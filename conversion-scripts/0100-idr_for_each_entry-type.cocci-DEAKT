@@ -1,0 +1,19 @@
+
+@@
+expression wl;
+expression pd;
+expression peer_device;
+@@
+
+-	list_for_each_entry(peer_device, wl, pd)
++	list_for_each_entry(struct drbd_peer_device, peer_device, wl, pd)
+
+@@
+expression pds;
+expression vnr;
+identifier peer_device;
+@@
+
+-	idr_for_each_entry(pds, peer_device, vnr)
++	idr_for_each_entry(struct drbd_peer_device *, pds, peer_device, vnr)
+
