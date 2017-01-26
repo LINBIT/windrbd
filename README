@@ -1,0 +1,24 @@
+** DRBD for Windows **
+
+These are scripts to convert a Linux-DRBD-9 codebase to Windows-compatible 
+files that can be compiled via CL.EXE.
+
+
+You'll need the EWDK 10[1] (the "Enterprise Windows Driver Kit"),
+respectively at least the part adressed as
+	ewdk/Program Files/Windows Kits/10/Include,
+and the matching Visual C compiler ("CL.EXE") and associated
+build tools (like "MSBUILD.EXE").
+
+
+You'll need either a Linux machine or enough of the Cygwin tools to run the 
+conversion; so for example "make", "perl", "sed", "awk", "cp", "rm".
+
+
+After the sources have been converted, the Makefile will try to run MSBUILD;
+if it fails to do so, you will need to run it in the "converted-sources" 
+directory yourself.
+
+
+
+Ad 1: https://msdn.microsoft.com/en-us/windows/hardware/drivers/develop/installing-the-enterprise-wdk
