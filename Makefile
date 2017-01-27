@@ -17,7 +17,7 @@ all: copy change msbuild
 
 copy:
 	mkdir -p $(CONV_DEST)/
-	cd -a $(CONV_SRC) && make drbd_buildtag.c
+	cd $(CONV_SRC) && make drbd_buildtag.c
 	cp -a $(CONV_SRC)/$(SOURCE_FILES) $(CONV_DEST)/
 	cp -a data/wdrbd9.vcxproj $(CONV_DEST)/
 
