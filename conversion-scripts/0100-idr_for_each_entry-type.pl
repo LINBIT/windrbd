@@ -1,7 +1,5 @@
-#!/bin/bash
+#!/usr/bin/perl -pi.bak
 
-
-perl -i.bak -pe '
 
 our %types;
 sub BEGIN {
@@ -14,11 +12,12 @@ sub BEGIN {
 };
 
 s{ 
-	( \s list_for_each_entry ( _continue | _safe | _reverse | _rcu )* \( )
+	( \s (?: list_for_each_entry ( _continue | _safe | _reverse | _rcu )* 
+		| list_next_entry ) 
+		\( )
 	((\w+),) 
 }{
 	my $t = $types{$4};
 	$t ?  $1 . "struct $t, " . $3 : "$1$3";
 }xe;
 
-' "$@"
