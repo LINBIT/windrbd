@@ -3,14 +3,17 @@
 
 our %types;
 sub BEGIN {
-%types = qw(    peer_device          drbd_peer_device
+%types = qw(    
+                e                    lc_element
                 device               drbd_device
                 r                    drbd_request
-                next_resource        drbd_resource
-                e                    lc_element
                 req                  drbd_request
+                req2                 drbd_request
+                next_resource        drbd_resource
                 path                 drbd_path
-                q                    struct queued_twopc
+                peer_device          drbd_peer_device
+                peer_req             drbd_peer_request
+                q                    queued_twopc
                 );
 };
 
