@@ -1,5 +1,10 @@
+#!/bin/sh
 
 
-BITS_PER_LONG => BITS_PER_BM_WORD?
+exit 0
 
-__test_and_clear_bit from kernel headers, or reimplement?
+# 
+# 
+# BITS_PER_LONG => BITS_PER_BM_WORD?
+# 
+# __test_and_clear_bit from kernel headers, or reimplement?
