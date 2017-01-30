@@ -26,9 +26,16 @@ copy:
 change:
 	# These scripts must be callable multiple times
 	set -e ; for cmd in $(CONV_SCRIPTS)/* ; do ( cd $(CONV_DEST)/drbd && if test -x "$$cmd" ; then echo "## $$cmd ##" && "$$cmd" ./$(SOURCE_FILES) ; fi ) || echo "ERROR $$?" ; done
-	mkdir -p $(CONV_DEST)/drbd/{linux,asm}
-	for f in module.h uaccess.h fs.h file.h proc_fs.h seq_file.h; do ( cd $(CONV_DEST)/drbd && touch linux/$$f;); done
+	# INCLUDES
+	mkdir -p $(CONV_DEST)/drbd/{linux,asm,sys}
+	# <linux/...>
+	for f in module.h uaccess.h fs.h file.h proc_fs.h; do ( cd $(CONV_DEST)/drbd && touch linux/$$f;); done
+	cp  ./wdrbd9/linux-compat/{jiffies.h,seq_file.h} $(CONV_DEST)/drbd/linux
+	cp  ./wdrbd9/linux-compat/Kernel.h $(CONV_DEST)/drbd/linux/kernel.h
+	# <asm/...>
 	for f in kmap_types.h types.h unaligned.h; do ( cd $(CONV_DEST)/drbd && touch asm/$$f;); done
+	# <sys/...>
+	cp  ./wdrbd9/linux-compat/Wait.h $(CONV_DEST)/drbd/sys/wait.h
 
 ifeq ($(shell uname -o),Cygwin)
 msbuild:
