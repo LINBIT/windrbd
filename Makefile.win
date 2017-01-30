@@ -31,6 +31,10 @@ WIN_CFLAGS += -D _WIN64=1
 
 VC := /cygdrive/c/Windows/System32/cmd.exe /a /c ms-cl.cmd
 
+all: drbd.sys
+
+drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c))
+
 ifeq ($(shell uname -o),Cygwin)
     %.obj: %.c
 	rm -f "$(call fPDB,$<)"

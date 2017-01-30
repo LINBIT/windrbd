@@ -19,15 +19,23 @@ copy:
 	mkdir -p $(CONV_DEST)/
 	cp -ra $(CONV_SRC)/* $(CONV_DEST)
 	cd $(CONV_SRC)/drbd && echo 'const char *drbd_buildtag(void){return "WDRBD";}' > drbd_buildtag.c
-	cp -a ./Makefile.win $(CONV_DEST)/Makefile
-	cp -a ./ms-cl.cmd $(CONV_DEST)/
+	cp -a ./Makefile.win $(CONV_DEST)/drbd/Makefile
+	cp -a ./ms-cl.cmd $(CONV_DEST)/drbd/
 	cp -a data/wdrbd9.vcxproj $(CONV_DEST)/drbd
 
 change:
 	# These scripts must be callable multiple times
 	set -e ; for cmd in $(CONV_SCRIPTS)/* ; do ( cd $(CONV_DEST)/drbd && if test -x "$$cmd" ; then echo "## $$cmd ##" && "$$cmd" ./$(SOURCE_FILES) ; fi ) || echo "ERROR $$?" ; done
 
+ifeq ($(shell uname -o),Cygwin)
 msbuild:
+	cd converted-sources/drbd/ && $(MAKE)
+else
+msbuild:
+	echo "Please run 'make' in the Windows VM."
+	exit 1
+endif
+	
 
 clean:
 	test -n "$(CONV_DEST)" && test -n "$(SOURCE_FILES)" && rm -f "$(CONV_DEST)/$(SOURCE_FILES)" # Be careful
