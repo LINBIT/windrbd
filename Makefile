@@ -25,19 +25,9 @@ copy:
 
 change:
 	# These scripts must be callable multiple times
-	set -e ; for cmd in $(CONV_SCRIPTS)/*.sh ; do ( cd $(CONV_DEST)/drbd && $$cmd ./$(SOURCE_FILES) ) ; done
+	set -e ; for cmd in $(CONV_SCRIPTS)/* ; do ( cd $(CONV_DEST)/drbd && if test -x "$$cmd" ; then echo "## $$cmd ##" && "$$cmd" ./$(SOURCE_FILES) ; fi ) || echo "ERROR $$?" ; done
 
 msbuild:
-	if type msbuild.exe                                     \
-	then                                                    \
-		cd "$(CONV_DEST)"                                   \
-		msbuild.exe                                         \
-	else                                                    \
-		@echo "Please call MSBUILD.EXE from within the"     \
-		@echo "  $(CONV_DEST)"                              \
-		@echo "directory."                                  \
-		exit 1                                              \
-	fi
 
 clean:
 	test -n "$(CONV_DEST)" && test -n "$(SOURCE_FILES)" && rm -f "$(CONV_DEST)/$(SOURCE_FILES)" # Be careful
