@@ -9,6 +9,7 @@ sub BEGIN {
                 e           lc_element
                 req         drbd_request
                 drbd_path   drbd_path
+                q           struct queued_twopc
                 );
 };
 
