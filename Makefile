@@ -26,6 +26,7 @@ copy:
 change:
 	# These scripts must be callable multiple times
 	set -e ; for cmd in $(CONV_SCRIPTS)/* ; do ( cd $(CONV_DEST)/drbd && if test -x "$$cmd" ; then echo "## $$cmd ##" && "$$cmd" ./$(SOURCE_FILES) ; fi ) || echo "ERROR $$?" ; done
+	for f in module.h uaccess.h fs.h file.h proc_fs.h seq_file.h; do ( cd $(CONV_DEST)/drbd && touch linux/$$f;); done
 
 ifeq ($(shell uname -o),Cygwin)
 msbuild:
