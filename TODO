@@ -1,0 +1,32 @@
+
+* Check ULONG_PTR which ones need to be 64bit on 64bit arch
+    * simply changing all means that we'd break 32bit - would we want/need to support that?
+
+* Change kmem_cache_alloc etc. to "Lookaside Lists"
+    https://msdn.microsoft.com/en-us/library/windows/hardware/ff565416(v=vs.85).aspx
+
+* WriteSame not support 
+
+* Thin should be supported?
+    https://msdn.microsoft.com/en-us/windows/hardware/drivers/storage/thin-provisioning
+
+* RCU
+ 
+* receiver wakeup (signals, for ping)
+
+* transport_tcp:
+    -       s_estab->ops->getname(s_estab, (struct sockaddr *)&peer_addr, &peer_addr_len, 2);
+    +       status = GetRemoteAddress(s_estab->sk, (PSOCKADDR)&peer_addr);
+
+* Mantech's submit_bio doesn't run bio_endio() on failure?
+
+* Repair wait_event_timeout. We can't do this now:
+    -       if (wait_event_timeout(resource->state_wait,
+    -                      cluster_wide_reply_ready(resource),
+    -                      twopc_timeout(resource)))
+    +        long t;
+    +        wait_event_timeout(t, resource->state_wait,
+    +            cluster_wide_reply_ready(resource),
+    +            twopc_timeout(resource));
+    +        if (t)
+

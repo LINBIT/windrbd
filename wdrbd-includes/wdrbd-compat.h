@@ -14,3 +14,6 @@
 struct kmem_cache {
 	NPAGED_LOOKASIDE_LIST cache;
 };
+
+
+#define BIO_ENDIO_ARGS(void1, void2) (void *p1, void *p2, void *p3)
