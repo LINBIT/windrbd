@@ -1,8 +1,9 @@
-#!/bin/bash
+#!/usr/bin/perl -pi.bak
 
-# - 	t = wait_event_timeout(device->misc_wait,
-# +    wait_event_timeout(t, device->misc_wait,
+# -       peer_device = list_first_or_null_rcu(&device->peer_devices,
+#-                           struct drbd_peer_device,
+#-                           peer_devices);
+#+        list_first_or_null_rcu(peer_device, &device->peer_devices, struct drbd_peer_device, peer_devices);
 
-perl -i.bak -pe '
+
 s/^(\s*(\w+)\s*=\s*list_first_or_null_rcu\()/$1$2, /;
-' "$@"
