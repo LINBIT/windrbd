@@ -1,0 +1,44 @@
+WIN_CFLAGS += /c /nologo /W4 
+WIN_CFLAGS += /Zi # /Zi would be a PDB file, we want the .obj file to be used
+WIN_CFLAGS += /WX # warnings == errors
+WIN_CFLAGS += /Od # disable optimizations
+WIN_CFLAGS += /Oi # enable intrinsic functions
+WIN_CFLAGS += /Oy- # enable frame pointer omission
+# WIN_CFLAGS += /D _X86_=1 /D i386=1 # 32bit
+WIN_CFLAGS += /D _WIN64 /D _AMD64_ /D AMD64 /D _M_AMD64 # 64bit
+WIN_CFLAGS += /D STD_CALL /D DEPRECATE_DDK_FUNCTIONS=1 /D MSC_NOOPT /D _WIN32_WINNT=0x0601 /D WINVER=0x0601 /D WINNT=1 /D NTDDI_VERSION=0x06010000 /D DBG=1 /D KMDF_VERSION_MAJOR=1 /D KMDF_VERSION_MINOR=15 
+WIN_CFLAGS += /GF /Gm- /Zp8 /GS /Gy 
+# /fp:precise  # precise - "precise" floating-point model; results are predictable
+WIN_CFLAGS += /Zc:wchar_t- /Zc:forScope /Zc:inline /GR- 
+# On x64, there's only one calling convention. https://msdn.microsoft.com/en-us/library/zthk2dkh.aspx
+# WIN_CFLAGS += /Gz # __stdcall calling convention  -- is default
+# WIN_CFLAGS += /Gr # __fastcall calling convention -- is what we want for linux compat
+WIN_CFLAGS += /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996 
+WIN_CFLAGS += /FI"../../ewdk-include/10.0.14393.0/shared/warning.h"  # include that file
+WIN_CFLAGS += /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+ 
+
+
+# CL.exe takes (AND RETURNS) forward slashes; that makes navigating an error output easy.
+WIN_INCLUDE_DIRS += -I "../../ewdk-include/10.0.14393.0/shared"
+WIN_INCLUDE_DIRS += -I "../../ewdk-include/10.0.14393.0/km"
+WIN_INCLUDE_DIRS += -I "../../ewdk-include/10.0.14393.0/km/crt"
+WIN_INCLUDE_DIRS += -I "../../ewdk-include/10.0.14393.0/um"
+#WIN_CFLAGS += -I "../../ewdk-include/10.0.14393.0"
+
+WIN_CFLAGS += $(WIN_INCLUDE_DIRS)
+WIN_CFLAGS += -D _WIN64=1
+# WIN_CFLAGS += -D _AMD64_=1
+
+VC := /cygdrive/c/Windows/System32/cmd.exe /a /c ms-cl.cmd
+
+ifeq ($(shell uname -o),Cygwin)
+    %.obj: %.c
+	rm -f "$(call fPDB,$<)"
+	$(VC) $(WIN_CFLAGS) "$<" /c /Fo:"$@" /Fd:"$(call fPDB,$<)"
+	# /Fi:"$(patsubst %.c,%.E,$<)" ...  cl : Command line warning D9007 : '/Fi:' requires '/P'; option ignored
+	echo "-- done --"
+
+    wdrbd_on_windows.E: wdrbd_on_windows.c
+	$(VC) $(WIN_CFLAGS) "$<" /P /Fo:"$@" /Fi:"$@"
+endif
+
