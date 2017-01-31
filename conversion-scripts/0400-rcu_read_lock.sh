@@ -7,7 +7,7 @@ echo "
 identifier func;
 @@
 func (...) {
-+     unsigned long rcu_flags;
++     KIRQL rcu_flags;
       ...
 -     rcu_read_lock();
 +     rcu_flags = rcu_read_lock();
