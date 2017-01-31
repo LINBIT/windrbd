@@ -21,7 +21,11 @@
 #define _WINDOWS_TYPES_H
 
 #include <ctype.h>
-#include <stdbool.h>
+//#include <stdbool.h>
+enum __Bool__ {
+	false = 0,
+	true = 1
+};
 typedef signed char		    __s8;
 typedef unsigned char		__u8;
 typedef signed short		__s16;

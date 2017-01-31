@@ -28,6 +28,7 @@ WIN_INCLUDE_DIRS += -I "../drbd-headers"
 #WIN_CFLAGS += -I "../../ewdk-include/10.0.14393.0"
 
 WIN_CFLAGS += $(WIN_INCLUDE_DIRS)
+WIN_CFLAGS += /FI"linux-compat/types.h"
 WIN_CFLAGS += -D _WIN64=1
 # WIN_CFLAGS += -D _AMD64_=1
 
