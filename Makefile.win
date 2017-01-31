@@ -31,7 +31,8 @@ WIN_CFLAGS += $(WIN_INCLUDE_DIRS)
 WIN_CFLAGS += -D _WIN64=1
 # WIN_CFLAGS += -D _AMD64_=1
 
-VC := /cygdrive/c/Windows/System32/cmd.exe /a /c ms-cl.cmd
+VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl.cmd
+# /a      for debugging output
 
 all: drbd.sys
 
