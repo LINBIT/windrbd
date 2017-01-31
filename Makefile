@@ -39,6 +39,7 @@ change:
 	# things they include as linux-compat/...
 	mkdir -p $(CONV_DEST)/drbd/linux-compat
 	for f in list.h spinlock.h; do cp ./wdrbd9/linux-compat/$$f $(CONV_DEST)/drbd/linux-compat/; done
+	cp ./wdrbd9/windows/* $(CONV_DEST)/drbd/linux-compat/
 
 ifeq ($(shell uname -o),Cygwin)
 msbuild:
