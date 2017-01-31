@@ -21,16 +21,17 @@ sub BEGIN {
 # - idr_for_each_entry(&resource->devices, device, vnr)
 # + idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr)
 s{
-	( \s idr_for_each_entry
-		\( [^,]+, )
-	((\w+),)
+	( \s idr_for_each_entry \( )
+	( [^,]+ ) , \s*
+	(\w+),
+	(\w+) 
+	\)
 }{
 	my $t = $types{$3};
-	$t ?  $1 . "struct $t *, $2"  : "$1$2";
+	$1 . "struct $t *, $2, $3, $4)"
 }xe;
 
-# - idr_for_each_entry(&resource->devices, device, vnr)
-# + idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr)
+
 s{
 	( \s (?: list_for_each_entry ( _continue | _safe | _reverse | _rcu )* 
 		| list_next_entry ) 

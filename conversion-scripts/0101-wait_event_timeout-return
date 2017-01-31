@@ -3,4 +3,8 @@
 # - 	t = wait_event_timeout(device->misc_wait,
 # +    wait_event_timeout(t, device->misc_wait,
 
-s/^(\s*(\w+)\s*=\s*wait_event_timeout\()/$1$2, /;
+# -    timeout = wait_event_interruptible_timeout(resource->state_wait,
+# +    wait_event_interruptible_timeout(timeout, resource->state_wait,
+
+
+s/^(?<indent>\s*)(?<var>\w+)\s*=\s*(?<func>wait_event(?:_interruptible)?_timeout\()/$+{indent}$+{func}$+{var}, /;
