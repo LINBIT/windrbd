@@ -29,13 +29,16 @@ change:
 	# INCLUDES
 	mkdir -p $(CONV_DEST)/drbd/{linux,asm,sys}
 	# <linux/...>
-	for f in module.h uaccess.h fs.h file.h proc_fs.h; do ( cd $(CONV_DEST)/drbd && touch linux/$$f;); done
-	cp  ./wdrbd9/linux-compat/{jiffies.h,seq_file.h} $(CONV_DEST)/drbd/linux
+	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h types.h; do ( cd $(CONV_DEST)/drbd && truncate -s0 linux/$$f;); done
+	cp  ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c} $(CONV_DEST)/drbd/linux
 	cp  ./wdrbd9/linux-compat/Kernel.h $(CONV_DEST)/drbd/linux/kernel.h
 	# <asm/...>
-	for f in kmap_types.h types.h unaligned.h; do ( cd $(CONV_DEST)/drbd && touch asm/$$f;); done
+	for f in kmap_types.h types.h unaligned.h; do ( cd $(CONV_DEST)/drbd && truncate -s0 asm/$$f;); done
 	# <sys/...>
 	cp  ./wdrbd9/linux-compat/Wait.h $(CONV_DEST)/drbd/sys/wait.h
+	# things they include as linux-compat/...
+	mkdir -p $(CONV_DEST)/drbd/linux-compat
+	for f in list.h spinlock.h; do cp ./wdrbd9/linux-compat/$$f $(CONV_DEST)/drbd/linux-compat/; done
 
 ifeq ($(shell uname -o),Cygwin)
 msbuild:
