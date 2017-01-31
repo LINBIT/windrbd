@@ -1351,7 +1351,7 @@ extern void list_del_rcu(struct list_head *entry);
 #define rcu_dereference(_PTR)		(_PTR)
 #define __rcu_assign_pointer(_p, _v) \
 	do { \
-		/*smp_mb();*/ \
+		smp_mb();    \
 		(_p) = (_v); \
 	} while (0)
 
@@ -1363,26 +1363,30 @@ extern void list_del_rcu(struct list_head *entry);
 
 extern EX_SPIN_LOCK g_rcuLock;
 
-#define rcu_read_lock() \
-    unsigned char oldIrql_rLock = ExAcquireSpinLockShared(&g_rcuLock);\
-    WDRBD_TRACE_RCU("rcu_read_lock : currentIrql(%d), oldIrql_rLock(%d:%x) g_rcuLock(%d)\n", KeGetCurrentIrql(), oldIrql_rLock, &oldIrql_rLock, g_rcuLock)
+static inline KIRQL rcu_read_lock(void)
+{
+	KIRQL rcu_flags = ExAcquireSpinLockShared(&g_rcuLock);
+	WDRBD_TRACE_RCU("rcu_read_lock : currentIrql(%d), oldIrql_rLock(%d:%x) g_rcuLock(%d)\n",
+			KeGetCurrentIrql(), oldIrql_rLock, &oldIrql_rLock, g_rcuLock)
+        return rcu_flags;
+}
 
-#define rcu_read_unlock() \
-    ExReleaseSpinLockShared(&g_rcuLock, oldIrql_rLock);\
-    WDRBD_TRACE_RCU("rcu_read_unlock : currentIrql(%d), oldIrql_rLock(%d:%x) g_rcuLock(%d)\n", KeGetCurrentIrql(), oldIrql_rLock, &oldIrql_rLock, g_rcuLock)
+static inline rcu_read_unlock(KIRQL rcu_flags)
+{
+	ExReleaseSpinLockShared(&g_rcuLock, rcu_flags);
+	WDRBD_TRACE_RCU("rcu_read_unlock : currentIrql(%d), oldIrql_rLock(%d:%x) g_rcuLock(%d)\n",
+			KeGetCurrentIrql(), oldIrql_rLock, &oldIrql_rLock, g_rcuLock)
+}
 
-#define rcu_read_lock_w32_inner() \
-	oldIrql_rLock = ExAcquireSpinLockShared(&g_rcuLock);\
-    WDRBD_TRACE_RCU("rcu_read_lock_w32_inner : currentIrql(%d), oldIrql_rLock(%d:%x) g_rcuLock(%d)\n", KeGetCurrentIrql(), oldIrql_rLock, &oldIrql_rLock, g_rcuLock)
-
-#define synchronize_rcu_w32_wlock() \
-	unsigned char  oldIrql_wLock; \
-	oldIrql_wLock = ExAcquireSpinLockExclusive(&g_rcuLock);\
-    WDRBD_TRACE_RCU("synchronize_rcu_w32_wlock : currentIrql(%d), oldIrql_wLock(%d:%x) g_rcuLock(%lu)\n", KeGetCurrentIrql(), oldIrql_wLock, &oldIrql_wLock, g_rcuLock)
-
-#define synchronize_rcu() \
-	ExReleaseSpinLockExclusive(&g_rcuLock, oldIrql_wLock);\
-    WDRBD_TRACE_RCU("synchronize_rcu : currentIrql(%d), oldIrql_wLock(%d:%x) g_rcuLock(%lu)\n", KeGetCurrentIrql(), oldIrql_wLock, &oldIrql_wLock, g_rcuLock)
+static inline void synchronize_rcu()
+{
+	KIRQL rcu_flags;
+	ExAcquireSpinLockExclusive(&g_rcuLock);
+	/* compiler barrier */
+	ExReleaseSpinLockExclusive(&g_rcuLock, rcu_flags);
+	WDRBD_TRACE_RCU("synchronize_rcu : currentIrql(%d), oldIrql_wLock(%d:%x) g_rcuLock(%lu)\n",
+			KeGetCurrentIrql(), oldIrql_wLock, &oldIrql_wLock, g_rcuLock)
+}
 
 extern void local_irq_disable();
 extern void local_irq_enable();
