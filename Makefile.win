@@ -25,6 +25,8 @@ WIN_INCLUDE_DIRS += -I "../../ewdk-include/10.0.14393.0/km/crt"
 WIN_INCLUDE_DIRS += -I "../../ewdk-include/10.0.14393.0/um"
 WIN_INCLUDE_DIRS += -I "."
 WIN_INCLUDE_DIRS += -I "../drbd-headers"
+WIN_INCLUDE_DIRS += -I "linux-compat/windows"
+WIN_INCLUDE_DIRS += -I "drbd-kernel-compat"
 #WIN_CFLAGS += -I "../../ewdk-include/10.0.14393.0"
 
 WIN_CFLAGS += $(WIN_INCLUDE_DIRS)

@@ -36,10 +36,12 @@ change:
 	for f in kmap_types.h types.h unaligned.h; do ( cd $(CONV_DEST)/drbd && truncate -s0 asm/$$f;); done
 	# <sys/...>
 	cp  ./wdrbd9/linux-compat/Wait.h $(CONV_DEST)/drbd/sys/wait.h
+	cp  ./wdrbd9/linux-compat/Bitops.h $(CONV_DEST)/drbd/linux/
+	cp  ./wdrbd9/linux-compat/sched.h $(CONV_DEST)/drbd/linux/
 	# things they include as linux-compat/...
 	mkdir -p $(CONV_DEST)/drbd/linux-compat
 	for f in list.h spinlock.h; do cp ./wdrbd9/linux-compat/$$f $(CONV_DEST)/drbd/linux-compat/; done
-	cp ./wdrbd9/windows/* $(CONV_DEST)/drbd/linux-compat/
+	cp -a ./wdrbd9/windows/ $(CONV_DEST)/drbd/linux-compat/
 
 ifeq ($(shell uname -o),Cygwin)
 msbuild:
