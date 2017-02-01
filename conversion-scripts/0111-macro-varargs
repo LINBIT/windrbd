@@ -1,0 +1,10 @@
+#!/usr/bin/perl -pi.bak
+
+
+# -#define GENL_op_init(args...)	args
+# +#define GENL_op_init(...)	__VA_ARGS__
+
+
+s{ ^ ( \s* \#define \s+ \w+ ) \( (\w+) \.\.\. \) \s+ \2 $}
+ { "$1(...) __VA_ARGS__" }xe;
+
