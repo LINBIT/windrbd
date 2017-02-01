@@ -1,5 +1,5 @@
 WIN_CFLAGS += /c /nologo /W4 
-WIN_CFLAGS += /Zi # /Zi would be a PDB file, we want the .obj file to be used
+WIN_CFLAGS += /Zi # /Zi gives us a PDB file; without that we'd get debug information in the .obj file instead
 WIN_CFLAGS += /WX # warnings == errors
 WIN_CFLAGS += /Od # disable optimizations
 WIN_CFLAGS += /Oi # enable intrinsic functions
