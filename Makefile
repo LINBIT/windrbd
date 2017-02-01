@@ -53,7 +53,7 @@ patch:
 	# replacing files in <drbd>
 	cp ./windows/drbd_transport_tcp.c $(CONV_DEST)/
 	# <linux/...>
-	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h slab.h string.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
+	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h slab.h string.h version.h random.h kref.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
 	cp  ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c,sched.h} $(OV_INC)/linux
 	cp  ./wdrbd9/linux-compat/Kernel.h $(OV_INC)/linux/kernel.h
 	cp  ./wdrbd9/linux-compat/Bitops.h $(OV_INC)/linux/bitops.h
@@ -71,6 +71,9 @@ patch:
 	for f in types.h ioctl.h drbd.h; do cp ./wdrbd9/windows/$$f $(OV_INC)/windows/; done
 	# standard
 	for f in mvolmsg.h disp.h mvolse.h send_buf.h; do cp ./wdrbd9/$$f $(OV_INC)/; done
+	# additional toplevel
+	truncate -s0 $(OV_INC)/drbd_wrappers.h
+
 
 ifeq ($(shell uname -o),Cygwin)
 msbuild:
