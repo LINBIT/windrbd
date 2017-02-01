@@ -1,7 +1,9 @@
 ﻿#ifndef __JIFFIES_H__
 #define __JIFFIES_H__
 
-__inline unsigned int jiffies_to_msecs(const ULONG_PTR j)
+#include <stdint.h>
+
+__inline unsigned int jiffies_to_msecs(const UINT64 j)
 {
 	return (unsigned int)j;
 }
