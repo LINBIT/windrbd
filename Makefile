@@ -54,9 +54,9 @@ patch:
 	cp ./windows/drbd_transport_tcp.c $(CONV_DEST)/
 	# <linux/...>
 	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h slab.h string.h version.h random.h kref.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
-	cp  ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c,sched.h} $(OV_INC)/linux
-	cp  ./wdrbd9/linux-compat/Kernel.h $(OV_INC)/linux/kernel.h
-	cp  ./wdrbd9/linux-compat/Bitops.h $(OV_INC)/linux/bitops.h
+	cp ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c,sched.h} $(OV_INC)/linux
+	cp ./wdrbd9/linux-compat/Kernel.h $(OV_INC)/linux/kernel.h
+	cp ./wdrbd9/linux-compat/Bitops.h $(OV_INC)/linux/bitops.h
 	cp ./wdrbd9/windows/types.h $(OV_INC)/linux/
 	cp ./wdrbd9/linux-compat/list.h $(OV_INC)/linux/
 	# <asm/...>
