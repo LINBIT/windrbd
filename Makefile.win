@@ -17,7 +17,11 @@ WIN_CFLAGS += /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996
 WIN_CFLAGS += /FI"../../ewdk-include/10.0.14393.0/shared/warning.h"  # include that file
 WIN_CFLAGS += /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+ 
 WIN_CFLAGS += /D __KERNEL__=1
-WIN_CFLAGS += /Ze # Microsoft extensions - eg. nameless struct/union
+# WIN_CFLAGS += /Ze # Microsoft extensions - eg. nameless struct/union. Not enabled because
+#   The /Ze option is deprecated because its behavior is on by default. We recommend you use the /Zc (Conformance) compiler options to control specific language extension features.
+# but there's no setting for that.
+WIN_CFLAGS += /wd4201
+
 
 
 # CL.exe takes (AND RETURNS) forward slashes; that makes navigating an error output easy.
@@ -40,9 +44,15 @@ WIN_CFLAGS += -D _WIN64=1
 VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl.cmd
 # /a      for debugging output
 
+
+# How to calculate the debug name
+fPDB = $(patsubst %.c,%.pdb,$(1))
+
+
 all: drbd.sys
 
 drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c))
+	$(VC) $(WIN_LDFLAGS) "$^" /Fo:"$@"
 
 ifeq ($(shell uname -o),Cygwin)
     %.obj: %.c
