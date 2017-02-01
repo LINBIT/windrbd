@@ -9,7 +9,7 @@ CONV_DEST := $(PWD)/converted-sources/
 OV_INC := $(CONV_DEST)/overrides/
 CONV_SCRIPTS := $(PWD)/conversion-scripts/
 
-SOURCE_FILES := *.[ch]
+SOURCE_FILES := $(shell cd $(CONV_SRC) && find . -iname "*.[ch]" | grep -v drbd/drbd-kernel-compat )
 
 export SHELL=bash
 
@@ -26,7 +26,7 @@ copy:
 
 change:
 	# These scripts must be callable multiple times
-	set -e ; for cmd in $(CONV_SCRIPTS)/* ; do ( cd $(CONV_DEST)/drbd && if test -x "$$cmd" ; then echo "## $$cmd ##" && "$$cmd" ./$(SOURCE_FILES) ; fi ) || echo "ERROR $$?" ; done
+	set -e ; for cmd in $(CONV_SCRIPTS)/* ; do ( cd "$(CONV_DEST)" && if test -x "$$cmd" ; then echo "## $$cmd ##" && "$$cmd" $(SOURCE_FILES) ; fi ) || echo "ERROR $$?" ; done
 	# INCLUDES
 	mkdir -p $(OV_INC)/{linux,asm,sys,linux-compat}
 	cp ./wdrbd9/generic_compat_stuff.h $(OV_INC)/
@@ -55,6 +55,6 @@ endif
 	
 
 clean:
-	test -n "$(CONV_DEST)" && test -n "$(SOURCE_FILES)" && rm -f "$(CONV_DEST)/$(SOURCE_FILES)" # Be careful
+	test -n "$(CONV_DEST)" && rm -rf "$(CONV_DEST)" # Be careful!
 
 # vim: set ts=8 sw=8 noet : 
