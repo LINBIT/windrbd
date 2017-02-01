@@ -17,7 +17,7 @@ export SHELL=bash
 
 all: transform patch msbuild
 
-# can not regenerate those scritps
+# can not regenerate those scripts
 $(SCRIPTS): ;
 
 # can not regenerate the originals
