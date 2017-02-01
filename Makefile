@@ -28,7 +28,7 @@ change:
 	# These scripts must be callable multiple times
 	set -e ; for cmd in $(CONV_SCRIPTS)/* ; do ( cd "$(CONV_DEST)" && if test -x "$$cmd" ; then echo "## $$cmd ##" && "$$cmd" $(SOURCE_FILES) ; fi ) || echo "ERROR $$?" ; done
 	# INCLUDES
-	mkdir -p $(OV_INC)/{linux,asm,sys,linux-compat}
+	mkdir -p $(OV_INC)/{linux,asm,sys,net,linux-compat}
 	cp ./wdrbd9/generic_compat_stuff.h $(OV_INC)/
 	cp ./wdrbd9/drbd_windows.h $(OV_INC)/
 	# <linux/...>
@@ -39,6 +39,8 @@ change:
 	cp ./wdrbd9/windows/types.h $(OV_INC)/linux/
 	# <asm/...>
 	for f in kmap_types.h types.h unaligned.h byteorder.h; do ( cd $(OV_INC) && truncate -s0 asm/$$f;); done
+	# <net/...>
+	for f in genetlink.h; do ( cd $(OV_INC) && truncate -s0 net/$$f;); done
 	# <sys/...>
 	cp  ./wdrbd9/linux-compat/Wait.h $(OV_INC)/sys/wait.h
 	# things they include as linux-compat/...
