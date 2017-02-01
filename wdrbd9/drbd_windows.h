@@ -1364,16 +1364,16 @@ extern EX_SPIN_LOCK g_rcuLock;
 static inline KIRQL rcu_read_lock(void)
 {
 	KIRQL rcu_flags = ExAcquireSpinLockShared(&g_rcuLock);
-	WDRBD_TRACE_RCU("rcu_read_lock : currentIrql(%d), oldIrql_rLock(%d:%x) g_rcuLock(%d)\n",
-			KeGetCurrentIrql(), oldIrql_rLock, &oldIrql_rLock, g_rcuLock)
-        return rcu_flags;
+	WDRBD_TRACE_RCU("rcu_read_lock : currentIrql(%d), rcu_flags(%d:%x) g_rcuLock(%d)\n",
+			KeGetCurrentIrql(), rcu_flags, &rcu_flags, g_rcuLock);
+	return rcu_flags;
 }
 
 static inline rcu_read_unlock(KIRQL rcu_flags)
 {
 	ExReleaseSpinLockShared(&g_rcuLock, rcu_flags);
-	WDRBD_TRACE_RCU("rcu_read_unlock : currentIrql(%d), oldIrql_rLock(%d:%x) g_rcuLock(%d)\n",
-			KeGetCurrentIrql(), oldIrql_rLock, &oldIrql_rLock, g_rcuLock)
+	WDRBD_TRACE_RCU("rcu_read_unlock : currentIrql(%d), rcu_flags(%d:%x) g_rcuLock(%d)\n",
+			KeGetCurrentIrql(), rcu_flags, &rcu_flags, g_rcuLock);
 }
 
 static inline void synchronize_rcu()
@@ -1382,8 +1382,8 @@ static inline void synchronize_rcu()
 	ExAcquireSpinLockExclusive(&g_rcuLock);
 	/* compiler barrier */
 	ExReleaseSpinLockExclusive(&g_rcuLock, rcu_flags);
-	WDRBD_TRACE_RCU("synchronize_rcu : currentIrql(%d), oldIrql_wLock(%d:%x) g_rcuLock(%lu)\n",
-			KeGetCurrentIrql(), oldIrql_wLock, &oldIrql_wLock, g_rcuLock)
+	WDRBD_TRACE_RCU("synchronize_rcu : currentIrql(%d), rcu_flags(%d:%x) g_rcuLock(%lu)\n",
+			KeGetCurrentIrql(), rcu_flags, &rcu_flags, g_rcuLock);
 }
 
 extern void local_irq_disable();
