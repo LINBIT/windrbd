@@ -1,0 +1,21 @@
+#!/bin/bash
+
+FILE=$(mktemp)
+
+echo "
+
+@@
+identifier id, member;
+type T;
+@@
+struct id {
+		...
+-       T member[0];
++       T member[1];
+}
+
+" > $FILE
+
+spatch --sp-file $FILE --in-place "$@"
+
+rm $FILE
