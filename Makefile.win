@@ -39,6 +39,7 @@ WIN_INCLUDE_DIRS += -I "drbd-kernel-compat"
 WIN_CFLAGS += $(WIN_INCLUDE_DIRS)
 WIN_CFLAGS += /FI"linux/types.h"
 WIN_CFLAGS += /FI"generic_compat_stuff.h"
+WIN_CFLAGS += /FI"wingenl.h"
 WIN_CFLAGS += -D _WIN64=1
 # WIN_CFLAGS += -D _AMD64_=1
 
