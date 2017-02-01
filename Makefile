@@ -9,7 +9,7 @@ CONV_DEST := converted-sources/
 CONV_SCRIPTS := conversion-scripts/
 OV_INC := $(CONV_DEST)/overrides/
 
-ORIG := $(shell find $(CONV_SRC) -name "*.[ch]")
+ORIG := $(shell find $(CONV_SRC) -name "*.[ch]" | grep  -v drbd/drbd-kernel-compat)
 CONVERTED := $(patsubst $(CONV_SRC)%,$(CONV_DEST)%,$(ORIG))
 SCRIPTS := $(sort $(wildcard $(CONV_SCRIPTS)/*))
 
@@ -31,7 +31,7 @@ define convert
 	tmp=$@.tmp; \
 	cat < $< > $$tmp; \
 	for s in $(SCRIPTS); do \
-		$$s $$tmp ; \
+		test -x $$s && $$s $$tmp ; \
 	done ; \
 	mv -v $$tmp $@
 endef
@@ -47,15 +47,16 @@ patch:
 	cp -a ./ms-cl.cmd $(CONV_DEST)/drbd/
 	cp -a data/wdrbd9.vcxproj $(CONV_DEST)/drbd
 	# INCLUDES
-	mkdir -p $(OV_INC)/{linux,asm,sys,net,linux-compat}
+	mkdir -p $(OV_INC)/{linux,asm,sys,net,linux-compat,windows}
 	cp ./wdrbd9/generic_compat_stuff.h $(OV_INC)/
 	cp ./wdrbd9/drbd_windows.h $(OV_INC)/
 	# <linux/...>
-	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
+	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h slab.h string.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
 	cp  ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c,sched.h} $(OV_INC)/linux
 	cp  ./wdrbd9/linux-compat/Kernel.h $(OV_INC)/linux/kernel.h
 	cp  ./wdrbd9/linux-compat/Bitops.h $(OV_INC)/linux/bitops.h
 	cp ./wdrbd9/windows/types.h $(OV_INC)/linux/
+	cp ./wdrbd9/linux-compat/list.h $(OV_INC)/linux/
 	# <asm/...>
 	for f in kmap_types.h types.h unaligned.h byteorder.h; do ( cd $(OV_INC) && truncate -s0 asm/$$f;); done
 	# <net/...>
@@ -63,7 +64,11 @@ patch:
 	# <sys/...>
 	cp  ./wdrbd9/linux-compat/Wait.h $(OV_INC)/sys/wait.h
 	# things they include as linux-compat/...
-	for f in list.h spinlock.h hweight.h; do cp ./wdrbd9/linux-compat/$$f $(OV_INC)/linux-compat/; done
+	for f in list.h spinlock.h hweight.h drbd_endian.h; do cp ./wdrbd9/linux-compat/$$f $(OV_INC)/linux-compat/; done
+	# <windows/>
+	for f in types.h ioctl.h drbd.h; do cp ./wdrbd9/windows/$$f $(OV_INC)/windows/; done
+	# standard
+	for f in mvolmsg.h disp.h mvolse.h send_buf.h; do cp ./wdrbd9/$$f $(OV_INC)/; done
 
 ifeq ($(shell uname -o),Cygwin)
 msbuild:

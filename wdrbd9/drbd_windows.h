@@ -21,11 +21,9 @@
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H
 #include <wdm.h>
-#include <stdint.h>
 #include <ntstrsafe.h>
-#include <stdbool.h>
 #include "linux-compat/list.h"
-#include "linux-compat/Wait.h"
+#include "sys/wait.h"
 #include "linux-compat/drbd_endian.h"
 #include "windows/types.h"
 #include "mvolmsg.h"
