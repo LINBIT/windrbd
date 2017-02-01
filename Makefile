@@ -31,7 +31,7 @@ define convert
 	tmp=$@.tmp; \
 	cat < $< > $$tmp; \
 	for s in $(SCRIPTS); do \
-		test -x $$s && $$s $$tmp ; \
+		if test -x $$s ; then $$s $$tmp ; fi ;\
 	done ; \
 	mv -v $$tmp $@
 endef
