@@ -15,6 +15,8 @@ SCRIPTS := $(sort $(wildcard $(CONV_SCRIPTS)/*))
 
 export SHELL=bash
 
+all: transform patch msbuild
+
 # can not regenerate those scritps
 $(SCRIPTS): ;
 
@@ -37,9 +39,9 @@ endef
 $(CONV_DEST)% : $(CONV_SRC)%
 	$(call convert)
 
-all: transform msbuild
-
 transform: $(CONVERTED)
+
+patch:
 	cd $(CONV_SRC)/drbd && echo 'const char *drbd_buildtag(void){return "WDRBD";}' > drbd_buildtag.c
 	cp -a ./Makefile.win $(CONV_DEST)/drbd/Makefile
 	cp -a ./ms-cl.cmd $(CONV_DEST)/drbd/
@@ -61,7 +63,7 @@ transform: $(CONVERTED)
 	# <sys/...>
 	cp  ./wdrbd9/linux-compat/Wait.h $(OV_INC)/sys/wait.h
 	# things they include as linux-compat/...
-	for f in list.h spinlock.h; do cp ./wdrbd9/linux-compat/$$f $(OV_INC)/linux-compat/; done
+	for f in list.h spinlock.h hweight.h; do cp ./wdrbd9/linux-compat/$$f $(OV_INC)/linux-compat/; done
 
 ifeq ($(shell uname -o),Cygwin)
 msbuild:
