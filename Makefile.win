@@ -17,6 +17,7 @@ WIN_CFLAGS += /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996
 WIN_CFLAGS += /FI"../../ewdk-include/10.0.14393.0/shared/warning.h"  # include that file
 WIN_CFLAGS += /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+ 
 WIN_CFLAGS += /D __KERNEL__=1
+WIN_CFLAGS += /Ze # Microsoft extensions - eg. nameless struct/union
 
 
 # CL.exe takes (AND RETURNS) forward slashes; that makes navigating an error output easy.
