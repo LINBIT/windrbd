@@ -60,8 +60,8 @@ ifeq ($(shell uname -o),Cygwin)
     %.obj: %.c
 	rm -f "$(call fPDB,$<)"
 	$(VC) $(WIN_CFLAGS) "$<" /c /Fo:"$@" /Fd:"$(call fPDB,$<)"
-	# /Fi:"$(patsubst %.c,%.E,$<)" ...  cl : Command line warning D9007 : '/Fi:' requires '/P'; option ignored
-	echo "-- done --"
+# /Fi:"$(patsubst %.c,%.E,$<)" ...  cl : Command line warning D9007 : '/Fi:' requires '/P'; option ignored
+	echo "-- $@ done --"
 
     wdrbd_on_windows.E: wdrbd_on_windows.c
 	$(VC) $(WIN_CFLAGS) "$<" /P /Fo:"$@" /Fi:"$@"
