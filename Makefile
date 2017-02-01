@@ -4,29 +4,46 @@ EWDK_PATH := ../
 
 EWDK_INC := "$(EWDK_PATH)/ewdk/Program Files/Windows Kits/10/Include"
 
-CONV_SRC := $(PWD)/drbd/
-CONV_DEST := $(PWD)/converted-sources/
+CONV_SRC := drbd/
+CONV_DEST := converted-sources/
+CONV_SCRIPTS := conversion-scripts/
 OV_INC := $(CONV_DEST)/overrides/
-CONV_SCRIPTS := $(PWD)/conversion-scripts/
 
-SOURCE_FILES := $(shell cd $(CONV_SRC) && find . -iname "*.[ch]" | grep -v drbd/drbd-kernel-compat )
+ORIG := $(shell find $(CONV_SRC) -name "*.[ch]")
+CONVERTED := $(patsubst $(CONV_SRC)%,$(CONV_DEST)%,$(ORIG))
+SCRIPTS := $(sort $(wildcard $(CONV_SCRIPTS)/*))
 
 export SHELL=bash
 
+# can not regenerate those scritps
+$(SCRIPTS): ;
 
-all: copy change msbuild
+# can not regenerate the originals
+$(ORIG): ;
 
-copy:
-	mkdir -p $(CONV_DEST)/
-	cp -ra $(CONV_SRC)/* $(CONV_DEST)
+$(CONVERTED): $(SCRIPTS) Makefile
+
+define convert
+	set -e ; \
+	mkdir -p `dirname $@`; \
+	tmp=$@.tmp; \
+	cat < $< > $$tmp; \
+	for s in $(SCRIPTS); do \
+		$$s $$tmp ; \
+	done ; \
+	mv -v $$tmp $@
+endef
+
+$(CONV_DEST)% : $(CONV_SRC)%
+	$(call convert)
+
+all: transform msbuild
+
+transform: $(CONVERTED)
 	cd $(CONV_SRC)/drbd && echo 'const char *drbd_buildtag(void){return "WDRBD";}' > drbd_buildtag.c
 	cp -a ./Makefile.win $(CONV_DEST)/drbd/Makefile
 	cp -a ./ms-cl.cmd $(CONV_DEST)/drbd/
 	cp -a data/wdrbd9.vcxproj $(CONV_DEST)/drbd
-
-change:
-	# These scripts must be callable multiple times
-	set -e ; for cmd in $(CONV_SCRIPTS)/* ; do ( cd "$(CONV_DEST)" && if test -x "$$cmd" ; then echo "## $$cmd ##" && "$$cmd" $(SOURCE_FILES) ; fi ) || echo "ERROR $$?" ; done
 	# INCLUDES
 	mkdir -p $(OV_INC)/{linux,asm,sys,net,linux-compat}
 	cp ./wdrbd9/generic_compat_stuff.h $(OV_INC)/
