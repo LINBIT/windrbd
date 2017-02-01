@@ -29,6 +29,7 @@ change:
 	set -e ; for cmd in $(CONV_SCRIPTS)/* ; do ( cd $(CONV_DEST)/drbd && if test -x "$$cmd" ; then echo "## $$cmd ##" && "$$cmd" ./$(SOURCE_FILES) ; fi ) || echo "ERROR $$?" ; done
 	# INCLUDES
 	mkdir -p $(OV_INC)/{linux,asm,sys,linux-compat}
+	cp ./wdrbd9/generic_compat_stuff.h $(OV_INC)/
 	# <linux/...>
 	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
 	cp  ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c,sched.h} $(OV_INC)/linux
