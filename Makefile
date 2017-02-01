@@ -6,6 +6,7 @@ EWDK_INC := "$(EWDK_PATH)/ewdk/Program Files/Windows Kits/10/Include"
 
 CONV_SRC := $(PWD)/drbd/
 CONV_DEST := $(PWD)/converted-sources/
+OV_INC := $(CONV_DEST)/overrides/
 CONV_SCRIPTS := $(PWD)/conversion-scripts/
 
 SOURCE_FILES := *.[ch]
@@ -27,21 +28,19 @@ change:
 	# These scripts must be callable multiple times
 	set -e ; for cmd in $(CONV_SCRIPTS)/* ; do ( cd $(CONV_DEST)/drbd && if test -x "$$cmd" ; then echo "## $$cmd ##" && "$$cmd" ./$(SOURCE_FILES) ; fi ) || echo "ERROR $$?" ; done
 	# INCLUDES
-	mkdir -p $(CONV_DEST)/drbd/{linux,asm,sys}
+	mkdir -p $(OV_INC)/{linux,asm,sys,linux-compat}
 	# <linux/...>
-	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h types.h bitops.h; do ( cd $(CONV_DEST)/drbd && truncate -s0 linux/$$f;); done
-	cp  ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c} $(CONV_DEST)/drbd/linux
-	cp  ./wdrbd9/linux-compat/Kernel.h $(CONV_DEST)/drbd/linux/kernel.h
+	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
+	cp  ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c,sched.h} $(OV_INC)/linux
+	cp  ./wdrbd9/linux-compat/Kernel.h $(OV_INC)/linux/kernel.h
+	cp  ./wdrbd9/linux-compat/Bitops.h $(OV_INC)/linux/bitops.h
+	cp ./wdrbd9/windows/types.h $(OV_INC)/linux/
 	# <asm/...>
-	for f in kmap_types.h types.h unaligned.h byteorder.h; do ( cd $(CONV_DEST)/drbd && truncate -s0 asm/$$f;); done
+	for f in kmap_types.h types.h unaligned.h byteorder.h; do ( cd $(OV_INC) && truncate -s0 asm/$$f;); done
 	# <sys/...>
-	cp  ./wdrbd9/linux-compat/Wait.h $(CONV_DEST)/drbd/sys/wait.h
-	cp  ./wdrbd9/linux-compat/Bitops.h $(CONV_DEST)/drbd/linux/
-	cp  ./wdrbd9/linux-compat/sched.h $(CONV_DEST)/drbd/linux/
+	cp  ./wdrbd9/linux-compat/Wait.h $(OV_INC)/sys/wait.h
 	# things they include as linux-compat/...
-	mkdir -p $(CONV_DEST)/drbd/linux-compat
-	for f in list.h spinlock.h; do cp ./wdrbd9/linux-compat/$$f $(CONV_DEST)/drbd/linux-compat/; done
-	cp -a ./wdrbd9/windows/ $(CONV_DEST)/drbd/linux-compat/
+	for f in list.h spinlock.h; do cp ./wdrbd9/linux-compat/$$f $(OV_INC)/linux-compat/; done
 
 ifeq ($(shell uname -o),Cygwin)
 msbuild:
