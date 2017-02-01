@@ -45,12 +45,13 @@ patch:
 	cd $(CONV_SRC)/drbd && echo 'const char *drbd_buildtag(void){return "WDRBD";}' > drbd_buildtag.c
 	cp -a ./Makefile.win $(CONV_DEST)/drbd/Makefile
 	cp -a ./ms-cl.cmd $(CONV_DEST)/drbd/
-	cp -a data/wdrbd9.vcxproj $(CONV_DEST)/drbd
 	# INCLUDES
 	mkdir -p $(OV_INC)/{linux,asm,sys,net,linux-compat,windows}
 	cp ./wdrbd9/generic_compat_stuff.h $(OV_INC)/
 	cp ./wdrbd9/drbd_windows.h $(OV_INC)/
 	cp ./wdrbd9/windows/wingenl.h $(OV_INC)/
+	# replacing files in <drbd>
+	cp ./windows/drbd_transport_tcp.c $(CONV_DEST)/
 	# <linux/...>
 	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h slab.h string.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
 	cp  ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c,sched.h} $(OV_INC)/linux
