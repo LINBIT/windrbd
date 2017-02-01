@@ -26,9 +26,6 @@
 #ifndef DRBD_H
 #define DRBD_H
 
-#define __BYTE_ORDER __LITTLE_ENDIAN
-#define __LITTLE_ENDIAN_BITFIELD
-
 #ifdef WINNT
 #pragma warning (disable : 4005 4018 4101 4115 4121 4127 4131 4152 4189 4200 4201 4204 4212 4218 4242 4244 4245 4267 4307 4389 4702 4706)
 /* warning disable list
@@ -80,14 +77,6 @@
    generic endianness and the bitfields' endianness, there is no
    architecture as of Linux-2.6.24-rc4 where the bitfields' endianness
    does not match the generic endianness. */
-
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#define __LITTLE_ENDIAN_BITFIELD
-#elif __BYTE_ORDER == __BIG_ENDIAN
-#define __BIG_ENDIAN_BITFIELD
-#else
-# error "sorry, weird endianness on this box"
-#endif
 
 #endif
 
