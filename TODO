@@ -13,8 +13,9 @@
 * receiver wakeup (signals, for ping)
 
 * transport_tcp:
-    -       s_estab->ops->getname(s_estab, (struct sockaddr *)&peer_addr, &peer_addr_len, 2);
-    +       status = GetRemoteAddress(s_estab->sk, (PSOCKADDR)&peer_addr);
+    It can not be derived from the Linux transport_tcp. The WinSock API is very
+    different from the Linux TCP API. Simply take mantech's edition and ripp out
+    all the useless #ifdefs.
 
 * Mantech's submit_bio doesn't run bio_endio() on failure?
 
