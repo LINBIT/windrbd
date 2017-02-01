@@ -11,7 +11,6 @@
 * and the cpu_to_le etc. endianness convert functions.
 */
 
-#include <stdint.h>
 #ifdef _WIN32
 #define inline  __inline
 #include <basetsd.h>
