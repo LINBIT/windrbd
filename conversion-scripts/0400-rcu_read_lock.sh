@@ -6,22 +6,15 @@ echo "
 @@
 identifier func;
 @@
-func (...) {
+func(...) {
 +     KIRQL rcu_flags;
-      ...
+      <+...
 -     rcu_read_lock();
 +     rcu_flags = rcu_read_lock();
       ...
- }
-
-@@
-identifier func;
-@@
-func (...) {
-      ...
 -     rcu_read_unlock();
 +     rcu_read_unlock(rcu_flags);
-      ...
+      ...+>
  }
 " > $FILE
 
