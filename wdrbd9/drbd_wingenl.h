@@ -3,7 +3,9 @@
 #include <wdm.h>
 #include <wsk.h>
 #include "linux-compat/list.h"
+#if 0
 #include "windows/wingenl.h"
+#endif
 #include "drbd_windows.h"
 
 struct sk_buff
@@ -12,7 +14,7 @@ struct sk_buff
     unsigned int tail;
     unsigned int end;
 
-    unsigned char data[0];
+    unsigned char data[1];
 };
 
 static __inline int skb_is_nonlinear(const struct sk_buff *skb)

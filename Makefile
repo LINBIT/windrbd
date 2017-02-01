@@ -59,6 +59,7 @@ patch:
 	cp ./wdrbd9/linux-compat/Bitops.h $(OV_INC)/linux/bitops.h
 	cp ./wdrbd9/windows/types.h $(OV_INC)/linux/
 	cp ./wdrbd9/linux-compat/list.h $(OV_INC)/linux/
+	cp ./wdrbd9/drbd_wingenl.h $(OV_INC)/
 	# <asm/...>
 	for f in kmap_types.h types.h unaligned.h byteorder.h; do ( cd $(OV_INC) && truncate -s0 asm/$$f;); done
 	# <net/...>
