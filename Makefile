@@ -46,24 +46,28 @@ patch:
 	cp -a ./Makefile.win $(CONV_DEST)/drbd/Makefile
 	cp -a ./ms-cl.cmd $(CONV_DEST)/drbd/
 	# INCLUDES
-	mkdir -p $(OV_INC)/{linux,asm,sys,net,linux-compat,windows}
+	mkdir -p $(OV_INC)/{linux,asm,sys,net,linux-compat,windows,crypto}
 	cp ./wdrbd9/generic_compat_stuff.h $(OV_INC)/
 	cp ./wdrbd9/drbd_windows.h $(OV_INC)/
 	cp ./wdrbd9/windows/wingenl.h $(OV_INC)/
 	# replacing files in <drbd>
 	cp ./windows/drbd_transport_tcp.c $(CONV_DEST)/
 	# <linux/...>
-	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h slab.h string.h version.h random.h kref.h wait.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
+	for f in dynamic_debug.h cpumask.h idr.h prefetch.h debugfs.h in.h blkdev.h blkpg.h genhd.h backing-dev.h unistd.h stat.h crc32c.h ratelimit.h mm_inline.h major.h scatterlist.h mutex.h compiler.h memcontrol.h module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h slab.h string.h version.h random.h kref.h wait.h version.h vmalloc.h mm.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
 	cp ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c,sched.h} $(OV_INC)/linux
 	cp ./wdrbd9/linux-compat/Kernel.h $(OV_INC)/linux/kernel.h
 	cp ./wdrbd9/linux-compat/Bitops.h $(OV_INC)/linux/bitops.h
 	cp ./wdrbd9/windows/types.h $(OV_INC)/linux/
 	cp ./wdrbd9/linux-compat/list.h $(OV_INC)/linux/
+	cp ./wdrbd9/linux-compat/rbtree.* $(OV_INC)/linux/
+	cp ./wdrbd9/linux-compat/spinlock.h $(OV_INC)/linux
 	cp ./wdrbd9/drbd_wingenl.h $(OV_INC)/
 	# <asm/...>
 	for f in kmap_types.h types.h unaligned.h byteorder.h; do ( cd $(OV_INC) && truncate -s0 asm/$$f;); done
 	# <net/...>
-	for f in genetlink.h; do ( cd $(OV_INC) && truncate -s0 net/$$f;); done
+	for f in genetlink.h ipv6.h netlink.h sock.h; do ( cd $(OV_INC) && truncate -s0 net/$$f;); done
+	# <crypto/...>
+	for f in hash.h; do ( cd $(OV_INC) && truncate -s0 crypto/$$f;); done
 	# <sys/...>
 	cp ./wdrbd9/linux-compat/Wait.h $(OV_INC)/sys/wait.h
 	# things they include as linux-compat/...
@@ -73,7 +77,7 @@ patch:
 	# standard
 	for f in mvolmsg.h disp.h mvolse.h send_buf.h; do cp ./wdrbd9/$$f $(OV_INC)/; done
 	# additional toplevel
-	truncate -s0 $(OV_INC)/drbd_wrappers.h
+	for f in drbd_wrappers.h stdint.h; do ( cd $(OV_INC) && truncate -s0 $$f;); done
 
 
 ifeq ($(shell uname -o),Cygwin)
