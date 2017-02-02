@@ -52,6 +52,7 @@ patch:
 	cp ./wdrbd9/windows/wingenl.h $(OV_INC)/
 	# replacing files in <drbd>
 	cp ./windows/drbd_transport_tcp.c $(CONV_DEST)/drbd/
+	cp ./windows/drbd_polymorph_printk.h $(CONV_DEST)/drbd/
 	# <linux/...>
 	for f in dynamic_debug.h cpumask.h idr.h prefetch.h debugfs.h in.h blkdev.h blkpg.h genhd.h backing-dev.h unistd.h stat.h crc32c.h ratelimit.h mm_inline.h major.h scatterlist.h mutex.h compiler.h memcontrol.h module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h slab.h string.h version.h random.h kref.h wait.h version.h vmalloc.h mm.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
 	cp ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c,sched.h} $(OV_INC)/linux
