@@ -1,3 +1,5 @@
+# vim: set ft=make ts=8 sw=8 noet :
+
 WIN_CFLAGS += /c /nologo /W4 
 WIN_CFLAGS += /Zi # /Zi gives us a PDB file; without that we'd get debug information in the .obj file instead
 WIN_CFLAGS += /WX # warnings == errors
@@ -64,7 +66,7 @@ ifeq ($(shell uname -o),Cygwin)
 # /Fi:"$(patsubst %.c,%.E,$<)" ...  cl : Command line warning D9007 : '/Fi:' requires '/P'; option ignored
 	echo "-- $@ done --"
 
-    wdrbd_on_windows.E: wdrbd_on_windows.c
-	$(VC) $(WIN_CFLAGS) "$<" /P /Fo:"$@" /Fi:"$@"
+    %.E: %.c
+	$(VC) $(WIN_CFLAGS) "$<" /E > "$@"
 endif
 
