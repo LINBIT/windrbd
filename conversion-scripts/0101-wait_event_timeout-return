@@ -1,4 +1,4 @@
-#!/usr/bin/perl -pi.bak
+#!/bin/bash
 
 # - 	t = wait_event_timeout(device->misc_wait,
 # +    wait_event_timeout(t, device->misc_wait,
@@ -7,4 +7,37 @@
 # +    wait_event_interruptible_timeout(timeout, resource->state_wait,
 
 
-s/^(?<indent>\s*)(?<var>\w+)\s*=\s*(?<func>wait_event(?:_interruptible)?_timeout\()/$+{indent}$+{func}$+{var}, /;
+FILE=$(mktemp)
+
+echo "
+@@
+identifier func;
+expression list E;
+statement S1, S2;
+@@
+func(...) {
++     long remaining_time;
+      <+...
+-     if (wait_event_timeout(E)) S1 else S2
++     wait_event_timeout(remaining_time, E); if (remaining_time) S1 else S2
+      ...+>
+}
+
+@@
+identifier t;
+expression list E;
+@@
+-     t = wait_event_interruptible_timeout(E)
++     wait_event_interruptible_timeout(t, E)
+
+@@
+identifier t;
+expression list E;
+@@
+-     t = wait_event_timeout(E)
++     wait_event_timeout(t, E)
+" > $FILE
+
+spatch --sp-file $FILE --in-place "$@"
+
+rm $FILE

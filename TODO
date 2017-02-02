@@ -19,16 +19,6 @@
 
 * Mantech's submit_bio doesn't run bio_endio() on failure?
 
-* Repair wait_event_timeout. We can't do this now:
-    -       if (wait_event_timeout(resource->state_wait,
-    -                      cluster_wide_reply_ready(resource),
-    -                      twopc_timeout(resource)))
-    +        long t;
-    +        wait_event_timeout(t, resource->state_wait,
-    +            cluster_wide_reply_ready(resource),
-    +            twopc_timeout(resource));
-    +        if (t)
-
 * Timeouts, SND_BUFF etc.?
 	+#define DRBD_SNDBUF_SIZE_MAX  (1024*1024*1024*2)
 	+#define DRBD_SNDBUF_SIZE_DEF  (1024*1024*20)
