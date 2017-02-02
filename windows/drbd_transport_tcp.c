@@ -399,6 +399,7 @@ static bool dtt_path_cmp_addr(struct dtt_path *path)
 
 static int dtt_try_connect(struct dtt_path *path, struct socket **ret_socket)
 {
+	KIRQL rcu_flags;
 	struct drbd_transport *transport = path->waiter.transport;
 	const char *what;
 	struct socket *socket;
@@ -412,10 +413,10 @@ static int dtt_try_connect(struct dtt_path *path, struct socket **ret_socket)
 	char sbuf[128] = {0,};
 	char dbuf[128] = {0,};
 	
-	rcu_read_lock();
+	rcu_flags = rcu_read_lock();
 	nc = rcu_dereference(transport->net_conf);
 	if (!nc) {
-		rcu_read_unlock();
+		rcu_read_unlock(rcu_flags);
 		return -EIO;
 	}
 
@@ -433,7 +434,7 @@ static int dtt_try_connect(struct dtt_path *path, struct socket **ret_socket)
 	sndbuf_size = nc->sndbuf_size;
 	rcvbuf_size = nc->rcvbuf_size;
 	connect_int = nc->connect_int;
-	rcu_read_unlock();
+	rcu_read_unlock(rcu_flags);
 
 	my_addr = path->path.my_addr;
 	if (my_addr.ss_family == AF_INET6)
@@ -675,16 +676,17 @@ static bool dtt_connection_established(struct drbd_transport *transport,
 				       struct socket **socket2,
 				       struct dtt_path **first_path)
 {
+	KIRQL rcu_flags;
 	struct net_conf *nc;
 	int timeout, good = 0;
 
 	if (!*socket1 || !*socket2)
 		return false;
 
-	rcu_read_lock();
+	rcu_flags = rcu_read_lock();
 	nc = rcu_dereference(transport->net_conf);
 	timeout = (nc->sock_check_timeo ? nc->sock_check_timeo : nc->ping_timeo) * HZ / 10;
-	rcu_read_unlock();
+	rcu_read_unlock(rcu_flags);
 	schedule_timeout_interruptible(timeout);
 
 	good += dtt_socket_ok_or_free(socket1);
@@ -724,6 +726,7 @@ static struct dtt_path *dtt_wait_connect_cond(struct drbd_transport *transport)
 static int dtt_wait_for_connect(struct dtt_wait_first *waiter, struct socket **socket,
 				struct dtt_path **ret_path)
 {
+	KIRQL rcu_flags;
 	struct drbd_transport *transport = waiter->transport;
 	struct sockaddr_storage_win my_addr, peer_addr;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -736,14 +739,14 @@ static int dtt_wait_for_connect(struct dtt_wait_first *waiter, struct socket **s
 	struct dtt_listener *listener;
 	struct dtt_path *path = NULL;
 
-	rcu_read_lock();
+	rcu_flags = rcu_read_lock();
 	nc = rcu_dereference(transport->net_conf);
 	if (!nc) {
-		rcu_read_unlock();
+		rcu_read_unlock(rcu_flags);
 		return -EINVAL;
 	}
 	connect_int = nc->connect_int;
-	rcu_read_unlock();
+	rcu_read_unlock(rcu_flags);
 
 	timeo = connect_int * HZ;
 	timeo += (prandom_u32() & 1) ? timeo / 7 : -timeo / 7; /* 28.5% random jitter */
@@ -874,20 +877,21 @@ retry_locked:
 
 static int dtt_receive_first_packet(struct drbd_tcp_transport *tcp_transport, struct socket *socket)
 {
+	KIRQL rcu_flags;
 	struct drbd_transport *transport = &tcp_transport->transport;
 	struct p_header80 *h = tcp_transport->rbuf[DATA_STREAM].base;
 	const unsigned int header_size = sizeof(*h);
 	struct net_conf *nc;
 	int err;
 
-	rcu_read_lock();
+	rcu_flags = rcu_read_lock();
 	nc = rcu_dereference(transport->net_conf);
 	if (!nc) {
-		rcu_read_unlock();
+		rcu_read_unlock(rcu_flags);
 		return -EIO;
 	}
 	socket->sk_linux_attr->sk_rcvtimeo = nc->ping_timeo * 4 * HZ / 10;
-	rcu_read_unlock();
+	rcu_read_unlock(rcu_flags);
 
 	err = dtt_recv_short(socket, h, header_size, 0);
     WDRBD_TRACE_SK("socket(0x%p) err(%d) header_size(%d)\n", socket, err, header_size);
@@ -1035,6 +1039,7 @@ static int dtt_create_listener(struct drbd_transport *transport,
 			       const struct sockaddr *addr,
 			       struct drbd_listener **ret_listener)
 {
+	KIRQL rcu_flags;
 	int err = 0, sndbuf_size, rcvbuf_size; 
 	struct sockaddr_storage_win my_addr;
 	NTSTATUS status;
@@ -1045,15 +1050,15 @@ static int dtt_create_listener(struct drbd_transport *transport,
 	struct net_conf *nc;
 	const char *what;
 
-	rcu_read_lock();
+	rcu_flags = rcu_read_lock();
 	nc = rcu_dereference(transport->net_conf);
 	if (!nc) {
-		rcu_read_unlock();
+		rcu_read_unlock(rcu_flags);
 		return -EINVAL;
 	}
 	sndbuf_size = nc->sndbuf_size;
 	rcvbuf_size = nc->rcvbuf_size;
-	rcu_read_unlock();
+	rcu_read_unlock(rcu_flags);
 
 	my_addr = *(struct sockaddr_storage_win *)addr;
 
@@ -1225,6 +1230,7 @@ extern char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr);
 
 static int dtt_connect(struct drbd_transport *transport)
 {
+	KIRQL rcu_flags;
 	NTSTATUS status;
 	struct drbd_tcp_transport *tcp_transport =
 		container_of(transport, struct drbd_tcp_transport, transport);
@@ -1444,11 +1450,11 @@ randomize:
 	tcp_transport->stream[DATA_STREAM] = dsocket;
 	tcp_transport->stream[CONTROL_STREAM] = csocket;
 
-	rcu_read_lock();
+	rcu_flags = rcu_read_lock();
 	nc = rcu_dereference(transport->net_conf);
 
 	timeout = nc->timeout * HZ / 10;
-	rcu_read_unlock();
+	rcu_read_unlock(rcu_flags);
 
 	dsocket->sk_linux_attr->sk_sndtimeo = timeout;
 	csocket->sk_linux_attr->sk_sndtimeo = timeout;
