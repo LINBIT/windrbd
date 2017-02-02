@@ -30,9 +30,6 @@ typedef char bool;
 /* Yes, that'll be active for all structures...
  * But unless defined otherwise the compiler is free to choose alignment anyway. */
 #define __packed
-#pragma pack (push, 1)
-/* warning C4103: alignment changed after including header, may be due to missing #pragma pack(pop) */
-#pragma warning (disable : 4103)
 
 
 /* For shared/inaddr.h, struct in_addr */
