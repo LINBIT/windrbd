@@ -1,0 +1,21 @@
+#!/usr/bin/perl -pi.bak
+
+sub BEGIN {
+	$/ = ';';
+	$counter=0;
+}
+
+# - b = kzalloc(sizeof(struct drbd_bitmap), GFP_KERNEL);
+# + b = kzalloc(sizeof(struct drbd_bitmap), GFP_KERNEL, '11DW');
+
+
+s{ (?<call> \b kzalloc\( )
+	(?<arg1> [^,]+  ) ,
+	(?<arg2> [^,)]+ ) \)
+}{
+	my $id = sprintf("'%02XWD'", $counter++);
+	die "TOO BIG" if $counter > 0xff;
+
+	"$+{call}$+{arg1},$+{arg2}, $id)"
+}ex;
+
