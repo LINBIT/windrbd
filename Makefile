@@ -26,11 +26,12 @@ $(ORIG): ;
 $(CONVERTED): $(SCRIPTS) Makefile
 
 define convert
-	set -e ; \
+	@set -e ; \
 	mkdir -p `dirname $@`; \
 	tmp=$@.tmp; \
 	cat < $< > $$tmp; \
 	for s in $(SCRIPTS); do \
+		printf "   CONVERSION: %-40s < %s" "$$s" "$@" ; \
 		if test -x $$s ; then $$s $$tmp ; fi ;\
 	done ; \
 	mv -v $$tmp $@
