@@ -26,6 +26,8 @@ WIN_CFLAGS += /D __BYTE_ORDER=1 /D __LITTLE_ENDIAN=1 /D __LITTLE_ENDIAN_BITFIELD
 # but there's no setting for that.
 WIN_CFLAGS += /wd4201
 
+# drbd-headers\drbd_protocol.h(466): warning C4200: nonstandard extension used: zero-sized array in struct/union
+WIN_CFLAGS += /wd4200
 
 
 # CL.exe takes (AND RETURNS) forward slashes; that makes navigating an error output easy.
