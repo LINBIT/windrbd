@@ -1,5 +1,8 @@
-#!/bin/bash
+#!/usr/bin/perl -pi.bak
 
-perl -i.bak -pe 's/\s__must_hold\(.*?\)(\s)$/$1/' "$@"
+# remove definition
+s/#define\s__must_hold.*//;
+
+s/\s__must_hold\(.*?\)([\s;]+)$/$1/;
 
 
