@@ -53,7 +53,7 @@ patch:
 	# replacing files in <drbd>
 	cp ./windows/drbd_transport_tcp.c $(CONV_DEST)/
 	# <linux/...>
-	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h slab.h string.h version.h random.h kref.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
+	for f in module.h uaccess.h fs.h file.h proc_fs.h errno.h socket.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h slab.h string.h version.h random.h kref.h wait.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
 	cp ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c,sched.h} $(OV_INC)/linux
 	cp ./wdrbd9/linux-compat/Kernel.h $(OV_INC)/linux/kernel.h
 	cp ./wdrbd9/linux-compat/Bitops.h $(OV_INC)/linux/bitops.h
@@ -65,7 +65,7 @@ patch:
 	# <net/...>
 	for f in genetlink.h; do ( cd $(OV_INC) && truncate -s0 net/$$f;); done
 	# <sys/...>
-	cp  ./wdrbd9/linux-compat/Wait.h $(OV_INC)/sys/wait.h
+	cp ./wdrbd9/linux-compat/Wait.h $(OV_INC)/sys/wait.h
 	# things they include as linux-compat/...
 	for f in list.h spinlock.h hweight.h drbd_endian.h; do cp ./wdrbd9/linux-compat/$$f $(OV_INC)/linux-compat/; done
 	# <windows/>
