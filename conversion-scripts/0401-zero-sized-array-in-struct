@@ -1,24 +1,8 @@
 #!/bin/bash
 
-FILE=$(mktemp)
 
-echo "
-
-@@
-identifier id, member;
-type T;
-@@
-struct id {
-		...
--       T member[0];
-+       T member[1];
-}
-
-" > $FILE
-
-spatch --sp-file $FILE --in-place "$@"
-
-rm $FILE
+# We can't change the [0] in drbd_protocol.h because that would change packet size calculation.
+# Turned the compiler warning off.
 
 
 # drbd-headers\linux/drbd_genl.h(90): warning C4200: nonstandard extension used: zero-sized array in struct/union^M
