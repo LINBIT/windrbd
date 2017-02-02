@@ -3,7 +3,7 @@
 
 our %types;
 sub BEGIN {
-%types = qw(    
+%types = qw(
                 e                    lc_element
                 device               drbd_device
                 r                    drbd_request
@@ -23,8 +23,8 @@ sub BEGIN {
 s{
 	( \s idr_for_each_entry \( )
 	( [^,]+ ) , \s*
-	(\w+),
-	(\w+) 
+	(\w+), \s*
+	(\w+)
 	\)
 }{
 	my $t = $types{$3};
@@ -33,8 +33,8 @@ s{
 
 
 s{
-	( \s (?: list_for_each_entry ( _continue | _safe | _reverse | _rcu )* 
-		| list_next_entry ) 
+	( \s (?: list_for_each_entry ( _continue | _safe | _reverse | _rcu )*
+		| list_next_entry )
 		\( )
 	((\w+),)
 }{
