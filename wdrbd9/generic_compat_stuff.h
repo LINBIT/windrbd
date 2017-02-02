@@ -35,4 +35,10 @@ typedef char bool;
 #pragma warning (disable : 4103)
 
 
+/* For shared/inaddr.h, struct in_addr */
+#define FAR
+
+
+#define BUILD_BUG_ON(expr)
+
 #endif

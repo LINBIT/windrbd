@@ -76,7 +76,7 @@ patch:
 	# <windows/>
 	for f in types.h ioctl.h drbd.h; do cp ./wdrbd9/windows/$$f $(OV_INC)/windows/; done
 	# standard
-	for f in mvolmsg.h disp.h mvolse.h send_buf.h; do cp ./wdrbd9/$$f $(OV_INC)/; done
+	for f in mvolmsg.h disp.h mvolse.h send_buf.h wsk2.h; do cp ./wdrbd9/$$f $(OV_INC)/; done
 	# additional toplevel
 	for f in drbd_wrappers.h stdint.h; do ( cd $(OV_INC) && truncate -s0 $$f;); done
 
