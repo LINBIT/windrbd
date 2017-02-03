@@ -11,5 +11,5 @@ sub BEGIN
 }
 
 while (<>) {
-	print "#pragma pack(push, 1)\n" . $_ . "\n#pragma pop()\n";
+	print "#pragma pack(push, 1)\n" . $_ . "\n#pragma pack(pop)\n";
 }
