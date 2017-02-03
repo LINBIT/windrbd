@@ -19,3 +19,14 @@ s{ (?<call> \b kzalloc\( )
 	"$+{call}$+{arg1},$+{arg2}, $id)"
 }ex;
 
+s{ (?<call> \b kcalloc\( )
+	(?<arg1> [^,]+  ) ,
+	(?<arg2> [^,]+  ) ,
+	(?<arg3> [^,)]+ ) \)
+}{
+	my $id = sprintf("'%02XWD'", $counter++);
+	die "TOO BIG" if $counter > 0xff;
+
+	"$+{call}$+{arg1},$+{arg2},$+{arg3}, $id)"
+}ex;
+
