@@ -95,7 +95,6 @@ struct ratelimit_state {
 	int             missed;
 	ULONG_PTR	    begin;
 };
-#endif
 
 extern struct ratelimit_state drbd_ratelimit_state;
 
