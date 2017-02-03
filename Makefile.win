@@ -49,6 +49,8 @@ WIN_CFLAGS += -D _WIN64=1
 WIN_CFLAGS += -D COMPAT_HAVE_BOOL_TYPE=1 # for "typedef bool" in drbd/linux/lru_cache.h
 # WIN_CFLAGS += -D _AMD64_=1
 
+WIN_CFLAGS += /D CONFIG_KREF_DEBUG=1
+
 VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl.cmd
 # /a      for debugging output
 
