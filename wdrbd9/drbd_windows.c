@@ -486,9 +486,9 @@ void __free_page(struct page *page)
 	kfree(page); 
 }
 
-void * kmem_cache_alloc(struct kmem_cache *cache, int flag, ULONG Tag)
+void * kmem_cache_alloc(struct kmem_cache *cache, int flag)
 {
-	return kzalloc(cache->size, flag, Tag); 
+	return ExAllocateFromNPagedLookasideList(cache)
 }
 
 void kmem_cache_free(struct kmem_cache *cache, void * x)

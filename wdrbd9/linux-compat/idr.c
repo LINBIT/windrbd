@@ -119,7 +119,7 @@ int idr_pre_get(struct idr *idp, gfp_t gfp_mask)
 	while (idp->id_free_cnt < IDR_FREE_MAX) {
 		struct idr_layer *new = NULL;
 
-		new = kmem_cache_alloc(idr_layer_cache, gfp_mask, 'D4DW');
+		new = kzalloc(idr_layer_cache->size, gfp_mask, 'D4DW');
 		if (new == NULL)
 			return (0);
 		free_layer(idp, new);
