@@ -23,6 +23,7 @@
    along with drbd; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
+#include <drbd_windows.h>
 #include <drbd_transport.h>
 #include "windows/drbd.h"
 #include <linux/drbd_genl_api.h>
@@ -30,7 +31,7 @@
 #include "drbd_wrappers.h"
 #include <wsk2.h>
 #include <linux-compat\drbd_endian.h>
-#include <drbd_int.h>
+// #include <drbd_int.h> A transport layer must not use internals
 #include <linux/drbd_limits.h>
 
 struct buffer {

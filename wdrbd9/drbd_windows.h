@@ -30,6 +30,10 @@
 
 #include "disp.h"
 
+struct drbd_transport;
+enum drbd_stream;
+enum update_sync_bits_mode;
+
 #pragma warning (disable : 4100 4146 4221)
 //#define DRBD_TRACE				    // trace replication flow(basic)
 //#define DRBD_TRACE1				    // trace replication flow(detail)
