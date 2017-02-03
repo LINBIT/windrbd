@@ -6,7 +6,7 @@ EWDK_INC := "$(EWDK_PATH)/ewdk/Program Files/Windows Kits/10/Include"
 
 CONV_SRC := drbd/
 CONV_DEST := converted-sources/
-CONV_SCRIPTS := conversion-scripts/
+CONV_SCRIPTS := transformation-scripts/
 OV_INC := $(CONV_DEST)/overrides/
 
 ORIG := $(shell find $(CONV_SRC) -name "*.[ch]" | grep  -v drbd/drbd-kernel-compat)
