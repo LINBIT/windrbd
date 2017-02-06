@@ -38,7 +38,6 @@ enum update_sync_bits_mode;
 //#define DRBD_TRACE				    // trace replication flow(basic)
 //#define DRBD_TRACE1				    // trace replication flow(detail)
 
-#define _WIN32_SEND_BUFFING				// Use Send Buffering
 //#define _WSK_IRP_REUSE				// WSK IRP reuse. // DW-1078 disable reuse Irp 
 #define _WSK_SOCKETCONNECT
 #define _WIN32_EVENTLOG			        // Windows Eventlog porting point
@@ -500,26 +499,16 @@ struct sock {
 	int sk_priority;
 	int sk_sndtimeo; //intptr_t 
 	int sk_rcvtimeo; //intptr_t
-#ifdef _WIN32_SEND_BUFFING
-	// unused!
-#else
 	int sk_wmem_queued;
-#endif
 	int sk_sndbuf;
 	KSPIN_LOCK sk_callback_lock; 
 };
 
 #include <wsk.h>
-#ifdef _WIN32_SEND_BUFFING
-#include <send_buf.h>
-#endif
 struct socket {
 	struct sock *sk_linux_attr;
 	PWSK_SOCKET sk;
 	char name[32];
-#ifdef _WIN32_SEND_BUFFING
-	struct _buffering_attr buffering_attr;
-#endif
 };
 
 char * get_ip4(char *buf, struct sockaddr_in *sockaddr);
@@ -1300,7 +1289,7 @@ static inline rcu_read_unlock(KIRQL rcu_flags)
 static inline void synchronize_rcu()
 {
 	KIRQL rcu_flags;
-	ExAcquireSpinLockExclusive(&g_rcuLock);
+	rcu_flags = ExAcquireSpinLockExclusive(&g_rcuLock);
 	/* compiler barrier */
 	ExReleaseSpinLockExclusive(&g_rcuLock, rcu_flags);
 	WDRBD_TRACE_RCU("synchronize_rcu : currentIrql(%d), rcu_flags(%d:%x) g_rcuLock(%lu)\n",

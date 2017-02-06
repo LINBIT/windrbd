@@ -80,8 +80,8 @@ patch:
 	# standard
 	for f in mvolmsg.h disp.h mvolse.h send_buf.h wsk2.h; do cp ./wdrbd9/$$f $(OV_INC)/; done
 	# additional toplevel
-	for f in drbd_wrappers.h stdint.h; do ( cd $(OV_INC) && truncate -s0 $$f;); done
-
+	for f in stdint.h; do ( cd $(OV_INC) && truncate -s0 $$f;); done
+	cp ./wdrbd9/drbd_wrappers.h $(OV_INC)
 
 ifeq ($(shell uname -o),Cygwin)
 msbuild:
