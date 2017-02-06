@@ -3222,3 +3222,30 @@ NTSTATUS SaveCurrentValue(PCWSTR valueName, int value)
 
 	return status;
 }
+
+sector_t wdrbd_get_capacity(struct block_device *bdev)
+{
+    if (!bdev) {
+        WDRBD_WARN("Null argument\n");
+        return 0;
+    }
+
+    if (bdev->d_size) {
+        return bdev->d_size >> 9;
+    }
+
+    if (bdev->bd_contains) {    // not real device
+        bdev = bdev->bd_contains;
+        if (bdev->d_size) {
+            return bdev->d_size >> 9;
+        }
+    }
+
+    // Maybe... need to recalculate volume size
+    PVOLUME_EXTENSION pvext = (bdev->bd_disk) ? bdev->bd_disk->pDeviceExtension : NULL;
+    if (!pvext && (KeGetCurrentIrql() < 2)) {
+        bdev->d_size = get_targetdev_volsize(pvext);    // real size
+    }
+
+    return bdev->d_size >> 9;
+}
