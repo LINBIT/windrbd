@@ -21,22 +21,23 @@
 
 #   printf("# md_offset %llu\n", (long long unsigned)cfg->md_offset);
 
-s{ (?<prefix> 
-        (^ \s* | [,(]\s* ) 
+s{ (?<prefix>
+        (^ \s* | [,(]\s* )
         (const \s+)?
+        (volatile \s+)?
     ) # end of prefix
 
     (?<to_remove>
-        (?<u> unsigned \s+)?    long 
+        (?<u> unsigned \s+)?    long
     ) # end of to_remove
 
     (?<rest>
-        \s* 
+        \s*
         # NOT "long"
         (?! long )
         # BUT must be word-characters or a stop sign.
         # else "\s+ (?! long" might match "  long" by "\s+" only taking the first space
-        [\w)]
+        [\w)*]
     )
 }{
     $+{prefix} . ($+{u} ? "U" : "") .  "LONG_PTR" . $+{rest};
