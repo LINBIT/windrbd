@@ -43,6 +43,10 @@ s{ (?<prefix>
     $+{prefix} . ($+{u} ? "U" : "") .  "LONG_PTR" . $+{rest};
 }xge;
 
+# 1UL -> ((ULONG_PTR)1)
+# 1ULL -> ((ULONG_PTR)1)
+s{([0-9]+)ULL?}
+ {((ULONG_PTR)$1)}g;
 
 # test line:
 # :T cp drbd/drbd/drbd_receiver.c converted-sources/drbd/ ; conversion-scripts/0200-types.sh converted-sources/drbd/drbd_receiver.c ; diff -u drbd/drbd/drbd_receiver.c converted-sources/drbd/drbd_receiver.c \| colordiff
