@@ -9,7 +9,7 @@ CONV_DEST := converted-sources/
 CONV_SCRIPTS := transformation-scripts/
 OV_INC := $(CONV_DEST)/overrides/
 
-ORIG := $(shell find $(CONV_SRC) -name "*.[ch]" | grep  -v drbd/drbd-kernel-compat)
+ORIG := $(shell find $(CONV_SRC) -name "*.[ch]" | grep  -v drbd/drbd-kernel-compat | grep -v drbd_transport_tcp.c)
 CONVERTED := $(patsubst $(CONV_SRC)%,$(CONV_DEST)%,$(ORIG))
 SCRIPTS := $(sort $(wildcard $(CONV_SCRIPTS)/*))
 

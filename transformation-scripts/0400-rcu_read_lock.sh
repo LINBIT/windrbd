@@ -18,6 +18,6 @@ func(...) {
  }
 " > $FILE
 
-spatch --sp-file $FILE --in-place "$@"
+spatch --sp-file $FILE --no-show-diff --in-place "$@"
 
 rm $FILE
