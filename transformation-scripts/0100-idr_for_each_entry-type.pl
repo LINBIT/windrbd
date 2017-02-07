@@ -6,6 +6,7 @@ sub BEGIN {
 %types = qw(
                 e                    lc_element
                 device               drbd_device
+                connection           drbd_connection
                 r                    drbd_request
                 req                  drbd_request
                 req2                 drbd_request
