@@ -616,6 +616,8 @@ struct block_device {
 	struct kref kref;
 };
 
+extern sector_t wdrbd_get_capacity(struct block_device *bdev);
+
 typedef struct kmem_cache {
 	int size;
 	char *name;
