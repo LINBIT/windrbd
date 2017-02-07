@@ -31,7 +31,7 @@ define convert
 	tmp=$@.tmp; \
 	cat < $< > $$tmp; \
 	for s in $(SCRIPTS); do \
-		printf "   CONVERSION: %-40s < %s" "$$s" "$@" ; \
+		printf "   CONVERSION: %-40s < %s\n" "$$s" "$@" ; \
 		if test -x $$s ; then $$s $$tmp ; fi ;\
 	done ; \
 	mv -v $$tmp $@
