@@ -1,9 +1,8 @@
 #!/bin/bash
 
 for ARG in "$@"; do
-    if [[ "$ARG" == *drbd_int.h ]]; then
-	DIR=${ARG%drbd_int.h}
-	patch -d$DIR -p2 -s <<EOF
+    if [[ "$ARG" == *drbd_int.h* ]]; then
+	patch $ARG <<EOF
 diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
 --- a/drbd/drbd_int.h
 +++ b/drbd/drbd_int.h
