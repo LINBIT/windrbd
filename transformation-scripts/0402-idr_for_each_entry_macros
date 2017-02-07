@@ -1,0 +1,35 @@
+#!/bin/bash
+
+for ARG in "$@"; do
+    if [[ "$ARG" == *drbd_int.h* ]]; then
+	patch $ARG <<'EOF'
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -2762,17 +2762,17 @@ struct bm_extent {
+  * @id:      id entry's key
+  */
+ #ifndef idr_for_each_entry
+-#define idr_for_each_entry(idp, entry, id)				\
+-	for (id = 0, entry = (typeof(entry))idr_get_next((idp), &(id)); \
++#define idr_for_each_entry(type, idp, entry, id)			\
++	for (id = 0, entry = (type)idr_get_next((idp), &(id)); 		\
+ 	     entry != NULL;						\
+-	     ++id, entry = (typeof(entry))idr_get_next((idp), &(id)))
++	     ++id, entry = (type)idr_get_next((idp), &(id)))
+ #endif
+ 
+ #ifndef idr_for_each_entry_continue
+-#define idr_for_each_entry_continue(idp, entry, id)			\
+-	for (entry = (typeof(entry))idr_get_next((idp), &(id));		\
++#define idr_for_each_entry_continue(type, idp, entry, id)		\
++	for (entry = (type)idr_get_next((idp), &(id));			\
+ 	     entry;							\
+-	     ++id, entry = (typeof(entry))idr_get_next((idp), &(id)))
++	     ++id, entry = (type)idr_get_next((idp), &(id)))
+ #endif
+ 
+ static inline struct drbd_connection *first_connection(struct drbd_resource *resource)
+EOF
+    fi
+done
