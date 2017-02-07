@@ -11,6 +11,7 @@
 
 #define module_param(...)
 
+#define WARN_ONCE (cond, msg) do {if(!!(cond)) printk(msg)}while(0)
 
 #if 0
 struct kmem_cache {
