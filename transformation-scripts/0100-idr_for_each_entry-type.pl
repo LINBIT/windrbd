@@ -21,7 +21,8 @@ sub BEGIN {
 
 # - idr_for_each_entry(&resource->devices, device, vnr)
 # + idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr)
-s{
+# But only at line start, not after #define.
+s{ ^
 	( \s idr_for_each_entry \( )
 	( [^,]+ ) , \s*
 	(\w+), \s*
@@ -33,7 +34,8 @@ s{
 }xe;
 
 
-s{
+# Only at line start, not after #define.
+s{ ^
 	( \s (?: list_for_each_entry ( _continue | _safe | _reverse | _rcu )*
 		| list_next_entry )
 		\( )
