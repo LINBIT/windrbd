@@ -43,7 +43,7 @@ $(CONV_DEST)% : $(CONV_SRC)%
 transform: $(CONVERTED)
 
 patch:
-	cd $(CONV_SRC)/drbd && echo 'const char *drbd_buildtag(void){return "WDRBD";}' > drbd_buildtag.c
+	echo "const char *drbd_buildtag(void){return \"WDRBD: `git describe --tags --always --dirty`\";}" > $(CONV_DEST)/drbd/drbd_buildtag.c
 	cp -a ./Makefile.win $(CONV_DEST)/drbd/Makefile
 	cp -a ./ms-cl.cmd $(CONV_DEST)/drbd/
 	# INCLUDES
