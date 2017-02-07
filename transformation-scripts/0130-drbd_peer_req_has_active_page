@@ -1,0 +1,24 @@
+#!/bin/bash
+
+for ARG in "$@"; do
+    if [[ "$ARG" == *drbd_int.h ]]; then
+	DIR=${ARG%drbd_int.h}
+	patch -d$DIR -p2 -s <<EOF
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -2061,11 +2061,6 @@ extern sector_t drbd_local_max_size(struct drbd_device *device) __must_hold(loca
+ 
+ static inline int drbd_peer_req_has_active_page(struct drbd_peer_request *peer_req)
+ {
+-	struct page *page = peer_req->page_chain.head;
+-	page_chain_for_each(page) {
+-		if (page_count(page) > 1)
+-			return 1;
+-	}
+ 	return 0;
+ }
+ 
+EOF
+    fi
+done
