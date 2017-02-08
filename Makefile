@@ -42,7 +42,7 @@ patch:
 	cp ./windows/drbd_transport_tcp.c $(TRANS_DEST)/drbd/
 	cp ./windows/drbd_polymorph_printk.h $(TRANS_DEST)/drbd/
 	# <linux/...>
-	for f in ctype.h init.h reboot.h notifier.h workqueue.h kthread.h device.h dynamic_debug.h cpumask.h prefetch.h debugfs.h in.h blkdev.h blkpg.h genhd.h backing-dev.h unistd.h stat.h crc32c.h ratelimit.h mm_inline.h major.h scatterlist.h mutex.h compiler.h memcontrol.h module.h uaccess.h fs.h file.h proc_fs.h errno.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h slab.h string.h version.h random.h kref.h wait.h version.h vmalloc.h mm.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
+	for f in swab.h security.h ctype.h init.h reboot.h notifier.h workqueue.h kthread.h device.h dynamic_debug.h cpumask.h prefetch.h debugfs.h in.h blkdev.h blkpg.h genhd.h backing-dev.h unistd.h stat.h crc32c.h ratelimit.h mm_inline.h major.h scatterlist.h mutex.h compiler.h memcontrol.h module.h uaccess.h fs.h file.h proc_fs.h errno.h pkt_sched.h net.h tcp.h highmem.h netlink.h genetlink.h slab.h string.h version.h random.h kref.h wait.h version.h vmalloc.h mm.h; do ( cd $(OV_INC) && truncate -s0 linux/$$f;); done
 	echo '#include "wsk2.h"' > $(OV_INC)/linux/socket.h
 	cp ./wdrbd9/linux-compat/{jiffies.h,seq_file.h,seq_file.c,sched.h,idr.h} $(OV_INC)/linux
 	cp ./wdrbd9/linux-compat/Kernel.h $(OV_INC)/linux/kernel.h
