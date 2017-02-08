@@ -115,17 +115,23 @@ extern int _DRBD_ratelimit(struct ratelimit_state *rs, const char * func, const 
  *
  * Unlike the assert macro, this macro returns a boolean result.
  */
-static inline static_inline_expect_fn_device(struct drbd_device *device, int expr, const char *expr_string, const char *fn)
+static inline bool static_inline_expect_fn_device(struct drbd_device *device, int expr, const char *expr_string, const char *fn)
 {
 	if (!expr && drbd_ratelimit())
 		drbd_err(device, "ASSERTION %s FAILED in %s\n", expr_string, fn);
-	return expr;
+	return !!expr;
 }
-static inline static_inline_expect_fn_resource(struct drbd_resource *resource, int expr, const char *expr_string, const char *fn)
+static inline bool static_inline_expect_fn_resource(struct drbd_resource *resource, int expr, const char *expr_string, const char *fn)
 {
 	if (!expr && drbd_ratelimit())
 		drbd_err(resource, "ASSERTION %s FAILED in %s\n", expr_string, fn);
-	return expr;
+	return !!expr;
+}
+static inline bool static_inline_expect_fn_connection(struct drbd_connection *connection, int expr, const char *expr_string, const char *fn)
+{
+	if (!expr && drbd_ratelimit())
+		drbd_err(connection, "ASSERTION %s FAILED in %s\n", expr_string, fn);
+	return !!expr;
 }
 #define expect(x, expr) static_inline_expect_fn_##x(x, (expr), #expr, __FUNCTION__)
 
