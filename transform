@@ -39,7 +39,9 @@ for TRANS in $TRANSFORMATIONS; do
 		patch --batch --fuzz 0 --silent $TMP $CACHE_FILE
 	    else
 		printf " GEN COCCI: %-40s %s\n" $TRANS_NAME $TARGET
-		spatch --sp-file $TRANS --in-place $TMP > $CACHE_FILE 2>/dev/null
+		rm -f "$CACHE_FILE"
+		spatch --sp-file $TRANS --in-place $TMP > $CACHE_FILE.tmp 2>/dev/null
+		mv "$CACHE_FILE.tmp" "$CACHE_FILE"
 	    fi
 	;;
 	*)
