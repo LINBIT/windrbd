@@ -8,6 +8,7 @@ TRANS_SRC := drbd/
 TRANS_DEST := converted-sources/
 OV_INC := $(TRANS_DEST)/overrides/
 
+TRANSFORMATIONS := $(sort $(wildcard transform.d/*))
 ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | grep  -v drbd/drbd-kernel-compat | grep -v drbd_transport_tcp.c)
 TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG))
 
@@ -16,28 +17,12 @@ export SHELL=bash
 all: transform patch msbuild
 
 # can not regenerate those scripts
-$(SCRIPTS): ;
+$(TRANSFORMATIONS): ;
 
 # can not regenerate the originals
 $(ORIG): ;
 
-$(TRANSFORMED): $(SCRIPTS) Makefile
-
-define convert
-	@set -e ; \
-	mkdir -p `dirname $@`; \
-	tmp=$@.tmp; \
-	cat < $< > $$tmp; \
-	for s in $(SCRIPTS); do \
-		if test -x $$s ; then \
-			printf "   CONVERSION: %-40s %s\n" "$$s" "$@" ; \
-			$$s $$tmp ; \
-		else \
-			printf "   IGNORED   : %-40s %s\n" "$$s" "$@" ; \
-		fi ;\
-	done ; \
-	mv -v $$tmp $@
-endef
+$(TRANSFORMED): $(TRANSFORMATIONS) Makefile
 
 $(TRANS_DEST)% : $(TRANS_SRC)%
 	./transform $< $@
