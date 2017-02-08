@@ -109,4 +109,19 @@ extern int _DRBD_ratelimit(struct ratelimit_state *rs, const char * func, const 
 		} \
 	} while (0)
 
+
+/**
+ * expect  -  Make an assertion
+ *
+ * Unlike the assert macro, this macro returns a boolean result.
+ */
+static inline static_inline_expect_fn(drbd_device dev, _bool expr, const char const *expr_string)
+{
+	if (!expr && drbd_ratelimit())
+		drbd_err(dev, "ASSERTION %s FAILED in %s\n", expr_string, __func__);
+	return expr;
+}
+#define expect(x, expr) static_inline_expect_fn(x, (expr), #expr)
+
+
 #endif
