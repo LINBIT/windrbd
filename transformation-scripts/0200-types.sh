@@ -21,10 +21,11 @@
 
 #   printf("# md_offset %llu\n", (long long unsigned)cfg->md_offset);
 
+#   volatile const unsigned long *addr = &page_private(page);                                           |drbd_bitmap.c(889): error C2059: syntax error: 'else'^M                                                
+
 s{ (?<prefix>
         (^ \s* | [,(]\s* )
-        (const \s+)?
-        (volatile \s+)?
+        ( const \s+ | volatile \s+ )*
     ) # end of prefix
 
     (?<to_remove>
