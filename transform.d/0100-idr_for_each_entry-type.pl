@@ -23,7 +23,7 @@ sub BEGIN {
 # + idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr)
 # But only at line start, not after #define.
 s{ ^
-	( \s idr_for_each_entry \( )
+	( \s+ idr_for_each_entry \( )
 	( [^,]+ ) , \s*
 	(\w+), \s*
 	(\w+)
