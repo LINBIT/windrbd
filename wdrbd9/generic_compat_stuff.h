@@ -13,6 +13,7 @@
 
 #define module_param(...)
 #define module_param_string(...)
+#define put_page(egal)
 
 #define WARN(condition, format...) do {if(!!(condition)) printk(format);} while(0)
 /* As good as it gets for now, don't know how to implement a true windows *ONCE* */

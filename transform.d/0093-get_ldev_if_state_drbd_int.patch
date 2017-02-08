@@ -1,0 +1,12 @@
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -2478,7 +2478,7 @@ static inline bool is_sync_state(struct drbd_peer_device *peer_device,
+  */
+ #define get_ldev_if_state(_device, _min_state)				\
+ 	(_get_ldev_if_state((_device), (_min_state)) ?			\
+-	 ({ __acquire(x); true; }) : false)
++	true : false)
+ #define get_ldev(_device) get_ldev_if_state(_device, D_INCONSISTENT)
+ 
+ static inline void put_ldev(struct drbd_device *device)

@@ -1,0 +1,13 @@
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -217,6 +217,9 @@ enum drbd_thread_state {
+ };
+ 
+ struct drbd_thread {
++	struct task_struct *nt;
++	KEVENT start_event;
++	KEVENT wait_event;
+ 	spinlock_t t_lock;
+ 	struct task_struct *task;
+ 	struct completion stop;

@@ -1,0 +1,46 @@
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -609,22 +609,30 @@ int drbd_thread_start(struct drbd_thread *thi)
+ 		spin_unlock_irqrestore(&thi->t_lock, flags);
+ 		flush_signals(current); /* otherw. may get -ERESTARTNOINTR */
+ 
+-		nt = kthread_create(drbd_thread_setup, (void *) thi,
+-				    "drbd_%c_%s", thi->name[0], resource->name);
+-
+-		if (IS_ERR(nt)) {
+-			if (connection)
+-				drbd_err(connection, "Couldn't start thread\n");
+-			else
+-				drbd_err(resource, "Couldn't start thread\n");
++	thi->nt = NULL;
++        {
++            HANDLE		hThread = NULL;
++            NTSTATUS	Status = STATUS_UNSUCCESSFUL;
++
++            KeInitializeEvent(&thi->start_event, SynchronizationEvent, FALSE);
++            KeInitializeEvent(&thi->wait_event, SynchronizationEvent, FALSE);
++            Status = PsCreateSystemThread(&hThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, drbd_thread_setup, (void *) thi);
++            if (!NT_SUCCESS(Status)) {
++                return false;
++            }
++            ZwClose(hThread);
++        }
+ 
+-			return false;
+-		}
++        KeWaitForSingleObject(&thi->start_event, Executive, KernelMode, FALSE, NULL);
++        if (!thi->nt)
++        {
++            return false;
++        }
+ 		spin_lock_irqsave(&thi->t_lock, flags);
+-		thi->task = nt;
++	thi->task = thi->nt;
+ 		thi->t_state = RUNNING;
+ 		spin_unlock_irqrestore(&thi->t_lock, flags);
+-		wake_up_process(nt);
++	wake_up_process(thi);
+ 		break;
+ 	case EXITING:
+ 		thi->t_state = RESTARTING;
