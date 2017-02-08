@@ -24,3 +24,10 @@ expression list E;
 @@
 -     t = wait_event_timeout(E)
 +     wait_event_timeout(t, E)
+
+@@
+identifier t;
+expression list E;
+@@
+-     t = wait_event_interruptible(E)
++     wait_event_interruptible(t, E)
