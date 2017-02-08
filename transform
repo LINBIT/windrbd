@@ -1,0 +1,53 @@
+#!/bin/bash
+
+UPSTREAM=$1
+shift
+TARGET=$1
+
+set -e
+COCCI_CACHE_DIR=transform.d/cocci-cache
+TRANSFORMATIONS=transform.d/*
+DIR=${TARGET%/*}
+TMP=$TARGET.tmp
+
+mkdir -p $DIR
+cp $UPSTREAM $TMP
+
+for TRANS in $TRANSFORMATIONS; do
+    test -d $TRANS && continue
+    EXT=${TRANS##*.}
+    TRANS_NAME=${TRANS##*/}
+    TARGET_FILE=${TARGET##*/}
+    case $EXT in
+	patch)
+	    read -r FIRST_LINE_OF_PATCH < $TRANS
+	    PATCH_TARGET=${FIRST_LINE_OF_PATCH##*/}
+	    if [ $PATCH_TARGET = $TARGET_FILE ]; then
+		printf " PATCH    : %-40s %s\n" $TRANS_NAME $TARGET
+		patch --batch --silent $TMP $TRANS
+	    fi
+	;;
+	cocci)
+	    mkdir -p $COCCI_CACHE_DIR/$TARGET_FILE
+	    CACHE_FILE=$COCCI_CACHE_DIR/$TARGET_FILE/$TRANS_NAME
+	    CACHE_FILE=${CACHE_FILE/.cocci/.patch}
+	    if test -e $CACHE_FILE && \
+	       test $CACHE_FILE -nt $TRANS && \
+	       patch --batch --dry-run --fuzz 0 --silent $TMP $CACHE_FILE 2> /dev/null > /dev/null; then
+		printf " CACHED CO: %-40s %s\n" $TRANS_NAME $TARGET
+		patch --batch --fuzz 0 --silent $TMP $CACHE_FILE
+	    else
+		printf " GEN COCCI: %-40s %s\n" $TRANS_NAME $TARGET
+		spatch --sp-file $TRANS --in-place $TMP > $CACHE_FILE 2>/dev/null
+	    fi
+	;;
+	*)
+	    if test -x $TRANS; then
+		printf " TRANSFORM: %-40s %s\n" $TRANS_NAME $TARGET
+		$TRANS $TMP
+	    else
+		printf " IGNORED  : %-40s %s\n" $TRANS_NAME $TARGET
+	    fi
+    esac
+done
+mv -v $TMP $TARGET

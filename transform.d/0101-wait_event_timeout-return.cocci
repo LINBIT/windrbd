@@ -1,15 +1,3 @@
-#!/bin/bash
-
-# - 	t = wait_event_timeout(device->misc_wait,
-# +    wait_event_timeout(t, device->misc_wait,
-
-# -    timeout = wait_event_interruptible_timeout(resource->state_wait,
-# +    wait_event_interruptible_timeout(timeout, resource->state_wait,
-
-
-FILE=$(mktemp)
-
-echo "
 @@
 identifier func;
 expression list E;
@@ -36,8 +24,3 @@ expression list E;
 @@
 -     t = wait_event_timeout(E)
 +     wait_event_timeout(t, E)
-" > $FILE
-
-spatch --sp-file $FILE  --no-show-diff --in-place "$@"
-
-rm $FILE

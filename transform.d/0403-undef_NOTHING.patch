@@ -1,8 +1,3 @@
-#!/bin/bash
-
-for ARG in "$@"; do
-    if [[ "$ARG" == *drbd_req.h* ]]; then
-	patch $ARG <<'EOF'
 diff --git a/drbd/drbd_req.h b/drbd/drbd_req.h
 --- a/drbd/drbd_req.h
 +++ b/drbd/drbd_req.h
@@ -17,6 +12,3 @@ diff --git a/drbd/drbd_req.h b/drbd/drbd_req.h
  enum drbd_req_event {
  	CREATED,
  	TO_BE_SENT,
-EOF
-    fi
-done

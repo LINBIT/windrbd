@@ -1,8 +1,3 @@
-#!/bin/bash
-
-FILE=$(mktemp)
-
-echo "
 @@
 identifier func;
 @@
@@ -16,8 +11,3 @@ func(...) {
 +     rcu_read_unlock(rcu_flags);
       ...+>
  }
-" > $FILE
-
-spatch --sp-file $FILE --no-show-diff --in-place "$@"
-
-rm $FILE
