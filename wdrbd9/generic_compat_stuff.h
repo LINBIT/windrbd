@@ -15,6 +15,7 @@
 #define module_param_string(...)
 #define put_page(egal)
 
+#define uninitialized_var(x) x = x
 #define WARN(condition, format...) do {if(!!(condition)) printk(format);} while(0)
 /* As good as it gets for now, don't know how to implement a true windows *ONCE* */
 #define WARN_ONCE(condition, format...) WARN(condition, format)
