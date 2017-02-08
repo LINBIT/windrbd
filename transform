@@ -33,6 +33,7 @@ for TRANS in $TRANSFORMATIONS; do
 	    CACHE_FILE=${CACHE_FILE/.cocci/.patch}
 	    if test -e $CACHE_FILE && \
 	       test $CACHE_FILE -nt $TRANS && \
+	       test $CACHE_FILE -nt $UPSTREAM && \
 	       patch --batch --dry-run --fuzz 0 --silent $TMP $CACHE_FILE 2> /dev/null > /dev/null; then
 		printf " CACHED CO: %-40s %s\n" $TRANS_NAME $TARGET
 		patch --batch --fuzz 0 --silent $TMP $CACHE_FILE

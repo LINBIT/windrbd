@@ -1,0 +1,12 @@
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -745,7 +745,7 @@ bool conn_try_outdate_peer(struct drbd_connection *connection)
+ 	r = drbd_khelper(NULL, connection, "fence-peer");
+ 
+ 	begin_state_change(resource, &irq_flags, CS_VERBOSE);
+-	switch ((r>>8) & 0xff) {
++	switch (r & 0xff) {
+ 	case P_INCONSISTENT: /* peer is inconsistent */
+ 		ex_to_string = "peer is inconsistent or worse";
+ 		__change_peer_disk_states(connection, D_INCONSISTENT);
