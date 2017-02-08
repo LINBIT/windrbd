@@ -1,0 +1,20 @@
+#!/bin/bash
+
+for ARG in "$@"; do
+    if [[ "$ARG" == *drbd_int.h* ]]; then
+	patch $ARG <<'EOF'
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index a9afac8..9dee4d2 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -816,6 +816,7 @@ struct drbd_send_buffer {
+ 
+ 
+ struct drbd_resource {
++	KIRQL wrcu_flags;
+ 	char *name;
+ #ifdef CONFIG_DEBUG_FS
+ 	struct dentry *debugfs_res;
+EOF
+    fi
+done
