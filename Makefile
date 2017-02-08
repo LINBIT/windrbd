@@ -52,7 +52,7 @@ patch:
 	cp -a ./ms-cl.cmd $(CONV_DEST)/drbd/
 	# INCLUDES
 	mkdir -p $(OV_INC)/{linux,asm,sys,net,linux-compat,windows,crypto}
-	cp ./wdrbd9/generic_compat_stuff.h $(OV_INC)/
+	./transformation-scripts/0111-macro-varargs < wdrbd9/generic_compat_stuff.h > $(OV_INC)/generic_compat_stuff.h
 	cp ./wdrbd9/drbd_windows.h $(OV_INC)/
 	cp ./wdrbd9/windows/wingenl.h $(OV_INC)/
 	# replacing files in <drbd>
