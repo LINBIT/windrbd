@@ -1,0 +1,22 @@
+diff --git i/drbd/drbd_int.h w/drbd/drbd_int.h
+index a9afac8c..982fcc1c 100644
+--- i/drbd/drbd_int.h
++++ w/drbd/drbd_int.h
+@@ -54,7 +54,6 @@
+ #include "drbd_protocol.h"
+ #include "drbd_kref_debug.h"
+ #include "drbd_transport.h"
+-#include "drbd_polymorph_printk.h"
+
+ #ifdef __CHECKER__
+ # define __protected_by(x)       __attribute__((require_context(x,1,999,"rdwr")))
+@@ -1273,6 +1272,8 @@ struct drbd_device {
+  u64 read_nodes; /* used for balancing read requests among peers */
+ };
+
++#include "drbd_polymorph_printk.h"
++
+ struct drbd_bm_aio_ctx {
+  struct drbd_device *device;
+  struct list_head list; /* on device->pending_bitmap_io */
+
