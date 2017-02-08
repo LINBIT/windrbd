@@ -25,7 +25,7 @@
 
 s{ (?<prefix>
         (^ \s* | [,(]\s* )
-        ( const \s+ | volatile \s+ )*
+        ( extern \s+ | const \s+ | volatile \s+ )*
     ) # end of prefix
 
     (?<to_remove>
