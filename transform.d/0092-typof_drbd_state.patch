@@ -1,0 +1,13 @@
+diff --git a/drbd/drbd_state.c b/drbd/drbd_state.c
+index 6caf8df..0c6c65c 100644
+--- a/drbd/drbd_state.c
++++ b/drbd/drbd_state.c
+@@ -2189,7 +2189,7 @@ static void notify_state_change(struct drbd_state_change *state_change)
+ 	})
+ #define REMEMBER_STATE_CHANGE(func, arg, type) \
+ 	({ FINAL_STATE_CHANGE(type | NOTIFY_CONTINUES); \
+-	   last_func = (typeof(last_func))func; \
++	   last_func = func; \
+ 	   last_arg = arg; \
+ 	 })
+ 
