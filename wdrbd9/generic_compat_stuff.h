@@ -8,8 +8,11 @@
 #define MODULE_VERSION(egal)
 #define MODULE_LICENSE(egal)
 #define MODULE_PARM_DESC(egal, ...)
+#define MODULE_ALIAS_BLOCKDEV_MAJOR(egal)
+#define MODULE_PARM_DESC(egal, ...)
 
 #define module_param(...)
+#define module_param_string(...)
 
 #define WARN(condition, format...) do {if(!!(condition)) printk(format);} while(0)
 /* As good as it gets for now, don't know how to implement a true windows *ONCE* */

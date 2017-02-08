@@ -1,0 +1,12 @@
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -1736,7 +1736,7 @@ extern mempool_t *drbd_md_io_page_pool;
+  * when we need it for housekeeping purposes */
+ extern struct bio_set *drbd_md_io_bio_set;
+ /* to allocate from that set */
+-extern struct bio *bio_alloc_drbd(gfp_t gfp_mask);
++extern struct bio *bio_alloc_drbd(gfp_t gfp_mask, ULONG tag);
+ 
+ extern int conn_lowest_minor(struct drbd_connection *connection);
+ extern struct drbd_peer_device *create_peer_device(struct drbd_device *, struct drbd_connection *);

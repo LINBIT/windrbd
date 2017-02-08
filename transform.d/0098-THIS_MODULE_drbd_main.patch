@@ -1,0 +1,18 @@
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -154,7 +154,6 @@ int          drbd_pp_vacant;
+ wait_queue_head_t drbd_pp_wait;
+ 
+ static const struct block_device_operations drbd_ops = {
+-	.owner =   THIS_MODULE,
+ 	.open =    drbd_open,
+ 	.release = drbd_release,
+ };
+@@ -2823,7 +2822,6 @@ void drbd_destroy_resource(struct kref *kref)
+ 	kfree(resource->name);
+ 	kref_debug_destroy(&resource->kref_debug);
+ 	kfree(resource);
+-	module_put(THIS_MODULE);
+ }
+ 

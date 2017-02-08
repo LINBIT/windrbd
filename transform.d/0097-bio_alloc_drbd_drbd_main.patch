@@ -1,0 +1,26 @@
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -166,20 +166,9 @@ static void bio_destructor_drbd(struct bio *bio)
+ }
+ #endif
+ 
+-struct bio *bio_alloc_drbd(gfp_t gfp_mask)
++struct bio *bio_alloc_drbd(gfp_t gfp_mask, ULONG tag)
+ {
+-	struct bio *bio;
+-
+-	if (!drbd_md_io_bio_set)
+-		return bio_alloc(gfp_mask, 1);
+-
+-	bio = bio_alloc_bioset(gfp_mask, 1, drbd_md_io_bio_set);
+-	if (!bio)
+-		return NULL;
+-#ifdef COMPAT_HAVE_BIO_FREE
+-	bio->bi_destructor = bio_destructor_drbd;
+-#endif
+-	return bio;
++	return bio_alloc(gfp_mask, 1, tag);
+ }
+ 
+ #ifdef __CHECKER__
