@@ -36,6 +36,12 @@
         /*rcu_read_unlock(); _WIN32 // DW- */ \
     } while(0)
 
+#define __drbd_printk_twopc_parent(level, twopc_parent, fmt, ...) \
+    do {	                    \
+        printk(level fmt, __VA_ARGS__); \
+    } while(0)
+
+
 void drbd_printk_with_wrong_object_type(void);
 
 #define __drbd_printk_if_same_type(obj, type, func, level, fmt, ...) 
