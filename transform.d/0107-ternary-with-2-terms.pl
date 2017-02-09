@@ -10,7 +10,7 @@
 
 # whitespace or parenthesis as separator; not really C conform, but works for our current code.
 
-s{ (?<part1> [\s(] (?<cond> \S+ ) \s* ) \?\: }
+s{ (?<part1> [\s(]+ (?<cond> \S+ ) \s* ) \?\: }
  {
      "$+{part1}? $+{cond} : ";
  }xeg;
