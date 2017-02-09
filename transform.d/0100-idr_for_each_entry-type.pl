@@ -15,6 +15,7 @@ sub BEGIN {
                 path                 drbd_path
                 peer_device          drbd_peer_device
                 peer_req             drbd_peer_request
+                pr                   drbd_peer_request
                 q                    queued_twopc
                 twopc_parent         drbd_connection
                 );
