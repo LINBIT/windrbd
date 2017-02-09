@@ -115,6 +115,12 @@ extern int _DRBD_ratelimit(struct ratelimit_state *rs, const char * func, const 
  *
  * Unlike the assert macro, this macro returns a boolean result.
  */
+static inline bool static_inline_expect_fn_peer_device(struct drbd_peer_device *peer_device, int expr, const char *expr_string, const char *fn)
+{
+	if (!expr && drbd_ratelimit())
+		drbd_err(peer_device, "ASSERTION %s FAILED in %s\n", expr_string, fn);
+	return !!expr;
+}
 static inline bool static_inline_expect_fn_device(struct drbd_device *device, int expr, const char *expr_string, const char *fn)
 {
 	if (!expr && drbd_ratelimit())
