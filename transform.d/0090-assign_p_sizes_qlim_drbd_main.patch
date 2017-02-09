@@ -1,0 +1,38 @@
+diff -rup a/drbd/drbd_main.c b/drbd/drbd_main.c
+--- a/drbd/drbd_main.c	2017-02-09 13:14:54.486523890 +0100
++++ b/drbd/drbd_main.c	2017-02-09 13:12:27.124895043 +0100
+@@ -1505,7 +1505,7 @@ out:
+ 	return err;
+ }
+ 
+-/* communicated if (agreed_features & DRBD_FF_WSAME) */
++/* communicated if (agreed_features & DRBD_FF_WSAME) 
+ static void assign_p_sizes_qlim(struct drbd_device *device, struct p_sizes *p, struct request_queue *q)
+ {
+ 	if (q) {
+@@ -1532,7 +1532,7 @@ static void assign_p_sizes_qlim(struct d
+ 		p->qlim->discard_zeroes_data = 0;
+ 		p->qlim->write_same_capable = 0;
+ 	}
+-}
++} */
+ 
+ int drbd_send_sizes(struct drbd_peer_device *peer_device,
+ 		    uint64_t u_size_diskless, enum dds_flags flags)
+@@ -1563,14 +1563,14 @@ int drbd_send_sizes(struct drbd_peer_dev
+ 		q_order_type = drbd_queue_order_type(device);
+ 		max_bio_size = queue_max_hw_sectors(q) << 9;
+ 		max_bio_size = min(max_bio_size, DRBD_MAX_BIO_SIZE);
+-		assign_p_sizes_qlim(device, p, q);
++		// assign_p_sizes_qlim(device, p, q); // not on WIN32
+ 		put_ldev(device);
+ 	} else {
+ 		d_size = 0;
+ 		u_size = u_size_diskless;
+ 		q_order_type = QUEUE_ORDERED_NONE;
+ 		max_bio_size = DRBD_MAX_BIO_SIZE; /* ... multiple BIOs per peer_request */
+-		assign_p_sizes_qlim(device, p, NULL);
++		// assign_p_sizes_qlim(device, p, NULL); // not on WIN32
+ 	}
+ 
+ 	if (peer_device->connection->agreed_pro_version <= 94)

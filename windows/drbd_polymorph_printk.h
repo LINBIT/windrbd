@@ -125,27 +125,27 @@ static inline bool static_inline_expect_fn_peer_device(struct drbd_peer_device *
 {
 	if (!expr && drbd_ratelimit())
 		drbd_err(peer_device, "ASSERTION %s FAILED in %s\n", expr_string, fn);
-	return !!expr;
+	return expr;
 }
 static inline bool static_inline_expect_fn_device(struct drbd_device *device, int expr, const char *expr_string, const char *fn)
 {
 	if (!expr && drbd_ratelimit())
 		drbd_err(device, "ASSERTION %s FAILED in %s\n", expr_string, fn);
-	return !!expr;
+	return expr;
 }
 static inline bool static_inline_expect_fn_resource(struct drbd_resource *resource, int expr, const char *expr_string, const char *fn)
 {
 	if (!expr && drbd_ratelimit())
 		drbd_err(resource, "ASSERTION %s FAILED in %s\n", expr_string, fn);
-	return !!expr;
+	return expr;
 }
 static inline bool static_inline_expect_fn_connection(struct drbd_connection *connection, int expr, const char *expr_string, const char *fn)
 {
 	if (!expr && drbd_ratelimit())
 		drbd_err(connection, "ASSERTION %s FAILED in %s\n", expr_string, fn);
-	return !!expr;
+	return expr;
 }
-#define expect(x, expr) static_inline_expect_fn_##x(x, (expr), #expr, __FUNCTION__)
+#define expect(x, expr) static_inline_expect_fn_##x(x, !!(expr), #expr, __FUNCTION__)
 
 
 #endif
