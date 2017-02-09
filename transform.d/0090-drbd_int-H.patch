@@ -1,0 +1,15 @@
+Needed so that the macro can correctly generate the correct printk name.
+
+diff --git i/drbd/drbd_int.h w/drbd/drbd_int.h
+index a9afac8c..fd4f5726 100644
+--- i/drbd/drbd_int.h
++++ w/drbd/drbd_int.h
+@@ -2391,7 +2391,7 @@ static inline void inc_ap_pending(struct drbd_peer_device *peer_device)
+ }
+ 
+ #define dec_ap_pending(peer_device) \
+-	((void)expect((peer_device), __dec_ap_pending(peer_device) >= 0))
++	((void)expect(peer_device, __dec_ap_pending(peer_device) >= 0))
+ static inline int __dec_ap_pending(struct drbd_peer_device *peer_device)
+ {
+ 	int ap_pending_cnt = atomic_dec_return(&peer_device->ap_pending_cnt);

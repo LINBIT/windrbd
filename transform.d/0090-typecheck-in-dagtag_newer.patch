@@ -1,0 +1,21 @@
+diff --git i/drbd/drbd_int.h w/drbd/drbd_int.h
+index a9afac8c..4a853bca 100644
+--- i/drbd/drbd_int.h
++++ w/drbd/drbd_int.h
+@@ -267,14 +267,10 @@ extern u64 directly_connected_nodes(struct drbd_resource *, enum which_state);
+ /* sequence arithmetic for dagtag (data generation tag) sector numbers.
+  * dagtag_newer_eq: true, if a is newer than b */
+ #define dagtag_newer_eq(a,b)      \
+-	(typecheck(u64, a) && \
+-	 typecheck(u64, b) && \
+-	((s64)(a) - (s64)(b) >= 0))
++	((s64)(a) - (s64)(b) >= 0)
+ 
+ #define dagtag_newer(a,b)      \
+-	(typecheck(u64, a) && \
+-	 typecheck(u64, b) && \
+-	((s64)(a) - (s64)(b) > 0))
++	((s64)(a) - (s64)(b) > 0)
+ 
+ struct drbd_request {
+ 	struct drbd_device *device;

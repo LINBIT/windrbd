@@ -665,7 +665,8 @@ struct bio {
 	struct bio*				bi_next;	/* request queue link */
 	struct block_device*	bi_bdev;
 	unsigned long			bi_flags;	/* status, command, etc */
-	unsigned long			bi_rw;		
+	unsigned long			bi_rw;
+	unsigned int            bi_opf;     /* bottom bits req flags, top bits REQ_OP. Use accessors. */
 	unsigned short			bi_vcnt;	/* how many bio_vec's */
 	unsigned short			bi_idx;		/* current index into bvl_vec */
 	unsigned int			bi_size;	/* residual I/O count */

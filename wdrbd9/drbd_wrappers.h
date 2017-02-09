@@ -659,9 +659,13 @@ enum req_op {
         REQ_OP_SECURE_ERASE,    /* request to securely erase sectors */
         REQ_OP_WRITE_SAME,      /* write same block many times */
         REQ_OP_FLUSH,           /* request for cache flush */
+        REQ_RAHEAD,
+        REQ_PREFLUSH,
 };
 
-#define REQ_WRITE REQ_OP_WRITE
+#define REQ_WRITE			REQ_OP_WRITE
+/* https://msdn.microsoft.com/en-us/library/windows/hardware/ff549235(v=vs.85).aspx */
+#define DRBD_REQ_PREFLUSH	REQ_PREFLUSH
 
 
 #define bio_op(bio)                            (op_from_rq_bits((bio)->bi_rw))
