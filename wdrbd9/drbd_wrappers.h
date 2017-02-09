@@ -358,10 +358,12 @@ static inline int
 crypto_hash_digest(struct hash_desc *desc, struct scatterlist *sg,
 		   unsigned int nbytes, u8 *out)
 {
-
+#if 0
+	// TODO reimplement!
 	crypto_hmac(desc->tfm->base, (u8 *)desc->tfm->key,
 		    &desc->tfm->keylen, sg, 1 /* ! */ , out);
 	/* ! this is not generic. Would need to convert nbytes -> nsg */
+#endif
 	return 0;
 }
 
