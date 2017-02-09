@@ -3,6 +3,7 @@
 WIN_CFLAGS += /c /nologo /W4 
 WIN_CFLAGS += /Zi # /Zi gives us a PDB file; without that we'd get debug information in the .obj file instead
 WIN_CFLAGS += /WX # warnings == errors
+WIN_CFLAGS += /Wv:18 # disable hides previous local declaration
 WIN_CFLAGS += /Od # disable optimizations
 WIN_CFLAGS += /Oi # enable intrinsic functions
 WIN_CFLAGS += /Oy- # enable frame pointer omission
