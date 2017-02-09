@@ -8,6 +8,7 @@ sub BEGIN {
                 e                    lc_element
                 device               drbd_device
                 connection           drbd_connection
+                listener             drbd_listener    
                 r                    drbd_request
                 req                  drbd_request
                 req2                 drbd_request
@@ -18,6 +19,8 @@ sub BEGIN {
                 pr                   drbd_peer_request
                 q                    queued_twopc
                 twopc_parent         drbd_connection
+                transport_class      drbd_transport_class
+                tc                   drbd_transport_class
                 );
 };
 
