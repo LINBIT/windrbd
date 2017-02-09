@@ -47,4 +47,16 @@ typedef int cpumask_var_t;
 
 #define BUILD_BUG_ON(expr)
 
+
+/* Undefined if input is zero.
+ * http://lxr.free-electrons.com/source/include/linux/bitops.h#L215 */
+static inline int __ffs64(u64 i)
+{
+	int index, found;
+
+	found = _BitScanForward64(&index, i);
+	return found ? index : 0;
+}
+
+
 #endif
