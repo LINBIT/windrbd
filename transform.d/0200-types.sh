@@ -46,7 +46,7 @@ s{ (?<prefix>
 
 # 1UL -> ((ULONG_PTR)1)
 # 1ULL -> ((ULONG_PTR)1)
-s{([0-9]+)ULL?}
+s{((?:0x)?[0-9]+)ULL?}
  {((ULONG_PTR)$1)}g;
 
 # test line:
