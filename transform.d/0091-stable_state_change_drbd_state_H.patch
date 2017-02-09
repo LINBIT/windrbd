@@ -1,0 +1,23 @@
+diff --git a/drbd/drbd_state.h b/drbd/drbd_state.h
+index 5db9b48..99ae9f4 100644
+--- a/drbd/drbd_state.h
++++ b/drbd/drbd_state.h
+@@ -65,17 +65,7 @@ extern union drbd_state drbd_get_device_state(struct drbd_device *, enum which_s
+ extern union drbd_state drbd_get_peer_device_state(struct drbd_peer_device *, enum which_state);
+ extern union drbd_state drbd_get_connection_state(struct drbd_connection *, enum which_state);
+ 
+-#define stable_state_change(resource, change_state) ({				\
+-		enum drbd_state_rv rv;						\
+-		int err;							\
+-		err = wait_event_interruptible((resource)->state_wait,		\
+-			(rv = (change_state)) != SS_IN_TRANSIENT_STATE);	\
+-		if (err)							\
+-			err = -SS_UNKNOWN_ERROR;				\
+-		else								\
+-			err = rv;						\
+-		err;								\
+-	})
++inline int stable_state_change(struct drbd_resource *resource, enum drbd_state_rv change_state);
+ 
+ extern int nested_twopc_work(struct drbd_work *work, int cancel);
+ extern enum drbd_state_rv nested_twopc_request(struct drbd_resource *, int, enum drbd_packet, struct p_twopc_request *);

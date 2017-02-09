@@ -1,0 +1,21 @@
+diff --git a/drbd/drbd_state.c b/drbd/drbd_state.c
+index 21ae14e..fe81c20 100644
+--- a/drbd/drbd_state.c
++++ b/drbd/drbd_state.c
+@@ -4253,6 +4253,16 @@ enum drbd_state_rv change_repl_state(struct drbd_peer_device *peer_device,
+ 	return change_cluster_wide_state(do_change_repl_state, &repl_context.context);
+ }
+ 
++inline int stable_state_change(struct drbd_resource *resource, enum drbd_state_rv change_state) {
++	int err;
++	err = wait_event_interruptible(resource->state_wait, change_state != SS_IN_TRANSIENT_STATE);
++	if (err)
++		err = -SS_UNKNOWN_ERROR;
++	else
++		err = change_state;
++	return err;								\
++}
++
+ enum drbd_state_rv stable_change_repl_state(struct drbd_peer_device *peer_device,
+ 					    enum drbd_repl_state repl_state,
+ 					    enum chg_state_flags flags)
