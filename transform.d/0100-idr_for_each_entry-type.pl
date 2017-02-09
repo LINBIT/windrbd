@@ -1,4 +1,5 @@
 #!/usr/bin/perl -pi.bak
+# vim: set et :
 
 
 our %types;
@@ -37,7 +38,7 @@ s{ ^
 
 # Only at line start, not after #define.
 s{ ^
-	( \s (?: list_for_each_entry ( _continue | _safe | _reverse | _rcu )*
+	( \s (?: h? list_for_each_entry ( _continue | _safe | _reverse | _rcu )*
 		| list_next_entry )
 		\( )
 	((\w+),)
