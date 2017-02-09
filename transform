@@ -29,7 +29,7 @@ for TRANS in $TRANSFORMATIONS; do
     TARGET_FILE=${TARGET##*/}
     case $EXT in
 	patch)
-	    read -r FIRST_LINE_OF_PATCH < $TRANS
+	    FIRST_LINE_OF_PATCH="$(grep ^diff < $TRANS)"
 	    PATCH_TARGET=${FIRST_LINE_OF_PATCH##*/}
 	    if [ $PATCH_TARGET = $TARGET_FILE ]; then
 		msg " PATCH    : %-40s %s\n" $TRANS_NAME $TARGET
