@@ -1026,7 +1026,7 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 #define __wait_event_timeout(wq, condition, ret)  \
 	do {\
 		int i = 0;\
-		int t = 0;\
+		int tm = 0;\
 		int real_timeout = ret/100; \
 		for (;;) {\
 			i++; \
@@ -1035,7 +1035,7 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 				break;     \
 						}\
 			/*ret = schedule(&wq, ret, __FUNC__, __LINE__);*/\
-			if (++t > real_timeout) \
+			if (++tm > real_timeout) \
 						{\
 				ret = 0;\
 				break;\
