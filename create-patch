@@ -1,0 +1,27 @@
+#!/bin/bash
+
+PATCH=$1
+
+TRANS_DEST=converted-sources/
+
+GENERATED=$(<$TRANS_DEST.generated)
+
+for F in $GENERATED; do
+    UPSTREAM_FILE=${F/$TRANS_DEST/drbd\/}
+    TMP_FILE=${F/$TRANS_DEST/.tmp\/}
+    ./transform $UPSTREAM_FILE $TMP_FILE
+done
+
+echo
+ln -s .tmp a
+ln -s $TRANS_DEST b
+if test "$PATCH"; then
+    LC_ALL=C diff -rup a b | grep -v "Only in" >$PATCH
+    cat $PATCH
+else
+    LC_ALL=C diff -rup a b | grep -v "Only in"
+fi
+rm a
+rm b
+
+rm -rf .tmp

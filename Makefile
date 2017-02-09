@@ -9,7 +9,7 @@ TRANS_DEST := converted-sources/
 OV_INC := $(TRANS_DEST)/overrides/
 
 TRANSFORMATIONS := $(sort $(wildcard transform.d/*))
-ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | grep  -v drbd/drbd-kernel-compat | grep -v drbd_transport_tcp.c)
+ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | grep  -v drbd/drbd-kernel-compat | grep -v drbd_transport_tcp.c | grep -v drbd_polymorph_printk.h | grep -v drbd_buildtag.c)
 TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG))
 
 export SHELL=bash
@@ -25,9 +25,12 @@ $(ORIG): ;
 $(TRANSFORMED): $(TRANSFORMATIONS) Makefile
 
 $(TRANS_DEST)% : $(TRANS_SRC)%
-	./transform $< $@
+	@./transform $< $@
 
-transform: $(TRANSFORMED)
+$(TRANS_DEST).generated: $(ORIG)
+	echo $(TRANSFORMED) > $(TRANS_DEST).generated
+
+transform: $(TRANSFORMED) $(TRANS_DEST).generated
 
 patch:
 	echo "const char *drbd_buildtag(void){return \"WDRBD: `git describe --tags --always --dirty`\";}" > $(TRANS_DEST)/drbd/drbd_buildtag.c
@@ -81,6 +84,13 @@ endif
 	
 
 clean:
-	test -n "$(TRANS_DEST)" && rm -rf "$(TRANS_DEST)" # Be careful!
+	if test -n $(TRANS_DEST); then \
+		rm -f $(shell cat $(TRANS_DEST).generated) $(TRANS_DEST).generated; \
+		find $(TRANS_DEST) -name "*.tmp.bak" -delete; \
+		find $(TRANS_DEST) -name "*.pdb" -delete; \
+		find $(TRANS_DEST) -name "*.obj" -delete; \
+		find $(TRANS_DEST) -name "*.orig" -delete; \
+		find $(TRANS_DEST) -name "*.tmpe" -delete; \
+	fi
 
 # vim: set ts=8 sw=8 noet : 

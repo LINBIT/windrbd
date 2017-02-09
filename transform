@@ -10,6 +10,15 @@ TRANSFORMATIONS=transform.d/*
 DIR=${TARGET%/*}
 TMP=$TARGET.tmp
 
+msg()
+{
+    if test "$V"; then
+	printf "$@"
+    else
+	echo -n .
+    fi
+}
+
 mkdir -p $DIR
 cp $UPSTREAM $TMP
 
@@ -23,7 +32,7 @@ for TRANS in $TRANSFORMATIONS; do
 	    read -r FIRST_LINE_OF_PATCH < $TRANS
 	    PATCH_TARGET=${FIRST_LINE_OF_PATCH##*/}
 	    if [ $PATCH_TARGET = $TARGET_FILE ]; then
-		printf " PATCH    : %-40s %s\n" $TRANS_NAME $TARGET
+		msg " PATCH    : %-40s %s\n" $TRANS_NAME $TARGET
 		patch --batch --silent $TMP $TRANS
 	    fi
 	;;
@@ -35,10 +44,10 @@ for TRANS in $TRANSFORMATIONS; do
 	       test $CACHE_FILE -nt $TRANS && \
 	       test $CACHE_FILE -nt $UPSTREAM && \
 	       patch --batch --dry-run --fuzz 0 --silent $TMP $CACHE_FILE 2> /dev/null > /dev/null; then
-		printf " CACHED CO: %-40s %s\n" $TRANS_NAME $TARGET
+		msg " CACHED CO: %-40s %s\n" $TRANS_NAME $TARGET
 		patch --batch --fuzz 0 --silent $TMP $CACHE_FILE
 	    else
-		printf " GEN COCCI: %-40s %s\n" $TRANS_NAME $TARGET
+		msg " GEN COCCI: %-40s %s\n" $TRANS_NAME $TARGET
 		rm -f "$CACHE_FILE"
 		spatch --sp-file $TRANS --in-place $TMP > $CACHE_FILE.tmp 2>/dev/null
 		mv "$CACHE_FILE.tmp" "$CACHE_FILE"
@@ -46,11 +55,12 @@ for TRANS in $TRANSFORMATIONS; do
 	;;
 	*)
 	    if test -x $TRANS; then
-		printf " TRANSFORM: %-40s %s\n" $TRANS_NAME $TARGET
+		msg " TRANSFORM: %-40s %s\n" $TRANS_NAME $TARGET
 		$TRANS $TMP
 	    else
-		printf " IGNORED  : %-40s %s\n" $TRANS_NAME $TARGET
+		msg " IGNORED  : %-40s %s\n" $TRANS_NAME $TARGET
 	    fi
     esac
 done
-mv -v $TMP $TARGET
+mv $TMP $TARGET
+msg " MOVE     : %-40s %s\n" $TMP $TARGET
