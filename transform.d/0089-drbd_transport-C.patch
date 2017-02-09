@@ -1,0 +1,44 @@
+diff --git i/drbd/drbd_transport.c w/drbd/drbd_transport.c
+index 4e5f7417..9b29a409 100644
+--- i/drbd/drbd_transport.c
++++ w/drbd/drbd_transport.c
+@@ -106,6 +106,21 @@ void drbd_print_transports_loaded(struct seq_file *seq)
+ 	up_read(&transport_classes_lock);
+ }
+ 
++/* Taken from include/net/ipv6.h */
++static inline bool ipv6_addr_equal(const struct in6_addr *a1,
++                                   const struct in6_addr *a2)
++{
++        const ULONG_PTR *ul1 = (const ULONG_PTR *)a1;
++        const ULONG_PTR *ul2 = (const ULONG_PTR *)a2;
++
++        return ((ul1[0] ^ ul2[0]) | (ul1[1] ^ ul2[1])) == 0UL;
++}
++static inline int ipv6_addr_is_link_local(const struct in6_addr *addr)
++{
++    return (addr->u.Byte[0] == 0xff) && ((addr->u.Byte[1] & 0xc0) == 0x80);
++}
++
++
+ static bool addr_equal(const struct sockaddr_storage *addr1, const struct sockaddr_storage *addr2)
+ {
+ 	if (addr1->ss_family != addr2->ss_family)
+@@ -117,7 +132,7 @@ static bool addr_equal(const struct sockaddr_storage *addr1, const struct sockad
+ 
+ 		if (!ipv6_addr_equal(&v6a1->sin6_addr, &v6a2->sin6_addr))
+ 			return false;
+-		else if (ipv6_addr_type(&v6a1->sin6_addr) & IPV6_ADDR_LINKLOCAL)
++		else if (ipv6_addr_is_link_local(&v6a1->sin6_addr))
+ 			return v6a1->sin6_scope_id == v6a2->sin6_scope_id;
+ 		return true;
+ 	} else /* AF_INET, AF_SSOCKS, AF_SDP */ {
+@@ -227,7 +242,7 @@ void drbd_put_listener(struct drbd_path *path)
+ 	struct drbd_resource *resource;
+ 	struct drbd_listener *listener;
+ 
+-	listener = xchg(&path->listener, NULL);
++	listener = xchg_ptr(&path->listener, NULL);
+ 	if (!listener)
+ 		return;
+ 

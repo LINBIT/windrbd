@@ -58,5 +58,28 @@ static inline int __ffs64(u64 i)
 	return found ? index : 0;
 }
 
+struct module {
+	char version[1];
+};
+
+void module_put(void *module)
+{
+    (void)module;
+}
+
+void request_module(const char *fmt, ...)
+{
+    (void)fmt;
+}
+
+int try_module_get(void *m)
+{
+    (void)m;
+    return 0;
+}
+
+
+#define xchg_ptr(__target, __value) (  (void*)xchg(  (LONG_PTR*)(__target), (LONG_PTR)(__value)  )  )
+
 
 #endif
