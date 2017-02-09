@@ -650,6 +650,36 @@ static inline void blk_queue_max_segments(struct request_queue *q, unsigned shor
 #define DRBD_REQ_WSAME          0
 #endif
 
+
+/* From include/linux/blk_types.h */
+enum req_op {
+        REQ_OP_READ,
+        REQ_OP_WRITE,
+        REQ_OP_DISCARD,         /* request to discard sectors */
+        REQ_OP_SECURE_ERASE,    /* request to securely erase sectors */
+        REQ_OP_WRITE_SAME,      /* write same block many times */
+        REQ_OP_FLUSH,           /* request for cache flush */
+};
+
+#define REQ_WRITE REQ_OP_WRITE
+
+
+#define bio_op(bio)                            (op_from_rq_bits((bio)->bi_rw))
+
+static inline int op_from_rq_bits(u64 flags)
+{
+	if (flags & DRBD_REQ_DISCARD)
+		return REQ_OP_DISCARD;
+	else if (flags & DRBD_REQ_WSAME)
+		return REQ_OP_WRITE_SAME;
+	else if (flags & REQ_WRITE)
+		return REQ_OP_WRITE;
+	else
+		return REQ_OP_READ;
+}
+
+
+
 #ifndef WRITE_FLUSH
 #ifndef WRITE_SYNC
 #error  FIXME WRITE_SYNC undefined??
