@@ -493,7 +493,7 @@ void * kmem_cache_alloc(struct kmem_cache *cache, int flag)
 
 void kmem_cache_free(struct kmem_cache *cache, void * x)
 {
-	kfree(x);
+	ExFreeToNPagedLookasideList(cache, x);
 }
 
 void drbd_bp(char *msg)
