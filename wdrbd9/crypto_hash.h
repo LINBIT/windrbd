@@ -2,6 +2,7 @@
 #define _WDRBD_CRYPTO_HASH_H
 
 #include <wdm.h>
+#include <drbd_windows.h>
 
 
 #define CRYPTO_ALG_ASYNC 4711
