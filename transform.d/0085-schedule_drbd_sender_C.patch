@@ -1,0 +1,13 @@
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index af7e7bd..045aedd 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -2499,7 +2499,7 @@ static void wait_for_sender_todo(struct drbd_connection *connection)
+ 		if (get_t_state(&connection->sender) != RUNNING)
+ 			break;
+ 
+-		schedule();
++		schedule(&connection->sender_work.q_wait, SENDER_SCHEDULE_TIMEOUT, __FUNCTION__, __LINE__);
+ 		/* may be woken up for other things but new work, too,
+ 		 * e.g. if the current epoch got closed.
+ 		 * In which case we send the barrier above. */
