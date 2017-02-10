@@ -958,7 +958,7 @@ struct scatterlist {
     } while (0)
 
 
-extern struct workqueue_struct *create_singlethread_workqueue(void * name);
+struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ...);
 #ifdef _WIN32
 extern int queue_work(struct workqueue_struct* queue, struct work_struct* work);
 #else

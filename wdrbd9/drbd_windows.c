@@ -916,9 +916,13 @@ void run_singlethread_workqueue(struct workqueue_struct * wq)
     }
 }
 
-struct workqueue_struct *create_singlethread_workqueue(void * name)
+struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ...)
 {
     struct workqueue_struct * wq = kzalloc(sizeof(struct workqueue_struct), 0, '31DW');
+    va_list args;
+    va_start(args, flags);
+
+
     if (!wq)
     {
         return NULL;
@@ -928,7 +932,8 @@ struct workqueue_struct *create_singlethread_workqueue(void * name)
     KeInitializeEvent(&wq->killEvent, SynchronizationEvent, FALSE);
     InitializeListHead(&wq->list_head);
     KeInitializeSpinLock(&wq->list_lock);
-    strcpy(wq->name, name);
+
+    status = RtlStringCbVPrintfA(wq->name, sizeof(wq->name)-1, fmt, args);
     wq->run = TRUE;
 
     HANDLE hThread = NULL;
