@@ -9,7 +9,7 @@ sub BEGIN {
 # + b = kzalloc(sizeof(struct drbd_bitmap), GFP_KERNEL, '11DW');
 
 
-s{ (?<call> \b k[zm]alloc\( )
+s{ (?<call> \b (?: kzalloc | kmalloc | bio_alloc ) \( )
 	(?<arg1> [^,]+  ) ,
 	(?<arg2> [^,)]+ ) \)
 }{
