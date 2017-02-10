@@ -75,6 +75,28 @@ static inline int try_module_get(void *m)
     return 0;
 }
 
+static inline void* __vmalloc(u64 bytes, int flags, int flags2)
+{
+    (void)bytes;
+    (void)flags;
+    (void)flags2;
+    /* NULL not defined yet */
+    return (void*)0;
+}
+
+
+/* Taken from include/asm-generic/div64.h */
+static inline u32 _do_div_fn(u64 *n, u32 base)
+{
+        u32 rem;
+        rem = (*n) % base;
+	*n  = (*n) / base;
+        return rem;
+}
+
+#define do_div(n, base) _do_div_fn(&(n), (base))
+
+
 
 #define xchg_ptr(__target, __value) (  (void*)xchg(  (LONG_PTR*)(__target), (LONG_PTR)(__value)  )  )
 
