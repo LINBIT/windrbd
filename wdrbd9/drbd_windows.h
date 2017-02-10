@@ -514,7 +514,9 @@ struct socket {
 char * get_ip4(char *buf, struct sockaddr_in *sockaddr);
 char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr);
 	
-#define WQNAME_LEN	16	
+
+#define WQ_MEM_RECLAIM 0
+#define WQNAME_LEN	32
 struct workqueue_struct {
 #ifdef _WIN32
     LIST_ENTRY list_head;
