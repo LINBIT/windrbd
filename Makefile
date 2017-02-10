@@ -32,7 +32,7 @@ $(TRANS_DEST).generated: $(ORIG)
 
 transform: $(TRANSFORMED) $(TRANS_DEST).generated
 
-patch:
+patch: transform
 	echo "const char *drbd_buildtag(void){return \"WDRBD: `git describe --tags --always --dirty`\";}" > $(TRANS_DEST)/drbd/drbd_buildtag.c
 	cp -a ./Makefile.win $(TRANS_DEST)/drbd/Makefile
 	cp -a ./ms-cl.cmd $(TRANS_DEST)/drbd/
@@ -74,10 +74,10 @@ patch:
 	cp ./wdrbd9/drbd_wrappers.h $(OV_INC)
 
 ifeq ($(shell uname -o),Cygwin)
-msbuild:
+msbuild: patch
 	cd converted-sources/drbd/ && $(MAKE)
 else
-msbuild:
+msbuild: patch
 	echo "Please run 'make' in the Windows VM."
 	exit 1
 endif
