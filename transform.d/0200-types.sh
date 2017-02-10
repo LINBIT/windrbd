@@ -22,8 +22,12 @@
 #   printf("# md_offset %llu\n", (long long unsigned)cfg->md_offset);
 
 #   volatile const unsigned long *addr = &page_private(page);                                           |drbd_bitmap.c(889): error C2059: syntax error: 'else'^M                                                
+#   extern void drbd_bm_mark_range_for_writeout(struct drbd_device *, unsigned long, unsigned long);
 
-s{ (?<prefix>
+
+# The /g modifier doesn't work, as the comma after long overlaps with the comma before the next "long".
+# So loop explicitly.
+1 while s{ (?<prefix>
         (^ \s* | [,(]\s* )
         ( extern \s+ | const \s+ | volatile \s+ )*
     ) # end of prefix
@@ -38,11 +42,11 @@ s{ (?<prefix>
         (?! long )
         # BUT must be word-characters or a stop sign.
         # else "\s+ (?! long" might match "  long" by "\s+" only taking the first space
-        [\w)*]
+        [,\w)*]
     )
 }{
     $+{prefix} . ($+{u} ? "U" : "") .  "LONG_PTR" . $+{rest};
-}xge;
+}xe;
 
 # 1UL -> ((ULONG_PTR)1)
 # 1ULL -> ((ULONG_PTR)1)
