@@ -27,9 +27,6 @@ struct kmem_cache {
 #endif
 
 
-#define BIO_ENDIO_ARGS(void1, void2) (void *p1, void *p2, void *p3)
-#define MAKE_REQUEST_TYPE void
-
 #define __always_inline inline
 #define __inline inline
 

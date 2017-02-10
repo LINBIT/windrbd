@@ -130,15 +130,8 @@ static inline int bdev_discard_alignment(struct block_device *bdev)
 }
 #endif
 
-#ifdef COMPAT_HAVE_VOID_MAKE_REQUEST
-/* in Commit 5a7bbad27a410350e64a2d7f5ec18fc73836c14f (between Linux-3.1 and 3.2)
-   make_request() becomes type void. Before it had type int. */
 #define MAKE_REQUEST_TYPE void
 #define MAKE_REQUEST_RETURN return
-#else
-#define MAKE_REQUEST_TYPE int
-#define MAKE_REQUEST_RETURN return 0
-#endif
 
 #define __bitwise__
 
@@ -186,7 +179,8 @@ static inline int drbd_blkdev_put(struct block_device *bdev, fmode_t mode)
 
 typedef NTSTATUS BIO_ENDIO_TYPE;
 #define FAULT_TEST_FLAG     (ULONG_PTR)0x11223344
-#define BIO_ENDIO_ARGS(b,e) (void *p1, void *p2, void *p3)
+//#define BIO_ENDIO_ARGS(b,e) (ULONG_PTR fault_test_flag, struct bio *bio, int error)
+#define BIO_ENDIO_ARGS(b,e) (ULONG_PTR fault_test_flag, b, e)
 #define BIO_ENDIO_FN_START
 #define BIO_ENDIO_FN_RETURN     return STATUS_MORE_PROCESSING_REQUIRED
 
@@ -195,6 +189,19 @@ typedef NTSTATUS BIO_ENDIO_TYPE;
 extern BIO_ENDIO_TYPE drbd_md_endio BIO_ENDIO_ARGS(struct bio *bio, int error);
 extern BIO_ENDIO_TYPE drbd_peer_request_endio BIO_ENDIO_ARGS(struct bio *bio, int error);
 extern BIO_ENDIO_TYPE drbd_request_endio BIO_ENDIO_ARGS(struct bio *bio, int error);
+
+
+static inline void bio_set_op_attrs(struct bio *bio, const int op, const long flags)
+{
+    /* If we explicitly issue discards or write_same, we use
+     * blkdev_isse_discard() and blkdev_issue_write_same() helpers.
+     * If we implicitly submit them, we just pass on a cloned bio to
+     * generic_make_request().  We expect to use bio_set_op_attrs() with
+     * REQ_OP_READ or REQ_OP_WRITE only. */
+    BUG_ON(!(op == REQ_OP_READ || op == REQ_OP_WRITE));
+    bio->bi_rw |= (op | flags);
+}
+
 
 #ifdef COMPAT_HAVE_BIO_BI_ERROR
 #define bio_endio(B,E) do { (B)->bi_error = E; bio_endio(B); } while (0)

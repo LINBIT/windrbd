@@ -638,13 +638,7 @@ struct bio_vec {
 	unsigned int bv_offset;
 };
 
-#ifdef _WIN32
-typedef void(BIO_END_IO_CALLBACK)(void*, void*, void*);
-//PIO_COMPLETION_ROUTINE bio_end_io_t;
-#else
-struct bio;
-typedef void(bio_end_io_t)(struct bio *, int);
-#endif
+typedef void(BIO_END_IO_CALLBACK)(ULONG_PTR fault_test_flag, struct bio *bio, int error);
 
 
 struct splitInfo {	
