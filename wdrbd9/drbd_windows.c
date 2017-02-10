@@ -2995,12 +2995,13 @@ error:
 	return ret;
 }
 
-void panic(char *msg)
+void panic(const char *fmt, ...)
 {
-    WDRBD_ERROR("%s\n", msg);
-#ifdef _WIN32_EVENTLOG
-	WriteEventLogEntryData((ULONG) DEV_ERR_3003, 0, 0, 1, L"%S", msg);
-#endif
+	va_list args;
+
+	va_start(args, fmt);
+	printk(KERN_EMERG fmt, args);
+	va_end(args);
 	KeBugCheckEx(0xddbd, (ULONG_PTR)__FILE__, (ULONG_PTR)__func__, 0x12345678, 0xd8bdd8bd);
 }
 

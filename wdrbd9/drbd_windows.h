@@ -1134,7 +1134,7 @@ extern void get_random_bytes(void *buf, int nbytes);
 extern int fls(int x);
 extern unsigned char *skb_put(struct sk_buff *skb, unsigned int len);
 extern char *kstrdup(const char *s, int gfp);
-extern void panic(char *msg);
+extern void panic(const char *fmt, ...);
 
 extern int proc_details;
 extern int g_bypass_level;
