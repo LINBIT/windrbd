@@ -1,0 +1,13 @@
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index a9afac8..6425611 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -2412,7 +2412,7 @@ static inline void inc_rs_pending(struct drbd_peer_device *peer_device)
+ }
+ 
+ #define dec_rs_pending(peer_device) \
+-	((void)expect((peer_device), __dec_rs_pending(peer_device) >= 0))
++	((void)expect(peer_device, __dec_rs_pending(peer_device) >= 0))
+ static inline int __dec_rs_pending(struct drbd_peer_device *peer_device)
+ {
+ 	return atomic_dec_return(&peer_device->rs_pending_cnt);
