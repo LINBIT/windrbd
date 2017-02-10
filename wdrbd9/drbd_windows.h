@@ -618,11 +618,6 @@ struct block_device {
 
 extern sector_t wdrbd_get_capacity(struct block_device *bdev);
 
-typedef struct kmem_cache {
-	int size;
-	char *name;
-} kmem_cache_t;
-
 typedef struct mempool_s {
 	struct kmem_cache *p_cache;
 	int page_alloc;
@@ -980,10 +975,6 @@ extern void * kzalloc(int x, int flag, ULONG Tag);
 extern void * kmalloc(int size, int flag, ULONG Tag);
 extern void kfree(void * x);
 extern void kvfree(void * x);
-extern void * kmem_cache_alloc(void * cache, int flag);
-extern void kmem_cache_destroy(struct kmem_cache *s);
-extern struct kmem_cache *kmem_cache_create(char *name, size_t size, size_t align, unsigned long flags, void (*ctor)(void *), ULONG Tag);
-extern void kmem_cache_free(void * cache, void * x);
 #define kfree2(x) if((x)) {ExFreePool((x)); (x)=NULL;}
 
 static __inline wait_queue_t initqueue(wait_queue_t *wq)

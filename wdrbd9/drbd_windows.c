@@ -486,16 +486,6 @@ void __free_page(struct page *page)
 	kfree(page); 
 }
 
-void * kmem_cache_alloc(struct kmem_cache *cache, int flag)
-{
-	return ExAllocateFromNPagedLookasideList(cache)
-}
-
-void kmem_cache_free(struct kmem_cache *cache, void * x)
-{
-	ExFreeToNPagedLookasideList(cache, x);
-}
-
 void drbd_bp(char *msg)
 {
     WDRBD_ERROR("breakpoint: msg(%s)\n", msg);
@@ -605,25 +595,6 @@ void mempool_destroy(void *p)
 	// we don't need to free mempool. wdrbd is static loading driver.
 }
 
-void kmem_cache_destroy(struct kmem_cache *s)
-{
-	kfree(s);
-	s = 0;
-}
-
-struct kmem_cache *kmem_cache_create(char *name, size_t size, size_t align,
-                  unsigned long flags, void (*ctor)(void *), ULONG Tag)
-{
-	struct kmem_cache *p = kmalloc(sizeof(struct kmem_cache), 0, Tag);	
-	if (!p)
-	{
-		WDRBD_ERROR("kzalloc failed\n");
-		return 0;
-	}
-	p->size = size;
-	p->name = name;
-	return p;
-}
 
 // from  linux 2.6.32
 int kref_put(struct kref *kref, void (*release)(struct kref *kref))

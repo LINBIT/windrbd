@@ -30,3 +30,16 @@ s{ (?<call> \b kcalloc\( )
 	"$+{call}$+{arg1},$+{arg2},$+{arg3}, $id)"
 }ex;
 
+s{ (?<call> \b kmem_cache_create\( )
+	(?<arg1> [^,]+  ) ,
+	(?<arg2> [^,]+  ) ,
+	(?<arg3> [^,]+  ) ,
+	(?<arg4> [^,]+  ) ,
+	(?<arg5> [^,)]+ ) \)
+}{
+	my $id = sprintf("'%02XWD'", $counter++);
+	die "TOO BIG" if $counter > 0xff;
+
+	"$+{call}$+{arg1},$+{arg2},$+{arg3},$+{arg4},$+{arg5}, $id)"
+}ex;
+
