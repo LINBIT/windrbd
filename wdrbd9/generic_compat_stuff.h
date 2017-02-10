@@ -62,17 +62,17 @@ struct module {
 	char version[1];
 };
 
-void module_put(void *module)
+static inline void module_put(void *module)
 {
     (void)module;
 }
 
-void request_module(const char *fmt, ...)
+static inline void request_module(const char *fmt, ...)
 {
     (void)fmt;
 }
 
-int try_module_get(void *m)
+static inline int try_module_get(void *m)
 {
     (void)m;
     return 0;
