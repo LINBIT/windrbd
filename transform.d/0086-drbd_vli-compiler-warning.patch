@@ -1,0 +1,12 @@
+diff --git i/drbd/drbd_vli.h w/drbd/drbd_vli.h
+index 8cb1532a..49022ff3 100644
+--- i/drbd/drbd_vli.h
++++ w/drbd/drbd_vli.h
+@@ -161,6 +161,7 @@ static inline int vli_decode_bits(u64 *out, const u64 in)
+ 	/* NOT REACHED, if VLI_LEVELS code table is defined properly */
+ 	BUG();
+ #undef LEVEL
++	return 0;
+ }
+ 
+ /* return number of code bits needed,

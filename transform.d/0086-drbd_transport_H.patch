@@ -1,0 +1,34 @@
+diff --git i/drbd_transport.h w/drbd_transport.h
+index 5f435d5..b6dad71 100644
+--- i/drbd_transport.h
++++ w/drbd_transport.h
+@@ -317,19 +317,19 @@ static inline void dummy_for_buildbug(void)
+ 	(((struct drbd_page_chain*)&(page)->lru)->size = (v))
+ #define set_page_chain_offset(page, v) \
+ 	(((struct drbd_page_chain*)&(page)->lru)->offset = (v))
+-#define set_page_chain_next_offset_size(page, n, o, s)	\
+-	*((struct drbd_page_chain*)&(page)->lru) =	\
+-	((struct drbd_page_chain) {			\
+-		.next = (n),				\
+-		.offset = (o),				\
+-		.size = (s),				\
+-	 })
++#define set_page_chain_next_offset_size(page, n, o, s)  \
++    do {                                                \
++	struct drbd_page_chain *__dpc =                 \
++		(struct drbd_page_chain*)(&(page)->lru);\
++	__dpc->next = (n);                              \
++	__dpc->offset = (o);                            \
++	__dpc->size = (s);                              \
++    } while (0)
+ 
+ #define page_chain_for_each(page) \
+-	for (; page && ({ prefetch(page_chain_next(page)); 1; }); \
+-			page = page_chain_next(page))
++	for (; page; page = page_chain_next(page))
+ #define page_chain_for_each_safe(page, n) \
+-	for (; page && ({ n = page_chain_next(page); 1; }); page = n)
++	for (; page && ( n = page_chain_next(page), 1 ); page = n)
+ 
+ #ifndef SK_CAN_REUSE
+ /* This constant was introduced by Pavel Emelyanov <xemul@parallels.com> on
