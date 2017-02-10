@@ -959,6 +959,13 @@ struct scatterlist {
         }\
     } while (0)
 
+static inline void assert_spin_locked(spinlock_t *lock)
+{
+    /* KeTestSpinLock returns FALSE if the spin lock is currently being held.
+     * Otherwise, it returns TRUE. */
+    BUG_ON(KeTestSpinLock(&lock->spinLock));
+}
+
 
 struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ...);
 #ifdef _WIN32
@@ -1465,7 +1472,7 @@ void list_cut_position(struct list_head *list, struct list_head *head, struct li
 	     (bit) < (size);					\
 	     (bit) = find_next_bit((addr), (size), (bit) + 1))
 
-extern int drbd_backing_bdev_events(struct drbd_device *device);
+extern int drbd_backing_bdev_events(struct gendisk *device);
 
 static inline unsigned int queue_io_min(struct request_queue *q)
 {

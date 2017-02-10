@@ -3050,7 +3050,7 @@ void list_cut_position(struct list_head *list, struct list_head *head, struct li
 		__list_cut_position(list, head, entry);
 }
 
-int drbd_backing_bdev_events(struct drbd_device *device)
+int drbd_backing_bdev_events(struct gendisk *device)
 {
 #ifdef _WIN32_GetDiskPerf
 	extern NTSTATUS mvolGetDiskPerf(PDEVICE_OBJECT TargetDeviceObject, PDISK_PERFORMANCE pDiskPerf);
