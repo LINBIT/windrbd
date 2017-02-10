@@ -195,17 +195,6 @@ index e1e9595b..100a6e49 100644
  		/* A write may have been queued for send_oos, however.
  		 * So we can not simply free it, we must go through drbd_req_put_completion_ref() */
  	}
-@@ -1837,6 +1788,10 @@ static void __drbd_submit_peer_request(struct drbd_peer_request *peer_req)
- 		drbd_cleanup_after_failed_submit_peer_request(peer_req);
- }
- 
-+/* TODO implement */
-+#define blk_start_plug(egal)
-+#define blk_finish_plug(egal)
-+
- static void submit_fast_path(struct drbd_device *device, struct waiting_for_act_log *wfa)
- {
- 	struct blk_plug plug;
 @@ -2033,7 +1988,7 @@ void do_submit(struct work_struct *ws)
  				break;
  

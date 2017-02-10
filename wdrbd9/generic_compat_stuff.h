@@ -97,6 +97,8 @@ static inline u32 _do_div_fn(u64 *n, u32 base)
 #define do_div(n, base) _do_div_fn(&(n), (base))
 
 
+#define blk_start_plug(egal)
+#define blk_finish_plug(egal)
 
 #define xchg_ptr(__target, __value) (  (void*)xchg(  (LONG_PTR*)(__target), (LONG_PTR)(__value)  )  )
 
