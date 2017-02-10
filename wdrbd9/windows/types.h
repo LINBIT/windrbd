@@ -63,6 +63,8 @@ typedef		__u8		uint8_t;
 typedef		__u16		uint16_t;
 typedef		__u32		uint32_t;
 
+typedef unsigned int gfp_t;
+
 //#if defined(__GNUC__)
 #ifndef _WIN32_APP
 typedef		__u64		uint64_t;

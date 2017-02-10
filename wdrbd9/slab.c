@@ -9,8 +9,7 @@ struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align
 	cache = ExAllocatePoolWithTag(NonPagedPool, sizeof(*cache), tag);
 	if (!cache)
 		return NULL;
-	ExInitializeNPagedLookasideList(&cache->l, NULL, NULL, 0,
-					sizeof(struct drbd_request), tag, 0);
+	ExInitializeNPagedLookasideList(&cache->l, NULL, NULL, 0, size, tag, 0);
 
 	return cache;
 }

@@ -29,6 +29,7 @@
 #include "mvolmsg.h"
 
 #include "disp.h"
+#include <linux/mempool.h>
 
 struct drbd_transport;
 enum drbd_stream;
@@ -107,7 +108,6 @@ enum
 #define GFP_ATOMIC              2
 #define GFP_NOIO				(__GFP_WAIT)
 #define GFP_NOWAIT	            0
-#define gfp_t					int
 
 #define atomic_t				int
 #define atomic_t64				LONGLONG
@@ -620,15 +620,6 @@ struct block_device {
 
 extern sector_t wdrbd_get_capacity(struct block_device *bdev);
 
-typedef struct mempool_s {
-	struct kmem_cache *p_cache;
-	int page_alloc;
-#ifdef _WIN32
-	NPAGED_LOOKASIDE_LIST pageLS;
-	NPAGED_LOOKASIDE_LIST page_addrLS;
-#endif
-} mempool_t;
-
 struct bio_vec {
 	struct page *bv_page;
 	unsigned int bv_len;
@@ -830,16 +821,6 @@ static inline PKTHREAD task_pid_nr(struct task_struct *tsk)
 {
     return tsk->pid;
 }
-
-
-extern mempool_t *mempool_create(int min_nr, void *alloc_fn, void *free_fn, void *pool_data);
-extern mempool_t *mempool_create_page_pool(int min_nr, int order);
-extern mempool_t *mempool_create_slab_pool(int min_nr, int order);
-extern void * mempool_alloc(mempool_t *pool, gfp_t gfp_mask);
-extern void mempool_free(void *req, void *mempool);
-extern void mempool_destroy(void *p);
-extern void *mempool_alloc_slab(gfp_t gfp_mask, void *pool_data);
-extern void *mempool_free_slab(gfp_t gfp_mask, void *pool_data);
 
 #define	atomic_inc_return(_p)		InterlockedIncrement((LONG volatile*)(_p))
 #define	atomic_dec_return(_p)		InterlockedDecrement((LONG volatile*)(_p))
