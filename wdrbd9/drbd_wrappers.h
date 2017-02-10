@@ -283,129 +283,6 @@ static inline void drbd_unregister_blkdev(unsigned int major, const char *name)
 #define drbd_unregister_blkdev unregister_blkdev
 #endif
 
-#if !defined(CRYPTO_ALG_ASYNC)
-/* With Linux-2.6.19 the crypto API changed! */
-/* This is not a generic backport of the new api, it just implements
-   the corner case of "hmac(xxx)".  */
-
-#define CRYPTO_ALG_ASYNC 4711
-#define CRYPTO_ALG_TYPE_HASH CRYPTO_ALG_TYPE_DIGEST
-
-struct crypto_hash {
-	struct crypto_tfm *base;
-	const u8 *key;
-	int keylen;
-};
-
-struct hash_desc {
-	struct crypto_hash *tfm;
-	u32 flags;
-};
-
-static inline struct crypto_hash *
-crypto_alloc_hash(char *alg_name, u32 type, u32 mask, ULONG Tag)
-{
-	struct crypto_hash *ch;
-	char *closing_bracket;
-
-	/* "hmac(xxx)" is in alg_name we need that xxx. */
-	closing_bracket = strchr(alg_name, ')');
-	if (!closing_bracket) {
-		ch = kmalloc(sizeof(struct crypto_hash), GFP_KERNEL, Tag);
-		if (!ch)
-			return ERR_PTR(-ENOMEM);
-		ch->base = crypto_alloc_tfm(alg_name, 0);
-		if (ch->base == NULL) {
-			kfree(ch);
-			return ERR_PTR(-ENOMEM);
-		}
-		return ch;
-	}
-	if (closing_bracket-alg_name < 6)
-		return ERR_PTR(-ENOENT);
-
-	ch = kmalloc(sizeof(struct crypto_hash), GFP_KERNEL, Tag);
-	if (!ch)
-		return ERR_PTR(-ENOMEM);
-
-	*closing_bracket = 0;
-	ch->base = crypto_alloc_tfm(alg_name + 5, 0);
-	*closing_bracket = ')';
-
-	if (ch->base == NULL) {
-		kfree(ch);
-		return ERR_PTR(-ENOMEM);
-	}
-
-	return ch;
-}
-
-static inline int
-crypto_hash_setkey(struct crypto_hash *hash, const u8 *key, unsigned int keylen)
-{
-	hash->key = key;
-	hash->keylen = keylen;
-
-	return 0;
-}
-
-static inline int
-crypto_hash_digest(struct hash_desc *desc, struct scatterlist *sg,
-		   unsigned int nbytes, u8 *out)
-{
-#if 0
-	// TODO reimplement!
-	crypto_hmac(desc->tfm->base, (u8 *)desc->tfm->key,
-		    &desc->tfm->keylen, sg, 1 /* ! */ , out);
-	/* ! this is not generic. Would need to convert nbytes -> nsg */
-#endif
-	return 0;
-}
-
-static inline void crypto_free_hash(struct crypto_hash *tfm)
-{
-	if (!tfm)
-		return;
-
-	kfree(tfm);
-}
-
-static inline unsigned int crypto_hash_digestsize(struct crypto_hash *tfm)
-{
-	return crypto_tfm_alg_digestsize(tfm->base);
-}
-
-static inline struct crypto_tfm *crypto_hash_tfm(struct crypto_hash *tfm)
-{
-	return tfm->base;
-}
-
-static inline int crypto_hash_init(struct hash_desc *desc)
-{
-	return 0;
-}
-
-static inline int crypto_hash_update(struct hash_desc *desc,
-				     struct scatterlist *sg,
-				     unsigned int nbytes)
-{
-	*(int*)desc = crc32c(0, (uint8_t *)sg, nbytes);
-	return 0;
-}
-
-static inline int crypto_hash_final(struct hash_desc *desc, u8 *out)
-{
-	int i;
-	u8 *p = (u8*)desc;
-	for(i = 0; i < 4; i++)
-	{
-		*out++ = *p++; // long
-	}
-	return 0;
-}
-
-#endif
-
 
 #ifndef COMPAT_HAVE_UMH_WAIT_PROC
 /* On Jul 17 2007 with commit 86313c4 usermodehelper: Tidy up waiting,
@@ -1208,6 +1085,7 @@ static inline void genl_unlock(void)  { }
 #endif
 
 
+#if 0
 #if !defined(QUEUE_FLAG_DISCARD) || !defined(QUEUE_FLAG_SECDISCARD)
 # define queue_flag_set_unlocked(F, Q)				\
     do {							\
@@ -1229,6 +1107,7 @@ static inline void genl_unlock(void)  { }
 #  define blk_queue_secdiscard(q)   (0)
 #  define QUEUE_FLAG_SECDISCARD    (-1)
 # endif
+#endif
 #endif
 
 #ifndef COMPAT_HAVE_BLK_SET_STACKING_LIMITS

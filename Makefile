@@ -61,7 +61,8 @@ patch: transform
 	# <net/...>
 	for f in genetlink.h ipv6.h netlink.h sock.h; do ( cd $(OV_INC) && truncate -s0 net/$$f;); done
 	# <crypto/...>
-	for f in hash.h; do ( cd $(OV_INC) && truncate -s0 crypto/$$f;); done
+	mkdir -p $(OV_INC)/crypto
+	cp ./wdrbd9/crypto_hash.h $(OV_INC)/crypto/hash.h
 	# <sys/...>
 	cp ./wdrbd9/linux-compat/Wait.h $(OV_INC)/sys/wait.h
 	# things they include as linux-compat/...

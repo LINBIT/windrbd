@@ -1675,12 +1675,6 @@ void flush_signals(struct task_struct *task)
 	}
 }
 
-void *crypto_alloc_tfm(char *name, u32 mask)
-{
-	WDRBD_INFO("request crypto name(%s) --> supported crc32c only.\n", name);
-	return (void *)1;
-}
-
 int generic_make_request(struct bio *bio)
 {
 	int err = 0;
