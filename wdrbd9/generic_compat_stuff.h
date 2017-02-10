@@ -95,7 +95,10 @@ static inline u32 _do_div_fn(u64 *n, u32 base)
 }
 
 #define do_div(n, base) _do_div_fn(&(n), (base))
+#define sector_div(n, base) _do_div_fn(&(n), (base))
 
+
+static inline void might_sleep() { }
 
 #define blk_start_plug(egal)
 #define blk_finish_plug(egal)
