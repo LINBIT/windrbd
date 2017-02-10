@@ -701,12 +701,6 @@ void bio_free(struct bio *bio)
 	kfree(bio);
 }
 
-extern int submit_bio(int rw, struct bio *bio)
-{
-	bio->bi_rw |= rw; 
-	return generic_make_request(bio);
-}
-
 void bio_endio(struct bio *bio, int error)
 {
 	if (bio->bi_end_io) {

@@ -715,9 +715,12 @@ extern void bio_put(struct bio *);
 extern void bio_free(struct bio *bio); 
 extern void bio_endio(struct bio *, int);
 extern int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset);
-extern int submit_bio(int rw, struct bio *bio);
 extern void bio_endio(struct bio *bio, int error);
 
+static inline int submit_bio(struct bio *bio)
+{
+	return generic_make_request(bio);
+}
 #define bio_get(bio)			atomic_inc(&(bio)->bi_cnt) 
 
 #define bio_iovec_idx(bio, idx)		(&((bio)->bi_io_vec[(idx)]))
