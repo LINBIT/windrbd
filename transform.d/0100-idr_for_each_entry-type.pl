@@ -7,6 +7,7 @@ sub BEGIN {
 %types = qw(
                 e                    lc_element
                 device               drbd_device
+                other_device         drbd_device
                 connection           drbd_connection
                 listener             drbd_listener    
                 r                    drbd_request
@@ -17,7 +18,9 @@ sub BEGIN {
                 peer_device          drbd_peer_device
                 peer_req             drbd_peer_request
                 pr                   drbd_peer_request
+                rs_req               drbd_peer_request
                 q                    queued_twopc
+                q2                   queued_twopc
                 twopc_parent         drbd_connection
                 transport_class      drbd_transport_class
                 tc                   drbd_transport_class
