@@ -711,6 +711,7 @@ extern void bio_endio(struct bio *, int);
 extern int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset);
 extern void bio_endio(struct bio *bio, int error);
 
+int generic_make_request(struct bio *bio);
 static inline int submit_bio(struct bio *bio)
 {
 	return generic_make_request(bio);

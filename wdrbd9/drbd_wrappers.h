@@ -191,18 +191,6 @@ extern BIO_ENDIO_TYPE drbd_peer_request_endio BIO_ENDIO_ARGS(struct bio *bio, in
 extern BIO_ENDIO_TYPE drbd_request_endio BIO_ENDIO_ARGS(struct bio *bio, int error);
 
 
-static inline void bio_set_op_attrs(struct bio *bio, const int op, const long flags)
-{
-    /* If we explicitly issue discards or write_same, we use
-     * blkdev_isse_discard() and blkdev_issue_write_same() helpers.
-     * If we implicitly submit them, we just pass on a cloned bio to
-     * generic_make_request().  We expect to use bio_set_op_attrs() with
-     * REQ_OP_READ or REQ_OP_WRITE only. */
-    BUG_ON(!(op == REQ_OP_READ || op == REQ_OP_WRITE));
-    bio->bi_rw |= (op | flags);
-}
-
-
 #ifdef COMPAT_HAVE_BIO_BI_ERROR
 #define bio_endio(B,E) do { (B)->bi_error = E; bio_endio(B); } while (0)
 #endif
@@ -688,6 +676,18 @@ static inline int op_from_rq_bits(u64 flags)
 	else
 		return REQ_OP_READ;
 }
+
+static inline void bio_set_op_attrs(struct bio *bio, const int op, const long flags)
+{
+    /* If we explicitly issue discards or write_same, we use
+     * blkdev_isse_discard() and blkdev_issue_write_same() helpers.
+     * If we implicitly submit them, we just pass on a cloned bio to
+     * generic_make_request().  We expect to use bio_set_op_attrs() with
+     * REQ_OP_READ or REQ_OP_WRITE only. */
+    BUG_ON(!(op == REQ_OP_READ || op == REQ_OP_WRITE));
+    bio->bi_rw |= (op | flags);
+}
+
 
 
 
