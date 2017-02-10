@@ -27,7 +27,7 @@ crypto_alloc_shash(const char *alg_name, u32 type, u32 mask)
 	const supported_len = sizeof(supported);
 
 	if (RtlCompareMemory(alg_name, supported, supported_len) != supported_len)
-		return ERR_PTR(-ENOTSUPP);
+		return ERR_PTR(-EOPNOTSUPP);
 
 	ch = kmalloc(sizeof(struct crypto_shash), GFP_KERNEL, 'HSWD');
 	if (!ch)
