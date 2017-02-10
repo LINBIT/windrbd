@@ -13,4 +13,22 @@ static __always_inline bool need_resched(void)
 }
 #endif
 
+
+struct sched_param {
+	int sched_priority;
+};
+
+#define SCHED_RR 42
+
+int sched_setscheduler(struct task_struct *p, int policy,
+	                       const struct sched_param *param)
+{
+    (void)policy;
+    (void)param;
+
+    KeSetPriorityThread(p->pid, LOW_REALTIME_PRIORITY);
+    return 0;
+}
+
+
 #endif
