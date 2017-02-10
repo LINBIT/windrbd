@@ -12,6 +12,45 @@ func(...) {
 }
 
 @@
+identifier func;
+expression list E;
+statement S1, S2;
+@@
+func(...) {
++     long remaining_time;
+      <+...
+-     wait_event_interruptible_timeout(E);
++     wait_event_interruptible_timeout(remaining_time, E);
+      ...+>
+}
+
+@@
+identifier func;
+expression list E;
+statement S1, S2;
+@@
+func(...) {
++     long remaining_time;
+      <+...
+-     wait_event_timeout(E);
++     wait_event_timeout(remaining_time, E);
+      ...+>
+}
+
+@@
+identifier func;
+expression list E;
+statement S1, S2;
+@@
+func(...) {
++     int err_ignored;
+      <+...
+-     wait_event_interruptible(E);
++     wait_event_interruptible(err_ignored, E);
+      ...+>
+}
+
+@@
 identifier t;
 expression list E;
 @@
