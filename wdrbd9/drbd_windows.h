@@ -930,6 +930,7 @@ extern unsigned int lc_index_of(struct lru_cache *lc, struct lc_element *e);
 struct page {
 	ULONG_PTR private;
 	void *addr;
+	struct list_head lru;
 };
 
 #define page_private(_page)		((_page)->private)
