@@ -828,6 +828,13 @@ struct task_struct {
     char comm[TASK_COMM_LEN];
 };
 
+/* From include/linux/sched.h */
+static inline PKTHREAD task_pid_nr(struct task_struct *tsk)
+{
+    return tsk->pid;
+}
+
+
 extern mempool_t *mempool_create(int min_nr, void *alloc_fn, void *free_fn, void *pool_data);
 extern mempool_t *mempool_create_page_pool(int min_nr, int order);
 extern mempool_t *mempool_create_slab_pool(int min_nr, int order);
