@@ -15,6 +15,7 @@ sub BEGIN {
                 req2                 drbd_request
                 tmp                  drbd_request
                 next_resource        drbd_resource
+                resource             drbd_resource
                 path                 drbd_path
                 peer_device          drbd_peer_device
                 peer_req             drbd_peer_request
