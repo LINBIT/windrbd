@@ -1,0 +1,13 @@
+diff --git a/drbd/drbd_actlog.c b/drbd/drbd_actlog.c
+index a36204b..e86aefd 100644
+--- a/drbd/drbd_actlog.c
++++ b/drbd/drbd_actlog.c
+@@ -463,7 +463,7 @@ static int __al_write_transaction(struct drbd_device *device, struct al_transact
+ 
+ 	sector = al_tr_number_to_on_disk_sector(device);
+ 
+-	crc = crc32c(0, buffer, 4096);
++	crc = crc32c(0, (uint8_t*)buffer, 4096);
+ 	buffer->crc32c = cpu_to_be32(crc);
+ 
+ 	if (drbd_bm_write_hinted(device))
