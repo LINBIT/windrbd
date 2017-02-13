@@ -370,7 +370,7 @@ extern atomic_t g_oos_trace;
 
 extern void printk_init(void);
 extern void printk_cleanup(void);
-extern void _printk(const char * func, const char * format, ...);
+extern int _printk(const char * func, const char * format, ...);
 
 #ifdef _WIN32_DEBUG_OOS
 extern VOID WriteOOSTraceLog(int bitmap_index, ULONG_PTR startBit, ULONG_PTR endBit, ULONG_PTR bitsCount, enum update_sync_bits_mode mode);

@@ -656,6 +656,8 @@ void printk_cleanup(void)
 }
 
 
+/* Replaced by print-to-syslog */
+#if 0
 void _printk(const char * func, const char * format, ...)
 {
 	int ret = 0;
@@ -769,6 +771,7 @@ void _printk(const char * func, const char * format, ...)
 
 #endif
 }
+#endif
 #endif
 
 static int _char_to_wchar(wchar_t * dst, size_t buf_size, char * src)
