@@ -13,6 +13,7 @@ sub BEGIN {
                 r                    drbd_request
                 req                  drbd_request
                 req2                 drbd_request
+                tmp                  drbd_request
                 next_resource        drbd_resource
                 path                 drbd_path
                 peer_device          drbd_peer_device
@@ -46,6 +47,7 @@ s{ ^
 # Only at line start, not after #define.
 s{ ^
 	( \s+ (?: h? list_for_each_entry ( _continue | _safe | _reverse | _rcu )*
+		| \w+\s*=\s*list_prepare_entry    # variable = ...
 		| list_next_entry )
 		\( )
 	((\w+),)
