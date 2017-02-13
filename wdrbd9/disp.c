@@ -27,7 +27,7 @@
 #include "proto.h"
 
 #include "drbd_int.h"
-#include "../drbd/drbd-kernel-compat/drbd_wrappers.h"
+#include "drbd_wrappers.h"
 
 #ifdef _WIN32_WPP
 #include "disp.tmh"
@@ -37,6 +37,27 @@
 DRIVER_INITIALIZE DriverEntry;
 DRIVER_UNLOAD mvolUnload;
 DRIVER_ADD_DEVICE mvolAddDevice;
+
+UINT32 windows_ret_codes[] = {
+    [EROFS] = STATUS_MEDIA_WRITE_PROTECTED,
+};
+
+UINT32 translate_drbd_error(int i)
+{
+    unsigned int j;
+    UINT32 err;
+
+    if (i >= 0)
+    /* No error. */
+	return i;
+
+    j = -i;
+    if (j >= ARRAY_SIZE(windows_ret_codes))
+	return STATUS_UNSUCCESSFUL;
+
+    err = windows_ret_codes[j];
+    return err ? err : STATUS_UNSUCCESSFUL;
+}
 
 
 _Dispatch_type_(IRP_MJ_CREATE) DRIVER_DISPATCH mvolCreate;
@@ -399,58 +420,60 @@ mvolSendToNextDriver(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 NTSTATUS
 mvolCreate(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
-	PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
-#if 0 // DW-1380
+    PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
+    int err;
+
     if (DeviceObject == mvolRootDeviceObject) {
-        WDRBD_TRACE("mvolRootDevice Request\n");
+	WDRBD_TRACE("mvolRootDevice Request\n");
 
-        Irp->IoStatus.Status = STATUS_SUCCESS;
-        IoCompleteRequest(Irp, IO_NO_INCREMENT);
-        return STATUS_SUCCESS;
+	Irp->IoStatus.Status = STATUS_SUCCESS;
+	IoCompleteRequest(Irp, IO_NO_INCREMENT);
+	return STATUS_SUCCESS;
     }
 
-#ifdef _WIN32_MVFL
-    if (VolumeExtension->Active) 
+    if (VolumeExtension->Active)
+    {
+	struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
+
+	/* https://msdn.microsoft.com/en-us/library/windows/hardware/ff548630(v=vs.85).aspx
+	 * https://msdn.microsoft.com/en-us/library/windows/hardware/ff550729(v=vs.85).aspx
+	 * https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424(v=vs.85).aspx
+	 * */
+	err = drbd_open(device,
+		(Irp->Parameters.Create.SecurityContext->DesiredAccess &
+		 FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES |
+		 FILE_APPEND_DATA | GENERIC_WRITE )
+		? FMODE_WRITE : 0);
+
+	if (err < 0)
 	{
-		// DW-1300: get device and get reference.
-		struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
-		// DW-1300: prevent mounting volume when device went diskless.
-		if (device && ((R_PRIMARY != device->resource->role[NOW]) || (device->resource->bPreDismountLock == TRUE) || device->disk_state[NOW] == D_DISKLESS))   // V9
-		{
-			//PIO_STACK_LOCATION irpSp = IoGetCurrentIrpStackLocation(Irp);
-			//WDRBD_TRACE("DeviceObject(0x%x), MinorFunction(0x%x) STATUS_INVALID_DEVICE_REQUEST\n", DeviceObject, irpSp->MinorFunction);
-			// DW-1300: put device reference count when no longer use.
-			kref_put(&device->kref, drbd_destroy_device);
+	    kref_put(&device->kref, drbd_destroy_device);
 
-			Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
-			IoCompleteRequest(Irp, IO_NO_INCREMENT);
+	    Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
+	    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-			return STATUS_INVALID_DEVICE_REQUEST;
-		}
-		// DW-1300: put device reference count when no longer use.
-		else if (device)
-			kref_put(&device->kref, drbd_destroy_device);
+	    return translate_drbd_error(err);
+	} else {
+	    return STATUS_SUCCESS;
+	}
     }
-#endif
-#endif
-
     return mvolSendToNextDriver(DeviceObject, Irp);
 }
 
 NTSTATUS
 mvolClose(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
-	PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
-#if 0 // DW-1380
+    PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
     if (DeviceObject == mvolRootDeviceObject) {
-        WDRBD_TRACE("mvolRootDevice Request\n");
+	WDRBD_TRACE("mvolRootDevice Request\n");
 
-        Irp->IoStatus.Status = STATUS_SUCCESS;
-        IoCompleteRequest(Irp, IO_NO_INCREMENT);
-        return STATUS_SUCCESS;
+	Irp->IoStatus.Status = STATUS_SUCCESS;
+	IoCompleteRequest(Irp, IO_NO_INCREMENT);
+    } else {
+	struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
+	kref_put(&device->kref, drbd_destroy_device);
     }
-#endif
-    return mvolSendToNextDriver(DeviceObject, Irp);
+    return STATUS_SUCCESS;
 }
 
 void drbd_cleanup_by_win_shutdown(PVOLUME_EXTENSION VolumeExtension);
@@ -554,7 +577,7 @@ _Use_decl_annotations_
 NTSTATUS
 mvolRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
-	NTSTATUS 	status = STATUS_SUCCESS;
+    NTSTATUS 	status = STATUS_SUCCESS;
     PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
 
     if (DeviceObject == mvolRootDeviceObject)
@@ -562,45 +585,12 @@ mvolRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         goto invalid_device;
     }
 
-    if (VolumeExtension->Active)
-    {
-		// DW-1300: get device and get reference.
-		struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
-		// DW-1363: prevent mounting volume when device is failed or below.
-		if (device && ((R_PRIMARY == device->resource->role[0]) && (device->resource->bPreDismountLock == FALSE) && device->disk_state[NOW] > D_FAILED || device->resource->bTempAllowMount == TRUE))
-        {
-			// DW-1300: put device reference count when no longer use.
-			kref_put(&device->kref, drbd_destroy_device);
-            if (g_read_filter)
-            {
-                goto async_read_filter;
-            }
-        }
-        else
-        {
-			// DW-1300: put device reference count when no longer use.
-			if (device)
-				kref_put(&device->kref, drbd_destroy_device);
-            goto invalid_device;
-        }
-    }
-
-	if (KeGetCurrentIrql() <= DISPATCH_LEVEL) {
-		status = IoAcquireRemoveLock(&VolumeExtension->RemoveLock, NULL);
-		if (!NT_SUCCESS(status)) {
-			Irp->IoStatus.Status = status;
-			Irp->IoStatus.Information = 0;
-			IoCompleteRequest(Irp, IO_NO_INCREMENT);
-			return status;
-		}
-	} 
-	
+    /* TODO read balancing */
     IoSkipCurrentIrpStackLocation(Irp);
-	status = IoCallDriver(VolumeExtension->TargetDeviceObject, Irp);
-	if (KeGetCurrentIrql() <= DISPATCH_LEVEL) {
-		IoReleaseRemoveLock(&VolumeExtension->RemoveLock, NULL);
-	}
-	return status;
+    return IoCallDriver(VolumeExtension->TargetDeviceObject, Irp);
+
+#if  0
+    struct drbd_device *device = get_device_quick(VolumeExtension);
 
 async_read_filter:
     {
@@ -623,6 +613,7 @@ invalid_device:
     IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     return STATUS_INVALID_DEVICE_REQUEST;
+#endif
 }
 
 NTSTATUS
