@@ -43,3 +43,13 @@ s{ (?<call> \b kmem_cache_create\( )
 	"$+{call}$+{arg1},$+{arg2},$+{arg3},$+{arg4},$+{arg5}, $id)"
 }ex;
 
+s{ (?<call> = \s* \b bio_alloc_drbd \( )
+	(?<arg> [^)]+  ) \)
+}{
+	my $id = sprintf("'%02XWD'", $counter++);
+	die "TOO BIG" if $counter > 0xff;
+
+	"$+{call}$+{arg}, $id)"
+}ex;
+
+
