@@ -17,15 +17,39 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+#include "drbd_windows.h"
+#undef _NTDDK_
+/* Can't include that without getting redefinition errors.
+ *   10.0.14393.0\km\ntddk.h(69): error C2371: 'PEPROCESS': redefinition; different basic types
+ *   10.0.14393.0\km\wdm.h(84): note: see declaration of 'PEPROCESS'
+#include <ntifs.h>
+ *   */
+NTSTATUS
+NTAPI
+ZwCreateEvent (
+	_Out_ PHANDLE EventHandle,
+	_In_ ACCESS_MASK DesiredAccess,
+	_In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
+	_In_ EVENT_TYPE EventType,
+	_In_ BOOLEAN InitialState
+	);
+NTSTATUS
+NTAPI
+ZwWaitForSingleObject(
+	_In_ HANDLE Handle,
+	_In_ BOOLEAN Alertable,
+	_In_opt_ PLARGE_INTEGER Timeout
+	);
+
+
+#include <ntddk.h>
 #include <stdint.h>
 #include <stdarg.h>
 #include <intrin.h>
-#include <ntifs.h>
-#include "drbd_windows.h"
 #include "wsk2.h"
 #include "drbd_wingenl.h"
-#include "linux-compat/idr.h"
-#include "../drbd/drbd-kernel-compat/drbd_wrappers.h"
+#include "linux/idr.h"
+#include "drbd_wrappers.h"
 #include "disp.h"
 #include "proto.h"
 
@@ -585,15 +609,15 @@ void bio_free(struct bio *bio)
 
 void bio_endio(struct bio *bio, int error)
 {
-	if (bio->bi_end_io) {
-		if(error) {
-			WDRBD_INFO("thread(%s) bio_endio error with err=%d.\n", current->comm, error);
-        	bio->bi_end_io((void*)FAULT_TEST_FLAG, (void*) bio, (void*) error);
-		} else { // if bio_endio is called with success(just in case)
-			//WDRBD_INFO("thread(%s) bio_endio with err=%d.\n", current->comm, error);
-        	bio->bi_end_io((void*)error, (void*) bio, (void*) error);
-		}
+    if (bio->bi_end_io) {
+	if(error) {
+	    WDRBD_INFO("thread(%s) bio_endio error with err=%d.\n", current->comm, error);
+	    bio->bi_end_io(FAULT_TEST_FLAG, bio, error);
+	} else { // if bio_endio is called with success(just in case)
+	    //WDRBD_INFO("thread(%s) bio_endio with err=%d.\n", current->comm, error);
+	    bio->bi_end_io(error, bio, error);
 	}
+    }
 }
 
 struct bio *bio_clone(struct bio * bio_src, int flag)
@@ -832,6 +856,7 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
     struct workqueue_struct * wq = kzalloc(sizeof(struct workqueue_struct), 0, '31DW');
     va_list args;
     va_start(args, flags);
+    NTSTATUS status;
 
 
     if (!wq)
@@ -845,10 +870,16 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
     KeInitializeSpinLock(&wq->list_lock);
 
     status = RtlStringCbVPrintfA(wq->name, sizeof(wq->name)-1, fmt, args);
+    if (status != STATUS_SUCCESS) {
+	WDRBD_ERROR("Can't RtlStringCbVPrintfA");
+        kfree(wq);
+        return NULL;
+    }
+
     wq->run = TRUE;
 
     HANDLE hThread = NULL;
-    NTSTATUS status = PsCreateSystemThread(&hThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, run_singlethread_workqueue, wq);
+    status = PsCreateSystemThread(&hThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, run_singlethread_workqueue, wq);
     if (!NT_SUCCESS(status))
     {
         WDRBD_ERROR("PsCreateSystemThread failed with status 0x%08X\n", status);
@@ -2101,7 +2132,7 @@ void query_targetdev(PVOLUME_EXTENSION pvext)
 	}
 
 	UNICODE_STRING new_name;
-	NTSTATUS status = IoVolumeDeviceToDosName(pvext->DeviceObject, &new_name);
+	NTSTATUS status = RtlVolumeDeviceToDosName(pvext->DeviceObject, &new_name);
 	// if not same, it need to re-query
 	if (!NT_SUCCESS(status)) {	// ex: CD-ROM
 		return;
@@ -2916,7 +2947,7 @@ void panic(const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	printk(KERN_EMERG fmt, args);
+	printk(fmt, args);
 	va_end(args);
 	KeBugCheckEx(0xddbd, (ULONG_PTR)__FILE__, (ULONG_PTR)__func__, 0x12345678, 0xd8bdd8bd);
 }
@@ -2963,6 +2994,8 @@ void list_cut_position(struct list_head *list, struct list_head *head, struct li
 
 int drbd_backing_bdev_events(struct gendisk *device)
 {
+    /* TODO */
+#if 0
 #ifdef _WIN32_GetDiskPerf
 	extern NTSTATUS mvolGetDiskPerf(PDEVICE_OBJECT TargetDeviceObject, PDISK_PERFORMANCE pDiskPerf);
 	NTSTATUS status;
@@ -2988,6 +3021,8 @@ int drbd_backing_bdev_events(struct gendisk *device)
 	}
 	return device->writ_cnt + device->read_cnt;
 #endif
+#endif
+	return 0;
 }
 
 char * get_ip4(char *buf, struct sockaddr_in *sockaddr)

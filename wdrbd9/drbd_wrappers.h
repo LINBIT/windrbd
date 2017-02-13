@@ -178,7 +178,7 @@ static inline int drbd_blkdev_put(struct block_device *bdev, fmode_t mode)
 
 
 typedef NTSTATUS BIO_ENDIO_TYPE;
-#define FAULT_TEST_FLAG     (ULONG_PTR)0x11223344
+#define FAULT_TEST_FLAG     ((ULONG_PTR)0x11223344)
 //#define BIO_ENDIO_ARGS(b,e) (ULONG_PTR fault_test_flag, struct bio *bio, int error)
 #define BIO_ENDIO_ARGS(b,e) (ULONG_PTR fault_test_flag, b, e)
 #define BIO_ENDIO_FN_START
