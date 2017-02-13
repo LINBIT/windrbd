@@ -9,7 +9,7 @@ TRANS_DEST := converted-sources/
 OV_INC := $(TRANS_DEST)/overrides/
 
 TRANSFORMATIONS := $(sort $(wildcard transform.d/*))
-ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | grep  -v drbd/drbd-kernel-compat | grep -v drbd_transport_tcp.c | grep -v drbd_polymorph_printk.h | grep -v drbd_buildtag.c)
+ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_tcp.c|drbd_polymorph_printk.h|drbd_buildtag.c|drbd_transport_template.c')
 TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG))
 
 export SHELL=bash
