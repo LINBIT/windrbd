@@ -434,12 +434,13 @@ mvolCreate(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     if (VolumeExtension->Active)
     {
 	struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
+	struct block_device *bdev = VolumeExtension->dev;
 
 	/* https://msdn.microsoft.com/en-us/library/windows/hardware/ff548630(v=vs.85).aspx
 	 * https://msdn.microsoft.com/en-us/library/windows/hardware/ff550729(v=vs.85).aspx
 	 * https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424(v=vs.85).aspx
 	 * */
-	err = drbd_open(device,
+	err = drbd_open(bdev,
 		(Irp->Parameters.Create.SecurityContext->DesiredAccess &
 		 FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES |
 		 FILE_APPEND_DATA | GENERIC_WRITE )
@@ -539,6 +540,14 @@ mvolSystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         return STATUS_SUCCESS;
     }
 
+    // TODO: what would we do here?
+    Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
+
+    return STATUS_INVALID_DEVICE_REQUEST;
+
+#if 0
+
 #ifdef _WIN32_MVFL
     if (VolumeExtension->Active)
     {
@@ -565,6 +574,7 @@ mvolSystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     IoSkipCurrentIrpStackLocation(Irp);
 
     return IoCallDriver(VolumeExtension->TargetDeviceObject, Irp);
+#endif
 }
 
 NTSTATUS
@@ -629,6 +639,7 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 
+#if 0
     if (VolumeExtension->Active) {
 		// DW-1300: get device and get reference.
 		struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
@@ -712,6 +723,7 @@ skip:
 		IoReleaseRemoveLock(&VolumeExtension->RemoveLock, NULL);
 	}
 	return status;
+#endif
 }
 
 extern int seq_file_idx;
