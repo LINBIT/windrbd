@@ -598,13 +598,13 @@ mvolRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         goto invalid_device;
     }
 
-    status = mvolReadWriteDevice(VolumeExtension, irp, IRP_MJ_READ);
+    status = mvolReadWriteDevice(VolumeExtension, Irp, IRP_MJ_READ);
     if (status != STATUS_SUCCESS)
     {
-	mvolLogError(VolumeExtension->DeviceObject, 111, MSG_, status);
-	irp->IoStatus.Information = 0;
-	irp->IoStatus.Status = status;
-	IoCompleteRequest(irp, (CCHAR)(NT_SUCCESS(irp->IoStatus.Status) ? IO_DISK_INCREMENT : IO_NO_INCREMENT));
+	mvolLogError(VolumeExtension->DeviceObject, 111, MSG_INSUFFICIENT_RESOURCES, status);
+	Irp->IoStatus.Information = 0;
+	Irp->IoStatus.Status = status;
+	IoCompleteRequest(Irp, (CCHAR)(NT_SUCCESS(Irp->IoStatus.Status) ? IO_DISK_INCREMENT : IO_NO_INCREMENT));
     }
     return status;
 
@@ -652,13 +652,13 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 
-    status = mvolReadWriteDevice(VolumeExtension, irp, IRP_MJ_WRITE);
+    status = mvolReadWriteDevice(VolumeExtension, Irp, IRP_MJ_WRITE);
     if (status != STATUS_SUCCESS)
     {
 	mvolLogError(VolumeExtension->DeviceObject, 111, MSG_WRITE_ERROR, status);
-	irp->IoStatus.Information = 0;
-	irp->IoStatus.Status = status;
-	IoCompleteRequest(irp, (CCHAR)(NT_SUCCESS(irp->IoStatus.Status) ? IO_DISK_INCREMENT : IO_NO_INCREMENT));
+	Irp->IoStatus.Information = 0;
+	Irp->IoStatus.Status = status;
+	IoCompleteRequest(Irp, (CCHAR)(NT_SUCCESS(Irp->IoStatus.Status) ? IO_DISK_INCREMENT : IO_NO_INCREMENT));
     }
     return status;
 
