@@ -20,6 +20,9 @@
 /* As good as it gets for now, don't know how to implement a true windows *ONCE* */
 #define WARN_ONCE(condition, format...) WARN(condition, format)
 
+/* not capable of anything... */
+#define capable(x) (false)
+
 #if 0
 struct kmem_cache {
 	NPAGED_LOOKASIDE_LIST cache;
