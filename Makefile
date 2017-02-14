@@ -59,7 +59,6 @@ patch: transform
 	cp ./wdrbd9/linux-compat/blkdev.h $(OV_INC)/linux
 	cp ./wdrbd9/linux-compat/bio.h $(OV_INC)/linux
 	cp ./wdrbd9/linux-compat/mempool.h $(OV_INC)/linux
-	cp ./wdrbd9/drbd_wingenl.h $(OV_INC)/
 	# <asm/...>
 	for f in kmap_types.h types.h unaligned.h byteorder.h; do ( cd $(OV_INC) && truncate -s0 asm/$$f;); done
 	# <net/...>
@@ -74,7 +73,7 @@ patch: transform
 	# <windows/>
 	for f in types.h ioctl.h drbd.h; do cp ./wdrbd9/windows/$$f $(OV_INC)/windows/; done
 	# standard
-	for f in mvolmsg.h disp.h mvolse.h send_buf.h wsk2.h; do cp ./wdrbd9/$$f $(OV_INC)/; done
+	for f in drbd_wingenl.h mvolmsg.h disp.h mvolse.h send_buf.h wsk2.h; do cp ./wdrbd9/$$f $(OV_INC)/; done
 	# additional toplevel
 	for f in stdint.h; do ( cd $(OV_INC) && truncate -s0 $$f;); done
 	cp ./wdrbd9/drbd_wrappers.h ./wdrbd9/proto.h $(OV_INC)
