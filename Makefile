@@ -59,6 +59,7 @@ patch: transform
 	cp ./wdrbd9/linux-compat/blkdev.h $(OV_INC)/linux
 	cp ./wdrbd9/linux-compat/bio.h $(OV_INC)/linux
 	cp ./wdrbd9/linux-compat/mempool.h $(OV_INC)/linux
+	cp ./windows/stringify.h $(OV_INC)/linux
 	# <asm/...>
 	for f in kmap_types.h types.h unaligned.h byteorder.h; do ( cd $(OV_INC) && truncate -s0 asm/$$f;); done
 	# <net/...>
