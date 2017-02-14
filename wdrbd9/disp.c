@@ -598,6 +598,16 @@ mvolRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         goto invalid_device;
     }
 
+    status = mvolReadWriteDevice(VolumeExtension, irp, IRP_MJ_READ);
+    if (status != STATUS_SUCCESS)
+    {
+	mvolLogError(VolumeExtension->DeviceObject, 111, MSG_, status);
+	irp->IoStatus.Information = 0;
+	irp->IoStatus.Status = status;
+	IoCompleteRequest(irp, (CCHAR)(NT_SUCCESS(irp->IoStatus.Status) ? IO_DISK_INCREMENT : IO_NO_INCREMENT));
+    }
+    return status;
+
     /* TODO read balancing */
     IoSkipCurrentIrpStackLocation(Irp);
     return IoCallDriver(VolumeExtension->TargetDeviceObject, Irp);
@@ -632,7 +642,7 @@ invalid_device:
 NTSTATUS
 mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
-	NTSTATUS status = STATUS_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
     PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
 
     if (DeviceObject == mvolRootDeviceObject)
@@ -641,6 +651,16 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         IoCompleteRequest(Irp, IO_NO_INCREMENT);
         return STATUS_INVALID_DEVICE_REQUEST;
     }
+
+    status = mvolReadWriteDevice(VolumeExtension, irp, IRP_MJ_WRITE);
+    if (status != STATUS_SUCCESS)
+    {
+	mvolLogError(VolumeExtension->DeviceObject, 111, MSG_WRITE_ERROR, status);
+	irp->IoStatus.Information = 0;
+	irp->IoStatus.Status = status;
+	IoCompleteRequest(irp, (CCHAR)(NT_SUCCESS(irp->IoStatus.Status) ? IO_DISK_INCREMENT : IO_NO_INCREMENT));
+    }
+    return status;
 
 #if 0
     if (VolumeExtension->Active) {
