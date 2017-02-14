@@ -17,19 +17,27 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include <ntifs.h>
 #include <wdm.h>
+/* Can't include ntifs.h, produces conflicts with wdm.h.
+ * #include <ntifs.h> */
+USHORT
+NTAPI
+RtlCaptureStackBackTrace(
+    _In_ ULONG FramesToSkip,
+    _In_ ULONG FramesToCapture,
+    _Out_writes_to_(FramesToCapture, return) PVOID * BackTrace,
+    _Out_opt_ PULONG BackTraceHash
+    );
+
 #include "drbd_windows.h"
 #include "drbd_wingenl.h"	
 #include "proto.h"
 
-#include "linux-compat/idr.h"
+#include "linux/idr.h"
 #include "drbd_int.h"
-#include "../drbd/drbd-kernel-compat/drbd_wrappers.h"
+#include "drbd_wrappers.h"
 
-#ifdef _WIN32
 #include <ntdddisk.h>
-#endif
 
 #ifdef _WIN32_WPP
 #include "sub.tmh" 
@@ -242,6 +250,16 @@ mvolDeviceUsage(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	return status;
 }
 
+void bio_finished(ULONG_PTR fault_test_flag, struct bio * bio, int error) {
+   PIRP irp = bio->pMasterIrp;
+
+   /* TODO handle split-up bios! */
+   IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+
+   bio_free(bio);
+}
+
+
 int DoSplitIo(PVOLUME_EXTENSION VolumeExtension, ULONG io, PIRP upper_pirp, struct splitInfo *splitInfo,
     long split_id, long split_total_id, long split_total_length, struct drbd_device *device, PVOID buffer, LARGE_INTEGER offset, ULONG length)
 {
@@ -267,17 +285,13 @@ int DoSplitIo(PVOLUME_EXTENSION VolumeExtension, ULONG io, PIRP upper_pirp, stru
 	bio->bi_bdev = VolumeExtension->dev;
 	bio->bi_rw |= (io == IRP_MJ_WRITE) ? WRITE : READ;
 	bio->bi_size = length;
+	bio->bi_end_io = bio_finished;
 	// save original Master Irp's Stack Flags
 	bio->MasterIrpStackFlags = ((PIO_STACK_LOCATION)IoGetCurrentIrpStackLocation(upper_pirp))->Flags;
 	
-	status = drbd_make_request(device->rq_queue, bio); // drbd local I/O entry point 
-	if (STATUS_SUCCESS != status)
-	{
-		bio_free(bio);
-		status = STATUS_INSUFFICIENT_RESOURCES;
-	}
+	drbd_make_request(device->rq_queue, bio); // drbd local I/O entry point 
 
-	return status;
+	return STATUS_PENDING;
 }
 
 NTSTATUS
@@ -373,9 +387,10 @@ mvolReadWriteDevice(PVOLUME_EXTENSION VolumeExtension, PIRP Irp, ULONG Io)
 
 			if ((status = DoSplitIo(VolumeExtension, Io, Irp, splitInfo, io_id, splitted_io_count, length, device, newbuf, offset, slice)) != 0)
 #else
-            if ((status = DoSplitIo(VolumeExtension, Io, Irp, splitInfo, io_id, splitted_io_count, length, device, buffer, offset, slice)))
+			if ((status = DoSplitIo(VolumeExtension, Io, Irp, splitInfo, io_id, splitted_io_count, length, device, buffer, offset, slice)))
 #endif
 			{
+			    if (status != STATUS_PENDING)
 				goto fail_put_dev;
 			}
 
