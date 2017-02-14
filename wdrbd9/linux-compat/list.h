@@ -1,5 +1,7 @@
-﻿#ifndef __DRBD_WINLIST_H__
-#define __DRBD_WINLIST_H__
+﻿#ifndef __LIST_H__
+#define __LIST_H__
+
+#include <linux/stddef.h>
 
 #ifdef CONFIG_ILLEGAL_POINTER_VALUE
 #define POISON_POINTER_DELTA _AC(CONFIG_ILLEGAL_POINTER_VALUE, UL)
@@ -22,116 +24,62 @@ extern void list_del_init(struct list_head *entry);
 #define LIST_HEAD_INIT(name)			{ &(name), &(name) }
 #define LIST_HEAD(name)				struct list_head name = LIST_HEAD_INIT(name)
 
-#ifdef _WIN32
-static void INIT_LIST_HEAD(struct list_head *list)
-#else
-static __inline void INIT_LIST_HEAD(struct list_head *list)
-#endif
+static inline void INIT_LIST_HEAD(struct list_head *list)
 {
-#ifdef _WIN32
-	if(list == 0) {
-		return;
-	}
-#endif
 	list->next = list;
 	list->prev = list;
 }
 
-#ifdef _WIN32
-static void __list_add(struct list_head *new, struct list_head *prev, struct list_head *next)
-#else
-static __inline void __list_add(struct list_head *new, struct list_head *prev, struct list_head *next)
-#endif
+static inline void __list_add(struct list_head *new, struct list_head *prev, struct list_head *next)
 {
-#ifdef _WIN32
-	if(new == 0 || prev == 0 || next == 0) {
-		return;
-	}
-#endif
 	next->prev = new;
 	new->next = next;
 	new->prev = prev;
 	prev->next = new;
 }
 
-#ifdef _WIN32
-static void list_add(struct list_head *new, struct list_head *head)
-#else
-static __inline void list_add(struct list_head *new, struct list_head *head)
-#endif
+static inline void list_add(struct list_head *new, struct list_head *head)
 {
-#ifdef _WIN32
-	if(new == 0 || head == 0) {
-		return;
-	}
-#endif
 	__list_add(new, head, head->next);
 }
 
-#ifdef _WIN32
-static void __list_del(struct list_head * prev, struct list_head * next)
-#else
-static __inline void __list_del(struct list_head * prev, struct list_head * next)
-#endif
+static inline void __list_del(struct list_head * prev, struct list_head * next)
 {
-#ifdef _WIN32
-	if(prev == 0 || next == 0) {
-		return;
-	}
-#endif
 	next->prev = prev;
 	prev->next = next;
 }
 
-#ifdef _WIN32
-static void list_del(struct list_head *entry)
-#else
-static __inline void list_del(struct list_head *entry)
-#endif
+static inline void list_del(struct list_head *entry)
 {
-#ifdef _WIN32
-	if(entry == 0 || entry->prev == 0 || entry->next == 0) {
-		return;
-	} 
-#endif
 	__list_del(entry->prev, entry->next);
 	entry->next = LIST_POISON1;
 	entry->prev = LIST_POISON2;
 }
 
-#ifdef _WIN32
-static int list_empty(const struct list_head *head)
-#else
-static __inline int list_empty(const struct list_head *head)
-#endif
+static inline int list_empty(const struct list_head *head)
 {
-#ifdef _WIN32
-	if(head == 0) {
-		return 1;
-	} 
-#endif
 	return head->next == head;
 }
 
-static __inline void list_add_tail(struct list_head *new, struct list_head *head)
+static inline void list_add_tail(struct list_head *new, struct list_head *head)
 {
 	extern long *g_mdev_ptr, g_mdev_ptr_test;
 	__list_add(new, head->prev, head);
 }
 
-static __inline void list_move(struct list_head *list, struct list_head *head)
+static inline void list_move(struct list_head *list, struct list_head *head)
 {
 	__list_del(list->prev, list->next);
 	list_add(list, head);
 }
 
-static __inline void list_move_tail(struct list_head *list, struct list_head *head)
+static inline void list_move_tail(struct list_head *list, struct list_head *head)
 {
 	__list_del(list->prev, list->next);
 	list_add_tail(list, head);
 }
 
-static __inline void __list_splice(const struct list_head *list, struct list_head *prev, struct list_head *next)
+static inline void __list_splice(const struct list_head *list, struct list_head *prev, struct list_head *next)
 {
 	struct list_head *first = list->next;
 	struct list_head *last = list->prev;
@@ -142,7 +90,7 @@ static __inline void __list_splice(const struct list_head *list, struct list_hea
 	next->prev = last;
 }
 
-static __inline void list_splice_init(struct list_head *list, struct list_head *head)
+static inline void list_splice_init(struct list_head *list, struct list_head *head)
 {
 	if (!list_empty(list)) {
 		__list_splice(list, head, head->next);
@@ -158,7 +106,7 @@ static __inline void list_splice_init(struct list_head *list, struct list_head *
 * Each of the lists is a queue.
 * The list at @list is reinitialised
 */
-static __inline void list_splice_tail_init(struct list_head *list,
+static inline void list_splice_tail_init(struct list_head *list,
                         struct list_head *head)
 {
     if (!list_empty(list))
@@ -168,13 +116,13 @@ static __inline void list_splice_tail_init(struct list_head *list,
     }
 }
 
-static __inline int list_empty_careful(const struct list_head *head)
+static inline int list_empty_careful(const struct list_head *head)
 {
      struct list_head *next = head->next;
      return (next == head) && (next == head->prev);
 }
 
-static __inline int list_is_last(const struct list_head *list, const struct list_head *head)
+static inline int list_is_last(const struct list_head *list, const struct list_head *head)
 {
 	return list->next == head;
 }
@@ -211,18 +159,10 @@ static __inline int list_is_last(const struct list_head *list, const struct list
  * @head:	the head for your list.
  * @member:	the name of the list_struct within the struct.
  */
-#ifdef _WIN32 // DW-987 fix NULL reference by container_of
 #define list_for_each_entry(type, pos, head, member) \
-	if((head)->next != NULL )	\
 		for (pos = list_entry((head)->next, type, member);	\
 				&pos->member != (head); 	\
 				pos = list_entry(pos->member.next, type, member))
-#else
-#define list_for_each_entry(pos, head, member)				\
-		for (pos = list_entry((head)->next, typeof(*pos), member);	\
-			 &pos->member != (head); 	\
-			 pos = list_entry(pos->member.next, typeof(*pos), member))
-#endif
 
 /**
  * list_for_each_entry_reverse - iterate backwards over list of given type.
@@ -230,18 +170,10 @@ static __inline int list_is_last(const struct list_head *list, const struct list
  * @head:	the head for your list.
  * @member:	the name of the list_struct within the struct.
  */
-#ifdef _WIN32 // DW-987 fix NULL reference by container_of
 #define list_for_each_entry_reverse(type, pos, head, member)			\
-	if((head)->prev != NULL )	\
 		for (pos = list_entry((head)->prev, type, member);	\
 		     prefetch(pos->member.prev), &pos->member != (head); 	\
 		     pos = list_entry(pos->member.prev, type, member))
-#else
-#define list_for_each_entry_reverse(pos, head, member)			\
-	for (pos = list_entry((head)->prev, typeof(*pos), member);	\
-	     prefetch(pos->member.prev), &pos->member != (head); 	\
-	     pos = list_entry(pos->member.prev, typeof(*pos), member))
-#endif
 
 #ifdef _WIN32 // V9
 #define list_prepare_entry(type, pos, head, member) \
@@ -257,18 +189,10 @@ static __inline int list_is_last(const struct list_head *list, const struct list
  * Continue to iterate over list of given type, continuing after
  * the current position.
  */
-#ifdef _WIN32 // DW-987 fix NULL reference by container_of
 #define list_for_each_entry_continue(type, pos, head, member) 		\
-	if(pos->member.next != NULL )	\
 		for (pos = list_entry(pos->member.next, type, member);	\
 		     prefetch(pos->member.next), &pos->member != (head);	\
 		     pos = list_entry(pos->member.next, type, member))
-#else
-#define list_for_each_entry_continue(pos, head, member) 		\
-	for (pos = list_entry(pos->member.next, typeof(*pos), member);	\
-	     prefetch(pos->member.next), &pos->member != (head);	\
-	     pos = list_entry(pos->member.next, typeof(*pos), member))
-#endif
 
 /**
  * list_for_each_entry_safe - iterate over list of given type safe against removal of list entry
@@ -277,20 +201,11 @@ static __inline int list_is_last(const struct list_head *list, const struct list
  * @head:	the head for your list.
  * @member:	the name of the list_struct within the struct.
  */
-#ifdef _WIN32 // DW-987 fix NULL reference by container_of
 #define list_for_each_entry_safe(type, pos, n, head, member)                  \
-		if((head)->next != NULL )	\
 			for (pos = list_entry((head)->next, type, member),      \
 						n = list_entry(pos->member.next, type, member); \
 					&pos->member != (head);                                    \
 					pos = n, n = list_entry(n->member.next, type, member))
-#else
-#define list_for_each_entry_safe(pos, n, head, member)                  \
-			for (pos = list_entry((head)->next, typeof(*pos), member),      \
-					 n = list_entry(pos->member.next, typeof(*pos), member); \
-				 &pos->member != (head);                                    \
-				  pos = n, n = list_entry(n->member.next, typeof(*n), member))
-#endif
 /**
  * list_for_each_entry_safe_from
  * @pos:	the type * to use as a loop cursor.
@@ -301,18 +216,10 @@ static __inline int list_is_last(const struct list_head *list, const struct list
  * Iterate over list of given type from current point, safe against
  * removal of list entry.
  */
-#ifdef _WIN32 // DW-987 fix NULL reference by container_of
 #define list_for_each_entry_safe_from(type, pos, n, head, member) 			\
-	if(pos->member.next != NULL )	\
 		for (n = list_entry(pos->member.next, type, member);		\
 				&pos->member != (head);						\
 				pos = n, n = list_entry(n->member.next, type, member))
-#else
-#define list_for_each_entry_safe_from(pos, n, head, member) 			\
-		for (n = list_entry(pos->member.next, typeof(*pos), member);		\
-			 &pos->member != (head);						\
-			 pos = n, n = list_entry(n->member.next, typeof(*n), member))
-#endif
 
 #define hlist_entry(ptr, type, member) container_of(ptr,type,member)
 #endif
