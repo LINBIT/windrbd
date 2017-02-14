@@ -435,16 +435,19 @@ mvolCreate(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     {
 	struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
 	struct block_device *bdev = VolumeExtension->dev;
+	PIO_STACK_LOCATION psl;
+
+
+	psl = IoGetCurrentIrpStackLocation(Irp);
 
 	/* https://msdn.microsoft.com/en-us/library/windows/hardware/ff548630(v=vs.85).aspx
 	 * https://msdn.microsoft.com/en-us/library/windows/hardware/ff550729(v=vs.85).aspx
 	 * https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424(v=vs.85).aspx
 	 * */
 	err = drbd_open(bdev,
-		(Irp->Parameters.Create.SecurityContext->DesiredAccess &
-		 FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES |
-		 FILE_APPEND_DATA | GENERIC_WRITE )
-		? FMODE_WRITE : 0);
+		(psl->Parameters.Create.SecurityContext->DesiredAccess &
+		 (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES |
+		  FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0);
 
 	if (err < 0)
 	{
@@ -616,6 +619,7 @@ async_read_filter:
         IO_THREAD_SIG(pThreadInfo);
     }
     return STATUS_PENDING;
+#endif
 
 invalid_device:
     Irp->IoStatus.Information = 0;
@@ -623,7 +627,6 @@ invalid_device:
     IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     return STATUS_INVALID_DEVICE_REQUEST;
-#endif
 }
 
 NTSTATUS
