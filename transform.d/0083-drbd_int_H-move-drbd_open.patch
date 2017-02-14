@@ -1,0 +1,11 @@
+diff --git i/drbd/drbd_int.h w/drbd/drbd_int.h
+index a9afac8c..a285fb9f 100644
+--- i/drbd/drbd_int.h
++++ w/drbd/drbd_int.h
+@@ -2783,4 +2783,6 @@ static inline struct drbd_connection *first_connection(struct drbd_resource *res
+ 
+ #define NODE_MASK(id) ((u64)1 << (id))
+ 
++int drbd_open(struct block_device *bdev, fmode_t mode);
++
+ #endif
