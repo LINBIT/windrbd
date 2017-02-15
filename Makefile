@@ -38,7 +38,7 @@ patch: transform
 	cp -a ./ms-cl.cmd $(TRANS_DEST)/drbd/
 	# INCLUDES
 	mkdir -p $(OV_INC)/{linux,asm,sys,net,linux-compat,windows,crypto}
-	./transform.d/0111-macro-varargs < wdrbd9/generic_compat_stuff.h > $(OV_INC)/generic_compat_stuff.h
+	./transform.d/211-macro-varargs < wdrbd9/generic_compat_stuff.h > $(OV_INC)/generic_compat_stuff.h
 	cp ./wdrbd9/drbd_windows.h $(OV_INC)/
 	cp ./wdrbd9/windows/wingenl.h $(OV_INC)/
 	# replacing files in <drbd>
