@@ -10,7 +10,11 @@
 #define MODULE_PARM_DESC(egal, ...)
 #define MODULE_ALIAS_BLOCKDEV_MAJOR(egal)
 #define MODULE_PARM_DESC(egal, ...)
+#define EXPORT_SYMBOL(...)
 
+
+#define module_init(...)
+#define module_exit(...)
 #define module_param(...)
 #define module_param_string(...)
 #define put_page(egal)
