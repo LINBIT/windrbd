@@ -1,0 +1,55 @@
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index e207d80..56fcab0 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3827,7 +3827,7 @@ void drbd_put_connection(struct drbd_connection *connection)
+ 	kref_sub(&connection->kref, refs, drbd_destroy_connection);
+ }
+ 
+-static int __init drbd_init(void)
++int __init drbd_init(void)
+ {
+ 	int err;
+ 
+@@ -3842,19 +3842,11 @@ static int __init drbd_init(void)
+ #endif
+ 	}
+ 
+-	err = register_blkdev(DRBD_MAJOR, "drbd");
+-	if (err) {
+-		pr_err("unable to register block device major %d\n",
+-		       DRBD_MAJOR);
+-		return err;
+-	}
+-
+ 	/*
+ 	 * allocate all necessary structs
+ 	 */
+ 	init_waitqueue_head(&drbd_pp_wait);
+ 
+-	drbd_proc = NULL; /* play safe for drbd_cleanup */
+ 	idr_init(&drbd_devices);
+ 
+ 	mutex_init(&resources_mutex);
+@@ -3871,11 +3863,6 @@ static int __init drbd_init(void)
+ 		goto fail;
+ 
+ 	err = -ENOMEM;
+-	drbd_proc = proc_create_data("drbd", S_IFREG | S_IRUGO , NULL, &drbd_proc_fops, NULL);
+-	if (!drbd_proc)	{
+-		pr_err("unable to register proc file\n");
+-		goto fail;
+-	}
+ 
+ 	retry.wq = create_singlethread_workqueue("drbd-reissue");
+ 	if (!retry.wq) {
+@@ -3886,9 +3873,6 @@ static int __init drbd_init(void)
+ 	spin_lock_init(&retry.lock);
+ 	INIT_LIST_HEAD(&retry.writes);
+ 
+-	if (drbd_debugfs_init())
+-		pr_notice("failed to initialize debugfs -- will not be available\n");
+-
+ 	pr_info("initialized. "
+ 	       "Version: " REL_VERSION " (api:%d/proto:%d-%d)\n",
+ 	       GENL_MAGIC_VERSION, PRO_VERSION_MIN, PRO_VERSION_MAX);
