@@ -7,7 +7,7 @@ sub BEGIN {
 %types = qw(
                 e                    lc_element
                 device               drbd_device
-                debug_lock           kref_debug_info
+                debug_info           kref_debug_info
                 other_device         drbd_device
                 connection           drbd_connection
                 listener             drbd_listener    
