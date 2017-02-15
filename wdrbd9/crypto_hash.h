@@ -58,7 +58,7 @@ crypto_hash_digest(struct hash_desc *desc, struct scatterlist *sg,
 	return 0;
 }
 
-static inline void crypto_free_ahash(struct crypto_shash *tfm)
+static inline void crypto_free_shash(struct crypto_shash *tfm)
 {
 	if (!tfm)
 		return;
@@ -104,5 +104,5 @@ static inline int crypto_hash_final(struct hash_desc *desc, u8 *out)
 #define crypto_ahash			crypto_shash
 #define crypto_ahash_digestsize		crypto_shash_digestsize
 #define crypto_alloc_ahash		crypto_alloc_shash
-
+#define crypto_free_ahash               crypto_free_shash
 #endif
