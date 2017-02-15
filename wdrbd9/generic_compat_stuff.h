@@ -33,6 +33,7 @@ struct kmem_cache {
 };
 #endif
 
+#define swahw32(x) ( (__u32)((((__u32)(x) & (__u32)0x0000ffffUL)<<16) | (((__u32)(x) & (__u32)0xffff0000UL)>>16)) )
 
 #define __always_inline inline
 #define __inline inline
