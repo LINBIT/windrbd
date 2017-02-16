@@ -62,10 +62,5 @@ for TRANS in $TRANSFORMATIONS; do
 	    fi
     esac
 done
-if cmp --silent $TMP $TARGET
-then
-    rm $TMP
-else
-    mv $TMP $TARGET
-fi
+mv $TMP $TARGET
 msg " MOVE     : %-40s %s\n" $TMP $TARGET
