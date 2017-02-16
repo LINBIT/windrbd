@@ -14,7 +14,7 @@ TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG))
 
 export SHELL=bash
 
-all: transform patch msbuild
+all: trans patch msbuild
 
 # can not regenerate those scripts
 $(TRANSFORMATIONS): ;
@@ -22,7 +22,7 @@ $(TRANSFORMATIONS): ;
 # can not regenerate the originals
 $(ORIG): ;
 
-$(TRANSFORMED): $(TRANSFORMATIONS) Makefile
+$(TRANSFORMED): $(TRANSFORMATIONS) Makefile transform
 
 $(TRANS_DEST)% : $(TRANS_SRC)%
 	@./transform $< $@
@@ -30,9 +30,9 @@ $(TRANS_DEST)% : $(TRANS_SRC)%
 $(TRANS_DEST).generated: $(ORIG)
 	echo $(TRANSFORMED) > $(TRANS_DEST).generated
 
-transform: $(TRANSFORMED) $(TRANS_DEST).generated
+trans: $(TRANSFORMED) $(TRANS_DEST).generated
 
-patch: transform
+patch: trans
 	echo "const char *drbd_buildtag(void){return \"WDRBD: `git describe --tags --always --dirty`\";}" > $(TRANS_DEST)/drbd/drbd_buildtag.c
 	cp -a ./Makefile.win $(TRANS_DEST)/drbd/Makefile
 	cp -a ./ms-cl.cmd $(TRANS_DEST)/drbd/
