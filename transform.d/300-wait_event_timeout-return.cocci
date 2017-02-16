@@ -6,15 +6,19 @@ statement S1, S2;
 func(...) {
 +     long remaining_time;
       <+...
+(
 -     if (wait_event_timeout(E)) S1 else S2
 +     wait_event_timeout(remaining_time, E); if (remaining_time) S1 else S2
+|
+-     wait_event_timeout(E);
++     wait_event_timeout(remaining_time, E);
+)
       ...+>
 }
 
 @@
 identifier func;
 expression list E;
-statement S1, S2;
 @@
 func(...) {
 +     long remaining_time;
@@ -27,22 +31,6 @@ func(...) {
 @@
 identifier func;
 expression list E;
-statement S0;
-statement S1, S2;
-@@
-func(...) {
-+     long remaining_time;
-      <+...
-      S0;
--     wait_event_timeout(E);
-+     wait_event_timeout(remaining_time, E);
-      ...+>
-}
-
-@@
-identifier func;
-expression list E;
-statement S1, S2;
 @@
 func(...) {
 +     int err_ignored;
