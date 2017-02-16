@@ -891,11 +891,11 @@ static inline struct sk_buff *genlmsg_new(size_t payload, gfp_t flags)
  * changed in 17c157c8 (v2.6.20-rc2).  genlmsg_put_reply() was introduced in
  * 17c157c8.  We replace the compat_genlmsg_put() from 482a8524.
  */
-extern void *compat_genlmsg_put(struct msg_buff *skb, u32 pid, u32 seq,
+extern void *compat_genlmsg_put(struct sk_buff *skb, u32 pid, u32 seq,
 		           struct genl_family *family, int flags, u8 cmd);
 #define genlmsg_put compat_genlmsg_put
 
-extern void *genlmsg_put_reply(struct msg_buff *skb,
+extern void *genlmsg_put_reply(struct sk_buff *skb,
                          struct genl_info *info,
                          struct genl_family *family,
                          int flags, u8 cmd);
@@ -905,16 +905,11 @@ extern void *genlmsg_put_reply(struct msg_buff *skb,
  * (v2.6.19-rc1).
  */
 
-#ifdef COMPAT_NEED_GENLMSG_MULTICAST_WRAPPER
-static inline int compat_genlmsg_multicast(struct sk_buff *skb, u32 pid,
+static inline int genlmsg_multicast(struct sk_buff *skb, u32 pid,
 					   unsigned int group, gfp_t flags)
 {
-	return genlmsg_multicast(skb, pid, group);
+    /* Only declaration needed */
 }
-
-#define genlmsg_multicast compat_genlmsg_multicast
-
-#endif
 
 /*
  * Dynamic generic netlink multicast groups were introduced in mainline commit
@@ -1085,18 +1080,16 @@ static inline void genl_unlock(void)  { }
 #endif
 
 
-#if 0
-#if !defined(QUEUE_FLAG_DISCARD) || !defined(QUEUE_FLAG_SECDISCARD)
 # define queue_flag_set_unlocked(F, Q)				\
     do {							\
         if ((F) != -1)					\
-            __set_bit(F, Q);		\
+            __set_bit(F, &(Q)->queue_flags);		\
     } while(0)
 
 # define queue_flag_clear_unlocked(F, Q)			\
     do {							\
         if ((F) != -1)					\
-            clear_bit(F, Q);	\
+            clear_bit(F, &(Q)->queue_flags);	\
     } while (0)
 # ifndef blk_queue_discard
 #  define blk_queue_discard(q)   (0)
@@ -1107,8 +1100,6 @@ static inline void genl_unlock(void)  { }
 #  define blk_queue_secdiscard(q)   (0)
 #  define QUEUE_FLAG_SECDISCARD    (-1)
 # endif
-#endif
-#endif
 
 #ifndef COMPAT_HAVE_BLK_SET_STACKING_LIMITS
 static inline void blk_set_stacking_limits(struct queue_limits *lim)

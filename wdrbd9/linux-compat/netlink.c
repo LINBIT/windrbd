@@ -1,97 +1,4 @@
-﻿#include "drbd_windows.h"
-#include "wsk2.h"
-#include "drbd_wingenl.h"
-#include "linux-compat/idr.h"
-#include "Drbd_int.h"
-#include "../../drbd/drbd_nla.h"
-
-extern int drbd_tla_parse(struct nlmsghdr *nlh, struct nlattr **attr);
-
-extern int drbd_adm_new_resource(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_del_resource(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_down(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_set_role(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_attach(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_disk_opts(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_detach(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_connect(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_net_opts(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_resize(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_start_ov(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_new_c_uuid(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_disconnect(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_invalidate(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_invalidate_peer(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_pause_sync(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_resume_sync(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_suspend_io(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_resume_io(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_outdate(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_resource_opts(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_get_status(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_adm_get_timeout_type(struct sk_buff *skb, struct genl_info *info);
-/* .dumpit */
-#ifdef _WIN32
-extern int drbd_adm_send_reply(struct sk_buff *skb, struct genl_info *info);
-#else
-extern void drbd_adm_send_reply(struct sk_buff *skb, struct genl_info *info);
-#endif
-
-extern int _drbd_adm_get_status(struct sk_buff *skb, struct genl_info * pinfo);
-
-/*
-static struct genl_ops drbd_genl_ops[] = {
-{ .doit = drbd_adm_new_minor, .flags = 0x01, .cmd = DRBD_ADM_NEW_MINOR, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_del_minor, .flags = 0x01, .cmd = DRBD_ADM_DEL_MINOR, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_new_resource, .flags = 0x01, .cmd = DRBD_ADM_NEW_RESOURCE, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_del_resource, .flags = 0x01, .cmd = DRBD_ADM_DEL_RESOURCE, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_resource_opts, .flags = 0x01, .cmd = DRBD_ADM_RESOURCE_OPTS, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_new_peer, .flags = 0x01, .cmd = DRBD_ADM_NEW_PEER, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_new_path, .flags = 0x01, .cmd = DRBD_ADM_NEW_PATH, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_del_peer, .flags = 0x01, .cmd = DRBD_ADM_DEL_PEER, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_del_path, .flags = 0x01, .cmd = DRBD_ADM_DEL_PATH, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_connect, .flags = 0x01, .cmd = DRBD_ADM_CONNECT, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_net_opts, .flags = 0x01, .cmd = DRBD_ADM_CHG_NET_OPTS, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_disconnect, .flags = 0x01, .cmd = DRBD_ADM_DISCONNECT, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_attach, .flags = 0x01, .cmd = DRBD_ADM_ATTACH, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_disk_opts, .flags = 0x01, .cmd = DRBD_ADM_CHG_DISK_OPTS, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_resize, .flags = 0x01, .cmd = DRBD_ADM_RESIZE, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_set_role, .flags = 0x01, .cmd = DRBD_ADM_PRIMARY, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_set_role, .flags = 0x01, .cmd = DRBD_ADM_SECONDARY, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_new_c_uuid, .flags = 0x01, .cmd = DRBD_ADM_NEW_C_UUID, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_start_ov, .flags = 0x01, .cmd = DRBD_ADM_START_OV, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_detach, .flags = 0x01, .cmd = DRBD_ADM_DETACH, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_invalidate, .flags = 0x01, .cmd = DRBD_ADM_INVALIDATE, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_invalidate_peer, .flags = 0x01, .cmd = DRBD_ADM_INVAL_PEER, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_pause_sync, .flags = 0x01, .cmd = DRBD_ADM_PAUSE_SYNC, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_resume_sync, .flags = 0x01, .cmd = DRBD_ADM_RESUME_SYNC, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_suspend_io, .flags = 0x01, .cmd = DRBD_ADM_SUSPEND_IO, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_resume_io, .flags = 0x01, .cmd = DRBD_ADM_RESUME_IO, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_outdate, .flags = 0x01, .cmd = DRBD_ADM_OUTDATE, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_get_timeout_type, .flags = 0x01, .cmd = DRBD_ADM_GET_TIMEOUT_TYPE, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_down, .flags = 0x01, .cmd = DRBD_ADM_DOWN, .policy = drbd_tla_nl_policy, },
-{ .dumpit = drbd_adm_dump_resources, .cmd = DRBD_ADM_GET_RESOURCES, .policy = drbd_tla_nl_policy, },
-{ .dumpit = drbd_adm_dump_devices, .done = drbd_adm_dump_devices_done, .cmd = DRBD_ADM_GET_DEVICES, .policy = drbd_tla_nl_policy, },
-{ .dumpit = drbd_adm_dump_connections, .done = drbd_adm_dump_connections_done, .cmd = DRBD_ADM_GET_CONNECTIONS, .policy = drbd_tla_nl_policy, },
-{ .dumpit = drbd_adm_dump_peer_devices, .done = drbd_adm_dump_peer_devices_done, .cmd = DRBD_ADM_GET_PEER_DEVICES, .policy = drbd_tla_nl_policy, },
-{ .dumpit = drbd_adm_get_initial_state, .cmd = DRBD_ADM_GET_INITIAL_STATE, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_forget_peer, .flags = 0x01, .cmd = DRBD_ADM_FORGET_PEER, .policy = drbd_tla_nl_policy, },
-{ .doit = drbd_adm_peer_device_opts, .flags = 0x01, .cmd = DRBD_ADM_CHG_PEER_DEVICE_OPTS, .policy = drbd_tla_nl_policy, },
-};
-*/
-
-/*
-static struct genl_family drbd_genl_family  = {
-	.id = 0,
-	.name = "drbd",
-	.version = 2,
-
-	.hdrsize = (((sizeof(struct drbd_genlmsghdr)) + 4 - 1) & ~(4 - 1)),
-	.maxattr = (sizeof(drbd_tla_nl_policy) / sizeof((drbd_tla_nl_policy)[0]))-1,
-};
-*/
-
-#define cli_info(_minor, _fmt, ...)
+﻿#define cli_info(_minor, _fmt, ...)
 
 // globals
 
@@ -269,9 +176,7 @@ static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netli
         hdr->reserved = 0;
     }
 
-	if(drbd_adm_send_reply(skb, info) < 0) {
-		err = -1;
-	}
+    drbd_adm_send_reply(skb, info);
 
     WDRBD_TRACE_NETLINK("send_reply(%d) seq(%d)\n", err, cb->nlh->nlmsg_seq);
 
@@ -544,6 +449,32 @@ static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 	return 0;
 }
 
+
+int drbd_tla_parse(struct nlmsghdr *nlh, struct nlattr **attr)
+{
+    drbd_genl_family.id = nlh->nlmsg_type;
+
+    return nla_parse(attr, ARRAY_SIZE(drbd_tla_nl_policy) - 1,
+	    nlmsg_attrdata(nlh, GENL_HDRLEN + drbd_genl_family.hdrsize),
+	    nlmsg_attrlen(nlh, GENL_HDRLEN + drbd_genl_family.hdrsize),
+	    drbd_tla_nl_policy);
+}
+
+struct genl_ops * get_drbd_genl_ops(u8 cmd)
+{
+    struct genl_ops * pops = NULL;
+    for (int i = 0; i < sizeof(drbd_genl_ops) / sizeof((drbd_genl_ops)[0]); i++)
+    {
+	if (drbd_genl_ops[i].cmd == cmd)
+	{
+	    return &drbd_genl_ops[i];
+	}
+    }
+
+    return NULL;
+}
+
+
 VOID
 NetlinkWorkThread(PVOID context)
 {
@@ -567,113 +498,113 @@ NetlinkWorkThread(PVOID context)
 
     while (TRUE)
     {
-        readcount = Receive(socket, psock_buf, NLMSG_GOODSIZE, 0, 0);
+	readcount = Receive(socket, psock_buf, NLMSG_GOODSIZE, 0, 0);
 
-        if (readcount == 0)
-        {
-            //WDRBD_INFO("peer closed\n"); // disconenct 명령??
-            goto cleanup;
-        }
-        else if(readcount < 0)
-        {
-            WDRBD_ERROR("Receive error = 0x%x\n", readcount);
-            goto cleanup;
-        }
+	if (readcount == 0)
+	{
+	    //WDRBD_INFO("peer closed\n"); // disconenct 명령??
+	    goto cleanup;
+	}
+	else if(readcount < 0)
+	{
+	    WDRBD_ERROR("Receive error = 0x%x\n", readcount);
+	    goto cleanup;
+	}
 
-		struct nlmsghdr *nlh = (struct nlmsghdr *)psock_buf;
+	struct nlmsghdr *nlh = (struct nlmsghdr *)psock_buf;
 
-        if (strstr(psock_buf, DRBD_EVENT_SOCKET_STRING))
-        {
-			WDRBD_TRACE("DRBD_EVENT_SOCKET_STRING received. socket(0x%p)\n", socket);
-			if (!push_msocket_entry(socket)) {
-				goto cleanup;
-			}
+	if (strstr(psock_buf, DRBD_EVENT_SOCKET_STRING))
+	{
+	    WDRBD_TRACE("DRBD_EVENT_SOCKET_STRING received. socket(0x%p)\n", socket);
+	    if (!push_msocket_entry(socket)) {
+		goto cleanup;
+	    }
 
-			if (strlen(DRBD_EVENT_SOCKET_STRING) < readcount)
-			{
-				nlh = (struct nlmsghdr *)((char*)psock_buf + strlen(DRBD_EVENT_SOCKET_STRING));
-				readcount -= strlen(DRBD_EVENT_SOCKET_STRING);
-			}
-			else
-			{
-				continue;
-			}
-        }
+	    if (strlen(DRBD_EVENT_SOCKET_STRING) < readcount)
+	    {
+		nlh = (struct nlmsghdr *)((char*)psock_buf + strlen(DRBD_EVENT_SOCKET_STRING));
+		readcount -= strlen(DRBD_EVENT_SOCKET_STRING);
+	    }
+	    else
+	    {
+		continue;
+	    }
+	}
 
-        if (pinfo)
-            ExFreeToNPagedLookasideList(&genl_info_mempool, pinfo);
-		
-		// DW-1229: using global attr may cause BSOD when we receive plural netlink requests. use local attr.
-		struct nlattr *local_attrs[128];
+	if (pinfo)
+	    ExFreeToNPagedLookasideList(&genl_info_mempool, pinfo);
 
-		pinfo = genl_info_new(nlh, socket, local_attrs);
-        if (!pinfo)
-        {
-            WDRBD_ERROR("Failed to allocate (struct genl_info) memory. size(%d)\n", sizeof(struct genl_info));
-            goto cleanup;
-        }
+	// DW-1229: using global attr may cause BSOD when we receive plural netlink requests. use local attr.
+	struct nlattr *local_attrs[128];
 
-        drbd_tla_parse(nlh, local_attrs);
-        if (!nlmsg_ok(nlh, readcount))
-        {
-            WDRBD_ERROR("rx message(%d) crashed!\n", readcount);
-            goto cleanup;
-        }
+	pinfo = genl_info_new(nlh, socket, local_attrs);
+	if (!pinfo)
+	{
+	    WDRBD_ERROR("Failed to allocate (struct genl_info) memory. size(%d)\n", sizeof(struct genl_info));
+	    goto cleanup;
+	}
 
-        WDRBD_TRACE_NETLINK("rx(%d), len(%d), cmd(%d), flags(0x%x), type(0x%x), seq(%d), pid(%d)\n",
-            readcount, nlh->nlmsg_len, pinfo->genlhdr->cmd, nlh->nlmsg_flags, nlh->nlmsg_type, nlh->nlmsg_seq, nlh->nlmsg_pid);
+	drbd_tla_parse(nlh, local_attrs);
+	if (!nlmsg_ok(nlh, readcount))
+	{
+	    WDRBD_ERROR("rx message(%d) crashed!\n", readcount);
+	    goto cleanup;
+	}
 
-        // check whether resource suspended
-        struct drbd_genlmsghdr * gmh = pinfo->userhdr;
-        if (gmh)
-        {
-            minor = gmh->minor;
-            struct drbd_conf * mdev = minor_to_device(minor);
+	WDRBD_TRACE_NETLINK("rx(%d), len(%d), cmd(%d), flags(0x%x), type(0x%x), seq(%d), pid(%d)\n",
+		readcount, nlh->nlmsg_len, pinfo->genlhdr->cmd, nlh->nlmsg_flags, nlh->nlmsg_type, nlh->nlmsg_seq, nlh->nlmsg_pid);
+
+	// check whether resource suspended
+	struct drbd_genlmsghdr * gmh = pinfo->userhdr;
+	if (gmh)
+	{
+	    minor = gmh->minor;
+	    struct drbd_conf * mdev = minor_to_device(minor);
 #ifdef _WIN32
-            if (mdev && drbd_suspended(mdev))
+	    if (mdev && drbd_suspended(mdev))
 #else
-            if (mdev && (drbd_suspended(mdev) || test_bit(SUSPEND_IO, &mdev->flags)))
+		if (mdev && (drbd_suspended(mdev) || test_bit(SUSPEND_IO, &mdev->flags)))
 #endif
-            {
-                reply_error(NLMSG_ERROR, NLM_F_MULTI, EIO, pinfo);
-                WDRBD_WARN("minor(%d) suspended\n", gmh->minor);
-                goto cleanup;
-            }
-        }
+		{
+		    reply_error(NLMSG_ERROR, NLM_F_MULTI, EIO, pinfo);
+		    WDRBD_WARN("minor(%d) suspended\n", gmh->minor);
+		    goto cleanup;
+		}
+	}
 
-        int i;
-        u8 cmd = pinfo->genlhdr->cmd;
-        struct genl_ops * pops = get_drbd_genl_ops(cmd);
+	int i;
+	u8 cmd = pinfo->genlhdr->cmd;
+	struct genl_ops * pops = cmd < ARRAY_SIZE(drbd_genl_ops) ? drbd_genl_ops+cmd : NULL;
 
-        if (pops)
-        {
-			NTSTATUS status = STATUS_UNSUCCESSFUL;
+	if (pops)
+	{
+	    NTSTATUS status = STATUS_UNSUCCESSFUL;
 
-            WDRBD_INFO("drbd cmd(%s:%u)\n", pops->str, cmd);
-            cli_info(gmh->minor, "Command (%s:%u)\n", pops->str, cmd);
-			
-			status = mutex_lock_timeout(&g_genl_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
+	    WDRBD_INFO("drbd cmd(%s:%u)\n", pops->str, cmd);
+	    cli_info(gmh->minor, "Command (%s:%u)\n", pops->str, cmd);
 
-			if (STATUS_SUCCESS == status)
-			{
-				err = _genl_ops(pops, pinfo);
-				mutex_unlock(&g_genl_mutex);
-				if (err)
-				{
-					WDRBD_ERROR("Failed while operating. cmd(%u), error(%d)\n", cmd, err);
-					errcnt++;
-				}
-			}
-			else
-			{
-				WDRBD_WARN("Failed to acquire the mutex : 0x%x\n", status);
-			}
+	    status = mutex_lock_timeout(&g_genl_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
 
-        }
-        else
-        {
-            WDRBD_WARN("Not validated cmd(%d)\n", cmd);
-        }
+	    if (STATUS_SUCCESS == status)
+	    {
+		err = _genl_ops(pops, pinfo);
+		mutex_unlock(&g_genl_mutex);
+		if (err)
+		{
+		    WDRBD_ERROR("Failed while operating. cmd(%u), error(%d)\n", cmd, err);
+		    errcnt++;
+		}
+	    }
+	    else
+	    {
+		WDRBD_WARN("Failed to acquire the mutex : 0x%x\n", status);
+	    }
+
+	}
+	else
+	{
+	    WDRBD_WARN("Not validated cmd(%d)\n", cmd);
+	}
     }
 
 cleanup:

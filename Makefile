@@ -80,6 +80,7 @@ patch: transform
 	cp ./wdrbd9/drbd_wrappers.h ./wdrbd9/proto.h $(OV_INC)
 	# To compile test the .c file, before we sanitize the repository layout....
 	cp ./wdrbd9/sub.c ./wdrbd9/wsk2.c wdrbd9/disp.c ./wdrbd9/slab.c ./wdrbd9/mempool.c ./wdrbd9/drbd_windows.c ./windows/printk-to-syslog.c $(TRANS_DEST)/drbd/
+	cp ./wdrbd9/linux-compat/netlink.c $(TRANS_DEST)/drbd/netlink.c_inc
 
 ifeq ($(shell uname -o),Cygwin)
 msbuild: patch

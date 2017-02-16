@@ -877,6 +877,7 @@ struct request_queue {
 	struct backing_dev_info backing_dev_info;
 	spinlock_t *queue_lock; // _WIN32: unused.
 	unsigned short logical_block_size;
+	ULONG_PTR queue_flags;
 	long max_hw_sectors;
 #ifdef _WIN32
     struct queue_limits limits; 
@@ -1446,7 +1447,6 @@ static int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 
 #define snprintf(a, b, c,...) memset(a, 0, b); sprintf(a, c, ##__VA_ARGS__)
 
-int drbd_genl_multicast_events(void *mdev, const struct sib_info *sib);
 
 #ifdef _WIN32
 extern int scnprintf(char * buf, size_t size, const char *fmt, ...);

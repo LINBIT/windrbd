@@ -775,10 +775,10 @@ static __inline struct nlmsghdr *
 	return nlh;
 }
 
-static __inline struct nlmsghdr *nlmsg_put(struct msg_buff *skb, u32 portid, u32 seq,
+static __inline struct nlmsghdr *nlmsg_put(struct sk_buff *skb, u32 portid, u32 seq,
 	int type, int payload, int flags)
 {
-	return __nlmsg_put((void *)skb, portid, seq, type, payload, flags);
+	return __nlmsg_put(skb, portid, seq, type, payload, flags);
 }
 
 static __inline int nlmsg_end(struct sk_buff *skb, struct nlmsghdr *nlh)

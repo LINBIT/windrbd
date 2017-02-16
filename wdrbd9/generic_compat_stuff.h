@@ -120,4 +120,9 @@ static inline void might_sleep() { }
 #define MSG_DONTWAIT 0
 
 
+#define __printf(a, b) /* nothing */
+
+#define CRYPTO_MAX_ALG_NAME (64)
+
+
 #endif
