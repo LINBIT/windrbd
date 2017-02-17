@@ -20,23 +20,13 @@
 #include <Ntifs.h>
 #include <ntddk.h>
 #include <stdlib.h>
-#include <Mountmgr.h> 
+#include <Mountmgr.h>
 #include <ntddvol.h>
 
 #include "drbd_windows.h"
 #include "drbd_wingenl.h"
 #include "proto.h"
 #include "drbd_int.h"
-
-#ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, QueryMountDUID)
-#ifdef _WIN32_MVFL
-//#pragma alloc_text(PAGE, FsctlFlsuhDismountVolume)
-#pragma alloc_text(PAGE, FsctlLockVolume)
-#pragma alloc_text(PAGE, FsctlUnlockVolume)
-#pragma alloc_text(PAGE, FsctlCreateVolume)
-#endif
-#endif
 
 NTSTATUS
 GetDeviceName( PDEVICE_OBJECT DeviceObject, PWCHAR Buffer, ULONG BufferLength )

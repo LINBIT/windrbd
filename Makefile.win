@@ -17,7 +17,6 @@ WIN_CFLAGS += /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-
 # WIN_CFLAGS += /Gz # __stdcall calling convention  -- is default
 # WIN_CFLAGS += /Gr # __fastcall calling convention -- is what we want for linux compat
 WIN_CFLAGS += /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996 
-WIN_CFLAGS += /FI"../../ewdk-include/10.0.14393.0/shared/warning.h"  # include that file
 WIN_CFLAGS += /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+ 
 WIN_CFLAGS += /D __KERNEL__=1
 WIN_CFLAGS += /D __BYTE_ORDER=1 /D __LITTLE_ENDIAN=1 /D __LITTLE_ENDIAN_BITFIELD
@@ -42,10 +41,13 @@ WIN_INCLUDE_DIRS += -I "../drbd-headers"
 WIN_INCLUDE_DIRS += -I "drbd-kernel-compat"
 
 WIN_CFLAGS += $(WIN_INCLUDE_DIRS)
-WIN_CFLAGS += /FI"linux/types.h"
-WIN_CFLAGS += /FI"generic_compat_stuff.h"
-WIN_CFLAGS += /FI"wingenl.h"
-WIN_CFLAGS += /FI"drbd_windows.h"
+
+WIN_DEF_INCLUDES += /FI"../../ewdk-include/10.0.14393.0/shared/warning.h"  # include that file
+WIN_DEF_INCLUDES += /FI"linux/types.h"
+WIN_DEF_INCLUDES += /FI"generic_compat_stuff.h"
+WIN_DEF_INCLUDES += /FI"wingenl.h"
+WIN_DEF_INCLUDES += /FI"drbd_windows.h"
+
 WIN_CFLAGS += -D _WIN64=1
 WIN_CFLAGS += -D COMPAT_HAVE_BOOL_TYPE=1 # for "typedef bool" in drbd/linux/lru_cache.h
 # WIN_CFLAGS += -D _AMD64_=1
@@ -68,11 +70,13 @@ drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c))
 ifeq ($(shell uname -o),Cygwin)
     %.obj: %.c
 	rm -f "$(call fPDB,$<)"
-	$(VC) $(WIN_CFLAGS) "$<" /c /Fo:"$@" /Fd:"$(call fPDB,$<)"
+	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /c /Fo:"$@" /Fd:"$(call fPDB,$<)"
 # /Fi:"$(patsubst %.c,%.E,$<)" ...  cl : Command line warning D9007 : '/Fi:' requires '/P'; option ignored
 	echo "-- $@ done --"
 
     %.E: %.c
-	$(VC) $(WIN_CFLAGS) "$<" /E > "$@"
+	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /E > "$@"
+
+util.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
 endif
 
