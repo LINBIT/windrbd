@@ -20,7 +20,7 @@
 #include <wdm.h>
 #include "drbd_windows.h"
 #include "loglink.h"
-#include "../drbd/drbd-kernel-compat/drbd_wrappers.h"
+#include "drbd_wrappers.h"
 
 atomic_t g_loglink_state = LOGLINK_UNINITIALIZED;
 int g_loglink_tcp_port;
@@ -109,11 +109,11 @@ VOID NTAPI LogLink_ListenThread(PVOID p)
 
 	if (!loglink.wq)
 	{
-		loglink.wq = create_singlethread_workqueue("loglink");
+		loglink.wq = alloc_ordered_workqueue("loglink", 0);
 		
 		if (!loglink.wq)
 		{
-			printk(KERN_ERR "LogLink: create_singlethread_workqueue failed\n");
+			printk(KERN_ERR "LogLink: alloc_ordered_workqueue failed\n");
 			goto cleanup;
 		}
 
