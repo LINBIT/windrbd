@@ -118,13 +118,8 @@ NTSTATUS reply_error(int type, int flags, int error, struct genl_info * pinfo)
 
     if (reply_skb)
     {
-#ifdef _WIN32
-		struct nlmsghdr * nlh = nlmsg_put((struct msg_buff*)reply_skb, pinfo->nlhdr->nlmsg_pid,
-			pinfo->nlhdr->nlmsg_seq, type, GENL_HDRLEN, flags);
-#else
-		struct nlmsghdr * nlh = nlmsg_put(reply_skb, pinfo->nlhdr->nlmsg_pid,
-			pinfo->nlhdr->nlmsg_seq, type, GENL_HDRLEN, flags);
-#endif
+	struct nlmsghdr * nlh = nlmsg_put(reply_skb, pinfo->nlhdr->nlmsg_pid,
+		pinfo->nlhdr->nlmsg_seq, type, GENL_HDRLEN, flags);
         if (nlh)
         {
             struct nlmsgerr * err = nlmsg_data(nlh);
@@ -139,7 +134,7 @@ NTSTATUS reply_error(int type, int flags, int error, struct genl_info * pinfo)
     {
         return STATUS_NO_MEMORY;
     }
-              
+
     return STATUS_SUCCESS;
 }
 
@@ -150,20 +145,12 @@ static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netli
 
     if (0 == err)
     {
-#ifdef _WIN32
-		nlh = nlmsg_put((struct msg_buff*)skb, cb->nlh->nlmsg_pid, cb->nlh->nlmsg_seq, NLMSG_DONE, GENL_HDRLEN, NLM_F_MULTI);
-#else
-		nlh = nlmsg_put(skb, cb->nlh->nlmsg_pid, cb->nlh->nlmsg_seq, NLMSG_DONE, GENL_HDRLEN, NLM_F_MULTI);
-#endif
+	nlh = nlmsg_put(skb, cb->nlh->nlmsg_pid, cb->nlh->nlmsg_seq, NLMSG_DONE, GENL_HDRLEN, NLM_F_MULTI);
     }
     else if (err < 0)
     {
-#ifdef _WIN32
-		nlh = nlmsg_put((struct msg_buff*)skb, cb->nlh->nlmsg_pid, cb->nlh->nlmsg_seq, NLMSG_DONE, GENL_HDRLEN, NLM_F_ACK);
-#else
-		nlh = nlmsg_put(skb, cb->nlh->nlmsg_pid, cb->nlh->nlmsg_seq, NLMSG_DONE, GENL_HDRLEN, NLM_F_ACK);
-#endif
-        
+	nlh = nlmsg_put(skb, cb->nlh->nlmsg_pid, cb->nlh->nlmsg_seq, NLMSG_DONE, GENL_HDRLEN, NLM_F_ACK);
+
         // -ENODEV : occured by first drbdadm adjust. response?
         WDRBD_WARN("drbd_adm_get_status_all err = %d\n", err);
     }
