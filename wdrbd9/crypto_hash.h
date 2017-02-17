@@ -24,7 +24,7 @@ crypto_alloc_shash(const char *alg_name, u32 type, u32 mask)
 {
 	struct crypto_shash *ch;
 	static const char supported[] = "crc32c";
-	const supported_len = sizeof(supported);
+	const int supported_len = sizeof(supported);
 
 	if (RtlCompareMemory(alg_name, supported, supported_len) != supported_len)
 		return ERR_PTR(-EOPNOTSUPP);

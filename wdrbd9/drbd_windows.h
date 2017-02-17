@@ -1276,7 +1276,7 @@ static inline KIRQL rcu_read_lock(void)
 	return rcu_flags;
 }
 
-static inline rcu_read_unlock(KIRQL rcu_flags)
+static inline void rcu_read_unlock(KIRQL rcu_flags)
 {
 	ExReleaseSpinLockShared(&g_rcuLock, rcu_flags);
 	WDRBD_TRACE_RCU("rcu_read_unlock : currentIrql(%d), rcu_flags(%d:%x) g_rcuLock(%d)\n",
