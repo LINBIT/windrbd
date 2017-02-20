@@ -294,15 +294,6 @@ index 6aa1ee49..f241e94f 100644
  		retcode = ERR_NOMEM;
  	}
  	goto out_no_unlock;
-@@ -5456,7 +5484,7 @@ int drbd_adm_down(struct sk_buff *skb, struct genl_info *info)
- 	struct drbd_device *device;
- 	int retcode; /* enum drbd_ret_code rsp. enum drbd_state_rv */
- 	enum drbd_ret_code ret;
--	unsigned i;
-+	int i;
- 	u64 im;
- 
- 	retcode = drbd_adm_prepare(&adm_ctx, skb, info,
 @@ -5805,7 +5833,7 @@ void notify_helper(enum drbd_notification_type type,
  	struct drbd_genlmsghdr *dh;
  	int err;
