@@ -534,7 +534,10 @@ struct timer_list {
     KTIMER ktimer;
     KDPC dpc;
     void (*function)(PKDPC dpc, PVOID data, PVOID arg1, PVOID arg2);
-    PVOID data;             
+    union {
+	ULONG_PTR data;
+	PVOID pdata;
+    };
     ULONG_PTR expires; 
 #ifdef DBG
     char name[32];
@@ -556,7 +559,7 @@ static __inline void setup_timer_key(_In_ struct timer_list * timer,
     const char *name,
     struct lock_class_key *key,
 	void(*function)(PKDPC dpc, PVOID data, PVOID arg1, PVOID arg2),
-    void * data)
+    ULONG_PTR data)
 {
     timer->function = function;
     timer->data = data;

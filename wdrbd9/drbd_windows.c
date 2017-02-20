@@ -1242,7 +1242,7 @@ int page_count(struct page *page)
 void init_timer(struct timer_list *t)
 {
 	KeInitializeTimer(&t->ktimer);
-	KeInitializeDpc(&t->dpc, (PKDEFERRED_ROUTINE) t->function, t->data);
+	KeInitializeDpc(&t->dpc, (PKDEFERRED_ROUTINE) t->function, t->pdata);
 #ifdef DBG
     strcpy(t->name, "undefined");
 #endif
