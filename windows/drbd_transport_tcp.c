@@ -1536,10 +1536,10 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
 		}
 
 #ifdef _WIN32_SEND_BUFFING 
-		sent = send_buf(transport, stream, socket, (void *)((unsigned char *)(page) +offset), len);
+		sent = send_buf(transport, stream, socket, (void *)((unsigned char *)(page->addr) +offset), len);
 		// WIN32_SEND_ERR_FIX: move we_should_drop_the_connection to inside of send_buf, because retransmission occurred
 #else
-		sent = Send(socket->sk, (void *)((unsigned char *)(page) + offset), len, 0, socket->sk_linux_attr->sk_sndtimeo, NULL, transport, stream);
+		sent = Send(socket->sk, (void *)((unsigned char *)(page->addr) + offset), len, 0, socket->sk_linux_attr->sk_sndtimeo, NULL, transport, stream);
 #endif
 		if (sent <= 0) {
 #ifdef _WIN32_SEND_BUFFING
