@@ -18,6 +18,7 @@
 #define module_param(...)
 #define module_param_string(...)
 #define put_page(egal)
+#define free_cpumask_var(...)
 
 #define uninitialized_var(x) x = x
 #define WARN(condition, format...) do {if(!!(condition)) printk(format);} while(0)
