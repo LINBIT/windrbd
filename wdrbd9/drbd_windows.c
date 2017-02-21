@@ -1916,6 +1916,13 @@ struct bio_set *bioset_create(unsigned int pool_size, unsigned int front_pad)
 	return NULL;
 }
 
+void bioset_free(struct bio_set *bs)
+{
+    /* Will never be called, as bioset_create() above isn't implemented. */
+    (void)bs;
+}
+
+
 //
 // porting netlink interface 
 //

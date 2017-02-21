@@ -1,0 +1,13 @@
+diff --git i/drbd/drbd_nl.c w/drbd/drbd_nl.c
+index bf5ed5e6..fde52e13 100644
+--- i/drbd/drbd_nl.c
++++ w/drbd/drbd_nl.c
+@@ -478,7 +478,7 @@ static __printf(2, 3) int env_print(struct env *env, const char *fmt, ...)
+ 	if (pos < 0)
+ 		return pos;
+ 	va_start(args, fmt);
+-	ret = vsnprintf(env->buffer + pos, env->size - pos, fmt, args);
++	ret = RtlStringCbVPrintfA(env->buffer + pos, env->size - pos, fmt, args);
+ 	va_end(args);
+ 	if (ret < 0) {
+ 		env->pos = ret;

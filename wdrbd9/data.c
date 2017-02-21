@@ -39,3 +39,9 @@ struct mutex notification_mutex;
 struct mutex g_genl_mutex;
 KSPIN_LOCK	transport_classes_lock;
 
+
+/* https://vxlab.info/wasm/print.php-article=npi_subvert.htm */
+const NPIID NPI_WSK_INTERFACE_ID = {
+	0x2227E803, 0x8D8B, 0x11D4,
+	{0xAB, 0xAD, 0x00, 0x90, 0x27, 0x71, 0x9E, 0x09}
+};
