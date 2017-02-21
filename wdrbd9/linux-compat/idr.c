@@ -28,7 +28,9 @@
 #ifdef _WIN32
 #include "drbd_windows.h"
 #include "drbd_wingenl.h"
-#include "idr.h"
+#include "linux/idr.h"
+#include "linux/slab.h"
+#include "linux/bitops.h"
 #else
 #ifndef TEST  // to test in user space...
 #include <linux/slab.h>
@@ -119,7 +121,7 @@ int idr_pre_get(struct idr *idp, gfp_t gfp_mask)
 	while (idp->id_free_cnt < IDR_FREE_MAX) {
 		struct idr_layer *new = NULL;
 
-		new = kzalloc(idr_layer_cache->size, gfp_mask, 'D4DW');
+		new = kmem_cache_alloc(idr_layer_cache, gfp_mask);
 		if (new == NULL)
 			return (0);
 		free_layer(idp, new);
