@@ -1,0 +1,12 @@
+diff --git i/drbd/drbd_main.c w/drbd/drbd_main.c
+index e207d805..e73d77af 100644
+--- i/drbd/drbd_main.c
++++ w/drbd/drbd_main.c
+@@ -2280,6 +2280,7 @@ int drbd_send_dblock(struct drbd_peer_device *peer_device, struct drbd_request *
+ 	if (digest_size && digest_out)
+ 		drbd_csum_bio(peer_device->connection->integrity_tfm, req->master_bio, digest_out);
+ 
++	err = 0;
+ 	if (wsame) {
+ 		additional_size_command(peer_device->connection, DATA_STREAM,
+ 					bio_iovec(req->master_bio) BVD bv_len);

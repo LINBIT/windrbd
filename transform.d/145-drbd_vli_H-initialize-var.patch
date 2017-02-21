@@ -1,0 +1,13 @@
+diff --git i/drbd/drbd_vli.h w/drbd/drbd_vli.h
+index 8cb1532a..7a451882 100644
+--- i/drbd/drbd_vli.h
++++ w/drbd/drbd_vli.h
+@@ -339,7 +339,7 @@ static inline int bitstream_get_bits(struct bitstream *bs, u64 *out, int bits)
+  */
+ static inline int vli_encode_bits(struct bitstream *bs, u64 in)
+ {
+-	u64 code = code;
++	u64 code = 0;
+ 	int bits = __vli_encode_bits(&code, in);
+ 
+ 	if (bits <= 0)
