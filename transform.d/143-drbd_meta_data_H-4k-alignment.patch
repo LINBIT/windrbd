@@ -1,0 +1,13 @@
+diff --git i/drbd_meta_data.h w/drbd_meta_data.h
+index e87cf09..8ab3e2d 100644
+--- i/drbd_meta_data.h
++++ w/drbd_meta_data.h
+@@ -46,7 +46,7 @@ struct meta_data_on_disk_9 {
+ 	struct peer_dev_md_on_disk_9 peers[DRBD_PEERS_MAX];
+ 	be_u64 history_uuids[HISTORY_UUIDS];
+ 
+-	char padding[0] __attribute__((aligned(4096)));
++	__declspec(align(4096)) char padding[0] __attribute__((aligned(4096)));
+ } __packed;
+ 
+ 
