@@ -595,6 +595,7 @@ struct gendisk
 {
 	char disk_name[DISK_NAME_LEN];  /* name of major driver */
 	struct request_queue *queue;
+	int major, first_minor;
 #ifdef _WIN32
     const struct block_device_operations *fops;
     void *private_data;
