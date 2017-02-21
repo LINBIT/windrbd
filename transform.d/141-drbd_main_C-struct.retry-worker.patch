@@ -1,0 +1,12 @@
+diff --git i/drbd/drbd_main.c w/drbd/drbd_main.c
+index e207d805..98eb6778 100644
+--- i/drbd/drbd_main.c
++++ w/drbd/drbd_main.c
+@@ -2865,6 +2865,7 @@ static struct retry_worker {
+ 
+ 	spinlock_t lock;
+ 	struct list_head writes;
++	struct task_struct task;
+ } retry;
+ 
+ static void drbd_req_destroy_lock(struct kref *kref)

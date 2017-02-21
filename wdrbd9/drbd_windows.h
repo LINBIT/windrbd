@@ -1090,15 +1090,6 @@ extern void wake_up_process(struct drbd_thread *thi);
 extern void _wake_up(wait_queue_head_t *q, char *__func, int __line);
 
 
-struct retry_worker {
-	struct workqueue_struct *wq;
-	struct work_struct worker;
-	spinlock_t lock;
-	struct list_head writes;
-	struct task_struct task;
-};
-
-
 #define current		    ct_find_thread(KeGetCurrentThread())
 
 #define MAX_PROC_BUF	2048
