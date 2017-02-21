@@ -1,0 +1,13 @@
+diff --git i/drbd/drbd_main.c w/drbd/drbd_main.c
+index e207d805..7e67e7ae 100644
+--- i/drbd/drbd_main.c
++++ w/drbd/drbd_main.c
+@@ -3877,7 +3877,7 @@ static int __init drbd_init(void)
+ 		goto fail;
+ 	}
+ 
+-	retry.wq = create_singlethread_workqueue("drbd-reissue");
++	retry.wq = alloc_ordered_workqueue("drbd-reissue", 0);
+ 	if (!retry.wq) {
+ 		pr_err("unable to create retry workqueue\n");
+ 		goto fail;
