@@ -61,11 +61,19 @@ VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl.cmd
 # How to calculate the debug name
 fPDB = $(patsubst %.c,%.pdb,$(1))
 
+WIN_LDFLAGS += /link # must be first!
+WIN_LDFLAGS += /DRIVER:WDM /NODEFAULTLIB /ENTRY:DriverEntry
+WIN_LDFLAGS += /LIBPATH:../../ewdk-lib/win7/km/x64/
+WIN_LDFLAGS += /LIBPATH:../../ewdk-lib/10.0.14393.0/km/x64/
+WIN_LINK_INPUT += wdm.lib
+WIN_LINK_INPUT += ntoskrnl.lib
+WIN_LINK_INPUT += bufferoverflowfastfailk.lib # for __security_check_cookie
+
 
 all: drbd.sys
 
 drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c))
-	$(VC) $(WIN_LDFLAGS) "$^" /Fo:"$@"
+	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /OUT:"$@"
 
 ifeq ($(shell uname -o),Cygwin)
     %.obj: %.c
