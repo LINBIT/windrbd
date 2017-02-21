@@ -22,6 +22,9 @@
 #define remove_proc_entry(...)
 #define drbd_unregister_blkdev(...)
 #define zalloc_cpumask_var(...) (true)
+#define blk_queue_bounce_limit(...)
+#define blk_queue_write_cache(...)
+#define add_disk(...)
 
 #define uninitialized_var(x) x = x
 #define WARN(condition, format...) do {if(!!(condition)) printk(format);} while(0)
