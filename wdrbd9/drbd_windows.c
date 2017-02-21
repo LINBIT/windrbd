@@ -1433,11 +1433,6 @@ void kobject_get(struct kobject *kobj)
     }
 }
 
-void drbd_unregister_blkdev(unsigned int major, const char *name)
-{
-
-}
-
 void del_gendisk(struct gendisk *disk)
 {
 	// free disk
