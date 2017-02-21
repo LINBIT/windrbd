@@ -83,7 +83,7 @@ patch: trans
 	# To compile test the .c file, before we sanitize the repository layout....
 	$(CP) ./wdrbd9/data.c ./wdrbd9/send_buf.c ./wdrbd9/thread.c ./wdrbd9/loglink.c ./wdrbd9/ops.c ./wdrbd9/util.c ./wdrbd9/sub.c ./wdrbd9/wsk2.c wdrbd9/disp.c ./wdrbd9/slab.c ./wdrbd9/mempool.c ./wdrbd9/drbd_windows.c ./windows/printk-to-syslog.c $(TRANS_DEST)/drbd/
 	$(CP) ./wdrbd9/linux-compat/netlink.c $(TRANS_DEST)/drbd/netlink.c_inc
-	$(CP) ./wdrbd9/linux-compat/Attr.c ./wdrbd9/linux-compat/seq_file.c ./wdrbd9/linux-compat/idr.c $(TRANS_DEST)/drbd/
+	$(CP) ./wdrbd9/linux-compat/hweight.c ./wdrbd9/linux-compat/Attr.c ./wdrbd9/linux-compat/seq_file.c ./wdrbd9/linux-compat/idr.c $(TRANS_DEST)/drbd/
 
 ifeq ($(shell uname -o),Cygwin)
 msbuild: patch
