@@ -20,7 +20,7 @@ struct sched_param {
 
 #define SCHED_RR 42
 
-int sched_setscheduler(struct task_struct *p, int policy,
+static inline int sched_setscheduler(struct task_struct *p, int policy,
 	                       const struct sched_param *param)
 {
     (void)policy;
