@@ -84,6 +84,11 @@ static inline int try_module_get(void *m)
     return 0;
 }
 
+#define bdput(this_bdev) do { \
+	kfree2(this_bdev->bd_contains); \
+	kfree2(this_bdev); \
+} while(0)
+
 static inline void* __vmalloc(u64 bytes, int flags, int flags2)
 {
     (void)bytes;

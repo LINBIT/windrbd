@@ -1,0 +1,36 @@
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index a364cef..da885c0 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -2747,6 +2747,11 @@ void drbd_destroy_device(struct kref *kref)
+ 	if (device->this_bdev)
+ 		bdput(device->this_bdev);
+ 
++	if (device->vdisk->pDeviceExtension) {
++		// just in case existing a VolumeExtension
++		device->vdisk->pDeviceExtension->dev = NULL;
++	}
++
+ 	drbd_backing_dev_free(device, device->ldev);
+ 	device->ldev = NULL;
+ 
+@@ -2764,6 +2769,8 @@ void drbd_destroy_device(struct kref *kref)
+ 	__free_page(device->md_io.page);
+ 	put_disk(device->vdisk);
+ 	blk_cleanup_queue(device->rq_queue);
++	device->vdisk = NULL;
++	device->rq_queue = NULL;
+ 	kref_debug_destroy(&device->kref_debug);
+ 
+ 	kfree(device);
+@@ -3489,10 +3496,6 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	sprintf(disk->disk_name, "drbd%d", minor);
+ 	disk->private_data = device;
+ 
+-	device->this_bdev = bdget(MKDEV(DRBD_MAJOR, minor));
+-	/* we have no partitions. we contain only ourselves. */
+-	device->this_bdev->bd_contains = device->this_bdev;
+-
+ 	q->backing_dev_info.congested_fn = drbd_congested;
+ 	q->backing_dev_info.congested_data = device;
+ 
