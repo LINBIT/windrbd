@@ -22,7 +22,7 @@
  
 #ifdef _WIN32
 #include "drbd_windows.h"
-#include "rbtree.h"
+#include "linux/rbtree.h"
 #else
 //#include<linux/rbtree.h>
 //#include<linux/module.h>
