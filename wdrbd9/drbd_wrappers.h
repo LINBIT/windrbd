@@ -272,17 +272,6 @@ static inline int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_c
 }
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,23)
-static inline void drbd_unregister_blkdev(unsigned int major, const char *name)
-{
-	int ret = unregister_blkdev(major, name);
-	if (ret)
-		pr_err("unregister of device failed\n");
-}
-#else
-#define drbd_unregister_blkdev unregister_blkdev
-#endif
-
 
 #ifndef COMPAT_HAVE_UMH_WAIT_PROC
 /* On Jul 17 2007 with commit 86313c4 usermodehelper: Tidy up waiting,

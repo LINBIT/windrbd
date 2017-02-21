@@ -19,6 +19,9 @@
 #define module_param_string(...)
 #define put_page(egal)
 #define free_cpumask_var(...)
+#define remove_proc_entry(...)
+#define drbd_unregister_blkdev(...)
+#define zalloc_cpumask_var(...) (true)
 
 #define uninitialized_var(x) x = x
 #define WARN(condition, format...) do {if(!!(condition)) printk(format);} while(0)
