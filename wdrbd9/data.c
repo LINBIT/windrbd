@@ -35,3 +35,7 @@ int				seq_file_idx		= 0;
 EX_SPIN_LOCK g_rcuLock;
 struct ratelimit_state drbd_ratelimit_state;
 
+struct mutex notification_mutex;
+struct mutex g_genl_mutex;
+KSPIN_LOCK	transport_classes_lock;
+
