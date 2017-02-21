@@ -20,6 +20,8 @@
 #include <ntddk.h>
 #include "disp.h"
 #include "proto.h"
+#include "drbd_int.h"
+#include "drbd_polymorph_printk.h"
 
 PDEVICE_OBJECT	mvolRootDeviceObject;
 PDRIVER_OBJECT	mvolDriverObject;
@@ -30,5 +32,6 @@ PETHREAD		g_NetlinkServerThread;
 
 int				seq_file_idx		= 0;
 
-
+EX_SPIN_LOCK g_rcuLock;
+struct ratelimit_state drbd_ratelimit_state;
 
