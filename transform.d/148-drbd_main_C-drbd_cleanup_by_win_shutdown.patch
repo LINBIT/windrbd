@@ -1,0 +1,32 @@
+diff --git i/drbd/drbd_main.c w/drbd/drbd_main.c
+index e207d805..00790073 100644
+--- i/drbd/drbd_main.c
++++ w/drbd/drbd_main.c
+@@ -5344,6 +5344,27 @@ _drbd_insert_fault(struct drbd_device *device, unsigned int type)
+ }
+ #endif
+ 
++
++void drbd_cleanup_by_win_shutdown(PVOLUME_EXTENSION VolumeExtension)
++{
++    int i;
++
++    struct device_list {
++        struct drbd_device *device;
++        struct list_head list;
++    } device_list;
++    struct device_list *device_list_p, *p;
++
++    WDRBD_INFO("Shutdown: IRQL(%d) device(%ws) Name(%wZ)\n",
++        KeGetCurrentIrql(), VolumeExtension->PhysicalDeviceName, &VolumeExtension->MountPoint);
++
++    if (retry.wq)
++        destroy_workqueue(retry.wq);
++    retry.wq = NULL;
++
++    gbShutdown = TRUE;
++}
++
+ module_init(drbd_init)
+ module_exit(drbd_cleanup)
+ 
