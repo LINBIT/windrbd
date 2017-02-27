@@ -14,7 +14,7 @@ TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG))
 
 export SHELL=bash
 
-all: trans patch msbuild
+all: build
 
 # can not regenerate those scripts
 $(TRANSFORMATIONS): ;
@@ -47,17 +47,20 @@ patch: trans
 	$(CP) ./wdrbd9/linux-compat/rbtree.c ./wdrbd9/linux-compat/hweight.c ./wdrbd9/linux-compat/Attr.c ./wdrbd9/linux-compat/seq_file.c ./wdrbd9/linux-compat/idr.c $(TRANS_DEST)/drbd/
 
 ifeq ($(shell uname -o),Cygwin)
-msbuild: patch
-	cd converted-sources/drbd/ && $(MAKE)
+build:
+	@if test -d $(TRANS_DEST); then \
+		cd $(TRANS_DEST)/drbd/ && $(MAKE); \
+	else \
+		echo "Please run 'make' first on a Linux system with spatch installed"; \
+	fi
 else
-msbuild: patch
-	echo "Please run 'make' in the Windows VM."
-	exit 1
+build: patch
+	@echo "Now please run 'make' in the Windows VM."
 endif
 	
 
 clean:
-	if test -n $(TRANS_DEST); then \
+	if test -f $(TRANS_DEST)/.generated; then \
 		rm -f $(shell cat $(TRANS_DEST).generated) $(TRANS_DEST).generated; \
 		find $(TRANS_DEST) -name "*.tmp.bak" -delete; \
 		find $(TRANS_DEST) -name "*.pdb" -delete; \
