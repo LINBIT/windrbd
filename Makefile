@@ -74,7 +74,7 @@ patch: trans
 	# <sys/...>
 	$(CP) ./wdrbd9/linux-compat/Wait.h $(OV_INC)/sys/wait.h
 	# <windows/>
-	for f in types.h ioctl.h drbd.h; do $(CP) ./wdrbd9/windows/$$f $(OV_INC)/windows/; done
+	for f in ioctl.h drbd.h; do $(CP) ./wdrbd9/windows/$$f $(OV_INC)/windows/; done
 	# standard
 	for f in drbd_wingenl.h mvolmsg.h disp.h mvolse.h send_buf.h wsk2.h; do $(CP) ./wdrbd9/$$f $(OV_INC)/; done
 	# additional toplevel

@@ -1,7 +1,7 @@
 ﻿#ifndef __HWEIGHT_H__
 #define __HWEIGHT_H__
 #include "linux/bitops.h"
-#include "windows/types.h"
+#include "linux/types.h"
 #include "linux/drbd_endian.h"
 
 /**

@@ -25,7 +25,7 @@
 #include <linux/list.h>
 #include "sys/wait.h"
 #include <linux/drbd_endian.h>
-#include "windows/types.h"
+#include "linux/types.h"
 #include "mvolmsg.h"
 
 #include "disp.h"

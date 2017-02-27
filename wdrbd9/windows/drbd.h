@@ -67,7 +67,7 @@
 */
 #endif
 
-#include "windows/types.h"
+#include "linux/types.h"
 #ifndef __KERNEL__
 #include <sys/types.h>
 #include <sys/wait.h>
