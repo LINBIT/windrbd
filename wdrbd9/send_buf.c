@@ -20,7 +20,7 @@
 #include "drbd_windows.h"
 #include "wsk2.h"
 #include "drbd_wingenl.h"
-#include "linux-compat/drbd_endian.h"
+#include "linux/drbd_endian.h"
 #include "linux/idr.h"
 #include "disp.h" 
 #include "drbd_int.h"

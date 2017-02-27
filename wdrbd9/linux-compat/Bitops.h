@@ -1,7 +1,7 @@
 ﻿#ifndef __BITOPS_H__
 #define __BITOPS_H__
 
-#include "linux-compat/hweight.h"
+#include "linux/hweight.h"
 
 extern int test_and_change_bit(int nr, const ULONG_PTR *vaddr);
 #ifdef _WIN32

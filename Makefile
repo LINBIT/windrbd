@@ -61,6 +61,8 @@ patch: trans
 	$(CP) ./wdrbd9/linux-compat/blkdev.h $(OV_INC)/linux
 	$(CP) ./wdrbd9/linux-compat/bio.h $(OV_INC)/linux
 	$(CP) ./wdrbd9/linux-compat/mempool.h $(OV_INC)/linux
+	$(CP) ./wdrbd9/linux-compat/drbd_endian.h $(OV_INC)/linux
+	$(CP) ./wdrbd9/linux-compat/hweight.h $(OV_INC)/linux
 	$(CP) ./windows/stringify.h $(OV_INC)/linux
 	# <asm/...>
 	for f in kmap_types.h types.h unaligned.h byteorder.h; do ( cd $(OV_INC) && truncate -s0 asm/$$f;); done
@@ -71,8 +73,6 @@ patch: trans
 	$(CP) ./wdrbd9/crypto_hash.h $(OV_INC)/crypto/hash.h
 	# <sys/...>
 	$(CP) ./wdrbd9/linux-compat/Wait.h $(OV_INC)/sys/wait.h
-	# things they include as linux-compat/...
-	for f in list.h spinlock.h hweight.h drbd_endian.h; do $(CP) ./wdrbd9/linux-compat/$$f $(OV_INC)/linux-compat/; done
 	# <windows/>
 	for f in types.h ioctl.h drbd.h; do $(CP) ./wdrbd9/windows/$$f $(OV_INC)/windows/; done
 	# standard

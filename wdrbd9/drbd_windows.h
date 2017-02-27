@@ -22,9 +22,9 @@
 #define DRBD_WINDOWS_H
 #include <wdm.h>
 #include <ntstrsafe.h>
-#include "linux-compat/list.h"
+#include <linux/list.h>
 #include "sys/wait.h"
-#include "linux-compat/drbd_endian.h"
+#include <linux/drbd_endian.h>
 #include "windows/types.h"
 #include "mvolmsg.h"
 

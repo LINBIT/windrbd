@@ -30,7 +30,7 @@
 #include <drbd_protocol.h>
 #include "drbd_wrappers.h"
 #include <wsk2.h>
-#include <linux-compat\drbd_endian.h>
+#include <linux/drbd_endian.h>
 // #include <drbd_int.h> A transport layer must not use internals
 #include <linux/drbd_limits.h>
 #include <linux/bitops.h>

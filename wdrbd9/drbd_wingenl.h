@@ -2,7 +2,7 @@
 #define __DRBD_WINGENL_H__
 #include <wdm.h>
 #include <wsk.h>
-#include "linux-compat/list.h"
+#include <linux/list.h>
 #if 0
 #include "windows/wingenl.h"
 #endif
