@@ -73,7 +73,7 @@ WIN_LINK_INPUT += netio.lib
 
 all: drbd.sys
 
-drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c))
+drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildcard ../../win4lin/src/*.c))
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /OUT:"$@"
 
 ifeq ($(shell uname -o),Cygwin)
@@ -86,7 +86,7 @@ ifeq ($(shell uname -o),Cygwin)
     %.E: %.c
 	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /E > "$@"
 
-util.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
-thread.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
+../../win4lin/src/util.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
+../../win4lin/src/thread.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
 endif
 

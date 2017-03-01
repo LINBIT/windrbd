@@ -38,13 +38,9 @@ patch: trans
 	echo "const char *drbd_buildtag(void){return \"WDRBD: `git describe --tags --always --dirty`\";}" > $(TRANS_DEST)/drbd/drbd_buildtag.c
 	$(CP) ./Makefile.win $(TRANS_DEST)/drbd/Makefile
 	$(CP) ./ms-cl.cmd $(TRANS_DEST)/drbd/
-	# To compile test the .c file, before we sanitize the repository layout....
-	$(CP) ./wdrbd9/data.c ./wdrbd9/send_buf.c ./wdrbd9/thread.c ./wdrbd9/loglink.c ./wdrbd9/ops.c ./wdrbd9/util.c ./wdrbd9/sub.c ./wdrbd9/wsk2.c wdrbd9/disp.c ./wdrbd9/slab.c ./wdrbd9/mempool.c ./wdrbd9/drbd_windows.c ./windows/printk-to-syslog.c $(TRANS_DEST)/drbd/
 	$(CP) ./windows/drbd_polymorph_printk.h $(TRANS_DEST)/drbd/
 	$(CP) ./windows/drbd_proc.c $(TRANS_DEST)/drbd/
 	$(CP) ./windows/drbd_transport_tcp.c $(TRANS_DEST)/drbd/
-	$(CP) ./wdrbd9/linux-compat/netlink.c $(TRANS_DEST)/drbd/netlink.c_inc
-	$(CP) ./wdrbd9/linux-compat/rbtree.c ./wdrbd9/linux-compat/hweight.c ./wdrbd9/linux-compat/Attr.c ./wdrbd9/linux-compat/seq_file.c ./wdrbd9/linux-compat/idr.c $(TRANS_DEST)/drbd/
 
 ifeq ($(shell uname -o),Cygwin)
 build:
@@ -62,11 +58,13 @@ endif
 clean:
 	if test -f $(TRANS_DEST)/.generated; then \
 		rm -f $(shell cat $(TRANS_DEST).generated) $(TRANS_DEST).generated; \
-		find $(TRANS_DEST) -name "*.tmp.bak" -delete; \
-		find $(TRANS_DEST) -name "*.pdb" -delete; \
-		find $(TRANS_DEST) -name "*.obj" -delete; \
-		find $(TRANS_DEST) -name "*.orig" -delete; \
-		find $(TRANS_DEST) -name "*.tmpe" -delete; \
+		for d in $(TRANS_DEST) $(WIN4LIN); do \
+			find $$d -name "*.tmp.bak" -delete; \
+			find $$d -name "*.pdb" -delete; \
+			find $$d -name "*.obj" -delete; \
+			find $$d -name "*.orig" -delete; \
+			find $$d -name "*.tmpe" -delete; \
+		done; \
 	fi
 
 # vim: set ts=8 sw=8 noet : 
