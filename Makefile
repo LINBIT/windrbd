@@ -9,7 +9,7 @@ TRANS_DEST := converted-sources/
 WIN4LIN := win4lin/
 
 TRANSFORMATIONS := $(sort $(wildcard transform.d/*))
-ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_tcp.c|drbd_polymorph_printk.h|drbd_buildtag.c|drbd_transport_template.c')
+ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c')
 TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG))
 
 export SHELL=bash
@@ -35,12 +35,22 @@ trans: $(TRANSFORMED) $(TRANS_DEST).generated
 CP := cp --preserve=timestamps
 
 patch: trans
-	echo "const char *drbd_buildtag(void){return \"WDRBD: `git describe --tags --always --dirty`\";}" > $(TRANS_DEST)/drbd/drbd_buildtag.c
 	$(CP) ./Makefile.win $(TRANS_DEST)/drbd/Makefile
 	$(CP) ./ms-cl.cmd $(TRANS_DEST)/drbd/
-	$(CP) ./windows/drbd_polymorph_printk.h $(TRANS_DEST)/drbd/
-	$(CP) ./windows/drbd_proc.c $(TRANS_DEST)/drbd/
-	$(CP) ./windows/drbd_transport_tcp.c $(TRANS_DEST)/drbd/
+
+$(TRANS_DEST)drbd/drbd_buildtag.c:
+	echo "const char *drbd_buildtag(void){return \"WDRBD: `git describe --tags --always --dirty`\";}" > $(TRANS_DEST)/drbd/drbd_buildtag.c
+
+define copy_win
+	mkdir $$(dirname $(2)) 2>/dev/null || true
+	cp $(1) $(2)
+endef
+$(TRANS_DEST)drbd/drbd_polymorph_printk.h: windows/drbd_polymorph_printk.h
+	$(call copy_win,$<,$@)
+$(TRANS_DEST)drbd/drbd_proc.c: windows/drbd_proc.c
+	$(call copy_win,$<,$@)
+$(TRANS_DEST)drbd/drbd_transport_tcp.c: windows/drbd_transport_tcp.c
+	$(call copy_win,$<,$@)
 
 ifeq ($(shell uname -o),Cygwin)
 build:
