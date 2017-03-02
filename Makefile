@@ -10,7 +10,7 @@ WIN4LIN := win4lin/
 
 TRANSFORMATIONS := $(sort $(wildcard transform.d/*))
 ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c')
-TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG))
+TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG)) $(TRANS_DEST)drbd/resource.rc
 
 export SHELL=bash
 
@@ -41,7 +41,10 @@ patch: trans
 	$(CP) ./windows/drbd.inf $(TRANS_DEST)/drbd/
 
 $(TRANS_DEST)drbd/drbd_buildtag.c:
-	echo "const char *drbd_buildtag(void){return \"WDRBD: `git describe --tags --always --dirty`\";}" > $(TRANS_DEST)/drbd/drbd_buildtag.c
+	echo "const char *drbd_buildtag(void){return \"WDRBD: `git describe --tags --always --dirty`\";}" > $@
+
+$(TRANS_DEST)drbd/resource.rc:
+	./resgen.sh > $@
 
 define copy_win
 	mkdir $$(dirname $(2)) 2>/dev/null || true

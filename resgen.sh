@@ -1,0 +1,47 @@
+#!/bin/bash
+
+VERSION=$(date +%Y,%m,%d,%H)
+GITHASH=$(git describe --tags --always --dirty)
+
+VER_FILEVERSION_STR="${GITHASH}\\0"
+
+cat <<EOF
+#define VER_FILEVERSION		${VERSION}
+#define VER_FILEVERSION_STR	"${VER_FILEVERSION_STR}"
+#define VER_PRODUCTVERSION	VER_FILEVERSION
+#define VER_PRODUCTVERSION_STR	VER_FILEVERSION_STR
+
+#define VER_COMPANYNAME_STR	 	"LINBIT"
+#define VER_FILEDESCRIPTION_STR		"TODO"
+#define VER_INTERNALNAME_STR		"DRBD4WINDOWS"
+#define VER_LEGALCOPYRIGHT_STR		"TODO"
+#define VER_LEGALTRADEMARKS1_STR	"TODO"
+#define VER_LEGALTRADEMARKS2_STR	"TODO"
+#define VER_ORIGINALFILENAME_STR	"TODO"
+#define VER_PRODUCTNAME_STR		VER_INTERNALNAME_STR
+
+1 VERSIONINFO
+FILEVERSION    	VER_FILEVERSION
+PRODUCTVERSION 	VER_PRODUCTVERSION
+//These need #include <windows.h>, enable them when integrated into buildsystem
+//FILETYPE	VFT_DRV
+//FILESUBTYPE	VFT2_DRV_SYSTEM
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",      VER_COMPANYNAME_STR
+            VALUE "FileDescription",  VER_FILEDESCRIPTION_STR
+            VALUE "FileVersion",      VER_FILEVERSION_STR
+            VALUE "InternalName",     VER_INTERNALNAME_STR
+            VALUE "LegalCopyright",   VER_LEGALCOPYRIGHT_STR
+            VALUE "LegalTrademarks1", VER_LEGALTRADEMARKS1_STR
+            VALUE "LegalTrademarks2", VER_LEGALTRADEMARKS2_STR
+            VALUE "OriginalFilename", VER_ORIGINALFILENAME_STR
+            VALUE "ProductName",      VER_PRODUCTNAME_STR
+            VALUE "ProductVersion",   VER_PRODUCTVERSION_STR
+        END
+    END
+END
+EOF
