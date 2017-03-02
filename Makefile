@@ -37,6 +37,8 @@ CP := cp --preserve=timestamps
 patch: trans
 	$(CP) ./Makefile.win $(TRANS_DEST)/drbd/Makefile
 	$(CP) ./ms-cl.cmd $(TRANS_DEST)/drbd/
+	# For the CAT file
+	$(CP) ./windows/drbd.inf $(TRANS_DEST)/drbd/
 
 $(TRANS_DEST)drbd/drbd_buildtag.c:
 	echo "const char *drbd_buildtag(void){return \"WDRBD: `git describe --tags --always --dirty`\";}" > $(TRANS_DEST)/drbd/drbd_buildtag.c

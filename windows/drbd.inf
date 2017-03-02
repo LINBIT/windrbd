@@ -1,0 +1,121 @@
+;;;
+;;; install/uninstall drbd engine driver
+;;;
+
+[Version]
+signature   =   "$Windows NT$"
+Class       =   "Volume"                       		;This is determined by the work this filter driver does
+ClassGuid   =   {71A27CDD-812A-11D0-BEC7-08002BE2092F}  ;This value is determined by the Class
+Provider    =   %Msft%
+DriverVer   =   12/01/2013,0.2.0.0
+CatalogFile = drbd.cat
+
+
+[DestinationDirs]
+DefaultDestDir       = 12
+DRBD.DriverFiles     = 12           ;%windir%\system32\drivers
+;;DRBD.UserFiles       = 10,drbdcon   ;%windir%\drbdcon
+
+;;
+;; Default install sections
+;;
+
+[DefaultInstall]
+OptionDesc          = %ServiceDesc%
+CopyFiles           = DRBD.DriverFiles
+;;CopyFiles           = DRBD.DriverFiles, DRBD.UserFiles
+
+[DefaultInstall.Services]
+AddService          = %ServiceName%,,DRBD.Service
+
+;;
+;; Default uninstall sections
+;;
+
+[DefaultUninstall]
+DelFiles            = DRBD.DriverFiles
+;;DelFiles            = DRBD.DriverFiles, DRBD.UserFiles
+DelReg              = DRBD.DelRegistry
+
+[DefaultUninstall.Services]
+DelService = drbd,0x200      ; Flags note to stop service first
+
+;
+; Services Section
+;
+
+[DRBD.Service]
+DisplayName      = %ServiceName%
+Description      = %ServiceDesc%
+ServiceBinary    = %12%\drbd.sys     	;%windir%\system32\drivers\drbd.sys
+ServiceType      = 1                    ;SERVICE_FILE_SYSTEM_DRIVER
+;;StartType        = 3                   
+;; https://social.msdn.microsoft.com/Forums/sqlserver/en-US/a7481885-f042-4de9-ad01-528db1d56be0/why-cant-i-suppress-the-prompt-dialog-even-i-use-installhinfsection-defaultinstall-128-?forum=windowsgeneraldevelopmentissues
+StartType        = 0                    ;SERVICE_DEMAND_START
+ErrorControl     = 1                    ;SERVICE_ERROR_NORMAL
+LoadOrderGroup   = "PnP Filter"  	
+AddReg           = DRBD.AddRegistry
+
+;
+; Registry Modifications
+;
+
+[DRBD.AddRegistry]
+HKLM, System\CurrentControlSet\Control\Class\{71A27CDD-812A-11D0-BEC7-08002BE2092F}, UpperFilters, 0x00010008, drbd
+HKR,,"proc_details",0x00010001,0
+HKR,,"debug_level",0x00010001,0
+HKR,,"bypass_level",0x00010001,0
+HKR,,"read_filter",0x00010001,0
+HKR,,"flush_filter",0x00010001,1
+HKR,,"use_volume_lock",0x00010001,1
+HKR,,"use_fast_sync",0x00010001,1
+HKR,,"dbgwin_output",0x00010001,0
+HKR,,"loglink_tcp_port",0x00010001,5677
+HKR,,"loglink_usage",0x00010001,1
+HKR,,"netlink_tcp_port",0x00010001,5678
+HKR,,"daemon_tcp_port",0x00010001,5679
+HKR,,"handler_use",0x00010001,0
+HKR,,"handler_timeout",0x00010001,1
+HKR,,"handler_retry",0x00010001,0
+HKR,,"ver",0x00000000, "va.9"
+
+[DRBD.DelRegistry]
+HKLM, System\CurrentControlSet\Control\Class\{71A27CDD-812A-11D0-BEC7-08002BE2092F}, UpperFilters, 0x00018002, drbd
+HKR,,"proc_details"
+HKR,,"debug_level"
+HKR,,"bypass_level"
+HKR,,"read_filter"
+HKR,,"flush_filter"
+HKR,,"use_volume_lock"
+HKR,,"use_fast_sync"
+HKR,,"dbgwin_output"
+HKR,,"netlink_tcp_port"
+HKR,,"daemon_tcp_port"
+HKR,,"ver"
+;
+; Copy Files
+;
+
+[DRBD.DriverFiles]
+drbd.sys
+
+[DRBD.UserFiles]
+;drbdcon.exe
+
+[SourceDisksFiles]
+drbd.sys = 1,,
+;;drbdcon.exe = 1,,
+
+[SourceDisksNames]
+1 = %DiskId1%,,,
+
+;;
+;; String Section
+;;
+
+[Strings]
+Msft                = "drbd"
+ServiceDesc         = "drbd engine"
+ServiceName         = "drbd"
+DiskId1             = "drbd Installation Disk"
+
