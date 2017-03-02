@@ -672,8 +672,8 @@ void printk_cleanup(void)
 
 
 /* Replaced by print-to-syslog */
-#if 0
-void _printk(const char * func, const char * format, ...)
+#if 1
+int _printk(const char * func, const char * format, ...)
 {
 	int ret = 0;
 	va_list args;
@@ -712,7 +712,7 @@ void _printk(const char * func, const char * format, ...)
 #else
 	if (!bEventLog && !bDbgLog) {
 #endif
-		return;
+		return 0;
 	}
 	
 	logcnt = InterlockedIncrement(&gLogCnt);
@@ -785,6 +785,7 @@ void _printk(const char * func, const char * format, ...)
 		DbgPrintEx(FLTR_COMPONENT, printLevel, buf);
 
 #endif
+	return 0;
 }
 #endif
 #endif

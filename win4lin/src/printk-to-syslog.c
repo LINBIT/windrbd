@@ -11,6 +11,8 @@ static PIRP printk_udp_irp = NULL;
 char my_host_name[256];
 
 
+
+#if 0
 /* For now, we only push messages via a UDP socket.
  * Later on, we can also */
 int _printk(const char *func, const char *fmt, ...)
@@ -104,4 +106,5 @@ int _printk(const char *func, const char *fmt, ...)
 #endif
     return 1;
 }
+#endif
 
