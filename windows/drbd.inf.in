@@ -7,7 +7,7 @@ signature   =   "$Windows NT$"
 Class       =   "Volume"                       		;This is determined by the work this filter driver does
 ClassGuid   =   {71A27CDD-812A-11D0-BEC7-08002BE2092F}  ;This value is determined by the Class
 Provider    =   %Msft%
-DriverVer   =   12/01/2013,0.2.0.0
+DriverVer   =   12/01/2013,0.2.0.0			;Will get replaced by build magic
 CatalogFile = drbd.cat
 
 

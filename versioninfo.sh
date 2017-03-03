@@ -1,11 +1,22 @@
 #!/bin/bash
 
+if [ "$#" -ne 1 ]; then
+	echo "Usage: $0 TRANS_DEST"
+	exit 1
+else
+	OUTPATH=$1/drbd
+fi
+
 VERSION=$(date +%Y,%m,%d,%H)
 GITHASH=$(git describe --tags --always --dirty)
 
+VER_INTERNALNAME_STR="DRBD4WINDOWS"
 VER_FILEVERSION_STR="${GITHASH}\\0"
 
-cat <<EOF
+mkdir -p ${OUTPATH} || exit 1
+
+## resource.rc
+cat <<EOF > ${OUTPATH}/resource.rc
 #define VER_FILEVERSION		${VERSION}
 #define VER_FILEVERSION_STR	"${VER_FILEVERSION_STR}"
 #define VER_PRODUCTVERSION	VER_FILEVERSION
@@ -13,7 +24,7 @@ cat <<EOF
 
 #define VER_COMPANYNAME_STR	 	"LINBIT"
 #define VER_FILEDESCRIPTION_STR		"TODO"
-#define VER_INTERNALNAME_STR		"DRBD4WINDOWS"
+#define VER_INTERNALNAME_STR		"${VER_INTERNALNAME_STR}"
 #define VER_LEGALCOPYRIGHT_STR		"TODO"
 #define VER_LEGALTRADEMARKS1_STR	"TODO"
 #define VER_LEGALTRADEMARKS2_STR	"TODO"
@@ -45,3 +56,9 @@ BEGIN
     END
 END
 EOF
+
+## drbd_buildtag.c
+echo "const char *drbd_buildtag(void){return \"${VER_INTERNALNAME_STR}: ${GITHASH}\";}" > ${OUTPATH}/drbd_buildtag.c
+
+## drbd.inf
+sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y) ;Replaced by build magic#" ./windows/drbd.inf.in > ${OUTPATH}/drbd.inf

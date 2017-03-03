@@ -9,8 +9,8 @@ TRANS_DEST := converted-sources/
 WIN4LIN := win4lin/
 
 TRANSFORMATIONS := $(sort $(wildcard transform.d/*))
-ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c')
-TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG)) $(TRANS_DEST)drbd/resource.rc
+ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c|drbd_buildtag.c')
+TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG))
 
 export SHELL=bash
 
@@ -34,17 +34,13 @@ trans: $(TRANSFORMED) $(TRANS_DEST).generated
 
 CP := cp --preserve=timestamps
 
-patch: trans
+patch: trans versioninfo
 	$(CP) ./Makefile.win $(TRANS_DEST)/drbd/Makefile
 	$(CP) ./ms-cl.cmd $(TRANS_DEST)/drbd/
-	# For the CAT file
-	$(CP) ./windows/drbd.inf $(TRANS_DEST)/drbd/
 
-$(TRANS_DEST)drbd/drbd_buildtag.c:
-	echo "const char *drbd_buildtag(void){return \"WDRBD: `git describe --tags --always --dirty`\";}" > $@
-
-$(TRANS_DEST)drbd/resource.rc:
-	./resgen.sh > $@
+.PHONY: versioninfo
+versioninfo:
+	./versioninfo.sh $(TRANS_DEST)
 
 define copy_win
 	mkdir $$(dirname $(2)) 2>/dev/null || true
