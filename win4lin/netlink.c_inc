@@ -681,3 +681,4 @@ _Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDis
     return STATUS_SUCCESS;
 }
 
+/* vim: set ft=c : */
