@@ -86,6 +86,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
     PROOT_EXTENSION			RootExtension = NULL;
     UNICODE_STRING      		nameUnicode, linkUnicode;
     ULONG				i;
+    static volatile LONG      IsEngineStart = FALSE;
 
 	// init logging system first
 	wdrbd_logger_init();
@@ -156,6 +157,31 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
     drbd_init();
 
     WDRBD_INFO("MVF Driver loaded.\n");
+
+
+    if (FALSE == InterlockedCompareExchange(&IsEngineStart, TRUE, FALSE))
+    {
+        HANDLE		hNetLinkThread = NULL;
+		HANDLE		hLogLinkThread = NULL;
+        NTSTATUS	Status = STATUS_UNSUCCESSFUL;
+
+        // Init WSK and StartNetLinkServer
+		Status = PsCreateSystemThread(&hNetLinkThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, InitWskNetlink, NULL);
+        if (!NT_SUCCESS(Status))
+        {
+            WDRBD_ERROR("PsCreateSystemThread failed with status 0x%08X\n", Status);
+            return Status;
+        }
+
+		Status = ObReferenceObjectByHandle(hNetLinkThread, THREAD_ALL_ACCESS, NULL, KernelMode, &g_NetlinkServerThread, NULL);
+		ZwClose(hNetLinkThread);
+
+        if (!NT_SUCCESS(Status))
+        {
+            WDRBD_ERROR("ObReferenceObjectByHandle() failed with status 0x%08X\n", Status);
+            return Status;
+        }
+    }
 
     return STATUS_SUCCESS;
 }
@@ -279,31 +305,7 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
     PDEVICE_OBJECT      ReferenceDeviceObject = NULL;
     PVOLUME_EXTENSION   VolumeExtension = NULL;
     ULONG               deviceType = 0;
-	static volatile LONG      IsEngineStart = FALSE;
 
-    if (FALSE == InterlockedCompareExchange(&IsEngineStart, TRUE, FALSE))
-    {
-        HANDLE		hNetLinkThread = NULL;
-		HANDLE		hLogLinkThread = NULL;
-        NTSTATUS	Status = STATUS_UNSUCCESSFUL;
-
-        // Init WSK and StartNetLinkServer
-		Status = PsCreateSystemThread(&hNetLinkThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, InitWskNetlink, NULL);
-        if (!NT_SUCCESS(Status))
-        {
-            WDRBD_ERROR("PsCreateSystemThread failed with status 0x%08X\n", Status);
-            return Status;
-        }
-
-		Status = ObReferenceObjectByHandle(hNetLinkThread, THREAD_ALL_ACCESS, NULL, KernelMode, &g_NetlinkServerThread, NULL);
-		ZwClose(hNetLinkThread);
-
-        if (!NT_SUCCESS(Status))
-        {
-            WDRBD_ERROR("ObReferenceObjectByHandle() failed with status 0x%08X\n", Status);
-            return Status;
-        }
-    }
 
     ReferenceDeviceObject = IoGetAttachedDeviceReference(PhysicalDeviceObject);
     deviceType = ReferenceDeviceObject->DeviceType; //deviceType = 0x7 = FILE_DEVICE_DISK 
