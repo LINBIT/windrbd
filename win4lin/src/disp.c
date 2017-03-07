@@ -145,7 +145,8 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
     KeInitializeSpinLock(&mvolVolumeLock);
     KeInitializeMutex(&mvolMutex, 0);
     KeInitializeMutex(&eventlogMutex, 0);
-	downup_rwlock_init(&transport_classes_lock); //init spinlock for transport 
+    downup_rwlock_init(&transport_classes_lock); //init spinlock for transport 
+    mutex_init(&g_genl_mutex);
 	
 #ifdef _WIN32_WPP
 	WPP_INIT_TRACING(DriverObject, RegistryPath);

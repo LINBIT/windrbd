@@ -1499,6 +1499,8 @@ NTSTATUS SaveCurrentValue(PCWSTR valueName, int value);
 
 BOOLEAN gbShutdown;
 
+extern struct mutex g_genl_mutex;
+
 
 LONGLONG	gTotalLogCnt;
 long		gLogCnt;
