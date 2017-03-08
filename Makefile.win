@@ -71,8 +71,8 @@ fPDB = $(patsubst %.c,%.pdb,$(1))
 
 WIN_LDFLAGS += /link # must be first!
 WIN_LDFLAGS += /DRIVER:WDM /NODEFAULTLIB /ENTRY:DriverEntry
-WIN_LDFLAGS += /LIBPATH:../../ewdk-lib/win7/km/x64/
-WIN_LDFLAGS += /LIBPATH:../../ewdk-lib/10.0.14393.0/km/x64/
+WIN_LDFLAGS += /LIBPATH:$(EWDK_LIB)/win7/km/x64/
+WIN_LDFLAGS += /LIBPATH:$(EWDK_LIB)/10.0.14393.0/km/x64/
 WIN_LDFLAGS += /DEBUG:FULL
 WIN_LINK_INPUT += wdm.lib
 WIN_LINK_INPUT += ntoskrnl.lib
