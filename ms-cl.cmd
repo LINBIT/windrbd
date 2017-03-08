@@ -1,3 +1,3 @@
 @echo off
-@call "../../../installs/ewdk/BuildEnv/SetupBuildEnv.cmd" amd64
+@call %EWDK_BASE%/BuildEnv/SetupBuildEnv.cmd amd64
 @cl.exe %*
