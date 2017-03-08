@@ -110,3 +110,6 @@ ifeq ($(shell uname -o),Cygwin)
 ../../win4lin/src/thread.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
 endif
 
+
+clean:
+	rm -f *.obj
