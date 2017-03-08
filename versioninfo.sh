@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ ! -d ".git" ]; then
+	echo "Not a git repo, not regenerating version info"
+	exit 0
+fi
+
 if [ "$#" -ne 1 ]; then
 	echo "Usage: $0 TRANS_DEST"
 	exit 1

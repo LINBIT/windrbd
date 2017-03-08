@@ -1,8 +1,5 @@
-
-
-EWDK_PATH := ../
-
-EWDK_INC := "$(EWDK_PATH)/ewdk/Program Files/Windows Kits/10/Include"
+VERSION=$(shell git describe --tags --always --dirty)
+export TMPDIR = /tmp
 
 TRANS_SRC := drbd/
 TRANS_DEST := converted-sources/
@@ -34,13 +31,15 @@ trans: $(TRANSFORMED) $(TRANS_DEST).generated
 
 CP := cp --preserve=timestamps
 
-patch: trans versioninfo
+copy:
 	$(CP) ./Makefile.win $(TRANS_DEST)/drbd/Makefile
 	$(CP) ./ms-cl.cmd $(TRANS_DEST)/drbd/
 
+patch: trans versioninfo copy
+
 .PHONY: versioninfo
 versioninfo:
-	./versioninfo.sh $(TRANS_DEST)
+	./versioninfo.sh $(TRANS_DEST) || true
 
 define copy_win
 	mkdir $$(dirname $(2)) 2>/dev/null || true
@@ -54,7 +53,7 @@ $(TRANS_DEST)drbd/drbd_transport_tcp.c: windows/drbd_transport_tcp.c
 	$(call copy_win,$<,$@)
 
 ifeq ($(shell uname -o),Cygwin)
-build:
+build: patch
 	@if test -d $(TRANS_DEST); then \
 		cd $(TRANS_DEST)/drbd/ && $(MAKE); \
 	else \
@@ -65,6 +64,18 @@ build: patch
 	@echo "Now please run 'make' in the Windows VM."
 endif
 	
+tarball:
+	rm -rf $(TRANS_DEST) && mkdir $(TRANS_DEST)
+	make trans # regenerate cocci-cache
+	rm -rf $(TRANS_DEST) && mkdir $(TRANS_DEST)
+	make versioninfo
+	git ls-files > .filelist
+	find $(TRANS_DEST) -print >> .filelist
+	find transform.d/cocci-cache -print >> .filelist
+	sed -i "s/^/wdrbd-$(VERSION)\//" .filelist
+	ln -s . wdrbd-$(VERSION)
+	tar --owner=0 --group=0 -czf - -T .filelist > wdrbd-$(VERSION).tar.gz
+	rm wdrbd-$(VERSION)
 
 clean:
 	if test -f $(TRANS_DEST)/.generated; then \
