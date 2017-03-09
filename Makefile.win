@@ -25,9 +25,9 @@ WIN_CFLAGS += /Wv:18 # disable hides previous local declaration
 WIN_CFLAGS += /Od # disable optimizations
 WIN_CFLAGS += /Oi # enable intrinsic functions
 WIN_CFLAGS += /Oy- # enable frame pointer omission
-# WIN_CFLAGS += /D _X86_=1 /D i386=1 # 32bit
-WIN_CFLAGS += /D _WIN64 /D _AMD64_ /D AMD64 /D _M_AMD64 # 64bit
-WIN_CFLAGS += /D STD_CALL /D DEPRECATE_DDK_FUNCTIONS=1 /D MSC_NOOPT /D _WIN32_WINNT=0x0601 /D WINVER=0x0601 /D WINNT=1 /D NTDDI_VERSION=0x06010000 /D DBG=1 /D KMDF_VERSION_MAJOR=1 /D KMDF_VERSION_MINOR=15 
+# C_DEFINES += -D _X86_=1 -D i386=1 # 32bit
+C_DEFINES += -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64 # 64bit
+C_DEFINES += -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D DBG=1 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15 
 WIN_CFLAGS += /GF /Gm- /Zp8 /GS /Gy 
 # /fp:precise  # precise - "precise" floating-point model; results are predictable
 WIN_CFLAGS += /Zc:wchar_t- /Zc:forScope /Zc:inline /GR- 
@@ -36,8 +36,8 @@ WIN_CFLAGS += /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-
 # WIN_CFLAGS += /Gr # __fastcall calling convention -- is what we want for linux compat
 WIN_CFLAGS += /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996 
 WIN_CFLAGS += /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+ 
-WIN_CFLAGS += /D __KERNEL__=1
-WIN_CFLAGS += /D __BYTE_ORDER=1 /D __LITTLE_ENDIAN=1 /D __LITTLE_ENDIAN_BITFIELD
+C_DEFINES += -D __KERNEL__=1
+C_DEFINES += -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD
 
 # WIN_CFLAGS += /Ze # Microsoft extensions - eg. nameless struct/union. Not enabled because
 #   The /Ze option is deprecated because its behavior is on by default. We recommend you use the /Zc (Conformance) compiler options to control specific language extension features.
@@ -59,12 +59,13 @@ WIN_DEF_INCLUDES += /FI"generic_compat_stuff.h"
 WIN_DEF_INCLUDES += /FI"wingenl.h"
 WIN_DEF_INCLUDES += /FI"drbd_windows.h"
 
-WIN_CFLAGS += -D _WIN64=1
-WIN_CFLAGS += -D COMPAT_HAVE_BOOL_TYPE=1 # for "typedef bool" in drbd/linux/lru_cache.h
-# WIN_CFLAGS += -D _AMD64_=1
+C_DEFINES += -D _WIN64=1
+C_DEFINES += -D COMPAT_HAVE_BOOL_TYPE=1 # for "typedef bool" in drbd/linux/lru_cache.h
+# C_DEFINES += -D _AMD64_=1
 
-WIN_CFLAGS += /D CONFIG_KREF_DEBUG=1
+C_DEFINES += -D CONFIG_KREF_DEBUG=1
 
+WIN_CFLAGS += $(C_DEFINES)
 
 # How to calculate the debug name
 fPDB = $(patsubst %.c,%.pdb,$(1))
@@ -110,6 +111,10 @@ ifeq ($(shell uname -o),Cygwin)
 ../../win4lin/src/thread.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
 endif
 
+deps:
+	gcc -D BITS_PER_LONG=64 -D _MSC_VER=1300 -D _WIN32=1 $(C_DEFINES) $(WIN_INCLUDE_DIRS) -M *.c ../../win4lin/src/*.c | perl -pe 's/^(\S+)\.o:/\1.obj:/' > Makefile.deps 
+
+-include Makefile.deps
 
 clean:
 	rm -f *.obj
