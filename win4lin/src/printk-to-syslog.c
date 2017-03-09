@@ -6,7 +6,6 @@
 
 static PWSK_SOCKET printk_udp_socket = NULL;
 static SOCKADDR_IN printk_udp_target;
-static PIRP printk_udp_irp = NULL;
 
 char my_host_name[256];
 
@@ -69,8 +68,6 @@ int _printk(const char *func, const char *fmt, ...)
 	printk_udp_socket = CreateSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
 		NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET);
 	Bind(printk_udp_socket, (SOCKADDR *)&local);
-
-	printk_udp_irp = IoAllocateIrp(1, FALSE);
     }
 
     //    DoTraceMessage(TRCINFO, "%s", buf);
@@ -80,17 +77,9 @@ int _printk(const char *func, const char *fmt, ...)
 	     DPFLTR_WARNING_LEVEL),
 	    "WDRBD: %s", fmt);
 
-    if (printk_udp_irp && printk_udp_socket) {
-	/*	wsk_buf.Offset = 0;
-		wsk_buf.Length = len;
-		wsk_buf.Mdl = NdisAllocateMdl */
+    if (printk_udp_socket) {
 	status = SendTo(printk_udp_socket, buffer, len,
 		(PSOCKADDR)&printk_udp_target);
-	if (status == STATUS_PENDING) {
-	    KeWaitForSingleObject(&printk_udp_irp, Executive, KernelMode, FALSE, NULL);
-	}
-
-
     }
 #if 0
     WriteEventLogEntryData(msgids[level_index], 0, 0, 1, L"%S", buf);
