@@ -53,7 +53,6 @@ struct genl_ops
     int (*doit)(struct sk_buff *skb, struct genl_info *info);
     int (*dumpit)(struct sk_buff *skb, struct netlink_callback *cb);
     int (*done)(struct netlink_callback *cb);
-    const char *  str;
 };
 
 #ifndef __read_mostly

@@ -561,14 +561,13 @@ NetlinkWorkThread(PVOID context)
 
 	int i;
 	u8 cmd = pinfo->genlhdr->cmd;
-	struct genl_ops * pops = cmd < ARRAY_SIZE(drbd_genl_ops) ? drbd_genl_ops+cmd : NULL;
+	struct genl_ops * pops = get_drbd_genl_ops(cmd);
 
 	if (pops)
 	{
 	    NTSTATUS status = STATUS_UNSUCCESSFUL;
 
-	    WDRBD_INFO("drbd cmd(%s:%u)\n", pops->str, cmd);
-	    cli_info(gmh->minor, "Command (%s:%u)\n", pops->str, cmd);
+	    WDRBD_INFO("drbd cmd(%s:%u)\n", drbd_genl_cmd_to_str(cmd), cmd);
 
 	    status = mutex_lock_timeout(&g_genl_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
 
