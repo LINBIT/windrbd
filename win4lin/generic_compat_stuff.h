@@ -83,7 +83,7 @@ static inline void request_module(const char *fmt, ...)
 static inline int try_module_get(void *m)
 {
     (void)m;
-    return 0;
+    return 1;
 }
 
 #define bdput(this_bdev) do { \

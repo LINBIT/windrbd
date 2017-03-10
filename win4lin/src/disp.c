@@ -151,6 +151,8 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
     mutex_init(&notification_mutex);
     KeInitializeSpinLock(&transport_classes_lock);
 
+    dtt_initialize();
+
 #ifdef _WIN32_WPP
 	WPP_INIT_TRACING(DriverObject, RegistryPath);
 	DoTraceMessage(TRCINFO, "WDRBD V9(1:1) MVF Driver loaded.");

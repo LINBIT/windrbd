@@ -1504,6 +1504,8 @@ BOOLEAN gbShutdown;
 
 extern struct mutex g_genl_mutex;
 
+extern int dtt_initialize(void);
+
 
 LONGLONG	gTotalLogCnt;
 long		gLogCnt;
