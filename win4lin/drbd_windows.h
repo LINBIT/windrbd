@@ -1086,6 +1086,7 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 #define wake_up(q) _wake_up(q, __FUNCTION__, __LINE__)
 
 struct drbd_thread;
+extern int win_drbd_thread_setup(struct drbd_thread *thi);
 extern void wake_up_process(struct drbd_thread *thi);
 
 extern void _wake_up(wait_queue_head_t *q, char *__func, int __line);

@@ -20,7 +20,7 @@ diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
 +
 +            KeInitializeEvent(&thi->start_event, SynchronizationEvent, FALSE);
 +            KeInitializeEvent(&thi->wait_event, SynchronizationEvent, FALSE);
-+            Status = PsCreateSystemThread(&hThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, drbd_thread_setup, (void *) thi);
++            Status = PsCreateSystemThread(&hThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, win_drbd_thread_setup, (void *) thi);
 +            if (!NT_SUCCESS(Status)) {
 +                return false;
 +            }

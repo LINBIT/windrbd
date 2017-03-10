@@ -3169,3 +3169,32 @@ sector_t wdrbd_get_capacity(struct block_device *bdev)
 
     return bdev->d_size >> 9;
 }
+
+
+int win_drbd_thread_setup(struct drbd_thread *thi)
+{
+	struct drbd_resource *resource = thi->resource;
+	struct drbd_connection *connection = thi->connection;
+	int res;
+
+	thi->nt = ct_add_thread(KeGetCurrentThread(), thi->name, TRUE, 'B0DW');
+	if (!thi->nt)
+	{
+		WDRBD_ERROR("DRBD_PANIC: ct_add_thread failed.\n");
+		PsTerminateSystemThread(STATUS_SUCCESS);
+	}
+
+	KeSetEvent(&thi->start_event, 0, FALSE);
+	KeWaitForSingleObject(&thi->wait_event, Executive, KernelMode, FALSE, NULL);
+
+	res = drbd_thread_start(thi);
+	// TODO ct_delete_thread(thi->task->pid); ??
+	if (res)
+		WDRBD_ERROR("stop, result %d\n", res);
+	else
+		WDRBD_INFO("stopped.\n");
+
+	PsTerminateSystemThread(STATUS_SUCCESS);
+
+	return STATUS_SUCCESS;
+}
