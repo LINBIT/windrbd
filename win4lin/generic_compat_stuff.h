@@ -31,7 +31,7 @@
 #define WARN_ONCE(condition, ...) WARN(condition, __VA_ARGS__)
 
 /* not capable of anything... */
-#define capable(x) (false)
+#define capable(x) (1)
 
 #if 0
 struct kmem_cache {
