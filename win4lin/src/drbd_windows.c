@@ -691,6 +691,13 @@ void _wake_up(wait_queue_head_t *q, char *__func, int __line)
     KeSetEvent(&q->wqh_event, 0, FALSE);
 }
 
+void wake_up_all(wait_queue_head_t *q)
+{
+	/* Should cause all threads to wake up and check the condition again */
+	/* TODO: phil check whether the single-wake-up is wrong? */
+    KeSetEvent(&q->wqh_event, 0, FALSE);
+}
+
 void init_completion(struct completion *completion)
 {
 	memset(completion->wait.eventName, 0, Q_NAME_SZ);

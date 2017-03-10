@@ -1089,6 +1089,7 @@ struct drbd_thread;
 extern void wake_up_process(struct drbd_thread *thi);
 
 extern void _wake_up(wait_queue_head_t *q, char *__func, int __line);
+extern void wake_up_all(wait_queue_head_t *q);
 
 
 #define current		    ct_find_thread(KeGetCurrentThread())
