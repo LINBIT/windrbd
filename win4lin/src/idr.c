@@ -82,26 +82,14 @@ static void __free_layer(struct idr *idp, struct idr_layer *p)
 
 static void free_layer(struct idr *idp, struct idr_layer *p)
 {
-#ifdef _WIN32
 	KIRQL oldIrql;
-#else
-	unsigned long flags;
-#endif
 
 	/*
 	* Depends on the return element being zeroed.
 	*/
-#ifdef _WIN32
 	KeAcquireSpinLock(&idp->lock, &oldIrql);
-#else
-	spin_lock_irqsave(&idp->lock, flags);
-#endif
 	__free_layer(idp, p);
-#ifdef _WIN32
 	KeReleaseSpinLock(&idp->lock, oldIrql);
-#else
-	spin_unlock_irqrestore(&idp->lock, flags);
-#endif
 }
 
 /**
