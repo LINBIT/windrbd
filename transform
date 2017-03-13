@@ -5,6 +5,8 @@ shift
 TARGET=$1
 
 set -e
+trap "rm -f $TARGET" ERR
+
 COCCI_CACHE_DIR=transform.d/cocci-cache
 TRANSFORMATIONS=transform.d/*
 DIR=${TARGET%/*}
@@ -18,6 +20,9 @@ msg()
 	echo -n .
     fi
 }
+if [[ "$V" -eq 2 ]]; then
+    set -x
+fi
 
 mkdir -p $DIR
 cp $UPSTREAM $TMP
@@ -49,7 +54,14 @@ for TRANS in $TRANSFORMATIONS; do
 	    else
 		msg " GEN COCCI: %-40s %s\n" $TRANS_NAME $TARGET
 		rm -f "$CACHE_FILE"
-		spatch --sp-file $TRANS --in-place $TMP > $CACHE_FILE.tmp 2>/dev/null
+		spatch --sp-file $TRANS --verbose-parsing --in-place $TMP > $CACHE_FILE.tmp 2> $CACHE_FILE.err
+		# careful, extra space at the end!
+		if grep '^parse error' < $CACHE_FILE.err ; then
+		    echo "spatch parsing error" >&2
+		    grep '^    around = ' < $CACHE_FILE.err >&2
+		    exit 1
+		fi
+		rm $CACHE_FILE.err
 		mv "$CACHE_FILE.tmp" "$CACHE_FILE"
 	    fi
 	;;
