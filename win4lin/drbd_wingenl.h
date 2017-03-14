@@ -45,6 +45,8 @@ struct netlink_callback
     ULONG_PTR               args[6];
 };
 
+
+struct genl_info;
 struct genl_ops
 {
     u8    cmd;

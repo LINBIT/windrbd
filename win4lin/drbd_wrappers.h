@@ -1146,6 +1146,7 @@ static inline void blk_set_stacking_limits(struct queue_limits *lim)
 
 #ifndef COMPAT_HAVE_GENERIC_START_IO_ACCT
 #ifndef __disk_stat_inc
+struct hd_struct;
 static inline void generic_start_io_acct(int rw, unsigned long sectors,
 					 struct hd_struct *part)
 {

@@ -581,6 +581,7 @@ struct work_struct_wrapper {
     LIST_ENTRY  element;
 };
 
+struct gendisk;
 struct block_device_operations {
 	int (*open) (struct block_device *, fmode_t);
 	int (*release) (struct gendisk *, fmode_t);
@@ -630,6 +631,7 @@ struct bio_vec {
 	unsigned int bv_offset;
 };
 
+struct bio;
 typedef void(BIO_END_IO_CALLBACK)(ULONG_PTR fault_test_flag, struct bio *bio, int error);
 
 
@@ -1098,10 +1100,12 @@ extern void wake_up_all(wait_queue_head_t *q);
 
 #define MAX_PROC_BUF	2048
 
+struct crypto_tfm;
 extern void *crypto_alloc_tfm(char *name, u32 mask);
 extern unsigned int crypto_tfm_alg_digestsize(struct crypto_tfm *tfm);
 extern int generic_make_request(struct bio *bio); // return value is changed for error handling 2015.12.08(DW-649)
 
+enum umh_wait;
 extern int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait);
 
 extern void * ERR_PTR(long error);
@@ -1121,6 +1125,7 @@ extern uint32_t crc32c(uint32_t crc, const uint8_t *data, unsigned int length);
 extern bool lc_is_used(struct lru_cache *lc, unsigned int enr);
 extern void get_random_bytes(void *buf, int nbytes);
 extern int fls(int x);
+struct sk_buff;
 extern unsigned char *skb_put(struct sk_buff *skb, unsigned int len);
 extern char *kstrdup(const char *s, int gfp);
 extern void panic(const char *fmt, ...);
