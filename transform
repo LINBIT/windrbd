@@ -56,9 +56,10 @@ for TRANS in $TRANSFORMATIONS; do
 		rm -f "$CACHE_FILE"
 		spatch --sp-file $TRANS --verbose-parsing --in-place $TMP > $CACHE_FILE.tmp 2> $CACHE_FILE.err
 		# careful, extra space at the end!
-		if grep '^parse error' < $CACHE_FILE.err ; then
-		    echo "spatch parsing error" >&2
-		    grep '^    around = ' < $CACHE_FILE.err >&2
+		if grep '^parse error' -A2 < $CACHE_FILE.err ; then
+		    echo "spatch parsing error, see '$CACHE_FILE.err'" >&2
+		    # doesn't trigger the ERR trap
+		    rm -f $TARGET
 		    exit 1
 		fi
 		rm $CACHE_FILE.err
