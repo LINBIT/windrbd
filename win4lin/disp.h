@@ -23,7 +23,6 @@
 #include <mountdev.h>
 #include "mvolse.h"
 #include "windows/ioctl.h"
-#include "windows/drbd.h"
 
 #define	MVOL_IOCOMPLETE_REQ(Irp, status, size)		\
 {							\

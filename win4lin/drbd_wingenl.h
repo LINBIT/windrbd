@@ -199,7 +199,7 @@ extern int		nla_append(struct sk_buff *msg, int attrlen,
 * nlmsg_msg_size - length of netlink message not including padding
 * @payload: length of message payload
 */
-static __inline int nlmsg_msg_size(int payload)
+static __inline u16 nlmsg_msg_size(u16 payload)
 {
     return NLMSG_HDRLEN + payload;
 }
@@ -208,7 +208,7 @@ static __inline int nlmsg_msg_size(int payload)
 * nlmsg_total_size - length of netlink message including padding
 * @payload: length of message payload
 */
-static __inline int nlmsg_total_size(int payload)
+static __inline u16 nlmsg_total_size(u16 payload)
 {
     return NLMSG_ALIGN(nlmsg_msg_size(payload));
 }
@@ -217,7 +217,7 @@ static __inline int nlmsg_total_size(int payload)
 * nlmsg_padlen - length of padding at the message's tail
 * @payload: length of message payload
 */
-static __inline int nlmsg_padlen(int payload)
+static __inline u16 nlmsg_padlen(u16 payload)
 {
     return nlmsg_total_size(payload) - nlmsg_msg_size(payload);
 }
@@ -447,10 +447,10 @@ static __inline int nla_put_u64(struct sk_buff *msg, int attrtype, __u64 value)
 * @attrtype: attribute type
 * @str: NUL terminated string
 */
-static __inline size_t nla_put_string(struct sk_buff *msg, int attrtype,
+static __inline int nla_put_string(struct sk_buff *msg, int attrtype,
     const char *str)
 {
-    return nla_put(msg, attrtype, strlen(str) + 1, str);
+    return nla_put(msg, attrtype, (short int)strlen(str) + 1, str);
 }
 
 /**
@@ -629,7 +629,7 @@ static __inline struct nlattr *nla_nest_start(struct sk_buff *msg, int attrtype)
  */
 static __inline int nla_nest_end(struct sk_buff *msg, struct nlattr *start)
 {
-	start->nla_len = skb_tail_pointer(msg) - (unsigned char *)start;
+	start->nla_len = (u16)(skb_tail_pointer(msg) - (unsigned char *)start);
 	return msg->len;
 }
 
@@ -673,10 +673,10 @@ static __inline int nla_validate_nested(struct nlattr *start, int maxtype,
 	nla_for_each_attr(pos, nla_data(nla), nla_len(nla), rem)
 
 static __inline struct nlmsghdr *
-	__nlmsg_put(struct sk_buff *skb, u32 portid, u32 seq, int type, int len, int flags)
+	__nlmsg_put(struct sk_buff *skb, u32 portid, u32 seq, u16 type, u16 len, u16 flags)
 {
 	struct nlmsghdr *nlh;
-	int size = nlmsg_msg_size(len);
+	u16 size = nlmsg_msg_size(len);
 
 	nlh = (struct nlmsghdr*)skb_put(skb, NLMSG_ALIGN(size));
 	nlh->nlmsg_type = type;
@@ -695,14 +695,14 @@ static __inline struct nlmsghdr *
 }
 
 static __inline struct nlmsghdr *nlmsg_put(struct sk_buff *skb, u32 portid, u32 seq,
-	int type, int payload, int flags)
+	u16 type, u16 payload, u16 flags)
 {
 	return __nlmsg_put(skb, portid, seq, type, payload, flags);
 }
 
 static __inline int nlmsg_end(struct sk_buff *skb, struct nlmsghdr *nlh)
 {
-    nlh->nlmsg_len = skb_tail_pointer(skb) - (unsigned char *)nlh;
+    nlh->nlmsg_len = (u16)(skb_tail_pointer(skb) - (unsigned char *)nlh);
     return skb->len;
 }
 

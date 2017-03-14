@@ -90,7 +90,7 @@
 
 static inline unsigned short queue_logical_block_size(struct request_queue *q)
 {
-	int retval = 512;
+	unsigned short retval = 512;
 	if (q && q->logical_block_size)
 		retval = q->logical_block_size;
 	return retval;
