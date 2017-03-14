@@ -25,7 +25,7 @@
 */
 #include <drbd_windows.h>
 #include <drbd_transport.h>
-#include "windows/drbd.h"
+#include "linux/drbd.h"
 #include <linux/drbd_genl_api.h>
 #include <drbd_protocol.h>
 #include "drbd_wrappers.h"

@@ -3,6 +3,48 @@
 #ifndef WDRBD9_GENERIC_COMPAT_STUFF
 #define WDRBD9_GENERIC_COMPAT_STUFF
 
+#ifdef WINNT
+#pragma warning (disable : 4005 4018 4101 4115 4121 4127 4131 4152 4189 4200 4201 4204 4212 4218 4242 4244 4245 4267 4307 4389 4702 4706)
+/* warning disable list
+// drbd.h
+4005: macro redefinition
+4018: signed/unsigned mismatch
+4067: unexpected tokens following preprocessor directive - expected a newline
+4101: unreferenced local variable
+4115: named type definition in parentheses
+4121: alignment of a member was sensitive to packing
+4127: conditional expression is constant
+4131: uses old-style declarator
+4189: local variable is initialized but not referenced
+4152: nonstandard extension, function/data pointer conversion in expression
+4200: nonstandard extension used : zero-sized array in struct/union
+4201: nonstandard extension used : nameless struct/union
+4204: nonstandard extension used : non-constant aggregate initializer
+4212: nonstandard extension used : function declaration used ellipsis
+4218: nonstandard extension used : must specify at least a storage class or a type
+4242: '=' : conversion from 'sector_t' to 'long', possible loss of data
+4244: '=' : conversion from 'int' to 'uint8_t', possible loss of data
+4245: 'function' : conversion from 'int' to 'unsigned short', signed/unsigned mismatch
+4267: conversion from 'size_t' to '__u32', possible loss of data
+4307: integral constant overflow warning disable (about DRBD_SNDBUF_SIZE_MAX define)
+4389: '!=' : signed/unsigned mismatch
+4702: unreachable code
+4706: assignment within conditional expression
+
+//drbd_int.h
+4221: cannot be initialized using address of automatic variable
+4706: assignment within conditional expression
+
+//drbd_interval.h
+4067: unexpected tokens following preprocessor directive - expected a newline
+
+//drbd_windows.h
+4100: unreferenced formal parameter
+4146: unary minus operator applied to unsigned type, result still unsigned
+*/
+#endif
+
+
 #define MODULE_AUTHOR(egal, ...)
 #define MODULE_DESCRIPTION(egal, ...)
 #define MODULE_VERSION(egal)
@@ -128,5 +170,10 @@ static inline void might_sleep() { }
 #define CRYPTO_MAX_ALG_NAME (64)
 
 #define spin_lock_nested(__lock, __subclass) spin_lock(__lock)
+
+#define _WIN32_MVFL
+#define _WIN32_MULTI_VOLUME
+#define _WIN32_TWOPC
+
 
 #endif
