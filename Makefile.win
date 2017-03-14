@@ -53,6 +53,9 @@ WIN_INCLUDE_DIRS += -I "../drbd-headers"
 WIN_INCLUDE_DIRS += -I "drbd-kernel-compat"
 
 WIN_CFLAGS += $(WIN_INCLUDE_DIRS)
+ifeq (V,1)
+WIN_CFLAGS += /showIncludes 
+endif
 
 WIN_DEF_INCLUDES += /FI"linux/types.h"
 WIN_DEF_INCLUDES += /FI"generic_compat_stuff.h"
