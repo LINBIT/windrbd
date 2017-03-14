@@ -445,7 +445,7 @@ static __inline int nla_put_u64(struct sk_buff *msg, int attrtype, __u64 value)
 * @attrtype: attribute type
 * @str: NUL terminated string
 */
-static __inline int nla_put_string(struct sk_buff *msg, int attrtype,
+static __inline size_t nla_put_string(struct sk_buff *msg, int attrtype,
     const char *str)
 {
     return nla_put(msg, attrtype, strlen(str) + 1, str);
