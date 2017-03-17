@@ -20,12 +20,12 @@ void kmem_cache_destroy(struct kmem_cache *cache)
 	ExFreePool(cache);
 }
 
-void *kmem_cache_alloc(void * cache, int flag)
+void *kmem_cache_alloc(struct kmem_cache * cache, int flag)
 {
-	return ExAllocateFromNPagedLookasideList(cache);
+	return ExAllocateFromNPagedLookasideList(&cache->l);
 }
 
-void kmem_cache_free(void * cache, void *obj)
+void kmem_cache_free(struct kmem_cache * cache, void *obj)
 {
-	ExFreeToNPagedLookasideList(cache, obj);
+	ExFreeToNPagedLookasideList(&cache->l, obj);
 }
