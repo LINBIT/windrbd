@@ -25,50 +25,28 @@
 * with the slab allocator.
 */
 
-#ifdef _WIN32
 #include "drbd_windows.h"
 #include "drbd_wingenl.h"
 #include "linux/idr.h"
 #include "linux/slab.h"
 #include "linux/bitops.h"
-#else
-#ifndef TEST  // to test in user space...
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#endif
-#include <linux/err.h>
-#include <linux/string.h>
-#include <linux/idr.h>
-#endif
 
-static kmem_cache_t *idr_layer_cache;
+
+static kmem_cache_t *idr_layer_cache = NULL;
 
 static struct idr_layer *alloc_layer(struct idr *idp)
 {
 	struct idr_layer *p;
-#ifdef _WIN32
 	KIRQL oldIrql;
-#else
-	unsigned long flags;
-#endif
 
-#ifdef _WIN32
 	KeAcquireSpinLock(&idp->lock, &oldIrql);
-#else
-	spin_lock_irqsave(&idp->lock, flags);
-#endif
 	if ((p = idp->id_free) != 0) {
 		idp->id_free = p->ary[0];
 		idp->id_free_cnt--;
 		p->ary[0] = NULL;
 	}
 
-#ifdef _WIN32
 	KeReleaseSpinLock(&idp->lock, oldIrql);
-#else
-	spin_unlock_irqrestore(&idp->lock, flags);
-#endif
 	return(p);
 }
 
@@ -123,11 +101,7 @@ static int sub_alloc(struct idr *idp, void *ptr, int *starting_id)
 	struct idr_layer *p, *new;
 	struct idr_layer *pa[MAX_LEVEL];
 	int l, id;
-#ifdef _WIN32
-    ULONG_PTR bm;
-#else
-	long bm;
-#endif
+	ULONG_PTR bm;
 
 	id = *starting_id;
 	p = idp->top;
@@ -198,11 +172,7 @@ static int idr_get_new_above_int(struct idr *idp, void *ptr, int starting_id)
 {
 	struct idr_layer *p, *new;
 	int layers, v, id;
-#ifdef _WIN32
 	KIRQL oldIrql;
-#else
-	unsigned long flags;
-#endif
 
 	id = starting_id;
 build_up:
@@ -226,11 +196,7 @@ build_up:
 			* The allocation failed.  If we built part of
 			* the structure tear it down.
 			*/
-#ifdef _WIN32
 			KeAcquireSpinLock(&idp->lock, &oldIrql);
-#else
-			spin_lock_irqsave(&idp->lock, flags);
-#endif
 			for (new = p; p && p != idp->top; new = p) {
 				p = p->ary[0];
 				new->ary[0] = NULL;
@@ -238,11 +204,7 @@ build_up:
 				__free_layer(idp, new);
 			}
 
-#ifdef _WIN32
 			KeReleaseSpinLock(&idp->lock, oldIrql);
-#else
-			spin_unlock_irqrestore(&idp->lock, flags);
-#endif
 			return -1;
 		}
 		new->ary[0] = p;
@@ -346,22 +308,14 @@ static void sub_remove(struct idr *idp, int shift, int id)
 
 	while ((shift > 0) && p) {
 		n = (id >> shift) & IDR_MASK;
-#ifdef _WIN32
-		clear_bit(n, &p->bitmap);
-#else
 		__clear_bit(n, &p->bitmap);
-#endif
 		*++paa = &p->ary[n];
 		p = p->ary[n];
 		shift -= IDR_BITS;
 	}
 	n = id & IDR_MASK;
 	if (likely(p != NULL && test_bit(n, &p->bitmap))){
-#ifdef _WIN32
-		clear_bit(n, &p->bitmap);
-#else
 		__clear_bit(n, &p->bitmap);
-#endif
 		p->ary[n] = NULL;
 		while (*paa && !--((**paa)->count)){
 			free_layer(idp, **paa);
@@ -465,7 +419,6 @@ void *idr_find(struct idr *idp, int id)
  *
  * The caller must serialize idr_for_each() vs idr_get_new() and idr_remove().
  */
-#ifdef _WIN32
 // DRBD_DOC: from http://ftp.openswan.org/openswan/openswan-ocf/klips-fsm/lib/idr.c
 int idr_for_each(struct idr *idp,
 		 int (*fn)(int id, void *p, void *data), void *data)
@@ -502,7 +455,6 @@ int idr_for_each(struct idr *idp,
 
 	return error;
 }
-#endif
 
 /**
 * idr_replace - replace pointer for given id
@@ -570,9 +522,5 @@ void idr_init(struct idr *idp)
 {
 	init_id_cache();
 	memset(idp, 0, sizeof(struct idr));
-#ifdef _WIN32
 	KeInitializeSpinLock(&idp->lock);
-#else
-	spin_lock_init(&idp->lock);
-#endif
 }

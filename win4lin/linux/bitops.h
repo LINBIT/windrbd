@@ -42,6 +42,8 @@ void clear_bit(int bit, volatile ULONG_PTR * base)
     test_and_clear_bit(bit, base);
 }
 
+#define __clear_bit(__n, __p) clear_bit(__n, __p)
+
 static __inline void __set_bit(int nr, volatile ULONG_PTR *addr)
 {
 	ULONG_PTR mask = BIT_MASK(nr);
