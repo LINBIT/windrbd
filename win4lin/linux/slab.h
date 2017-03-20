@@ -5,6 +5,7 @@
 
 struct kmem_cache {
 	NPAGED_LOOKASIDE_LIST l;
+	size_t element_size;
 };
 
 typedef struct kmem_cache kmem_cache_t;
