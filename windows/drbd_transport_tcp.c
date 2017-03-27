@@ -1057,53 +1057,53 @@ static int dtt_create_listener(struct drbd_transport *transport,
 	my_addr = *(struct sockaddr_storage_win *)addr;
 
 	what = "sock_create_kern";
-    s_listen = kzalloc(sizeof(struct socket), 0, '9TDW');
-    if (!s_listen)
-    {
-        err = -ENOMEM;
-        goto out;
-    }
-    sprintf(s_listen->name, "listen_sock\0");
-    s_listen->sk_linux_attr = 0;
-    err = 0;
+	s_listen = kzalloc(sizeof(struct socket), 0, '9TDW');
+	if (!s_listen)
+	{
+		err = -ENOMEM;
+		goto out;
+	}
+	sprintf(s_listen->name, "listen_sock\0");
+	s_listen->sk_linux_attr = 0;
+	err = 0;
 	listener = kzalloc(sizeof(struct dtt_listener), 0, 'ATDW');
 	if (!listener) {
-        err = -ENOMEM;
-        goto out;
-    }
+		err = -ENOMEM;
+		goto out;
+	}
 
 	if (my_addr.ss_family == AF_INET6) {
 		s_listen->sk = CreateSocket(AF_INET6, SOCK_STREAM, IPPROTO_TCP, (PVOID*)listener, &dispatch, WSK_FLAG_LISTEN_SOCKET); // this is listen socket
 	} else {
 		s_listen->sk = CreateSocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, (PVOID*)listener, &dispatch, WSK_FLAG_LISTEN_SOCKET); // this is listen socket
 	}
-    if (s_listen->sk == NULL) {
-        err = -1;
-        goto out;
-    }
+	if (s_listen->sk == NULL) {
+		err = -1;
+		goto out;
+	}
 
-    status = SetConditionalAccept(s_listen->sk, 1);
+	status = SetConditionalAccept(s_listen->sk, 1);
 	if (!NT_SUCCESS(status))
-    {
+	{
 		WDRBD_ERROR("Failed to set SO_CONDITIONAL_ACCEPT. err(0x%x)\n", status);
-        err = status;
-        goto out;
-    }
-    s_listen->sk_linux_attr = kzalloc(sizeof(struct sock), 0, 'BTDW');
-    if (!s_listen->sk_linux_attr)
-    {
-        err = -ENOMEM;
-        goto out;
-    }
+		err = status;
+		goto out;
+	}
+	s_listen->sk_linux_attr = kzalloc(sizeof(struct sock), 0, 'BTDW');
+	if (!s_listen->sk_linux_attr)
+	{
+		err = -ENOMEM;
+		goto out;
+	}
 
-    s_listen->sk_linux_attr->sk_reuse = SK_CAN_REUSE; /* SO_REUSEADDR */
+	s_listen->sk_linux_attr->sk_reuse = SK_CAN_REUSE; /* SO_REUSEADDR */
 	LONG InputBuffer = 1;
-    status = ControlSocket(s_listen->sk, WskSetOption, SO_REUSEADDR, SOL_SOCKET, sizeof(ULONG), &InputBuffer, 0, NULL, NULL);
-    if (!NT_SUCCESS(status)) {
-        WDRBD_ERROR("ControlSocket: s_listen socket SO_REUSEADDR: failed=0x%x\n", status);
-        err = -1;
-        goto out;
-    }
+	status = ControlSocket(s_listen->sk, WskSetOption, SO_REUSEADDR, SOL_SOCKET, sizeof(ULONG), &InputBuffer, 0, NULL, NULL);
+	if (!NT_SUCCESS(status)) {
+		WDRBD_ERROR("ControlSocket: s_listen socket SO_REUSEADDR: failed=0x%x\n", status);
+		err = -1;
+		goto out;
+	}
 	dtt_setbufsize(s_listen, sndbuf_size, rcvbuf_size);
 
 	what = "bind before listen";
@@ -1121,20 +1121,20 @@ static int dtt_create_listener(struct drbd_transport *transport,
 	}
 
 	status = Bind(s_listen->sk, (my_addr.ss_family == AF_INET) ? (PSOCKADDR)&ListenV4Addr : (PSOCKADDR)&ListenV6Addr);
-	
+
 	if (!NT_SUCCESS(status)) {
-    	if(my_addr.ss_family == AF_INET) {
+		if(my_addr.ss_family == AF_INET) {
 			WDRBD_ERROR("AF_INET Failed to socket Bind(). err(0x%x) %02X.%02X.%02X.%02X:0x%X%X\n", status, (UCHAR)my_addr.__data[2], (UCHAR)my_addr.__data[3], (UCHAR)my_addr.__data[4], (UCHAR)my_addr.__data[5],(UCHAR)my_addr.__data[0],(UCHAR)my_addr.__data[1]);
-    	} else {
+		} else {
 			WDRBD_ERROR("AF_INET6 Failed to socket Bind(). err(0x%x) [%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X]:0x%X%X\n", status, (UCHAR)my_addr.__data[2],(UCHAR)my_addr.__data[3], (UCHAR)my_addr.__data[4],(UCHAR)my_addr.__data[5],
-																		(UCHAR)my_addr.__data[6],(UCHAR)my_addr.__data[7], (UCHAR)my_addr.__data[8],(UCHAR)my_addr.__data[9],
-																		(UCHAR)my_addr.__data[10],(UCHAR)my_addr.__data[11], (UCHAR)my_addr.__data[12],(UCHAR)my_addr.__data[13],
-																		(UCHAR)my_addr.__data[14],(UCHAR)my_addr.__data[15],(UCHAR)my_addr.__data[16],(UCHAR)my_addr.__data[17],
-																		(UCHAR)my_addr.__data[0], (UCHAR)my_addr.__data[1]);
-    	}
+					(UCHAR)my_addr.__data[6],(UCHAR)my_addr.__data[7], (UCHAR)my_addr.__data[8],(UCHAR)my_addr.__data[9],
+					(UCHAR)my_addr.__data[10],(UCHAR)my_addr.__data[11], (UCHAR)my_addr.__data[12],(UCHAR)my_addr.__data[13],
+					(UCHAR)my_addr.__data[14],(UCHAR)my_addr.__data[15],(UCHAR)my_addr.__data[16],(UCHAR)my_addr.__data[17],
+					(UCHAR)my_addr.__data[0], (UCHAR)my_addr.__data[1]);
+		}
 		err = -1;
-        goto out;
-    }
+		goto out;
+	}
 
 	if (err < 0)
 		goto out;
@@ -1147,18 +1147,18 @@ static int dtt_create_listener(struct drbd_transport *transport,
 
 	// DW-845 fix crash issue(EventCallback is called when listener is not initialized, then reference to invalid Socketcontext at dtt_inspect_incoming.)
 	status = SetEventCallbacks(s_listen->sk, WSK_EVENT_ACCEPT);
-    if (!NT_SUCCESS(status)) {
-        WDRBD_ERROR("Failed to set WSK_EVENT_ACCEPT. err(0x%x)\n", status);
-    	err = -1;
-        goto out;
-    }
+	if (!NT_SUCCESS(status)) {
+		WDRBD_ERROR("Failed to set WSK_EVENT_ACCEPT. err(0x%x)\n", status);
+		err = -1;
+		goto out;
+	}
 	return 0;
 out:
 	if (s_listen)
 		sock_release(s_listen);
 
 	if (err < 0 &&
-	    err != -EAGAIN && err != -EINTR && err != -ERESTARTSYS && err != -EADDRINUSE)
+			err != -EAGAIN && err != -EINTR && err != -ERESTARTSYS && err != -EADDRINUSE)
 		tr_err(transport, "%s failed, err = %d\n", what, err);
 
 	kfree(listener);
