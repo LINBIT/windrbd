@@ -482,7 +482,9 @@ mvolClose(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
     } else {
 	struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
-	kref_put(&device->kref, drbd_destroy_device);
+
+	if (device)
+	    kref_put(&device->kref, drbd_destroy_device);
     }
     return STATUS_SUCCESS;
 }
@@ -550,13 +552,14 @@ mvolSystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         return STATUS_SUCCESS;
     }
 
+#if 0
     // TODO: what would we do here?
     Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
     IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     return STATUS_INVALID_DEVICE_REQUEST;
 
-#if 0
+#endif
 
 #ifdef _WIN32_MVFL
     if (VolumeExtension->Active)
@@ -564,7 +567,7 @@ mvolSystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		// DW-1300: get device and get reference.
 		struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
 		// DW-1300: prevent mounting volume when device is failed or below.
-		if (device && device->resource->bTempAllowMount == FALSE && ((R_PRIMARY != device->resource->role[NOW]) || (device->resource->bPreDismountLock == TRUE) || device->disk_state[NOW] <= D_FAILED))   // V9
+		if (device && ((R_PRIMARY != device->resource->role[NOW]) || device->disk_state[NOW] <= D_FAILED))   // V9
 		{
 			//PIO_STACK_LOCATION irpSp = IoGetCurrentIrpStackLocation(Irp);
 			//WDRBD_TRACE("DeviceObject(0x%x), MinorFunction(0x%x) STATUS_INVALID_DEVICE_REQUEST\n", DeviceObject, irpSp->MinorFunction);
@@ -584,7 +587,6 @@ mvolSystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     IoSkipCurrentIrpStackLocation(Irp);
 
     return IoCallDriver(VolumeExtension->TargetDeviceObject, Irp);
-#endif
 }
 
 NTSTATUS
@@ -605,6 +607,7 @@ mvolRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         goto invalid_device;
     }
 
+#if  0
     status = mvolReadWriteDevice(VolumeExtension, Irp, IRP_MJ_READ);
     if (status != STATUS_SUCCESS)
     {
@@ -614,15 +617,14 @@ mvolRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	IoCompleteRequest(Irp, (CCHAR)(NT_SUCCESS(Irp->IoStatus.Status) ? IO_DISK_INCREMENT : IO_NO_INCREMENT));
     }
     return status;
+#endif
 
     /* TODO read balancing */
     IoSkipCurrentIrpStackLocation(Irp);
     return IoCallDriver(VolumeExtension->TargetDeviceObject, Irp);
 
-#if  0
     struct drbd_device *device = get_device_quick(VolumeExtension);
 
-async_read_filter:
     {
 #ifdef DRBD_TRACE
         PIO_STACK_LOCATION readIrpSp = IoGetCurrentIrpStackLocation(Irp);
@@ -636,7 +638,6 @@ async_read_filter:
         IO_THREAD_SIG(pThreadInfo);
     }
     return STATUS_PENDING;
-#endif
 
 invalid_device:
     Irp->IoStatus.Information = 0;
@@ -659,6 +660,7 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 
+#if 0
     status = mvolReadWriteDevice(VolumeExtension, Irp, IRP_MJ_WRITE);
     if (status != STATUS_SUCCESS)
     {
@@ -668,13 +670,13 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	IoCompleteRequest(Irp, (CCHAR)(NT_SUCCESS(Irp->IoStatus.Status) ? IO_DISK_INCREMENT : IO_NO_INCREMENT));
     }
     return status;
+#endif
 
-#if 0
     if (VolumeExtension->Active) {
 		// DW-1300: get device and get reference.
 		struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
 		// DW-1363: prevent writing when device is failed or below.
-		if (device && device->resource && (device->resource->role[NOW] == R_PRIMARY) && (device->resource->bPreSecondaryLock == FALSE) && (device->disk_state[NOW] > D_FAILED)) {
+		if (device && device->resource && (device->resource->role[NOW] == R_PRIMARY) && (device->disk_state[NOW] > D_FAILED)) {
         	
 			PIO_STACK_LOCATION pisl = IoGetCurrentIrpStackLocation(Irp);
 			ULONGLONG offset_sector = (ULONGLONG)(pisl->Parameters.Write.ByteOffset.QuadPart) >> 9;
@@ -753,7 +755,6 @@ skip:
 		IoReleaseRemoveLock(&VolumeExtension->RemoveLock, NULL);
 	}
 	return status;
-#endif
 }
 
 extern int seq_file_idx;
