@@ -1139,12 +1139,6 @@ static int dtt_create_listener(struct drbd_transport *transport,
 	if (err < 0)
 		goto out;
 
-	what = "kmalloc";
-	listener = kzalloc(sizeof(*listener), GFP_KERNEL, 'CTDW');
-	if (!listener) {
-		err = -ENOMEM;
-		goto out;
-	}
 
 	listener->listener.listen_addr = my_addr;
 	listener->listener.destroy = dtt_destroy_listener;
