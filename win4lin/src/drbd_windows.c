@@ -2089,12 +2089,8 @@ void *idr_get_next(struct idr *idp, int *nextidp)
 	int n, max;
 
 	/* find first ent */
-#ifdef _WIN32
 	if (!idp)
-	{
 		return NULL;
-	}
-#endif
 
 	n = idp->layers * IDR_BITS;
 	max = 1 << n;
@@ -2707,7 +2703,6 @@ struct block_device *blkdev_get_by_link(UNICODE_STRING * name)
 
 struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder)
 {
-#ifdef _WIN32
 	UNREFERENCED_PARAMETER(mode);
 	UNREFERENCED_PARAMETER(holder);
 
@@ -2728,9 +2723,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	RtlFreeUnicodeString(&upath);
 
 	return dev ? dev : ERR_PTR(-ENODEV);
-#else
-	return open_bdev_exclusive(path, mode, holder);
-#endif
 }
 
 void dumpHex(const void *aBuffer, const size_t aBufferSize, size_t aWidth)
