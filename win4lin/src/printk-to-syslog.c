@@ -70,12 +70,12 @@ int _printk(const char *func, const char *fmt, ...)
 	Bind(printk_udp_socket, (SOCKADDR *)&local);
     }
 
-    //    DoTraceMessage(TRCINFO, "%s", buf);
+    DoTraceMessage(TRCINFO, buffer);
     DbgPrintEx(DPFLTR_IHVDRIVER_ID,
 	    (level <= KERN_ERR[0]  ? DPFLTR_ERROR_LEVEL :
 	     level >= KERN_INFO[0] ? DPFLTR_INFO_LEVEL  :
 	     DPFLTR_WARNING_LEVEL),
-	    "WDRBD: %s", fmt);
+	    buffer);
 
     if (printk_udp_socket) {
 	status = SendTo(printk_udp_socket, buffer, len,
