@@ -21,6 +21,7 @@ int _printk(const char *func, const char *fmt, ...)
     LARGE_INTEGER time;
     va_list args;
     NTSTATUS status;
+    int hour, min, sec, usec, sec_day;
 
 
     fmt_without_level = fmt;
@@ -36,8 +37,13 @@ int _printk(const char *func, const char *fmt, ...)
     }
 
     KeQuerySystemTime(&time);
-    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1, "<%c> %lld %s ",
-	    level, time,
+    sec_day = (time.QuadPart / (ULONG_PTR)1e7) % 86400;
+    sec = sec_day % 60;
+    min = (sec_day / 60) % 60;
+    hour = sec_day / 3600;
+    usec = (time.QuadPart / 10) % (ULONG_PTR)1e6;
+    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1, "<%c> U%02d:%02d:%02d.%06d %s ",
+	    level, hour, min, sec, usec,
 	    func // my_host_name
 	    );
     if (! NT_SUCCESS(status))
