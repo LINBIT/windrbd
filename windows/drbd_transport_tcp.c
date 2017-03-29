@@ -1622,6 +1622,10 @@ static int dtt_add_path(struct drbd_transport *transport, struct drbd_path *drbd
 	int err = 0;
 
 	drbd_path->established = false;
+	path->socket = NULL;
+	path->first = NULL;
+	init_waitqueue_head(&path->wait);
+
 	mutex_lock(&tcp_transport->paths_mutex);
 	if (test_bit(DTT_CONNECTING, &tcp_transport->flags)) {
 		err = drbd_get_listener(transport, &path->path, dtt_create_listener);
