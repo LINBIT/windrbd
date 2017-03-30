@@ -907,55 +907,49 @@ dtt_incoming_connection (
     _Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
 )
 {
-    struct socket * s_estab = kzalloc(sizeof(struct socket), 0, '7TDW');
+	struct socket * s_estab = kzalloc(sizeof(struct socket), 0, '7TDW');
 
-    if (!s_estab)
-    {
-        return STATUS_REQUEST_NOT_ACCEPTED;
-    }
 
-    s_estab->sk = AcceptSocket;
-    sprintf(s_estab->name, "estab_sock");
-    s_estab->sk_linux_attr = kzalloc(sizeof(struct sock), 0, '8TDW');
+	if (!s_estab) {
+		return STATUS_REQUEST_NOT_ACCEPTED;
+	}
 
-    if (s_estab->sk_linux_attr)
-    {
-        s_estab->sk_linux_attr->sk_sndbuf = SOCKET_SND_DEF_BUFFER;
-    }
-    else
-    {
-        kfree(s_estab);
-        return STATUS_REQUEST_NOT_ACCEPTED;
-    }
-    
-    struct dtt_listener *listener = (struct dtt_listener *)SocketContext;
+	s_estab->sk = AcceptSocket;
+	sprintf(s_estab->name, "estab_sock");
+	s_estab->sk_linux_attr = kzalloc(sizeof(struct sock), 0, '8TDW');
+
+	if (s_estab->sk_linux_attr) {
+		s_estab->sk_linux_attr->sk_sndbuf = SOCKET_SND_DEF_BUFFER;
+	} else {
+		kfree(s_estab);
+		return STATUS_REQUEST_NOT_ACCEPTED;
+	}
+
+	struct dtt_listener *listener = (struct dtt_listener *)SocketContext;
 	if(!listener) {
 		kfree(s_estab->sk_linux_attr);
 		kfree(s_estab);
-        return STATUS_REQUEST_NOT_ACCEPTED;
+		return STATUS_REQUEST_NOT_ACCEPTED;
 	}
-    spin_lock(&listener->listener.waiters_lock);
-    struct drbd_path *drbd_path = drbd_find_path_by_addr(&listener->listener, (struct sockaddr_storage_win*)RemoteAddress);
+	spin_lock(&listener->listener.waiters_lock);
+	struct drbd_path *drbd_path = drbd_find_path_by_addr(&listener->listener, (struct sockaddr_storage_win*)RemoteAddress);
 	if(!drbd_path) {
 		kfree(s_estab->sk_linux_attr);
 		kfree(s_estab);
 		spin_unlock(&listener->listener.waiters_lock);
-        return STATUS_REQUEST_NOT_ACCEPTED;
+		return STATUS_REQUEST_NOT_ACCEPTED;
 	}
 
-    if (drbd_path)
-    {
+	if (drbd_path) {
 		struct dtt_path *path = container_of(drbd_path, struct dtt_path, path);
-        path->socket = s_estab;
+		path->socket = s_estab;
 		wake_up(&path->wait);
-    }
-    else
-    {
-        listener->listener.pending_accepts++;
-        listener->paccept_socket = AcceptSocket;
-    }
+	} else {
+		listener->listener.pending_accepts++;
+		listener->paccept_socket = AcceptSocket;
+	}
 	spin_unlock(&listener->listener.waiters_lock);
-//    WDRBD_TRACE_SK("waiter(0x%p) s_estab(0x%p) wsk(0x%p) wake!!!!\n", waiter, s_estab, AcceptSocket);
+	//    WDRBD_TRACE_SK("waiter(0x%p) s_estab(0x%p) wsk(0x%p) wake!!!!\n", waiter, s_estab, AcceptSocket);
 
 	return STATUS_SUCCESS;
 }
@@ -1024,8 +1018,8 @@ dtt_abort_inspect_incoming(
 
 WSK_CLIENT_LISTEN_DISPATCH dispatch = {
 	dtt_incoming_connection,
-    dtt_inspect_incoming,       // WskInspectEvent is required only if conditional-accept is used.
-    dtt_abort_inspect_incoming  // WskAbortEvent is required only if conditional-accept is used.
+	dtt_inspect_incoming,       // WskInspectEvent is required only if conditional-accept is used.
+	dtt_abort_inspect_incoming  // WskAbortEvent is required only if conditional-accept is used.
 };
 
 

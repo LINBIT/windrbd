@@ -297,12 +297,12 @@ int DoSplitIo(PVOLUME_EXTENSION VolumeExtension, ULONG io, PIRP upper_pirp, stru
 NTSTATUS
 mvolReadWriteDevice(PVOLUME_EXTENSION VolumeExtension, PIRP Irp, ULONG Io)
 {
-	NTSTATUS					status = STATUS_INSUFFICIENT_RESOURCES;
-	PIO_STACK_LOCATION			irpSp;
-	PVOID						buffer;
-	LARGE_INTEGER				offset;
-	ULONG						length;
-	struct drbd_device*			device = NULL;
+	NTSTATUS		status = STATUS_INSUFFICIENT_RESOURCES;
+	PIO_STACK_LOCATION	irpSp;
+	PVOID			buffer;
+	LARGE_INTEGER		offset;
+	ULONG			length;
+	struct drbd_device*	device = NULL;
 
 	irpSp = IoGetCurrentIrpStackLocation(Irp);
 	if (Irp->MdlAddress)

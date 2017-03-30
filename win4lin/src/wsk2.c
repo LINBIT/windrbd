@@ -127,32 +127,32 @@ InitWskBuffer(
 	__in  BOOLEAN	bWriteAccess
 )
 {
-	NTSTATUS Status = STATUS_SUCCESS;
+    NTSTATUS Status = STATUS_SUCCESS;
 
-	ASSERT(Buffer);
-	ASSERT(BufferSize);
-	ASSERT(WskBuffer);
+    ASSERT(Buffer);
+    ASSERT(BufferSize);
+    ASSERT(WskBuffer);
 
-	WskBuffer->Offset = 0;
-	WskBuffer->Length = BufferSize;
+    WskBuffer->Offset = 0;
+    WskBuffer->Length = BufferSize;
 
-	WskBuffer->Mdl = IoAllocateMdl(Buffer, BufferSize, FALSE, FALSE, NULL);
-	if (!WskBuffer->Mdl) {
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
+    WskBuffer->Mdl = IoAllocateMdl(Buffer, BufferSize, FALSE, FALSE, NULL);
+    if (!WskBuffer->Mdl) {
+	return STATUS_INSUFFICIENT_RESOURCES;
+    }
 
     try {
-		// DW-1223: Locking with 'IoWriteAccess' affects buffer, which causes infinite I/O from ntfs when the buffer is from mdl of write IRP.
-		// we need write access for receiver, since buffer will be filled.
-		MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
+	// DW-1223: Locking with 'IoWriteAccess' affects buffer, which causes infinite I/O from ntfs when the buffer is from mdl of write IRP.
+	// we need write access for receiver, since buffer will be filled.
+	MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
     } except(EXCEPTION_EXECUTE_HANDLER) {
-        if (WskBuffer->Mdl != NULL) {
-            IoFreeMdl(WskBuffer->Mdl);
-        }
-        WDRBD_ERROR("MmProbeAndLockPages failed. exception code=0x%x\n", GetExceptionCode());
-        return STATUS_INSUFFICIENT_RESOURCES;
+	if (WskBuffer->Mdl != NULL) {
+	    IoFreeMdl(WskBuffer->Mdl);
+	}
+	WDRBD_ERROR("MmProbeAndLockPages failed. exception code=0x%x\n", GetExceptionCode());
+	return STATUS_INSUFFICIENT_RESOURCES;
     }
-	return Status;
+    return Status;
 }
 
 VOID
@@ -1424,12 +1424,11 @@ AcceptLocal(
 	PIRP			Irp = NULL;
 	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
 	PWSK_SOCKET		AcceptedSocket = NULL;
-    struct task_struct *thread = current;
-    PVOID waitObjects[2];
-    int wObjCount = 1;
+	struct task_struct *thread = current;
+	PVOID waitObjects[2];
+	int wObjCount = 1;
 
-	if (g_SocketsState != INITIALIZED || !WskSocket)
-	{
+	if (g_SocketsState != INITIALIZED || !WskSocket) {
 		*RetStaus = SOCKET_ERROR;
 		return NULL;
 	}
@@ -1446,64 +1445,56 @@ AcceptLocal(
 		return NULL;	
 	}
 	Status = ((PWSK_PROVIDER_LISTEN_DISPATCH) WskSocket->Dispatch)->WskAccept(
-		WskSocket,
-		0,
-		NULL,
-		NULL,
-		LocalAddress,
-		RemoteAddress,
-		Irp);
+			WskSocket,
+			0,
+			NULL,
+			NULL,
+			LocalAddress,
+			RemoteAddress,
+			Irp);
 
-	if (Status == STATUS_PENDING)
-	{
+	if (Status == STATUS_PENDING) {
 		LARGE_INTEGER	nWaitTime;
 		LARGE_INTEGER	*pTime;
 
 		if (timeout <= 0 || timeout == MAX_SCHEDULE_TIMEOUT)
 		{
 			pTime = 0;
-		}
-		else
-		{
+		} else {
 			nWaitTime = RtlConvertLongToLargeInteger(-1 * timeout * 10000000);
 			pTime = &nWaitTime;
 		}
 
-        waitObjects[0] = (PVOID) &CompletionEvent;
-        if (thread->has_sig_event)
-        {
-            waitObjects[1] = (PVOID) &thread->sig_event;
-            wObjCount = 2;
-        }
-
-        Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-
-		switch (Status)
-		{
-			case STATUS_WAIT_0:
-				break;
-
-			case STATUS_WAIT_0 + 1:
-				IoCancelIrp(Irp);
-				KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-				*RetStaus = -EINTR;	
-				break;
-
-			case STATUS_TIMEOUT:
-				IoCancelIrp(Irp);
-				KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-				*RetStaus = STATUS_TIMEOUT;
-				break;
-
-			default:
-				WDRBD_ERROR("Unexpected Error Status=0x%x\n", Status);
-				break;
+		waitObjects[0] = (PVOID) &CompletionEvent;
+		if (thread->has_sig_event) {
+			waitObjects[1] = (PVOID) &thread->sig_event;
+			wObjCount = 2;
 		}
-	}
-	else
-	{
-		if (Status != STATUS_SUCCESS)
-		{
+
+		Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
+HERi(Status);
+		switch (Status) {
+		case STATUS_WAIT_0:
+			break;
+
+		case STATUS_WAIT_0 + 1:
+			IoCancelIrp(Irp);
+			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
+			*RetStaus = -EINTR;	
+			break;
+
+		case STATUS_TIMEOUT:
+			IoCancelIrp(Irp);
+			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
+			*RetStaus = STATUS_TIMEOUT;
+			break;
+
+		default:
+			WDRBD_ERROR("Unexpected Error Status=0x%x\n", Status);
+			break;
+		}
+	} else {
+		if (Status != STATUS_SUCCESS) {
 			WDRBD_TRACE("Accept Error Status=0x%x\n", Status);
 		}
 	}
@@ -1528,12 +1519,11 @@ Accept(
 	PIRP			Irp = NULL;
 	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
 	PWSK_SOCKET		AcceptedSocket = NULL;
-    struct task_struct *thread = current;
-    PVOID waitObjects[2];
-    int wObjCount = 1;
+	struct task_struct *thread = current;
+	PVOID waitObjects[2];
+	int wObjCount = 1;
 
-	if (g_SocketsState != INITIALIZED || !WskSocket)
-	{
+	if (g_SocketsState != INITIALIZED || !WskSocket) {
 		*RetStaus = SOCKET_ERROR;
 		return NULL;
 	}
@@ -1545,64 +1535,55 @@ Accept(
 	}
 
 	Status = ((PWSK_PROVIDER_LISTEN_DISPATCH) WskSocket->Dispatch)->WskAccept(
-		WskSocket,
-		0,
-		NULL,
-		NULL,
-		LocalAddress,
-		RemoteAddress,
-		Irp);
+			WskSocket,
+			0,
+			NULL,
+			NULL,
+			LocalAddress,
+			RemoteAddress,
+			Irp);
 
-	if (Status == STATUS_PENDING)
-	{
+	if (Status == STATUS_PENDING) {
 		LARGE_INTEGER	nWaitTime;
 		LARGE_INTEGER	*pTime;
 
-		if (timeout <= 0 || timeout == MAX_SCHEDULE_TIMEOUT)
-		{
+		if (timeout <= 0 || timeout == MAX_SCHEDULE_TIMEOUT) {
 			pTime = 0;
-		}
-		else
-		{
+		} else {
 			nWaitTime = RtlConvertLongToLargeInteger(-1 * timeout * 10000000);
 			pTime = &nWaitTime;
 		}
 
-        waitObjects[0] = (PVOID) &CompletionEvent;
-        if (thread->has_sig_event)
-        {
-            waitObjects[1] = (PVOID) &thread->sig_event;
-            wObjCount = 2;
-        }
-
-        Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-
-		switch (Status)
-		{
-			case STATUS_WAIT_0:
-				break;
-
-			case STATUS_WAIT_0 + 1:
-				IoCancelIrp(Irp);
-				KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-				*RetStaus = -EINTR;	
-				break;
-
-			case STATUS_TIMEOUT:
-				IoCancelIrp(Irp);
-				KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-				*RetStaus = STATUS_TIMEOUT;
-				break;
-
-			default:
-				WDRBD_ERROR("Unexpected Error Status=0x%x\n", Status);
-				break;
+		waitObjects[0] = (PVOID) &CompletionEvent;
+		if (thread->has_sig_event) {
+			waitObjects[1] = (PVOID) &thread->sig_event;
+			wObjCount = 2;
 		}
-	}
-	else
-	{
-		if (Status != STATUS_SUCCESS)
-		{
+
+		Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
+
+		switch (Status) {
+		case STATUS_WAIT_0:
+			break;
+
+		case STATUS_WAIT_0 + 1:
+			IoCancelIrp(Irp);
+			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
+			*RetStaus = -EINTR;	
+			break;
+
+		case STATUS_TIMEOUT:
+			IoCancelIrp(Irp);
+			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
+			*RetStaus = STATUS_TIMEOUT;
+			break;
+
+		default:
+			WDRBD_ERROR("Unexpected Error Status=0x%x\n", Status);
+			break;
+		}
+	} else {
+		if (Status != STATUS_SUCCESS) {
 			WDRBD_TRACE("Accept Error Status=0x%x\n", Status);
 		}
 	}
@@ -1944,32 +1925,30 @@ _In_opt_  PWSK_SOCKET AcceptSocket,
 _Outptr_result_maybenull_ PVOID *AcceptSocketContext,
 _Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
 )
-{   
-    UNREFERENCED_PARAMETER(Flags);
-    // Check for a valid new socket
-    if (AcceptSocket != NULL)
-    {
-        WDRBD_INFO("incoming connection on a listening socket.\n");
-        struct accept_wait_data *ad = (struct accept_wait_data*)SocketContext;        
-        ad->s_accept = kzalloc(sizeof(struct socket), 0, '89DW');
-        if(!ad->s_accept) {
-        	return STATUS_REQUEST_NOT_ACCEPTED;
-        }
-        ad->s_accept->sk = AcceptSocket;
-        sprintf(ad->s_accept->name, "estab_sock");
-        ad->s_accept->sk_linux_attr = kzalloc(sizeof(struct sock), 0, '92DW');
-        if (!ad->s_accept->sk_linux_attr)
-        {
-            ExFreePool(ad->s_accept);
-            return STATUS_REQUEST_NOT_ACCEPTED;
-        }
+{
+	UNREFERENCED_PARAMETER(Flags);
+	// Check for a valid new socket
+HERp(AcceptSocket);
+	if (AcceptSocket != NULL)  {
+		WDRBD_INFO("incoming connection on a listening socket.\n");
+		struct accept_wait_data *ad = (struct accept_wait_data*)SocketContext;        
+		ad->s_accept = kzalloc(sizeof(struct socket), 0, '89DW');
+		if(!ad->s_accept) {
+			return STATUS_REQUEST_NOT_ACCEPTED;
+		}
+		ad->s_accept->sk = AcceptSocket;
+		sprintf(ad->s_accept->name, "estab_sock");
+		ad->s_accept->sk_linux_attr = kzalloc(sizeof(struct sock), 0, '92DW');
+		if (!ad->s_accept->sk_linux_attr) {
+			ExFreePool(ad->s_accept);
+			return STATUS_REQUEST_NOT_ACCEPTED;
+		}
 
-        complete(&ad->door_bell);
-        return STATUS_SUCCESS;
-    }
-    // Error with listening socket
-    else
-    {
-        return STATUS_REQUEST_NOT_ACCEPTED;
-    }
+		complete(&ad->door_bell);
+		return STATUS_SUCCESS;
+	}
+	// Error with listening socket
+	else {
+		return STATUS_REQUEST_NOT_ACCEPTED;
+	}
 }
