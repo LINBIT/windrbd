@@ -752,7 +752,7 @@ long schedule(wait_queue_head_t *q, long timeout, char *func, int line)
 	{
 		KTIMER ktimer;
 		KeInitializeTimer(&ktimer);
-		KeSetTimerEx(&ktimer, nWaitTime, 0, NULL);
+		KeSetTimer(&ktimer, nWaitTime, 0);
 		KeWaitForSingleObject(&ktimer, Executive, KernelMode, FALSE, NULL);
 	}
 	else
