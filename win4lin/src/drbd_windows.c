@@ -1246,23 +1246,20 @@ int page_count(struct page *page)
 	return 1;
 }
 
-void init_timer(struct timer_list *t)
+static void timer_callback(PKDPC dpc, struct timer_list* timer, PVOID arg1, PVOID arg2)
 {
-	KeInitializeTimer(&t->ktimer);
-	KeInitializeDpc(&t->dpc, (PKDEFERRED_ROUTINE) t->function, t->pdata);
-#ifdef DBG
-    strcpy(t->name, "undefined");
-#endif
+	(void)arg1;
+	(void)arg2;
+	(void)dpc;
+	timer->function(timer->data);
 }
 
-void init_timer_key(struct timer_list *timer, const char *name,
-    struct lock_class_key *key)
+void setup_timer(struct timer_list * timer, void(*function)(ULONG_PTR data), ULONG_PTR data)
 {
-    UNREFERENCED_PARAMETER(key);
-    init_timer(timer);
-#ifdef DBG
-    strcpy(timer->name, name);
-#endif
+	timer->function = function;
+	timer->data = data;
+	KeInitializeTimer(&timer->ktimer);
+	KeInitializeDpc(&timer->dpc, (PKDEFERRED_ROUTINE)timer_callback, timer);
 }
 
 void add_timer(struct timer_list *t)

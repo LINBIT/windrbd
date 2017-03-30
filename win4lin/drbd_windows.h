@@ -533,7 +533,7 @@ struct workqueue_struct {
 struct timer_list {
     KTIMER ktimer;
     KDPC dpc;
-    void (*function)(PKDPC dpc, PVOID data, PVOID arg1, PVOID arg2);
+    void (*function)(ULONG_PTR data);
     union {
 	ULONG_PTR data;
 	PVOID pdata;
@@ -544,33 +544,15 @@ struct timer_list {
 #endif
 };
 #endif
-extern void init_timer(struct timer_list *t);
 extern void add_timer(struct timer_list *t);
 extern int del_timer_sync(struct timer_list *t);
 extern void del_timer(struct timer_list *t);
 extern int mod_timer(struct timer_list *t, ULONG_PTR expires);
-#ifdef _WIN32
+
 extern int mod_timer_pending(struct timer_list *timer, ULONG_PTR expires);
 
-struct lock_class_key { char __one_byte; };
-extern void init_timer_key(struct timer_list *timer, const char *name, struct lock_class_key *key);
+extern void setup_timer(struct timer_list * timer, void(*function)(ULONG_PTR data), ULONG_PTR data);
 
-static __inline void setup_timer_key(_In_ struct timer_list * timer,
-    const char *name,
-    struct lock_class_key *key,
-	void(*function)(PKDPC dpc, PVOID data, PVOID arg1, PVOID arg2),
-    ULONG_PTR data)
-{
-    timer->function = function;
-    timer->data = data;
-    init_timer_key(timer, name, key);
-}
-
-#define setup_timer(timer, fn, data)                            \
-    do {                                                        \
-        setup_timer_key((timer), #timer, NULL, (fn), (data));   \
-    } while (0)
-#endif
 struct work_struct {
 	struct list_head entry;
 	void (*func)(struct work_struct *work);
