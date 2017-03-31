@@ -72,9 +72,9 @@ int _printk(const char *func, const char *fmt, ...)
     } else {
 	/* Indicate how much might be lost on UDP */
 	if (dbgout_only) {
-	    pos = (ULONG)strlen(buffer);
-	    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - pos, " [%d dbg]", dbgout_only);
+	    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [%d dbg]\n", dbgout_only);
 	    dbgout_only = 0;
+	    len = (ULONG)strlen(buffer);
 	}
 
 	/* While this initialization might be racy normally, it's already done from
