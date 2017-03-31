@@ -21,7 +21,7 @@ int _printk(const char *func, const char *fmt, ...)
     LARGE_INTEGER time;
     va_list args;
     NTSTATUS status;
-    int hour, min, sec, usec, sec_day;
+    int hour, min, sec, msec, sec_day;
 
 
     fmt_without_level = fmt;
@@ -41,9 +41,11 @@ int _printk(const char *func, const char *fmt, ...)
     sec = sec_day % 60;
     min = (sec_day / 60) % 60;
     hour = sec_day / 3600;
-    usec = (time.QuadPart / 10) % (ULONG_PTR)1e6;
-    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1, "<%c> U%02d:%02d:%02d.%06d %s ",
-	    level, hour, min, sec, usec,
+    msec = (time.QuadPart / 10000) % (ULONG_PTR)1e3; // 100nsec to msec
+    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1, "<%c> U%02d:%02d:%02d.%03d|%08.8x %s ",
+	    level, hour, min, sec, msec,
+	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
+	    ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
 	    func // my_host_name
 	    );
     if (! NT_SUCCESS(status))
