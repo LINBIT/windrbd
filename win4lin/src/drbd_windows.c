@@ -2689,7 +2689,9 @@ struct block_device *blkdev_get_by_link(UNICODE_STRING * name)
 		UNICODE_STRING * plink = MOUNTMGR_IS_VOLUME_NAME(name) ?
 			&pvext->VolumeGuid : &pvext->MountPoint;
 
-		if (plink && is_equal_volume_link(name, plink, false)) {
+		if (RtlEqualMemory(name->Buffer,
+			    pvext->PhysicalDeviceName,
+			    pvext->PhysicalDeviceNameLength)) {
 			break;
 		}
 	}
