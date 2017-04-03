@@ -273,8 +273,12 @@ enum rq_flag_bits {
 #define LONG_MAX				((long)(~0UL>>1)) 
 #define MAX_SCHEDULE_TIMEOUT	LONG_MAX	
 #define SENDER_SCHEDULE_TIMEOUT	5 * HZ
-#define _RET_IP_				(unsigned long)(0)
 #define HZ					    1000
+
+/* https://msdn.microsoft.com/en-us/library/64ez38eh.aspx */
+#pragma intrinsic(_ReturnAddress)
+#define _RET_IP_				((void*)_ReturnAddress())
+
 
 #define likely(_X)				(_X)
 #define unlikely(_X)			(_X)
