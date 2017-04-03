@@ -1156,10 +1156,6 @@ __inline void FreeUnicodeString(UNICODE_STRING * s)
 	}
 }
 
-extern bool is_equal_volume_link(UNICODE_STRING *, UNICODE_STRING *, bool);
-extern void dumpHex(const void *b, const size_t s, size_t w);	
-extern void ResolveDriveLetters(void);
-
 extern VOID MVOL_LOCK();
 extern VOID MVOL_UNLOCK();
 #ifdef _WIN32_MVFL

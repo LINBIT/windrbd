@@ -2598,51 +2598,6 @@ cleanup:
     return ret;
 }
 
-/**
- * @brief
- *	Compare link string between unix and windows styles
- *	consider:
- *	- '/' equal '\'
- *	- ignore if last character is '/', '\', ':'
- *	- '?' equal '\' in case windows  
- */
-bool is_equal_volume_link(
-	_In_ UNICODE_STRING * lhs,
-	_In_ UNICODE_STRING * rhs,
-	_In_ bool case_sensitive)
-{
-	WCHAR * l = lhs->Buffer;
-	WCHAR * r = rhs->Buffer;
-	USHORT index = 0;
-	int gap = lhs->Length - rhs->Length;
-
-	if (abs(gap) > sizeof(WCHAR)) {
-		return false;
-	}
-
-	for (; index < min(lhs->Length, rhs->Length); ++l, ++r, index += sizeof(WCHAR)) {
-
-		if ((*l == *r) ||
-			(('/' == *l || '\\' == *l || '?' == *l) && ('/' == *r || '\\' == *r || '?' == *r)) ||
-			(case_sensitive ? false : toupper(*l) == toupper(*r))) {
-			continue;
-		}
-
-		return false;
-	}
-
-	if (0 == gap) {
-		return true;
-	}
-
-	// if last character is '/', '\\', ':', then consider equal
-	WCHAR t = (gap > 0) ? *l : *r;
-	if (('/' == t || '\\' == t || ':' == t)) {
-		return true;
-	}
-
-	return false;
-}
 
 /**
  * @brief
@@ -2686,9 +2641,6 @@ struct block_device *blkdev_get_by_link(UNICODE_STRING * name)
 		// if no block_device instance yet,
 		query_targetdev(pvext);
 
-		UNICODE_STRING * plink = MOUNTMGR_IS_VOLUME_NAME(name) ?
-			&pvext->VolumeGuid : &pvext->MountPoint;
-
 		if (RtlEqualMemory(name->Buffer,
 			    pvext->PhysicalDeviceName,
 			    pvext->PhysicalDeviceNameLength)) {
@@ -2724,68 +2676,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	return dev ? dev : ERR_PTR(-ENODEV);
 }
 
-void dumpHex(const void *aBuffer, const size_t aBufferSize, size_t aWidth)
-{
-	char           sHexBuffer[6] = {0};  
-	size_t         sLineSize;  
-	size_t         sLineLength;    /* the number of bytes printed in a line */  
-	char          *sLine = NULL;  
-	size_t         sPos = 0;  
-	size_t         i;  
-
-	const uint8_t *sBuffer = (const uint8_t *)aBuffer;  
-	const size_t   sAddrAreaSize = 6; /* address column (e.g. FFFF  ) */  
-	const size_t   sColWidth     = 4; /* the number of bytes that consists a column (FF FF FF FF  FF FF FF FF  ) */  
-
-	aWidth = ((aWidth + (sColWidth - 1)) / sColWidth) * sColWidth;  
-
-	const size_t  sHexAreaSize = (aWidth * 3) + /* 3 chars required to display a byte (FF ) - including trailing space */
-		(aWidth / sColWidth);  /* to distinguish a column by inserting additional space */
-
-	const size_t  sCharAreaStartPos = sAddrAreaSize + sHexAreaSize;
-	sLineSize = sAddrAreaSize + sHexAreaSize + aWidth + 1; /* Null terminator */
-	sLine = (char *) kmalloc(sLineSize, 0, '54DW');
-	if (!sLine)
-	{
-		WDRBD_ERROR("sLine:kzalloc failed\n");
-		return;
-	}
-
-	*(sLine + sLineSize - 1) = '\0';
-
-	WDRBD_INFO("DUMP: addr=0x%p, sz=%d. width=%d\n", aBuffer, aBufferSize, aWidth);
-
-	while (sPos < aBufferSize)
-	{
-		memset(sLine, ' ', sLineSize - 1);
-		sLineLength = ((aBufferSize - sPos) > aWidth) ? aWidth : (aBufferSize - sPos);
-
-		/* Address */
-		//snprintf(sHexBuffer, sizeof(sHexBuffer), "%04X:", (uint16_t) (sPos & 0xFFFF));
-		memset(sHexBuffer, 0, 6);
-		sprintf(sHexBuffer, "%04X:", (uint16_t) (sPos & 0xFFFF));
-		memcpy(sLine, sHexBuffer, 5);
-
-		/* Hex part */
-		for (i = 0; i < sLineLength; i++)
-		{
-			//snprintf(sHexBuffer, sizeof(sHexBuffer), "%02X", *(sBuffer + sPos + i));
-			memset(sHexBuffer, 0, 6);
-			sprintf(sHexBuffer, "%02X", *(sBuffer + sPos + i));
-			memcpy(sLine + sAddrAreaSize + (i * 3) + (i / sColWidth), sHexBuffer, 2);
-		}
-
-		/* Character part */
-		for (i = 0; i < sLineLength; i++)
-		{
-			uint8_t sByte = *(sBuffer + sPos + i);
-			*(sLine + sCharAreaStartPos + i) = (sByte < 127 && sByte >= 0x20) ? (char) sByte : '.';
-		}
-		sPos += aWidth;
-		WDRBD_INFO("%s\n", sLine);
-	}
-	kfree(sLine);
-}
 
 int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait)
 {
