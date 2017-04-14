@@ -612,10 +612,10 @@ void bio_endio(struct bio *bio, int error)
     if (bio->bi_end_io) {
 	if(error) {
 	    WDRBD_INFO("thread(%s) bio_endio error with err=%d.\n", current->comm, error);
-	    bio->bi_end_io(FAULT_TEST_FLAG, bio, error);
+	    bio->bi_end_io(bio, error);
 	} else { // if bio_endio is called with success(just in case)
 	    //WDRBD_INFO("thread(%s) bio_endio with err=%d.\n", current->comm, error);
-	    bio->bi_end_io(error, bio, error);
+	    bio->bi_end_io(bio, error);
 	}
     }
 }
@@ -1621,6 +1621,41 @@ void flush_signals(struct task_struct *task)
 	}
 }
 
+/* https://msdn.microsoft.com/de-de/library/ff548354(v=vs.85).aspx */
+IO_COMPLETION_ROUTINE DrbdIoCompletion;
+
+NTSTATUS DrbdIoCompletion(
+  _In_     PDEVICE_OBJECT DeviceObject,
+  _In_     PIRP           Irp,
+  _In_opt_ PVOID          Context
+)
+{
+    struct bio *bio = Context;
+
+    if (bio && bio->bi_bdev && bio->bi_bdev->bd_disk && bio->bi_bdev->bd_disk->pDeviceExtension) {
+	IoReleaseRemoveLock(&bio->bi_bdev->bd_disk->pDeviceExtension->RemoveLock, NULL);
+    }
+
+    bio->bi_end_io(bio,
+	    Irp->IoStatus.Status == STATUS_SUCCESS ?
+	    0 : Irp->IoStatus.Status);
+
+	/* https://msdn.microsoft.com/de-de/library/ff548310(v=vs.85).aspx */
+    if (DeviceObject && (DeviceObject->Flags & DO_DIRECT_IO) == DO_DIRECT_IO) {
+	PMDL mdl, nextMdl;
+	for (mdl = Irp->MdlAddress; mdl != NULL; mdl = nextMdl) {
+	    nextMdl = mdl->Next;
+	    MmUnlockPages(mdl);
+	    IoFreeMdl(mdl); // This function will also unmap pages.
+	}
+	Irp->MdlAddress = NULL;
+    }
+
+//    IoFreeIrp(Irp);
+
+    return STATUS_SUCCESS;
+}
+
 int generic_make_request(struct bio *bio)
 {
 	int err = 0;
@@ -1706,8 +1741,8 @@ int generic_make_request(struct bio *bio)
 			}
 		}
 	}
-	
-	IoSetCompletionRoutine(newIrp, (PIO_COMPLETION_ROUTINE)bio->bi_end_io, bio, TRUE, TRUE, TRUE);
+
+	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
 	//
 	//	simulation disk-io error point . (generic_make_request fail) - disk error simluation type 0

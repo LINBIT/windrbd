@@ -250,7 +250,7 @@ mvolDeviceUsage(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	return status;
 }
 
-void bio_finished(ULONG_PTR fault_test_flag, struct bio * bio, int error) {
+void bio_finished(struct bio * bio, int error) {
    PIRP irp = bio->pMasterIrp;
 
    /* TODO handle split-up bios! */
@@ -269,8 +269,7 @@ int DoSplitIo(PVOLUME_EXTENSION VolumeExtension, ULONG io, PIRP upper_pirp, stru
 
 	nr_pages = (length + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	bio = bio_alloc(GFP_NOIO, nr_pages, '75DW');
-	if (!bio) 
-	{
+	if (!bio) {
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 

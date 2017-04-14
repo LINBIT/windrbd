@@ -180,20 +180,19 @@ static inline int drbd_blkdev_put(struct block_device *bdev, fmode_t mode)
 typedef NTSTATUS BIO_ENDIO_TYPE;
 #define FAULT_TEST_FLAG     ((ULONG_PTR)0x11223344)
 //#define BIO_ENDIO_ARGS(b,e) (ULONG_PTR fault_test_flag, struct bio *bio, int error)
-#define BIO_ENDIO_ARGS(b,e) (ULONG_PTR fault_test_flag, b, e)
 #define BIO_ENDIO_FN_START
 #define BIO_ENDIO_FN_RETURN     return STATUS_MORE_PROCESSING_REQUIRED
 
+#if 0
+#define BIO_ENDIO_ARGS(b,e) (ULONG_PTR fault_test_flag, b, e)
+#endif
+#define BIO_ENDIO_ARGS(b,e) (b, e)
 
 /* bi_end_io handlers */
 extern BIO_ENDIO_TYPE drbd_md_endio BIO_ENDIO_ARGS(struct bio *bio, int error);
 extern BIO_ENDIO_TYPE drbd_peer_request_endio BIO_ENDIO_ARGS(struct bio *bio, int error);
 extern BIO_ENDIO_TYPE drbd_request_endio BIO_ENDIO_ARGS(struct bio *bio, int error);
 
-
-#ifdef COMPAT_HAVE_BIO_BI_ERROR
-#define bio_endio(B,E) do { (B)->bi_error = E; bio_endio(B); } while (0)
-#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 #define part_inc_in_flight(A, B) part_inc_in_flight(A)

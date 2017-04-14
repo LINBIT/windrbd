@@ -618,7 +618,7 @@ struct bio_vec {
 };
 
 struct bio;
-typedef void(BIO_END_IO_CALLBACK)(ULONG_PTR fault_test_flag, struct bio *bio, int error);
+typedef void(BIO_END_IO_CALLBACK)(struct bio *bio, int error);
 
 
 struct splitInfo {	
@@ -687,7 +687,6 @@ extern struct bio *bio_kmalloc(gfp_t, int);
 extern struct bio *bio_alloc_bioset(gfp_t, int, struct bio_set *);
 extern void bio_put(struct bio *);
 extern void bio_free(struct bio *bio); 
-extern void bio_endio(struct bio *, int);
 extern int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset);
 extern void bio_endio(struct bio *bio, int error);
 
