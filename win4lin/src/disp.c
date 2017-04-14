@@ -87,6 +87,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
     UNICODE_STRING      		nameUnicode, linkUnicode;
     ULONG				i;
     static volatile LONG      IsEngineStart = FALSE;
+    int ret;
 
 	// init logging system first
 	wdrbd_logger_init();
@@ -158,7 +159,12 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	DoTraceMessage(TRCINFO, "WDRBD V9(1:1) MVF Driver loaded.");
 #endif
     // Init DRBD engine
-    drbd_init();
+    ret = drbd_init();
+    if (ret) {
+        WDRBD_ERROR("cannot init drbd, %d", ret);
+  //      IoDeleteDevice(deviceObject);
+        return STATUS_TIMEOUT;
+    }
 
     WDRBD_INFO("MVF Driver loaded.\n");
 
