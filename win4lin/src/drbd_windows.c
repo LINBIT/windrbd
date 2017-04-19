@@ -41,6 +41,10 @@ ZwWaitForSingleObject(
 	_In_opt_ PLARGE_INTEGER Timeout
 	);
 
+ULONG RtlRandomEx(
+  _Inout_ PULONG Seed
+);
+
 
 #include <ntddk.h>
 #include <stdint.h>
@@ -1212,32 +1216,26 @@ BOOLEAN spin_trylock(spinlock_t *lock)
 	return TRUE;
 }
 
-ULONG get_random_ulong(PULONG seed)
+void get_random_bytes(char *buf, int nbytes)
 {
-	LARGE_INTEGER Tick;
-	if (!seed) {
-		return 0;
-	}
-	KeQueryTickCount(&Tick);
+    static ULONG seed = 'DRBD';
+    ULONG rn;
+    int length;
 
-	return (Tick.LowPart + *seed);
-}
-
-void get_random_bytes(void *buf, int nbytes)
-{
-    ULONG rn = nbytes;
-    UCHAR * target = buf;
-    int length = 0;
-
-    do
+    while (nbytes > 0)
     {
-		rn = get_random_ulong(&rn);
-        length = (4 > nbytes) ? nbytes : 4;
-        memcpy(target, (UCHAR *)&rn, length);
+	/* That only returns [0, 2^31-1], so not even 31bit... but is good enough, I hope. */
+	rn = RtlRandomEx(&seed);
+
+	length = sizeof(rn);
+	if (length > nbytes)
+	    length = nbytes;
+
+        memcpy(buf, (UCHAR *)&rn, length);
+
         nbytes -= length;
-        target += length;
-        
-    } while (nbytes);
+        buf += length;
+    }
 }
 
 unsigned int crypto_tfm_alg_digestsize(struct crypto_tfm *tfm)
