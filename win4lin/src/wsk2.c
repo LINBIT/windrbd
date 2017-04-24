@@ -1511,7 +1511,7 @@ Accept(
 	__in PWSK_SOCKET	WskSocket,
 	__out_opt PSOCKADDR	LocalAddress,
 	__out_opt PSOCKADDR	RemoteAddress,
-	__out_opt NTSTATUS	*RetStaus,
+	__out_opt NTSTATUS	*RetStatus,
 	__in int			timeout
 )
 {
@@ -1524,14 +1524,12 @@ Accept(
 	int wObjCount = 1;
 
 	if (g_SocketsState != INITIALIZED || !WskSocket) {
-		*RetStaus = SOCKET_ERROR;
-		return NULL;
+		goto ex;
 	}
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 	if (!NT_SUCCESS(Status)) {
-		*RetStaus = Status;
-		return NULL;
+		goto ex;
 	}
 
 	Status = ((PWSK_PROVIDER_LISTEN_DISPATCH) WskSocket->Dispatch)->WskAccept(
@@ -1569,13 +1567,13 @@ Accept(
 		case STATUS_WAIT_0 + 1:
 			IoCancelIrp(Irp);
 			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-			*RetStaus = -EINTR;	
+			Status = -EINTR;
 			break;
 
 		case STATUS_TIMEOUT:
 			IoCancelIrp(Irp);
 			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-			*RetStaus = STATUS_TIMEOUT;
+			Status = STATUS_TIMEOUT;
 			break;
 
 		default:
@@ -1588,8 +1586,11 @@ Accept(
 		}
 	}
 
-	AcceptedSocket = (Status == STATUS_SUCCESS) ? (PWSK_SOCKET) Irp->IoStatus.Information : NULL;
 	IoFreeIrp(Irp);
+ex:
+	AcceptedSocket = (Status == STATUS_SUCCESS) ? (PWSK_SOCKET) Irp->IoStatus.Information : NULL;
+	if (RetStatus)
+	    *RetStatus = Status;
 	return AcceptedSocket;
 }
 
