@@ -959,6 +959,17 @@ extern void kfree(void * x);
 extern void kvfree(void * x);
 #define kfree2(x) if((x)) {ExFreePool((x)); (x)=NULL;}
 
+static inline void * __get_free_page(int flags)
+{
+    return kzalloc(4096, flags, 'FPWD');
+}
+
+static void free_page(void *addr)
+{
+	kfree2(addr);
+}
+
+
 static __inline wait_queue_t initqueue(wait_queue_t *wq)
 {
 	INIT_LIST_HEAD(&wq->task_list);
