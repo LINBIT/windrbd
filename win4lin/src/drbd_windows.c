@@ -766,48 +766,49 @@ long schedule(wait_queue_head_t *q, long timeout, char *func, int line)
 	else
 	{
 		NTSTATUS status;
-		PVOID waitObjects[2];
+		PVOID waitObjects[2] = {0};
 		struct task_struct *thread = current;
 
-        int wObjCount = 1;
+		int wObjCount = 1;
 
-        waitObjects[0] = (PVOID) &q->wqh_event;
-        if (thread->has_sig_event)
-        {
-            waitObjects[1] = (PVOID) &thread->sig_event;
-            wObjCount = 2;
-        }
+		waitObjects[0] = (PVOID) &q->wqh_event;
+		if (thread->has_sig_event)
+		{
+			waitObjects[1] = (PVOID) &thread->sig_event;
+			wObjCount = 2;
+		}
 
-        while (1)
-        {
-            status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
+		while (1)
+		{
+			//HERf("about to wait; count %d, timeout %llu, obj 0x%p 0x%p", wObjCount, (unsigned long long)nWaitTime.QuadPart, waitObjects[0], waitObjects[1]); // too noisy
+			status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
 
-            switch (status) {
-            case STATUS_WAIT_0:
-                KeResetEvent(&q->wqh_event); // DW-105: use event and polling both.
-                break;
+			switch (status) {
+			case STATUS_WAIT_0:
+				KeResetEvent(&q->wqh_event); // DW-105: use event and polling both.
+				break;
 
-            case STATUS_WAIT_1:
-                if (thread->sig == DRBD_SIGKILL)
-                {
-                    return -DRBD_SIGKILL;
-                }
-                break;
+			case STATUS_WAIT_1:
+				if (thread->sig == DRBD_SIGKILL)
+				{
+					return -DRBD_SIGKILL;
+				}
+				break;
 
-            case STATUS_TIMEOUT:
-                if (timeout == MAX_SCHEDULE_TIMEOUT)
-                {
-                     continue;
-                }
-                break;
+			case STATUS_TIMEOUT:
+				if (timeout == MAX_SCHEDULE_TIMEOUT)
+				{
+					continue;
+				}
+				break;
 
-            default:
-                WDRBD_ERROR("DRBD_PANIC: KeWaitForMultipleObjects done! default status=0x%x\n", status);
-                BUG();
-                break;
-            }
-            break;
-        }
+			default:
+				WDRBD_ERROR("DRBD_PANIC: KeWaitForMultipleObjects done! default status=0x%x\n", status);
+				BUG();
+				break;
+			}
+			break;
+		}
 	}
 
 	timeout = expire - jiffies;
