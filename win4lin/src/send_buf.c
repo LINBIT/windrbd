@@ -225,7 +225,7 @@ unsigned long read_ring_buffer(IN ring_buffer *ring, OUT char *data, OUT unsigne
 int send_buf(struct drbd_transport *transport, enum drbd_stream stream, struct socket *socket, PVOID buf, ULONG size)
 {
 	struct _buffering_attr *buffering_attr = &socket->buffering_attr;
-	ULONG timeout = socket->sk_linux_attr->sk_sndtimeo;
+	ULONG timeout = socket->sk_sndtimeo;
 
 	if (buffering_attr->send_buf_thread_handle == NULL || buffering_attr->bab == NULL) {
 		return Send(socket->sk, buf, size, 0, timeout, NULL, transport, stream);
@@ -234,7 +234,7 @@ int send_buf(struct drbd_transport *transport, enum drbd_stream stream, struct s
 	unsigned long long  tmp = (long long)buffering_attr->bab->length * 99;
 	int highwater = (unsigned long long)tmp / 100; // 99% // refacto: global
 	// performance tuning point for delay time
-	int retry = socket->sk_linux_attr->sk_sndtimeo / 100; //retry default count : 6000/100 = 60 => write buffer delay time : 100ms => 60*100ms = 6sec //retry default count : 6000/20 = 300 => write buffer delay time : 20ms => 300*20ms = 6sec
+	int retry = socket->sk_sndtimeo / 100; //retry default count : 6000/100 = 60 => write buffer delay time : 100ms => 60*100ms = 6sec //retry default count : 6000/20 = 300 => write buffer delay time : 20ms => 300*20ms = 6sec
 
 	size = write_ring_buffer(transport, stream, buffering_attr->bab, buf, size, highwater, retry);
 
@@ -334,9 +334,9 @@ VOID NTAPI send_buf_thread(PVOID p)
 
 		case (STATUS_WAIT_0 + 1) :
 #ifdef _WSK_IRP_REUSE
-			if (do_send(pReuseIrp , socket->sk, buffering_attr->bab, socket->sk_linux_attr->sk_sndtimeo, &buffering_attr->send_buf_kill_event) == -EINTR)
+			if (do_send(pReuseIrp , socket->sk, buffering_attr->bab, socket->sk_sndtimeo, &buffering_attr->send_buf_kill_event) == -EINTR)
 #else
-			if (do_send(socket->sk, buffering_attr->bab, socket->sk_linux_attr->sk_sndtimeo, &buffering_attr->send_buf_kill_event) == -EINTR)
+			if (do_send(socket->sk, buffering_attr->bab, socket->sk_sndtimeo, &buffering_attr->send_buf_kill_event) == -EINTR)
 #endif
 			{
 				goto done;

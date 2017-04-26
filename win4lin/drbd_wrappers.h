@@ -956,13 +956,6 @@ static inline void kref_sub(struct kref *kref, unsigned int count,
 // move to windfows.h 
 #endif
 
-#ifndef SK_CAN_REUSE
-/* This constant was introduced by Pavel Emelyanov <xemul@parallels.com> on
-   Thu Apr 19 03:39:36 2012 +0000. Before the release of linux-3.5
-   commit 4a17fd52 sock: Introduce named constants for sk_reuse */
-#define SK_CAN_REUSE   1
-#endif
-
 #ifndef COMPAT_HAVE_KREF_GET_UNLESS_ZERO
 static __inline int kref_get_unless_zero(struct kref *kref)
 {

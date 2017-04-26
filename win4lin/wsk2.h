@@ -272,14 +272,6 @@ __in LONG			mask
 );
 
 extern
-NTSTATUS
-NTAPI
-SetConditionalAccept(
-    __in PWSK_SOCKET ListeningSocket,
-    __in ULONG       Mode
-);
-
-extern
 NTSTATUS WSKAPI
 AcceptEvent(
 _In_  PVOID         SocketContext,

@@ -1472,12 +1472,6 @@ void del_gendisk(struct gendisk *disk)
 	}
 #endif
 
-	if (sock->sk_linux_attr)
-	{
-		kfree(sock->sk_linux_attr);
-		sock->sk_linux_attr = 0;
-	}
-
 #ifdef _WIN32_SEND_BUFFING
 	struct _buffering_attr *buffering_attr = &sock->buffering_attr;
 	struct ring_buffer *bab = buffering_attr->bab;

@@ -491,33 +491,24 @@ struct sockaddr_storage_win {
 	char	__data[_K_SS_MAXSIZE - sizeof(unsigned short)];
 }; 
 
-struct sock {
-#ifdef _WIN32
-	LONG_PTR sk_state_change;
-#else
-	int sk_state_change;
-#endif
-	int sk_user_data;
-	int sk_reuse;
-	int sk_allocation;
-	int sk_priority;
-	int sk_sndtimeo; //intptr_t 
-	int sk_rcvtimeo; //intptr_t
-	int sk_wmem_queued;
-	int sk_sndbuf;
-	KSPIN_LOCK sk_callback_lock; 
-};
-
 #include <wsk.h>
 struct socket {
-	struct sock *sk_linux_attr;
 	PWSK_SOCKET sk;
+
+	int sk_sndtimeo;
+	int sk_rcvtimeo;
+
+	int no_delay:1;
+
 	char name[32];
+
+	/* For the accept event */
+	struct list_head list;
 };
 
 char * get_ip4(char *buf, struct sockaddr_in *sockaddr);
 char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr);
-	
+
 
 #define WQ_MEM_RECLAIM 0
 #define WQNAME_LEN	32
