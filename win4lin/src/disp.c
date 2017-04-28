@@ -486,13 +486,14 @@ mvolClose(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 	Irp->IoStatus.Status = STATUS_SUCCESS;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
+	return STATUS_SUCCESS;
     } else {
 	struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
 
 	if (device)
 	    kref_put(&device->kref, drbd_destroy_device);
+	return mvolSendToNextDriver(DeviceObject, Irp);
     }
-    return STATUS_SUCCESS;
 }
 
 void drbd_cleanup_by_win_shutdown(PVOLUME_EXTENSION VolumeExtension);
