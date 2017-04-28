@@ -591,6 +591,7 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 		return 0;
 	}
 	bio->bi_max_vecs = nr_iovecs;
+	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
 
 	if (nr_iovecs > 256)
