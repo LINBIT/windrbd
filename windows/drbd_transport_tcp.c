@@ -983,6 +983,7 @@ static int dtt_create_listener(struct drbd_transport *transport,
 		err = -ENOMEM;
 		goto out;
 	}
+	drbd_init_listener(&listener->listener, transport);
 
 	if (my_addr.ss_family == AF_INET6) {
 		s_listen->sk = CreateSocket(AF_INET6, SOCK_STREAM, IPPROTO_TCP, (PVOID*)listener, &dispatch, WSK_FLAG_LISTEN_SOCKET); // this is listen socket
