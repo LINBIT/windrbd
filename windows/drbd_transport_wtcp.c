@@ -1159,6 +1159,7 @@ static int dtt_connect(struct drbd_transport *transport)
 	do {
 		struct socket *s = NULL;
 
+schedule_timeout_interruptible(0.4*HZ);
 		err = dtt_try_connect(transport, connect_to_path, &s);
 
 		if (err < 0 && err != -EAGAIN)
