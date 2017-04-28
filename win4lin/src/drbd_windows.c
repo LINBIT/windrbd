@@ -1220,23 +1220,47 @@ BOOLEAN spin_trylock(spinlock_t *lock)
 
 void get_random_bytes(char *buf, int nbytes)
 {
-    static ULONG seed = 'DRBD';
+    static ULONG_PTR lcg_2_64_div_pi = 0;
+    static ULONG_PTR mmix_knuth = 0;
+    LARGE_INTEGER li;
+    ULONG_PTR rnt;
     ULONG rn;
     int length;
 
+    if (mmix_knuth == 0) {
+	    li = KeQueryPerformanceCounter(NULL);
+	    mmix_knuth = li.QuadPart;
+    }
+    if (lcg_2_64_div_pi == 0) {
+	    lcg_2_64_div_pi = mmix_knuth;
+	    get_random_bytes((char*)&lcg_2_64_div_pi, sizeof(lcg_2_64_div_pi));
+    }
+
+    /* https://www.winvistatips.com/threads/verifier-exe-is-not-compatible-with-rtlrandom-ex.193117/ */
+    if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
+	    /* RtlRandomEx only returns [0, 2^31-1], so not even 31bit. */
+	    RtlRandomEx(&rn);
+	    mmix_knuth += rn;
+    }
+
     while (nbytes > 0)
     {
-	/* That only returns [0, 2^31-1], so not even 31bit... but is good enough, I hope. */
-	rn = RtlRandomEx(&seed);
+	    /* https://en.wikipedia.org/wiki/Linear_congruential_generator */
+	    mmix_knuth = mmix_knuth * 6364136223846793005 + 1442695040888963407;
+	    /* Nearest prime to 2^64/π */
+	    lcg_2_64_div_pi = lcg_2_64_div_pi * 5871781006564002809 + 1;
 
-	length = sizeof(rn);
-	if (length > nbytes)
-	    length = nbytes;
+	    /* Hide lowest bits */
+	    rn = (lcg_2_64_div_pi ^ mmix_knuth) >> 11;
 
-        memcpy(buf, (UCHAR *)&rn, length);
+	    length = sizeof(rn);
+	    if (length > nbytes)
+		    length = nbytes;
 
-        nbytes -= length;
-        buf += length;
+	    memcpy(buf, (UCHAR *)&rn, length);
+
+	    nbytes -= length;
+	    buf += length;
     }
 }
 
