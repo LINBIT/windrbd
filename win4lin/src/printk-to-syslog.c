@@ -22,6 +22,7 @@ int _printk(const char *func, const char *fmt, ...)
     va_list args;
     NTSTATUS status;
     int hour, min, sec, msec, sec_day;
+    static int dbgout_only = 0;
 
 
     fmt_without_level = fmt;
@@ -60,45 +61,65 @@ int _printk(const char *func, const char *fmt, ...)
 
     len = (ULONG)strlen(buffer);
 
-    /* While this initialization might be racy normally, it's already done from
-       DriverEntry, where only a single thread is active. */
-    if (!printk_udp_socket) {
-	SOCKADDR_IN local;
+    if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {
+	/* When in a DPC or similar context, we must not call waiting functions. */
+	dbgout_only++;
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID,
+		(level <= KERN_ERR[0]  ? DPFLTR_ERROR_LEVEL :
+		 level >= KERN_INFO[0] ? DPFLTR_INFO_LEVEL  :
+		 DPFLTR_WARNING_LEVEL),
+		buffer);
+    } else {
+	/* Indicate how much might be lost on UDP */
+	if (dbgout_only) {
+	    pos = (ULONG)strlen(buffer);
+	    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - pos, " [%d dbg]", dbgout_only);
+	    dbgout_only = 0;
+	}
 
-	printk_udp_target.sin_family = AF_INET;
-	printk_udp_target.sin_port = 514;
-	printk_udp_target.sin_addr.s_addr = 0xffffffff;
+	/* While this initialization might be racy normally, it's already done from
+	   DriverEntry, where only a single thread is active. */
+	if (!printk_udp_socket) {
+	    SOCKADDR_IN local;
 
-	local.sin_family = AF_INET;
-	local.sin_addr.s_addr = 0;
-	local.sin_port = 0;
+	    printk_udp_target.sin_family = AF_INET;
+	    printk_udp_target.sin_port = 514;
+	    printk_udp_target.sin_addr.s_addr = 0xffffffff;
 
-	printk_udp_socket = CreateSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-		NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET);
-	Bind(printk_udp_socket, (SOCKADDR *)&local);
-    }
+	    local.sin_family = AF_INET;
+	    local.sin_addr.s_addr = 0;
+	    local.sin_port = 0;
 
-    DoTraceMessage(TRCINFO, buffer);
-    DbgPrintEx(DPFLTR_IHVDRIVER_ID,
-	    (level <= KERN_ERR[0]  ? DPFLTR_ERROR_LEVEL :
-	     level >= KERN_INFO[0] ? DPFLTR_INFO_LEVEL  :
-	     DPFLTR_WARNING_LEVEL),
-	    buffer);
+	    printk_udp_socket = CreateSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+		    NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET);
+	    Bind(printk_udp_socket, (SOCKADDR *)&local);
+	}
 
-    if (printk_udp_socket) {
-	status = SendTo(printk_udp_socket, buffer, len,
-		(PSOCKADDR)&printk_udp_target);
-    }
 #if 0
-    WriteEventLogEntryData(msgids[level_index], 0, 0, 1, L"%S", buf);
-
-    if (bEventLog) {
-	save_to_system_event(buf, length, level_index);
-    }
-
-    if (bDbgLog)
-	DbgPrintEx(FLTR_COMPONENT, printLevel, buf);
+	/* Serial output of all of these is _sooo_ slow */
+	DoTraceMessage(TRCINFO, buffer);
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID,
+		(level <= KERN_ERR[0]  ? DPFLTR_ERROR_LEVEL :
+		 level >= KERN_INFO[0] ? DPFLTR_INFO_LEVEL  :
+		 DPFLTR_WARNING_LEVEL),
+		buffer);
 #endif
+
+	if (printk_udp_socket) {
+	    status = SendToaaaa(printk_udp_socket, buffer, len,
+		    (PSOCKADDR)&printk_udp_target);
+	}
+#if 0
+	WriteEventLogEntryData(msgids[level_index], 0, 0, 1, L"%S", buf);
+
+	if (bEventLog) {
+	    save_to_system_event(buf, length, level_index);
+	}
+
+	if (bDbgLog)
+	    DbgPrintEx(FLTR_COMPONENT, printLevel, buf);
+#endif
+    }
     return 1;
 }
 
