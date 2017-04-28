@@ -7,5 +7,9 @@ sub BEGIN
 }
 #\-\>vdisk\,(\w+)size\)}
 s{set_capacity\(device\-\>vdisk, size\)}
- {device->this_bdev->d_size = size << 9};
+ {if (device && device->this_bdev && device->this_bdev)
+\tdevice->this_bdev->d_size = size << 9};
+# windows as diskless client
+
+
 s{\tdevice\-\>this_bdev\-\>bd_inode\-\>i_size = \(loff_t\)size \<\< 9;}{};
