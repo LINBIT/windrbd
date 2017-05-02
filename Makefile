@@ -45,14 +45,15 @@ versioninfo:
 	./versioninfo.sh $(TRANS_DEST) || true
 
 define copy_win
-	mkdir $$(dirname $(2)) 2>/dev/null || true
-	cp $(1) $(2)
+	@mkdir $$(dirname $(2)) 2>/dev/null || true
+	@rm -f $(2)
+	@echo '#include "../../$(1)"' > $(2)
 endef
 $(TRANS_DEST)drbd/drbd_polymorph_printk.h: windows/drbd_polymorph_printk.h
 	$(call copy_win,$<,$@)
 $(TRANS_DEST)drbd/drbd_proc.c: windows/drbd_proc.c
 	$(call copy_win,$<,$@)
-$(TRANS_DEST)drbd/drbd_transport_tcp.c: windows/drbd_transport_tcp.c
+$(TRANS_DEST)drbd/drbd_transport_tcp.c: windows/drbd_transport_wtcp.c
 	$(call copy_win,$<,$@)
 
 ifeq ($(shell uname -o),Cygwin)
