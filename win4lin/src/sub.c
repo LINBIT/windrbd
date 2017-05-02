@@ -336,7 +336,7 @@ mvolReadWriteDevice(PVOLUME_EXTENSION VolumeExtension, PIRP Irp, ULONG Io)
 		ULONG rest, slice, loop;
 		ULONG splitted_io_count;
 
-		slice = MAX_SPILT_BLOCK_SZ; // 1MB fixed
+		slice = MAX_SPLIT_BLOCK_SZ; // 1MB fixed
 		loop = length / slice;
 		rest = length % slice;
 

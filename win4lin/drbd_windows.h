@@ -364,7 +364,7 @@ extern atomic_t g_oos_trace;
 
 #define MAX_TEXT_BUF                256
 
-#define MAX_SPILT_BLOCK_SZ			(1 << 20)
+#define MAX_SPLIT_BLOCK_SZ			(1 << 20)
 
 #define WDRBD_THREAD_POINTER
 
