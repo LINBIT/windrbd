@@ -70,7 +70,6 @@ struct dtt_path {
 	struct drbd_path path;
 
 	struct list_head sockets; /* sockets passed to me by other receiver threads */
-	wait_queue_head_t wait;
 	struct dtt_wait_first *first;
 };
 
@@ -1506,25 +1505,31 @@ static int dtt_add_path(struct drbd_transport *transport, struct drbd_path *drbd
 	struct drbd_tcp_transport *tcp_transport =
 		container_of(transport, struct drbd_tcp_transport, transport);
 	struct dtt_path *path = container_of(drbd_path, struct dtt_path, path);
-	int err = 0;
+	bool active;
 
 	drbd_path->established = false;
-	path->first = NULL;
-	init_waitqueue_head(&path->wait);
+	INIT_LIST_HEAD(&path->sockets);
 
-	mutex_lock(&tcp_transport->paths_mutex);
-	if (test_bit(DTT_CONNECTING, &tcp_transport->flags)) {
-		err = drbd_get_listener(transport, &path->path, dtt_create_listener);
+retry:
+	active = test_bit(DTT_CONNECTING, &tcp_transport->flags);
+	if (!active && drbd_path->listener)
+		drbd_put_listener(drbd_path);
+
+	if (active && !drbd_path->listener) {
+		int err = drbd_get_listener(transport, drbd_path, dtt_create_listener);
 		if (err)
-			goto out_unlock;
+			return err;
 	}
 
+	mutex_lock(&tcp_transport->paths_mutex);
+	if (active != test_bit(DTT_CONNECTING, &tcp_transport->flags)) {
+		mutex_unlock(&tcp_transport->paths_mutex);
+		goto retry;
+	}
 	list_add(&drbd_path->list, &transport->paths);
-
-out_unlock:
 	mutex_unlock(&tcp_transport->paths_mutex);
 
-	return err;
+	return 0;
 }
 
 static int dtt_remove_path(struct drbd_transport *transport, struct drbd_path *drbd_path)
