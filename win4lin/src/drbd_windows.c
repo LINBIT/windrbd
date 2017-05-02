@@ -2422,22 +2422,22 @@ LONGLONG get_targetdev_volsize(PVOLUME_EXTENSION VolumeExtension)
 */
 struct block_device * create_drbd_block_device(IN OUT PVOLUME_EXTENSION pvext)
 {
-    struct block_device * dev;
+	struct block_device * dev;
 
 	// DW-1109: need to increase reference count of device object to guarantee not to be freed while we're using.
 	ObReferenceObject(pvext->DeviceObject);
 
-    dev = kmalloc(sizeof(struct block_device), 0, 'C5DW');
-    if (!dev) {
-        WDRBD_ERROR("Failed to allocate block_device NonPagedMemory\n");
-        return NULL;
-    }
+	dev = kmalloc(sizeof(struct block_device), 0, 'C5DW');
+	if (!dev) {
+		WDRBD_ERROR("Failed to allocate block_device NonPagedMemory\n");
+		return NULL;
+	}
 
 	dev->bd_contains = kmalloc(sizeof(struct block_device), 0, 'C5DW');
 	if (!dev->bd_contains) {
-        WDRBD_ERROR("Failed to allocate block_device NonPagedMemory\n");
-        return NULL;
-    }
+		WDRBD_ERROR("Failed to allocate block_device NonPagedMemory\n");
+		return NULL;
+	}
 
 	dev->bd_disk = alloc_disk(0);
 	if (!dev->bd_disk)
@@ -2452,7 +2452,7 @@ struct block_device * create_drbd_block_device(IN OUT PVOLUME_EXTENSION pvext)
 		WDRBD_ERROR("Failed to allocate request_queue NonPagedMemory\n");
 		goto request_queue_failed;
 	}
-		
+
 	kref_init(&dev->kref);
 
 	dev->bd_contains->bd_disk = dev->bd_disk;
@@ -2463,13 +2463,13 @@ struct block_device * create_drbd_block_device(IN OUT PVOLUME_EXTENSION pvext)
 
 	dev->bd_disk->queue->logical_block_size = 512;
 
-    return dev;
+	return dev;
 
 request_queue_failed:
-    kfree(dev->bd_disk);
+	kfree(dev->bd_disk);
 
 gendisk_failed:
-    kfree(dev);
+	kfree(dev);
 
 	return NULL;
 }
