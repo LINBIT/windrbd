@@ -446,33 +446,36 @@ mvolCreate(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
     if (VolumeExtension->Active)
     {
-	struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
-	struct block_device *bdev = VolumeExtension->dev;
-	PIO_STACK_LOCATION psl;
+	    struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
+	    struct block_device *bdev = VolumeExtension->dev;
+	    if (device && bdev) {
+
+		    PIO_STACK_LOCATION psl;
 
 
-	psl = IoGetCurrentIrpStackLocation(Irp);
+		    psl = IoGetCurrentIrpStackLocation(Irp);
 
-	/* https://msdn.microsoft.com/en-us/library/windows/hardware/ff548630(v=vs.85).aspx
-	 * https://msdn.microsoft.com/en-us/library/windows/hardware/ff550729(v=vs.85).aspx
-	 * https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424(v=vs.85).aspx
-	 * */
-	err = drbd_open(bdev,
-		(psl->Parameters.Create.SecurityContext->DesiredAccess &
-		 (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES |
-		  FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0);
+		    /* https://msdn.microsoft.com/en-us/library/windows/hardware/ff548630(v=vs.85).aspx
+		     * https://msdn.microsoft.com/en-us/library/windows/hardware/ff550729(v=vs.85).aspx
+		     * https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424(v=vs.85).aspx
+		     * */
+		    err = drbd_open(bdev,
+				    (psl->Parameters.Create.SecurityContext->DesiredAccess &
+				     (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES |
+				      FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0);
 
-	if (err < 0)
-	{
-	    kref_put(&device->kref, drbd_destroy_device);
+		    if (err < 0)
+		    {
+			    kref_put(&device->kref, drbd_destroy_device);
 
-	    Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
-	    IoCompleteRequest(Irp, IO_NO_INCREMENT);
+			    Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
+			    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-	    return translate_drbd_error(err);
-	} else {
-	    return STATUS_SUCCESS;
-	}
+			    return translate_drbd_error(err);
+		    } else {
+			    return STATUS_SUCCESS;
+		    }
+	    }
     }
     return mvolSendToNextDriver(DeviceObject, Irp);
 }
