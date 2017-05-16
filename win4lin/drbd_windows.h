@@ -1185,7 +1185,6 @@ extern NTSTATUS start_mnt_monitor();
 extern
 NTSTATUS ReleaseWskNetlink();
 
-// Forward declaration for WskAcceptEvent in WSK_CLIENT_LISTEN_DISPATCH
 extern
 NTSTATUS WSKAPI
 NetlinkAcceptEvent(
