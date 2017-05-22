@@ -55,7 +55,7 @@ index f3414b6..f332da2 100644
 -					 bio_iter_last(bvec, iter) ? 0 : MSG_MORE);
 -		if (err)
 -			return err;
--		/* REQ_WRITE_SAME has only one segment */
+-		/* WRITE_SAME has only one segment */
 -		if (bio_op(bio) == REQ_OP_WRITE_SAME)
 -			break;
 +	page.addr = bio->bio_databuf;

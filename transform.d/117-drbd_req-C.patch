@@ -67,7 +67,7 @@ index e1e9595b..100a6e49 100644
 @@ -724,12 +717,14 @@ static void mod_rq_state(struct drbd_request *req, struct bio_and_error *m,
  		 * kref_sub below, we need req to be still around then. */
  		int at_least = k_put + !!c_put;
- 		int refcount = atomic_read(&req->kref.refcount);
+		int refcount = refcount_read(&req->kref.refcount);
 -		if (refcount < at_least)
 -			drbd_err(req->device,
 +		if (refcount < at_least) {
@@ -97,7 +97,7 @@ index e1e9595b..100a6e49 100644
 +		return false;
 +#if 0
 +		// TODO reimplement statistics
- 		bdi = &device->ldev->backing_bdev->bd_disk->queue->backing_dev_info;
+		bdi = bdi_from_device(device);
  		return bdi_read_congested(bdi);
 +#endif
  	case RB_LEAST_PENDING:
