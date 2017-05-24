@@ -946,8 +946,8 @@ extern void kobject_del(struct kobject *kobj);
 extern void * kcalloc(int e_count, int x, int flag, ULONG Tag);
 extern void * kzalloc(int x, int flag, ULONG Tag);
 extern void * kmalloc(int size, int flag, ULONG Tag);
-extern void kfree(void * x);
-extern void kvfree(void * x);
+extern void kfree(const void * x);
+extern void kvfree(const void * x);
 #define kfree2(x) if((x)) {ExFreePool((x)); (x)=NULL;}
 
 static inline void * __get_free_page(int flags)

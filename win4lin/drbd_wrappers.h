@@ -620,6 +620,43 @@ static inline void bio_set_op_attrs(struct bio *bio, const int op, const long fl
 #define REQ_NOIDLE 0
 #endif
 
+#ifndef COMPAT_HAVE_REFCOUNT_INC
+#define refcount_inc(R) atomic_inc(R)
+#define refcount_read(R) atomic_read(R)
+#define refcount_dec_and_test(R) atomic_dec_and_test(R)
+#endif
+
+
+#ifndef KREF_INIT
+#define KREF_INIT(N) { ATOMIC_INIT(N) }
+#endif
+
+
+#define _adjust_ra_pages(qrap, brap) do { \
+	if (qrap != brap) { \
+		drbd_info(device, "Adjusting my ra_pages to backing device's (%lu -> %lu)\n", qrap, brap); \
+		qrap = brap; \
+	} \
+} while(0)
+
+#ifdef COMPAT_HAVE_POINTER_BACKING_DEV_INFO
+#define bdi_from_device(device) (device->ldev->backing_bdev->bd_disk->queue->backing_dev_info)
+#define init_bdev_info(bdev_info, drbd_congested, device) do { \
+	(bdev_info)->congested_fn = drbd_congested; \
+	(bdev_info)->congested_data = device; \
+} while(0)
+#define adjust_ra_pages(q, b) _adjust_ra_pages((q)->backing_dev_info->ra_pages, (b)->backing_dev_info->ra_pages)
+#else
+#define bdi_rw_congested(BDI) bdi_rw_congested(&BDI)
+#define bdi_congested(BDI, BDI_BITS) bdi_congested(&BDI, (BDI_BITS))
+#define bdi_from_device(device) (&device->ldev->backing_bdev->bd_disk->queue->backing_dev_info)
+#define init_bdev_info(bdev_info, drbd_congested, device) do { \
+	(bdev_info).congested_fn = drbd_congested; \
+	(bdev_info).congested_data = device; \
+} while(0)
+#define adjust_ra_pages(q, b) _adjust_ra_pages((q)->backing_dev_info.ra_pages, (b)->backing_dev_info.ra_pages)
+#endif
+
 #ifndef CONFIG_DYNAMIC_DEBUG
 /* At least in 2.6.34 the function macro dynamic_dev_dbg() is broken when compiling
    without CONFIG_DYNAMIC_DEBUG. It has 'format' in the argument list, it references
@@ -1162,6 +1199,16 @@ static inline void generic_end_io_acct(int rw, struct hd_struct *part,
 #define WB_async_congested BDI_async_congested
 #define WB_sync_congested BDI_sync_congested
 #endif
+
+static int idr_has_entry(int id, void *p, void *data)
+{
+	return 1;
+}
+
+static inline bool idr_is_empty(struct idr *idr)
+{
+	return !idr_for_each(idr, idr_has_entry, NULL);
+}
 
 
 #ifndef COMPAT_HAVE_ATOMIC_DEC_IF_POSITIVE

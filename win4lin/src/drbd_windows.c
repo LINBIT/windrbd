@@ -519,7 +519,7 @@ void drbd_bp(char *msg)
     WDRBD_ERROR("breakpoint: msg(%s)\n", msg);
 }
 
-__inline void kfree(void * x)
+__inline void kfree(const void * x)
 {
 	if (x)
 	{
@@ -527,7 +527,7 @@ __inline void kfree(void * x)
 	}
 }
 
-__inline void kvfree(void * x)
+__inline void kvfree(const void * x)
 {
 	if (x)
 	{
