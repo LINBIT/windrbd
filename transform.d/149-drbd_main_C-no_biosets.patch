@@ -1,0 +1,17 @@
+diff --git i/drbd/drbd_main.c w/drbd/drbd_main.c
+index d330c28e..c647a728 100644
+--- i/drbd/drbd_main.c
++++ w/drbd/drbd_main.c
+@@ -2744,9 +2744,12 @@ static int drbd_create_mempools(void)
+ 		goto Enomem;
+ 
+ 	/* mempools */
++#if 0
++	No emulation for biosets.
+ 	drbd_md_io_bio_set = bioset_create(DRBD_MIN_POOL_PAGES, 0);
+ 	if (drbd_md_io_bio_set == NULL)
+ 		goto Enomem;
++#endif
+ 
+ 	drbd_md_io_page_pool = mempool_create_page_pool(DRBD_MIN_POOL_PAGES, 0);
+ 	if (drbd_md_io_page_pool == NULL)
