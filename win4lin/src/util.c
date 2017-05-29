@@ -18,6 +18,7 @@
 */
 
 #include <Ntifs.h>
+#include <Ntstrsafe.h>
 #include <ntddk.h>
 #include <stdlib.h>
 #include <Mountmgr.h>
@@ -1606,6 +1607,26 @@ ULONG ucsdup(_Out_ UNICODE_STRING * dst, _In_ WCHAR * src, ULONG size)
 
 	return 0;
 }
+
+
+char *kvasprintf(int flags, const char *fmt, va_list args)
+{
+	char *buffer;
+	const int size = 4096;
+	NTSTATUS status;
+
+	buffer = kzalloc(size, flags, 'AVDW');
+	if (buffer) {
+		status = RtlStringCchVPrintfA(buffer, size, fmt, args);
+		if (status == STATUS_SUCCESS)
+			return buffer;
+
+		kfree(buffer);
+	}
+
+	return NULL;
+}
+
 
 // GetIrpName
 // from:https://github.com/iocellnetworks/ndas4windows/blob/master/fremont/3.20-stable/src/drivers/ndasfat/ndasfat.c

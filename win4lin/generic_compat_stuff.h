@@ -176,4 +176,6 @@ static inline void might_sleep() { }
 #define _WIN32_TWOPC
 
 
+char *kvasprintf(int flags, const char *fmt, va_list args);
+
 #endif
