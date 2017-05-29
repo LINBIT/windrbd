@@ -523,7 +523,7 @@ __inline void kfree(const void * x)
 {
 	if (x)
 	{
-		ExFreePool(x);
+		ExFreePool((void*)x);
 	}
 }
 
@@ -531,7 +531,7 @@ __inline void kvfree(const void * x)
 {
 	if (x)
 	{
-		ExFreePool(x);
+		ExFreePool((void*)x);
 	}
 }
 
@@ -2208,7 +2208,7 @@ void query_targetdev(PVOLUME_EXTENSION pvext)
 		{
 			WDRBD_WARN("replicating volume letter is changed, detaching\n");
 			set_bit(FORCE_DETACH, &device->flags);
-			change_disk_state(device, D_DETACHING, CS_HARD);						
+			change_disk_state(device, D_DETACHING, CS_HARD, NULL);
 			put_ldev(device);
 		}
 		// DW-1300: put device reference count when no longer use.
