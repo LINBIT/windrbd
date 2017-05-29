@@ -52,13 +52,13 @@ index f332da2..7ef6dc4 100644
  		drbd_csum_bio(peer_device->connection->integrity_tfm, req->master_bio, digest_out);
  
  	if (wsame) {
-+		#if 0
++#if 0
  		additional_size_command(peer_device->connection, DATA_STREAM,
  					bio_iovec(req->master_bio)->bv_len);
  		err = __send_command(peer_device->connection, device->vnr, P_WSAME, DATA_STREAM);
-+		#else
++#else
 +		/* Currently not supported on windows */
-+		#endif
++#endif
  	} else {
  		additional_size_command(peer_device->connection, DATA_STREAM, req->i.size);
  		err = __send_command(peer_device->connection, device->vnr, P_DATA, DATA_STREAM);
