@@ -2400,7 +2400,7 @@ LONGLONG get_targetdev_volsize(PVOLUME_EXTENSION VolumeExtension)
 	LARGE_INTEGER	volumeSize;
 	NTSTATUS	status;
 
-	if (VolumeExtension->TargetDeviceObject == NULL)
+	if (!VolumeExtension || VolumeExtension->TargetDeviceObject == NULL)
 	{
 		WDRBD_ERROR("TargetDeviceObject is null!\n");
 		return (LONGLONG)0;
