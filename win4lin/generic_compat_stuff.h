@@ -128,11 +128,6 @@ static inline int try_module_get(void *m)
     return 1;
 }
 
-#define bdput(this_bdev) do { \
-	kfree2(this_bdev->bd_contains); \
-	kfree2(this_bdev); \
-} while(0)
-
 static inline void* __vmalloc(u64 bytes, int flags, int flags2)
 {
     (void)bytes;
@@ -177,5 +172,6 @@ static inline void might_sleep() { }
 
 
 char *kvasprintf(int flags, const char *fmt, va_list args);
+
 
 #endif

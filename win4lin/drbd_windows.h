@@ -1441,6 +1441,8 @@ static inline unsigned int queue_io_min(struct request_queue *q)
 	return 0; // dummy: q->limits.io_min;
 }
 
+void bdput(struct block_device *this_bdev);
+
 #endif
 
 #ifdef _WIN32
@@ -1487,5 +1489,9 @@ extern int dtt_initialize(void);
 LONGLONG	gTotalLogCnt;
 long		gLogCnt;
 char		gLogBuf[LOGBUF_MAXCNT][MAX_DRBDLOG_BUF];
+
+struct block_device *bdget(int dev);
+#define MKDEV(_maj, _min) ((_maj << 24) | _min)
+
 
 #endif // DRBD_WINDOWS_H

@@ -3136,3 +3136,28 @@ int win_drbd_thread_setup(struct drbd_thread *thi)
 
 	return STATUS_SUCCESS;
 }
+
+struct block_device *bdget(int dev)
+{
+	struct block_device *bdev = kzalloc(sizeof(*bdev), 0, 'DBDW');
+
+	(void)dev;
+
+	kref_init(&bdev->kref);
+	kref_get(&bdev->kref);
+	return bdev;
+}
+
+static void _bdput(struct kref *kref)
+{
+	struct block_device *bdev = container_of(kref, struct block_device, kref);
+
+	kfree(bdev->bd_contains);
+	if (bdev != bdev->bd_contains)
+		kfree(bdev);
+}
+
+void bdput(struct block_device *this_bdev)
+{
+	kref_put(&this_bdev->kref, _bdput);
+}
