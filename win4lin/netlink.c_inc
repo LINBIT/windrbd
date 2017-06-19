@@ -368,7 +368,7 @@ static int w_connect(struct drbd_work *w, int cancel)
 
 static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 {
-	if (pops->doit)
+    if (pops->doit)
     {
 #if 0
 		struct drbd_config_context adm_ctx;
