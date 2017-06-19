@@ -119,7 +119,8 @@ static int sub_alloc(struct idr *idp, void *ptr, int *starting_id)
 			/* no space available go back to previous layer. */
 			l++;
 			id = (id | ((1 << (IDR_BITS * l)) - 1)) + 1;
-			if (!((p = pa[l]) != 0)) {
+			p = pa[l];
+			if (!p) {
 				*starting_id = id;
 				return -2;
 			}
@@ -179,7 +180,8 @@ build_up:
 	p = idp->top;
 	layers = idp->layers;
 	if (!p) {
-		if (!((p = alloc_layer(idp)) != 0))
+		p = alloc_layer(idp);
+		if (!p)
 			return -1;
 		layers = 1;
 	}
