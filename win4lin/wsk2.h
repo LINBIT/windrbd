@@ -58,7 +58,7 @@ NTAPI
     __in ADDRESS_FAMILY	AddressFamily,
     __in USHORT			SocketType,
     __in ULONG			Protocol,
-    __in PVOID          *SocketContext,
+    __in PVOID			SocketContext,
     __in PWSK_CLIENT_LISTEN_DISPATCH Dispatch,
     __in ULONG			Flags
     );
@@ -263,24 +263,14 @@ NTSTATUS CloseWskEventSocket();
 extern
 void ReleaseProviderNPI();
 
-extern
-NTSTATUS
-NTAPI
-SetEventCallbacks(
-__in PWSK_SOCKET    Socket,
-__in LONG			mask
-);
-
-extern
-NTSTATUS WSKAPI
-AcceptEvent(
-_In_  PVOID         SocketContext,
-_In_  ULONG         Flags,
-_In_  PSOCKADDR     LocalAddress,
-_In_  PSOCKADDR     RemoteAddress,
-_In_opt_  PWSK_SOCKET AcceptSocket,
-_Outptr_result_maybenull_ PVOID *AcceptSocketContext,
-_Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
-);
-
 char *GetSockErrorString(NTSTATUS status);
+
+int sock_create_kern(
+	PVOID                   net_namespace,
+	ADDRESS_FAMILY		AddressFamily,
+	USHORT			SocketType,
+	ULONG			Protocol,
+	PVOID			SocketContext,
+	PWSK_CLIENT_LISTEN_DISPATCH Dispatch,
+	ULONG			Flags,
+	struct socket		**out);

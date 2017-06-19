@@ -501,9 +501,6 @@ struct socket {
 	int no_delay:1;
 
 	char name[32];
-
-	/* For the accept event */
-	struct list_head list;
 };
 
 char * get_ip4(char *buf, struct sockaddr_in *sockaddr);
@@ -658,13 +655,6 @@ struct bio_set {
 struct completion {
 	//unsigned int done;
 	wait_queue_head_t wait;
-};
-
-struct accept_wait_data {
-    struct drbd_tconn *tconn;
-    struct socket *s_listen;
-    struct socket *s_accept;
-    struct completion door_bell;
 };
 
 extern struct bio *bio_clone(struct bio *, int x);

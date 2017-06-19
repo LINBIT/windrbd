@@ -66,7 +66,7 @@ InitWskData(
 	if (!*pIrp) {
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
-	
+
 	KeInitializeEvent(CompletionEvent, SynchronizationEvent, FALSE);
 	IoSetCompletionRoutine(*pIrp, CompletionRoutine, CompletionEvent, TRUE, TRUE, TRUE);
 
@@ -228,11 +228,11 @@ VOID NTAPI SocketsDeinit()
 PWSK_SOCKET
 NTAPI
 CreateSocket(
-	__in ADDRESS_FAMILY	AddressFamily,
+	__in ADDRESS_FAMILY		AddressFamily,
 	__in USHORT			SocketType,
 	__in ULONG			Protocol,
-    __in PVOID          *SocketContext,
-    __in PWSK_CLIENT_LISTEN_DISPATCH Dispatch,
+	__in PVOID			SocketContext,
+	__in PWSK_CLIENT_LISTEN_DISPATCH Dispatch,
 	__in ULONG			Flags
 )
 {
@@ -241,6 +241,7 @@ CreateSocket(
 	PWSK_SOCKET		WskSocket = NULL;
 	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
 
+	/* NO _printk HERE, WOULD LOOP */
 	if (g_SocketsState != INITIALIZED)
 	{
 		return NULL;
@@ -534,7 +535,7 @@ __in KEVENT			*send_buf_kill_event
 
 	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || !pIrp || ((int)BufferSize <= 0))
 		return SOCKET_ERROR;
-		
+
 
 	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, FALSE);
 	if (!NT_SUCCESS(Status)) {
@@ -544,7 +545,7 @@ __in KEVENT			*send_buf_kill_event
 	IoReuseIrp(pIrp, STATUS_UNSUCCESSFUL);
 	KeInitializeEvent(&CompletionEvent, SynchronizationEvent, FALSE);
 	IoSetCompletionRoutine(pIrp, CompletionRoutine, &CompletionEvent, TRUE, TRUE, TRUE);
-	
+
 
 	Flags |= WSK_FLAG_NODELAY;
 
@@ -1801,35 +1802,40 @@ __in LONG			mask
     return Status;
 }
 
-NTSTATUS WSKAPI
-AcceptEvent(
-_In_  PVOID         SocketContext,
-_In_  ULONG         Flags,
-_In_  PSOCKADDR     LocalAddress,
-_In_  PSOCKADDR     RemoteAddress,
-_In_opt_  PWSK_SOCKET AcceptSocket,
-_Outptr_result_maybenull_ PVOID *AcceptSocketContext,
-_Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
-)
-{
-	UNREFERENCED_PARAMETER(Flags);
-	// Check for a valid new socket
-HERp(AcceptSocket);
-	if (AcceptSocket != NULL)  {
-		WDRBD_INFO("incoming connection on a listening socket.\n");
-		struct accept_wait_data *ad = (struct accept_wait_data*)SocketContext;        
-		ad->s_accept = kzalloc(sizeof(struct socket), 0, '89DW');
-		if(!ad->s_accept) {
-			return STATUS_REQUEST_NOT_ACCEPTED;
-		}
-		ad->s_accept->sk = AcceptSocket;
-		sprintf(ad->s_accept->name, "estab_sock");
 
-		complete(&ad->door_bell);
-		return STATUS_SUCCESS;
+int sock_create_kern(
+	PVOID                   net_namespace,
+	ADDRESS_FAMILY		AddressFamily,
+	USHORT			SocketType,
+	ULONG			Protocol,
+	PVOID			SocketContext,
+	PWSK_CLIENT_LISTEN_DISPATCH Dispatch,
+	ULONG			Flags,
+	struct socket  		**out)
+{
+HERp(AcceptSocket);
+	int err;
+	struct socket *socket;
+
+	(void)net_namespace;
+	err = 0;
+	socket = kzalloc(sizeof(struct socket), 0, '3WDW');
+	if (!socket) {
+		err = -ENOMEM; 
+		goto out;
 	}
-	// Error with listening socket
-	else {
-		return STATUS_REQUEST_NOT_ACCEPTED;
+
+	socket->sk = CreateSocket(AddressFamily, SocketType, Protocol,
+			SocketContext, Dispatch, Flags);
+
+	if (socket->sk == NULL) {
+		err = -1;
+		kfree(socket);
+		goto out;
+	} else {
+		*out = socket;
 	}
+
+out:
+	return err;
 }
