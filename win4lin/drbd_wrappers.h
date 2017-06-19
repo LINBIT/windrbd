@@ -171,7 +171,10 @@ static inline int drbd_blkdev_put(struct block_device *bdev, fmode_t mode)
 	 * close_bdev_exclusive is void. */
 	return 0;
 }
-#define blkdev_put(b, m)	drbd_blkdev_put(b, m)
+static inline int blkdev_put(struct block_device *bdev, fmode_t mode)
+{
+	return drbd_blkdev_put(bdev, mode);
+}
 #endif
 
 #define drbd_bio_uptodate(bio) bio_flagged(bio, BIO_UPTODATE)
