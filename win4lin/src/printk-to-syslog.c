@@ -106,7 +106,7 @@ int _printk(const char *func, const char *fmt, ...)
 #endif
 
 	if (printk_udp_socket) {
-	    status = SendToaaaa(printk_udp_socket, buffer, len,
+	    status = SendTo(printk_udp_socket, buffer, len,
 		    (PSOCKADDR)&printk_udp_target);
 	}
 #if 0
