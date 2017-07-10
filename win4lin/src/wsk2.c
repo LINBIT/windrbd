@@ -1473,7 +1473,6 @@ AcceptLocal(
 		}
 
 		Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-HERi(Status);
 		switch (Status) {
 		case STATUS_WAIT_0:
 			break;
@@ -1813,7 +1812,6 @@ int sock_create_kern(
 	ULONG			Flags,
 	struct socket  		**out)
 {
-HERp(AcceptSocket);
 	int err;
 	struct socket *socket;
 
