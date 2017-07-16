@@ -7,6 +7,7 @@ EWDK_INC := $(EWDK_KIT)\\Include
 EWDK_LIB := $(EWDK_KIT)\\Lib
 EWDK_BIN := $(EWDK_KIT)\\bin\\x86
 VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl.cmd
+INSTALL := /cygdrive/c/Windows/System32/cmd.exe /c INSTALL-DRBD.bat
 # /a      for debugging output
 
 
@@ -116,6 +117,9 @@ endif
 
 deps:
 	gcc -D BITS_PER_LONG=64 -D _MSC_VER=1300 -D _WIN32=1 $(C_DEFINES) $(WIN_INCLUDE_DIRS) $(subst /FI,-include ,$(WIN_DEF_INCLUDES)) -M *.c ../win4lin/src/*.c | perl -pe 's/^(\S+)\.o:/\1.obj \1.E:/' > Makefile.deps 
+
+install:
+	$(INSTALL)
 
 -include Makefile.deps
 
