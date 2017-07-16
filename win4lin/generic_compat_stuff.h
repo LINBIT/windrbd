@@ -3,6 +3,8 @@
 #ifndef WDRBD9_GENERIC_COMPAT_STUFF
 #define WDRBD9_GENERIC_COMPAT_STUFF
 
+#include <stdarg.h>
+
 #ifdef WINNT
 #pragma warning (disable : 4005 4018 4101 4115 4121 4127 4131 4152 4189 4200 4201 4204 4212 4218 4242 4244 4245 4267 4307 4389 4702 4706)
 /* warning disable list
