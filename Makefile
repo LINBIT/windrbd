@@ -58,7 +58,7 @@ $(TRANS_DEST)drbd/drbd_transport_tcp.c: windows/drbd_transport_wtcp.c
 	$(call copy_win,$<,$@)
 
 ifeq ($(shell uname -o),Cygwin)
-build: patch
+build: 
 	@if test -d $(TRANS_DEST); then \
 		cd $(TRANS_DEST)/drbd/ && $(MAKE); \
 	else \
