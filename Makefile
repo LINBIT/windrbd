@@ -64,9 +64,22 @@ build: patch
 	else \
 		echo "Please run 'make' first on a Linux system with spatch installed"; \
 	fi
+
+install: build
+	@if test -d $(TRANS_DEST); then \
+		cd $(TRANS_DEST)/drbd/ && $(MAKE) install; \
+	else \
+		echo "Please run 'make' first on a Linux system with spatch installed"; \
+	fi
 else
 build: patch
 	@echo "Now please run 'make' in the Windows VM."
+
+install:
+	@echo "This is not a Windows machine. Since we are building a Windows"
+	@echo "kernel driver, execute make install on your Windows box (as"
+	@echo "Administrator)"
+
 endif
 	
 tarball:
