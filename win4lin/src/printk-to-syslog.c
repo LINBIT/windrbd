@@ -10,6 +10,50 @@ static SOCKADDR_IN printk_udp_target;
 char my_host_name[256];
 
 
+int initialize_syslog_printk(void)
+{
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in initialize_syslog_printk\n");
+	if (!printk_udp_socket) {
+		SOCKADDR_IN local;
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in initialize_syslog_printk 2\n");
+
+		printk_udp_target.sin_family = AF_INET;
+		printk_udp_target.sin_port = 514;
+
+		/* TODO: This doesn't work on our setup. I am pretty sure
+		 * that it was never supposed to work. */
+		/* printk_udp_target.sin_addr.s_addr = 0xffffffff; */
+
+		/* TODO: this is a hardcoded IP address in network byte
+		 * order. You need to put the IPv4 address of a Linux
+		 * box running rsyslogd with remote logging on UDP
+		 * enabled here. To enable UDP logging in rsyslogd
+		 * put (or uncomment) following lines into /etc/rsyslog.conf:
+module(load="imudp")
+input(type="imudp" port="514")
+		 * then do a 
+bash$ sudo service syslog restart
+		 * . */
+
+		printk_udp_target.sin_addr.s_addr = 0x6738a8c0;
+
+		local.sin_family = AF_INET;
+		local.sin_addr.s_addr = 0;
+		local.sin_port = 0;
+
+		printk_udp_socket = CreateSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+			NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET);
+		if (printk_udp_socket) {
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in initialize_syslog_printk 2\n");
+			Bind(printk_udp_socket, (SOCKADDR *)&local);
+		} else {
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility. You will NOT see any output produced by printk (and pr_err, ...)\n");
+			return -1;
+		}
+	}
+	return 0;
+}
+
 /* For now, we only push messages via a UDP socket.
  * Later on, we can also */
 int _printk(const char *func, const char *fmt, ...)
@@ -85,24 +129,6 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 5\n");
 
 	/* While this initialization might be racy normally, it's already done from
 	   DriverEntry, where only a single thread is active. */
-	if (!printk_udp_socket) {
-	    SOCKADDR_IN local;
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 6\n");
-
-	    printk_udp_target.sin_family = AF_INET;
-	    printk_udp_target.sin_port = 514;
-	    // printk_udp_target.sin_addr.s_addr = 0xffffffff;
-	    printk_udp_target.sin_addr.s_addr = 0x6738a8c0;
-
-	    local.sin_family = AF_INET;
-	    local.sin_addr.s_addr = 0;
-	    local.sin_port = 0;
-
-	    printk_udp_socket = CreateSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-		    NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET);
-	    Bind(printk_udp_socket, (SOCKADDR *)&local);
-	}
-
 #if 0
 	/* Serial output of all of these is _sooo_ slow */
 	DoTraceMessage(TRCINFO, buffer);
@@ -121,6 +147,8 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "buffer: %s\n", buffer);
 	    status = SendTo(printk_udp_socket, buffer, len,
 		    (PSOCKADDR)&printk_udp_target);
 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "SendTo returned %d\n", status);
+	} else {
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, no socket: %s\n", buffer);
 	}
 #if 0
 	WriteEventLogEntryData(msgids[level_index], 0, 0, 1, L"%S", buf);

@@ -659,6 +659,11 @@ void save_to_system_event(char * buf, int length, int level_index)
 	}
 }
 
+	/* TODO: We now use initialize_syslog_printk() for development
+	 * maybe this should go away? Production printk won't have a 
+	 * syslog server ...
+	 */
+
 void printk_init(void)
 {
 	// initialization for logging. the function '_prink' shouldn't be called before this initialization.

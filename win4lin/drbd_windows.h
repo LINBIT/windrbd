@@ -374,6 +374,7 @@ extern atomic_t g_oos_trace;
 
 extern void printk_init(void);
 extern void printk_cleanup(void);
+extern int initialize_syslog_printk(void);
 extern int _printk(const char * func, const char * format, ...);
 
 #ifdef _WIN32_DEBUG_OOS
