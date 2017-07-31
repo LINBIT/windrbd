@@ -24,6 +24,7 @@ int _printk(const char *func, const char *fmt, ...)
     int hour, min, sec, msec, sec_day;
     static int dbgout_only = 0;
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk (to syslog)\n");
 
     fmt_without_level = fmt;
     if (fmt[0] == '<' && fmt[2] == '>') {
@@ -37,6 +38,7 @@ int _printk(const char *func, const char *fmt, ...)
 	strcpy(my_host_name, "WIN");
     }
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 2\n");
     KeQuerySystemTime(&time);
     sec_day = (time.QuadPart / (ULONG_PTR)1e7) % 86400;
     sec = sec_day % 60;
@@ -52,12 +54,14 @@ int _printk(const char *func, const char *fmt, ...)
     if (! NT_SUCCESS(status))
 	return -EINVAL;
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 2\n");
     pos = (ULONG)strlen(buffer);
     va_start(args, fmt);
     status = RtlStringCbVPrintfA(buffer + pos, sizeof(buffer)-1-pos,
 	    fmt, args);
     if (! NT_SUCCESS(status))
 	return -EINVAL;
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 3\n");
 
     len = (ULONG)strlen(buffer);
 
@@ -70,21 +74,25 @@ int _printk(const char *func, const char *fmt, ...)
 		 DPFLTR_WARNING_LEVEL),
 		buffer);
     } else {
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 4\n");
 	/* Indicate how much might be lost on UDP */
 	if (dbgout_only) {
 	    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [%d dbg]\n", dbgout_only);
 	    dbgout_only = 0;
 	    len = (ULONG)strlen(buffer);
 	}
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 5\n");
 
 	/* While this initialization might be racy normally, it's already done from
 	   DriverEntry, where only a single thread is active. */
 	if (!printk_udp_socket) {
 	    SOCKADDR_IN local;
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 6\n");
 
 	    printk_udp_target.sin_family = AF_INET;
 	    printk_udp_target.sin_port = 514;
-	    printk_udp_target.sin_addr.s_addr = 0xffffffff;
+	    // printk_udp_target.sin_addr.s_addr = 0xffffffff;
+	    printk_udp_target.sin_addr.s_addr = 0x6738a8c0;
 
 	    local.sin_family = AF_INET;
 	    local.sin_addr.s_addr = 0;
@@ -105,9 +113,14 @@ int _printk(const char *func, const char *fmt, ...)
 		buffer);
 #endif
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 7\n");
 	if (printk_udp_socket) {
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 8\n");
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "len: %d\n", len);
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "buffer: %s\n", buffer);
 	    status = SendTo(printk_udp_socket, buffer, len,
 		    (PSOCKADDR)&printk_udp_target);
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "SendTo returned %d\n", status);
 	}
 #if 0
 	WriteEventLogEntryData(msgids[level_index], 0, 0, 1, L"%S", buf);
@@ -120,6 +133,7 @@ int _printk(const char *func, const char *fmt, ...)
 	    DbgPrintEx(FLTR_COMPONENT, printLevel, buf);
 #endif
     }
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 9\n");
     return 1;
 }
 
