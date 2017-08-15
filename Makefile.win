@@ -1,22 +1,23 @@
 # vim: set ft=make ts=8 sw=8 noet :
 
-export EWDK_BASE := ../../../installs/ewdk/
-EWDK_KIT := $(EWDK_BASE)/Program Files/Windows Kits/10/
-EWDK_VERSION := 10.0.14393.0
-EWDK_INC := "$(EWDK_KIT)/Include"
-EWDK_LIB := "$(EWDK_KIT)/Lib"
-EWDK_BIN := "$(EWDK_KIT)/bin/x86"
+export EWDK_BASE := c:\\Ewdk
+EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
+EWDK_VERSION := 10.0.15063.0
+EWDK_INC := $(EWDK_KIT)\\Include
+EWDK_LIB := $(EWDK_KIT)\\Lib
+EWDK_BIN := $(EWDK_KIT)\\bin\\x86
 VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl.cmd
 # /a      for debugging output
 
 
 # CL.exe takes (AND RETURNS) forward slashes; that makes navigating an error output easy.
-WIN_INCLUDE_DIRS += -I $(EWDK_INC)/$(EWDK_VERSION)/shared
-WIN_INCLUDE_DIRS += -I $(EWDK_INC)/$(EWDK_VERSION)/km
-WIN_INCLUDE_DIRS += -I $(EWDK_INC)/$(EWDK_VERSION)/km/crt
-WIN_INCLUDE_DIRS += -I $(EWDK_INC)/$(EWDK_VERSION)/um
+WIN_INCLUDE_DIRS += "-I$(EWDK_INC)\\$(EWDK_VERSION)\\shared"
+WIN_INCLUDE_DIRS += "-I$(EWDK_INC)\\$(EWDK_VERSION)\\km"
+WIN_INCLUDE_DIRS += "-I$(EWDK_INC)\\$(EWDK_VERSION)\\km\\crt"
+WIN_INCLUDE_DIRS += "-I$(EWDK_INC)\\$(EWDK_VERSION)\\um"
 
-WIN_DEF_INCLUDES += /FI $(EWDK_INC)/$(EWDK_VERSION)/shared/warning.h  # include that file
+WIN_DEF_INCLUDES += /FI"$(EWDK_INC)/$(EWDK_VERSION)\\shared\\warning.h"
+# include that file
 
 WIN_CFLAGS += /c /nologo /W4 
 WIN_CFLAGS += /Zi # /Zi gives us a PDB file; without that we'd get debug information in the .obj file instead
@@ -47,9 +48,9 @@ WIN_CFLAGS += /wd4201
 # drbd-headers\drbd_protocol.h(466): warning C4200: nonstandard extension used: zero-sized array in struct/union
 WIN_CFLAGS += /wd4200
 
-WIN_INCLUDE_DIRS += -I "../../win4lin"
-WIN_INCLUDE_DIRS += -I "."
-WIN_INCLUDE_DIRS += -I "../drbd-headers"
+WIN_INCLUDE_DIRS += -I"../win4lin"
+WIN_INCLUDE_DIRS += -I"."
+WIN_INCLUDE_DIRS += -I"../drbd-headers"
 
 WIN_CFLAGS += $(WIN_INCLUDE_DIRS)
 ifeq (V,1)
@@ -74,8 +75,8 @@ fPDB = $(patsubst %.c,%.pdb,$(1))
 
 WIN_LDFLAGS += /link # must be first!
 WIN_LDFLAGS += /DRIVER:WDM /NODEFAULTLIB /ENTRY:DriverEntry
-WIN_LDFLAGS += /LIBPATH:$(EWDK_LIB)/win7/km/x64/
-WIN_LDFLAGS += /LIBPATH:$(EWDK_LIB)/$(EWDK_VERSION)/km/x64/
+WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x64/"
+WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/$(EWDK_VERSION)/km/x64/"
 WIN_LDFLAGS += /DEBUG:FULL
 WIN_LINK_INPUT += wdm.lib
 WIN_LINK_INPUT += ntoskrnl.lib
@@ -85,10 +86,10 @@ WIN_LINK_INPUT += netio.lib
 
 all: drbd.sys drbd.cat
 
-drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildcard ../../win4lin/src/*.c)) resource.res
+drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildcard ../win4lin/src/*.c)) resource.res
 	rm -f drbd.pdb "_$@"
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"drbd.pdb" /OUT:"_$@"
-	$(EWDK_BIN)/signtool.exe sign /f ../../crypto/linbit.pfx /p a /v /t http://timestamp.verisign.com/scripts/timstamp.dll "_$@"
+	"$(EWDK_BIN)/signtool.exe" sign /f ../crypto/linbit.pfx /p a /v /t http://timestamp.verisign.com/scripts/timstamp.dll "_$@"
 	mv -f "_$@" "$@"
 
 resource.res: resource.rc
@@ -96,8 +97,8 @@ resource.res: resource.rc
 
 drbd.cat: drbd.sys
 	rm -f "$@"
-	$(EWDK_BIN)/Inf2Cat.exe /os:7_X64 /driver:.
-	$(EWDK_BIN)/signtool.exe sign /f ../../crypto/linbit.pfx /p a /v /t http://timestamp.verisign.com/scripts/timstamp.dll $@
+	"$(EWDK_BIN)/Inf2Cat.exe" /os:7_X64 /driver:.
+	"$(EWDK_BIN)/signtool.exe" sign /f ../crypto/linbit.pfx /p a /v /t http://timestamp.verisign.com/scripts/timstamp.dll $@
 
 ifeq ($(shell uname -o),Cygwin)
     %.obj: %.c
@@ -109,12 +110,12 @@ ifeq ($(shell uname -o),Cygwin)
     %.E: %.c
 	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /E > "$@"
 
-../../win4lin/src/util.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
-../../win4lin/src/thread.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
+../win4lin/src/util.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
+../win4lin/src/thread.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
 endif
 
 deps:
-	gcc -D BITS_PER_LONG=64 -D _MSC_VER=1300 -D _WIN32=1 $(C_DEFINES) $(WIN_INCLUDE_DIRS) $(subst /FI,-include ,$(WIN_DEF_INCLUDES)) -M *.c ../../win4lin/src/*.c | perl -pe 's/^(\S+)\.o:/\1.obj \1.E:/' > Makefile.deps 
+	gcc -D BITS_PER_LONG=64 -D _MSC_VER=1300 -D _WIN32=1 $(C_DEFINES) $(WIN_INCLUDE_DIRS) $(subst /FI,-include ,$(WIN_DEF_INCLUDES)) -M *.c ../win4lin/src/*.c | perl -pe 's/^(\S+)\.o:/\1.obj \1.E:/' > Makefile.deps 
 
 -include Makefile.deps
 
