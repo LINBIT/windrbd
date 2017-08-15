@@ -49,9 +49,9 @@ WIN_CFLAGS += /wd4201
 # drbd-headers\drbd_protocol.h(466): warning C4200: nonstandard extension used: zero-sized array in struct/union
 WIN_CFLAGS += /wd4200
 
-WIN_INCLUDE_DIRS += -I"../win4lin"
+WIN_INCLUDE_DIRS += -I"..\\..\\win4lin"
 WIN_INCLUDE_DIRS += -I"."
-WIN_INCLUDE_DIRS += -I"../drbd-headers"
+WIN_INCLUDE_DIRS += -I"..\\drbd-headers"
 
 WIN_CFLAGS += $(WIN_INCLUDE_DIRS)
 ifeq (V,1)
@@ -87,14 +87,14 @@ WIN_LINK_INPUT += netio.lib
 
 all: drbd.sys drbd.cat
 
-drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildcard ../win4lin/src/*.c)) resource.res
+drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildcard ../../win4lin/src/*.c)) resource.res
 	rm -f drbd.pdb "_$@"
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"drbd.pdb" /OUT:"_$@"
 	"$(EWDK_BIN)/signtool.exe" sign /f ../crypto/linbit.pfx /p a /v /t http://timestamp.verisign.com/scripts/timstamp.dll "_$@"
 	mv -f "_$@" "$@"
 
 resource.res: resource.rc
-	$(EWDK_BIN)/rc.exe $<
+	"$(EWDK_BIN)/rc.exe" $<
 
 drbd.cat: drbd.sys
 	rm -f "$@"
@@ -111,8 +111,8 @@ ifeq ($(shell uname -o),Cygwin)
     %.E: %.c
 	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /E > "$@"
 
-../win4lin/src/util.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
-../win4lin/src/thread.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
+../../win4lin/src/util.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
+../../win4lin/src/thread.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
 endif
 
 deps:

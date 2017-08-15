@@ -1,3 +1,8 @@
+rem Adjust these variables to match your system
+
+set CYGWINDIR="c:\cygwin64"
+rem Probably not needed .. we work without driver signing
+set CERTMGR="c:\Ewdk\Program Files\Windows Kits\10\bin\x64\certmgr.exe"
 rem This script currently just copies neccessary stuff to 
 rem the Windows temp (%Temp%/drbd) directory. I am not sure
 rem if we really need this step.
@@ -30,14 +35,14 @@ mkdir "%TMPCPYDIR%\var\run\drbd"
 
 copy "%0\..\..\drbd-utils\user\v9\*.exe" "%TMPCPYDIR%\bin"
 rem You need to change this to the location of cygwin on your system.
-copy "c:\cygwin64\bin\cygwin1.dll" "%TMPCPYDIR%\bin"
+copy "%CYGWINDIR%\bin\cygwin1.dll" "%TMPCPYDIR%\bin"
 
 copy "..\converted-sources-working-copy\drbd\drbd.sys" "%TMPCPYDIR%\setup"
 copy "..\converted-sources-working-copy\drbd\drbd.cat" "%TMPCPYDIR%\setup"
 copy "..\converted-sources-working-copy\drbd\drbd.inf" "%TMPCPYDIR%\setup"
 copy "..\converted-sources-working-copy\crypto\linbit.cer"               "%TMPCPYDIR%\setup"
 rem You need to change this to the location of Ewdk on your system.
-copy "c:\Ewdk\Program Files\Windows Kits\10\bin\x64\certmgr.exe"     "%TMPCPYDIR%\setup"
+copy "     "%TMPCPYDIR%\setup"
 
 copy ".\etc\drbd.conf" "%TMPCPYDIR%\etc"
 copy ".\etc\drbd.d\*.res" "%TMPCPYDIR%\etc\drbd.d"
