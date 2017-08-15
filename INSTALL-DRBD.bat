@@ -4,6 +4,7 @@ rem This script currently just copies neccessary stuff to
 rem the Windows temp (%Temp%/drbd) directory. I am not sure
 rem if we really need this step.
 rem
+rem @echo OFF
 
 rem change drive, too...
 cd /D ".\..\.."
