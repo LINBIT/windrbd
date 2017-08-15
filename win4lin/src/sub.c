@@ -666,7 +666,20 @@ void save_to_system_event(char * buf, int length, int level_index)
 
 void printk_init(void)
 {
-	// initialization for logging. the function '_prink' shouldn't be called before this initialization.
+	NTSTATUS    status;
+
+	// Init WSK first, we need a UDP socket here.
+	status = SocketsInit(); 
+	if (!NT_SUCCESS(status)) 
+	{ 
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Failed to init. status(0x%x)\n", status); 
+
+		WDRBD_ERROR("Failed to init. status(0x%x)\n", status); 
+		return; 
+	} 
+
+        /* Do this at the very beginning so we see printk() messages. */
+        initialize_syslog_printk();
 }
 
 void printk_cleanup(void)

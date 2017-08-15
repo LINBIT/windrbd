@@ -12,10 +12,9 @@ char my_host_name[256];
 
 int initialize_syslog_printk(void)
 {
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in initialize_syslog_printk\n");
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
 	if (!printk_udp_socket) {
 		SOCKADDR_IN local;
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in initialize_syslog_printk 2\n");
 
 		printk_udp_target.sin_family = AF_INET;
 		printk_udp_target.sin_port = 514;
@@ -44,7 +43,6 @@ bash$ sudo service syslog restart
 		printk_udp_socket = CreateSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
 			NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET);
 		if (printk_udp_socket) {
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in initialize_syslog_printk 2\n");
 			Bind(printk_udp_socket, (SOCKADDR *)&local);
 		} else {
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility. You will NOT see any output produced by printk (and pr_err, ...)\n");
@@ -68,8 +66,6 @@ int _printk(const char *func, const char *fmt, ...)
     int hour, min, sec, msec, sec_day;
     static int dbgout_only = 0;
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk (to syslog)\n");
-
     fmt_without_level = fmt;
     if (fmt[0] == '<' && fmt[2] == '>') {
 	level = fmt[1];
@@ -82,7 +78,6 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk (to syslog)\n"
 	strcpy(my_host_name, "WIN");
     }
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 2\n");
     KeQuerySystemTime(&time);
     sec_day = (time.QuadPart / (ULONG_PTR)1e7) % 86400;
     sec = sec_day % 60;
@@ -98,14 +93,12 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 2\n");
     if (! NT_SUCCESS(status))
 	return -EINVAL;
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 2\n");
     pos = (ULONG)strlen(buffer);
     va_start(args, fmt);
     status = RtlStringCbVPrintfA(buffer + pos, sizeof(buffer)-1-pos,
 	    fmt, args);
     if (! NT_SUCCESS(status))
 	return -EINVAL;
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 3\n");
 
     len = (ULONG)strlen(buffer);
 
@@ -118,17 +111,13 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 3\n");
 		 DPFLTR_WARNING_LEVEL),
 		buffer);
     } else {
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 4\n");
 	/* Indicate how much might be lost on UDP */
 	if (dbgout_only) {
 	    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [%d dbg]\n", dbgout_only);
 	    dbgout_only = 0;
 	    len = (ULONG)strlen(buffer);
 	}
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 5\n");
 
-	/* While this initialization might be racy normally, it's already done from
-	   DriverEntry, where only a single thread is active. */
 #if 0
 	/* Serial output of all of these is _sooo_ slow */
 	DoTraceMessage(TRCINFO, buffer);
@@ -139,14 +128,12 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 5\n");
 		buffer);
 #endif
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 7\n");
 	if (printk_udp_socket) {
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 8\n");
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "len: %d\n", len);
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "buffer: %s\n", buffer);
 	    status = SendTo(printk_udp_socket, buffer, len,
 		    (PSOCKADDR)&printk_udp_target);
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "SendTo returned %d\n", status);
+            if (status < 0) {
+                DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, SendTo returned error: %s\n", buffer);
+            }
 	} else {
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, no socket: %s\n", buffer);
 	}
@@ -161,7 +148,6 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "SendTo returned %d\n", st
 	    DbgPrintEx(FLTR_COMPONENT, printLevel, buf);
 #endif
     }
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "in _printk 9\n");
     return 1;
 }
 
