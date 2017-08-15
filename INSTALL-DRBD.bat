@@ -10,7 +10,7 @@ rem
 rem @echo OFF
 
 rem change drive, too...
-cd /D "%0\.."
+cd /D ".\..\.."
 
 
 rem .
@@ -33,30 +33,30 @@ mkdir "%TMPCPYDIR%\var\lib\drbd"
 mkdir "%TMPCPYDIR%\var\run"
 mkdir "%TMPCPYDIR%\var\run\drbd"
 
-copy "%0\..\..\drbd-utils\user\v9\*.exe" "%TMPCPYDIR%\bin"
+copy ".\..\drbd-utils\user\v9\*.exe" "%TMPCPYDIR%\bin"
 rem You need to change this to the location of cygwin on your system.
 copy "%CYGWINDIR%\bin\cygwin1.dll" "%TMPCPYDIR%\bin"
 
-copy "..\converted-sources-working-copy\drbd\drbd.sys" "%TMPCPYDIR%\setup"
-copy "..\converted-sources-working-copy\drbd\drbd.cat" "%TMPCPYDIR%\setup"
-copy "..\converted-sources-working-copy\drbd\drbd.inf" "%TMPCPYDIR%\setup"
-copy "..\converted-sources-working-copy\crypto\linbit.cer"               "%TMPCPYDIR%\setup"
+copy "converted-sources\drbd\drbd.sys" "%TMPCPYDIR%\setup"
+copy "converted-sources\drbd\drbd.cat" "%TMPCPYDIR%\setup"
+copy "converted-sources\drbd\drbd.inf" "%TMPCPYDIR%\setup"
+copy "crypto\linbit.cer"               "%TMPCPYDIR%\setup"
 rem You need to change this to the location of Ewdk on your system.
-copy "     "%TMPCPYDIR%\setup"
+copy %CERTMGR% %TMPCPYDIR%\setup"
 
-copy ".\etc\drbd.conf" "%TMPCPYDIR%\etc"
-copy ".\etc\drbd.d\*.res" "%TMPCPYDIR%\etc\drbd.d"
-copy ".\etc\drbd.d\*.conf" "%TMPCPYDIR%\etc\drbd.d"
+copy "etc\drbd.conf" "%TMPCPYDIR%\etc"
+copy "etc\drbd.d\*.res" "%TMPCPYDIR%\etc\drbd.d"
+copy "etc\drbd.d\*.conf" "%TMPCPYDIR%\etc\drbd.d"
 
-copy ".\INSTALL-DRBD-admin.bat" "%TMPCPYDIR%"
+copy "converted-sources\drbd\INSTALL-DRBD-admin.bat" "%TMPCPYDIR%"
 
 rem RUNAS always asks for a password, unless credentials have already been saved via /SAVECRED
-runas /user:administrator "%TMPCPYDIR%\INSTALL-DRBD-admin.bat"
+rem runas /user:administrator "%TMPCPYDIR%\INSTALL-DRBD-admin.bat"
 
 echo "Type"
 echo "sc drbd start"
 echo "to load the driver"
-echo
+echo ""
 echo "Note that you must disable Windows driver signature verification"
 echo "on boot (for Windows 7, press F8 on boot and select Disable driver"
 echo "signature verification (or so))"

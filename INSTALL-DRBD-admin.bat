@@ -1,7 +1,5 @@
 rem @echo on
 
-cd /D ".."
-
 rem /COPYALL doesn't work, not enough rights
 robocopy /MIR /COPY:DT "." "c:\program files\drbd"
 

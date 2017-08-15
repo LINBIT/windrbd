@@ -90,7 +90,7 @@ all: drbd.sys drbd.cat
 drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildcard ../../win4lin/src/*.c)) resource.res
 	rm -f drbd.pdb "_$@"
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"drbd.pdb" /OUT:"_$@"
-	"$(EWDK_BIN)/signtool.exe" sign /f ../crypto/linbit.pfx /p a /v /t http://timestamp.verisign.com/scripts/timstamp.dll "_$@"
+	"$(EWDK_BIN)/signtool.exe" sign /f ../../crypto/linbit.pfx /p a /v /t http://timestamp.verisign.com/scripts/timstamp.dll "_$@"
 	mv -f "_$@" "$@"
 
 resource.res: resource.rc
@@ -99,7 +99,7 @@ resource.res: resource.rc
 drbd.cat: drbd.sys
 	rm -f "$@"
 	"$(EWDK_BIN)/Inf2Cat.exe" /os:7_X64 /driver:.
-	"$(EWDK_BIN)/signtool.exe" sign /f ../crypto/linbit.pfx /p a /v /t http://timestamp.verisign.com/scripts/timstamp.dll $@
+	"$(EWDK_BIN)/signtool.exe" sign /f ../../crypto/linbit.pfx /p a /v /t http://timestamp.verisign.com/scripts/timstamp.dll $@
 
 ifeq ($(shell uname -o),Cygwin)
     %.obj: %.c
