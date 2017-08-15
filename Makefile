@@ -34,6 +34,7 @@ CP := cp --preserve=timestamps
 copy:
 	$(CP) ./Makefile.win $(TRANS_DEST)/drbd/Makefile
 	$(CP) ./ms-cl.cmd $(TRANS_DEST)/drbd/
+	$(CP) ./INSTALL-DRBD*.bat $(TRANS_DEST)/drbd/
 
 deps: copy trans
 	cd $(TRANS_DEST)/drbd && $(MAKE) deps
