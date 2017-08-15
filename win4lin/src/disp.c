@@ -92,7 +92,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	// init logging system first
 	wdrbd_logger_init();
 
-    WDRBD_TRACE("MVF Driver Loading...\n");
+    WDRBD_TRACE("DRBD Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
 
     initRegistry(RegistryPath);
 
