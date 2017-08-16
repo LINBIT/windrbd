@@ -1,3 +1,5 @@
+@echo off
+
 rem Adjust these variables to match your system
 
 set CYGWINDIR="c:\cygwin64"
