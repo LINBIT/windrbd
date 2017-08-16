@@ -1,0 +1,101 @@
+Note: WDRBD9 (DRBD for Windows) is at a very early development stage, 
+so please don't expect everything described in here to work out-of-the-box.
+
+Furthermore, running WDRBD9 will, at some point, most likely crash your 
+windows machine (blue screen) so be sure to
+	1.) Not use it on production machines.
+	2.) Make Snapshots frequently.
+
+In particular, make a snapshot every time before you execute the
+INSTALL-DRBD-admin.bat script, since after that your Windows box
+will not boot any more.
+
+Build environment setup:
+
+You need two virtual machines: 
+	1.) One Linux box with spatch installed (in addition to 
+		the usual development tools like make, gcc, ...)
+		On Ubuntu this is installed by:
+
+			sudo apt-get install coccinelle
+
+	2.) A Windows 7 WM with Service Pack 1 (at least) installed.
+		This is what we currently use for development.
+
+	    Download and install the EWDK as described in:
+
+		https://docs.microsoft.com/en-us/windows-hardware/drivers/develop/installing-the-enterprise-wdk
+
+	   	Install it to 
+			C:\ewdk 
+		This saves you from too many makefile edits later
+
+	    Download and Install cygwin 
+	    Download and Install Development tools of cygwin (there is
+		a GUI for that, please don't expect screenshots in here)
+
+	    Note: I've also installed Visual Studio on my Windows box,
+		not sure if that is needed also, since the C compiler
+		should come with ewdk.
+
+git clone wdrbd with:
+
+bash$ git clone --recursive http://git.drbd.org/wdrbd.git	
+
+on your Linux box. wdrbd uses drbd as a submodule that's why --recursive
+is needed.
+
+Share the wdrbd9 folder via Samba, so that your Windows VM can access it
+(we are not keeping any important data on the Windows VM since it will
+crash frequently). You can use the GNOME Files utility to do so (for
+example).
+
+Mount the shared folder in your windows box:
+	net use z: \\<ip-of-linux-box>\wdrbd9
+(assuming the share name is wdrbd9)
+
+Building and "insmod" DRBD windows driver:
+
+        1.) Run
+                make
+        on the Linux box (from $HOME/Linbit/Work/wdrbd9)
+
+        2.) Run
+                make
+        on the Windows box (from $HOME/Linbit/Work/wdrbd9 (takes some while)
+
+        3.) Run
+                make install
+        on the Windows box (from $HOME/Linbit/Work/wdrbd9/converted-sources/drbd)
+
+        4.) Run (in an Administrator cmd.exe Console: to open it go to
+                 C:\Windows\System32 in Explorer, Cmd-Click on cmd.exe
+                 and select Run as Administrator)
+                INSTALL-DRBD-admin.bat
+	from within C:\cygwin64\tmp\drbd (or whereever make install
+	told you to do so).
+
+        5.) To load the driver, do (from Adminstrator Console)
+                sc start drbd
+        DbgViewer will show output. To start DbgViewer go to
+        C:\drbd\DebugViewer and start DbgView.exe as Administrator
+
+------------
+
+Note on logging: Currently the IP of the syslog host is hardcoded into the
+source (somewhere near win4lin/src/printk-to-syslog.c:37) in hexadecimal
+*and* network byte order. In order to see log messages you need to change
+that (and follow the instructions there to enable syslog UDP logging).
+Since it is only IPv4 addresses I assume you can compute it in your 
+head ;) 
+
+You can also use the dbgview.exe tool (please google it) and enable 
+Capture Kernel on Windows to see some log messages. It must be run as
+Administrator on the Windows machine.
+
+--------------
+
+Note on crypto: Even though I start Windows with driver signature verification
+off it still needs to be signed. The crypto directory, for obvious reasons
+doesn't contain our (Linbit) keys so you have to create your own. Please
+consult google and/or then enclosed README about how to do this.
