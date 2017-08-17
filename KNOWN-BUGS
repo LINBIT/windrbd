@@ -24,6 +24,18 @@ Aug 17 18:37:21 192.168.56.101  U16:21:17.664|01321040 open_backing_dev <3>drbd 
 
 Update: Some printk's showed that pvext list is empty in blkdev_get_by_link.
 
+Update: Research showed that AddDevice (and AddDeviceList) is only called
+for devices that are created while the driver is already running (at least
+on my Windows box). For example if you create a new partition on a hard 
+drive and drbd is loaded, the AddDevice handler is called, but only for
+that newly created device. Hence at the point in time the driver is
+started, the internal list of devices is empty (existing volumes don't
+show up in the list). 
+
+I am not sure if the win4lin internal duplication is really needed. I will
+check and remove it (replacing it by something like FindVolumeByName(),
+I am sure there is something in the NT kernel). 
+
 -------------------------------------------------------------------------
 
 Windows does not boot any more once DRBD driver is installed. 
