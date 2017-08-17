@@ -2692,11 +2692,16 @@ struct block_device *blkdev_get_by_link(UNICODE_STRING * name)
 	ROOT_EXTENSION * proot = mvolRootDeviceObject->DeviceExtension;
 	VOLUME_EXTENSION * pvext = proot->Head;
 
+printk(KERN_INFO "in blkdev_get_by_link()\n");
+printk(KERN_INFO "name: %S\n", name->Buffer);
+printk(KERN_INFO "pvext: %p\n", pvext);
 	MVOL_LOCK();
 	for (; pvext; pvext = pvext->Next) {
 
+printk(KERN_INFO "pvext\n");
 		// if no block_device instance yet,
 		query_targetdev(pvext);
+printk(KERN_INFO "pvext name = %S\n", pvext->PhysicalDeviceName);
 
 		if (RtlEqualMemory(name->Buffer,
 			    pvext->PhysicalDeviceName,
