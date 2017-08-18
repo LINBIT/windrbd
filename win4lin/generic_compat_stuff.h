@@ -168,7 +168,7 @@ static inline void might_sleep() { }
 
 #define spin_lock_nested(__lock, __subclass) spin_lock(__lock)
 
-#define _WIN32_MVFL
+#undef _WIN32_MVFL
 #define _WIN32_MULTI_VOLUME
 #define _WIN32_TWOPC
 
