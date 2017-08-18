@@ -81,3 +81,17 @@ Aug 17 18:16:37 192.168.56.101  U16:16:27.291|038c91c0 win_drbd_thread_setup <6>
 
 This is something we probably can't fix, but we need to map the devices
 properly to the internal windows kernel device names.
+
+--------------------------------------------------------------------------
+
+AddDevice is called when any Block Device is created on the system. For
+example when a new partition is created (probably also when a USB disk is
+attached, didn't test that). It seems to me that it should check if the 
+newly created device is a drbd device (/dev/drbdN). 
+
+------------------------------------------------------------------------
+
+All drbd devices are called drbd (without a number). The sprintf is wrong
+This should be easy to fix.
+
+------------------------------------------------------------------------
