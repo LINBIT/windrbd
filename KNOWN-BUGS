@@ -95,3 +95,9 @@ All drbd devices are called drbd (without a number). The sprintf is wrong
 This should be easy to fix.
 
 ------------------------------------------------------------------------
+
+Note: The functions enclosed by _WIN32_MVFL (see win4lin/src/util.c) are
+not referenced anywhere in the code. I assume that they never have been
+tested. I would like to remove them (or at least rewrite them if the
+functionality is needed) since they depend on some other stuff I would
+like to redesign.
