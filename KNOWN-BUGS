@@ -36,6 +36,28 @@ I am not sure if the win4lin internal duplication is really needed. I will
 check and remove it (replacing it by something like FindVolumeByName(),
 I am sure there is something in the NT kernel). 
 
+Update: There is something: see 
+https://stackoverflow.com/questions/45743841/getting-windows-nt-kernel-object-by-name-from-within-a-kernel-driver
+
+What I suggest is to always use kernel internal namespace, also on the
+netlink interface. It is then drbdsetup's duty to convert the various
+existing namespaces to Windows NT kernel names. For example: 
+"D:" -> "\DosDevices\D:"
+
+I am not sure if we should support the UNIX naming convention at all
+(/dev/sda1, ...) since it gets shuffled during reboots (/dev/sda sometimes
+becomes /dev/sdb). Most safe operation probably is to use the GUID namespace:
+
+\DosDevices\Volume{GUID}
+
+Since the \DosDevices entries are SymLinks (yes NT has symlinks internally!)
+we need to resolve them to finally get to the destination object. Then
+we need to make sure that it is really a disk partition. 
+
+If we are lucky this works also with network drives. Update: it won't
+since SMB is a file based protocol. Same thing as drbd for linux cannot
+have NFS backing devices.
+
 -------------------------------------------------------------------------
 
 Windows does not boot any more once DRBD driver is installed. 
