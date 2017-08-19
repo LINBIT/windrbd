@@ -2655,30 +2655,6 @@ cleanup:
     return ret;
 }
 
-
-/**
- * @brief
- *	exceptional case
- *	"////?//Volume{d41d41d1-17fb-11e6-bb93-000c29ac57ee}//" by cli
- *	to
- *	"\\\\?\\Volume{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}\\"
- *	f no block_device allocated, then query
- */
-static void _adjust_guid_name(char * dst, const char * src)
-{
-	const char token[] = "Volume{";
-	char * start = strstr(src, token);
-	if (start) {
-		strcpy(dst, "\\\\?\\Volume{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}\\");
-		char * end = strstr(src, "}");
-		char * t3 = strstr(dst, token);
-		memcpy(t3, start, (int)(end - start));
-	}
- 	else {
-		strcpy(dst, src);
-	}
-}
-
 /**
  * @brief
  *	link is below 
@@ -2723,9 +2699,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	UNICODE_STRING upath;
 	char cpath[64] = { 0, };
 
-	_adjust_guid_name(cpath, path);
-
-	RtlInitAnsiString(&apath, cpath);
+	RtlInitAnsiString(&apath, path);
 	NTSTATUS status = RtlAnsiStringToUnicodeString(&upath, &apath, TRUE);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("Wrong path = %s\n", path);
