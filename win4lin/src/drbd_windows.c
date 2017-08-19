@@ -18,6 +18,7 @@
 */
 
 #include "drbd_windows.h"
+
 #undef _NTDDK_
 /* Can't include that without getting redefinition errors.
  *   10.0.14393.0\km\ntddk.h(69): error C2371: 'PEPROCESS': redefinition; different basic types
@@ -40,6 +41,17 @@ ZwWaitForSingleObject(
 	_In_ BOOLEAN Alertable,
 	_In_opt_ PLARGE_INTEGER Timeout
 	);
+
+/* same for #include <Winternl.h> */
+NTSTATUS NtOpenFile(
+  _Out_ PHANDLE            FileHandle,
+  _In_  ACCESS_MASK        DesiredAccess,
+  _In_  POBJECT_ATTRIBUTES ObjectAttributes,
+  _Out_ PIO_STATUS_BLOCK   IoStatusBlock,
+  _In_  ULONG              ShareAccess,
+  _In_  ULONG              OpenOptions
+);
+
 
 ULONG RtlRandomEx(
   _Inout_ PULONG Seed
@@ -2697,19 +2709,36 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	ANSI_STRING apath;
 	UNICODE_STRING upath;
-	char cpath[64] = { 0, };
+	OBJECT_ATTRIBUTES device_attributes;
+	NTSTATUS status;
+	HANDLE blkdev_handle;
+	IO_STATUS_BLOCK io_status_block;
 
 	RtlInitAnsiString(&apath, path);
-	NTSTATUS status = RtlAnsiStringToUnicodeString(&upath, &apath, TRUE);
+	status = RtlAnsiStringToUnicodeString(&upath, &apath, TRUE);
 	if (!NT_SUCCESS(status)) {
-		WDRBD_WARN("Wrong path = %s\n", path);
+		WDRBD_WARN("RtlAnsiStringToUnicodeString: Cannot convert path to Unicode string, status = %d, path = %s\n", status, path);
 		return ERR_PTR(-EINVAL);
 	}
 
-	struct block_device * dev = blkdev_get_by_link(&upath);
+	InitializeObjectAttributes(&device_attributes, &upath, OBJ_FORCE_ACCESS_CHECK, NULL, NULL);
+	status = NtOpenFile(&blkdev_handle, FILE_READ_DATA | FILE_WRITE_DATA, &device_attributes, &io_status_block, FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
 	RtlFreeUnicodeString(&upath);
 
-	return dev ? dev : ERR_PTR(-ENODEV);
+	if (!NT_SUCCESS(status)) {
+		WDRBD_WARN("NtOpenFile: Cannot open backing device, status = %d, path = %s\n", status, path);
+		return ERR_PTR(-ENODEV);
+	}
+
+/* TODO: Check if symbolic link (?) */
+
+/* TODO: create_drbd_block device. Here we need to keep references internally
+   with the blkdev_handle and the created drbd device in case the same device
+   is opened twice. */
+	printk(KERN_INFO "NtOpenFile succeeded. io_status_block.Information: %d\n", io_status_block.Information); 
+	printk(KERN_INFO "TODO: create drbd block dev. We now have a handle leak.\n");
+
+	return ERR_PTR(-ENODEV);
 }
 
 

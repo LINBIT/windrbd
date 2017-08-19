@@ -1091,7 +1091,6 @@ extern long PTR_ERR(const void *ptr);
 extern long IS_ERR_OR_NULL(const void *ptr);
 extern int IS_ERR(void *err);
 
-extern struct block_device *blkdev_get_by_link(UNICODE_STRING * name);
 extern struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder);
 
 extern void hlist_add_head(struct hlist_node *n, struct hlist_head *h);
