@@ -104,6 +104,13 @@ Aug 17 18:16:37 192.168.56.101  U16:16:27.291|038c91c0 win_drbd_thread_setup <6>
 This is something we probably can't fix, but we need to map the devices
 properly to the internal windows kernel device names.
 
+Update: This should be addressed somehow, since drbdmeta expects these
+filenames (UNIX-type), while the kernel should receive NT ObjectManager
+internal pathes only (\Device\HarddiskVolume<n>, or \DosDevices\D: or
+so). I still think that it is a bad idea to use /dev/sda3 style in
+DRBD config, since they change when the system is rebooted (At least
+on Windows 7).
+
 --------------------------------------------------------------------------
 
 AddDevice is called when any Block Device is created on the system. For

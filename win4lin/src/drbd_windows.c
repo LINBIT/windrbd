@@ -2735,7 +2735,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 /* TODO: create_drbd_block device. Here we need to keep references internally
    with the blkdev_handle and the created drbd device in case the same device
    is opened twice. */
-	printk(KERN_INFO "NtOpenFile succeeded. io_status_block.Information: %d\n", io_status_block.Information); 
+	printk(KERN_INFO "NtOpenFile succeeded. path: %s io_status_block.Information: %d\n", path, io_status_block.Information); 
 	printk(KERN_INFO "TODO: create drbd block dev. We now have a handle leak.\n");
 
 	return ERR_PTR(-ENODEV);
