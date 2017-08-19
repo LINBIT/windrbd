@@ -1,30 +1,158 @@
+TODO: Open backing device:
+	drbdutils:
+		drbdmeta should accept NT-style pathes
+			Problem is that /dev/sda and /dev/sdb is sometimes
+			swapped (see KNOWN-BUGS) This takes some while,
+			later.
+			For now, have two different entries (NT-style, UNIX style)
+		drbdsetup should translate NT-style pathes to NT kernel internal
+			style pathes (this is easy)
+	kernel: win4lin: see if symlinks work
+	kernel: keep track of opened HANDLEs and struct drbd_block_devices
+		(but please not in VOLUME_EXTENSIONs they don't belong there)
+	kernel: Use that handle for I/O on backing device
 
-* Check ULONG_PTR which ones need to be 64bit on 64bit arch
-    * simply changing all means that we'd break 32bit - would we want/need to support that?
+TODO: Make drbd service stoppable
+	This probably takes some while
 
-* Change kmem_cache_alloc etc. to "Lookaside Lists"
-    https://msdn.microsoft.com/en-us/library/windows/hardware/ff565416(v=vs.85).aspx
+TODO: Why does DRBD crash when loaded at boot time?
 
-* WriteSame not supported
+TODO: Make drbd run on peer Linux box
 
-* Thin should be supported?
-    https://msdn.microsoft.com/en-us/windows/hardware/drivers/storage/thin-provisioning
+TODO: Later: RCU needs change
+--------------------------------
 
-* receiver wakeup (signals, for ping)
+Done: fix patch errors on Linux side build (conversion)
+	a make clean did solve it
 
-* transport_tcp:
-    It can not be derived from the Linux transport_tcp. The WinSock API is very
-    different from the Linux TCP API. Simply take mantech's edition and ripp out
-    all the useless #ifdefs.
+Done: backup on www.johannesthoma.com
 
-* Mantech's submit_bio doesn't run bio_endio() on failure?
+Rejected: install Windows kernel headers
+	Is part of EWDK.
 
-* Timeouts, SND_BUFF etc.?
-	+#define DRBD_SNDBUF_SIZE_MAX  (1024*1024*1024*2)
-	+#define DRBD_SNDBUF_SIZE_DEF  (1024*1024*20)
+Rejected: Download heise Linux Virus scanner CD and check image.
+	I tried Desinfec't 2014 but it hangs. Now have Avira 
+	inside the Windows machine.
 
+	TODO: This should start automatically at boot
 
-########################### done ####################
+Rejected: Maybe migrate vdi image to internal SSD
 
+Done: Reboot Mac and see if it is still slow
+	Done: Something in the VM config was slow, created a new one
 
-* RCU -- okay for Phil 9f2ece44099531b6d0155414386a4c1e04426ce6
+Rejected: Install FreeSshD
+	
+Done: Install cygwin
+	Done, works
+	Also installed Dev (GNU toolchain)
+
+Done: Install Visual Studio
+	C headers are missing, TODO: Uninstall and redo installation
+	from scratch.	
+	Done, works now
+
+Rejected: Reorganize converted sources (have drbd and drbd-headers inside
+	a dummy dir, to make it compatible to original layout.
+
+Done: Make it compile under Windows
+	Done: Fixed permission errors
+	Done: Must work with /cygdrive/z/... mapping (cmd.exe does not
+		support UNC names)
+
+	Done: path to cl.exe
+	Done: install EWDK (plus prerequisites like device driver
+		kit)
+
+	Done: make signing the driver work.
+	Done: Make clean and remake to see if it still works.
+
+	Must:
+	1.) Run 
+		make 
+	on the Linux box (from $HOME/Linbit/Work/wdrbd9)
+
+	2.) Run
+		make
+	on the Windows box (from $HOME/Linbit/Work/wdrbd9 (takes some while)
+
+	3.) Run
+		make install
+	on the Windows box (from $HOME/Linbit/Work/wdrbd9/converted-sources/drbd)
+
+	4.) Run (in an Administrator cmd.exe Console: to open it go to
+		 C:\Windows\System32 in Explorer, Cmd-Click on cmd.exe
+		 and select Run as Administrator)
+		INSTALL-DRBD-admin.bat
+
+	5.) To load the driver, do (from Adminstrator Console)
+		sc start drbd
+	DbgViewer will show output. To start DbgViewer go to 
+	C:\drbd\DebugViewer and start DbgView.exe as Administrator
+
+Done: Revert to original build layout
+	Done: Backported work done in converted sources
+	Rejected: Cross compiling coccinelle for Linux (requires ocaml)
+		Does not work, Ubuntu OCaml parmap library installation
+		seems to be broken.
+	Done: see if there is a cygwin package for coccinelle
+		No
+	Rejected: install ocaml for CygWin
+	Rejected: Cross compile conccinelle for CygWin
+		If possible, do not try to fix too many things.
+	Rejected: make should build everything under Windows
+
+Done: make install should install the driver and activate it
+	(Rethink: only install the service User should do 
+	sc start drbd manually, since that could crash the
+	machine rightaway)
+
+Done: make install should also be possible in top make file
+
+Rejected: Migrate sources to Windows C: drive and build from there
+	Maybe then it is faster..but then we need to make tarball and
+	the like .. Hmmm.
+
+	Rejected because Windows crashes randomly. It is also better
+	to have sources on Linux since step 1 of the build has to be
+	executed under Linux.
+
+Rejected: Remove everything with signing (signtool exits with an error)
+	We leave it in, even though it does not work. Must start Windows
+	with Load unsigned drivers (Press F8 at boot and select bottom
+	most entry (Load unsigned drivers))
+
+Done: Insmod
+	Rejected: pnputil -a drbd.inf
+	Done: currently fails with Permission denied.
+		Must run cmd.exe as administrator (Cmd-Click on
+		cmd.exe in /Windows/System32)
+	Done: try if F8 + load unsigned drivers works.
+		Yes it does.
+
+Done: Install DRBD Linux peer VM
+	Ubuntu Server? Took Ubuntu 16.04 Gnome edition
+	Installed drbd from git repo
+
+Done: Add volume to Windows VM for DRBD test drive.
+
+Done: logging: syslog server (see how it is done)
+	Currently checking DebugViewer (but doesn't survive blue screen)
+
+Done: Run DRBD with provided config file
+	One Windows one Linux peer, with added Volume as backing
+	storage.
+	However there are many issues, see KNOWN-BUGS
+
+Done: send public key to upstream
+
+Done: Add build instructions to repo
+
+Done: revert (make invisible) last 3 patches from upstream
+
+Done: git pull last commit
+
+Done: rebase dev branch to upstream master
+
+Done: Merge into 
+
