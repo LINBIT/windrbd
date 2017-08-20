@@ -64,7 +64,7 @@ int _printk(const char *func, const char *fmt, ...)
     va_list args;
     NTSTATUS status;
     int hour, min, sec, msec, sec_day;
-    static int dbgout_only = 0;
+    static int printks_in_irq_context = 0;
 
     fmt_without_level = fmt;
     if (fmt[0] == '<' && fmt[2] == '>') {
@@ -90,31 +90,41 @@ int _printk(const char *func, const char *fmt, ...)
 	    ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
 	    func // my_host_name
 	    );
-    if (! NT_SUCCESS(status))
+    if (! NT_SUCCESS(status)) {
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, RtlStringCbPrintfA returned error (status = %d).\n", status);
 	return -EINVAL;
+    }
 
     pos = (ULONG)strlen(buffer);
     va_start(args, fmt);
     status = RtlStringCbVPrintfA(buffer + pos, sizeof(buffer)-1-pos,
 	    fmt, args);
     if (! NT_SUCCESS(status))
+    {
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent (2), RtlStringCbPrintfA returned error (status = %d).\n", status);
 	return -EINVAL;
+    }
 
     len = (ULONG)strlen(buffer);
 
-    if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {
-	/* When in a DPC or similar context, we must not call waiting functions. */
-	dbgout_only++;
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID,
+	/* Always print messages to debugging facility, use a tool like
+	 * DbgViewer to see them.
+	 */
+
+    DbgPrintEx(DPFLTR_IHVDRIVER_ID,
 		(level <= KERN_ERR[0]  ? DPFLTR_ERROR_LEVEL :
 		 level >= KERN_INFO[0] ? DPFLTR_INFO_LEVEL  :
 		 DPFLTR_WARNING_LEVEL),
 		buffer);
+
+    if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {
+	/* When in a DPC or similar context, we must not call waiting functions. */
+	printks_in_irq_context++;
     } else {
 	/* Indicate how much might be lost on UDP */
-	if (dbgout_only) {
-	    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [%d dbg]\n", dbgout_only);
-	    dbgout_only = 0;
+	if (printks_in_irq_context) {
+	    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [%d messages lost in IRQ, use DbgViewer.exe to see them]\n", printks_in_irq_context);
+	    printks_in_irq_context = 0;
 	    len = (ULONG)strlen(buffer);
 	}
 
