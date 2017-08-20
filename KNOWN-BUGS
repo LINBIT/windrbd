@@ -136,3 +136,14 @@ is called on the DRBD device. So leave it in for now.
 
 -------------------------------------------------------------------------
 
+make install on userland tools (drbd-utils): 2 minor issues:
+	Under cygwin it tries to install to //usr/local/sbin while
+	this should be /usr/local/sbin (cygwin doesn't handle double
+	slashes correctly, this is normally done by the Linux kernel).
+
+	Workaround (for now) is to use 
+		make install DESTDIR=""
+
+	It also fails (correcly, I suppose) to set the UNIX permissions
+	on the resulting EXE files, this step should be skipped. For
+	now this can be ignored since the EXE files are installed correctly.
