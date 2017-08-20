@@ -1,16 +1,25 @@
+TODO: printk_syslog(): collect the messages in a ring buffer and send them 
+	later.
+	Nice-to-have, do that later.
+
 TODO: Open backing device:
 	drbdutils:
 		drbdmeta should accept NT-style pathes
 			Problem is that /dev/sda and /dev/sdb is sometimes
 			swapped (see KNOWN-BUGS) This takes some while,
 			later.
-			For now, have two different entries (NT-style, UNIX style)
 		drbdsetup should translate NT-style pathes to NT kernel internal
 			style pathes (this is easy)
 	kernel: win4lin: see if symlinks work
 	kernel: keep track of opened HANDLEs and struct drbd_block_devices
 		(but please not in VOLUME_EXTENSIONs they don't belong there)
 	kernel: Use that handle for I/O on backing device
+
+TODO: Revert the win-disk patch later to use only 
+	NT style disk device paths (win-disk becomes disk, UNIX
+	disk device paths are not used any more).
+
+	We need to patch drbdmeta for that.
 
 TODO: Make drbd service stoppable
 	This probably takes some while
@@ -155,4 +164,19 @@ Done: git pull last commit
 Done: rebase dev branch to upstream master
 
 Done: Merge into 
+
+Done: drbd-adm: For now, have two different entries (NT-style, UNIX style)
+	have win-disk and win-meta-disk in addition to UNIX style
+	disk device paths. 
+
+Done: Reconfigure drbd-utils with sane paths (/usr/local/etc ->
+	/etc) 
+	Problem is that drbdadm fails because some path does not
+	exist.
+
+Done: fix the syslog printk code to print all messages
+	At least partially .. print all messages to the local
+	Debugging facility (use DbgView.exe to see them), when
+	IRQL is higher than DISPATCH we must not sleep and cannot
+	send UDP packets. 
 
