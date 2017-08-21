@@ -28,6 +28,8 @@ TODO: Why does DRBD crash when loaded at boot time?
 
 TODO: Make drbd run on peer Linux box
 
+TODO: use gtest to write tests.
+
 TODO: Later: RCU needs change
 --------------------------------
 

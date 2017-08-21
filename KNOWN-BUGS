@@ -147,3 +147,8 @@ make install on userland tools (drbd-utils): 2 minor issues:
 	It also fails (correcly, I suppose) to set the UNIX permissions
 	on the resulting EXE files, this step should be skipped. For
 	now this can be ignored since the EXE files are installed correctly.
+
+-------------------------------------------------------------------------
+
+Kernel really should report an error if Bind() fails. 
+	For example if the local IP address does not exist.
