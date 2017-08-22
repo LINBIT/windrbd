@@ -1,0 +1,7 @@
+To test:
+
+Invalid disk name in drbd.conf.
+
+Valid device as disk name in drbd.conf.
+
+Symlink as disk name in drbd.conf.
