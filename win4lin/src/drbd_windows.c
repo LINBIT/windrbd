@@ -2714,7 +2714,9 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	OBJECT_ATTRIBUTES device_attributes;
 	NTSTATUS status;
 	HANDLE blkdev_handle;
+	HANDLE link_handle;
 	IO_STATUS_BLOCK io_status_block;
+	UNICODE_STRING link_target;
 
 	RtlInitAnsiString(&apath, path);
 	status = RtlAnsiStringToUnicodeString(&upath, &apath, TRUE);
@@ -2739,7 +2741,21 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	printk(KERN_INFO "NtOpenFile succeeded. path: %s io_status_block.Information: %d\n", path, io_status_block.Information); 
 
-	print_object_type(blkdev_handle);
+	status = ZwOpenSymbolicLinkObject(&link_handle, GENERIC_READ, &device_attributes);
+	if (!NT_SUCCESS(status)) {
+		WDRBD_WARN("ZwOpenSymbolicLinkObject: Cannot open link object, status = %x, path = %s\n", status, path);
+		goto out_close_handle;
+	}
+
+	RtlInitUnicodeString(&link_target, NULL);
+	status = ZwQuerySymbolicLinkObject(blkdev_handle, &link_target, NULL);
+	if (!NT_SUCCESS(status)) {
+		WDRBD_WARN("ZwQuerySymbolicLinkObject: Cannot get link target name, status = %x, path = %s\n", status, path);
+		goto out_close_2_handles;
+	}
+	printk(KERN_INFO "Symbolic link points to %S\n", link_target.Buffer);
+
+//	print_object_type(blkdev_handle);
 
 /* TODO: create_drbd_block device. Here we need to keep references internally
    with the blkdev_handle and the created drbd device in case the same device
@@ -2748,6 +2764,8 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	return ERR_PTR(-ENODEV);
 
+out_close_2_handles:
+	ZwClose(link_handle);
 out_close_handle:
 	ZwClose(blkdev_handle);
 	return ERR_PTR(-ENODEV);

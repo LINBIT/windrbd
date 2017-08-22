@@ -1,5 +1,5 @@
         /* For ZwQueryObject() */
-#include <Ntifs.h>
+#include <FltKernel.h>
 
 extern int _printk(const char *func, const char *fmt, ...)
 #define printk(format, ...)   \
