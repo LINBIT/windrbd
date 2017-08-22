@@ -2702,6 +2702,8 @@ printk(KERN_INFO "pvext name = %S\n", pvext->PhysicalDeviceName);
 	return (pvext) ? pvext->dev : NULL;
 }
 
+extern void print_object_type(HANDLE h);
+
 struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder)
 {
 	UNREFERENCED_PARAMETER(mode);
@@ -2713,7 +2715,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	NTSTATUS status;
 	HANDLE blkdev_handle;
 	IO_STATUS_BLOCK io_status_block;
-	FILE_BASIC_INFORMATION file_basic_information;
 
 	RtlInitAnsiString(&apath, path);
 	status = RtlAnsiStringToUnicodeString(&upath, &apath, TRUE);
@@ -2738,12 +2739,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	printk(KERN_INFO "NtOpenFile succeeded. path: %s io_status_block.Information: %d\n", path, io_status_block.Information); 
 
-	status = ZwQueryInformationFile(blkdev_handle, &io_status_block, &file_basic_information, sizeof(file_basic_information), FileBasicInformation);
-	if (!NT_SUCCESS(status)) {
-		WDRBD_WARN("ZwQueryInformationFile: Cannot query file information, status = %x, path = %s\n", status, path);
-		goto out_close_handle;
-	}
-	printk(KERN_INFO "ZwQueryInformationFile succeeded. path: %s io_status_block.Information: %x, File attributes: %x\n", path, io_status_block.Information, file_basic_information.FileAttributes); 
+	print_object_type(blkdev_handle);
 
 /* TODO: create_drbd_block device. Here we need to keep references internally
    with the blkdev_handle and the created drbd device in case the same device
