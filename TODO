@@ -30,6 +30,10 @@ TODO: Make drbd run on peer Linux box
 
 TODO: use gtest to write tests.
 
+TODO: fix the macro redefinition problems in drbd_windows.c
+	For now we have to copy the function prototypes from MSDN.
+	Not good style.
+
 TODO: Later: RCU needs change
 --------------------------------
 

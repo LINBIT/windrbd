@@ -2713,6 +2713,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	NTSTATUS status;
 	HANDLE blkdev_handle;
 	IO_STATUS_BLOCK io_status_block;
+	FILE_BASIC_INFORMATION file_basic_information;
 
 	RtlInitAnsiString(&apath, path);
 	status = RtlAnsiStringToUnicodeString(&upath, &apath, TRUE);
@@ -2726,18 +2727,33 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	RtlFreeUnicodeString(&upath);
 
 	if (!NT_SUCCESS(status)) {
-		WDRBD_WARN("NtOpenFile: Cannot open backing device, status = %d, path = %s\n", status, path);
+		WDRBD_WARN("NtOpenFile: Cannot open backing device, status = %x, path = %s\n", status, path);
 		return ERR_PTR(-ENODEV);
 	}
 
-/* TODO: Check if symbolic link (?) */
+	if (io_status_block.Information != FILE_OPENED) {
+		WDRBD_WARN("NtOpenFile: Cannot open backing device, status ok but status block said %d, path = %s\n", io_status_block.Information, path);
+		goto out_close_handle;	
+	}
+
+	printk(KERN_INFO "NtOpenFile succeeded. path: %s io_status_block.Information: %d\n", path, io_status_block.Information); 
+
+	status = ZwQueryInformationFile(blkdev_handle, &io_status_block, &file_basic_information, sizeof(file_basic_information), FileBasicInformation);
+	if (!NT_SUCCESS(status)) {
+		WDRBD_WARN("ZwQueryInformationFile: Cannot query file information, status = %x, path = %s\n", status, path);
+		goto out_close_handle;
+	}
+	printk(KERN_INFO "ZwQueryInformationFile succeeded. path: %s io_status_block.Information: %x, File attributes: %x\n", path, io_status_block.Information, file_basic_information.FileAttributes); 
 
 /* TODO: create_drbd_block device. Here we need to keep references internally
    with the blkdev_handle and the created drbd device in case the same device
    is opened twice. */
-	printk(KERN_INFO "NtOpenFile succeeded. path: %s io_status_block.Information: %d\n", path, io_status_block.Information); 
 	printk(KERN_INFO "TODO: create drbd block dev. We now have a handle leak.\n");
 
+	return ERR_PTR(-ENODEV);
+
+out_close_handle:
+	ZwClose(blkdev_handle);
 	return ERR_PTR(-ENODEV);
 }
 
