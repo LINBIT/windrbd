@@ -73,6 +73,18 @@ Update: When not checking for driver signatures (press F8
 	No log output is seen.
 	If the driver does nothing (and signatures are disabled)
 	Windows bluescreens.
+
+It seems that the driver is running but shows no log output over 
+syslog (else changing it to doing nothing won't help).
+
+Update: When switching to boot log (Don't start GUI in msconfig.exe
+Boot tab) it shows that drbd.sys is loaded (when not checking signatures)
+correctly, but then avdevprot.sys (Avira Virus Scanner) blocks the
+boot.
+
+Update: Not true. The GUI just does not start after CLASSPNP.sys is
+loaded. Revert to original source and see if the problem persists.
+
 -------------------------------------------------------------------------
 
 drbdadm down hangs on a partially configured resource
