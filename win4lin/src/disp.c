@@ -81,8 +81,6 @@ mvolRunIrpSynchronous(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 NTSTATUS
 DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 {
-return STATUS_SUCCESS;
-
     NTSTATUS            		status;
     PDEVICE_OBJECT      		deviceObject;
     PROOT_EXTENSION			RootExtension = NULL;
