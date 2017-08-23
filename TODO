@@ -25,10 +25,8 @@ TODO: Make drbd service stoppable
 	This probably takes some while
 
 TODO: Why does DRBD crash when loaded at boot time?
-	Update: When not checking for driver signatures (press F8
-	and then select disable signature check near the bottom)
-	Windows doesn't blue screen, but it hangs on boot.
-	No log output is seen.
+
+TODO: fix driver signature
 
 TODO: Make drbd run on peer Linux box
 

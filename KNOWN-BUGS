@@ -67,6 +67,12 @@ It fails at loading drbd.sys (shown by Windows 7 repair utility).
 It also fails if the driver does nothing (return SUCCESS right at the
 	beginning)
 
+Update: When not checking for driver signatures (press F8
+	and then select disable signature check near the bottom)
+	Windows doesn't blue screen, but it hangs on boot.
+	No log output is seen.
+	If the driver does nothing (and signatures are disabled)
+	Windows bluescreens.
 -------------------------------------------------------------------------
 
 drbdadm down hangs on a partially configured resource
