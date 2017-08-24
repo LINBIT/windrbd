@@ -12,7 +12,7 @@ char my_host_name[256];
 
 int initialize_syslog_printk(void)
 {
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
+//	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
 	if (!printk_udp_socket) {
 		SOCKADDR_IN local;
 
@@ -45,7 +45,7 @@ bash$ sudo service syslog restart
 		if (printk_udp_socket) {
 			Bind(printk_udp_socket, (SOCKADDR *)&local);
 		} else {
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility. You will NOT see any output produced by printk (and pr_err, ...)\n");
+//			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility. You will NOT see any output produced by printk (and pr_err, ...)\n");
 			return -1;
 		}
 	}
@@ -91,7 +91,7 @@ int _printk(const char *func, const char *fmt, ...)
 	    func // my_host_name
 	    );
     if (! NT_SUCCESS(status)) {
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, RtlStringCbPrintfA returned error (status = %d).\n", status);
+//	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, RtlStringCbPrintfA returned error (status = %d).\n", status);
 	return -EINVAL;
     }
 
@@ -101,7 +101,7 @@ int _printk(const char *func, const char *fmt, ...)
 	    fmt, args);
     if (! NT_SUCCESS(status))
     {
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent (2), RtlStringCbPrintfA returned error (status = %d).\n", status);
+//	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent (2), RtlStringCbPrintfA returned error (status = %d).\n", status);
 	return -EINVAL;
     }
 
@@ -111,11 +111,13 @@ int _printk(const char *func, const char *fmt, ...)
 	 * DbgViewer to see them.
 	 */
 
+/*
     DbgPrintEx(DPFLTR_IHVDRIVER_ID,
 		(level <= KERN_ERR[0]  ? DPFLTR_ERROR_LEVEL :
 		 level >= KERN_INFO[0] ? DPFLTR_INFO_LEVEL  :
 		 DPFLTR_WARNING_LEVEL),
 		buffer);
+*/
 
     if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {
 	/* When in a DPC or similar context, we must not call waiting functions. */
@@ -142,10 +144,10 @@ int _printk(const char *func, const char *fmt, ...)
 	    status = SendTo(printk_udp_socket, buffer, len,
 		    (PSOCKADDR)&printk_udp_target);
             if (status < 0) {
-                DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, SendTo returned error: %s\n", buffer);
+//                DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, SendTo returned error: %s\n", buffer);
             }
 	} else {
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, no socket: %s\n", buffer);
+//		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, no socket: %s\n", buffer);
 	}
 #if 0
 	WriteEventLogEntryData(msgids[level_index], 0, 0, 1, L"%S", buf);
