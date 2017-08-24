@@ -12,6 +12,7 @@ char my_host_name[256];
 
 int initialize_syslog_printk(void)
 {
+#if 0
 //	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
 	if (!printk_udp_socket) {
 		SOCKADDR_IN local;
@@ -49,6 +50,7 @@ bash$ sudo service syslog restart
 			return -1;
 		}
 	}
+#endif
 	return 0;
 }
 
