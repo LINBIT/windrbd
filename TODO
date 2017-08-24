@@ -24,8 +24,6 @@ TODO: Revert the win-disk patch later to use only
 TODO: Make drbd service stoppable
 	This probably takes some while
 
-TODO: Why does DRBD crash when loaded at boot time?
-
 TODO: fix driver signature
 
 TODO: Make drbd run on peer Linux box
@@ -187,4 +185,8 @@ Done: fix the syslog printk code to print all messages
 	Debugging facility (use DbgView.exe to see them), when
 	IRQL is higher than DISPATCH we must not sleep and cannot
 	send UDP packets. 
+
+Done: Why does DRBD crash when loaded at boot time?
+	Because signature is invalid. Boot windows with 
+	F8+Allow invalid signatures.
 

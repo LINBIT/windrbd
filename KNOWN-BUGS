@@ -85,6 +85,9 @@ boot.
 Update: Not true. The GUI just does not start after CLASSPNP.sys is
 loaded. Revert to original source and see if the problem persists.
 
+Update: Windows boots normally with original driver (and disable
+	signature check). Probably logging loop (DbgPrintEx)?
+
 -------------------------------------------------------------------------
 
 drbdadm down hangs on a partially configured resource
