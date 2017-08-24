@@ -666,6 +666,7 @@ void save_to_system_event(char * buf, int length, int level_index)
 
 void printk_init(void)
 {
+#if 0
 	NTSTATUS    status;
 
 	// Init WSK first, we need a UDP socket here.
@@ -680,6 +681,7 @@ void printk_init(void)
 
         /* Do this at the very beginning so we see printk() messages. */
         initialize_syslog_printk();
+#endif
 }
 
 void printk_cleanup(void)

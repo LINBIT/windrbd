@@ -274,7 +274,6 @@ InitWskNetlink(void * pctx)
     PWSK_SOCKET netlink_socket = NULL;
     SOCKADDR_IN LocalAddress = {0};
 
-#if 0
 	/* Done at the very beginning of printk_init() */
     // Init WSK
     status = SocketsInit();
@@ -283,7 +282,6 @@ InitWskNetlink(void * pctx)
         WDRBD_ERROR("Failed to init. status(0x%x)\n", status);
         return;
     }
-#endif
 
     // Init WSK Event Callback
     status = InitWskEvent();
