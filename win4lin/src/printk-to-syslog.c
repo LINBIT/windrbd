@@ -56,6 +56,7 @@ bash$ sudo service syslog restart
  * Later on, we can also */
 int _printk(const char *func, const char *fmt, ...)
 {
+#if 0
     char buffer[1024];
     int level = '1';
     const char *fmt_without_level;
@@ -140,7 +141,6 @@ int _printk(const char *func, const char *fmt, ...)
 		buffer);
 #endif
 
-#if 0
 	if (printk_udp_socket) {
 	    status = SendTo(printk_udp_socket, buffer, len,
 		    (PSOCKADDR)&printk_udp_target);
@@ -150,7 +150,6 @@ int _printk(const char *func, const char *fmt, ...)
 	} else {
 //		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, no socket: %s\n", buffer);
 	}
-#endif
 #if 0
 	WriteEventLogEntryData(msgids[level_index], 0, 0, 1, L"%S", buf);
 
@@ -162,6 +161,7 @@ int _printk(const char *func, const char *fmt, ...)
 	    DbgPrintEx(FLTR_COMPONENT, printLevel, buf);
 #endif
     }
+#endif
     return 1;
 }
 
