@@ -140,6 +140,7 @@ int _printk(const char *func, const char *fmt, ...)
 		buffer);
 #endif
 
+#if 0
 	if (printk_udp_socket) {
 	    status = SendTo(printk_udp_socket, buffer, len,
 		    (PSOCKADDR)&printk_udp_target);
@@ -149,6 +150,7 @@ int _printk(const char *func, const char *fmt, ...)
 	} else {
 //		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, no socket: %s\n", buffer);
 	}
+#endif
 #if 0
 	WriteEventLogEntryData(msgids[level_index], 0, 0, 1, L"%S", buf);
 
