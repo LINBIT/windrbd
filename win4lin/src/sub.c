@@ -659,29 +659,14 @@ void save_to_system_event(char * buf, int length, int level_index)
 	}
 }
 
-	/* TODO: We now use initialize_syslog_printk() for development
-	 * maybe this should go away? Production printk won't have a 
-	 * syslog server ...
+	/* TODO: We cannot initialize printk here (at the beginning
+	 * of DriverEntry()) since this needs a call to SocketsInit()
+	 * which makes Windows deadlock on boot.
+ 	 * For now printk will (try to) initialize itself in printk().
 	 */
 
 void printk_init(void)
 {
-#if 0
-	NTSTATUS    status;
-
-	// Init WSK first, we need a UDP socket here.
-	status = SocketsInit(); 
-	if (!NT_SUCCESS(status)) 
-	{ 
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Failed to init. status(0x%x)\n", status); 
-
-		WDRBD_ERROR("Failed to init. status(0x%x)\n", status); 
-		return; 
-	} 
-
-        /* Do this at the very beginning so we see printk() messages. */
-        initialize_syslog_printk();
-#endif
 }
 
 void printk_cleanup(void)

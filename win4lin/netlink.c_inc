@@ -274,7 +274,9 @@ InitWskNetlink(void * pctx)
     PWSK_SOCKET netlink_socket = NULL;
     SOCKADDR_IN LocalAddress = {0};
 
-	/* Done at the very beginning of printk_init() */
+	/* We have to do that here, else Windows will deadlock
+	 * on booting. 
+         */
     // Init WSK
     status = SocketsInit();
     if (!NT_SUCCESS(status))

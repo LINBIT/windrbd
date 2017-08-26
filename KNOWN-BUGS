@@ -60,36 +60,6 @@ have NFS backing devices.
 
 -------------------------------------------------------------------------
 
-Windows does not boot any more once DRBD driver is installed. 
-
-It fails at loading drbd.sys (shown by Windows 7 repair utility).
-
-It also fails if the driver does nothing (return SUCCESS right at the
-	beginning)
-
-Update: When not checking for driver signatures (press F8
-	and then select disable signature check near the bottom)
-	Windows doesn't blue screen, but it hangs on boot.
-	No log output is seen.
-	If the driver does nothing (and signatures are disabled)
-	Windows bluescreens.
-
-It seems that the driver is running but shows no log output over 
-syslog (else changing it to doing nothing won't help).
-
-Update: When switching to boot log (Don't start GUI in msconfig.exe
-Boot tab) it shows that drbd.sys is loaded (when not checking signatures)
-correctly, but then avdevprot.sys (Avira Virus Scanner) blocks the
-boot.
-
-Update: Not true. The GUI just does not start after CLASSPNP.sys is
-loaded. Revert to original source and see if the problem persists.
-
-Update: Windows boots normally with original driver (and disable
-	signature check). Probably logging loop (DbgPrintEx)?
-
--------------------------------------------------------------------------
-
 drbdadm down hangs on a partially configured resource
 
 Resource was configured partially (failed because disk didn't exist: kernel
@@ -173,3 +143,42 @@ make install on userland tools (drbd-utils): 2 minor issues:
 
 Kernel really should report an error if Bind() fails. 
 	For example if the local IP address does not exist.
+
+-------------------------------------------------------------------------
+
+SOLVED: Windows does not boot any more once DRBD driver is installed. 
+
+It fails at loading drbd.sys (shown by Windows 7 repair utility).
+
+It also fails if the driver does nothing (return SUCCESS right at the
+	beginning)
+
+Update: When not checking for driver signatures (press F8
+	and then select disable signature check near the bottom)
+	Windows doesn't blue screen, but it hangs on boot.
+	No log output is seen.
+	If the driver does nothing (and signatures are disabled)
+	Windows bluescreens.
+
+It seems that the driver is running but shows no log output over 
+syslog (else changing it to doing nothing won't help).
+
+Update: When switching to boot log (Don't start GUI in msconfig.exe
+Boot tab) it shows that drbd.sys is loaded (when not checking signatures)
+correctly, but then avdevprot.sys (Avira Virus Scanner) blocks the
+boot.
+
+Update: Not true. The GUI just does not start after CLASSPNP.sys is
+loaded. Revert to original source and see if the problem persists.
+
+Update: Windows boots normally with original driver (and disable
+	signature check). Probably logging loop (DbgPrintEx)?
+
+Update: It was the SocketsInit() function hanging forever. Now
+	calling SocketsInit() in netlink thread (which works, it
+	seems that Windows kernel threads are started only when 
+	the GUI is started) and reverted printk_init to keep
+	trying to initialize in printk itself.
+
+	Problem solved for now.
+
