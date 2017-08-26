@@ -2709,6 +2709,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	UNREFERENCED_PARAMETER(mode);
 	UNREFERENCED_PARAMETER(holder);
 
+	struct block_device *dev;
 	ANSI_STRING apath;
 	UNICODE_STRING upath;
 	OBJECT_ATTRIBUTES device_attributes;
@@ -2716,7 +2717,9 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	HANDLE blkdev_handle;
 	HANDLE link_handle;
 	IO_STATUS_BLOCK io_status_block;
+	WCHAR link_target_buffer[1024];
 	UNICODE_STRING link_target;
+	ULONG link_target_length;
 
 	RtlInitAnsiString(&apath, path);
 	status = RtlAnsiStringToUnicodeString(&upath, &apath, TRUE);
@@ -2724,8 +2727,10 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		WDRBD_WARN("RtlAnsiStringToUnicodeString: Cannot convert path to Unicode string, status = %d, path = %s\n", status, path);
 		return ERR_PTR(-EINVAL);
 	}
+	dev = blkdev_get_by_link(&upath);
 
 	InitializeObjectAttributes(&device_attributes, &upath, OBJ_FORCE_ACCESS_CHECK, NULL, NULL);
+#if 0
 	status = NtOpenFile(&blkdev_handle, FILE_READ_DATA | FILE_WRITE_DATA, &device_attributes, &io_status_block, FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
 	RtlFreeUnicodeString(&upath);
 
@@ -2740,6 +2745,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	}
 
 	printk(KERN_INFO "NtOpenFile succeeded. path: %s io_status_block.Information: %d\n", path, io_status_block.Information); 
+#endif
 
 	status = ZwOpenSymbolicLinkObject(&link_handle, GENERIC_READ, &device_attributes);
 	if (!NT_SUCCESS(status)) {
@@ -2747,12 +2753,21 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_close_handle;
 	}
 
-	RtlInitUnicodeString(&link_target, NULL);
-	status = ZwQuerySymbolicLinkObject(blkdev_handle, &link_target, NULL);
+// RtlInitUnicodeString(&link_target, &link_target_buffer);
+	link_target.Buffer = link_target_buffer;
+	link_target.MaximumLength = sizeof(link_target_buffer)-1;
+	link_target.Length = 0;
+
+	status = ZwQuerySymbolicLinkObject(link_handle, &link_target, &link_target_length);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ZwQuerySymbolicLinkObject: Cannot get link target name, status = %x, path = %s\n", status, path);
 		goto out_close_2_handles;
 	}
+	if (link_target_length >= sizeof(link_target_buffer)) {
+		WDRBD_WARN("ZwQuerySymbolicLinkObject: Link target name exceeds %lu bytes, path = %s\n", link_target_length, path);
+		goto out_close_2_handles;
+	}
+	link_target.Buffer[link_target_length] = 0;
 	printk(KERN_INFO "Symbolic link points to %S\n", link_target.Buffer);
 
 //	print_object_type(blkdev_handle);
@@ -2762,13 +2777,14 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
    is opened twice. */
 	printk(KERN_INFO "TODO: create drbd block dev. We now have a handle leak.\n");
 
-	return ERR_PTR(-ENODEV);
+	return dev ? dev : ERR_PTR(-ENODEV);
 
 out_close_2_handles:
 	ZwClose(link_handle);
 out_close_handle:
-	ZwClose(blkdev_handle);
-	return ERR_PTR(-ENODEV);
+//	ZwClose(blkdev_handle);
+	return dev ? dev : ERR_PTR(-ENODEV);
+//	return ERR_PTR(-ENODEV);
 }
 
 
@@ -3170,7 +3186,9 @@ int win_drbd_thread_setup(struct drbd_thread *thi)
 	else
 		WDRBD_INFO("stopped.\n");
 
+printk(KERN_INFO "Into PsTerminateSystemThread\n");
 	PsTerminateSystemThread(STATUS_SUCCESS);
+printk(KERN_INFO "Out of PsTerminateSystemThread\n");
 
 	return STATUS_SUCCESS;
 }
