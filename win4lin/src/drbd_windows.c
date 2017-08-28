@@ -2669,18 +2669,15 @@ cleanup:
 
 /**
  * @brief
- *	link is below 
- *	- "\\\\?\\Volume{d41d41d1-17fb-11e6-bb93-000c29ac57ee}\\"
- *	- "d" or "d:"
- *	- "c/vdrive" or "c\\vdrive"
- *	f no block_device allocated, then query
+ *	Looks up the \\Devices\\HarddiskVolume<n> device in our
+ *      internal list of associated block devices.
  */
-struct block_device *blkdev_get_by_link(UNICODE_STRING * name)
+static struct block_device *lookup_blkdev(UNICODE_STRING * name)
 {
 	ROOT_EXTENSION * proot = mvolRootDeviceObject->DeviceExtension;
 	VOLUME_EXTENSION * pvext = proot->Head;
 
-printk(KERN_INFO "in blkdev_get_by_link()\n");
+printk(KERN_INFO "in lookup_blkdev()\n");
 printk(KERN_INFO "name: %S\n", name->Buffer);
 printk(KERN_INFO "pvext: %p\n", pvext);
 	MVOL_LOCK();
@@ -2702,7 +2699,37 @@ printk(KERN_INFO "pvext name = %S\n", pvext->PhysicalDeviceName);
 	return (pvext) ? pvext->dev : NULL;
 }
 
-extern void print_object_type(HANDLE h);
+static NTSTATUS resolve_nt_kernel_link(UNICODE_STRING *upath, UNICODE_STRING *link_target)
+{
+	NTSTATUS status;
+	OBJECT_ATTRIBUTES device_attributes;
+	ULONG link_target_length;
+	HANDLE link_handle;
+	IO_STATUS_BLOCK io_status_block;
+
+	InitializeObjectAttributes(&device_attributes, upath, OBJ_FORCE_ACCESS_CHECK, NULL, NULL);
+	status = ZwOpenSymbolicLinkObject(&link_handle, GENERIC_READ, &device_attributes);
+	if (!NT_SUCCESS(status)) {
+		WDRBD_WARN("ZwOpenSymbolicLinkObject: Cannot open link object, status = %x, path = %S\n", status, upath->Buffer);
+		return status;
+	}
+
+	status = ZwQuerySymbolicLinkObject(link_handle, link_target, &link_target_length);
+	if (!NT_SUCCESS(status)) {
+		WDRBD_WARN("ZwQuerySymbolicLinkObject: Cannot get link target name, status = %x, path = %S\n", status, upath->Buffer);
+		goto out_close_handle;
+	}
+	if (link_target_length >= link_target->MaximumLength) {
+		WDRBD_WARN("ZwQuerySymbolicLinkObject: Link target name exceeds %lu bytes (is %lu bytes), path = %S\n", link_target->MaximumLength, link_target_length, upath->Buffer);
+		goto out_close_handle;
+	}
+	link_target->Buffer[link_target_length] = 0;
+	printk(KERN_INFO "Symbolic link points to %S\n", link_target->Buffer);
+
+out_close_handle:
+	ZwClose(link_handle);
+	return status;
+}
 
 struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder)
 {
@@ -2712,14 +2739,9 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	struct block_device *dev;
 	ANSI_STRING apath;
 	UNICODE_STRING upath;
-	OBJECT_ATTRIBUTES device_attributes;
 	NTSTATUS status;
-	HANDLE blkdev_handle;
-	HANDLE link_handle;
-	IO_STATUS_BLOCK io_status_block;
 	WCHAR link_target_buffer[1024];
 	UNICODE_STRING link_target;
-	ULONG link_target_length;
 
 	RtlInitAnsiString(&apath, path);
 	status = RtlAnsiStringToUnicodeString(&upath, &apath, TRUE);
@@ -2727,64 +2749,23 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		WDRBD_WARN("RtlAnsiStringToUnicodeString: Cannot convert path to Unicode string, status = %d, path = %s\n", status, path);
 		return ERR_PTR(-EINVAL);
 	}
-	dev = blkdev_get_by_link(&upath);
+	dev = lookup_blkdev(&upath);
 
-	InitializeObjectAttributes(&device_attributes, &upath, OBJ_FORCE_ACCESS_CHECK, NULL, NULL);
-#if 0
-	status = NtOpenFile(&blkdev_handle, FILE_READ_DATA | FILE_WRITE_DATA, &device_attributes, &io_status_block, FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
-	RtlFreeUnicodeString(&upath);
+	if (dev == NULL) {
+		WDRBD_INFO("%s is not a block device, let's see if it is a symbolic link.\n", path);
+		link_target.Buffer = link_target_buffer;
+		link_target.MaximumLength = sizeof(link_target_buffer)-1;
+		link_target.Length = 0;
 
-	if (!NT_SUCCESS(status)) {
-		WDRBD_WARN("NtOpenFile: Cannot open backing device, status = %x, path = %s\n", status, path);
-		return ERR_PTR(-ENODEV);
+		status = resolve_nt_kernel_link(&upath, &link_target);
+		if (!NT_SUCCESS(status)) {
+			return ERR_PTR(-ENODEV);
+		}
+
+		dev = lookup_blkdev(&link_target);
 	}
-
-	if (io_status_block.Information != FILE_OPENED) {
-		WDRBD_WARN("NtOpenFile: Cannot open backing device, status ok but status block said %d, path = %s\n", io_status_block.Information, path);
-		goto out_close_handle;	
-	}
-
-	printk(KERN_INFO "NtOpenFile succeeded. path: %s io_status_block.Information: %d\n", path, io_status_block.Information); 
-#endif
-
-	status = ZwOpenSymbolicLinkObject(&link_handle, GENERIC_READ, &device_attributes);
-	if (!NT_SUCCESS(status)) {
-		WDRBD_WARN("ZwOpenSymbolicLinkObject: Cannot open link object, status = %x, path = %s\n", status, path);
-		goto out_close_handle;
-	}
-
-// RtlInitUnicodeString(&link_target, &link_target_buffer);
-	link_target.Buffer = link_target_buffer;
-	link_target.MaximumLength = sizeof(link_target_buffer)-1;
-	link_target.Length = 0;
-
-	status = ZwQuerySymbolicLinkObject(link_handle, &link_target, &link_target_length);
-	if (!NT_SUCCESS(status)) {
-		WDRBD_WARN("ZwQuerySymbolicLinkObject: Cannot get link target name, status = %x, path = %s\n", status, path);
-		goto out_close_2_handles;
-	}
-	if (link_target_length >= sizeof(link_target_buffer)) {
-		WDRBD_WARN("ZwQuerySymbolicLinkObject: Link target name exceeds %lu bytes, path = %s\n", link_target_length, path);
-		goto out_close_2_handles;
-	}
-	link_target.Buffer[link_target_length] = 0;
-	printk(KERN_INFO "Symbolic link points to %S\n", link_target.Buffer);
-
-//	print_object_type(blkdev_handle);
-
-/* TODO: create_drbd_block device. Here we need to keep references internally
-   with the blkdev_handle and the created drbd device in case the same device
-   is opened twice. */
-	printk(KERN_INFO "TODO: create drbd block dev. We now have a handle leak.\n");
-
+			
 	return dev ? dev : ERR_PTR(-ENODEV);
-
-out_close_2_handles:
-	ZwClose(link_handle);
-out_close_handle:
-//	ZwClose(blkdev_handle);
-	return dev ? dev : ERR_PTR(-ENODEV);
-//	return ERR_PTR(-ENODEV);
 }
 
 
