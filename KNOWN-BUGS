@@ -102,6 +102,12 @@ so). I still think that it is a bad idea to use /dev/sda3 style in
 DRBD config, since they change when the system is rebooted (At least
 on Windows 7).
 
+Update: Since /dev/sd[ab] just follow windows NT internal enumeration
+(which also swaps) to \Device\Harddisk[01]\Partition<n> this is not a
+CygWin problem. What remains constant, however is the enumeration in 
+the target objects \Device\HarddiskPartition<n> (only the symbolic
+link directory \Device\Harddisk<n> is sometimes swapped).
+
 --------------------------------------------------------------------------
 
 AddDevice is called when any Block Device is created on the system. For
@@ -143,6 +149,12 @@ make install on userland tools (drbd-utils): 2 minor issues:
 
 Kernel really should report an error if Bind() fails. 
 	For example if the local IP address does not exist.
+
+-------------------------------------------------------------------------
+
+I am not sure how drbdmeta should work on wdrbd while a drbd device 
+is attached, since there is no way (?) to access the lower level
+device directly (and access the meta data).
 
 -------------------------------------------------------------------------
 
