@@ -158,6 +158,21 @@ device directly (and access the meta data).
 
 -------------------------------------------------------------------------
 
+Driver blue screens on drbdadm detach
+
+-------------------------------------------------------------------------
+
+Driver blue screens when backing device contains no meta data (and
+	meta data is internal)
+
+Last output was:
+
+Aug 28 15:07:59 192.168.56.101  U21:39:03.969|0131c040 drbd_md_sync_page_io <7>drbd w0/17 minor 26, ds(Diskless), dvflag(0x0): meta_data io: drbdcmd [20037696]:drbd_md_sync_page_io(,20472s,READ) FFFFF8800181DF9DS
+Aug 28 15:07:59 192.168.56.101  U21:39:04.000|0131c040 drbd_md_read <3>drbd w0/17 minor 26, ds(Diskless), dvflag(0x0): Meta data magic not found. Did you "drbdadm create-md"?
+
+
+-------------------------------------------------------------------------
+
 SOLVED: Windows does not boot any more once DRBD driver is installed. 
 
 It fails at loading drbd.sys (shown by Windows 7 repair utility).
