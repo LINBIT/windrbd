@@ -108,6 +108,9 @@ CygWin problem. What remains constant, however is the enumeration in
 the target objects \Device\HarddiskPartition<n> (only the symbolic
 link directory \Device\Harddisk<n> is sometimes swapped).
 
+Update: Patch for drbdmeta is there, need to beautify (separate
+	file) and merge into upstream wdrbd branch.
+
 --------------------------------------------------------------------------
 
 AddDevice is called when any Block Device is created on the system. For

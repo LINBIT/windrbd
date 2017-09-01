@@ -1,3 +1,26 @@
+wdrbd-next:
+
+TODO: For some disk sizes, NtReadFile fails with EOF reached
+	(0xc0000011)
+	Root kit?
+	Update: No, seems to be a NTFS kind of hack. With cygwin it
+	works. Our version fails on NTFS partitions (which don't contain
+	DRBD meta data anyway), so we can work around it.
+
+TODO: check if drbd-utils compiles on Linux.
+
+TODO: Have NTDLL functions in separate file?
+	Without knowing struct format internals.
+
+TODO: Revert the win-disk patch later to use only 
+	NT style disk device paths (win-disk becomes disk, UNIX
+	disk device paths are not used any more).
+
+	We need to patch drbdmeta for that.
+	Update: Patch is there, need to revert and test.
+
+TODO: D: -> \\DosDevices\\D: also in drbdmeta
+
 TODO: printk_syslog(): merge logging functions of
 	jt/logging-fixed-and-windows-boots-with-signature-check-disabled
 	into master and push
@@ -6,30 +29,7 @@ TODO: printk_syslog(): collect the messages in a ring buffer and send them
 	later.
 	Nice-to-have, do that later.
 
-TODO: Open backing device:
-	drbdutils:
-		drbdmeta should accept NT-style pathes
-			Problem is that /dev/sda and /dev/sdb is sometimes
-			swapped (see KNOWN-BUGS) This takes some while,
-			later.
-		We need to use NT-style I/O functions
-			(ReadFile, WriteFile) in pread/write_or_die()
-			and use NtOpenFile() (need to load address
-			from NTDLL, see 
-			http://resources.infosecinstitute.com/calling-ntdll-functions-directly/#gref
-			)
-		drbdsetup should translate NT-style pathes to NT kernel internal
-			style pathes (this is easy)
-	kernel: win4lin: see if symlinks work
-		We need to resolve them (ZwQuerySymbolicLinkObject), partially
-		done.
-
-TODO: Revert the win-disk patch later to use only 
-	NT style disk device paths (win-disk becomes disk, UNIX
-	disk device paths are not used any more).
-
-	We need to patch drbdmeta for that.
-
+-----------------
 TODO: Make drbd service stoppable
 	This probably takes some while
 
@@ -204,4 +204,24 @@ Rejected: kernel: keep track of opened HANDLEs and struct drbd_block_devices
 Rejected: kernel: Use that handle for I/O on backing device
 	This is probably too slow. Keep the current device stack
 	approach.
+
+Done: kernel: win4lin: see if symlinks work
+	We need to resolve them (ZwQuerySymbolicLinkObject), Done
+
+Done: drbdsetup should translate NT-style pathes to NT kernel internal
+	style pathes (this is easy)
+
+Done: drbdmeta should accept NT-style pathes
+	Problem is that /dev/sda and /dev/sdb is sometimes
+	swapped (see KNOWN-BUGS) 
+
+Done: We need to use NT-style I/O functions for drbdmeta
+	(ReadFile, WriteFile) in pread/write_or_die()
+	and use NtOpenFile() (need to load address
+	from NTDLL.DLL).
+
+Done: Open backing device:
+	Need to reboot Windows to make it work. Right now I don't see any
+	possibilty to attach to the device stack without rebooting
+	(maybe pnp manager can be told to reiterate disk devices somehow..)
 
