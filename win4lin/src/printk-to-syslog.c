@@ -148,18 +148,17 @@ int _printk(const char *func, const char *fmt, ...)
 		memcpy(ring_buffer + ring_buffer_head, s, RING_BUFFER_SIZE-ring_buffer_head);
 		len -= RING_BUFFER_SIZE-ring_buffer_head;
 		s += RING_BUFFER_SIZE-ring_buffer_head;
-		if (ring_buffer_tail >= ring_buffer_head)
-			ring_buffer_tail = RING_BUFFER_SIZE-1;
+		if (ring_buffer_tail > ring_buffer_head)
+			ring_buffer_tail = 1;
 		ring_buffer_head = 0;
 	}
 	memcpy(ring_buffer + ring_buffer_head, s, len);
 	ring_buffer_head += len;
-	if (ring_buffer_tail >= ring_buffer_head-len &&
+	if (ring_buffer_tail > ring_buffer_head-len &&
 	    ring_buffer_tail <= ring_buffer_head) {
-		if (ring_buffer_head == 0)
-			ring_buffer_tail = RING_BUFFER_SIZE-1;
-		else
-			ring_buffer_tail = ring_buffer_head-1;
+		ring_buffer_tail = ring_buffer_head+1;
+		if (ring_buffer_tail == RING_BUFFER_SIZE)
+			ring_buffer_tail = 0;
 	}
 
 	if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
