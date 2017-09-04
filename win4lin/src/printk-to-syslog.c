@@ -122,7 +122,10 @@ int _printk(const char *func, const char *fmt, ...)
 	} else {
 	/* Indicate how much might be lost on UDP */
 		if (printks_in_irq_context) {
-			status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [%d messages lost in IRQ, use DbgViewer.exe to see them]\n", printks_in_irq_context);
+			if (printks_in_irq_context == 1)
+				status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [last message was in IRQ context]\n");
+			else
+				status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [last %d messages were in IRQ context]\n", printks_in_irq_context);
 			printks_in_irq_context = 0;
 			len = (ULONG)strlen(buffer);
 		}
