@@ -122,6 +122,7 @@ int _printk(const char *func, const char *fmt, ...)
 	} else {
 	/* Indicate how much might be lost on UDP */
 		if (printks_in_irq_context) {
+		/* TODO: This should go before the new message .. */
 			if (printks_in_irq_context == 1)
 				status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [last message was in IRQ context]\n");
 			else
@@ -130,6 +131,8 @@ int _printk(const char *func, const char *fmt, ...)
 			len = (ULONG)strlen(buffer);
 		}
 	}
+
+/* TODO: locking. use a spin lock */
 
 	/* Always print messages to debugging facility, use a tool like
 	 * DbgViewer to see them.
