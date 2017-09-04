@@ -1,26 +1,5 @@
 wdrbd-next:
 
-TODO: For some disk sizes, NtReadFile fails with EOF reached
-	(0xc0000011)
-	Root kit?
-	Update: No, seems to be a NTFS kind of hack. With cygwin it
-	works. Our version fails on NTFS partitions (which don't contain
-	DRBD meta data anyway), so we can work around it.
-
-TODO: check if drbd-utils compiles on Linux.
-
-TODO: Have NTDLL functions in separate file?
-	Without knowing struct format internals.
-
-TODO: Revert the win-disk patch later to use only 
-	NT style disk device paths (win-disk becomes disk, UNIX
-	disk device paths are not used any more).
-
-	We need to patch drbdmeta for that.
-	Update: Patch is there, need to revert and test.
-
-TODO: D: -> \\DosDevices\\D: also in drbdmeta
-
 TODO: printk_syslog(): merge logging functions of
 	jt/logging-fixed-and-windows-boots-with-signature-check-disabled
 	into master and push
@@ -29,7 +8,11 @@ TODO: printk_syslog(): collect the messages in a ring buffer and send them
 	later.
 	Nice-to-have, do that later.
 
+TODO: IP address of logging host should be configurable (Registry?)
+
 -----------------
+TODO: #ifdef the Windows netlink code in drbd-utils
+
 TODO: Make drbd service stoppable
 	This probably takes some while
 
@@ -224,4 +207,32 @@ Done: Open backing device:
 	Need to reboot Windows to make it work. Right now I don't see any
 	possibilty to attach to the device stack without rebooting
 	(maybe pnp manager can be told to reiterate disk devices somehow..)
+
+Done: For some disk sizes, NtReadFile fails with EOF reached
+	(0xc0000011)
+	Root kit?
+	Update: No, seems to be a NTFS kind of hack. With cygwin it
+	works. Our version fails on NTFS partitions (which don't contain
+	DRBD meta data anyway), so we can work around it.
+
+	We just print a warning and terminate now.
+
+Rejected: Have NTDLL functions in separate file?
+	Without knowing struct format internals.
+	We are using WIN32 API which is not that wild.
+
+Done: D: -> \\DosDevices\\D: also in drbdmeta
+	Done
+
+Done: check if drbd-utils compiles on Linux.
+	No it doesn't. Netlink port was unclean (doesn't #ifdef __CYGWIN__)
+	takes some time to repair.
+
+Done: Revert the win-disk patch later to use only 
+	NT style disk device paths (win-disk becomes disk, UNIX
+	disk device paths are not used any more).
+
+	We need to patch drbdmeta for that.
+	Update: Patch is there, need to revert and test.
+	Reverted and tested.
 
