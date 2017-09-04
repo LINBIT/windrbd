@@ -1,63 +1,3 @@
-drbdadm up fails if the backing device was newly created with the
-	partition manager.
-
-Kernel log says: 
-
-Aug 16 19:32:57 192.168.56.101  U16:25:44.600|0131b660 open_backing_dev <3>drbd w0/17 minor 26, ds(Diskless), dvflag(0x0): open("\Device\HarddiskVolume5") failed with -13
-
-Relevant data from drbd.conf:
-
-device /dev/sda3 
-
-(this partition was just created and drbdadm create-md didn't fail)
-
-Now trying to reboot and see if the problem persists.
-
-Update: after reboot /dev/sda and /dev/sdb are swapped, so we changed 
-it to: 
-
-device /dev/sda3 
-
-However, same problem (rebooting didn't fix it)
-
-Aug 17 18:37:21 192.168.56.101  U16:21:17.664|01321040 open_backing_dev <3>drbd w0/17 minor 26, ds(Diskless), dvflag(0x0): open("\Device\HarddiskVolume5") failed with -13
-
-Update: Some printk's showed that pvext list is empty in blkdev_get_by_link.
-
-Update: Research showed that AddDevice (and AddDeviceList) is only called
-for devices that are created while the driver is already running (at least
-on my Windows box). For example if you create a new partition on a hard 
-drive and drbd is loaded, the AddDevice handler is called, but only for
-that newly created device. Hence at the point in time the driver is
-started, the internal list of devices is empty (existing volumes don't
-show up in the list). 
-
-I am not sure if the win4lin internal duplication is really needed. I will
-check and remove it (replacing it by something like FindVolumeByName(),
-I am sure there is something in the NT kernel). 
-
-Update: There is something: see 
-https://stackoverflow.com/questions/45743841/getting-windows-nt-kernel-object-by-name-from-within-a-kernel-driver
-
-What I suggest is to always use kernel internal namespace, also on the
-netlink interface. It is then drbdsetup's duty to convert the various
-existing namespaces to Windows NT kernel names. For example: 
-"D:" -> "\DosDevices\D:"
-
-I am not sure if we should support the UNIX naming convention at all
-(/dev/sda1, ...) since it gets shuffled during reboots (/dev/sda sometimes
-becomes /dev/sdb). Most safe operation probably is to use the GUID namespace:
-
-\DosDevices\Volume{GUID}
-
-Since the \DosDevices entries are SymLinks (yes NT has symlinks internally!)
-we need to resolve them to finally get to the destination object. Then
-we need to make sure that it is really a disk partition. 
-
-If we are lucky this works also with network drives. Update: it won't
-since SMB is a file based protocol. Same thing as drbd for linux cannot
-have NFS backing devices.
-
 -------------------------------------------------------------------------
 
 drbdadm down hangs on a partially configured resource
@@ -88,40 +28,15 @@ Aug 17 18:16:37 192.168.56.101  U16:16:27.275|0131b660 NetlinkWorkThread <6>[0xF
 Aug 17 18:16:37 192.168.56.101  U16:16:27.291|0131b660 NetlinkWorkThread <6>[0xFFFFFA800131B660] drbd cmd(DRBD_ADM_DOWN:27)
 Aug 17 18:16:37 192.168.56.101  U16:16:27.291|038c91c0 win_drbd_thread_setup <6>[0xFFFFFA80038C91C0] stopped.
 
--------------------------------------------------------------------------
+Update: drbdadm down also hangs on a completely configured resource.
 
-/dev/sda and /dev/sdb are sometimes swapped.
-
-This is something we probably can't fix, but we need to map the devices
-properly to the internal windows kernel device names.
-
-Update: This should be addressed somehow, since drbdmeta expects these
-filenames (UNIX-type), while the kernel should receive NT ObjectManager
-internal pathes only (\Device\HarddiskVolume<n>, or \DosDevices\D: or
-so). I still think that it is a bad idea to use /dev/sda3 style in
-DRBD config, since they change when the system is rebooted (At least
-on Windows 7).
-
-Update: Since /dev/sd[ab] just follow windows NT internal enumeration
-(which also swaps) to \Device\Harddisk[01]\Partition<n> this is not a
-CygWin problem. What remains constant, however is the enumeration in 
-the target objects \Device\HarddiskPartition<n> (only the symbolic
-link directory \Device\Harddisk<n> is sometimes swapped).
-
-Update: Patch for drbdmeta is there, need to beautify (separate
-	file) and merge into upstream wdrbd branch.
-
---------------------------------------------------------------------------
-
-AddDevice is called when any Block Device is created on the system. For
-example when a new partition is created (probably also when a USB disk is
-attached, didn't test that). It seems to me that it should check if the 
-newly created device is a drbd device (/dev/drbdN). 
+We should solve this next, so we need less reboots.
 
 ------------------------------------------------------------------------
 
 All drbd devices are called drbd (without a number). The sprintf is wrong
-This should be easy to fix.
+This should be easy to fix. Update: but where are they in the WinObj
+object hierachy?
 
 ------------------------------------------------------------------------
 
@@ -212,3 +127,107 @@ Update: It was the SocketsInit() function hanging forever. Now
 
 	Problem solved for now.
 
+-----------------------------------------------------------------------
+
+SOLVED: /dev/sda and /dev/sdb are sometimes swapped.
+
+This is something we probably can't fix, but we need to map the devices
+properly to the internal windows kernel device names.
+
+Update: This should be addressed somehow, since drbdmeta expects these
+filenames (UNIX-type), while the kernel should receive NT ObjectManager
+internal pathes only (\Device\HarddiskVolume<n>, or \DosDevices\D: or
+so). I still think that it is a bad idea to use /dev/sda3 style in
+DRBD config, since they change when the system is rebooted (At least
+on Windows 7).
+
+Update: Since /dev/sd[ab] just follow windows NT internal enumeration
+(which also swaps) to \Device\Harddisk[01]\Partition<n> this is not a
+CygWin problem. What remains constant, however is the enumeration in 
+the target objects \Device\HarddiskPartition<n> (only the symbolic
+link directory \Device\Harddisk<n> is sometimes swapped).
+
+Update: Patch for drbdmeta is there, need to beautify (separate
+	file) and merge into upstream wdrbd branch.
+
+Done.
+
+--------------------------------------------------------------------------
+
+CLOSED: AddDevice is called when any Block Device is created on the system. For
+example when a new partition is created (probably also when a USB disk is
+attached, didn't test that). It seems to me that it should check if the 
+newly created device is a drbd device (/dev/drbdN). 
+
+Update: It seems that AddDevice is not called for new DRBD devices (on
+	drbdadm up), so we can close this one.
+
+--------------------------------------------------------------------------
+
+SOLVED: drbdadm up fails if the backing device was newly created with the
+	partition manager.
+
+Kernel log says: 
+
+Aug 16 19:32:57 192.168.56.101  U16:25:44.600|0131b660 open_backing_dev <3>drbd w0/17 minor 26, ds(Diskless), dvflag(0x0): open("\Device\HarddiskVolume5") failed with -13
+
+Relevant data from drbd.conf:
+
+device /dev/sda3 
+
+(this partition was just created and drbdadm create-md didn't fail)
+
+Now trying to reboot and see if the problem persists.
+
+Update: after reboot /dev/sda and /dev/sdb are swapped, so we changed 
+it to: 
+
+device /dev/sda3 
+
+However, same problem (rebooting didn't fix it)
+
+Aug 17 18:37:21 192.168.56.101  U16:21:17.664|01321040 open_backing_dev <3>drbd w0/17 minor 26, ds(Diskless), dvflag(0x0): open("\Device\HarddiskVolume5") failed with -13
+
+Update: Some printk's showed that pvext list is empty in blkdev_get_by_link.
+
+Update: Research showed that AddDevice (and AddDeviceList) is only called
+for devices that are created while the driver is already running (at least
+on my Windows box). For example if you create a new partition on a hard 
+drive and drbd is loaded, the AddDevice handler is called, but only for
+that newly created device. Hence at the point in time the driver is
+started, the internal list of devices is empty (existing volumes don't
+show up in the list). 
+
+I am not sure if the win4lin internal duplication is really needed. I will
+check and remove it (replacing it by something like FindVolumeByName(),
+I am sure there is something in the NT kernel). 
+
+Update: There is something: see 
+https://stackoverflow.com/questions/45743841/getting-windows-nt-kernel-object-by-name-from-within-a-kernel-driver
+
+What I suggest is to always use kernel internal namespace, also on the
+netlink interface. It is then drbdsetup's duty to convert the various
+existing namespaces to Windows NT kernel names. For example: 
+"D:" -> "\DosDevices\D:"
+
+I am not sure if we should support the UNIX naming convention at all
+(/dev/sda1, ...) since it gets shuffled during reboots (/dev/sda sometimes
+becomes /dev/sdb). Most safe operation probably is to use the GUID namespace:
+
+\DosDevices\Volume{GUID}
+
+Since the \DosDevices entries are SymLinks (yes NT has symlinks internally!)
+we need to resolve them to finally get to the destination object. Then
+we need to make sure that it is really a disk partition. 
+
+If we are lucky this works also with network drives. Update: it won't
+since SMB is a file based protocol. Same thing as drbd for linux cannot
+have NFS backing devices.
+
+Update: Need to reboot Windows after installing the DRBD driver, so
+it gets the device list from the PNP manager. This is very common
+for Windows drivers (reboot required) so we leave it like this.
+
+However when the backing device is created while windows is running
+(like when a partition is created with Partition manager or maybe
+USB disk (didn't try that)) reboot is not required.

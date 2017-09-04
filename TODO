@@ -4,11 +4,11 @@ TODO: printk_syslog(): merge logging functions of
 	jt/logging-fixed-and-windows-boots-with-signature-check-disabled
 	into master and push
 
-TODO: printk_syslog(): collect the messages in a ring buffer and send them 
-	later.
-	Nice-to-have, do that later.
-
 TODO: IP address of logging host should be configurable (Registry?)
+
+TODO: Locking for ring buffer
+
+TODO: IRQ message should go before current message.
 
 -----------------
 TODO: #ifdef the Windows netlink code in drbd-utils
@@ -235,4 +235,9 @@ Done: Revert the win-disk patch later to use only
 	We need to patch drbdmeta for that.
 	Update: Patch is there, need to revert and test.
 	Reverted and tested.
+
+Done: printk_syslog(): collect the messages in a ring buffer and send them 
+	later.
+	Nice-to-have, do that later.
+	Done it, it is good to have it for further work.
 
