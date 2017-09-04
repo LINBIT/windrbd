@@ -3,12 +3,16 @@
 #include <Ntstrsafe.h>
 // #include <dpfilter.h> // included by wdm.h already
 
+#define RING_BUFFER_SIZE 4096
 
 static PWSK_SOCKET printk_udp_socket = NULL;
 static SOCKADDR_IN printk_udp_target;
 
-char my_host_name[256];
+static char ring_buffer[RING_BUFFER_SIZE];
+size_t ring_buffer_head;
+size_t ring_buffer_tail;
 
+char my_host_name[256];
 
 int initialize_syslog_printk(void)
 {
@@ -58,6 +62,8 @@ bash$ sudo service syslog restart
 int _printk(const char *func, const char *fmt, ...)
 {
     char buffer[1024];
+    char *s;
+    
     int level = '1';
     const char *fmt_without_level;
     ULONG pos, len;
@@ -108,60 +114,84 @@ int _printk(const char *func, const char *fmt, ...)
 
     len = (ULONG)strlen(buffer);
 
+	if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {
+	/* When in a DPC or similar context, we must not call waiting functions. */
+		printks_in_irq_context++;
+	} else {
+	/* Indicate how much might be lost on UDP */
+		if (printks_in_irq_context) {
+			status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [%d messages lost in IRQ, use DbgViewer.exe to see them]\n", printks_in_irq_context);
+			printks_in_irq_context = 0;
+			len = (ULONG)strlen(buffer);
+		}
+	}
+
 	/* Always print messages to debugging facility, use a tool like
 	 * DbgViewer to see them.
 	 */
-    DbgPrintEx(DPFLTR_IHVDRIVER_ID,
-		(level <= KERN_ERR[0]  ? DPFLTR_ERROR_LEVEL :
-		 level >= KERN_INFO[0] ? DPFLTR_INFO_LEVEL  :
-		 DPFLTR_WARNING_LEVEL),
-		buffer);
-
-    if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {
-	/* When in a DPC or similar context, we must not call waiting functions. */
-	printks_in_irq_context++;
-    } else {
-	/* Indicate how much might be lost on UDP */
-	if (printks_in_irq_context) {
-	    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [%d messages lost in IRQ, use DbgViewer.exe to see them]\n", printks_in_irq_context);
-	    printks_in_irq_context = 0;
-	    len = (ULONG)strlen(buffer);
-	}
-
-#if 0
-	/* Serial output of all of these is _sooo_ slow */
-	DoTraceMessage(TRCINFO, buffer);
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID,
-		(level <= KERN_ERR[0]  ? DPFLTR_ERROR_LEVEL :
-		 level >= KERN_INFO[0] ? DPFLTR_INFO_LEVEL  :
-		 DPFLTR_WARNING_LEVEL),
-		buffer);
-#endif
+		   (level <= KERN_ERR[0]  ? DPFLTR_ERROR_LEVEL :
+		    level >= KERN_INFO[0] ? DPFLTR_INFO_LEVEL  :
+		    DPFLTR_WARNING_LEVEL),
+		    buffer);
 
-	if (printk_udp_socket == NULL) {
-		initialize_syslog_printk();
-	}
-
-	if (printk_udp_socket) {
-	    status = SendTo(printk_udp_socket, buffer, len,
-		    (PSOCKADDR)&printk_udp_target);
-            if (status < 0) {
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, SendTo returned error: %s\n", buffer);
-            }
+	if (len > RING_BUFFER_SIZE) {
+		s = buffer+len-RING_BUFFER_SIZE;
+		len = RING_BUFFER_SIZE;
 	} else {
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, no socket: %s\n", buffer);
-	}
-#if 0
-	WriteEventLogEntryData(msgids[level_index], 0, 0, 1, L"%S", buf);
-
-	if (bEventLog) {
-	    save_to_system_event(buf, length, level_index);
+		s = buffer;
 	}
 
-	if (bDbgLog)
-	    DbgPrintEx(FLTR_COMPONENT, printLevel, buf);
-#endif
-    }
-    return 1;	/* TODO: strlen(buffer) */
+	if (len + ring_buffer_head > RING_BUFFER_SIZE) {
+		memcpy(ring_buffer + ring_buffer_head, s, RING_BUFFER_SIZE-ring_buffer_head);
+		len -= RING_BUFFER_SIZE-ring_buffer_head;
+		s += RING_BUFFER_SIZE-ring_buffer_head;
+		if (ring_buffer_tail >= ring_buffer_head)
+			ring_buffer_tail = 1;
+		ring_buffer_head = 0;
+	}
+	memcpy(ring_buffer + ring_buffer_head, s, len);
+	ring_buffer_head += len;
+	if (ring_buffer_tail >= ring_buffer_head-len &&
+	    ring_buffer_tail <= ring_buffer_head) {
+		ring_buffer_tail = ring_buffer_head+1;
+		if (ring_buffer_tail >= RING_BUFFER_SIZE)
+			ring_buffer_tail -= RING_BUFFER_SIZE;
+	}
+
+	if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
+		if (printk_udp_socket == NULL) {
+			initialize_syslog_printk();
+		}
+
+/* TODO: when ring buffer wraps over we've got two packets .. */
+
+		if (printk_udp_socket) {
+			if (ring_buffer_tail > ring_buffer_head) {
+				status = SendTo(printk_udp_socket, 
+						ring_buffer+ring_buffer_tail, 
+						RING_BUFFER_SIZE-ring_buffer_tail,
+						(PSOCKADDR)&printk_udp_target);
+			
+				ring_buffer_tail = 0;
+				if (status < 0) {
+					DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, SendTo returned error: %s\n", buffer);
+				}
+			}
+			if (ring_buffer_tail < ring_buffer_head) {
+				status = SendTo(printk_udp_socket, 
+						ring_buffer+ring_buffer_tail, 
+						ring_buffer_head - ring_buffer_tail,
+						(PSOCKADDR)&printk_udp_target);
+				if (status < 0) {
+					DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, SendTo returned error: %s\n", buffer);
+				}
+				ring_buffer_tail = ring_buffer_head;
+			}
+		} else {
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, no socket: %s\n", buffer);
+		}
+	}
+	return 1;	/* TODO: strlen(buffer) */
 }
 
