@@ -1,11 +1,5 @@
 wdrbd-next:
 
-TODO: printk_syslog(): merge logging functions of
-	jt/logging-fixed-and-windows-boots-with-signature-check-disabled
-	into master and push
-
-TODO: IP address of logging host should be configurable (Registry?)
-
 -----------------
 TODO: #ifdef the Windows netlink code in drbd-utils
 
@@ -240,4 +234,10 @@ Done: printk_syslog(): collect the messages in a ring buffer and send them
 Done: Locking for ring buffer
 
 Done: IRQ message should go before current message.
+
+Done: printk_syslog(): merge logging functions of
+	jt/logging-fixed-and-windows-boots-with-signature-check-disabled
+	into master and push
+
+Done: IP address of logging host should be configurable (Registry?)
 
