@@ -15,8 +15,6 @@ static size_t ring_buffer_head;
 static size_t ring_buffer_tail;
 static spinlock_t ring_buffer_lock;
 
-char my_host_name[256];
-
 int initialize_syslog_printk(void)
 {
 	spin_lock_init(&ring_buffer_lock);
@@ -79,70 +77,64 @@ int _printk(const char *func, const char *fmt, ...)
 	char line[512];	/* Must fit in one UDP packet */
 	size_t line_pos;
     
-    int level = '1';
-    const char *fmt_without_level;
-    ULONG pos, len;
-    LARGE_INTEGER time;
-    va_list args;
-    NTSTATUS status;
-    int hour, min, sec, msec, sec_day;
-    static int printks_in_irq_context = 0;
-
-    fmt_without_level = fmt;
-    if (fmt[0] == '<' && fmt[2] == '>') {
-	level = fmt[1];
-	fmt_without_level = fmt + 3;
-    }
-
-    if (!my_host_name) {
-	pos = sizeof(my_host_name);
-	//	GetComputerName(my_host_name, &pos); // TODO FIXME
-	strcpy(my_host_name, "WIN");
-    }
-
-    KeQuerySystemTime(&time);
-    sec_day = (time.QuadPart / (ULONG_PTR)1e7) % 86400;
-    sec = sec_day % 60;
-    min = (sec_day / 60) % 60;
-    hour = sec_day / 3600;
-    msec = (time.QuadPart / 10000) % (ULONG_PTR)1e3; // 100nsec to msec
-    status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1, "<%c> U%02d:%02d:%02d.%03d|%08.8x %s ",
-	    level, hour, min, sec, msec,
-	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
-	    ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
-	    func // my_host_name
-	    );
-    if (! NT_SUCCESS(status)) {
-//	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, RtlStringCbPrintfA returned error (status = %d).\n", status);
-	return -EINVAL;
-    }
-
-    pos = (ULONG)strlen(buffer);
-    va_start(args, fmt);
-    status = RtlStringCbVPrintfA(buffer + pos, sizeof(buffer)-1-pos,
-	    fmt, args);
-    if (! NT_SUCCESS(status))
-    {
-//	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent (2), RtlStringCbPrintfA returned error (status = %d).\n", status);
-	return -EINVAL;
-    }
-
-    len = (ULONG)strlen(buffer);
+	int level = '1';
+	const char *fmt_without_level;
+	ULONG pos, len;
+	LARGE_INTEGER time;
+	va_list args;
+	NTSTATUS status;
+	int hour, min, sec, msec, sec_day;
+	static int printks_in_irq_context = 0;
+	static int buffer_overflows = 0;
 
 	if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {
-	/* When in a DPC or similar context, we must not call waiting functions. */
 		printks_in_irq_context++;
 	} else {
 	/* Indicate how much might be lost on UDP */
 		if (printks_in_irq_context) {
-		/* TODO: This should go before the new message .. */
 			if (printks_in_irq_context == 1)
-				status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [last message was in IRQ context]\n");
+				status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1, " [last message was in IRQ context]\n");
 			else
-				status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1 - len, " [last %d messages were in IRQ context]\n", printks_in_irq_context);
+				status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1, " [last %d messages were in IRQ context]\n", printks_in_irq_context);
 			printks_in_irq_context = 0;
-			len = (ULONG)strlen(buffer);
 		}
+	}
+
+	fmt_without_level = fmt;
+	if (fmt[0] == '<' && fmt[2] == '>') {
+		level = fmt[1];
+		fmt_without_level = fmt + 3;
+	}
+
+	KeQuerySystemTime(&time);
+	sec_day = (time.QuadPart / (ULONG_PTR)1e7) % 86400;
+	sec = sec_day % 60;
+	min = (sec_day / 60) % 60;
+	hour = sec_day / 3600;
+	msec = (time.QuadPart / 10000) % (ULONG_PTR)1e3; // 100nsec to msec
+
+	pos = (ULONG)strlen(buffer);
+	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d|%08.8x %s ",
+	    level, hour, min, sec, msec,
+	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
+	    ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
+	    func
+	);
+	if (! NT_SUCCESS(status)) {
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, RtlStringCbPrintfA returned error (status = %d).\n", status);
+		buffer_overflows++;
+		return -EINVAL;
+	}
+
+	pos = (ULONG)strlen(buffer);
+	va_start(args, fmt);
+	status = RtlStringCbVPrintfA(buffer+pos, sizeof(buffer)-1-pos,
+		    fmt, args);
+	if (! NT_SUCCESS(status))
+	{
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent (2), RtlStringCbPrintfA returned error (status = %d).\n", status);
+		buffer_overflows++;
+		return -EINVAL;
 	}
 
 	/* Always print messages to debugging facility, use a tool like
@@ -153,6 +145,8 @@ int _printk(const char *func, const char *fmt, ...)
 		    level >= KERN_INFO[0] ? DPFLTR_INFO_LEVEL  :
 		    DPFLTR_WARNING_LEVEL),
 		    buffer);
+
+	len = (ULONG)strlen(buffer);
 
 	if (len > RING_BUFFER_SIZE) {
 		s = buffer+len-RING_BUFFER_SIZE;
@@ -179,6 +173,10 @@ int _printk(const char *func, const char *fmt, ...)
 			ring_buffer_tail = 0;
 	}
 	spin_unlock_irq(&ring_buffer_lock);
+
+		/* When in a DPC or similar context, we must not 
+		 * call waiting functions, like SendTo(). 
+		 */
 
 	if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
 		if (printk_udp_socket == NULL) {
