@@ -7,6 +7,8 @@
 
 #define RING_BUFFER_SIZE 4096
 
+char g_syslog_ip[SYSLOG_IP_SIZE];
+
 static PWSK_SOCKET printk_udp_socket = NULL;
 static SOCKADDR_IN printk_udp_target;
 
@@ -23,6 +25,7 @@ int initialize_syslog_printk(void)
 
 static int open_syslog_socket(void)
 {
+	char ip[4];
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
 	if (!printk_udp_socket) {
 		SOCKADDR_IN local;
@@ -31,22 +34,21 @@ static int open_syslog_socket(void)
 			/* Same as htons(514) ;) */
 		printk_udp_target.sin_port = 514;
 
-		/* TODO: This doesn't work on our setup. I am pretty sure
-		 * that it was never supposed to work. */
-		/* printk_udp_target.sin_addr.s_addr = 0xffffffff; */
-
-		/* TODO: this is a hardcoded IP address in network byte
-		 * order. You need to put the IPv4 address of a Linux
-		 * box running rsyslogd with remote logging on UDP
-		 * enabled here. To enable UDP logging in rsyslogd
+		/* To enable UDP logging in rsyslogd
 		 * put (or uncomment) following lines into /etc/rsyslog.conf:
 module(load="imudp")
 input(type="imudp" port="514")
 		 * then do a 
 bash$ sudo service syslog restart
-		 * . */
+		 * . 
+		 */
 
-		printk_udp_target.sin_addr.s_addr = 0x6738a8c0;
+		if (sscanf(g_syslog_ip, "%hhu.%hhu.%hhu.%hhu", ip, ip+1, ip+2, ip+3) != 4) {
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Invalid syslog IP address: %s\nYou will NOT see any output produced by printk (and pr_err, ...)\n", g_syslog_ip);
+			return -1;
+		}
+
+		printk_udp_target.sin_addr.s_addr = ip[0] + (ip[1] << 8) + (ip[2] << 16) + (ip[3] << 24);
 
 		local.sin_family = AF_INET;
 		local.sin_addr.s_addr = 0;

@@ -1415,6 +1415,7 @@ NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG *pReturnLength, UCHAR *puc
 int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 {
 	ULONG ulLength;
+	ULONG ip_length;
 	UCHAR aucTemp[255] = { 0 };
 	NTSTATUS status;
 
@@ -1549,17 +1550,29 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	{
 		RtlCopyMemory(g_ver, "DRBD", 4 * 2); 
 	}
+
+	ip_length = 0;
+	status = GetRegistryValue(L"syslog_ip", &ulLength, (UCHAR*)&aucTemp, RegPath_unicode);
+	if (status == STATUS_SUCCESS) {
+		status = RtlUnicodeToUTF8N(g_syslog_ip, SYSLOG_IP_SIZE, &ip_length, (WCHAR*) aucTemp, ulLength);
+	}
+	if (status != STATUS_SUCCESS) {
+		strcpy(g_syslog_ip, "192.168.56.103");
+	} else {
+		g_syslog_ip[ip_length] = '\0';
+	}
 	// _WIN32_V9: proc_details is removed. 
 	WDRBD_INFO("registry_path[%wZ]\n"
 		"bypass_level=%d, read_filter=%d, use_volume_lock=%d, "
-		"netlink_tcp_port=%d, daemon_tcp_port=%d, ver=%ws\n",
+		"netlink_tcp_port=%d, daemon_tcp_port=%d, ver=%ws, syslog_ip=%s\n",
 		RegPath_unicode,
 		g_bypass_level,
 		g_read_filter,
 		g_use_volume_lock,
 		g_netlink_tcp_port,
 		g_daemon_tcp_port,
-		g_ver
+		g_ver,
+		g_syslog_ip
 		);
 
 	return 0;

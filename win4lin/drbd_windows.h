@@ -1119,6 +1119,8 @@ extern int g_daemon_tcp_port;
 #endif
 
 extern WCHAR g_ver[];
+#define SYSLOG_IP_SIZE 64
+extern char g_syslog_ip[];
 
 #ifdef _WIN32_HANDLER_TIMEOUT
 int g_handler_use;
