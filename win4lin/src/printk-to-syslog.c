@@ -23,9 +23,39 @@ int initialize_syslog_printk(void)
 	return 0;
 }
 
+/* To enable UDP logging in rsyslogd
+ * put (or uncomment) following lines into /etc/rsyslog.conf:
+module(load="imudp")
+input(type="imudp" port="514")
+ * then do a 
+bash$ sudo service syslog restart
+ */
+
+int my_inet_aton(const char *cp, struct in_addr *inp)
+{
+	unsigned char ip[4];
+	int i, j;
+
+	j = 0;
+	for (i=0;i<4;i++) {
+		ip[i] = 0;
+		while (isdigit(cp[j])) {
+			ip[i] *= 10;
+			ip[i] += cp[j]-'0';
+			j++;
+		}
+		if (i != 3) {
+			if (cp[j] != '.')
+				return -1;
+			j++;
+		}
+	}
+	inp->s_addr = ip[0] + (ip[1] << 8) + (ip[2] << 16) + (ip[3] << 24);
+	return 0;
+}
+
 static int open_syslog_socket(void)
 {
-	char ip[4];
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
 	if (!printk_udp_socket) {
 		SOCKADDR_IN local;
@@ -34,21 +64,10 @@ static int open_syslog_socket(void)
 			/* Same as htons(514) ;) */
 		printk_udp_target.sin_port = 514;
 
-		/* To enable UDP logging in rsyslogd
-		 * put (or uncomment) following lines into /etc/rsyslog.conf:
-module(load="imudp")
-input(type="imudp" port="514")
-		 * then do a 
-bash$ sudo service syslog restart
-		 * . 
-		 */
-
-		if (sscanf(g_syslog_ip, "%hhu.%hhu.%hhu.%hhu", ip, ip+1, ip+2, ip+3) != 4) {
+		if (my_inet_aton(g_syslog_ip, &printk_udp_target.sin_addr) < 0) {
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Invalid syslog IP address: %s\nYou will NOT see any output produced by printk (and pr_err, ...)\n", g_syslog_ip);
 			return -1;
 		}
-
-		printk_udp_target.sin_addr.s_addr = ip[0] + (ip[1] << 8) + (ip[2] << 16) + (ip[3] << 24);
 
 		local.sin_family = AF_INET;
 		local.sin_addr.s_addr = 0;
@@ -88,6 +107,8 @@ int _printk(const char *func, const char *fmt, ...)
 	int hour, min, sec, msec, sec_day;
 	static int printks_in_irq_context = 0;
 	static int buffer_overflows = 0;
+
+	buffer[0] = '\0';
 
 	if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {
 		printks_in_irq_context++;
