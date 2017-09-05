@@ -6,10 +6,6 @@ TODO: printk_syslog(): merge logging functions of
 
 TODO: IP address of logging host should be configurable (Registry?)
 
-TODO: Locking for ring buffer
-
-TODO: IRQ message should go before current message.
-
 -----------------
 TODO: #ifdef the Windows netlink code in drbd-utils
 
@@ -240,4 +236,8 @@ Done: printk_syslog(): collect the messages in a ring buffer and send them
 	later.
 	Nice-to-have, do that later.
 	Done it, it is good to have it for further work.
+
+Done: Locking for ring buffer
+
+Done: IRQ message should go before current message.
 
