@@ -1,6 +1,8 @@
 #include <wdm.h>
 #include <wsk2.h>
 #include <Ntstrsafe.h>
+#include "drbd_windows.h"
+
 // #include <dpfilter.h> // included by wdm.h already
 
 #define RING_BUFFER_SIZE 4096
@@ -9,12 +11,19 @@ static PWSK_SOCKET printk_udp_socket = NULL;
 static SOCKADDR_IN printk_udp_target;
 
 static char ring_buffer[RING_BUFFER_SIZE];
-size_t ring_buffer_head;
-size_t ring_buffer_tail;
+static size_t ring_buffer_head;
+static size_t ring_buffer_tail;
+static spinlock_t ring_buffer_lock;
 
 char my_host_name[256];
 
 int initialize_syslog_printk(void)
+{
+	spin_lock_init(&ring_buffer_lock);
+	return 0;
+}
+
+static int open_syslog_socket(void)
 {
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
 	if (!printk_udp_socket) {
@@ -57,8 +66,12 @@ bash$ sudo service syslog restart
 	return 0;
 }
 
-/* For now, we only push messages via a UDP socket.
- * Later on, we can also */
+/* Prints the message via DbgPrintEx and sends it to logging host
+ * via syslog UDP if we may sleep. Stores message in ring buffer
+ * so we also see messages from raised IRQL once we are being 
+ * called with lower IRQL.
+ */
+
 int _printk(const char *func, const char *fmt, ...)
 {
 	char buffer[1024];
@@ -132,8 +145,6 @@ int _printk(const char *func, const char *fmt, ...)
 		}
 	}
 
-/* TODO: locking. use a spin lock */
-
 	/* Always print messages to debugging facility, use a tool like
 	 * DbgViewer to see them.
 	 */
@@ -150,6 +161,7 @@ int _printk(const char *func, const char *fmt, ...)
 		s = buffer;
 	}
 
+	spin_lock_irq(&ring_buffer_lock);
 	if (len + ring_buffer_head > RING_BUFFER_SIZE) {
 		memcpy(ring_buffer + ring_buffer_head, s, RING_BUFFER_SIZE-ring_buffer_head);
 		len -= RING_BUFFER_SIZE-ring_buffer_head;
@@ -166,10 +178,11 @@ int _printk(const char *func, const char *fmt, ...)
 		if (ring_buffer_tail == RING_BUFFER_SIZE)
 			ring_buffer_tail = 0;
 	}
+	spin_unlock_irq(&ring_buffer_lock);
 
 	if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
 		if (printk_udp_socket == NULL) {
-			initialize_syslog_printk();
+			open_syslog_socket();
 		}
 
 		if (printk_udp_socket) {

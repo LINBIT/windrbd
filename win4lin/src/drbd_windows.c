@@ -357,6 +357,11 @@ int test_and_change_bit(int nr, const ULONG_PTR *addr)
 	ULONG_PTR old;
 	ULONG_PTR flags;
 
+	/* TODO: racy. Someone might call spin_lock_irq and somebody
+	 * else later spin_lock_init. We should have a function that
+	 * initializes all the spin locks before anything else happens.
+	 */
+
 	if (!g_test_and_change_bit_flag)
 	{
 		spin_lock_init(&g_test_and_change_bit_lock);

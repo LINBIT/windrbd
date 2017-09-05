@@ -659,14 +659,17 @@ void save_to_system_event(char * buf, int length, int level_index)
 	}
 }
 
-	/* TODO: We cannot initialize printk here (at the beginning
-	 * of DriverEntry()) since this needs a call to SocketsInit()
-	 * which makes Windows deadlock on boot.
- 	 * For now printk will (try to) initialize itself in printk().
-	 */
+
+/* We don't create the syslog UDP socket here, since we cannot start
+ * the networking that early (Windows would wait forever for the 
+ * network stack to start.
+ *
+ * Just our spinlock is initialized.
+ */
 
 void printk_init(void)
 {
+	initialize_syslog_printk();
 }
 
 void printk_cleanup(void)
