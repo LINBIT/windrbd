@@ -316,8 +316,6 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
     PVOLUME_EXTENSION   VolumeExtension = NULL;
     ULONG               deviceType = 0;
 
-printk(KERN_INFO "Add device\n");
-
     ReferenceDeviceObject = IoGetAttachedDeviceReference(PhysicalDeviceObject);
     deviceType = ReferenceDeviceObject->DeviceType; //deviceType = 0x7 = FILE_DEVICE_DISK 
     ObDereferenceObject(ReferenceDeviceObject);
@@ -326,7 +324,6 @@ printk(KERN_INFO "Add device\n");
         deviceType, FILE_DEVICE_SECURE_OPEN, FALSE, &AttachedDeviceObject);
     if (!NT_SUCCESS(status))
     {
-printk(KERN_INFO "IoCreateDevice failed\n");
         mvolLogError(mvolRootDeviceObject, 102, MSG_ADD_DEVICE_ERROR, status);
         WDRBD_ERROR("cannot create device, err=0x%x\n", status);
         return status;
@@ -346,7 +343,6 @@ printk(KERN_INFO "IoCreateDevice failed\n");
         IoAttachDeviceToDeviceStack(AttachedDeviceObject, PhysicalDeviceObject);
     if (VolumeExtension->TargetDeviceObject == NULL)
     {
-printk(KERN_INFO "IoAttachDeviceToDeviceStack failed\n");
         mvolLogError(mvolRootDeviceObject, 103, MSG_ADD_DEVICE_ERROR, STATUS_NO_SUCH_DEVICE);
         IoDeleteDevice(AttachedDeviceObject);
         return STATUS_NO_SUCH_DEVICE;
@@ -359,7 +355,6 @@ printk(KERN_INFO "IoAttachDeviceToDeviceStack failed\n");
         VolumeExtension->PhysicalDeviceName, MAXDEVICENAME * sizeof(WCHAR)); // -> \Device\HarddiskVolumeXX
     if (!NT_SUCCESS(status))
     {
-printk(KERN_INFO "GetDeviceName failed\n");
         mvolLogError(mvolRootDeviceObject, 101, MSG_ADD_DEVICE_ERROR, status);
 		IoDeleteDevice(AttachedDeviceObject);
         return status;
@@ -372,8 +367,7 @@ printk(KERN_INFO "GetDeviceName failed\n");
 		ExFreePool(pmuid);
 	}
 
-printk(KERN_INFO "Into mvolAddDeviceList\n");
-printk(KERN_INFO "Device name: %S\n", VolumeExtension->PhysicalDeviceName);
+	printk(KERN_INFO "Got block device from PNP manager (via AddDevice), device name: %S\n", VolumeExtension->PhysicalDeviceName);
 
     MVOL_LOCK();
     mvolAddDeviceList(VolumeExtension);

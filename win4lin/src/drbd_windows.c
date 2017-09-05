@@ -2682,16 +2682,11 @@ static struct block_device *lookup_blkdev(UNICODE_STRING * name)
 	ROOT_EXTENSION * proot = mvolRootDeviceObject->DeviceExtension;
 	VOLUME_EXTENSION * pvext = proot->Head;
 
-printk(KERN_INFO "in lookup_blkdev()\n");
-printk(KERN_INFO "name: %S\n", name->Buffer);
-printk(KERN_INFO "pvext: %p\n", pvext);
 	MVOL_LOCK();
 	for (; pvext; pvext = pvext->Next) {
 
-printk(KERN_INFO "pvext\n");
 		// if no block_device instance yet,
 		query_targetdev(pvext);
-printk(KERN_INFO "pvext name = %S\n", pvext->PhysicalDeviceName);
 
 		if (RtlEqualMemory(name->Buffer,
 			    pvext->PhysicalDeviceName,
@@ -2769,7 +2764,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 		dev = lookup_blkdev(&link_target);
 	}
-			
+
 	return dev ? dev : ERR_PTR(-ENODEV);
 }
 
