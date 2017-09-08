@@ -1653,6 +1653,10 @@ void flush_signals(struct task_struct *task)
 /* https://msdn.microsoft.com/de-de/library/ff548354(v=vs.85).aspx */
 IO_COMPLETION_ROUTINE DrbdIoCompletion;
 
+/* TODO: Irp we get in here seems to be already freed. Check this
+ * and remove commented out code if it is really freed.
+ */
+
 NTSTATUS DrbdIoCompletion(
   _In_     PDEVICE_OBJECT DeviceObject,
   _In_     PIRP           Irp,
@@ -1665,10 +1669,14 @@ NTSTATUS DrbdIoCompletion(
 	IoReleaseRemoveLock(&bio->bi_bdev->bd_disk->pDeviceExtension->RemoveLock, NULL);
     }
 
+    bio->bi_end_io(bio, 0);
+/*
     bio->bi_end_io(bio,
 	    Irp->IoStatus.Status == STATUS_SUCCESS ?
 	    0 : Irp->IoStatus.Status);
+*/
 
+#if 0
 	/* https://msdn.microsoft.com/de-de/library/ff548310(v=vs.85).aspx */
     if (DeviceObject && (DeviceObject->Flags & DO_DIRECT_IO) == DO_DIRECT_IO) {
 	PMDL mdl, nextMdl;
@@ -1679,6 +1687,7 @@ NTSTATUS DrbdIoCompletion(
 	}
 	Irp->MdlAddress = NULL;
     }
+#endif
 
 //    IoFreeIrp(Irp);
 
