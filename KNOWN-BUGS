@@ -1,42 +1,11 @@
--------------------------------------------------------------------------
-
-drbdadm down hangs on a partially configured resource
-
-Resource was configured partially (failed because disk didn't exist: kernel
-log: 
-Aug 17 18:14:47 192.168.56.101  U16:14:37.177|01321b50 get_targetdev_volsize <3>[0xFFFFFA8001321B50] TargetDeviceObject is null!
-this behaves as expected).
-
-Further drbdadm up failed with:
-
-$ ./drbd-up.sh
-w0: Failure: (162) Invalid configuration request
-additional info from kernel:
-peer connection already exists
-Command '/tmp/drbd/bin/drbdsetup new-peer w0 1 --_name=ubuntu-gnome --use-rle=no --protocol=A' terminated with exit code 10
-
-The down command was never completed:
-$ ./drbd-op.sh down
-w0: timed out waiting for reply
-Command '/tmp/drbd/bin/drbdsetup down w0' terminated with exit code 20
-
-kernel log:
-
-Aug 17 18:15:44 192.168.56.101  U16:15:34.140|01321b50 NetlinkWorkThread <6>[0xFFFFFA8001321B50] done
-Aug 17 18:16:37 192.168.56.101  U16:16:27.275|0131b660 NetlinkWorkThread <6>[0xFFFFFA800131B660] drbd cmd(DRBD_ADM_GET_RESOURCES:30)
-Aug 17 18:16:37 192.168.56.101  U16:16:27.275|0131b660 NetlinkWorkThread <6>[0xFFFFFA800131B660] drbd cmd(DRBD_ADM_GET_DEVICES:31)
-Aug 17 18:16:37 192.168.56.101  U16:16:27.291|0131b660 NetlinkWorkThread <6>[0xFFFFFA800131B660] drbd cmd(DRBD_ADM_DOWN:27)
-Aug 17 18:16:37 192.168.56.101  U16:16:27.291|038c91c0 win_drbd_thread_setup <6>[0xFFFFFA80038C91C0] stopped.
-
-Update: drbdadm down also hangs on a completely configured resource.
-
-We should solve this next, so we need less reboots.
-
 ------------------------------------------------------------------------
 
 All drbd devices are called drbd (without a number). The sprintf is wrong
 This should be easy to fix. Update: but where are they in the WinObj
 object hierachy?
+
+Update: They are the devices themselves (all of them) so even I/O
+from/to the System partition (C:) goes through the WDRBD driver.
 
 ------------------------------------------------------------------------
 
@@ -73,10 +42,6 @@ Kernel really should report an error if Bind() fails.
 I am not sure how drbdmeta should work on wdrbd while a drbd device 
 is attached, since there is no way (?) to access the lower level
 device directly (and access the meta data).
-
--------------------------------------------------------------------------
-
-Driver blue screens on drbdadm detach
 
 -------------------------------------------------------------------------
 
@@ -231,3 +196,51 @@ for Windows drivers (reboot required) so we leave it like this.
 However when the backing device is created while windows is running
 (like when a partition is created with Partition manager or maybe
 USB disk (didn't try that)) reboot is not required.
+
+-------------------------------------------------------------------------
+
+SOLVED: drbdadm down hangs on a partially configured resource
+
+Resource was configured partially (failed because disk didn't exist: kernel
+log: 
+Aug 17 18:14:47 192.168.56.101  U16:14:37.177|01321b50 get_targetdev_volsize <3>[0xFFFFFA8001321B50] TargetDeviceObject is null!
+this behaves as expected).
+
+Further drbdadm up failed with:
+
+$ ./drbd-up.sh
+w0: Failure: (162) Invalid configuration request
+additional info from kernel:
+peer connection already exists
+Command '/tmp/drbd/bin/drbdsetup new-peer w0 1 --_name=ubuntu-gnome --use-rle=no --protocol=A' terminated with exit code 10
+
+The down command was never completed:
+$ ./drbd-op.sh down
+w0: timed out waiting for reply
+Command '/tmp/drbd/bin/drbdsetup down w0' terminated with exit code 20
+
+kernel log:
+
+Aug 17 18:15:44 192.168.56.101  U16:15:34.140|01321b50 NetlinkWorkThread <6>[0xFFFFFA8001321B50] done
+Aug 17 18:16:37 192.168.56.101  U16:16:27.275|0131b660 NetlinkWorkThread <6>[0xFFFFFA800131B660] drbd cmd(DRBD_ADM_GET_RESOURCES:30)
+Aug 17 18:16:37 192.168.56.101  U16:16:27.275|0131b660 NetlinkWorkThread <6>[0xFFFFFA800131B660] drbd cmd(DRBD_ADM_GET_DEVICES:31)
+Aug 17 18:16:37 192.168.56.101  U16:16:27.291|0131b660 NetlinkWorkThread <6>[0xFFFFFA800131B660] drbd cmd(DRBD_ADM_DOWN:27)
+Aug 17 18:16:37 192.168.56.101  U16:16:27.291|038c91c0 win_drbd_thread_setup <6>[0xFFFFFA80038C91C0] stopped.
+
+Update: drbdadm down also hangs on a completely configured resource.
+
+We should solve this next, so we need less reboots.
+
+Reason is that complete is not called (in fact drbd_thread_setup isn't
+used at all). We now call drbd_thread_setup in win_drbd_thread_setup 
+as the function. Now it blue screens but one step further.
+
+Update: Calling drbd_thread_setup within win_drbd_thread_setup fixed
+this problem.
+
+-------------------------------------------------------------------------
+
+SOLVED: Driver blue screens on drbdadm detach
+
+Solved. There were some little issues, see git log.
+

@@ -1,16 +1,32 @@
 wdrbd-next:
 
+TODO: Merge changes to master (including drbd_thread_setup non-static)
+	and push.
+
 -----------------
+TODO: Frees in Completion routine: is the memory freed by lower level
+	driver?
+
+TODO: cond_wait shouldn't busy loop. How is this done in Linux.
+
+TODO: integrate INSTALL-DRBD-admin.bat in Makefile.win
+-----------------
+
+TODO: Possible race at drbd_thread_setup() (drbdmain.c:567) with
+	use-after-free.
+
 TODO: #ifdef the Windows netlink code in drbd-utils
 
 TODO: Make drbd service stoppable
 	This probably takes some while
 
-TODO: fix driver signature
-
 TODO: Make drbd run on peer Linux box
 
+TODO: Port agruen's test suite to cygwin.
+
 TODO: use gtest to write tests.
+	Probably for some tests where we need to call Windows API functions.
+	Maybe we can extent agruen's test suite to call mini binaries.
 
 TODO: fix the macro redefinition problems in drbd_windows.c
 	For now we have to copy the function prototypes from MSDN.
@@ -240,4 +256,8 @@ Done: printk_syslog(): merge logging functions of
 	into master and push
 
 Done: IP address of logging host should be configurable (Registry?)
+
+Rejected: fix driver signature
+	Don't know how this works..we now use Windows Test Mode to 
+	avoid pressing F8 all the time.
 
