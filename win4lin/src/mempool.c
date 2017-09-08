@@ -60,6 +60,9 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
 
 void mempool_free(void *element, mempool_t *pool)
 {
+	if (element == NULL)
+		return;
+
 	if (pool->type == MEMPOOL_PAGE) {
 		struct page* page = element;
                 ExFreeToNPagedLookasideList (&pool->page_addrLS, page->addr);
