@@ -2764,7 +2764,11 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		dev = lookup_blkdev(&link_target);
 	}
 
-	return dev ? dev : ERR_PTR(-ENODEV);
+	if (dev) {
+		kref_get(&dev->kref);
+		return dev;
+	}
+	return ERR_PTR(-ENODEV);
 }
 
 
