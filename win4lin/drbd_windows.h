@@ -1032,7 +1032,7 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
                 sig = 0;    \
                 break;      \
             } \
-            sig = schedule(&wq, 1, __FUNCTION__, __LINE__);   \
+            sig = schedule(&wq, 100, __FUNCTION__, __LINE__);   \
             if (-DRBD_SIGKILL == sig) { break; }    \
         } \
     } while (0)
