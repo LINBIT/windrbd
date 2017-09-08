@@ -3139,6 +3139,7 @@ int win_drbd_thread_setup(struct drbd_thread *thi)
 	struct drbd_resource *resource = thi->resource;
 	struct drbd_connection *connection = thi->connection;
 	int res;
+	NTSTATUS status;
 
 	thi->nt = ct_add_thread(KeGetCurrentThread(), thi->name, TRUE, 'B0DW');
 	if (!thi->nt)
@@ -3158,9 +3159,8 @@ int win_drbd_thread_setup(struct drbd_thread *thi)
 	else
 		WDRBD_INFO("stopped.\n");
 
-printk(KERN_INFO "Into PsTerminateSystemThread\n");
-	PsTerminateSystemThread(STATUS_SUCCESS);
-printk(KERN_INFO "Out of PsTerminateSystemThread\n");
+	status = PsTerminateSystemThread(STATUS_SUCCESS);
+	printk(KERN_ERR "PsTerminateSystenThread() returned (status: %x). This is not good.\n", status);
 
 	return STATUS_SUCCESS;
 }
