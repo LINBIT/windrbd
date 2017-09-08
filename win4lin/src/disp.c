@@ -630,7 +630,6 @@ mvolRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     return status;
 #endif
 
-    /* TODO read balancing */
     IoSkipCurrentIrpStackLocation(Irp);
     return IoCallDriver(VolumeExtension->TargetDeviceObject, Irp);
 

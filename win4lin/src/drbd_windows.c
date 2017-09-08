@@ -1722,7 +1722,7 @@ int generic_make_request(struct bio *bio)
 		return -EIO;
 	}
 
-	if(bio->bi_rw == WRITE_FLUSH) {
+	if(bio->bi_rw == WRITE_FLUSH) {	// TODO: & WRITE_FLUSH ? plus WRITE_FLUSH is defined as the same as WRITE
 		io = IRP_MJ_FLUSH_BUFFERS;
 		buffer = NULL;
 		bio->bi_size = 0;
@@ -1733,6 +1733,7 @@ int generic_make_request(struct bio *bio)
 		} else {
 			io = IRP_MJ_READ;
 		}
+			/* TODO: what if sect size != 512? */
 		offset.QuadPart = bio->bi_sector << 9;
 		if (bio->bio_databuf) {
 			buffer = bio->bio_databuf;
@@ -2405,6 +2406,7 @@ PVOLUME_EXTENSION get_targetdev_by_minor(unsigned int minor)
 		return NULL;
 	}
 
+// TODO: put dev
 	return dev->bd_disk->pDeviceExtension;
 }
 
@@ -3178,6 +3180,8 @@ int win_drbd_thread_setup(struct drbd_thread *thi)
 
 	return STATUS_SUCCESS;
 }
+
+/* TODO: this should go away. */
 
 struct block_device *bdget(int dev)
 {

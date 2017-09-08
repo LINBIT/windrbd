@@ -1025,6 +1025,10 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 		t = __ret; \
         		} while (0)
 
+/* TODO: eventually we want to find something that does not
+ * busy loop.
+ */
+
 #define __wait_event_interruptible(wq, condition, sig)   \
     do { \
         for (;;) { \
