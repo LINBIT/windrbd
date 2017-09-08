@@ -3150,7 +3150,8 @@ int win_drbd_thread_setup(struct drbd_thread *thi)
 	KeSetEvent(&thi->start_event, 0, FALSE);
 	KeWaitForSingleObject(&thi->wait_event, Executive, KernelMode, FALSE, NULL);
 
-	res = thi->function(thi);
+	res = drbd_thread_setup(thi);
+
 	// TODO ct_delete_thread(thi->task->pid); ??
 	if (res)
 		WDRBD_ERROR("stop, result %d\n", res);
