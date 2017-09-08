@@ -1,0 +1,12 @@
+diff -ru converted-sources/drbd/drbd_main.c converted-sources-drbd-thread-setup-nonstatic/drbd/drbd_main.c
+--- converted-sources/drbd/drbd_main.c	2017-09-08 19:16:50.699554424 +0200
++++ converted-sources-drbd-thread-setup-nonstatic/drbd/drbd_main.c	2017-09-08 19:19:53.450884423 +0200
+@@ -508,7 +508,7 @@
+         spin_unlock_irq(&resource->req_lock);
+ }
+ 
+-static int drbd_thread_setup(void *arg)
++int drbd_thread_setup(void *arg)
+ {
+ 	struct drbd_thread *thi = (struct drbd_thread *) arg;
+ 	struct drbd_resource *resource = thi->resource;
