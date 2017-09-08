@@ -1738,7 +1738,8 @@ int generic_make_request(struct bio *bio)
 			buffer = bio->bio_databuf;
 		} else {
 			if (bio->bi_max_vecs > 1) {
-				BUG(); // DRBD_PANIC
+					/* TODO: might happen one day ... */
+				printk(KERN_WARNING "bio->bi_max_vecs is %d, this is currently not supported.\n", bio->bi_max_vecs);
 			}
 			buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
 		}
