@@ -52,29 +52,29 @@ Mount the shared folder in your windows box:
 
 Building and "insmod" DRBD windows driver:
 
-        1.) Run
-                make
-        on the Linux box (from $HOME/Linbit/Work/wdrbd9)
+	1.) cd into root directory of wdrbd on your Linux box
 
         2.) Run
                 make
-        on the Windows box (from $HOME/Linbit/Work/wdrbd9 (takes some while)
+        on the Linux box
 
-        3.) Run
+	3.) cd into root directory of wdrbd on your Windows box
+
+        4.) Run
+                make
+        on the Windows box
+
+        5.) Run (as Administrator in cygwin bash) 
                 make install
-        on the Windows box (from $HOME/Linbit/Work/wdrbd9/converted-sources/drbd)
+        on the Windows box
 
-        4.) Run (in an Administrator cmd.exe Console: to open it go to
-                 C:\Windows\System32 in Explorer, Cmd-Click on cmd.exe
-                 and select Run as Administrator)
-                INSTALL-DRBD-admin.bat
-	from within C:\cygwin64\tmp\drbd (or whereever make install
-	told you to do so).
+	Windows will show a panel asking you to reboot the machine.
 
-        5.) To load the driver, do (from Adminstrator Console)
+        6.) (optional) To load the driver, do (from Adminstrator Console)
                 sc start drbd
-        DbgViewer will show output. To start DbgViewer go to
-        C:\drbd\DebugViewer and start DbgView.exe as Administrator
+
+	However to make WDRBD work correctly you will have to reboot
+	the machine.
 
 ------------
 

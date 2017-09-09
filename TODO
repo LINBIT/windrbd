@@ -9,7 +9,6 @@ TODO: Frees in Completion routine: is the memory freed by lower level
 
 TODO: cond_wait shouldn't busy loop. How is this done in Linux.
 
-TODO: integrate INSTALL-DRBD-admin.bat in Makefile.win
 -----------------
 
 TODO: Possible race at drbd_thread_setup() (drbdmain.c:567) with
@@ -261,3 +260,4 @@ Rejected: fix driver signature
 	Don't know how this works..we now use Windows Test Mode to 
 	avoid pressing F8 all the time.
 
+Done: integrate INSTALL-DRBD-admin.bat in Makefile.win
