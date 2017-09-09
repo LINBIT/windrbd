@@ -1,4 +1,4 @@
 linbit.cer
-linbit.pfx
-linbit.pvk
-linbit.spc
+*.pfx
+*.pvk
+*.spc
