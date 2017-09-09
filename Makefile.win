@@ -3,7 +3,10 @@
 # Name of the pfx file (without extension)
 KEY = johannes
 PASSWD = karin
+CERTIFICATE = linbit.cer
 
+DRIVER_DEST_DIR := /cygdrive/c/Program Files/drbd
+DRIVER_DEST_DIR_WINDOWS := C:\\Program\ Files\\drbd
 export EWDK_BASE := c:\\Ewdk
 EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
 EWDK_VERSION := 10.0.15063.0
@@ -11,7 +14,8 @@ EWDK_INC := $(EWDK_KIT)\\Include
 EWDK_LIB := $(EWDK_KIT)\\Lib
 EWDK_BIN := $(EWDK_KIT)\\bin\\x86
 VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl.cmd
-INSTALL := /cygdrive/c/Windows/System32/cmd.exe /c INSTALL-DRBD.bat
+CERTMGR := "$(EWDK_BIN)/certmgr.exe"
+
 # /a      for debugging output
 
 
@@ -123,7 +127,17 @@ deps:
 	gcc -D BITS_PER_LONG=64 -D _MSC_VER=1300 -D _WIN32=1 $(C_DEFINES) $(WIN_INCLUDE_DIRS) $(subst /FI,-include ,$(WIN_DEF_INCLUDES)) -M *.c ../win4lin/src/*.c | perl -pe 's/^(\S+)\.o:/\1.obj \1.E:/' > Makefile.deps 
 
 install:
-	$(INSTALL)
+	mkdir -p "$(DRIVER_DEST_DIR)"
+	cp drbd.sys "$(DRIVER_DEST_DIR)"
+	cp drbd.cat "$(DRIVER_DEST_DIR)"
+	cp drbd.inf "$(DRIVER_DEST_DIR)"
+	cp ../../crypto/$(CERTIFICATE) "$(DRIVER_DEST_DIR)"
+
+	verifier /standard /driver drbd.sys
+	$(CERTMGR) -add $(DRIVER_DEST_DIR_WINDOWS)\\$(CERTIFICATE) -s -r localMachine ROOT
+	$(CERTMGR) -add $(DRIVER_DEST_DIR_WINDOWS)\\$(CERTIFICATE) -s -r localMachine TRUSTEDPUBLISHER
+	/cygdrive/c/Windows/System32/InfDefaultInstall.exe $(DRIVER_DEST_DIR_WINDOWS)\\drbd.inf
+
 
 -include Makefile.deps
 
