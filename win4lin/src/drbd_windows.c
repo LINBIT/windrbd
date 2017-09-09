@@ -1691,7 +1691,9 @@ NTSTATUS DrbdIoCompletion(
 
 //    IoFreeIrp(Irp);
 
-    return STATUS_SUCCESS;
+	ObDereferenceObject(Irp->Tail.Overlay.Thread);
+
+	return STATUS_SUCCESS;
 }
 
 int generic_make_request(struct bio *bio)
@@ -1803,6 +1805,17 @@ int generic_make_request(struct bio *bio)
 			}
 			newIrp->MdlAddress = NULL;
 		}
+		IoFreeIrp(newIrp);
+		return -EIO;
+	}
+		/* Take a reference to this thread, it is referenced
+		 * in the IRP. We need this else IoCompletion is blue
+		 * screening later when we free the Irp.
+		 */
+
+	status = ObReferenceObjectByPointer(newIrp->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
+	if (!NT_SUCCESS(status)) {
+		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		IoFreeIrp(newIrp);
 		return -EIO;
 	}
