@@ -1,3 +1,5 @@
+Note: Please also see the file INSTALL
+
 # DRBD for Windows
 
 These are scripts to convert a Linux-DRBD-9 codebase to Windows-compatible 

@@ -6,10 +6,6 @@ windows machine (blue screen) so be sure to
 	1.) Not use it on production machines.
 	2.) Make Snapshots frequently.
 
-In particular, make a snapshot every time before you execute the
-INSTALL-DRBD-admin.bat script, since after that your Windows box
-will not boot any more.
-
 Build environment setup:
 
 You need two virtual machines: 
@@ -82,16 +78,31 @@ Building and "insmod" DRBD windows driver:
 
 ------------
 
-Note on logging: Currently the IP of the syslog host is hardcoded into the
-source (somewhere near win4lin/src/printk-to-syslog.c:37) in hexadecimal
-*and* network byte order. In order to see log messages you need to change
-that (and follow the instructions there to enable syslog UDP logging).
-Since it is only IPv4 addresses I assume you can compute it in your 
-head ;) 
+Note on logging: wdrbd currently sends UDP packets to a logging host
+for logging. This is meant for use with syslog.
+
+To enable UDP logging in rsyslogd put (or uncomment) following lines
+into /etc/rsyslog.conf:
+
+module(load="imudp")
+input(type="imudp" port="514")
+
+then do a 
+bash$ sudo service syslog restart
+
+Logging now uses a kernel ring buffer, much like Linux does. So
+you should be able to view the log messages in order. The only
+exception is when Windows crashes with interrupts disabled
+Then you wouldn't see the last messages starting from when
+interrupts got disabled.
+
+Currently you also only see the DRBD driver's boot messages
+only after you configure a DRBD resource.
 
 You can also use the dbgview.exe tool (please google it) and enable 
 Capture Kernel on Windows to see some log messages. It must be run as
-Administrator on the Windows machine.
+Administrator on the Windows machine. But if windows blue screens 
+you are screwed.
 
 --------------
 
@@ -99,3 +110,11 @@ Note on crypto: Even though I start Windows with driver signature verification
 off it still needs to be signed. The crypto directory, for obvious reasons
 doesn't contain our (Linbit) keys so you have to create your own. Please
 consult google and/or then enclosed README about how to do this.
+
+To disable Windows 7 driver signature checking, execute
+
+bcdedit /set TESTSIGNING ON
+
+as Windows Administrator on your Windows box and reboot. Then it should
+not be neccessary to press F8 and select disable signature check manually.
+
