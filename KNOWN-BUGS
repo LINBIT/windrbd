@@ -1,37 +1,8 @@
-DrbdIoCompletion: MDLs are never freed because device object is
-always NULL.
-
-----------------------------------------------------------------------
-
-Irps are currently not freed (and so the associated buffers I suppose)
-The reason is that Irps are allocated in non paged memory (which make
-sense since the pager would maybe need them for I/O also), but for
-DRBD Irps and buffers we might want to use Paged memory, so we
-can use the completion routine to free them.
-
-If we patch kzmalloc (this also has to be fixed one day ...) to use
-Paged memory, the OS blue screens right after finishing booting so
-this is not an option.
-
-Maybe have a cleanup_irps thread that does the IRP freeing when
-IRQL is not blocking interrupts. Or alternatively allocate buffers
-from paged memory, which would prevent us to DRBD the partition
-where the swap file is on (which isn't a good idea anyway).
-
-Update: We are now working on getting IoAllocateIrp() to work. It
-seems that IoBuildAsynchronousFds() is setting some non-documented
-fields which we now have to set manually.
-
-Update: IoAllocateIrp() didn't work (for other reasons). We now
-return STATUS_MORE_PROCESSING_REQUIRED as outlined in
-https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/constraints-on-completion-routines :
-After calling IoFreeIrp, the completion routine must return STATUS_MORE_PROCESSING_REQUIRED to indicate that no further completion processing is needed.
-
-drbdadm up works now (Doing I/O with IoFreeIrp()), drbdadm down / detach
-blue screens, but somewhere else.
+DrbdIoCompletion: DeviceObject is NULL.
+	It doesn't hurt at the moment, but eventually we want to
+	fix this.
 
 ------------------------------------------------------------------------
-
 All drbd devices are called drbd (without a number). The sprintf is wrong
 This should be easy to fix. Update: but where are they in the WinObj
 object hierachy?
@@ -278,4 +249,41 @@ this problem.
 SOLVED: Driver blue screens on drbdadm detach
 
 Solved. There were some little issues, see git log.
+
+-------------------------------------------------------------------------
+SOLVED: DrbdIoCompletion: MDLs are never freed because device object is
+always NULL.
+	Freeing MDLs always. Now blue screen on drbdadm detach/down
+	has gone.
+
+----------------------------------------------------------------------
+
+SOLVED: Irps are currently not freed (and so the associated buffers I suppose)
+The reason is that Irps are allocated in non paged memory (which make
+sense since the pager would maybe need them for I/O also), but for
+DRBD Irps and buffers we might want to use Paged memory, so we
+can use the completion routine to free them.
+
+If we patch kzmalloc (this also has to be fixed one day ...) to use
+Paged memory, the OS blue screens right after finishing booting so
+this is not an option.
+
+Maybe have a cleanup_irps thread that does the IRP freeing when
+IRQL is not blocking interrupts. Or alternatively allocate buffers
+from paged memory, which would prevent us to DRBD the partition
+where the swap file is on (which isn't a good idea anyway).
+
+Update: We are now working on getting IoAllocateIrp() to work. It
+seems that IoBuildAsynchronousFds() is setting some non-documented
+fields which we now have to set manually.
+
+Update: IoAllocateIrp() didn't work (for other reasons). We now
+return STATUS_MORE_PROCESSING_REQUIRED as outlined in
+https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/constraints-on-completion-routines :
+After calling IoFreeIrp, the completion routine must return STATUS_MORE_PROCESSING_REQUIRED to indicate that no further completion processing is needed.
+
+drbdadm up works now (Doing I/O with IoFreeIrp()), drbdadm down / detach
+blue screens, but somewhere else.
+
+------------------------------------------------------------------------
 
