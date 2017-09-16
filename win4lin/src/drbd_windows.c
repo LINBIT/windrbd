@@ -1675,7 +1675,7 @@ NTSTATUS DrbdIoCompletion(
 	    0 : Irp->IoStatus.Status);
 
 	/* https://msdn.microsoft.com/de-de/library/ff548310(v=vs.85).aspx */
-    if (DeviceObject && (DeviceObject->Flags & DO_DIRECT_IO) == DO_DIRECT_IO) {
+//     if (DeviceObject && (DeviceObject->Flags & DO_DIRECT_IO) == DO_DIRECT_IO) {
 	PMDL mdl, nextMdl;
 printk(KERN_INFO "Freeing MDLs...\n");
 	for (mdl = Irp->MdlAddress; mdl != NULL; mdl = nextMdl) {
@@ -1686,7 +1686,7 @@ printk(KERN_INFO "Freeing MDLs %p...\n", mdl);
 	}
 printk(KERN_INFO "Freeing MDLs Done\n", mdl);
 	Irp->MdlAddress = NULL;
-    }
+//    }
 
 	ObDereferenceObject(Irp->Tail.Overlay.Thread);
 	IoFreeIrp(Irp);
@@ -1821,6 +1821,7 @@ int generic_make_request(struct bio *bio)
 		IoFreeIrp(newIrp);
 		return -EIO;
 	}
+printk(KERN_INFO "generic_make_request: Calling driver\n");
 	IoCallDriver(bio->bi_bdev->bd_disk->pDeviceExtension->TargetDeviceObject, newIrp);
 
 	return 0;
