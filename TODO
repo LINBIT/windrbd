@@ -1,15 +1,23 @@
 wdrbd-next:
 
-TODO: Merge changes to master (including drbd_thread_setup non-static)
-	and push.
+---------------
 
------------------
-TODO: Frees in Completion routine: is the memory freed by lower level
-	driver?
+TODO: fix 0x4e blue screen on drbdadm detach / down
+	Last message: 
+drbd_bm_resize <6>drbd w0/17 minor 26, ds(Diskless), dvflag(0x2000): drbd_bm_resize called with capacity == 0
+	
+TODO: Try to put I/O on DRBD device.
+	This will be the same device as if there was no DRBD (use
+	the drive letters).
+
+TODO: Have a lower level device for drbdmeta for access of internal
+	DRBD meta data while resource is up.
+
+TODO: Have a function that initialized all (global) spinlocks
+	and replace the racy solution (with an flag indicating
+	wheter it is initialized) we have now.
 
 TODO: cond_wait shouldn't busy loop. How is this done in Linux.
-
------------------
 
 TODO: Possible race at drbd_thread_setup() (drbdmain.c:567) with
 	use-after-free.
@@ -261,3 +269,15 @@ Rejected: fix driver signature
 	avoid pressing F8 all the time.
 
 Done: integrate INSTALL-DRBD-admin.bat in Makefile.win
+
+Done: Merge changes to master (including drbd_thread_setup non-static)
+	and push.
+
+Done: Frees in Completion routine: is the memory freed by lower level
+	driver?
+	No it is Paged and accessed in an IRQ routine.
+	Update: Now returning MORE_PROCESSING_REQUIRED and the
+	blue screen disappeared.
+	See https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/constraints-on-completion-routines :
+		"After calling IoFreeIrp, the completion routine must return STATUS_MORE_PROCESSING_REQUIRED to indicate that no further completion processing is needed."
+

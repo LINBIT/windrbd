@@ -1,3 +1,30 @@
+Irps are currently not freed (and so the associated buffers I suppose)
+The reason is that Irps are allocated in non paged memory (which make
+sense since the pager would maybe need them for I/O also), but for
+DRBD Irps and buffers we might want to use Paged memory, so we
+can use the completion routine to free them.
+
+If we patch kzmalloc (this also has to be fixed one day ...) to use
+Paged memory, the OS blue screens right after finishing booting so
+this is not an option.
+
+Maybe have a cleanup_irps thread that does the IRP freeing when
+IRQL is not blocking interrupts. Or alternatively allocate buffers
+from paged memory, which would prevent us to DRBD the partition
+where the swap file is on (which isn't a good idea anyway).
+
+Update: We are now working on getting IoAllocateIrp() to work. It
+seems that IoBuildAsynchronousFds() is setting some non-documented
+fields which we now have to set manually.
+
+Update: IoAllocateIrp() didn't work (for other reasons). We now
+return STATUS_MORE_PROCESSING_REQUIRED as outlined in
+https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/constraints-on-completion-routines :
+After calling IoFreeIrp, the completion routine must return STATUS_MORE_PROCESSING_REQUIRED to indicate that no further completion processing is needed.
+
+drbdadm up works now (Doing I/O with IoFreeIrp()), drbdadm down / detach
+blue screens, but somewhere else.
+
 ------------------------------------------------------------------------
 
 All drbd devices are called drbd (without a number). The sprintf is wrong
@@ -43,6 +70,8 @@ I am not sure how drbdmeta should work on wdrbd while a drbd device
 is attached, since there is no way (?) to access the lower level
 device directly (and access the meta data).
 
+Maybe we should create a lower device (which bypasses DRBD even
+when the resource is up) just for the use of drbdmeta.
 -------------------------------------------------------------------------
 
 Driver blue screens when backing device contains no meta data (and
@@ -53,7 +82,8 @@ Last output was:
 Aug 28 15:07:59 192.168.56.101  U21:39:03.969|0131c040 drbd_md_sync_page_io <7>drbd w0/17 minor 26, ds(Diskless), dvflag(0x0): meta_data io: drbdcmd [20037696]:drbd_md_sync_page_io(,20472s,READ) FFFFF8800181DF9DS
 Aug 28 15:07:59 192.168.56.101  U21:39:04.000|0131c040 drbd_md_read <3>drbd w0/17 minor 26, ds(Diskless), dvflag(0x0): Meta data magic not found. Did you "drbdadm create-md"?
 
-
+Update: It might be fixed meanwhile, see the bluescreen on detach
+entry.
 -------------------------------------------------------------------------
 
 SOLVED: Windows does not boot any more once DRBD driver is installed. 
