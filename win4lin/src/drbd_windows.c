@@ -401,6 +401,9 @@ void atomic_sub64(LONGLONG a, atomic_t64 *v)
 	atomic_sub_return64(a, v);
 }
 
+	/* TODO: atomic? Results may be non-monotonic decreasing, not
+	 * sure if double values can occur.
+	 */
 int atomic_sub_return(int i, atomic_t *v)
 {
 	int retval;
@@ -416,6 +419,8 @@ LONGLONG atomic_sub_return64(LONGLONG a, atomic_t64 *v)
 	retval -= a;
 	return retval;
 }
+
+	/* TODO: this is really atomic? */
 
 int atomic_dec_and_test(atomic_t *v)
 {
@@ -449,6 +454,14 @@ LONGLONG atomic_read64(const atomic_t64 *v)
 {
 	return InterlockedAnd64((LONGLONG*)v, 0xffffffffffffffff);
 }
+
+	/* TODO: we don"t need to initialize memory here, it should
+	   be just the other way round (kzalloc calling kmalloc) 
+	 */
+
+	/* TODO: we would save patches to DRBD if we skip the tag
+	   here .. aren't using Windows Degugger anyway at the moment..
+	 */
 
 void * kmalloc(int size, int flag, ULONG Tag)
 {
@@ -504,6 +517,7 @@ struct page  *alloc_page(int flag)
 	}	
 	RtlZeroMemory(p, sizeof(struct page));
 	
+		/* TODO: is this page aligned? */
 	p->addr = kzalloc(PAGE_SIZE, 0, 'E3DW');
 	if (!p->addr)	{
 		kfree(p); 
@@ -517,6 +531,7 @@ struct page  *alloc_page(int flag)
 
 void __free_page(struct page *page)
 {
+	/* TODO: page == NULL defined? */
 	kfree(page->addr);
 	kfree(page); 
 }
@@ -584,6 +599,7 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
 	return NULL;
 }
 
+	/* TODO: Tag needed? Would save patches .. */
 struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 {
 	struct bio *bio;
@@ -601,6 +617,7 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
 
+		/* TODO: is this limitation defined? */
 	if (nr_iovecs > 256)
 	{
 		WDRBD_ERROR("DRBD_PANIC: bio_alloc: nr_iovecs too big = %d. check over 1MB.\n", nr_iovecs);
@@ -1653,10 +1670,6 @@ void flush_signals(struct task_struct *task)
 /* https://msdn.microsoft.com/de-de/library/ff548354(v=vs.85).aspx */
 IO_COMPLETION_ROUTINE DrbdIoCompletion;
 
-/* TODO: Irp we get in here seems to be already freed. Check this
- * and remove commented out code if it is really freed.
- */
-
 NTSTATUS DrbdIoCompletion(
   _In_     PDEVICE_OBJECT DeviceObject,
   _In_     PIRP           Irp,
@@ -2429,7 +2442,11 @@ LONGLONG get_targetdev_volsize(PVOLUME_EXTENSION VolumeExtension)
 	LARGE_INTEGER	volumeSize;
 	NTSTATUS	status;
 
-	if (!VolumeExtension || VolumeExtension->TargetDeviceObject == NULL)
+	if (VolumeExtension == NULL) {
+		WDRBD_ERROR("VolumeExtension is null!\n");
+		return (LONGLONG)0;
+	}
+	if (VolumeExtension->TargetDeviceObject == NULL)
 	{
 		WDRBD_ERROR("TargetDeviceObject is null!\n");
 		return (LONGLONG)0;
@@ -3152,10 +3169,12 @@ sector_t wdrbd_get_capacity(struct block_device *bdev)
 
     // Maybe... need to recalculate volume size
     PVOLUME_EXTENSION pvext = (bdev->bd_disk) ? bdev->bd_disk->pDeviceExtension : NULL;
+	/* TODO: !pvext ?? */
     if (!pvext && (KeGetCurrentIrql() < 2)) {
         bdev->d_size = get_targetdev_volsize(pvext);    // real size
     }
 
+	/* TODO: sector size isn't always 512 */
     return bdev->d_size >> 9;
 }
 
