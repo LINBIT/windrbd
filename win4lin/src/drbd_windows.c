@@ -1689,11 +1689,10 @@ NTSTATUS DrbdIoCompletion(
     }
 #endif
 
-//    IoFreeIrp(Irp);
-
 	ObDereferenceObject(Irp->Tail.Overlay.Thread);
+	IoFreeIrp(Irp);
 
-	return STATUS_SUCCESS;
+	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
 int generic_make_request(struct bio *bio)
