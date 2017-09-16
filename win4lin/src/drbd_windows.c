@@ -1663,6 +1663,7 @@ NTSTATUS DrbdIoCompletion(
   _In_opt_ PVOID          Context
 )
 {
+	printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context);
     struct bio *bio = Context;
 
     if (bio && bio->bi_bdev && bio->bi_bdev->bd_disk && bio->bi_bdev->bd_disk->pDeviceExtension) {
@@ -1676,11 +1677,14 @@ NTSTATUS DrbdIoCompletion(
 	/* https://msdn.microsoft.com/de-de/library/ff548310(v=vs.85).aspx */
     if (DeviceObject && (DeviceObject->Flags & DO_DIRECT_IO) == DO_DIRECT_IO) {
 	PMDL mdl, nextMdl;
+printk(KERN_INFO "Freeing MDLs...\n");
 	for (mdl = Irp->MdlAddress; mdl != NULL; mdl = nextMdl) {
+printk(KERN_INFO "Freeing MDLs %p...\n", mdl);
 	    nextMdl = mdl->Next;
 	    MmUnlockPages(mdl);
 	    IoFreeMdl(mdl); // This function will also unmap pages.
 	}
+printk(KERN_INFO "Freeing MDLs Done\n", mdl);
 	Irp->MdlAddress = NULL;
     }
 
@@ -1763,8 +1767,9 @@ int generic_make_request(struct bio *bio)
 		return -ENOMEM;
 	}
 
+	pIoNextStackLocation = IoGetNextIrpStackLocation (newIrp);
+
 	if( IRP_MJ_WRITE == io) {
-		pIoNextStackLocation = IoGetNextIrpStackLocation (newIrp);
 		if(bio->MasterIrpStackFlags) { 
 			//copy original Local I/O's Flags for private_bio instead of drbd's write_ordering, because of performance issue. (2016.03.23)
 			pIoNextStackLocation->Flags = bio->MasterIrpStackFlags;
@@ -1779,6 +1784,9 @@ int generic_make_request(struct bio *bio)
 	}
 
 	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
+
+/* Doesn't help */
+	pIoNextStackLocation->DeviceObject = bio->bi_bdev->bd_disk->pDeviceExtension->TargetDeviceObject; 
 
 	//
 	//	simulation disk-io error point . (generic_make_request fail) - disk error simluation type 0

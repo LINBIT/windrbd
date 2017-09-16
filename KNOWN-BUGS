@@ -1,3 +1,8 @@
+DrbdIoCompletion: MDLs are never freed because device object is
+always NULL.
+
+----------------------------------------------------------------------
+
 Irps are currently not freed (and so the associated buffers I suppose)
 The reason is that Irps are allocated in non paged memory (which make
 sense since the pager would maybe need them for I/O also), but for
