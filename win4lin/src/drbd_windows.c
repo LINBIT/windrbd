@@ -1663,30 +1663,25 @@ NTSTATUS DrbdIoCompletion(
   _In_opt_ PVOID          Context
 )
 {
-	printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context);
-    struct bio *bio = Context;
+/* TODO: Device object is NULL here. Fix that in case we need it one day. */
+/* printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context); */
+	struct bio *bio = Context;
+	PMDL mdl, nextMdl;
 
-    if (bio && bio->bi_bdev && bio->bi_bdev->bd_disk && bio->bi_bdev->bd_disk->pDeviceExtension) {
-	IoReleaseRemoveLock(&bio->bi_bdev->bd_disk->pDeviceExtension->RemoveLock, NULL);
-    }
+	if (bio && bio->bi_bdev && bio->bi_bdev->bd_disk && bio->bi_bdev->bd_disk->pDeviceExtension) {
+		IoReleaseRemoveLock(&bio->bi_bdev->bd_disk->pDeviceExtension->RemoveLock, NULL);
+	}
 
-    bio->bi_end_io(bio,
+	bio->bi_end_io(bio,
 	    Irp->IoStatus.Status == STATUS_SUCCESS ?
 	    0 : Irp->IoStatus.Status);
 
-	/* https://msdn.microsoft.com/de-de/library/ff548310(v=vs.85).aspx */
-//     if (DeviceObject && (DeviceObject->Flags & DO_DIRECT_IO) == DO_DIRECT_IO) {
-	PMDL mdl, nextMdl;
-printk(KERN_INFO "Freeing MDLs...\n");
 	for (mdl = Irp->MdlAddress; mdl != NULL; mdl = nextMdl) {
-printk(KERN_INFO "Freeing MDLs %p...\n", mdl);
-	    nextMdl = mdl->Next;
-	    MmUnlockPages(mdl);
-	    IoFreeMdl(mdl); // This function will also unmap pages.
+		nextMdl = mdl->Next;
+		MmUnlockPages(mdl);
+		IoFreeMdl(mdl); // This function will also unmap pages.
 	}
-printk(KERN_INFO "Freeing MDLs Done\n", mdl);
 	Irp->MdlAddress = NULL;
-//    }
 
 	ObDereferenceObject(Irp->Tail.Overlay.Thread);
 	IoFreeIrp(Irp);
@@ -1785,7 +1780,7 @@ int generic_make_request(struct bio *bio)
 
 	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
-/* Doesn't help */
+/* TODO: Doesn't help */
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->bd_disk->pDeviceExtension->TargetDeviceObject; 
 
 	//
@@ -1821,7 +1816,6 @@ int generic_make_request(struct bio *bio)
 		IoFreeIrp(newIrp);
 		return -EIO;
 	}
-printk(KERN_INFO "generic_make_request: Calling driver\n");
 	IoCallDriver(bio->bi_bdev->bd_disk->pDeviceExtension->TargetDeviceObject, newIrp);
 
 	return 0;
