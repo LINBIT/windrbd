@@ -620,8 +620,10 @@ mvolRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     NTSTATUS 	status = STATUS_SUCCESS;
     PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
 
+// printk(KERN_INFO "read 1\n");
     if (DeviceObject == mvolRootDeviceObject)
     {
+printk(KERN_INFO "read 2\n");
         goto invalid_device;
     }
 
@@ -637,9 +639,12 @@ mvolRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     return status;
 #endif
 
+// printk(KERN_INFO "read 3\n");
     IoSkipCurrentIrpStackLocation(Irp);
+// printk(KERN_INFO "read 4\n");
     return IoCallDriver(VolumeExtension->TargetDeviceObject, Irp);
 
+printk(KERN_INFO "read 5\n");
     struct drbd_device *device = get_device_quick(VolumeExtension);
 
     {
@@ -648,19 +653,25 @@ mvolRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         WDRBD_TRACE("\n\nupper driver READ request start! vol:%c: sect:0x%llx sz:%d --------------------------------!\n",
             VolumeExtension->Letter, (readIrpSp->Parameters.Read.ByteOffset.QuadPart / 512), readIrpSp->Parameters.Read.Length);
 #endif
+printk(KERN_INFO "read 6\n");
         PMVOL_THREAD pThreadInfo = &VolumeExtension->WorkThreadInfo;
 
+printk(KERN_INFO "read 7\n");
         IoMarkIrpPending(Irp);
         ExInterlockedInsertTailList(&pThreadInfo->ListHead, &Irp->Tail.Overlay.ListEntry, &pThreadInfo->ListLock);
+printk(KERN_INFO "read 8\n");
         IO_THREAD_SIG(pThreadInfo);
     }
+printk(KERN_INFO "read 9\n");
     return STATUS_PENDING;
 
 invalid_device:
+printk(KERN_INFO "read a\n");
     Irp->IoStatus.Information = 0;
     Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
     IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
+printk(KERN_INFO "read b\n");
     return STATUS_INVALID_DEVICE_REQUEST;
 }
 
@@ -670,8 +681,10 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     NTSTATUS status = STATUS_SUCCESS;
     PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
 
+// printk(KERN_INFO "write 1\n");
     if (DeviceObject == mvolRootDeviceObject)
     {
+printk(KERN_INFO "write 2\n");
         Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
         IoCompleteRequest(Irp, IO_NO_INCREMENT);
         return STATUS_INVALID_DEVICE_REQUEST;
@@ -690,10 +703,12 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 #endif
 
     if (VolumeExtension->Active) {
+printk(KERN_INFO "write 3\n");
 		// DW-1300: get device and get reference.
 		struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
 		// DW-1363: prevent writing when device is failed or below.
 		if (device && device->resource && (device->resource->role[NOW] == R_PRIMARY) && (device->disk_state[NOW] > D_FAILED)) {
+printk(KERN_INFO "write 4\n");
         	
 			PIO_STACK_LOCATION pisl = IoGetCurrentIrpStackLocation(Irp);
 			ULONGLONG offset_sector = (ULONGLONG)(pisl->Parameters.Write.ByteOffset.QuadPart) >> 9;
@@ -707,12 +722,15 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		 * error.
 		 */
 			if (offset_sector + size_sector > vol_size_sector) {
+printk(KERN_INFO "write 5\n");
 				WDRBD_TRACE("Upper driver WRITE vol(%wZ) sect(0x%llx+%u) VolumeExtension->IrpCount(%d) ......................Skipped Irp:%p Irp->Flags:%x\n",
 					&VolumeExtension->MountPoint, offset_sector, size_sector, VolumeExtension->IrpCount, Irp, Irp->Flags);	
 				// DW-1300: put device reference count when no longer use.
 				kref_put(&device->kref, drbd_destroy_device);
+printk(KERN_INFO "write 6\n");
 				goto skip;
 			}
+printk(KERN_INFO "write 7\n");
 
             PMVOL_THREAD				pThreadInfo;
 #ifdef DRBD_TRACE
@@ -721,6 +739,7 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 #endif
 
 #ifdef MULTI_WRITE_HOOKER_THREADS
+printk(KERN_INFO "write 8\n");
             pThreadInfo = &deviceExtension->WorkThreadInfo[deviceExtension->Rr];
             IoMarkIrpPending(Irp);
             ExInterlockedInsertTailList(&pThreadInfo->ListHead,
@@ -732,6 +751,7 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
                 deviceExtension->Rr = 0;
             }
 #else
+printk(KERN_INFO "write 9\n");
             pThreadInfo = &VolumeExtension->WorkThreadInfo;
             IoMarkIrpPending(Irp);
             ExInterlockedInsertTailList(&pThreadInfo->ListHead,
@@ -739,11 +759,13 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
             IO_THREAD_SIG(pThreadInfo);
 #endif
 			// DW-1300: put device reference count when no longer use.
+printk(KERN_INFO "write a\n");
 			kref_put(&device->kref, drbd_destroy_device);
             return STATUS_PENDING;
         }
         else
         {
+printk(KERN_INFO "write b\n");
 			// DW-1300: put device reference count when no longer use.
 			if (device)
 				kref_put(&device->kref, drbd_destroy_device);
@@ -751,16 +773,22 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			WDRBD_TRACE("Upper driver WRITE vol(%wZ) VolumeExtension->IrpCount(%d) STATUS_INVALID_DEVICE_REQUEST return Irp:%p Irp->Flags:%x\n",
 					&VolumeExtension->MountPoint, VolumeExtension->IrpCount, Irp, Irp->Flags);	
 			
+printk(KERN_INFO "write c\n");
             Irp->IoStatus.Information = 0;
             Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
             IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
+printk(KERN_INFO "write d\n");
             return STATUS_INVALID_DEVICE_REQUEST;
         }
-    }
+    } else {
+// printk(KERN_INFO "Device not active\n");
+	}
 
 skip:
+// printk(KERN_INFO "write e\n");
 	if (KeGetCurrentIrql() <= DISPATCH_LEVEL) {
+// printk(KERN_INFO "write f\n");
 		status = IoAcquireRemoveLock(&VolumeExtension->RemoveLock, NULL);
 		if (!NT_SUCCESS(status)) {
 			Irp->IoStatus.Status = status;
@@ -770,11 +798,15 @@ skip:
 		}
 	}
 
+// printk(KERN_INFO "write g\n");
     IoSkipCurrentIrpStackLocation(Irp);
     status = IoCallDriver(VolumeExtension->TargetDeviceObject, Irp);
+// printk(KERN_INFO "write h\n");
 	if (KeGetCurrentIrql() <= DISPATCH_LEVEL) {
+// printk(KERN_INFO "write i\n");
 		IoReleaseRemoveLock(&VolumeExtension->RemoveLock, NULL);
 	}
+// printk(KERN_INFO "write j\n");
 	return status;
 }
 
