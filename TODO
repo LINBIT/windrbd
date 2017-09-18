@@ -2,10 +2,9 @@ wdrbd-next:
 
 ---------------
 
-TODO: fix 0x4e blue screen on drbdadm detach / down
-	Last message: 
-drbd_bm_resize <6>drbd w0/17 minor 26, ds(Diskless), dvflag(0x2000): drbd_bm_resize called with capacity == 0
-	
+TODO: We want to see the syslog output when the system did boot, not
+	only when we configure a DRBD device.
+
 TODO: Try to put I/O on DRBD device.
 	This will be the same device as if there was no DRBD (use
 	the drive letters).
@@ -281,3 +280,7 @@ Done: Frees in Completion routine: is the memory freed by lower level
 	See https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/constraints-on-completion-routines :
 		"After calling IoFreeIrp, the completion routine must return STATUS_MORE_PROCESSING_REQUIRED to indicate that no further completion processing is needed."
 
+Done: fix 0x4e blue screen on drbdadm detach / down
+	Last message: 
+drbd_bm_resize <6>drbd w0/17 minor 26, ds(Diskless), dvflag(0x2000): drbd_bm_resize called with capacity == 0
+	

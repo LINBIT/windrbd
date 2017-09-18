@@ -1,3 +1,23 @@
+When doing a drbdadm up w0 and it fails because of missing metadata,
+drbdadm up doesn't cleanup properly. In particular a subsequent
+drbdadm up (with another disk which has meta data) fails with:
+
+peer connection already exists.
+drbdset new-peer w0 ... is the command that failed.
+
+This is probably a problem that also exists on the Linux version.
+
+Kernel log shows that last command of the original drbdadm up is:
+
+DRBD_ADM_NEW_PEER
+
+so it seems that the problem is really drbdadm, not the kernel driver.
+
+Update: It isn't that much of a problem, since a drbdadm down takes
+down the peer config and the minor, but still drbdadm up should be
+atomic.
+------------------------------------------------------------------------
+
 DrbdIoCompletion: DeviceObject is NULL.
 	It doesn't hurt at the moment, but eventually we want to
 	fix this.
@@ -48,18 +68,11 @@ device directly (and access the meta data).
 
 Maybe we should create a lower device (which bypasses DRBD even
 when the resource is up) just for the use of drbdmeta.
--------------------------------------------------------------------------
 
-Driver blue screens when backing device contains no meta data (and
-	meta data is internal)
-
-Last output was:
-
-Aug 28 15:07:59 192.168.56.101  U21:39:03.969|0131c040 drbd_md_sync_page_io <7>drbd w0/17 minor 26, ds(Diskless), dvflag(0x0): meta_data io: drbdcmd [20037696]:drbd_md_sync_page_io(,20472s,READ) FFFFF8800181DF9DS
-Aug 28 15:07:59 192.168.56.101  U21:39:04.000|0131c040 drbd_md_read <3>drbd w0/17 minor 26, ds(Diskless), dvflag(0x0): Meta data magic not found. Did you "drbdadm create-md"?
-
-Update: It might be fixed meanwhile, see the bluescreen on detach
-entry.
+Update: Yes we need that, but low priority. Create a 
+\Device\HarddiskXParitionY-skip-drbd device along with the
+\DosDevices\C:-skip-drbd Symlinks (also for Volume{GID}-skip-drbd)
+and try them first in drbdmeta. Or check if DRBD is up first.
 -------------------------------------------------------------------------
 
 SOLVED: Windows does not boot any more once DRBD driver is installed. 
@@ -286,4 +299,18 @@ drbdadm up works now (Doing I/O with IoFreeIrp()), drbdadm down / detach
 blue screens, but somewhere else.
 
 ------------------------------------------------------------------------
+
+SOLVED: Driver blue screens when backing device contains no meta data (and
+	meta data is internal)
+
+Last output was:
+
+Aug 28 15:07:59 192.168.56.101  U21:39:03.969|0131c040 drbd_md_sync_page_io <7>drbd w0/17 minor 26, ds(Diskless), dvflag(0x0): meta_data io: drbdcmd [20037696]:drbd_md_sync_page_io(,20472s,READ) FFFFF8800181DF9DS
+Aug 28 15:07:59 192.168.56.101  U21:39:04.000|0131c040 drbd_md_read <3>drbd w0/17 minor 26, ds(Diskless), dvflag(0x0): Meta data magic not found. Did you "drbdadm create-md"?
+
+Update: It might be fixed meanwhile, see the bluescreen on detach
+entry.
+
+Update: Yes now it works.
+-------------------------------------------------------------------------
 

@@ -695,6 +695,10 @@ mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 			// if io offset is larger than volume size oacassionally,
 			// then allow to lower device, so not try to send to peer
+		/* TODO: This is wrong. If someone tries to read or
+		 * write past the device size we have to return an
+		 * error.
+		 */
 			if (offset_sector + size_sector > vol_size_sector) {
 				WDRBD_TRACE("Upper driver WRITE vol(%wZ) sect(0x%llx+%u) VolumeExtension->IrpCount(%d) ......................Skipped Irp:%p Irp->Flags:%x\n",
 					&VolumeExtension->MountPoint, offset_sector, size_sector, VolumeExtension->IrpCount, Irp, Irp->Flags);	
