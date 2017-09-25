@@ -21,23 +21,8 @@
 #ifndef _LINUX_KTIME_H
 #define _LINUX_KTIME_H
 
-/* #include <linux/time.h> */
+#include <linux/time64.h>
 #include <linux/jiffies.h>
-
-/* From: time64.h */
-/* Parameters used to convert the timespec values: */
-#define MSEC_PER_SEC    1000L
-#define USEC_PER_MSEC   1000L
-#define NSEC_PER_USEC   1000L
-#define NSEC_PER_MSEC   1000000L
-#define USEC_PER_SEC    1000000L
-#define NSEC_PER_SEC    1000000000L
-#define FSEC_PER_SEC    1000000000000000LL
-
-/* Located here for timespec[64]_valid_strict */
-#define TIME64_MAX                      ((s64)~((u64)1 << 63))
-#define KTIME_MAX                       ((s64)~((u64)1 << 63))
-#define KTIME_SEC_MAX                   (KTIME_MAX / NSEC_PER_SEC)
 
 /*
  * ktime_t:
@@ -54,6 +39,9 @@ union ktime {
 };
 
 typedef union ktime ktime_t;		/* Kill this */
+
+/* Convert ktime_t to nanoseconds - NOP in the scalar storage format: */
+#define ktime_to_ns(kt)                 ((kt).tv64)
 
 /**
  * ktime_set - Set a ktime_t variable from a seconds/nanoseconds value
