@@ -1258,6 +1258,7 @@ extern void list_del_rcu(struct list_head *entry);
 
 
 
+/* TODO: those are not implemented? */
 extern EX_SPIN_LOCK g_rcuLock;
 
 static inline KIRQL rcu_read_lock(void)
@@ -1283,6 +1284,11 @@ static inline void synchronize_rcu()
 	ExReleaseSpinLockExclusive(&g_rcuLock, rcu_flags);
 	WDRBD_TRACE_RCU("synchronize_rcu : currentIrql(%d), rcu_flags(%d:%x) g_rcuLock(%lu)\n",
 			KeGetCurrentIrql(), rcu_flags, &rcu_flags, g_rcuLock);
+}
+
+/* TODO: implement this */
+static inline void call_rcu(struct rcu_head *head, rcu_callback_t func)
+{
 }
 
 extern void local_irq_disable();
