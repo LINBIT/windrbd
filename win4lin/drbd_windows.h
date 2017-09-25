@@ -607,7 +607,9 @@ struct bio_vec {
 };
 
 struct bio;
-typedef void(BIO_END_IO_CALLBACK)(struct bio *bio, int error);
+typedef u8 blk_status_t;
+
+typedef void(BIO_END_IO_CALLBACK)(struct bio *bio, blk_status_t error);
 
 
 struct splitInfo {	
