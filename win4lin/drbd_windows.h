@@ -467,6 +467,7 @@ struct semaphore{
 };
 #endif
 
+/* TODO: atomic_t? or use refcount_t */
 struct kref {
 	int refcount;
 };
@@ -748,6 +749,12 @@ extern void kref_put(struct kref *kref, void(*release)(struct kref *kref));
 #endif
 extern int kref_get(struct kref *kref);
 extern void kref_init(struct kref *kref);
+
+/* TODO: eventually use refcount_t from linux */
+static inline void refcount_set(int *r, int val)
+{
+	(*r) = val;
+}
 
 extern struct request_queue *bdev_get_queue(struct block_device *bdev);
 extern void blk_cleanup_queue(struct request_queue *q);
