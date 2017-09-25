@@ -73,4 +73,10 @@ typedef		__s64		int64_t;
 #endif
 //#endif
 
+struct callback_head {
+	struct callback_head *next;
+	void (*func)(struct callback_head *head);
+};
+#define rcu_head callback_head
+
 #endif
