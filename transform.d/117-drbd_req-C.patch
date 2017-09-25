@@ -2,59 +2,44 @@ diff --git i/drbd/drbd_req.c w/drbd/drbd_req.c
 index e1e9595b..100a6e49 100644
 --- i/drbd/drbd_req.c
 +++ w/drbd/drbd_req.c
-@@ -29,44 +29,37 @@
+@@ -29,6 +29,8 @@
  #include <linux/drbd.h>
  #include "drbd_int.h"
  #include "drbd_req.h"
 +#include "linux/jiffies.h"
++
  
  
  
- static bool drbd_may_do_local_read(struct drbd_device *device, sector_t sector, int size);
- 
--#ifndef __disk_stat_inc
--/* Update disk stats at start of I/O request */
+@@ -46,20 +48,28 @@
+ /* Update disk stats at start of I/O request */
  static void _drbd_start_io_acct(struct drbd_device *device, struct drbd_request *req)
  {
--	generic_start_io_acct(bio_data_dir(req->master_bio), req->i.size >> 9,
--			      &device->vdisk->part0);
--}
--
--/* Update disk stats when completing request upwards */
--static void _drbd_end_io_acct(struct drbd_device *device, struct drbd_request *req)
--{
--	generic_end_io_acct(bio_data_dir(req->master_bio),
--			    &device->vdisk->part0, req->start_jif);
--}
 +#if 1
-+	// DbgPrint("generic_start_io_acct\n");
- #else
--static void _drbd_start_io_acct(struct drbd_device *device, struct drbd_request *req)
--{
- 	const int rw = bio_data_dir(req->master_bio);
- 	BUILD_BUG_ON(sizeof(atomic_t) != sizeof(device->vdisk->in_flight));
- 	disk_stat_inc(device->vdisk, ios[rw]);
- 	disk_stat_add(device->vdisk, sectors[rw], req->i.size >> 9);
- 	disk_round_stats(device->vdisk);
- 	atomic_inc((atomic_t*)&device->vdisk->in_flight);
++	printk(KERN_INFO "generic_start_io_acct\n");
++#else
+ 	struct request_queue *q = device->rq_queue;
+ 
+ 	generic_start_io_acct(q, bio_data_dir(req->master_bio), req->i.size >> 9,
+ 			      &device->vdisk->part0);
 +#endif
  }
+ 
+ /* Update disk stats when completing request upwards */
  static void _drbd_end_io_acct(struct drbd_device *device, struct drbd_request *req)
  {
 +#if 1
-+	// DbgPrint("generic_end_io_acct\n");
-+#else // TODO reimplement statistics
- 	const int rw = bio_data_dir(req->master_bio);
- 	unsigned long duration = jiffies - req->start_jif;
- 	disk_stat_add(device->vdisk, ticks[rw], duration);
- 	disk_round_stats(device->vdisk);
- 	atomic_dec((atomic_t*)&device->vdisk->in_flight);
--}
- #endif
-+}
++	printk(KERN_INFO "generic_start_io_acct\n");
++#else
+ 	struct request_queue *q = device->rq_queue;
  
- static struct drbd_request *drbd_req_new(struct drbd_device *device, struct bio *bio_src)
- {
+ 	generic_end_io_acct(q, bio_data_dir(req->master_bio),
+ 			    &device->vdisk->part0,
+ 			    ktime_to_jiffies(req->start_kt));
++#endif
+ }
+ #else
+ static void _drbd_start_io_acct(struct drbd_device *device, struct drbd_request *req)
 @@ -177,7 +177,7 @@ void drbd_req_destroy(struct kref *kref)
  {
  	struct drbd_request *req = container_of(kref, struct drbd_request, kref);
@@ -64,23 +49,6 @@ index e1e9595b..100a6e49 100644
  	struct drbd_peer_device *peer_device;
  	unsigned int s, device_refs = 0;
  	bool was_last_ref = false;
-@@ -724,12 +717,14 @@ static void mod_rq_state(struct drbd_request *req, struct bio_and_error *m,
- 		 * kref_sub below, we need req to be still around then. */
- 		int at_least = k_put + !!c_put;
-		int refcount = refcount_read(&req->kref.refcount);
--		if (refcount < at_least)
--			drbd_err(req->device,
-+		if (refcount < at_least) {
-+			struct drbd_device * device = req->device;
-+			drbd_err(device,
- 				"mod_rq_state: Logic BUG: 0: %x -> %x, %d: %x -> %x: refcount = %d, should be >= %d\n",
- 				old_local, req->rq_state[0],
- 				idx, old_net, req->rq_state[idx],
- 				refcount, at_least);
-+		}
- 	}
- 
- 	/* If we made progress, retry conflicting peer requests, if any. */
 @@ -743,8 +737,6 @@ static void mod_rq_state(struct drbd_request *req, struct bio_and_error *m,
  
  static void drbd_report_io_error(struct drbd_device *device, struct drbd_request *req)
@@ -113,70 +81,15 @@ index e1e9595b..100a6e49 100644
  		spin_lock_irq(&device->resource->req_lock);
  	}
  	finish_wait(&device->misc_wait, &wait);
-@@ -1559,62 +1556,10 @@ static bool may_do_writes(struct drbd_device *device)
- 	return false;
+@@ -1627,7 +1637,7 @@
+ 		kref_put(&tmp->kref, drbd_req_destroy);
  }
- 
--#ifdef COMPAT_HAVE_BLK_CHECK_PLUGGED
--struct drbd_plug_cb {
--	struct blk_plug_cb cb;
--	struct drbd_request *most_recent_req;
--	/* do we need more? */
--};
--
--static void drbd_unplug(struct blk_plug_cb *cb, bool from_schedule)
--{
--	struct drbd_plug_cb *plug = container_of(cb, struct drbd_plug_cb, cb);
--	struct drbd_resource *resource = plug->cb.data;
--	struct drbd_request *req = plug->most_recent_req;
--
--	kfree(cb);
--	if (!req)
--		return;
--
--	spin_lock_irq(&resource->req_lock);
--	/* In case the sender did not process it yet, raise the flag to
--	 * have it followed with P_UNPLUG_REMOTE just after. */
--	req->rq_state[0] |= RQ_UNPLUG;
--	/* but also queue a generic unplug */
--	drbd_queue_unplug(req->device);
--	kref_put(&req->kref, drbd_req_destroy);
--	spin_unlock_irq(&resource->req_lock);
--}
--
--static struct drbd_plug_cb* drbd_check_plugged(struct drbd_resource *resource)
--{
--	/* A lot of text to say
--	 * return (struct drbd_plug_cb*)blk_check_plugged(); */
--	struct drbd_plug_cb *plug;
--	struct blk_plug_cb *cb = blk_check_plugged(drbd_unplug, resource, sizeof(*plug));
--
--	if (cb)
--		plug = container_of(cb, struct drbd_plug_cb, cb);
--	else
--		plug = NULL;
--	return plug;
--}
- 
--static void drbd_update_plug(struct drbd_plug_cb *plug, struct drbd_request *req)
--{
--	struct drbd_request *tmp = plug->most_recent_req;
--	/* Will be sent to some peer.
--	 * Remember to tag it with UNPLUG_REMOTE on unplug */
--	kref_get(&req->kref);
--	plug->most_recent_req = req;
--	if (tmp)
--		kref_put(&tmp->kref, drbd_req_destroy);
--}
--#else
+ #else
 -struct drbd_plug_cb { };
-+struct drbd_plug_cb { char egal; };
++struct drbd_plug_cb { char unused; };
  static void * drbd_check_plugged(struct drbd_resource *resource) { return NULL; };
  static void drbd_update_plug(struct drbd_plug_cb *plug, struct drbd_request *req) { };
--#endif
- 
- static void drbd_send_and_submit(struct drbd_device *device, struct drbd_request *req)
- {
+ #endif
 @@ -1736,9 +1681,15 @@ static void drbd_send_and_submit(struct drbd_device *device, struct drbd_request
  		submit_private_bio = true;
  	} else if (no_remote) {

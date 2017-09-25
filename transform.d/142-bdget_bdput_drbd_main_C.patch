@@ -15,9 +15,9 @@ index a364cef..da885c0 100644
  	device->ldev = NULL;
  
 @@ -2764,6 +2769,8 @@ void drbd_destroy_device(struct kref *kref)
+ 	}
+
  	__free_page(device->md_io.page);
- 	put_disk(device->vdisk);
- 	blk_cleanup_queue(device->rq_queue);
 +	device->vdisk = NULL;
 +	device->rq_queue = NULL;
  	kref_debug_destroy(&device->kref_debug);

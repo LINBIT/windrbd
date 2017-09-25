@@ -3,13 +3,13 @@ index ffb2752..6e40c99 100644
 --- a/drbd/drbd_debugfs.c
 +++ b/drbd/drbd_debugfs.c
 @@ -136,9 +136,11 @@ static void seq_print_one_request(struct seq_file *m, struct drbd_request *req,
- 	seq_print_age_or_dash(m, s & RQ_LOCAL_PENDING, now - req->pre_submit_jif);
+ 	seq_print_age_or_dash(m, s & RQ_LOCAL_PENDING, ktime_sub(now, req->pre_submit_kt));
  
  #define RQ_HDR_3 "\tsent\tacked\tdone"
 +#if 0
- 	print_one_age_or_dash(m, req, RQ_NET_SENT, 0, now, offsetof(typeof(*req), pre_send_jif));
- 	print_one_age_or_dash(m, req, RQ_NET_SENT, RQ_NET_PENDING, now, offsetof(typeof(*req), acked_jif));
- 	print_one_age_or_dash(m, req, RQ_NET_DONE, 0, now, offsetof(typeof(*req), net_done_jif));
+ 	print_one_age_or_dash(m, req, RQ_NET_SENT, 0, now, offsetof(typeof(*req), pre_send_kt));
+ 	print_one_age_or_dash(m, req, RQ_NET_SENT, RQ_NET_PENDING, now, offsetof(typeof(*req), acked_kt));
+ 	print_one_age_or_dash(m, req, RQ_NET_DONE, 0, now, offsetof(typeof(*req), net_done_kt));
 +#endif
  
  #define RQ_HDR_4 "\tstate\n"
