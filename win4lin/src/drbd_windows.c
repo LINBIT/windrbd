@@ -840,6 +840,9 @@ long schedule(wait_queue_head_t *q, long timeout, char *func, int line)
 	timeout = expire - jiffies;
 	return timeout < 0 ? 0 : timeout;
 }
+
+struct workqueue_struct *system_wq;
+
 #ifdef _WIN32
 int queue_work(struct workqueue_struct* queue, struct work_struct* work)
 #else
@@ -941,6 +944,13 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
     return wq;
 }
 #endif
+
+/* TODO: implement */
+void flush_workqueue(struct workqueue_struct *wq)
+{
+	printk(KERN_INFO "flush_workqueue not implemented.\n");
+}
+
 #ifdef _WIN32_TMP_DEBUG_MUTEX
 void mutex_init(struct mutex *m, char *name)
 #else

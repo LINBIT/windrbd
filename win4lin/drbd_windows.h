@@ -930,7 +930,16 @@ extern int queue_work(struct workqueue_struct* queue, struct work_struct* work);
 #else
 extern void queue_work(struct workqueue_struct* queue, struct work_struct* work);
 #endif
+extern void flush_workqueue(struct workqueue_struct *wq);
 extern void destroy_workqueue(struct workqueue_struct *wq);
+
+extern struct workqueue_struct *system_wq;
+
+static inline bool schedule_work(struct work_struct *work)
+{
+	return queue_work(system_wq, work);
+}
+
 
 extern void kobject_put(struct kobject *kobj);
 extern void kobject_get(struct kobject *kobj);

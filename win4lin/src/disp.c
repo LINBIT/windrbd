@@ -154,6 +154,13 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
     dtt_initialize();
 
+	system_wq = alloc_ordered_workqueue("system workqueue", 0);
+	if (system_wq == NULL) {
+		pr_err("Could not allocate system work queue\n");
+		return STATUS_NO_MEMORY;
+	}
+
+
 #ifdef _WIN32_WPP
 	WPP_INIT_TRACING(DriverObject, RegistryPath);
 	DoTraceMessage(TRCINFO, "WDRBD V9(1:1) MVF Driver loaded.");
