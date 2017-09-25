@@ -1280,4 +1280,10 @@ static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
 /* This is currently not supported by WinDRBD */
 #define BLKDEV_ZERO_NOUNMAP (false)
 
+/* nla_parse_nested got a new parameter in 150c76aa (drbd-kernel-compat)
+ * which we ignore.
+ */
+#define nla_parse_nested(tb, maxtype, nla, policy, extack) \
+       nla_parse_nested(tb, maxtype, nla, policy)
+
 #endif
