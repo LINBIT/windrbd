@@ -283,7 +283,8 @@ enum rq_flag_bits {
 #define likely(_X)				(_X)
 #define unlikely(_X)			(_X)
 
-#define pid_t					int
+/* TODO: this should be in linux/types.h */
+typedef PKTHREAD pid_t;
 
 #define PAGE_KERNEL				1
 #define TASK_INTERRUPTIBLE		1
