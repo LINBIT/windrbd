@@ -1,0 +1,22 @@
+From d206557a921a4e6d847c44d1693456baa6c663e0 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 25 Sep 2017 16:14:56 +0200
+Subject: [PATCH 2/4] Added ktime.h to drbd_int includes.
+
+---
+ drbd/drbd_int.h        |   1 +
+ drbd/drbd_receiver.pdb | Bin 102400 -> 126976 bytes
+ 2 files changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index 4037f6c..f6adb9c 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -47,6 +47,7 @@
+ #include <linux/drbd_genl_api.h>
+ #include <linux/drbd.h>
+ #include <linux/drbd_config.h>
++#include <linux/ktime.h>
+ 
+ #include "drbd_wrappers.h"
+ #include "drbd_strings.h"

@@ -1,0 +1,27 @@
+From 58c5228399f22e3ec7cbb20c5952361f9d226c5a Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 25 Sep 2017 18:28:32 +0200
+Subject: [PATCH 3/4] drbd_sender: changed type of status parameter.
+
+This was probably forgotten in upstream and does not hurt the
+Linux compiler.
+---
+ drbd/drbd_sender.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index cd4b5a6..f4473a3 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -64,7 +64,7 @@ struct mutex resources_mutex;
+ /* used for synchronous meta data and bitmap IO
+  * submitted by drbd_md_sync_page_io()
+  */
+-void drbd_md_endio BIO_ENDIO_ARGS(struct bio *bio, int error)
++void drbd_md_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status)
+ {
+ 	struct drbd_device *device;
+ 
+-- 
+2.8.0-rc4
+
