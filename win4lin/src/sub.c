@@ -250,7 +250,7 @@ mvolDeviceUsage(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	return status;
 }
 
-void bio_finished(struct bio * bio, int error) {
+void bio_finished(struct bio * bio, blk_status_t error) {
    PIRP irp = bio->pMasterIrp;
 
    /* TODO handle split-up bios! */
