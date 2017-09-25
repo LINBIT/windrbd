@@ -640,6 +640,7 @@ void bio_free(struct bio *bio)
 	kfree(bio);
 }
 
+/* TODO: used at all? */
 void bio_endio(struct bio *bio, int error)
 {
     if (bio->bi_end_io) {
@@ -3235,4 +3236,28 @@ static void _bdput(struct kref *kref)
 void bdput(struct block_device *this_bdev)
 {
 	kref_put(&this_bdev->kref, _bdput);
+}
+
+
+/* TODO: Implement using Windows timers */
+ktime_t ktime_get(void)
+{
+#if 0
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
+	ktime_t base;
+	u64 nsecs;
+
+	WARN_ON(timekeeping_suspended);
+
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
+		base = tk->tkr_mono.base;
+		nsecs = timekeeping_get_ns(&tk->tkr_mono);
+
+	} while (read_seqcount_retry(&tk_core.seq, seq));
+
+	return ktime_add_ns(base, nsecs);
+#endif
+	return (ktime_t) { .tv64 = 0 };
 }

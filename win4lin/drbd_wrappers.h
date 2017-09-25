@@ -180,7 +180,7 @@ static inline int blkdev_put(struct block_device *bdev, fmode_t mode)
 #define drbd_bio_uptodate(bio) bio_flagged(bio, BIO_UPTODATE)
 
 
-typedef NTSTATUS BIO_ENDIO_TYPE;
+typedef void BIO_ENDIO_TYPE;
 #define FAULT_TEST_FLAG     ((ULONG_PTR)0x11223344)
 #define BIO_ENDIO_FN_START
 #define BIO_ENDIO_FN_RETURN     return STATUS_MORE_PROCESSING_REQUIRED
@@ -188,9 +188,9 @@ typedef NTSTATUS BIO_ENDIO_TYPE;
 #define BIO_ENDIO_ARGS(b,e) (b, e)
 
 /* bi_end_io handlers */
-extern BIO_ENDIO_TYPE drbd_md_endio(struct bio *bio, blk_status_t status);
-extern BIO_ENDIO_TYPE drbd_peer_request_endio(struct bio *bio, blk_status_t status);
-extern BIO_ENDIO_TYPE drbd_request_endio(struct bio *bio, blk_status_t status);
+extern BIO_ENDIO_TYPE drbd_md_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status);
+extern BIO_ENDIO_TYPE drbd_peer_request_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status);
+extern BIO_ENDIO_TYPE drbd_request_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status);
 
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)

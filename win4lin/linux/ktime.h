@@ -264,4 +264,6 @@ static inline ktime_t ms_to_ktime(u64 ms)
 
 /* # include <linux/timekeeping.h> */
 
+extern ktime_t ktime_get(void);
+
 #endif
