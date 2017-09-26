@@ -640,20 +640,6 @@ void bio_free(struct bio *bio)
 	kfree(bio);
 }
 
-/* TODO: used at all? */
-void bio_endio(struct bio *bio, int error)
-{
-    if (bio->bi_end_io) {
-	if(error) {
-	    WDRBD_INFO("thread(%s) bio_endio error with err=%d.\n", current->comm, error);
-	    bio->bi_end_io(bio, error);
-	} else { // if bio_endio is called with success(just in case)
-	    //WDRBD_INFO("thread(%s) bio_endio with err=%d.\n", current->comm, error);
-	    bio->bi_end_io(bio, error);
-	}
-    }
-}
-
 struct bio *bio_clone(struct bio * bio_src, int flag)
 {
     struct bio *bio = bio_alloc(flag, bio_src->bi_max_vecs, '24DW');
@@ -1681,6 +1667,11 @@ void flush_signals(struct task_struct *task)
 /* https://msdn.microsoft.com/de-de/library/ff548354(v=vs.85).aspx */
 IO_COMPLETION_ROUTINE DrbdIoCompletion;
 
+static inline blk_status_t win_status_to_blk_status(NTSTATUS status)
+{
+	return status == STATUS_SUCCESS ? 0 : BLK_STS_IOERR; 
+}
+
 NTSTATUS DrbdIoCompletion(
   _In_     PDEVICE_OBJECT DeviceObject,
   _In_     PIRP           Irp,
@@ -1696,9 +1687,7 @@ NTSTATUS DrbdIoCompletion(
 		IoReleaseRemoveLock(&bio->bi_bdev->bd_disk->pDeviceExtension->RemoveLock, NULL);
 	}
 
-	bio->bi_end_io(bio,
-	    Irp->IoStatus.Status == STATUS_SUCCESS ?
-	    0 : Irp->IoStatus.Status);
+	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
 	for (mdl = Irp->MdlAddress; mdl != NULL; mdl = nextMdl) {
 		nextMdl = mdl->Next;
@@ -1713,7 +1702,7 @@ NTSTATUS DrbdIoCompletion(
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-int generic_make_request(struct bio *bio)
+static int win_generic_make_request(struct bio *bio)
 {
 	int err = 0;
 	NTSTATUS status = STATUS_SUCCESS;
@@ -1843,6 +1832,32 @@ int generic_make_request(struct bio *bio)
 	IoCallDriver(bio->bi_bdev->bd_disk->pDeviceExtension->TargetDeviceObject, newIrp);
 
 	return 0;
+}
+
+	/* This just ensures that DRBD gets I/O errors in case something
+	 * in processing the request before submitting it to the lower
+	 * level driver goes wrong.
+	 */
+
+int generic_make_request(struct bio *bio)
+{
+	int ret = win_generic_make_request(bio);
+
+	if (ret != 0)
+		drbd_bio_endio(bio, BLK_STS_IOERR);
+
+	return ret;
+}
+
+void bio_endio(struct bio *bio, int error)
+{
+	if (bio->bi_end_io != NULL) {
+		if (error != 0)
+			WDRBD_INFO("thread(%s) bio_endio error with err=%d.\n", current->comm, error);
+
+		bio->bi_end_io(bio, error);
+	} else
+		WDRBD_WARN("thread(%s) bio(%p) no bi_end_io function.\n", current->comm, bio);
 }
 
 void __list_del_entry(struct list_head *entry)
