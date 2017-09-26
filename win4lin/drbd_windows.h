@@ -1115,6 +1115,8 @@ extern long IS_ERR_OR_NULL(const void *ptr);
 extern int IS_ERR(void *err);
 
 extern struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder);
+extern int windrbd_set_drbd_device_active(struct drbd_device *device, int flag);
+
 
 extern void hlist_add_head(struct hlist_node *n, struct hlist_head *h);
 extern void hlist_del_init(struct hlist_node *entry);

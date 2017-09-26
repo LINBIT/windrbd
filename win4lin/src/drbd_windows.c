@@ -2727,6 +2727,42 @@ cleanup:
     return ret;
 }
 
+static int windrbd_set_block_device_active(struct block_device *bdev, int flag)
+{
+        struct _VOLUME_EXTENSION *vext;
+
+        if (bdev == NULL || bdev->bd_disk == NULL)
+                return -EINVAL;
+
+        vext = bdev->bd_disk->pDeviceExtension;
+        if (vext == NULL)
+                return -EINVAL;
+        vext->Active = flag;
+        return 0;
+}
+
+	/* This is called by DRBD once a device is configured completely
+	 * and DRBD is ready to serve requests via drbd_make_request().
+	 * Since *all* block devices (including C:) go through the
+	 * windrbd driver we want to keep the Active flag in the
+	 * device extensions to filter out configured DRBD and those
+	 * which are not (all others) quickly.
+	 */
+
+int windrbd_set_drbd_device_active(struct drbd_device *device, int flag)
+{
+        int ret;
+
+        if (device == NULL || device->ldev == NULL)
+                return -EINVAL;
+
+        ret = windrbd_set_block_device_active(device->ldev->backing_bdev, flag);
+        if (ret == 0)
+                ret = windrbd_set_block_device_active(device->ldev->md_bdev, flag);
+        return ret;
+}
+
+
 /**
  * @brief
  *	Looks up the \\Devices\\HarddiskVolume<n> device in our
