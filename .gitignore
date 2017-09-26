@@ -1,5 +1,5 @@
 
-converted-sources/
+converted-sources*/
 *.bak
 *~
 win4lin/src/*.obj
