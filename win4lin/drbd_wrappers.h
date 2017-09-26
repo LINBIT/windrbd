@@ -1271,11 +1271,7 @@ static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
 #define bio_clone_fast(bio, gfp, bio_set) bio_clone(bio, gfp)
 #endif
 
-#ifdef COMPAT_HAVE_BIO_BI_BDEV
 #define bio_set_dev(bio, bdev) (bio)->bi_bdev = bdev
-#else
-#define bio_set_dev(bio, bdev)
-#endif
 
 /* This is currently not supported by WinDRBD */
 #define BLKDEV_ZERO_NOUNMAP (false)
