@@ -2737,6 +2737,8 @@ static int windrbd_set_block_device_active(struct block_device *bdev, int flag)
         vext = bdev->bd_disk->pDeviceExtension;
         if (vext == NULL)
                 return -EINVAL;
+
+printk(KERN_DEBUG "Set block device active\n");
         vext->Active = flag;
         return 0;
 }
@@ -2751,15 +2753,10 @@ static int windrbd_set_block_device_active(struct block_device *bdev, int flag)
 
 int windrbd_set_drbd_device_active(struct drbd_device *device, int flag)
 {
-        int ret;
-
         if (device == NULL || device->ldev == NULL)
                 return -EINVAL;
 
-        ret = windrbd_set_block_device_active(device->ldev->backing_bdev, flag);
-        if (ret == 0)
-                ret = windrbd_set_block_device_active(device->ldev->md_bdev, flag);
-        return ret;
+	return windrbd_set_block_device_active(device->ldev->backing_bdev, flag);
 }
 
 
