@@ -1,13 +1,15 @@
 wdrbd-next:
 
----------------
-
-TODO: We want to see the syslog output when the system did boot, not
-	only when we configure a DRBD device.
-
 TODO: Try to put I/O on DRBD device.
 	This will be the same device as if there was no DRBD (use
 	the drive letters).
+
+---------------
+
+TODO: Implement function stubs created when integrating DRBD 9.0.9
+
+TODO: We want to see the syslog output when the system did boot, not
+	only when we configure a DRBD device.
 
 TODO: Have a lower level device for drbdmeta for access of internal
 	DRBD meta data while resource is up.
