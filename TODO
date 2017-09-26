@@ -4,7 +4,18 @@ TODO: Try to put I/O on DRBD device.
 	This will be the same device as if there was no DRBD (use
 	the drive letters).
 
+	Update: Started setting the Active flag automatically from
+	within DRBD (currently only at successful attach, later
+	also on connect. Somewhere else?).
+
 ---------------
+
+TODO: Do we really need all those IOCTLs?
+
+TODO: What we would need is something that overwrites Windows' default
+	behaviour of determining device sizes (when Meta data is
+	internal we want to report only the payload size without
+	the meta data).
 
 TODO: Implement function stubs created when integrating DRBD 9.0.9
 
