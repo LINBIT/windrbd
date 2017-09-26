@@ -8,6 +8,12 @@ TODO: Try to put I/O on DRBD device.
 	within DRBD (currently only at successful attach, later
 	also on connect. Somewhere else?).
 
+	TODO: Unset the flag on down / detach. Or better set it on
+	becoming primary, clear it on becoming secondary (let
+	DRBD do the checks).
+
+	TODO: Remove check in mvolWrite(): DRBD should do this.
+
 ---------------
 
 TODO: Do we really need all those IOCTLs?
