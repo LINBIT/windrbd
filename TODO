@@ -16,6 +16,9 @@ TODO: Try to put I/O on DRBD device.
 
 ---------------
 
+TODO: We should really lock the backing devices using NT kernel
+	mechanisms.
+
 TODO: Do we really need all those IOCTLs?
 
 TODO: What we would need is something that overwrites Windows' default
