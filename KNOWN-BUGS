@@ -1,3 +1,60 @@
+I/O fails with Invalid request Code
+
+Reason is that in the I/O handler, drbd_device is NULL (is looked
+up over the struct block_device).
+
+It seems that DRBD and win_drbd maintain different copies of
+the struct gendisk (and struct block_device) states. The problem
+is that given a volume extension we cannot access the drbd
+block device because the pointer(s) are NULL in the wdrbd version
+of the data. Furthermore we have two fields referring to the
+drbd device (namely struct drbd_device *drbd_device and 
+void *private_data) what I would do is drop drbd_device since
+Linux does not have this field.
+
+Update: This appears to be a little bit more complex than it
+seemed originally. Since Windows does not have minor numbers
+we need another way for drbd_create_device to find the
+matching block device in drbd_create_device() (drbd_main.c).
+Since we can lookup windows volume extension by (NT-internal)
+name (and the functionality to look it up is already there) the
+most natural thing for me would be to use NT-internal names
+(such as \\.\F: or \\Devices\HarddiskVolume5) instead of
+minor numbers, since this is the way how Windows addresses
+block devices. So from a user's point of view we would replace
+the device minor <n> entry in drbd.conf by device volume "<driveletter>:"
+(or similar for GUIDs and internal names) just as we did in
+specifying the disk name (see older solved ticket /dev/sda and
+/dev/sdb are sometimes swapped). Usually this would be the same
+as the disk (we should provide a default using the disk name
+if the device volume is not specified). This allows us also
+to (later) create new NT Volumes which are DRBD devices without
+local backing device (which is a feature that DRBD for Linux has
+TODO: true?). So internally we would lookup the device by
+internal NT kernel name and if not found we would (later) create
+it and tell the PnP manager that there is a new block device.
+If one specifies an existing volume as device volume which differs
+from the backing device, one can easily shoot himself into the
+foot if the existing device is in use (but there are NT locking
+mechanisms which we can use to fail if the device is in use).
+
+Only remaining issue is the question if DRBD can cope with the
+struct block_device for the DRBD device is the same (same pointer)
+as the backing device (but I think yes, since DRBD uses struct
+block_device's internals not very often).
+
+Mantech's solution is to keep the original minor DRBD API and
+interpret the minor as (n-1)th letter in alphabet (actually
+it starts at letter C .. so if you want to have A: you need
+to specify -2 ;) ). I personally think that we do not need
+another mapping from something to volumes we should stick to
+the way NT is doing this .. that way we are not restricted
+to disks that do have a drive letter (it is very easy to
+have more than 24 drives in your system). Plus users need
+to understand that the minor they specify must match the
+backing device (else bad things may happen) and this is not
+very user friendly.
+
 ------------------------------------------------------------------------
 DrbdIoCompletion: DeviceObject is NULL.
 	It doesn't hurt at the moment, but eventually we want to
@@ -110,7 +167,7 @@ properly to the internal windows kernel device names.
 
 Update: This should be addressed somehow, since drbdmeta expects these
 filenames (UNIX-type), while the kernel should receive NT ObjectManager
-internal pathes only (\Device\HarddiskVolume<n>, or \DosDevices\D: or
+internal pathes only (\\Device\HarddiskVolume<n>, or \\DosDevices\D: or
 so). I still think that it is a bad idea to use /dev/sda3 style in
 DRBD config, since they change when the system is rebooted (At least
 on Windows 7).
