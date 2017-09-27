@@ -706,6 +706,14 @@ printk(KERN_INFO "write 2\n");
 printk(KERN_INFO "write 3\n");
 		// DW-1300: get device and get reference.
 		struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
+printk(KERN_INFO "device: %p\n", device);
+printk(KERN_INFO "device (drbd_device) %p\n", VolumeExtension->dev->bd_disk->drbd_device);
+printk(KERN_INFO "device (private data): %p\n", VolumeExtension->dev->bd_disk->private_data);
+if (device) {
+printk(KERN_INFO "resource: %p\n", device->resource);
+printk(KERN_INFO "role: %d\n", device->resource->role[NOW]);
+printk(KERN_INFO "disk_state: %d\n", device->disk_state[NOW]);
+}
 		// DW-1363: prevent writing when device is failed or below.
 		if (device && device->resource && (device->resource->role[NOW] == R_PRIMARY) && (device->disk_state[NOW] > D_FAILED)) {
 printk(KERN_INFO "write 4\n");

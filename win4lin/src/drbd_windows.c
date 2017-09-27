@@ -575,6 +575,7 @@ int kref_put(struct kref *kref, void (*release)(struct kref *kref))
 #endif
 }
 
+/* TODO: originally this is void. */
 int kref_get(struct kref *kref)
 {
 	return atomic_inc_return(&kref->refcount) < 2;
@@ -2572,9 +2573,11 @@ struct drbd_device *get_device_with_vol_ext(PVOLUME_EXTENSION pvext, bool bCheck
 	unsigned char oldIRQL = 0;
 	struct drbd_device *device = NULL;
 
+printk(KERN_INFO "get_device_with_vol_ext 1\n");
 	if (KeGetCurrentIrql() > DISPATCH_LEVEL)
 		return NULL;
 
+printk(KERN_INFO "get_device_with_vol_ext 2\n");
 	// DW-1381: dev is set as NULL when block device is destroyed.
 	if (!pvext->dev)
 	{
@@ -2582,33 +2585,45 @@ struct drbd_device *get_device_with_vol_ext(PVOLUME_EXTENSION pvext, bool bCheck
 		return NULL;		
 	}
 
+printk(KERN_INFO "get_device_with_vol_ext 3\n");
 	// DW-1381: check if device is removed already.
 	if (bCheckRemoveLock)
 	{
+printk(KERN_INFO "get_device_with_vol_ext 4\n");
 		NTSTATUS status = IoAcquireRemoveLock(&pvext->RemoveLock, NULL);
 		if (!NT_SUCCESS(status))
 		{
 			WDRBD_INFO("failed to acquire remove lock with status:0x%x, return NULL\n", status);
 			return NULL;
 		}
+printk(KERN_INFO "get_device_with_vol_ext 5\n");
 	}
+printk(KERN_INFO "get_device_with_vol_ext 6\n");
 
 	oldIRQL = ExAcquireSpinLockShared(&pvext->dev->bd_disk->drbd_device_ref_lock);
+printk(KERN_INFO "get_device_with_vol_ext 7\n");
 	device = pvext->dev->bd_disk->drbd_device;
+printk(KERN_INFO "get_device_with_vol_ext 8\n");
 	if (device)
 	{
+printk(KERN_INFO "get_device_with_vol_ext 9\n");
 		if (kref_get(&device->kref))
 		{
+printk(KERN_INFO "get_device_with_vol_ext a\n");
 			// already destroyed.
 			atomic_dec(&device->kref);			
 			device = NULL;
 		}
+printk(KERN_INFO "get_device_with_vol_ext b\n");
 	}
+printk(KERN_INFO "get_device_with_vol_ext c\n");
 	ExReleaseSpinLockShared(&pvext->dev->bd_disk->drbd_device_ref_lock, oldIRQL);
 
+printk(KERN_INFO "get_device_with_vol_ext d\n");
 	if (bCheckRemoveLock)
 		IoReleaseRemoveLock(&pvext->RemoveLock, NULL);
 
+printk(KERN_INFO "get_device_with_vol_ext e\n");
 	return device;
 }
 
