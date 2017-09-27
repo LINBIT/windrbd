@@ -992,7 +992,8 @@ VOID drbdFreeDev(PVOLUME_EXTENSION VolumeExtension)
 		return;
 	}
 
-	kfree(VolumeExtension->dev->bd_disk->queue);
+	if (VolumeExtension->dev->bd_disk)
+		kfree(VolumeExtension->dev->bd_disk->queue);
 	kfree(VolumeExtension->dev->bd_disk);
 	kfree2(VolumeExtension->dev);
 }

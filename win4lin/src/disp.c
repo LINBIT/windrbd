@@ -707,8 +707,8 @@ printk(KERN_INFO "write 3\n");
 		// DW-1300: get device and get reference.
 		struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
 printk(KERN_INFO "device: %p\n", device);
-printk(KERN_INFO "device (drbd_device) %p\n", VolumeExtension->dev->bd_disk->drbd_device);
-printk(KERN_INFO "device (private data): %p\n", VolumeExtension->dev->bd_disk->private_data);
+/* printk(KERN_INFO "device (drbd_device) %p\n", VolumeExtension->dev->bd_disk->drbd_device);
+printk(KERN_INFO "device (private data): %p\n", VolumeExtension->dev->bd_disk->private_data); */
 if (device) {
 printk(KERN_INFO "resource: %p\n", device->resource);
 printk(KERN_INFO "role: %d\n", device->resource->role[NOW]);

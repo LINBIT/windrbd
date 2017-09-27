@@ -1785,9 +1785,11 @@ static int win_generic_make_request(struct bio *bio)
 		} else { 
 			//apply meta I/O's write_ordering
 			// DW-1300: get drbd device from gendisk.
-			struct drbd_device* device = bio->bi_bdev->bd_disk->drbd_device;
-			if(device && device->resource->write_ordering >= WO_BDEV_FLUSH) {
-				pIoNextStackLocation->Flags |= (SL_WRITE_THROUGH | SL_FT_SEQUENTIAL_WRITE);
+			if (bio->bi_bdev->bd_disk) {
+				struct drbd_device* device = bio->bi_bdev->bd_disk->drbd_device;
+				if(device && device->resource->write_ordering >= WO_BDEV_FLUSH) {
+					pIoNextStackLocation->Flags |= (SL_WRITE_THROUGH | SL_FT_SEQUENTIAL_WRITE);
+				}
 			}
 		}
 	}
@@ -2301,8 +2303,10 @@ void query_targetdev(PVOLUME_EXTENSION pvext)
 	{
 		unsigned long long d_size = get_targetdev_volsize(pvext);
 		pvext->dev->bd_contains->d_size = d_size;
-		pvext->dev->bd_disk->queue->max_hw_sectors =
-			d_size ? (d_size >> 9) : DRBD_MAX_BIO_SIZE;
+		if (pvext->dev->bd_disk) {
+			pvext->dev->bd_disk->queue->max_hw_sectors =
+				d_size ? (d_size >> 9) : DRBD_MAX_BIO_SIZE;
+		}
 	}
 }
 
@@ -2553,6 +2557,11 @@ printk(KERN_INFO "get_device_with_vol_ext 2\n");
 	if (!pvext->dev)
 	{
 		WDRBD_ERROR("failed to get drbd device since pvext->dev is NULL\n");
+		return NULL;		
+	}
+	if (!pvext->dev->bd_disk)
+	{
+		WDRBD_ERROR("failed to get drbd device since pvext->dev->bd_disk is NULL\n");
 		return NULL;		
 	}
 
@@ -3213,7 +3222,7 @@ sector_t wdrbd_get_capacity(struct block_device *bdev)
     }
 
     // Maybe... need to recalculate volume size
-    PVOLUME_EXTENSION pvext = (bdev->bd_disk) ? bdev->pDeviceExtension : NULL;
+    PVOLUME_EXTENSION pvext = bdev->pDeviceExtension;
 	/* TODO: !pvext ?? */
     if (!pvext && (KeGetCurrentIrql() < 2)) {
         bdev->d_size = get_targetdev_volsize(pvext);    // real size
