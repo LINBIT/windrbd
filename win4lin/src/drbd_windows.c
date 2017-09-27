@@ -1684,8 +1684,8 @@ NTSTATUS DrbdIoCompletion(
 	struct bio *bio = Context;
 	PMDL mdl, nextMdl;
 
-	if (bio && bio->bi_bdev && bio->bi_bdev->bd_disk && bio->bi_bdev->bd_disk->pDeviceExtension) {
-		IoReleaseRemoveLock(&bio->bi_bdev->bd_disk->pDeviceExtension->RemoveLock, NULL);
+	if (bio && bio->bi_bdev && bio->bi_bdev && bio->bi_bdev->pDeviceExtension) {
+		IoReleaseRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
 	}
 
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
@@ -1720,14 +1720,14 @@ static int win_generic_make_request(struct bio *bio)
 		return -EIO;
 	}
 	if (KeGetCurrentIrql() <= DISPATCH_LEVEL) {
-		status = IoAcquireRemoveLock(&bio->bi_bdev->bd_disk->pDeviceExtension->RemoveLock, NULL);
+		status = IoAcquireRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
 		if (!NT_SUCCESS(status)) {
-			WDRBD_ERROR("IoAcquireRemoveLock bio->bi_bdev->bd_disk->pDeviceExtension:%p fail. status(0x%x)\n", bio->bi_bdev->bd_disk->pDeviceExtension, status);
+			WDRBD_ERROR("IoAcquireRemoveLock bio->bi_bdev->pDeviceExtension:%p fail. status(0x%x)\n", bio->bi_bdev->pDeviceExtension, status);
 			return -EIO;
 		}
 	}
 	else {
-		WDRBD_WARN("IoAcquireRemoveLock IRQL(%d) is too high, bio->pVolExt:%p fail\n", KeGetCurrentIrql(), bio->bi_bdev->bd_disk->pDeviceExtension);
+		WDRBD_WARN("IoAcquireRemoveLock IRQL(%d) is too high, bio->pVolExt:%p fail\n", KeGetCurrentIrql(), bio->bi_bdev->pDeviceExtension);
 		return -EIO;
 	}
 
@@ -1763,7 +1763,7 @@ static int win_generic_make_request(struct bio *bio)
 
 	newIrp = IoBuildAsynchronousFsdRequest(
 				io,
-				bio->bi_bdev->bd_disk->pDeviceExtension->TargetDeviceObject,
+				bio->bi_bdev->pDeviceExtension->TargetDeviceObject,
 				buffer,
 				bio->bi_size,
 				&offset,
@@ -1772,7 +1772,7 @@ static int win_generic_make_request(struct bio *bio)
 
 	if (!newIrp) {
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
-		IoReleaseRemoveLock(&bio->bi_bdev->bd_disk->pDeviceExtension->RemoveLock, NULL);
+		IoReleaseRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
 		return -ENOMEM;
 	}
 
@@ -1795,14 +1795,14 @@ static int win_generic_make_request(struct bio *bio)
 	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
 /* TODO: Doesn't help */
-	pIoNextStackLocation->DeviceObject = bio->bi_bdev->bd_disk->pDeviceExtension->TargetDeviceObject; 
+	pIoNextStackLocation->DeviceObject = bio->bi_bdev->pDeviceExtension->TargetDeviceObject; 
 
 	//
 	//	simulation disk-io error point . (generic_make_request fail) - disk error simluation type 0
 	//
 	if(gSimulDiskIoError.bDiskErrorOn && gSimulDiskIoError.ErrorType == SIMUL_DISK_IO_ERROR_TYPE0) {
 		WDRBD_ERROR("SimulDiskIoError: type0...............\n");
-		IoReleaseRemoveLock(&bio->bi_bdev->bd_disk->pDeviceExtension->RemoveLock, NULL);
+		IoReleaseRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
 
 		// DW-859: Without unlocking mdl and freeing irp, freeing buffer causes bug check code 0x4e(0x9a, ...)
 		// When 'generic_make_request' returns an error code, bi_end_io is called to clean up the bio but doesn't do for irp. We should free irp that is made but wouldn't be delivered.
@@ -1830,7 +1830,7 @@ static int win_generic_make_request(struct bio *bio)
 		IoFreeIrp(newIrp);
 		return -EIO;
 	}
-	IoCallDriver(bio->bi_bdev->bd_disk->pDeviceExtension->TargetDeviceObject, newIrp);
+	IoCallDriver(bio->bi_bdev->pDeviceExtension->TargetDeviceObject, newIrp);
 
 	return 0;
 }
@@ -2457,7 +2457,7 @@ PVOLUME_EXTENSION get_targetdev_by_minor(unsigned int minor)
 	}
 
 // TODO: put dev
-	return dev->bd_disk->pDeviceExtension;
+	return dev->pDeviceExtension;
 }
 
 /**
@@ -2505,65 +2505,36 @@ struct block_device *create_block_device(IN OUT PVOLUME_EXTENSION pvext)
 		WDRBD_ERROR("Failed to allocate block_device NonPagedMemory\n");
 		return NULL;
 	}
-
-	dev->bd_contains = kmalloc(sizeof(struct block_device), 0, 'C5DW');
-	if (!dev->bd_contains) {
-		WDRBD_ERROR("Failed to allocate block_device NonPagedMemory\n");
-		return NULL;
-	}
-
-	dev->bd_disk = alloc_disk(0);
-	if (!dev->bd_disk)
-	{
-		WDRBD_ERROR("Failed to allocate gendisk NonPagedMemory\n");
-		goto gendisk_failed;
-	}
-
-	dev->bd_disk->queue = blk_alloc_queue(0);
-	if (!dev->bd_disk->queue)
-	{
-		WDRBD_ERROR("Failed to allocate request_queue NonPagedMemory\n");
-		goto request_queue_failed;
-	}
-
 	kref_init(&dev->kref);
 
-	dev->bd_contains->bd_disk = dev->bd_disk;
-	dev->bd_contains->bd_parent = dev;
-
-	sprintf(dev->bd_disk->disk_name, "drbd", pvext->VolIndex);
-	dev->bd_disk->pDeviceExtension = pvext;
-
-	dev->bd_disk->queue->logical_block_size = 512;
+	dev->bd_contains = dev;
+	dev->bd_parent = dev;
+	dev->bd_disk = NULL;	/* Created later by DRBD */
+	dev->pDeviceExtension = pvext;
+	dev->d_size = 0;
 
 	return dev;
-
-request_queue_failed:
-	kfree(dev->bd_disk);
-
-gendisk_failed:
-	kfree(dev);
-
-	return NULL;
 }
 
 // DW-1109: delete drbd bdev when ref cnt gets 0, clean up all resources that has been created in create_drbd_block_device.
-void delete_drbd_block_device(struct kref *kref)
+void delete_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 
 	// DW-1109: reference count has been increased when we create block device, decrease here.
-	ObDereferenceObject(bdev->bd_disk->pDeviceExtension->DeviceObject);
-	bdev->bd_disk->pDeviceExtension->DeviceObject = NULL;
+	ObDereferenceObject(bdev->pDeviceExtension->DeviceObject);
+		/* TODO: may leak */
+	bdev->pDeviceExtension->DeviceObject = NULL;
 
 	// DW-1381: set dev as NULL not to access from this volume extension since it's being deleted.
-	bdev->bd_disk->pDeviceExtension->dev = NULL;
+	bdev->pDeviceExtension->dev = NULL;
 
-	blk_cleanup_queue(bdev->bd_disk->queue);
+	if (bdev->bd_disk) {
+		if (bdev->bd_disk->queue)
+			blk_cleanup_queue(bdev->bd_disk->queue);
+		put_disk(bdev->bd_disk);
+	}
 
-	put_disk(bdev->bd_disk);
-
-	kfree2(bdev->bd_contains);
 	kfree2(bdev);
 }
 
@@ -2746,10 +2717,10 @@ static int windrbd_set_block_device_active(struct block_device *bdev, int flag)
 {
         struct _VOLUME_EXTENSION *vext;
 
-        if (bdev == NULL || bdev->bd_disk == NULL)
+        if (bdev == NULL)
                 return -EINVAL;
 
-        vext = bdev->bd_disk->pDeviceExtension;
+        vext = bdev->pDeviceExtension;
         if (vext == NULL)
                 return -EINVAL;
 
@@ -3242,7 +3213,7 @@ sector_t wdrbd_get_capacity(struct block_device *bdev)
     }
 
     // Maybe... need to recalculate volume size
-    PVOLUME_EXTENSION pvext = (bdev->bd_disk) ? bdev->bd_disk->pDeviceExtension : NULL;
+    PVOLUME_EXTENSION pvext = (bdev->bd_disk) ? bdev->pDeviceExtension : NULL;
 	/* TODO: !pvext ?? */
     if (!pvext && (KeGetCurrentIrql() < 2)) {
         bdev->d_size = get_targetdev_volsize(pvext);    // real size

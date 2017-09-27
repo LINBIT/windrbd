@@ -166,7 +166,7 @@ static inline int drbd_blkdev_put(struct block_device *bdev, fmode_t mode)
 {
 	// DW-1109: put ref count and delete bdev if ref gets 0
 	struct block_device *b = bdev->bd_parent ? bdev->bd_parent : bdev;
-	kref_put(&b->kref, delete_drbd_block_device);
+	kref_put(&b->kref, delete_block_device);
 	/* blkdev_put seems to not have useful return values,
 	 * close_bdev_exclusive is void. */
 	return 0;
