@@ -1225,7 +1225,7 @@ extern int initRegistry(__in PUNICODE_STRING RegistryPath);
 extern NTSTATUS DeleteRegistryValueKey(__in PUNICODE_STRING preg_path, __in PUNICODE_STRING pvalue_name);
 extern NTSTATUS DeleteDriveLetterInRegistry(char letter);
 extern void NTAPI NetlinkServerThread(PVOID p);
-extern struct block_device * create_drbd_block_device(IN OUT PVOLUME_EXTENSION pvext);
+extern struct block_device *create_block_device(IN OUT PVOLUME_EXTENSION pvext);
 extern void delete_drbd_block_device(struct kref *kref);
 // DW-1300
 extern struct drbd_device *get_device_with_vol_ext(PVOLUME_EXTENSION pvext, bool bCheckRemoveLock);

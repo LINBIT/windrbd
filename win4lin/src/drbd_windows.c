@@ -2493,9 +2493,9 @@ LONGLONG get_targetdev_volsize(PVOLUME_EXTENSION VolumeExtension)
 * @brief   create block_device by referencing to VOLUME_EXTENSION object.
 *          a created block_device must be freed by ExFreePool() elsewhere.
 */
-struct block_device * create_drbd_block_device(IN OUT PVOLUME_EXTENSION pvext)
+struct block_device *create_block_device(IN OUT PVOLUME_EXTENSION pvext)
 {
-	struct block_device * dev;
+	struct block_device *dev;
 
 	// DW-1109: need to increase reference count of device object to guarantee not to be freed while we're using.
 	ObReferenceObject(pvext->DeviceObject);
