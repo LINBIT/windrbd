@@ -54,6 +54,15 @@ Update: Yes we need that, but low priority. Create a
 \Device\HarddiskXParitionY-skip-drbd device along with the
 \DosDevices\C:-skip-drbd Symlinks (also for Volume{GID}-skip-drbd)
 and try them first in drbdmeta. Or check if DRBD is up first.
+
+Update: Mantech wdrbd allows writes past the size of the DRBD device
+via the DRBD-ed device itself. This is not a good idea since a
+
+cp /dev/zero /dev/sda5
+
+(/dev/sda5 being the DRBD-ed device) will erase meta data while
+it shouldn't.
+
 -------------------------------------------------------------------------
 
 SOLVED: Windows does not boot any more once DRBD driver is installed. 
