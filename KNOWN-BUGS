@@ -1,23 +1,4 @@
-When doing a drbdadm up w0 and it fails because of missing metadata,
-drbdadm up doesn't cleanup properly. In particular a subsequent
-drbdadm up (with another disk which has meta data) fails with:
-
-peer connection already exists.
-drbdset new-peer w0 ... is the command that failed.
-
-This is probably a problem that also exists on the Linux version.
-
-Kernel log shows that last command of the original drbdadm up is:
-
-DRBD_ADM_NEW_PEER
-
-so it seems that the problem is really drbdadm, not the kernel driver.
-
-Update: It isn't that much of a problem, since a drbdadm down takes
-down the peer config and the minor, but still drbdadm up should be
-atomic.
 ------------------------------------------------------------------------
-
 DrbdIoCompletion: DeviceObject is NULL.
 	It doesn't hurt at the moment, but eventually we want to
 	fix this.
