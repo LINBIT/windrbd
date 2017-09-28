@@ -1684,10 +1684,13 @@ NTSTATUS DrbdIoCompletion(
 	struct bio *bio = Context;
 	PMDL mdl, nextMdl;
 
-	if (bio && bio->bi_bdev && bio->bi_bdev && bio->bi_bdev->pDeviceExtension) {
+	if (bio && bio->bi_bdev && bio->bi_bdev->pDeviceExtension) {
 		IoReleaseRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
 	}
 
+	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
+		WDRBD_WARN("DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
+	}
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
 	for (mdl = Irp->MdlAddress; mdl != NULL; mdl = nextMdl) {
@@ -1717,6 +1720,7 @@ static int win_generic_make_request(struct bio *bio)
 	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
 
 	if (!q) {
+		WDRBD_WARN("win_generic_make_request: request queue is NULL.\n");
 		return -EIO;
 	}
 	if (KeGetCurrentIrql() <= DISPATCH_LEVEL) {
@@ -1755,11 +1759,9 @@ static int win_generic_make_request(struct bio *bio)
 		}
 	}
 
-#ifdef DRBD_TRACE
-    WDRBD_TRACE("(%s)Local I/O(%s): sect=0x%llx sz=%d IRQL=%d buf=0x%p, off&=0x%llx target=%c:\n", 
+	WDRBD_TRACE("(%s)Local I/O(%s): sect=0x%llx sz=%d IRQL=%d buf=0x%p, off&=0x%llx\n", 
 		current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", 
-		offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), &offset, buffer, q->backing_dev_info.pDeviceExtension->Letter);
-#endif
+		offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), &offset, buffer);
 
 	newIrp = IoBuildAsynchronousFsdRequest(
 				io,
