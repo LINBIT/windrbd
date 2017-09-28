@@ -394,8 +394,20 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
     }
 #endif
 
-	// DW-1109: create block device in add device routine, it won't be destroyed at least we put ref in remove device routine.
-	VolumeExtension->dev = create_block_device(VolumeExtension);
+	VolumeExtension->upper_dev = create_block_device(VolumeExtension);
+	if (VolumeExtension->upper_dev == NULL) {
+		WDRBD_WARN("Could not create upper dev.\n");
+		return STATUS_NO_SUCH_DEVICE;	/* TODO: Or so, also cleanup */
+	}
+	VolumeExtension->upper_dev->d_size = 0;
+
+	VolumeExtension->lower_dev = create_block_device(VolumeExtension);
+	if (VolumeExtension->lower_dev == NULL) {
+		WDRBD_WARN("Could not create lower dev.\n");
+		return STATUS_NO_SUCH_DEVICE;	/* TODO: Or so, also cleanup */
+	}
+	VolumeExtension->lower_dev->d_size = get_targetdev_volsize(VolumeExtension);
+	
 
     WDRBD_INFO("VolumeExt(0x%p) Device(%ws) VolIndex(%d) Active(%d) MountPoint(%wZ)\n",
         VolumeExtension,

@@ -93,7 +93,8 @@ typedef struct _VOLUME_EXTENSION
 #else
 	MVOL_THREAD			WorkThreadInfo;
 #endif
-	struct block_device	*dev;
+	struct block_device	*upper_dev;
+	struct block_device	*lower_dev;
 } VOLUME_EXTENSION, *PVOLUME_EXTENSION;
 
 typedef struct _ROOT_EXTENSION
