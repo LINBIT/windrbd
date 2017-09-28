@@ -2542,6 +2542,17 @@ struct block_device *create_block_device(IN OUT PVOLUME_EXTENSION pvext)
 		/* TODO: not always? */
 	dev->bd_disk->queue->logical_block_size = 512;
 	dev->pDeviceExtension = pvext;
+		/* TODO: DRBD size may be less than that (without
+		   meta data. */
+/*	dev->d_size = get_targetdev_volsize(pvext); */
+		/* TODO: As long as we're unconfigured, we don't know
+		   the size. Will be set later during attach.
+		   Else DRBD attach complains about disk too small. 
+		   TODO: have a mechanism to determine the size for
+		         diskless configurations.
+			Fix that when splitting devices into
+			backing devices and drbd devices.
+		 */
 	dev->d_size = 0;
  
         return dev;
@@ -2582,11 +2593,9 @@ struct drbd_device *get_device_with_vol_ext(PVOLUME_EXTENSION pvext, bool bCheck
 {
 	struct drbd_device *device = NULL;
 
-printk(KERN_INFO "get_device_with_vol_ext 1\n");
 	if (KeGetCurrentIrql() > DISPATCH_LEVEL)
 		return NULL;
 
-printk(KERN_INFO "get_device_with_vol_ext 2\n");
 	// DW-1381: dev is set as NULL when block device is destroyed.
 	if (!pvext->dev)
 	{
@@ -2594,34 +2603,25 @@ printk(KERN_INFO "get_device_with_vol_ext 2\n");
 		return NULL;		
 	}
 
-printk(KERN_INFO "get_device_with_vol_ext 3\n");
 	// DW-1381: check if device is removed already.
 	if (bCheckRemoveLock)
 	{
-printk(KERN_INFO "get_device_with_vol_ext 4\n");
 		NTSTATUS status = IoAcquireRemoveLock(&pvext->RemoveLock, NULL);
 		if (!NT_SUCCESS(status))
 		{
 			WDRBD_INFO("failed to acquire remove lock with status:0x%x, return NULL\n", status);
 			return NULL;
 		}
-printk(KERN_INFO "get_device_with_vol_ext 5\n");
 	}
-printk(KERN_INFO "get_device_with_vol_ext 6\n");
 
-printk(KERN_INFO "get_device_with_vol_ext 7\n");
 	device = pvext->dev->drbd_device;
-printk(KERN_INFO "get_device_with_vol_ext 8\n");
 	if (device)
 	{
-printk(KERN_INFO "get_device_with_vol_ext 9\n");
 		kref_get(&device->kref);
 	}
-printk(KERN_INFO "get_device_with_vol_ext d\n");
 	if (bCheckRemoveLock)
 		IoReleaseRemoveLock(&pvext->RemoveLock, NULL);
 
-printk(KERN_INFO "get_device_with_vol_ext e\n");
 	return device;
 }
 
