@@ -2448,12 +2448,13 @@ void refresh_targetdev_list()
     MVOL_UNLOCK();
 }
 
-/**
- * @brief
- */
+/* TODO: this should go away .. we want NT device names internally. */
+
 PVOLUME_EXTENSION get_targetdev_by_minor(unsigned int minor)
 {
-	char path[3] = { minor_to_letter(minor), ':', '\0' };
+	char path[128] = "\\DosDevices\\F:";
+	path[12] = minor_to_letter(minor);
+
 	struct block_device * dev = blkdev_get_by_path(path, (fmode_t)0, NULL);
 	if (IS_ERR(dev))
 	{
