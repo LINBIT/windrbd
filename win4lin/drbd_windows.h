@@ -574,15 +574,9 @@ struct gendisk
 	char disk_name[DISK_NAME_LEN];  /* name of major driver */
 	struct request_queue *queue;
 	int major, first_minor;
-#ifdef _WIN32
-    const struct block_device_operations *fops;
-    void *private_data;
-	struct drbd_device*		drbd_device;			// DW-1300: the only point to access drbd device from volume extension.
-	EX_SPIN_LOCK			drbd_device_ref_lock;	// DW-1300: to synchronously access drbd_device. this lock is used when both referencing(shared) and deleting(exclusive) drbd device.
-#endif
-#ifdef _WIN32
+	const struct block_device_operations *fops;
+	void *private_data;
 	void * part0; 
-#endif
 };
 
 struct block_device {
@@ -598,6 +592,7 @@ struct block_device {
 	unsigned long long d_size;
 	struct kref kref;
 
+	struct drbd_device* drbd_device;
 	PVOLUME_EXTENSION pDeviceExtension;
 };
 
@@ -1232,7 +1227,7 @@ extern void delete_block_device(struct kref *kref);
 extern struct drbd_device *get_device_with_vol_ext(PVOLUME_EXTENSION pvext, bool bCheckRemoveLock);
 static inline struct drbd_device *get_device_quick(PVOLUME_EXTENSION pvext)
 {
-	return pvext->dev->bd_disk->drbd_device;
+	return pvext->dev->drbd_device;
 }
 
 

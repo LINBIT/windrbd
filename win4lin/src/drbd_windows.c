@@ -1785,8 +1785,8 @@ static int win_generic_make_request(struct bio *bio)
 		} else { 
 			//apply meta I/O's write_ordering
 			// DW-1300: get drbd device from gendisk.
-			if (bio->bi_bdev->bd_disk) {
-				struct drbd_device* device = bio->bi_bdev->bd_disk->drbd_device;
+			if (bio->bi_bdev) {
+				struct drbd_device* device = bio->bi_bdev->drbd_device;
 				if(device && device->resource->write_ordering >= WO_BDEV_FLUSH) {
 					pIoNextStackLocation->Flags |= (SL_WRITE_THROUGH | SL_FT_SEQUENTIAL_WRITE);
 				}
@@ -2513,7 +2513,7 @@ struct block_device *create_block_device(IN OUT PVOLUME_EXTENSION pvext)
 
 	dev->bd_contains = dev;
 	dev->bd_parent = dev;
-	dev->bd_disk = NULL;	/* Created later by DRBD */
+	dev->bd_disk = NULL;	/* Created later by DRBD. TODO: ?? */
 	dev->pDeviceExtension = pvext;
 	dev->d_size = 0;
 
@@ -2545,7 +2545,6 @@ void delete_block_device(struct kref *kref)
 // get device with volume extension in safe, user should put ref when no longer use device.
 struct drbd_device *get_device_with_vol_ext(PVOLUME_EXTENSION pvext, bool bCheckRemoveLock)
 {
-	unsigned char oldIRQL = 0;
 	struct drbd_device *device = NULL;
 
 printk(KERN_INFO "get_device_with_vol_ext 1\n");
@@ -2557,11 +2556,6 @@ printk(KERN_INFO "get_device_with_vol_ext 2\n");
 	if (!pvext->dev)
 	{
 		WDRBD_ERROR("failed to get drbd device since pvext->dev is NULL\n");
-		return NULL;		
-	}
-	if (!pvext->dev->bd_disk)
-	{
-		WDRBD_ERROR("failed to get drbd device since pvext->dev->bd_disk is NULL\n");
 		return NULL;		
 	}
 
@@ -2580,25 +2574,14 @@ printk(KERN_INFO "get_device_with_vol_ext 5\n");
 	}
 printk(KERN_INFO "get_device_with_vol_ext 6\n");
 
-	oldIRQL = ExAcquireSpinLockShared(&pvext->dev->bd_disk->drbd_device_ref_lock);
 printk(KERN_INFO "get_device_with_vol_ext 7\n");
-	device = pvext->dev->bd_disk->drbd_device;
+	device = pvext->dev->drbd_device;
 printk(KERN_INFO "get_device_with_vol_ext 8\n");
 	if (device)
 	{
 printk(KERN_INFO "get_device_with_vol_ext 9\n");
-		if (kref_get(&device->kref))
-		{
-printk(KERN_INFO "get_device_with_vol_ext a\n");
-			// already destroyed.
-			atomic_dec(&device->kref);			
-			device = NULL;
-		}
-printk(KERN_INFO "get_device_with_vol_ext b\n");
+		kref_get(&device->kref);
 	}
-printk(KERN_INFO "get_device_with_vol_ext c\n");
-	ExReleaseSpinLockShared(&pvext->dev->bd_disk->drbd_device_ref_lock, oldIRQL);
-
 printk(KERN_INFO "get_device_with_vol_ext d\n");
 	if (bCheckRemoveLock)
 		IoReleaseRemoveLock(&pvext->RemoveLock, NULL);
@@ -3264,17 +3247,16 @@ int win_drbd_thread_setup(struct drbd_thread *thi)
 	return STATUS_SUCCESS;
 }
 
-/* TODO: this should go away. */
+/* TODO: this should take a string as argument and call blkdev_get_by_path
+         to find the block device. */
 
-struct block_device *bdget(int dev)
+struct block_device *bdget(int device_no)
 {
-	struct block_device *bdev = kzalloc(sizeof(*bdev), 0, 'DBDW');
+	struct _VOLUME_EXTENSION *v = get_targetdev_by_minor(device_no & 0xffffff);
+	if (v)
+		return v->dev;
 
-	(void)dev;
-
-	kref_init(&bdev->kref);
-	kref_get(&bdev->kref);
-	return bdev;
+	return NULL;
 }
 
 static void _bdput(struct kref *kref)
