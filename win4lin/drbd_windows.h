@@ -1225,11 +1225,6 @@ extern struct block_device *create_block_device(IN OUT PVOLUME_EXTENSION pvext);
 extern void delete_block_device(struct kref *kref);
 // DW-1300
 extern struct drbd_device *get_device_with_vol_ext(PVOLUME_EXTENSION pvext, bool bCheckRemoveLock);
-static inline struct drbd_device *get_device_quick(PVOLUME_EXTENSION pvext)
-{
-	return pvext->dev->drbd_device;
-}
-
 
 extern BOOLEAN do_add_minor(unsigned int minor);
 extern void drbdFreeDev(PVOLUME_EXTENSION pDeviceExtension);

@@ -62,12 +62,12 @@ IOCTL_GetAllVolumeInfo( PIRP Irp, PULONG ReturnLength )
 		pventry->VolIndex = (UCHAR)pvext->VolIndex;
 		pventry->ThreadActive = pvext->WorkThreadInfo.Active;
 		pventry->ThreadExit = pvext->WorkThreadInfo.exit_thread;
-		if (pvext->dev)
+		if (pvext->upper_dev)
 		{
-			pventry->AgreedSize = pvext->dev->d_size;
-			if (pvext->dev->bd_contains)
+			pventry->AgreedSize = pvext->upper_dev->d_size;
+			if (pvext->upper_dev->bd_contains)
 			{
-				pventry->Size = pvext->dev->bd_contains->d_size;
+				pventry->Size = pvext->upper_dev->bd_contains->d_size;
 			}
 		}
 	}

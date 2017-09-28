@@ -168,27 +168,22 @@ mvolRemoveDevice(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	}
 #endif
 
-	if (VolumeExtension->dev) {
-		// DW-1300: get device and get reference.
-		struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, FALSE);
-		if (device)
+	struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, FALSE);
+	if (device)
+	{
+		if (get_disk_state2(device) >= D_INCONSISTENT)
 		{
-			if (get_disk_state2(device) >= D_INCONSISTENT)
-			{
-				drbd_chk_io_error(device, 1, DRBD_FORCE_DETACH);
+			drbd_chk_io_error(device, 1, DRBD_FORCE_DETACH);
 
-				long timeo = 3 * HZ;
-				wait_event_interruptible_timeout(timeo, device->misc_wait,
-							 get_disk_state2(device) != D_FAILED, timeo);
-			}			
-			// DW-1300: put device reference count when no longer use.
-			kref_put(&device->kref, drbd_destroy_device);
-		}
-		
-		// DW-1109: put ref count that's been set as 1 when initialized, in add device routine.
-		// deleting block device can be defered if drbd device is using.		
-		blkdev_put(VolumeExtension->dev, 0);
+			long timeo = 3 * HZ;
+			wait_event_interruptible_timeout(timeo, device->misc_wait,
+						 get_disk_state2(device) != D_FAILED, timeo);
+		}			
+		kref_put(&device->kref, drbd_destroy_device);
 	}
+		
+	blkdev_put(VolumeExtension->lower_dev, 0);
+	blkdev_put(VolumeExtension->upper_dev, 0);
 
 	// DW-1277: check volume type we marked when drbd attaches.
 	// for normal volume.
@@ -281,7 +276,7 @@ int DoSplitIo(PVOLUME_EXTENSION VolumeExtension, ULONG io, PIRP upper_pirp, stru
 	bio->pMasterIrp = upper_pirp; 
 
 	bio->bi_sector = offset.QuadPart >> 9; 
-	bio->bi_bdev = VolumeExtension->dev;
+	bio->bi_bdev = VolumeExtension->upper_dev;
 	bio->bi_rw |= (io == IRP_MJ_WRITE) ? WRITE : READ;
 	bio->bi_size = length;
 	bio->bi_end_io = bio_finished;
@@ -988,14 +983,21 @@ NTSTATUS DeleteDriveLetterInRegistry(char letter)
 */
 VOID drbdFreeDev(PVOLUME_EXTENSION VolumeExtension)
 {
-	if (VolumeExtension == NULL || VolumeExtension->dev == NULL) {
+	if (VolumeExtension == NULL || VolumeExtension->lower_dev == NULL || VolumeExtension->upper_dev == NULL) {
 		return;
 	}
 
-	if (VolumeExtension->dev->bd_disk)
-		kfree(VolumeExtension->dev->bd_disk->queue);
-	kfree(VolumeExtension->dev->bd_disk);
-	kfree2(VolumeExtension->dev);
+		/* TODO: request queues? */
+	if (VolumeExtension->lower_dev->bd_disk)
+		kfree(VolumeExtension->lower_dev->bd_disk->queue);
+	kfree(VolumeExtension->lower_dev->bd_disk);
+		/* TODO: kfree2? */
+	kfree2(VolumeExtension->lower_dev);
+
+	if (VolumeExtension->upper_dev->bd_disk)
+		kfree(VolumeExtension->upper_dev->bd_disk->queue);
+	kfree(VolumeExtension->upper_dev->bd_disk);
+	kfree2(VolumeExtension->upper_dev);
 }
 
 #ifdef _WIN32_DEBUG_OOS

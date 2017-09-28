@@ -467,7 +467,7 @@ mvolCreate(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     if (VolumeExtension->Active)
     {
 	    struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
-	    struct block_device *bdev = VolumeExtension->dev;
+	    struct block_device *bdev = VolumeExtension->upper_dev;
 	    if (device && bdev) {
 
 		    PIO_STACK_LOCATION psl;
@@ -657,7 +657,7 @@ printk(KERN_INFO "read 2\n");
     return IoCallDriver(VolumeExtension->TargetDeviceObject, Irp);
 
 printk(KERN_INFO "read 5\n");
-    struct drbd_device *device = get_device_quick(VolumeExtension);
+    struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
 
     {
 #ifdef DRBD_TRACE

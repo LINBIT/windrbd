@@ -2300,15 +2300,16 @@ void query_targetdev(PVOLUME_EXTENSION pvext)
 	}
 
 	// DW-1109: not able to get volume size in add device routine, get it here if no size is assigned.
-	if (pvext->dev->bd_contains &&
-		pvext->dev->bd_contains->d_size == 0)
+	if (pvext->lower_dev->bd_contains &&
+		pvext->lower_dev->bd_contains->d_size == 0)
 	{
 		unsigned long long d_size = get_targetdev_volsize(pvext);
-		pvext->dev->bd_contains->d_size = d_size;
-		if (pvext->dev->bd_disk) {
-			pvext->dev->bd_disk->queue->max_hw_sectors =
+		pvext->lower_dev->bd_contains->d_size = d_size;
+		if (pvext->lower_dev->bd_disk) {
+			pvext->lower_dev->bd_disk->queue->max_hw_sectors =
 				d_size ? (d_size >> 9) : DRBD_MAX_BIO_SIZE;
 		}
+printk(KERN_INFO "query_targetdev: d_size: %llu\n", d_size);
 	}
 }
 
@@ -2450,23 +2451,6 @@ void refresh_targetdev_list()
     MVOL_UNLOCK();
 }
 
-/* TODO: this should go away .. we want NT device names internally. */
-
-PVOLUME_EXTENSION get_targetdev_by_minor(unsigned int minor)
-{
-	char path[128] = "\\DosDevices\\F:";
-	path[12] = minor_to_letter(minor);
-
-	struct block_device * dev = blkdev_get_by_path(path, (fmode_t)0, NULL);
-	if (IS_ERR(dev))
-	{
-		return NULL;
-	}
-
-// TODO: put dev
-	return dev->pDeviceExtension;
-}
-
 /**
  * @return
  *	volume size per byte
@@ -2579,7 +2563,8 @@ void delete_block_device(struct kref *kref)
 	bdev->pDeviceExtension->DeviceObject = NULL;
 
 	// DW-1381: set dev as NULL not to access from this volume extension since it's being deleted.
-	bdev->pDeviceExtension->dev = NULL;
+	bdev->pDeviceExtension->upper_dev = NULL;
+	bdev->pDeviceExtension->lower_dev = NULL;
 
 	if (bdev->bd_disk) {
 		if (bdev->bd_disk->queue)
@@ -2599,7 +2584,7 @@ struct drbd_device *get_device_with_vol_ext(PVOLUME_EXTENSION pvext, bool bCheck
 		return NULL;
 
 	// DW-1381: dev is set as NULL when block device is destroyed.
-	if (!pvext->dev)
+	if (!pvext->upper_dev)
 	{
 		WDRBD_ERROR("failed to get drbd device since pvext->dev is NULL\n");
 		return NULL;		
@@ -2616,7 +2601,7 @@ struct drbd_device *get_device_with_vol_ext(PVOLUME_EXTENSION pvext, bool bCheck
 		}
 	}
 
-	device = pvext->dev->drbd_device;
+	device = pvext->upper_dev->drbd_device;
 	if (device)
 	{
 		kref_get(&device->kref);
@@ -2780,7 +2765,7 @@ int windrbd_set_drbd_device_active(struct drbd_device *device, int flag)
  *	Looks up the \\Devices\\HarddiskVolume<n> device in our
  *      internal list of associated block devices.
  */
-static struct block_device *lookup_blkdev(UNICODE_STRING * name)
+static struct _VOLUME_EXTENSION *lookup_pvext(UNICODE_STRING * name)
 {
 	ROOT_EXTENSION * proot = mvolRootDeviceObject->DeviceExtension;
 	VOLUME_EXTENSION * pvext = proot->Head;
@@ -2799,7 +2784,7 @@ static struct block_device *lookup_blkdev(UNICODE_STRING * name)
 	}
 	MVOL_UNLOCK();
 
-	return (pvext) ? pvext->dev : NULL;
+	return pvext;
 }
 
 static NTSTATUS resolve_nt_kernel_link(UNICODE_STRING *upath, UNICODE_STRING *link_target)
@@ -2834,17 +2819,14 @@ out_close_handle:
 	return status;
 }
 
-struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder)
+static struct _VOLUME_EXTENSION *pvext_get_by_path(const char *path)
 {
-	UNREFERENCED_PARAMETER(mode);
-	UNREFERENCED_PARAMETER(holder);
-
-	struct block_device *dev;
 	ANSI_STRING apath;
 	UNICODE_STRING upath;
 	NTSTATUS status;
 	WCHAR link_target_buffer[1024];
 	UNICODE_STRING link_target;
+	struct _VOLUME_EXTENSION *pvext;
 
 	RtlInitAnsiString(&apath, path);
 	status = RtlAnsiStringToUnicodeString(&upath, &apath, TRUE);
@@ -2852,9 +2834,9 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		WDRBD_WARN("RtlAnsiStringToUnicodeString: Cannot convert path to Unicode string, status = %d, path = %s\n", status, path);
 		return ERR_PTR(-EINVAL);
 	}
-	dev = lookup_blkdev(&upath);
+	pvext = lookup_pvext(&upath);
 
-	if (dev == NULL) {
+	if (pvext == NULL) {
 		WDRBD_INFO("%s is not a block device, let's see if it is a symbolic link.\n", path);
 		link_target.Buffer = link_target_buffer;
 		link_target.MaximumLength = sizeof(link_target_buffer)-1;
@@ -2865,9 +2847,27 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 			return ERR_PTR(-ENODEV);
 		}
 
-		dev = lookup_blkdev(&link_target);
+		pvext = lookup_pvext(&link_target);
 	}
+	return pvext;
+}
 
+
+
+static struct block_device *windrbd_blkdev_get_by_path(const char *path, bool upper)
+{
+	struct _VOLUME_EXTENSION *pvext;
+	struct block_device *dev;
+
+	pvext = pvext_get_by_path(path);
+	if (pvext == NULL)
+		return NULL;
+
+	if (upper) {
+		dev = pvext->upper_dev;	
+	} else {
+		dev = pvext->lower_dev;	
+	}
 	if (dev) {
 		kref_get(&dev->kref);
 		return dev;
@@ -2875,6 +2875,22 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	return ERR_PTR(-ENODEV);
 }
 
+struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder)
+{
+	return windrbd_blkdev_get_by_path(path, false);
+}
+
+/* TODO: this should go away .. we want NT device names internally. */
+
+/* This always gets the upper device */
+
+PVOLUME_EXTENSION get_targetdev_by_minor(unsigned int minor)
+{
+	char path[128] = "\\DosDevices\\F:";
+	path[12] = minor_to_letter(minor);
+
+	return pvext_get_by_path(path);
+}
 
 int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait)
 {
@@ -3293,7 +3309,7 @@ struct block_device *bdget(dev_t device_no)
 	printk(KERN_DEBUG "bdget device_no: %u minor: %u\n", device_no, minor);
 	struct _VOLUME_EXTENSION *v = get_targetdev_by_minor(device_no & 0xffffff);
 	if (v)
-		return v->dev;
+		return v->upper_dev;
 
 	WDRBD_WARN("bdget: couldn't find block device for minor %d\n", device_no);
 	return NULL;
