@@ -2491,8 +2491,7 @@ LONGLONG get_targetdev_volsize(PVOLUME_EXTENSION VolumeExtension)
 		WDRBD_WARN("get volume size error = 0x%x\n", status);
 		volumeSize.QuadPart = 0;
 	}
-printk("get_targetdev_volsize succeeded, size is %llu, returning 0\n", volumeSize.QuadPart);
-	return (LONGLONG) 0;
+	return volumeSize.QuadPart;
 }
 
 #define DRBD_REGISTRY_VOLUMES       L"\\volumes"
