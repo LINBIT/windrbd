@@ -182,6 +182,7 @@ mvolRemoveDevice(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		kref_put(&device->kref, drbd_destroy_device);
 	}
 		
+		/* TODO: no destroy func? */
 	blkdev_put(VolumeExtension->lower_dev, 0);
 	blkdev_put(VolumeExtension->upper_dev, 0);
 

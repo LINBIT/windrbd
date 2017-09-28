@@ -954,6 +954,7 @@ extern void * kzalloc(int x, int flag, ULONG Tag);
 extern void * kmalloc(int size, int flag, ULONG Tag);
 extern void kfree(const void * x);
 extern void kvfree(const void * x);
+/* TODO: this should go away .. */
 #define kfree2(x) if((x)) {ExFreePool((x)); (x)=NULL;}
 
 static inline void * __get_free_page(int flags)
