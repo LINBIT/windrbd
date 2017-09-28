@@ -1519,8 +1519,14 @@ LONGLONG	gTotalLogCnt;
 long		gLogCnt;
 char		gLogBuf[LOGBUF_MAXCNT][MAX_DRBDLOG_BUF];
 
-struct block_device *bdget(int dev);
-#define MKDEV(_maj, _min) ((_maj << 24) | _min)
+struct block_device *bdget(dev_t dev);
 
+/* From: include/linux/kdev_t.h : */
+#define MINORBITS	20
+#define MINORMASK	((1U << MINORBITS) - 1)
+
+#define MAJOR(dev)	((unsigned int) ((dev) >> MINORBITS))
+#define MINOR(dev)	((unsigned int) ((dev) & MINORMASK))
+#define MKDEV(ma,mi)	(((ma) << MINORBITS) | (mi))
 
 #endif // DRBD_WINDOWS_H

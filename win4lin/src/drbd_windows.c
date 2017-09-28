@@ -3250,12 +3250,15 @@ int win_drbd_thread_setup(struct drbd_thread *thi)
 /* TODO: this should take a string as argument and call blkdev_get_by_path
          to find the block device. */
 
-struct block_device *bdget(int device_no)
+struct block_device *bdget(dev_t device_no)
 {
+	dev_t minor = MINOR(device_no);
+	printk(KERN_DEBUG "bdget device_no: %u minor: %u\n", device_no, minor);
 	struct _VOLUME_EXTENSION *v = get_targetdev_by_minor(device_no & 0xffffff);
 	if (v)
 		return v->dev;
 
+	WDRBD_WARN("bdget: couldn't find block device for minor %d\n", device_no);
 	return NULL;
 }
 

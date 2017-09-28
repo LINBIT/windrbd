@@ -73,6 +73,8 @@ typedef		__s64		int64_t;
 #endif
 //#endif
 
+typedef u32 dev_t;
+
 struct callback_head {
 	struct callback_head *next;
 	void (*func)(struct callback_head *head);
