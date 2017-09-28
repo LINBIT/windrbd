@@ -2512,13 +2512,47 @@ struct block_device *create_block_device(IN OUT PVOLUME_EXTENSION pvext)
 	}
 	kref_init(&dev->kref);
 
-	dev->bd_contains = dev;
-	dev->bd_parent = dev;
-	dev->bd_disk = NULL;	/* Created later by DRBD. TODO: ?? */
+	dev->bd_contains = kmalloc(sizeof(struct block_device), 0, 'C5DW');
+	if (!dev->bd_contains) {
+		WDRBD_ERROR("Failed to allocate block_device NonPagedMemory\n");
+		return NULL;
+	}
+
+	dev->bd_disk = alloc_disk(0);
+	if (!dev->bd_disk)
+	{
+		WDRBD_ERROR("Failed to allocate gendisk NonPagedMemory\n");
+		goto gendisk_failed;
+	}
+
+	dev->bd_disk->queue = blk_alloc_queue(0);
+	if (!dev->bd_disk->queue)
+	{
+		WDRBD_ERROR("Failed to allocate request_queue NonPagedMemory\n");
+		goto request_queue_failed;
+	}
+        kref_init(&dev->kref);
+ 
+	dev->bd_contains->bd_disk = dev->bd_disk;
+	dev->bd_contains->bd_parent = dev;
+
+		/* TODO: VolIndex should go away. */
+	sprintf(dev->bd_disk->disk_name, "drbd%d", pvext->VolIndex);
+
+		/* TODO: not always? */
+	dev->bd_disk->queue->logical_block_size = 512;
 	dev->pDeviceExtension = pvext;
 	dev->d_size = 0;
+ 
+        return dev;
 
-	return dev;
+request_queue_failed:
+	kfree(dev->bd_disk);
+
+gendisk_failed:
+	kfree(dev);
+
+	return NULL;
 }
 
 // DW-1109: delete drbd bdev when ref cnt gets 0, clean up all resources that has been created in create_drbd_block_device.
