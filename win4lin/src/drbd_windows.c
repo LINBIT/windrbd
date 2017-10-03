@@ -2739,14 +2739,18 @@ static int windrbd_set_block_device_active(struct block_device *bdev, int flag)
 {
         struct _VOLUME_EXTENSION *vext;
 
-        if (bdev == NULL)
+        if (bdev == NULL) {
+printk("windrbd_set_block_device_active: bdev is NULL\n");
                 return -EINVAL;
+	}
 
         vext = bdev->pDeviceExtension;
-        if (vext == NULL)
+        if (vext == NULL) {
+printk("windrbd_set_block_device_active: vext is NULL\n");
                 return -EINVAL;
+	}
 
-printk(KERN_DEBUG "Set block device active\n");
+printk(KERN_DEBUG "Set block device %sactive\n", flag ? "" : "in");
         vext->Active = flag;
         return 0;
 }
@@ -2761,10 +2765,13 @@ printk(KERN_DEBUG "Set block device active\n");
 
 int windrbd_set_drbd_device_active(struct drbd_device *device, int flag)
 {
-        if (device == NULL || device->ldev == NULL)
+        if (device == NULL || device->this_bdev == NULL) {
+printk("windrbd_set_drbd_device_active: device is %p\n", device);
+if (device) printk("windrbd_set_drbd_device_active: this_bdev is %p\n", device->this_bdev);
                 return -EINVAL;
+	}
 
-	return windrbd_set_block_device_active(device->ldev->backing_bdev, flag);
+	return windrbd_set_block_device_active(device->this_bdev, flag);
 }
 
 
