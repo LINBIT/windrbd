@@ -466,14 +466,20 @@ mvolCreate(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
     if (VolumeExtension->Active)
     {
+printk(KERN_INFO "mvolCreate 1\n");
 	    struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
 	    struct block_device *bdev = VolumeExtension->upper_dev;
+printk(KERN_INFO "mvolCreate 2\n");
 	    if (device && bdev) {
 
 		    PIO_STACK_LOCATION psl;
 
+printk(KERN_INFO "mvolCreate 3\n");
 
 		    psl = IoGetCurrentIrpStackLocation(Irp);
+printk(KERN_INFO "mvolCreate 4\n");
+printk(KERN_INFO "psl: %p\n", psl);
+printk(KERN_INFO "psl->Parameters.Create.SecurityContext: %p\n", psl->Parameters.Create.SecurityContext);
 
 		    /* https://msdn.microsoft.com/en-us/library/windows/hardware/ff548630(v=vs.85).aspx
 		     * https://msdn.microsoft.com/en-us/library/windows/hardware/ff550729(v=vs.85).aspx
@@ -483,20 +489,27 @@ mvolCreate(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 				    (psl->Parameters.Create.SecurityContext->DesiredAccess &
 				     (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES |
 				      FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0);
+printk(KERN_INFO "mvolCreate 5\n");
 
 		    if (err < 0)
 		    {
+printk(KERN_INFO "mvolCreate 6\n");
 			    kref_put(&device->kref, drbd_destroy_device);
+printk(KERN_INFO "mvolCreate 7\n");
 
 			    Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
+printk(KERN_INFO "mvolCreate 8\n");
 			    IoCompleteRequest(Irp, IO_NO_INCREMENT);
+printk(KERN_INFO "mvolCreate 9\n");
 
 			    return translate_drbd_error(err);
 		    } else {
+printk(KERN_INFO "mvolCreate a\n");
 			    return STATUS_SUCCESS;
 		    }
 	    }
     }
+printk(KERN_INFO "mvolCreate b\n");
     return mvolSendToNextDriver(DeviceObject, Irp);
 }
 
@@ -511,6 +524,7 @@ mvolClose(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 	return STATUS_SUCCESS;
     } else {
+printk(KERN_INFO "mvolClose 1\n");
 	struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
 
 	if (device)
@@ -541,6 +555,7 @@ mvolFlush(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
 	 
 	if (g_mj_flush_buffers_filter && VolumeExtension->Active) {
+printk(KERN_INFO "mvolFlush 1\n");
 		// DW-1300: get device and get reference.
 		struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
         if (device) {
@@ -594,6 +609,7 @@ mvolSystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 #ifdef _WIN32_MVFL
     if (VolumeExtension->Active)
     {
+printk(KERN_INFO "mvolSystemControl 1\n");
 		// DW-1300: get device and get reference.
 		struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
 		// DW-1300: prevent mounting volume when device is failed or below.
@@ -622,6 +638,7 @@ mvolSystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 NTSTATUS
 mvolDispatchPower(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+printk(KERN_INFO "mvolDispatchPower 1\n");
     return mvolSendToNextDriver(DeviceObject, Irp);
 }
 
@@ -840,6 +857,7 @@ mvolDeviceControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     PIO_STACK_LOCATION	irpSp = NULL;
     PVOLUME_EXTENSION	VolumeExtension = DeviceObject->DeviceExtension;
 
+printk(KERN_INFO "mvolDeviceControl 1\n");
     irpSp = IoGetCurrentIrpStackLocation(Irp);
     switch (irpSp->Parameters.DeviceIoControl.IoControlCode)
     {
@@ -979,6 +997,7 @@ mvolDispatchPnp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         return STATUS_SUCCESS;
     }
 
+printk(KERN_INFO "mvolDispatchPnp 1\n");
     irpSp = IoGetCurrentIrpStackLocation(Irp);
     switch (irpSp->MinorFunction)
     {
