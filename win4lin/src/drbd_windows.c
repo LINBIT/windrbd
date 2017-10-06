@@ -3317,6 +3317,13 @@ struct block_device *bdget(dev_t device_no)
         PDEVICE_OBJECT new_device;
 	NTSTATUS status;
 
+	name.Buffer = ExAllocatePool(NonPagedPool, 100);
+	if (name.Buffer == NULL) {
+		return NULL;
+	}
+	name.Length = 0;
+	name.MaximumLength = 100;
+
 	RtlUnicodeStringPrintf(&name, L"\\Device\\Drbd%d", minor);
 
 	status = IoCreateDevice(mvolDriverObject, 
@@ -3327,6 +3334,7 @@ struct block_device *bdget(dev_t device_no)
                                 FALSE,
                                 &new_device);
 
+	ExFreePool(name.Buffer);
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("bdget: couldn't create new block device for minor %d\n", device_no);
 		return NULL;
