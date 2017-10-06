@@ -323,6 +323,8 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
     PVOLUME_EXTENSION   VolumeExtension = NULL;
     ULONG               deviceType = 0;
 
+printk(KERN_INFO "AddDevice\n");
+
     ReferenceDeviceObject = IoGetAttachedDeviceReference(PhysicalDeviceObject);
     deviceType = ReferenceDeviceObject->DeviceType; //deviceType = 0x7 = FILE_DEVICE_DISK 
     ObDereferenceObject(ReferenceDeviceObject);
