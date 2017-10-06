@@ -5,7 +5,7 @@
 
 // #include <dpfilter.h> // included by wdm.h already
 
-#define RING_BUFFER_SIZE 65536
+#define RING_BUFFER_SIZE 1048576
 
 char g_syslog_ip[SYSLOG_IP_SIZE];
 
