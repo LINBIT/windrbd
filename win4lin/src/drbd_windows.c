@@ -2256,33 +2256,25 @@ void query_targetdev(PVOLUME_EXTENSION pvext)
 		WDRBD_WARN("Null parameter\n");
 		return;
 	}
-printk(KERN_INFO "query_targetdev 1\n");
 
 	if (IsEmptyUnicodeString(&pvext->VolumeGuid)) {
-printk(KERN_INFO "query_targetdev 2\n");
 		// Should be existed guid's name
 		mvolQueryMountPoint(pvext);
 	}
 
-printk(KERN_INFO "query_targetdev 3 %p\n", pvext->DeviceObject);
 	UNICODE_STRING new_name;
 	NTSTATUS status = RtlVolumeDeviceToDosName(pvext->DeviceObject, &new_name);
-printk(KERN_INFO "query_targetdev 4\n");
 	// if not same, it need to re-query
 	if (!NT_SUCCESS(status)) {	// ex: CD-ROM
-printk(KERN_INFO "query_targetdev 5\n");
 		return;
 	}
 
-printk(KERN_INFO "query_targetdev 6\n");
 	// DW-1105: detach volume when replicating volume letter is changed.
 	if (pvext->Active &&
 		!RtlEqualUnicodeString(&pvext->MountPoint, &new_name, TRUE))
 	{
-printk(KERN_INFO "query_targetdev 7\n");
 		// DW-1300: get device and get reference.
 		struct drbd_device *device = get_device_with_vol_ext(pvext, TRUE);
-printk(KERN_INFO "query_targetdev 8\n");
 		if (device &&
 			get_ldev_if_state(device, D_NEGOTIATING))
 		{
@@ -2291,41 +2283,33 @@ printk(KERN_INFO "query_targetdev 8\n");
 			change_disk_state(device, D_DETACHING, CS_HARD, NULL);
 			put_ldev(device);
 		}
-printk(KERN_INFO "query_targetdev 9\n");
 		// DW-1300: put device reference count when no longer use.
 		if (device)
 			kref_put(&device->kref, drbd_destroy_device);
 	}
-printk(KERN_INFO "query_targetdev a\n");
 
 	if (!MOUNTMGR_IS_VOLUME_NAME(&new_name) &&
 		!RtlEqualUnicodeString(&new_name, &pvext->MountPoint, TRUE)) {
 
-printk(KERN_INFO "query_targetdev b\n");
 		FreeUnicodeString(&pvext->MountPoint);
 		RtlUnicodeStringInit(&pvext->MountPoint, new_name.Buffer);
 
-printk(KERN_INFO "query_targetdev c\n");
 		if (IsDriveLetterMountPoint(&new_name)) {
-printk(KERN_INFO "query_targetdev d\n");
 			pvext->VolIndex = pvext->MountPoint.Buffer[0] - 'C';
+printk(KERN_INFO "query_targetdev: mount point is %S volIndex is %d\n", &pvext->MountPoint.Buffer, pvext->VolIndex);
 		}
 	}
-printk(KERN_INFO "query_targetdev e\n");
 
 	// DW-1109: not able to get volume size in add device routine, get it here if no size is assigned.
 	if (pvext->lower_dev->bd_contains &&
 		pvext->lower_dev->bd_contains->d_size == 0)
 	{
-printk(KERN_INFO "query_targetdev f\n");
 		unsigned long long d_size = get_targetdev_volsize(pvext);
 		pvext->lower_dev->bd_contains->d_size = d_size;
-printk(KERN_INFO "query_targetdev g\n");
 		if (pvext->lower_dev->bd_disk) {
 			pvext->lower_dev->bd_disk->queue->max_hw_sectors =
 				d_size ? (d_size >> 9) : DRBD_MAX_BIO_SIZE;
 		}
-printk(KERN_INFO "query_targetdev: d_size: %llu\n", d_size);
 	}
 }
 
@@ -2785,24 +2769,19 @@ static struct _VOLUME_EXTENSION *lookup_pvext(UNICODE_STRING * name)
 	ROOT_EXTENSION * proot = mvolRootDeviceObject->DeviceExtension;
 	VOLUME_EXTENSION * pvext = proot->Head;
 
-printk(KERN_INFO "lookup_pvext 1\n");
 	MVOL_LOCK();
 	for (; pvext; pvext = pvext->Next) {
 
-printk(KERN_INFO "lookup_pvext 2 %p\n", pvext);
 		// if no block_device instance yet,
 		query_targetdev(pvext);
 
-printk(KERN_INFO "lookup_pvext 3\n");
 		if (RtlEqualMemory(name->Buffer,
 			    pvext->PhysicalDeviceName,
 			    pvext->PhysicalDeviceNameLength)) {
-printk(KERN_INFO "lookup_pvext 4\n");
 			break;
 		}
 	}
 	MVOL_UNLOCK();
-printk(KERN_INFO "lookup_pvext 5\n");
 
 	return pvext;
 }
@@ -2848,19 +2827,16 @@ static struct _VOLUME_EXTENSION *pvext_get_by_path(const char *path)
 	UNICODE_STRING link_target;
 	struct _VOLUME_EXTENSION *pvext;
 
-printk(KERN_INFO "pvext_get_by_path 1 %s\n", path);
 	RtlInitAnsiString(&apath, path);
 	status = RtlAnsiStringToUnicodeString(&upath, &apath, TRUE);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("RtlAnsiStringToUnicodeString: Cannot convert path to Unicode string, status = %d, path = %s\n", status, path);
 		return ERR_PTR(-EINVAL);
 	}
-printk(KERN_INFO "pvext_get_by_path 3\n");
 	pvext = lookup_pvext(&upath);
-printk(KERN_INFO "pvext_get_by_path 4\n");
 
 	if (pvext == NULL) {
-		WDRBD_INFO("%s is not a block device, let's see if it is a symbolic link.\n", path);
+//		WDRBD_INFO("%s is not a block device, let's see if it is a symbolic link.\n", path);
 		link_target.Buffer = link_target_buffer;
 		link_target.MaximumLength = sizeof(link_target_buffer)-1;
 		link_target.Length = 0;
@@ -2872,7 +2848,6 @@ printk(KERN_INFO "pvext_get_by_path 4\n");
 
 		pvext = lookup_pvext(&link_target);
 	}
-printk(KERN_INFO "pvext_get_by_path 5\n");
 	return pvext;
 }
 
