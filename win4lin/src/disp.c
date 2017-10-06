@@ -509,7 +509,7 @@ printk(KERN_INFO "mvolCreate 8\n");
 			    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 printk(KERN_INFO "mvolCreate 9\n");
 
-				return STATUS_UNSUCCESSFUL;
+			    return STATUS_INVALID_DEVICE_REQUEST;
 //			    return translate_drbd_error(err);
 		    } else {
 printk(KERN_INFO "mvolCreate a\n");
