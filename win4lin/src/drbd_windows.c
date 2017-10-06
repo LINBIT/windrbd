@@ -3310,29 +3310,30 @@ struct block_device *bdget(dev_t device_no)
 	dev_t minor = MINOR(device_no);
 	printk(KERN_DEBUG "bdget device_no: %u minor: %u\n", device_no, minor);
 	struct _VOLUME_EXTENSION *v = get_targetdev_by_minor(device_no & 0xffffff);
-printk("bdget 1\n");
 	if (!IS_ERR(v))
 		return v->upper_dev;
 
-printk("bdget 2\n");
 	UNICODE_STRING name;
+	UNICODE_STRING dos_name;
         PDEVICE_OBJECT new_device;
 	NTSTATUS status;
 
-printk("bdget 3\n");
 	name.Buffer = ExAllocatePool(NonPagedPool, 100);
 	if (name.Buffer == NULL) {
-printk("bdget 4\n");
 		return NULL;
 	}
-printk("bdget 5\n");
 	name.Length = 0;
 	name.MaximumLength = 100;
 
-printk("bdget 6\n");
-	RtlUnicodeStringPrintf(&name, L"\\Device\\Drbd%d", minor);
+	status = RtlUnicodeStringPrintf(&name, L"\\Device\\Drbd%d", minor);
+	if (status != STATUS_SUCCESS) {
+		WDRBD_WARN("bdget: couldn't printf device name for minor %d\n", device_no);
+		ExFreePool(name.Buffer);
+		return NULL;
+	}
+printk(KERN_INFO "name.Length is %d\n", name.Length);
+	name.Buffer[name.Length] = 0;
 
-printk("bdget 7\n");
 	status = IoCreateDevice(mvolDriverObject, 
 		                sizeof(struct _VOLUME_EXTENSION), 
 		                &name,
@@ -3341,18 +3342,43 @@ printk("bdget 7\n");
                                 FALSE,
                                 &new_device);
 
-printk("bdget 8\n");
-	ExFreePool(name.Buffer);
-printk("bdget 9\n");
 	if (status != STATUS_SUCCESS) {
-printk("bdget a\n");
-		WDRBD_WARN("bdget: couldn't create new block device for minor %d\n", device_no);
+		WDRBD_WARN("bdget: couldn't create new block device %S for minor %d\n", name.Buffer, device_no);
+		ExFreePool(name.Buffer);
 		return NULL;
 	}
-printk("bdget b\n");
 /* TODO: create block dev, initialize user data */
-	printk(KERN_INFO "IoCreateDevice succeeded.\n");
-printk("bdget c\n");
+printk(KERN_INFO "IoCreateDevice succeeded.\n");
+
+	dos_name.Buffer = ExAllocatePool(NonPagedPool, 100);
+	if (dos_name.Buffer == NULL) {
+		return NULL;
+	}
+	dos_name.Length = 0;
+	dos_name.MaximumLength = 100;
+
+	status = RtlUnicodeStringPrintf(&dos_name, L"\\DosDevices\\%C:", minor+'C');
+	if (status != STATUS_SUCCESS) {
+		WDRBD_WARN("bdget: couldn't printf DOS device name for minor %d\n", device_no);
+
+		IoDeleteDevice(new_device);
+		ExFreePool(dos_name.Buffer);
+		ExFreePool(name.Buffer);
+		return NULL;
+	}
+printk(KERN_INFO "dos_name.Length is %d\n", dos_name.Length);
+	dos_name.Buffer[dos_name.Length] = 0;
+
+	status = IoCreateSymbolicLink(&dos_name, &name);
+	if (status != STATUS_SUCCESS) {
+		WDRBD_WARN("bdget: couldn't symlink %S to %S for minor %d\n", dos_name.Buffer, name.Buffer, device_no);
+
+		IoDeleteDevice(new_device);
+		ExFreePool(dos_name.Buffer);
+		ExFreePool(name.Buffer);
+		return NULL;
+	}
+	
 	return NULL;
 }
 
