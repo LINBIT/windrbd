@@ -464,6 +464,9 @@ mvolCreate(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	return STATUS_SUCCESS;
     }
 
+if (VolumeExtension->VolIndex == 3) {
+printk(KERN_INFO "create on F: vext: %p\n", VolumeExtension);
+}
     if (VolumeExtension->Active)
     {
 printk(KERN_INFO "mvolCreate 1\n");
@@ -509,7 +512,6 @@ printk(KERN_INFO "mvolCreate a\n");
 		    }
 	    }
     }
-printk(KERN_INFO "mvolCreate b\n");
     return mvolSendToNextDriver(DeviceObject, Irp);
 }
 
@@ -524,7 +526,9 @@ mvolClose(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 	return STATUS_SUCCESS;
     } else {
-printk(KERN_INFO "mvolClose 1\n");
+if (VolumeExtension->VolIndex == 3) {
+printk(KERN_INFO "close on F: vext: %p\n", VolumeExtension);
+}
 	struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
 
 	if (device)
@@ -553,6 +557,10 @@ mvolFlush(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
 	NTSTATUS	status = STATUS_SUCCESS;
 	PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
+		/* TODO: if != root dev */
+if (VolumeExtension->VolIndex == 3) {
+printk(KERN_INFO "flush on F: vext: %p\n", VolumeExtension);
+}
 	 
 	if (g_mj_flush_buffers_filter && VolumeExtension->Active) {
 printk(KERN_INFO "mvolFlush 1\n");
@@ -607,6 +615,9 @@ mvolSystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 #endif
 
 #ifdef _WIN32_MVFL
+if (VolumeExtension->VolIndex == 3) {
+printk(KERN_INFO "system_control on F: vext: %p\n", VolumeExtension);
+}
     if (VolumeExtension->Active)
     {
 printk(KERN_INFO "mvolSystemControl 1\n");
@@ -638,7 +649,11 @@ printk(KERN_INFO "mvolSystemControl 1\n");
 NTSTATUS
 mvolDispatchPower(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
-printk(KERN_INFO "mvolDispatchPower 1\n");
+/*
+if (VolumeExtension->VolIndex == 3) {
+printk(KERN_INFO "dispatch_power on F: vext: %p\n", VolumeExtension);
+}
+*/
     return mvolSendToNextDriver(DeviceObject, Irp);
 }
 
@@ -668,7 +683,9 @@ printk(KERN_INFO "read 2\n");
     return status;
 #endif
 
-// printk(KERN_INFO "read 3\n");
+if (VolumeExtension->VolIndex == 3) {
+printk(KERN_INFO "read on F: vext: %p\n", VolumeExtension);
+}
     IoSkipCurrentIrpStackLocation(Irp);
 // printk(KERN_INFO "read 4\n");
     return IoCallDriver(VolumeExtension->TargetDeviceObject, Irp);
@@ -731,6 +748,9 @@ printk(KERN_INFO "write 2\n");
     return status;
 #endif
 
+if (VolumeExtension->VolIndex == 3) {
+printk(KERN_INFO "write on F: vext: %p\n", VolumeExtension);
+}
     if (VolumeExtension->Active) {
 printk(KERN_INFO "write 3\n");
 		// DW-1300: get device and get reference.
@@ -857,7 +877,9 @@ mvolDeviceControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     PIO_STACK_LOCATION	irpSp = NULL;
     PVOLUME_EXTENSION	VolumeExtension = DeviceObject->DeviceExtension;
 
-printk(KERN_INFO "mvolDeviceControl 1\n");
+if (VolumeExtension->VolIndex == 3) {
+printk(KERN_INFO "device_control on F: vext: %p\n", VolumeExtension);
+}
     irpSp = IoGetCurrentIrpStackLocation(Irp);
     switch (irpSp->Parameters.DeviceIoControl.IoControlCode)
     {
@@ -996,8 +1018,12 @@ mvolDispatchPnp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         IoCompleteRequest(Irp, IO_NO_INCREMENT);
         return STATUS_SUCCESS;
     }
+/*
+if (VolumeExtension->VolIndex == 3) {
+printk(KERN_INFO "dispatch_pnp on F: vext: %p\n", VolumeExtension);
+}
+*/
 
-printk(KERN_INFO "mvolDispatchPnp 1\n");
     irpSp = IoGetCurrentIrpStackLocation(Irp);
     switch (irpSp->MinorFunction)
     {
