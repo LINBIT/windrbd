@@ -3299,8 +3299,11 @@ int win_drbd_thread_setup(struct drbd_thread *thi)
 	return STATUS_SUCCESS;
 }
 
-/* TODO: this should take a string as argument and call blkdev_get_by_path
-         to find the block device. */
+/* TODO: this should take a string as argument, check if the device
+	 exists (by calling blkdev_get_by_path) and create the
+	 new DRBD device if it does not exist.
+
+	 For now, it should be an error if the device exists. */
 
 struct block_device *bdget(dev_t device_no)
 {
@@ -3310,7 +3313,26 @@ struct block_device *bdget(dev_t device_no)
 	if (v)
 		return v->upper_dev;
 
-	WDRBD_WARN("bdget: couldn't find block device for minor %d\n", device_no);
+	UNICODE_STRING name;
+        PDEVICE_OBJECT new_device;
+	NTSTATUS status;
+
+	RtlUnicodeStringPrintf(&name, L"\\Device\\Drbd%d", minor);
+
+	status = IoCreateDevice(mvolDriverObject, 
+		                sizeof(struct _VOLUME_EXTENSION), 
+		                &name,
+		                FILE_DEVICE_DISK,
+                                0,
+                                FALSE,
+                                &new_device);
+
+	if (status != STATUS_SUCCESS) {
+		WDRBD_WARN("bdget: couldn't create new block device for minor %d\n", device_no);
+		return NULL;
+	}
+/* TODO: create block dev, initialize user data */
+	printk(KERN_INFO "IoCreateDevice succeeded.\n");
 	return NULL;
 }
 
