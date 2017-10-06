@@ -1,9 +1,3 @@
-Bluescreen if drbd_open fails
-
-If drbd_open fails in mvolCreate() the whole thing blue screens. Even
-when not calling drbd_open and just return an error it blue screens.
-
---------------------------------------------------------------------
 I/O fails with Invalid request Code
 
 Reason is that in the I/O handler, drbd_device is NULL (is looked
@@ -367,3 +361,12 @@ entry.
 Update: Yes now it works.
 -------------------------------------------------------------------------
 
+SOLVED: Bluescreen if drbd_open fails
+
+If drbd_open fails in mvolCreate() the whole thing blue screens. Even
+when not calling drbd_open and just return an error it blue screens.
+
+The reason was that the return code of mvolCreate() must match
+the status field in the Irp (set before the return)
+
+--------------------------------------------------------------------
