@@ -488,10 +488,13 @@ printk(KERN_INFO "psl->Parameters.Create.SecurityContext: %p\n", psl->Parameters
 		     * https://msdn.microsoft.com/en-us/library/windows/hardware/ff550729(v=vs.85).aspx
 		     * https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424(v=vs.85).aspx
 		     * */
-		    err = drbd_open(bdev,
+err = -5;
+printk(KERN_INFO "drbd_open NOT DONE\n");
+/*		    err = drbd_open(bdev,
 				    (psl->Parameters.Create.SecurityContext->DesiredAccess &
 				     (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES |
 				      FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0);
+*/
 printk(KERN_INFO "mvolCreate 5\n");
 
 printk(KERN_INFO "drbd_open returned %d\n", err);
