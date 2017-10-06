@@ -2750,8 +2750,8 @@ printk("windrbd_set_block_device_active: vext is NULL\n");
                 return -EINVAL;
 	}
 
-printk(KERN_DEBUG "Set block device %sactive\n", flag ? "" : "in");
-        vext->Active = flag;
+printk(KERN_DEBUG "Set block device %sactive NOT DONE\n", flag ? "" : "in");
+//        vext->Active = flag;
         return 0;
 }
 
