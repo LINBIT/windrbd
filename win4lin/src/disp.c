@@ -494,6 +494,7 @@ printk(KERN_INFO "psl->Parameters.Create.SecurityContext: %p\n", psl->Parameters
 				      FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0);
 printk(KERN_INFO "mvolCreate 5\n");
 
+printk(KERN_INFO "drbd_open returned %d\n", err);
 		    if (err < 0)
 		    {
 printk(KERN_INFO "mvolCreate 6\n");
@@ -505,7 +506,8 @@ printk(KERN_INFO "mvolCreate 8\n");
 			    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 printk(KERN_INFO "mvolCreate 9\n");
 
-			    return translate_drbd_error(err);
+				return STATUS_UNSUCCESSFUL;
+//			    return translate_drbd_error(err);
 		    } else {
 printk(KERN_INFO "mvolCreate a\n");
 			    return STATUS_SUCCESS;
@@ -531,6 +533,7 @@ printk(KERN_INFO "close on F: vext: %p\n", VolumeExtension);
 }
 	struct drbd_device *device = get_device_with_vol_ext(VolumeExtension, TRUE);
 
+	/* TODO: drbd_close or something? */
 	if (device)
 	    kref_put(&device->kref, drbd_destroy_device);
 	return mvolSendToNextDriver(DeviceObject, Irp);
