@@ -1,6 +1,6 @@
 wdrbd-next:
 
-TODO: Try to put I/O on DRBD device.
+Later: Try to put I/O on DRBD device.
 	This will be the same device as if there was no DRBD (use
 	the drive letters).
 
@@ -8,11 +8,20 @@ TODO: Try to put I/O on DRBD device.
 	within DRBD (currently only at successful attach, later
 	also on connect. Somewhere else?).
 
-	TODO: Unset the flag on down / detach. Or better set it on
+	Done: Unset the flag on down / detach. Or better set it on
 	becoming primary, clear it on becoming secondary (let
 	DRBD do the checks).
 
-	TODO: Remove check in mvolWrite(): DRBD should do this.
+	Later: Remove check in mvolWrite(): DRBD should do this.
+
+	Update: Currently drbd_open() fails because of some
+	auto-promote mechanism that never happens. It seems
+	that the synchronisation (wait_event_interruptible()
+	and the like) are broken.
+
+	Update: We now try to have a separate Windows device for drbd
+	and backing device this is more close to what DRBD under
+	Linux does.
 
 ---------------
 

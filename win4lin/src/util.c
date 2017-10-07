@@ -89,7 +89,7 @@ NTSTATUS FsctlFlushDismountVolume(unsigned int minor, bool bFlush)
     PAGED_CODE();
 
     PVOLUME_EXTENSION pvext = get_targetdev_by_minor(minor);
-    if (!pvext) {
+    if (IS_ERR(pvext)) {
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -192,8 +192,7 @@ NTSTATUS FsctlLockVolume(unsigned int minor)
     PAGED_CODE();
 
     PVOLUME_EXTENSION pvext = get_targetdev_by_minor(minor);
-    if (!pvext)
-    {
+    if (IS_ERR(pvext)) {
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -276,8 +275,7 @@ NTSTATUS FsctlUnlockVolume(unsigned int minor)
     PAGED_CODE();
 
     PVOLUME_EXTENSION pvext = get_targetdev_by_minor(minor);
-    if (!pvext)
-    {
+    if (IS_ERR(pvext)) {
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -317,8 +315,7 @@ NTSTATUS FsctlFlushVolume(unsigned int minor)
     PAGED_CODE();
 
     PVOLUME_EXTENSION pvext = get_targetdev_by_minor(minor);
-    if (!pvext)
-    {
+    if (IS_ERR(pvext)) {
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -376,8 +373,7 @@ NTSTATUS FsctlCreateVolume(unsigned int minor)
     PAGED_CODE();
 
     PVOLUME_EXTENSION pvext = get_targetdev_by_minor(minor);
-    if (!pvext)
-    {
+    if (IS_ERR(pvext)) {
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -429,8 +425,7 @@ NTSTATUS FsctlCreateVolume(unsigned int minor)
 HANDLE GetVolumeHandleFromDeviceMinor(unsigned int minor)
 {
 	PVOLUME_EXTENSION pvext = get_targetdev_by_minor(minor);
-	if (!pvext)
-	{
+	if (IS_ERR(pvext)) {
 		WDRBD_ERROR("could not get volume extension from device minor(%u)\n", minor);
 		return NULL;
 	}
