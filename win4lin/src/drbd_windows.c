@@ -3301,49 +3301,77 @@ int win_drbd_thread_setup(struct drbd_thread *thi)
 	return STATUS_SUCCESS;
 }
 
+/* This fills a name of the form \DosDevices\x: into unicode string
+   dos name where drive letter is 'C'+minor (C:=0, D:=1, ...). 
+   If internal is set, the result is \Device\Drbd<n> instead where
+   n is a number (Drbd1, ...)
+
+   TODO: This should eventually be replaced by a udev-like mechanism 
+   where the user specifies the name in the drbd.conf.
+
+   Space is allocated by this function and must be freed by the
+   caller.
+ */
+
+	/* Note that this is unicode characters */
+	/* TODO: lookup windows constant and use it */
+
+// #define MAX_WINDOWS_KERNEL_PATH_LENGTH 32767
+	/* TODO: if string is too long RtlSomethingPrintf returns
+	 * an error */
+#define MAX_WINDOWS_KERNEL_PATH_LENGTH 100
+
+static int minor_to_x_name(UNICODE_STRING *name, int minor, int internal)
+{
+	NTSTATUS status;
+
+	name->Buffer = ExAllocatePool(NonPagedPool, MAX_WINDOWS_KERNEL_PATH_LENGTH * sizeof(name->Buffer[0]));
+
+	if (name->Buffer == NULL) {
+		WDRBD_WARN("minor_to_x_name: couldn't allocate memory for name buffer\n");
+		return -ENOMEM;
+	}
+	name->Length = 0;
+	name->MaximumLength = MAX_WINDOWS_KERNEL_PATH_LENGTH;
+
+	if (internal) {
+		status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
+	} else {
+		status = RtlUnicodeStringPrintf(name, L"\\DosDevices\\%C:", minor+'C');
+	}
+
+	if (status != STATUS_SUCCESS) {
+		WDRBD_WARN("minor_to_dos_name: couldn't printf device name for minor %d status: %x\n", minor, status);
+
+		ExFreePool(name->Buffer);
+		return -EINVAL;
+	}
+	name->Buffer[name->Length / sizeof(name->Buffer[0])] = 0;
+	return 0;
+}
+
 /* TODO: this should take a string as argument, check if the device
 	 exists (by calling blkdev_get_by_path) and create the
 	 new DRBD device if it does not exist.
 
 	 For now, it should be an error if the device exists. */
 
+/* TODO: 100 -> MAX_PATH_LEN */
+/* TODO: name, dos_name into device extension */
+
 struct block_device *bdget(dev_t device_no)
 {
 	dev_t minor = MINOR(device_no);
-printk(KERN_DEBUG "bdget device_no: %u minor: %u\n", device_no, minor);
-		/* TODO: this should go away. But somehow check if
-		   the minor exists (is done in CreateSymbolicLink I
-		   guess).
-		 */
-#if 0
-	struct _VOLUME_EXTENSION *v = get_targetdev_by_minor(device_no & 0xffffff);
-
-	if (!IS_ERR(v)) {
-		return v->upper_dev;
-	}
-#endif
-
 	UNICODE_STRING name;
 	UNICODE_STRING dos_name;
         PDEVICE_OBJECT new_device;
 	NTSTATUS status;
 	struct block_device *block_device;
+	struct _VOLUME_EXTENSION *pvext;
 
-	name.Buffer = ExAllocatePool(NonPagedPool, 100);
-	if (name.Buffer == NULL) {
-		WDRBD_WARN("bdget: couldn't allocate memory for name buffer\n");
+	if (minor_to_x_name(&name, minor, 1) < 0) {
 		return NULL;
 	}
-	name.Length = 0;
-	name.MaximumLength = 100;
-
-	status = RtlUnicodeStringPrintf(&name, L"\\Device\\Drbd%d", minor);
-	if (status != STATUS_SUCCESS) {
-		WDRBD_WARN("bdget: couldn't printf device name for minor %d status: %x\n", minor, status);
-		ExFreePool(name.Buffer);
-		return NULL;
-	}
-	name.Buffer[name.Length / sizeof(name.Buffer[0])] = 0;
 
 	status = IoCreateDevice(mvolDriverObject, 
 		                sizeof(struct _VOLUME_EXTENSION), 
@@ -3360,27 +3388,11 @@ printk(KERN_DEBUG "bdget device_no: %u minor: %u\n", device_no, minor);
 		return NULL;
 	}
 
-	dos_name.Buffer = ExAllocatePool(NonPagedPool, 100);
-	if (dos_name.Buffer == NULL) {
-		WDRBD_WARN("bdget: couldn't allocate memory for dos name buffer\n");
-
+	if (minor_to_x_name(&dos_name, minor, 0) < 0) {
 		IoDeleteDevice(new_device);
 		ExFreePool(name.Buffer);
 		return NULL;
 	}
-	dos_name.Length = 0;
-	dos_name.MaximumLength = 100;
-
-	status = RtlUnicodeStringPrintf(&dos_name, L"\\DosDevices\\%C:", minor+'C');
-	if (status != STATUS_SUCCESS) {
-		WDRBD_WARN("bdget: couldn't printf DOS device name for minor %d status: %x\n", minor, status);
-
-		IoDeleteDevice(new_device);
-		ExFreePool(dos_name.Buffer);
-		ExFreePool(name.Buffer);
-		return NULL;
-	}
-	dos_name.Buffer[dos_name.Length / sizeof(dos_name.Buffer[0])] = 0;
 
 	status = IoCreateSymbolicLink(&dos_name, &name);
 	if (status != STATUS_SUCCESS) {
@@ -3391,13 +3403,12 @@ printk(KERN_DEBUG "bdget device_no: %u minor: %u\n", device_no, minor);
 		ExFreePool(name.Buffer);
 		return NULL;
 	}
-
 	block_device = kmalloc(sizeof(struct block_device), 0, 'DBRD');
 	if (block_device == NULL) {
 		WDRBD_ERROR("Failed to allocate block_device\n");
 		IoDeleteDevice(new_device);
 		if (IoDeleteSymbolicLink(&dos_name) != STATUS_SUCCESS) {
-			WDRBD_WARN("Failed to remove symbolic link (drive letter)\n");
+			WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", dos_name.Buffer);
 		}
 
 		ExFreePool(dos_name.Buffer);
@@ -3411,27 +3422,50 @@ printk(KERN_DEBUG "bdget device_no: %u minor: %u\n", device_no, minor);
 		 * be some other structure soon.
 		 */
 
-	block_device->pDeviceExtension = new_device->DeviceExtension;
+	pvext = new_device->DeviceExtension;
+	block_device->pDeviceExtension = pvext;
+	pvext->DeviceObject = new_device;
 
 	WDRBD_INFO("Created new block device %S for drbd and assigned it the dos name %S\n", name.Buffer, dos_name.Buffer);
 	
+	ExFreePool(dos_name.Buffer);
+	ExFreePool(name.Buffer);
+
 	return block_device;
 }
 
-static void _bdput(struct kref *kref)
+static void destroy_block_device(struct kref *kref)
 {
+printk(KERN_DEBUG "destroy_block_device 1\n");
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
+	UNICODE_STRING name;
+	UNICODE_STRING dos_name;
+	int minor = bdev->drbd_device->minor;
 
-/* TODO: remove windows device and symbolic link created by bdget() */
+printk(KERN_INFO "Destroying minor %d\n", minor);
 
-	kfree(bdev->bd_contains);
-	if (bdev != bdev->bd_contains)
-		kfree(bdev);
+	if (minor_to_x_name(&name, minor, 1) < 0) {
+		return;
+	}
+	if (minor_to_x_name(&dos_name, minor, 0) < 0) {
+		ExFreePool(name.Buffer);
+		return;
+	}
+	IoDeleteDevice(bdev->pDeviceExtension->DeviceObject);
+	if (IoDeleteSymbolicLink(&dos_name) != STATUS_SUCCESS) {
+		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", dos_name.Buffer);
+	}
+
+	ExFreePool(dos_name.Buffer);
+	ExFreePool(name.Buffer);
+
+	kfree(bdev);
 }
 
 void bdput(struct block_device *this_bdev)
 {
-	kref_put(&this_bdev->kref, _bdput);
+printk(KERN_INFO "bdput: refcount is %d\n", this_bdev->kref.refcount);
+	kref_put(&this_bdev->kref, destroy_block_device);
 }
 
 

@@ -17,6 +17,8 @@ TODO: Redesign of architecture.
 	device objects, even for the Windows kernel.
 
 	TODO: bdput in drbd_create_device on failure.
+	Implemented but cannot test it now, it is newer called from 
+	drbd_destroy_device (which is also never called).
 
 	TODO: Check if it is a network share (currently blue screens)
 	Update: blue screen was something else. Should check if the

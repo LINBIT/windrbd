@@ -568,6 +568,11 @@ struct kobj_type {
 	void(*release)(struct kobject *);
 };
 
+	/* TODO: Use that later. */
+struct windows_block_device {
+	struct _DEVICE_OBJECT DeviceObject;
+};
+	
 #define DISK_NAME_LEN		16
 struct gendisk 
 {
