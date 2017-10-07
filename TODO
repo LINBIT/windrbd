@@ -17,8 +17,10 @@ TODO: Redesign of architecture.
 	device objects, even for the Windows kernel.
 
 	TODO: bdput in drbd_create_device on failure.
-	Implemented but cannot test it now, it is newer called from 
-	drbd_destroy_device (which is also never called).
+
+	Later: Currently bdput is called from within drbd_unregister_device,
+	ask phil if that is ok (it should make the device invisible, which
+	is what it does).
 
 	TODO: Check if it is a network share (currently blue screens)
 	Update: blue screen was something else. Should check if the
@@ -26,8 +28,6 @@ TODO: Redesign of architecture.
 	appear in the \DosDevices directory. If we create a drive
 	letter (symbolic link) in the \DosDevices it will be silently
 	ignored. Warn the user if it is a network share.
-
-	TODO: remove devices in bdput destroyer.
 
 	TODO: One day we want to have a more specific error message
 	than Device does not have a disk config if the device or
@@ -37,6 +37,11 @@ TODO: Redesign of architecture.
 
 	TODO: check if generic_make_request can use the ZwCreateFile
 	API (instead of creating an IRP)
+
+	Done: remove devices in bdput destroyer.
+	Implemented but cannot test it now, it is newer called from 
+	drbd_destroy_device (which is also never called).
+	Update: calling it now from drbd_unregister_device(). Works.
 
 Later: Try to put I/O on DRBD device.
 	This will be the same device as if there was no DRBD (use
