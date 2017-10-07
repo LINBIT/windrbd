@@ -36,6 +36,9 @@ TODO: Redesign of architecture.
 	than Device does not have a disk config if the device or
 	the drive letter already exist.
 
+	TODO: allow user to pass name of symbolic link created
+	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
+
 	TODO: implement I/O handler stubs
 
 	TODO: check if generic_make_request can use the ZwCreateFile
