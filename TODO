@@ -16,6 +16,17 @@ TODO: Redesign of architecture.
 	of Linux where DRBD devices and backing devices are different
 	device objects, even for the Windows kernel.
 
+	TODO: bdput in drbd_create_device on failure.
+
+	TODO: Check if it is a network share (currently blue screens)
+	Update: blue screen was something else. Should check if the
+	drive letter is a network share. Unfortunately they do not
+	appear in the \DosDevices directory. If we create a drive
+	letter (symbolic link) in the \DosDevices it will be silently
+	ignored. Warn the user if it is a network share.
+
+	TODO: remove devices in bdput destroyer.
+
 	TODO: One day we want to have a more specific error message
 	than Device does not have a disk config if the device or
 	the drive letter already exist.
