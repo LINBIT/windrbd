@@ -16,7 +16,10 @@ TODO: Redesign of architecture.
 	of Linux where DRBD devices and backing devices are different
 	device objects, even for the Windows kernel.
 
-	TODO: bdput in drbd_create_device on failure.
+	Done: bdput in drbd_create_device on failure.
+
+	TODO: Have other device extension with only the fields we
+	need.
 
 	Later: Currently bdput is called from within drbd_unregister_device,
 	ask phil if that is ok (it should make the device invisible, which

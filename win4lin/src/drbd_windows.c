@@ -3424,6 +3424,7 @@ struct block_device *bdget(dev_t device_no)
 
 	pvext = new_device->DeviceExtension;
 	block_device->pDeviceExtension = pvext;
+	block_device->minor = minor;
 	pvext->DeviceObject = new_device;
 
 	WDRBD_INFO("Created new block device %S for drbd and assigned it the dos name %S\n", name.Buffer, dos_name.Buffer);
@@ -3440,7 +3441,7 @@ printk(KERN_DEBUG "destroy_block_device 1\n");
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 	UNICODE_STRING name;
 	UNICODE_STRING dos_name;
-	int minor = bdev->drbd_device->minor;
+	int minor = bdev->minor;
 
 printk(KERN_INFO "Destroying minor %d\n", minor);
 

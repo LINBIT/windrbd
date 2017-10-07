@@ -597,6 +597,7 @@ struct block_device {
 	unsigned long long d_size;
 	struct kref kref;
 
+	int minor;	/* in case drbd_device is still NULL */
 	struct drbd_device* drbd_device;
 	PVOLUME_EXTENSION pDeviceExtension; /* TODO: rename and use other struct */
 };
