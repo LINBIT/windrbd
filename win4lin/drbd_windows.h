@@ -593,7 +593,7 @@ struct block_device {
 	struct kref kref;
 
 	struct drbd_device* drbd_device;
-	PVOLUME_EXTENSION pDeviceExtension;
+	PVOLUME_EXTENSION pDeviceExtension; /* TODO: rename and use other struct */
 };
 
 extern sector_t wdrbd_get_capacity(struct block_device *bdev);
