@@ -1835,6 +1835,7 @@ static int win_generic_make_request(struct bio *bio)
 		IoFreeIrp(newIrp);
 		return -EIO;
 	}
+printk("call driver device object %p irp %p\n", bio->bi_bdev->pDeviceExtension->TargetDeviceObject, newIrp);
 	IoCallDriver(bio->bi_bdev->pDeviceExtension->TargetDeviceObject, newIrp);
 
 	return 0;
@@ -2777,7 +2778,7 @@ printk(KERN_DEBUG "pvext looking for %S\n", name->Buffer);
 printk(KERN_DEBUG "pvext %S\n", pvext->PhysicalDeviceName);
 
 		// if no block_device instance yet,
-		query_targetdev(pvext);
+//		query_targetdev(pvext);
 
 		if (RtlEqualMemory(name->Buffer,
 			    pvext->PhysicalDeviceName,

@@ -419,6 +419,7 @@ printk(KERN_INFO "AddDevice\n");
 NTSTATUS
 mvolSendToNextDriver(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+printk(KERN_ERR "should not come here.\n");
     PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
 	NTSTATUS 	status = STATUS_SUCCESS;
 	
@@ -450,6 +451,7 @@ mvolSendToNextDriver(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 NTSTATUS
 mvolCreate(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+printk(KERN_ERR "should not come here.\n");
     PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
     int err;
 
@@ -520,6 +522,7 @@ printk(KERN_INFO "mvolCreate a\n");
 NTSTATUS
 mvolClose(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+printk(KERN_ERR "should not come here.\n");
     PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
     if (DeviceObject == mvolRootDeviceObject) {
 	WDRBD_TRACE("mvolRootDevice Request\n");
@@ -545,6 +548,7 @@ void drbd_cleanup_by_win_shutdown(PVOLUME_EXTENSION VolumeExtension);
 NTSTATUS
 mvolShutdown(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+printk(KERN_ERR "should not come here.\n");
 	NTSTATUS status = STATUS_SUCCESS;
     PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
 
@@ -558,6 +562,7 @@ mvolShutdown(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 NTSTATUS
 mvolFlush(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+printk(KERN_ERR "should not come here.\n");
 	NTSTATUS	status = STATUS_SUCCESS;
 	PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
 		/* TODO: if != root dev */
@@ -597,6 +602,7 @@ _Use_decl_annotations_
 NTSTATUS
 mvolSystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+printk(KERN_ERR "should not come here.\n");
     PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
 
     if (DeviceObject == mvolRootDeviceObject)
@@ -652,6 +658,7 @@ printk(KERN_INFO "mvolSystemControl 1\n");
 NTSTATUS
 mvolDispatchPower(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+printk(KERN_ERR "should not come here.\n");
 /*
 if (VolumeExtension->VolIndex == 3) {
 printk(KERN_INFO "dispatch_power on F: vext: %p\n", VolumeExtension);
@@ -664,6 +671,7 @@ _Use_decl_annotations_
 NTSTATUS
 mvolRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+printk(KERN_ERR "should not come here.\n");
     NTSTATUS 	status = STATUS_SUCCESS;
     PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
 
@@ -727,6 +735,7 @@ printk(KERN_INFO "read b\n");
 NTSTATUS
 mvolWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+printk(KERN_ERR "should not come here.\n");
     NTSTATUS status = STATUS_SUCCESS;
     PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
 
@@ -876,6 +885,7 @@ extern int drbd_seq_show(struct seq_file *seq, void *v);
 NTSTATUS
 mvolDeviceControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+printk(KERN_ERR "should not come here.\n");
     NTSTATUS		status;
     PIO_STACK_LOCATION	irpSp = NULL;
     PVOLUME_EXTENSION	VolumeExtension = DeviceObject->DeviceExtension;
@@ -1017,6 +1027,7 @@ printk(KERN_INFO "4\n");
 NTSTATUS
 mvolDispatchPnp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+printk(KERN_ERR "should not come here.\n");
     NTSTATUS		status;
     PIO_STACK_LOCATION	irpSp;
 
