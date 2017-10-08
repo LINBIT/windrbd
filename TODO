@@ -16,10 +16,21 @@ TODO: Redesign of architecture.
 	of Linux where DRBD devices and backing devices are different
 	device objects, even for the Windows kernel.
 
-	Done: bdput in drbd_create_device on failure.
-
 	TODO: Have other device extension with only the fields we
 	need.
+
+	We now disabled mvolAddDevice (by returning NO_SUCH_DEVICE,
+	else we blue screen because some verifier) so volume
+	extension does not exist any more (except in non-accessible
+	code). 
+
+	TODO: Next thing is to have replacment data structure so
+	that attach works again (create block_device with target
+	device looked up in find_target_dev). Also get I/O on
+	that target dev working (used to blue screen but maybe
+	it works now that we do not create a device in AddDevice())
+
+	TODO: implement I/O handler stubs
 
 	Later: Currently bdput is called from within drbd_unregister_device,
 	ask phil if that is ok (it should make the device invisible, which
@@ -39,8 +50,6 @@ TODO: Redesign of architecture.
 	TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
-	TODO: implement I/O handler stubs
-
 	TODO: check if generic_make_request can use the ZwCreateFile
 	API (instead of creating an IRP)
 
@@ -48,6 +57,8 @@ TODO: Redesign of architecture.
 	Implemented but cannot test it now, it is newer called from 
 	drbd_destroy_device (which is also never called).
 	Update: calling it now from drbd_unregister_device(). Works.
+
+	Done: bdput in drbd_create_device on failure.
 
 Later: Try to put I/O on DRBD device.
 	This will be the same device as if there was no DRBD (use
