@@ -99,6 +99,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
     for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
         DriverObject->MajorFunction[i] = mvolSendToNextDriver;
 
+/*
     DriverObject->MajorFunction[IRP_MJ_CREATE] = mvolCreate;
     DriverObject->MajorFunction[IRP_MJ_CLOSE] = mvolClose;
     DriverObject->MajorFunction[IRP_MJ_READ] = mvolRead;
@@ -109,8 +110,10 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
     DriverObject->MajorFunction[IRP_MJ_PNP] = mvolDispatchPnp;
     DriverObject->MajorFunction[IRP_MJ_SYSTEM_CONTROL] = mvolSystemControl;
     DriverObject->MajorFunction[IRP_MJ_POWER] = mvolDispatchPower;
+*/
 
     DriverObject->DriverExtension->AddDevice = mvolAddDevice;
+//    DriverObject->DriverExtension->AddDevice = NULL;
     DriverObject->DriverUnload = mvolUnload;
 
 	gbShutdown = FALSE;
@@ -152,7 +155,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
     mutex_init(&notification_mutex);
     KeInitializeSpinLock(&transport_classes_lock);
 
-    dtt_initialize();
+ //   dtt_initialize();
 
 	system_wq = alloc_ordered_workqueue("system workqueue", 0);
 	if (system_wq == NULL) {
@@ -323,7 +326,8 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
     PVOLUME_EXTENSION   VolumeExtension = NULL;
 /*    ULONG               deviceType = 0; */
 
-printk(KERN_INFO "AddDevice\n");
+printk(KERN_INFO "AddDevice NOT DONE\n");
+return STATUS_NO_SUCH_DEVICE;
 
 #if 0
     ReferenceDeviceObject = IoGetAttachedDeviceReference(PhysicalDeviceObject);
