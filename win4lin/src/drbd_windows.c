@@ -2771,7 +2771,10 @@ static struct _VOLUME_EXTENSION *lookup_pvext(UNICODE_STRING * name)
 	VOLUME_EXTENSION * pvext = proot->Head;
 
 	MVOL_LOCK();
+printk(KERN_DEBUG "pvext looking for %S\n", name->Buffer);
 	for (; pvext; pvext = pvext->Next) {
+
+printk(KERN_DEBUG "pvext %S\n", pvext->PhysicalDeviceName);
 
 		// if no block_device instance yet,
 		query_targetdev(pvext);
@@ -2819,6 +2822,28 @@ out_close_handle:
 	return status;
 }
 
+static int find_target_dev(struct _VOLUME_EXTENSION *pvext)
+{
+	PFILE_OBJECT FileObject;
+	UNICODE_STRING device_name;
+	NTSTATUS status;
+
+	RtlInitUnicodeString(&device_name, pvext->PhysicalDeviceName);
+
+printk(KERN_DEBUG "Init Unicode String %S\n", device_name.Buffer);
+
+	status = IoGetDeviceObjectPointer(&device_name, FILE_ALL_ACCESS, &FileObject, &pvext->TargetDeviceObject);
+
+	if (!NT_SUCCESS(status))
+	{
+printk(KERN_ERR "Cannot get device object for %S status: %x\n", pvext->PhysicalDeviceName, status);
+		return -1;
+	}
+printk(KERN_DEBUG "IoGetDeviceObjectPointer succeeded, targetdev is %p\n", pvext->TargetDeviceObject);
+
+	return 0;
+}
+
 static struct _VOLUME_EXTENSION *pvext_get_by_path(const char *path)
 {
 	ANSI_STRING apath;
@@ -2851,6 +2876,9 @@ static struct _VOLUME_EXTENSION *pvext_get_by_path(const char *path)
 		if (pvext == NULL)
 			return ERR_PTR(-ENODEV);
 	}
+	if (find_target_dev(pvext) < 0)
+		return ERR_PTR(-ENODEV);
+
 	return pvext;
 }
 

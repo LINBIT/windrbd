@@ -361,24 +361,7 @@ printk(KERN_INFO "AddDevice\n");
 		IoDeleteDevice(AttachedDeviceObject);
         return status;
     }
-	PFILE_OBJECT FileObject;
-	UNICODE_STRING device_name;
-
-	RtlInitUnicodeString(&device_name, VolumeExtension->PhysicalDeviceName);
-
-printk(KERN_DEBUG "Init Unicode String %S\n", device_name.Buffer);
-
-	status = IoGetDeviceObjectPointer(&device_name, FILE_ALL_ACCESS, &FileObject, &VolumeExtension->TargetDeviceObject);
-
-    if (!NT_SUCCESS(status))
-    {
-printk(KERN_ERR "Cannot get device object for %S status: %x\n", VolumeExtension->PhysicalDeviceName, status);
-        mvolLogError(mvolRootDeviceObject, 103, MSG_ADD_DEVICE_ERROR, STATUS_NO_SUCH_DEVICE);
-        IoDeleteDevice(AttachedDeviceObject);
-        return STATUS_NO_SUCH_DEVICE;
-    }
-
-printk(KERN_DEBUG "IoGetDeviceObjectPointer succeeded, targetdev is %p\n", VolumeExtension->TargetDeviceObject);
+	VolumeExtension->TargetDeviceObject = NULL;
 
     VolumeExtension->PhysicalDeviceNameLength = wcslen(VolumeExtension->PhysicalDeviceName) * sizeof(WCHAR);
 
