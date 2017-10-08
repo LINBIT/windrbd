@@ -318,13 +318,14 @@ NTSTATUS
 mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject)
 {
     NTSTATUS            status;
-    PDEVICE_OBJECT      AttachedDeviceObject = NULL;
-    PDEVICE_OBJECT      ReferenceDeviceObject = NULL;
+ /*   PDEVICE_OBJECT      AttachedDeviceObject = NULL;
+    PDEVICE_OBJECT      ReferenceDeviceObject = NULL; */
     PVOLUME_EXTENSION   VolumeExtension = NULL;
-    ULONG               deviceType = 0;
+/*    ULONG               deviceType = 0; */
 
 printk(KERN_INFO "AddDevice\n");
 
+#if 0
     ReferenceDeviceObject = IoGetAttachedDeviceReference(PhysicalDeviceObject);
     deviceType = ReferenceDeviceObject->DeviceType; //deviceType = 0x7 = FILE_DEVICE_DISK 
     ObDereferenceObject(ReferenceDeviceObject);
@@ -340,10 +341,18 @@ printk(KERN_INFO "AddDevice\n");
 
     AttachedDeviceObject->Flags |= (DO_DIRECT_IO | DO_POWER_PAGABLE);
     AttachedDeviceObject->Flags &= ~DO_DEVICE_INITIALIZING;
+#endif
 
-    VolumeExtension = AttachedDeviceObject->DeviceExtension;
+//    VolumeExtension = AttachedDeviceObject->DeviceExtension;
+	VolumeExtension = kmalloc(sizeof(VOLUME_EXTENSION), 0, 'KARI');
+	if (VolumeExtension == NULL) {
+		printk(KERN_ERR "Cannot allocate volume extension.\n");
+		return STATUS_NO_MEMORY;
+	}
+		
     RtlZeroMemory(VolumeExtension, sizeof(VOLUME_EXTENSION));
-    VolumeExtension->DeviceObject = AttachedDeviceObject;
+//    VolumeExtension->DeviceObject = AttachedDeviceObject;
+    VolumeExtension->DeviceObject = NULL;
     VolumeExtension->PhysicalDeviceObject = PhysicalDeviceObject;
     VolumeExtension->Magic = MVOL_MAGIC;
     VolumeExtension->Flag = 0;
@@ -358,7 +367,7 @@ printk(KERN_INFO "AddDevice\n");
     if (!NT_SUCCESS(status))
     {
         mvolLogError(mvolRootDeviceObject, 101, MSG_ADD_DEVICE_ERROR, status);
-		IoDeleteDevice(AttachedDeviceObject);
+//		IoDeleteDevice(AttachedDeviceObject);
         return status;
     }
 	VolumeExtension->TargetDeviceObject = NULL;
