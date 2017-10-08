@@ -18,6 +18,7 @@
 */
 
 #include "drbd_windows.h"
+#include "windrbd_device.h"
 
 #undef _NTDDK_
 /* Can't include that without getting redefinition errors.
@@ -3426,6 +3427,10 @@ struct block_device *bdget(dev_t device_no)
 	block_device->pDeviceExtension = pvext;
 	block_device->minor = minor;
 	pvext->DeviceObject = new_device;
+
+	/* Need to swtich architecture first since that is per driver
+	   not per device */
+/*	windrbd_set_major_functions(mvolDriverObject); */
 
 	WDRBD_INFO("Created new block device %S for drbd and assigned it the dos name %S\n", name.Buffer, dos_name.Buffer);
 	
