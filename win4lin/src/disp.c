@@ -99,6 +99,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
     for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
         DriverObject->MajorFunction[i] = mvolSendToNextDriver;
 
+/* TODO: windrbd_set_major_functions() */
 /*
     DriverObject->MajorFunction[IRP_MJ_CREATE] = mvolCreate;
     DriverObject->MajorFunction[IRP_MJ_CLOSE] = mvolClose;
@@ -113,7 +114,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 */
 
     DriverObject->DriverExtension->AddDevice = mvolAddDevice;
-//    DriverObject->DriverExtension->AddDevice = NULL;
     DriverObject->DriverUnload = mvolUnload;
 
 	gbShutdown = FALSE;
@@ -155,7 +155,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
     mutex_init(&notification_mutex);
     KeInitializeSpinLock(&transport_classes_lock);
 
- //   dtt_initialize();
+    dtt_initialize();
 
 	system_wq = alloc_ordered_workqueue("system workqueue", 0);
 	if (system_wq == NULL) {
