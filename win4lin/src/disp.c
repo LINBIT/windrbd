@@ -667,7 +667,7 @@ mvolRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     NTSTATUS 	status = STATUS_SUCCESS;
     PVOLUME_EXTENSION VolumeExtension = DeviceObject->DeviceExtension;
 
-// printk(KERN_INFO "read 1\n");
+printk(KERN_INFO "read 1\n");
     if (DeviceObject == mvolRootDeviceObject)
     {
 printk(KERN_INFO "read 2\n");
@@ -881,7 +881,7 @@ mvolDeviceControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     PVOLUME_EXTENSION	VolumeExtension = DeviceObject->DeviceExtension;
 
 if (VolumeExtension->VolIndex == 3) {
-printk(KERN_INFO "device_control on F: vext: %p\n", VolumeExtension);
+printk(KERN_INFO "device_control on F: vext: %p targetdev: %p\n", VolumeExtension, VolumeExtension->TargetDeviceObject);
 }
     irpSp = IoGetCurrentIrpStackLocation(Irp);
     switch (irpSp->Parameters.DeviceIoControl.IoControlCode)
@@ -998,14 +998,19 @@ printk(KERN_INFO "device_control on F: vext: %p\n", VolumeExtension);
 		}
     }
 
-    if (DeviceObject == mvolRootDeviceObject ||
-        VolumeExtension->TargetDeviceObject == NULL)
+printk(KERN_INFO "1\n");
+	if (1)
+/*    if (DeviceObject == mvolRootDeviceObject ||
+        VolumeExtension->TargetDeviceObject == NULL) */
     {
+printk(KERN_INFO "2\n");
         status = STATUS_UNSUCCESSFUL;
         MVOL_IOCOMPLETE_REQ(Irp, status, 0);
     }
 
+printk(KERN_INFO "3\n");
     IoSkipCurrentIrpStackLocation(Irp);
+printk(KERN_INFO "4\n");
     return IoCallDriver(VolumeExtension->TargetDeviceObject, Irp);
 }
 
