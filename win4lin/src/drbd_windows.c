@@ -1685,9 +1685,11 @@ NTSTATUS DrbdIoCompletion(
 	struct bio *bio = Context;
 	PMDL mdl, nextMdl;
 
+/*
 	if (bio && bio->bi_bdev && bio->bi_bdev->pDeviceExtension) {
 		IoReleaseRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
 	}
+*/
 
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		WDRBD_WARN("DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
@@ -1721,12 +1723,12 @@ static int win_generic_make_request(struct bio *bio)
 printk(KERN_DEBUG "1\n");
 	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
 
-printk(KERN_DEBUG "1\n");
+printk(KERN_DEBUG "2\n");
 	if (!q) {
 		WDRBD_WARN("win_generic_make_request: request queue is NULL.\n");
 		return -EIO;
 	}
-printk(KERN_DEBUG "1\n");
+printk(KERN_DEBUG "3\n");
 #if 0
 	if (KeGetCurrentIrql() <= DISPATCH_LEVEL) {
 		status = IoAcquireRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
@@ -1844,6 +1846,8 @@ printk(KERN_DEBUG "1\n");
 	}
 printk("call driver device object %p irp %p\n", bio->bi_bdev->windows_device, newIrp);
 	IoCallDriver(bio->bi_bdev->windows_device, newIrp);
+
+printk("call driver object returned.\n");
 
 	return 0;
 }
