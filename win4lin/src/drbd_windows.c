@@ -2867,13 +2867,19 @@ static struct _DEVICE_OBJECT *find_windows_device(const char *path)
 	struct _DEVICE_OBJECT *windows_device;
 	PFILE_OBJECT FileObject;
 	ANSI_STRING apath;
+	UNICODE_STRING link_name;
 	UNICODE_STRING device_name;
 	NTSTATUS status;
 
 	RtlInitAnsiString(&apath, path);
-	status = RtlAnsiStringToUnicodeString(&device_name, &apath, TRUE);
+	status = RtlAnsiStringToUnicodeString(&link_name, &apath, TRUE);
 
-printk(KERN_DEBUG "Init Unicode String %S\n", device_name.Buffer);
+printk(KERN_DEBUG "Link is %S\n", link_name.Buffer);
+	if (resolve_nt_kernel_link(&link_name, &device_name) != STATUS_SUCCESS) {
+		WDRBD_ERROR("Could not resolve link.\n");
+		return NULL;
+	}
+printk(KERN_DEBUG "Link points to %S\n", device_name.Buffer);
 
 	status = IoGetDeviceObjectPointer(&device_name, FILE_ALL_ACCESS, &FileObject, &windows_device);
 
@@ -2882,7 +2888,7 @@ printk(KERN_DEBUG "Init Unicode String %S\n", device_name.Buffer);
 printk(KERN_ERR "Cannot get device object for %s status: %x\n", path, status);
 		return NULL;
 	}
-printk(KERN_DEBUG "IoGetDeviceObjectPointer succeeded, targetdev is %p\n", windows_device);
+printk(KERN_DEBUG "IoGetDeviceObjectPointer %S succeeded, targetdev is %p\n", device_name.Buffer, windows_device);
 
 	return windows_device;
 }
