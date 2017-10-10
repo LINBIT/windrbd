@@ -24,6 +24,9 @@ TODO: Redesign of architecture.
 	extension does not exist any more (except in non-accessible
 	code). 
 
+	Update: maybe the struct block_device should be the windows
+	device extension, so we safe a intermediate data structure.
+
 	TODO: Next thing is to have replacment data structure so
 	that attach works again (create block_device with target
 	device looked up in find_target_dev). Also get I/O on

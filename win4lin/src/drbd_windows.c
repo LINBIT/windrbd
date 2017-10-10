@@ -1766,7 +1766,7 @@ static int win_generic_make_request(struct bio *bio)
 
 	newIrp = IoBuildAsynchronousFsdRequest(
 				io,
-				bio->bi_bdev->pDeviceExtension->TargetDeviceObject,
+				bio->bi_bdev->windows_device,
 				buffer,
 				bio->bi_size,
 				&offset,
@@ -1800,7 +1800,7 @@ static int win_generic_make_request(struct bio *bio)
 	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
 /* TODO: Doesn't help */
-	pIoNextStackLocation->DeviceObject = bio->bi_bdev->pDeviceExtension->TargetDeviceObject; 
+//	pIoNextStackLocation->DeviceObject = bio->bi_bdev->pDeviceExtension->TargetDeviceObject; 
 
 	//
 	//	simulation disk-io error point . (generic_make_request fail) - disk error simluation type 0
@@ -1835,7 +1835,7 @@ static int win_generic_make_request(struct bio *bio)
 		IoFreeIrp(newIrp);
 		return -EIO;
 	}
-printk("call driver device object %p irp %p\n", bio->bi_bdev->pDeviceExtension->TargetDeviceObject, newIrp);
+printk("call driver device object %p irp %p\n", bio->bi_bdev->windows_device, newIrp);
 	IoCallDriver(bio->bi_bdev->pDeviceExtension->TargetDeviceObject, newIrp);
 
 	return 0;
@@ -2823,27 +2823,32 @@ out_close_handle:
 	return status;
 }
 
-static int find_target_dev(struct _VOLUME_EXTENSION *pvext)
+static struct _DEVICE_OBJECT *find_windows_device(const char *path)
 {
+	struct _DEVICE_OBJECT *windows_device;
 	PFILE_OBJECT FileObject;
+	ANSI_STRING apath;
 	UNICODE_STRING device_name;
 	NTSTATUS status;
 
-	RtlInitUnicodeString(&device_name, pvext->PhysicalDeviceName);
+	RtlInitAnsiString(&apath, path);
+	status = RtlAnsiStringToUnicodeString(&device_name, &apath, TRUE);
 
 printk(KERN_DEBUG "Init Unicode String %S\n", device_name.Buffer);
 
-	status = IoGetDeviceObjectPointer(&device_name, FILE_ALL_ACCESS, &FileObject, &pvext->TargetDeviceObject);
+	status = IoGetDeviceObjectPointer(&device_name, FILE_ALL_ACCESS, &FileObject, &windows_device);
 
 	if (!NT_SUCCESS(status))
 	{
-printk(KERN_ERR "Cannot get device object for %S status: %x\n", pvext->PhysicalDeviceName, status);
-		return -1;
+printk(KERN_ERR "Cannot get device object for %s status: %x\n", path, status);
+		return NULL;
 	}
-printk(KERN_DEBUG "IoGetDeviceObjectPointer succeeded, targetdev is %p\n", pvext->TargetDeviceObject);
+printk(KERN_DEBUG "IoGetDeviceObjectPointer succeeded, targetdev is %p\n", windows_device);
 
-	return 0;
+	return windows_device;
 }
+
+#if 0
 
 static struct _VOLUME_EXTENSION *pvext_get_by_path(const char *path)
 {
@@ -2884,7 +2889,6 @@ static struct _VOLUME_EXTENSION *pvext_get_by_path(const char *path)
 }
 
 
-
 static struct block_device *windrbd_blkdev_get_by_path(const char *path, bool upper)
 {
 	struct _VOLUME_EXTENSION *pvext;
@@ -2905,16 +2909,72 @@ static struct block_device *windrbd_blkdev_get_by_path(const char *path, bool up
 	}
 	return ERR_PTR(-ENODEV);
 }
+#endif
+
+/* This creates a new block device associated with the windows
+   device pointed to by path.
+ */
 
 struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder)
 {
-	return windrbd_blkdev_get_by_path(path, false);
+	struct block_device *block_device;
+
+	block_device = kmalloc(sizeof(struct block_device), 0, 'DBRD');
+	if (block_device == NULL) {
+		WDRBD_ERROR("could not allocate block_device.\n");
+		return NULL;
+	}
+	block_device->windows_device = find_windows_device(path);
+	if (block_device->windows_device == NULL) {
+		kfree(block_device);
+		return NULL;
+	}
+	block_device->bd_disk = alloc_disk(0);
+	if (!block_device->bd_disk)
+	{
+		WDRBD_ERROR("Failed to allocate gendisk NonPagedMemory\n");
+		kfree(block_device);
+		return NULL;
+	}
+
+	block_device->bd_disk->queue = blk_alloc_queue(0);
+	if (!block_device->bd_disk->queue)
+	{
+		WDRBD_ERROR("Failed to allocate request_queue NonPagedMemory\n");
+			/* TODO: and free disk */
+		kfree(block_device);
+		return NULL;
+	}
+        kref_init(&block_device->kref);
+ 
+	block_device->bd_contains->bd_disk = block_device->bd_disk;
+	block_device->bd_contains->bd_parent = block_device;
+
+		/* TODO: not always? */
+	block_device->bd_disk->queue->logical_block_size = 512;
+		/* TODO: DRBD size may be less than that (without
+		   meta data. */
+/*	dev->d_size = get_targetdev_volsize(pvext); */
+		/* TODO: As long as we're unconfigured, we don't know
+		   the size. Will be set later during attach.
+		   Else DRBD attach complains about disk too small. 
+		   TODO: have a mechanism to determine the size for
+		         diskless configurations.
+			Fix that when splitting devices into
+			backing devices and drbd devices.
+		 */
+		/* TODO: now we should really look it up since we
+			now get called from drbdadm attach */
+	block_device->d_size = 0;
+
+	return block_device;
 }
 
 /* TODO: this should go away .. we want NT device names internally. */
 
 /* This always gets the upper device */
 
+#if 0
 PVOLUME_EXTENSION get_targetdev_by_minor(unsigned int minor)
 {
 	char path[128] = "\\DosDevices\\F:";
@@ -2922,6 +2982,7 @@ PVOLUME_EXTENSION get_targetdev_by_minor(unsigned int minor)
 printk(KERN_INFO "get_targetdev_by_minor %d\n", minor);
 	return pvext_get_by_path(path);
 }
+#endif
 
 int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait)
 {
@@ -3388,6 +3449,7 @@ static int minor_to_x_name(UNICODE_STRING *name, int minor, int internal)
 
 /* TODO: 100 -> MAX_PATH_LEN */
 /* TODO: name, dos_name into device extension */
+/* TODO: have goto's for cleaning up. */
 
 struct block_device *bdget(dev_t device_no)
 {

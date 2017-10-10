@@ -597,9 +597,11 @@ struct block_device {
 	unsigned long long d_size;
 	struct kref kref;
 
-	int minor;	/* in case drbd_device is still NULL */
+	int minor;	/* in case drbd_device is still NULL we need to shadow it here */
 	struct drbd_device* drbd_device;
-	PVOLUME_EXTENSION pDeviceExtension; /* TODO: rename and use other struct */
+	struct _DEVICE_OBJECT *windows_device;	/* If that is a backing dev, the target device to send the I/O IRPs to. If this is a DRBD device, currently unset (later maybe the device created by bdget() */
+
+	PVOLUME_EXTENSION pDeviceExtension; /* TODO: this should go away */
 };
 
 extern sector_t wdrbd_get_capacity(struct block_device *bdev);
