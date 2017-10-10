@@ -1809,7 +1809,7 @@ printk(KERN_DEBUG "3\n");
 		}
 	}
 
-	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
+/*	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE); */
 
 /* TODO: Doesn't help */
 	// pIoNextStackLocation->DeviceObject = bio->bi_bdev->pDeviceExtension->TargetDeviceObject; 
@@ -1851,7 +1851,9 @@ printk(KERN_DEBUG "3\n");
 		return -EIO;
 	}
 printk("call driver device object %p irp %p\n", bio->bi_bdev->windows_device, newIrp);
-	IoCallDriver(bio->bi_bdev->windows_device, newIrp);
+	status = IoCallDriver(bio->bi_bdev->windows_device, newIrp);
+		/* either STATUS_SUCCESS or STATUS_PENDING */
+printk("IoCallDriver status %x\n", status);
 
 printk("call driver object returned.\n");
 
