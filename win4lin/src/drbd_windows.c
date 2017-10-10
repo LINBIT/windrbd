@@ -1680,6 +1680,8 @@ NTSTATUS DrbdIoCompletion(
   _In_opt_ PVOID          Context
 )
 {
+printk(KERN_DEBUG "io completion NOT DONE.\n");
+	return STATUS_SUCCESS;
 /* TODO: Device object is NULL here. Fix that in case we need it one day. */
 /* printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context); */
 	struct bio *bio = Context;
@@ -1793,6 +1795,8 @@ printk(KERN_DEBUG "3\n");
 			//copy original Local I/O's Flags for private_bio instead of drbd's write_ordering, because of performance issue. (2016.03.23)
 			pIoNextStackLocation->Flags = bio->MasterIrpStackFlags;
 		} else { 
+#if 0
+	/* TODO: don't have drbd_device there yet .. */
 			//apply meta I/O's write_ordering
 			// DW-1300: get drbd device from gendisk.
 			if (bio->bi_bdev) {
@@ -1801,13 +1805,15 @@ printk(KERN_DEBUG "3\n");
 					pIoNextStackLocation->Flags |= (SL_WRITE_THROUGH | SL_FT_SEQUENTIAL_WRITE);
 				}
 			}
+#endif
 		}
 	}
 
 	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
 /* TODO: Doesn't help */
-//	pIoNextStackLocation->DeviceObject = bio->bi_bdev->pDeviceExtension->TargetDeviceObject; 
+	// pIoNextStackLocation->DeviceObject = bio->bi_bdev->pDeviceExtension->TargetDeviceObject; 
+	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 
 	//
 	//	simulation disk-io error point . (generic_make_request fail) - disk error simluation type 0
@@ -2994,7 +3000,7 @@ printk(KERN_DEBUG "8\n");
 		   meta data. */
 	block_device->d_size = get_volsize(block_device->windows_device);
 printk(KERN_DEBUG "block device size is %llu\n", block_device->d_size);
-printk(KERN_DEBUG "blkdev_get_by_path succeeded %p.\n", block_device);
+printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
 	return block_device;
 }
