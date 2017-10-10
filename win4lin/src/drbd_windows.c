@@ -2455,6 +2455,24 @@ void refresh_targetdev_list()
 
 /**
  * @return
+ *	volume size per byte for windows disk device
+ */
+LONGLONG get_volsize(struct _DEVICE_OBJECT *windows_device)
+{
+	LARGE_INTEGER	volumeSize;
+	NTSTATUS	status;
+
+	status = mvolGetVolumeSize(windows_device, &volumeSize);
+	if (!NT_SUCCESS(status))
+	{
+		WDRBD_WARN("get volume size error = 0x%x\n", status);
+		volumeSize.QuadPart = 0;
+	}
+	return volumeSize.QuadPart;
+}
+
+/**
+ * @return
  *	volume size per byte
  */
 LONGLONG get_targetdev_volsize(PVOLUME_EXTENSION VolumeExtension)
@@ -2486,6 +2504,8 @@ LONGLONG get_targetdev_volsize(PVOLUME_EXTENSION VolumeExtension)
 * @brief   create block_device by referencing to VOLUME_EXTENSION object.
 *          a created block_device must be freed by ExFreePool() elsewhere.
 */
+
+/* TODO: this goes away */
 struct block_device *create_block_device(IN OUT PVOLUME_EXTENSION pvext)
 {
 	struct block_device *dev;
@@ -2919,16 +2939,19 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 {
 	struct block_device *block_device;
 
+printk(KERN_DEBUG "1\n");
 	block_device = kmalloc(sizeof(struct block_device), 0, 'DBRD');
 	if (block_device == NULL) {
 		WDRBD_ERROR("could not allocate block_device.\n");
 		return NULL;
 	}
+printk(KERN_DEBUG "2\n");
 	block_device->windows_device = find_windows_device(path);
 	if (block_device->windows_device == NULL) {
 		kfree(block_device);
 		return NULL;
 	}
+printk(KERN_DEBUG "3\n");
 	block_device->bd_disk = alloc_disk(0);
 	if (!block_device->bd_disk)
 	{
@@ -2937,7 +2960,9 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		return NULL;
 	}
 
+printk(KERN_DEBUG "4\n");
 	block_device->bd_disk->queue = blk_alloc_queue(0);
+printk(KERN_DEBUG "5\n");
 	if (!block_device->bd_disk->queue)
 	{
 		WDRBD_ERROR("Failed to allocate request_queue NonPagedMemory\n");
@@ -2945,27 +2970,20 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		kfree(block_device);
 		return NULL;
 	}
+printk(KERN_DEBUG "6\n");
         kref_init(&block_device->kref);
  
-	block_device->bd_contains->bd_disk = block_device->bd_disk;
-	block_device->bd_contains->bd_parent = block_device;
+printk(KERN_DEBUG "7\n");
+	block_device->bd_contains = block_device;
 
+printk(KERN_DEBUG "8\n");
 		/* TODO: not always? */
 	block_device->bd_disk->queue->logical_block_size = 512;
 		/* TODO: DRBD size may be less than that (without
 		   meta data. */
-/*	dev->d_size = get_targetdev_volsize(pvext); */
-		/* TODO: As long as we're unconfigured, we don't know
-		   the size. Will be set later during attach.
-		   Else DRBD attach complains about disk too small. 
-		   TODO: have a mechanism to determine the size for
-		         diskless configurations.
-			Fix that when splitting devices into
-			backing devices and drbd devices.
-		 */
-		/* TODO: now we should really look it up since we
-			now get called from drbdadm attach */
-	block_device->d_size = 0;
+	block_device->d_size = get_volsize(block_device->windows_device);
+printk(KERN_DEBUG "block device size is %llu\n", block_device->d_size);
+printk(KERN_DEBUG "blkdev_get_by_path succeeded %p.\n", block_device);
 
 	return block_device;
 }

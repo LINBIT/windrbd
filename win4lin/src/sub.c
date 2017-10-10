@@ -439,6 +439,7 @@ fail:
 	return status;
 }
 
+/* we need this */
 NTSTATUS
 mvolGetVolumeSize(PDEVICE_OBJECT TargetDeviceObject, PLARGE_INTEGER pVolumeSize)
 {
