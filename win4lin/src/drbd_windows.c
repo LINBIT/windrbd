@@ -1718,12 +1718,16 @@ static int win_generic_make_request(struct bio *bio)
 	ULONG io = 0;
 	PIO_STACK_LOCATION	pIoNextStackLocation = NULL;
 	
+printk(KERN_DEBUG "1\n");
 	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
 
+printk(KERN_DEBUG "1\n");
 	if (!q) {
 		WDRBD_WARN("win_generic_make_request: request queue is NULL.\n");
 		return -EIO;
 	}
+printk(KERN_DEBUG "1\n");
+#if 0
 	if (KeGetCurrentIrql() <= DISPATCH_LEVEL) {
 		status = IoAcquireRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
 		if (!NT_SUCCESS(status)) {
@@ -1735,6 +1739,7 @@ static int win_generic_make_request(struct bio *bio)
 		WDRBD_WARN("IoAcquireRemoveLock IRQL(%d) is too high, bio->pVolExt:%p fail\n", KeGetCurrentIrql(), bio->bi_bdev->pDeviceExtension);
 		return -EIO;
 	}
+#endif
 
 	if(bio->bi_rw == WRITE_FLUSH) {	// TODO: & WRITE_FLUSH ? plus WRITE_FLUSH is defined as the same as WRITE
 		io = IRP_MJ_FLUSH_BUFFERS;
@@ -1775,7 +1780,7 @@ static int win_generic_make_request(struct bio *bio)
 
 	if (!newIrp) {
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
-		IoReleaseRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
+//		IoReleaseRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
 		return -ENOMEM;
 	}
 
@@ -1805,6 +1810,7 @@ static int win_generic_make_request(struct bio *bio)
 	//
 	//	simulation disk-io error point . (generic_make_request fail) - disk error simluation type 0
 	//
+#if 0
 	if(gSimulDiskIoError.bDiskErrorOn && gSimulDiskIoError.ErrorType == SIMUL_DISK_IO_ERROR_TYPE0) {
 		WDRBD_ERROR("SimulDiskIoError: type0...............\n");
 		IoReleaseRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
@@ -1824,6 +1830,7 @@ static int win_generic_make_request(struct bio *bio)
 		IoFreeIrp(newIrp);
 		return -EIO;
 	}
+#endif
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP. We need this else IoCompletion is blue
 		 * screening later when we free the Irp.
@@ -1836,7 +1843,7 @@ static int win_generic_make_request(struct bio *bio)
 		return -EIO;
 	}
 printk("call driver device object %p irp %p\n", bio->bi_bdev->windows_device, newIrp);
-	IoCallDriver(bio->bi_bdev->pDeviceExtension->TargetDeviceObject, newIrp);
+	IoCallDriver(bio->bi_bdev->windows_device, newIrp);
 
 	return 0;
 }
