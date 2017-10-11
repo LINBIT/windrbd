@@ -1730,6 +1730,7 @@ printk(KERN_DEBUG "2\n");
 		WDRBD_WARN("win_generic_make_request: request queue is NULL.\n");
 		return -EIO;
 	}
+printk(KERN_DEBUG "bio: %p bio->bi_bdev: %p bio->bi_sector: %llx bio->bi_rw: %d bio->bio_databuf: %p bio->bi_size: %d\n", bio, bio->bi_bdev, bio->bi_sector, bio->bi_rw, bio->bio_databuf, bio->bi_size);
 printk(KERN_DEBUG "3\n");
 #if 0
 	if (KeGetCurrentIrql() <= DISPATCH_LEVEL) {
@@ -1764,6 +1765,7 @@ printk(KERN_DEBUG "3\n");
 			if (bio->bi_max_vecs > 1) {
 					/* TODO: might happen one day ... */
 				printk(KERN_WARNING "bio->bi_max_vecs is %d, this is currently not supported.\n", bio->bi_max_vecs);
+				return -EIO;
 			}
 			buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
 		}
@@ -1809,7 +1811,7 @@ printk(KERN_DEBUG "3\n");
 		}
 	}
 
-/*	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE); */
+	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
 /* TODO: Doesn't help */
 	// pIoNextStackLocation->DeviceObject = bio->bi_bdev->pDeviceExtension->TargetDeviceObject; 
@@ -1854,7 +1856,11 @@ printk("call driver device object %p irp %p\n", bio->bi_bdev->windows_device, ne
 	__try {
 		status = IoCallDriver(bio->bi_bdev->windows_device, newIrp);
 	} __except (EXCEPTION_EXECUTE_HANDLER) {
+//		LPEXCEPTION_POINTERS p = GetExceptionInformation();
 		printk(KERN_ERR "Exception raised during IoCallDriver, code is %x.\n", GetExceptionCode());
+//		printk(KERN_ERR "PC Address is %p\n", p->ExceptionRecord->ExceptionAddress);
+//		printk(KERN_ERR "Target Address is %llx\n", p->ExceptionRecord->ExceptionInformation[1]);
+		
 		return -EIO;
 	}
 		/* either STATUS_SUCCESS or STATUS_PENDING */
