@@ -1841,6 +1841,12 @@ printk(KERN_DEBUG "3\n");
 		return -EIO;
 	}
 #endif
+
+	PMDL mdl;
+printk("newIrp->MdlAddress %p\n", newIrp->MdlAddress);
+	for (mdl = newIrp->MdlAddress; mdl != NULL; mdl = mdl->Next) {
+		printk(KERN_DEBUG "mdl %p vaddr %p\n", mdl, MmGetMdlVirtualAddress(mdl));
+	}
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP. We need this else IoCompletion is blue
 		 * screening later when we free the Irp.
