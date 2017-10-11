@@ -1851,7 +1851,12 @@ printk(KERN_DEBUG "3\n");
 		return -EIO;
 	}
 printk("call driver device object %p irp %p\n", bio->bi_bdev->windows_device, newIrp);
-	status = IoCallDriver(bio->bi_bdev->windows_device, newIrp);
+	__try {
+		status = IoCallDriver(bio->bi_bdev->windows_device, newIrp);
+	} __except (EXCEPTION_EXECUTE_HANDLER) {
+		printk(KERN_ERR "Exception raised during IoCallDriver, code is %x.\n", GetExceptionCode());
+		return -EIO;
+	}
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 printk("IoCallDriver status %x\n", status);
 
