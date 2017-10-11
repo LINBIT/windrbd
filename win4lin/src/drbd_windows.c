@@ -1718,7 +1718,7 @@ static int win_generic_make_request(struct bio *bio)
 
 	PIRP newIrp = NULL;
 	PVOID buffer = NULL;;
-	LARGE_INTEGER offset = {0,};
+	PLARGE_INTEGER offset;
 	ULONG io = 0;
 	PIO_STACK_LOCATION	pIoNextStackLocation = NULL;
 	
@@ -1730,6 +1730,9 @@ printk(KERN_DEBUG "2\n");
 		WDRBD_WARN("win_generic_make_request: request queue is NULL.\n");
 		return -EIO;
 	}
+	offset = kmalloc(sizeof(*offset), 0, 'DRBD');
+
+bio->bi_sector = 0x18ff8;
 printk(KERN_DEBUG "bio: %p bio->bi_bdev: %p bio->bi_sector: %llx bio->bi_rw: %d bio->bio_databuf: %p bio->bi_size: %d\n", bio, bio->bi_bdev, bio->bi_sector, bio->bi_rw, bio->bio_databuf, bio->bi_size);
 printk(KERN_DEBUG "3\n");
 #if 0
@@ -1750,7 +1753,7 @@ printk(KERN_DEBUG "3\n");
 		io = IRP_MJ_FLUSH_BUFFERS;
 		buffer = NULL;
 		bio->bi_size = 0;
-		offset.QuadPart = 0;
+		offset->QuadPart = 0;
 	} else {
 		if (bio->bi_rw & WRITE) {
 			io = IRP_MJ_WRITE;
@@ -1758,7 +1761,7 @@ printk(KERN_DEBUG "3\n");
 			io = IRP_MJ_READ;
 		}
 			/* TODO: what if sect size != 512? */
-		offset.QuadPart = bio->bi_sector << 9;
+		offset->QuadPart = bio->bi_sector << 9;
 		if (bio->bio_databuf) {
 			buffer = bio->bio_databuf;
 		} else {
@@ -1773,15 +1776,18 @@ printk(KERN_DEBUG "3\n");
 
 	WDRBD_TRACE("(%s)Local I/O(%s): sect=0x%llx sz=%d IRQL=%d buf=0x%p, off&=0x%llx\n", 
 		current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", 
-		offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), &offset, buffer);
+		offset->QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, offset);
+
+	IO_STATUS_BLOCK *io_stat;
+	io_stat = kmalloc(sizeof(*io_stat), 0, 'DRBD');
 
 	newIrp = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
 				buffer,
 				bio->bi_size,
-				&offset,
-				NULL
+				offset,
+				io_stat
 				);
 
 	if (!newIrp) {
@@ -1845,7 +1851,7 @@ printk(KERN_DEBUG "3\n");
 	PMDL mdl;
 printk("newIrp->MdlAddress %p\n", newIrp->MdlAddress);
 	for (mdl = newIrp->MdlAddress; mdl != NULL; mdl = mdl->Next) {
-		printk(KERN_DEBUG "mdl %p vaddr %p\n", mdl, MmGetMdlVirtualAddress(mdl));
+		printk(KERN_DEBUG "mdl %p vaddr %p length: %lu offset: %lu\n", mdl, MmGetMdlVirtualAddress(mdl), MmGetMdlByteCount(mdl), MmGetMdlByteOffset(mdl));
 	}
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP. We need this else IoCompletion is blue
