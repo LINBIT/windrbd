@@ -1852,6 +1852,11 @@ printk(KERN_DEBUG "3\n");
 printk("newIrp->MdlAddress %p\n", newIrp->MdlAddress);
 	for (mdl = newIrp->MdlAddress; mdl != NULL; mdl = mdl->Next) {
 		printk(KERN_DEBUG "mdl %p vaddr %p length: %lu offset: %lu\n", mdl, MmGetMdlVirtualAddress(mdl), MmGetMdlByteCount(mdl), MmGetMdlByteOffset(mdl));
+		char *p = MmGetMdlVirtualAddress(mdl);
+		printk("Writing to %p\n", p);
+		*p = 1;
+		printk("Writing to %p\n", p+MmGetMdlByteCount(mdl)-1);
+		*(p+MmGetMdlByteCount(mdl)-1) = 2;
 	}
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP. We need this else IoCompletion is blue
@@ -1865,8 +1870,9 @@ printk("newIrp->MdlAddress %p\n", newIrp->MdlAddress);
 		return -EIO;
 	}
 printk("call driver device object %p irp %p\n", bio->bi_bdev->windows_device, newIrp);
-	__try {
+//	__try {
 		status = IoCallDriver(bio->bi_bdev->windows_device, newIrp);
+#if 0
 	} __except (EXCEPTION_EXECUTE_HANDLER) {
 //		LPEXCEPTION_POINTERS p = GetExceptionInformation();
 		printk(KERN_ERR "Exception raised during IoCallDriver, code is %x.\n", GetExceptionCode());
@@ -1875,6 +1881,7 @@ printk("call driver device object %p irp %p\n", bio->bi_bdev->windows_device, ne
 		
 		return -EIO;
 	}
+#endif
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 printk("IoCallDriver status %x\n", status);
 
