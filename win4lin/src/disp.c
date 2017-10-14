@@ -21,6 +21,7 @@
 #include <ntstrsafe.h>
 #include <ntddk.h>
 #include "drbd_windows.h"
+#include "windrbd_device.h"
 #include "drbd_wingenl.h"	
 #include "disp.h"
 #include "mvolmsg.h"
@@ -94,12 +95,9 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
     WDRBD_TRACE("DRBD Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
 
-    initRegistry(RegistryPath);
+	initRegistry(RegistryPath);
 
-    for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
-        DriverObject->MajorFunction[i] = mvolSendToNextDriver;
-
-/* TODO: windrbd_set_major_functions() */
+	windrbd_set_major_functions(DriverObject);
 /*
     DriverObject->MajorFunction[IRP_MJ_CREATE] = mvolCreate;
     DriverObject->MajorFunction[IRP_MJ_CLOSE] = mvolClose;

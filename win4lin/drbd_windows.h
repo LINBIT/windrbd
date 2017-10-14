@@ -584,6 +584,11 @@ struct gendisk
 	void * part0; 
 };
 
+/* TODO: this is used as device extension for the DRBD devices and
+   also as block device for the backing devices. This is probably
+   not a good idea.
+ */
+
 struct block_device {
 	// If the block device descriptor refers to a disk partition,
 	// the bd_contains field points to the descriptor of the
@@ -599,7 +604,10 @@ struct block_device {
 
 	int minor;	/* in case drbd_device is still NULL we need to shadow it here */
 	struct drbd_device* drbd_device;
-	struct _DEVICE_OBJECT *windows_device;	/* If that is a backing dev, the target device to send the I/O IRPs to. If this is a DRBD device, currently unset (later maybe the device created by bdget() */
+	struct _DEVICE_OBJECT *windows_device;	/* If that is a backing dev, the target device to send the I/O IRPs to. If this is a DRBD device, the device created by bdget()) */
+
+/* TODO: also have fileobject returned by IoGetDeviceObjectPointer() here */
+	IO_REMOVE_LOCK remove_lock;
 };
 
 extern sector_t wdrbd_get_capacity(struct block_device *bdev);
