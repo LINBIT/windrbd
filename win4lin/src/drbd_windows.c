@@ -1732,7 +1732,7 @@ printk(KERN_DEBUG "2\n");
 	}
 	offset = kmalloc(sizeof(*offset), 0, 'DRBD');
 
-bio->bi_sector = 0x18ff8;
+// bio->bi_sector = 0x18ff8;
 printk(KERN_DEBUG "bio: %p bio->bi_bdev: %p bio->bi_sector: %llx bio->bi_rw: %d bio->bio_databuf: %p bio->bi_size: %d\n", bio, bio->bi_bdev, bio->bi_sector, bio->bi_rw, bio->bio_databuf, bio->bi_size);
 printk(KERN_DEBUG "3\n");
 #if 0
@@ -2927,7 +2927,6 @@ printk(KERN_ERR "Cannot get device object for %s status: %x\n", path, status);
 	}
 printk(KERN_DEBUG "IoGetDeviceObjectPointer %S succeeded, targetdev is %p\n", device_name.Buffer, windows_device);
 
-#if 0
 	HANDLE f;
 	OBJECT_ATTRIBUTES attributes;
 	IO_STATUS_BLOCK io_status;
@@ -2948,7 +2947,6 @@ printk("5\n");
 	}
 printk("6\n");
 printk("File opened successfully.\n");
-#endif
 	/* TODO: leaks f and FileObject */
 	return windows_device;
 }
@@ -3025,6 +3023,13 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 {
 	struct block_device *block_device;
 
+/* TODO: keep a record of created block devices (by link targets
+   of the pathes) so that when using internal meta data we return
+   the same struct block_device * (which is already initialized)
+   for meta data and for data.
+   (for now internal meta data won't work because of the sharing
+    violation in getting the object pointer).
+ */
 printk(KERN_DEBUG "1\n");
 	block_device = kmalloc(sizeof(struct block_device), 0, 'DBRD');
 	if (block_device == NULL) {
