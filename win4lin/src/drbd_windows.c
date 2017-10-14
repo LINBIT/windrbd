@@ -2899,10 +2899,16 @@ static struct _DEVICE_OBJECT *find_windows_device(const char *path)
 	ANSI_STRING apath;
 	UNICODE_STRING link_name;
 	UNICODE_STRING device_name;
+	WCHAR link_target_buffer[1024];
+	
 	NTSTATUS status;
 
 	RtlInitAnsiString(&apath, path);
 	status = RtlAnsiStringToUnicodeString(&link_name, &apath, TRUE);
+
+	device_name.Buffer = link_target_buffer;
+	device_name.MaximumLength = sizeof(link_target_buffer)-1;
+	device_name.Length = 0;
 
 printk(KERN_DEBUG "Link is %S\n", link_name.Buffer);
 	if (resolve_nt_kernel_link(&link_name, &device_name) != STATUS_SUCCESS) {
@@ -2913,6 +2919,7 @@ printk(KERN_DEBUG "Link points to %S\n", device_name.Buffer);
 
 	status = IoGetDeviceObjectPointer(&device_name, FILE_ALL_ACCESS, &FileObject, &windows_device);
 
+printk("1\n");
 	if (!NT_SUCCESS(status))
 	{
 printk(KERN_ERR "Cannot get device object for %s status: %x\n", path, status);
@@ -2920,6 +2927,27 @@ printk(KERN_ERR "Cannot get device object for %s status: %x\n", path, status);
 	}
 printk(KERN_DEBUG "IoGetDeviceObjectPointer %S succeeded, targetdev is %p\n", device_name.Buffer, windows_device);
 
+	HANDLE f;
+	OBJECT_ATTRIBUTES attributes;
+	IO_STATUS_BLOCK io_status;
+
+printk("2\n");
+	InitializeObjectAttributes(&attributes, &device_name, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+printk("3\n");
+	attributes.ObjectName = &device_name;
+printk("4\n");
+
+	status = ZwCreateFile(&f, FILE_ALL_ACCESS, &attributes, &io_status, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN, FILE_NON_DIRECTORY_FILE, NULL, 0);
+	
+printk("5\n");
+	if (!NT_SUCCESS(status)) {
+		WDRBD_ERROR("Could not open file %s status is %x\n", path, status);
+			/* TODO: leaks FileObject */
+		return NULL;
+	}
+printk("6\n");
+printk("File opened successfully.\n");
+	/* TODO: leaks f and FileObject */
 	return windows_device;
 }
 
@@ -2985,6 +3013,7 @@ static struct block_device *windrbd_blkdev_get_by_path(const char *path, bool up
 	return ERR_PTR(-ENODEV);
 }
 #endif
+
 
 /* This creates a new block device associated with the windows
    device pointed to by path.
