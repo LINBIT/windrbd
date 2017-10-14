@@ -3031,6 +3031,7 @@ static struct block_device *windrbd_blkdev_get_by_path(const char *path, bool up
 struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder)
 {
 	struct block_device *block_device;
+	NTSTATUS status;
 
 /* TODO: keep a record of created block devices (by link targets
    of the pathes) so that when using internal meta data we return
@@ -3084,6 +3085,14 @@ printk(KERN_DEBUG "8\n");
 	block_device->d_size = get_volsize(block_device->windows_device);
 printk(KERN_DEBUG "block device size is %llu\n", block_device->d_size);
 printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
+
+	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
+	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
+	if (!NT_SUCCESS(status)) {
+		WDRBD_ERROR("Failed to acquire remove lock, status is %s\n", status);
+			/* TODO: clean up */
+		return NULL;
+	}
 
 	return block_device;
 }
@@ -3614,6 +3623,14 @@ struct block_device *bdget(dev_t device_no)
 #endif
 	block_device = new_device->DeviceExtension;
 	kref_init(&block_device->kref);
+
+	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
+	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
+	if (!NT_SUCCESS(status)) {
+		WDRBD_ERROR("Failed to acquire remove lock, status is %s\n", status);
+			/* TODO: clean up */
+		return NULL;
+	}
 
 	block_device->windows_device = new_device;
 	block_device->minor = minor;
