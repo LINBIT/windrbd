@@ -2927,6 +2927,7 @@ printk(KERN_ERR "Cannot get device object for %s status: %x\n", path, status);
 	}
 printk(KERN_DEBUG "IoGetDeviceObjectPointer %S succeeded, targetdev is %p\n", device_name.Buffer, windows_device);
 
+#if 0
 	HANDLE f;
 	OBJECT_ATTRIBUTES attributes;
 	IO_STATUS_BLOCK io_status;
@@ -2947,6 +2948,7 @@ printk("5\n");
 	}
 printk("6\n");
 printk("File opened successfully.\n");
+#endif
 	/* TODO: leaks f and FileObject */
 	return windows_device;
 }
