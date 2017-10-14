@@ -345,7 +345,6 @@ return STATUS_NO_SUCH_DEVICE;
 
     AttachedDeviceObject->Flags |= (DO_DIRECT_IO | DO_POWER_PAGABLE);
     AttachedDeviceObject->Flags &= ~DO_DEVICE_INITIALIZING;
-#endif
 
 //    VolumeExtension = AttachedDeviceObject->DeviceExtension;
 	VolumeExtension = kmalloc(sizeof(VOLUME_EXTENSION), 0, 'KARI');
@@ -427,6 +426,7 @@ return STATUS_NO_SUCH_DEVICE;
         &VolumeExtension->MountPoint);
 
     return STATUS_SUCCESS;
+#endif
 }
 
 NTSTATUS

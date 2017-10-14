@@ -1819,8 +1819,7 @@ printk(KERN_DEBUG "3\n");
 
 	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
-/* TODO: Doesn't help */
-	// pIoNextStackLocation->DeviceObject = bio->bi_bdev->pDeviceExtension->TargetDeviceObject; 
+printk("pIoNextStackLocation->DeviceObject: %p bio->bi_bdev->windows_device: %p\n");
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 
 	//
@@ -2301,6 +2300,7 @@ void *idr_get_next(struct idr *idp, int *nextidp)
  *	Recreate the VOLUME_EXTENSION's MountPoint, VolIndex, block_device
  *	if it was changed
  */
+#if 0
 void query_targetdev(PVOLUME_EXTENSION pvext)
 {
 	if (!pvext) {
@@ -2363,11 +2363,13 @@ printk(KERN_INFO "query_targetdev: mount point is %S volIndex is %d\n", &pvext->
 		}
 	}
 }
+#endif
 
 // DW-1105: refresh all volumes and handle changes.
+/* TODO: ?? */
 void adjust_changes_to_volume(PVOID pParam)
 {
-	refresh_targetdev_list();
+//	refresh_targetdev_list();
 }
 
 // DW-1105: request mount manager to notify us whenever there is a change in the mount manager's persistent symbolic link name database.
@@ -2491,6 +2493,7 @@ void stop_mnt_monitor()
  * @brief
  *	refresh all VOLUME_EXTENSION's values
  */
+#if 0
 void refresh_targetdev_list()
 {
     PROOT_EXTENSION proot = mvolRootDeviceObject->DeviceExtension;
@@ -2501,6 +2504,7 @@ void refresh_targetdev_list()
     }
     MVOL_UNLOCK();
 }
+#endif
 
 /**
  * @return
@@ -2554,6 +2558,7 @@ LONGLONG get_targetdev_volsize(PVOLUME_EXTENSION VolumeExtension)
 *          a created block_device must be freed by ExFreePool() elsewhere.
 */
 
+#if 0
 /* TODO: this goes away */
 struct block_device *create_block_device(IN OUT PVOLUME_EXTENSION pvext)
 {
@@ -2598,7 +2603,6 @@ struct block_device *create_block_device(IN OUT PVOLUME_EXTENSION pvext)
 
 		/* TODO: not always? */
 	dev->bd_disk->queue->logical_block_size = 512;
-	dev->pDeviceExtension = pvext;
 		/* TODO: DRBD size may be less than that (without
 		   meta data. */
 /*	dev->d_size = get_targetdev_volsize(pvext); */
@@ -2622,6 +2626,7 @@ gendisk_failed:
 
 	return NULL;
 }
+#endif
 
 // DW-1109: delete drbd bdev when ref cnt gets 0, clean up all resources that has been created in create_drbd_block_device.
 void delete_block_device(struct kref *kref)
@@ -2790,6 +2795,7 @@ cleanup:
     return ret;
 }
 
+#if 0
 static int windrbd_set_block_device_active(struct block_device *bdev, int flag)
 {
         struct _VOLUME_EXTENSION *vext;
@@ -2829,7 +2835,9 @@ if (device) printk("windrbd_set_drbd_device_active: this_bdev is %p\n", device->
 	return windrbd_set_block_device_active(device->this_bdev, flag);
 }
 
+#endif
 
+#if 0
 /**
  * @brief
  *	Looks up the \\Devices\\HarddiskVolume<n> device in our
@@ -2859,6 +2867,7 @@ printk(KERN_DEBUG "pvext %S\n", pvext->PhysicalDeviceName);
 
 	return pvext;
 }
+#endif
 
 static NTSTATUS resolve_nt_kernel_link(UNICODE_STRING *upath, UNICODE_STRING *link_target)
 {
@@ -3442,33 +3451,17 @@ NTSTATUS SaveCurrentValue(PCWSTR valueName, int value)
 
 sector_t wdrbd_get_capacity(struct block_device *bdev)
 {
-    if (!bdev) {
-        WDRBD_WARN("Null argument\n");
-        return 0;
-    }
+	if (bdev == NULL) {
+		WDRBD_WARN("Null argument\n");
+		return 0;
+	}
 
-    if (bdev->d_size) {
-        return bdev->d_size >> 9;
-    }
-
-    if (bdev->bd_contains) {    // not real device
-        bdev = bdev->bd_contains;
-        if (bdev->d_size) {
-            return bdev->d_size >> 9;
-        }
-    }
-
-    // Maybe... need to recalculate volume size
-    PVOLUME_EXTENSION pvext = bdev->pDeviceExtension;
-	/* TODO: !pvext ?? */
-    if (!pvext && (KeGetCurrentIrql() < 2)) {
-        bdev->d_size = get_targetdev_volsize(pvext);    // real size
-    }
-
-	/* TODO: sector size isn't always 512 */
-    return bdev->d_size >> 9;
+	if (bdev->d_size == 0) {
+		bdev->d_size = get_volsize(bdev->windows_device);
+	}
+		/* TODO: sector size is not always 512 bytes */
+	return bdev->d_size >> 9;
 }
-
 
 int win_drbd_thread_setup(struct drbd_thread *thi)
 {
@@ -3575,7 +3568,7 @@ struct block_device *bdget(dev_t device_no)
 	}
 
 	status = IoCreateDevice(mvolDriverObject, 
-		                sizeof(struct _VOLUME_EXTENSION), 
+		                sizeof(struct block_device), 
 		                &name,
 		                FILE_DEVICE_DISK,
                                 0,
@@ -3604,6 +3597,7 @@ struct block_device *bdget(dev_t device_no)
 		ExFreePool(name.Buffer);
 		return NULL;
 	}
+#if 0
 	block_device = kmalloc(sizeof(struct block_device), 0, 'DBRD');
 	if (block_device == NULL) {
 		WDRBD_ERROR("Failed to allocate block_device\n");
@@ -3617,16 +3611,12 @@ struct block_device *bdget(dev_t device_no)
 
 		return NULL;
 	}
+#endif
+	block_device = new_device->DeviceExtension;
 	kref_init(&block_device->kref);
 
-		/* For now this is unintialized. It will
-		 * be some other structure soon.
-		 */
-
-	pvext = new_device->DeviceExtension;
-	block_device->pDeviceExtension = pvext;
+	block_device->windows_device = new_device;
 	block_device->minor = minor;
-	pvext->DeviceObject = new_device;
 
 	/* Need to swtich architecture first since that is per driver
 	   not per device */
@@ -3657,15 +3647,13 @@ printk(KERN_INFO "Destroying minor %d\n", minor);
 		ExFreePool(name.Buffer);
 		return;
 	}
-	IoDeleteDevice(bdev->pDeviceExtension->DeviceObject);
+	IoDeleteDevice(bdev->windows_device); /* should also delete the device extension, which is the bdev */
 	if (IoDeleteSymbolicLink(&dos_name) != STATUS_SUCCESS) {
 		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", dos_name.Buffer);
 	}
 
 	ExFreePool(dos_name.Buffer);
 	ExFreePool(name.Buffer);
-
-	kfree(bdev);
 }
 
 void bdput(struct block_device *this_bdev)
