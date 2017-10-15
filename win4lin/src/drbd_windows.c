@@ -1680,8 +1680,6 @@ NTSTATUS DrbdIoCompletion(
   _In_opt_ PVOID          Context
 )
 {
-printk(KERN_DEBUG "io completion NOT DONE.\n");
-	return STATUS_SUCCESS;
 /* TODO: Device object is NULL here. Fix that in case we need it one day. */
 /* printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context); */
 	struct bio *bio = Context;
