@@ -1828,6 +1828,8 @@ printk("newIrp->UserBuffer %p, newIrp->Cancel %d, newIrp->AssociatedIrp.MasterIr
 
 printk("pIoNextStackLocation->DeviceObject: %p bio->bi_bdev->windows_device: %p\n", pIoNextStackLocation->DeviceObject, bio->bi_bdev->windows_device);
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
+	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
+	
 
 	//
 	//	simulation disk-io error point . (generic_make_request fail) - disk error simluation type 0
@@ -2908,7 +2910,7 @@ out_close_handle:
 	return status;
 }
 
-static struct _DEVICE_OBJECT *find_windows_device(const char *path)
+static struct _DEVICE_OBJECT *find_windows_device(const char *path, struct _FILE_OBJECT ** file_object)
 {
 	struct _DEVICE_OBJECT *windows_device;
 	PFILE_OBJECT FileObject;
@@ -2963,7 +2965,8 @@ printk("5\n");
 	}
 printk("6\n");
 printk("File opened successfully.\n");
-	/* TODO: leaks f and FileObject */
+	/* TODO: leaks f */
+	*file_object = FileObject;
 	return windows_device;
 }
 
@@ -3054,7 +3057,7 @@ printk(KERN_DEBUG "1\n");
 		return NULL;
 	}
 printk(KERN_DEBUG "2\n");
-	block_device->windows_device = find_windows_device(path);
+	block_device->windows_device = find_windows_device(path, &block_device->file_object);
 	if (block_device->windows_device == NULL) {
 		kfree(block_device);
 		return NULL;

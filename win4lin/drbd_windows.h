@@ -605,8 +605,8 @@ struct block_device {
 	int minor;	/* in case drbd_device is still NULL we need to shadow it here */
 	struct drbd_device* drbd_device;
 	struct _DEVICE_OBJECT *windows_device;	/* If that is a backing dev, the target device to send the I/O IRPs to. If this is a DRBD device, the device created by bdget()) */
+	struct _FILE_OBJECT *file_object; /* As returned by IoGetDeviceObjectPointer() */
 
-/* TODO: also have fileobject returned by IoGetDeviceObjectPointer() here */
 	IO_REMOVE_LOCK remove_lock;
 };
 
