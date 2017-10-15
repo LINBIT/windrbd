@@ -97,7 +97,15 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	initRegistry(RegistryPath);
 
-	windrbd_set_major_functions(DriverObject);
+	for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
+		DriverObject->MajorFunction[i] = mvolSendToNextDriver;
+
+/* TODO: windrbd_set_major_functions() currently fails with 0xc9 (driver
+   verifier detecting a problem) most likely because they are not
+   implemted.
+ */
+
+//	windrbd_set_major_functions(DriverObject);
 /*
     DriverObject->MajorFunction[IRP_MJ_CREATE] = mvolCreate;
     DriverObject->MajorFunction[IRP_MJ_CLOSE] = mvolClose;

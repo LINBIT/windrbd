@@ -1732,6 +1732,7 @@ printk(KERN_DEBUG "2\n");
 	}
 	offset = kmalloc(sizeof(*offset), 0, 'DRBD');
 
+printk("offset is %p\n", offset);
 // bio->bi_sector = 0x18ff8;
 printk(KERN_DEBUG "bio: %p bio->bi_bdev: %p bio->bi_sector: %llx bio->bi_rw: %d bio->bio_databuf: %p bio->bi_size: %d\n", bio, bio->bi_bdev, bio->bi_sector, bio->bi_rw, bio->bio_databuf, bio->bi_size);
 printk(KERN_DEBUG "3\n");
@@ -1771,8 +1772,10 @@ printk(KERN_DEBUG "3\n");
 				return -EIO;
 			}
 			buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
+printk("buffer is %p\n", buffer);
 		}
 	}
+printk("offset is %llx\n", offset->QuadPart);
 
 	WDRBD_TRACE("(%s)Local I/O(%s): sect=0x%llx sz=%d IRQL=%d buf=0x%p, off&=0x%llx\n", 
 		current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", 
@@ -1780,6 +1783,8 @@ printk(KERN_DEBUG "3\n");
 
 	IO_STATUS_BLOCK *io_stat;
 	io_stat = kmalloc(sizeof(*io_stat), 0, 'DRBD');
+
+printk("io_stat is %p\n", io_stat);
 
 	newIrp = IoBuildAsynchronousFsdRequest(
 				io,
@@ -1795,6 +1800,8 @@ printk(KERN_DEBUG "3\n");
 //		IoReleaseRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
 		return -ENOMEM;
 	}
+
+printk("newIrp->UserBuffer %p, newIrp->Cancel %d, newIrp->AssociatedIrp.MasterIrp %p\n", newIrp->UserBuffer, newIrp->Cancel, newIrp->AssociatedIrp.MasterIrp);
 
 	pIoNextStackLocation = IoGetNextIrpStackLocation (newIrp);
 
@@ -1819,7 +1826,7 @@ printk(KERN_DEBUG "3\n");
 
 	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
-printk("pIoNextStackLocation->DeviceObject: %p bio->bi_bdev->windows_device: %p\n");
+printk("pIoNextStackLocation->DeviceObject: %p bio->bi_bdev->windows_device: %p\n", pIoNextStackLocation->DeviceObject, bio->bi_bdev->windows_device);
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 
 	//
@@ -3466,7 +3473,8 @@ sector_t wdrbd_get_capacity(struct block_device *bdev)
 	}
 
 	if (bdev->d_size == 0) {
-		bdev->d_size = get_volsize(bdev->windows_device);
+			/* TODO: currently not implemted for DRBD devices */
+		bdev->d_size = 0; /* get_volsize(bdev->windows_device); */
 	}
 		/* TODO: sector size is not always 512 bytes */
 	return bdev->d_size >> 9;
