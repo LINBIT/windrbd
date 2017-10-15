@@ -661,6 +661,10 @@ struct bio {
 	unsigned int			bi_max_vecs;    /* max bvl_vecs we can hold */
 	struct bio_vec			bi_io_vec[1]; // only one!!!
 	UCHAR					MasterIrpStackFlags; //Stack Location's Flag
+
+		/* Those are used by win_generic_make_request internally */
+	LARGE_INTEGER offset;
+	IO_STATUS_BLOCK io_stat;
 };
 
 struct bio_set {

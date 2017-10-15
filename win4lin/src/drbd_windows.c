@@ -1716,7 +1716,6 @@ static int win_generic_make_request(struct bio *bio)
 
 	PIRP newIrp = NULL;
 	PVOID buffer = NULL;;
-	PLARGE_INTEGER offset;
 	ULONG io = 0;
 	PIO_STACK_LOCATION	pIoNextStackLocation = NULL;
 	
@@ -1728,31 +1727,12 @@ printk(KERN_DEBUG "2\n");
 		WDRBD_WARN("win_generic_make_request: request queue is NULL.\n");
 		return -EIO;
 	}
-	offset = kmalloc(sizeof(*offset), 0, 'DRBD');
-
-printk("offset is %p\n", offset);
-// bio->bi_sector = 0x18ff8;
-printk(KERN_DEBUG "bio: %p bio->bi_bdev: %p bio->bi_sector: %llx bio->bi_rw: %d bio->bio_databuf: %p bio->bi_size: %d\n", bio, bio->bi_bdev, bio->bi_sector, bio->bi_rw, bio->bio_databuf, bio->bi_size);
-printk(KERN_DEBUG "3\n");
-#if 0
-	if (KeGetCurrentIrql() <= DISPATCH_LEVEL) {
-		status = IoAcquireRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
-		if (!NT_SUCCESS(status)) {
-			WDRBD_ERROR("IoAcquireRemoveLock bio->bi_bdev->pDeviceExtension:%p fail. status(0x%x)\n", bio->bi_bdev->pDeviceExtension, status);
-			return -EIO;
-		}
-	}
-	else {
-		WDRBD_WARN("IoAcquireRemoveLock IRQL(%d) is too high, bio->pVolExt:%p fail\n", KeGetCurrentIrql(), bio->bi_bdev->pDeviceExtension);
-		return -EIO;
-	}
-#endif
 
 	if(bio->bi_rw == WRITE_FLUSH) {	// TODO: & WRITE_FLUSH ? plus WRITE_FLUSH is defined as the same as WRITE
 		io = IRP_MJ_FLUSH_BUFFERS;
 		buffer = NULL;
 		bio->bi_size = 0;
-		offset->QuadPart = 0;
+		bio->offset.QuadPart = 0;
 	} else {
 		if (bio->bi_rw & WRITE) {
 			io = IRP_MJ_WRITE;
@@ -1760,7 +1740,7 @@ printk(KERN_DEBUG "3\n");
 			io = IRP_MJ_READ;
 		}
 			/* TODO: what if sect size != 512? */
-		offset->QuadPart = bio->bi_sector << 9;
+		bio->offset.QuadPart = bio->bi_sector << 9;
 		if (bio->bio_databuf) {
 			buffer = bio->bio_databuf;
 		} else {
@@ -1773,24 +1753,17 @@ printk(KERN_DEBUG "3\n");
 printk("buffer is %p\n", buffer);
 		}
 	}
-printk("offset is %llx\n", offset->QuadPart);
-
-	WDRBD_TRACE("(%s)Local I/O(%s): sect=0x%llx sz=%d IRQL=%d buf=0x%p, off&=0x%llx\n", 
+	WDRBD_TRACE("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx sz=%d IRQL=%d buf=0x%p, off&=0x%llx\n", 
 		current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", 
-		offset->QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, offset);
-
-	IO_STATUS_BLOCK *io_stat;
-	io_stat = kmalloc(sizeof(*io_stat), 0, 'DRBD');
-
-printk("io_stat is %p\n", io_stat);
+		bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer);
 
 	newIrp = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
 				buffer,
 				bio->bi_size,
-				offset,
-				io_stat
+				&bio->offset,
+				&bio->io_stat
 				);
 
 	if (!newIrp) {
