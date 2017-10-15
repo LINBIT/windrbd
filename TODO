@@ -16,22 +16,13 @@ TODO: Redesign of architecture.
 	of Linux where DRBD devices and backing devices are different
 	device objects, even for the Windows kernel.
 
-	TODO: Have other device extension with only the fields we
-	need.
+	TODO: keep an internal list of struct block_devices created
+	for backing devices (so that internal meta data works again).
 
-	We now disabled mvolAddDevice (by returning NO_SUCH_DEVICE,
-	else we blue screen because some verifier) so volume
-	extension does not exist any more (except in non-accessible
-	code). 
+	TODO: size fix (with external meta data something destroys the
+	disk size setting, so that drbdadm up / down only works once).
 
-	Update: maybe the struct block_device should be the windows
-	device extension, so we safe a intermediate data structure.
-
-	TODO: Next thing is to have replacment data structure so
-	that attach works again (create block_device with target
-	device looked up in find_target_dev). Also get I/O on
-	that target dev working (used to blue screen but maybe
-	it works now that we do not create a device in AddDevice())
+	TODO: clean up code, delete commented out code.
 
 	TODO: implement I/O handler stubs
 
@@ -53,8 +44,40 @@ TODO: Redesign of architecture.
 	TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
-	TODO: check if generic_make_request can use the ZwCreateFile
+	Done: Have other device extension with only the fields we
+	need.
+
+	We now disabled mvolAddDevice (by returning NO_SUCH_DEVICE,
+	else we blue screen because some verifier) so volume
+	extension does not exist any more (except in non-accessible
+	code). 
+
+	Update: maybe the struct block_device should be the windows
+	device extension, so we safe a intermediate data structure.
+
+	Update: That's what we do now. While having NT kernel internal
+	variables inside linux structures seems like bad design at
+	first, it saves a lot of (unneccessary) work. For example
+	we now have the offset and io_stat used by 
+	win_generic_make_request() internally as part of the struct bio.
+
+	Done: Next thing is to have replacment data structure so
+	that attach works again (create block_device with target
+	device looked up in find_target_dev). Also get I/O on
+	that target dev working (used to blue screen but maybe
+	it works now that we do not create a device in AddDevice())
+
+	Update: for DRBD devices device extension is now struct
+	block_device. 
+
+	Update: after long research (and with help from a stack overflow
+	kernel guru) we solved the blue screen and now do not do 
+	AddDevices any more.
+
+	Rejected: check if generic_make_request can use the ZwCreateFile
 	API (instead of creating an IRP)
+		I/O on the backing devices work now (again) with the
+		IRP API.
 
 	Done: remove devices in bdput destroyer.
 	Implemented but cannot test it now, it is newer called from 
