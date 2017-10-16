@@ -2419,6 +2419,7 @@ printk(KERN_INFO "delete_block_device %p\n", bdev);
 			blk_cleanup_queue(bdev->bd_disk->queue);
 		put_disk(bdev->bd_disk);
 	}
+	ObDereferenceObject(bdev->file_object);
 
 	kfree2(bdev);
 }

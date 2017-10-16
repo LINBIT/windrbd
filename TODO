@@ -16,8 +16,6 @@ TODO: Redesign of architecture.
 	of Linux where DRBD devices and backing devices are different
 	device objects, even for the Windows kernel.
 
-	TODO: clean up block devices created by blkdev_get_by_path().
-
 	TODO: keep an internal list of struct block_devices created
 	for backing devices (so that internal meta data works again).
 	and don't have more than one struct block_device per physical
@@ -90,6 +88,8 @@ TODO: Redesign of architecture.
 	Done: size fix (with external meta data something destroys the
 	disk size setting, so that drbdadm up / down only works once).
 	Update: this doesn't happen no more.
+
+	Done: clean up block devices created by blkdev_get_by_path().
 
 
 Later: Try to put I/O on DRBD device.
