@@ -1,3 +1,13 @@
+blkdev_put isn't called on drbdadm down
+
+So the block devices are never freed. Since we keep a record
+internally on the block devices this might be a problem 
+one day.
+
+This is most likely a DRBD 9 bug and should be fixed there.
+
+---------------------------------------------------------------------
+
 I/O fails with Invalid request Code
 
 Reason is that in the I/O handler, drbd_device is NULL (is looked

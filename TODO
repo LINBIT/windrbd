@@ -16,10 +16,9 @@ TODO: Redesign of architecture.
 	of Linux where DRBD devices and backing devices are different
 	device objects, even for the Windows kernel.
 
-	TODO: keep an internal list of struct block_devices created
-	for backing devices (so that internal meta data works again).
-	and don't have more than one struct block_device per physical
-	partition.
+	TODO: blkdev_put isn't called on drbdadm down
+
+	fix this one day, this is probably a DRBD9 bug.
 
 	TODO: implement I/O handler stubs
 
@@ -90,6 +89,13 @@ TODO: Redesign of architecture.
 	Update: this doesn't happen no more.
 
 	Done: clean up block devices created by blkdev_get_by_path().
+
+	Done: keep an internal list of struct block_devices created
+	for backing devices (so that internal meta data works again).
+	and don't have more than one struct block_device per physical
+	partition.
+
+	Works now (again) with internal meta data.
 
 
 Later: Try to put I/O on DRBD device.

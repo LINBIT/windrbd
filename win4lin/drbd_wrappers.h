@@ -173,6 +173,7 @@ static inline int drbd_blkdev_put(struct block_device *bdev, fmode_t mode)
 }
 static inline int blkdev_put(struct block_device *bdev, fmode_t mode)
 {
+printk("blkdev_put %p\n", bdev);
 	return drbd_blkdev_put(bdev, mode);
 }
 #endif

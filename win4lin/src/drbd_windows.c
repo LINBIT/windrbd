@@ -104,6 +104,8 @@ extern SIMULATION_DISK_IO_ERROR gSimulDiskIoError = {0,};
 // DW-1105: monitoring mount change thread state (FALSE : not working, TRUE : working)
 atomic_t g_monitor_mnt_working = FALSE;
 
+static LIST_HEAD(backing_devices);
+
 //__ffs - find first bit in word.
 ULONG_PTR __ffs(ULONG_PTR word) 
 {
@@ -561,19 +563,15 @@ __inline void kvfree(const void * x)
 // from  linux 2.6.32
 int kref_put(struct kref *kref, void (*release)(struct kref *kref))
 {
-#ifdef _WIN32
-    WARN_ON(release == NULL);
-    WARN_ON(release == (void (*)(struct kref *))kfree);
+	WARN_ON(release == NULL);
+	WARN_ON(release == (void (*)(struct kref *))kfree);
 
-    if (atomic_dec_and_test(&kref->refcount))
-    {
-        release(kref);
-        return 1;
-    }
-    return 0;
-#else
-	kref_sub(kref, 1, release);
-#endif
+	if (atomic_dec_and_test(&kref->refcount))
+	{
+		release(kref);
+		return 1;
+	}
+	return 0;
 }
 
 /* TODO: originally this is void. */
@@ -1796,8 +1794,7 @@ static int win_generic_make_request(struct bio *bio)
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 	
 		/* Take a reference to this thread, it is referenced
-		 * in the IRP. We need this else IoCompletion is blue
-		 * screening later when we free the Irp.
+		 * in the IRP.
 		 */
 
 	status = ObReferenceObjectByPointer(newIrp->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
@@ -2420,6 +2417,7 @@ printk(KERN_INFO "delete_block_device %p\n", bdev);
 		put_disk(bdev->bd_disk);
 	}
 	ObDereferenceObject(bdev->file_object);
+	list_del(&bdev->backing_devices_list);
 
 	kfree2(bdev);
 }
@@ -2672,22 +2670,33 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 {
 	struct block_device *block_device;
 	NTSTATUS status;
+	struct _DEVICE_OBJECT *windows_device;
+	struct _FILE_OBJECT *file_object;
 
-/* TODO: keep a record of created block devices (by link targets
-   of the pathes) so that when using internal meta data we return
-   the same struct block_device * (which is already initialized)
-   for meta data and for data.
-   (for now internal meta data won't work because of the sharing
-    violation in getting the object pointer).
- */
+	windows_device = find_windows_device(path, &file_object);
+	if (windows_device == NULL)
+		return NULL;
+
+	list_for_each_entry(struct block_device, block_device, &backing_devices, backing_devices_list) {
+		if (block_device->windows_device == windows_device) {
+			printk(KERN_DEBUG "Block device for windows device %p already open, reusing it (block_device %p)\n", windows_device, block_device);
+				/* we got an extra reference in 
+				 * find_windows_device()
+				 */
+			ObDereferenceObject(file_object);
+			kref_get(&block_device->kref);
+			return block_device;
+		}
+	}
+
 	block_device = kmalloc(sizeof(struct block_device), 0, 'DBRD');
 	if (block_device == NULL) {
 		WDRBD_ERROR("could not allocate block_device.\n");
-		return NULL;
+		goto out_no_block_device;
 	}
-	block_device->windows_device = find_windows_device(path, &block_device->file_object);
+	block_device->windows_device = windows_device;
 	if (block_device->windows_device == NULL) {
-		goto out_no_windows_device;
+		BUG();
 	}
 	block_device->bd_disk = alloc_disk(0);
 	if (!block_device->bd_disk)
@@ -2712,13 +2721,18 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
         kref_init(&block_device->kref);
  
 	block_device->bd_contains = block_device;
+	block_device->bd_parent = NULL;
 
 		/* TODO: not always? */
 	block_device->bd_disk->queue->logical_block_size = 512;
 	block_device->d_size = get_volsize(block_device->windows_device);
 
+	block_device->file_object = file_object;
+
 printk(KERN_DEBUG "block device size is %llu\n", block_device->d_size);
 printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
+
+	list_add(&block_device->backing_devices_list, &backing_devices);
 
 	return block_device;
 
@@ -2727,9 +2741,9 @@ out_remove_lock_error:
 out_no_queue:
 	put_disk(block_device->bd_disk);
 out_no_disk:
-	ObDereferenceObject(block_device->file_object);
-out_no_windows_device:
 	kfree(block_device);
+out_no_block_device:
+	ObDereferenceObject(block_device->file_object);
 	return NULL;
 }
 

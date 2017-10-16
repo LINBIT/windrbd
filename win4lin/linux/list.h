@@ -63,7 +63,7 @@ static inline int list_empty(const struct list_head *head)
 
 static inline void list_add_tail(struct list_head *new, struct list_head *head)
 {
-	extern long *g_mdev_ptr, g_mdev_ptr_test;
+	extern long *g_mdev_ptr, g_mdev_ptr_test; 	/* TODO: ??? */
 	__list_add(new, head->prev, head);
 }
 

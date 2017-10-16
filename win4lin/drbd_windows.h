@@ -608,6 +608,8 @@ struct block_device {
 	struct _FILE_OBJECT *file_object; /* As returned by IoGetDeviceObjectPointer() */
 
 	IO_REMOVE_LOCK remove_lock;
+
+	struct list_head backing_devices_list;
 };
 
 extern sector_t wdrbd_get_capacity(struct block_device *bdev);
