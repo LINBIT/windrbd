@@ -1711,18 +1711,17 @@ NTSTATUS DrbdIoCompletion(
 
 static int win_generic_make_request(struct bio *bio)
 {
-	int err = 0;
-	NTSTATUS status = STATUS_SUCCESS;
+	NTSTATUS status;
 
-	PIRP newIrp = NULL;
-	PVOID buffer = NULL;;
+	struct _IRP *newIrp;
+	void *buffer;
 	ULONG io = 0;
 	PIO_STACK_LOCATION	pIoNextStackLocation = NULL;
+	struct _MDL *mdl, *nextMdl;
 	
-printk(KERN_DEBUG "1\n");
+		/* TODO: not referenced in here. */
 	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
 
-printk(KERN_DEBUG "2\n");
 	if (!q) {
 		WDRBD_WARN("win_generic_make_request: request queue is NULL.\n");
 		return -EIO;
@@ -1750,7 +1749,6 @@ printk(KERN_DEBUG "2\n");
 				return -EIO;
 			}
 			buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
-printk("buffer is %p\n", buffer);
 		}
 	}
 	WDRBD_TRACE("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx sz=%d IRQL=%d buf=0x%p, off&=0x%llx\n", 
@@ -1768,11 +1766,8 @@ printk("buffer is %p\n", buffer);
 
 	if (!newIrp) {
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
-//		IoReleaseRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
 		return -ENOMEM;
 	}
-
-printk("newIrp->UserBuffer %p, newIrp->Cancel %d, newIrp->AssociatedIrp.MasterIrp %p\n", newIrp->UserBuffer, newIrp->Cancel, newIrp->AssociatedIrp.MasterIrp);
 
 	pIoNextStackLocation = IoGetNextIrpStackLocation (newIrp);
 
@@ -1797,46 +1792,9 @@ printk("newIrp->UserBuffer %p, newIrp->Cancel %d, newIrp->AssociatedIrp.MasterIr
 
 	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
-printk("pIoNextStackLocation->DeviceObject: %p bio->bi_bdev->windows_device: %p\n", pIoNextStackLocation->DeviceObject, bio->bi_bdev->windows_device);
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 	
-
-	//
-	//	simulation disk-io error point . (generic_make_request fail) - disk error simluation type 0
-	//
-#if 0
-	if(gSimulDiskIoError.bDiskErrorOn && gSimulDiskIoError.ErrorType == SIMUL_DISK_IO_ERROR_TYPE0) {
-		WDRBD_ERROR("SimulDiskIoError: type0...............\n");
-		IoReleaseRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
-
-		// DW-859: Without unlocking mdl and freeing irp, freeing buffer causes bug check code 0x4e(0x9a, ...)
-		// When 'generic_make_request' returns an error code, bi_end_io is called to clean up the bio but doesn't do for irp. We should free irp that is made but wouldn't be delivered.
-		// If no error simulation, calling 'IoCallDriver' verifies our completion routine called so that irp will be freed there.
-		if (newIrp->MdlAddress != NULL) {
-			PMDL mdl, nextMdl;
-			for (mdl = newIrp->MdlAddress; mdl != NULL; mdl = nextMdl) {
-				nextMdl = mdl->Next;
-				MmUnlockPages(mdl);
-				IoFreeMdl(mdl); // This function will also unmap pages.
-			}
-			newIrp->MdlAddress = NULL;
-		}
-		IoFreeIrp(newIrp);
-		return -EIO;
-	}
-#endif
-
-	PMDL mdl;
-printk("newIrp->MdlAddress %p\n", newIrp->MdlAddress);
-	for (mdl = newIrp->MdlAddress; mdl != NULL; mdl = mdl->Next) {
-		printk(KERN_DEBUG "mdl %p vaddr %p length: %lu offset: %lu\n", mdl, MmGetMdlVirtualAddress(mdl), MmGetMdlByteCount(mdl), MmGetMdlByteOffset(mdl));
-		char *p = MmGetMdlVirtualAddress(mdl);
-		printk("Writing to %p\n", p);
-		*p = 1;
-		printk("Writing to %p\n", p+MmGetMdlByteCount(mdl)-1);
-		*(p+MmGetMdlByteCount(mdl)-1) = 2;
-	}
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP. We need this else IoCompletion is blue
 		 * screening later when we free the Irp.
@@ -1845,28 +1803,31 @@ printk("newIrp->MdlAddress %p\n", newIrp->MdlAddress);
 	status = ObReferenceObjectByPointer(newIrp->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
-		IoFreeIrp(newIrp);
-		return -EIO;
+		goto out_free_irp;
 	}
-printk("call driver device object %p irp %p\n", bio->bi_bdev->windows_device, newIrp);
-//	__try {
-		status = IoCallDriver(bio->bi_bdev->windows_device, newIrp);
-#if 0
-	} __except (EXCEPTION_EXECUTE_HANDLER) {
-//		LPEXCEPTION_POINTERS p = GetExceptionInformation();
-		printk(KERN_ERR "Exception raised during IoCallDriver, code is %x.\n", GetExceptionCode());
-//		printk(KERN_ERR "PC Address is %p\n", p->ExceptionRecord->ExceptionAddress);
-//		printk(KERN_ERR "Target Address is %llx\n", p->ExceptionRecord->ExceptionInformation[1]);
-		
-		return -EIO;
-	}
-#endif
+	status = IoCallDriver(bio->bi_bdev->windows_device, newIrp);
 		/* either STATUS_SUCCESS or STATUS_PENDING */
-printk("IoCallDriver status %x\n", status);
 
-printk("call driver object returned.\n");
+	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
+		printk("IoCallDriver status %x, I/O on backing device failed.\n", status);
+		goto out_calldriver_failed;
+	}
 
 	return 0;
+
+out_free_irp:
+	for (mdl = newIrp->MdlAddress; mdl != NULL; mdl = nextMdl) {
+		nextMdl = mdl->Next;
+		MmUnlockPages(mdl);
+		IoFreeMdl(mdl); // This function will also unmap pages.
+	}
+	newIrp->MdlAddress = NULL;
+	IoFreeIrp(newIrp);
+
+out_calldriver_failed:
+	ObDereferenceObject(newIrp->Tail.Overlay.Thread);
+
+	return -EIO;
 }
 
 	/* This just ensures that DRBD gets I/O errors in case something
@@ -2275,75 +2236,6 @@ void *idr_get_next(struct idr *idp, int *nextidp)
 	return NULL;
 }
 
-/**
- * @brief
- *	Recreate the VOLUME_EXTENSION's MountPoint, VolIndex, block_device
- *	if it was changed
- */
-#if 0
-void query_targetdev(PVOLUME_EXTENSION pvext)
-{
-	if (!pvext) {
-		WDRBD_WARN("Null parameter\n");
-		return;
-	}
-
-	if (IsEmptyUnicodeString(&pvext->VolumeGuid)) {
-		// Should be existed guid's name
-		mvolQueryMountPoint(pvext);
-	}
-
-	UNICODE_STRING new_name;
-	NTSTATUS status = RtlVolumeDeviceToDosName(pvext->DeviceObject, &new_name);
-	// if not same, it need to re-query
-	if (!NT_SUCCESS(status)) {	// ex: CD-ROM
-		return;
-	}
-
-	// DW-1105: detach volume when replicating volume letter is changed.
-	if (pvext->Active &&
-		!RtlEqualUnicodeString(&pvext->MountPoint, &new_name, TRUE))
-	{
-		// DW-1300: get device and get reference.
-		struct drbd_device *device = get_device_with_vol_ext(pvext, TRUE);
-		if (device &&
-			get_ldev_if_state(device, D_NEGOTIATING))
-		{
-			WDRBD_WARN("replicating volume letter is changed, detaching\n");
-			set_bit(FORCE_DETACH, &device->flags);
-			change_disk_state(device, D_DETACHING, CS_HARD, NULL);
-			put_ldev(device);
-		}
-		// DW-1300: put device reference count when no longer use.
-		if (device)
-			kref_put(&device->kref, drbd_destroy_device);
-	}
-
-	if (!MOUNTMGR_IS_VOLUME_NAME(&new_name) &&
-		!RtlEqualUnicodeString(&new_name, &pvext->MountPoint, TRUE)) {
-
-		FreeUnicodeString(&pvext->MountPoint);
-		RtlUnicodeStringInit(&pvext->MountPoint, new_name.Buffer);
-
-		if (IsDriveLetterMountPoint(&new_name)) {
-			pvext->VolIndex = pvext->MountPoint.Buffer[0] - 'C';
-printk(KERN_INFO "query_targetdev: mount point is %S volIndex is %d\n", &pvext->MountPoint.Buffer, pvext->VolIndex);
-		}
-	}
-
-	// DW-1109: not able to get volume size in add device routine, get it here if no size is assigned.
-	if (pvext->lower_dev->bd_contains &&
-		pvext->lower_dev->bd_contains->d_size == 0)
-	{
-		unsigned long long d_size = get_targetdev_volsize(pvext);
-		pvext->lower_dev->bd_contains->d_size = d_size;
-		if (pvext->lower_dev->bd_disk) {
-			pvext->lower_dev->bd_disk->queue->max_hw_sectors =
-				d_size ? (d_size >> 9) : DRBD_MAX_BIO_SIZE;
-		}
-	}
-}
-#endif
 
 // DW-1105: refresh all volumes and handle changes.
 /* TODO: ?? */
@@ -2470,23 +2362,6 @@ void stop_mnt_monitor()
 }
 
 /**
- * @brief
- *	refresh all VOLUME_EXTENSION's values
- */
-#if 0
-void refresh_targetdev_list()
-{
-    PROOT_EXTENSION proot = mvolRootDeviceObject->DeviceExtension;
-
-    MVOL_LOCK();
-    for (PVOLUME_EXTENSION pvext = proot->Head; pvext; pvext = pvext->Next) {
-        query_targetdev(pvext);
-    }
-    MVOL_UNLOCK();
-}
-#endif
-
-/**
  * @return
  *	volume size per byte for windows disk device
  */
@@ -2532,81 +2407,6 @@ LONGLONG get_targetdev_volsize(PVOLUME_EXTENSION VolumeExtension)
 }
 
 #define DRBD_REGISTRY_VOLUMES       L"\\volumes"
-
-/**
-* @brief   create block_device by referencing to VOLUME_EXTENSION object.
-*          a created block_device must be freed by ExFreePool() elsewhere.
-*/
-
-#if 0
-/* TODO: this goes away */
-struct block_device *create_block_device(IN OUT PVOLUME_EXTENSION pvext)
-{
-	struct block_device *dev;
-
-	// DW-1109: need to increase reference count of device object to guarantee not to be freed while we're using.
-	ObReferenceObject(pvext->DeviceObject);
-
-	dev = kmalloc(sizeof(struct block_device), 0, 'C5DW');
-	if (!dev) {
-		WDRBD_ERROR("Failed to allocate block_device NonPagedMemory\n");
-		return NULL;
-	}
-	kref_init(&dev->kref);
-
-	dev->bd_contains = kmalloc(sizeof(struct block_device), 0, 'C5DW');
-	if (!dev->bd_contains) {
-		WDRBD_ERROR("Failed to allocate block_device NonPagedMemory\n");
-		return NULL;
-	}
-
-	dev->bd_disk = alloc_disk(0);
-	if (!dev->bd_disk)
-	{
-		WDRBD_ERROR("Failed to allocate gendisk NonPagedMemory\n");
-		goto gendisk_failed;
-	}
-
-	dev->bd_disk->queue = blk_alloc_queue(0);
-	if (!dev->bd_disk->queue)
-	{
-		WDRBD_ERROR("Failed to allocate request_queue NonPagedMemory\n");
-		goto request_queue_failed;
-	}
-        kref_init(&dev->kref);
- 
-	dev->bd_contains->bd_disk = dev->bd_disk;
-	dev->bd_contains->bd_parent = dev;
-
-		/* TODO: VolIndex should go away. */
-	sprintf(dev->bd_disk->disk_name, "drbd%d", pvext->VolIndex);
-
-		/* TODO: not always? */
-	dev->bd_disk->queue->logical_block_size = 512;
-		/* TODO: DRBD size may be less than that (without
-		   meta data. */
-/*	dev->d_size = get_targetdev_volsize(pvext); */
-		/* TODO: As long as we're unconfigured, we don't know
-		   the size. Will be set later during attach.
-		   Else DRBD attach complains about disk too small. 
-		   TODO: have a mechanism to determine the size for
-		         diskless configurations.
-			Fix that when splitting devices into
-			backing devices and drbd devices.
-		 */
-	dev->d_size = 0;
- 
-        return dev;
-
-request_queue_failed:
-	kfree(dev->bd_disk);
-
-gendisk_failed:
-	kfree(dev);
-
-	return NULL;
-}
-#endif
 
 // DW-1109: delete drbd bdev when ref cnt gets 0, clean up all resources that has been created in create_drbd_block_device.
 void delete_block_device(struct kref *kref)
@@ -2775,80 +2575,6 @@ cleanup:
     return ret;
 }
 
-#if 0
-static int windrbd_set_block_device_active(struct block_device *bdev, int flag)
-{
-        struct _VOLUME_EXTENSION *vext;
-
-        if (bdev == NULL) {
-printk("windrbd_set_block_device_active: bdev is NULL\n");
-                return -EINVAL;
-	}
-
-        vext = bdev->pDeviceExtension;
-        if (vext == NULL) {
-printk("windrbd_set_block_device_active: vext is NULL\n");
-                return -EINVAL;
-	}
-
-printk(KERN_DEBUG "Set block device %sactive\n", flag ? "" : "in");
-        vext->Active = flag;
-        return 0;
-}
-
-	/* This is called by DRBD once a device is configured completely
-	 * and DRBD is ready to serve requests via drbd_make_request().
-	 * Since *all* block devices (including C:) go through the
-	 * windrbd driver we want to keep the Active flag in the
-	 * device extensions to filter out configured DRBD and those
-	 * which are not (all others) quickly.
-	 */
-
-int windrbd_set_drbd_device_active(struct drbd_device *device, int flag)
-{
-        if (device == NULL || device->this_bdev == NULL) {
-printk("windrbd_set_drbd_device_active: device is %p\n", device);
-if (device) printk("windrbd_set_drbd_device_active: this_bdev is %p\n", device->this_bdev);
-                return -EINVAL;
-	}
-
-	return windrbd_set_block_device_active(device->this_bdev, flag);
-}
-
-#endif
-
-#if 0
-/**
- * @brief
- *	Looks up the \\Devices\\HarddiskVolume<n> device in our
- *      internal list of associated block devices.
- */
-static struct _VOLUME_EXTENSION *lookup_pvext(UNICODE_STRING * name)
-{
-	ROOT_EXTENSION * proot = mvolRootDeviceObject->DeviceExtension;
-	VOLUME_EXTENSION * pvext = proot->Head;
-
-	MVOL_LOCK();
-printk(KERN_DEBUG "pvext looking for %S\n", name->Buffer);
-	for (; pvext; pvext = pvext->Next) {
-
-printk(KERN_DEBUG "pvext %S\n", pvext->PhysicalDeviceName);
-
-		// if no block_device instance yet,
-//		query_targetdev(pvext);
-
-		if (RtlEqualMemory(name->Buffer,
-			    pvext->PhysicalDeviceName,
-			    pvext->PhysicalDeviceNameLength)) {
-			break;
-		}
-	}
-	MVOL_UNLOCK();
-
-	return pvext;
-}
-#endif
-
 static NTSTATUS resolve_nt_kernel_link(UNICODE_STRING *upath, UNICODE_STRING *link_target)
 {
 	NTSTATUS status;
@@ -2899,111 +2625,43 @@ static struct _DEVICE_OBJECT *find_windows_device(const char *path, struct _FILE
 	device_name.MaximumLength = sizeof(link_target_buffer)-1;
 	device_name.Length = 0;
 
-printk(KERN_DEBUG "Link is %S\n", link_name.Buffer);
+	WDRBD_TRACE("Link is %S\n", link_name.Buffer);
 	if (resolve_nt_kernel_link(&link_name, &device_name) != STATUS_SUCCESS) {
 		WDRBD_ERROR("Could not resolve link.\n");
 		return NULL;
 	}
-printk(KERN_DEBUG "Link points to %S\n", device_name.Buffer);
 
 	status = IoGetDeviceObjectPointer(&device_name, FILE_ALL_ACCESS, &FileObject, &windows_device);
 
-printk("1\n");
 	if (!NT_SUCCESS(status))
 	{
-printk(KERN_ERR "Cannot get device object for %s status: %x\n", path, status);
+		printk(KERN_ERR "Cannot get device object for %s status: %x, does it exist?\n", path, status);
 		return NULL;
 	}
-printk(KERN_DEBUG "IoGetDeviceObjectPointer %S succeeded, targetdev is %p\n", device_name.Buffer, windows_device);
+	WDRBD_TRACE("IoGetDeviceObjectPointer %S succeeded, targetdev is %p\n", device_name.Buffer, windows_device);
 
+#if 0
+		/* TODO: do we need it or not? */
 	HANDLE f;
 	OBJECT_ATTRIBUTES attributes;
 	IO_STATUS_BLOCK io_status;
 
-printk("2\n");
 	InitializeObjectAttributes(&attributes, &device_name, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
-printk("3\n");
 	attributes.ObjectName = &device_name;
-printk("4\n");
 
 	status = ZwCreateFile(&f, FILE_ALL_ACCESS, &attributes, &io_status, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN, FILE_NON_DIRECTORY_FILE, NULL, 0);
 	
-printk("5\n");
 	if (!NT_SUCCESS(status)) {
 		WDRBD_ERROR("Could not open file %s status is %x\n", path, status);
-			/* TODO: leaks FileObject */
+		ObDereferenceObject(FileObject);
+
 		return NULL;
 	}
-printk("6\n");
-printk("File opened successfully.\n");
 	/* TODO: leaks f */
+#endif
 	*file_object = FileObject;
 	return windows_device;
 }
-
-#if 0
-
-static struct _VOLUME_EXTENSION *pvext_get_by_path(const char *path)
-{
-	ANSI_STRING apath;
-	UNICODE_STRING upath;
-	NTSTATUS status;
-	WCHAR link_target_buffer[1024];
-	UNICODE_STRING link_target;
-	struct _VOLUME_EXTENSION *pvext;
-
-	RtlInitAnsiString(&apath, path);
-	status = RtlAnsiStringToUnicodeString(&upath, &apath, TRUE);
-	if (!NT_SUCCESS(status)) {
-		WDRBD_WARN("RtlAnsiStringToUnicodeString: Cannot convert path to Unicode string, status = %d, path = %s\n", status, path);
-		return ERR_PTR(-EINVAL);
-	}
-	pvext = lookup_pvext(&upath);
-
-	if (pvext == NULL) {
-//		WDRBD_INFO("%s is not a block device, let's see if it is a symbolic link.\n", path);
-		link_target.Buffer = link_target_buffer;
-		link_target.MaximumLength = sizeof(link_target_buffer)-1;
-		link_target.Length = 0;
-
-		status = resolve_nt_kernel_link(&upath, &link_target);
-		if (!NT_SUCCESS(status)) {
-			return ERR_PTR(-ENODEV);
-		}
-
-		pvext = lookup_pvext(&link_target);
-		if (pvext == NULL)
-			return ERR_PTR(-ENODEV);
-	}
-	if (find_target_dev(pvext) < 0)
-		return ERR_PTR(-ENODEV);
-
-	return pvext;
-}
-
-
-static struct block_device *windrbd_blkdev_get_by_path(const char *path, bool upper)
-{
-	struct _VOLUME_EXTENSION *pvext;
-	struct block_device *dev;
-
-	pvext = pvext_get_by_path(path);
-	if (IS_ERR(pvext))
-		return (struct block_device*)pvext;
-
-	if (upper) {
-		dev = pvext->upper_dev;	
-	} else {
-		dev = pvext->lower_dev;	
-	}
-	if (dev) {
-		kref_get(&dev->kref);
-		return dev;
-	}
-	return ERR_PTR(-ENODEV);
-}
-#endif
-
 
 /* This creates a new block device associated with the windows
    device pointed to by path.
@@ -3021,76 +2679,58 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
    (for now internal meta data won't work because of the sharing
     violation in getting the object pointer).
  */
-printk(KERN_DEBUG "1\n");
 	block_device = kmalloc(sizeof(struct block_device), 0, 'DBRD');
 	if (block_device == NULL) {
 		WDRBD_ERROR("could not allocate block_device.\n");
 		return NULL;
 	}
-printk(KERN_DEBUG "2\n");
 	block_device->windows_device = find_windows_device(path, &block_device->file_object);
 	if (block_device->windows_device == NULL) {
-		kfree(block_device);
-		return NULL;
+		goto out_no_windows_device;
 	}
-printk(KERN_DEBUG "3\n");
 	block_device->bd_disk = alloc_disk(0);
 	if (!block_device->bd_disk)
 	{
 		WDRBD_ERROR("Failed to allocate gendisk NonPagedMemory\n");
-		kfree(block_device);
-		return NULL;
+		goto out_no_disk;
 	}
 
-printk(KERN_DEBUG "4\n");
 	block_device->bd_disk->queue = blk_alloc_queue(0);
-printk(KERN_DEBUG "5\n");
 	if (!block_device->bd_disk->queue)
 	{
 		WDRBD_ERROR("Failed to allocate request_queue NonPagedMemory\n");
-			/* TODO: and free disk */
-		kfree(block_device);
-		return NULL;
+		goto out_no_queue;
 	}
-printk(KERN_DEBUG "6\n");
-        kref_init(&block_device->kref);
- 
-printk(KERN_DEBUG "7\n");
-	block_device->bd_contains = block_device;
-
-printk(KERN_DEBUG "8\n");
-		/* TODO: not always? */
-	block_device->bd_disk->queue->logical_block_size = 512;
-		/* TODO: DRBD size may be less than that (without
-		   meta data. */
-	block_device->d_size = get_volsize(block_device->windows_device);
-printk(KERN_DEBUG "block device size is %llu\n", block_device->d_size);
-printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
-
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_ERROR("Failed to acquire remove lock, status is %s\n", status);
-			/* TODO: clean up */
-		return NULL;
+		goto out_remove_lock_error;
 	}
 
+        kref_init(&block_device->kref);
+ 
+	block_device->bd_contains = block_device;
+
+		/* TODO: not always? */
+	block_device->bd_disk->queue->logical_block_size = 512;
+	block_device->d_size = get_volsize(block_device->windows_device);
+
+printk(KERN_DEBUG "block device size is %llu\n", block_device->d_size);
+printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
+
 	return block_device;
+
+out_remove_lock_error:
+	blk_cleanup_queue(block_device->bd_disk->queue);
+out_no_queue:
+	put_disk(block_device->bd_disk);
+out_no_disk:
+	ObDereferenceObject(block_device->file_object);
+out_no_windows_device:
+	kfree(block_device);
+	return NULL;
 }
-
-/* TODO: this should go away .. we want NT device names internally. */
-
-/* This always gets the upper device */
-
-#if 0
-PVOLUME_EXTENSION get_targetdev_by_minor(unsigned int minor)
-{
-	char path[128] = "\\DosDevices\\F:";
-	path[12] = minor_to_letter(minor);
-printk(KERN_INFO "get_targetdev_by_minor %d\n", minor);
-	return pvext_get_by_path(path);
-}
-#endif
 
 int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait)
 {
@@ -3542,7 +3182,6 @@ static int minor_to_x_name(UNICODE_STRING *name, int minor, int internal)
 
 /* TODO: 100 -> MAX_PATH_LEN */
 /* TODO: name, dos_name into device extension */
-/* TODO: have goto's for cleaning up. */
 
 struct block_device *bdget(dev_t device_no)
 {
@@ -3569,40 +3208,13 @@ struct block_device *bdget(dev_t device_no)
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("bdget: couldn't create new block device %S for minor %d status: %x\n", name.Buffer, minor, status);
 
-		ExFreePool(name.Buffer);
-		return NULL;
+		goto out_create_device_failed;
 	}
 
 	if (minor_to_x_name(&dos_name, minor, 0) < 0) {
-		IoDeleteDevice(new_device);
-		ExFreePool(name.Buffer);
-		return NULL;
+		goto out_dos_name_failed;
 	}
 
-	status = IoCreateSymbolicLink(&dos_name, &name);
-	if (status != STATUS_SUCCESS) {
-		WDRBD_WARN("bdget: couldn't symlink %S to %S for minor %d status: %x\n", dos_name.Buffer, name.Buffer, minor, status);
-
-		IoDeleteDevice(new_device);
-		ExFreePool(dos_name.Buffer);
-		ExFreePool(name.Buffer);
-		return NULL;
-	}
-#if 0
-	block_device = kmalloc(sizeof(struct block_device), 0, 'DBRD');
-	if (block_device == NULL) {
-		WDRBD_ERROR("Failed to allocate block_device\n");
-		IoDeleteDevice(new_device);
-		if (IoDeleteSymbolicLink(&dos_name) != STATUS_SUCCESS) {
-			WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", dos_name.Buffer);
-		}
-
-		ExFreePool(dos_name.Buffer);
-		ExFreePool(name.Buffer);
-
-		return NULL;
-	}
-#endif
 	block_device = new_device->DeviceExtension;
 	kref_init(&block_device->kref);
 
@@ -3610,16 +3222,17 @@ struct block_device *bdget(dev_t device_no)
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_ERROR("Failed to acquire remove lock, status is %s\n", status);
-			/* TODO: clean up */
-		return NULL;
+		goto out_remove_lock_failed;
 	}
 
+	status = IoCreateSymbolicLink(&dos_name, &name);
+	if (status != STATUS_SUCCESS) {
+		WDRBD_WARN("bdget: couldn't symlink %S to %S for minor %d status: %x\n", dos_name.Buffer, name.Buffer, minor, status);
+		goto out_symlink_failed;
+
+	}
 	block_device->windows_device = new_device;
 	block_device->minor = minor;
-
-	/* Need to swtich architecture first since that is per driver
-	   not per device */
-/*	windrbd_set_major_functions(mvolDriverObject); */
 
 	WDRBD_INFO("Created new block device %S for drbd and assigned it the dos name %S\n", name.Buffer, dos_name.Buffer);
 	
@@ -3627,11 +3240,20 @@ struct block_device *bdget(dev_t device_no)
 	ExFreePool(name.Buffer);
 
 	return block_device;
+
+out_symlink_failed:
+	IoReleaseRemoveLock(&block_device->remove_lock, NULL);
+out_remove_lock_failed:
+	ExFreePool(dos_name.Buffer);
+out_dos_name_failed:
+	IoDeleteDevice(new_device);
+out_create_device_failed:
+	ExFreePool(name.Buffer);
+	return NULL;
 }
 
 static void destroy_block_device(struct kref *kref)
 {
-printk(KERN_DEBUG "destroy_block_device 1\n");
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 	UNICODE_STRING name;
 	UNICODE_STRING dos_name;
@@ -3657,7 +3279,6 @@ printk(KERN_INFO "Destroying minor %d\n", minor);
 
 void bdput(struct block_device *this_bdev)
 {
-printk(KERN_INFO "bdput: refcount is %d\n", this_bdev->kref.refcount);
 	kref_put(&this_bdev->kref, destroy_block_device);
 }
 
