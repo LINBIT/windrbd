@@ -16,13 +16,12 @@ TODO: Redesign of architecture.
 	of Linux where DRBD devices and backing devices are different
 	device objects, even for the Windows kernel.
 
+	TODO: clean up block devices created by blkdev_get_by_path().
+
 	TODO: keep an internal list of struct block_devices created
 	for backing devices (so that internal meta data works again).
-
-	TODO: size fix (with external meta data something destroys the
-	disk size setting, so that drbdadm up / down only works once).
-
-	TODO: clean up code, delete commented out code.
+	and don't have more than one struct block_device per physical
+	partition.
 
 	TODO: implement I/O handler stubs
 
@@ -85,6 +84,13 @@ TODO: Redesign of architecture.
 	Update: calling it now from drbd_unregister_device(). Works.
 
 	Done: bdput in drbd_create_device on failure.
+
+	Done: clean up code, delete commented out code.
+
+	Done: size fix (with external meta data something destroys the
+	disk size setting, so that drbdadm up / down only works once).
+	Update: this doesn't happen no more.
+
 
 Later: Try to put I/O on DRBD device.
 	This will be the same device as if there was no DRBD (use
