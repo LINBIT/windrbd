@@ -1679,7 +1679,7 @@ NTSTATUS DrbdIoCompletion(
 )
 {
 /* TODO: Device object is NULL here. Fix that in case we need it one day. */
-/* printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context); */
+printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context);
 	struct bio *bio = Context;
 	PMDL mdl, nextMdl;
 
@@ -2639,25 +2639,6 @@ static struct _DEVICE_OBJECT *find_windows_device(const char *path, struct _FILE
 	}
 	WDRBD_TRACE("IoGetDeviceObjectPointer %S succeeded, targetdev is %p\n", device_name.Buffer, windows_device);
 
-#if 0
-		/* TODO: do we need it or not? */
-	HANDLE f;
-	OBJECT_ATTRIBUTES attributes;
-	IO_STATUS_BLOCK io_status;
-
-	InitializeObjectAttributes(&attributes, &device_name, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
-	attributes.ObjectName = &device_name;
-
-	status = ZwCreateFile(&f, FILE_ALL_ACCESS, &attributes, &io_status, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN, FILE_NON_DIRECTORY_FILE, NULL, 0);
-	
-	if (!NT_SUCCESS(status)) {
-		WDRBD_ERROR("Could not open file %s status is %x\n", path, status);
-		ObDereferenceObject(FileObject);
-
-		return NULL;
-	}
-	/* TODO: leaks f */
-#endif
 	*file_object = FileObject;
 	return windows_device;
 }

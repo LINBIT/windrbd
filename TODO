@@ -1,5 +1,9 @@
 wdrbd-next:
 
+TODO: Create patches for DRBD for recent changes.
+
+TODO: Submit current sources.
+
 TODO: Redesign of architecture.
 
 	Currently the DRBD device is stacked atop of the low level
@@ -18,7 +22,10 @@ TODO: Redesign of architecture.
 
 	TODO: blkdev_put isn't called on drbdadm down
 
-	fix this one day, this is probably a DRBD9 bug.
+	fix this one day, this is probably a DRBD9 bug. Or maybe
+	it is intentional.
+
+	INIT_WORK and schedule_work do what they say?
 
 	TODO: implement I/O handler stubs
 
