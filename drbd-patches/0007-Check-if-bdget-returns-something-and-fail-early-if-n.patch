@@ -1,0 +1,43 @@
+From 5bbe531ef6a72c8574abaa00f08baf84d3b33ba6 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 28 Sep 2017 16:48:35 +0200
+Subject: [PATCH 07/15] Check if bdget() returns something and fail early if
+ not.
+
+---
+ drbd/drbd_main.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 4e11aa2..295f83d 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3436,11 +3436,16 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	int vnr = adm_ctx->volume;
+ 	enum drbd_ret_code err = ERR_NOMEM;
+ 	bool locked = false;
++	struct block_device *block_device;
+ 
+ 	device = minor_to_device(minor);
+ 	if (device)
+ 		return ERR_MINOR_OR_VOLUME_EXISTS;
+ 
++	block_device = bdget(MKDEV(DRBD_MAJOR, minor));
++	if (block_device == NULL)
++		return ERR_NO_DISK;
++
+ 	/* GFP_KERNEL, we are outside of all write-out paths */
+ 	device = kzalloc(sizeof(struct drbd_device), GFP_KERNEL, '0CWD');
+ 	if (!device)
+@@ -3512,7 +3517,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	sprintf(disk->disk_name, "drbd%d", minor);
+ 	disk->private_data = device;
+ 
+-	device->this_bdev = bdget(MKDEV(DRBD_MAJOR, minor));
++	device->this_bdev = block_device;
+ 	/* we have no partitions. we contain only ourselves. */
+ 	device->this_bdev->bd_contains = device->this_bdev;
+ 	device->this_bdev->drbd_device = device;
+-- 
+2.8.0-rc4
+

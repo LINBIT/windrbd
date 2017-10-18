@@ -1,0 +1,30 @@
+From af547e65a4a80f525111bf460180f625f0832757 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Sat, 7 Oct 2017 17:38:05 +0200
+Subject: [PATCH 13/15] Call bdput at the end of drbd_unregister_device.
+
+To make it invisible.
+---
+ drbd/drbd_main.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 2a5763d..41af19f 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3724,8 +3724,10 @@ void drbd_unregister_device(struct drbd_device *device)
+ 
+ 	if (windrbd_set_drbd_device_active(device, 0) != 0)
+ 		drbd_warn(device, "Could not set device inactive.\n");
+-		/* TODO: this should go away: */
+-	device->this_bdev->drbd_device = NULL;
++
++		/* TODO: Ask phil if that is correct */
++	bdput(device->this_bdev);
++	device->this_bdev = NULL;
+ }
+ 
+ void drbd_reclaim_device(struct rcu_head *rp)
+-- 
+2.8.0-rc4
+

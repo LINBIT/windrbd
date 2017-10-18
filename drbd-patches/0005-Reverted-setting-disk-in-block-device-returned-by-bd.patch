@@ -1,0 +1,25 @@
+From e8701d0678ec052d9a8efef46b85f1ec81a6ae3e Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 28 Sep 2017 16:42:32 +0200
+Subject: [PATCH 05/15] Reverted setting disk in block device returned by
+ bdget().
+
+---
+ drbd/drbd_main.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 0a778b6..63526f5 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3515,7 +3515,6 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	device->this_bdev = bdget(MKDEV(DRBD_MAJOR, minor));
+ 	/* we have no partitions. we contain only ourselves. */
+ 	device->this_bdev->bd_contains = device->this_bdev;
+-	device->this_bdev->bd_disk = disk;
+ 
+ 	init_bdev_info(q->backing_dev_info, drbd_congested, device);
+ 
+-- 
+2.8.0-rc4
+

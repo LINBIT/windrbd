@@ -1,0 +1,27 @@
+From 6702ab76e9e8ea0d637264e01c4818ca18c3ac45 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 27 Sep 2017 15:01:11 +0200
+Subject: [PATCH 02/15] Clear active flag on detach.
+
+We don't want that in the end, because if peer is still connected
+we can be diskless and still serve I/O.
+---
+ drbd/drbd_nl.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 7e0f75d..d72c5f1 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -2921,6 +2921,8 @@ int drbd_adm_detach(struct sk_buff *skb, struct genl_info *info)
+ 	mutex_unlock(&adm_ctx.resource->adm_mutex);
+ out:
+ 	drbd_adm_finish(&adm_ctx, info, retcode);
++	windrbd_set_drbd_device_active(adm_ctx.device, 0);
++
+ 	return 0;
+ }
+ 
+-- 
+2.8.0-rc4
+

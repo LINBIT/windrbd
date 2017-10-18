@@ -1,0 +1,27 @@
+From e37f892590a4a04fba5dce467c77daae136832be Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 27 Sep 2017 19:54:54 +0200
+Subject: [PATCH 03/15] drbd_create_device: Reference newly created disk in
+ block device.
+
+This is probably not what we want to do in Linux since the structure
+there is different.
+---
+ drbd/drbd_main.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 8274e6a..28b1839 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3520,6 +3520,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	device->this_bdev = bdget(MKDEV(DRBD_MAJOR, minor));
+ 	/* we have no partitions. we contain only ourselves. */
+ 	device->this_bdev->bd_contains = device->this_bdev;
++	device->this_bdev->bd_disk = disk;
+ 
+ 	init_bdev_info(q->backing_dev_info, drbd_congested, device);
+ 
+-- 
+2.8.0-rc4
+
