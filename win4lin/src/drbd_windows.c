@@ -3197,7 +3197,7 @@ struct block_device *bdget(dev_t device_no)
 		                sizeof(struct block_device), 
 		                &name,
 		                FILE_DEVICE_DISK,
-                                0,
+                                FILE_DEVICE_SECURE_OPEN,
                                 FALSE,
                                 &new_device);
 
