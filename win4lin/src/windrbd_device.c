@@ -8,7 +8,7 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	
-	printk(KERN_DEBUG "device: %p irp: %p s: %p s->MajorFunction: %x\n", device, irp, s, s->MajorFunction);
+	printk(KERN_DEBUG "device: %p irp: %p s: %p s->MajorFunction: %x s->MinorFunction: %x s->Parameters.DeviceIoControl.IoControlCode: %x\n", device, irp, s, s->MajorFunction, s->MinorFunction, s->Parameters.DeviceIoControl.IoControlCode);
 	irp->IoStatus.Status = STATUS_SUCCESS;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return STATUS_SUCCESS;
