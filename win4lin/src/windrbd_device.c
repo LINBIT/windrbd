@@ -9,7 +9,7 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	
-	printk(KERN_DEBUG "device: %p irp: %p s: %p s->MajorFunction: %x s->MinorFunction: %x s->Parameters.DeviceIoControl.IoControlCode: %x\n", device, irp, s, s->MajorFunction, s->MinorFunction, s->Parameters.DeviceIoControl.IoControlCode);
+printk(KERN_DEBUG "DRBD device request: MajorFunction: 0x%x\n", s->MajorFunction);
 	irp->IoStatus.Status = STATUS_SUCCESS;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return STATUS_SUCCESS;
@@ -32,7 +32,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct block_device *dev = device->DeviceExtension;
 	NTSTATUS status = STATUS_SUCCESS;
 
-	printk(KERN_DEBUG "IoCtl: device: %p irp: %p s: %p s->MajorFunction: %x s->MinorFunction: %x s->Parameters.DeviceIoControl.IoControlCode: %x\n", device, irp, s, s->MajorFunction, s->MinorFunction, s->Parameters.DeviceIoControl.IoControlCode);
+printk(KERN_DEBUG "DRBD IoCtl request: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 	case IOCTL_DISK_GET_DRIVE_GEOMETRY:
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _DISK_GEOMETRY)) {
@@ -44,7 +44,18 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		irp->IoStatus.Information = sizeof(struct _DISK_GEOMETRY);
 		break;
 
-	default: ;
+	case IOCTL_DISK_GET_LENGTH_INFO:
+		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _GET_LENGTH_INFORMATION)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+
+		struct _GET_LENGTH_INFORMATION *l = irp->AssociatedIrp.SystemBuffer;
+		l->Length.QuadPart = dev->d_size;
+		irp->IoStatus.Information = sizeof(struct _GET_LENGTH_INFORMATION);
+		break;
+
+	default: status = STATUS_NOT_IMPLEMENTED;
 	}
 
 	irp->IoStatus.Status = status;
