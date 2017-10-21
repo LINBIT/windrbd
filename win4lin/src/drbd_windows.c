@@ -2706,6 +2706,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	block_device->bd_parent = NULL;
 
 		/* TODO: not always? */
+	block_device->bd_block_size = 512;
 	block_device->bd_disk->queue->logical_block_size = 512;
 	block_device->d_size = get_volsize(block_device->windows_device);
 
@@ -3236,6 +3237,7 @@ struct block_device *bdget(dev_t device_no)
 	}
 	block_device->windows_device = new_device;
 	block_device->minor = minor;
+	block_device->bd_block_size = 512;
 
 	WDRBD_INFO("Created new block device %S for drbd and assigned it the dos name %S\n", name.Buffer, dos_name.Buffer);
 	
