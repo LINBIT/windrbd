@@ -20,11 +20,12 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+	struct block_device *dev = device->DeviceExtension;
 
 	printk(KERN_DEBUG "IoCtl: device: %p irp: %p s: %p s->MajorFunction: %x s->MinorFunction: %x s->Parameters.DeviceIoControl.IoControlCode: %x\n", device, irp, s, s->MajorFunction, s->MinorFunction, s->Parameters.DeviceIoControl.IoControlCode);
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 	case IOCTL_DISK_GET_DRIVE_GEOMETRY:
-		printk(KERN_DEBUG "get drive geometry.\n");
+		printk(KERN_DEBUG "get drive geometry (dev->bi_size: %lld).\n", dev->d_size);
 		break;
 	default: ;
 	}
