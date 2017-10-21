@@ -9,12 +9,10 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	
-printk(KERN_DEBUG "DRBD device request: MajorFunction: 0x%x\n", s->MajorFunction);
-	irp->IoStatus.Status = STATUS_SUCCESS;
+	printk(KERN_DEBUG "DRBD device request not implemented: MajorFunction: 0x%x\n", s->MajorFunction);
+	irp->IoStatus.Status = STATUS_NOT_IMPLEMENTED;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
-        return STATUS_SUCCESS;
-
-//	return STATUS_NOT_IMPLEMENTED;
+	return STATUS_NOT_IMPLEMENTED;
 }
 
 static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *dev)
@@ -32,7 +30,6 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct block_device *dev = device->DeviceExtension;
 	NTSTATUS status = STATUS_SUCCESS;
 
-printk(KERN_DEBUG "DRBD IoCtl request: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 	case IOCTL_DISK_GET_DRIVE_GEOMETRY:
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _DISK_GEOMETRY)) {
@@ -76,13 +73,16 @@ printk(KERN_DEBUG "DRBD IoCtl request: IoControlCode: 0x%x\n", s->Parameters.Dev
 		}
 
 		struct _PREVENT_MEDIA_REMOVAL *r = irp->AssociatedIrp.SystemBuffer;
-printk(KERN_INFO "Request for %slocking media\n", r->PreventMediaRemoval ? "" : "un");
+		printk(KERN_INFO "DRBD: Request for %slocking media\n", r->PreventMediaRemoval ? "" : "un");
+
 		dev->mechanically_locked = r->PreventMediaRemoval;
 
 		irp->IoStatus.Information = 0;
 		break;
 
-	default: status = STATUS_NOT_IMPLEMENTED;
+	default: 
+		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
+		status = STATUS_NOT_IMPLEMENTED;
 	}
 
 	irp->IoStatus.Status = status;
