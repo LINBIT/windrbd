@@ -19,6 +19,7 @@
 
 #include "drbd_windows.h"
 #include "windrbd_device.h"
+#include <wdmsec.h>
 
 #undef _NTDDK_
 /* Can't include that without getting redefinition errors.
@@ -3188,17 +3189,23 @@ struct block_device *bdget(dev_t device_no)
 	NTSTATUS status;
 	struct block_device *block_device;
 	struct _VOLUME_EXTENSION *pvext;
+	UNICODE_STRING sddl;
 
 	if (minor_to_x_name(&name, minor, 1) < 0) {
 		return NULL;
 	}
 
-	status = IoCreateDevice(mvolDriverObject, 
+		/* TODO: understand what this means */
+	RtlInitUnicodeString(&sddl, L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)");
+
+	status = IoCreateDeviceSecure(mvolDriverObject, 
 		                sizeof(struct block_device), 
 		                &name,
 		                FILE_DEVICE_DISK,
-                                FILE_DEVICE_SECURE_OPEN,
+                                0,
                                 FALSE,
+				&sddl,
+				NULL,
                                 &new_device);
 
 	if (status != STATUS_SUCCESS) {
@@ -3234,6 +3241,8 @@ struct block_device *bdget(dev_t device_no)
 	
 	ExFreePool(dos_name.Buffer);
 	ExFreePool(name.Buffer);
+
+	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
 	return block_device;
 

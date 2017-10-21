@@ -91,6 +91,7 @@ WIN_LINK_INPUT += wdm.lib
 WIN_LINK_INPUT += ntoskrnl.lib
 WIN_LINK_INPUT += bufferoverflowfastfailk.lib # for __security_check_cookie
 WIN_LINK_INPUT += netio.lib
+WIN_LINK_INPUT += wdmsec.lib
 
 
 all: drbd.sys drbd.cat
