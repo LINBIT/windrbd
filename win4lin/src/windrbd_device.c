@@ -63,6 +63,8 @@ printk(KERN_DEBUG "DRBD IoCtl request: IoControlCode: 0x%x\n", s->Parameters.Dev
 
 		struct _PREVENT_MEDIA_REMOVAL *r = irp->AssociatedIrp.SystemBuffer;
 printk(KERN_INFO "Request for %slocking media\n", r->PreventMediaRemoval ? "" : "un");
+		dev->mechanically_locked = r->PreventMediaRemoval;
+
 		irp->IoStatus.Information = 0;
 		break;
 

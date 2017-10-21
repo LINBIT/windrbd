@@ -611,6 +611,7 @@ struct block_device {
 	IO_REMOVE_LOCK remove_lock;
 
 	struct list_head backing_devices_list;
+	bool mechanically_locked; /* MEDIA_REMOVAL ioctl */
 };
 
 extern sector_t wdrbd_get_capacity(struct block_device *bdev);
