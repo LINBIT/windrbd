@@ -6,14 +6,16 @@
 
 static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+#if 0
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	
 	printk(KERN_DEBUG "device: %p irp: %p s: %p s->MajorFunction: %x\n", device, irp, s, s->MajorFunction);
 	irp->IoStatus.Status = STATUS_SUCCESS;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return STATUS_SUCCESS;
+#endif
 
-//	return STATUS_NOT_IMPLEMENTED;
+	return STATUS_NOT_IMPLEMENTED;
 }
 
 void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
