@@ -30,14 +30,14 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct block_device *dev = device->DeviceExtension;
+	NTSTATUS status = STATUS_SUCCESS;
 
 	printk(KERN_DEBUG "IoCtl: device: %p irp: %p s: %p s->MajorFunction: %x s->MinorFunction: %x s->Parameters.DeviceIoControl.IoControlCode: %x\n", device, irp, s, s->MajorFunction, s->MinorFunction, s->Parameters.DeviceIoControl.IoControlCode);
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 	case IOCTL_DISK_GET_DRIVE_GEOMETRY:
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _DISK_GEOMETRY)) {
-			irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
-			IoCompleteRequest(irp, IO_NO_INCREMENT);
-			return STATUS_INSUFFICIENT_RESOURCES;
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
 		}
 
 		fill_drive_geometry((struct _DISK_GEOMETRY*) irp->AssociatedIrp.SystemBuffer, dev);
@@ -47,9 +47,9 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	default: ;
 	}
 
-	irp->IoStatus.Status = STATUS_SUCCESS;
+	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
-        return STATUS_SUCCESS;
+        return status;
 }
 
 void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
