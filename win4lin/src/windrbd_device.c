@@ -44,6 +44,20 @@ printk(KERN_DEBUG "DRBD IoCtl request: IoControlCode: 0x%x\n", s->Parameters.Dev
 		irp->IoStatus.Information = sizeof(struct _DISK_GEOMETRY);
 		break;
 
+	case IOCTL_DISK_GET_DRIVE_GEOMETRY_EX:
+		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _DISK_GEOMETRY_EX)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+
+		struct _DISK_GEOMETRY_EX *g = irp->AssociatedIrp.SystemBuffer;
+		fill_drive_geometry(&g->Geometry, dev);
+		g->DiskSize.QuadPart = dev->d_size;
+		g->Data[0] = 0;
+
+		irp->IoStatus.Information = sizeof(struct _DISK_GEOMETRY_EX);
+		break;
+
 	case IOCTL_DISK_GET_LENGTH_INFO:
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _GET_LENGTH_INFORMATION)) {
 			status = STATUS_BUFFER_TOO_SMALL;
