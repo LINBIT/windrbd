@@ -55,6 +55,17 @@ printk(KERN_DEBUG "DRBD IoCtl request: IoControlCode: 0x%x\n", s->Parameters.Dev
 		irp->IoStatus.Information = sizeof(struct _GET_LENGTH_INFORMATION);
 		break;
 
+	case IOCTL_DISK_MEDIA_REMOVAL:
+		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct _PREVENT_MEDIA_REMOVAL)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+
+		struct _PREVENT_MEDIA_REMOVAL *r = irp->AssociatedIrp.SystemBuffer;
+printk(KERN_INFO "Request for %slocking media\n", r->PreventMediaRemoval ? "" : "un");
+		irp->IoStatus.Information = 0;
+		break;
+
 	default: status = STATUS_NOT_IMPLEMENTED;
 	}
 
