@@ -4,6 +4,8 @@
 
 #include "drbd_windows.h"
 #include "windrbd_device.h"
+#include "drbd_int.h"
+#include "drbd_wrappers.h"
 
 static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
@@ -90,6 +92,54 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
         return status;
 }
 
+int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bio)
+{
+	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+	struct _MDL *mdl = irp->MdlAddress;
+
+		/* TODO: FLUSH? */
+	bio->bi_rw |= (s->MajorFunction == IRP_MJ_WRITE) ? WRITE : READ;
+	bio->bi_size = s->Parameters.Read.Length;
+	bio->bi_sector = s->Parameters.Read.ByteOffset.QuadPart / dev->bd_block_size;
+	bio->bi_bdev = dev;
+	bio->bi_max_vecs = 1;
+	bio->bi_vcnt = 1;  /* just for now .. */
+
+	/* TODO: later have more than one .. */
+	if (mdl->Next != NULL) {
+		printk("not implemented: have more than one mdl\n");
+	}
+	bio->bi_io_vec[0].bv_page = MmGetMdlVirtualAddress(mdl);
+	bio->bi_io_vec[0].bv_len = MmGetMdlByteCount(mdl);
+	bio->bi_io_vec[0].bv_offset = MmGetMdlByteOffset(mdl);
+
+	return 0;
+}
+
+static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	struct block_device *dev = device->DeviceExtension;
+	struct bio *bio;
+	NTSTATUS status = STATUS_SUCCESS;
+
+	bio = bio_alloc(GFP_NOIO, 1, 'DBRD');
+	if (bio == NULL) {
+		status = STATUS_INSUFFICIENT_RESOURCES;
+		goto exit;
+	}
+	if (irp_to_bio(irp, dev, bio) < 0) {
+		bio_free(bio);
+		status = STATUS_INVALID_DEVICE_REQUEST;
+		goto exit;
+	}
+	drbd_make_request(dev->drbd_device->rq_queue, bio);
+
+exit:
+	irp->IoStatus.Status = status;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return status;
+}
+
 void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 {
 	int i;
@@ -98,5 +148,7 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 		obj->MajorFunction[i] = windrbd_not_implemented;
 
 	obj->MajorFunction[IRP_MJ_DEVICE_CONTROL] = windrbd_device_control;
+	obj->MajorFunction[IRP_MJ_READ] = windrbd_io;
+	obj->MajorFunction[IRP_MJ_WRITE] = windrbd_io;
 
 }

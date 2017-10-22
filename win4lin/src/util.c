@@ -64,6 +64,9 @@ GetDeviceName( PDEVICE_OBJECT DeviceObject, PWCHAR Buffer, ULONG BufferLength )
 	return STATUS_SUCCESS;
 }
 
+/* TODO: see if this is needed */
+/* Update: yes it is */
+
 #ifdef _WIN32_MVFL
 /**
 * @brief    do FSCTL_DISMOUNT_VOLUME in kernel.

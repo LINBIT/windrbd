@@ -179,20 +179,10 @@ Later: Try to put I/O on DRBD device.
 TODO: We should really lock the backing devices using NT kernel
 	mechanisms.
 
-TODO: Do we really need all those IOCTLs?
-
-TODO: What we would need is something that overwrites Windows' default
-	behaviour of determining device sizes (when Meta data is
-	internal we want to report only the payload size without
-	the meta data).
-
 TODO: Implement function stubs created when integrating DRBD 9.0.9
 
 TODO: We want to see the syslog output when the system did boot, not
 	only when we configure a DRBD device.
-
-TODO: Have a lower level device for drbdmeta for access of internal
-	DRBD meta data while resource is up.
 
 TODO: Have a function that initialized all (global) spinlocks
 	and replace the racy solution (with an flag indicating
@@ -207,6 +197,8 @@ TODO: #ifdef the Windows netlink code in drbd-utils
 
 TODO: Make drbd service stoppable
 	This probably takes some while
+	Update: with the new architecture that should be possible
+	one day.
 
 TODO: Have sshd on Windows and work remotely
 	Would be convenient, however setup is a little bit
@@ -214,15 +206,13 @@ TODO: Have sshd on Windows and work remotely
 
 TODO: Make drbd run on peer Linux box
 
-TODO: Port agruen's test suite to cygwin.
-
-TODO: use gtest to write tests.
-	Probably for some tests where we need to call Windows API functions.
-	Maybe we can extent agruen's test suite to call mini binaries.
+Maybe Later: Port agruen's test suite to cygwin.
 
 TODO: fix the macro redefinition problems in drbd_windows.c
 	For now we have to copy the function prototypes from MSDN.
 	Not good style.
+
+	Update: check if the prototypes are still needed.
 
 TODO: Later: RCU needs change
 --------------------------------
@@ -239,7 +229,7 @@ Rejected: Download heise Linux Virus scanner CD and check image.
 	I tried Desinfec't 2014 but it hangs. Now have Avira 
 	inside the Windows machine.
 
-	TODO: This should start automatically at boot
+	TO DO: This should start automatically at boot
 
 Rejected: Maybe migrate vdi image to internal SSD
 
@@ -253,7 +243,7 @@ Done: Install cygwin
 	Also installed Dev (GNU toolchain)
 
 Done: Install Visual Studio
-	C headers are missing, TODO: Uninstall and redo installation
+	C headers are missing, TO DO: Uninstall and redo installation
 	from scratch.	
 	Done, works now
 
@@ -471,4 +461,23 @@ Done: fix 0x4e blue screen on drbdadm detach / down
 drbd_bm_resize <6>drbd w0/17 minor 26, ds(Diskless), dvflag(0x2000): drbd_bm_resize called with capacity == 0
 	
 Done: Make it work with DRBD from September
+
+Done: Do we really need all those IOCTLs?
+	drbdcon does not exist in WinDRBD, new ioctls are not 
+	needed.
+
+Done: use gtest to write tests.
+	Probably for some tests where we need to call Windows API functions.
+	Maybe we can extent agruen's test suite to call mini binaries.
+
+Done: What we would need is something that overwrites Windows' default
+	behaviour of determining device sizes (when Meta data is
+	internal we want to report only the payload size without
+	the meta data).
+
+	Update: With the new architecture this comes for free.
+
+Done: Have a lower level device for drbdmeta for access of internal
+	DRBD meta data while resource is up.
+	Update: with new architecture this came for free.
 

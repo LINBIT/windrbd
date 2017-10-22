@@ -17,6 +17,7 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+/* TODO: most of the stuff in here goes away, except DriverEntry */
 #include <wdm.h>
 #include <ntstrsafe.h>
 #include <ntddk.h>
