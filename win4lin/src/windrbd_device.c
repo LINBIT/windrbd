@@ -92,26 +92,71 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
         return status;
 }
 
-int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bio)
+static void windrbd_bio_finished(struct bio * bio, blk_status_t error)
 {
+	PIRP irp = bio->pMasterIrp;
+
+	printk("1\n");
+
+   /* TODO handle split-up bios! */
+	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+	printk("2\n");
+
+	bio_free(bio);
+	printk("3\n");
+}
+
+
+
+static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bio)
+{
+printk("1\n");
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct _MDL *mdl = irp->MdlAddress;
 
+	if (s == NULL) {
+		printk("Stacklocation is NULL.\n");
+		return -1;
+	}
+	if (mdl == NULL) {
+		printk("MdlAddress is NULL.\n");
+		return -1;
+	}
+
+printk("2\n");
 		/* TODO: FLUSH? */
 	bio->bi_rw |= (s->MajorFunction == IRP_MJ_WRITE) ? WRITE : READ;
 	bio->bi_size = s->Parameters.Read.Length;
 	bio->bi_sector = s->Parameters.Read.ByteOffset.QuadPart / dev->bd_block_size;
+printk("3\n");
 	bio->bi_bdev = dev;
 	bio->bi_max_vecs = 1;
-	bio->bi_vcnt = 1;  /* just for now .. */
+	bio->bi_vcnt = 0;  /* just for now .. */
 
+printk("4\n");
 	/* TODO: later have more than one .. */
 	if (mdl->Next != NULL) {
 		printk("not implemented: have more than one mdl\n");
 	}
-	bio->bi_io_vec[0].bv_page = MmGetMdlVirtualAddress(mdl);
+printk("5\n");
+	bio->bi_io_vec[0].bv_page = kmalloc(sizeof(struct page), 0, 'DRBD');
+	if (bio->bi_io_vec[0].bv_page == NULL) {
+		printk("Page is NULL.\n");
+		return -1;
+	}
+	bio->bi_io_vec[0].bv_page->addr = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority);
+printk("a\n");
 	bio->bi_io_vec[0].bv_len = MmGetMdlByteCount(mdl);
+printk("b\n");
 	bio->bi_io_vec[0].bv_offset = MmGetMdlByteOffset(mdl);
+printk("c\n");
+
+	bio->bio_databuf = bio->bi_io_vec[0].bv_page->addr;
+//	bio->bio_databuf = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority);
+	bio->bi_end_io = windrbd_bio_finished;
+	bio->pMasterIrp = irp;
+
+printk("6\n");
 
 	return 0;
 }
@@ -122,21 +167,33 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct bio *bio;
 	NTSTATUS status = STATUS_SUCCESS;
 
+printk("1\n");
+
 	bio = bio_alloc(GFP_NOIO, 1, 'DBRD');
+printk("2\n");
 	if (bio == NULL) {
+printk("3\n");
 		status = STATUS_INSUFFICIENT_RESOURCES;
 		goto exit;
 	}
+printk("4\n");
 	if (irp_to_bio(irp, dev, bio) < 0) {
+printk("5\n");
 		bio_free(bio);
 		status = STATUS_INVALID_DEVICE_REQUEST;
 		goto exit;
 	}
+printk("6\n");
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
+printk("7\n");
+
+	return STATUS_PENDING;
 
 exit:
+printk("8\n");
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
+printk("9\n");
         return status;
 }
 
