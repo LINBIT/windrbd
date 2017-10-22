@@ -187,6 +187,8 @@ printk("6\n");
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
 printk("7\n");
 
+        IoMarkIrpPending(irp);
+
 	return STATUS_PENDING;
 
 exit:
