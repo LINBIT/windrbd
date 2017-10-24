@@ -98,6 +98,9 @@ static void windrbd_bio_finished(struct bio * bio, blk_status_t error)
 
 	printk("1\n");
 
+	if (error == 0) {
+		irp->IoStatus.Information = bio->bi_size;
+	}
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 	printk("2\n");
 	complete(&bio->completion);
