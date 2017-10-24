@@ -1695,12 +1695,14 @@ printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", D
 	}
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
+#if 0
 	for (mdl = Irp->MdlAddress; mdl != NULL; mdl = nextMdl) {
 		nextMdl = mdl->Next;
 		MmUnlockPages(mdl);
 		IoFreeMdl(mdl); // This function will also unmap pages.
 	}
 	Irp->MdlAddress = NULL;
+#endif
 
 	ObDereferenceObject(Irp->Tail.Overlay.Thread);
 	IoFreeIrp(Irp);
@@ -1845,13 +1847,18 @@ int generic_make_request(struct bio *bio)
 
 void bio_endio(struct bio *bio, int error)
 {
+printk("1\n");
 	if (bio->bi_end_io != NULL) {
+printk("2\n");
 		if (error != 0)
 			WDRBD_INFO("thread(%s) bio_endio error with err=%d.\n", current->comm, error);
 
+printk("3\n");
 		bio->bi_end_io(bio, error);
+printk("4\n");
 	} else
 		WDRBD_WARN("thread(%s) bio(%p) no bi_end_io function.\n", current->comm, bio);
+printk("5\n");
 }
 
 void __list_del_entry(struct list_head *entry)

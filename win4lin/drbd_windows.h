@@ -628,6 +628,11 @@ typedef u8 blk_status_t;
 typedef void(BIO_END_IO_CALLBACK)(struct bio *bio, blk_status_t error);
 
 
+struct completion {
+	//unsigned int done;
+	wait_queue_head_t wait;
+};
+
 struct splitInfo {	
 	unsigned long 	finished;
 	NTSTATUS 		LastError; // 0 :STATUS_SUCCESS, 
@@ -669,15 +674,13 @@ struct bio {
 		/* Those are used by win_generic_make_request internally */
 	LARGE_INTEGER offset;
 	IO_STATUS_BLOCK io_stat;
+
+		/* This is used in upper level I/O */
+	struct completion completion;
 };
 
 struct bio_set {
 	mempool_t *bio_pool;
-};
-
-struct completion {
-	//unsigned int done;
-	wait_queue_head_t wait;
 };
 
 extern struct bio *bio_clone(struct bio *, int x);

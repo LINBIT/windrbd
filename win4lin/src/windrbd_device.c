@@ -98,11 +98,11 @@ static void windrbd_bio_finished(struct bio * bio, blk_status_t error)
 
 	printk("1\n");
 
-   /* TODO handle split-up bios! */
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 	printk("2\n");
+	complete(&bio->completion);
 
-	bio_free(bio);
+//	bio_free(bio);
 	printk("3\n");
 }
 
@@ -155,6 +155,7 @@ printk("c\n");
 //	bio->bio_databuf = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority);
 	bio->bi_end_io = windrbd_bio_finished;
 	bio->pMasterIrp = irp;
+	init_completion(&bio->completion);
 
 printk("6\n");
 
@@ -186,10 +187,13 @@ printk("5\n");
 printk("6\n");
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
 printk("7\n");
+	wait_for_completion(&bio->completion);
+printk("x\n");
 
-        IoMarkIrpPending(irp);
+/*        IoMarkIrpPending(irp);
 
-	return STATUS_PENDING;
+	return STATUS_PENDING; */
+	return STATUS_SUCCESS;
 
 exit:
 printk("8\n");
