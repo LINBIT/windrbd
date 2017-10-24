@@ -188,12 +188,12 @@ printk("5\n");
 		goto exit;
 	}
 printk("6\n");
+        IoMarkIrpPending(irp);
+printk("w\n");
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
 printk("7\n");
 //	wait_for_completion(&bio->completion);
 printk("x\n");
-
-        IoMarkIrpPending(irp);
 
 	return STATUS_PENDING;
 //	return STATUS_SUCCESS;
