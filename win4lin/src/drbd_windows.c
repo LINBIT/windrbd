@@ -1684,12 +1684,6 @@ printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", D
 	struct bio *bio = Context;
 	PMDL mdl, nextMdl;
 
-/*
-	if (bio && bio->bi_bdev && bio->bi_bdev->pDeviceExtension) {
-		IoReleaseRemoveLock(&bio->bi_bdev->pDeviceExtension->RemoveLock, NULL);
-	}
-*/
-
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		WDRBD_WARN("DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
 	}
@@ -1845,18 +1839,13 @@ int generic_make_request(struct bio *bio)
 
 void bio_endio(struct bio *bio, int error)
 {
-printk("1\n");
 	if (bio->bi_end_io != NULL) {
-printk("2\n");
 		if (error != 0)
 			WDRBD_INFO("thread(%s) bio_endio error with err=%d.\n", current->comm, error);
 
-printk("3\n");
 		bio->bi_end_io(bio, error);
-printk("4\n");
 	} else
 		WDRBD_WARN("thread(%s) bio(%p) no bi_end_io function.\n", current->comm, bio);
-printk("5\n");
 }
 
 void __list_del_entry(struct list_head *entry)

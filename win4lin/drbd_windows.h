@@ -674,9 +674,6 @@ struct bio {
 		/* Those are used by win_generic_make_request internally */
 	LARGE_INTEGER offset;
 	IO_STATUS_BLOCK io_stat;
-
-		/* This is used in upper level I/O */
-	struct completion completion;
 };
 
 struct bio_set {
