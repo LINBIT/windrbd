@@ -4,60 +4,10 @@ TODO: Create patches for DRBD for recent changes.
 
 TODO: Submit current sources.
 
-TODO: Redesign of architecture.
-
-	Currently the DRBD device is stacked atop of the low level
-	Disk drivers. This way all I/O goes through the WinDRBD
-	driver also that of the non-drbd drives (like C:, ...).
-	An Active flag controls whether I/O is routed through
-	DRBD or not.
-	
-	One major drawback is that once the Active flag is set
-	we cannot access the lower device. This is needed however
-	by drbdmeta.
-	
-	We want an architecture that is more close to that one
-	of Linux where DRBD devices and backing devices are different
-	device objects, even for the Windows kernel.
-
-+ km/wdm.h:#define IRP_MJ_CREATE                   0x00
-km/wdm.h:#define IRP_MJ_CREATE_NAMED_PIPE        0x01
-+ km/wdm.h:#define IRP_MJ_CLOSE                    0x02
-+ km/wdm.h:#define IRP_MJ_READ                     0x03
-+ km/wdm.h:#define IRP_MJ_WRITE                    0x04
-km/wdm.h:#define IRP_MJ_QUERY_INFORMATION        0x05
-km/wdm.h:#define IRP_MJ_SET_INFORMATION          0x06
-km/wdm.h:#define IRP_MJ_QUERY_EA                 0x07
-km/wdm.h:#define IRP_MJ_SET_EA                   0x08
-+ km/wdm.h:#define IRP_MJ_FLUSH_BUFFERS            0x09
-km/wdm.h:#define IRP_MJ_QUERY_VOLUME_INFORMATION 0x0a
-km/wdm.h:#define IRP_MJ_SET_VOLUME_INFORMATION   0x0b
-km/wdm.h:#define IRP_MJ_DIRECTORY_CONTROL        0x0c
-km/wdm.h:#define IRP_MJ_FILE_SYSTEM_CONTROL      0x0d
-+ km/wdm.h:#define IRP_MJ_DEVICE_CONTROL           0x0e
-km/wdm.h:#define IRP_MJ_INTERNAL_DEVICE_CONTROL  0x0f
-x km/wdm.h:#define IRP_MJ_SHUTDOWN                 0x10
-km/wdm.h:#define IRP_MJ_LOCK_CONTROL             0x11
-+ km/wdm.h:#define IRP_MJ_CLEANUP                  0x12
-km/wdm.h:#define IRP_MJ_CREATE_MAILSLOT          0x13
-km/wdm.h:#define IRP_MJ_QUERY_SECURITY           0x14
-km/wdm.h:#define IRP_MJ_SET_SECURITY             0x15
-x km/wdm.h:#define IRP_MJ_POWER                    0x16
-x km/wdm.h:#define IRP_MJ_SYSTEM_CONTROL           0x17
-km/wdm.h:#define IRP_MJ_DEVICE_CHANGE            0x18
-km/wdm.h:#define IRP_MJ_QUERY_QUOTA              0x19
-km/wdm.h:#define IRP_MJ_SET_QUOTA                0x1a
-x km/wdm.h:#define IRP_MJ_PNP                      0x1b
-km/wdm.h:#define IRP_MJ_PNP_POWER                IRP_MJ_PNP      // Obsolete....
-km/wdm.h:#define IRP_MJ_MAXIMUM_FUNCTION         0x1b
-km/wdm.h:#define IRP_MJ_SCSI                     IRP_MJ_INTERNAL_DEVICE_CONTROL
-km/wdm.h:#define SL_PERSISTENT_MEMORY_FIXED_MAPPING  0x20    // valid only with persistent memory device and IRP_MJ_WRITE
-
-
-	TODO: allow user to pass name of symbolic link created
+TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
-	TODO: blkdev_put isn't called on drbdadm down
+TODO: blkdev_put isn't called on drbdadm down
 
 	fix this one day, this is probably a DRBD9 bug. Or maybe
 	it is intentional.
@@ -68,75 +18,18 @@ km/wdm.h:#define SL_PERSISTENT_MEMORY_FIXED_MAPPING  0x20    // valid only with 
 	ask phil if that is ok (it should make the device invisible, which
 	is what it does).
 
-	TODO: Check if it is a network share (currently blue screens)
+TODO: Check if it is a network share (currently blue screens)
 	Update: blue screen was something else. Should check if the
 	drive letter is a network share. Unfortunately they do not
 	appear in the \DosDevices directory. If we create a drive
 	letter (symbolic link) in the \DosDevices it will be silently
 	ignored. Warn the user if it is a network share.
 
-	TODO: One day we want to have a more specific error message
+TODO: One day we want to have a more specific error message
 	than Device does not have a disk config if the device or
 	the drive letter already exist.
 
-	Done: Have other device extension with only the fields we
-	need.
-
-	We now disabled mvolAddDevice (by returning NO_SUCH_DEVICE,
-	else we blue screen because some verifier) so volume
-	extension does not exist any more (except in non-accessible
-	code). 
-
-	Update: maybe the struct block_device should be the windows
-	device extension, so we safe a intermediate data structure.
-
-	Update: That's what we do now. While having NT kernel internal
-	variables inside linux structures seems like bad design at
-	first, it saves a lot of (unneccessary) work. For example
-	we now have the offset and io_stat used by 
-	win_generic_make_request() internally as part of the struct bio.
-
-	Done: Next thing is to have replacment data structure so
-	that attach works again (create block_device with target
-	device looked up in find_target_dev). Also get I/O on
-	that target dev working (used to blue screen but maybe
-	it works now that we do not create a device in AddDevice())
-
-	Update: for DRBD devices device extension is now struct
-	block_device. 
-
-	Update: after long research (and with help from a stack overflow
-	kernel guru) we solved the blue screen and now do not do 
-	AddDevices any more.
-
-	Rejected: check if generic_make_request can use the ZwCreateFile
-	API (instead of creating an IRP)
-		I/O on the backing devices work now (again) with the
-		IRP API.
-
-	Done: remove devices in bdput destroyer.
-	Implemented but cannot test it now, it is newer called from 
-	drbd_destroy_device (which is also never called).
-	Update: calling it now from drbd_unregister_device(). Works.
-
-	Done: bdput in drbd_create_device on failure.
-
-	Done: clean up code, delete commented out code.
-
-	Done: size fix (with external meta data something destroys the
-	disk size setting, so that drbdadm up / down only works once).
-	Update: this doesn't happen no more.
-
-	Done: clean up block devices created by blkdev_get_by_path().
-
-	Done: keep an internal list of struct block_devices created
-	for backing devices (so that internal meta data works again).
-	and don't have more than one struct block_device per physical
-	partition.
-
-	Works now (again) with internal meta data.
-
-	Done: DeviceControl (there are many more but those
+Done: DeviceControl (there are many more but those
 	are the ones called when the device is opened):
 
 Done: 0x70000: FILE_DEVICE_DISK: IOCTL_DISK_GET_DRIVE_GEOMETRY
@@ -154,29 +47,6 @@ TODO: 0x70048: FILE_DEVICE_DISK: IOCTL_DISK_GET_PARTITION_INFO_EX
 	Done: implement I/O handler stubs
 		Stubs done, return STATUS_OK (or STATUS_NOT_IMPLEMENTED)
 
-
-Later: Try to put I/O on DRBD device.
-	This will be the same device as if there was no DRBD (use
-	the drive letters).
-
-	Update: Started setting the Active flag automatically from
-	within DRBD (currently only at successful attach, later
-	also on connect. Somewhere else?).
-
-	Done: Unset the flag on down / detach. Or better set it on
-	becoming primary, clear it on becoming secondary (let
-	DRBD do the checks).
-
-	Later: Remove check in mvolWrite(): DRBD should do this.
-
-	Update: Currently drbd_open() fails because of some
-	auto-promote mechanism that never happens. It seems
-	that the synchronisation (wait_event_interruptible()
-	and the like) are broken.
-
-	Update: We now try to have a separate Windows device for drbd
-	and backing device this is more close to what DRBD under
-	Linux does.
 
 ---------------
 
@@ -484,4 +354,134 @@ Done: What we would need is something that overwrites Windows' default
 Done: Have a lower level device for drbdmeta for access of internal
 	DRBD meta data while resource is up.
 	Update: with new architecture this came for free.
+
+Done: Have other device extension with only the fields we
+	need.
+
+	We now disabled mvolAddDevice (by returning NO_SUCH_DEVICE,
+	else we blue screen because some verifier) so volume
+	extension does not exist any more (except in non-accessible
+	code). 
+
+	Update: maybe the struct block_device should be the windows
+	device extension, so we safe a intermediate data structure.
+
+	Update: That's what we do now. While having NT kernel internal
+	variables inside linux structures seems like bad design at
+	first, it saves a lot of (unneccessary) work. For example
+	we now have the offset and io_stat used by 
+	win_generic_make_request() internally as part of the struct bio.
+
+	Done: Next thing is to have replacment data structure so
+	that attach works again (create block_device with target
+	device looked up in find_target_dev). Also get I/O on
+	that target dev working (used to blue screen but maybe
+	it works now that we do not create a device in AddDevice())
+
+	Update: for DRBD devices device extension is now struct
+	block_device. 
+
+	Update: after long research (and with help from a stack overflow
+	kernel guru) we solved the blue screen and now do not do 
+	AddDevices any more.
+
+	Rejected: check if generic_make_request can use the ZwCreateFile
+	API (instead of creating an IRP)
+		I/O on the backing devices work now (again) with the
+		IRP API.
+
+	Done: remove devices in bdput destroyer.
+	Implemented but cannot test it now, it is newer called from 
+	drbd_destroy_device (which is also never called).
+	Update: calling it now from drbd_unregister_device(). Works.
+
+	Done: bdput in drbd_create_device on failure.
+
+	Done: clean up code, delete commented out code.
+
+	Done: size fix (with external meta data something destroys the
+	disk size setting, so that drbdadm up / down only works once).
+	Update: this doesn't happen no more.
+
+	Done: clean up block devices created by blkdev_get_by_path().
+
+	Done: keep an internal list of struct block_devices created
+	for backing devices (so that internal meta data works again).
+	and don't have more than one struct block_device per physical
+	partition.
+
+	Works now (again) with internal meta data.
+
+Done: Redesign of architecture.
+
+	Currently the DRBD device is stacked atop of the low level
+	Disk drivers. This way all I/O goes through the WinDRBD
+	driver also that of the non-drbd drives (like C:, ...).
+	An Active flag controls whether I/O is routed through
+	DRBD or not.
+	
+	One major drawback is that once the Active flag is set
+	we cannot access the lower device. This is needed however
+	by drbdmeta.
+	
+	We want an architecture that is more close to that one
+	of Linux where DRBD devices and backing devices are different
+	device objects, even for the Windows kernel.
+
++ km/wdm.h:#define IRP_MJ_CREATE                   0x00
+km/wdm.h:#define IRP_MJ_CREATE_NAMED_PIPE        0x01
++ km/wdm.h:#define IRP_MJ_CLOSE                    0x02
++ km/wdm.h:#define IRP_MJ_READ                     0x03
++ km/wdm.h:#define IRP_MJ_WRITE                    0x04
+km/wdm.h:#define IRP_MJ_QUERY_INFORMATION        0x05
+km/wdm.h:#define IRP_MJ_SET_INFORMATION          0x06
+km/wdm.h:#define IRP_MJ_QUERY_EA                 0x07
+km/wdm.h:#define IRP_MJ_SET_EA                   0x08
++ km/wdm.h:#define IRP_MJ_FLUSH_BUFFERS            0x09
+km/wdm.h:#define IRP_MJ_QUERY_VOLUME_INFORMATION 0x0a
+km/wdm.h:#define IRP_MJ_SET_VOLUME_INFORMATION   0x0b
+km/wdm.h:#define IRP_MJ_DIRECTORY_CONTROL        0x0c
+km/wdm.h:#define IRP_MJ_FILE_SYSTEM_CONTROL      0x0d
++ km/wdm.h:#define IRP_MJ_DEVICE_CONTROL           0x0e
+km/wdm.h:#define IRP_MJ_INTERNAL_DEVICE_CONTROL  0x0f
+x km/wdm.h:#define IRP_MJ_SHUTDOWN                 0x10
+km/wdm.h:#define IRP_MJ_LOCK_CONTROL             0x11
++ km/wdm.h:#define IRP_MJ_CLEANUP                  0x12
+km/wdm.h:#define IRP_MJ_CREATE_MAILSLOT          0x13
+km/wdm.h:#define IRP_MJ_QUERY_SECURITY           0x14
+km/wdm.h:#define IRP_MJ_SET_SECURITY             0x15
+x km/wdm.h:#define IRP_MJ_POWER                    0x16
+x km/wdm.h:#define IRP_MJ_SYSTEM_CONTROL           0x17
+km/wdm.h:#define IRP_MJ_DEVICE_CHANGE            0x18
+km/wdm.h:#define IRP_MJ_QUERY_QUOTA              0x19
+km/wdm.h:#define IRP_MJ_SET_QUOTA                0x1a
+x km/wdm.h:#define IRP_MJ_PNP                      0x1b
+km/wdm.h:#define IRP_MJ_PNP_POWER                IRP_MJ_PNP      // Obsolete....
+km/wdm.h:#define IRP_MJ_MAXIMUM_FUNCTION         0x1b
+km/wdm.h:#define IRP_MJ_SCSI                     IRP_MJ_INTERNAL_DEVICE_CONTROL
+km/wdm.h:#define SL_PERSISTENT_MEMORY_FIXED_MAPPING  0x20    // valid only with persistent memory device and IRP_MJ_WRITE
+
+
+Done: Try to put I/O on DRBD device.
+	This will be the same device as if there was no DRBD (use
+	the drive letters).
+
+	Update: Started setting the Active flag automatically from
+	within DRBD (currently only at successful attach, later
+	also on connect. Somewhere else?).
+
+Done: Unset the flag on down / detach. Or better set it on
+	becoming primary, clear it on becoming secondary (let
+	DRBD do the checks).
+
+Rejected: Remove check in mvolWrite(): DRBD should do this.
+
+	Update: Currently drbd_open() fails because of some
+	auto-promote mechanism that never happens. It seems
+	that the synchronisation (wait_event_interruptible()
+	and the like) are broken.
+
+	Update: We now try to have a separate Windows device for drbd
+	and backing device this is more close to what DRBD under
+	Linux does.
 
