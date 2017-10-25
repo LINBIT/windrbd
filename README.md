@@ -86,6 +86,20 @@ the DRBD device would be H: (internally however it will be \\Device\\Drbd5)
 
 This restriction will be fixed soon.
 
+Logging
+=======
+
+Since WinDRBD is at a very early development stage, logging is very
+important. We use syslog UDP packets and a Linux host to debug
+WinDRBD.
+
+To configure the log host set a Registry key (string value):
+
+	Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\drbd\syslog_ip
+
+and assign it the IP address (you might have to reload the WinDRBD driver
+after setting this). See also file INSTALL for more instructions.
+
 Version history
 ===============
 

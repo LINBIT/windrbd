@@ -34,31 +34,33 @@ You need two virtual machines:
 		not sure if that is needed also, since the C compiler
 		should come with ewdk.
 
-git clone wdrbd with:
+git clone windrbd with:
 
-bash$ git clone --recursive http://git.drbd.org/wdrbd.git	
+# TODO: wdrbd9 -> windrbd
 
-on your Linux box. wdrbd uses drbd as a submodule that's why --recursive
+bash$ git clone --recursive git@github.com:LINBIT/wdrbd9.git
+
+on your Linux box. windrbd uses drbd as a submodule that's why --recursive
 is needed.
 
-Share the wdrbd9 folder via Samba, so that your Windows VM can access it
+Share the windrbd folder via Samba, so that your Windows VM can access it
 (we are not keeping any important data on the Windows VM since it will
 crash frequently). You can use the GNOME Files utility to do so (for
 example).
 
 Mount the shared folder in your windows box:
-	net use z: \\<ip-of-linux-box>\wdrbd9
-(assuming the share name is wdrbd9)
+	net use z: \\<ip-of-linux-box>\windrbd
+(assuming the share name is windrbd)
 
 Building and "insmod" DRBD windows driver:
 
-	1.) cd into root directory of wdrbd on your Linux box
+	1.) cd into root directory of windrbd on your Linux box
 
         2.) Run
                 make
         on the Linux box
 
-	3.) cd into root directory of wdrbd on your Windows box
+	3.) cd into root directory of windrbd on your Windows box
 
         4.) Run
                 make
@@ -78,7 +80,7 @@ Building and "insmod" DRBD windows driver:
 
 ------------
 
-Note on logging: wdrbd currently sends UDP packets to a logging host
+Note on logging: windrbd currently sends UDP packets to a logging host
 for logging. This is meant for use with syslog.
 
 To enable UDP logging in rsyslogd put (or uncomment) following lines
@@ -98,6 +100,13 @@ interrupts got disabled.
 
 Currently you also only see the DRBD driver's boot messages
 only after you configure a DRBD resource.
+
+To configure the log host set a Registry key (string value):
+
+	Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\drbd\syslog_ip
+
+and assign it the IP address (you might have to reload the WinDRBD driver
+after setting this).
 
 You can also use the dbgview.exe tool (please google it) and enable 
 Capture Kernel on Windows to see some log messages. It must be run as
