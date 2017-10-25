@@ -1,8 +1,6 @@
-wdrbd-next:
+WinDRBD-next:
 
-TODO: Create patches for DRBD for recent changes.
-
-TODO: Submit current sources.
+-----------------------------------------------------------------------
 
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
@@ -484,4 +482,10 @@ Rejected: Remove check in mvolWrite(): DRBD should do this.
 	Update: We now try to have a separate Windows device for drbd
 	and backing device this is more close to what DRBD under
 	Linux does.
+
+Done: Create patches for DRBD for recent changes.
+
+Done: README.md
+
+Done: Submit current sources.
 

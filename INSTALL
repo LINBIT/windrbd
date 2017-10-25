@@ -1,7 +1,7 @@
-Note: WDRBD9 (DRBD for Windows) is at a very early development stage, 
+Note: WinDRBD (DRBD for Windows) is at a very early development stage, 
 so please don't expect everything described in here to work out-of-the-box.
 
-Furthermore, running WDRBD9 will, at some point, most likely crash your 
+Furthermore, running WinDRBD will, at some point, most likely crash your 
 windows machine (blue screen) so be sure to
 	1.) Not use it on production machines.
 	2.) Make Snapshots frequently.
@@ -73,8 +73,8 @@ Building and "insmod" DRBD windows driver:
         6.) (optional) To load the driver, do (from Adminstrator Console)
                 sc start drbd
 
-	However to make WDRBD work correctly you will have to reboot
-	the machine.
+	However to make WinDRBD work correctly you will have to reboot
+	the machine. (this restriction may vanish in future).
 
 ------------
 
