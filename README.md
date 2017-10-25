@@ -30,12 +30,13 @@ and a separate Linux Box with spatch (concinelle) installed.
 
 You need the windrbd branch of drbd-utils. 
 
-To test it you need windrbd-test (but this is optional).
+To test it, we use the WIN32 API test suite in windrbd-test. This
+	is based on Google Test: see README.md in windrbd-test directory.
 
 You don't need drbdcon: it does not exist in WinDRBD.
 
 We recommend to run Windows 7 in a virtual machine and make
-snapshots everytime before a new WinDRBD version is installed.
+snapshots everytime *before* a new WinDRBD version is installed.
 
 Differences to WDRBD
 ====================
