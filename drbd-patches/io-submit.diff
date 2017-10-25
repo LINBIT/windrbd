@@ -1,0 +1,89 @@
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index f6adb9c..2abad1c 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -1988,7 +1988,7 @@ static inline void drbd_set_my_capacity(struct drbd_device *device,
+ {
+ 	/* set_capacity(device->this_bdev->bd_disk, size); */
+ 	if (device && device->this_bdev && device->this_bdev)
+-	device->this_bdev->d_size = size << 9;
++		device->this_bdev->d_size = size << 9;
+ 
+ }
+ 
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 8274e6a..52cf9fa 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -2760,11 +2781,6 @@ static void drbd_device_finalize_work_fn(struct work_struct *work)
+ 	if (device->this_bdev)
+ 		bdput(device->this_bdev);
+ 
+-	if (device->vdisk->pDeviceExtension) {
+-		// just in case existing a VolumeExtension
+-		device->vdisk->pDeviceExtension->dev = NULL;
+-	}
+-
+ 	drbd_backing_dev_free(device, device->ldev);
+ 	device->ldev = NULL;
+ 
+@@ -3441,15 +3459,20 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	int vnr = adm_ctx->volume;
+ 	enum drbd_ret_code err = ERR_NOMEM;
+ 	bool locked = false;
++	struct block_device *block_device;
+ 
+ 	device = minor_to_device(minor);
+ 	if (device)
+ 		return ERR_MINOR_OR_VOLUME_EXISTS;
+ 
++	block_device = bdget(MKDEV(DRBD_MAJOR, minor));
++	if (block_device == NULL)
++		return ERR_NO_DISK;
++
+ 	/* GFP_KERNEL, we are outside of all write-out paths */
+ 	device = kzalloc(sizeof(struct drbd_device), GFP_KERNEL, '0CWD');
+ 	if (!device)
+-		return ERR_NOMEM;
++		goto out_no_device;
+ 	kref_init(&device->kref);
+ 	kref_debug_init(&device->kref_debug, &device->kref, &kref_class_device);
+ 
+@@ -3517,9 +3540,13 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	sprintf(disk->disk_name, "drbd%d", minor);
+ 	disk->private_data = device;
+ 
+-	device->this_bdev = bdget(MKDEV(DRBD_MAJOR, minor));
++	device->this_bdev = block_device;
+ 	/* we have no partitions. we contain only ourselves. */
+ 	device->this_bdev->bd_contains = device->this_bdev;
++	/* TODO: should go away, use bdev->bd_disk->private_data instead */
++	device->this_bdev->drbd_device = device;
++	/* TODO: leaks existing disk */
++	device->this_bdev->bd_disk = disk;
+ 
+ 	init_bdev_info(q->backing_dev_info, drbd_congested, device);
+ 
+@@ -3658,7 +3686,11 @@ out_no_disk:
+ 	blk_cleanup_queue(q);
+ out_no_q:
+ 	kref_put(&resource->kref, drbd_destroy_resource);
++	kref_debug_destroy(&device->kref_debug);
+ 	kfree(device);
++out_no_device:
++	bdput(block_device);
++
+ 	return err;
+ }
+ 
+@@ -3691,6 +3723,10 @@ void drbd_unregister_device(struct drbd_device *device)
+ 	destroy_workqueue(device->submit.wq);
+ 	device->submit.wq = NULL;
+ 	del_timer_sync(&device->request_timer);
++
++		/* TODO: Ask phil if that is correct */
++	bdput(device->this_bdev);
++	device->this_bdev = NULL;
+ }
+ 
+ void drbd_reclaim_device(struct rcu_head *rp)
