@@ -1,3 +1,10 @@
+Bluescreen on getting length info via IRP request when there
+is a NTFS file system on the backing device.
+
+To reproduce, format a DRBD device with NTFS, reboot and make
+a drbdadm up. It crashes in IoCallDriver of mvolGetVolumeSize()
+
+---------------------------------------------------------------------
 blkdev_put isn't called on drbdadm down
 
 So the block devices are never freed. Since we keep a record
