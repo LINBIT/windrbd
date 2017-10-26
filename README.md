@@ -104,3 +104,4 @@ Version history
 ===============
 
 0.1 (Oct 25, 2017): Basic I/O works with separate DRBD device.
+0.2 (Oct 26, 2017): Creating filesystems works.

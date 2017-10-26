@@ -125,6 +125,25 @@ TEST(win_drbd, get_partition_information_ex)
 	CloseHandle(h);
 }
 
+TEST(win_drbd, set_partition_information)
+{
+	HANDLE h = do_open_device();
+	struct _SET_PARTITION_INFORMATION s;
+	DWORD size;
+	BOOL ret;
+	int err;
+
+	size = sizeof(s);
+	s.PartitionType = PARTITION_EXTENDED;
+	ret = DeviceIoControl(h, IOCTL_DISK_SET_PARTITION_INFO, &s, sizeof(s), NULL, 0, &size, NULL);
+	err = GetLastError();
+
+	EXPECT_EQ(err, ERROR_SUCCESS);
+	EXPECT_NE(ret, 0);
+
+	CloseHandle(h);
+}
+
 TEST(win_drbd, get_length_info)
 {
 	HANDLE h = do_open_device();

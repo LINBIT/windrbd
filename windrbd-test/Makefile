@@ -2,8 +2,8 @@ OBJS=main.o drbd-device.o
 PROG=windrbd-test.exe
 CPPFLAGS=-Wall
 DRIVE ?= H:
-# SIZE ?= 52428800
-SIZE ?= 52387840
+SIZE ?= 52428800
+# SIZE ?= 52387840
 
 all: $(PROG)
 
