@@ -43,18 +43,6 @@ TODO: One day we want to have a more specific error message
 Done: DeviceControl (there are many more but those
 	are the ones called when the device is opened):
 
-Done: 0x70000: FILE_DEVICE_DISK: IOCTL_DISK_GET_DRIVE_GEOMETRY
-Done: 0x7405c: FILE_DEVICE_DISK: IOCTL_DISK_GET_LENGTH_INFO
-Done (but does nothing): 0x74804: FILE_DEVICE_DISK: IOCTL_DISK_MEDIA_REMOVAL
-Later (maybe never): 0x70024: FILE_DEVICE_DISK: IOCTL_DISK_PERFORMANCE
-Later (maybe never): 0x2d1400: FILE_DEVICE_MASS_STORAGE: IOCTL_STORAGE_QUERY_PROPERTY
-Later (maybe never)0x2d0c14: FILE_DEVICE_MASS_STORAGE: IOCTL_STORAGE_GET_HOTPLUG_INFO
-Later (maybe never)0x2d5190: FILE_DEVICE_MASS_STORAGE: ??
-
-TODO: 0x70004: IOCTL_DISK_GET_PARTITION_INFO
-TODO: 0x70048: FILE_DEVICE_DISK: IOCTL_DISK_GET_PARTITION_INFO_EX
-	for format H:
-
 	Done: implement I/O handler stubs
 		Stubs done, return STATUS_OK (or STATUS_NOT_IMPLEMENTED)
 
@@ -438,39 +426,6 @@ Done: Redesign of architecture.
 	We want an architecture that is more close to that one
 	of Linux where DRBD devices and backing devices are different
 	device objects, even for the Windows kernel.
-
-+ km/wdm.h:#define IRP_MJ_CREATE                   0x00
-km/wdm.h:#define IRP_MJ_CREATE_NAMED_PIPE        0x01
-+ km/wdm.h:#define IRP_MJ_CLOSE                    0x02
-+ km/wdm.h:#define IRP_MJ_READ                     0x03
-+ km/wdm.h:#define IRP_MJ_WRITE                    0x04
-km/wdm.h:#define IRP_MJ_QUERY_INFORMATION        0x05
-km/wdm.h:#define IRP_MJ_SET_INFORMATION          0x06
-km/wdm.h:#define IRP_MJ_QUERY_EA                 0x07
-km/wdm.h:#define IRP_MJ_SET_EA                   0x08
-+ km/wdm.h:#define IRP_MJ_FLUSH_BUFFERS            0x09
-km/wdm.h:#define IRP_MJ_QUERY_VOLUME_INFORMATION 0x0a
-km/wdm.h:#define IRP_MJ_SET_VOLUME_INFORMATION   0x0b
-km/wdm.h:#define IRP_MJ_DIRECTORY_CONTROL        0x0c
-km/wdm.h:#define IRP_MJ_FILE_SYSTEM_CONTROL      0x0d
-+ km/wdm.h:#define IRP_MJ_DEVICE_CONTROL           0x0e
-km/wdm.h:#define IRP_MJ_INTERNAL_DEVICE_CONTROL  0x0f
-x km/wdm.h:#define IRP_MJ_SHUTDOWN                 0x10
-km/wdm.h:#define IRP_MJ_LOCK_CONTROL             0x11
-+ km/wdm.h:#define IRP_MJ_CLEANUP                  0x12
-km/wdm.h:#define IRP_MJ_CREATE_MAILSLOT          0x13
-km/wdm.h:#define IRP_MJ_QUERY_SECURITY           0x14
-km/wdm.h:#define IRP_MJ_SET_SECURITY             0x15
-x km/wdm.h:#define IRP_MJ_POWER                    0x16
-x km/wdm.h:#define IRP_MJ_SYSTEM_CONTROL           0x17
-km/wdm.h:#define IRP_MJ_DEVICE_CHANGE            0x18
-km/wdm.h:#define IRP_MJ_QUERY_QUOTA              0x19
-km/wdm.h:#define IRP_MJ_SET_QUOTA                0x1a
-x km/wdm.h:#define IRP_MJ_PNP                      0x1b
-km/wdm.h:#define IRP_MJ_PNP_POWER                IRP_MJ_PNP      // Obsolete....
-km/wdm.h:#define IRP_MJ_MAXIMUM_FUNCTION         0x1b
-km/wdm.h:#define IRP_MJ_SCSI                     IRP_MJ_INTERNAL_DEVICE_CONTROL
-km/wdm.h:#define SL_PERSISTENT_MEMORY_FIXED_MAPPING  0x20    // valid only with persistent memory device and IRP_MJ_WRITE
 
 
 Done: Try to put I/O on DRBD device.

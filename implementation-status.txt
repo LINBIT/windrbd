@@ -1,0 +1,60 @@
+Major function codes:
+
+TODO (currently just returns STATUS_SUCCESS):  
+	km/wdm.h:#define IRP_MJ_CREATE                   0x00
+Not needed: km/wdm.h:#define IRP_MJ_CREATE_NAMED_PIPE        0x01
+TODO: km/wdm.h:#define IRP_MJ_CLOSE                    0x02
+Done: km/wdm.h:#define IRP_MJ_READ                     0x03
+Done: km/wdm.h:#define IRP_MJ_WRITE                    0x04
+Not needed: km/wdm.h:#define IRP_MJ_QUERY_INFORMATION        0x05
+Not needed: km/wdm.h:#define IRP_MJ_SET_INFORMATION          0x06
+Not needed: km/wdm.h:#define IRP_MJ_QUERY_EA                 0x07
+Not needed: km/wdm.h:#define IRP_MJ_SET_EA                   0x08
+TODO: km/wdm.h:#define IRP_MJ_FLUSH_BUFFERS            0x09
+Not needed: km/wdm.h:#define IRP_MJ_QUERY_VOLUME_INFORMATION 0x0a
+Not needed: km/wdm.h:#define IRP_MJ_SET_VOLUME_INFORMATION   0x0b
+Not needed: km/wdm.h:#define IRP_MJ_DIRECTORY_CONTROL        0x0c
+Not needed: km/wdm.h:#define IRP_MJ_FILE_SYSTEM_CONTROL      0x0d
+Done (but see below): km/wdm.h:#define IRP_MJ_DEVICE_CONTROL           0x0e
+Not needed: km/wdm.h:#define IRP_MJ_INTERNAL_DEVICE_CONTROL  0x0f
+TODO: km/wdm.h:#define IRP_MJ_SHUTDOWN                 0x10
+Not needed: km/wdm.h:#define IRP_MJ_LOCK_CONTROL             0x11
+TODO: km/wdm.h:#define IRP_MJ_CLEANUP                  0x12
+Not needed: km/wdm.h:#define IRP_MJ_CREATE_MAILSLOT          0x13
+Not needed: km/wdm.h:#define IRP_MJ_QUERY_SECURITY           0x14
+Not needed: km/wdm.h:#define IRP_MJ_SET_SECURITY             0x15
+Needed?: km/wdm.h:#define IRP_MJ_POWER                    0x16
+Needed?: km/wdm.h:#define IRP_MJ_SYSTEM_CONTROL           0x17
+Not needed: km/wdm.h:#define IRP_MJ_DEVICE_CHANGE            0x18
+Not needed: km/wdm.h:#define IRP_MJ_QUERY_QUOTA              0x19
+Not needed: km/wdm.h:#define IRP_MJ_SET_QUOTA                0x1a
+Needed?: km/wdm.h:#define IRP_MJ_PNP                      0x1b
+Not needed: km/wdm.h:#define IRP_MJ_PNP_POWER                IRP_MJ_PNP      // Obsolete....
+Not needed: km/wdm.h:#define IRP_MJ_MAXIMUM_FUNCTION         0x1b
+Not needed: km/wdm.h:#define IRP_MJ_SCSI                     IRP_MJ_INTERNAL_DEVICE_CONTROL
+Not needed: km/wdm.h:#define SL_PERSISTENT_MEMORY_FIXED_MAPPING  0x20    // valid only with persistent memory device and IRP_MJ_WRITE
+
+IoCtls:
+
+Done: 0x70000: FILE_DEVICE_DISK: IOCTL_DISK_GET_DRIVE_GEOMETRY
+Done: 0x7405c: FILE_DEVICE_DISK: IOCTL_DISK_GET_LENGTH_INFO
+Done (but does nothing): 0x74804: FILE_DEVICE_DISK: IOCTL_DISK_MEDIA_REMOVAL
+Done: 0x70004: IOCTL_DISK_GET_PARTITION_INFO
+Done: 0x70048: FILE_DEVICE_DISK: IOCTL_DISK_GET_PARTITION_INFO_EX
+	for format H: (implemented, format H: works now)
+
+Later (maybe never): 0x70024: FILE_DEVICE_DISK: IOCTL_DISK_PERFORMANCE
+Later (maybe never): 0x2d1400: FILE_DEVICE_MASS_STORAGE: IOCTL_STORAGE_QUERY_PROPERTY
+Later (maybe never)0x2d0c14: FILE_DEVICE_MASS_STORAGE: IOCTL_STORAGE_GET_HOTPLUG_INFO
+Later (maybe never)0x2d5190: FILE_DEVICE_MASS_STORAGE: ??
+
+0x2d1080
+0x2d9404
+0x45561088
+0x4d0008
+0x560038
+0x564052
+0x66001b
+0x700f8
+0x7c008
+
