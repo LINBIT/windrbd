@@ -1704,63 +1704,36 @@ printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", D
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-static LONGLONG windrbd_get_volsize(struct block_device *dev)
+static LONGLONG windrbd_get_volsize(const char *path)
 {
 	NTSTATUS status;
-	KEVENT event;
-	struct _IO_STATUS_BLOCK *ioStatus;
-	struct _IRP *newIrp;
-	struct _GET_LENGTH_INFORMATION *li;
-	struct _IO_STACK_LOCATION *s;
+	ANSI_STRING apath;
+	UNICODE_STRING device_name;
+	HANDLE h;
+	OBJECT_ATTRIBUTES attr;
+	IO_STATUS_BLOCK io_status;
+	struct _GET_LENGTH_INFORMATION li;
 
-	ioStatus = kmalloc(sizeof(*ioStatus), 0, 'DBRD');
-	if (ioStatus == NULL) {
-		WDRBD_ERROR("cannot kmalloc ioStatus\n");
-		return -1;
-	}
-	li = kmalloc(sizeof(*li), 0, 'DBRD');
-	if (li == NULL) {
-		WDRBD_ERROR("cannot kmalloc li\n");
-		return -1;
-	}
 
-	memset(li, 0, sizeof(*li));
+	RtlInitAnsiString(&apath, path);
+	status = RtlAnsiStringToUnicodeString(&device_name, &apath, TRUE);
 
-	if (KeGetCurrentIrql() > APC_LEVEL) {
-		WDRBD_ERROR("cannot run IoBuildDeviceIoControlRequest becauseof IRP(%d)\n", KeGetCurrentIrql());
+	InitializeObjectAttributes(&attr, &device_name, OBJ_KERNEL_HANDLE, NULL, NULL);
+
+	status = ZwCreateFile(&h, FILE_READ_DATA, &attr, &io_status, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_OPEN, 0, NULL, 0);
+	if (status != STATUS_SUCCESS) {
+		printk(KERN_WARNING "Couldn't open %s for getting volume size, status is %x.\n", path, status);
 		return -1;
 	}
 
-	KeInitializeEvent(&event, NotificationEvent, FALSE);
-	newIrp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_LENGTH_INFO,
-       		dev->windows_device, NULL, 0,
-		li, sizeof(*li),
-		FALSE, &event, ioStatus);
-
-	if (!newIrp) {
-		WDRBD_ERROR("cannot alloc new IRP\n");
-		return -1;
-	}	
-	s = IoGetNextIrpStackLocation(newIrp);
-
-	s->DeviceObject = dev->windows_device;
-	s->FileObject = dev->file_object;
-
-printk("Into IoCallDriver\n");
-	status = IoCallDriver(dev->windows_device, newIrp);
-printk("Out of IoCallDriver\n");
-	if (status == STATUS_PENDING) {
-printk("Pending..waiting for completion.\n");
-		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
-printk("completed.\n");
-		status = ioStatus->Status;
-	}
-	if (!NT_SUCCESS(status)) {
-	        WDRBD_ERROR("cannot get volume information, err=0x%x\n", status);
+	status = ZwDeviceIoControlFile(h, NULL, NULL, NULL, &io_status, IOCTL_DISK_GET_LENGTH_INFO, NULL, 0, &li, sizeof(li));
+	if (status != STATUS_SUCCESS) {
+		printk(KERN_WARNING "ZwDeviceIoControlFile failed on %s for getting volume size, status is %x.\n", path, status);
+		ZwClose(h);
 		return -1;
 	}
-
-	return li->Length.QuadPart;
+	ZwClose(h);
+	return li.Length.QuadPart;
 }
 
 static int win_generic_make_request(struct bio *bio)
@@ -2414,7 +2387,7 @@ void stop_mnt_monitor()
 	atomic_set(&g_monitor_mnt_working, FALSE);
 }
 
-/**
+/** TODO: should go away 
  * @return
  *	volume size per byte
  */
@@ -2747,7 +2720,8 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	block_device->bd_disk->queue->logical_block_size = 512;
 
 	block_device->file_object = file_object;
-	block_device->d_size = windrbd_get_volsize(block_device);
+	block_device->d_size = windrbd_get_volsize(path);
+	/* TODO: if < 0 */
 
 printk(KERN_DEBUG "block device size is %llu\n", block_device->d_size);
 printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
