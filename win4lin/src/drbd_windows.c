@@ -1719,7 +1719,7 @@ static LONGLONG windrbd_get_volsize(const char *path)
 
 	InitializeObjectAttributes(&attr, &device_name, OBJ_KERNEL_HANDLE, NULL, NULL);
 
-	status = ZwCreateFile(&h, FILE_READ_DATA, &attr, &io_status, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN, 0, NULL, 0);
+	status = ZwCreateFile(&h, FILE_READ_ATTRIBUTES, &attr, &io_status, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN, 0, NULL, 0);
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "Couldn't open %s for getting volume size, status is %x.\n", path, status);
 		return -1;
@@ -2753,7 +2753,8 @@ out_no_queue:
 out_no_disk:
 	kfree(block_device);
 out_no_block_device:
-	ObDereferenceObject(block_device->file_object);
+	ObDereferenceObject(file_object);
+
 	return ERR_PTR(err);
 }
 
