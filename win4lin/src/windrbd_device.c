@@ -51,6 +51,12 @@ static void fill_partition_info_ex(struct _PARTITION_INFORMATION_EX *p, struct b
 	p->Mbr.HiddenSectors = 0;
 }
 
+static void dump_partition_info(struct _PARTITION_INFORMATION *p, struct block_device *dev)
+{
+	printk(KERN_DEBUG "Partition Info Not Set.\n");
+	printk(KERN_DEBUG "p->StartingOffset.QuadPart: %lld p->PartitionLength.QuadPart: %lld p->HiddenSectors: %d p->PartitionNumber: %d p->PartitionType: %d p->BootIndicator: %d p->RecognizedPartition: %d p->RewritePartition: %d\n", p->StartingOffset.QuadPart, p->PartitionLength.QuadPart, p->HiddenSectors, p->PartitionNumber, p->PartitionType, p->BootIndicator, p->RecognizedPartition, p->RewritePartition);
+}
+
 static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
@@ -125,6 +131,16 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		struct _PARTITION_INFORMATION_EX *pe = irp->AssociatedIrp.SystemBuffer;
 		fill_partition_info_ex(pe, dev);
 		irp->IoStatus.Information = sizeof(struct _PARTITION_INFORMATION_EX);
+		break;
+
+	case IOCTL_DISK_SET_PARTITION_INFO:
+		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct _PARTITION_INFORMATION)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+		struct _PARTITION_INFORMATION *pi = irp->AssociatedIrp.SystemBuffer;
+		dump_partition_info(pi, dev);
+		irp->IoStatus.Information = 0;
 		break;
 
 	case IOCTL_DISK_IS_WRITABLE:

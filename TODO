@@ -10,7 +10,16 @@ TODO: allow user to pass name of symbolic link created
 TODO: lots of more tests (corner cases like reading near the
 	end of the device)
 
-TODO: make format H: work
+Done: make format H: work
+	TODO: Writing partition table should not fail.
+
+TODO: when there is NTFS on the backing device drbdadm up fails
+	(with internal meta data) because it cannot access meta
+	data.
+
+	Plus there is a blue screen when changing from internal
+	to external meta data. (This might be a windows internal
+	bug tough).
 
 TODO: have windrbd-test execute drbdadm as needed.
 
