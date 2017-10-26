@@ -108,7 +108,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		break;
 
 	case IOCTL_DISK_GET_PARTITION_INFO:
-		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct _PARTITION_INFORMATION)) {
+		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _PARTITION_INFORMATION)) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
@@ -118,7 +118,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		break;
 
 	case IOCTL_DISK_GET_PARTITION_INFO_EX:
-		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct _PARTITION_INFORMATION_EX)) {
+		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _PARTITION_INFORMATION_EX)) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}

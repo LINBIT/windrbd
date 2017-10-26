@@ -103,6 +103,28 @@ TEST(win_drbd, get_drive_geometry_ex)
 	CloseHandle(h);
 }
 
+TEST(win_drbd, get_partition_information_ex)
+{
+	HANDLE h = do_open_device();
+	struct _PARTITION_INFORMATION_EX pi;
+	DWORD size;
+	BOOL ret;
+	int err;
+
+	ret = DeviceIoControl(h, IOCTL_DISK_GET_PARTITION_INFO_EX, NULL, 0, &pi, sizeof(pi), &size, NULL);
+	err = GetLastError();
+
+	EXPECT_EQ(err, ERROR_SUCCESS);
+	EXPECT_NE(ret, 0);
+	EXPECT_EQ(size, sizeof(pi));
+	EXPECT_EQ(pi.PartitionStyle, PARTITION_STYLE_MBR);
+	EXPECT_EQ(pi.StartingOffset.QuadPart, 0);
+	EXPECT_EQ(pi.PartitionLength.QuadPart, p.expected_size);
+	EXPECT_EQ(pi.PartitionNumber, 1);
+
+	CloseHandle(h);
+}
+
 TEST(win_drbd, get_length_info)
 {
 	HANDLE h = do_open_device();
