@@ -1,9 +1,22 @@
 WinDRBD-next:
 
------------------------------------------------------------------------
-
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
+
+	Update: This should be userspace-only. It should
+	also be possible to mount the device upon an
+	empty NTFS folder.
+
+TODO: lots of more tests (corner cases like reading near the
+	end of the device)
+
+TODO: make format H: work
+
+TODO: have windrbd-test execute drbdadm as needed.
+
+TODO: test if loading drbd driver later (not at boot) works.
+
+-----------------------------------------------------------------------
 
 TODO: blkdev_put isn't called on drbdadm down
 
