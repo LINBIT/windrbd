@@ -1708,12 +1708,23 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 {
 	NTSTATUS status;
 	KEVENT event;
-	struct _IO_STATUS_BLOCK ioStatus;
+	struct _IO_STATUS_BLOCK *ioStatus;
 	struct _IRP *newIrp;
-	struct _GET_LENGTH_INFORMATION li;
+	struct _GET_LENGTH_INFORMATION *li;
 	struct _IO_STACK_LOCATION *s;
 
-	memset(&li, 0, sizeof(li));
+	ioStatus = kmalloc(sizeof(*ioStatus), 0, 'DBRD');
+	if (ioStatus == NULL) {
+		WDRBD_ERROR("cannot kmalloc ioStatus\n");
+		return -1;
+	}
+	li = kmalloc(sizeof(*li), 0, 'DBRD');
+	if (li == NULL) {
+		WDRBD_ERROR("cannot kmalloc li\n");
+		return -1;
+	}
+
+	memset(li, 0, sizeof(*li));
 
 	if (KeGetCurrentIrql() > APC_LEVEL) {
 		WDRBD_ERROR("cannot run IoBuildDeviceIoControlRequest becauseof IRP(%d)\n", KeGetCurrentIrql());
@@ -1723,27 +1734,33 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 	KeInitializeEvent(&event, NotificationEvent, FALSE);
 	newIrp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_LENGTH_INFO,
        		dev->windows_device, NULL, 0,
-		&li, sizeof(li),
-		FALSE, &event, &ioStatus);
+		li, sizeof(*li),
+		FALSE, &event, ioStatus);
 
 	if (!newIrp) {
 		WDRBD_ERROR("cannot alloc new IRP\n");
 		return -1;
 	}	
 	s = IoGetNextIrpStackLocation(newIrp);
+
+	s->DeviceObject = dev->windows_device;
 	s->FileObject = dev->file_object;
 
+printk("Into IoCallDriver\n");
 	status = IoCallDriver(dev->windows_device, newIrp);
+printk("Out of IoCallDriver\n");
 	if (status == STATUS_PENDING) {
+printk("Pending..waiting for completion.\n");
 		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
-		status = ioStatus.Status;
+printk("completed.\n");
+		status = ioStatus->Status;
 	}
 	if (!NT_SUCCESS(status)) {
 	        WDRBD_ERROR("cannot get volume information, err=0x%x\n", status);
 		return -1;
 	}
 
-	return li.Length.QuadPart;
+	return li->Length.QuadPart;
 }
 
 static int win_generic_make_request(struct bio *bio)
@@ -2395,24 +2412,6 @@ NTSTATUS start_mnt_monitor()
 void stop_mnt_monitor()
 {
 	atomic_set(&g_monitor_mnt_working, FALSE);
-}
-
-/** TODO: this will go away 
- * @return
- *	volume size per byte for windows disk device
- */
-LONGLONG get_volsize(struct _DEVICE_OBJECT *windows_device)
-{
-	LARGE_INTEGER	volumeSize;
-	NTSTATUS	status;
-
-	status = mvolGetVolumeSize(windows_device, &volumeSize);
-	if (!NT_SUCCESS(status))
-	{
-		WDRBD_WARN("get volume size error = 0x%x\n", status);
-		volumeSize.QuadPart = 0;
-	}
-	return volumeSize.QuadPart;
 }
 
 /**
@@ -3115,6 +3114,7 @@ NTSTATUS SaveCurrentValue(PCWSTR valueName, int value)
 	return status;
 }
 
+/* TODO: ??? */
 sector_t wdrbd_get_capacity(struct block_device *bdev)
 {
 	if (bdev == NULL) {
@@ -3124,7 +3124,7 @@ sector_t wdrbd_get_capacity(struct block_device *bdev)
 
 	if (bdev->d_size == 0) {
 			/* TODO: currently not implemted for DRBD devices */
-		bdev->d_size = 0; /* get_volsize(bdev->windows_device); */
+		bdev->d_size = 0;
 	}
 		/* TODO: sector size is not always 512 bytes */
 	return bdev->d_size >> 9;
