@@ -1,5 +1,8 @@
 WinDRBD-next:
 
+TODO: Fix sharing violation problem.
+
+----------------------------------------------------------------------
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
@@ -10,8 +13,8 @@ TODO: allow user to pass name of symbolic link created
 TODO: lots of more tests (corner cases like reading near the
 	end of the device)
 
-Done: make format H: work
-	TODO: Writing partition table should not fail.
+TODO: make drbdmeta be able to read near the end of an NTFS 
+	partition.
 
 TODO: when there is NTFS on the backing device drbdadm up fails
 	(with internal meta data) because it cannot access meta
@@ -20,6 +23,11 @@ TODO: when there is NTFS on the backing device drbdadm up fails
 	Plus there is a blue screen when changing from internal
 	to external meta data. (This might be a windows internal
 	bug tough).
+
+	Update: No it was something else..Irps don't work with
+	getting volsize of an NTFS partition, rewrote it to 
+	use ZwXXX() API, now we have problems with sharing
+	violations.
 
 TODO: have windrbd-test execute drbdadm as needed.
 
@@ -465,4 +473,8 @@ Done: Create patches for DRBD for recent changes.
 Done: README.md
 
 Done: Submit current sources.
+
+Done: make format H: work
+
+Done: Writing partition table should not fail.
 
