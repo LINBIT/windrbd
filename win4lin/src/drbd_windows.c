@@ -1714,7 +1714,6 @@ static LONGLONG windrbd_get_volsize(const char *path)
 	IO_STATUS_BLOCK io_status;
 	struct _GET_LENGTH_INFORMATION li;
 
-
 	RtlInitAnsiString(&apath, path);
 	status = RtlAnsiStringToUnicodeString(&device_name, &apath, TRUE);
 
@@ -1729,10 +1728,16 @@ static LONGLONG windrbd_get_volsize(const char *path)
 	status = ZwDeviceIoControlFile(h, NULL, NULL, NULL, &io_status, IOCTL_DISK_GET_LENGTH_INFO, NULL, 0, &li, sizeof(li));
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "ZwDeviceIoControlFile failed on %s for getting volume size, status is %x.\n", path, status);
-		ZwClose(h);
+		status = ZwClose(h);
+		if (status != STATUS_SUCCESS) {
+			printk(KERN_WARNING "ZwClose failed on %s (%p) for getting volume size, status is %x.\n", path, h, status);
+		}
 		return -1;
 	}
-	ZwClose(h);
+	status = ZwClose(h);
+	if (status != STATUS_SUCCESS) {
+		printk(KERN_WARNING "ZwClose failed on %s (%p) for getting volume size, status is %x.\n", path, h, status);
+	}
 	return li.Length.QuadPart;
 }
 
