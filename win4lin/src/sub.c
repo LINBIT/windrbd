@@ -448,53 +448,41 @@ mvolGetVolumeSize(PDEVICE_OBJECT TargetDeviceObject, PLARGE_INTEGER pVolumeSize)
     IO_STATUS_BLOCK				ioStatus;
     PIRP						newIrp;
     GET_LENGTH_INFORMATION      li;
-printk("1\n");
+
     memset(&li, 0, sizeof(li));
-printk("2\n");
 
     KeInitializeEvent(&event, NotificationEvent, FALSE);
 
-printk("3\n");
     if (KeGetCurrentIrql() > APC_LEVEL)
     {
-printk("4\n");
         WDRBD_ERROR("cannot run IoBuildDeviceIoControlRequest becauseof IRP(%d)\n", KeGetCurrentIrql());
     }
 
-printk("5\n");
     newIrp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_LENGTH_INFO,
         TargetDeviceObject, NULL, 0,
         &li, sizeof(li),
         FALSE, &event, &ioStatus);
-printk("6\n");
     if (!newIrp)
     {
-printk("7\n");
         WDRBD_ERROR("cannot alloc new IRP\n");
         return STATUS_INSUFFICIENT_RESOURCES;
     }
-printk("8\n");
 
     status = IoCallDriver(TargetDeviceObject, newIrp);
-printk("9\n");
     if (status == STATUS_PENDING)
     {
-printk("a\n");
         KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         status = ioStatus.Status;
     }
 
-printk("b\n");
     if (!NT_SUCCESS(status))
     {
         WDRBD_ERROR("cannot get volume information, err=0x%x\n", status);
         return status;
     }
 
-printk("c\n");
     pVolumeSize->QuadPart = li.Length.QuadPart;
 
-printk("d\n");
     return status;
 }
 

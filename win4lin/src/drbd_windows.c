@@ -2649,15 +2649,11 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	struct _DEVICE_OBJECT *windows_device;
 	struct _FILE_OBJECT *file_object;
 
-printk("1\n");
 	windows_device = find_windows_device(path, &file_object);
-printk("2\n");
 	if (windows_device == NULL)
 		return NULL;
 
-printk("3\n");
 	list_for_each_entry(struct block_device, block_device, &backing_devices, backing_devices_list) {
-printk("4\n");
 		if (block_device->windows_device == windows_device) {
 			printk(KERN_DEBUG "Block device for windows device %p already open, reusing it (block_device %p)\n", windows_device, block_device);
 				/* we got an extra reference in 
@@ -2667,62 +2663,46 @@ printk("4\n");
 			kref_get(&block_device->kref);
 			return block_device;
 		}
-printk("5\n");
 	}
-printk("6\n");
 
 	block_device = kmalloc(sizeof(struct block_device), 0, 'DBRD');
-printk("7\n");
 	if (block_device == NULL) {
 		WDRBD_ERROR("could not allocate block_device.\n");
 		goto out_no_block_device;
 	}
-printk("8\n");
 	block_device->windows_device = windows_device;
-printk("9\n");
 	if (block_device->windows_device == NULL) {
 		BUG();
 	}
-printk("a\n");
 	block_device->bd_disk = alloc_disk(0);
-printk("b\n");
 	if (!block_device->bd_disk)
 	{
 		WDRBD_ERROR("Failed to allocate gendisk NonPagedMemory\n");
 		goto out_no_disk;
 	}
-printk("c\n");
 
 	block_device->bd_disk->queue = blk_alloc_queue(0);
-printk("d\n");
 	if (!block_device->bd_disk->queue)
 	{
 		WDRBD_ERROR("Failed to allocate request_queue NonPagedMemory\n");
 		goto out_no_queue;
 	}
-printk("e\n");
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
-printk("f\n");
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
-printk("g\n");
 	if (!NT_SUCCESS(status)) {
 		WDRBD_ERROR("Failed to acquire remove lock, status is %s\n", status);
 		goto out_remove_lock_error;
 	}
-printk("h\n");
 
         kref_init(&block_device->kref);
  
-printk("i\n");
 	block_device->bd_contains = block_device;
 	block_device->bd_parent = NULL;
 
 		/* TODO: not always? */
 	block_device->bd_block_size = 512;
 	block_device->bd_disk->queue->logical_block_size = 512;
-printk("j\n");
 	block_device->d_size = get_volsize(block_device->windows_device);
-printk("k\n");
 
 	block_device->file_object = file_object;
 
