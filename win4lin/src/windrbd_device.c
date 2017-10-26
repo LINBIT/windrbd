@@ -26,6 +26,31 @@ static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *d
 	g->MediaType = FixedMedia;
 }
 
+static void fill_partition_info(struct _PARTITION_INFORMATION *p, struct block_device *dev)
+{
+	p->StartingOffset.QuadPart = 0;
+	p->PartitionLength.QuadPart = dev->d_size;
+	p->HiddenSectors = 0;
+	p->PartitionNumber = 1;
+	p->PartitionType = PARTITION_ENTRY_UNUSED;
+	p->BootIndicator = FALSE;
+	p->RecognizedPartition = TRUE;
+	p->RewritePartition = FALSE;
+}
+
+static void fill_partition_info_ex(struct _PARTITION_INFORMATION_EX *p, struct block_device *dev)
+{
+	p->PartitionStyle = PARTITION_STYLE_MBR;
+	p->StartingOffset.QuadPart = 0;
+	p->PartitionLength.QuadPart = dev->d_size;
+	p->PartitionNumber = 1;
+	p->RewritePartition = FALSE;
+	p->Mbr.PartitionType = PARTITION_ENTRY_UNUSED;
+	p->Mbr.BootIndicator = FALSE;
+	p->Mbr.RecognizedPartition = TRUE;
+	p->Mbr.HiddenSectors = 0;
+}
+
 static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
@@ -81,6 +106,28 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 
 		irp->IoStatus.Information = 0;
 		break;
+
+	case IOCTL_DISK_GET_PARTITION_INFO:
+		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct _PARTITION_INFORMATION)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+		struct _PARTITION_INFORMATION *p = irp->AssociatedIrp.SystemBuffer;
+		fill_partition_info(p, dev);
+		irp->IoStatus.Information = sizeof(struct _PARTITION_INFORMATION);
+		break;
+
+	case IOCTL_DISK_GET_PARTITION_INFO_EX:
+		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct _PARTITION_INFORMATION_EX)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+		struct _PARTITION_INFORMATION_EX *pe = irp->AssociatedIrp.SystemBuffer;
+		fill_partition_info_ex(pe, dev);
+		irp->IoStatus.Information = sizeof(struct _PARTITION_INFORMATION_EX);
+		break;
+
+	case IOCTL_DISK_IS_WRITABLE:
 
 	default: 
 		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
