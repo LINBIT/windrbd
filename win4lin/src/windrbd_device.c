@@ -45,7 +45,7 @@ static void fill_partition_info_ex(struct _PARTITION_INFORMATION_EX *p, struct b
 	p->PartitionLength.QuadPart = dev->d_size;
 	p->PartitionNumber = 1;
 	p->RewritePartition = FALSE;
-	p->Mbr.PartitionType = PARTITION_ENTRY_UNUSED;
+	p->Mbr.PartitionType = PARTITION_EXTENDED;
 	p->Mbr.BootIndicator = FALSE;
 	p->Mbr.RecognizedPartition = TRUE;
 	p->Mbr.HiddenSectors = 0;
@@ -128,6 +128,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		break;
 
 	case IOCTL_DISK_IS_WRITABLE:
+		break;	/* just return without error */
 
 	default: 
 		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
@@ -137,6 +138,16 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return status;
+}
+
+static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+
+	printk(KERN_DEBUG "DRBD device create request NOT DONE: MajorFunction: 0x%x\n", s->MajorFunction);
+	irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+	return STATUS_SUCCESS;
 }
 
 static void windrbd_bio_finished(struct bio * bio, blk_status_t error)
@@ -234,5 +245,5 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	obj->MajorFunction[IRP_MJ_DEVICE_CONTROL] = windrbd_device_control;
 	obj->MajorFunction[IRP_MJ_READ] = windrbd_io;
 	obj->MajorFunction[IRP_MJ_WRITE] = windrbd_io;
-
+	obj->MajorFunction[IRP_MJ_CREATE] = windrbd_create;
 }
