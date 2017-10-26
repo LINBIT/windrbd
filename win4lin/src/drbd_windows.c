@@ -2664,10 +2664,11 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	NTSTATUS status;
 	struct _DEVICE_OBJECT *windows_device;
 	struct _FILE_OBJECT *file_object;
+	int err = 0;
 
 	windows_device = find_windows_device(path, &file_object);
 	if (windows_device == NULL)
-		return NULL;
+		return ERR_PTR(-ENOENT);
 
 	list_for_each_entry(struct block_device, block_device, &backing_devices, backing_devices_list) {
 		if (block_device->windows_device == windows_device) {
@@ -2684,6 +2685,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	block_device = kmalloc(sizeof(struct block_device), 0, 'DBRD');
 	if (block_device == NULL) {
 		WDRBD_ERROR("could not allocate block_device.\n");
+		err = -ENOMEM;
 		goto out_no_block_device;
 	}
 	block_device->windows_device = windows_device;
@@ -2694,6 +2696,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	if (!block_device->bd_disk)
 	{
 		WDRBD_ERROR("Failed to allocate gendisk NonPagedMemory\n");
+		err = -ENOMEM;
 		goto out_no_disk;
 	}
 
@@ -2701,12 +2704,14 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	if (!block_device->bd_disk->queue)
 	{
 		WDRBD_ERROR("Failed to allocate request_queue NonPagedMemory\n");
+		err = -ENOMEM;
 		goto out_no_queue;
 	}
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_ERROR("Failed to acquire remove lock, status is %s\n", status);
+		err = -EBUSY;
 		goto out_remove_lock_error;
 	}
 
@@ -2721,7 +2726,11 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	block_device->file_object = file_object;
 	block_device->d_size = windrbd_get_volsize(path);
-	/* TODO: if < 0 */
+	if (block_device->d_size == -1) {
+		printk(KERN_ERR "Cannot get volsize.\n");
+		err = -EINVAL;
+		goto out_get_volsize_error;
+	}
 
 printk(KERN_DEBUG "block device size is %llu\n", block_device->d_size);
 printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
@@ -2730,6 +2739,8 @@ printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_
 
 	return block_device;
 
+out_get_volsize_error:
+	IoReleaseRemoveLock(&block_device->remove_lock, NULL);
 out_remove_lock_error:
 	blk_cleanup_queue(block_device->bd_disk->queue);
 out_no_queue:
@@ -2738,7 +2749,7 @@ out_no_disk:
 	kfree(block_device);
 out_no_block_device:
 	ObDereferenceObject(block_device->file_object);
-	return NULL;
+	return ERR_PTR(err);
 }
 
 int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait)
