@@ -1719,7 +1719,7 @@ static LONGLONG windrbd_get_volsize(const char *path)
 
 	InitializeObjectAttributes(&attr, &device_name, OBJ_KERNEL_HANDLE, NULL, NULL);
 
-	status = ZwCreateFile(&h, FILE_READ_ATTRIBUTES, &attr, &io_status, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN, 0, NULL, 0);
+	status = ZwCreateFile(&h, FILE_READ_ATTRIBUTES, &attr, &io_status, NULL, FILE_ATTRIBUTE_NORMAL, /* FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE */ 0, FILE_OPEN, 0, NULL, 0);
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "Couldn't open %s for getting volume size, status is %x.\n", path, status);
 		return -1;
