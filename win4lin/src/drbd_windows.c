@@ -569,6 +569,11 @@ int kref_put(struct kref *kref, void (*release)(struct kref *kref))
 	WARN_ON(release == NULL);
 	WARN_ON(release == (void (*)(struct kref *))kfree);
 
+printk("1\n");
+if (release == drbd_destroy_device) {
+printk("kref put drbd_destroy_device %p\n", kref);
+}
+
 	if (atomic_dec_and_test(&kref->refcount))
 	{
 		release(kref);
