@@ -1703,7 +1703,7 @@ printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", D
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
-
+#if 0
 static LONGLONG windrbd_get_volsize(const char *path)
 {
 	NTSTATUS status;
@@ -1740,6 +1740,67 @@ static LONGLONG windrbd_get_volsize(const char *path)
 	}
 	return li.Length.QuadPart;
 }
+#endif
+
+static LONGLONG windrbd_get_volsize(struct block_device *dev)
+{
+	NTSTATUS status;
+	KEVENT event;
+	struct _IO_STATUS_BLOCK *ioStatus;
+	struct _IRP *newIrp;
+	struct _GET_LENGTH_INFORMATION *li;
+	struct _IO_STACK_LOCATION *s;
+
+	ioStatus = kmalloc(sizeof(*ioStatus), 0, 'DBRD');
+	if (ioStatus == NULL) {
+		WDRBD_ERROR("cannot kmalloc ioStatus\n");
+		return -1;
+	}
+	li = kmalloc(sizeof(*li), 0, 'DBRD');
+	if (li == NULL) {
+		WDRBD_ERROR("cannot kmalloc li\n");
+		return -1;
+	}
+
+	memset(li, 0, sizeof(*li));
+
+	if (KeGetCurrentIrql() > APC_LEVEL) {
+		WDRBD_ERROR("cannot run IoBuildDeviceIoControlRequest becauseof IRP(%d)\n", KeGetCurrentIrql());
+		return -1;
+	}
+
+	KeInitializeEvent(&event, NotificationEvent, FALSE);
+	newIrp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_LENGTH_INFO,
+       		dev->windows_device, NULL, 0,
+		li, sizeof(*li),
+		FALSE, &event, ioStatus);
+
+	if (!newIrp) {
+		WDRBD_ERROR("cannot alloc new IRP\n");
+		return -1;
+	}	
+	s = IoGetNextIrpStackLocation(newIrp);
+
+	s->DeviceObject = dev->windows_device;
+	s->FileObject = dev->file_object;
+
+printk("Into IoCallDriver\n");
+	status = IoCallDriver(dev->windows_device, newIrp);
+printk("Out of IoCallDriver\n");
+	if (status == STATUS_PENDING) {
+printk("Pending..waiting for completion.\n");
+		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+printk("completed.\n");
+		status = ioStatus->Status;
+	}
+	if (!NT_SUCCESS(status)) {
+	        WDRBD_ERROR("cannot get volume information, err=0x%x\n", status);
+		return -1;
+	}
+
+	return li->Length.QuadPart;
+}
+
 
 static int win_generic_make_request(struct bio *bio)
 {
@@ -2730,7 +2791,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	block_device->bd_disk->queue->logical_block_size = 512;
 
 	block_device->file_object = file_object;
-	block_device->d_size = windrbd_get_volsize(path);
+	block_device->d_size = windrbd_get_volsize(block_device);
 	if (block_device->d_size == -1) {
 		printk(KERN_ERR "Cannot get volsize.\n");
 		err = -EINVAL;
