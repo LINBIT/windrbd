@@ -1,6 +1,6 @@
 WinDRBD-next:
 
-TODO: Fix sharing violation problem.
+Done: Fix sharing violation problem.
 	Currently find_windows_device fails (as it should) calling
 	IoGetDeviceObjectPointer() (before it can check the list
 	of already open backing devices, these are currently indexed
@@ -11,6 +11,11 @@ TODO: Fix sharing violation problem.
 	Update: drbd_destroy isn't called because the rcu mechanism
 	is not implemented (or not implemented correctly) in windrbd.
 	Do that after 0.2
+
+	Update: sharing violation now fixed, however now there is
+	an IO ERROR: neither local nor remote data which is new.
+
+TODO: Fix IO ERROR
 
 TODO: where did the volsize blue screen disappear.
 	When using IRPs on an NTFS formatted partition, we had
