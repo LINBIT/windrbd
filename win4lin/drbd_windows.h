@@ -607,6 +607,7 @@ struct block_device {
 	struct drbd_device* drbd_device;
 	struct _DEVICE_OBJECT *windows_device;	/* If that is a backing dev, the target device to send the I/O IRPs to. If this is a DRBD device, the device created by bdget()) */
 	struct _FILE_OBJECT *file_object; /* As returned by IoGetDeviceObjectPointer() */
+	UNICODE_STRING path_to_device;
 
 	IO_REMOVE_LOCK remove_lock;
 

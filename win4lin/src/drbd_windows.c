@@ -569,11 +569,6 @@ int kref_put(struct kref *kref, void (*release)(struct kref *kref))
 	WARN_ON(release == NULL);
 	WARN_ON(release == (void (*)(struct kref *))kfree);
 
-printk("1\n");
-if (release == drbd_destroy_device) {
-printk("kref put drbd_destroy_device %p\n", kref);
-}
-
 	if (atomic_dec_and_test(&kref->refcount))
 	{
 		release(kref);
@@ -2499,8 +2494,9 @@ printk(KERN_INFO "delete_block_device %p\n", bdev);
 		put_disk(bdev->bd_disk);
 	}
 	ObDereferenceObject(bdev->file_object);
-	list_del(&bdev->backing_devices_list);
+	kfree(bdev->path_to_device.Buffer);
 
+	list_del(&bdev->backing_devices_list);
 	kfree2(bdev);
 }
 
@@ -2688,42 +2684,52 @@ out_close_handle:
 	return status;
 }
 
-static struct _DEVICE_OBJECT *find_windows_device(const char *path, struct _FILE_OBJECT ** file_object)
+
+int resolve_ascii_path(const char *path, UNICODE_STRING *path_to_device)
 {
-	struct _DEVICE_OBJECT *windows_device;
-	PFILE_OBJECT FileObject;
 	ANSI_STRING apath;
 	UNICODE_STRING link_name;
-	UNICODE_STRING device_name;
-	WCHAR link_target_buffer[1024];
-	
 	NTSTATUS status;
 
 	RtlInitAnsiString(&apath, path);
 	status = RtlAnsiStringToUnicodeString(&link_name, &apath, TRUE);
 
-	device_name.Buffer = link_target_buffer;
-	device_name.MaximumLength = sizeof(link_target_buffer)-1;
-	device_name.Length = 0;
-
-	WDRBD_TRACE("Link is %S\n", link_name.Buffer);
-	if (resolve_nt_kernel_link(&link_name, &device_name) != STATUS_SUCCESS) {
-		WDRBD_ERROR("Could not resolve link.\n");
-		return NULL;
+	path_to_device->Buffer = kmalloc(sizeof(WCHAR) * 1024, 0, 'BDRX');
+	if (path_to_device->Buffer == NULL) {
+		printk(KERN_ERR "Cannot allocate device name.\n");
+		return -ENOMEM;
 	}
 
-	status = IoGetDeviceObjectPointer(&device_name, FILE_ALL_ACCESS, &FileObject, &windows_device);
+	path_to_device->MaximumLength = 1024-1;
+	path_to_device->Length = 0;
+
+	WDRBD_TRACE("Link is %S\n", link_name.Buffer);
+	if (resolve_nt_kernel_link(&link_name, path_to_device) != STATUS_SUCCESS) {
+		WDRBD_ERROR("Could not resolve link.\n");
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static struct _DEVICE_OBJECT *find_windows_device(UNICODE_STRING *path, struct _FILE_OBJECT ** file_object)
+{
+	struct _DEVICE_OBJECT *windows_device;
+	PFILE_OBJECT FileObject;
+	NTSTATUS status;
+
+	status = IoGetDeviceObjectPointer(path, FILE_ALL_ACCESS, &FileObject, &windows_device);
 
 	if (!NT_SUCCESS(status))
 	{
 		printk(KERN_ERR "Cannot get device object for %s status: %x, does it exist?\n", path, status);
 		return NULL;
 	}
-	WDRBD_TRACE("IoGetDeviceObjectPointer %S succeeded, targetdev is %p\n", device_name.Buffer, windows_device);
+	WDRBD_TRACE("IoGetDeviceObjectPointer %S succeeded, targetdev is %p\n", path->Buffer, windows_device);
 
 	*file_object = FileObject;
 	return windows_device;
 }
+
 
 /* This creates a new block device associated with the windows
    device pointed to by path.
@@ -2736,21 +2742,29 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	struct _DEVICE_OBJECT *windows_device;
 	struct _FILE_OBJECT *file_object;
 	int err = 0;
+	UNICODE_STRING path_to_device;
 
-	windows_device = find_windows_device(path, &file_object);
-	if (windows_device == NULL)
-		return ERR_PTR(-ENOENT);
+	err = resolve_ascii_path(path, &path_to_device);
+	if (err < 0)
+		return ERR_PTR(err);
 
 	list_for_each_entry(struct block_device, block_device, &backing_devices, backing_devices_list) {
-		if (block_device->windows_device == windows_device) {
-			printk(KERN_DEBUG "Block device for windows device %p already open, reusing it (block_device %p)\n", windows_device, block_device);
+		if (RtlEqualUnicodeString(&block_device->path_to_device, &path_to_device, TRUE)) {
+			printk(KERN_DEBUG "Block device for windows device %S already open, reusing it (block_device %p)\n", path_to_device.Buffer, block_device);
+
+			kfree(path_to_device.Buffer);
 				/* we got an extra reference in 
 				 * find_windows_device()
 				 */
-			ObDereferenceObject(file_object);
 			kref_get(&block_device->kref);
 			return block_device;
 		}
+	}
+
+	windows_device = find_windows_device(&path_to_device, &file_object);
+	if (windows_device == NULL) {
+		err = -ENOENT;
+		goto out_no_windows_device;
 	}
 
 	block_device = kmalloc(sizeof(struct block_device), 0, 'DBRD');
@@ -2760,9 +2774,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_no_block_device;
 	}
 	block_device->windows_device = windows_device;
-	if (block_device->windows_device == NULL) {
-		BUG();
-	}
 	block_device->bd_disk = alloc_disk(0);
 	if (!block_device->bd_disk)
 	{
@@ -2802,6 +2813,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		err = -EINVAL;
 		goto out_get_volsize_error;
 	}
+	block_device->path_to_device = path_to_device;
 
 printk(KERN_DEBUG "block device size is %llu\n", block_device->d_size);
 printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
@@ -2820,6 +2832,8 @@ out_no_disk:
 	kfree(block_device);
 out_no_block_device:
 	ObDereferenceObject(file_object);
+out_no_windows_device:
+	kfree(path_to_device.Buffer);
 
 	return ERR_PTR(err);
 }
