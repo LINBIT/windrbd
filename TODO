@@ -16,6 +16,11 @@ Done: Fix sharing violation problem.
 	an IO ERROR: neither local nor remote data which is new.
 
 TODO: Fix IO ERROR
+	It seems to come from an 0xc0000022 (access denied) error
+	from the lower level device.
+
+	Update: Error was not propagated to user space, this should be
+	fixed now.
 
 TODO: where did the volsize blue screen disappear.
 	When using IRPs on an NTFS formatted partition, we had
