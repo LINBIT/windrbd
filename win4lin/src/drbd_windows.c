@@ -632,8 +632,11 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 void bio_put(struct bio *bio)
 {
     int cnt;
+printk(KERN_INFO "bio: %p\n", bio);
     cnt = atomic_dec(&bio->bi_cnt);
+printk(KERN_INFO "1\n");
     if (cnt == 0) {
+printk(KERN_INFO "into bio_free %p\n", bio);
 	bio_free(bio);
     }
 }
@@ -1897,12 +1900,18 @@ static int win_generic_make_request(struct bio *bio)
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
+printk(KERN_INFO "into IoCallDriver bio: %p\n", bio);
 	status = IoCallDriver(bio->bi_bdev->windows_device, newIrp);
+printk(KERN_INFO "out of IoCallDriver bio: %p\n", bio);
 		/* either STATUS_SUCCESS or STATUS_PENDING */
+		/* Update: may also return STATUS_ACCESS_DENIED */
 
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
-		printk("IoCallDriver status %x, I/O on backing device failed.\n", status);
-		goto out_calldriver_failed;
+		printk("IoCallDriver status %x, I/O on backing device failed, bio: %p\n", status, bio);
+		return EIO; /* positive value indicating that irp is already
+			     * completed and bio is already freed (bio_endio
+			     * must not be called).
+			     */
 	}
 
 	return 0;
@@ -1916,7 +1925,6 @@ out_free_irp:
 	newIrp->MdlAddress = NULL;
 	IoFreeIrp(newIrp);
 
-out_calldriver_failed:
 /* TODO: use after free..is it done by driver? */
 //	ObDereferenceObject(newIrp->Tail.Overlay.Thread);
 
@@ -1932,21 +1940,29 @@ int generic_make_request(struct bio *bio)
 {
 	int ret = win_generic_make_request(bio);
 
-	if (ret != 0)
+	if (ret < 0) {
+printk("1\n");
 		drbd_bio_endio(bio, BLK_STS_IOERR);
+	}
 
 	return ret;
 }
 
 void bio_endio(struct bio *bio, int error)
 {
+printk("bio: %p error: %d\n", bio, error);
+printk("1\n");
 	if (bio->bi_end_io != NULL) {
+printk("2\n");
 		if (error != 0)
 			WDRBD_INFO("thread(%s) bio_endio error with err=%d.\n", current->comm, error);
 
+printk("3\n");
 		bio->bi_end_io(bio, error);
+printk("4\n");
 	} else
 		WDRBD_WARN("thread(%s) bio(%p) no bi_end_io function.\n", current->comm, bio);
+printk("5\n");
 }
 
 void __list_del_entry(struct list_head *entry)
