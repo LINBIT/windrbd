@@ -166,9 +166,15 @@ static void windrbd_bio_finished(struct bio * bio, blk_status_t error)
 
 	if (error == 0) {
 		irp->IoStatus.Information = bio->bi_size;
+		irp->IoStatus.Status = STATUS_SUCCESS;
+	} else {
+		printk(KERN_ERR "I/O failed with %d\n", error);
+		irp->IoStatus.Information = 0;  /* TODO: ?? */
+		irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
 	}
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 
+/* TODO: ?? we need this */
 //	bio_free(bio);
 }
 
