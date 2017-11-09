@@ -1672,7 +1672,7 @@ IO_COMPLETION_ROUTINE DrbdIoCompletion;
 
 static inline blk_status_t win_status_to_blk_status(NTSTATUS status)
 {
-	return status == STATUS_SUCCESS ? 0 : BLK_STS_IOERR; 
+	return (status == STATUS_SUCCESS) ? 0 : BLK_STS_IOERR; 
 }
 
 NTSTATUS DrbdIoCompletion(
@@ -1917,7 +1917,8 @@ out_free_irp:
 	IoFreeIrp(newIrp);
 
 out_calldriver_failed:
-	ObDereferenceObject(newIrp->Tail.Overlay.Thread);
+/* TODO: use after free..is it done by driver? */
+//	ObDereferenceObject(newIrp->Tail.Overlay.Thread);
 
 	return -EIO;
 }
