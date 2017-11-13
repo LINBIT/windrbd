@@ -190,6 +190,15 @@ TEST(win_drbd, do_write_read)
 	char buf[512], buf2[512];
 	unsigned int i;
 	DWORD p;
+        char c;
+
+        fprintf(stderr, "This test will *DESTROY* the first sectors of the underlying backing device.\n");
+        fprintf(stderr, "Please type y<enter> if you wish to do this.\n");
+        c = getchar();
+        if (c != 'y') {
+                fprintf(stderr, "Write test not done.\n");
+                return;
+        }
 
 	for (i=0;i<sizeof(buf);i++)
 		buf[i] = i;

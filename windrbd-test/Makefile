@@ -17,5 +17,8 @@ test: all
 install: all
 	cp $(PROG) /usr/local/bin
 
+clean:
+	rm -f $(PROG) $(OBJS)
+
 main.o: main.cpp drbd-device.hpp
 drbd-device.o: drbd-device.cpp drbd-device.hpp
