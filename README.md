@@ -76,7 +76,13 @@ is drive letters and GUID's are used. Examples:
 We recommend not to assign drive letters to backing devices, since 
 that easily may confuse the user.
 
-Version 0.1 only: The drive letter for the DRBD device (the one 
+New with version 0.2: The backing device is shifted by one sector,
+so that Microsoft Windows does not recognize the underlying block
+device as NTFS formatted (it would place some restrictions of how
+to use this backing device, then). Backing devices are just RAW
+devices to Windows from now on.
+
+Version 0.1 and 0.2 only: The drive letter for the DRBD device (the one 
 you will be working with) is derived from the DRBD minor, where
 C => minor 0, D => minor 1 and so on. So when specifying
 
@@ -104,4 +110,5 @@ Version history
 ===============
 
 0.1 (Oct 25, 2017): Basic I/O works with separate DRBD device.
-0.2 (Oct 26, 2017): Creating filesystems works.
+0.2 (Nov 13, 2017): Creation and basic usage of NT filesystem on DRBD 
+		    device works.

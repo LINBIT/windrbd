@@ -1,39 +1,5 @@
 WinDRBD-next:
 
-Done: Fix sharing violation problem.
-	Currently find_windows_device fails (as it should) calling
-	IoGetDeviceObjectPointer() (before it can check the list
-	of already open backing devices, these are currently indexed
-	by exactly that pointer) because close_backing_dev is currently
-	not called on detach. The reason is probably that schedule_work()
-	mechanism is implemented wrong in windrbd.
-
-	Update: drbd_destroy isn't called because the rcu mechanism
-	is not implemented (or not implemented correctly) in windrbd.
-	Do that after 0.2
-
-	Update: sharing violation now fixed, however now there is
-	an IO ERROR: neither local nor remote data which is new.
-
-TODO: Fix IO ERROR
-	It seems to come from an 0xc0000022 (access denied) error
-	from the lower level device.
-
-	Update: Error was not propagated to user space, this should be
-	fixed now.
-
-	Update: error c0000011 on accessing meta data (end of file
-	error) when meta data is internal.
-
-TODO: where did the volsize blue screen disappear.
-	When using IRPs on an NTFS formatted partition, we had
-	blue screens which do not happen any more. This is strange.
-
-	Update: Also does not blue screen when meta data is internal,
-	however apply-al does not work (error c0000011 (end of file)
-	when reading meta data).
-
-----------------------------------------------------------------------
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
@@ -41,24 +7,27 @@ TODO: allow user to pass name of symbolic link created
 	also be possible to mount the device upon an
 	empty NTFS folder.
 
+	At this point also clean up drbd-utils (separate
+	files for UNIX and Windows) and integrate upstream
+	changes.
+
+TODO: implement open and close methods.
+
+----------------------------------------------------------------------
+
+TODO: Port agruen's test suite to cygwin.
+
+TODO: Make drbd run on peer Linux box
+
+TODO: How is sync done? 
+	Data appears delayed on backing device (about 10 - 20 
+	seconds later).
+
 TODO: lots of more tests (corner cases like reading near the
 	end of the device)
 
 TODO: make drbdmeta be able to read near the end of an NTFS 
 	partition.
-
-TODO: when there is NTFS on the backing device drbdadm up fails
-	(with internal meta data) because it cannot access meta
-	data.
-
-	Plus there is a blue screen when changing from internal
-	to external meta data. (This might be a windows internal
-	bug tough).
-
-	Update: No it was something else..Irps don't work with
-	getting volsize of an NTFS partition, rewrote it to 
-	use ZwXXX() API, now we have problems with sharing
-	violations.
 
 TODO: have windrbd-test execute drbdadm as needed.
 
@@ -77,6 +46,8 @@ TODO: blkdev_put isn't called on drbdadm down
 	ask phil if that is ok (it should make the device invisible, which
 	is what it does).
 
+	Update: this is something with RCUs
+
 TODO: Check if it is a network share (currently blue screens)
 	Update: blue screen was something else. Should check if the
 	drive letter is a network share. Unfortunately they do not
@@ -88,17 +59,13 @@ TODO: One day we want to have a more specific error message
 	than Device does not have a disk config if the device or
 	the drive letter already exist.
 
-Done: DeviceControl (there are many more but those
-	are the ones called when the device is opened):
-
-	Done: implement I/O handler stubs
-		Stubs done, return STATUS_OK (or STATUS_NOT_IMPLEMENTED)
-
-
 ---------------
 
 TODO: We should really lock the backing devices using NT kernel
 	mechanisms.
+
+	Maybe use the mechanically locked IOCTL? Then one would
+	have to drbdadm down <res> --force
 
 TODO: Implement function stubs created when integrating DRBD 9.0.9
 
@@ -124,10 +91,6 @@ TODO: Make drbd service stoppable
 TODO: Have sshd on Windows and work remotely
 	Would be convenient, however setup is a little bit
 	complicated ...
-
-TODO: Make drbd run on peer Linux box
-
-Maybe Later: Port agruen's test suite to cygwin.
 
 TODO: fix the macro redefinition problems in drbd_windows.c
 	For now we have to copy the function prototypes from MSDN.
@@ -508,4 +471,68 @@ Done: Submit current sources.
 Done: make format H: work
 
 Done: Writing partition table should not fail.
+
+Done: Fix sharing violation problem.
+	Currently find_windows_device fails (as it should) calling
+	IoGetDeviceObjectPointer() (before it can check the list
+	of already open backing devices, these are currently indexed
+	by exactly that pointer) because close_backing_dev is currently
+	not called on detach. The reason is probably that schedule_work()
+	mechanism is implemented wrong in windrbd.
+
+	Update: drbd_destroy isn't called because the rcu mechanism
+	is not implemented (or not implemented correctly) in windrbd.
+	Do that after 0.2
+
+	Update: sharing violation now fixed, however now there is
+	an IO ERROR: neither local nor remote data which is new.
+
+	Update: We now shift the backing device by one sector so
+	that Windows NT does not recognize the backing device as
+	NTFS (or whatever) formatted. This solution works quite
+	well for us and also prevents Windows NT from replaying
+	journal before the DRBD device is brought up.
+
+Done: Fix IO ERROR
+	It seems to come from an 0xc0000022 (access denied) error
+	from the lower level device.
+
+	Update: Error was not propagated to user space, this should be
+	fixed now.
+
+	Update: error c0000011 on accessing meta data (end of file
+	error) when meta data is internal.
+
+	Sectors are now shifted, see sharing violation problem.
+
+Done: where did the volsize blue screen disappear.
+	When using IRPs on an NTFS formatted partition, we had
+	blue screens which do not happen any more. This is strange.
+
+	Update: Also does not blue screen when meta data is internal,
+	however apply-al does not work (error c0000011 (end of file)
+	when reading meta data).
+
+	Sectors are now shifted, see sharing violation problem.
+
+Done: when there is NTFS on the backing device drbdadm up fails
+	(with internal meta data) because it cannot access meta
+	data.
+
+	Plus there is a blue screen when changing from internal
+	to external meta data. (This might be a windows internal
+	bug tough).
+
+	Update: No it was something else..Irps don't work with
+	getting volsize of an NTFS partition, rewrote it to 
+	use ZwXXX() API, now we have problems with sharing
+	violations.
+
+	Sectors are now shifted, see sharing violation problem.
+
+Done: DeviceControl (there are many more but those
+	are the ones called when the device is opened):
+
+Done: implement I/O handler stubs
+	Stubs done, return STATUS_OK (or STATUS_NOT_IMPLEMENTED)
 
