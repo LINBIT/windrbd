@@ -632,11 +632,8 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 void bio_put(struct bio *bio)
 {
     int cnt;
-printk(KERN_INFO "bio: %p\n", bio);
     cnt = atomic_dec(&bio->bi_cnt);
-printk(KERN_INFO "1\n");
     if (cnt == 0) {
-printk(KERN_INFO "into bio_free %p\n", bio);
 	bio_free(bio);
     }
 }
@@ -1787,13 +1784,9 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 	s->DeviceObject = dev->windows_device;
 	s->FileObject = dev->file_object;
 
-printk("Into IoCallDriver\n");
 	status = IoCallDriver(dev->windows_device, newIrp);
-printk("Out of IoCallDriver\n");
 	if (status == STATUS_PENDING) {
-printk("Pending..waiting for completion.\n");
 		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
-printk("completed.\n");
 		status = ioStatus->Status;
 	}
 	if (!NT_SUCCESS(status)) {
@@ -1900,9 +1893,7 @@ static int win_generic_make_request(struct bio *bio)
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
-printk(KERN_INFO "into IoCallDriver bio: %p\n", bio);
 	status = IoCallDriver(bio->bi_bdev->windows_device, newIrp);
-printk(KERN_INFO "out of IoCallDriver bio: %p\n", bio);
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
 
@@ -1941,7 +1932,6 @@ int generic_make_request(struct bio *bio)
 	int ret = win_generic_make_request(bio);
 
 	if (ret < 0) {
-printk("1\n");
 		drbd_bio_endio(bio, BLK_STS_IOERR);
 	}
 
@@ -1950,19 +1940,13 @@ printk("1\n");
 
 void bio_endio(struct bio *bio, int error)
 {
-printk("bio: %p error: %d\n", bio, error);
-printk("1\n");
 	if (bio->bi_end_io != NULL) {
-printk("2\n");
 		if (error != 0)
 			WDRBD_INFO("thread(%s) bio_endio error with err=%d.\n", current->comm, error);
 
-printk("3\n");
 		bio->bi_end_io(bio, error);
-printk("4\n");
 	} else
 		WDRBD_WARN("thread(%s) bio(%p) no bi_end_io function.\n", current->comm, bio);
-printk("5\n");
 }
 
 void __list_del_entry(struct list_head *entry)
@@ -2832,8 +2816,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	}
 	block_device->path_to_device = path_to_device;
 
-printk(KERN_DEBUG "block device size is %llu\n", block_device->d_size);
-printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
+	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
 

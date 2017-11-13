@@ -164,8 +164,6 @@ static void windrbd_bio_finished(struct bio * bio, blk_status_t error)
 {
 	PIRP irp = bio->pMasterIrp;
 
-printk(KERN_INFO "upper bio finished bio %p irp %p error %d\n", bio, irp, error);
-
 	if (error == 0) {
 		irp->IoStatus.Information = bio->bi_size;
 		irp->IoStatus.Status = STATUS_SUCCESS;
