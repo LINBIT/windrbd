@@ -2734,7 +2734,7 @@ static struct _DEVICE_OBJECT *find_windows_device(UNICODE_STRING *path, struct _
 	PFILE_OBJECT FileObject;
 	NTSTATUS status;
 
-	status = IoGetDeviceObjectPointer(path, FILE_ALL_ACCESS, &FileObject, &windows_device);
+	status = IoGetDeviceObjectPointer(path, STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS, &FileObject, &windows_device);
 
 	if (!NT_SUCCESS(status))
 	{

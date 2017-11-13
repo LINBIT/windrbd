@@ -22,9 +22,16 @@ TODO: Fix IO ERROR
 	Update: Error was not propagated to user space, this should be
 	fixed now.
 
+	Update: error c0000011 on accessing meta data (end of file
+	error) when meta data is internal.
+
 TODO: where did the volsize blue screen disappear.
 	When using IRPs on an NTFS formatted partition, we had
 	blue screens which do not happen any more. This is strange.
+
+	Update: Also does not blue screen when meta data is internal,
+	however apply-al does not work (error c0000011 (end of file)
+	when reading meta data).
 
 ----------------------------------------------------------------------
 TODO: allow user to pass name of symbolic link created
