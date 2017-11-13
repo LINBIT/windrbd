@@ -6,7 +6,8 @@
 
 struct params p = {
 	drive: "H:",
-	expected_size: 52387840
+	expected_size: 52387840,
+	force: false
 };
 
 HANDLE do_open_device(void)
@@ -189,16 +190,19 @@ TEST(win_drbd, do_write_read)
 	int err;
 	char buf[512], buf2[512];
 	unsigned int i;
-	DWORD p;
-        char c;
+	DWORD px;
 
-        fprintf(stderr, "This test will *DESTROY* the first sectors of the underlying backing device.\n");
-        fprintf(stderr, "Please type y<enter> if you wish to do this.\n");
-        c = getchar();
-        if (c != 'y') {
-                fprintf(stderr, "Write test not done.\n");
-                return;
-        }
+	if (!p.force) {
+	        char c;
+
+		fprintf(stderr, "This test will *DESTROY* the first sectors of the underlying backing device.\n");
+		fprintf(stderr, "Please type y<enter> if you wish to do this.\n");
+		c = getchar();
+		if (c != 'y') {
+			fprintf(stderr, "Write test not done.\n");
+			return;
+		}
+	}
 
 	for (i=0;i<sizeof(buf);i++)
 		buf[i] = i;
@@ -210,8 +214,8 @@ TEST(win_drbd, do_write_read)
 	EXPECT_NE(ret, 0);
 	EXPECT_EQ(bytes_written, sizeof(buf));
 
-	p = SetFilePointer(h, 0, NULL, FILE_BEGIN);
-	EXPECT_EQ(p, 0);
+	px = SetFilePointer(h, 0, NULL, FILE_BEGIN);
+	EXPECT_EQ(px, 0);
 	
 	ret = ReadFile(h, buf2, sizeof(buf2), &bytes_read,  NULL);
 	err = GetLastError();
