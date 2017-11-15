@@ -1675,6 +1675,25 @@ static inline blk_status_t win_status_to_blk_status(NTSTATUS status)
 	return (status == STATUS_SUCCESS) ? 0 : BLK_STS_IOERR; 
 }
 
+static void patch_ntfs_boot_sector(char *buffer, bool to_ntfs)
+{
+	if (to_ntfs) {
+		if (buffer[3] == 'D' && buffer[4] == 'R' && buffer[5] == 'B' && buffer[6] == 'D') {
+			buffer[3] = 'N';
+			buffer[4] = 'T';
+			buffer[5] = 'F';
+			buffer[6] = 'S';
+		}
+	} else {
+		if (buffer[3] == 'N' && buffer[4] == 'T' && buffer[5] == 'F' && buffer[6] == 'S') {
+			buffer[3] = 'D';
+			buffer[4] = 'R';
+			buffer[5] = 'B';
+			buffer[6] = 'D';
+		}
+	}
+}
+
 NTSTATUS DrbdIoCompletion(
   _In_     PDEVICE_OBJECT DeviceObject,
   _In_     PIRP           Irp,
@@ -1685,9 +1704,14 @@ NTSTATUS DrbdIoCompletion(
 printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context);
 	struct bio *bio = Context;
 	PMDL mdl, nextMdl;
+	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
 
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		WDRBD_WARN("DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
+	}
+	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512) {
+		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
+		patch_ntfs_boot_sector(buffer, true);
 	}
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
@@ -1797,7 +1821,6 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 	return li->Length.QuadPart;
 }
 
-
 static int win_generic_make_request(struct bio *bio)
 {
 	NTSTATUS status;
@@ -1843,6 +1866,10 @@ static int win_generic_make_request(struct bio *bio)
 	WDRBD_TRACE("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx sz=%d IRQL=%d buf=0x%p, off&=0x%llx\n", 
 		current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", 
 		bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer);
+
+	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512) {
+		patch_ntfs_boot_sector(buffer, false);
+	}
 
 	newIrp = IoBuildAsynchronousFsdRequest(
 				io,

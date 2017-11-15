@@ -36,7 +36,7 @@
    To disable the feature set this to 0 (but this is not recommended).
  */
 
-#define WINDRBD_SECTOR_SHIFT 1
+#define WINDRBD_SECTOR_SHIFT 0
 
 struct drbd_transport;
 enum drbd_stream;

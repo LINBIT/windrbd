@@ -38,6 +38,9 @@ TODO: test if loading drbd driver later (not at boot) works.
 
 -----------------------------------------------------------------------
 
+TODO: have a make depend target
+	Or at least header file dependencies.
+
 TODO: blkdev_put isn't called on drbdadm down
 
 	fix this one day, this is probably a DRBD9 bug. Or maybe
