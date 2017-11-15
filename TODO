@@ -16,6 +16,26 @@ TODO: implement open and close methods.
 TODO: Throw away lots of Mantech code.
 	I am really looking forward to this one.
 
+TODO: Release backing device:
+	drbdadm up / drbdadm down / format f:
+
+TODO: Inform windows about new drive.
+	So that explorer opens.
+
+TODO: windrbd.exe hide-ntfs-partition
+
+TODO: on patching boot sector, inform Windows that file system is
+	raw now.
+	So that it disappears.
+
+TODO: read error: Volume dismounted
+	Nov 15 14:42:21 192.168.56.101  U13:22:16.265|0131b040 DrbdIoCompletion <4>[0xFFFFFA800131B040] DrbdIoCompletion: I/O failed with error c000026e
+	Nov 15 14:42:21 192.168.56.101  U13:22:16.265|0131b040 drbd_report_io_error <4>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x208): local READ IO error sector 0+1 on
+
+TODO: Understand what windows means by mounting / dismounting.
+
+TODO: Test other file systems (FAT, FAT32, ...)
+
 ----------------------------------------------------------------------
 
 TODO: Port agruen's test suite to cygwin.
