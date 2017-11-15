@@ -20,7 +20,7 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *dev)
 {
 	g->BytesPerSector = dev->bd_block_size;
-	g->Cylinders.QuadPart = dev->d_size / dev->bd_block_size - 1;
+	g->Cylinders.QuadPart = dev->d_size / dev->bd_block_size - WINDRBD_SECTOR_SHIFT;
 	g->TracksPerCylinder = 1;
 	g->SectorsPerTrack = 1;
 	g->MediaType = FixedMedia;
@@ -29,7 +29,7 @@ static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *d
 static void fill_partition_info(struct _PARTITION_INFORMATION *p, struct block_device *dev)
 {
 	p->StartingOffset.QuadPart = 0;
-	p->PartitionLength.QuadPart = dev->d_size - 512;
+	p->PartitionLength.QuadPart = dev->d_size - WINDRBD_SECTOR_SHIFT*512;
 	p->HiddenSectors = 0;
 	p->PartitionNumber = 1;
 	p->PartitionType = PARTITION_ENTRY_UNUSED;
@@ -42,7 +42,7 @@ static void fill_partition_info_ex(struct _PARTITION_INFORMATION_EX *p, struct b
 {
 	p->PartitionStyle = PARTITION_STYLE_MBR;
 	p->StartingOffset.QuadPart = 0;
-	p->PartitionLength.QuadPart = dev->d_size - 512;
+	p->PartitionLength.QuadPart = dev->d_size - WINDRBD_SECTOR_SHIFT*512;
 	p->PartitionNumber = 1;
 	p->RewritePartition = FALSE;
 	p->Mbr.PartitionType = PARTITION_EXTENDED;
@@ -76,7 +76,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 
 		struct _DISK_GEOMETRY_EX *g = irp->AssociatedIrp.SystemBuffer;
 		fill_drive_geometry(&g->Geometry, dev);
-		g->DiskSize.QuadPart = dev->d_size - 512;
+		g->DiskSize.QuadPart = dev->d_size - WINDRBD_SECTOR_SHIFT*512;
 		g->Data[0] = 0;
 
 		irp->IoStatus.Information = sizeof(struct _DISK_GEOMETRY_EX);
@@ -89,7 +89,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		}
 
 		struct _GET_LENGTH_INFORMATION *l = irp->AssociatedIrp.SystemBuffer;
-		l->Length.QuadPart = dev->d_size - 512;
+		l->Length.QuadPart = dev->d_size - WINDRBD_SECTOR_SHIFT*512;
 		irp->IoStatus.Information = sizeof(struct _GET_LENGTH_INFORMATION);
 		break;
 
@@ -197,7 +197,7 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 		/* TODO: FLUSH? */
 	bio->bi_rw |= (s->MajorFunction == IRP_MJ_WRITE) ? WRITE : READ;
 	bio->bi_size = s->Parameters.Read.Length;
-	bio->bi_sector = (s->Parameters.Read.ByteOffset.QuadPart) / dev->bd_block_size + 1;
+	bio->bi_sector = (s->Parameters.Read.ByteOffset.QuadPart) / dev->bd_block_size + WINDRBD_SECTOR_SHIFT;
 	bio->bi_bdev = dev;
 	bio->bi_max_vecs = 1;
 	bio->bi_vcnt = 0;  /* just for now .. */

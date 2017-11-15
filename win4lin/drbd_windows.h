@@ -31,6 +31,13 @@
 #include "disp.h"
 #include <linux/mempool.h>
 
+/* First n sectors are reserved, so that Windows does not treat
+   the backing device as formatted (and disallow certain accesses)
+   To disable the feature set this to 0 (but this is not recommended).
+ */
+
+#define WINDRBD_SECTOR_SHIFT 1
+
 struct drbd_transport;
 enum drbd_stream;
 enum update_sync_bits_mode;

@@ -13,6 +13,9 @@ TODO: allow user to pass name of symbolic link created
 
 TODO: implement open and close methods.
 
+TODO: Throw away lots of Mantech code.
+	I am really looking forward to this one.
+
 ----------------------------------------------------------------------
 
 TODO: Port agruen's test suite to cygwin.
