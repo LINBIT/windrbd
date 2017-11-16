@@ -2,9 +2,9 @@ What is WinDRBD?
 ================
 
 WinDRBD is a port of Linbit's Distributed Replicated Block Device
-Linux driver to Linux. Technically it is a thin emulation layer
-that maps Linux specific kernel API calls to the Microsoft Windows 
-NT Kernel API.
+Linux driver to Microsoft Windows. Technically it is a thin
+emulation layer that maps Linux specific kernel API calls to the
+Microsoft Windows NT Kernel API.
 
 DRBD itself is used to build High Availability clusters by replicating
 contents of one block device over a network to (up to 31) other nodes.
@@ -31,7 +31,7 @@ and a separate Linux Box with spatch (concinelle) installed.
 You need the windrbd branch of drbd-utils. 
 
 To test it, we use the WIN32 API test suite in windrbd-test. This
-	is based on Google Test: see README.md in windrbd-test directory.
+is based on Google Test: see README.md in windrbd-test directory.
 
 You don't need drbdcon: it does not exist in WinDRBD.
 
