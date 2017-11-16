@@ -112,3 +112,5 @@ Version history
 0.1 (Oct 25, 2017): Basic I/O works with separate DRBD device.
 0.2 (Nov 13, 2017): Creation and basic usage of NT filesystem on DRBD 
 		    device works.
+0.2.1 (Nov 16, 2017): Patch bootsector to hide NTFS on backing device
+		    from NTFS driver.
