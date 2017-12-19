@@ -1,69 +1,13 @@
 WinDRBD-next:
 
-TODO: schedule_timeout_interruptible not implemented correctly.
+Release 0.3
+	Don't have 3 version numbers.
 
-	It just does a wait on single object with a timeout object. so it
-	isn't interruptible.
+----------------------------------------------------------
 
-	If solved then also write a small test for it.
+WinDRBD-after-next:
 
-TODO: Who is supposed to wake up schedule_timeout_interruptible() in
-	dtt_connection_established()?
-
-	Ask phil or lars. Don't want to dig too deep into DRBD now.
-
-	Those two are needed to make connection work.
-
-TODO: Make connection work.
-	It seems that kernel_recvmsg() does not receive anything
-	from the windrbd side (it fails with an EAGAIN error
-	reproducible).
-	If DRBD on Linux is replaced by a ncat we can see the
-	packets arriving on both sockets: 
-ncat -l 7600 -k | hexdump -v
-0000000 7483 6702 f1ff 0000 7483 6702 f2ff 0000
-
-	Update: If connection is established in the order
-	connect send connect send the first packet is received.
-
-	Done: Write a small C program (with gcc) to test that from user
-	mode. 
-	It works non-interleaved (is a cygwin program)
-
-	Now, check tcpdump output.
-	TCP checksums are wrong but this is most likely due to 
-	checksum offloadinng (they are correct on the wire only
-	the network card displays it wrong).
-
-	Apart from that the packets seem to be equal (sequence number?)
-	Update sequence number is Wireshark connection ID.
-
-	Update: difference is that Linux DRBD upon incoming connection
-	tries to reach windrbd which fails because windrbd makes a
-	bind but no listen currently. What is strange is that 
-	connect() on Linux side succeeds while we see a RST in 
-	the TCP packet coming from windrbd (but that is maybe
-	because the socket is non-blocking on the Linux side).
-	
-	We now patch Linux DRBD so that connect(2) always fails and
-	see if that works.
-	Update: unfortunately this did not fix the error.
-
-	netcat on the windrbd port shows that connection is
-	accepted(?) but closed immedieately
-
-	Update: No packets get lost. The initial packets are received
-	and the 80 byte handshake packet is sent to windrbd.
-	However there it is never received (drbd_recv_short
-	is never being called by windrbd). So the whole
-	thing was because receiving the handshake packet
-	(80 bytes) is not implemented on the windrbd side.
-
-	Rejected: write 2 C (user space) programs that show how this
-	scenario looks like in POSIX environment (bind without listen
-	and connect returning 0)
-
-TODO: Re-port drbd_transport_tcp.c to windrbd's
+Maybe later: Re-port drbd_transport_tcp.c to windrbd's
 	drbd_transport_wtcp.c.
 	Update: currently it seems that the problem is
 	somewhere else. 
@@ -685,4 +629,79 @@ Rejected / Partially done: tcpdump nc and drbd and see if there is a difference.
 	Update: The packets were received but on the windrbd side
 	the 80 byte handshake parameter packet never is received
 	(it is sent by Linux DRBD).
+
+Rejected: schedule_timeout_interruptible not implemented correctly.
+
+	It just does a wait on single object with a timeout object. so it
+	isn't interruptible.
+
+	If solved then also write a small test for it.
+	
+	Update: No it can only be interrupted by a UNIX signal
+	(which does not exist on Windows) so the implementation
+	is correct.
+
+Done: Who is supposed to wake up schedule_timeout_interruptible() in
+	dtt_connection_established()?
+
+	Ask phil or lars. Don't want to dig too deep into DRBD now.
+
+	Those two are needed to make connection work.
+
+	Done: Nobody.
+
+Done: Make connection work.
+	It seems that kernel_recvmsg() does not receive anything
+	from the windrbd side (it fails with an EAGAIN error
+	reproducible).
+	If DRBD on Linux is replaced by a ncat we can see the
+	packets arriving on both sockets: 
+ncat -l 7600 -k | hexdump -v
+0000000 7483 6702 f1ff 0000 7483 6702 f2ff 0000
+
+	Update: If connection is established in the order
+	connect send connect send the first packet is received.
+
+	Done: Write a small C program (with gcc) to test that from user
+	mode. 
+	It works non-interleaved (is a cygwin program)
+
+	Now, check tcpdump output.
+	TCP checksums are wrong but this is most likely due to 
+	checksum offloadinng (they are correct on the wire only
+	the network card displays it wrong).
+
+	Apart from that the packets seem to be equal (sequence number?)
+	Update sequence number is Wireshark connection ID.
+
+	Update: difference is that Linux DRBD upon incoming connection
+	tries to reach windrbd which fails because windrbd makes a
+	bind but no listen currently. What is strange is that 
+	connect() on Linux side succeeds while we see a RST in 
+	the TCP packet coming from windrbd (but that is maybe
+	because the socket is non-blocking on the Linux side).
+	
+	We now patch Linux DRBD so that connect(2) always fails and
+	see if that works.
+	Update: unfortunately this did not fix the error.
+
+	netcat on the windrbd port shows that connection is
+	accepted(?) but closed immedieately
+
+	Update: No packets get lost. The initial packets are received
+	and the 80 byte handshake packet is sent to windrbd.
+	However there it is never received (drbd_recv_short
+	is never being called by windrbd). So the whole
+	thing was because receiving the handshake packet
+	(80 bytes) is not implemented on the windrbd side.
+
+	Rejected: write 2 C (user space) programs that show how this
+	scenario looks like in POSIX environment (bind without listen
+	and connect returning 0)
+
+	Update: Reasons were:
+		ping timeout was set incorrectly.
+		peer (Linux) disk was too small.
+
+	So in fact it always worked. Arghhhh!
 
