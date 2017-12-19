@@ -1,5 +1,82 @@
 WinDRBD-next:
 
+TODO: schedule_timeout_interruptible not implemented correctly.
+
+	It just does a wait on single object with a timeout object. so it
+	isn't interruptible.
+
+	If solved then also write a small test for it.
+
+TODO: Who is supposed to wake up schedule_timeout_interruptible() in
+	dtt_connection_established()?
+
+	Ask phil or lars. Don't want to dig too deep into DRBD now.
+
+	Those two are needed to make connection work.
+
+TODO: Make connection work.
+	It seems that kernel_recvmsg() does not receive anything
+	from the windrbd side (it fails with an EAGAIN error
+	reproducible).
+	If DRBD on Linux is replaced by a ncat we can see the
+	packets arriving on both sockets: 
+ncat -l 7600 -k | hexdump -v
+0000000 7483 6702 f1ff 0000 7483 6702 f2ff 0000
+
+	Update: If connection is established in the order
+	connect send connect send the first packet is received.
+
+	Done: Write a small C program (with gcc) to test that from user
+	mode. 
+	It works non-interleaved (is a cygwin program)
+
+	Now, check tcpdump output.
+	TCP checksums are wrong but this is most likely due to 
+	checksum offloadinng (they are correct on the wire only
+	the network card displays it wrong).
+
+	Apart from that the packets seem to be equal (sequence number?)
+	Update sequence number is Wireshark connection ID.
+
+	Update: difference is that Linux DRBD upon incoming connection
+	tries to reach windrbd which fails because windrbd makes a
+	bind but no listen currently. What is strange is that 
+	connect() on Linux side succeeds while we see a RST in 
+	the TCP packet coming from windrbd (but that is maybe
+	because the socket is non-blocking on the Linux side).
+	
+	We now patch Linux DRBD so that connect(2) always fails and
+	see if that works.
+	Update: unfortunately this did not fix the error.
+
+	netcat on the windrbd port shows that connection is
+	accepted(?) but closed immedieately
+
+	Update: No packets get lost. The initial packets are received
+	and the 80 byte handshake packet is sent to windrbd.
+	However there it is never received (drbd_recv_short
+	is never being called by windrbd). So the whole
+	thing was because receiving the handshake packet
+	(80 bytes) is not implemented on the windrbd side.
+
+	Rejected: write 2 C (user space) programs that show how this
+	scenario looks like in POSIX environment (bind without listen
+	and connect returning 0)
+
+TODO: Re-port drbd_transport_tcp.c to windrbd's
+	drbd_transport_wtcp.c.
+	Update: currently it seems that the problem is
+	somewhere else. 
+	However we need those updates. Best way would be to
+	git diff the original drbd transport_tcp to the version
+	we had before and apply the patches manually.
+
+TODO: Right now, windrbd isn't listening for incoming connections.
+
+	Connection should work nevertheless.
+
+--------------------------------------------------------------
+
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
@@ -14,7 +91,6 @@ TODO: allow user to pass name of symbolic link created
 TODO: implement open and close methods.
 
 TODO: Throw away lots of Mantech code.
-	I am really looking forward to this one.
 
 TODO: Release backing device:
 	drbdadm up / drbdadm down / format f:
@@ -38,9 +114,11 @@ TODO: Test other file systems (FAT, FAT32, ...)
 
 ----------------------------------------------------------------------
 
-TODO: Port agruen's test suite to cygwin.
+TODO: Test with Windows 10 (we have to do that anyway some day)
 
-TODO: Make drbd run on peer Linux box
+TODO: check out mantech wdrbd and see if it works (and why)
+
+TODO: Port agruen's test suite to cygwin.
 
 TODO: How is sync done? 
 	Data appears delayed on backing device (about 10 - 20 
@@ -49,10 +127,8 @@ TODO: How is sync done?
 TODO: lots of more tests (corner cases like reading near the
 	end of the device)
 
-TODO: make drbdmeta be able to read near the end of an NTFS 
-	partition.
-
 TODO: have windrbd-test execute drbdadm as needed.
+	This is a nice to have.
 
 TODO: test if loading drbd driver later (not at boot) works.
 
@@ -73,6 +149,8 @@ TODO: blkdev_put isn't called on drbdadm down
 	is what it does).
 
 	Update: this is something with RCUs
+
+	Update: call_rcu now does something, is this fixed now?
 
 TODO: Check if it is a network share (currently blue screens)
 	Update: blue screen was something else. Should check if the
@@ -117,14 +195,32 @@ TODO: Make drbd service stoppable
 TODO: Have sshd on Windows and work remotely
 	Would be convenient, however setup is a little bit
 	complicated ...
+	This is a nice to have.
 
 TODO: fix the macro redefinition problems in drbd_windows.c
 	For now we have to copy the function prototypes from MSDN.
 	Not good style.
 
 	Update: check if the prototypes are still needed.
+	Update: we probably reject this.
 
 TODO: Later: RCU needs change
+	At least call_rcu now calls the function. I don't think
+	that it is a good idea to port the linked list thing to
+	windows, we want to stay thin..
+
+TODO: The functions enclosed by _WIN32_MVFL (see win4lin/src/util.c) are
+	not referenced anywhere in the code. I assume that they never have been
+	tested. I would like to remove them (or at least rewrite them if the
+	functionality is needed) since they depend on some other stuff I would
+	like to redesign.
+
+	Update: We need the functionality if DeviceIoControl() (user level
+	function) is called on the DRBD device. So leave it in for now.
+
+	Update: We don't want any DRBD specific DeviceIoControls. Check if
+	one of those are really needed and then remove the code.
+
 --------------------------------
 
 Done: fix patch errors on Linux side build (conversion)
@@ -238,6 +334,8 @@ Done: Insmod
 Done: Install DRBD Linux peer VM
 	Ubuntu Server? Took Ubuntu 16.04 Gnome edition
 	Installed drbd from git repo
+	Update: we are using the production VM since not enough
+	RAM for running 3 VMs.
 
 Done: Add volume to Windows VM for DRBD test drive.
 
@@ -561,4 +659,30 @@ Done: DeviceControl (there are many more but those
 
 Done: implement I/O handler stubs
 	Stubs done, return STATUS_OK (or STATUS_NOT_IMPLEMENTED)
+
+Done: nc test
+	Works as expected.
+
+Done: Fix Spurious timeout error on receive.
+	Was behaving as intended.
+
+Done: hack test
+
+Done: Make drbd run on peer Linux box
+	We cannot run 3 VMs on our Macbook Air since it has only
+	4 GB of RAM. Now, we are using the production Linux box
+	for DRBD peer.
+
+Done: make drbdmeta be able to read near the end of an NTFS 
+	partition.
+	We now hide NTFS from windows when it is a backing
+	device.
+
+Rejected / Partially done: tcpdump nc and drbd and see if there is a difference.
+	Didn't find anything yet, however there must be
+	something. Look at the packets with hex?
+
+	Update: The packets were received but on the windrbd side
+	the 80 byte handshake parameter packet never is received
+	(it is sent by Linux DRBD).
 
