@@ -1277,6 +1277,7 @@ extern void list_add_rcu(struct list_head *new, struct list_head *head);
 extern void list_add_tail_rcu(struct list_head *new,   struct list_head *head);
 extern void list_del_rcu(struct list_head *entry);
 
+/* TODO: volatile? */
 #define rcu_dereference(_PTR)		(_PTR)
 #define __rcu_assign_pointer(_p, _v) \
 	do { \
@@ -1318,9 +1319,12 @@ static inline void synchronize_rcu()
 			KeGetCurrentIrql(), rcu_flags, &rcu_flags, g_rcuLock);
 }
 
-/* TODO: implement this */
+/* TODO: test this */
 static inline void call_rcu(struct rcu_head *head, rcu_callback_t func)
 {
+	KIRQL rcu_flags = ExAcquireSpinLockExclusive(&g_rcuLock);
+	func(head);
+	ExReleaseSpinLockExclusive(&g_rcuLock, rcu_flags);
 }
 
 extern void local_irq_disable();

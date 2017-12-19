@@ -108,6 +108,14 @@ int _printk(const char *func, const char *fmt, ...)
 	static int printks_in_irq_context = 0;
 	static int buffer_overflows = 0;
 
+	int is_bind = (strcmp(func, "Bind") == 0);
+	int is_sendto = (strcmp(func, "SendTo") == 0);
+
+	if (is_bind || is_sendto) {
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, printk called from Bind() or SendTo() (which we need interally).\n");
+	/* TODO: return?? */
+	}
+
 	buffer[0] = '\0';
 
 	if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {

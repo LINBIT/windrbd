@@ -496,10 +496,12 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 	rcu_read_unlock(rcu_flags);
 
 	my_addr = path->path.my_addr;
-	if (my_addr.ss_family == AF_INET6)
+	if (my_addr.ss_family == AF_INET6) {
 		((struct sockaddr_in6 *)&my_addr)->sin6_port = 0;
-	else
+	} else {
+		((struct sockaddr_in *)&my_addr)->sin_addr.s_addr = INADDR_ANY; 
 		((struct sockaddr_in *)&my_addr)->sin_port = 0; /* AF_INET & AF_SCI */
+	}
 
 	/* In some cases, the network stack can end up overwriting
 	   peer_addr.ss_family, so use a copy here. */
@@ -1056,7 +1058,8 @@ static int dtt_connect(struct drbd_transport *transport)
 	do {
 		struct socket *s = NULL;
 
-schedule_timeout_interruptible(0.4*HZ);
+/* TODO: needed? */
+// schedule_timeout_interruptible(0.4*HZ);
 		err = dtt_try_connect(transport, connect_to_path, &s);
 
 		if (err < 0 && err != -EAGAIN)
@@ -1207,6 +1210,7 @@ randomize:
 	dsocket->sk_sndtimeo = timeout;
 	csocket->sk_sndtimeo = timeout;
 
+/* TODO: isn't set, remove that code */
 #ifdef _WIN32_SEND_BUFFING
     if ((nc->wire_protocol == DRBD_PROT_A) && (nc->sndbuf_size > 0) )
     {

@@ -1775,6 +1775,10 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 	struct _GET_LENGTH_INFORMATION *li;
 	struct _IO_STACK_LOCATION *s;
 
+	/* TODO: free these somewhere. They must not be on stack
+	 * since that blue screens sometimes.
+	 */
+
 	ioStatus = kmalloc(sizeof(*ioStatus), 0, 'DBRD');
 	if (ioStatus == NULL) {
 		WDRBD_ERROR("cannot kmalloc ioStatus\n");

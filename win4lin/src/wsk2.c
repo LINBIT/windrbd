@@ -18,6 +18,8 @@ NTAPI CompletionRoutine(
 	__in PKEVENT		CompletionEvent
 )
 {
+	/* Must not printk in here, will loop forever. */
+
 	ASSERT(CompletionEvent);
 	KeSetEvent(CompletionEvent, IO_NO_INCREMENT, FALSE);
 	
@@ -375,6 +377,7 @@ Connect(
 
 	if (Status == STATUS_PENDING) {
 		LARGE_INTEGER	nWaitTime;
+	/* TODO: hard coding timeout to 1 second is most likely wrong. */
 		nWaitTime = RtlConvertLongToLargeInteger(-1 * 1000 * 1000 * 10);
 		if ((Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime)) == STATUS_TIMEOUT)
 		{
@@ -546,7 +549,7 @@ __in KEVENT			*send_buf_kill_event
 	KeInitializeEvent(&CompletionEvent, SynchronizationEvent, FALSE);
 	IoSetCompletionRoutine(pIrp, CompletionRoutine, &CompletionEvent, TRUE, TRUE, TRUE);
 
-
+/* TODO: also try without */
 	Flags |= WSK_FLAG_NODELAY;
 
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH)WskSocket->Dispatch)->WskSend(
@@ -1378,6 +1381,7 @@ ReceiveFrom(
 	return BytesReceived;
 }
 
+/* Must not printk() from in here, might loop forever */
 NTSTATUS
 NTAPI
 Bind(
