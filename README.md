@@ -115,3 +115,4 @@ Version history
 0.2.1 (Nov 16, 2017): Patch bootsector to hide NTFS on backing device
 		    from NTFS driver.
 0.3.0 (Dec 20, 2017): Connection from windrbd to Linux DRBD works.
+0.3.1 (Dec 20, 2017): Fixed a blue screen introduced with 0.3.0
