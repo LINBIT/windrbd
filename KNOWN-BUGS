@@ -1,3 +1,16 @@
+BUG: blue screen on drbdadm down when cmd's pwd is the drbd device (H:)
+
+	Also when it is not. Must be something new, this already used to
+	work..
+	Update: when accessing it via h: once it crashes when it 
+	is untouched (no I/O ever on DRBD device) it does not crash (?).
+
+---------------------------------------------------------------------
+BUG: "DRBD_PANIC" on sync: multi page
+
+Dec 20 16:14:14 192.168.56.101  U15:14:13.394|03857b50 bio_add_page <3>[0xFFFFFA8003857B50] DRBD_PANIC: bio->bi_vcn=2. multi page occured!
+Dec 20 16:14:14 192.168.56.101  U15:14:13.394|03857b50 bio_add_page <2>[0xFFFFFA8003857B50] warning: failure
+
 ---------------------------------------------------------------------
 BUG: blkdev_put isn't called on drbdadm down
 

@@ -1,12 +1,5 @@
 WinDRBD-next:
 
-Release 0.3
-	Don't have 3 version numbers.
-
-----------------------------------------------------------
-
-WinDRBD-after-next:
-
 Maybe later: Re-port drbd_transport_tcp.c to windrbd's
 	drbd_transport_wtcp.c.
 	Update: currently it seems that the problem is
@@ -20,6 +13,8 @@ TODO: Right now, windrbd isn't listening for incoming connections.
 	Connection should work nevertheless.
 
 --------------------------------------------------------------
+
+TODO: Implement multi page.
 
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
@@ -57,6 +52,9 @@ TODO: Understand what windows means by mounting / dismounting.
 TODO: Test other file systems (FAT, FAT32, ...)
 
 ----------------------------------------------------------------------
+
+TODO: errnos should match linux error codes
+	(so that errno cmd line tool works).
 
 TODO: Test with Windows 10 (we have to do that anyway some day)
 
