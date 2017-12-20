@@ -53,6 +53,7 @@ static void fill_partition_info_ex(struct _PARTITION_INFORMATION_EX *p, struct b
 
 static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+printk("1\n");
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct block_device *dev = device->DeviceExtension;
 	NTSTATUS status = STATUS_SUCCESS;
@@ -152,6 +153,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 
 static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+printk("1\n");
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 
 	printk(KERN_DEBUG "DRBD device create request NOT DONE: MajorFunction: 0x%x\n", s->MajorFunction);
@@ -225,6 +227,7 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+printk("1\n");
 	struct block_device *dev = device->DeviceExtension;
 	struct bio *bio;
 	NTSTATUS status = STATUS_SUCCESS;
