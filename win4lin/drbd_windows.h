@@ -1322,11 +1322,9 @@ static inline void synchronize_rcu()
 /* TODO: test this */
 static inline void call_rcu(struct rcu_head *head, rcu_callback_t func)
 {
-printk("1\n");
 	KIRQL rcu_flags = ExAcquireSpinLockExclusive(&g_rcuLock);
-//	func(head);
+	func(head);
 	ExReleaseSpinLockExclusive(&g_rcuLock, rcu_flags);
-printk("2\n");
 }
 
 extern void local_irq_disable();

@@ -3415,6 +3415,12 @@ printk(KERN_INFO "Destroying minor %d\n", minor);
 		ExFreePool(name.Buffer);
 		return;
 	}
+	bdev->windows_device->DeviceExtension = NULL;
+		/* TODO: this does not really delete the device
+		 * if somebody still holds a reference. For example,
+		 * if there is a cmd shell open it will access the
+		 * device after this has happened.
+		 */
 	IoDeleteDevice(bdev->windows_device); /* should also delete the device extension, which is the bdev */
 	if (IoDeleteSymbolicLink(&dos_name) != STATUS_SUCCESS) {
 		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", dos_name.Buffer);
@@ -3422,6 +3428,7 @@ printk(KERN_INFO "Destroying minor %d\n", minor);
 
 	ExFreePool(dos_name.Buffer);
 	ExFreePool(name.Buffer);
+/* TODO: not freeing bdev? */
 }
 
 void bdput(struct block_device *this_bdev)
