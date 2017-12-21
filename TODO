@@ -32,8 +32,6 @@ TODO: allow user to pass name of symbolic link created
 	files for UNIX and Windows) and integrate upstream
 	changes.
 
-In progress: implement open and close methods.
-
 TODO: Throw away lots of Mantech code.
 
 TODO: Release backing device:
@@ -714,4 +712,6 @@ Done: blkdev_put isn't called on drbdadm down
 
 Done: Possible race at drbd_thread_setup() (drbdmain.c:567) with
 	use-after-free.
+
+Done: implement open and close methods.
 

@@ -10,18 +10,6 @@ Dec 20 16:14:14 192.168.56.101  U15:14:13.394|03857b50 bio_add_page <3>[0xFFFFFA
 Dec 20 16:14:14 192.168.56.101  U15:14:13.394|03857b50 bio_add_page <2>[0xFFFFFA8003857B50] warning: failure
 
 ---------------------------------------------------------------------
-BUG: blkdev_put isn't called on drbdadm down
-
-So the block devices are never freed. Since we keep a record
-internally on the block devices this might be a problem 
-one day.
-
-This is most likely a DRBD 9 bug and should be fixed there.
-
-Update: This is probably now fixed, since call_rcu now does
-something. Check if it is called now.
-
----------------------------------------------------------------------
 
 BUG: DrbdIoCompletion: DeviceObject is NULL.
 	It doesn't hurt at the moment, but eventually we want to
@@ -422,3 +410,16 @@ Dec 20 17:17:55 192.168.56.101  U16:20:22.000|0131b040 windrbd_io 1
 	Update: Fixed. Setting DeviceExtension to NULL and checking
 	for that condition. But now, Windows hangs on shut down.
 
+------------------------------------------------------------------------
+SOLVED: blkdev_put isn't called on drbdadm down
+
+So the block devices are never freed. Since we keep a record
+internally on the block devices this might be a problem 
+one day.
+
+This is most likely a DRBD 9 bug and should be fixed there.
+
+Update: This is probably now fixed, since call_rcu now does
+something. Check if it is called now.
+
+---------------------------------------------------------------------
