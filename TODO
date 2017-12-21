@@ -32,7 +32,7 @@ TODO: allow user to pass name of symbolic link created
 	files for UNIX and Windows) and integrate upstream
 	changes.
 
-TODO: implement open and close methods.
+In progress: implement open and close methods.
 
 TODO: Throw away lots of Mantech code.
 
@@ -84,21 +84,6 @@ TODO: test if loading drbd driver later (not at boot) works.
 TODO: have a make depend target
 	Or at least header file dependencies.
 
-TODO: blkdev_put isn't called on drbdadm down
-
-	fix this one day, this is probably a DRBD9 bug. Or maybe
-	it is intentional.
-
-	INIT_WORK and schedule_work do what they say?
-
-	Later: Currently bdput is called from within drbd_unregister_device,
-	ask phil if that is ok (it should make the device invisible, which
-	is what it does).
-
-	Update: this is something with RCUs
-
-	Update: call_rcu now does something, is this fixed now?
-
 TODO: Check if it is a network share (currently blue screens)
 	Update: blue screen was something else. Should check if the
 	drive letter is a network share. Unfortunately they do not
@@ -129,9 +114,6 @@ TODO: Have a function that initialized all (global) spinlocks
 
 TODO: cond_wait shouldn't busy loop. How is this done in Linux.
 
-TODO: Possible race at drbd_thread_setup() (drbdmain.c:567) with
-	use-after-free.
-
 TODO: #ifdef the Windows netlink code in drbd-utils
 
 TODO: Make drbd service stoppable
@@ -155,6 +137,10 @@ TODO: Later: RCU needs change
 	At least call_rcu now calls the function. I don't think
 	that it is a good idea to port the linked list thing to
 	windows, we want to stay thin..
+
+	Update: talk to phil about current solution (just call
+	the function). I don't think that it is a good idea to
+	mimic the original intended behaviour in Windows.
 
 TODO: The functions enclosed by _WIN32_MVFL (see win4lin/src/util.c) are
 	not referenced anywhere in the code. I assume that they never have been
@@ -707,4 +693,25 @@ ncat -l 7600 -k | hexdump -v
 		peer (Linux) disk was too small.
 
 	So in fact it always worked. Arghhhh!
+
+
+Done: blkdev_put isn't called on drbdadm down
+
+	fix this one day, this is probably a DRBD9 bug. Or maybe
+	it is intentional.
+
+	INIT_WORK and schedule_work do what they say?
+
+	Later: Currently bdput is called from within drbd_unregister_device,
+	ask phil if that is ok (it should make the device invisible, which
+	is what it does).
+
+	Update: this is something with RCUs
+
+	Update: call_rcu now does something, is this fixed now?
+
+	Update: Yes it is. Closed.
+
+Done: Possible race at drbd_thread_setup() (drbdmain.c:567) with
+	use-after-free.
 
