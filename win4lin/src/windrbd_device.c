@@ -194,8 +194,9 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	NTSTATUS status;
 	int err;
 
-	mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
-                (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0;
+	mode = 0;	/* TODO: remember mode from open () */
+/*	mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
+                (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0; */
 
 	printk(KERN_INFO "DRBD device close request: releasing DRBD device %s\n",
 		mode == 0 ? "read-only" : "read-write");
@@ -203,6 +204,22 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	err = dev->bd_disk->fops->release(dev->bd_disk, mode);
 printk(KERN_DEBUG "drbd_release returned %d\n", err);
 	status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
+
+	irp->IoStatus.Status = status;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+	return status;
+}
+
+static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	struct block_device *dev = device->DeviceExtension;
+	if (dev == NULL) {
+		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
+		return STATUS_INVALID_DEVICE_REQUEST;
+	}
+	NTSTATUS status = STATUS_SUCCESS;
+
+printk(KERN_INFO "Pretending that cleanup does something.\n");
 
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -316,4 +333,5 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	obj->MajorFunction[IRP_MJ_WRITE] = windrbd_io;
 	obj->MajorFunction[IRP_MJ_CREATE] = windrbd_create;
 	obj->MajorFunction[IRP_MJ_CLOSE] = windrbd_close;
+	obj->MajorFunction[IRP_MJ_CLEANUP] = windrbd_cleanup;
 }
