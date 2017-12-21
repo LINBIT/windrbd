@@ -12,6 +12,11 @@ TODO: Right now, windrbd isn't listening for incoming connections.
 
 	Connection should work nevertheless.
 
+TODO: Implement multi page I/O
+
+	Required for DRBD sync
+
+TODO: Fix windows shutdown bug.
 --------------------------------------------------------------
 
 TODO: Implement multi page.

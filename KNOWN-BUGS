@@ -1,17 +1,7 @@
-BUG: blue screen on drbdadm down when cmd's pwd is the drbd device (H:)
+---------------------------------------------------------------------
+BUG: Windows hangs on shutdown
 
-	Also when it is not. Must be something new, this already used to
-	work..
-	Update: when accessing it via h: once it crashes when it 
-	is untouched (no I/O ever on DRBD device) it does not crash (?).
-
-	Update: Windows does an I/O after down:
-
-Dec 20 17:17:53 192.168.56.101  U16:20:19.921|0388f4a0 win_drbd_thread_setup <6>[0xFFFFFA800388F4A0] stopped.
-Dec 20 17:17:55 192.168.56.101  U16:20:22.000|0131b040 windrbd_io 1
-
-	Update: Fixed. Setting DeviceExtension to NULL and checking
-	for that condition. But now, Windows hangs on shut down.
+	If we access DRBD device while it is up.
 
 ---------------------------------------------------------------------
 BUG: "DRBD_PANIC" on sync: multi page
@@ -417,3 +407,18 @@ from/to the System partition (C:) goes through the WDRBD driver.
 Update: This isn't used any more (dead code)
 
 ------------------------------------------------------------------------
+SOLVED: blue screen on drbdadm down when cmd's pwd is the drbd device (H:)
+
+	Also when it is not. Must be something new, this already used to
+	work..
+	Update: when accessing it via h: once it crashes when it 
+	is untouched (no I/O ever on DRBD device) it does not crash (?).
+
+	Update: Windows does an I/O after down:
+
+Dec 20 17:17:53 192.168.56.101  U16:20:19.921|0388f4a0 win_drbd_thread_setup <6>[0xFFFFFA800388F4A0] stopped.
+Dec 20 17:17:55 192.168.56.101  U16:20:22.000|0131b040 windrbd_io 1
+
+	Update: Fixed. Setting DeviceExtension to NULL and checking
+	for that condition. But now, Windows hangs on shut down.
+
