@@ -162,11 +162,51 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+	int mode;
+	NTSTATUS status;
+	int err;
 
-	printk(KERN_DEBUG "DRBD device create request NOT DONE: MajorFunction: 0x%x\n", s->MajorFunction);
-	irp->IoStatus.Status = STATUS_SUCCESS;
+	mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
+                (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0;
+
+	printk(KERN_INFO "DRBD device create request: opening DRBD device %s\n",
+		mode == 0 ? "read-only" : "read-write");
+
+	err = drbd_open(dev, mode);
+printk(KERN_DEBUG "drbd_open returned %d\n", err);
+	status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
+
+	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
-	return STATUS_SUCCESS;
+	return status;
+}
+
+
+static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	struct block_device *dev = device->DeviceExtension;
+	if (dev == NULL) {
+		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
+		return STATUS_INVALID_DEVICE_REQUEST;
+	}
+	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+	int mode;
+	NTSTATUS status;
+	int err;
+
+	mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
+                (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0;
+
+	printk(KERN_INFO "DRBD device close request: releasing DRBD device %s\n",
+		mode == 0 ? "read-only" : "read-write");
+
+	err = dev->bd_disk->fops->release(dev->bd_disk, mode);
+printk(KERN_DEBUG "drbd_release returned %d\n", err);
+	status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
+
+	irp->IoStatus.Status = status;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+	return status;
 }
 
 static void windrbd_bio_finished(struct bio * bio, blk_status_t error)
@@ -275,4 +315,5 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	obj->MajorFunction[IRP_MJ_READ] = windrbd_io;
 	obj->MajorFunction[IRP_MJ_WRITE] = windrbd_io;
 	obj->MajorFunction[IRP_MJ_CREATE] = windrbd_create;
+	obj->MajorFunction[IRP_MJ_CLOSE] = windrbd_close;
 }
