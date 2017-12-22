@@ -766,6 +766,7 @@ NTSTATUS WSKAPI dtt_incoming_connection (
     _Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
 )
 {
+printk("karin\n");
 	struct dtt_listener *listener = (struct dtt_listener *)SocketContext;
 	struct socket *socket = NULL;
 	struct dtt_socket_container *socket_c = NULL;
@@ -874,25 +875,32 @@ static int dtt_init_listener(struct drbd_transport *transport,
 	my_addr = *(struct sockaddr_storage_win *)addr;
 	err = 0;
 
+printk("1\n");
 	what = "sock_create_kern";
 	err = sock_create_kern(NULL, my_addr.ss_family, SOCK_STREAM, IPPROTO_TCP, listener, &dispatch, WSK_FLAG_LISTEN_SOCKET, &s_listen);
 	if (err) {
+printk("2\n");
 		s_listen = NULL;
 		goto out;
 	}
+printk("3\n");
 	sprintf(s_listen->name, "listen_sock\0");
 
+printk("4\n");
 	status = ControlSocket(s_listen->sk, WskSetOption, SO_REUSEADDR, SOL_SOCKET, sizeof(ULONG), &InputBuffer, 0, NULL, NULL);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_ERROR("ControlSocket: s_listen socket SO_REUSEADDR: failed=0x%x\n", status);
 		err = -1;
 		goto out;
 	}
+printk("5\n");
 	dtt_setbufsize(s_listen, sndbuf_size, rcvbuf_size);
+printk("6\n");
 
 	what = "bind before listen";
 	status = Bind(s_listen->sk, (PSOCKADDR)&my_addr);
 
+printk("7\n");
 	if (!NT_SUCCESS(status)) {
 		if(my_addr.ss_family == AF_INET) {
 			WDRBD_ERROR("AF_INET Failed to socket Bind(). err(0x%x) %02X.%02X.%02X.%02X:0x%X%X\n", status, (UCHAR)my_addr.__data[2], (UCHAR)my_addr.__data[3], (UCHAR)my_addr.__data[4], (UCHAR)my_addr.__data[5],(UCHAR)my_addr.__data[0],(UCHAR)my_addr.__data[1]);
@@ -907,22 +915,30 @@ static int dtt_init_listener(struct drbd_transport *transport,
 		goto out;
 	}
 
+printk("8\n");
 	listener->s_listen = s_listen;
 
-//	what = "listen";
-//	err = s_listen->ops->listen(s_listen, DRBD_PEERS_MAX * 2);
-//	if (err < 0)
-//		goto out;
+#if 0
+	what = "listen";
+	err = s_listen->ops->listen(s_listen, DRBD_PEERS_MAX * 2);
+printk("listen returned %d\n", err);
+	if (err < 0)
+		goto out;
+#endif
 
+printk("9\n");
 	listener->listener.listen_addr = my_addr;
 	listener->listener.destroy = dtt_destroy_listener;
 	init_waitqueue_head(&listener->wait);
+printk("a\n");
 
 	return 0;
 out:
+printk("b\n");
 	if (s_listen)
 		sock_release(s_listen);
 
+printk("c\n");
 	if (err < 0 &&
 			err != -EAGAIN && err != -EINTR && err != -ERESTARTSYS && err != -EADDRINUSE)
 		tr_err(transport, "%s failed, err = %d\n", what, err);
