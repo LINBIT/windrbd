@@ -18,8 +18,7 @@ TODO: Implement multi page I/O
 
 TODO: Fix windows shutdown bug.
 --------------------------------------------------------------
-
-TODO: Implement multi page.
+TODO: fix memleak in getting volsize.
 
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
