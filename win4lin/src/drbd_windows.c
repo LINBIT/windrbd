@@ -1678,6 +1678,7 @@ static inline blk_status_t win_status_to_blk_status(NTSTATUS status)
 
 static void patch_ntfs_boot_sector(char *buffer, bool to_ntfs)
 {
+printk("in patch routine.\n");
 	if (to_ntfs) {
 		if (buffer[3] == 'D' && buffer[4] == 'R' && buffer[5] == 'B' && buffer[6] == 'D') {
 			buffer[3] = 'N';
@@ -1685,6 +1686,7 @@ static void patch_ntfs_boot_sector(char *buffer, bool to_ntfs)
 			buffer[5] = 'F';
 			buffer[6] = 'S';
 		}
+printk("patched from DRBD to NTFS\n");
 	} else {
 		if (buffer[3] == 'N' && buffer[4] == 'T' && buffer[5] == 'F' && buffer[6] == 'S') {
 			buffer[3] = 'D';
@@ -1692,6 +1694,7 @@ static void patch_ntfs_boot_sector(char *buffer, bool to_ntfs)
 			buffer[5] = 'B';
 			buffer[6] = 'D';
 		}
+printk("patched from NTFS to DRBD\n");
 	}
 }
 
