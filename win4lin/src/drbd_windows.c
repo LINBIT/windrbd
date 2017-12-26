@@ -1720,11 +1720,11 @@ printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", D
 		MmUnlockPages(mdl);
 		IoFreeMdl(mdl); // This function will also unmap pages.
 	}
-#endif
 	Irp->MdlAddress = NULL;
 
 	ObDereferenceObject(Irp->Tail.Overlay.Thread);
 	IoFreeIrp(Irp);
+#endif
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
