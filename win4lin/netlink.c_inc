@@ -294,8 +294,6 @@ InitWskNetlink(void * pctx)
 
     //WDRBD_INFO("Start\n");
 
-// printk("karin\n");
-
     netlink_socket = CreateSocketEvent(
         AF_INET,
         SOCK_STREAM,
@@ -632,7 +630,6 @@ _Outptr_result_maybenull_ PVOID *AcceptSocketContext,
 _Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
 )
 {
-// printk("karin\n");
     UNREFERENCED_PARAMETER(Flags);
 
     if (AcceptSocket == NULL)

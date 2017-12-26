@@ -242,7 +242,6 @@ CreateSocket(
 	PIRP			Irp = NULL;
 	PWSK_SOCKET		WskSocket = NULL;
 	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
-// printk("karin\n");
 
 	/* NO _printk HERE, WOULD LOOP */
 	if (g_SocketsState != INITIALIZED)
@@ -1656,8 +1655,6 @@ __in ULONG			Flags
     PWSK_SOCKET		socket = NULL;
     NTSTATUS		status;
 
-// printk("karin\n");
-
     status = InitWskData(&irp, &CompletionEvent, FALSE);
     if (!NT_SUCCESS(status))
     {
@@ -1821,8 +1818,6 @@ int sock_create_kern(
 {
 	int err;
 	struct socket *socket;
-
-// printk("karin\n");
 
 	(void)net_namespace;
 	err = 0;
