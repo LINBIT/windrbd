@@ -932,6 +932,15 @@ printk("9\n");
 	init_waitqueue_head(&listener->wait);
 printk("a\n");
 
+printk("setting event callbacks.\n");
+	status = SetEventCallbacks(s_listen->sk, WSK_EVENT_ACCEPT);
+	if (!NT_SUCCESS(status)) {
+		printk(KERN_ERR "Could not set event accept mask on socket %p\n", s_listen->sk);
+		/* TODO: clean up */
+		err = -1;
+		goto out;
+	}
+
 	return 0;
 out:
 printk("b\n");

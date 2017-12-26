@@ -274,3 +274,10 @@ int sock_create_kern(
 	PWSK_CLIENT_LISTEN_DISPATCH Dispatch,
 	ULONG			Flags,
 	struct socket		**out);
+
+NTSTATUS
+NTAPI
+SetEventCallbacks(
+	__in PWSK_SOCKET Socket,
+	__in LONG                       mask
+);
