@@ -31,6 +31,10 @@
 #include "disp.h"
 #include <linux/mempool.h>
 
+/* TODO: they should be allocated dynamically */
+
+#define BIO_MAX_VEC 256
+
 /* First n sectors are reserved, so that Windows does not treat
    the backing device as formatted (and disallow certain accesses)
    To disable the feature set this to 0 (but this is not recommended).
@@ -647,8 +651,10 @@ struct splitInfo {
 };
 
 struct bio {
+		/* TODO: this still needed? */
 	PIRP 					pMasterIrp;  /* _WIN32: for upper layer's  IRP */
 
+		/* TODO: these still needed? */
 	unsigned int 			split_id;
 	unsigned int 			split_total_id;
 	unsigned int 			split_total_length;
@@ -675,7 +681,7 @@ struct bio {
 	BIO_END_IO_CALLBACK*	bi_end_io; 
 	void*					bi_private; 
 	unsigned int			bi_max_vecs;    /* max bvl_vecs we can hold */
-	struct bio_vec			bi_io_vec[1]; // only one!!!
+	struct bio_vec			bi_io_vec[BIO_MAX_VEC];
 	UCHAR					MasterIrpStackFlags; //Stack Location's Flag
 
 		/* Those are used by win_generic_make_request internally */

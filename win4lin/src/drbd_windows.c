@@ -667,14 +667,9 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset)
 {
 	struct bio_vec *bvec = &bio->bi_io_vec[bio->bi_vcnt++];
-		
-		/* TODO: allow this */
-	if (bio->bi_vcnt > 1)
-	{
-		WDRBD_ERROR("DRBD_PANIC: bio->bi_vcn=%d. multi page occured!\n", bio->bi_vcnt);
-        BUG();
-	}
 
+printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio->bi_max_vecs);
+		
 	bvec->bv_page = page;
 	bvec->bv_len = len;
 	bvec->bv_offset = offset;
@@ -1838,6 +1833,8 @@ static int win_generic_make_request(struct bio *bio)
 	ULONG io = 0;
 	PIO_STACK_LOCATION pIoNextStackLocation = NULL;
 	struct _MDL *mdl, *nextMdl;
+	int i;
+	int err = -EIO;
 	
 		/* TODO: not referenced in here. */
 	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
@@ -1860,11 +1857,7 @@ static int win_generic_make_request(struct bio *bio)
 		}
 			/* TODO: what if sect size != 512? */
 		bio->offset.QuadPart = bio->bi_sector << 9;
-		if (bio->bi_max_vecs > 1) {
-				/* TODO: might happen one day ... */
-			printk(KERN_WARNING "bio->bi_max_vecs is %d, this is currently not supported.\n", bio->bi_max_vecs);
-			return -EIO;
-		}
+printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio->bi_max_vecs);
 		buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
 	}
 	WDRBD_TRACE("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx sz=%d IRQL=%d buf=0x%p, off&=0x%llx\n", 
@@ -1887,6 +1880,17 @@ static int win_generic_make_request(struct bio *bio)
 	if (!newIrp) {
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
 		return -ENOMEM;
+	}
+
+	for (i=1;i<bio->bi_vcnt;i++) {
+		struct bio_vec *entry = &bio->bi_io_vec[i];
+		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, newIrp);
+printk("entry: %p mdl: %p\n", entry, mdl);
+		if (mdl == NULL) {
+			printk("Could not allocate mdl, giving up.\n");
+			err = -ENOMEM;
+			goto out_free_irp;
+		}
 	}
 
 	pIoNextStackLocation = IoGetNextIrpStackLocation (newIrp);
@@ -1950,7 +1954,7 @@ out_free_irp:
 /* TODO: use after free..is it done by driver? */
 //	ObDereferenceObject(newIrp->Tail.Overlay.Thread);
 
-	return -EIO;
+	return err;
 }
 
 	/* This just ensures that DRBD gets I/O errors in case something
