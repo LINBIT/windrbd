@@ -1714,11 +1714,13 @@ printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", D
 	}
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
+#if 0
 	for (mdl = Irp->MdlAddress; mdl != NULL; mdl = nextMdl) {
 		nextMdl = mdl->Next;
 		MmUnlockPages(mdl);
 		IoFreeMdl(mdl); // This function will also unmap pages.
 	}
+#endif
 	Irp->MdlAddress = NULL;
 
 	ObDereferenceObject(Irp->Tail.Overlay.Thread);
@@ -1892,9 +1894,11 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 			goto out_free_irp;
 		}
 	}
+printk("1\n");
 
 	pIoNextStackLocation = IoGetNextIrpStackLocation (newIrp);
 
+printk("2\n");
 	if( IRP_MJ_WRITE == io) {
 		if(bio->MasterIrpStackFlags) { 
 			//copy original Local I/O's Flags for private_bio instead of drbd's write_ordering, because of performance issue. (2016.03.23)
@@ -1914,11 +1918,14 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 		}
 	}
 
+printk("3\n");
 	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
+printk("4\n");
 
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 	
+printk("5\n");
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP.
 		 */
@@ -1928,17 +1935,21 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
+printk("6\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, newIrp);
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
 
+printk("7\n");
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
 		printk("IoCallDriver status %x, I/O on backing device failed, bio: %p\n", status, bio);
 		return EIO; /* positive value indicating that irp is already
 			     * completed and bio is already freed (bio_endio
 			     * must not be called).
 			     */
+printk("8\n");
 	}
+printk("9\n");
 
 	return 0;
 
