@@ -117,3 +117,4 @@ Version history
 0.3.0 (Dec 20, 2017): Connection from windrbd to Linux DRBD works.
 0.3.1 (Dec 20, 2017): Fixed a blue screen introduced with 0.3.0
 0.3.2 (Dec 21, 2017): Implemented device open and close methods.
+0.3.3 (Dec 26, 2017): Connection from Linux DRBD to windrbd also works.
