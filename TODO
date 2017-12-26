@@ -717,3 +717,4 @@ Done: Right now, windrbd isn't listening for incoming connections.
 	connections work (tested with disabling outgoing connection,
 	the DRBDs eventually connect anyway).
 
+Done: eliminate bio_databuf fields.
