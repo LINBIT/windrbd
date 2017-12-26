@@ -2,52 +2,6 @@ diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
 index f332da2..7ef6dc4 100644
 --- a/drbd/drbd_main.c
 +++ b/drbd/drbd_main.c
-@@ -2126,39 +2126,14 @@ static int _drbd_send_zc_bio(struct drbd_peer_device *peer_device, struct bio *b
- 	DRBD_BIO_VEC_TYPE bvec;
- 	DRBD_ITER_TYPE iter;
- 	bool no_zc = disable_sendpage;
-+	struct page page;
-+	int err;
- 
--	/* e.g. XFS meta- & log-data is in slab pages, which have a
--	 * page_count of 0 and/or have PageSlab() set.
--	 * we cannot use send_page for those, as that does get_page();
--	 * put_page(); and would cause either a VM_BUG directly, or
--	 * __page_cache_release a page that would actually still be referenced
--	 * by someone, leading to some obscure delayed Oops somewhere else. */
--	if (!no_zc)
--		bio_for_each_segment(bvec, bio, iter) {
--			struct page *page = bvec->bv_page;
--
--			if (page_count(page) < 1 || PageSlab(page)) {
--				no_zc = true;
--				break;
--			}
--		}
--
--	if (no_zc) {
--		return _drbd_send_bio(peer_device, bio);
--	} else {
--		struct drbd_connection *connection = peer_device->connection;
--		struct drbd_transport *transport = &connection->transport;
--		struct drbd_transport_ops *tr_ops = transport->ops;
--		int err;
--
--		flush_send_buffer(connection, DATA_STREAM);
--
--		err = tr_ops->send_zc_bio(transport, bio);
--		if (!err)
--			peer_device->send_cnt += DRBD_BIO_BI_SIZE(bio) >> 9;
--
-+	page.addr = bio->bio_databuf;
-+	err = _drbd_no_send_page(peer_device, &page, 0, bio->bi_size, 0);
-+	if (err)
- 		return err;
--	}
-+	return 0;
- }
- 
- static int _drbd_send_zc_ee(struct drbd_peer_device *peer_device,
 @@ -2255,9 +2230,13 @@ int drbd_send_dblock(struct drbd_peer_device *peer_device, struct drbd_request *
  		drbd_csum_bio(peer_device->connection->integrity_tfm, req->master_bio, digest_out);
  
