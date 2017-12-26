@@ -668,6 +668,7 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned i
 {
 	struct bio_vec *bvec = &bio->bi_io_vec[bio->bi_vcnt++];
 		
+		/* TODO: allow this */
 	if (bio->bi_vcnt > 1)
 	{
 		WDRBD_ERROR("DRBD_PANIC: bio->bi_vcn=%d. multi page occured!\n", bio->bi_vcnt);
@@ -1856,16 +1857,12 @@ static int win_generic_make_request(struct bio *bio)
 		}
 			/* TODO: what if sect size != 512? */
 		bio->offset.QuadPart = bio->bi_sector << 9;
-		if (bio->bio_databuf) {
-			buffer = bio->bio_databuf;
-		} else {
-			if (bio->bi_max_vecs > 1) {
-					/* TODO: might happen one day ... */
-				printk(KERN_WARNING "bio->bi_max_vecs is %d, this is currently not supported.\n", bio->bi_max_vecs);
-				return -EIO;
-			}
-			buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
+		if (bio->bi_max_vecs > 1) {
+				/* TODO: might happen one day ... */
+			printk(KERN_WARNING "bio->bi_max_vecs is %d, this is currently not supported.\n", bio->bi_max_vecs);
+			return -EIO;
 		}
+		buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
 	}
 	WDRBD_TRACE("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx sz=%d IRQL=%d buf=0x%p, off&=0x%llx\n", 
 		current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", 

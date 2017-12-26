@@ -281,8 +281,6 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 	bio->bi_io_vec[0].bv_len = MmGetMdlByteCount(mdl);
 	bio->bi_io_vec[0].bv_offset = MmGetMdlByteOffset(mdl);
 
-	bio->bio_databuf = bio->bi_io_vec[0].bv_page->addr;
-//	bio->bio_databuf = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority);
 	bio->bi_end_io = windrbd_bio_finished;
 	bio->pMasterIrp = irp;
 

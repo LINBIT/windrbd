@@ -263,6 +263,8 @@ int DoSplitIo(PVOLUME_EXTENSION VolumeExtension, ULONG io, PIRP upper_pirp, stru
 	struct bio				*bio;
 	unsigned int			nr_pages;
 
+printk("Should not come here.\n");
+
 	nr_pages = (length + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	bio = bio_alloc(GFP_NOIO, nr_pages, '75DW');
 	if (!bio) {
@@ -273,7 +275,7 @@ int DoSplitIo(PVOLUME_EXTENSION VolumeExtension, ULONG io, PIRP upper_pirp, stru
 	bio->split_total_id = split_total_id;
 	bio->split_total_length = split_total_length;
 	bio->splitInfo = splitInfo;
-	bio->bio_databuf = buffer;
+//	bio->bio_databuf = buffer;
 	bio->pMasterIrp = upper_pirp; 
 
 	bio->bi_sector = offset.QuadPart >> 9; 
