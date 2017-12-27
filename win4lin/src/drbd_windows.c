@@ -671,7 +671,7 @@ printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio
 	bvec->bv_len = len;
 	bvec->bv_offset = offset;
 	bio->bi_size += len;
-printk("page: %p bvec->bv_len: %d bvec->bv_offset: %d bio->bi_size: %d\n", page, bvec->bv_len, bvec->bv_offset, bio->bi_size);
+printk("page: %p page->addr: %p bvec->bv_len: %d bvec->bv_offset: %d bio->bi_size: %d\n", page, page->addr, bvec->bv_len, bvec->bv_offset, bio->bi_size);
 
 	return len;
 }
