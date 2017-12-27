@@ -8,7 +8,7 @@ Maybe later: Re-port drbd_transport_tcp.c to windrbd's
 	git diff the original drbd transport_tcp to the version
 	we had before and apply the patches manually.
 
-TODO: Implement multi page I/O
+In progress: Implement multi page I/O
 
 	Required for DRBD sync
 
