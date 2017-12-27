@@ -620,12 +620,6 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
 
-		/* TODO: is this limitation defined? */
-	if (nr_iovecs > 256)
-	{
-		WDRBD_ERROR("DRBD_PANIC: bio_alloc: nr_iovecs too big = %d. check over 1MB.\n", nr_iovecs);
-		BUG();
-	}
 	return bio;
 }
 

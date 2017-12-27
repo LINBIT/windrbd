@@ -681,12 +681,13 @@ struct bio {
 	BIO_END_IO_CALLBACK*	bi_end_io; 
 	void*					bi_private; 
 	unsigned int			bi_max_vecs;    /* max bvl_vecs we can hold */
-	struct bio_vec			bi_io_vec[BIO_MAX_VEC];
 	UCHAR					MasterIrpStackFlags; //Stack Location's Flag
 
 		/* Those are used by win_generic_make_request internally */
 	LARGE_INTEGER offset;
 	IO_STATUS_BLOCK io_stat;
+
+	struct bio_vec			bi_io_vec[0];
 };
 
 struct bio_set {
