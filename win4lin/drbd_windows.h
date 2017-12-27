@@ -1565,7 +1565,4 @@ struct block_device *bdget(dev_t dev);
 #define MINOR(dev)	((unsigned int) ((dev) & MINORMASK))
 #define MKDEV(ma,mi)	(((ma) << MINORBITS) | (mi))
 
-// TODO: what is this really? Needed in drbd_main for some xfs workaround ...
-#define PageSlab(x) 	(0)
-
 #endif // DRBD_WINDOWS_H
