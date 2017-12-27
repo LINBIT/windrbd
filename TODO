@@ -12,6 +12,32 @@ In progress: Implement multi page I/O
 
 	Required for DRBD sync
 
+	Currently fixing some blue screens: on multiple page I/O
+	one issue was fixed (length of first MDL was wrong), now
+	when doing a:
+
+	drbdadm up
+	drbdadm cstate == connected
+	drbdadm down
+
+	we crash (PFL something)
+	when we do
+
+	drbdadm up
+	drbdadm cstate == connected
+	drbdadm detach
+	drbdadm disconnect
+	drbdadm down
+
+	everything works. So disconnecting when we have a backing
+	device is what doesn't work. Also:
+
+	drbdadm up
+	drbdadm cstate == connected
+	drbdadm disconnect
+
+	Crashes on disconnect
+
 TODO: Fix windows shutdown bug.
 --------------------------------------------------------------
 TODO: fix memleak in getting volsize.
