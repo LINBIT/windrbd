@@ -1712,7 +1712,6 @@ printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", D
 	}
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
-#if 0
 	for (mdl = Irp->MdlAddress; mdl != NULL; mdl = nextMdl) {
 		nextMdl = mdl->Next;
 		MmUnlockPages(mdl);
@@ -1722,7 +1721,6 @@ printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", D
 
 	ObDereferenceObject(Irp->Tail.Overlay.Thread);
 	IoFreeIrp(Irp);
-#endif
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
