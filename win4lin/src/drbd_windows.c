@@ -645,6 +645,7 @@ void bio_free(struct bio *bio)
 
 struct bio *bio_clone(struct bio * bio_src, int flag)
 {
+printk("1\n");
     struct bio *bio = bio_alloc(flag, bio_src->bi_max_vecs, '24DW');
 
     if (!bio)
@@ -652,7 +653,9 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
         return NULL;
     }
 
+printk("2\n");
 	memcpy(bio->bi_io_vec, bio_src->bi_io_vec, bio_src->bi_max_vecs * sizeof(struct bio_vec));
+printk("3\n");
 	bio->bi_sector = bio_src->bi_sector;
 	bio->bi_bdev = bio_src->bi_bdev;
 	//bio->bi_flags |= 1 << BIO_CLONED;
@@ -674,6 +677,7 @@ printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio
 	bvec->bv_len = len;
 	bvec->bv_offset = offset;
 	bio->bi_size += len;
+printk("page: %p bvec->bv_len: %d bvec->bv_offset: %d bio->bi_size: %d\n", page, bvec->bv_len, bvec->bv_offset, bio->bi_size);
 
 	return len;
 }
@@ -1837,6 +1841,7 @@ static int win_generic_make_request(struct bio *bio)
 	struct _MDL *mdl, *nextMdl;
 	int i;
 	int err = -EIO;
+	unsigned int first_size;
 	
 		/* TODO: not referenced in here. */
 	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
@@ -1850,6 +1855,7 @@ static int win_generic_make_request(struct bio *bio)
 		io = IRP_MJ_FLUSH_BUFFERS;
 		buffer = NULL;
 		bio->bi_size = 0;
+		first_size = 0;
 		bio->offset.QuadPart = 0;
 	} else {
 		if (bio->bi_rw & WRITE) {
@@ -1861,8 +1867,9 @@ static int win_generic_make_request(struct bio *bio)
 		bio->offset.QuadPart = bio->bi_sector << 9;
 printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio->bi_max_vecs);
 		buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
+		first_size = bio->bi_io_vec[0].bv_len; 
 	}
-	WDRBD_TRACE("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx sz=%d IRQL=%d buf=0x%p, off&=0x%llx\n", 
+	WDRBD_TRACE("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p\n", 
 		current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", 
 		bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer);
 
@@ -1874,7 +1881,7 @@ printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio
 				io,
 				bio->bi_bdev->windows_device,
 				buffer,
-				bio->bi_size,
+				first_size,
 				&bio->offset,
 				&bio->io_stat
 				);
