@@ -38,6 +38,12 @@ In progress: Implement multi page I/O
 
 	Crashes on disconnect
 
+	Update: Reason most likely a buggy implementation of
+	mempool_free() in windrbd. (see drbd_bitmap.c:drbd_bm_endio
+	around line 1074: if that line is commented out, no
+	crash). mempool_free probably should not free the page
+	itself, have reference counting on the page.
+
 TODO: Fix windows shutdown bug.
 --------------------------------------------------------------
 TODO: fix memleak in getting volsize.
