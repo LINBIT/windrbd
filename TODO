@@ -44,6 +44,13 @@ In progress: Implement multi page I/O
 	crash). mempool_free probably should not free the page
 	itself, have reference counting on the page.
 
+	Update: Problem fixed for now. The real problem is the
+	question of who owns the memory pointed to by the MDLs.
+	There seem to be other instances where the DRBD endio
+	routine frees memory and also if we comment out MDL
+	freeing we get a blue screen when syncing (at the end
+	of format h: command).
+
 TODO: Fix windows shutdown bug.
 
 	Most likely this was introduced when implementing the
