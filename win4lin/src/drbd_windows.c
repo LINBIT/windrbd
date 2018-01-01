@@ -634,6 +634,9 @@ void bio_put(struct bio *bio)
 
 void bio_free(struct bio *bio)
 {
+		/* TODO: free the associated IRP and the
+		   MDLs in here instead of in IO completion
+		   routine. */
 	kfree(bio);
 }
 
