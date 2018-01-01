@@ -45,6 +45,11 @@ In progress: Implement multi page I/O
 	itself, have reference counting on the page.
 
 TODO: Fix windows shutdown bug.
+
+	Most likely this was introduced when implementing the
+	cleanup() method.
+
+TODO: check 2 patches using bio_databuf
 --------------------------------------------------------------
 TODO: fix memleak in getting volsize.
 
