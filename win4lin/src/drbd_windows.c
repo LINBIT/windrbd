@@ -1861,6 +1861,7 @@ static int win_generic_make_request(struct bio *bio)
 	}
 
 	if(bio->bi_rw == WRITE_FLUSH) {	// TODO: & WRITE_FLUSH ? plus WRITE_FLUSH is defined as the same as WRITE
+printk("flushing\n");
 		io = IRP_MJ_FLUSH_BUFFERS;
 		buffer = NULL;
 		bio->bi_size = 0;
@@ -1872,11 +1873,11 @@ static int win_generic_make_request(struct bio *bio)
 		} else {
 			io = IRP_MJ_READ;
 		}
+			/* TODO: this might be legal ... */
 		if (bio->bi_vcnt == 0) {
-			printk("Error: bio->bi_vcnt == 0\n");
+			printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
 			return -EIO;
 		}
-			/* TODO: what if sect size != 512? */
 		bio->offset.QuadPart = bio->bi_sector << 9;
 printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio->bi_max_vecs);
 		buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
