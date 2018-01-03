@@ -51,11 +51,11 @@ uses the backing device like a normal Windows block device.
 
 This approach has several advantages:
 
-.) Diskless operation is supported (network only).
-.) Drbdmeta can access internal meta data without special casing offsets
+ * Diskless operation is supported (network only).
+ * Drbdmeta can access internal meta data without special casing offsets
    larger that the DRBD device.
-.) The WinDRBD doesn't need a reboot if it is changed or installed.
-.) drbdcon is not needed.
+ * The WinDRBD doesn't need a reboot if it is changed or installed.
+ * drbdcon is not needed.
 
 Another difference is that DRBD source code is derived directly from
 Linbit's sources (using spatch and patch to patch in WinDRBD specific
@@ -109,12 +109,12 @@ after setting this). See also file INSTALL for more instructions.
 Version history
 ===============
 
-0.1 (Oct 25, 2017): Basic I/O works with separate DRBD device.
-0.2 (Nov 13, 2017): Creation and basic usage of NT filesystem on DRBD 
+ * 0.1 (Oct 25, 2017): Basic I/O works with separate DRBD device.
+ * 0.2 (Nov 13, 2017): Creation and basic usage of NT filesystem on DRBD 
 		    device works.
-0.2.1 (Nov 16, 2017): Patch bootsector to hide NTFS on backing device
+ * 0.2.1 (Nov 16, 2017): Patch bootsector to hide NTFS on backing device
 		    from NTFS driver.
-0.3.0 (Dec 20, 2017): Connection from windrbd to Linux DRBD works.
-0.3.1 (Dec 20, 2017): Fixed a blue screen introduced with 0.3.0
-0.3.2 (Dec 21, 2017): Implemented device open and close methods.
-0.3.3 (Dec 26, 2017): Connection from Linux DRBD to windrbd also works.
+ * 0.3.0 (Dec 20, 2017): Connection from windrbd to Linux DRBD works.
+ * 0.3.1 (Dec 20, 2017): Fixed a blue screen introduced with 0.3.0
+ * 0.3.2 (Dec 21, 2017): Implemented device open and close methods.
+ * 0.3.3 (Dec 26, 2017): Connection from Linux DRBD to windrbd also works.
