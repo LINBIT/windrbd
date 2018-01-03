@@ -544,8 +544,10 @@ printk("free_page: page: %p\n", page);
 if (page != NULL) printk("free_page: page->addr: %p\n", page->addr);
 
 	/* TODO: page == NULL defined? */
+/*
 	kfree(page->addr);
 	kfree(page); 
+*/
 }
 
 void drbd_bp(char *msg)
@@ -557,6 +559,7 @@ __inline void kfree(const void * x)
 {
 	if (x)
 	{
+printk("kfree %p\n", x);
 		ExFreePool((void*)x);
 	}
 }
@@ -565,6 +568,7 @@ __inline void kvfree(const void * x)
 {
 	if (x)
 	{
+printk("kvfree %p\n", x);
 		ExFreePool((void*)x);
 	}
 }
@@ -643,7 +647,8 @@ void bio_free(struct bio *bio)
 		/* TODO: free the associated IRP and the
 		   MDLs in here instead of in IO completion
 		   routine. */
-	kfree(bio);
+printk("not freeing bio %p\n", bio);
+//	kfree(bio);
 }
 
 struct bio *bio_clone(struct bio * bio_src, int flag)
@@ -1866,6 +1871,10 @@ static int win_generic_make_request(struct bio *bio)
 			io = IRP_MJ_WRITE;
 		} else {
 			io = IRP_MJ_READ;
+		}
+		if (bio->bi_vcnt == 0) {
+			printk("Error: bio->bi_vcnt == 0\n");
+			return -EIO;
 		}
 			/* TODO: what if sect size != 512? */
 		bio->offset.QuadPart = bio->bi_sector << 9;
