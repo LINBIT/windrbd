@@ -532,11 +532,17 @@ struct page  *alloc_page(int flag)
 	}
 	RtlZeroMemory(p->addr, PAGE_SIZE);
 
+printk("alloc_page: page: %p\n", p);
+if (p != NULL) printk("alloc_page: page->addr: %p\n", p->addr);
+
 	return p;
 }
 
 void __free_page(struct page *page)
 {
+printk("free_page: page: %p\n", page);
+if (page != NULL) printk("free_page: page->addr: %p\n", page->addr);
+
 	/* TODO: page == NULL defined? */
 	kfree(page->addr);
 	kfree(page); 
@@ -1722,11 +1728,11 @@ printk("karin mdl: %p\n", MmGetMdlVirtualAddress(mdl));
 		MmUnlockPages(mdl);
 		IoFreeMdl(mdl); // This function will also unmap pages.
 	}
-#endif
 	Irp->MdlAddress = NULL;
 
 	ObDereferenceObject(Irp->Tail.Overlay.Thread);
 	IoFreeIrp(Irp);
+#endif
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
