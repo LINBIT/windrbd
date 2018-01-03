@@ -31,10 +31,6 @@
 #include "disp.h"
 #include <linux/mempool.h>
 
-/* TODO: they should be allocated dynamically */
-
-#define BIO_MAX_VEC 256
-
 /* First n sectors are reserved, so that Windows does not treat
    the backing device as formatted (and disallow certain accesses)
    To disable the feature set this to 0 (but this is not recommended).
