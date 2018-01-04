@@ -550,12 +550,14 @@ if (page != NULL) printk("free_page: page->addr: %p\n", page->addr);
 
 static void hack_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status)
 {
+	printk("1\n");
 	struct completion *c = (struct completion*) bio->bi_private;
-
+	printk("2\n");
 	complete(c);
+	printk("3\n");
 }
 
-void hack_alloc_page(void)
+void hack_alloc_page(struct block_device *dev)
 {
 	printk("1\n");
 	struct page *p = alloc_page(0);
@@ -575,7 +577,10 @@ void hack_alloc_page(void)
 	printk("7\n");
 	b->bi_private = &c;
 	printk("7a\n");
+        bio_set_dev(b, dev);
+	printk("7b\n");
 	submit_bio(b);	
+//	hack_endio(b, 0);
 	printk("8\n");
 	wait_for_completion(&c);
 	printk("9\n");
@@ -1808,7 +1813,7 @@ static LONGLONG windrbd_get_volsize(const char *path)
 	}
 	status = ZwClose(h);
 	if (status != STATUS_SUCCESS) {
-		printk(KERN_WARNING "ZwClose failed on %s (%p) for getting volume size, status is %x.\n", path, h, status);
+		printk(KERN_WARNIN3G "ZwClose failed on %s (%p) for getting volume size, status is %x.\n", path, h, status);
 	}
 	return li.Length.QuadPart;
 }
@@ -1886,6 +1891,7 @@ static int win_generic_make_request(struct bio *bio)
 	int err = -EIO;
 	unsigned int first_size;
 	
+#if 0
 		/* TODO: not referenced in here. */
 	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
 
@@ -1893,6 +1899,7 @@ static int win_generic_make_request(struct bio *bio)
 		WDRBD_WARN("win_generic_make_request: request queue is NULL.\n");
 		return -EIO;
 	}
+#endif
 printk("bio->bi_rw is %d(%x)\n", bio->bi_rw, bio->bi_rw);
 
 	if(bio->bi_rw == WRITE_FLUSH) {	// TODO: & WRITE_FLUSH ? plus WRITE_FLUSH is defined as the same as WRITE
@@ -1953,6 +1960,13 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 	}
 printk("1\n");
 
+{ struct _MDL *mdl;
+printk("MdlAddress: %p\n", newIrp->MdlAddress);
+for (mdl=newIrp->MdlAddress; mdl != NULL; mdl = mdl->Next) {
+printk("MDL: %p VAddr: %p Size: %lu(%x) PFN: %p sysaddrsafe: %p\n", mdl, MmGetMdlVirtualAddress(mdl), MmGetMdlByteCount(mdl), MmGetMdlByteCount(mdl), MmGetMdlPfnArray(mdl), MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority));
+}
+}
+
 	pIoNextStackLocation = IoGetNextIrpStackLocation (newIrp);
 
 printk("2\n");
@@ -1993,6 +2007,7 @@ printk("5\n");
 		goto out_free_irp;
 	}
 printk("6\n");
+// status = STATUS_SUCCESS;
 	status = IoCallDriver(bio->bi_bdev->windows_device, newIrp);
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
@@ -2923,6 +2938,8 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
 
+hack_alloc_page(block_device);
+
 	return block_device;
 
 out_get_volsize_error:
@@ -3403,8 +3420,6 @@ struct block_device *bdget(dev_t device_no)
 	struct block_device *block_device;
 	struct _VOLUME_EXTENSION *pvext;
 	UNICODE_STRING sddl;
-
-hack_alloc_page();
 
 	if (minor_to_x_name(&name, minor, 1) < 0) {
 		return NULL;
