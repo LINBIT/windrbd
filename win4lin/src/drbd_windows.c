@@ -711,6 +711,11 @@ void bio_free(struct bio *bio)
 		/* TODO: free the associated IRP and the
 		   MDLs in here instead of in IO completion
 		   routine. */
+		/* TODO: does IoFreeMdl() also free the buffer?
+		   In that case (this is what we see) do not
+		   free the pages in __free_pages(). Do some
+		   research on that topic (with a malloc debugger)
+		 */
 printk("not freeing bio %p\n", bio);
 //	kfree(bio);
 }
