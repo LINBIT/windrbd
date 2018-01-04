@@ -544,11 +544,19 @@ printk("free_page: page: %p\n", page);
 if (page != NULL) printk("free_page: page->addr: %p\n", page->addr);
 
 	/* TODO: page == NULL defined? */
-/*
 	kfree(page->addr);
 	kfree(page); 
-*/
 }
+
+void hack_alloc_page(void)
+{
+	printk("1\n");
+	struct page *p = alloc_page(0);
+	printk("2\n");
+	__free_page(p);
+	printk("3\n");
+}
+
 
 void drbd_bp(char *msg)
 {
@@ -3368,6 +3376,8 @@ struct block_device *bdget(dev_t device_no)
 	struct block_device *block_device;
 	struct _VOLUME_EXTENSION *pvext;
 	UNICODE_STRING sddl;
+
+hack_alloc_page();
 
 	if (minor_to_x_name(&name, minor, 1) < 0) {
 		return NULL;
