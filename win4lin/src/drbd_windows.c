@@ -544,6 +544,7 @@ printk("free_page: page: %p\n", page);
 if (page != NULL) printk("free_page: page->addr: %p\n", page->addr);
 
 	/* TODO: page == NULL defined? */
+// printk("NOT freeing %p\n", page->addr);
 	kfree(page->addr);
 	kfree(page); 
 }
@@ -563,13 +564,18 @@ void hack_alloc_page(struct block_device *dev)
 	struct page *p = alloc_page(0);
 	printk("2\n");
 	struct bio *b = bio_alloc(0, 1, 'XXXX');
-
+	int i;
 	struct completion c;
 	printk("3\n");
 	bio_add_page(b, p, 4096, 0);
 	printk("4\n");
-	bio_set_op_attrs(b, REQ_OP_READ, 0);
+	// bio_set_op_attrs(b, REQ_OP_READ, 0);
+	bio_set_op_attrs(b, REQ_OP_WRITE, 0);
 	printk("5\n");
+	for (i=0;i<4096;i++) {
+		((char*)p->addr)[i] = i;
+	}
+	printk("5a\n");
         b->bi_end_io = hack_endio;
         DRBD_BIO_BI_SECTOR(b) = 1;
 	printk("6\n");
