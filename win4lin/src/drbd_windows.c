@@ -548,13 +548,39 @@ if (page != NULL) printk("free_page: page->addr: %p\n", page->addr);
 	kfree(page); 
 }
 
+static void hack_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status)
+{
+	struct completion *c = (struct completion*) bio->bi_private;
+
+	complete(c);
+}
+
 void hack_alloc_page(void)
 {
 	printk("1\n");
 	struct page *p = alloc_page(0);
 	printk("2\n");
-	__free_page(p);
+	struct bio *b = bio_alloc(0, 1, 'XXXX');
+
+	struct completion c;
 	printk("3\n");
+	bio_add_page(b, p, 4096, 0);
+	printk("4\n");
+	bio_set_op_attrs(b, REQ_OP_READ, 0);
+	printk("5\n");
+        b->bi_end_io = hack_endio;
+        DRBD_BIO_BI_SECTOR(b) = 1;
+	printk("6\n");
+	init_completion(&c);
+	printk("7\n");
+	b->bi_private = &c;
+	printk("7a\n");
+	submit_bio(b);	
+	printk("8\n");
+	wait_for_completion(&c);
+	printk("9\n");
+	__free_page(p);
+	printk("a\n");
 }
 
 
@@ -1867,6 +1893,7 @@ static int win_generic_make_request(struct bio *bio)
 		WDRBD_WARN("win_generic_make_request: request queue is NULL.\n");
 		return -EIO;
 	}
+printk("bio->bi_rw is %d(%x)\n", bio->bi_rw, bio->bi_rw);
 
 	if(bio->bi_rw == WRITE_FLUSH) {	// TODO: & WRITE_FLUSH ? plus WRITE_FLUSH is defined as the same as WRITE
 printk("flushing\n");
