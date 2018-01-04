@@ -994,13 +994,12 @@ VOID drbdFreeDev(PVOLUME_EXTENSION VolumeExtension)
 	if (VolumeExtension->lower_dev->bd_disk)
 		kfree(VolumeExtension->lower_dev->bd_disk->queue);
 	kfree(VolumeExtension->lower_dev->bd_disk);
-		/* TODO: kfree2? */
-	kfree2(VolumeExtension->lower_dev);
+	kfree(VolumeExtension->lower_dev);
 
 	if (VolumeExtension->upper_dev->bd_disk)
 		kfree(VolumeExtension->upper_dev->bd_disk->queue);
 	kfree(VolumeExtension->upper_dev->bd_disk);
-	kfree2(VolumeExtension->upper_dev);
+	kfree(VolumeExtension->upper_dev);
 }
 
 #ifdef _WIN32_DEBUG_OOS

@@ -2180,7 +2180,7 @@ void list_add_tail_rcu(struct list_head *new, struct list_head *head)
 
 void blk_cleanup_queue(struct request_queue *q)
 {
-	kfree2(q);
+	kfree(q);
 }
 
 struct gendisk *alloc_disk(int minors)
@@ -2191,7 +2191,7 @@ struct gendisk *alloc_disk(int minors)
 
 void put_disk(struct gendisk *disk)
 {
-	kfree2(disk);
+	kfree(disk);
 }
 
 void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
@@ -2574,7 +2574,7 @@ printk(KERN_INFO "delete_block_device %p\n", bdev);
 	kfree(bdev->path_to_device.Buffer);
 
 	list_del(&bdev->backing_devices_list);
-	kfree2(bdev);
+	kfree(bdev);
 }
 
 // get device with volume extension in safe, user should put ref when no longer use device.
