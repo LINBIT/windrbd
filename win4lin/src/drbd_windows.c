@@ -516,6 +516,7 @@ void *page_address(const struct page *page)
 
 struct page  *alloc_page(int flag)
 {
+	int i;
 	struct page *p = kmalloc(sizeof(struct page),0, 'D3DW'); 
 	if (!p)	{
 		WDRBD_INFO("alloc_page struct page failed\n");
@@ -524,11 +525,18 @@ struct page  *alloc_page(int flag)
 	RtlZeroMemory(p, sizeof(struct page));
 	
 		/* TODO: is this page aligned? */
-	p->addr = kzalloc(PAGE_SIZE, 0, 'E3DW');
+	p->addr = kzalloc(PAGE_SIZE+16*2, 0, 'E3DW');
 	if (!p->addr)	{
 		kfree(p); 
 		WDRBD_INFO("alloc_page PAGE_SIZE failed\n");
 		return NULL;
+	}
+	p->addr = ((char*)p->addr) + 16;
+	for (i=-16;i<0;i++) {
+		((char*)p->addr)[i] = 0xeb;
+	}
+	for (i=PAGE_SIZE;i<PAGE_SIZE+16;i++) {
+		((char*)p->addr)[i] = 0xeb;
 	}
 	RtlZeroMemory(p->addr, PAGE_SIZE);
 
@@ -540,12 +548,23 @@ if (p != NULL) printk("alloc_page: page->addr: %p\n", p->addr);
 
 void __free_page(struct page *page)
 {
+	int i;
 printk("free_page: page: %p\n", page);
 if (page != NULL) printk("free_page: page->addr: %p\n", page->addr);
 
+	for (i=-16;i<0;i++) {
+		if (((char*)page->addr)[i] != 0xeb) {
+			printk("page->addr[%d] = %x\n", i, (((char*)page->addr)[i]));
+		}
+	}
+	for (i=PAGE_SIZE;i<PAGE_SIZE+16;i++) {
+		if (((char*)page->addr)[i] != 0xeb) {
+			printk("page->addr[%d] = %x\n", i, (((char*)page->addr)[i]));
+		}
+	}
 	/* TODO: page == NULL defined? */
-// printk("NOT freeing %p\n", page->addr);
-	kfree(page->addr);
+printk("NOT freeing %p\n", page->addr);
+//	kfree(((char*)page->addr) - 16);
 	kfree(page); 
 }
 
@@ -1771,7 +1790,6 @@ printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", D
 	}
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
-#if 0
 	for (mdl = Irp->MdlAddress; mdl != NULL; mdl = nextMdl) {
 printk("karin mdl: %p\n", MmGetMdlVirtualAddress(mdl));
 		nextMdl = mdl->Next;
@@ -1782,7 +1800,6 @@ printk("karin mdl: %p\n", MmGetMdlVirtualAddress(mdl));
 
 	ObDereferenceObject(Irp->Tail.Overlay.Thread);
 	IoFreeIrp(Irp);
-#endif
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
