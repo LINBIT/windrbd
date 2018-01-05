@@ -235,7 +235,7 @@ static void windrbd_bio_finished(struct bio * bio, blk_status_t error)
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	} else {
 		printk(KERN_ERR "I/O failed with %d\n", error);
-		irp->IoStatus.Information = 0;  /* TODO: ?? */
+		irp->IoStatus.Information = 0;
 		irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
 	}
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
