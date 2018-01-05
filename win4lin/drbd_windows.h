@@ -649,6 +649,8 @@ struct splitInfo {
 };
 
 struct bio {
+	struct _IRP *bi_irp;
+
 		/* TODO: this still needed? */
 	PIRP 					pMasterIrp;  /* _WIN32: for upper layer's  IRP */
 

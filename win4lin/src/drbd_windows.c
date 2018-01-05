@@ -697,6 +697,29 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	return bio;
 }
 
+void free_mdls_and_irp(struct bio *bio)
+{
+	struct _MDL *mdl, *next_mdl;
+
+	if (bio->bi_irp == NULL) {
+		printk(KERN_WARNING "freeing bio without irp.\n");
+		return;
+	}
+		/* This has to be done before freeing the buffers with
+		 * __free_page(). Else we get a PFN list corrupted (or
+		 * so) BSOD.
+		 */
+	for (mdl = bio->bi_irp->MdlAddress; mdl != NULL; mdl = next_mdl) {
+		next_mdl = mdl->Next;
+		MmUnlockPages(mdl);
+		IoFreeMdl(mdl); // This function will also unmap pages.
+	}
+	bio->bi_irp->MdlAddress = NULL;
+	ObDereferenceObject(bio->bi_irp->Tail.Overlay.Thread);
+
+	IoFreeIrp(bio->bi_irp);
+}
+
 void bio_put(struct bio *bio)
 {
     int cnt;
@@ -708,16 +731,11 @@ void bio_put(struct bio *bio)
 
 void bio_free(struct bio *bio)
 {
-		/* TODO: free the associated IRP and the
-		   MDLs in here instead of in IO completion
-		   routine. */
-		/* TODO: does IoFreeMdl() also free the buffer?
-		   In that case (this is what we see) do not
-		   free the pages in __free_pages(). Do some
-		   research on that topic (with a malloc debugger)
-		 */
-printk("not freeing bio %p\n", bio);
-//	kfree(bio);
+printk("1\n");
+	free_mdls_and_irp(bio);
+printk("2\n");
+	kfree(bio);
+printk("3\n");
 }
 
 struct bio *bio_clone(struct bio * bio_src, int flag)
@@ -1795,17 +1813,6 @@ printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", D
 	}
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
-	for (mdl = Irp->MdlAddress; mdl != NULL; mdl = nextMdl) {
-printk("karin mdl: %p\n", MmGetMdlVirtualAddress(mdl));
-		nextMdl = mdl->Next;
-		MmUnlockPages(mdl);
-		IoFreeMdl(mdl); // This function will also unmap pages.
-	}
-	Irp->MdlAddress = NULL;
-
-	ObDereferenceObject(Irp->Tail.Overlay.Thread);
-	IoFreeIrp(Irp);
-
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 #if 0
@@ -1910,7 +1917,6 @@ static int win_generic_make_request(struct bio *bio)
 {
 	NTSTATUS status;
 
-	struct _IRP *newIrp;
 	void *buffer;
 	ULONG io = 0;
 	PIO_STACK_LOCATION pIoNextStackLocation = NULL;
@@ -1961,7 +1967,7 @@ printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio
 		patch_ntfs_boot_sector(buffer, false);
 	}
 
-	newIrp = IoBuildAsynchronousFsdRequest(
+	bio->bi_irp = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
 				buffer,
@@ -1970,7 +1976,7 @@ printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio
 				&bio->io_stat
 				);
 
-	if (!newIrp) {
+	if (!bio->bi_irp) {
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
 		return -ENOMEM;
 	}
@@ -1978,7 +1984,7 @@ printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio
 
 	for (i=1;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
-		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, newIrp);
+		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irp);
 printk("entry: %p mdl: %p\n", entry, mdl);
 		if (mdl == NULL) {
 			printk("Could not allocate mdl, giving up.\n");
@@ -1989,13 +1995,13 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 printk("1\n");
 
 { struct _MDL *mdl;
-printk("MdlAddress: %p\n", newIrp->MdlAddress);
-for (mdl=newIrp->MdlAddress; mdl != NULL; mdl = mdl->Next) {
+printk("MdlAddress: %p\n", bio->bi_irp->MdlAddress);
+for (mdl=bio->bi_irp->MdlAddress; mdl != NULL; mdl = mdl->Next) {
 printk("MDL: %p VAddr: %p Size: %lu(%x) PFN: %p sysaddrsafe: %p\n", mdl, MmGetMdlVirtualAddress(mdl), MmGetMdlByteCount(mdl), MmGetMdlByteCount(mdl), MmGetMdlPfnArray(mdl), MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority));
 }
 }
 
-	pIoNextStackLocation = IoGetNextIrpStackLocation (newIrp);
+	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irp);
 
 printk("2\n");
 	if( IRP_MJ_WRITE == io) {
@@ -2018,7 +2024,7 @@ printk("2\n");
 	}
 
 printk("3\n");
-	IoSetCompletionRoutine(newIrp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
+	IoSetCompletionRoutine(bio->bi_irp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 printk("4\n");
 
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
@@ -2029,14 +2035,14 @@ printk("5\n");
 		 * in the IRP.
 		 */
 
-	status = ObReferenceObjectByPointer(newIrp->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
+	status = ObReferenceObjectByPointer(bio->bi_irp->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
 printk("6\n");
 // status = STATUS_SUCCESS;
-	status = IoCallDriver(bio->bi_bdev->windows_device, newIrp);
+	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irp);
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
 
@@ -2054,13 +2060,7 @@ printk("9\n");
 	return 0;
 
 out_free_irp:
-	for (mdl = newIrp->MdlAddress; mdl != NULL; mdl = nextMdl) {
-		nextMdl = mdl->Next;
-		MmUnlockPages(mdl);
-		IoFreeMdl(mdl); // This function will also unmap pages.
-	}
-	newIrp->MdlAddress = NULL;
-	IoFreeIrp(newIrp);
+	free_mdls_and_irp(bio);
 
 /* TODO: use after free..is it done by driver? */
 //	ObDereferenceObject(newIrp->Tail.Overlay.Thread);
