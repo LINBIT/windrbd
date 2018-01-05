@@ -609,6 +609,8 @@ void hack_alloc_page(struct block_device *dev)
 	printk("8\n");
 	wait_for_completion(&c);
 	printk("9\n");
+	bio_put(b);
+	printk("9a\n");
 	__free_page(p);
 	printk("a\n");
 }
@@ -1989,6 +1991,7 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 		if (mdl == NULL) {
 			printk("Could not allocate mdl, giving up.\n");
 			err = -ENOMEM;
+				/* TODO: will also dereference thread */
 			goto out_free_irp;
 		}
 	}
@@ -2061,9 +2064,6 @@ printk("9\n");
 
 out_free_irp:
 	free_mdls_and_irp(bio);
-
-/* TODO: use after free..is it done by driver? */
-//	ObDereferenceObject(newIrp->Tail.Overlay.Thread);
 
 	return err;
 }
