@@ -240,11 +240,8 @@ static void windrbd_bio_finished(struct bio * bio, blk_status_t error)
 	}
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 
-/* TODO: ?? we need this */
-//	bio_free(bio);
+	bio_put(bio);
 }
-
-
 
 static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bio)
 {
