@@ -563,8 +563,8 @@ if (page != NULL) printk("free_page: page->addr: %p\n", page->addr);
 		}
 	}
 	/* TODO: page == NULL defined? */
-printk("NOT freeing %p\n", page->addr);
-//	kfree(((char*)page->addr) - 16);
+// printk("NOT freeing %p\n", page->addr);
+	kfree(((char*)page->addr) - 16);
 	kfree(page); 
 }
 
