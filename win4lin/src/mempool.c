@@ -48,9 +48,6 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
                 if (page) {
                         page->addr = ExAllocateFromNPagedLookasideList(&pool->page_addrLS);
                         if(page->addr) {
-printk("karin allocated %p\n", page);
-printk("karin allocated %p\n", page->addr);
-printk("karin pool is %p\n", pool);
                                 return page;
 			}
 
@@ -69,9 +66,7 @@ void mempool_free(void *element, mempool_t *pool)
 
 	if (pool->type == MEMPOOL_PAGE) {
 		struct page* page = element;
-printk("karin would free %p\n", page->addr);
-printk("karin would free %p\n", page);
-printk("karin pool is %p\n", pool);
+
                 ExFreeToNPagedLookasideList (&pool->page_addrLS, page->addr);
                 ExFreeToNPagedLookasideList (&pool->pageLS, page);
 	} else {

@@ -514,9 +514,8 @@ void *page_address(const struct page *page)
 	return page->addr;
 }
 
-struct page  *alloc_page(int flag)
+struct page *alloc_page(int flag)
 {
-	int i;
 	struct page *p = kmalloc(sizeof(struct page),0, 'D3DW'); 
 	if (!p)	{
 		WDRBD_INFO("alloc_page struct page failed\n");
@@ -531,90 +530,17 @@ struct page  *alloc_page(int flag)
 		WDRBD_INFO("alloc_page PAGE_SIZE failed\n");
 		return NULL;
 	}
-	p->addr = ((char*)p->addr) + 16;
-	for (i=-16;i<0;i++) {
-		((char*)p->addr)[i] = 0xeb;
-	}
-	for (i=PAGE_SIZE;i<PAGE_SIZE+16;i++) {
-		((char*)p->addr)[i] = 0xeb;
-	}
 	RtlZeroMemory(p->addr, PAGE_SIZE);
-
-printk("alloc_page: page: %p\n", p);
-if (p != NULL) printk("alloc_page: page->addr: %p\n", p->addr);
 
 	return p;
 }
 
 void __free_page(struct page *page)
 {
-	int i;
-printk("free_page: page: %p\n", page);
-if (page != NULL) printk("free_page: page->addr: %p\n", page->addr);
-
-	for (i=-16;i<0;i++) {
-		if (((char*)page->addr)[i] != 0xeb) {
-			printk("page->addr[%d] = %x\n", i, (((char*)page->addr)[i]));
-		}
-	}
-	for (i=PAGE_SIZE;i<PAGE_SIZE+16;i++) {
-		if (((char*)page->addr)[i] != 0xeb) {
-			printk("page->addr[%d] = %x\n", i, (((char*)page->addr)[i]));
-		}
-	}
 	/* TODO: page == NULL defined? */
-// printk("NOT freeing %p\n", page->addr);
-	kfree(((char*)page->addr) - 16);
+	kfree(page->addr);
 	kfree(page); 
 }
-
-static void hack_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status)
-{
-	printk("1\n");
-	struct completion *c = (struct completion*) bio->bi_private;
-	printk("2\n");
-	complete(c);
-	printk("3\n");
-}
-
-void hack_alloc_page(struct block_device *dev)
-{
-	printk("1\n");
-	struct page *p = alloc_page(0);
-	printk("2\n");
-	struct bio *b = bio_alloc(0, 1, 'XXXX');
-	int i;
-	struct completion c;
-	printk("3\n");
-	bio_add_page(b, p, 4096, 0);
-	printk("4\n");
-	// bio_set_op_attrs(b, REQ_OP_READ, 0);
-	bio_set_op_attrs(b, REQ_OP_WRITE, 0);
-	printk("5\n");
-	for (i=0;i<4096;i++) {
-		((char*)p->addr)[i] = i;
-	}
-	printk("5a\n");
-        b->bi_end_io = hack_endio;
-        DRBD_BIO_BI_SECTOR(b) = 1;
-	printk("6\n");
-	init_completion(&c);
-	printk("7\n");
-	b->bi_private = &c;
-	printk("7a\n");
-        bio_set_dev(b, dev);
-	printk("7b\n");
-	submit_bio(b);	
-//	hack_endio(b, 0);
-	printk("8\n");
-	wait_for_completion(&c);
-	printk("9\n");
-	bio_put(b);
-	printk("9a\n");
-	__free_page(p);
-	printk("a\n");
-}
-
 
 void drbd_bp(char *msg)
 {
@@ -625,7 +551,6 @@ __inline void kfree(const void * x)
 {
 	if (x)
 	{
-printk("kfree %p\n", x);
 		ExFreePool((void*)x);
 	}
 }
@@ -634,7 +559,6 @@ __inline void kvfree(const void * x)
 {
 	if (x)
 	{
-printk("kvfree %p\n", x);
 		ExFreePool((void*)x);
 	}
 }
@@ -733,16 +657,12 @@ void bio_put(struct bio *bio)
 
 void bio_free(struct bio *bio)
 {
-printk("1\n");
 	free_mdls_and_irp(bio);
-printk("2\n");
 	kfree(bio);
-printk("3\n");
 }
 
 struct bio *bio_clone(struct bio * bio_src, int flag)
 {
-printk("1\n");
     struct bio *bio = bio_alloc(flag, bio_src->bi_max_vecs, '24DW');
 
     if (!bio)
@@ -750,9 +670,7 @@ printk("1\n");
         return NULL;
     }
 
-printk("2\n");
 	memcpy(bio->bi_io_vec, bio_src->bi_io_vec, bio_src->bi_max_vecs * sizeof(struct bio_vec));
-printk("3\n");
 	bio->bi_sector = bio_src->bi_sector;
 	bio->bi_bdev = bio_src->bi_bdev;
 	//bio->bi_flags |= 1 << BIO_CLONED;
@@ -767,14 +685,11 @@ printk("3\n");
 int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset)
 {
 	struct bio_vec *bvec = &bio->bi_io_vec[bio->bi_vcnt++];
-
-printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio->bi_max_vecs);
 		
 	bvec->bv_page = page;
 	bvec->bv_len = len;
 	bvec->bv_offset = offset;
 	bio->bi_size += len;
-printk("page: %p page->addr: %p bvec->bv_len: %d bvec->bv_offset: %d bio->bi_size: %d\n", page, page->addr, bvec->bv_len, bvec->bv_offset, bio->bi_size);
 
 	return len;
 }
@@ -1774,7 +1689,6 @@ static inline blk_status_t win_status_to_blk_status(NTSTATUS status)
 
 static void patch_ntfs_boot_sector(char *buffer, bool to_ntfs)
 {
-printk("in patch routine.\n");
 	if (to_ntfs) {
 		if (buffer[3] == 'D' && buffer[4] == 'R' && buffer[5] == 'B' && buffer[6] == 'D') {
 			buffer[3] = 'N';
@@ -1782,7 +1696,6 @@ printk("in patch routine.\n");
 			buffer[5] = 'F';
 			buffer[6] = 'S';
 		}
-printk("patched from DRBD to NTFS\n");
 	} else {
 		if (buffer[3] == 'N' && buffer[4] == 'T' && buffer[5] == 'F' && buffer[6] == 'S') {
 			buffer[3] = 'D';
@@ -1790,7 +1703,6 @@ printk("patched from DRBD to NTFS\n");
 			buffer[5] = 'B';
 			buffer[6] = 'D';
 		}
-printk("patched from NTFS to DRBD\n");
 	}
 }
 
@@ -1817,44 +1729,6 @@ printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", D
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
-#if 0
-static LONGLONG windrbd_get_volsize(const char *path)
-{
-	NTSTATUS status;
-	ANSI_STRING apath;
-	UNICODE_STRING device_name;
-	HANDLE h;
-	OBJECT_ATTRIBUTES attr;
-	IO_STATUS_BLOCK io_status;
-	struct _GET_LENGTH_INFORMATION li;
-
-	RtlInitAnsiString(&apath, path);
-	status = RtlAnsiStringToUnicodeString(&device_name, &apath, TRUE);
-
-	InitializeObjectAttributes(&attr, &device_name, OBJ_KERNEL_HANDLE, NULL, NULL);
-
-	status = ZwCreateFile(&h, FILE_READ_ATTRIBUTES, &attr, &io_status, NULL, FILE_ATTRIBUTE_NORMAL, /* FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE */ 0, FILE_OPEN, 0, NULL, 0);
-	if (status != STATUS_SUCCESS) {
-		printk(KERN_WARNING "Couldn't open %s for getting volume size, status is %x.\n", path, status);
-		return -1;
-	}
-
-	status = ZwDeviceIoControlFile(h, NULL, NULL, NULL, &io_status, IOCTL_DISK_GET_LENGTH_INFO, NULL, 0, &li, sizeof(li));
-	if (status != STATUS_SUCCESS) {
-		printk(KERN_WARNING "ZwDeviceIoControlFile failed on %s for getting volume size, status is %x.\n", path, status);
-		status = ZwClose(h);
-		if (status != STATUS_SUCCESS) {
-			printk(KERN_WARNING "ZwClose failed on %s (%p) for getting volume size, status is %x.\n", path, h, status);
-		}
-		return -1;
-	}
-	status = ZwClose(h);
-	if (status != STATUS_SUCCESS) {
-		printk(KERN_WARNIN3G "ZwClose failed on %s (%p) for getting volume size, status is %x.\n", path, h, status);
-	}
-	return li.Length.QuadPart;
-}
-#endif
 
 static LONGLONG windrbd_get_volsize(struct block_device *dev)
 {
@@ -1927,16 +1801,6 @@ static int win_generic_make_request(struct bio *bio)
 	int err = -EIO;
 	unsigned int first_size;
 	
-#if 0
-		/* TODO: not referenced in here. */
-	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
-
-	if (!q) {
-		WDRBD_WARN("win_generic_make_request: request queue is NULL.\n");
-		return -EIO;
-	}
-#endif
-printk("bio->bi_rw is %d(%x)\n", bio->bi_rw, bio->bi_rw);
 
 	if(bio->bi_rw == WRITE_FLUSH) {	// TODO: & WRITE_FLUSH ? plus WRITE_FLUSH is defined as the same as WRITE
 printk("flushing\n");
@@ -1957,13 +1821,13 @@ printk("flushing\n");
 			return -EIO;
 		}
 		bio->offset.QuadPart = bio->bi_sector << 9;
-printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio->bi_max_vecs);
 		buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
 		first_size = bio->bi_io_vec[0].bv_len; 
 	}
-	WDRBD_TRACE("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p\n", 
+
+	WDRBD_TRACE("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt=%d\n", 
 		current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", 
-		bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer);
+		bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt);
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512) {
 		patch_ntfs_boot_sector(buffer, false);
@@ -1982,7 +1846,6 @@ printk("bio: %p bio->bi_vcnt: %d bio->bi_max_vecs: %d\n", bio, bio->bi_vcnt, bio
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
 		return -ENOMEM;
 	}
-	printk(KERN_INFO "bio->bi_vcnt = %d\n", bio->bi_vcnt);
 
 	for (i=1;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
@@ -1995,18 +1858,8 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 			goto out_free_irp;
 		}
 	}
-printk("1\n");
-
-{ struct _MDL *mdl;
-printk("MdlAddress: %p\n", bio->bi_irp->MdlAddress);
-for (mdl=bio->bi_irp->MdlAddress; mdl != NULL; mdl = mdl->Next) {
-printk("MDL: %p VAddr: %p Size: %lu(%x) PFN: %p sysaddrsafe: %p\n", mdl, MmGetMdlVirtualAddress(mdl), MmGetMdlByteCount(mdl), MmGetMdlByteCount(mdl), MmGetMdlPfnArray(mdl), MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority));
-}
-}
-
 	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irp);
 
-printk("2\n");
 	if( IRP_MJ_WRITE == io) {
 		if(bio->MasterIrpStackFlags) { 
 			//copy original Local I/O's Flags for private_bio instead of drbd's write_ordering, because of performance issue. (2016.03.23)
@@ -2026,14 +1879,11 @@ printk("2\n");
 		}
 	}
 
-printk("3\n");
 	IoSetCompletionRoutine(bio->bi_irp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
-printk("4\n");
 
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
-	
-printk("5\n");
+
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP.
 		 */
@@ -2043,23 +1893,17 @@ printk("5\n");
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
-printk("6\n");
-// status = STATUS_SUCCESS;
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irp);
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
 
-printk("7\n");
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
 		printk("IoCallDriver status %x, I/O on backing device failed, bio: %p\n", status, bio);
 		return EIO; /* positive value indicating that irp is already
 			     * completed and bio is already freed (bio_endio
 			     * must not be called).
 			     */
-printk("8\n");
 	}
-printk("9\n");
-
 	return 0;
 
 out_free_irp:
@@ -2965,8 +2809,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
-
-hack_alloc_page(block_device);
 
 	return block_device;
 

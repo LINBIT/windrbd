@@ -711,7 +711,6 @@ extern void bio_endio(struct bio *bio, int error);
 int generic_make_request(struct bio *bio);
 static inline int submit_bio(struct bio *bio)
 {
-printk("1\n");
 	return generic_make_request(bio);
 }
 #define bio_get(bio)			atomic_inc(&(bio)->bi_cnt) 
