@@ -691,9 +691,18 @@ printk("1\n");
 		 */
 	for (mdl = bio->bi_irp->MdlAddress; mdl != NULL; mdl = next_mdl) {
 printk("freeing mdl %p\n", mdl);
+printk("a\n");
 		next_mdl = mdl->Next;
-		MmUnlockPages(mdl); /* TODO: must not do this when MmBuildMdlForNonPagedPool() is used */
+printk("b X\n");
+		if (mdl->MdlFlags & MDL_PAGES_LOCKED) 
+		{
+printk("b1\n");
+			MmUnlockPages(mdl); /* TODO: must not do this when MmBuildMdlForNonPagedPool() is used */
+printk("b2\n");
+		}
+printk("c\n");
 		IoFreeMdl(mdl); // This function will also unmap pages.
+printk("d\n");
 	}
 printk("2\n");
 	bio->bi_irp->MdlAddress = NULL;
@@ -1905,7 +1914,7 @@ printk("flushing\n");
 	}
 
 printk("MdlAddress (alloced by IoBuildAsynchronousFsdRequest()): %p\n", bio->bi_irp->MdlAddress);
-	MmBuildMdlForNonPagedPool(bio->bi_irp->MdlAddress);
+//	MmBuildMdlForNonPagedPool(bio->bi_irp->MdlAddress);
 
 	for (i=1;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
@@ -1917,14 +1926,14 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 				/* TODO: will also dereference thread */
 			goto out_free_irp;
 		}
-		MmBuildMdlForNonPagedPool(mdl);
+//		MmBuildMdlForNonPagedPool(mdl);
 	}
 
 { struct _MDL *mdl;
 printk("MdlAddress: %p\n", bio->bi_irp->MdlAddress);
 for (mdl=bio->bi_irp->MdlAddress; mdl != NULL; mdl = mdl->Next) {
 printk("MDL: %p\n", mdl);
-printk("VAddr: %p Size: %lu(%x) PFN: %p sysaddrsafe: %p\n", MmGetMdlVirtualAddress(mdl), MmGetMdlByteCount(mdl), MmGetMdlByteCount(mdl), MmGetMdlPfnArray(mdl), MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority));
+// printk("VAddr: %p Size: %lu(%x) PFN: %p sysaddrsafe: %p\n", MmGetMdlVirtualAddress(mdl), MmGetMdlByteCount(mdl), MmGetMdlByteCount(mdl), MmGetMdlPfnArray(mdl), MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority));
 }
 }
 
