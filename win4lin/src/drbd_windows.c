@@ -524,7 +524,8 @@ struct page *alloc_page(int flag)
 	RtlZeroMemory(p, sizeof(struct page));
 	
 		/* TODO: is this page aligned? */
-	p->addr = kzalloc(PAGE_SIZE+16*2, 0, 'E3DW');
+		/* TODO: Alloc this from PagedPool, not from NonpagedPool */
+	p->addr = kzalloc(PAGE_SIZE, 0, 'E3DW');
 	if (!p->addr)	{
 		kfree(p); 
 		WDRBD_INFO("alloc_page PAGE_SIZE failed\n");
@@ -589,6 +590,7 @@ void hack_alloc_page(struct block_device *dev)
 	bio_put(b);
 	printk("9a\n");
 	__free_page(p);
+	printk("9b\n");
 	__free_page(p2);
 	printk("a\n");
 }
@@ -688,6 +690,7 @@ printk("1\n");
 		 * so) BSOD.
 		 */
 	for (mdl = bio->bi_irp->MdlAddress; mdl != NULL; mdl = next_mdl) {
+printk("freeing mdl %p\n", mdl);
 		next_mdl = mdl->Next;
 //		MmUnlockPages(mdl);
 		IoFreeMdl(mdl); // This function will also unmap pages.
