@@ -1893,8 +1893,8 @@ printk("flushing\n");
 	bio->bi_irp = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
-				buffer,
-				first_size,
+				NULL,
+				0,
 				&bio->offset,
 				&bio->io_stat
 				);
@@ -1904,7 +1904,8 @@ printk("flushing\n");
 		return -ENOMEM;
 	}
 
-	for (i=1;i<bio->bi_vcnt;i++) {
+	/* TODO: if io in [READ, WRITE] */
+	for (i=0;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
 		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, FALSE, FALSE, bio->bi_irp);
 printk("entry: %p mdl: %p\n", entry, mdl);
