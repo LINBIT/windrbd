@@ -51,6 +51,13 @@ In progress: Implement multi page I/O
 	freeing we get a blue screen when syncing (at the end
 	of format h: command).
 
+	Update: We still have I/O errors however BSODs are gone.
+	We now check if MDL has MDL_PAGES_LOCKED set (which is
+	only the case for the first entry) before calling
+	MmUnlockPages().
+
+	TO DO is to check where the I/O errors come from.
+
 TODO: Fix windows shutdown bug.
 
 	Most likely this was introduced when implementing the
