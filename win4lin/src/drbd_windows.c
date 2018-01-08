@@ -1893,8 +1893,8 @@ printk("flushing\n");
 	bio->bi_irp = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
-				NULL,
-				0,
+				buffer,
+				first_size,
 				&bio->offset,
 				&bio->io_stat
 				);
@@ -1904,10 +1904,12 @@ printk("flushing\n");
 		return -ENOMEM;
 	}
 
-	/* TODO: if io in [READ, WRITE] */
-	for (i=0;i<bio->bi_vcnt;i++) {
+printk("MdlAddress (alloced by IoBuildAsynchronousFsdRequest()): %p\n", bio->bi_irp->MdlAddress);
+	MmBuildMdlForNonPagedPool(bio->bi_irp->MdlAddress);
+
+	for (i=1;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
-		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, FALSE, FALSE, bio->bi_irp);
+		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irp);
 printk("entry: %p mdl: %p\n", entry, mdl);
 		if (mdl == NULL) {
 			printk("Could not allocate mdl, giving up.\n");
