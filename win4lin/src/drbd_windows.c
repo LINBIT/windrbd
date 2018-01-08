@@ -692,7 +692,7 @@ printk("1\n");
 	for (mdl = bio->bi_irp->MdlAddress; mdl != NULL; mdl = next_mdl) {
 printk("freeing mdl %p\n", mdl);
 		next_mdl = mdl->Next;
-//		MmUnlockPages(mdl);
+		MmUnlockPages(mdl); /* TODO: must not do this when MmBuildMdlForNonPagedPool() is used */
 		IoFreeMdl(mdl); // This function will also unmap pages.
 	}
 printk("2\n");
