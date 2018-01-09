@@ -11,13 +11,3 @@ index 58b67a1..8240781 100644
  	err = _drbd_no_send_page(peer_device, &page, 0, bio->bi_size, 0);
  	if (err)
  		return err;
-@@ -2138,7 +2138,8 @@ static int _drbd_send_zc_bio(struct drbd_peer_device *peer_device, struct bio *b
- 	struct page page;
- 	int err;
- 
--	page.addr = bio->bio_databuf;
-+        page.addr = bio->bi_io_vec[0].bv_page->addr;
-+
- 	err = _drbd_no_send_page(peer_device, &page, 0, bio->bi_size, 0);
- 	if (err)
- 		return err;

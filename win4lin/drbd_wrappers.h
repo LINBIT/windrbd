@@ -179,18 +179,48 @@ static inline int blkdev_put(struct block_device *bdev, fmode_t mode)
 
 #define drbd_bio_uptodate(bio) bio_flagged(bio, BIO_UPTODATE)
 
+typedef u8 blk_status_t;
+#define BLK_STS_OK 0
+#define BLK_STS_NOTSUPP         ((blk_status_t)1)
+#define BLK_STS_MEDIUM          ((blk_status_t)7)
+#define BLK_STS_RESOURCE        ((blk_status_t)9)
+#define BLK_STS_IOERR           ((blk_status_t)10)
+
+static int blk_status_to_errno(blk_status_t status)
+{
+        return  status == BLK_STS_OK ? 0 :
+                status == BLK_STS_RESOURCE ? -ENOMEM :
+                status == BLK_STS_NOTSUPP ? -EOPNOTSUPP :
+                -EIO;
+}
+static inline blk_status_t errno_to_blk_status(int errno)
+{
+        blk_status_t status =
+                errno == 0 ? BLK_STS_OK :
+                errno == -ENOMEM ? BLK_STS_RESOURCE :
+                errno == -EOPNOTSUPP ? BLK_STS_NOTSUPP :
+                BLK_STS_IOERR;
+
+        return status;
+}
 
 typedef void BIO_ENDIO_TYPE;
 #define FAULT_TEST_FLAG     ((ULONG_PTR)0x11223344)
-#define BIO_ENDIO_FN_START
-#define BIO_ENDIO_FN_RETURN     return STATUS_MORE_PROCESSING_REQUIRED
-/* TODO: this should go away */
-#define BIO_ENDIO_ARGS(b,e) (b, e)
+static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
+{
+        bio_endio(bio, blk_status_to_errno(status));
+}
+#define BIO_ENDIO_ARGS(b) (b, int error)
+#define BIO_ENDIO_FN_START      \
+        int status = errno_to_blk_status(error); \
+        int uptodate = bio_flagged(bio, BIO_UPTODATE); \
+        if (!error && !uptodate) { error = -EIO; status = BLK_STS_IOERR; }
+#define BIO_ENDIO_FN_RETURN return
 
 /* bi_end_io handlers */
-extern BIO_ENDIO_TYPE drbd_md_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status);
-extern BIO_ENDIO_TYPE drbd_peer_request_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status);
-extern BIO_ENDIO_TYPE drbd_request_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status);
+extern BIO_ENDIO_TYPE drbd_md_endio BIO_ENDIO_ARGS(struct bio *bio);
+extern BIO_ENDIO_TYPE drbd_peer_request_endio BIO_ENDIO_ARGS(struct bio *bio);
+extern BIO_ENDIO_TYPE drbd_request_endio BIO_ENDIO_ARGS(struct bio *bio);
 
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
@@ -1231,40 +1261,7 @@ static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
         bio_endio(bio);
 }
 #else
-#define BLK_STS_OK 0
-#define BLK_STS_NOTSUPP         ((blk_status_t)1)
-#define BLK_STS_MEDIUM          ((blk_status_t)7)
-#define BLK_STS_RESOURCE        ((blk_status_t)9)
-#define BLK_STS_IOERR           ((blk_status_t)10)
-static int blk_status_to_errno(blk_status_t status)
-{
-        return  status == BLK_STS_OK ? 0 :
-                status == BLK_STS_RESOURCE ? -ENOMEM :
-                status == BLK_STS_NOTSUPP ? -EOPNOTSUPP :
-                -EIO;
-}
-static inline blk_status_t errno_to_blk_status(int errno)
-{
-        blk_status_t status =
-                errno == 0 ? BLK_STS_OK :
-                errno == -ENOMEM ? BLK_STS_RESOURCE :
-                errno == -EOPNOTSUPP ? BLK_STS_NOTSUPP :
-                BLK_STS_IOERR;
 
-        return status;
-}
-#ifdef COMPAT_HAVE_BIO_BI_ERROR
-static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
-{
-        bio->bi_error = blk_status_to_errno(status);
-        bio_endio(bio);
-}
-#else
-static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
-{
-        bio_endio(bio, blk_status_to_errno(status));
-}
-#endif
 #endif
 
 #ifndef COMPAT_HAVE_BIO_CLONE_FAST
@@ -1283,3 +1280,7 @@ static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
        nla_parse_nested(tb, maxtype, nla, policy)
 
 #endif
+
+#define REQ_OP_WRITE_ZEROES (-3u)
+
+#define PageSlab(p) (0)

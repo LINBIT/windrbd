@@ -215,6 +215,8 @@ enum rq_flag_bits {
 #define FMODE_READ				    0x1
 /* file is open for writing */
 #define FMODE_WRITE				    0x2
+/* File is opened with O_NDELAY (only set for block devices) */
+#define FMODE_NDELAY            		    0x40
 
 // from notify.h
 #define NOTIFY_DONE				    0x0000          /* Don't care */
@@ -260,6 +262,7 @@ enum rq_flag_bits {
 #define	EOVERFLOW				75	/* Value too large for defined data type */ // from linux 2.6.32.61
 #define	ESTALE					116	/* Stale NFS file handle */
 #define ECONNABORTED			130 /* Software caused connection abort */ 
+#define ENODATA					61
 
 #define SIGXCPU					100
 #define SIGHUP					101
@@ -635,7 +638,7 @@ struct bio_vec {
 struct bio;
 typedef u8 blk_status_t;
 
-typedef void(BIO_END_IO_CALLBACK)(struct bio *bio, blk_status_t error);
+typedef void(BIO_END_IO_CALLBACK)(struct bio *bio, int error);
 
 
 struct completion {

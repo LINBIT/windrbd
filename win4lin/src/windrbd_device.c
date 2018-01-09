@@ -226,7 +226,7 @@ printk(KERN_INFO "Pretending that cleanup does something.\n");
 	return status;
 }
 
-static void windrbd_bio_finished(struct bio * bio, blk_status_t error)
+static void windrbd_bio_finished(struct bio * bio, int error)
 {
 	PIRP irp = bio->pMasterIrp;
 

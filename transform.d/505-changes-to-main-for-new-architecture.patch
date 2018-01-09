@@ -51,18 +51,6 @@ index 8274e6a..52cf9fa 100644
  
  	init_bdev_info(q->backing_dev_info, drbd_congested, device);
  
-@@ -3658,7 +3686,11 @@ out_no_disk:
- 	blk_cleanup_queue(q);
- out_no_q:
- 	kref_put(&resource->kref, drbd_destroy_resource);
-+	kref_debug_destroy(&device->kref_debug);
- 	kfree(device);
-+out_no_device:
-+	bdput(block_device);
-+
- 	return err;
- }
- 
 @@ -3691,6 +3723,10 @@ void drbd_unregister_device(struct drbd_device *device)
  	destroy_workqueue(device->submit.wq);
  	device->submit.wq = NULL;
