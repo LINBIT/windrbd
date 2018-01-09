@@ -1,0 +1,27 @@
+diff --git a/drbd/drbd_bitmap.c b/drbd/drbd_bitmap.c
+index b675c6f..cbdbb0c 100644
+--- a/drbd/drbd_bitmap.c
++++ b/drbd/drbd_bitmap.c
+@@ -1045,6 +1045,7 @@ static void drbd_bm_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status)
+ 	struct drbd_device *device = ctx->device;
+ 	struct drbd_bitmap *b = device->bitmap;
+ 	unsigned int idx = bm_page_to_idx(bio->bi_io_vec[0].bv_page);
++	struct page *page = NULL;
+ 
+ 	BIO_ENDIO_FN_START;
+ 
+@@ -1070,10 +1071,13 @@ static void drbd_bm_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status)
+ 	bm_page_unlock_io(device, idx);
+ 
+ 	if (ctx->flags & BM_AIO_COPY_PAGES)
+-		mempool_free(bio->bi_io_vec[0].bv_page, drbd_md_io_page_pool);
++		page = bio->bi_io_vec[0].bv_page;
+ 
+ 	bio_put(bio);
+ 
++	if (page)
++		mempool_free(page, drbd_md_io_page_pool);
++
+ 	if (atomic_dec_and_test(&ctx->in_flight)) {
+ 		ctx->done = 1;
+ 		wake_up(&device->misc_wait);
