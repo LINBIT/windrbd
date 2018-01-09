@@ -1,3 +1,12 @@
+First things first
+==================
+
+Clone this repository with 
+
+	git clone --recursive <url>
+
+else you get an incomplete checkout.
+
 What is WinDRBD?
 ================
 
@@ -76,11 +85,12 @@ is drive letters and GUID's are used. Examples:
 We recommend not to assign drive letters to backing devices, since 
 that easily may confuse the user.
 
-New with version 0.2: The backing device is shifted by one sector,
+New with version 0.3: The backing device is patched
 so that Microsoft Windows does not recognize the underlying block
 device as NTFS formatted (it would place some restrictions of how
 to use this backing device, then). Backing devices are just RAW
-devices to Windows from now on.
+devices to Windows from now on. This is implemented for NTFS but
+not yet for FAT file systems.
 
 Version 0.1 and 0.2 only: The drive letter for the DRBD device (the one 
 you will be working with) is derived from the DRBD minor, where
