@@ -1,0 +1,38 @@
+From f8f81590375dff0226b5cc0f9fc70e7b40db3429 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 9 Jan 2018 16:34:33 +0100
+Subject: [PATCH 2/2] Do not call generic_end_io_acct
+
+It is not implemented.
+---
+ drbd/drbd_req.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
+index bc40d0a..94dbb6d 100644
+--- a/drbd/drbd_req.c
++++ b/drbd/drbd_req.c
+@@ -45,16 +45,20 @@ static inline unsigned long ktime_to_jiffies(ktime_t kt)
+ /* Update disk stats at start of I/O request */
+ static void _drbd_start_io_acct(struct drbd_device *device, struct drbd_request *req)
+ {
++#if 0
+ 	generic_start_io_acct(device->rq_queue, bio_data_dir(req->master_bio), req->i.size >> 9,
+ 			      &device->vdisk->part0);
++#endif
+ }
+ 
+ /* Update disk stats when completing request upwards */
+ static void _drbd_end_io_acct(struct drbd_device *device, struct drbd_request *req)
+ {
++#if 0
+ 	generic_end_io_acct(device->rq_queue, bio_data_dir(req->master_bio),
+ 			    &device->vdisk->part0,
+ 			    ktime_to_jiffies(req->start_kt));
++#endif
+ }
+ #else
+ static void _drbd_start_io_acct(struct drbd_device *device, struct drbd_request *req)
+-- 
+2.8.0-rc4
+

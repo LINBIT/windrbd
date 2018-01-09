@@ -1,0 +1,26 @@
+From 22ff0ccc9fedf364a6e00e789ef203201a5d9306 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 9 Jan 2018 15:50:12 +0100
+Subject: [PATCH 1/2] Handle out no device (kmalloc error)
+
+---
+ drbd/drbd_main.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 72cd858..150f35c 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3728,6 +3728,9 @@ out_no_q:
+ 	kref_put(&resource->kref, drbd_destroy_resource);
+ 	kref_debug_destroy(&device->kref_debug);
+ 	kfree(device);
++out_no_device:
++	bdput(block_device);
++
+ 	return err;
+ }
+ 
+-- 
+2.8.0-rc4
+
