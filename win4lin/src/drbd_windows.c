@@ -524,7 +524,6 @@ struct page *alloc_page(int flag)
 	RtlZeroMemory(p, sizeof(struct page));
 	
 		/* TODO: is this page aligned? */
-		/* TODO: Alloc this from PagedPool, not from NonpagedPool */
 	p->addr = kzalloc(PAGE_SIZE, 0, 'E3DW');
 	if (!p->addr)	{
 		kfree(p); 
@@ -541,58 +540,6 @@ void __free_page(struct page *page)
 	/* TODO: page == NULL defined? */
 	kfree(page->addr);
 	kfree(page); 
-}
-
-static void hack_endio BIO_ENDIO_ARGS(struct bio *bio, blk_status_t status)
-{
-	printk("1\n");
-	struct completion *c = (struct completion*) bio->bi_private;
-	printk("2\n");
-	complete(c);
-	printk("3\n");
-}
-
-void hack_alloc_page(struct block_device *dev)
-{
-	printk("1\n");
-	struct page *p = alloc_page(0);
-	struct page *p2 = alloc_page(0);
-	printk("2\n");
-	struct bio *b = bio_alloc(0, 2, 'XXXX');
-	int i;
-	struct completion c;
-	printk("3\n");
-	bio_add_page(b, p, 4096, 0);
-	bio_add_page(b, p2, 4096, 0);
-	printk("4\n");
-	// bio_set_op_attrs(b, REQ_OP_READ, 0);
-	bio_set_op_attrs(b, REQ_OP_WRITE, 0);
-	printk("5\n");
-	for (i=0;i<4096;i++) {
-		((char*)p->addr)[i] = i;
-		((char*)p2->addr)[i] = i;
-	}
-	printk("5a\n");
-	b->bi_end_io = hack_endio;
-	DRBD_BIO_BI_SECTOR(b) = 1;
-	printk("6\n");
-	init_completion(&c);
-	printk("7\n");
-	b->bi_private = &c;
-	printk("7a\n");
-	bio_set_dev(b, dev);
-	printk("7b\n");
-	submit_bio(b);	
-//	hack_endio(b, 0);
-	printk("8\n");
-	wait_for_completion(&c);
-	printk("9\n");
-	bio_put(b);
-	printk("9a\n");
-	__free_page(p);
-	printk("9b\n");
-	__free_page(p2);
-	printk("a\n");
 }
 
 void drbd_bp(char *msg)
@@ -684,31 +631,21 @@ void free_mdls_and_irp(struct bio *bio)
 		printk(KERN_WARNING "freeing bio without irp.\n");
 		return;
 	}
-printk("1\n");
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
 		 */
 	for (mdl = bio->bi_irp->MdlAddress; mdl != NULL; mdl = next_mdl) {
-printk("freeing mdl %p\n", mdl);
-printk("a\n");
 		next_mdl = mdl->Next;
-printk("b X\n");
 		if (mdl->MdlFlags & MDL_PAGES_LOCKED) 
 		{
-printk("b1\n");
 			MmUnlockPages(mdl); /* TODO: must not do this when MmBuildMdlForNonPagedPool() is used */
-printk("b2\n");
 		}
-printk("c\n");
 		IoFreeMdl(mdl); // This function will also unmap pages.
-printk("d\n");
 	}
-printk("2\n");
 	bio->bi_irp->MdlAddress = NULL;
 	ObDereferenceObject(bio->bi_irp->Tail.Overlay.Thread);
 
-printk("3\n");
 	IoFreeIrp(bio->bi_irp);
 }
 
@@ -1913,7 +1850,6 @@ printk("flushing\n");
 		return -ENOMEM;
 	}
 
-printk("MdlAddress (alloced by IoBuildAsynchronousFsdRequest()): %p\n", bio->bi_irp->MdlAddress);
 //	MmBuildMdlForNonPagedPool(bio->bi_irp->MdlAddress);
 
 	for (i=1;i<bio->bi_vcnt;i++) {
@@ -1929,19 +1865,8 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 //		MmBuildMdlForNonPagedPool(mdl);
 	}
 
-{ struct _MDL *mdl;
-printk("MdlAddress: %p\n", bio->bi_irp->MdlAddress);
-for (mdl=bio->bi_irp->MdlAddress; mdl != NULL; mdl = mdl->Next) {
-printk("MDL: %p\n", mdl);
-// printk("VAddr: %p Size: %lu(%x) PFN: %p sysaddrsafe: %p\n", MmGetMdlVirtualAddress(mdl), MmGetMdlByteCount(mdl), MmGetMdlByteCount(mdl), MmGetMdlPfnArray(mdl), MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority));
-}
-}
-
-printk("1\n");
-
 	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irp);
 
-printk("2\n");
 	if( IRP_MJ_WRITE == io) {
 		if(bio->MasterIrpStackFlags) { 
 			//copy original Local I/O's Flags for private_bio instead of drbd's write_ordering, because of performance issue. (2016.03.23)
@@ -1961,9 +1886,7 @@ printk("2\n");
 		}
 	}
 
-printk("3\n");
 	IoSetCompletionRoutine(bio->bi_irp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
-printk("4\n");
 
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
@@ -1972,17 +1895,14 @@ printk("4\n");
 		 * in the IRP.
 		 */
 
-printk("5\n");
 	status = ObReferenceObjectByPointer(bio->bi_irp->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
-printk("6\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irp);
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
-printk("7\n");
 
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
 		printk("IoCallDriver status %x, I/O on backing device failed, bio: %p\n", status, bio);
@@ -1991,7 +1911,6 @@ printk("7\n");
 			     * must not be called).
 			     */
 	}
-printk("8\n");
 	return 0;
 
 out_free_irp:
@@ -2897,8 +2816,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
-
-hack_alloc_page(block_device);
 
 	return block_device;
 
