@@ -58,6 +58,9 @@ In progress: Implement multi page I/O
 
 	TO DO is to check where the I/O errors come from.
 
+	Update: New blue screen page fault in non paged area
+	(when waiting before connecting)
+
 TODO: Fix windows shutdown bug.
 
 	Most likely this was introduced when implementing the
