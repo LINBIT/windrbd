@@ -1863,6 +1863,7 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 			goto out_free_irp;
 		}
 	/* TODO: lock those pages */
+		MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
 //		MmBuildMdlForNonPagedPool(mdl);
 	}
 
