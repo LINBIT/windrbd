@@ -59,7 +59,9 @@ In progress: Implement multi page I/O
 	TO DO is to check where the I/O errors come from.
 
 	Update: New blue screen page fault in non paged area
-	(when waiting before connecting)
+	(when waiting before connecting) Update: this is probably
+	fixed by locking all the pages into memory. Observe
+	and reopen this if it happens again.
 
 TODO: Fix windows shutdown bug.
 
