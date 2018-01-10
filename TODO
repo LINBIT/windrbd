@@ -1,4 +1,4 @@
-WinDRBD-next:
+WinDRBD-next: beta for selected customers
 
 Maybe later: Re-port drbd_transport_tcp.c to windrbd's
 	drbd_transport_wtcp.c.
@@ -64,8 +64,6 @@ TODO: Fix windows shutdown bug.
 	cleanup() method.
 
 TODO: check 2 patches using bio_databuf
---------------------------------------------------------------
-TODO: fix memleak in getting volsize.
 
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
@@ -78,11 +76,18 @@ TODO: allow user to pass name of symbolic link created
 	files for UNIX and Windows) and integrate upstream
 	changes.
 
+TODO: fix memleak in getting volsize.
+
 TODO: Throw away lots of Mantech code.
 
 TODO: Release backing device:
 	drbdadm up / drbdadm down / format f:
 
+TODO: Test other file systems (FAT, FAT32, ...)
+
+TODO: Test with Windows 10 (we have to do that anyway some day)
+
+--------------------------------------------------------------
 TODO: Inform windows about new drive.
 	So that explorer opens.
 
@@ -98,14 +103,12 @@ TODO: read error: Volume dismounted
 
 TODO: Understand what windows means by mounting / dismounting.
 
-TODO: Test other file systems (FAT, FAT32, ...)
+TODO: cleanup, rebase and merge drbd-utils
 
 ----------------------------------------------------------------------
 
 TODO: errnos should match linux error codes
 	(so that errno cmd line tool works).
-
-TODO: Test with Windows 10 (we have to do that anyway some day)
 
 TODO: check out mantech wdrbd and see if it works (and why)
 
@@ -165,11 +168,6 @@ TODO: Make drbd service stoppable
 	Update: with the new architecture that should be possible
 	one day.
 
-TODO: Have sshd on Windows and work remotely
-	Would be convenient, however setup is a little bit
-	complicated ...
-	This is a nice to have.
-
 TODO: fix the macro redefinition problems in drbd_windows.c
 	For now we have to copy the function prototypes from MSDN.
 	Not good style.
@@ -177,7 +175,7 @@ TODO: fix the macro redefinition problems in drbd_windows.c
 	Update: check if the prototypes are still needed.
 	Update: we probably reject this.
 
-TODO: Later: RCU needs change
+In progress: Later: RCU needs change
 	At least call_rcu now calls the function. I don't think
 	that it is a good idea to port the linked list thing to
 	windows, we want to stay thin..
@@ -185,6 +183,10 @@ TODO: Later: RCU needs change
 	Update: talk to phil about current solution (just call
 	the function). I don't think that it is a good idea to
 	mimic the original intended behaviour in Windows.
+
+	Update: We now call the cleanup / on update function 
+	in the call_rcu() function, which makes the thing work.
+	Double check if that works as expected.
 
 TODO: The functions enclosed by _WIN32_MVFL (see win4lin/src/util.c) are
 	not referenced anywhere in the code. I assume that they never have been
@@ -769,3 +771,9 @@ Done: Right now, windrbd isn't listening for incoming connections.
 	the DRBDs eventually connect anyway).
 
 Done: eliminate bio_databuf fields.
+
+Rejected: Have sshd on Windows and work remotely
+	Would be convenient, however setup is a little bit
+	complicated ...
+	This is a nice to have.
+
