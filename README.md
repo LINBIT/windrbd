@@ -79,7 +79,7 @@ are specified as you would expect it under Microsoft Windows, that
 is drive letters and GUID's are used. Examples:
 
 	disk "F:";
-# or:
+	# or:
 	disk "0b098289-8295-11e7-bddb-0800274272c4";
 
 We recommend not to assign drive letters to backing devices, since 

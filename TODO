@@ -2,6 +2,8 @@ WinDRBD-next: beta for selected customers
 
 TODO: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
 
+TODO: get cygwin chmod working.
+
 Maybe later: Re-port drbd_transport_tcp.c to windrbd's
 	drbd_transport_wtcp.c.
 	Update: currently it seems that the problem is
@@ -83,6 +85,11 @@ TODO: allow user to pass name of symbolic link created
 	files for UNIX and Windows) and integrate upstream
 	changes.
 
+In Progress: Port agruen's test suite to cygwin.
+	exxe is running. Ask phil about how to install it.
+	Depends on chmod working (else cannot install
+	opensshd).
+
 TODO: fix memleak in getting volsize.
 
 TODO: Throw away lots of Mantech code.
@@ -117,8 +124,6 @@ TODO: check out drbd-utils from github and see if that works.
 ----------------------------------------------------------------------
 
 TODO: check out mantech wdrbd and see if it works (and why)
-
-TODO: Port agruen's test suite to cygwin.
 
 TODO: How is sync done? 
 	Data appears delayed on backing device (about 10 - 20 
