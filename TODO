@@ -1,5 +1,7 @@
 WinDRBD-next: beta for selected customers
 
+TODO: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
+
 Maybe later: Re-port drbd_transport_tcp.c to windrbd's
 	drbd_transport_wtcp.c.
 	Update: currently it seems that the problem is
@@ -113,9 +115,6 @@ TODO: cleanup, rebase and merge drbd-utils
 TODO: check out drbd-utils from github and see if that works.
 	(once it is pushed)
 ----------------------------------------------------------------------
-
-TODO: errnos should match linux error codes
-	(so that errno cmd line tool works).
 
 TODO: check out mantech wdrbd and see if it works (and why)
 
@@ -783,4 +782,7 @@ Rejected: Have sshd on Windows and work remotely
 	Would be convenient, however setup is a little bit
 	complicated ...
 	This is a nice to have.
+
+Done: errnos should match linux error codes
+	(so that errno cmd line tool works).
 

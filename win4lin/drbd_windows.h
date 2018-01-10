@@ -226,42 +226,44 @@ enum rq_flag_bits {
 
 #define KERNEL_VERSION(_x, _y, _z)	0
 
-#define EINVAL					1
-#define EOPNOTSUPP				2
-#define ENOMEM					3
-#define ENOENT					4
-#define EMEDIUMTYPE				5
-#define EROFS					6
-#define	E2BIG					7	/* Argument list too long */    // from linux 2.6.32.61
-#define MSG_NOSIGNAL			8
-#define ETIMEDOUT				9
-#define EBUSY					10
-#define	EAGAIN					11	/* Try again */ // from linux 2.6.32.61
-#define ENOBUFS					12
-#define ENODEV					13
-#define EWOULDBLOCK				14
-#define EINTR					15
-#define ENOSPC					16
+/* Those match now the Linux values. Use errno utility to convert number
+ * to symbol (or symbol to number).
+ */
+
+#define EINVAL					22
+#define EOPNOTSUPP				95
+#define ENOMEM					12
+#define ENOENT					2
+#define EMEDIUMTYPE				124
+#define EROFS					30
+#define	E2BIG					7
+#define ETIMEDOUT				110
+#define EBUSY					16
+#define	EAGAIN					11
+#define ENOBUFS					105
+#define ENODEV					19
+#define EWOULDBLOCK				11
+#define EINTR					4
+#define ENOSPC					28
 #define ECONNRESET				17
-#define ERESTARTSYS				18
-#define EIO					    5 //19
-#define ENOMSG					20
-#define EEXIST					21
-#define EPERM					22
-#define EMSGSIZE				23
-#define ESRCH					24
-#define ERANGE					25	
-#define EINPROGRESS				26	
-#define ECONNREFUSED			27	
-#define ENETUNREACH				28
-#define EHOSTDOWN				29
-#define EHOSTUNREACH			30
-#define EBADR					31
-#define EADDRINUSE              32
-#define EINVALADDR              33	// DW-1272 : STATUS_INVALID_ADDRESS_COMPONENT
-#define	EOVERFLOW				75	/* Value too large for defined data type */ // from linux 2.6.32.61
-#define	ESTALE					116	/* Stale NFS file handle */
-#define ECONNABORTED			130 /* Software caused connection abort */ 
+#define ERESTARTSYS				512
+#define EIO					5
+#define ENOMSG					42
+#define EEXIST					17
+#define EPERM					1
+#define EMSGSIZE				90
+#define ESRCH					3
+#define ERANGE					34
+#define EINPROGRESS				115
+#define ECONNREFUSED				111
+#define ENETUNREACH				101
+#define EHOSTDOWN				112
+#define EHOSTUNREACH				113
+#define EBADR					53
+#define EADDRINUSE             			98
+#define	EOVERFLOW				75
+#define	ESTALE					11
+#define ECONNABORTED				103
 #define ENODATA					61
 
 #define SIGXCPU					100
@@ -271,6 +273,7 @@ enum rq_flag_bits {
 #define MAX_ERRNO				4095
 #define IS_ERR_VALUE(_x)		((_x) >= (unsigned long) -MAX_ERRNO)
 
+#define MSG_NOSIGNAL			8
 
 #define READ					0
 #define WRITE					1
