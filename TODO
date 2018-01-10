@@ -105,6 +105,8 @@ TODO: Understand what windows means by mounting / dismounting.
 
 TODO: cleanup, rebase and merge drbd-utils
 
+TODO: check out drbd-utils from github and see if that works.
+	(once it is pushed)
 ----------------------------------------------------------------------
 
 TODO: errnos should match linux error codes

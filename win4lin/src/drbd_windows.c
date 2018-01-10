@@ -1862,6 +1862,7 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 				/* TODO: will also dereference thread */
 			goto out_free_irp;
 		}
+	/* TODO: lock those pages */
 //		MmBuildMdlForNonPagedPool(mdl);
 	}
 
