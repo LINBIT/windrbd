@@ -230,3 +230,57 @@ TEST(win_drbd, do_write_read)
 	CloseHandle(h);
 }
 
+TEST(win_drbd, do_write_read_whole_disk)
+{
+	HANDLE h = do_open_device();
+	DWORD bytes_read, bytes_written;
+	BOOL ret;
+	int err;
+	char buf[512], buf2[512];
+	unsigned int i;
+	DWORD px;
+	unsigned int sector;
+
+	if (!p.force) {
+	        char c;
+
+		fprintf(stderr, "This test will *DESTROY* the first sectors of the underlying backing device.\n");
+		fprintf(stderr, "Please type y<enter> if you wish to do this.\n");
+		c = getchar();
+		if (c != 'y') {
+			fprintf(stderr, "Write test not done.\n");
+			return;
+		}
+	}
+
+	for (sector=0; sector<p.expected_size / 512; sector++) {
+		for (i=0;i<sizeof(buf);i++)
+			buf[i] = i;
+		*(int*)buf = sector;
+
+		printf("Sector is %d\n", sector);
+
+		ret = WriteFile(h, buf, sizeof(buf), &bytes_written,  NULL);
+		err = GetLastError();
+
+		EXPECT_EQ(err, ERROR_SUCCESS);
+		EXPECT_NE(ret, 0);
+		EXPECT_EQ(bytes_written, sizeof(buf));
+
+		px = SetFilePointer(h, 512*sector, NULL, FILE_BEGIN);
+		EXPECT_EQ(px, 512*sector);
+
+		ret = ReadFile(h, buf2, sizeof(buf2), &bytes_read,  NULL);
+		err = GetLastError();
+
+		EXPECT_EQ(err, ERROR_SUCCESS);
+		EXPECT_NE(ret, 0);
+		EXPECT_EQ(bytes_read, sizeof(buf2));
+
+/*		for (i=0;i<10;i++)
+			EXPECT_EQ(buf[i], buf2[i]); */
+	}
+
+	CloseHandle(h);
+}
+
