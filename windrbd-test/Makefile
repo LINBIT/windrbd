@@ -12,7 +12,7 @@ $(PROG): $(OBJS)
 	g++ $(OBJS) -o $(PROG) -L/usr/local/lib -lgtest
 
 test: all
-	./windrbd-test.exe --drive $(DRIVE) --expected-size $(SIZE)
+	./windrbd-test.exe --drive $(DRIVE) --expected-size $(SIZE) --force
 
 install: all
 	cp $(PROG) /usr/local/bin

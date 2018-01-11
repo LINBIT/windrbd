@@ -58,7 +58,13 @@ TODO: Cannot mount NTFS after sync.
 TODO: write should fail when Secondary
 
 TODO: make write_whole_disk test work.
+	Only fails when connected. Works when primary and disconnected.
+
+	Update: stalls at sector 73924 when primary and disconnected.
+
 --------------------------------------------------------------
+TODO: I/O seems to be rather slow even when being unconnected (and primary)
+
 TODO: fix memleak in getting volsize.
 
 TODO: make ssh to Windows box work
@@ -114,6 +120,9 @@ TODO: have windrbd-test execute drbdadm as needed.
 TODO: test if loading drbd driver later (not at boot) works.
 
 -----------------------------------------------------------------------
+
+TODO: Nice to have: Cygwin should have /dev/drbd<n> mapped to
+	\\Device\\Drbd<n>
 
 TODO: have a make depend target
 	Or at least header file dependencies.
