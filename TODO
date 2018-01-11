@@ -1,77 +1,16 @@
 WinDRBD-next: beta for selected customers
 
 TODO: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
+	Update: didn't observe lately (with 0.3.7) but I am
+	pretty sure it is still in there.
 
-TODO: get cygwin chmod working.
-
-Maybe later: Re-port drbd_transport_tcp.c to windrbd's
-	drbd_transport_wtcp.c.
-	Update: currently it seems that the problem is
-	somewhere else. 
-	However we need those updates. Best way would be to
-	git diff the original drbd transport_tcp to the version
-	we had before and apply the patches manually.
-
-In progress: Implement multi page I/O
-
-	Required for DRBD sync
-
-	Currently fixing some blue screens: on multiple page I/O
-	one issue was fixed (length of first MDL was wrong), now
-	when doing a:
-
-	drbdadm up
-	drbdadm cstate == connected
-	drbdadm down
-
-	we crash (PFL something)
-	when we do
-
-	drbdadm up
-	drbdadm cstate == connected
-	drbdadm detach
-	drbdadm disconnect
-	drbdadm down
-
-	everything works. So disconnecting when we have a backing
-	device is what doesn't work. Also:
-
-	drbdadm up
-	drbdadm cstate == connected
-	drbdadm disconnect
-
-	Crashes on disconnect
-
-	Update: Reason most likely a buggy implementation of
-	mempool_free() in windrbd. (see drbd_bitmap.c:drbd_bm_endio
-	around line 1074: if that line is commented out, no
-	crash). mempool_free probably should not free the page
-	itself, have reference counting on the page.
-
-	Update: Problem fixed for now. The real problem is the
-	question of who owns the memory pointed to by the MDLs.
-	There seem to be other instances where the DRBD endio
-	routine frees memory and also if we comment out MDL
-	freeing we get a blue screen when syncing (at the end
-	of format h: command).
-
-	Update: We still have I/O errors however BSODs are gone.
-	We now check if MDL has MDL_PAGES_LOCKED set (which is
-	only the case for the first entry) before calling
-	MmUnlockPages().
-
-	TO DO is to check where the I/O errors come from.
+TODO: BSOD sometimes when syncing
 
 	Update: New blue screen page fault in non paged area
 	(when waiting before connecting) Update: this is probably
 	fixed by locking all the pages into memory. Observe
 	and reopen this if it happens again. Update: happened
 	again.
-
-	Jan 11 15:25:13 192.168.56.101  U14:24:54.369|0131bb50 __drbd_chk_io_error_ <3>drbd w0/17 minor 5, ds(Failed), dvflag(0x2c): Local IO failed in __req_mod. Detaching...
-
-	Update: fixed. Was a wrong bi_vcnt in irp_to_bio (windrbd
-	toplevel device object (H:)).
 
 	Update: the page fault in non paged area BSOD reappeared
 	(while Syncing).
@@ -80,8 +19,6 @@ TODO: Fix windows shutdown bug.
 
 	Most likely this was introduced when implementing the
 	cleanup() method.
-
-TODO: check 2 patches using bio_databuf
 
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
@@ -94,13 +31,6 @@ TODO: allow user to pass name of symbolic link created
 	files for UNIX and Windows) and integrate upstream
 	changes.
 
-In Progress: Port agruen's test suite to cygwin.
-	exxe is running. Ask phil about how to install it.
-	Depends on chmod working (else cannot install
-	opensshd).
-
-TODO: fix memleak in getting volsize.
-
 TODO: Throw away lots of Mantech code.
 
 TODO: Release backing device:
@@ -110,7 +40,39 @@ TODO: Test other file systems (FAT, FAT32, ...)
 
 TODO: Test with Windows 10 (we have to do that anyway some day)
 
+TODO: Cannot mount NTFS after sync.
+
+	johannes@johannes-VirtualBox:~/Linbit/tmp$ sudo mount /dev/drbd26 -t ntfs mnt/
+	ntfs_mst_post_read_fixup_warn: magic: 0x00000000  size: 1024   usa_ofs: 0  usa_count: 65535: Invalid argument
+	Record 0 has no FILE magic (0x0)
+	Failed to load $MFT: Input/output error
+	Failed to mount '/dev/drbd26': Input/output error
+	NTFS is either inconsistent, or there is a hardware fault, or it's a
+	SoftRAID/FakeRAID hardware. In the first case run chkdsk /f on Windows
+	then reboot into Windows twice. The usage of the /f parameter is very
+	important! If the device is a SoftRAID/FakeRAID then first activate
+	it and mount a different device under the /dev/mapper/ directory, (e.g.
+	/dev/mapper/nvidia_eahaabcc1). Please see the 'dmraid' documentation
+	for more details.
+
 --------------------------------------------------------------
+TODO: fix memleak in getting volsize.
+
+In Progress: Port agruen's test suite to cygwin.
+	exxe is running. Ask phil about how to install it.
+	Depends on chmod working (else cannot install
+	opensshd).
+
+TODO: check 2 patches using bio_databuf
+
+Maybe later: Re-port drbd_transport_tcp.c to windrbd's
+	drbd_transport_wtcp.c.
+	Update: currently it seems that the problem is
+	somewhere else. 
+	However we need those updates. Best way would be to
+	git diff the original drbd transport_tcp to the version
+	we had before and apply the patches manually.
+
 TODO: Inform windows about new drive.
 	So that explorer opens.
 
@@ -799,4 +761,61 @@ Rejected: Have sshd on Windows and work remotely
 
 Done: errnos should match linux error codes
 	(so that errno cmd line tool works).
+
+Done: get cygwin chmod working.
+
+Done: Implement multi page I/O
+
+	Required for DRBD sync
+
+	Currently fixing some blue screens: on multiple page I/O
+	one issue was fixed (length of first MDL was wrong), now
+	when doing a:
+
+	drbdadm up
+	drbdadm cstate == connected
+	drbdadm down
+
+	we crash (PFL something)
+	when we do
+
+	drbdadm up
+	drbdadm cstate == connected
+	drbdadm detach
+	drbdadm disconnect
+	drbdadm down
+
+	everything works. So disconnecting when we have a backing
+	device is what doesn't work. Also:
+
+	drbdadm up
+	drbdadm cstate == connected
+	drbdadm disconnect
+
+	Crashes on disconnect
+
+	Update: Reason most likely a buggy implementation of
+	mempool_free() in windrbd. (see drbd_bitmap.c:drbd_bm_endio
+	around line 1074: if that line is commented out, no
+	crash). mempool_free probably should not free the page
+	itself, have reference counting on the page.
+
+	Update: Problem fixed for now. The real problem is the
+	question of who owns the memory pointed to by the MDLs.
+	There seem to be other instances where the DRBD endio
+	routine frees memory and also if we comment out MDL
+	freeing we get a blue screen when syncing (at the end
+	of format h: command).
+
+	Update: We still have I/O errors however BSODs are gone.
+	We now check if MDL has MDL_PAGES_LOCKED set (which is
+	only the case for the first entry) before calling
+	MmUnlockPages().
+
+	TO DO is to check where the I/O errors come from.
+
+	Jan 11 15:25:13 192.168.56.101  U14:24:54.369|0131bb50 __drbd_chk_io_error_ <3>drbd w0/17 minor 5, ds(Failed), dvflag(0x2c): Local IO failed in __req_mod. Detaching...
+
+	Update: fixed. Was a wrong bi_vcnt in irp_to_bio (windrbd
+	toplevel device object (H:)).
 
