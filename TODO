@@ -65,9 +65,16 @@ In progress: Implement multi page I/O
 	Update: New blue screen page fault in non paged area
 	(when waiting before connecting) Update: this is probably
 	fixed by locking all the pages into memory. Observe
-	and reopen this if it happens again.
+	and reopen this if it happens again. Update: happened
+	again.
 
 	Jan 11 15:25:13 192.168.56.101  U14:24:54.369|0131bb50 __drbd_chk_io_error_ <3>drbd w0/17 minor 5, ds(Failed), dvflag(0x2c): Local IO failed in __req_mod. Detaching...
+
+	Update: fixed. Was a wrong bi_vcnt in irp_to_bio (windrbd
+	toplevel device object (H:)).
+
+	Update: the page fault in non paged area BSOD reappeared
+	(while Syncing).
 
 TODO: Fix windows shutdown bug.
 

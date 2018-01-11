@@ -245,6 +245,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 
 static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bio)
 {
+	/* TODO: use bio_alloc(), bio_add_page and the like */
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct _MDL *mdl = irp->MdlAddress;
 
@@ -263,11 +264,11 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 	bio->bi_sector = (s->Parameters.Read.ByteOffset.QuadPart) / dev->bd_block_size + WINDRBD_SECTOR_SHIFT;
 	bio->bi_bdev = dev;
 	bio->bi_max_vecs = 1;
-	bio->bi_vcnt = 0;  /* just for now .. */
+	bio->bi_vcnt = 1;
 
 	/* TODO: later have more than one .. */
 	if (mdl->Next != NULL) {
-		printk("not implemented: have more than one mdl\n");
+		printk(KERN_ERR "not implemented: have more than one mdl. Dropping additional mdl data.\n");
 	}
 	bio->bi_io_vec[0].bv_page = kmalloc(sizeof(struct page), 0, 'DRBD');
 	if (bio->bi_io_vec[0].bv_page == NULL) {
