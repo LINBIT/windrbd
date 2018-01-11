@@ -620,6 +620,7 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
 
+printk(KERN_DEBUG "bio: %p\n", bio);
 	return bio;
 }
 
@@ -694,6 +695,7 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned i
 	bvec->bv_offset = offset;
 	bio->bi_size += len;
 
+printk(KERN_DEBUG "bio: %p page: %p page->addr: %p\n", bio, page, page->addr);
 	return len;
 }
 
@@ -1820,9 +1822,11 @@ printk("flushing\n");
 			io = IRP_MJ_READ;
 		}
 			/* TODO: this might be legal ... */
+			/* update: was a wrong value in windrbd device
+			   (see windrbd_device.c). */
 		if (bio->bi_vcnt == 0) {
 			printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
-			return 0;
+			return -EIO;
 		}
 		bio->offset.QuadPart = bio->bi_sector << 9;
 		buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 

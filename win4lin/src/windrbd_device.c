@@ -327,7 +327,7 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	obj->MajorFunction[IRP_MJ_DEVICE_CONTROL] = windrbd_device_control;
 	obj->MajorFunction[IRP_MJ_READ] = windrbd_io;
 	obj->MajorFunction[IRP_MJ_WRITE] = windrbd_io;
-/*	obj->MajorFunction[IRP_MJ_CREATE] = windrbd_create;
-	obj->MajorFunction[IRP_MJ_CLOSE] = windrbd_close; */
+	obj->MajorFunction[IRP_MJ_CREATE] = windrbd_create;
+	obj->MajorFunction[IRP_MJ_CLOSE] = windrbd_close;
 	obj->MajorFunction[IRP_MJ_CLEANUP] = windrbd_cleanup;
 }
