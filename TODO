@@ -55,8 +55,13 @@ TODO: Cannot mount NTFS after sync.
 	/dev/mapper/nvidia_eahaabcc1). Please see the 'dmraid' documentation
 	for more details.
 
+TODO: write should fail when Secondary
+
+TODO: make write_whole_disk test work.
 --------------------------------------------------------------
 TODO: fix memleak in getting volsize.
+
+TODO: make ssh to Windows box work
 
 In Progress: Port agruen's test suite to cygwin.
 	exxe is running. Ask phil about how to install it.
