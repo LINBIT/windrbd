@@ -1804,6 +1804,7 @@ static int win_generic_make_request(struct bio *bio)
 	int err = -EIO;
 	unsigned int first_size;
 	
+	printk(KERN_INFO "bio->bi_rw = %d WRITE_FLUSH = %d\n", bio->bi_rw, WRITE_FLUSH);
 
 	if(bio->bi_rw == WRITE_FLUSH) {	// TODO: & WRITE_FLUSH ? plus WRITE_FLUSH is defined as the same as WRITE
 printk("flushing\n");
@@ -1821,7 +1822,7 @@ printk("flushing\n");
 			/* TODO: this might be legal ... */
 		if (bio->bi_vcnt == 0) {
 			printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
-			return -EIO;
+			return 0;
 		}
 		bio->offset.QuadPart = bio->bi_sector << 9;
 		buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
