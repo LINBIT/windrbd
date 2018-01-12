@@ -620,7 +620,9 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
 
+/*
 printk(KERN_DEBUG "bio: %p\n", bio);
+*/
 	return bio;
 }
 
@@ -629,7 +631,10 @@ void free_mdls_and_irp(struct bio *bio)
 	struct _MDL *mdl, *next_mdl;
 
 	if (bio->bi_irp == NULL) {
-		printk(KERN_WARNING "freeing bio without irp.\n");
+/* TODO: this happens quite frequently while it shouldn't */
+/*
+printk(KERN_WARNING "freeing bio without irp.\n");
+*/
 		return;
 	}
 		/* This has to be done before freeing the buffers with
@@ -640,7 +645,7 @@ void free_mdls_and_irp(struct bio *bio)
 		next_mdl = mdl->Next;
 		if (mdl->MdlFlags & MDL_PAGES_LOCKED) 
 		{
-			MmUnlockPages(mdl); /* TODO: must not do this when MmBuildMdlForNonPagedPool() is used */
+			MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 		}
 		IoFreeMdl(mdl); // This function will also unmap pages.
 	}
@@ -1718,7 +1723,9 @@ NTSTATUS DrbdIoCompletion(
 )
 {
 /* TODO: Device object is NULL here. Fix that in case we need it one day. */
+/*
 printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context);
+*/
 	struct bio *bio = Context;
 	PMDL mdl, nextMdl;
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
@@ -1806,7 +1813,9 @@ static int win_generic_make_request(struct bio *bio)
 	int err = -EIO;
 	unsigned int first_size;
 	
-	printk(KERN_INFO "bio->bi_rw = %d WRITE_FLUSH = %d\n", bio->bi_rw, WRITE_FLUSH);
+/*
+printk(KERN_INFO "bio->bi_rw = %d WRITE_FLUSH = %d\n", bio->bi_rw, WRITE_FLUSH);
+*/
 
 	if ((bio->bi_rw & WRITE_FLUSH) == WRITE_FLUSH) {
 printk("flushing\n");
