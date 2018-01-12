@@ -6,10 +6,6 @@ TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
 
 TODO: fix memleak in getting volsize.
 
-In Progress: Throw away lots of Mantech code.
-	Mostly done.
-	Get rid of PVOLUME_EXTENSION as well.
-
 TODO: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
 	Update: didn't observe lately (with 0.3.7) but I am
 	pretty sure it is still in there.
@@ -76,14 +72,25 @@ TODO: Cannot mount NTFS after sync.
 
 	Strange: DRBD does not sync while all bits are set in bitmap.
 
+TODO: test no I/O when disk is failed.
+
+--------------------------------------------------------------
+
+TODO: Review patches if they are still needed.
+	Especially kmalloc(,, Tag) which is not neccessary.
+
+TODO: kzalloc should call kmalloc not the other way around.
+
+TODO: Do not have a root device.
+	It is useless.
+
 TODO: when losing Quorum go into read only mode.
 	(quorum means that our connected network contains > n/2 
 	(n .. total number of names) valid nodes.
 	This is currently being implemented in DRBD
 
-TODO: test no I/O when disk is failed.
-
---------------------------------------------------------------
+TODO: Device FFFFFA80038B03F0 accessed after it was deleted.
+	After formatting and drbdadm down
 
 TODO: clean up the registry
 	Except for logging IP we don't need anything IMHO
@@ -886,4 +893,9 @@ Done: all I/O should fail when Secondary
 	Important.
 	Done. format h: however does not display an error (but
 	this is a format problem, the data on disk is unchanged).
+
+Done: Throw away lots of Mantech code.
+	Mostly done.
+	Get rid of PVOLUME_EXTENSION as well.
+	Done
 
