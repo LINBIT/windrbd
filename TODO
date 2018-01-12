@@ -4,9 +4,6 @@ TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
 	after doing some experiments. drbdadm down / up solved the
 	problem.
 
-TODO: all I/O should fail when Secondary
-	Important.
-
 TODO: fix memleak in getting volsize.
 
 In Progress: Throw away lots of Mantech code.
@@ -32,6 +29,7 @@ TODO: Fix windows shutdown bug.
 	cleanup() method.
 
 	Update: Not observed lately.
+	Update: just reappeared again.
 
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
@@ -870,4 +868,9 @@ Done: make write_whole_disk test work.
 
 	Update: works when unconnected (except the aforementioned stall,
 	which we cannot reproduce at the moment).
+
+Done: all I/O should fail when Secondary
+	Important.
+	Done. format h: however does not display an error (but
+	this is a format problem, the data on disk is unchanged).
 
