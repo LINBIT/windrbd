@@ -290,12 +290,18 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct block_device *dev = device->DeviceExtension;
+	NTSTATUS status = STATUS_INVALID_DEVICE_REQUEST;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
-		return STATUS_INVALID_DEVICE_REQUEST;
+		goto exit;
 	}
 	struct bio *bio;
-	NTSTATUS status = STATUS_SUCCESS;
+
+	if (dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
+printk("I/O request while not primary.\n");
+		goto exit;
+	}
+	/* TODO: dev->drbd_device->disk_state[NOW] <= D_FAILED */
 
 	bio = bio_alloc(GFP_NOIO, 1, 'DBRD');
 	if (bio == NULL) {
@@ -304,7 +310,6 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	if (irp_to_bio(irp, dev, bio) < 0) {
 		bio_free(bio);
-		status = STATUS_INVALID_DEVICE_REQUEST;
 		goto exit;
 	}
         IoMarkIrpPending(irp);
