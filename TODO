@@ -85,6 +85,9 @@ TODO: test no I/O when disk is failed.
 
 --------------------------------------------------------------
 
+TODO: clean up the registry
+	Except for logging IP we don't need anything IMHO
+
 TODO: check what _WIN32_DEBUG_OOS is really doing.
 	Dumping bitmap?
 
