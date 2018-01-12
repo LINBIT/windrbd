@@ -19,7 +19,6 @@
 
 #include <ntddk.h>
 #include "disp.h"
-#include "proto.h"
 #include "drbd_int.h"
 #include "drbd_polymorph_printk.h"
 

@@ -25,12 +25,12 @@
 #include "drbd_wingenl.h"	
 #include "disp.h"
 #include "mvolmsg.h"
-#include "proto.h"
 
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
 
 #ifdef _WIN32_WPP
+karin
 #include "disp.tmh"
 #endif
 
@@ -66,18 +66,15 @@ UINT32 translate_drbd_error(int i)
 #endif
 
 NTSTATUS
-mvolRunIrpSynchronous(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
-
-NTSTATUS
 DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 {
-    NTSTATUS            		status;
-    PDEVICE_OBJECT      		deviceObject;
-    PROOT_EXTENSION			RootExtension = NULL;
-    UNICODE_STRING      		nameUnicode, linkUnicode;
-    ULONG				i;
-    static volatile LONG      IsEngineStart = FALSE;
-    int ret;
+	NTSTATUS            		status;
+	PDEVICE_OBJECT      		deviceObject;
+	PROOT_EXTENSION			RootExtension = NULL;
+	UNICODE_STRING      		nameUnicode, linkUnicode;
+	ULONG				i;
+	static volatile LONG      IsEngineStart = FALSE;
+	int ret;
 
 	// init logging system first
 	initialize_syslog_printk();
@@ -115,7 +112,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	RootExtension = deviceObject->DeviceExtension;
 	RootExtension->Magic = MVOL_MAGIC;
-	RootExtension->Head = NULL;
 	RootExtension->Count = 0;
 	ucsdup(&RootExtension->RegistryPath, RegistryPath->Buffer, RegistryPath->Length);
 	RootExtension->PhysicalDeviceNameLength = nameUnicode.Length;
@@ -184,107 +180,6 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 	UNREFERENCED_PARAMETER(DriverObject);
 	
 	printk("Unloading windrbd driver.\n");
-}
-
-static
-NTSTATUS _QueryVolumeNameRegistry(
-	_In_ PMOUNTDEV_UNIQUE_ID pmuid,
-	_Out_ PVOLUME_EXTENSION pvext)
-{
-	OBJECT_ATTRIBUTES           attributes;
-	PKEY_FULL_INFORMATION       keyInfo = NULL;
-	PKEY_VALUE_FULL_INFORMATION valueInfo = NULL;
-	size_t                      valueInfoSize = sizeof(KEY_VALUE_FULL_INFORMATION) + 1024 + sizeof(ULONGLONG);
-
-	UNICODE_STRING mm_reg_path;
-	NTSTATUS status;
-	HANDLE hKey = NULL;
-	ULONG size;
-	int Count;
-
-	PAGED_CODE();
-
-	RtlUnicodeStringInit(&mm_reg_path, L"\\Registry\\Machine\\System\\MountedDevices");
-
-	InitializeObjectAttributes(&attributes,
-		&mm_reg_path,
-		OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-		NULL,
-		NULL);
-
-	status = ZwOpenKey(&hKey, KEY_READ, &attributes);
-	if (!NT_SUCCESS(status)) {
-		goto cleanup;
-	}
-
-	status = ZwQueryKey(hKey, KeyFullInformation, NULL, 0, &size);
-	if (status != STATUS_BUFFER_TOO_SMALL) {
-		ASSERT(!NT_SUCCESS(status));
-		goto cleanup;
-	}
-
-	keyInfo = (PKEY_FULL_INFORMATION)ExAllocatePoolWithTag(PagedPool, size, '00DW');
-	if (!keyInfo) {
-		status = STATUS_INSUFFICIENT_RESOURCES;
-		goto cleanup;
-	}
-
-	status = ZwQueryKey(hKey, KeyFullInformation, keyInfo, size, &size);
-	if (!NT_SUCCESS(status)) {
-		goto cleanup;
-	}
-
-	Count = keyInfo->Values;
-
-	valueInfo = (PKEY_VALUE_FULL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoSize, '10DW');
-	if (!valueInfo) {
-		status = STATUS_INSUFFICIENT_RESOURCES;
-		goto cleanup;
-	}
-
-	for (int i = 0; i < Count; ++i) {
-		RtlZeroMemory(valueInfo, valueInfoSize);
-
-		status = ZwEnumerateValueKey(hKey, i, KeyValueFullInformation, valueInfo, valueInfoSize, &size);
-		if (!NT_SUCCESS(status)) {
-			if (status == STATUS_BUFFER_OVERFLOW || status == STATUS_BUFFER_TOO_SMALL) {
-				goto cleanup;
-			}
-		}
-
-		if (REG_BINARY == valueInfo->Type && pmuid->UniqueIdLength == valueInfo->DataLength) {
-			PWCHAR key = ExAllocatePoolWithTag(PagedPool, valueInfo->NameLength + sizeof(WCHAR), '20DW');
-			if (!key) {
-				goto cleanup;
-			}
-			RtlZeroMemory(key, valueInfo->NameLength + sizeof(WCHAR));
-			RtlCopyMemory(key, valueInfo->Name, valueInfo->NameLength);
-
-			if (((SIZE_T)pmuid->UniqueIdLength == RtlCompareMemory(pmuid->UniqueId, (PCHAR)valueInfo + valueInfo->DataOffset, pmuid->UniqueIdLength))) {
-				if (wcsstr(key, L"\\DosDevices\\")) {
-					ucsdup(&pvext->MountPoint, L" :", 4);
-					pvext->MountPoint.Buffer[0] = toupper((CHAR)(*(key + wcslen(L"\\DosDevices\\"))));
-					pvext->VolIndex = pvext->MountPoint.Buffer[0] - 'C';
-				}
-				else if (wcsstr(key, L"\\??\\Volume")) {	// registry's style
-					RtlUnicodeStringInit(&pvext->VolumeGuid, key);
-					key = NULL;
-				}
-			}
-
-			kfree(key);
-		}
-	}
-
-cleanup:
-	kfree(keyInfo);
-	kfree(valueInfo);
-
-	if (hKey) {
-		ZwClose(hKey);
-	}
-
-	return status;
 }
 
 /* TODO: This should not be called. Change type of driver so that

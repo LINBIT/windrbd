@@ -26,7 +26,6 @@
 
 #include "drbd_windows.h"
 #include "drbd_wingenl.h"
-#include "proto.h"
 #include "drbd_int.h"
 
 NTSTATUS

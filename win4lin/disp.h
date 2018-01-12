@@ -22,7 +22,7 @@
 
 #include <mountdev.h>
 #include "mvolse.h"
-#include "windows/ioctl.h"
+#include <windows/ioctl.h>
 
 #define	MVOL_IOCOMPLETE_REQ(Irp, status, size)		\
 {							\
@@ -61,45 +61,11 @@ enum {
 	VOLUME_TYPE_META,		// for meta volume.
 };
 
-typedef struct _VOLUME_EXTENSION
-{
-	struct _VOLUME_EXTENSION	*Next;
-
-	PDEVICE_OBJECT		DeviceObject;		// volume deviceobject
-	PDEVICE_OBJECT		PhysicalDeviceObject;
-	PDEVICE_OBJECT		TargetDeviceObject;
-#ifdef _WIN32_MVFL
-    HANDLE              LockHandle;
-#endif
-	ULONG_PTR			Flag;
-	ULONG				Magic;
-	BOOLEAN				Active;
-
-	IO_REMOVE_LOCK		RemoveLock; // RemoveLock for Block Device 
-	KMUTEX				CountMutex;
-
-	ULONG				IrpCount;
-
-	USHORT				PhysicalDeviceNameLength;
-	WCHAR				PhysicalDeviceName[MAXDEVICENAME];
-	ULONG				VolIndex;
-	//CHAR				Letter;
-	UNICODE_STRING		MountPoint;	// IoVolumeDeviceToDosName()
-	UNICODE_STRING		VolumeGuid;
-
-#ifdef MULTI_WRITE_HOOKER_THREADS
-	ULONG				Rr; // MULTI_WRITE_HOOKER_THREADS
-	MVOL_THREAD			WorkThreadInfo[5]; 
-#else
-	MVOL_THREAD			WorkThreadInfo;
-#endif
-	struct block_device	*upper_dev;
-	struct block_device	*lower_dev;
-} VOLUME_EXTENSION, *PVOLUME_EXTENSION;
-
+	/* TODO: this should go away also one day. Must figure out
+	   what the root device should do one day. Maybe it is
+	   not needed at all. */
 typedef struct _ROOT_EXTENSION
 {
-    PVOLUME_EXTENSION   Head;
     ULONG				Magic;
     USHORT				Count;
     USHORT				PhysicalDeviceNameLength;
@@ -121,6 +87,5 @@ extern KSPIN_LOCK			mvolVolumeLock;
 extern KMUTEX				mvolMutex;
 extern KMUTEX				eventlogMutex;
 
-NTSTATUS GetDriverLetterByDeviceName(IN PUNICODE_STRING pDeviceName, OUT PUNICODE_STRING pDriveLetter);
 extern int drbd_init(void);
 #endif MVF_DISP_H

@@ -1,0 +1,47 @@
+From e60a78ff16960c4d3f8258b0cc349741137d6ec0 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 12 Jan 2018 19:20:19 +0100
+Subject: [PATCH] Removed PVOLUME_EXTENSION from drbd_main.c
+
+---
+ drbd/drbd_main.c | 21 ++++++---------------
+ 1 file changed, 6 insertions(+), 15 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 150f35c..4978a72 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -5294,24 +5294,15 @@ _drbd_insert_fault(struct drbd_device *device, unsigned int type)
+ }
+ #endif
+ 
+-void drbd_cleanup_by_win_shutdown(PVOLUME_EXTENSION VolumeExtension)
++void drbd_cleanup_by_win_shutdown(void)
+ {
+-    int i;
++printk("1\n");
+ 
+-    struct device_list {
+-        struct drbd_device *device;
+-        struct list_head list;
+-    } device_list;
+-    struct device_list *device_list_p, *p;
+-
+-    WDRBD_INFO("Shutdown: IRQL(%d) device(%ws) Name(%wZ)\n",
+-        KeGetCurrentIrql(), VolumeExtension->PhysicalDeviceName, &VolumeExtension->MountPoint);
+-
+-    if (retry.wq)
+-        destroy_workqueue(retry.wq);
+-    retry.wq = NULL;
++	if (retry.wq)
++		destroy_workqueue(retry.wq);
++	retry.wq = NULL;
+ 
+-    gbShutdown = TRUE;
++	gbShutdown = TRUE;
+ }
+ 
+ module_init(drbd_init)
+-- 
+2.7.4
+
