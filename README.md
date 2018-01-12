@@ -131,4 +131,5 @@ Version history
  * 0.3.4 (Jan 05, 2018): Fixed several blue screens.
  * 0.3.5 (Jan 09, 2018): Fixed additional blue screen when connected.
  * 0.3.6 (Jan 09, 2018): Updated version of DRBD this is based on.
- * 0.3.7 (Jan 11, 2018): Local I/O works again
+ * 0.3.7 (Jan 11, 2018): Local I/O works again.
+ * 0.4.0 (Jan 12, 2018): Removed lots of legacy code.
