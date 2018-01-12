@@ -7,7 +7,8 @@
 struct params p = {
 	drive: "H:",
 	expected_size: 52387840,
-	force: false
+	force: false,
+	dump_file: NULL
 };
 
 HANDLE do_open_device(void)
@@ -296,5 +297,55 @@ TEST(win_drbd, do_write_read_whole_disk)
 	}
 
 	CloseHandle(h);
+}
+
+TEST(win_drbd, copy_disk_to_file)
+{
+	HANDLE h = do_open_device();
+	HANDLE f;
+	DWORD bytes_read, bytes_written;
+	BOOL ret;
+	int err;
+	char buf[512];
+	unsigned int i;
+	unsigned int sector;
+
+	if (p.dump_file == NULL) {
+		printf("Skipping copy_disk_to_file test, please use --dump-file <fname> to enable this\n");
+		return;
+	}
+
+	printf("Opening file %s for writing.\n", p.dump_file);
+
+	f = CreateFile(p.dump_file, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+	err = GetLastError();
+
+	ASSERT_EQ(err, ERROR_SUCCESS);
+	ASSERT_NE(f, INVALID_HANDLE_VALUE);
+
+	for (sector=0; sector<p.expected_size / 512; sector++) {
+		for (i=0;i<sizeof(buf);i++)
+			buf[i] = i;
+		*(int*)buf = sector;
+
+		printf("Sector is %d\n", sector);
+
+		ret = ReadFile(h, buf, sizeof(buf), &bytes_read,  NULL);
+		err = GetLastError();
+
+		EXPECT_EQ(err, ERROR_SUCCESS);
+		EXPECT_NE(ret, 0);
+		EXPECT_EQ(bytes_read, sizeof(buf));
+
+		ret = WriteFile(f, buf, sizeof(buf), &bytes_written,  NULL);
+		err = GetLastError();
+
+		EXPECT_EQ(err, ERROR_SUCCESS);
+		EXPECT_NE(ret, 0);
+		EXPECT_EQ(bytes_written, sizeof(buf));
+	}
+
+	CloseHandle(h);
+	CloseHandle(f);
 }
 

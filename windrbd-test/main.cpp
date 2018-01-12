@@ -14,6 +14,7 @@ int main(int argc, char** argv)
 			{"drive", required_argument, 0, 'd'},
 			{"expected-size", required_argument, 0, 's'},
 			{"force", no_argument, 0, 'f'},
+			{"dump-file", required_argument, 0, 'o'},
 			{0, 0, 0, 0}
 		};
 		c = getopt_long(argc, argv, "d:s:f", my_options, &option_index);
@@ -33,6 +34,10 @@ int main(int argc, char** argv)
 			break;
 		case 'f':
 			p.force = true;
+			break;
+		case 'o':
+			printf("Dumpfile is %s\n", optarg);
+			p.dump_file = optarg;
 			break;
 		default:
 			printf("unknown argument: %c\n", c);
