@@ -2448,33 +2448,6 @@ void stop_mnt_monitor()
 	atomic_set(&g_monitor_mnt_working, FALSE);
 }
 
-/** TODO: should go away 
- * @return
- *	volume size per byte
- */
-LONGLONG get_targetdev_volsize(PVOLUME_EXTENSION VolumeExtension)
-{
-	LARGE_INTEGER	volumeSize;
-	NTSTATUS	status;
-
-	if (VolumeExtension == NULL) {
-		WDRBD_ERROR("VolumeExtension is null!\n");
-		return (LONGLONG)0;
-	}
-	if (VolumeExtension->TargetDeviceObject == NULL)
-	{
-		WDRBD_ERROR("TargetDeviceObject is null!\n");
-		return (LONGLONG)0;
-	}
-	status = mvolGetVolumeSize(VolumeExtension->TargetDeviceObject, &volumeSize);
-	if (!NT_SUCCESS(status))
-	{
-		WDRBD_WARN("get volume size error = 0x%x\n", status);
-		volumeSize.QuadPart = 0;
-	}
-	return volumeSize.QuadPart;
-}
-
 #define DRBD_REGISTRY_VOLUMES       L"\\volumes"
 
 // DW-1109: delete drbd bdev when ref cnt gets 0, clean up all resources that has been created in create_drbd_block_device.

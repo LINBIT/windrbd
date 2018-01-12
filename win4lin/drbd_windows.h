@@ -655,16 +655,8 @@ struct splitInfo {
 };
 
 struct bio {
-	struct _IRP *bi_irp;
-
-		/* TODO: this still needed? */
-	PIRP 					pMasterIrp;  /* _WIN32: for upper layer's  IRP */
-
-		/* TODO: these still needed? */
-	unsigned int 			split_id;
-	unsigned int 			split_total_id;
-	unsigned int 			split_total_length;
-	struct splitInfo*		splitInfo;
+	struct _IRP *bi_irp;	/* Used for accessing the backing device */
+	struct _IRP *bi_upper_irp; /* Used for the DRBD device */
 
 	sector_t				bi_sector;	/* device address in 512 byte sectors */
 	struct bio*				bi_next;	/* request queue link */
@@ -687,7 +679,6 @@ struct bio {
 	BIO_END_IO_CALLBACK*	bi_end_io; 
 	void*					bi_private; 
 	unsigned int			bi_max_vecs;    /* max bvl_vecs we can hold */
-	UCHAR					MasterIrpStackFlags; //Stack Location's Flag
 
 		/* Those are used by win_generic_make_request internally */
 	LARGE_INTEGER offset;

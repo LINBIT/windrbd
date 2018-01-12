@@ -230,7 +230,7 @@ printk(KERN_INFO "Pretending that cleanup does something.\n");
 
 static void windrbd_bio_finished(struct bio * bio, int error)
 {
-	PIRP irp = bio->pMasterIrp;
+	PIRP irp = bio->bi_upper_irp;
 
 	if (error == 0) {
 		irp->IoStatus.Information = bio->bi_size;
@@ -282,7 +282,7 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 	bio->bi_io_vec[0].bv_offset = MmGetMdlByteOffset(mdl);
 
 	bio->bi_end_io = windrbd_bio_finished;
-	bio->pMasterIrp = irp;
+	bio->bi_upper_irp = irp;
 
 	return 0;
 }
