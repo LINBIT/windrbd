@@ -672,128 +672,7 @@ void printk_init(void)
 
 void printk_cleanup(void)
 {
-	
 }
-
-
-/* Replaced by print-to-syslog */
-#if 0
-void _printk(const char * func, const char * format, ...)
-{
-    int ret = 0;
-    va_list args;
-    char* buf = NULL;
-    long logcnt = 0;
-
-    ULONG msgid = PRINTK_INFO;
-    int level_index = format[1] - '0';
-    int printLevel = 0;
-    BOOLEAN bEventLog = FALSE;
-    BOOLEAN bDbgLog = FALSE;
-#ifdef _WIN32_DEBUG_OOS
-    BOOLEAN bOosLog = FALSE;
-#endif
-    LARGE_INTEGER systemTime, localTime;
-    TIME_FIELDS timeFields = {0,};
-    KIRQL		oldirql;
-    LONGLONG	totallogcnt = 0;
-    long 		offset = 0;
-    ASSERT((level_index >= 0) && (level_index < 8));
-
-    // to write system event log.
-    if (level_index <= atomic_read(&g_eventlog_lv_min))
-	bEventLog = TRUE;
-    // to print through debugger.
-    if (level_index <= atomic_read(&g_dbglog_lv_min))
-	bDbgLog = TRUE;
-#ifdef _WIN32_DEBUG_OOS
-    if (TRUE == atomic_read(&g_oos_trace))
-	bOosLog = TRUE;
-#endif
-
-    // nothing to log.
-#ifdef _WIN32_DEBUG_OOS
-    if (!bEventLog && !bDbgLog && !bOosLog)
-	return 0;
-#else
-    if (!bEventLog && !bDbgLog)
-		return 0;
-#endif
-
-    logcnt = InterlockedIncrement(&gLogCnt);
-    if(logcnt >= LOGBUF_MAXCNT) {
-	gLogCnt = 0;
-	logcnt = 0;
-    }
-    totallogcnt = InterlockedIncrement64(&gTotalLogCnt);
-
-    buf = gLogBuf[logcnt];
-    RtlZeroMemory(buf, MAX_DRBDLOG_BUF);
-    //#define TOTALCNT_OFFSET	(9)
-    //#define TIME_OFFSET		(TOTALCNT_OFFSET+24)	//"00001234 08/02/2016 13:24:13.123 "
-    KeQuerySystemTime(&systemTime);
-    ExSystemTimeToLocalTime(&systemTime, &localTime);
-
-    RtlTimeToTimeFields(&localTime, &timeFields);
-
-    offset = sprintf(buf , "%08lld %02d/%02d/%04d %02d:%02d:%02d.%03d [%s] ", 
-	    totallogcnt,
-	    timeFields.Month,
-	    timeFields.Day,
-	    timeFields.Year,
-	    timeFields.Hour,
-	    timeFields.Minute,
-	    timeFields.Second,
-	    timeFields.Milliseconds,
-	    func);
-
-#define LEVEL_OFFSET	10
-
-    switch (level_index) {
-	case KERN_EMERG_NUM: case KERN_ALERT_NUM: case KERN_CRIT_NUM: 
-	    printLevel = DPFLTR_ERROR_LEVEL; memcpy(buf+offset, "WDRBD_FATA", LEVEL_OFFSET); break;
-	case KERN_ERR_NUM: 
-	    printLevel = DPFLTR_ERROR_LEVEL; memcpy(buf+offset, "WDRBD_ERRO", LEVEL_OFFSET); break;
-	case KERN_WARNING_NUM: 
-	    printLevel = DPFLTR_WARNING_LEVEL; memcpy(buf+offset, "WDRBD_WARN", LEVEL_OFFSET); break;
-	case KERN_NOTICE_NUM: case KERN_INFO_NUM: 
-	    printLevel = DPFLTR_INFO_LEVEL; memcpy(buf+offset, "WDRBD_INFO", LEVEL_OFFSET); break;
-	case KERN_DEBUG_NUM: 
-	    printLevel = DPFLTR_TRACE_LEVEL; memcpy(buf+offset, "WDRBD_TRAC", LEVEL_OFFSET); break;
-	default: 
-	    printLevel = DPFLTR_TRACE_LEVEL; memcpy(buf+offset, "WDRBD_UNKN", LEVEL_OFFSET); break;
-    }
-
-    va_start(args, format);
-    ret = vsprintf(buf + offset + LEVEL_OFFSET, format, args); // DRBD_DOC: improve vsnprintf 
-    va_end(args);
-
-    int length = strlen(buf);
-    if (length > MAX_DRBDLOG_BUF) {
-	length = MAX_DRBDLOG_BUF - 1;
-	buf[MAX_DRBDLOG_BUF - 1] = 0;
-    } else {
-	// TODO: chekc min?
-    }
-
-#ifdef _WIN32_WPP
-    DoTraceMessage(TRCINFO, "%s", buf);
-    WriteEventLogEntryData(msgids[level_index], 0, 0, 1, L"%S", buf);
-    DbgPrintEx(FLTR_COMPONENT, DPFLTR_INFO_LEVEL, "WDRBD_INFO: [%s] %s", func, buf);
-#else
-
-    if (bEventLog) {
-	save_to_system_event(buf, length, level_index);
-    }
-
-    if (bDbgLog || bOosLog)
-	DbgPrintEx(FLTR_COMPONENT, printLevel, buf);
-
-#endif
-    return 0;
-}
-#endif
-#endif
 
 static int _char_to_wchar(wchar_t * dst, size_t buf_size, char * src)
 {
@@ -809,6 +688,7 @@ static int _char_to_wchar(wchar_t * dst, size_t buf_size, char * src)
     return c;
 }
 
+/* TODO: still used? */
 int
 WriteEventLogEntryData(
 	ULONG	pi_ErrorCode,
@@ -854,14 +734,7 @@ Reference : http://git.etherboot.org/scm/mirror/winof/hw/mlx4/kernel/bus/core/l2
 	USHORT l_nDataItem;
 	/* total packet size */
 	int l_TotalSize;
-#if 0
-    if (KeGetCurrentIrql() > PASSIVE_LEVEL) // DRBD_DOC: DV: skip api RtlStringCchPrintfW(PASSIVE_LEVEL)
-    {
-        // DRBD_DOC: you should consider to process EVENTLOG
-        WDRBD_WARN("IRQL(%d) too high. Log canceled.\n", KeGetCurrentIrql());
-        return 1;
-    }
-#endif
+
 	if (mvolRootDeviceObject == NULL) {
 		ASSERT(mvolRootDeviceObject != NULL);
 		return -2;
@@ -1003,6 +876,7 @@ VOID drbdFreeDev(PVOLUME_EXTENSION VolumeExtension)
 }
 
 #ifdef _WIN32_DEBUG_OOS
+
 static USHORT getStackFrames(PVOID *frames, USHORT usFrameCount)
 {
 	USHORT usCaptured = 0;
@@ -1067,4 +941,4 @@ VOID WriteOOSTraceLog(int bitmap_index, ULONG_PTR startBit, ULONG_PTR endBit, UL
 	}
 }
 #endif
-
+#endif

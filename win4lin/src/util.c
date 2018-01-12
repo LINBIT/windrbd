@@ -68,6 +68,9 @@ GetDeviceName( PDEVICE_OBJECT DeviceObject, PWCHAR Buffer, ULONG BufferLength )
 /* Update: yes it is */
 
 #ifdef _WIN32_MVFL
+
+karin
+
 /**
 * @brief    do FSCTL_DISMOUNT_VOLUME in kernel.
 *           advised to use this function in next sequence
@@ -83,9 +86,7 @@ NTSTATUS FsctlFlushDismountVolume(unsigned int minor, bool bFlush)
     NTSTATUS status = STATUS_SUCCESS;
     OBJECT_ATTRIBUTES ObjectAttributes;
     IO_STATUS_BLOCK StatusBlock;
-#if 0
-	PFILE_OBJECT pVolumeFileObject = NULL;
-#endif
+
     HANDLE hFile = NULL;
     UNICODE_STRING device_name;
 

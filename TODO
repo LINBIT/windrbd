@@ -81,6 +81,12 @@ TODO: when losing Quorum go into read only mode.
 
 TODO: test no I/O when disk is failed.
 --------------------------------------------------------------
+
+TODO: check what _WIN32_DEBUG_OOS is really doing.
+	Dumping bitmap?
+
+TODO: have dump_stack function
+
 Later: with DRBD: 500 kB/sec (unconnected) without 900 kB/sec
 	500 kB was with lots of debug output. Now we have 600 kB/Sec
 	a bit better.
