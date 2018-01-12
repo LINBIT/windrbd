@@ -326,117 +326,16 @@ cleanup:
 	return status;
 }
 
+/* TODO: This should not be called. Change type of driver so that
+   this is not neccessary */
 NTSTATUS
 mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject)
 {
-    NTSTATUS            status;
- /*   PDEVICE_OBJECT      AttachedDeviceObject = NULL;
-    PDEVICE_OBJECT      ReferenceDeviceObject = NULL; */
-    PVOLUME_EXTENSION   VolumeExtension = NULL;
-/*    ULONG               deviceType = 0; */
-
-printk(KERN_INFO "AddDevice NOT DONE\n");
-return STATUS_NO_SUCH_DEVICE;
+	printk(KERN_INFO "AddDevice NOT DONE\n");
+	return STATUS_NO_SUCH_DEVICE;
+}
 
 #if 0
-    ReferenceDeviceObject = IoGetAttachedDeviceReference(PhysicalDeviceObject);
-    deviceType = ReferenceDeviceObject->DeviceType; //deviceType = 0x7 = FILE_DEVICE_DISK 
-    ObDereferenceObject(ReferenceDeviceObject);
-
-    status = IoCreateDevice(mvolDriverObject, sizeof(VOLUME_EXTENSION), NULL,
-        deviceType, FILE_DEVICE_SECURE_OPEN, FALSE, &AttachedDeviceObject);
-    if (!NT_SUCCESS(status))
-    {
-        mvolLogError(mvolRootDeviceObject, 102, MSG_ADD_DEVICE_ERROR, status);
-        WDRBD_ERROR("cannot create device, err=0x%x\n", status);
-        return status;
-    }
-
-    AttachedDeviceObject->Flags |= (DO_DIRECT_IO | DO_POWER_PAGABLE);
-    AttachedDeviceObject->Flags &= ~DO_DEVICE_INITIALIZING;
-
-//    VolumeExtension = AttachedDeviceObject->DeviceExtension;
-	VolumeExtension = kmalloc(sizeof(VOLUME_EXTENSION), 0, 'KARI');
-	if (VolumeExtension == NULL) {
-		printk(KERN_ERR "Cannot allocate volume extension.\n");
-		return STATUS_NO_MEMORY;
-	}
-		
-    RtlZeroMemory(VolumeExtension, sizeof(VOLUME_EXTENSION));
-//    VolumeExtension->DeviceObject = AttachedDeviceObject;
-    VolumeExtension->DeviceObject = NULL;
-    VolumeExtension->PhysicalDeviceObject = PhysicalDeviceObject;
-    VolumeExtension->Magic = MVOL_MAGIC;
-    VolumeExtension->Flag = 0;
-    VolumeExtension->IrpCount = 0;
-/*    VolumeExtension->TargetDeviceObject =
-        IoAttachDeviceToDeviceStack(AttachedDeviceObject, PhysicalDeviceObject); */
-	IoInitializeRemoveLock(&VolumeExtension->RemoveLock, '00FS', 0, 0);
-	KeInitializeMutex(&VolumeExtension->CountMutex, 0);
-
-    status = GetDeviceName(PhysicalDeviceObject,
-        VolumeExtension->PhysicalDeviceName, MAXDEVICENAME * sizeof(WCHAR)); // -> \Device\HarddiskVolumeXX
-    if (!NT_SUCCESS(status))
-    {
-        mvolLogError(mvolRootDeviceObject, 101, MSG_ADD_DEVICE_ERROR, status);
-//		IoDeleteDevice(AttachedDeviceObject);
-        return status;
-    }
-	VolumeExtension->TargetDeviceObject = NULL;
-
-    VolumeExtension->PhysicalDeviceNameLength = wcslen(VolumeExtension->PhysicalDeviceName) * sizeof(WCHAR);
-
-	PMOUNTDEV_UNIQUE_ID pmuid = QueryMountDUID(PhysicalDeviceObject);
-	if (pmuid) {
-		_QueryVolumeNameRegistry(pmuid, VolumeExtension);
-		ExFreePool(pmuid);
-	}
-
-	printk(KERN_INFO "Got block device from PNP manager (via AddDevice), device name: %S\n", VolumeExtension->PhysicalDeviceName);
-
-    MVOL_LOCK();
-    mvolAddDeviceList(VolumeExtension);
-    MVOL_UNLOCK();
-    
-#ifdef _WIN32_MVFL
-    if (do_add_minor(VolumeExtension->VolIndex))
-    {
-        status = mvolInitializeThread(VolumeExtension, &VolumeExtension->WorkThreadInfo, mvolWorkThread);
-        if (!NT_SUCCESS(status))
-        {
-            WDRBD_ERROR("Failed to initialize WorkThread. status(0x%x)\n", status);
-            //return status;
-        }
-
-        VolumeExtension->Active = TRUE;
-    }
-#endif
-
-	VolumeExtension->upper_dev = create_block_device(VolumeExtension);
-	if (VolumeExtension->upper_dev == NULL) {
-		WDRBD_WARN("Could not create upper dev.\n");
-		return STATUS_NO_SUCH_DEVICE;	/* TODO: Or so, also cleanup */
-	}
-	VolumeExtension->upper_dev->d_size = 0;
-
-	VolumeExtension->lower_dev = create_block_device(VolumeExtension);
-	if (VolumeExtension->lower_dev == NULL) {
-		WDRBD_WARN("Could not create lower dev.\n");
-		return STATUS_NO_SUCH_DEVICE;	/* TODO: Or so, also cleanup */
-	}
-	VolumeExtension->lower_dev->d_size = get_targetdev_volsize(VolumeExtension);
-	
-
-    WDRBD_INFO("VolumeExt(0x%p) Device(%ws) VolIndex(%d) Active(%d) MountPoint(%wZ)\n",
-        VolumeExtension,
-        VolumeExtension->PhysicalDeviceName,
-        VolumeExtension->VolIndex,
-        VolumeExtension->Active,
-        &VolumeExtension->MountPoint);
-
-    return STATUS_SUCCESS;
-#endif
-}
 
 NTSTATUS
 mvolSendToNextDriver(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
@@ -1091,3 +990,5 @@ printk(KERN_INFO "dispatch_pnp on F: vext: %p\n", VolumeExtension);
 
     return status;
 }
+
+#endif

@@ -220,6 +220,8 @@ static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	NTSTATUS status = STATUS_SUCCESS;
 
 printk(KERN_INFO "Pretending that cleanup does something.\n");
+	/* TODO: call this: */
+/*        drbd_cleanup_by_win_shutdown(VolumeExtension); */
 
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -330,4 +332,5 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	obj->MajorFunction[IRP_MJ_CREATE] = windrbd_create;
 	obj->MajorFunction[IRP_MJ_CLOSE] = windrbd_close;
 	obj->MajorFunction[IRP_MJ_CLEANUP] = windrbd_cleanup;
+	/* TODO: IRP_MJ_FLUSH */
 }

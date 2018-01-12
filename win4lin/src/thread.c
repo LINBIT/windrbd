@@ -103,6 +103,7 @@ mvolTerminateThread( PMVOL_THREAD pThreadInfo )
 	pThreadInfo->Active = FALSE;
 }
 
+#if 0
 VOID
 mvolWorkThread(PVOID arg)
 {
@@ -196,3 +197,5 @@ mvolWorkThread(PVOID arg)
 		loop = 0;
 	}
 }
+
+#endif

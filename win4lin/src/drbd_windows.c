@@ -1808,7 +1808,7 @@ static int win_generic_make_request(struct bio *bio)
 	
 	printk(KERN_INFO "bio->bi_rw = %d WRITE_FLUSH = %d\n", bio->bi_rw, WRITE_FLUSH);
 
-	if(bio->bi_rw == WRITE_FLUSH) {	// TODO: & WRITE_FLUSH ? plus WRITE_FLUSH is defined as the same as WRITE
+	if ((bio->bi_rw & WRITE_FLUSH) == WRITE_FLUSH) {
 printk("flushing\n");
 		io = IRP_MJ_FLUSH_BUFFERS;
 		buffer = NULL;
@@ -1816,26 +1816,23 @@ printk("flushing\n");
 		first_size = 0;
 		bio->offset.QuadPart = 0;
 	} else {
+		if (bio->bi_vcnt == 0) {
+			printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
+			return -EIO;
+		}
 		if (bio->bi_rw & WRITE) {
 			io = IRP_MJ_WRITE;
 		} else {
 			io = IRP_MJ_READ;
-		}
-			/* TODO: this might be legal ... */
-			/* update: was a wrong value in windrbd device
-			   (see windrbd_device.c). */
-		if (bio->bi_vcnt == 0) {
-			printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
-			return -EIO;
 		}
 		bio->offset.QuadPart = bio->bi_sector << 9;
 		buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
 		first_size = bio->bi_io_vec[0].bv_len; 
 	}
 
-	WDRBD_TRACE("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt=%d\n", 
-		current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", 
-		bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt);
+/*
+printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt);
+*/
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512) {
 		patch_ntfs_boot_sector(buffer, false);
@@ -1860,38 +1857,18 @@ printk("flushing\n");
 	for (i=1;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
 		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irp);
-printk("entry: %p mdl: %p\n", entry, mdl);
+// printk("entry: %p mdl: %p\n", entry, mdl);
 		if (mdl == NULL) {
 			printk("Could not allocate mdl, giving up.\n");
 			err = -ENOMEM;
 				/* TODO: will also dereference thread */
 			goto out_free_irp;
 		}
-	/* TODO: lock those pages */
 		MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
 //		MmBuildMdlForNonPagedPool(mdl);
 	}
 
 	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irp);
-
-	if( IRP_MJ_WRITE == io) {
-		if(bio->MasterIrpStackFlags) { 
-			//copy original Local I/O's Flags for private_bio instead of drbd's write_ordering, because of performance issue. (2016.03.23)
-			pIoNextStackLocation->Flags = bio->MasterIrpStackFlags;
-		} else { 
-#if 0
-	/* TODO: don't have drbd_device there yet .. */
-			//apply meta I/O's write_ordering
-			// DW-1300: get drbd device from gendisk.
-			if (bio->bi_bdev) {
-				struct drbd_device* device = bio->bi_bdev->drbd_device;
-				if(device && device->resource->write_ordering >= WO_BDEV_FLUSH) {
-					pIoNextStackLocation->Flags |= (SL_WRITE_THROUGH | SL_FT_SEQUENTIAL_WRITE);
-				}
-			}
-#endif
-		}
-	}
 
 	IoSetCompletionRoutine(bio->bi_irp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
@@ -2165,6 +2142,7 @@ unsigned char *skb_put(struct sk_buff *skb, unsigned int len)
 
 	return tmp;
 }
+
 void *compat_genlmsg_put(struct sk_buff *skb, u32 pid, u32 seq,
 				       struct genl_family *family, int flags, u8 cmd)
 {
@@ -2341,6 +2319,8 @@ void adjust_changes_to_volume(PVOID pParam)
 //	refresh_targetdev_list();
 }
 
+/* TODO: used? */
+
 // DW-1105: request mount manager to notify us whenever there is a change in the mount manager's persistent symbolic link name database.
 void monitor_mnt_change(PVOID pParam)
 {
@@ -2430,6 +2410,7 @@ void monitor_mnt_change(PVOID pParam)
 	}
 }
 
+/* TODO: used? */	
 // DW-1105: start monitoring mount change thread.
 NTSTATUS start_mnt_monitor()
 {
@@ -3050,33 +3031,6 @@ void list_cut_position(struct list_head *list, struct list_head *head, struct li
 int drbd_backing_bdev_events(struct gendisk *device)
 {
     /* TODO */
-#if 0
-#ifdef _WIN32_GetDiskPerf
-	extern NTSTATUS mvolGetDiskPerf(PDEVICE_OBJECT TargetDeviceObject, PDISK_PERFORMANCE pDiskPerf);
-	NTSTATUS status;
-	DISK_PERFORMANCE diskPerf;
-
-	status = mvolGetDiskPerf(mdev->ldev->backing_bdev->bd_disk->pDeviceExtension->TargetDeviceObject, &diskPerf);
-	if (!NT_SUCCESS(status))
-	{
-		WDRBD_ERROR("mvolGetDiskPerf status=0x%x\n", status);
-		return mdev->writ_cnt + mdev->read_cnt;
-	}
-	// WDRBD_INFO("mdev: %d + %d = %d, diskPerf: %lld + %lld = %lld\n",
-	//		mdev->read_cnt, mdev->writ_cnt, mdev->writ_cnt + mdev->read_cnt,
-	//		diskPerf.BytesRead.QuadPart/512, diskPerf.BytesWritten.QuadPart/512,
-	//		diskPerf.BytesRead.QuadPart/512 + diskPerf.BytesWritten.QuadPart/512);
-
-	return (diskPerf.BytesRead.QuadPart / 512) + (diskPerf.BytesWritten.QuadPart / 512);
-#else
-	if ((device->writ_cnt + device->read_cnt) == 0)
-	{
-		// initial value
-		return 100;
-	}
-	return device->writ_cnt + device->read_cnt;
-#endif
-#endif
 	return 0;
 }
 
