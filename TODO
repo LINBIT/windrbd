@@ -1,5 +1,12 @@
 WinDRBD-next: beta for selected customers
 
+TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
+	after doing some experiments. drbdadm down / up solved the
+	problem.
+
+TODO: all I/O should fail when Secondary
+	Important.
+
 TODO: fix memleak in getting volsize.
 
 TODO: make write_whole_disk test work.
@@ -9,6 +16,9 @@ TODO: make write_whole_disk test work.
 
 	Update: connection fails from time to time and we need to
 	reconnect.
+
+	Update: works when unconnected (except the aforementioned stall,
+	which we cannot reproduce at the moment). 
 
 In Progress: Throw away lots of Mantech code.
 
@@ -67,7 +77,10 @@ TODO: Cannot mount NTFS after sync.
 	/dev/mapper/nvidia_eahaabcc1). Please see the 'dmraid' documentation
 	for more details.
 
-TODO: write should fail when Secondary
+TODO: when losing Quorum go into read only mode.
+	(quorum means that our connected network contains > n/2 
+	(n .. total number of names) valid nodes.
+	This is currently being implemented in DRBD
 
 --------------------------------------------------------------
 Later: with DRBD: 500 kB/sec (unconnected) without 900 kB/sec
