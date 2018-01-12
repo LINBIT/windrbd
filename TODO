@@ -7,6 +7,8 @@ TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
 TODO: fix memleak in getting volsize.
 
 In Progress: Throw away lots of Mantech code.
+	Mostly done.
+	Get rid of PVOLUME_EXTENSION as well.
 
 TODO: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
 	Update: didn't observe lately (with 0.3.7) but I am
@@ -80,6 +82,7 @@ TODO: when losing Quorum go into read only mode.
 	This is currently being implemented in DRBD
 
 TODO: test no I/O when disk is failed.
+
 --------------------------------------------------------------
 
 TODO: check what _WIN32_DEBUG_OOS is really doing.

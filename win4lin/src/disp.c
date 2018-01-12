@@ -80,9 +80,9 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
     int ret;
 
 	// init logging system first
-	wdrbd_logger_init();
+	initialize_syslog_printk();
 
-    WDRBD_TRACE("DRBD Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
+	WDRBD_TRACE("DRBD Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
 
 	initRegistry(RegistryPath);
 
@@ -92,44 +92,44 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	gbShutdown = FALSE;
 		
-    RtlInitUnicodeString(&nameUnicode, L"\\Device\\mvolCntl");
-    status = IoCreateDevice(DriverObject, sizeof(ROOT_EXTENSION),
-        &nameUnicode, FILE_DEVICE_UNKNOWN, 0, FALSE, &deviceObject);
-    if (!NT_SUCCESS(status))
-    {
-        WDRBD_ERROR("Can't create root, err=%x\n", status);
-        return status;
-    }
+	RtlInitUnicodeString(&nameUnicode, L"\\Device\\mvolCntl");
+	status = IoCreateDevice(DriverObject, sizeof(ROOT_EXTENSION),
+       		 &nameUnicode, FILE_DEVICE_UNKNOWN, 0, FALSE, &deviceObject);
+	if (!NT_SUCCESS(status))
+	{
+		WDRBD_ERROR("Can't create root, err=%x\n", status);
+		return status;
+	}
 
-    RtlInitUnicodeString(&linkUnicode, L"\\DosDevices\\mvolCntl");
-    status = IoCreateSymbolicLink(&linkUnicode, &nameUnicode);
-    if (!NT_SUCCESS(status))
-    {
-        WDRBD_ERROR("cannot create symbolic link, err=%x\n", status);
-        IoDeleteDevice(deviceObject);
-        return status;
-    }
+	RtlInitUnicodeString(&linkUnicode, L"\\DosDevices\\mvolCntl");
+	status = IoCreateSymbolicLink(&linkUnicode, &nameUnicode);
+	if (!NT_SUCCESS(status))
+	{
+		WDRBD_ERROR("cannot create symbolic link, err=%x\n", status);
+		IoDeleteDevice(deviceObject);
+		return status;
+	}
 
-    mvolDriverObject = DriverObject;
-    mvolRootDeviceObject = deviceObject;
+	mvolDriverObject = DriverObject;
+	mvolRootDeviceObject = deviceObject;
 
-    RootExtension = deviceObject->DeviceExtension;
-    RootExtension->Magic = MVOL_MAGIC;
-    RootExtension->Head = NULL;
-    RootExtension->Count = 0;
+	RootExtension = deviceObject->DeviceExtension;
+	RootExtension->Magic = MVOL_MAGIC;
+	RootExtension->Head = NULL;
+	RootExtension->Count = 0;
 	ucsdup(&RootExtension->RegistryPath, RegistryPath->Buffer, RegistryPath->Length);
-    RootExtension->PhysicalDeviceNameLength = nameUnicode.Length;
-    RtlCopyMemory(RootExtension->PhysicalDeviceName, nameUnicode.Buffer, nameUnicode.Length);
+	RootExtension->PhysicalDeviceNameLength = nameUnicode.Length;
+	RtlCopyMemory(RootExtension->PhysicalDeviceName, nameUnicode.Buffer, nameUnicode.Length);
 
-    KeInitializeSpinLock(&mvolVolumeLock);
-    KeInitializeMutex(&mvolMutex, 0);
-    KeInitializeMutex(&eventlogMutex, 0);
-    downup_rwlock_init(&transport_classes_lock); //init spinlock for transport 
-    mutex_init(&g_genl_mutex);
-    mutex_init(&notification_mutex);
-    KeInitializeSpinLock(&transport_classes_lock);
+	KeInitializeSpinLock(&mvolVolumeLock);
+	KeInitializeMutex(&mvolMutex, 0);
+	KeInitializeMutex(&eventlogMutex, 0);
+	downup_rwlock_init(&transport_classes_lock); //init spinlock for transport 
+	mutex_init(&g_genl_mutex);
+	mutex_init(&notification_mutex);
+	KeInitializeSpinLock(&transport_classes_lock);
 
-    dtt_initialize();
+	dtt_initialize();
 
 	system_wq = alloc_ordered_workqueue("system workqueue", 0);
 	if (system_wq == NULL) {
@@ -143,51 +143,47 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	DoTraceMessage(TRCINFO, "WDRBD V9(1:1) MVF Driver loaded.");
 #endif
     // Init DRBD engine
-    ret = drbd_init();
-    if (ret) {
-        WDRBD_ERROR("cannot init drbd, %d", ret);
+	ret = drbd_init();
+	if (ret) { /* TODO: ?? */
+		WDRBD_ERROR("cannot init drbd, %d", ret);
   //      IoDeleteDevice(deviceObject);
-        return STATUS_TIMEOUT;
-    }
+		return STATUS_TIMEOUT;
+	}
 
-    WDRBD_INFO("MVF Driver loaded.\n");
+	WDRBD_INFO("MVF Driver loaded.\n");
 
-
-    if (FALSE == InterlockedCompareExchange(&IsEngineStart, TRUE, FALSE))
-    {
-        HANDLE		hNetLinkThread = NULL;
+	if (FALSE == InterlockedCompareExchange(&IsEngineStart, TRUE, FALSE))
+	{
+		HANDLE		hNetLinkThread = NULL;
 		HANDLE		hLogLinkThread = NULL;
-        NTSTATUS	Status = STATUS_UNSUCCESSFUL;
+		NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
         // Init WSK and StartNetLinkServer
 		Status = PsCreateSystemThread(&hNetLinkThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, InitWskNetlink, NULL);
-        if (!NT_SUCCESS(Status))
-        {
-            WDRBD_ERROR("PsCreateSystemThread failed with status 0x%08X\n", Status);
-            return Status;
-        }
+		if (!NT_SUCCESS(Status))
+		{
+			WDRBD_ERROR("PsCreateSystemThread failed with status 0x%08X\n", Status);
+			return Status;
+		}
 
 		Status = ObReferenceObjectByHandle(hNetLinkThread, THREAD_ALL_ACCESS, NULL, KernelMode, &g_NetlinkServerThread, NULL);
 		ZwClose(hNetLinkThread);
 
-        if (!NT_SUCCESS(Status))
-        {
-            WDRBD_ERROR("ObReferenceObjectByHandle() failed with status 0x%08X\n", Status);
-            return Status;
-        }
+		if (!NT_SUCCESS(Status))
+		{
+			WDRBD_ERROR("ObReferenceObjectByHandle() failed with status 0x%08X\n", Status);
+			return Status;
+		}
     }
 
     return STATUS_SUCCESS;
 }
 
-VOID
-mvolUnload(IN PDRIVER_OBJECT DriverObject)
+void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 {
-    UNREFERENCED_PARAMETER(DriverObject);
-#ifdef _WIN32_WPP
-	WPP_CLEANUP(DriverObject);
-#endif
-	wdrbd_logger_cleanup();
+	UNREFERENCED_PARAMETER(DriverObject);
+	
+	printk("Unloading windrbd driver.\n");
 }
 
 static
