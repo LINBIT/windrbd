@@ -79,6 +79,7 @@ TODO: when losing Quorum go into read only mode.
 	(n .. total number of names) valid nodes.
 	This is currently being implemented in DRBD
 
+TODO: test no I/O when disk is failed.
 --------------------------------------------------------------
 Later: with DRBD: 500 kB/sec (unconnected) without 900 kB/sec
 	500 kB was with lots of debug output. Now we have 600 kB/Sec

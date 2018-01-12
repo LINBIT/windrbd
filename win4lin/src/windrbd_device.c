@@ -301,7 +301,11 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 printk("I/O request while not primary.\n");
 		goto exit;
 	}
-	/* TODO: dev->drbd_device->disk_state[NOW] <= D_FAILED */
+		/* TODO: can serve read requests from peer */
+	if (dev->drbd_device->disk_state[NOW] <= D_FAILED) {
+printk("I/O request on a failed disk.\n");
+		goto exit;
+	}
 
 	bio = bio_alloc(GFP_NOIO, 1, 'DBRD');
 	if (bio == NULL) {
