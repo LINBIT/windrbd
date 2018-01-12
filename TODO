@@ -9,17 +9,6 @@ TODO: all I/O should fail when Secondary
 
 TODO: fix memleak in getting volsize.
 
-TODO: make write_whole_disk test work.
-	Only fails when connected. Works when primary and disconnected.
-
-	Update: stalls at sector 73924 when primary and disconnected.
-
-	Update: connection fails from time to time and we need to
-	reconnect.
-
-	Update: works when unconnected (except the aforementioned stall,
-	which we cannot reproduce at the moment). 
-
 In Progress: Throw away lots of Mantech code.
 
 TODO: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
@@ -76,6 +65,16 @@ TODO: Cannot mount NTFS after sync.
 	it and mount a different device under the /dev/mapper/ directory, (e.g.
 	/dev/mapper/nvidia_eahaabcc1). Please see the 'dmraid' documentation
 	for more details.
+
+	Update: It seems that somebody writes to the DRBD device (what we
+	did is write it while unconnected, then copy drbd device on windows
+	to a file and then connect the DRBD to linux wait until sync is
+	finished and then copy the Linux contents to a file and diff the
+	hexdumps of both files). Either Sync is broken or somebody writes
+	the device where he shouldn't. Update: windows data seems to be
+	correct, so sync is broken.
+
+	Strange: DRBD does not sync while all bits are set in bitmap.
 
 TODO: when losing Quorum go into read only mode.
 	(quorum means that our connected network contains > n/2 
@@ -860,4 +859,15 @@ Done: Implement multi page I/O
 Done: windrbd-test destroyed (!) partition table?
 	Yes it does (set_partition_info test). Now protected by
 	an interactive query (unless --force is given).
+
+Done: make write_whole_disk test work.
+	Only fails when connected. Works when primary and disconnected.
+
+	Update: stalls at sector 73924 when primary and disconnected.
+
+	Update: connection fails from time to time and we need to
+	reconnect.
+
+	Update: works when unconnected (except the aforementioned stall,
+	which we cannot reproduce at the moment).
 
