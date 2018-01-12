@@ -1,5 +1,12 @@
 WinDRBD-next: beta for selected customers
 
+TODO: make write_whole_disk test work.
+	Only fails when connected. Works when primary and disconnected.
+
+	Update: stalls at sector 73924 when primary and disconnected.
+
+TODO: Throw away lots of Mantech code.
+
 TODO: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
 	Update: didn't observe lately (with 0.3.7) but I am
 	pretty sure it is still in there.
@@ -20,6 +27,8 @@ TODO: Fix windows shutdown bug.
 	Most likely this was introduced when implementing the
 	cleanup() method.
 
+	Update: Not observed lately.
+
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
@@ -30,8 +39,6 @@ TODO: allow user to pass name of symbolic link created
 	At this point also clean up drbd-utils (separate
 	files for UNIX and Windows) and integrate upstream
 	changes.
-
-TODO: Throw away lots of Mantech code.
 
 TODO: Release backing device:
 	drbdadm up / drbdadm down / format f:
@@ -56,11 +63,6 @@ TODO: Cannot mount NTFS after sync.
 	for more details.
 
 TODO: write should fail when Secondary
-
-TODO: make write_whole_disk test work.
-	Only fails when connected. Works when primary and disconnected.
-
-	Update: stalls at sector 73924 when primary and disconnected.
 
 --------------------------------------------------------------
 TODO: I/O seems to be rather slow even when being unconnected (and primary)
