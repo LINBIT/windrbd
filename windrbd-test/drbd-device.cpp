@@ -20,6 +20,8 @@ HANDLE do_open_device(void)
 	EXPECT_NE(fname, (void*)0);
 	snprintf(fname, len+1, "\\\\.\\%s", p.drive);
 
+printf("opening file %s\n", fname);
+
 	h = CreateFile(fname, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	err = GetLastError();
 
@@ -134,6 +136,18 @@ TEST(win_drbd, set_partition_information)
 	BOOL ret;
 	int err;
 
+	if (!p.force) {
+	        char answer[10];
+
+		fprintf(stderr, "This test might *DESTROY* the partition.\n");
+		fprintf(stderr, "Please type y<enter> if you wish to do this.\n");
+		fgets(answer, sizeof(answer)-1, stdin);
+		if (answer[0] != 'y') {
+			fprintf(stderr, "Set partition information test not done.\n");
+			return;
+		}
+	}
+
 	size = sizeof(s);
 	s.PartitionType = PARTITION_EXTENDED;
 	ret = DeviceIoControl(h, IOCTL_DISK_SET_PARTITION_INFO, &s, sizeof(s), NULL, 0, &size, NULL);
@@ -193,12 +207,12 @@ TEST(win_drbd, do_write_read)
 	DWORD px;
 
 	if (!p.force) {
-	        char c;
+	        char answer[10];
 
 		fprintf(stderr, "This test will *DESTROY* the first sectors of the underlying backing device.\n");
 		fprintf(stderr, "Please type y<enter> if you wish to do this.\n");
-		c = getchar();
-		if (c != 'y') {
+		fgets(answer, sizeof(answer)-1, stdin);
+		if (answer[0] != 'y') {
 			fprintf(stderr, "Write test not done.\n");
 			return;
 		}
@@ -242,12 +256,12 @@ TEST(win_drbd, do_write_read_whole_disk)
 	unsigned int sector;
 
 	if (!p.force) {
-	        char c;
+	        char answer[10];
 
-		fprintf(stderr, "This test will *DESTROY* the first sectors of the underlying backing device.\n");
+		fprintf(stderr, "This test will *DESTROY* the whole data on the disk of the underlying backing device.\n");
 		fprintf(stderr, "Please type y<enter> if you wish to do this.\n");
-		c = getchar();
-		if (c != 'y') {
+		fgets(answer, sizeof(answer)-1, stdin);
+		if (answer[0] != 'y') {
 			fprintf(stderr, "Write test not done.\n");
 			return;
 		}
