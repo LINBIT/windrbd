@@ -44,6 +44,8 @@ TODO: Release backing device:
 	drbdadm up / drbdadm down / format f:
 
 TODO: Test other file systems (FAT, FAT32, ...)
+	FAT does not work (Invalid function when accessing DRBD device)
+	FAT32 also not (something with flushing?)
 
 TODO: Test with Windows 10 (we have to do that anyway some day)
 

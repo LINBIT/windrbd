@@ -1693,21 +1693,27 @@ static inline blk_status_t win_status_to_blk_status(NTSTATUS status)
 	return (status == STATUS_SUCCESS) ? 0 : BLK_STS_IOERR; 
 }
 
-static void patch_ntfs_boot_sector(char *buffer, bool to_ntfs)
+static void patch_boot_sector(char *buffer, int to_fs)
 {
-	if (to_ntfs) {
-		if (buffer[3] == 'D' && buffer[4] == 'R' && buffer[5] == 'B' && buffer[6] == 'D') {
-			buffer[3] = 'N';
-			buffer[4] = 'T';
-			buffer[5] = 'F';
-			buffer[6] = 'S';
+	static const char *fs_signatures[][2] = {
+		{ "NTFS", "DRBD" },
+//		{ "MSDOS5.0", "FATDRBD" },
+		{ "EXFAT", "EDRBD" },
+		{ NULL, NULL }};
+	int fs;
+	int i;
+
+	for (fs=0; fs_signatures[fs][0] != NULL; fs++) {
+		for (i=0;fs_signatures[fs][to_fs][i] != '\0';i++) {
+			if (buffer[3+i] != fs_signatures[fs][to_fs][i])
+				break;
 		}
-	} else {
-		if (buffer[3] == 'N' && buffer[4] == 'T' && buffer[5] == 'F' && buffer[6] == 'S') {
-			buffer[3] = 'D';
-			buffer[4] = 'R';
-			buffer[5] = 'B';
-			buffer[6] = 'D';
+		if (fs_signatures[fs][to_fs][i] == '\0') {
+			printk("Patching boot sector from %s to %s\n", fs_signatures[fs][to_fs], fs_signatures[fs][!to_fs]);
+			for (i=0;fs_signatures[fs][to_fs][i] != '\0';i++) {
+				buffer[3+i] = fs_signatures[fs][!to_fs][i];
+			}
+			return;
 		}
 	}
 }
@@ -1731,7 +1737,7 @@ printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", D
 	}
 	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512) {
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
-		patch_ntfs_boot_sector(buffer, true);
+		patch_boot_sector(buffer, 1);
 	}
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
@@ -1840,7 +1846,7 @@ printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%
 */
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512) {
-		patch_ntfs_boot_sector(buffer, false);
+		patch_boot_sector(buffer, 0);
 	}
 
 	bio->bi_irp = IoBuildAsynchronousFsdRequest(
