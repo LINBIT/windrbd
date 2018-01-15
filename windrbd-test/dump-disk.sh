@@ -1,1 +1,1 @@
-./windrbd-test --drive=H: --dump-file=$1 --gtest_filter=win_drbd.copy_disk_to_file --expected-size=52383744
+./windrbd-test --drive=$1 --dump-file=$2 --gtest_filter=win_drbd.copy_disk_to_file --expected-size=$3

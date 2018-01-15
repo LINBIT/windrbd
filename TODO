@@ -67,9 +67,30 @@ TODO: Cannot mount NTFS after sync.
 
 	Strange: DRBD does not sync while all bits are set in bitmap.
 
+	Update: when copiing the dumped DRBD block device from windows
+	to Linux, it also fails. Maybe the Linux NTFS driver is buggy?
+
+	Update: when using external meta data and copy the backing
+	device (F:) via scp we can mount the NTFS partition with
+	ntfs-3g (Update: also with mainline kernel ntfs driver)
+	The backing device must be patched so that where it says
+	DRBD it should read NTFS in the boot sector (can be done
+	with vi).
+	It is clear that copiing the DRBD device (instead of the
+	backing device) does not work because Windows hides the
+	last 8 sectors.
+
 TODO: test no I/O when disk is failed.
 
 TODO: test external meta data
+
+In progress: make install package
+	self extracting exe or msi file.
+	Know how to do it (iexpress.exe) do it properly once
+	everything else is done.
+
+TODO: reinstall windows 7 and check if last 4096 bytes in NTFS 
+	are still hidden.
 --------------------------------------------------------------
 
 TODO: Test other file systems (FAT, FAT32, ...)
