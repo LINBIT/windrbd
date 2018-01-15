@@ -1,10 +1,10 @@
 WinDRBD-next: beta for selected customers
 
+TODO: fix memleak in getting volsize.
+
 TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
 	after doing some experiments. drbdadm down / up solved the
 	problem.
-
-TODO: fix memleak in getting volsize.
 
 TODO: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
 	Update: didn't observe lately (with 0.3.7) but I am
@@ -40,13 +40,6 @@ TODO: allow user to pass name of symbolic link created
 	files for UNIX and Windows) and integrate upstream
 	changes.
 
-TODO: Release backing device:
-	drbdadm up / drbdadm down / format f:
-
-TODO: Test other file systems (FAT, FAT32, ...)
-	FAT does not work (Invalid function when accessing DRBD device)
-	FAT32 also not (something with flushing?)
-
 TODO: Test with Windows 10 (we have to do that anyway some day)
 
 TODO: Cannot mount NTFS after sync.
@@ -76,7 +69,13 @@ TODO: Cannot mount NTFS after sync.
 
 TODO: test no I/O when disk is failed.
 
+TODO: test external meta data
 --------------------------------------------------------------
+
+TODO: Test other file systems (FAT, FAT32, ...)
+	FAT does not work (Invalid function when accessing DRBD device)
+	FAT32 also not (something with flushing?)
+	Probably there is one important IOCTL missing.
 
 TODO: Review patches if they are still needed.
 	Especially kmalloc(,, Tag) which is not neccessary.
@@ -900,4 +899,9 @@ Done: Throw away lots of Mantech code.
 	Mostly done.
 	Get rid of PVOLUME_EXTENSION as well.
 	Done
+
+Invalid: Release backing device:
+	drbdadm up / drbdadm down / format f:
+	Not clear what this means. It works for me.
+	Reopen that when it bites.
 
