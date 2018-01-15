@@ -21,6 +21,8 @@ TODO: BSOD sometimes when syncing
 	Update: the page fault in non paged area BSOD reappeared
 	(while Syncing).
 
+	Update: again, while syncing (2 times in a row)
+
 TODO: Fix windows shutdown bug.
 
 	Most likely this was introduced when implementing the
@@ -79,6 +81,17 @@ TODO: Cannot mount NTFS after sync.
 	It is clear that copiing the DRBD device (instead of the
 	backing device) does not work because Windows hides the
 	last 8 sectors.
+
+	Update: It seems that the invalid pages point to somewhere
+	where windows kernel alloc tags (like WD4E, E4DW in the source
+	code) are. So we have an invalid pointer (use after free?)
+	problem.
+
+	Check if all pages are transferred first and then validate
+	the pointers.
+
+	Test was made with write-test.sh not with NTFS (so NTFS
+	driver isn't the problem)
 
 TODO: test no I/O when disk is failed.
 

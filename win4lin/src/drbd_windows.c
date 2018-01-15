@@ -630,11 +630,13 @@ void free_mdls_and_irp(struct bio *bio)
 printk(KERN_WARNING "freeing bio without irp.\n");
 		return;
 	}
+printk("1\n");
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
 		 */
 	for (mdl = bio->bi_irp->MdlAddress; mdl != NULL; mdl = next_mdl) {
+printk("2 mdl: %p\n", mdl);
 		next_mdl = mdl->Next;
 		if (mdl->MdlFlags & MDL_PAGES_LOCKED) 
 		{
@@ -642,10 +644,13 @@ printk(KERN_WARNING "freeing bio without irp.\n");
 		}
 		IoFreeMdl(mdl); // This function will also unmap pages.
 	}
+printk("3\n");
 	bio->bi_irp->MdlAddress = NULL;
 	ObDereferenceObject(bio->bi_irp->Tail.Overlay.Thread);
+printk("4\n");
 
 	IoFreeIrp(bio->bi_irp);
+printk("5\n");
 }
 
 void bio_put(struct bio *bio)
