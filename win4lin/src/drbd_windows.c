@@ -616,9 +616,8 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
 
-/*
 printk(KERN_DEBUG "bio: %p\n", bio);
-*/
+
 	return bio;
 }
 
@@ -628,9 +627,7 @@ void free_mdls_and_irp(struct bio *bio)
 
 	if (bio->bi_irp == NULL) {
 /* TODO: this happens quite frequently while it shouldn't */
-/*
 printk(KERN_WARNING "freeing bio without irp.\n");
-*/
 		return;
 	}
 		/* This has to be done before freeing the buffers with
@@ -1697,7 +1694,7 @@ static void patch_boot_sector(char *buffer, int to_fs)
 {
 	static const char *fs_signatures[][2] = {
 		{ "NTFS", "DRBD" },
-//		{ "MSDOS5.0", "FATDRBD" },
+		{ "MSDOS5.0", "FATDRBD" },
 		{ "EXFAT", "EDRBD" },
 		{ NULL, NULL }};
 	int fs;
@@ -1725,9 +1722,7 @@ NTSTATUS DrbdIoCompletion(
 )
 {
 /* TODO: Device object is NULL here. Fix that in case we need it one day. */
-/*
 printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context);
-*/
 	struct bio *bio = Context;
 	PMDL mdl, nextMdl;
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
@@ -1815,9 +1810,7 @@ static int win_generic_make_request(struct bio *bio)
 	int err = -EIO;
 	unsigned int first_size;
 	
-/*
 printk(KERN_INFO "bio->bi_rw = %d WRITE_FLUSH = %d\n", bio->bi_rw, WRITE_FLUSH);
-*/
 
 	if ((bio->bi_rw & WRITE_FLUSH) == WRITE_FLUSH) {
 printk("flushing\n");
@@ -1841,9 +1834,8 @@ printk("flushing\n");
 		first_size = bio->bi_io_vec[0].bv_len; 
 	}
 
-/*
 printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt);
-*/
+
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512) {
 		patch_boot_sector(buffer, 0);
