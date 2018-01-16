@@ -95,8 +95,6 @@ TODO: Cannot mount NTFS after sync.
 
 TODO: test no I/O when disk is failed.
 
-TODO: test external meta data
-
 In progress: make install package
 	self extracting exe or msi file.
 	Know how to do it (iexpress.exe) do it properly once
@@ -938,4 +936,7 @@ Invalid: Release backing device:
 	drbdadm up / drbdadm down / format f:
 	Not clear what this means. It works for me.
 	Reopen that when it bites.
+
+Done: test external meta data
+	Currently running with external meta data
 

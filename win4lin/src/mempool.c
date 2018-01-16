@@ -36,6 +36,7 @@ void mempool_destroy(mempool_t *pool)
 		ExDeleteNPagedLookasideList(&pool->pageLS);
 		ExDeleteNPagedLookasideList(&pool->page_addrLS);
 	}
+printk("Pool: %p\n", pool);
 	ExFreePool(pool);
 }
 
@@ -67,6 +68,7 @@ void mempool_free(void *element, mempool_t *pool)
 	if (pool->type == MEMPOOL_PAGE) {
 		struct page* page = element;
 
+printk("&pool->page_addrLS: %p &pool->pageLS: %p\n", &pool->page_addrLS, &pool->pageLS);
                 ExFreeToNPagedLookasideList (&pool->page_addrLS, page->addr);
                 ExFreeToNPagedLookasideList (&pool->pageLS, page);
 	} else {

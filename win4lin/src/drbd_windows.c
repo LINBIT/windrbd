@@ -547,6 +547,7 @@ __inline void kfree(const void * x)
 {
 	if (x)
 	{
+printk("freeing %p\n", x);
 		ExFreePool((void*)x);
 	}
 }
@@ -555,6 +556,7 @@ __inline void kvfree(const void * x)
 {
 	if (x)
 	{
+printk("freeing %p\n", x);
 		ExFreePool((void*)x);
 	}
 }
@@ -637,6 +639,8 @@ printk("1\n");
 		 */
 	for (mdl = bio->bi_irp->MdlAddress; mdl != NULL; mdl = next_mdl) {
 printk("2 mdl: %p\n", mdl);
+printk("addr: %p\n", MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority));
+
 		next_mdl = mdl->Next;
 		if (mdl->MdlFlags & MDL_PAGES_LOCKED) 
 		{
@@ -697,8 +701,8 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned i
 	bvec->bv_len = len;
 	bvec->bv_offset = offset;
 	bio->bi_size += len;
+printk("bio: %p bv_page: %p bv_page->addr: %p bv_offset: %d bv_len: %d bi_size: %d\n", bio, bvec->bv_page, bvec->bv_page->addr, bvec->bv_offset, bvec->bv_len, bio->bi_size);
 
-printk(KERN_DEBUG "bio: %p page: %p page->addr: %p\n", bio, page, page->addr);
 	return len;
 }
 
@@ -1835,11 +1839,11 @@ printk("flushing\n");
 			io = IRP_MJ_READ;
 		}
 		bio->offset.QuadPart = bio->bi_sector << 9;
-		buffer = (PVOID) bio->bi_io_vec[0].bv_page->addr; 
+		buffer = (void*) (((char*) bio->bi_io_vec[0].bv_page->addr) + bio->bi_io_vec[0].bv_offset); 
 		first_size = bio->bi_io_vec[0].bv_len; 
 	}
 
-printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt);
+printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bv_offset: %d bi_vcnt=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset);
 
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512) {

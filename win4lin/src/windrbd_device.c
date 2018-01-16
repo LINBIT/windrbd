@@ -284,6 +284,8 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 	bio->bi_end_io = windrbd_bio_finished;
 	bio->bi_upper_irp = irp;
 
+printk("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
+
 	return 0;
 }
 
