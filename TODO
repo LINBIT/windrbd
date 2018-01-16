@@ -942,3 +942,7 @@ Invalid: Release backing device:
 Done: test external meta data
 	Currently running with external meta data
 
+Done: write sometimes stalls when there is too much logging.
+	Solved: this is a bug in VirtualBox (network is down
+	and write test runs from network share).
+

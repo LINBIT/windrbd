@@ -625,7 +625,9 @@ void free_mdls_and_irp(struct bio *bio)
 
 	if (bio->bi_irp == NULL) {
 /* TODO: this happens quite frequently while it shouldn't */
+/*
 printk(KERN_WARNING "freeing bio without irp.\n");
+*/
 		return;
 	}
 
@@ -1833,7 +1835,9 @@ printk("flushing\n");
 		first_size = bio->bi_io_vec[0].bv_len; 
 	}
 
+/*
 printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset);
+*/
 
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512) {
