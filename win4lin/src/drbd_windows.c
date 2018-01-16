@@ -547,7 +547,6 @@ __inline void kfree(const void * x)
 {
 	if (x)
 	{
-printk("freeing %p\n", x);
 		ExFreePool((void*)x);
 	}
 }
@@ -556,7 +555,6 @@ __inline void kvfree(const void * x)
 {
 	if (x)
 	{
-printk("freeing %p\n", x);
 		ExFreePool((void*)x);
 	}
 }
@@ -618,8 +616,6 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
 
-printk(KERN_DEBUG "bio: %p\n", bio);
-
 	return bio;
 }
 
@@ -632,15 +628,12 @@ void free_mdls_and_irp(struct bio *bio)
 printk(KERN_WARNING "freeing bio without irp.\n");
 		return;
 	}
-printk("1\n");
+
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
 		 */
 	for (mdl = bio->bi_irp->MdlAddress; mdl != NULL; mdl = next_mdl) {
-printk("2 mdl: %p\n", mdl);
-printk("addr: %p\n", MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority));
-
 		next_mdl = mdl->Next;
 		if (mdl->MdlFlags & MDL_PAGES_LOCKED) 
 		{
@@ -648,13 +641,10 @@ printk("addr: %p\n", MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority));
 		}
 		IoFreeMdl(mdl); // This function will also unmap pages.
 	}
-printk("3\n");
 	bio->bi_irp->MdlAddress = NULL;
 	ObDereferenceObject(bio->bi_irp->Tail.Overlay.Thread);
-printk("4\n");
 
 	IoFreeIrp(bio->bi_irp);
-printk("5\n");
 }
 
 void bio_put(struct bio *bio)
@@ -701,7 +691,7 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned i
 	bvec->bv_len = len;
 	bvec->bv_offset = offset;
 	bio->bi_size += len;
-printk("bio: %p bv_page: %p bv_page->addr: %p bv_offset: %d bv_len: %d bi_size: %d\n", bio, bvec->bv_page, bvec->bv_page->addr, bvec->bv_offset, bvec->bv_len, bio->bi_size);
+/* printk("bio: %p bv_page: %p bv_page->addr: %p bv_offset: %d bv_len: %d bi_size: %d\n", bio, bvec->bv_page, bvec->bv_page->addr, bvec->bv_offset, bvec->bv_len, bio->bi_size); */
 
 	return len;
 }
@@ -1731,7 +1721,7 @@ NTSTATUS DrbdIoCompletion(
 )
 {
 /* TODO: Device object is NULL here. Fix that in case we need it one day. */
-printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context);
+/* printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context); */
 	struct bio *bio = Context;
 	PMDL mdl, nextMdl;
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
@@ -1819,7 +1809,7 @@ static int win_generic_make_request(struct bio *bio)
 	int err = -EIO;
 	unsigned int first_size;
 	
-printk(KERN_INFO "bio->bi_rw = %d WRITE_FLUSH = %d\n", bio->bi_rw, WRITE_FLUSH);
+/* printk(KERN_INFO "bio->bi_rw = %d WRITE_FLUSH = %d\n", bio->bi_rw, WRITE_FLUSH); */
 
 	if ((bio->bi_rw & WRITE_FLUSH) == WRITE_FLUSH) {
 printk("flushing\n");
