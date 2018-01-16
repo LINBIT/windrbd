@@ -1,15 +1,5 @@
 WinDRBD-next: beta for selected customers
 
-TODO: fix memleak in getting volsize.
-
-TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
-	after doing some experiments. drbdadm down / up solved the
-	problem.
-
-TODO: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
-	Update: didn't observe lately (with 0.3.7) but I am
-	pretty sure it is still in there.
-
 TODO: BSOD sometimes when syncing
 
 	Update: New blue screen page fault in non paged area
@@ -22,29 +12,6 @@ TODO: BSOD sometimes when syncing
 	(while Syncing).
 
 	Update: again, while syncing (2 times in a row)
-
-TODO: Fix windows shutdown bug.
-
-	Most likely this was introduced when implementing the
-	cleanup() method.
-
-	Update: Not observed lately.
-	Update: just reappeared again.
-
-TODO: how and when is flush to backing device done?
-
-TODO: allow user to pass name of symbolic link created
-	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
-
-	Update: This should be userspace-only. It should
-	also be possible to mount the device upon an
-	empty NTFS folder.
-
-	At this point also clean up drbd-utils (separate
-	files for UNIX and Windows) and integrate upstream
-	changes.
-
-TODO: Test with Windows 10 (we have to do that anyway some day)
 
 TODO: Cannot mount NTFS after sync.
 
@@ -95,16 +62,49 @@ TODO: Cannot mount NTFS after sync.
 	Test was made with write-test.sh not with NTFS (so NTFS
 	driver isn't the problem)
 
-TODO: test no I/O when disk is failed.
+TODO: allow user to pass name of symbolic link created
+	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
+
+	Update: This should be userspace-only. It should
+	also be possible to mount the device upon an
+	empty NTFS folder.
+
+	At this point also clean up drbd-utils (separate
+	files for UNIX and Windows) and integrate upstream
+	changes.
+
+TODO: Fix windows shutdown bug.
+
+	Most likely this was introduced when implementing the
+	cleanup() method.
+
+	Update: Not observed lately.
+	Update: just reappeared again.
+
+TODO: fix memleak in getting volsize.
+
+TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
+	after doing some experiments. drbdadm down / up solved the
+	problem.
+
+TODO: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
+	Update: didn't observe lately (with 0.3.7) but I am
+	pretty sure it is still in there.
+
+TODO: how and when is flush to backing device done?
 
 In progress: make install package
 	self extracting exe or msi file.
 	Know how to do it (iexpress.exe) do it properly once
 	everything else is done.
 
+TODO: Test with Windows 10 (we have to do that anyway some day)
+
 TODO: reinstall windows 7 and check if last 4096 bytes in NTFS 
 	are still hidden.
 --------------------------------------------------------------
+
+TODO: test no I/O when disk is failed.
 
 TODO: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
