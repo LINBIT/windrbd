@@ -31,6 +31,8 @@ TODO: Fix windows shutdown bug.
 	Update: Not observed lately.
 	Update: just reappeared again.
 
+TODO: how and when is flush to backing device done?
+
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 

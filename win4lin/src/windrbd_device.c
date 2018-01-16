@@ -277,9 +277,13 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 		printk("Page is NULL.\n");
 		return -1;
 	}
+		/* This is not page aligned. */
 	bio->bi_io_vec[0].bv_page->addr = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority);
 	bio->bi_io_vec[0].bv_len = MmGetMdlByteCount(mdl);
-	bio->bi_io_vec[0].bv_offset = MmGetMdlByteOffset(mdl);
+		/* Address returned by MmGetSystemAddressForMdlSafe
+		 * is already offset, not using MmGetMdlByteOffset.
+		 */
+	bio->bi_io_vec[0].bv_offset = 0;
 
 	bio->bi_end_io = windrbd_bio_finished;
 	bio->bi_upper_irp = irp;
