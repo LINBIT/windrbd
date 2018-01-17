@@ -262,6 +262,7 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 
 		/* TODO: FLUSH? */
 	bio->bi_rw |= (s->MajorFunction == IRP_MJ_WRITE) ? WRITE : READ;
+/* TODO: Parameters.Write if IRP_MD_WRITE */
 	bio->bi_size = s->Parameters.Read.Length;
 	bio->bi_sector = (s->Parameters.Read.ByteOffset.QuadPart) / dev->bd_block_size + WINDRBD_SECTOR_SHIFT;
 	bio->bi_bdev = dev;

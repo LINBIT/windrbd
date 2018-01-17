@@ -1732,7 +1732,7 @@ NTSTATUS DrbdIoCompletion(
 	int i;
 
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
-		WDRBD_WARN("DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
+		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
 	}
 	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512) {
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
@@ -1844,7 +1844,7 @@ printk("flushing\n");
 	}
 
 if (bio->bi_io_vec[0].bv_offset != 0) {
-printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset);
+printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
 }
 
 
@@ -1871,13 +1871,14 @@ printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%
 	for (i=1;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
 		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irp);
-printk("entry: %p mdl: %p\n", entry, mdl);
+printk("entry: %p mdl: %p offset: %d len: %d\n", entry, mdl, entry->bv_offset, entry->bv_len);
 		if (mdl == NULL) {
 			printk("Could not allocate mdl, giving up.\n");
 			err = -ENOMEM;
 				/* TODO: will also dereference thread */
 			goto out_free_irp;
 		}
+*(int*)(((char*)entry->bv_page->addr)+entry->bv_offset) = 0xdeadbeef;
 		MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
 //		MmBuildMdlForNonPagedPool(mdl);
 	}
@@ -1889,6 +1890,18 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
+printk("pIoNextStackLocation->Parameters.Read.Length: %lu\n", pIoNextStackLocation->Parameters.Read.Length); 
+	if (io == IRP_MJ_WRITE) {
+		pIoNextStackLocation->Parameters.Write.Length = bio->bi_size;
+	}
+	if (io == IRP_MJ_READ) {
+		pIoNextStackLocation->Parameters.Read.Length = bio->bi_size;
+	}
+
+printk("pIoNextStackLocation->Parameters.Read.Length patched to: %lu\n", pIoNextStackLocation->Parameters.Read.Length); 
+
+
+	
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP.
 		 */
@@ -1909,6 +1922,9 @@ printk("entry: %p mdl: %p\n", entry, mdl);
 			     * must not be called).
 			     */
 	}
+if (status == STATUS_PENDING) {
+printk("pending\n");
+}
 	return 0;
 
 out_free_irp:
