@@ -13,6 +13,8 @@ TODO: BSOD sometimes when syncing
 
 	Update: again, while syncing (2 times in a row)
 
+	Update: again, while syncing (and not freeing pages)
+
 TODO: Cannot mount NTFS after sync.
 
 	johannes@johannes-VirtualBox:~/Linbit/tmp$ sudo mount /dev/drbd26 -t ntfs mnt/
@@ -61,6 +63,10 @@ TODO: Cannot mount NTFS after sync.
 
 	Test was made with write-test.sh not with NTFS (so NTFS
 	driver isn't the problem)
+
+	Update: Problem was that Length of I/O was only the first
+	MDL entry not the total length. Should work now. TODO:
+	test with NTFS.
 
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel

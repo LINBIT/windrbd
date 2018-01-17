@@ -1738,11 +1738,6 @@ NTSTATUS DrbdIoCompletion(
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
 		patch_boot_sector(buffer, 1);
 	}
-	if (stack_location->MajorFunction == IRP_MJ_READ) {
-		for (i=0;i<bio->bi_vcnt;i++) {
-			printk("i: %d bv_len: %d data: %x\n", i, bio->bi_io_vec[i].bv_len, *((int*)bio->bi_io_vec[i].bv_page->addr));
-		}
-	}
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
@@ -1871,7 +1866,9 @@ printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%
 	for (i=1;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
 		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irp);
+/*
 printk("entry: %p mdl: %p offset: %d len: %d\n", entry, mdl, entry->bv_offset, entry->bv_len);
+*/
 		if (mdl == NULL) {
 			printk("Could not allocate mdl, giving up.\n");
 			err = -ENOMEM;
@@ -1890,7 +1887,6 @@ printk("entry: %p mdl: %p offset: %d len: %d\n", entry, mdl, entry->bv_offset, e
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
-printk("pIoNextStackLocation->Parameters.Read.Length: %lu\n", pIoNextStackLocation->Parameters.Read.Length); 
 	if (io == IRP_MJ_WRITE) {
 		pIoNextStackLocation->Parameters.Write.Length = bio->bi_size;
 	}
@@ -1898,10 +1894,6 @@ printk("pIoNextStackLocation->Parameters.Read.Length: %lu\n", pIoNextStackLocati
 		pIoNextStackLocation->Parameters.Read.Length = bio->bi_size;
 	}
 
-printk("pIoNextStackLocation->Parameters.Read.Length patched to: %lu\n", pIoNextStackLocation->Parameters.Read.Length); 
-
-
-	
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP.
 		 */
@@ -1922,9 +1914,6 @@ printk("pIoNextStackLocation->Parameters.Read.Length patched to: %lu\n", pIoNext
 			     * must not be called).
 			     */
 	}
-if (status == STATUS_PENDING) {
-printk("pending\n");
-}
 	return 0;
 
 out_free_irp:
