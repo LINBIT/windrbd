@@ -1839,9 +1839,9 @@ printk("flushing\n");
 		first_size = bio->bi_io_vec[0].bv_len; 
 	}
 
-if (bio->bi_io_vec[0].bv_offset != 0) {
+// if (bio->bi_io_vec[0].bv_offset != 0) {
 printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
-}
+// }
 
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512) {
@@ -1865,6 +1865,10 @@ printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%
 //	MmBuildMdlForNonPagedPool(bio->bi_irp->MdlAddress);
 
 printk("bio->bi_size: %d bio->bi_vcnt: %d\n", bio->bi_size, bio->bi_vcnt);
+
+int total_size = first_size;
+if (bio->bi_vcnt > 16) bio->bi_vcnt = 16;
+
 	for (i=1;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
 			/* TODO: + offset back in */
@@ -1877,6 +1881,7 @@ printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len
 				/* TODO: will also dereference thread */
 			goto out_free_irp;
 		}
+		total_size += entry->bv_len;
 // *(int*)(((char*)entry->bv_page->addr)+entry->bv_offset) = 0xdeadbeef;
 		MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
 //		MmBuildMdlForNonPagedPool(mdl);
@@ -1891,6 +1896,7 @@ printk("2\n");
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
+bio->bi_size = total_size;
 	if (io == IRP_MJ_WRITE) {
 		pIoNextStackLocation->Parameters.Write.Length = bio->bi_size;
 	}
