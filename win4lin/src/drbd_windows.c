@@ -1739,6 +1739,12 @@ NTSTATUS DrbdIoCompletion(
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
 		patch_boot_sector(buffer, 1);
 	}
+	if (stack_location->MajorFunction == IRP_MJ_READ) {
+		for (i=0;i<bio->bi_vcnt;i++) {
+			printk("i: %d bv_len: %d data: %x\n", i, bio->bi_io_vec[i].bv_len, *((int*)bio->bi_io_vec[i].bv_page->addr));
+		}
+	}
+
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
 	return STATUS_MORE_PROCESSING_REQUIRED;

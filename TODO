@@ -72,6 +72,10 @@ TODO: Cannot mount NTFS after sync.
 	virtual address outside the range of the source Mdl.
 	When syncing.
 
+	When restricting max number of MDLs to 16 we do not
+	blue screen but data is corrupt (at offset 0x1000
+	which cannot be explained by the 16 MDLs limit).
+
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
