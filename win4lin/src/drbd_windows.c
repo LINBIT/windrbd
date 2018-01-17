@@ -1729,6 +1729,7 @@ NTSTATUS DrbdIoCompletion(
 	struct bio *bio = Context;
 	PMDL mdl, nextMdl;
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
+	int i;
 
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		WDRBD_WARN("DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
@@ -1736,6 +1737,11 @@ NTSTATUS DrbdIoCompletion(
 	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512) {
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
 		patch_boot_sector(buffer, 1);
+	}
+	if (stack_location->MajorFunction == IRP_MJ_READ) {
+		for (i=0;i<bio->bi_vcnt;i++) {
+			printk("i: %d bv_len: %d data: %x\n", i, bio->bi_io_vec[i].bv_len, *((int*)bio->bi_io_vec[i].bv_page->addr));
+		}
 	}
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
@@ -1865,7 +1871,7 @@ printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%
 	for (i=1;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
 		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irp);
-// printk("entry: %p mdl: %p\n", entry, mdl);
+printk("entry: %p mdl: %p\n", entry, mdl);
 		if (mdl == NULL) {
 			printk("Could not allocate mdl, giving up.\n");
 			err = -ENOMEM;
