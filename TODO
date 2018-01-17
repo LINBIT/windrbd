@@ -68,6 +68,10 @@ TODO: Cannot mount NTFS after sync.
 	MDL entry not the total length. Should work now. TODO:
 	test with NTFS.
 
+	New blue screen: IoBuildPartialMdl was called with a
+	virtual address outside the range of the source Mdl.
+	When syncing.
+
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
