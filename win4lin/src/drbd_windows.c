@@ -534,6 +534,7 @@ struct page *alloc_page(int flag)
 void __free_page(struct page *page)
 {
 	/* TODO: page == NULL defined? */
+	/* TODO: put kfree back in */
 printk("Not freeing page %p (%p)\n", page, page->addr);
 /*	kfree(page->addr);
 	kfree(page); 
@@ -1863,27 +1864,30 @@ printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%
 
 //	MmBuildMdlForNonPagedPool(bio->bi_irp->MdlAddress);
 
+printk("bio->bi_size: %d bio->bi_vcnt: %d\n", bio->bi_size, bio->bi_vcnt);
 	for (i=1;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
-		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irp);
-/*
-printk("entry: %p mdl: %p offset: %d len: %d\n", entry, mdl, entry->bv_offset, entry->bv_len);
-*/
+			/* TODO: + offset back in */
+		struct _MDL *mdl = IoAllocateMdl(entry->bv_page->addr, entry->bv_len, TRUE, FALSE, bio->bi_irp);
+
+printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len: %d\n", entry, i, mdl, entry->bv_page->addr, ((char*)entry->bv_page->addr)+entry->bv_offset,  entry->bv_offset, entry->bv_len);
 		if (mdl == NULL) {
 			printk("Could not allocate mdl, giving up.\n");
 			err = -ENOMEM;
 				/* TODO: will also dereference thread */
 			goto out_free_irp;
 		}
-*(int*)(((char*)entry->bv_page->addr)+entry->bv_offset) = 0xdeadbeef;
+// *(int*)(((char*)entry->bv_page->addr)+entry->bv_offset) = 0xdeadbeef;
 		MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
 //		MmBuildMdlForNonPagedPool(mdl);
 	}
 
+printk("1\n");
 	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irp);
 
 	IoSetCompletionRoutine(bio->bi_irp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
+printk("2\n");
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
@@ -1894,6 +1898,7 @@ printk("entry: %p mdl: %p offset: %d len: %d\n", entry, mdl, entry->bv_offset, e
 		pIoNextStackLocation->Parameters.Read.Length = bio->bi_size;
 	}
 
+printk("3\n");
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP.
 		 */
@@ -1903,7 +1908,9 @@ printk("entry: %p mdl: %p offset: %d len: %d\n", entry, mdl, entry->bv_offset, e
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
+printk("4\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irp);
+printk("5\n");
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
 
@@ -1914,6 +1921,7 @@ printk("entry: %p mdl: %p offset: %d len: %d\n", entry, mdl, entry->bv_offset, e
 			     * must not be called).
 			     */
 	}
+printk("6\n");
 	return 0;
 
 out_free_irp:
