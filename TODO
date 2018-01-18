@@ -76,6 +76,16 @@ TODO: Cannot mount NTFS after sync.
 	blue screen but data is corrupt (at offset 0x1000
 	which cannot be explained by the 16 MDLs limit).
 
+	Update: we have 3 errors here: one is that we cannot
+	read more than 64K (16 Pages/MDLs) without blue screen
+	one is a page fault blue screen (which does not always
+	happen) and one is a data corruption between
+	DrbdIoCompletion and sending the packet.
+
+	Update: error #3 (data corruption is because 
+	_drbd_send_zc_ee is wrongly patched by windrbd. 
+	Undo this patch and it should work.
+
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 

@@ -528,6 +528,8 @@ struct page *alloc_page(int flag)
 	}
 	RtlZeroMemory(p->addr, PAGE_SIZE);
 
+printk("p: %p p->addr: %p\n", p, p->addr);
+
 	return p;
 }
 
@@ -535,7 +537,7 @@ void __free_page(struct page *page)
 {
 	/* TODO: page == NULL defined? */
 	/* TODO: put kfree back in */
-printk("Not freeing page %p (%p)\n", page, page->addr);
+printk("Not freeing page page: %p page->addr: %p\n", page, page->addr);
 /*	kfree(page->addr);
 	kfree(page); 
 */
@@ -628,9 +630,7 @@ void free_mdls_and_irp(struct bio *bio)
 
 	if (bio->bi_irp == NULL) {
 /* TODO: this happens quite frequently while it shouldn't */
-/*
-printk(KERN_WARNING "freeing bio without irp.\n");
-*/
+printk(KERN_WARNING "freeing bio without irp. bio->bi_vcnt: %d\n", bio->bi_vcnt);
 		return;
 	}
 
@@ -1846,7 +1846,7 @@ printk("flushing\n");
 	}
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
+// printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
 // }
 
 
@@ -1870,7 +1870,7 @@ printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%
 
 //	MmBuildMdlForNonPagedPool(bio->bi_irp->MdlAddress);
 
-printk("bio->bi_size: %d bio->bi_vcnt: %d\n", bio->bi_size, bio->bi_vcnt);
+// printk("bio->bi_size: %d bio->bi_vcnt: %d\n", bio->bi_size, bio->bi_vcnt);
 
 int total_size = first_size;
 if (bio->bi_vcnt > 16) bio->bi_vcnt = 16;
@@ -1888,17 +1888,20 @@ printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len
 			goto out_free_irp;
 		}
 		total_size += entry->bv_len;
-// *(int*)(((char*)entry->bv_page->addr)+entry->bv_offset) = 0xdeadbeef;
+
+if (io == IRP_MJ_READ) {
+ *(int*)(((char*)entry->bv_page->addr)+entry->bv_offset) = 0xdeadbeef;
+}
 		MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
 //		MmBuildMdlForNonPagedPool(mdl);
 	}
 
-printk("1\n");
+// printk("1\n");
 	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irp);
 
 	IoSetCompletionRoutine(bio->bi_irp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
-printk("2\n");
+// printk("2\n");
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
@@ -1910,7 +1913,7 @@ bio->bi_size = total_size;
 		pIoNextStackLocation->Parameters.Read.Length = bio->bi_size;
 	}
 
-printk("3\n");
+// printk("3\n");
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP.
 		 */
@@ -1920,9 +1923,9 @@ printk("3\n");
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
-printk("4\n");
+// printk("4\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irp);
-printk("5\n");
+// printk("5\n");
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
 
@@ -1933,7 +1936,7 @@ printk("5\n");
 			     * must not be called).
 			     */
 	}
-printk("6\n");
+// printk("6\n");
 	return 0;
 
 out_free_irp:
