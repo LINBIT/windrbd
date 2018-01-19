@@ -23,6 +23,14 @@ TODO: Cannot read more and 64K (16 MDLs) from backing device.
 TODO: Create windrbd device on primary and delete windrbd device 
 	on secondary.
 
+	Update: drbd_create_device needs to assign a valid
+	this_bdev. Do not create Windows device in bdget, 
+	instead create it on becoming primary and delete
+	it (with checking for open references) in becoming
+	secondary. This way we do not support auto promote
+	(because the block device cannot be opened) but
+	that is not so important.
+
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
