@@ -245,6 +245,74 @@ TEST(win_drbd, do_write_read)
 	CloseHandle(h);
 }
 
+TEST(win_drbd, do_write_read_whole_disk_by_1meg_requests)
+{
+#define ONE_MEG (65536*16)
+
+	HANDLE h = do_open_device();
+	DWORD bytes_read, bytes_written;
+	BOOL ret;
+	int err;
+	// char buf[ONE_MEG], buf2[ONE_MEG];
+	char *buf, *buf2;
+	unsigned int i;
+	DWORD px;
+	unsigned int sector;
+
+	if (!p.force) {
+	        char answer[10];
+
+		fprintf(stderr, "This test will *DESTROY* the whole data on the disk of the underlying backing device.\n");
+		fprintf(stderr, "Please type y<enter> if you wish to do this.\n");
+		fgets(answer, sizeof(answer)-1, stdin);
+		if (answer[0] != 'y') {
+			fprintf(stderr, "Write test not done.\n");
+			return;
+		}
+	}
+
+	buf = (char*)malloc(ONE_MEG);
+	if (buf == NULL) {
+		printf("Out of memory.\n");
+		exit(1);
+	}
+	buf2 = (char*)malloc(ONE_MEG);
+	if (buf2 == NULL) {
+		printf("Out of memory.\n");
+		exit(1);
+	}
+
+	for (sector=0; sector<p.expected_size / ONE_MEG; sector++) {
+		for (i=0;i<ONE_MEG;i++)
+			buf[i] = i;
+		*(int*)buf = sector;
+
+		printf("Sector is %d\n", sector);
+
+		ret = WriteFile(h, buf, ONE_MEG, &bytes_written,  NULL);
+		err = GetLastError();
+
+		EXPECT_EQ(err, ERROR_SUCCESS);
+		EXPECT_NE(ret, 0);
+		EXPECT_EQ(bytes_written, ONE_MEG);
+
+		px = SetFilePointer(h, ONE_MEG*sector, NULL, FILE_BEGIN);
+		EXPECT_EQ(px, ONE_MEG*sector);
+
+		ret = ReadFile(h, buf2, ONE_MEG, &bytes_read,  NULL);
+		err = GetLastError();
+
+		EXPECT_EQ(err, ERROR_SUCCESS);
+		EXPECT_NE(ret, 0);
+		EXPECT_EQ(bytes_read, ONE_MEG);
+
+/*		for (i=0;i<10;i++)
+			EXPECT_EQ(buf[i], buf2[i]); */
+	}
+
+	CloseHandle(h);
+}
+
 TEST(win_drbd, do_write_read_whole_disk)
 {
 	HANDLE h = do_open_device();

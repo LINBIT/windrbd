@@ -617,6 +617,8 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
 
+printk("bio: %p\n", bio);
+
 	return bio;
 }
 
@@ -652,6 +654,7 @@ void bio_put(struct bio *bio)
 {
     int cnt;
     cnt = atomic_dec(&bio->bi_cnt);
+printk("bio: %p\n", bio);
     if (cnt == 0) {
 	bio_free(bio);
     }
@@ -659,6 +662,7 @@ void bio_put(struct bio *bio)
 
 void bio_free(struct bio *bio)
 {
+printk("bio: %p\n", bio);
 	free_mdls_and_irp(bio);
 	kfree(bio);
 }
