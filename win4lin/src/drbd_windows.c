@@ -1872,10 +1872,17 @@ printk("flushing\n");
 
 // printk("bio->bi_size: %d bio->bi_vcnt: %d\n", bio->bi_size, bio->bi_vcnt);
 
-/*
-int total_size = first_size;
-if (bio->bi_vcnt > 16) bio->bi_vcnt = 16;
-*/
+	/* Windows tries to split up MDLs and crashes when
+	 * there are more than 32*4K MDLs.
+	 */
+
+#define MAX_MDL_ELEMENTS 32
+
+	int total_size = first_size;
+	if (bio->bi_vcnt > MAX_MDL_ELEMENTS) {
+		printk(KERN_WARNING "More than %d elements in bio (%d), cutting them\n", MAX_MDL_ELEMENTS, bio->bi_vcnt);
+		bio->bi_vcnt = MAX_MDL_ELEMENTS;
+	}
 
 	for (i=1;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
@@ -1889,7 +1896,7 @@ printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len
 				/* TODO: will also dereference thread */
 			goto out_free_irp;
 		}
-//		total_size += entry->bv_len;
+		total_size += entry->bv_len;
 
 if (io == IRP_MJ_READ) {
  *(int*)(((char*)entry->bv_page->addr)+entry->bv_offset) = 0xdeadbeef;
@@ -1907,7 +1914,8 @@ if (io == IRP_MJ_READ) {
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
-// bio->bi_size = total_size;
+	bio->bi_size = total_size;
+
 	if (io == IRP_MJ_WRITE) {
 		pIoNextStackLocation->Parameters.Write.Length = bio->bi_size;
 	}
