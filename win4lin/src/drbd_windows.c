@@ -534,11 +534,9 @@ struct page *alloc_page(int flag)
 void __free_page(struct page *page)
 {
 	/* TODO: page == NULL defined? */
-	/* TODO: put kfree back in */
-printk("Not freeing page page: %p page->addr: %p\n", page, page->addr);
-/*	kfree(page->addr);
+
+	kfree(page->addr);
 	kfree(page); 
-*/
 }
 
 void drbd_bp(char *msg)
