@@ -622,7 +622,7 @@ printk("bio: %p\n", bio);
 	return bio;
 }
 
-void free_mdls_and_irp(struct bio *bio)
+static void free_mdls_and_irp(struct bio *bio)
 {
 	struct _MDL *mdl, *next_mdl;
 
@@ -1954,6 +1954,7 @@ if (io == IRP_MJ_READ) {
 	return 0;
 
 out_free_irp:
+printk("karin\n");
 	free_mdls_and_irp(bio);
 
 	return err;
