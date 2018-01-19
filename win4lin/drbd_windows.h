@@ -30,6 +30,7 @@
 
 #include "disp.h"
 #include <linux/mempool.h>
+#include <ntdddisk.h>
 
 /* TODO: this should go away */
 
@@ -627,6 +628,11 @@ struct block_device {
 
 	struct list_head backing_devices_list;
 	bool mechanically_locked; /* MEDIA_REMOVAL ioctl */
+
+		/* Those are used by windrbd_get_volsize() internally */
+	struct _IO_STATUS_BLOCK vol_size_io_status;
+	struct _GET_LENGTH_INFORMATION vol_size_length_information;
+	struct mutex vol_size_mutex;
 };
 
 extern sector_t wdrbd_get_capacity(struct block_device *bdev);

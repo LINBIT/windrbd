@@ -62,6 +62,7 @@ ULONG RtlRandomEx(
 #include "drbd_wrappers.h"
 #include "disp.h"
 
+	/* TODO: these should go away. */
 long		gLogCnt = 0;
 LONGLONG 	gTotalLogCnt = 0;
 char		gLogBuf[LOGBUF_MAXCNT][MAX_DRBDLOG_BUF] = {0,};
@@ -617,8 +618,6 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
 
-printk("bio: %p\n", bio);
-
 	return bio;
 }
 
@@ -626,11 +625,12 @@ static void free_mdls_and_irp(struct bio *bio)
 {
 	struct _MDL *mdl, *next_mdl;
 
-	if (bio->bi_irp == NULL) {
-/* TODO: this happens quite frequently while it shouldn't */
-printk(KERN_WARNING "freeing bio without irp. bio: %p bio->bi_vcnt: %d\n", bio, bio->bi_vcnt);
+		/* This happens quite frequently when DRBD allocates a
+	         * bio without ever calling generic_make_request on it.
+		 */
+
+	if (bio->bi_irp == NULL)
 		return;
-	}
 
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
@@ -652,17 +652,14 @@ printk(KERN_WARNING "freeing bio without irp. bio: %p bio->bi_vcnt: %d\n", bio, 
 
 void bio_put(struct bio *bio)
 {
-    int cnt;
-    cnt = atomic_dec(&bio->bi_cnt);
-printk("bio: %p\n", bio);
-    if (cnt == 0) {
-	bio_free(bio);
-    }
+	int cnt;
+	cnt = atomic_dec(&bio->bi_cnt);
+	if (cnt == 0)
+		bio_free(bio);
 }
 
 void bio_free(struct bio *bio)
 {
-printk("bio: %p\n", bio);
 	free_mdls_and_irp(bio);
 	kfree(bio);
 }
@@ -1756,41 +1753,31 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 {
 	NTSTATUS status;
 	KEVENT event;
-	struct _IO_STATUS_BLOCK *ioStatus;
 	struct _IRP *newIrp;
-	struct _GET_LENGTH_INFORMATION *li;
 	struct _IO_STACK_LOCATION *s;
+	ULONGLONG ret;
 
-	/* TODO: free these somewhere. They must not be on stack
-	 * since that blue screens sometimes.
-	 */
+	mutex_lock(&dev->vol_size_mutex);
 
-	ioStatus = kmalloc(sizeof(*ioStatus), 0, 'DBRD');
-	if (ioStatus == NULL) {
-		WDRBD_ERROR("cannot kmalloc ioStatus\n");
-		return -1;
-	}
-	li = kmalloc(sizeof(*li), 0, 'DBRD');
-	if (li == NULL) {
-		WDRBD_ERROR("cannot kmalloc li\n");
-		return -1;
-	}
-
-	memset(li, 0, sizeof(*li));
+	memset(&dev->vol_size_length_information, 0, sizeof(dev->vol_size_length_information));
 
 	if (KeGetCurrentIrql() > APC_LEVEL) {
 		WDRBD_ERROR("cannot run IoBuildDeviceIoControlRequest becauseof IRP(%d)\n", KeGetCurrentIrql());
+		mutex_unlock(&dev->vol_size_mutex);
+
 		return -1;
 	}
 
 	KeInitializeEvent(&event, NotificationEvent, FALSE);
 	newIrp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_LENGTH_INFO,
        		dev->windows_device, NULL, 0,
-		li, sizeof(*li),
-		FALSE, &event, ioStatus);
+		&dev->vol_size_length_information, sizeof(dev->vol_size_length_information), 
+		FALSE, &event, &dev->vol_size_io_status);
 
 	if (!newIrp) {
 		WDRBD_ERROR("cannot alloc new IRP\n");
+		mutex_unlock(&dev->vol_size_mutex);
+
 		return -1;
 	}	
 	s = IoGetNextIrpStackLocation(newIrp);
@@ -1801,14 +1788,18 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 	status = IoCallDriver(dev->windows_device, newIrp);
 	if (status == STATUS_PENDING) {
 		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
-		status = ioStatus->Status;
+		status = dev->vol_size_io_status.Status;
 	}
 	if (!NT_SUCCESS(status)) {
 	        WDRBD_ERROR("cannot get volume information, err=0x%x\n", status);
+		mutex_unlock(&dev->vol_size_mutex);
 		return -1;
 	}
 
-	return li->Length.QuadPart;
+	ret = dev->vol_size_length_information.Length.QuadPart;
+	mutex_unlock(&dev->vol_size_mutex);
+
+	return ret;
 }
 
 static int win_generic_make_request(struct bio *bio)
@@ -1870,10 +1861,9 @@ printk("flushing\n");
 		return -ENOMEM;
 	}
 
-printk("bio: %p bio->bi_irp: %p\n", bio, bio->bi_irp);
 //	MmBuildMdlForNonPagedPool(bio->bi_irp->MdlAddress);
 
-// printk("bio->bi_size: %d bio->bi_vcnt: %d\n", bio->bi_size, bio->bi_vcnt);
+printk("bio->bi_size: %d bio->bi_vcnt: %d\n", bio->bi_size, bio->bi_vcnt);
 
 	/* Windows tries to split up MDLs and crashes when
 	 * there are more than 32*4K MDLs.
@@ -1954,7 +1944,6 @@ if (io == IRP_MJ_READ) {
 	return 0;
 
 out_free_irp:
-printk("karin\n");
 	free_mdls_and_irp(bio);
 
 	return err;
@@ -2671,6 +2660,8 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	block_device->bd_disk->queue->logical_block_size = 512;
 
 	block_device->file_object = file_object;
+
+	mutex_init(&block_device->vol_size_mutex);
 	block_device->d_size = windrbd_get_volsize(block_device);
 	if (block_device->d_size == -1) {
 		printk(KERN_ERR "Cannot get volsize.\n");

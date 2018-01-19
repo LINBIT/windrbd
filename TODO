@@ -1,7 +1,5 @@
 WinDRBD-next: beta for selected customers
 
-TODO: fix freeing bio without irp.
-
 TODO: Cannot read more and 64K (16 MDLs) from backing device.
 
 	Blue screen shows STOP: 0x0000012E (0xFFFFFA80037AD980,
@@ -19,6 +17,8 @@ TODO: Cannot read more and 64K (16 MDLs) from backing device.
 	128K because this is an over the wire parameter (would
 	have to patch linux DRBD as well). Implement solution
 	that splits the bios into smaller pieces.
+
+	Update: its 128K (32 pages) according to our experiments.
 	
 TODO: Create windrbd device on primary and delete windrbd device 
 	on secondary.
@@ -50,8 +50,6 @@ TODO: Fix windows shutdown bug.
 	Update: Not observed lately.
 	Update: just reappeared again.
 
-TODO: fix memleak in getting volsize.
-
 TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
 	after doing some experiments. drbdadm down / up solved the
 	problem.
@@ -71,6 +69,9 @@ TODO: Test with Windows 10 (we have to do that anyway some day)
 
 TODO: reinstall windows 7 and check if last 4096 bytes in NTFS 
 	are still hidden.
+
+TODO: support I/O vectors in windrbd device (irp_to_bio)
+	and clean up code (see TODOs in source code)
 --------------------------------------------------------------
 
 TODO: test no I/O when disk is failed.
@@ -1011,3 +1012,11 @@ Done: BSOD sometimes when syncing
 
 	Update: Fixed something in drbd_main.c this should
 	not happen any more. Reopen when it occurs again.
+
+Rejected: fix freeing bio without irp.
+	Not to fix. DRBD sometimes allocates bios without ever
+	calling generic_make_request on them.
+
+Done: fix memleak in getting volsize.
+
+
