@@ -528,8 +528,6 @@ struct page *alloc_page(int flag)
 	}
 	RtlZeroMemory(p->addr, PAGE_SIZE);
 
-printk("p: %p p->addr: %p\n", p, p->addr);
-
 	return p;
 }
 
@@ -1739,11 +1737,13 @@ NTSTATUS DrbdIoCompletion(
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
 		patch_boot_sector(buffer, 1);
 	}
+/*
 	if (stack_location->MajorFunction == IRP_MJ_READ) {
 		for (i=0;i<bio->bi_vcnt;i++) {
 			printk("i: %d bv_len: %d data: %x\n", i, bio->bi_io_vec[i].bv_len, *((int*)bio->bi_io_vec[i].bv_page->addr));
 		}
 	}
+*/
 
 	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
@@ -1889,7 +1889,9 @@ printk("flushing\n");
 			/* TODO: + offset back in */
 		struct _MDL *mdl = IoAllocateMdl(entry->bv_page->addr, entry->bv_len, TRUE, FALSE, bio->bi_irp);
 
+/*
 printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len: %d\n", entry, i, mdl, entry->bv_page->addr, ((char*)entry->bv_page->addr)+entry->bv_offset,  entry->bv_offset, entry->bv_len);
+*/
 		if (mdl == NULL) {
 			printk("Could not allocate mdl, giving up.\n");
 			err = -ENOMEM;
