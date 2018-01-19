@@ -1,91 +1,12 @@
 WinDRBD-next: beta for selected customers
 
-TODO: BSOD sometimes when syncing
+TODO: Cannot read more and 64K (16 MDLs) from backing device.
 
-	Update: New blue screen page fault in non paged area
-	(when waiting before connecting) Update: this is probably
-	fixed by locking all the pages into memory. Observe
-	and reopen this if it happens again. Update: happened
-	again.
-
-	Update: the page fault in non paged area BSOD reappeared
-	(while Syncing).
-
-	Update: again, while syncing (2 times in a row)
-
-	Update: again, while syncing (and not freeing pages)
-
-TODO: Cannot mount NTFS after sync.
-
-	johannes@johannes-VirtualBox:~/Linbit/tmp$ sudo mount /dev/drbd26 -t ntfs mnt/
-	ntfs_mst_post_read_fixup_warn: magic: 0x00000000  size: 1024   usa_ofs: 0  usa_count: 65535: Invalid argument
-	Record 0 has no FILE magic (0x0)
-	Failed to load $MFT: Input/output error
-	Failed to mount '/dev/drbd26': Input/output error
-	NTFS is either inconsistent, or there is a hardware fault, or it's a
-	SoftRAID/FakeRAID hardware. In the first case run chkdsk /f on Windows
-	then reboot into Windows twice. The usage of the /f parameter is very
-	important! If the device is a SoftRAID/FakeRAID then first activate
-	it and mount a different device under the /dev/mapper/ directory, (e.g.
-	/dev/mapper/nvidia_eahaabcc1). Please see the 'dmraid' documentation
-	for more details.
-
-	Update: It seems that somebody writes to the DRBD device (what we
-	did is write it while unconnected, then copy drbd device on windows
-	to a file and then connect the DRBD to linux wait until sync is
-	finished and then copy the Linux contents to a file and diff the
-	hexdumps of both files). Either Sync is broken or somebody writes
-	the device where he shouldn't. Update: windows data seems to be
-	correct, so sync is broken.
-
-	Strange: DRBD does not sync while all bits are set in bitmap.
-
-	Update: when copiing the dumped DRBD block device from windows
-	to Linux, it also fails. Maybe the Linux NTFS driver is buggy?
-
-	Update: when using external meta data and copy the backing
-	device (F:) via scp we can mount the NTFS partition with
-	ntfs-3g (Update: also with mainline kernel ntfs driver)
-	The backing device must be patched so that where it says
-	DRBD it should read NTFS in the boot sector (can be done
-	with vi).
-	It is clear that copiing the DRBD device (instead of the
-	backing device) does not work because Windows hides the
-	last 8 sectors.
-
-	Update: It seems that the invalid pages point to somewhere
-	where windows kernel alloc tags (like WD4E, E4DW in the source
-	code) are. So we have an invalid pointer (use after free?)
-	problem.
-
-	Check if all pages are transferred first and then validate
-	the pointers.
-
-	Test was made with write-test.sh not with NTFS (so NTFS
-	driver isn't the problem)
-
-	Update: Problem was that Length of I/O was only the first
-	MDL entry not the total length. Should work now. TODO:
-	test with NTFS.
-
-	New blue screen: IoBuildPartialMdl was called with a
-	virtual address outside the range of the source Mdl.
-	When syncing.
-
-	When restricting max number of MDLs to 16 we do not
-	blue screen but data is corrupt (at offset 0x1000
-	which cannot be explained by the 16 MDLs limit).
-
-	Update: we have 3 errors here: one is that we cannot
-	read more than 64K (16 Pages/MDLs) without blue screen
-	one is a page fault blue screen (which does not always
-	happen) and one is a data corruption between
-	DrbdIoCompletion and sending the packet.
-
-	Update: error #3 (data corruption is because 
-	_drbd_send_zc_ee is wrongly patched by windrbd. 
-	Undo this patch and it should work. Update: yes
-	it does.
+	Blue screen shows STOP: 0x0000012E (0xFFFFFA80037AD980,
+	0xFFFFFA80039951A0, 0xFFFFFA800669F000, 0x0000000012000)
+	
+TODO: Create windrbd device on primary and delete windrbd device 
+	on secondary.
 
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
@@ -971,3 +892,99 @@ Done: write sometimes stalls when there is too much logging.
 	Solved: this is a bug in VirtualBox (network is down
 	and write test runs from network share).
 
+Done: Cannot mount NTFS after sync.
+
+	johannes@johannes-VirtualBox:~/Linbit/tmp$ sudo mount /dev/drbd26 -t ntfs mnt/
+	ntfs_mst_post_read_fixup_warn: magic: 0x00000000  size: 1024   usa_ofs: 0  usa_count: 65535: Invalid argument
+	Record 0 has no FILE magic (0x0)
+	Failed to load $MFT: Input/output error
+	Failed to mount '/dev/drbd26': Input/output error
+	NTFS is either inconsistent, or there is a hardware fault, or it's a
+	SoftRAID/FakeRAID hardware. In the first case run chkdsk /f on Windows
+	then reboot into Windows twice. The usage of the /f parameter is very
+	important! If the device is a SoftRAID/FakeRAID then first activate
+	it and mount a different device under the /dev/mapper/ directory, (e.g.
+	/dev/mapper/nvidia_eahaabcc1). Please see the 'dmraid' documentation
+	for more details.
+
+	Update: It seems that somebody writes to the DRBD device (what we
+	did is write it while unconnected, then copy drbd device on windows
+	to a file and then connect the DRBD to linux wait until sync is
+	finished and then copy the Linux contents to a file and diff the
+	hexdumps of both files). Either Sync is broken or somebody writes
+	the device where he shouldn't. Update: windows data seems to be
+	correct, so sync is broken.
+
+	Strange: DRBD does not sync while all bits are set in bitmap.
+
+	Update: when copiing the dumped DRBD block device from windows
+	to Linux, it also fails. Maybe the Linux NTFS driver is buggy?
+
+	Update: when using external meta data and copy the backing
+	device (F:) via scp we can mount the NTFS partition with
+	ntfs-3g (Update: also with mainline kernel ntfs driver)
+	The backing device must be patched so that where it says
+	DRBD it should read NTFS in the boot sector (can be done
+	with vi).
+	It is clear that copiing the DRBD device (instead of the
+	backing device) does not work because Windows hides the
+	last 8 sectors.
+
+	Update: It seems that the invalid pages point to somewhere
+	where windows kernel alloc tags (like WD4E, E4DW in the source
+	code) are. So we have an invalid pointer (use after free?)
+	problem.
+
+	Check if all pages are transferred first and then validate
+	the pointers.
+
+	Test was made with write-test.sh not with NTFS (so NTFS
+	driver isn't the problem)
+
+	Update: Problem was that Length of I/O was only the first
+	MDL entry not the total length. Should work now. TODO:
+	test with NTFS.
+
+	New blue screen: IoBuildPartialMdl was called with a
+	virtual address outside the range of the source Mdl.
+	When syncing.
+
+	When restricting max number of MDLs to 16 we do not
+	blue screen but data is corrupt (at offset 0x1000
+	which cannot be explained by the 16 MDLs limit).
+
+	Update: we have 3 errors here: one is that we cannot
+	read more than 64K (16 Pages/MDLs) without blue screen
+	one is a page fault blue screen (which does not always
+	happen) and one is a data corruption between
+	DrbdIoCompletion and sending the packet.
+
+	Update: error #3 (data corruption is because 
+	_drbd_send_zc_ee is wrongly patched by windrbd. 
+	Undo this patch and it should work. Update: yes
+	it does.
+
+	Update: Mount works now. Error #2 (page fault blue
+	screen) is most likely fixed. Error 1 is TO DO.
+
+	Update: NTFS mounting works now, however there
+	is a blue screen when reading more than 64K
+	from the backing device. Making seperate TODO.
+
+Done: BSOD sometimes when syncing
+
+	Update: New blue screen page fault in non paged area
+	(when waiting before connecting) Update: this is probably
+	fixed by locking all the pages into memory. Observe
+	and reopen this if it happens again. Update: happened
+	again.
+
+	Update: the page fault in non paged area BSOD reappeared
+	(while Syncing).
+
+	Update: again, while syncing (2 times in a row)
+
+	Update: again, while syncing (and not freeing pages)
+
+	Update: Fixed something in drbd_main.c this should
+	not happen any more. Reopen when it occurs again.
