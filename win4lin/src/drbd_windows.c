@@ -626,7 +626,7 @@ void free_mdls_and_irp(struct bio *bio)
 
 	if (bio->bi_irp == NULL) {
 /* TODO: this happens quite frequently while it shouldn't */
-printk(KERN_WARNING "freeing bio without irp. bio->bi_vcnt: %d\n", bio->bi_vcnt);
+printk(KERN_WARNING "freeing bio without irp. bio: %p bio->bi_vcnt: %d\n", bio, bio->bi_vcnt);
 		return;
 	}
 
@@ -1866,6 +1866,7 @@ printk("flushing\n");
 		return -ENOMEM;
 	}
 
+printk("bio: %p bio->bi_irp: %p\n", bio, bio->bi_irp);
 //	MmBuildMdlForNonPagedPool(bio->bi_irp->MdlAddress);
 
 // printk("bio->bi_size: %d bio->bi_vcnt: %d\n", bio->bi_size, bio->bi_vcnt);
@@ -1884,8 +1885,7 @@ printk("flushing\n");
 
 	for (i=1;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
-			/* TODO: + offset back in */
-		struct _MDL *mdl = IoAllocateMdl(entry->bv_page->addr, entry->bv_len, TRUE, FALSE, bio->bi_irp);
+		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irp);
 
 /*
 printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len: %d\n", entry, i, mdl, entry->bv_page->addr, ((char*)entry->bv_page->addr)+entry->bv_offset,  entry->bv_offset, entry->bv_len);
