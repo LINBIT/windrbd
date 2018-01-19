@@ -69,28 +69,3 @@ index f3414b6..f332da2 100644
  	return 0;
  }
  
-@@ -2186,21 +2169,9 @@ static int _drbd_send_zc_ee(struct drbd_peer_device *peer_device,
- 	int err;
- 
- 	flush_send_buffer(peer_device->connection, DATA_STREAM);
--	/* hint all but last page with MSG_MORE */
--	page_chain_for_each(page) {
--		unsigned l = min_t(unsigned, len, PAGE_SIZE);
--		if (page_chain_offset(page) != 0 ||
--		    page_chain_size(page) != l) {
--			drbd_err(peer_device, "FIXME page %p offset %u len %u\n",
--				page, page_chain_offset(page), page_chain_size(page));
--		}
--
--		err = _drbd_send_page(peer_device, page, 0, l,
--				      page_chain_next(page) ? MSG_MORE : 0);
--		if (err)
--			return err;
--		len -= l;
--	}
-+	err = _drbd_no_send_page(peer_device, page, 0, len, 0);
-+	if (err)
-+		return err;
- 	return 0;
- }
- 

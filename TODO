@@ -84,7 +84,8 @@ TODO: Cannot mount NTFS after sync.
 
 	Update: error #3 (data corruption is because 
 	_drbd_send_zc_ee is wrongly patched by windrbd. 
-	Undo this patch and it should work.
+	Undo this patch and it should work. Update: yes
+	it does.
 
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
