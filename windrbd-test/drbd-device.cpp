@@ -309,6 +309,8 @@ TEST(win_drbd, do_write_read_whole_disk_by_1meg_requests)
 /*		for (i=0;i<10;i++)
 			EXPECT_EQ(buf[i], buf2[i]); */
 	}
+	free(buf);
+	free(buf2);
 
 	CloseHandle(h);
 }
