@@ -93,6 +93,8 @@ TODO: Re-port drbd_transport_tcp.c to windrbd's
 
 TODO: test no I/O when disk is failed.
 
+TODO: also test with 32 bit version of Windows 7
+	(does it exist for Windows 10?)
 --------------------------------------------------------------
 
 TODO: Test other file systems (FAT, FAT32, ...)
