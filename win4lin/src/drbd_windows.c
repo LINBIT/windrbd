@@ -536,8 +536,10 @@ void __free_page(struct page *page)
 {
 	/* TODO: page == NULL defined? */
 
+/*
 	kfree(page->addr);
 	kfree(page); 
+*/
 }
 
 void drbd_bp(char *msg)
@@ -660,8 +662,10 @@ void bio_put(struct bio *bio)
 
 void bio_free(struct bio *bio)
 {
+/*
 	free_mdls_and_irp(bio);
 	kfree(bio);
+*/
 }
 
 struct bio *bio_clone(struct bio * bio_src, int flag)
@@ -1747,6 +1751,11 @@ NTSTATUS DrbdIoCompletion(
 	int num_completed = atomic_inc_return(&bio->bi_requests_completed);
 	if (num_completed == bio->bi_num_requests)
 		drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
+
+		/* Tell IO manager that it should not touch the
+		 * irp. It has yet to be freed together with the
+		 * bio.
+		 */
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
