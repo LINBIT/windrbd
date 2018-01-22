@@ -660,7 +660,7 @@ struct splitInfo {
 };
 
 struct bio {
-	struct _IRP *bi_irp;	/* Used for accessing the backing device */
+	struct _IRP **bi_irps;	   /* Used for accessing the backing device */
 	struct _IRP *bi_upper_irp; /* Used for the DRBD device */
 
 	sector_t				bi_sector;	/* device address in 512 byte sectors */
@@ -694,6 +694,7 @@ struct bio {
 	int bi_last_element;	/* actually last element + 1 so it matches bi_vcnt */
 
 	int bi_num_requests;
+	int bi_this_request;
 	atomic_t bi_requests_completed;
 
 		/* Those are used by win_generic_make_request internally */

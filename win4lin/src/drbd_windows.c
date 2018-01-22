@@ -624,30 +624,41 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 static void free_mdls_and_irp(struct bio *bio)
 {
 	struct _MDL *mdl, *next_mdl;
+	int r;
 
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */
 
-	if (bio->bi_irp == NULL)
+	if (bio->bi_irps == NULL)
 		return;
+
+	for (r=0;r<bio->bi_num_requests;r++) {
 
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
 		 */
-	for (mdl = bio->bi_irp->MdlAddress; mdl != NULL; mdl = next_mdl) {
-		next_mdl = mdl->Next;
-		if (mdl->MdlFlags & MDL_PAGES_LOCKED) 
-		{
-			MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
-		}
-		IoFreeMdl(mdl); // This function will also unmap pages.
-	}
-	bio->bi_irp->MdlAddress = NULL;
-	ObDereferenceObject(bio->bi_irp->Tail.Overlay.Thread);
+		if (bio->bi_irps[r] == NULL)
+			continue;
 
-	IoFreeIrp(bio->bi_irp);
+		for (mdl = bio->bi_irps[r]->MdlAddress;
+		     mdl != NULL;
+		     mdl = next_mdl) {
+			next_mdl = mdl->Next;
+			if (mdl->MdlFlags & MDL_PAGES_LOCKED) 
+			{
+				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
+			}
+			IoFreeMdl(mdl); // This function will also unmap pages.
+		}
+		bio->bi_irps[r]->MdlAddress = NULL;
+		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
+
+		IoFreeIrp(bio->bi_irps[r]);
+	}
+
+	kfree(bio->bi_irps);
 }
 
 void bio_put(struct bio *bio)
@@ -1854,7 +1865,7 @@ printk("flushing\n");
 		patch_boot_sector(buffer, 0);
 	}
 
-	bio->bi_irp = IoBuildAsynchronousFsdRequest(
+	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
 				buffer,
@@ -1863,12 +1874,12 @@ printk("flushing\n");
 				&bio->io_stat
 				);
 
-	if (!bio->bi_irp) {
+	if (!bio->bi_irps[bio->bi_this_request]) {
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
 		return -ENOMEM;
 	}
 
-//	MmBuildMdlForNonPagedPool(bio->bi_irp->MdlAddress);
+//	MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
 
 printk("bio->bi_size: %d bio->bi_vcnt: %d bio->bi_first_element: %d bio->bi_last_element: %d\n", bio->bi_size, bio->bi_vcnt, bio->bi_first_element, bio->bi_last_element);
 
@@ -1882,7 +1893,7 @@ printk("bio->bi_size: %d bio->bi_vcnt: %d bio->bi_first_element: %d bio->bi_last
 
 	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
-		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irp);
+		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irps[bio->bi_this_request]);
 
 /*
 printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len: %d\n", entry, i, mdl, entry->bv_page->addr, ((char*)entry->bv_page->addr)+entry->bv_offset,  entry->bv_offset, entry->bv_len);
@@ -1902,9 +1913,9 @@ if (io == IRP_MJ_READ) {
 //		MmBuildMdlForNonPagedPool(mdl);
 	}
 
-	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irp);
+	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
 
-	IoSetCompletionRoutine(bio->bi_irp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
+	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
@@ -1920,12 +1931,12 @@ if (io == IRP_MJ_READ) {
 		 * in the IRP.
 		 */
 
-	status = ObReferenceObjectByPointer(bio->bi_irp->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
+	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
-	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irp);
+	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
@@ -1954,7 +1965,6 @@ out_free_irp:
 
 int generic_make_request(struct bio *bio)
 {
-	int this_request;
 	int ret;
 
 	bio_get(bio);
@@ -1964,11 +1974,19 @@ int generic_make_request(struct bio *bio)
 	else
 		bio->bi_num_requests = (bio->bi_vcnt-1)/MAX_MDL_ELEMENTS + 1;
 
+	bio->bi_irps = kmalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, 0, 'XXXX');
+	if (bio->bi_irps == NULL) {
+		drbd_bio_endio(bio, BLK_STS_IOERR);
+		bio_put(bio);
+		return -ENOMEM;
+	}
 	atomic_set(&bio->bi_requests_completed, 0);
 
-	for (this_request=0; this_request<bio->bi_num_requests; this_request++) {
-		bio->bi_first_element = this_request*MAX_MDL_ELEMENTS;
-		bio->bi_last_element = (this_request+1)*MAX_MDL_ELEMENTS;
+	for (bio->bi_this_request=0; 
+             bio->bi_this_request<bio->bi_num_requests; 
+             bio->bi_this_request++) {
+		bio->bi_first_element = bio->bi_this_request*MAX_MDL_ELEMENTS;
+		bio->bi_last_element = (bio->bi_this_request+1)*MAX_MDL_ELEMENTS;
 		if (bio->bi_vcnt < bio->bi_last_element)
 			bio->bi_last_element = bio->bi_vcnt;
 
