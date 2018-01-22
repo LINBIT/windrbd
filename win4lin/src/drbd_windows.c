@@ -536,10 +536,8 @@ void __free_page(struct page *page)
 {
 	/* TODO: page == NULL defined? */
 
-/*
 	kfree(page->addr);
 	kfree(page); 
-*/
 }
 
 void drbd_bp(char *msg)
@@ -662,10 +660,8 @@ void bio_put(struct bio *bio)
 
 void bio_free(struct bio *bio)
 {
-/*
 	free_mdls_and_irp(bio);
 	kfree(bio);
-*/
 }
 
 struct bio *bio_clone(struct bio * bio_src, int flag)
@@ -1961,6 +1957,8 @@ int generic_make_request(struct bio *bio)
 	int this_request;
 	int ret;
 
+	bio_get(bio);
+
 	if (bio->bi_vcnt == 0)
 		bio->bi_num_requests = 1;	/* a flush request */
 	else
@@ -1977,9 +1975,11 @@ int generic_make_request(struct bio *bio)
 		ret = windrbd_generic_make_request(bio);
 		if (ret < 0) {
 			drbd_bio_endio(bio, BLK_STS_IOERR);
+			bio_put(bio);
 			return ret;
 		}
 	}
+	bio_put(bio);
 	return 0;
 }
 

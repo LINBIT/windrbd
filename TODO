@@ -58,6 +58,12 @@ Jan 20 12:46:05 192.168.56.101  U11:46:05.795|0393cb50 find_request <3>drbd w0/1
 Jan 20 12:46:05 192.168.56.101  [last message was in IRQ context]
 Jan 20 12:46:05 192.168.56.101  U11:46:05.795|0393cb50 drbdd <3>drbd w0 pnode-id:1, cs(Connected), prole(Secondary), cflag(0x200a), scf(0x1): error receiving P_DATA_REPLY, e: -5 l: 4096!
 
+TODO: use after free blue screen after patching bio split in.
+
+	When not freeing mdls and irps and not freeing the bio
+	it disappears. Not putting the bio in upper device does
+	not help. Nor does not freeing the buffers themselves
+	(in __free_page()).
 
 
 TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.

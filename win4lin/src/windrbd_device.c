@@ -242,7 +242,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	}
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 
-//	bio_put(bio);
+	bio_put(bio);
 }
 
 static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bio)
