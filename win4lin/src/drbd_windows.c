@@ -1881,7 +1881,11 @@ printk("flushing\n");
 
 //	MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
 
-printk("bio->bi_size: %d bio->bi_vcnt: %d bio->bi_first_element: %d bio->bi_last_element: %d\n", bio->bi_size, bio->bi_vcnt, bio->bi_first_element, bio->bi_last_element);
+/*
+if (bio->bi_this_request > 0) {
+printk("karin bio->bi_size: %d bio->bi_vcnt: %d bio->bi_first_element: %d bio->bi_last_element: %d\n", bio->bi_size, bio->bi_vcnt, bio->bi_first_element, bio->bi_last_element);
+}
+*/
 
 	/* Windows tries to split up MDLs and crashes when
 	 * there are more than 32*4K MDLs.
