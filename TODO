@@ -50,6 +50,16 @@ TODO: Fix windows shutdown bug.
 	Update: Not observed lately.
 	Update: just reappeared again.
 
+TODO: logical block sizes do not match (me:512, peer:0); this may cause problems.
+
+TODO: Network goes down while sync. When syncing an NTFS partition only.
+
+Jan 20 12:46:05 192.168.56.101  U11:46:05.795|0393cb50 find_request <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x2): receive_DataReply: failed to find request 0x136c6c00, sector 26160s
+Jan 20 12:46:05 192.168.56.101  [last message was in IRQ context]
+Jan 20 12:46:05 192.168.56.101  U11:46:05.795|0393cb50 drbdd <3>drbd w0 pnode-id:1, cs(Connected), prole(Secondary), cflag(0x200a), scf(0x1): error receiving P_DATA_REPLY, e: -5 l: 4096!
+
+
+
 TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
 	after doing some experiments. drbdadm down / up solved the
 	problem.
