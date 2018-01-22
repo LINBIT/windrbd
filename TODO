@@ -1,29 +1,23 @@
-WinDRBD-next: beta for selected customers
+windrbd-next: beta for selected customers
 
-TODO: Cannot read more and 64K (16 MDLs) from backing device.
+TODO: PFN list corrupted when connected and I/O is on windrbd device
 
-	Blue screen shows STOP: 0x0000012E (0xFFFFFA80037AD980,
-	0xFFFFFA80039951A0, 0xFFFFFA800669F000, 0x0000000012000)
+TODO: allow user to pass name of symbolic link created
+	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
-	Update: According to:
-	http://osronline.com/showThread.CFM?link=204514
-	this is a known bug in some Windows versions (esp.
-	Windows 7 Professional 64 bit), while it works
-	in other versions. We should restrict the number of
-	sectors read/written to max 128 and test this on various
-	windows versions.
+	Update: This should be userspace-only. It should
+	also be possible to mount the device upon an
+	empty NTFS folder (later).
 
-	Update: not possible to patch DRBD not to use more than
-	128K because this is an over the wire parameter (would
-	have to patch linux DRBD as well). Implement solution
-	that splits the bios into smaller pieces.
+	At this point also clean up drbd-utils (separate
+	files for UNIX and Windows) and integrate upstream
+	changes (later).
 
-	Update: its 128K (32 pages) according to our experiments.
+	Update: we wait for our patched drbd-headers to
+	appear on github.
 
-	Update: Implemented but currently leaks IRPs.
-	
-TODO: Create windrbd device on primary and delete windrbd device 
-	on secondary.
+TODO: Create windrbd device on becoming primary and delete
+	windrbd device on secondary.
 
 	Update: drbd_create_device needs to assign a valid
 	this_bdev. Do not create Windows device in bdget, 
@@ -33,16 +27,36 @@ TODO: Create windrbd device on primary and delete windrbd device
 	(because the block device cannot be opened) but
 	that is not so important.
 
-TODO: allow user to pass name of symbolic link created
-	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
+TODO: logical block sizes do not match (me:512, peer:0); this may cause problems.
+	Fix this (should be easy)
 
-	Update: This should be userspace-only. It should
-	also be possible to mount the device upon an
-	empty NTFS folder.
+TODO: how and when is flush to backing device done?
+	This is important. Right now NTFS files only appear on
+	Linux when sync is done manually. Should sync at least
+	when becoming secondary. sync must be done while primary
+	(when secondary it would fail)
 
-	At this point also clean up drbd-utils (separate
-	files for UNIX and Windows) and integrate upstream
-	changes.
+In progress: make install package
+	self extracting exe or msi file.
+	Know how to do it (iexpress.exe) do it properly once
+	everything else is done.
+
+TODO: Test with Windows 10 (we have to do that anyway some day)
+
+In Progress: reinstall windows 7 and check if last 4096 bytes in NTFS
+	are still hidden.
+
+--------------------------------------------------------------
+windrbd-next-next
+
+TODO: Cannot write first sector on format h:
+	Sector seems to be alright (showing DRBD on the backing device
+	and NTFS on the windrbd device). Not sure where this is coming
+	from.
+
+TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
+	after doing some experiments. drbdadm down / up solved the
+	problem.
 
 TODO: Fix windows shutdown bug.
 
@@ -52,39 +66,34 @@ TODO: Fix windows shutdown bug.
 	Update: Not observed lately.
 	Update: just reappeared again.
 
-TODO: logical block sizes do not match (me:512, peer:0); this may cause problems.
-
-TODO: Network goes down while sync. When syncing an NTFS partition only.
-
-Jan 20 12:46:05 192.168.56.101  U11:46:05.795|0393cb50 find_request <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x2): receive_DataReply: failed to find request 0x136c6c00, sector 26160s
-Jan 20 12:46:05 192.168.56.101  [last message was in IRQ context]
-Jan 20 12:46:05 192.168.56.101  U11:46:05.795|0393cb50 drbdd <3>drbd w0 pnode-id:1, cs(Connected), prole(Secondary), cflag(0x200a), scf(0x1): error receiving P_DATA_REPLY, e: -5 l: 4096!
-
-TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
-	after doing some experiments. drbdadm down / up solved the
-	problem.
-
-TODO: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
-	Update: didn't observe lately (with 0.3.7) but I am
-	pretty sure it is still in there.
-
-TODO: how and when is flush to backing device done?
-
-In progress: make install package
-	self extracting exe or msi file.
-	Know how to do it (iexpress.exe) do it properly once
-	everything else is done.
-
-TODO: Test with Windows 10 (we have to do that anyway some day)
-
-TODO: reinstall windows 7 and check if last 4096 bytes in NTFS 
-	are still hidden.
-
 TODO: support I/O vectors in windrbd device (irp_to_bio)
 	and clean up code (see TODOs in source code)
---------------------------------------------------------------
+
+	Also have a test that does WriteFileGather and ReadFileScatter.
+
+TODO: Integrate (manually rebase) windrbd branch of drbd-utils to its master
+
+TODO: Also allow for mounting windrbd device to NTFS folder
+
+In Progress: Port agruen's test suite to cygwin.
+	exxe is running. Ask phil about how to install it.
+	Depends on chmod working (else cannot install
+	opensshd).
+
+TODO: Re-port drbd_transport_tcp.c to windrbd's
+	drbd_transport_wtcp.c.
+	Update: currently it seems that the problem is
+	somewhere else. 
+	However we need those updates. Best way would be to
+	git diff the original drbd transport_tcp to the version
+	we had before and apply the patches manually.
+
+	Update: we should integrate drbd_transport_tcp back to
+	converted-sources.
 
 TODO: test no I/O when disk is failed.
+
+--------------------------------------------------------------
 
 TODO: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
@@ -115,30 +124,9 @@ TODO: check what _WIN32_DEBUG_OOS is really doing.
 
 TODO: have dump_stack function
 
-Later: with DRBD: 500 kB/sec (unconnected) without 900 kB/sec
-	500 kB was with lots of debug output. Now we have 600 kB/Sec
-	a bit better.
-	without DRBD: 983.71 kB/Sec
-	with DRBD (unconnected): 586.25 kB / Sec
-
 TODO: I/O seems to be rather slow even when being unconnected (and primary)
 
 TODO: make ssh to Windows box work
-
-In Progress: Port agruen's test suite to cygwin.
-	exxe is running. Ask phil about how to install it.
-	Depends on chmod working (else cannot install
-	opensshd).
-
-TODO: check 2 patches using bio_databuf
-
-Maybe later: Re-port drbd_transport_tcp.c to windrbd's
-	drbd_transport_wtcp.c.
-	Update: currently it seems that the problem is
-	somewhere else. 
-	However we need those updates. Best way would be to
-	git diff the original drbd transport_tcp to the version
-	we had before and apply the patches manually.
 
 TODO: Inform windows about new drive.
 	So that explorer opens.
@@ -154,8 +142,6 @@ TODO: read error: Volume dismounted
 	Nov 15 14:42:21 192.168.56.101  U13:22:16.265|0131b040 drbd_report_io_error <4>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x208): local READ IO error sector 0+1 on
 
 TODO: Understand what windows means by mounting / dismounting.
-
-TODO: cleanup, rebase and merge drbd-utils
 
 TODO: check out drbd-utils from github and see if that works.
 	(once it is pushed)
@@ -239,19 +225,6 @@ In progress: Later: RCU needs change
 	Update: We now call the cleanup / on update function 
 	in the call_rcu() function, which makes the thing work.
 	Double check if that works as expected.
-
-TODO: The functions enclosed by _WIN32_MVFL (see win4lin/src/util.c) are
-	not referenced anywhere in the code. I assume that they never have been
-	tested. I would like to remove them (or at least rewrite them if the
-	functionality is needed) since they depend on some other stuff I would
-	like to redesign.
-
-	Update: We need the functionality if DeviceIoControl() (user level
-	function) is called on the DRBD device. So leave it in for now.
-
-	Update: We don't want any DRBD specific DeviceIoControls. Check if
-	one of those are really needed and then remove the code.
-
 --------------------------------
 
 Done: fix patch errors on Linux side build (conversion)
@@ -1038,4 +1011,71 @@ Done: use after free blue screen after patching bio split in.
 
 	Now holding reference to bio in generic_make_request this
 	seems to solve the problem.
+
+Done: Cannot read more and 64K (16 MDLs) from backing device.
+
+	Blue screen shows STOP: 0x0000012E (0xFFFFFA80037AD980,
+	0xFFFFFA80039951A0, 0xFFFFFA800669F000, 0x0000000012000)
+
+	Update: According to:
+	http://osronline.com/showThread.CFM?link=204514
+	this is a known bug in some Windows versions (esp.
+	Windows 7 Professional 64 bit), while it works
+	in other versions. We should restrict the number of
+	sectors read/written to max 128 and test this on various
+	windows versions.
+
+	Update: not possible to patch DRBD not to use more than
+	128K because this is an over the wire parameter (would
+	have to patch linux DRBD as well). Implement solution
+	that splits the bios into smaller pieces.
+
+	Update: its 128K (32 pages) according to our experiments.
+
+	Update: Implemented but currently leaks IRPs.
+	Update: fixed leak seem to work ok (except blue screen
+	when formatting and drbd is connected). This is now a
+	separate TO DO since it also happens when doing something
+	(writing) to the DRBD device and the resources are connected.
+
+Done: Network goes down while sync. When syncing an NTFS partition only.
+
+Jan 20 12:46:05 192.168.56.101  U11:46:05.795|0393cb50 find_request <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x2): receive_DataReply: failed to find request 0x136c6c00, sector 26160s
+Jan 20 12:46:05 192.168.56.101  [last message was in IRQ context]
+Jan 20 12:46:05 192.168.56.101  U11:46:05.795|0393cb50 drbdd <3>drbd w0 pnode-id:1, cs(Connected), prole(Secondary), cflag(0x200a), scf(0x1): error receiving P_DATA_REPLY, e: -5 l: 4096!
+
+	This seems to be fixed by the > 32 bio_vecs patch.
+
+Done: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
+	Update: didn't observe lately (with 0.3.7) but I am
+	pretty sure it is still in there.
+
+	Hopefully fixed by multiple requests patch.
+
+Done: check 2 patches using bio_databuf
+	bio_databuf is gone. So are the patches.
+
+Done: with DRBD: 500 kB/sec (unconnected) without 900 kB/sec
+	500 kB was with lots of debug output. Now we have 600 kB/Sec
+	a bit better.
+	without DRBD: 983.71 kB/Sec
+	with DRBD (unconnected): 586.25 kB / Sec
+
+	Update: with 1Meg write requests it is very fast. So
+	the problem seems to be the OS overhead (both DRBD
+	and NT kernel)
+
+Done: The functions enclosed by _WIN32_MVFL (see win4lin/src/util.c) are
+	not referenced anywhere in the code. I assume that they never have been
+	tested. I would like to remove them (or at least rewrite them if the
+	functionality is needed) since they depend on some other stuff I would
+	like to redesign.
+
+	Update: We need the functionality if DeviceIoControl() (user level
+	function) is called on the DRBD device. So leave it in for now.
+
+	Update: We don't want any DRBD specific DeviceIoControls. Check if
+	one of those are really needed and then remove the code.
+
+	Done. We removed about 4000 lines of code.
 
