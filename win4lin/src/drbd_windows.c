@@ -1744,11 +1744,9 @@ NTSTATUS DrbdIoCompletion(
 	}
 */
 
-printk("1\n");
-	int num_completed = bio->bi_requests_completed++;
+	int num_completed = atomic_inc_return(&bio->bi_requests_completed);
 	if (num_completed == bio->bi_num_requests)
 		drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
-printk("2\n");
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
@@ -1922,9 +1920,7 @@ if (io == IRP_MJ_READ) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
-printk("1\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irp);
-printk("2\n");
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
@@ -1961,10 +1957,9 @@ int generic_make_request(struct bio *bio)
 	else
 		bio->bi_num_requests = (bio->bi_vcnt-1)/MAX_MDL_ELEMENTS + 1;
 
-	bio->bi_requests_completed = 0;
+	atomic_set(&bio->bi_requests_completed, 0);
 
 	for (this_request=0; this_request<bio->bi_num_requests; this_request++) {
-printk("request %d\n", this_request);
 		bio->bi_first_element = this_request*MAX_MDL_ELEMENTS;
 		bio->bi_last_element = (this_request+1)*MAX_MDL_ELEMENTS;
 		if (bio->bi_vcnt < bio->bi_last_element)

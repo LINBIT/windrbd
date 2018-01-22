@@ -694,7 +694,7 @@ struct bio {
 	int bi_last_element;	/* actually last element + 1 so it matches bi_vcnt */
 
 	int bi_num_requests;
-	int bi_requests_completed;
+	atomic_t bi_requests_completed;
 
 		/* Those are used by win_generic_make_request internally */
 	LARGE_INTEGER offset;
