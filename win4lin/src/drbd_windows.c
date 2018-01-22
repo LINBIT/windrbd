@@ -1806,22 +1806,23 @@ static int win_generic_make_request(struct bio *bio)
 {
 	NTSTATUS status;
 
-	void *buffer;
 	ULONG io = 0;
 	PIO_STACK_LOCATION pIoNextStackLocation = NULL;
 	struct _MDL *mdl, *nextMdl;
 	int i;
 	int err = -EIO;
-	unsigned int first_size;
 	
 /* printk(KERN_INFO "bio->bi_rw = %d WRITE_FLUSH = %d\n", bio->bi_rw, WRITE_FLUSH); */
 
 	if ((bio->bi_rw & WRITE_FLUSH) == WRITE_FLUSH) {
 printk("flushing\n");
 		io = IRP_MJ_FLUSH_BUFFERS;
-		buffer = NULL;
+		if (bio->bi_size != 0 || bio->bi_vcnt != 0) {
+			printk(KERN_ERR "Warning: bio->bi_vcnt != 0 or bio->bi_size != 0 on FLUSH\n");
+			return -EIO;
+		}
+
 		bio->bi_size = 0;
-		first_size = 0;
 		bio->offset.QuadPart = 0;
 	} else {
 		if (bio->bi_vcnt == 0) {
@@ -1834,8 +1835,6 @@ printk("flushing\n");
 			io = IRP_MJ_READ;
 		}
 		bio->offset.QuadPart = bio->bi_sector << 9;
-		buffer = (void*) (((char*) bio->bi_io_vec[0].bv_page->addr) + bio->bi_io_vec[0].bv_offset); 
-		first_size = bio->bi_io_vec[0].bv_len; 
 	}
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
@@ -1844,14 +1843,17 @@ printk("flushing\n");
 
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512) {
+		void *buffer;
+		buffer = (void*) (((char*) bio->bi_io_vec[0].bv_page->addr) + bio->bi_io_vec[0].bv_offset);
+
 		patch_boot_sector(buffer, 0);
 	}
 
 	bio->bi_irp = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
-				buffer,
-				first_size,
+				NULL,
+				0,
 				&bio->offset,
 				&bio->io_stat
 				);
@@ -1871,13 +1873,13 @@ printk("bio->bi_size: %d bio->bi_vcnt: %d\n", bio->bi_size, bio->bi_vcnt);
 
 #define MAX_MDL_ELEMENTS 32
 
-	int total_size = first_size;
+	int total_size = 0;
 	if (bio->bi_vcnt > MAX_MDL_ELEMENTS) {
 		printk(KERN_WARNING "More than %d elements in bio (%d), cutting them\n", MAX_MDL_ELEMENTS, bio->bi_vcnt);
 		bio->bi_vcnt = MAX_MDL_ELEMENTS;
 	}
 
-	for (i=1;i<bio->bi_vcnt;i++) {
+	for (i=0;i<bio->bi_vcnt;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
 		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irp);
 
