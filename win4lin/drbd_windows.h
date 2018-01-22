@@ -685,6 +685,17 @@ struct bio {
 	void*					bi_private; 
 	unsigned int			bi_max_vecs;    /* max bvl_vecs we can hold */
 
+		/* Windows backing device driver cannot handle more than
+		 * 32 vector elements. Split the IoCalldriver calls into
+		 * subrequests.
+		 */
+
+	int bi_first_element;
+	int bi_last_element;	/* actually last element + 1 so it matches bi_vcnt */
+
+	int bi_num_requests;
+	atomic_t bi_requests_completed;
+
 		/* Those are used by win_generic_make_request internally */
 	LARGE_INTEGER offset;
 	IO_STATUS_BLOCK io_stat;

@@ -1732,7 +1732,7 @@ NTSTATUS DrbdIoCompletion(
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
 	}
-	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512) {
+	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0) {
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
 		patch_boot_sector(buffer, 1);
 	}
@@ -1744,7 +1744,9 @@ NTSTATUS DrbdIoCompletion(
 	}
 */
 
-	drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
+	int num_completed = atomic_inc_return(&bio->bi_requests_completed);
+	if (num_completed == bio->bi_num_requests)
+		drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
@@ -1802,7 +1804,7 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 	return ret;
 }
 
-static int win_generic_make_request(struct bio *bio)
+static int windrbd_generic_make_request(struct bio *bio)
 {
 	NTSTATUS status;
 
@@ -1834,8 +1836,8 @@ printk("flushing\n");
 			io = IRP_MJ_READ;
 		}
 		bio->offset.QuadPart = bio->bi_sector << 9;
-		buffer = (void*) (((char*) bio->bi_io_vec[0].bv_page->addr) + bio->bi_io_vec[0].bv_offset); 
-		first_size = bio->bi_io_vec[0].bv_len; 
+		buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_first_element].bv_page->addr) + bio->bi_io_vec[bio->bi_first_element].bv_offset); 
+		first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
 	}
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
@@ -1843,7 +1845,7 @@ printk("flushing\n");
 // }
 
 
-	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512) {
+	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0) {
 		patch_boot_sector(buffer, 0);
 	}
 
@@ -1863,7 +1865,7 @@ printk("flushing\n");
 
 //	MmBuildMdlForNonPagedPool(bio->bi_irp->MdlAddress);
 
-printk("bio->bi_size: %d bio->bi_vcnt: %d\n", bio->bi_size, bio->bi_vcnt);
+printk("bio->bi_size: %d bio->bi_vcnt: %d bio->bi_first_element: %d bio->bi_last_element: %d\n", bio->bi_size, bio->bi_vcnt, bio->bi_first_element, bio->bi_last_element);
 
 	/* Windows tries to split up MDLs and crashes when
 	 * there are more than 32*4K MDLs.
@@ -1872,12 +1874,8 @@ printk("bio->bi_size: %d bio->bi_vcnt: %d\n", bio->bi_size, bio->bi_vcnt);
 #define MAX_MDL_ELEMENTS 32
 
 	int total_size = first_size;
-	if (bio->bi_vcnt > MAX_MDL_ELEMENTS) {
-		printk(KERN_WARNING "More than %d elements in bio (%d), cutting them\n", MAX_MDL_ELEMENTS, bio->bi_vcnt);
-		bio->bi_vcnt = MAX_MDL_ELEMENTS;
-	}
 
-	for (i=1;i<bio->bi_vcnt;i++) {
+	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
 		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irp);
 
@@ -1899,25 +1897,20 @@ if (io == IRP_MJ_READ) {
 //		MmBuildMdlForNonPagedPool(mdl);
 	}
 
-// printk("1\n");
 	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irp);
 
 	IoSetCompletionRoutine(bio->bi_irp, DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
-// printk("2\n");
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
-	bio->bi_size = total_size;
-
 	if (io == IRP_MJ_WRITE) {
-		pIoNextStackLocation->Parameters.Write.Length = bio->bi_size;
+		pIoNextStackLocation->Parameters.Write.Length = total_size;
 	}
 	if (io == IRP_MJ_READ) {
-		pIoNextStackLocation->Parameters.Read.Length = bio->bi_size;
+		pIoNextStackLocation->Parameters.Read.Length = total_size;
 	}
 
-// printk("3\n");
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP.
 		 */
@@ -1927,9 +1920,8 @@ if (io == IRP_MJ_READ) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
-// printk("4\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irp);
-// printk("5\n");
+
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
 
@@ -1940,7 +1932,6 @@ if (io == IRP_MJ_READ) {
 			     * must not be called).
 			     */
 	}
-// printk("6\n");
 	return 0;
 
 out_free_irp:
@@ -1951,18 +1942,36 @@ out_free_irp:
 
 	/* This just ensures that DRBD gets I/O errors in case something
 	 * in processing the request before submitting it to the lower
-	 * level driver goes wrong.
+	 * level driver goes wrong. It also splits the I/O requests
+	 * into smaller pieces of maximum 32 vector elements. Windows
+	 * block drivers cannot handle more than that.
 	 */
 
 int generic_make_request(struct bio *bio)
 {
-	int ret = win_generic_make_request(bio);
+	int this_request;
+	int ret;
 
-	if (ret < 0) {
-		drbd_bio_endio(bio, BLK_STS_IOERR);
+	if (bio->bi_vcnt == 0)
+		bio->bi_num_requests = 1;	/* a flush request */
+	else
+		bio->bi_num_requests = (bio->bi_vcnt-1)/MAX_MDL_ELEMENTS + 1;
+
+	atomic_set(&bio->bi_requests_completed, 0);
+
+	for (this_request=0; this_request<bio->bi_num_requests; this_request++) {
+		bio->bi_first_element = this_request*MAX_MDL_ELEMENTS;
+		bio->bi_last_element = (this_request+1)*MAX_MDL_ELEMENTS;
+		if (bio->bi_vcnt < bio->bi_last_element)
+			bio->bi_last_element = bio->bi_vcnt;
+
+		ret = windrbd_generic_make_request(bio);
+		if (ret < 0) {
+			drbd_bio_endio(bio, BLK_STS_IOERR);
+			return ret;
+		}
 	}
-
-	return ret;
+	return 0;
 }
 
 void bio_endio(struct bio *bio, int error)
