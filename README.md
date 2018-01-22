@@ -134,3 +134,5 @@ Version history
  * 0.3.7 (Jan 11, 2018): Local I/O works again.
  * 0.4.0 (Jan 12, 2018): Removed lots of legacy code.
  * 0.4.1 (Jan 19, 2018): Sync is almost working.
+ * 0.4.2 (Jan 19, 2018): Support for I/O to/from backing device with more
+			 than 32 pages (needed to split requests).
