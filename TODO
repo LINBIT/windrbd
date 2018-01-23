@@ -48,6 +48,9 @@ TODO: Test with Windows 10 (we have to do that anyway some day)
 In Progress: reinstall windows 7 and check if last 4096 bytes in NTFS
 	are still hidden.
 
+TODO: Use Linbit certificate to sign driver.
+	It should be trusted.
+
 --------------------------------------------------------------
 windrbd-next-next
 

@@ -4,6 +4,7 @@
 KEY = johannes
 PASSWD = karin
 CERTIFICATE = linbit.cer
+# CERTIFICATE = user.crt
 
 DRIVER_DEST_DIR := /cygdrive/c/Program Files/drbd
 DRIVER_DEST_DIR_WINDOWS := C:\\Program\ Files\\drbd
