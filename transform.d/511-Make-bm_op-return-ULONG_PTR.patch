@@ -1,0 +1,45 @@
+From b4dbb3c8d7f2e34f0f1a5760938e616082ab8160 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 23 Jan 2018 15:02:29 +0100
+Subject: [PATCH] Make bm_op return ULONG_PTR
+
+Instead of unsigned long (which is 32 bit on 64 bit windows, while
+ULONG_PTR is 64 bit).
+---
+ drbd/drbd_bitmap.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drbd/drbd_bitmap.c b/drbd/drbd_bitmap.c
+index dc826a7..2aadf25 100644
+--- a/drbd/drbd_bitmap.c
++++ b/drbd/drbd_bitmap.c
+@@ -462,7 +462,7 @@ static inline unsigned long bit_to_page_interleaved(struct drbd_bitmap *bitmap,
+ #define ____bm_op(device, bitmap_index, start, end, op, buffer, km_type) \
+ 	____bm_op(device, bitmap_index, start, end, op, buffer)
+ #endif
+-static __always_inline unsigned long
++static __always_inline ULONG_PTR
+ ____bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start, ULONG_PTR end,
+ 	 enum bitmap_operations op, __le32 *buffer, enum km_type km_type)
+ {
+@@ -693,7 +693,7 @@ ____bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start
+ }
+ 
+ /* Returns the number of bits changed.  */
+-static __always_inline unsigned long
++static __always_inline ULONG_PTR
+ __bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start, ULONG_PTR end,
+ 	enum bitmap_operations op, __le32 *buffer)
+ {
+@@ -731,7 +731,7 @@ __bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start,
+ 	return ____bm_op(device, bitmap_index, start, end, op, buffer, KM_IRQ1);
+ }
+ 
+-static __always_inline unsigned long
++static __always_inline ULONG_PTR
+ bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start, ULONG_PTR end,
+       enum bitmap_operations op, __le32 *buffer)
+ {
+-- 
+2.7.4
+
