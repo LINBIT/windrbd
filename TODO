@@ -1,6 +1,8 @@
 windrbd-next: beta for selected customers
 
 TODO: PFN list corrupted when connected and I/O is on windrbd device
+	Just reappeared again when sync completed and windrbd was
+	SyncTarget.
 
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
@@ -1048,12 +1050,6 @@ Jan 20 12:46:05 192.168.56.101  U11:46:05.795|0393cb50 drbdd <3>drbd w0 pnode-id
 
 	This seems to be fixed by the > 32 bio_vecs patch.
 
-Done: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
-	Update: didn't observe lately (with 0.3.7) but I am
-	pretty sure it is still in there.
-
-	Hopefully fixed by multiple requests patch.
-
 Done: check 2 patches using bio_databuf
 	bio_databuf is gone. So are the patches.
 
@@ -1080,4 +1076,17 @@ Done: The functions enclosed by _WIN32_MVFL (see win4lin/src/util.c) are
 	one of those are really needed and then remove the code.
 
 	Done. We removed about 4000 lines of code.
+
+Done: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
+	Update: didn't observe lately (with 0.3.7) but I am
+	pretty sure it is still in there.
+
+	Hopefully fixed by multiple requests patch.
+	Update: No it isn't. Just happened while Windows was SyncTarget.
+
+	Update: bm_op was returning unsigned long instead of 
+	ULONG_PTR. Fixed by patching DRBD.
+
+Done: Test windows being SyncTarget
+	Works now, error receiving P_RS_DATA_REQUEST was fixed.
 
