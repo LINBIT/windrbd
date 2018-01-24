@@ -1,10 +1,10 @@
 # vim: set ft=make ts=8 sw=8 noet :
 
 # Name of the pfx file (without extension)
-KEY = johannes
-PASSWD = karin
-CERTIFICATE = linbit.cer
-# CERTIFICATE = user.crt
+KEY = linbit-ha
+PASSWD = ""
+# CERTIFICATE = linbit.cer
+CERTIFICATE = user.crt
 
 DRIVER_DEST_DIR := /cygdrive/c/Program Files/drbd
 DRIVER_DEST_DIR_WINDOWS := C:\\Program\ Files\\drbd

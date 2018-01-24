@@ -9,3 +9,9 @@ cert2spc.exe z:\wdrbd9\crypto\linbit.cer z:\wdrbd9\crypto\linbit.spc
 
 
 pvk2pfx -pvk z:\wdrbd9\crypto\linbit.pvk -pi a -spc z:\wdrbd9\crypto\linbit.spc -pfx z:\wdrbd9\crypto\linbit.pfx -po a
+
+update: create pvk from pem using:
+
+openssl rsa -in linbit-ha-code-signing_no_pw.pem -outform PVK -pvk-strong -out linbit.pvk
+
+(openssl should be installed on Linux)
