@@ -2,3 +2,6 @@ linbit.cer
 *.pfx
 *.pvk
 *.spc
+*.p12
+*.pem
+*.crt

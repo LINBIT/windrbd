@@ -4,6 +4,12 @@ TODO: PFN list corrupted when connected and I/O is on windrbd device
 	Just reappeared again when sync completed and windrbd was
 	SyncTarget.
 
+TODO: data corruption when doing a 
+
+	cp /dev/urandom /cygdrive/h/random-file
+
+	and diff it against the synced linux ntfs.
+
 TODO: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
@@ -28,6 +34,11 @@ TODO: Create windrbd device on becoming primary and delete
 	secondary. This way we do not support auto promote
 	(because the block device cannot be opened) but
 	that is not so important.
+
+	Update: Phil wants the auto promote feature (for
+	virtualization), so alternative would be to
+	patch the boot sector as long it is secondary. 
+	However this does not solve the read cache problem.
 
 TODO: logical block sizes do not match (me:512, peer:0); this may cause problems.
 	Fix this (should be easy)
