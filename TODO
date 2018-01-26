@@ -10,6 +10,10 @@ TODO: data corruption when doing a
 
 TODO: IRP_MJ_SHUTDOWN (0x10) not implemented.
 
+	Update: Implemented but does not get called if we
+	never access the DRBD device. This functionality should
+	be in a one time called function.
+
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
 	On windows side when syncing.

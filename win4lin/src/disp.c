@@ -83,10 +83,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	initRegistry(RegistryPath);
 
-	windrbd_set_major_functions(DriverObject);
-	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
-	DriverObject->DriverUnload = mvolUnload;
-
 	gbShutdown = FALSE;
 		
 	RtlInitUnicodeString(&nameUnicode, L"\\Device\\mvolCntl");
@@ -109,6 +105,10 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	mvolDriverObject = DriverObject;
 	mvolRootDeviceObject = deviceObject;
+
+	windrbd_set_major_functions(DriverObject);
+	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
+	DriverObject->DriverUnload = mvolUnload;
 
 	RootExtension = deviceObject->DeviceExtension;
 	RootExtension->Magic = MVOL_MAGIC;

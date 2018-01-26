@@ -339,7 +339,8 @@ exit:
 
 static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-	drbd_cleanup();
+	if (device == mvolRootDeviceObject)
+		drbd_cleanup();
 
 /* TODO: clean up logging. */
 
@@ -352,6 +353,7 @@ static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp
 void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 {
 	int i;
+	NTSTATUS status;
 
 	for (i=0; i<IRP_MJ_MAXIMUM_FUNCTION; i++)
 		obj->MajorFunction[i] = windrbd_not_implemented;
@@ -364,4 +366,9 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	obj->MajorFunction[IRP_MJ_CLEANUP] = windrbd_cleanup;
 	obj->MajorFunction[IRP_MJ_SHUTDOWN] = windrbd_shutdown;
 	/* TODO: IRP_MJ_FLUSH */
+
+	status = IoRegisterShutdownNotification(mvolRootDeviceObject);
+	if (status != STATUS_SUCCESS) {
+		printk("Could not register shutdown notification.\n");
+	}
 }
