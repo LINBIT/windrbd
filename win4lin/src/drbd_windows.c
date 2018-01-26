@@ -536,8 +536,10 @@ void __free_page(struct page *page)
 {
 	/* TODO: page == NULL defined? */
 
+printk("1\n");
 	kfree(page->addr);
 	kfree(page); 
+printk("2\n");
 }
 
 void drbd_bp(char *msg)
@@ -630,6 +632,7 @@ static void free_mdls_and_irp(struct bio *bio)
 	         * bio without ever calling generic_make_request on it.
 		 */
 
+printk("1\n");
 	if (bio->bi_irps == NULL)
 		return;
 
@@ -642,14 +645,19 @@ static void free_mdls_and_irp(struct bio *bio)
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
+printk("a\n");
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
+printk("b\n");
+#if 0
 			if (mdl->MdlFlags & MDL_PAGES_LOCKED) 
 			{
+printk("karin c\n");
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 			}
+#endif
 			IoFreeMdl(mdl); // This function will also unmap pages.
 		}
 		bio->bi_irps[r]->MdlAddress = NULL;
@@ -659,6 +667,7 @@ static void free_mdls_and_irp(struct bio *bio)
 	}
 
 	kfree(bio->bi_irps);
+printk("2\n");
 }
 
 void bio_put(struct bio *bio)
@@ -1857,7 +1866,7 @@ printk("flushing\n");
 	}
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-// printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
+printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
 // }
 
 
@@ -1865,6 +1874,7 @@ printk("flushing\n");
 		patch_boot_sector(buffer, 0);
 	}
 
+printk("karin 1\n");
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
@@ -1878,15 +1888,23 @@ printk("flushing\n");
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
 		return -ENOMEM;
 	}
+printk("karin 2\n");
+/*
+	if (buffer != NULL)
+		MmProbeAndLockPages(bio->bi_irps[bio->bi_this_request]->MdlAddress, KernelMode, IoWriteAccess);
+*/
 
-//	MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
+	MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
 
 /*
 if (bio->bi_this_request > 0) {
+*/
 printk("karin bio->bi_size: %d bio->bi_vcnt: %d bio->bi_first_element: %d bio->bi_last_element: %d\n", bio->bi_size, bio->bi_vcnt, bio->bi_first_element, bio->bi_last_element);
+/*
 }
 */
 
+printk("karin 3\n");
 	/* Windows tries to split up MDLs and crashes when
 	 * there are more than 32*4K MDLs.
 	 */
@@ -1894,6 +1912,7 @@ printk("karin bio->bi_size: %d bio->bi_vcnt: %d bio->bi_first_element: %d bio->b
 #define MAX_MDL_ELEMENTS 32
 
 	int total_size = first_size;
+printk("karin 4\n");
 
 	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
@@ -1910,13 +1929,16 @@ printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len
 		}
 		total_size += entry->bv_len;
 
+/*
 if (io == IRP_MJ_READ) {
  *(int*)(((char*)entry->bv_page->addr)+entry->bv_offset) = 0xdeadbeef;
 }
-		MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
-//		MmBuildMdlForNonPagedPool(mdl);
+*/
+//		MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
+		MmBuildMdlForNonPagedPool(mdl);
 	}
 
+printk("karin 5\n");
 	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
 
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
@@ -1930,6 +1952,7 @@ if (io == IRP_MJ_READ) {
 	if (io == IRP_MJ_READ) {
 		pIoNextStackLocation->Parameters.Read.Length = total_size;
 	}
+printk("karin 6\n");
 
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP.
@@ -1940,7 +1963,9 @@ if (io == IRP_MJ_READ) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
+printk("1\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
+printk("2\n");
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
