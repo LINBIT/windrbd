@@ -1888,6 +1888,16 @@ printk("karin 1\n");
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
 		return -ENOMEM;
 	}
+
+printk("karin 1a\n");
+	struct _MDL *first_mdl;
+	first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress; 
+	if (first_mdl != NULL) {
+		if (first_mdl->MdlFlags & MDL_PAGES_LOCKED) {
+printk("karin c\n");
+			MmUnlockPages(first_mdl);
+		}
+	}
 printk("karin 2\n");
 /*
 	if (buffer != NULL)
