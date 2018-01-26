@@ -1,5 +1,9 @@
 windrbd-next: beta for selected customers
 
+TODO: it seems that free_page crashes sometimes (0x1E)
+
+	Reactivate the hack to see if it crashes there.
+
 TODO: data corruption when doing a 
 
 	cp /dev/urandom /cygdrive/h/random-file
