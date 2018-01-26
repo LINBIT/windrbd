@@ -1,14 +1,12 @@
 windrbd-next: beta for selected customers
 
-TODO: PFN list corrupted when connected and I/O is on windrbd device
-	Just reappeared again when sync completed and windrbd was
-	SyncTarget.
-
 TODO: data corruption when doing a 
 
 	cp /dev/urandom /cygdrive/h/random-file
 
 	and diff it against the synced linux ntfs.
+
+	Maybe this is a sync error.
 
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
@@ -1119,4 +1117,14 @@ Done: drbd w0 linbit-wdrbd: error receiving P_RS_DATA_REQUEST, e: -22 l: 0!
 
 Done: Test windows being SyncTarget
 	Works now, error receiving P_RS_DATA_REQUEST was fixed.
+
+Done: PFN list corrupted when connected and I/O is on windrbd device
+	Just reappeared again when sync completed and windrbd was
+	SyncTarget.
+
+	Update: We now unlock the mdl page's memory created by
+	IoBuildAsynchronousFdsRequest() right after creating the
+	Irp. Furthermore we now use MmBuildMdlForNonPagedPool()
+	since the page memory is from NonPagedPool. It seems to
+	work now. Please reopen when blue screen happens again.
 
