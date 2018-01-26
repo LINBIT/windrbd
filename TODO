@@ -8,12 +8,6 @@ TODO: data corruption when doing a
 
 	Maybe this is a sync error.
 
-TODO: IRP_MJ_SHUTDOWN (0x10) not implemented.
-
-	Update: Implemented but does not get called if we
-	never access the DRBD device. This functionality should
-	be in a one time called function.
-
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
 	On windows side when syncing.
@@ -1133,4 +1127,13 @@ Done: PFN list corrupted when connected and I/O is on windrbd device
 	Irp. Furthermore we now use MmBuildMdlForNonPagedPool()
 	since the page memory is from NonPagedPool. It seems to
 	work now. Please reopen when blue screen happens again.
+
+Done: IRP_MJ_SHUTDOWN (0x10) not implemented.
+
+	Update: Implemented but does not get called if we
+	never access the DRBD device. This functionality should
+	be in a one time called function.
+
+	Update: shutdown done when the root device object is
+	shut down (exactly once).
 
