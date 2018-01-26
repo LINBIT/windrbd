@@ -337,6 +337,18 @@ exit:
         return status;
 }
 
+static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	drbd_cleanup();
+
+/* TODO: clean up logging. */
+
+	irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+        return STATUS_SUCCESS;
+}
+
 void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 {
 	int i;
@@ -350,5 +362,6 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	obj->MajorFunction[IRP_MJ_CREATE] = windrbd_create;
 	obj->MajorFunction[IRP_MJ_CLOSE] = windrbd_close;
 	obj->MajorFunction[IRP_MJ_CLEANUP] = windrbd_cleanup;
+	obj->MajorFunction[IRP_MJ_SHUTDOWN] = windrbd_shutdown;
 	/* TODO: IRP_MJ_FLUSH */
 }
