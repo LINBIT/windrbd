@@ -137,3 +137,4 @@ Version history
  * 0.4.2 (Jan 22, 2018): Support for I/O to/from backing device with more
 			 than 32 pages (needed to split requests).
  * 0.4.3 (Jan 26, 2018): Fixed a blue screen.
+ * 0.4.4 (Jan 27, 2018): Fixed a blue screen on system shutdown.
