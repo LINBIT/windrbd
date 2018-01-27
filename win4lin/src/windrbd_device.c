@@ -339,10 +339,15 @@ exit:
 
 static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	printk("System shutdown, for now, don't clean up, there might be DRBD resources online\nin which case we would crash the system.\n");
+
+	printk("device: %p irp: %p\n", device, irp);
+#if 0
 	if (device == mvolRootDeviceObject)
 		drbd_cleanup();
 
 /* TODO: clean up logging. */
+#endif
 
 	irp->IoStatus.Status = STATUS_SUCCESS;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
