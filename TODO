@@ -20,6 +20,9 @@ TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 	Update: The later is because of a split brain. For now
 	resolved it by re-creating meta data in the Linux side.
 
+	Update: this seems to be correlated with the data corruption
+	bug.
+
 In progress: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
