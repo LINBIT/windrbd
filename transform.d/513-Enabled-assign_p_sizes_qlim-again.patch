@@ -1,0 +1,51 @@
+From c41ecc820c40bcba9e8a772f95d7b546bfa756b1 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Sat, 27 Jan 2018 17:24:17 +0100
+Subject: [PATCH] Enabled assign_p_sizes_qlim() again.
+
+---
+ drbd/drbd_main.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 3921660..321fa13 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -1510,7 +1510,7 @@ out:
+ 	return err;
+ }
+ 
+-/* communicated if (agreed_features & DRBD_FF_WSAME) 
++/* communicated if (agreed_features & DRBD_FF_WSAME) */
+ static void assign_p_sizes_qlim(struct drbd_device *device, struct p_sizes *p, struct request_queue *q)
+ {
+ 	if (q) {
+@@ -1537,7 +1537,7 @@ static void assign_p_sizes_qlim(struct drbd_device *device, struct p_sizes *p, s
+ 		p->qlim->discard_zeroes_data = 0;
+ 		p->qlim->write_same_capable = 0;
+ 	}
+-} */
++}
+ 
+ int drbd_send_sizes(struct drbd_peer_device *peer_device,
+ 		    uint64_t u_size_diskless, enum dds_flags flags)
+@@ -1568,14 +1568,14 @@ int drbd_send_sizes(struct drbd_peer_device *peer_device,
+ 		q_order_type = drbd_queue_order_type(device);
+ 		max_bio_size = queue_max_hw_sectors(q) << 9;
+ 		max_bio_size = min(max_bio_size, DRBD_MAX_BIO_SIZE);
+-		// assign_p_sizes_qlim(device, p, q); // not on WIN32
++		assign_p_sizes_qlim(device, p, q);
+ 		put_ldev(device);
+ 	} else {
+ 		d_size = 0;
+ 		u_size = u_size_diskless;
+ 		q_order_type = QUEUE_ORDERED_NONE;
+ 		max_bio_size = DRBD_MAX_BIO_SIZE; /* ... multiple BIOs per peer_request */
+-		// assign_p_sizes_qlim(device, p, NULL); // not on WIN32
++		assign_p_sizes_qlim(device, p, NULL);
+ 	}
+ 
+ 	if (peer_device->connection->agreed_pro_version <= 94)
+-- 
+2.7.4
+
