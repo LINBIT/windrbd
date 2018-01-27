@@ -62,8 +62,10 @@ TODO: Create windrbd device on becoming primary and delete
 	patch the boot sector as long it is secondary. 
 	However this does not solve the read cache problem.
 
-TODO: logical block sizes do not match (me:512, peer:0); this may cause problems.
-	Fix this (should be easy)
+	Update: Right now, we return IO error if a secondary
+	resource is accessed via ReadFile/WriteFile. Eventually
+	we want to declare the secondary resource offline
+	but not sure yet how to do this.
 
 TODO: how and when is flush to backing device done?
 	This is important. Right now NTFS files only appear on
@@ -1157,4 +1159,10 @@ Done: it seems that free_page crashes sometimes (0x1E)
 	(which is generally not a good idea). For now don't do
 	anything on shutdown, we should see how Linux DRBD behaves
 	on forced system shutdown.
+
+Done: logical block sizes do not match (me:512, peer:0); this may cause problems.
+	Fix this (should be easy)
+
+	Update: Reenabled assign_p_sizes_qlim() in drbd_main.c
+	this should have fixed it.
 
