@@ -23,6 +23,12 @@
 #include <ntdddisk.h>
 #include <wdm.h>
 
+	/* Define this if you want a built in test for backing device
+	   I/O. Attention this destroys data on the back device.
+	 */
+#define _HACK
+// #define _HACK_WRITE
+
 #undef _NTDDK_
 /* Can't include that without getting redefinition errors.
  *   10.0.14393.0\km\ntddk.h(69): error C2371: 'PEPROCESS': redefinition; different basic types
@@ -541,6 +547,65 @@ printk("karin\n");
 	kfree(page); 
 printk("karin 2\n");
 }
+
+#ifdef _HACK
+
+static void hack_endio BIO_ENDIO_ARGS(struct bio *bio)
+{
+	printk("1\n");
+	struct completion *c = (struct completion*) bio->bi_private;
+	printk("2\n");
+	complete(c);
+	printk("3\n");
+}
+
+void hack_alloc_page(struct block_device *dev)
+{
+	printk("1\n");
+	struct page *p = alloc_page(0);
+	struct page *p2 = alloc_page(0);
+	printk("2\n");
+	struct bio *b = bio_alloc(0, 2, 'XXXX');
+	int i;
+	struct completion c;
+	printk("3\n");
+	bio_add_page(b, p, 4096, 0);
+	bio_add_page(b, p2, 4096, 0);
+	printk("4\n");
+#ifdef _HACK_WRITE
+	bio_set_op_attrs(b, REQ_OP_WRITE, 0);
+#else
+	bio_set_op_attrs(b, REQ_OP_READ, 0);
+#endif
+	printk("5\n");
+	for (i=0;i<4096;i++) {
+		((char*)p->addr)[i] = i;
+		((char*)p2->addr)[i] = i;
+	}
+	printk("5a\n");
+	b->bi_end_io = hack_endio;
+	DRBD_BIO_BI_SECTOR(b) = 1;
+	printk("6\n");
+	init_completion(&c);
+	printk("7\n");
+	b->bi_private = &c;
+	printk("7a\n");
+	bio_set_dev(b, dev);
+	printk("7b\n");
+	submit_bio(b);
+	//     hack_endio(b, 0);
+	printk("8\n");
+	wait_for_completion(&c);
+	printk("9\n");
+	bio_put(b);
+	printk("9a\n");
+	__free_page(p);
+	printk("9b\n");
+	__free_page(p2);
+	printk("a\n");
+	printk("karin 2\n");
+}
+#endif
 
 void drbd_bp(char *msg)
 {
@@ -2741,6 +2806,10 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
+
+#ifdef _HACK
+hack_alloc_page(block_device);
+#endif
 
 	return block_device;
 
