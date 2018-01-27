@@ -1,0 +1,56 @@
+From 15ac603d9cc31b42d5711c7da61ee89e3ada7663 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 26 Jan 2018 18:27:30 +0100
+Subject: [PATCH] Exporting the drbd_cleanup() function.
+
+To clean up the module.
+---
+ drbd/drbd_int.h  |  2 ++
+ drbd/drbd_main.c | 13 +------------
+ 2 files changed, 3 insertions(+), 12 deletions(-)
+
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index e4e109f..c5ff9e3 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -2816,4 +2816,6 @@ static inline int        twopc_timer_fn_win(KDPC *dpc, void * data, void *sysarg
+ static inline int      connect_timer_fn_win(KDPC *dpc, void * data, void *sysarg1, void *sysarg2) { (void)dpc; (void)sysarg1; (void)sysarg2;      connect_timer_fn((ULONG_PTR)data); return STATUS_SUCCESS; }
+ static inline int start_resync_timer_fn_win(KDPC *dpc, void * data, void *sysarg1, void *sysarg2) { (void)dpc; (void)sysarg1; (void)sysarg2; start_resync_timer_fn((ULONG_PTR)data); return STATUS_SUCCESS; }
+ 
++void drbd_cleanup(void);
++
+ #endif
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 032f87f..3921660 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3019,7 +3019,7 @@ void drbd_restart_request(struct drbd_request *req)
+ 	queue_work(retry.wq, &retry.worker);
+ }
+ 
+-static void drbd_cleanup(void)
++void drbd_cleanup(void)
+ {
+ 	/* first remove proc,
+ 	 * drbdsetup uses it's presence to detect
+@@ -5323,17 +5323,6 @@ _drbd_insert_fault(struct drbd_device *device, unsigned int type)
+ }
+ #endif
+ 
+-void drbd_cleanup_by_win_shutdown(void)
+-{
+-printk("1\n");
+-
+-	if (retry.wq)
+-		destroy_workqueue(retry.wq);
+-	retry.wq = NULL;
+-
+-	gbShutdown = TRUE;
+-}
+-
+ module_init(drbd_init)
+ module_exit(drbd_cleanup)
+ 
+-- 
+2.7.4
+
