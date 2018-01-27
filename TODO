@@ -1,9 +1,5 @@
 windrbd-next: beta for selected customers
 
-TODO: it seems that free_page crashes sometimes (0x1E)
-
-	Reactivate the hack to see if it crashes there.
-
 TODO: data corruption when doing a 
 
 	cp /dev/urandom /cygdrive/h/random-file
@@ -15,6 +11,14 @@ TODO: data corruption when doing a
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
 	On windows side when syncing.
+
+	Also:
+
+	linbit-wdrbd: error receiving P_STATE, e: -5 l: 0!
+	on windows side on connection establishment.
+
+	Update: The later is because of a split brain. For now
+	resolved it by re-creating meta data in the Linux side.
 
 In progress: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
@@ -1140,4 +1144,14 @@ Done: IRP_MJ_SHUTDOWN (0x10) not implemented.
 
 	Update: shutdown done when the root device object is
 	shut down (exactly once).
+
+Done: it seems that free_page crashes sometimes (0x1E)
+
+	Reactivate the hack to see if it crashes there.
+
+	Update: No free_page is ok. Crash is because there are
+	still drbd resources on line while we free all buffers
+	(which is generally not a good idea). For now don't do
+	anything on shutdown, we should see how Linux DRBD behaves
+	on forced system shutdown.
 
