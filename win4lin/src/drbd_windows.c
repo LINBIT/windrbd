@@ -540,12 +540,8 @@ struct page *alloc_page(int flag)
 
 void __free_page(struct page *page)
 {
-	/* TODO: page == NULL defined? */
-
-printk("karin\n");
 	kfree(page->addr);
 	kfree(page); 
-printk("karin 2\n");
 }
 
 #ifdef _HACK
