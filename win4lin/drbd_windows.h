@@ -1160,6 +1160,21 @@ extern long PTR_ERR(const void *ptr);
 extern long IS_ERR_OR_NULL(const void *ptr);
 extern int IS_ERR(void *err);
 
+static inline unsigned short queue_physical_block_size(struct request_queue *q)
+{
+	return 512;
+}
+
+static inline int queue_alignment_offset(struct request_queue *q)
+{
+	return 0;
+}
+
+static inline int queue_io_opt(struct request_queue *q)
+{
+	return 0;
+}
+
 extern struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder);
 extern int windrbd_set_drbd_device_active(struct drbd_device *device, int flag);
 
