@@ -1980,6 +1980,8 @@ if (bio->bi_this_request > 0) {
 
 #define MAX_MDL_ELEMENTS 32
 
+		/* TODO: use bio->bi_size it should be correct now. */
+
 	int total_size = first_size;
 
 	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {

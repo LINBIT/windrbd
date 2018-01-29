@@ -1,13 +1,5 @@
 windrbd-next: beta for selected customers
 
-TODO: data corruption when doing a 
-
-	cp /dev/urandom /cygdrive/h/random-file
-
-	and diff it against the synced linux ntfs.
-
-	Maybe this is a sync error.
-
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
 	On windows side when syncing.
@@ -21,7 +13,10 @@ TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 	resolved it by re-creating meta data in the Linux side.
 
 	Update: this seems to be correlated with the data corruption
-	bug.
+	bug. Update: no it isn't data corruption happened when accessing
+	the backing device.
+
+TODO: upgrade DRBD to 9.0.12
 
 In progress: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
@@ -1165,4 +1160,15 @@ Done: logical block sizes do not match (me:512, peer:0); this may cause problems
 
 	Update: Reenabled assign_p_sizes_qlim() in drbd_main.c
 	this should have fixed it.
+
+Done: data corruption when doing a 
+
+	cp /dev/urandom /cygdrive/h/random-file
+
+	and diff it against the synced linux ntfs.
+
+	Maybe this is a sync error.
+
+	Update: bio->bi_sector was set wrong when splitting
+	the bio in generic_make_request. Is fixed now.
 
