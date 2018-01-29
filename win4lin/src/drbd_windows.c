@@ -3181,7 +3181,7 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
 	return bdev->d_size >> 9;
 }
 
-int win_drbd_thread_setup(struct drbd_thread *thi)
+int windrbd_thread_setup(struct drbd_thread *thi)
 {
 	struct drbd_resource *resource = thi->resource;
 	struct drbd_connection *connection = thi->connection;
