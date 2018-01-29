@@ -3171,19 +3171,13 @@ NTSTATUS SaveCurrentValue(PCWSTR valueName, int value)
 	return status;
 }
 
-/* TODO: ??? */
-sector_t wdrbd_get_capacity(struct block_device *bdev)
+sector_t windrbd_get_capacity(struct block_device *bdev)
 {
 	if (bdev == NULL) {
-		WDRBD_WARN("Null argument\n");
+		printk(KERN_WARNING "bdev is NULL\n");
 		return 0;
 	}
 
-	if (bdev->d_size == 0) {
-			/* TODO: currently not implemted for DRBD devices */
-		bdev->d_size = 0;
-	}
-		/* TODO: sector size is not always 512 bytes */
 	return bdev->d_size >> 9;
 }
 

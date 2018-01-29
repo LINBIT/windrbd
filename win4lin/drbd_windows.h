@@ -635,7 +635,7 @@ struct block_device {
 	struct mutex vol_size_mutex;
 };
 
-extern sector_t wdrbd_get_capacity(struct block_device *bdev);
+extern sector_t windrbd_get_capacity(struct block_device *bdev);
 
 struct bio_vec {
 	struct page *bv_page;
