@@ -1,4 +1,6 @@
 ﻿/*
+	Copyright(C) 2017-2018, Johannes Thoma <johannes@johannesthoma.com>
+	Copyright(C) 2017-2018, LINBIT HA-Solutions GmbH  <office@linbit.com>
 	Copyright(C) 2007-2016, ManTechnology Co., LTD.
 	Copyright(C) 2007-2016, wdrbd@mantech.co.kr
 
