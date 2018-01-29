@@ -18,6 +18,14 @@ TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
 TODO: upgrade DRBD to 9.0.12
 
+	So Need Access to up to date data on drbdadm down is fixed.
+
+TODO: Remove most registry keys.
+
+	Also do not create them on installing windrbd.
+
+TODO: review TODOs in source code.
+
 In progress: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
@@ -40,6 +48,9 @@ In progress: allow user to pass name of symbolic link created
 	Later, remove the drive letter magic from the kernel driver.
 
 	Nice-to-have: a list-drive-letters command.
+
+	Update: find out how to set drive letters visible to
+	all users.
 
 TODO: Create windrbd device on becoming primary and delete
 	windrbd device on secondary.
@@ -73,7 +84,9 @@ In progress: make install package
 	Know how to do it (iexpress.exe) do it properly once
 	everything else is done.
 
-TODO: Test with Windows 10 (we have to do that anyway some day)
+In progress: Test with Windows 10 (we have to do that anyway some day)
+
+	Installing to Linbit supplied test machine.
 
 In Progress: reinstall windows 7 and check if last 4096 bytes in NTFS
 	are still hidden.
