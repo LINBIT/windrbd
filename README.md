@@ -138,3 +138,4 @@ Version history
 			 than 32 pages (needed to split requests).
  * 0.4.3 (Jan 26, 2018): Fixed a blue screen.
  * 0.4.4 (Jan 27, 2018): Fixed a blue screen on system shutdown.
+ * 0.4.5 (Jan 29, 2018): Fixed a data integrity error on sync
