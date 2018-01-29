@@ -2,3 +2,4 @@ windrbd-test.exe
 *.o
 .*.sw?
 ntfs.*
+verify-content

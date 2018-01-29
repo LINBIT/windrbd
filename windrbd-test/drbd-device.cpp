@@ -258,6 +258,7 @@ TEST(win_drbd, do_write_read_whole_disk_by_1meg_requests)
 	unsigned int i;
 	DWORD px;
 	unsigned int sector;
+	unsigned int sector2;
 
 	if (!p.force) {
 	        char answer[10];
@@ -282,10 +283,12 @@ TEST(win_drbd, do_write_read_whole_disk_by_1meg_requests)
 		exit(1);
 	}
 
+	sector2 = 0;
 	for (sector=0; sector<p.expected_size / ONE_MEG; sector++) {
 		for (i=0;i<ONE_MEG;i++)
 			buf[i] = i;
-		*(int*)buf = sector;
+		for (i=0;i<ONE_MEG;i+=512, sector2++)
+			*(int*)(buf+i) = sector2;
 
 		printf("Sector is %d\n", sector);
 
