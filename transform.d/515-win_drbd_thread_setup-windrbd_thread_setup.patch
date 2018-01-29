@@ -1,0 +1,25 @@
+From 0280a0c5f5ac501046263483b8f981905f207cf7 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 29 Jan 2018 19:31:21 +0100
+Subject: [PATCH] win_drbd_thread_setup -> windrbd_thread_setup
+
+---
+ drbd/drbd_main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 321fa13..8e53d3d 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -606,7 +606,7 @@ int drbd_thread_start(struct drbd_thread *thi)
+ 
+             KeInitializeEvent(&thi->start_event, SynchronizationEvent, FALSE);
+             KeInitializeEvent(&thi->wait_event, SynchronizationEvent, FALSE);
+-            Status = PsCreateSystemThread(&hThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, win_drbd_thread_setup, (void *) thi);
++            Status = PsCreateSystemThread(&hThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, windrbd_thread_setup, (void *) thi);
+             if (!NT_SUCCESS(Status)) {
+                 return false;
+             }
+-- 
+2.7.4
+
