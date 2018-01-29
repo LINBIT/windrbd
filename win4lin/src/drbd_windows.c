@@ -2059,6 +2059,11 @@ out_free_irp:
 int generic_make_request(struct bio *bio)
 {
 	int ret;
+	int sector;
+	int orig_sector;
+	int total_size;
+	int orig_size;
+	int e;
 
 	bio_get(bio);
 
@@ -2075,6 +2080,9 @@ int generic_make_request(struct bio *bio)
 	}
 	atomic_set(&bio->bi_requests_completed, 0);
 
+	orig_sector = sector = bio->bi_sector;
+	orig_size = bio->bi_size;
+
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<bio->bi_num_requests; 
              bio->bi_this_request++) {
@@ -2083,13 +2091,29 @@ int generic_make_request(struct bio *bio)
 		if (bio->bi_vcnt < bio->bi_last_element)
 			bio->bi_last_element = bio->bi_vcnt;
 
+		total_size = 0;
+		for (e = bio->bi_first_element; e < bio->bi_last_element; e++)
+			total_size += bio->bi_io_vec[e].bv_len;
+
+		bio->bi_sector = sector;
+		bio->bi_size = total_size;
+
 		ret = windrbd_generic_make_request(bio);
 		if (ret < 0) {
 			drbd_bio_endio(bio, BLK_STS_IOERR);
+
+			bio->bi_sector = orig_sector;
+			bio->bi_size = orig_size;
+
 			bio_put(bio);
 			return ret;
 		}
+		sector += total_size >> 9;
 	}
+
+	bio->bi_sector = orig_sector;
+	bio->bi_size = orig_size;
+
 	bio_put(bio);
 	return 0;
 }
