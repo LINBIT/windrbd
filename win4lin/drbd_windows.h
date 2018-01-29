@@ -399,7 +399,6 @@ extern VOID WriteOOSTraceLog(int bitmap_index, ULONG_PTR startBit, ULONG_PTR end
 #endif
 
 #ifdef _WIN32_EVENTLOG
-#define wdrbd_logger_cleanup()	printk_cleanup();
 #define printk(format, ...)   \
     _printk(__FUNCTION__, format, __VA_ARGS__)
 #else
