@@ -16,6 +16,13 @@ TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 	bug. Update: no it isn't data corruption happened when accessing
 	the backing device.
 
+	Update: it is also (or only) on Linux side.
+
+	Update: error receiving P_STATE on split brain should also not happen.
+	But low priority.
+
+TODO: compile user space apps with MinGW
+
 TODO: upgrade DRBD to 9.0.12
 
 	So Need Access to up to date data on drbdadm down is fixed.
@@ -26,7 +33,7 @@ TODO: Remove most registry keys.
 
 TODO: review TODOs in source code.
 
-In progress: allow user to pass name of symbolic link created
+TODO: In progress: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
 
 	Update: This should be userspace-only. It should
@@ -51,6 +58,12 @@ In progress: allow user to pass name of symbolic link created
 
 	Update: find out how to set drive letters visible to
 	all users.
+
+	Update: syntax is:
+
+	device "l:" minor n
+
+	which is quite intuitive
 
 TODO: Create windrbd device on becoming primary and delete
 	windrbd device on secondary.
@@ -79,19 +92,24 @@ TODO: how and when is flush to backing device done?
 	when becoming secondary. sync must be done while primary
 	(when secondary it would fail)
 
-In progress: make install package
+TODO: In progress: make install package
 	self extracting exe or msi file.
 	Know how to do it (iexpress.exe) do it properly once
 	everything else is done.
 
-In progress: Test with Windows 10 (we have to do that anyway some day)
+	Works almost .. we however have to compile user space utilities
+	with MinGW, which would use native Windows DLLs. Currently
+	bundling with cygwin fails because the POSIX root (/) cannot
+	be set to the cygwin path.
+
+TODO: In progress: Test with Windows 10 (we have to do that anyway some day)
 
 	Installing to Linbit supplied test machine.
 
-In Progress: reinstall windows 7 and check if last 4096 bytes in NTFS
+TODO: In progress: reinstall windows 7 and check if last 4096 bytes in NTFS
 	are still hidden.
 
-In progress: Use Linbit certificate to sign driver.
+TODO: In progress: Use Linbit certificate to sign driver.
 	It should be trusted.
 
 	We have a certificate now, but the root of this certificate
@@ -99,6 +117,8 @@ In progress: Use Linbit certificate to sign driver.
 
 --------------------------------------------------------------
 windrbd-next-next
+
+TODO: Error receiving P_STATE on Linux on split-brain.
 
 TODO: Cannot write first sector on format h:
 	Sector seems to be alright (showing DRBD on the backing device
