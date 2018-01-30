@@ -5,11 +5,11 @@ SEDVersion=3
 PackagePurpose=InstallApp
 ShowInstallProgramWindow=0
 HideExtractAnimation=0
-UseLongFileName=0
+UseLongFileName=1
 InsideCompressed=0
 CAB_FixedSize=0
 CAB_ResvCodeSigning=0
-RebootMode=A
+RebootMode=N
 InstallPrompt=%InstallPrompt%
 DisplayLicense=%DisplayLicense%
 FinishMessage=%FinishMessage%
@@ -21,19 +21,39 @@ AdminQuietInstCmd=%AdminQuietInstCmd%
 UserQuietInstCmd=%UserQuietInstCmd%
 SourceFiles=SourceFiles
 [Strings]
-InstallPrompt=This is an early evaluation version of windrbd. Do not use on production machines. Also make a full backup (or snapshot).
-DisplayLicense=Y:\windrbd\LICENSE
+InstallPrompt=This is an early evaluation version of windrbd. Do not use on production machines. Also make a full backup first (or create a snapshot now if you are running in a virtual machine). Do you wish to continue?
+DisplayLicense=Y:\windrbd\LICENSE.txt
 FinishMessage=Please reboot in order to use windrbd.
-TargetName=C:\Users\johannes\windrbd.exe
+TargetName=Y:\install-windrbd.exe
 FriendlyName=windrbd
 AppLaunched=drbd.inf
-PostInstallCmd=<None>
+PostInstallCmd=post-install-windrbd.cmd
 AdminQuietInstCmd=
 UserQuietInstCmd=
 FILE0="drbd.sys"
 FILE1="drbd.inf"
+FILE2="drbdadm.exe"
+FILE3="drbdsetup.exe"
+FILE4="drbdmeta.exe"
+FILE5="windrbd.exe"
+FILE6="cygwin1.dll"
+FILE7="post-install-windrbd.cmd"
 [SourceFiles]
 SourceFiles0=Y:\windrbd\converted-sources\drbd\
+SourceFiles1=Y:\drbd-utils-windows\user\v9\
+SourceFiles2=Y:\drbd-utils-windows\user\windrbd\
+SourceFiles3=C:\cygwin64\bin\
+SourceFiles4=Y:\windrbd\
 [SourceFiles0]
 %FILE0%=
 %FILE1%=
+[SourceFiles1]
+%FILE2%=
+%FILE3%=
+%FILE4%=
+[SourceFiles2]
+%FILE5%=
+[SourceFiles3]
+%FILE6%=
+[SourceFiles4]
+%FILE7%=
