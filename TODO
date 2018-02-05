@@ -1,5 +1,7 @@
 windrbd-next: beta for selected customers
 
+TODO: Have DRBD and windrbd release number in log and properties of driver
+
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
 	On windows side when syncing.
