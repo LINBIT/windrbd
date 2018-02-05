@@ -145,3 +145,6 @@ install:
 
 clean:
 	rm -f *.obj
+
+package:
+	iexpress /n windrbd.sed
