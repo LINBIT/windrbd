@@ -102,9 +102,21 @@ TODO: In progress: make install package
 	bundling with cygwin fails because the POSIX root (/) cannot
 	be set to the cygwin path.
 
+	We should switch to msi based install. Or at least get rid
+	of the Must reboot now panel, because userland tools are installed
+	later.
+
+	Check the GPL line feeds.
+	Get rid of reboot now message (change type of driver?)
+	Make userland use C:\windrbd as cygwin root (take care not
+	to destroy existing Cygwin installations)
+
 TODO: In progress: Test with Windows 10 (we have to do that anyway some day)
 
 	Installing to Linbit supplied test machine.
+
+	Driver loads (with TESTSIGNING ON) userland currently fails 
+	to find POSIX root (/) dir (/etc/drbd.conf not found).
 
 TODO: In progress: reinstall windows 7 and check if last 4096 bytes in NTFS
 	are still hidden.
@@ -114,6 +126,8 @@ TODO: In progress: Use Linbit certificate to sign driver.
 
 	We have a certificate now, but the root of this certificate
 	isn't trusted by Windows 7.
+
+	Phil is currently trying to get a proper certificate.
 
 --------------------------------------------------------------
 windrbd-next-next
