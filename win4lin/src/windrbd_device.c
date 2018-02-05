@@ -343,17 +343,23 @@ printk("I/O request on a failed disk.\n");
 		goto exit;
 	}
 
+printk("1\n");
+
 	bio = bio_alloc(GFP_NOIO, 1, 'DBRD');
 	if (bio == NULL) {
 		status = STATUS_INSUFFICIENT_RESOURCES;
 		goto exit;
 	}
+printk("2\n");
 	if (irp_to_bio(irp, dev, bio) < 0) {
 		bio_free(bio);
 		goto exit;
 	}
+printk("3\n");
         IoMarkIrpPending(irp);
+printk("4\n");
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
+printk("5\n");
 
 	return STATUS_PENDING;
 
