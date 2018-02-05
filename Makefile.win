@@ -147,4 +147,4 @@ clean:
 	rm -f *.obj
 
 package:
-	iexpress /n windrbd.sed
+	iexpress /n ../../windrbd.sed
