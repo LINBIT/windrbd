@@ -550,6 +550,9 @@ NetlinkWorkThread(PVOID context)
 	{
 	    minor = gmh->minor;
 	    struct drbd_conf * mdev = minor_to_device(minor);
+printk("mdev: %p\n", mdev);
+if (mdev) printk("drbd_suspended: %d\n", drbd_suspended(mdev));
+#if 0
 #ifdef _WIN32
 	    if (mdev && drbd_suspended(mdev))
 #else
@@ -560,6 +563,7 @@ NetlinkWorkThread(PVOID context)
 		    WDRBD_WARN("minor(%d) suspended\n", gmh->minor);
 		    goto cleanup;
 		}
+#endif
 	}
 
 	int i;
