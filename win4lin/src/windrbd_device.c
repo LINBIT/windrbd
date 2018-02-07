@@ -260,6 +260,17 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	PIRP irp = bio->bi_upper_irp;
 
 	if (error == 0) {
+		if (bio->bi_rw == READ) {
+			if (bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
+				void *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
+				if (user_buffer != NULL)
+					RtlCopyMemory(user_buffer, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len);
+				else
+					printk("MmGetSystemAddressForMdlSafe returned NULL\n");
+
+				kfree(bio->bi_io_vec[0].bv_page->addr);
+			}
+		}
 		irp->IoStatus.Information = bio->bi_size;
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	} else {
@@ -315,8 +326,13 @@ printk("1\n");
 */
 
 printk("2\n");
+	bio->bi_io_vec[0].bv_len = MmGetMdlByteCount(mdl);
+	if (bio->bi_rw == READ) {
+		bio->bi_io_vec[0].bv_page->addr = kmalloc(bio->bi_io_vec[0].bv_len, 0, 'DRBD');
+	} else {
 		/* This is not page aligned. */
-	bio->bi_io_vec[0].bv_page->addr = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
+		bio->bi_io_vec[0].bv_page->addr = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
+	}
 printk("2a\n");
 	if (bio->bi_io_vec[0].bv_page->addr == NULL) {
 		printk("MmGetSystemAddressForMdlSafe returned NULL.\n");
@@ -324,7 +340,6 @@ printk("2a\n");
 			/* TODO: Here we get a blue screen sooner or later */
 	}
 printk("3\n");
-	bio->bi_io_vec[0].bv_len = MmGetMdlByteCount(mdl);
 		/* Address returned by MmGetSystemAddressForMdlSafe
 		 * is already offset, not using MmGetMdlByteOffset.
 		 */
