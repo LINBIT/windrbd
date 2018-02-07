@@ -1,0 +1,26 @@
+From c672b053d4339431e8f8c3bf73126f3182069998 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 29 Jan 2018 19:27:32 +0100
+Subject: [PATCH] wdrbd_get_capacity -> windrbd_get_capacity.
+
+---
+ drbd/drbd_int.h | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index c5ff9e3..064964a 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -1976,8 +1976,7 @@ drbd_commit_size_change(struct drbd_device *device, struct resize_parms *rs, u64
+ 
+ static inline sector_t drbd_get_capacity(struct block_device *bdev)
+ {
+-	/* return bdev ? get_capacity(bdev->bd_disk) : 0; */
+-	return bdev ? (wdrbd_get_capacity(bdev) << 9) >> 9 : 0;
++	return bdev ? (windrbd_get_capacity(bdev) << 9) >> 9 : 0;
+ }
+ 
+ /* sets the number of 512 byte sectors of our virtual device */
+-- 
+2.7.4
+

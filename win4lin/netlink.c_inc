@@ -544,28 +544,6 @@ NetlinkWorkThread(PVOID context)
 	WDRBD_TRACE_NETLINK("rx(%d), len(%d), cmd(%d), flags(0x%x), type(0x%x), seq(%d), pid(%d)\n",
 		readcount, nlh->nlmsg_len, pinfo->genlhdr->cmd, nlh->nlmsg_flags, nlh->nlmsg_type, nlh->nlmsg_seq, nlh->nlmsg_pid);
 
-	// check whether resource suspended
-	struct drbd_genlmsghdr * gmh = pinfo->userhdr;
-	if (gmh)
-	{
-	    minor = gmh->minor;
-	    struct drbd_conf * mdev = minor_to_device(minor);
-printk("mdev: %p\n", mdev);
-if (mdev) printk("drbd_suspended: %d\n", drbd_suspended(mdev));
-#if 0
-#ifdef _WIN32
-	    if (mdev && drbd_suspended(mdev))
-#else
-		if (mdev && (drbd_suspended(mdev) || test_bit(SUSPEND_IO, &mdev->flags)))
-#endif
-		{
-		    reply_error(NLMSG_ERROR, NLM_F_MULTI, EIO, pinfo);
-		    WDRBD_WARN("minor(%d) suspended\n", gmh->minor);
-		    goto cleanup;
-		}
-#endif
-	}
-
 	int i;
 	u8 cmd = pinfo->genlhdr->cmd;
 	struct genl_ops * pops = get_drbd_genl_ops(cmd);

@@ -1,3 +1,30 @@
+/*
+	Copyright(C) 2017-2018, Johannes Thoma <johannes@johannesthoma.com>
+	Copyright(C) 2017-2018, LINBIT HA-Solutions GmbH  <office@linbit.com>
+
+	Windows DRBD is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2, or (at your option)
+	any later version.
+
+	Windows DRBD is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with Windows DRBD; see the file COPYING. If not, write to
+	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+*/
+
+/* This file contains the handler on the windrbd device (matching the
+ * /dev/drbd<n> devices in Linux). Requests to a windrbd device (such
+ * as called by a CreateFile, WriteFile and the like) are handled first
+ * herein and then (if neccessary) forwarded to the corresponding
+ * DRBD handlers. For functions related to accessing the DRBD backing
+ * devices (the 'physical' devices), see drbd_windows.c
+ */
+
 #include <wdm.h>
 #include <ntddk.h>
 #include <ntdddisk.h>
@@ -316,17 +343,23 @@ printk("I/O request on a failed disk.\n");
 		goto exit;
 	}
 
+printk("1\n");
+
 	bio = bio_alloc(GFP_NOIO, 1, 'DBRD');
 	if (bio == NULL) {
 		status = STATUS_INSUFFICIENT_RESOURCES;
 		goto exit;
 	}
+printk("2\n");
 	if (irp_to_bio(irp, dev, bio) < 0) {
 		bio_free(bio);
 		goto exit;
 	}
+printk("3\n");
         IoMarkIrpPending(irp);
+printk("4\n");
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
+printk("5\n");
 
 	return STATUS_PENDING;
 

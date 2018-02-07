@@ -1,4 +1,6 @@
 ﻿/*
+        Copyright(C) 2017-2018, Johannes Thoma <johannes@johannesthoma.com>
+        Copyright(C) 2017-2018, LINBIT HA-Solutions GmbH  <office@linbit.com>
 	Copyright(C) 2007-2016, ManTechnology Co., LTD.
 	Copyright(C) 2007-2016, wdrbd@mantech.co.kr
 
@@ -399,7 +401,6 @@ extern VOID WriteOOSTraceLog(int bitmap_index, ULONG_PTR startBit, ULONG_PTR end
 #endif
 
 #ifdef _WIN32_EVENTLOG
-#define wdrbd_logger_cleanup()	printk_cleanup();
 #define printk(format, ...)   \
     _printk(__FUNCTION__, format, __VA_ARGS__)
 #else
@@ -635,7 +636,7 @@ struct block_device {
 	struct mutex vol_size_mutex;
 };
 
-extern sector_t wdrbd_get_capacity(struct block_device *bdev);
+extern sector_t windrbd_get_capacity(struct block_device *bdev);
 
 struct bio_vec {
 	struct page *bv_page;
@@ -1136,7 +1137,7 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 #define wake_up(q) _wake_up(q, __FUNCTION__, __LINE__)
 
 struct drbd_thread;
-extern int win_drbd_thread_setup(struct drbd_thread *thi);
+extern int windrbd_thread_setup(struct drbd_thread *thi);
 extern void wake_up_process(struct drbd_thread *thi);
 
 extern void _wake_up(wait_queue_head_t *q, char *__func, int __line);
