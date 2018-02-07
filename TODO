@@ -23,8 +23,6 @@ TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 	Update: error receiving P_STATE on split brain should also not happen.
 	But low priority.
 
-TODO: compile user space apps with MinGW
-
 TODO: upgrade DRBD to 9.0.12
 
 	So Need Access to up to date data on drbdadm down is fixed.
@@ -120,6 +118,9 @@ TODO: In progress: Test with Windows 10 (we have to do that anyway some day)
 	Driver loads (with TESTSIGNING ON) userland currently fails 
 	to find POSIX root (/) dir (/etc/drbd.conf not found).
 
+	Update: works. When accessing windrbd device (dir h:) it
+	blue screens
+
 TODO: In progress: reinstall windows 7 and check if last 4096 bytes in NTFS
 	are still hidden.
 
@@ -133,6 +134,8 @@ TODO: In progress: Use Linbit certificate to sign driver.
 
 --------------------------------------------------------------
 windrbd-next-next
+
+TODO: blue screen when backing device fails.
 
 TODO: Error receiving P_STATE on Linux on split-brain.
 
@@ -1220,4 +1223,7 @@ Done: data corruption when doing a
 
 	Update: bio->bi_sector was set wrong when splitting
 	the bio in generic_make_request. Is fixed now.
+
+Rejected: compile user space apps with MinGW
+	Isn't meant for POSIX apps
 

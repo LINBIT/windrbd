@@ -299,6 +299,7 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 	/* TODO: later have more than one .. */
 	if (mdl->Next != NULL) {
 		printk(KERN_ERR "not implemented: have more than one mdl. Dropping additional mdl data.\n");
+		return -1;
 	}
 	bio->bi_io_vec[0].bv_page = kmalloc(sizeof(struct page), 0, 'DRBD');
 	if (bio->bi_io_vec[0].bv_page == NULL) {
@@ -307,13 +308,21 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 	}
 
 printk("1\n");
+//	MmBuildMdlForNonPagedPool(mdl);
+/*
 	MmProbeAndLockPages(mdl, UserMode,
 		(s->MajorFunction == IRP_MJ_WRITE) ? IoReadAccess : IoWriteAccess);
+*/
 
 printk("2\n");
 		/* This is not page aligned. */
-	bio->bi_io_vec[0].bv_page->addr = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority);
-		/* TODO: if addr == NULL */
+	bio->bi_io_vec[0].bv_page->addr = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
+printk("2a\n");
+	if (bio->bi_io_vec[0].bv_page->addr == NULL) {
+		printk("MmGetSystemAddressForMdlSafe returned NULL.\n");
+		return -1;
+			/* TODO: Here we get a blue screen sooner or later */
+	}
 printk("3\n");
 	bio->bi_io_vec[0].bv_len = MmGetMdlByteCount(mdl);
 		/* Address returned by MmGetSystemAddressForMdlSafe
