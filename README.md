@@ -140,3 +140,5 @@ Version history
  * 0.4.4 (Jan 27, 2018): Fixed a blue screen on system shutdown.
  * 0.4.5 (Jan 29, 2018): Fixed a data integrity error on sync
  * 0.4.6 (Feb 06, 2018): supend-io and resume-io should work (quorum not)
+ * 0.4.7 (Feb 07, 2018): Fixed a Windows 10 blue screen when accessing the
+			 windrbd device.
