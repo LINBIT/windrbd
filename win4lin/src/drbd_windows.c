@@ -1928,9 +1928,12 @@ printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d b
 // }
 
 
+printk("x\n");
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0) {
+printk("y\n");
 		patch_boot_sector(buffer, 0);
 	}
+printk("z\n");
 
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,

@@ -305,20 +305,28 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 		printk("Page is NULL.\n");
 		return -1;
 	}
+
+printk("1\n");
+	MmProbeAndLockPages(mdl, UserMode,
+		(s->MajorFunction == IRP_MJ_WRITE) ? IoReadAccess : IoWriteAccess);
+
+printk("2\n");
 		/* This is not page aligned. */
 	bio->bi_io_vec[0].bv_page->addr = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority);
+		/* TODO: if addr == NULL */
+printk("3\n");
 	bio->bi_io_vec[0].bv_len = MmGetMdlByteCount(mdl);
 		/* Address returned by MmGetSystemAddressForMdlSafe
 		 * is already offset, not using MmGetMdlByteOffset.
 		 */
 	bio->bi_io_vec[0].bv_offset = 0;
 
+// printk("bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d\n", bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len);
+
 	bio->bi_end_io = windrbd_bio_finished;
 	bio->bi_upper_irp = irp;
 
-/*
 printk("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
-*/
 
 	return 0;
 }
