@@ -12,7 +12,7 @@ FORCE ?= --force
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	g++ $(OBJS) -o $(PROG) -L/usr/local/lib -lgtest
+	g++ $(OBJS) -o $(PROG) -L/usr/local/lib -lgtest -static
 
 test: all
 	./windrbd-test.exe --drive $(DRIVE) --expected-size $(SIZE) $(FORCE)

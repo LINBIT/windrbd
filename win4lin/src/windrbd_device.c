@@ -318,14 +318,15 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 		return -1;
 	}
 
-printk("1\n");
+/* TODO: eventually we want to make READ requests work without the
+	 intermediate buffer and the extra copy.
+*/
 //	MmBuildMdlForNonPagedPool(mdl);
 /*
 	MmProbeAndLockPages(mdl, UserMode,
 		(s->MajorFunction == IRP_MJ_WRITE) ? IoReadAccess : IoWriteAccess);
 */
 
-printk("2\n");
 	bio->bi_io_vec[0].bv_len = MmGetMdlByteCount(mdl);
 	if (bio->bi_rw == READ) {
 		bio->bi_io_vec[0].bv_page->addr = kmalloc(bio->bi_io_vec[0].bv_len, 0, 'DRBD');
@@ -333,13 +334,11 @@ printk("2\n");
 		/* This is not page aligned. */
 		bio->bi_io_vec[0].bv_page->addr = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
 	}
-printk("2a\n");
 	if (bio->bi_io_vec[0].bv_page->addr == NULL) {
 		printk("MmGetSystemAddressForMdlSafe returned NULL.\n");
 		return -1;
 			/* TODO: Here we get a blue screen sooner or later */
 	}
-printk("3\n");
 		/* Address returned by MmGetSystemAddressForMdlSafe
 		 * is already offset, not using MmGetMdlByteOffset.
 		 */
@@ -350,7 +349,7 @@ printk("3\n");
 	bio->bi_end_io = windrbd_bio_finished;
 	bio->bi_upper_irp = irp;
 
-printk("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
+/* printk("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset); */
 
 	return 0;
 }
@@ -375,23 +374,17 @@ printk("I/O request on a failed disk.\n");
 		goto exit;
 	}
 
-printk("1\n");
-
 	bio = bio_alloc(GFP_NOIO, 1, 'DBRD');
 	if (bio == NULL) {
 		status = STATUS_INSUFFICIENT_RESOURCES;
 		goto exit;
 	}
-printk("2\n");
 	if (irp_to_bio(irp, dev, bio) < 0) {
 		bio_free(bio);
 		goto exit;
 	}
-printk("3\n");
         IoMarkIrpPending(irp);
-printk("4\n");
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
-printk("5\n");
 
 	return STATUS_PENDING;
 

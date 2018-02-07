@@ -1924,16 +1924,13 @@ printk("flushing\n");
 	}
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
+// printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
 // }
 
 
-printk("x\n");
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0) {
-printk("y\n");
 		patch_boot_sector(buffer, 0);
 	}
-printk("z\n");
 
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,
@@ -1944,13 +1941,11 @@ printk("z\n");
 				&bio->io_stat
 				);
 
-printk("1\n");
 	if (!bio->bi_irps[bio->bi_this_request]) {
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
 		return -ENOMEM;
 	}
 
-printk("2\n");
 		/* Unlock the MDLs pages locked by
 		 * IoBuildAsynchronousFsdRequest, we must not have
 		 * pages locked while using MmBuildMdlForNonPagedPool()
@@ -1966,7 +1961,6 @@ printk("2\n");
 		}
 	}
 
-printk("3\n");
 /*
 	if (buffer != NULL)
 		MmProbeAndLockPages(bio->bi_irps[bio->bi_this_request]->MdlAddress, KernelMode, IoWriteAccess);
@@ -1974,7 +1968,6 @@ printk("3\n");
 
 	MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
 
-printk("4\n");
 /*
 if (bio->bi_this_request > 0) {
 */
@@ -2000,7 +1993,6 @@ if (bio->bi_this_request > 0) {
 /*
 printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len: %d\n", entry, i, mdl, entry->bv_page->addr, ((char*)entry->bv_page->addr)+entry->bv_offset,  entry->bv_offset, entry->bv_len);
 */
-printk("5\n");
 		if (mdl == NULL) {
 			printk("Could not allocate mdl, giving up.\n");
 			err = -ENOMEM;
@@ -2008,7 +2000,6 @@ printk("5\n");
 			goto out_free_irp;
 		}
 		total_size += entry->bv_len;
-printk("6\n");
 
 /*
 if (io == IRP_MJ_READ) {
@@ -2017,13 +2008,10 @@ if (io == IRP_MJ_READ) {
 */
 //		MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
 		MmBuildMdlForNonPagedPool(mdl);
-printk("7\n");
 	}
 
-printk("8\n");
 	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
 
-printk("9\n");
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
@@ -2035,21 +2023,17 @@ printk("9\n");
 	if (io == IRP_MJ_READ) {
 		pIoNextStackLocation->Parameters.Read.Length = total_size;
 	}
-printk("a\n");
 
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP.
 		 */
 
 	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
-printk("b\n");
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
-printk("c\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
-printk("d\n");
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
@@ -2061,7 +2045,6 @@ printk("d\n");
 			     * must not be called).
 			     */
 	}
-printk("e\n");
 	return 0;
 
 out_free_irp:

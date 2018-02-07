@@ -38,12 +38,14 @@ FILE4="drbdmeta.exe"
 FILE5="windrbd.exe"
 FILE6="cygwin1.dll"
 FILE7="post-install-windrbd.cmd"
+FILE8="windrbd-test.exe"
 [SourceFiles]
 SourceFiles0=Y:\windrbd\converted-sources\drbd\
 SourceFiles1=Y:\drbd-utils-windows\user\v9\
 SourceFiles2=Y:\drbd-utils-windows\user\windrbd\
 SourceFiles3=C:\cygwin64\bin\
 SourceFiles4=Y:\windrbd\
+SourceFiles5=Y:\windrbd\windrbd-test\
 [SourceFiles0]
 %FILE0%=
 %FILE1%=
@@ -57,3 +59,5 @@ SourceFiles4=Y:\windrbd\
 %FILE6%=
 [SourceFiles4]
 %FILE7%=
+[SourceFiles5]
+%FILE8%=
