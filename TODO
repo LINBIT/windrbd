@@ -2,6 +2,23 @@ windrbd-next: beta for selected customers
 
 TODO: Have DRBD and windrbd release number in log and properties of driver
 
+	Review. And there is a bug in printk() ring buffer which causes
+	corrupt initial log messages.
+
+TODO: In progress: Test with Windows 10 (we have to do that anyway some day)
+
+	Installing to Linbit supplied test machine.
+
+	Driver loads (with TESTSIGNING ON) userland currently fails 
+	to find POSIX root (/) dir (/etc/drbd.conf not found).
+
+	Update: works. When accessing windrbd device (dir h:) it
+	blue screens
+	Update: Blue screen fixed.
+
+	Connection currently unclear (error receiving initial packet).
+	With netcat a TCP/IP connection works.
+
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
 	On windows side when syncing.
@@ -22,10 +39,6 @@ TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
 	Update: error receiving P_STATE on split brain should also not happen.
 	But low priority.
-
-TODO: upgrade DRBD to 9.0.12
-
-	So Need Access to up to date data on drbdadm down is fixed.
 
 TODO: Remove most registry keys.
 
@@ -65,27 +78,6 @@ TODO: In progress: allow user to pass name of symbolic link created
 
 	which is quite intuitive
 
-TODO: Create windrbd device on becoming primary and delete
-	windrbd device on secondary.
-
-	Update: drbd_create_device needs to assign a valid
-	this_bdev. Do not create Windows device in bdget, 
-	instead create it on becoming primary and delete
-	it (with checking for open references) in becoming
-	secondary. This way we do not support auto promote
-	(because the block device cannot be opened) but
-	that is not so important.
-
-	Update: Phil wants the auto promote feature (for
-	virtualization), so alternative would be to
-	patch the boot sector as long it is secondary. 
-	However this does not solve the read cache problem.
-
-	Update: Right now, we return IO error if a secondary
-	resource is accessed via ReadFile/WriteFile. Eventually
-	we want to declare the secondary resource offline
-	but not sure yet how to do this.
-
 TODO: how and when is flush to backing device done?
 	This is important. Right now NTFS files only appear on
 	Linux when sync is done manually. Should sync at least
@@ -111,18 +103,13 @@ TODO: In progress: make install package
 	Make userland use C:\windrbd as cygwin root (take care not
 	to destroy existing Cygwin installations)
 
-TODO: In progress: Test with Windows 10 (we have to do that anyway some day)
-
-	Installing to Linbit supplied test machine.
-
-	Driver loads (with TESTSIGNING ON) userland currently fails 
-	to find POSIX root (/) dir (/etc/drbd.conf not found).
-
-	Update: works. When accessing windrbd device (dir h:) it
-	blue screens
+	Update: setting StartType to 3 (on demand) makes windows not
+	boot. Try this with a freshly installed windows.
 
 TODO: In progress: reinstall windows 7 and check if last 4096 bytes in NTFS
 	are still hidden.
+
+	They seem to be under Windows 10.
 
 TODO: In progress: Use Linbit certificate to sign driver.
 	It should be trusted.
@@ -132,12 +119,41 @@ TODO: In progress: Use Linbit certificate to sign driver.
 
 	Phil is currently trying to get a proper certificate.
 
+TODO: upgrade DRBD to 9.0.12
+
+	So Need Access to up to date data on drbdadm down is fixed.
+
 --------------------------------------------------------------
 windrbd-next-next
 
-TODO: blue screen when backing device fails.
+TODO: Create windrbd device on becoming primary and delete
+	windrbd device on secondary.
 
-TODO: Error receiving P_STATE on Linux on split-brain.
+	Update: drbd_create_device needs to assign a valid
+	this_bdev. Do not create Windows device in bdget, 
+	instead create it on becoming primary and delete
+	it (with checking for open references) in becoming
+	secondary. This way we do not support auto promote
+	(because the block device cannot be opened) but
+	that is not so important.
+
+	Update: Phil wants the auto promote feature (for
+	virtualization), so alternative would be to
+	patch the boot sector as long it is secondary. 
+	However this does not solve the read cache problem.
+
+	Update: Right now, we return IO error if a secondary
+	resource is accessed via ReadFile/WriteFile. Eventually
+	we want to declare the secondary resource offline
+	but not sure yet how to do this.
+
+	Rethink this and do that later.
+
+TODO: Someday we want to pass user level buffer to driver directly
+	on READ requests instead of having a temp buffer (needed
+	for Windows 10).
+
+TODO: blue screen when backing device fails.
 
 TODO: Cannot write first sector on format h:
 	Sector seems to be alright (showing DRBD on the backing device
@@ -1227,3 +1243,5 @@ Done: data corruption when doing a
 Rejected: compile user space apps with MinGW
 	Isn't meant for POSIX apps
 
+Rejected: Error receiving P_STATE on Linux on split-brain.
+	Phil says this is normal
