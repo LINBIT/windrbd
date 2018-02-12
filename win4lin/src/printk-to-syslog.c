@@ -213,12 +213,16 @@ int _printk(const char *func, const char *fmt, ...)
 		 */
 
 	if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
+/* static int tries = 100;
+if (--tries > 0) return 1; */
 		mutex_lock(&send_mutex);
 		if (printk_udp_socket == NULL) {
 			open_syslog_socket();
 		}
 
 		if (printk_udp_socket) {
+			size_t last_tail = ring_buffer_tail;
+
 			for (line_pos = 0;
 			     ring_buffer_tail != ring_buffer_head;
 			     ring_buffer_tail = (ring_buffer_tail+1) % RING_BUFFER_SIZE) {
@@ -227,6 +231,7 @@ int _printk(const char *func, const char *fmt, ...)
 				if (line[line_pos] == '\n' || 
 				    line[line_pos] == '\0' ||
 				    line_pos >= sizeof(line)-2) {
+static int num_errors = 0;
 					if (line[line_pos] == '\n')
 						line_pos++;
 					status = SendTo(printk_udp_socket, 
@@ -235,7 +240,14 @@ int _printk(const char *func, const char *fmt, ...)
 							(PSOCKADDR)&printk_udp_target);
 					if (status < 0) {
 						DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, SendTo returned error: %s\n", buffer);
-					}
+						num_errors++;
+
+						ring_buffer_tail = last_tail;
+						return 1;
+					} else
+						last_tail = ring_buffer_tail;
+
+					DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Total send errors %d\n", num_errors);
 					line_pos = 0;
 				} else 
 					line_pos++;
