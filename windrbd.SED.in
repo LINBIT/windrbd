@@ -21,7 +21,7 @@ AdminQuietInstCmd=%AdminQuietInstCmd%
 UserQuietInstCmd=%UserQuietInstCmd%
 SourceFiles=SourceFiles
 [Strings]
-InstallPrompt=This is an early evaluation version of windrbd. Do not use on production machines. Also make a full backup first (or create a snapshot now if you are running in a virtual machine). Do you wish to continue?
+InstallPrompt=windrbd release XXX. This is an early evaluation version of windrbd. Do not use on production machines. Also make a full backup first (or create a snapshot now if you are running in a virtual machine). Do you wish to continue?
 DisplayLicense=Y:\windrbd\LICENSE.txt
 FinishMessage=Please reboot in order to use windrbd.
 TargetName=Y:\install-windrbd.exe

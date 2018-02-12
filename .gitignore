@@ -6,3 +6,4 @@ win4lin/src/*.obj
 win4lin/src/*.pdb
 
 .*.sw?
+windrbd.SED

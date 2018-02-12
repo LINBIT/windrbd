@@ -95,7 +95,11 @@ WIN_LINK_INPUT += netio.lib
 WIN_LINK_INPUT += wdmsec.lib
 
 
-all: drbd.sys drbd.cat
+all: versioninfo drbd.sys drbd.cat
+
+.PHONY: versioninfo
+versioninfo:
+	cd ../.. && ./versioninfo.sh converted-sources || true
 
 drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildcard ../../win4lin/src/*.c)) resource.res
 	rm -f drbd.pdb "_$@"

@@ -16,15 +16,7 @@ TODO: In progress: Test with Windows 10 (we have to do that anyway some day)
 
 	Update: Was a split brain.
 
-TODO: Have DRBD and windrbd release number in log and properties of driver
-
-	Review. And there is a bug in printk() ring buffer which causes
-	corrupt initial log messages.
-
-	Put DRBD and windrbd version number in 1. dialog of self extracting
-	exe
-
-TODO: Logging Eventlog? windrbd server localhost UDP.
+TODO: Fix logging errors
 
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
@@ -46,6 +38,16 @@ TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
 	Update: error receiving P_STATE on split brain should also not happen.
 	But low priority.
+
+TODO: Have DRBD and windrbd release number in log and properties of driver
+
+	Review. And there is a bug in printk() ring buffer which causes
+	corrupt initial log messages.
+
+	Put DRBD and windrbd version number in 1. dialog of self extracting
+	exe
+
+TODO: Logging Eventlog? windrbd server localhost UDP.
 
 TODO: Remove most registry keys.
 

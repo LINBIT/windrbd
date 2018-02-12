@@ -13,7 +13,9 @@ else
 fi
 
 VERSION=$(date +%Y,%m,%d,%H)
+DATE=$(date)
 GITHASH=$(git describe --tags --always --dirty)
+DRBD_GITHASH="$(cd drbd ; git describe --tags --always --dirty)"
 
 VER_INTERNALNAME_STR="DRBD4WINDOWS"
 VER_FILEVERSION_STR="${GITHASH}\\0"
@@ -67,3 +69,7 @@ echo "const char *drbd_buildtag(void){return \"${VER_INTERNALNAME_STR}: ${GITHAS
 
 ## drbd.inf
 sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y) ;Replaced by build magic#" ./windows/drbd.inf.in > ${OUTPATH}/drbd.inf
+
+## windrbd.SED
+sed "s#XXX#${DATE} ${GITHASH} ${DRBD_GITHASH}#g" windrbd.SED.in > windrbd.SED
+
