@@ -1,10 +1,5 @@
 windrbd-next: beta for selected customers
 
-TODO: Have DRBD and windrbd release number in log and properties of driver
-
-	Review. And there is a bug in printk() ring buffer which causes
-	corrupt initial log messages.
-
 TODO: In progress: Test with Windows 10 (we have to do that anyway some day)
 
 	Installing to Linbit supplied test machine.
@@ -18,6 +13,18 @@ TODO: In progress: Test with Windows 10 (we have to do that anyway some day)
 
 	Connection currently unclear (error receiving initial packet).
 	With netcat a TCP/IP connection works.
+
+	Update: Was a split brain.
+
+TODO: Have DRBD and windrbd release number in log and properties of driver
+
+	Review. And there is a bug in printk() ring buffer which causes
+	corrupt initial log messages.
+
+	Put DRBD and windrbd version number in 1. dialog of self extracting
+	exe
+
+TODO: Logging Eventlog? windrbd server localhost UDP.
 
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
@@ -43,8 +50,6 @@ TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 TODO: Remove most registry keys.
 
 	Also do not create them on installing windrbd.
-
-TODO: review TODOs in source code.
 
 TODO: In progress: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
@@ -106,6 +111,9 @@ TODO: In progress: make install package
 	Update: setting StartType to 3 (on demand) makes windows not
 	boot. Try this with a freshly installed windows.
 
+	Also blue screens on a virgin windows (well almost..) we
+	skip this for now and try again later.
+
 TODO: In progress: reinstall windows 7 and check if last 4096 bytes in NTFS
 	are still hidden.
 
@@ -119,12 +127,14 @@ TODO: In progress: Use Linbit certificate to sign driver.
 
 	Phil is currently trying to get a proper certificate.
 
+--------------------------------------------------------------
+windrbd-next-next
+
 TODO: upgrade DRBD to 9.0.12
 
 	So Need Access to up to date data on drbdadm down is fixed.
 
---------------------------------------------------------------
-windrbd-next-next
+TODO: review TODOs in source code.
 
 TODO: Create windrbd device on becoming primary and delete
 	windrbd device on secondary.
