@@ -16,10 +16,12 @@ static char ring_buffer[RING_BUFFER_SIZE];
 static size_t ring_buffer_head;
 static size_t ring_buffer_tail;
 static spinlock_t ring_buffer_lock;
+static struct mutex send_mutex;
 
 int initialize_syslog_printk(void)
 {
 	spin_lock_init(&ring_buffer_lock);
+	mutex_init(&send_mutex);
 	return 0;
 }
 
@@ -210,6 +212,7 @@ int _printk(const char *func, const char *fmt, ...)
 		 */
 
 	if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
+		mutex_lock(&send_mutex);
 		if (printk_udp_socket == NULL) {
 			open_syslog_socket();
 		}
@@ -239,6 +242,7 @@ int _printk(const char *func, const char *fmt, ...)
 		} else {
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, no socket: %s\n", buffer);
 		}
+		mutex_unlock(&send_mutex);
 	}
 	return 1;	/* TODO: strlen(buffer) */
 }
