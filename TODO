@@ -1,14 +1,6 @@
 windrbd-next: beta for selected customers
 
-TODO: Install userland before driver
-	So we can safely reboot.
-
-	This is now done by calling infdefaultinstall from
-	within the cmd script (as last command). infdefaultinstall
-	needs a path (even if it is the current working directory,
-	so do infdefaultinstall .\drbd.inf
-
-	Eventually we want to have msi.
+TODO: install c:\windrbd filesystem hierachy
 
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
@@ -1275,4 +1267,14 @@ Done: make install package
 
 	For now, self extracting exe should be fine. But install
 	userland before reboot message appears.
+
+Done: Install userland before driver
+	So we can safely reboot.
+
+	This is now done by calling infdefaultinstall from
+	within the cmd script (as last command). infdefaultinstall
+	needs a path (even if it is the current working directory,
+	so do infdefaultinstall .\drbd.inf
+
+	Eventually we want to have msi.
 
