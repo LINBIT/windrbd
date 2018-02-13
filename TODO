@@ -81,6 +81,8 @@ TODO: In progress: Use Linbit certificate to sign driver.
 --------------------------------------------------------------
 windrbd-next-next
 
+TODO: check if windrbd can be loaded not at boot time but later.
+
 TODO: msi installer instead of self extracting exe.
 
 TODO: upgrade DRBD to 9.0.12
