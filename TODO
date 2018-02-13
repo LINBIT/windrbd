@@ -2,6 +2,10 @@ windrbd-next: beta for selected customers
 
 TODO: install c:\windrbd filesystem hierachy
 
+TODO: Remove most registry keys.
+
+	Also do not create them on installing windrbd.
+
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
 	On windows side when syncing.
@@ -24,10 +28,6 @@ TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 	But low priority.
 
 TODO: Logging Eventlog? windrbd server localhost UDP.
-
-TODO: Remove most registry keys.
-
-	Also do not create them on installing windrbd.
 
 TODO: In progress: allow user to pass name of symbolic link created
 	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
