@@ -1,10 +1,8 @@
 windrbd-next: beta for selected customers
 
-TODO: install c:\windrbd filesystem hierachy
+TODO: DRBD windows to windows sync is very slow.
 
-TODO: Remove most registry keys.
-
-	Also do not create them on installing windrbd.
+	Not clear if it is the network or something else.
 
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
@@ -1277,4 +1275,12 @@ Done: Install userland before driver
 	so do infdefaultinstall .\drbd.inf
 
 	Eventually we want to have msi.
+
+Done: install c:\windrbd filesystem hierachy
+
+	Had to include cygwin's unzip (plus an extra DLL) in package
+
+Done: Remove most registry keys.
+
+	Also do not create them on installing windrbd.
 

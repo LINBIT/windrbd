@@ -75,10 +75,6 @@ long		gLogCnt = 0;
 LONGLONG 	gTotalLogCnt = 0;
 char		gLogBuf[LOGBUF_MAXCNT][MAX_DRBDLOG_BUF] = {0,};
 
-int g_bypass_level;
-int g_read_filter;
-int g_mj_flush_buffers_filter;
-int g_use_volume_lock;
 int g_netlink_tcp_port;
 int g_daemon_tcp_port;
 
@@ -89,13 +85,9 @@ atomic_t g_dbglog_lv_min = LOG_LV_DEFAULT_DBG;
 atomic_t g_oos_trace = 0;
 #endif
 
-#ifdef _WIN32_HANDLER_TIMEOUT
 int g_handler_use;
 int g_handler_timeout;
 int g_handler_retry;
-#endif
-
-WCHAR g_ver[64];
 
 #define MAX_IDR_SHIFT		(sizeof(int) * 8 - 1)
 #define MAX_IDR_BIT		(1U << MAX_IDR_SHIFT)

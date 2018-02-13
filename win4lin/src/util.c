@@ -165,51 +165,6 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	UCHAR aucTemp[255] = { 0 };
 	NTSTATUS status;
 
-#ifndef _WIN32
-	// set proc_details
-	status = GetRegistryValue(L"proc_details", &ulLength, &aucTemp, RegPath_unicode);
-	if (status == STATUS_SUCCESS){
-		proc_details = *(int*) aucTemp;
-	}
-	else
-	{
-		proc_details = 1;
-	}
-#endif
-
-	// set bypass_level
-	status = GetRegistryValue(L"bypass_level", &ulLength, (UCHAR*)&aucTemp, RegPath_unicode);
-	if (status == STATUS_SUCCESS){
-		g_bypass_level = *(int*) aucTemp;
-	}
-	else
-	{
-		g_bypass_level = 0;
-	}
-
-	// set read_filter
-	g_read_filter = 0;
-
-	//set g_mj_flush_buffers_filter
-	status = GetRegistryValue(L"flush_filter", &ulLength, (UCHAR*)&aucTemp, RegPath_unicode);
-	if (status == STATUS_SUCCESS) {
-		g_mj_flush_buffers_filter = *(int*) aucTemp;
-	}
-	else
-	{
-		g_mj_flush_buffers_filter = 0;
-	}
-	
-	// set use_volume_lock
-	status = GetRegistryValue(L"use_volume_lock", &ulLength, (UCHAR*)&aucTemp, RegPath_unicode);
-	if (status == STATUS_SUCCESS){
-		g_use_volume_lock = *(int*) aucTemp;
-	}
-	else
-	{
-		g_use_volume_lock = 0;
-	}
-
 	// set log level
 	int log_level = LOG_LV_DEFAULT;	
 	status = GetRegistryValue(LOG_LV_REG_VALUE_NAME, &ulLength, (UCHAR*)&aucTemp, RegPath_unicode);
@@ -238,7 +193,6 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 		g_daemon_tcp_port = 5679;
 	}
 
-#ifdef _WIN32_HANDLER_TIMEOUT
 	status = GetRegistryValue(L"handler_use", &ulLength, (UCHAR*) &aucTemp, RegPath_unicode);
 	if (status == STATUS_SUCCESS){
 		g_handler_use = *(int*) aucTemp;
@@ -274,18 +228,6 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	{
 		g_handler_retry = 0;
 	}
-#endif
-
-	// set ver
-    // DRBD_DOC: not used
-	status = GetRegistryValue(L"ver", &ulLength, (UCHAR*)&aucTemp, RegPath_unicode);
-	if (status == STATUS_SUCCESS){
-		RtlCopyMemory(g_ver, aucTemp, ulLength * 2);
-	}
-	else
-	{
-		RtlCopyMemory(g_ver, "DRBD", 4 * 2); 
-	}
 
 	ip_length = 0;
 	status = GetRegistryValue(L"syslog_ip", &ulLength, (UCHAR*)&aucTemp, RegPath_unicode);
@@ -297,17 +239,11 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	} else {
 		g_syslog_ip[ip_length] = '\0';
 	}
-	// _WIN32_V9: proc_details is removed. 
 	WDRBD_INFO("registry_path[%wZ]\n"
-		"bypass_level=%d, read_filter=%d, use_volume_lock=%d, "
-		"netlink_tcp_port=%d, daemon_tcp_port=%d, ver=%ws, syslog_ip=%s\n",
+		"netlink_tcp_port=%d, daemon_tcp_port=%d, syslog_ip=%s\n",
 		RegPath_unicode,
-		g_bypass_level,
-		g_read_filter,
-		g_use_volume_lock,
 		g_netlink_tcp_port,
 		g_daemon_tcp_port,
-		g_ver,
 		g_syslog_ip
 		);
 

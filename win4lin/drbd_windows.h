@@ -63,9 +63,6 @@ enum update_sync_bits_mode;
 
 #define DRBD_EVENT_SOCKET_STRING	"DRBD_EVENTS"		/// used in NETLINK
 
-//#define _WIN32_WPP
-#define _WIN32_HANDLER_TIMEOUT	// call_usermodehelper timeout
-
 #ifdef _WIN32_WPP
 #define WPP_CONTROL_GUIDS \
 	WPP_DEFINE_CONTROL_GUID(LogGuid, \
@@ -1194,26 +1191,16 @@ extern unsigned char *skb_put(struct sk_buff *skb, unsigned int len);
 extern char *kstrdup(const char *s, int gfp);
 extern void panic(const char *fmt, ...);
 
-extern int proc_details;
-extern int g_bypass_level;
-extern int g_read_filter;
-extern int g_mj_flush_buffers_filter;
-
-#ifdef _WIN32_HANDLER_TIMEOUT
-extern int g_use_volume_lock;
 extern int g_netlink_tcp_port;
 extern int g_daemon_tcp_port;
-#endif
 
 extern WCHAR g_ver[];
 #define SYSLOG_IP_SIZE 64
 extern char g_syslog_ip[];
 
-#ifdef _WIN32_HANDLER_TIMEOUT
 int g_handler_use;
 int g_handler_timeout;
 int g_handler_retry;
-#endif
 
 extern PETHREAD	g_NetlinkServerThread;
 extern union drbd_state g_mask; 

@@ -62,36 +62,22 @@ AddReg           = DRBD.AddRegistry
 
 [DRBD.AddRegistry]
 HKLM, System\CurrentControlSet\Control\Class\{71A27CDD-812A-11D0-BEC7-08002BE2092F}, UpperFilters, 0x00010008, drbd
-HKR,,"proc_details",0x00010001,0
-HKR,,"debug_level",0x00010001,0
-HKR,,"bypass_level",0x00010001,0
-HKR,,"read_filter",0x00010001,0
-HKR,,"flush_filter",0x00010001,1
-HKR,,"use_volume_lock",0x00010001,1
-HKR,,"use_fast_sync",0x00010001,1
-HKR,,"dbgwin_output",0x00010001,0
-HKR,,"loglink_tcp_port",0x00010001,5677
-HKR,,"loglink_usage",0x00010001,1
 HKR,,"netlink_tcp_port",0x00010001,5678
 HKR,,"daemon_tcp_port",0x00010001,5679
 HKR,,"handler_use",0x00010001,0
 HKR,,"handler_timeout",0x00010001,1
 HKR,,"handler_retry",0x00010001,0
-HKR,,"ver",0x00000000, "va.9"
+HKR,,"syslog_ip",0x00000002, "127.0.0.1"
 
 [DRBD.DelRegistry]
 HKLM, System\CurrentControlSet\Control\Class\{71A27CDD-812A-11D0-BEC7-08002BE2092F}, UpperFilters, 0x00018002, drbd
-HKR,,"proc_details"
-HKR,,"debug_level"
-HKR,,"bypass_level"
-HKR,,"read_filter"
-HKR,,"flush_filter"
-HKR,,"use_volume_lock"
-HKR,,"use_fast_sync"
-HKR,,"dbgwin_output"
 HKR,,"netlink_tcp_port"
 HKR,,"daemon_tcp_port"
-HKR,,"ver"
+HKR,,"handler_use"
+HKR,,"handler_timeout"
+HKR,,"handler_retry"
+HKR,,"syslog_ip"
+
 ;
 ; Copy Files
 ;
