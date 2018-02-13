@@ -795,19 +795,21 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	path_d = drbd_find_path_by_addr(&listener->listener,
 			(struct sockaddr_storage_win*)RemoteAddress);
 	if (!path_d) {
+		struct sockaddr *sa = (struct sockaddr*) RemoteAddress;
 		struct sockaddr_in6 *from_sin6;
 		struct sockaddr_in *from_sin;
 
 		switch (RemoteAddress->sa_family) {
 		case AF_INET6:
-			from_sin6 = (struct sockaddr_in6 *)&RemoteAddress;
+/* TODO: print IPv6 address instead of pointer */
+			from_sin6 = (struct sockaddr_in6 *)&sa->sa_data[2];
 			printk(KERN_WARNING "Closing unexpected connection from "
 					"%pI6\n", &from_sin6->sin6_addr);
 			break;
 		default:
-			from_sin = (struct sockaddr_in *)&RemoteAddress;
+			from_sin = (struct sockaddr_in *)&sa->sa_data[2];
 			printk(KERN_WARNING "Closing unexpected connection from "
-					"%pI4\n", &from_sin->sin_addr);
+					"%u.%u.%u.%u\n", from_sin->sin_addr.s_addr, from_sin->sin_addr.s_addr & 0xff, (from_sin->sin_addr.s_addr >> 8) & 0xff, (from_sin->sin_addr.s_addr >> 16) & 0xff, (from_sin->sin_addr.s_addr >> 24) & 0xff);
 			break;
 		}
 
