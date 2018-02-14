@@ -705,12 +705,9 @@ static void free_mdls_and_irp(struct bio *bio)
 		     mdl != NULL;
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
-#if 0
-			if (mdl->MdlFlags & MDL_PAGES_LOCKED) 
-			{
+			if (bio->bi_paged_memory && mdl->MdlFlags & MDL_PAGES_LOCKED) {
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 			}
-#endif
 			IoFreeMdl(mdl); // This function will also unmap pages.
 		}
 		bio->bi_irps[r]->MdlAddress = NULL;
@@ -1763,7 +1760,18 @@ static inline blk_status_t win_status_to_blk_status(NTSTATUS status)
 	return (status == STATUS_SUCCESS) ? 0 : BLK_STS_IOERR; 
 }
 
-static void patch_boot_sector(char *buffer, int to_fs)
+	/* Patch boot sector contained in buffer.
+	 * When to_fs is nonzero, patch from DRBD to filesystem (such as
+	 * NTFS) done typically in a read request, else the other way
+	 * around. 
+	 * When test_mode is non-zero do not touch the buffer. Just
+	 * return non-zero when signature is found. To check for
+	 * Windows filesystems use patch_boot_sector(buf, 0, 1).
+	 *
+	 * Returns non-zero if signature is found, else zero.
+	 */
+
+static int patch_boot_sector(char *buffer, int to_fs, int test_mode)
 {
 	static const char *fs_signatures[][2] = {
 		{ "NTFS", "DRBD" },
@@ -1779,13 +1787,23 @@ static void patch_boot_sector(char *buffer, int to_fs)
 				break;
 		}
 		if (fs_signatures[fs][to_fs][i] == '\0') {
-			printk("Patching boot sector from %s to %s\n", fs_signatures[fs][to_fs], fs_signatures[fs][!to_fs]);
-			for (i=0;fs_signatures[fs][to_fs][i] != '\0';i++) {
-				buffer[3+i] = fs_signatures[fs][!to_fs][i];
+			if (test_mode) {
+				printk("Patching boot sector from %s to %s\n", fs_signatures[fs][to_fs], fs_signatures[fs][!to_fs]);
+				for (i=0;fs_signatures[fs][to_fs][i] != '\0';i++) {
+					buffer[3+i] = fs_signatures[fs][!to_fs][i];
+				}
+			} else {
+				printk("File system signature %s found in boot sector\n", fs_signatures[fs][to_fs]);
 			}
-			return;
+			return 1;
 		}
 	}
+	return 0;
+}
+
+static int is_filesystem(char *buf)
+{
+	return patch_boot_sector(buf, 0, 1);
 }
 
 NTSTATUS DrbdIoCompletion(
@@ -1806,7 +1824,7 @@ NTSTATUS DrbdIoCompletion(
 	}
 	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0) {
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
-		patch_boot_sector(buffer, 1);
+		patch_boot_sector(buffer, 1, 0);
 	}
 /*
 	if (stack_location->MajorFunction == IRP_MJ_READ) {
@@ -1925,7 +1943,7 @@ printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d b
 printk("2\n");
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0) {
-		patch_boot_sector(buffer, 0);
+		patch_boot_sector(buffer, 0, 0);
 	}
 
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
@@ -1953,13 +1971,14 @@ printk("4\n");
 		 * MmBuildMdlForNonPagedPool() blue screens.
 		 */
 
-	struct _MDL *first_mdl;
-	first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress; 
-	if (first_mdl != NULL) {
-		if (first_mdl->MdlFlags & MDL_PAGES_LOCKED) {
-			MmUnlockPages(first_mdl);
+	if (!bio->bi_paged_memory) {
+		struct _MDL *first_mdl;
+		first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress;
+		if (first_mdl != NULL) {
+			if (first_mdl->MdlFlags & MDL_PAGES_LOCKED) {
+				MmUnlockPages(first_mdl);
+			}
 		}
-	}
 
 printk("5\n");
 /*
@@ -1970,8 +1989,8 @@ printk("5\n");
 	/* TODO: this blue screens if backing device is NTFS. We shouldn't
 	   allow NTFS for backing device. */
 
-	if (!bio->bi_paged_memory)
 		MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
+	}	/* Else leave it locked */
 printk("6\n");
 
 /*
@@ -2016,8 +2035,9 @@ if (io == IRP_MJ_READ) {
  *(int*)(((char*)entry->bv_page->addr)+entry->bv_offset) = 0xdeadbeef;
 }
 */
-//		MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
-		if (!bio->bi_paged_memory)
+		if (bio->bi_paged_memory)
+			MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
+		else
 			MmBuildMdlForNonPagedPool(mdl);
 	}
 

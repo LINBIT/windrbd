@@ -10,6 +10,9 @@ TODO: Windows to Windows test: blue screen on both sides on drbdadm up
 	user has done something wrong. (We are patching NTFS<->DRBD,
 	so a valid windrbd NTFS contains DRBD as filesystem magic)
 
+	Update: when there is a file system on the backing device
+	Windows still crashes.
+
 TODO: DRBD windows to windows sync is very slow.
 
 	Not clear if it is the network or something else.
