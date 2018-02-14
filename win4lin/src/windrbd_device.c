@@ -384,7 +384,9 @@ printk("I/O request on a failed disk.\n");
 		goto exit;
 	}
         IoMarkIrpPending(irp);
+printk("1\n");
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
+printk("2\n");
 
 	return STATUS_PENDING;
 

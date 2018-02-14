@@ -27,8 +27,10 @@
 
 	/* Define this if you want a built in test for backing device
 	   I/O. Attention this destroys data on the back device.
+	   Note that submit_bio may fail on some systems, therefore
+	   leave this commented out for now.
 	 */
-#define _HACK
+// #define _HACK
 // #define _HACK_WRITE
 
 #undef _NTDDK_
@@ -1893,6 +1895,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	
 /* printk(KERN_INFO "bio->bi_rw = %d WRITE_FLUSH = %d\n", bio->bi_rw, WRITE_FLUSH); */
 
+printk("1\n");
 	if ((bio->bi_rw & WRITE_FLUSH) == WRITE_FLUSH) {
 printk("flushing\n");
 		io = IRP_MJ_FLUSH_BUFFERS;
@@ -1916,9 +1919,10 @@ printk("flushing\n");
 	}
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-// printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
+printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
 // }
 
+printk("2\n");
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0) {
 		patch_boot_sector(buffer, 0);
@@ -1933,16 +1937,20 @@ printk("flushing\n");
 				&bio->io_stat
 				);
 
+printk("3\n");
 	if (!bio->bi_irps[bio->bi_this_request]) {
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
 		return -ENOMEM;
 	}
+printk("4\n");
 
 		/* Unlock the MDLs pages locked by
 		 * IoBuildAsynchronousFsdRequest, we must not have
 		 * pages locked while using MmBuildMdlForNonPagedPool()
 		 * (which is used for pages from NONPAGED pool (which
-		 * is what we have.
+		 * is what we have).
+		 * Update: if there is an NTFS on the backing device,
+		 * MmBuildMdlForNonPagedPool() blue screens.
 		 */
 
 	struct _MDL *first_mdl;
@@ -1953,12 +1961,17 @@ printk("flushing\n");
 		}
 	}
 
+printk("5\n");
 /*
 	if (buffer != NULL)
 		MmProbeAndLockPages(bio->bi_irps[bio->bi_this_request]->MdlAddress, KernelMode, IoWriteAccess);
 */
 
+	/* TODO: this blue screens if backing device is NTFS. We shouldn't
+	   allow NTFS for backing device. */
+
 	MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
+printk("6\n");
 
 /*
 if (bio->bi_this_request > 0) {
@@ -1974,14 +1987,17 @@ if (bio->bi_this_request > 0) {
 
 #define MAX_MDL_ELEMENTS 32
 
+printk("7\n");
 		/* TODO: use bio->bi_size it should be correct now. */
 
 	int total_size = first_size;
+printk("8\n");
 
 	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
 		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irps[bio->bi_this_request]);
 
+printk("9\n");
 /*
 printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len: %d\n", entry, i, mdl, entry->bv_page->addr, ((char*)entry->bv_page->addr)+entry->bv_offset,  entry->bv_offset, entry->bv_len);
 */
@@ -1992,6 +2008,7 @@ printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len
 			goto out_free_irp;
 		}
 		total_size += entry->bv_len;
+printk("a\n");
 
 /*
 if (io == IRP_MJ_READ) {
@@ -2002,13 +2019,16 @@ if (io == IRP_MJ_READ) {
 		MmBuildMdlForNonPagedPool(mdl);
 	}
 
+printk("b\n");
 	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
 
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
+printk("c\n");
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
+printk("d\n");
 	if (io == IRP_MJ_WRITE) {
 		pIoNextStackLocation->Parameters.Write.Length = total_size;
 	}
@@ -2020,13 +2040,16 @@ if (io == IRP_MJ_READ) {
 		 * in the IRP.
 		 */
 
+printk("e\n");
 	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
+printk("f\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
+printk("g\n");
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
 
@@ -2037,11 +2060,13 @@ if (io == IRP_MJ_READ) {
 			     * must not be called).
 			     */
 	}
+printk("h\n");
 	return 0;
 
 out_free_irp:
 	free_mdls_and_irp(bio);
 
+printk("i\n");
 	return err;
 }
 
@@ -2061,8 +2086,10 @@ int generic_make_request(struct bio *bio)
 	int orig_size;
 	int e;
 
+printk("1\n");
 	bio_get(bio);
 
+printk("2\n");
 	if (bio->bi_vcnt == 0)
 		bio->bi_num_requests = 1;	/* a flush request */
 	else
@@ -2079,9 +2106,11 @@ int generic_make_request(struct bio *bio)
 	orig_sector = sector = bio->bi_sector;
 	orig_size = bio->bi_size;
 
+printk("3\n");
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<bio->bi_num_requests; 
              bio->bi_this_request++) {
+printk("4\n");
 		bio->bi_first_element = bio->bi_this_request*MAX_MDL_ELEMENTS;
 		bio->bi_last_element = (bio->bi_this_request+1)*MAX_MDL_ELEMENTS;
 		if (bio->bi_vcnt < bio->bi_last_element)
@@ -2094,8 +2123,11 @@ int generic_make_request(struct bio *bio)
 		bio->bi_sector = sector;
 		bio->bi_size = total_size;
 
+printk("5\n");
 		ret = windrbd_generic_make_request(bio);
+printk("6\n");
 		if (ret < 0) {
+printk("6b\n");
 			drbd_bio_endio(bio, BLK_STS_IOERR);
 
 			bio->bi_sector = orig_sector;
@@ -2106,11 +2138,13 @@ int generic_make_request(struct bio *bio)
 		}
 		sector += total_size >> 9;
 	}
+printk("7\n");
 
 	bio->bi_sector = orig_sector;
 	bio->bi_size = orig_size;
 
 	bio_put(bio);
+printk("8\n");
 	return 0;
 }
 
