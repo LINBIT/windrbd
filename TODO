@@ -1,8 +1,55 @@
 windrbd-next: beta for selected customers
 
+TODO: Windows to Windows test: blue screen on both sides on drbdadm up
+
+	Is when backing device contains an NTFS filesystem (which
+	is normally not the case, but it shouldn't blue screen).
+
+	Maybe it is in general not a good idea to attach to a backing
+	storage containing a file system, because this means that the
+	user has done something wrong. (We are patching NTFS<->DRBD,
+	so a valid windrbd NTFS contains DRBD as filesystem magic)
+
 TODO: DRBD windows to windows sync is very slow.
 
 	Not clear if it is the network or something else.
+
+TODO: 3 changes to userland:
+
+	drbdadm should call windrbd to assign the drive letter
+	(also remove 'C'+minor magic from kerne)
+
+	windrbd log-server -o logfile
+
+	windrbd hide-filesystem <drive-letter/GUID>
+		also show-filesystem
+
+TODO: how and when is flush to backing device done?
+	This is important. Right now NTFS files only appear on
+	Linux when sync is done manually. Should sync at least
+	when becoming secondary. sync must be done while primary
+	(when secondary it would fail)
+
+TODO: invalidate read cache when becoming secondary.
+
+	Problem is that if windows is primary, becomes secondary and
+	then primary again the read cache is still filled from the
+	former primary.
+
+	Should invalidate when becoming secondary: reason is
+	that while secondary requests still are served from
+	the read cache (they should fail).
+
+TODO: In progress: Use Linbit certificate to sign driver.
+	It should be trusted.
+
+	We have a certificate now, but the root of this certificate
+	isn't trusted by Windows 7.
+
+	Phil is currently trying to get a proper certificate.
+
+--------------------------------------------------------------
+windrbd-next-next
 
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
@@ -25,61 +72,17 @@ TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 	Update: error receiving P_STATE on split brain should also not happen.
 	But low priority.
 
-TODO: Logging Eventlog? windrbd server localhost UDP.
+	Update: this error is not so critical, do that later
 
-TODO: In progress: allow user to pass name of symbolic link created
-	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
+	Update: peer has no local data:
 
-	Update: This should be userspace-only. It should
-	also be possible to mount the device upon an
-	empty NTFS folder (later).
+Feb 14 16:08:05 johannes-VirtualBox kernel: [ 4722.510438] drbd w0/17 drbd26: Can not satisfy peer's read request, no local data.
 
-	At this point also clean up drbd-utils (separate
-	files for UNIX and Windows) and integrate upstream
-	changes (later).
+	So maybe this behaves as expected.
 
-	Update: we wait for our patched drbd-headers to
-	appear on github.
+TODO: Kernel really should report an error if Bind() fails. 
+	For example if the local IP address does not exist.
 
-	Update: Created windrbd utility that does it. For now
-	users have to execute it manually (it creates drive letters
-	only for the user that runs the script which might be
-	confusing since drbdadm usually runs as administrator).
-
-	Later, remove the drive letter magic from the kernel driver.
-
-	Nice-to-have: a list-drive-letters command.
-
-	Update: find out how to set drive letters visible to
-	all users.
-
-	Update: syntax is:
-
-	device "l:" minor n
-
-	which is quite intuitive
-
-TODO: how and when is flush to backing device done?
-	This is important. Right now NTFS files only appear on
-	Linux when sync is done manually. Should sync at least
-	when becoming secondary. sync must be done while primary
-	(when secondary it would fail)
-
-TODO: In progress: reinstall windows 7 and check if last 4096 bytes in NTFS
-	are still hidden.
-
-	They seem to be under Windows 10.
-
-TODO: In progress: Use Linbit certificate to sign driver.
-	It should be trusted.
-
-	We have a certificate now, but the root of this certificate
-	isn't trusted by Windows 7.
-
-	Phil is currently trying to get a proper certificate.
-
---------------------------------------------------------------
-windrbd-next-next
 
 TODO: check if windrbd can be loaded not at boot time but later.
 
@@ -1285,4 +1288,49 @@ Done: install c:\windrbd filesystem hierachy
 Done: Remove most registry keys.
 
 	Also do not create them on installing windrbd.
+
+Done: In progress: reinstall windows 7 and check if last 4096 bytes in NTFS
+	are still hidden.
+
+	They seem to be under Windows 10.
+
+	Update: Need cygwin to run tests (else WriteFile will always
+	fail with error 87 Invalid Parameter, even on a newly created
+	partition when running from cmd shell). However I/O returns
+	5 (Access denied) when accessing an NTFS partition. So the
+	answer is yes.
+
+Duplicate: Logging Eventlog? windrbd server localhost UDP.
+
+Duplicate: In progress: allow user to pass name of symbolic link created
+	(i.e. the drive letter) via drbdadm/drbdsetup/kernel
+
+	Update: This should be userspace-only. It should
+	also be possible to mount the device upon an
+	empty NTFS folder (later).
+
+	At this point also clean up drbd-utils (separate
+	files for UNIX and Windows) and integrate upstream
+	changes (later).
+
+	Update: we wait for our patched drbd-headers to
+	appear on github.
+
+	Update: Created windrbd utility that does it. For now
+	users have to execute it manually (it creates drive letters
+	only for the user that runs the script which might be
+	confusing since drbdadm usually runs as administrator).
+
+	Later, remove the drive letter magic from the kernel driver.
+
+	Nice-to-have: a list-drive-letters command.
+
+	Update: find out how to set drive letters visible to
+	all users.
+
+	Update: syntax is:
+
+	device "l:" minor n
+
+	which is quite intuitive
 

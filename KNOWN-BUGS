@@ -1,23 +1,25 @@
+Note: see TODO for more up to date docs.
+
 ---------------------------------------------------------------------
-BUG: Windows hangs on shutdown
+SOLVED: Windows hangs on shutdown
 
 	If we access DRBD device while it is up.
 
 ---------------------------------------------------------------------
-BUG: "DRBD_PANIC" on sync: multi page
+SOLVED: "DRBD_PANIC" on sync: multi page
 
 Dec 20 16:14:14 192.168.56.101  U15:14:13.394|03857b50 bio_add_page <3>[0xFFFFFA8003857B50] DRBD_PANIC: bio->bi_vcn=2. multi page occured!
 Dec 20 16:14:14 192.168.56.101  U15:14:13.394|03857b50 bio_add_page <2>[0xFFFFFA8003857B50] warning: failure
 
 ---------------------------------------------------------------------
 
-BUG: DrbdIoCompletion: DeviceObject is NULL.
+REJECTED: DrbdIoCompletion: DeviceObject is NULL.
 	It doesn't hurt at the moment, but eventually we want to
 	fix this.
 
 -------------------------------------------------------------------------
 
-BUG: make install on userland tools (drbd-utils): 2 minor issues:
+SOLVED: make install on userland tools (drbd-utils): 2 minor issues:
 	Under cygwin it tries to install to //usr/local/sbin while
 	this should be /usr/local/sbin (cygwin doesn't handle double
 	slashes correctly, this is normally done by the Linux kernel).
@@ -29,10 +31,8 @@ BUG: make install on userland tools (drbd-utils): 2 minor issues:
 	on the resulting EXE files, this step should be skipped. For
 	now this can be ignored since the EXE files are installed correctly.
 
--------------------------------------------------------------------------
-
-BUG: Kernel really should report an error if Bind() fails. 
-	For example if the local IP address does not exist.
+	Update: chmod works now (must have valid group names, see
+	/etc/group
 
 -------------------------------------------------------------------------
 
