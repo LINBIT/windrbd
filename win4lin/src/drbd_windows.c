@@ -1970,7 +1970,8 @@ printk("5\n");
 	/* TODO: this blue screens if backing device is NTFS. We shouldn't
 	   allow NTFS for backing device. */
 
-	MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
+	if (!bio->bi_paged_memory)
+		MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
 printk("6\n");
 
 /*
@@ -2016,7 +2017,8 @@ if (io == IRP_MJ_READ) {
 }
 */
 //		MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
-		MmBuildMdlForNonPagedPool(mdl);
+		if (!bio->bi_paged_memory)
+			MmBuildMdlForNonPagedPool(mdl);
 	}
 
 printk("b\n");

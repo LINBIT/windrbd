@@ -333,6 +333,7 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 	} else {
 		/* This is not page aligned. */
 		bio->bi_io_vec[0].bv_page->addr = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
+		bio->bi_paged_memory = true;
 	}
 	if (bio->bi_io_vec[0].bv_page->addr == NULL) {
 		printk("MmGetSystemAddressForMdlSafe returned NULL.\n");

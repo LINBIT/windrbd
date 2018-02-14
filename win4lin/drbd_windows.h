@@ -695,6 +695,8 @@ struct bio {
 	int bi_this_request;
 	atomic_t bi_requests_completed;
 
+	bool bi_paged_memory;
+
 		/* Those are used by win_generic_make_request internally */
 	LARGE_INTEGER offset;
 	IO_STATUS_BLOCK io_stat;
