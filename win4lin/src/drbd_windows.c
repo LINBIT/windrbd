@@ -1822,7 +1822,7 @@ NTSTATUS DrbdIoCompletion(
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
 	}
-	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0) {
+	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
 		patch_boot_sector(buffer, 1, 0);
 	}
@@ -1942,7 +1942,7 @@ printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d b
 
 printk("2\n");
 
-	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0) {
+	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
 		patch_boot_sector(buffer, 0, 0);
 	}
 
@@ -2810,8 +2810,11 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 
 	bio_add_page(b, p, 512, 0);
 	bio_set_op_attrs(b, REQ_OP_READ, 0);
+
 	b->bi_end_io = backingdev_check_endio;
 	b->bi_might_access_filesystem = true;
+	b->dont_patch_boot_sector = true;
+
 	DRBD_BIO_BI_SECTOR(b) = 0;
 	init_completion(&c);
 	b->bi_private = &c;
@@ -2822,9 +2825,9 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	wait_for_completion(&c);
 	printk("9\n");
 	ret = is_filesystem(p->addr);
-	printk("9\n");
-	bio_put(b);
+	printk("a bio_put and free page not done\n");
 /*
+	bio_put(b);
 	__free_page(p);
 */
 

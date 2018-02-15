@@ -707,6 +707,12 @@ struct bio {
 	 */
 	bool bi_might_access_filesystem;
 
+	/* If set do not modify boot sector file system signature
+	 * on I/O. Currently only used by check for file system
+	 * on backing device on attach.
+	 */
+	bool dont_patch_boot_sector;
+
 		/* Those are used by win_generic_make_request internally */
 	LARGE_INTEGER offset;
 	IO_STATUS_BLOCK io_stat;

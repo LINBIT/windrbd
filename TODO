@@ -1,18 +1,5 @@
 windrbd-next: beta for selected customers
 
-TODO: Windows to Windows test: blue screen on both sides on drbdadm up
-
-	Is when backing device contains an NTFS filesystem (which
-	is normally not the case, but it shouldn't blue screen).
-
-	Maybe it is in general not a good idea to attach to a backing
-	storage containing a file system, because this means that the
-	user has done something wrong. (We are patching NTFS<->DRBD,
-	so a valid windrbd NTFS contains DRBD as filesystem magic)
-
-	Update: when there is a file system on the backing device
-	Windows still crashes.
-
 TODO: DRBD windows to windows sync is very slow.
 
 	Not clear if it is the network or something else.
@@ -53,6 +40,8 @@ TODO: In progress: Use Linbit certificate to sign driver.
 
 --------------------------------------------------------------
 windrbd-next-next
+
+TODO: mandatory locking for backing device.
 
 TODO: One day we want to not blue screen when backing device contains a file system.
 
@@ -1338,4 +1327,23 @@ Duplicate: In progress: allow user to pass name of symbolic link created
 	device "l:" minor n
 
 	which is quite intuitive
+
+Done: Windows to Windows test: blue screen on both sides on drbdadm up
+
+	Is when backing device contains an NTFS filesystem (which
+	is normally not the case, but it shouldn't blue screen).
+
+	Maybe it is in general not a good idea to attach to a backing
+	storage containing a file system, because this means that the
+	user has done something wrong. (We are patching NTFS<->DRBD,
+	so a valid windrbd NTFS contains DRBD as filesystem magic)
+
+	Update: when there is a file system on the backing device
+	Windows still crashes.
+
+	We now refuse to attach backing device when it contains
+	a file system. Formatting an attached file system currently
+	force detaches the device, this is not exactly what we want
+	There should be a mandarory locking preventing all I/O
+	(except DRBD) on the backing device. Do that later.
 
