@@ -142,3 +142,5 @@ Version history
  * 0.4.6 (Feb 06, 2018): supend-io and resume-io should work (quorum not)
  * 0.4.7 (Feb 07, 2018): Fixed a Windows 10 blue screen when accessing the
 			 windrbd device.
+ * 0.4.8 (Feb 15, 2018): Refuse to attach to a backing device containing
+			 a (known) file system.
