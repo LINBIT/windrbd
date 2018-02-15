@@ -1787,7 +1787,7 @@ static int patch_boot_sector(char *buffer, int to_fs, int test_mode)
 				break;
 		}
 		if (fs_signatures[fs][to_fs][i] == '\0') {
-			if (test_mode) {
+			if (!test_mode) {
 				printk("Patching boot sector from %s to %s\n", fs_signatures[fs][to_fs], fs_signatures[fs][!to_fs]);
 				for (i=0;fs_signatures[fs][to_fs][i] != '\0';i++) {
 					buffer[3+i] = fs_signatures[fs][!to_fs][i];
