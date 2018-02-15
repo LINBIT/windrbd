@@ -2756,6 +2756,8 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	int i;
 	struct completion c;
 	int ret;
+
+#ifdef _USE_STATIC_MEM
 	static char boot_sector[8192];
 	struct page *p;
 
@@ -2765,6 +2767,10 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 		return 1;
 	}
 	p->addr = boot_sector+(4096-((ULONG_PTR)boot_sector & 4095));
+#else
+	struct page *p = alloc_page(0);
+#endif
+
 	bio_add_page(b, p, 512, 0);
 	bio_set_op_attrs(b, REQ_OP_READ, 0);
 
@@ -2781,8 +2787,14 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	wait_for_completion(&c);
 
 	ret = is_filesystem(p->addr);
+/*
 	bio_put(b);
+*/
+#ifdef _USE_STATIC_MEM
 	kfree(p);
+#else
+//	__free_page(p);	/* blue screens */
+#endif
 
 	return ret;
 }
