@@ -43,6 +43,8 @@
 
 #define WINDRBD_SECTOR_SHIFT 0
 
+void init_windrbd(void);
+
 struct drbd_transport;
 enum drbd_stream;
 enum update_sync_bits_mode;

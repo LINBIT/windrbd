@@ -85,9 +85,5 @@ extern PDRIVER_OBJECT		mvolDriverObject;
 #define	FILTER_DEVICE_PROPOGATE_FLAGS			0
 #define	FILTER_DEVICE_PROPOGATE_CHARACTERISTICS		(FILE_REMOVABLE_MEDIA | FILE_READ_ONLY_DEVICE | FILE_FLOPPY_DISKETTE)
 
-extern KSPIN_LOCK			mvolVolumeLock;
-extern KMUTEX				mvolMutex;
-extern KMUTEX				eventlogMutex;
-
 extern int drbd_init(void);
 #endif MVF_DISP_H

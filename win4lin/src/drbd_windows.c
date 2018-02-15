@@ -107,6 +107,12 @@ extern SIMULATION_DISK_IO_ERROR gSimulDiskIoError = {0,};
 atomic_t g_monitor_mnt_working = FALSE;
 
 static LIST_HEAD(backing_devices);
+static struct mutex read_bootsector_mutex;
+
+void init_windrbd(void)
+{
+	mutex_init(&read_bootsector_mutex);
+}
 
 //__ffs - find first bit in word.
 ULONG_PTR __ffs(ULONG_PTR word) 
@@ -2751,25 +2757,23 @@ static void backingdev_check_endio BIO_ENDIO_ARGS(struct bio *bio)
 
 static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 {
-		/* TODO: use static memory. */
 	struct bio *b = bio_alloc(0, 1, 'DRBD');
 	int i;
 	struct completion c;
 	int ret;
 
-#ifdef _USE_STATIC_MEM
 	static char boot_sector[8192];
 	struct page *p;
+
+	mutex_lock(&read_bootsector_mutex);
 
 	p = kzalloc(sizeof(struct page),0, 'D3DW'); 
 	if (!p)	{
 		printk(KERN_ERR "alloc_page struct page failed\n");
+		mutex_unlock(&read_bootsector_mutex);
 		return 1;
 	}
 	p->addr = boot_sector+(4096-((ULONG_PTR)boot_sector & 4095));
-#else
-	struct page *p = alloc_page(0);
-#endif
 
 	bio_add_page(b, p, 512, 0);
 	bio_set_op_attrs(b, REQ_OP_READ, 0);
@@ -2787,14 +2791,15 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	wait_for_completion(&c);
 
 	ret = is_filesystem(p->addr);
-/*
+
+/* TODO: this might cause a blue screen from time to time.
+	Fix free_mdls_and_irp() to handle this */
+
 	bio_put(b);
-*/
-#ifdef _USE_STATIC_MEM
+
 	kfree(p);
-#else
-//	__free_page(p);	/* blue screens */
-#endif
+
+	mutex_unlock(&read_bootsector_mutex);
 
 	return ret;
 }

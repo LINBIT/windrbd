@@ -119,13 +119,14 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	RootExtension->PhysicalDeviceNameLength = nameUnicode.Length;
 	RtlCopyMemory(RootExtension->PhysicalDeviceName, nameUnicode.Buffer, nameUnicode.Length);
 
-	KeInitializeSpinLock(&mvolVolumeLock);
-	KeInitializeMutex(&mvolMutex, 0);
-	KeInitializeMutex(&eventlogMutex, 0);
+	/* TODO: those also should go away. */
+
 	downup_rwlock_init(&transport_classes_lock); //init spinlock for transport 
 	mutex_init(&g_genl_mutex);
 	mutex_init(&notification_mutex);
 	KeInitializeSpinLock(&transport_classes_lock);
+
+	init_windrbd();
 
 	dtt_initialize();
 
