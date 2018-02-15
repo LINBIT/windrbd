@@ -1986,11 +1986,15 @@ printk("5\n");
 		MmProbeAndLockPages(bio->bi_irps[bio->bi_this_request]->MdlAddress, KernelMode, IoWriteAccess);
 */
 
-	/* TODO: this blue screens if backing device is NTFS. We shouldn't
-	   allow NTFS for backing device. */
+		if (!bio->bi_might_access_filesystem)
+			MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
 
-//		MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
-	}	/* Else leave it locked */
+			/* Else do nothing. Memory cannot be freed, so
+			 * use static memory for the file system test.
+			 */
+
+	}
+		/* Else leave it locked */
 printk("6\n");
 
 /*
@@ -2038,7 +2042,8 @@ if (io == IRP_MJ_READ) {
 		if (bio->bi_paged_memory)
 			MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
 		else
-			MmBuildMdlForNonPagedPool(mdl);
+			if (!bio->bi_might_access_filesystem)
+				MmBuildMdlForNonPagedPool(mdl);
 	}
 
 printk("b\n");
@@ -2796,6 +2801,7 @@ static void backingdev_check_endio BIO_ENDIO_ARGS(struct bio *bio)
 
 static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 {
+		/* TODO: use static memory. */
 	struct page *p = alloc_page(0);
 	struct bio *b = bio_alloc(0, 1, 'DRBD');
 	int i;
@@ -2805,6 +2811,7 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	bio_add_page(b, p, 512, 0);
 	bio_set_op_attrs(b, REQ_OP_READ, 0);
 	b->bi_end_io = backingdev_check_endio;
+	b->bi_might_access_filesystem = true;
 	DRBD_BIO_BI_SECTOR(b) = 0;
 	init_completion(&c);
 	b->bi_private = &c;
@@ -2816,8 +2823,8 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	printk("9\n");
 	ret = is_filesystem(p->addr);
 	printk("9\n");
-/*
 	bio_put(b);
+/*
 	__free_page(p);
 */
 

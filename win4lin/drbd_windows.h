@@ -695,7 +695,17 @@ struct bio {
 	int bi_this_request;
 	atomic_t bi_requests_completed;
 
+	/* If set, indicates that the memory is paged, in which case
+	 * we must lock it to memory. If not set, must unlock memory
+	 * locked by IoBuildAsynchronousFsdRequest().
+	 */
 	bool bi_paged_memory;
+
+	/* If set, indicates that the device might contain a file
+	 * system, in which case we should not call
+	 * MmBuildMdlForNonPagedPool() on the memory.
+	 */
+	bool bi_might_access_filesystem;
 
 		/* Those are used by win_generic_make_request internally */
 	LARGE_INTEGER offset;
