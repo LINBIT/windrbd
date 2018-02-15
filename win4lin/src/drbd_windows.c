@@ -1989,7 +1989,7 @@ printk("5\n");
 	/* TODO: this blue screens if backing device is NTFS. We shouldn't
 	   allow NTFS for backing device. */
 
-		MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
+//		MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
 	}	/* Else leave it locked */
 printk("6\n");
 
@@ -2816,8 +2816,10 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	printk("9\n");
 	ret = is_filesystem(p->addr);
 	printk("9\n");
+/*
 	bio_put(b);
 	__free_page(p);
+*/
 
 	return ret;
 }
