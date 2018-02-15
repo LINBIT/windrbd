@@ -4,6 +4,16 @@ TODO: DRBD windows to windows sync is very slow.
 
 	Not clear if it is the network or something else.
 
+TODO: invalidate read cache when becoming secondary.
+
+	Problem is that if windows is primary, becomes secondary and
+	then primary again the read cache is still filled from the
+	former primary.
+
+	Should invalidate when becoming secondary: reason is
+	that while secondary requests still are served from
+	the read cache (they should fail).
+
 TODO: 3 changes to userland:
 
 	drbdadm should call windrbd to assign the drive letter
@@ -19,16 +29,6 @@ TODO: how and when is flush to backing device done?
 	Linux when sync is done manually. Should sync at least
 	when becoming secondary. sync must be done while primary
 	(when secondary it would fail)
-
-TODO: invalidate read cache when becoming secondary.
-
-	Problem is that if windows is primary, becomes secondary and
-	then primary again the read cache is still filled from the
-	former primary.
-
-	Should invalidate when becoming secondary: reason is
-	that while secondary requests still are served from
-	the read cache (they should fail).
 
 TODO: In progress: Use Linbit certificate to sign driver.
 	It should be trusted.

@@ -1911,9 +1911,6 @@ static int windrbd_generic_make_request(struct bio *bio)
 	int err = -EIO;
 	unsigned int first_size;
 	
-/* printk(KERN_INFO "bio->bi_rw = %d WRITE_FLUSH = %d\n", bio->bi_rw, WRITE_FLUSH); */
-
-printk("1\n");
 	if ((bio->bi_rw & WRITE_FLUSH) == WRITE_FLUSH) {
 printk("flushing\n");
 		io = IRP_MJ_FLUSH_BUFFERS;
@@ -1937,10 +1934,9 @@ printk("flushing\n");
 	}
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
+// printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
 // }
 
-printk("2\n");
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
 		patch_boot_sector(buffer, 0, 0);
@@ -1955,12 +1951,10 @@ printk("2\n");
 				&bio->io_stat
 				);
 
-printk("3\n");
 	if (!bio->bi_irps[bio->bi_this_request]) {
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
 		return -ENOMEM;
 	}
-printk("4\n");
 
 		/* Unlock the MDLs pages locked by
 		 * IoBuildAsynchronousFsdRequest, we must not have
@@ -1979,13 +1973,6 @@ printk("4\n");
 				MmUnlockPages(first_mdl);
 			}
 		}
-
-printk("5\n");
-/*
-	if (buffer != NULL)
-		MmProbeAndLockPages(bio->bi_irps[bio->bi_this_request]->MdlAddress, KernelMode, IoWriteAccess);
-*/
-
 		if (!bio->bi_might_access_filesystem)
 			MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
 
@@ -1995,15 +1982,6 @@ printk("5\n");
 
 	}
 		/* Else leave it locked */
-printk("6\n");
-
-/*
-if (bio->bi_this_request > 0) {
-*/
-// printk("karin bio->bi_size: %d bio->bi_vcnt: %d bio->bi_first_element: %d bio->bi_last_element: %d\n", bio->bi_size, bio->bi_vcnt, bio->bi_first_element, bio->bi_last_element);
-/*
-}
-*/
 
 	/* Windows tries to split up MDLs and crashes when
 	 * there are more than 32*4K MDLs.
@@ -2011,20 +1989,14 @@ if (bio->bi_this_request > 0) {
 
 #define MAX_MDL_ELEMENTS 32
 
-printk("7\n");
 		/* TODO: use bio->bi_size it should be correct now. */
 
 	int total_size = first_size;
-printk("8\n");
 
 	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
 		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irps[bio->bi_this_request]);
 
-printk("9\n");
-/*
-printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len: %d\n", entry, i, mdl, entry->bv_page->addr, ((char*)entry->bv_page->addr)+entry->bv_offset,  entry->bv_offset, entry->bv_len);
-*/
 		if (mdl == NULL) {
 			printk("Could not allocate mdl, giving up.\n");
 			err = -ENOMEM;
@@ -2032,13 +2004,7 @@ printk("entry: %p i: %d mdl: %p page->addr: %p resulting addr: %p offset: %d len
 			goto out_free_irp;
 		}
 		total_size += entry->bv_len;
-printk("a\n");
 
-/*
-if (io == IRP_MJ_READ) {
- *(int*)(((char*)entry->bv_page->addr)+entry->bv_offset) = 0xdeadbeef;
-}
-*/
 		if (bio->bi_paged_memory)
 			MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
 		else
@@ -2046,16 +2012,13 @@ if (io == IRP_MJ_READ) {
 				MmBuildMdlForNonPagedPool(mdl);
 	}
 
-printk("b\n");
 	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
 
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
-printk("c\n");
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
-printk("d\n");
 	if (io == IRP_MJ_WRITE) {
 		pIoNextStackLocation->Parameters.Write.Length = total_size;
 	}
@@ -2067,16 +2030,13 @@ printk("d\n");
 		 * in the IRP.
 		 */
 
-printk("e\n");
 	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
-printk("f\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
-printk("g\n");
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
 
@@ -2087,13 +2047,11 @@ printk("g\n");
 			     * must not be called).
 			     */
 	}
-printk("h\n");
 	return 0;
 
 out_free_irp:
 	free_mdls_and_irp(bio);
 
-printk("i\n");
 	return err;
 }
 
@@ -2113,10 +2071,8 @@ int generic_make_request(struct bio *bio)
 	int orig_size;
 	int e;
 
-printk("1\n");
 	bio_get(bio);
 
-printk("2\n");
 	if (bio->bi_vcnt == 0)
 		bio->bi_num_requests = 1;	/* a flush request */
 	else
@@ -2133,11 +2089,9 @@ printk("2\n");
 	orig_sector = sector = bio->bi_sector;
 	orig_size = bio->bi_size;
 
-printk("3\n");
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<bio->bi_num_requests; 
              bio->bi_this_request++) {
-printk("4\n");
 		bio->bi_first_element = bio->bi_this_request*MAX_MDL_ELEMENTS;
 		bio->bi_last_element = (bio->bi_this_request+1)*MAX_MDL_ELEMENTS;
 		if (bio->bi_vcnt < bio->bi_last_element)
@@ -2150,11 +2104,8 @@ printk("4\n");
 		bio->bi_sector = sector;
 		bio->bi_size = total_size;
 
-printk("5\n");
 		ret = windrbd_generic_make_request(bio);
-printk("6\n");
 		if (ret < 0) {
-printk("6b\n");
 			drbd_bio_endio(bio, BLK_STS_IOERR);
 
 			bio->bi_sector = orig_sector;
@@ -2165,13 +2116,12 @@ printk("6b\n");
 		}
 		sector += total_size >> 9;
 	}
-printk("7\n");
 
 	bio->bi_sector = orig_sector;
 	bio->bi_size = orig_size;
 
 	bio_put(bio);
-printk("8\n");
+
 	return 0;
 }
 
@@ -2802,12 +2752,19 @@ static void backingdev_check_endio BIO_ENDIO_ARGS(struct bio *bio)
 static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 {
 		/* TODO: use static memory. */
-	struct page *p = alloc_page(0);
 	struct bio *b = bio_alloc(0, 1, 'DRBD');
 	int i;
 	struct completion c;
 	int ret;
+	static char boot_sector[512];
+	struct page *p;
 
+	p = kzalloc(sizeof(struct page),0, 'D3DW'); 
+	if (!p)	{
+		printk(KERN_ERR "alloc_page struct page failed\n");
+		return 1;
+	}
+	p->addr = boot_sector;
 	bio_add_page(b, p, 512, 0);
 	bio_set_op_attrs(b, REQ_OP_READ, 0);
 
@@ -2819,17 +2776,13 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	init_completion(&c);
 	b->bi_private = &c;
 	bio_set_dev(b, dev);
-	printk("7b\n");
+
 	submit_bio(b);
-	printk("8\n");
 	wait_for_completion(&c);
-	printk("9\n");
+
 	ret = is_filesystem(p->addr);
-	printk("a bio_put and free page not done\n");
-/*
 	bio_put(b);
-	__free_page(p);
-*/
+	kfree(p);
 
 	return ret;
 }
