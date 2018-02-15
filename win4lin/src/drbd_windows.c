@@ -2788,6 +2788,39 @@ static struct _DEVICE_OBJECT *find_windows_device(UNICODE_STRING *path, struct _
 	return windows_device;
 }
 
+static void backingdev_check_endio BIO_ENDIO_ARGS(struct bio *bio)
+{
+	struct completion *c = (struct completion*) bio->bi_private;
+	complete(c);
+}
+
+static int check_if_backingdev_contains_filesystem(struct block_device *dev)
+{
+	struct page *p = alloc_page(0);
+	struct bio *b = bio_alloc(0, 1, 'DRBD');
+	int i;
+	struct completion c;
+	int ret;
+
+	bio_add_page(b, p, 512, 0);
+	bio_set_op_attrs(b, REQ_OP_READ, 0);
+	b->bi_end_io = backingdev_check_endio;
+	DRBD_BIO_BI_SECTOR(b) = 0;
+	init_completion(&c);
+	b->bi_private = &c;
+	bio_set_dev(b, dev);
+	printk("7b\n");
+	submit_bio(b);
+	printk("8\n");
+	wait_for_completion(&c);
+	printk("9\n");
+	ret = is_filesystem(p->addr);
+	printk("9\n");
+	bio_put(b);
+	__free_page(p);
+
+	return ret;
+}
 
 /* This creates a new block device associated with the windows
    device pointed to by path.
@@ -2874,6 +2907,13 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_get_volsize_error;
 	}
 	block_device->path_to_device = path_to_device;
+
+	if (check_if_backingdev_contains_filesystem(block_device)) {
+		printk(KERN_ERR "Backing device contains filesystem, refusing to use it.\n");
+		printk(KERN_INFO "You may want to do something like windrbd hide-filesystem <drive-letter-of-backing-dev>\n");
+		err = -EINVAL;
+		goto out_get_volsize_error;
+	}
 
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 

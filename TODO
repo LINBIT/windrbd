@@ -54,6 +54,8 @@ TODO: In progress: Use Linbit certificate to sign driver.
 --------------------------------------------------------------
 windrbd-next-next
 
+TODO: One day we want to not blue screen when backing device contains a file system.
+
 TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
 
 	On windows side when syncing.
