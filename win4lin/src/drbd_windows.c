@@ -2756,7 +2756,7 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	int i;
 	struct completion c;
 	int ret;
-	static char boot_sector[512];
+	static char boot_sector[8192];
 	struct page *p;
 
 	p = kzalloc(sizeof(struct page),0, 'D3DW'); 
@@ -2764,7 +2764,7 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 		printk(KERN_ERR "alloc_page struct page failed\n");
 		return 1;
 	}
-	p->addr = boot_sector;
+	p->addr = boot_sector+(4096-((ULONG_PTR)boot_sector & 4095));
 	bio_add_page(b, p, 512, 0);
 	bio_set_op_attrs(b, REQ_OP_READ, 0);
 
