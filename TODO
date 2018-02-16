@@ -1,28 +1,21 @@
 windrbd-next: beta for selected customers
 
-TODO: DRBD windows to windows sync is very slow.
+TODO: New blue screen on connecting Windows 10 to buildhost Windows 7
+	(I think it was D1).
 
-	Not clear if it is the network or something else.
-
-TODO: invalidate read cache when becoming secondary.
-
-	Problem is that if windows is primary, becomes secondary and
-	then primary again the read cache is still filled from the
-	former primary.
-
-	Should invalidate when becoming secondary: reason is
-	that while secondary requests still are served from
-	the read cache (they should fail).
+	This might be because of wrong rcu handling (must sleep
+	before cleaning up)
 
 TODO: 3 changes to userland:
 
-	drbdadm should call windrbd to assign the drive letter
-	(also remove 'C'+minor magic from kerne)
+	Done: windrbd hide-filesystem <drive-letter/GUID>
+		also show-filesystem and filesystem-state
+		no GUID
 
 	windrbd log-server -o logfile
 
-	windrbd hide-filesystem <drive-letter/GUID>
-		also show-filesystem
+	drbdadm should call windrbd to assign the drive letter
+	(also remove 'C'+minor magic from kernel)
 
 TODO: how and when is flush to backing device done?
 	This is important. Right now NTFS files only appear on
@@ -40,6 +33,38 @@ TODO: In progress: Use Linbit certificate to sign driver.
 
 --------------------------------------------------------------
 windrbd-next-next
+
+TODO: on windrbd show/hide filesystem check if attached.
+
+	And refuse to touch it if yes.
+
+TODO: invalidate read cache when becoming secondary.
+
+	Problem is that if windows is primary, becomes secondary and
+	then primary again the read cache is still filled from the
+	former primary.
+
+	Should invalidate when becoming secondary: reason is
+	that while secondary requests still are served from
+	the read cache (they should fail).
+
+	Update: Moving that to beta2 because we are a little bit
+	short on time. Document that defect.
+
+TODO: IP address of "Closing unexpected connection" printk is still wrong
+
+Later: DRBD windows to windows sync is very slow.
+
+	Not clear if it is the network or something else.
+
+	Update: it is not the network.
+
+	I/O on Windows 10 is very slow also (format h: on a
+	connected resource takes forever)
+
+	Update: when connecting to windows build host it is
+	faster (network is over the air), so maybe something
+	with the Linbit Windows VM is wrong.
 
 TODO: mandatory locking for backing device.
 
@@ -79,6 +104,10 @@ TODO: Kernel really should report an error if Bind() fails.
 
 
 TODO: check if windrbd can be loaded not at boot time but later.
+
+	Working on it .. test with demand load on a fresh installed
+	windows (it blue screens on boot if there was a windrbd before
+	installed).
 
 TODO: msi installer instead of self extracting exe.
 
