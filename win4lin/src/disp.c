@@ -31,37 +31,9 @@
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
 
-#ifdef _WIN32_WPP
-karin
-#include "disp.tmh"
-#endif
-
-
 DRIVER_INITIALIZE DriverEntry;
 DRIVER_UNLOAD mvolUnload;
 DRIVER_ADD_DEVICE mvolAddDevice;
-
-UINT32 windows_ret_codes[] = {
-    [EROFS] = STATUS_MEDIA_WRITE_PROTECTED,
-};
-
-UINT32 translate_drbd_error(int i)
-{
-    unsigned int j;
-    UINT32 err;
-
-    if (i >= 0)
-    /* No error. */
-	return i;
-
-    j = -i;
-    if (j >= ARRAY_SIZE(windows_ret_codes))
-	return STATUS_UNSUCCESSFUL;
-
-    err = windows_ret_codes[j];
-    return err ? err : STATUS_UNSUCCESSFUL;
-}
-
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, DriverEntry)
@@ -81,13 +53,13 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	// init logging system first
 	initialize_syslog_printk();
 
-	WDRBD_TRACE("DRBD Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
+	printk(KERN_INFO "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
 
 	initRegistry(RegistryPath);
 
 	gbShutdown = FALSE;
 		
-	RtlInitUnicodeString(&nameUnicode, L"\\Device\\mvolCntl");
+	RtlInitUnicodeString(&nameUnicode, L"\\Device\\windrbd_control");
 	status = IoCreateDevice(DriverObject, sizeof(ROOT_EXTENSION),
        		 &nameUnicode, FILE_DEVICE_UNKNOWN, 0, FALSE, &deviceObject);
 	if (!NT_SUCCESS(status))
@@ -96,7 +68,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 		return status;
 	}
 
-	RtlInitUnicodeString(&linkUnicode, L"\\DosDevices\\mvolCntl");
+	RtlInitUnicodeString(&linkUnicode, L"\\DosDevices\\windrbd_control");
 	status = IoCreateSymbolicLink(&linkUnicode, &nameUnicode);
 	if (!NT_SUCCESS(status))
 	{
@@ -119,8 +91,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	RootExtension->PhysicalDeviceNameLength = nameUnicode.Length;
 	RtlCopyMemory(RootExtension->PhysicalDeviceName, nameUnicode.Buffer, nameUnicode.Length);
 
-	/* TODO: those also should go away. */
-
 	downup_rwlock_init(&transport_classes_lock); //init spinlock for transport 
 	mutex_init(&g_genl_mutex);
 	mutex_init(&notification_mutex);
@@ -136,20 +106,15 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 		return STATUS_NO_MEMORY;
 	}
 
-
-#ifdef _WIN32_WPP
-	WPP_INIT_TRACING(DriverObject, RegistryPath);
-	DoTraceMessage(TRCINFO, "WDRBD V9(1:1) MVF Driver loaded.");
-#endif
-    // Init DRBD engine
 	ret = drbd_init();
-	if (ret) { /* TODO: ?? */
-		WDRBD_ERROR("cannot init drbd, %d", ret);
-  //      IoDeleteDevice(deviceObject);
+	if (ret != 0) {
+		printk(KERN_ERR "cannot init drbd, error is %d", ret);
+		IoDeleteDevice(deviceObject);
+
 		return STATUS_TIMEOUT;
 	}
 
-	WDRBD_INFO("MVF Driver loaded.\n");
+	printk(KERN_INFO "Windrbd Driver loaded.\n");
 
 	if (FALSE == InterlockedCompareExchange(&IsEngineStart, TRUE, FALSE))
 	{
