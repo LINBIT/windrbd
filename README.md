@@ -153,3 +153,4 @@ Version history
 			 windrbd device.
  * 0.4.8 (Feb 15, 2018): Refuse to attach to a backing device containing
 			 a (known) file system.
+ * 0.4.9 (Feb 16, 2018): Fixed a blue screen introduced in last commit.
