@@ -7,6 +7,9 @@ Clone this repository with
 
 else you get an incomplete checkout.
 
+If you need installable binaries please contact Linbit (www.linbit.com)
+at sales@linbit.com
+
 What is WinDRBD?
 ================
 
@@ -85,22 +88,20 @@ is drive letters and GUID's are used. Examples:
 We recommend not to assign drive letters to backing devices, since 
 that easily may confuse the user.
 
-New with version 0.3: The backing device is patched
-so that Microsoft Windows does not recognize the underlying block
-device as NTFS formatted (it would place some restrictions of how
-to use this backing device, then). Backing devices are just RAW
-devices to Windows from now on. This is implemented for NTFS but
-not yet for FAT file systems.
+Starting with 0.4.8 windrbd refuses to attach to a device containing
+a file system known to Windows. We do so because Windows accesses
+the file system independently of DRBD causing data corruption.
 
-Version 0.1 and 0.2 only: The drive letter for the DRBD device (the one 
-you will be working with) is derived from the DRBD minor, where
-C => minor 0, D => minor 1 and so on. So when specifying
+Use
 
-         device /dev/drbd5;
+	windrbd hide-filesystem <drive-letter>
 
-the DRBD device would be H: (internally however it will be \\Device\\Drbd5)
+to prepare the backing device for use with windrbd. You can undo
+that later with
 
-This restriction will be fixed soon.
+	windrbd show-filesystem <drive-letter>
+
+however only when the device is not attached.
 
 Logging
 =======
@@ -113,8 +114,16 @@ To configure the log host set a Registry key (string value):
 
 	Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\drbd\syslog_ip
 
-and assign it the IP address (you might have to reload the WinDRBD driver
-after setting this). See also file INSTALL for more instructions.
+and assign it the IP address (you have to reload the WinDRBD driver
+after setting this, currently you have to reboot the machine).
+
+You can also log on the Windows machine directly by starting
+
+	windrbd log-server [-o logfile]
+
+However the last log messages before a blue screen will be lost, then.
+
+See also file INSTALL for more instructions.
 
 Version history
 ===============
