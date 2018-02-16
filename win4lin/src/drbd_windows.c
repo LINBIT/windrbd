@@ -2795,7 +2795,9 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 /* TODO: this might cause a blue screen from time to time.
 	Fix free_mdls_and_irp() to handle this */
 
+/*
 	bio_put(b);
+*/
 
 	kfree(p);
 
