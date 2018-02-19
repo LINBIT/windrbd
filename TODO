@@ -6,13 +6,24 @@ TODO: New blue screen on connecting Windows 10 to buildhost Windows 7
 	This might be because of wrong rcu handling (must sleep
 	before cleaning up)
 
+TODO: When playing with show / hide filesystem blue screen on attach.
+	1D (1E?)
+
+	Occured again. Please fix this.
+
+	drbdadm up w0 		# fails to attach
+	windrbd hide-filesystem f:
+	drbdadm attach w0
+	drbdadm primary w0
+	ls /cygdrive/h		# blue screens
+
 TODO: 3 changes to userland:
 
 	Done: windrbd hide-filesystem <drive-letter/GUID>
 		also show-filesystem and filesystem-state
 		no GUID
 
-	windrbd log-server -o logfile
+	Done: windrbd log-server -o logfile
 
 	drbdadm should call windrbd to assign the drive letter
 	(also remove 'C'+minor magic from kernel)
