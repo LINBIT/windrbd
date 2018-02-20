@@ -1,0 +1,11 @@
+If Cygwin is already installed on the computer (or installed later)
+rename the cygwin1.dll in C:\Windows\System32 to cygwin1-old.dll .
+This has to be redone for now  whenever a new version of 
+windrbd is installed.
+
+If accessing the windrbd device's drive fails with Invalid request code
+this is most likely because the device is not primary. Do a
+
+	drbdadm primary <res>
+
+to make it primary.
