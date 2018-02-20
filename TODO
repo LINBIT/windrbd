@@ -1,38 +1,31 @@
 windrbd-next: beta for selected customers
 
+TODO: Windows 10 would require more testing.
+
+	Blue screen THREAD_EXCEPTION_NOT_HANDLED when writing data
+	while connected (on a NTFS filesystem). Maybe because of
+	extensive logging. Update: happened again last log message
+	is:
+Feb 20 19:04:48 10.43.8.215  U18:04:48.392|51a96700 windrbd_thread_setup <6>[0xFFFFD40351A96700] stopped.
+
+	maybe the rcu?
+
+	Accessing directory (reading) from windrbd device stalls
+	when connected (and syncing). Writing data works (but
+	that is maybe just in the cache).
+
+	Syncing is very slow at the moment.
+
+TODO: Don't install cygwin1.dll when cygwin is found on the target.
+
 TODO: New blue screen on connecting Windows 10 to buildhost Windows 7
 	(I think it was D1).
 
 	This might be because of wrong rcu handling (must sleep
 	before cleaning up)
 
-TODO: When playing with show / hide filesystem blue screen on attach.
-	1D (1E?)
-
-	Occured again. Please fix this.
-
-	drbdadm up w0 		# fails to attach
-	windrbd hide-filesystem f:
-	drbdadm attach w0
-	drbdadm primary w0
-	ls /cygdrive/h		# blue screens
-
-TODO: 3 changes to userland:
-
-	Done: windrbd hide-filesystem <drive-letter/GUID>
-		also show-filesystem and filesystem-state
-		no GUID
-
-	Done: windrbd log-server -o logfile
-
-	drbdadm should call windrbd to assign the drive letter
+TODO: drbdadm should call windrbd to assign the drive letter
 	(also remove 'C'+minor magic from kernel)
-
-TODO: how and when is flush to backing device done?
-	This is important. Right now NTFS files only appear on
-	Linux when sync is done manually. Should sync at least
-	when becoming secondary. sync must be done while primary
-	(when secondary it would fail)
 
 TODO: In progress: Use Linbit certificate to sign driver.
 	It should be trusted.
@@ -44,6 +37,12 @@ TODO: In progress: Use Linbit certificate to sign driver.
 
 --------------------------------------------------------------
 windrbd-next-next
+
+TODO: how and when is flush to backing device done?
+	This is important. Right now NTFS files only appear on
+	Linux when sync is done manually. Should sync at least
+	when becoming secondary. sync must be done while primary
+	(when secondary it would fail)
 
 TODO: on windrbd show/hide filesystem check if attached.
 
@@ -1386,4 +1385,43 @@ Done: Windows to Windows test: blue screen on both sides on drbdadm up
 	force detaches the device, this is not exactly what we want
 	There should be a mandarory locking preventing all I/O
 	(except DRBD) on the backing device. Do that later.
+
+Done: When playing with show / hide filesystem blue screen on attach.
+	1D (1E?)
+
+	Occured again. Please fix this.
+
+	drbdadm up w0 		# fails to attach
+	windrbd hide-filesystem f:
+	drbdadm attach w0
+	drbdadm primary w0
+	ls /cygdrive/h		# blue screens
+
+	Windows seems to cache the file system separately (something
+	like Linux' directory cache). Solution would be to unmount
+	and mount again it on hide-filesystem (already tried manually
+	with mountvol utility). Update: there seem to be some sort
+	of reread filesystem mountvol delete does.
+
+	Update: Obviously our patching NTFS <-> DRBD of the filesystem
+	bootsector at offset 3 isn't enough .. we need to patch more
+	than that. Update: no it isn't. Need to call mountvol to
+	remount volume, works now with Windows 7 Windows 10 unclear.
+
+	Reopen when it happens again.
+
+Done: windrbd hide-filesystem <drive-letter/GUID>
+	also show-filesystem and filesystem-state
+	no GUID yet.
+
+	In progress: umount / mount Volume on hide-filesystem
+	to clear windows directory cache (else drbdadm
+	up / drbdadm primary / accessing the windrbd device
+	will blue screen)
+
+	We now call mountvol directly, it works on Windows 7
+	but not (always) on Windows 10 (but maybe this is
+	another BSOD)
+
+Done: windrbd log-server -o logfile
 
