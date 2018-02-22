@@ -1,5 +1,10 @@
 windrbd-next: beta for selected customers
 
+TODO: Don't install cygwin1.dll when cygwin is found on the target.
+
+	Now, taking cygwin1.dll from existing installation. TODO:
+	Test if this works.
+
 TODO: Windows 10 would require more testing.
 
 	Blue screen THREAD_EXCEPTION_NOT_HANDLED when writing data
@@ -16,8 +21,6 @@ Feb 20 19:04:48 10.43.8.215  U18:04:48.392|51a96700 windrbd_thread_setup <6>[0xF
 
 	Syncing is very slow at the moment.
 
-TODO: Don't install cygwin1.dll when cygwin is found on the target.
-
 TODO: New blue screen on connecting Windows 10 to buildhost Windows 7
 	(I think it was D1).
 
@@ -26,14 +29,6 @@ TODO: New blue screen on connecting Windows 10 to buildhost Windows 7
 
 TODO: drbdadm should call windrbd to assign the drive letter
 	(also remove 'C'+minor magic from kernel)
-
-TODO: In progress: Use Linbit certificate to sign driver.
-	It should be trusted.
-
-	We have a certificate now, but the root of this certificate
-	isn't trusted by Windows 7.
-
-	Phil is currently trying to get a proper certificate.
 
 --------------------------------------------------------------
 windrbd-next-next
@@ -1424,4 +1419,16 @@ Done: windrbd hide-filesystem <drive-letter/GUID>
 	another BSOD)
 
 Done: windrbd log-server -o logfile
+
+Done: Use Linbit certificate to sign driver.
+	It should be trusted.
+
+	We have a certificate now, but the root of this certificate
+	isn't trusted by Windows 7.
+
+	Phil is currently trying to get a proper certificate.
+
+	Update: Works now, but build / sign process is a little
+	bit clumsy. Need to copy files manually and patch
+	Windows Makefile.
 
