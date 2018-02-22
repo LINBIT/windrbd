@@ -7,3 +7,6 @@ win4lin/src/*.pdb
 
 .*.sw?
 windrbd.SED
+
+to-sign
+signed
