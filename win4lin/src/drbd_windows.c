@@ -1641,7 +1641,9 @@ void set_disk_ro(struct gendisk *disk, int flag)
 
 }
 
-#define CT_MAX_THREAD_LIST          40
+/* TODO: why? (was hardcoded to 40) */
+/* TODO: why the ct_thread_list? */
+#define CT_MAX_THREAD_LIST          1000
 static LIST_HEAD(ct_thread_list);
 static int ct_thread_num = 0;
 static KSPIN_LOCK ct_thread_list_lock;

@@ -1,0 +1,68 @@
+Run install-windrbd-signed.exe as administrator else it
+will complain about some file not found.
+
+Find the windrbd config files under C:\windrbd\etc
+C:\windrbd is the root of a Linux like directory tree, which
+should contain all files and directories needed by the
+userland admin tools (drbdadm, drbdsetup, ...).
+
+To create a new resource, you can start from the
+C:\windrbd\etc\drbd.d\w0.res file which contains
+documentation about differences between Linux DRBD
+and windrbd resources.
+
+The userland admin tools should behave just the same way as
+their Linux counterparts.
+
+A new tool is windrbd.exe, use it:
+
+ * To see log messages written by the kernel driver:
+
+	windrbd log-server [filename]
+
+   If filename is specified, log messages are also written
+   to the file named filename.
+
+ * To prepare an existing NTFS partition for use with
+   windrbd:
+
+         windrbd hide-filesystem <drive-letter>
+
+   Windrbd prevents Windows from accessing a backing device by
+   patching the first sector of the device. The above command
+   will do this. If you want to use the device without windrbd
+   again you can do a
+
+         windrbd show-filesystem <drive-letter>
+
+   Note that when you format a windrbd device patching to and
+   from the backing device happens automatically, you only need
+   the windrbd utility if you have existing partitions which you
+   want to use as windrbd backing devices.
+
+For other features just call it without parameters.
+
+Don't forget to disable Windows firewall or even better, open
+the configured windrbd TCP/IP ports for incoming connections.
+
+If accessing the windrbd device's drive fails with Invalid request code
+this is most likely because the device is not primary. Do a
+
+	drbdadm primary <res>
+
+to make it primary.
+
+Flush buffers is currently not yet implemented.
+
+When becoming secondary (was primary before), read requests are
+still served from Windows read cache (with outdated data). This
+will change soon (all read requests from secondary will fail,
+then).
+
+Right now, drive letter of windrbd device (the device you use
+to access data) is hardcoded to 'C'+minor, so for example
+/dev/drbd5 would match /dev/drbd5. This will change in the
+near future. (windrbd.exe utility already can assign drive
+letters, but drbdadm can't).
+
+Userland callbacks are not implemented at the moment.
