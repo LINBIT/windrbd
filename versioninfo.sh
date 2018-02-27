@@ -73,3 +73,6 @@ sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y) ;Replaced by build magic#" ./w
 ## windrbd.SED
 sed "s#XXX#${DATE} ${GITHASH} ${DRBD_GITHASH}#g" windrbd.SED.in > windrbd.SED
 
+## windrbd-signed.SED
+sed "s#XXX#${DATE} ${GITHASH} ${DRBD_GITHASH}#g" windrbd-signed.SED.in > windrbd-signed.SED
+

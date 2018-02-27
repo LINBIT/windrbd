@@ -77,6 +77,13 @@ package: build
 	else \
 		echo "Please run 'make' first on a Linux system with spatch installed"; \
 	fi
+
+signed-package:
+	@if test -d $(TRANS_DEST); then \
+		cd $(TRANS_DEST)/drbd/ && $(MAKE) signed-package; \
+	else \
+		echo "Please run 'make' first on a Linux system with spatch installed"; \
+	fi
 else
 build: patch
 	@echo "Now please run 'make' in the Windows VM."

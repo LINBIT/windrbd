@@ -163,3 +163,7 @@ clean:
 
 package: all
 	iexpress /n ../../windrbd.sed
+
+signed-package: versioninfo
+	iexpress /n ../../windrbd-signed.sed
+
