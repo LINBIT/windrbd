@@ -105,7 +105,13 @@ drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildcard 
 	rm -f drbd.pdb "_$@"
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"drbd.pdb" /OUT:"_$@"
 	mv -f "_$@" "$@"
+ifdef R
+	cp "$@" ../../to-sign
+	echo "$@ copiied to to-sign directory. Please sign it using USB token and place the result in the signed directory."
+else
 	"$(EWDK_BIN)/signtool.exe" sign /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v /t http://timestamp.verisign.com/scripts/timstamp.dll "$@"
+endif
+
 
 resource.res: resource.rc
 	"$(EWDK_BIN)/rc.exe" $<
@@ -113,7 +119,12 @@ resource.res: resource.rc
 drbd.cat: drbd.sys
 	rm -f "$@"
 	"$(EWDK_BIN)/Inf2Cat.exe" /os:7_X64 /driver:.
+ifdef R
+	cp "$@" ../../to-sign
+	echo "$@ copiied to to-sign directory. Please sign it using USB token and place the result in the signed directory."
+else
 	"$(EWDK_BIN)/signtool.exe" sign /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v /t http://timestamp.verisign.com/scripts/timstamp.dll $@
+endif
 
 ifeq ($(shell uname -o),Cygwin)
     %.obj: %.c
