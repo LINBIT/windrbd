@@ -807,7 +807,7 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 			break;
 		default:
 			printk(KERN_WARNING "Closing unexpected connection from "
-					"%hhu.%hhu.%hhu.%hhu\n", sa->sa_data[2], sa->sa_data[3], sa->sa_data[4], sa->sa_data[5]);
+					"%hhu.%hhu.%hhu.%hhu\n", (unsigned char) sa->sa_data[2], (unsigned char) sa->sa_data[3], (unsigned char) sa->sa_data[4], (unsigned char) sa->sa_data[5]);
 			break;
 		}
 
