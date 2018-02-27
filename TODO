@@ -21,11 +21,16 @@ Feb 20 19:04:48 10.43.8.215  U18:04:48.392|51a96700 windrbd_thread_setup <6>[0xF
 
 	Syncing is very slow at the moment.
 
+TODO: when installing a signed DRBD driver, installing an unsigned
+	DRBD driver fails silently.
+
 TODO: New blue screen on connecting Windows 10 to buildhost Windows 7
 	(I think it was D1).
 
 	This might be because of wrong rcu handling (must sleep
 	before cleaning up)
+
+TODO: /cygdrive/c/windrbd/var/lib/drbd should exist.
 
 TODO: drbdadm should call windrbd to assign the drive letter
 	(also remove 'C'+minor magic from kernel)
