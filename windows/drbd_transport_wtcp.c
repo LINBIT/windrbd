@@ -797,7 +797,6 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	if (!path_d) {
 		struct sockaddr *sa = (struct sockaddr*) RemoteAddress;
 		struct sockaddr_in6 *from_sin6;
-		struct sockaddr_in *from_sin;
 
 		switch (RemoteAddress->sa_family) {
 		case AF_INET6:
@@ -807,9 +806,8 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 					"%pI6\n", &from_sin6->sin6_addr);
 			break;
 		default:
-			from_sin = (struct sockaddr_in *)&sa->sa_data[2];
 			printk(KERN_WARNING "Closing unexpected connection from "
-					"%u.%u.%u.%u\n", from_sin->sin_addr.s_addr, from_sin->sin_addr.s_addr & 0xff, (from_sin->sin_addr.s_addr >> 8) & 0xff, (from_sin->sin_addr.s_addr >> 16) & 0xff, (from_sin->sin_addr.s_addr >> 24) & 0xff);
+					"%hhu.%hhu.%hhu.%hhu\n", sa->sa_data[2], sa->sa_data[3], sa->sa_data[4], sa->sa_data[5]);
 			break;
 		}
 
