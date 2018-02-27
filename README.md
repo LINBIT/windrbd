@@ -154,3 +154,4 @@ Version history
  * 0.4.8 (Feb 15, 2018): Refuse to attach to a backing device containing
 			 a (known) file system.
  * 0.4.9 (Feb 16, 2018): Fixed a blue screen introduced in last commit.
+ * 0.5.0 (Feb 27, 2018): Beta 1
