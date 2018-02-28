@@ -1,18 +1,86 @@
+Windrbd binary distribution
+===========================
+
+You should have received a file named install-windrbd-signed.exe
+which contains everything you need to run windrbd (which is
+DRBD for Windows).
+
 Run install-windrbd-signed.exe as administrator else it
-will complain about some file not found.
+will fail to install.
+
+Right now, we use a self-extracting exe to distribute
+windrbd. We might change that to a msi format in a later
+version.
+
+Package contents are:
+
+drbd.sys	The windrbd driver
+drbd.inf	Install instructions for the windrbd driver
+drbdadm.exe	windrbd userland utilities (same as
+drbdsetup.exe	for Linux DRBD)
+drbdmeta.exe
+windrbd.exe	Additional tool for windows specific settings
+cygwin1.dll	POSIX library for userland executables
+sysroot.zip	Contents of the C:\windrbd directory (contains drbd config)
+unzip.exe	Needed to extract the sysroot.zip file
+cygbz2-1.dll
+install-windrbd.cmd Install script
+
+Windrbd configuration
+=====================
 
 Find the windrbd config files under C:\windrbd\etc
 C:\windrbd is the root of a Linux like directory tree, which
 should contain all files and directories needed by the
 userland admin tools (drbdadm, drbdsetup, ...).
 
+Right now, the C:\windrbd path is hardcoded and cannot be
+changed at installation time.
+
 To create a new resource, you can start from the
 C:\windrbd\etc\drbd.d\w0.res file which contains
 documentation about differences between Linux DRBD
 and windrbd resources.
 
+The main difference is that the disk and meta-disk
+parameters of the volume section take Microsoft Windows
+drive letters or global unique IDs to address the
+backing devices.
+
+For beta1 only, the device parameter takes an entry
+of the form /dev/drbd<n> where n is the minor number.
+The minor number speficies the drive letter under which
+the windrbd device can be accessed as follows:
+
+	/dev/drbd0	C:	(don't use that)
+	/dev/drbd1	D:
+	/dev/drbd2	E:
+	... 
+
+and so on. This mapping will go away in a future version.
+
+Windrbd registry keys
+=====================
+
+Find registry entries for windrbd under
+
+	\HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\drbd
+
+Usually you don't need to touch those registry values unless
+you wish to log kernel module messages to a remote machine (see
+below).
+
+Whenever you change a value in here, you need to reboot the machine
+for changes to take effect.
+
+Windrbd userland utilities
+==========================
+
 The userland admin tools should behave just the same way as
-their Linux counterparts.
+their Linux counterparts. Please see the DRBD users guide
+for DRBD 9.0 (windrbd is based on DRBD 9.0) at:
+
+	https://docs.linbit.com/docs/users-guide-9.0/
 
 A new tool is windrbd.exe, use it:
 
@@ -40,7 +108,42 @@ A new tool is windrbd.exe, use it:
    the windrbd utility if you have existing partitions which you
    want to use as windrbd backing devices.
 
-For other features just call it without parameters.
+For other features just call windrbd without parameters.
+
+Kernel log messages
+===================
+
+Windrbd logs by sending syslog UDP packets to the address
+specified in the syslog_ip registry key. This address defaults
+to 127.0.0.1 (localhost) which allows you to use 
+
+	windrbd log-server [<filename>]
+
+to capture log entries. The drawback is that in case the machine
+blue screens (which sometimes happens in this beta1 release) last
+log messages are lost. 
+
+To log to a Linux host running rsyslog you can enable logging
+by editing /etc/rsyslogd.conf and adding (or uncommenting) the
+following lines:
+
+	module(load="imudp")
+	input(type="imudp" port="514")
+
+then do a
+
+	bash$ sudo service syslog restart
+
+(assuming Ubuntu-style sudo, please adapt to your distro).
+
+Then set the syslog_ip registry key to the IPv4 address
+of your distribution (sorry no DNS supported) and reboot
+the windows machine. As soon as you run the first drbdadm /
+drbdsetup command log messages should appear in the 
+/var/log/syslog.log file.
+
+Tips and tricks
+===============
 
 Don't forget to disable Windows firewall or even better, open
 the configured windrbd TCP/IP ports for incoming connections.
@@ -51,6 +154,12 @@ this is most likely because the device is not primary. Do a
 	drbdadm primary <res>
 
 to make it primary.
+
+Restrictions
+============
+
+This is an incomplete list of not-yet-implemented features of
+windrbd.
 
 Flush buffers is currently not yet implemented.
 
@@ -66,3 +175,28 @@ near future. (windrbd.exe utility already can assign drive
 letters, but drbdadm can't).
 
 Userland callbacks are not implemented at the moment.
+
+We used mainly Windows 7 to test windrbd for now, it might
+happen that windrbd is more unstable on Windows 10 (or other
+Windows versions). We are working on it to get it more stable.
+Please remember that this is the first beta we release, so
+don't expect miracles .. ;)
+
+Right now, only NTFS is supported as device file system.
+
+When installing cygwin after windrbd was installed, there is
+a DLL conflict. To resolve, copy the cygwin1.dll from (usually)
+C:\cygwin64\bin to C:\windows\system32 (or reinstall windrbd, 
+which will also do that).
+
+Comments and suggestions
+========================
+
+We would love to hear feedback from you about test results
+as well as features you would like to see in windrbd. Please
+write your suggestions and comments to your Linbit sales
+representative.
+
+Thank you for being part of this early beta program,
+
+		Johannes Thoma and the Linbit team.
