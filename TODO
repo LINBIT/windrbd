@@ -34,6 +34,18 @@ TODO: New blue screen on connecting Windows 10 to buildhost Windows 7
 --------------------------------------------------------------
 windrbd-next-next
 
+In progress: Later: RCU needs change
+	At least call_rcu now calls the function. I don't think
+	that it is a good idea to port the linked list thing to
+	windows, we want to stay thin..
+
+	Update: talk to phil about current solution (just call
+	the function). I don't think that it is a good idea to
+	mimic the original intended behaviour in Windows.
+
+	Update: We now call the cleanup / on update function 
+	in the call_rcu() function, which makes the thing work.
+	Double check if that works as expected.
 TODO: /cygdrive/c/windrbd/var/lib/drbd should exist.
 
 TODO: drbdadm should call windrbd to assign the drive letter
@@ -61,8 +73,6 @@ TODO: invalidate read cache when becoming secondary.
 
 	Update: Moving that to beta2 because we are a little bit
 	short on time. Document that defect.
-
-TODO: IP address of "Closing unexpected connection" printk is still wrong
 
 Later: DRBD windows to windows sync is very slow.
 
@@ -188,6 +198,8 @@ In Progress: Port agruen's test suite to cygwin.
 	Depends on chmod working (else cannot install
 	opensshd).
 
+	Update: chmod works now.
+
 TODO: Re-port drbd_transport_tcp.c to windrbd's
 	drbd_transport_wtcp.c.
 	Update: currently it seems that the problem is
@@ -201,8 +213,6 @@ TODO: Re-port drbd_transport_tcp.c to windrbd's
 
 TODO: test no I/O when disk is failed.
 
-TODO: also test with 32 bit version of Windows 7
-	(does it exist for Windows 10?)
 --------------------------------------------------------------
 
 TODO: Test other file systems (FAT, FAT32, ...)
@@ -226,9 +236,6 @@ TODO: when losing Quorum go into read only mode.
 TODO: Device FFFFFA80038B03F0 accessed after it was deleted.
 	After formatting and drbdadm down
 
-TODO: clean up the registry
-	Except for logging IP we don't need anything IMHO
-
 TODO: check what _WIN32_DEBUG_OOS is really doing.
 	Dumping bitmap?
 
@@ -240,8 +247,6 @@ TODO: make ssh to Windows box work
 
 TODO: Inform windows about new drive.
 	So that explorer opens.
-
-TODO: windrbd.exe hide-ntfs-partition
 
 TODO: on patching boot sector, inform Windows that file system is
 	raw now.
@@ -258,6 +263,9 @@ TODO: check out drbd-utils from github and see if that works.
 ----------------------------------------------------------------------
 
 TODO: check out mantech wdrbd and see if it works (and why)
+	Update: mantech WDRBD lacks many features we have
+	in windrbd most notably: it cannot connect to a
+	Linux DRBD. It does not support internal meta disk.
 
 TODO: How is sync done? 
 	Data appears delayed on backing device (about 10 - 20 
@@ -300,9 +308,6 @@ TODO: We should really lock the backing devices using NT kernel
 
 TODO: Implement function stubs created when integrating DRBD 9.0.9
 
-TODO: We want to see the syslog output when the system did boot, not
-	only when we configure a DRBD device.
-
 TODO: Have a function that initialized all (global) spinlocks
 	and replace the racy solution (with an flag indicating
 	wheter it is initialized) we have now.
@@ -323,18 +328,6 @@ TODO: fix the macro redefinition problems in drbd_windows.c
 	Update: check if the prototypes are still needed.
 	Update: we probably reject this.
 
-In progress: Later: RCU needs change
-	At least call_rcu now calls the function. I don't think
-	that it is a good idea to port the linked list thing to
-	windows, we want to stay thin..
-
-	Update: talk to phil about current solution (just call
-	the function). I don't think that it is a good idea to
-	mimic the original intended behaviour in Windows.
-
-	Update: We now call the cleanup / on update function 
-	in the call_rcu() function, which makes the thing work.
-	Double check if that works as expected.
 --------------------------------
 
 Done: fix patch errors on Linux side build (conversion)
@@ -1442,4 +1435,19 @@ Done: Don't install cygwin1.dll when cygwin is found on the target.
 
 	Now, taking cygwin1.dll from existing installation. Done:
 	Test if this works.
+
+Done: IP address of "Closing unexpected connection" printk is still wrong
+
+Rejected: also test with 32 bit version of Windows 7
+	(does it exist for Windows 10?)
+
+Done: clean up the registry
+	Except for logging IP we don't need anything IMHO
+
+Done: windrbd.exe hide-ntfs-partition
+
+Rejected: We want to see the syslog output when the system did boot, not
+	only when we configure a DRBD device.
+
+	This is sometimes practical.
 
