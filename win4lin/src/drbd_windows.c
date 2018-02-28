@@ -670,10 +670,6 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 {
 	struct bio *bio;
 
-	if(nr_iovecs == 0) { // DW-1242 fix nr_iovecs is zero case.
-		return 0;
-	}
-	
 	bio = kzalloc(sizeof(struct bio) + nr_iovecs * sizeof(struct bio_vec), gfp_mask, Tag);
 	if (!bio)
 	{
