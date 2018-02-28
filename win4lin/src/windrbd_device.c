@@ -385,9 +385,7 @@ printk("I/O request on a failed disk.\n");
 		goto exit;
 	}
         IoMarkIrpPending(irp);
-printk("1\n");
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
-printk("2\n");
 
 	return STATUS_PENDING;
 
@@ -416,6 +414,35 @@ static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp
         return STATUS_SUCCESS;
 }
 
+static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	struct block_device *dev = device->DeviceExtension;
+	struct bio *bio;
+	NTSTATUS status;
+
+	bio = bio_alloc(GFP_NOIO, 0, 'DBRD');
+	if (bio == NULL) {
+		status = STATUS_INSUFFICIENT_RESOURCES;
+		goto exit;
+	}
+	bio->bi_rw = WRITE | DRBD_REQ_PREFLUSH;
+	bio->bi_size = 0;
+	bio->bi_end_io = windrbd_bio_finished;
+	bio->bi_upper_irp = irp;
+	bio->bi_bdev = dev;
+
+	drbd_make_request(dev->drbd_device->rq_queue, bio);
+
+        IoMarkIrpPending(irp);
+	return STATUS_PENDING;
+
+exit:
+	irp->IoStatus.Status = status;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+        return status;
+}
+
 void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 {
 	int i;
@@ -431,7 +458,7 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	obj->MajorFunction[IRP_MJ_CLOSE] = windrbd_close;
 	obj->MajorFunction[IRP_MJ_CLEANUP] = windrbd_cleanup;
 	obj->MajorFunction[IRP_MJ_SHUTDOWN] = windrbd_shutdown;
-	/* TODO: IRP_MJ_FLUSH */
+	obj->MajorFunction[IRP_MJ_FLUSH_BUFFERS] = windrbd_flush;
 
 	status = IoRegisterShutdownNotification(mvolRootDeviceObject);
 	if (status != STATUS_SUCCESS) {
