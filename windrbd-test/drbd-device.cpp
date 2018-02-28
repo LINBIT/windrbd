@@ -422,3 +422,18 @@ TEST(win_drbd, copy_disk_to_file)
 	CloseHandle(f);
 }
 
+TEST(win_drbd, flush_disk)
+{
+	HANDLE h = do_open_device();
+	BOOL ret;
+	int err;
+
+	ret = FlushFileBuffers(h);
+	err = GetLastError();
+
+	EXPECT_NE(ret, 0);
+	EXPECT_EQ(err, ERROR_SUCCESS);
+
+	CloseHandle(h);
+}
+
