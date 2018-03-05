@@ -1919,7 +1919,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 printk("flushing\n");
 		io = IRP_MJ_FLUSH_BUFFERS;
 		buffer = NULL;
-		bio->bi_size = 0;
+		bio->bi_size = 0;	/* TODO: check if this was 0 before */
 		first_size = 0;
 		bio->offset.QuadPart = 0;
 printk("1\n");
@@ -2039,6 +2039,7 @@ printk("f\n");
 
 printk("g\n");
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
+//	if (io != IRP_MJ_FLUSH_BUFFERS)
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
 printk("h\n");
@@ -2048,6 +2049,10 @@ printk("h\n");
 	if (io == IRP_MJ_READ) {
 		pIoNextStackLocation->Parameters.Read.Length = total_size;
 	}
+/* TODO ... 
+	if (io == IRP_MJ_FLUSH_BUFFERS) {
+		pIoNextStackLocation->Parameters.
+*/
 printk("i\n");
 
 		/* Take a reference to this thread, it is referenced
