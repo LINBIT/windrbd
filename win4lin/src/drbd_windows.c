@@ -1915,13 +1915,14 @@ static int windrbd_generic_make_request(struct bio *bio)
 	int err = -EIO;
 	unsigned int first_size;
 	
-	if ((bio->bi_rw & WRITE_FLUSH) == WRITE_FLUSH) {
+	if ((bio->bi_rw & (WRITE | DRBD_REQ_PREFLUSH)) == (WRITE | DRBD_REQ_PREFLUSH)) {
 printk("flushing\n");
 		io = IRP_MJ_FLUSH_BUFFERS;
 		buffer = NULL;
 		bio->bi_size = 0;
 		first_size = 0;
 		bio->offset.QuadPart = 0;
+printk("1\n");
 	} else {
 		if (bio->bi_vcnt == 0) {
 			printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
@@ -1942,9 +1943,12 @@ printk("flushing\n");
 // }
 
 
+printk("2\n");
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
+printk("3\n");
 		patch_boot_sector(buffer, 0, 0);
 	}
+printk("4\n");
 
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,
@@ -1954,11 +1958,13 @@ printk("flushing\n");
 				&bio->offset,
 				&bio->io_stat
 				);
+printk("5\n");
 
 	if (!bio->bi_irps[bio->bi_this_request]) {
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
 		return -ENOMEM;
 	}
+printk("6\n");
 
 		/* Unlock the MDLs pages locked by
 		 * IoBuildAsynchronousFsdRequest, we must not have
@@ -1969,23 +1975,31 @@ printk("flushing\n");
 		 * MmBuildMdlForNonPagedPool() blue screens.
 		 */
 
+printk("7\n");
 	if (!bio->bi_paged_memory) {
+printk("8\n");
 		struct _MDL *first_mdl;
 		first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress;
 		if (first_mdl != NULL) {
+printk("9\n");
 			if (first_mdl->MdlFlags & MDL_PAGES_LOCKED) {
 				MmUnlockPages(first_mdl);
 			}
-		}
-		if (!bio->bi_might_access_filesystem)
-			MmBuildMdlForNonPagedPool(bio->bi_irps[bio->bi_this_request]->MdlAddress);
+printk("a\n");
+			if (!bio->bi_might_access_filesystem)
+				MmBuildMdlForNonPagedPool(first_mdl);
 
+printk("x\n");
 			/* Else do nothing. Memory cannot be freed, so
 			 * use static memory for the file system test.
 			 */
 
+		}
+printk("b\n");
+
 	}
 		/* Else leave it locked */
+printk("c\n");
 
 	/* Windows tries to split up MDLs and crashes when
 	 * there are more than 32*4K MDLs.
@@ -1995,6 +2009,7 @@ printk("flushing\n");
 
 		/* TODO: use bio->bi_size it should be correct now. */
 
+printk("d\n");
 	int total_size = first_size;
 
 	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {
@@ -2016,30 +2031,38 @@ printk("flushing\n");
 				MmBuildMdlForNonPagedPool(mdl);
 	}
 
+printk("e\n");
 	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
 
+printk("f\n");
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
+printk("g\n");
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
+printk("h\n");
 	if (io == IRP_MJ_WRITE) {
 		pIoNextStackLocation->Parameters.Write.Length = total_size;
 	}
 	if (io == IRP_MJ_READ) {
 		pIoNextStackLocation->Parameters.Read.Length = total_size;
 	}
+printk("i\n");
 
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP.
 		 */
 
 	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
+printk("j\n");
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
+printk("k\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
+printk("l\n");
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
@@ -2051,11 +2074,14 @@ printk("flushing\n");
 			     * must not be called).
 			     */
 	}
+printk("m\n");
 	return 0;
 
 out_free_irp:
+printk("n\n");
 	free_mdls_and_irp(bio);
 
+printk("o\n");
 	return err;
 }
 

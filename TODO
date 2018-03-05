@@ -1,3 +1,10 @@
+TODO: Create file with version number
+
+TODO: Check in install script if it runs as adminstrator.
+
+TODO: Why doesn't it work on Phil's machine?
+
+--------------------------------------------------------------------
 windrbd-next: beta for selected customers
 
 TODO: Windows 10 would require more testing.
@@ -51,7 +58,7 @@ TODO: /cygdrive/c/windrbd/var/lib/drbd should exist.
 TODO: drbdadm should call windrbd to assign the drive letter
 	(also remove 'C'+minor magic from kernel)
 
-TODO: how and when is flush to backing device done?
+In progress: how and when is flush to backing device done?
 	This is important. Right now NTFS files only appear on
 	Linux when sync is done manually. Should sync at least
 	when becoming secondary. sync must be done while primary
