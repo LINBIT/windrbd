@@ -114,7 +114,9 @@ void msleep(int ms)
 	LARGE_INTEGER d;
 
 	d.QuadPart = -10000LL * ms;
+printk(KERN_INFO "into KeDelayExecutionThread\n");
 	KeDelayExecutionThread(KernelMode, FALSE, &d);
+printk(KERN_INFO "out of KeDelayExecutionThread\n");
 }
 
 void init_windrbd(void)
