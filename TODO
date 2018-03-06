@@ -4,6 +4,8 @@ TODO: Check in install script if it runs as adminstrator.
 
 TODO: Why doesn't it work on Phil's machine?
 
+TODO: msi installer instead of self extracting exe.
+
 --------------------------------------------------------------------
 windrbd-next: beta for selected customers
 
@@ -136,8 +138,6 @@ TODO: check if windrbd can be loaded not at boot time but later.
 	Working on it .. test with demand load on a fresh installed
 	windows (it blue screens on boot if there was a windrbd before
 	installed).
-
-TODO: msi installer instead of self extracting exe.
 
 TODO: upgrade DRBD to 9.0.12
 

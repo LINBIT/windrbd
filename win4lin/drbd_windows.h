@@ -279,6 +279,7 @@ enum rq_flag_bits {
 
 #define READ					0
 #define WRITE					1
+/* TODO: ?? should flush ?? */
 #define WRITE_SYNC				WRITE	// REQ_SYNC | REQ_NOIDLE not used.
 
 // for drbd_actlog.c
