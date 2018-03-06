@@ -44,6 +44,7 @@
 #define WINDRBD_SECTOR_SHIFT 0
 
 void init_windrbd(void);
+void msleep(int ms);
 
 struct drbd_transport;
 enum drbd_stream;

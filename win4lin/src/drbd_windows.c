@@ -109,6 +109,14 @@ atomic_t g_monitor_mnt_working = FALSE;
 static LIST_HEAD(backing_devices);
 static struct mutex read_bootsector_mutex;
 
+void msleep(int ms)
+{
+	LARGE_INTEGER d;
+
+	d.QuadPart = -10000LL * ms;
+	KeDelayExecutionThread(KernelMode, FALSE, &d);
+}
+
 void init_windrbd(void)
 {
 	mutex_init(&read_bootsector_mutex);
