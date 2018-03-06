@@ -1903,6 +1903,31 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 	return ret;
 }
 
+static int make_flush_request(struct bio *bio)
+{
+	NTSTATUS status;
+
+	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
+				IRP_MJ_FLUSH_BUFFERS,
+				bio->bi_bdev->windows_device,
+				NULL,
+				0,
+				NULL,
+				&bio->io_stat
+				);
+
+	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
+
+	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
+
+	if (!NT_SUCCESS(status)) {
+		printk(KERN_WARNING "flush request failed with status %x\n", status);
+		return -EIO;
+	}
+
+	return 0;
+}
+
 static int windrbd_generic_make_request(struct bio *bio)
 {
 	NTSTATUS status;
@@ -1915,28 +1940,19 @@ static int windrbd_generic_make_request(struct bio *bio)
 	int err = -EIO;
 	unsigned int first_size;
 	
-	if ((bio->bi_rw & (WRITE | DRBD_REQ_PREFLUSH)) == (WRITE | DRBD_REQ_PREFLUSH)) {
-printk("flushing\n");
-		io = IRP_MJ_FLUSH_BUFFERS;
-		buffer = NULL;
-		bio->bi_size = 0;	/* TODO: check if this was 0 before */
-		first_size = 0;
-		bio->offset.QuadPart = 0;
-printk("1\n");
-	} else {
-		if (bio->bi_vcnt == 0) {
-			printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
-			return -EIO;
-		}
-		if (bio->bi_rw & WRITE) {
-			io = IRP_MJ_WRITE;
-		} else {
-			io = IRP_MJ_READ;
-		}
-		bio->offset.QuadPart = bio->bi_sector << 9;
-		buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_first_element].bv_page->addr) + bio->bi_io_vec[bio->bi_first_element].bv_offset); 
-		first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
+	if (bio->bi_vcnt == 0) {
+		printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
+		return -EIO;
 	}
+	if (bio->bi_rw & WRITE) {
+		io = IRP_MJ_WRITE;
+	} else {
+		io = IRP_MJ_READ;
+	}
+
+	bio->offset.QuadPart = bio->bi_sector << 9;
+	buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_first_element].bv_page->addr) + bio->bi_io_vec[bio->bi_first_element].bv_offset); 
+	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
 // printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
@@ -2039,7 +2055,6 @@ printk("f\n");
 
 printk("g\n");
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
-//	if (io != IRP_MJ_FLUSH_BUFFERS)
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
 printk("h\n");
@@ -2049,10 +2064,6 @@ printk("h\n");
 	if (io == IRP_MJ_READ) {
 		pIoNextStackLocation->Parameters.Read.Length = total_size;
 	}
-/* TODO ... 
-	if (io == IRP_MJ_FLUSH_BUFFERS) {
-		pIoNextStackLocation->Parameters.
-*/
 printk("i\n");
 
 		/* Take a reference to this thread, it is referenced
@@ -2105,13 +2116,21 @@ int generic_make_request(struct bio *bio)
 	int total_size;
 	int orig_size;
 	int e;
+	int flush_request;
 
 	bio_get(bio);
 
+printk(KERN_INFO "bio: %p bio->bi_rw: %x bio->bi_size: %d bio->bi_vcnt: %d\n", bio, bio->bi_rw, bio->bi_size, bio->bi_vcnt);
+
+	flush_request = (bio->bi_rw & DRBD_REQ_PREFLUSH) != 0;
+
 	if (bio->bi_vcnt == 0)
-		bio->bi_num_requests = 1;	/* a flush request */
+		bio->bi_num_requests = flush_request;
 	else
-		bio->bi_num_requests = (bio->bi_vcnt-1)/MAX_MDL_ELEMENTS + 1;
+		bio->bi_num_requests = (bio->bi_vcnt-1)/MAX_MDL_ELEMENTS + 1 + flush_request;
+
+	if (bio->bi_num_requests == 0)
+		return 0;
 
 	bio->bi_irps = kmalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, 0, 'XXXX');
 	if (bio->bi_irps == NULL) {
@@ -2124,8 +2143,10 @@ int generic_make_request(struct bio *bio)
 	orig_sector = sector = bio->bi_sector;
 	orig_size = bio->bi_size;
 
+	ret = 0;
+
 	for (bio->bi_this_request=0; 
-             bio->bi_this_request<bio->bi_num_requests; 
+             bio->bi_this_request<bio->bi_num_requests - flush_request; 
              bio->bi_this_request++) {
 		bio->bi_first_element = bio->bi_this_request*MAX_MDL_ELEMENTS;
 		bio->bi_last_element = (bio->bi_this_request+1)*MAX_MDL_ELEMENTS;
@@ -2142,22 +2163,23 @@ int generic_make_request(struct bio *bio)
 		ret = windrbd_generic_make_request(bio);
 		if (ret < 0) {
 			drbd_bio_endio(bio, BLK_STS_IOERR);
-
-			bio->bi_sector = orig_sector;
-			bio->bi_size = orig_size;
-
-			bio_put(bio);
-			return ret;
+			goto out;
 		}
 		sector += total_size >> 9;
 	}
+	if (flush_request) {
+		ret = make_flush_request(bio);
+		if (ret < 0)
+			drbd_bio_endio(bio, BLK_STS_IOERR);
+	}
 
+out:
 	bio->bi_sector = orig_sector;
 	bio->bi_size = orig_size;
 
 	bio_put(bio);
 
-	return 0;
+	return ret;
 }
 
 void bio_endio(struct bio *bio, int error)
