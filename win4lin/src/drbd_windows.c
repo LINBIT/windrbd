@@ -1842,6 +1842,8 @@ NTSTATUS DrbdIoCompletion(
 	if (num_completed == bio->bi_num_requests)
 		drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
 
+	bio_put(bio);
+
 		/* Tell IO manager that it should not touch the
 		 * irp. It has yet to be freed together with the
 		 * bio.
@@ -1918,11 +1920,12 @@ static int make_flush_request(struct bio *bio)
 
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
+	bio_get(bio);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
-	if (!NT_SUCCESS(status)) {
+	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
 		printk(KERN_WARNING "flush request failed with status %x\n", status);
-		return -EIO;
+		return EIO;	/* Positive value means do not call endio function */
 	}
 
 	return 0;
@@ -2077,6 +2080,7 @@ printk("j\n");
 		goto out_free_irp;
 	}
 printk("k\n");
+	bio_get(bio);	/* To be put in completion routine */
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 printk("l\n");
 
@@ -2123,14 +2127,19 @@ int generic_make_request(struct bio *bio)
 printk(KERN_INFO "bio: %p bio->bi_rw: %x bio->bi_size: %d bio->bi_vcnt: %d\n", bio, bio->bi_rw, bio->bi_size, bio->bi_vcnt);
 
 	flush_request = (bio->bi_rw & DRBD_REQ_PREFLUSH) != 0;
+//	flush_request = 0;
 
 	if (bio->bi_vcnt == 0)
 		bio->bi_num_requests = flush_request;
 	else
 		bio->bi_num_requests = (bio->bi_vcnt-1)/MAX_MDL_ELEMENTS + 1 + flush_request;
 
-	if (bio->bi_num_requests == 0)
+	if (bio->bi_num_requests == 0) {
+printk(KERN_INFO "bio->bi_num_requests is 0.\n");
+		drbd_bio_endio(bio, 0);
+		bio_put(bio);
 		return 0;
+	}
 
 	bio->bi_irps = kmalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, 0, 'XXXX');
 	if (bio->bi_irps == NULL) {
@@ -2145,9 +2154,11 @@ printk(KERN_INFO "bio: %p bio->bi_rw: %x bio->bi_size: %d bio->bi_vcnt: %d\n", b
 
 	ret = 0;
 
+printk("1\n");
 	for (bio->bi_this_request=0; 
-             bio->bi_this_request<bio->bi_num_requests - flush_request; 
+             bio->bi_this_request<(bio->bi_num_requests - flush_request); 
              bio->bi_this_request++) {
+printk("2 %d\n", bio->bi_this_request);
 		bio->bi_first_element = bio->bi_this_request*MAX_MDL_ELEMENTS;
 		bio->bi_last_element = (bio->bi_this_request+1)*MAX_MDL_ELEMENTS;
 		if (bio->bi_vcnt < bio->bi_last_element)
@@ -2162,6 +2173,7 @@ printk(KERN_INFO "bio: %p bio->bi_rw: %x bio->bi_size: %d bio->bi_vcnt: %d\n", b
 
 		ret = windrbd_generic_make_request(bio);
 		if (ret < 0) {
+printk("x\n");
 			drbd_bio_endio(bio, BLK_STS_IOERR);
 			goto out;
 		}
@@ -2173,11 +2185,17 @@ printk(KERN_INFO "bio: %p bio->bi_rw: %x bio->bi_size: %d bio->bi_vcnt: %d\n", b
 			drbd_bio_endio(bio, BLK_STS_IOERR);
 	}
 
+	if (ret > 0)
+		ret = -ret;
+
+printk("3\n");
 out:
 	bio->bi_sector = orig_sector;
 	bio->bi_size = orig_size;
+printk("4\n");
 
 	bio_put(bio);
+printk("5\n");
 
 	return ret;
 }
