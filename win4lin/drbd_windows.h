@@ -898,7 +898,6 @@ extern int atomic_xchg(atomic_t *v, int n);
 static inline void bio_get(struct bio *bio)
 {
 	atomic_inc(&bio->bi_cnt);
-printk("refcnt %d bio %p\n", bio->bi_cnt, bio);
 }
 
 // from rcu_list.h

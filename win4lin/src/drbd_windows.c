@@ -118,9 +118,7 @@ void msleep(int ms)
 		printk("msleep called with irqlevel > DISPATCH_LEVEL (%d)\n", KeGetCurrentIrql());
 	} else {
 		d.QuadPart = -10000LL * ms;
-printk(KERN_INFO "into KeDelayExecutionThread\n");
 		KeDelayExecutionThread(KernelMode, FALSE, &d);
-printk(KERN_INFO "out of KeDelayExecutionThread\n");
 	}
 }
 
@@ -702,7 +700,6 @@ static void free_mdls_and_irp(struct bio *bio)
 	struct _MDL *mdl, *next_mdl;
 	int r;
 
-printk("1\n");
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */
@@ -710,9 +707,7 @@ printk("1\n");
 	if (bio->bi_irps == NULL)
 		return;
 
-printk("2\n");
 	for (r=0;r<bio->bi_num_requests;r++) {
-printk("r: %d\n", r);
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
@@ -720,28 +715,21 @@ printk("r: %d\n", r);
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
-printk("3\n");
-
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
 		     mdl = next_mdl) {
-printk("4 mdl %p\n", mdl);
 			next_mdl = mdl->Next;
 			if (bio->bi_paged_memory && mdl->MdlFlags & MDL_PAGES_LOCKED) {
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 			}
 			IoFreeMdl(mdl); // This function will also unmap pages.
 		}
-printk("5\n");
 		bio->bi_irps[r]->MdlAddress = NULL;
-printk("6\n");
 		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
-printk("7\n");
 
 		IoFreeIrp(bio->bi_irps[r]);
 	}
 
-printk("8\n");
 	kfree(bio->bi_irps);
 }
 
@@ -749,7 +737,6 @@ void bio_put(struct bio *bio)
 {
 	int cnt;
 	cnt = atomic_dec(&bio->bi_cnt);
-printk("refcnt: %d bio: %p\n", cnt, bio);
 	if (cnt == 0)
 		bio_free(bio);
 }
@@ -1999,12 +1986,9 @@ static int windrbd_generic_make_request(struct bio *bio)
 // }
 
 
-printk("2\n");
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
-printk("3\n");
 		patch_boot_sector(buffer, 0, 0);
 	}
-printk("4\n");
 
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,
@@ -2014,13 +1998,11 @@ printk("4\n");
 				&bio->offset,
 				&bio->io_stat
 				);
-printk("5\n");
 
 	if (!bio->bi_irps[bio->bi_this_request]) {
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
 		return -ENOMEM;
 	}
-printk("6\n");
 
 		/* Unlock the MDLs pages locked by
 		 * IoBuildAsynchronousFsdRequest, we must not have
@@ -2031,31 +2013,23 @@ printk("6\n");
 		 * MmBuildMdlForNonPagedPool() blue screens.
 		 */
 
-printk("7\n");
 	if (!bio->bi_paged_memory) {
-printk("8\n");
 		struct _MDL *first_mdl;
 		first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress;
 		if (first_mdl != NULL) {
-printk("9\n");
 			if (first_mdl->MdlFlags & MDL_PAGES_LOCKED) {
 				MmUnlockPages(first_mdl);
 			}
-printk("a\n");
 			if (!bio->bi_might_access_filesystem)
 				MmBuildMdlForNonPagedPool(first_mdl);
 
-printk("x\n");
 			/* Else do nothing. Memory cannot be freed, so
 			 * use static memory for the file system test.
 			 */
 
 		}
-printk("b\n");
-
 	}
 		/* Else leave it locked */
-printk("c\n");
 
 	/* Windows tries to split up MDLs and crashes when
 	 * there are more than 32*4K MDLs.
@@ -2065,7 +2039,6 @@ printk("c\n");
 
 		/* TODO: use bio->bi_size it should be correct now. */
 
-printk("d\n");
 	int total_size = first_size;
 
 	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {
@@ -2087,42 +2060,31 @@ printk("d\n");
 				MmBuildMdlForNonPagedPool(mdl);
 	}
 
-printk("e\n");
 	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
 
-printk("f\n");
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
-printk("g\n");
 	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
 	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
 
-printk("h\n");
 	if (io == IRP_MJ_WRITE) {
 		pIoNextStackLocation->Parameters.Write.Length = total_size;
 	}
 	if (io == IRP_MJ_READ) {
 		pIoNextStackLocation->Parameters.Read.Length = total_size;
 	}
-printk("i\n");
 
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP.
 		 */
 
 	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
-printk("j\n");
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
-printk("k\n");
 	bio_get(bio);	/* To be put in completion routine */
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
-printk("l\n");
-
-printk("injecting fault.\n");
-return EIO;
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
@@ -2134,14 +2096,11 @@ return EIO;
 			     * must not be called).
 			     */
 	}
-printk("m\n");
 	return 0;
 
 out_free_irp:
-printk("n\n");
 	free_mdls_and_irp(bio);
 
-printk("o\n");
 	return err;
 }
 
@@ -2167,7 +2126,6 @@ int generic_make_request(struct bio *bio)
 printk(KERN_INFO "bio: %p bio->bi_rw: %x bio->bi_size: %d bio->bi_vcnt: %d\n", bio, bio->bi_rw, bio->bi_size, bio->bi_vcnt);
 
 	flush_request = (bio->bi_rw & DRBD_REQ_PREFLUSH) != 0;
-//	flush_request = 0;
 
 	if (bio->bi_vcnt == 0)
 		bio->bi_num_requests = flush_request;
@@ -2175,7 +2133,6 @@ printk(KERN_INFO "bio: %p bio->bi_rw: %x bio->bi_size: %d bio->bi_vcnt: %d\n", b
 		bio->bi_num_requests = (bio->bi_vcnt-1)/MAX_MDL_ELEMENTS + 1 + flush_request;
 
 	if (bio->bi_num_requests == 0) {
-printk(KERN_INFO "bio->bi_num_requests is 0.\n");
 		drbd_bio_endio(bio, 0);
 		bio_put(bio);
 		return 0;
@@ -2197,11 +2154,9 @@ printk(KERN_INFO "bio->bi_num_requests is 0.\n");
 
 	ret = 0;
 
-printk("1\n");
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<(bio->bi_num_requests - flush_request); 
              bio->bi_this_request++) {
-printk("2 %d\n", bio->bi_this_request);
 		bio->bi_first_element = bio->bi_this_request*MAX_MDL_ELEMENTS;
 		bio->bi_last_element = (bio->bi_this_request+1)*MAX_MDL_ELEMENTS;
 		if (bio->bi_vcnt < bio->bi_last_element)
@@ -2216,7 +2171,6 @@ printk("2 %d\n", bio->bi_this_request);
 
 		ret = windrbd_generic_make_request(bio);
 		if (ret < 0) {
-printk("x\n");
 			drbd_bio_endio(bio, BLK_STS_IOERR);
 			goto out;
 		}
@@ -2231,14 +2185,11 @@ printk("x\n");
 	if (ret > 0)
 		ret = -ret;
 
-printk("3\n");
 out:
 	bio->bi_sector = orig_sector;
 	bio->bi_size = orig_size;
-printk("4\n");
 
 	bio_put(bio);
-printk("5\n");
 
 	return ret;
 }
