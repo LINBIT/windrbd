@@ -2766,9 +2766,7 @@ void delete_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 printk(KERN_INFO "delete_block_device %p\n", bdev);
-printk(KERN_INFO "delete_block_device NOT DONE\n", bdev);
 
-#if 0
 	if (bdev->bd_disk) {
 		if (bdev->bd_disk->queue)
 			blk_cleanup_queue(bdev->bd_disk->queue);
@@ -2779,7 +2777,6 @@ printk(KERN_INFO "delete_block_device NOT DONE\n", bdev);
 
 	list_del(&bdev->backing_devices_list);
 	kfree(bdev);
-#endif
 }
 
 static NTSTATUS resolve_nt_kernel_link(UNICODE_STRING *upath, UNICODE_STRING *link_target)

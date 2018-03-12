@@ -1359,12 +1359,9 @@ static inline void synchronize_rcu()
 /* TODO: test this */
 static inline void call_rcu(struct rcu_head *head, rcu_callback_t func)
 {
-printk("RCU: not calling function.\n");
-/*
 	KIRQL rcu_flags = ExAcquireSpinLockExclusive(&g_rcuLock);
 	func(head);
 	ExReleaseSpinLockExclusive(&g_rcuLock, rcu_flags);
-*/
 }
 
 extern void local_irq_disable();
