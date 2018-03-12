@@ -749,6 +749,7 @@ void bio_put(struct bio *bio)
 {
 	int cnt;
 	cnt = atomic_dec(&bio->bi_cnt);
+printk("refcnt: %d bio: %p\n", cnt, bio);
 	if (cnt == 0)
 		bio_free(bio);
 }
@@ -2119,6 +2120,9 @@ printk("k\n");
 	bio_get(bio);	/* To be put in completion routine */
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 printk("l\n");
+
+printk("injecting fault.\n");
+return EIO;
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */

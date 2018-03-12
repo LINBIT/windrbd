@@ -747,7 +747,6 @@ static inline int submit_bio(struct bio *bio)
 {
 	return generic_make_request(bio);
 }
-#define bio_get(bio)			atomic_inc(&(bio)->bi_cnt) 
 
 #define bio_iovec_idx(bio, idx)		(&((bio)->bi_io_vec[(idx)]))
 #define __bio_for_each_segment(bvl, bio, i, start_idx)			\
@@ -895,6 +894,12 @@ extern int atomic_cmpxchg(atomic_t *v, int old, int new);
 extern int atomic_read(const atomic_t *v);
 extern LONGLONG atomic_read64(const atomic_t64 *v);
 extern int atomic_xchg(atomic_t *v, int n);
+
+static inline void bio_get(struct bio *bio)
+{
+	atomic_inc(&bio->bi_cnt);
+printk("refcnt %d bio %p\n", bio->bi_cnt, bio);
+}
 
 // from rcu_list.h
 
