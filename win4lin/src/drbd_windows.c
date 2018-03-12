@@ -702,6 +702,7 @@ static void free_mdls_and_irp(struct bio *bio)
 	struct _MDL *mdl, *next_mdl;
 	int r;
 
+printk("1\n");
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */
@@ -709,8 +710,9 @@ static void free_mdls_and_irp(struct bio *bio)
 	if (bio->bi_irps == NULL)
 		return;
 
+printk("2\n");
 	for (r=0;r<bio->bi_num_requests;r++) {
-
+printk("r: %d\n", r);
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
@@ -718,21 +720,28 @@ static void free_mdls_and_irp(struct bio *bio)
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
+printk("3\n");
+
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
 		     mdl = next_mdl) {
+printk("4 mdl %p\n", mdl);
 			next_mdl = mdl->Next;
 			if (bio->bi_paged_memory && mdl->MdlFlags & MDL_PAGES_LOCKED) {
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 			}
 			IoFreeMdl(mdl); // This function will also unmap pages.
 		}
+printk("5\n");
 		bio->bi_irps[r]->MdlAddress = NULL;
+printk("6\n");
 		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
+printk("7\n");
 
 		IoFreeIrp(bio->bi_irps[r]);
 	}
 
+printk("8\n");
 	kfree(bio->bi_irps);
 }
 
@@ -1934,7 +1943,18 @@ static int make_flush_request(struct bio *bio)
 				&bio->io_stat
 				);
 
+	if (bio->bi_irps[bio->bi_this_request] == NULL) {
+		printk(KERN_ERR "Cannot build IRP.\n");
+		return -EIO;
+	}
+
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
+
+	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
+	if (!NT_SUCCESS(status)) {
+		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
+		return -EIO;
+	}
 
 	bio_get(bio);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
@@ -2157,7 +2177,10 @@ printk(KERN_INFO "bio->bi_num_requests is 0.\n");
 		return 0;
 	}
 
-	bio->bi_irps = kmalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, 0, 'XXXX');
+		/* In case we fail early, bi_irps[n].MdlAddress must be
+		 * NULL.
+		 */
+	bio->bi_irps = kzalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, 0, 'XXXX');
 	if (bio->bi_irps == NULL) {
 		drbd_bio_endio(bio, BLK_STS_IOERR);
 		bio_put(bio);
