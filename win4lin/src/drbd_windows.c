@@ -113,10 +113,15 @@ void msleep(int ms)
 {
 	LARGE_INTEGER d;
 
-	d.QuadPart = -10000LL * ms;
+	if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {
+		/* Maybe busy loop? */
+		printk("msleep called with irqlevel > DISPATCH_LEVEL (%d)\n", KeGetCurrentIrql());
+	} else {
+		d.QuadPart = -10000LL * ms;
 printk(KERN_INFO "into KeDelayExecutionThread\n");
-	KeDelayExecutionThread(KernelMode, FALSE, &d);
+		KeDelayExecutionThread(KernelMode, FALSE, &d);
 printk(KERN_INFO "out of KeDelayExecutionThread\n");
+	}
 }
 
 void init_windrbd(void)
@@ -1848,6 +1853,7 @@ NTSTATUS DrbdIoCompletion(
 	}
 */
 
+/* TODO: if failed call drbd_bio_endio always */
 	int num_completed = atomic_inc_return(&bio->bi_requests_completed);
 	if (num_completed == bio->bi_num_requests)
 		drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
@@ -2737,7 +2743,9 @@ void delete_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 printk(KERN_INFO "delete_block_device %p\n", bdev);
+printk(KERN_INFO "delete_block_device NOT DONE\n", bdev);
 
+#if 0
 	if (bdev->bd_disk) {
 		if (bdev->bd_disk->queue)
 			blk_cleanup_queue(bdev->bd_disk->queue);
@@ -2748,6 +2756,7 @@ printk(KERN_INFO "delete_block_device %p\n", bdev);
 
 	list_del(&bdev->backing_devices_list);
 	kfree(bdev);
+#endif
 }
 
 static NTSTATUS resolve_nt_kernel_link(UNICODE_STRING *upath, UNICODE_STRING *link_target)
