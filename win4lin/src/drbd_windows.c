@@ -1921,6 +1921,7 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 static int make_flush_request(struct bio *bio)
 {
 	NTSTATUS status;
+	PIO_STACK_LOCATION next_stack_location;
 
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				IRP_MJ_FLUSH_BUFFERS,
@@ -1944,6 +1945,13 @@ static int make_flush_request(struct bio *bio)
 		return -EIO;
 	}
 
+	next_stack_location = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
+
+	next_stack_location->DeviceObject = bio->bi_bdev->windows_device;
+	next_stack_location->FileObject = bio->bi_bdev->file_object;
+
+printk("next_stack_location->MajorFunction: %x next_stack_location->MinorFunction: %x\n", next_stack_location->MajorFunction, next_stack_location->MinorFunction);
+
 	bio_get(bio);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
@@ -1961,7 +1969,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 
 	void *buffer;
 	ULONG io = 0;
-	PIO_STACK_LOCATION pIoNextStackLocation = NULL;
+	PIO_STACK_LOCATION next_stack_location;
 	struct _MDL *mdl, *nextMdl;
 	int i;
 	int err = -EIO;
@@ -2060,18 +2068,18 @@ static int windrbd_generic_make_request(struct bio *bio)
 				MmBuildMdlForNonPagedPool(mdl);
 	}
 
-	pIoNextStackLocation = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
-
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
-	pIoNextStackLocation->DeviceObject = bio->bi_bdev->windows_device;
-	pIoNextStackLocation->FileObject = bio->bi_bdev->file_object;
+	next_stack_location = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
+
+	next_stack_location->DeviceObject = bio->bi_bdev->windows_device;
+	next_stack_location->FileObject = bio->bi_bdev->file_object;
 
 	if (io == IRP_MJ_WRITE) {
-		pIoNextStackLocation->Parameters.Write.Length = total_size;
+		next_stack_location->Parameters.Write.Length = total_size;
 	}
 	if (io == IRP_MJ_READ) {
-		pIoNextStackLocation->Parameters.Read.Length = total_size;
+		next_stack_location->Parameters.Read.Length = total_size;
 	}
 
 		/* Take a reference to this thread, it is referenced
