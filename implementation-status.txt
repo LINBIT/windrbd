@@ -10,7 +10,7 @@ Not needed: km/wdm.h:#define IRP_MJ_QUERY_INFORMATION        0x05
 Not needed: km/wdm.h:#define IRP_MJ_SET_INFORMATION          0x06
 Not needed: km/wdm.h:#define IRP_MJ_QUERY_EA                 0x07
 Not needed: km/wdm.h:#define IRP_MJ_SET_EA                   0x08
-In progress: km/wdm.h:#define IRP_MJ_FLUSH_BUFFERS            0x09
+TODO: km/wdm.h:#define IRP_MJ_FLUSH_BUFFERS            0x09
 Not needed: km/wdm.h:#define IRP_MJ_QUERY_VOLUME_INFORMATION 0x0a
 Not needed: km/wdm.h:#define IRP_MJ_SET_VOLUME_INFORMATION   0x0b
 Not needed: km/wdm.h:#define IRP_MJ_DIRECTORY_CONTROL        0x0c
