@@ -9,6 +9,11 @@ TODO: msi installer instead of self extracting exe.
 --------------------------------------------------------------------
 windrbd-next: beta for selected customers
 
+TODO: flush not supported by some (all?) devices: currently we
+	ignore this (as reactOS also does it). Update: ext2
+	file system uses CcFlushCache(): see
+	reactos/reactos/drivers/filesystems/ext2/src/flush.c
+
 TODO: Windows 10 would require more testing.
 
 	Blue screen THREAD_EXCEPTION_NOT_HANDLED when writing data
