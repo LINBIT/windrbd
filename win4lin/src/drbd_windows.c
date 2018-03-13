@@ -1834,8 +1834,14 @@ NTSTATUS DrbdIoCompletion(
 	PMDL mdl, nextMdl;
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
 	int i;
+	NTSTATUS status = Irp->IoStatus.Status;
 
-	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
+	if (status != STATUS_SUCCESS) {
+		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)
+			status = STATUS_SUCCESS;
+	}
+
+	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
 	}
 	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
@@ -1853,7 +1859,7 @@ NTSTATUS DrbdIoCompletion(
 /* TODO: if failed call drbd_bio_endio always */
 	int num_completed = atomic_inc_return(&bio->bi_requests_completed);
 	if (num_completed == bio->bi_num_requests)
-		drbd_bio_endio(bio, win_status_to_blk_status(Irp->IoStatus.Status));
+		drbd_bio_endio(bio, win_status_to_blk_status(status));
 
 	bio_put(bio);
 
@@ -1952,10 +1958,16 @@ static int make_flush_request(struct bio *bio)
 
 printk("next_stack_location->MajorFunction: %x next_stack_location->MinorFunction: %x\n", next_stack_location->MajorFunction, next_stack_location->MinorFunction);
 
+printk("bio: %p bio->bi_bdev: %p bio->bi_bdev->windows_device: %p\n", bio, bio->bi_bdev, bio->bi_bdev->windows_device);
+
 	bio_get(bio);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
+		if (status == STATUS_INVALID_DEVICE_REQUEST) {
+			printk(KERN_INFO "Flush not supported by windows device., ignored\n");
+			return 0;
+		}
 		printk(KERN_WARNING "flush request failed with status %x\n", status);
 		return EIO;	/* Positive value means do not call endio function */
 	}
@@ -2920,6 +2932,8 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_no_block_device;
 	}
 	block_device->windows_device = windows_device;
+printk("block_device: %p block_device->windows_device: %p\n", block_device, block_device->windows_device);
+
 	block_device->bd_disk = alloc_disk(0);
 	if (!block_device->bd_disk)
 	{
