@@ -1922,13 +1922,17 @@ static int make_flush_request(struct bio *bio)
 {
 	NTSTATUS status;
 	PIO_STACK_LOCATION next_stack_location;
+	KEVENT event;
+	
+	KeInitializeEvent(&event, NotificationEvent, FALSE);
 
-	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
+	bio->bi_irps[bio->bi_this_request] = IoBuildSynchronousFsdRequest(
 				IRP_MJ_FLUSH_BUFFERS,
 				bio->bi_bdev->windows_device,
 				NULL,
 				0,
 				NULL,
+				&event,
 				&bio->io_stat
 				);
 
@@ -1958,6 +1962,10 @@ printk("next_stack_location->MajorFunction: %x next_stack_location->MinorFunctio
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
 		printk(KERN_WARNING "flush request failed with status %x\n", status);
 		return EIO;	/* Positive value means do not call endio function */
+	}
+	if (status == STATUS_PENDING) {
+		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+		status = bio->io_stat.Status;
 	}
 
 	return 0;
