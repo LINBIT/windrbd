@@ -1965,7 +1965,7 @@ printk("bio: %p bio->bi_bdev: %p bio->bi_bdev->windows_device: %p\n", bio, bio->
 
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST) {
-			printk(KERN_INFO "Flush not supported by windows device., ignored\n");
+			printk(KERN_INFO "Flush not supported by windows device, ignored\n");
 			return 0;
 		}
 		printk(KERN_WARNING "flush request failed with status %x\n", status);

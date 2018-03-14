@@ -14,6 +14,8 @@ TODO: flush not supported by some (all?) devices: currently we
 	file system uses CcFlushCache(): see
 	reactos/reactos/drivers/filesystems/ext2/src/flush.c
 
+	Also try to use the ZwFlushXXX function (as Mantech does it)
+
 TODO: Windows 10 would require more testing.
 
 	Blue screen THREAD_EXCEPTION_NOT_HANDLED when writing data

@@ -439,10 +439,10 @@ printk("2\n");
 	bio->bi_bdev = dev;
 
 printk("3\n");
-	drbd_make_request(dev->drbd_device->rq_queue, bio);
-
-printk("4\n");
         IoMarkIrpPending(irp);
+	drbd_make_request(dev->drbd_device->rq_queue, bio);
+		/* The irp may be already invalid here. */
+printk("4\n");
 	return STATUS_PENDING;
 
 exit:
