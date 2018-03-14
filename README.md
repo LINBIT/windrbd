@@ -155,3 +155,4 @@ Version history
 			 a (known) file system.
  * 0.4.9 (Feb 16, 2018): Fixed a blue screen introduced in last commit.
  * 0.5.0 (Feb 27, 2018): Beta 1
+ * 0.5.1 (Mar 14, 2018): Implemented flushing in windrbd device.
