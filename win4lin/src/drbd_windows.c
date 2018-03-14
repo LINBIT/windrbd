@@ -1956,9 +1956,9 @@ static int make_flush_request(struct bio *bio)
 	next_stack_location->DeviceObject = bio->bi_bdev->windows_device;
 	next_stack_location->FileObject = bio->bi_bdev->file_object;
 
-printk("next_stack_location->MajorFunction: %x next_stack_location->MinorFunction: %x\n", next_stack_location->MajorFunction, next_stack_location->MinorFunction);
+// printk("next_stack_location->MajorFunction: %x next_stack_location->MinorFunction: %x\n", next_stack_location->MajorFunction, next_stack_location->MinorFunction);
 
-printk("bio: %p bio->bi_bdev: %p bio->bi_bdev->windows_device: %p\n", bio, bio->bi_bdev, bio->bi_bdev->windows_device);
+// printk("bio: %p bio->bi_bdev: %p bio->bi_bdev->windows_device: %p\n", bio, bio->bi_bdev, bio->bi_bdev->windows_device);
 
 	bio_get(bio);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
@@ -2143,7 +2143,7 @@ int generic_make_request(struct bio *bio)
 
 	bio_get(bio);
 
-printk(KERN_INFO "bio: %p bio->bi_rw: %x bio->bi_size: %d bio->bi_vcnt: %d\n", bio, bio->bi_rw, bio->bi_size, bio->bi_vcnt);
+// printk(KERN_INFO "bio: %p bio->bi_rw: %x bio->bi_size: %d bio->bi_vcnt: %d\n", bio, bio->bi_rw, bio->bi_size, bio->bi_vcnt);
 
 	flush_request = (bio->bi_rw & DRBD_REQ_PREFLUSH) != 0;
 
@@ -2740,7 +2740,7 @@ void stop_mnt_monitor()
 void delete_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
-printk(KERN_INFO "delete_block_device %p\n", bdev);
+// printk(KERN_INFO "delete_block_device %p\n", bdev);
 
 	if (bdev->bd_disk) {
 		if (bdev->bd_disk->queue)
@@ -2932,7 +2932,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_no_block_device;
 	}
 	block_device->windows_device = windows_device;
-printk("block_device: %p block_device->windows_device: %p\n", block_device, block_device->windows_device);
+// printk("block_device: %p block_device->windows_device: %p\n", block_device, block_device->windows_device);
 
 	block_device->bd_disk = alloc_disk(0);
 	if (!block_device->bd_disk)
@@ -3514,7 +3514,7 @@ static void destroy_block_device(struct kref *kref)
 	UNICODE_STRING dos_name;
 	int minor = bdev->minor;
 
-printk(KERN_INFO "Destroying minor %d\n", minor);
+// printk(KERN_INFO "Destroying minor %d\n", minor);
 
 	if (minor_to_x_name(&name, minor, 1) < 0) {
 		return;

@@ -259,7 +259,6 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 {
 	PIRP irp = bio->bi_upper_irp;
 
-printk("1\n");
 	if (error == 0) {
 		if (bio->bi_rw == READ) {
 			if (bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
@@ -272,7 +271,6 @@ printk("1\n");
 				kfree(bio->bi_io_vec[0].bv_page->addr);
 			}
 		}
-printk("2\n");
 		irp->IoStatus.Information = bio->bi_size;
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	} else {
@@ -280,12 +278,9 @@ printk("2\n");
 		irp->IoStatus.Information = 0;
 		irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
 	}
-printk("3\n");
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 
-printk("4\n");
 	bio_put(bio);
-printk("5\n");
 }
 
 static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bio)
@@ -425,28 +420,23 @@ static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct bio *bio;
 	NTSTATUS status;
 
-printk("1\n");
 	bio = bio_alloc(GFP_NOIO, 0, 'DBRD');
 	if (bio == NULL) {
 		status = STATUS_INSUFFICIENT_RESOURCES;
 		goto exit;
 	}
-printk("2\n");
 	bio->bi_rw = WRITE | DRBD_REQ_PREFLUSH;
 	bio->bi_size = 0;
 	bio->bi_end_io = windrbd_bio_finished;
 	bio->bi_upper_irp = irp;
 	bio->bi_bdev = dev;
 
-printk("3\n");
         IoMarkIrpPending(irp);
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
 		/* The irp may be already invalid here. */
-printk("4\n");
 	return STATUS_PENDING;
 
 exit:
-printk("5\n");
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 
