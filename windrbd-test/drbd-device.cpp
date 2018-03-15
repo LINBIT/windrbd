@@ -437,3 +437,19 @@ TEST(win_drbd, flush_disk)
 	CloseHandle(h);
 }
 
+TEST(win_drbd, dismount_volume)
+{
+	HANDLE h = do_open_device();
+	BOOL ret;
+	int err;
+	DWORD size;
+
+	ret = DeviceIoControl(h, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0, &size, NULL);
+	err = GetLastError();
+
+	EXPECT_NE(ret, 0);
+	EXPECT_EQ(err, ERROR_SUCCESS);
+
+	CloseHandle(h);
+}
+

@@ -1,3 +1,9 @@
+TODO: fix the case where backing device contains a file system.
+	It should not blue screen.
+
+TODO: hide backing device from Windows on attach.
+
+--------------------------------------------------------------------
 TODO: Create file with version number
 
 TODO: Check in install script if it runs as adminstrator.
