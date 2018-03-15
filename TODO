@@ -1,19 +1,38 @@
-TODO: fix the case where backing device contains a file system.
-	It should not blue screen.
+windrbd-beta2:
 
 TODO: hide backing device from Windows on attach.
+	This can (?) be done from user space by including
+	windrbd hide-filesystem automatically on drbdadm attach
+	(and maybe show-filesystem on drbdadm detach).
 
---------------------------------------------------------------------
+	Doing it from kernel does not "add value" .. it would just
+	be extra effort (and might fail, since we had troubles
+	with ZwCreateFile()).
+
+TODO: windrbd show-filesystem should check if device is used as
+	a backing device.
+
+TODO: Auto-promote seems not to work as expected.
+
+	dir h: should make device primary if possible and then
+	not fail.
+
 TODO: Create file with version number
 
 TODO: Check in install script if it runs as adminstrator.
 
+--------------------------------------------------------------------
 TODO: Why doesn't it work on Phil's machine?
 
 TODO: msi installer instead of self extracting exe.
 
 --------------------------------------------------------------------
-windrbd-next: beta for selected customers
+TODO: fix the case where backing device contains a file system.
+	It should not blue screen.
+	(maybe later, this seems to be rather complex)
+	We are now avoiding the case when there is a filesystem
+	on an attached backing device. This blue screen should
+	be fixed but maybe in a later release.
 
 TODO: flush not supported by some (all?) devices: currently we
 	ignore this (as reactOS also does it). Update: ext2
