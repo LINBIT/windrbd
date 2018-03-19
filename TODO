@@ -1,13 +1,20 @@
 windrbd-beta2:
 
-TODO: hide backing device from Windows on attach.
-	This can (?) be done from user space by including
-	windrbd hide-filesystem automatically on drbdadm attach
-	(and maybe show-filesystem on drbdadm detach).
+TODO: remove drive letter from volume on attach.
+	And not reassign it on detach: Users shouldn't modify
+	data on a backing device even when the device is down,
+	unless they really want it.
 
-	Doing it from kernel does not "add value" .. it would just
-	be extra effort (and might fail, since we had troubles
-	with ZwCreateFile()).
+	Print a howto showing:
+		how to change from drive letter to GUID in drbd.conf
+		how to recover the drive letter later (in case
+			DRBD is never needed again, or if it was
+			the wrong drive letter).
+
+TODO: most windrbd command should also take GUIDs (show-filesystem, ...).
+
+TODO: drbdadm should call windrbd to assign the drive letter
+	(also remove 'C'+minor magic from kernel)
 
 TODO: windrbd show-filesystem should check if device is used as
 	a backing device.
@@ -88,9 +95,6 @@ In progress: Later: RCU needs change
 	in the call_rcu() function, which makes the thing work.
 	Double check if that works as expected.
 TODO: /cygdrive/c/windrbd/var/lib/drbd should exist.
-
-TODO: drbdadm should call windrbd to assign the drive letter
-	(also remove 'C'+minor magic from kernel)
 
 In progress: how and when is flush to backing device done?
 	This is important. Right now NTFS files only appear on
@@ -1491,3 +1495,13 @@ Rejected: We want to see the syslog output when the system did boot, not
 	This is sometimes practical.
 
 Done: Implemented flushing for WinDRBD device.
+
+Done: hide backing device from Windows on attach.
+	This can (?) be done from user space by including
+	windrbd hide-filesystem automatically on drbdadm attach
+	(and maybe show-filesystem on drbdadm detach).
+
+	Doing it from kernel does not "add value" .. it would just
+	be extra effort (and might fail, since we had troubles
+	with ZwCreateFile()).
+
