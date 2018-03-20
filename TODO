@@ -1,18 +1,5 @@
 windrbd-beta2:
 
-TODO: remove drive letter from volume on attach.
-	And not reassign it on detach: Users shouldn't modify
-	data on a backing device even when the device is down,
-	unless they really want it.
-
-	Print a howto showing:
-		how to change from drive letter to GUID in drbd.conf
-		how to recover the drive letter later (in case
-			DRBD is never needed again, or if it was
-			the wrong drive letter).
-
-TODO: most windrbd command should also take GUIDs (show-filesystem, ...).
-
 TODO: drbdadm should call windrbd to assign the drive letter
 	(also remove 'C'+minor magic from kernel)
 
@@ -34,6 +21,17 @@ TODO: Why doesn't it work on Phil's machine?
 TODO: msi installer instead of self extracting exe.
 
 --------------------------------------------------------------------
+Maybe: remove drive letter from volume on attach.
+	And not reassign it on detach: Users shouldn't modify
+	data on a backing device even when the device is down,
+	unless they really want it.
+
+	Print a howto showing:
+		how to change from drive letter to GUID in drbd.conf
+		how to recover the drive letter later (in case
+			DRBD is never needed again, or if it was
+			the wrong drive letter).
+
 TODO: fix the case where backing device contains a file system.
 	It should not blue screen.
 	(maybe later, this seems to be rather complex)
@@ -1504,4 +1502,11 @@ Done: hide backing device from Windows on attach.
 	Doing it from kernel does not "add value" .. it would just
 	be extra effort (and might fail, since we had troubles
 	with ZwCreateFile()).
+
+Done: windrbd show/hide filesystem also with GUIDs.
+	
+Rejected: show filesystem on drbdadm down (not on detach).
+	Instead instruct the user how he could do it.
+
+Done: most windrbd command should also take GUIDs (show-filesystem, ...).
 
