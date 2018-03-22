@@ -1,5 +1,7 @@
 windrbd-beta2:
 
+TODO: logging to localhost (windows) seems to cause boot problems (?)
+
 TODO: remove 'C'+minor magic from kernel
 	Maybe: generate a GUID in kernel and create a Volume{GUID}
 	entry. So we can assign the drive letter for all users.

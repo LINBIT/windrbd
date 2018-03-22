@@ -3468,17 +3468,6 @@ struct block_device *bdget(dev_t device_no)
 
 		goto out_create_device_failed;
 	}
-
-	status = IoRegisterDeviceInterface(new_device, &MOUNTDEV_MOUNTED_DEVICE_GUID, NULL, &interfaceName);
-
-	if (status != STATUS_SUCCESS) {
-		WDRBD_WARN("bdget: couldn't register MOUNTED_DEVICE_GUID class for block device %S for minor %d status: %x\n", name.Buffer, minor, status);
-
-		goto out_register_device_interface_failed;
-	}
-
-printk("karin interface name: %S\n", interfaceName.Buffer);
-
 	if (minor_to_x_name(&dos_name, minor, 0) < 0) {
 		goto out_dos_name_failed;
 	}
@@ -3490,12 +3479,14 @@ printk("karin interface name: %S\n", interfaceName.Buffer);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_ERROR("Failed to acquire remove lock, status is %s\n", status);
+		ExFreePool(dos_name.Buffer);
 		goto out_remove_lock_failed;
 	}
 
 	status = IoCreateSymbolicLink(&dos_name, &name);
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("bdget: couldn't symlink %S to %S for minor %d status: %x\n", dos_name.Buffer, name.Buffer, minor, status);
+		ExFreePool(dos_name.Buffer);
 		goto out_symlink_failed;
 
 	}
@@ -3510,17 +3501,26 @@ printk("karin interface name: %S\n", interfaceName.Buffer);
 
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
+	status = IoRegisterDeviceInterface(new_device, &MOUNTDEV_MOUNTED_DEVICE_GUID, NULL, &interfaceName);
+
+	if (status != STATUS_SUCCESS) {
+		WDRBD_WARN("bdget: couldn't register MOUNTED_DEVICE_GUID class for block device %S for minor %d status: %x\n", name.Buffer, minor, status);
+
+		goto out_register_device_interface_failed;
+	}
+
+printk("karin interface name: %S\n", interfaceName.Buffer);
+
 	return block_device;
 
+out_register_device_interface_failed:
+printk("karin failed\n");
 out_symlink_failed:
 	IoReleaseRemoveLock(&block_device->remove_lock, NULL);
 out_remove_lock_failed:
-	ExFreePool(dos_name.Buffer);
-out_register_device_interface_failed:
 out_dos_name_failed:
 	IoDeleteDevice(new_device);
 out_create_device_failed:
-	ExFreePool(name.Buffer);
 	return NULL;
 }
 
