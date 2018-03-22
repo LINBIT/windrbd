@@ -3389,7 +3389,7 @@ int windrbd_thread_setup(struct drbd_thread *thi)
 // #define MAX_WINDOWS_KERNEL_PATH_LENGTH 32767
 	/* TODO: if string is too long RtlSomethingPrintf returns
 	 * an error */
-#define MAX_WINDOWS_KERNEL_PATH_LENGTH 100
+#define MAX_WINDOWS_KERNEL_PATH_LENGTH 200
 
 static int minor_to_x_name(UNICODE_STRING *name, int minor, int internal)
 {
@@ -3407,7 +3407,7 @@ static int minor_to_x_name(UNICODE_STRING *name, int minor, int internal)
 	if (internal) {
 		status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
 	} else {
-		status = RtlUnicodeStringPrintf(name, L"\\DosDevices\\%C:", minor+'C');
+		status = RtlUnicodeStringPrintf(name, L"\\DosDevices\\Volume{d3d%05x-7c84-471b-9541-f872a3bc8826}", minor);
 	}
 
 	if (status != STATUS_SUCCESS) {
@@ -3486,11 +3486,11 @@ struct block_device *bdget(dev_t device_no)
 	block_device->windows_device = new_device;
 	block_device->minor = minor;
 	block_device->bd_block_size = 512;
+	block_device->path_to_device = name;
 
 	WDRBD_INFO("Created new block device %S for drbd and assigned it the dos name %S\n", name.Buffer, dos_name.Buffer);
 	
 	ExFreePool(dos_name.Buffer);
-	ExFreePool(name.Buffer);
 
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
@@ -3510,19 +3510,15 @@ out_create_device_failed:
 static void destroy_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
-	UNICODE_STRING name;
 	UNICODE_STRING dos_name;
 	int minor = bdev->minor;
 
 // printk(KERN_INFO "Destroying minor %d\n", minor);
 
-	if (minor_to_x_name(&name, minor, 1) < 0) {
-		return;
-	}
 	if (minor_to_x_name(&dos_name, minor, 0) < 0) {
-		ExFreePool(name.Buffer);
 		return;
 	}
+	ExFreePool(bdev->path_to_device.Buffer);
 	bdev->windows_device->DeviceExtension = NULL;
 		/* TODO: this does not really delete the device
 		 * if somebody still holds a reference. For example,
@@ -3535,7 +3531,6 @@ static void destroy_block_device(struct kref *kref)
 	}
 
 	ExFreePool(dos_name.Buffer);
-	ExFreePool(name.Buffer);
 /* TODO: not freeing bdev? */
 }
 

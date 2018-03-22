@@ -1,7 +1,19 @@
 windrbd-beta2:
 
-TODO: drbdadm should call windrbd to assign the drive letter
-	(also remove 'C'+minor magic from kernel)
+TODO: remove 'C'+minor magic from kernel
+	Maybe: generate a GUID in kernel and create a Volume{GUID}
+	entry. So we can assign the drive letter for all users.
+	Update: create a GUID once and hardcode it in the driver /
+	windrbd utility.
+
+	Update: implement IOCTL_MOUNTDEV_QUERY_DEVICE_NAME
+	to return /Device/Drbd5, and check if this is being called.
+
+TODO: assign-drive-letter should assign drive letter for all users.
+
+TODO: delete drive letter also on drbdadm down.
+	Problem is that on down there is no volume. Maybe we have to
+	iterate over all volumes.
 
 TODO: windrbd show-filesystem should check if device is used as
 	a backing device.
@@ -1509,4 +1521,6 @@ Rejected: show filesystem on drbdadm down (not on detach).
 	Instead instruct the user how he could do it.
 
 Done: most windrbd command should also take GUIDs (show-filesystem, ...).
+
+Done: drbdadm should call windrbd to assign the drive letter
 
