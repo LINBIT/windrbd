@@ -3479,14 +3479,12 @@ struct block_device *bdget(dev_t device_no)
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_ERROR("Failed to acquire remove lock, status is %s\n", status);
-		ExFreePool(dos_name.Buffer);
 		goto out_remove_lock_failed;
 	}
 
 	status = IoCreateSymbolicLink(&dos_name, &name);
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("bdget: couldn't symlink %S to %S for minor %d status: %x\n", dos_name.Buffer, name.Buffer, minor, status);
-		ExFreePool(dos_name.Buffer);
 		goto out_symlink_failed;
 
 	}
@@ -3497,8 +3495,6 @@ struct block_device *bdget(dev_t device_no)
 
 	WDRBD_INFO("Created new block device %S for drbd and assigned it the dos name %S\n", name.Buffer, dos_name.Buffer);
 	
-	ExFreePool(dos_name.Buffer);
-
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
 	status = IoRegisterDeviceInterface(new_device, &MOUNTDEV_MOUNTED_DEVICE_GUID, NULL, &interfaceName);
@@ -3511,13 +3507,18 @@ struct block_device *bdget(dev_t device_no)
 
 printk("karin interface name: %S\n", interfaceName.Buffer);
 
+	ExFreePool(dos_name.Buffer);
+
 	return block_device;
 
 out_register_device_interface_failed:
-printk("karin failed\n");
+	if (IoDeleteSymbolicLink(&dos_name) != STATUS_SUCCESS) {
+		WDRBD_WARN("Failed to remove symbolic link again %S\n", dos_name.Buffer);
+	}
 out_symlink_failed:
 	IoReleaseRemoveLock(&block_device->remove_lock, NULL);
 out_remove_lock_failed:
+	ExFreePool(dos_name.Buffer);
 out_dos_name_failed:
 	IoDeleteDevice(new_device);
 out_create_device_failed:

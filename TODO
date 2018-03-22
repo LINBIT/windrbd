@@ -11,6 +11,9 @@ TODO: remove 'C'+minor magic from kernel
 	Update: implement IOCTL_MOUNTDEV_QUERY_DEVICE_NAME
 	to return /Device/Drbd5, and check if this is being called.
 
+	Update: have to register device with mount manager, which
+	currently fails with invalid device request.
+
 TODO: assign-drive-letter should assign drive letter for all users.
 
 TODO: delete drive letter also on drbdadm down.
