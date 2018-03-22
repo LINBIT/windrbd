@@ -171,14 +171,20 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	case IOCTL_DISK_IS_WRITABLE:
 		break;	/* just return without error */
 
-#if 0
 	case IOCTL_MOUNTDEV_QUERY_DEVICE_NAME:
-		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _MOUNTDEV_NAME)) {
+printk("karin IOCTL_MOUNTDEV_QUERY_DEVICE_NAME\n");
+		int length = dev->path_to_device.Length * sizeof(WCHAR);
+		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _MOUNTDEV_NAME) + length) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
-		struct _SET_PARTITION_INFORMATION *name = irp->AssociatedIrp.SystemBuffer;
-#endif
+		struct _MOUNTDEV_NAME *name = irp->AssociatedIrp.SystemBuffer;
+
+		name->NameLength = length;
+		RtlCopyMemory(name->Name, dev->path_to_device.Buffer, length);
+
+		irp->IoStatus.Information = length + sizeof(struct _MOUNTDEV_NAME);
+		break;
 		
 	default: 
 		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
