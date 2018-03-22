@@ -25,6 +25,11 @@
 #include <ntdddisk.h>
 #include <wdm.h>
 
+#include <initguid.h>
+DEFINE_GUID(MOUNTDEV_MOUNTED_DEVICE_GUID, 0x53F5630D, 0xB6BF, 0x11D0, 0x94, 0xF2, 0x00, 0xA0, 0xC9, 0x1E, 0xFB, 0x8B);
+
+/* Does not work: unresolved external symbol MOUNTDEV_MOUNTED_DEVICE_GUID */
+/* #include <mountmgr.h> */
 	/* Define this if you want a built in test for backing device
 	   I/O. Attention this destroys data on the back device.
 	   Note that submit_bio may fail on some systems, therefore
@@ -3439,6 +3444,7 @@ struct block_device *bdget(dev_t device_no)
 	struct block_device *block_device;
 	struct _VOLUME_EXTENSION *pvext;
 	UNICODE_STRING sddl;
+	UNICODE_STRING interfaceName;
 
 	if (minor_to_x_name(&name, minor, 1) < 0) {
 		return NULL;
@@ -3462,6 +3468,16 @@ struct block_device *bdget(dev_t device_no)
 
 		goto out_create_device_failed;
 	}
+
+	status = IoRegisterDeviceInterface(new_device, &MOUNTDEV_MOUNTED_DEVICE_GUID, NULL, &interfaceName);
+
+	if (status != STATUS_SUCCESS) {
+		WDRBD_WARN("bdget: couldn't register MOUNTED_DEVICE_GUID class for block device %S for minor %d status: %x\n", name.Buffer, minor, status);
+
+		goto out_register_device_interface_failed;
+	}
+
+printk("karin interface name: %S\n", interfaceName.Buffer);
 
 	if (minor_to_x_name(&dos_name, minor, 0) < 0) {
 		goto out_dos_name_failed;
@@ -3500,6 +3516,7 @@ out_symlink_failed:
 	IoReleaseRemoveLock(&block_device->remove_lock, NULL);
 out_remove_lock_failed:
 	ExFreePool(dos_name.Buffer);
+out_register_device_interface_failed:
 out_dos_name_failed:
 	IoDeleteDevice(new_device);
 out_create_device_failed:
