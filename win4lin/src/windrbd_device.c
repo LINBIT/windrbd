@@ -185,7 +185,7 @@ printk("karin IOCTL_MOUNTDEV_QUERY_DEVICE_NAME\n");
 
 		irp->IoStatus.Information = length + sizeof(struct _MOUNTDEV_NAME);
 		break;
-		
+
 	default: 
 		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_NOT_IMPLEMENTED;

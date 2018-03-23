@@ -25,11 +25,14 @@
 #include <ntdddisk.h>
 #include <wdm.h>
 
+/* TODO: either fix the mountmanager code or throw it away */
+#if 0
 #include <initguid.h>
 DEFINE_GUID(MOUNTDEV_MOUNTED_DEVICE_GUID, 0x53F5630D, 0xB6BF, 0x11D0, 0x94, 0xF2, 0x00, 0xA0, 0xC9, 0x1E, 0xFB, 0x8B);
 
 /* TODO: randomize */
 DEFINE_GUID(DRBD_DEVICE_CLASS_GUID, 0x53F5630A, 0xB6BF, 0x11D0, 0x94, 0xF2, 0x00, 0xA0, 0xC9, 0x1E, 0xFB, 0x8B);
+#endif
 
 /* Does not work: unresolved external symbol MOUNTDEV_MOUNTED_DEVICE_GUID */
 /* #include <mountmgr.h> */
@@ -3447,7 +3450,7 @@ struct block_device *bdget(dev_t device_no)
 	struct block_device *block_device;
 	struct _VOLUME_EXTENSION *pvext;
 	UNICODE_STRING sddl;
-	UNICODE_STRING interfaceName;
+//	UNICODE_STRING interfaceName;
 
 	if (minor_to_x_name(&name, minor, 1) < 0) {
 		return NULL;
@@ -3463,7 +3466,8 @@ struct block_device *bdget(dev_t device_no)
                                 0,
                                 FALSE,
 				&sddl,
-				&DRBD_DEVICE_CLASS_GUID,
+				NULL,
+//				&DRBD_DEVICE_CLASS_GUID,
                                 &new_device);
 /*
 	status = IoCreateDevice(mvolDriverObject, 
@@ -3510,6 +3514,7 @@ struct block_device *bdget(dev_t device_no)
 	
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
+#if 0
 	status = IoRegisterDeviceInterface(new_device, &MOUNTDEV_MOUNTED_DEVICE_GUID, NULL, &interfaceName);
 
 	if (status != STATUS_SUCCESS) {
@@ -3517,17 +3522,19 @@ struct block_device *bdget(dev_t device_no)
 
 		goto out_register_device_interface_failed;
 	}
-
 printk("karin interface name: %S\n", interfaceName.Buffer);
+#endif
 
 	ExFreePool(dos_name.Buffer);
 
 	return block_device;
 
+#if 0
 out_register_device_interface_failed:
 	if (IoDeleteSymbolicLink(&dos_name) != STATUS_SUCCESS) {
 		WDRBD_WARN("Failed to remove symbolic link again %S\n", dos_name.Buffer);
 	}
+#endif
 out_symlink_failed:
 	IoReleaseRemoveLock(&block_device->remove_lock, NULL);
 out_remove_lock_failed:
