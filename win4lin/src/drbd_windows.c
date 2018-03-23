@@ -28,6 +28,9 @@
 #include <initguid.h>
 DEFINE_GUID(MOUNTDEV_MOUNTED_DEVICE_GUID, 0x53F5630D, 0xB6BF, 0x11D0, 0x94, 0xF2, 0x00, 0xA0, 0xC9, 0x1E, 0xFB, 0x8B);
 
+/* TODO: randomize */
+DEFINE_GUID(DRBD_DEVICE_CLASS_GUID, 0x53F5630A, 0xB6BF, 0x11D0, 0x94, 0xF2, 0x00, 0xA0, 0xC9, 0x1E, 0xFB, 0x8B);
+
 /* Does not work: unresolved external symbol MOUNTDEV_MOUNTED_DEVICE_GUID */
 /* #include <mountmgr.h> */
 	/* Define this if you want a built in test for backing device
@@ -3453,18 +3456,16 @@ struct block_device *bdget(dev_t device_no)
 		/* TODO: understand what this means */
 	RtlInitUnicodeString(&sddl, L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)");
 
-/*
 	status = IoCreateDeviceSecure(mvolDriverObject, 
 		                sizeof(struct block_device), 
-				NULL,
-//		                &name,
+		                &name,
 		                FILE_DEVICE_VIRTUAL_DISK,
                                 0,
                                 FALSE,
 				&sddl,
-				NULL,
+				&DRBD_DEVICE_CLASS_GUID,
                                 &new_device);
-*/
+/*
 	status = IoCreateDevice(mvolDriverObject, 
 		                sizeof(struct block_device), 
 				NULL,
@@ -3473,6 +3474,7 @@ struct block_device *bdget(dev_t device_no)
                                 0,
                                 FALSE,
                                 &new_device);
+*/
 
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("bdget: couldn't create new block device %S for minor %d status: %x\n", name.Buffer, minor, status);
