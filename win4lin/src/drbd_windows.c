@@ -3453,14 +3453,25 @@ struct block_device *bdget(dev_t device_no)
 		/* TODO: understand what this means */
 	RtlInitUnicodeString(&sddl, L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)");
 
+/*
 	status = IoCreateDeviceSecure(mvolDriverObject, 
 		                sizeof(struct block_device), 
-		                &name,
+				NULL,
+//		                &name,
 		                FILE_DEVICE_VIRTUAL_DISK,
                                 0,
                                 FALSE,
 				&sddl,
 				NULL,
+                                &new_device);
+*/
+	status = IoCreateDevice(mvolDriverObject, 
+		                sizeof(struct block_device), 
+				NULL,
+//		                &name,
+		                FILE_DEVICE_VIRTUAL_DISK,
+                                0,
+                                FALSE,
                                 &new_device);
 
 	if (status != STATUS_SUCCESS) {
