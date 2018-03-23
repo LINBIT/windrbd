@@ -123,6 +123,10 @@ You can also log on the Windows machine directly by starting
 
 However the last log messages before a blue screen will be lost, then.
 
+If you are logging to the local Windows machine, use 127.0.0.1 as
+IP address (this is the default). Do not specify a network interface
+IP, this might cause the system to hang on boot.
+
 See also file INSTALL for more instructions.
 
 Version history
