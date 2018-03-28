@@ -3402,7 +3402,7 @@ int windrbd_thread_setup(struct drbd_thread *thi)
 	 * an error */
 #define MAX_WINDOWS_KERNEL_PATH_LENGTH 200
 
-static int minor_to_x_name(UNICODE_STRING *name, int minor, int internal)
+static int minor_to_x_name(UNICODE_STRING *name, int minor, const char *mount_point)
 {
 	NTSTATUS status;
 
@@ -3415,10 +3415,10 @@ static int minor_to_x_name(UNICODE_STRING *name, int minor, int internal)
 	name->Length = 0;
 	name->MaximumLength = MAX_WINDOWS_KERNEL_PATH_LENGTH;
 
-	if (internal) {
-		status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
+	if (mount_point) {
+		status = RtlUnicodeStringPrintf(name, L"\\DosDevices\\%s", mount_point);
 	} else {
-		status = RtlUnicodeStringPrintf(name, L"\\DosDevices\\Volume{d3d%05x-7c84-471b-9541-f872a3bc8826}", minor);
+		status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
 	}
 
 	if (status != STATUS_SUCCESS) {
@@ -3444,7 +3444,6 @@ struct block_device *bdget(dev_t device_no)
 {
 	dev_t minor = MINOR(device_no);
 	UNICODE_STRING name;
-	UNICODE_STRING dos_name;
         PDEVICE_OBJECT new_device;
 	NTSTATUS status;
 	struct block_device *block_device;
@@ -3452,7 +3451,7 @@ struct block_device *bdget(dev_t device_no)
 	UNICODE_STRING sddl;
 //	UNICODE_STRING interfaceName;
 
-	if (minor_to_x_name(&name, minor, 1) < 0) {
+	if (minor_to_x_name(&name, minor, NULL) < 0) {
 		return NULL;
 	}
 
@@ -3483,10 +3482,7 @@ struct block_device *bdget(dev_t device_no)
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("bdget: couldn't create new block device %S for minor %d status: %x\n", name.Buffer, minor, status);
 
-		goto out_create_device_failed;
-	}
-	if (minor_to_x_name(&dos_name, minor, 0) < 0) {
-		goto out_dos_name_failed;
+		return NULL;
 	}
 
 	block_device = new_device->DeviceExtension;
@@ -3499,18 +3495,12 @@ struct block_device *bdget(dev_t device_no)
 		goto out_remove_lock_failed;
 	}
 
-	status = IoCreateSymbolicLink(&dos_name, &name);
-	if (status != STATUS_SUCCESS) {
-		WDRBD_WARN("bdget: couldn't symlink %S to %S for minor %d status: %x\n", dos_name.Buffer, name.Buffer, minor, status);
-		goto out_symlink_failed;
-
-	}
 	block_device->windows_device = new_device;
 	block_device->minor = minor;
 	block_device->bd_block_size = 512;
 	block_device->path_to_device = name;
 
-	WDRBD_INFO("Created new block device %S for drbd and assigned it the dos name %S\n", name.Buffer, dos_name.Buffer);
+	printk(KERN_INFO "Created new block device %S for drbd.\n", name.Buffer);
 	
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
@@ -3525,8 +3515,6 @@ struct block_device *bdget(dev_t device_no)
 printk("karin interface name: %S\n", interfaceName.Buffer);
 #endif
 
-	ExFreePool(dos_name.Buffer);
-
 	return block_device;
 
 #if 0
@@ -3535,27 +3523,39 @@ out_register_device_interface_failed:
 		WDRBD_WARN("Failed to remove symbolic link again %S\n", dos_name.Buffer);
 	}
 #endif
-out_symlink_failed:
-	IoReleaseRemoveLock(&block_device->remove_lock, NULL);
 out_remove_lock_failed:
-	ExFreePool(dos_name.Buffer);
-out_dos_name_failed:
 	IoDeleteDevice(new_device);
-out_create_device_failed:
+
 	return NULL;
+}
+
+int windrbd_mount(struct block_device *dev, const char *mount_point)
+{
+	NTSTATUS status;
+
+	if (mount_point == NULL)
+		return 0;
+
+	if (minor_to_x_name(&dev->mount_point, -1, mount_point) < 0)
+		return -1;
+	
+	status = IoCreateSymbolicLink(&dev->mount_point, &dev->path_to_device);
+	if (status != STATUS_SUCCESS) {
+		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, dev->mount_point.Buffer, status);
+		return -1;
+
+	}
+	printk(KERN_INFO "Assigned device %S the mount point %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
+	return 0;
 }
 
 static void destroy_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
-	UNICODE_STRING dos_name;
 	int minor = bdev->minor;
 
 // printk(KERN_INFO "Destroying minor %d\n", minor);
 
-	if (minor_to_x_name(&dos_name, minor, 0) < 0) {
-		return;
-	}
 	ExFreePool(bdev->path_to_device.Buffer);
 	bdev->windows_device->DeviceExtension = NULL;
 		/* TODO: this does not really delete the device
@@ -3563,12 +3563,13 @@ static void destroy_block_device(struct kref *kref)
 		 * if there is a cmd shell open it will access the
 		 * device after this has happened.
 		 */
-	IoDeleteDevice(bdev->windows_device); /* should also delete the device extension, which is the bdev */
-	if (IoDeleteSymbolicLink(&dos_name) != STATUS_SUCCESS) {
-		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", dos_name.Buffer);
-	}
 
-	ExFreePool(dos_name.Buffer);
+	if (IoDeleteSymbolicLink(&bdev->mount_point) != STATUS_SUCCESS) {
+		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", bdev->mount_point.Buffer);
+	}
+	ExFreePool(bdev->mount_point.Buffer);
+
+	IoDeleteDevice(bdev->windows_device); /* should also delete the device extension, which is the bdev */
 /* TODO: not freeing bdev? */
 }
 

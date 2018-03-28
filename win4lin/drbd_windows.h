@@ -625,6 +625,7 @@ struct block_device {
 	struct _DEVICE_OBJECT *windows_device;	/* If that is a backing dev, the target device to send the I/O IRPs to. If this is a DRBD device, the device created by bdget()) */
 	struct _FILE_OBJECT *file_object; /* As returned by IoGetDeviceObjectPointer() */
 	UNICODE_STRING path_to_device;
+	UNICODE_STRING mount_point;
 
 	IO_REMOVE_LOCK remove_lock;
 
@@ -1591,6 +1592,7 @@ long		gLogCnt;
 char		gLogBuf[LOGBUF_MAXCNT][MAX_DRBDLOG_BUF];
 
 struct block_device *bdget(dev_t dev);
+int windrbd_mount(struct block_device *dev, const char *mount_point);
 
 /* From: include/linux/kdev_t.h : */
 #define MINORBITS	20
