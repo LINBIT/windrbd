@@ -3506,6 +3506,7 @@ struct block_device *bdget(dev_t device_no)
 	block_device->minor = minor;
 	block_device->bd_block_size = 512;
 	block_device->path_to_device = name;
+	block_device->mount_point.Buffer = NULL;
 
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", name.Buffer, minor);
 	
@@ -3571,10 +3572,12 @@ static void destroy_block_device(struct kref *kref)
 		 * device after this has happened.
 		 */
 
-	if (IoDeleteSymbolicLink(&bdev->mount_point) != STATUS_SUCCESS) {
-		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", bdev->mount_point.Buffer);
+	if (bdev->mount_point.Buffer != NULL) {
+		if (IoDeleteSymbolicLink(&bdev->mount_point) != STATUS_SUCCESS) {
+			WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", bdev->mount_point.Buffer);
+		}
+		ExFreePool(bdev->mount_point.Buffer);
 	}
-	ExFreePool(bdev->mount_point.Buffer);
 
 	IoDeleteDevice(bdev->windows_device); /* should also delete the device extension, which is the bdev */
 /* TODO: not freeing bdev? */
