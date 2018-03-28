@@ -2,18 +2,6 @@ windrbd-beta2:
 
 TODO: logging to localhost (windows) seems to cause boot problems (?)
 
-TODO: remove 'C'+minor magic from kernel
-	Maybe: generate a GUID in kernel and create a Volume{GUID}
-	entry. So we can assign the drive letter for all users.
-	Update: create a GUID once and hardcode it in the driver /
-	windrbd utility.
-
-	Update: implement IOCTL_MOUNTDEV_QUERY_DEVICE_NAME
-	to return /Device/Drbd5, and check if this is being called.
-
-	Update: have to register device with mount manager, which
-	currently fails with invalid device request.
-
 TODO: assign-drive-letter should assign drive letter for all users.
 
 TODO: delete drive letter also on drbdadm down.
@@ -1528,4 +1516,19 @@ Rejected: show filesystem on drbdadm down (not on detach).
 Done: most windrbd command should also take GUIDs (show-filesystem, ...).
 
 Done: drbdadm should call windrbd to assign the drive letter
+
+Done: remove 'C'+minor magic from kernel
+	Maybe: generate a GUID in kernel and create a Volume{GUID}
+	entry. So we can assign the drive letter for all users.
+	Update: create a GUID once and hardcode it in the driver /
+	windrbd utility.
+
+	Update: implement IOCTL_MOUNTDEV_QUERY_DEVICE_NAME
+	to return /Device/Drbd5, and check if this is being called.
+
+	Update: have to register device with mount manager, which
+	currently fails with invalid device request.
+
+	Update: have drbdsetup new-minor --mount-point parameter
+	now, drbdadm uses the device name for the mount point.
 
