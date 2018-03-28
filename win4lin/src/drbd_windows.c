@@ -3416,7 +3416,14 @@ static int minor_to_x_name(UNICODE_STRING *name, int minor, const char *mount_po
 	name->MaximumLength = MAX_WINDOWS_KERNEL_PATH_LENGTH;
 
 	if (mount_point) {
-		status = RtlUnicodeStringPrintf(name, L"\\DosDevices\\%s", mount_point);
+		ANSI_STRING a;
+		UNICODE_STRING u;
+	        RtlInitAnsiString(&a, mount_point);
+		status = RtlAnsiStringToUnicodeString(&u, &a, TRUE);
+		if (status == STATUS_SUCCESS) {
+			status = RtlUnicodeStringPrintf(name, L"\\DosDevices\\%s", u.Buffer);
+			RtlFreeUnicodeString(&u);
+		}
 	} else {
 		status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
 	}
@@ -3500,7 +3507,7 @@ struct block_device *bdget(dev_t device_no)
 	block_device->bd_block_size = 512;
 	block_device->path_to_device = name;
 
-	printk(KERN_INFO "Created new block device %S for drbd.\n", name.Buffer);
+	printk(KERN_INFO "Created new block device %S (minor %d).\n", name.Buffer, minor);
 	
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
