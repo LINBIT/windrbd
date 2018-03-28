@@ -162,3 +162,4 @@ Version history
  * 0.5.1 (Mar 14, 2018): Implemented flushing in windrbd device.
  * 0.5.2 (Mar 20, 2018): Auto-hide filesystem on attach (user space changes
 			 only).
+ * 0.5.3 (Mar 28, 2018): Assign drive letter from drbd.conf
