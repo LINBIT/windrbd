@@ -163,3 +163,4 @@ Version history
  * 0.5.2 (Mar 20, 2018): Auto-hide filesystem on attach (user space changes
 			 only).
  * 0.5.3 (Mar 28, 2018): Assign drive letter from drbd.conf
+ * 0.5.4 (Mar 28, 2018): Fixed blue screen on drbdadm down and no mount point.
