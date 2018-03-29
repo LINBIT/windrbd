@@ -1,0 +1,45 @@
+Hi Devin,
+
+I've been working to fix some usability issues:
+
+1) It shouldn't be as easy as before to access the backing device while
+    it is used by windrbd. You can still format it underneath windrbd
+    (just like in Linux DRBD), but you have to confirm twice. If you
+    do behaviour is undefined. "Normal" formatting or accessing the
+    device in any way should fail now.
+
+2) Conversion of a Windows visible file system on the backing device
+    ("NTFS" signature) to a windrbd backing device ("DRBD" signature)
+    now happens automatically on attach. It is currently not converted
+    back to NTFS, users have to do that manually (if one modifies
+    the backing device even when windrbd is down changes will not
+    be propagated to peers, same behaviour in Linux)
+
+3) Mount point (drive letter for the time being, later I will add NTFS
+    directories (if they are empty)) is now part of the device directive.
+
+    Sample:
+
+       device "K:" minor 5;
+
+   Will create a drive K: for all users (not just for the current session).
+   (should K: be a network share also, the network share wins over
+   the windrbd device. There is currently no warning if it is a network
+   share).
+
+4) Improvments on various Error / Warning messages of drbd-utils
+    in case user tries something dangerous.
+
+As always, please try "unusual" things which I haven't thought of
+(like passing "/dev/drbd5" as device name, this is something I am
+catching) and test from the view point of a "normal" user (with basic
+Windows admin skills but nothing else).
+
+Thank you for your time, I am on vacation next week but will respond
+to emails.
+
+Best wishes
+
+- Johannes
+
+
