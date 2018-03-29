@@ -2,12 +2,6 @@ windrbd-beta2:
 
 TODO: logging to localhost (windows) seems to cause boot problems (?)
 
-TODO: assign-drive-letter should assign drive letter for all users.
-
-TODO: delete drive letter also on drbdadm down.
-	Problem is that on down there is no volume. Maybe we have to
-	iterate over all volumes.
-
 TODO: windrbd show-filesystem should check if device is used as
 	a backing device.
 
@@ -1531,4 +1525,13 @@ Done: remove 'C'+minor magic from kernel
 
 	Update: have drbdsetup new-minor --mount-point parameter
 	now, drbdadm uses the device name for the mount point.
+
+Rejected: assign-drive-letter should assign drive letter for all users.
+	Still there, but we are not using it. Now there is an extra
+	field mount-point in new-minor. 
+
+Rejected: delete drive letter also on drbdadm down.
+	Problem is that on down there is no volume. Maybe we have to
+	iterate over all volumes.
+	Superseded by mount-point flag in new-minor.
 
