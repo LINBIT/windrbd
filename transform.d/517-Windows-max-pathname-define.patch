@@ -1,0 +1,24 @@
+From 783390d402e7c5692b53dcefc76d6b7e0162782b Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 28 Mar 2018 17:09:06 +0200
+Subject: [PATCH 1/2] Max length of windows pathname define
+
+---
+ drbd-headers/linux/drbd.h      | 4 ++++
+ 1 files changed, 4 insertions(+)
+
+diff --git a/drbd-headers/linux/drbd.h b/drbd-headers/linux/drbd.h
+index e43a898..ee39fb3 100644
+--- a/drbd-headers/linux/drbd.h
++++ b/drbd-headers/linux/drbd.h
+@@ -51,6 +51,10 @@
+ 
+ #endif
+ 
++/* Maximal length for the mount point in windrbd */
++
++#define DRBD_WINDOWS_PATH_MAX 260
++
+ enum drbd_io_error_p {
+ 	EP_PASS_ON, /* FIXME should the better be named "Ignore"? */
+ 	EP_CALL_HELPER,

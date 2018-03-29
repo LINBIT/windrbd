@@ -1,0 +1,41 @@
+From 5aa1698da96bd8f5704193b3dde621925b6d9aa5 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 28 Mar 2018 17:43:24 +0200
+Subject: [PATCH 2/2] Call windrbd_mount on device creation.
+
+---
+ drbd/drbd_main.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index d501655..201d198 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3541,6 +3541,13 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	if (block_device == NULL)
+ 		return ERR_NO_DISK;
+ 
++	if (device_conf->mount_point && device_conf->mount_point[0]) {
++		if (windrbd_mount(block_device, device_conf->mount_point) < 0) {
++			err = ERR_INVALID_REQUEST;
++			goto out_couldnt_mount;
++		}
++	}
++
+ 	/* GFP_KERNEL, we are outside of all write-out paths */
+ 	device = kzalloc(sizeof(struct drbd_device), GFP_KERNEL, '0CWD');
+ 	if (!device)
+@@ -3760,7 +3767,9 @@ out_no_q:
+ 	kref_debug_destroy(&device->kref_debug);
+ 	kfree(device);
+ out_no_device:
+-	bdput(block_device);
++out_couldnt_mount:
++	bdput(block_device);	/* This will also remove the symbolic link
++				   (mount point) if present. */
+ 
+ 	return err;
+ }
+-- 
+2.7.4
+
