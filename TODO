@@ -1,21 +1,7 @@
 windrbd-beta2:
 
-TODO: drbdmeta called before hide-filesystem and fails
-	(on drbdadm up / format f: / down / up)
-
-drbdsetup new-resource w0 2 
-drbdsetup new-minor w0 5 17 --mount-point K: 
-drbdsetup new-peer w0 1 --_name=ubuntu-gnome --use-rle=no --protocol=A 
-drbdsetup new-path w0 1 ipv4:192.168.56.101:7600 ipv4:192.168.56.103:7600 
-drbdmeta 5 v09 F: internal apply-al 
-windrbd -q hide-filesystem F: 
-drbdsetup attach 5 F: F: internal 
-drbdsetup connect w0 1 
-
-	should be 
-
-windrbd -q hide-filesystem F: 
-drbdmeta 5 v09 F: internal apply-al 
+TODO: Cannot format virtual drive.
+	Regression introduced recently (right before windrbd-0.6.0)
 
 TODO: Mount to NTFS directories.
 
@@ -1553,4 +1539,25 @@ Rejected: delete drive letter also on drbdadm down.
 	Problem is that on down there is no volume. Maybe we have to
 	iterate over all volumes.
 	Superseded by mount-point flag in new-minor.
+
+Done: drbdmeta called before hide-filesystem and fails
+	(on drbdadm up / format f: / down / up)
+
+drbdsetup new-resource w0 2 
+drbdsetup new-minor w0 5 17 --mount-point K: 
+drbdsetup new-peer w0 1 --_name=ubuntu-gnome --use-rle=no --protocol=A 
+drbdsetup new-path w0 1 ipv4:192.168.56.101:7600 ipv4:192.168.56.103:7600 
+drbdmeta 5 v09 F: internal apply-al 
+windrbd -q hide-filesystem F: 
+drbdsetup attach 5 F: F: internal 
+drbdsetup connect w0 1 
+
+	should be 
+
+windrbd -q hide-filesystem F: 
+drbdmeta 5 v09 F: internal apply-al 
+
+	Update: Done, but this is still invalid. After formatting
+	the backing device, meta data gets destroyed. Need to redo
+	a create-md.
 
