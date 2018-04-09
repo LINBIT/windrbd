@@ -3468,7 +3468,7 @@ struct block_device *bdget(dev_t device_no)
 	status = IoCreateDeviceSecure(mvolDriverObject, 
 		                sizeof(struct block_device), 
 		                &name,
-		                FILE_DEVICE_VIRTUAL_DISK,
+		                FILE_DEVICE_DISK,
                                 0,
                                 FALSE,
 				&sddl,

@@ -2,6 +2,9 @@ windrbd-beta2:
 
 TODO: Cannot format virtual drive.
 	Regression introduced recently (right before windrbd-0.6.0)
+	
+	Impletented TODO: test it when we have internet again (just
+	format k:, should run without error)
 
 TODO: Mount to NTFS directories.
 
