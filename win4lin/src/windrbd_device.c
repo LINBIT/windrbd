@@ -218,6 +218,10 @@ printk(KERN_DEBUG "s->Parameters.Create.SecurityContext->DesiredAccess is %x\n",
 
 	err = drbd_open(dev, mode);
 printk(KERN_DEBUG "drbd_open returned %d\n", err);
+	if (err == -EMEDIUMTYPE) {
+		printk(KERN_DEBUG "-EMEDIUMTYPE error ignored on drbd_open()\n");
+		err = 0;
+	}
 	status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
 
 	irp->IoStatus.Status = status;
