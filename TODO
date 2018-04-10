@@ -1,4 +1,10 @@
-windrbd-beta2:
+TODO: Auto-promote seems not to work as expected.
+
+	dir h: should make device primary if possible and then
+	not fail.
+
+	Strange, but neither with read/write nor with read only we get
+	a create request on the windrbd device. (tested with windrbd-test)
 
 TODO: Cannot format virtual drive.
 	Regression introduced recently (right before windrbd-0.6.0)
@@ -12,11 +18,6 @@ TODO: logging to localhost (windows) seems to cause boot problems (?)
 
 TODO: windrbd show-filesystem should check if device is used as
 	a backing device.
-
-TODO: Auto-promote seems not to work as expected.
-
-	dir h: should make device primary if possible and then
-	not fail.
 
 TODO: Create file with version number
 
