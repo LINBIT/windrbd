@@ -11,7 +11,7 @@ struct params p = {
 	dump_file: NULL
 };
 
-HANDLE do_open_device(void)
+HANDLE do_open_device(int readonly)
 {
 	HANDLE h;
 	DWORD err;
@@ -23,7 +23,11 @@ HANDLE do_open_device(void)
 
 printf("opening file %s\n", fname);
 
-	h = CreateFile(fname, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (readonly)
+		h = CreateFile(fname, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	else
+		h = CreateFile(fname, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	
 	err = GetLastError();
 
 	EXPECT_EQ(err, ERROR_SUCCESS);
@@ -34,18 +38,23 @@ printf("opening file %s\n", fname);
 
 TEST(win_drbd, open_device)
 {
-	do_open_device();
+	do_open_device(0);
+}
+
+TEST(win_drbd, open_device_readonly)
+{
+	do_open_device(1);
 }
 
 TEST(win_drbd, open_and_close_device)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	CloseHandle(h);
 }
 
 TEST(win_drbd, get_drive_geometry)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	struct _DISK_GEOMETRY g;
 	DWORD size;
 	BOOL ret;
@@ -68,7 +77,7 @@ TEST(win_drbd, get_drive_geometry)
 
 TEST(win_drbd, get_drive_geometry_invalid)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	struct _DISK_GEOMETRY g;
 	DWORD size;
 	BOOL ret;
@@ -85,7 +94,7 @@ TEST(win_drbd, get_drive_geometry_invalid)
 
 TEST(win_drbd, get_drive_geometry_ex)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	struct _DISK_GEOMETRY_EX g;
 	DWORD size;
 	BOOL ret;
@@ -109,7 +118,7 @@ TEST(win_drbd, get_drive_geometry_ex)
 
 TEST(win_drbd, get_partition_information_ex)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	struct _PARTITION_INFORMATION_EX pi;
 	DWORD size;
 	BOOL ret;
@@ -131,7 +140,7 @@ TEST(win_drbd, get_partition_information_ex)
 
 TEST(win_drbd, set_partition_information)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	struct _SET_PARTITION_INFORMATION s;
 	DWORD size;
 	BOOL ret;
@@ -162,7 +171,7 @@ TEST(win_drbd, set_partition_information)
 
 TEST(win_drbd, get_length_info)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	struct _GET_LENGTH_INFORMATION l;
 	DWORD size;
 	BOOL ret;
@@ -181,7 +190,7 @@ TEST(win_drbd, get_length_info)
 
 TEST(win_drbd, do_read)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	DWORD bytes_read;
 	BOOL ret;
 	int err;
@@ -199,7 +208,7 @@ TEST(win_drbd, do_read)
 
 TEST(win_drbd, do_write_read)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	DWORD bytes_read, bytes_written;
 	BOOL ret;
 	int err;
@@ -249,7 +258,7 @@ TEST(win_drbd, do_write_read_whole_disk_by_1meg_requests)
 {
 #define ONE_MEG (65536*16)
 
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	DWORD bytes_read, bytes_written;
 	BOOL ret;
 	int err;
@@ -320,7 +329,7 @@ TEST(win_drbd, do_write_read_whole_disk_by_1meg_requests)
 
 TEST(win_drbd, do_write_read_whole_disk)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	DWORD bytes_read, bytes_written;
 	BOOL ret;
 	int err;
@@ -374,7 +383,7 @@ TEST(win_drbd, do_write_read_whole_disk)
 
 TEST(win_drbd, copy_disk_to_file)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	HANDLE f;
 	DWORD bytes_read, bytes_written;
 	BOOL ret;
@@ -424,7 +433,7 @@ TEST(win_drbd, copy_disk_to_file)
 
 TEST(win_drbd, flush_disk)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	BOOL ret;
 	int err;
 
@@ -439,7 +448,7 @@ TEST(win_drbd, flush_disk)
 
 TEST(win_drbd, dismount_volume)
 {
-	HANDLE h = do_open_device();
+	HANDLE h = do_open_device(0);
 	BOOL ret;
 	int err;
 	DWORD size;
