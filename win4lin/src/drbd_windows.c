@@ -35,7 +35,8 @@ DEFINE_GUID(DRBD_DEVICE_CLASS_GUID, 0x53F5630A, 0xB6BF, 0x11D0, 0x94, 0xF2, 0x00
 #endif
 
 /* Does not work: unresolved external symbol MOUNTDEV_MOUNTED_DEVICE_GUID */
-/* #include <mountmgr.h> */
+#include <mountmgr.h>
+
 	/* Define this if you want a built in test for backing device
 	   I/O. Attention this destroys data on the back device.
 	   Note that submit_bio may fail on some systems, therefore
@@ -2771,7 +2772,6 @@ static NTSTATUS resolve_nt_kernel_link(UNICODE_STRING *upath, UNICODE_STRING *li
 	OBJECT_ATTRIBUTES device_attributes;
 	ULONG link_target_length;
 	HANDLE link_handle;
-	IO_STATUS_BLOCK io_status_block;
 
 	InitializeObjectAttributes(&device_attributes, upath, OBJ_FORCE_ACCESS_CHECK, NULL, NULL);
 	status = ZwOpenSymbolicLinkObject(&link_handle, GENERIC_READ, &device_attributes);
@@ -2827,7 +2827,7 @@ int resolve_ascii_path(const char *path, UNICODE_STRING *path_to_device)
 static struct _DEVICE_OBJECT *find_windows_device(UNICODE_STRING *path, struct _FILE_OBJECT ** file_object)
 {
 	struct _DEVICE_OBJECT *windows_device;
-	PFILE_OBJECT FileObject;
+	struct _FILE_OBJECT *FileObject;
 	NTSTATUS status;
 
 	status = IoGetDeviceObjectPointer(path, STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS, &FileObject, &windows_device);
@@ -3537,6 +3537,111 @@ out_remove_lock_failed:
 	return NULL;
 }
 
+	/* This function is roughly taken from:
+	 * https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/content/mountmgr/ni-mountmgr-ioctl_mountmgr_create_point
+	 */
+
+static int mountmgr_create_point(struct block_device *dev)
+{
+	struct _MOUNTMGR_CREATE_POINT_INPUT *create_point;
+	size_t create_point_size = sizeof(MOUNTMGR_CREATE_POINT_INPUT) +
+                      dev->mount_point.Length + dev->path_to_device.Length;
+	UNICODE_STRING mountmgr_name;
+	struct _FILE_OBJECT *mountmgr_file_object;
+	struct _DEVICE_OBJECT *mountmgr_device_object;
+	KEVENT event;
+	struct _IO_STATUS_BLOCK *io_status;
+	NTSTATUS status;
+	struct _IRP *irp;
+	struct _IO_STACK_LOCATION *s;
+
+printk("1\n");
+	create_point = kmalloc(create_point_size, 0, 'DRBD');
+	if (create_point == NULL)
+		return -1;
+
+	io_status = kmalloc(sizeof(*io_status), 0, 'DRBD');
+	if (io_status == NULL) {
+		kfree(create_point);
+		return -1;
+	}
+printk("2\n");
+	create_point->SymbolicLinkNameOffset = sizeof(*create_point);
+	create_point->SymbolicLinkNameLength = dev->mount_point.Length;
+	create_point->DeviceNameOffset = create_point->SymbolicLinkNameOffset+create_point->SymbolicLinkNameLength;
+	create_point->DeviceNameLength = dev->path_to_device.Length;
+
+printk("3\n");
+	RtlCopyMemory(((char*)create_point)+create_point->SymbolicLinkNameOffset, dev->mount_point.Buffer, dev->mount_point.Length);
+	RtlCopyMemory(((char*)create_point)+create_point->DeviceNameOffset, dev->path_to_device.Buffer, dev->path_to_device.Length);
+
+printk("4\n");
+	/* Use the name of the mount manager device object
+	 * defined in mountmgr.h (MOUNTMGR_DEVICE_NAME) to
+	 * obtain a pointer to the mount manager.
+	 */
+
+printk("5\n");
+	RtlInitUnicodeString(&mountmgr_name, MOUNTMGR_DEVICE_NAME);
+	status = IoGetDeviceObjectPointer(&mountmgr_name, FILE_READ_ATTRIBUTES, &mountmgr_file_object, &mountmgr_device_object);
+printk("6\n");
+	if (!NT_SUCCESS(status)) {
+		printk(KERN_WARNING "IoGetDeviceObjectPointer %s returned %x\n", MOUNTMGR_DEVICE_NAME, status);
+		kfree(create_point);
+		kfree(io_status);
+		return -1;
+	}
+printk("7\n");
+	KeInitializeEvent(&event, NotificationEvent, FALSE);
+printk("8\n");
+	irp = IoBuildDeviceIoControlRequest(
+            IOCTL_MOUNTMGR_CREATE_POINT,
+            mountmgr_device_object, create_point, create_point_size,
+            NULL, 0, FALSE, &event, io_status);
+
+printk("9\n");
+	if (irp == NULL) {
+		printk(KERN_WARNING "Cannot create IRP.\n");
+		kfree(create_point);
+		kfree(io_status);
+		return -1;
+	}
+printk("a1\n");
+        s = IoGetNextIrpStackLocation(irp);
+
+printk("a2\n");
+        s->DeviceObject = mountmgr_device_object;
+        s->FileObject = mountmgr_file_object;
+
+printk("a\n");
+	/* Send the irp to the mount manager requesting
+	 * that a new mount point (persistent symbolic link)
+	 * be created for the indicated volume.
+	 */
+
+	status = IoCallDriver(mountmgr_device_object, irp);
+
+printk("b\n");
+	if (status == STATUS_PENDING) {
+printk("c\n");
+		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+printk("d\n");
+		status = io_status->Status;
+	}
+printk("e\n");
+	if (!NT_SUCCESS(status)) {
+		printk(KERN_ERR "Registering mount point failed status = %x\n", status);
+		kfree(create_point);
+		kfree(io_status);
+		return -1;
+	}
+printk("f\n");
+	kfree(create_point);
+	kfree(io_status);
+printk("g\n");
+	return 0;
+}
+
 int windrbd_mount(struct block_device *dev, const char *mount_point)
 {
 	NTSTATUS status;
@@ -3547,12 +3652,17 @@ int windrbd_mount(struct block_device *dev, const char *mount_point)
 	if (minor_to_x_name(&dev->mount_point, -1, mount_point) < 0)
 		return -1;
 	
+/*
 	status = IoCreateSymbolicLink(&dev->mount_point, &dev->path_to_device);
 	if (status != STATUS_SUCCESS) {
 		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, dev->mount_point.Buffer, status);
 		return -1;
 
 	}
+*/
+	if (mountmgr_create_point(dev) < 0)
+		return -1;
+
 	printk(KERN_INFO "Assigned device %S the mount point %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 	return 0;
 }

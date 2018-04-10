@@ -208,6 +208,8 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	NTSTATUS status;
 	int err;
 
+printk(KERN_DEBUG "s->Parameters.Create.SecurityContext->DesiredAccess is %x\n", s->Parameters.Create.SecurityContext->DesiredAccess);
+
 	mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
                 (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0;
 
@@ -220,6 +222,7 @@ printk(KERN_DEBUG "drbd_open returned %d\n", err);
 
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
+printk(KERN_DEBUG "status is %x\n", status);
 	return status;
 }
 
