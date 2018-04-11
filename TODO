@@ -2,6 +2,14 @@ TODO: logging: printk's without terminating \n not displayed.
 
 TODO: mountmanager
 
+	Drive letter (mount point) is created now.
+
+	Right now, need to log in / log out to make windrbd drive
+	visible in explorer.
+
+TODO: blue screen on drbdadm detach --force (when needing uptodate
+	data) and then drbdadm status.
+
 TODO: Auto-promote seems not to work as expected.
 
 	dir h: should make device primary if possible and then
