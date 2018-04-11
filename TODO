@@ -1,3 +1,7 @@
+TODO: logging: printk's without terminating \n not displayed.
+
+TODO: mountmanager
+
 TODO: Auto-promote seems not to work as expected.
 
 	dir h: should make device primary if possible and then

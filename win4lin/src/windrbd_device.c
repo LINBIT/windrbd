@@ -173,17 +173,35 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 
 	case IOCTL_MOUNTDEV_QUERY_DEVICE_NAME:
 printk("karin IOCTL_MOUNTDEV_QUERY_DEVICE_NAME\n");
-		int length = dev->path_to_device.Length * sizeof(WCHAR);
-		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _MOUNTDEV_NAME) + length) {
+		int length = dev->path_to_device.Length;
+		struct _MOUNTDEV_NAME *name = irp->AssociatedIrp.SystemBuffer;
+		int total_length = sizeof(struct _MOUNTDEV_NAME) - sizeof(name->Name) + length + sizeof(WCHAR);
+
+printk("length: %d s->Parameters.DeviceIoControl.OutputBufferLength: %d sizeof(struct _MOUNTDEV_NAME): %d total_length: %d path_to_device: %S\n", length, s->Parameters.DeviceIoControl.OutputBufferLength, sizeof(struct _MOUNTDEV_NAME), total_length, dev->path_to_device.Buffer);
+		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _MOUNTDEV_NAME) - sizeof(name->Name)) {
+printk("buffer WAY too small\n");
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
-		struct _MOUNTDEV_NAME *name = irp->AssociatedIrp.SystemBuffer;
-
+printk("ok\n");
 		name->NameLength = length;
+printk("1\n");
+		if (s->Parameters.DeviceIoControl.OutputBufferLength < total_length) {
+printk("buffer too small\n");
+				/* Fill in only length, so mount manager knows
+				 * how much space we need. */
+			irp->IoStatus.Information = sizeof(struct _MOUNTDEV_NAME);
+			status = STATUS_BUFFER_OVERFLOW;
+			break;
+		}
+printk("2\n");
 		RtlCopyMemory(name->Name, dev->path_to_device.Buffer, length);
+printk("3\n");
+		name->Name[length / sizeof(WCHAR)] = 0;
+printk("4\n");
 
-		irp->IoStatus.Information = length + sizeof(struct _MOUNTDEV_NAME);
+		irp->IoStatus.Information = total_length;
+printk("5\n");
 		break;
 
 	default: 

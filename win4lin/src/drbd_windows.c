@@ -3435,6 +3435,8 @@ static int minor_to_x_name(UNICODE_STRING *name, int minor, const char *mount_po
 		return -EINVAL;
 	}
 	name->Buffer[name->Length / sizeof(name->Buffer[0])] = 0;
+
+printk("name->Buffer: %S name->Length: %d\n", name->Buffer, name->Length);
 	return 0;
 }
 
@@ -3540,6 +3542,8 @@ out_remove_lock_failed:
 	/* This function is roughly taken from:
 	 * https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/content/mountmgr/ni-mountmgr-ioctl_mountmgr_create_point
 	 */
+
+/* TODO: mount point (drive letter) must always be upper case */
 
 static int mountmgr_create_point(struct block_device *dev)
 {
