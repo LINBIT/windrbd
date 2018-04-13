@@ -19,10 +19,8 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#if 0
 /* TODO: either fix the mountmanager code or throw it away */
 #include <initguid.h>
-#endif
 
 #include "drbd_windows.h"
 #include "windrbd_device.h"
@@ -30,6 +28,7 @@
 #include <ntdddisk.h>
 #include <wdm.h>
 #include <wdmguid.h>
+#include <ntddstor.h>
 
 #if 0
 DEFINE_GUID(MOUNTDEV_MOUNTED_DEVICE_GUID, 0x53F5630D, 0xB6BF, 0x11D0, 0x94, 0xF2, 0x00, 0xA0, 0xC9, 0x1E, 0xFB, 0x8B);
@@ -3671,11 +3670,13 @@ int windrbd_mount(struct block_device *dev, const char *mount_point)
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
 
-	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVICE_INTERFACE_ARRIVAL, NULL, &dev->mount_point);
+//	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVICE_INTERFACE_ARRIVAL, NULL, &dev->mount_point);
+	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVINTERFACE_DISK, NULL, &dev->mount_point);
 	if (!NT_SUCCESS(status)) {
 		printk("IoRegisterDeviceInterface returned %x (ignored)\n", status);
 	}
 
+// MOUNTDEV_MOUNTED_DEVICE_GUID
 	printk(KERN_INFO "Assigned device %S the mount point %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 	return 0;
 }
