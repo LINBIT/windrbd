@@ -3670,6 +3670,23 @@ int windrbd_mount(struct block_device *dev, const char *mount_point)
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
 
+	UNICODE_STRING hdd_name;
+	struct _FILE_OBJECT *f;
+	RtlInitUnicodeString(&hdd_name, L"\\Device\\Null");
+	struct _DEVICE_OBJECT *hdd = find_windows_device(&hdd_name, &f);
+	if (hdd) {
+		struct _DEVICE_OBJECT *d = IoAttachDeviceToDeviceStack(dev->windows_device, hdd);
+		if (!d)
+			printk("IoAttachDeviceToDeviceStack returned NULL\n");
+	} else {
+		printk("didn't find %S\n", hdd_name.Buffer);
+	}
+	IoInvalidateDeviceRelations(hdd, BusRelations);
+
+printk("dev->windows_device->DeviceObjectExtension: %p\n", dev->windows_device->DeviceObjectExtension);
+if (dev->windows_device->DeviceObjectExtension != NULL)
+printk("dev->windows_device->DeviceObjectExtension->DeviceNode: %p\n", dev->windows_device->DeviceObjectExtension->DeviceNode);
+
 //	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVICE_INTERFACE_ARRIVAL, NULL, &dev->mount_point);
 	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVINTERFACE_DISK, NULL, &dev->mount_point);
 	if (!NT_SUCCESS(status)) {

@@ -1,3 +1,6 @@
+TODO: Blue screen when opening windrbd_control (root device object)
+	with WinObj
+
 TODO: logging: printk's without terminating \n not displayed.
 
 TODO: mountmanager
@@ -6,6 +9,11 @@ TODO: mountmanager
 
 	Right now, need to log in / log out to make windrbd drive
 	visible in explorer.
+
+	Need to have a valid DeviceNode (that is attach it somewhere
+	in the PNP device tree). It does not work to attach it to
+	the backing device (backing device then becomes invalid and
+	BSODs)
 
 TODO: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
