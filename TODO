@@ -3,7 +3,7 @@ TODO: Blue screen when opening windrbd_control (root device object)
 
 TODO: logging: printk's without terminating \n not displayed.
 
-TODO: mountmanager
+TODO: mountmanager / register device with PNP
 
 	Drive letter (mount point) is created now.
 
