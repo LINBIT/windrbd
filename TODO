@@ -15,6 +15,11 @@ TODO: mountmanager
 	the backing device (backing device then becomes invalid and
 	BSODs)
 
+	This seems to be a little bit more complicated than expected..
+	maybe attaching the windrbd device to the root device object
+	helps? (But root device object also does not have a device
+	node).
+
 TODO: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
 
@@ -26,15 +31,10 @@ TODO: Auto-promote seems not to work as expected.
 	Strange, but neither with read/write nor with read only we get
 	a create request on the windrbd device. (tested with windrbd-test)
 
-TODO: Cannot format virtual drive.
-	Regression introduced recently (right before windrbd-0.6.0)
-	
-	Impletented TODO: test it when we have internet again (just
-	format k:, should run without error)
-
 TODO: Mount to NTFS directories.
 
 TODO: logging to localhost (windows) seems to cause boot problems (?)
+	When using 192.168.56.101 instead of 127.0.0.1
 
 TODO: windrbd show-filesystem should check if device is used as
 	a backing device.
@@ -1584,4 +1584,10 @@ drbdmeta 5 v09 F: internal apply-al
 	Update: Done, but this is still invalid. After formatting
 	the backing device, meta data gets destroyed. Need to redo
 	a create-md.
+
+Done: Cannot format virtual drive.
+	Regression introduced recently (right before windrbd-0.6.0)
+	
+	Impletented Done: test it when we have internet again (just
+	format k:, should run without error), works
 
