@@ -166,3 +166,5 @@ Version history
  * 0.5.4 (Mar 28, 2018): Fixed blue screen on drbdadm down and no mount point.
  * 0.6.0 (Mar 29, 2018): Beta 2: Usability improvements.
  * 0.6.1 (Apr 17, 2018): Use Mountmanager to create Symlinks.
+ * 0.6.2 (Apr 17, 2018): Fixed reference count error on drbdadm down introduced
+                         with last release.
