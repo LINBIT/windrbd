@@ -621,7 +621,7 @@ struct block_device {
 	struct kref kref;
 
 	int minor;	/* in case drbd_device is still NULL we need to shadow it here */
-	struct drbd_device* drbd_device;
+	struct drbd_device *drbd_device;
 	struct _DEVICE_OBJECT *windows_device;	/* If that is a backing dev, the target device to send the I/O IRPs to. If this is a DRBD device, the device created by bdget()) */
 	struct _FILE_OBJECT *file_object; /* As returned by IoGetDeviceObjectPointer() */
 	UNICODE_STRING path_to_device;
@@ -636,6 +636,8 @@ struct block_device {
 	struct _IO_STATUS_BLOCK vol_size_io_status;
 	struct _GET_LENGTH_INFORMATION vol_size_length_information;
 	struct mutex vol_size_mutex;
+
+	int currently_mounting;
 };
 
 extern sector_t windrbd_get_capacity(struct block_device *bdev);
@@ -1201,8 +1203,6 @@ static inline int queue_io_opt(struct request_queue *q)
 }
 
 extern struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder);
-extern int windrbd_set_drbd_device_active(struct drbd_device *device, int flag);
-
 
 extern void hlist_add_head(struct hlist_node *n, struct hlist_head *h);
 extern void hlist_del_init(struct hlist_node *entry);

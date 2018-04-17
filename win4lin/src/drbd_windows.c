@@ -3609,6 +3609,9 @@ static int mountmgr_create_point(struct block_device *dev)
         s->DeviceObject = mountmgr_device_object;
         s->FileObject = mountmgr_file_object;
 
+	/* Do not pass open requests to DRBD, they will fail. */
+	dev->currently_mounting = 1;
+
 	/* Send the irp to the mount manager requesting
 	 * that a new mount point (persistent symbolic link)
 	 * be created for the indicated volume.
@@ -3620,6 +3623,8 @@ static int mountmgr_create_point(struct block_device *dev)
 		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 		status = io_status->Status;
 	}
+	dev->currently_mounting = 0;
+
 	if (!NT_SUCCESS(status)) {
 		printk(KERN_ERR "Registering mount point failed status = %x\n", status);
 		kfree(create_point);

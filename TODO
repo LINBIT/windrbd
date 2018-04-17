@@ -1591,3 +1591,6 @@ Done: Cannot format virtual drive.
 	Impletented Done: test it when we have internet again (just
 	format k:, should run without error), works
 
+Done: up / down: down fails with failed to detach
+	Fixed, was problem drbd_release() when drbd_open failed before.
+

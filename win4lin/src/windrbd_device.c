@@ -269,6 +269,8 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct block_device *dev = device->DeviceExtension;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
+        	IoCompleteRequest(irp, IO_NO_INCREMENT);
+
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
@@ -276,21 +278,26 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	NTSTATUS status;
 	int err;
 
+	if (!dev->currently_mounting) {
 printk(KERN_DEBUG "s->Parameters.Create.SecurityContext->DesiredAccess is %x\n", s->Parameters.Create.SecurityContext->DesiredAccess);
 
-	mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
-                (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0;
+		mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
+       	               (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0;
 
-	printk(KERN_INFO "DRBD device create request: opening DRBD device %s\n",
-		mode == 0 ? "read-only" : "read-write");
+		printk(KERN_INFO "DRBD device create request: opening DRBD device %s\n",
+			mode == 0 ? "read-only" : "read-write");
 
-	err = drbd_open(dev, mode);
+		err = drbd_open(dev, mode);
 printk(KERN_DEBUG "drbd_open returned %d\n", err);
-	if (err == -EMEDIUMTYPE) {
-		printk(KERN_DEBUG "-EMEDIUMTYPE error ignored on drbd_open()\n");
-		err = 0;
+		status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
+	} else {
+			/* If we are currently mounting we most likely got
+			 * this IRP from the mount manager. Do not open the
+			 * device in drbd, this will fail at this early stage.
+			 */
+
+		status = STATUS_SUCCESS;
 	}
-	status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
 
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -304,6 +311,8 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct block_device *dev = device->DeviceExtension;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
+        	IoCompleteRequest(irp, IO_NO_INCREMENT);
+
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
@@ -311,16 +320,21 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	NTSTATUS status;
 	int err;
 
-	mode = 0;	/* TODO: remember mode from open () */
+	if (!dev->currently_mounting) {
+		mode = 0;	/* TODO: remember mode from open () */
 /*	mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
                 (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0; */
 
-	printk(KERN_INFO "DRBD device close request: releasing DRBD device %s\n",
-		mode == 0 ? "read-only" : "read-write");
+		printk(KERN_INFO "DRBD device close request: releasing DRBD device %s\n",
+			mode == 0 ? "read-only" : "read-write");
 
-	err = dev->bd_disk->fops->release(dev->bd_disk, mode);
+		err = dev->bd_disk->fops->release(dev->bd_disk, mode);
 printk(KERN_DEBUG "drbd_release returned %d\n", err);
-	status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
+		status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
+	} else {
+			/* See comment in windrbd_create() */
+		status = STATUS_SUCCESS;
+	}
 
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
