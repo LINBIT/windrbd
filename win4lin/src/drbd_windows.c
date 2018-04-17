@@ -3439,7 +3439,7 @@ static int minor_to_x_name(UNICODE_STRING *name, int minor, const char *mount_po
 	}
 	name->Buffer[name->Length / sizeof(name->Buffer[0])] = 0;
 
-printk("name->Buffer: %S name->Length: %d\n", name->Buffer, name->Length);
+// printk("name->Buffer: %S name->Length: %d\n", name->Buffer, name->Length);
 	return 0;
 }
 
@@ -3562,7 +3562,6 @@ static int mountmgr_create_point(struct block_device *dev)
 	struct _IRP *irp;
 	struct _IO_STACK_LOCATION *s;
 
-printk("1\n");
 	create_point = kmalloc(create_point_size, 0, 'DRBD');
 	if (create_point == NULL)
 		return -1;
@@ -3572,55 +3571,44 @@ printk("1\n");
 		kfree(create_point);
 		return -1;
 	}
-printk("2\n");
 	create_point->SymbolicLinkNameOffset = sizeof(*create_point);
 	create_point->SymbolicLinkNameLength = dev->mount_point.Length;
 	create_point->DeviceNameOffset = create_point->SymbolicLinkNameOffset+create_point->SymbolicLinkNameLength;
 	create_point->DeviceNameLength = dev->path_to_device.Length;
 
-printk("3\n");
 	RtlCopyMemory(((char*)create_point)+create_point->SymbolicLinkNameOffset, dev->mount_point.Buffer, dev->mount_point.Length);
 	RtlCopyMemory(((char*)create_point)+create_point->DeviceNameOffset, dev->path_to_device.Buffer, dev->path_to_device.Length);
 
-printk("4\n");
 	/* Use the name of the mount manager device object
 	 * defined in mountmgr.h (MOUNTMGR_DEVICE_NAME) to
 	 * obtain a pointer to the mount manager.
 	 */
 
-printk("5\n");
 	RtlInitUnicodeString(&mountmgr_name, MOUNTMGR_DEVICE_NAME);
 	status = IoGetDeviceObjectPointer(&mountmgr_name, FILE_READ_ATTRIBUTES, &mountmgr_file_object, &mountmgr_device_object);
-printk("6\n");
 	if (!NT_SUCCESS(status)) {
 		printk(KERN_WARNING "IoGetDeviceObjectPointer %s returned %x\n", MOUNTMGR_DEVICE_NAME, status);
 		kfree(create_point);
 		kfree(io_status);
 		return -1;
 	}
-printk("7\n");
 	KeInitializeEvent(&event, NotificationEvent, FALSE);
-printk("8\n");
 	irp = IoBuildDeviceIoControlRequest(
             IOCTL_MOUNTMGR_CREATE_POINT,
             mountmgr_device_object, create_point, create_point_size,
             NULL, 0, FALSE, &event, io_status);
 
-printk("9\n");
 	if (irp == NULL) {
 		printk(KERN_WARNING "Cannot create IRP.\n");
 		kfree(create_point);
 		kfree(io_status);
 		return -1;
 	}
-printk("a1\n");
         s = IoGetNextIrpStackLocation(irp);
 
-printk("a2\n");
         s->DeviceObject = mountmgr_device_object;
         s->FileObject = mountmgr_file_object;
 
-printk("a\n");
 	/* Send the irp to the mount manager requesting
 	 * that a new mount point (persistent symbolic link)
 	 * be created for the indicated volume.
@@ -3628,24 +3616,18 @@ printk("a\n");
 
 	status = IoCallDriver(mountmgr_device_object, irp);
 
-printk("b\n");
 	if (status == STATUS_PENDING) {
-printk("c\n");
 		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
-printk("d\n");
 		status = io_status->Status;
 	}
-printk("e\n");
 	if (!NT_SUCCESS(status)) {
 		printk(KERN_ERR "Registering mount point failed status = %x\n", status);
 		kfree(create_point);
 		kfree(io_status);
 		return -1;
 	}
-printk("f\n");
 	kfree(create_point);
 	kfree(io_status);
-printk("g\n");
 	return 0;
 }
 
@@ -3670,6 +3652,18 @@ int windrbd_mount(struct block_device *dev, const char *mount_point)
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
 
+/*
+printk("dev->windows_device->DeviceObjectExtension: %p\n", dev->windows_device->DeviceObjectExtension);
+if (dev->windows_device->DeviceObjectExtension != NULL)
+printk("dev->windows_device->DeviceObjectExtension->DeviceNode: %p\n", dev->windows_device->DeviceObjectExtension->DeviceNode);
+
+printk("mvolRootDeviceObject->DeviceObjectExtension: %p\n", mvolRootDeviceObject->DeviceObjectExtension);
+if (mvolRootDeviceObject->DeviceObjectExtension != NULL)
+printk("mvolRootDeviceObject->DeviceObjectExtension->DeviceNode: %p\n", mvolRootDeviceObject->DeviceObjectExtension->DeviceNode);
+
+*/
+
+/*
 	UNICODE_STRING hdd_name;
 	struct _FILE_OBJECT *f;
 	RtlInitUnicodeString(&hdd_name, L"\\Device\\Null");
@@ -3682,16 +3676,15 @@ int windrbd_mount(struct block_device *dev, const char *mount_point)
 		printk("didn't find %S\n", hdd_name.Buffer);
 	}
 	IoInvalidateDeviceRelations(hdd, BusRelations);
-
-printk("dev->windows_device->DeviceObjectExtension: %p\n", dev->windows_device->DeviceObjectExtension);
-if (dev->windows_device->DeviceObjectExtension != NULL)
-printk("dev->windows_device->DeviceObjectExtension->DeviceNode: %p\n", dev->windows_device->DeviceObjectExtension->DeviceNode);
+*/
 
 //	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVICE_INTERFACE_ARRIVAL, NULL, &dev->mount_point);
+/*
 	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVINTERFACE_DISK, NULL, &dev->mount_point);
 	if (!NT_SUCCESS(status)) {
 		printk("IoRegisterDeviceInterface returned %x (ignored)\n", status);
 	}
+*/
 
 // MOUNTDEV_MOUNTED_DEVICE_GUID
 	printk(KERN_INFO "Assigned device %S the mount point %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);

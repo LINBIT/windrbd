@@ -140,6 +140,12 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 		}
     }
 
+/*
+printk("mvolRootDeviceObject->DeviceObjectExtension: %p\n", mvolRootDeviceObject->DeviceObjectExtension);
+if (mvolRootDeviceObject->DeviceObjectExtension != NULL)
+printk("mvolRootDeviceObject->DeviceObjectExtension->DeviceNode: %p\n", mvolRootDeviceObject->DeviceObjectExtension->DeviceNode);
+*/
+
     return STATUS_SUCCESS;
 }
 
