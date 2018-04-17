@@ -1,0 +1,66 @@
+From 0668ea52f6b18a43321285c629d2f86c25327ba9 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 10 Apr 2018 17:35:33 +0200
+Subject: [PATCH] Mount windrbd device at end of drbd_create_device()
+
+mountmgr will open it and send it a ioctl. drbd_open would fail
+at the start of drbd_create_device()
+---
+ drbd/drbd_main.c | 25 +++++++++++++++++--------
+ 1 file changed, 17 insertions(+), 8 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 201d198..862ae78 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3541,13 +3541,6 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	if (block_device == NULL)
+ 		return ERR_NO_DISK;
+ 
+-	if (device_conf->mount_point && device_conf->mount_point[0]) {
+-		if (windrbd_mount(block_device, device_conf->mount_point) < 0) {
+-			err = ERR_INVALID_REQUEST;
+-			goto out_couldnt_mount;
+-		}
+-	}
+-
+ 	/* GFP_KERNEL, we are outside of all write-out paths */
+ 	device = kzalloc(sizeof(struct drbd_device), GFP_KERNEL, '0CWD');
+ 	if (!device)
+@@ -3726,8 +3719,25 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 
+ 	drbd_debugfs_device_add(device);
+ 	*p_device = device;
++
++	if (device_conf->mount_point && device_conf->mount_point[0]) {
++
++			/* windrbd_mount (via mountmgr) calls drbd_open
++			 * internally, so do the mount only when the device
++			 * is fully functional.
++			 */
++
++		if (windrbd_mount(block_device, device_conf->mount_point) < 0) {
++			err = ERR_INVALID_REQUEST;
++			goto out_couldnt_mount;
++		}
++	}
++
+ 	return NO_ERROR;
+ 
++out_couldnt_mount:
++	/* TODO: clean up more. */
++
+ out_remove_peer_device:
+ 	list_add_rcu(&tmp, &device->peer_devices);
+ 	list_del_init(&device->peer_devices);
+@@ -3767,7 +3777,6 @@ out_no_q:
+ 	kref_debug_destroy(&device->kref_debug);
+ 	kfree(device);
+ out_no_device:
+-out_couldnt_mount:
+ 	bdput(block_device);	/* This will also remove the symbolic link
+ 				   (mount point) if present. */
+ 
+-- 
+2.7.4
+
