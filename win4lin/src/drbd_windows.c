@@ -3631,6 +3631,11 @@ static int mountmgr_create_point(struct block_device *dev)
 	return 0;
 }
 
+	/* TODO: make drive appear in Windows Explorer, not clear
+	   currently how to do that (via PNP manager?) and remove
+           commented out code.
+	 */
+
 int windrbd_mount(struct block_device *dev, const char *mount_point)
 {
 	NTSTATUS status;
@@ -3652,7 +3657,36 @@ int windrbd_mount(struct block_device *dev, const char *mount_point)
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
 
+#if 0
+
+	UNICODE_STRING hdd_name;
+	struct _FILE_OBJECT *f;
+	RtlInitUnicodeString(&hdd_name, L"\\Device\\VolMgrControl");
+	struct _DEVICE_OBJECT *hdd = find_windows_device(&hdd_name, &f);
+
+printk("volmgrcontrol device object is %p\n", hdd);
+
+	if (hdd) {
+printk("hdd->DeviceObjectExtension: %p\n", hdd->DeviceObjectExtension);
+if (hdd->DeviceObjectExtension != NULL)
+printk("hdd->DeviceObjectExtension->DeviceNode: %p\n", hdd->DeviceObjectExtension->DeviceNode);
+		struct _DEVICE_OBJECT *d = IoAttachDeviceToDeviceStack(dev->windows_device, hdd);
+		if (!d)
+			printk("IoAttachDeviceToDeviceStack returned NULL\n");
+	} else {
+		printk("didn't find %S\n", hdd_name.Buffer);
+	}
+printk("1\n");
+	IoInvalidateDeviceRelations(hdd, BusRelations);
+printk("2\n");
+#endif
+
 /*
+	struct _DEVICE_OBJECT *d = IoAttachDeviceToDeviceStack(dev->windows_device, mvolRootDeviceObject);
+	printk("IoAttachDeviceToDeviceStack returned %p dev->windows_device is %p mvolRootDeviceObject is %p\n", d, dev->windows_device, mvolRootDeviceObject);
+*/
+
+#if 0
 printk("dev->windows_device->DeviceObjectExtension: %p\n", dev->windows_device->DeviceObjectExtension);
 if (dev->windows_device->DeviceObjectExtension != NULL)
 printk("dev->windows_device->DeviceObjectExtension->DeviceNode: %p\n", dev->windows_device->DeviceObjectExtension->DeviceNode);
@@ -3661,32 +3695,22 @@ printk("mvolRootDeviceObject->DeviceObjectExtension: %p\n", mvolRootDeviceObject
 if (mvolRootDeviceObject->DeviceObjectExtension != NULL)
 printk("mvolRootDeviceObject->DeviceObjectExtension->DeviceNode: %p\n", mvolRootDeviceObject->DeviceObjectExtension->DeviceNode);
 
-*/
+#endif
 
-/*
-	UNICODE_STRING hdd_name;
-	struct _FILE_OBJECT *f;
-	RtlInitUnicodeString(&hdd_name, L"\\Device\\Null");
-	struct _DEVICE_OBJECT *hdd = find_windows_device(&hdd_name, &f);
-	if (hdd) {
-		struct _DEVICE_OBJECT *d = IoAttachDeviceToDeviceStack(dev->windows_device, hdd);
-		if (!d)
-			printk("IoAttachDeviceToDeviceStack returned NULL\n");
-	} else {
-		printk("didn't find %S\n", hdd_name.Buffer);
-	}
-	IoInvalidateDeviceRelations(hdd, BusRelations);
-*/
+	// IoInvalidateDeviceRelations(mvolRootDeviceObject, BusRelations);
+
 
 //	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVICE_INTERFACE_ARRIVAL, NULL, &dev->mount_point);
-/*
+
 	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVINTERFACE_DISK, NULL, &dev->mount_point);
 	if (!NT_SUCCESS(status)) {
-		printk("IoRegisterDeviceInterface returned %x (ignored)\n", status);
+		printk("IoRegisterDeviceInterface(&GUID_DEVINTERFACE_DISK) returned %x (ignored)\n", status);
 	}
-*/
+	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVINTERFACE_VOLUME, NULL, &dev->mount_point);
+	if (!NT_SUCCESS(status)) {
+		printk("IoRegisterDeviceInterface(&GUID_DEVINTERFACE_VOLUME) returned %x (ignored)\n", status);
+	}
 
-// MOUNTDEV_MOUNTED_DEVICE_GUID
 	printk(KERN_INFO "Assigned device %S the mount point %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 	return 0;
 }

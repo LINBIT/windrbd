@@ -18,7 +18,7 @@ TODO: mountmanager
 	This seems to be a little bit more complicated than expected..
 	maybe attaching the windrbd device to the root device object
 	helps? (But root device object also does not have a device
-	node).
+	node). Update: fails with PNP BSOD.
 
 TODO: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
