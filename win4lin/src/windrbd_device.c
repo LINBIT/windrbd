@@ -36,6 +36,14 @@
 
 static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	if (device == mvolRootDeviceObject) {
+		printk(KERN_DEBUG "Root device request.\n");
+
+		irp->IoStatus.Status = STATUS_SUCCESS;
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_SUCCESS;
+	}
+
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	
 	printk(KERN_DEBUG "DRBD device request not implemented: MajorFunction: 0x%x\n", s->MajorFunction);
@@ -80,6 +88,14 @@ static void fill_partition_info_ex(struct _PARTITION_INFORMATION_EX *p, struct b
 
 static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	if (device == mvolRootDeviceObject) {
+		printk(KERN_DEBUG "Root device request.\n");
+
+		irp->IoStatus.Status = STATUS_SUCCESS;
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_INVALID_DEVICE_REQUEST;
+	}
+
 	struct block_device *dev = device->DeviceExtension;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
@@ -266,6 +282,14 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 
 static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	if (device == mvolRootDeviceObject) {
+		printk(KERN_DEBUG "Root device request.\n");
+
+		irp->IoStatus.Status = STATUS_SUCCESS;
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_SUCCESS;
+	}
+
 	struct block_device *dev = device->DeviceExtension;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
@@ -308,6 +332,14 @@ printk(KERN_DEBUG "status is %x\n", status);
 
 static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	if (device == mvolRootDeviceObject) {
+		printk(KERN_DEBUG "Root device request.\n");
+
+		irp->IoStatus.Status = STATUS_SUCCESS;
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_SUCCESS;
+	}
+
 	struct block_device *dev = device->DeviceExtension;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
@@ -343,6 +375,14 @@ printk(KERN_DEBUG "drbd_release returned %d\n", err);
 
 static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	if (device == mvolRootDeviceObject) {
+		printk(KERN_DEBUG "Root device request.\n");
+
+		irp->IoStatus.Status = STATUS_SUCCESS;
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_SUCCESS;
+	}
+
 	struct block_device *dev = device->DeviceExtension;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
@@ -461,6 +501,14 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	if (device == mvolRootDeviceObject) {
+		printk(KERN_DEBUG "Root device request.\n");
+
+		irp->IoStatus.Status = STATUS_SUCCESS;
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_SUCCESS;
+	}
+
 	struct block_device *dev = device->DeviceExtension;
 	NTSTATUS status = STATUS_INVALID_DEVICE_REQUEST;
 	if (dev == NULL) {
@@ -502,6 +550,14 @@ exit:
 
 static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	if (device == mvolRootDeviceObject) {
+		printk(KERN_DEBUG "Root device request.\n");
+
+		irp->IoStatus.Status = STATUS_SUCCESS;
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_SUCCESS;
+	}
+
 	printk("System shutdown, for now, don't clean up, there might be DRBD resources online\nin which case we would crash the system.\n");
 
 	printk("device: %p irp: %p\n", device, irp);
@@ -520,6 +576,14 @@ static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp
 
 static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	if (device == mvolRootDeviceObject) {
+		printk(KERN_DEBUG "Root device request.\n");
+
+		irp->IoStatus.Status = STATUS_SUCCESS;
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_SUCCESS;
+	}
+
 	struct block_device *dev = device->DeviceExtension;
 	struct bio *bio;
 	NTSTATUS status;

@@ -1,6 +1,3 @@
-TODO: Blue screen when opening windrbd_control (root device object)
-	with WinObj
-
 TODO: logging: printk's without terminating \n not displayed.
 
 TODO: mountmanager / register device with PNP
@@ -1594,3 +1591,8 @@ Done: Cannot format virtual drive.
 Done: up / down: down fails with failed to detach
 	Fixed, was problem drbd_release() when drbd_open failed before.
 
+Done: Blue screen when opening windrbd_control (root device object)
+	with WinObj
+
+	DriverVerifier expects IRP requests to succeed (at least create
+	close and cleanup)
