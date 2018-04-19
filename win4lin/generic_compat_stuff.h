@@ -88,7 +88,6 @@ struct kmem_cache {
 #define __always_inline inline
 #define __inline inline
 
-typedef char bool;
 typedef int cpumask_var_t;
 
 /* Yes, that'll be active for all structures...
