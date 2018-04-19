@@ -1851,7 +1851,6 @@ NTSTATUS DrbdIoCompletion(
 	int i;
 	NTSTATUS status = Irp->IoStatus.Status;
 
-printk("LEBT status: %x\n", status);
 	if (status != STATUS_SUCCESS) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)
 			status = STATUS_SUCCESS;
@@ -2025,7 +2024,6 @@ static int windrbd_generic_make_request(struct bio *bio)
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
 		patch_boot_sector(buffer, 0, 0);
 	}
-printk("KARIN bio->bi_rw: %x bio->bi_sector: %d bio->bi_size: %d\n", bio->bi_rw, bio->bi_sector, bio->bi_size);
 
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,
@@ -2162,9 +2160,7 @@ int generic_make_request(struct bio *bio)
 
 // printk(KERN_INFO "bio: %p bio->bi_rw: %x bio->bi_size: %d bio->bi_vcnt: %d\n", bio, bio->bi_rw, bio->bi_size, bio->bi_vcnt);
 
-/* TODO:  WRONG! */
-//	flush_request = (bio->bi_rw & DRBD_REQ_PREFLUSH) != 0;
-	flush_request = 0;
+	flush_request = (bio->bi_rw & DRBD_REQ_PREFLUSH) != 0;
 
 	if (bio->bi_vcnt == 0)
 		bio->bi_num_requests = flush_request;

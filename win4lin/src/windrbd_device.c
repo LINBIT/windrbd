@@ -402,7 +402,6 @@ printk(KERN_INFO "Pretending that cleanup does something.\n");
 static void windrbd_bio_finished(struct bio * bio, int error)
 {
 	PIRP irp = bio->bi_upper_irp;
-printk("LEBT error: %d\n", error);
 
 	if (error == 0) {
 		if (bio->bi_rw == READ) {
@@ -538,9 +537,7 @@ printk("I/O request on a failed disk.\n");
 		goto exit;
 	}
         IoMarkIrpPending(irp);
-printk("KARIN bio->bi_rw: %x bio->bi_sector: %d bio->bi_size: %d\n", bio->bi_rw, bio->bi_sector, bio->bi_size);
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
-/* printk("LEBT bio->bi_rw: %x bio->bi_sector: %d bio->bi_size: %d\n", bio->bi_rw, bio->bi_sector, bio->bi_size); */
 
 	return STATUS_PENDING;
 
