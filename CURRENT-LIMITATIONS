@@ -1,0 +1,7 @@
+Must restart session (log out and log back in) to make windrbd
+drive visible in Explorer (it is visible in cmd and cygwin shell
+rightaway).
+
+Flush requests are not propagated to backing device.
+
+Auto-promote is not supported.

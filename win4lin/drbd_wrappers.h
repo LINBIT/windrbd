@@ -541,6 +541,12 @@ static inline void blk_queue_max_segments(struct request_queue *q, unsigned shor
 
 
 /* From include/linux/blk_types.h */
+
+	/* TODO: This is most likely wrong. REQ_PREFLUSH is supposed
+	 * to be a single bit, instead it equals to 7 here .. result
+	 * is that any write request is flushed.
+	 */
+
 enum req_op {
         REQ_OP_READ,
         REQ_OP_WRITE,

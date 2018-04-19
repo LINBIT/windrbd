@@ -1,3 +1,11 @@
+TODO: receive_DataReply: failed to find request 0x1a186c00, sector 25896s
+	When writing on Windows DRBD.
+
+TODO: blue screen on drbdadm detach --force (when needing uptodate
+	data) and then drbdadm status.
+
+	Cannot reproduce at the moment.
+
 TODO: logging: printk's without terminating \n not displayed.
 
 TODO: mountmanager / register device with PNP
@@ -17,8 +25,7 @@ TODO: mountmanager / register device with PNP
 	helps? (But root device object also does not have a device
 	node). Update: fails with PNP BSOD.
 
-TODO: blue screen on drbdadm detach --force (when needing uptodate
-	data) and then drbdadm status.
+	See Microsoft driver samples for how to do this.
 
 TODO: Auto-promote seems not to work as expected.
 
@@ -27,8 +34,6 @@ TODO: Auto-promote seems not to work as expected.
 
 	Strange, but neither with read/write nor with read only we get
 	a create request on the windrbd device. (tested with windrbd-test)
-
-TODO: Mount to NTFS directories.
 
 TODO: logging to localhost (windows) seems to cause boot problems (?)
 	When using 192.168.56.101 instead of 127.0.0.1
@@ -46,6 +51,8 @@ TODO: Why doesn't it work on Phil's machine?
 TODO: msi installer instead of self extracting exe.
 
 --------------------------------------------------------------------
+TODO: Mount to NTFS directories.
+
 Maybe: remove drive letter from volume on attach.
 	And not reassign it on detach: Users shouldn't modify
 	data on a backing device even when the device is down,
