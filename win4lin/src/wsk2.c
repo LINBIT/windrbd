@@ -651,6 +651,7 @@ Send(
 	LONG		BytesSent = SOCKET_ERROR; // DRBC_CHECK_WSK: SOCKET_ERROR be mixed EINVAL?
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
+printk("sending %d bytes\n", BufferSize);
 	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || ((int) BufferSize <= 0))
 		return SOCKET_ERROR;
 
@@ -667,14 +668,17 @@ Send(
 
 	Flags |= WSK_FLAG_NODELAY;
 
+printk("into WskSend\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskSend(
 		WskSocket,
 		&WskBuffer,
 		Flags,
 		Irp);
+printk("out of WskSend\n");
 
 	if (Status == STATUS_PENDING)
 	{
+printk("pending\n");
 		LARGE_INTEGER	nWaitTime;
 		LARGE_INTEGER	*pTime;
 
@@ -695,7 +699,9 @@ Send(
 
 			waitObjects[0] = (PVOID) &CompletionEvent;
 
+printk("into KeWaitForMultipleObjects\n");
 			Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
+printk("out of KeWaitForMultipleObjects\n");
 			switch (Status)
 			{
 			case STATUS_TIMEOUT:
@@ -764,6 +770,7 @@ Send(
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer);
 
+printk("returning %d\n", BytesSent);
 	return BytesSent;
 }
 
