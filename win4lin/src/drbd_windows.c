@@ -3213,6 +3213,8 @@ int windrbd_thread_setup(struct drbd_thread *thi)
 	int res;
 	NTSTATUS status;
 
+printk("thread started\n");
+
 	thi->nt = ct_add_thread(KeGetCurrentThread(), thi->name, TRUE, 'B0DW');
 	if (!thi->nt)
 	{
@@ -3230,6 +3232,8 @@ int windrbd_thread_setup(struct drbd_thread *thi)
 		WDRBD_ERROR("stop, result %d\n", res);
 	else
 		WDRBD_INFO("stopped.\n");
+
+printk("thread stopped\n");
 
 	status = PsTerminateSystemThread(STATUS_SUCCESS);
 	printk(KERN_ERR "PsTerminateSystenThread() returned (status: %x). This is not good.\n", status);

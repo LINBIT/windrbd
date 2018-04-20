@@ -270,6 +270,7 @@ InitWskNetlink(void * pctx)
     PWSK_SOCKET netlink_socket = NULL;
     SOCKADDR_IN LocalAddress = {0};
 
+printk("thread started\n");
 	/* We have to do that here, else Windows will deadlock
 	 * on booting. 
          */
@@ -327,6 +328,7 @@ InitWskNetlink(void * pctx)
 end:
     ReleaseProviderNPI();
 
+printk("thread stopped\n");
     PsTerminateSystemThread(status);
 }
 
