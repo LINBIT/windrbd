@@ -201,34 +201,12 @@ fail:
 	return -ENOMEM;
 }
 
-// MODIFIED_BY_MANTECH DW-1204: added argument bFlush.
-#ifdef _WIN32_SEND_BUFFING
-static void dtt_free_one_sock(struct socket *socket, bool bFlush)
-#else
 static void dtt_free_one_sock(struct socket *socket)
-#endif
 {
 	if (socket) {
 		synchronize_rcu();
 
-#ifdef _WIN32_SEND_BUFFING
-		// MODIFIED_BY_MANTECH DW-1204: flushing send buffer takes too long when network is slow, just shut it down if possible.
-		if (!bFlush)
-			kernel_sock_shutdown(socket, SHUT_RDWR);
-
-        struct _buffering_attr *attr = &socket->buffering_attr;
-        if (attr->send_buf_thread_handle)
-        {
-            KeSetEvent(&attr->send_buf_kill_event, 0, FALSE);
-            KeWaitForSingleObject(&attr->send_buf_killack_event, Executive, KernelMode, FALSE, NULL);
-            attr->send_buf_thread_handle = NULL;
-        }
-#endif		
-#ifdef _WIN32_SEND_BUFFING
-		// DW-1173: shut the socket down after send buf thread goes down.
-		if (bFlush)
-#endif
-			kernel_sock_shutdown(socket, SHUT_RDWR);
+		kernel_sock_shutdown(socket, SHUT_RDWR);
 		sock_release(socket);
 	}
 }
@@ -244,13 +222,7 @@ static void dtt_free(struct drbd_transport *transport, enum drbd_tr_free_op free
 
 	for (i = DATA_STREAM; i <= CONTROL_STREAM; i++) {
 		if (tcp_transport->stream[i]) {
-#ifdef _WIN32_SEND_BUFFING
-			// MODIFIED_BY_MANTECH DW-1204: provide boolean if send buffer has to be flushed.
-			dtt_free_one_sock(tcp_transport->stream[i], test_bit(DISCONNECT_FLUSH, &transport->flags));
-			clear_bit(DISCONNECT_FLUSH, &transport->flags);
-#else
 			dtt_free_one_sock(tcp_transport->stream[i]);
-#endif
 			tcp_transport->stream[i] = NULL;
 		}
 	}
@@ -297,15 +269,8 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
  * do we need to block DRBD_SIG if sock == &meta.socket ??
  * otherwise wake_asender() might interrupt some send_*Ack !
  */
-#ifdef _WIN32_SEND_BUFFING
-		 // _dtt_send is only used when dtt_connect is processed(dtt_send_first_packet), at this time send buffering is not done yet.
-		rv = Send(socket->sk, DataBuffer, iov_len, 0, socket->sk_sndtimeo, NULL, NULL, 0);
-#else
-#if 1 
 		rv = Send(socket->sk, DataBuffer, iov_len, 0, socket->sk_sndtimeo, NULL, &tcp_transport->transport, 0);
-#else
-		rv = kernel_sendmsg(socket, &msg, &iov, 1, size);
-#endif
+
 		if (rv == -EAGAIN) {
 			struct drbd_transport *transport = &tcp_transport->transport;
 			enum drbd_stream stream =
@@ -317,7 +282,6 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
 			else
 				continue;
 		}
-#endif
 		if (rv == -EINTR) {
 			flush_signals(current);
 			rv = 0;
@@ -412,27 +376,9 @@ static void dtt_stats(struct drbd_transport *transport, struct drbd_transport_st
 
 	if (socket) {
 		/* https://msdn.microsoft.com/de-de/library/ff570818(v=vs.85).aspx */
+		/* TODO: implement */
+		printk("stats not implemented.\n");
 		// not supported
-#if 0
-		stats->send_buffer_size = socket->sk_sndbuf;
-#ifdef _WIN32_SEND_BUFFING
-		{
-			struct _buffering_attr *buffering_attr = &tcp_transport->stream[DATA_STREAM]->buffering_attr;
-			struct ring_buffer *bab = buffering_attr->bab;
-
-			if (bab)
-			{
-				stats->send_buffer_used = bab->sk_wmem_queued;
-			}
-			else
-			{
-				stats->send_buffer_used = 0; // don't know how to get WSK tx buffer usage yet. Ignore it.
-			}
-		}
-#else
-		stats->send_buffer_used = socket->sk_wmem_queued;
-#endif
-#endif
 	}
 }
 
@@ -478,17 +424,6 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 		rcu_read_unlock(rcu_flags);
 		return -EIO;
 	}
-
-#ifdef _WIN32_SEND_BUFFING
-	if (nc->sndbuf_size < DRBD_SNDBUF_SIZE_DEF)
-	{
-		if (nc->sndbuf_size > 0)
-		{
-			tr_warn(transport, "sndbuf_size(%d) -> (%d)\n", nc->sndbuf_size, DRBD_SNDBUF_SIZE_DEF);
-			nc->sndbuf_size = DRBD_SNDBUF_SIZE_DEF; 
-		}
-	}
-#endif
 
 	sndbuf_size = nc->sndbuf_size;
 	rcvbuf_size = nc->rcvbuf_size;
@@ -1213,24 +1148,6 @@ randomize:
 	dsocket->sk_sndtimeo = timeout;
 	csocket->sk_sndtimeo = timeout;
 
-/* TODO: isn't set, remove that code */
-#ifdef _WIN32_SEND_BUFFING
-    if ((nc->wire_protocol == DRBD_PROT_A) && (nc->sndbuf_size > 0) )
-    {
-        bool send_buffring = FALSE;
-
-        send_buffring = dtt_start_send_buffring(transport, nc->sndbuf_size);
-        if (send_buffring)
-            drbd_info(connection, "buffering s(%d) c(%d)\n", nc->sndbuf_size, (nc->cong_fill * 512));
-        else
-            drbd_warn(connection, "send-buffering disabled\n");
-    }
-    else
-    {
-        drbd_warn(connection, "send-buffering disabled\n");
-    }
-#endif
-
 	return 0;
 
 out_eagain:
@@ -1309,28 +1226,15 @@ printk("3\n");
 		}
 printk("4\n");
 
-#ifdef _WIN32_SEND_BUFFING 
-		sent = send_buf(transport, stream, socket, (void *)((unsigned char *)(page->addr) +offset), len);
-		// WIN32_SEND_ERR_FIX: move we_should_drop_the_connection to inside of send_buf, because retransmission occurred
-#else
 		sent = Send(socket->sk, (void *)((unsigned char *)(page->addr) + offset), len, 0, socket->sk_sndtimeo, NULL, transport, stream);
-#endif
 printk("5\n");
 		if (sent <= 0) {
-#ifdef _WIN32_SEND_BUFFING
-printk("6\n");
-			if (sent == -EAGAIN) 
-			{
-				break;
-			}
-#else
 printk("7\n");
 			if (sent == -EAGAIN) {
 				if (drbd_stream_send_timed_out(transport, stream))
 					break;
 				continue;
 			}
-#endif
 printk("8\n");
 			tr_warn(transport, "%s: size=%d len=%d sent=%d\n",
 			     __func__, (int)size, len, sent);
@@ -1463,126 +1367,7 @@ static void __exit dtt_cleanup(void)
 	drbd_unregister_transport_class(&tcp_transport_class);
 }
 
-#ifdef _WIN32_SEND_BUFFING
-
-extern VOID NTAPI send_buf_thread(PVOID p);
-
-static bool dtt_start_send_buffring(struct drbd_transport *transport, int size)
-{
-	struct drbd_tcp_transport *tcp_transport = container_of(transport, struct drbd_tcp_transport, transport);
-
-	if (size > 0 )
-	{
-		int i;
-		for (int i = 0; i < 2; i++)
-		{
-			if (tcp_transport->stream[i] != NULL)
-			{
-				struct _buffering_attr *attr = &tcp_transport->stream[i]->buffering_attr;
-
-				if (attr->bab != NULL)
-				{
-					tr_warn(transport, "Unexpected: send buffer bab(%s) already exists!\n", tcp_transport->stream[i]->name);
-					return FALSE;
-				}
-
-				if (attr->send_buf_thread_handle != NULL)
-				{
-					tr_warn(transport, "Unexpected: send buffer thread(%s) already exists!\n", tcp_transport->stream[i]->name);
-					return FALSE;
-				}
-
-				if (i == CONTROL_STREAM)
-				{
-					size = 1024 * 5120; // meta bab is about 5MB
-				}
-
-				if ((attr->bab = create_ring_buffer(tcp_transport->stream[i]->name, size)) != NULL)
-				{
-					KeInitializeEvent(&attr->send_buf_kill_event, SynchronizationEvent, FALSE);
-					KeInitializeEvent(&attr->send_buf_killack_event, SynchronizationEvent, FALSE);
-					KeInitializeEvent(&attr->send_buf_thr_start_event, SynchronizationEvent, FALSE);
-					KeInitializeEvent(&attr->ring_buf_event, SynchronizationEvent, FALSE);
-
-					NTSTATUS Status = PsCreateSystemThread(&attr->send_buf_thread_handle, THREAD_ALL_ACCESS, NULL, NULL, NULL, send_buf_thread, attr);
-					if (!NT_SUCCESS(Status)) {
-						tr_warn(transport, "send-buffering: create thread(%s) failed(0x%08X)\n", tcp_transport->stream[i]->name, Status);
-						destroy_ring_buffer(attr->bab);
-						attr->bab = NULL;
-						return FALSE;
-					}
-
-					// wait send buffering thread start...
-					KeWaitForSingleObject(&attr->send_buf_thr_start_event, Executive, KernelMode, FALSE, NULL);
-				}
-				else
-				{
-					if (i == CONTROL_STREAM)
-					{
-						attr = &tcp_transport->stream[DATA_STREAM]->buffering_attr;
-
-						// kill DATA_STREAM thread
-						KeSetEvent(&attr->send_buf_kill_event, 0, FALSE);
-						//WDRBD_INFO("wait for send_buffering_data_thread(%s) ack\n", tcp_transport->stream[i]->name);
-						KeWaitForSingleObject(&attr->send_buf_killack_event, Executive, KernelMode, FALSE, NULL);
-						//WDRBD_INFO("send_buffering_data_thread(%s) acked\n", tcp_transport->stream[i]->name);
-						attr->send_buf_thread_handle = NULL;
-						
-						// free DATA_STREAM bab
-						destroy_ring_buffer(attr->bab);
-						attr->bab = NULL;
-					}
-					return FALSE;
-				}
-			}
-			else
-			{
-				tr_warn(transport, "Unexpected: send buffer socket(channel:%d) is null!\n", i);
-				return FALSE;
-			}
-		}
-		return TRUE;
-	}
-	return FALSE;
-}
-
-static void dtt_stop_send_buffring(struct drbd_transport *transport)
-{
-	struct drbd_tcp_transport *tcp_transport = container_of(transport, struct drbd_tcp_transport, transport);
-	struct _buffering_attr *attr;
-	int err_ret = 0;
-	int i;
-
-	for (int i = 0; i < 2; i++)
-	{
-		if (tcp_transport->stream[i] != NULL)
-		{
-			attr = &tcp_transport->stream[i]->buffering_attr;
-
-			if (attr->send_buf_thread_handle != NULL)
-			{
-				KeSetEvent(&attr->send_buf_kill_event, 0, FALSE);
-				//WDRBD_INFO("wait for send_buffering_data_thread(%s) ack\n", tcp_transport->stream[i]->name);
-				KeWaitForSingleObject(&attr->send_buf_killack_event, Executive, KernelMode, FALSE, NULL);
-				//WDRBD_INFO("send_buffering_data_thread(%s) acked\n", tcp_transport->stream[i]->name);
-				attr->send_buf_thread_handle = NULL;
-			}
-			else
-			{
-				WDRBD_WARN("No send_buffering thread(%s)\n", tcp_transport->stream[i]->name);
-			}
-		}
-		else
-		{
-			//WDRBD_WARN("No stream(channel:%d)\n", i);
-		}
-	}
-	return;
-}
-#endif // _WIN32_SEND_BUFFING
-
-
 static void dtt_update_congested(struct drbd_tcp_transport *tcp_transport)
 {
-	/* TODO */
+	/* TODO: implement */
 }

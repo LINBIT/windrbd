@@ -1628,34 +1628,12 @@ void del_gendisk(struct gendisk *disk)
 		return;
 	}
 
-#ifndef _WIN32_SEND_BUFFING
-	
 	status = CloseSocket(sock->sk); 
 	if (!NT_SUCCESS(status)) 
 	{
 		WDRBD_ERROR("error=0x%x\n", status);
 		return;
 	}
-#endif
-
-#ifdef _WIN32_SEND_BUFFING
-	struct _buffering_attr *buffering_attr = &sock->buffering_attr;
-	struct ring_buffer *bab = buffering_attr->bab;
-
-	if (bab)
-	{
-		if (bab->static_big_buf)
-		{
-			kfree(bab->static_big_buf);
-		}
-		kfree(bab);
-	}
-	
-	status = CloseSocket(sock->sk);
-	if (!NT_SUCCESS(status)) {
-		return;
-	}
-#endif
 
 	kfree(sock);
 }

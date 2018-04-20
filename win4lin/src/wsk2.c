@@ -694,13 +694,7 @@ Send(
 			int         wObjCount = 1;
 
 			waitObjects[0] = (PVOID) &CompletionEvent;
-#ifndef _WIN32_SEND_BUFFING 
-			// in send-buffering, Netlink , call_usermodehelper are distinguished to SendLocal
-			// KILL event is only used in send-buffering thread while send block. 
-			// WIN32_V9_REFACTO_:required to refactoring that input param, log message are simplized.
-#else
 
-#endif
 			Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
 			switch (Status)
 			{
