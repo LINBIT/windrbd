@@ -403,8 +403,11 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 {
 	PIRP irp = bio->bi_upper_irp;
 
+printk("1\n");
 	if (error == 0) {
+printk("2\n");
 		if (bio->bi_rw == READ) {
+printk("3\n");
 			if (bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
 				void *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
 				if (user_buffer != NULL)
@@ -414,7 +417,9 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 
 				kfree(bio->bi_io_vec[0].bv_page->addr);
 			}
+printk("4\n");
 		}
+printk("5\n");
 		irp->IoStatus.Information = bio->bi_size;
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	} else {
@@ -422,9 +427,12 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 		irp->IoStatus.Information = 0;
 		irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
 	}
+printk("6\n");
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 
+printk("7\n");
 	bio_put(bio);
+printk("8\n");
 }
 
 static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bio)
@@ -537,7 +545,9 @@ printk("I/O request on a failed disk.\n");
 		goto exit;
 	}
         IoMarkIrpPending(irp);
+printk("1\n");
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
+printk("2\n");
 
 	return STATUS_PENDING;
 

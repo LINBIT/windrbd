@@ -1288,6 +1288,7 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
 		container_of(transport, struct drbd_tcp_transport, transport);
 	struct socket *socket = tcp_transport->stream[stream];
 
+printk("1\n");
 	if(!socket) { 
 		return -EIO;
 	}
@@ -1297,13 +1298,16 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
 
 	msg_flags |= MSG_NOSIGNAL;
 	dtt_update_congested(tcp_transport);
+printk("2\n");
 	do {
+printk("3\n");
 		int sent;
 		if (stream == DATA_STREAM)
 		{
 			// ignore rcu_dereference
 			transport->ko_count = transport->net_conf->ko_count;
 		}
+printk("4\n");
 
 #ifdef _WIN32_SEND_BUFFING 
 		sent = send_buf(transport, stream, socket, (void *)((unsigned char *)(page->addr) +offset), len);
@@ -1311,33 +1315,41 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
 #else
 		sent = Send(socket->sk, (void *)((unsigned char *)(page->addr) + offset), len, 0, socket->sk_sndtimeo, NULL, transport, stream);
 #endif
+printk("5\n");
 		if (sent <= 0) {
 #ifdef _WIN32_SEND_BUFFING
+printk("6\n");
 			if (sent == -EAGAIN) 
 			{
 				break;
 			}
 #else
+printk("7\n");
 			if (sent == -EAGAIN) {
 				if (drbd_stream_send_timed_out(transport, stream))
 					break;
 				continue;
 			}
 #endif
+printk("8\n");
 			tr_warn(transport, "%s: size=%d len=%d sent=%d\n",
 			     __func__, (int)size, len, sent);
 			if (sent < 0)
 				err = sent;
 			break;
 		}
+printk("9\n");
 		len    -= sent;
 		offset += sent;
 	} while (len > 0 /* THINK && peer_device->repl_state[NOW] >= L_ESTABLISHED */);
+printk("a\n");
 	clear_bit(NET_CONGESTED, &tcp_transport->transport.flags);
 
+printk("b\n");
 	if (len == 0)
 		err = 0;
 
+printk("c\n");
 	return err;
 }
 
