@@ -1272,9 +1272,6 @@ extern bool ChangeVolumeReadonly(unsigned int minor, bool set);
 extern
 void InitWskNetlink(void * pctx);
 
-extern void monitor_mnt_change(PVOID pParam);
-extern NTSTATUS start_mnt_monitor();
-
 extern
 NTSTATUS ReleaseWskNetlink();
 

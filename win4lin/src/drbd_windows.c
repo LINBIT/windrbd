@@ -972,6 +972,7 @@ void run_singlethread_workqueue(struct workqueue_struct * wq)
     PVOID waitObjects[2] = { &wq->wakeupEvent, &wq->killEvent };
     int maxObj = 2;
 
+printk("thread started\n");
     while (wq->run)
     {
         status = KeWaitForMultipleObjects(maxObj, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
@@ -997,6 +998,7 @@ void run_singlethread_workqueue(struct workqueue_struct * wq)
                 continue;
         }
     }
+printk("thread ended\n");
 }
 
 struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ...)
@@ -2619,134 +2621,6 @@ void *idr_get_next(struct idr *idp, int *nextidp)
 		}
 	}
 	return NULL;
-}
-
-
-// DW-1105: refresh all volumes and handle changes.
-/* TODO: ?? */
-void adjust_changes_to_volume(PVOID pParam)
-{
-//	refresh_targetdev_list();
-}
-
-/* TODO: used? */
-
-// DW-1105: request mount manager to notify us whenever there is a change in the mount manager's persistent symbolic link name database.
-void monitor_mnt_change(PVOID pParam)
-{
-	OBJECT_ATTRIBUTES oaMntMgr = { 0, };
-	UNICODE_STRING usMntMgr = { 0, };
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	HANDLE hMntMgr = NULL;
-	HANDLE hEvent = NULL;
-	IO_STATUS_BLOCK iosb = { 0, };
-	
-	RtlInitUnicodeString(&usMntMgr, MOUNTMGR_DEVICE_NAME);
-	InitializeObjectAttributes(&oaMntMgr, &usMntMgr, OBJ_CASE_INSENSITIVE, NULL, NULL);
-
-	do
-	{
-		status = ZwCreateFile(&hMntMgr,
-			FILE_READ_DATA | FILE_WRITE_DATA,
-			&oaMntMgr,
-			&iosb,
-			NULL,
-			0,
-			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-			FILE_OPEN,
-			FILE_NON_DIRECTORY_FILE,
-			NULL,
-			0);
-
-		if (!NT_SUCCESS(status))
-		{
-			WDRBD_ERROR("could not open mount manager, status : 0x%x\n", status);
-			break;
-		}
-
-		status = ZwCreateEvent(&hEvent, GENERIC_ALL, 0, NotificationEvent, FALSE);
-		if (!NT_SUCCESS(status))
-		{
-			WDRBD_ERROR("could not create event, status : 0x%x\n", status);
-			break;
-		}
-
-		// DW-1105: set state as 'working', this can be set as 'not working' by stop_mnt_monitor.
-		atomic_set(&g_monitor_mnt_working, TRUE);
-
-		MOUNTMGR_CHANGE_NOTIFY_INFO mcni1 = { 0, }, mcni2 = { 0, };
-		while (TRUE == atomic_read(&g_monitor_mnt_working))
-		{
-			status = ZwDeviceIoControlFile(hMntMgr, hEvent, NULL, NULL, &iosb, IOCTL_MOUNTMGR_CHANGE_NOTIFY,
-				&mcni1, sizeof(mcni1), &mcni2, sizeof(mcni2));
-
-			if (!NT_SUCCESS(status))
-			{
-				WDRBD_ERROR("ZwDeviceIoControl with IOCTL_MOUNTMGR_CHANGE_NOTIFY has been failed, status : 0x%x\n", status);
-				break;
-			}
-			else if (STATUS_PENDING == status)
-			{
-				status = ZwWaitForSingleObject(hEvent, TRUE, NULL);
-			}
-
-			// we've got notification, refresh all volume and adjust changes if necessary.
-			HANDLE hVolRefresher = NULL;
-			status = PsCreateSystemThread(&hVolRefresher, THREAD_ALL_ACCESS, NULL, NULL, NULL, adjust_changes_to_volume, NULL);
-			if (!NT_SUCCESS(status))
-			{
-				WDRBD_ERROR("PsCreateSystemThread for adjust_changes_to_volume failed, status : 0x%x\n", status);
-				break;
-			}
-
-			if (NULL != hVolRefresher)
-			{
-				ZwClose(hVolRefresher);
-				hVolRefresher = NULL;
-			}
-			
-			// prepare for next change.
-			mcni1.EpicNumber = mcni2.EpicNumber;
-		}
-
-	} while (false);
-
-	atomic_set(&g_monitor_mnt_working, FALSE);
-
-	if (NULL != hMntMgr)
-	{
-		ZwClose(hMntMgr);
-		hMntMgr = NULL;
-	}
-}
-
-/* TODO: used? */	
-// DW-1105: start monitoring mount change thread.
-NTSTATUS start_mnt_monitor()
-{
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	HANDLE	hVolMonitor = NULL;
-
-	status = PsCreateSystemThread(&hVolMonitor, THREAD_ALL_ACCESS, NULL, NULL, NULL, monitor_mnt_change, NULL);
-	if (!NT_SUCCESS(status))
-	{
-		WDRBD_ERROR("PsCreateSystemThread for monitor_mnt_change failed with status 0x%08X\n", status);
-		return status;
-	}
-
-	if (NULL != hVolMonitor)
-	{
-		ZwClose(hVolMonitor);
-		hVolMonitor = NULL;
-	}
-
-	return status;
-}
-
-// DW-1105: stop monitoring mount change thread.
-void stop_mnt_monitor()
-{
-	atomic_set(&g_monitor_mnt_working, FALSE);
 }
 
 #define DRBD_REGISTRY_VOLUMES       L"\\volumes"
