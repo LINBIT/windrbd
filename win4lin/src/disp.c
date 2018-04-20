@@ -119,7 +119,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	if (FALSE == InterlockedCompareExchange(&IsEngineStart, TRUE, FALSE))
 	{
 		HANDLE		hNetLinkThread = NULL;
-		HANDLE		hLogLinkThread = NULL;
 		NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
         // Init WSK and StartNetLinkServer
