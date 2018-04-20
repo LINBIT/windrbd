@@ -2140,7 +2140,9 @@ int generic_make_request(struct bio *bio)
 
 // printk(KERN_INFO "bio: %p bio->bi_rw: %x bio->bi_size: %d bio->bi_vcnt: %d\n", bio, bio->bi_rw, bio->bi_size, bio->bi_vcnt);
 
-	flush_request = (bio->bi_rw & DRBD_REQ_PREFLUSH) != 0;
+/* TODO: reenable again after fixing DRBD_REQ_PREFLUSH define */
+//	flush_request = (bio->bi_rw & DRBD_REQ_PREFLUSH) != 0;
+	flush_request = 0;
 
 	if (bio->bi_vcnt == 0)
 		bio->bi_num_requests = flush_request;
