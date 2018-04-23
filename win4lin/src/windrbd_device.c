@@ -543,6 +543,8 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 
 /* printk("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset); */
 
+printk("bio %p created. bio->bi_rw: %s bio->bi_size: %d bio->bi_vcnt: %d bio->bi_sector: %d\n", bio, bio->bi_rw==WRITE ? "WRITE" : "READ", bio->bi_size, bio->bi_vcnt, bio->bi_sector);
+
 	return bio;
 }
 

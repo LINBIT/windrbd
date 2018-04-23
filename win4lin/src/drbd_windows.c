@@ -1845,7 +1845,9 @@ NTSTATUS DrbdIoCompletion(
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
 	}
+printk("stack_location->MajorFunction: %d bio->bi_sector: %d bio->bi_size: %d bio->bi_first_element: %d bio->dont_patch_boot_sector: %d\n", stack_location->MajorFunction, bio->bi_sector, bio->bi_size, bio->bi_first_element, bio->dont_patch_boot_sector);
 	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
+printk("karin\n");
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
 		patch_boot_sector(buffer, 1, 0);
 	}
@@ -2007,7 +2009,9 @@ static int windrbd_generic_make_request(struct bio *bio)
 // }
 
 
+printk("io: %d bio->bi_sector: %d bio->bi_size: %d bio->bi_first_element: %d bio->dont_patch_boot_sector: %d\n", io, bio->bi_sector, bio->bi_size, bio->bi_first_element, bio->dont_patch_boot_sector);
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
+printk("karin\n");
 		patch_boot_sector(buffer, 0, 0);
 	}
 
