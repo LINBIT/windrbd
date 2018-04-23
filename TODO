@@ -60,6 +60,9 @@ TODO: Why doesn't it work on Phil's machine?
 TODO: msi installer instead of self extracting exe.
 
 --------------------------------------------------------------------
+TODO: remove all tags from alloc() routines
+	and revert patches.
+
 TODO: Mount to NTFS directories.
 
 Maybe: remove drive letter from volume on attach.
