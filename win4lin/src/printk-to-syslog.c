@@ -148,10 +148,11 @@ int _printk(const char *func, const char *fmt, ...)
 	msec = (time.QuadPart / 10000) % (ULONG_PTR)1e3; // 100nsec to msec
 
 	pos = (ULONG)strlen(buffer);
-	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d|%08.8x %s ",
+	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d|%08.8x(%s) %s ",
 	    level, hour, min, sec, msec,
 	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
 	    ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
+            current->comm,
 	    func
 	);
 	if (! NT_SUCCESS(status)) {
