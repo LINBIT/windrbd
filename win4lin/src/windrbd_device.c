@@ -480,6 +480,7 @@ static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bi
 */
 
 	bio->bi_io_vec[0].bv_len = MmGetMdlByteCount(mdl);
+printk("bio->bi_io_vec[0].bv_len is %d\n", bio->bi_io_vec[0].bv_len);
 	if (bio->bi_rw == READ) {
 		bio->bi_io_vec[0].bv_page->addr = kmalloc(bio->bi_io_vec[0].bv_len, 0, 'DRBD');
 	} else {

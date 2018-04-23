@@ -651,7 +651,7 @@ Send(
 	LONG		BytesSent = SOCKET_ERROR; // DRBC_CHECK_WSK: SOCKET_ERROR be mixed EINVAL?
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
-printk("sending %d bytes\n", BufferSize);
+printk("sending %d bytes timeout is %d\n", BufferSize, Timeout);
 	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || ((int) BufferSize <= 0))
 		return SOCKET_ERROR;
 
@@ -701,21 +701,28 @@ printk("pending\n");
 
 printk("into KeWaitForMultipleObjects\n");
 			Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-printk("out of KeWaitForMultipleObjects\n");
+printk("out of KeWaitForMultipleObjects status is %x\n", Status);
 			switch (Status)
 			{
 			case STATUS_TIMEOUT:
+printk("timeout 1\n");
 
 				// DW-988 refactoring about retry_count. retry_count is removed.
 				if (transport != NULL) {
+printk("timeout 2\n");
 					if (!drbd_stream_send_timed_out(transport, stream)) {
+printk("timeout 3\n");
 						goto retry;
 					}
 				}
 
+printk("timeout 4\n");
 				IoCancelIrp(Irp);
+printk("timeout 5\n");
 				KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
+printk("timeout 6\n");
 				BytesSent = -EAGAIN;
+printk("timeout 7\n");
 				break;
 
 			case STATUS_WAIT_0:

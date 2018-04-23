@@ -1,3 +1,5 @@
+TODO: remove the #ifdef _WIN32 defines
+
 TODO: blue screen on writing while connected.
 
 	Also reported by Devin.

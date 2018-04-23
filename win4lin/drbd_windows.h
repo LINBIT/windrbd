@@ -570,6 +570,7 @@ struct work_struct {
 	void (*func)(struct work_struct *work);
 };
 
+/* TODO: needed? element could be part of work_struct */
 struct work_struct_wrapper {
     struct work_struct * w;
     LIST_ENTRY  element;

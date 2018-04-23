@@ -975,7 +975,9 @@ void run_singlethread_workqueue(struct workqueue_struct * wq)
 printk("thread started\n");
     while (wq->run)
     {
+printk("into KeWaitForMultipleObjects\n");
         status = KeWaitForMultipleObjects(maxObj, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
+printk("out of KeWaitForMultipleObjects status: %x\n", status);
         switch (status)
         {
             case STATUS_WAIT_0:
@@ -984,8 +986,10 @@ printk("thread started\n");
                 while ((entry = ExInterlockedRemoveHeadList(&wq->list_head, &wq->list_lock)) != 0)
                 {
                     struct work_struct_wrapper * wr = CONTAINING_RECORD(entry, struct work_struct_wrapper, element);
+printk("into func");
                     wr->w->func(wr->w);
-                    kfree(wr);
+printk("out of func");
+                    kfree(wr);	/* TODO: sure? */
                 }
                 break;
             }
@@ -1612,10 +1616,12 @@ void del_gendisk(struct gendisk *disk)
 
  void destroy_workqueue(struct workqueue_struct *wq)
 {
+printk("1 wq %p\n", wq);
 	 KeSetEvent(&wq->killEvent, 0, FALSE);
 	 KeWaitForSingleObject(wq->pThread, Executive, KernelMode, FALSE, NULL);
 	 ObDereferenceObject(wq->pThread);
      kfree(wq);
+printk("2\n");
 }
 
  void sock_release(struct socket *sock)
