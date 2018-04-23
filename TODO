@@ -1,5 +1,6 @@
-TODO: receive_DataReply: failed to find request 0x1a186c00, sector 25896s
-	When writing on Windows DRBD.
+TODO: blue screen on writing while connected.
+
+	Also reported by Devin.
 
 TODO: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
@@ -165,35 +166,6 @@ Later: DRBD windows to windows sync is very slow.
 TODO: mandatory locking for backing device.
 
 TODO: One day we want to not blue screen when backing device contains a file system.
-
-TODO: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
-
-	On windows side when syncing.
-
-	Also:
-
-	linbit-wdrbd: error receiving P_STATE, e: -5 l: 0!
-	on windows side on connection establishment.
-
-	Update: The later is because of a split brain. For now
-	resolved it by re-creating meta data in the Linux side.
-
-	Update: this seems to be correlated with the data corruption
-	bug. Update: no it isn't data corruption happened when accessing
-	the backing device.
-
-	Update: it is also (or only) on Linux side.
-
-	Update: error receiving P_STATE on split brain should also not happen.
-	But low priority.
-
-	Update: this error is not so critical, do that later
-
-	Update: peer has no local data:
-
-Feb 14 16:08:05 johannes-VirtualBox kernel: [ 4722.510438] drbd w0/17 drbd26: Can not satisfy peer's read request, no local data.
-
-	So maybe this behaves as expected.
 
 TODO: Kernel really should report an error if Bind() fails. 
 	For example if the local IP address does not exist.
@@ -1603,3 +1575,39 @@ Done: Blue screen when opening windrbd_control (root device object)
 
 	DriverVerifier expects IRP requests to succeed (at least create
 	close and cleanup)
+
+Done: receive_DataReply: failed to find request 0x1a186c00, sector 25896s
+	When writing on Windows DRBD.
+
+Done: error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
+
+	On windows side when syncing.
+
+	Also:
+
+	linbit-wdrbd: error receiving P_STATE, e: -5 l: 0!
+	on windows side on connection establishment.
+
+	Update: The later is because of a split brain. For now
+	resolved it by re-creating meta data in the Linux side.
+
+	Update: this seems to be correlated with the data corruption
+	bug. Update: no it isn't data corruption happened when accessing
+	the backing device.
+
+	Update: it is also (or only) on Linux side.
+
+	Update: error receiving P_STATE on split brain should also not happen.
+	But low priority.
+
+	Update: this error is not so critical, do that later
+
+	Update: peer has no local data:
+
+Feb 14 16:08:05 johannes-VirtualBox kernel: [ 4722.510438] drbd w0/17 drbd26: Can not satisfy peer's read request, no local data.
+
+	So maybe this behaves as expected.
+
+	Was typedef char bool which caused is_write_request() to
+	always return 0.
+
