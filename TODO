@@ -4,6 +4,12 @@ TODO: blue screen on writing while connected.
 
 	Also reported by Devin.
 
+	Reason is (most likely) that the bi_vecs contain elements
+	bigger than PAGE_SIZE which isn't supported by DRBD (when
+	it comes to sending pages). On fixing this (at windrbd
+	level, see irp_to_bio) we introduced a new error which
+	causes formatting to fail.
+
 TODO: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
 
