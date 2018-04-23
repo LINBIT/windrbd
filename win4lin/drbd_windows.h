@@ -34,15 +34,6 @@
 #include <linux/mempool.h>
 #include <ntdddisk.h>
 
-/* TODO: this should go away */
-
-/* First n sectors are reserved, so that Windows does not treat
-   the backing device as formatted (and disallow certain accesses)
-   To disable the feature set this to 0 (but this is not recommended).
- */
-
-#define WINDRBD_SECTOR_SHIFT 0
-
 void init_windrbd(void);
 void msleep(int ms);
 
@@ -645,6 +636,11 @@ extern sector_t windrbd_get_capacity(struct block_device *bdev);
 
 struct bio_vec {
 	struct page *bv_page;
+
+		/* A restriction by DRBD is that this (bv_len) must not be
+		 * larger than PAGE_SIZE, else sending a bio will
+		 * crash.
+		 */
 	unsigned int bv_len;
 	unsigned int bv_offset;
 };

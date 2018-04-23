@@ -55,7 +55,7 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *dev)
 {
 	g->BytesPerSector = dev->bd_block_size;
-	g->Cylinders.QuadPart = dev->d_size / dev->bd_block_size - WINDRBD_SECTOR_SHIFT;
+	g->Cylinders.QuadPart = dev->d_size / dev->bd_block_size;
 	g->TracksPerCylinder = 1;
 	g->SectorsPerTrack = 1;
 	g->MediaType = FixedMedia;
@@ -64,7 +64,7 @@ static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *d
 static void fill_partition_info(struct _PARTITION_INFORMATION *p, struct block_device *dev)
 {
 	p->StartingOffset.QuadPart = 0;
-	p->PartitionLength.QuadPart = dev->d_size - WINDRBD_SECTOR_SHIFT*512;
+	p->PartitionLength.QuadPart = dev->d_size;
 	p->HiddenSectors = 0;
 	p->PartitionNumber = 1;
 	p->PartitionType = PARTITION_ENTRY_UNUSED;
@@ -77,7 +77,7 @@ static void fill_partition_info_ex(struct _PARTITION_INFORMATION_EX *p, struct b
 {
 	p->PartitionStyle = PARTITION_STYLE_MBR;
 	p->StartingOffset.QuadPart = 0;
-	p->PartitionLength.QuadPart = dev->d_size - WINDRBD_SECTOR_SHIFT*512;
+	p->PartitionLength.QuadPart = dev->d_size;
 	p->PartitionNumber = 1;
 	p->RewritePartition = FALSE;
 	p->Mbr.PartitionType = PARTITION_EXTENDED;
@@ -123,7 +123,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 
 		struct _DISK_GEOMETRY_EX *g = irp->AssociatedIrp.SystemBuffer;
 		fill_drive_geometry(&g->Geometry, dev);
-		g->DiskSize.QuadPart = dev->d_size - WINDRBD_SECTOR_SHIFT*512;
+		g->DiskSize.QuadPart = dev->d_size;
 		g->Data[0] = 0;
 
 		irp->IoStatus.Information = sizeof(struct _DISK_GEOMETRY_EX);
@@ -136,7 +136,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		}
 
 		struct _GET_LENGTH_INFORMATION *l = irp->AssociatedIrp.SystemBuffer;
-		l->Length.QuadPart = dev->d_size - WINDRBD_SECTOR_SHIFT*512;
+		l->Length.QuadPart = dev->d_size;
 		irp->IoStatus.Information = sizeof(struct _GET_LENGTH_INFORMATION);
 		break;
 
@@ -402,24 +402,26 @@ printk(KERN_INFO "Pretending that cleanup does something.\n");
 static void windrbd_bio_finished(struct bio * bio, int error)
 {
 	PIRP irp = bio->bi_upper_irp;
+	int i;
 
-printk("1\n");
 	if (error == 0) {
-printk("2\n");
 		if (bio->bi_rw == READ) {
-printk("3\n");
 			if (bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
-				void *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
-				if (user_buffer != NULL)
-					RtlCopyMemory(user_buffer, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len);
-				else
-					printk("MmGetSystemAddressForMdlSafe returned NULL\n");
+				char *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
+				if (user_buffer != NULL) {
+					int offset;
 
-				kfree(bio->bi_io_vec[0].bv_page->addr);
+					offset = 0;
+					for (i=0;i<bio->bi_vcnt;i++) {
+						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+
+						kfree(bio->bi_io_vec[i].bv_page->addr);
+						offset += bio->bi_io_vec[i].bv_len;
+					}
+				} else
+					printk(KERN_WARNING "MmGetSystemAddressForMdlSafe returned NULL\n");
 			}
-printk("4\n");
 		}
-printk("5\n");
 		irp->IoStatus.Information = bio->bi_size;
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	} else {
@@ -427,76 +429,112 @@ printk("5\n");
 		irp->IoStatus.Information = 0;
 		irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
 	}
-printk("6\n");
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 
-printk("7\n");
+	for (i=0;i<bio->bi_vcnt;i++)
+		kfree(bio->bi_io_vec[i].bv_page);
+
 	bio_put(bio);
-printk("8\n");
 }
 
-static int irp_to_bio(struct _IRP *irp, struct block_device *dev, struct bio *bio)
+static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 {
-	/* TODO: use bio_alloc(), bio_add_page and the like */
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct _MDL *mdl = irp->MdlAddress;
+	struct bio *bio;
+
+	int vcnt;
+	int last_size;
+	int this_size;
+	unsigned int total_size;
+	sector_t sector;
+	int i;
+	char *buffer;
 
 	if (s == NULL) {
 		printk("Stacklocation is NULL.\n");
-		return -1;
+		return NULL;
 	}
 	if (mdl == NULL) {
 		printk("MdlAddress is NULL.\n");
-		return -1;
+		return NULL;
 	}
-
-		/* TODO: FLUSH? */
-	bio->bi_rw |= (s->MajorFunction == IRP_MJ_WRITE) ? WRITE : READ;
-/* TODO: Parameters.Write if IRP_MD_WRITE */
-	bio->bi_size = s->Parameters.Read.Length;
-	bio->bi_sector = (s->Parameters.Read.ByteOffset.QuadPart) / dev->bd_block_size + WINDRBD_SECTOR_SHIFT;
-	bio->bi_bdev = dev;
-	bio->bi_max_vecs = 1;
-	bio->bi_vcnt = 1;
 
 	/* TODO: later have more than one .. */
 	if (mdl->Next != NULL) {
 		printk(KERN_ERR "not implemented: have more than one mdl. Dropping additional mdl data.\n");
-		return -1;
-	}
-	bio->bi_io_vec[0].bv_page = kmalloc(sizeof(struct page), 0, 'DRBD');
-	if (bio->bi_io_vec[0].bv_page == NULL) {
-		printk("Page is NULL.\n");
-		return -1;
+		return NULL;
 	}
 
-/* TODO: eventually we want to make READ requests work without the
-	 intermediate buffer and the extra copy.
-*/
-//	MmBuildMdlForNonPagedPool(mdl);
-/*
-	MmProbeAndLockPages(mdl, UserMode,
-		(s->MajorFunction == IRP_MJ_WRITE) ? IoReadAccess : IoWriteAccess);
-*/
-
-	bio->bi_io_vec[0].bv_len = MmGetMdlByteCount(mdl);
-printk("bio->bi_io_vec[0].bv_len is %d\n", bio->bi_io_vec[0].bv_len);
-	if (bio->bi_rw == READ) {
-		bio->bi_io_vec[0].bv_page->addr = kmalloc(bio->bi_io_vec[0].bv_len, 0, 'DRBD');
+	if (s->MajorFunction == IRP_MJ_WRITE) {
+		total_size = s->Parameters.Write.Length;
+		sector = (s->Parameters.Write.ByteOffset.QuadPart) / dev->bd_block_size;
+	} else if (s->MajorFunction == IRP_MJ_READ) {
+		total_size = s->Parameters.Read.Length;
+		sector = (s->Parameters.Read.ByteOffset.QuadPart) / dev->bd_block_size;
 	} else {
-		/* This is not page aligned. */
-		bio->bi_io_vec[0].bv_page->addr = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
-		bio->bi_paged_memory = true;
+		printk("s->MajorFunction neither read nor write.\n");
+		return NULL;
 	}
-	if (bio->bi_io_vec[0].bv_page->addr == NULL) {
-		printk("MmGetSystemAddressForMdlSafe returned NULL.\n");
-		return -1;
-			/* TODO: Here we get a blue screen sooner or later */
+	if (total_size == 0) {
+		printk("I/O request of size 0.\n");
+		return NULL;
 	}
+
 		/* Address returned by MmGetSystemAddressForMdlSafe
 		 * is already offset, not using MmGetMdlByteOffset.
 		 */
-	bio->bi_io_vec[0].bv_offset = 0;
+
+	buffer = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
+	if (buffer == NULL) {
+		printk("I/O buffer from MmGetSystemAddressForMdlSafe() is NULL\n");
+		return NULL;
+	}
+	vcnt = (total_size-1) / PAGE_SIZE + 1;
+	last_size = total_size % PAGE_SIZE;
+
+	bio = bio_alloc(GFP_NOIO, vcnt, 'DBRD');
+	if (bio == NULL) {
+		printk("Couldn't allocate bio.\n");
+		return NULL;
+	}
+	bio->bi_rw = s->MajorFunction == IRP_MJ_WRITE ? WRITE : READ;
+	bio->bi_bdev = dev;
+	bio->bi_max_vecs = vcnt;
+	bio->bi_vcnt = vcnt;
+	bio->bi_paged_memory = bio->bi_rw == WRITE;
+	bio->bi_size = total_size;
+
+	for (i=0; i<vcnt; i++) {
+		this_size = (i == vcnt-1) ? last_size : PAGE_SIZE;
+		if (this_size == 0)
+			this_size = PAGE_SIZE;
+
+		bio->bi_io_vec[i].bv_page = kmalloc(sizeof(struct page), 0, 'DRBD');
+		if (bio->bi_io_vec[i].bv_page == NULL) {
+			printk("Couldn't allocate page.\n");
+			return NULL; /* TODO: cleanup */
+		}
+
+		bio->bi_io_vec[i].bv_len = this_size;
+
+/*
+ * TODO: eventually we want to make READ requests work without the
+ *	 intermediate buffer and the extra copy.
+ */
+
+		if (bio->bi_rw == READ)
+			bio->bi_io_vec[i].bv_page->addr = kmalloc(this_size, 0, 'DRBD');
+		else
+			bio->bi_io_vec[i].bv_page->addr = buffer+i*PAGE_SIZE;
+
+		if (bio->bi_io_vec[i].bv_page->addr == NULL) {
+			printk("Couldn't allocate temp buffer for read.\n");
+			return NULL; /* TODO: cleanup */
+		}
+
+		bio->bi_io_vec[i].bv_offset = 0;
+	}
 
 // printk("bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d\n", bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len);
 
@@ -505,7 +543,7 @@ printk("bio->bi_io_vec[0].bv_len is %d\n", bio->bi_io_vec[0].bv_len);
 
 /* printk("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset); */
 
-	return 0;
+	return bio;
 }
 
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
@@ -536,19 +574,13 @@ printk("I/O request on a failed disk.\n");
 		goto exit;
 	}
 
-	bio = bio_alloc(GFP_NOIO, 1, 'DBRD');
+	bio = irp_to_bio(irp, dev);
 	if (bio == NULL) {
 		status = STATUS_INSUFFICIENT_RESOURCES;
 		goto exit;
 	}
-	if (irp_to_bio(irp, dev, bio) < 0) {
-		bio_free(bio);
-		goto exit;
-	}
         IoMarkIrpPending(irp);
-printk("1\n");
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
-printk("2\n");
 
 	return STATUS_PENDING;
 
