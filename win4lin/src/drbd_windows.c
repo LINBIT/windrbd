@@ -972,12 +972,9 @@ void run_singlethread_workqueue(struct workqueue_struct * wq)
     PVOID waitObjects[2] = { &wq->wakeupEvent, &wq->killEvent };
     int maxObj = 2;
 
-printk("thread started\n");
     while (wq->run)
     {
-printk("into KeWaitForMultipleObjects\n");
         status = KeWaitForMultipleObjects(maxObj, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
-printk("out of KeWaitForMultipleObjects status: %x\n", status);
         switch (status)
         {
             case STATUS_WAIT_0:
@@ -986,9 +983,7 @@ printk("out of KeWaitForMultipleObjects status: %x\n", status);
                 while ((entry = ExInterlockedRemoveHeadList(&wq->list_head, &wq->list_lock)) != 0)
                 {
                     struct work_struct_wrapper * wr = CONTAINING_RECORD(entry, struct work_struct_wrapper, element);
-printk("into func");
                     wr->w->func(wr->w);
-printk("out of func");
                     kfree(wr);	/* TODO: sure? */
                 }
                 break;
@@ -1002,7 +997,6 @@ printk("out of func");
                 continue;
         }
     }
-printk("thread ended\n");
 }
 
 struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ...)
@@ -1616,12 +1610,10 @@ void del_gendisk(struct gendisk *disk)
 
  void destroy_workqueue(struct workqueue_struct *wq)
 {
-printk("1 wq %p\n", wq);
 	 KeSetEvent(&wq->killEvent, 0, FALSE);
 	 KeWaitForSingleObject(wq->pThread, Executive, KernelMode, FALSE, NULL);
 	 ObDereferenceObject(wq->pThread);
      kfree(wq);
-printk("2\n");
 }
 
  void sock_release(struct socket *sock)
@@ -3221,8 +3213,6 @@ int windrbd_thread_setup(struct drbd_thread *thi)
 	int res;
 	NTSTATUS status;
 
-printk("thread started\n");
-
 	thi->nt = ct_add_thread(KeGetCurrentThread(), thi->name, TRUE, 'B0DW');
 	if (!thi->nt)
 	{
@@ -3240,8 +3230,6 @@ printk("thread started\n");
 		WDRBD_ERROR("stop, result %d\n", res);
 	else
 		WDRBD_INFO("stopped.\n");
-
-printk("thread stopped\n");
 
 	status = PsTerminateSystemThread(STATUS_SUCCESS);
 	printk(KERN_ERR "PsTerminateSystenThread() returned (status: %x). This is not good.\n", status);
