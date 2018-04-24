@@ -1,14 +1,17 @@
+TODO: invalidate read cache when becoming secondary.
+
+	Problem is that if windows is primary, becomes secondary and
+	then primary again the read cache is still filled from the
+	former primary.
+
+	Should invalidate when becoming secondary: reason is
+	that while secondary requests still are served from
+	the read cache (they should fail).
+
+	Update: Moving that to beta2 because we are a little bit
+	short on time. Document that defect.
+
 TODO: remove the #ifdef _WIN32 defines
-
-TODO: blue screen on writing while connected.
-
-	Also reported by Devin.
-
-	Reason is (most likely) that the bi_vecs contain elements
-	bigger than PAGE_SIZE which isn't supported by DRBD (when
-	it comes to sending pages). On fixing this (at windrbd
-	level, see irp_to_bio) we introduced a new error which
-	causes formatting to fail.
 
 TODO: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
@@ -16,6 +19,9 @@ TODO: blue screen on drbdadm detach --force (when needing uptodate
 	Cannot reproduce at the moment.
 
 TODO: logging: printk's without terminating \n not displayed.
+
+	Also: if there are some special characters (\0?) the
+	line is not displayed.
 
 TODO: mountmanager / register device with PNP
 
@@ -147,19 +153,6 @@ In progress: how and when is flush to backing device done?
 TODO: on windrbd show/hide filesystem check if attached.
 
 	And refuse to touch it if yes.
-
-TODO: invalidate read cache when becoming secondary.
-
-	Problem is that if windows is primary, becomes secondary and
-	then primary again the read cache is still filled from the
-	former primary.
-
-	Should invalidate when becoming secondary: reason is
-	that while secondary requests still are served from
-	the read cache (they should fail).
-
-	Update: Moving that to beta2 because we are a little bit
-	short on time. Document that defect.
 
 Later: DRBD windows to windows sync is very slow.
 
@@ -1621,4 +1614,21 @@ Feb 14 16:08:05 johannes-VirtualBox kernel: [ 4722.510438] drbd w0/17 drbd26: Ca
 
 	Was typedef char bool which caused is_write_request() to
 	always return 0.
+
+Done: blue screen on writing while connected.
+
+	Also reported by Devin.
+
+	Reason is (most likely (Update: yes that was it)) that
+	the bi_vecs contain elements bigger than PAGE_SIZE which
+        isn't supported by DRBD (when it comes to sending pages).
+        On fixing this (at windrbd level, see irp_to_bio) we
+	introduced a new error which causes formatting to fail.
+
+	Update: Fixed a bug that caused formatting to fail.
+    
+	But not the read/write tests of our testsuite..we probably want
+	to cover this case too. Formatting works now, as well as writing
+	to windrbd device while it is connected (also writing on the
+	remote side while being connected works).
 
