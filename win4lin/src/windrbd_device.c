@@ -504,6 +504,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 	bio->bi_vcnt = vcnt;
 	bio->bi_paged_memory = bio->bi_rw == WRITE;
 	bio->bi_size = total_size;
+	bio->bi_sector = sector;
 
 	for (i=0; i<vcnt; i++) {
 		this_size = (i == vcnt-1) ? last_size : PAGE_SIZE;
