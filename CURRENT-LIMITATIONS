@@ -5,3 +5,7 @@ rightaway).
 Flush requests are not propagated to backing device.
 
 Auto-promote is not supported.
+
+Right now only NTFS is supported atop the windrbd device.
+
+System Volume (C:) cannot be used for windrbd.
