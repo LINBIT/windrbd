@@ -11,7 +11,7 @@ TODO: invalidate read cache when becoming secondary.
 	Update: Moving that to beta2 because we are a little bit
 	short on time. Document that defect.
 
-TODO: remove the #ifdef _WIN32 defines
+TODO: Re-check the WIN32 / WIN64 thing in drbd_endian.h
 
 TODO: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
@@ -1633,4 +1633,6 @@ Done: blue screen on writing while connected.
 	to cover this case too. Formatting works now, as well as writing
 	to windrbd device while it is connected (also writing on the
 	remote side while being connected works).
+
+Done: remove the #ifdef _WIN32 defines
 
