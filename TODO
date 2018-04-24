@@ -60,6 +60,8 @@ TODO: Create file with version number
 
 TODO: Check in install script if it runs as adminstrator.
 
+TODO: On formatting: error message cannot write NTFS boot sector.
+
 --------------------------------------------------------------------
 TODO: Why doesn't it work on Phil's machine?
 

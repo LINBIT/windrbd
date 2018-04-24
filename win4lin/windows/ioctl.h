@@ -17,6 +17,8 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+/* TODO: except for some macros, this is obsolete. */
+
 
 #ifndef __MVF_IOCTL_H__
 #define __MVF_IOCTL_H__
@@ -115,31 +117,11 @@ typedef struct _LOGGING_MIN_LV {
 	int			nErrLvMin;
 }LOGGING_MIN_LV, *PLOGGING_MIN_LV;
 
-#define _WIN32_DEBUG_OOS		// DW-1153: debug oos.
-
 #define LOGGING_TYPE_SYSLOG		0
 #define LOGGING_TYPE_DBGLOG		1
-#ifdef _WIN32_DEBUG_OOS
-// DW-1153
-#define LOGGING_TYPE_OOSLOG		2
-#endif
-
-#ifdef _WIN32_DEBUG_OOS
-#pragma warning (disable : 4055)
-#define FRAME_DELIMITER		"@"
-#define OOS_TRACE_STRING	"oos_trace"
-#define STACK_FRAME_CAPTURE_COUNT	(10)
-#define MAX_FUNC_NAME_LEN		(50)
-#define MAX_FUNCS_STR_LEN		(MAX_FUNC_NAME_LEN * (STACK_FRAME_CAPTURE_COUNT + 1))
-#define MAX_FUNC_ADDR_LEN		(20)
-#endif
 
 #define MAX_DRBDLOG_BUF				512
-#ifdef _WIN32_DEBUG_OOS
-#define LOGBUF_MAXCNT				100000
-#else
 #define LOGBUF_MAXCNT				10000
-#endif
 
 typedef struct _DRBD_LOG {
 	LONGLONG 	totalcnt;

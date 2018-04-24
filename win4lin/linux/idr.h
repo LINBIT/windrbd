@@ -45,11 +45,7 @@
 #define IDR_FREE_MAX MAX_LEVEL + MAX_LEVEL
 
 struct idr_layer {
-#ifdef _WIN32
 	ULONG_PTR			bitmap; /* A zero bit means "space here" */
-#else
-	unsigned long		bitmap; /* A zero bit means "space here" */
-#endif
 	struct idr_layer	*ary[1 << IDR_BITS];
 	int			 count;	 /* When zero, we can release it */
 	int			 layer;	 /* distance from leaf */
@@ -62,26 +58,6 @@ struct idr {
 	int		  id_free_cnt;
 	KSPIN_LOCK	  lock;
 };
-
-#ifdef _WIN32
-	// unused
-#else
-#define IDR_INIT(name)						\
-{								\
-	.top = NULL, \
-	.id_free = NULL, \
-	.layers = 0, \
-	.id_free_cnt = 0, \
-	.lock = __SPIN_LOCK_UNLOCKED(name.lock), \
-}
-#define DEFINE_IDR(name)	struct idr name = IDR_INIT(name)
-/* Actions to be taken after a call to _idr_sub_alloc */
-#define IDR_NEED_TO_GROW -2
-#define IDR_NOMORE_SPACE -3
-
-
-#define _idr_rc_to_errno(rc) ((rc) == -1 ? -EAGAIN : -ENOSPC)
-#endif
 
 /**
 * idr synchronization (stolen from radix-tree.h)
@@ -122,13 +98,8 @@ extern void idr_init(struct idr *idp);
 * pointer isn't necessary.
 */
 #define IDA_CHUNK_SIZE		128	/* 128 bytes per chunk */
-#ifdef _WIN32
 #define IDA_BITMAP_LONGS	(128 / sizeof(LONG_PTR) - 1)
 #define IDA_BITMAP_BITS		(IDA_BITMAP_LONGS * sizeof(LONG_PTR) * 8)
-#else
-#define IDA_BITMAP_LONGS	(128 / sizeof(long) - 1) 
-#define IDA_BITMAP_BITS		(IDA_BITMAP_LONGS * sizeof(long) * 8)
-#endif
 
 
 struct ida_bitmap {
@@ -140,31 +111,5 @@ struct ida {
 	struct idr		idr;
 	struct ida_bitmap	*free_bitmap;
 };
-
-#ifdef _WIN32
-	// unused
-#else
-#define IDA_INIT(name)		{ .idr = IDR_INIT(name), .free_bitmap = NULL, }
-#define DEFINE_IDA(name)	struct ida name = IDA_INIT(name)
-#endif
-
-#ifndef _WIN32
-extern int ida_pre_get(struct ida *ida, gfp_t gfp_mask);
-extern int ida_get_new_above(struct ida *ida, int starting_id, int *p_id);
-extern int ida_get_new(struct ida *ida, int *p_id);
-extern void ida_remove(struct ida *ida, int id);
-extern void ida_destroy(struct ida *ida);
-extern void ida_init(struct ida *ida);
-
-int ida_simple_get(struct ida *ida, unsigned int start, unsigned int end,
-	gfp_t gfp_mask);
-void ida_simple_remove(struct ida *ida, unsigned int id);
-#endif
-
-#ifdef _WIN32
-	// unused
-#else
-void __init idr_init_cache(void);
-#endif
 
 #endif /* __IDR_H__ */

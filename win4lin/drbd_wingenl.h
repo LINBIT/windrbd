@@ -599,7 +599,6 @@ static __inline int nla_get_flag(const struct nlattr *nla)
  */
 static __inline struct nlattr *nla_nest_start(struct sk_buff *msg, int attrtype)
 {
-#ifndef _WIN32_APP
 	extern unsigned char *skb_tail_pointer(const struct sk_buff *skb);
 	struct nlattr *start = (struct nlattr *)skb_tail_pointer(msg);
 
@@ -607,14 +606,6 @@ static __inline struct nlattr *nla_nest_start(struct sk_buff *msg, int attrtype)
 		return NULL;
 
 	return start;
-#else
-	struct nlattr *start = (struct nlattr *)msg->tail;
-
-	if (nla_put(msg, attrtype, 0, NULL) < 0)
-		return NULL;
-
-	return start;
-#endif
 }
 
 /**

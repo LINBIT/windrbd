@@ -1190,8 +1190,6 @@ static inline void blk_set_stacking_limits(struct queue_limits *lim)
 #define rcu_dereference_protected(p, c) (p)
 #endif
 
-// _WIN32_V9_DEBUGFS 
-
 #ifndef list_next_rcu
 #define list_next_rcu(list)	(*((struct list_head **)(&(list)->next)))
 #endif

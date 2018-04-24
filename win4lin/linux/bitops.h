@@ -4,9 +4,7 @@
 #include "linux/hweight.h"
 
 extern int test_and_change_bit(int nr, const ULONG_PTR *vaddr);
-#ifdef _WIN32
 extern ULONG_PTR find_first_bit(const ULONG_PTR* addr, ULONG_PTR size); //reference linux 3.x kernel. 64bit compatible
-#endif
 extern ULONG_PTR find_next_bit(const ULONG_PTR *addr, ULONG_PTR size, ULONG_PTR offset);
 extern int find_next_zero_bit(const ULONG_PTR * addr, ULONG_PTR size, ULONG_PTR offset);
 

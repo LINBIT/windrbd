@@ -42,28 +42,11 @@ enum drbd_stream;
 enum update_sync_bits_mode;
 
 #pragma warning (disable : 4100 4146 4221)
-//#define DRBD_TRACE				    // trace replication flow(basic)
-//#define DRBD_TRACE1				    // trace replication flow(detail)
 
-//#define _WSK_IRP_REUSE				// WSK IRP reuse. // DW-1078 disable reuse Irp 
-#define _WSK_SOCKETCONNECT
-#define _WIN32_EVENTLOG			        // Windows Eventlog porting point
-#define _WIN32_TMP_Win8_BUG_0x1a_61946
-#define minor_to_letter(m)	('C'+(m))
-#define minor_to_mdev minor_to_device
+	/* TODO: This appears very dangerous to me ... */
 #define drbd_conf drbd_device
-#define _WIN32_V9_DW_663_LINBIT_PATCH 
-#define DRBD_GENERIC_POOL_TAG       ((ULONG)'dbrd')
 
 #define DRBD_EVENT_SOCKET_STRING	"DRBD_EVENTS"		/// used in NETLINK
-
-#ifdef _WIN32_WPP
-#define WPP_CONTROL_GUIDS \
-	WPP_DEFINE_CONTROL_GUID(LogGuid, \
-	(998bdf51, 0349, 4fbc, 870c, d6130a955a5f), \
-	WPP_DEFINE_BIT(TRCERROR) \
-	WPP_DEFINE_BIT(TRCINFO))
-#endif
 
 /// for linux code
 #define inline					__inline
@@ -85,9 +68,6 @@ enum update_sync_bits_mode;
 #define	KERN_NOTICE				"<5>"	/* normal but significant condition	*/
 #define	KERN_INFO				"<6>"	/* informational			*/
 #define	KERN_DEBUG				"<7>"	/* debug-level messages			*/
-#ifdef _WIN32_DEBUG_OOS
-#define KERN_DEBUG_OOS			"<8>"	/* DW-1153: debug-oos */
-#endif
 
 enum
 {
@@ -121,10 +101,7 @@ enum
 #define RELATIVE(wait) (-(wait))
 
 #define __init                  NTAPI
-
-#ifdef _WIN32
 #define __exit                  NTAPI
-#endif
 
 #define NANOSECONDS(nanos) \
 (((signed __int64)(nanos)) / 100L)
@@ -328,51 +305,6 @@ enum km_type {
 
 typedef unsigned int                fmode_t;
 
-extern atomic_t g_eventlog_lv_min;
-extern atomic_t g_dbglog_lv_min;
-#ifdef _WIN32_DEBUG_OOS
-extern atomic_t g_oos_trace;
-#endif
-
-#define LOG_LV_REG_VALUE_NAME	L"log_level"
-
-/* Log level value is 32-bit integer
-   00000000 00000000 00000000 00000000
-                                   ||| 3 bit between 0 ~ 2 indicates system event log level (0 ~ 7)
-                                |||	   3 bit between 3 ~ 5 indicates debug print log level (0 ~ 7)
-                               |	   1 bit on 6 indicates if oos is being traced. (0 or 1), it is valid only when _WIN32_DEBUG_OOS is defined.
-*/
-#define LOG_LV_BIT_POS_EVENTLOG		(0)
-#define LOG_LV_BIT_POS_DBG			(LOG_LV_BIT_POS_EVENTLOG + 3)
-#ifdef _WIN32_DEBUG_OOS
-#define LOG_LV_BIT_POS_OOS_TRACE	(LOG_LV_BIT_POS_DBG + 3)
-#endif
-
-// Default values are used when log_level value doesn't exist.
-#define LOG_LV_DEFAULT_EVENTLOG	KERN_ERR_NUM
-#define LOG_LV_DEFAULT_DBG		KERN_INFO_NUM
-#define LOG_LV_DEFAULT			(LOG_LV_DEFAULT_EVENTLOG << LOG_LV_BIT_POS_EVENTLOG) | (LOG_LV_DEFAULT_DBG << LOG_LV_BIT_POS_DBG) 
-
-#define LOG_LV_MASK			0x7
-
-#ifdef _WIN32_DEBUG_OOS
-#define Set_log_lv(log_level) \
-	atomic_set(&g_eventlog_lv_min, (log_level >> LOG_LV_BIT_POS_EVENTLOG) & LOG_LV_MASK);	\
-	atomic_set(&g_dbglog_lv_min, (log_level >> LOG_LV_BIT_POS_DBG) & LOG_LV_MASK);	\
-	atomic_set(&g_oos_trace, (log_level >> LOG_LV_BIT_POS_OOS_TRACE) & 0x1);
-
-#define Get_log_lv() \
-	(atomic_read(&g_eventlog_lv_min) << LOG_LV_BIT_POS_EVENTLOG) | (atomic_read(&g_dbglog_lv_min) << LOG_LV_BIT_POS_DBG) | (atomic_read(&g_oos_trace) << LOG_LV_BIT_POS_OOS_TRACE)
-#else
-#define Set_log_lv(log_level) \
-	atomic_set(&g_eventlog_lv_min, (log_level >> LOG_LV_BIT_POS_EVENTLOG) & LOG_LV_MASK);	\
-	atomic_set(&g_dbglog_lv_min, (log_level >> LOG_LV_BIT_POS_DBG) & LOG_LV_MASK);
-
-#define Get_log_lv() \
-	(atomic_read(&g_eventlog_lv_min) << LOG_LV_BIT_POS_EVENTLOG) | (atomic_read(&g_dbglog_lv_min) << LOG_LV_BIT_POS_DBG)
-#endif
-
-
 #define MAX_TEXT_BUF                256
 
 #define MAX_SPLIT_BLOCK_SZ			(1 << 20)
@@ -388,16 +320,8 @@ extern void printk_cleanup(void);
 extern int initialize_syslog_printk(void);
 extern int _printk(const char * func, const char * format, ...);
 
-#ifdef _WIN32_DEBUG_OOS
-extern VOID WriteOOSTraceLog(int bitmap_index, ULONG_PTR startBit, ULONG_PTR endBit, ULONG_PTR bitsCount, enum update_sync_bits_mode mode);
-#endif
-
-#ifdef _WIN32_EVENTLOG
 #define printk(format, ...)   \
     _printk(__FUNCTION__, format, __VA_ARGS__)
-#else
-#define printk(format, ...)
-#endif
 
 #if defined (WDRBD_THREAD_POINTER)
 #define WDRBD_FATAL(_m_, ...)   printk(KERN_CRIT "[0x%p] "##_m_, KeGetCurrentThread(), __VA_ARGS__)
@@ -465,16 +389,11 @@ extern VOID WriteOOSTraceLog(int bitmap_index, ULONG_PTR startBit, ULONG_PTR end
 
 struct mutex {
 	KMUTEX mtx;
-#ifdef _WIN32_TMP_DEBUG_MUTEX
-	char name[32]; 
-#endif
 };
 
-#ifdef _WIN32
-struct semaphore{
+struct semaphore {
     KSEMAPHORE sem;
 };
-#endif
 
 /* TODO: atomic_t? or use refcount_t */
 struct kref {
@@ -521,10 +440,9 @@ char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr);
 #define WQ_MEM_RECLAIM 0
 #define WQNAME_LEN	32
 struct workqueue_struct {
-#ifdef _WIN32
-    LIST_ENTRY list_head;
-    KSPIN_LOCK list_lock;
-#endif
+	LIST_ENTRY list_head;
+	KSPIN_LOCK list_lock;
+
 	int run;
 	KEVENT	wakeupEvent;
 	KEVENT	killEvent;
@@ -532,7 +450,7 @@ struct workqueue_struct {
 	void (*func)();
 	char name[WQNAME_LEN];
 };
-#ifdef _WIN32
+
 struct timer_list {
     KTIMER ktimer;
     KDPC dpc;
@@ -546,7 +464,7 @@ struct timer_list {
     char name[32];
 #endif
 };
-#endif
+
 extern void add_timer(struct timer_list *t);
 extern int del_timer_sync(struct timer_list *t);
 extern void del_timer(struct timer_list *t);
@@ -761,12 +679,10 @@ static inline int submit_bio(struct bio *bio)
 #define bio_data_dir(bio)       ((bio)->bi_rw & 1)
 #define bio_rw(bio)             ((bio)->bi_rw & (RW_MASK))
 
-#ifdef _WIN32
 // DRBD_DOC: not support, it is always newest updated block for windows.
+/* TODO: Sure? */
 #define bio_flagged(bio, flag)  (1) 
-#else
-#define bio_flagged(bio, flag)  ((bio)->bi_flags & (1 << (flag))) 
-#endif
+// #define bio_flagged(bio, flag)  ((bio)->bi_flags & (1 << (flag))) 
 
 extern void rwlock_init(void *lock);
 extern void spin_lock_init(spinlock_t *lock);
@@ -790,29 +706,17 @@ extern void write_lock_irq(spinlock_t *lock);
 extern void write_lock_bh(spinlock_t *lock);
 extern void write_unlock_irq(spinlock_t *lock);
 
-#ifdef _WIN32_TMP_DEBUG_MUTEX
-extern void mutex_init(struct mutex *m, char *name);
-#else
 extern void mutex_init(struct mutex *m);
-#endif
-#ifdef _WIN32
 extern void sema_init(struct semaphore *s, int limit);
-#endif
 
 extern NTSTATUS mutex_lock(struct mutex *m);
-#ifdef _WIN32
 extern int mutex_lock_interruptible(struct mutex *m);
 extern NTSTATUS mutex_lock_timeout(struct mutex *m, ULONG msTimeout);
-#endif
 extern int mutex_is_locked(struct mutex *m);
 extern void mutex_unlock(struct mutex *m);
 extern int mutex_trylock(struct mutex *m);
 
-#ifdef _WIN32
 extern int kref_put(struct kref *kref, void (*release)(struct kref *kref));
-#else
-extern void kref_put(struct kref *kref, void(*release)(struct kref *kref));
-#endif
 extern int kref_get(struct kref *kref);
 extern void kref_init(struct kref *kref);
 
@@ -918,23 +822,20 @@ struct backing_dev_info {
 	void *congested_data;   /* Pointer to aux data for congested func */
 };
 
-#ifdef _WIN32
 struct queue_limits {
-    unsigned int            max_discard_sectors;
-    unsigned int            discard_granularity;    
+	unsigned int            max_discard_sectors;
+	unsigned int            discard_granularity;    
 	unsigned int			discard_zeroes_data;
 };
-#endif
+
 struct request_queue {
 	void * queuedata;
 	struct backing_dev_info backing_dev_info;
-	spinlock_t *queue_lock; // _WIN32: unused.
+	spinlock_t *queue_lock; // TODO: unused?.
 	unsigned short logical_block_size;
 	ULONG_PTR queue_flags;
 	long max_hw_sectors;
-#ifdef _WIN32
-    struct queue_limits limits; 
-#endif
+	struct queue_limits limits; 
 };
 
 static __inline ULONG_PTR JIFFIES()
@@ -981,11 +882,7 @@ struct scatterlist {
 
 #define MINORMASK	0xff
 
-#ifdef _WIN32
-#define BUG()   WDRBD_FATAL("warning: failure\n")
-#else
 #define BUG()   WDRBD_FATAL("BUG: failure\n")
-#endif
 
 #define BUG_ON(_condition)	\
     do {	\
@@ -1003,11 +900,7 @@ static inline void assert_spin_locked(spinlock_t *lock)
 
 
 struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ...);
-#ifdef _WIN32
 extern int queue_work(struct workqueue_struct* queue, struct work_struct* work);
-#else
-extern void queue_work(struct workqueue_struct* queue, struct work_struct* work);
-#endif
 extern void flush_workqueue(struct workqueue_struct *wq);
 extern void destroy_workqueue(struct workqueue_struct *wq);
 
@@ -1137,7 +1030,6 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
         sig = __ret; \
     } while (0)
 
-#ifdef _WIN32  // DW_552
 #define wait_event_interruptible_timeout(ret, wq, condition, to) \
 	do {\
 		ret = 0;	\
@@ -1155,7 +1047,6 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 			if (-DRBD_SIGKILL == ret) { break; } \
 		}\
 	} while (0)
-#endif
 
 #define wake_up(q) _wake_up(q, __FUNCTION__, __LINE__)
 
@@ -1230,41 +1121,6 @@ extern PETHREAD	g_NetlinkServerThread;
 extern union drbd_state g_mask; 
 extern union drbd_state g_val;
 ///
-
-
-__inline bool IsDriveLetterMountPoint(UNICODE_STRING * s)
-{
-	return ((s->Length == 4) &&
-		(s->Buffer[0] >= 'A' && s->Buffer[0] <= 'Z') &&
-		(s->Buffer[1] == ':'));
-}
-
-__inline bool IsEmptyUnicodeString(UNICODE_STRING * s)
-{
-	return (s && (s->Length == 0) || !(s->Buffer));
-}
-
-__inline void FreeUnicodeString(UNICODE_STRING * s)
-{
-	if (!IsEmptyUnicodeString(s)) {
-		RtlFreeUnicodeString(s);
-	}
-}
-
-extern VOID MVOL_LOCK();
-extern VOID MVOL_UNLOCK();
-#ifdef _WIN32_MVFL
-extern NTSTATUS FsctlFlushDismountVolume(unsigned int minor, bool bFlush);
-extern NTSTATUS FsctlLockVolume(unsigned int minor);
-extern NTSTATUS FsctlUnlockVolume(unsigned int minor);
-extern NTSTATUS FsctlFlushVolume(unsigned int minor);
-extern NTSTATUS FsctlCreateVolume(unsigned int minor);
-// DW-844
-extern PVOID GetVolumeBitmapForDrbd(unsigned int minor, ULONG ulDrbdBitmapUnit);
-extern BOOLEAN isFastInitialSync();
-// DW-1317
-extern bool ChangeVolumeReadonly(unsigned int minor, bool set);
-#endif
 
 extern
 void InitWskNetlink(void * pctx);
@@ -1432,8 +1288,6 @@ typedef struct _PTR_ENTRY
 } PTR_ENTRY, * PPTR_ENTRY;
 
 
-#ifdef _WIN32
-
 // linux-2.6.24 define 
 // kernel.h 
 #define UINT_MAX	(~0U)
@@ -1454,39 +1308,6 @@ typedef struct _PTR_ENTRY
 
 // Bitops.h
 #define BITS_PER_BYTE		8
-
-/////////////////////////////////////////////////////////////////////
-// linux-2.6.24 define end
-////////////////////////////////////////////////////////////////////
-
-#endif
-
-#ifdef _WIN32
-#if 0
-60 /* Common initializer macros and functions */
-61
-62 #ifdef CONFIG_DEBUG_LOCK_ALLOC
-63 # define __RWSEM_DEP_MAP_INIT(lockname), .dep_map = { .name = #lockname }
-64 #else
-65 # define __RWSEM_DEP_MAP_INIT(lockname)
-66 #endif
-67
-68 #ifdef CONFIG_RWSEM_SPIN_ON_OWNER
-69 #define __RWSEM_OPT_INIT(lockname), .osq = OSQ_LOCK_UNLOCKED, .owner = NULL
-70 #else
-71 #define __RWSEM_OPT_INIT(lockname)
-72 #endif
-73
-74 #define __RWSEM_INITIALIZER(name)                               \
- 75         { .count = RWSEM_UNLOCKED_VALUE,                        \
- 76           .wait_list = LIST_HEAD_INIT((name).wait_list),        \
- 77           .wait_lock = __RAW_SPIN_LOCK_UNLOCKED(name.wait_lock) \
- 78           __RWSEM_OPT_INIT(name)                                \
- 79           __RWSEM_DEP_MAP_INIT(name) }
-80
-81 #define DECLARE_RWSEM(name) \
- 82         struct rw_semaphore name = __RWSEM_INITIALIZER(name)
-#endif
 
 extern void down(struct semaphore *s);
 extern int down_trylock(struct semaphore *s);
@@ -1513,12 +1334,9 @@ static int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 	return 0;
 }
 
-#endif
-
 #define snprintf(a, b, c,...) memset(a, 0, b); sprintf(a, c, ##__VA_ARGS__)
 
 
-#ifdef _WIN32
 extern int scnprintf(char * buf, size_t size, const char *fmt, ...);
 
 void list_cut_position(struct list_head *list, struct list_head *head, struct list_head *entry);
@@ -1538,9 +1356,6 @@ static inline unsigned int queue_io_min(struct request_queue *q)
 
 void bdput(struct block_device *this_bdev);
 
-#endif
-
-#ifdef _WIN32
 /*
  * blk_plug permits building a queue of related requests by holding the I/O
  * fragments for a short period. This allows merging of sequential requests
@@ -1572,7 +1387,6 @@ extern struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data, 
 extern SIMULATION_DISK_IO_ERROR gSimulDiskIoError;
 
 NTSTATUS SaveCurrentValue(PCWSTR valueName, int value);
-#endif
 
 BOOLEAN gbShutdown;
 
