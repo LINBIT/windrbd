@@ -1,3 +1,11 @@
+TODO: Check in install script if it runs as adminstrator.
+
+	I just ran into that ... it fails silently.
+
+TODO: Do not display Please reboot .. when installation is finished.
+
+	INF install already does this.
+
 TODO: DRBD windows to windows sync is very slow.
 
 	Not clear if it is the network or something else.
@@ -13,8 +21,20 @@ TODO: DRBD windows to windows sync is very slow.
 
 	Update: Devin (Linbit USA) also reported this.
 
+TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
+
+	Maybe this was introduced during code cleanup. Update: no it wasn't.
+	The reason is that REQ_OP_FLUSH != REQ_OP_WRITE in windrbd,
+	which has to be fixed (they also should be powers of two,
+	see comment in win4lin/drbd_wrappers.h:544.
+
+	The bug appears on testing resync.
+
 TODO: new blue screen running (new) test.sh
 	driver verifier again. Peer is not running (no connection)
+
+TODO: Device FFFFFA8004F2D4C0 accessed after it was deleted.
+	Strange.
 
 TODO: invalidate read cache when becoming secondary.
 
@@ -75,8 +95,6 @@ TODO: windrbd show-filesystem should check if device is used as
 	a backing device.
 
 TODO: Create file with version number
-
-TODO: Check in install script if it runs as adminstrator.
 
 TODO: On formatting: error message cannot write NTFS boot sector.
 
@@ -1642,4 +1660,16 @@ Done: blue screen on writing while connected.
 	remote side while being connected works).
 
 Done: remove the #ifdef _WIN32 defines
+
+Done: Segmentation fault on drbdadm invalidate
+
+	drbdadm invalidate-remote works.
+
+	Should be fixed, was easy.
+
+Done: drbdadm del-minor should not call windrbd delete-drive-letter
+	any more.
+
+	Check if this is needed and remove that code if not.
+	Done, removed. I don't think we still need this.
 
