@@ -30,8 +30,7 @@ TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 
 	The bug appears on testing resync.
 
-TODO: new blue screen running (new) test.sh
-	driver verifier again. Peer is not running (no connection)
+TODO: test-loop hangs after about 16 iterations.
 
 TODO: Device FFFFFA8004F2D4C0 accessed after it was deleted.
 	Strange.
@@ -1672,4 +1671,11 @@ Done: drbdadm del-minor should not call windrbd delete-drive-letter
 
 	Check if this is needed and remove that code if not.
 	Done, removed. I don't think we still need this.
+
+Done: new blue screen running (new) test.sh
+	driver verifier again. Peer is not running (no connection)
+	Reason was a missing IoCompleteRequest on windrbd_ioctl()
+	when device was already deleted.
+
+	Tested, no blue screen.
 
