@@ -1,7 +1,7 @@
 set -x
 
 RES=w0
-DRIVE=/cygdrive/k
+DRIVE_LETTER=k
 
 drbdadm up $RES
 drbdadm down $RES
@@ -18,7 +18,8 @@ drbdadm down $RES
 
 drbdadm up $RES
 drbdadm primary $RES
-cp /dev/urandom $DRIVE/data
+# echo -e 'j\nj\nj\nj\nj\n' | format.com ${DRIVE_LETTER}:
+cp /dev/urandom /cygdrive/${DRIVE_LETTER}/data
 drbdadm secondary $RES
 drbdadm down $RES
 
