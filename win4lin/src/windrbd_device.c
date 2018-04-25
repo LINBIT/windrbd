@@ -91,7 +91,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	if (device == mvolRootDeviceObject) {
 		printk(KERN_DEBUG "Root device request.\n");
 
-		irp->IoStatus.Status = STATUS_SUCCESS;
+		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
@@ -99,10 +99,10 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct block_device *dev = device->DeviceExtension;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
-		irp->IoStatus.Status = STATUS_SUCCESS;
+		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
+		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
@@ -296,10 +296,10 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct block_device *dev = device->DeviceExtension;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
-		irp->IoStatus.Status = STATUS_SUCCESS;
+		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
+		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	int mode;
@@ -347,10 +347,10 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct block_device *dev = device->DeviceExtension;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
-		irp->IoStatus.Status = STATUS_SUCCESS;
+		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
+		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	int mode;
@@ -391,10 +391,10 @@ static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct block_device *dev = device->DeviceExtension;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
-		irp->IoStatus.Status = STATUS_SUCCESS;
+		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
+		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 	NTSTATUS status = STATUS_SUCCESS;
 
@@ -569,10 +569,10 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	NTSTATUS status = STATUS_INVALID_DEVICE_REQUEST;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
-		irp->IoStatus.Status = STATUS_SUCCESS;
+		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
+		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 	struct bio *bio;
 
@@ -642,10 +642,10 @@ static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct block_device *dev = device->DeviceExtension;
 	if (dev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
-		irp->IoStatus.Status = STATUS_SUCCESS;
+		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
+		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 	struct bio *bio;
 	NTSTATUS status;
