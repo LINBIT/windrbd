@@ -1,3 +1,21 @@
+TODO: DRBD windows to windows sync is very slow.
+
+	Not clear if it is the network or something else.
+
+	Update: it is not the network.
+
+	I/O on Windows 10 is very slow also (format h: on a
+	connected resource takes forever)
+
+	Update: when connecting to windows build host it is
+	faster (network is over the air), so maybe something
+	with the Linbit Windows VM is wrong.
+
+	Update: Devin (Linbit USA) also reported this.
+
+TODO: new blue screen running (new) test.sh
+	driver verifier again. Peer is not running (no connection)
+
 TODO: invalidate read cache when becoming secondary.
 
 	Problem is that if windows is primary, becomes secondary and
@@ -62,6 +80,8 @@ TODO: Check in install script if it runs as adminstrator.
 
 TODO: On formatting: error message cannot write NTFS boot sector.
 
+TODO: drbd-util: Update manpage.
+	And write one for windrbd utility.
 --------------------------------------------------------------------
 TODO: Why doesn't it work on Phil's machine?
 
@@ -155,19 +175,6 @@ In progress: how and when is flush to backing device done?
 TODO: on windrbd show/hide filesystem check if attached.
 
 	And refuse to touch it if yes.
-
-Later: DRBD windows to windows sync is very slow.
-
-	Not clear if it is the network or something else.
-
-	Update: it is not the network.
-
-	I/O on Windows 10 is very slow also (format h: on a
-	connected resource takes forever)
-
-	Update: when connecting to windows build host it is
-	faster (network is over the air), so maybe something
-	with the Linbit Windows VM is wrong.
 
 TODO: mandatory locking for backing device.
 
