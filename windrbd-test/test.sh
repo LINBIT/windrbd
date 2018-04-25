@@ -19,8 +19,8 @@ drbdadm down $RES
 drbdadm up $RES
 drbdadm primary $RES
 echo -e 'j\nj\nj\nj\nj\n' | format.com ${DRIVE_LETTER}:
-sleep 5
 cp /dev/urandom /cygdrive/${DRIVE_LETTER}/data
+sync
 drbdadm secondary $RES
 drbdadm down $RES
 
