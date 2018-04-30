@@ -377,7 +377,7 @@ static void dtt_stats(struct drbd_transport *transport, struct drbd_transport_st
 	if (socket) {
 		/* https://msdn.microsoft.com/de-de/library/ff570818(v=vs.85).aspx */
 		/* TODO: implement */
-		printk("stats not implemented.\n");
+//		printk("stats not implemented.\n");
 		// not supported
 	}
 }

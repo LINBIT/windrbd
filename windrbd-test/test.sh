@@ -18,7 +18,8 @@ drbdadm down $RES
 
 drbdadm up $RES
 drbdadm primary $RES
-echo -e 'j\nj\nj\nj\nj\n' | format.com ${DRIVE_LETTER}:
+# format is unstable with CygWin
+# echo -e 'j\nj\nj\nj\nj\n' | format.com ${DRIVE_LETTER}:
 cp /dev/urandom /cygdrive/${DRIVE_LETTER}/data
 sync
 drbdadm secondary $RES

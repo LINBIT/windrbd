@@ -35,6 +35,12 @@ TODO: DRBD windows to windows sync is very slow.
 	into w0.res (at resource config level) on both sides.
 	Then it should work. TODO: upgrade windrbd to 9.0.13
 
+	Done, with 9.0.13 Sync is faster (14MB / sec instead of
+	4 MB / sec), should be 50 MB / sec however.
+
+	Update: between much VM (Windows 7) and Windows 10 sync
+	rate is still at 200 kB which is way too less.
+
 TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 
 	Maybe this was introduced during code cleanup. Update: no it wasn't.
@@ -45,6 +51,8 @@ TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 	The bug appears on testing resync.
 
 TODO: test-loop hangs after about 16 iterations.
+
+	format k: sometimes gets stuck when run from test script.
 
 TODO: Device FFFFFA8004F2D4C0 accessed after it was deleted.
 	Strange.
