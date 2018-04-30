@@ -1476,10 +1476,11 @@ __mod_timer(struct timer_list *timer, ULONG_PTR expires, bool pending_only)
 		nWaitTime = RtlConvertLongToLargeInteger(RELATIVE(MILLISECONDS(expires)));
 	}
 
-#ifdef DBG
-    WDRBD_TRACE_TM("%s timer(0x%p) current(%d) expires(%d) gap(%d)\n",
-        timer->name, timer, current_milisec, timer->expires, timer->expires - current_milisec);
-#endif
+/*
+printk("%s timer(0x%p) current(%d) expires(%d) gap(%d) nWaitTime(%lld)\n",
+        timer->name, timer, current_milisec, timer->expires, timer->expires - current_milisec, nWaitTime.QuadPart);
+*/
+
     KeSetTimer(&timer->ktimer, nWaitTime, &timer->dpc);
     return 1;
 }
