@@ -1,0 +1,36 @@
+From e608fdb6971b6f1b7c832da521cfa23b1e91cea5 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 30 Apr 2018 16:09:08 +0200
+Subject: [PATCH 1/2] Disable unintialized local variable warning.
+
+MS C Compiler produces a wrong warning here.
+---
+ drbd/drbd_req.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
+index c151983..1eb739c 100644
+--- a/drbd/drbd_req.c
++++ b/drbd/drbd_req.c
+@@ -1251,6 +1251,9 @@ static void complete_conflicting_writes(struct drbd_request *req)
+ 	finish_wait(&device->misc_wait, &wait);
+ }
+ 
++#pragma warning( push )
++#pragma warning (disable : 4701)
++
+ /* called within req_lock and rcu_read_lock() */
+ static void __maybe_pull_ahead(struct drbd_device *device, struct drbd_connection *connection)
+ {
+@@ -1313,6 +1316,8 @@ static void __maybe_pull_ahead(struct drbd_device *device, struct drbd_connectio
+ 	put_ldev(device);
+ }
+ 
++#pragma warning( pop )
++
+ /* called within req_lock */
+ static void maybe_pull_ahead(struct drbd_device *device)
+ {
+-- 
+2.7.4
+

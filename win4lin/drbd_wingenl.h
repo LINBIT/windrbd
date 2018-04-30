@@ -11,6 +11,10 @@
 struct sk_buff
 {
     int len;
+		/* Maybe TODO: In current Linux versions these are
+		 * pointers into the data buffer.
+		 */
+
     unsigned int tail;
     unsigned int end;
 
@@ -275,6 +279,23 @@ static __inline int nlmsg_ok(const struct nlmsghdr *nlh, int remaining)
 }
 
 extern void nlmsg_free(struct sk_buff *skb);
+
+/**
+* nlmsg_trim - shorten socket buffer skb to end at position pointed to
+	       by mark.
+* @skb: socket buffer
+* @mark: pointer in skb->data where buffer should end
+*/
+static __inline void nlmsg_trim(struct sk_buff *skb, const void *mark)
+{
+	if (mark) {
+		size_t len = ((const unsigned char*)mark) - skb->data;
+		if (len < skb->len) {
+			skb->len = len;
+			skb->tail = len;
+		}
+	}
+}
 
 /**************************************************************************
 * Netlink Attributes

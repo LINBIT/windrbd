@@ -1288,3 +1288,13 @@ static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
 #define REQ_OP_WRITE_ZEROES (-3u)
 
 #define PageSlab(p) (0)
+
+/* timer interface before v4.16 */
+#define DRBD_TIMER_FN_ARG ULONG_PTR data
+#define DRBD_TIMER_ARG2OBJ(OBJ, MEMBER) (struct drbd_##OBJ *) data
+#define drbd_timer_setup(OBJ, MEMBER, TIMER_FN) setup_timer(&OBJ->MEMBER, TIMER_FN, (ULONG_PTR)OBJ)
+#define DRBD_TIMER_CALL_ARG(OBJ, MEMBER) (ULONG_PTR) OBJ
+
+/* This is currently not supported by windrbd */
+#define DRBD_REQ_NOUNMAP        0
+

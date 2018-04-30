@@ -2941,8 +2941,16 @@ int scnprintf(char * buf, size_t size, const char *fmt, ...)
 	int i = 0;
 
 	va_start(args, fmt);
-    i = _vsnprintf_s(buf, size, _TRUNCATE, fmt, args);
+	i = _vsnprintf_s(buf, size, _TRUNCATE, fmt, args);
 	va_end(args);
+	return (-1 == i) ? (size - 1) : i;
+}
+
+int vscnprintf(char * buf, size_t size, const char *fmt, va_list args)
+{
+	int i = 0;
+
+	i = _vsnprintf_s(buf, size, _TRUNCATE, fmt, args);
 	return (-1 == i) ? (size - 1) : i;
 }
 
@@ -3497,4 +3505,9 @@ ktime_t ktime_get(void)
 	return ktime_add_ns(base, nsecs);
 #endif
 	return (ktime_t) { .tv64 = 0 };
+}
+
+void unregister_blkdev(int major, const char *name)
+{
+	/* does nothing */
 }

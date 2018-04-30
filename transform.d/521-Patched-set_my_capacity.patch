@@ -1,0 +1,29 @@
+From 3678c0c4cedd246326827ad171177e43c0b63f80 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 30 Apr 2018 17:16:28 +0200
+Subject: [PATCH 2/2] Patched set_my_capacity
+
+Since our internal block device looks different (we don't have
+inodes for example), accesses to internal blockdev fields must
+be patched.
+---
+ drbd/drbd_nl.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 9628776..0a93843 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -1425,8 +1425,7 @@ static bool effective_disk_size_determined(struct drbd_device *device)
+ void drbd_set_my_capacity(struct drbd_device *device, sector_t size)
+ {
+ 	char ppb[10];
+-	set_capacity(device->vdisk, size);
+-	device->this_bdev->bd_inode->i_size = (loff_t)size << 9;
++	device->this_bdev->d_size = size << 9;
+ 	drbd_info(device, "size = %s (%llu KB)\n",
+ 		ppsize(ppb, size>>1), (unsigned long long)size>>1);
+ }
+-- 
+2.7.4
+

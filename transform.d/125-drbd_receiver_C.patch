@@ -61,15 +61,6 @@ index 13ec23c3..daa95b20 100644
  	int err = 0;
  
  	if (!discard)
-@@ -1369,7 +1381,7 @@ static void __conn_wait_ee_empty(struct drbd_connection *connection, struct list
- 		prepare_to_wait(&connection->ee_wait, &wait, TASK_UNINTERRUPTIBLE);
- 		spin_unlock_irq(&connection->resource->req_lock);
- 		drbd_unplug_all_devices(connection);
--		schedule();
-+		schedule(&connection->ee_wait, MAX_SCHEDULE_TIMEOUT, __FUNCTION__, __LINE__);
- 		finish_wait(&connection->ee_wait, &wait);
- 		spin_lock_irq(&connection->resource->req_lock);
- 	}
 @@ -1800,7 +1812,7 @@ read_in_block(struct drbd_peer_device *peer_device, struct drbd_peer_request_det
  		drbd_err(device, "Fault injection: Corrupting data on receive, sector %llu\n",
  				d->sector);

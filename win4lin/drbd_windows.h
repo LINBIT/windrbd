@@ -1338,6 +1338,7 @@ static int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 
 
 extern int scnprintf(char * buf, size_t size, const char *fmt, ...);
+extern int vscnprintf(char * buf, size_t size, const char *fmt, va_list args);
 
 void list_cut_position(struct list_head *list, struct list_head *head, struct list_head *entry);
 
@@ -1409,5 +1410,7 @@ int windrbd_mount(struct block_device *dev, const char *mount_point);
 #define MAJOR(dev)	((unsigned int) ((dev) >> MINORBITS))
 #define MINOR(dev)	((unsigned int) ((dev) & MINORMASK))
 #define MKDEV(ma,mi)	(((ma) << MINORBITS) | (mi))
+
+void unregister_blkdev(int major, const char *name);
 
 #endif // DRBD_WINDOWS_H
