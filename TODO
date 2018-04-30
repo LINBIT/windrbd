@@ -21,6 +21,20 @@ TODO: DRBD windows to windows sync is very slow.
 
 	Update: Devin (Linbit USA) also reported this.
 
+	Update: Something between drbd-9.0.9 and drbd-9.0.13
+	has been fixed to solve that (it is slow between a 
+	9.0.9 and a 9.0.13 under Linux also (in one direction), 
+	upgrading 9.0.9 to 9.0.13 solves that so it is fast in
+	both directions). Also put
+
+        disk {
+                c-max-rate 4048000;
+                c-fill-target 1048000;
+        }
+
+	into w0.res (at resource config level) on both sides.
+	Then it should work. TODO: upgrade windrbd to 9.0.13
+
 TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 
 	Maybe this was introduced during code cleanup. Update: no it wasn't.
