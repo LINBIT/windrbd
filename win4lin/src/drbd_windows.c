@@ -2730,6 +2730,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		/* TODO: not always? */
 	block_device->bd_block_size = 512;
 	block_device->bd_disk->queue->logical_block_size = 512;
+	block_device->bd_disk->queue->max_hw_sectors = DRBD_MAX_BIO_SIZE >> 9;
 
 	block_device->file_object = file_object;
 
