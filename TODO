@@ -41,6 +41,33 @@ TODO: DRBD windows to windows sync is very slow.
 	Update: between much VM (Windows 7) and Windows 10 sync
 	rate is still at 200 kB which is way too less.
 
+	Some printk's for researching slow sync show that requests are sent
+	by 4k (instead of up to 1m) from the windows side (if windows is
+	SyncTarget). Fix that and see if it is faster, then.
+
+	Compared to Linux/Linux sync it is then still slower (about
+	a factor of 3 or 4) maybe because Windows I/O is slower?
+
+[ 3979.671662] KARIN cmd: 9 sector: 14336 size: 1048576
+[ 3979.671665] KARIN cmd: 9 sector: 16384 size: 32768
+[ 3979.780097] KARIN cmd: 9 sector: 16448 size: 32768
+[ 3979.780121] KARIN cmd: 9 sector: 16512 size: 65536
+
+	Windows sometimes stucks when replying to data requests (11ms
+	pause).
+
+	Update: Initialize max_hw_sects in queue.
+
+	Now resync requests are sent in chunks of (up to) 1M which makes
+	resync much faster (was 4K chunks, because max_hw_sects was 0).
+
+	Right now, resync between Windows and Linux is still a bit slower
+	(factor 4) than beween Linuxes, this is maybe because the I/O
+	stack is slower under Windows (?).
+
+	Update: Between win7 (much VM) and win10 sync gets stucked
+	now (number is 0)
+
 TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 
 	Maybe this was introduced during code cleanup. Update: no it wasn't.
