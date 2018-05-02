@@ -1,0 +1,9 @@
+*.bak
+*.orig
+*.obj
+*.pdb
+*.tmp*
+.*.sw?
+*.ilk
+*.sys
+*.cat
