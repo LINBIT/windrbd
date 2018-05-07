@@ -33,7 +33,7 @@ NTAPI SendPageCompletionRoutine(
 	__in PVOID		Unused
 )
 {
-printk("send completed.\n");
+// printk("send completed.\n");
 
 	/* TODO: do a put_page() here to free the buffer page. */
 	
@@ -2009,7 +2009,9 @@ void connect_and_send(struct sockaddr_in *peer_addr)
 	for (i=0; i<40960000/sizeof(buf); i++) {
 		printk("Sending %d bytes (%d)\n", sizeof(buf), i);
 		sprintf(buf, "%d\n", i);
-		// sent = Send(socket->sk, buf, sizeof(buf), 0, 1000, NULL, NULL, 0);
+			/* about 2 Mbit/sec, 60-70 seconds for 40 MBytes: */
+//		sent = Send(socket->sk, buf, sizeof(buf), 0, 1000, NULL, NULL, 0);
+			/* about 25 Mbit/sec, 10-13 seconds for 40 MBytes: */
 		sent = SendPage(socket->sk, buf, sizeof(buf), 0);
 		if (sent != sizeof(buf)) {
 			printk("Send returned %d\n", sent);
