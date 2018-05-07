@@ -25,6 +25,23 @@ NTAPI CompletionRoutine(
 	
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
+
+NTSTATUS
+NTAPI SendPageCompletionRoutine(
+	__in PDEVICE_OBJECT	DeviceObject,
+	__in PIRP		Irp,
+	__in PVOID		Unused
+)
+{
+printk("send completed.\n");
+
+	/* TODO: do a put_page() here to free the buffer page. */
+	
+	IoFreeIrp(Irp);
+
+	return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
 #if WSK_ASYNCCOMPL
 NTSTATUS
 NTAPI CompletionRoutineAsync(
@@ -777,6 +794,76 @@ Send(
 // printk("c\n");
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer);
+// printk("d\n");
+
+	return BytesSent;
+}
+
+LONG
+NTAPI
+SendPage(
+	__in PWSK_SOCKET	WskSocket,
+	__in PVOID		Buffer,
+	__in ULONG		BufferSize,
+	__in ULONG		Flags
+)
+{
+	struct _IRP *Irp;
+	struct _WSK_BUF *WskBuffer;
+	LONG BytesSent;
+	NTSTATUS Status;
+
+// printk("Buffer: %p BufferSize: %d\n", Buffer, BufferSize);
+	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || ((int) BufferSize <= 0))
+		return SOCKET_ERROR;
+
+// printk("1\n");
+		/* TODO: free this later in completion routine. */
+	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
+	if (WskBuffer == NULL)
+		return SOCKET_ERROR;
+
+	Status = InitWskBuffer(Buffer, BufferSize, WskBuffer, FALSE);
+	if (!NT_SUCCESS(Status)) {
+		return SOCKET_ERROR;
+	}
+
+// printk("2\n");
+	Irp = IoAllocateIrp(1, FALSE);
+	if (Irp == NULL) {
+		FreeWskBuffer(WskBuffer);
+		return SOCKET_ERROR;
+	}
+	IoSetCompletionRoutine(Irp, SendPageCompletionRoutine, NULL, TRUE, TRUE, TRUE);
+
+// printk("3\n");
+	Flags |= WSK_FLAG_NODELAY;
+
+// printk("4\n");
+	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskSend(
+		WskSocket,
+		WskBuffer,
+		Flags,
+		Irp);
+
+// printk("5\n");
+	switch (Status) {
+	case STATUS_PENDING:
+		BytesSent = BufferSize; /* not true, at least not yet */
+		break;
+
+	case STATUS_SUCCESS:
+		BytesSent = (LONG) Irp->IoStatus.Information;
+		WDRBD_WARN("(%s) WskSend No pending: but sent(%d)!\n", current->comm, BytesSent);
+		break;
+
+	default:
+		WDRBD_WARN("(%s) WskSend error(0x%x)\n", current->comm, Status);
+		BytesSent = SOCKET_ERROR;
+	}
+
+// printk("c\n");
+//	FreeWskBuffer(WskBuffer);
 // printk("d\n");
 
 	return BytesSent;
@@ -1913,7 +2000,8 @@ void connect_and_send(struct sockaddr_in *peer_addr)
 			msleep(1000);
 	} while (err != STATUS_SUCCESS);
 
-	static char buf[409600];
+	// static char buf[40960000];
+	static char buf[4096];
 	int i;
 	int sent;
 
@@ -1921,7 +2009,8 @@ void connect_and_send(struct sockaddr_in *peer_addr)
 	for (i=0; i<40960000/sizeof(buf); i++) {
 		printk("Sending %d bytes (%d)\n", sizeof(buf), i);
 		sprintf(buf, "%d\n", i);
-		sent = Send(socket->sk, buf, sizeof(buf), 0, 1000, NULL, NULL, 0);
+		// sent = Send(socket->sk, buf, sizeof(buf), 0, 1000, NULL, NULL, 0);
+		sent = SendPage(socket->sk, buf, sizeof(buf), 0);
 		if (sent != sizeof(buf)) {
 			printk("Send returned %d\n", sent);
 			break;

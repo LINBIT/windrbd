@@ -73,6 +73,14 @@ TODO: DRBD windows to windows sync is very slow.
 	one minute). Dig deeper into the windrbd implementation and
 	see why endio arrives so late (SyncSource was a Windows 10 box)
 
+	Update: We found a performance leak in the Send() (wsk2.c)
+	function. It completes synchrouniously, throughput is
+	2 MBit/sec (4096 bytes / call). When switching to asynchronous
+	completion this raises to 27MBit/sec. Problem is: how to
+	free buffer memory (should be done by put_page(), however
+	this is not implemented yet), and, much worse, error
+	reporting (don't know yet how to solve this).
+
 TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 
 	Maybe this was introduced during code cleanup. Update: no it wasn't.
