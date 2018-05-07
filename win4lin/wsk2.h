@@ -127,6 +127,15 @@ NTAPI
 
 LONG
 NTAPI
+SendPage(
+        __in PWSK_SOCKET        WskSocket,
+        __in PVOID              Buffer,
+        __in ULONG              BufferSize,
+        __in ULONG              Flags
+);
+
+LONG
+NTAPI
 SendAsync(
 	__in PWSK_SOCKET	WskSocket,
 	__in PVOID			Buffer,
