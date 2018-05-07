@@ -651,33 +651,41 @@ Send(
 	LONG		BytesSent = SOCKET_ERROR; // DRBC_CHECK_WSK: SOCKET_ERROR be mixed EINVAL?
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
+// printk("Buffer: %p BufferSize: %d\n", Buffer, BufferSize);
 	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || ((int) BufferSize <= 0))
 		return SOCKET_ERROR;
 
+// printk("1\n");
 	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, FALSE);
 	if (!NT_SUCCESS(Status)) {
 		return SOCKET_ERROR;
 	}
 
+// printk("2\n");
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 	if (!NT_SUCCESS(Status)) {
 		FreeWskBuffer(&WskBuffer);
 		return SOCKET_ERROR;
 	}
 
-	Flags |= WSK_FLAG_NODELAY;
+// printk("3\n");
+//	Flags |= WSK_FLAG_NODELAY;
+	Flags &= ~WSK_FLAG_NODELAY;
 
+// printk("4\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskSend(
 		WskSocket,
 		&WskBuffer,
 		Flags,
 		Irp);
 
+// printk("5\n");
 	if (Status == STATUS_PENDING)
 	{
 		LARGE_INTEGER	nWaitTime;
 		LARGE_INTEGER	*pTime;
 
+// printk("6\n");
 	retry:
 		if (Timeout <= 0 || Timeout == MAX_SCHEDULE_TIMEOUT)
 		{
@@ -688,6 +696,7 @@ Send(
 			nWaitTime = RtlConvertLongToLargeInteger(-1 * Timeout * 1000 * 10);
 			pTime = &nWaitTime;
 		}
+// printk("7\n");
 		{
 			struct      task_struct *thread = current;
 			PVOID       waitObjects[2];
@@ -695,11 +704,14 @@ Send(
 
 			waitObjects[0] = (PVOID) &CompletionEvent;
 
+// printk("8\n");
 			Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
+// printk("9\n");
 			switch (Status)
 			{
 			case STATUS_TIMEOUT:
 
+// printk("a\n");
 				// DW-988 refactoring about retry_count. retry_count is removed.
 				if (transport != NULL) {
 					if (!drbd_stream_send_timed_out(transport, stream)) {
@@ -713,6 +725,7 @@ Send(
 				break;
 
 			case STATUS_WAIT_0:
+// printk("b\n");
 				if (NT_SUCCESS(Irp->IoStatus.Status))
 				{
 					BytesSent = (LONG)Irp->IoStatus.Information;
@@ -761,8 +774,10 @@ Send(
 		}
 	}
 
+// printk("c\n");
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer);
+// printk("d\n");
 
 	return BytesSent;
 }
@@ -1211,38 +1226,47 @@ LONG NTAPI Receive(
 	LONG		BytesReceived = SOCKET_ERROR;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
+// printk("Buffer: %p BufferSize: %d\n", Buffer, BufferSize);
     struct      task_struct *thread = current;
     PVOID       waitObjects[2];
     int         wObjCount = 1;
 
+// printk("1\n");
 	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || !BufferSize)
 		return SOCKET_ERROR;
 
+// printk("2\n");
 	if ((int) BufferSize <= 0)
 	{
 		return SOCKET_ERROR;
 	}
 
+// printk("3\n");
 	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, TRUE);
 	if (!NT_SUCCESS(Status)) {
 		return SOCKET_ERROR;
 	}
 
+// printk("4\n");
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 
+// printk("5\n");
 	if (!NT_SUCCESS(Status)) {
 		FreeWskBuffer(&WskBuffer);
 		return SOCKET_ERROR;
 	}
 
+// printk("6\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskReceive(
 				WskSocket,
 				&WskBuffer,
 				Flags,
 				Irp);
 
+// printk("7\n");
     if (Status == STATUS_PENDING)
     {
+// printk("8\n");
         LARGE_INTEGER	nWaitTime;
         LARGE_INTEGER	*pTime;
 
@@ -1256,16 +1280,20 @@ LONG NTAPI Receive(
             pTime = &nWaitTime;
         }
 
+// printk("9\n");
         waitObjects[0] = (PVOID) &CompletionEvent;
         if (thread->has_sig_event)
         {
             waitObjects[1] = (PVOID) &thread->sig_event;
             wObjCount = 2;
         }
+// printk("a\n");
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
+// printk("b\n");
         switch (Status)
         {
         case STATUS_WAIT_0: // waitObjects[0] CompletionEvent
+// printk("c\n");
             if (Irp->IoStatus.Status == STATUS_SUCCESS)
             {
                 BytesReceived = (LONG) Irp->IoStatus.Information;
@@ -1281,10 +1309,12 @@ LONG NTAPI Receive(
             break;
 
         case STATUS_WAIT_1:
+// printk("d\n");
             BytesReceived = -EINTR;
             break;
 
         case STATUS_TIMEOUT:
+// printk("e\n");
             BytesReceived = -EAGAIN;
             break;
 
@@ -1306,11 +1336,15 @@ LONG NTAPI Receive(
 		}
 	}
 
+// printk("f\n");
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
+// printk("g\n");
 		// cancel irp in wsk subsystem
 		IoCancelIrp(Irp);
+// printk("h\n");
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
+// printk("i\n");
 		if (Irp->IoStatus.Information > 0)
 		{
 			//WDRBD_INFO("rx canceled but rx data(%d) avaliable.\n", Irp->IoStatus.Information);
@@ -1318,9 +1352,11 @@ LONG NTAPI Receive(
 		}
 	}
 
+// printk("j\n");
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer);
 
+// printk("k\n");
 	return BytesReceived;
 }
 
@@ -1835,3 +1871,64 @@ int sock_create_kern(
 out:
 	return err;
 }
+
+extern int my_inet_aton(const char *cp, struct in_addr *inp);
+
+// void connect_and_send(char *ipv4_addr, int port)
+void connect_and_send(struct sockaddr_in *peer_addr)
+{
+	struct socket *socket;
+	struct sockaddr_in my_addr;
+	int err;
+	NTSTATUS status;
+
+	my_addr.sin_addr.s_addr = INADDR_ANY;
+	my_addr.sin_port = 0; /* AF_INET & AF_SCI */
+	my_addr.sin_family = AF_INET;
+
+	err = sock_create_kern(NULL, AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSK_FLAG_CONNECTION_SOCKET, &socket);
+	if (err < 0) {
+		printk("sock_create_kern failed with %d\n", err);
+		return;
+	}
+
+	status = Bind(socket->sk, (PSOCKADDR)&my_addr);
+	if (!NT_SUCCESS(status)) {
+		printk("bind failed nt status: %x\n", status);
+		sock_release(socket);
+		return;
+	}
+
+/*
+	my_inet_aton(ipv4_addr, &peer_addr.sin_addr);
+	peer_addr.sin_port = ((port & 0xff) << 8) || ((port & 0xff00) >> 8);
+	peer_addr.sin_family = AF_INET;
+*/
+
+	char sbuf[128];
+	do {
+		printk("connecting to %s\n", get_ip(sbuf, (struct sockaddr_storage_win*) peer_addr));
+	        err = Connect(socket->sk, (struct sockaddr *) peer_addr);
+		if (err != STATUS_SUCCESS)
+			msleep(1000);
+	} while (err != STATUS_SUCCESS);
+
+	static char buf[409600];
+	int i;
+	int sent;
+
+	RtlZeroMemory(buf, sizeof(buf));	
+	for (i=0; i<40960000/sizeof(buf); i++) {
+		printk("Sending %d bytes (%d)\n", sizeof(buf), i);
+		sprintf(buf, "%d\n", i);
+		sent = Send(socket->sk, buf, sizeof(buf), 0, 1000, NULL, NULL, 0);
+		if (sent != sizeof(buf)) {
+			printk("Send returned %d\n", sent);
+			break;
+		}
+	}
+	printk("Closing socket\n");
+	
+	sock_release(socket);
+}
+

@@ -11,3 +11,5 @@ Right now only NTFS is supported atop the windrbd device.
 System Volume (C:) cannot be used for windrbd.
 
 No 32-Bit version is supported, only 64 bit.
+
+On installation (or upgrade) a system reboot is required.

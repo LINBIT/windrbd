@@ -281,3 +281,6 @@ SetEventCallbacks(
 	__in PWSK_SOCKET Socket,
 	__in LONG                       mask
 );
+
+void connect_and_send(struct sockaddr_in *peer_addr);
+char *get_ip(char *buf, struct sockaddr_storage_win *addr);

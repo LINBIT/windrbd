@@ -68,6 +68,11 @@ TODO: DRBD windows to windows sync is very slow.
 	Update: Between win7 (much VM) and win10 sync gets stucked
 	now (number is 0)
 
+	Update: Research showed that when called via drbd_submit_peer_request()
+	I/O on the backing device is very slow (reading 512kb takes over
+	one minute). Dig deeper into the windrbd implementation and
+	see why endio arrives so late (SyncSource was a Windows 10 box)
+
 TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 
 	Maybe this was introduced during code cleanup. Update: no it wasn't.
@@ -109,6 +114,9 @@ TODO: logging: printk's without terminating \n not displayed.
 	Also: if there are some special characters (\0?) the
 	line is not displayed.
 
+	Update: Please fix this, it is annoying, I just ran into
+	it.
+
 TODO: mountmanager / register device with PNP
 
 	Drive letter (mount point) is created now.
@@ -148,6 +156,8 @@ TODO: On formatting: error message cannot write NTFS boot sector.
 
 TODO: drbd-util: Update manpage.
 	And write one for windrbd utility.
+
+TODO: Redo installation of sshd on Windows VM
 --------------------------------------------------------------------
 TODO: Why doesn't it work on Phil's machine?
 

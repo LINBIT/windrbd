@@ -1782,6 +1782,7 @@ NTSTATUS DrbdIoCompletion(
 	int i;
 	NTSTATUS status = Irp->IoStatus.Status;
 
+printk("status: %x\n", status);
 	if (status != STATUS_SUCCESS) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)
 			status = STATUS_SUCCESS;
@@ -1804,6 +1805,7 @@ NTSTATUS DrbdIoCompletion(
 
 /* TODO: if failed call drbd_bio_endio always */
 	int num_completed = atomic_inc_return(&bio->bi_requests_completed);
+printk("num_completed: %d bio->bi_num_requests: %d\n", num_completed, bio->bi_num_requests);
 	if (num_completed == bio->bi_num_requests)
 		drbd_bio_endio(bio, win_status_to_blk_status(status));
 
@@ -1948,7 +1950,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-// printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
+printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
 // }
 
 
@@ -2050,8 +2052,10 @@ static int windrbd_generic_make_request(struct bio *bio)
 		goto out_free_irp;
 	}
 	bio_get(bio);	/* To be put in completion routine */
+printk("before IoCallDriver\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
+printk("after IoCallDriver, returned %x\n", status);
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
 
@@ -2121,6 +2125,8 @@ int generic_make_request(struct bio *bio)
 	orig_size = bio->bi_size;
 
 	ret = 0;
+
+printk("bio->bi_vcnt: %d bio->bi_num_requests: %d\n", bio->bi_vcnt, bio->bi_num_requests);
 
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<(bio->bi_num_requests - flush_request); 

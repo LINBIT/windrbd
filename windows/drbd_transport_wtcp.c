@@ -302,6 +302,7 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
 static int dtt_recv_short(struct socket *socket, void *buf, size_t size, int flags)
 {
 	flags = WSK_FLAG_WAITALL;
+printk("1\n");
 	return Receive(socket->sk, buf, size, flags, socket->sk_rcvtimeo);
 }
 
@@ -344,22 +345,31 @@ static int dtt_recv_pages(struct drbd_transport *transport, struct drbd_page_cha
 	struct page *page;
 	int err;
 
+printk("size: %d\n", size);
 	drbd_alloc_page_chain(transport, chain, DIV_ROUND_UP(size, PAGE_SIZE), GFP_TRY);
 	page = chain->head;
 	if (!page)
 		return -ENOMEM;
 
+printk("1\n");
 	page_chain_for_each(page) {
 		size_t len = min_t(int, size, PAGE_SIZE);
 		void *data = kmap(page);
+printk("2\n");
+printk("data: %p len: %d\n", data, len);
 		err = dtt_recv_short(socket, data, len, 0);
+printk("3\n");
 		kunmap(page);
+printk("4\n");
 		set_page_chain_offset(page, 0);
 		set_page_chain_size(page, len);
+printk("5\n");
 		if (err < 0)
 			goto fail;
 		size -= len;
+printk("6\n");
 	}
+printk("7\n");
 	return 0;
 fail:
 	drbd_free_page_chain(transport, chain, 0);
@@ -992,6 +1002,7 @@ static int dtt_connect(struct drbd_transport *transport)
 			get_ip(sbuf, &connect_to_path->path.my_addr),
 			get_ip(dbuf, &connect_to_path->path.peer_addr));
 
+	connect_and_send((struct sockaddr_in*) &connect_to_path->path.peer_addr);
 
 	do {
 		struct socket *s = NULL;
@@ -1201,10 +1212,12 @@ static bool dtt_stream_ok(struct drbd_transport *transport, enum drbd_stream str
 static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stream,
 			 struct page *page, int offset, size_t size, unsigned msg_flags)
 {
+printk("1\n");
 	struct drbd_tcp_transport *tcp_transport =
 		container_of(transport, struct drbd_tcp_transport, transport);
 	struct socket *socket = tcp_transport->stream[stream];
 
+printk("2\n");
 	if(!socket) { 
 		return -EIO;
 	}
@@ -1213,8 +1226,11 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
 	int err = -EIO;
 
 	msg_flags |= MSG_NOSIGNAL;
+printk("3\n");
 	dtt_update_congested(tcp_transport);
+printk("4\n");
 	do {
+printk("5\n");
 		int sent;
 		if (stream == DATA_STREAM)
 		{
@@ -1222,7 +1238,10 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
 			transport->ko_count = transport->net_conf->ko_count;
 		}
 
+printk("6\n");
+printk("buf: %p len: %d timeout: %d\n",  (void *)((unsigned char *)(page->addr) + offset), len, socket->sk_sndtimeo);
 		sent = Send(socket->sk, (void *)((unsigned char *)(page->addr) + offset), len, 0, socket->sk_sndtimeo, NULL, transport, stream);
+printk("7\n");
 		if (sent <= 0) {
 			if (sent == -EAGAIN) {
 				if (drbd_stream_send_timed_out(transport, stream))
@@ -1235,14 +1254,18 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
 				err = sent;
 			break;
 		}
+printk("8\n");
 		len    -= sent;
 		offset += sent;
 	} while (len > 0 /* THINK && peer_device->repl_state[NOW] >= L_ESTABLISHED */);
+printk("9\n");
 	clear_bit(NET_CONGESTED, &tcp_transport->transport.flags);
 
+printk("a\n");
 	if (len == 0)
 		err = 0;
 
+printk("b\n");
 	return err;
 }
 
