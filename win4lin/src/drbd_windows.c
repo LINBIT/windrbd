@@ -784,7 +784,6 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned i
 	bvec->bv_len = len;
 	bvec->bv_offset = offset;
 	bio->bi_size += len;
-/* printk("bio: %p bv_page: %p bv_page->addr: %p bv_offset: %d bv_len: %d bi_size: %d\n", bio, bvec->bv_page, bvec->bv_page->addr, bvec->bv_offset, bvec->bv_len, bio->bi_size); */
 
 	return len;
 }
@@ -1775,7 +1774,7 @@ NTSTATUS DrbdIoCompletion(
 )
 {
 /* TODO: Device object is NULL here. Fix that in case we need it one day. */
-/* printk(KERN_INFO "DrbdIoCompletion: DeviceObject: %p, Irp: %p, Context: %p\n", DeviceObject, Irp, Context); */
+
 	struct bio *bio = Context;
 	PMDL mdl, nextMdl;
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
@@ -1804,7 +1803,6 @@ NTSTATUS DrbdIoCompletion(
 
 /* TODO: if failed call drbd_bio_endio always */
 	int num_completed = atomic_inc_return(&bio->bi_requests_completed);
-// printk("num_completed: %d bio->bi_num_requests: %d\n", num_completed, bio->bi_num_requests);
 	if (num_completed == bio->bi_num_requests)
 		drbd_bio_endio(bio, win_status_to_blk_status(status));
 
@@ -1902,10 +1900,6 @@ static int make_flush_request(struct bio *bio)
 
 	next_stack_location->DeviceObject = bio->bi_bdev->windows_device;
 	next_stack_location->FileObject = bio->bi_bdev->file_object;
-
-// printk("next_stack_location->MajorFunction: %x next_stack_location->MinorFunction: %x\n", next_stack_location->MajorFunction, next_stack_location->MinorFunction);
-
-// printk("bio: %p bio->bi_bdev: %p bio->bi_bdev->windows_device: %p\n", bio, bio->bi_bdev, bio->bi_bdev->windows_device);
 
 	bio_get(bio);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
@@ -2051,10 +2045,8 @@ static int windrbd_generic_make_request(struct bio *bio)
 		goto out_free_irp;
 	}
 	bio_get(bio);	/* To be put in completion routine */
-// printk("before IoCallDriver\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
-// printk("after IoCallDriver, returned %x\n", status);
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
 
@@ -2092,8 +2084,6 @@ int generic_make_request(struct bio *bio)
 
 	bio_get(bio);
 
-// printk(KERN_INFO "bio: %p bio->bi_rw: %x bio->bi_size: %d bio->bi_vcnt: %d\n", bio, bio->bi_rw, bio->bi_size, bio->bi_vcnt);
-
 /* TODO: reenable again after fixing DRBD_REQ_PREFLUSH define */
 //	flush_request = (bio->bi_rw & DRBD_REQ_PREFLUSH) != 0;
 	flush_request = 0;
@@ -2124,8 +2114,6 @@ int generic_make_request(struct bio *bio)
 	orig_size = bio->bi_size;
 
 	ret = 0;
-
-// printk("bio->bi_vcnt: %d bio->bi_num_requests: %d\n", bio->bi_vcnt, bio->bi_num_requests);
 
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<(bio->bi_num_requests - flush_request); 
@@ -2511,8 +2499,6 @@ void *idr_get_next(struct idr *idp, int *nextidp)
 void delete_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
-// printk(KERN_INFO "delete_block_device %p\n", bdev);
-
 	if (bdev->bd_disk) {
 		if (bdev->bd_disk->queue)
 			blk_cleanup_queue(bdev->bd_disk->queue);
@@ -2702,8 +2688,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_no_block_device;
 	}
 	block_device->windows_device = windows_device;
-// printk("block_device: %p block_device->windows_device: %p\n", block_device, block_device->windows_device);
-
 	block_device->bd_disk = alloc_disk(0);
 	if (!block_device->bd_disk)
 	{
@@ -3177,7 +3161,6 @@ static int minor_to_x_name(UNICODE_STRING *name, int minor, const char *mount_po
 	}
 	name->Buffer[name->Length / sizeof(name->Buffer[0])] = 0;
 
-// printk("name->Buffer: %S name->Length: %d\n", name->Buffer, name->Length);
 	return 0;
 }
 
@@ -3462,8 +3445,6 @@ static void destroy_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 	int minor = bdev->minor;
-
-// printk(KERN_INFO "Destroying minor %d\n", minor);
 
 	ExFreePool(bdev->path_to_device.Buffer);
 	bdev->windows_device->DeviceExtension = NULL;

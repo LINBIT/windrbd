@@ -33,8 +33,6 @@ NTAPI SendPageCompletionRoutine(
 	__in PVOID		Unused
 )
 {
-// printk("send completed.\n");
-
 	/* TODO: do a put_page() here to free the buffer page. */
 	
 	IoFreeIrp(Irp);
@@ -668,41 +666,34 @@ Send(
 	LONG		BytesSent = SOCKET_ERROR; // DRBC_CHECK_WSK: SOCKET_ERROR be mixed EINVAL?
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
-// printk("Buffer: %p BufferSize: %d\n", Buffer, BufferSize);
 	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || ((int) BufferSize <= 0))
 		return SOCKET_ERROR;
 
-// printk("1\n");
 	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, FALSE);
 	if (!NT_SUCCESS(Status)) {
 		return SOCKET_ERROR;
 	}
 
-// printk("2\n");
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 	if (!NT_SUCCESS(Status)) {
 		FreeWskBuffer(&WskBuffer);
 		return SOCKET_ERROR;
 	}
 
-// printk("3\n");
 //	Flags |= WSK_FLAG_NODELAY;
 	Flags &= ~WSK_FLAG_NODELAY;
 
-// printk("4\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskSend(
 		WskSocket,
 		&WskBuffer,
 		Flags,
 		Irp);
 
-// printk("5\n");
 	if (Status == STATUS_PENDING)
 	{
 		LARGE_INTEGER	nWaitTime;
 		LARGE_INTEGER	*pTime;
 
-// printk("6\n");
 	retry:
 		if (Timeout <= 0 || Timeout == MAX_SCHEDULE_TIMEOUT)
 		{
@@ -713,7 +704,6 @@ Send(
 			nWaitTime = RtlConvertLongToLargeInteger(-1 * Timeout * 1000 * 10);
 			pTime = &nWaitTime;
 		}
-// printk("7\n");
 		{
 			struct      task_struct *thread = current;
 			PVOID       waitObjects[2];
@@ -721,14 +711,11 @@ Send(
 
 			waitObjects[0] = (PVOID) &CompletionEvent;
 
-// printk("8\n");
 			Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-// printk("9\n");
 			switch (Status)
 			{
 			case STATUS_TIMEOUT:
 
-// printk("a\n");
 				// DW-988 refactoring about retry_count. retry_count is removed.
 				if (transport != NULL) {
 					if (!drbd_stream_send_timed_out(transport, stream)) {
@@ -742,7 +729,6 @@ Send(
 				break;
 
 			case STATUS_WAIT_0:
-// printk("b\n");
 				if (NT_SUCCESS(Irp->IoStatus.Status))
 				{
 					BytesSent = (LONG)Irp->IoStatus.Information;
@@ -791,10 +777,8 @@ Send(
 		}
 	}
 
-// printk("c\n");
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer);
-// printk("d\n");
 
 	return BytesSent;
 }
@@ -813,11 +797,9 @@ SendPage(
 	LONG BytesSent;
 	NTSTATUS Status;
 
-// printk("Buffer: %p BufferSize: %d\n", Buffer, BufferSize);
 	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || ((int) BufferSize <= 0))
 		return SOCKET_ERROR;
 
-// printk("1\n");
 		/* TODO: free this later in completion routine. */
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
 	if (WskBuffer == NULL)
@@ -828,7 +810,6 @@ SendPage(
 		return SOCKET_ERROR;
 	}
 
-// printk("2\n");
 	Irp = IoAllocateIrp(1, FALSE);
 	if (Irp == NULL) {
 		FreeWskBuffer(WskBuffer);
@@ -836,17 +817,14 @@ SendPage(
 	}
 	IoSetCompletionRoutine(Irp, SendPageCompletionRoutine, NULL, TRUE, TRUE, TRUE);
 
-// printk("3\n");
 	Flags |= WSK_FLAG_NODELAY;
 
-// printk("4\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskSend(
 		WskSocket,
 		WskBuffer,
 		Flags,
 		Irp);
 
-// printk("5\n");
 	switch (Status) {
 	case STATUS_PENDING:
 		BytesSent = BufferSize; /* not true, at least not yet */
@@ -861,10 +839,6 @@ SendPage(
 		WDRBD_WARN("(%s) WskSend error(0x%x)\n", current->comm, Status);
 		BytesSent = SOCKET_ERROR;
 	}
-
-// printk("c\n");
-//	FreeWskBuffer(WskBuffer);
-// printk("d\n");
 
 	return BytesSent;
 }
@@ -1313,47 +1287,38 @@ LONG NTAPI Receive(
 	LONG		BytesReceived = SOCKET_ERROR;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
-// printk("Buffer: %p BufferSize: %d\n", Buffer, BufferSize);
     struct      task_struct *thread = current;
     PVOID       waitObjects[2];
     int         wObjCount = 1;
 
-// printk("1\n");
 	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || !BufferSize)
 		return SOCKET_ERROR;
 
-// printk("2\n");
 	if ((int) BufferSize <= 0)
 	{
 		return SOCKET_ERROR;
 	}
 
-// printk("3\n");
 	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, TRUE);
 	if (!NT_SUCCESS(Status)) {
 		return SOCKET_ERROR;
 	}
 
-// printk("4\n");
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 
-// printk("5\n");
 	if (!NT_SUCCESS(Status)) {
 		FreeWskBuffer(&WskBuffer);
 		return SOCKET_ERROR;
 	}
 
-// printk("6\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskReceive(
 				WskSocket,
 				&WskBuffer,
 				Flags,
 				Irp);
 
-// printk("7\n");
     if (Status == STATUS_PENDING)
     {
-// printk("8\n");
         LARGE_INTEGER	nWaitTime;
         LARGE_INTEGER	*pTime;
 
@@ -1367,20 +1332,16 @@ LONG NTAPI Receive(
             pTime = &nWaitTime;
         }
 
-// printk("9\n");
         waitObjects[0] = (PVOID) &CompletionEvent;
         if (thread->has_sig_event)
         {
             waitObjects[1] = (PVOID) &thread->sig_event;
             wObjCount = 2;
         }
-// printk("a\n");
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-// printk("b\n");
         switch (Status)
         {
         case STATUS_WAIT_0: // waitObjects[0] CompletionEvent
-// printk("c\n");
             if (Irp->IoStatus.Status == STATUS_SUCCESS)
             {
                 BytesReceived = (LONG) Irp->IoStatus.Information;
@@ -1396,12 +1357,10 @@ LONG NTAPI Receive(
             break;
 
         case STATUS_WAIT_1:
-// printk("d\n");
             BytesReceived = -EINTR;
             break;
 
         case STATUS_TIMEOUT:
-// printk("e\n");
             BytesReceived = -EAGAIN;
             break;
 
@@ -1423,15 +1382,11 @@ LONG NTAPI Receive(
 		}
 	}
 
-// printk("f\n");
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
-// printk("g\n");
 		// cancel irp in wsk subsystem
 		IoCancelIrp(Irp);
-// printk("h\n");
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-// printk("i\n");
 		if (Irp->IoStatus.Information > 0)
 		{
 			//WDRBD_INFO("rx canceled but rx data(%d) avaliable.\n", Irp->IoStatus.Information);
@@ -1439,11 +1394,9 @@ LONG NTAPI Receive(
 		}
 	}
 
-// printk("j\n");
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer);
 
-// printk("k\n");
 	return BytesReceived;
 }
 

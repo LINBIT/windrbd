@@ -545,8 +545,6 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 		bio->bi_io_vec[i].bv_offset = 0;
 	}
 
-// printk("bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d\n", bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len);
-
 	bio->bi_end_io = windrbd_bio_finished;
 	bio->bi_upper_irp = irp;
 
