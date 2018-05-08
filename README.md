@@ -169,3 +169,4 @@ Version history
  * 0.6.2 (Apr 17, 2018): Fixed reference count error on drbdadm down introduced
                          with last release.
  * 0.6.3 (Apr 24, 2018): Fixed blue screen on writing while connected.
+ * 0.6.4 (May 08, 2018): Fixed very slow sync performance problem.
