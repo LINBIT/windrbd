@@ -6,80 +6,11 @@ TODO: Do not display Please reboot .. when installation is finished.
 
 	INF install already does this.
 
-TODO: DRBD windows to windows sync is very slow.
+TODO: BSOD on network failure
 
-	Not clear if it is the network or something else.
+TODO: Memory leaks on SendPage()
 
-	Update: it is not the network.
-
-	I/O on Windows 10 is very slow also (format h: on a
-	connected resource takes forever)
-
-	Update: when connecting to windows build host it is
-	faster (network is over the air), so maybe something
-	with the Linbit Windows VM is wrong.
-
-	Update: Devin (Linbit USA) also reported this.
-
-	Update: Something between drbd-9.0.9 and drbd-9.0.13
-	has been fixed to solve that (it is slow between a 
-	9.0.9 and a 9.0.13 under Linux also (in one direction), 
-	upgrading 9.0.9 to 9.0.13 solves that so it is fast in
-	both directions). Also put
-
-        disk {
-                c-max-rate 4048000;
-                c-fill-target 1048000;
-        }
-
-	into w0.res (at resource config level) on both sides.
-	Then it should work. TODO: upgrade windrbd to 9.0.13
-
-	Done, with 9.0.13 Sync is faster (14MB / sec instead of
-	4 MB / sec), should be 50 MB / sec however.
-
-	Update: between much VM (Windows 7) and Windows 10 sync
-	rate is still at 200 kB which is way too less.
-
-	Some printk's for researching slow sync show that requests are sent
-	by 4k (instead of up to 1m) from the windows side (if windows is
-	SyncTarget). Fix that and see if it is faster, then.
-
-	Compared to Linux/Linux sync it is then still slower (about
-	a factor of 3 or 4) maybe because Windows I/O is slower?
-
-[ 3979.671662] KARIN cmd: 9 sector: 14336 size: 1048576
-[ 3979.671665] KARIN cmd: 9 sector: 16384 size: 32768
-[ 3979.780097] KARIN cmd: 9 sector: 16448 size: 32768
-[ 3979.780121] KARIN cmd: 9 sector: 16512 size: 65536
-
-	Windows sometimes stucks when replying to data requests (11ms
-	pause).
-
-	Update: Initialize max_hw_sects in queue.
-
-	Now resync requests are sent in chunks of (up to) 1M which makes
-	resync much faster (was 4K chunks, because max_hw_sects was 0).
-
-	Right now, resync between Windows and Linux is still a bit slower
-	(factor 4) than beween Linuxes, this is maybe because the I/O
-	stack is slower under Windows (?).
-
-	Update: Between win7 (much VM) and win10 sync gets stucked
-	now (number is 0)
-
-	Update: Research showed that when called via drbd_submit_peer_request()
-	I/O on the backing device is very slow (reading 512kb takes over
-	one minute). Dig deeper into the windrbd implementation and
-	see why endio arrives so late (SyncSource was a Windows 10 box)
-
-	Update: We found a performance leak in the Send() (wsk2.c)
-	function. It completes synchrouniously, throughput is
-	2 MBit/sec (4096 bytes / call). When switching to asynchronous
-	completion this raises to 27MBit/sec. Problem is: how to
-	free buffer memory (should be done by put_page(), however
-	this is not implemented yet), and, much worse, error
-	reporting (don't know yet how to solve this).
+TODO: Error reporting of SendPage()
 
 TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 
@@ -1745,4 +1676,87 @@ Done: new blue screen running (new) test.sh
 	when device was already deleted.
 
 	Tested, no blue screen.
+
+Done: DRBD windows to windows sync is very slow.
+
+	Not clear if it is the network or something else.
+
+	Update: it is not the network.
+
+	I/O on Windows 10 is very slow also (format h: on a
+	connected resource takes forever)
+
+	Update: when connecting to windows build host it is
+	faster (network is over the air), so maybe something
+	with the Linbit Windows VM is wrong.
+
+	Update: Devin (Linbit USA) also reported this.
+
+	Update: Something between drbd-9.0.9 and drbd-9.0.13
+	has been fixed to solve that (it is slow between a 
+	9.0.9 and a 9.0.13 under Linux also (in one direction), 
+	upgrading 9.0.9 to 9.0.13 solves that so it is fast in
+	both directions). Also put
+
+        disk {
+                c-max-rate 4048000;
+                c-fill-target 1048000;
+        }
+
+	into w0.res (at resource config level) on both sides.
+	Then it should work. TODO: upgrade windrbd to 9.0.13
+
+	Done, with 9.0.13 Sync is faster (14MB / sec instead of
+	4 MB / sec), should be 50 MB / sec however.
+
+	Update: between much VM (Windows 7) and Windows 10 sync
+	rate is still at 200 kB which is way too less.
+
+	Some printk's for researching slow sync show that requests are sent
+	by 4k (instead of up to 1m) from the windows side (if windows is
+	SyncTarget). Fix that and see if it is faster, then.
+
+	Compared to Linux/Linux sync it is then still slower (about
+	a factor of 3 or 4) maybe because Windows I/O is slower?
+
+[ 3979.671662] KARIN cmd: 9 sector: 14336 size: 1048576
+[ 3979.671665] KARIN cmd: 9 sector: 16384 size: 32768
+[ 3979.780097] KARIN cmd: 9 sector: 16448 size: 32768
+[ 3979.780121] KARIN cmd: 9 sector: 16512 size: 65536
+
+	Windows sometimes stucks when replying to data requests (11ms
+	pause).
+
+	Update: Initialize max_hw_sects in queue.
+
+	Now resync requests are sent in chunks of (up to) 1M which makes
+	resync much faster (was 4K chunks, because max_hw_sects was 0).
+
+	Right now, resync between Windows and Linux is still a bit slower
+	(factor 4) than beween Linuxes, this is maybe because the I/O
+	stack is slower under Windows (?).
+
+	Update: Between win7 (much VM) and win10 sync gets stucked
+	now (number is 0)
+
+	Update: Research showed that when called via drbd_submit_peer_request()
+	I/O on the backing device is very slow (reading 512kb takes over
+	one minute). Dig deeper into the windrbd implementation and
+	see why endio arrives so late (SyncSource was a Windows 10 box)
+
+	Update: We found a performance leak in the Send() (wsk2.c)
+	function. It completes synchrouniously, throughput is
+	2 MBit/sec (4096 bytes / call). When switching to asynchronous
+	completion this raises to 27MBit/sec. Problem is: how to
+	free buffer memory (should be done by put_page(), however
+	this is not implemented yet), and, much worse, error
+	reporting (don't know yet how to solve this).
+
+	Update: we had a version that worked (with SendPage()?) find
+	it again. Update: Yes that was the working version. It performs
+	well on our test setup (syncing with 100MBit/s, which is on
+	the VM side the maximum). However there is a blue screen
+	on PingAck didn't arrive in time (see separate TODO) plus
+	one or two additional memory leaks. Performance problem
+	seems to be fixed now.
 
