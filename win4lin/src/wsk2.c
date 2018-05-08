@@ -564,7 +564,6 @@ __in KEVENT			*send_buf_kill_event
 	KeInitializeEvent(&CompletionEvent, SynchronizationEvent, FALSE);
 	IoSetCompletionRoutine(pIrp, CompletionRoutine, &CompletionEvent, TRUE, TRUE, TRUE);
 
-/* TODO: also try without */
 	Flags |= WSK_FLAG_NODELAY;
 
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH)WskSocket->Dispatch)->WskSend(
@@ -680,8 +679,7 @@ Send(
 		return SOCKET_ERROR;
 	}
 
-//	Flags |= WSK_FLAG_NODELAY;
-	Flags &= ~WSK_FLAG_NODELAY;
+	Flags |= WSK_FLAG_NODELAY;
 
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskSend(
 		WskSocket,
