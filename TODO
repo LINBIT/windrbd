@@ -8,9 +8,16 @@ TODO: Do not display Please reboot .. when installation is finished.
 
 TODO: BSOD on network failure
 
+TODO: On network failure (unplug cable) stays in NetworkFailure state.
+
+TODO: drbdadm status fails after unplug cable when syncing.
+
 TODO: Memory leaks on SendPage()
 
 TODO: Error reporting of SendPage()
+
+TODO: On VM, one CPU core (has 2 cores) goes to 100% on sync.
+	I assume there is an unneccessary (?) copy somewhere.
 
 TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 
