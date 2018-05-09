@@ -25,21 +25,6 @@ NTAPI CompletionRoutine(
 	
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
-
-NTSTATUS
-NTAPI SendPageCompletionRoutine(
-	__in PDEVICE_OBJECT	DeviceObject,
-	__in PIRP		Irp,
-	__in PVOID		Unused
-)
-{
-	/* TODO: do a put_page() here to free the buffer page. */
-	
-	IoFreeIrp(Irp);
-
-	return STATUS_MORE_PROCESSING_REQUIRED;
-}
-
 #if WSK_ASYNCCOMPL
 NTSTATUS
 NTAPI CompletionRoutineAsync(
@@ -190,6 +175,31 @@ __in PIRP pIrp
 {
 	if (pIrp)
 		IoFreeIrp(pIrp);
+}
+
+struct send_page_completion_info {
+	struct page *page;
+	struct _WSK_BUF *wsk_buffer;
+};
+
+NTSTATUS
+NTAPI SendPageCompletionRoutine(
+	__in PDEVICE_OBJECT	DeviceObject,
+	__in PIRP		Irp,
+	__in struct send_page_completion_info *completion
+
+)
+	/* TODO: if we get an error here, how do we tell DRBD? */
+{ 
+		/* Also unmaps the pages of the containg Mdl */
+	FreeWskBuffer(completion->wsk_buffer);
+	kfree(completion->wsk_buffer);
+	put_page(completion->page); /* Might free the page if connection is already down */
+	kfree(completion);
+	
+	IoFreeIrp(Irp);
+
+	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
 //
@@ -785,47 +795,62 @@ LONG
 NTAPI
 SendPage(
 	__in PWSK_SOCKET	WskSocket,
-	__in PVOID		Buffer,
-	__in ULONG		BufferSize,
-	__in ULONG		Flags
+	__in struct page	*page,
+	__in ULONG		offset,
+	__in ULONG		len,
+	__in ULONG		flags	
 )
 {
 	struct _IRP *Irp;
 	struct _WSK_BUF *WskBuffer;
+	struct send_page_completion_info *completion;
 	LONG BytesSent;
 	NTSTATUS Status;
 
-	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || ((int) BufferSize <= 0))
+	if (g_SocketsState != INITIALIZED || !WskSocket || !page || ((int) len <= 0))
 		return SOCKET_ERROR;
 
-		/* TODO: free this later in completion routine. */
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
 	if (WskBuffer == NULL)
 		return SOCKET_ERROR;
 
-	Status = InitWskBuffer(Buffer, BufferSize, WskBuffer, FALSE);
-	if (!NT_SUCCESS(Status)) {
+	completion = kzalloc(sizeof(*completion), 0, 'DRBD');
+	if (completion == NULL) {
+		kfree(WskBuffer);
 		return SOCKET_ERROR;
 	}
+
+	Status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE);
+	if (!NT_SUCCESS(Status)) {
+		kfree(completion);
+		kfree(WskBuffer);
+		return SOCKET_ERROR;
+	}
+
+	get_page(page);
+	completion->page = page;
+	completion->wsk_buffer = WskBuffer;
 
 	Irp = IoAllocateIrp(1, FALSE);
 	if (Irp == NULL) {
+		kfree(completion);
+		kfree(WskBuffer);
 		FreeWskBuffer(WskBuffer);
 		return SOCKET_ERROR;
 	}
-	IoSetCompletionRoutine(Irp, SendPageCompletionRoutine, NULL, TRUE, TRUE, TRUE);
+	IoSetCompletionRoutine(Irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
 
-	Flags |= WSK_FLAG_NODELAY;
+	flags |= WSK_FLAG_NODELAY;
 
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskSend(
 		WskSocket,
 		WskBuffer,
-		Flags,
+		flags,
 		Irp);
 
 	switch (Status) {
 	case STATUS_PENDING:
-		BytesSent = BufferSize; /* not true, at least not yet */
+		BytesSent = len; /* TODO: not true, at least not yet */
 		break;
 
 	case STATUS_SUCCESS:
@@ -1961,9 +1986,12 @@ void connect_and_send(struct sockaddr_in *peer_addr)
 		printk("Sending %d bytes (%d)\n", sizeof(buf), i);
 		sprintf(buf, "%d\n", i);
 			/* about 2 Mbit/sec, 60-70 seconds for 40 MBytes: */
-//		sent = Send(socket->sk, buf, sizeof(buf), 0, 1000, NULL, NULL, 0);
+		sent = Send(socket->sk, buf, sizeof(buf), 0, 1000, NULL, NULL, 0);
 			/* about 25 Mbit/sec, 10-13 seconds for 40 MBytes: */
-		sent = SendPage(socket->sk, buf, sizeof(buf), 0);
+		/* TODO: need a struct page here..we don't really need
+		 * it anymore, so this is probably not being fixed.
+		 */
+//		sent = SendPage(socket->sk, buf, sizeof(buf), 0);
 		if (sent != sizeof(buf)) {
 			printk("Send returned %d\n", sent);
 			break;

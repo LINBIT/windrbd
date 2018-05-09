@@ -129,8 +129,9 @@ LONG
 NTAPI
 SendPage(
         __in PWSK_SOCKET        WskSocket,
-        __in PVOID              Buffer,
-        __in ULONG              BufferSize,
+        __in struct page        *page,
+        __in ULONG              offset,
+        __in ULONG              len,
         __in ULONG              Flags
 );
 
