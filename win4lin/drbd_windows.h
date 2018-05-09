@@ -92,6 +92,8 @@ enum
 #define GFP_NOIO				(__GFP_WAIT)
 #define GFP_NOWAIT	            0
 
+/* TODO: this should be a struct containing an int, so compiler
+   can tell int's from atomic_t's */
 #define atomic_t				int
 #define atomic_t64				LONGLONG
 
@@ -395,9 +397,8 @@ struct semaphore {
     KSEMAPHORE sem;
 };
 
-/* TODO: atomic_t? or use refcount_t */
 struct kref {
-	int refcount;
+	atomic_t refcount;
 };
 
 struct hlist_head {
@@ -864,7 +865,20 @@ struct page {
 	ULONG_PTR private;
 	void *addr;
 	struct list_head lru;
+	struct kref kref;
 };
+
+void free_page_kref(struct kref *kref);
+
+static inline void put_page(struct page *page)
+{
+	kref_put(&page->kref, free_page_kref);
+}
+
+static inline void get_page(struct page *page)
+{
+	kref_get(&page->kref);
+}
 
 #define page_private(_page)		((_page)->private)
 #define set_page_private(_page, _v)	((_page)->private = (_v))
@@ -872,7 +886,7 @@ struct page {
 extern void *page_address(const struct page *page);
 extern int page_count(struct page *page);
 extern void __free_page(struct page *page);
-extern struct page * alloc_page(int flag);
+extern struct page *alloc_page(int flag);
 
 struct scatterlist {
 	struct page *page;

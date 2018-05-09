@@ -550,13 +550,17 @@ struct page *alloc_page(int flag)
 	RtlZeroMemory(p, sizeof(struct page));
 	
 		/* TODO: is this page aligned? */
+		/* TODO: kmalloc? */
 	p->addr = kzalloc(PAGE_SIZE, 0, 'E3DW');
 	if (!p->addr)	{
 		kfree(p); 
 		WDRBD_INFO("alloc_page PAGE_SIZE failed\n");
 		return NULL;
 	}
+		/* TODO: Sure? */
 	RtlZeroMemory(p->addr, PAGE_SIZE);
+
+	kref_init(&p->kref);
 
 	return p;
 }
@@ -565,6 +569,12 @@ void __free_page(struct page *page)
 {
 	kfree(page->addr);
 	kfree(page); 
+}
+
+void free_page_kref(struct kref *kref)
+{
+	struct page *page = container_of(kref, struct page, kref);
+	__free_page(page);
 }
 
 #ifdef _HACK

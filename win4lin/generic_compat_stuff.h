@@ -60,7 +60,6 @@
 #define module_exit(...)
 #define module_param(...)
 #define module_param_string(...)
-#define put_page(egal)
 #define free_cpumask_var(...)
 #define remove_proc_entry(...)
 #define drbd_unregister_blkdev(...)
