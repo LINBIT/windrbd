@@ -191,6 +191,9 @@ NTAPI SendPageCompletionRoutine(
 )
 	/* TODO: if we get an error here, how do we tell DRBD? */
 { 
+	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
+		printk(KERN_ERR "SendPage completed with status %x\n", Irp->IoStatus.Status);
+	}
 		/* Also unmaps the pages of the containg Mdl */
 	FreeWskBuffer(completion->wsk_buffer);
 	kfree(completion->wsk_buffer);
