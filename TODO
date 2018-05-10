@@ -6,6 +6,18 @@ TODO: Do not display Please reboot .. when installation is finished.
 
 	INF install already does this.
 
+TODO: SendPage on sync always sends the same page.
+	Probably there is data corruption.
+
+TODO: Both sides are SyncSource??
+w0 role:Secondary
+  volume:17 disk:UpToDate
+  linbit-wdrbd role:Secondary
+    volume:17 replication:SyncSource peer-disk:Inconsistent
+        done:0.00
+
+Same on other side.
+
 TODO: BSOD on network failure
 	Check if still there.
 
