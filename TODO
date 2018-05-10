@@ -9,12 +9,17 @@ TODO: Do not display Please reboot .. when installation is finished.
 TODO: SendPage on sync always sends the same page.
 	Probably there is data corruption.
 
-TODO: Both sides are SyncSource??
+Report: Both sides are SyncSource??
 w0 role:Secondary
   volume:17 disk:UpToDate
   linbit-wdrbd role:Secondary
     volume:17 replication:SyncSource peer-disk:Inconsistent
         done:0.00
+
+	It seems that DRBD 9.0.13 fails to detect split brain
+	correctly (downgrading WinDRBD to DRBD 9.0.10 detects
+	the split brain). That seems to be an upstream problem.
+	Report?
 
 Same on other side.
 
