@@ -9,6 +9,9 @@ TODO: Do not display Please reboot .. when installation is finished.
 TODO: SendPage on sync always sends the same page.
 	Probably there is data corruption.
 
+TODO: patch_boot_sector: DRBD signature on peer.
+	Should only be on backing device, never on the wire.
+
 Report: Both sides are SyncSource??
 w0 role:Secondary
   volume:17 disk:UpToDate
