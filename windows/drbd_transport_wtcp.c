@@ -1223,9 +1223,9 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
 			transport->ko_count = transport->net_conf->ko_count;
 		}
 
-printk("into SendPage: buf: %p len: %d timeout: %d\n",  (void *)((unsigned char *)(page->addr) + offset), len, socket->sk_sndtimeo);
-	//	sent = Send(socket->sk, (void *)((unsigned char *)(page->addr) + offset), len, 0, socket->sk_sndtimeo, NULL, transport, stream);
-		sent = SendPage(socket->sk, page, offset, len, 0);
+printk("into Send: buf: %p len: %d timeout: %d\n",  (void *)((unsigned char *)(page->addr) + offset), len, socket->sk_sndtimeo);
+		sent = Send(socket->sk, (void *)((unsigned char *)(page->addr) + offset), len, 0, socket->sk_sndtimeo, NULL, transport, stream);
+//		sent = SendPage(socket->sk, page, offset, len, 0);
 printk("returned %d\n", sent);
 		if (sent <= 0) {
 			if (sent == -EAGAIN) {
