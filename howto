@@ -1,0 +1,158 @@
+Note: These are my internal howto receipes, some of them might
+be obsolete while others just work in my setting. If you need
+help installing windrbd, please see the file INSTALL or contact
+sales@linbit.com for professional support.
+
+						- Johannes
+---------------------------------------------------------------------
+
+Building and "insmod" DRBD windows driver:
+
+        1.) Run
+                make
+        on the Linux box (from $HOME/Linbit/Work/wdrbd9)
+
+        2.) Run
+                make
+        on the Windows box (from $HOME/Linbit/Work/wdrbd9 (takes some while)
+
+        3.) Run
+                make install
+        on the Windows box (from $HOME/Linbit/Work/wdrbd9/converted-sources/drbd)
+
+        4.) Run (in an Administrator cmd.exe Console: to open it go to
+                 C:\Windows\System32 in Explorer, Cmd-Click on cmd.exe
+                 and select Run as Administrator)
+                INSTALL-DRBD-admin.bat
+
+        5.) To load the driver, do (from Adminstrator Console)
+                sc start drbd
+        DbgViewer will show output. To start DbgViewer go to
+        C:\drbd\DebugViewer and start DbgView.exe as Administrator
+
+from Windows to Mac:
+
+Start -> In Text field:
+\\192.168.56.1
+
+Right click: Cmd+Click
+
+Gruppenrichtline: Start, type Gruppenrichtlinie
+
+search cmd.exe - right click (Cmd+click) and select run as administrator
+
+then 
+pnputil -a drbd.inf
+
+eventvwr linbit-wdrbd
+
+DebugView
+
+	C:\drbd\dbgview\DbgView.exe as Administrator
+
+---
+List physical (also non partitioned) drives:
+
+wmic diskdrive list 
+wmic diskdrive list brief
+
+---
+Reconnect z: (/home/johannes/Linbit on Ubuntu 14.03 machine):
+
+net use z:
+
+---
+
+partition manager:
+
+System und Sicherheit / Verwaltung / Festplattenpartitionen erstellen und formatieren
+
+---
+
+BSOD:
+
+codes at https://www.lifewire.com/blue-screen-error-codes-4065576
+1 Memory referenced
+2 IRQL at time of reference
+3 0: Read 1: Write 8: Execute
+4 Address that referenced memory
+
+----
+Disable checksum offloading:
+
+sudo ethtool -K eth1 rx off
+sudo ethtool -K eth1 tx off
+
+----
+
+Resolve split brain:
+
+sudo drbdadm connect --discard-my-data w0
+
+jt/fix-multipage-io
+
+Linux invalidate read cache (sync does push write cache)
+sudo blockdev --flushbufs /dev/drbd26
+sudo blockdev --flushbufs /dev/sdb1
+
+Windows self extracting EXE generator:
+
+iexpress.exe
+
+device          minor 5 name "C:\\foo\\bar";
+device          minor 5 name "H:";
+
+drbd_sender.c:make_resync_request()
+
+----
+
+Make versioninfo work:
+
+change path specs in .git file (not dir) in submodules to
+relative path.
+
+----
+
+Sign with Linbit certificate:
+
+copy unsigned drbd.sys and drbd.cat to Windows 10: C:\to-sign
+
+"C:\Program Files (x86)\Windows Kits\10\bin\10.0.16299.0\x64\signtool.exe" sign /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com "c:\to-sign\drbd.cat"
+
+"C:\Program Files (x86)\Windows Kits\10\bin\10.0.16299.0\x64\signtool.exe" sign /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com "c:\to-sign\drbd.sys"
+
+copy files back to $LINBIT_COMPILE_DIR/signed
+
+Use windrbd-install-signed.SED.in to build package (will take drbd.sys and
+	drbd.cat from signed directory).
+
+-----
+
+Make releases
+-------------
+Add entry to README.md
+git add README.md
+git commit -m "Release 0.x.0 (Beta y)"
+git tag windrbd-0.x.0-beta-y
+
+make R=1
+
+copy windrbd/to-sign/* to Windows 10 physical machine.
+copy there to C:\to-sign
+run sign.bat with dongle attached (password is written on box)
+copy drbd.* back to windrbd/signed
+make signed-package
+pass resulting install-windrbd-signed.exe to clients
+
+-----
+
+Upgrade DRBD
+
+cd drbd
+git checkout master
+git pull
+git submodule update
+cd ..
+git commit -a
+
+and adapt patches to new version.
