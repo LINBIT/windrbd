@@ -1396,7 +1396,7 @@ unsigned int crypto_tfm_alg_digestsize(struct crypto_tfm *tfm)
 
 int page_count(struct page *page)
 {
-	return 1;
+	return page->kref.refcount;
 }
 
 static void timer_callback(PKDPC dpc, struct timer_list* timer, PVOID arg1, PVOID arg2)
