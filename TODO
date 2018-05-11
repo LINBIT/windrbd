@@ -6,25 +6,13 @@ TODO: Do not display Please reboot .. when installation is finished.
 
 	INF install already does this.
 
-TODO: SendPage on sync always sends the same page.
-	Probably there is data corruption.
-
 TODO: patch_boot_sector: DRBD signature on peer.
 	Should only be on backing device, never on the wire.
 
-Report: Both sides are SyncSource??
-w0 role:Secondary
-  volume:17 disk:UpToDate
-  linbit-wdrbd role:Secondary
-    volume:17 replication:SyncSource peer-disk:Inconsistent
-        done:0.00
+	Not when Syncing, only when formatting while connected?
 
-	It seems that DRBD 9.0.13 fails to detect split brain
-	correctly (downgrading WinDRBD to DRBD 9.0.10 detects
-	the split brain). That seems to be an upstream problem.
-	Report?
-
-Same on other side.
+TODO: upgrade to 9.0.14
+	9.0.13 fails to detect split brain correctly.
 
 TODO: BSOD on network failure
 	Check if still there.
@@ -1791,4 +1779,33 @@ Done: DRBD windows to windows sync is very slow.
 
 Done: Memory leaks on SendPage()
 	doing a put_page and MmUnlockPages()
+
+Done: SendPage on sync always sends the same page.
+	Probably there is data corruption.
+
+	Update: No it isn't. Linux sendpage() has no callback,
+	however uses get_page / put_page to keep the page allocated
+	as long as it is needed. DRBD uses the page counter
+	(page_count()) to detect this and does not touch pages
+	with page_count > 1 (see drbd_peer_req_has_active_page()
+	in drbd_int.h). windrbd's SendPage() works just the same
+	(regarding get_page / put_page), so DRBD shouldn't re-use
+	pages that are currently used by SendPage.
+
+Done: Both sides are SyncSource??
+w0 role:Secondary
+  volume:17 disk:UpToDate
+  linbit-wdrbd role:Secondary
+    volume:17 replication:SyncSource peer-disk:Inconsistent
+        done:0.00
+
+Same on other side.
+
+	It seems that DRBD 9.0.13 fails to detect split brain
+	correctly (downgrading WinDRBD to DRBD 9.0.10 detects
+	the split brain). That seems to be an upstream problem.
+	Report? 
+
+	Update: No, upstream already fixed that. Upgrade to
+	9.0.14.
 
