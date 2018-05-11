@@ -10,9 +10,11 @@ TODO: patch_boot_sector: DRBD signature on peer.
 	Should only be on backing device, never on the wire.
 
 	Not when Syncing, only when formatting while connected?
-
-TODO: upgrade to 9.0.14
-	9.0.13 fails to detect split brain correctly.
+	Yes. Make a temporary copy of the boot sector when writing
+	in windrbd_generic_make_request(). Do not modify the bio's
+	buffer directly, this might also be the Page Cache (or whatever
+	this is called on Windows) of the file system which causes
+	format to display the weird Boot sector invalid message.
 
 TODO: BSOD on network failure
 	Check if still there.
@@ -22,6 +24,16 @@ TODO: On network failure (unplug cable) stays in NetworkFailure state.
 TODO: drbdadm status fails after unplug cable when syncing.
 
 TODO: Error reporting of SendPage()
+	Don't know how to do this .. DRBD seems to implement a mechanism
+	that works without having sendpage reporting errors, since Linux
+	also doesn't report errors on sendpage. Ask Lars.
+
+TODO: I/O error reading past the device.
+	Which is correct, however there is a disconnect. And the
+	disk should not fail.
+
+	Reading past the device can be used for I/O error handling
+	testing.
 
 TODO: Clean up wsk2.c
 	Remove unneccessary code.
@@ -1808,4 +1820,7 @@ Same on other side.
 
 	Update: No, upstream already fixed that. Upgrade to
 	9.0.14.
+
+Done: upgrade to 9.0.14
+	9.0.13 fails to detect split brain correctly.
 

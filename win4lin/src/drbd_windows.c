@@ -1956,6 +1956,13 @@ static int windrbd_generic_make_request(struct bio *bio)
 // printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
 // }
 
+/* TODO: Make a copy of the (page cache) buffer and write the copy to the
+   backing device. Reason is that on write (for example formatting the
+   disk) modified buffer gets written to the peer device(s) which in turn
+   prevents them to mount the NTFS (or other) file system.
+   (might want to move this to generic_make_request, then it is easier to
+    just copy the boot sector, and not any following sectors).
+ */
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
 		patch_boot_sector(buffer, 0, 0);
