@@ -1,6 +1,4 @@
-﻿#ifndef __HWEIGHT_H__
-#define __HWEIGHT_H__
-#include "linux/bitops.h"
+﻿#include "linux/bitops.h"
 #include "linux/types.h"
 #include "linux/drbd_endian.h"
 
@@ -55,4 +53,3 @@ ULONG_PTR hweight64(__u64 w)
 #endif
 #endif
 }
-#endif

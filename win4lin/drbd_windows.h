@@ -33,6 +33,7 @@
 #include "disp.h"
 #include <linux/mempool.h>
 #include <ntdddisk.h>
+#include <linux/bitops.h>
 
 void init_windrbd(void);
 void msleep(int ms);
@@ -375,9 +376,6 @@ extern int _printk(const char * func, const char * format, ...);
 #endif
 
 #define ARRAY_SIZE(_x)				(sizeof(_x) / sizeof((_x)[0]))
-
-#define BIT_MASK(_nr)				(1ULL << ((_nr) % BITS_PER_LONG))
-#define BIT_WORD(_nr)				((_nr) / BITS_PER_LONG)
 
 #define min_t(_type, _x, _y)		((_type)_x < (_type)_y ? (_type)_x : (_type)_y)
 #define max_t(_type, _x, _y)		((_type)_x < (_type)_y ? (_type)_y : (_type)_x)
@@ -838,6 +836,16 @@ struct request_queue {
 	long max_hw_sectors;
 	struct queue_limits limits; 
 };
+
+static inline void queue_flag_set(unsigned int flag, struct request_queue *q)
+{
+	__set_bit(flag, &q->queue_flags);
+}
+
+static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
+{
+	__clear_bit(flag, &q->queue_flags);
+}
 
 static __inline ULONG_PTR JIFFIES()
 {
