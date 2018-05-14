@@ -6,16 +6,6 @@ TODO: Do not display Please reboot .. when installation is finished.
 
 	INF install already does this.
 
-TODO: patch_boot_sector: DRBD signature on peer.
-	Should only be on backing device, never on the wire.
-
-	Not when Syncing, only when formatting while connected?
-	Yes. Make a temporary copy of the boot sector when writing
-	in windrbd_generic_make_request(). Do not modify the bio's
-	buffer directly, this might also be the Page Cache (or whatever
-	this is called on Windows) of the file system which causes
-	format to display the weird Boot sector invalid message.
-
 TODO: invalidate read cache when becoming secondary.
 
 	Problem is that if windows is primary, becomes secondary and
@@ -31,7 +21,11 @@ TODO: invalidate read cache when becoming secondary.
 
 --------------------------------------------------------------------
 
+TODO: io_status should not be in struct bio, see comments in
+	drbd_windows.h
+
 TODO: make clean target under Windows should do what one would expect.
+	also remove *.pdb and *.ilk files in addition to *.obj
 
 TODO: BSOD on network failure
 	Check if still there.
@@ -1827,4 +1821,19 @@ Done: upgrade to 9.0.14
 	9.0.13 fails to detect split brain correctly.
 
 Done: Create file with version number
+
+Done: patch_boot_sector: DRBD signature on peer.
+	Should only be on backing device, never on the wire.
+
+	Not when Syncing, only when formatting while connected?
+	Yes. Make a temporary copy of the boot sector when writing
+	in windrbd_generic_make_request(). Do not modify the bio's
+	buffer directly, this might also be the Page Cache (or whatever
+	this is called on Windows) of the file system which causes
+	format to display the weird Boot sector invalid message.
+
+	Update: implemented, weird behaviour when extra field is
+	put after io_status (see separate TODO). It seems to work
+	now (formatting while connected does not copy DRBD signature
+	to peer).
 
