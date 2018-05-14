@@ -1815,8 +1815,8 @@ NTSTATUS DrbdIoCompletion(
 	int num_completed = atomic_inc_return(&bio->bi_requests_completed);
 	if (num_completed == bio->bi_num_requests) {
 		drbd_bio_endio(bio, win_status_to_blk_status(status));
-/*		if (bio->patched_bootsector_buffer)
-			kfree(bio->patched_bootsector_buffer); */
+		if (bio->patched_bootsector_buffer)
+			kfree(bio->patched_bootsector_buffer);
 	}
 
 	bio_put(bio);
@@ -1968,15 +1968,13 @@ static int windrbd_generic_make_request(struct bio *bio)
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
 printk("first_size is %d\n", first_size);
 
-/*
 		bio->patched_bootsector_buffer = kmalloc(first_size, 0, 'DRBD');
 		if (bio->patched_bootsector_buffer == NULL)
 			return -ENOMEM;
 
 		memcpy(bio->patched_bootsector_buffer, buffer, first_size);
 		buffer = bio->patched_bootsector_buffer;
-*/
-printk("not copiing buffer.\n");
+printk("copied buffer.\n");
 
 		patch_boot_sector(buffer, 0, 0);
 	}
