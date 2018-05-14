@@ -174,3 +174,5 @@ Version history
  * 0.6.5 (May 09, 2018): Fixed memleaks introduced with last release.
  * 0.6.6 (May 11, 2018): Upgraded to DRBD 9.0.14, solving broken split brain
                          handling.
+ * 0.6.7 (May 14, 2018): Fixed pachting bootsector. Patch is not propagated to
+			 peers.
