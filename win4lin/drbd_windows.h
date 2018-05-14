@@ -638,7 +638,8 @@ struct bio {
 	LARGE_INTEGER offset;
 	IO_STATUS_BLOCK io_stat;
 
-	struct bio_vec			bi_io_vec[0];
+	void *patched_bootsector_buffer;
+	struct bio_vec bi_io_vec[0];
 };
 
 struct bio_set {

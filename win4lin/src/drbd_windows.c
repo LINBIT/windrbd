@@ -1813,8 +1813,11 @@ NTSTATUS DrbdIoCompletion(
 
 /* TODO: if failed call drbd_bio_endio always */
 	int num_completed = atomic_inc_return(&bio->bi_requests_completed);
-	if (num_completed == bio->bi_num_requests)
+	if (num_completed == bio->bi_num_requests) {
 		drbd_bio_endio(bio, win_status_to_blk_status(status));
+		if (bio->patched_bootsector_buffer)
+			kfree(bio->patched_bootsector_buffer);
+	}
 
 	bio_put(bio);
 
@@ -1956,15 +1959,20 @@ static int windrbd_generic_make_request(struct bio *bio)
 // printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size);
 // }
 
-/* TODO: Make a copy of the (page cache) buffer and write the copy to the
+/* Make a copy of the (page cache) buffer and write the copy to the
    backing device. Reason is that on write (for example formatting the
    disk) modified buffer gets written to the peer device(s) which in turn
    prevents them to mount the NTFS (or other) file system.
-   (might want to move this to generic_make_request, then it is easier to
-    just copy the boot sector, and not any following sectors).
  */
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
+		bio->patched_bootsector_buffer = kmalloc(first_size, 0, 'DRBD');
+		if (bio->patched_bootsector_buffer == NULL)
+			return -ENOMEM;
+
+		memcpy(bio->patched_bootsector_buffer, buffer, first_size);
+		buffer = bio->patched_bootsector_buffer;
+
 		patch_boot_sector(buffer, 0, 0);
 	}
 
