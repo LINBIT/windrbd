@@ -637,9 +637,13 @@ struct bio {
 	bool dont_patch_boot_sector;
 
 		/* Those are used by win_generic_make_request internally */
+		/* TODO: we have separate requests now, allocate them
+	           on the heap and free them once all requests are done. */
 	LARGE_INTEGER offset;
 	IO_STATUS_BLOCK io_stat;
 
+		/* TODO: putting *any* field (was patched_bootsector_buffer)
+		   here makes weird things happen. But why? */
 	struct bio_vec bi_io_vec[0];
 };
 
