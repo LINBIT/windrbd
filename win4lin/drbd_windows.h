@@ -616,6 +616,8 @@ struct bio {
 	int bi_this_request;
 	atomic_t bi_requests_completed;
 
+	void *patched_bootsector_buffer;
+
 	/* If set, indicates that the memory is paged, in which case
 	 * we must lock it to memory. If not set, must unlock memory
 	 * locked by IoBuildAsynchronousFsdRequest().
@@ -638,7 +640,6 @@ struct bio {
 	LARGE_INTEGER offset;
 	IO_STATUS_BLOCK io_stat;
 
-	void *patched_bootsector_buffer;
 	struct bio_vec bi_io_vec[0];
 };
 
