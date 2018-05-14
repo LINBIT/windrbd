@@ -1966,6 +1966,8 @@ static int windrbd_generic_make_request(struct bio *bio)
  */
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
+printk("first_size is %d\n", first_size);
+
 		bio->patched_bootsector_buffer = kmalloc(first_size, 0, 'DRBD');
 		if (bio->patched_bootsector_buffer == NULL)
 			return -ENOMEM;
