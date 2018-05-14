@@ -16,6 +16,23 @@ TODO: patch_boot_sector: DRBD signature on peer.
 	this is called on Windows) of the file system which causes
 	format to display the weird Boot sector invalid message.
 
+TODO: invalidate read cache when becoming secondary.
+
+	Problem is that if windows is primary, becomes secondary and
+	then primary again the read cache is still filled from the
+	former primary.
+
+	Should invalidate when becoming secondary: reason is
+	that while secondary requests still are served from
+	the read cache (they should fail).
+
+	Update: Moving that to beta2 because we are a little bit
+	short on time. Document that defect.
+
+--------------------------------------------------------------------
+
+TODO: make clean target under Windows should do what one would expect.
+
 TODO: BSOD on network failure
 	Check if still there.
 
@@ -56,19 +73,6 @@ TODO: test-loop hangs after about 16 iterations.
 
 TODO: Device FFFFFA8004F2D4C0 accessed after it was deleted.
 	Strange.
-
-TODO: invalidate read cache when becoming secondary.
-
-	Problem is that if windows is primary, becomes secondary and
-	then primary again the read cache is still filled from the
-	former primary.
-
-	Should invalidate when becoming secondary: reason is
-	that while secondary requests still are served from
-	the read cache (they should fail).
-
-	Update: Moving that to beta2 because we are a little bit
-	short on time. Document that defect.
 
 TODO: Re-check the WIN32 / WIN64 thing in drbd_endian.h
 
@@ -117,8 +121,6 @@ TODO: logging to localhost (windows) seems to cause boot problems (?)
 
 TODO: windrbd show-filesystem should check if device is used as
 	a backing device.
-
-TODO: Create file with version number
 
 TODO: On formatting: error message cannot write NTFS boot sector.
 
@@ -1823,4 +1825,6 @@ Same on other side.
 
 Done: upgrade to 9.0.14
 	9.0.13 fails to detect split brain correctly.
+
+Done: Create file with version number
 
