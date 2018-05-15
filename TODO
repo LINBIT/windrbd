@@ -1,10 +1,4 @@
-TODO: Check in install script if it runs as adminstrator.
-
-	I just ran into that ... it fails silently.
-
-TODO: Do not display Please reboot .. when installation is finished.
-
-	INF install already does this.
+--------------------------------------------------------------------
 
 TODO: invalidate read cache when becoming secondary.
 
@@ -19,7 +13,7 @@ TODO: invalidate read cache when becoming secondary.
 	Update: Moving that to beta2 because we are a little bit
 	short on time. Document that defect.
 
---------------------------------------------------------------------
+TODO: define tests to be run before releases.
 
 TODO: io_status should not be in struct bio, see comments in
 	drbd_windows.h
@@ -204,6 +198,11 @@ In progress: Later: RCU needs change
 	Update: We now call the cleanup / on update function 
 	in the call_rcu() function, which makes the thing work.
 	Double check if that works as expected.
+
+	Update: RCU should currently cause problems on SMP machines
+	only (we always tested single CPU, so this was not a problem).
+	Implement Phil's algorithm.
+
 TODO: /cygdrive/c/windrbd/var/lib/drbd should exist.
 
 In progress: how and when is flush to backing device done?
@@ -1836,4 +1835,15 @@ Done: patch_boot_sector: DRBD signature on peer.
 	put after io_status (see separate TODO). It seems to work
 	now (formatting while connected does not copy DRBD signature
 	to peer).
+
+Done: Check in install script if it runs as adminstrator.
+
+	I just ran into that ... it fails silently.
+	Update: Now we check in cmd script, but eventually it
+	should check earlier. We should switch to something
+	sane anyway some day (msi?)
+
+Done: Do not display Please reboot .. when installation is finished.
+
+	INF install already does this.
 
