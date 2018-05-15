@@ -1,3 +1,11 @@
+rem see https://stackoverflow.com/questions/4051883/batch-script-how-to-check-for-admin-rights#21295806
+
+fsutil dirty query %systemdrive% >nul
+if %errorlevel% NEQ 0 (
+	msg "%username%" "Please run this with Administrator privileges"
+	exit
+)
+
 copy *.exe c:\windows\System32
 
 if exist c:\cygwin\NUL goto found_cygwin1
