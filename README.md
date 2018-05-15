@@ -176,3 +176,4 @@ Version history
                          handling.
  * 0.6.7 (May 14, 2018): Fixed pachting bootsector. Patch is not propagated to
 			 peers.
+ * 0.7.0 (May 15, 2018): Beta 3: Stability fixes
