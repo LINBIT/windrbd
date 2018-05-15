@@ -134,6 +134,8 @@ Add entry to README.md
 git add README.md
 git commit -m "Release 0.x.0 (Beta y)"
 git tag windrbd-0.x.0-betay
+git describe --tags --always --dirty
+	(should not display version as -dirty)
 
 make R=1
 
@@ -143,6 +145,7 @@ run sign.bat with dongle attached (password is written on box)
 copy drbd.* back to windrbd/signed
 make signed-package
 rename resulting install-windrbd-signed.exe to install-windrbd-signed-0.x.0-betay.exe
+test install on Windows VM which has no test mode set (must come up after reboot)
 pass resulting install-windrbd-signed-0.x.0-betay.exe to clients
 upload to google drive windrbd-in folder
 

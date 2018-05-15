@@ -1,5 +1,7 @@
 --------------------------------------------------------------------
 
+TODO: renew the sysroot.zip
+
 TODO: invalidate read cache when becoming secondary.
 
 	Problem is that if windows is primary, becomes secondary and
@@ -12,6 +14,13 @@ TODO: invalidate read cache when becoming secondary.
 
 	Update: Moving that to beta2 because we are a little bit
 	short on time. Document that defect.
+
+TODO: Sync is still somewhat slow when windrbd is SyncTarget
+	And: I/O is slow when connected.
+	Are we waiting for TCP ACK here?
+
+	Also need to set c-fill-target and/or c-max-rate with
+	defaults it is just too slow...
 
 TODO: define tests to be run before releases.
 
