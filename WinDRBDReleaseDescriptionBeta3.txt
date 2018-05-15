@@ -1,0 +1,68 @@
+This is release 0.7.0-beta3 of windrbd. Do not use on production machines.
+It is distributed in order to get feedback from testers, please email
+bug reports directly to johannes@johannesthoma.com
+
+First of all, things that are known to be broken are:
+
+	*) When network connection is lost (for example by unplugging
+	   the cable), windrbd behaves not as expected.
+
+	*) When the backing device reports an I/O error, windrbd behaves
+	   not as expected.
+
+	*) windrbd now expects the device parameter to be of the form:
+
+		device "X:" minor y;
+
+	   where X: is the drive letter for the windrbd device (the
+	   windrbd device is the device you are dealing with, once
+           the drbd resource is up). y is a minor number which must
+	   be unique on the node, but can be anything. Please ignore
+           the comment in the sample w0.res file about the "C"+minor
+           magic.
+
+	*) We are interrested in getting feedback about performance
+           especially when resources are connected.
+
+        *) For the windrbd device to be visible in Windows Explorer,
+           one has to log out and log in again. We are working on
+           a fix.
+
+	*) Right now, flushing the backing device does not work
+           as expected, so if you hard-power-off the node after
+           a flush you currently may loose data. Again we are
+	   working on a fix.
+
+	*) Currently only NTFS is supported.
+
+Here are restrictions we know of for the 1.0 release: please talk to
+clients if those features are on their wishlist, maybe we can find
+a way to implement them:
+
+	*) Auto-promote is not supported.
+
+	*) System Volume (C:) cannot be used for windrbd.
+
+	*) No 32-Bit version is supported, only 64 bit.
+
+	*) Windows 7 is minimum (no Vista, no XP)
+
+	*) On installation (or upgrade) a system reboot is required.
+		(this might be fixed before the 1.0 release)
+
+We are testing on a VirtualBox VMs Linux (Ubuntu) / Windows 7 SP1
+enviroment as well as a kvm Windows 7 SP1 / Windows 10 physical
+machine setup. Currently we have tested only with 2-node setups,
+we are interrested in > 2 nodes tests as well.
+
+Currently, we don't have a strict time schedule for a 1.0 release,
+please talk to Linbit later if you have questions about a release
+date.
+
+Please help windrbd development by testing features you think are
+important and report defects (but we are also interrested in what
+works for you already :-) ).
+
+Thank you for participating in windrbd development.
+
+- Johannes (johannes@johannesthoma.com)
