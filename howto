@@ -133,7 +133,7 @@ Make releases
 Add entry to README.md
 git add README.md
 git commit -m "Release 0.x.0 (Beta y)"
-git tag windrbd-0.x.0-beta-y
+git tag windrbd-0.x.0-betay
 
 make R=1
 
@@ -142,7 +142,9 @@ copy there to C:\to-sign
 run sign.bat with dongle attached (password is written on box)
 copy drbd.* back to windrbd/signed
 make signed-package
-pass resulting install-windrbd-signed.exe to clients
+rename resulting install-windrbd-signed.exe to install-windrbd-signed-0.x.0-betay.exe
+pass resulting install-windrbd-signed-0.x.0-betay.exe to clients
+upload to google drive windrbd-in folder
 
 -----
 
