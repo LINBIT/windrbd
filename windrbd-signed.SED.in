@@ -3,8 +3,8 @@ Class=IEXPRESS
 SEDVersion=3
 [Options]
 PackagePurpose=InstallApp
-ShowInstallProgramWindow=0
-HideExtractAnimation=0
+ShowInstallProgramWindow=1
+HideExtractAnimation=1
 UseLongFileName=1
 InsideCompressed=0
 CAB_FixedSize=0
@@ -23,7 +23,7 @@ SourceFiles=SourceFiles
 [Strings]
 InstallPrompt=windrbd signed release XXX. This is an early evaluation version of windrbd. Do not use on production machines. Also make a full backup first (or create a snapshot now if you are running in a virtual machine). Do you wish to continue?
 DisplayLicense=Y:\windrbd\LICENSE.txt
-FinishMessage=Please reboot in order to use windrbd.
+FinishMessage=
 TargetName=Y:\install-windrbd-signed.exe
 FriendlyName=windrbd
 AppLaunched=install-windrbd.cmd
