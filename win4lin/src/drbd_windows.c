@@ -3503,7 +3503,7 @@ static int umount_volume(struct block_device *bdev)
 		return -1;
 	}
 	
-	status = ZwOpenFile(&f, GENERIC_READ, &attr, &iostat, FILE_SHARE_READ, 0);
+	status = ZwOpenFile(&f, GENERIC_READ, &attr, &iostat, FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
 	if (status != STATUS_SUCCESS) {
 		printk("ZwOpenFile failed, status is %x\n", status);
 		return -1;
@@ -3536,8 +3536,6 @@ static void destroy_block_device(struct kref *kref)
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 	int minor = bdev->minor;
 
-	ExFreePool(bdev->path_to_device.Buffer);
-	bdev->windows_device->DeviceExtension = NULL;
 		/* TODO: this does not really delete the device
 		 * if somebody still holds a reference. For example,
 		 * if there is a cmd shell open it will access the
@@ -3546,11 +3544,16 @@ static void destroy_block_device(struct kref *kref)
 
 	if (bdev->mount_point.Buffer != NULL) {
 		umount_volume(bdev);
+			/* TODO: someone could re-open the device
+			   here, then it becomes mounted again. */
 		if (IoDeleteSymbolicLink(&bdev->mount_point) != STATUS_SUCCESS) {
 			WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", bdev->mount_point.Buffer);
 		}
 		ExFreePool(bdev->mount_point.Buffer);
 	}
+
+	ExFreePool(bdev->path_to_device.Buffer);
+	bdev->windows_device->DeviceExtension = NULL;
 
 	IoDeleteDevice(bdev->windows_device); /* should also delete the device extension, which is the bdev */
 /* TODO: not freeing bdev? */
