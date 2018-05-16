@@ -671,6 +671,27 @@ exit:
         return status;
 }
 
+static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	if (device == mvolRootDeviceObject) {
+		printk(KERN_DEBUG "Root device request.\n");
+
+		irp->IoStatus.Status = STATUS_SUCCESS;
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_SUCCESS;
+	}
+
+	printk("device: %p irp: %p\n", device, irp);
+
+	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+	
+	printk(KERN_DEBUG "PnP device request not implemented: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
+
+	irp->IoStatus.Status = STATUS_NOT_IMPLEMENTED;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+	return STATUS_NOT_IMPLEMENTED;
+}
+
 void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 {
 	int i;
@@ -685,6 +706,7 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	obj->MajorFunction[IRP_MJ_CREATE] = windrbd_create;
 	obj->MajorFunction[IRP_MJ_CLOSE] = windrbd_close;
 	obj->MajorFunction[IRP_MJ_CLEANUP] = windrbd_cleanup;
+	obj->MajorFunction[IRP_MJ_PNP] = windrbd_pnp;
 	obj->MajorFunction[IRP_MJ_SHUTDOWN] = windrbd_shutdown;
 	obj->MajorFunction[IRP_MJ_FLUSH_BUFFERS] = windrbd_flush;
 

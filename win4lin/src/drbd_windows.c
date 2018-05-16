@@ -29,6 +29,8 @@
 #include <wdm.h>
 #include <wdmguid.h>
 #include <ntddstor.h>
+/* TODO: make this include work. */
+// #include <Ntifs.h>
 
 #if 0
 DEFINE_GUID(MOUNTDEV_MOUNTED_DEVICE_GUID, 0x53F5630D, 0xB6BF, 0x11D0, 0x94, 0xF2, 0x00, 0xA0, 0xC9, 0x1E, 0xFB, 0x8B);
@@ -70,6 +72,21 @@ ZwWaitForSingleObject(
 	_In_ BOOLEAN Alertable,
 	_In_opt_ PLARGE_INTEGER Timeout
 	);
+
+#define FSCTL_DISMOUNT_VOLUME           CTL_CODE(FILE_DEVICE_FILE_SYSTEM,  8, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
+NTSTATUS ZwFsControlFile(
+  HANDLE           FileHandle,
+  HANDLE           Event,
+  PIO_APC_ROUTINE  ApcRoutine,
+  PVOID            ApcContext,
+  PIO_STATUS_BLOCK IoStatusBlock,
+  ULONG            FsControlCode,
+  PVOID            InputBuffer,
+  ULONG            InputBufferLength,
+  PVOID            OutputBuffer,
+  ULONG            OutputBufferLength
+);
 
 
 ULONG RtlRandomEx(
@@ -3466,6 +3483,54 @@ printk("mvolRootDeviceObject->DeviceObjectExtension->DeviceNode: %p\n", mvolRoot
 	return 0;
 }
 
+static int umount_volume(struct block_device *bdev)
+{
+	UNICODE_STRING drive;
+	OBJECT_ATTRIBUTES attr;
+	HANDLE f;
+	IO_STATUS_BLOCK iostat;
+	NTSTATUS status;
+	PKEVENT event;
+	HANDLE event_handle;
+
+		/* TODO: take from mountpoint parameter */
+//	RtlInitUnicodeString(&drive, L"\\\\.\\K:");
+	InitializeObjectAttributes(&attr, &bdev->mount_point, OBJ_KERNEL_HANDLE, NULL, NULL);
+
+	event = IoCreateNotificationEvent(NULL, &event_handle);
+	if (event == NULL) {
+		printk("IoCreateNotificationEvent failed.\n");
+		return -1;
+	}
+	
+	status = ZwOpenFile(&f, GENERIC_READ, &attr, &iostat, FILE_SHARE_READ, 0);
+	if (status != STATUS_SUCCESS) {
+		printk("ZwOpenFile failed, status is %x\n", status);
+		return -1;
+	}
+
+printk("into ZwFsControlFile...\n");
+	status = ZwFsControlFile(f, event_handle, NULL, NULL, &iostat, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0);
+printk("out of ZwFsControlFile...\n");
+	if (status == STATUS_PENDING) {
+printk("into KeWaitForSingleObject ... \n");
+		KeWaitForSingleObject(event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+printk("out of KeWaitForSingleObject ... \n");
+		status = iostat.Status;
+	}
+	ZwClose(event_handle);
+	if (status != STATUS_SUCCESS) {
+		printk("ZwFsControlFile failed, status is %x\n", status);
+		ZwClose(f);
+		return -1;
+	}
+	ZwClose(f);
+
+printk("umount_volume succeeded.\n");
+
+	return 0;
+}
+
 static void destroy_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
@@ -3480,6 +3545,7 @@ static void destroy_block_device(struct kref *kref)
 		 */
 
 	if (bdev->mount_point.Buffer != NULL) {
+		umount_volume(bdev);
 		if (IoDeleteSymbolicLink(&bdev->mount_point) != STATUS_SUCCESS) {
 			WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", bdev->mount_point.Buffer);
 		}
