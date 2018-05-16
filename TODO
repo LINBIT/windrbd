@@ -1,5 +1,9 @@
 --------------------------------------------------------------------
 
+TODO: race on umount
+
+TODO: what is PnP minor 7 code?
+
 TODO: renew the sysroot.zip
 
 TODO: invalidate read cache when becoming secondary.
@@ -67,9 +71,6 @@ TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 TODO: test-loop hangs after about 16 iterations.
 
 	format k: sometimes gets stuck when run from test script.
-
-TODO: Device FFFFFA8004F2D4C0 accessed after it was deleted.
-	Strange.
 
 TODO: Re-check the WIN32 / WIN64 thing in drbd_endian.h
 
@@ -1855,4 +1856,10 @@ Done: Check in install script if it runs as adminstrator.
 Done: Do not display Please reboot .. when installation is finished.
 
 	INF install already does this.
+
+Done: Device FFFFFA8004F2D4C0 accessed after it was deleted.
+	Strange.
+
+	Because we didn't unmount (dismount) the volume on drbdadm
+	down. Should be fixed now.
 
