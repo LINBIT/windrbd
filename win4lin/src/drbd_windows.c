@@ -3278,6 +3278,7 @@ struct block_device *bdget(dev_t device_no)
 	block_device->mount_point.Buffer = NULL;
 
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", name.Buffer, minor);
+	printk(KERN_DEBUG "Device object is %p\n", block_device->windows_device);
 	
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
@@ -3567,6 +3568,8 @@ printk("out of KeWaitForSingleObject ... \n");
 	ZwClose(f);
 
 printk("umount_volume succeeded.\n");
+
+printk("bdev->windows_device->DeviceObjectExtension->DeviceNode: %p\n", bdev->windows_device->DeviceObjectExtension->DeviceNode);
 
 	return 0;
 }

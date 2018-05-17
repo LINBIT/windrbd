@@ -673,6 +673,8 @@ exit:
 
 static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	NTSTATUS status;
+
 	if (device == mvolRootDeviceObject) {
 		printk(KERN_DEBUG "Root device request.\n");
 
@@ -680,16 +682,30 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
 	}
+	status = STATUS_NOT_IMPLEMENTED;
 
-	printk("device: %p irp: %p\n", device, irp);
+	printk("Pnp: device: %p irp: %p\n", device, irp);
 
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	
 	printk(KERN_DEBUG "PnP device request not implemented: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
+	if (s->MinorFunction == IRP_MN_QUERY_DEVICE_RELATIONS) {
+		printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
 
-	irp->IoStatus.Status = STATUS_NOT_IMPLEMENTED;
+		struct _DEVICE_RELATIONS *rel;
+		rel = kmalloc(sizeof(*rel), 0, 'DRBD');
+		if (rel != NULL) {
+			rel->Count = 1; /* blue screens if this is 0 */
+			rel->Objects[0] = device;
+			ObReferenceObject(device);
+			irp->IoStatus.Information = (ULONG_PTR) rel;
+			status = STATUS_SUCCESS;
+		}
+	}
+
+	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
-	return STATUS_NOT_IMPLEMENTED;
+	return status;
 }
 
 void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
