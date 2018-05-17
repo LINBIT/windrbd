@@ -3481,15 +3481,19 @@ printk("mvolRootDeviceObject->DeviceObjectExtension->DeviceNode: %p\n", mvolRoot
 	}
 
 	struct _TARGET_DEVICE_CUSTOM_NOTIFICATION *notification;
-	notification = kzalloc(sizeof(*notification), 0, 'DRBD');
+	size_t notification_size = sizeof(*notification) - sizeof(notification->CustomDataBuffer) + sizeof(struct _CLASS_MEDIA_CHANGE_CONTEXT);
+
+	notification = kzalloc(notification_size, 0, 'DRBD');
 	if (notification == NULL) {
 		printk("Couldn't allocate notification.\n");
 	} else {
-		notification->Size = sizeof(*notification) - sizeof(notification->CustomDataBuffer);
+		notification->Size = notification_size;
 		notification->Version = 1;
 		notification->FileObject = NULL;
 		notification->NameBufferOffset = -1;
 		notification->Event = GUID_IO_MEDIA_ARRIVAL;
+		((struct _CLASS_MEDIA_CHANGE_CONTEXT*)&notification->CustomDataBuffer)->MediaChangeCount = 1;
+		((struct _CLASS_MEDIA_CHANGE_CONTEXT*)&notification->CustomDataBuffer)->NewState = 1;	/* MediaPresent */
 
 		status = IoReportTargetDeviceChange(dev->windows_device, notification);
 		if (!NT_SUCCESS(status)) {
