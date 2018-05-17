@@ -3480,8 +3480,20 @@ printk("mvolRootDeviceObject->DeviceObjectExtension->DeviceNode: %p\n", mvolRoot
 		printk("IoRegisterDeviceInterface(&GUID_DEVINTERFACE_VOLUME) returned %x (ignored)\n", status);
 	}
 
+#if 0
+printk("Into IoInvalidateDeviceRelations\n");
+// This blue screens
+	IoInvalidateDeviceRelations(dev->windows_device, BusRelations);
+printk("Out of IoInvalidateDeviceRelations\n");
+#endif
+
+#if 0
+
+// This currently blue screens.
+
 	struct _TARGET_DEVICE_CUSTOM_NOTIFICATION *notification;
-	size_t notification_size = sizeof(*notification) - sizeof(notification->CustomDataBuffer) + sizeof(struct _CLASS_MEDIA_CHANGE_CONTEXT);
+	// size_t notification_size = sizeof(*notification) - sizeof(notification->CustomDataBuffer) + sizeof(struct _CLASS_MEDIA_CHANGE_CONTEXT);
+	size_t notification_size = sizeof(*notification) - sizeof(notification->CustomDataBuffer);
 
 	notification = kzalloc(notification_size, 0, 'DRBD');
 	if (notification == NULL) {
@@ -3491,16 +3503,21 @@ printk("mvolRootDeviceObject->DeviceObjectExtension->DeviceNode: %p\n", mvolRoot
 		notification->Version = 1;
 		notification->FileObject = NULL;
 		notification->NameBufferOffset = -1;
-		notification->Event = GUID_IO_MEDIA_ARRIVAL;
+		notification->Event = GUID_IO_VOLUME_MOUNT;
+/*
 		((struct _CLASS_MEDIA_CHANGE_CONTEXT*)&notification->CustomDataBuffer)->MediaChangeCount = 1;
-		((struct _CLASS_MEDIA_CHANGE_CONTEXT*)&notification->CustomDataBuffer)->NewState = 1;	/* MediaPresent */
+		((struct _CLASS_MEDIA_CHANGE_CONTEXT*)&notification->CustomDataBuffer)->NewState = 1;	// MediaPresent
+*/
 
+printk("into IoReportTargetDeviceChange\n");
 		status = IoReportTargetDeviceChange(dev->windows_device, notification);
+printk("out of IoReportTargetDeviceChange\n");
 		if (!NT_SUCCESS(status)) {
 			printk("IoRegisterDeviceInterface(GUID_IO_MEDIA_ARRIVAL) returned %x (ignored)\n", status);
 		}
 		kfree(notification);
 	}
+#endif
 
 	printk(KERN_INFO "Assigned device %S the mount point %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 	return 0;
