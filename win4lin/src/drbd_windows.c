@@ -29,6 +29,7 @@
 #include <wdm.h>
 #include <wdmguid.h>
 #include <ntddstor.h>
+#include <IoEvent.h>
 /* TODO: make this include work. */
 // #include <Ntifs.h>
 
@@ -3477,6 +3478,24 @@ printk("mvolRootDeviceObject->DeviceObjectExtension->DeviceNode: %p\n", mvolRoot
 	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVINTERFACE_VOLUME, NULL, &dev->mount_point);
 	if (!NT_SUCCESS(status)) {
 		printk("IoRegisterDeviceInterface(&GUID_DEVINTERFACE_VOLUME) returned %x (ignored)\n", status);
+	}
+
+	struct _TARGET_DEVICE_CUSTOM_NOTIFICATION *notification;
+	notification = kzalloc(sizeof(*notification), 0, 'DRBD');
+	if (notification == NULL) {
+		printk("Couldn't allocate notification.\n");
+	} else {
+		notification->Size = sizeof(*notification) - sizeof(notification->CustomDataBuffer);
+		notification->Version = 1;
+		notification->FileObject = NULL;
+		notification->NameBufferOffset = -1;
+		notification->Event = GUID_IO_MEDIA_ARRIVAL;
+
+		status = IoReportTargetDeviceChange(dev->windows_device, notification);
+		if (!NT_SUCCESS(status)) {
+			printk("IoRegisterDeviceInterface(GUID_IO_MEDIA_ARRIVAL) returned %x (ignored)\n", status);
+		}
+		kfree(notification);
 	}
 
 	printk(KERN_INFO "Assigned device %S the mount point %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
