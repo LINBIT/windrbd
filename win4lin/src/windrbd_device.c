@@ -692,6 +692,7 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	if (s->MinorFunction == IRP_MN_QUERY_DEVICE_RELATIONS) {
 		printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
 
+#if 0
 		struct _DEVICE_RELATIONS *rel;
 		rel = kmalloc(sizeof(*rel), 0, 'DRBD');
 		if (rel != NULL) {
@@ -701,6 +702,7 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			irp->IoStatus.Information = (ULONG_PTR) rel;
 			status = STATUS_SUCCESS;
 		}
+#endif
 	}
 
 	irp->IoStatus.Status = status;

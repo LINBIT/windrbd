@@ -3521,6 +3521,10 @@ printk("out of IoReportTargetDeviceChange\n");
 #endif
 
 	printk(KERN_INFO "Assigned device %S the mount point %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
+
+printk("Fault injection: failing.\n");
+return -1;
+
 	return 0;
 }
 
@@ -3534,21 +3538,25 @@ static int umount_volume(struct block_device *bdev)
 	PKEVENT event;
 	HANDLE event_handle;
 
-		/* TODO: take from mountpoint parameter */
-//	RtlInitUnicodeString(&drive, L"\\\\.\\K:");
+printk("1\n");
 	InitializeObjectAttributes(&attr, &bdev->mount_point, OBJ_KERNEL_HANDLE, NULL, NULL);
 
+printk("2\n");
 	event = IoCreateNotificationEvent(NULL, &event_handle);
+printk("3\n");
 	if (event == NULL) {
 		printk("IoCreateNotificationEvent failed.\n");
 		return -1;
 	}
+printk("4\n");
 	
 	status = ZwOpenFile(&f, GENERIC_READ, &attr, &iostat, FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
+printk("1\n");
 	if (status != STATUS_SUCCESS) {
 		printk("ZwOpenFile failed, status is %x\n", status);
 		return -1;
 	}
+printk("5\n");
 
 printk("into ZwFsControlFile...\n");
 	status = ZwFsControlFile(f, event_handle, NULL, NULL, &iostat, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0);
@@ -3579,26 +3587,36 @@ static void destroy_block_device(struct kref *kref)
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 	int minor = bdev->minor;
 
+printk("1\n");
 		/* TODO: this does not really delete the device
 		 * if somebody still holds a reference. For example,
 		 * if there is a cmd shell open it will access the
 		 * device after this has happened.
 		 */
 
+printk("2\n");
 	if (bdev->mount_point.Buffer != NULL) {
+printk("3\n");
 		umount_volume(bdev);
+printk("4\n");
 			/* TODO: someone could re-open the device
 			   here, then it becomes mounted again. */
 		if (IoDeleteSymbolicLink(&bdev->mount_point) != STATUS_SUCCESS) {
 			WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", bdev->mount_point.Buffer);
 		}
+printk("5\n");
 		ExFreePool(bdev->mount_point.Buffer);
+printk("6\n");
 	}
 
+printk("7\n");
 	ExFreePool(bdev->path_to_device.Buffer);
+printk("8\n");
 	bdev->windows_device->DeviceExtension = NULL;
 
+printk("9\n");
 	IoDeleteDevice(bdev->windows_device); /* should also delete the device extension, which is the bdev */
+printk("a\n");
 /* TODO: not freeing bdev? */
 }
 
