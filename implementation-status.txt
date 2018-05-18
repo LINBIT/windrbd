@@ -28,7 +28,7 @@ Needed?: km/wdm.h:#define IRP_MJ_SYSTEM_CONTROL           0x17
 Not needed: km/wdm.h:#define IRP_MJ_DEVICE_CHANGE            0x18
 Not needed: km/wdm.h:#define IRP_MJ_QUERY_QUOTA              0x19
 Not needed: km/wdm.h:#define IRP_MJ_SET_QUOTA                0x1a
-Needed?: km/wdm.h:#define IRP_MJ_PNP                      0x1b
+TODO: km/wdm.h:#define IRP_MJ_PNP                      0x1b
 Not needed: km/wdm.h:#define IRP_MJ_PNP_POWER                IRP_MJ_PNP      // Obsolete....
 Not needed: km/wdm.h:#define IRP_MJ_MAXIMUM_FUNCTION         0x1b
 Not needed: km/wdm.h:#define IRP_MJ_SCSI                     IRP_MJ_INTERNAL_DEVICE_CONTROL

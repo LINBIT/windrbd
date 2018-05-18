@@ -2,9 +2,29 @@
 
 TODO: race on umount
 
-TODO: what is PnP minor 7 code?
-
 TODO: renew the sysroot.zip
+
+TODO: BSOD From Devin: kref_debuf_destroy ASSERT FAILED:
+
+	2018-05-17T13:30:09.567725-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) bdget <6>Created new block device \Device\Drbd0 (minor 0).
+	2018-05-17T13:30:09.569841-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) kref_debug_destroy <3>:ASSERT FAILED
+	2018-05-17T13:30:09.569841-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) kref_debug_destroy <3>:object of class: device
+	2018-05-17T13:30:09.569841-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) kref_debug_destroy <3>:  [1] = 1 (struct drbd_peer_device / free)
+	2018-05-17T13:30:09.569910-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) kref_debug_destroy <3>:
+
+	Causes (?) BSOD later.
+
+TODO: other BSOD from Devin: Handle Send errors correctly.
+
+	2018-05-17T13:37:08.904002-07:00 legolas.us.linbit  U20:37:08.888|8e3a8040(sender) SendPageCompletionRoutine <3>SendPage completed with status c000020d
+
+	But not reported to DRBD.
+
+TODO: From Devin: d->bi_size (from peer request) too big:
+
+	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
+
+TODO: From Devin: Registering mount point failed status = c0000035
 
 TODO: invalidate read cache when becoming secondary.
 
@@ -19,12 +39,17 @@ TODO: invalidate read cache when becoming secondary.
 	Update: Moving that to beta2 because we are a little bit
 	short on time. Document that defect.
 
+	Update: Implement this for the next beta, there should be
+	no windrbd device unless resource is primary.
+
 TODO: Sync is still somewhat slow when windrbd is SyncTarget
 	And: I/O is slow when connected.
 	Are we waiting for TCP ACK here?
 
 	Also need to set c-fill-target and/or c-max-rate with
 	defaults it is just too slow...
+
+	Update: Also implement no-wait sending for Send() function.
 
 TODO: define tests to be run before releases.
 
@@ -45,6 +70,13 @@ TODO: Error reporting of SendPage()
 	Don't know how to do this .. DRBD seems to implement a mechanism
 	that works without having sendpage reporting errors, since Linux
 	also doesn't report errors on sendpage. Ask Lars.
+
+	Update: SendPage should return error if there is an error
+	in Completion function (of an earlier SendPage()), else success. 
+	According to Lars, SendPage() (and also Send()) in Linux
+	just queues the buffer, however it seems to report errors
+	if the socket is in an error state (else that wouldn't make
+	sense, at least not to me).
 
 TODO: I/O error reading past the device.
 	Which is correct, however there is a disconnect. And the
@@ -67,6 +99,8 @@ TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 	see comment in win4lin/drbd_wrappers.h:544.
 
 	The bug appears on testing resync.
+
+	Update: Also happened to Devin.
 
 TODO: test-loop hangs after about 16 iterations.
 
@@ -106,6 +140,28 @@ TODO: mountmanager / register device with PNP
 
 	See Microsoft driver samples for how to do this.
 
+	Update: Most driver samples build atop of Windows driver
+	framework, we use Windows device model.
+
+	Update: We are now getting PnP IRPs when calling
+	ZwFsControlFile( ..., FSCTL_DISMOUNT_VOLUME, ..); According
+	to MicroSoft documentation, PnP manager does not send
+	IRP_MJ_PNP unless anybody in the system (driver / user app)
+	registers for PnP events (using IoRegisterPlugPlayNotification()
+	for example).
+	
+	See https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/irp-mn-query-device-relations:
+
+	Warning A device object cannot be passed to any routine that
+	takes a PDO as an argument until the PnP manager creates a
+	device node (devnode) for that object. (If the driver does
+	pass a device object, the system will bug check with Bug
+	Check 0xCA: PNP_DETECTED_FATAL_ERROR.) The PnP manager
+	creates the devnode in response to the 
+	IRP_MN_QUERY_DEVICE_RELATIONS request. The driver can safely
+	assume that the PDO's devnode has been created when it receives
+	an IRP_MN_QUERY_RESOURCE_REQUIREMENTS request.
+
 TODO: Auto-promote seems not to work as expected.
 
 	dir h: should make device primary if possible and then
@@ -114,24 +170,28 @@ TODO: Auto-promote seems not to work as expected.
 	Strange, but neither with read/write nor with read only we get
 	a create request on the windrbd device. (tested with windrbd-test)
 
+	Update: It seems to me that when we open \\.\K: the file system
+	device object (not the storage device object, that is, we) get
+	the open request. File system keeps references to the block device,
+	so it doesn't reopen it. We plan to release 1.0 without Auto-promote.
+	(also because we should not have a windrbd device when the
+	resource is secondary, because of the caching).
+
 TODO: logging to localhost (windows) seems to cause boot problems (?)
 	When using 192.168.56.101 instead of 127.0.0.1
 
 TODO: windrbd show-filesystem should check if device is used as
 	a backing device.
 
-TODO: On formatting: error message cannot write NTFS boot sector.
-
 TODO: drbd-util: Update manpage.
 	And write one for windrbd utility.
 
 TODO: Redo installation of sshd on Windows VM
---------------------------------------------------------------------
+
 TODO: Why doesn't it work on Phil's machine?
 
 TODO: msi installer instead of self extracting exe.
 
---------------------------------------------------------------------
 TODO: remove all tags from alloc() routines
 	and revert patches.
 
@@ -161,23 +221,6 @@ TODO: flush not supported by some (all?) devices: currently we
 	reactos/reactos/drivers/filesystems/ext2/src/flush.c
 
 	Also try to use the ZwFlushXXX function (as Mantech does it)
-
-TODO: Windows 10 would require more testing.
-
-	Blue screen THREAD_EXCEPTION_NOT_HANDLED when writing data
-	while connected (on a NTFS filesystem). Maybe because of
-	extensive logging. Update: happened again last log message
-	is:
-Feb 20 19:04:48 10.43.8.215  U18:04:48.392|51a96700 windrbd_thread_setup <6>[0xFFFFD40351A96700] stopped.
-
-	maybe the rcu?
-
-	Accessing directory (reading) from windrbd device stalls
-	when connected (and syncing). Writing data works (but
-	that is maybe just in the cache).
-
-	Syncing is very slow at the moment.
-	This is most likely a network issue (non-windrbd issue)
 
 TODO: when installing a signed DRBD driver, installing an unsigned
 	DRBD driver fails silently.
@@ -239,45 +282,13 @@ TODO: check if windrbd can be loaded not at boot time but later.
 	windows (it blue screens on boot if there was a windrbd before
 	installed).
 
-TODO: upgrade DRBD to 9.0.12
-
-	So Need Access to up to date data on drbdadm down is fixed.
-
 TODO: review TODOs in source code.
-
-TODO: Create windrbd device on becoming primary and delete
-	windrbd device on secondary.
-
-	Update: drbd_create_device needs to assign a valid
-	this_bdev. Do not create Windows device in bdget, 
-	instead create it on becoming primary and delete
-	it (with checking for open references) in becoming
-	secondary. This way we do not support auto promote
-	(because the block device cannot be opened) but
-	that is not so important.
-
-	Update: Phil wants the auto promote feature (for
-	virtualization), so alternative would be to
-	patch the boot sector as long it is secondary. 
-	However this does not solve the read cache problem.
-
-	Update: Right now, we return IO error if a secondary
-	resource is accessed via ReadFile/WriteFile. Eventually
-	we want to declare the secondary resource offline
-	but not sure yet how to do this.
-
-	Rethink this and do that later.
 
 TODO: Someday we want to pass user level buffer to driver directly
 	on READ requests instead of having a temp buffer (needed
 	for Windows 10).
 
 TODO: blue screen when backing device fails.
-
-TODO: Cannot write first sector on format h:
-	Sector seems to be alright (showing DRBD on the backing device
-	and NTFS on the windrbd device). Not sure where this is coming
-	from.
 
 TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
 	after doing some experiments. drbdadm down / up solved the
@@ -297,8 +308,6 @@ TODO: support I/O vectors in windrbd device (irp_to_bio)
 	Also have a test that does WriteFileGather and ReadFileScatter.
 
 TODO: Integrate (manually rebase) windrbd branch of drbd-utils to its master
-
-TODO: Also allow for mounting windrbd device to NTFS folder
 
 In Progress: Port agruen's test suite to cygwin.
 	exxe is running. Ask phil about how to install it.
@@ -340,20 +349,7 @@ TODO: when losing Quorum go into read only mode.
 	(n .. total number of names) valid nodes.
 	This is currently being implemented in DRBD
 
-TODO: Device FFFFFA80038B03F0 accessed after it was deleted.
-	After formatting and drbdadm down
-
-TODO: check what _WIN32_DEBUG_OOS is really doing.
-	Dumping bitmap?
-
-TODO: have dump_stack function
-
 TODO: I/O seems to be rather slow even when being unconnected (and primary)
-
-TODO: make ssh to Windows box work
-
-TODO: Inform windows about new drive.
-	So that explorer opens.
 
 TODO: on patching boot sector, inform Windows that file system is
 	raw now.
@@ -1862,4 +1858,88 @@ Done: Device FFFFFA8004F2D4C0 accessed after it was deleted.
 
 	Because we didn't unmount (dismount) the volume on drbdadm
 	down. Should be fixed now.
+
+Done: what is PnP minor 7 code?
+	It is IRP_MN_QUERY_DEVICE_RELATIONS with TargetRelations what
+	we are being sent. Currently handling this (correctly, as I
+	assume, copiied that from reactos kernel) gives a BSOD.
+
+	See PnP TO DO for more on this.
+
+Done: On formatting: error message cannot write NTFS boot sector.
+	Fixed. DRBD signature was also promoted to peer, which
+	also shouldn't happen (also fixed).
+
+Duplicate: Create windrbd device on becoming primary and delete
+	windrbd device on secondary.
+
+	Update: drbd_create_device needs to assign a valid
+	this_bdev. Do not create Windows device in bdget, 
+	instead create it on becoming primary and delete
+	it (with checking for open references) in becoming
+	secondary. This way we do not support auto promote
+	(because the block device cannot be opened) but
+	that is not so important.
+
+	Update: Phil wants the auto promote feature (for
+	virtualization), so alternative would be to
+	patch the boot sector as long it is secondary. 
+	However this does not solve the read cache problem.
+
+	Update: Right now, we return IO error if a secondary
+	resource is accessed via ReadFile/WriteFile. Eventually
+	we want to declare the secondary resource offline
+	but not sure yet how to do this.
+
+	Rethink this and do that later.
+
+Done: Windows 10 would require more testing.
+
+	Blue screen THREAD_EXCEPTION_NOT_HANDLED when writing data
+	while connected (on a NTFS filesystem). Maybe because of
+	extensive logging. Update: happened again last log message
+	is:
+Feb 20 19:04:48 10.43.8.215  U18:04:48.392|51a96700 windrbd_thread_setup <6>[0xFFFFD40351A96700] stopped.
+
+	maybe the rcu?
+
+	Accessing directory (reading) from windrbd device stalls
+	when connected (and syncing). Writing data works (but
+	that is maybe just in the cache).
+
+	Syncing is very slow at the moment.
+	This is most likely a network issue (non-windrbd issue)
+
+	Update: The above issues should be fixed now.
+
+Done: upgrade DRBD to 9.0.12
+
+	So Need Access to up to date data on drbdadm down is fixed.
+
+Done: Cannot write first sector on format h:
+	Sector seems to be alright (showing DRBD on the backing device
+	and NTFS on the windrbd device). Not sure where this is coming
+	from.
+
+	Fixed. Needed to copy on write before patching.
+
+Done: Device FFFFFA80038B03F0 accessed after it was deleted.
+	After formatting and drbdadm down
+
+	Fixed. Needed to FSCTL_DISMOUNT_VOLUME it.
+
+Done: check what _WIN32_DEBUG_OOS is really doing.
+	Dumping bitmap?
+
+	Removed.
+
+Rejected: have dump_stack function
+	We don't have symbols.
+
+Duplicate: Also allow for mounting windrbd device to NTFS folder
+
+Duplicate: make ssh to Windows box work
+
+Duplicate: Inform windows about new drive.
+	So that explorer opens.
 
