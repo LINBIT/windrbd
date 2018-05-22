@@ -1,0 +1,78 @@
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 30 Apr 2018 17:16:28 +0200
+Subject: drbd_create_device fixes
+
+*) Set drbd device valid at end of drbd_create_device()
+	So that windrbd device handlers (windrbd_io, windrbd_create,
+	windrbd_close) know when not to touch the DRBD device.
+    
+*) Remove device from resource devices idr on failure.
+	So a follow-up drbdadm status does not OOPS/BSOD.
+	This is a patch which probably is also useful to upstream.
+
+*) Moved call to windrbd_mount().
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 291d764..2648056 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3622,8 +3622,6 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	device->this_bdev = block_device;
+ 	/* we have no partitions. we contain only ourselves. */
+ 	device->this_bdev->bd_contains = device->this_bdev;
+-	/* TODO: should go away, use bdev->bd_disk->private_data instead */
+-	device->this_bdev->drbd_device = device;
+ 	/* TODO: leaks existing disk */
+ 	device->this_bdev->bd_disk = disk;
+ 
+@@ -3711,6 +3709,13 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 		goto out_remove_peer_device;
+ 	}
+ 
++	if (device_conf->mount_point && device_conf->mount_point[0]) {
++		if (windrbd_mount(block_device, device_conf->mount_point) < 0) {
++			err = ERR_INVALID_REQUEST;
++			goto out_couldnt_mount;
++		}
++	}
++
+ 	add_disk(disk);
+ 	device->have_quorum[OLD] =
+ 	device->have_quorum[NEW] =
+@@ -3727,23 +3732,14 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	drbd_debugfs_device_add(device);
+ 	*p_device = device;
+ 
+-	if (device_conf->mount_point && device_conf->mount_point[0]) {
+-
+-			/* windrbd_mount (via mountmgr) calls drbd_open
+-			 * internally, so do the mount only when the device
+-			 * is fully functional.
+-			 */
+-
+-		if (windrbd_mount(block_device, device_conf->mount_point) < 0) {
+-			err = ERR_INVALID_REQUEST;
+-			goto out_couldnt_mount;
+-		}
+-	}
++		/* From here we consider the DRBD device as valid.
++		 * drbd_open and I/O will be called.
++		 */
++	device->this_bdev->drbd_device = device;
+ 
+ 	return NO_ERROR;
+ 
+ out_couldnt_mount:
+-	/* TODO: clean up more. */
+ 
+ out_remove_peer_device:
+ 	list_add_rcu(&tmp, &device->peer_devices);
+@@ -3759,6 +3755,8 @@ out_remove_peer_device:
+ 		kref_put(&connection->kref, drbd_destroy_connection);
+ 	}
+ 
++	idr_remove(&resource->devices, vnr);
++
+ out_idr_remove_minor:
+ 	idr_remove(&drbd_devices, minor);
+ out_no_minor_idr:
