@@ -306,7 +306,7 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	NTSTATUS status;
 	int err;
 
-	if (!dev->currently_mounting) {
+	if (dev->drbd_device != NULL) {
 printk(KERN_DEBUG "s->Parameters.Create.SecurityContext->DesiredAccess is %x\n", s->Parameters.Create.SecurityContext->DesiredAccess);
 
 		mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
@@ -357,7 +357,7 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	NTSTATUS status;
 	int err;
 
-	if (!dev->currently_mounting) {
+	if (dev->drbd_device != NULL) {
 		mode = 0;	/* TODO: remember mode from open () */
 /*	mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
                 (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0; */
@@ -573,6 +573,13 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 	struct bio *bio;
+
+		/* Happens when mounting fails and we try to umount
+		 * the device.
+		 */
+
+	if (dev->drbd_device == NULL) 
+		goto exit;
 
 	if (dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 printk("I/O request while not primary.\n");

@@ -545,8 +545,6 @@ struct block_device {
 	struct _IO_STATUS_BLOCK vol_size_io_status;
 	struct _GET_LENGTH_INFORMATION vol_size_length_information;
 	struct mutex vol_size_mutex;
-
-	int currently_mounting;
 };
 
 extern sector_t windrbd_get_capacity(struct block_device *bdev);
