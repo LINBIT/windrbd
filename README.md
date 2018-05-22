@@ -40,7 +40,12 @@ works in theory, but hasn't been tested. Nor has Windows Subsystem for
 Linux (WSL)) to run WinDRBD. For building you need Ewdk from Microsoft
 and a separate Linux Box with spatch (concinelle) installed.
 
-You need the windrbd branch of drbd-utils. 
+You need the windrbd branch of drbd-utils. To obtain it, do a:
+
+git clone --branch windrbd --recursive https://github.com/LINBIT/drbd-utils.git
+
+and follow the build instruction in INSTALL.windrbd file of the
+repo.
 
 To test it, we use the WIN32 API test suite in windrbd-test. This
 is based on Google Test: see README.md in windrbd-test directory.
