@@ -1,18 +1,18 @@
 --------------------------------------------------------------------
 
+TODO: check if one can build windrbd branch of drbd-utils from github.
+	Waiting for Roland to push.
+
+TODO: Rebase windrbd branch of drbd-utils to its master
+	Also for drbd-headers. Then, also use the drbd-headers in
+	drbd (and remove drbd-headers patches)
+
 TODO: race on umount
 
 TODO: renew the sysroot.zip
 
-TODO: BSOD From Devin: kref_debuf_destroy ASSERT FAILED:
-
-	2018-05-17T13:30:09.567725-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) bdget <6>Created new block device \Device\Drbd0 (minor 0).
-	2018-05-17T13:30:09.569841-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) kref_debug_destroy <3>:ASSERT FAILED
-	2018-05-17T13:30:09.569841-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) kref_debug_destroy <3>:object of class: device
-	2018-05-17T13:30:09.569841-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) kref_debug_destroy <3>:  [1] = 1 (struct drbd_peer_device / free)
-	2018-05-17T13:30:09.569910-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) kref_debug_destroy <3>:
-
-	Causes (?) BSOD later.
+TODO: fix kref_debug_destroy asserts should mounting fail.
+	They do not hurt, but are ugly.
 
 TODO: other BSOD from Devin: Handle Send errors correctly.
 
@@ -306,8 +306,6 @@ TODO: support I/O vectors in windrbd device (irp_to_bio)
 	and clean up code (see TODOs in source code)
 
 	Also have a test that does WriteFileGather and ReadFileScatter.
-
-TODO: Integrate (manually rebase) windrbd branch of drbd-utils to its master
 
 In Progress: Port agruen's test suite to cygwin.
 	exxe is running. Ask phil about how to install it.
@@ -1942,4 +1940,21 @@ Duplicate: make ssh to Windows box work
 
 Duplicate: Inform windows about new drive.
 	So that explorer opens.
+
+Rejected: make windrbd use existing drbd-headers.
+	Update: we made patches to the protocol (mount_point) and
+	hence need a separate windrbd branch of drbd-headers.
+
+Done: BSOD From Devin: kref_debuf_destroy ASSERT FAILED:
+
+	2018-05-17T13:30:09.567725-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) bdget <6>Created new block device \Device\Drbd0 (minor 0).
+	2018-05-17T13:30:09.569841-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) kref_debug_destroy <3>:ASSERT FAILED
+	2018-05-17T13:30:09.569841-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) kref_debug_destroy <3>:object of class: device
+	2018-05-17T13:30:09.569841-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) kref_debug_destroy <3>:  [1] = 1 (struct drbd_peer_device / free)
+	2018-05-17T13:30:09.569910-07:00 legolas.us.linbit  U20:30:09.548|d92da040(drbdcmd) kref_debug_destroy <3>:
+
+	Causes (?) BSOD later.
+
+	Update: No, but the BSOD was due to incorrect cleanups.
+	Fixed now.
 

@@ -127,3 +127,13 @@ bcdedit /set TESTSIGNING ON
 as Windows Administrator on your Windows box and reboot. Then it should
 not be neccessary to press F8 and select disable signature check manually.
 
+---------------
+
+Note on drbd-utils: You need the windrbd branch of drbd-utils.
+To obtain it, do a:
+
+git clone --branch windrbd --recursive https://github.com/LINBIT/drbd-utils.git
+
+and follow the build instruction in INSTALL.windrbd file of the
+repo.
+
