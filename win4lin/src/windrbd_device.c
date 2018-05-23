@@ -699,17 +699,15 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	if (s->MinorFunction == IRP_MN_QUERY_DEVICE_RELATIONS) {
 		printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
 
-#if 0
 		struct _DEVICE_RELATIONS *rel;
 		rel = kmalloc(sizeof(*rel), 0, 'DRBD');
 		if (rel != NULL) {
 			rel->Count = 1; /* blue screens if this is 0 */
-			rel->Objects[0] = device;
+			rel->Objects[0] = device; /* blue screens because this is not a PDO (yet). Hmmm ... */
 			ObReferenceObject(device);
 			irp->IoStatus.Information = (ULONG_PTR) rel;
 			status = STATUS_SUCCESS;
 		}
-#endif
 	}
 
 	irp->IoStatus.Status = status;

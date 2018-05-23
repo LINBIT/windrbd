@@ -3444,6 +3444,7 @@ int windrbd_mount(struct block_device *dev, const char *mount_point)
 		printk("Couldn't get file object\n");
 	else {
 printk("calling IoRegisterPlugPlayNotification...\n");
+			/* TODO: Unregister later using dev->pnp_notification_entry */
 		status = IoRegisterPlugPlayNotification(EventCategoryTargetDeviceChange, 0, dev->file_object, mvolDriverObject, pnp_callback, dev, &dev->pnp_notification_entry);
 
 		printk("IoRegisterPlugPlayNotification returned %x\n", status);
