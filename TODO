@@ -1,8 +1,5 @@
 --------------------------------------------------------------------
 
-TODO: check if one can build windrbd branch of drbd-utils from github.
-	Waiting for Roland to push.
-
 TODO: Rebase windrbd branch of drbd-utils to its master
 	Also for drbd-headers. Then, also use the drbd-headers in
 	drbd (and remove drbd-headers patches)
@@ -18,6 +15,8 @@ TODO: other BSOD from Devin: Handle Send errors correctly.
 	2018-05-17T13:37:08.904002-07:00 legolas.us.linbit  U20:37:08.888|8e3a8040(sender) SendPageCompletionRoutine <3>SendPage completed with status c000020d
 
 	But not reported to DRBD.
+
+TODO: From Devin: make winsat run.
 
 TODO: From Devin: d->bi_size (from peer request) too big:
 
@@ -1967,4 +1966,10 @@ Done: BSOD From Devin: kref_debuf_destroy ASSERT FAILED:
 
 Done: fix kref_debug_destroy asserts should mounting fail.
 	They do not hurt, but are ugly.
+
+Done: check if one can build windrbd branch of drbd-utils from github.
+	Waiting for Roland to push.
+
+	Roland pushed windrbd (both drbd-headers and drbd-utils) and
+	it works like a charm.
 
