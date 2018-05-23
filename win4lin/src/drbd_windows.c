@@ -3397,6 +3397,13 @@ static int mountmgr_create_point(struct block_device *dev)
 	return 0;
 }
 
+NTSTATUS pnp_callback(void *notification, void *context)
+{
+	printk("notification: %p context: %p\n", notification, context);
+
+	return STATUS_SUCCESS;
+}
+
 	/* TODO: make drive appear in Windows Explorer, not clear
 	   currently how to do that (via PNP manager?) and remove
            commented out code.
@@ -3422,6 +3429,25 @@ int windrbd_mount(struct block_device *dev, const char *mount_point)
 */
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
+
+	struct _DEVICE_OBJECT *windows_device;
+		/* This (hopefully) fills in the file_object */
+	windows_device = find_windows_device(&dev->path_to_device, &dev->file_object);
+
+	if (windows_device == NULL)
+		printk("Couldn't get device object\n");
+
+	if (windows_device != dev->windows_device)
+		printk("More than one device object?\n");
+
+	if (dev->file_object == NULL)
+		printk("Couldn't get file object\n");
+	else {
+printk("calling IoRegisterPlugPlayNotification...\n");
+		status = IoRegisterPlugPlayNotification(EventCategoryTargetDeviceChange, 0, dev->file_object, mvolDriverObject, pnp_callback, dev, &dev->pnp_notification_entry);
+
+		printk("IoRegisterPlugPlayNotification returned %x\n", status);
+	}
 
 #if 0
 

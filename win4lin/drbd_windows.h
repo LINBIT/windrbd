@@ -540,6 +540,7 @@ struct block_device {
 
 	struct list_head backing_devices_list;
 	bool mechanically_locked; /* MEDIA_REMOVAL ioctl */
+	void *pnp_notification_entry;
 
 		/* Those are used by windrbd_get_volsize() internally */
 	struct _IO_STATUS_BLOCK vol_size_io_status;
