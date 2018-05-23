@@ -3518,9 +3518,6 @@ printk("out of IoReportTargetDeviceChange\n");
 
 	printk(KERN_INFO "Assigned device %S the mount point %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 
-printk("Fault injection: failing.\n");
-return -1;
-
 	return 0;
 }
 
