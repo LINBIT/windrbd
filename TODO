@@ -7,12 +7,11 @@ TODO: Rebase windrbd branch of drbd-utils to its master
 	Also for drbd-headers. Then, also use the drbd-headers in
 	drbd (and remove drbd-headers patches)
 
+TODO: review README.md: some info is outdated.
+
 TODO: race on umount
 
 TODO: renew the sysroot.zip
-
-TODO: fix kref_debug_destroy asserts should mounting fail.
-	They do not hurt, but are ugly.
 
 TODO: other BSOD from Devin: Handle Send errors correctly.
 
@@ -25,6 +24,14 @@ TODO: From Devin: d->bi_size (from peer request) too big:
 	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
 
 TODO: From Devin: Registering mount point failed status = c0000035
+	This seems to be something that only happens on Windows Server 2016.
+	The mount_point buffer is NULL at end of the windrbd_mount
+	function:
+
+	2018-05-17T13:47:08.666486-07:00 legolas.us.linbit  U20:47:08.638|da4db040(drbdcmd) windrbd_mount <6>Assigned device \Device\Drbd0 the mount point (null)
+	However, all checks before that succeed.
+
+	Get a Windows 2016 Server and test on it.
 
 TODO: invalidate read cache when becoming secondary.
 
@@ -1957,4 +1964,7 @@ Done: BSOD From Devin: kref_debuf_destroy ASSERT FAILED:
 
 	Update: No, but the BSOD was due to incorrect cleanups.
 	Fixed now.
+
+Done: fix kref_debug_destroy asserts should mounting fail.
+	They do not hurt, but are ugly.
 
