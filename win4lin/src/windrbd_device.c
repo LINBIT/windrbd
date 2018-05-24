@@ -273,6 +273,25 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		break;
 	}
 
+	case IOCTL_STORAGE_GET_HOTPLUG_INFO:
+		printk("IOCTL_STORAGE_GET_HOTPLUG_INFO\n");
+		struct _STORAGE_HOTPLUG_INFO *hotplug_info = 
+			irp->AssociatedIrp.SystemBuffer;
+
+		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _STORAGE_HOTPLUG_INFO)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+		hotplug_info->Size = sizeof(struct _STORAGE_HOTPLUG_INFO);
+		hotplug_info->MediaRemovable = TRUE;
+		hotplug_info->MediaHotplug = TRUE;
+		hotplug_info->DeviceHotplug = TRUE;
+		hotplug_info->WriteCacheEnableOverride = FALSE;
+		
+		irp->IoStatus.Information = sizeof(struct _STORAGE_HOTPLUG_INFO);
+		status = STATUS_SUCCESS;
+		break;
+
 	default: 
 		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_NOT_IMPLEMENTED;
@@ -324,6 +343,7 @@ printk(KERN_DEBUG "drbd_open returned %d\n", err);
 			 * device in drbd, this will fail at this early stage.
 			 */
 
+printk("Create request while device isn't set up yet.\n");
 		status = STATUS_SUCCESS;
 	}
 
@@ -369,6 +389,7 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 printk(KERN_DEBUG "drbd_release returned %d\n", err);
 		status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
 	} else {
+printk("Close request while device isn't set up yet.\n");
 			/* See comment in windrbd_create() */
 		status = STATUS_SUCCESS;
 	}
@@ -578,8 +599,10 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		 * the device.
 		 */
 
-	if (dev->drbd_device == NULL) 
+	if (dev->drbd_device == NULL) {
+printk("I/O request while device isn't set up yet.\n");
 		goto exit;
+	}
 
 	if (dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 printk("I/O request while not primary.\n");
@@ -699,6 +722,8 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	if (s->MinorFunction == IRP_MN_QUERY_DEVICE_RELATIONS) {
 		printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
 
+#if 0
+
 		struct _DEVICE_RELATIONS *rel;
 		rel = kmalloc(sizeof(*rel), 0, 'DRBD');
 		if (rel != NULL) {
@@ -708,6 +733,7 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			irp->IoStatus.Information = (ULONG_PTR) rel;
 			status = STATUS_SUCCESS;
 		}
+#endif
 	}
 
 	irp->IoStatus.Status = status;
