@@ -3430,6 +3430,9 @@ int windrbd_mount(struct block_device *dev, const char *mount_point)
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
 
+#if 0
+/* If this is enabled, we cannot access the windrbd_device for I/O
+later. */
 	struct _DEVICE_OBJECT *windows_device;
 		/* This (hopefully) fills in the file_object */
 	windows_device = find_windows_device(&dev->path_to_device, &dev->file_object);
@@ -3449,6 +3452,8 @@ printk("calling IoRegisterPlugPlayNotification...\n");
 
 		printk("IoRegisterPlugPlayNotification returned %x\n", status);
 	}
+
+#endif
 
 #if 0
 

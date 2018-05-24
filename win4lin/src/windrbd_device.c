@@ -273,6 +273,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		break;
 	}
 
+#if 0
 	case IOCTL_STORAGE_GET_HOTPLUG_INFO:
 		printk("IOCTL_STORAGE_GET_HOTPLUG_INFO\n");
 		struct _STORAGE_HOTPLUG_INFO *hotplug_info = 
@@ -291,6 +292,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		irp->IoStatus.Information = sizeof(struct _STORAGE_HOTPLUG_INFO);
 		status = STATUS_SUCCESS;
 		break;
+#endif
 
 	default: 
 		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
