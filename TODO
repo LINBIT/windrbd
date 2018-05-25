@@ -1,10 +1,36 @@
 --------------------------------------------------------------------
 
+TODO: invalidate read cache when becoming secondary.
+
+	Problem is that if windows is primary, becomes secondary and
+	then primary again the read cache is still filled from the
+	former primary.
+
+	Should invalidate when becoming secondary: reason is
+	that while secondary requests still are served from
+	the read cache (they should fail).
+
+	Update: Moving that to beta2 because we are a little bit
+	short on time. Document that defect.
+
+	Update: Implement this for the next beta, there should be
+	no windrbd device unless resource is primary.
+
 TODO: Rebase windrbd branch of drbd-utils to its master
 	Also for drbd-headers. Then, also use the drbd-headers in
 	drbd (and remove drbd-headers patches)
 
 TODO: review README.md: some info is outdated.
+
+TODO: Cleanly unmount windows NTFS on drbdadm down (or, later,
+	drbdadm secondary).
+
+	Currently, on drbdadm primary we get a panel showing 
+	unclean filesystem. Also when mounting under Linux,
+	it shows a warning. Chkdsk however works, and finds no
+	errors.
+
+TODO: Make windows checkdisk (over unclean shutdown panel) work.
 
 TODO: race on umount
 
@@ -31,22 +57,6 @@ TODO: From Devin: Registering mount point failed status = c0000035
 	However, all checks before that succeed.
 
 	Get a Windows 2016 Server and test on it.
-
-TODO: invalidate read cache when becoming secondary.
-
-	Problem is that if windows is primary, becomes secondary and
-	then primary again the read cache is still filled from the
-	former primary.
-
-	Should invalidate when becoming secondary: reason is
-	that while secondary requests still are served from
-	the read cache (they should fail).
-
-	Update: Moving that to beta2 because we are a little bit
-	short on time. Document that defect.
-
-	Update: Implement this for the next beta, there should be
-	no windrbd device unless resource is primary.
 
 TODO: Sync is still somewhat slow when windrbd is SyncTarget
 	And: I/O is slow when connected.
@@ -127,7 +137,7 @@ TODO: logging: printk's without terminating \n not displayed.
 	Update: Please fix this, it is annoying, I just ran into
 	it.
 
-TODO: mountmanager / register device with PNP
+Almost Done: mountmanager / register device with PNP
 
 	Drive letter (mount point) is created now.
 
@@ -168,6 +178,12 @@ TODO: mountmanager / register device with PNP
 	assume that the PDO's devnode has been created when it receives
 	an IRP_MN_QUERY_RESOURCE_REQUIREMENTS request.
 
+	Update: It seems we don't need all of this. Showing the
+	drive in Explorer is now implemented in drbd-utils (user
+	space only).
+
+TODO: clean up left over PNP code.
+
 TODO: Auto-promote seems not to work as expected.
 
 	dir h: should make device primary if possible and then
@@ -182,6 +198,10 @@ TODO: Auto-promote seems not to work as expected.
 	so it doesn't reopen it. We plan to release 1.0 without Auto-promote.
 	(also because we should not have a windrbd device when the
 	resource is secondary, because of the caching).
+
+	Update: We are delivering windrbd without auto-promote, for
+	various reasons (don't have device object when secondary,
+	for example).
 
 TODO: logging to localhost (windows) seems to cause boot problems (?)
 	When using 192.168.56.101 instead of 127.0.0.1
@@ -1944,9 +1964,6 @@ Duplicate: Also allow for mounting windrbd device to NTFS folder
 
 Duplicate: make ssh to Windows box work
 
-Duplicate: Inform windows about new drive.
-	So that explorer opens.
-
 Rejected: make windrbd use existing drbd-headers.
 	Update: we made patches to the protocol (mount_point) and
 	hence need a separate windrbd branch of drbd-headers.
@@ -1972,4 +1989,7 @@ Done: check if one can build windrbd branch of drbd-utils from github.
 
 	Roland pushed windrbd (both drbd-headers and drbd-utils) and
 	it works like a charm.
+
+Done: Inform windows about new drive.
+	So that explorer opens.
 
