@@ -535,6 +535,7 @@ struct block_device {
 	struct _FILE_OBJECT *file_object; /* As returned by IoGetDeviceObjectPointer() */
 	UNICODE_STRING path_to_device;
 	UNICODE_STRING mount_point;
+	bool is_mounted;
 
 	IO_REMOVE_LOCK remove_lock;
 
@@ -1428,7 +1429,9 @@ long		gLogCnt;
 char		gLogBuf[LOGBUF_MAXCNT][MAX_DRBDLOG_BUF];
 
 struct block_device *bdget(dev_t dev);
-int windrbd_mount(struct block_device *dev, const char *mount_point);
+
+int windrbd_set_mount_point(struct block_device *dev, const char *mount_point);
+int windrbd_mount(struct block_device *dev);
 int windrbd_umount(struct block_device *dev);
 
 /* From: include/linux/kdev_t.h : */

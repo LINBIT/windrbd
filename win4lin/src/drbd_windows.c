@@ -3376,15 +3376,29 @@ NTSTATUS pnp_callback(void *notification, void *context)
 	return STATUS_SUCCESS;
 }
 
-int windrbd_mount(struct block_device *dev, const char *mount_point)
+int windrbd_set_mount_point(struct block_device *dev, const char *mount_point)
 {
-	NTSTATUS status;
-
 	if (mount_point == NULL)
 		return 0;
 
+		/* TODO: think: do we allow this? */
+	if (dev->mount_point.Buffer != NULL) {
+		printk("set_mount_point called while there is a mount point registered.\n");
+
+		ExFreePool(dev->mount_point.Buffer);
+		dev->mount_point.Buffer = NULL;
+	}
+
 	if (minor_to_x_name(&dev->mount_point, -1, mount_point) < 0)
 		return -1;
+
+	return 0;
+}
+
+int windrbd_mount(struct block_device *dev)
+{
+	NTSTATUS status;
+
 	
 	/* This is basically what mount manager does: leave it here,
 	   in case we revert the mount manager code again.
@@ -3399,6 +3413,8 @@ int windrbd_mount(struct block_device *dev, const char *mount_point)
 */
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
+
+	dev->is_mounted = true;
 
 	printk(KERN_INFO "Assigned device %S the mount point %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 
@@ -3417,6 +3433,10 @@ int windrbd_umount(struct block_device *bdev)
 
 	if (bdev->mount_point.Buffer == NULL) {
 		printk("windrbd_umount() called without a known mount_point.\n");
+		return -1;
+	}
+	if (!bdev->is_mounted) {
+		printk("windrbd_umount() called while not mounted.\n");
 		return -1;
 	}
 	InitializeObjectAttributes(&attr, &bdev->mount_point, OBJ_KERNEL_HANDLE, NULL, NULL);
@@ -3440,13 +3460,9 @@ int windrbd_umount(struct block_device *bdev)
 		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", bdev->mount_point.Buffer);
 	}
 
-printk("into ZwFsControlFile...\n");
 	status = ZwFsControlFile(f, event_handle, NULL, NULL, &iostat, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0);
-printk("out of ZwFsControlFile...\n");
 	if (status == STATUS_PENDING) {
-printk("into KeWaitForSingleObject ... \n");
 		KeWaitForSingleObject(event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
-printk("out of KeWaitForSingleObject ... \n");
 		status = iostat.Status;
 	}
 	ZwClose(event_handle);
@@ -3457,12 +3473,7 @@ printk("out of KeWaitForSingleObject ... \n");
 	}
 	ZwClose(f);
 
-	ExFreePool(bdev->mount_point.Buffer);
-	bdev->mount_point.Buffer = NULL;
-printk("windrbd_umount succeeded.\n");
-
-printk("bdev->windows_device->DeviceObjectExtension->DeviceNode: %p\n", bdev->windows_device->DeviceObjectExtension->DeviceNode);
-
+	bdev->is_mounted = false;
 	return 0;
 }
 
@@ -3471,20 +3482,28 @@ static void destroy_block_device(struct kref *kref)
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 	int minor = bdev->minor;
 
-		/* TODO: this does not really delete the device
-		 * if somebody still holds a reference. For example,
-		 * if there is a cmd shell open it will access the
-		 * device after this has happened.
+		/* This is legal. Users may create DRBD devices without
+		 * mount point.
 		 */
-
-	if (bdev->mount_point.Buffer != NULL)
+	if (bdev->mount_point.Buffer != NULL) {
 		windrbd_umount(bdev);
 
+		ExFreePool(bdev->mount_point.Buffer);
+		bdev->mount_point.Buffer = NULL;
+	}
+
 	ExFreePool(bdev->path_to_device.Buffer);
+	bdev->path_to_device.Buffer = NULL;
+
 	bdev->windows_device->DeviceExtension = NULL;
 
 		/* TODO: This device isn't really freed here, somewhere
 		 * there are still references.
+		 */
+		/* TODO: this does not really delete the device
+		 * if somebody still holds a reference. For example,
+		 * if there is a cmd shell open it will access the
+		 * device after this has happened.
 		 */
 
 	IoDeleteDevice(bdev->windows_device); /* should also delete the device extension, which is the bdev */
