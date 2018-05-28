@@ -182,3 +182,5 @@ Version history
  * 0.6.7 (May 14, 2018): Fixed pachting bootsector. Patch is not propagated to
 			 peers.
  * 0.7.0 (May 15, 2018): Beta 3: Stability fixes
+ * 0.7.1 (May 24, 2018): Notify Windows explorer about new disk drive(s) (user
+			 space only)
