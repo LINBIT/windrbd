@@ -11,6 +11,10 @@ TODO: check if windows device is accessed when it shouldn't
 
 TODO: patches for lars (kref debug in failure path)
 
+TODO: remove more dead code.
+
+	This is always fun.
+
 TODO: Rebase windrbd branch of drbd-utils to its master
 	Also for drbd-headers. Then, also use the drbd-headers in
 	drbd (and remove drbd-headers patches)
