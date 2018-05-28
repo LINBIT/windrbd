@@ -549,6 +549,17 @@ struct block_device {
 	struct mutex vol_size_mutex;
 };
 
+	/* Starting with version 0.7.1, this is the device extension
+	 * of the windows device object (for the upper device). This
+	 * is because the struct block_device lives longer than the
+	 * windows device now (windows device only exists as long
+	 * as we are primary, to avoid caching side effects).
+	 */
+
+struct block_device_reference {
+	struct block_device *bdev;
+};
+
 extern sector_t windrbd_get_capacity(struct block_device *bdev);
 
 struct bio_vec {
@@ -1429,6 +1440,8 @@ long		gLogCnt;
 char		gLogBuf[LOGBUF_MAXCNT][MAX_DRBDLOG_BUF];
 
 struct block_device *bdget(dev_t dev);
+int windrbd_create_windows_device(struct block_device *bdev);
+void windrbd_remove_windows_device(struct block_device *bdev);
 
 int windrbd_set_mount_point(struct block_device *dev, const char *mount_point);
 int windrbd_mount(struct block_device *dev);

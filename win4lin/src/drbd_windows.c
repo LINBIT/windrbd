@@ -3065,6 +3065,7 @@ struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data,
 }
 
 /* Save current value in registry, this value is used when drbd is loading.*/
+/* TODO: remove, dead code */
 NTSTATUS SaveCurrentValue(PCWSTR valueName, int value)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -3207,36 +3208,22 @@ static int minor_to_x_name(UNICODE_STRING *name, int minor, const char *mount_po
 	return 0;
 }
 
-/* TODO: this should take a string as argument, check if the device
-	 exists (by calling blkdev_get_by_path) and create the
-	 new DRBD device if it does not exist.
-
-	 For now, it should be an error if the device exists. */
-
-/* TODO: 100 -> MAX_PATH_LEN */
-/* TODO: name, dos_name into device extension */
-
-struct block_device *bdget(dev_t device_no)
+int windrbd_create_windows_device(struct block_device *bdev)
 {
-	dev_t minor = MINOR(device_no);
-	UNICODE_STRING name;
-        PDEVICE_OBJECT new_device;
-	NTSTATUS status;
-	struct block_device *block_device;
-	struct _VOLUME_EXTENSION *pvext;
 	UNICODE_STRING sddl;
-//	UNICODE_STRING interfaceName;
+        PDEVICE_OBJECT new_device;
+	struct block_device_reference *bdev_ref;
+	NTSTATUS status;
 
-	if (minor_to_x_name(&name, minor, NULL) < 0) {
-		return NULL;
-	}
+	if (bdev->windows_device != NULL)
+		printk(KERN_WARNING "Warning: block device %p already has a windows device (%p)\n", bdev, bdev->windows_device);
 
 		/* TODO: understand what this means */
 	RtlInitUnicodeString(&sddl, L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)");
 
 	status = IoCreateDeviceSecure(mvolDriverObject, 
-		                sizeof(struct block_device), 
-		                &name,
+		                sizeof(struct block_device_reference), 
+		                &bdev->path_to_device,
 		                FILE_DEVICE_DISK,
                                 FILE_DEVICE_SECURE_OPEN,
                                 FALSE,
@@ -3245,14 +3232,50 @@ struct block_device *bdget(dev_t device_no)
                                 &new_device);
 
 	if (status != STATUS_SUCCESS) {
-		WDRBD_WARN("bdget: couldn't create new block device %S for minor %d status: %x\n", name.Buffer, minor, status);
+		printk("Couldn't create new block device %S for minor %d status: %x\n", bdev->path_to_device.Buffer, bdev->minor, status);
 
-		return NULL;
+		return -1;
+	}
+	bdev->windows_device = new_device;
+	bdev_ref = new_device->DeviceExtension;
+	bdev_ref->bdev = bdev;
+
+	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
+
+	return 0;
+}
+
+void windrbd_remove_windows_device(struct block_device *bdev)
+{
+	if (bdev->windows_device == NULL) {
+		printk(KERN_WARNING "Windows device does not exist in block device %p.\n", bdev);
+		return;
 	}
 
-	block_device = new_device->DeviceExtension;
+	bdev->windows_device->DeviceExtension = NULL;
+
+		/* TODO: check if there are still references (PENDING_DELETE) */
+
+	IoDeleteDevice(bdev->windows_device);
+	bdev->windows_device = NULL;
+}
+
+struct block_device *bdget(dev_t device_no)
+{
+	dev_t minor = MINOR(device_no);
+	NTSTATUS status;
+	struct block_device *block_device;
+
+	block_device = kzalloc(sizeof(struct block_device), 0, 'DRBD');
+	if (block_device == NULL)
+		return NULL;
+
+	if (minor_to_x_name(&block_device->path_to_device, minor, NULL) < 0)
+		goto out_path_to_device_failed;
+
 	kref_init(&block_device->kref);
 
+		/* TODO: release that lock later ... */
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
@@ -3260,21 +3283,19 @@ struct block_device *bdget(dev_t device_no)
 		goto out_remove_lock_failed;
 	}
 
-	block_device->windows_device = new_device;
+	block_device->windows_device = NULL;
 	block_device->minor = minor;
 	block_device->bd_block_size = 512;
-	block_device->path_to_device = name;
 	block_device->mount_point.Buffer = NULL;
 
-	printk(KERN_INFO "Created new block device %S (minor %d).\n", name.Buffer, minor);
-	printk(KERN_DEBUG "Device object is %p\n", block_device->windows_device);
+	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);
 	
-	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
-
 	return block_device;
 
 out_remove_lock_failed:
-	IoDeleteDevice(new_device);
+	kfree(block_device->path_to_device.Buffer);
+out_path_to_device_failed:
+	kfree(block_device);
 
 	return NULL;
 }
@@ -3480,34 +3501,24 @@ int windrbd_umount(struct block_device *bdev)
 static void destroy_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
-	int minor = bdev->minor;
 
 		/* This is legal. Users may create DRBD devices without
 		 * mount point.
 		 */
 	if (bdev->mount_point.Buffer != NULL) {
-		windrbd_umount(bdev);
+		if (bdev->is_mounted)
+			windrbd_umount(bdev);
 
 		ExFreePool(bdev->mount_point.Buffer);
 		bdev->mount_point.Buffer = NULL;
 	}
+	if (bdev->windows_device != NULL)
+		windrbd_remove_windows_device(bdev);
 
 	ExFreePool(bdev->path_to_device.Buffer);
 	bdev->path_to_device.Buffer = NULL;
 
-	bdev->windows_device->DeviceExtension = NULL;
-
-		/* TODO: This device isn't really freed here, somewhere
-		 * there are still references.
-		 */
-		/* TODO: this does not really delete the device
-		 * if somebody still holds a reference. For example,
-		 * if there is a cmd shell open it will access the
-		 * device after this has happened.
-		 */
-
-	IoDeleteDevice(bdev->windows_device); /* should also delete the device extension, which is the bdev */
-/* TODO: not freeing bdev? */
+	kfree(bdev);
 }
 
 void bdput(struct block_device *this_bdev)
