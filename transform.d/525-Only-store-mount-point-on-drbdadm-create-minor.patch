@@ -1,0 +1,26 @@
+From bcee6d49f7ce794f4fabbd06c9e30ec0304de37d Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 28 May 2018 16:25:50 +0200
+Subject: [PATCH 2/3] Only store mount point on drbdadm create-minor.
+
+Mount it (next patch) on secondary -> primary state transistion.
+---
+ drbd/drbd_main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 64544b2..8e54cf8 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3710,7 +3710,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	}
+ 
+ 	if (device_conf->mount_point && device_conf->mount_point[0]) {
+-		if (windrbd_mount(block_device, device_conf->mount_point) < 0) {
++		if (windrbd_set_mount_point(block_device, device_conf->mount_point) < 0) {
+ 			err = ERR_INVALID_REQUEST;
+ 			goto out_couldnt_mount;
+ 		}
+-- 
+2.7.4
+

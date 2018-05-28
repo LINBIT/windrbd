@@ -1,0 +1,39 @@
+From 39db80bfdeb4af6c9ecd6bc3c746bcae8c227333 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 28 May 2018 16:32:32 +0200
+Subject: [PATCH 3/3] mount windrbd device on role change secondary -> primary.
+
+---
+ drbd/drbd_nl.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 518b6ac..e897e0e 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -1006,8 +1006,9 @@ drbd_set_role(struct drbd_resource *resource, enum drbd_role role, bool force, s
+ 	bool with_force = false;
+ 	const char *err_str = NULL;
+ 	enum chg_state_flags flags = CS_ALREADY_SERIALIZED | CS_DONT_RETRY | CS_WAIT_COMPLETE;
++	enum drbd_role old_role = resource->role[NOW];
+ 
+-	if (resource->role[NOW] == R_PRIMARY && role == R_SECONDARY)
++	if (old_role == R_PRIMARY && role == R_SECONDARY)
+ 		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr)
+ 			if (windrbd_umount(device->this_bdev) != 0)
+ 				drbd_warn(device, "Couldn't umount volume %d\n", vnr);
+@@ -1238,6 +1239,11 @@ retry:
+ 			drbd_kobject_uevent(device);
+ 	}
+ 
++	if (old_role == R_SECONDARY && role == R_PRIMARY)
++		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr)
++			if (windrbd_mount(device->this_bdev) != 0)
++				drbd_warn(device, "Couldn't umount volume %d\n", vnr);
++
+ out:
+ 	up(&resource->state_sem);
+ 	if (err_str) {
+-- 
+2.7.4
+

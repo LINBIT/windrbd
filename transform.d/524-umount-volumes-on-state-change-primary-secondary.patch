@@ -1,0 +1,28 @@
+From 1c944bbf4c9e8548554d22d49a6ec3f6d15994e5 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 28 May 2018 15:43:16 +0200
+Subject: [PATCH 1/3] umount volumes on state change primary -> secondary.
+
+---
+ drbd/drbd_nl.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index dd9df59..518b6ac 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -1007,6 +1007,11 @@ drbd_set_role(struct drbd_resource *resource, enum drbd_role role, bool force, s
+ 	const char *err_str = NULL;
+ 	enum chg_state_flags flags = CS_ALREADY_SERIALIZED | CS_DONT_RETRY | CS_WAIT_COMPLETE;
+ 
++	if (resource->role[NOW] == R_PRIMARY && role == R_SECONDARY)
++		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr)
++			if (windrbd_umount(device->this_bdev) != 0)
++				drbd_warn(device, "Couldn't umount volume %d\n", vnr);
++
+ retry:
+ 	down(&resource->state_sem);
+ 
+-- 
+2.7.4
+
