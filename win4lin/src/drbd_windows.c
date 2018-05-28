@@ -3242,18 +3242,7 @@ struct block_device *bdget(dev_t device_no)
                                 FALSE,
 				&sddl,
 				NULL,
-//				&DRBD_DEVICE_CLASS_GUID,
                                 &new_device);
-/*
-	status = IoCreateDevice(mvolDriverObject, 
-		                sizeof(struct block_device), 
-				NULL,
-//		                &name,
-		                FILE_DEVICE_VIRTUAL_DISK,
-                                0,
-                                FALSE,
-                                &new_device);
-*/
 
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("bdget: couldn't create new block device %S for minor %d status: %x\n", name.Buffer, minor, status);
@@ -3282,25 +3271,8 @@ struct block_device *bdget(dev_t device_no)
 	
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
-#if 0
-	status = IoRegisterDeviceInterface(new_device, &MOUNTDEV_MOUNTED_DEVICE_GUID, NULL, &interfaceName);
-
-	if (status != STATUS_SUCCESS) {
-		WDRBD_WARN("bdget: couldn't register MOUNTED_DEVICE_GUID class for block device %S for minor %d status: %x\n", name.Buffer, minor, status);
-
-		goto out_register_device_interface_failed;
-	}
-printk("karin interface name: %S\n", interfaceName.Buffer);
-#endif
-
 	return block_device;
 
-#if 0
-out_register_device_interface_failed:
-	if (IoDeleteSymbolicLink(&dos_name) != STATUS_SUCCESS) {
-		WDRBD_WARN("Failed to remove symbolic link again %S\n", dos_name.Buffer);
-	}
-#endif
 out_remove_lock_failed:
 	IoDeleteDevice(new_device);
 
@@ -3404,11 +3376,6 @@ NTSTATUS pnp_callback(void *notification, void *context)
 	return STATUS_SUCCESS;
 }
 
-	/* TODO: make drive appear in Windows Explorer, not clear
-	   currently how to do that (via PNP manager?) and remove
-           commented out code.
-	 */
-
 int windrbd_mount(struct block_device *dev, const char *mount_point)
 {
 	NTSTATUS status;
@@ -3419,6 +3386,9 @@ int windrbd_mount(struct block_device *dev, const char *mount_point)
 	if (minor_to_x_name(&dev->mount_point, -1, mount_point) < 0)
 		return -1;
 	
+	/* This is basically what mount manager does: leave it here,
+	   in case we revert the mount manager code again.
+	 */
 /*
 	status = IoCreateSymbolicLink(&dev->mount_point, &dev->path_to_device);
 	if (status != STATUS_SUCCESS) {
@@ -3429,124 +3399,6 @@ int windrbd_mount(struct block_device *dev, const char *mount_point)
 */
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
-
-#if 0
-/* If this is enabled, we cannot access the windrbd_device for I/O
-later. */
-	struct _DEVICE_OBJECT *windows_device;
-		/* This (hopefully) fills in the file_object */
-	windows_device = find_windows_device(&dev->path_to_device, &dev->file_object);
-
-	if (windows_device == NULL)
-		printk("Couldn't get device object\n");
-
-	if (windows_device != dev->windows_device)
-		printk("More than one device object?\n");
-
-	if (dev->file_object == NULL)
-		printk("Couldn't get file object\n");
-	else {
-printk("calling IoRegisterPlugPlayNotification...\n");
-			/* TODO: Unregister later using dev->pnp_notification_entry */
-		status = IoRegisterPlugPlayNotification(EventCategoryTargetDeviceChange, 0, dev->file_object, mvolDriverObject, pnp_callback, dev, &dev->pnp_notification_entry);
-
-		printk("IoRegisterPlugPlayNotification returned %x\n", status);
-	}
-
-#endif
-
-#if 0
-
-	UNICODE_STRING hdd_name;
-	struct _FILE_OBJECT *f;
-	RtlInitUnicodeString(&hdd_name, L"\\Device\\VolMgrControl");
-	struct _DEVICE_OBJECT *hdd = find_windows_device(&hdd_name, &f);
-
-printk("volmgrcontrol device object is %p\n", hdd);
-
-	if (hdd) {
-printk("hdd->DeviceObjectExtension: %p\n", hdd->DeviceObjectExtension);
-if (hdd->DeviceObjectExtension != NULL)
-printk("hdd->DeviceObjectExtension->DeviceNode: %p\n", hdd->DeviceObjectExtension->DeviceNode);
-		struct _DEVICE_OBJECT *d = IoAttachDeviceToDeviceStack(dev->windows_device, hdd);
-		if (!d)
-			printk("IoAttachDeviceToDeviceStack returned NULL\n");
-	} else {
-		printk("didn't find %S\n", hdd_name.Buffer);
-	}
-printk("1\n");
-	IoInvalidateDeviceRelations(hdd, BusRelations);
-printk("2\n");
-#endif
-
-/*
-	struct _DEVICE_OBJECT *d = IoAttachDeviceToDeviceStack(dev->windows_device, mvolRootDeviceObject);
-	printk("IoAttachDeviceToDeviceStack returned %p dev->windows_device is %p mvolRootDeviceObject is %p\n", d, dev->windows_device, mvolRootDeviceObject);
-*/
-
-#if 0
-printk("dev->windows_device->DeviceObjectExtension: %p\n", dev->windows_device->DeviceObjectExtension);
-if (dev->windows_device->DeviceObjectExtension != NULL)
-printk("dev->windows_device->DeviceObjectExtension->DeviceNode: %p\n", dev->windows_device->DeviceObjectExtension->DeviceNode);
-
-printk("mvolRootDeviceObject->DeviceObjectExtension: %p\n", mvolRootDeviceObject->DeviceObjectExtension);
-if (mvolRootDeviceObject->DeviceObjectExtension != NULL)
-printk("mvolRootDeviceObject->DeviceObjectExtension->DeviceNode: %p\n", mvolRootDeviceObject->DeviceObjectExtension->DeviceNode);
-
-#endif
-
-	// IoInvalidateDeviceRelations(mvolRootDeviceObject, BusRelations);
-
-
-//	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVICE_INTERFACE_ARRIVAL, NULL, &dev->mount_point);
-
-	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVINTERFACE_DISK, NULL, &dev->mount_point);
-	if (!NT_SUCCESS(status)) {
-		printk("IoRegisterDeviceInterface(&GUID_DEVINTERFACE_DISK) returned %x (ignored)\n", status);
-	}
-	status = IoRegisterDeviceInterface(dev->windows_device, &GUID_DEVINTERFACE_VOLUME, NULL, &dev->mount_point);
-	if (!NT_SUCCESS(status)) {
-		printk("IoRegisterDeviceInterface(&GUID_DEVINTERFACE_VOLUME) returned %x (ignored)\n", status);
-	}
-
-#if 0
-printk("Into IoInvalidateDeviceRelations\n");
-// This blue screens
-	IoInvalidateDeviceRelations(dev->windows_device, BusRelations);
-printk("Out of IoInvalidateDeviceRelations\n");
-#endif
-
-#if 0
-
-// This currently blue screens.
-
-	struct _TARGET_DEVICE_CUSTOM_NOTIFICATION *notification;
-	// size_t notification_size = sizeof(*notification) - sizeof(notification->CustomDataBuffer) + sizeof(struct _CLASS_MEDIA_CHANGE_CONTEXT);
-	size_t notification_size = sizeof(*notification) - sizeof(notification->CustomDataBuffer);
-
-	notification = kzalloc(notification_size, 0, 'DRBD');
-	if (notification == NULL) {
-		printk("Couldn't allocate notification.\n");
-	} else {
-		notification->Size = notification_size;
-		notification->Version = 1;
-		notification->FileObject = NULL;
-		notification->NameBufferOffset = -1;
-		notification->Event = GUID_IO_VOLUME_MOUNT;
-/*
-		((struct _CLASS_MEDIA_CHANGE_CONTEXT*)&notification->CustomDataBuffer)->MediaChangeCount = 1;
-		((struct _CLASS_MEDIA_CHANGE_CONTEXT*)&notification->CustomDataBuffer)->NewState = 1;	// MediaPresent
-*/
-
-printk("into IoReportTargetDeviceChange\n");
-		status = IoReportTargetDeviceChange(dev->windows_device, notification);
-printk("out of IoReportTargetDeviceChange\n");
-		if (!NT_SUCCESS(status)) {
-			printk("IoRegisterDeviceInterface(GUID_IO_MEDIA_ARRIVAL) returned %x (ignored)\n", status);
-		}
-		kfree(notification);
-	}
-#endif
 
 	printk(KERN_INFO "Assigned device %S the mount point %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 
