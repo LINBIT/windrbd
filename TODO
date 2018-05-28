@@ -1,20 +1,15 @@
 --------------------------------------------------------------------
 
-TODO: invalidate read cache when becoming secondary.
+TODO: Check if windows device is really deleted on becoming secondary
 
-	Problem is that if windows is primary, becomes secondary and
-	then primary again the read cache is still filled from the
-	former primary.
+	There might be references and it is only marked as pending
+	delete (see IoDeleteDevice manpage)
 
-	Should invalidate when becoming secondary: reason is
-	that while secondary requests still are served from
-	the read cache (they should fail).
+TODO: check if windows device is accessed when it shouldn't
 
-	Update: Moving that to beta2 because we are a little bit
-	short on time. Document that defect.
+	(grep syslog)
 
-	Update: Implement this for the next beta, there should be
-	no windrbd device unless resource is primary.
+TODO: patches for lars (kref debug in failure path)
 
 TODO: Rebase windrbd branch of drbd-utils to its master
 	Also for drbd-headers. Then, also use the drbd-headers in
@@ -24,7 +19,9 @@ TODO: review README.md: some info is outdated.
 
 TODO: Make windows checkdisk (over unclean shutdown panel) work.
 
-TODO: race on umount
+	It seems that this appears when backing device is used
+	twice and modified, but how to make it disappear? cmdline
+	chkdsk works.
 
 TODO: renew the sysroot.zip
 
@@ -1998,4 +1995,37 @@ Done: Cleanly unmount windows NTFS on drbdadm down (or, later,
 	I/O still happens during unmount).
 
 	Linux now does not complain about unclean shutdown.
+
+Done: race on umount
+
+	Just to be sure, delete the symbolic link once volume
+	is opened for sending it the umount fscntl.
+
+Done: invalidate read cache when becoming secondary.
+
+	Problem is that if windows is primary, becomes secondary and
+	then primary again the read cache is still filled from the
+	former primary.
+
+	Should invalidate when becoming secondary: reason is
+	that while secondary requests still are served from
+	the read cache (they should fail).
+
+	Update: Moving that to beta2 because we are a little bit
+	short on time. Document that defect.
+
+	Update: Implement this for the next beta, there should be
+	no windrbd device unless resource is primary.
+
+	Update: It already works with mounting on becoming primary
+	and unmounting on becoming secondary. Need to restructure
+	code a bit because currently the block device is the
+	Device Extension of the Windows device object (and not
+	referenced somewhere else).
+
+	Update: now creating windrbd device immeadiately before
+	mount it (when becoming primary) and remove the device
+	right after unmounting it (when becoming secondary).
+
+	Works now as expected.
 
