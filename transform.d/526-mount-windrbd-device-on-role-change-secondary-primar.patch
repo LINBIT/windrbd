@@ -29,7 +29,7 @@ index 518b6ac..e897e0e 100644
 +	if (old_role == R_SECONDARY && role == R_PRIMARY)
 +		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr)
 +			if (windrbd_mount(device->this_bdev) != 0)
-+				drbd_warn(device, "Couldn't umount volume %d\n", vnr);
++				drbd_warn(device, "Couldn't mount volume %d\n", vnr);
 +
  out:
  	up(&resource->state_sem);
