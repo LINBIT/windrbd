@@ -1429,6 +1429,7 @@ char		gLogBuf[LOGBUF_MAXCNT][MAX_DRBDLOG_BUF];
 
 struct block_device *bdget(dev_t dev);
 int windrbd_mount(struct block_device *dev, const char *mount_point);
+int windrbd_umount(struct block_device *dev);
 
 /* From: include/linux/kdev_t.h : */
 #define MINORBITS	20

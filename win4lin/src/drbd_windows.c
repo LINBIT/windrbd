@@ -3553,7 +3553,7 @@ printk("out of IoReportTargetDeviceChange\n");
 	return 0;
 }
 
-static int umount_volume(struct block_device *bdev)
+int windrbd_umount(struct block_device *bdev)
 {
 	UNICODE_STRING drive;
 	OBJECT_ATTRIBUTES attr;
@@ -3563,6 +3563,10 @@ static int umount_volume(struct block_device *bdev)
 	PKEVENT event;
 	HANDLE event_handle;
 
+	if (bdev->mount_point.Buffer == NULL) {
+		printk("windrbd_umount() called without a known mount_point.\n");
+		return -1;
+	}
 	InitializeObjectAttributes(&attr, &bdev->mount_point, OBJ_KERNEL_HANDLE, NULL, NULL);
 
 	event = IoCreateNotificationEvent(NULL, &event_handle);
@@ -3578,6 +3582,10 @@ static int umount_volume(struct block_device *bdev)
 	if (status != STATUS_SUCCESS) {
 		printk("ZwOpenFile failed, status is %x\n", status);
 		return -1;
+	}
+
+	if (IoDeleteSymbolicLink(&bdev->mount_point) != STATUS_SUCCESS) {
+		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", bdev->mount_point.Buffer);
 	}
 
 printk("into ZwFsControlFile...\n");
@@ -3597,7 +3605,9 @@ printk("out of KeWaitForSingleObject ... \n");
 	}
 	ZwClose(f);
 
-printk("umount_volume succeeded.\n");
+	ExFreePool(bdev->mount_point.Buffer);
+	bdev->mount_point.Buffer = NULL;
+printk("windrbd_umount succeeded.\n");
 
 printk("bdev->windows_device->DeviceObjectExtension->DeviceNode: %p\n", bdev->windows_device->DeviceObjectExtension->DeviceNode);
 
@@ -3615,16 +3625,8 @@ static void destroy_block_device(struct kref *kref)
 		 * device after this has happened.
 		 */
 
-	if (bdev->mount_point.Buffer != NULL) {
-		umount_volume(bdev);
-
-			/* TODO: someone could re-open the device
-			   here, then it becomes mounted again. */
-		if (IoDeleteSymbolicLink(&bdev->mount_point) != STATUS_SUCCESS) {
-			WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", bdev->mount_point.Buffer);
-		}
-		ExFreePool(bdev->mount_point.Buffer);
-	}
+	if (bdev->mount_point.Buffer != NULL)
+		windrbd_umount(bdev);
 
 	ExFreePool(bdev->path_to_device.Buffer);
 	bdev->windows_device->DeviceExtension = NULL;
