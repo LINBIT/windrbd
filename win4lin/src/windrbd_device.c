@@ -591,7 +591,7 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL) {
-		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
+		printk(KERN_WARNING "I/O request: Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
