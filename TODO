@@ -22,14 +22,6 @@ TODO: Rebase windrbd branch of drbd-utils to its master
 
 TODO: review README.md: some info is outdated.
 
-TODO: Cleanly unmount windows NTFS on drbdadm down (or, later,
-	drbdadm secondary).
-
-	Currently, on drbdadm primary we get a panel showing 
-	unclean filesystem. Also when mounting under Linux,
-	it shows a warning. Chkdsk however works, and finds no
-	errors.
-
 TODO: Make windows checkdisk (over unclean shutdown panel) work.
 
 TODO: race on umount
@@ -1992,4 +1984,18 @@ Done: check if one can build windrbd branch of drbd-utils from github.
 
 Done: Inform windows about new drive.
 	So that explorer opens.
+
+Done: Cleanly unmount windows NTFS on drbdadm down (or, later,
+	drbdadm secondary).
+
+	Currently, on drbdadm primary we get a panel showing 
+	unclean filesystem. Also when mounting under Linux,
+	it shows a warning. Chkdsk however works, and finds no
+	errors.
+
+	Update: Done, call windrbd_umount() on state change
+	Primary -> Secondary *while still primary* (so that
+	I/O still happens during unmount).
+
+	Linux now does not complain about unclean shutdown.
 
