@@ -1,5 +1,39 @@
 --------------------------------------------------------------------
 
+TODO: Implement function stubs created when integrating DRBD 9.0.9
+
+TODO: on patching boot sector, inform Windows that file system is
+	raw now.
+	So that it disappears.
+
+TODO: Review patches if they are still needed.
+	Especially kmalloc(,, Tag) which is not neccessary.
+
+TODO: kzalloc should call kmalloc not the other way around.
+
+TODO: Test other file systems (FAT, FAT32, ...)
+	FAT does not work (Invalid function when accessing DRBD device)
+	FAT32 also not (something with flushing?)
+	Probably there is one important IOCTL missing.
+
+TODO: how and when is flush to backing device done?
+	This is important. Right now NTFS files only appear on
+	Linux when sync is done manually. Should sync at least
+	when becoming secondary. sync must be done while primary
+	(when secondary it would fail)
+
+	Update: is this fixed now?
+
+TODO: check if windrbd can be loaded not at boot time but later.
+
+	Working on it .. test with demand load on a fresh installed
+	windows (it blue screens on boot if there was a windrbd before
+	installed).
+
+	Update: imdisk can do it.
+
+TODO: Redo installation of sshd on Windows VM
+
 TODO: Check if windows device is really deleted on becoming secondary
 
 	There might be references and it is only marked as pending
@@ -130,72 +164,6 @@ TODO: logging: printk's without terminating \n not displayed.
 	Update: Please fix this, it is annoying, I just ran into
 	it.
 
-Almost Done: mountmanager / register device with PNP
-
-	Drive letter (mount point) is created now.
-
-	Right now, need to log in / log out to make windrbd drive
-	visible in explorer.
-
-	Need to have a valid DeviceNode (that is attach it somewhere
-	in the PNP device tree). It does not work to attach it to
-	the backing device (backing device then becomes invalid and
-	BSODs)
-
-	This seems to be a little bit more complicated than expected..
-	maybe attaching the windrbd device to the root device object
-	helps? (But root device object also does not have a device
-	node). Update: fails with PNP BSOD.
-
-	See Microsoft driver samples for how to do this.
-
-	Update: Most driver samples build atop of Windows driver
-	framework, we use Windows device model.
-
-	Update: We are now getting PnP IRPs when calling
-	ZwFsControlFile( ..., FSCTL_DISMOUNT_VOLUME, ..); According
-	to MicroSoft documentation, PnP manager does not send
-	IRP_MJ_PNP unless anybody in the system (driver / user app)
-	registers for PnP events (using IoRegisterPlugPlayNotification()
-	for example).
-	
-	See https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/irp-mn-query-device-relations:
-
-	Warning A device object cannot be passed to any routine that
-	takes a PDO as an argument until the PnP manager creates a
-	device node (devnode) for that object. (If the driver does
-	pass a device object, the system will bug check with Bug
-	Check 0xCA: PNP_DETECTED_FATAL_ERROR.) The PnP manager
-	creates the devnode in response to the 
-	IRP_MN_QUERY_DEVICE_RELATIONS request. The driver can safely
-	assume that the PDO's devnode has been created when it receives
-	an IRP_MN_QUERY_RESOURCE_REQUIREMENTS request.
-
-	Update: It seems we don't need all of this. Showing the
-	drive in Explorer is now implemented in drbd-utils (user
-	space only).
-
-TODO: clean up left over PNP code.
-
-TODO: Auto-promote seems not to work as expected.
-
-	dir h: should make device primary if possible and then
-	not fail.
-
-	Strange, but neither with read/write nor with read only we get
-	a create request on the windrbd device. (tested with windrbd-test)
-
-	Update: It seems to me that when we open \\.\K: the file system
-	device object (not the storage device object, that is, we) get
-	the open request. File system keeps references to the block device,
-	so it doesn't reopen it. We plan to release 1.0 without Auto-promote.
-	(also because we should not have a windrbd device when the
-	resource is secondary, because of the caching).
-
-	Update: We are delivering windrbd without auto-promote, for
-	various reasons (don't have device object when secondary,
-	for example).
-
 TODO: logging to localhost (windows) seems to cause boot problems (?)
 	When using 192.168.56.101 instead of 127.0.0.1
 
@@ -204,8 +172,6 @@ TODO: windrbd show-filesystem should check if device is used as
 
 TODO: drbd-util: Update manpage.
 	And write one for windrbd utility.
-
-TODO: Redo installation of sshd on Windows VM
 
 TODO: Why doesn't it work on Phil's machine?
 
@@ -216,7 +182,7 @@ TODO: remove all tags from alloc() routines
 
 TODO: Mount to NTFS directories.
 
-Maybe: remove drive letter from volume on attach.
+TODO: remove drive letter from volume on attach.
 	And not reassign it on detach: Users shouldn't modify
 	data on a backing device even when the device is down,
 	unless they really want it.
@@ -226,6 +192,8 @@ Maybe: remove drive letter from volume on attach.
 		how to recover the drive letter later (in case
 			DRBD is never needed again, or if it was
 			the wrong drive letter).
+
+	Update: are we doing this?
 
 TODO: fix the case where backing device contains a file system.
 	It should not blue screen.
@@ -258,7 +226,13 @@ TODO: New blue screen on connecting Windows 10 to buildhost Windows 7
 --------------------------------------------------------------
 windrbd-next-next
 
-In progress: Later: RCU needs change
+TODO: netlink transport over ioctl
+
+	(something that can verify permissions of caller)
+
+TODO: make debugfs work
+
+TODO: RCU needs change
 	At least call_rcu now calls the function. I don't think
 	that it is a good idea to port the linked list thing to
 	windows, we want to stay thin..
@@ -277,12 +251,6 @@ In progress: Later: RCU needs change
 
 TODO: /cygdrive/c/windrbd/var/lib/drbd should exist.
 
-In progress: how and when is flush to backing device done?
-	This is important. Right now NTFS files only appear on
-	Linux when sync is done manually. Should sync at least
-	when becoming secondary. sync must be done while primary
-	(when secondary it would fail)
-
 TODO: on windrbd show/hide filesystem check if attached.
 
 	And refuse to touch it if yes.
@@ -293,13 +261,6 @@ TODO: One day we want to not blue screen when backing device contains a file sys
 
 TODO: Kernel really should report an error if Bind() fails. 
 	For example if the local IP address does not exist.
-
-
-TODO: check if windrbd can be loaded not at boot time but later.
-
-	Working on it .. test with demand load on a fresh installed
-	windows (it blue screens on boot if there was a windrbd before
-	installed).
 
 TODO: review TODOs in source code.
 
@@ -326,13 +287,6 @@ TODO: support I/O vectors in windrbd device (irp_to_bio)
 
 	Also have a test that does WriteFileGather and ReadFileScatter.
 
-In Progress: Port agruen's test suite to cygwin.
-	exxe is running. Ask phil about how to install it.
-	Depends on chmod working (else cannot install
-	opensshd).
-
-	Update: chmod works now.
-
 TODO: Re-port drbd_transport_tcp.c to windrbd's
 	drbd_transport_wtcp.c.
 	Update: currently it seems that the problem is
@@ -346,50 +300,20 @@ TODO: Re-port drbd_transport_tcp.c to windrbd's
 
 TODO: test no I/O when disk is failed.
 
---------------------------------------------------------------
-
-TODO: Test other file systems (FAT, FAT32, ...)
-	FAT does not work (Invalid function when accessing DRBD device)
-	FAT32 also not (something with flushing?)
-	Probably there is one important IOCTL missing.
-
-TODO: Review patches if they are still needed.
-	Especially kmalloc(,, Tag) which is not neccessary.
-
-TODO: kzalloc should call kmalloc not the other way around.
-
-TODO: Do not have a root device.
-	It is useless.
-
 TODO: when losing Quorum go into read only mode.
 	(quorum means that our connected network contains > n/2 
-	(n .. total number of names) valid nodes.
+	(n .. total number of nodes) valid nodes.
 	This is currently being implemented in DRBD
 
 TODO: I/O seems to be rather slow even when being unconnected (and primary)
-
-TODO: on patching boot sector, inform Windows that file system is
-	raw now.
-	So that it disappears.
-
-TODO: read error: Volume dismounted
-	Nov 15 14:42:21 192.168.56.101  U13:22:16.265|0131b040 DrbdIoCompletion <4>[0xFFFFFA800131B040] DrbdIoCompletion: I/O failed with error c000026e
-	Nov 15 14:42:21 192.168.56.101  U13:22:16.265|0131b040 drbd_report_io_error <4>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x208): local READ IO error sector 0+1 on
-
-TODO: Understand what windows means by mounting / dismounting.
-
-TODO: check out drbd-utils from github and see if that works.
-	(once it is pushed)
-----------------------------------------------------------------------
 
 TODO: check out mantech wdrbd and see if it works (and why)
 	Update: mantech WDRBD lacks many features we have
 	in windrbd most notably: it cannot connect to a
 	Linux DRBD. It does not support internal meta disk.
 
-TODO: How is sync done? 
-	Data appears delayed on backing device (about 10 - 20 
-	seconds later).
+	If there is spare time have a look on it (at least read
+	the docs, need Chrome for it (!)).
 
 TODO: lots of more tests (corner cases like reading near the
 	end of the device)
@@ -397,12 +321,11 @@ TODO: lots of more tests (corner cases like reading near the
 TODO: have windrbd-test execute drbdadm as needed.
 	This is a nice to have.
 
-TODO: test if loading drbd driver later (not at boot) works.
-
------------------------------------------------------------------------
-
 TODO: Nice to have: Cygwin should have /dev/drbd<n> mapped to
 	\\Device\\Drbd<n>
+
+	Right now, we can read/write the windrbd device via
+	windrbd-test utility.
 
 TODO: have a make depend target
 	Or at least header file dependencies.
@@ -418,28 +341,19 @@ TODO: One day we want to have a more specific error message
 	than Device does not have a disk config if the device or
 	the drive letter already exist.
 
----------------
-
 TODO: We should really lock the backing devices using NT kernel
 	mechanisms.
 
 	Maybe use the mechanically locked IOCTL? Then one would
 	have to drbdadm down <res> --force
 
-TODO: Implement function stubs created when integrating DRBD 9.0.9
-
 TODO: Have a function that initialized all (global) spinlocks
 	and replace the racy solution (with an flag indicating
 	wheter it is initialized) we have now.
 
-TODO: cond_wait shouldn't busy loop. How is this done in Linux.
+TODO: cond_wait shouldn't busy loop. How is this done in Linux?
 
 TODO: #ifdef the Windows netlink code in drbd-utils
-
-TODO: Make drbd service stoppable
-	This probably takes some while
-	Update: with the new architecture that should be possible
-	one day.
 
 TODO: fix the macro redefinition problems in drbd_windows.c
 	For now we have to copy the function prototypes from MSDN.
@@ -448,7 +362,7 @@ TODO: fix the macro redefinition problems in drbd_windows.c
 	Update: check if the prototypes are still needed.
 	Update: we probably reject this.
 
---------------------------------
+-------------------------------------------------------------------------
 
 Done: fix patch errors on Linux side build (conversion)
 	a make clean did solve it
@@ -905,7 +819,7 @@ Done: make drbdmeta be able to read near the end of an NTFS
 	We now hide NTFS from windows when it is a backing
 	device.
 
-Rejected / Partially done: tcpdump nc and drbd and see if there is a difference.
+Done: tcpdump nc and drbd and see if there is a difference.
 	Didn't find anything yet, however there must be
 	something. Look at the packets with hex?
 
@@ -1020,10 +934,13 @@ Done: Right now, windrbd isn't listening for incoming connections.
 
 Done: eliminate bio_databuf fields.
 
-Rejected: Have sshd on Windows and work remotely
+Done: Have sshd on Windows and work remotely
 	Would be convenient, however setup is a little bit
 	complicated ...
 	This is a nice to have.
+
+	Yes it works. Needed to add a /etc/groups file with
+	correct contents.
 
 Done: errnos should match linux error codes
 	(so that errno cmd line tool works).
@@ -1110,7 +1027,7 @@ Done: Throw away lots of Mantech code.
 	Get rid of PVOLUME_EXTENSION as well.
 	Done
 
-Invalid: Release backing device:
+Done: Release backing device:
 	drbdadm up / drbdadm down / format f:
 	Not clear what this means. It works for me.
 	Reopen that when it bites.
@@ -1829,7 +1746,7 @@ w0 role:Secondary
     volume:17 replication:SyncSource peer-disk:Inconsistent
         done:0.00
 
-Same on other side.
+	Same on other side.
 
 	It seems that DRBD 9.0.13 fails to detect split brain
 	correctly (downgrading WinDRBD to DRBD 9.0.10 detects
@@ -2032,4 +1949,129 @@ Done: invalidate read cache when becoming secondary.
 	right after unmounting it (when becoming secondary).
 
 	Works now as expected.
+
+Done: mountmanager / register device with PNP
+
+	Drive letter (mount point) is created now.
+
+	Right now, need to log in / log out to make windrbd drive
+	visible in explorer.
+
+	Need to have a valid DeviceNode (that is attach it somewhere
+	in the PNP device tree). It does not work to attach it to
+	the backing device (backing device then becomes invalid and
+	BSODs)
+
+	This seems to be a little bit more complicated than expected..
+	maybe attaching the windrbd device to the root device object
+	helps? (But root device object also does not have a device
+	node). Update: fails with PNP BSOD.
+
+	See Microsoft driver samples for how to do this.
+
+	Update: Most driver samples build atop of Windows driver
+	framework, we use Windows device model.
+
+	Update: We are now getting PnP IRPs when calling
+	ZwFsControlFile( ..., FSCTL_DISMOUNT_VOLUME, ..); According
+	to MicroSoft documentation, PnP manager does not send
+	IRP_MJ_PNP unless anybody in the system (driver / user app)
+	registers for PnP events (using IoRegisterPlugPlayNotification()
+	for example).
+
+	See https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/irp-mn-query-device-relations:
+
+	Warning A device object cannot be passed to any routine that
+	takes a PDO as an argument until the PnP manager creates a
+	device node (devnode) for that object. (If the driver does
+	pass a device object, the system will bug check with Bug
+	Check 0xCA: PNP_DETECTED_FATAL_ERROR.) The PnP manager
+	creates the devnode in response to the
+	IRP_MN_QUERY_DEVICE_RELATIONS request. The driver can safely
+	assume that the PDO's devnode has been created when it receives
+	an IRP_MN_QUERY_RESOURCE_REQUIREMENTS request.
+
+	Update: It seems we don't need all of this. Showing the
+	drive in Explorer is now implemented in drbd-utils (user
+	space only).
+
+	Update: Now it notifies applications / explorer of new drive
+	via user space on becoming primary and removal of drive
+	when becoming secondary.
+
+Done: clean up left over PNP code.
+
+Rejected: Auto-promote seems not to work as expected.
+
+	dir h: should make device primary if possible and then
+	not fail.
+
+	Strange, but neither with read/write nor with read only we get
+	a create request on the windrbd device. (tested with windrbd-test)
+
+	Update: It seems to me that when we open \\.\K: the file system
+	device object (not the storage device object, that is, we) get
+	the open request. File system keeps references to the block device,
+	so it doesn't reopen it. We plan to release 1.0 without Auto-promote.
+	(also because we should not have a windrbd device when the
+	resource is secondary, because of the caching).
+
+	Update: We are delivering windrbd without auto-promote, for
+	various reasons (don't have device object when secondary,
+	for example).
+
+Rejected: Port agruen's test suite to cygwin.
+	exxe is running. Ask phil about how to install it.
+	Depends on chmod working (else cannot install
+	opensshd).
+
+	Update: chmod works now.
+
+	Update: We probably don't do this, according to phil,
+	it takes at least one month to complete.
+
+Rejected: Do not have a root device.
+	It is useless.
+
+	Update: Windows requires it. We can use it (later) for
+	debugfs or for the netlink ioctl.
+
+Done: Understand what windows means by mounting / dismounting.
+
+	Much like linux with udev always automounting everything. Also
+	ofter refers to assigning a drive letter to a volume, but also
+	the process of detecting a file system and initializing it is
+	part of the mount process. Mounting and unmounting (dismounting)
+	now works as expected.
+
+Done: check out drbd-utils from github and see if that works.
+	(once it is pushed)
+
+	Yes it works (windrbd branch)
+
+Done: How is sync done? 
+	Data appears delayed on backing device (about 10 - 20 
+	seconds later).
+
+	This is not part of DRBD (also not on Linux) it is the
+	responsibility of the application to send sync requests.
+	If it doesn't there is nothing DRBD (and hence also windrbd)
+	can do.
+
+	What it does, however is to cleanly dismount (unmount) the
+	volume on becoming secondary now.
+
+Duplicate: test if loading drbd driver later (not at boot) works.
+
+Duplicate: Make drbd service stoppable
+	This probably takes some while
+	Update: with the new architecture that should be possible
+	one day.
+
+Done: read error: Volume dismounted
+	Nov 15 14:42:21 192.168.56.101  U13:22:16.265|0131b040 DrbdIoCompletion <4>[0xFFFFFA800131B040] DrbdIoCompletion: I/O failed with error c000026e
+	Nov 15 14:42:21 192.168.56.101  U13:22:16.265|0131b040 drbd_report_io_error <4>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x208): local READ IO error sector 0+1 on
+
+	Does this still happen? If yes then please reopen, a lot has
+	changed meanwhile.
 
