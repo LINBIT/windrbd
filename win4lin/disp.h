@@ -23,67 +23,19 @@
 #define MVF_DISP_H
 
 #include <mountdev.h>
-#include "mvolse.h"
-#include <windows/ioctl.h>
-
-#define	MVOL_IOCOMPLETE_REQ(Irp, status, size)		\
-{							\
-	Irp->IoStatus.Status = status;			\
-	Irp->IoStatus.Information = size;		\
-	IoCompleteRequest( Irp, IO_NO_INCREMENT );	\
-	return status;					\
-}
-
-#define	MVOL_IOTYPE_SYNC		0x01
-#define	MVOL_IOTYPE_ASYNC		0x02
-
-typedef struct _MVOL_THREAD
-{
-	PDEVICE_OBJECT				DeviceObject;		// mvol Volume DeviceObject
-	BOOLEAN						Active;
-	BOOLEAN						exit_thread;
-	LIST_ENTRY					ListHead;
-	KSPIN_LOCK					ListLock;
-	MVOL_SECURITY_CLIENT_CONTEXT	se_client_context;
-	KEVENT						RequestEvent;
-	PVOID						pThread;
-	ULONG						Id;                 // MULTI_WRITE_HOOKER_THREADS
-	KEVENT						SplitIoDoneEvent;
-} MVOL_THREAD, *PMVOL_THREAD;
-
-#define	MVOL_MAGIC				0x853a2954
-
-#define	MVOL_READ_OFF			0x01
-#define	MVOL_WRITE_OFF			0x02
-
-/* flag bits per volume extension 
-	DW-1277: volume type is marked when drbd attaches */
-enum {
-	VOLUME_TYPE_REPL,		// for replicating volume.
-	VOLUME_TYPE_META,		// for meta volume.
-};
 
 	/* TODO: this should go away also one day. Must figure out
 	   what the root device should do one day. Maybe it is
 	   not needed at all. */
+
 typedef struct _ROOT_EXTENSION
 {
-    ULONG				Magic;
-    USHORT				Count;
-    USHORT				PhysicalDeviceNameLength;
-    WCHAR				PhysicalDeviceName[MAXDEVICENAME];
-    UNICODE_STRING      RegistryPath;
+	int dummy;
 } ROOT_EXTENSION, *PROOT_EXTENSION;
 
 extern PDEVICE_OBJECT		mvolRootDeviceObject;
 extern PDRIVER_OBJECT		mvolDriverObject;
 
-#define	IO_THREAD_WAIT(X)	KeWaitForSingleObject( &X->RequestEvent, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL );
-#define	IO_THREAD_SIG(X)	KeSetEvent( &X->RequestEvent, (KPRIORITY)0, FALSE ); 
-#define	IO_THREAD_CLR(X)	KeClearEvent( &X->RequestEvent );
-
-#define	FILTER_DEVICE_PROPOGATE_FLAGS			0
-#define	FILTER_DEVICE_PROPOGATE_CHARACTERISTICS		(FILE_REMOVABLE_MEDIA | FILE_READ_ONLY_DEVICE | FILE_FLOPPY_DISKETTE)
-
 extern int drbd_init(void);
+
 #endif MVF_DISP_H

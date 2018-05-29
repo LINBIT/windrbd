@@ -105,11 +105,6 @@ ULONG RtlRandomEx(
 #include "drbd_wrappers.h"
 #include "disp.h"
 
-	/* TODO: these should go away. */
-long		gLogCnt = 0;
-LONGLONG 	gTotalLogCnt = 0;
-char		gLogBuf[LOGBUF_MAXCNT][MAX_DRBDLOG_BUF] = {0,};
-
 int g_netlink_tcp_port;
 int g_daemon_tcp_port;
 
@@ -125,12 +120,6 @@ int g_handler_retry;
 
 /* Number of id_layer structs to leave in free list */
 #define MAX_IDR_FREE (MAX_IDR_LEVEL * 2)
-
-
-extern SIMULATION_DISK_IO_ERROR gSimulDiskIoError = {0,};
-
-// DW-1105: monitoring mount change thread state (FALSE : not working, TRUE : working)
-atomic_t g_monitor_mnt_working = FALSE;
 
 static LIST_HEAD(backing_devices);
 static struct mutex read_bootsector_mutex;
@@ -3062,52 +3051,6 @@ struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data,
 				      int size)
 {
 	return NULL;
-}
-
-/* Save current value in registry, this value is used when drbd is loading.*/
-/* TODO: remove, dead code */
-NTSTATUS SaveCurrentValue(PCWSTR valueName, int value)
-{
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	PROOT_EXTENSION pRootExtension = NULL;
-	UNICODE_STRING usValueName = { 0, };
-	OBJECT_ATTRIBUTES oa = { 0, };
-	HANDLE hKey = NULL;
-
-	if (NULL == mvolRootDeviceObject ||
-		NULL == mvolRootDeviceObject->DeviceExtension)
-	{
-		return STATUS_UNSUCCESSFUL;
-	}
-
-	do
-	{
-		pRootExtension = mvolRootDeviceObject->DeviceExtension;
-
-		InitializeObjectAttributes(&oa, &pRootExtension->RegistryPath, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
-
-		status = ZwOpenKey(&hKey, KEY_ALL_ACCESS, &oa);
-		if (!NT_SUCCESS(status))
-		{
-			break;
-		}
-
-		RtlInitUnicodeString(&usValueName, valueName);
-		status = ZwSetValueKey(hKey, &usValueName, 0, REG_DWORD, &value, sizeof(value));
-		if (!NT_SUCCESS(status))
-		{
-			break;
-		}
-
-	} while (FALSE);
-
-	if (NULL != hKey)
-	{
-		ZwClose(hKey);
-		hKey = NULL;
-	}
-
-	return status;
 }
 
 sector_t windrbd_get_capacity(struct block_device *bdev)

@@ -28,7 +28,6 @@
 #include "sys/wait.h"
 #include <linux/drbd_endian.h>
 #include "linux/types.h"
-#include "mvolmsg.h"
 
 #include "disp.h"
 #include <linux/mempool.h>
@@ -1178,30 +1177,11 @@ _In_opt_  PWSK_SOCKET AcceptSocket,
 _Outptr_result_maybenull_ PVOID *AcceptSocketContext,
 _Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
 );
-extern NTSTATUS QueryMountPoint(
-	_In_ PVOID MountPoint,
-	_In_ ULONG MountPointLength,
-	_Inout_ PVOID MountPointInfo,
-	_Out_ PULONG MountPointInfoLength);
 extern PMOUNTDEV_UNIQUE_ID QueryMountDUID(PDEVICE_OBJECT devObj);
 
 extern int initRegistry(__in PUNICODE_STRING RegistryPath);
-extern NTSTATUS DeleteRegistryValueKey(__in PUNICODE_STRING preg_path, __in PUNICODE_STRING pvalue_name);
-extern NTSTATUS DeleteDriveLetterInRegistry(char letter);
 extern void NTAPI NetlinkServerThread(PVOID p);
 extern void delete_block_device(struct kref *kref);
-// DW-1300
-
-extern BOOLEAN do_add_minor(unsigned int minor);
-extern void refresh_targetdev_list();
-
-extern int WriteEventLogEntryData(
-	ULONG	pi_ErrorCode,
-	ULONG	pi_UniqueErrorCode,
-	ULONG	pi_FinalStatus,
-	ULONG	pi_nDataItems,
-	...
-);
 
 extern ULONG ucsdup(_Out_ UNICODE_STRING * dst, _In_ WCHAR * src, ULONG size);
 extern void list_add_rcu(struct list_head *new, struct list_head *head);
@@ -1424,20 +1404,12 @@ struct blk_plug_cb {
 };
 
 extern struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data, int size);
-extern SIMULATION_DISK_IO_ERROR gSimulDiskIoError;
-
-NTSTATUS SaveCurrentValue(PCWSTR valueName, int value);
 
 BOOLEAN gbShutdown;
 
 extern struct mutex g_genl_mutex;
 
 extern int dtt_initialize(void);
-
-
-LONGLONG	gTotalLogCnt;
-long		gLogCnt;
-char		gLogBuf[LOGBUF_MAXCNT][MAX_DRBDLOG_BUF];
 
 struct block_device *bdget(dev_t dev);
 int windrbd_create_windows_device(struct block_device *bdev);

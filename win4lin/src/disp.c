@@ -26,7 +26,6 @@
 #include "windrbd_device.h"
 #include "drbd_wingenl.h"	
 #include "disp.h"
-#include "mvolmsg.h"
 
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
@@ -85,11 +84,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	DriverObject->DriverUnload = mvolUnload;
 
 	RootExtension = deviceObject->DeviceExtension;
-	RootExtension->Magic = MVOL_MAGIC;
-	RootExtension->Count = 0;
-	ucsdup(&RootExtension->RegistryPath, RegistryPath->Buffer, RegistryPath->Length);
-	RootExtension->PhysicalDeviceNameLength = nameUnicode.Length;
-	RtlCopyMemory(RootExtension->PhysicalDeviceName, nameUnicode.Buffer, nameUnicode.Length);
 
 	downup_rwlock_init(&transport_classes_lock); //init spinlock for transport 
 	mutex_init(&g_genl_mutex);
