@@ -19,7 +19,6 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-/* TODO: either fix the mountmanager code or throw it away */
 #include <initguid.h>
 
 #include "drbd_windows.h"
@@ -30,17 +29,7 @@
 #include <wdmguid.h>
 #include <ntddstor.h>
 #include <IoEvent.h>
-/* TODO: make this include work. */
-// #include <Ntifs.h>
 
-#if 0
-DEFINE_GUID(MOUNTDEV_MOUNTED_DEVICE_GUID, 0x53F5630D, 0xB6BF, 0x11D0, 0x94, 0xF2, 0x00, 0xA0, 0xC9, 0x1E, 0xFB, 0x8B);
-
-/* TODO: randomize */
-DEFINE_GUID(DRBD_DEVICE_CLASS_GUID, 0x53F5630A, 0xB6BF, 0x11D0, 0x94, 0xF2, 0x00, 0xA0, 0xC9, 0x1E, 0xFB, 0x8B);
-#endif
-
-/* Does not work: unresolved external symbol MOUNTDEV_MOUNTED_DEVICE_GUID */
 #include <mountmgr.h>
 
 	/* Define this if you want a built in test for backing device
@@ -135,11 +124,6 @@ void msleep(int ms)
 		d.QuadPart = -10000LL * ms;
 		KeDelayExecutionThread(KernelMode, FALSE, &d);
 	}
-}
-
-void init_windrbd(void)
-{
-	mutex_init(&read_bootsector_mutex);
 }
 
 //__ffs - find first bit in word.
@@ -376,7 +360,6 @@ int find_next_zero_bit(const ULONG_PTR * addr, ULONG_PTR size, ULONG_PTR offset)
     return offset + find_first_zero_bit(p, size);
  }
 
-static int g_test_and_change_bit_flag = 0;
 static spinlock_t g_test_and_change_bit_lock;
 
 int test_and_change_bit(int nr, const ULONG_PTR *addr)
@@ -386,23 +369,12 @@ int test_and_change_bit(int nr, const ULONG_PTR *addr)
 	ULONG_PTR old;
 	ULONG_PTR flags;
 
-	/* TODO: racy. Someone might call spin_lock_irq and somebody
-	 * else later spin_lock_init. We should have a function that
-	 * initializes all the spin locks before anything else happens.
-	 */
-
-	if (!g_test_and_change_bit_flag)
-	{
-		spin_lock_init(&g_test_and_change_bit_lock);
-		g_test_and_change_bit_flag = 1;
-	}
-
 	spin_lock_irq(&g_test_and_change_bit_lock);
 	old = *p;
 	*p = old ^ mask;
 	spin_unlock_irq(&g_test_and_change_bit_lock);
 
-    return (old & mask) != 0;
+	return (old & mask) != 0;
 }
 
 LONG_PTR xchg(LONG_PTR *target, LONG_PTR value)
@@ -494,36 +466,28 @@ LONGLONG atomic_read64(const atomic_t64 *v)
 	return InterlockedAnd64((LONGLONG*)v, 0xffffffffffffffff);
 }
 
-	/* TODO: we don"t need to initialize memory here, it should
-	   be just the other way round (kzalloc calling kmalloc) 
-	 */
-
 	/* TODO: we would save patches to DRBD if we skip the tag
 	   here .. aren't using Windows Degugger anyway at the moment..
 	 */
 
-void * kmalloc(int size, int flag, ULONG Tag)
+void *kmalloc(int size, int flag, ULONG Tag)
 {
-	return kcalloc(size, 1, flag, Tag); // => adjust size, count parameter mismatch
+	return ExAllocatePoolWithTag(NonPagedPool, size, Tag);
 }
 
-void * kcalloc(int size, int count, int flag, ULONG Tag)
+void *kcalloc(int size, int count, int flag, ULONG Tag)
 {
-	return kzalloc(size * count, 0, Tag);
+	return kzalloc(size*count, 0, Tag);
 }
 
-void * kzalloc(int size, int flag, ULONG Tag)
+void *kzalloc(int size, int flag, ULONG Tag)
 {
 	void *mem;
-    static int fail_count = 0;
 
-	mem = ExAllocatePoolWithTag(NonPagedPool, size, Tag);
-	if (!mem)
-	{
-		return NULL;
-	}
+	mem = kmalloc(size, flag, Tag);
+	if (mem != NULL)
+		RtlZeroMemory(mem, size);
 
-	RtlZeroMemory(mem, size);
 	return mem;
 }
 
@@ -536,7 +500,7 @@ char *kstrdup(const char *s, int gfp)
 		return NULL;
 
 	len = strlen(s) + 1;
-	buf = kzalloc(len, gfp, 'C3DW');
+	buf = kmalloc(len, gfp, 'C3DW');
 	if (buf)
 		memcpy(buf, s, len);
 	return buf;
@@ -556,17 +520,17 @@ struct page *alloc_page(int flag)
 	}	
 	RtlZeroMemory(p, sizeof(struct page));
 	
-		/* TODO: is this page aligned? */
-		/* TODO: kmalloc? */
-	p->addr = kzalloc(PAGE_SIZE, 0, 'E3DW');
+		/* Under Windows this is defined to align to a page
+		 * of PAGE_SIZE bytes. PAGE_SIZE itself is always
+		 * 4096 under Windows.
+		 */
+
+	p->addr = kmalloc(PAGE_SIZE, 0, 'E3DW');
 	if (!p->addr)	{
 		kfree(p); 
 		WDRBD_INFO("alloc_page PAGE_SIZE failed\n");
 		return NULL;
 	}
-		/* TODO: Sure? */
-	RtlZeroMemory(p->addr, PAGE_SIZE);
-
 	kref_init(&p->kref);
 
 	return p;
@@ -643,11 +607,6 @@ void hack_alloc_page(struct block_device *dev)
 }
 #endif
 
-void drbd_bp(char *msg)
-{
-    WDRBD_ERROR("breakpoint: msg(%s)\n", msg);
-}
-
 __inline void kfree(const void * x)
 {
 	if (x)
@@ -678,10 +637,9 @@ int kref_put(struct kref *kref, void (*release)(struct kref *kref))
 	return 0;
 }
 
-/* TODO: originally this is void. */
-int kref_get(struct kref *kref)
+void kref_get(struct kref *kref)
 {
-	return atomic_inc_return(&kref->refcount) < 2;
+	atomic_inc(&kref->refcount);
 }
 
 void kref_init(struct kref *kref)
@@ -691,9 +649,8 @@ void kref_init(struct kref *kref)
 
 struct request_queue *bdev_get_queue(struct block_device *bdev)
 {
-	if (bdev && bdev->bd_disk) {
+	if (bdev && bdev->bd_disk)
 		return bdev->bd_disk->queue;
-	}
 
 	return NULL;
 }
@@ -2525,8 +2482,6 @@ void *idr_get_next(struct idr *idp, int *nextidp)
 	return NULL;
 }
 
-#define DRBD_REGISTRY_VOLUMES       L"\\volumes"
-
 // DW-1109: delete drbd bdev when ref cnt gets 0, clean up all resources that has been created in create_drbd_block_device.
 void delete_block_device(struct kref *kref)
 {
@@ -3497,3 +3452,10 @@ void unregister_blkdev(int major, const char *name)
 {
 	/* does nothing */
 }
+
+void init_windrbd(void)
+{
+	mutex_init(&read_bootsector_mutex);
+	spin_lock_init(&g_test_and_change_bit_lock);
+}
+

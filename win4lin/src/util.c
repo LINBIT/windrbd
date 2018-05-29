@@ -144,7 +144,7 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 		status = RtlUnicodeToUTF8N(g_syslog_ip, SYSLOG_IP_SIZE, &ip_length, (WCHAR*) aucTemp, ulLength);
 	}
 	if (status != STATUS_SUCCESS) {
-		strcpy(g_syslog_ip, "192.168.56.103");
+		strcpy(g_syslog_ip, "127.0.0.1");
 	} else {
 		g_syslog_ip[ip_length] = '\0';
 	}
@@ -158,28 +158,6 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 
 	return 0;
 }
-
-/**
- * @brief
- *	caller should release unicode's buffer(in bytes)
- */
-ULONG ucsdup(_Out_ UNICODE_STRING * dst, _In_ WCHAR * src, ULONG size)
-{
-	if (!dst || !src) {
-		return 0;
-	}
-
-    dst->Buffer = (WCHAR *)ExAllocatePoolWithTag(NonPagedPool, size, '46DW');
-	if (dst->Buffer) {
-		dst->Length = size;
-		dst->MaximumLength = size + sizeof(WCHAR);
-		RtlCopyMemory(dst->Buffer, src, size);
-		return size;
-	}
-
-	return 0;
-}
-
 
 char *kvasprintf(int flags, const char *fmt, va_list args)
 {

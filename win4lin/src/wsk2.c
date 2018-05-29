@@ -324,10 +324,6 @@ CloseSocketLocal(
 		return Status;
 	}
 
-	if(gbShutdown) {
-		IoFreeIrp(Irp);
-		return STATUS_UNSUCCESSFUL;
-	}
 	Status = ((PWSK_PROVIDER_BASIC_DISPATCH) WskSocket->Dispatch)->WskCloseSocket(WskSocket, Irp);
 	if (Status == STATUS_PENDING) {
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
@@ -1026,12 +1022,6 @@ SendLocal(
 
 	Flags |= WSK_FLAG_NODELAY;
 
-	if(gbShutdown) { // DW-1015 fix crash. WskSocket->Dispatch)->WskSend is NULL while machine is shutdowning
-		IoFreeIrp(Irp);
-		FreeWskBuffer(&WskBuffer);
-		return SOCKET_ERROR;
-	}
-
 	if (!WskSocket->Dispatch) { // DW-1029 to prevent possible contingency, check if dispatch table is valid.
 		IoFreeIrp(Irp);
 		FreeWskBuffer(&WskBuffer);
@@ -1199,12 +1189,6 @@ LONG NTAPI ReceiveLocal(
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 
 	if (!NT_SUCCESS(Status)) {
-		FreeWskBuffer(&WskBuffer);
-		return SOCKET_ERROR;
-	}
-
-	if(gbShutdown) {
-		IoFreeIrp(Irp);
 		FreeWskBuffer(&WskBuffer);
 		return SOCKET_ERROR;
 	}
@@ -1540,11 +1524,6 @@ AcceptLocal(
 		return NULL;
 	}
 
-	if(gbShutdown) {
-		*RetStaus = SOCKET_ERROR;
-		IoFreeIrp(Irp);
-		return NULL;	
-	}
 	Status = ((PWSK_PROVIDER_LISTEN_DISPATCH) WskSocket->Dispatch)->WskAccept(
 			WskSocket,
 			0,

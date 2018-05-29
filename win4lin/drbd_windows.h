@@ -732,7 +732,7 @@ extern void mutex_unlock(struct mutex *m);
 extern int mutex_trylock(struct mutex *m);
 
 extern int kref_put(struct kref *kref, void (*release)(struct kref *kref));
-extern int kref_get(struct kref *kref);
+extern void kref_get(struct kref *kref);
 extern void kref_init(struct kref *kref);
 
 /* TODO: eventually use refcount_t from linux */
@@ -1147,7 +1147,6 @@ extern void panic(const char *fmt, ...);
 extern int g_netlink_tcp_port;
 extern int g_daemon_tcp_port;
 
-extern WCHAR g_ver[];
 #define SYSLOG_IP_SIZE 64
 extern char g_syslog_ip[];
 
@@ -1156,8 +1155,6 @@ int g_handler_timeout;
 int g_handler_retry;
 
 extern PETHREAD	g_NetlinkServerThread;
-extern union drbd_state g_mask; 
-extern union drbd_state g_val;
 ///
 
 extern
@@ -1177,13 +1174,11 @@ _In_opt_  PWSK_SOCKET AcceptSocket,
 _Outptr_result_maybenull_ PVOID *AcceptSocketContext,
 _Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
 );
-extern PMOUNTDEV_UNIQUE_ID QueryMountDUID(PDEVICE_OBJECT devObj);
 
 extern int initRegistry(__in PUNICODE_STRING RegistryPath);
 extern void NTAPI NetlinkServerThread(PVOID p);
 extern void delete_block_device(struct kref *kref);
 
-extern ULONG ucsdup(_Out_ UNICODE_STRING * dst, _In_ WCHAR * src, ULONG size);
 extern void list_add_rcu(struct list_head *new, struct list_head *head);
 extern void list_add_tail_rcu(struct list_head *new,   struct list_head *head);
 extern void list_del_rcu(struct list_head *entry);
@@ -1404,8 +1399,6 @@ struct blk_plug_cb {
 };
 
 extern struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data, int size);
-
-BOOLEAN gbShutdown;
 
 extern struct mutex g_genl_mutex;
 
