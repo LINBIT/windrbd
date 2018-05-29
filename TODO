@@ -1,5 +1,9 @@
 --------------------------------------------------------------------
 
+TODO: review README.md: some info is outdated.
+
+TODO: user mode helpers
+
 TODO: Implement function stubs created when integrating DRBD 9.0.9
 
 TODO: on patching boot sector, inform Windows that file system is
@@ -8,8 +12,6 @@ TODO: on patching boot sector, inform Windows that file system is
 
 TODO: Review patches if they are still needed.
 	Especially kmalloc(,, Tag) which is not neccessary.
-
-TODO: kzalloc should call kmalloc not the other way around.
 
 TODO: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
@@ -32,8 +34,6 @@ TODO: check if windrbd can be loaded not at boot time but later.
 
 	Update: imdisk can do it.
 
-TODO: Redo installation of sshd on Windows VM
-
 TODO: Check if windows device is really deleted on becoming secondary
 
 	There might be references and it is only marked as pending
@@ -45,15 +45,9 @@ TODO: check if windows device is accessed when it shouldn't
 
 TODO: patches for lars (kref debug in failure path)
 
-TODO: remove more dead code.
-
-	This is always fun.
-
 TODO: Rebase windrbd branch of drbd-utils to its master
 	Also for drbd-headers. Then, also use the drbd-headers in
 	drbd (and remove drbd-headers patches)
-
-TODO: review README.md: some info is outdated.
 
 TODO: Make windows checkdisk (over unclean shutdown panel) work.
 
@@ -2074,4 +2068,13 @@ Done: read error: Volume dismounted
 
 	Does this still happen? If yes then please reopen, a lot has
 	changed meanwhile.
+
+Done: Redo installation of sshd on Windows VM
+
+Done: remove more dead code.
+
+	This is always fun.
+	Saved about 1600 lines.
+
+Done: kzalloc should call kmalloc not the other way around.
 
