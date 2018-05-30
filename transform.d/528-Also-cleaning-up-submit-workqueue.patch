@@ -1,0 +1,36 @@
+From 2b4f6534c39cdc864111979741e7762c0f1c0a41 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 30 May 2018 16:09:05 +0200
+Subject: [PATCH] Also cleaning up submit workqueue.
+
+---
+ drbd/drbd_main.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 8e54cf8..9183640 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3712,7 +3712,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	if (device_conf->mount_point && device_conf->mount_point[0]) {
+ 		if (windrbd_set_mount_point(block_device, device_conf->mount_point) < 0) {
+ 			err = ERR_INVALID_REQUEST;
+-			goto out_couldnt_mount;
++			goto out_couldnt_set_mount_point;
+ 		}
+ 	}
+ 
+@@ -3739,7 +3739,9 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 
+ 	return NO_ERROR;
+ 
+-out_couldnt_mount:
++out_couldnt_set_mount_point:
++	destroy_workqueue(device->submit.wq);
++	device->submit.wq = NULL;
+ 
+ out_remove_peer_device:
+ 	list_add_rcu(&tmp, &device->peer_devices);
+-- 
+2.17.0
+
