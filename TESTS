@@ -1,7 +1,26 @@
-To test:
+-----------------------------------------
+
+test-loop.sh
+
+Ran 100+ times.
+
+--------------------------------------
+
+drbdadm up w0
+drbdadm primary w0
+write-fs-loop.sh
+
+On Linux side:
+
+./updown-loop-wait-until-synced.sh
+
+write-fs-loop.sh ran 1700 times.
+
+----------------------------------------
 
 Invalid disk name in drbd.conf.
 
 Valid device as disk name in drbd.conf.
 
 Symlink as disk name in drbd.conf.
+
