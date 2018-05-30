@@ -1,5 +1,20 @@
 --------------------------------------------------------------------
 
+TODO: install kernel manpages
+
+	Must install from kernel source using 
+	make mandocs ; sudo make installmandocs
+
+TODO: other BSOD from Devin: Handle Send errors correctly.
+
+	2018-05-17T13:37:08.904002-07:00 legolas.us.linbit  U20:37:08.888|8e3a8040(sender) SendPageCompletionRoutine <3>SendPage completed with status c000020d
+
+	But not reported to DRBD.
+
+TODO: activate Ctrl-Alt-Del on Windows Server 2016 VM for VNCViewer
+
+	See https://community.spiceworks.com/how_to/19223-how-to-enable-the-software-secure-attention-sequence-policy-workgroup-procedure
+
 TODO: review README.md: some info is outdated.
 
 TODO: user mode helpers
@@ -9,9 +24,6 @@ TODO: Implement function stubs created when integrating DRBD 9.0.9
 TODO: on patching boot sector, inform Windows that file system is
 	raw now.
 	So that it disappears.
-
-TODO: Review patches if they are still needed.
-	Especially kmalloc(,, Tag) which is not neccessary.
 
 TODO: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
@@ -39,12 +51,6 @@ TODO: Check if windows device is really deleted on becoming secondary
 	There might be references and it is only marked as pending
 	delete (see IoDeleteDevice manpage)
 
-TODO: check if windows device is accessed when it shouldn't
-
-	(grep syslog)
-
-TODO: patches for lars (kref debug in failure path)
-
 TODO: Rebase windrbd branch of drbd-utils to its master
 	Also for drbd-headers. Then, also use the drbd-headers in
 	drbd (and remove drbd-headers patches)
@@ -56,12 +62,6 @@ TODO: Make windows checkdisk (over unclean shutdown panel) work.
 	chkdsk works.
 
 TODO: renew the sysroot.zip
-
-TODO: other BSOD from Devin: Handle Send errors correctly.
-
-	2018-05-17T13:37:08.904002-07:00 legolas.us.linbit  U20:37:08.888|8e3a8040(sender) SendPageCompletionRoutine <3>SendPage completed with status c000020d
-
-	But not reported to DRBD.
 
 TODO: From Devin: make winsat run.
 
@@ -291,6 +291,12 @@ TODO: Re-port drbd_transport_tcp.c to windrbd's
 
 	Update: we should integrate drbd_transport_tcp back to
 	converted-sources.
+
+	Update: it seems to be doable, but first change the
+	wsk2.c API to match the kernel API (Send->kernel_send_msg
+	and so on).
+
+TODO: rebase drbd_wrappers.h to upstream DRBD
 
 TODO: test no I/O when disk is failed.
 
@@ -2077,4 +2083,25 @@ Done: remove more dead code.
 	Saved about 1600 lines.
 
 Done: kzalloc should call kmalloc not the other way around.
+
+Done: Review patches if they are still needed.
+	Especially kmalloc(,, Tag) which is not neccessary.
+
+	Update: The Tag thing is a perl script which actually
+	works quite well (unusual for a perl script ...), leave
+	it in, maybe someday one wants to use windows debugger.
+
+	Some features are hard-patched out (discard, biosets, debugfs,
+	online verify (!), RB_CONGESTED_REMOTE, write same, disk stats)
+	maybe we want to implement them one day.
+
+Done: patches for lars (kref debug in failure path)
+
+Done: More clean up in drbd_create_device (init_submitter)
+
+Done: check if windows device is accessed when it shouldn't
+
+	(grep syslog)
+
+	Right now, this didn't happen.
 
