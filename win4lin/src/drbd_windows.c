@@ -3049,38 +3049,28 @@ int windrbd_thread_setup(struct drbd_thread *thi)
 	return STATUS_SUCCESS;
 }
 
-/* This fills a name of the form \DosDevices\x: into unicode string
-   dos name where drive letter is 'C'+minor (C:=0, D:=1, ...). 
-   If internal is set, the result is \Device\Drbd<n> instead where
-   n is a number (Drbd1, ...)
-
-   TODO: This should eventually be replaced by a udev-like mechanism 
-   where the user specifies the name in the drbd.conf.
-
-   Space is allocated by this function and must be freed by the
+/* Space is allocated by this function and must be freed by the
    caller.
  */
-
-	/* Note that this is unicode characters */
-	/* TODO: lookup windows constant and use it */
-
-// #define MAX_WINDOWS_KERNEL_PATH_LENGTH 32767
-	/* TODO: if string is too long RtlSomethingPrintf returns
-	 * an error */
-#define MAX_WINDOWS_KERNEL_PATH_LENGTH 200
 
 static int minor_to_x_name(UNICODE_STRING *name, int minor, const char *mount_point)
 {
 	NTSTATUS status;
+	size_t len = NTSTRSAFE_UNICODE_STRING_MAX_CCH - 1;
 
-	name->Buffer = ExAllocatePool(NonPagedPool, MAX_WINDOWS_KERNEL_PATH_LENGTH * sizeof(name->Buffer[0]));
+		/* RtlUnicodeStringPrintf returns INVALID_PARAMETER
+		 * if buffer is too big ...
+		 */
+	if (len > 10000) len = 10000;
+
+	name->Buffer = ExAllocatePool(NonPagedPool, len * sizeof(name->Buffer[0]));
 
 	if (name->Buffer == NULL) {
 		WDRBD_WARN("minor_to_x_name: couldn't allocate memory for name buffer\n");
 		return -ENOMEM;
 	}
 	name->Length = 0;
-	name->MaximumLength = MAX_WINDOWS_KERNEL_PATH_LENGTH;
+	name->MaximumLength = (len - 1) * sizeof(name->Buffer[0]);
 
 	if (mount_point) {
 		ANSI_STRING a;
