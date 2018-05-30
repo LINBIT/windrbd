@@ -1531,15 +1531,15 @@ void kobject_get(struct kobject *kobj)
 
 void del_gendisk(struct gendisk *disk)
 {
-	// free disk
+	// TODO: free disk
 }
 
- void destroy_workqueue(struct workqueue_struct *wq)
+void destroy_workqueue(struct workqueue_struct *wq)
 {
-	 KeSetEvent(&wq->killEvent, 0, FALSE);
-	 KeWaitForSingleObject(wq->pThread, Executive, KernelMode, FALSE, NULL);
-	 ObDereferenceObject(wq->pThread);
-     kfree(wq);
+	KeSetEvent(&wq->killEvent, 0, FALSE);
+	KeWaitForSingleObject(wq->pThread, Executive, KernelMode, FALSE, NULL);
+	ObDereferenceObject(wq->pThread);
+	kfree(wq);
 }
 
  void sock_release(struct socket *sock)
