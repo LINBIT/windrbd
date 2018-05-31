@@ -692,10 +692,12 @@ int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_CONNECTION_ABORTED:
 		return -ECONNABORTED;
 	case STATUS_IO_TIMEOUT:
+printk("TIMEOUT\n");
 		return -EAGAIN;
 	case STATUS_INVALID_DEVICE_STATE:
 		return -EINVAL;
 	default:
+		printk("Unknown status %x, returning -EIO.\n", status);
 		return -EIO;
 	}
 }
@@ -713,7 +715,7 @@ SendPage(
 	struct _IRP *Irp;
 	struct _WSK_BUF *WskBuffer;
 	struct send_page_completion_info *completion;
-	NTSTATUS Status;
+	NTSTATUS status;
 
 	if (g_SocketsState != INITIALIZED || !socket || !page || ((int) len <= 0))
 		return -EINVAL;
@@ -731,11 +733,11 @@ SendPage(
 		return -ENOMEM;
 	}
 
-	Status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE);
-	if (!NT_SUCCESS(Status)) {
+	status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE);
+	if (!NT_SUCCESS(status)) {
 		kfree(completion);
 		kfree(WskBuffer);
-		return SOCKET_ERROR;
+		return -ENOMEM;
 	}
 
 	get_page(page);
@@ -748,7 +750,7 @@ SendPage(
 		kfree(completion);
 		kfree(WskBuffer);
 		FreeWskBuffer(WskBuffer);
-		return SOCKET_ERROR;
+		return -ENOMEM;
 	}
 	IoSetCompletionRoutine(Irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
 
@@ -757,13 +759,14 @@ SendPage(
 	else
 		flags &= ~WSK_FLAG_NODELAY;
 
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskSend(
+	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskSend(
 		socket->sk,
 		WskBuffer,
 		flags,
 		Irp);
 
-	switch (Status) {
+
+	switch (status) {
 	case STATUS_PENDING:
 			/* This now behaves just like Linux kernel socket
 			 * sending functions do for TCP/IP: on return,
@@ -781,7 +784,7 @@ SendPage(
 		return (LONG) Irp->IoStatus.Information;
 
 	default:
-		return winsock_to_linux_error(Irp->IoStatus.Information);
+		return winsock_to_linux_error(status);
 	}
 }
 
@@ -1294,6 +1297,7 @@ Bind(
 	return Status;
 }
 
+	/* TODO: why is this named accept local? */
 PWSK_SOCKET
 NTAPI
 AcceptLocal(
@@ -1705,13 +1709,12 @@ int sock_create_kern(
 			SocketContext, Dispatch, Flags);
 
 	if (socket->sk == NULL) {
-		err = -1;
+		err = -ENOMEM;
 		kfree(socket);
 		goto out;
-	} else {
-		*out = socket;
 	}
 	socket->error_status = STATUS_SUCCESS;
+	*out = socket;
 
 out:
 	return err;
