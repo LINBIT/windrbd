@@ -218,7 +218,7 @@ enum rq_flag_bits {
 #define EWOULDBLOCK				11
 #define EINTR					4
 #define ENOSPC					28
-#define ECONNRESET				17
+#define ECONNRESET				104
 #define ERESTARTSYS				512
 #define EIO					5
 #define ENOMSG					42
@@ -238,6 +238,7 @@ enum rq_flag_bits {
 #define	ESTALE					11
 #define ECONNABORTED				103
 #define ENODATA					61
+#define ENOTCONN				107
 
 #define SIGXCPU					100
 #define SIGHUP					101
@@ -427,6 +428,8 @@ struct socket {
 	int sk_rcvtimeo;
 
 	int no_delay:1;
+
+	NTSTATUS error_status;
 
 	char name[32];
 };

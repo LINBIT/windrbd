@@ -1223,7 +1223,7 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
 			transport->ko_count = transport->net_conf->ko_count;
 		}
 
-		sent = SendPage(socket->sk, page, offset, len, 0);
+		sent = SendPage(socket, page, offset, len, 0);
 		if (sent <= 0) {
 			if (sent == -EAGAIN) {
 				if (drbd_stream_send_timed_out(transport, stream))

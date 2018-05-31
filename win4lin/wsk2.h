@@ -2,6 +2,7 @@
 #include <ntddk.h>
 #include <wsk.h>
 
+/* TODO: this should go away */
 #define SOCKET_ERROR -1
 
 enum
@@ -98,20 +99,6 @@ SocketConnect(
 	__inout  NTSTATUS* pStatus
 );
 
-#ifdef _WSK_IRP_REUSE
-LONG
-NTAPI
-SendEx(
-__in PIRP           pIrp,
-__in PWSK_SOCKET	WskSocket,
-__in PVOID			Buffer,
-__in ULONG			BufferSize,
-__in ULONG			Flags,
-__in ULONG			Timeout,
-__in KEVENT			*send_buf_kill_event
-);
-#endif
-
 LONG
 NTAPI
   Send(
@@ -128,23 +115,11 @@ NTAPI
 LONG
 NTAPI
 SendPage(
-        __in PWSK_SOCKET        WskSocket,
+        __in struct socket	*socket,
         __in struct page        *page,
         __in ULONG              offset,
         __in ULONG              len,
         __in ULONG              Flags
-);
-
-LONG
-NTAPI
-SendAsync(
-	__in PWSK_SOCKET	WskSocket,
-	__in PVOID			Buffer,
-	__in ULONG			BufferSize,
-	__in ULONG			Flags,
-	__in ULONG			Timeout,
-	__in struct			drbd_transport *transport,
-	__in enum			drbd_stream stream
 );
 
 LONG

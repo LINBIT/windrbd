@@ -180,6 +180,7 @@ __in PIRP pIrp
 struct send_page_completion_info {
 	struct page *page;
 	struct _WSK_BUF *wsk_buffer;
+	struct socket *socket;
 };
 
 NTSTATUS
@@ -189,10 +190,13 @@ NTAPI SendPageCompletionRoutine(
 	__in struct send_page_completion_info *completion
 
 )
-	/* TODO: if we get an error here, how do we tell DRBD? */
 { 
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
-		printk(KERN_ERR "SendPage completed with status %x\n", Irp->IoStatus.Status);
+		if (completion->socket->error_status != STATUS_SUCCESS &&
+		    completion->socket->error_status != Irp->IoStatus.Status)
+			printk(KERN_WARNING "Last error status of socket was %x, now got %x\n", completion->socket->error_status, Irp->IoStatus.Status);
+
+		completion->socket->error_status = Irp->IoStatus.Status;
 	}
 		/* Also unmaps the pages of the containg Mdl */
 	FreeWskBuffer(completion->wsk_buffer);
@@ -541,120 +545,6 @@ char *GetSockErrorString(NTSTATUS status)
 	return ErrorString;
 }
 
-#ifdef _WSK_IRP_REUSE
-// for Reusing IRP, first, create IRP outside, and input SendEx's parameter. Irp can be freed in finalize point.
-LONG
-NTAPI
-SendEx(
-__in PIRP           pIrp,
-__in PWSK_SOCKET	WskSocket,
-__in PVOID			Buffer,
-__in ULONG			BufferSize,
-__in ULONG			Flags,
-__in ULONG			Timeout,
-__in KEVENT			*send_buf_kill_event
-)
-{
-	KEVENT		CompletionEvent = { 0 };
-	WSK_BUF		WskBuffer = { 0 };
-	LONG		BytesSent = SOCKET_ERROR;
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
-
-	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || !pIrp || ((int)BufferSize <= 0))
-		return SOCKET_ERROR;
-
-
-	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		return SOCKET_ERROR;
-	}
-
-	IoReuseIrp(pIrp, STATUS_UNSUCCESSFUL);
-	KeInitializeEvent(&CompletionEvent, SynchronizationEvent, FALSE);
-	IoSetCompletionRoutine(pIrp, CompletionRoutine, &CompletionEvent, TRUE, TRUE, TRUE);
-
-	Flags |= WSK_FLAG_NODELAY;
-
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH)WskSocket->Dispatch)->WskSend(
-		WskSocket,
-		&WskBuffer,
-		Flags,
-		pIrp);
-
-	if (Status == STATUS_PENDING)
-	{
-		LARGE_INTEGER	nWaitTime;
-		PVOID       waitObjects[2];
-		int retry_count = 0;
-
-		nWaitTime = RtlConvertLongToLargeInteger(-1 * Timeout * 1000 * 10);
-		waitObjects[0] = (PVOID) &CompletionEvent;
-		waitObjects[1] = send_buf_kill_event;
-
-	retry:
-		Status = KeWaitForMultipleObjects(2, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, &nWaitTime, NULL);
-		switch (Status)
-		{
-			case STATUS_TIMEOUT:
-				if (!(retry_count++ % 5))
-				{
-					WDRBD_WARN("sendbuffing: tx timeout(%d ms). retry.\n", Timeout);// for trace
-				}
-				// TCP session is no problem. peer does not receive this data yet. he may be busy. So, just retry forever. 
-				// the real tx timeout will be occured by upper level sender thread decreasing ko_count at drbd_stream_send_timed_out.
-				goto retry;
-
-			case STATUS_WAIT_0:
-				if (NT_SUCCESS(pIrp->IoStatus.Status))
-				{
-					BytesSent = (LONG) pIrp->IoStatus.Information;
-				}
-				else
-				{
-					WDRBD_ERROR("sendbuffing: tx error(%s) wsk(0x%p)\n", GetSockErrorString(pIrp->IoStatus.Status), WskSocket);
-					switch (pIrp->IoStatus.Status)
-					{
-					case STATUS_IO_TIMEOUT:
-						BytesSent = -EAGAIN;
-						break;
-					case STATUS_INVALID_DEVICE_STATE:
-						BytesSent = -EAGAIN;
-						break;
-					default:
-						BytesSent = -ECONNRESET;
-						break;
-					}
-				}
-				break;
-
-			case STATUS_WAIT_1: // send_buffering thread's kill signal
-				BytesSent = -EINTR;
-				break;
-
-			default:
-				WDRBD_ERROR("Wait failed. status 0x%x\n", Status);
-				BytesSent = SOCKET_ERROR;
-		}
-	}
-	else
-	{
-		if (Status == STATUS_SUCCESS)
-		{
-			BytesSent = (LONG) pIrp->IoStatus.Information;
-		}
-		else
-		{
-			WDRBD_ERROR("sendbuffing: WskSend error(0x%x)\n", Status);
-			BytesSent = SOCKET_ERROR;
-		}
-	}
-
-	FreeWskBuffer(&WskBuffer);
-	return BytesSent;
-}
-#endif
-
-
 LONG
 NTAPI
 Send(
@@ -790,10 +680,30 @@ Send(
 	return BytesSent;
 }
 
+int winsock_to_linux_error(NTSTATUS status)
+{
+	switch (status) {
+	case STATUS_SUCCESS:
+		return 0;
+	case STATUS_CONNECTION_RESET:
+		return -ECONNRESET;
+	case STATUS_CONNECTION_DISCONNECTED:
+		return -ENOTCONN;
+	case STATUS_CONNECTION_ABORTED:
+		return -ECONNABORTED;
+	case STATUS_IO_TIMEOUT:
+		return -EAGAIN;
+	case STATUS_INVALID_DEVICE_STATE:
+		return -EINVAL;
+	default:
+		return -EIO;
+	}
+}
+
 LONG
 NTAPI
 SendPage(
-	__in PWSK_SOCKET	WskSocket,
+	__in struct socket *socket,
 	__in struct page	*page,
 	__in ULONG		offset,
 	__in ULONG		len,
@@ -803,20 +713,22 @@ SendPage(
 	struct _IRP *Irp;
 	struct _WSK_BUF *WskBuffer;
 	struct send_page_completion_info *completion;
-	LONG BytesSent;
 	NTSTATUS Status;
 
-	if (g_SocketsState != INITIALIZED || !WskSocket || !page || ((int) len <= 0))
-		return SOCKET_ERROR;
+	if (g_SocketsState != INITIALIZED || !socket || !page || ((int) len <= 0))
+		return -EINVAL;
+
+	if (socket->error_status != STATUS_SUCCESS)
+		return winsock_to_linux_error(socket->error_status);
 
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
 	if (WskBuffer == NULL)
-		return SOCKET_ERROR;
+		return -ENOMEM;
 
 	completion = kzalloc(sizeof(*completion), 0, 'DRBD');
 	if (completion == NULL) {
 		kfree(WskBuffer);
-		return SOCKET_ERROR;
+		return -ENOMEM;
 	}
 
 	Status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE);
@@ -829,6 +741,7 @@ SendPage(
 	get_page(page);
 	completion->page = page;
 	completion->wsk_buffer = WskBuffer;
+	completion->socket = socket;
 
 	Irp = IoAllocateIrp(1, FALSE);
 	if (Irp == NULL) {
@@ -839,156 +752,42 @@ SendPage(
 	}
 	IoSetCompletionRoutine(Irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
 
-	flags |= WSK_FLAG_NODELAY;
+	if (socket->no_delay)
+		flags |= WSK_FLAG_NODELAY;
+	else
+		flags &= ~WSK_FLAG_NODELAY;
 
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskSend(
-		WskSocket,
+	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskSend(
+		socket->sk,
 		WskBuffer,
 		flags,
 		Irp);
 
 	switch (Status) {
 	case STATUS_PENDING:
-		BytesSent = len; /* TODO: not true, at least not yet */
-		break;
+			/* This now behaves just like Linux kernel socket
+			 * sending functions do for TCP/IP: on return,
+			 * the data is queued, if there is an error later
+			 * we cannot know now, but a follow-up sending
+			 * function will fail. To know about it, we
+			 * have a error_status field in our socket struct
+			 * which is set by the completion routine on
+			 * error.
+			 */
+
+		return len;
 
 	case STATUS_SUCCESS:
-		BytesSent = (LONG) Irp->IoStatus.Information;
-		WDRBD_WARN("(%s) WskSend No pending: but sent(%d)!\n", current->comm, BytesSent);
-		break;
+		return (LONG) Irp->IoStatus.Information;
 
 	default:
-		WDRBD_WARN("(%s) WskSend error(0x%x)\n", current->comm, Status);
-		BytesSent = SOCKET_ERROR;
+		return winsock_to_linux_error(Irp->IoStatus.Information);
 	}
-
-	return BytesSent;
 }
 
-
-LONG
-NTAPI
-SendAsync(
-	__in PWSK_SOCKET	WskSocket,
-	__in PVOID			Buffer,
-	__in ULONG			BufferSize,
-	__in ULONG			Flags,
-	__in ULONG			Timeout,
-	__in struct			drbd_transport *transport,
-	__in enum			drbd_stream stream
-)
-{
-	KEVENT		CompletionEvent = { 0 };
-	PIRP		Irp = NULL;
-	WSK_BUF		WskBuffer = { 0 };
-	LONG		BytesSent = SOCKET_ERROR; // DRBC_CHECK_WSK: SOCKET_ERROR be mixed EINVAL?
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
-
-	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || ((int) BufferSize <= 0))
-		return SOCKET_ERROR;
-
-	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		return SOCKET_ERROR;
-	}
-
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		FreeWskBuffer(&WskBuffer);
-		return SOCKET_ERROR;
-	}
-
-	Flags |= WSK_FLAG_NODELAY;
-
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskSend(
-		WskSocket,
-		&WskBuffer,
-		Flags,
-		Irp);
-
-	if (Status == STATUS_PENDING)
-	{
-		LARGE_INTEGER	nWaitTime;
-		LARGE_INTEGER	*pTime;
-
-		if (Timeout <= 0 || Timeout == MAX_SCHEDULE_TIMEOUT)
-		{
-			pTime = NULL;
-		}
-		else
-		{
-			nWaitTime = RtlConvertLongToLargeInteger(-1 * Timeout * 1000 * 10);
-			pTime = &nWaitTime;
-		}
-		{
-			//struct      task_struct *thread = current;
-			int 		retry_count = 0;
-$retry:			
-			// DW-1173: do not wait for send_buf_kill_event, we need to send all items queued before cleaning up.
-			Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, pTime);
-			switch (Status) {
-			case STATUS_TIMEOUT:
-				// DW-1095 adjust retry_count logic 
-				if (!(++retry_count % 5)) {
-					WDRBD_WARN("sendbuffing: tx timeout(%d ms). retry.\n", Timeout);// for trace
-				} 
-
-				goto $retry;
-				
-				//IoCancelIrp(Irp);
-				//KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-				//BytesSent = -EAGAIN;
-				break;
-
-			case STATUS_SUCCESS:
-				if (NT_SUCCESS(Irp->IoStatus.Status))
-				{
-					BytesSent = (LONG)Irp->IoStatus.Information;
-				}
-				else
-				{
-					WDRBD_WARN("tx error(%s) wsk(0x%p)\n", GetSockErrorString(Irp->IoStatus.Status), WskSocket);
-					switch (Irp->IoStatus.Status)
-					{
-						case STATUS_IO_TIMEOUT:
-							BytesSent = -EAGAIN;
-							break;
-						case STATUS_INVALID_DEVICE_STATE:
-							BytesSent = -EAGAIN;
-							break;
-						default:
-							BytesSent = -ECONNRESET;
-							break;
-					}
-				}
-				break;
-
-			default:
-				WDRBD_ERROR("Wait failed. status 0x%x\n", Status);
-				BytesSent = SOCKET_ERROR;
-			}
-		}
-	}
-	else
-	{
-		if (Status == STATUS_SUCCESS)
-		{
-			BytesSent = (LONG) Irp->IoStatus.Information;
-			WDRBD_WARN("(%s) WskSend No pending: but sent(%d)!\n", current->comm, BytesSent);
-		}
-		else
-		{
-			WDRBD_WARN("(%s) WskSend error(0x%x)\n", current->comm, Status);
-			BytesSent = SOCKET_ERROR;
-		}
-	}
-
-	IoFreeIrp(Irp);
-	FreeWskBuffer(&WskBuffer);
-
-	return BytesSent;
-}
-
+/* TODO: this goes away soon, once we switch to ioctls for netlink
+ *	 (drbdadm and usermode helper APIs)
+ */
 
 LONG
 NTAPI
@@ -1912,6 +1711,7 @@ int sock_create_kern(
 	} else {
 		*out = socket;
 	}
+	socket->error_status = STATUS_SUCCESS;
 
 out:
 	return err;
