@@ -191,6 +191,7 @@ NTAPI SendPageCompletionRoutine(
 
 )
 { 
+printk("Completion from SendPage, status is %x\n", Irp->IoStatus.Status);
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		if (completion->socket->error_status != STATUS_SUCCESS &&
 		    completion->socket->error_status != Irp->IoStatus.Status)
@@ -759,6 +760,7 @@ SendPage(
 	else
 		flags &= ~WSK_FLAG_NODELAY;
 
+printk("into WskSend (SendPage)\n");
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskSend(
 		socket->sk,
 		WskBuffer,

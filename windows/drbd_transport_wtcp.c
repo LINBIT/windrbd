@@ -269,7 +269,8 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
  * do we need to block DRBD_SIG if sock == &meta.socket ??
  * otherwise wake_asender() might interrupt some send_*Ack !
  */
-		rv = Send(socket->sk, DataBuffer, iov_len, 0, socket->sk_sndtimeo, NULL, &tcp_transport->transport, 0);
+printk("socket->sk_sndtimeo is %d, but waiting forever.\n", socket->sk_sndtimeo);
+		rv = Send(socket->sk, DataBuffer, iov_len, 0, MAX_SCHEDULE_TIMEOUT, NULL, &tcp_transport->transport, 0);
 
 		if (rv == -EAGAIN) {
 			struct drbd_transport *transport = &tcp_transport->transport;
@@ -302,7 +303,8 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
 static int dtt_recv_short(struct socket *socket, void *buf, size_t size, int flags)
 {
 	flags = WSK_FLAG_WAITALL;
-	return Receive(socket->sk, buf, size, flags, socket->sk_rcvtimeo);
+printk("socket->sk_rcvtimeo is %d, but waiting forever.\n", socket->sk_rcvtimeo);
+	return Receive(socket->sk, buf, size, flags, MAX_SCHEDULE_TIMEOUT);
 }
 
 static int dtt_recv(struct drbd_transport *transport, enum drbd_stream stream, void **buf, size_t size, int flags)
