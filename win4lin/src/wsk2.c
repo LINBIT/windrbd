@@ -1214,6 +1214,7 @@ LONG NTAPI Receive(
 	return BytesReceived;
 }
 
+	/* TODO: not really needed? */
 LONG
 NTAPI
 ReceiveFrom(

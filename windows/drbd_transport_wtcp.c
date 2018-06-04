@@ -452,8 +452,19 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 	}
 	sprintf(socket->name, "conn_sock\0");
 
+/*	socket->sk_rcvtimeo =
+	socket->sk_sndtimeo = connect_int * HZ; */
+
 	socket->sk_rcvtimeo =
-	socket->sk_sndtimeo = connect_int * HZ;
+	socket->sk_sndtimeo = 5000;	/* 5 seconds? */
+
+        status = ControlSocket(socket->sk, WskSetOption, SO_SNDTIMEO, SOL_IP,
+            sizeof(socket->sk_sndtimeo), &socket->sk_sndtimeo, 0, NULL, NULL);
+printk("ControlSocket( ... , SO_SNDTIMEO, ) returned status %x\n", status);
+        ControlSocket(socket->sk, WskSetOption, SO_RCVTIMEO, SOL_IP,
+            sizeof(socket->sk_rcvtimeo), &socket->sk_rcvtimeo, 0, NULL, NULL);
+printk("ControlSocket( ... , SO_RCVTIMEO, ) returned status %x\n", status);
+
 	dtt_setbufsize(socket, sndbuf_size, rcvbuf_size);
 
 	/* explicitly bind to the configured IP as source IP
@@ -708,6 +719,7 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	struct dtt_socket_container *socket_c = NULL;
 	struct drbd_path *path_d;
 	struct dtt_path *path_t;
+	NTSTATUS status;
 
 	/* Already invalid again */
 	if (AcceptSocket == NULL)
@@ -756,6 +768,17 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	path_t = container_of(path_d, struct dtt_path, path);
 	socket->sk = AcceptSocket;
 	socket->error_status = STATUS_SUCCESS;
+
+	socket->sk_rcvtimeo =
+	socket->sk_sndtimeo = 5000;	/* 5 seconds? */
+
+        status = ControlSocket(socket->sk, WskSetOption, SO_SNDTIMEO, SOL_SOCKET,
+            sizeof(socket->sk_sndtimeo), &socket->sk_sndtimeo, 0, NULL, NULL);
+printk("ControlSocket( ... , SO_SNDTIMEO, ) returned status %x\n", status);
+        ControlSocket(socket->sk, WskSetOption, SO_RCVTIMEO, SOL_SOCKET,
+            sizeof(socket->sk_rcvtimeo), &socket->sk_rcvtimeo, 0, NULL, NULL);
+printk("ControlSocket( ... , SO_RCVTIMEO, ) returned status %x\n", status);
+
 	socket_c->socket = socket;
 	list_add_tail(&socket_c->list, &path_t->sockets);
 	spin_unlock(&listener->listener.waiters_lock);
