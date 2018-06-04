@@ -1,5 +1,65 @@
 --------------------------------------------------------------------
 
+TODO: Test network timeout on syncing.
+
+	Test timeout with iptables on linux side (must DROP the TCP/IP
+	packets from Windows, else there is some other error).
+
+	Update: "New" API correctly detects timeout by giving
+	a STATUS_IO_TIMEOUT in the completion (after approx. 22
+	seconds). ("Old" API was patched to have infinite timeout)
+
+	Make WinSocket timeout configurable in WinSocket layer
+	(SO_SNDTIMEO, SO_RCVTIMEO): Update: not possible, see below.
+
+	Port Send (and also receive?) to new API. Update: receive
+	no, here we need the timeout set by tr_ops->set_rcvtimeo()
+
+	Update: also don't port Send() to non-blocking, it is only
+	used to send the first packet during DRBD handshake (there
+	the buffer is on the stack so we have to wait for completion).
+
+	Update: What happens to send buffers? Same as with Pages?
+
+	Receive with MSG_PEEK used somewhere in DRBD?
+	Update: MSG_PEEK no but MSG_DONTWAIT is used. Need to implement
+	this.
+
+	What about CALLER_BUFFER, GROW_BUFFER support in recv()?
+	Update: Those are DRBD specific and implemented already.
+
+	WinSocket kernel API does not support setting SO_SNDTIMEO
+	and SO_RCVTIMEO, since the API functions are always non-blocking.
+	There is a system defined send timeout after which WinSocket
+	kernel API reports an STATUS_IO_TIMEOUT and completes the IRP
+	(without having it sent), which cannot be set programmatically
+	(at least not over WskControlSocket which roughly matches
+	setsockopt()). The value for Windows 7 is 22 seconds (measured)
+	which seems reasonable.
+
+	For now, we now do not support setting send timeout via config,
+	if we did we would need to use (Linux) timers to cancel the
+	IRP before it completes and set an error state. Doable but
+	not now.
+
+TODO: Implement MSG_DONTWAIT for recv().
+
+TODO: On ping timeout reached, goes and stays in NetworkFailure.
+
+	Tested with iptables-drop.sh on Linux side while connected
+	(not syncing)
+
+TODO: Sync is still somewhat slow when windrbd is SyncTarget
+	And: I/O is slow when connected.
+	Are we waiting for TCP ACK here?
+
+	Also need to set c-fill-target and/or c-max-rate with
+	defaults it is just too slow...
+
+	Update: Also implement no-wait sending for Send() function.
+
+TODO: receive should also fail if error_status is set.
+
 TODO: logging: printk's without terminating \n not displayed.
 
 	Also: if there are some special characters (\0?) the
@@ -14,12 +74,6 @@ TODO: install kernel manpages
 
 	Must install from kernel source using 
 	make mandocs ; sudo make installmandocs
-
-TODO: other BSOD from Devin: Handle Send errors correctly.
-
-	2018-05-17T13:37:08.904002-07:00 legolas.us.linbit  U20:37:08.888|8e3a8040(sender) SendPageCompletionRoutine <3>SendPage completed with status c000020d
-
-	But not reported to DRBD.
 
 TODO: activate Ctrl-Alt-Del on Windows Server 2016 VM for VNCViewer
 
@@ -89,15 +143,6 @@ TODO: From Devin: Registering mount point failed status = c0000035
 
 	Get a Windows 2016 Server and test on it.
 
-TODO: Sync is still somewhat slow when windrbd is SyncTarget
-	And: I/O is slow when connected.
-	Are we waiting for TCP ACK here?
-
-	Also need to set c-fill-target and/or c-max-rate with
-	defaults it is just too slow...
-
-	Update: Also implement no-wait sending for Send() function.
-
 TODO: define tests to be run before releases.
 
 TODO: io_status should not be in struct bio, see comments in
@@ -112,11 +157,6 @@ TODO: BSOD on network failure
 TODO: On network failure (unplug cable) stays in NetworkFailure state.
 
 TODO: drbdadm status fails after unplug cable when syncing.
-
-TODO: Test network timeout on syncing.
-
-	Test timeout with iptables on linux side (must DROP the TCP/IP
-	packets from Windows, else there is some other error).
 
 TODO: refcnt is 0 on drbd_rs_complete_io
 	May 31 17:10:06 192.168.56.101  U15:10:04.337|03431840(sender) drbd_rs_complete_io <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x0): drbd_rs_complete_io(,16384 [=0]) called, but refcnt is 0!?
@@ -363,6 +403,8 @@ TODO: fix the macro redefinition problems in drbd_windows.c
 
 	Update: check if the prototypes are still needed.
 	Update: we probably reject this.
+
+TODO: (maybe) support setting send timeout.
 
 -------------------------------------------------------------------------
 
@@ -2123,3 +2165,12 @@ Done: Error reporting of SendPage()
 	Update: After a fixing a silly bug this works now. 
 
 	Check if timeout works (separate TODO)
+
+Done: other BSOD from Devin: Handle Send errors correctly.
+
+	2018-05-17T13:37:08.904002-07:00 legolas.us.linbit  U20:37:08.888|8e3a8040(sender) SendPageCompletionRoutine <3>SendPage completed with status c000020d
+
+	But not reported to DRBD.
+
+	Update: now reporting errors on send.
+
