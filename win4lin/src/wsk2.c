@@ -2,14 +2,10 @@
 #include "drbd_windows.h"
 #include "wsk2.h"
 
-extern bool drbd_stream_send_timed_out(struct drbd_transport *transport, enum drbd_stream stream);
-
 WSK_REGISTRATION			g_WskRegistration;
 static WSK_PROVIDER_NPI		g_WskProvider;
 static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 LONG						g_SocketsState = DEINITIALIZED;
-
-//#define WSK_ASYNCCOMPL	1
 
 NTSTATUS
 NTAPI CompletionRoutine(
@@ -25,26 +21,6 @@ NTAPI CompletionRoutine(
 	
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
-#if WSK_ASYNCCOMPL
-NTSTATUS
-NTAPI CompletionRoutineAsync(
-	__in PDEVICE_OBJECT	DeviceObject,
-	__in PIRP			Irp,
-	__in PVOID			Context
-)
-{
-	if (Irp->IoStatus.Status == STATUS_SUCCESS) {
-		// Get the pointer to the socket context
-		// Perform any cleanup and/or deallocation of the socket context
-	} else { // Error status
-		// Handle error
-	}
-	// Free the IRP
-	IoFreeIrp(Irp);
-
-	return STATUS_MORE_PROCESSING_REQUIRED;
-}
-#endif
 
 NTSTATUS
 InitWskData(
@@ -73,52 +49,6 @@ InitWskData(
 	IoSetCompletionRoutine(*pIrp, CompletionRoutine, CompletionEvent, TRUE, TRUE, TRUE);
 
 	return STATUS_SUCCESS;
-}
-
-
-#if WSK_ASYNCCOMPL
-NTSTATUS
-InitWskDataAsync(
-	__out PIRP*		pIrp,
-	__in  BOOLEAN	bRawIrp
-	)
-{
-	ASSERT(pIrp);
-	ASSERT(CompletionEvent);
-
-	if (bRawIrp) {
-		*pIrp = ExAllocatePoolWithTag(NonPagedPool, IoSizeOfIrp(1), 'FFDW');
-		IoInitializeIrp(*pIrp, IoSizeOfIrp(1), 1);
-	}
-	else {
-		*pIrp = IoAllocateIrp(1, FALSE);
-	}
-
-	if (!*pIrp) {
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-	//KeInitializeEvent(CompletionEvent, SynchronizationEvent, FALSE);
-	IoSetCompletionRoutine(*pIrp, CompletionRoutineAsync, NULL, TRUE, TRUE, TRUE);
-
-	return STATUS_SUCCESS;
-}
-#endif
-
-VOID
-ReInitWskData(
-__out PIRP*		pIrp,
-__out PKEVENT	CompletionEvent
-)
-{
-	ASSERT(pIrp);
-	ASSERT(CompletionEvent);
-
-	KeResetEvent(CompletionEvent);
-	IoReuseIrp(*pIrp, STATUS_UNSUCCESSFUL);
-	IoSetCompletionRoutine(*pIrp, CompletionRoutine, CompletionEvent, TRUE, TRUE, TRUE);
-
-	return;
 }
 
 NTSTATUS
@@ -352,21 +282,15 @@ CloseSocket(
 
 	if (g_SocketsState != INITIALIZED || !WskSocket)
 		return STATUS_INVALID_PARAMETER;
-#if WSK_ASYNCCOMPL
-	Status = InitWskDataAsync(&Irp, TRUE);
-#else
+
 	Status = InitWskData(&Irp, &CompletionEvent, TRUE);
-#endif
 	if (!NT_SUCCESS(Status)) {
 		return Status;
 	}
 	Status = ((PWSK_PROVIDER_BASIC_DISPATCH) WskSocket->Dispatch)->WskCloseSocket(WskSocket, Irp);
-#if WSK_ASYNCCOMPL	
-	// DW-1316 replace Waiting-WskCloseSocket method with Async-completion method
-#else
 	if (Status == STATUS_PENDING) {
 		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime);
-		if (STATUS_TIMEOUT == Status) { // DW-1316 detour WskCloseSocket hang in Win7/x86.
+		if (Status == STATUS_TIMEOUT) { // DW-1316 detour WskCloseSocket hang in Win7/x86.
 			WDRBD_WARN("Timeout... Cancel WskCloseSocket:%p. maybe required to patch WSK Kernel\n", WskSocket);
 			IoCancelIrp(Irp);
 			// DW-1388: canceling must be completed before freeing the irp.
@@ -375,7 +299,7 @@ CloseSocket(
 		Status = Irp->IoStatus.Status;
 	}
 	IoFreeIrp(Irp);
-#endif
+
 	return Status;
 }
 
@@ -553,10 +477,7 @@ Send(
 	__in PVOID			Buffer,
 	__in ULONG			BufferSize,
 	__in ULONG			Flags,
-	__in ULONG			Timeout,
-	__in KEVENT			*send_buf_kill_event,
-	__in struct			drbd_transport *transport,
-	__in enum			drbd_stream stream
+	__in ULONG			Timeout
 )
 {
 	KEVENT		CompletionEvent = { 0 };
@@ -592,7 +513,6 @@ Send(
 		LARGE_INTEGER	nWaitTime;
 		LARGE_INTEGER	*pTime;
 
-	retry:
 		if (Timeout <= 0 || Timeout == MAX_SCHEDULE_TIMEOUT)
 		{
 			pTime = NULL;
@@ -613,14 +533,6 @@ Send(
 			switch (Status)
 			{
 			case STATUS_TIMEOUT:
-
-				// DW-988 refactoring about retry_count. retry_count is removed.
-				if (transport != NULL) {
-					if (!drbd_stream_send_timed_out(transport, stream)) {
-						goto retry;
-					}
-				}
-
 				IoCancelIrp(Irp);
 				KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 				BytesSent = -EAGAIN;
@@ -1774,7 +1686,7 @@ void connect_and_send(struct sockaddr_in *peer_addr)
 		printk("Sending %d bytes (%d)\n", sizeof(buf), i);
 		sprintf(buf, "%d\n", i);
 			/* about 2 Mbit/sec, 60-70 seconds for 40 MBytes: */
-		sent = Send(socket->sk, buf, sizeof(buf), 0, 1000, NULL, NULL, 0);
+		sent = Send(socket->sk, buf, sizeof(buf), 0, 1000);
 			/* about 25 Mbit/sec, 10-13 seconds for 40 MBytes: */
 		/* TODO: need a struct page here..we don't really need
 		 * it anymore, so this is probably not being fixed.

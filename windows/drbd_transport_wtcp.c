@@ -270,7 +270,7 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
  * otherwise wake_asender() might interrupt some send_*Ack !
  */
 printk("socket->sk_sndtimeo is %d, but waiting forever.\n", socket->sk_sndtimeo);
-		rv = Send(socket->sk, DataBuffer, iov_len, 0, MAX_SCHEDULE_TIMEOUT, NULL, &tcp_transport->transport, 0);
+		rv = Send(socket->sk, DataBuffer, iov_len, 0, MAX_SCHEDULE_TIMEOUT);
 
 		if (rv == -EAGAIN) {
 			struct drbd_transport *transport = &tcp_transport->transport;
@@ -458,12 +458,14 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 	socket->sk_rcvtimeo =
 	socket->sk_sndtimeo = 5000;	/* 5 seconds? */
 
+/*
         status = ControlSocket(socket->sk, WskSetOption, SO_SNDTIMEO, SOL_IP,
             sizeof(socket->sk_sndtimeo), &socket->sk_sndtimeo, 0, NULL, NULL);
 printk("ControlSocket( ... , SO_SNDTIMEO, ) returned status %x\n", status);
         ControlSocket(socket->sk, WskSetOption, SO_RCVTIMEO, SOL_IP,
             sizeof(socket->sk_rcvtimeo), &socket->sk_rcvtimeo, 0, NULL, NULL);
 printk("ControlSocket( ... , SO_RCVTIMEO, ) returned status %x\n", status);
+*/
 
 	dtt_setbufsize(socket, sndbuf_size, rcvbuf_size);
 
@@ -772,12 +774,14 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	socket->sk_rcvtimeo =
 	socket->sk_sndtimeo = 5000;	/* 5 seconds? */
 
+/*
         status = ControlSocket(socket->sk, WskSetOption, SO_SNDTIMEO, SOL_SOCKET,
             sizeof(socket->sk_sndtimeo), &socket->sk_sndtimeo, 0, NULL, NULL);
 printk("ControlSocket( ... , SO_SNDTIMEO, ) returned status %x\n", status);
         ControlSocket(socket->sk, WskSetOption, SO_RCVTIMEO, SOL_SOCKET,
             sizeof(socket->sk_rcvtimeo), &socket->sk_rcvtimeo, 0, NULL, NULL);
 printk("ControlSocket( ... , SO_RCVTIMEO, ) returned status %x\n", status);
+*/
 
 	socket_c->socket = socket;
 	list_add_tail(&socket_c->list, &path_t->sockets);
