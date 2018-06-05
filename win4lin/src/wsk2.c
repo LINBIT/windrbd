@@ -1212,7 +1212,9 @@ Bind(
 	return Status;
 }
 
+#if 0
 	/* TODO: why is this named accept local? */
+	/* TODO: This isn't in use any more, remove it */
 PWSK_SOCKET
 NTAPI
 AcceptLocal(
@@ -1300,6 +1302,8 @@ AcceptLocal(
 	IoFreeIrp(Irp);
 	return AcceptedSocket;
 }
+
+#endif
 
 
 NTSTATUS

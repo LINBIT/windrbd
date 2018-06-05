@@ -174,6 +174,8 @@ Bind(
 	__in PWSK_SOCKET	WskSocket,
 	__in PSOCKADDR		LocalAddress
 	);
+
+#if 0
 PWSK_SOCKET
 NTAPI
 AcceptLocal(
@@ -183,6 +185,7 @@ AcceptLocal(
 	__out_opt NTSTATUS	*RetStaus,
 	__in int			timeout
 );
+#endif
 
 PWSK_SOCKET
 NTAPI
