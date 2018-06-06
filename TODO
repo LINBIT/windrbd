@@ -1,18 +1,35 @@
 --------------------------------------------------------------------
 
+TODO: Get Windows 10 drbd installation working again.
+
+	There's a signed driver installed cannot install
+	unsigned drivers over it. 
+
+TODO: Make DRBD driver removable.
+
 TODO: Test sendbuffer full.
 
 	See if supported at all (have printk's if not). Update:
 	seems to be supported.
+	Update: No it is not. It just never got called. Setting
+	receive buffer size is supported, send buffer not.
 
 TODO: On ping timeout reached, goes and stays in NetworkFailure.
 
 	Tested with iptables-drop.sh on Linux side while connected
 	(not syncing)
 
-TODO: Implement MSG_DONTWAIT for recv().
+TODO: From Devin: Registering mount point failed status = c0000035
+	This seems to be something that only happens on Windows Server 2016.
+	The mount_point buffer is NULL at end of the windrbd_mount
+	function:
 
-	Later.
+	2018-05-17T13:47:08.666486-07:00 legolas.us.linbit  U20:47:08.638|da4db040(drbdcmd) windrbd_mount <6>Assigned device \Device\Drbd0 the mount point (null)
+	However, all checks before that succeed.
+
+	Get a Windows 2016 Server and test on it.
+
+	Update: Also happens on Windows 10 with beta 3
 
 TODO: BSOD on network failure
 	Check if still there.
@@ -58,9 +75,9 @@ TODO: install kernel manpages
 	Must install from kernel source using 
 	make mandocs ; sudo make installmandocs
 
-TODO: activate Ctrl-Alt-Del on Windows Server 2016 VM for VNCViewer
+TODO: Implement MSG_DONTWAIT for recv().
 
-	See https://community.spiceworks.com/how_to/19223-how-to-enable-the-software-secure-attention-sequence-policy-workgroup-procedure
+	Later.
 
 TODO: review README.md: some info is outdated.
 
@@ -108,23 +125,11 @@ TODO: Make windows checkdisk (over unclean shutdown panel) work.
 	twice and modified, but how to make it disappear? cmdline
 	chkdsk works.
 
-TODO: renew the sysroot.zip
-
 TODO: From Devin: make winsat run.
 
 TODO: From Devin: d->bi_size (from peer request) too big:
 
 	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
-
-TODO: From Devin: Registering mount point failed status = c0000035
-	This seems to be something that only happens on Windows Server 2016.
-	The mount_point buffer is NULL at end of the windrbd_mount
-	function:
-
-	2018-05-17T13:47:08.666486-07:00 legolas.us.linbit  U20:47:08.638|da4db040(drbdcmd) windrbd_mount <6>Assigned device \Device\Drbd0 the mount point (null)
-	However, all checks before that succeed.
-
-	Get a Windows 2016 Server and test on it.
 
 TODO: define tests to be run before releases.
 
@@ -260,8 +265,6 @@ TODO: RCU needs change
 	Update: RCU should currently cause problems on SMP machines
 	only (we always tested single CPU, so this was not a problem).
 	Implement Phil's algorithm.
-
-TODO: /cygdrive/c/windrbd/var/lib/drbd should exist.
 
 TODO: on windrbd show/hide filesystem check if attached.
 
@@ -2206,4 +2209,32 @@ Rejected: report socket error state also in Send() and Receive()
 Rejected: receive should also fail if error_status is set.
 
 	See other rejected TODO
+
+Done: activate Ctrl-Alt-Del on Windows Server 2016 VM for VNCViewer
+
+	See https://community.spiceworks.com/how_to/19223-how-to-enable-the-software-secure-attention-sequence-policy-workgroup-procedure
+
+Done: /cygdrive/c/windrbd/var/lib/drbd should exist.
+
+Done: renew the sysroot.zip
+
+Done: New BSOD under Windows 10
+
+	drbdadm up w0
+	Invalid configuration request
+	drbdadm down w0
+	BSOD
+
+	Update: this is a bug in beta-3 and fixed meanwhile.
+
+	Obviously I've installed WinDRBD beta-3 (which is signed)
+	and cannot install an unsigned windrbd (test) version over
+	it. See TODO about when installing a signed DRBD driver,
+	installing an unsigned DRBD driver fails silently.
+
+	Always create snapshots (either VM or clonezilla) before
+	installing signed drivers on test machines.
+
+	For now, sign the driver and install it on Windows 10
+	machine and repeat test.
 

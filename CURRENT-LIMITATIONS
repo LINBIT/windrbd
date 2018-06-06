@@ -19,3 +19,5 @@ On installation (or upgrade) a system reboot is required.
 Windows 7 is minimum (no Vista, no XP) (SP1 required (?))
 
 Setting sendtimeout (via netconf / timeout) is not supported
+
+Setting send buffer size (via netconf / sndbuf-size) is not supported
