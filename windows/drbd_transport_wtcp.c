@@ -1,20 +1,17 @@
 ﻿/*
-   drbd_transport_tcp.c
+   drbd_transport_wtcp.c
 
    This file is part of DRBD.
 
    Copyright (C) 2014-2017, LINBIT HA-Solutions GmbH.
    Copyright (C) 2016, ManTech Co., Ltd.
 
-   This file was derived from the Linux version. All Linux relicts should
-   be cleaned up.
-
-   drbd is free software; you can redistribute it and/or modify
+   windrbd is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2, or (at your option)
    any later version.
 
-   drbd is distributed in the hope that it will be useful,
+   windrbd is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -53,6 +50,7 @@ struct drbd_tcp_transport {
 struct dtt_listener {
 	struct drbd_listener listener;
 	struct socket *s_listen;
+	struct drbd_transport *transport;
 
 	wait_queue_head_t wait; /* woken if a connection came in */
 };
@@ -391,12 +389,16 @@ static void dtt_setbufsize(struct socket *socket, unsigned int snd,
 		status = ControlSocket(socket->sk, WskSetOption, SO_SNDBUF, SOL_SOCKET, sizeof(snd), &snd, 0, NULL, NULL);
 		if (status != STATUS_SUCCESS)
 			printk(KERN_WARNING "Could not set send buffer size to %d, status is %x\n", snd, status);
+		else
+			printk(KERN_DEBUG "Set sendbuf size to %d\n", snd);
 	}
 
 	if (rcv) {
 		status = ControlSocket(socket->sk, WskSetOption, SO_RCVBUF, SOL_SOCKET, sizeof(rcv), &rcv, 0, NULL, NULL);
 		if (status != STATUS_SUCCESS)
 			printk(KERN_WARNING "Could not set receive buffer size to %d, status is %x\n", rcv, status);
+		else
+			printk(KERN_DEBUG "Set receivebuf size to %d\n", rcv);
 	}
 }
 
@@ -711,6 +713,9 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	struct dtt_socket_container *socket_c = NULL;
 	struct drbd_path *path_d;
 	struct dtt_path *path_t;
+	struct net_conf *nc;
+	KIRQL rcu_flags;
+	int timeout;
 
 	/* Already invalid again */
 	if (AcceptSocket == NULL)
@@ -760,13 +765,13 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	socket->sk = AcceptSocket;
 	socket->error_status = STATUS_SUCCESS;
 
-		/* This will be overridden soon (sk_rcvtimeo) or
-		 * isn't usable on windows anyway (except for
-		 * sending the first packet) (sk_sndtimeo).
-		 */
+	rcu_flags = rcu_read_lock();
+	nc = rcu_dereference(listener->transport->net_conf);
+	timeout = nc->timeout * HZ / 10;
+	rcu_read_unlock(rcu_flags);
 
-	socket->sk_rcvtimeo =
-	socket->sk_sndtimeo = 5000;	/* just something != 0 */
+	socket->sk_rcvtimeo = socket->sk_sndtimeo = timeout;
+	dtt_setbufsize(socket, nc->sndbuf_size, nc->rcvbuf_size);
 
 	socket_c->socket = socket;
 	list_add_tail(&socket_c->list, &path_t->sockets);
@@ -823,6 +828,8 @@ static int dtt_init_listener(struct drbd_transport *transport,
 
 	my_addr = *(struct sockaddr_storage_win *)addr;
 	err = 0;
+
+	listener->transport = transport;
 
 	what = "sock_create_kern";
 	err = sock_create_kern(NULL, my_addr.ss_family, SOCK_STREAM, IPPROTO_TCP, listener, &dispatch, WSK_FLAG_LISTEN_SOCKET, &s_listen);
