@@ -1,19 +1,5 @@
 --------------------------------------------------------------------
 
-TODO: Get Windows 10 drbd installation working again.
-
-	There's a signed driver installed cannot install
-	unsigned drivers over it. 
-
-TODO: Make DRBD driver removable.
-
-TODO: Test sendbuffer full.
-
-	See if supported at all (have printk's if not). Update:
-	seems to be supported.
-	Update: No it is not. It just never got called. Setting
-	receive buffer size is supported, send buffer not.
-
 TODO: On ping timeout reached, goes and stays in NetworkFailure.
 
 	Tested with iptables-drop.sh on Linux side while connected
@@ -30,6 +16,41 @@ TODO: From Devin: Registering mount point failed status = c0000035
 	Get a Windows 2016 Server and test on it.
 
 	Update: Also happens on Windows 10 with beta 3
+
+TODO: From Devin: make winsat run.
+
+TODO: From Devin: d->bi_size (from peer request) too big:
+
+	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
+
+	Test with large block device sizes.
+
+TODO: Windows 2016 server: cannot format volume
+
+	Strange behaviour. Blue screen on format f: (windrbd device)
+
+	Fix networking first (we cannot reach Linux machine from
+	Windows 2016 server at the moment)
+
+TODO: white paper for linbit website.
+
+	Until end of June 2018
+
+TODO: Get Windows 10 drbd installation working again.
+
+	There's a signed driver installed cannot install
+	unsigned drivers over it. 
+
+TODO: Make DRBD driver removable.
+
+TODO: Test sendbuffer full (rety on Metadata socket).
+
+	See if supported at all (have printk's if not). Update:
+	seems to be supported.
+	Update: No it is not. It just never got called. Setting
+	receive buffer size is supported, send buffer not.
+
+	Unclear how to test it. Do that later.
 
 TODO: BSOD on network failure
 	Check if still there.
@@ -124,12 +145,6 @@ TODO: Make windows checkdisk (over unclean shutdown panel) work.
 	It seems that this appears when backing device is used
 	twice and modified, but how to make it disappear? cmdline
 	chkdsk works.
-
-TODO: From Devin: make winsat run.
-
-TODO: From Devin: d->bi_size (from peer request) too big:
-
-	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
 
 TODO: define tests to be run before releases.
 
@@ -2237,4 +2252,8 @@ Done: New BSOD under Windows 10
 
 	For now, sign the driver and install it on Windows 10
 	machine and repeat test.
+
+Done: review code for kmalloc()
+
+	Replaced by kzalloc where needed.
 
