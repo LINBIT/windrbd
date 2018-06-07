@@ -721,7 +721,7 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	if (AcceptSocket == NULL)
 		goto error;
 
-	socket_c = kmalloc(sizeof(*socket_c), GFP_ATOMIC, 'CTWD');
+	socket_c = kzalloc(sizeof(*socket_c), GFP_ATOMIC, 'CTWD');
 	if (!socket_c) {
 		printk(KERN_ERR "No mem, dropped an incoming connection\n");
 		goto error;

@@ -243,7 +243,7 @@ struct sk_buff *genlmsg_new(size_t payload, gfp_t flags)
     }
     else
     {
-        skb = kmalloc(sizeof(*skb) + payload, GFP_KERNEL, '67DW');
+        skb = kzalloc(sizeof(*skb) + payload, GFP_KERNEL, '67DW');
     }
 
     if (!skb)
@@ -375,7 +375,7 @@ static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 		if (pinfo->genlhdr->cmd == DRBD_ADM_CONNECT) {
 			struct connect_work* pcon_work = NULL;
 			struct drbd_resource* resource = NULL;
-			pcon_work = kmalloc(sizeof(*pcon_work), GFP_ATOMIC, 'F1DW');
+			pcon_work = kzalloc(sizeof(*pcon_work), GFP_ATOMIC, 'F1DW');
 			if (pcon_work) {
 				pcon_work->w.cb = w_connect;
 				RtlCopyMemory(&pcon_work->ops, pops, sizeof(*pops));

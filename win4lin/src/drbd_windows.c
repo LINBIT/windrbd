@@ -513,12 +513,11 @@ void *page_address(const struct page *page)
 
 struct page *alloc_page(int flag)
 {
-	struct page *p = kmalloc(sizeof(struct page),0, 'D3DW'); 
+	struct page *p = kzalloc(sizeof(struct page),0, 'D3DW'); 
 	if (!p)	{
 		WDRBD_INFO("alloc_page struct page failed\n");
 		return NULL;
 	}	
-	RtlZeroMemory(p, sizeof(struct page));
 	
 		/* Under Windows this is defined to align to a page
 		 * of PAGE_SIZE bytes. PAGE_SIZE itself is always
@@ -915,7 +914,7 @@ struct workqueue_struct *system_wq;
 	/* TODO: make this void again, and get rid of struct wrapper */
 int queue_work(struct workqueue_struct* queue, struct work_struct* work)
 {
-    struct work_struct_wrapper * wr = kmalloc(sizeof(struct work_struct_wrapper), 0, '68DW');
+    struct work_struct_wrapper * wr = kzalloc(sizeof(struct work_struct_wrapper), 0, '68DW');
 	if(!wr) {
 		return FALSE;
 	}
@@ -2668,7 +2667,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_no_windows_device;
 	}
 
-	block_device = kmalloc(sizeof(struct block_device), 0, 'DBRD');
+	block_device = kzalloc(sizeof(struct block_device), 0, 'DBRD');
 	if (block_device == NULL) {
 		WDRBD_ERROR("could not allocate block_device.\n");
 		err = -ENOMEM;
@@ -3214,11 +3213,11 @@ static int mountmgr_create_point(struct block_device *dev)
 	struct _IRP *irp;
 	struct _IO_STACK_LOCATION *s;
 
-	create_point = kmalloc(create_point_size, 0, 'DRBD');
+	create_point = kzalloc(create_point_size, 0, 'DRBD');
 	if (create_point == NULL)
 		return -1;
 
-	io_status = kmalloc(sizeof(*io_status), 0, 'DRBD');
+	io_status = kzalloc(sizeof(*io_status), 0, 'DRBD');
 	if (io_status == NULL) {
 		kfree(create_point);
 		return -1;

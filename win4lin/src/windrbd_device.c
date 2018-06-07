@@ -545,7 +545,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 		if (this_size == 0)
 			this_size = PAGE_SIZE;
 
-		bio->bi_io_vec[i].bv_page = kmalloc(sizeof(struct page), 0, 'DRBD');
+		bio->bi_io_vec[i].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
 		if (bio->bi_io_vec[i].bv_page == NULL) {
 			printk("Couldn't allocate page.\n");
 			return NULL; /* TODO: cleanup */
