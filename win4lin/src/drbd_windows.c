@@ -1569,7 +1569,6 @@ void set_disk_ro(struct gendisk *disk, int flag)
 
 static LIST_HEAD(ct_thread_list);
 static KSPIN_LOCK ct_thread_list_lock;
-static KIRQL ct_oldIrql;
 
 	/* NO printk's in here. Used by printk internally, would loop. */
 
@@ -1587,28 +1586,22 @@ static struct task_struct *__find_thread(PKTHREAD id)
 struct task_struct *ct_add_thread(PKTHREAD id, const char *name, BOOLEAN event, ULONG Tag)
 {
 	struct task_struct *t;
-//	KIRQL ct_oldIrql;
+	KIRQL ct_oldIrql;
 
-printk("1\n");
 	if ((t = kzalloc(sizeof(*t), GFP_KERNEL, Tag)) == NULL)
 		return NULL;
 
-printk("2\n");
 	t->pid = id;
 	if (event) {
 		KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
 		t->has_sig_event = TRUE;
 	}
-printk("3\n");
 	strcpy(t->comm, name);
-printk("4\n");
-//	t->parent = current;
-printk("5\n");
+	t->parent = current;
 
 	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
 	list_add(&t->list, &ct_thread_list);
     	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
-printk("6\n");
 
 	return t;
 }
@@ -1616,9 +1609,7 @@ printk("6\n");
 void ct_delete_thread(PKTHREAD id)
 {
 	struct task_struct *the_thread, *t;
-//	KIRQL ct_oldIrql;
-
-printk("1\n");
+	KIRQL ct_oldIrql;
 
 	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
 	the_thread = __find_thread(id);
@@ -1638,7 +1629,6 @@ printk("1\n");
 		return;
 	}
 
-#if 0
 		/* Clear references to this thread. In UNIX, there would
 		 * be an init thread which we could assign the parent
 		 * thread field to, here we just set it to NULL.
@@ -1649,12 +1639,10 @@ printk("1\n");
 	list_for_each_entry(struct task_struct, t, &ct_thread_list, list)
 		if (t->parent == the_thread)
 			t->parent = NULL;
-#endif
 
 	list_del(&the_thread->list);
 	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
 
-printk("6\n");
 	kfree(the_thread);
 }
 
@@ -1662,7 +1650,7 @@ printk("6\n");
 struct task_struct* ct_find_thread(PKTHREAD id)
 {
 	struct task_struct *t;
-//	KIRQL ct_oldIrql;
+	KIRQL ct_oldIrql;
 
 	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
 	t = __find_thread(id);
@@ -1692,18 +1680,14 @@ int signal_pending(struct task_struct *task)
 
 void force_sig(int sig, struct task_struct *task)
 {
-	KIRQL ct_oldIrql;
+		/* TODO: We need to protect against thread
+		 * suddenly dying here. */
 
-		/* We protect against thread suddenly dying here. */
-		/* TODO: rethink this. */
-
-//	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
 	if (task && task->has_sig_event)
 	{
 		task->sig = sig;
 		KeSetEvent(&task->sig_event, 0, FALSE);
 	}
-//	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
 }
 
 void flush_signals(struct task_struct *task)
@@ -3061,34 +3045,27 @@ int windrbd_thread_setup(struct drbd_thread *thi)
 	int res;
 	NTSTATUS status;
 
-printk("1\n");
 	thi->nt = ct_add_thread(KeGetCurrentThread(), thi->name, TRUE, 'B0DW');
-printk("2\n");
 	if (!thi->nt)
 	{
 		WDRBD_ERROR("DRBD_PANIC: ct_add_thread failed.\n");
 		PsTerminateSystemThread(STATUS_SUCCESS);
 	}
 
-printk("3\n");
 	KeSetEvent(&thi->start_event, 0, FALSE);
-printk("4\n");
 	KeWaitForSingleObject(&thi->wait_event, Executive, KernelMode, FALSE, NULL);
-printk("5\n");
 
 	res = drbd_thread_setup(thi);
 
-printk("6\n");
-	// TODO ct_delete_thread(thi->task->pid); ??
 	if (res)
-		WDRBD_ERROR("stop, result %d\n", res);
+		printk(KERN_ERR "stop, result %d\n", res);
 	else
-		WDRBD_INFO("stopped.\n");
+		printk("stopped.\n");
 
-printk("7\n");
 //	force_sig(SIGCHLD, thi->nt->parent);
+	/* TODO: Fix code in drbd_main.c first */
+/*	ct_delete_thread(thi->nt->pid); */
 
-printk("22\n");
 	status = PsTerminateSystemThread(STATUS_SUCCESS);
 	printk(KERN_ERR "PsTerminateSystenThread() returned (status: %x). This is not good.\n", status);
 
