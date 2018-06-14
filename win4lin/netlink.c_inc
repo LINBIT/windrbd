@@ -578,7 +578,9 @@ cleanup:
     pop_msocket_entry(socket);
     Disconnect(socket);
     CloseSocket(socket);
+printk("into ct_delete_thread\n");
     ct_delete_thread(KeGetCurrentThread());
+printk("out of ct_delete_thread\n");
     ExFreeToNPagedLookasideList(&drbd_workitem_mempool, context);
     if (pinfo)
         ExFreeToNPagedLookasideList(&genl_info_mempool, pinfo);

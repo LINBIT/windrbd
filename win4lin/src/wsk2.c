@@ -871,6 +871,7 @@ SendTo(
 	return BytesSent;
 }
 
+/* TODO: not referenced? */
 LONG NTAPI ReceiveLocal(
 	__in  PWSK_SOCKET	WskSocket,
 	__out PVOID			Buffer,

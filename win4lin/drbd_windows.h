@@ -1244,7 +1244,7 @@ static inline void call_rcu(struct rcu_head *head, rcu_callback_t func)
 
 extern void local_irq_disable();
 extern void local_irq_enable();
-extern void ct_init_thread_list();
+
 extern struct task_struct * ct_add_thread(PKTHREAD id, const char *name, BOOLEAN event, ULONG Tag);
 extern void ct_delete_thread(PKTHREAD id);
 extern struct task_struct* ct_find_thread(PKTHREAD id);

@@ -1569,11 +1569,9 @@ void set_disk_ro(struct gendisk *disk, int flag)
 
 static LIST_HEAD(ct_thread_list);
 static KSPIN_LOCK ct_thread_list_lock;
+static KIRQL ct_oldIrql;
 
-void ct_init_thread_list()
-{
-	KeInitializeSpinLock(&ct_thread_list_lock);
-}
+	/* NO printk's in here. Used by printk internally, would loop. */
 
 static struct task_struct *__find_thread(PKTHREAD id)
 {
@@ -1589,7 +1587,7 @@ static struct task_struct *__find_thread(PKTHREAD id)
 struct task_struct *ct_add_thread(PKTHREAD id, const char *name, BOOLEAN event, ULONG Tag)
 {
 	struct task_struct *t;
-	KIRQL ct_oldIrql;
+//	KIRQL ct_oldIrql;
 
 printk("1\n");
 	if ((t = kzalloc(sizeof(*t), GFP_KERNEL, Tag)) == NULL)
@@ -1618,16 +1616,29 @@ printk("6\n");
 void ct_delete_thread(PKTHREAD id)
 {
 	struct task_struct *the_thread, *t;
-	KIRQL ct_oldIrql;
+//	KIRQL ct_oldIrql;
+
+printk("1\n");
 
 	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
 	the_thread = __find_thread(id);
 
 	if (the_thread == NULL) {
+		KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
+
+			/* printk does access current internally which
+			 * in turn attempts to grab the lock (which would
+			 * fail if we released the spin lock after the
+			 * printk). Don't do any printk's when the
+			 * ct_thread_list_lock is held, not even debug
+			 * printk's.
+			 */
+
 		printk(KERN_WARNING "Attempt to delete thread which is not on our thread list. Double free?\n");
 		return;
 	}
 
+#if 0
 		/* Clear references to this thread. In UNIX, there would
 		 * be an init thread which we could assign the parent
 		 * thread field to, here we just set it to NULL.
@@ -1638,17 +1649,20 @@ void ct_delete_thread(PKTHREAD id)
 	list_for_each_entry(struct task_struct, t, &ct_thread_list, list)
 		if (t->parent == the_thread)
 			t->parent = NULL;
+#endif
 
-	list_del(&t->list);
+	list_del(&the_thread->list);
 	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
 
-	kfree(t);
+printk("6\n");
+	kfree(the_thread);
 }
 
+	/* NO printk's here, used internally by printk (via current). */
 struct task_struct* ct_find_thread(PKTHREAD id)
 {
 	struct task_struct *t;
-	KIRQL ct_oldIrql;
+//	KIRQL ct_oldIrql;
 
 	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
 	t = __find_thread(id);
@@ -1683,13 +1697,13 @@ void force_sig(int sig, struct task_struct *task)
 		/* We protect against thread suddenly dying here. */
 		/* TODO: rethink this. */
 
-	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
+//	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
 	if (task && task->has_sig_event)
 	{
 		task->sig = sig;
 		KeSetEvent(&task->sig_event, 0, FALSE);
 	}
-	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
+//	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
 }
 
 void flush_signals(struct task_struct *task)
@@ -3475,9 +3489,12 @@ void unregister_blkdev(int major, const char *name)
 	/* does nothing */
 }
 
+	/* NO printk's in here. */
 void init_windrbd(void)
 {
 	mutex_init(&read_bootsector_mutex);
 	spin_lock_init(&g_test_and_change_bit_lock);
+	KeInitializeSpinLock(&ct_thread_list_lock);
+	INIT_LIST_HEAD(&ct_thread_list);
 }
 

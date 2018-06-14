@@ -49,7 +49,16 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	static volatile LONG      IsEngineStart = FALSE;
 	int ret;
 
-	// init logging system first
+	/* Init windrbd primitives (spinlocks, ...) before doing anything
+	 * else .. needed for printk.
+	 */
+	init_windrbd();
+
+	/* Then, initialize the printk subsystem (ring buffer). Logging
+	 * can be seen only later when booting is finished (depending on
+	 * OS), on most OSes this is when the first printk on behalf of
+	 * a drbdadm command happens.
+	 */
 	initialize_syslog_printk();
 
 	printk(KERN_INFO "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
@@ -87,8 +96,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	mutex_init(&g_genl_mutex);
 	mutex_init(&notification_mutex);
 	KeInitializeSpinLock(&transport_classes_lock);
-
-	init_windrbd();
 
 	dtt_initialize();
 
