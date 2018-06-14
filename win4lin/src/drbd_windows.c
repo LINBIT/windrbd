@@ -883,6 +883,7 @@ long schedule(wait_queue_head_t *q, long timeout, char *func, int line)
 				break;
 
 			case STATUS_WAIT_1:
+printk("STATUS_WAIT_1\n");
 				if (thread->sig == DRBD_SIGKILL)
 				{
 					return -DRBD_SIGKILL;
@@ -1064,6 +1065,7 @@ int mutex_lock_interruptible(struct mutex *m)
 		err = 0;
 		break;
 	case STATUS_WAIT_1:		// thread got signal by the func 'force_sig'
+printk("STATUS_WAIT_1\n");
 		err = thread->sig != 0 ? -thread->sig : -EIO;
 		break;
 	default:
@@ -1610,6 +1612,7 @@ void ct_delete_thread(PKTHREAD id)
 {
 	struct task_struct *the_thread, *t;
 	KIRQL ct_oldIrql;
+	int nr_reparented = 0;
 
 	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
 	the_thread = __find_thread(id);
@@ -1636,13 +1639,17 @@ void ct_delete_thread(PKTHREAD id)
 		 * thread dies.
 		 */
 
-	list_for_each_entry(struct task_struct, t, &ct_thread_list, list)
-		if (t->parent == the_thread)
+	list_for_each_entry(struct task_struct, t, &ct_thread_list, list) {
+		if (t->parent == the_thread) {
+			nr_reparented++;
 			t->parent = NULL;
+		}
+	}
 
 	list_del(&the_thread->list);
 	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
 
+printk("%d threads reparented\n", nr_reparented);
 	kfree(the_thread);
 }
 
@@ -1668,12 +1675,10 @@ struct task_struct* ct_find_thread(PKTHREAD id)
 
 int signal_pending(struct task_struct *task)
 {
-    if (task->has_sig_event)
+	if (task->has_sig_event)
 	{
 		if (task->sig || KeReadStateEvent(&task->sig_event))
-		{
 			return 1;
-		}
 	}
 	return 0;
 }
@@ -1683,10 +1688,16 @@ void force_sig(int sig, struct task_struct *task)
 		/* TODO: We need to protect against thread
 		 * suddenly dying here. */
 
+printk("sig is %d\n", sig);
+printk("task is %p\n", task);
+if (task) printk("task->has_sig_event is %d\n", task->has_sig_event);
 	if (task && task->has_sig_event)
 	{
+printk("setting event 1\n");
 		task->sig = sig;
+printk("setting event 2\n");
 		KeSetEvent(&task->sig_event, 0, FALSE);
+printk("set event 3\n");
 	}
 }
 
@@ -3062,8 +3073,23 @@ int windrbd_thread_setup(struct drbd_thread *thi)
 	else
 		printk("stopped.\n");
 
-//	force_sig(SIGCHLD, thi->nt->parent);
-	/* TODO: Fix code in drbd_main.c first */
+		/* As any UNIX does, send a SIGCHLD to the parent on
+		 * thread exit. This causes receive being interrupted,
+		 * when the ack_receiver terminates and the receiver
+		 * can handle connection loss (Before that we stayed
+		 * in NetworkFailure forever)
+		 */
+
+printk("thi: %p\n", thi);
+printk("thi->task: %p\n", thi->task);
+if (thi->task) printk("thi->task->parent: %p\n", thi->task->parent);
+printk("thi->nt: %p\n", thi->nt);
+if (thi->nt) printk("thi->nt->parent: %p\n", thi->nt->parent);
+
+	force_sig(SIGCHLD, thi->nt->parent);
+	/* TODO: Fix code in drbd_main.c first, this currently
+	 * blue screens.
+	 */
 /*	ct_delete_thread(thi->nt->pid); */
 
 	status = PsTerminateSystemThread(STATUS_SUCCESS);

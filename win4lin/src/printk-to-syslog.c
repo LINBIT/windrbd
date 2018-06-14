@@ -151,7 +151,8 @@ int _printk(const char *func, const char *fmt, ...)
 	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d|%08.8x(%s) %s ",
 	    level, hour, min, sec, msec,
 	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
-	    ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
+//	    ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
+	    current,
             current->comm,
 	    func
 	);
