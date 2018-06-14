@@ -32,6 +32,8 @@ TODO: Windows 2016 server: cannot format volume
 	Fix networking first (we cannot reach Linux machine from
 	Windows 2016 server at the moment)
 
+TODO: Linux box sometimes loses IP address.
+
 TODO: white paper for linbit website.
 
 	Until end of June 2018

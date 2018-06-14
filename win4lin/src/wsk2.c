@@ -1061,9 +1061,12 @@ LONG NTAPI Receive(
         waitObjects[0] = (PVOID) &CompletionEvent;
         if (thread->has_sig_event)
         {
+printk("thread->has_sig_event YES\n");
             waitObjects[1] = (PVOID) &thread->sig_event;
             wObjCount = 2;
-        }
+        } 
+else printk("thread->has_sig_event NO\n");
+
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
         switch (Status)
         {
@@ -1083,6 +1086,7 @@ LONG NTAPI Receive(
             break;
 
         case STATUS_WAIT_1:
+printk("Got signal %d\n", current->sig);
             BytesReceived = -EINTR;
             break;
 

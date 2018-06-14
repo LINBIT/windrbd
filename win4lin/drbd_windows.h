@@ -240,8 +240,14 @@ enum rq_flag_bits {
 #define ENODATA					61
 #define ENOTCONN				107
 
+#define SIGCHLD					17
 #define SIGXCPU					100
 #define SIGHUP					101
+/*
+TODO: should be:
+#define SIGXCPU					1
+#define SIGHUP					24
+*/
 #define MSG_MORE				102
 
 #define MAX_ERRNO				4095
@@ -781,6 +787,7 @@ struct task_struct {
 	int sig; 
 
 	struct blk_plug *plug;
+	struct task_struct *parent;
 	
     char comm[TASK_COMM_LEN];
 };

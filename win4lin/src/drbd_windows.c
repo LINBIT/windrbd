@@ -1567,93 +1567,101 @@ void set_disk_ro(struct gendisk *disk, int flag)
 
 }
 
-/* TODO: why? (was hardcoded to 40) */
-/* TODO: why the ct_thread_list? */
-#define CT_MAX_THREAD_LIST          1000
 static LIST_HEAD(ct_thread_list);
-static int ct_thread_num = 0;
 static KSPIN_LOCK ct_thread_list_lock;
-static KIRQL ct_oldIrql;
 
 void ct_init_thread_list()
 {
-    KeInitializeSpinLock(&ct_thread_list_lock);
+	KeInitializeSpinLock(&ct_thread_list_lock);
 }
 
 static struct task_struct *__find_thread(PKTHREAD id)
 {
-    struct task_struct *t;
+	struct task_struct *t;
 
-    list_for_each_entry(struct task_struct, t, &ct_thread_list, list)
-    {
-        if (t->pid == id) {
-            return t;
-        }
-    }
-    return NULL;
+	list_for_each_entry(struct task_struct, t, &ct_thread_list, list) {
+		if (t->pid == id)
+			return t;
+	}
+	return NULL;
 }
 
-static void __delete_thread(struct task_struct *t)
+struct task_struct *ct_add_thread(PKTHREAD id, const char *name, BOOLEAN event, ULONG Tag)
 {
-    list_del(&t->list);
-    kfree(t);
-    ct_thread_num--;
+	struct task_struct *t;
+	KIRQL ct_oldIrql;
 
-    // logic check
-    if (ct_thread_num < 0)
-    {
-        WDRBD_ERROR("DRBD_PANIC:unexpected ct_thread_num(%d)\n", ct_thread_num);
-        BUG();
-    }
-}
+printk("1\n");
+	if ((t = kzalloc(sizeof(*t), GFP_KERNEL, Tag)) == NULL)
+		return NULL;
 
-struct task_struct * ct_add_thread(PKTHREAD id, const char *name, BOOLEAN event, ULONG Tag)
-{
-    struct task_struct *t;
+printk("2\n");
+	t->pid = id;
+	if (event) {
+		KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
+		t->has_sig_event = TRUE;
+	}
+printk("3\n");
+	strcpy(t->comm, name);
+printk("4\n");
+//	t->parent = current;
+printk("5\n");
 
-    if ((t = kzalloc(sizeof(*t), GFP_KERNEL, Tag)) == NULL)
-    {
-        return NULL;
-    }
-
-    t->pid = id;
-    if (event)
-    {
-        KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
-        t->has_sig_event = TRUE;
-    }
-    strcpy(t->comm, name);
-    KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
+	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
 	list_add(&t->list, &ct_thread_list);
-	if (++ct_thread_num > CT_MAX_THREAD_LIST) {
-        WDRBD_WARN("ct_thread too big(%d)\n", ct_thread_num);
-    }
-    KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
-    return t;
+    	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
+printk("6\n");
+
+	return t;
 }
 
 void ct_delete_thread(PKTHREAD id)
 {
-    KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
-    __delete_thread(__find_thread(id));
-    KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
+	struct task_struct *the_thread, *t;
+	KIRQL ct_oldIrql;
+
+	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
+	the_thread = __find_thread(id);
+
+	if (the_thread == NULL) {
+		printk(KERN_WARNING "Attempt to delete thread which is not on our thread list. Double free?\n");
+		return;
+	}
+
+		/* Clear references to this thread. In UNIX, there would
+		 * be an init thread which we could assign the parent
+		 * thread field to, here we just set it to NULL.
+		 * It is currently only used to send SIGCHLD when the
+		 * thread dies.
+		 */
+
+	list_for_each_entry(struct task_struct, t, &ct_thread_list, list)
+		if (t->parent == the_thread)
+			t->parent = NULL;
+
+	list_del(&t->list);
+	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
+
+	kfree(t);
 }
 
 struct task_struct* ct_find_thread(PKTHREAD id)
 {
-    struct task_struct *t;
-    KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
-    t = __find_thread(id);
-    if (!t)
-    {
-        static struct task_struct g_dummy_current;
-        t = &g_dummy_current;
-        t->pid = 0;
-        t->has_sig_event = FALSE;
-        strcpy(t->comm, "not_drbd_thread");
-    }
-    KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
-    return t;
+	struct task_struct *t;
+	KIRQL ct_oldIrql;
+
+	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
+	t = __find_thread(id);
+	if (!t) {
+		static struct task_struct g_dummy_current;
+		t = &g_dummy_current;
+		t->pid = 0;
+		t->has_sig_event = FALSE;
+		strcpy(t->comm, "not_drbd_thread");
+	}
+	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
+
+	return t;
 }
 
 int signal_pending(struct task_struct *task)
@@ -1668,18 +1676,27 @@ int signal_pending(struct task_struct *task)
 	return 0;
 }
 
-void force_sig(int sig, struct task_struct  *task)
+void force_sig(int sig, struct task_struct *task)
 {
-    if (task->has_sig_event)
+	KIRQL ct_oldIrql;
+
+		/* We protect against thread suddenly dying here. */
+		/* TODO: rethink this. */
+
+	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
+	if (task && task->has_sig_event)
 	{
 		task->sig = sig;
 		KeSetEvent(&task->sig_event, 0, FALSE);
 	}
+	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
 }
 
 void flush_signals(struct task_struct *task)
 {
-    if (task->has_sig_event)
+		/* TODO: protect against thread being deleted. */
+
+	if (task && task->has_sig_event)
 	{
 		KeClearEvent(&task->sig_event); 
 		task->sig = 0;
@@ -3030,24 +3047,34 @@ int windrbd_thread_setup(struct drbd_thread *thi)
 	int res;
 	NTSTATUS status;
 
+printk("1\n");
 	thi->nt = ct_add_thread(KeGetCurrentThread(), thi->name, TRUE, 'B0DW');
+printk("2\n");
 	if (!thi->nt)
 	{
 		WDRBD_ERROR("DRBD_PANIC: ct_add_thread failed.\n");
 		PsTerminateSystemThread(STATUS_SUCCESS);
 	}
 
+printk("3\n");
 	KeSetEvent(&thi->start_event, 0, FALSE);
+printk("4\n");
 	KeWaitForSingleObject(&thi->wait_event, Executive, KernelMode, FALSE, NULL);
+printk("5\n");
 
 	res = drbd_thread_setup(thi);
 
+printk("6\n");
 	// TODO ct_delete_thread(thi->task->pid); ??
 	if (res)
 		WDRBD_ERROR("stop, result %d\n", res);
 	else
 		WDRBD_INFO("stopped.\n");
 
+printk("7\n");
+//	force_sig(SIGCHLD, thi->nt->parent);
+
+printk("22\n");
 	status = PsTerminateSystemThread(STATUS_SUCCESS);
 	printk(KERN_ERR "PsTerminateSystenThread() returned (status: %x). This is not good.\n", status);
 
