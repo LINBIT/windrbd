@@ -1,7 +1,5 @@
 --------------------------------------------------------------------
 
-TODO: clean up SIGCHLD, printk's
-
 TODO: From Devin: make winsat run.
 
 TODO: From Devin: d->bi_size (from peer request) too big:
@@ -2265,4 +2263,6 @@ Done: Implement MSG_DONTWAIT for recv().
 
 	Update: now implemented fixed NetworkFailure stuckness on
 	connection loss while idle.
+
+Done: clean up SIGCHLD, printk's
 

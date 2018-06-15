@@ -1022,8 +1022,6 @@ static int dtt_connect(struct drbd_transport *transport)
 			get_ip(sbuf, &connect_to_path->path.my_addr),
 			get_ip(dbuf, &connect_to_path->path.peer_addr));
 
-//	connect_and_send((struct sockaddr_in*) &connect_to_path->path.peer_addr);
-
 	do {
 		struct socket *s = NULL;
 

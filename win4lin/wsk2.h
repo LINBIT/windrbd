@@ -2,7 +2,11 @@
 #include <ntddk.h>
 #include <wsk.h>
 
-/* TODO: this should go away */
+/* TODO: one day we should convert the APIs here to be kernel
+ * compatible and revert the drbd_transport_wtcp.c to be based on
+ * the original drbd_transport_tcp.c (with some small patches)
+ */
+
 #define SOCKET_ERROR -1
 
 enum
@@ -138,16 +142,6 @@ SendTo(
 	__in_opt PSOCKADDR	RemoteAddress
 	);
 
-LONG 
-NTAPI 
-ReceiveLocal(
-	__in  PWSK_SOCKET	WskSocket,
-	__out PVOID			Buffer,
-	__in  ULONG			BufferSize,
-	__in  ULONG			Flags,
-	__in ULONG			Timeout
-	);
-
 LONG
 NTAPI
 Receive(
@@ -158,44 +152,12 @@ Receive(
 	__in ULONG			Timeout
 	);
 
-LONG
-NTAPI
-ReceiveFrom(
-	__in  PWSK_SOCKET	WskSocket,
-	__out PVOID			Buffer,
-	__in  ULONG			BufferSize,
-	__out_opt PSOCKADDR	RemoteAddress,
-	__out_opt PULONG	ControlFlags
-	);
-
 NTSTATUS
 NTAPI
 Bind(
 	__in PWSK_SOCKET	WskSocket,
 	__in PSOCKADDR		LocalAddress
 	);
-
-#if 0
-PWSK_SOCKET
-NTAPI
-AcceptLocal(
-	__in PWSK_SOCKET	WskSocket,
-	__out_opt PSOCKADDR	LocalAddress,
-	__out_opt PSOCKADDR	RemoteAddress,
-	__out_opt NTSTATUS	*RetStaus,
-	__in int			timeout
-);
-#endif
-
-PWSK_SOCKET
-NTAPI
-Accept(
-	__in PWSK_SOCKET	WskSocket,
-	__out_opt PSOCKADDR	LocalAddress,
-	__out_opt PSOCKADDR	RemoteAddress,
-	__out PNTSTATUS		Error,
-	int					timeout
-   );
 
 NTSTATUS
 NTAPI
@@ -267,5 +229,4 @@ SetEventCallbacks(
 	__in LONG                       mask
 );
 
-void connect_and_send(struct sockaddr_in *peer_addr);
 char *get_ip(char *buf, struct sockaddr_storage_win *addr);
