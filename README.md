@@ -185,4 +185,5 @@ Version history
  * 0.7.1 (May 24, 2018): Notify Windows explorer about new disk drive(s) (user
 			 space only)
  * 0.7.2 (May 28, 2018): Windows device only exists while primary.
+ * 0.7.3 (Jun 15, 2018): Networking fixes
 
