@@ -121,7 +121,6 @@ NTAPI SendPageCompletionRoutine(
 
 )
 { 
-printk("Completion from SendPage, status is %x\n", Irp->IoStatus.Status);
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		if (completion->socket->error_status != STATUS_SUCCESS &&
 		    completion->socket->error_status != Irp->IoStatus.Status)
@@ -605,7 +604,6 @@ int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_CONNECTION_ABORTED:
 		return -ECONNABORTED;
 	case STATUS_IO_TIMEOUT:
-printk("TIMEOUT\n");
 		return -EAGAIN;
 	case STATUS_INVALID_DEVICE_STATE:
 		return -EINVAL;
@@ -672,7 +670,6 @@ SendPage(
 	else
 		flags &= ~WSK_FLAG_NODELAY;
 
-printk("into WskSend (SendPage)\n");
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskSend(
 		socket->sk,
 		WskBuffer,
@@ -1062,11 +1059,9 @@ LONG NTAPI Receive(
         waitObjects[0] = (PVOID) &CompletionEvent;
         if (thread->has_sig_event)
         {
-printk("thread->has_sig_event YES\n");
             waitObjects[1] = (PVOID) &thread->sig_event;
             wObjCount = 2;
         } 
-else printk("thread->has_sig_event NO\n");
 
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
         switch (Status)
@@ -1087,7 +1082,6 @@ else printk("thread->has_sig_event NO\n");
             break;
 
         case STATUS_WAIT_1:
-printk("Got signal %d\n", current->sig);
             BytesReceived = -EINTR;
             break;
 

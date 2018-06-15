@@ -299,12 +299,8 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
 
 static int dtt_recv_short(struct socket *socket, void *buf, size_t size, int flags)
 {
-int err;
 	flags = WSK_FLAG_WAITALL;
-printk("into Receive\n");
-err = Receive(socket->sk, buf, size, flags, socket->sk_rcvtimeo);
-printk("out of Receive err is %d\n", err);
-return err;
+	return Receive(socket->sk, buf, size, flags, socket->sk_rcvtimeo);
 }
 
 static int dtt_recv(struct drbd_transport *transport, enum drbd_stream stream, void **buf, size_t size, int flags)

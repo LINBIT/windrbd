@@ -156,7 +156,6 @@ static inline void might_sleep() { }
 
 #define xchg_ptr(__target, __value) (  (void*)xchg(  (LONG_PTR*)(__target), (LONG_PTR)(__value)  )  )
 
-/* TODO: implement this. */
 #define MSG_DONTWAIT 0x40
 
 #define __printf(a, b) /* nothing */

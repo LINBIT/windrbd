@@ -883,7 +883,6 @@ long schedule(wait_queue_head_t *q, long timeout, char *func, int line)
 				break;
 
 			case STATUS_WAIT_1:
-printk("STATUS_WAIT_1\n");
 				if (thread->sig == DRBD_SIGKILL)
 				{
 					return -DRBD_SIGKILL;
@@ -1065,7 +1064,6 @@ int mutex_lock_interruptible(struct mutex *m)
 		err = 0;
 		break;
 	case STATUS_WAIT_1:		// thread got signal by the func 'force_sig'
-printk("STATUS_WAIT_1\n");
 		err = thread->sig != 0 ? -thread->sig : -EIO;
 		break;
 	default:
@@ -1603,7 +1601,7 @@ struct task_struct *ct_add_thread(PKTHREAD id, const char *name, BOOLEAN event, 
 
 	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
 	list_add(&t->list, &ct_thread_list);
-    	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
+	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
 
 	return t;
 }
@@ -1688,16 +1686,10 @@ void force_sig(int sig, struct task_struct *task)
 		/* TODO: We need to protect against thread
 		 * suddenly dying here. */
 
-printk("sig is %d\n", sig);
-printk("task is %p\n", task);
-if (task) printk("task->has_sig_event is %d\n", task->has_sig_event);
 	if (task && task->has_sig_event)
 	{
-printk("setting event 1\n");
 		task->sig = sig;
-printk("setting event 2\n");
 		KeSetEvent(&task->sig_event, 0, FALSE);
-printk("set event 3\n");
 	}
 }
 
@@ -3079,12 +3071,6 @@ int windrbd_thread_setup(struct drbd_thread *thi)
 		 * can handle connection loss (Before that we stayed
 		 * in NetworkFailure forever)
 		 */
-
-printk("thi: %p\n", thi);
-printk("thi->task: %p\n", thi->task);
-if (thi->task) printk("thi->task->parent: %p\n", thi->task->parent);
-printk("thi->nt: %p\n", thi->nt);
-if (thi->nt) printk("thi->nt->parent: %p\n", thi->nt->parent);
 
 	force_sig(SIGCHLD, thi->nt->parent);
 	/* TODO: Fix code in drbd_main.c first, this currently
