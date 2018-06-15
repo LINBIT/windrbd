@@ -1597,7 +1597,6 @@ struct task_struct *ct_add_thread(PKTHREAD id, const char *name, BOOLEAN event, 
 		t->has_sig_event = TRUE;
 	}
 	strcpy(t->comm, name);
-	t->parent = current;
 
 	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
 	list_add(&t->list, &ct_thread_list);
@@ -1610,7 +1609,6 @@ void ct_delete_thread(PKTHREAD id)
 {
 	struct task_struct *the_thread, *t;
 	KIRQL ct_oldIrql;
-	int nr_reparented = 0;
 
 	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
 	the_thread = __find_thread(id);
@@ -1630,24 +1628,9 @@ void ct_delete_thread(PKTHREAD id)
 		return;
 	}
 
-		/* Clear references to this thread. In UNIX, there would
-		 * be an init thread which we could assign the parent
-		 * thread field to, here we just set it to NULL.
-		 * It is currently only used to send SIGCHLD when the
-		 * thread dies.
-		 */
-
-	list_for_each_entry(struct task_struct, t, &ct_thread_list, list) {
-		if (t->parent == the_thread) {
-			nr_reparented++;
-			t->parent = NULL;
-		}
-	}
-
 	list_del(&the_thread->list);
 	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
 
-printk("%d threads reparented\n", nr_reparented);
 	kfree(the_thread);
 }
 
@@ -3065,14 +3048,6 @@ int windrbd_thread_setup(struct drbd_thread *thi)
 	else
 		printk("stopped.\n");
 
-		/* As any UNIX does, send a SIGCHLD to the parent on
-		 * thread exit. This causes receive being interrupted,
-		 * when the ack_receiver terminates and the receiver
-		 * can handle connection loss (Before that we stayed
-		 * in NetworkFailure forever)
-		 */
-
-	force_sig(SIGCHLD, thi->nt->parent);
 	/* TODO: Fix code in drbd_main.c first, this currently
 	 * blue screens.
 	 */

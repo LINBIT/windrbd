@@ -787,7 +787,6 @@ struct task_struct {
 	int sig; 
 
 	struct blk_plug *plug;
-	struct task_struct *parent;
 	
     char comm[TASK_COMM_LEN];
 };
