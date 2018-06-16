@@ -395,18 +395,14 @@ static void dtt_setbufsize(struct socket *socket, unsigned int snd,
 
 	if (snd) {
 		status = ControlSocket(socket->sk, WskSetOption, SO_SNDBUF, SOL_SOCKET, sizeof(snd), &snd, 0, NULL, NULL);
-		if (status != STATUS_SUCCESS)
-			printk(KERN_WARNING "Could not set send buffer size to %d, status is %x\n", snd, status);
-		else
-			printk(KERN_DEBUG "Set sendbuf size to %d\n", snd);
+		if (status == STATUS_SUCCESS)
+			printk(KERN_DEBUG "Set sendbuf size to %d (unusual we expected this to fail)\n", snd);
 	}
 
 	if (rcv) {
 		status = ControlSocket(socket->sk, WskSetOption, SO_RCVBUF, SOL_SOCKET, sizeof(rcv), &rcv, 0, NULL, NULL);
 		if (status != STATUS_SUCCESS)
 			printk(KERN_WARNING "Could not set receive buffer size to %d, status is %x\n", rcv, status);
-		else
-			printk(KERN_DEBUG "Set receivebuf size to %d\n", rcv);
 	}
 }
 
