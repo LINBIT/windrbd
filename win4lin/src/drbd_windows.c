@@ -38,7 +38,7 @@
 
 	/* Define this to make every n-th I/O request fail on request. */
 
-#define INJECT_IO_ERRORS_ON_REQUEST 1000
+// #define INJECT_IO_ERRORS_ON_REQUEST 1000
 
 
 	/* Define this if you want a built in test for backing device
