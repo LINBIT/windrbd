@@ -1,5 +1,24 @@
 --------------------------------------------------------------------
 
+TODO: blue screen when backing device fails.
+
+TODO: I/O error reading past the device.
+	Which is correct, however there is a disconnect. And the
+	disk should not fail.
+
+	Reading past the device can be used for I/O error handling
+	testing.
+
+TODO: io_status should not be in struct bio, see comments in
+	drbd_windows.h
+
+TODO: review README.md: some info is outdated.
+
+TODO: Test other file systems (FAT, FAT32, ...)
+	FAT does not work (Invalid function when accessing DRBD device)
+	FAT32 also not (something with flushing?)
+	Probably there is one important IOCTL missing.
+
 TODO: From Devin: make winsat run.
 
 TODO: From Devin: d->bi_size (from peer request) too big:
@@ -67,35 +86,20 @@ TODO: implement flush_workqueue
 	For example, drbdadm down takes long when connection goes
 	down.
 
-TODO: logging: printk's without terminating \n not displayed.
-
-	Also: if there are some special characters (\0?) the
-	line is not displayed.
-
-	Update: Please fix this, it is annoying, I just ran into
-	it.
-
-	Update: again.
-
 TODO: install kernel manpages
 
 	Must install from kernel source using 
 	make mandocs ; sudo make installmandocs
 
-TODO: review README.md: some info is outdated.
-
 TODO: user mode helpers
+
+	switch to ioctl() interface first.
 
 TODO: Implement function stubs created when integrating DRBD 9.0.9
 
 TODO: on patching boot sector, inform Windows that file system is
 	raw now.
 	So that it disappears.
-
-TODO: Test other file systems (FAT, FAT32, ...)
-	FAT does not work (Invalid function when accessing DRBD device)
-	FAT32 also not (something with flushing?)
-	Probably there is one important IOCTL missing.
 
 TODO: how and when is flush to backing device done?
 	This is important. Right now NTFS files only appear on
@@ -141,28 +145,12 @@ TODO: Get Windows 10 drbd installation working again.
 
 TODO: define tests to be run before releases.
 
-TODO: io_status should not be in struct bio, see comments in
-	drbd_windows.h
-
-TODO: make clean target under Windows should do what one would expect.
-	also remove *.pdb and *.ilk files in addition to *.obj
-
 TODO: refcnt is 0 on drbd_rs_complete_io
 	May 31 17:10:06 192.168.56.101  U15:10:04.337|03431840(sender) drbd_rs_complete_io <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x0): drbd_rs_complete_io(,16384 [=0]) called, but refcnt is 0!?
 
 	Did
 		sudo drbdadm invalidate w0 ; sleep 1 ; sudo drbdadm down w0
 	on Linux side.
-
-TODO: I/O error reading past the device.
-	Which is correct, however there is a disconnect. And the
-	disk should not fail.
-
-	Reading past the device can be used for I/O error handling
-	testing.
-
-TODO: Clean up wsk2.c
-	Remove unneccessary code.
 
 TODO: On much VM, one CPU core (has 2 cores) goes to 100% on sync.
 	I assume there is an unneccessary (?) copy somewhere.
@@ -201,9 +189,6 @@ TODO: drbd-util: Update manpage.
 TODO: Why doesn't it work on Phil's machine?
 
 TODO: msi installer instead of self extracting exe.
-
-TODO: remove all tags from alloc() routines
-	and revert patches.
 
 TODO: Mount to NTFS directories.
 
@@ -248,8 +233,7 @@ TODO: New blue screen on connecting Windows 10 to buildhost Windows 7
 	This might be because of wrong rcu handling (must sleep
 	before cleaning up)
 
---------------------------------------------------------------
-windrbd-next-next
+	Update: still there?
 
 TODO: netlink transport over ioctl
 
@@ -290,8 +274,6 @@ TODO: review TODOs in source code.
 TODO: Someday we want to pass user level buffer to driver directly
 	on READ requests instead of having a temp buffer (needed
 	for Windows 10).
-
-TODO: blue screen when backing device fails.
 
 TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
 	after doing some experiments. drbdadm down / up solved the
@@ -376,10 +358,6 @@ TODO: We should really lock the backing devices using NT kernel
 	Maybe use the mechanically locked IOCTL? Then one would
 	have to drbdadm down <res> --force
 
-TODO: Have a function that initialized all (global) spinlocks
-	and replace the racy solution (with an flag indicating
-	wheter it is initialized) we have now.
-
 TODO: cond_wait shouldn't busy loop. How is this done in Linux?
 
 TODO: #ifdef the Windows netlink code in drbd-utils
@@ -390,8 +368,6 @@ TODO: fix the macro redefinition problems in drbd_windows.c
 
 	Update: check if the prototypes are still needed.
 	Update: we probably reject this.
-
-TODO: (maybe) support setting send timeout.
 
 -------------------------------------------------------------------------
 
@@ -2265,4 +2241,36 @@ Done: Implement MSG_DONTWAIT for recv().
 	connection loss while idle.
 
 Done: clean up SIGCHLD, printk's
+
+Done: Clean up wsk2.c
+	Remove unneccessary code.
+
+Done: logging: printk's without terminating \n not displayed.
+
+	Also: if there are some special characters (\0?) the
+	line is not displayed.
+
+	Update: Please fix this, it is annoying, I just ran into
+	it.
+
+	Update: again.
+
+Rejected: remove all tags from alloc() routines
+	and revert patches.
+
+	Update: there's a perl script that does it for us .. leave
+	it in, maybe someone will need this one day.
+
+Done: Have a function that initialized all (global) spinlocks
+	and replace the racy solution (with an flag indicating
+	wheter it is initialized) we have now.
+
+Rejected: (maybe) support setting send timeout.
+
+	This works differently in Windows socket implementation,
+	since the send function is asynchronous. There is a
+	(fixed) timeout after which we get an error.
+
+Done: make clean target under Windows should do what one would expect.
+	also remove *.pdb and *.ilk files in addition to *.obj
 
