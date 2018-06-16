@@ -32,6 +32,15 @@
 
 #include <mountmgr.h>
 
+	/* Define this to make every n-th I/O request fail on completion. */
+
+#define INJECT_IO_ERRORS_ON_COMPLETION 1000
+
+	/* Define this to make every n-th I/O request fail on request. */
+
+// #define INJECT_IO_ERRORS_ON_REQUEST 1000
+
+
 	/* Define this if you want a built in test for backing device
 	   I/O. Attention this destroys data on the back device.
 	   Note that submit_bio may fail on some systems, therefore
@@ -659,7 +668,6 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
 	return NULL;
 }
 
-	/* TODO: Tag needed? Would save patches .. */
 struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 {
 	struct bio *bio;
@@ -672,6 +680,7 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_max_vecs = nr_iovecs;
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
+	spin_lock_init(&bio->device_failed_lock);
 
 	return bio;
 }
@@ -1200,12 +1209,18 @@ void releaseSpinLock(KSPIN_LOCK *lock, KIRQL flags)
 // DW-903 protect lock recursion
 // if current thread equal lock owner thread, just increase refcnt
 
+/* See also defintion of spin_lock_irqsave in drbd_windows.h for handling
+ * the flags parameter.
+ */
+
 long _spin_lock_irqsave(spinlock_t *lock)
 {
 	KIRQL	oldIrql = 0;
 	PKTHREAD curthread = KeGetCurrentThread();
 	if( curthread == lock->OwnerThread) { 
 		WDRBD_WARN("thread:%p spinlock recursion is happened! function:%s line:%d\n", curthread, __FUNCTION__, __LINE__);
+
+		/* TODO: and directly into the critical section?! */
 	} else {
 		acquireSpinLock(&lock->spinLock, &oldIrql);
 		lock->OwnerThread = curthread;
@@ -1247,6 +1262,7 @@ void spin_unlock_irq(spinlock_t *lock)
 	InterlockedDecrement(&lock->Refcnt);
 	if(lock->Refcnt == 0) {
 		lock->OwnerThread = 0;
+			/* TODO: This is most likely wrong (flags in lock). */
 		releaseSpinLock(&lock->spinLock, lock->saved_oldIrql);
 	}
 }
@@ -1688,6 +1704,7 @@ void flush_signals(struct task_struct *task)
 }
 
 /* https://msdn.microsoft.com/de-de/library/ff548354(v=vs.85).aspx */
+/* TODO: needed here? */
 IO_COMPLETION_ROUTINE DrbdIoCompletion;
 
 static inline blk_status_t win_status_to_blk_status(NTSTATUS status)
@@ -1754,6 +1771,7 @@ NTSTATUS DrbdIoCompletion(
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
 	int i;
 	NTSTATUS status = Irp->IoStatus.Status;
+	unsigned long flags;
 
 	if (status != STATUS_SUCCESS) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)
@@ -1763,6 +1781,16 @@ NTSTATUS DrbdIoCompletion(
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
 	}
+
+#ifdef INJECT_IO_ERRORS_ON_COMPLETION
+	static int nr_requests_to_failure = INJECT_IO_ERRORS_ON_COMPLETION;
+	if (--nr_requests_to_failure == 0) {
+		printk("Injecting fault after %d requests completed.\n", INJECT_IO_ERRORS_ON_COMPLETION);
+		status = STATUS_IO_DEVICE_ERROR;
+		nr_requests_to_failure = INJECT_IO_ERRORS_ON_COMPLETION;
+	}
+#endif
+
 	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
 		patch_boot_sector(buffer, 1, 0);
@@ -1775,13 +1803,21 @@ NTSTATUS DrbdIoCompletion(
 	}
 */
 
-/* TODO: if failed call drbd_bio_endio always */
+	spin_lock_irqsave(&bio->device_failed_lock, flags);
+	if (status != STATUS_SUCCESS) {
+		drbd_bio_endio(bio, win_status_to_blk_status(status));
+		if (bio->patched_bootsector_buffer)
+			kfree(bio->patched_bootsector_buffer);
+		bio->device_failed = 1;
+	}
+
 	int num_completed = atomic_inc_return(&bio->bi_requests_completed);
-	if (num_completed == bio->bi_num_requests) {
+	if (!bio->device_failed && num_completed == bio->bi_num_requests) {
 		drbd_bio_endio(bio, win_status_to_blk_status(status));
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
 	}
+	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
 
 	bio_put(bio);
 
@@ -1879,6 +1915,7 @@ static int make_flush_request(struct bio *bio)
 	next_stack_location->FileObject = bio->bi_bdev->file_object;
 
 	bio_get(bio);
+
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
@@ -2034,6 +2071,17 @@ static int windrbd_generic_make_request(struct bio *bio)
 		goto out_free_irp;
 	}
 	bio_get(bio);	/* To be put in completion routine */
+
+#ifdef INJECT_IO_ERRORS_ON_REQUEST
+	static int nr_requests_to_failure = INJECT_IO_ERRORS_ON_REQUEST;
+	if (--nr_requests_to_failure == 0) {
+		printk("Injecting fault after %d requests completed.\n", INJECT_IO_ERRORS_ON_REQUEST);
+		status = STATUS_IO_ERROR;
+		nr_requests_to_failure = INJECT_IO_ERRORS_ON_REQUEST;
+		return -EIO; /* yes we leak. This is test code. */
+	} else  /* (! be careful) */
+#endif
+
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
@@ -2123,7 +2171,7 @@ int generic_make_request(struct bio *bio)
 		if (ret < 0) {
 			drbd_bio_endio(bio, BLK_STS_IOERR);
 			goto out;
-		}
+		}	/* TODO: if ret > 0 break? */
 		sector += total_size >> 9;
 	}
 	if (flush_request) {

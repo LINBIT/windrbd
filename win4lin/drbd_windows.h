@@ -635,6 +635,9 @@ struct bio {
 	int bi_this_request;
 	atomic_t bi_requests_completed;
 
+	int device_failed;
+	spinlock_t device_failed_lock;
+
 	void *patched_bootsector_buffer;
 
 	/* If set, indicates that the memory is paged, in which case
