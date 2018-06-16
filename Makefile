@@ -84,7 +84,18 @@ signed-package:
 	else \
 		echo "Please run 'make' first on a Linux system with spatch installed"; \
 	fi
+
+clean:
+	for d in $(TRANS_DEST) $(WIN4LIN); do \
+		find $$d -name "*.pdb" -delete; \
+		find $$d -name "*.obj" -delete; \
+		find $$d -name "drbd.sys" -delete; \
+		find $$d -name "drbd.cat" -delete; \
+		find $$d -name "_drbd.ilk" -delete; \
+	done
+
 else
+
 build: patch
 	@echo "Now please run 'make' in the Windows VM."
 
@@ -92,6 +103,18 @@ install:
 	@echo "This is not a Windows machine. Since we are building a Windows"
 	@echo "kernel driver, execute make install on your Windows box (as"
 	@echo "Administrator)"
+
+clean:
+	if test -f $(TRANS_DEST)/.generated; then \
+		rm -f $(shell cat $(TRANS_DEST).generated) $(TRANS_DEST).generated; \
+		for d in $(TRANS_DEST) $(WIN4LIN); do \
+			find $$d -name "*.tmp.bak" -delete; \
+			find $$d -name "*.pdb" -delete; \
+			find $$d -name "*.obj" -delete; \
+			find $$d -name "*.orig" -delete; \
+			find $$d -name "*.tmpe" -delete; \
+		done; \
+	fi
 
 endif
 		
@@ -107,17 +130,5 @@ tarball:
 	ln -s . wdrbd-$(VERSION)
 	tar --owner=0 --group=0 -czf - -T .filelist > wdrbd-$(VERSION).tar.gz
 	rm wdrbd-$(VERSION)
-
-clean:
-	if test -f $(TRANS_DEST)/.generated; then \
-		rm -f $(shell cat $(TRANS_DEST).generated) $(TRANS_DEST).generated; \
-		for d in $(TRANS_DEST) $(WIN4LIN); do \
-			find $$d -name "*.tmp.bak" -delete; \
-			find $$d -name "*.pdb" -delete; \
-			find $$d -name "*.obj" -delete; \
-			find $$d -name "*.orig" -delete; \
-			find $$d -name "*.tmpe" -delete; \
-		done; \
-	fi
 
 # vim: set ts=8 sw=8 noet : 
