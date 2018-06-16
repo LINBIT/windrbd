@@ -389,7 +389,7 @@ TEST(windrbd, do_read_past_end_of_device)
 	char buf[512];
 	unsigned int i;
 	DWORD px;
-	DWORD bytes_written;
+	DWORD bytes_read;
 
 	for (i=0;i<sizeof(buf);i++)
 		buf[i] = i;
@@ -397,9 +397,11 @@ TEST(windrbd, do_read_past_end_of_device)
 	px = SetFilePointer(h, p.expected_size, NULL, FILE_BEGIN);
 	err = GetLastError();
 	printf("px is %d err is %d\n", px, err);
-	ret = ReadFile(h, buf, sizeof(buf), &bytes_written,  NULL);
-	err = GetLastError();
-	printf("ret is %d err is %d\n", ret, err);
+	for (i=0;i<1000;i++) {
+		ret = ReadFile(h, buf, sizeof(buf), &bytes_read,  NULL);
+		err = GetLastError();
+		printf("ret is %d err is %d\n", ret, err);
+	}
 
 	CloseHandle(h);
 }
