@@ -34,11 +34,11 @@
 
 	/* Define this to make every n-th I/O request fail on completion. */
 
-#define INJECT_IO_ERRORS_ON_COMPLETION 1000
+// #define INJECT_IO_ERRORS_ON_COMPLETION 1000
 
 	/* Define this to make every n-th I/O request fail on request. */
 
-// #define INJECT_IO_ERRORS_ON_REQUEST 1000
+#define INJECT_IO_ERRORS_ON_REQUEST 1000
 
 
 	/* Define this if you want a built in test for backing device
@@ -2076,7 +2076,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	static int nr_requests_to_failure = INJECT_IO_ERRORS_ON_REQUEST;
 	if (--nr_requests_to_failure == 0) {
 		printk("Injecting fault after %d requests completed.\n", INJECT_IO_ERRORS_ON_REQUEST);
-		status = STATUS_IO_ERROR;
+		status = STATUS_IO_DEVICE_ERROR;
 		nr_requests_to_failure = INJECT_IO_ERRORS_ON_REQUEST;
 		return -EIO; /* yes we leak. This is test code. */
 	} else  /* (! be careful) */

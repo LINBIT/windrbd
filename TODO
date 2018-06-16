@@ -2299,3 +2299,6 @@ Done: I/O error reading past the device.
 	I/O error handling seems to work as expected. Maybe also
 	test this with an USB stick.
 
+Done: Fault injection on backing device.
+
+	If we were saints we also would test with split I/O requests.
