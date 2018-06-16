@@ -381,6 +381,29 @@ TEST(win_drbd, do_write_read_whole_disk)
 	CloseHandle(h);
 }
 
+TEST(win_drbd, do_read_past_end_of_device)
+{
+	HANDLE h = do_open_device(0);
+	BOOL ret;
+	int err;
+	char buf[512];
+	unsigned int i;
+	DWORD px;
+	DWORD bytes_written;
+
+	for (i=0;i<sizeof(buf);i++)
+		buf[i] = i;
+
+	px = SetFilePointer(h, p.expected_size, NULL, FILE_BEGIN);
+	err = GetLastError();
+	printf("px is %d err is %d\n", px, err);
+	ret = ReadFile(h, buf, sizeof(buf), &bytes_written,  NULL);
+	err = GetLastError();
+	printf("ret is %d err is %d\n", ret, err);
+
+	CloseHandle(h);
+}
+
 TEST(win_drbd, copy_disk_to_file)
 {
 	HANDLE h = do_open_device(0);
