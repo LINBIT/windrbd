@@ -103,7 +103,7 @@ int _printk(const char *func, const char *fmt, ...)
     
 	int level = '1';
 	const char *fmt_without_level;
-	ULONG pos, len;
+	size_t pos, len;
 	LARGE_INTEGER time;
 	va_list args;
 	NTSTATUS status;
@@ -147,7 +147,7 @@ int _printk(const char *func, const char *fmt, ...)
 	hour = sec_day / 3600;
 	msec = (time.QuadPart / 10000) % (ULONG_PTR)1e3; // 100nsec to msec
 
-	pos = (ULONG)strlen(buffer);
+	pos = strlen(buffer);
 	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d|%08.8x(%s) %s ",
 	    level, hour, min, sec, msec,
 	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
@@ -162,7 +162,7 @@ int _printk(const char *func, const char *fmt, ...)
 		return -EINVAL;
 	}
 
-	pos = (ULONG)strlen(buffer);
+	pos = strlen(buffer);
 	va_start(args, fmt);
 	status = RtlStringCbVPrintfA(buffer+pos, sizeof(buffer)-1-pos,
 		    fmt, args);
@@ -182,7 +182,8 @@ int _printk(const char *func, const char *fmt, ...)
 		    DPFLTR_WARNING_LEVEL),
 		    buffer);
 
-	len = (ULONG)strlen(buffer);
+		/* Include the trailing \0 */
+	len = strlen(buffer)+1;
 
 	if (len > RING_BUFFER_SIZE) {
 		s = buffer+len-RING_BUFFER_SIZE;
@@ -233,6 +234,10 @@ int _printk(const char *func, const char *fmt, ...)
 				    line_pos >= sizeof(line)-2) {
 					if (line[line_pos] == '\n')
 						line_pos++;
+		/* do not send '\0' after '\n', will return send error */
+					if (line_pos == 0)
+						continue;
+
 					status = SendTo(printk_udp_socket, 
 							line,
 							line_pos,
