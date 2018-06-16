@@ -36,23 +36,23 @@ printf("opening file %s\n", fname);
 	return h;
 }
 
-TEST(win_drbd, open_device)
+TEST(windrbd, open_device)
 {
 	do_open_device(0);
 }
 
-TEST(win_drbd, open_device_readonly)
+TEST(windrbd, open_device_readonly)
 {
 	do_open_device(1);
 }
 
-TEST(win_drbd, open_and_close_device)
+TEST(windrbd, open_and_close_device)
 {
 	HANDLE h = do_open_device(0);
 	CloseHandle(h);
 }
 
-TEST(win_drbd, get_drive_geometry)
+TEST(windrbd, get_drive_geometry)
 {
 	HANDLE h = do_open_device(0);
 	struct _DISK_GEOMETRY g;
@@ -75,7 +75,7 @@ TEST(win_drbd, get_drive_geometry)
 	CloseHandle(h);
 }
 
-TEST(win_drbd, get_drive_geometry_invalid)
+TEST(windrbd, get_drive_geometry_invalid)
 {
 	HANDLE h = do_open_device(0);
 	struct _DISK_GEOMETRY g;
@@ -92,7 +92,7 @@ TEST(win_drbd, get_drive_geometry_invalid)
 	CloseHandle(h);
 }
 
-TEST(win_drbd, get_drive_geometry_ex)
+TEST(windrbd, get_drive_geometry_ex)
 {
 	HANDLE h = do_open_device(0);
 	struct _DISK_GEOMETRY_EX g;
@@ -116,7 +116,7 @@ TEST(win_drbd, get_drive_geometry_ex)
 	CloseHandle(h);
 }
 
-TEST(win_drbd, get_partition_information_ex)
+TEST(windrbd, get_partition_information_ex)
 {
 	HANDLE h = do_open_device(0);
 	struct _PARTITION_INFORMATION_EX pi;
@@ -138,7 +138,7 @@ TEST(win_drbd, get_partition_information_ex)
 	CloseHandle(h);
 }
 
-TEST(win_drbd, set_partition_information)
+TEST(windrbd, set_partition_information)
 {
 	HANDLE h = do_open_device(0);
 	struct _SET_PARTITION_INFORMATION s;
@@ -169,7 +169,7 @@ TEST(win_drbd, set_partition_information)
 	CloseHandle(h);
 }
 
-TEST(win_drbd, get_length_info)
+TEST(windrbd, get_length_info)
 {
 	HANDLE h = do_open_device(0);
 	struct _GET_LENGTH_INFORMATION l;
@@ -188,7 +188,7 @@ TEST(win_drbd, get_length_info)
 	CloseHandle(h);
 }
 
-TEST(win_drbd, do_read)
+TEST(windrbd, do_read)
 {
 	HANDLE h = do_open_device(0);
 	DWORD bytes_read;
@@ -206,7 +206,7 @@ TEST(win_drbd, do_read)
 	CloseHandle(h);
 }
 
-TEST(win_drbd, do_write_read)
+TEST(windrbd, do_write_read)
 {
 	HANDLE h = do_open_device(0);
 	DWORD bytes_read, bytes_written;
@@ -254,7 +254,7 @@ TEST(win_drbd, do_write_read)
 	CloseHandle(h);
 }
 
-TEST(win_drbd, do_write_read_whole_disk_by_1meg_requests)
+TEST(windrbd, do_write_read_whole_disk_by_1meg_requests)
 {
 #define ONE_MEG (65536*16)
 
@@ -327,7 +327,7 @@ TEST(win_drbd, do_write_read_whole_disk_by_1meg_requests)
 	CloseHandle(h);
 }
 
-TEST(win_drbd, do_write_read_whole_disk)
+TEST(windrbd, do_write_read_whole_disk)
 {
 	HANDLE h = do_open_device(0);
 	DWORD bytes_read, bytes_written;
@@ -381,7 +381,7 @@ TEST(win_drbd, do_write_read_whole_disk)
 	CloseHandle(h);
 }
 
-TEST(win_drbd, do_read_past_end_of_device)
+TEST(windrbd, do_read_past_end_of_device)
 {
 	HANDLE h = do_open_device(0);
 	BOOL ret;
@@ -404,7 +404,7 @@ TEST(win_drbd, do_read_past_end_of_device)
 	CloseHandle(h);
 }
 
-TEST(win_drbd, copy_disk_to_file)
+TEST(windrbd, copy_disk_to_file)
 {
 	HANDLE h = do_open_device(0);
 	HANDLE f;
@@ -454,7 +454,7 @@ TEST(win_drbd, copy_disk_to_file)
 	CloseHandle(f);
 }
 
-TEST(win_drbd, flush_disk)
+TEST(windrbd, flush_disk)
 {
 	HANDLE h = do_open_device(0);
 	BOOL ret;
@@ -469,7 +469,7 @@ TEST(win_drbd, flush_disk)
 	CloseHandle(h);
 }
 
-TEST(win_drbd, dismount_volume)
+TEST(windrbd, dismount_volume)
 {
 	HANDLE h = do_open_device(0);
 	BOOL ret;
