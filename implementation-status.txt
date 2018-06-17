@@ -1,3 +1,6 @@
+This document lists currently implemented functions for the
+windrbd (upper level) block device.
+
 Major function codes:
 
 TODO (currently just returns STATUS_SUCCESS):  
@@ -34,7 +37,14 @@ Not needed: km/wdm.h:#define IRP_MJ_MAXIMUM_FUNCTION         0x1b
 Not needed: km/wdm.h:#define IRP_MJ_SCSI                     IRP_MJ_INTERNAL_DEVICE_CONTROL
 Not needed: km/wdm.h:#define SL_PERSISTENT_MEMORY_FIXED_MAPPING  0x20    // valid only with persistent memory device and IRP_MJ_WRITE
 
-IoCtls:
+IoCtls: (see http://www.ioctls.net for a reference)
+
+(note: 
+
+#define CTL_CODE( DeviceType, Function, Method, Access ) (                 \
+    ((DeviceType) << 16) | ((Access) << 14) | ((Function) << 2) | (Method) \
+)
+)
 
 Done: 0x70000: FILE_DEVICE_DISK: IOCTL_DISK_GET_DRIVE_GEOMETRY
 Done: 0x7405c: FILE_DEVICE_DISK: IOCTL_DISK_GET_LENGTH_INFO
@@ -44,10 +54,10 @@ Done: 0x70048: FILE_DEVICE_DISK: IOCTL_DISK_GET_PARTITION_INFO_EX
 	for format H: (implemented, format H: works now)
 TODO: 0x7c008 : FILE_DEVICE_DISK: IOCTL_DISK_SET_PARTITION_INFO
 
-Later (maybe never): 0x70024: FILE_DEVICE_DISK: IOCTL_DISK_PERFORMANCE
-Later (maybe never): 0x2d1400: FILE_DEVICE_MASS_STORAGE: IOCTL_STORAGE_QUERY_PROPERTY
-Later (maybe never)0x2d0c14: FILE_DEVICE_MASS_STORAGE: IOCTL_STORAGE_GET_HOTPLUG_INFO
-Later (maybe never)0x2d5190: FILE_DEVICE_MASS_STORAGE: ??
+For Winsat: 0x2d1400: FILE_DEVICE_MASS_STORAGE: IOCTL_STORAGE_QUERY_PROPERTY
+For Winsat: 0x2d5190: FILE_DEVICE_MASS_STORAGE: undocumented (function 0x464): ReactOS does not define this.
+For Winsat: IOCTL_STORAGE_GET_DEVICE_NUMBER	0x2d1080	inc\api\ntddstor.h	Retrieves the device type, device number, and, for a partitionable device, the partition number of a device.
+For Winsat: IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS	0x560000	inc\api\ntddvol.h	Retrieves the physical location of a specified volume on one or more disks.
 
 0x2d1080
 0x2d9404
@@ -57,4 +67,9 @@ Later (maybe never)0x2d5190: FILE_DEVICE_MASS_STORAGE: ??
 0x564052
 0x66001b
 0x700f8
+
+PNP request: IRP_MN_QUERY_DEVICE_RELATIONS Parameters.QueryDeviceRelations.Type is 4
+
+Later (maybe never): 0x70024: FILE_DEVICE_DISK: IOCTL_DISK_PERFORMANCE
+Later (maybe never): 0x2d0c14: FILE_DEVICE_MASS_STORAGE: IOCTL_STORAGE_GET_HOTPLUG_INFO
 
