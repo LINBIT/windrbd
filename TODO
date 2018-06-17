@@ -1,24 +1,36 @@
 --------------------------------------------------------------------
 
-TODO: Protect against sector out of range by checking in windrbd device entry.
-
-TODO: Test other file systems (FAT, FAT32, ...)
-	FAT does not work (Invalid function when accessing DRBD device)
-	FAT32 also not (something with flushing?)
-	Probably there is one important IOCTL missing.
-
-TODO: From Devin: make winsat run.
-
-TODO: io_status should not be in struct bio, see comments in
-	drbd_windows.h
-
-TODO: review README.md: some info is outdated.
+TODO: Test with fault injection and split I/O requests
 
 TODO: From Devin: d->bi_size (from peer request) too big:
 
 	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
 
 	Test with large block device sizes.
+
+	Update: did, but didn't yet happen (sync would take 3 hours)
+
+TODO: Protect against sector out of range by checking in windrbd device entry.
+
+TODO: maybe revert the mountmanager code.
+
+	I am not sure if this is a benefit.
+
+TODO: white paper for linbit website.
+
+	Until end of June 2018
+
+TODO: review README.md: some info is outdated.
+
+TODO: fix the spinlocks (see comments in drbd_windows.c).
+
+TODO: Test other file systems (FAT, FAT32, ...)
+	FAT does not work (Invalid function when accessing DRBD device)
+	FAT32 also not (something with flushing?)
+	Probably there is one important IOCTL missing.
+
+TODO: io_status should not be in struct bio, see comments in
+	drbd_windows.h
 
 TODO: windrbd hide-filesystem does not work on a DRBD device.
 
@@ -135,10 +147,6 @@ TODO: Make windows checkdisk (over unclean shutdown panel) work.
 	chkdsk works.
 
 TODO: Linux box sometimes loses IP address.
-
-TODO: white paper for linbit website.
-
-	Until end of June 2018
 
 TODO: Get Windows 10 drbd installation working again.
 
@@ -2302,3 +2310,15 @@ Done: I/O error reading past the device.
 Done: Fault injection on backing device.
 
 	If we were saints we also would test with split I/O requests.
+
+Rejected: From Devin: make winsat run.
+
+	It uses undocumented APIs (ioctl 0x2d5190). There are lots
+	of other tools, for example CrystalDiskMark.
+
+Done: random read/writes (reported by CrystalDiskMark) are very slow
+
+	Device is unconnected.
+	Update: also slow when writing directly to backing device.
+	Probably a VirtualBox issue.
+
