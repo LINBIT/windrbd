@@ -510,6 +510,14 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 		printk("s->MajorFunction neither read nor write.\n");
 		return NULL;
 	}
+	if (sector * dev->bd_block_size >= dev->d_size) {
+		printk("Attempt to read past the end of the device\n");
+		return NULL;
+	}
+	if (sector * dev->bd_block_size + total_size > dev->d_size) {
+		printk("Attempt to read past the end of the device, request shortened\n");
+		total_size = dev->d_size - sector * dev->bd_block_size; 
+	}
 	if (total_size == 0) {
 		printk("I/O request of size 0.\n");
 		return NULL;
@@ -624,6 +632,7 @@ printk("I/O request on a failed disk.\n");
 
 	bio = irp_to_bio(irp, dev);
 	if (bio == NULL) {
+		/* TODO: or INVALID_PARAMETER if reading past the device. */
 		status = STATUS_INSUFFICIENT_RESOURCES;
 		goto exit;
 	}
