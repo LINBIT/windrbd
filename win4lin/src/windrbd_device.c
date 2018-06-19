@@ -471,7 +471,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	bio_put(bio);
 }
 
-static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
+static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev, NTSTATUS *status)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct _MDL *mdl = irp->MdlAddress;
@@ -487,16 +487,19 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 
 	if (s == NULL) {
 		printk("Stacklocation is NULL.\n");
+		*status = STATUS_INSUFFICIENT_RESOURCES;
 		return NULL;
 	}
 	if (mdl == NULL) {
 		printk("MdlAddress is NULL.\n");
+		*status = STATUS_INVALID_PARAMETER;
 		return NULL;
 	}
 
 	/* TODO: later have more than one .. */
 	if (mdl->Next != NULL) {
 		printk(KERN_ERR "not implemented: have more than one mdl. Dropping additional mdl data.\n");
+		*status = STATUS_NOT_IMPLEMENTED;
 		return NULL;
 	}
 
@@ -508,10 +511,12 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 		sector = (s->Parameters.Read.ByteOffset.QuadPart) / dev->bd_block_size;
 	} else {
 		printk("s->MajorFunction neither read nor write.\n");
+		*status = STATUS_INVALID_PARAMETER;
 		return NULL;
 	}
 	if (sector * dev->bd_block_size >= dev->d_size) {
 		printk("Attempt to read past the end of the device\n");
+		*status = STATUS_INVALID_PARAMETER;
 		return NULL;
 	}
 	if (sector * dev->bd_block_size + total_size > dev->d_size) {
@@ -520,6 +525,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 	}
 	if (total_size == 0) {
 		printk("I/O request of size 0.\n");
+		*status = STATUS_INVALID_PARAMETER;
 		return NULL;
 	}
 
@@ -530,6 +536,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 	buffer = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
 	if (buffer == NULL) {
 		printk("I/O buffer from MmGetSystemAddressForMdlSafe() is NULL\n");
+		*status = STATUS_INSUFFICIENT_RESOURCES;
 		return NULL;
 	}
 	vcnt = (total_size-1) / PAGE_SIZE + 1;
@@ -538,6 +545,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 	bio = bio_alloc(GFP_NOIO, vcnt, 'DBRD');
 	if (bio == NULL) {
 		printk("Couldn't allocate bio.\n");
+		*status = STATUS_INSUFFICIENT_RESOURCES;
 		return NULL;
 	}
 	bio->bi_rw = s->MajorFunction == IRP_MJ_WRITE ? WRITE : READ;
@@ -558,6 +566,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 		bio->bi_io_vec[i].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
 		if (bio->bi_io_vec[i].bv_page == NULL) {
 			printk("Couldn't allocate page.\n");
+			*status = STATUS_INSUFFICIENT_RESOURCES;
 			return NULL; /* TODO: cleanup */
 		}
 
@@ -575,6 +584,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 
 		if (bio->bi_io_vec[i].bv_page->addr == NULL) {
 			printk("Couldn't allocate temp buffer for read.\n");
+			*status = STATUS_INSUFFICIENT_RESOURCES;
 			return NULL; /* TODO: cleanup */
 		}
 
@@ -586,6 +596,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 
 /* printk("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset); */
 
+	*status = STATUS_SUCCESS;
 	return bio;
 }
 
@@ -625,15 +636,15 @@ printk("I/O request while not primary.\n");
 		goto exit;
 	}
 		/* TODO: can serve read requests from peer */
+		/* TODO: legal while connected? */
 	if (dev->drbd_device->disk_state[NOW] <= D_FAILED) {
 printk("I/O request on a failed disk.\n");
 		goto exit;
 	}
 
-	bio = irp_to_bio(irp, dev);
+	bio = irp_to_bio(irp, dev, &status);
 	if (bio == NULL) {
 		/* TODO: or INVALID_PARAMETER if reading past the device. */
-		status = STATUS_INSUFFICIENT_RESOURCES;
 		goto exit;
 	}
         IoMarkIrpPending(irp);
