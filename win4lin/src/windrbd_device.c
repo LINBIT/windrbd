@@ -425,9 +425,6 @@ static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	NTSTATUS status = STATUS_SUCCESS;
 
 printk(KERN_INFO "Pretending that cleanup does something.\n");
-	/* TODO: call this: */
-/*        drbd_cleanup_by_win_shutdown(VolumeExtension); */
-
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 	return status;
@@ -635,18 +632,17 @@ printk("I/O request while device isn't set up yet.\n");
 printk("I/O request while not primary.\n");
 		goto exit;
 	}
-		/* TODO: can serve read requests from peer */
-		/* TODO: legal while connected? */
-	if (dev->drbd_device->disk_state[NOW] <= D_FAILED) {
-printk("I/O request on a failed disk.\n");
-		goto exit;
-	}
+
+		/* allow I/O when the local disk failed, usually there
+		 * are peers which can handle the I/O. If not, DRBD will
+		 * report an I/O error which we will get in our completion
+		 * routine later and can report to the application.
+		 */
 
 	bio = irp_to_bio(irp, dev, &status);
-	if (bio == NULL) {
-		/* TODO: or INVALID_PARAMETER if reading past the device. */
+	if (bio == NULL)
 		goto exit;
-	}
+
         IoMarkIrpPending(irp);
 	drbd_make_request(dev->drbd_device->rq_queue, bio);
 
