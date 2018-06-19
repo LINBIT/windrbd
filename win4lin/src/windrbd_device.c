@@ -540,7 +540,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev)
 	bio->bi_size = total_size;
 	bio->bi_sector = sector;
 
-printk("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
+// printk("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
 
 	for (i=0; i<vcnt; i++) {
 		this_size = (i == vcnt-1) ? last_size : PAGE_SIZE;
