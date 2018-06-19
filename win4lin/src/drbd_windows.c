@@ -34,7 +34,7 @@
 
 	/* Define this to make every n-th I/O request fail on completion. */
 
-// #define INJECT_IO_ERRORS_ON_COMPLETION 1000
+#define INJECT_IO_ERRORS_ON_COMPLETION 1000
 
 	/* Define this to make every n-th I/O request fail on request. */
 
