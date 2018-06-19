@@ -1,14 +1,9 @@
 --------------------------------------------------------------------
 
-TODO: From Devin: d->bi_size (from peer request) too big:
+TODO: support I/O vectors in windrbd device (irp_to_bio)
+	and clean up code (see TODOs in source code)
 
-	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
-
-	Test with large block device sizes.
-
-	Update: did, but didn't yet happen (sync would take 3 hours)
-
-TODO: Protect against sector out of range by checking in windrbd device entry.
+	Also have a test that does WriteFileGather and ReadFileScatter.
 
 TODO: white paper for linbit website.
 
@@ -31,6 +26,15 @@ TODO: windrbd hide-filesystem does not work on a DRBD device.
 	For now use windrbd-test with do_read_write test.
 
 ------------------------------------------------------------------------
+
+TODO: From Devin: d->bi_size (from peer request) too big:
+
+	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
+
+	Test with large block device sizes.
+
+	Update: did, but didn't yet happen (sync would take 3 hours)
+
 TODO: From Devin: Registering mount point failed status = c0000035
 	This seems to be something that only happens on Windows Server 2016.
 	The mount_point buffer is NULL at end of the windrbd_mount
@@ -296,11 +300,6 @@ TODO: Fix windows shutdown bug.
 
 	Update: Not observed lately.
 	Update: just reappeared again.
-
-TODO: support I/O vectors in windrbd device (irp_to_bio)
-	and clean up code (see TODOs in source code)
-
-	Also have a test that does WriteFileGather and ReadFileScatter.
 
 TODO: Re-port drbd_transport_tcp.c to windrbd's
 	drbd_transport_wtcp.c.
@@ -2325,4 +2324,8 @@ Done: random read/writes (reported by CrystalDiskMark) are very slow
 Done: Test with fault injection and split I/O requests
 
 	With writing 1meg requests.
+
+Done: Protect against sector out of range by checking in windrbd device entry.
+
+Done: Fix error codes returned by irp_to_bio
 
