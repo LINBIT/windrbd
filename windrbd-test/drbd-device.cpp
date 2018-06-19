@@ -391,9 +391,6 @@ TEST(windrbd, do_read_past_end_of_device)
 	DWORD px;
 	DWORD bytes_read;
 
-	for (i=0;i<sizeof(buf);i++)
-		buf[i] = i;
-
 	px = SetFilePointer(h, p.expected_size, NULL, FILE_BEGIN);
 	err = GetLastError();
 	printf("px is %d err is %d\n", px, err);
@@ -402,6 +399,25 @@ TEST(windrbd, do_read_past_end_of_device)
 		err = GetLastError();
 		printf("ret is %d err is %d\n", ret, err);
 	}
+
+	CloseHandle(h);
+}
+
+TEST(windrbd, do_read_at_end_of_device)
+{
+	HANDLE h = do_open_device(0);
+	BOOL ret;
+	int err;
+	char buf[1024];
+	DWORD px;
+	DWORD bytes_read;
+
+	px = SetFilePointer(h, p.expected_size-512, NULL, FILE_BEGIN);
+	err = GetLastError();
+	printf("px is %d err is %d\n", px, err);
+	ret = ReadFile(h, buf, sizeof(buf), &bytes_read,  NULL);
+	err = GetLastError();
+	printf("ret is %d err is %d, bytes_read is %d\n", ret, err, bytes_read);
 
 	CloseHandle(h);
 }
