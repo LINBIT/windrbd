@@ -1,9 +1,12 @@
 --------------------------------------------------------------------
 
-TODO: support I/O vectors in windrbd device (irp_to_bio)
-	and clean up code (see TODOs in source code)
+TODO: Test other file systems (FAT, FAT32, ...)
+	FAT does not work (Invalid function when accessing DRBD device)
+	FAT32 also not (something with flushing?)
+	Probably there is one important IOCTL missing.
 
-	Also have a test that does WriteFileGather and ReadFileScatter.
+TODO: io_status should not be in struct bio, see comments in
+	drbd_windows.h
 
 TODO: white paper for linbit website.
 
@@ -13,17 +16,17 @@ TODO: review README.md: some info is outdated.
 
 TODO: fix the spinlocks (see comments in drbd_windows.c).
 
-TODO: Test other file systems (FAT, FAT32, ...)
-	FAT does not work (Invalid function when accessing DRBD device)
-	FAT32 also not (something with flushing?)
-	Probably there is one important IOCTL missing.
+	Windows doesn't have an equivalent of spin_lock_irq()
+	(without flags) however we can assume that interrupts
+	are enabled when spin_lock_irq is called and reset it
+	to enabled when spin_unlock_irq is called (set it to
+	PASSIVE_LEVEL).
 
-TODO: io_status should not be in struct bio, see comments in
-	drbd_windows.h
+	So no need for a tmp storage here. (Maybe put an assert
+	at the beginning of spin_lock_irq that tests for IRQL
+	being PASSIVE_LEVEL).
 
-TODO: windrbd hide-filesystem does not work on a DRBD device.
-
-	For now use windrbd-test with do_read_write test.
+TODO: Make DRBD driver removable.
 
 ------------------------------------------------------------------------
 
@@ -58,8 +61,6 @@ TODO: Windows 2016 server: cannot format volume
 	Fix networking first (we cannot reach Linux machine from
 	Windows 2016 server at the moment)
 
-TODO: Make DRBD driver removable.
-
 TODO: Test sendbuffer full (rety on Metadata socket).
 
 	See if supported at all (have printk's if not). Update:
@@ -92,6 +93,10 @@ TODO: Sync is still somewhat slow when windrbd is SyncTarget
 	Update: Probably not the networking code, maybe I/O on
 	backing device is slow? When Windows is SyncTarget it is
 	faster (3 sec) than when it is SyncSource (7 sec) doing I/O
+
+TODO: windrbd hide-filesystem does not work on a DRBD device.
+
+	For now use windrbd-test with do_read_write test.
 
 TODO: implement flush_workqueue
 
@@ -317,8 +322,6 @@ TODO: Re-port drbd_transport_tcp.c to windrbd's
 	and so on).
 
 TODO: rebase drbd_wrappers.h to upstream DRBD
-
-TODO: test no I/O when disk is failed.
 
 TODO: when losing Quorum go into read only mode.
 	(quorum means that our connected network contains > n/2 
@@ -2328,4 +2331,20 @@ Done: Test with fault injection and split I/O requests
 Done: Protect against sector out of range by checking in windrbd device entry.
 
 Done: Fix error codes returned by irp_to_bio
+
+Rejected: support I/O vectors in windrbd device (irp_to_bio)
+	and clean up code (see TODOs in source code)
+
+	Also have a test that does WriteFileGather and ReadFileScatter.
+
+	Update: Have test, but windows copies the data to have it
+	linear in memory (getting one MDL element describing a
+	linar buffer for all the vector elements).
+
+	For now, leave that alone, it seems not be used by applications.
+
+Done: test no I/O when disk is failed.
+
+	We now allow I/O since DRBD will serve I/O requests from
+	a Primary peer of the local disk fails. This works well.
 
