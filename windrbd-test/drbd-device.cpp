@@ -463,7 +463,7 @@ TEST(windrbd, do_readv)
 		buf[i]=i;
 
 	for (i=0;i<ELEMENTS;i++)
-		arr[i].Buffer = buf+i*PAGE_SIZE;
+		arr[ELEMENTS-i-1].Buffer = buf+i*PAGE_SIZE;
 	arr[i].Buffer = NULL;
 
 	overlapped.Offset = overlapped.OffsetHigh = 0;
@@ -476,12 +476,149 @@ TEST(windrbd, do_readv)
 	ret = ReadFileScatter(h, arr, ELEMENTS*PAGE_SIZE, NULL, &overlapped);
 	printf("ReadFileScatter returned %d\n", ret);
 	err = GetLastError();
-	if (ret == 0 && err != 997) {	/* windows ... 997 means pending and is not error here */
+	if (ret == 0 && err != 997) {	/* windows ... 997 means pending and is not an error here */
 		printf("error is %d\n", err);
 	} else {
 		WaitForSingleObject(overlapped.hEvent, INFINITE);
 		printf("read file status is %lld bytes read is %lld\n", overlapped.Internal, overlapped.InternalHigh);
 	}
+
+	CloseHandle(h);
+}
+
+TEST(windrbd, do_writev)
+{
+	HANDLE h = do_open_device(DIRECT);
+	BOOL ret;
+	char *buf_storage;
+	char *buf;
+	int i;
+	union _FILE_SEGMENT_ELEMENT arr[ELEMENTS+1];
+	struct _OVERLAPPED overlapped;
+	int err;
+
+	buf_storage = (char*)malloc(PAGE_SIZE*(ELEMENTS+1));
+	if (buf_storage == NULL) {
+		printf("cannot allocate buf_storage\n");
+		return;
+	}
+	if (((ULONG_PTR)buf_storage) % PAGE_SIZE == 0)
+		buf = buf_storage;
+	else
+		buf = buf_storage - ((ULONG_PTR)buf_storage) % PAGE_SIZE + PAGE_SIZE;
+
+	for (i=0;i<PAGE_SIZE*ELEMENTS;i++)
+		buf[i]=i;
+
+	for (i=0;i<ELEMENTS;i++)
+		arr[ELEMENTS-i-1].Buffer = buf+i*PAGE_SIZE;
+	arr[i].Buffer = NULL;
+
+	overlapped.Offset = overlapped.OffsetHigh = 0;
+	overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (overlapped.hEvent == INVALID_HANDLE_VALUE) {
+		printf("cannot create event.\n");
+		return;
+	}
+
+	ret = WriteFileGather(h, arr, ELEMENTS*PAGE_SIZE, NULL, &overlapped);
+	printf("WriteFileScatter returned %d\n", ret);
+	err = GetLastError();
+	if (ret == 0 && err != 997) {	/* windows ... 997 means pending and is not an error here */
+		printf("error is %d\n", err);
+	} else {
+		WaitForSingleObject(overlapped.hEvent, INFINITE);
+		printf("write file status is %lld bytes written is %lld\n", overlapped.Internal, overlapped.InternalHigh);
+	}
+
+	CloseHandle(h);
+}
+
+TEST(windrbd, do_writereadv)
+{
+	HANDLE h = do_open_device(DIRECT);
+	BOOL ret;
+	char *buf_storage;
+	char *buf;
+	char *buf_storage2;
+	char *buf2;
+	int i;
+	union _FILE_SEGMENT_ELEMENT arr[ELEMENTS+1];
+	struct _OVERLAPPED overlapped;
+	int err;
+
+	buf_storage = (char*)malloc(PAGE_SIZE*(ELEMENTS+1));
+	if (buf_storage == NULL) {
+		printf("cannot allocate buf_storage\n");
+		return;
+	}
+	if (((ULONG_PTR)buf_storage) % PAGE_SIZE == 0)
+		buf = buf_storage;
+	else
+		buf = buf_storage - ((ULONG_PTR)buf_storage) % PAGE_SIZE + PAGE_SIZE;
+
+	buf_storage2 = (char*)malloc(PAGE_SIZE*(ELEMENTS+1));
+	if (buf_storage2 == NULL) {
+		printf("cannot allocate buf_storage\n");
+		return;
+	}
+	if (((ULONG_PTR)buf_storage2) % PAGE_SIZE == 0)
+		buf2 = buf_storage2;
+	else
+		buf2 = buf_storage2 - ((ULONG_PTR)buf_storage2) % PAGE_SIZE + PAGE_SIZE;
+
+	for (i=0;i<PAGE_SIZE*ELEMENTS;i++)
+		buf[i]=i;
+
+	for (i=0;i<ELEMENTS;i++)
+		arr[ELEMENTS-i-1].Buffer = buf+i*PAGE_SIZE;
+	arr[i].Buffer = NULL;
+
+	overlapped.Offset = overlapped.OffsetHigh = 0;
+	overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (overlapped.hEvent == INVALID_HANDLE_VALUE) {
+		printf("cannot create event.\n");
+		return;
+	}
+
+	ret = WriteFileGather(h, arr, ELEMENTS*PAGE_SIZE, NULL, &overlapped);
+	printf("WriteFileScatter returned %d\n", ret);
+	err = GetLastError();
+	if (ret == 0 && err != 997) {	/* windows ... 997 means pending and is not an error here */
+		printf("error is %d\n", err);
+	} else {
+		WaitForSingleObject(overlapped.hEvent, INFINITE);
+		printf("write file status is %lld bytes written is %lld\n", overlapped.Internal, overlapped.InternalHigh);
+	}
+
+	for (i=0;i<ELEMENTS;i++)
+		arr[ELEMENTS-i-1].Buffer = buf2+i*PAGE_SIZE;
+	arr[i].Buffer = NULL;
+
+	overlapped.Offset = overlapped.OffsetHigh = 0;
+	overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (overlapped.hEvent == INVALID_HANDLE_VALUE) {
+		printf("cannot create event.\n");
+		return;
+	}
+
+	ret = ReadFileScatter(h, arr, ELEMENTS*PAGE_SIZE, NULL, &overlapped);
+	printf("ReadFileScatter returned %d\n", ret);
+	err = GetLastError();
+	if (ret == 0 && err != 997) {	/* windows ... 997 means pending and is not an error here */
+		printf("error is %d\n", err);
+	} else {
+		WaitForSingleObject(overlapped.hEvent, INFINITE);
+		printf("read file status is %lld bytes read is %lld\n", overlapped.Internal, overlapped.InternalHigh);
+	}
+
+	for (i=0;i<PAGE_SIZE*ELEMENTS;i++) {
+		if (buf[i] != buf2[i]) {
+			printf("data mismatch at offset %d is %d expected %d\n", i, buf2[i], buf[i]);
+			break;
+		}
+	}
+	printf("%d bytes compared.\n", i);
 
 	CloseHandle(h);
 }
