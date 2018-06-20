@@ -11,7 +11,11 @@ struct params p = {
 	dump_file: NULL
 };
 
-HANDLE do_open_device(int readonly)
+#define	READ_WRITE 0
+#define READ_ONLY  1
+#define DIRECT     2
+
+HANDLE do_open_device(int open_mode)
 {
 	HANDLE h;
 	DWORD err;
@@ -21,12 +25,21 @@ HANDLE do_open_device(int readonly)
 	EXPECT_NE(fname, (void*)0);
 	snprintf(fname, len+1, "\\\\.\\%s", p.drive);
 
-printf("opening file %s\n", fname);
+printf("opening file %s, mode is %d\n", fname, open_mode);
 
-	if (readonly)
+	switch (open_mode) {
+	case READ_ONLY:
 		h = CreateFile(fname, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	else
+		break;
+
+	case READ_WRITE:
 		h = CreateFile(fname, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		break;
+
+	case DIRECT:
+		h = CreateFile(fname, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL);
+		break;
+	}
 	
 	err = GetLastError();
 
@@ -418,6 +431,57 @@ TEST(windrbd, do_read_at_end_of_device)
 	ret = ReadFile(h, buf, sizeof(buf), &bytes_read,  NULL);
 	err = GetLastError();
 	printf("ret is %d err is %d, bytes_read is %d\n", ret, err, bytes_read);
+
+	CloseHandle(h);
+}
+
+#define ELEMENTS 64
+#define PAGE_SIZE 4096
+
+TEST(windrbd, do_readv)
+{
+	HANDLE h = do_open_device(DIRECT);
+	BOOL ret;
+	char *buf_storage;
+	char *buf;
+	int i;
+	union _FILE_SEGMENT_ELEMENT arr[ELEMENTS+1];
+	struct _OVERLAPPED overlapped;
+	int err;
+
+	buf_storage = (char*)malloc(PAGE_SIZE*(ELEMENTS+1));
+	if (buf_storage == NULL) {
+		printf("cannot allocate buf_storage\n");
+		return;
+	}
+	if (((ULONG_PTR)buf_storage) % PAGE_SIZE == 0)
+		buf = buf_storage;
+	else
+		buf = buf_storage - ((ULONG_PTR)buf_storage) % PAGE_SIZE + PAGE_SIZE;
+
+	for (i=0;i<PAGE_SIZE*ELEMENTS;i++)
+		buf[i]=i;
+
+	for (i=0;i<ELEMENTS;i++)
+		arr[i].Buffer = buf+i*PAGE_SIZE;
+	arr[i].Buffer = NULL;
+
+	overlapped.Offset = overlapped.OffsetHigh = 0;
+	overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (overlapped.hEvent == INVALID_HANDLE_VALUE) {
+		printf("cannot create event.\n");
+		return;
+	}
+
+	ret = ReadFileScatter(h, arr, ELEMENTS*PAGE_SIZE, NULL, &overlapped);
+	printf("ReadFileScatter returned %d\n", ret);
+	err = GetLastError();
+	if (ret == 0 && err != 997) {	/* windows ... 997 means pending and is not error here */
+		printf("error is %d\n", err);
+	} else {
+		WaitForSingleObject(overlapped.hEvent, INFINITE);
+		printf("read file status is %lld bytes read is %lld\n", overlapped.Internal, overlapped.InternalHigh);
+	}
 
 	CloseHandle(h);
 }
