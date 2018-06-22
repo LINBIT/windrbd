@@ -1727,8 +1727,8 @@ static int patch_boot_sector(char *buffer, int to_fs, int test_mode)
 {
 	static const char *fs_signatures[][2] = {
 		{ "NTFS", "DRBD" },
-		{ "MSDOS5.0", "FATDRBD" },
-		{ "EXFAT", "EDRBD" },
+/*		{ "MSDOS5.0", "FATDRBD" },
+		{ "EXFAT", "EDRBD" }, */
 		{ NULL, NULL }};
 	int fs;
 	int i;
