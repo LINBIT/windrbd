@@ -326,6 +326,22 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		status = STATUS_SUCCESS;
 		break;
 
+	case IOCTL_STORAGE_GET_DEVICE_NUMBER:
+		struct _STORAGE_DEVICE_NUMBER *dn;
+		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _STORAGE_DEVICE_NUMBER)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+		dn = (struct _STORAGE_DEVICE_NUMBER*) irp->AssociatedIrp.SystemBuffer;
+
+		dn->DeviceType = FILE_DEVICE_DISK; /* TODO: device->DeviceType? */
+		dn->DeviceNumber = dev->minor;
+		dn->PartitionNumber = -1;
+
+		irp->IoStatus.Information = sizeof(struct _STORAGE_DEVICE_NUMBER);
+		status = STATUS_SUCCESS;
+		break;
+
 	default: 
 		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;
