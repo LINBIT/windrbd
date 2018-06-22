@@ -119,7 +119,7 @@ resource.res: resource.rc
 
 drbd.cat: drbd.sys
 	rm -f "$@"
-	"$(EWDK_BIN)/Inf2Cat.exe" /os:7_X64 /driver:.
+	"$(EWDK_BIN)/Inf2Cat.exe" /uselocaltime /os:7_X64 /driver:.
 ifdef R
 	cp "$@" ../../to-sign
 	echo "$@ copiied to to-sign directory. Please sign it using USB token and place the result in the signed directory."
