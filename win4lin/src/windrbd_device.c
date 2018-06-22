@@ -304,12 +304,12 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		}
 
 		printk("IOCTL_STORAGE_QUERY_PROPERTY: PropertyId: %d QueryType: %d\n", query->PropertyId, query->QueryType);
-		status = STATUS_INVALID_DEVICE_REQUEST;
+		status = STATUS_NOT_IMPLEMENTED;
 		break;
 
 	default: 
 		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
-		status = STATUS_INVALID_DEVICE_REQUEST;
+		status = STATUS_NOT_IMPLEMENTED;
 	}
 
 	irp->IoStatus.Status = status;
