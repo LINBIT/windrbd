@@ -298,6 +298,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		status = STATUS_SUCCESS;
 		break;
 
+/*
 	case IOCTL_STORAGE_QUERY_PROPERTY:
 		struct _STORAGE_PROPERTY_QUERY *query =
 			irp->AssociatedIrp.SystemBuffer;
@@ -310,6 +311,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		printk("IOCTL_STORAGE_QUERY_PROPERTY: PropertyId: %d QueryType: %d\n", query->PropertyId, query->QueryType);
 		status = STATUS_NOT_IMPLEMENTED;
 		break;
+*/
 
 	case IOCTL_DISK_CHECK_VERIFY:
 	case IOCTL_STORAGE_CHECK_VERIFY:
