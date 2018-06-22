@@ -285,9 +285,13 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 			break;
 		}
 		hotplug_info->Size = sizeof(struct _STORAGE_HOTPLUG_INFO);
-		hotplug_info->MediaRemovable = TRUE;
+			/* TODO: makes no difference for FAT, ... */
+/*		hotplug_info->MediaRemovable = TRUE;
 		hotplug_info->MediaHotplug = TRUE;
-		hotplug_info->DeviceHotplug = TRUE;
+		hotplug_info->DeviceHotplug = TRUE; */
+		hotplug_info->MediaRemovable = FALSE;
+		hotplug_info->MediaHotplug = FALSE;
+		hotplug_info->DeviceHotplug = FALSE;
 		hotplug_info->WriteCacheEnableOverride = FALSE;
 		
 		irp->IoStatus.Information = sizeof(struct _STORAGE_HOTPLUG_INFO);
@@ -305,6 +309,19 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 
 		printk("IOCTL_STORAGE_QUERY_PROPERTY: PropertyId: %d QueryType: %d\n", query->PropertyId, query->QueryType);
 		status = STATUS_NOT_IMPLEMENTED;
+		break;
+
+	case IOCTL_DISK_CHECK_VERIFY:
+	case IOCTL_STORAGE_CHECK_VERIFY:
+	case IOCTL_STORAGE_CHECK_VERIFY2:
+		printk("CHECK_VERIFY (%x)\n", s->Parameters.DeviceIoControl.IoControlCode);
+		if (s->Parameters.DeviceIoControl.OutputBufferLength >=
+			sizeof(ULONG))
+		{
+			*(PULONG)irp->AssociatedIrp.SystemBuffer = 0;
+			irp->IoStatus.Information = sizeof(ULONG);
+		}
+		status = STATUS_SUCCESS;
 		break;
 
 	default: 
@@ -566,7 +583,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev, NTSTAT
 	bio->bi_size = total_size;
 	bio->bi_sector = sector;
 
-// printk("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
+printk("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
 
 	for (i=0; i<vcnt; i++) {
 		this_size = (i == vcnt-1) ? last_size : PAGE_SIZE;
