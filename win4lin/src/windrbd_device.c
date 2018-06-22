@@ -326,7 +326,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 
 	default: 
 		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
-		status = STATUS_NOT_IMPLEMENTED;
+		status = STATUS_INVALID_DEVICE_REQUEST;
 	}
 
 	irp->IoStatus.Status = status;
