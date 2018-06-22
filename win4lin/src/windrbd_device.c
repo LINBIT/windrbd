@@ -294,6 +294,19 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		status = STATUS_SUCCESS;
 		break;
 
+	case IOCTL_STORAGE_QUERY_PROPERTY:
+		struct _STORAGE_PROPERTY_QUERY *query =
+			irp->AssociatedIrp.SystemBuffer;
+
+		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct _STORAGE_PROPERTY_QUERY)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+
+		printk("IOCTL_STORAGE_QUERY_PROPERTY: PropertyId: %d QueryType: %d\n", query->PropertyId, query->QueryType);
+		status = STATUS_NOT_IMPLEMENTED;
+		break;
+
 	default: 
 		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_NOT_IMPLEMENTED;
