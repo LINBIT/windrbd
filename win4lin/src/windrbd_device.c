@@ -286,12 +286,12 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		}
 		hotplug_info->Size = sizeof(struct _STORAGE_HOTPLUG_INFO);
 			/* TODO: makes no difference for FAT, ... */
-/*		hotplug_info->MediaRemovable = TRUE;
+		hotplug_info->MediaRemovable = TRUE;
 		hotplug_info->MediaHotplug = TRUE;
-		hotplug_info->DeviceHotplug = TRUE; */
-		hotplug_info->MediaRemovable = FALSE;
+		hotplug_info->DeviceHotplug = TRUE;
+/*		hotplug_info->MediaRemovable = FALSE;
 		hotplug_info->MediaHotplug = FALSE;
-		hotplug_info->DeviceHotplug = FALSE;
+		hotplug_info->DeviceHotplug = FALSE; */
 		hotplug_info->WriteCacheEnableOverride = FALSE;
 		
 		irp->IoStatus.Information = sizeof(struct _STORAGE_HOTPLUG_INFO);
