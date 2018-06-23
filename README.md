@@ -26,7 +26,7 @@ company Mantech and later resigned by Johannes Thoma for Linbit
 to match more closely the Linux device model. In particular the
 DRBD devices are not stacked over existing Windows devices (like
 Mantech WDRBD does it) but creates DRBD devices upon creation with
-the drbdadm up command.
+the drbdadm primary command.
 
 To avoid confusion with ManTech's WDRBD we called our WDRBD-fork
 WinDRBD.
@@ -37,8 +37,13 @@ What else is needed?
 For detailed build instructions, please see the file INSTALL. Having
 said that you need a Windows 7 box with CygWin installed (Windows 10
 works in theory, but hasn't been tested. Nor has Windows Subsystem for
-Linux (WSL)) to run WinDRBD. For building you need Ewdk from Microsoft
-and a separate Linux Box with spatch (concinelle) installed.
+Linux (WSL)) to run WinDRBD. If you have a binary package, you don't
+need to install CygWin since the Cygwin DLL comes with the binary
+package. Commands like drbdadm and windrbd should work out-of-the-box
+with the Windows cmd shell.
+
+For building you need Ewdk from Microsoft and a separate Linux Box
+with spatch (concinelle) installed.
 
 You need the windrbd branch of drbd-utils. To obtain it, do a:
 
@@ -55,49 +60,93 @@ You don't need drbdcon: it does not exist in WinDRBD.
 We recommend to run Windows 7 in a virtual machine and make
 snapshots everytime *before* a new WinDRBD version is installed.
 
+Please also note that once you have installed an officially
+verified version of WinDRBD (you can get one from Linbit),
+you cannot install self-signed versions of WinDRBD over them.
+In other words if you wish to compile WinDRBD by yourself,
+do not install official packages on your test machines.
+In addition if you use self signed (self compiled) packages,
+you have to put Windows into Test mode, else it will refuse
+to boot. To do so, execute
+
+bcdedit /set TESTSIGNING ON
+
+as Administrator and reboot the machine. It then should display
+Testmode in the lower right corner when it comes up again.
+
+Configuring DRBD
+================
+
+The DRBD config files can be found in following folder:
+
+	C:\windrbd\etc
+
+Put your resources (extension .res) into the C:\windrbd\etc\drbd.d
+folder (from within a CygWin shell you can access this via
+
+	/cygdrive/c/windrbd/etc/drbd.d/<name>.res
+
+Then with
+
+	drbdadm up <name>
+
+you can bring your DRBD resource up. Please refer to the DRBD
+Users guide (be sure to pick the 9.0 version) for more information
+of how to configure and administrate DRBD. Most drbdadm commands
+should work exactly like with the Linux version of DRBD.
+
 Differences to WDRBD
 ====================
+
+Note: If you don't know ManTech's WDRBD, you can skip reading
+this section.
 
 The main difference is that ManTech's WDRBD stacks the DRBD devices
 atop of all block devices reported by PnP manager and uses an Active
 flag to control whether I/O requests are routed through DRBD or not.
 
 In contrast Linbit's WinDRBD creates a separate Windows Device on
-request (on drbdadm new-minor which is called by drbdadm up) and
-uses the backing device like a normal Windows block device.
+request (on drbdadm primary) and uses the backing device like a
+normal Windows block device.
 
 This approach has several advantages:
 
  * Diskless operation is supported (network only).
  * Drbdmeta can access internal meta data without special casing offsets
    larger that the DRBD device.
- * The WinDRBD doesn't need a reboot if it is changed or installed.
- * drbdcon is not needed.
+ * Later, the WinDRBD driver doesn't need a reboot if it is changed
+   or installed (we are working on this).
+ * drbdcon is not needed, thereby lots of race conditions simply just
+   don't exist on WinDRBD.
 
 Another difference is that DRBD source code is derived directly from
 Linbit's sources (using spatch and patch to patch in WinDRBD specific
 changes). This makes it much more easy to maintain and keep up with
-DRBD 9 development.
+DRBD 9 development (current WinDRBD releases are based on DRBD 9.0.14).
 
 Differences to Linux DRBD
 =========================
 
 Currently the only difference to Linux DRBD is that block devices 
 are specified as you would expect it under Microsoft Windows, that
-is drive letters and GUID's are used. Examples:
+is drive letters or GUID's are used. Examples:
 
 	disk "F:";
 	# or:
 	disk "0b098289-8295-11e7-bddb-0800274272c4";
 
 We recommend not to assign drive letters to backing devices, since 
-that easily may confuse the user.
+that easily may confuse the user. You can use the mountvol utility
+to find the GUID of a device.
 
 Starting with 0.4.8 windrbd refuses to attach to a device containing
 a file system known to Windows. We do so because Windows accesses
 the file system independently of DRBD causing data corruption.
 
-Use
+Starting from 0.5.2 if drbdadm detects a file system (NTFS) on
+the backing device, it automatically hides it from Windows.
+
+To do that manually, use
 
 	windrbd hide-filesystem <drive-letter>
 
@@ -107,6 +156,50 @@ that later with
 	windrbd show-filesystem <drive-letter>
 
 however only when the device is not attached.
+
+Starting from 0.5.3, the device entry has following format:
+
+	device <drive-letter> minor <unique-minor>;
+
+for example:
+
+	device "K:" minor 1;
+
+This makes the WinDRBD device appear as drive K: once the
+drbdadm primary <res> command is executed (before 0.7.2 it
+also existed on drbdadm up, but this couldn't be accessed,
+so we changed that to drbdadm primary). Starting from 0.7.1,
+your shell (Windows Explorer in most cases) gets notified
+about the new drive, so you probably will get a panel that
+asks you if the drive should be formatted.
+
+Current limitations
+===================
+
+Our planned 1.0 release will have following restrictions:
+
+  * Auto-promote is not supported.
+
+  * System Volume (C:) cannot be used for windrbd.
+
+  * No 32-Bit version is supported, only 64 bit.
+
+  * Windows 7 is minimum (no Vista, no XP) (SP1 required (?))
+
+  * Some network settings (send buffer size/send timeout) have
+    no effect.
+
+We might fix following current (0.7.4) restrictions for the
+1.0 release:
+
+  * Right now only NTFS is supported atop the windrbd device.
+    (or you can use the device as a RAW device).
+
+  * On installation (or upgrade) a system reboot is required.
+
+  * Of the DRBD features, the following are currently unsupported:
+    discard, biosets, debugfs, online verify, RB_CONGESTED_REMOTE,
+    write same, disk stats, trimming.
 
 Logging
 =======

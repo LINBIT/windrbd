@@ -24,8 +24,7 @@ TODO: io_status should not be in struct bio, see comments in
 TODO: white paper for linbit website.
 
 	Until end of June 2018
-
-TODO: review README.md: some info is outdated.
+	Update: maybe refer to the README.md.
 
 TODO: fix the spinlocks (see comments in drbd_windows.c).
 
@@ -2360,4 +2359,6 @@ Done: test no I/O when disk is failed.
 
 	We now allow I/O since DRBD will serve I/O requests from
 	a Primary peer of the local disk fails. This works well.
+
+Done: review README.md: some info is outdated.
 
