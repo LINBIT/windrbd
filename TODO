@@ -5,6 +5,19 @@ TODO: Test other file systems (FAT, FAT32, ...)
 	FAT32 also not (something with flushing?)
 	Probably there is one important IOCTL missing.
 
+	UDF and exFAT can be mounted on Linux. FAT and FAT32 show
+	empty (zeroed out) device. So we probably have 2 independent
+	errors. (UDF cannot we written on Linux, this is because it
+	is the DVD format).
+
+	Update: exFAT now can be read (not written to) on Windows,
+	by returning STATUS_INVALID_DEVICE_REQUEST (instead of
+	STATUS_NOT_IMPLEMENTED) for unknown ioctl's.
+
+	Update: implemented some other ioctl's without success so
+	far. On formatting FAT, reads bootsector as last action
+	(before terminating), maybe that's a hint.
+
 TODO: io_status should not be in struct bio, see comments in
 	drbd_windows.h
 
