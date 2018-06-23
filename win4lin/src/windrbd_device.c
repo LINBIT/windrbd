@@ -342,6 +342,32 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		status = STATUS_SUCCESS;
 		break;
 
+	case IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES:
+		struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES *attrs =
+	            (struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES*) irp->AssociatedIrp.SystemBuffer;
+
+		if ((s->Parameters.DeviceIoControl.InputBufferLength <
+	            sizeof(struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES)) ||
+                   (s->Parameters.DeviceIoControl.InputBufferLength <
+                   (attrs->DataSetRangesOffset + attrs->DataSetRangesLength))) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+		printk("attrs->Action is %d\n", attrs->Action);
+		if (attrs->Action != DeviceDsmAction_Trim) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+		int items = attrs->DataSetRangesLength / sizeof(DEVICE_DATA_SET_RANGE);
+
+		printk("%d items\n", items);
+
+		status = STATUS_SUCCESS;
+		irp->IoStatus.Information = 0;
+			/* TODO: trim */
+
+		break;
+
 	default: 
 		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;
