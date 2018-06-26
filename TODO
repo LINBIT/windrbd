@@ -47,6 +47,42 @@ TODO: fix the spinlocks (see comments in drbd_windows.c).
 
 TODO: Make DRBD driver removable.
 
+	From imdisk:
+
+	start "" "%SystemRoot%\system32\rundll32.exe" setupapi.dll,InstallHinfSection DefaultUninstall 132 %SystemRoot%\inf\imdisk.inf
+
+	In practice a
+
+	rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 Y:\windrbd\converted-sources\drbd\drbd.inf
+
+	did the trick. DRBD is not stopped, but this uninstalls DRBD
+	driver (after reboot drbdadm status fails because DRBD kernel
+	module is not running).
+
+	What is missing: write a cmd script that down all DRBD
+	resources, stops the driver itself (how? see sepearate todo)
+	and executes the setupapi thing above.
+
+	Also create registry keys for Linbit / DRBD in
+	HKLM/Software/Microsoft/Windows/Uninstall/DRBD so one can
+	use control panel / uninstall software to uninstall DRBD.
+
+TODO: Make drbd service stoppable
+	This probably takes some while
+	Update: with the new architecture that should be possible
+	one day.
+
+	Probably some setting in the inf section. Or the way DRBD
+	registers itself in DriverEntry?
+
+TODO: Get Windows 10 drbd installation working again.
+
+	There's a signed driver installed cannot install
+	unsigned drivers over it. 
+
+	Update: use rundll32 setupapi ... from uninstall todo
+	that should do the trick.
+
 TODO: 3 node setup does not work.
 
 	If node with node-id 1 is missing, node 2 thinks that node
@@ -173,11 +209,6 @@ TODO: Make windows checkdisk (over unclean shutdown panel) work.
 	chkdsk works.
 
 TODO: Linux box sometimes loses IP address.
-
-TODO: Get Windows 10 drbd installation working again.
-
-	There's a signed driver installed cannot install
-	unsigned drivers over it. 
 
 TODO: maybe revert the mountmanager code.
 
@@ -2102,11 +2133,6 @@ Done: How is sync done?
 	volume on becoming secondary now.
 
 Duplicate: test if loading drbd driver later (not at boot) works.
-
-Duplicate: Make drbd service stoppable
-	This probably takes some while
-	Update: with the new architecture that should be possible
-	one day.
 
 Done: read error: Volume dismounted
 	Nov 15 14:42:21 192.168.56.101  U13:22:16.265|0131b040 DrbdIoCompletion <4>[0xFFFFFA800131B040] DrbdIoCompletion: I/O failed with error c000026e
