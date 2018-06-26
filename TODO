@@ -1,5 +1,12 @@
 --------------------------------------------------------------------
 
+TODO: Windows 2016 server: cannot format volume
+
+	Strange behaviour. Blue screen on format f: (windrbd device)
+
+	Fix networking first (we cannot reach Linux machine from
+	Windows 2016 server at the moment)
+
 TODO: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
 	FAT32 also not (something with flushing?)
@@ -40,6 +47,15 @@ TODO: fix the spinlocks (see comments in drbd_windows.c).
 
 TODO: Make DRBD driver removable.
 
+TODO: 3 node setup does not work.
+
+	If node with node-id 1 is missing, node 2 thinks that node
+	3 is node 1 during connection establishment:
+
+Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
+
+	(but 10.43.8.188 is WIN-F11R93CP9KI).
+
 ------------------------------------------------------------------------
 
 TODO: From Devin: d->bi_size (from peer request) too big:
@@ -65,13 +81,6 @@ TODO: From Devin: Registering mount point failed status = c0000035
 TODO: test I/O error with USB stick.
 
 TODO: test network failure with real network cable.
-
-TODO: Windows 2016 server: cannot format volume
-
-	Strange behaviour. Blue screen on format f: (windrbd device)
-
-	Fix networking first (we cannot reach Linux machine from
-	Windows 2016 server at the moment)
 
 TODO: Test sendbuffer full (rety on Metadata socket).
 
