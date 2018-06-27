@@ -1,8 +1,5 @@
 --------------------------------------------------------------------
 
-TODO: Code quality: io_status should not be in struct bio, see comments in
-	drbd_windows.h
-
 TODO: Features: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
 	FAT32 also not (something with flushing?)
@@ -68,13 +65,7 @@ TODO: Features: Make drbd service stoppable
 	Probably some setting in the inf section. Or the way DRBD
 	registers itself in DriverEntry?
 
-TODO: Infrastructure: Get Windows 10 drbd installation working again.
-
-	There's a signed driver installed cannot install
-	unsigned drivers over it. 
-
-	Update: use rundll32 setupapi ... from uninstall todo
-	that should do the trick.
+------------------------------------------------------------------------
 
 TODO: Features: 3 node setup does not work.
 
@@ -96,8 +87,6 @@ TODO: Test: drbdadm status fails after unplug cable when syncing.
 
 	Still there? I suppose no but test it on physical Windows 10
 	machine.
-
-------------------------------------------------------------------------
 
 TODO: Bug: From Devin: d->bi_size (from peer request) too big:
 
@@ -2427,4 +2416,19 @@ Done: Blue screen: Windows 2016 server: cannot format volume
 	greater than 4K in size (seperate TODO).
 
 	Blue screen fixed by setting MAX_MDL_ELEMENTS to 1.
+
+Done: Code quality: io_status should not be in struct bio, see comments in
+	drbd_windows.h
+
+	Seems to work. Maybe do some more tests (see TODO's in source).
+
+Done: Infrastructure: Get Windows 10 drbd installation working again.
+
+	There's a signed driver installed cannot install
+	unsigned drivers over it.
+
+	Update: use rundll32 setupapi ... from uninstall todo
+	that should do the trick.
+
+	Update: yes it did. Newer windrbd kernel already installed.
 
