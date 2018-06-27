@@ -1960,7 +1960,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 		io = IRP_MJ_READ;
 	}
 
-	bio->offset.QuadPart = bio->bi_sector << 9;
+	bio->bi_io_vec[bio->bi_first_element].offset.QuadPart = bio->bi_sector << 9;
 	buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_first_element].bv_page->addr) + bio->bi_io_vec[bio->bi_first_element].bv_offset); 
 	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
 
@@ -1991,8 +1991,8 @@ static int windrbd_generic_make_request(struct bio *bio)
 				bio->bi_bdev->windows_device,
 				buffer,
 				first_size,
-				&bio->offset,
-				&bio->io_stat
+				&bio->bi_io_vec[bio->bi_first_element].offset,
+				&bio->bi_io_vec[bio->bi_first_element].io_stat
 				);
 
 	if (!bio->bi_irps[bio->bi_this_request]) {

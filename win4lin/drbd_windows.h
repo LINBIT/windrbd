@@ -579,6 +579,14 @@ struct bio_vec {
 		 */
 	unsigned int bv_len;
 	unsigned int bv_offset;
+
+		/* Those are used by win_generic_make_request internally.
+		 * We have them here, since we build a request for each
+		 * biovec element seperately (see MAX_MDL_ELEMENTS
+		 * #define in drbd_windows.c).
+		 */
+	LARGE_INTEGER offset;
+	IO_STATUS_BLOCK io_stat;
 };
 
 struct bio;
@@ -658,14 +666,12 @@ struct bio {
 	 */
 	bool dont_patch_boot_sector;
 
-		/* Those are used by win_generic_make_request internally */
-		/* TODO: we have separate requests now, allocate them
-	           on the heap and free them once all requests are done. */
-	LARGE_INTEGER offset;
+	/* Used by flush_request (which is currently not enabled).
+	 */
 	IO_STATUS_BLOCK io_stat;
 
-		/* TODO: putting *any* field (was patched_bootsector_buffer)
-		   here makes weird things happen. But why? */
+	/* TODO: may be put members here again? */
+
 	struct bio_vec bi_io_vec[0];
 };
 
