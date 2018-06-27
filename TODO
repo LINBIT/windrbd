@@ -1,13 +1,9 @@
 --------------------------------------------------------------------
 
-TODO: Windows 2016 server: cannot format volume
+TODO: Code quality: io_status should not be in struct bio, see comments in
+	drbd_windows.h
 
-	Strange behaviour. Blue screen on format f: (windrbd device)
-
-	Fix networking first (we cannot reach Linux machine from
-	Windows 2016 server at the moment)
-
-TODO: Test other file systems (FAT, FAT32, ...)
+TODO: Features: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
 	FAT32 also not (something with flushing?)
 	Probably there is one important IOCTL missing.
@@ -25,15 +21,12 @@ TODO: Test other file systems (FAT, FAT32, ...)
 	far. On formatting FAT, reads bootsector as last action
 	(before terminating), maybe that's a hint.
 
-TODO: io_status should not be in struct bio, see comments in
-	drbd_windows.h
-
-TODO: white paper for linbit website.
+TODO: Documentation: white paper for linbit website.
 
 	Until end of June 2018
 	Update: maybe refer to the README.md.
 
-TODO: fix the spinlocks (see comments in drbd_windows.c).
+TODO: Code quality: fix the spinlocks (see comments in drbd_windows.c).
 
 	Windows doesn't have an equivalent of spin_lock_irq()
 	(without flags) however we can assume that interrupts
@@ -45,7 +38,7 @@ TODO: fix the spinlocks (see comments in drbd_windows.c).
 	at the beginning of spin_lock_irq that tests for IRQL
 	being PASSIVE_LEVEL).
 
-TODO: Make DRBD driver removable.
+TODO: Features: Make DRBD driver removable.
 
 	From imdisk:
 
@@ -67,7 +60,7 @@ TODO: Make DRBD driver removable.
 	HKLM/Software/Microsoft/Windows/Uninstall/DRBD so one can
 	use control panel / uninstall software to uninstall DRBD.
 
-TODO: Make drbd service stoppable
+TODO: Features: Make drbd service stoppable
 	This probably takes some while
 	Update: with the new architecture that should be possible
 	one day.
@@ -75,7 +68,7 @@ TODO: Make drbd service stoppable
 	Probably some setting in the inf section. Or the way DRBD
 	registers itself in DriverEntry?
 
-TODO: Get Windows 10 drbd installation working again.
+TODO: Infrastructure: Get Windows 10 drbd installation working again.
 
 	There's a signed driver installed cannot install
 	unsigned drivers over it. 
@@ -83,7 +76,7 @@ TODO: Get Windows 10 drbd installation working again.
 	Update: use rundll32 setupapi ... from uninstall todo
 	that should do the trick.
 
-TODO: 3 node setup does not work.
+TODO: Features: 3 node setup does not work.
 
 	If node with node-id 1 is missing, node 2 thinks that node
 	3 is node 1 during connection establishment:
@@ -92,9 +85,21 @@ Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closin
 
 	(but 10.43.8.188 is WIN-F11R93CP9KI).
 
+TODO: Test: test I/O error with USB stick.
+
+TODO: Test: test network failure with real network cable.
+
+TODO: Test: BSOD on network failure
+	Check if still there.
+
+TODO: Test: drbdadm status fails after unplug cable when syncing.
+
+	Still there? I suppose no but test it on physical Windows 10
+	machine.
+
 ------------------------------------------------------------------------
 
-TODO: From Devin: d->bi_size (from peer request) too big:
+TODO: Bug: From Devin: d->bi_size (from peer request) too big:
 
 	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
 
@@ -102,7 +107,14 @@ TODO: From Devin: d->bi_size (from peer request) too big:
 
 	Update: did, but didn't yet happen (sync would take 3 hours)
 
-TODO: From Devin: Registering mount point failed status = c0000035
+	Update: happened on syncing between Windows Server 2016 and
+	Linux: two more assertions failed:
+
+Jun 27 15:37:45 wintestubuntu kernel: [85326.250911] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION (n_oos - peer_device->rs_failed) == 0 FAILED in drbd_resync_finished
+Jun 27 17:02:04 wintestubuntu kernel: [90385.215243] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION node_mask == 0 FAILED in _drbd_send_uuids110
+Jun 27 17:03:02 wintestubuntu kernel: [90443.041728] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
+
+TODO: Bug: From Devin: Registering mount point failed status = c0000035
 	This seems to be something that only happens on Windows Server 2016.
 	The mount_point buffer is NULL at end of the windrbd_mount
 	function:
@@ -114,9 +126,8 @@ TODO: From Devin: Registering mount point failed status = c0000035
 
 	Update: Also happens on Windows 10 with beta 3
 
-TODO: test I/O error with USB stick.
-
-TODO: test network failure with real network cable.
+	Update: Tested with Windows 2016 server, didn't happen so
+	far.
 
 TODO: Test sendbuffer full (rety on Metadata socket).
 
@@ -127,15 +138,7 @@ TODO: Test sendbuffer full (rety on Metadata socket).
 
 	Unclear how to test it. Do that later.
 
-TODO: BSOD on network failure
-	Check if still there.
-
-TODO: drbdadm status fails after unplug cable when syncing.
-
-	Still there? I suppose no but test it on physical Windows 10
-	machine.
-
-TODO: Sync is still somewhat slow when windrbd is SyncTarget
+TODO: Performance: Sync is still somewhat slow when windrbd is SyncTarget
 	And: I/O is slow when connected.
 	Are we waiting for TCP ACK here?
 
@@ -151,6 +154,12 @@ TODO: Sync is still somewhat slow when windrbd is SyncTarget
 	backing device is slow? When Windows is SyncTarget it is
 	faster (3 sec) than when it is SyncSource (7 sec) doing I/O
 
+TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
+
+	There might be other limits .. 1 Meg is the maximum size
+	of a data request packet, so we still need the splitting
+	in windrbd.
+
 TODO: windrbd hide-filesystem does not work on a DRBD device.
 
 	For now use windrbd-test with do_read_write test.
@@ -165,7 +174,7 @@ TODO: install kernel manpages
 	Must install from kernel source using 
 	make mandocs ; sudo make installmandocs
 
-TODO: user mode helpers
+TODO: Features: user mode helpers
 
 	switch to ioctl() interface first.
 
@@ -2396,4 +2405,26 @@ Done: test no I/O when disk is failed.
 	a Primary peer of the local disk fails. This works well.
 
 Done: review README.md: some info is outdated.
+
+Done: Blue screen: Windows 2016 server: cannot format volume
+
+	Strange behaviour. Blue screen on format f: (windrbd device)
+
+	Fix networking first (we cannot reach Linux machine from
+	Windows 2016 server at the moment)
+
+	Update: fixed, can now test quite good on much vm's.
+
+	Problem was that MAX_MDL_ELEMENTS is just a guess of what
+	a Windows block driver can handle. It is 32 for Windows 7
+	(found by trial and error), however Windows 2016 Server
+	(and as I suppose also Windows 10) have problems with that
+	setting. When setting it to 1, no blue screen so far, however
+	it is just too slow. Update: it is slow but not so slow
+	(had lots of printk's in the I/O path).
+
+	Maybe we can patch DRBD so it can handle biovec elements
+	greater than 4K in size (seperate TODO).
+
+	Blue screen fixed by setting MAX_MDL_ELEMENTS to 1.
 
