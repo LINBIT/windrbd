@@ -1473,7 +1473,7 @@ __mod_timer(struct timer_list *timer, ULONG_PTR expires, bool pending_only)
 	}
 
 /*
-printk("%s timer(0x%p) current(%d) expires(%d) gap(%d) nWaitTime(%lld)\n",
+   printk("%s timer(0x%p) current(%d) expires(%d) gap(%d) nWaitTime(%lld)\n",
         timer->name, timer, current_milisec, timer->expires, timer->expires - current_milisec, nWaitTime.QuadPart);
 */
 
@@ -1781,18 +1781,15 @@ NTSTATUS DrbdIoCompletion(
 	NTSTATUS status = Irp->IoStatus.Status;
 	unsigned long flags;
 
-printk("1\n");
 	if (status != STATUS_SUCCESS) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)
 			status = STATUS_SUCCESS;
 	}
 
-printk("2\n");
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
 	}
 
-printk("3\n");
 #ifdef INJECT_IO_ERRORS_ON_COMPLETION
 	static int nr_requests_to_failure = INJECT_IO_ERRORS_ON_COMPLETION;
 	if (--nr_requests_to_failure == 0) {
@@ -1801,7 +1798,6 @@ printk("3\n");
 		nr_requests_to_failure = INJECT_IO_ERRORS_ON_COMPLETION;
 	}
 #endif
-printk("4\n");
 
 	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
@@ -1815,7 +1811,6 @@ printk("4\n");
 	}
 */
 
-printk("5\n");
 	spin_lock_irqsave(&bio->device_failed_lock, flags);
 	if (status != STATUS_SUCCESS) {
 		drbd_bio_endio(bio, win_status_to_blk_status(status));
@@ -1831,7 +1826,6 @@ printk("5\n");
 			kfree(bio->patched_bootsector_buffer);
 	}
 	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
-printk("6\n");
 
 	bio_put(bio);
 
@@ -1840,7 +1834,6 @@ printk("6\n");
 		 * bio.
 		 */
 
-printk("7\n");
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
@@ -1972,7 +1965,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element);
+// printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->offset.QuadPart, bio->offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element);
 // }
 
 /* Make a copy of the (page cache) buffer and write the copy to the
@@ -1981,7 +1974,6 @@ printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d b
    prevents them to mount the NTFS (or other) file system.
  */
 
-printk("2\n");
 
 	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
 		bio->patched_bootsector_buffer = kmalloc(first_size, 0, 'DRBD');
@@ -1994,7 +1986,6 @@ printk("2\n");
 		patch_boot_sector(buffer, 0, 0);
 	}
 
-printk("3\n");
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
@@ -2004,7 +1995,6 @@ printk("3\n");
 				&bio->io_stat
 				);
 
-printk("4\n");
 	if (!bio->bi_irps[bio->bi_this_request]) {
 		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
 		return -ENOMEM;
@@ -2019,9 +2009,7 @@ printk("4\n");
 		 * MmBuildMdlForNonPagedPool() blue screens.
 		 */
 
-printk("5\n");
 	if (!bio->bi_paged_memory) {
-printk("6\n");
 		struct _MDL *first_mdl;
 		first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress;
 		if (first_mdl != NULL) {
@@ -2037,7 +2025,6 @@ printk("6\n");
 
 		}
 	}
-printk("7\n");
 		/* Else leave it locked */
 
 	/* Windows tries to split up MDLs and crashes when
@@ -2048,7 +2035,6 @@ printk("7\n");
 
 	int total_size = first_size;
 
-printk("8\n");
 	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
 		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irps[bio->bi_this_request]);
@@ -2068,39 +2054,31 @@ printk("8\n");
 				MmBuildMdlForNonPagedPool(mdl);
 	}
 
-printk("9\n");
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
-printk("a\n");
 	next_stack_location = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
 
-printk("b\n");
 	next_stack_location->DeviceObject = bio->bi_bdev->windows_device;
 	next_stack_location->FileObject = bio->bi_bdev->file_object;
 
-printk("c\n");
 	if (io == IRP_MJ_WRITE) {
 		next_stack_location->Parameters.Write.Length = total_size;
 	}
 	if (io == IRP_MJ_READ) {
 		next_stack_location->Parameters.Read.Length = total_size;
 	}
-printk("d\n");
 
 		/* Take a reference to this thread, it is referenced
 		 * in the IRP.
 		 */
 
 	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
-printk("e\n");
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
-printk("f\n");
 	bio_get(bio);	/* To be put in completion routine */
 
-printk("g\n");
 #ifdef INJECT_IO_ERRORS_ON_REQUEST
 	static int nr_requests_to_failure = INJECT_IO_ERRORS_ON_REQUEST;
 	if (--nr_requests_to_failure == 0) {
@@ -2111,9 +2089,7 @@ printk("g\n");
 	} else  /* (! be careful) */
 #endif
 
-printk("h\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
-printk("i\n");
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED */
@@ -2125,7 +2101,6 @@ printk("i\n");
 			     * must not be called).
 			     */
 	}
-printk("j\n");
 	return 0;
 
 out_free_irp:
@@ -2151,26 +2126,22 @@ int generic_make_request(struct bio *bio)
 	int e;
 	int flush_request;
 
-printk("1\n");
 	bio_get(bio);
 
 /* TODO: reenable again after fixing DRBD_REQ_PREFLUSH define */
 //	flush_request = (bio->bi_rw & DRBD_REQ_PREFLUSH) != 0;
 	flush_request = 0;
 
-printk("2\n");
 	if (bio->bi_vcnt == 0)
 		bio->bi_num_requests = flush_request;
 	else
 		bio->bi_num_requests = (bio->bi_vcnt-1)/MAX_MDL_ELEMENTS + 1 + flush_request;
 
-printk("3\n");
 	if (bio->bi_num_requests == 0) {
 		drbd_bio_endio(bio, 0);
 		bio_put(bio);
 		return 0;
 	}
-printk("4\n");
 
 		/* In case we fail early, bi_irps[n].MdlAddress must be
 		 * NULL.
@@ -2182,63 +2153,48 @@ printk("4\n");
 		return -ENOMEM;
 	}
 	atomic_set(&bio->bi_requests_completed, 0);
-printk("5\n");
 
 	orig_sector = sector = bio->bi_sector;
 	orig_size = bio->bi_size;
 
-printk("6\n");
 	ret = 0;
 
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<(bio->bi_num_requests - flush_request); 
              bio->bi_this_request++) {
-printk("7\n");
 		bio->bi_first_element = bio->bi_this_request*MAX_MDL_ELEMENTS;
 		bio->bi_last_element = (bio->bi_this_request+1)*MAX_MDL_ELEMENTS;
-printk("8\n");
 		if (bio->bi_vcnt < bio->bi_last_element)
 			bio->bi_last_element = bio->bi_vcnt;
-printk("9\n");
 
 		total_size = 0;
 		for (e = bio->bi_first_element; e < bio->bi_last_element; e++)
 			total_size += bio->bi_io_vec[e].bv_len;
 
-printk("a\n");
 		bio->bi_sector = sector;
 		bio->bi_size = total_size;
 
-printk("b\n");
 		ret = windrbd_generic_make_request(bio);
-printk("c\n");
 		if (ret < 0) {
 			drbd_bio_endio(bio, BLK_STS_IOERR);
 			goto out;
 		}	/* TODO: if ret > 0 break? */
-printk("d\n");
 		sector += total_size >> 9;
 	}
-printk("e\n");
 	if (flush_request) {
 		ret = make_flush_request(bio);
 		if (ret < 0)
 			drbd_bio_endio(bio, BLK_STS_IOERR);
 	}
-printk("f\n");
 
 	if (ret > 0)
 		ret = -ret;
 
-printk("g\n");
 out:
-printk("h\n");
 	bio->bi_sector = orig_sector;
 	bio->bi_size = orig_size;
 
-printk("i\n");
 	bio_put(bio);
-printk("j\n");
 
 	return ret;
 }
