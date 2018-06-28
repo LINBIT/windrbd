@@ -1,72 +1,5 @@
 --------------------------------------------------------------------
 
-TODO: Features: Test other file systems (FAT, FAT32, ...)
-	FAT does not work (Invalid function when accessing DRBD device)
-	FAT32 also not (something with flushing?)
-	Probably there is one important IOCTL missing.
-
-	UDF and exFAT can be mounted on Linux. FAT and FAT32 show
-	empty (zeroed out) device. So we probably have 2 independent
-	errors. (UDF cannot we written on Linux, this is because it
-	is the DVD format).
-
-	Update: exFAT now can be read (not written to) on Windows,
-	by returning STATUS_INVALID_DEVICE_REQUEST (instead of
-	STATUS_NOT_IMPLEMENTED) for unknown ioctl's.
-
-	Update: implemented some other ioctl's without success so
-	far. On formatting FAT, reads bootsector as last action
-	(before terminating), maybe that's a hint.
-
-TODO: Documentation: white paper for linbit website.
-
-	Until end of June 2018
-	Update: maybe refer to the README.md.
-
-TODO: Code quality: fix the spinlocks (see comments in drbd_windows.c).
-
-	Windows doesn't have an equivalent of spin_lock_irq()
-	(without flags) however we can assume that interrupts
-	are enabled when spin_lock_irq is called and reset it
-	to enabled when spin_unlock_irq is called (set it to
-	PASSIVE_LEVEL).
-
-	So no need for a tmp storage here. (Maybe put an assert
-	at the beginning of spin_lock_irq that tests for IRQL
-	being PASSIVE_LEVEL).
-
-TODO: Features: Make DRBD driver removable.
-
-	From imdisk:
-
-	start "" "%SystemRoot%\system32\rundll32.exe" setupapi.dll,InstallHinfSection DefaultUninstall 132 %SystemRoot%\inf\imdisk.inf
-
-	In practice a
-
-	rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 Y:\windrbd\converted-sources\drbd\drbd.inf
-
-	did the trick. DRBD is not stopped, but this uninstalls DRBD
-	driver (after reboot drbdadm status fails because DRBD kernel
-	module is not running).
-
-	What is missing: write a cmd script that down all DRBD
-	resources, stops the driver itself (how? see sepearate todo)
-	and executes the setupapi thing above.
-
-	Also create registry keys for Linbit / DRBD in
-	HKLM/Software/Microsoft/Windows/Uninstall/DRBD so one can
-	use control panel / uninstall software to uninstall DRBD.
-
-TODO: Features: Make drbd service stoppable
-	This probably takes some while
-	Update: with the new architecture that should be possible
-	one day.
-
-	Probably some setting in the inf section. Or the way DRBD
-	registers itself in DriverEntry?
-
-------------------------------------------------------------------------
-
 TODO: Features: 3 node setup does not work.
 
 	If node with node-id 1 is missing, node 2 thinks that node
@@ -118,7 +51,97 @@ TODO: Bug: From Devin: Registering mount point failed status = c0000035
 	Update: Tested with Windows 2016 server, didn't happen so
 	far.
 
-TODO: Test sendbuffer full (rety on Metadata socket).
+TODO: Test: blue screen on drbdadm detach --force (when needing uptodate
+	data) and then drbdadm status.
+
+	Cannot reproduce at the moment.
+
+TODO: Test: New blue screen on connecting Windows 10 to buildhost Windows 7
+	(I think it was D1).
+
+	This might be because of wrong rcu handling (must sleep
+	before cleaning up)
+
+	Update: still there?
+
+TODO: Documentation: white paper for linbit website.
+
+	Until end of June 2018
+	Update: maybe refer to the README.md.
+
+TODO: Documentation: define tests to be run before releases.
+
+TODO: Features: Make DRBD driver removable.
+
+	From imdisk:
+
+	start "" "%SystemRoot%\system32\rundll32.exe" setupapi.dll,InstallHinfSection DefaultUninstall 132 %SystemRoot%\inf\imdisk.inf
+
+	In practice a
+
+	rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 Y:\windrbd\converted-sources\drbd\drbd.inf
+
+	did the trick. DRBD is not stopped, but this uninstalls DRBD
+	driver (after reboot drbdadm status fails because DRBD kernel
+	module is not running).
+
+	What is missing: write a cmd script that down all DRBD
+	resources, stops the driver itself (how? see sepearate todo)
+	and executes the setupapi thing above.
+
+	Also create registry keys for Linbit / DRBD in
+	HKLM/Software/Microsoft/Windows/Uninstall/DRBD so one can
+	use control panel / uninstall software to uninstall DRBD.
+
+TODO: Features: Make drbd service stoppable
+	This probably takes some while
+	Update: with the new architecture that should be possible
+	one day.
+
+	Probably some setting in the inf section. Or the way DRBD
+	registers itself in DriverEntry?
+
+TODO: Features: check if windrbd can be loaded not at boot time but later.
+
+	Working on it .. test with demand load on a fresh installed
+	windows (it blue screens on boot if there was a windrbd before
+	installed).
+
+	Update: imdisk can do it.
+
+------------------------------------------------------------------------
+
+TODO: Features: Test other file systems (FAT, FAT32, ...)
+	FAT does not work (Invalid function when accessing DRBD device)
+	FAT32 also not (something with flushing?)
+	Probably there is one important IOCTL missing.
+
+	UDF and exFAT can be mounted on Linux. FAT and FAT32 show
+	empty (zeroed out) device. So we probably have 2 independent
+	errors. (UDF cannot we written on Linux, this is because it
+	is the DVD format).
+
+	Update: exFAT now can be read (not written to) on Windows,
+	by returning STATUS_INVALID_DEVICE_REQUEST (instead of
+	STATUS_NOT_IMPLEMENTED) for unknown ioctl's.
+
+	Update: implemented some other ioctl's without success so
+	far. On formatting FAT, reads bootsector as last action
+	(before terminating), maybe that's a hint.
+
+TODO: Code quality: fix the spinlocks (see comments in drbd_windows.c).
+
+	Windows doesn't have an equivalent of spin_lock_irq()
+	(without flags) however we can assume that interrupts
+	are enabled when spin_lock_irq is called and reset it
+	to enabled when spin_unlock_irq is called (set it to
+	PASSIVE_LEVEL).
+
+	So no need for a tmp storage here. (Maybe put an assert
+	at the beginning of spin_lock_irq that tests for IRQL
+	being PASSIVE_LEVEL).
+
+TODO: Test: Test sendbuffer full (rety on Metadata socket).
 
 	See if supported at all (have printk's if not). Update:
 	seems to be supported.
@@ -149,16 +172,12 @@ TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
 	of a data request packet, so we still need the splitting
 	in windrbd.
 
-TODO: windrbd hide-filesystem does not work on a DRBD device.
-
-	For now use windrbd-test with do_read_write test.
-
-TODO: implement flush_workqueue
+TODO: Features: implement flush_workqueue
 
 	For example, drbdadm down takes long when connection goes
 	down.
 
-TODO: install kernel manpages
+TODO: Infrastructure: install kernel manpages
 
 	Must install from kernel source using 
 	make mandocs ; sudo make installmandocs
@@ -167,15 +186,19 @@ TODO: Features: user mode helpers
 
 	switch to ioctl() interface first.
 
-TODO: eventually use drbd_rate_limit() on some printk's
+TODO: Features: netlink transport over ioctl
 
-TODO: Implement function stubs created when integrating DRBD 9.0.9
+	(something that can verify permissions of caller)
 
-TODO: on patching boot sector, inform Windows that file system is
+TODO: Code quality: eventually use drbd_rate_limit() on some printk's
+
+TODO: Code quality: Implement function stubs created when integrating DRBD 9.0.9
+
+TODO: Feature: on patching boot sector, inform Windows that file system is
 	raw now.
 	So that it disappears.
 
-TODO: how and when is flush to backing device done?
+TODO: Test: how and when is flush to backing device done?
 	This is important. Right now NTFS files only appear on
 	Linux when sync is done manually. Should sync at least
 	when becoming secondary. sync must be done while primary
@@ -183,48 +206,45 @@ TODO: how and when is flush to backing device done?
 
 	Update: is this fixed now?
 
-TODO: check if windrbd can be loaded not at boot time but later.
+	I recently didn't observe data loss on writing to an
+	NTFS then doing secondary / primary on remote. However
+	since Windows does caching at file level (not at block
+	device level) it should fail. Maybe write a test that
+	writes a large file and then immeadiately does a
+	drbdadm secondary (without syncing the file).
 
-	Working on it .. test with demand load on a fresh installed
-	windows (it blue screens on boot if there was a windrbd before
-	installed).
-
-	Update: imdisk can do it.
-
-TODO: Check if windows device is really deleted on becoming secondary
+TODO: Test: Check if windows device is really deleted on becoming secondary
 
 	There might be references and it is only marked as pending
 	delete (see IoDeleteDevice manpage)
 
-TODO: Rebase windrbd branch of drbd-utils to its master
+TODO: Code quality: Rebase windrbd branch of drbd-utils to its master
 	Also for drbd-headers. Then, also use the drbd-headers in
 	drbd (and remove drbd-headers patches)
 
-TODO: Make windows checkdisk (over unclean shutdown panel) work.
+TODO: Bug: Make windows checkdisk (over unclean shutdown panel) work.
 
 	It seems that this appears when backing device is used
 	twice and modified, but how to make it disappear? cmdline
 	chkdsk works.
 
-TODO: Linux box sometimes loses IP address.
+TODO: Infrastructure: Linux box sometimes loses IP address.
 
-TODO: maybe revert the mountmanager code.
+TODO: Code quality: maybe revert the mountmanager code.
 
 	I am not sure if this is a benefit.
 
-TODO: define tests to be run before releases.
-
-TODO: refcnt is 0 on drbd_rs_complete_io
+TODO: Bug: refcnt is 0 on drbd_rs_complete_io
 	May 31 17:10:06 192.168.56.101  U15:10:04.337|03431840(sender) drbd_rs_complete_io <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x0): drbd_rs_complete_io(,16384 [=0]) called, but refcnt is 0!?
 
 	Did
 		sudo drbdadm invalidate w0 ; sleep 1 ; sudo drbdadm down w0
 	on Linux side.
 
-TODO: On much VM, one CPU core (has 2 cores) goes to 100% on sync.
+TODO: Performance: On much VM, one CPU core (has 2 cores) goes to 100% on sync.
 	I assume there is an unneccessary (?) copy somewhere.
 
-TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
+TODO: Bug: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 
 	Maybe this was introduced during code cleanup. Update: no it wasn't.
 	The reason is that REQ_OP_FLUSH != REQ_OP_WRITE in windrbd,
@@ -235,82 +255,47 @@ TODO: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
 
 	Update: Also happened to Devin.
 
-TODO: test-loop hangs after about 16 iterations.
+TODO: Bug: test-loop hangs after about 16 iterations.
 
 	format k: sometimes gets stuck when run from test script.
 
-TODO: Re-check the WIN32 / WIN64 thing in drbd_endian.h
+TODO: Code quality: Re-check the WIN32 / WIN64 thing in drbd_endian.h
 
-TODO: blue screen on drbdadm detach --force (when needing uptodate
-	data) and then drbdadm status.
-
-	Cannot reproduce at the moment.
-
-TODO: logging to localhost (windows) seems to cause boot problems (?)
+TODO: Bug: logging to localhost (windows) seems to cause boot problems (?)
 	When using 192.168.56.101 instead of 127.0.0.1
 
-TODO: windrbd show-filesystem should check if device is used as
+TODO: Feature: windrbd show-filesystem should check if device is used as
 	a backing device.
 
-TODO: drbd-util: Update manpage.
+TODO: Documentation: drbd-util: Update manpage.
 	And write one for windrbd utility.
 
-TODO: Why doesn't it work on Phil's machine?
+TODO: Infrastructure: Why doesn't it work on Phil's machine?
 
 TODO: msi installer instead of self extracting exe.
 
-TODO: Mount to NTFS directories.
+	Not clear yet .. imdisk for example comes also with a
+	homegrown install script.
 
-TODO: remove drive letter from volume on attach.
-	And not reassign it on detach: Users shouldn't modify
-	data on a backing device even when the device is down,
-	unless they really want it.
+TODO: Feature: Mount to NTFS directories.
 
-	Print a howto showing:
-		how to change from drive letter to GUID in drbd.conf
-		how to recover the drive letter later (in case
-			DRBD is never needed again, or if it was
-			the wrong drive letter).
-
-	Update: are we doing this?
-
-TODO: fix the case where backing device contains a file system.
+TODO: Code quality: fix the case where backing device contains a file system.
 	It should not blue screen.
 	(maybe later, this seems to be rather complex)
 	We are now avoiding the case when there is a filesystem
 	on an attached backing device. This blue screen should
 	be fixed but maybe in a later release.
 
-TODO: flush not supported by some (all?) devices: currently we
+TODO: Feature: flush not supported by some (all?) devices: currently we
 	ignore this (as reactOS also does it). Update: ext2
 	file system uses CcFlushCache(): see
 	reactos/reactos/drivers/filesystems/ext2/src/flush.c
 
 	Also try to use the ZwFlushXXX function (as Mantech does it)
 
-TODO: when installing a signed DRBD driver, installing an unsigned
-	DRBD driver fails silently.
+TODO: Feature: make debugfs work
 
-	It is unclear how this really works. When installing a
-	signed driver it seems to be not possible any more to
-	install an unsigned driver over it. Test signed drivers
-	is separate virtual machines.
-
-TODO: New blue screen on connecting Windows 10 to buildhost Windows 7
-	(I think it was D1).
-
-	This might be because of wrong rcu handling (must sleep
-	before cleaning up)
-
-	Update: still there?
-
-TODO: netlink transport over ioctl
-
-	(something that can verify permissions of caller)
-
-TODO: make debugfs work
-
-TODO: RCU needs change
+TODO: Code quality: RCU needs change
 	At least call_rcu now calls the function. I don't think
 	that it is a good idea to port the linked list thing to
 	windows, we want to stay thin..
@@ -327,28 +312,33 @@ TODO: RCU needs change
 	only (we always tested single CPU, so this was not a problem).
 	Implement Phil's algorithm.
 
-TODO: on windrbd show/hide filesystem check if attached.
+TODO: Feature: on windrbd show/hide filesystem check if attached.
 
 	And refuse to touch it if yes.
 
-TODO: mandatory locking for backing device.
+TODO: Feature: mandatory locking for backing device.
 
-TODO: One day we want to not blue screen when backing device contains a file system.
+	This is unclear. Test how backing device is locked right now
+	(formatting for example reports that it is in use).
 
-TODO: Kernel really should report an error if Bind() fails. 
+TODO: Test: Kernel really should report an error if Bind() fails. 
 	For example if the local IP address does not exist.
 
-TODO: review TODOs in source code.
+	Update: Test if this is fixed now.
 
-TODO: Someday we want to pass user level buffer to driver directly
+TODO: Code quality: review TODOs in source code.
+
+TODO: Performance: Someday we want to pass user level buffer to driver directly
 	on READ requests instead of having a temp buffer (needed
 	for Windows 10).
 
-TODO: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
+TODO: Test: spurious error 5 (ACCESS_DENIED) when reading DRBD device.
 	after doing some experiments. drbdadm down / up solved the
 	problem.
 
-TODO: Fix windows shutdown bug.
+	Update: still there?
+
+TODO: Test: Fix windows shutdown bug.
 
 	Most likely this was introduced when implementing the
 	cleanup() method.
@@ -356,7 +346,9 @@ TODO: Fix windows shutdown bug.
 	Update: Not observed lately.
 	Update: just reappeared again.
 
-TODO: Re-port drbd_transport_tcp.c to windrbd's
+	Update: still there?
+
+TODO: Code quality: Re-port drbd_transport_tcp.c to windrbd's
 	drbd_transport_wtcp.c.
 	Update: currently it seems that the problem is
 	somewhere else. 
@@ -371,16 +363,16 @@ TODO: Re-port drbd_transport_tcp.c to windrbd's
 	wsk2.c API to match the kernel API (Send->kernel_send_msg
 	and so on).
 
-TODO: rebase drbd_wrappers.h to upstream DRBD
+TODO: Code quality: rebase drbd_wrappers.h to upstream DRBD
 
-TODO: when losing Quorum go into read only mode.
+TODO: Feature: when losing Quorum go into read only mode.
 	(quorum means that our connected network contains > n/2 
 	(n .. total number of nodes) valid nodes.
 	This is currently being implemented in DRBD
 
-TODO: I/O seems to be rather slow even when being unconnected (and primary)
+TODO: Performance: I/O seems to be rather slow even when being unconnected (and primary)
 
-TODO: check out mantech wdrbd and see if it works (and why)
+TODO: Research: check out mantech wdrbd and see if it works (and why)
 	Update: mantech WDRBD lacks many features we have
 	in windrbd most notably: it cannot connect to a
 	Linux DRBD. It does not support internal meta disk.
@@ -388,43 +380,31 @@ TODO: check out mantech wdrbd and see if it works (and why)
 	If there is spare time have a look on it (at least read
 	the docs, need Chrome for it (!)).
 
-TODO: lots of more tests (corner cases like reading near the
-	end of the device)
-
-TODO: have windrbd-test execute drbdadm as needed.
-	This is a nice to have.
-
 TODO: Nice to have: Cygwin should have /dev/drbd<n> mapped to
 	\\Device\\Drbd<n>
 
 	Right now, we can read/write the windrbd device via
 	windrbd-test utility.
 
-TODO: have a make depend target
+TODO: Build system: have a make depend target
 	Or at least header file dependencies.
 
-TODO: Check if it is a network share (currently blue screens)
+TODO: Feature: Check if it is a network share (currently blue screens)
 	Update: blue screen was something else. Should check if the
 	drive letter is a network share. Unfortunately they do not
 	appear in the \DosDevices directory. If we create a drive
 	letter (symbolic link) in the \DosDevices it will be silently
 	ignored. Warn the user if it is a network share.
 
-TODO: One day we want to have a more specific error message
+TODO: Feature: One day we want to have a more specific error message
 	than Device does not have a disk config if the device or
-	the drive letter already exist.
+	the drive letter already exists.
 
-TODO: We should really lock the backing devices using NT kernel
-	mechanisms.
+TODO: Code quality: cond_wait shouldn't busy loop. How is this done in Linux?
 
-	Maybe use the mechanically locked IOCTL? Then one would
-	have to drbdadm down <res> --force
+TODO: Code quality: #ifdef the Windows netlink code in drbd-utils
 
-TODO: cond_wait shouldn't busy loop. How is this done in Linux?
-
-TODO: #ifdef the Windows netlink code in drbd-utils
-
-TODO: fix the macro redefinition problems in drbd_windows.c
+TODO: Code quality: fix the macro redefinition problems in drbd_windows.c
 	For now we have to copy the function prototypes from MSDN.
 	Not good style.
 
@@ -2431,4 +2411,62 @@ Done: Infrastructure: Get Windows 10 drbd installation working again.
 	that should do the trick.
 
 	Update: yes it did. Newer windrbd kernel already installed.
+
+Rejected: when installing a signed DRBD driver, installing an unsigned
+	DRBD driver fails silently.
+
+	It is unclear how this really works. When installing a
+	signed driver it seems to be not possible any more to
+	install an unsigned driver over it. Test signed drivers
+	is separate virtual machines.
+
+	Update: we now can uninstall DRBD (currently with a
+	command line command, see TODO about uninstall). We
+	won't research this in more detail.
+
+Duplicate: One day we want to not blue screen when backing device contains a file system.
+
+Done: lots of more tests (corner cases like reading near the
+	end of the device)
+
+Rejected: have windrbd-test execute drbdadm as needed.
+	This is a nice to have.
+
+Duplicate: We should really lock the backing devices using NT kernel
+	mechanisms.
+
+	Maybe use the mechanically locked IOCTL? Then one would
+	have to drbdadm down <res> --force
+
+Done: windrbd hide-filesystem does not work on a DRBD device.
+
+	For now use windrbd-test with do_read_write test.
+
+	If we think a little then we find that this is as it
+	should be: hide-filesystem writes DRBD into the boot
+	sector. This gets written on the backing device. However
+	when reading the backing device, the windrbd driver
+	converts the DRBD signature to NTFS, so it looks as
+	DRBD never got written. There is no way how we can
+	distinguish a (possibly intentional) DRBD signature
+	from a NTFS signature on the windrbd device.
+
+Rejected: remove drive letter from volume on attach.
+	And not reassign it on detach: Users shouldn't modify
+	data on a backing device even when the device is down,
+	unless they really want it.
+
+	Print a howto showing:
+		how to change from drive letter to GUID in drbd.conf
+		how to recover the drive letter later (in case
+			DRBD is never needed again, or if it was
+			the wrong drive letter).
+
+	Update: are we doing this?
+
+	Update: currently it works quite well .. we recommend
+	users to use GUIDs and not assign drive letters. If
+	we remove drive letters from backing devices, users
+	might get confused (plus there might be a lot of
+	race conditions).
 
