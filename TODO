@@ -1,5 +1,15 @@
 --------------------------------------------------------------------
 
+TODO: code quality: experiment with MAX_MDL_ELEMENTS
+
+	Make it a variable, increase and wait for blue screen.
+
+TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
+
+	There might be other limits .. 1 Meg is the maximum size
+	of a data request packet, so we still need the splitting
+	in windrbd.
+
 TODO: Features: 3 node setup does not work.
 
 	If node with node-id 1 is missing, node 2 thinks that node
@@ -10,16 +20,6 @@ Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closin
 	(but 10.43.8.188 is WIN-F11R93CP9KI).
 
 TODO: Test: test I/O error with USB stick.
-
-TODO: Test: test network failure with real network cable.
-
-TODO: Test: BSOD on network failure
-	Check if still there.
-
-TODO: Test: drbdadm status fails after unplug cable when syncing.
-
-	Still there? I suppose no but test it on physical Windows 10
-	machine.
 
 TODO: Bug: From Devin: d->bi_size (from peer request) too big:
 
@@ -165,12 +165,6 @@ TODO: Performance: Sync is still somewhat slow when windrbd is SyncTarget
 	Update: Probably not the networking code, maybe I/O on
 	backing device is slow? When Windows is SyncTarget it is
 	faster (3 sec) than when it is SyncSource (7 sec) doing I/O
-
-TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
-
-	There might be other limits .. 1 Meg is the maximum size
-	of a data request packet, so we still need the splitting
-	in windrbd.
 
 TODO: Features: implement flush_workqueue
 
@@ -2469,4 +2463,35 @@ Rejected: remove drive letter from volume on attach.
 	we remove drive letters from backing devices, users
 	might get confused (plus there might be a lot of
 	race conditions).
+
+Done: Test: test network failure with real network cable.
+
+Done: Test: drbdadm status fails after unplug cable when syncing.
+
+	Still there? I suppose no but test it on physical Windows 10
+	machine.
+
+	Update: yes it is. No bluescreen however so far.
+
+	Update: Reason was logging. Windows seems to stall drivers
+	that send UDP packets. (maybe this is also connected to the
+	problem of having interface address instead of loopback as
+	syslog_ip).
+
+	Works now, however after plugging network cable again, no
+	connection can be established (with errors like sock_recvmsg
+	returned -11, Timeout waiting for feature packet).
+
+	Update: I accidentially re-enabled Windows firewall, deactivating
+	it solved the problem.
+
+	On no I/O everything works fine.
+	On I/O we stall in sync at 99.85 percent after reconnect.
+
+	After a while that goes to 100 percent.
+
+Done: Test: BSOD on network failure
+	Check if still there.
+
+	Update: as far as I can tell, no.
 
