@@ -1,5 +1,38 @@
 --------------------------------------------------------------------
 
+TODO: Test: test I/O error with USB stick.
+
+	Simple test succeeded (no I/O during unplugging).
+	When unplugging while I/O is running (over NTFS), 
+	BSOD.
+
+TODO: Bug: BSOD on backing device failure while I/O is running
+
+	This was tested by unplugging a USB stick (contained the
+	backing device) while copiing a large file to windrbd
+	device. OS was Windows 10 (physical machine).
+
+TODO: Bug: BSOD on passive remote side on reconnect to failed peer.
+
+	This happened after restarting the peer after it had a
+	BSOD on backing device failure.
+
+TODO: Bug: Connection instable when connecting two Windows boxes.
+
+	In that case our physical Windows 10 with Windows 7 VM on
+	much.
+
+	And one box is not pingable any more. Maybe something with
+	libvirt? Hangs because logging does not work (was configured
+	to log to Linux VM).
+
+	Update: happens also with VirtualBox (Mac) Windows 7 box.
+	drbdadm down / up on Windows 10 usually solves the problem.
+
+	Update: really? Was split-brain, IP address change.
+
+TODO: Test: Test protocol B, C
+
 TODO: code quality: experiment with MAX_MDL_ELEMENTS
 
 	Make it a variable, increase and wait for blue screen.
@@ -18,8 +51,6 @@ TODO: Features: 3 node setup does not work.
 Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
 
 	(but 10.43.8.188 is WIN-F11R93CP9KI).
-
-TODO: Test: test I/O error with USB stick.
 
 TODO: Bug: From Devin: d->bi_size (from peer request) too big:
 
@@ -51,23 +82,13 @@ TODO: Bug: From Devin: Registering mount point failed status = c0000035
 	Update: Tested with Windows 2016 server, didn't happen so
 	far.
 
+	Update: This happens when drive letter is in use. Report error
+	to userspace.
+
 TODO: Test: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
 
 	Cannot reproduce at the moment.
-
-TODO: Test: New blue screen on connecting Windows 10 to buildhost Windows 7
-	(I think it was D1).
-
-	This might be because of wrong rcu handling (must sleep
-	before cleaning up)
-
-	Update: still there?
-
-TODO: Documentation: white paper for linbit website.
-
-	Until end of June 2018
-	Update: maybe refer to the README.md.
 
 TODO: Documentation: define tests to be run before releases.
 
@@ -110,6 +131,18 @@ TODO: Features: check if windrbd can be loaded not at boot time but later.
 	Update: imdisk can do it.
 
 ------------------------------------------------------------------------
+TODO: Documentation: white paper for linbit website.
+
+	Until end of June 2018
+	Update: maybe refer to the README.md.
+
+	Update: No we need a TechGuide. Postponed to September.
+
+TODO: Bug: If windrbd drive letter is used as real drive letter, windows
+	accesses the real drive silently.
+
+	Update: in that case, mounting fails with c0000035, this should
+	be reported to user space as an error.
 
 TODO: Features: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
@@ -265,11 +298,6 @@ TODO: Documentation: drbd-util: Update manpage.
 	And write one for windrbd utility.
 
 TODO: Infrastructure: Why doesn't it work on Phil's machine?
-
-TODO: msi installer instead of self extracting exe.
-
-	Not clear yet .. imdisk for example comes also with a
-	homegrown install script.
 
 TODO: Feature: Mount to NTFS directories.
 
@@ -2494,4 +2522,25 @@ Done: Test: BSOD on network failure
 	Check if still there.
 
 	Update: as far as I can tell, no.
+
+Done: Test: Test lower case drive letters for windrbd device.
+
+	Works.
+
+Done: Test: New blue screen on connecting Windows 10 to buildhost Windows 7
+	(I think it was D1).
+
+	This might be because of wrong rcu handling (must sleep
+	before cleaning up)
+
+	Update: still there?
+
+	Update: Not observed recently, closing this for now.
+
+Rejected: msi installer instead of self extracting exe.
+
+	Not clear yet .. imdisk for example comes also with a
+	homegrown install script.
+
+	Please reopen upon customer request.
 
