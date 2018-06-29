@@ -2006,7 +2006,7 @@ printk("3\n");
 
 printk("4\n");
 	if (!bio->bi_irps[bio->bi_this_request]) {
-		WDRBD_ERROR("IoBuildAsynchronousFsdRequest: cannot alloc new IRP\n");
+		printk(KERN_ERR "IoBuildAsynchronousFsdRequest: cannot alloc new IRP for io %d, device %p, buffer %p, first_size %d, offset %lld%\n", io, bio->bi_bdev->windows_device, buffer, first_size, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart);
 		return -ENOMEM;
 	}
 
