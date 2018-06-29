@@ -1,21 +1,13 @@
 --------------------------------------------------------------------
 
-TODO: Test: test I/O error with USB stick.
-
-	Simple test succeeded (no I/O during unplugging).
-	When unplugging while I/O is running (over NTFS), 
-	BSOD.
-
-TODO: Bug: BSOD on backing device failure while I/O is running
-
-	This was tested by unplugging a USB stick (contained the
-	backing device) while copiing a large file to windrbd
-	device. OS was Windows 10 (physical machine).
-
 TODO: Bug: BSOD on passive remote side on reconnect to failed peer.
 
 	This happened after restarting the peer after it had a
 	BSOD on backing device failure.
+
+TODO: Bug: On Primary diskless (after backing dev failure) BSOD when unplugging Network cable.
+
+TODO: Bug: on passive side, on BSOD stays in NetworkFailure
 
 TODO: Bug: Connection instable when connecting two Windows boxes.
 
@@ -2543,4 +2535,23 @@ Rejected: msi installer instead of self extracting exe.
 	homegrown install script.
 
 	Please reopen upon customer request.
+
+Done: Test: test I/O error with USB stick.
+
+	Simple test succeeded (no I/O during unplugging).
+	When unplugging while I/O is running (over NTFS),
+	BSOD.
+
+	Done, and some things fixed.
+
+Done: Bug: BSOD on backing device failure while I/O is running
+
+	This was tested by unplugging a USB stick (contained the
+	backing device) while copiing a large file to windrbd
+	device. OS was Windows 10 (physical machine).
+
+	Update: We cannot call the backing device driver again
+	if the device already failed (else BSOD). Immeadietly
+	before calling it check if it has failed and cancel
+	IRP without calling the driver if yes.
 
