@@ -2101,6 +2101,15 @@ printk("f\n");
 	bio_get(bio);	/* To be put in completion routine */
 
 printk("g\n");
+printk("h\n");
+	if (bio->device_failed ||
+	    (bio->bi_bdev && bio->bi_bdev->drbd_device &&
+	     bio->bi_bdev->drbd_device->disk_state[NOW] <= D_FAILED)) {
+		printk("Device already failed, cancelling IRP\n");
+		IoCancelIrp(bio->bi_irps[bio->bi_this_request]);
+		return EIO;
+	}
+
 #ifdef INJECT_IO_ERRORS_ON_REQUEST
 	static int nr_requests_to_failure = INJECT_IO_ERRORS_ON_REQUEST;
 	if (--nr_requests_to_failure == 0) {
@@ -2108,10 +2117,8 @@ printk("g\n");
 		status = STATUS_IO_DEVICE_ERROR;
 		nr_requests_to_failure = INJECT_IO_ERRORS_ON_REQUEST;
 		return -EIO; /* yes we leak. This is test code. */
-	} else  /* (! be careful) */
+	} else  /* (! be careful, must be IoCallDriver in else branch) */
 #endif
-
-printk("h\n");
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 printk("i\n");
 
@@ -2215,7 +2222,9 @@ printk("c\n");
 		if (ret < 0) {
 			drbd_bio_endio(bio, BLK_STS_IOERR);
 			goto out;
-		}	/* TODO: if ret > 0 break? */
+		}
+		if (ret > 0)
+			goto out;
 printk("d\n");
 		sector += total_size >> 9;
 	}
