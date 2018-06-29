@@ -1,13 +1,46 @@
 --------------------------------------------------------------------
 
+TODO: Code quality: Should report I/O error instead of Permission denied on disk failure
+
+TODO: Code quality: Replace WDRBD_ERROR and the like by printk
+
+	The log severities are wrong with these macros.
+
+TODO: Bug: On Primary diskless (after backing dev failure) BSOD when unplugging Network cable.
+
+	Check if also on 'normal' diskless.
+	Update: No (did 1 test), but peer stuck in NetworkFailure
+
 TODO: Bug: BSOD on passive remote side on reconnect to failed peer.
 
 	This happened after restarting the peer after it had a
 	BSOD on backing device failure.
 
-TODO: Bug: On Primary diskless (after backing dev failure) BSOD when unplugging Network cable.
+	Update: There appears to be more than one problem. One last line
+	is:
+
+Jun 29 19:02:29 192.168.56.101  U17:02:24.344|0d994fa0(sender) w_e_end_rsdata_req <3>drbd usb-stick/1 minor 6 pnode-id:2, pdsk(Inconsistent), prpl(Established), pdvflag(0x600): Sending NegRSDReply. sector 32832s.
+
+	but also
+
+Jun 29 19:02:29 192.168.56.101  U17:02:24.329|171bcfa0(receiver) windrbd_generic_make_request <3>[0xFFFFFA800237AB50] IoBuildAsynchronousFsdRequest: cannot alloc new IRP
+
+	before that line (which is most likely some invalid argument, not
+	out of memory).
+
+	Another last line is:
+
+Jun 29 17:29:25 192.168.56.101  U15:29:08.370|133befa0(receiver) drbd_md_sync_page_io <7>drbd usb-stick/1 minor 6, ds(Inconsistent), dvflag(0x0): meta_data io: receiver [64726384]:drbd_md_sync_page_io(,15728632s,WRITE) FFFFF88001ADAD1CS
+
+	This happens always after Down/Up after stuck in NetworkFailure.
 
 TODO: Bug: on passive side, on BSOD stays in NetworkFailure
+
+	Also on Diskless Primary (peer) and unplugging cable (without
+	BSOD)
+
+	After Down/Up when Sync starts (must attach disk on peer)
+	BSOD (see separate TODO).
 
 TODO: Bug: Connection instable when connecting two Windows boxes.
 
