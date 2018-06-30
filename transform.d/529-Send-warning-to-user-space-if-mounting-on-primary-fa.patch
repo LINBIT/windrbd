@@ -1,0 +1,39 @@
+From 8519010cfa06d4b8e96805da90a62af86bd0a2e6 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Sat, 30 Jun 2018 22:37:51 +0200
+Subject: [PATCH] Send warning to user space if mounting on primary fails.
+
+We do not want to fail silently at this point.
+---
+ drbd/drbd_nl.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index e2e9a8f..81030fa 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -1011,7 +1011,7 @@ drbd_set_role(struct drbd_resource *resource, enum drbd_role role, bool force, s
+ 	if (old_role == R_PRIMARY && role == R_SECONDARY) {
+ 		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr) {
+ 			if (windrbd_umount(device->this_bdev) != 0)
+-				drbd_warn(device, "couldn't umount volume %d\n", vnr);
++				windrbd_device_error(device, &err_str, "Warning: couldn't umount volume %d\n", vnr);
+ 			windrbd_remove_windows_device(device->this_bdev);
+ 		}
+ 	}
+@@ -1245,10 +1245,9 @@ retry:
+ 	if (old_role == R_SECONDARY && role == R_PRIMARY) {
+ 		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr) {
+ 			if (windrbd_create_windows_device(device->this_bdev) != 0)
+-				drbd_warn(device, "Couldn't create windows device for volume %d\n", vnr);
++				windrbd_device_error(device, &err_str, "Warning: Couldn't create windows device for volume %d\n", vnr);
+ 			if (windrbd_mount(device->this_bdev) != 0)
+-				drbd_warn(device, "Couldn't mount volume %d\n", vnr);
+-
++				windrbd_device_error(device, &err_str, "Warning: Couldn't mount volume %d, perhaps the drive letter (%S) is in use?\n", vnr, device->this_bdev->mount_point.Buffer);
+ 		}
+ 	}
+ 
+-- 
+2.17.0
+
