@@ -1,4 +1,4 @@
-﻿r*
+﻿/*
    drbd_transport_wtcp.c
 
    This file is part of DRBD.
@@ -372,7 +372,9 @@ printk("out of dtt_recv_short, err is %d\n", err);
 fail:
 printk("fail\n");
 	drbd_free_page_chain(transport, chain, 0);
+printk("after drbd_free_page_chain\n");
 	kfree(page); // PMaskPR
+printk("after kfree\n");
 	return err;
 }
 
