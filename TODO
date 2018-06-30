@@ -48,6 +48,16 @@ TODO: Bug: Connection instable when connecting two Windows boxes.
 
 	Update: really? Was split-brain, IP address change.
 
+TODO: Bug: WinDRBD unresponsive when syslog host can't be reached.
+
+	This is most likely because we wait for completion. Not
+	sure yet if we want to fix this, because that probably
+	would cause last messages before BSOD getting lost.
+
+	On the other hand this probably can also fix the
+	does not boot when local interface IP is configured bug
+	(which is severe).
+
 TODO: Test: Test protocol B, C
 
 TODO: code quality: experiment with MAX_MDL_ELEMENTS
