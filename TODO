@@ -34,14 +34,6 @@ Jun 29 17:29:25 192.168.56.101  U15:29:08.370|133befa0(receiver) drbd_md_sync_pa
 
 	This happens always after Down/Up after stuck in NetworkFailure.
 
-TODO: Bug: on passive side, on BSOD stays in NetworkFailure
-
-	Also on Diskless Primary (peer) and unplugging cable (without
-	BSOD)
-
-	After Down/Up when Sync starts (must attach disk on peer)
-	BSOD (see separate TODO).
-
 TODO: Bug: Connection instable when connecting two Windows boxes.
 
 	In that case our physical Windows 10 with Windows 7 VM on
@@ -2587,4 +2579,20 @@ Done: Bug: BSOD on backing device failure while I/O is running
 	if the device already failed (else BSOD). Immeadietly
 	before calling it check if it has failed and cancel
 	IRP without calling the driver if yes.
+
+Done: Bug: on passive side, on BSOD stays in NetworkFailure
+
+	Also on Diskless Primary (peer) and unplugging cable (without
+	BSOD)
+
+	After Down/Up when Sync starts (must attach disk on peer)
+	BSOD (see separate TODO).
+
+	Update: Found it:
+
+	Problem was that recv_pages didn't return -EINTR when a
+	signal was delivered and data was there (which is probably
+	right according to recv manpage, even when MSG_WAITALL is
+	given). Right now we have a followup BSOD, probably in
+	DRBD, because this apparently never worked.
 

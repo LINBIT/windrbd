@@ -906,12 +906,14 @@ LONG NTAPI Receive(
 		return SOCKET_ERROR;
 	}
 
+printk("into WskReceive\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskReceive(
 				WskSocket,
 				&WskBuffer,
 				Flags,
 				Irp);
 
+printk("out of WskReceive\n");
     if (Status == STATUS_PENDING)
     {
         LARGE_INTEGER	nWaitTime;
@@ -930,17 +932,25 @@ LONG NTAPI Receive(
         waitObjects[0] = (PVOID) &CompletionEvent;
         if (thread->has_sig_event)
         {
+printk("has sig event\n");
             waitObjects[1] = (PVOID) &thread->sig_event;
             wObjCount = 2;
         } 
 
+if (pTime != NULL)
+printk("into KeWaitForMultipleObjects, timeout is %ll\n", pTime->QuadPart);
+else 
+printk("into KeWaitForMultipleObjects, timeout is infinite\n");
+
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
+printk("out of KeWaitForMultipleObjects, status is %x\n", Status);
         switch (Status)
         {
         case STATUS_WAIT_0: // waitObjects[0] CompletionEvent
             if (Irp->IoStatus.Status == STATUS_SUCCESS)
             {
                 BytesReceived = (LONG) Irp->IoStatus.Information;
+printk("ok, %ld bytes received\n", BytesReceived);
             }
             else
             {
@@ -953,14 +963,17 @@ LONG NTAPI Receive(
             break;
 
         case STATUS_WAIT_1:
+printk("STATUS_WAIT_1\n");
             BytesReceived = -EINTR;
             break;
 
         case STATUS_TIMEOUT:
+printk("STATUS_TIMEOUT\n");
             BytesReceived = -EAGAIN;
             break;
 
         default:
+printk("error\n");
             BytesReceived = SOCKET_ERROR;
             break;
         }
@@ -985,8 +998,23 @@ LONG NTAPI Receive(
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		if (Irp->IoStatus.Information > 0)
 		{
-			//WDRBD_INFO("rx canceled but rx data(%d) avaliable.\n", Irp->IoStatus.Information);
-			BytesReceived = Irp->IoStatus.Information;
+				/* When network is interrupted while we
+				 * are serving a Primary Diskless server
+				 * we want DRBD to know that the network
+				 * is down. Do not deliver the data to
+				 * DRBD, it should cancel the receiver
+				 * instead (else it would get stuck in
+				 * NetworkFailure). This is probably a
+				 * DRBD bug, since Linux (userland) recv
+				 * would deliver EINTR only if no data
+				 * is available.
+				 */
+
+/* Don't do this:
+				BytesReceived = Irp->IoStatus.Information;
+*/
+
+			printk("Receiving canceled (errno is %d) but data available (%d bytes, will be discarded).\n", BytesReceived, Irp->IoStatus.Information);
 		}
 	}
 

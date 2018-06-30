@@ -1693,10 +1693,14 @@ void force_sig(int sig, struct task_struct *task)
 		/* TODO: We need to protect against thread
 		 * suddenly dying here. */
 
+printk("force_sig sig is %d\n", sig);
+
 	if (task && task->has_sig_event)
 	{
 		task->sig = sig;
+printk("into KeSetEvent\n");
 		KeSetEvent(&task->sig_event, 0, FALSE);
+printk("out of KeSetEvent\n");
 	}
 }
 

@@ -1,4 +1,4 @@
-﻿/*
+﻿r*
    drbd_transport_wtcp.c
 
    This file is part of DRBD.
@@ -358,7 +358,9 @@ static int dtt_recv_pages(struct drbd_transport *transport, struct drbd_page_cha
 	page_chain_for_each(page) {
 		size_t len = min_t(int, size, PAGE_SIZE);
 		void *data = kmap(page);
+printk("into dtt_recv_short\n");
 		err = dtt_recv_short(socket, data, len, 0);
+printk("out of dtt_recv_short, err is %d\n", err);
 		kunmap(page);
 		set_page_chain_offset(page, 0);
 		set_page_chain_size(page, len);
@@ -368,6 +370,7 @@ static int dtt_recv_pages(struct drbd_transport *transport, struct drbd_page_cha
 	}
 	return 0;
 fail:
+printk("fail\n");
 	drbd_free_page_chain(transport, chain, 0);
 	kfree(page); // PMaskPR
 	return err;
