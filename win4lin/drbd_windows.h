@@ -329,6 +329,8 @@ extern void printk_cleanup(void);
 extern int initialize_syslog_printk(void);
 extern int _printk(const char * func, const char * format, ...);
 
+void windrbd_device_error(struct drbd_device *device, const char ** err_str_out, const char *fmt, ...);
+
 #define printk(format, ...)   \
     _printk(__FUNCTION__, format, __VA_ARGS__)
 

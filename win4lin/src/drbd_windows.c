@@ -31,6 +31,7 @@
 #include <IoEvent.h>
 
 #include <mountmgr.h>
+#include "drbd_int.h"
 
 	/* Maximal number of MDL elements that the backing device can
 	 * handle. If requests contain more than this number of elements
@@ -129,6 +130,24 @@ int g_handler_retry;
 
 static LIST_HEAD(backing_devices);
 static struct mutex read_bootsector_mutex;
+
+void windrbd_device_error(struct drbd_device *device, const char ** err_str_out, const char *fmt, ...)
+{
+	char *err_str;
+	va_list args;
+
+        va_start(args, fmt);
+	err_str = kvasprintf(GFP_ATOMIC, fmt, args);
+        va_end(args);
+
+	if (err_str != NULL) {
+		drbd_warn(device, "%s\n", err_str);
+
+		/* Do not overwrite existing err strings. */
+		if (err_str_out != NULL && *err_str_out == NULL)
+			*err_str_out = err_str;
+	}	/* else no memory */
+}
 
 void msleep(int ms)
 {
