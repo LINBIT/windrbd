@@ -906,14 +906,12 @@ LONG NTAPI Receive(
 		return SOCKET_ERROR;
 	}
 
-printk("into WskReceive\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskReceive(
 				WskSocket,
 				&WskBuffer,
 				Flags,
 				Irp);
 
-printk("out of WskReceive\n");
     if (Status == STATUS_PENDING)
     {
         LARGE_INTEGER	nWaitTime;
@@ -932,25 +930,17 @@ printk("out of WskReceive\n");
         waitObjects[0] = (PVOID) &CompletionEvent;
         if (thread->has_sig_event)
         {
-printk("has sig event\n");
             waitObjects[1] = (PVOID) &thread->sig_event;
             wObjCount = 2;
         } 
 
-if (pTime != NULL)
-printk("into KeWaitForMultipleObjects, timeout is %ll\n", pTime->QuadPart);
-else 
-printk("into KeWaitForMultipleObjects, timeout is infinite\n");
-
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-printk("out of KeWaitForMultipleObjects, status is %x\n", Status);
         switch (Status)
         {
         case STATUS_WAIT_0: // waitObjects[0] CompletionEvent
             if (Irp->IoStatus.Status == STATUS_SUCCESS)
             {
                 BytesReceived = (LONG) Irp->IoStatus.Information;
-printk("ok, %ld bytes received\n", BytesReceived);
             }
             else
             {
@@ -963,17 +953,14 @@ printk("ok, %ld bytes received\n", BytesReceived);
             break;
 
         case STATUS_WAIT_1:
-printk("STATUS_WAIT_1\n");
             BytesReceived = -EINTR;
             break;
 
         case STATUS_TIMEOUT:
-printk("STATUS_TIMEOUT\n");
             BytesReceived = -EAGAIN;
             break;
 
         default:
-printk("error\n");
             BytesReceived = SOCKET_ERROR;
             break;
         }
