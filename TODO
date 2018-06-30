@@ -1,10 +1,14 @@
 --------------------------------------------------------------------
 
-TODO: Code quality: Should report I/O error instead of Permission denied on disk failure
+TODO: code quality: experiment with MAX_MDL_ELEMENTS
 
-TODO: Code quality: Replace WDRBD_ERROR and the like by printk
+	Make it a variable, increase and wait for blue screen.
 
-	The log severities are wrong with these macros.
+TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
+
+	There might be other limits .. 1 Meg is the maximum size
+	of a data request packet, so we still need the splitting
+	in windrbd.
 
 TODO: Bug: On Primary diskless (after backing dev failure) BSOD when unplugging Network cable.
 
@@ -34,6 +38,10 @@ Jun 29 17:29:25 192.168.56.101  U15:29:08.370|133befa0(receiver) drbd_md_sync_pa
 
 	This happens always after Down/Up after stuck in NetworkFailure.
 
+	Update: After fixing the NetworkFailure bug, this unfortunately
+	still happens (when reconnecting and syncing). Can't test at the
+	moment.
+
 TODO: Bug: Connection instable when connecting two Windows boxes.
 
 	In that case our physical Windows 10 with Windows 7 VM on
@@ -48,6 +56,9 @@ TODO: Bug: Connection instable when connecting two Windows boxes.
 
 	Update: really? Was split-brain, IP address change.
 
+	Update: We also just had a complete network outage on
+	the testing subnet..
+
 TODO: Bug: WinDRBD unresponsive when syslog host can't be reached.
 
 	This is most likely because we wait for completion. Not
@@ -59,16 +70,6 @@ TODO: Bug: WinDRBD unresponsive when syslog host can't be reached.
 	(which is severe).
 
 TODO: Test: Test protocol B, C
-
-TODO: code quality: experiment with MAX_MDL_ELEMENTS
-
-	Make it a variable, increase and wait for blue screen.
-
-TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
-
-	There might be other limits .. 1 Meg is the maximum size
-	of a data request packet, so we still need the splitting
-	in windrbd.
 
 TODO: Features: 3 node setup does not work.
 
@@ -93,24 +94,6 @@ TODO: Bug: From Devin: d->bi_size (from peer request) too big:
 Jun 27 15:37:45 wintestubuntu kernel: [85326.250911] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION (n_oos - peer_device->rs_failed) == 0 FAILED in drbd_resync_finished
 Jun 27 17:02:04 wintestubuntu kernel: [90385.215243] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION node_mask == 0 FAILED in _drbd_send_uuids110
 Jun 27 17:03:02 wintestubuntu kernel: [90443.041728] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
-
-TODO: Bug: From Devin: Registering mount point failed status = c0000035
-	This seems to be something that only happens on Windows Server 2016.
-	The mount_point buffer is NULL at end of the windrbd_mount
-	function:
-
-	2018-05-17T13:47:08.666486-07:00 legolas.us.linbit  U20:47:08.638|da4db040(drbdcmd) windrbd_mount <6>Assigned device \Device\Drbd0 the mount point (null)
-	However, all checks before that succeed.
-
-	Get a Windows 2016 Server and test on it.
-
-	Update: Also happens on Windows 10 with beta 3
-
-	Update: Tested with Windows 2016 server, didn't happen so
-	far.
-
-	Update: This happens when drive letter is in use. Report error
-	to userspace.
 
 TODO: Test: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
@@ -158,18 +141,21 @@ TODO: Features: check if windrbd can be loaded not at boot time but later.
 	Update: imdisk can do it.
 
 ------------------------------------------------------------------------
+
+TODO: Installation: Make windrbd directory unaccessible for non-admins.
+
+TODO: Code quality: Should report I/O error instead of Permission denied on disk failure
+
+TODO: Code quality: Replace WDRBD_ERROR and the like by printk
+
+	The log severities are wrong with these macros.
+
 TODO: Documentation: white paper for linbit website.
 
 	Until end of June 2018
 	Update: maybe refer to the README.md.
 
 	Update: No we need a TechGuide. Postponed to September.
-
-TODO: Bug: If windrbd drive letter is used as real drive letter, windows
-	accesses the real drive silently.
-
-	Update: in that case, mounting fails with c0000035, this should
-	be reported to user space as an error.
 
 TODO: Features: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
@@ -2605,4 +2591,44 @@ Done: Bug: on passive side, on BSOD stays in NetworkFailure
 	right according to recv manpage, even when MSG_WAITALL is
 	given). Right now we have a followup BSOD, probably in
 	DRBD, because this apparently never worked.
+
+	Update: Linux hasn't got this problem (it seems that -EINTR
+	is returned even if there is data).
+
+Done: Bug: From Devin: Registering mount point failed status = c0000035
+	This seems to be something that only happens on Windows Server 2016.
+	The mount_point buffer is NULL at end of the windrbd_mount
+	function:
+
+	2018-05-17T13:47:08.666486-07:00 legolas.us.linbit  U20:47:08.638|da4db040(drbdcmd) windrbd_mount <6>Assigned device \Device\Drbd0 the mount point (null)
+	However, all checks before that succeed.
+
+	Get a Windows 2016 Server and test on it.
+
+	Update: Also happens on Windows 10 with beta 3
+
+	Update: Tested with Windows 2016 server, didn't happen so
+	far.
+
+	Update: This happens when drive letter is in use. Report error
+	to userspace.
+
+	In case we cannot mount on becoming primary, we do not fail with
+	an error (since it is not DRBD's fault), but rather print a
+	warning. In most cases users want to review their config,
+	then. Fixed (to be fixed by user).
+
+Done: Bug: If windrbd drive letter is used as real drive letter, windows
+	accesses the real drive silently.
+
+	Update: in that case, mounting fails with c0000035, this should
+	be reported to user space as an error.
+
+	Update: We do not fail (would have to revert becoming primary,
+	but print a warning:
+
+	In case we cannot mount on becoming primary, we do not fail with
+	an error (since it is not DRBD's fault), but rather print a
+	warning. In most cases users want to review their config,
+	then.
 
