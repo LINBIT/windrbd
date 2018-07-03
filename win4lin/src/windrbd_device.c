@@ -538,7 +538,8 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 			 * STATUS_UNSUCCESSFUL translates to a
 			 * Permission denied error.
 			 */
-		irp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
+		// irp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
+		irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
 	}
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 
