@@ -532,7 +532,13 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	} else {
 		printk(KERN_ERR "I/O failed with %d\n", error);
 		irp->IoStatus.Information = 0;
-		irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+
+			/* TODO: On Windows 7, this error seems not
+			 * to reach userspace. On Windows 10, returning
+			 * STATUS_UNSUCCESSFUL translates to a
+			 * Permission denied error.
+			 */
+		irp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
 	}
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 
