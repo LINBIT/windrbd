@@ -37,9 +37,11 @@
 	 * handle. If requests contain more than this number of elements
 	 * Windows simply blue screens. The value is 32 for Windows 7
 	 * but might be lower on other Windows versions.
+	 * Update: for Windows 10 and Windows Server this is 16.
+	 * Set this to -1 to enable max mdl elements experiment.
 	 */
 
-#define MAX_MDL_ELEMENTS 1
+#define MAX_MDL_ELEMENTS 16
 
 	/* Define this to make every n-th I/O request fail on completion. */
 
@@ -2151,6 +2153,7 @@ int generic_make_request(struct bio *bio)
 	int orig_size;
 	int e;
 	int flush_request;
+#if MAX_MDL_ELEMENTS == -1
 	static int max_mdl_elements = 1;
 	static int num_tries = 100;
 
@@ -2159,6 +2162,9 @@ int generic_make_request(struct bio *bio)
 		max_mdl_elements++;
 		printk("max_mdl_elements is now %d\n", max_mdl_elements);
 	}
+#else
+	static int max_mdl_elements = MAX_MDL_ELEMENTS;
+#endif
 
 	bio_get(bio);
 
