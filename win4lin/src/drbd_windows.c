@@ -2151,6 +2151,14 @@ int generic_make_request(struct bio *bio)
 	int orig_size;
 	int e;
 	int flush_request;
+	static int max_mdl_elements = 1;
+	static int num_tries = 100;
+
+	if (--num_tries == 0) {
+		num_tries = 100;
+		max_mdl_elements++;
+		printk("max_mdl_elements is now %d\n", max_mdl_elements);
+	}
 
 	bio_get(bio);
 
@@ -2161,7 +2169,7 @@ int generic_make_request(struct bio *bio)
 	if (bio->bi_vcnt == 0)
 		bio->bi_num_requests = flush_request;
 	else
-		bio->bi_num_requests = (bio->bi_vcnt-1)/MAX_MDL_ELEMENTS + 1 + flush_request;
+		bio->bi_num_requests = (bio->bi_vcnt-1)/max_mdl_elements + 1 + flush_request;
 
 	if (bio->bi_num_requests == 0) {
 		drbd_bio_endio(bio, 0);
@@ -2188,8 +2196,8 @@ int generic_make_request(struct bio *bio)
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<(bio->bi_num_requests - flush_request); 
              bio->bi_this_request++) {
-		bio->bi_first_element = bio->bi_this_request*MAX_MDL_ELEMENTS;
-		bio->bi_last_element = (bio->bi_this_request+1)*MAX_MDL_ELEMENTS;
+		bio->bi_first_element = bio->bi_this_request*max_mdl_elements;
+		bio->bi_last_element = (bio->bi_this_request+1)*max_mdl_elements;
 		if (bio->bi_vcnt < bio->bi_last_element)
 			bio->bi_last_element = bio->bi_vcnt;
 
