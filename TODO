@@ -10,6 +10,66 @@ TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
 	of a data request packet, so we still need the splitting
 	in windrbd.
 
+TODO: Test: Test protocol B, C
+
+TODO: Test: More tests with Windows 2016
+
+TODO: Features: 3 node setup does not work.
+
+	If node with node-id 1 is missing, node 2 thinks that node
+	3 is node 1 during connection establishment:
+
+Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
+
+	(but 10.43.8.188 is WIN-F11R93CP9KI).
+
+TODO: Documentation: Describe BSODs in release description
+
+TODO: Documentation: Describe restrictions in release description
+
+TODO: Installation: Include inf file in package.
+
+	And document how to uninstall on command line.
+------------------------------------------------------------------------
+
+TODO: Bug: From Devin: d->bi_size (from peer request) too big:
+
+	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
+
+	Test with large block device sizes.
+
+	Update: did, but didn't yet happen (sync would take 3 hours)
+
+	Update: happened on syncing between Windows Server 2016 and
+	Linux: two more assertions failed:
+
+Jun 27 15:37:45 wintestubuntu kernel: [85326.250911] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION (n_oos - peer_device->rs_failed) == 0 FAILED in drbd_resync_finished
+Jun 27 17:02:04 wintestubuntu kernel: [90385.215243] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION node_mask == 0 FAILED in _drbd_send_uuids110
+Jun 27 17:03:02 wintestubuntu kernel: [90443.041728] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
+
+TODO: Bug: blue screen on drbdadm detach --force (when needing uptodate
+	data) and then drbdadm status.
+
+	Cannot reproduce at the moment.
+
+	Update: Yes this still happens (when I/O is on the windrbd
+	device). BSOD on drbdadm detach --force (no need for drbdadm
+	status). Happened on Windows 10.
+
+	Does not happen on Windows 7, however on Windows 7 there is
+	no error reported to user space (I/O application hangs and
+	is not killable).
+
+TODO: Bug: WinDRBD unresponsive when syslog host can't be reached.
+
+	This is most likely because we wait for completion. Not
+	sure yet if we want to fix this, because that probably
+	would cause last messages before BSOD getting lost.
+
+	On the other hand this probably can also fix the
+	does not boot when local interface IP is configured bug
+	(which is severe).
+
 TODO: Bug: On Primary diskless (after backing dev failure) BSOD when unplugging Network cable.
 
 	Check if also on 'normal' diskless.
@@ -59,47 +119,6 @@ TODO: Bug: Connection instable when connecting two Windows boxes.
 	Update: We also just had a complete network outage on
 	the testing subnet..
 
-TODO: Bug: WinDRBD unresponsive when syslog host can't be reached.
-
-	This is most likely because we wait for completion. Not
-	sure yet if we want to fix this, because that probably
-	would cause last messages before BSOD getting lost.
-
-	On the other hand this probably can also fix the
-	does not boot when local interface IP is configured bug
-	(which is severe).
-
-TODO: Test: Test protocol B, C
-
-TODO: Features: 3 node setup does not work.
-
-	If node with node-id 1 is missing, node 2 thinks that node
-	3 is node 1 during connection establishment:
-
-Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
-
-	(but 10.43.8.188 is WIN-F11R93CP9KI).
-
-TODO: Bug: From Devin: d->bi_size (from peer request) too big:
-
-	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
-
-	Test with large block device sizes.
-
-	Update: did, but didn't yet happen (sync would take 3 hours)
-
-	Update: happened on syncing between Windows Server 2016 and
-	Linux: two more assertions failed:
-
-Jun 27 15:37:45 wintestubuntu kernel: [85326.250911] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION (n_oos - peer_device->rs_failed) == 0 FAILED in drbd_resync_finished
-Jun 27 17:02:04 wintestubuntu kernel: [90385.215243] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION node_mask == 0 FAILED in _drbd_send_uuids110
-Jun 27 17:03:02 wintestubuntu kernel: [90443.041728] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
-
-TODO: Test: blue screen on drbdadm detach --force (when needing uptodate
-	data) and then drbdadm status.
-
-	Cannot reproduce at the moment.
-
 TODO: Documentation: define tests to be run before releases.
 
 TODO: Features: Make DRBD driver removable.
@@ -139,8 +158,6 @@ TODO: Features: check if windrbd can be loaded not at boot time but later.
 	installed).
 
 	Update: imdisk can do it.
-
-------------------------------------------------------------------------
 
 TODO: Installation: Make windrbd directory unaccessible for non-admins.
 
