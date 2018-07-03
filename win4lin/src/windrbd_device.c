@@ -34,6 +34,8 @@
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
 
+/* TODO: place commented out printk's in a #define DEBUG */
+
 static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject) {
@@ -46,7 +48,7 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	
-	printk(KERN_DEBUG "DRBD device request not implemented: MajorFunction: 0x%x\n", s->MajorFunction);
+//	printk(KERN_DEBUG "DRBD device request not implemented: MajorFunction: 0x%x\n", s->MajorFunction);
 	irp->IoStatus.Status = STATUS_NOT_IMPLEMENTED;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 	return STATUS_NOT_IMPLEMENTED;
@@ -152,7 +154,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		}
 
 		struct _PREVENT_MEDIA_REMOVAL *r = irp->AssociatedIrp.SystemBuffer;
-		printk(KERN_INFO "DRBD: Request for %slocking media\n", r->PreventMediaRemoval ? "" : "un");
+//		printk(KERN_INFO "DRBD: Request for %slocking media\n", r->PreventMediaRemoval ? "" : "un");
 
 		dev->mechanically_locked = r->PreventMediaRemoval;
 
@@ -185,7 +187,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 			break;
 		}
 		struct _SET_PARTITION_INFORMATION *pi = irp->AssociatedIrp.SystemBuffer;
-		printk(KERN_INFO "Request to set partition type to %x\n", pi->PartitionType);
+//		printk(KERN_INFO "Request to set partition type to %x\n", pi->PartitionType);
 		irp->IoStatus.Information = 0;
 		break;
 
@@ -276,7 +278,6 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	}
 
 	case IOCTL_STORAGE_GET_HOTPLUG_INFO:
-		printk("IOCTL_STORAGE_GET_HOTPLUG_INFO\n");
 		struct _STORAGE_HOTPLUG_INFO *hotplug_info = 
 			irp->AssociatedIrp.SystemBuffer;
 
@@ -316,7 +317,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	case IOCTL_DISK_CHECK_VERIFY:
 	case IOCTL_STORAGE_CHECK_VERIFY:
 	case IOCTL_STORAGE_CHECK_VERIFY2:
-		printk("CHECK_VERIFY (%x)\n", s->Parameters.DeviceIoControl.IoControlCode);
+//		printk("CHECK_VERIFY (%x)\n", s->Parameters.DeviceIoControl.IoControlCode);
 		if (s->Parameters.DeviceIoControl.OutputBufferLength >=
 			sizeof(ULONG))
 		{
@@ -353,14 +354,14 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
-		printk("attrs->Action is %d\n", attrs->Action);
+//		printk("attrs->Action is %d\n", attrs->Action);
 		if (attrs->Action != DeviceDsmAction_Trim) {
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 		}
 		int items = attrs->DataSetRangesLength / sizeof(DEVICE_DATA_SET_RANGE);
 
-		printk("%d items\n", items);
+//		printk("%d items\n", items);
 
 		status = STATUS_SUCCESS;
 		irp->IoStatus.Information = 0;
@@ -369,7 +370,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		break;
 
 	default: 
-		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
+//		printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;
 	}
 
@@ -403,16 +404,18 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	int err;
 
 	if (dev->drbd_device != NULL) {
-printk(KERN_DEBUG "s->Parameters.Create.SecurityContext->DesiredAccess is %x\n", s->Parameters.Create.SecurityContext->DesiredAccess);
+// printk(KERN_DEBUG "s->Parameters.Create.SecurityContext->DesiredAccess is %x\n", s->Parameters.Create.SecurityContext->DesiredAccess);
 
 		mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
        	               (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0;
 
+/*
 		printk(KERN_INFO "DRBD device create request: opening DRBD device %s\n",
 			mode == 0 ? "read-only" : "read-write");
+*/
 
 		err = drbd_open(dev, mode);
-printk(KERN_DEBUG "drbd_open returned %d\n", err);
+// printk(KERN_DEBUG "drbd_open returned %d\n", err);
 		status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
 	} else {
 			/* If we are currently mounting we most likely got
@@ -420,13 +423,13 @@ printk(KERN_DEBUG "drbd_open returned %d\n", err);
 			 * device in drbd, this will fail at this early stage.
 			 */
 
-printk("Create request while device isn't set up yet.\n");
+// printk("Create request while device isn't set up yet.\n");
 		status = STATUS_SUCCESS;
 	}
 
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
-printk(KERN_DEBUG "status is %x\n", status);
+// printk(KERN_DEBUG "status is %x\n", status);
 	return status;
 }
 
@@ -460,14 +463,16 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 /*	mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
                 (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0; */
 
+/*
 		printk(KERN_INFO "DRBD device close request: releasing DRBD device %s\n",
 			mode == 0 ? "read-only" : "read-write");
+*/
 
 		err = dev->bd_disk->fops->release(dev->bd_disk, mode);
-printk(KERN_DEBUG "drbd_release returned %d\n", err);
+// printk(KERN_DEBUG "drbd_release returned %d\n", err);
 		status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
 	} else {
-printk("Close request while device isn't set up yet.\n");
+// printk("Close request while device isn't set up yet.\n");
 			/* See comment in windrbd_create() */
 		status = STATUS_SUCCESS;
 	}
@@ -498,7 +503,7 @@ static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct block_device *dev = ref->bdev;
 	NTSTATUS status = STATUS_SUCCESS;
 
-printk(KERN_INFO "Pretending that cleanup does something.\n");
+// printk(KERN_INFO "Pretending that cleanup does something.\n");
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 	return status;
@@ -634,7 +639,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev, NTSTAT
 	bio->bi_size = total_size;
 	bio->bi_sector = sector;
 
-printk("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
+// printk("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
 
 	for (i=0; i<vcnt; i++) {
 		this_size = (i == vcnt-1) ? last_size : PAGE_SIZE;
@@ -705,12 +710,12 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		 */
 
 	if (dev->drbd_device == NULL) {
-printk("I/O request while device isn't set up yet.\n");
+// printk("I/O request while device isn't set up yet.\n");
 		goto exit;
 	}
 
 	if (dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
-printk("I/O request while not primary.\n");
+// printk("I/O request while not primary.\n");
 		goto exit;
 	}
 
@@ -820,13 +825,13 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	status = STATUS_NOT_IMPLEMENTED;
 
-	printk("Pnp: device: %p irp: %p\n", device, irp);
+//	printk("Pnp: device: %p irp: %p\n", device, irp);
 
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	
-	printk(KERN_DEBUG "PnP device request not implemented: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
+//	printk(KERN_DEBUG "PnP device request not implemented: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
 	if (s->MinorFunction == IRP_MN_QUERY_DEVICE_RELATIONS) {
-		printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
+//		printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
 
 #if 0
 
