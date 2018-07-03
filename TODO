@@ -6,6 +6,8 @@ TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
 	of a data request packet, so we still need the splitting
 	in windrbd.
 
+TODO: Infrastructure: Windows 2016 powers off on (some) blue screens.
+
 TODO: Test: Test protocol B, C
 
 TODO: Test: More tests with Windows 2016
