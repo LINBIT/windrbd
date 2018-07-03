@@ -32,6 +32,21 @@ TODO: Installation: Include inf file in package.
 	And document how to uninstall on command line.
 ------------------------------------------------------------------------
 
+TODO: Bug: BSOD on backing device failure while I/O is running
+
+	This was tested by unplugging a USB stick (contained the
+	backing device) while copiing a large file to windrbd
+	device. OS was Windows 10 (physical machine).
+
+	Update: We cannot call the backing device driver again
+	if the device already failed (else BSOD). Immeadietly
+	before calling it check if it has failed and cancel
+	IRP without calling the driver if yes.
+
+	Update: When logging is not on, there's still a BSOD,
+	(windrbd log-server not running), reopened. Maybe fix
+	the logging first (wait for UDP packet to arrive).
+
 TODO: Bug: From Devin: d->bi_size (from peer request) too big:
 
 	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
@@ -2581,17 +2596,6 @@ Done: Test: test I/O error with USB stick.
 	BSOD.
 
 	Done, and some things fixed.
-
-Done: Bug: BSOD on backing device failure while I/O is running
-
-	This was tested by unplugging a USB stick (contained the
-	backing device) while copiing a large file to windrbd
-	device. OS was Windows 10 (physical machine).
-
-	Update: We cannot call the backing device driver again
-	if the device already failed (else BSOD). Immeadietly
-	before calling it check if it has failed and cancel
-	IRP without calling the driver if yes.
 
 Done: Bug: on passive side, on BSOD stays in NetworkFailure
 
