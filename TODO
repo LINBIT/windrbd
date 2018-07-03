@@ -1,9 +1,5 @@
 --------------------------------------------------------------------
 
-TODO: code quality: experiment with MAX_MDL_ELEMENTS
-
-	Make it a variable, increase and wait for blue screen.
-
 TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
 
 	There might be other limits .. 1 Meg is the maximum size
@@ -2652,4 +2648,16 @@ Done: Bug: If windrbd drive letter is used as real drive letter, windows
 	an error (since it is not DRBD's fault), but rather print a
 	warning. In most cases users want to review their config,
 	then.
+
+Done: code quality: experiment with MAX_MDL_ELEMENTS
+
+	Make it a variable, increase and wait for blue screen.
+
+	Update: Done, Here's the results:
+
+	Windows 10 and Windows 2016: maximal 16 MDL elements.
+	Windows 7: maximal 32 MDL elements.
+
+	Test was on a (virtual) SCSI disk, other device classes
+	(USB stick) may have lower limits.
 
