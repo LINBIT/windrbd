@@ -6,11 +6,9 @@ TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
 	of a data request packet, so we still need the splitting
 	in windrbd.
 
-TODO: Infrastructure: Windows 2016 powers off on (some) blue screens.
+TODO: Test: More tests with Windows 2016
 
 TODO: Test: Test protocol B, C
-
-TODO: Test: More tests with Windows 2016
 
 TODO: Features: 3 node setup does not work.
 
@@ -2662,4 +2660,8 @@ Done: code quality: experiment with MAX_MDL_ELEMENTS
 
 	Test was on a (virtual) SCSI disk, other device classes
 	(USB stick) may have lower limits.
+
+Done: Infrastructure: Windows 2016 powers off on (some) blue screens.
+
+	Simon will write a script that restarts it over libvirt.
 
