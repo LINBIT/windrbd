@@ -334,6 +334,14 @@ void windrbd_device_error(struct drbd_device *device, const char ** err_str_out,
 #define printk(format, ...)   \
     _printk(__FUNCTION__, format, __VA_ARGS__)
 
+#ifdef DEBUG
+#define dbg(format, ...)   \
+    _printk(__FUNCTION__, format, __VA_ARGS__)
+#else
+#define dbg(format, ...)   __noop
+#endif
+
+
 #if defined (WDRBD_THREAD_POINTER)
 #define WDRBD_FATAL(_m_, ...)   printk(KERN_CRIT "[0x%p] "##_m_, KeGetCurrentThread(), __VA_ARGS__)
 #else
