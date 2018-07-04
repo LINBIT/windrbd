@@ -28,6 +28,8 @@
 #include "sys/wait.h"
 #include <linux/drbd_endian.h>
 #include "linux/types.h"
+#include "generic_compat_stuff.h"
+#include "wingenl.h"
 
 #include "disp.h"
 #include <linux/mempool.h>
@@ -196,8 +198,6 @@ enum rq_flag_bits {
 #define NOTIFY_OK				    0x0001          /* Suits me */
 #define NOTIFY_STOP_MASK			0x8000          /* Don't call further */
 #define NOTIFY_BAD				    (NOTIFY_STOP_MASK|0x0002)
-
-#define KERNEL_VERSION(_x, _y, _z)	0
 
 /* Those match now the Linux values. Use errno utility to convert number
  * to symbol (or symbol to number).

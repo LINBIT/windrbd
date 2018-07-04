@@ -1,0 +1,26 @@
+From 57619c6ff24a1170ef13e65369e5ce7c5b120071 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 4 Jul 2018 20:48:52 +0200
+Subject: [PATCH] Ignore signed/unsigned mismatch in drbd_strings.
+
+---
+ drbd/drbd_strings.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drbd/drbd_strings.c b/drbd/drbd_strings.c
+index 698a706..af02f5d 100644
+--- a/drbd/drbd_strings.c
++++ b/drbd/drbd_strings.c
+@@ -200,6 +200,9 @@ struct state_names drbd_packet_names = {
+         .size = sizeof __packet_names / sizeof __packet_names[0],
+ };
+ 
++/* Do not warn about signed/unsigned mismatch */
++#pragma warning (disable : 4018)
++
+ const char *drbd_repl_str(enum drbd_repl_state s)
+ {
+ 	return (s < 0 || s >= drbd_repl_state_names.size ||
+-- 
+2.17.0
+

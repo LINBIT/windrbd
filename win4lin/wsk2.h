@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <ntddk.h>
 #include <wsk.h>
+#include "drbd_windows.h"
 
 /* TODO: one day we should convert the APIs here to be kernel
  * compatible and revert the drbd_transport_wtcp.c to be based on

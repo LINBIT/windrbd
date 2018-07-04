@@ -1,5 +1,6 @@
 #include <linux/mempool.h>
 #include <linux/slab.h>
+#include "drbd_windows.h"
 
 mempool_t *mempool_create_page_pool(int min_nr, int order, ULONG tag)
 {

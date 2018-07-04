@@ -1,4 +1,5 @@
 #include <linux/slab.h>
+#include "drbd_windows.h"
 
 struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align,
 				     unsigned long flags,

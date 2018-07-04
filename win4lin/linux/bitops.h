@@ -3,6 +3,7 @@
 
 #include "linux/hweight.h"
 #include <linux/bitsperlong.h>
+#include <linux/types.h>
 
 #define BIT_MASK(_nr)				(1ULL << ((_nr) % BITS_PER_LONG))
 #define BIT_WORD(_nr)				((_nr) / BITS_PER_LONG)

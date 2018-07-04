@@ -1,6 +1,7 @@
 ﻿#ifndef _DRBD_WRAPPERS_H
 #define _DRBD_WRAPPERS_H
 
+#include <linux/version.h>
 #include "linux/rbtree.h"
 #include "linux/idr.h"
 #include "drbd_wingenl.h"

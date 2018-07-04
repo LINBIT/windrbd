@@ -20,6 +20,7 @@
 #ifndef _WINDOWS_TYPES_H
 #define _WINDOWS_TYPES_H
 
+#include <wdm.h>
 #include <ctype.h>
 //#include <stdbool.h>
 typedef enum __Bool__ {
@@ -80,5 +81,9 @@ struct callback_head {
 
 typedef void (*rcu_callback_t)(struct rcu_head *head);
 typedef void (*call_rcu_func_t)(struct rcu_head *head, rcu_callback_t func);
+
+#ifndef __packed
+#define __packed
+#endif
 
 #endif

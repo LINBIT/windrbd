@@ -6,6 +6,9 @@
 #include <stdarg.h>
 
 #ifdef WINNT
+/* TODO: eventually we want to enable those warnings again, ther
+ * are there for a reason.
+ */
 #pragma warning (disable : 4005 4018 4101 4115 4121 4127 4131 4152 4189 4200 4201 4204 4212 4218 4242 4244 4245 4267 4307 4389 4702 4706)
 /* warning disable list
 // drbd.h
@@ -91,7 +94,10 @@ typedef int cpumask_var_t;
 
 /* Yes, that'll be active for all structures...
  * But unless defined otherwise the compiler is free to choose alignment anyway. */
+
+#ifndef __packed
 #define __packed
+#endif
 
 /* For shared/inaddr.h, struct in_addr */
 #define FAR
@@ -102,7 +108,7 @@ typedef int cpumask_var_t;
  * http://lxr.free-electrons.com/source/include/linux/bitops.h#L215 */
 static inline int __ffs64(u64 i)
 {
-	int index, found;
+	ULONG index, found;
 
 	found = _BitScanForward64(&index, i);
 	return found ? index : 0;

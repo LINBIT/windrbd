@@ -27,7 +27,7 @@
 #include <ntdddisk.h>
 #include <wdm.h>
 #include <wdmguid.h>
-#include <ntddstor.h>
+// #include <ntddstor.h>
 #include <IoEvent.h>
 
 #include <mountmgr.h>

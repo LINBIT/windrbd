@@ -19,7 +19,7 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include <Ntifs.h>
+// #include <Ntifs.h>
 #include <Ntstrsafe.h>
 #include <ntddk.h>
 #include <stdlib.h>

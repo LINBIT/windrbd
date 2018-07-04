@@ -12,6 +12,8 @@
 #ifndef __IDR_H__
 #define __IDR_H__
 
+#include <linux/types.h>
+#include <linux/bitsperlong.h>
 
 #if BITS_PER_LONG == 32
 # define IDR_BITS 5
