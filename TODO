@@ -1,14 +1,13 @@
 --------------------------------------------------------------------
 
-TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
+TODO: Documentation: Describe BSODs in release description
 
-	There might be other limits .. 1 Meg is the maximum size
-	of a data request packet, so we still need the splitting
-	in windrbd.
+TODO: Documentation: Describe restrictions in release description
 
-TODO: Test: More tests with Windows 2016
+TODO: Installation: Include inf file in package.
 
-TODO: Test: Test protocol B, C
+	And document how to uninstall on command line.
+------------------------------------------------------------------------
 
 TODO: Features: 3 node setup does not work.
 
@@ -19,14 +18,17 @@ Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closin
 
 	(but 10.43.8.188 is WIN-F11R93CP9KI).
 
-TODO: Documentation: Describe BSODs in release description
+	Sometimes connection can be established however we get a
+	BSOD then.
 
-TODO: Documentation: Describe restrictions in release description
+	Connection between 2 nodes (Linux and Windows VirtualBox)
+	works, but 3rd node (Windows 10 physical machine) BSOD's.
 
-TODO: Installation: Include inf file in package.
+TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
 
-	And document how to uninstall on command line.
-------------------------------------------------------------------------
+	There might be other limits .. 1 Meg is the maximum size
+	of a data request packet, so we still need the splitting
+	in windrbd.
 
 TODO: Bug: BSOD on backing device failure while I/O is running
 
@@ -2664,4 +2666,12 @@ Done: code quality: experiment with MAX_MDL_ELEMENTS
 Done: Infrastructure: Windows 2016 powers off on (some) blue screens.
 
 	Simon will write a script that restarts it over libvirt.
+
+Done: Test: Test protocol B, C
+
+	B seems to work .. if one has A and the other node B then
+	B wins (also in upstream).
+	C also seems to work.
+
+Done: Test: More tests with Windows 2016
 
