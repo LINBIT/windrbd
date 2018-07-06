@@ -14,8 +14,8 @@ fi
 
 VERSION=$(date +%Y,%m,%d,%H)
 DATE=$(date)
-GITHASH=$(git describe --tags --always --dirty)
-DRBD_GITHASH="$(cd drbd ; git describe --tags --always --dirty)"
+GITHASH=$(git describe --tags --always)
+DRBD_GITHASH="$(cd drbd ; git describe --tags --always)"
 
 VER_INTERNALNAME_STR="DRBD4WINDOWS"
 VER_FILEVERSION_STR="${GITHASH}\\0"
