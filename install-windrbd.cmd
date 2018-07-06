@@ -7,6 +7,7 @@ if %errorlevel% NEQ 0 (
 )
 
 copy *.exe c:\windows\System32
+copy drbd.inf c:\windows\inf
 
 if exist c:\cygwin\NUL goto found_cygwin1
 if exist c:\cygwin64\NUL goto found_cygwin2
