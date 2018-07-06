@@ -17,6 +17,11 @@ TODO: Research: See if it works under ReactOS
 	right before BSOD's (maybe it can also Stack dump in
 	a sane way ...).
 
+	Oops, ReactOS is 32-bit only .. this would require some
+	adaption. First, compile ReactOS from scratch to see if
+	that make sense at all. Then (try to) compile windrbd with
+	the ReactOS compiler (can do that under Linux...)
+
 TODO: Bug: BSOD on backing device failure while I/O is running
 
 	This was tested by unplugging a USB stick (contained the
