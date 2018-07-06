@@ -1,21 +1,10 @@
+TODO: Physical USB stick BSOD on becoming Primary.
+
+	Most likely because of MAX_MDL_ELEMENTS being 16.
+
 TODO: test backing device failure with small I/O sizes
 
 TODO: test I/O with requests > 1 Megabyte
-
-TODO: Features: 3 node setup does not work.
-
-	If node with node-id 1 is missing, node 2 thinks that node
-	3 is node 1 during connection establishment:
-
-Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
-
-	(but 10.43.8.188 is WIN-F11R93CP9KI).
-
-	Sometimes connection can be established however we get a
-	BSOD then.
-
-	Connection between 2 nodes (Linux and Windows VirtualBox)
-	works, but 3rd node (Windows 10 physical machine) BSOD's.
 
 TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
 
@@ -107,6 +96,13 @@ Jun 29 17:29:25 192.168.56.101  U15:29:08.370|133befa0(receiver) drbd_md_sync_pa
 	Update: After fixing the NetworkFailure bug, this unfortunately
 	still happens (when reconnecting and syncing). Can't test at the
 	moment.
+
+TODO: BSOD on unplugging network cable in 3 node setup
+
+	Was most likely something with 3 node setup (freezes when
+	network cable is unplugged). Logging was local (BSOD when
+	it is remote). Update: after several minutes BSOD also
+	when freezed (WATCHDOG_VIOLATION).
 
 TODO: Bug: Connection instable when connecting two Windows boxes.
 
@@ -2675,3 +2671,22 @@ Done: Documentation: Describe restrictions in release description
 Done: Installation: Include inf file in package.
 
 	And document how to uninstall on command line.
+
+Done: Features: 3 node setup does not work.
+
+	If node with node-id 1 is missing, node 2 thinks that node
+	3 is node 1 during connection establishment:
+
+Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
+
+	(but 10.43.8.188 is WIN-F11R93CP9KI).
+
+	Sometimes connection can be established however we get a
+	BSOD then.
+
+	Connection between 2 nodes (Linux and Windows VirtualBox)
+	works, but 3rd node (Windows 10 physical machine) BSOD's.
+
+	Update: Now managed to have stable 3-node setup between
+	Windows 7 VM, Linux VM and Windows 10 PhysM.
+
