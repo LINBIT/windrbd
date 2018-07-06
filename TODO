@@ -1,13 +1,6 @@
---------------------------------------------------------------------
+TODO: test backing device failure with small I/O sizes
 
-TODO: Documentation: Describe BSODs in release description
-
-TODO: Documentation: Describe restrictions in release description
-
-TODO: Installation: Include inf file in package.
-
-	And document how to uninstall on command line.
-------------------------------------------------------------------------
+TODO: test I/O with requests > 1 Megabyte
 
 TODO: Features: 3 node setup does not work.
 
@@ -2675,3 +2668,10 @@ Done: Test: Test protocol B, C
 
 Done: Test: More tests with Windows 2016
 
+Done: Documentation: Describe BSODs in release description
+
+Done: Documentation: Describe restrictions in release description
+
+Done: Installation: Include inf file in package.
+
+	And document how to uninstall on command line.
