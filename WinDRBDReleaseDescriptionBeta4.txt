@@ -43,6 +43,19 @@ Things that are known to be broken are:
 
 	*) Uninstall must be done manually (see end of this document)
 
+	*) Currently, on Windows 10 USB sticks cannot be used as
+	   backing device.
+
+We have tested under following operating systems:
+
+	*) Windows 7 (running in a VirtualBox VM)
+
+	*) Windows 10 (physical machine)
+
+	*) Windows Server 2016 (running in a libvirt VM (kvm))
+
+	*) Linux (Ubuntu)
+
 Here are restrictions we know of for the 1.0 release:
 
 	*) Auto-promote is not supported.
