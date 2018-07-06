@@ -38,10 +38,12 @@
 	 * Windows simply blue screens. The value is 32 for Windows 7
 	 * but might be lower on other Windows versions.
 	 * Update: for Windows 10 and Windows Server this is 16.
+	 * Update: for USB sticks under Windows 10 this is 1 (!).
+	 *
 	 * Set this to -1 to enable max mdl elements experiment.
 	 */
 
-#define MAX_MDL_ELEMENTS 16
+#define MAX_MDL_ELEMENTS 1
 
 	/* Define this to make every n-th I/O request fail on completion. */
 
