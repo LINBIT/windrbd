@@ -8,7 +8,8 @@ struct params p = {
 	drive: "H:",
 	expected_size: 52387840,
 	force: false,
-	dump_file: NULL
+	dump_file: NULL,
+	request_size: 1048576
 };
 
 #define	READ_WRITE 0
@@ -269,13 +270,10 @@ TEST(windrbd, do_write_read)
 
 TEST(windrbd, do_write_read_whole_disk_by_1meg_requests)
 {
-#define ONE_MEG (65536*16)
-
 	HANDLE h = do_open_device(0);
 	DWORD bytes_read, bytes_written;
 	BOOL ret;
 	int err;
-	// char buf[ONE_MEG], buf2[ONE_MEG];
 	char *buf, *buf2;
 	unsigned int i;
 	DWORD px;
@@ -294,42 +292,42 @@ TEST(windrbd, do_write_read_whole_disk_by_1meg_requests)
 		}
 	}
 
-	buf = (char*)malloc(ONE_MEG);
+	buf = (char*)malloc(p.request_size);
 	if (buf == NULL) {
 		printf("Out of memory.\n");
 		exit(1);
 	}
-	buf2 = (char*)malloc(ONE_MEG);
+	buf2 = (char*)malloc(p.request_size);
 	if (buf2 == NULL) {
 		printf("Out of memory.\n");
 		exit(1);
 	}
 
 	sector2 = 0;
-	for (sector=0; sector<p.expected_size / ONE_MEG; sector++) {
-		for (i=0;i<ONE_MEG;i++)
+	for (sector=0; sector<p.expected_size / p.request_size; sector++) {
+		for (i=0;i<p.request_size;i++)
 			buf[i] = i;
-		for (i=0;i<ONE_MEG;i+=512, sector2++)
+		for (i=0;i<p.request_size;i+=512, sector2++)
 			*(int*)(buf+i) = sector2;
 
 		printf("Sector is %d\n", sector);
 
-		ret = WriteFile(h, buf, ONE_MEG, &bytes_written,  NULL);
+		ret = WriteFile(h, buf, p.request_size, &bytes_written,  NULL);
 		err = GetLastError();
 
 		EXPECT_EQ(err, ERROR_SUCCESS);
 		EXPECT_NE(ret, 0);
-		EXPECT_EQ(bytes_written, ONE_MEG);
+		EXPECT_EQ(bytes_written, p.request_size);
 
-		px = SetFilePointer(h, ONE_MEG*sector, NULL, FILE_BEGIN);
-		EXPECT_EQ(px, ONE_MEG*sector);
+		px = SetFilePointer(h, p.request_size*sector, NULL, FILE_BEGIN);
+		EXPECT_EQ(px, p.request_size*sector);
 
-		ret = ReadFile(h, buf2, ONE_MEG, &bytes_read,  NULL);
+		ret = ReadFile(h, buf2, p.request_size, &bytes_read,  NULL);
 		err = GetLastError();
 
 		EXPECT_EQ(err, ERROR_SUCCESS);
 		EXPECT_NE(ret, 0);
-		EXPECT_EQ(bytes_read, ONE_MEG);
+		EXPECT_EQ(bytes_read, p.request_size);
 
 /*		for (i=0;i<10;i++)
 			EXPECT_EQ(buf[i], buf2[i]); */

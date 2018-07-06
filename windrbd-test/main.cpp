@@ -15,6 +15,7 @@ int main(int argc, char** argv)
 			{"expected-size", required_argument, 0, 's'},
 			{"force", no_argument, 0, 'f'},
 			{"dump-file", required_argument, 0, 'o'},
+			{"request-size", required_argument, 0, 'r'},
 			{0, 0, 0, 0}
 		};
 		c = getopt_long(argc, argv, "d:s:f", my_options, &option_index);
@@ -38,6 +39,10 @@ int main(int argc, char** argv)
 		case 'o':
 			printf("Dumpfile is %s\n", optarg);
 			p.dump_file = optarg;
+			break;
+		case 'r':
+			p.request_size = atoll(optarg);
+			printf("Request size (for 1meg test) is %lld (instead of 1meg)\n", p.request_size);
 			break;
 		default:
 			printf("unknown argument: %c\n", c);
