@@ -52,17 +52,18 @@
 	 * fail on user space I/O request.
 	 */
 
-#define INJECT_IO_ERRORS_ON_COMPLETION 1000
+// #define INJECT_IO_ERRORS_ON_COMPLETION 1000
 
 	/* Define this to make every n-th I/O request fail on request. */
 
 // #define INJECT_IO_ERRORS_ON_REQUEST 100000
 
-	/* Define this to fail forever after n ok requests. You normally
-	 * want this (else it would fail only once and the work again.
+	/* Reset fault injection counter after failing this often
+	 * times (so we don't have to reboot to repeat fault injection
+	 * test).
 	 */
 
-#define INJECT_IO_ERRORS_FOREVER 1
+// #define INJECT_IO_ERRORS_THIS_OFTEN 10
 
 
 	/* Define this if you want a built in test for backing device
@@ -1826,12 +1827,16 @@ NTSTATUS DrbdIoCompletion(
 
 #ifdef INJECT_IO_ERRORS_ON_COMPLETION
 	static int nr_requests_to_failure = INJECT_IO_ERRORS_ON_COMPLETION;
-	if (--nr_requests_to_failure <= 0) {
-		printk("Injecting fault after %d requests completed (assuming completion routing was sent an error).\n", INJECT_IO_ERRORS_ON_COMPLETION);
+	--nr_requests_to_failure;
+
+	if (nr_requests_to_failure <= 10 && nr_requests_to_failure > 0)
+		printk("Will soon inject fault on completion (nr_requests_to_failure is %d)\n", nr_requests_to_failure);
+
+	if (nr_requests_to_failure <= 0) {
+		printk("Injecting fault after %d requests completed (nr_requests_to_failure is %d) (assuming completion routing was sent an error).\n", INJECT_IO_ERRORS_ON_COMPLETION, nr_requests_to_failure);
 		status = STATUS_IO_DEVICE_ERROR;
-#ifndef INJECT_IO_ERRORS_FOREVER
-		nr_requests_to_failure = INJECT_IO_ERRORS_ON_COMPLETION;
-#endif
+		if (nr_requests_to_failure < -INJECT_IO_ERRORS_THIS_OFTEN)
+			nr_requests_to_failure = INJECT_IO_ERRORS_ON_COMPLETION;
 	}
 #endif
 
@@ -1848,22 +1853,18 @@ NTSTATUS DrbdIoCompletion(
 */
 
 	spin_lock_irqsave(&bio->device_failed_lock, flags);
-	if (status != STATUS_SUCCESS) {
-		drbd_bio_endio(bio, win_status_to_blk_status(status));
-		if (bio->patched_bootsector_buffer)
-			kfree(bio->patched_bootsector_buffer);
-		bio->device_failed = 1;
-	}
-
 	int num_completed = atomic_inc_return(&bio->bi_requests_completed);
-	if (!bio->device_failed && num_completed == bio->bi_num_requests) {
-		drbd_bio_endio(bio, win_status_to_blk_status(status));
-		if (bio->patched_bootsector_buffer)
-			kfree(bio->patched_bootsector_buffer);
-	}
+	int device_failed = bio->device_failed;
+	if (status != STATUS_SUCCESS)
+		bio->device_failed = 1;
 	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
 
-	bio_put(bio);
+	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
+		drbd_bio_endio(bio, win_status_to_blk_status(status));
+		if (bio->patched_bootsector_buffer)
+			kfree(bio->patched_bootsector_buffer);
+	} else
+		bio_put(bio);
 
 		/* Tell IO manager that it should not touch the
 		 * irp. It has yet to be freed together with the
@@ -2125,12 +2126,16 @@ static int windrbd_generic_make_request(struct bio *bio)
 
 #ifdef INJECT_IO_ERRORS_ON_REQUEST
 	static int nr_requests_to_failure = INJECT_IO_ERRORS_ON_REQUEST;
-	if (--nr_requests_to_failure <= 0) {
-		printk("Injecting fault after %d requests completed (assume IoCallDriver failed).\n", INJECT_IO_ERRORS_ON_REQUEST);
+	--nr_requests_to_failure;
+
+	if (nr_requests_to_failure <= 10 && nr_requests_to_failure > 0)
+		printk("Will soon inject fault on request (nr_requests_to_failure is %d)\n", nr_requests_to_failure);
+
+	if (nr_requests_to_failure <= 0) {
+		printk("Injecting fault after %d requests completed (nr_requests_to_failure is %d) (assume IoCallDriver failed).\n", INJECT_IO_ERRORS_ON_REQUEST, nr_requests_to_failure);
 		status = STATUS_IO_DEVICE_ERROR;
-#ifndef INJECT_IO_ERRORS_FOREVER
-		nr_requests_to_failure = INJECT_IO_ERRORS_ON_REQUEST;
-#endif
+		if (nr_requests_to_failure < -INJECT_IO_ERRORS_THIS_OFTEN)
+			nr_requests_to_failure = INJECT_IO_ERRORS_ON_REQUEST;
 		return -EIO; /* yes we leak. This is test code. */
 	} else  /* (! be careful, must be IoCallDriver in else branch) */
 #endif
