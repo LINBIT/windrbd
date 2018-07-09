@@ -47,13 +47,20 @@
 
 	/* Define this to make every n-th I/O request fail on completion. */
 
+	/* Set this to approx. 1000 to fail on meta data. Set this to
+	 * 10000 to fail on Sync. Set this to 100000 (and do I/O) to
+	 * fail on user space I/O request.
+	 */
+
 #define INJECT_IO_ERRORS_ON_COMPLETION 1000
 
 	/* Define this to make every n-th I/O request fail on request. */
 
-// #define INJECT_IO_ERRORS_ON_REQUEST 1000
+// #define INJECT_IO_ERRORS_ON_REQUEST 100000
 
-	/* Define this to fail forever after n ok requests. */
+	/* Define this to fail forever after n ok requests. You normally
+	 * want this (else it would fail only once and the work again.
+	 */
 
 #define INJECT_IO_ERRORS_FOREVER 1
 
@@ -1820,7 +1827,7 @@ NTSTATUS DrbdIoCompletion(
 #ifdef INJECT_IO_ERRORS_ON_COMPLETION
 	static int nr_requests_to_failure = INJECT_IO_ERRORS_ON_COMPLETION;
 	if (--nr_requests_to_failure <= 0) {
-		printk("Injecting fault after %d requests completed.\n", INJECT_IO_ERRORS_ON_COMPLETION);
+		printk("Injecting fault after %d requests completed (assuming completion routing was sent an error).\n", INJECT_IO_ERRORS_ON_COMPLETION);
 		status = STATUS_IO_DEVICE_ERROR;
 #ifndef INJECT_IO_ERRORS_FOREVER
 		nr_requests_to_failure = INJECT_IO_ERRORS_ON_COMPLETION;
@@ -2119,7 +2126,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 #ifdef INJECT_IO_ERRORS_ON_REQUEST
 	static int nr_requests_to_failure = INJECT_IO_ERRORS_ON_REQUEST;
 	if (--nr_requests_to_failure <= 0) {
-		printk("Injecting fault after %d requests completed.\n", INJECT_IO_ERRORS_ON_REQUEST);
+		printk("Injecting fault after %d requests completed (assume IoCallDriver failed).\n", INJECT_IO_ERRORS_ON_REQUEST);
 		status = STATUS_IO_DEVICE_ERROR;
 #ifndef INJECT_IO_ERRORS_FOREVER
 		nr_requests_to_failure = INJECT_IO_ERRORS_ON_REQUEST;
