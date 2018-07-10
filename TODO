@@ -53,6 +53,7 @@ TODO: Research: See if it works under ReactOS
 	adaption. First, compile ReactOS from scratch to see if
 	that make sense at all. Then (try to) compile windrbd with
 	the ReactOS compiler (can do that under Linux...)
+
 TODO: Bug: From Devin: d->bi_size (from peer request) too big:
 
 	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
@@ -125,6 +126,18 @@ Jun 29 17:29:25 192.168.56.101  U15:29:08.370|133befa0(receiver) drbd_md_sync_pa
 	Update: After fixing the NetworkFailure bug, this unfortunately
 	still happens (when reconnecting and syncing). Can't test at the
 	moment.
+
+	Update: Happened again:
+
+Jul 10 16:29:18 192.168.56.101  U14:29:17.012|25dcafa0(receiver) bio_set_op_attrs <2>[0xFFFFFA8005C13760] BUG: failure
+Jul 10 16:29:22 192.168.56.101  U14:29:20.684|25dcafa0(receiver) drbd_submit_peer_request bio->bi_end_io = drbd_peer_request_endio
+Jul 10 16:29:22 192.168.56.101  U14:29:20.684|25dcafa0(receiver) submit_one_flush bio->bi_end_io = one_flush_endio
+Jul 10 16:29:22 192.168.56.101  U14:29:20.684|25dcafa0(receiver) bio_set_op_attrs <2>[0xFFFFFA8005C13760] BUG: failure
+Jul 10 16:29:22 192.168.56.101  U14:29:20.684|25dcafa0(receiver) drbd_submit_peer_request bio->bi_end_io = drbd_peer_request_endio
+Jul 10 16:29:22 192.168.56.101  U14:29:20.684|25dcafa0(receiver) submit_one_flush bio->bi_end_io = one_flush_endio
+Jul 10 16:29:22 192.168.56.101  U14:29:20.684|25dcafa0(receiver) bio_set_op_attrs <2>[0xFFFFFA8005C13760] BUG: failure
+
+	BSOD is 0xD1
 
 TODO: Bug: BSOD on unplugging network cable in 3 node setup
 
