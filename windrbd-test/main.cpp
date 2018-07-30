@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "drbd-device.hpp"
 #include <getopt.h>
+#include <string.h>
 
 int main(int argc, char** argv)
 {
@@ -16,6 +17,7 @@ int main(int argc, char** argv)
 			{"force", no_argument, 0, 'f'},
 			{"dump-file", required_argument, 0, 'o'},
 			{"request-size", required_argument, 0, 'r'},
+			{"mode", required_argument, 0, 'm'},
 			{0, 0, 0, 0}
 		};
 		c = getopt_long(argc, argv, "d:s:f", my_options, &option_index);
@@ -44,6 +46,19 @@ int main(int argc, char** argv)
 			p.request_size = atoll(optarg);
 			printf("Request size (for 1meg test) is %lld (instead of 1meg)\n", p.request_size);
 			break;
+		case 'm':
+			if (strchr(optarg, 'r') != NULL)
+				if (strchr(optarg, 'w') != NULL)
+					p.mode = MODE_WRITE_AND_READ;
+				else
+					p.mode = MODE_ONLY_READ;
+			else
+				if (strchr(optarg, 'w') != NULL)
+					p.mode = MODE_ONLY_WRITE;
+				else
+					printf("mode must contain r and/or w (defaulting to both)\n");
+			break;
+
 		default:
 			printf("unknown argument: %c\n", c);
 		}

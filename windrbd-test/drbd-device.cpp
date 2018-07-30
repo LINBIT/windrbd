@@ -9,7 +9,8 @@ struct params p = {
 	expected_size: 52387840,
 	force: false,
 	dump_file: NULL,
-	request_size: 1048576
+	request_size: 1048576,
+	mode: MODE_WRITE_AND_READ
 };
 
 #define	READ_WRITE 0
@@ -312,22 +313,26 @@ TEST(windrbd, do_write_read_whole_disk_by_1meg_requests)
 
 		printf("Sector is %d\n", sector);
 
-		ret = WriteFile(h, buf, p.request_size, &bytes_written,  NULL);
-		err = GetLastError();
+		if (p.mode != MODE_ONLY_READ) {
+			ret = WriteFile(h, buf, p.request_size, &bytes_written,  NULL);
+			err = GetLastError();
 
-		EXPECT_EQ(err, ERROR_SUCCESS);
-		EXPECT_NE(ret, 0);
-		EXPECT_EQ(bytes_written, p.request_size);
+			EXPECT_EQ(err, ERROR_SUCCESS);
+			EXPECT_NE(ret, 0);
+			EXPECT_EQ(bytes_written, p.request_size);
+		}
 
-		px = SetFilePointer(h, p.request_size*sector, NULL, FILE_BEGIN);
-		EXPECT_EQ(px, p.request_size*sector);
+		if (p.mode != MODE_ONLY_WRITE) {
+			px = SetFilePointer(h, p.request_size*sector, NULL, FILE_BEGIN);
+			EXPECT_EQ(px, p.request_size*sector);
 
-		ret = ReadFile(h, buf2, p.request_size, &bytes_read,  NULL);
-		err = GetLastError();
+			ret = ReadFile(h, buf2, p.request_size, &bytes_read,  NULL);
+			err = GetLastError();
 
-		EXPECT_EQ(err, ERROR_SUCCESS);
-		EXPECT_NE(ret, 0);
-		EXPECT_EQ(bytes_read, p.request_size);
+			EXPECT_EQ(err, ERROR_SUCCESS);
+			EXPECT_NE(ret, 0);
+			EXPECT_EQ(bytes_read, p.request_size);
+		}
 
 /*		for (i=0;i<10;i++)
 			EXPECT_EQ(buf[i], buf2[i]); */
