@@ -526,6 +526,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 
 						kfree(bio->bi_io_vec[i].bv_page->addr);
 						offset += bio->bi_io_vec[i].bv_len;
+dbg("offset is %d\n", offset);
 					}
 				} else
 					printk(KERN_WARNING "MmGetSystemAddressForMdlSafe returned NULL\n");
@@ -549,10 +550,19 @@ printk("into IoCompleteRequest(%p) error is %d\n", irp, error);
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 printk("out of IoCompleteRequest(%p)\n", irp);
 
+#if 0
+printk("0\n");
+	if (num_completed == bio->bi_num_requests)
+		kfree(bio->bi_common_data);
+#endif
+
+printk("1\n");
 	for (i=0;i<bio->bi_vcnt;i++)
 		kfree(bio->bi_io_vec[i].bv_page);
 
+printk("2\n");
 	bio_put(bio);
+printk("3\n");
 }
 
 static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
@@ -635,7 +645,7 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 	bio->bi_size = total_size;
 	bio->bi_sector = sector;
 
-// dbg("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
+dbg("%s sector: %d this_bio_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, this_bio_size);
 
 	for (i=0; i<vcnt; i++) {
 		this_size = (i == vcnt-1) ? last_size : PAGE_SIZE;
@@ -671,7 +681,8 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 	bio->bi_end_io = windrbd_bio_finished;
 	bio->bi_upper_irp = irp;
 
-/* dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset); */
+dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
+dbg("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset); 
 
 printk("into IoMarkIrpPending(%p)\n", irp);
         IoMarkIrpPending(irp);
@@ -763,6 +774,30 @@ static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp
         return STATUS_SUCCESS;
 }
 
+static void windrbd_bio_flush_finished(struct bio * bio, int error)
+{
+	PIRP irp = bio->bi_upper_irp;
+
+	if (error == 0) {
+		irp->IoStatus.Information = bio->bi_size;
+		irp->IoStatus.Status = STATUS_SUCCESS;
+	} else {
+		printk(KERN_ERR "Flush failed with %d\n", error);
+		irp->IoStatus.Information = 0;
+
+			/* TODO: On Windows 7, this error seems not
+			 * to reach userspace. On Windows 10, returning
+			 * STATUS_UNSUCCESSFUL translates to a
+			 * Permission denied error.
+			 */
+		// irp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
+		irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+	}
+	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+
+	bio_put(bio);
+}
+
 static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject) {
@@ -792,7 +827,7 @@ static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	bio->bi_rw = WRITE | DRBD_REQ_PREFLUSH;
 	bio->bi_size = 0;
-	bio->bi_end_io = windrbd_bio_finished;
+	bio->bi_end_io = windrbd_bio_flush_finished;
 	bio->bi_upper_irp = irp;
 	bio->bi_bdev = dev;
 
