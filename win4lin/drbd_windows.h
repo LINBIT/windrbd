@@ -610,9 +610,18 @@ struct completion {
 	wait_queue_head_t wait;
 };
 
-struct splitInfo {	
-	unsigned long 	finished;
-	NTSTATUS 		LastError; // 0 :STATUS_SUCCESS, 
+	/* When we create more bio's upon request for a single MDL,
+	 * this is common data shared between all that bios.
+	 */
+
+struct bio_collection {
+	atomic_t bc_num_completed;
+	size_t bc_total_size;
+	int bc_num_requests;
+
+	int bc_device_failed;
+	spinlock_t bc_device_failed_lock;
+
 };
 
 struct bio {
@@ -652,6 +661,7 @@ struct bio {
 	int bi_num_requests;
 	int bi_this_request;
 	atomic_t bi_requests_completed;
+	struct bio_collection *bi_common_data;
 
 	int device_failed;
 	spinlock_t device_failed_lock;
@@ -675,6 +685,15 @@ struct bio {
 	 * on backing device on attach.
 	 */
 	bool dont_patch_boot_sector;
+
+	/* For bio's created by windrbd device ("upper") layer, this
+	 * indicates where in the user space MDL the bio starts.
+	 * We need it because Linux bios must not be larger than
+	 * 1 megabyte, while MDLs may be larger than that. If they
+	 * are we split the request in separate calls to
+	 * drbd_make_request() (with separate bio's each).
+	 */
+	size_t bi_mdl_offset;
 
 	/* Used by flush_request (which is currently not enabled).
 	 */

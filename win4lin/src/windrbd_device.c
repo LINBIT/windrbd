@@ -508,11 +508,19 @@ static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	return status;
 }
 
+/* Limit imposed by DRBD over the wire protocol. This will not change
+ * in the next 5+ years, most likely never.
+ */
+
+#define MAX_BIO_SIZE (1024*1024)
+
 static void windrbd_bio_finished(struct bio * bio, int error)
 {
 	PIRP irp = bio->bi_upper_irp;
 	int i;
+	NTSTATUS status;
 
+	status = STATUS_SUCCESS;
 	if (error == 0) {
 		if (bio->bi_rw == READ) {
 			if (bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
@@ -520,22 +528,21 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 				if (user_buffer != NULL) {
 					int offset;
 
-					offset = 0;
+					offset = bio->bi_mdl_offset;
 					for (i=0;i<bio->bi_vcnt;i++) {
 						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
 						kfree(bio->bi_io_vec[i].bv_page->addr);
 						offset += bio->bi_io_vec[i].bv_len;
 					}
-				} else
+				} else {
 					printk(KERN_WARNING "MmGetSystemAddressForMdlSafe returned NULL\n");
+					status = STATUS_INVALID_PARAMETER;
+				}
 			}
 		}
-		irp->IoStatus.Information = bio->bi_size;
-		irp->IoStatus.Status = STATUS_SUCCESS;
 	} else {
 		printk(KERN_ERR "I/O failed with %d\n", error);
-		irp->IoStatus.Information = 0;
 
 			/* TODO: On Windows 7, this error seems not
 			 * to reach userspace. On Windows 10, returning
@@ -543,9 +550,25 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 			 * Permission denied error.
 			 */
 		// irp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
-		irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+		status = STATUS_UNSUCCESSFUL;
 	}
-	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+        unsigned long flags;
+
+        spin_lock_irqsave(&bio->bi_common_data->bc_device_failed_lock, flags);
+        int num_completed = atomic_inc_return(&bio->bi_common_data->bc_num_completed);
+        int device_failed = bio->bi_common_data->bc_device_failed;
+        if (status != STATUS_SUCCESS)
+                bio->bi_common_data->bc_device_failed = 1;
+        spin_unlock_irqrestore(&bio->bi_common_data->bc_device_failed_lock, flags);
+
+	if (!device_failed && (status != STATUS_SUCCESS || num_completed == bio->bi_common_data->bc_num_requests)) {
+		if (status == STATUS_SUCCESS)
+			irp->IoStatus.Information = bio->bi_common_data->bc_total_size;
+		else
+			irp->IoStatus.Information = 0; /* TODO: one day also report partial I/O */
+		irp->IoStatus.Status = status;
+		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+	}
 
 	for (i=0;i<bio->bi_vcnt;i++)
 		kfree(bio->bi_io_vec[i].bv_page);
@@ -564,8 +587,9 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 	int this_size;
 	unsigned int total_size;
 	sector_t sector;
-	int i;
+	int i, b;
 	char *buffer;
+	struct bio_collection *common_data;
 
 	if (s == NULL) {
 		printk("Stacklocation is NULL.\n");
@@ -579,7 +603,18 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 		return STATUS_INVALID_PARAMETER;
 	}
 
-	/* TODO: later have more than one .. */
+	/* later have more than one .. */
+
+	/* Update: I tried to generate this test case using ReadFileGather/
+	 * WriteFileScatter but this is more like a mmap replacement (has
+	 * one MDL element with page table entries created for each vector
+	 * element). I don't know currently how to test this. Plus we
+	 * found a Windows block device that blue screens (!) if there
+	 * is more than one MDL element in the request (Windows 10 USB
+	 * storage driver). For now, it should be sufficient to support
+	 * one MDL element, we will implement this if someone complains.
+	 */
+
 	if (mdl->Next != NULL) {
 		printk(KERN_ERR "not implemented: have more than one mdl. Dropping additional mdl data.\n");
 		return STATUS_NOT_IMPLEMENTED;
@@ -617,57 +652,79 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 		printk("I/O buffer from MmGetSystemAddressForMdlSafe() is NULL\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
-	vcnt = (total_size-1) / PAGE_SIZE + 1;
-	last_size = total_size % PAGE_SIZE;
+// dbg("%s sector: %d this_bio_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, this_bio_size);
+	int bio_count = (total_size-1) / MAX_BIO_SIZE + 1;
+	int this_bio_size;
+	int last_bio_size = total_size % MAX_BIO_SIZE;
+	if (last_bio_size == 0)
+		last_bio_size = MAX_BIO_SIZE;
 
-	bio = bio_alloc(GFP_NOIO, vcnt, 'DBRD');
-	if (bio == NULL) {
-		printk("Couldn't allocate bio.\n");
+	common_data = kzalloc(sizeof(*common_data), 0, 'DRBD');
+	if (common_data == NULL) {
+		printk("Cannot allocate common data.\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
-	bio->bi_rw = s->MajorFunction == IRP_MJ_WRITE ? WRITE : READ;
-	bio->bi_bdev = dev;
-	bio->bi_max_vecs = vcnt;
-	bio->bi_vcnt = vcnt;
-	bio->bi_paged_memory = bio->bi_rw == WRITE;
-	bio->bi_size = total_size;
-	bio->bi_sector = sector;
+	atomic_set(&common_data->bc_num_completed, 0);
+	common_data->bc_total_size = total_size;
+	common_data->bc_num_requests = bio_count;
+	common_data->bc_device_failed = 0;
+	spin_lock_init(&common_data->bc_device_failed_lock);
 
-// dbg("%s sector: %d this_bio_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, this_bio_size);
+	for (b=0; b<bio_count; b++) {
+		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
 
-	for (i=0; i<vcnt; i++) {
-		this_size = (i == vcnt-1) ? last_size : PAGE_SIZE;
-		if (this_size == 0)
-			this_size = PAGE_SIZE;
+		vcnt = (this_bio_size-1) / PAGE_SIZE + 1;
+		last_size = this_bio_size % PAGE_SIZE;
 
-		bio->bi_io_vec[i].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
-		if (bio->bi_io_vec[i].bv_page == NULL) {
-			printk("Couldn't allocate page.\n");
-			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
+		bio = bio_alloc(GFP_NOIO, vcnt, 'DBRD');
+		if (bio == NULL) {
+			printk("Couldn't allocate bio.\n");
+			return STATUS_INSUFFICIENT_RESOURCES;
 		}
+		bio->bi_rw = s->MajorFunction == IRP_MJ_WRITE ? WRITE : READ;
+		bio->bi_bdev = dev;
+		bio->bi_max_vecs = vcnt;
+		bio->bi_vcnt = vcnt;
+		bio->bi_paged_memory = bio->bi_rw == WRITE;
+		bio->bi_size = this_bio_size;
+		bio->bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
+		bio->bi_mdl_offset = b*MAX_BIO_SIZE;
+		bio->bi_common_data = common_data;
 
-		bio->bi_io_vec[i].bv_len = this_size;
+// dbg("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
+
+		for (i=0; i<vcnt; i++) {
+			this_size = (i == vcnt-1) ? last_size : PAGE_SIZE;
+			if (this_size == 0)
+				this_size = PAGE_SIZE;
+
+			bio->bi_io_vec[i].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
+			if (bio->bi_io_vec[i].bv_page == NULL) {
+				printk("Couldn't allocate page.\n");
+				return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
+			}
+
+			bio->bi_io_vec[i].bv_len = this_size;
 
 /*
  * TODO: eventually we want to make READ requests work without the
  *	 intermediate buffer and the extra copy.
  */
 
-		if (bio->bi_rw == READ)
-			bio->bi_io_vec[i].bv_page->addr = kmalloc(this_size, 0, 'DRBD');
-		else
-			bio->bi_io_vec[i].bv_page->addr = buffer+i*PAGE_SIZE;
+			if (bio->bi_rw == READ)
+				bio->bi_io_vec[i].bv_page->addr = kmalloc(this_size, 0, 'DRBD');
+			else
+				bio->bi_io_vec[i].bv_page->addr = buffer+bio->bi_mdl_offset+i*PAGE_SIZE;
 
-		if (bio->bi_io_vec[i].bv_page->addr == NULL) {
-			printk("Couldn't allocate temp buffer for read.\n");
-			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
+			if (bio->bi_io_vec[i].bv_page->addr == NULL) {
+				printk("Couldn't allocate temp buffer for read.\n");
+				return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
+			}
+
+			bio->bi_io_vec[i].bv_offset = 0;
 		}
-
-		bio->bi_io_vec[i].bv_offset = 0;
-	}
-
-	bio->bi_end_io = windrbd_bio_finished;
-	bio->bi_upper_irp = irp;
+		bio->bi_end_io = windrbd_bio_finished;
+		bio->bi_upper_irp = irp;
 
 // dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
 // dbg("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset); 
@@ -678,7 +735,8 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 
         IoMarkIrpPending(irp);
 
-	drbd_make_request(dev->drbd_device->rq_queue, bio);
+		drbd_make_request(dev->drbd_device->rq_queue, bio);
+	}
 
 	return STATUS_SUCCESS;
 }
