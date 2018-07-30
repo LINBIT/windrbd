@@ -1,3 +1,125 @@
+TODO: Implement: Split requests > 1 Meg into seperate bio's.
+
+	DRBD cannot handle bio's larger than 1 Meg in total
+	(which is a sort-of hard limit in current Linux kernels).
+
+TODO: Implement: patch DRBD to handle biovec elements larger than 4K.
+
+	There might be other limits .. 1 Meg is the maximum size
+	of a data request packet, so we still need the splitting
+	in windrbd.
+
+TODO: Implement: WinDRBD unresponsive when syslog host can't be reached.
+
+	This is most likely because we wait for completion. Not
+	sure yet if we want to fix this, because that probably
+	would cause last messages before BSOD getting lost.
+
+	On the other hand this probably can also fix the
+	does not boot when local interface IP is configured bug
+	(which is severe).
+
+TODO: Implement: user mode helpers
+
+	switch to ioctl() interface first.
+
+TODO: Implement: netlink transport over ioctl
+
+	(something that can verify permissions of caller)
+
+TODO: Implement: Rebase windrbd branch of drbd-utils to its master
+	Also for drbd-headers. Then, also use the drbd-headers in
+	drbd (and remove drbd-headers patches)
+
+TODO: Implement: Test other file systems (FAT, FAT32, ...)
+	FAT does not work (Invalid function when accessing DRBD device)
+	FAT32 also not (something with flushing?)
+	Probably there is one important IOCTL missing.
+
+	UDF and exFAT can be mounted on Linux. FAT and FAT32 show
+	empty (zeroed out) device. So we probably have 2 independent
+	errors. (UDF cannot we written on Linux, this is because it
+	is the DVD format).
+
+	Update: exFAT now can be read (not written to) on Windows,
+	by returning STATUS_INVALID_DEVICE_REQUEST (instead of
+	STATUS_NOT_IMPLEMENTED) for unknown ioctl's.
+
+	Update: implemented some other ioctl's without success so
+	far. On formatting FAT, reads bootsector as last action
+	(before terminating), maybe that's a hint.
+
+TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
+
+	Windows doesn't have an equivalent of spin_lock_irq()
+	(without flags) however we can assume that interrupts
+	are enabled when spin_lock_irq is called and reset it
+	to enabled when spin_unlock_irq is called (set it to
+	PASSIVE_LEVEL).
+
+	So no need for a tmp storage here. (Maybe put an assert
+	at the beginning of spin_lock_irq that tests for IRQL
+	being PASSIVE_LEVEL).
+
+TODO: Implement: Make DRBD driver removable.
+
+	From imdisk:
+
+	start "" "%SystemRoot%\system32\rundll32.exe" setupapi.dll,InstallHinfSection DefaultUninstall 132 %SystemRoot%\inf\imdisk.inf
+
+	In practice a
+
+	rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 Y:\windrbd\converted-sources\drbd\drbd.inf
+
+	did the trick. DRBD is not stopped, but this uninstalls DRBD
+	driver (after reboot drbdadm status fails because DRBD kernel
+	module is not running).
+
+	What is missing: write a cmd script that down all DRBD
+	resources, stops the driver itself (how? see sepearate todo)
+	and executes the setupapi thing above.
+
+	Also create registry keys for Linbit / DRBD in
+	HKLM/Software/Microsoft/Windows/Uninstall/DRBD so one can
+	use control panel / uninstall software to uninstall DRBD.
+
+TODO: Implement: Make drbd service stoppable
+	This probably takes some while
+	Update: with the new architecture that should be possible
+	one day.
+
+	Probably some setting in the inf section. Or the way DRBD
+	registers itself in DriverEntry?
+
+TODO: Implement: check if windrbd can be loaded not at boot time but later.
+
+	Working on it .. test with demand load on a fresh installed
+	windows (it blue screens on boot if there was a windrbd before
+	installed).
+
+	Update: imdisk can do it.
+
+TODO: Implement: Make windrbd directory unaccessible for non-admins.
+
+TODO: Implement: Detect earlier versions of WinDRBD and offer upgrade.
+
+	(from Devin)
+
+-----------------------------------------------------------------------
+
+TODO: Implement: We want to have some sort of a regression test suite.
+
+	Do not use agruen's it is too complicated. Maybe write a simple
+	new one from scratch (or reuse parts of the old DRBD 8 python
+	test suite with ssh support).
+
+TODO: Usability: disallow windrbd hide-filesystem on a DRBD device.
+
+	Since we are patching back and forth, show-filesystem won't
+	work later. Plus cannot mount those resources on Linux.
+	hide-filesystem on a DRBD device is in all cases a user
+	error.
+
 TODO: Bug: Assertion triggered:
 
 Jul  9 15:28:24 johannes-VirtualBox kernel: [ 4399.169792] drbd w0/17 drbd26 linbit-wdrbd: ASSERTION (n_oos - peer_device->rs_failed) == 0 FAILED in drbd_resync_finished
@@ -24,17 +146,6 @@ Jul  9 16:11:44 192.168.56.101  [last message was in IRQ context]
 Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) drbd_recv_all_warn <4>drbd w0 pnode-id:1, cs(BrokenPipe), prole(Unknown), cflag(0x0), scf(0x0): short read (expected size 8)
 
 	After a while the two machines find each other.
-
-TODO: Bug: Split requests > 1 Meg into seperate bio's.
-
-	DRBD cannot handle bio's larger than 1 Meg in total
-	(which is a sort-of hard limit in current Linux kernels).
-
-TODO: Performance: patch DRBD to handle biovec elements larger than 4K.
-
-	There might be other limits .. 1 Meg is the maximum size
-	of a data request packet, so we still need the splitting
-	in windrbd.
 
 TODO: Bug: On re-attach USB stick after failure, WinDRBD hangs.
 
@@ -84,16 +195,6 @@ TODO: Bug: blue screen on drbdadm detach --force (when needing uptodate
 	Does not happen on Windows 7, however on Windows 7 there is
 	no error reported to user space (I/O application hangs and
 	is not killable).
-
-TODO: Bug: WinDRBD unresponsive when syslog host can't be reached.
-
-	This is most likely because we wait for completion. Not
-	sure yet if we want to fix this, because that probably
-	would cause last messages before BSOD getting lost.
-
-	On the other hand this probably can also fix the
-	does not boot when local interface IP is configured bug
-	(which is severe).
 
 TODO: Bug: On Primary diskless (after backing dev failure) BSOD when unplugging Network cable.
 
@@ -168,46 +269,6 @@ TODO: Bug: Connection instable when connecting two Windows boxes.
 
 TODO: Documentation: define tests to be run before releases.
 
-TODO: Features: Make DRBD driver removable.
-
-	From imdisk:
-
-	start "" "%SystemRoot%\system32\rundll32.exe" setupapi.dll,InstallHinfSection DefaultUninstall 132 %SystemRoot%\inf\imdisk.inf
-
-	In practice a
-
-	rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 Y:\windrbd\converted-sources\drbd\drbd.inf
-
-	did the trick. DRBD is not stopped, but this uninstalls DRBD
-	driver (after reboot drbdadm status fails because DRBD kernel
-	module is not running).
-
-	What is missing: write a cmd script that down all DRBD
-	resources, stops the driver itself (how? see sepearate todo)
-	and executes the setupapi thing above.
-
-	Also create registry keys for Linbit / DRBD in
-	HKLM/Software/Microsoft/Windows/Uninstall/DRBD so one can
-	use control panel / uninstall software to uninstall DRBD.
-
-TODO: Features: Make drbd service stoppable
-	This probably takes some while
-	Update: with the new architecture that should be possible
-	one day.
-
-	Probably some setting in the inf section. Or the way DRBD
-	registers itself in DriverEntry?
-
-TODO: Features: check if windrbd can be loaded not at boot time but later.
-
-	Working on it .. test with demand load on a fresh installed
-	windows (it blue screens on boot if there was a windrbd before
-	installed).
-
-	Update: imdisk can do it.
-
-TODO: Installation: Make windrbd directory unaccessible for non-admins.
-
 TODO: Code quality: Should report I/O error instead of Permission denied on disk failure
 
 TODO: Code quality: Replace WDRBD_ERROR and the like by printk
@@ -220,36 +281,6 @@ TODO: Documentation: white paper for linbit website.
 	Update: maybe refer to the README.md.
 
 	Update: No we need a TechGuide. Postponed to September.
-
-TODO: Features: Test other file systems (FAT, FAT32, ...)
-	FAT does not work (Invalid function when accessing DRBD device)
-	FAT32 also not (something with flushing?)
-	Probably there is one important IOCTL missing.
-
-	UDF and exFAT can be mounted on Linux. FAT and FAT32 show
-	empty (zeroed out) device. So we probably have 2 independent
-	errors. (UDF cannot we written on Linux, this is because it
-	is the DVD format).
-
-	Update: exFAT now can be read (not written to) on Windows,
-	by returning STATUS_INVALID_DEVICE_REQUEST (instead of
-	STATUS_NOT_IMPLEMENTED) for unknown ioctl's.
-
-	Update: implemented some other ioctl's without success so
-	far. On formatting FAT, reads bootsector as last action
-	(before terminating), maybe that's a hint.
-
-TODO: Code quality: fix the spinlocks (see comments in drbd_windows.c).
-
-	Windows doesn't have an equivalent of spin_lock_irq()
-	(without flags) however we can assume that interrupts
-	are enabled when spin_lock_irq is called and reset it
-	to enabled when spin_unlock_irq is called (set it to
-	PASSIVE_LEVEL).
-
-	So no need for a tmp storage here. (Maybe put an assert
-	at the beginning of spin_lock_irq that tests for IRQL
-	being PASSIVE_LEVEL).
 
 TODO: Test: Test sendbuffer full (rety on Metadata socket).
 
@@ -286,14 +317,6 @@ TODO: Infrastructure: install kernel manpages
 	Must install from kernel source using 
 	make mandocs ; sudo make installmandocs
 
-TODO: Features: user mode helpers
-
-	switch to ioctl() interface first.
-
-TODO: Features: netlink transport over ioctl
-
-	(something that can verify permissions of caller)
-
 TODO: Code quality: eventually use drbd_rate_limit() on some printk's
 
 TODO: Code quality: Implement function stubs created when integrating DRBD 9.0.9
@@ -321,10 +344,6 @@ TODO: Test: Check if windows device is really deleted on becoming secondary
 
 	There might be references and it is only marked as pending
 	delete (see IoDeleteDevice manpage)
-
-TODO: Code quality: Rebase windrbd branch of drbd-utils to its master
-	Also for drbd-headers. Then, also use the drbd-headers in
-	drbd (and remove drbd-headers patches)
 
 TODO: Bug: Make windows checkdisk (over unclean shutdown panel) work.
 
@@ -377,6 +396,8 @@ TODO: Documentation: drbd-util: Update manpage.
 TODO: Infrastructure: Why doesn't it work on Phil's machine?
 
 TODO: Feature: Mount to NTFS directories.
+
+TODO: Test: drbdadm adjust changing mount point most likely doesn't work now.
 
 TODO: Code quality: fix the case where backing device contains a file system.
 	It should not blue screen.
