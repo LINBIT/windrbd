@@ -553,7 +553,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	bio_put(bio);
 }
 
-static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev, NTSTATUS *status)
+static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct _MDL *mdl = irp->MdlAddress;
@@ -569,23 +569,20 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev, NTSTAT
 
 	if (s == NULL) {
 		printk("Stacklocation is NULL.\n");
-		*status = STATUS_INSUFFICIENT_RESOURCES;
-		return NULL;
+		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 	if (mdl == NULL) {
 			/* TODO: this sometimes happens with windrbd-test.
 			 * Find out why.
 			 */
 		dbg("MdlAddress is NULL.\n");
-		*status = STATUS_INVALID_PARAMETER;
-		return NULL;
+		return STATUS_INVALID_PARAMETER;
 	}
 
 	/* TODO: later have more than one .. */
 	if (mdl->Next != NULL) {
 		printk(KERN_ERR "not implemented: have more than one mdl. Dropping additional mdl data.\n");
-		*status = STATUS_NOT_IMPLEMENTED;
-		return NULL;
+		return STATUS_NOT_IMPLEMENTED;
 	}
 
 	if (s->MajorFunction == IRP_MJ_WRITE) {
@@ -596,13 +593,11 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev, NTSTAT
 		sector = (s->Parameters.Read.ByteOffset.QuadPart) / dev->bd_block_size;
 	} else {
 		printk("s->MajorFunction neither read nor write.\n");
-		*status = STATUS_INVALID_PARAMETER;
-		return NULL;
+		return STATUS_INVALID_PARAMETER;
 	}
 	if (sector * dev->bd_block_size >= dev->d_size) {
 		dbg("Attempt to read past the end of the device\n");
-		*status = STATUS_INVALID_PARAMETER;
-		return NULL;
+		return STATUS_INVALID_PARAMETER;
 	}
 	if (sector * dev->bd_block_size + total_size > dev->d_size) {
 		dbg("Attempt to read past the end of the device, request shortened\n");
@@ -610,8 +605,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev, NTSTAT
 	}
 	if (total_size == 0) {
 		printk("I/O request of size 0.\n");
-		*status = STATUS_INVALID_PARAMETER;
-		return NULL;
+		return STATUS_INVALID_PARAMETER;
 	}
 
 		/* Address returned by MmGetSystemAddressForMdlSafe
@@ -621,8 +615,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev, NTSTAT
 	buffer = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
 	if (buffer == NULL) {
 		printk("I/O buffer from MmGetSystemAddressForMdlSafe() is NULL\n");
-		*status = STATUS_INSUFFICIENT_RESOURCES;
-		return NULL;
+		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 	vcnt = (total_size-1) / PAGE_SIZE + 1;
 	last_size = total_size % PAGE_SIZE;
@@ -630,8 +623,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev, NTSTAT
 	bio = bio_alloc(GFP_NOIO, vcnt, 'DBRD');
 	if (bio == NULL) {
 		printk("Couldn't allocate bio.\n");
-		*status = STATUS_INSUFFICIENT_RESOURCES;
-		return NULL;
+		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 	bio->bi_rw = s->MajorFunction == IRP_MJ_WRITE ? WRITE : READ;
 	bio->bi_bdev = dev;
@@ -651,8 +643,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev, NTSTAT
 		bio->bi_io_vec[i].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
 		if (bio->bi_io_vec[i].bv_page == NULL) {
 			printk("Couldn't allocate page.\n");
-			*status = STATUS_INSUFFICIENT_RESOURCES;
-			return NULL; /* TODO: cleanup */
+			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
 		}
 
 		bio->bi_io_vec[i].bv_len = this_size;
@@ -669,8 +660,7 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev, NTSTAT
 
 		if (bio->bi_io_vec[i].bv_page->addr == NULL) {
 			printk("Couldn't allocate temp buffer for read.\n");
-			*status = STATUS_INSUFFICIENT_RESOURCES;
-			return NULL; /* TODO: cleanup */
+			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
 		}
 
 		bio->bi_io_vec[i].bv_offset = 0;
@@ -681,8 +671,9 @@ static struct bio *irp_to_bio(struct _IRP *irp, struct block_device *dev, NTSTAT
 
 /* dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset); */
 
-	*status = STATUS_SUCCESS;
-	return bio;
+	drbd_make_request(dev->drbd_device->rq_queue, bio);
+
+	return STATUS_SUCCESS;
 }
 
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
@@ -705,7 +696,6 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	struct block_device *dev = ref->bdev;
 	NTSTATUS status = STATUS_INVALID_DEVICE_REQUEST;
-	struct bio *bio;
 
 		/* Happens when mounting fails and we try to umount
 		 * the device.
@@ -727,13 +717,11 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		 * routine later and can report to the application.
 		 */
 
-	bio = irp_to_bio(irp, dev, &status);
-	if (bio == NULL)
+	status = make_drbd_requests(irp, dev);
+	if (status != STATUS_SUCCESS)
 		goto exit;
 
         IoMarkIrpPending(irp);
-	drbd_make_request(dev->drbd_device->rq_queue, bio);
-
 	return STATUS_PENDING;
 
 exit:
