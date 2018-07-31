@@ -19,6 +19,7 @@ test: all
 
 install: all
 	cp $(PROG) /usr/local/bin
+	cp *.sh /usr/local/bin
 
 clean:
 	rm -f $(PROG) $(OBJS)
