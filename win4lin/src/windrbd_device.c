@@ -645,7 +645,7 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 	bio->bi_size = total_size;
 	bio->bi_sector = sector;
 
-dbg("%s sector: %d this_bio_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, this_bio_size);
+// dbg("%s sector: %d this_bio_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, this_bio_size);
 
 	for (i=0; i<vcnt; i++) {
 		this_size = (i == vcnt-1) ? last_size : PAGE_SIZE;
@@ -681,8 +681,8 @@ dbg("%s sector: %d this_bio_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRI
 	bio->bi_end_io = windrbd_bio_finished;
 	bio->bi_upper_irp = irp;
 
-dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
-dbg("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset); 
+// dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
+// dbg("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset); 
 
 printk("into IoMarkIrpPending(%p)\n", irp);
         IoMarkIrpPending(irp);
