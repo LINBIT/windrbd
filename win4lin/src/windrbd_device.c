@@ -546,6 +546,8 @@ dbg("offset is %d\n", offset);
 		// irp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
 		irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
 	}
+printk("into KeWaitForSingleObject\n");
+	KeWaitForSingleObject(&bio->bi_irp_marked_pending, Executive, KernelMode, FALSE, NULL);
 printk("into IoCompleteRequest(%p) error is %d\n", irp, error);
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 printk("out of IoCompleteRequest(%p)\n", irp);
@@ -684,11 +686,17 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 // dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
 // dbg("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset); 
 
+	KeInitializeEvent(&bio->bi_irp_marked_pending, NotificationEvent, FALSE);
+
+	drbd_make_request(dev->drbd_device->rq_queue, bio);
+
 printk("into IoMarkIrpPending(%p)\n", irp);
         IoMarkIrpPending(irp);
 printk("out of IoMarkIrpPending(%p)\n", irp);
 
-	drbd_make_request(dev->drbd_device->rq_queue, bio);
+printk("Into KeSetEvent\n");
+	KeSetEvent(&bio->bi_irp_marked_pending, 0, FALSE);
+printk("Out of KeSetEvent\n");
 
 	return STATUS_SUCCESS;
 }
