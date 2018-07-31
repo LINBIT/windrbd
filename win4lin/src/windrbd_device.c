@@ -520,10 +520,11 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	int i;
 	NTSTATUS status;
 
+printk("1 bio: %p bio->bi_common_data: %p\n", bio, bio->bi_common_data);
 	status = STATUS_SUCCESS;
 	if (error == 0) {
 		if (bio->bi_rw == READ) {
-			if (bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
+			if (!bio->bi_common_data->bc_device_failed && bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
 				char *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
 				if (user_buffer != NULL) {
 					int offset;
@@ -552,6 +553,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 		// irp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
 		status = STATUS_UNSUCCESSFUL;
 	}
+printk("2\n");
         unsigned long flags;
 
         spin_lock_irqsave(&bio->bi_common_data->bc_device_failed_lock, flags);
@@ -560,20 +562,30 @@ static void windrbd_bio_finished(struct bio * bio, int error)
         if (status != STATUS_SUCCESS)
                 bio->bi_common_data->bc_device_failed = 1;
         spin_unlock_irqrestore(&bio->bi_common_data->bc_device_failed_lock, flags);
+printk("3\n");
 
 	if (!device_failed && (status != STATUS_SUCCESS || num_completed == bio->bi_common_data->bc_num_requests)) {
+printk("4\n");
 		if (status == STATUS_SUCCESS)
 			irp->IoStatus.Information = bio->bi_common_data->bc_total_size;
 		else
 			irp->IoStatus.Information = 0; /* TODO: one day also report partial I/O */
+printk("5\n");
 		irp->IoStatus.Status = status;
+printk("6\n");
 		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+printk("7\n");
 	}
 
+	/* TODO: leaks bio->bi_common_data */
+
+printk("8\n");
 	for (i=0;i<bio->bi_vcnt;i++)
 		kfree(bio->bi_io_vec[i].bv_page);
 
-	bio_put(bio);
+printk("9\n");
+//	bio_put(bio);
+printk("a\n");
 }
 
 static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)

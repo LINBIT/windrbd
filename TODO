@@ -1,5 +1,8 @@
 TODO: Test: New windrbd layer with fault injection on lower device.
 
+	Found a BSOD on failure when request is larger than 1M.
+	When request is 1M or smaller, no BSOD.
+
 TODO: Implement: patch DRBD to handle biovec elements larger than 4K.
 
 	There might be other limits .. 1 Meg is the maximum size

@@ -52,11 +52,11 @@
 	 * fail on user space I/O request.
 	 */
 
-#define INJECT_IO_ERRORS_ON_COMPLETION 100000
+// #define INJECT_IO_ERRORS_ON_COMPLETION 100000
 
 	/* Define this to make every n-th I/O request fail on request. */
 
-// #define INJECT_IO_ERRORS_ON_REQUEST 100000
+#define INJECT_IO_ERRORS_ON_REQUEST 50000
 
 	/* Reset fault injection counter after failing this often
 	 * times (so we don't have to reboot to repeat fault injection
