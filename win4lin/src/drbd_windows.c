@@ -52,7 +52,7 @@
 	 * fail on user space I/O request.
 	 */
 
-// #define INJECT_IO_ERRORS_ON_COMPLETION 1000
+#define INJECT_IO_ERRORS_ON_COMPLETION 100000
 
 	/* Define this to make every n-th I/O request fail on request. */
 
@@ -63,7 +63,7 @@
 	 * test).
 	 */
 
-// #define INJECT_IO_ERRORS_THIS_OFTEN 10
+#define INJECT_IO_ERRORS_THIS_OFTEN 10
 
 
 	/* Define this if you want a built in test for backing device
