@@ -1,7 +1,4 @@
-TODO: Implement: Split requests > 1 Meg into seperate bio's.
-
-	DRBD cannot handle bio's larger than 1 Meg in total
-	(which is a sort-of hard limit in current Linux kernels).
+TODO: Test: New windrbd layer with fault injection on lower device.
 
 TODO: Implement: patch DRBD to handle biovec elements larger than 4K.
 
@@ -60,6 +57,12 @@ TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
 	So no need for a tmp storage here. (Maybe put an assert
 	at the beginning of spin_lock_irq that tests for IRQL
 	being PASSIVE_LEVEL).
+
+TODO: Build system: have a make depend target
+	Or at least header file dependencies.
+
+	Working on it .. make deps creates the Makefile.deps
+	Generate it if it does not exists and include it.
 
 TODO: Implement: Make DRBD driver removable.
 
@@ -164,24 +167,6 @@ TODO: Research: See if it works under ReactOS
 	adaption. First, compile ReactOS from scratch to see if
 	that make sense at all. Then (try to) compile windrbd with
 	the ReactOS compiler (can do that under Linux...)
-
-TODO: Bug: From Devin: d->bi_size (from peer request) too big:
-
-	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
-
-	Test with large block device sizes.
-
-	Update: did, but didn't yet happen (sync would take 3 hours)
-
-	Update: happened on syncing between Windows Server 2016 and
-	Linux: two more assertions failed:
-
-Jun 27 15:37:45 wintestubuntu kernel: [85326.250911] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION (n_oos - peer_device->rs_failed) == 0 FAILED in drbd_resync_finished
-Jun 27 17:02:04 wintestubuntu kernel: [90385.215243] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION node_mask == 0 FAILED in _drbd_send_uuids110
-Jun 27 17:03:02 wintestubuntu kernel: [90443.041728] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
-
-	Update: Need to split into seperate bio's for requests larger
-	than 1MB. Test later if all assertions are gone, then.
 
 TODO: Bug: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
@@ -505,9 +490,6 @@ TODO: Nice to have: Cygwin should have /dev/drbd<n> mapped to
 
 	Right now, we can read/write the windrbd device via
 	windrbd-test utility.
-
-TODO: Build system: have a make depend target
-	Or at least header file dependencies.
 
 TODO: Feature: Check if it is a network share (currently blue screens)
 	Update: blue screen was something else. Should check if the
@@ -2811,4 +2793,35 @@ Jul  6 18:22:02 10.43.8.215  U16:22:01.009|f8ac2e70(not_drbd_thread) drbd_md_syn
 	works with physically unplugging the USB stick containing the
 	backing device (no BSOD, I/O continues if connected, I/O
 	error reported to application if not connected)
+
+Done: Implement: Split requests > 1 Meg into seperate bio's.
+
+	DRBD cannot handle bio's larger than 1 Meg in total
+	(which is a sort-of hard limit in current Linux kernels).
+
+	Update: Implemented, first tests (after fixed a nasty
+	race condition in completion of upper level IRPs) show
+	that it works quite fine. Now also test with fault
+	injection on the lower level I/O.
+
+Done: Bug: From Devin: d->bi_size (from peer request) too big:
+
+	2018-05-17T13:37:08.765112-07:00 aragorn.us.linbit  U20:37:08.743|d6f31040(receiver) static_inline_expect_fn_peer_device <3>drbd w0/0 minor 0 pnode-id:1, pdsk(UpToDate), prpl(Established), pdvflag(0x600): ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
+
+	Test with large block device sizes.
+
+	Update: did, but didn't yet happen (sync would take 3 hours)
+
+	Update: happened on syncing between Windows Server 2016 and
+	Linux: two more assertions failed:
+
+Jun 27 15:37:45 wintestubuntu kernel: [85326.250911] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION (n_oos - peer_device->rs_failed) == 0 FAILED in drbd_resync_finished
+Jun 27 17:02:04 wintestubuntu kernel: [90385.215243] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION node_mask == 0 FAILED in _drbd_send_uuids110
+Jun 27 17:03:02 wintestubuntu kernel: [90443.041728] drbd w0/1 drbd1 WIN-F11R93CP9KI: ASSERTION d->bi_size <= DRBD_MAX_BIO_SIZE FAILED in read_in_block
+
+	Update: Need to split into seperate bio's for requests larger
+	than 1MB. Test later if all assertions are gone, then.
+
+	Update: With implementing bio split into 1Meg pieces this is
+	gone now.
 
