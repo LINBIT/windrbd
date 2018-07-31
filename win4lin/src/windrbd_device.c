@@ -30,7 +30,7 @@
 #include <ntdddisk.h>
 
 /* Uncomment this if you want more debug output (disable for releases) */
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 #include "drbd_windows.h"
 #include "windrbd_device.h"
@@ -545,7 +545,9 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 		// irp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
 		irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
 	}
+printk("into IoCompleteRequest(%p) error is %d\n", irp, error);
 	IoCompleteRequest(irp, error ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+printk("out of IoCompleteRequest(%p)\n", irp);
 
 	for (i=0;i<bio->bi_vcnt;i++)
 		kfree(bio->bi_io_vec[i].bv_page);
@@ -718,10 +720,13 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		 */
 
 	status = make_drbd_requests(irp, dev);
+printk("status is %x\n", status);
 	if (status != STATUS_SUCCESS)
 		goto exit;
 
+printk("into IoMarkIrpPending(%p)\n", irp);
         IoMarkIrpPending(irp);
+printk("out of IoMarkIrpPending(%p)\n", irp);
 	return STATUS_PENDING;
 
 exit:
