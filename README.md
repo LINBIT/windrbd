@@ -282,4 +282,5 @@ Version history
  * 0.7.4 (Jun 19, 2018): Error handling on backing device (with fault injection)
  * 0.8.0 (Jul 06, 2018): Beta 4: First public beta
  * 0.8.1 (Jul 10, 2018): Handling unplugging USB stick should work now.
+ * 0.8.2 (Jul 31, 2018): Split WinDRBD requests into 1Meg pieces for DRBD
 
