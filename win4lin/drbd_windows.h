@@ -680,12 +680,10 @@ struct bio {
 	 */
 	IO_STATUS_BLOCK io_stat;
 
-	/* Used by upper layer to signal completion routine
-	 * that it may complete the IRP now.
+	/* TODO: may be put members here again? Update: Not sure,
+	 * we've put a KEVENT here and it didn't work .. might also
+	 * have been something else.
 	 */
-	KEVENT bi_irp_marked_pending;
-
-	/* TODO: may be put members here again? */
 
 	struct bio_vec bi_io_vec[0];
 };
