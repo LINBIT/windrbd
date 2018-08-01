@@ -522,6 +522,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 
 printk("1 bio: %p bio->bi_common_data: %p irp: %p\n", bio, bio->bi_common_data, irp);
 	status = STATUS_SUCCESS;
+		/* TODO: need to kfree the read buffers even if there is a failure */
 	if (error == 0) {
 		if (bio->bi_rw == READ) {
 			if (!bio->bi_common_data->bc_device_failed && bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
@@ -551,6 +552,13 @@ printk("1 bio: %p bio->bi_common_data: %p irp: %p\n", bio, bio->bi_common_data, 
 			 * Permission denied error.
 			 */
 		// irp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
+			/* TODO: This translates to error 55
+			 * (ERROR_DEV_NOT_EXIST: The specified network
+			 * resource or device is no longer available.
+			 * which is quite close to what we mean. Also
+			 * under Windows 10 / Server 2016?
+			 */
+
 		status = STATUS_DEVICE_DOES_NOT_EXIST;
 //		status = STATUS_UNSUCCESSFUL;
 	}
@@ -582,6 +590,7 @@ printk("6\n");
 
 /* else don't for now. BSOD? */
 printk("7\n");
+		/* TODO: kfree(bio->bi_common_data) should be safe here... */
 	}
 
 	/* TODO: leaks bio->bi_common_data */
@@ -763,6 +772,7 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 				bio->bi_io_vec[i].bv_page->addr = buffer+bio->bi_mdl_offset+i*PAGE_SIZE;
 
 // printk("i\n");
+				/* TODO: fault inject here. */
 			if (bio->bi_io_vec[i].bv_page->addr == NULL) {
 				printk("Couldn't allocate temp buffer for read.\n");
 				return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
@@ -786,6 +796,10 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 
 	return STATUS_SUCCESS;
 }
+
+/* Why is this called again? Is it the next I/O request?
+   TODO: rewrite test to abort if there is an error.
+ */
 
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
