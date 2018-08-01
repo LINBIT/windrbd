@@ -10,8 +10,10 @@ shift
 sleep_interval=$1
 shift
 
+loop_cnt=${LOOP_CNT:-1000000}
+
 i=0
-while true
+while [ $i -lt $loop_cnt ]
 do
 	i=$[ $i+1 ]
 	echo $msg $i
