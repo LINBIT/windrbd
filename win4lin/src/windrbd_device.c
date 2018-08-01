@@ -767,10 +767,6 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 	return STATUS_SUCCESS;
 }
 
-/* Why is this called again? Is it the next I/O request?
-   TODO: rewrite test to abort if there is an error.
- */
-
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject) {
