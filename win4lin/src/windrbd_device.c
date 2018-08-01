@@ -520,7 +520,6 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	int i;
 	NTSTATUS status;
 
-// printk("1 bio: %p bio->bi_common_data: %p irp: %p\n", bio, bio->bi_common_data, irp);
 	status = STATUS_SUCCESS;
 
 	if (error == 0) {
@@ -545,13 +544,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	} else {
 		printk(KERN_ERR "I/O failed with %d\n", error);
 
-			/* TODO: On Windows 7, this error seems not
-			 * to reach userspace. On Windows 10, returning
-			 * STATUS_UNSUCCESSFUL translates to a
-			 * Permission denied error.
-			 */
-		// irp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
-			/* TODO: This translates to error 55
+			/* This translates to error 55
 			 * (ERROR_DEV_NOT_EXIST: The specified network
 			 * resource or device is no longer available.
 			 * which is quite close to what we mean. Also
@@ -559,13 +552,19 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 			 */
 
 		status = STATUS_DEVICE_DOES_NOT_EXIST;
-//		status = STATUS_UNSUCCESSFUL;
 	}
 	if (bio->bi_rw == READ)
 		for (i=0;i<bio->bi_vcnt;i++)
 			kfree(bio->bi_io_vec[i].bv_page->addr);
 
         unsigned long flags;
+
+		/* TODO: later when we patch out the extra copy
+		 * on read, this also can be done much easier.
+		 */
+
+	int total_num_completed = bio->bi_common_data->bc_num_requests;
+	size_t total_size = bio->bi_common_data->bc_total_size;
 
         spin_lock_irqsave(&bio->bi_common_data->bc_device_failed_lock, flags);
         int num_completed = atomic_inc_return(&bio->bi_common_data->bc_num_completed);
@@ -574,10 +573,13 @@ static void windrbd_bio_finished(struct bio * bio, int error)
                 bio->bi_common_data->bc_device_failed = 1;
         spin_unlock_irqrestore(&bio->bi_common_data->bc_device_failed_lock, flags);
 
-	// if (!device_failed && (status != STATUS_SUCCESS || num_completed == bio->bi_common_data->bc_num_requests)) {
-	if (num_completed == bio->bi_common_data->bc_num_requests) {
+		/* Do not access bio->bi_common_data here as it might be
+		 * already freed.
+		 */
+
+	if (num_completed == total_num_completed) {
 		if (status == STATUS_SUCCESS)
-			irp->IoStatus.Information = bio->bi_common_data->bc_total_size;
+			irp->IoStatus.Information = total_size;
 		else
 				/* Windows documentation states that this
 				 * should be set to 0 if non-success error
@@ -588,11 +590,8 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 
 		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
-		/* TODO: kfree(bio->bi_common_data) should be safe here... */
+		kfree(bio->bi_common_data);
 	}
-
-	/* TODO: leaks bio->bi_common_data */
-
 	for (i=0;i<bio->bi_vcnt;i++)
 		kfree(bio->bi_io_vec[i].bv_page);
 

@@ -122,11 +122,21 @@ TODO: Implement: Detect earlier versions of WinDRBD and offer upgrade.
 
 -----------------------------------------------------------------------
 
+TODO: Test: Test under memory pressure.
+
+	We had a leak that caused all non-paged memory to be consumed,
+	followed by a CC BSOD.
+
 TODO: Implement: We want to have some sort of a regression test suite.
 
 	Do not use agruen's it is too complicated. Maybe write a simple
 	new one from scratch (or reuse parts of the old DRBD 8 python
 	test suite with ssh support).
+
+	Update: maybe best is to write a simple new one in bash.
+	(see test-io-larger-than-1m.sh).
+
+TODO: Implement: Allow for enabling fault injection via ioctl (windrbd.exe)
 
 TODO: Usability: disallow windrbd hide-filesystem on a DRBD device.
 
