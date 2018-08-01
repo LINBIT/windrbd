@@ -565,7 +565,8 @@ printk("2\n");
         spin_unlock_irqrestore(&bio->bi_common_data->bc_device_failed_lock, flags);
 printk("3\n");
 
-	if (!device_failed && (status != STATUS_SUCCESS || num_completed == bio->bi_common_data->bc_num_requests)) {
+	// if (!device_failed && (status != STATUS_SUCCESS || num_completed == bio->bi_common_data->bc_num_requests)) {
+	if (num_completed == bio->bi_common_data->bc_num_requests) {
 printk("4\n");
 		if (status == STATUS_SUCCESS)
 			irp->IoStatus.Information = bio->bi_common_data->bc_total_size;
@@ -610,7 +611,7 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 	struct bio_collection *common_data;
 	unsigned long rw;
 
-printk("1\n");
+// printk("1\n");
 
 	if (s == NULL) {
 		printk("Stacklocation is NULL.\n");
@@ -700,53 +701,53 @@ printk("1\n");
         IoMarkIrpPending(irp);
 
 	for (b=0; b<bio_count; b++) {
-printk("a\n");
+// printk("a\n");
 		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
 
 		vcnt = (this_bio_size-1) / PAGE_SIZE + 1;
 		last_size = this_bio_size % PAGE_SIZE;
-printk("b\n");
+// printk("b\n");
 
 		bio = bio_alloc(GFP_NOIO, vcnt, 'DBRD');
 		if (bio == NULL) {
 			printk("Couldn't allocate bio.\n");
 			return STATUS_INSUFFICIENT_RESOURCES;
 		}
-printk("c\n");
+// printk("c\n");
 		bio->bi_rw = rw;
-printk("A\n");
+// printk("A\n");
 		bio->bi_bdev = dev;
-printk("B\n");
+// printk("B\n");
 		bio->bi_max_vecs = vcnt;
-printk("C\n");
+// printk("C\n");
 		bio->bi_vcnt = vcnt;
-printk("D\n");
+// printk("D\n");
 		bio->bi_paged_memory = bio->bi_rw == WRITE;
-printk("E\n");
+// printk("E\n");
 		bio->bi_size = this_bio_size;
-printk("F\n");
+// printk("F\n");
 		bio->bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
-printk("G\n");
+// printk("G\n");
 		bio->bi_mdl_offset = b*MAX_BIO_SIZE;
-printk("H\n");
+// printk("H\n");
 		bio->bi_common_data = common_data;
 
 // dbg("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
 
-printk("d\n");
+// printk("d\n");
 		for (i=0; i<vcnt; i++) {
-printk("e\n");
+// printk("e\n");
 			this_size = (i == vcnt-1) ? last_size : PAGE_SIZE;
 			if (this_size == 0)
 				this_size = PAGE_SIZE;
 
-printk("f\n");
+// printk("f\n");
 			bio->bi_io_vec[i].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
 			if (bio->bi_io_vec[i].bv_page == NULL) {
 				printk("Couldn't allocate page.\n");
 				return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
 			}
-printk("g\n");
+// printk("g\n");
 
 			bio->bi_io_vec[i].bv_len = this_size;
 
@@ -755,33 +756,33 @@ printk("g\n");
  *	 intermediate buffer and the extra copy.
  */
 
-printk("h\n");
+// printk("h\n");
 			if (bio->bi_rw == READ)
 				bio->bi_io_vec[i].bv_page->addr = kmalloc(this_size, 0, 'DRBD');
 			else
 				bio->bi_io_vec[i].bv_page->addr = buffer+bio->bi_mdl_offset+i*PAGE_SIZE;
 
-printk("i\n");
+// printk("i\n");
 			if (bio->bi_io_vec[i].bv_page->addr == NULL) {
 				printk("Couldn't allocate temp buffer for read.\n");
 				return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
 			}
-printk("j\n");
+// printk("j\n");
 
 			bio->bi_io_vec[i].bv_offset = 0;
 		}
-printk("z\n");
+// printk("z\n");
 		bio->bi_end_io = windrbd_bio_finished;
 		bio->bi_upper_irp = irp;
 
 // dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
 // dbg("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset); 
 
-printk("2\n");
+// printk("2\n");
 		drbd_make_request(dev->drbd_device->rq_queue, bio);
-printk("3\n");
+// printk("3\n");
 	}
-printk("4\n");
+// printk("4\n");
 
 	return STATUS_SUCCESS;
 }
