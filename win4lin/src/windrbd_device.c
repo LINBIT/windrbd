@@ -551,7 +551,8 @@ printk("1 bio: %p bio->bi_common_data: %p irp: %p\n", bio, bio->bi_common_data, 
 			 * Permission denied error.
 			 */
 		// irp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
-		status = STATUS_UNSUCCESSFUL;
+		status = STATUS_DEVICE_DOES_NOT_EXIST;
+//		status = STATUS_UNSUCCESSFUL;
 	}
 printk("2\n");
         unsigned long flags;
@@ -607,6 +608,7 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 	int i, b;
 	char *buffer;
 	struct bio_collection *common_data;
+	unsigned long rw;
 
 printk("1\n");
 
@@ -689,39 +691,62 @@ printk("1\n");
 	common_data->bc_device_failed = 0;
 	spin_lock_init(&common_data->bc_device_failed_lock);
 
+	rw = s->MajorFunction == IRP_MJ_WRITE ? WRITE : READ;
+
+	/* Do this before windrbd_bio_finished might be called, else
+	 * this could produce a blue screen.
+	 */
+
+        IoMarkIrpPending(irp);
+
 	for (b=0; b<bio_count; b++) {
+printk("a\n");
 		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
 
 		vcnt = (this_bio_size-1) / PAGE_SIZE + 1;
 		last_size = this_bio_size % PAGE_SIZE;
+printk("b\n");
 
 		bio = bio_alloc(GFP_NOIO, vcnt, 'DBRD');
 		if (bio == NULL) {
 			printk("Couldn't allocate bio.\n");
 			return STATUS_INSUFFICIENT_RESOURCES;
 		}
-		bio->bi_rw = s->MajorFunction == IRP_MJ_WRITE ? WRITE : READ;
+printk("c\n");
+		bio->bi_rw = rw;
+printk("A\n");
 		bio->bi_bdev = dev;
+printk("B\n");
 		bio->bi_max_vecs = vcnt;
+printk("C\n");
 		bio->bi_vcnt = vcnt;
+printk("D\n");
 		bio->bi_paged_memory = bio->bi_rw == WRITE;
+printk("E\n");
 		bio->bi_size = this_bio_size;
+printk("F\n");
 		bio->bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
+printk("G\n");
 		bio->bi_mdl_offset = b*MAX_BIO_SIZE;
+printk("H\n");
 		bio->bi_common_data = common_data;
 
 // dbg("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
 
+printk("d\n");
 		for (i=0; i<vcnt; i++) {
+printk("e\n");
 			this_size = (i == vcnt-1) ? last_size : PAGE_SIZE;
 			if (this_size == 0)
 				this_size = PAGE_SIZE;
 
+printk("f\n");
 			bio->bi_io_vec[i].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
 			if (bio->bi_io_vec[i].bv_page == NULL) {
 				printk("Couldn't allocate page.\n");
 				return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
 			}
+printk("g\n");
 
 			bio->bi_io_vec[i].bv_len = this_size;
 
@@ -730,29 +755,27 @@ printk("1\n");
  *	 intermediate buffer and the extra copy.
  */
 
+printk("h\n");
 			if (bio->bi_rw == READ)
 				bio->bi_io_vec[i].bv_page->addr = kmalloc(this_size, 0, 'DRBD');
 			else
 				bio->bi_io_vec[i].bv_page->addr = buffer+bio->bi_mdl_offset+i*PAGE_SIZE;
 
+printk("i\n");
 			if (bio->bi_io_vec[i].bv_page->addr == NULL) {
 				printk("Couldn't allocate temp buffer for read.\n");
 				return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
 			}
+printk("j\n");
 
 			bio->bi_io_vec[i].bv_offset = 0;
 		}
+printk("z\n");
 		bio->bi_end_io = windrbd_bio_finished;
 		bio->bi_upper_irp = irp;
 
 // dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
 // dbg("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset); 
-
-	/* Do this before windrbd_bio_finished might be called, else
-	 * this could produce a blue screen.
-	 */
-
-        IoMarkIrpPending(irp);
 
 printk("2\n");
 		drbd_make_request(dev->drbd_device->rq_queue, bio);
@@ -765,6 +788,7 @@ printk("4\n");
 
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+printk("irp: %p\n", irp);
 printk("1\n");
 	if (device == mvolRootDeviceObject) {
 		printk(KERN_DEBUG "Root device request.\n");
