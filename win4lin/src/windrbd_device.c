@@ -520,9 +520,9 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	int i;
 	NTSTATUS status;
 
-printk("1 bio: %p bio->bi_common_data: %p irp: %p\n", bio, bio->bi_common_data, irp);
+// printk("1 bio: %p bio->bi_common_data: %p irp: %p\n", bio, bio->bi_common_data, irp);
 	status = STATUS_SUCCESS;
-		/* TODO: need to kfree the read buffers even if there is a failure */
+
 	if (error == 0) {
 		if (bio->bi_rw == READ) {
 			if (!bio->bi_common_data->bc_device_failed && bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
@@ -534,7 +534,6 @@ printk("1 bio: %p bio->bi_common_data: %p irp: %p\n", bio, bio->bi_common_data, 
 					for (i=0;i<bio->bi_vcnt;i++) {
 						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
-						kfree(bio->bi_io_vec[i].bv_page->addr);
 						offset += bio->bi_io_vec[i].bv_len;
 					}
 				} else {
@@ -562,7 +561,10 @@ printk("1 bio: %p bio->bi_common_data: %p irp: %p\n", bio, bio->bi_common_data, 
 		status = STATUS_DEVICE_DOES_NOT_EXIST;
 //		status = STATUS_UNSUCCESSFUL;
 	}
-printk("2\n");
+	if (bio->bi_rw == READ)
+		for (i=0;i<bio->bi_vcnt;i++)
+			kfree(bio->bi_io_vec[i].bv_page->addr);
+
         unsigned long flags;
 
         spin_lock_irqsave(&bio->bi_common_data->bc_device_failed_lock, flags);
@@ -571,37 +573,30 @@ printk("2\n");
         if (status != STATUS_SUCCESS)
                 bio->bi_common_data->bc_device_failed = 1;
         spin_unlock_irqrestore(&bio->bi_common_data->bc_device_failed_lock, flags);
-printk("3\n");
 
 	// if (!device_failed && (status != STATUS_SUCCESS || num_completed == bio->bi_common_data->bc_num_requests)) {
 	if (num_completed == bio->bi_common_data->bc_num_requests) {
-printk("4\n");
 		if (status == STATUS_SUCCESS)
 			irp->IoStatus.Information = bio->bi_common_data->bc_total_size;
 		else
-			irp->IoStatus.Information = 0; /* TODO: one day also report partial I/O */
-printk("5\n");
-		irp->IoStatus.Status = status;
-printk("6\n");
-// if (status == STATUS_SUCCESS)
-		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
-// else
-// printk("I/O failed with status %x, not completing IRP.\n", status);
+				/* Windows documentation states that this
+				 * should be set to 0 if non-success error
+				 * code is returned (even if we already
+				 * successfully read/wrote data).
+				 */
+			irp->IoStatus.Information = 0;
 
-/* else don't for now. BSOD? */
-printk("7\n");
+		irp->IoStatus.Status = status;
+		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 		/* TODO: kfree(bio->bi_common_data) should be safe here... */
 	}
 
 	/* TODO: leaks bio->bi_common_data */
 
-printk("8\n");
 	for (i=0;i<bio->bi_vcnt;i++)
 		kfree(bio->bi_io_vec[i].bv_page);
 
-printk("9\n");
-//	bio_put(bio);
-printk("a\n");
+	bio_put(bio);
 }
 
 static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
