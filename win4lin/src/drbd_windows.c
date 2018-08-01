@@ -56,14 +56,14 @@
 
 	/* Define this to make every n-th I/O request fail on request. */
 
-#define INJECT_IO_ERRORS_ON_REQUEST 50000
+// #define INJECT_IO_ERRORS_ON_REQUEST 50000
 
 	/* Reset fault injection counter after failing this often
 	 * times (so we don't have to reboot to repeat fault injection
 	 * test).
 	 */
 
-#define INJECT_IO_ERRORS_THIS_OFTEN 10
+// #define INJECT_IO_ERRORS_THIS_OFTEN 10
 
 
 	/* Define this if you want a built in test for backing device
