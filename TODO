@@ -1,17 +1,3 @@
-TODO: Test: New windrbd layer with fault injection on lower device.
-
-	Found a BSOD on failure when request is larger than 1M.
-	When request is 1M or smaller, no BSOD.
-
-	Update: IRP was accessed (in loop) after IoComplete() was
-	called (which invalidates the IRP), now we call IoComplete
-	only after all bio's are finished (and do not access the
-	IRP in the bio loop). Need to cleanup code.
-
-	Also free the read buffers in all cases.
-
-TODO: Bug: Out of memory handling in windrbd device is broken (BSOD).
-
 TODO: Implement: patch DRBD to handle biovec elements larger than 4K.
 
 	There might be other limits .. 1 Meg is the maximum size
@@ -126,6 +112,8 @@ TODO: Test: Test under memory pressure.
 
 	We had a leak that caused all non-paged memory to be consumed,
 	followed by a CC BSOD.
+
+TODO: Bug: Out of memory handling in windrbd device is broken (BSOD).
 
 TODO: Implement: We want to have some sort of a regression test suite.
 
@@ -2846,4 +2834,18 @@ Jun 27 17:03:02 wintestubuntu kernel: [90443.041728] drbd w0/1 drbd1 WIN-F11R93C
 
 	Update: With implementing bio split into 1Meg pieces this is
 	gone now.
+
+Done: Test: New windrbd layer with fault injection on lower device.
+
+	Found a BSOD on failure when request is larger than 1M.
+	When request is 1M or smaller, no BSOD.
+
+	Update: IRP was accessed (in loop) after IoComplete() was
+	called (which invalidates the IRP), now we call IoComplete
+	only after all bio's are finished (and do not access the
+	IRP in the bio loop). Need to cleanup code.
+
+	Also free the read buffers in all cases.
+
+	Update: all done.
 
