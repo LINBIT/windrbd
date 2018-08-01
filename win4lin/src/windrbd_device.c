@@ -520,7 +520,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	int i;
 	NTSTATUS status;
 
-printk("1 bio: %p bio->bi_common_data: %p\n", bio, bio->bi_common_data);
+printk("1 bio: %p bio->bi_common_data: %p irp: %p\n", bio, bio->bi_common_data, irp);
 	status = STATUS_SUCCESS;
 	if (error == 0) {
 		if (bio->bi_rw == READ) {
@@ -573,7 +573,12 @@ printk("4\n");
 printk("5\n");
 		irp->IoStatus.Status = status;
 printk("6\n");
+// if (status == STATUS_SUCCESS)
 		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+// else
+// printk("I/O failed with status %x, not completing IRP.\n", status);
+
+/* else don't for now. BSOD? */
 printk("7\n");
 	}
 
@@ -602,6 +607,8 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 	int i, b;
 	char *buffer;
 	struct bio_collection *common_data;
+
+printk("1\n");
 
 	if (s == NULL) {
 		printk("Stacklocation is NULL.\n");
@@ -747,14 +754,18 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 
         IoMarkIrpPending(irp);
 
+printk("2\n");
 		drbd_make_request(dev->drbd_device->rq_queue, bio);
+printk("3\n");
 	}
+printk("4\n");
 
 	return STATUS_SUCCESS;
 }
 
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+printk("1\n");
 	if (device == mvolRootDeviceObject) {
 		printk(KERN_DEBUG "Root device request.\n");
 
@@ -794,15 +805,19 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		 * routine later and can report to the application.
 		 */
 
+printk("2\n");
 	status = make_drbd_requests(irp, dev);
 	if (status != STATUS_SUCCESS)
 		goto exit;
+printk("3\n");
 
 	return STATUS_PENDING;
 
 exit:
+printk("4\n");
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
+printk("5\n");
 
         return status;
 }
