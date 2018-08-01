@@ -18,6 +18,7 @@ int main(int argc, char** argv)
 			{"dump-file", required_argument, 0, 'o'},
 			{"request-size", required_argument, 0, 'r'},
 			{"mode", required_argument, 0, 'm'},
+			{"stop-on-error", no_argument, 0, 'e'},
 			{0, 0, 0, 0}
 		};
 		c = getopt_long(argc, argv, "d:s:f", my_options, &option_index);
@@ -57,6 +58,9 @@ int main(int argc, char** argv)
 					p.mode = MODE_ONLY_WRITE;
 				else
 					printf("mode must contain r and/or w (defaulting to both)\n");
+			break;
+		case 'e':
+			p.stop_on_error = 1;
 			break;
 
 		default:

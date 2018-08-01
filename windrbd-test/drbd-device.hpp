@@ -11,6 +11,7 @@ struct params {
 	const char *dump_file;
 	unsigned long long request_size;
 	enum test_mode mode;
+	int stop_on_error;
 };
 
 extern struct params p;

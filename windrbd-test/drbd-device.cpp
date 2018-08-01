@@ -10,7 +10,8 @@ struct params p = {
 	force: false,
 	dump_file: NULL,
 	request_size: 1048576,
-	mode: MODE_WRITE_AND_READ
+	mode: MODE_WRITE_AND_READ,
+	stop_on_error: 0
 };
 
 #define	READ_WRITE 0
@@ -320,6 +321,11 @@ TEST(windrbd, do_write_read_whole_disk_by_1meg_requests)
 			EXPECT_EQ(err, ERROR_SUCCESS);
 			EXPECT_NE(ret, 0);
 			EXPECT_EQ(bytes_written, p.request_size);
+
+			if (p.stop_on_error && ret == 0) {
+				printf("There was an error. Stopping.\n");
+				break;
+			}
 		}
 
 		if (p.mode != MODE_ONLY_WRITE) {
@@ -332,6 +338,11 @@ TEST(windrbd, do_write_read_whole_disk_by_1meg_requests)
 			EXPECT_EQ(err, ERROR_SUCCESS);
 			EXPECT_NE(ret, 0);
 			EXPECT_EQ(bytes_read, p.request_size);
+
+			if (p.stop_on_error && ret == 0) {
+				printf("There was an error. Stopping.\n");
+				break;
+			}
 		}
 
 /*		for (i=0;i<10;i++)
