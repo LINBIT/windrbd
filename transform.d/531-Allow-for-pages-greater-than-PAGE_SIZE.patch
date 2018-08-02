@@ -1,0 +1,58 @@
+From cf6622de5ae5ec3f53abd2773ddbc29066f8c6ad Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 2 Aug 2018 17:17:59 +0200
+Subject: [PATCH] Allow for "pages" greater than PAGE_SIZE.
+
+This patch modifies the send buffer to be larger than PAGE_SIZE
+if there is an I/O request larger than that. It is used for
+performance optimization (no need to split the bio into biovecs
+of PAGE_SIZE size and later send them seperately to the backing
+device).
+---
+ drbd/drbd_main.c | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 9183640..13248d6 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -881,17 +881,19 @@ static void prepare_header(struct drbd_connection *connection, int vnr,
+ 		prepare_header80(buffer, cmd, size);
+ }
+ 
+-static void new_or_recycle_send_buffer_page(struct drbd_send_buffer *sbuf)
++static void new_or_recycle_send_buffer_page(struct drbd_send_buffer *sbuf, size_t size)
+ {
+ 	while (1) {
+ 		struct page *page;
+ 		int count = page_count(sbuf->page);
+ 
+-		BUG_ON(count == 0);
+-		if (count == 1)
+-			goto have_page;
++		if (sbuf->page->size >= size) {
++			BUG_ON(count == 0);
++			if (count == 1)
++				goto have_page;
++		}
+ 
+-		page = alloc_page(GFP_KERNEL);
++		page = alloc_page_of_size(GFP_KERNEL, size);
+ 		if (page) {
+ 			put_page(sbuf->page);
+ 			sbuf->page = page;
+@@ -911,9 +913,9 @@ static char *alloc_send_buffer(struct drbd_connection *connection, int size,
+ 	struct drbd_send_buffer *sbuf = &connection->send_buffer[drbd_stream];
+ 	char *page_start = page_address(sbuf->page);
+ 
+-	if (sbuf->pos - page_start + size > PAGE_SIZE) {
++	if (sbuf->pos - page_start + size > sbuf->page->size) {
+ 		flush_send_buffer(connection, drbd_stream);
+-		new_or_recycle_send_buffer_page(sbuf);
++		new_or_recycle_send_buffer_page(sbuf, size);
+ 	}
+ 
+ 	sbuf->allocated_size = size;
+-- 
+2.17.0
+
