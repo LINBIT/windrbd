@@ -704,8 +704,8 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 	for (b=0; b<bio_count; b++) {
 		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
 
-		vcnt = (this_bio_size-1) / PAGE_SIZE + 1;
-		last_size = this_bio_size % PAGE_SIZE;
+		vcnt = 1;
+		last_size = this_bio_size;
 
 		bio = bio_alloc(GFP_NOIO, vcnt, 'DBRD');
 		if (bio == NULL) {
@@ -736,6 +736,9 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 			}
 
 			bio->bi_io_vec[i].bv_len = this_size;
+			bio->bi_io_vec[i].bv_page->size = this_size;
+			kref_init(&bio->bi_io_vec[i].bv_page->kref);
+
 
 /*
  * TODO: eventually we want to make READ requests work without the

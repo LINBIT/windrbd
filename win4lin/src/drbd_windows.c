@@ -563,28 +563,41 @@ void *page_address(const struct page *page)
 	return page->addr;
 }
 
-struct page *alloc_page(int flag)
+struct page *alloc_page_of_size(int flag, size_t size)
 {
+if (size % PAGE_SIZE)
+printk(KERN_DEBUG "misaligned size: %d (extra %d bytes, rounding up)\n", size, size % PAGE_SIZE);
+		/* Round up to the next PAGE_SIZE */
+
+	BUG_ON(size==0);
+	size = (((size-1) / PAGE_SIZE)+1)*PAGE_SIZE;
+
 	struct page *p = kzalloc(sizeof(struct page),0, 'D3DW'); 
 	if (!p)	{
 		WDRBD_INFO("alloc_page struct page failed\n");
 		return NULL;
-	}	
+	}
 	
 		/* Under Windows this is defined to align to a page
-		 * of PAGE_SIZE bytes. PAGE_SIZE itself is always
+		 * of PAGE_SIZE bytes if size is . PAGE_SIZE itself is always
 		 * 4096 under Windows.
 		 */
 
-	p->addr = kmalloc(PAGE_SIZE, 0, 'E3DW');
+	p->addr = kmalloc(size, 0, 'E3DW');
 	if (!p->addr)	{
 		kfree(p); 
 		WDRBD_INFO("alloc_page PAGE_SIZE failed\n");
 		return NULL;
 	}
 	kref_init(&p->kref);
+	p->size = size;
 
 	return p;
+}
+
+struct page *alloc_page(int flag)
+{
+	return alloc_page_of_size(flag, PAGE_SIZE);
 }
 
 void __free_page(struct page *page)
@@ -2220,6 +2233,8 @@ int generic_make_request(struct bio *bio)
 	orig_size = bio->bi_size;
 
 	ret = 0;
+
+printk("num_requests: %d\n", bio->bi_num_requests);
 
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<(bio->bi_num_requests - flush_request); 

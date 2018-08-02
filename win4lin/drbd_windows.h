@@ -934,11 +934,21 @@ struct lru_cache;
 extern struct lc_element *lc_element_by_index(struct lru_cache *lc, unsigned i);
 extern unsigned int lc_index_of(struct lru_cache *lc, struct lc_element *e);
 
+	/* A 'page' in WinDRBD may actually contain more pages (vmalloc'ed)
+	 * We need this to optimize I/O requests larger than 4K which
+	 * we used to send by seperate requests to the backing devices
+	 * (which is just too slow). A struct page may now contain
+	 * memory of any length, therefore we don't need the splitting
+	 * mechanism any more for userspace I/O requests (we still need
+	 * it, however for the metadata).
+	 */
+
 struct page {
 	ULONG_PTR private;
 	void *addr;
 	struct list_head lru;
 	struct kref kref;
+	size_t size;
 };
 
 void free_page_kref(struct kref *kref);
@@ -960,6 +970,7 @@ extern void *page_address(const struct page *page);
 extern int page_count(struct page *page);
 extern void __free_page(struct page *page);
 extern struct page *alloc_page(int flag);
+struct page *alloc_page_of_size(int flag, size_t size);
 
 struct scatterlist {
 	struct page *page;
