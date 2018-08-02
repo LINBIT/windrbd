@@ -604,12 +604,9 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 	struct _MDL *mdl = irp->MdlAddress;
 	struct bio *bio;
 
-	int vcnt;
-	int last_size;
-	int this_size;
 	unsigned int total_size;
 	sector_t sector;
-	int i, b;
+	int b;
 	char *buffer;
 	struct bio_collection *common_data;
 	unsigned long rw;
@@ -704,18 +701,15 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 	for (b=0; b<bio_count; b++) {
 		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
 
-		vcnt = 1;
-		last_size = this_bio_size;
-
-		bio = bio_alloc(GFP_NOIO, vcnt, 'DBRD');
+		bio = bio_alloc(GFP_NOIO, 1, 'DBRD');
 		if (bio == NULL) {
 			printk("Couldn't allocate bio.\n");
 			return STATUS_INSUFFICIENT_RESOURCES;
 		}
 		bio->bi_rw = rw;
 		bio->bi_bdev = dev;
-		bio->bi_max_vecs = vcnt;
-		bio->bi_vcnt = vcnt;
+		bio->bi_max_vecs = 1;
+		bio->bi_vcnt = 1;
 		bio->bi_paged_memory = bio->bi_rw == WRITE;
 		bio->bi_size = this_bio_size;
 		bio->bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
@@ -724,20 +718,15 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 
 // dbg("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
 
-		for (i=0; i<vcnt; i++) {
-			this_size = (i == vcnt-1) ? last_size : PAGE_SIZE;
-			if (this_size == 0)
-				this_size = PAGE_SIZE;
+		bio->bi_io_vec[0].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
+		if (bio->bi_io_vec[0].bv_page == NULL) {
+			printk("Couldn't allocate page.\n");
+			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
+		}
 
-			bio->bi_io_vec[i].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
-			if (bio->bi_io_vec[i].bv_page == NULL) {
-				printk("Couldn't allocate page.\n");
-				return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
-			}
-
-			bio->bi_io_vec[i].bv_len = this_size;
-			bio->bi_io_vec[i].bv_page->size = this_size;
-			kref_init(&bio->bi_io_vec[i].bv_page->kref);
+		bio->bi_io_vec[0].bv_len = this_bio_size;
+		bio->bi_io_vec[0].bv_page->size = this_bio_size;
+		kref_init(&bio->bi_io_vec[0].bv_page->kref);
 
 
 /*
@@ -745,19 +734,18 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
  *	 intermediate buffer and the extra copy.
  */
 
-			if (bio->bi_rw == READ)
-				bio->bi_io_vec[i].bv_page->addr = kmalloc(this_size, 0, 'DRBD');
-			else
-				bio->bi_io_vec[i].bv_page->addr = buffer+bio->bi_mdl_offset+i*PAGE_SIZE;
+		if (bio->bi_rw == READ)
+			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, 0, 'DRBD');
+		else
+			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
 
 				/* TODO: fault inject here. */
-			if (bio->bi_io_vec[i].bv_page->addr == NULL) {
-				printk("Couldn't allocate temp buffer for read.\n");
-				return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
-			}
-
-			bio->bi_io_vec[i].bv_offset = 0;
+		if (bio->bi_io_vec[0].bv_page->addr == NULL) {
+			printk("Couldn't allocate temp buffer for read.\n");
+			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
 		}
+
+		bio->bi_io_vec[0].bv_offset = 0;
 		bio->bi_end_io = windrbd_bio_finished;
 		bio->bi_upper_irp = irp;
 
