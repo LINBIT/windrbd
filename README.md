@@ -284,4 +284,4 @@ Version history
  * 0.8.1 (Jul 10, 2018): Handling unplugging USB stick should work now.
  * 0.8.2 (Jul 31, 2018): Split WinDRBD requests into 1Meg pieces for DRBD
  * 0.8.3 (Aug 01, 2018): Fixed BSOD requests > 1Meg and backing dev failure.
-
+ * 0.8.4 (Aug 02, 2018): Performance: do not split into 4K requests.
