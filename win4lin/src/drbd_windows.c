@@ -565,8 +565,6 @@ void *page_address(const struct page *page)
 
 struct page *alloc_page_of_size(int flag, size_t size)
 {
-if (size % PAGE_SIZE)
-printk(KERN_DEBUG "misaligned size: %d (extra %d bytes, rounding up)\n", size, size % PAGE_SIZE);
 		/* Round up to the next PAGE_SIZE */
 
 	BUG_ON(size==0);
@@ -2233,8 +2231,6 @@ int generic_make_request(struct bio *bio)
 	orig_size = bio->bi_size;
 
 	ret = 0;
-
-printk("num_requests: %d\n", bio->bi_num_requests);
 
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<(bio->bi_num_requests - flush_request); 
