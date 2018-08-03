@@ -3448,8 +3448,6 @@ int windrbd_mount(struct block_device *dev)
 {
 	NTSTATUS status;
 
-printk("about to BSOD...\n");
-*(int*)0 = 0;
 	
 	/* This is basically what mount manager does: leave it here,
 	   in case we revert the mount manager code again.
