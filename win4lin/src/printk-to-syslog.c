@@ -9,7 +9,7 @@
 
 char g_syslog_ip[SYSLOG_IP_SIZE];
 
-static PWSK_SOCKET printk_udp_socket = NULL;
+static struct socket printk_udp_socket;
 static SOCKADDR_IN printk_udp_target;
 
 static char ring_buffer[RING_BUFFER_SIZE];
@@ -59,7 +59,7 @@ int my_inet_aton(const char *cp, struct in_addr *inp)
 static int open_syslog_socket(void)
 {
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
-	if (!printk_udp_socket) {
+	if (!printk_udp_socket.sk) {
 		SOCKADDR_IN local;
 
 		printk_udp_target.sin_family = AF_INET;
@@ -75,15 +75,19 @@ static int open_syslog_socket(void)
 		local.sin_addr.s_addr = 0;
 		local.sin_port = 0;
 
-		printk_udp_socket = CreateSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+		printk_udp_socket.sk = CreateSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
 			NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET);
-		if (printk_udp_socket) {
-			Bind(printk_udp_socket, (SOCKADDR *)&local);
+		if (printk_udp_socket.sk) {
+				/* TODO: what if this fails? */
+			Bind(printk_udp_socket.sk, (SOCKADDR *)&local);
+
+			printk_udp_socket.error_status = STATUS_SUCCESS;
+			strcpy(printk_udp_socket.name, "debug socket");
 		} else {
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility. You will NOT see any output produced by printk (and pr_err, ...)\n");
 			return -1;
 		}
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "socket opened, ring_buffer_head: %d ring_buffer_tail: %d\n", ring_buffer_head, ring_buffer_tail);
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "socket opened, ring_buffer_head: %d ring_buffer_tail: %d\n", ring_buffer_head, ring_buffer_tail);
 	}
 	return 0;
 }
@@ -217,11 +221,11 @@ int _printk(const char *func, const char *fmt, ...)
 
 	if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
 		mutex_lock(&send_mutex);
-		if (printk_udp_socket == NULL) {
+		if (printk_udp_socket.sk == NULL) {
 			open_syslog_socket();
 		}
 
-		if (printk_udp_socket) {
+		if (printk_udp_socket.sk) {
 			size_t last_tail = ring_buffer_tail;
 
 			for (line_pos = 0;
@@ -238,7 +242,7 @@ int _printk(const char *func, const char *fmt, ...)
 					if (line_pos == 0)
 						continue;
 
-					status = SendTo(printk_udp_socket, 
+					status = SendTo(&printk_udp_socket, 
 							line,
 							line_pos,
 							(PSOCKADDR)&printk_udp_target);

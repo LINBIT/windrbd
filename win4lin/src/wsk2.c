@@ -14,9 +14,10 @@ NTAPI CompletionRoutine(
 	__in PKEVENT		CompletionEvent
 )
 {
-	/* Must not printk in here, will loop forever. */
+	/* Must not printk in here, will loop forever. Hence also no
+	 * ASSERT.
+	 */
 
-	ASSERT(CompletionEvent);
 	KeSetEvent(CompletionEvent, IO_NO_INCREMENT, FALSE);
 	
 	return STATUS_MORE_PROCESSING_REQUIRED;
@@ -29,9 +30,6 @@ InitWskData(
 	__in  BOOLEAN	bRawIrp
 )
 {
-	ASSERT(pIrp);
-	ASSERT(CompletionEvent);
-
 	// DW-1316 use raw irp.
 	if (bRawIrp) {
 		*pIrp = ExAllocatePoolWithTag(NonPagedPool, IoSizeOfIrp(1), 'FFDW');
@@ -61,10 +59,6 @@ InitWskBuffer(
 {
     NTSTATUS Status = STATUS_SUCCESS;
 
-    ASSERT(Buffer);
-    ASSERT(BufferSize);
-    ASSERT(WskBuffer);
-
     WskBuffer->Offset = 0;
     WskBuffer->Length = BufferSize;
 
@@ -92,23 +86,13 @@ FreeWskBuffer(
 __in PWSK_BUF WskBuffer
 )
 {
-	ASSERT(WskBuffer);
-
 	MmUnlockPages(WskBuffer->Mdl);
 	IoFreeMdl(WskBuffer->Mdl);
 }
 
-VOID
-FreeWskData(
-__in PIRP pIrp
-)
-{
-	if (pIrp)
-		IoFreeIrp(pIrp);
-}
-
 struct send_page_completion_info {
 	struct page *page;
+	char *data_buffer;
 	struct _WSK_BUF *wsk_buffer;
 	struct socket *socket;
 };
@@ -131,7 +115,11 @@ NTAPI SendPageCompletionRoutine(
 		/* Also unmaps the pages of the containg Mdl */
 	FreeWskBuffer(completion->wsk_buffer);
 	kfree(completion->wsk_buffer);
-	put_page(completion->page); /* Might free the page if connection is already down */
+
+	if (completion->page)
+		put_page(completion->page); /* Might free the page if connection is already down */
+	if (completion->data_buffer)
+		kfree(completion->data_buffer);
 	kfree(completion);
 	
 	IoFreeIrp(Irp);
@@ -469,6 +457,10 @@ char *GetSockErrorString(NTSTATUS status)
 	return ErrorString;
 }
 
+	/* TODO: maybe one day we also eliminate this function. It
+	 * is currently only used for sending the first packet.
+	 */
+
 LONG
 NTAPI
 Send(
@@ -628,7 +620,7 @@ SendPage(
 	struct send_page_completion_info *completion;
 	NTSTATUS status;
 
-	if (g_SocketsState != INITIALIZED || !socket || !page || ((int) len <= 0))
+	if (g_SocketsState != INITIALIZED || !socket || !socket->sk || !page || ((int) len <= 0))
 		return -EINVAL;
 
 	if (socket->error_status != STATUS_SUCCESS)
@@ -819,53 +811,86 @@ SendLocal(
 	return BytesSent;
 }
 
-LONG
-NTAPI
-SendTo(
-	__in PWSK_SOCKET	WskSocket,
-	__in PVOID			Buffer,
-	__in ULONG			BufferSize,
-	__in_opt PSOCKADDR	RemoteAddress
-)
+/* Do not use printk's in here, will loop forever... */
+
+int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress)
 {
-	KEVENT		CompletionEvent = { 0 };
-	PIRP		Irp = NULL;
-	WSK_BUF		WskBuffer = { 0 };
-	LONG		BytesSent = SOCKET_ERROR;
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
+	struct _IRP *irp;
+	struct _WSK_BUF *WskBuffer;
+	struct send_page_completion_info *completion;
 
-	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || !BufferSize)
-		return SOCKET_ERROR;
+		/* We copy what we send to a tmp buffer, so
+		 * caller may free or use otherwise what we
+		 * have got in Buffer.
+		 */
 
-	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		return SOCKET_ERROR;
+	char *tmp_buffer;
+	NTSTATUS status;
+
+	if (g_SocketsState != INITIALIZED || !socket || !socket->sk || !Buffer || !BufferSize)
+		return -EINVAL;
+
+	if (socket->error_status != STATUS_SUCCESS)
+		return winsock_to_linux_error(socket->error_status);
+
+	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
+	if (WskBuffer == NULL)
+		return -ENOMEM;
+
+	completion = kzalloc(sizeof(*completion), 0, 'DRBD');
+	if (completion == NULL) {
+		kfree(WskBuffer);
+		return -ENOMEM;
 	}
 
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		FreeWskBuffer(&WskBuffer);
-		return SOCKET_ERROR;
+	tmp_buffer = kmalloc(BufferSize, 0, 'TMPB');
+	if (tmp_buffer == NULL) {
+		kfree(completion);
+		kfree(WskBuffer);
+		return -ENOMEM;
+	}
+	memcpy(tmp_buffer, Buffer, BufferSize);
+
+	status = InitWskBuffer(tmp_buffer, BufferSize, WskBuffer, FALSE);
+	if (!NT_SUCCESS(status)) {
+		kfree(completion);
+		kfree(WskBuffer);
+		kfree(tmp_buffer);
+		return -ENOMEM;
 	}
 
-	Status = ((PWSK_PROVIDER_DATAGRAM_DISPATCH) WskSocket->Dispatch)->WskSendTo(
-		WskSocket,
-		&WskBuffer,
+	completion->data_buffer = tmp_buffer;
+	completion->wsk_buffer = WskBuffer;
+	completion->socket = socket;
+
+	irp = IoAllocateIrp(1, FALSE);
+	if (irp == NULL) {
+		kfree(completion);
+		kfree(WskBuffer);
+		kfree(tmp_buffer);
+		FreeWskBuffer(WskBuffer);
+		return -ENOMEM;
+	}
+	IoSetCompletionRoutine(irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
+
+	status = ((PWSK_PROVIDER_DATAGRAM_DISPATCH) socket->sk->Dispatch)->WskSendTo(
+		socket->sk,
+		WskBuffer,
 		0,
 		RemoteAddress,
 		0,
 		NULL,
-		Irp);
-	if (Status == STATUS_PENDING) {
-		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-		Status = Irp->IoStatus.Status;
-	}
+		irp);
 
-	BytesSent = NT_SUCCESS(Status) ? (LONG) Irp->IoStatus.Information : SOCKET_ERROR;
+		/* Again if not yet sent, pretend that it has been sent,
+		 * followup calls to SendTo() on that socket will report
+		 * errors. This is how Linux behaves.
+		 */
 
-	IoFreeIrp(Irp);
-	FreeWskBuffer(&WskBuffer);
-	return BytesSent;
+	if (status == STATUS_PENDING)
+		status = STATUS_SUCCESS;
+
+	return status == STATUS_SUCCESS ? BufferSize : winsock_to_linux_error(status);
 }
 
 LONG NTAPI Receive(

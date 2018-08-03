@@ -134,14 +134,7 @@ SendLocal(
 	__in ULONG			Timeout
 );
 
-LONG
-NTAPI
-SendTo(
-	__in PWSK_SOCKET	WskSocket,
-	__in PVOID			Buffer,
-	__in ULONG			BufferSize,
-	__in_opt PSOCKADDR	RemoteAddress
-	);
+int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress);
 
 LONG
 NTAPI
