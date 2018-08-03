@@ -1,20 +1,12 @@
-TODO: Implement: WinDRBD unresponsive when syslog host can't be reached.
+TODO: Implement: netlink transport over ioctl
 
-	This is most likely because we wait for completion. Not
-	sure yet if we want to fix this, because that probably
-	would cause last messages before BSOD getting lost.
-
-	On the other hand this probably can also fix the
-	does not boot when local interface IP is configured bug
-	(which is severe).
+	(something that can verify permissions of caller)
 
 TODO: Implement: user mode helpers
 
 	switch to ioctl() interface first.
 
-TODO: Implement: netlink transport over ioctl
-
-	(something that can verify permissions of caller)
+TODO: Code quality: #ifdef the Windows netlink code in drbd-utils
 
 TODO: Implement: Rebase windrbd branch of drbd-utils to its master
 	Also for drbd-headers. Then, also use the drbd-headers in
@@ -49,12 +41,6 @@ TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
 	So no need for a tmp storage here. (Maybe put an assert
 	at the beginning of spin_lock_irq that tests for IRQL
 	being PASSIVE_LEVEL).
-
-TODO: Build system: have a make depend target
-	Or at least header file dependencies.
-
-	Working on it .. make deps creates the Makefile.deps
-	Generate it if it does not exists and include it.
 
 TODO: Implement: Make DRBD driver removable.
 
@@ -101,6 +87,56 @@ TODO: Implement: Detect earlier versions of WinDRBD and offer upgrade.
 	(from Devin)
 
 -----------------------------------------------------------------------
+
+TODO: Build system: have a make depend target
+	Or at least header file dependencies.
+
+	Working on it .. make deps creates the Makefile.deps
+	Generate it if it does not exists and include it.
+
+	Update: we just found that it works. Be nice and warn user
+	if Makefile.deps does not exist (or make deps if it does not
+	exist).
+
+	Update: Now generate dependencies and use them rightaway
+	if they don't exist (need gcc on Windows build host for that,
+	however).
+
+	Update: Currently always exectutes make deps, not what we
+	want. Ask Robert or Lars.
+
+TODO: Bug: 3 node setup sometimes does not work.
+
+	If node with node-id 1 is missing, node 2 thinks that node
+	3 is node 1 during connection establishment:
+
+Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
+
+	(but 10.43.8.188 is WIN-F11R93CP9KI).
+
+	Sometimes connection can be established however we get a
+	BSOD then.
+
+	Connection between 2 nodes (Linux and Windows VirtualBox)
+	works, but 3rd node (Windows 10 physical machine) BSOD's.
+
+	Update: Now managed to have stable 3-node setup between
+	Windows 7 VM, Linux VM and Windows 10 PhysM.
+
+	Update: Happened again, this time without the presence of
+	the DESKTOP-0VHSFB5 node (didn't touch config, before doing
+	experiments with logging (log to a non-existing host) it
+	worked).
+
+Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0VHSFB5: Closing unexpected connection from 192.168.56.101
+
+	(note that this log message is from a drbd-9.0.14 Linux
+	host).
+
+	Update: Rebooting the Linux machine solved the problem
+	(resource on Windows wasn't taken down meanwhile) so
+	most likely something that causes Linux DRBD to mistake
+	one Windows host for another.
 
 TODO: Test: Test under memory pressure.
 
@@ -373,9 +409,6 @@ TODO: Bug: test-loop hangs after about 16 iterations.
 
 TODO: Code quality: Re-check the WIN32 / WIN64 thing in drbd_endian.h
 
-TODO: Bug: logging to localhost (windows) seems to cause boot problems (?)
-	When using 192.168.56.101 instead of 127.0.0.1
-
 TODO: Feature: windrbd show-filesystem should check if device is used as
 	a backing device.
 
@@ -507,8 +540,6 @@ TODO: Feature: One day we want to have a more specific error message
 	the drive letter already exists.
 
 TODO: Code quality: cond_wait shouldn't busy loop. How is this done in Linux?
-
-TODO: Code quality: #ifdef the Windows netlink code in drbd-utils
 
 TODO: Code quality: fix the macro redefinition problems in drbd_windows.c
 	For now we have to copy the function prototypes from MSDN.
@@ -2724,24 +2755,6 @@ Done: Installation: Include inf file in package.
 
 	And document how to uninstall on command line.
 
-Done: Features: 3 node setup does not work.
-
-	If node with node-id 1 is missing, node 2 thinks that node
-	3 is node 1 during connection establishment:
-
-Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
-
-	(but 10.43.8.188 is WIN-F11R93CP9KI).
-
-	Sometimes connection can be established however we get a
-	BSOD then.
-
-	Connection between 2 nodes (Linux and Windows VirtualBox)
-	works, but 3rd node (Windows 10 physical machine) BSOD's.
-
-	Update: Now managed to have stable 3-node setup between
-	Windows 7 VM, Linux VM and Windows 10 PhysM.
-
 Done: test backing device failure with small I/O sizes
 
 	Done, if there is not much I/O no BSOD.
@@ -2851,4 +2864,33 @@ Done: Implement: patch DRBD to handle biovec elements larger than 4K.
 
 	Update: Done and tested with protocol A, B and C (plus
 	verifying content. Much faster (for large requests) now.
+
+Done: Bug: logging to localhost (windows) seems to cause boot problems (?)
+	When using 192.168.56.101 instead of 127.0.0.1
+
+	Fixed by making SendTo asynchronous.
+
+Done: Implement: WinDRBD unresponsive when syslog host can't be reached.
+
+	This is most likely because we wait for completion. Not
+	sure yet if we want to fix this, because that probably
+	would cause last messages before BSOD getting lost.
+
+	Update: Implemented this and did a test (log, then crash),
+	over a VirtualBox network, the last logging line gets delivered.
+
+	On the other hand this probably can also fix the
+	does not boot when local interface IP is configured bug
+	(which is severe).
+
+	Update: Yes it does.
+
+	It also might allow us to send while IRP level is raised.
+
+	Update: No it does not. According to MS documentation packet
+	will be sent before WskSendTo returns .. so it is unclear if
+	we needed the patch at all. However, it works and fixes
+	(at least) the Local Network address not boot error (and
+	most likely also the network address not reachable, this
+	requires more testing).
 
