@@ -91,15 +91,15 @@ WIN_LINK_INPUT += wdmsec.lib
 # WIN_LINK_INPUT += setupapi.lib
 
 
-all: versioninfo drbd.sys drbd.cat Makefile.deps
+all: versioninfo drbd.sys drbd.cat
 
 .PHONY: versioninfo
 versioninfo:
 	cd ../.. && ./versioninfo.sh converted-sources || true
 
-drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildcard ../../win4lin/src/*.c)) resource.res Makefile.deps
+drbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildcard ../../win4lin/src/*.c)) resource.res
 	rm -f drbd.pdb "_$@"
-	$(VC) $(WIN_LINK_INPUT) $(filter-out Makefile.deps, $^) $(WIN_LDFLAGS) /PDB:"drbd.pdb" /OUT:"_$@"
+	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"drbd.pdb" /OUT:"_$@"
 	mv -f "_$@" "$@"
 ifdef R
 	cp "$@" ../../to-sign
@@ -123,13 +123,13 @@ else
 endif
 
 ifeq ($(shell uname -o),Cygwin)
-    %.obj: %.c Makefile.deps
+    %.obj: %.c
 	rm -f "$(call fPDB,$<)"
 	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /c /Fo:"$@" /Fd:"$(call fPDB,$<)"
 # /Fi:"$(patsubst %.c,%.E,$<)" ...  cl : Command line warning D9007 : '/Fi:' requires '/P'; option ignored
 	echo "-- $@ done --"
 
-    %.E: %.c Makefile.deps
+    %.E: %.c
 	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /E > "$@"
 
 ../../win4lin/src/util.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
@@ -138,8 +138,6 @@ endif
 
 deps:
 	gcc -D BITS_PER_LONG=64 -D _MSC_VER=1300 -D _WIN32=1 $(C_DEFINES) $(WIN_INCLUDE_DIRS) $(subst /FI,-include ,$(WIN_DEF_INCLUDES)) -M *.c ../../win4lin/src/*.c | perl -pe 's/^(\S+)\.o:/\1.obj \1.E:/' > Makefile.deps 
-
-Makefile.deps: deps
 
 install:
 	mkdir -p "$(DRIVER_DEST_DIR)"
@@ -158,7 +156,6 @@ install:
 
 clean:
 	rm -f *.obj
-	rm -f ../../win4lin/src/*.obj
 
 package: all
 	iexpress /n ../../windrbd.sed
