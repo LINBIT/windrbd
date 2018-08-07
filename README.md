@@ -49,7 +49,7 @@ You need the windrbd branch of drbd-utils. To obtain it, do a:
 
 git clone --branch windrbd --recursive https://github.com/LINBIT/drbd-utils.git
 
-and follow the build instruction in INSTALL.windrbd file of the
+and follow the build instruction in README-windrbd.md file of the
 repo.
 
 To test it, we use the WIN32 API test suite in windrbd-test. This

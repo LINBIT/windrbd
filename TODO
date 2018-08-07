@@ -1,3 +1,5 @@
+TODO: Implement: Allow for enabling fault injection via ioctl (windrbd.exe)
+
 TODO: Implement: netlink transport over ioctl
 
 	(something that can verify permissions of caller)
@@ -5,12 +7,6 @@ TODO: Implement: netlink transport over ioctl
 TODO: Implement: user mode helpers
 
 	switch to ioctl() interface first.
-
-TODO: Code quality: #ifdef the Windows netlink code in drbd-utils
-
-TODO: Implement: Rebase windrbd branch of drbd-utils to its master
-	Also for drbd-headers. Then, also use the drbd-headers in
-	drbd (and remove drbd-headers patches)
 
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
@@ -86,7 +82,27 @@ TODO: Implement: Detect earlier versions of WinDRBD and offer upgrade.
 
 	(from Devin)
 
+TODO: Upstream: drbd-utils make clean should also remove dependencies.
+
+TODO: Upstream: Linux drbd-utils should not complain about WinDRBD device
+
+	On peers. Do that before merging windrbd into master.
+
+TODO: Upgrade to latest DRBD (9.0.15?) before testing next beta.
+
+TODO: Implement: Check if patches still apply with newest drbd-headers
+
+	We've touched some of the windrbd specific code.
+
 -----------------------------------------------------------------------
+
+TODO: Test: test disk none
+
+TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
+
+TODO: Code quality: merge drbd-headers/windrbd branch onto Linux version
+
+TODO: Code quality: use drbd-headers/windrbd merged branch in Linux DRBD
 
 TODO: Build system: have a make depend target
 	Or at least header file dependencies.
@@ -153,8 +169,6 @@ TODO: Implement: We want to have some sort of a regression test suite.
 
 	Update: maybe best is to write a simple new one in bash.
 	(see test-io-larger-than-1m.sh).
-
-TODO: Implement: Allow for enabling fault injection via ioctl (windrbd.exe)
 
 TODO: Usability: disallow windrbd hide-filesystem on a DRBD device.
 
@@ -547,6 +561,14 @@ TODO: Code quality: fix the macro redefinition problems in drbd_windows.c
 
 	Update: check if the prototypes are still needed.
 	Update: we probably reject this.
+
+TODO: Implement: drbdsetup events2 does not work
+
+TODO: Nice to have: get drbdmon (and drbdsetup events2) working.
+
+	Probably this works only with WSL .. CygWin does not have
+	epoll as well as some other required syscalls (kill,
+	sigaddset, sigemptyset, pipe2).
 
 -------------------------------------------------------------------------
 
@@ -2893,4 +2915,32 @@ Done: Implement: WinDRBD unresponsive when syslog host can't be reached.
 	(at least) the Local Network address not boot error (and
 	most likely also the network address not reachable, this
 	requires more testing).
+
+Done: Rebase windrbd branch of drbd-utils to its master
+	Also for drbd-headers. Then, also use the drbd-headers in
+	drbd (and remove drbd-headers patches)
+
+	Done, seems to work. Now make the windrbd branch usable under
+	Linux
+
+Done: Code quality: #ifdef the Windows netlink code in drbd-utils
+
+	windrbd branch should compile and be usable under Linux
+	as well.
+
+	Update: compiles under Linux (when checking out master
+	on drbd-headers, see seperate TODO)
+
+	Also need to remove .*.d files seperately (this should
+	be fixed upstream).
+
+Done: Code quality: fix drbd-headers patches.
+
+	drbd-headers windrbd branch should be as close as possible
+	to Linux DRBD version.
+
+	Done, there are some ugly ifdef WINDRBD's as well as a separate
+	windrbd directory for essential headers (netlink, types, ...)
+
+Done: Code quality: duplicate is_guid() function.
 
