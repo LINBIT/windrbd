@@ -3,6 +3,7 @@
 #include "drbd-device.hpp"
 #include <string.h>
 #include <stdlib.h>
+#include "../win4lin/windrbd_ioctl.h"
 
 struct params p = {
 	drive: "H:",
@@ -52,6 +53,40 @@ printf("opening file %s, mode is %d\n", fname, open_mode);
 	return h;
 }
 
+HANDLE do_open_root_device(int open_mode)
+{
+	HANDLE h;
+	DWORD err;
+
+	int len = snprintf(NULL, 0, "\\\\.\\%s", WINDRBD_ROOT_DEVICE_NAME);
+	char *fname = (char*)malloc(len+2);
+	EXPECT_NE(fname, (void*)0);
+	snprintf(fname, len+1, "\\\\.\\%s", WINDRBD_ROOT_DEVICE_NAME);
+
+printf("opening file %s, mode is %d\n", fname, open_mode);
+
+	switch (open_mode) {
+	case READ_ONLY:
+		h = CreateFile(fname, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		break;
+
+	case READ_WRITE:
+		h = CreateFile(fname, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		break;
+
+	case DIRECT:
+		h = CreateFile(fname, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL);
+		break;
+	}
+
+	err = GetLastError();
+
+	EXPECT_EQ(err, ERROR_SUCCESS);
+	EXPECT_NE(h, INVALID_HANDLE_VALUE);
+
+	return h;
+}
+
 TEST(windrbd, open_device)
 {
 	do_open_device(0);
@@ -66,6 +101,39 @@ TEST(windrbd, open_and_close_device)
 {
 	HANDLE h = do_open_device(0);
 	CloseHandle(h);
+}
+
+TEST(windrbd, is_windrbd_device)
+{
+	HANDLE h = do_open_device(0);
+	DWORD size;
+	BOOL ret;
+	int err;
+
+	ret = DeviceIoControl(h, IOCTL_WINDRBD_IS_WINDRBD_DEVICE, NULL, 0, NULL, 0, &size, NULL);
+	err = GetLastError();
+
+	EXPECT_EQ(err, ERROR_SUCCESS);
+	EXPECT_NE(ret, 0);
+}
+
+TEST(windrbd, open_root_device)
+{
+	do_open_root_device(0);
+}
+
+TEST(windrbd, is_windrbd_root_device)
+{
+	HANDLE h = do_open_root_device(0);
+	DWORD size;
+	BOOL ret;
+	int err;
+
+	ret = DeviceIoControl(h, IOCTL_WINDRBD_ROOT_IS_WINDRBD_ROOT_DEVICE, NULL, 0, NULL, 0, &size, NULL);
+	err = GetLastError();
+
+	EXPECT_EQ(err, ERROR_SUCCESS);
+	EXPECT_NE(ret, 0);
 }
 
 TEST(windrbd, get_drive_geometry)

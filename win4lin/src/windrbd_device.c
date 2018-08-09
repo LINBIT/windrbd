@@ -90,15 +90,29 @@ static void fill_partition_info_ex(struct _PARTITION_INFORMATION_EX *p, struct b
 	p->Mbr.HiddenSectors = 0;
 }
 
+static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+	NTSTATUS status = STATUS_SUCCESS;
+
+	switch (s->Parameters.DeviceIoControl.IoControlCode) {
+	case IOCTL_WINDRBD_ROOT_IS_WINDRBD_ROOT_DEVICE:
+		break;	/* just return success */
+
+	default:
+		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
+		status = STATUS_INVALID_DEVICE_REQUEST;
+	}
+
+	irp->IoStatus.Status = status;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+	return status;
+}
+
 static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-	if (device == mvolRootDeviceObject) {
-		printk(KERN_DEBUG "Root device request.\n");
-
-		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_INVALID_DEVICE_REQUEST;
-	}
+	if (device == mvolRootDeviceObject)
+		return windrbd_root_device_control(device, irp);
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL) {
@@ -114,6 +128,11 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	NTSTATUS status = STATUS_SUCCESS;
 
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
+		/* custom WINDRBD ioctl's */
+	case IOCTL_WINDRBD_IS_WINDRBD_DEVICE:
+		break;	/* just return success */
+
+		/* ioctls defined for block devices (some of them) */
 	case IOCTL_DISK_GET_DRIVE_GEOMETRY:
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _DISK_GEOMETRY)) {
 			status = STATUS_BUFFER_TOO_SMALL;

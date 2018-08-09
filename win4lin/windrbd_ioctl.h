@@ -14,6 +14,8 @@
 )
 #endif
 
+#define WINDRBD_ROOT_DEVICE_NAME "windrbd_control"
+
 /* TODO: are these used by someone else? Doc states that <= 0x8000
  * is reserved by Microsoft, but it does not state how to obtain
  * such a number. Plus the WINDRBD_DEVICEs appear as FILE_DEVICE_DISK.

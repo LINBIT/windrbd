@@ -65,6 +65,8 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	initRegistry(RegistryPath);
 
+		/* TODO: have this string in a header, windrbd_ioctl.h? */
+
 	RtlInitUnicodeString(&nameUnicode, L"\\Device\\windrbd_control");
 	status = IoCreateDevice(DriverObject, sizeof(ROOT_EXTENSION),
        		 &nameUnicode, FILE_DEVICE_UNKNOWN, 0, FALSE, &deviceObject);
