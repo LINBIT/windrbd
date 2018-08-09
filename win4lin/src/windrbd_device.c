@@ -132,6 +132,30 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	case IOCTL_WINDRBD_IS_WINDRBD_DEVICE:
 		break;	/* just return success */
 
+	case IOCTL_WINDRBD_INJECT_FAULTS_ON_COMPLETION:
+		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct windrbd_ioctl_fault_injection)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+		struct windrbd_ioctl_fault_injection *injc = irp->AssociatedIrp.SystemBuffer;
+		if (windrbd_inject_failure_on_completion(dev, injc->after) < 0)
+			status = STATUS_DEVICE_DOES_NOT_EXIST;
+
+		irp->IoStatus.Information = 0;
+		break;
+
+	case IOCTL_WINDRBD_INJECT_FAULTS_ON_REQUEST:
+		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct windrbd_ioctl_fault_injection)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+		struct windrbd_ioctl_fault_injection *injr = irp->AssociatedIrp.SystemBuffer;
+		if (windrbd_inject_failure_on_request(dev, injr->after) < 0)
+			status = STATUS_DEVICE_DOES_NOT_EXIST;
+
+		irp->IoStatus.Information = 0;
+		break;
+
 		/* ioctls defined for block devices (some of them) */
 	case IOCTL_DISK_GET_DRIVE_GEOMETRY:
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _DISK_GEOMETRY)) {

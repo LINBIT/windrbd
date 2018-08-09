@@ -565,6 +565,18 @@ struct block_device {
 	struct _IO_STATUS_BLOCK vol_size_io_status;
 	struct _GET_LENGTH_INFORMATION vol_size_length_information;
 	struct mutex vol_size_mutex;
+
+	/* Fault injection
+	 *
+         * Set this to approx. 1000 to fail on meta data. Set this to
+         * 10000 to fail on Sync. Set this to 100000 (and do I/O) to
+         * fail on user space I/O request.
+         */
+
+	int nr_requests_to_failure_on_completion;
+	int nr_requests_on_completion;
+	int nr_requests_to_failure_on_request;
+	int nr_requests_on_request;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
@@ -1210,6 +1222,7 @@ extern int g_daemon_tcp_port;
 #define SYSLOG_IP_SIZE 64
 extern char g_syslog_ip[];
 
+/* TODO: this is most likely wrong, but will go away soon. */
 int g_handler_use;
 int g_handler_timeout;
 int g_handler_retry;
@@ -1306,6 +1319,7 @@ extern struct task_struct* ct_find_thread(PKTHREAD id);
 //  Lock primitives
 //
 
+/* TODO: this go away as soon as netlink is rewritten. */
 _Acquires_lock_(_Global_critical_region_)
 _IRQL_requires_max_(APC_LEVEL)
 FORCEINLINE
@@ -1355,6 +1369,7 @@ PERESOURCE Resource
     KeLeaveCriticalRegion();
 }
 
+/* TODO: not referenced */
 typedef struct _PTR_ENTRY
 {
     SINGLE_LIST_ENTRY   slink;
@@ -1481,5 +1496,8 @@ int windrbd_umount(struct block_device *dev);
 #define MKDEV(ma,mi)	(((ma) << MINORBITS) | (mi))
 
 void unregister_blkdev(int major, const char *name);
+
+int windrbd_inject_failure_on_completion(struct block_device *bdev, int after);
+int windrbd_inject_failure_on_request(struct block_device *bdev, int after);
 
 #endif // DRBD_WINDOWS_H

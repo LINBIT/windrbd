@@ -1,5 +1,11 @@
 TODO: Implement: Allow for enabling fault injection via ioctl (windrbd.exe)
 
+	Implemented on a per device basis.
+
+	Works once we become primary. What is missing is fault
+	injection via root device (on all devices), so we can
+	test everything before becoming primary.
+
 TODO: Implement: netlink transport over ioctl
 
 	(something that can verify permissions of caller)
@@ -93,6 +99,11 @@ TODO: Upgrade to latest DRBD (9.0.15?) before testing next beta.
 TODO: Implement: Check if patches still apply with newest drbd-headers
 
 	We've touched some of the windrbd specific code.
+
+TODO: Code quality: drbd-patches directory probably should go away.
+
+	Also samples dir. Reorganize a bit (put release description
+	in separate dir, ...)
 
 -----------------------------------------------------------------------
 
