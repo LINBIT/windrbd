@@ -34,6 +34,7 @@
 
 #include "drbd_windows.h"
 #include "windrbd_device.h"
+#include "windrbd_ioctl.h"
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
 
