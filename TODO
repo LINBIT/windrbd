@@ -170,13 +170,6 @@ TODO: Implement: We want to have some sort of a regression test suite.
 	Update: maybe best is to write a simple new one in bash.
 	(see test-io-larger-than-1m.sh).
 
-TODO: Usability: disallow windrbd hide-filesystem on a DRBD device.
-
-	Since we are patching back and forth, show-filesystem won't
-	work later. Plus cannot mount those resources on Linux.
-	hide-filesystem on a DRBD device is in all cases a user
-	error.
-
 TODO: Bug: Assertion triggered:
 
 Jul  9 15:28:24 johannes-VirtualBox kernel: [ 4399.169792] drbd w0/17 drbd26 linbit-wdrbd: ASSERTION (n_oos - peer_device->rs_failed) == 0 FAILED in drbd_resync_finished
@@ -2943,4 +2936,11 @@ Done: Code quality: fix drbd-headers patches.
 	windrbd directory for essential headers (netlink, types, ...)
 
 Done: Code quality: duplicate is_guid() function.
+
+Done: Usability: disallow windrbd hide-filesystem on a DRBD device.
+
+	Since we are patching back and forth, show-filesystem won't
+	work later. Plus cannot mount those resources on Linux.
+	hide-filesystem on a DRBD device is in all cases a user
+	error (except stacking which is deprecated).
 
