@@ -14,6 +14,8 @@ TODO: Implement: user mode helpers
 
 	switch to ioctl() interface first.
 
+TODO: Implement: drbdsetup events2 does not work
+
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
 	FAT32 also not (something with flushing?)
@@ -88,17 +90,46 @@ TODO: Implement: Detect earlier versions of WinDRBD and offer upgrade.
 
 	(from Devin)
 
+TODO: Documentation: drbd-util: Update manpage.
+
+	And write one for windrbd utility.
+
+TODO: Code quality: fix remaining warnings when compiling drbd-utils with-windrbd
+
 TODO: Upstream: drbd-utils make clean should also remove dependencies.
 
 TODO: Upstream: Linux drbd-utils should not complain about WinDRBD device
 
 	On peers. Do that before merging windrbd into master.
 
-TODO: Upgrade to latest DRBD (9.0.15?) before testing next beta.
+TODO: Code quality: fake commit history (git rebase -i master)
 
-TODO: Implement: Check if patches still apply with newest drbd-headers
+	Remove commits reverted later, clean up.
 
-	We've touched some of the windrbd specific code.
+TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
+
+	Avoid #ifdefs whereever possible: for includes see drbd-headers
+	TODO.
+
+	For functions, have a drbdmeta-linux.c and a drbdmeta-windrbd.c
+	and link with the right version.
+
+TODO: Code quality: merge drbd-headers/windrbd branch onto Linux version
+
+	Avoid #ifdefs whereever possible:
+
+	Have windrbd-compat subdir with empty headers to avoid ifdef
+	on includes (windrbd-compat/linux, windrbd-compat/sys) add
+	-I windrbd-compat to Makefile.
+
+	Mountpoint field: leave it in, phil will patch it out for
+	his upstream (Linux mainline)
+
+	Others: Find another way to do it (undef NO_ERROR, ...)
+
+TODO: Code quality: use drbd-headers/windrbd merged branch in Linux DRBD
+
+TODO: Upgrade to latest DRBD (9.0.15) before testing next beta.
 
 TODO: Code quality: drbd-patches directory probably should go away.
 
@@ -108,12 +139,6 @@ TODO: Code quality: drbd-patches directory probably should go away.
 -----------------------------------------------------------------------
 
 TODO: Test: test disk none
-
-TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
-
-TODO: Code quality: merge drbd-headers/windrbd branch onto Linux version
-
-TODO: Code quality: use drbd-headers/windrbd merged branch in Linux DRBD
 
 TODO: Build system: have a make depend target
 	Or at least header file dependencies.
@@ -312,8 +337,6 @@ TODO: Bug: Connection instable when connecting two Windows boxes.
 
 TODO: Documentation: define tests to be run before releases.
 
-TODO: Code quality: Should report I/O error instead of Permission denied on disk failure
-
 TODO: Code quality: Replace WDRBD_ERROR and the like by printk
 
 	The log severities are wrong with these macros.
@@ -354,11 +377,6 @@ TODO: Features: implement flush_workqueue
 
 	For example, drbdadm down takes long when connection goes
 	down.
-
-TODO: Infrastructure: install kernel manpages
-
-	Must install from kernel source using 
-	make mandocs ; sudo make installmandocs
 
 TODO: Code quality: eventually use drbd_rate_limit() on some printk's
 
@@ -429,9 +447,6 @@ TODO: Code quality: Re-check the WIN32 / WIN64 thing in drbd_endian.h
 
 TODO: Feature: windrbd show-filesystem should check if device is used as
 	a backing device.
-
-TODO: Documentation: drbd-util: Update manpage.
-	And write one for windrbd utility.
 
 TODO: Infrastructure: Why doesn't it work on Phil's machine?
 
@@ -553,10 +568,6 @@ TODO: Feature: Check if it is a network share (currently blue screens)
 	letter (symbolic link) in the \DosDevices it will be silently
 	ignored. Warn the user if it is a network share.
 
-TODO: Feature: One day we want to have a more specific error message
-	than Device does not have a disk config if the device or
-	the drive letter already exists.
-
 TODO: Code quality: cond_wait shouldn't busy loop. How is this done in Linux?
 
 TODO: Code quality: fix the macro redefinition problems in drbd_windows.c
@@ -565,8 +576,6 @@ TODO: Code quality: fix the macro redefinition problems in drbd_windows.c
 
 	Update: check if the prototypes are still needed.
 	Update: we probably reject this.
-
-TODO: Implement: drbdsetup events2 does not work
 
 TODO: Nice to have: get drbdmon (and drbdsetup events2) working.
 
@@ -2954,4 +2963,26 @@ Done: Usability: disallow windrbd hide-filesystem on a DRBD device.
 	work later. Plus cannot mount those resources on Linux.
 	hide-filesystem on a DRBD device is in all cases a user
 	error (except stacking which is deprecated).
+
+Done: Implement: Check if patches still apply with newest drbd-headers
+
+	We've touched some of the windrbd specific code.
+
+Rejected: Infrastructure: install kernel manpages
+
+	Must install from kernel source using
+	make mandocs ; sudo make installmandocs
+
+	Somehow this does not work..google is your friend.
+
+Done: Code quality: Should report I/O error instead of Permission denied on disk failure
+
+	We now return STATUS_DEVICE_DOES_NOT_EXIST which translates to
+	a sane windows error code (also under Windows 10?).
+
+Done: Feature: One day we want to have a more specific error message
+	than Device does not have a disk config if the device or
+	the drive letter already exists.
+
+	Now, printing warning generated by kernel.
 
