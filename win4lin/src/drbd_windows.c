@@ -3254,7 +3254,6 @@ static int minor_to_x_name(UNICODE_STRING *name, int minor, const char *mount_po
 
 int windrbd_create_windows_device(struct block_device *bdev)
 {
-	UNICODE_STRING sddl;
         PDEVICE_OBJECT new_device;
 	struct block_device_reference *bdev_ref;
 	NTSTATUS status;
@@ -3262,17 +3261,18 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	if (bdev->windows_device != NULL)
 		printk(KERN_WARNING "Warning: block device %p already has a windows device (%p)\n", bdev, bdev->windows_device);
 
-		/* TODO: understand what this means */
-	RtlInitUnicodeString(&sddl, L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)");
+		/* By default, this creates an object accessible only
+		 * by the Administrator user from user space. If this
+		 * does not work one day, use IoCreateDeviceSecure with
+		 * SDDL_DEVOBJ_SYS_ALL_ADM_ALL as the sddl parameter.
+		 */
 
-	status = IoCreateDeviceSecure(mvolDriverObject, 
+	status = IoCreateDevice(mvolDriverObject, 
 		                sizeof(struct block_device_reference), 
 		                &bdev->path_to_device,
 		                FILE_DEVICE_DISK,
                                 FILE_DEVICE_SECURE_OPEN,
                                 FALSE,
-				&sddl,
-				NULL,
                                 &new_device);
 
 	if (status != STATUS_SUCCESS) {
