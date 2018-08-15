@@ -6,7 +6,7 @@ drive=${DRIVE:-'k:'}
 
 drbdadm up $res
 drbdadm primary $res
-windrbd inject-faults-on-completion $drive 100
+windrbd inject-faults 100 backing-completion $drive
 ./loop.sh 'rw test' 0 ./write-disk-one-meg.sh $drive $[ $size*1024*1024 ] $[ $megs*1024*1024 ] rw
 drbdadm down $res
 # also fault injection disabled here .. it is per backing device.

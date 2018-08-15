@@ -30,6 +30,7 @@
 #include "linux/types.h"
 #include "generic_compat_stuff.h"
 #include "wingenl.h"
+#include "windrbd_ioctl.h"
 
 #include "disp.h"
 #include <linux/mempool.h>
@@ -528,6 +529,11 @@ struct gendisk
 	void * part0; 
 };
 
+struct fault_injection {
+	int nr_requests_to_failure;
+	int nr_requests;
+};
+
 /* TODO: this is used as device extension for the DRBD devices and
    also as block device for the backing devices. This is probably
    not a good idea.
@@ -573,10 +579,8 @@ struct block_device {
          * fail on user space I/O request.
          */
 
-	int nr_requests_to_failure_on_completion;
-	int nr_requests_on_completion;
-	int nr_requests_to_failure_on_request;
-	int nr_requests_on_request;
+	struct fault_injection inject_on_completion;
+	struct fault_injection inject_on_request;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
@@ -1497,7 +1501,6 @@ int windrbd_umount(struct block_device *dev);
 
 void unregister_blkdev(int major, const char *name);
 
-int windrbd_inject_failure_on_completion(struct block_device *bdev, int after);
-int windrbd_inject_failure_on_request(struct block_device *bdev, int after);
+int windrbd_inject_faults(int after, enum fault_injection_location where, struct block_device *windrbd_bdev);
 
 #endif // DRBD_WINDOWS_H

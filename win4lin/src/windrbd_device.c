@@ -99,6 +99,18 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 	case IOCTL_WINDRBD_ROOT_IS_WINDRBD_ROOT_DEVICE:
 		break;	/* just return success */
 
+	case IOCTL_WINDRBD_ROOT_INJECT_FAULTS:
+		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct windrbd_ioctl_fault_injection)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+		struct windrbd_ioctl_fault_injection *inj = irp->AssociatedIrp.SystemBuffer;
+		if (windrbd_inject_faults(inj->after, inj->where, NULL) < 0)
+			status = STATUS_INVALID_DEVICE_REQUEST;
+
+		irp->IoStatus.Information = 0;
+		break;
+
 	default:
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;
@@ -132,25 +144,13 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	case IOCTL_WINDRBD_IS_WINDRBD_DEVICE:
 		break;	/* just return success */
 
-	case IOCTL_WINDRBD_INJECT_FAULTS_ON_COMPLETION:
+	case IOCTL_WINDRBD_INJECT_FAULTS:
 		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct windrbd_ioctl_fault_injection)) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
-		struct windrbd_ioctl_fault_injection *injc = irp->AssociatedIrp.SystemBuffer;
-		if (windrbd_inject_failure_on_completion(dev, injc->after) < 0)
-			status = STATUS_DEVICE_DOES_NOT_EXIST;
-
-		irp->IoStatus.Information = 0;
-		break;
-
-	case IOCTL_WINDRBD_INJECT_FAULTS_ON_REQUEST:
-		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct windrbd_ioctl_fault_injection)) {
-			status = STATUS_BUFFER_TOO_SMALL;
-			break;
-		}
-		struct windrbd_ioctl_fault_injection *injr = irp->AssociatedIrp.SystemBuffer;
-		if (windrbd_inject_failure_on_request(dev, injr->after) < 0)
+		struct windrbd_ioctl_fault_injection *inj = irp->AssociatedIrp.SystemBuffer;
+		if (windrbd_inject_faults(inj->after, inj->where, dev) < 0)
 			status = STATUS_DEVICE_DOES_NOT_EXIST;
 
 		irp->IoStatus.Information = 0;

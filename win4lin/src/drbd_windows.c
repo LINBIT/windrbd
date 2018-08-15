@@ -1791,44 +1791,64 @@ static int is_filesystem(char *buf)
 	return patch_boot_sector(buf, 0, 1);
 }
 
-int windrbd_inject_failure_on_completion(struct block_device *windrbd_bdev, int after)
+static int inject_faults(int after, struct fault_injection *i)
 {
-	struct block_device *bdev = NULL;
-
-	if (windrbd_bdev && windrbd_bdev->drbd_device && windrbd_bdev->drbd_device->ldev) {
-			/* TODO: have flag for selecting meta device */
-		bdev = windrbd_bdev->drbd_device->ldev->backing_bdev;
+	if (after >= 0) {
+		i->nr_requests_to_failure = after;
+		i->nr_requests = 0;
+	} else {
+		i->nr_requests_to_failure = -1;
+		i->nr_requests = -1;
 	}
-	if (bdev) {
-		if (after >= 0) {
-			bdev->nr_requests_to_failure_on_completion = after;
-			bdev->nr_requests_on_completion = 0;
-		} else {
-			bdev->nr_requests_to_failure_on_completion = -1;
-			bdev->nr_requests_on_completion = -1;
-		}
-		return 0;
-	}
-	return -1;
+	return 0;
 }
 
-int windrbd_inject_failure_on_request(struct block_device *windrbd_bdev, int after)
+	/* This returns non-zero status code if fault should be injected */
+
+static int test_inject_faults(struct fault_injection *i, const char *msg)
+{
+	if (i->nr_requests >= 0 && i->nr_requests_to_failure >= 0) {
+		++i->nr_requests;
+
+		if (i->nr_requests > i->nr_requests_to_failure) {
+			printk("Injecting fault after %d requests completed (nr_requests_to_failure is %d) (%s).\n", i->nr_requests, i->nr_requests_to_failure, msg);
+			return 1;
+		} else if (i->nr_requests+10 > i->nr_requests_to_failure) {
+			printk("Will soon inject fault on completion (nr_requests_to_failure is %d, nr_requests_on_completion is %d)\n", i->nr_requests_to_failure, i->nr_requests);
+		}
+	}
+	return 0;
+}
+
+static struct fault_injection inject_on_completion = { -1, -1 };
+static struct fault_injection inject_on_request = { -1, -1 };
+
+int windrbd_inject_faults(int after, enum fault_injection_location where, struct block_device *windrbd_bdev)
 {
 	struct block_device *bdev = NULL;
 
-	if (windrbd_bdev && windrbd_bdev->drbd_device && windrbd_bdev->drbd_device->ldev) {
-			/* TODO: have flag for selecting meta device */
-		bdev = windrbd_bdev->drbd_device->ldev->backing_bdev;
+	if (where == ON_META_DEVICE_ON_REQUEST || where == ON_META_DEVICE_ON_COMPLETION) {
+		if (windrbd_bdev && windrbd_bdev->drbd_device && windrbd_bdev->drbd_device->ldev)
+			bdev = windrbd_bdev->drbd_device->ldev->md_bdev;
 	}
-	if (bdev) {
-		if (after >= 0) {
-			bdev->nr_requests_to_failure_on_request = after;
-			bdev->nr_requests_on_request = 0;
-		} else {
-			bdev->nr_requests_to_failure_on_request = -1;
-			bdev->nr_requests_on_request = -1;
-		}
-		return 0;
+	if (where == ON_BACKING_DEVICE_ON_REQUEST || where == ON_BACKING_DEVICE_ON_COMPLETION) {
+		if (windrbd_bdev && windrbd_bdev->drbd_device && windrbd_bdev->drbd_device->ldev)
+			bdev = windrbd_bdev->drbd_device->ldev->backing_bdev;
+	}
+
+	switch (where) {
+        case ON_ALL_REQUESTS_ON_REQUEST:
+		return inject_faults(after, &inject_on_request);
+	case ON_ALL_REQUESTS_ON_COMPLETION:
+		return inject_faults(after, &inject_on_completion);
+	case ON_META_DEVICE_ON_REQUEST:
+        case ON_BACKING_DEVICE_ON_REQUEST:
+		if (bdev == NULL) return -1;
+		return inject_faults(after, &bdev->inject_on_request);
+        case ON_META_DEVICE_ON_COMPLETION:
+        case ON_BACKING_DEVICE_ON_COMPLETION:
+		if (bdev == NULL) return -1;
+		return inject_faults(after, &bdev->inject_on_completion);
 	}
 	return -1;
 }
@@ -1857,15 +1877,11 @@ NTSTATUS DrbdIoCompletion(
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
 	}
 
-	if (bio->bi_bdev->nr_requests_on_completion >= 0 && bio->bi_bdev->nr_requests_to_failure_on_completion >= 0) {
-		++bio->bi_bdev->nr_requests_on_completion;
-		if (bio->bi_bdev->nr_requests_on_completion > bio->bi_bdev->nr_requests_to_failure_on_completion) {
-			printk("Injecting fault after %d requests completed on completion (nr_requests_to_failure is %d) (assuming completion routing was sent an error).\n", bio->bi_bdev->nr_requests_to_failure_on_completion, bio->bi_bdev->nr_requests_on_completion);
-			status = STATUS_IO_DEVICE_ERROR;
-		} else if (bio->bi_bdev->nr_requests_on_completion+10 > bio->bi_bdev->nr_requests_to_failure_on_completion) {
-			printk("Will soon inject fault on completion (nr_requests_to_failure_on_completion is %d, nr_requests_on_completion is %d)\n", bio->bi_bdev->nr_requests_to_failure_on_completion, bio->bi_bdev->nr_requests_on_completion);
-		}
-	}
+	if (test_inject_faults(&bio->bi_bdev->inject_on_completion, "assuming completion routine was send an error (enabled for this device)"))
+		status = STATUS_IO_DEVICE_ERROR;
+
+	if (test_inject_faults(&inject_on_completion, "assuming completion routine was send an error (enabled for all devices)"))
+		status = STATUS_IO_DEVICE_ERROR;
 
 	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
 		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
@@ -2151,15 +2167,11 @@ static int windrbd_generic_make_request(struct bio *bio)
 		return EIO;
 	}
 
-	if (bio->bi_bdev->nr_requests_on_request >= 0 && bio->bi_bdev->nr_requests_to_failure_on_request >= 0) {
-		++bio->bi_bdev->nr_requests_on_request;
-		if (bio->bi_bdev->nr_requests_on_request > bio->bi_bdev->nr_requests_to_failure_on_request) {
-			printk("Injecting fault after %d requests completed on request (nr_requests_to_failure is %d) (assuming request routing was sent an error).\n", bio->bi_bdev->nr_requests_to_failure_on_request, bio->bi_bdev->nr_requests_on_request);
-			return -EIO;
-		} else if (bio->bi_bdev->nr_requests_on_request+10 > bio->bi_bdev->nr_requests_to_failure_on_request) {
-			printk("Will soon inject fault on request (nr_requests_to_failure_on_request is %d, nr_requests_on_request is %d)\n", bio->bi_bdev->nr_requests_to_failure_on_request, bio->bi_bdev->nr_requests_on_request);
-		}
-	}
+	if (test_inject_faults(&bio->bi_bdev->inject_on_request, "assuming request failed (enabled for this device)"))
+		return -EIO;
+
+	if (test_inject_faults(&inject_on_request, "assuming request failed (enabled for all devices)"))
+		return -EIO;
 
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
@@ -2860,10 +2872,8 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	}
 	block_device->path_to_device = path_to_device;
 
-	block_device->nr_requests_to_failure_on_completion = -1;
-	block_device->nr_requests_on_completion = -1;
-	block_device->nr_requests_to_failure_on_request = -1;
-	block_device->nr_requests_on_request = -1;
+	inject_faults(-1, &block_device->inject_on_completion);
+	inject_faults(-1, &block_device->inject_on_request);
 
 	if (check_if_backingdev_contains_filesystem(block_device)) {
 		printk(KERN_ERR "Backing device contains filesystem, refusing to use it.\n");
@@ -3331,10 +3341,9 @@ struct block_device *bdget(dev_t device_no)
 	block_device->minor = minor;
 	block_device->bd_block_size = 512;
 	block_device->mount_point.Buffer = NULL;
-	block_device->nr_requests_to_failure_on_completion = -1;
-	block_device->nr_requests_on_completion = -1;
-	block_device->nr_requests_to_failure_on_request = -1;
-	block_device->nr_requests_on_request = -1;
+
+	inject_faults(-1, &block_device->inject_on_completion);
+	inject_faults(-1, &block_device->inject_on_request);
 
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);
 	
