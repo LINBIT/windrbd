@@ -19,9 +19,10 @@ int main(int argc, char** argv)
 			{"request-size", required_argument, 0, 'r'},
 			{"mode", required_argument, 0, 'm'},
 			{"stop-on-error", no_argument, 0, 'e'},
+			{"root-device", required_argument, 0, 't'},
 			{0, 0, 0, 0}
 		};
-		c = getopt_long(argc, argv, "d:s:f", my_options, &option_index);
+		c = getopt_long(argc, argv, "d:s:fo:r:m:et:", my_options, &option_index);
 		if (c == -1)
 			break;
 		switch (c) {
@@ -61,6 +62,10 @@ int main(int argc, char** argv)
 			break;
 		case 'e':
 			p.stop_on_error = 1;
+			break;
+		case 't':
+			printf("root device is %s\n", optarg);
+			p.root_device = optarg;
 			break;
 
 		default:

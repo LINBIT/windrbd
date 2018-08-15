@@ -12,6 +12,7 @@ struct params {
 	unsigned long long request_size;
 	enum test_mode mode;
 	int stop_on_error;
+	const char *root_device;
 };
 
 extern struct params p;

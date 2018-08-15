@@ -12,7 +12,8 @@ struct params p = {
 	dump_file: NULL,
 	request_size: 1048576,
 	mode: MODE_WRITE_AND_READ,
-	stop_on_error: 0
+	stop_on_error: 0,
+	root_device: WINDRBD_ROOT_DEVICE_NAME
 };
 
 #define	READ_WRITE 0
@@ -58,10 +59,10 @@ HANDLE do_open_root_device(int open_mode)
 	HANDLE h;
 	DWORD err;
 
-	int len = snprintf(NULL, 0, "\\\\.\\%s", WINDRBD_ROOT_DEVICE_NAME);
+	int len = snprintf(NULL, 0, "\\\\.\\%s", p.root_device);
 	char *fname = (char*)malloc(len+2);
 	EXPECT_NE(fname, (void*)0);
-	snprintf(fname, len+1, "\\\\.\\%s", WINDRBD_ROOT_DEVICE_NAME);
+	snprintf(fname, len+1, "\\\\.\\%s", p.root_device);
 
 printf("opening file %s, mode is %d\n", fname, open_mode);
 
