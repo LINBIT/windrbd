@@ -20,12 +20,14 @@
 */
 
 #include <wdm.h>
+#include <wdmsec.h>
 #include <ntstrsafe.h>
 #include <ntddk.h>
 #include "drbd_windows.h"
 #include "windrbd_device.h"
 #include "drbd_wingenl.h"	
 #include "disp.h"
+#include "windrbd_ioctl.h"
 
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
@@ -65,18 +67,18 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	initRegistry(RegistryPath);
 
-		/* TODO: have this string in a header, windrbd_ioctl.h? */
-
-	RtlInitUnicodeString(&nameUnicode, L"\\Device\\windrbd_control");
-	status = IoCreateDevice(DriverObject, sizeof(ROOT_EXTENSION),
-       		 &nameUnicode, FILE_DEVICE_UNKNOWN, 0, FALSE, &deviceObject);
+	RtlInitUnicodeString(&nameUnicode, L"\\Device\\" WINDRBD_ROOT_DEVICE_NAME);
+	status = IoCreateDeviceSecure(DriverObject, sizeof(ROOT_EXTENSION),
+			 &nameUnicode, FILE_DEVICE_UNKNOWN,
+			FILE_DEVICE_SECURE_OPEN, FALSE,
+			&SDDL_DEVOBJ_SYS_ALL_ADM_ALL, NULL, &deviceObject);
 	if (!NT_SUCCESS(status))
 	{
 		WDRBD_ERROR("Can't create root, err=%x\n", status);
 		return status;
 	}
 
-	RtlInitUnicodeString(&linkUnicode, L"\\DosDevices\\windrbd_control");
+	RtlInitUnicodeString(&linkUnicode, L"\\DosDevices\\" WINDRBD_ROOT_DEVICE_NAME);
 	status = IoCreateSymbolicLink(&linkUnicode, &nameUnicode);
 	if (!NT_SUCCESS(status))
 	{
