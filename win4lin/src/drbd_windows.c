@@ -750,6 +750,7 @@ static void free_mdls_and_irp(struct bio *bio)
 		bio->bi_irps[r]->MdlAddress = NULL;
 		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 
+			/* TODO: IoCompleteRequest? */
 		IoFreeIrp(bio->bi_irps[r]);
 	}
 

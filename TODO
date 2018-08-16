@@ -8,6 +8,47 @@ TODO: Implement: user mode helpers
 
 TODO: Implement: drbdsetup events2 does not work
 
+TODO: Documentation: drbd-util: Update manpage.
+
+	And write one for windrbd utility.
+
+TODO: Code quality: fix remaining warnings when compiling drbd-utils with-windrbd
+
+TODO: Upstream: drbd-utils make clean should also remove dependencies.
+
+TODO: Feature: Mount to NTFS directories.
+
+	For now, at least prepare user space to support that.
+
+TODO: Upstream: Linux drbd-utils should not complain about WinDRBD device
+
+	On peers. Do that before merging windrbd into master.
+
+TODO: Code quality: fake commit history (git rebase -i master)
+
+	Remove commits reverted later, clean up.
+
+TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
+
+	Avoid #ifdefs whereever possible: for includes see drbd-headers
+	TODO.
+
+	For functions, have a drbdmeta-linux.c and a drbdmeta-windrbd.c
+	and link with the right version.
+
+TODO: Code quality: merge drbd-headers/windrbd branch onto Linux version
+
+	Avoid #ifdefs whereever possible:
+
+	Have windrbd-compat subdir with empty headers to avoid ifdef
+	on includes (windrbd-compat/linux, windrbd-compat/sys) add
+	-I windrbd-compat to Makefile.
+
+	Mountpoint field: leave it in, phil will patch it out for
+	his upstream (Linux mainline)
+
+	Others: Find another way to do it (undef NO_ERROR, ...)
+
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
 	FAT32 also not (something with flushing?)
@@ -82,43 +123,6 @@ TODO: Implement: Detect earlier versions of WinDRBD and offer upgrade.
 
 	(from Devin)
 
-TODO: Documentation: drbd-util: Update manpage.
-
-	And write one for windrbd utility.
-
-TODO: Code quality: fix remaining warnings when compiling drbd-utils with-windrbd
-
-TODO: Upstream: drbd-utils make clean should also remove dependencies.
-
-TODO: Upstream: Linux drbd-utils should not complain about WinDRBD device
-
-	On peers. Do that before merging windrbd into master.
-
-TODO: Code quality: fake commit history (git rebase -i master)
-
-	Remove commits reverted later, clean up.
-
-TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
-
-	Avoid #ifdefs whereever possible: for includes see drbd-headers
-	TODO.
-
-	For functions, have a drbdmeta-linux.c and a drbdmeta-windrbd.c
-	and link with the right version.
-
-TODO: Code quality: merge drbd-headers/windrbd branch onto Linux version
-
-	Avoid #ifdefs whereever possible:
-
-	Have windrbd-compat subdir with empty headers to avoid ifdef
-	on includes (windrbd-compat/linux, windrbd-compat/sys) add
-	-I windrbd-compat to Makefile.
-
-	Mountpoint field: leave it in, phil will patch it out for
-	his upstream (Linux mainline)
-
-	Others: Find another way to do it (undef NO_ERROR, ...)
-
 TODO: Code quality: use drbd-headers/windrbd merged branch in Linux DRBD
 
 TODO: Upgrade to latest DRBD (9.0.15) before testing next beta.
@@ -128,7 +132,33 @@ TODO: Code quality: drbd-patches directory probably should go away.
 	Also samples dir. Reorganize a bit (put release description
 	in separate dir, ...)
 
+TODO: Infrastructure: Why doesn't it work on Phil's machine?
+
+TODO: Code quality: review TODOs in source code.
+
+TODO: Code quality: cond_wait shouldn't busy loop. How is this done in Linux?
+
+TODO: Features: implement flush_workqueue
+
+	For example, drbdadm down takes long when connection goes
+	down.
+
+TODO: Code quality: Implement function stubs created when integrating DRBD 9.0.9
+
+TODO: Documentation: white paper for linbit website.
+
+	Until end of June 2018
+	Update: maybe refer to the README.md.
+
+	Update: No we need a TechGuide. Postponed to September.
+
 -----------------------------------------------------------------------
+
+TODO: Research: Understand IRP cancellation
+
+TODO: Test: Somehow test if referencing overlay thread works as intended.
+
+TODO: Test: Test with MS SQL server
 
 TODO: Test: test disk none
 
@@ -333,13 +363,6 @@ TODO: Code quality: Replace WDRBD_ERROR and the like by printk
 
 	The log severities are wrong with these macros.
 
-TODO: Documentation: white paper for linbit website.
-
-	Until end of June 2018
-	Update: maybe refer to the README.md.
-
-	Update: No we need a TechGuide. Postponed to September.
-
 TODO: Test: Test sendbuffer full (rety on Metadata socket).
 
 	See if supported at all (have printk's if not). Update:
@@ -365,14 +388,7 @@ TODO: Performance: Sync is still somewhat slow when windrbd is SyncTarget
 	backing device is slow? When Windows is SyncTarget it is
 	faster (3 sec) than when it is SyncSource (7 sec) doing I/O
 
-TODO: Features: implement flush_workqueue
-
-	For example, drbdadm down takes long when connection goes
-	down.
-
 TODO: Code quality: eventually use drbd_rate_limit() on some printk's
-
-TODO: Code quality: Implement function stubs created when integrating DRBD 9.0.9
 
 TODO: Feature: on patching boot sector, inform Windows that file system is
 	raw now.
@@ -440,10 +456,6 @@ TODO: Code quality: Re-check the WIN32 / WIN64 thing in drbd_endian.h
 TODO: Feature: windrbd show-filesystem should check if device is used as
 	a backing device.
 
-TODO: Infrastructure: Why doesn't it work on Phil's machine?
-
-TODO: Feature: Mount to NTFS directories.
-
 TODO: Test: drbdadm adjust changing mount point most likely doesn't work now.
 
 TODO: Code quality: fix the case where backing device contains a file system.
@@ -479,10 +491,6 @@ TODO: Code quality: RCU needs change
 	only (we always tested single CPU, so this was not a problem).
 	Implement Phil's algorithm.
 
-TODO: Feature: on windrbd show/hide filesystem check if attached.
-
-	And refuse to touch it if yes.
-
 TODO: Feature: mandatory locking for backing device.
 
 	This is unclear. Test how backing device is locked right now
@@ -492,8 +500,6 @@ TODO: Test: Kernel really should report an error if Bind() fails.
 	For example if the local IP address does not exist.
 
 	Update: Test if this is fixed now.
-
-TODO: Code quality: review TODOs in source code.
 
 TODO: Performance: Someday we want to pass user level buffer to driver directly
 	on READ requests instead of having a temp buffer (needed
@@ -537,7 +543,13 @@ TODO: Feature: when losing Quorum go into read only mode.
 	(n .. total number of nodes) valid nodes.
 	This is currently being implemented in DRBD
 
+	Update: We leave checking to DRBD, is there something
+	we need to do in WinDRBD emulation layer? I suppose no.
+
 TODO: Performance: I/O seems to be rather slow even when being unconnected (and primary)
+
+	We now patched request to be 1M (instead of 4K). Is it still
+	there?
 
 TODO: Research: check out mantech wdrbd and see if it works (and why)
 	Update: mantech WDRBD lacks many features we have
@@ -559,8 +571,6 @@ TODO: Feature: Check if it is a network share (currently blue screens)
 	appear in the \DosDevices directory. If we create a drive
 	letter (symbolic link) in the \DosDevices it will be silently
 	ignored. Warn the user if it is a network share.
-
-TODO: Code quality: cond_wait shouldn't busy loop. How is this done in Linux?
 
 TODO: Code quality: fix the macro redefinition problems in drbd_windows.c
 	For now we have to copy the function prototypes from MSDN.
@@ -2989,4 +2999,8 @@ Done: Implement: Allow for enabling fault injection via ioctl (windrbd.exe)
 	Update: Now reworked interface, also possible to inject
 	faults before anything else (drbdadm primary, drbdadm up)
 	happens.
+
+Duplicate: Feature: on windrbd show/hide filesystem check if attached.
+
+	And refuse to touch it if yes.
 
