@@ -73,6 +73,7 @@ static PPTR_ENTRY pop_msocket_entry(void * ptr)
 * @brief    multicast를 위한 전역 소켓 리스트 변수(gSocketList)를 활용하여
 *           리스트내에 있는 socket으로 모두 send를 보내는 일을 한다.
 */
+/* We need that */
 int drbd_genl_multicast_events(struct sk_buff * skb, const struct sib_info *sib)
 {
     int ret = 0;
@@ -109,6 +110,8 @@ int drbd_genl_multicast_events(struct sk_buff * skb, const struct sib_info *sib)
 
     return ret;
 }
+
+/* TODO: unreferenced */
 
 NTSTATUS reply_error(int type, int flags, int error, struct genl_info * pinfo)
 {
@@ -168,6 +171,8 @@ static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netli
     return err;
 }
 
+/* We need that. This is originally a linux kernel function. */
+
 int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info)
 {
     int sent;
@@ -197,6 +202,9 @@ typedef struct _NETLINK_WORK_ITEM{
 } NETLINK_WORK_ITEM, *PNETLINK_WORK_ITEM;
 
 // DW-1229: using global attr may cause BSOD when we receive plural netlink requests. use local attr.
+
+/* should be static */
+
 struct genl_info * genl_info_new(struct nlmsghdr * nlh, PWSK_SOCKET socket, struct nlattr **attrs)
 {
     struct genl_info * pinfo = ExAllocateFromNPagedLookasideList(&genl_info_mempool);
@@ -222,6 +230,7 @@ struct genl_info * genl_info_new(struct nlmsghdr * nlh, PWSK_SOCKET socket, stru
     return pinfo;
 }
 
+/* should be static */
 __inline
 void _genlmsg_init(struct sk_buff * pmsg, size_t size)
 {
@@ -231,6 +240,7 @@ void _genlmsg_init(struct sk_buff * pmsg, size_t size)
     pmsg->end = size - sizeof(*pmsg);
 }
 
+/* We need that. Linux kernel function */
 struct sk_buff *genlmsg_new(size_t payload, gfp_t flags)
 {
     struct sk_buff *skb;
@@ -258,11 +268,15 @@ struct sk_buff *genlmsg_new(size_t payload, gfp_t flags)
 * nlmsg_free - free a netlink message
 * @skb: socket buffer of netlink message
 */
+
+/* We need that. Kernel function */
+
 __inline void nlmsg_free(struct sk_buff *skb)
 {
     ExFreeToNPagedLookasideList(&genl_msg_mempool, skb);
 }
 
+/* will go away. Have to initialize sockets somewhere else */
 void
 InitWskNetlink(void * pctx)
 {
@@ -330,6 +344,7 @@ end:
     PsTerminateSystemThread(status);
 }
 
+/* will also go away */
 NTSTATUS
 ReleaseWskNetlink()
 {
@@ -365,6 +380,7 @@ static int w_connect(struct drbd_work *w, int cancel)
 }
 #endif
 
+/* We need that. originally a DRBD function? */
 static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 {
     if (pops->doit)
@@ -436,6 +452,7 @@ static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 }
 
 
+/* We need that. Originally a DRBD function? */
 int drbd_tla_parse(struct nlmsghdr *nlh, struct nlattr **attr)
 {
     drbd_genl_family.id = nlh->nlmsg_type;
@@ -446,6 +463,7 @@ int drbd_tla_parse(struct nlmsghdr *nlh, struct nlattr **attr)
 	    drbd_tla_nl_policy);
 }
 
+/* We need that. Originally a DRBD function? */
 struct genl_ops * get_drbd_genl_ops(u8 cmd)
 {
     struct genl_ops * pops = NULL;
@@ -460,6 +478,7 @@ struct genl_ops * get_drbd_genl_ops(u8 cmd)
     return NULL;
 }
 
+/* We need some of that, but completely reworked */
 
 VOID
 NetlinkWorkThread(PVOID context)
@@ -595,6 +614,7 @@ cleanup:
     }
 }
 
+/* This will go away */
 // Listening socket callback which is invoked whenever a new connection arrives.
 NTSTATUS
 WSKAPI

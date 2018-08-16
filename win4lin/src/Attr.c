@@ -2,6 +2,8 @@
 #include "drbd_wingenl.h"
 #include "drbd_windows.h"
 
+/* TODO: from which Linux source file was this taken? Which version? */
+
 static u16 nla_attr_minlen[NLA_TYPE_MAX + 1] __read_mostly = {
     [NLA_U8] = sizeof(u8),
     [NLA_U16] = sizeof(u16),
