@@ -790,6 +790,7 @@ extern void write_unlock_irq(spinlock_t *lock);
 extern void mutex_init(struct mutex *m);
 extern void sema_init(struct semaphore *s, int limit);
 
+/* TODO: those should return int. These are Linux functions */
 extern NTSTATUS mutex_lock(struct mutex *m);
 extern int mutex_lock_interruptible(struct mutex *m);
 extern NTSTATUS mutex_lock_timeout(struct mutex *m, ULONG msTimeout);
@@ -1479,8 +1480,6 @@ struct blk_plug_cb {
 };
 
 extern struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data, int size);
-
-extern struct mutex g_genl_mutex;
 
 extern int dtt_initialize(void);
 

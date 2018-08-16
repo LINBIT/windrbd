@@ -24,6 +24,10 @@
 #include "drbd_int.h"
 #include "drbd_polymorph_printk.h"
 
+/* TODO: this file should also go away. Move the really needed globals
+   to the files where they are actually used.
+ */
+
 PDEVICE_OBJECT	mvolRootDeviceObject;
 PDRIVER_OBJECT	mvolDriverObject;
 PETHREAD		g_NetlinkServerThread;
@@ -34,7 +38,6 @@ EX_SPIN_LOCK g_rcuLock;
 struct ratelimit_state drbd_ratelimit_state;
 
 struct mutex notification_mutex;
-struct mutex g_genl_mutex;
 KSPIN_LOCK	transport_classes_lock;
 
 

@@ -2,7 +2,7 @@
 
 // globals
 
-extern struct mutex g_genl_mutex;
+static struct mutex g_genl_mutex;
 
 static ERESOURCE    genl_multi_socket_res_lock;
 
@@ -12,6 +12,7 @@ PTR_ENTRY gSocketList =
     .ptr = NULL,
 };
 
+/* TODO: this goes away */
 /**
 * @brief    Multicast를 위한 socket 포인터를 list에 push 한다.
 */
@@ -201,13 +202,36 @@ typedef struct _NETLINK_WORK_ITEM{
     PWSK_SOCKET Socket;
 } NETLINK_WORK_ITEM, *PNETLINK_WORK_ITEM;
 
+
+/* TODO: into drbd_limits.h */
+#define DRBD_MAX_ATTRS 128
+
+static struct genl_info *genl_info_alloc_init(struct nlmsghdr * nlh)
+{
+	struct genl_info *info = kzalloc(sizeof(*info), 0, 'DRBD');
+	if (!info)
+		return NULL;
+
+	info->attrs = kmalloc(sizeof(*info->attrs)*DRBD_MAX_ATTRS, 0, 'DRBD');
+	if (!info->attrs) {
+		kfree(info);
+		return NULL;
+	}
+	info->seq = nlh->nlmsg_seq;
+	info->nlhdr = nlh;
+	info->genlhdr = nlmsg_data(nlh);
+	info->userhdr = genlmsg_data(nlmsg_data(nlh));
+	info->snd_seq = nlh->nlmsg_seq;
+	info->snd_portid = nlh->nlmsg_pid;
+
+	return info;
+}
+
+/* TODO: this should go away */
 // DW-1229: using global attr may cause BSOD when we receive plural netlink requests. use local attr.
-
-/* should be static */
-
 struct genl_info * genl_info_new(struct nlmsghdr * nlh, PWSK_SOCKET socket, struct nlattr **attrs)
 {
-    struct genl_info * pinfo = ExAllocateFromNPagedLookasideList(&genl_info_mempool);
+	struct genl_info * pinfo = ExAllocateFromNPagedLookasideList(&genl_info_mempool);
 
     if (!pinfo)
     {
@@ -283,6 +307,8 @@ InitWskNetlink(void * pctx)
     NTSTATUS    status;
     PWSK_SOCKET netlink_socket = NULL;
     SOCKADDR_IN LocalAddress = {0};
+
+        mutex_init(&g_genl_mutex);
 
 	/* We have to do that here, else Windows will deadlock
 	 * on booting. 
@@ -381,8 +407,15 @@ static int w_connect(struct drbd_work *w, int cancel)
 #endif
 
 /* We need that. originally a DRBD function? */
+/* Update: no, sort of kernel function, but now this is in
+ * genl_family_rcv_msg()
+ */
+
 static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 {
+	/* TODO: and if dump? According to net/netlink/genetlink.c:500
+	 * (function genl_family_rcv_msg) this has to be checked first.
+	 */
     if (pops->doit)
     {
 #if 0
@@ -476,6 +509,53 @@ struct genl_ops * get_drbd_genl_ops(u8 cmd)
     }
 
     return NULL;
+}
+
+int windrbd_process_netlink_packet(void *msg, size_t msg_size, void *reply, size_t *reply_size)
+{
+	struct nlmsghdr *nlh;
+	struct genl_info *info;
+	int ret;
+	NTSTATUS status;
+
+	if (msg == NULL)
+		return -EINVAL;
+
+	nlh = (struct nlmsghdr *)msg;
+	info = genl_info_alloc_init(nlh);
+	if (info == NULL)
+		return -ENOMEM;
+
+	drbd_tla_parse(nlh, info->attrs);
+	if (!nlmsg_ok(nlh, msg_size)) {
+		ret = -EINVAL;
+		goto out_free_info;
+	}
+	unsigned int cmd = info->genlhdr->cmd;
+	struct genl_ops *op = get_drbd_genl_ops(cmd);
+
+	if (!op) {
+		ret = -EINVAL;
+		goto out_free_info;
+	}
+
+	printk("drbd cmd(%s:%u)\n", drbd_genl_cmd_to_str(cmd), cmd);
+
+	status = mutex_lock_timeout(&g_genl_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
+	if (status != STATUS_SUCCESS) {
+		printk("failed to acquire the mutex, probably a previous drbd command is stuck.\n");
+		ret = -EAGAIN;
+		goto out_free_info;
+	}
+		/* This actually calls the routine in drbd_nl.c */
+	ret = _genl_ops(op, info);
+	mutex_unlock(&g_genl_mutex);
+
+out_free_info:
+	kfree(info->attrs);
+	kfree(info);
+
+	return ret;
 }
 
 /* We need some of that, but completely reworked */
