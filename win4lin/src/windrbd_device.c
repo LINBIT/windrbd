@@ -111,6 +111,37 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 		irp->IoStatus.Information = 0;
 		break;
 
+	case IOCTL_WINDRBD_ROOT_DRBD_CMD:
+		size_t in_bytes = s->Parameters.DeviceIoControl.InputBufferLength;
+		size_t bytes_returned = s->Parameters.DeviceIoControl.OutputBufferLength;
+		void *cmd, *reply;
+
+		if (in_bytes > NLMSG_GOODSIZE) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+			/* We need an extra copy here, since Windows kernel
+			 * interface uses the same buffer for input and output.
+			 */
+
+		cmd = kmalloc(in_bytes, 0, 'DRBD');
+		if (cmd == NULL) {
+			status = STATUS_INSUFFICIENT_RESOURCES;
+			break;
+		}
+		RtlCopyMemory(cmd, irp->AssociatedIrp.SystemBuffer, in_bytes);
+
+		int err = windrbd_process_netlink_packet(cmd, in_bytes, irp->AssociatedIrp.SystemBuffer, &bytes_returned);
+
+		if (err != 0) {
+			kfree(cmd);
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+		irp->IoStatus.Information = bytes_returned;
+		status = STATUS_SUCCESS;
+		break;
+
 	default:
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;
