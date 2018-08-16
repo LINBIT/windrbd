@@ -75,6 +75,12 @@ static PPTR_ENTRY pop_msocket_entry(void * ptr)
 *           리스트내에 있는 socket으로 모두 send를 보내는 일을 한다.
 */
 /* We need that */
+
+/* Update: this is a generated function originally. It calls genl_multicast
+ * with drbd as the genl_family and events as the multicast group.
+ * If we really have time we keep that and implement genl_multicast()
+ * instead.
+ */
 int drbd_genl_multicast_events(struct sk_buff * skb, const struct sib_info *sib)
 {
     int ret = 0;
