@@ -110,8 +110,13 @@ struct genl_info
     struct nlattr **	attrs;
     u32             snd_seq;
     u32			    snd_portid;
+	/* those two will go away */
     PWSK_SOCKET		NetlinkSock;
     LIST_ENTRY      ListEntry;
+
+	void *reply_buf;
+	size_t reply_size;
+	size_t *reply_size_ret;
 };
 
 /**

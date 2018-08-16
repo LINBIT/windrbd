@@ -174,7 +174,7 @@ static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netli
 
 /* We need that. This is originally a linux kernel function. */
 
-int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info)
+int genlmsg_unicast_netlink(struct sk_buff *skb, struct genl_info *info)
 {
     int sent;
 
@@ -191,6 +191,16 @@ int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info)
         WDRBD_WARN("sent Error=0x%x. sock=%p, data=%p sz=%d\n", sent, info->NetlinkSock, skb->data, skb->len);
         return -2; // return non-zero!
     }
+}
+
+int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info)
+{
+	if (skb->len > info->reply_size)
+		return -ENOSPC;
+
+	RtlCopyMemory(info->reply_buf, skb->data, skb->len);
+	*info->reply_size_ret = skb->len;
+	return 0;
 }
 
 NPAGED_LOOKASIDE_LIST drbd_workitem_mempool;
@@ -525,6 +535,11 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size, void *reply, size
 	info = genl_info_alloc_init(nlh);
 	if (info == NULL)
 		return -ENOMEM;
+
+	info->reply_buf = reply;
+	info->reply_size = *reply_size;
+	info->reply_size_ret = reply_size;
+	*reply_size = 0;
 
 	drbd_tla_parse(nlh, info->attrs);
 	if (!nlmsg_ok(nlh, msg_size)) {
