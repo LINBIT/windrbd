@@ -112,32 +112,43 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 		break;
 
 	case IOCTL_WINDRBD_ROOT_DRBD_CMD:
+printk("IOCTL_WINDRBD_ROOT_DRBD_CMD\n");
 		size_t in_bytes = s->Parameters.DeviceIoControl.InputBufferLength;
 		size_t bytes_returned = s->Parameters.DeviceIoControl.OutputBufferLength;
 		void *cmd, *reply;
 
+printk("1\n");
 		if (in_bytes > NLMSG_GOODSIZE) {
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 		}
+printk("i: %d\n", *(int*)irp->AssociatedIrp.SystemBuffer);
+printk("2\n");
 			/* We need an extra copy here, since Windows kernel
 			 * interface uses the same buffer for input and output.
 			 */
 
 		cmd = kmalloc(in_bytes, 0, 'DRBD');
+printk("3\n");
 		if (cmd == NULL) {
 			status = STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
+printk("4\n");
 		RtlCopyMemory(cmd, irp->AssociatedIrp.SystemBuffer, in_bytes);
 
+printk("5 i: %d\n", *(int*)cmd);
 		int err = windrbd_process_netlink_packet(cmd, in_bytes, irp->AssociatedIrp.SystemBuffer, &bytes_returned);
+printk("6 err is %d bytes returned is %d\n", err, bytes_returned);
+
+		kfree(cmd);
 
 		if (err != 0) {
-			kfree(cmd);
+printk("7\n");
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 		}
+printk("8\n");
 		irp->IoStatus.Information = bytes_returned;
 		status = STATUS_SUCCESS;
 		break;

@@ -18,3 +18,4 @@ Setting send buffer size (via netconf / sndbuf-size) is not supported
 
 Windows applications that use undocumented ioctl system calls (like winsat).
 
+Need Administrator priviledges even for drbdadm status and the like.

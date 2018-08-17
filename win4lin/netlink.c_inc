@@ -186,6 +186,7 @@ int genlmsg_unicast_netlink(struct sk_buff *skb, struct genl_info *info)
 
     if (info->NetlinkSock == 0)
     {
+printk("no netlink socket\n");
         return -1; // return non-zero!
     }
 	if ((sent = SendLocal(info->NetlinkSock, skb->data, skb->len, 0, 0)) == (skb->len))
@@ -194,18 +195,33 @@ int genlmsg_unicast_netlink(struct sk_buff *skb, struct genl_info *info)
     }
     else
     {
-        WDRBD_WARN("sent Error=0x%x. sock=%p, data=%p sz=%d\n", sent, info->NetlinkSock, skb->data, skb->len);
+        printk("sent Error=0x%x. sock=%p, data=%p sz=%d\n", sent, info->NetlinkSock, skb->data, skb->len);
         return -2; // return non-zero!
     }
 }
 
 int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info)
 {
-	if (skb->len > info->reply_size)
+	if (info->reply_buf == NULL || info->reply_size_ret == NULL) {
+		printk("Reply buffer not via ioctl\n");
+		return genlmsg_unicast_netlink(skb, info);
+	}
+printk("1\n");
+	if (skb->len+(*info->reply_size_ret) > info->reply_size) {
+		printk("Reply buffer too small (is %d bytes, need %d + %d bytes).\n", info->reply_size, skb->len, *info->reply_size_ret);
 		return -ENOSPC;
+	}
 
-	RtlCopyMemory(info->reply_buf, skb->data, skb->len);
-	*info->reply_size_ret = skb->len;
+printk("buf: %p offset: %d len: %d\n", info->reply_buf, *info->reply_size_ret, skb->len);
+printk("2\n");
+	RtlCopyMemory(((char*)info->reply_buf)+(*info->reply_size_ret), skb->data, skb->len);
+{int i; 
+int *data = (int*) (((char*)info->reply_buf)+(*info->reply_size_ret)); 
+for (i=0;i<skb->len/sizeof(int);i++) {
+printk("i: %d data: %d (%x)\n", i, data[i], data[i]);
+}
+}
+	*info->reply_size_ret += skb->len;
 	return 0;
 }
 
@@ -534,47 +550,64 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size, void *reply, size
 	int ret;
 	NTSTATUS status;
 
+printk("msg is %p msg_size is %d reply is %p reply_size is %p (%d)\n", msg, msg_size, reply, reply_size, *reply_size);
+printk("1\n");
 	if (msg == NULL)
 		return -EINVAL;
 
+printk("2\n");
 	nlh = (struct nlmsghdr *)msg;
+printk("len: %d type: %d flags: %d seq: %d pid: %d\n", nlh->nlmsg_len, nlh->nlmsg_type, nlh->nlmsg_flags, nlh->nlmsg_seq, nlh->nlmsg_pid);
 	info = genl_info_alloc_init(nlh);
+printk("3\n");
 	if (info == NULL)
 		return -ENOMEM;
 
+printk("4\n");
 	info->reply_buf = reply;
 	info->reply_size = *reply_size;
 	info->reply_size_ret = reply_size;
 	*reply_size = 0;
 
+printk("5\n");
 	drbd_tla_parse(nlh, info->attrs);
+printk("6 msg_size is %d\n", msg_size);
 	if (!nlmsg_ok(nlh, msg_size)) {
 		ret = -EINVAL;
 		goto out_free_info;
 	}
+printk("7\n");
 	unsigned int cmd = info->genlhdr->cmd;
 	struct genl_ops *op = get_drbd_genl_ops(cmd);
 
+printk("8\n");
 	if (!op) {
 		ret = -EINVAL;
 		goto out_free_info;
 	}
 
+printk("9\n");
 	printk("drbd cmd(%s:%u)\n", drbd_genl_cmd_to_str(cmd), cmd);
 
+printk("a\n");
 	status = mutex_lock_timeout(&g_genl_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
 	if (status != STATUS_SUCCESS) {
 		printk("failed to acquire the mutex, probably a previous drbd command is stuck.\n");
 		ret = -EAGAIN;
 		goto out_free_info;
 	}
+printk("b\n");
 		/* This actually calls the routine in drbd_nl.c */
 	ret = _genl_ops(op, info);
+printk("c\n");
 	mutex_unlock(&g_genl_mutex);
+printk("d\n");
 
 out_free_info:
+printk("e\n");
 	kfree(info->attrs);
 	kfree(info);
+printk("f\n");
 
 	return ret;
 }
