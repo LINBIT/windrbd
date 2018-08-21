@@ -543,12 +543,40 @@ struct genl_ops * get_drbd_genl_ops(u8 cmd)
     return NULL;
 }
 
+struct genl_thread_args {
+	struct genl_info *info;
+	struct genl_ops *op;
+	KEVENT completion_event;
+	int ret;
+};
+
+	/* We need to execute the actual netlink procedure in a separate
+	 * thread, else driver verifier will complain (with BSOD) when
+	 * we do I/O (ZwQuerySymbolicLinkObject() in attach for example)
+	 * while in user mode context.
+	 */
+
+static NTSTATUS windrbd_netlink_thread(void *context)
+{
+	struct genl_thread_args *args = (struct genl_thread_args*) context;
+
+printk("1\n");
+		/* This actually calls the routine in drbd_nl.c */
+	args->ret = _genl_ops(args->op, args->info);
+printk("2\n");
+	KeSetEvent(&args->completion_event, 0, FALSE);
+printk("3\n");
+	return STATUS_SUCCESS;
+}
+
 int windrbd_process_netlink_packet(void *msg, size_t msg_size, void *reply, size_t *reply_size)
 {
 	struct nlmsghdr *nlh;
 	struct genl_info *info;
 	int ret;
 	NTSTATUS status;
+	struct genl_thread_args args;
+	HANDLE h;
 
 printk("msg is %p msg_size is %d reply is %p reply_size is %p (%d)\n", msg, msg_size, reply, reply_size, *reply_size);
 printk("1\n");
@@ -596,10 +624,37 @@ printk("a\n");
 		ret = -EAGAIN;
 		goto out_free_info;
 	}
+
+printk("a1\n");
+
+	args.op = op;
+	args.info = info;
+	KeInitializeEvent(&args.completion_event, SynchronizationEvent, FALSE);
+	args.ret = -ENOMEM;
+
 printk("b\n");
-		/* This actually calls the routine in drbd_nl.c */
-	ret = _genl_ops(op, info);
+	status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, windrbd_netlink_thread, (void *) &args);
+	if (!NT_SUCCESS(status)) {
+		printk("Couldn't create netlink thread, status is %x\n", status);
+		ret = -ENOMEM;
+		goto out_unlock_mutex;
+	}
+printk("b1\n");
+	status = KeWaitForSingleObject(&args.completion_event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+	if (!NT_SUCCESS(status)) {
+		printk("Couldn't wait for netlink thread completion event, status is %x\n", status);
+		ret = -ENOMEM;
+		goto out_close_handle;
+	}
+printk("b2\n");
+	ret = args.ret;
+
+out_close_handle:
+	ZwClose(h);
+
 printk("c\n");
+
+out_unlock_mutex:
 	mutex_unlock(&g_genl_mutex);
 printk("d\n");
 
