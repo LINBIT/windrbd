@@ -930,6 +930,7 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
 	__clear_bit(flag, &q->queue_flags);
 }
 
+/* TODO: returning ULONGLONG? */
 static __inline ULONG_PTR JIFFIES()
 {
 	LARGE_INTEGER Tick;

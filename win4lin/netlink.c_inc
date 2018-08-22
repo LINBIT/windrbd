@@ -1,5 +1,6 @@
 ﻿#define cli_info(_minor, _fmt, ...)
 
+/* TODO: make this a seperate C file (again) */
 // globals
 
 static struct mutex g_genl_mutex;
@@ -210,7 +211,7 @@ struct genl_reply {
 	struct list_head buffer_list;
 	struct list_head list;
 	u32 portid;
-/* TODO: timestamp now and reap them after 10sec or so timeout */
+	ULONGLONG last_used;
 };
 
 static LIST_HEAD(reply_buffers);
@@ -291,6 +292,64 @@ static struct genl_reply_buffer *next_buffer(struct genl_reply *r)
 	return NULL;
 }
 
+static int delete_reply_if_empty(struct genl_reply *r)
+{
+	if (list_empty(&r->buffer_list)) {
+		list_del(&r->list);
+		kfree(r); 	/* TODO: also remove references from multicast elements */
+		return 1;
+	}
+	return 0;
+}
+
+static void touch(struct genl_reply *r)
+{
+	if (r)
+		r->last_used = jiffies;
+}
+
+static void delete_reply(struct genl_reply *r)
+{
+	struct list_head *bh, *bhn;
+	struct genl_reply_buffer *b;
+	if (!r)
+		return;
+
+	list_for_each_safe(bh, bhn, &r->buffer_list) {
+		b = list_entry(bh, struct genl_reply_buffer, list);
+		list_del(&b->list);
+		kfree(b->buf);
+		kfree(b);
+	}
+	list_del(&r->list);
+	kfree(r); 	/* TODO: also remove references from multicast elements */
+}
+
+#define MAX_REPLY_AGE 10
+
+static NTSTATUS reply_reaper(void *unused)
+{
+	LARGE_INTEGER interval;
+	struct list_head *rh, *rhn;
+	struct genl_reply *r;
+	ULONGLONG now;
+
+	for (;;) {
+		interval.QuadPart = -10*1000*1000;   /* one second relative */
+		KeDelayExecutionThread(KernelMode, FALSE, &interval);
+		now = jiffies;
+
+		mutex_lock(&genl_reply_mutex);
+		list_for_each_safe(rh, rhn, &reply_buffers) {
+			r = list_entry(rh, struct genl_reply, list);
+			if (r->last_used + MAX_REPLY_AGE*1000 < now)
+				delete_reply(r);
+		}
+		mutex_unlock(&genl_reply_mutex);
+	}
+	return STATUS_SUCCESS;
+}
+
 size_t fill_buffer(void *vbuf, size_t remaining_size, u32 portid)
 {
 	struct genl_reply *r;
@@ -300,15 +359,16 @@ size_t fill_buffer(void *vbuf, size_t remaining_size, u32 portid)
 
 printk("portid: %d\n", portid);
 printk("1\n");
-	r = find_reply(portid);
-	if (r == NULL)
-		return 0;
-
-printk("2\n");
+	bytes_copied = 0;
 	mutex_lock(&genl_reply_mutex);
 
+	r = find_reply(portid);
+	if (r == NULL)
+		goto out_mutex;
+
+	touch(r);
+printk("2\n");
 printk("3\n");
-	bytes_copied = 0;
 	for (;;) {
 printk("4\n");
 		int nbs = next_buffer_size(r);
@@ -327,9 +387,14 @@ printk("6\n");
 		remaining_size -= nbs;
 		bytes_copied += nbs;
 		buf += nbs;
+
+printk("6a\n");
+		if (delete_reply_if_empty(r))
+			break;
 printk("7\n");
 	}
 printk("8\n");
+out_mutex:
 	mutex_unlock(&genl_reply_mutex);
 	return bytes_copied;
 }
@@ -349,6 +414,7 @@ printk("1\n");
 	portid = info->snd_portid;
 	mutex_lock(&genl_reply_mutex);
 	reply = find_or_create_reply(portid);
+	touch(reply);
 printk("portid: %d\n", portid);
 printk("2\n");
 	if (reply == NULL)
@@ -492,10 +558,16 @@ InitWskNetlink(void * pctx)
     NTSTATUS    status;
     PWSK_SOCKET netlink_socket = NULL;
     SOCKADDR_IN LocalAddress = {0};
+	HANDLE h;
 
         mutex_init(&g_genl_mutex);
         mutex_init(&genl_reply_mutex);
         mutex_init(&genl_multicast_mutex);
+
+	status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, reply_reaper, NULL);
+
+	if (!NT_SUCCESS(status))
+		printk(KERN_WARNING "Couldn't start reply reaper, expect memory leaks.\n");
 
 	/* We have to do that here, else Windows will deadlock
 	 * on booting. 
