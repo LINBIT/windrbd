@@ -111,44 +111,37 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 		irp->IoStatus.Information = 0;
 		break;
 
-	case IOCTL_WINDRBD_ROOT_DRBD_CMD:
-printk("IOCTL_WINDRBD_ROOT_DRBD_CMD\n");
+	case IOCTL_WINDRBD_ROOT_SEND_NL_PACKET:
 		size_t in_bytes = s->Parameters.DeviceIoControl.InputBufferLength;
-		size_t bytes_returned = s->Parameters.DeviceIoControl.OutputBufferLength;
-		void *cmd, *reply;
 
-printk("1\n");
 		if (in_bytes > NLMSG_GOODSIZE) {
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 		}
-printk("i: %d\n", *(int*)irp->AssociatedIrp.SystemBuffer);
-printk("2\n");
-			/* We need an extra copy here, since Windows kernel
-			 * interface uses the same buffer for input and output.
-			 */
+		int err = windrbd_process_netlink_packet(irp->AssociatedIrp.SystemBuffer, in_bytes);
+		irp->IoStatus.Information = 0;
 
-		cmd = kmalloc(in_bytes, 0, 'DRBD');
-printk("3\n");
-		if (cmd == NULL) {
-			status = STATUS_INSUFFICIENT_RESOURCES;
-			break;
-		}
-printk("4\n");
-		RtlCopyMemory(cmd, irp->AssociatedIrp.SystemBuffer, in_bytes);
+		if (err != 0) /* TODO: sure? */
+			status = STATUS_INVALID_DEVICE_REQUEST;
+		else
+			status = STATUS_SUCCESS;
 
-printk("5 i: %d\n", *(int*)cmd);
-		int err = windrbd_process_netlink_packet(cmd, in_bytes, irp->AssociatedIrp.SystemBuffer, &bytes_returned);
-printk("6 err is %d bytes returned is %d\n", err, bytes_returned);
+		break;
 
-		kfree(cmd);
+	case IOCTL_WINDRBD_ROOT_RECEIVE_NL_PACKET:
+		size_t out_max_bytes = s->Parameters.DeviceIoControl.OutputBufferLength;
+		size_t bytes_returned;
+		u32 portid;
 
-		if (err != 0) {
-printk("7\n");
+		if (s->Parameters.DeviceIoControl.InputBufferLength != sizeof(struct windrbd_ioctl_genl_portid)) {
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 		}
-printk("8\n");
+		portid = ((struct windrbd_ioctl_genl_portid*) irp->AssociatedIrp.SystemBuffer)->portid;
+
+		bytes_returned = windrbd_receive_netlink_packets(irp->AssociatedIrp.SystemBuffer, out_max_bytes, portid);
+
+			/* may be 0, if there is no data */
 		irp->IoStatus.Information = bytes_returned;
 		status = STATUS_SUCCESS;
 		break;

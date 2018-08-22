@@ -1505,6 +1505,7 @@ void unregister_blkdev(int major, const char *name);
 	/* These are WinDRBD specific ioctls. */
 
 int windrbd_inject_faults(int after, enum fault_injection_location where, struct block_device *windrbd_bdev);
-int windrbd_process_netlink_packet(void *msg, size_t msg_size, void *reply, size_t *reply_size);
+int windrbd_process_netlink_packet(void *msg, size_t msg_size);
+size_t windrbd_receive_netlink_packets(void *vbuf, size_t remaining_size, u32 portid);
 
 #endif // DRBD_WINDOWS_H

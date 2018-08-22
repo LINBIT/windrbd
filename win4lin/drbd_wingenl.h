@@ -114,9 +114,8 @@ struct genl_info
     PWSK_SOCKET		NetlinkSock;
     LIST_ENTRY      ListEntry;
 
-	void *reply_buf;
-	size_t reply_size;
-	size_t *reply_size_ret;
+	int is_ioctl_packet;	/* will also go away */
+
 };
 
 /**

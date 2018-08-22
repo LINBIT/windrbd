@@ -212,6 +212,7 @@ struct genl_reply {
 	struct list_head list;
 	u32 portid;
 	ULONGLONG last_used;
+/* TODO: if someone is polling us do not reap */
 };
 
 static LIST_HEAD(reply_buffers);
@@ -350,7 +351,7 @@ static NTSTATUS reply_reaper(void *unused)
 	return STATUS_SUCCESS;
 }
 
-size_t fill_buffer(void *vbuf, size_t remaining_size, u32 portid)
+size_t windrbd_receive_netlink_packets(void *vbuf, size_t remaining_size, u32 portid)
 {
 	struct genl_reply *r;
 	struct genl_reply_buffer *b;
@@ -401,7 +402,7 @@ out_mutex:
 
 int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info)
 {
-	if (info->reply_buf == NULL || info->reply_size_ret == NULL) {
+	if (!info->is_ioctl_packet) {
 		printk("Reply buffer not via ioctl\n");
 		return genlmsg_unicast_netlink(skb, info);
 	}
@@ -410,35 +411,27 @@ int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info)
 	struct genl_reply_buffer *buffer;
 	int ret = -ENOMEM;
 
-printk("1\n");
 	portid = info->snd_portid;
 	mutex_lock(&genl_reply_mutex);
 	reply = find_or_create_reply(portid);
 	touch(reply);
-printk("portid: %d\n", portid);
-printk("2\n");
 	if (reply == NULL)
 		goto out_mutex;
 
-printk("3\n");
 	buffer = new_buffer(reply);
 	if (buffer == NULL)
 		goto out_mutex;
 
-printk("4\n");
 	buffer->buf = kmalloc(skb->len, 0, 'DRBD');
 	if (buffer->buf == NULL)
 		goto out_mutex;
 		/* TODO: clean up. */
 
-printk("5\n");
 	buffer->len = skb->len;
 	RtlCopyMemory(buffer->buf, skb->data, skb->len);
 
-printk("6\n");
 	ret = 0;
 
-printk("7\n");
 out_mutex:
 	mutex_unlock(&genl_reply_mutex);
 	return ret;
@@ -796,7 +789,7 @@ printk("3\n");
 	return STATUS_SUCCESS;
 }
 
-int windrbd_process_netlink_packet(void *msg, size_t msg_size, void *reply, size_t *reply_size)
+int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 {
 	struct nlmsghdr *nlh;
 	struct genl_info *info;
@@ -805,7 +798,7 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size, void *reply, size
 	struct genl_thread_args args;
 	HANDLE h;
 
-printk("msg is %p msg_size is %d reply is %p reply_size is %p (%d)\n", msg, msg_size, reply, reply_size, *reply_size);
+printk("msg is %p msg_size is %d\n", msg, msg_size);
 printk("1\n");
 	if (msg == NULL)
 		return -EINVAL;
@@ -818,12 +811,8 @@ printk("3\n");
 	if (info == NULL)
 		return -ENOMEM;
 
+	info->is_ioctl_packet = 1;
 printk("4\n");
-	info->reply_buf = reply;
-	info->reply_size = *reply_size;
-	info->reply_size_ret = reply_size;
-	*reply_size = 0;
-
 printk("5\n");
 	drbd_tla_parse(nlh, info->attrs);
 printk("6 msg_size is %d\n", msg_size);
@@ -875,10 +864,6 @@ printk("b1\n");
 	}
 printk("b2\n");
 	ret = args.ret;
-
-printk("reply_size before: %d\n", *reply_size);
-	*reply_size = fill_buffer(reply, info->reply_size, nlh->nlmsg_pid);
-printk("reply_size after: %d\n", *reply_size);
 
 out_close_handle:
 	ZwClose(h);
