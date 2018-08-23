@@ -24,6 +24,13 @@ TODO: Upstream: Linux drbd-utils should not complain about WinDRBD device
 
 	On peers. Do that before merging windrbd into master.
 
+TODO: Upstream: drbdsetup generic_get() handles multiple packets wrong.
+
+	If the DONE packet is not the first packet, it is not detected.
+
+	Probably nobody noticed because recvmsg() always returned only
+	one packet (socket is a DGRAM socket).
+
 TODO: Code quality: fake commit history (git rebase -i master)
 
 	Remove commits reverted later, clean up.

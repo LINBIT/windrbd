@@ -1,5 +1,4 @@
-﻿#define cli_info(_minor, _fmt, ...)
-
+﻿
 /* TODO: make this a seperate C file (again) */
 // globals
 
@@ -187,7 +186,6 @@ int genlmsg_unicast_netlink(struct sk_buff *skb, struct genl_info *info)
 
     if (info->NetlinkSock == 0)
     {
-printk("no netlink socket\n");
         return -1; // return non-zero!
     }
 	if ((sent = SendLocal(info->NetlinkSock, skb->data, skb->len, 0, 0)) == (skb->len))
@@ -358,8 +356,6 @@ size_t windrbd_receive_netlink_packets(void *vbuf, size_t remaining_size, u32 po
 	size_t bytes_copied;
 	char *buf = vbuf;
 
-printk("portid: %d\n", portid);
-printk("1\n");
 	bytes_copied = 0;
 	mutex_lock(&genl_reply_mutex);
 
@@ -368,33 +364,31 @@ printk("1\n");
 		goto out_mutex;
 
 	touch(r);
-printk("2\n");
-printk("3\n");
 	for (;;) {
-printk("4\n");
 		int nbs = next_buffer_size(r);
 		if (nbs == -1)
 			break;
 		if (nbs > remaining_size)
 			break;
-printk("5\n");
 
 		b = next_buffer(r);
 		RtlCopyMemory(buf, b->buf, nbs);
 		kfree(b->buf);
 		kfree(b);
 
-printk("6\n");
 		remaining_size -= nbs;
 		bytes_copied += nbs;
 		buf += nbs;
 
-printk("6a\n");
 		if (delete_reply_if_empty(r))
 			break;
-printk("7\n");
+
+			/* Workaround for drbdsetup being not able
+			 * to handle multiple packets. Remove this
+			 * break if it is fixed.
+			 */
+		break;
 	}
-printk("8\n");
 out_mutex:
 	mutex_unlock(&genl_reply_mutex);
 	return bytes_copied;
@@ -780,12 +774,9 @@ static NTSTATUS windrbd_netlink_thread(void *context)
 {
 	struct genl_thread_args *args = (struct genl_thread_args*) context;
 
-printk("1\n");
 		/* This actually calls the routine in drbd_nl.c */
 	args->ret = _genl_ops(args->op, args->info);
-printk("2\n");
 	KeSetEvent(&args->completion_event, 0, FALSE);
-printk("3\n");
 	return STATUS_SUCCESS;
 }
 
@@ -798,42 +789,30 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 	struct genl_thread_args args;
 	HANDLE h;
 
-printk("msg is %p msg_size is %d\n", msg, msg_size);
-printk("1\n");
 	if (msg == NULL)
 		return -EINVAL;
 
-printk("2\n");
 	nlh = (struct nlmsghdr *)msg;
-printk("len: %d type: %d flags: %d seq: %d pid: %d\n", nlh->nlmsg_len, nlh->nlmsg_type, nlh->nlmsg_flags, nlh->nlmsg_seq, nlh->nlmsg_pid);
 	info = genl_info_alloc_init(nlh);
-printk("3\n");
 	if (info == NULL)
 		return -ENOMEM;
 
 	info->is_ioctl_packet = 1;
-printk("4\n");
-printk("5\n");
 	drbd_tla_parse(nlh, info->attrs);
-printk("6 msg_size is %d\n", msg_size);
 	if (!nlmsg_ok(nlh, msg_size)) {
 		ret = -EINVAL;
 		goto out_free_info;
 	}
-printk("7\n");
 	unsigned int cmd = info->genlhdr->cmd;
 	struct genl_ops *op = get_drbd_genl_ops(cmd);
 
-printk("8\n");
 	if (!op) {
 		ret = -EINVAL;
 		goto out_free_info;
 	}
 
-printk("9\n");
 	printk("drbd cmd(%s:%u)\n", drbd_genl_cmd_to_str(cmd), cmd);
 
-printk("a\n");
 	status = mutex_lock_timeout(&g_genl_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
 	if (status != STATUS_SUCCESS) {
 		printk("failed to acquire the mutex, probably a previous drbd command is stuck.\n");
@@ -841,45 +820,34 @@ printk("a\n");
 		goto out_free_info;
 	}
 
-printk("a1\n");
-
 	args.op = op;
 	args.info = info;
 	KeInitializeEvent(&args.completion_event, SynchronizationEvent, FALSE);
 	args.ret = -ENOMEM;
 
-printk("b\n");
 	status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, windrbd_netlink_thread, (void *) &args);
 	if (!NT_SUCCESS(status)) {
 		printk("Couldn't create netlink thread, status is %x\n", status);
 		ret = -ENOMEM;
 		goto out_unlock_mutex;
 	}
-printk("b1\n");
 	status = KeWaitForSingleObject(&args.completion_event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 	if (!NT_SUCCESS(status)) {
 		printk("Couldn't wait for netlink thread completion event, status is %x\n", status);
 		ret = -ENOMEM;
 		goto out_close_handle;
 	}
-printk("b2\n");
 	ret = args.ret;
 
 out_close_handle:
 	ZwClose(h);
 
-
-printk("c\n");
-
 out_unlock_mutex:
 	mutex_unlock(&g_genl_mutex);
-printk("d\n");
 
 out_free_info:
-printk("e\n");
 	kfree(info->attrs);
 	kfree(info);
-printk("f\n");
 
 	return ret;
 }
