@@ -110,11 +110,6 @@ struct genl_info
     struct nlattr **	attrs;
     u32             snd_seq;
     u32			    snd_portid;
-	/* those two will go away */
-    PWSK_SOCKET		NetlinkSock;
-    LIST_ENTRY      ListEntry;
-
-	int is_ioctl_packet;	/* will also go away */
 
 };
 

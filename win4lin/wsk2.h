@@ -71,12 +71,6 @@ NTAPI
 
 NTSTATUS
 NTAPI
-CloseSocketLocal(
-	__in PWSK_SOCKET WskSocket
-);
-
-NTSTATUS
-NTAPI
   CloseSocket(
 	__in PWSK_SOCKET WskSocket
 	);
@@ -93,16 +87,6 @@ NTSTATUS NTAPI
 Disconnect(
 	__in PWSK_SOCKET	WskSocket
 	);
-
-PWSK_SOCKET
-NTAPI
-SocketConnect(
-	__in USHORT		SocketType,
-	__in ULONG		Protocol,
-	__in PSOCKADDR	LocalAddress, // address family desc. required
-	__in PSOCKADDR	RemoteAddress, // address family desc. required
-	__inout  NTSTATUS* pStatus
-);
 
 LONG
 NTAPI
@@ -122,16 +106,6 @@ SendPage(
         __in ULONG              offset,
         __in ULONG              len,
         __in ULONG              Flags
-);
-
-LONG
-NTAPI
-SendLocal(
-	__in PWSK_SOCKET	WskSocket,
-	__in PVOID			Buffer,
-	__in ULONG			BufferSize,
-	__in ULONG			Flags,
-	__in ULONG			Timeout
 );
 
 int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress);
@@ -185,25 +159,6 @@ extern void sock_release(void  *sock);
 #define HTON_SHORT(n) (((((unsigned short)(n) & 0xFFu  )) << 8) | \
     (((unsigned short)(n)& 0xFF00u) >> 8))
 
-extern PWSK_SOCKET netlink_server_socket;
-
-extern
-NTSTATUS InitWskEvent();
-
-extern
-PWSK_SOCKET CreateSocketEvent(
-__in ADDRESS_FAMILY	AddressFamily,
-__in USHORT			SocketType,
-__in ULONG			Protocol,
-__in ULONG			Flags
-);
-
-extern
-NTSTATUS CloseWskEventSocket();
-
-extern
-void ReleaseProviderNPI();
-
 char *GetSockErrorString(NTSTATUS status);
 
 int sock_create_kern(
@@ -219,8 +174,8 @@ int sock_create_kern(
 NTSTATUS
 NTAPI
 SetEventCallbacks(
-	__in PWSK_SOCKET Socket,
-	__in LONG                       mask
+       __in PWSK_SOCKET Socket,
+       __in LONG                       mask
 );
 
 char *get_ip(char *buf, struct sockaddr_storage_win *addr);

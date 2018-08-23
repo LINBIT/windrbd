@@ -2929,152 +2929,8 @@ out_no_windows_device:
 
 int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait)
 {
-	SOCKADDR_IN		LocalAddress = { 0 }, RemoteAddress = { 0 };
-	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
-	PWSK_SOCKET		Socket = NULL;
-	char *cmd_line;
-	int leng;
-	char ret = 0;
-
-	if (0 == g_handler_use)
-	{
-		return -1;
-	}
-
-	leng = strlen(path) + 1 + strlen(argv[0]) + 1 + strlen(argv[1]) + 1 + strlen(argv[2]) + 1;
-	cmd_line = kcalloc(leng, 1, 0, '64DW');
-	if (!cmd_line)
-	{
-		WDRBD_ERROR("malloc(%d) failed", leng);
-		return -1;
-	}
-
-    sprintf(cmd_line, "%s %s\0", argv[1], argv[2]); // except "drbdadm.exe" string
-    WDRBD_INFO("malloc len(%d) cmd_line(%s)\n", leng, cmd_line);
-
-    Socket = CreateSocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSK_FLAG_CONNECTION_SOCKET);
-	if (Socket == NULL) {
-		WDRBD_ERROR("CreateSocket() returned NULL\n");
-		kfree(cmd_line);
-		return -1; 
-	}
-
-	LocalAddress.sin_family = AF_INET;
-	LocalAddress.sin_addr.s_addr = INADDR_ANY;
-	LocalAddress.sin_port = 0; 
-
-	Status = Bind(Socket, (PSOCKADDR) &LocalAddress);
-	if (!NT_SUCCESS(Status)) {
-		goto error;
-	}
-
-	RemoteAddress.sin_family = AF_INET;
-	RemoteAddress.sin_addr.S_un.S_un_b.s_b1 = 127;
-	RemoteAddress.sin_addr.S_un.S_un_b.s_b2 = 0;
-	RemoteAddress.sin_addr.S_un.S_un_b.s_b3 = 0;
-	RemoteAddress.sin_addr.S_un.S_un_b.s_b4 = 1;
-	RemoteAddress.sin_port = HTONS(g_daemon_tcp_port); 
-
-	Status = Connect(Socket, (PSOCKADDR) &RemoteAddress);
-	if (!NT_SUCCESS(Status)) {
-		goto error;;
-	}
-	else if (Status == STATUS_TIMEOUT)
-	{
-		WDRBD_INFO("Connect() timeout. IRQL(%d)\n", KeGetCurrentIrql());
-		goto error;
-	}
-
-	WDRBD_INFO("Connected to the %u.%u.%u.%u:%u  status:0x%08X IRQL(%d)\n", 
-			RemoteAddress.sin_addr.S_un.S_un_b.s_b1,
-			RemoteAddress.sin_addr.S_un.S_un_b.s_b2,
-			RemoteAddress.sin_addr.S_un.S_un_b.s_b3,
-			RemoteAddress.sin_addr.S_un.S_un_b.s_b4,
-			HTONS(RemoteAddress.sin_port),
-			Status, KeGetCurrentIrql());
-
-	{
-		LONG readcount;
-		char hello[2];
-		WDRBD_TRACE("Wait Hi\n");
-		if ((readcount = Receive(Socket, &hello, 2, 0, g_handler_timeout)) == 2)
-		{
-			WDRBD_TRACE("recv HI!!! \n");
-			//CloseSocket(Socket);
-			//kfree(cmd_line);
-			//return ret; 
-		}
-		else
-		{
-			if (readcount == -EAGAIN)
-			{
-				WDRBD_INFO("error rx hi timeout(%d) g_handler_retry(%d) !!!!\n", g_handler_timeout, g_handler_retry);
-			}
-			else
-			{
-				WDRBD_INFO("error recv status=0x%x\n", readcount);
-			}
-			ret = -1;
-
-			goto error;
-		}
-
-		if ((Status = SendLocal(Socket, cmd_line, strlen(cmd_line), 0, g_handler_timeout)) != (long) strlen(cmd_line))
-		{
-			WDRBD_ERROR("send command fail stat=0x%x\n", Status);
-			ret = -1;
-			goto error;
-		}
-
-		//WDRBD_INFO("send local done %s! Disconnect\n", Status);
-		//Disconnect(Socket);
-
-		if ((readcount = Receive(Socket, &ret, 1, 0, g_handler_timeout)) > 0)
-		{
-			WDRBD_TRACE("recv val=0x%x\n", ret);
-			//CloseSocket(Socket);
-			//kfree(cmd_line);
-			//return ret; 
-		}
-		else
-		{
-			if (readcount == -EAGAIN)
-			{
-				WDRBD_INFO("recv retval timeout(%d)!\n", g_handler_timeout);
-			}
-			else
-			{
-			
-				WDRBD_INFO("recv status=0x%x\n", readcount);
-			}
-			ret = -1;
-			goto error;
-		}
-
-		if ((Status = SendLocal(Socket, "BYE", 3, 0, g_handler_timeout)) != 3)
-		{
-			WDRBD_ERROR("send bye fail stat=0x%x\n", Status); // ignore!
-		}
-
-		WDRBD_TRACE("Disconnect:shutdown...\n", Status);
-		Disconnect(Socket);
-
-		/*
-		if ((readcount = Receive(Socket, &ret, 1, 0, 0)) > 0)
-		{
-			WDRBD_INFO("recv dummy  val=0x%x\n", ret);// ignore!
-		}
-		else
-		{
-			WDRBD_INFO("recv dummy  status=%d\n", readcount);// ignore!
-		}
-		*/
-	}
-
-error:
-	CloseSocket(Socket);
-	kfree(cmd_line);
-	return ret;
+	printk("Not implemented yet.\n");
+	return -EOPNOTSUPP;
 }
 
 void panic(const char *fmt, ...)
@@ -3084,6 +2940,7 @@ void panic(const char *fmt, ...)
 	va_start(args, fmt);
 	printk(fmt, args);
 	va_end(args);
+		/* TODO: no */
 	KeBugCheckEx(0xddbd, (ULONG_PTR)__FILE__, (ULONG_PTR)__func__, 0x12345678, 0xd8bdd8bd);
 }
 

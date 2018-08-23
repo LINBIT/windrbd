@@ -1237,8 +1237,7 @@ int g_handler_retry;
 extern PETHREAD	g_NetlinkServerThread;
 ///
 
-extern
-void InitWskNetlink(void * pctx);
+extern NTSTATUS init_wsk_and_netlink(void *unused);
 
 extern
 NTSTATUS ReleaseWskNetlink();
@@ -1325,56 +1324,6 @@ extern struct task_struct* ct_find_thread(PKTHREAD id);
 //
 //  Lock primitives
 //
-
-/* TODO: this go away as soon as netlink is rewritten. */
-_Acquires_lock_(_Global_critical_region_)
-_IRQL_requires_max_(APC_LEVEL)
-FORCEINLINE
-VOID
-MvfAcquireResourceExclusive(
-_Inout_ _Requires_lock_not_held_(*_Curr_) _Acquires_exclusive_lock_(*_Curr_)
-PERESOURCE Resource
-)
-{
-    NT_ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
-    NT_ASSERT(ExIsResourceAcquiredExclusiveLite(Resource) ||
-        !ExIsResourceAcquiredSharedLite(Resource));
-
-    KeEnterCriticalRegion();
-    (VOID)ExAcquireResourceExclusiveLite(Resource, TRUE);
-}
-
-_Acquires_lock_(_Global_critical_region_)
-_IRQL_requires_max_(APC_LEVEL)
-FORCEINLINE
-VOID
-MvfAcquireResourceShared(
-_Inout_ _Requires_lock_not_held_(*_Curr_) _Acquires_shared_lock_(*_Curr_)
-PERESOURCE Resource
-)
-{
-    NT_ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
-
-    KeEnterCriticalRegion();
-    (VOID)ExAcquireResourceSharedLite(Resource, TRUE);
-}
-
-_Releases_lock_(_Global_critical_region_)
-_IRQL_requires_max_(APC_LEVEL)
-FORCEINLINE
-VOID
-MvfReleaseResource(
-_Inout_ _Requires_lock_held_(*_Curr_) _Releases_lock_(*_Curr_)
-PERESOURCE Resource
-)
-{
-    NT_ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
-    NT_ASSERT(ExIsResourceAcquiredExclusiveLite(Resource) ||
-        ExIsResourceAcquiredSharedLite(Resource));
-
-    ExReleaseResourceLite(Resource);
-    KeLeaveCriticalRegion();
-}
 
 /* TODO: not referenced */
 typedef struct _PTR_ENTRY

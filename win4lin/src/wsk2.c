@@ -230,33 +230,6 @@ CreateSocket(
 
 NTSTATUS
 NTAPI
-CloseSocketLocal(
-	__in PWSK_SOCKET WskSocket
-)
-{
-	KEVENT		CompletionEvent = { 0 };
-	PIRP		Irp = NULL;
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
-
-	if (g_SocketsState != INITIALIZED || !WskSocket)
-		return STATUS_INVALID_PARAMETER;
-
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		return Status;
-	}
-
-	Status = ((PWSK_PROVIDER_BASIC_DISPATCH) WskSocket->Dispatch)->WskCloseSocket(WskSocket, Irp);
-	if (Status == STATUS_PENDING) {
-		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-		Status = Irp->IoStatus.Status;
-	}
-	IoFreeIrp(Irp);
-	return Status;
-}
-
-NTSTATUS
-NTAPI
 CloseSocket(
 	__in PWSK_SOCKET WskSocket
 )
@@ -373,61 +346,6 @@ Disconnect(
 
 	IoFreeIrp(Irp);
 	return Status;
-}
-
-PWSK_SOCKET
-NTAPI
-SocketConnect(
-	__in USHORT		SocketType,
-	__in ULONG		Protocol,
-	__in PSOCKADDR	LocalAddress, // address family desc. required
-	__in PSOCKADDR	RemoteAddress, // address family desc. required
-	__inout  NTSTATUS* pStatus
-)
-{
-	KEVENT			CompletionEvent = { 0 };
-	PIRP			Irp = NULL;
-	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
-	PWSK_SOCKET		WskSocket = NULL;
-
-	if (g_SocketsState != INITIALIZED || !RemoteAddress || !LocalAddress || !pStatus)
-		return NULL;
-
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		return NULL;
-	}
-
-	Status = g_WskProvider.Dispatch->WskSocketConnect(
-				g_WskProvider.Client,
-				SocketType,
-				Protocol,
-				LocalAddress,
-				RemoteAddress,
-				0,
-				NULL,
-				NULL,
-				NULL,
-				NULL,
-				NULL,
-				Irp);
-
-	if (Status == STATUS_PENDING) {
-		LARGE_INTEGER nWaitTime = { 0, };
-		nWaitTime = RtlConvertLongToLargeInteger(-3 * 1000 * 1000 * 10);	// 3s
-		if ((Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime)) == STATUS_TIMEOUT)
-		{
-			IoCancelIrp(Irp);
-			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);			
-			*pStatus = STATUS_TIMEOUT;
-		}
-		else
-			*pStatus = Status = Irp->IoStatus.Status;
-	}
-	
-	WskSocket = Status == STATUS_SUCCESS ? (PWSK_SOCKET) Irp->IoStatus.Information : NULL;
-	IoFreeIrp(Irp);
-	return WskSocket;
 }
 
 char *GetSockErrorString(NTSTATUS status)
@@ -691,126 +609,6 @@ SendPage(
 	}
 }
 
-/* TODO: this goes away soon, once we switch to ioctls for netlink
- *	 (drbdadm and usermode helper APIs)
- */
-
-LONG
-NTAPI
-SendLocal(
-	__in PWSK_SOCKET	WskSocket,
-	__in PVOID			Buffer,
-	__in ULONG			BufferSize,
-	__in ULONG			Flags,
-	__in ULONG			Timeout
-)
-{
-	KEVENT		CompletionEvent = { 0 };
-	PIRP		Irp = NULL;
-	WSK_BUF		WskBuffer = { 0 };
-	LONG		BytesSent = SOCKET_ERROR;
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
-
-	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || ((int) BufferSize <= 0))
-		return SOCKET_ERROR;
-
-	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		return SOCKET_ERROR;
-	}
-
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		FreeWskBuffer(&WskBuffer);
-		return SOCKET_ERROR;
-	}
-
-	Flags |= WSK_FLAG_NODELAY;
-
-	if (!WskSocket->Dispatch) { // DW-1029 to prevent possible contingency, check if dispatch table is valid.
-		IoFreeIrp(Irp);
-		FreeWskBuffer(&WskBuffer);
-		return SOCKET_ERROR;
-	}
-
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskSend(
-		WskSocket,
-		&WskBuffer,
-		Flags,
-		Irp);
-
-	if (Status == STATUS_PENDING)
-	{
-		LARGE_INTEGER	nWaitTime;
-		LARGE_INTEGER	*pTime;
-
-		if (Timeout <= 0 || Timeout == MAX_SCHEDULE_TIMEOUT)
-		{
-			pTime = NULL;
-		}
-		else
-		{
-			nWaitTime = RtlConvertLongToLargeInteger(-1 * Timeout * 1000 * 10);
-			pTime = &nWaitTime;
-		}
-		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, pTime);
-
-		switch (Status)
-		{
-		case STATUS_TIMEOUT:
-			IoCancelIrp(Irp);
-			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-			BytesSent = -EAGAIN;
-			break;
-
-		case STATUS_WAIT_0:
-			if (NT_SUCCESS(Irp->IoStatus.Status))
-			{
-				BytesSent = (LONG) Irp->IoStatus.Information;
-			}
-			else
-			{
-				WDRBD_WARN("(%s) sent error(%s)\n", current->comm, GetSockErrorString(Irp->IoStatus.Status));
-				switch (Irp->IoStatus.Status)
-				{
-				case STATUS_IO_TIMEOUT:
-					BytesSent = -EAGAIN;
-					break;
-				case STATUS_INVALID_DEVICE_STATE:
-					BytesSent = -EAGAIN;
-					break;
-				default:
-					BytesSent = -ECONNRESET;
-					break;
-				}
-			}
-			break;
-
-		default:
-			WDRBD_ERROR("KeWaitForSingleObject failed. status 0x%x\n", Status);
-			BytesSent = SOCKET_ERROR;
-		}
-	}
-	else
-	{
-		if (Status == STATUS_SUCCESS)
-		{
-			BytesSent = (LONG) Irp->IoStatus.Information;
-			WDRBD_WARN("(%s) WskSend No pending: but sent(%d)!\n", current->comm, BytesSent);
-		}
-		else
-		{
-			WDRBD_WARN("(%s) WskSend error(0x%x)\n", current->comm, Status);
-			BytesSent = SOCKET_ERROR;
-		}
-	}
-
-	IoFreeIrp(Irp);
-	FreeWskBuffer(&WskBuffer);
-
-	return BytesSent;
-}
-
 /* Do not use printk's in here, will loop forever... */
 
 int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress)
@@ -1070,7 +868,6 @@ Bind(
 	return Status;
 }
 
-
 NTSTATUS
 NTAPI
 ControlSocket(
@@ -1164,167 +961,18 @@ GetRemoteAddress(
 	return Status;
 }
 
-WSK_REGISTRATION    gWskEventRegistration;
-WSK_PROVIDER_NPI    gWskEventProviderNPI;
-PWSK_SOCKET         netlink_server_socket = NULL;
-
-// Socket-level callback table for listening sockets
-const WSK_CLIENT_LISTEN_DISPATCH ClientListenDispatch = {
-    NetlinkAcceptEvent,
-    NULL, // WskInspectEvent is required only if conditional-accept is used.
-    NULL  // WskAbortEvent is required only if conditional-accept is used.
-};
-
-NTSTATUS
-InitWskEvent()
-{
-    NTSTATUS status;
-    WSK_CLIENT_NPI  wskClientNpi;
-
-    wskClientNpi.ClientContext = NULL;
-    wskClientNpi.Dispatch = &g_WskDispatch;
-    
-    status = WskRegister(&wskClientNpi, &gWskEventRegistration);
-    if (!NT_SUCCESS(status))
-    {
-        WDRBD_ERROR("Failed to WskRegister(). status(0x%x)\n", status);
-        return status;
-    }
-
-    status = WskCaptureProviderNPI(&gWskEventRegistration,
-        WSK_INFINITE_WAIT, &gWskEventProviderNPI);
-	
-	if (!NT_SUCCESS(status))
-    {
-        WDRBD_ERROR("Failed to WskCaptureProviderNPI(). status(0x%x)\n", status);
-        WskDeregister(&gWskEventRegistration);
-        return status;
-    }
-	//WDRBD_INFO("WskProvider Version Major:%d Minor:%d\n",WSK_MAJOR_VERSION(gWskEventProviderNPI.Dispatch->Version),WSK_MINOR_VERSION(gWskEventProviderNPI.Dispatch->Version));
-    return status;
-}
-
-PWSK_SOCKET
-CreateSocketEvent(
-__in ADDRESS_FAMILY	AddressFamily,
-__in USHORT			SocketType,
-__in ULONG			Protocol,
-__in ULONG			Flags
-)
-{
-    KEVENT			CompletionEvent = {0};
-    PIRP			irp = NULL;
-    PWSK_SOCKET		socket = NULL;
-    NTSTATUS		status;
-
-    status = InitWskData(&irp, &CompletionEvent, FALSE);
-    if (!NT_SUCCESS(status))
-    {
-        return NULL;
-    }
-
-    WSK_EVENT_CALLBACK_CONTROL callbackControl;
-
-    callbackControl.NpiId = (PNPIID)&NPI_WSK_INTERFACE_ID;
-    callbackControl.EventMask = WSK_EVENT_ACCEPT;
-
-    status = gWskEventProviderNPI.Dispatch->WskControlClient(
-        gWskEventProviderNPI.Client,
-        WSK_SET_STATIC_EVENT_CALLBACKS,
-        sizeof(callbackControl),
-        &callbackControl,
-        0,
-        NULL,
-        NULL,
-        NULL);
-    if (!NT_SUCCESS(status))
-    {
-        IoFreeIrp(irp);
-        WDRBD_ERROR("Failed to WskControlClient(). status(0x%x)\n", status);
-        return NULL;
-    }
-
-    status = gWskEventProviderNPI.Dispatch->WskSocket(
-        gWskEventProviderNPI.Client,
-        AddressFamily,
-        SocketType,
-        Protocol,
-        Flags,
-        NULL,
-        &ClientListenDispatch,
-        NULL,
-        NULL,
-        NULL,
-        irp);
-    if (status == STATUS_PENDING)
-    {
-        KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-        status = irp->IoStatus.Status;
-    }
-
-    if (NT_SUCCESS(status))
-    {
-        socket = (PWSK_SOCKET)irp->IoStatus.Information;
-    }
-    else
-    {
-        WDRBD_ERROR("Failed to WskSocket(). status(0x%x)\n", status);
-    }
-
-    IoFreeIrp(irp);
-
-    return (PWSK_SOCKET)socket;
-}
-
-NTSTATUS
-CloseWskEventSocket()
-{
-    if (!netlink_server_socket)
-    {
-        return STATUS_SUCCESS;
-    }
-
-    KEVENT		CompletionEvent = {0};
-    PIRP		irp = NULL;
-
-    NTSTATUS status = InitWskData(&irp, &CompletionEvent,FALSE);
-    if (!NT_SUCCESS(status))
-    {
-        return status;
-    }
-
-    status = ((PWSK_PROVIDER_BASIC_DISPATCH)netlink_server_socket->Dispatch)->WskCloseSocket(netlink_server_socket, irp);
-    if (STATUS_PENDING == status)
-    {
-        KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-        status = irp->IoStatus.Status;
-    }
-
-    IoFreeIrp(irp);
-
-    WskDeregister(&gWskEventRegistration);
-
-    return status;
-}
-
-void
-ReleaseProviderNPI()
-{
-    WskReleaseProviderNPI(&gWskEventRegistration);
-}
-
 
 NTSTATUS
 NTAPI
 SetEventCallbacks(
 __in PWSK_SOCKET Socket,
-__in LONG			mask
+__in LONG                      mask
 )
 {
-    KEVENT			CompletionEvent = { 0 };
-    PIRP			Irp = NULL;
-    PWSK_SOCKET		WskSocket = NULL;
-    NTSTATUS		Status = STATUS_UNSUCCESSFUL;
+    KEVENT                     CompletionEvent = { 0 };
+    PIRP                       Irp = NULL;
+    PWSK_SOCKET                WskSocket = NULL;
+    NTSTATUS           Status = STATUS_UNSUCCESSFUL;
 
     if (g_SocketsState != INITIALIZED)
     {
@@ -1366,7 +1014,6 @@ __in LONG			mask
     IoFreeIrp(Irp);
     return Status;
 }
-
 
 int sock_create_kern(
 	PVOID                   net_namespace,
