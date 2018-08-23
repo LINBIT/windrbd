@@ -1,0 +1,74 @@
+From 6ad94dbadea71c0b47d6e8ffcee740e0537a1d91 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 23 Aug 2018 15:00:54 +0200
+Subject: [PATCH] Moved netlink.c_inc to seperate file.
+
+Since some of the stuff in drbd_nl.c is static (and we do not want
+to touch the magic func headers), we moved three functions from
+netlink.c_inc to this file.
+---
+ drbd/drbd_nl.c | 37 +++++++++++++++++++++++++++++++++----
+ 1 file changed, 33 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 81030fa..8535842 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -108,13 +108,42 @@ inline static int genl_unregister_family(const struct genl_family *f)
+     return 0;
+ }
+ 
+-static void drbd_adm_send_reply(struct sk_buff *skb, struct genl_info *info);
+-
+ #include <linux/drbd_genl_api.h>
+ #include "drbd_nla.h"
+ #include <linux/genl_magic_func.h>
+ 
+-#include "netlink.c_inc"
++/* Those two functions taken from netlink.c_inc, originally they
++ * are probably generated.
++ */
++
++int drbd_tla_parse(struct nlmsghdr *nlh, struct nlattr **attr)
++{
++		/* TODO: this should go away */
++	drbd_genl_family.id = nlh->nlmsg_type;
++
++	return nla_parse(attr, ARRAY_SIZE(drbd_tla_nl_policy) - 1,
++		nlmsg_attrdata(nlh, GENL_HDRLEN + drbd_genl_family.hdrsize),
++		nlmsg_attrlen(nlh, GENL_HDRLEN + drbd_genl_family.hdrsize),
++		drbd_tla_nl_policy);
++}
++
++struct genl_ops *get_drbd_genl_ops(u8 cmd)
++{
++	int i;
++
++	for (i=0; i<sizeof(drbd_genl_ops)/sizeof((drbd_genl_ops)[0]); i++) {
++		if (drbd_genl_ops[i].cmd == cmd)
++			return &drbd_genl_ops[i];
++	}
++	return NULL;
++}
++
++/* Don't want to touch magic func header, which declares this static */
++
++const char *windrbd_genl_cmd_to_str(u8 cmd)
++{
++	return drbd_genl_cmd_to_str(cmd);
++}
+ 
+ atomic_t drbd_genl_seq = ATOMIC_INIT(2); /* two. */
+ 
+@@ -123,7 +152,7 @@ DEFINE_MUTEX(notification_mutex);
+ /* used blkdev_get_by_path, to claim our meta data device(s) */
+ static char *drbd_m_holder = "Hands off! this is DRBD's meta data device.";
+ 
+-static void drbd_adm_send_reply(struct sk_buff *skb, struct genl_info *info)
++void drbd_adm_send_reply(struct sk_buff *skb, struct genl_info *info)
+ {
+ 	genlmsg_end(skb, genlmsg_data(nlmsg_data(nlmsg_hdr(skb))));
+ 	if (genlmsg_reply(skb, info))
+-- 
+2.17.0
+

@@ -1,5 +1,8 @@
-﻿
-/* TODO: make this a seperate C file (again) */
+﻿#include "drbd_windows.h"
+#include "drbd_wingenl.h"
+#include "wingenl.h"
+#include "drbd_int.h"
+
 // globals
 
 static struct mutex g_genl_mutex;
@@ -116,34 +119,6 @@ int drbd_genl_multicast_events(struct sk_buff * skb, const struct sib_info *sib)
     nlmsg_free(skb);
 
     return ret;
-}
-
-/* TODO: unreferenced */
-
-NTSTATUS reply_error(int type, int flags, int error, struct genl_info * pinfo)
-{
-    struct sk_buff * reply_skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
-
-    if (reply_skb)
-    {
-	struct nlmsghdr * nlh = nlmsg_put(reply_skb, pinfo->nlhdr->nlmsg_pid,
-		pinfo->nlhdr->nlmsg_seq, type, GENL_HDRLEN, flags);
-        if (nlh)
-        {
-            struct nlmsgerr * err = nlmsg_data(nlh);
-            err->error = -error;
-            err->msg.nlmsg_len = 0;
-
-            drbd_adm_send_reply(reply_skb, pinfo);
-        }
-        nlmsg_free(reply_skb);
-    }
-    else
-    {
-        return STATUS_NO_MEMORY;
-    }
-
-    return STATUS_SUCCESS;
 }
 
 static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netlink_callback * cb, struct genl_info * info)
@@ -731,32 +706,6 @@ static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 }
 
 
-/* We need that. Originally a DRBD function? */
-int drbd_tla_parse(struct nlmsghdr *nlh, struct nlattr **attr)
-{
-    drbd_genl_family.id = nlh->nlmsg_type;
-
-    return nla_parse(attr, ARRAY_SIZE(drbd_tla_nl_policy) - 1,
-	    nlmsg_attrdata(nlh, GENL_HDRLEN + drbd_genl_family.hdrsize),
-	    nlmsg_attrlen(nlh, GENL_HDRLEN + drbd_genl_family.hdrsize),
-	    drbd_tla_nl_policy);
-}
-
-/* We need that. Originally a DRBD function? */
-struct genl_ops * get_drbd_genl_ops(u8 cmd)
-{
-    struct genl_ops * pops = NULL;
-    for (int i = 0; i < sizeof(drbd_genl_ops) / sizeof((drbd_genl_ops)[0]); i++)
-    {
-	if (drbd_genl_ops[i].cmd == cmd)
-	{
-	    return &drbd_genl_ops[i];
-	}
-    }
-
-    return NULL;
-}
-
 struct genl_thread_args {
 	struct genl_info *info;
 	struct genl_ops *op;
@@ -811,7 +760,11 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 		goto out_free_info;
 	}
 
-	printk("drbd cmd(%s:%u)\n", drbd_genl_cmd_to_str(cmd), cmd);
+/* TODO: this is static in drbd_nl.c (included from genl_magic_func.h,
+ * which we shouldn't touch). For now, skip it.
+ */
+
+	printk("drbd cmd(%s:%u)\n", windrbd_genl_cmd_to_str(cmd), cmd);
 
 	status = mutex_lock_timeout(&g_genl_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
 	if (status != STATUS_SUCCESS) {
@@ -941,7 +894,7 @@ NetlinkWorkThread(PVOID context)
 	{
 	    NTSTATUS status = STATUS_UNSUCCESSFUL;
 
-	    WDRBD_INFO("drbd cmd(%s:%u)\n", drbd_genl_cmd_to_str(cmd), cmd);
+//	WDRBD_INFO("drbd cmd(%s:%u)\n", drbd_genl_cmd_to_str(cmd), cmd);
 
 	    status = mutex_lock_timeout(&g_genl_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
 
