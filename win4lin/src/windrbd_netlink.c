@@ -32,6 +32,14 @@ struct genl_multicast_group_list {
 
 static LIST_HEAD(multicast_elements);
 
+struct genl_pollers {
+	struct list_head list;
+	u32 portid;
+	KEVENT event;
+};
+
+static LIST_HEAD(pollers);
+
 static struct mutex genl_reply_mutex;
 static struct mutex genl_multicast_mutex;
 static struct mutex genl_drbd_mutex;
@@ -112,6 +120,22 @@ static void touch(struct genl_reply *r)
 		r->last_used = jiffies;
 }
 
+static void wake_up_pollers(struct genl_reply *r)
+{
+	u32 portid;
+	struct genl_pollers *p;
+
+	if (r == NULL)
+		return;
+
+	portid = r->portid;
+
+	list_for_each_entry(struct genl_pollers, p, &pollers, list) {
+		if (p->portid == portid)
+			KeSetEvent(&p->event, 0, FALSE);
+	}
+}
+
 static void delete_reply(struct genl_reply *r)
 {
 	struct list_head *bh, *bhn;
@@ -152,6 +176,53 @@ static NTSTATUS reply_reaper(void *unused)
 		mutex_unlock(&genl_reply_mutex);
 	}
 	return STATUS_SUCCESS;
+}
+
+int windrbd_poll_for_netlink_packets(u32 portid, int timeout_ms)
+{
+	NTSTATUS status;
+	LARGE_INTEGER timeout;
+	struct genl_pollers *p;
+	int ret;
+	struct genl_reply *r;
+
+	p = kmalloc(sizeof(*p), 0, 'DRBD');
+	if (p == NULL)
+		return -ENOMEM;
+
+	p->portid = portid;
+	KeInitializeEvent(&p->event, SynchronizationEvent, FALSE);
+	list_add(&p->list, &pollers);
+
+	r = find_reply(portid);
+	if (r) {
+		if (!list_empty(&r->buffer_list)) {
+			ret = 1;
+			goto out;
+		}
+	}
+	timeout.QuadPart = -10*1000*timeout_ms;
+	status = KeWaitForSingleObject(&p->event, UserRequest, UserMode, TRUE, &timeout);
+	switch (status) {
+	case STATUS_SUCCESS:
+		ret = 1;	/* indicating that 1 fd is 'readable' */
+		break;
+	case STATUS_TIMEOUT:
+		ret = -ETIMEDOUT;
+		break;
+	case STATUS_USER_APC:
+	case STATUS_ALERTED:
+		ret = -EINTR;
+		break;
+	default:
+		ret = -EINVAL;
+		break;
+	}
+out:
+	list_del(&p->list);
+	kfree(p);
+
+	return ret;
 }
 
 size_t windrbd_receive_netlink_packets(void *vbuf, size_t remaining_size, u32 portid)
@@ -224,6 +295,8 @@ int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info)
 
 	buffer->len = skb->len;
 	RtlCopyMemory(buffer->buf, skb->data, skb->len);
+
+	wake_up_pollers(reply);
 
 	ret = 0;
 

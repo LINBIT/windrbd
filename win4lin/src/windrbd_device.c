@@ -146,6 +146,26 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 		status = STATUS_SUCCESS;
 		break;
 
+	case IOCTL_WINDRBD_ROOT_POLL_NL_PACKET:
+		if (s->Parameters.DeviceIoControl.OutputBufferLength != sizeof(struct windrbd_ioctl_ret_code)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+		if (s->Parameters.DeviceIoControl.InputBufferLength != sizeof(struct windrbd_ioctl_genl_portid_and_timeout)) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+		struct windrbd_ioctl_genl_portid_and_timeout *pt;
+		pt = (struct windrbd_ioctl_genl_portid_and_timeout*) irp->AssociatedIrp.SystemBuffer;
+		int ret = windrbd_poll_for_netlink_packets(pt->portid, pt->timeout);
+		struct windrbd_ioctl_ret_code *rc;
+		rc = (struct windrbd_ioctl_ret_code*) irp->AssociatedIrp.SystemBuffer;
+		rc->ret = ret;
+
+		irp->IoStatus.Information = sizeof(*rc);
+		status = STATUS_SUCCESS;
+		break;
+
 	default:
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;
