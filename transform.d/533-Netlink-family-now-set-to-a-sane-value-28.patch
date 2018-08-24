@@ -1,0 +1,40 @@
+From f90f36e9d85df91b0f9e2a1978fb250414cd9032 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 24 Aug 2018 11:41:58 +0200
+Subject: [PATCH] Netlink family now set to a sane value (28).
+
+Instead of just being echoed to user space.
+---
+ drbd/drbd_nl.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 8535842..d761ee1 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -112,14 +112,20 @@ inline static int genl_unregister_family(const struct genl_family *f)
+ #include "drbd_nla.h"
+ #include <linux/genl_magic_func.h>
+ 
++#include "windrbd_ioctl.h"
++
+ /* Those two functions taken from netlink.c_inc, originally they
+  * are probably generated.
+  */
+ 
+ int drbd_tla_parse(struct nlmsghdr *nlh, struct nlattr **attr)
+ {
+-		/* TODO: this should go away */
+-	drbd_genl_family.id = nlh->nlmsg_type;
++		/* Since drbd_nl.c does not have an initialization
++		 * function and drbd_genl_family is static (we don't
++		 * want to change the header), we initialize that here.
++		 * This is 'our' function.
++		 */
++	drbd_genl_family.id = WINDRBD_NETLINK_FAMILY_ID;
+ 
+ 	return nla_parse(attr, ARRAY_SIZE(drbd_tla_nl_policy) - 1,
+ 		nlmsg_attrdata(nlh, GENL_HDRLEN + drbd_genl_family.hdrsize),
+-- 
+2.17.0
+
