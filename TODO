@@ -1,12 +1,6 @@
-TODO: Implement: netlink transport over ioctl
-
-	(something that can verify permissions of caller)
-
 TODO: Implement: user mode helpers
 
 	switch to ioctl() interface first.
-
-TODO: Implement: drbdsetup events2 does not work
 
 TODO: Documentation: drbd-util: Update manpage.
 
@@ -158,6 +152,22 @@ TODO: Documentation: white paper for linbit website.
 	Update: maybe refer to the README.md.
 
 	Update: No we need a TechGuide. Postponed to September.
+
+TODO: Code quality: Reenable Windows Compiler Warnings and fix them.
+
+TODO: Code quality: Other mechanism to specify syslog_ip.
+
+	Should be able to change it without rebooting.
+
+	Have a windrbd log-to-ip <...> command. Before this command
+	is given, only log to ring buffer internally (or maybe still
+	have the key?).
+
+TODO: Implement: get drbdmon (and drbdsetup events2) working.
+
+	Probably this works only with WSL .. CygWin does not have
+	epoll as well as some other required syscalls (kill,
+	sigaddset, sigemptyset, pipe2).
 
 -----------------------------------------------------------------------
 
@@ -585,12 +595,6 @@ TODO: Code quality: fix the macro redefinition problems in drbd_windows.c
 
 	Update: check if the prototypes are still needed.
 	Update: we probably reject this.
-
-TODO: Nice to have: get drbdmon (and drbdsetup events2) working.
-
-	Probably this works only with WSL .. CygWin does not have
-	epoll as well as some other required syscalls (kill,
-	sigaddset, sigemptyset, pipe2).
 
 -------------------------------------------------------------------------
 
@@ -3010,4 +3014,27 @@ Done: Implement: Allow for enabling fault injection via ioctl (windrbd.exe)
 Duplicate: Feature: on windrbd show/hide filesystem check if attached.
 
 	And refuse to touch it if yes.
+
+Done: Implement: netlink transport over ioctl
+
+	(something that can verify permissions of caller)
+
+	Update: Implemented. Restriction is that event for drbdsetup status
+	one needs Administrator priviledges.
+
+	Also does a busy poll for netlink messages in order to
+	make interrupting with Ctrl-C work (CygWin implements signals
+	in user space, if we wait in kernel space signals never get
+	delivered).
+
+Done: Implement: drbdsetup events2 does not work
+
+	Implemented (multicast group events sent to all drbdsetup events2
+	processes).
+
+Done: Remove registry entries for TCP/IP based netlink
+
+	Maybe someday also remove the syslog_ip registry key. There is
+	a buffer overflow in the InitRegistry function, plus we cannot
+	change the syslog_ip during runtime.
 
