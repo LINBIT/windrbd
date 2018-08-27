@@ -62,20 +62,10 @@ AddReg           = DRBD.AddRegistry
 
 [DRBD.AddRegistry]
 HKLM, System\CurrentControlSet\Control\Class\{71A27CDD-812A-11D0-BEC7-08002BE2092F}, UpperFilters, 0x00010008, drbd
-HKR,,"netlink_tcp_port",0x00010001,5678
-HKR,,"daemon_tcp_port",0x00010001,5679
-HKR,,"handler_use",0x00010001,0
-HKR,,"handler_timeout",0x00010001,1
-HKR,,"handler_retry",0x00010001,0
 HKR,,"syslog_ip",0x00000002, "127.0.0.1"
 
 [DRBD.DelRegistry]
 HKLM, System\CurrentControlSet\Control\Class\{71A27CDD-812A-11D0-BEC7-08002BE2092F}, UpperFilters, 0x00018002, drbd
-HKR,,"netlink_tcp_port"
-HKR,,"daemon_tcp_port"
-HKR,,"handler_use"
-HKR,,"handler_timeout"
-HKR,,"handler_retry"
 HKR,,"syslog_ip"
 
 ;

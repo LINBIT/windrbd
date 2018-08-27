@@ -82,63 +82,11 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	UCHAR aucTemp[255] = { 0 };
 	NTSTATUS status;
 
-	// set g_netlink_tcp_port
-	status = GetRegistryValue(L"netlink_tcp_port", &ulLength, (UCHAR*)&aucTemp, RegPath_unicode);
-	if (status == STATUS_SUCCESS){
-		g_netlink_tcp_port = *(int*) aucTemp;;
-	}
-	else
-	{
-		g_netlink_tcp_port = NETLINK_PORT;
-	}
-
-	// set daemon_tcp_port
-	status = GetRegistryValue(L"daemon_tcp_port", &ulLength, (UCHAR*)&aucTemp, RegPath_unicode);
-	if (status == STATUS_SUCCESS){
-		g_daemon_tcp_port = *(int*) aucTemp;
-	}
-	else
-	{
-		g_daemon_tcp_port = 5679;
-	}
-
-	status = GetRegistryValue(L"handler_use", &ulLength, (UCHAR*) &aucTemp, RegPath_unicode);
-	if (status == STATUS_SUCCESS){
-		g_handler_use = *(int*) aucTemp;
-	}
-	else
-	{
-		g_handler_use = 0;
-	}
-	
-	status = GetRegistryValue(L"handler_timeout", &ulLength, (UCHAR*) &aucTemp, RegPath_unicode);
-	if (status == STATUS_SUCCESS){
-		g_handler_timeout = *(int*) aucTemp;
-		if (g_handler_timeout < 0)
-		{
-			g_handler_timeout = 600;
-		}
-	}
-	else
-	{
-		g_handler_timeout = 1;
-	}	
-	g_handler_timeout = g_handler_timeout * 1000; // change to ms
-	
-	status = GetRegistryValue(L"handler_retry", &ulLength, (UCHAR*) &aucTemp, RegPath_unicode);
-	if (status == STATUS_SUCCESS){
-		g_handler_retry = *(int*) aucTemp;
-		if (g_handler_retry < 0)
-		{
-			g_handler_retry = 0;
-		}
-	}
-	else
-	{
-		g_handler_retry = 0;
-	}
-
 	ip_length = 0;
+
+		/* TODO: there is most likely a buffer overflow in there.
+		 * do we need the registry at all?
+		 */
 	status = GetRegistryValue(L"syslog_ip", &ulLength, (UCHAR*)&aucTemp, RegPath_unicode);
 	if (status == STATUS_SUCCESS) {
 		status = RtlUnicodeToUTF8N(g_syslog_ip, SYSLOG_IP_SIZE, &ip_length, (WCHAR*) aucTemp, ulLength);
@@ -148,13 +96,7 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	} else {
 		g_syslog_ip[ip_length] = '\0';
 	}
-	WDRBD_INFO("registry_path[%wZ]\n"
-		"netlink_tcp_port=%d, daemon_tcp_port=%d, syslog_ip=%s\n",
-		RegPath_unicode,
-		g_netlink_tcp_port,
-		g_daemon_tcp_port,
-		g_syslog_ip
-		);
+	printk("syslog_ip is %s", g_syslog_ip);
 
 	return 0;
 }

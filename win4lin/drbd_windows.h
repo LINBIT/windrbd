@@ -1224,16 +1224,8 @@ extern unsigned char *skb_put(struct sk_buff *skb, unsigned int len);
 extern char *kstrdup(const char *s, int gfp);
 extern void panic(const char *fmt, ...);
 
-extern int g_netlink_tcp_port;
-extern int g_daemon_tcp_port;
-
 #define SYSLOG_IP_SIZE 64
 extern char g_syslog_ip[];
-
-/* TODO: this is most likely wrong, but will go away soon. */
-int g_handler_use;
-int g_handler_timeout;
-int g_handler_retry;
 
 extern PETHREAD	g_NetlinkServerThread;
 ///

@@ -107,13 +107,6 @@ ULONG RtlRandomEx(
 #include "drbd_wrappers.h"
 #include "disp.h"
 
-int g_netlink_tcp_port;
-int g_daemon_tcp_port;
-
-int g_handler_use;
-int g_handler_timeout;
-int g_handler_retry;
-
 #define MAX_IDR_SHIFT		(sizeof(int) * 8 - 1)
 #define MAX_IDR_BIT		(1U << MAX_IDR_SHIFT)
 
@@ -1335,6 +1328,10 @@ void spin_unlock_bh(spinlock_t *lock)
 		KeReleaseSpinLock(&lock->spinLock, lock->saved_oldIrql);
 	}
 }
+
+/* TODO: static? It is also probably not a bad idea to initialize this
+   somewhere ...
+ */
 
 spinlock_t g_irqLock;
 void local_irq_disable()
