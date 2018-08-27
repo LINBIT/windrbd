@@ -1033,6 +1033,7 @@ extern void kobject_put(struct kobject *kobj);
 extern void kobject_get(struct kobject *kobj);
 extern void kobject_del(struct kobject *kobj);
 
+/* TODO: flag probably gfp_t */
 extern void * kcalloc(int e_count, int x, int flag, ULONG Tag);
 extern void * kzalloc(int x, int flag, ULONG Tag);
 extern void * kmalloc(int size, int flag, ULONG Tag);
@@ -1456,5 +1457,6 @@ void unregister_blkdev(int major, const char *name);
 int windrbd_inject_faults(int after, enum fault_injection_location where, struct block_device *windrbd_bdev);
 int windrbd_process_netlink_packet(void *msg, size_t msg_size);
 size_t windrbd_receive_netlink_packets(void *vbuf, size_t remaining_size, u32 portid);
+int windrbd_join_multicast_group(u32 portid, const char *name);
 
 #endif // DRBD_WINDOWS_H

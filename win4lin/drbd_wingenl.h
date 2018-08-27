@@ -732,7 +732,7 @@ static __inline void *genlmsg_data(const struct genlmsghdr *gnlh)
 }
 
 extern int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_genl_multicast_events(struct sk_buff * skb, const struct sib_info *sib);
+extern int drbd_genl_multicast_events(struct sk_buff * skb, gfp_t flags);
 
 /* Those two now patched into drbd_nl.c */
 extern struct genl_ops * get_drbd_genl_ops(u8 cmd);

@@ -14,7 +14,6 @@ struct genl_reply {
 	struct list_head list;
 	u32 portid;
 	ULONGLONG last_used;
-/* TODO: if someone is polling us do not reap */
 };
 
 static LIST_HEAD(reply_buffers);
@@ -22,11 +21,6 @@ static LIST_HEAD(reply_buffers);
 struct genl_multicast_element {
 	struct list_head list;
 	u32 portid;
-};
-
-struct genl_multicast_group_list {
-	struct list_head multicast_element_list;
-	struct list_head list;
 	char name[GENL_NAMSIZ];
 };
 
@@ -100,7 +94,7 @@ static int delete_reply_if_empty(struct genl_reply *r)
 {
 	if (list_empty(&r->buffer_list)) {
 		list_del(&r->list);
-		kfree(r); 	/* TODO: also remove references from multicast elements */
+		kfree(r);
 		return 1;
 	}
 	return 0;
@@ -110,6 +104,20 @@ static void touch(struct genl_reply *r)
 {
 	if (r)
 		r->last_used = jiffies;
+}
+
+static void delete_multicast_elements_for_portid(u32 portid)
+{
+	struct list_head *lh, *lhn;
+	struct genl_multicast_element *m;
+
+	list_for_each_safe(lh, lhn, &multicast_elements) {
+		m = list_entry(lh, struct genl_multicast_element, list);
+		if (m->portid == portid) {
+			list_del(&m->list);
+			kfree(m);
+		}
+	}
 }
 
 static void delete_reply(struct genl_reply *r)
@@ -126,7 +134,7 @@ static void delete_reply(struct genl_reply *r)
 		kfree(b);
 	}
 	list_del(&r->list);
-	kfree(r); 	/* TODO: also remove references from multicast elements */
+	kfree(r);
 }
 
 #define MAX_REPLY_AGE 10
@@ -143,13 +151,18 @@ static NTSTATUS reply_reaper(void *unused)
 		KeDelayExecutionThread(KernelMode, FALSE, &interval);
 		now = jiffies;
 
+		mutex_lock(&genl_multicast_mutex);
 		mutex_lock(&genl_reply_mutex);
 		list_for_each_safe(rh, rhn, &reply_buffers) {
 			r = list_entry(rh, struct genl_reply, list);
-			if (r->last_used + MAX_REPLY_AGE*1000 < now)
+			if (r->last_used + MAX_REPLY_AGE*1000 < now) {
+				delete_multicast_elements_for_portid(r->portid);
 				delete_reply(r);
+			}
 		}
 		mutex_unlock(&genl_reply_mutex);
+		mutex_unlock(&genl_multicast_mutex);
+
 	}
 	return STATUS_SUCCESS;
 }
@@ -199,14 +212,12 @@ out_mutex:
 	return bytes_copied;
 }
 
-int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info)
+static int do_genlmsg_unicast(struct sk_buff *skb, u32 portid)
 {
-	u32 portid;
 	struct genl_reply *reply;
 	struct genl_reply_buffer *buffer;
 	int ret = -ENOMEM;
 
-	portid = info->snd_portid;
 	mutex_lock(&genl_reply_mutex);
 	reply = find_or_create_reply(portid);
 	touch(reply);
@@ -232,17 +243,56 @@ out_mutex:
 	return ret;
 }
 
+int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info)
+{
+	return do_genlmsg_unicast(skb, info->snd_portid);
+}
+
+static int do_genl_multicast(struct sk_buff *skb, const char *group_name)
+{
+
+	struct genl_multicast_element *m;
+	int ret;
+
+	ret = 0;
+	mutex_lock(&genl_multicast_mutex);
+	list_for_each_entry(struct genl_multicast_element, m, &multicast_elements, list) {
+		if (strncmp(m->name, group_name, sizeof(m->name)) == 0) {
+			ret = do_genlmsg_unicast(skb, m->portid);
+			if (ret != 0)
+				break;
+		}
+	}
+	mutex_unlock(&genl_multicast_mutex);
+	return ret;
+}
+
 /* This is a generated function originally. It calls genl_multicast
  * with drbd as the genl_family and events as the multicast group.
  * If we really have time we keep that and implement genl_multicast()
  * instead.
  */
 
-int drbd_genl_multicast_events(struct sk_buff * skb, const struct sib_info *sib)
+int drbd_genl_multicast_events(struct sk_buff * skb, gfp_t flags)
 {
-	printk("Not implemented yet.\n");
+	return do_genl_multicast(skb, "events");
+}
 
-	return -EOPNOTSUPP;
+int windrbd_join_multicast_group(u32 portid, const char *name)
+{
+	struct genl_multicast_element *m;
+
+	m = kmalloc(sizeof(*m), 0, 'DRBD');
+	if (m == NULL)
+		return -ENOMEM;
+
+	strncpy(m->name, name, sizeof(m->name));
+	m->portid = portid;
+	mutex_lock(&genl_multicast_mutex);
+	list_add(&m->list, &multicast_elements);
+	mutex_unlock(&genl_multicast_mutex);
+
+	return 0;
 }
 
 /* TODO: into drbd_limits.h */
