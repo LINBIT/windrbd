@@ -169,6 +169,13 @@ TODO: Implement: get drbdmon (and drbdsetup events2) working.
 	epoll as well as some other required syscalls (kill,
 	sigaddset, sigemptyset, pipe2).
 
+TODO: Code quality: use zero-sized arrays at the end of structs
+
+	MS compiler seems to accept them (ask why this patch was neccessary).
+
+TODO: Code quality: List C files to compile in Makefile
+
+	Instead of just using globbing (*.c)
 -----------------------------------------------------------------------
 
 TODO: Research: Understand IRP cancellation

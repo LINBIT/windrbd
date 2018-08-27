@@ -2906,18 +2906,6 @@ out_no_windows_device:
 	return ERR_PTR(err);
 }
 
-
-	/* TODO: this should go away. Replace by an ioctl mechanism.
-		 Reason is that we cannot authentify the peer via
-		 TCP/IP (even if it is 'local')
-	 */
-
-int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait)
-{
-	printk("Not implemented yet.\n");
-	return -EOPNOTSUPP;
-}
-
 void panic(const char *fmt, ...)
 {
 	va_list args;
