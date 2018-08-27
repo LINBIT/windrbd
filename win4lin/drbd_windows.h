@@ -49,9 +49,6 @@ enum update_sync_bits_mode;
 	/* TODO: This appears very dangerous to me ... */
 #define drbd_conf drbd_device
 
-	/* TODO: this goes away. */
-#define DRBD_EVENT_SOCKET_STRING	"DRBD_EVENTS"		/// used in NETLINK
-
 /// for linux code
 #define inline					__inline
 #define __func__				__FUNCTION__

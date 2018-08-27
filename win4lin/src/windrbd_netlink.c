@@ -430,7 +430,7 @@ static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
                 .nlh = pinfo->nlhdr,
                 .args = { 0, }
             };
-            
+
             int ret = _genl_dump(pops, skb, &ncb, pinfo);
 			int cnt = 0;
             while (ret > 0) {

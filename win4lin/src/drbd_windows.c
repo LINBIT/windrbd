@@ -2656,37 +2656,27 @@ static NTSTATUS resolve_nt_kernel_link(UNICODE_STRING *upath, UNICODE_STRING *li
 	ULONG link_target_length;
 	HANDLE link_handle;
 
-printk("1\n");
 	InitializeObjectAttributes(&device_attributes, upath, OBJ_FORCE_ACCESS_CHECK, NULL, NULL);
-printk("2\n");
 	status = ZwOpenSymbolicLinkObject(&link_handle, GENERIC_READ, &device_attributes);
-printk("3\n");
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ZwOpenSymbolicLinkObject: Cannot open link object, status = %x, path = %S\n", status, upath->Buffer);
 		return status;
 	}
-printk("4\n");
 
 	status = ZwQuerySymbolicLinkObject(link_handle, link_target, &link_target_length);
-printk("5\n");
 	if (!NT_SUCCESS(status)) {
 		WDRBD_WARN("ZwQuerySymbolicLinkObject: Cannot get link target name, status = %x, path = %S\n", status, upath->Buffer);
 		goto out_close_handle;
 	}
-printk("6\n");
 	if (link_target_length >= link_target->MaximumLength) {
 		WDRBD_WARN("ZwQuerySymbolicLinkObject: Link target name exceeds %lu bytes (is %lu bytes), path = %S\n", link_target->MaximumLength, link_target_length, upath->Buffer);
 		goto out_close_handle;
 	}
-printk("7\n");
 	link_target->Buffer[link_target_length] = 0;
-printk("8\n");
 	printk(KERN_INFO "Symbolic link points to %S\n", link_target->Buffer);
 
 out_close_handle:
-printk("9\n");
 	ZwClose(link_handle);
-printk("a\n");
 	return status;
 }
 
@@ -2710,12 +2700,10 @@ int resolve_ascii_path(const char *path, UNICODE_STRING *path_to_device)
 	path_to_device->Length = 0;
 
 	WDRBD_TRACE("Link is %S\n", link_name.Buffer);
-printk("1\n");
 	if (resolve_nt_kernel_link(&link_name, path_to_device) != STATUS_SUCCESS) {
 		WDRBD_ERROR("Could not resolve link.\n");
 		return -EINVAL;
 	}
-printk("2\n");
 	return 0;
 }
 
