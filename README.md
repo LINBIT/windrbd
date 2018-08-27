@@ -286,3 +286,4 @@ Version history
  * 0.8.3 (Aug 01, 2018): Fixed BSOD requests > 1Meg and backing dev failure.
  * 0.8.4 (Aug 02, 2018): Performance: do not split into 4K requests.
  * 0.8.5 (Aug 15, 2018): Fault injection framework, fixed permissions
+ * 0.8.6 (Aug 27, 2018): Kernel interface now based on ioctl() instead of TCP/IP
