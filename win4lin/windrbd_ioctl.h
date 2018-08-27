@@ -69,10 +69,6 @@ struct windrbd_ioctl_genl_portid_and_multicast_group {
         char name[GENL_NAMSIZ];
 };
 
-struct windrbd_ioctl_ret_code {
-	int ret;
-};
-
 /* Send netlink packet(s) to kernel.
  *
  * Input buffer: the netlink packet.
@@ -104,8 +100,7 @@ struct windrbd_ioctl_ret_code {
  *
  * Input buffer: the port id (getpid()) and timeout (in milliseconds) in a
  * 		 struct windrbd_ioctl_genl_portid_and_timeout
- * Output buffer: an int containing a Linux-kernel-style return value
- *		 (negative errno) in a struct windrbd_ioctl_ret_code.
+ * Output buffer: none.
  *
  * Use this as a replacement to poll(2) for polling for new netlink packets
  * to arrive from DRBD kernel. TODO: somehow check for signals (POLLHUP).
