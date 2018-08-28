@@ -125,17 +125,15 @@ struct windrbd_usermode_helper {
 	size_t total_size;
 
 		/* Since we cannot map a NULL pointer over the ioctl()
-		 * interface, we store the length of the args (and env)
-		 * strings (total length including the '\0's seperating
-		 * the arguments / environment variables) in seperate
-		 * arguments here.
+		 * interface, we store the number of the args (and env)
+		 * in seperate arguments here.
 		 */
-	size_t args_len;
-	size_t env_len;
+	int argc;
+	int envc;
 
 		/* Data:
 		 * cmd<0>arg1<0>arg2<0>...argn<0>env1<0>env2<0> ... envn<0>
-		 * the len members determine how many args/how many envs.
+		 * the above members determine how many args/how many envs.
 		 */
 	char data[0];
 };
