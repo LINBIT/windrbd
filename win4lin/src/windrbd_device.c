@@ -160,6 +160,29 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 		irp->IoStatus.Information = 0;
 		break;
 
+	case IOCTL_WINDRBD_ROOT_RECEIVE_USERMODE_HELPER:
+		size_t bytes_returned2;
+		size_t out_max_bytes2 = s->Parameters.DeviceIoControl.OutputBufferLength;
+		int ret;
+
+		ret = windrbd_um_get_next_request(irp->AssociatedIrp.SystemBuffer, out_max_bytes2, &bytes_returned2);
+
+		if (ret == -EINVAL)
+			status = STATUS_BUFFER_TOO_SMALL;
+
+		irp->IoStatus.Information = bytes_returned2;
+		break;
+
+	case IOCTL_WINDRBD_ROOT_SEND_USERMODE_HELPER_RETURN_VALUE:
+		if (s->Parameters.DeviceIoControl.InputBufferLength != sizeof(struct windrbd_usermode_helper_return_value)) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+		windrbd_um_return_return_value(irp->AssociatedIrp.SystemBuffer);
+
+		irp->IoStatus.Information = 0;
+		break;
+
 	default:
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;

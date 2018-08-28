@@ -141,11 +141,11 @@ struct windrbd_usermode_helper {
 struct windrbd_usermode_helper_return_value {
 	int id;
 
-		/* The return value of the handler. As far as I can
+		/* The return value of the handler. As far as I can tell
 		 * nothing else is transferred to the kernel (no stdout/
 		 * stderr).
 		 */
-	int rv;
+	int retval;
 };
 
 /* This is for calling usermode helpers.
