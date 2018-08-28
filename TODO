@@ -2,32 +2,39 @@ TODO: Implement: user mode helpers
 
 	switch to ioctl() interface first.
 
-TODO: Documentation: drbd-util: Update manpage.
+	Update: switched to ioctl, now implementing user mode helpers.
 
-	And write one for windrbd utility.
+TODO: Implement: Rework mount code.
 
-TODO: Code quality: fix remaining warnings when compiling drbd-utils with-windrbd
+	Should be an ioctl called via windrbd on primary/secondary
+	(where add-drive-in-explorer is). Then we do not have to
+	change the netlink protocol attributes (and also save patches
+	to DRBD).
 
-TODO: Upstream: drbd-utils make clean should also remove dependencies.
+TODO: Feature: windrbd show-filesystem should check if device is used as
+	a backing device.
 
-TODO: Feature: Mount to NTFS directories.
+TODO: Test: drbdadm adjust changing mount point most likely doesn't work now.
 
-	For now, at least prepare user space to support that.
+TODO: Code quality: Other mechanism to specify syslog_ip.
+
+	Should be able to change it without rebooting.
+
+	Have a windrbd log-to-ip <...> command. Before this command
+	is given, only log to ring buffer internally (or maybe still
+	have the key?).
+
+	Update: No it makes sense to remove the registry key. Users
+	should either start windrbd log-server (which sets the IP
+	internally) or windrbd log-to-ip. Ring buffer is big enough :)
 
 TODO: Upstream: Linux drbd-utils should not complain about WinDRBD device
 
 	On peers. Do that before merging windrbd into master.
 
-TODO: Upstream: drbdsetup generic_get() handles multiple packets wrong.
+	Accept any string (including empty string)
 
-	If the DONE packet is not the first packet, it is not detected.
-
-	Probably nobody noticed because recvmsg() always returned only
-	one packet (socket is a DGRAM socket).
-
-TODO: Code quality: fake commit history (git rebase -i master)
-
-	Remove commits reverted later, clean up.
+TODO: Code quality: fix remaining warnings when compiling drbd-utils with-windrbd
 
 TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
 
@@ -36,6 +43,9 @@ TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
 
 	For functions, have a drbdmeta-linux.c and a drbdmeta-windrbd.c
 	and link with the right version.
+
+	Update: I think we can do this without any ifdefs in the C
+	code (only in Makefiles).
 
 TODO: Code quality: merge drbd-headers/windrbd branch onto Linux version
 
@@ -49,6 +59,40 @@ TODO: Code quality: merge drbd-headers/windrbd branch onto Linux version
 	his upstream (Linux mainline)
 
 	Others: Find another way to do it (undef NO_ERROR, ...)
+
+	Update: I think we can do this without any ifdefs in the C
+	code (only in Makefiles).
+
+TODO: Documentation: drbd-util: Update manpage.
+
+	And write one for windrbd utility.
+
+TODO: Code quality: fake commit history (git rebase -i master)
+
+	Remove commits reverted later, clean up.
+
+	Update: Phil said best is to have one big patch for everything.
+	That saves a lot of work.
+
+Milestone: windrbd merged into drbd-utils and drbd-headers
+Planned: Oct 1 2018
+-----------------------------------------------------------------------
+
+TODO: Feature: Check if it is a network share (currently blue screens)
+	Update: blue screen was something else. Should check if the
+	drive letter is a network share. Unfortunately they do not
+	appear in the \DosDevices directory. If we create a drive
+	letter (symbolic link) in the \DosDevices it will be silently
+	ignored. Warn the user if it is a network share.
+
+TODO: Upstream: drbd-utils make clean should also remove dependencies.
+
+TODO: Upstream: drbdsetup generic_get() handles multiple packets wrong.
+
+	If the DONE packet is not the first packet, it is not detected.
+
+	Probably nobody noticed because recvmsg() always returned only
+	one packet (socket is a DGRAM socket).
 
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
@@ -155,14 +199,6 @@ TODO: Documentation: white paper for linbit website.
 
 TODO: Code quality: Reenable Windows Compiler Warnings and fix them.
 
-TODO: Code quality: Other mechanism to specify syslog_ip.
-
-	Should be able to change it without rebooting.
-
-	Have a windrbd log-to-ip <...> command. Before this command
-	is given, only log to ring buffer internally (or maybe still
-	have the key?).
-
 TODO: Implement: get drbdmon (and drbdsetup events2) working.
 
 	Probably this works only with WSL .. CygWin does not have
@@ -176,7 +212,22 @@ TODO: Code quality: use zero-sized arrays at the end of structs
 TODO: Code quality: List C files to compile in Makefile
 
 	Instead of just using globbing (*.c)
+
+TODO: Documentation: define tests to be run before releases.
+
+	And run them ;)
+
+TODO: Code quality: Replace WDRBD_ERROR and the like by printk
+
+	The log severities are wrong with these macros.
+
+Milestone: Beta 5
+Planned: Nov 1 2018
 -----------------------------------------------------------------------
+
+TODO: Feature: Mount to NTFS directories.
+
+	For now, at least prepare user space to support that.
 
 TODO: Research: Understand IRP cancellation
 
@@ -252,6 +303,13 @@ TODO: Implement: We want to have some sort of a regression test suite.
 	Update: maybe best is to write a simple new one in bash.
 	(see test-io-larger-than-1m.sh).
 
+	Update: Phil probably rejects a seperate testsuite for
+	WinDRBD (which makes sense to me). Since drbdsetup events2
+	is working now, it got easier to get agruen's testsuite
+	working. What is definately missing is a replacement for
+	lvm and (probably) netfilter (we also need lvm replacement
+	for porting LinStor to Windows later).
+
 TODO: Bug: Assertion triggered:
 
 Jul  9 15:28:24 johannes-VirtualBox kernel: [ 4399.169792] drbd w0/17 drbd26 linbit-wdrbd: ASSERTION (n_oos - peer_device->rs_failed) == 0 FAILED in drbd_resync_finished
@@ -297,7 +355,7 @@ TODO: Research: See if it works under ReactOS
 	that make sense at all. Then (try to) compile windrbd with
 	the ReactOS compiler (can do that under Linux...)
 
-TODO: Bug: blue screen on drbdadm detach --force (when needing uptodate
+TODO: Upstream: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
 
 	Cannot reproduce at the moment.
@@ -310,10 +368,17 @@ TODO: Bug: blue screen on drbdadm detach --force (when needing uptodate
 	no error reported to user space (I/O application hangs and
 	is not killable).
 
+	Update: Does it happen on Linux? Then, maybe an upstream bug.
+
+	Update: Yes it is. Somewhere in the I/O path. We don't even
+	get an Oops in syslog, kernel just hangs (no mouse pointer, ...)
+
 TODO: Bug: On Primary diskless (after backing dev failure) BSOD when unplugging Network cable.
 
 	Check if also on 'normal' diskless.
 	Update: No (did 1 test), but peer stuck in NetworkFailure
+
+	Update: Does it happen on Linux? Then, maybe an upstream bug.
 
 TODO: Bug: BSOD on passive remote side on reconnect to failed peer.
 
@@ -354,12 +419,16 @@ Jul 10 16:29:22 192.168.56.101  U14:29:20.684|25dcafa0(receiver) bio_set_op_attr
 
 	BSOD is 0xD1
 
+	Update: Does it happen on Linux? Then, maybe an upstream bug.
+
 TODO: Bug: BSOD on unplugging network cable in 3 node setup
 
 	Was most likely something with 3 node setup (freezes when
 	network cable is unplugged). Logging was local (BSOD when
 	it is remote). Update: after several minutes BSOD also
 	when freezed (WATCHDOG_VIOLATION).
+
+	Update: Does it happen on Linux? Then, maybe an upstream bug.
 
 TODO: Bug: Connection instable when connecting two Windows boxes.
 
@@ -380,12 +449,6 @@ TODO: Bug: Connection instable when connecting two Windows boxes.
 
 	Update: Windows 10 to Mac VMs seems to have no problems.
 	Problem seems to be only between much VM's and Windows 10.
-
-TODO: Documentation: define tests to be run before releases.
-
-TODO: Code quality: Replace WDRBD_ERROR and the like by printk
-
-	The log severities are wrong with these macros.
 
 TODO: Test: Test sendbuffer full (rety on Metadata socket).
 
@@ -411,6 +474,9 @@ TODO: Performance: Sync is still somewhat slow when windrbd is SyncTarget
 	Update: Probably not the networking code, maybe I/O on
 	backing device is slow? When Windows is SyncTarget it is
 	faster (3 sec) than when it is SyncSource (7 sec) doing I/O
+
+	Update: Now we reworked the local I/O path a bit, did that
+	help?
 
 TODO: Code quality: eventually use drbd_rate_limit() on some printk's
 
@@ -477,17 +543,16 @@ TODO: Bug: test-loop hangs after about 16 iterations.
 
 TODO: Code quality: Re-check the WIN32 / WIN64 thing in drbd_endian.h
 
-TODO: Feature: windrbd show-filesystem should check if device is used as
-	a backing device.
-
-TODO: Test: drbdadm adjust changing mount point most likely doesn't work now.
-
 TODO: Code quality: fix the case where backing device contains a file system.
 	It should not blue screen.
 	(maybe later, this seems to be rather complex)
 	We are now avoiding the case when there is a filesystem
 	on an attached backing device. This blue screen should
 	be fixed but maybe in a later release.
+
+	Update: We found on stackoverflow that one should use
+	IoCompleteRequest() instead of IoFreeIrp(). Does that
+	help?
 
 TODO: Feature: flush not supported by some (all?) devices: currently we
 	ignore this (as reactOS also does it). Update: ext2
@@ -560,6 +625,8 @@ TODO: Code quality: Re-port drbd_transport_tcp.c to windrbd's
 	wsk2.c API to match the kernel API (Send->kernel_send_msg
 	and so on).
 
+TODO: Code quality: Minimize / Sqash patches to DRBD
+
 TODO: Code quality: rebase drbd_wrappers.h to upstream DRBD
 
 TODO: Feature: when losing Quorum go into read only mode.
@@ -588,13 +655,6 @@ TODO: Nice to have: Cygwin should have /dev/drbd<n> mapped to
 
 	Right now, we can read/write the windrbd device via
 	windrbd-test utility.
-
-TODO: Feature: Check if it is a network share (currently blue screens)
-	Update: blue screen was something else. Should check if the
-	drive letter is a network share. Unfortunately they do not
-	appear in the \DosDevices directory. If we create a drive
-	letter (symbolic link) in the \DosDevices it will be silently
-	ignored. Warn the user if it is a network share.
 
 TODO: Code quality: fix the macro redefinition problems in drbd_windows.c
 	For now we have to copy the function prototypes from MSDN.
