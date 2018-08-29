@@ -104,13 +104,19 @@ int windrbd_um_get_next_request(void *buf, size_t max_data_size, size_t *actual_
 	int ret = 0;
 	size_t bytes_copied = 0;
 
+printk("1\n");
 	mutex_lock(&request_mutex);
+printk("2\n");
 	if (!list_empty(&um_requests)) {
+printk("3\n");
 		r=list_first_entry(&um_requests, struct um_request, list);
 
+printk("4\n");
 		if (max_data_size >= r->helper.total_size) {
+printk("5\n");
 			bytes_copied = r->helper.total_size;
 			RtlCopyMemory(buf, &r->helper, bytes_copied);
+printk("6\n");
 
 				/* put on another list, so we do not
 				 * return that request later again.
@@ -118,23 +124,31 @@ int windrbd_um_get_next_request(void *buf, size_t max_data_size, size_t *actual_
 
 			list_del(&r->list);
 			list_add(&r->list, &um_requests_running);
+printk("7\n");
 		} else {
+printk("8\n");
 				/* Userspace only wants to know size */
 			if (max_data_size >= sizeof(r->helper)) {
+printk("9\n");
 				bytes_copied = sizeof(r->helper);
 				RtlCopyMemory(buf, &r->helper, bytes_copied);
 			} else {
+printk("a\n");
 				ret = -EINVAL;
 			}
 		}
 	} else {
+printk("b\n");
 		ret = -EAGAIN;
 	}
+printk("c\n");
 	mutex_unlock(&request_mutex);
 
+printk("d\n");
 	if (actual_data_size)
 		*actual_data_size = bytes_copied;
 
+printk("e\n");
 	return ret;
 }
 
@@ -160,4 +174,12 @@ int windrbd_um_return_return_value(void *rv_buf)
 	mutex_unlock(&request_mutex);
 
 	return ret;
+
+}
+
+int windrbd_init_usermode_helper(void)
+{
+	mutex_init(&request_mutex);
+
+	return 0;
 }
