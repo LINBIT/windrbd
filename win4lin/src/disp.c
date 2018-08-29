@@ -141,6 +141,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 		}
     }
 
+	windrbd_init_usermode_helper();
 /*
 printk("mvolRootDeviceObject->DeviceObjectExtension: %p\n", mvolRootDeviceObject->DeviceObjectExtension);
 if (mvolRootDeviceObject->DeviceObjectExtension != NULL)
@@ -158,7 +159,10 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 }
 
 /* TODO: This should not be called. Change type of driver so that
-   this is not neccessary */
+   this is not neccessary.
+
+   Update: Done, this can be removed.
+ */
 NTSTATUS
 mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject)
 {

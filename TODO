@@ -152,15 +152,8 @@ TODO: Implement: Make drbd service stoppable
 	one day.
 
 	Probably some setting in the inf section. Or the way DRBD
-	registers itself in DriverEntry?
-
-TODO: Implement: check if windrbd can be loaded not at boot time but later.
-
-	Working on it .. test with demand load on a fresh installed
-	windows (it blue screens on boot if there was a windrbd before
-	installed).
-
-	Update: imdisk can do it.
+	registers itself in DriverEntry? DriverUnload() routine
+	returning something?
 
 TODO: Implement: Make windrbd directory unaccessible for non-admins.
 
@@ -3104,4 +3097,21 @@ Done: Remove registry entries for TCP/IP based netlink
 	Maybe someday also remove the syslog_ip registry key. There is
 	a buffer overflow in the InitRegistry function, plus we cannot
 	change the syslog_ip during runtime.
+
+Done: Implement: check if windrbd can be loaded not at boot time but later.
+
+	Working on it .. test with demand load on a fresh installed
+	windows (it blue screens on boot if there was a windrbd before
+	installed).
+
+	Update: imdisk can do it.
+
+	Update: we got it working .. trick was not to register drbd
+	as upperfilterdriver in the registry (else windows fails on
+	boot when drbd.sys is not loaded). And set StartType to 3
+	(imdisk has 2 but accoring to doc this shouldn't be used
+	for WDM (which we are) and PnP drivers (which we are not).
+
+	Side-effect is also that AddDevice (see disp.c) isn't needed
+	any more.
 

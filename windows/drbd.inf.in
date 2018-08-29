@@ -4,9 +4,11 @@
 
 [Version]
 signature   =   "$Windows NT$"
+;; inf2cat complains if this is not specified:
 Class       =   "Volume"                       		;This is determined by the work this filter driver does
-ClassGuid   =   {71A27CDD-812A-11D0-BEC7-08002BE2092F}  ;This value is determined by the Class
-Provider    =   %Msft%
+;; Class       =   "drbd"                       		;This is determined by the work this filter driver does
+;; ClassGuid   =   {71A27CDD-812A-11D0-BEC7-08002BE2092F}  ;This value is determined by the Class
+Provider    =   "Linbit"
 DriverVer   =   12/01/2013,0.2.0.0			;Will get replaced by build magic
 CatalogFile = drbd.cat
 
@@ -49,11 +51,18 @@ DisplayName      = %ServiceName%
 Description      = %ServiceDesc%
 ServiceBinary    = %12%\drbd.sys     	;%windir%\system32\drivers\drbd.sys
 ServiceType      = 1                    ;SERVICE_FILE_SYSTEM_DRIVER
-;;StartType        = 3                   
+;; works?
+;; yes the trick was not to add the UpperFilters registry key.
+StartType        = 3
 ;; https://social.msdn.microsoft.com/Forums/sqlserver/en-US/a7481885-f042-4de9-ad01-528db1d56be0/why-cant-i-suppress-the-prompt-dialog-even-i-use-installhinfsection-defaultinstall-128-?forum=windowsgeneraldevelopmentissues
-StartType        = 0                    ;SERVICE_DEMAND_START
-ErrorControl     = 1                    ;SERVICE_ERROR_NORMAL
-LoadOrderGroup   = "PnP Filter"  	
+;; StartType        = 0                    ;SERVICE_DEMAND_START
+;; With this StartType, no reboot panel shows up upon install, however Windows fails to boot later (BSOD 0x7B).
+;; StartType        = 2                    ;SERVICE_AUTO_START meaning it has to be started manually by service manager
+;; also BSOD on boot:
+;; StartType        = 1                    ; just try it ...
+;; ErrorControl     = 1                    ;SERVICE_ERROR_NORMAL
+ErrorControl     = 0                    ;SERVICE_ERROR_NORMAL
+;; LoadOrderGroup   = "PnP Filter"
 AddReg           = DRBD.AddRegistry
 
 ;
@@ -61,11 +70,12 @@ AddReg           = DRBD.AddRegistry
 ;
 
 [DRBD.AddRegistry]
-HKLM, System\CurrentControlSet\Control\Class\{71A27CDD-812A-11D0-BEC7-08002BE2092F}, UpperFilters, 0x00010008, drbd
+;; do not do this: windows will search on boot for drbd, not find it and BSOD.
+;; HKLM, System\CurrentControlSet\Control\Class\{71A27CDD-812A-11D0-BEC7-08002BE2092F}, UpperFilters, 0x00010008, drbd
 HKR,,"syslog_ip",0x00000002, "127.0.0.1"
 
 [DRBD.DelRegistry]
-HKLM, System\CurrentControlSet\Control\Class\{71A27CDD-812A-11D0-BEC7-08002BE2092F}, UpperFilters, 0x00018002, drbd
+;; HKLM, System\CurrentControlSet\Control\Class\{71A27CDD-812A-11D0-BEC7-08002BE2092F}, UpperFilters, 0x00018002, drbd
 HKR,,"syslog_ip"
 
 ;
@@ -90,8 +100,8 @@ drbd.sys = 1,,
 ;;
 
 [Strings]
-Msft                = "drbd"
-ServiceDesc         = "drbd engine"
-ServiceName         = "drbd"
-DiskId1             = "drbd Installation Disk"
+ServiceDesc         = "WinDRBD - storage replication over network for Microsoft Windows"
+;; this is the parameter to sc (e.g. sc start windrbd to start the driver)
+ServiceName         = "WinDRBD"
+DiskId1             = "WinDRBD Installation Disk"
 
