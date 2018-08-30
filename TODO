@@ -1,8 +1,4 @@
-TODO: Implement: user mode helpers
-
-	switch to ioctl() interface first.
-
-	Update: switched to ioctl, now implementing user mode helpers.
+TODO: Ask phil about timeout for user mode helpers.
 
 TODO: Implement: Rework mount code.
 
@@ -10,6 +6,10 @@ TODO: Implement: Rework mount code.
 	(where add-drive-in-explorer is). Then we do not have to
 	change the netlink protocol attributes (and also save patches
 	to DRBD).
+
+TODO: Feature: flush printk buffer as soon as network is working.
+
+TODO: Feature: 'modprobe' (sc start windrbd) for drbdadm
 
 TODO: Feature: windrbd show-filesystem should check if device is used as
 	a backing device.
@@ -74,6 +74,20 @@ TODO: Code quality: fake commit history (git rebase -i master)
 	Update: Phil said best is to have one big patch for everything.
 	That saves a lot of work.
 
+TODO: forward port drbd_polymorph_printk.h (again).
+
+	Or even better use the original file which should also
+	work (currently exit code of user mode helper is not 
+	displayed when non-zero). 
+
+TODO: Bug: BSOD on pri-on-incon-degr user mode helper.
+
+	Most likely if and when there is no daemon running, because
+	of the 10 seconds delay .. there some strange things can
+	happen. Most likely also has to be fixed upstream (check
+	if this is a problem on Linux, just do a sleep 10 as
+	handler).
+
 Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
 -----------------------------------------------------------------------
@@ -123,6 +137,10 @@ TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
 	So no need for a tmp storage here. (Maybe put an assert
 	at the beginning of spin_lock_irq that tests for IRQL
 	being PASSIVE_LEVEL).
+
+TODO: Installation: Autostart user mode helper daemon
+
+	Someday ...
 
 TODO: Implement: Make DRBD driver removable.
 
@@ -365,6 +383,12 @@ TODO: Upstream: blue screen on drbdadm detach --force (when needing uptodate
 
 	Update: Yes it is. Somewhere in the I/O path. We don't even
 	get an Oops in syslog, kernel just hangs (no mouse pointer, ...)
+
+	Update: According to Lars this is a known issue and is
+	kind-of intentional (at least it is known). One should do
+	drbdadm suspend-io before drbdadm detach --force instead.
+	Changed to Upstream, low priority since this is also a defect
+	on Linux.
 
 TODO: Bug: On Primary diskless (after backing dev failure) BSOD when unplugging Network cable.
 
@@ -3114,4 +3138,14 @@ Done: Implement: check if windrbd can be loaded not at boot time but later.
 
 	Side-effect is also that AddDevice (see disp.c) isn't needed
 	any more.
+
+Done: Implement: user mode helpers
+
+	switch to ioctl() interface first.
+
+	Update: switched to ioctl, now implementing user mode helpers.
+
+	Update: User mode helpers should work now as expected, require
+	probably some more testing (and fixing of some TODO's in 
+	user space utility).
 
