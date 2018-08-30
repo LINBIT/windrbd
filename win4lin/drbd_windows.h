@@ -1374,6 +1374,9 @@ static int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 
 extern int scnprintf(char * buf, size_t size, const char *fmt, ...);
 extern int vscnprintf(char * buf, size_t size, const char *fmt, va_list args);
+/* TODO: defined in some windows header (stdio.h) but not in library: */
+/* Update: really? was something else (printf) */
+size_t windrbd_vsnprintf(char *buf, size_t bufsize, const char *fmt, va_list args);
 
 void list_cut_position(struct list_head *list, struct list_head *head, struct list_head *entry);
 

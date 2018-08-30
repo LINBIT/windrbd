@@ -101,14 +101,18 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	return 0;
 }
 
+/* TODO: move somewhere else */
+
+/* TODO: argh... */
 char *kvasprintf(int flags, const char *fmt, va_list args)
 {
 	char *buffer;
-	const int size = 4096;
+	const int size = 4096; /* TODO: no. */
 	NTSTATUS status;
 
 	buffer = kzalloc(size, flags, 'AVDW');
 	if (buffer) {
+			/* TODO: RtlStringCbVPrintfA */
 		status = RtlStringCchVPrintfA(buffer, size, fmt, args);
 		if (status == STATUS_SUCCESS)
 			return buffer;
@@ -117,6 +121,17 @@ char *kvasprintf(int flags, const char *fmt, va_list args)
 	}
 
 	return NULL;
+}
+
+size_t windrbd_vsnprintf(char *buf, size_t bufsize, const char *fmt, va_list args)
+{
+	NTSTATUS status;
+
+	status = RtlStringCbVPrintfA(buf, bufsize, fmt, args);
+	if (status == STATUS_SUCCESS)
+		return strlen(buf);
+
+	return 0;
 }
 
 

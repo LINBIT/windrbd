@@ -165,14 +165,11 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 		size_t out_max_bytes2 = s->Parameters.DeviceIoControl.OutputBufferLength;
 		int ret;
 
-printk("1\n");
 		ret = windrbd_um_get_next_request(irp->AssociatedIrp.SystemBuffer, out_max_bytes2, &bytes_returned2);
 
-printk("2\n");
 		if (ret == -EINVAL)
 			status = STATUS_BUFFER_TOO_SMALL;
 
-printk("3\n");
 		irp->IoStatus.Information = bytes_returned2;
 		break;
 

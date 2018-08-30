@@ -3,6 +3,9 @@
 #include "windrbd_ioctl.h"
 #include <linux/list.h>
 
+/* TODO: should be the same as with Linux, 10 seconds is probably too
+ * long.
+ */
 #define REQUEST_TIMEOUT_MS 10000
 
 struct um_request {
@@ -46,12 +49,11 @@ int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait
 {
 	static int unique_id;
 	struct um_request *new_request;
-	size_t path_size, arg_size, env_size, total_size;
+	size_t path_size, arg_size, env_size, total_size, total_size_of_helper;
 	char *buf;
 	NTSTATUS status;
 	LARGE_INTEGER timeout;
 	int ret;
-
 	if (wait != UMH_WAIT_PROC) {
 		printk("Only UMH_WAIT_PROC supported for wait (is %d)\n", wait);
 		return -EOPNOTSUPP;
@@ -60,7 +62,8 @@ int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait
 	string_table_to_buffer(NULL, argv, 0, &arg_size);
 	string_table_to_buffer(NULL, envp, 0, &env_size);
 
-	total_size = sizeof(struct windrbd_usermode_helper)+path_size+arg_size+env_size;
+	total_size = sizeof(struct um_request)+path_size+arg_size+env_size;
+	total_size_of_helper = sizeof(struct windrbd_usermode_helper)+path_size+arg_size+env_size;
 
 	new_request = kmalloc(total_size, 0, 'DRBD');
 	if (new_request == NULL)
@@ -69,7 +72,7 @@ int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait
         KeInitializeEvent(&new_request->request_event, SynchronizationEvent, FALSE);
 	new_request->retval = -ETIMEDOUT;
 	new_request->helper.id = unique_id++;
-	new_request->helper.total_size = total_size;
+	new_request->helper.total_size = total_size_of_helper;
 	buf = &new_request->helper.data[0];
 	strcpy(buf, path);
 	buf+=path_size;
@@ -104,19 +107,13 @@ int windrbd_um_get_next_request(void *buf, size_t max_data_size, size_t *actual_
 	int ret = 0;
 	size_t bytes_copied = 0;
 
-printk("1\n");
 	mutex_lock(&request_mutex);
-printk("2\n");
 	if (!list_empty(&um_requests)) {
-printk("3\n");
 		r=list_first_entry(&um_requests, struct um_request, list);
 
-printk("4\n");
 		if (max_data_size >= r->helper.total_size) {
-printk("5\n");
 			bytes_copied = r->helper.total_size;
 			RtlCopyMemory(buf, &r->helper, bytes_copied);
-printk("6\n");
 
 				/* put on another list, so we do not
 				 * return that request later again.
@@ -124,31 +121,23 @@ printk("6\n");
 
 			list_del(&r->list);
 			list_add(&r->list, &um_requests_running);
-printk("7\n");
 		} else {
-printk("8\n");
 				/* Userspace only wants to know size */
 			if (max_data_size >= sizeof(r->helper)) {
-printk("9\n");
 				bytes_copied = sizeof(r->helper);
 				RtlCopyMemory(buf, &r->helper, bytes_copied);
 			} else {
-printk("a\n");
 				ret = -EINVAL;
 			}
 		}
 	} else {
-printk("b\n");
 		ret = -EAGAIN;
 	}
-printk("c\n");
 	mutex_unlock(&request_mutex);
 
-printk("d\n");
 	if (actual_data_size)
 		*actual_data_size = bytes_copied;
 
-printk("e\n");
 	return ret;
 }
 
@@ -163,7 +152,6 @@ int windrbd_um_return_return_value(void *rv_buf)
 	mutex_lock(&request_mutex);
 	list_for_each_entry(struct um_request, r, &um_requests_running, list) {
 		if (rv->id == r->helper.id) {
-				/* TODO: something like >> 8 & 0xff ? */
 			r->retval = rv->retval;
 			KeSetEvent(&r->request_event, 0, FALSE);
 			ret = 0;

@@ -3320,7 +3320,6 @@ int windrbd_mount(struct block_device *dev)
 {
 	NTSTATUS status;
 
-	
 	/* This is basically what mount manager does: leave it here,
 	   in case we revert the mount manager code again.
 	 */

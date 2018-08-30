@@ -1,0 +1,41 @@
+From 81e8f619c3dbaf29a64d2b7613f22eae60d25ee6 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 30 Aug 2018 20:13:34 +0200
+Subject: [PATCH] Undone two patches by mantech that broke user mode helpers.
+
+One is the use of an RtlPrintxxx() function: these do not return
+the length which is a design bug in the Windows NT kernel Rtl
+library (but hey .. it is safe!)
+
+The other one is a patched exit status (don't know why ...).
+Exit status (under Linux) is in bits 8..15 of the value.
+Always (also under CygWin).
+---
+ drbd/drbd_nl.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index d761ee1..0b01db0 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -562,7 +562,7 @@ static int env_print(struct env *env, const char *fmt, ...)
+ 	if (pos < 0)
+ 		return pos;
+ 	va_start(args, fmt);
+-	ret = RtlStringCbVPrintfA(env->buffer + pos, env->size - pos, fmt, args);
++	ret = windrbd_vsnprintf(env->buffer + pos, env->size - pos, fmt, args);
+ 	va_end(args);
+ 	if (ret < 0) {
+ 		env->pos = ret;
+@@ -853,7 +853,7 @@ bool conn_try_outdate_peer(struct drbd_connection *connection)
+ 	r = drbd_khelper(NULL, connection, "fence-peer");
+ 
+ 	begin_state_change(resource, &irq_flags, CS_VERBOSE);
+-	switch (r & 0xff) {
++	switch ((r>>8) & 0xff) {
+ 	case P_INCONSISTENT: /* peer is inconsistent */
+ 		ex_to_string = "peer is inconsistent or worse";
+ 		__change_peer_disk_states(connection, D_INCONSISTENT);
+-- 
+2.17.0
+
