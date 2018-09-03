@@ -89,6 +89,10 @@ int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait
         status = KeWaitForSingleObject(&new_request->request_event, Executive, KernelMode, FALSE, &timeout);
 
 	ret = new_request->retval;
+	if (ret == -ETIMEDOUT)
+		printk("User mode helper request timed out after %d milliseconds, is the user mode helper daemon running?\n", REQUEST_TIMEOUT_MS);
+	else
+		printk("User mode helper returned %d (exit status is %d)\n", ret, (ret >> 8) & 0xff);
 
 	mutex_lock(&request_mutex);
 	list_del(&new_request->list);
