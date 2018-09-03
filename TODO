@@ -21,11 +21,6 @@ TODO: Code quality: Other mechanism to specify syslog_ip.
 
 TODO: Feature: flush printk buffer as soon as network is working.
 
-TODO: Feature: 'modprobe' (sc start windrbd) for drbdadm
-
-TODO: Feature: windrbd show-filesystem should check if device is used as
-	a backing device.
-
 TODO: Upstream: Linux drbd-utils should not complain about WinDRBD device
 
 	On peers. Do that before merging windrbd into master.
@@ -526,6 +521,9 @@ TODO: Bug: Make windows checkdisk (over unclean shutdown panel) work.
 	chkdsk works.
 
 TODO: Infrastructure: Linux box sometimes loses IP address.
+
+	Was maybe because of updates being installed in the background,
+	disabled now, observe if it happens again.
 
 TODO: Code quality: maybe revert the mountmanager code.
 
@@ -3151,4 +3149,16 @@ Done: Ask phil about timeout for user mode helpers.
 
 	DRBD does not enforce any timeouts. We leave them at 10
 	seconds for now.
+
+Done: Feature: 'modprobe' (sc start windrbd) for drbdadm
+
+Rejected: Feature: windrbd show-filesystem should check if device is used as
+	a backing device.
+
+	Right now, it behaves more or less sane: if one does a show
+	filesystem on backing device while the device is up, accesses
+	fail as long the device is used as backing device. As soon
+	as one does a drbdadm down on that resource the backing
+	device can be accessed again (which is what we wanted). I guess
+	we leave it that way until someone complains.
 

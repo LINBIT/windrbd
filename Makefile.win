@@ -6,6 +6,8 @@ PASSWD = ""
 # CERTIFICATE = linbit.cer
 CERTIFICATE = user.crt
 
+# TODO: this should be a tmp dir...we install it somewhere else using
+# the inf file later.
 DRIVER_DEST_DIR := /cygdrive/c/Program Files/drbd
 DRIVER_DEST_DIR_WINDOWS := C:\\Program\ Files\\drbd
 export EWDK_BASE := c:\\Ewdk
