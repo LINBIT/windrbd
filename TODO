@@ -1,18 +1,9 @@
-TODO: Ask phil about timeout for user mode helpers.
-
 TODO: Implement: Rework mount code.
 
 	Should be an ioctl called via windrbd on primary/secondary
 	(where add-drive-in-explorer is). Then we do not have to
 	change the netlink protocol attributes (and also save patches
 	to DRBD).
-
-TODO: Feature: flush printk buffer as soon as network is working.
-
-TODO: Feature: 'modprobe' (sc start windrbd) for drbdadm
-
-TODO: Feature: windrbd show-filesystem should check if device is used as
-	a backing device.
 
 TODO: Test: drbdadm adjust changing mount point most likely doesn't work now.
 
@@ -27,6 +18,13 @@ TODO: Code quality: Other mechanism to specify syslog_ip.
 	Update: No it makes sense to remove the registry key. Users
 	should either start windrbd log-server (which sets the IP
 	internally) or windrbd log-to-ip. Ring buffer is big enough :)
+
+TODO: Feature: flush printk buffer as soon as network is working.
+
+TODO: Feature: 'modprobe' (sc start windrbd) for drbdadm
+
+TODO: Feature: windrbd show-filesystem should check if device is used as
+	a backing device.
 
 TODO: Upstream: Linux drbd-utils should not complain about WinDRBD device
 
@@ -73,20 +71,6 @@ TODO: Code quality: fake commit history (git rebase -i master)
 
 	Update: Phil said best is to have one big patch for everything.
 	That saves a lot of work.
-
-TODO: forward port drbd_polymorph_printk.h (again).
-
-	Or even better use the original file which should also
-	work (currently exit code of user mode helper is not 
-	displayed when non-zero). 
-
-TODO: Bug: BSOD on pri-on-incon-degr user mode helper.
-
-	Most likely if and when there is no daemon running, because
-	of the 10 seconds delay .. there some strange things can
-	happen. Most likely also has to be fixed upstream (check
-	if this is a problem on Linux, just do a sleep 10 as
-	handler).
 
 Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
@@ -231,6 +215,20 @@ TODO: Documentation: define tests to be run before releases.
 TODO: Code quality: Replace WDRBD_ERROR and the like by printk
 
 	The log severities are wrong with these macros.
+
+TODO: forward port drbd_polymorph_printk.h (again).
+
+	Or even better use the original file which should also
+	work (currently exit code of user mode helper is not 
+	displayed when non-zero). 
+
+TODO: Bug: BSOD on pri-on-incon-degr user mode helper.
+
+	Most likely if and when there is no daemon running, because
+	of the 10 seconds delay .. there some strange things can
+	happen. Most likely also has to be fixed upstream (check
+	if this is a problem on Linux, just do a sleep 10 as
+	handler).
 
 Milestone: Beta 5
 Planned: Nov 1 2018
@@ -3148,4 +3146,9 @@ Done: Implement: user mode helpers
 	Update: User mode helpers should work now as expected, require
 	probably some more testing (and fixing of some TODO's in 
 	user space utility).
+
+Done: Ask phil about timeout for user mode helpers.
+
+	DRBD does not enforce any timeouts. We leave them at 10
+	seconds for now.
 
