@@ -149,8 +149,13 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 {
 	UNREFERENCED_PARAMETER(DriverObject);
-	
+
 	printk("Unloading windrbd driver.\n");
+
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Unload routine called.\n");
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "mvolRootDeviceObject->ReferenceCount is %d.\n", mvolRootDeviceObject->ReferenceCount);
+        IoDeleteDevice(mvolRootDeviceObject);
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "root device object deleted.\n");
 }
 
 /* TODO: This should not be called. Change type of driver so that
