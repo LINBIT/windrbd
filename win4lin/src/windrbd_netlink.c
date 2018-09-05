@@ -358,8 +358,7 @@ NTSTATUS init_wsk_and_netlink(void* unused)
         mutex_init(&genl_reply_mutex);
         mutex_init(&genl_multicast_mutex);
 
-	status = STATUS_SUCCESS;
-
+/* TODO: terminate that thread on driver unload */
 #if 0
 	status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, reply_reaper, NULL);
 
@@ -370,11 +369,9 @@ NTSTATUS init_wsk_and_netlink(void* unused)
 	/* We have to do that here, else Windows will deadlock
 	 * on booting. 
          */
-#if 0
 	status = SocketsInit();
 	if (!NT_SUCCESS(status))
 		printk(KERN_WARNING "Failed to initialize socket layer, status is %x.\n", status);
-#endif
 
 	printk("WSK and netlink initialized, terminating thread.\n");
 
