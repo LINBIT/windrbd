@@ -370,6 +370,8 @@ NTSTATUS init_wsk_and_netlink(void* unused)
 	if (!NT_SUCCESS(status))
 		printk(KERN_WARNING "Failed to initialize socket layer, status is %x.\n", status);
 
+	printk("WSK and netlink initialized, terminating thread.\n");
+
 	return status;
 }
 

@@ -34,7 +34,6 @@
 
 DRIVER_INITIALIZE DriverEntry;
 DRIVER_UNLOAD mvolUnload;
-DRIVER_ADD_DEVICE mvolAddDevice;
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, DriverEntry)
@@ -91,7 +90,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	mvolRootDeviceObject = deviceObject;
 
 	windrbd_set_major_functions(DriverObject);
-	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
 	DriverObject->DriverUnload = mvolUnload;
 
 	RootExtension = deviceObject->DeviceExtension;
@@ -150,23 +148,14 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 {
 	UNREFERENCED_PARAMETER(DriverObject);
 
-	printk("Unloading windrbd driver.\n");
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Unloading windrbd driver.\n");
 
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Unload routine called.\n");
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "mvolRootDeviceObject->ReferenceCount is %d.\n", mvolRootDeviceObject->ReferenceCount);
+		/* TODO: a lot. clean up everything. Right now,
+		 * Windows BSODs (rightfully, I think) after
+		 * doing this. There are some threads running,
+		 * which may cause the BSOD.
+		 */
+
         IoDeleteDevice(mvolRootDeviceObject);
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "root device object deleted.\n");
-}
-
-/* TODO: This should not be called. Change type of driver so that
-   this is not neccessary.
-
-   Update: Done, this can be removed.
- */
-NTSTATUS
-mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject)
-{
-	printk(KERN_INFO "AddDevice NOT DONE\n");
-	return STATUS_NO_SUCH_DEVICE;
 }
 
