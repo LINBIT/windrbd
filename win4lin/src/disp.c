@@ -32,6 +32,10 @@
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
 
+	/* TODO: find some headers where this fits. */
+void drbd_cleanup(void);
+void idr_shutdown(void);
+
 DRIVER_INITIALIZE DriverEntry;
 DRIVER_UNLOAD mvolUnload;
 
@@ -96,16 +100,24 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	downup_rwlock_init(&transport_classes_lock); //init spinlock for transport 
 	mutex_init(&notification_mutex);
+		/* TODO: this is unneccessary */
 	KeInitializeSpinLock(&transport_classes_lock);
 
 	dtt_initialize();
 
+/* TODO: if be place an if 0 from here until end of this
+ * function, sc stop windrbd does not blue screen. Somewhere
+ * there are resources we are not freeing */
+
+#if 0
 	system_wq = alloc_ordered_workqueue("system workqueue", 0);
 	if (system_wq == NULL) {
 		pr_err("Could not allocate system work queue\n");
 		return STATUS_NO_MEMORY;
 	}
+#endif
 
+		/* if we enable this BSOD on unload */
 	ret = drbd_init();
 	if (ret != 0) {
 		printk(KERN_ERR "cannot init drbd, error is %d", ret);
@@ -116,6 +128,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	printk(KERN_INFO "Windrbd Driver loaded.\n");
 
+#if 0
 	if (FALSE == InterlockedCompareExchange(&IsEngineStart, TRUE, FALSE))
 	{
 		HANDLE		hNetLinkThread = NULL;
@@ -140,6 +153,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
     }
 
 	windrbd_init_usermode_helper();
+#endif
 
     return STATUS_SUCCESS;
 }
@@ -147,8 +161,14 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 {
 	UNREFERENCED_PARAMETER(DriverObject);
+	UNICODE_STRING linkUnicode;
+	NTSTATUS status;
 
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Unloading windrbd driver.\n");
+
+	drbd_cleanup();
+
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "DRBD cleaned up.\n");
 
 		/* TODO: a lot. clean up everything. Right now,
 		 * Windows BSODs (rightfully, I think) after
@@ -156,6 +176,16 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 		 * which may cause the BSOD.
 		 */
 
+	RtlInitUnicodeString(&linkUnicode, L"\\DosDevices\\" WINDRBD_ROOT_DEVICE_NAME);
+	status = IoDeleteSymbolicLink(&linkUnicode);
+	if (!NT_SUCCESS(status))
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Cannot delete root device link, status is %x.\n", status);
+
         IoDeleteDevice(mvolRootDeviceObject);
+
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Root device deleted.\n");
+
+	idr_shutdown();
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "IDR layer shut down.\n");
 }
 

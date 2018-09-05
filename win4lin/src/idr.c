@@ -526,3 +526,9 @@ void idr_init(struct idr *idp)
 	memset(idp, 0, sizeof(struct idr));
 	KeInitializeSpinLock(&idp->lock);
 }
+
+void idr_shutdown(void)
+{
+	if (idr_layer_cache)
+		kmem_cache_destroy(idr_layer_cache);
+}
