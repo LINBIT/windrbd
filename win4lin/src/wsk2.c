@@ -1050,3 +1050,24 @@ int sock_create_kern(
 out:
 	return err;
 }
+
+/* This is a separate thread, since it blocks until Windows has finished
+ * booting. It initializes everything we need and then exits. You can
+ * ignore the return value.
+ */
+
+NTSTATUS windrbd_init_wsk(void *unused)
+{
+	NTSTATUS status;
+
+        /* We have to do that here, else Windows will deadlock
+         * on booting.
+         */
+        status = SocketsInit();
+        if (!NT_SUCCESS(status))
+                printk(KERN_WARNING "Failed to initialize socket layer, status is %x.\n", status);
+	else
+		printk(KERN_INFO "WSK initialized, terminating thread.\n");
+
+	return status;
+}

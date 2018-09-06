@@ -139,6 +139,9 @@ static void delete_reply(struct genl_reply *r)
 
 #define MAX_REPLY_AGE 10
 
+static int run_reaper;
+static void *reaper_thread_object;
+
 static NTSTATUS reply_reaper(void *unused)
 {
 	LARGE_INTEGER interval;
@@ -146,8 +149,8 @@ static NTSTATUS reply_reaper(void *unused)
 	struct genl_reply *r;
 	ULONGLONG now;
 
-	for (;;) {
-		interval.QuadPart = -10*1000*1000;   /* one second relative */
+	while (run_reaper) {
+		interval.QuadPart = -1*1000*1000;   /* 1/10th second relative */
 		KeDelayExecutionThread(KernelMode, FALSE, &interval);
 		now = jiffies;
 
@@ -162,7 +165,6 @@ static NTSTATUS reply_reaper(void *unused)
 		}
 		mutex_unlock(&genl_reply_mutex);
 		mutex_unlock(&genl_multicast_mutex);
-
 	}
 	return STATUS_SUCCESS;
 }
@@ -349,7 +351,7 @@ void nlmsg_free(struct sk_buff *skb)
  * ignore the return value.
  */
 
-NTSTATUS init_wsk_and_netlink(void* unused)
+void windrbd_init_netlink(void)
 {
 	NTSTATUS    status;
 	HANDLE h;
@@ -358,24 +360,32 @@ NTSTATUS init_wsk_and_netlink(void* unused)
         mutex_init(&genl_reply_mutex);
         mutex_init(&genl_multicast_mutex);
 
-/* TODO: terminate that thread on driver unload */
-#if 0
+	run_reaper = 1;
 	status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, reply_reaper, NULL);
 
 	if (!NT_SUCCESS(status))
 		printk(KERN_WARNING "Couldn't start reply reaper, expect memory leaks.\n");
-#endif
+	else {
+		status = ObReferenceObjectByHandle(h, THREAD_ALL_ACCESS, NULL, KernelMode, &reaper_thread_object, NULL);
+		if (!NT_SUCCESS(status))
+			printk(KERN_WARNING "Couldn't reference reply reaper, status is %x.\n", status);
+	}
 
-	/* We have to do that here, else Windows will deadlock
-	 * on booting. 
-         */
-	status = SocketsInit();
+
+	printk("Netlink initialized.\n");
+}
+
+void windrbd_shutdown_netlink(void)
+{
+	NTSTATUS status;
+
+	run_reaper = 0;
+	status = KeWaitForSingleObject(reaper_thread_object, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+
 	if (!NT_SUCCESS(status))
-		printk(KERN_WARNING "Failed to initialize socket layer, status is %x.\n", status);
+		printk("KeWaitForSingleObject failed with status %x\n", status);
 
-	printk("WSK and netlink initialized, terminating thread.\n");
-
-	return status;
+	ObDereferenceObject(reaper_thread_object);
 }
 
 static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netlink_callback * cb, struct genl_info * info)

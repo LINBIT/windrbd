@@ -128,7 +128,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 		NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
         // Init WSK and StartNetLinkServer
-		Status = PsCreateSystemThread(&hNetLinkThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, init_wsk_and_netlink, NULL);
+		Status = PsCreateSystemThread(&hNetLinkThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, windrbd_init_wsk, NULL);
 		if (!NT_SUCCESS(Status))
 		{
 			WDRBD_ERROR("PsCreateSystemThread failed with status 0x%08X\n", Status);
@@ -145,6 +145,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 		}
     }
 
+	windrbd_init_netlink();
 	windrbd_init_usermode_helper();
 
     return STATUS_SUCCESS;
@@ -160,24 +161,27 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 	 * to wait for its termination here.
 	 */
 
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Unloading windrbd driver.\n");
+	printk("Unloading windrbd driver.\n");
 
 	drbd_cleanup();
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "DRBD cleaned up.\n");
+	printk("DRBD cleaned up.\n");
 
 	destroy_workqueue(system_wq);
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "System workqueue destroyed.\n");
+	printk("System workqueue destroyed.\n");
 
 	RtlInitUnicodeString(&linkUnicode, L"\\DosDevices\\" WINDRBD_ROOT_DEVICE_NAME);
 	status = IoDeleteSymbolicLink(&linkUnicode);
 	if (!NT_SUCCESS(status))
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Cannot delete root device link, status is %x.\n", status);
+		printk("Cannot delete root device link, status is %x.\n", status);
 
         IoDeleteDevice(mvolRootDeviceObject);
 
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Root device deleted.\n");
+	printk("Root device deleted.\n");
 
 	idr_shutdown();
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "IDR layer shut down.\n");
+	printk("IDR layer shut down.\n");
+
+	windrbd_shutdown_netlink();
+	printk("Netlink layer shut down.\n");
 }
 
