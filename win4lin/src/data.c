@@ -30,7 +30,6 @@
 
 PDEVICE_OBJECT	mvolRootDeviceObject;
 PDRIVER_OBJECT	mvolDriverObject;
-PETHREAD		g_NetlinkServerThread;
 
 int				seq_file_idx		= 0;
 

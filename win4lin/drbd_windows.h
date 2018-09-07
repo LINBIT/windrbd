@@ -1224,14 +1224,11 @@ extern void panic(const char *fmt, ...);
 #define SYSLOG_IP_SIZE 64
 extern char g_syslog_ip[];
 
-	/* TODO: Do we really need this? */
-extern PETHREAD	g_NetlinkServerThread;
-///
-
 void windrbd_init_netlink(void);
 void windrbd_shutdown_netlink(void);
 
-NTSTATUS windrbd_init_wsk(void *unused);
+NTSTATUS windrbd_init_wsk(void);
+void windrbd_shutdown_wsk(void);
 
 extern
 NTSTATUS ReleaseWskNetlink();

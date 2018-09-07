@@ -2,6 +2,10 @@
 #include "drbd_windows.h"
 #include "wsk2.h"
 
+/* TODO: change the API in here to that of Linux kernel (so
+ * we don't need to patch the tcp transport file.
+ */
+
 WSK_REGISTRATION			g_WskRegistration;
 static WSK_PROVIDER_NPI		g_WskProvider;
 static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
@@ -1051,12 +1055,14 @@ out:
 	return err;
 }
 
+static void *init_wsk_thread;
+
 /* This is a separate thread, since it blocks until Windows has finished
  * booting. It initializes everything we need and then exits. You can
  * ignore the return value.
  */
 
-NTSTATUS windrbd_init_wsk(void *unused)
+static NTSTATUS windrbd_init_wsk_thread(void *unused)
 {
 	NTSTATUS status;
 
@@ -1071,3 +1077,40 @@ NTSTATUS windrbd_init_wsk(void *unused)
 
 	return status;
 }
+
+NTSTATUS windrbd_init_wsk(void)
+{
+	HANDLE h;
+	NTSTATUS status;
+
+	status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, windrbd_init_wsk_thread, NULL);
+	if (!NT_SUCCESS(status)) {
+		printk("Couldn't create thread for initializing socket layer: PsCreateSystemThread failed with status 0x%x\n", status);
+		return status;
+	}
+	status = ObReferenceObjectByHandle(h, THREAD_ALL_ACCESS, NULL, KernelMode, &init_wsk_thread, NULL);
+	ZwClose(h);
+
+	if (!NT_SUCCESS(status)) {
+		printk("ObReferenceObjectByHandle() failed with status 0x%08x\n", status);
+		return status;
+	}
+	return STATUS_SUCCESS;
+}
+
+	/* Under normal conditions, the thread already terminated long ago.
+	 * Wait for its termination in case it is still running.
+	 */
+
+void windrbd_shutdown_wsk(void)
+{
+        NTSTATUS status;
+
+        status = KeWaitForSingleObject(init_wsk_thread, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+
+        if (!NT_SUCCESS(status))
+                printk("KeWaitForSingleObject failed with status %x\n", status);
+
+        ObDereferenceObject(init_wsk_thread);
+}
+

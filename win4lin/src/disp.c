@@ -48,10 +48,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 {
 	NTSTATUS            		status;
 	PDEVICE_OBJECT      		deviceObject;
-	PROOT_EXTENSION			RootExtension = NULL;
 	UNICODE_STRING      		nameUnicode, linkUnicode;
-	ULONG				i;
-	static volatile LONG      IsEngineStart = FALSE;
 	int ret;
 
 	/* Init windrbd primitives (spinlocks, ...) before doing anything
@@ -96,8 +93,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	windrbd_set_major_functions(DriverObject);
 	DriverObject->DriverUnload = mvolUnload;
 
-	RootExtension = deviceObject->DeviceExtension;
-
 	downup_rwlock_init(&transport_classes_lock); //init spinlock for transport 
 	mutex_init(&notification_mutex);
 		/* TODO: this is unneccessary */
@@ -111,7 +106,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 		return STATUS_NO_MEMORY;
 	}
 
-		/* if we enable this BSOD on unload */
 	ret = drbd_init();
 	if (ret != 0) {
 		printk(KERN_ERR "cannot init drbd, error is %d", ret);
@@ -120,35 +114,13 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 		return STATUS_TIMEOUT;
 	}
 
-	printk(KERN_INFO "Windrbd Driver loaded.\n");
-
-	if (FALSE == InterlockedCompareExchange(&IsEngineStart, TRUE, FALSE))
-	{
-		HANDLE		hNetLinkThread = NULL;
-		NTSTATUS	Status = STATUS_UNSUCCESSFUL;
-
-        // Init WSK and StartNetLinkServer
-		Status = PsCreateSystemThread(&hNetLinkThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, windrbd_init_wsk, NULL);
-		if (!NT_SUCCESS(Status))
-		{
-			WDRBD_ERROR("PsCreateSystemThread failed with status 0x%08X\n", Status);
-			return Status;
-		}
-
-		Status = ObReferenceObjectByHandle(hNetLinkThread, THREAD_ALL_ACCESS, NULL, KernelMode, &g_NetlinkServerThread, NULL);
-		ZwClose(hNetLinkThread);
-
-		if (!NT_SUCCESS(Status))
-		{
-			WDRBD_ERROR("ObReferenceObjectByHandle() failed with status 0x%08X\n", Status);
-			return Status;
-		}
-    }
-
 	windrbd_init_netlink();
 	windrbd_init_usermode_helper();
+	windrbd_init_wsk();
 
-    return STATUS_SUCCESS;
+	printk(KERN_INFO "Windrbd Driver loaded.\n");
+
+	return STATUS_SUCCESS;
 }
 
 void mvolUnload(IN PDRIVER_OBJECT DriverObject)
@@ -156,10 +128,6 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 	UNREFERENCED_PARAMETER(DriverObject);
 	UNICODE_STRING linkUnicode;
 	NTSTATUS status;
-
-	/* TODO: in case netlink init thread is still running, we need
-	 * to wait for its termination here.
-	 */
 
 	printk("Unloading windrbd driver.\n");
 
@@ -183,5 +151,8 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 
 	windrbd_shutdown_netlink();
 	printk("Netlink layer shut down.\n");
+
+	windrbd_shutdown_wsk();
+	printk("WinSocket layer shut down.\n");
 }
 
