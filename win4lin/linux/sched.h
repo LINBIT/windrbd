@@ -21,7 +21,7 @@ static inline int sched_setscheduler(struct task_struct *p, int policy,
     (void)policy;
     (void)param;
 
-    KeSetPriorityThread(p->pid, LOW_REALTIME_PRIORITY);
+    KeSetPriorityThread(p->windows_thread, LOW_REALTIME_PRIORITY);
     return 0;
 }
 
