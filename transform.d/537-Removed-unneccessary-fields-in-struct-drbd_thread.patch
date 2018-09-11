@@ -1,0 +1,28 @@
+From ced50dcef37b6b2adafa71c37f38698b9d53783d Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 11 Sep 2018 15:37:05 +0200
+Subject: [PATCH] Removed unneccessary fields in struct drbd_thread.
+
+Since we are now (well .. almost) Linux compatible, we don't need
+them any more.
+---
+ drbd/drbd_int.h | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index 6a63fd8..6472d53 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -214,9 +214,6 @@ enum drbd_thread_state {
+ };
+ 
+ struct drbd_thread {
+-	struct task_struct *nt;
+-	KEVENT start_event;
+-	KEVENT wait_event;
+ 	spinlock_t t_lock;
+ 	struct task_struct *task;
+ 	struct completion stop;
+-- 
+2.17.0
+

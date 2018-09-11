@@ -155,7 +155,7 @@ void msleep(int ms)
 	 * reference in thread_object_p.
 	 */
 
-NTSTATUS windrbd_create_windows_thread(int (*threadfn)(void*), void *data, void **thread_object_p)
+NTSTATUS windrbd_create_windows_thread(void (*threadfn)(void*), void *data, void **thread_object_p)
 {
         HANDLE h;
         NTSTATUS status;
@@ -864,7 +864,7 @@ int wake_up_process(struct task_struct *t)
 	t->thread_started = 1;
 	spin_unlock_irqrestore(&t->thread_started_lock, flags);
 
-	status = windrbd_create_windows_thread(t->threadfn, t->data, &t->windows_thread);
+	status = windrbd_create_windows_thread(windrbd_thread_setup, t, &t->windows_thread);
 	if (status != STATUS_SUCCESS) {
 		printk("Could not start thread %s\n", t->comm);
 		return -1;
@@ -1664,17 +1664,17 @@ void set_disk_ro(struct gendisk *disk, int flag)
 
 }
 
-static LIST_HEAD(ct_thread_list);
-	/* TODO: convert this to a Linux spinlock one day */
-static KSPIN_LOCK ct_thread_list_lock;
+static LIST_HEAD(thread_list);
+static spinlock_t thread_list_lock;
 
 	/* NO printk's in here. Used by printk internally, would loop. */
+	/* Call this with thread_list_lock held. */
 
 static struct task_struct *__find_thread(PKTHREAD id)
 {
 	struct task_struct *t;
 
-	list_for_each_entry(struct task_struct, t, &ct_thread_list, list) {
+	list_for_each_entry(struct task_struct, t, &thread_list, list) {
 		if (t->windows_thread == id)
 			return t;
 	}
@@ -1696,7 +1696,6 @@ static spinlock_t next_pid_lock;
 struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const char *name, ...)
 {
 	struct task_struct *t;
-	KIRQL ct_oldIrql;
 	ULONG_PTR flags;
 	va_list args;
 	int i;
@@ -1732,9 +1731,9 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	t->pid = next_pid;
 	spin_unlock_irqrestore(&next_pid_lock, flags);
 
-	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
-	list_add(&t->list, &ct_thread_list);
-	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
+	spin_lock_irqsave(&thread_list_lock, flags);
+	list_add(&t->list, &thread_list);
+	spin_unlock_irqrestore(&thread_list_lock, flags);
 
 	return t;
 }
@@ -1747,51 +1746,22 @@ struct task_struct *kthread_run(int (*threadfn)(void *), void *data, const char 
 	return k;
 }
 
-void ct_delete_thread(PKTHREAD id)
-{
-	struct task_struct *the_thread, *t;
-	KIRQL ct_oldIrql;
-
-	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
-	the_thread = __find_thread(id);
-
-	if (the_thread == NULL) {
-		KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
-
-			/* printk does access current internally which
-			 * in turn attempts to grab the lock (which would
-			 * fail if we released the spin lock after the
-			 * printk). Don't do any printk's when the
-			 * ct_thread_list_lock is held, not even debug
-			 * printk's.
-			 */
-
-		printk(KERN_WARNING "Attempt to delete thread which is not on our thread list. Double free?\n");
-		return;
-	}
-
-	list_del(&the_thread->list);
-	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
-
-	kfree(the_thread);
-}
-
 	/* NO printk's here, used internally by printk (via current). */
 struct task_struct* ct_find_thread(PKTHREAD id)
 {
 	struct task_struct *t;
-	KIRQL ct_oldIrql;
+	ULONG_PTR flags;
 
-	KeAcquireSpinLock(&ct_thread_list_lock, &ct_oldIrql);
+	spin_lock_irqsave(&thread_list_lock, flags);
 	t = __find_thread(id);
-	if (!t) {
+	if (!t) {	/* TODO: ... */
 		static struct task_struct g_dummy_current;
 		t = &g_dummy_current;
 		t->pid = 0;
 		t->has_sig_event = FALSE;
 		strcpy(t->comm, "not_drbd_thread");
 	}
-	KeReleaseSpinLock(&ct_thread_list_lock, ct_oldIrql);
+	spin_unlock_irqrestore(&thread_list_lock, flags);
 
 	return t;
 }
@@ -3118,44 +3088,27 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
 	return bdev->d_size >> 9;
 }
 
-#if 0
-int windrbd_thread_setup(struct drbd_thread *thi)
-{
-	struct drbd_resource *resource = thi->resource;
-	struct drbd_connection *connection = thi->connection;
-	int res;
-	NTSTATUS status;
-
-	thi->nt = ct_add_thread(KeGetCurrentThread(), thi->name, TRUE, 'B0DW');
-	if (!thi->nt)
-	{
-		WDRBD_ERROR("DRBD_PANIC: ct_add_thread failed.\n");
-		PsTerminateSystemThread(STATUS_SUCCESS);
-	}
-
-	KeSetEvent(&thi->start_event, 0, FALSE);
-	KeWaitForSingleObject(&thi->wait_event, Executive, KernelMode, FALSE, NULL);
-
-	res = drbd_thread_setup(thi);
-
-	/* TODO: appears to free thi */
-
-	if (res)
-		printk(KERN_ERR "stop, result %d\n", res);
-	else
-		printk("Thread stopped.\n");
-
-	/* TODO: Fix code in drbd_main.c first, this currently
-	 * blue screens.
+	/* We need this so we clean up the task struct. Linux appears
+	 * to deref the task_struct on thread exit, we also should
+	 * do so.
 	 */
-/*	ct_delete_thread(thi->nt->pid); */
 
-	status = PsTerminateSystemThread(STATUS_SUCCESS);
-	printk(KERN_ERR "PsTerminateSystenThread() returned (status: %x). This is not good.\n", status);
+void windrbd_thread_setup(void *targ)
+{
+	struct task_struct *t = targ;
+	int ret;
+	ULONG_PTR flags;
 
-	return STATUS_SUCCESS;
+	ret = t->threadfn(t->data);
+	if (ret != 0)
+		printk(KERN_WARNING "Thread %s returned non-zero exit status. Ignored, since Windows threads are void.\n", t->comm);
+
+	spin_lock_irqsave(&thread_list_lock, flags);
+	list_del(&t->list);
+	spin_unlock_irqrestore(&thread_list_lock, flags);
+
+	kfree(t);
 }
-#endif
 
 /* Space is allocated by this function and must be freed by the
    caller.
@@ -3559,7 +3512,7 @@ void init_windrbd(void)
 	mutex_init(&read_bootsector_mutex);
 	spin_lock_init(&g_test_and_change_bit_lock);
 	spin_lock_init(&next_pid_lock);
-	KeInitializeSpinLock(&ct_thread_list_lock);
-	INIT_LIST_HEAD(&ct_thread_list);
+	spin_lock_init(&thread_list_lock);
+	INIT_LIST_HEAD(&thread_list);
 }
 

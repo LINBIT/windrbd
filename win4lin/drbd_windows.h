@@ -834,7 +834,7 @@ extern void set_disk_ro(struct gendisk *disk, int flag);
 #define INIT_WORK(_work, _func)                                         \
 	 __INIT_WORK((_work), (_func), 0);  
 
-NTSTATUS windrbd_create_windows_thread(int (*threadfn)(void*), void *data, void **thread_object_p);
+NTSTATUS windrbd_create_windows_thread(void (*threadfn)(void*), void *data, void **thread_object_p);
 
 #define TASK_COMM_LEN 32
 
@@ -1183,7 +1183,7 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 
 #define wake_up(q) _wake_up(q, __FUNCTION__, __LINE__)
 
-// extern int windrbd_thread_setup(struct drbd_thread *thi);
+void windrbd_thread_setup(void *targ);
 int wake_up_process(struct task_struct *t);
 
 
