@@ -2,6 +2,7 @@
 #include "drbd_wingenl.h"
 #include "wingenl.h"
 #include "drbd_int.h"
+#include "windrbd_threads.h"
 
 struct genl_reply_buffer {
 	struct list_head list;
@@ -165,6 +166,8 @@ static NTSTATUS reply_reaper(void *unused)
 		}
 		mutex_unlock(&genl_reply_mutex);
 		mutex_unlock(&genl_multicast_mutex);
+
+		windrbd_reap_threads();
 	}
 	return STATUS_SUCCESS;
 }

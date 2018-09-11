@@ -11,6 +11,38 @@ static spinlock_t thread_list_lock;
 static pid_t next_pid;
 static spinlock_t next_pid_lock;
 
+static struct task_struct *__find_thread(PKTHREAD id)
+{
+	struct task_struct *t;
+
+	list_for_each_entry(struct task_struct, t, &thread_list, list) {
+		if (t->windows_thread == id)
+			return t;
+	}
+	return NULL;
+}
+
+
+	/* NO printk's here, used internally by printk (via current). */
+struct task_struct* windrbd_find_thread(PKTHREAD id)
+{
+	struct task_struct *t;
+	ULONG_PTR flags;
+
+	spin_lock_irqsave(&thread_list_lock, flags);
+	t = __find_thread(id);
+	if (!t) {	/* TODO: ... */
+		static struct task_struct g_dummy_current;
+		t = &g_dummy_current;
+		t->pid = 0;
+		t->has_sig_event = FALSE;
+		strcpy(t->comm, "not_drbd_thread");
+	}
+	spin_unlock_irqrestore(&thread_list_lock, flags);
+
+	return t;
+}
+
 	/* Helper function to create and start windows kernel threads.
 	 * If non-null, the kernel's PKTHREAD object is returned by
 	 * reference in thread_object_p.
@@ -32,6 +64,51 @@ NTSTATUS windrbd_create_windows_thread(void (*threadfn)(void*), void *data, void
 	return status;
 }
 
+NTSTATUS windrbd_cleanup_windows_thread(void *thread_object)
+{
+	NTSTATUS status;
+
+        status = KeWaitForSingleObject(thread_object, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+
+        if (!NT_SUCCESS(status)) {
+                printk("KeWaitForSingleObject failed with status %x\n", status);
+		return status;
+	}
+        ObDereferenceObject(thread_object);
+
+	return STATUS_SUCCESS;
+}
+
+	/* Called by reply_reaper (see windrbd_netlink.c). We don't want
+	 * two threads having reaping some resources and this thread was
+	 * there first.
+	 */
+
+void windrbd_reap_threads(void)
+{
+	struct task_struct *t, *tn;
+	ULONG_PTR flags;
+	LIST_HEAD(dead_list);
+
+	INIT_LIST_HEAD(&dead_list);
+
+	spin_lock_irqsave(&thread_list_lock, flags);
+	list_for_each_entry_safe(struct task_struct, t, tn, &thread_list, list) {
+		if (t->is_zombie) {
+			list_del(&t->list);
+			list_add(&t->list, &dead_list);
+		}
+	}
+	spin_unlock_irqrestore(&thread_list_lock, flags);
+
+	list_for_each_entry_safe(struct task_struct, t, tn, &dead_list, list) {
+		windrbd_cleanup_windows_thread(t->windows_thread);
+		printk("Buried %s thread\n", t->comm);
+
+		list_del(&t->list);
+		kfree(t);
+	}
+}
 
 	/* We need this so we clean up the task struct. Linux appears
 	 * to deref the task_struct on thread exit, we also should
@@ -42,17 +119,12 @@ static void windrbd_thread_setup(void *targ)
 {
 	struct task_struct *t = targ;
 	int ret;
-	ULONG_PTR flags;
 
 	ret = t->threadfn(t->data);
 	if (ret != 0)
 		printk(KERN_WARNING "Thread %s returned non-zero exit status. Ignored, since Windows threads are void.\n", t->comm);
 
-	spin_lock_irqsave(&thread_list_lock, flags);
-	list_del(&t->list);
-	spin_unlock_irqrestore(&thread_list_lock, flags);
-
-	kfree(t);
+	t->is_zombie = 1;
 }
 
 	/* Again, we try to be more close to the Linux kernel API.
@@ -81,6 +153,7 @@ int wake_up_process(struct task_struct *t)
 
 	status = windrbd_create_windows_thread(windrbd_thread_setup, t, &t->windows_thread);
 	if (status != STATUS_SUCCESS) {
+			/* TODO: clean up t here .. */
 		printk("Could not start thread %s\n", t->comm);
 		return -1;
 	}
@@ -114,6 +187,7 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	t->threadfn = threadfn;
 	t->data = data;
 	t->thread_started = 0;
+	t->is_zombie = 0;
 	spin_lock_init(&t->thread_started_lock);
 
 	KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
@@ -146,38 +220,6 @@ struct task_struct *kthread_run(int (*threadfn)(void *), void *data, const char 
 	if (!IS_ERR(k))
 		wake_up_process(k);
 	return k;
-}
-
-static struct task_struct *__find_thread(PKTHREAD id)
-{
-	struct task_struct *t;
-
-	list_for_each_entry(struct task_struct, t, &thread_list, list) {
-		if (t->windows_thread == id)
-			return t;
-	}
-	return NULL;
-}
-
-
-	/* NO printk's here, used internally by printk (via current). */
-struct task_struct* windrbd_find_thread(PKTHREAD id)
-{
-	struct task_struct *t;
-	ULONG_PTR flags;
-
-	spin_lock_irqsave(&thread_list_lock, flags);
-	t = __find_thread(id);
-	if (!t) {	/* TODO: ... */
-		static struct task_struct g_dummy_current;
-		t = &g_dummy_current;
-		t->pid = 0;
-		t->has_sig_event = FALSE;
-		strcpy(t->comm, "not_drbd_thread");
-	}
-	spin_unlock_irqrestore(&thread_list_lock, flags);
-
-	return t;
 }
 
 void init_windrbd_threads(void)
