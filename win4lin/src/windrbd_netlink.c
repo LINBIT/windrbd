@@ -364,17 +364,9 @@ void windrbd_init_netlink(void)
         mutex_init(&genl_multicast_mutex);
 
 	run_reaper = 1;
-		/* TODO: use windrbd_create_windows_thread */
-	status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, reply_reaper, NULL);
-
+	status = windrbd_create_windows_thread(reply_reaper, NULL, &reaper_thread_object);
 	if (!NT_SUCCESS(status))
-		printk(KERN_WARNING "Couldn't start reply reaper, expect memory leaks.\n");
-	else {
-		status = ObReferenceObjectByHandle(h, THREAD_ALL_ACCESS, NULL, KernelMode, &reaper_thread_object, NULL);
-		if (!NT_SUCCESS(status))
-			printk(KERN_WARNING "Couldn't reference reply reaper, status is %x.\n", status);
-	}
-
+		printk(KERN_WARNING "Couldn't start reply reaper (status is %x), expect memory leaks.\n", status);
 
 	printk("Netlink initialized.\n");
 }
@@ -384,12 +376,10 @@ void windrbd_shutdown_netlink(void)
 	NTSTATUS status;
 
 	run_reaper = 0;
-	status = KeWaitForSingleObject(reaper_thread_object, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+	status = windrbd_cleanup_windows_thread(reaper_thread_object);
 
 	if (!NT_SUCCESS(status))
-		printk("KeWaitForSingleObject failed with status %x\n", status);
-
-	ObDereferenceObject(reaper_thread_object);
+		printk("Could not clean up reply reaper, status is %x\n", status);
 }
 
 static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netlink_callback * cb, struct genl_info * info)

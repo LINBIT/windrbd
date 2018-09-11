@@ -1,5 +1,5 @@
-﻿
-#include "drbd_windows.h"
+﻿#include "drbd_windows.h"
+#include "windrbd_threads.h"
 #include "wsk2.h"
 
 /* TODO: change the API in here to that of Linux kernel (so
@@ -1083,20 +1083,12 @@ NTSTATUS windrbd_init_wsk(void)
 	HANDLE h;
 	NTSTATUS status;
 
-		/* TODO: use windrbd_create_windows_thread */
-	status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, windrbd_init_wsk_thread, NULL);
-	if (!NT_SUCCESS(status)) {
-		printk("Couldn't create thread for initializing socket layer: PsCreateSystemThread failed with status 0x%x\n", status);
-		return status;
-	}
-	status = ObReferenceObjectByHandle(h, THREAD_ALL_ACCESS, NULL, KernelMode, &init_wsk_thread, NULL);
-	ZwClose(h);
+	status = windrbd_create_windows_thread(windrbd_init_wsk_thread, NULL, &init_wsk_thread);
 
-	if (!NT_SUCCESS(status)) {
-		printk("ObReferenceObjectByHandle() failed with status 0x%08x\n", status);
-		return status;
-	}
-	return STATUS_SUCCESS;
+	if (!NT_SUCCESS(status))
+		printk("Couldn't create thread for initializing socket layer: windrbd_create_windows_thread failed with status 0x%x\n", status);
+
+	return status;
 }
 
 	/* Under normal conditions, the thread already terminated long ago.
@@ -1107,11 +1099,9 @@ void windrbd_shutdown_wsk(void)
 {
         NTSTATUS status;
 
-        status = KeWaitForSingleObject(init_wsk_thread, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+        status = windrbd_cleanup_windows_thread(init_wsk_thread);
 
         if (!NT_SUCCESS(status))
-                printk("KeWaitForSingleObject failed with status %x\n", status);
-
-        ObDereferenceObject(init_wsk_thread);
+                printk("windrbd_cleanup_windows_thread failed with status %x\n", status);
 }
 

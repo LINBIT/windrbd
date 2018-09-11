@@ -23,6 +23,7 @@
 
 #include "drbd_windows.h"
 #include "windrbd_device.h"
+#include "windrbd_threads.h"
 #include <wdmsec.h>
 #include <ntdddisk.h>
 #include <wdm.h>
@@ -1023,26 +1024,17 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
 
     wq->run = TRUE;
 
-    HANDLE hThread = NULL;
 printk("starting a workqueue thread\n");
-    status = PsCreateSystemThread(&hThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, run_singlethread_workqueue, wq);
-    if (!NT_SUCCESS(status))
-    {
-        WDRBD_ERROR("PsCreateSystemThread failed with status 0x%08X\n", status);
-        kfree(wq);
-        return NULL;
-    }
 
-    status = ObReferenceObjectByHandle(hThread, THREAD_ALL_ACCESS, NULL, KernelMode, &wq->pThread, NULL);
-    ZwClose(hThread);
-    if (!NT_SUCCESS(status))
-    {
-        WDRBD_ERROR("ObReferenceObjectByHandle failed with status 0x%08X\n", status);
-        kfree(wq);
-        return NULL;
-    }
+	status = windrbd_create_windows_thread(run_singlethread_workqueue, wq, &wq->pThread);
 
-    return wq;
+	if (!NT_SUCCESS(status)) {
+		printk("windrbd_create_windows_thread failed with status 0x%08x\n", status);
+		kfree(wq);
+		return NULL;
+	}
+
+	return wq;
 }
 
 /* TODO: implement */
@@ -1586,8 +1578,8 @@ void del_gendisk(struct gendisk *disk)
 void destroy_workqueue(struct workqueue_struct *wq)
 {
 	KeSetEvent(&wq->killEvent, 0, FALSE);
-	KeWaitForSingleObject(wq->pThread, Executive, KernelMode, FALSE, NULL);
-	ObDereferenceObject(wq->pThread);
+	windrbd_cleanup_windows_thread(wq->pThread);
+
 	kfree(wq);
 printk("stopping a workqueue thread\n");
 }
