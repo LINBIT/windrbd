@@ -71,6 +71,74 @@ Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
 -----------------------------------------------------------------------
 
+TODO: User mode helpers: have sane defaults if daemon is not running.
+
+	Stays in SyncSource when invalidating peer sometimes.
+
+TODO: Also use windrbd_thread helpers for netlink helper thread.
+
+TODO: Build system: Compile with optimizations on.
+
+TODO: Implement: Make drbd service stoppable
+	This probably takes some while
+	Update: with the new architecture that should be possible
+	one day.
+
+	Probably some setting in the inf section. Or the way DRBD
+	registers itself in DriverEntry? DriverUnload() routine
+	returning something?
+
+	Update: After changing linker options (/DRIVER:WDM to
+	/DRIVER /SUBSYSTEM:WINDOWS) this works in theory. Things
+	we need to clean up include:
+
+	*) Threads (PsCreateSystemThread())
+		alloc_ordered_workqueue()
+		destroy_workqueue()
+	*) Lookaside lists (ExInitializeNPagedLookasideList())
+		kmem_cache_create() see slab.c
+
+	Right now, almost everything works, as long as no resources
+	are created. Missing: Terminate reply_reaper thread, wait
+	for wsk init thread completion (or terminate it?), really
+	clean up after resources. Sockets really don't need destroy
+	function?
+
+	Update: Works quite nice, however after a drbdsetup create-resource
+	drbdsetup del-resource some resources are not freed, which in
+	turn causes Unload not being called (which in turn causes
+	driver verifier to BSOD).
+
+TODO: patch_boot_sector: DRBD signature on peer.
+	Should only be on backing device, never on the wire.
+
+	Not when Syncing, only when formatting while connected?
+	Yes. Make a temporary copy of the boot sector when writing
+	in windrbd_generic_make_request(). Do not modify the bio's
+	buffer directly, this might also be the Page Cache (or whatever
+	this is called on Windows) of the file system which causes
+	format to display the weird Boot sector invalid message.
+
+	Update: implemented, weird behaviour when extra field is
+	put after io_status (see separate TODO). It seems to work
+	now (formatting while connected does not copy DRBD signature
+	to peer).
+
+	Update: Reopened: This happens now when invalidating (or otherwise
+	syncing) from a windows peer.
+
+TODO: Installation: Autostart user mode helper daemon
+
+	Someday ...
+	Update: we should do that in modprobe. WinDRBD isn't really
+	working smoothly without them.
+
+TODO: Upstream: Possible race at drbd_thread_setup() (drbdmain.c:567) with
+	use-after-free.
+
+	Ask phil. IMHO the resource object containing the drbd_thread
+	might get deleted before the spinlock is freed.
+
 TODO: Feature: Check if it is a network share (currently blue screens)
 	Update: blue screen was something else. Should check if the
 	drive letter is a network share. Unfortunately they do not
@@ -117,10 +185,6 @@ TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
 	at the beginning of spin_lock_irq that tests for IRQL
 	being PASSIVE_LEVEL).
 
-TODO: Installation: Autostart user mode helper daemon
-
-	Someday ...
-
 TODO: Implement: Make DRBD driver removable.
 
 	From imdisk:
@@ -143,30 +207,9 @@ TODO: Implement: Make DRBD driver removable.
 	HKLM/Software/Microsoft/Windows/Uninstall/DRBD so one can
 	use control panel / uninstall software to uninstall DRBD.
 
-TODO: Implement: Make drbd service stoppable
-	This probably takes some while
-	Update: with the new architecture that should be possible
-	one day.
+TODO: Bug: Syncing sometimes stalls now.
 
-	Probably some setting in the inf section. Or the way DRBD
-	registers itself in DriverEntry? DriverUnload() routine
-	returning something?
-
-	Update: After changing linker options (/DRIVER:WDM to
-	/DRIVER /SUBSYSTEM:WINDOWS) this works in theory. Things
-	we need to clean up include:
-
-	*) Threads (PsCreateSystemThread())
-		alloc_ordered_workqueue()
-		destroy_workqueue()
-	*) Lookaside lists (ExInitializeNPagedLookasideList())
-		kmem_cache_create() see slab.c
-
-	Right now, almost everything works, as long as no resources
-	are created. Missing: Terminate reply_reaper thread, wait
-	for wsk init thread completion (or terminate it?), really
-	clean up after resources. Sockets really don't need destroy
-	function?
+	And seems to be slow.
 
 TODO: Implement: Make windrbd directory unaccessible for non-admins.
 
@@ -210,6 +253,8 @@ TODO: Implement: get drbdmon (and drbdsetup events2) working.
 	Probably this works only with WSL .. CygWin does not have
 	epoll as well as some other required syscalls (kill,
 	sigaddset, sigemptyset, pipe2).
+
+	Maybe Robert does this.
 
 TODO: Code quality: use zero-sized arrays at the end of structs
 
@@ -1254,9 +1299,6 @@ Done: blkdev_put isn't called on drbdadm down
 
 	Update: Yes it is. Closed.
 
-Done: Possible race at drbd_thread_setup() (drbdmain.c:567) with
-	use-after-free.
-
 Done: implement open and close methods.
 
 Done: Right now, windrbd isn't listening for incoming connections.
@@ -2094,21 +2136,6 @@ Done: upgrade to 9.0.14
 	9.0.13 fails to detect split brain correctly.
 
 Done: Create file with version number
-
-Done: patch_boot_sector: DRBD signature on peer.
-	Should only be on backing device, never on the wire.
-
-	Not when Syncing, only when formatting while connected?
-	Yes. Make a temporary copy of the boot sector when writing
-	in windrbd_generic_make_request(). Do not modify the bio's
-	buffer directly, this might also be the Page Cache (or whatever
-	this is called on Windows) of the file system which causes
-	format to display the weird Boot sector invalid message.
-
-	Update: implemented, weird behaviour when extra field is
-	put after io_status (see separate TODO). It seems to work
-	now (formatting while connected does not copy DRBD signature
-	to peer).
 
 Done: Check in install script if it runs as adminstrator.
 
@@ -3182,3 +3209,7 @@ Rejected: Feature: windrbd show-filesystem should check if device is used as
 	device can be accessed again (which is what we wanted). I guess
 	we leave it that way until someone complains.
 
+Done: Use Linux API for creating DRBD threads.
+
+	Without the weird event logic. Done while attempting to make
+	driver removable from the kernel.
