@@ -1083,6 +1083,7 @@ NTSTATUS windrbd_init_wsk(void)
 	HANDLE h;
 	NTSTATUS status;
 
+		/* TODO: use windrbd_create_windows_thread */
 	status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, windrbd_init_wsk_thread, NULL);
 	if (!NT_SUCCESS(status)) {
 		printk("Couldn't create thread for initializing socket layer: PsCreateSystemThread failed with status 0x%x\n", status);

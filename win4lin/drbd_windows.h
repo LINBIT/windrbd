@@ -36,6 +36,7 @@
 #include <linux/mempool.h>
 #include <ntdddisk.h>
 #include <linux/bitops.h>
+#include "windrbd_threads.h"
 
 void init_windrbd(void);
 void msleep(int ms);
@@ -277,9 +278,6 @@ TODO: should be:
 
 #define likely(_X)				(_X)
 #define unlikely(_X)			(_X)
-
-/* TODO: this should be in linux/types.h */
-typedef int pid_t;
 
 #define PAGE_KERNEL				1
 #define TASK_INTERRUPTIBLE		1
@@ -834,43 +832,6 @@ extern void set_disk_ro(struct gendisk *disk, int flag);
 #define INIT_WORK(_work, _func)                                         \
 	 __INIT_WORK((_work), (_func), 0);  
 
-NTSTATUS windrbd_create_windows_thread(void (*threadfn)(void*), void *data, void **thread_object_p);
-
-#define TASK_COMM_LEN 32
-
-struct task_struct {
-	struct list_head list;
-
-	pid_t pid;
-	PKTHREAD windows_thread;
-
-	int (*threadfn)(void*);
-	void *data;
-
-		/* Signal handling. TODO: the has_sig_event should
-		 * go away one day.
-		 */
-	KEVENT sig_event;
-	BOOLEAN has_sig_event;
-	int sig; 
-
-	int thread_started;
-	spinlock_t thread_started_lock;
-
-		/* TODO: needed? */
-	struct blk_plug *plug;
-	
-	char comm[TASK_COMM_LEN];
-};
-
-/* From include/linux/sched.h */
-
-/* TODO: this should return a pid_t */
-static inline pid_t task_pid_nr(struct task_struct *tsk)
-{
-	return tsk->pid;
-}
-
 #define	atomic_inc_return(_p)		InterlockedIncrement((LONG volatile*)(_p))
 #define	atomic_dec_return(_p)		InterlockedDecrement((LONG volatile*)(_p))
 #define atomic_inc(_v)			atomic_inc_return(_v)
@@ -1183,23 +1144,9 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 
 #define wake_up(q) _wake_up(q, __FUNCTION__, __LINE__)
 
-void windrbd_thread_setup(void *targ);
-int wake_up_process(struct task_struct *t);
-
-
-struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const char *name, ...);
-
-	/* TODO: no varargs here, since we call kthread_create internally
-	 * (and don't have GNU-style varargs macros that create a block).
-	 */
-
-struct task_struct *kthread_run(int (*threadfn)(void *), void *data, const char *name);
-
 extern void _wake_up(wait_queue_head_t *q, char *__func, int __line);
 extern void wake_up_all(wait_queue_head_t *q);
 
-
-#define current		    ct_find_thread(KeGetCurrentThread())
 
 #define MAX_PROC_BUF	2048
 
@@ -1331,11 +1278,6 @@ static inline void call_rcu(struct rcu_head *head, rcu_callback_t func)
 
 extern void local_irq_disable();
 extern void local_irq_enable();
-
-struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const char *name, ...);
-
-extern void ct_delete_thread(PKTHREAD id);
-extern struct task_struct* ct_find_thread(PKTHREAD id);
 
 #define bdevname(dev, buf)   dev->bd_disk->disk_name
 

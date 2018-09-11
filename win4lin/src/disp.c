@@ -65,6 +65,10 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	printk(KERN_INFO "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
 
+	/* Next, the threads subsystem (so DRBD can create threads) */
+	init_windrbd_threads();
+
+	/* TODO: This will go away soon */
 	initRegistry(RegistryPath);
 
 	RtlInitUnicodeString(&nameUnicode, L"\\Device\\" WINDRBD_ROOT_DEVICE_NAME);

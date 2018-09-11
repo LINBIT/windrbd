@@ -361,6 +361,7 @@ void windrbd_init_netlink(void)
         mutex_init(&genl_multicast_mutex);
 
 	run_reaper = 1;
+		/* TODO: use windrbd_create_windows_thread */
 	status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, reply_reaper, NULL);
 
 	if (!NT_SUCCESS(status))
