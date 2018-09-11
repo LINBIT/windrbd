@@ -10,6 +10,7 @@ struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align
 	cache = ExAllocatePoolWithTag(NonPagedPool, sizeof(*cache), tag);
 	if (!cache)
 		return NULL;
+printk("ExInitializeNPagedLookasideList %p\n", cache);
 	ExInitializeNPagedLookasideList(&cache->l, NULL, NULL, 0, size, tag, 0);
 	cache->element_size = size;
 
@@ -18,6 +19,7 @@ struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align
 
 void kmem_cache_destroy(struct kmem_cache *cache)
 {
+printk("ExDeleteNPagedLookasideList %p\n", cache);
 	ExDeleteNPagedLookasideList(&cache->l);
 	ExFreePool(cache);
 }

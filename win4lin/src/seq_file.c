@@ -16,6 +16,7 @@ int seq_printf(struct seq_file *m, const char *f, ...)
     int ret;
     va_list args;
 
+/* TODO: buffer overflow */
     va_start(args, f);
     ret = vsprintf(m->buf + seq_file_idx, f, args);
     va_end(args);

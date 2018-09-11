@@ -1022,6 +1022,7 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
     wq->run = TRUE;
 
     HANDLE hThread = NULL;
+printk("starting a workqueue thread\n");
     status = PsCreateSystemThread(&hThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, run_singlethread_workqueue, wq);
     if (!NT_SUCCESS(status))
     {
@@ -1586,6 +1587,7 @@ void destroy_workqueue(struct workqueue_struct *wq)
 	KeWaitForSingleObject(wq->pThread, Executive, KernelMode, FALSE, NULL);
 	ObDereferenceObject(wq->pThread);
 	kfree(wq);
+printk("stopping a workqueue thread\n");
 }
 
  void sock_release(struct socket *sock)
@@ -3042,10 +3044,12 @@ int windrbd_thread_setup(struct drbd_thread *thi)
 
 	res = drbd_thread_setup(thi);
 
+	/* TODO: appears to free thi */
+
 	if (res)
 		printk(KERN_ERR "stop, result %d\n", res);
 	else
-		printk("stopped.\n");
+		printk("Thread stopped.\n");
 
 	/* TODO: Fix code in drbd_main.c first, this currently
 	 * blue screens.
