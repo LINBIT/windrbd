@@ -1,0 +1,40 @@
+From d51bbc8ef0e3b082f1e8c6db7dde67a7bdfdecfd Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 12 Sep 2018 15:40:37 +0200
+Subject: [PATCH 1/2] Un-inlined stable_state_change function.
+
+This was originally a macro that used a GNU extension (blocks returning
+a value). Since MS C compiler doesn't have something like that
+(except the do { ... } while (0) construct, which cannot return
+a value), we just un-inlined the function. We came accross that
+when enabling optimizations.
+---
+ drbd/drbd_state.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_state.c b/drbd/drbd_state.c
+index 7292349..ed930d9 100644
+--- a/drbd/drbd_state.c
++++ b/drbd/drbd_state.c
+@@ -4889,7 +4889,8 @@ enum drbd_state_rv change_repl_state(struct drbd_peer_device *peer_device,
+ 	return change_cluster_wide_state(do_change_repl_state, &repl_context.context);
+ }
+ 
+-inline int stable_state_change(struct drbd_resource *resource, enum drbd_state_rv change_state) {
++int stable_state_change(struct drbd_resource *resource, enum drbd_state_rv change_state)
++{
+ 	int err;
+ 	wait_event_interruptible(err, resource->state_wait,
+ 				 change_state != SS_IN_TRANSIENT_STATE);
+@@ -4897,7 +4898,7 @@ inline int stable_state_change(struct drbd_resource *resource, enum drbd_state_r
+ 		err = -SS_UNKNOWN_ERROR;
+ 	else
+ 		err = change_state;
+-	return err;								\
++	return err;
+ }
+ 
+ enum drbd_state_rv stable_change_repl_state(struct drbd_peer_device *peer_device,
+-- 
+2.17.0
+
