@@ -1038,6 +1038,11 @@ printk("starting a workqueue thread\n");
 }
 
 /* TODO: implement */
+
+/* This should ensure that all work on the workqueue is done (has finished).
+ * It is typically invoked when a driver shuts down a resource (for example
+ * on drbdadm down).
+ */
 void flush_workqueue(struct workqueue_struct *wq)
 {
 	printk(KERN_INFO "flush_workqueue not implemented.\n");

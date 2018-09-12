@@ -1105,6 +1105,14 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
  * busy loop.
  */
 
+/*
+The process is put to sleep (TASK_INTERRUPTIBLE) until the condition evaluates to true or a signal is received. The condition is checked each time the waitqueue wq is woken up.
+wake_up has to be called after changing any variable that could change the result of the wait condition.
+The function will return -ERESTARTSYS if it was interrupted by a signal and 0 if condition evaluated to true.
+
+TODO: change to static inline and make Linux compatible
+*/
+
 #define __wait_event_interruptible(wq, condition, sig)   \
     do { \
         for (;;) { \

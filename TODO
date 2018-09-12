@@ -71,14 +71,6 @@ Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
 -----------------------------------------------------------------------
 
-TODO: User mode helpers: have sane defaults if daemon is not running.
-
-	Stays in SyncSource when invalidating peer sometimes.
-
-TODO: Also use windrbd_thread helpers for netlink helper thread.
-
-TODO: Build system: Compile with optimizations on.
-
 TODO: Implement: Make drbd service stoppable
 	This probably takes some while
 	Update: with the new architecture that should be possible
@@ -109,7 +101,7 @@ TODO: Implement: Make drbd service stoppable
 	turn causes Unload not being called (which in turn causes
 	driver verifier to BSOD).
 
-TODO: patch_boot_sector: DRBD signature on peer.
+TODO: Bug: patch_boot_sector: DRBD signature on peer.
 	Should only be on backing device, never on the wire.
 
 	Not when Syncing, only when formatting while connected?
@@ -127,11 +119,16 @@ TODO: patch_boot_sector: DRBD signature on peer.
 	Update: Reopened: This happens now when invalidating (or otherwise
 	syncing) from a windows peer.
 
+TODO: Code quality: clean up drbd.inf (again)
+
 TODO: Installation: Autostart user mode helper daemon
 
 	Someday ...
 	Update: we should do that in modprobe. WinDRBD isn't really
 	working smoothly without them.
+
+	Need to define this as Windows service (in inf file) with
+	type 16 (daemon).
 
 TODO: Upstream: Possible race at drbd_thread_setup() (drbdmain.c:567) with
 	use-after-free.
@@ -211,6 +208,9 @@ TODO: Bug: Syncing sometimes stalls now.
 
 	And seems to be slow.
 
+	Update: When WinDRBD is SyncSource it takes around 4-5 seconds
+	When SyncTarget, it takes up to 55 seconds (!).
+
 TODO: Implement: Make windrbd directory unaccessible for non-admins.
 
 TODO: Implement: Detect earlier versions of WinDRBD and offer upgrade.
@@ -235,7 +235,9 @@ TODO: Code quality: cond_wait shouldn't busy loop. How is this done in Linux?
 TODO: Features: implement flush_workqueue
 
 	For example, drbdadm down takes long when connection goes
-	down.
+	down. Update: when touching this also refactor workqueue
+	code (use Linux locking primitives, don't have helper struct,
+	...).
 
 TODO: Code quality: Implement function stubs created when integrating DRBD 9.0.9
 
@@ -3213,3 +3215,21 @@ Done: Use Linux API for creating DRBD threads.
 
 	Without the weird event logic. Done while attempting to make
 	driver removable from the kernel.
+
+Rejected: Also use windrbd_thread helpers for netlink helper thread.
+
+	Would be more code.
+
+Done: User mode helpers: have sane defaults if daemon is not running.
+
+	Stays in SyncSource when invalidating peer sometimes.
+
+	Update: changed to 1 second, resync with out daemon running
+	works now.
+
+Done: Build system: Compile with optimizations on.
+
+	Little patch (un-inlined a function, functions never were
+	inlined before) to make linker happy. Observe if something
+	is faster now.
+
