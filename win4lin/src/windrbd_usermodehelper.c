@@ -3,10 +3,12 @@
 #include "windrbd_ioctl.h"
 #include <linux/list.h>
 
-/* TODO: should be the same as with Linux, 10 seconds is probably too
- * long.
+/* In case daemon is not running or a process takes longer than that
+ * to terminate, timeout after 1 second. This should not be too long
+ * since there are DRBD processes stalled while waiting.
  */
-#define REQUEST_TIMEOUT_MS 10000
+
+#define REQUEST_TIMEOUT_MS 1000
 
 struct um_request {
 	struct list_head list;
