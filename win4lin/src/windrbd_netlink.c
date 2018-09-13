@@ -250,7 +250,11 @@ out_mutex:
 
 int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info)
 {
-	return do_genlmsg_unicast(skb, info->snd_portid);
+	int ret;
+
+	ret = do_genlmsg_unicast(skb, info->snd_portid);
+	nlmsg_free(skb);
+	return ret;
 }
 
 static int do_genl_multicast(struct sk_buff *skb, const char *group_name)
@@ -269,6 +273,8 @@ static int do_genl_multicast(struct sk_buff *skb, const char *group_name)
 		}
 	}
 	mutex_unlock(&genl_multicast_mutex);
+
+	nlmsg_free(skb);
 	return ret;
 }
 
@@ -409,8 +415,6 @@ static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netli
 
     drbd_adm_send_reply(skb, info);
 
-    WDRBD_TRACE_NETLINK("send_reply(%d) seq(%d)\n", err, cb->nlh->nlmsg_seq);
-
     return err;
 }
 
@@ -423,49 +427,42 @@ static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 	/* TODO: and if dump? According to net/netlink/genetlink.c:500
 	 * (function genl_family_rcv_msg) this has to be checked first.
 	 */
-    if (pops->doit)
-    {
-        return pops->doit(NULL, pinfo);
-    }
+	if (pops->doit)
+			/* TODO: NULL? Really? */
+		return pops->doit(NULL, pinfo);
 
-    if (pinfo->nlhdr->nlmsg_flags && NLM_F_DUMP)
-    {
-        struct sk_buff * skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
+	if (pinfo->nlhdr->nlmsg_flags && NLM_F_DUMP)
+	{
+		int ret;
+		struct sk_buff *skb;
+		struct netlink_callback ncb;
+		int i;
 
-        if (skb)
-        {
-            struct netlink_callback ncb = {
-                .skb = skb,
-                .nlh = pinfo->nlhdr,
-                .args = { 0, }
-            };
+		ncb.nlh = pinfo->nlhdr;
+		for (i=0; i<ARRAY_SIZE(ncb.args); i++)
+			ncb.args[i] = 0;
 
-            int ret = _genl_dump(pops, skb, &ncb, pinfo);
-			int cnt = 0;
-            while (ret > 0) {
-                RtlZeroMemory(skb, NLMSG_GOODSIZE+sizeof(*skb));
-		skb->len = 0;
-		skb->tail = 0;
-		skb->end = NLMSG_GOODSIZE;
+		do {
+			skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
+			if (skb == NULL)
+				return -ENOMEM;
 
-                ret = _genl_dump(pops, skb, &ncb, pinfo);
-				if(cnt++ > 512) {
-					WDRBD_WARN("_genl_dump exceed process break;\n");
-					break;
-				}
-            }
+			ncb.skb = skb;
 
-            if (pops->done)
-            {
-                pops->done(&ncb);
-            }
+				/* This calls drbd_adm_send_reply internally,
+				 * which in turn calls genlmsg_free, which
+				 * will free the skb (Under Linux it changes
+				 * ownership to the network stack, which
+				 * eventually also frees it). So we need
+				 * a new skb after that.
+				 */
 
-            nlmsg_free(skb);
+			ret = _genl_dump(pops, skb, &ncb, pinfo);
+		} while (ret > 0);
+
+		if (pops->done)
+			pops->done(&ncb);
         }
-
-        return 0;
-    }
-
 	return 0;
 }
 
