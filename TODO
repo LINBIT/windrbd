@@ -71,6 +71,13 @@ Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
 -----------------------------------------------------------------------
 
+TODO: Bug: loading driver on boot BSOD's now on boot.
+
+	We changed some things in the DriverEntry routine, maybe
+	there's a regression. Be sure to create snapshots (set
+	driver start registry entry to 0 to make driver start on
+	boot).
+
 TODO: Implement: Make drbd service stoppable
 	This probably takes some while
 	Update: with the new architecture that should be possible
@@ -89,6 +96,8 @@ TODO: Implement: Make drbd service stoppable
 		destroy_workqueue()
 	*) Lookaside lists (ExInitializeNPagedLookasideList())
 		kmem_cache_create() see slab.c
+	*) Update: All memory leaks (ExAllocatePoolWithTag(NonPagedPool, ...))
+		kmalloc() and friends. Also for PagedPool?
 
 	Right now, almost everything works, as long as no resources
 	are created. Missing: Terminate reply_reaper thread, wait
@@ -100,6 +109,19 @@ TODO: Implement: Make drbd service stoppable
 	drbdsetup del-resource some resources are not freed, which in
 	turn causes Unload not being called (which in turn causes
 	driver verifier to BSOD).
+
+	Update: As soon as there is just a single memory leak, driver
+	verifier BSOD's after unload. This will be fun to fix all of
+	those ...
+
+	Update: We need something like dmalloc .. maybe implement some
+	of it for our kmalloc()/kfree() to see at driver unload where
+	we leak (and free it there). At this point also get rid of the
+	Tag patches, we really don't need them. What also would be nice
+	at this point is to be able to inject out of memory faults selected
+	by source line.
+
+	For now defer that TODO to somewhere later (after beta5).
 
 TODO: Bug: patch_boot_sector: DRBD signature on peer.
 	Should only be on backing device, never on the wire.
