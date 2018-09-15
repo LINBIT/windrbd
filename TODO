@@ -19,8 +19,6 @@ TODO: Code quality: Other mechanism to specify syslog_ip.
 	should either start windrbd log-server (which sets the IP
 	internally) or windrbd log-to-ip. Ring buffer is big enough :)
 
-TODO: Feature: flush printk buffer as soon as network is working.
-
 TODO: Upstream: Linux drbd-utils should not complain about WinDRBD device
 
 	On peers. Do that before merging windrbd into master.
@@ -71,13 +69,6 @@ Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
 -----------------------------------------------------------------------
 
-TODO: Bug: loading driver on boot BSOD's now on boot.
-
-	We changed some things in the DriverEntry routine, maybe
-	there's a regression. Be sure to create snapshots (set
-	driver start registry entry to 0 to make driver start on
-	boot).
-
 TODO: Implement: Make drbd service stoppable
 	This probably takes some while
 	Update: with the new architecture that should be possible
@@ -122,6 +113,11 @@ TODO: Implement: Make drbd service stoppable
 	by source line.
 
 	For now defer that TODO to somewhere later (after beta5).
+
+	Update: Or maybe implement kmalloc debugger now and fix some of the
+	leaks (don't deliver beta with kmalloc debugger enabled)
+	but do not unload driver on uninstall. Users may use
+	sc stop windrbd if they really want to.
 
 TODO: Bug: patch_boot_sector: DRBD signature on peer.
 	Should only be on backing device, never on the wire.
@@ -3254,4 +3250,25 @@ Done: Build system: Compile with optimizations on.
 	Little patch (un-inlined a function, functions never were
 	inlined before) to make linker happy. Observe if something
 	is faster now.
+
+Done: Bug: loading driver on boot BSOD's now on boot.
+
+	We changed some things in the DriverEntry routine, maybe
+	there's a regression. Be sure to create snapshots (set
+	driver start registry entry to 0 to make driver start on
+	boot).
+
+	Update: We must not printk right after SocketsInit() (in
+	the wsk init thread), else BSOD (printk will create a socket
+	for sending logs and bind it). Drawback is that we currently
+	don't see log messages on sc start windrbd (when loading the
+	driver manually) but this is usually done from drbdadm in
+	which case we see the logs.
+
+	Note also that driver loaded on boot can be unloaded
+	later (unless there is a memory leak).
+
+Rejected: Feature: flush printk buffer as soon as network is working.
+
+	Don't. Windows will BSOD on boot.
 
