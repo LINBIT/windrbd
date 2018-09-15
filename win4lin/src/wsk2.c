@@ -1070,10 +1070,14 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
          * on booting.
          */
         status = SocketsInit();
+
+	/* No printk's here, we're still booting. Windows will BSOD if we
+	 * do a printk over network here.
+	 */
         if (!NT_SUCCESS(status))
-                printk(KERN_WARNING "Failed to initialize socket layer, status is %x.\n", status);
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Failed to initialize socket layer, status is %x.\n", status);
 	else
-		printk(KERN_INFO "WSK initialized, terminating thread.\n");
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "WSK initialized, terminating thread.\n");
 
 	return status;
 }
