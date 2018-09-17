@@ -3186,6 +3186,7 @@ NTSTATUS pnp_callback(void *notification, void *context)
 	return STATUS_SUCCESS;
 }
 
+	/* TODO: depecated */
 int windrbd_set_mount_point(struct block_device *dev, const char *mount_point)
 {
 	if (mount_point == NULL)
@@ -3203,6 +3204,59 @@ int windrbd_set_mount_point(struct block_device *dev, const char *mount_point)
 		return -1;
 
 	return 0;
+}
+
+int windrbd_set_mount_point_utf16(struct block_device *dev, const wchar_t *mount_point)
+{
+	if (mount_point == NULL)
+		return -EINVAL;
+
+	if (dev->mount_point.Buffer != NULL) {
+		printk("set_mount_point called while there is a mount point registered.\n");
+
+		kfree(dev->mount_point.Buffer);
+		dev->mount_point.Buffer = NULL;
+	}
+
+#define DOS_DEVICES L"\\DosDevices\\"
+	size_t len = wcslen(mount_point)+wcslen(DOS_DEVICES)+1;
+	size_t size_in_bytes = len * sizeof(wchar_t);
+	int dos_devices_len = wcslen(DOS_DEVICES);
+
+	dev->mount_point.Buffer = kmalloc(size_in_bytes, GFP_KERNEL, 'DRBD');
+	if (dev->mount_point.Buffer == NULL)
+		return -ENOMEM;
+	dev->mount_point.Length = 0;
+	dev->mount_point.MaximumLength = size_in_bytes;
+
+	wcscpy(dev->mount_point.Buffer, DOS_DEVICES);
+	wcscpy(dev->mount_point.Buffer+dos_devices_len, mount_point);
+#undef DOS_DEVICES
+
+	return 0;
+}
+
+int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_point)
+{
+	struct drbd_device *drbd_device;
+	struct block_device *block_device;
+	int ret;
+
+	drbd_device = minor_to_device(minor);
+	if (drbd_device == NULL)
+		return -ENOENT;		/* no such minor */
+
+	block_device = drbd_device->this_bdev;
+	if (block_device == NULL)
+		return -ENOENT;
+
+	ret = windrbd_set_mount_point_utf16(block_device, mount_point);
+	if (ret == 0)
+		printk("Mount point for minor %d set to %S\n", minor, block_device->mount_point.Buffer);
+	else
+		printk("Warning: could not set mount point, error is %d\n", ret);
+
+	return ret;
 }
 
 int windrbd_mount(struct block_device *dev)
@@ -3297,7 +3351,7 @@ static void destroy_block_device(struct kref *kref)
 		if (bdev->is_mounted)
 			windrbd_umount(bdev);
 
-		ExFreePool(bdev->mount_point.Buffer);
+		kfree(bdev->mount_point.Buffer);
 		bdev->mount_point.Buffer = NULL;
 	}
 	if (bdev->windows_device != NULL)

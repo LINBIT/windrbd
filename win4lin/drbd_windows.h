@@ -1436,5 +1436,6 @@ int windrbd_join_multicast_group(u32 portid, const char *name);
 int windrbd_um_get_next_request(void *buf, size_t max_data_size, size_t *actual_data_size);
 int windrbd_um_return_return_value(void *rv_buf);
 int windrbd_init_usermode_helper(void);
+int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_point);
 
 #endif // DRBD_WINDOWS_H

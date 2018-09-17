@@ -178,7 +178,22 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 		}
+			/* TODO: retval? */
 		windrbd_um_return_return_value(irp->AssociatedIrp.SystemBuffer);
+
+		irp->IoStatus.Information = 0;
+		break;
+
+	case IOCTL_WINDRBD_ROOT_SET_MOUNT_POINT_FOR_MINOR:
+		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct windrbd_minor_mount_point)) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+		struct windrbd_minor_mount_point *mp =
+			(struct windrbd_minor_mount_point*) irp->AssociatedIrp.SystemBuffer;
+
+		if (windrbd_set_mount_point_for_minor_utf16(mp->minor, mp->mount_point) != 0)
+			status = STATUS_INVALID_DEVICE_REQUEST;
 
 		irp->IoStatus.Information = 0;
 		break;
