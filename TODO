@@ -69,56 +69,6 @@ Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
 -----------------------------------------------------------------------
 
-TODO: Implement: Make drbd service stoppable
-	This probably takes some while
-	Update: with the new architecture that should be possible
-	one day.
-
-	Probably some setting in the inf section. Or the way DRBD
-	registers itself in DriverEntry? DriverUnload() routine
-	returning something?
-
-	Update: After changing linker options (/DRIVER:WDM to
-	/DRIVER /SUBSYSTEM:WINDOWS) this works in theory. Things
-	we need to clean up include:
-
-	*) Threads (PsCreateSystemThread())
-		alloc_ordered_workqueue()
-		destroy_workqueue()
-	*) Lookaside lists (ExInitializeNPagedLookasideList())
-		kmem_cache_create() see slab.c
-	*) Update: All memory leaks (ExAllocatePoolWithTag(NonPagedPool, ...))
-		kmalloc() and friends. Also for PagedPool?
-
-	Right now, almost everything works, as long as no resources
-	are created. Missing: Terminate reply_reaper thread, wait
-	for wsk init thread completion (or terminate it?), really
-	clean up after resources. Sockets really don't need destroy
-	function?
-
-	Update: Works quite nice, however after a drbdsetup create-resource
-	drbdsetup del-resource some resources are not freed, which in
-	turn causes Unload not being called (which in turn causes
-	driver verifier to BSOD).
-
-	Update: As soon as there is just a single memory leak, driver
-	verifier BSOD's after unload. This will be fun to fix all of
-	those ...
-
-	Update: We need something like dmalloc .. maybe implement some
-	of it for our kmalloc()/kfree() to see at driver unload where
-	we leak (and free it there). At this point also get rid of the
-	Tag patches, we really don't need them. What also would be nice
-	at this point is to be able to inject out of memory faults selected
-	by source line.
-
-	For now defer that TODO to somewhere later (after beta5).
-
-	Update: Or maybe implement kmalloc debugger now and fix some of the
-	leaks (don't deliver beta with kmalloc debugger enabled)
-	but do not unload driver on uninstall. Users may use
-	sc stop windrbd if they really want to.
-
 TODO: Bug: patch_boot_sector: DRBD signature on peer.
 	Should only be on backing device, never on the wire.
 
@@ -310,6 +260,61 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
+TODO: Implement: Make drbd service stoppable
+	This probably takes some while
+	Update: with the new architecture that should be possible
+	one day.
+
+	Probably some setting in the inf section. Or the way DRBD
+	registers itself in DriverEntry? DriverUnload() routine
+	returning something?
+
+	Update: After changing linker options (/DRIVER:WDM to
+	/DRIVER /SUBSYSTEM:WINDOWS) this works in theory. Things
+	we need to clean up include:
+
+	*) Threads (PsCreateSystemThread())
+		alloc_ordered_workqueue()
+		destroy_workqueue()
+	*) Lookaside lists (ExInitializeNPagedLookasideList())
+		kmem_cache_create() see slab.c
+	*) Update: All memory leaks (ExAllocatePoolWithTag(NonPagedPool, ...))
+		kmalloc() and friends. Also for PagedPool?
+
+	Right now, almost everything works, as long as no resources
+	are created. Missing: Terminate reply_reaper thread, wait
+	for wsk init thread completion (or terminate it?), really
+	clean up after resources. Sockets really don't need destroy
+	function?
+
+	Update: Works quite nice, however after a drbdsetup create-resource
+	drbdsetup del-resource some resources are not freed, which in
+	turn causes Unload not being called (which in turn causes
+	driver verifier to BSOD).
+
+	Update: As soon as there is just a single memory leak, driver
+	verifier BSOD's after unload. This will be fun to fix all of
+	those ...
+
+	Update: We need something like dmalloc .. maybe implement some
+	of it for our kmalloc()/kfree() to see at driver unload where
+	we leak (and free it there). At this point also get rid of the
+	Tag patches, we really don't need them. What also would be nice
+	at this point is to be able to inject out of memory faults selected
+	by source line.
+
+	For now defer that TODO to somewhere later (after beta5).
+
+	Update: Or maybe implement kmalloc debugger now and fix some of the
+	leaks (don't deliver beta with kmalloc debugger enabled)
+	but do not unload driver on uninstall. Users may use
+	sc stop windrbd if they really want to.
+
+	Update: kmalloc() debugger implemented and works fine. On drbdadm up
+	down leaks at 3 code paths are found (plus an extra leak that the
+	debugger didn't find, probably kmem_cache_alloc()). Fix them
+	one day (there are probably more than that).
+
 TODO: Feature: Mount to NTFS directories.
 
 	For now, at least prepare user space to support that.
@@ -376,6 +381,14 @@ TODO: Test: Test under memory pressure.
 
 	We had a leak that caused all non-paged memory to be consumed,
 	followed by a CC BSOD.
+
+	Update: with the kmalloc debugger it will be possible to do
+	something like:
+
+	windrbd inject-oom drbd_windows.c:1234 10
+
+	to make kmalloc at drbd_windows.c line 1234 fail after being
+	called 10 times.
 
 TODO: Bug: Out of memory handling in windrbd device is broken (BSOD).
 
