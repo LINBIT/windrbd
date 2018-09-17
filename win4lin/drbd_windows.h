@@ -1009,12 +1009,16 @@ extern void kobject_put(struct kobject *kobj);
 extern void kobject_get(struct kobject *kobj);
 extern void kobject_del(struct kobject *kobj);
 
+#ifdef KMALLOC_DEBUG
+#include "kmalloc_debug.h"
+#else
 /* TODO: flag probably gfp_t */
 extern void * kcalloc(int e_count, int x, int flag, ULONG Tag);
 extern void * kzalloc(int x, int flag, ULONG Tag);
 extern void * kmalloc(int size, int flag, ULONG Tag);
 extern void kfree(const void * x);
 extern void kvfree(const void * x);
+#endif
 
 static inline void * __get_free_page(int flags)
 {

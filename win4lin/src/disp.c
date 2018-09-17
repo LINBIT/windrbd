@@ -65,6 +65,10 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	printk(KERN_INFO "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
 
+#ifdef KMALLOC_DEBUG
+	init_kmalloc_debug();
+	printk("kmalloc_debug initialized.\n");
+#endif
 	/* Next, the threads subsystem (so DRBD can create threads) */
 	init_windrbd_threads();
 
@@ -158,5 +162,9 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 
 	windrbd_shutdown_wsk();
 	printk("WinSocket layer shut down.\n");
+#ifdef KMALLOC_DEBUG
+	shutdown_kmalloc_debug();
+	printk("kmalloc_debug shut down, there should be no memory leaks now.\n");
+#endif
 }
 

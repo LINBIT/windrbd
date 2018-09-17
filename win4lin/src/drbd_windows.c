@@ -123,6 +123,7 @@ ULONG RtlRandomEx(
 /* Number of id_layer structs to leave in free list */
 #define MAX_IDR_FREE (MAX_IDR_LEVEL * 2)
 
+/* TODO: lock this list */
 static LIST_HEAD(backing_devices);
 static struct mutex read_bootsector_mutex;
 
@@ -497,9 +498,12 @@ LONGLONG atomic_read64(const atomic_t64 *v)
 	return InterlockedAnd64((LONGLONG*)v, 0xffffffffffffffff);
 }
 
+#ifndef KMALLOC_DEBUG
+
 	/* TODO: we would save patches to DRBD if we skip the tag
 	   here .. aren't using Windows Degugger anyway at the moment..
 	 */
+	/* TODO: honor the flag: alloc from PagedPool if flag is GFP_USER */
 
 void *kmalloc(int size, int flag, ULONG Tag)
 {
@@ -508,6 +512,7 @@ void *kmalloc(int size, int flag, ULONG Tag)
 
 void *kcalloc(int size, int count, int flag, ULONG Tag)
 {
+	/* TODO: flag is 0? */
 	return kzalloc(size*count, 0, Tag);
 }
 
@@ -521,6 +526,8 @@ void *kzalloc(int size, int flag, ULONG Tag)
 
 	return mem;
 }
+
+#endif
 
 char *kstrdup(const char *s, int gfp)
 {
@@ -648,7 +655,9 @@ void hack_alloc_page(struct block_device *dev)
 }
 #endif
 
-__inline void kfree(const void * x)
+#ifndef KMALLOC_DEBUG
+
+void kfree(const void * x)
 {
 	if (x)
 	{
@@ -656,13 +665,15 @@ __inline void kfree(const void * x)
 	}
 }
 
-__inline void kvfree(const void * x)
+void kvfree(const void * x)
 {
 	if (x)
 	{
 		ExFreePool((void*)x);
 	}
 }
+
+#endif
 
 // from  linux 2.6.32
 int kref_put(struct kref *kref, void (*release)(struct kref *kref))
