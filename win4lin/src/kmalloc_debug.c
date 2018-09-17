@@ -63,14 +63,14 @@ void *kzalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	return data;
 }
 
-void kfree_debug(const void *data)
+void kfree_debug(const void *data, const char *file, int line, const char *func)
 {
 	struct memory *mem;
 	struct poison_after *poison_after;
 	ULONG_PTR flags;
 
 	if (data == NULL) {
-		printk("kmalloc_debug: Warning: attempt to free the NULL pointer.\n");
+		printk("kmalloc_debug: Warning: attempt to free the NULL pointer in function %s at %s:%d\n", func, file, line);
 		return;
 	}
 	mem = container_of((void*) data, struct memory, data);
@@ -99,7 +99,7 @@ void shutdown_kmalloc_debug(void)
 
 	list_for_each_entry_safe(struct memory, mem, memh, &memory_allocations, list) {
 		printk("kmalloc_debug: Warning: memory leak of size %d, allocated by function %s at %s.\n", mem->size, mem->func, mem->desc);
-		kfree_debug(&mem->data[0]);
+		kfree_debug(&mem->data[0], __FILE__, __LINE__, __func__);
 	}
 }
 
