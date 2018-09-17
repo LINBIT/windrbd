@@ -288,3 +288,4 @@ Version history
  * 0.8.5 (Aug 15, 2018): Fault injection framework, fixed permissions
  * 0.8.6 (Aug 27, 2018): Kernel interface now based on ioctl() instead of TCP/IP
  * 0.8.7 (Sep 03, 2018): User mode helpers, do not load driver on boot
+ * 0.8.8 (Sep 17, 2018): kmalloc() debugger. For driver unload to work someday.
