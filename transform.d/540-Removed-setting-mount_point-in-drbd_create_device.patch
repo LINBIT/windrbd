@@ -1,0 +1,42 @@
+From 70df5a8f72f981db575a82944b11c48c26b712e1 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 18 Sep 2018 15:08:36 +0200
+Subject: [PATCH 1/3] Removed setting mount_point in drbd_create_device().
+
+This is now done via ioctl.
+---
+ drbd/drbd_main.c | 11 -----------
+ 1 file changed, 11 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 958d6f9..11bab08 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3705,13 +3705,6 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 		goto out_remove_peer_device;
+ 	}
+ 
+-	if (device_conf->mount_point && device_conf->mount_point[0]) {
+-		if (windrbd_set_mount_point(block_device, device_conf->mount_point) < 0) {
+-			err = ERR_INVALID_REQUEST;
+-			goto out_couldnt_set_mount_point;
+-		}
+-	}
+-
+ 	add_disk(disk);
+ 	device->have_quorum[OLD] =
+ 	device->have_quorum[NEW] =
+@@ -3735,10 +3728,6 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 
+ 	return NO_ERROR;
+ 
+-out_couldnt_set_mount_point:
+-	destroy_workqueue(device->submit.wq);
+-	device->submit.wq = NULL;
+-
+ out_remove_peer_device:
+ 	list_add_rcu(&tmp, &device->peer_devices);
+ 	list_del_init(&device->peer_devices);
+-- 
+2.17.0
+

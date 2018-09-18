@@ -2947,37 +2947,21 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
    caller.
  */
 
-static int minor_to_x_name(UNICODE_STRING *name, int minor, const char *mount_point)
+static int minor_to_windows_device_name(UNICODE_STRING *name, int minor)
 {
 	NTSTATUS status;
-	size_t len = NTSTRSAFE_UNICODE_STRING_MAX_CCH - 1;
-
-		/* RtlUnicodeStringPrintf returns INVALID_PARAMETER
-		 * if buffer is too big ...
-		 */
-	if (len > 10000) len = 10000;
+	size_t len = 32;
 
 	name->Buffer = kmalloc(len * sizeof(name->Buffer[0]), GFP_KERNEL, 'DRBD');
 
 	if (name->Buffer == NULL) {
-		WDRBD_WARN("minor_to_x_name: couldn't allocate memory for name buffer\n");
+		WDRBD_WARN("couldn't allocate memory for name buffer\n");
 		return -ENOMEM;
 	}
 	name->Length = 0;
 	name->MaximumLength = (len - 1) * sizeof(name->Buffer[0]);
 
-	if (mount_point) {
-		ANSI_STRING a;
-		UNICODE_STRING u;
-	        RtlInitAnsiString(&a, mount_point);
-		status = RtlAnsiStringToUnicodeString(&u, &a, TRUE);
-		if (status == STATUS_SUCCESS) {
-			status = RtlUnicodeStringPrintf(name, L"\\DosDevices\\%s", u.Buffer);
-			RtlFreeUnicodeString(&u);
-		}
-	} else {
-		status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
-	}
+	status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
 
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("minor_to_dos_name: couldn't printf device name for minor %d status: %x\n", minor, status);
@@ -3052,7 +3036,7 @@ struct block_device *bdget(dev_t device_no)
 	if (block_device == NULL)
 		return NULL;
 
-	if (minor_to_x_name(&block_device->path_to_device, minor, NULL) < 0)
+	if (minor_to_windows_device_name(&block_device->path_to_device, minor) < 0)
 		goto out_path_to_device_failed;
 
 	kref_init(&block_device->kref);
@@ -3185,26 +3169,6 @@ NTSTATUS pnp_callback(void *notification, void *context)
 	printk("notification: %p context: %p\n", notification, context);
 
 	return STATUS_SUCCESS;
-}
-
-	/* TODO: depecated */
-int windrbd_set_mount_point(struct block_device *dev, const char *mount_point)
-{
-	if (mount_point == NULL)
-		return 0;
-
-		/* TODO: think: do we allow this? */
-	if (dev->mount_point.Buffer != NULL) {
-		printk("set_mount_point called while there is a mount point registered.\n");
-
-		kfree(dev->mount_point.Buffer);
-		dev->mount_point.Buffer = NULL;
-	}
-
-	if (minor_to_x_name(&dev->mount_point, -1, mount_point) < 0)
-		return -1;
-
-	return 0;
 }
 
 int windrbd_set_mount_point_utf16(struct block_device *dev, const wchar_t *mount_point)

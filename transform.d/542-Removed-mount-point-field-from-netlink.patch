@@ -1,0 +1,26 @@
+From 625971ce444a05391fe3e098b833fcff5c9a5d4f Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 18 Sep 2018 15:13:25 +0200
+Subject: [PATCH 3/3] Removed mount-point field from netlink.
+
+We are now using ioctl's to pass this to kernel. Netlink interface is
+now the same (again) as the Linux version.
+---
+ drbd-headers/linux/drbd_genl.h | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drbd-headers/linux/drbd_genl.h b/drbd-headers/linux/drbd_genl.h
+index e584787..011ae59 100644
+--- a/drbd-headers/linux/drbd_genl.h
++++ b/drbd-headers/linux/drbd_genl.h
+@@ -218,7 +218,6 @@ GENL_struct(DRBD_NLA_DETACH_PARMS, 13, detach_parms,
+ GENL_struct(DRBD_NLA_DEVICE_CONF, 14, device_conf,
+ 	__u32_field_def(1, DRBD_F_INVARIANT,	max_bio_size, DRBD_MAX_BIO_SIZE_DEF)
+ 	__flg_field_def(2, 0 /* OPTIONAL */, intentional_diskless, DRBD_DISK_DISKLESS_DEF)
+-	__str_field_def(3, DRBD_F_INVARIANT, mount_point, DRBD_WINDOWS_PATH_MAX)
+ )
+ 
+ GENL_struct(DRBD_NLA_RESOURCE_INFO, 15, resource_info,
+-- 
+2.17.0
+

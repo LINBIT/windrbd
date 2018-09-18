@@ -1,0 +1,29 @@
+From 1a5dd7b5d552d2ff1686a3e072d29ff5c99ef0b9 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 18 Sep 2018 15:12:50 +0200
+Subject: [PATCH 2/3] Removed max path define.
+
+Since we are not passing mount point over netlink, this became
+obsolete.
+---
+ drbd-headers/linux/drbd.h | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/drbd-headers/linux/drbd.h b/drbd-headers/linux/drbd.h
+index 763d02d..d6b475c 100644
+--- a/drbd-headers/linux/drbd.h
++++ b/drbd-headers/linux/drbd.h
+@@ -51,10 +51,6 @@
+ 
+ #endif
+ 
+-/* Maximal length for the mount point in windrbd */
+-
+-#define DRBD_WINDOWS_PATH_MAX 260
+-
+ enum drbd_io_error_p {
+ 	EP_PASS_ON, /* FIXME should the better be named "Ignore"? */
+ 	EP_CALL_HELPER,
+-- 
+2.17.0
+
