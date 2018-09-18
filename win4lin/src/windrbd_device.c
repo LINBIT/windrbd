@@ -192,8 +192,21 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 		struct windrbd_minor_mount_point *mp =
 			(struct windrbd_minor_mount_point*) irp->AssociatedIrp.SystemBuffer;
 
-		if (windrbd_set_mount_point_for_minor_utf16(mp->minor, mp->mount_point) != 0)
+		switch (windrbd_set_mount_point_for_minor_utf16(mp->minor, mp->mount_point)) {
+		case -EBUSY:
+			status = STATUS_DEVICE_BUSY;
+			break;
+
+		case -ENOMEM:
+			status = STATUS_NO_MEMORY;
+			break;
+
+		case 0:
+			break;
+
+		default:
 			status = STATUS_INVALID_DEVICE_REQUEST;
+		}
 
 		irp->IoStatus.Information = 0;
 		break;

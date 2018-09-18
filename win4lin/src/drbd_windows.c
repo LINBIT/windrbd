@@ -660,17 +660,13 @@ void hack_alloc_page(struct block_device *dev)
 void kfree(const void * x)
 {
 	if (x)
-	{
 		ExFreePool((void*)x);
-	}
 }
 
 void kvfree(const void * x)
 {
 	if (x)
-	{
 		ExFreePool((void*)x);
-	}
 }
 
 #endif
@@ -2961,7 +2957,7 @@ static int minor_to_x_name(UNICODE_STRING *name, int minor, const char *mount_po
 		 */
 	if (len > 10000) len = 10000;
 
-	name->Buffer = ExAllocatePool(NonPagedPool, len * sizeof(name->Buffer[0]));
+	name->Buffer = kmalloc(len * sizeof(name->Buffer[0]), GFP_KERNEL, 'DRBD');
 
 	if (name->Buffer == NULL) {
 		WDRBD_WARN("minor_to_x_name: couldn't allocate memory for name buffer\n");
@@ -2986,7 +2982,7 @@ static int minor_to_x_name(UNICODE_STRING *name, int minor, const char *mount_po
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("minor_to_dos_name: couldn't printf device name for minor %d status: %x\n", minor, status);
 
-		ExFreePool(name->Buffer);
+		kfree(name->Buffer);
 		return -EINVAL;
 	}
 	name->Buffer[name->Length / sizeof(name->Buffer[0])] = 0;
@@ -3095,6 +3091,11 @@ out_path_to_device_failed:
 
 /* TODO: mount point (drive letter) must always be upper case */
 
+/* TODO: this code (using mount manager) really does not have any
+ * advantages and is quite complicated (it works, but ...), so
+ * maybe we switch back to just creating the symbolic link.
+ */
+
 static int mountmgr_create_point(struct block_device *dev)
 {
 	struct _MOUNTMGR_CREATE_POINT_INPUT *create_point;
@@ -3196,7 +3197,7 @@ int windrbd_set_mount_point(struct block_device *dev, const char *mount_point)
 	if (dev->mount_point.Buffer != NULL) {
 		printk("set_mount_point called while there is a mount point registered.\n");
 
-		ExFreePool(dev->mount_point.Buffer);
+		kfree(dev->mount_point.Buffer);
 		dev->mount_point.Buffer = NULL;
 	}
 
@@ -3217,6 +3218,13 @@ int windrbd_set_mount_point_utf16(struct block_device *dev, const wchar_t *mount
 		kfree(dev->mount_point.Buffer);
 		dev->mount_point.Buffer = NULL;
 	}
+		/* empty string means do not mount minor */
+	if (mount_point[0] == L'\0')
+		return 0;
+
+		/* TODO: later, check if it is a drive letter of the form
+		 * [A-Z]: and if not, try to mount it to NTFS directory.
+		 */
 
 #define DOS_DEVICES L"\\DosDevices\\"
 	size_t len = wcslen(mount_point)+wcslen(DOS_DEVICES)+1;
@@ -3226,7 +3234,7 @@ int windrbd_set_mount_point_utf16(struct block_device *dev, const wchar_t *mount
 	dev->mount_point.Buffer = kmalloc(size_in_bytes, GFP_KERNEL, 'DRBD');
 	if (dev->mount_point.Buffer == NULL)
 		return -ENOMEM;
-	dev->mount_point.Length = 0;
+	dev->mount_point.Length = size_in_bytes-sizeof(wchar_t);
 	dev->mount_point.MaximumLength = size_in_bytes;
 
 	wcscpy(dev->mount_point.Buffer, DOS_DEVICES);
@@ -3250,6 +3258,11 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 	if (block_device == NULL)
 		return -ENOENT;
 
+	if (block_device->is_mounted) {
+		printk("Attempt to change mount point while mounted. Please do a drbdadm secondary first.\n");
+		return -EBUSY;
+	}
+
 	ret = windrbd_set_mount_point_utf16(block_device, mount_point);
 	if (ret == 0)
 		printk("Mount point for minor %d set to %S\n", minor, block_device->mount_point.Buffer);
@@ -3262,6 +3275,11 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 int windrbd_mount(struct block_device *dev)
 {
 	NTSTATUS status;
+
+	if (dev->mount_point.Buffer == NULL) {
+		printk("No mount point set for minor %d, will not be mounted.\n");
+		return 0;	/* this is legal */
+	}
 
 	/* This is basically what mount manager does: leave it here,
 	   in case we revert the mount manager code again.
@@ -3296,11 +3314,11 @@ int windrbd_umount(struct block_device *bdev)
 
 	if (bdev->mount_point.Buffer == NULL) {
 		printk("windrbd_umount() called without a known mount_point.\n");
-		return -1;
+		return 0;
 	}
 	if (!bdev->is_mounted) {
 		printk("windrbd_umount() called while not mounted.\n");
-		return -1;
+		return 0;
 	}
 	InitializeObjectAttributes(&attr, &bdev->mount_point, OBJ_KERNEL_HANDLE, NULL, NULL);
 
@@ -3357,7 +3375,7 @@ static void destroy_block_device(struct kref *kref)
 	if (bdev->windows_device != NULL)
 		windrbd_remove_windows_device(bdev);
 
-	ExFreePool(bdev->path_to_device.Buffer);
+	kfree(bdev->path_to_device.Buffer);
 	bdev->path_to_device.Buffer = NULL;
 
 	kfree(bdev);
