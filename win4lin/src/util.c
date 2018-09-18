@@ -30,6 +30,7 @@
 #include "drbd_wingenl.h"
 #include "drbd_int.h"
 
+/* TODO: goes away soon */
 static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG *pReturnLength, UCHAR *pucReturnBuffer, PUNICODE_STRING pRegistryPath)
 {
     HANDLE hKey;

@@ -35,6 +35,7 @@ InitWskData(
 )
 {
 	// DW-1316 use raw irp.
+	/* TODO: is this still needed? CloseSocket uses it, but why? */
 	if (bRawIrp) {
 		*pIrp = ExAllocatePoolWithTag(NonPagedPool, IoSizeOfIrp(1), 'FFDW');
 		IoInitializeIrp(*pIrp, IoSizeOfIrp(1), 1);

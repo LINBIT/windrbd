@@ -6,7 +6,7 @@ mempool_t *mempool_create_page_pool(int min_nr, int order, ULONG tag)
 {
 	mempool_t *pool;
 
-	pool = ExAllocatePoolWithTag(NonPagedPool, sizeof(*pool), tag);
+	pool = kmalloc(sizeof(*pool), GFP_KERNEL, tag);
 	if (!pool)
 		return NULL;
 
@@ -22,7 +22,7 @@ mempool_t *mempool_create_slab_pool(int min_nr, struct kmem_cache *kc, ULONG tag
 {
 	mempool_t *pool;
 
-	pool = ExAllocatePoolWithTag(NonPagedPool, sizeof(*pool), tag);
+	pool = kmalloc(sizeof(*pool), GFP_KERNEL, tag);
 	if (!pool)
 		return NULL;
 
@@ -39,7 +39,7 @@ printk("ExDeleteNPagedLookasideList %p\n", pool);
 		ExDeleteNPagedLookasideList(&pool->pageLS);
 		ExDeleteNPagedLookasideList(&pool->page_addrLS);
 	}
-	ExFreePool(pool);
+	kfree(pool);
 }
 
 void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)

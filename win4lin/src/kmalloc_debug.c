@@ -15,8 +15,9 @@ struct memory {
 	size_t size;
 	char desc[DESC_SIZE];
 	char func[FUNC_SIZE];
+	int pad;
 	int poison;
-	char data[0];
+	char data[0];	/* this must be 16-byte aligned */
 		/* and another poison after that */
 };
 
