@@ -1,5 +1,8 @@
 # vim: set ft=make ts=8 sw=8 noet :
 
+# TODO: unset this for production releases.
+KMALLOC_DEBUG = 1
+
 # Name of the pfx file (without extension)
 KEY = linbit-ha
 PASSWD = ""
