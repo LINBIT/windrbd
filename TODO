@@ -1,11 +1,8 @@
-TODO: Implement: Rework mount code.
+TODO: Upstream: Linux drbd-utils should not complain about WinDRBD device
 
-	Should be an ioctl called via windrbd on primary/secondary
-	(where add-drive-in-explorer is). Then we do not have to
-	change the netlink protocol attributes (and also save patches
-	to DRBD).
+	On peers. Do that before merging windrbd into master.
 
-TODO: Test: drbdadm adjust changing mount point most likely doesn't work now.
+	Accept any string (including empty string)
 
 TODO: Code quality: Other mechanism to specify syslog_ip.
 
@@ -18,12 +15,6 @@ TODO: Code quality: Other mechanism to specify syslog_ip.
 	Update: No it makes sense to remove the registry key. Users
 	should either start windrbd log-server (which sets the IP
 	internally) or windrbd log-to-ip. Ring buffer is big enough :)
-
-TODO: Upstream: Linux drbd-utils should not complain about WinDRBD device
-
-	On peers. Do that before merging windrbd into master.
-
-	Accept any string (including empty string)
 
 TODO: Code quality: fix remaining warnings when compiling drbd-utils with-windrbd
 
@@ -179,6 +170,8 @@ TODO: Bug: Syncing sometimes stalls now.
 	Update: When WinDRBD is SyncSource it takes around 4-5 seconds
 	When SyncTarget, it takes up to 55 seconds (!).
 
+	cond_wait busy loop?
+
 TODO: Implement: Make windrbd directory unaccessible for non-admins.
 
 TODO: Implement: Detect earlier versions of WinDRBD and offer upgrade.
@@ -198,7 +191,9 @@ TODO: Infrastructure: Why doesn't it work on Phil's machine?
 
 TODO: Code quality: review TODOs in source code.
 
-TODO: Code quality: cond_wait shouldn't busy loop. How is this done in Linux?
+TODO: Implement: fix the wait_cond_interruptible busy loop.
+
+	DRBD does a wake_up() call whenever the condition might change.
 
 TODO: Features: implement flush_workqueue
 
@@ -259,6 +254,11 @@ TODO: Bug: BSOD on pri-on-incon-degr user mode helper.
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
+
+TODO: Implement: drbdadm adjust changing mount point doesn't work now.
+
+	Update: Yes. Meaning it doesn't work (as I expected). Do that
+	later.
 
 TODO: Implement: Make drbd service stoppable
 	This probably takes some while
@@ -3284,4 +3284,13 @@ Done: Bug: loading driver on boot BSOD's now on boot.
 Rejected: Feature: flush printk buffer as soon as network is working.
 
 	Don't. Windows will BSOD on boot.
+
+Done: Implement: Rework mount code.
+
+	Should be an ioctl called via windrbd on primary/secondary
+	(where add-drive-in-explorer is). Then we do not have to
+	change the netlink protocol attributes (and also save patches
+	to DRBD).
+
+	Update: Done, works.
 
