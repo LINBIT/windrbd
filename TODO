@@ -1,9 +1,3 @@
-TODO: Upstream: Linux drbd-utils should not complain about WinDRBD device
-
-	On peers. Do that before merging windrbd into master.
-
-	Accept any string (including empty string)
-
 TODO: Code quality: Other mechanism to specify syslog_ip.
 
 	Should be able to change it without rebooting.
@@ -16,8 +10,6 @@ TODO: Code quality: Other mechanism to specify syslog_ip.
 	should either start windrbd log-server (which sets the IP
 	internally) or windrbd log-to-ip. Ring buffer is big enough :)
 
-TODO: Code quality: fix remaining warnings when compiling drbd-utils with-windrbd
-
 TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
 
 	Avoid #ifdefs whereever possible: for includes see drbd-headers
@@ -28,6 +20,15 @@ TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
 
 	Update: I think we can do this without any ifdefs in the C
 	code (only in Makefiles).
+
+	Update: Working on headers .. we now only have ifdefs for
+	including headers that actually do something:
+
+	linux/netlink.h -> windrbd/netlink.h
+	linux/genetlink.h -> nothing
+	linux/types.h -> windrbd/types.h
+	linux/drbd_config.h -> windrbd/drbd_config.h
+	linux/fs.h -> cygwin/fs.h
 
 TODO: Code quality: merge drbd-headers/windrbd branch onto Linux version
 
@@ -3293,4 +3294,19 @@ Done: Implement: Rework mount code.
 	to DRBD).
 
 	Update: Done, works.
+
+Done: Upstream: Linux drbd-utils should not complain about WinDRBD device
+
+	On peers. Do that before merging windrbd into master.
+
+	Accept any string (including empty string)
+
+	Update: Not checking for devices when local host is in
+	hosts lists (but checking if hosts list is NULL)
+
+Done: Code quality: fix remaining warnings when compiling drbd-utils with-windrbd
+
+	There is also a warning when compiling with Linux.
+
+	Done, but re-check when done with de-ifdefing code.
 
