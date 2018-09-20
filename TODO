@@ -10,6 +10,10 @@ TODO: Code quality: Other mechanism to specify syslog_ip.
 	should either start windrbd log-server (which sets the IP
 	internally) or windrbd log-to-ip. Ring buffer is big enough :)
 
+	Update: Best is probably to have a /cygdrive/c/windrbd/etc/windrbd.conf
+	file for the IP or logfile, so that we don't have to touch
+	the config file format.
+
 TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
 
 	Avoid #ifdefs whereever possible: for includes see drbd-headers
@@ -28,23 +32,23 @@ TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
 	linux/genetlink.h -> nothing
 	linux/types.h -> windrbd/types.h
 	linux/drbd_config.h -> windrbd/drbd_config.h
+	Update: Done those above.
+
 	linux/fs.h -> cygwin/fs.h
+	(in shared_tool, but this ioctl won't work on Windows).
 
-TODO: Code quality: merge drbd-headers/windrbd branch onto Linux version
+	Update: split drbdmeta into I/O functions
+	(in drbdmeta_{linux,windrbd}.c). No ifdefs in C files, however
+	there are some (2) in header and in Makefile (where is doesn't
+	hurt). TODO: test it for DRBD < 9 it seems that drbdmeta isn't
+	built for that versions (for Linux).
 
-	Avoid #ifdefs whereever possible:
+TODO: Code quality: git diff master and undo unneccessary changes
 
-	Have windrbd-compat subdir with empty headers to avoid ifdef
-	on includes (windrbd-compat/linux, windrbd-compat/sys) add
-	-I windrbd-compat to Makefile.
+	.gitignore: add Linux binaries again.
+	install /var/lib/run: we need it but seperate patch
 
-	Mountpoint field: leave it in, phil will patch it out for
-	his upstream (Linux mainline)
-
-	Others: Find another way to do it (undef NO_ERROR, ...)
-
-	Update: I think we can do this without any ifdefs in the C
-	code (only in Makefiles).
+TODO: Upstream: add .\*.d and the like to .gitignore
 
 TODO: Documentation: drbd-util: Update manpage.
 
@@ -78,6 +82,15 @@ TODO: Bug: patch_boot_sector: DRBD signature on peer.
 
 	Update: Reopened: This happens now when invalidating (or otherwise
 	syncing) from a windows peer.
+
+TODO: Bug: it seems that free_mdls_and_irp() never gets called.
+
+TODO: Bug: leaking disk (see TODO in drbd_main.c)
+
+TODO: Installation: autostart user mode helper daemon and log server
+
+	As a Windows service? Can it be made dependent of the kernel
+	driver?
 
 TODO: Code quality: clean up drbd.inf (again)
 
@@ -3310,3 +3323,25 @@ Done: Code quality: fix remaining warnings when compiling drbd-utils with-windrb
 
 	Done, but re-check when done with de-ifdefing code.
 
+Done: Code quality: merge drbd-headers/windrbd branch onto Linux version
+
+	Avoid #ifdefs whereever possible:
+
+	Have windrbd-compat subdir with empty headers to avoid ifdef
+	on includes (windrbd-compat/linux, windrbd-compat/sys) add
+	-I windrbd-compat to Makefile.
+
+	Mountpoint field: leave it in, phil will patch it out for
+	his upstream (Linux mainline)
+
+	Others: Find another way to do it (undef NO_ERROR, ...)
+
+	Update: I think we can do this without any ifdefs in the C
+	code (only in Makefiles).
+
+	Update: Yes we did. Only diff is the NO_ERROR thing (which
+	we someday will replace by DRBD_NO_ERROR, send a patch
+	to Upstream) and the windrbd_ioctl.h (which is ok for
+	Phil).
+
+	Submit together with drbd-utils.
