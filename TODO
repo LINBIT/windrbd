@@ -14,6 +14,10 @@ TODO: Code quality: Other mechanism to specify syslog_ip.
 	file for the IP or logfile, so that we don't have to touch
 	the config file format.
 
+TODO: Implement: have an ioctl that returns WinDRBD versions string
+
+	What /proc/drbd would contain.
+
 TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
 
 	Avoid #ifdefs whereever possible: for includes see drbd-headers
@@ -43,12 +47,14 @@ TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
 	hurt). TODO: test it for DRBD < 9 it seems that drbdmeta isn't
 	built for that versions (for Linux).
 
+	Update: drbdadm and shared ifdef-free (except for HANDLE's
+	in two header files, ask Phil about that). Only drbdsetup
+	left to do.
+
 TODO: Code quality: git diff master and undo unneccessary changes
 
 	.gitignore: add Linux binaries again.
 	install /var/lib/run: we need it but seperate patch
-
-TODO: Upstream: add .\*.d and the like to .gitignore
 
 TODO: Documentation: drbd-util: Update manpage.
 
@@ -64,6 +70,8 @@ TODO: Code quality: fake commit history (git rebase -i master)
 Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
 -----------------------------------------------------------------------
+
+TODO: Upstream: add .\*.d and the like to .gitignore
 
 TODO: Bug: patch_boot_sector: DRBD signature on peer.
 	Should only be on backing device, never on the wire.
@@ -115,8 +123,6 @@ TODO: Feature: Check if it is a network share (currently blue screens)
 	appear in the \DosDevices directory. If we create a drive
 	letter (symbolic link) in the \DosDevices it will be silently
 	ignored. Warn the user if it is a network share.
-
-TODO: Upstream: drbd-utils make clean should also remove dependencies.
 
 TODO: Upstream: drbdsetup generic_get() handles multiple packets wrong.
 
@@ -3345,3 +3351,8 @@ Done: Code quality: merge drbd-headers/windrbd branch onto Linux version
 	Phil).
 
 	Submit together with drbd-utils.
+
+Rejected: Upstream: drbd-utils make clean should also remove dependencies.
+
+	One should use make distclean
+
