@@ -1,3 +1,18 @@
+TODO: Code quality: fake commit history (git rebase -i master)
+
+	Remove commits reverted later, clean up.
+
+	Update: Phil said best is to have one big patch for everything.
+	That saves a lot of work.
+
+	Update: Rebase once more and sqash commits
+
+	Update: Rebased, not quite clear yet if we should sqash or
+	otherwise clean up the commit history. Problem is that
+	drbd-headers submodule is also rebased, which in turn
+	caused some commits that used to compile to simply
+	fail.
+
 TODO: Code quality: Other mechanism to specify syslog_ip.
 
 	Should be able to change it without rebooting.
@@ -18,54 +33,9 @@ TODO: Implement: have an ioctl that returns WinDRBD versions string
 
 	What /proc/drbd would contain.
 
-TODO: Code quality: merge drbd-utils/windrbd branch onto Linux version
-
-	Avoid #ifdefs whereever possible: for includes see drbd-headers
-	TODO.
-
-	For functions, have a drbdmeta-linux.c and a drbdmeta-windrbd.c
-	and link with the right version.
-
-	Update: I think we can do this without any ifdefs in the C
-	code (only in Makefiles).
-
-	Update: Working on headers .. we now only have ifdefs for
-	including headers that actually do something:
-
-	linux/netlink.h -> windrbd/netlink.h
-	linux/genetlink.h -> nothing
-	linux/types.h -> windrbd/types.h
-	linux/drbd_config.h -> windrbd/drbd_config.h
-	Update: Done those above.
-
-	linux/fs.h -> cygwin/fs.h
-	(in shared_tool, but this ioctl won't work on Windows).
-
-	Update: split drbdmeta into I/O functions
-	(in drbdmeta_{linux,windrbd}.c). No ifdefs in C files, however
-	there are some (2) in header and in Makefile (where is doesn't
-	hurt). TODO: test it for DRBD < 9 it seems that drbdmeta isn't
-	built for that versions (for Linux).
-
-	Update: drbdadm and shared ifdef-free (except for HANDLE's
-	in two header files, ask Phil about that). Only drbdsetup
-	left to do.
-
-TODO: Code quality: git diff master and undo unneccessary changes
-
-	.gitignore: add Linux binaries again.
-	install /var/lib/run: we need it but seperate patch
-
 TODO: Documentation: drbd-util: Update manpage.
 
 	And write one for windrbd utility.
-
-TODO: Code quality: fake commit history (git rebase -i master)
-
-	Remove commits reverted later, clean up.
-
-	Update: Phil said best is to have one big patch for everything.
-	That saves a lot of work.
 
 Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
@@ -3355,4 +3325,44 @@ Done: Code quality: merge drbd-headers/windrbd branch onto Linux version
 Rejected: Upstream: drbd-utils make clean should also remove dependencies.
 
 	One should use make distclean
+
+Done: Code quality: merge drbd-utils/windrbd branch onto Linux version
+
+	Avoid #ifdefs whereever possible: for includes see drbd-headers
+	TODO.
+
+	For functions, have a drbdmeta-linux.c and a drbdmeta-windrbd.c
+	and link with the right version.
+
+	Update: I think we can do this without any ifdefs in the C
+	code (only in Makefiles).
+
+	Update: Working on headers .. we now only have ifdefs for
+	including headers that actually do something:
+
+	linux/netlink.h -> windrbd/netlink.h
+	linux/genetlink.h -> nothing
+	linux/types.h -> windrbd/types.h
+	linux/drbd_config.h -> windrbd/drbd_config.h
+	Update: Done those above.
+
+	linux/fs.h -> cygwin/fs.h
+	(in shared_tool, but this ioctl won't work on Windows).
+
+	Update: split drbdmeta into I/O functions
+	(in drbdmeta_{linux,windrbd}.c). No ifdefs in C files, however
+	there are some (2) in header and in Makefile (where is doesn't
+	hurt). TODO: test it for DRBD < 9 it seems that drbdmeta isn't
+	built for that versions (for Linux).
+
+	Update: drbdadm and shared ifdef-free (except for HANDLE's
+	in two header files, ask Phil about that). Only drbdsetup
+	left to do.
+
+	Update: drbdsetup done, ready for submit.
+
+Done: Code quality: git diff master and undo unneccessary changes
+
+	.gitignore: add Linux binaries again.
+	install /var/lib/run: we need it but seperate patch
 
