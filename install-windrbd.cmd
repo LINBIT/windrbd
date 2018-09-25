@@ -6,14 +6,27 @@ if %errorlevel% NEQ 0 (
 	exit
 )
 
-if not exist c:\windows\inf\drbd.inf goto no_legacy
-set /p a="A WinDRBD beta4 installation was found. We will uninstall it, since it conflicts with WinDRBD beta5 (and above) installations. Type yes to continue. Anything else cancels the installation without touching anything: "
-if not %a% == yes (
+rem This is required, else if uninstall of beta4 fails, the script would
+rem terminate
+
+setlocal
+
+if exist c:\windows\inf\drbd.inf (
+
+start /wait msgbox.vbs
+if errorlevel 7 (
+	msg "%username%" "Installation cancelled"
 	exit
 )
-rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 C:\windows\inf\drbd.inf
 
-:no_legacy
+start /wait rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 C:\windows\inf\drbd.inf
+del C:\windows\inf\drbd.inf
+
+)
+
+endlocal
+
+pause
 
 copy *.exe c:\windows\System32
 copy windrbd.inf c:\windows\inf
@@ -42,5 +55,9 @@ unzip -d c:\windrbd sysroot.zip
 
 
 :keep_settings
-rem this needs a path component
-InfDefaultInstall ".\drbd.inf"
+setlocal
+start /wait InfDefaultInstall ".\windrbd.inf"
+endlocal
+
+pause
+start /wait msg "%username%" "Installation succeeded"

@@ -3,7 +3,7 @@ Class=IEXPRESS
 SEDVersion=3
 [Options]
 PackagePurpose=InstallApp
-ShowInstallProgramWindow=1
+ShowInstallProgramWindow=0
 HideExtractAnimation=1
 UseLongFileName=1
 InsideCompressed=0
@@ -41,6 +41,7 @@ FILE7="unzip.exe"
 FILE8="cygbz2-1.dll"
 FILE9="install-windrbd.cmd"
 FILE10="sysroot.zip"
+FILE11="msgbox.vbs"
 [SourceFiles]
 SourceFiles0=Y:\windrbd\converted-sources\drbd\
 SourceFiles1=Y:\drbd-utils-windows\user\v9\
@@ -63,3 +64,4 @@ SourceFiles4=Y:\windrbd\
 [SourceFiles4]
 %FILE9%=
 %FILE10%=
+%FILE11%=
