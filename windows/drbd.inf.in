@@ -40,7 +40,7 @@ DelFiles            = DRBD.DriverFiles
 DelReg              = DRBD.DelRegistry
 
 [DefaultUninstall.Services]
-DelService = drbd,0x200      ; Flags note to stop service first
+DelService = WinDRBD,0x200      ; Flags note to stop service first
 
 ;
 ; Services Section
