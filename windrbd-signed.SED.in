@@ -40,8 +40,8 @@ FILE6="cygbz2-1.dll"
 FILE7="install-windrbd.cmd"
 FILE8="sysroot.zip"
 FILE9="drbd.cat"
-FILE10="drbd.sys"
-FILE11="drbd.inf"
+FILE10="windrbd.sys"
+FILE11="windrbd.inf"
 [SourceFiles]
 SourceFiles0=Y:\drbd-utils-windows\user\v9\
 SourceFiles1=Y:\drbd-utils-windows\user\windrbd\

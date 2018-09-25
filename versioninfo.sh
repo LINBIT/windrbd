@@ -68,7 +68,7 @@ EOF
 echo "const char *drbd_buildtag(void){return \"${VER_INTERNALNAME_STR}: ${GITHASH}\";}" > ${OUTPATH}/drbd_buildtag.c
 
 ## drbd.inf
-sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y) ;Replaced by build magic#" ./windows/drbd.inf.in > ${OUTPATH}/drbd.inf
+sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y) ;Replaced by build magic#" ./windows/windrbd.inf.in > ${OUTPATH}/windrbd.inf
 
 ## windrbd.SED
 sed "s#XXX#${DATE} ${GITHASH} ${DRBD_GITHASH}#g" windrbd.SED.in > windrbd.SED

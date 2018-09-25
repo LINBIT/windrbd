@@ -10,7 +10,7 @@ Class       =   "Volume"                       		;This is determined by the work
 ;; ClassGuid   =   {71A27CDD-812A-11D0-BEC7-08002BE2092F}  ;This value is determined by the Class
 Provider    =   "Linbit"
 DriverVer   =   12/01/2013,0.2.0.0			;Will get replaced by build magic
-CatalogFile = drbd.cat
+CatalogFile = windrbd.cat
 
 
 [DestinationDirs]
@@ -49,7 +49,7 @@ DelService = WinDRBD,0x200      ; Flags note to stop service first
 [DRBD.Service]
 DisplayName      = %ServiceName%
 Description      = %ServiceDesc%
-ServiceBinary    = %12%\drbd.sys     	;%windir%\system32\drivers\drbd.sys
+ServiceBinary    = %12%\windrbd.sys     	;%windir%\system32\drivers\windrbd.sys
 ServiceType      = 1                    ;SERVICE_FILE_SYSTEM_DRIVER
 ;; works?
 ;; yes the trick was not to add the UpperFilters registry key.
@@ -83,13 +83,13 @@ HKR,,"syslog_ip"
 ;
 
 [DRBD.DriverFiles]
-drbd.sys
+windrbd.sys
 
 [DRBD.UserFiles]
 ;drbdcon.exe
 
 [SourceDisksFiles]
-drbd.sys = 1,,
+windrbd.sys = 1,,
 ;;drbdcon.exe = 1,,
 
 [SourceDisksNames]

@@ -6,8 +6,17 @@ if %errorlevel% NEQ 0 (
 	exit
 )
 
+if not exist c:\windows\inf\drbd.inf goto no_legacy
+set /p a="A WinDRBD beta4 installation was found. We will uninstall it, since it conflicts with WinDRBD beta5 (and above) installations. Type yes to continue. Anything else cancels the installation without touching anything: "
+if not %a% == yes (
+	exit
+)
+rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 C:\windows\inf\drbd.inf
+
+:no_legacy
+
 copy *.exe c:\windows\System32
-copy drbd.inf c:\windows\inf
+copy windrbd.inf c:\windows\inf
 
 if exist c:\cygwin\NUL goto found_cygwin1
 if exist c:\cygwin64\NUL goto found_cygwin2
@@ -30,6 +39,7 @@ if exist c:\windrbd\NUL goto keep_settings
 
 mkdir c:\windrbd
 unzip -d c:\windrbd sysroot.zip
+
 
 :keep_settings
 rem this needs a path component
