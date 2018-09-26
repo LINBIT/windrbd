@@ -62,20 +62,20 @@ Source: "Y:\drbd-utils-windows\user\v9\drbdadm.exe"; DestDir: "{app}"; Flags: ig
 Source: "Y:\drbd-utils-windows\user\v9\drbdmeta.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "Y:\drbd-utils-windows\user\v9\drbdsetup.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "Y:\drbd-utils-windows\user\windrbd\windrbd.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Y:\windrbd\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Y:\windrbd\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "Y:\windrbd\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "Y:\windrbd\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "Y:\windrbd\converted-sources\drbd\windrbd.sys"; DestDir: "{sys}\drivers"; Flags: ignoreversion 64bit
-Source: "Y:\windrbd\msgbox.vbs"; DestDir: "{app}"; Flags: ignoreversion
+Source: "Y:\windrbd\msgbox.vbs"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
-Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletekeyifempty
+Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletekey
 Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: string; ValueName: "Description"; ValueData: "WinDRBD - storage replication over network for Microsoft Windows"
 Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: dword; ValueName: "Type"; ValueData: 1
 Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: dword; ValueName: "Start"; ValueData: 3
 Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: dword; ValueName: "ErrorControl"; ValueData: 0
-Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: expandsz; ValueName: "ImagePath"; ValueData: "SysWOW64\drivers\windrbd.sys"
+Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: expandsz; ValueName: "ImagePath"; ValueData: "system32\drivers\windrbd.sys"
 Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: string; ValueName: "DisplayName"; ValueData: "WinDRBD"
 
 [Icons]

@@ -42,10 +42,6 @@ unzip -d c:\windrbd sysroot.zip
 
 
 :keep_settings
-rem start /wait InfDefaultInstall ".\windrbd.inf"
-
-pause
-rem start /wait msg "%username%" "Installation succeeded"
 
 endlocal
 
