@@ -11,29 +11,16 @@ rem terminate
 
 setlocal
 
-if exist c:\windows\inf\drbd.inf (
-
-start /wait msgbox.vbs
-if errorlevel 7 (
-	msg "%username%" "Installation cancelled"
-	exit
-)
-
-start /wait rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 C:\windows\inf\drbd.inf
-del C:\windows\inf\drbd.inf
-
-)
-
-endlocal
-
 pause
 
+rem TODO: use PATH instead
 copy *.exe c:\windows\System32
 copy windrbd.inf c:\windows\inf
 
 if exist c:\cygwin\NUL goto found_cygwin1
 if exist c:\cygwin64\NUL goto found_cygwin2
 
+rem TODO: this is not a good idea
 copy *.dll c:\windows\System32
 goto next
 
@@ -55,9 +42,10 @@ unzip -d c:\windrbd sysroot.zip
 
 
 :keep_settings
-setlocal
 start /wait InfDefaultInstall ".\windrbd.inf"
-endlocal
 
 pause
 start /wait msg "%username%" "Installation succeeded"
+
+endlocal
+

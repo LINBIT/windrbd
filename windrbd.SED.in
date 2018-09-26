@@ -42,6 +42,7 @@ FILE8="cygbz2-1.dll"
 FILE9="install-windrbd.cmd"
 FILE10="sysroot.zip"
 FILE11="msgbox.vbs"
+FILE12="uninstall-windrbd-beta4.cmd"
 [SourceFiles]
 SourceFiles0=Y:\windrbd\converted-sources\drbd\
 SourceFiles1=Y:\drbd-utils-windows\user\v9\
@@ -65,3 +66,4 @@ SourceFiles4=Y:\windrbd\
 %FILE9%=
 %FILE10%=
 %FILE11%=
+%FILE12%=
