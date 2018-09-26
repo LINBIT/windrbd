@@ -153,6 +153,16 @@ TODO: Implement: Make DRBD driver removable.
 	HKLM/Software/Microsoft/Windows/Uninstall/DRBD so one can
 	use control panel / uninstall software to uninstall DRBD.
 
+	Update: Switched to inno-setup (see http://www.jrsoftware.org)
+	Uninstall works for the driver if it is not running.
+
+	Userland binaries should reside in the /Program Files/WinDRBD
+	directory (add a PATH to it) same for the cygwin DLLs.
+
+	Uninstall cmd script should also (try to) drbdadm down all
+	and sc stop windrbd (maybe ask first?, or call that later)
+	(Update: it seems that DefaultUninstall tries to stop the driver)
+
 TODO: Bug: Syncing sometimes stalls now.
 
 	And seems to be slow.
