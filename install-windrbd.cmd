@@ -6,43 +6,13 @@ if %errorlevel% NEQ 0 (
 	exit
 )
 
-rem This is required, else if uninstall of beta4 fails, the script would
-rem terminate
-
-setlocal
-
-pause
-
-rem TODO: use PATH instead
-copy *.exe c:\windows\System32
 rem needed?
 copy windrbd.inf c:\windows\inf
 
-if exist c:\cygwin\NUL goto found_cygwin1
-if exist c:\cygwin64\NUL goto found_cygwin2
-
-rem TODO: this is not a good idea
-copy *.dll c:\windows\System32
-goto next
-
-:found_cygwin1
-copy c:\cygwin\bin\cygwin1.dll c:\windows\System32
-copy c:\cygwin\bin\cygbz2-1.dll c:\windows\System32
-goto next
-
-:found_cygwin2
-copy c:\cygwin64\bin\cygwin1.dll c:\windows\System32
-copy c:\cygwin64\bin\cygbz2-1.dll c:\windows\System32
-goto next
-
-:next
-if exist c:\windrbd\NUL goto keep_settings
-
-mkdir c:\windrbd
-unzip -d c:\windrbd sysroot.zip
-
-
-:keep_settings
+if not exist c:\windrbd\NUL (
+	mkdir c:\windrbd
+	unzip -d c:\windrbd sysroot.zip
+)
 
 rem Also note that since the installer is 32 bit the system32
 rem directory (which holds 64 bit applications, hence the name ;)
@@ -53,8 +23,3 @@ copy windrbd.sys c:\windows\sysnative\drivers
 start /wait InfDefaultInstall ".\windrbd.inf"
 
 pause
- 
-
-
-endlocal
-
