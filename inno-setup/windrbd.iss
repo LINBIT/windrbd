@@ -64,15 +64,19 @@ Source: "Y:\drbd-utils-windows\user\v9\drbdsetup.exe"; DestDir: "{app}"; Flags: 
 Source: "Y:\drbd-utils-windows\user\windrbd\windrbd.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "Y:\windrbd\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion
 Source: "Y:\windrbd\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Y:\windrbd\converted-sources\drbd\windrbd.inf"; DestDir: "{win}/inf"; Flags: ignoreversion
-Source: "Y:\windrbd\converted-sources\drbd\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion 64bit
+Source: "Y:\windrbd\converted-sources\drbd\windrbd.sys"; DestDir: "{sys}\drivers"; Flags: ignoreversion 64bit
 Source: "Y:\windrbd\msgbox.vbs"; DestDir: "{app}"; Flags: ignoreversion
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
-; [Registry]
-; Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletekeyifempty
-; Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD\Description"; Flags: uninsdeletevalue; ValueType: string; ValueName: "Descrption"; ValueData: "WinDRBD - storage replication over network for Microsoft Windows"
+[Registry]
+Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletekeyifempty
+Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: string; ValueName: "Description"; ValueData: "WinDRBD - storage replication over network for Microsoft Windows"
+Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: dword; ValueName: "Type"; ValueData: 1
+Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: dword; ValueName: "Start"; ValueData: 3
+Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: dword; ValueName: "ErrorControl"; ValueData: 0
+Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: expandsz; ValueName: "ImagePath"; ValueData: "SysWOW64\drivers\windrbd.sys"
+Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: string; ValueName: "DisplayName"; ValueData: "WinDRBD"
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
