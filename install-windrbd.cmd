@@ -15,6 +15,7 @@ pause
 
 rem TODO: use PATH instead
 copy *.exe c:\windows\System32
+rem needed?
 copy windrbd.inf c:\windows\inf
 
 if exist c:\cygwin\NUL goto found_cygwin1
@@ -42,6 +43,18 @@ unzip -d c:\windrbd sysroot.zip
 
 
 :keep_settings
+
+rem Also note that since the installer is 32 bit the system32
+rem directory (which holds 64 bit applications, hence the name ;)
+rem is called sysnative. Somehow InfDefaultInstall gets confused,
+rem with this it works:
+
+copy windrbd.sys c:\windows\sysnative\drivers
+start /wait InfDefaultInstall ".\windrbd.inf"
+
+pause
+ 
+
 
 endlocal
 
