@@ -163,6 +163,24 @@ TODO: Implement: Make DRBD driver removable.
 	and sc stop windrbd (maybe ask first?, or call that later)
 	(Update: it seems that DefaultUninstall tries to stop the driver)
 
+	Update: PATH thing done. Maybe register the cygwin-1.dll as
+	shared file? Test cygwin installation after WinDRBD installation
+	and decide then.
+
+	unzip'ing sysroot also works, we have now all 'old' features
+	implemented.
+
+	TODO: When finished, remove the pause from the cmd scripts and
+	hide the cmd window.
+
+	Also maybe TODO: do not ask user about environment.
+
+	TODO: Integrate into make build system (with iscc)
+
+TODO: Bug: 'modprobe' does not work when invoked via cmd.
+
+	Because it starts a shell. Use WIN32 API instead.
+
 TODO: Bug: Syncing sometimes stalls now.
 
 	And seems to be slow.
