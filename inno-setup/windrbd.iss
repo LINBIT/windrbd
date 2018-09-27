@@ -123,3 +123,8 @@ const
 	end;
 
 #include "modpath.iss"
+
+function UninstallNeedRestart(): Boolean;
+begin
+	Result := True;
+end;
