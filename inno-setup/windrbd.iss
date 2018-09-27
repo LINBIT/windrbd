@@ -78,15 +78,16 @@ Source: "{#WindrbdUtilsSource}\user\v9\drbdadm.exe"; DestDir: "{app}"; Flags: ig
 Source: "{#WindrbdUtilsSource}\user\v9\drbdmeta.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
-Source: "{#WindrbdSource}\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
-Source: "{#WindrbdSource}\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\sysroot.zip"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
+; TODO: one day, package the individual files themselves:
+Source: "{#WindrbdSource}\inno-setup\sysroot.zip"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygwin1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygbz2-1.dll"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\unzip.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\msgbox.vbs"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "{#WindrbdSource}\inno-setup\msgbox.vbs"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
@@ -105,11 +106,11 @@ Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
                                                 
 [Run]
-Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated
-Filename: "{app}\install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated
+Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
+Filename: "{app}\install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
 
 [UninstallRun]
-Filename: "{app}\uninstall-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated
+Filename: "{app}\uninstall-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
 
 [Code]
 const

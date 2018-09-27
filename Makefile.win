@@ -171,6 +171,7 @@ clean:
 
 package: all
 	( cd ../../inno-setup && iscc windrbd.iss )
+	chmod a+x ../../inno-setup/install*.exe
 
 signed-package: versioninfo
 	( cd ../../inno-setup && iscc windrbd.iss )

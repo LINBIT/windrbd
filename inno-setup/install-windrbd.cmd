@@ -21,5 +21,3 @@ rem with this it works:
 
 copy windrbd.sys c:\windows\sysnative\drivers
 start /wait InfDefaultInstall ".\windrbd.inf"
-
-pause
