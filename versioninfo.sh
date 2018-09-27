@@ -76,3 +76,5 @@ sed "s#XXX#${DATE} ${GITHASH} ${DRBD_GITHASH}#g" windrbd.SED.in > windrbd.SED
 ## windrbd-signed.SED
 sed "s#XXX#${DATE} ${GITHASH} ${DRBD_GITHASH}#g" windrbd-signed.SED.in > windrbd-signed.SED
 
+## inno-setup version include file
+echo \#define MyAppVersion \"${GITHASH}\" > inno-setup/version.iss

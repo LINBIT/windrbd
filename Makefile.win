@@ -170,8 +170,8 @@ clean:
 	rm -f *.obj
 
 package: all
-	iexpress /n ../../windrbd.sed
+	( cd ../../inno-setup && iscc windrbd.iss )
 
 signed-package: versioninfo
-	iexpress /n ../../windrbd-signed.sed
+	( cd ../../inno-setup && iscc windrbd.iss )
 

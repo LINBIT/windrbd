@@ -39,6 +39,9 @@
 //		#include "modpath.iss"
 // ----------------------------------------------------------------------------
 
+// Update: Changed this to run unconditionally (i.e. user is not prompted)
+// You don't need a Task entry and also not the ModPathName const.
+
 procedure ModPath();
 var
 	oldpath:	String;
@@ -165,53 +168,23 @@ end;
 
 
 procedure CurStepChanged(CurStep: TSetupStep);
-var
-	taskname:	String;
 begin
-	taskname := ModPathName;
-	if CurStep = ssPostInstall then
-		if IsTaskSelected(taskname) then
-			ModPath();
+	if CurStep = ssPostInstall then begin
+		ModPath();
+	end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
-var
-	aSelectedTasks:	TArrayOfString;
-	i:				Integer;
-	taskname:		String;
-	regpath:		String;
-	regstring:		String;
-	appid:			String;
 begin
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
-		// get list of selected tasks saved in registry at install time
-		appid := '{#emit SetupSetting("AppId")}';
-		if appid = '' then appid := '{#emit SetupSetting("AppName")}';
-		regpath := ExpandConstant('Software\Microsoft\Windows\CurrentVersion\Uninstall\'+appid+'_is1');
-		RegQueryStringValue(HKLM, regpath, 'Inno Setup: Selected Tasks', regstring);
-		if regstring = '' then RegQueryStringValue(HKCU, regpath, 'Inno Setup: Selected Tasks', regstring);
-
-		// check each task; if matches modpath taskname, trigger patch removal
-		if regstring <> '' then begin
-			taskname := ModPathName;
-			MPExplode(aSelectedTasks, regstring, ',');
-			if GetArrayLength(aSelectedTasks) > 0 then begin
-				for i := 0 to GetArrayLength(aSelectedTasks)-1 do begin
-					if comparetext(aSelectedTasks[i], taskname) = 0 then
-						ModPath();
-				end;
-			end;
-		end;
+		ModPath();
 	end;
 end;
 
 function NeedRestart(): Boolean;
-var
-	taskname:	String;
 begin
-	taskname := ModPathName;
-	if IsTaskSelected(taskname) and not UsingWinNT() then begin
+	if not UsingWinNT() then begin
 		Result := True;
 	end else begin
 		Result := False;
