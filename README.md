@@ -289,3 +289,5 @@ Version history
  * 0.8.6 (Aug 27, 2018): Kernel interface now based on ioctl() instead of TCP/IP
  * 0.8.7 (Sep 03, 2018): User mode helpers, do not load driver on boot
  * 0.8.8 (Sep 17, 2018): kmalloc() debugger. For driver unload to work someday.
+ * 0.8.9 (Sep 27, 2018): Uninstall works (but needs reboot), switched to
+			 inno-setup for installation.
