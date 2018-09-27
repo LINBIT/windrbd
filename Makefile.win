@@ -103,7 +103,7 @@ WIN_LINK_INPUT += wdmsec.lib
 # WIN_LINK_INPUT += setupapi.lib
 
 
-all: versioninfo windrbd.sys drbd.cat
+all: versioninfo windrbd.sys windrbd.cat
 
 .PHONY: versioninfo
 versioninfo:
