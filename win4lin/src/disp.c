@@ -38,6 +38,7 @@ void idr_shutdown(void);
 
 DRIVER_INITIALIZE DriverEntry;
 DRIVER_UNLOAD mvolUnload;
+DRIVER_ADD_DEVICE mvolAddDevice;
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, DriverEntry)
@@ -99,6 +100,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	mvolRootDeviceObject = deviceObject;
 
 	windrbd_set_major_functions(DriverObject);
+	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
 	DriverObject->DriverUnload = mvolUnload;
 
 	downup_rwlock_init(&transport_classes_lock); //init spinlock for transport 
@@ -168,3 +170,9 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 #endif
 }
 
+NTSTATUS
+mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject)
+{
+	printk(KERN_INFO "AddDevice NOT DONE\n");
+	return STATUS_NO_SUCH_DEVICE;
+}
