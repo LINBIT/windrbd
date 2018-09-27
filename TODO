@@ -65,14 +65,9 @@ TODO: Bug: it seems that free_mdls_and_irp() never gets called.
 
 TODO: Bug: leaking disk (see TODO in drbd_main.c)
 
-TODO: Installation: autostart user mode helper daemon and log server
-
-	As a Windows service? Can it be made dependent of the kernel
-	driver?
-
 TODO: Code quality: clean up drbd.inf (again)
 
-TODO: Installation: Autostart user mode helper daemon
+TODO: Installation: Autostart user mode helper daemon and log server
 
 	Someday ...
 	Update: we should do that in modprobe. WinDRBD isn't really
@@ -80,6 +75,9 @@ TODO: Installation: Autostart user mode helper daemon
 
 	Need to define this as Windows service (in inf file) with
 	type 16 (daemon).
+
+	As a Windows service? Can it be made dependent of the kernel
+	driver?
 
 TODO: Upstream: Possible race at drbd_thread_setup() (drbdmain.c:567) with
 	use-after-free.
@@ -131,51 +129,19 @@ TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
 	at the beginning of spin_lock_irq that tests for IRQL
 	being PASSIVE_LEVEL).
 
-TODO: Implement: Make DRBD driver removable.
+TODO: Bug: Uninstall currenty BSOD's if there was ever I/O
 
-	From imdisk:
+TODO: Code quality: maybe: use file list in innosetup instead of a zip file.
 
-	start "" "%SystemRoot%\system32\rundll32.exe" setupapi.dll,InstallHinfSection DefaultUninstall 132 %SystemRoot%\inf\imdisk.inf
+	What would be cool if this makefile automatically builds the
+	utils, installs them to a tmp folder and selects the files.
 
-	In practice a
+TODO: Build system: install build utils on Windows 10 box and create signed packages there.
 
-	rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 Y:\windrbd\converted-sources\drbd\drbd.inf
+	So we never need the copy-to-another-machine step in building
+	signed packages.
 
-	did the trick. DRBD is not stopped, but this uninstalls DRBD
-	driver (after reboot drbdadm status fails because DRBD kernel
-	module is not running).
-
-	What is missing: write a cmd script that down all DRBD
-	resources, stops the driver itself (how? see sepearate todo)
-	and executes the setupapi thing above.
-
-	Also create registry keys for Linbit / DRBD in
-	HKLM/Software/Microsoft/Windows/Uninstall/DRBD so one can
-	use control panel / uninstall software to uninstall DRBD.
-
-	Update: Switched to inno-setup (see http://www.jrsoftware.org)
-	Uninstall works for the driver if it is not running.
-
-	Userland binaries should reside in the /Program Files/WinDRBD
-	directory (add a PATH to it) same for the cygwin DLLs.
-
-	Uninstall cmd script should also (try to) drbdadm down all
-	and sc stop windrbd (maybe ask first?, or call that later)
-	(Update: it seems that DefaultUninstall tries to stop the driver)
-
-	Update: PATH thing done. Maybe register the cygwin-1.dll as
-	shared file? Test cygwin installation after WinDRBD installation
-	and decide then.
-
-	unzip'ing sysroot also works, we have now all 'old' features
-	implemented.
-
-	TODO: When finished, remove the pause from the cmd scripts and
-	hide the cmd window.
-
-	Also maybe TODO: do not ask user about environment.
-
-	TODO: Integrate into make build system (with iscc)
+TODO: Code quality: Update README-windrbd.txt (in sysroot.zip)
 
 TODO: Bug: 'modprobe' does not work when invoked via cmd.
 
@@ -3393,4 +3359,54 @@ Done: Code quality: git diff master and undo unneccessary changes
 
 	.gitignore: add Linux binaries again.
 	install /var/lib/run: we need it but seperate patch
+
+Done: Implement: Make DRBD driver removable.
+
+	From imdisk:
+
+	start "" "%SystemRoot%\system32\rundll32.exe" setupapi.dll,InstallHinfSection DefaultUninstall 132 %SystemRoot%\inf\imdisk.inf
+
+	In practice a
+
+	rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 Y:\windrbd\converted-sources\drbd\drbd.inf
+
+	did the trick. DRBD is not stopped, but this uninstalls DRBD
+	driver (after reboot drbdadm status fails because DRBD kernel
+	module is not running).
+
+	What is missing: write a cmd script that down all DRBD
+	resources, stops the driver itself (how? see sepearate todo)
+	and executes the setupapi thing above.
+
+	Also create registry keys for Linbit / DRBD in
+	HKLM/Software/Microsoft/Windows/Uninstall/DRBD so one can
+	use control panel / uninstall software to uninstall DRBD.
+
+	Update: Switched to inno-setup (see http://www.jrsoftware.org)
+	Uninstall works for the driver if it is not running.
+
+	Userland binaries should reside in the /Program Files/WinDRBD
+	directory (add a PATH to it) same for the cygwin DLLs.
+
+	Uninstall cmd script should also (try to) drbdadm down all
+	and sc stop windrbd (maybe ask first?, or call that later)
+	(Update: it seems that DefaultUninstall tries to stop the driver)
+
+	Update: Yes it does. We currently BSOD on uninstall (removing
+	the driver), (at least) free_mdls_and_irp() never gets called
+	bug has to be fixed.
+
+	Update: PATH thing done. Maybe register the cygwin-1.dll as
+	shared file? Test cygwin installation after WinDRBD installation
+	and decide then.
+
+	unzip'ing sysroot also works, we have now all 'old' features
+	implemented.
+
+	Done: When finished, remove the pause from the cmd scripts and
+	hide the cmd window.
+
+	Also Done: do not ask user about environment. Update: done
+
+	Done: Integrate into make build system (with iscc) Update: done
 
