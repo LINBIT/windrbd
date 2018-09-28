@@ -41,7 +41,9 @@ Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
 -----------------------------------------------------------------------
 
-TODO: Two issues with cygwin1.dll
+TODO: Bug: When installing two times uninstall reports an error.
+
+TODO: Bug: Two issues with cygwin1.dll
 
 	Old cygwins (2016) do not understand whitespace in
 	path names of programs (at least when the program is
