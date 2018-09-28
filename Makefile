@@ -89,9 +89,9 @@ clean:
 	for d in $(TRANS_DEST) $(WIN4LIN); do \
 		find $$d -name "*.pdb" -delete; \
 		find $$d -name "*.obj" -delete; \
-		find $$d -name "drbd.sys" -delete; \
-		find $$d -name "drbd.cat" -delete; \
-		find $$d -name "_drbd.ilk" -delete; \
+		find $$d -name "windrbd.sys" -delete; \
+		find $$d -name "windrbd.cat" -delete; \
+		find $$d -name "_windrbd.ilk" -delete; \
 	done
 
 else
