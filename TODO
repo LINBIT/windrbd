@@ -169,10 +169,6 @@ TODO: Build system: install build utils on Windows 10 box and create signed pack
 
 TODO: Code quality: Update README-windrbd.txt (in sysroot.zip)
 
-TODO: Bug: 'modprobe' does not work when invoked via cmd.
-
-	Because it starts a shell. Use WIN32 API instead.
-
 TODO: Bug: Syncing sometimes stalls now.
 
 	And seems to be slow.
@@ -3435,4 +3431,9 @@ Done: Implement: Make DRBD driver removable.
 	Also Done: do not ask user about environment. Update: done
 
 	Done: Integrate into make build system (with iscc) Update: done
+
+Done: Bug: 'modprobe' does not work when invoked via cmd.
+
+	Because it starts a shell. Use WIN32 API instead.
+	Using execvp() now.
 
