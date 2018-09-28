@@ -20,8 +20,6 @@ del C:\windows\sysnative\unzip.exe
 del C:\windows\sysnative\cygwin1.dll
 del C:\windows\sysnative\cygbz2-1.dll
 
-pause
-
 )
 
 endlocal
