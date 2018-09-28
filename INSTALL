@@ -1,10 +1,10 @@
-Note: WinDRBD (DRBD for Windows) is at a very early development stage, 
-so please don't expect everything described in here to work out-of-the-box.
+This file explains how to build the WinDRBD kernel driver from the
+sources. If you just want to try WinDRBD you probably want to
+get an officially signed installable binary from the linbit
+website (www.linbit.com), because the build process requires
+lots of more work (and still the driver won't be officially signed).
 
-Furthermore, running WinDRBD will, at some point, most likely crash your 
-windows machine (blue screen) so be sure to
-	1.) Not use it on production machines.
-	2.) Make Snapshots frequently.
+Having said that, this is what you need:
 
 Build environment setup:
 
@@ -29,16 +29,25 @@ You need two virtual machines:
 	    Download and Install cygwin 
 	    Download and Install Development tools of cygwin (there is
 		a GUI for that, please don't expect screenshots in here)
+		You need (at least): 
+			autoconf, automake, flex, gcc, g++, git, make
 
 	    Note: I've also installed Visual Studio on my Windows box,
 		not sure if that is needed also, since the C compiler
 		should come with ewdk.
 
+	3.) To create installable packages (make package), you need
+	    inno-setup in addition to the above. You can download it
+	    from: 
+
+	    http://www.jrsoftware.org
+
+	    Make sure the command line compiler iscc.exe is in the
+	    PATH
+
 git clone windrbd with:
 
-# TODO: wdrbd9 -> windrbd
-
-bash$ git clone --recursive git@github.com:LINBIT/wdrbd9.git
+bash$ git clone --recursive git@github.com:LINBIT/windrbd.git
 
 on your Linux box. windrbd uses drbd as a submodule that's why --recursive
 is needed.
@@ -70,13 +79,17 @@ Building and "insmod" DRBD windows driver:
                 make install
         on the Windows box
 
-	Windows will show a panel asking you to reboot the machine.
+	starting with (roughly 0.8.5) no reboot is required for installation.
 
         6.) (optional) To load the driver, do (from Adminstrator Console)
-                sc start drbd
+                sc start windrbd
 
-	However to make WinDRBD work correctly you will have to reboot
-	the machine. (this restriction may vanish in future).
+	starting with (roughly 0.8.5) this is done automatically when
+	calling drbdadm/drbdsetup.
+
+Be sure to also build and install also the drbd-utils from
+https://github.com/LINBIT/drbd-utils
+else you won't be able to use the driver.
 
 ------------
 
