@@ -41,6 +41,23 @@ Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
 -----------------------------------------------------------------------
 
+TODO: Two issues with cygwin1.dll
+
+	Old cygwins (2016) do not understand whitespace in
+	path names of programs (at least when the program is
+	found via path). Solution is probably to document
+	that and tell user to upgrade cygwin (when running
+	drbdadm from a cmd shell everything works, so it
+	is probably the exec() call).
+
+	cygwin1.dll shipped with WinDRBD is incompatible with
+	newer cygwins, removing dll from program directory
+	(or renaming it) solves the problem. Probably always
+	shipping with the newest cygwin1.dll solves the problem.
+
+	Update: Yes it does. Document the old cygwin thing
+	and close this.
+
 TODO: Upstream: add .\*.d and the like to .gitignore
 
 TODO: Bug: patch_boot_sector: DRBD signature on peer.
@@ -140,6 +157,15 @@ TODO: Build system: install build utils on Windows 10 box and create signed pack
 
 	So we never need the copy-to-another-machine step in building
 	signed packages.
+
+	Making progress (installed ewdk, installed visual studio
+	(but probably not needed) installed inno-setup and built
+	with make package R=1. However, needed to patch Makefile.win
+	and ms-cl.cmd (does not compile with Windows 7 VM now).
+
+	Left TODO: document the new process, find a solution to the
+	Ewdk makefile hell and update inno-script (would be nice
+	to change the version to windrbd-signed or so ...)
 
 TODO: Code quality: Update README-windrbd.txt (in sysroot.zip)
 

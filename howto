@@ -130,6 +130,12 @@ Use windrbd-install-signed.SED.in to build package (will take drbd.sys and
 
 Make releases
 -------------
+Update: can now be built with Windows 10 physical machine, which
+makes everything much more easy.
+
+Run cygwin update
+Update cygwin1.dll to newest version (in inno-setup/cygwin-binaries)
+
 Add entry to README.md
 git add README.md
 git commit -m "Release 0.x.0 (Beta y)"
