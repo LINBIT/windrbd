@@ -181,12 +181,3 @@ begin
 		ModPath();
 	end;
 end;
-
-function NeedRestart(): Boolean;
-begin
-	if not UsingWinNT() then begin
-		Result := True;
-	end else begin
-		Result := False;
-	end;
-end;

@@ -128,3 +128,5 @@ function UninstallNeedRestart(): Boolean;
 begin
 	Result := True;
 end;
+
+#include "oldver.iss"
