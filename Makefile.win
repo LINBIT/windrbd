@@ -152,15 +152,6 @@ endif
 resource.res: resource.rc
 	"$(EWDK_BIN)/rc.exe" $<
 
-windrbd.cat: windrbd.sys
-	rm -f "$@"
-	"$(EWDK_BIN)/Inf2Cat.exe" /uselocaltime /os:7_X64 /driver:.
-ifdef R
-	"$(EWDK_BIN)/signtool.exe" sign /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com "$@"
-else
-	"$(EWDK_BIN)/signtool.exe" sign /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v /t http://timestamp.verisign.com/scripts/timstamp.dll $@
-endif
-
 ifeq ($(shell uname -o),Cygwin)
     %.obj: %.c
 	rm -f "$(call fPDB,$<)"
@@ -187,7 +178,7 @@ install:
 clean:
 	rm -f *.obj
 
-package: windrbd.sys windrbd.cat
+package: windrbd.sys
 	( cd ../../inno-setup && iscc windrbd.iss )
 	chmod a+x ../../inno-setup/install*.exe
 
