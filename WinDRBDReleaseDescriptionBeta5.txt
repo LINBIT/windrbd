@@ -1,0 +1,190 @@
+This is release 0.9.0-beta5 of windrbd.
+
+It is distributed in order to get feedback from testers, please email
+bug reports directly to johannes@johannesthoma.com
+
+We are of course also interested in:
+
+	*) What works for you
+
+	*) Performance numbers
+
+	*) What else is on your wishlist (see restrictions)
+
+	*) Which systems you used for testing
+
+In order to get professional support for windrbd please contact
+sales@linbit.com directly.
+
+What currently works is:
+
+	*) Connection between Linux/Windows or Windows/Windows
+
+	*) NTFS and RAW backing devices
+
+	*) Most drbdadm and drbdsetup commands.
+
+	*) Internal or External metadata
+
+	*) Many DRBD features like syncing, protocol A, B and C
+	   on-line replication and diskless primary
+
+	*) 3 node setups work but haven't been tested a lot. In
+	   theory n-node setups (n<=32) should work.
+
+	*) Proper install / uninstallation of package (no reboot neccessary
+	   on install, however reboot neccessary on uninstall).
+
+Things that are known to be broken are:
+
+	*) On backing device failure with ongoing I/O there are blue
+	   screens (see TODO file in repo for more details).
+
+	*) Network failure on n-node setups with m connected nodes (m>2)
+	   setups.
+
+	*) File systems other than NTFS
+
+Further notes:
+
+	*) Older cygwin installations (2016 and older, use uname -a
+	   to find the date) have problems starting programs with
+           whitespace in path names (at least when called via the
+	   PATH environment variable). If you have such a cygwin
+	   installation please update it by running the setup
+           program from https://cygwin.com/install.html .
+	   (Note that WinDRBD comes with a cygwin1.dll bundled,
+           so you can also run WinDRBD commands from a cmd shell)
+
+	*) On Uninstall sometimes Windows displays Installation failed
+	   while it didn't. You can ignore this message.
+
+	   Reboot the machine to remove the driver from memory.
+
+We have tested under following operating systems:
+
+	*) Windows 7 (running in a VirtualBox VM)
+
+	*) Windows 10 (physical machine)
+
+	*) Windows Server 2016 (running in a libvirt VM (kvm))
+
+	*) Linux (Ubuntu)
+
+Here are restrictions we know of for the 1.0 release:
+
+	*) Auto-promote is not supported.
+
+	*) System Volume (C:) cannot be used for windrbd.
+
+	*) No 32-Bit version is supported, only 64 bit.
+	   If you require 32-Bit support, please contact Linbit.
+
+	*) Windows 7 is minimum (no Vista, no XP)
+
+	*) Windows applications that use undocumented ioctl
+	   system calls (like winsat).
+
+Getting started:
+
+	*) Make a snapshot of your Windows System (either using
+           your favorite VM enviroment or something like CloneZilla).
+
+	*) Run the install-windrbd-signed-0.8.0-beta4.exe file from the
+	   Linbit Website as Administrator.
+
+	*) You'll find the windrbd configuration files in the folder
+
+	C:\windrbd\etc\drbd.d
+
+	(note that they use the UNIX end-of-line character, you should
+	 keep that).
+
+        *) Start logging by following command (as Administrator):
+
+	   windrbd log-server <filename>
+
+	   Will log to the cmd window and to the file filename.
+	   (note: to log via network change the ipaddress in the
+	   registry:
+
+Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\drbd\syslog_ip
+
+           and reboot).
+
+	   The target must either run windrbd log-server or be a
+	   Linux host with UDP logging activated (see file INSTALL).
+	   If it is a Linux host log messages usually go to
+	   /var/log/syslog
+
+	*) Create an empty partition using Control Panel (System/
+	   Administration/Create and Format Partitions).
+	   Do not format this partition, since it will be used as
+	   backing device.
+
+	*) You may assign a drive letter to the partition, however
+	   we recommend not to do that and instead use the GUID of
+           the partition. Use mountvol utility to find that GUID.
+
+	*) Adapt the windrbd-sample.res config file to match your
+           settings. You have to change:
+
+	   *) IP address of this host and the peer (address)
+           *) GUID of the backing device (disk on windowshost)
+	   *) Mount point (device)
+
+	   If you rename this file, keep the .res extension. 
+
+	*) To check the syntax, do
+
+	   drbdadm dump windrbd-sample
+
+	   (where windrbd-sample is the resource name)
+
+	*) Then create metadata (from now on, everything as Administrator):
+
+	   drbdadm create-md windrbd-sample
+
+	*) Activate the device:
+
+	   drbdadm up windrbd-sample
+
+	*) Make it primary, so you can read/write it.
+
+           drbdadm primary windrbd-sample
+
+           This also creates the windrbd device to access the data
+	   (note that this is one point where windrbd differs from
+	    Linux DRBD). Your drive now should show up in the 
+            Windows Explorer.
+
+	*) To format the windrbd device, click format on the
+	   panel that shows up. Be sure to select NTFS, others
+           will not work.
+
+	*) Get another Windows or Linux host, repeat the steps
+           and watch them syncing. Be sure that the sizes of the
+	   backing devices and meta-data settings (internal/external)
+	   match on both hosts (this is a common reason for
+	   connection failure, there are others).
+
+	   Note that (older) Linux DRBD versions do not understand
+           the windrbd disk and device syntax , so you have to fill in
+	   dummy values (just copiing the file won't work). Or you
+           upgrade your drbd-utils (under Linux) to 9.6.0 or newer.
+
+           Also reconfigure Windows Firewall (unless turned off
+           completly) to allow TCP/IP on the configured windrbd
+	   ports.
+
+	*) To uninstall WinDRBD, either use Uninstall WinDRBD in
+	   the start menu or Windows Add/Remove Programs facility.
+
+           Currently, to complete uninstall (to remove the driver)
+	   a reboot is required (you will get prompted)
+
+	*) Unless you want to keep it, delete the C:\windrbd folder also.
+
+Thank you for participating in windrbd development.
+
+- Johannes (johannes@johannesthoma.com)
