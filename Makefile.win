@@ -46,11 +46,6 @@ PASSWD = ""
 # CERTIFICATE = linbit.cer
 CERTIFICATE = user.crt
 
-# TODO: this should be a tmp dir...we install it somewhere else using
-# the inf file later.
-DRIVER_DEST_DIR := /cygdrive/c/Program Files/drbd
-DRIVER_DEST_DIR_WINDOWS := C:\\Program\ Files\\drbd
-
 EWDK_INC := $(EWDK_KIT)\\Include
 EWDK_LIB := $(EWDK_KIT)\\Lib
 VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl-$(BUILD_ENV).cmd
@@ -137,7 +132,7 @@ WIN_LINK_INPUT += wdmsec.lib
 # WIN_LINK_INPUT += setupapi.lib
 
 
-all: versioninfo windrbd.sys windrbd.cat
+all: versioninfo windrbd.sys
 
 .PHONY: versioninfo
 versioninfo:
@@ -184,17 +179,8 @@ deps:
 	gcc -D BITS_PER_LONG=64 -D _MSC_VER=1300 -D _WIN32=1 $(C_DEFINES) $(WIN_INCLUDE_DIRS) $(subst /FI,-include ,$(WIN_DEF_INCLUDES)) -M *.c ../../win4lin/src/*.c | perl -pe 's/^(\S+)\.o:/\1.obj \1.E:/' > Makefile.deps 
 
 install:
-	mkdir -p "$(DRIVER_DEST_DIR)"
-	cp windrbd.sys "$(DRIVER_DEST_DIR)"
-	cp windrbd.cat "$(DRIVER_DEST_DIR)"
-	cp windrbd.inf "$(DRIVER_DEST_DIR)"
-	cp ../../crypto/$(CERTIFICATE) "$(DRIVER_DEST_DIR)"
-
 	verifier /standard /driver windrbd.sys
-	$(CERTMGR) -add $(DRIVER_DEST_DIR_WINDOWS)\\$(CERTIFICATE) -s -r localMachine ROOT
-	$(CERTMGR) -add $(DRIVER_DEST_DIR_WINDOWS)\\$(CERTIFICATE) -s -r localMachine TRUSTEDPUBLISHER
-	/cygdrive/c/Windows/System32/InfDefaultInstall.exe $(DRIVER_DEST_DIR_WINDOWS)\\drbd.inf
-
+	bash -c 'cwd=`pwd` ; /cygdrive/c/Windows/System32/InfDefaultInstall.exe `cygpath -w "$${cwd}"`\\windrbd.inf'
 
 -include Makefile.deps
 

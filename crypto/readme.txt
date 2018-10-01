@@ -15,3 +15,5 @@ update: create pvk from pem using:
 openssl rsa -in linbit-ha-code-signing_no_pw.pem -outform PVK -pvk-strong -out linbit.pvk
 
 (openssl should be installed on Linux)
+
+update: cert manager has to be run manually (usually double clicking the crt file adds it to the system)
