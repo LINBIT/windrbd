@@ -113,7 +113,8 @@ relative path.
 
 ----
 
-Sign with Linbit certificate:
+Sign with Linbit certificate (now integrated in Makefile, ignore this
+section):
 
 copy unsigned drbd.sys and drbd.cat to Windows 10: C:\to-sign
 
@@ -143,16 +144,11 @@ git tag windrbd-0.x.0-betay
 git describe --tags --always --dirty
 	(should not display version as -dirty)
 
-make R=1
+On Windows 10 physical machine (with USB dongle attached):
+make BUILD_ENV=jt-win10 R=1 package
 
-copy windrbd/to-sign/* to Windows 10 physical machine.
-copy there to C:\to-sign
-run sign.bat with dongle attached (password is written on box)
-copy drbd.* back to windrbd/signed
-make signed-package
-rename resulting install-windrbd-signed.exe to install-windrbd-signed-0.x.0-betay.exe
 test install on Windows VM which has no test mode set (must come up after reboot)
-pass resulting install-windrbd-signed-0.x.0-betay.exe to clients
+pass resulting install-windrbd-0.x.0-betay-signed.exe to clients
 upload to google drive windrbd-in folder
 
 -----
