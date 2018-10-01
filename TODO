@@ -13,7 +13,93 @@ TODO: Code quality: fake commit history (git rebase -i master)
 	caused some commits that used to compile to simply
 	fail.
 
-TODO: Code quality: Other mechanism to specify syslog_ip.
+Milestone: windrbd merged into drbd-utils and drbd-headers
+Planned: Oct 1 2018
+-----------------------------------------------------------------------
+
+TODO: Installation: Autostart user mode helper daemon and log server
+
+	Someday ...
+	Update: we should do that in modprobe. WinDRBD isn't really
+	working smoothly without them.
+
+	Need to define this as Windows service (in inf file) with
+	type 16 (daemon).
+
+	As a Windows service? Can it be made dependent of the kernel
+	driver?
+
+TODO: Documentation: white paper for linbit website.
+
+	Until end of June 2018
+	Update: maybe refer to the README.md.
+
+	Update: No we need a TechGuide. Postponed to September.
+
+TODO: Documentation: define tests to be run before releases.
+
+	And run them ;)
+
+TODO: Bug: patch_boot_sector: DRBD signature on peer.
+	Should only be on backing device, never on the wire.
+
+	Not when Syncing, only when formatting while connected?
+	Yes. Make a temporary copy of the boot sector when writing
+	in windrbd_generic_make_request(). Do not modify the bio's
+	buffer directly, this might also be the Page Cache (or whatever
+	this is called on Windows) of the file system which causes
+	format to display the weird Boot sector invalid message.
+
+	Update: implemented, weird behaviour when extra field is
+	put after io_status (see separate TODO). It seems to work
+	now (formatting while connected does not copy DRBD signature
+	to peer).
+
+	Update: Reopened: This happens now when invalidating (or otherwise
+	syncing) from a windows peer.
+
+TODO: Bug: 3 node setup sometimes does not work.
+
+	If node with node-id 1 is missing, node 2 thinks that node
+	3 is node 1 during connection establishment:
+
+Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
+
+	(but 10.43.8.188 is WIN-F11R93CP9KI).
+
+	Sometimes connection can be established however we get a
+	BSOD then.
+
+	Connection between 2 nodes (Linux and Windows VirtualBox)
+	works, but 3rd node (Windows 10 physical machine) BSOD's.
+
+	Update: Now managed to have stable 3-node setup between
+	Windows 7 VM, Linux VM and Windows 10 PhysM.
+
+	Update: Happened again, this time without the presence of
+	the DESKTOP-0VHSFB5 node (didn't touch config, before doing
+	experiments with logging (log to a non-existing host) it
+	worked).
+
+Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0VHSFB5: Closing unexpected connection from 192.168.56.101
+
+	(note that this log message is from a drbd-9.0.14 Linux
+	host).
+
+	Update: Rebooting the Linux machine solved the problem
+	(resource on Windows wasn't taken down meanwhile) so
+	most likely something that causes Linux DRBD to mistake
+	one Windows host for another.
+
+Milestone: Beta 5
+Planned: Nov 1 2018
+-----------------------------------------------------------------------
+
+TODO: Infrastructure: Why doesn't it work on Phil's machine?
+
+	Maybe test it with new installer one day.
+
+TODO: Implement: Other mechanism to specify syslog_ip.
 
 	Should be able to change it without rebooting.
 
@@ -37,66 +123,11 @@ TODO: Documentation: drbd-util: Update manpage.
 
 	And write one for windrbd utility.
 
-Milestone: windrbd merged into drbd-utils and drbd-headers
-Planned: Oct 1 2018
------------------------------------------------------------------------
-
-TODO: Bug: When installing two times uninstall reports an error.
-
-TODO: Bug: Two issues with cygwin1.dll
-
-	Old cygwins (2016) do not understand whitespace in
-	path names of programs (at least when the program is
-	found via path). Solution is probably to document
-	that and tell user to upgrade cygwin (when running
-	drbdadm from a cmd shell everything works, so it
-	is probably the exec() call).
-
-	cygwin1.dll shipped with WinDRBD is incompatible with
-	newer cygwins, removing dll from program directory
-	(or renaming it) solves the problem. Probably always
-	shipping with the newest cygwin1.dll solves the problem.
-
-	Update: Yes it does. Document the old cygwin thing
-	and close this.
-
 TODO: Upstream: add .\*.d and the like to .gitignore
-
-TODO: Bug: patch_boot_sector: DRBD signature on peer.
-	Should only be on backing device, never on the wire.
-
-	Not when Syncing, only when formatting while connected?
-	Yes. Make a temporary copy of the boot sector when writing
-	in windrbd_generic_make_request(). Do not modify the bio's
-	buffer directly, this might also be the Page Cache (or whatever
-	this is called on Windows) of the file system which causes
-	format to display the weird Boot sector invalid message.
-
-	Update: implemented, weird behaviour when extra field is
-	put after io_status (see separate TODO). It seems to work
-	now (formatting while connected does not copy DRBD signature
-	to peer).
-
-	Update: Reopened: This happens now when invalidating (or otherwise
-	syncing) from a windows peer.
 
 TODO: Bug: it seems that free_mdls_and_irp() never gets called.
 
 TODO: Bug: leaking disk (see TODO in drbd_main.c)
-
-TODO: Code quality: clean up drbd.inf (again)
-
-TODO: Installation: Autostart user mode helper daemon and log server
-
-	Someday ...
-	Update: we should do that in modprobe. WinDRBD isn't really
-	working smoothly without them.
-
-	Need to define this as Windows service (in inf file) with
-	type 16 (daemon).
-
-	As a Windows service? Can it be made dependent of the kernel
-	driver?
 
 TODO: Upstream: Possible race at drbd_thread_setup() (drbdmain.c:567) with
 	use-after-free.
@@ -150,26 +181,14 @@ TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
 
 TODO: Bug: Uninstall currenty BSOD's if there was ever I/O
 
+	Currently (for beta5) removing the driver is disabled
+	(made it a PnP driver (again) by setting AddDevice which
+	causes sc stop windrbd to fail).
+
 TODO: Code quality: maybe: use file list in innosetup instead of a zip file.
 
 	What would be cool if this makefile automatically builds the
 	utils, installs them to a tmp folder and selects the files.
-
-TODO: Build system: install build utils on Windows 10 box and create signed packages there.
-
-	So we never need the copy-to-another-machine step in building
-	signed packages.
-
-	Making progress (installed ewdk, installed visual studio
-	(but probably not needed) installed inno-setup and built
-	with make package R=1. However, needed to patch Makefile.win
-	and ms-cl.cmd (does not compile with Windows 7 VM now).
-
-	Left TODO: document the new process, find a solution to the
-	Ewdk makefile hell and update inno-script (would be nice
-	to change the version to windrbd-signed or so ...)
-
-TODO: Code quality: Update README-windrbd.txt (in sysroot.zip)
 
 TODO: Bug: Syncing sometimes stalls now.
 
@@ -182,9 +201,9 @@ TODO: Bug: Syncing sometimes stalls now.
 
 TODO: Implement: Make windrbd directory unaccessible for non-admins.
 
-TODO: Implement: Detect earlier versions of WinDRBD and offer upgrade.
-
-	(from Devin)
+	Non-admins can read the dirs and files but not write them.
+	This is ok for now, later we probably want to deny read access
+	(in case there are shared secrets).
 
 TODO: Code quality: use drbd-headers/windrbd merged branch in Linux DRBD
 
@@ -194,8 +213,6 @@ TODO: Code quality: drbd-patches directory probably should go away.
 
 	Also samples dir. Reorganize a bit (put release description
 	in separate dir, ...)
-
-TODO: Infrastructure: Why doesn't it work on Phil's machine?
 
 TODO: Code quality: review TODOs in source code.
 
@@ -212,13 +229,6 @@ TODO: Features: implement flush_workqueue
 
 TODO: Code quality: Implement function stubs created when integrating DRBD 9.0.9
 
-TODO: Documentation: white paper for linbit website.
-
-	Until end of June 2018
-	Update: maybe refer to the README.md.
-
-	Update: No we need a TechGuide. Postponed to September.
-
 TODO: Code quality: Reenable Windows Compiler Warnings and fix them.
 
 TODO: Implement: get drbdmon (and drbdsetup events2) working.
@@ -229,6 +239,8 @@ TODO: Implement: get drbdmon (and drbdsetup events2) working.
 
 	Maybe Robert does this.
 
+	Update: Prepared a Windows VM for him to develop on.
+
 TODO: Code quality: use zero-sized arrays at the end of structs
 
 	MS compiler seems to accept them (ask why this patch was neccessary).
@@ -236,10 +248,6 @@ TODO: Code quality: use zero-sized arrays at the end of structs
 TODO: Code quality: List C files to compile in Makefile
 
 	Instead of just using globbing (*.c)
-
-TODO: Documentation: define tests to be run before releases.
-
-	And run them ;)
 
 TODO: Code quality: Replace WDRBD_ERROR and the like by printk
 
@@ -259,9 +267,10 @@ TODO: Bug: BSOD on pri-on-incon-degr user mode helper.
 	if this is a problem on Linux, just do a sleep 10 as
 	handler).
 
-Milestone: Beta 5
-Planned: Nov 1 2018
------------------------------------------------------------------------
+TODO: Bug: When installing two times uninstall reports an error.
+
+	Also when installed, running and installing again.
+	Don't know for now, document it and do that later.
 
 TODO: Implement: drbdadm adjust changing mount point doesn't work now.
 
@@ -352,39 +361,6 @@ TODO: Build system: have a make depend target
 	Update: Currently always exectutes make deps, not what we
 	want. Ask Robert or Lars.
 
-TODO: Bug: 3 node setup sometimes does not work.
-
-	If node with node-id 1 is missing, node 2 thinks that node
-	3 is node 1 during connection establishment:
-
-Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
-
-	(but 10.43.8.188 is WIN-F11R93CP9KI).
-
-	Sometimes connection can be established however we get a
-	BSOD then.
-
-	Connection between 2 nodes (Linux and Windows VirtualBox)
-	works, but 3rd node (Windows 10 physical machine) BSOD's.
-
-	Update: Now managed to have stable 3-node setup between
-	Windows 7 VM, Linux VM and Windows 10 PhysM.
-
-	Update: Happened again, this time without the presence of
-	the DESKTOP-0VHSFB5 node (didn't touch config, before doing
-	experiments with logging (log to a non-existing host) it
-	worked).
-
-Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0VHSFB5: Closing unexpected connection from 192.168.56.101
-
-	(note that this log message is from a drbd-9.0.14 Linux
-	host).
-
-	Update: Rebooting the Linux machine solved the problem
-	(resource on Windows wasn't taken down meanwhile) so
-	most likely something that causes Linux DRBD to mistake
-	one Windows host for another.
-
 TODO: Test: Test under memory pressure.
 
 	We had a leak that caused all non-paged memory to be consumed,
@@ -415,6 +391,8 @@ TODO: Implement: We want to have some sort of a regression test suite.
 	working. What is definately missing is a replacement for
 	lvm and (probably) netfilter (we also need lvm replacement
 	for porting LinStor to Windows later).
+
+	Update: Do that right after beta5
 
 TODO: Bug: Assertion triggered:
 
@@ -621,11 +599,6 @@ TODO: Bug: Make windows checkdisk (over unclean shutdown panel) work.
 	It seems that this appears when backing device is used
 	twice and modified, but how to make it disappear? cmdline
 	chkdsk works.
-
-TODO: Infrastructure: Linux box sometimes loses IP address.
-
-	Was maybe because of updates being installed in the background,
-	disabled now, observe if it happens again.
 
 TODO: Code quality: maybe revert the mountmanager code.
 
@@ -3438,4 +3411,66 @@ Done: Bug: 'modprobe' does not work when invoked via cmd.
 
 	Because it starts a shell. Use WIN32 API instead.
 	Using execvp() now.
+
+Done: Bug: Two issues with cygwin1.dll
+
+	Old cygwins (2016) do not understand whitespace in
+	path names of programs (at least when the program is
+	found via path). Solution is probably to document
+	that and tell user to upgrade cygwin (when running
+	drbdadm from a cmd shell everything works, so it
+	is probably the exec() call).
+
+	cygwin1.dll shipped with WinDRBD is incompatible with
+	newer cygwins, removing dll from program directory
+	(or renaming it) solves the problem. Probably always
+	shipping with the newest cygwin1.dll solves the problem.
+
+	Update: Yes it does. Document the old cygwin thing
+	and close this.
+
+Done: Build system: install build utils on Windows 10 box and create signed packages there.
+
+	So we never need the copy-to-another-machine step in building
+	signed packages.
+
+	Making progress (installed ewdk, installed visual studio
+	(but probably not needed) installed inno-setup and built
+	with make package R=1. However, needed to patch Makefile.win
+	and ms-cl.cmd (does not compile with Windows 7 VM now).
+
+	Left TODO: document the new process, find a solution to the
+	Ewdk makefile hell and update inno-script (would be nice
+	to change the version to windrbd-signed or so ...)
+
+Done: Infrastructure: Linux box sometimes loses IP address.
+
+	Was maybe because of updates being installed in the background,
+	disabled now, observe if it happens again.
+
+Done: Implement: Detect earlier versions of WinDRBD and offer upgrade.
+
+	(from Devin)
+
+	Done for beta4. We should prepare beta5 for being detected by
+	later releases.
+
+	Update: look at
+	HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\{{AppId}}\\DisplayVersion
+	it will contain {MyAppVersion} of the installation.
+
+Done: Code quality: clean up drbd.inf (again)
+
+	Done. Except for syslog registry entry, which will go
+	away soon.
+
+Done: is the .cat file needed?
+
+	No.
+
+Done: Code quality: Update README-windrbd.txt (in sysroot.zip)
+
+Done: Installation: add start menu entry to C:\windrbd\etc
+
+	Was very easy (English only, tough)
 
