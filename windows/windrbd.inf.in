@@ -5,18 +5,14 @@
 [Version]
 signature   =   "$Windows NT$"
 ;; inf2cat complains if this is not specified:
-Class       =   "Volume"                       		;This is determined by the work this filter driver does
-;; Class       =   "drbd"                       		;This is determined by the work this filter driver does
-;; ClassGuid   =   {71A27CDD-812A-11D0-BEC7-08002BE2092F}  ;This value is determined by the Class
+Class       =   "Volume" ; Virtual storage driver (creates block devices)
 Provider    =   "Linbit"
-DriverVer   =   12/01/2013,0.2.0.0			;Will get replaced by build magic
-CatalogFile = windrbd.cat
-
+DriverVer   =   12/01/2013,0.2.0.0 ;Will get replaced by build magic
+CatalogFile =   windrbd.cat
 
 [DestinationDirs]
 DefaultDestDir       = 12
 DRBD.DriverFiles     = 12           ;%windir%\system32\drivers
-;;DRBD.UserFiles       = 10,drbdcon   ;%windir%\drbdcon
 
 ;;
 ;; Default install sections
@@ -25,7 +21,6 @@ DRBD.DriverFiles     = 12           ;%windir%\system32\drivers
 [DefaultInstall]
 OptionDesc          = %ServiceDesc%
 CopyFiles           = DRBD.DriverFiles
-;;CopyFiles           = DRBD.DriverFiles, DRBD.UserFiles
 
 [DefaultInstall.Services]
 AddService          = %ServiceName%,,DRBD.Service
@@ -36,11 +31,10 @@ AddService          = %ServiceName%,,DRBD.Service
 
 [DefaultUninstall]
 DelFiles            = DRBD.DriverFiles
-;;DelFiles            = DRBD.DriverFiles, DRBD.UserFiles
 DelReg              = DRBD.DelRegistry
 
 [DefaultUninstall.Services]
-DelService = WinDRBD,0x200      ; Flags note to stop service first
+DelService = WinDRBD
 
 ;
 ; Services Section
@@ -51,31 +45,18 @@ DisplayName      = %ServiceName%
 Description      = %ServiceDesc%
 ServiceBinary    = %12%\windrbd.sys     	;%windir%\system32\drivers\windrbd.sys
 ServiceType      = 1                    ;SERVICE_FILE_SYSTEM_DRIVER
-;; works?
-;; yes the trick was not to add the UpperFilters registry key.
 StartType        = 3
-;; https://social.msdn.microsoft.com/Forums/sqlserver/en-US/a7481885-f042-4de9-ad01-528db1d56be0/why-cant-i-suppress-the-prompt-dialog-even-i-use-installhinfsection-defaultinstall-128-?forum=windowsgeneraldevelopmentissues
-;; StartType        = 0                    ;SERVICE_DEMAND_START
-;; With this StartType, no reboot panel shows up upon install, however Windows fails to boot later (BSOD 0x7B).
-;; StartType        = 2                    ;SERVICE_AUTO_START meaning it has to be started manually by service manager
-;; also BSOD on boot:
-;; StartType        = 1                    ; just try it ...
-;; ErrorControl     = 1                    ;SERVICE_ERROR_NORMAL
 ErrorControl     = 0                    ;SERVICE_ERROR_NORMAL
-;; LoadOrderGroup   = "PnP Filter"
 AddReg           = DRBD.AddRegistry
 
 ;
-; Registry Modifications
+; Registry Modifications (will soon go away)
 ;
 
 [DRBD.AddRegistry]
-;; do not do this: windows will search on boot for drbd, not find it and BSOD.
-;; HKLM, System\CurrentControlSet\Control\Class\{71A27CDD-812A-11D0-BEC7-08002BE2092F}, UpperFilters, 0x00010008, drbd
 HKR,,"syslog_ip",0x00000002, "127.0.0.1"
 
 [DRBD.DelRegistry]
-;; HKLM, System\CurrentControlSet\Control\Class\{71A27CDD-812A-11D0-BEC7-08002BE2092F}, UpperFilters, 0x00018002, drbd
 HKR,,"syslog_ip"
 
 ;
@@ -85,12 +66,8 @@ HKR,,"syslog_ip"
 [DRBD.DriverFiles]
 windrbd.sys
 
-[DRBD.UserFiles]
-;drbdcon.exe
-
 [SourceDisksFiles]
 windrbd.sys = 1,,
-;;drbdcon.exe = 1,,
 
 [SourceDisksNames]
 1 = %DiskId1%,,,
