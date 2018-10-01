@@ -13,12 +13,15 @@ CERTIFICATE = user.crt
 # the inf file later.
 DRIVER_DEST_DIR := /cygdrive/c/Program Files/drbd
 DRIVER_DEST_DIR_WINDOWS := C:\\Program\ Files\\drbd
-export EWDK_BASE := c:\\Ewdk
+# Use make EWDK_BASE=d: if you have installed EWDK somewhere else
+# export EWDK_BASE ?= c:\\Ewdk
+export EWDK_BASE ?= d:
 EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
-EWDK_VERSION := 10.0.15063.0
+# EWDK_VERSION := 10.0.15063.0
+EWDK_VERSION := 10.0.17134.0
 EWDK_INC := $(EWDK_KIT)\\Include
 EWDK_LIB := $(EWDK_KIT)\\Lib
-EWDK_BIN := $(EWDK_KIT)\\bin\\x86
+EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
 VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl.cmd
 CERTMGR := "$(EWDK_BIN)/certmgr.exe"
 
@@ -114,8 +117,9 @@ windrbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildca
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"windrbd.pdb" /OUT:"_$@"
 	mv -f "_$@" "$@"
 ifdef R
-	cp "$@" ../../to-sign
-	echo "$@ copiied to to-sign directory. Please sign it using USB token and place the result in the signed directory."
+	"$(EWDK_BIN)/signtool.exe" sign /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com "$@"
+#	cp "$@" ../../to-sign
+#	echo "$@ copiied to to-sign directory. Please sign it using USB token and place the result in the signed directory."
 else
 	"$(EWDK_BIN)/signtool.exe" sign /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v /t http://timestamp.verisign.com/scripts/timstamp.dll "$@"
 endif
@@ -128,8 +132,7 @@ windrbd.cat: windrbd.sys
 	rm -f "$@"
 	"$(EWDK_BIN)/Inf2Cat.exe" /uselocaltime /os:7_X64 /driver:.
 ifdef R
-	cp "$@" ../../to-sign
-	echo "$@ copiied to to-sign directory. Please sign it using USB token and place the result in the signed directory."
+	"$(EWDK_BIN)/signtool.exe" sign /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com "$@"
 else
 	"$(EWDK_BIN)/signtool.exe" sign /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v /t http://timestamp.verisign.com/scripts/timstamp.dll $@
 endif
