@@ -5,17 +5,23 @@ if [ ! -d ".git" ]; then
 	exit 0
 fi
 
-if [ "$#" -ne 1 ]; then
-	echo "Usage: $0 TRANS_DEST"
+EXTRA_VERSION=""
+
+if [ "$#" -ne 1 -a "$#" -ne 2 ]; then
+	echo "Usage: $0 TRANS_DEST [extra-version]"
 	exit 1
 else
 	OUTPATH=$1/drbd
+	if [ "$#" -eq 2 ]; then
+		EXTRA_VERSION=$2
+		echo "Adding $EXTRA_VERSION to git hashes"
+	fi
 fi
 
 VERSION=$(date +%Y,%m,%d,%H)
 DATE=$(date)
-GITHASH=$(git describe --tags --always)
-DRBD_GITHASH="$(cd drbd ; git describe --tags --always)"
+GITHASH=$(git describe --tags --always)$EXTRA_VERSION
+DRBD_GITHASH="$(cd drbd ; git describe --tags --always)"$EXTRA_VERSION
 
 VER_INTERNALNAME_STR="DRBD4WINDOWS"
 VER_FILEVERSION_STR="${GITHASH}\\0"

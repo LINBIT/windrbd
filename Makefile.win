@@ -1,7 +1,44 @@
 # vim: set ft=make ts=8 sw=8 noet :
 
+# Set this to your Ewdk build environment. You most likely
+# have to create a new one (see the ifeq's in this Makefile)
+# to get the pathes right. You also should add a ms-cl-$(BUILD_ENV)
+# wrapper script to call the Microsoft C compiler (see the VC variable).
+#
+# Please use your initials to name the build env if you want to
+# commit your changes upstream.
+#
+# For now run make copy in the windrbd root directory whenever you
+# change this Makefile or the ms-cl*.cmd wrappers.
+#
+BUILD_ENV ?= jt-win7
+
 # TODO: unset this for production releases.
 KMALLOC_DEBUG = 1
+
+ifeq ($(BUILD_ENV),jt-win7)
+export EWDK_BASE := c:\\Ewdk
+EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
+EWDK_VERSION := 10.0.15063.0
+EWDK_BIN := $(EWDK_KIT)\\bin\\x86
+endif
+
+ifeq ($(BUILD_ENV),jt-win10)
+export EWDK_BASE := d:
+EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
+EWDK_VERSION := 10.0.17134.0
+EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
+endif
+
+ifndef EWDK_VERSION
+$(error EWDK_BASE not set. Please edit Makefile to make it know about your ewdk installation.)
+endif
+
+ifdef R
+EXTRA_VERSION ?= -signed
+else
+EXTRA_VERSION ?=
+endif
 
 # Name of the pfx file (without extension)
 KEY = linbit-ha
@@ -13,16 +50,10 @@ CERTIFICATE = user.crt
 # the inf file later.
 DRIVER_DEST_DIR := /cygdrive/c/Program Files/drbd
 DRIVER_DEST_DIR_WINDOWS := C:\\Program\ Files\\drbd
-# Use make EWDK_BASE=d: if you have installed EWDK somewhere else
-# export EWDK_BASE ?= c:\\Ewdk
-export EWDK_BASE ?= d:
-EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
-# EWDK_VERSION := 10.0.15063.0
-EWDK_VERSION := 10.0.17134.0
+
 EWDK_INC := $(EWDK_KIT)\\Include
 EWDK_LIB := $(EWDK_KIT)\\Lib
-EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
-VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl.cmd
+VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl-$(BUILD_ENV).cmd
 CERTMGR := "$(EWDK_BIN)/certmgr.exe"
 
 # /a      for debugging output
@@ -110,7 +141,7 @@ all: versioninfo windrbd.sys windrbd.cat
 
 .PHONY: versioninfo
 versioninfo:
-	cd ../.. && ./versioninfo.sh converted-sources || true
+	cd ../.. && ./versioninfo.sh converted-sources $(EXTRA_VERSION) || true
 
 windrbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildcard ../../win4lin/src/*.c)) resource.res
 	rm -f windrbd.pdb "_$@"
@@ -118,8 +149,6 @@ windrbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildca
 	mv -f "_$@" "$@"
 ifdef R
 	"$(EWDK_BIN)/signtool.exe" sign /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com "$@"
-#	cp "$@" ../../to-sign
-#	echo "$@ copiied to to-sign directory. Please sign it using USB token and place the result in the signed directory."
 else
 	"$(EWDK_BIN)/signtool.exe" sign /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v /t http://timestamp.verisign.com/scripts/timstamp.dll "$@"
 endif
@@ -172,10 +201,7 @@ install:
 clean:
 	rm -f *.obj
 
-package: all
+package: windrbd.sys windrbd.cat
 	( cd ../../inno-setup && iscc windrbd.iss )
 	chmod a+x ../../inno-setup/install*.exe
-
-signed-package: versioninfo
-	( cd ../../inno-setup && iscc windrbd.iss )
 
