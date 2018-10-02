@@ -143,8 +143,13 @@ windrbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildca
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"windrbd.pdb" /OUT:"_$@"
 	mv -f "_$@" "$@"
 ifdef R
+# Linbit DigiCert certificate (trusted by Microsoft)
 	"$(EWDK_BIN)/signtool.exe" sign /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com "$@"
 else
+# We need a self signed certificate which has to be added to the
+# Windows certificate store in order to load the driver. See
+# readme.txt file in the crypto directory to learn how to create it.
+
 	"$(EWDK_BIN)/signtool.exe" sign /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v /t http://timestamp.verisign.com/scripts/timstamp.dll "$@"
 endif
 
