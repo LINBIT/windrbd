@@ -12,58 +12,69 @@ CatalogFile =   windrbd.cat
 
 [DestinationDirs]
 DefaultDestDir       = 12
-DRBD.DriverFiles     = 12           ;%windir%\system32\drivers
+WinDRBD.DriverFiles     = 12           ;%windir%\system32\drivers
 
 ;;
 ;; Default install sections
 ;;
 
 [DefaultInstall]
-OptionDesc          = %ServiceDesc%
-CopyFiles           = DRBD.DriverFiles
+OptionDesc          = "WinDRBD - storage replication over network for Microsoft Windows"
+CopyFiles           = WinDRBD.DriverFiles
 
 [DefaultInstall.Services]
-AddService          = %ServiceName%,,DRBD.Service
+AddService          = "WinDRBD",,WinDRBD.Service
+AddService          = "WinDRBDUM",,WinDRBDUM.Service
 
 ;;
 ;; Default uninstall sections
 ;;
 
 [DefaultUninstall]
-DelFiles            = DRBD.DriverFiles
-DelReg              = DRBD.DelRegistry
+DelFiles            = WinDRBD.DriverFiles
+DelReg              = WinDRBD.DelRegistry
 
 [DefaultUninstall.Services]
 DelService = WinDRBD
+DelService = WinDRBDUM
 
 ;
 ; Services Section
 ;
 
-[DRBD.Service]
-DisplayName      = %ServiceName%
-Description      = %ServiceDesc%
+[WinDRBD.Service]
+DisplayName      = "WinDRBD"
+Description      = "WinDRBD - storage replication over network for Microsoft Windows"
 ServiceBinary    = %12%\windrbd.sys     	;%windir%\system32\drivers\windrbd.sys
 ServiceType      = 1                    ;SERVICE_FILE_SYSTEM_DRIVER
 StartType        = 3
 ErrorControl     = 0                    ;SERVICE_ERROR_NORMAL
-AddReg           = DRBD.AddRegistry
+AddReg           = WinDRBD.AddRegistry
+
+[WinDRBDUM.Service]
+DisplayName      = "WinDRBD User Mode Helper Daemon"
+Description      = "WinDRBD Daemon for User Mode Helpers (called by certain events)"
+; TODO: this is Program Files (x86) if installer is 32 bit ...
+ServiceBinary    = %16422%\WinDRBD\windrbdsvc.exe ; C:\Program Files\...
+ServiceType      = 16                   ; Win32 Application
+StartType        = 3
+ErrorControl     = 0                    ;SERVICE_ERROR_NORMAL
 
 ;
 ; Registry Modifications (will soon go away)
 ;
 
-[DRBD.AddRegistry]
+[WinDRBD.AddRegistry]
 HKR,,"syslog_ip",0x00000002, "127.0.0.1"
 
-[DRBD.DelRegistry]
+[WinDRBD.DelRegistry]
 HKR,,"syslog_ip"
 
 ;
 ; Copy Files
 ;
 
-[DRBD.DriverFiles]
+[WinDRBD.DriverFiles]
 windrbd.sys
 
 [SourceDisksFiles]
@@ -77,8 +88,5 @@ windrbd.sys = 1,,
 ;;
 
 [Strings]
-ServiceDesc         = "WinDRBD - storage replication over network for Microsoft Windows"
-;; this is the parameter to sc (e.g. sc start windrbd to start the driver)
-ServiceName         = "WinDRBD"
 DiskId1             = "WinDRBD Installation Disk"
 
