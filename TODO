@@ -29,6 +29,25 @@ TODO: Installation: Autostart user mode helper daemon and log server
 	As a Windows service? Can it be made dependent of the kernel
 	driver?
 
+	Update: Yes we do it as a Windows service (see windrbdsvc.c
+	in drbd-utils/user/windrbd). Current issues are:
+
+	When running as a service /sbin/drbdadm symlink is (obviously)
+	not found.
+
+	Installer inf file currently uses C:\Program Files (x86) as
+	value for the path (because it is a 32-bit app when running
+	make install, it works).
+
+	log files: we currently don't see output of windrbd processes
+	(windrbd user-mode-helper and windrbd log-server). Something
+	with the dup code does not work correctly.
+
+	Also define somehow where the log files should be located
+	(C:\windrbd\var\log would be the most sane directory)
+
+	Installer should include service EXE (this should be easy).
+
 TODO: Documentation: white paper for linbit website.
 
 	Until end of June 2018
@@ -94,6 +113,10 @@ Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
+
+TODO: Implement: Make windrbd utils relocateable.
+
+	Do not hardcode C:\windrbd
 
 TODO: Infrastructure: Why doesn't it work on Phil's machine?
 
