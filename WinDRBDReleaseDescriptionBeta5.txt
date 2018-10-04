@@ -61,6 +61,11 @@ Further notes:
 
 	   Reboot the machine to remove the driver from memory.
 
+	*) The path for the DRBD configuration is currently hardcoded
+	   in the binaries to C:\windrbd (your DRBD configuration
+	   directory is C:\windrbd\etc\drbd.d). This may change in
+	   the future, suggestions where to put it are welcome.
+
 We have tested under following operating systems:
 
 	*) Windows 7 (running in a VirtualBox VM)
