@@ -15,6 +15,7 @@ TODO: Code quality: fake commit history (git rebase -i master)
 
 Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
+Postponed to; Oct 20 2018
 -----------------------------------------------------------------------
 
 TODO: Installation: Autostart user mode helper daemon and log server
@@ -54,6 +55,15 @@ TODO: Documentation: white paper for linbit website.
 	Update: maybe refer to the README.md.
 
 	Update: No we need a TechGuide. Postponed to September.
+
+	Guide how to connect 2 Windows boxes via DRBD.
+	(Windows 2016)
+
+	Also document how to run pacemaker under WSL
+
+TODO: Check if pacemaker under WSL works
+
+	And include in documentation.
 
 TODO: Documentation: define tests to be run before releases.
 
@@ -114,13 +124,32 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
+TODO: Implement: We want to have some sort of a regression test suite.
+
+	Do not use agruen's it is too complicated. Maybe write a simple
+	new one from scratch (or reuse parts of the old DRBD 8 python
+	test suite with ssh support).
+
+	Update: maybe best is to write a simple new one in bash.
+	(see test-io-larger-than-1m.sh).
+
+	Update: Phil probably rejects a seperate testsuite for
+	WinDRBD (which makes sense to me). Since drbdsetup events2
+	is working now, it got easier to get agruen's testsuite
+	working. What is definately missing is a replacement for
+	lvm and (probably) netfilter (we also need lvm replacement
+	for porting LinStor to Windows later).
+
+	Update: Do that right after beta5
+
+	Update: Yes we will use the agruen test suite. Phil is doing
+	most of the tests so ask him for a primer.
+
+TODO: Research Hyper-V plugin for Linstor
+
 TODO: Implement: Make windrbd utils relocateable.
 
 	Do not hardcode C:\windrbd
-
-TODO: Infrastructure: Why doesn't it work on Phil's machine?
-
-	Maybe test it with new installer one day.
 
 TODO: Implement: Other mechanism to specify syslog_ip.
 
@@ -398,24 +427,6 @@ TODO: Test: Test under memory pressure.
 	called 10 times.
 
 TODO: Bug: Out of memory handling in windrbd device is broken (BSOD).
-
-TODO: Implement: We want to have some sort of a regression test suite.
-
-	Do not use agruen's it is too complicated. Maybe write a simple
-	new one from scratch (or reuse parts of the old DRBD 8 python
-	test suite with ssh support).
-
-	Update: maybe best is to write a simple new one in bash.
-	(see test-io-larger-than-1m.sh).
-
-	Update: Phil probably rejects a seperate testsuite for
-	WinDRBD (which makes sense to me). Since drbdsetup events2
-	is working now, it got easier to get agruen's testsuite
-	working. What is definately missing is a replacement for
-	lvm and (probably) netfilter (we also need lvm replacement
-	for porting LinStor to Windows later).
-
-	Update: Do that right after beta5
 
 TODO: Bug: Assertion triggered:
 
@@ -3496,4 +3507,12 @@ Done: Code quality: Update README-windrbd.txt (in sysroot.zip)
 Done: Installation: add start menu entry to C:\windrbd\etc
 
 	Was very easy (English only, tough)
+
+Rejected: Infrastructure: Why doesn't it work on Phil's machine?
+
+	Maybe test it with new installer one day.
+
+	Phil doesn't seem to be interested .. I perfectly understand.
+	Just now, MS app store has stopped working on my Windows 10
+	box and I have no idea why .. I guess I just reinstall it.
 
