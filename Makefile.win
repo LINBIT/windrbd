@@ -189,7 +189,6 @@ deps:
 	gcc -D BITS_PER_LONG=64 -D _MSC_VER=1300 -D _WIN32=1 $(C_DEFINES) $(WIN_INCLUDE_DIRS) $(subst /FI,-include ,$(WIN_DEF_INCLUDES)) -M *.c ../../win4lin/src/*.c | perl -pe 's/^(\S+)\.o:/\1.obj \1.E:/' > Makefile.deps 
 
 install:
-	verifier /standard /driver windrbd.sys
 	bash -c 'cwd=`pwd` ; /cygdrive/c/Windows/System32/InfDefaultInstall.exe `cygpath -w "$${cwd}"`\\windrbd.inf'
 
 -include Makefile.deps
