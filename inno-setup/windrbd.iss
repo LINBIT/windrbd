@@ -7,11 +7,11 @@
 
 ; Windows-style path to the root of the source distribution
 ; You probably have to change this.
-#define WindrbdSource "Y:\windrbd"
+#define WindrbdSource "X:\windrbd"
 ; Where the WinDRBD utils (drbdadm, drbdsetup, drbdmeta and windrbd EXEs)
 ; can be found. Note: the utils are not built by this makefile, you
 ; have to build them seperately.
-#define WindrbdUtilsSource "Y:\drbd-utils-windows"
+#define WindrbdUtilsSource "X:\drbd-utils-windows"
 
 #define MyAppName "WinDRBD"
 #define MyAppPublisher "Linbit"

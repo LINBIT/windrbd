@@ -11,7 +11,8 @@
 # For now run make copy in the windrbd root directory whenever you
 # change this Makefile or the ms-cl*.cmd wrappers.
 #
-BUILD_ENV ?= jt-win7
+# BUILD_ENV ?= jt-win7
+BUILD_ENV ?= jt-server2016
 
 # TODO: unset this for production releases.
 KMALLOC_DEBUG = 1
