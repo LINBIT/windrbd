@@ -20,6 +20,7 @@ rem is called sysnative. Somehow InfDefaultInstall gets confused,
 rem with this it works:
 
 copy windrbd.sys c:\windows\sysnative\drivers
+copy windrbdsvc.exe c:\windows\sysnative
 
 rem TODO: also copy windrbdsvc.exe to some sane place
 start /wait InfDefaultInstall ".\windrbd.inf"

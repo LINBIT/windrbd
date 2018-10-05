@@ -54,8 +54,7 @@ AddReg           = WinDRBD.AddRegistry
 [WinDRBDUM.Service]
 DisplayName      = "WinDRBD User Mode Helper Daemon"
 Description      = "WinDRBD Daemon for User Mode Helpers (called by certain events)"
-; TODO: this is Program Files (x86) if installer is 32 bit ...
-ServiceBinary    = %16422%\WinDRBD\windrbdsvc.exe ; C:\Program Files\...
+ServiceBinary    = %11%\windrbdsvc.exe ; C:\Windows\System32 (sysnative if app is 32 bit running on a 64 bit machine
 ServiceType      = 16                   ; Win32 Application
 StartType        = 3
 ErrorControl     = 0                    ;SERVICE_ERROR_NORMAL
