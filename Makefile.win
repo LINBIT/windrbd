@@ -30,6 +30,13 @@ EWDK_VERSION := 10.0.17134.0
 EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
 endif
 
+ifeq ($(BUILD_ENV),jt-server2016)
+export EWDK_BASE := e:
+EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
+EWDK_VERSION := 10.0.17763.0
+EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
+endif
+
 ifndef EWDK_VERSION
 $(error EWDK_BASE not set. Please edit Makefile to make it know about your ewdk installation.)
 endif
