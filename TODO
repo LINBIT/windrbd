@@ -38,16 +38,24 @@ TODO: Installation: Autostart user mode helper daemon and log server
 
 	Installer inf file currently uses C:\Program Files (x86) as
 	value for the path (because it is a 32-bit app when running
-	make install, it works).
+	make install, it works). Update: now putting it in
+	C:\Windows\System32 somehow this does not work (cygwin
+	DLL not found?).
 
 	log files: we currently don't see output of windrbd processes
 	(windrbd user-mode-helper and windrbd log-server). Something
-	with the dup code does not work correctly.
+	with the dup code does not work correctly. Update: no it
+	was the open(2) flags (O_RDWR was missing), works in
+	console mode.
 
 	Also define somehow where the log files should be located
 	(C:\windrbd\var\log would be the most sane directory)
 
+	Update: better not. Windows admins don't look there.
+	Place it in C:\windrbd
+
 	Installer should include service EXE (this should be easy).
+	Update: should be done, test it.
 
 TODO: Documentation: white paper for linbit website.
 
@@ -64,6 +72,12 @@ TODO: Documentation: white paper for linbit website.
 TODO: Check if pacemaker under WSL works
 
 	And include in documentation.
+
+	Update: our Windows 10 physical machine cannot install
+	apps or updates and a manual download of Ubuntu for WSL
+	does not start. Don't know why. We however need the machine
+	for something else, so get a Windows 10 VM (on much or
+	somewhere else) and try the WSL thing there.
 
 TODO: Documentation: define tests to be run before releases.
 
@@ -383,6 +397,16 @@ TODO: Implement: Make drbd service stoppable
 	down leaks at 3 code paths are found (plus an extra leak that the
 	debugger didn't find, probably kmem_cache_alloc()). Fix them
 	one day (there are probably more than that).
+
+	Update: We just discovered that driver verifier was activated
+	on every make install. Technically, a 'normal' Windows installation
+	doesn't have driver verifier enabled. So we would have saved
+	tons of nerves (and time) if we never had driver verifier
+	enabled (no BSOD at least not so many). Removed the line from
+	the Makefile, now unloading works as expected (tough probably
+	the driver is still in memory a new version of the driver
+	can be loaded without rebooting). Think about including
+	driver unload in beta5.
 
 TODO: Feature: Mount to NTFS directories.
 
