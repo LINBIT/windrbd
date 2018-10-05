@@ -8,7 +8,8 @@ Having said that, this is what you need:
 
 Build environment setup:
 
-You need two virtual machines: 
+You need two virtual machines (of course physical machines are
+also fine): 
 	1.) One Linux box with spatch installed (in addition to 
 		the usual development tools like make, gcc, ...)
 		On Ubuntu this is installed by:
@@ -16,15 +17,7 @@ You need two virtual machines:
 			sudo apt-get install coccinelle
 
 	2.) A Windows 7 WM with Service Pack 1 (at least) installed.
-		This is what we currently use for development.
-
-	    Download and install the EWDK as described in:
-
-		https://docs.microsoft.com/en-us/windows-hardware/drivers/develop/installing-the-enterprise-wdk
-
-	   	Install it to 
-			C:\ewdk 
-		This saves you from too many makefile edits later
+	    (Windows 10 and Windows Server 2016 also work).
 
 	    Download and Install cygwin 
 	    Download and Install Development tools of cygwin (there is
@@ -32,18 +25,42 @@ You need two virtual machines:
 		You need (at least): 
 			autoconf, automake, flex, gcc, g++, git, make
 
-	    Note: I've also installed Visual Studio on my Windows box,
-		not sure if that is needed also, since the C compiler
-		should come with ewdk.
+	    Download and install the EWDK as described in:
 
-	3.) To create installable packages (make package), you need
+		https://docs.microsoft.com/en-us/windows-hardware/drivers/develop/installing-the-enterprise-wdk
+
+	   	If possible, install it to 
+			C:\ewdk 
+		This saves you from too many makefile edits later
+
+		Newer ewdk's come as ISO file, mount it (by double-clicking
+		it) to a drive.
+
+		Edit Makefile.win and add a build environment (since
+		there is no configure one has to do that manually).
+		See the jt-* samples there (which work for my Ewdk
+		installation but most likely not for yours).		
+
+		Also copy one of the ms-*.cmd scripts to ms-<my-buildenv>.cmd
+		and adapt as needed.
+
+		When running make on windows you must specify your
+		build enviroment (see below) or you hard code it
+		to Makefile.win.
+
+		Run make copy on one of the boxes (Linux or Windows)
+		whenever you change the Makefile.win or the ms-*.cmd
+		scripts.
+
+	3.) Optional: To create installable packages (make package), you need
 	    inno-setup in addition to the above. You can download it
 	    from: 
 
 	    http://www.jrsoftware.org
 
 	    Make sure the command line compiler iscc.exe is in the
-	    PATH
+	    PATH (ususally "/cygdrive/c/Program Files (x86)/Inno Setup 5")
+	    (it is a 32-bit application on an 64 bit system, hence x86)
 
 git clone windrbd with:
 
@@ -57,9 +74,41 @@ Share the windrbd folder via Samba, so that your Windows VM can access it
 crash frequently). You can use the GNOME Files utility to do so (for
 example).
 
+Or use (on Linux)
+
+sudo net usershare add home ~ "Home" johannes:F
+
+where johannes is your samba user (create with:
+sudo smbpasswd -a johannes
+)
+
+you might have to restart samba (shown here for Ubuntu):
+
+service smbd stop
+service smbd start
+
 Mount the shared folder in your windows box:
 	net use z: \\<ip-of-linux-box>\windrbd
 (assuming the share name is windrbd)
+
+Note on git: some git versions put absolute paths into the
+.git file of the submodules. Change that to relative paths
+else git commands on your Windows box will not work.
+(drbd/.git, drbd/drbd-headers/.git, drbd/drbd/drbd-kernel-compat/.git)
+
+Note on crypto: Even though I start Windows with driver signature verification
+off it still needs to be signed. The crypto directory, for obvious reasons
+doesn't contain our (Linbit) keys so you have to create your own. Please
+consult google and/or the enclosed README about how to do this.
+
+To disable Windows driver signature checking, execute
+
+bcdedit /set TESTSIGNING ON
+
+as Windows Administrator on your Windows box and reboot. Then it should
+not be neccessary to press F8 and select disable signature check manually.
+
+Once you are here, you're almost done.
 
 Building and "insmod" DRBD windows driver:
 
@@ -72,7 +121,7 @@ Building and "insmod" DRBD windows driver:
 	3.) cd into root directory of windrbd on your Windows box
 
         4.) Run
-                make
+                make BUILD_ENV=<your-build-env>
         on the Windows box
 
         5.) Run (as Administrator in cygwin bash) 
@@ -91,10 +140,28 @@ Be sure to also build and install also the drbd-utils from
 https://github.com/LINBIT/drbd-utils
 else you won't be able to use the driver.
 
+To make packages (installable exe using inno-setup), edit the
+inno-setup/windrbd.iss file to change the pathes of windrbd
+and drbd-utils and do:
+
+	make package
+
+The resulting EXE (with version number appended) will be placed
+in the inno-setup directory.
+
 ------------
 
 Note on logging: windrbd currently sends UDP packets to a logging host
 for logging. This is meant for use with syslog.
+
+If you don't want to log remotely, you can simply start
+
+windrbd log-server
+
+in a shell (cmd or cygwin is fine) and watch the logs (note that
+you don't get logs on driver startup only when the first drbdadm
+command is invoked). However you will lose logs when the system
+blue screens.
 
 To enable UDP logging in rsyslogd put (or uncomment) following lines
 into /etc/rsyslog.conf:
@@ -128,20 +195,6 @@ you are screwed.
 
 --------------
 
-Note on crypto: Even though I start Windows with driver signature verification
-off it still needs to be signed. The crypto directory, for obvious reasons
-doesn't contain our (Linbit) keys so you have to create your own. Please
-consult google and/or the enclosed README about how to do this.
-
-To disable Windows 7 driver signature checking, execute
-
-bcdedit /set TESTSIGNING ON
-
-as Windows Administrator on your Windows box and reboot. Then it should
-not be neccessary to press F8 and select disable signature check manually.
-
----------------
-
 Note on drbd-utils: You need the windrbd branch of drbd-utils.
 To obtain it, do a:
 
@@ -150,3 +203,4 @@ git clone --branch windrbd --recursive https://github.com/LINBIT/drbd-utils.git
 and follow the build instruction in README-windrbd.md file of the
 repo.
 
+(the windrbd branch will soon be merged into master)
