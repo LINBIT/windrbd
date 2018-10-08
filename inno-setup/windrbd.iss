@@ -74,10 +74,10 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 ; Name: modifypath; Description: &Add application directory to your environmental path;
 
 [Files]
-Source: "{#WindrbdUtilsSource}\user\v9\drbdadm.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdUtilsSource}\user\v9\drbdmeta.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdUtilsSource}\user\v9\drbdadm.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "{#WindrbdUtilsSource}\user\v9\drbdmeta.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdUtilsSource}\user\windrbd\windrbdsvc.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
@@ -120,8 +120,9 @@ const
 
 	function ModPathDir(): TArrayOfString;
 	begin
-		setArrayLength(Result, 1);
+		setArrayLength(Result, 2);
 		Result[0] := ExpandConstant('{app}');
+		Result[1] := ExpandConstant('C:\windrbd\usr\sbin');
 	end;
 
 #include "modpath.iss"
