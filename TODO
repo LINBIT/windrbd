@@ -57,6 +57,33 @@ TODO: Installation: Autostart user mode helper daemon and log server
 	Installer should include service EXE (this should be easy).
 	Update: should be done, test it.
 
+	Update: We now place all binaries in /cygdrive/c/windrbd/usr/sbin
+	so a make install does the right thing. Also hardcoded this
+	path in drbd_main.c now, so user mode helper finds the helper
+	(currently no way to change that via ioctl). TODO: update
+	installer script.
+
+	Update: Works now, however drbdadm requires /bin/sh (which
+	in turn requires several DLLs we don't want to ship). The
+	basic problem seems to be that when running as a service,
+	/ does not exists (and so don't /tmp , /bin and all the others)
+	However /cygdrive exists. Waiting for stackoverflow answer.
+
+	Proably best for now to have users start user mode helper
+	daemon manually in a cygwin terminal, they are not strictly
+	needed.
+
+	Right now, we do not see the output of the user mode helper
+	daemon (however we see the output of the helper scripts).
+
+TODO: Implement: have an ioctl that returns WinDRBD versions string
+
+	What /proc/drbd would contain.
+
+TODO: Upgrade to latest DRBD (9.0.15) before testing next beta.
+
+	Update: Wait for 9.0.16 (next week, by Oct 18).
+
 TODO: Documentation: white paper for linbit website.
 
 	Until end of June 2018
@@ -138,6 +165,17 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
+TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
+
+	Sync stalls at 0%. Try to update Linux DRBD before doing
+	anything else.
+
+	Update: Upgraded Linux peer.
+
+	After some reboots it worked again. Observe.
+
+TODO: Bug: sc stop windrbd BSOD's if there are resources up.
+
 TODO: Implement: We want to have some sort of a regression test suite.
 
 	Do not use agruen's it is too complicated. Maybe write a simple
@@ -180,10 +218,6 @@ TODO: Implement: Other mechanism to specify syslog_ip.
 	Update: Best is probably to have a /cygdrive/c/windrbd/etc/windrbd.conf
 	file for the IP or logfile, so that we don't have to touch
 	the config file format.
-
-TODO: Implement: have an ioctl that returns WinDRBD versions string
-
-	What /proc/drbd would contain.
 
 TODO: Documentation: drbd-util: Update manpage.
 
@@ -272,8 +306,6 @@ TODO: Implement: Make windrbd directory unaccessible for non-admins.
 	(in case there are shared secrets).
 
 TODO: Code quality: use drbd-headers/windrbd merged branch in Linux DRBD
-
-TODO: Upgrade to latest DRBD (9.0.15) before testing next beta.
 
 TODO: Code quality: drbd-patches directory probably should go away.
 
