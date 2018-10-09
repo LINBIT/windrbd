@@ -23,5 +23,7 @@ copy windrbd.sys c:\windows\sysnative\drivers
 copy windrbd*.exe c:\windrbd\usr\sbin
 copy drbd*.exe c:\windrbd\usr\sbin
 
-rem TODO: also copy windrbdsvc.exe to some sane place
+cygrunsrv.exe -I windrbdlog -p /cygdrive/c/windrbd/usr/sbin/windrbd.exe -a log-server -1 /cygdrive/c/windrbd/windrbd-kernel.log -2 /cygdrive/c/windrbd/windrbd-kernel.log
+cygrunsrv.exe -I windrbdumhelper -p /cygdrive/c/windrbd/usr/sbin/windrbd.exe -auser-mode-helper-daemon -1 /cygdrive/c/windrbd/windrbd-umhelper.log -2 /cygdrive/c/windrbd/windrbd-umhelper.log
+
 start /wait InfDefaultInstall ".\windrbd.inf"

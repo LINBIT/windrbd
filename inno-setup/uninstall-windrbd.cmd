@@ -7,7 +7,14 @@ if %errorlevel% NEQ 0 (
 )
 
 drbdadm down all
-sc stop drbd
+rem Later: (this currently might BSOD if there are resources up.
+rem Right now need to reboot after uninstall.
+rem sc stop windrbd
+sc stop windrbdlog
+sc stop windrbdumhelper
+
+cygrunsrv -R windrbdlog
+cygrunsrv -R windrbdumhelper
 
 start /wait rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 C:\windows\inf\windrbd.inf
 del C:\windows\inf\windrbd.inf
