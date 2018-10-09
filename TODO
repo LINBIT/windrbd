@@ -108,6 +108,12 @@ TODO: Installation: Autostart user mode helper daemon and log server
 
 	PowerShell patch: move args to platform specific
 		C file.
+		Done, test it.
+
+	Change timeout for user mode helpers (again) because
+	PowerShell is very slow.
+
+	Also change drbdsetup timeout.
 
 	Make release (0.8.10)
 
