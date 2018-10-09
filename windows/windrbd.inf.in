@@ -24,7 +24,6 @@ CopyFiles           = WinDRBD.DriverFiles
 
 [DefaultInstall.Services]
 AddService          = "WinDRBD",,WinDRBD.Service
-AddService          = "WinDRBDUM",,WinDRBDUM.Service
 
 ;;
 ;; Default uninstall sections
@@ -36,7 +35,6 @@ DelReg              = WinDRBD.DelRegistry
 
 [DefaultUninstall.Services]
 DelService = WinDRBD
-DelService = WinDRBDUM
 
 ;
 ; Services Section
@@ -50,16 +48,6 @@ ServiceType      = 1                    ;SERVICE_FILE_SYSTEM_DRIVER
 StartType        = 3
 ErrorControl     = 0                    ;SERVICE_ERROR_NORMAL
 AddReg           = WinDRBD.AddRegistry
-
-[WinDRBDUM.Service]
-DisplayName      = "WinDRBD User Mode Helper Daemon"
-Description      = "WinDRBD Daemon for User Mode Helpers (called by certain events)"
-; This is where make install of drbd-utils installs it (when configured
-; properly. We might change that in the future.
-ServiceBinary    = C:\windrbd\usr\sbin\windrbdsvc.exe
-ServiceType      = 16                   ; Win32 Application
-StartType        = 3
-ErrorControl     = 0                    ;SERVICE_ERROR_NORMAL
 
 ;
 ; Registry Modifications (will soon go away)
