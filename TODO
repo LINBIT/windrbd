@@ -103,10 +103,13 @@ TODO: Installation: Autostart user mode helper daemon and log server
 	Poll for root device on user mode helper startup.
 		Done
 
+	modprobe
+		Done
+
 	PowerShell patch: move args to platform specific
 		C file.
 
-	modprobe
+	Make release (0.8.10)
 
 TODO: Implement: have an ioctl that returns WinDRBD versions string
 
