@@ -75,6 +75,38 @@ TODO: Installation: Autostart user mode helper daemon and log server
 
 	Right now, we do not see the output of the user mode helper
 	daemon (however we see the output of the helper scripts).
+	Update: was printf() being fully buffered, fixed.
+
+	Update: now using cygrunsrv (also to install and remove
+	services) and it seems to work. User must have cygwin
+	installed for using user mode helpers. Later we may support
+	PowerShell.
+
+	Update: when packaging cygrunsrv it fails to find the
+	cygwin installation (cannot exec /bin/sh). We now switched
+	to PowerShell (which has a well known path), this is
+	anyway more likely what the users want (no need to
+	install cygwin at all).
+
+	Left TODO:
+
+	Do not fail if /bin/sh is not found (for now).
+		Is called only when there is a handler. Put a comment
+		in windrbd sample res file that explains.
+
+	Remove windrbdsrv.c
+		Done
+
+	Remove windrbdum service in inf file.
+		Done
+
+	Poll for root device on user mode helper startup.
+		Done
+
+	PowerShell patch: move args to platform specific
+		C file.
+
+	modprobe
 
 TODO: Implement: have an ioctl that returns WinDRBD versions string
 
@@ -164,6 +196,15 @@ Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
+
+TODO: Bug: BSOD when running unattended
+
+	Between Windows Server 2016 and Linux.
+
+Oct  9 04:01:31 10.43.10.11  U02:01:31.841|c9bcfc80(drbd_a_w0) Receive Receiving canceled (errno is -11) but data available (16 bytes, will be discarded).
+Oct  9 04:01:32 10.43.10.11  U02:01:32.340|c9bcfc80(drbd_a_w0) drbd_ack_receiver <3>drbd w0 pnode-id:3, cs(Connected), prole(Primary), cflag(0x200e), scf(0x2): meta connection shut down by peer.
+
+	But errno 11 is EAGAIN, shouldn't fail here. And not BSOD later.
 
 TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
