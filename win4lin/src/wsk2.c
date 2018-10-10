@@ -806,6 +806,13 @@ LONG NTAPI Receive(
 		}
 	}
 
+		/* Deliver what we have in case we received a signal. */
+
+	if (BytesReceived == -EAGAIN && Irp->IoStatus.Information > 0) {
+		printk("Got signal, but there is data (%d bytes) returning it.\n");
+		BytesReceived = Irp->IoStatus.Information;
+	}
+
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
 		// cancel irp in wsk subsystem
