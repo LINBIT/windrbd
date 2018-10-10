@@ -4,5 +4,5 @@ do
 	i=$[ $i+1 ]
 	echo Invalidate $i
 	drbdadm invalidate w0
-	sleep 60
+	sleep 10
 done
