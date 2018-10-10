@@ -806,13 +806,6 @@ LONG NTAPI Receive(
 		}
 	}
 
-		/* Deliver what we have in case we received a signal. */
-
-	if (BytesReceived == -EAGAIN && Irp->IoStatus.Information > 0) {
-		printk("Got signal, but there is data (%d bytes) returning it.\n");
-		BytesReceived = Irp->IoStatus.Information;
-	}
-
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
 		// cancel irp in wsk subsystem
@@ -832,11 +825,14 @@ LONG NTAPI Receive(
 				 * is available.
 				 */
 
-/* Don't do this:
-				BytesReceived = Irp->IoStatus.Information;
-*/
+		/* Deliver what we have in case we timed out. */
 
-			printk("Receiving canceled (errno is %d) but data available (%d bytes, will be discarded).\n", BytesReceived, Irp->IoStatus.Information);
+			if (BytesReceived == -EAGAIN) {
+				printk("Timed out, but there is data (%d bytes) returning it.\n");
+				BytesReceived = Irp->IoStatus.Information;
+			} else {
+				printk("Receiving canceled (errno is %d) but data available (%d bytes, will be discarded).\n", BytesReceived, Irp->IoStatus.Information);
+			}
 		}
 	}
 
