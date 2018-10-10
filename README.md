@@ -291,3 +291,5 @@ Version history
  * 0.8.8 (Sep 17, 2018): kmalloc() debugger. For driver unload to work someday.
  * 0.8.9 (Sep 27, 2018): Uninstall works (but needs reboot), switched to
 			 inno-setup for installation.
+ * 0.8.10 (Oct 10,2018): Autostarting user mode helper and log server as
+			 Windows Services.
