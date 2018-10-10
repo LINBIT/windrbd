@@ -18,105 +18,6 @@ Planned: Oct 1 2018
 Postponed to; Oct 20 2018
 -----------------------------------------------------------------------
 
-TODO: Installation: Autostart user mode helper daemon and log server
-
-	Someday ...
-	Update: we should do that in modprobe. WinDRBD isn't really
-	working smoothly without them.
-
-	Need to define this as Windows service (in inf file) with
-	type 16 (daemon).
-
-	As a Windows service? Can it be made dependent of the kernel
-	driver?
-
-	Update: Yes we do it as a Windows service (see windrbdsvc.c
-	in drbd-utils/user/windrbd). Current issues are:
-
-	When running as a service /sbin/drbdadm symlink is (obviously)
-	not found.
-
-	Installer inf file currently uses C:\Program Files (x86) as
-	value for the path (because it is a 32-bit app when running
-	make install, it works). Update: now putting it in
-	C:\Windows\System32 somehow this does not work (cygwin
-	DLL not found?).
-
-	log files: we currently don't see output of windrbd processes
-	(windrbd user-mode-helper and windrbd log-server). Something
-	with the dup code does not work correctly. Update: no it
-	was the open(2) flags (O_RDWR was missing), works in
-	console mode.
-
-	Also define somehow where the log files should be located
-	(C:\windrbd\var\log would be the most sane directory)
-
-	Update: better not. Windows admins don't look there.
-	Place it in C:\windrbd
-
-	Installer should include service EXE (this should be easy).
-	Update: should be done, test it.
-
-	Update: We now place all binaries in /cygdrive/c/windrbd/usr/sbin
-	so a make install does the right thing. Also hardcoded this
-	path in drbd_main.c now, so user mode helper finds the helper
-	(currently no way to change that via ioctl). TODO: update
-	installer script.
-
-	Update: Works now, however drbdadm requires /bin/sh (which
-	in turn requires several DLLs we don't want to ship). The
-	basic problem seems to be that when running as a service,
-	/ does not exists (and so don't /tmp , /bin and all the others)
-	However /cygdrive exists. Waiting for stackoverflow answer.
-
-	Proably best for now to have users start user mode helper
-	daemon manually in a cygwin terminal, they are not strictly
-	needed.
-
-	Right now, we do not see the output of the user mode helper
-	daemon (however we see the output of the helper scripts).
-	Update: was printf() being fully buffered, fixed.
-
-	Update: now using cygrunsrv (also to install and remove
-	services) and it seems to work. User must have cygwin
-	installed for using user mode helpers. Later we may support
-	PowerShell.
-
-	Update: when packaging cygrunsrv it fails to find the
-	cygwin installation (cannot exec /bin/sh). We now switched
-	to PowerShell (which has a well known path), this is
-	anyway more likely what the users want (no need to
-	install cygwin at all).
-
-	Left TODO:
-
-	Do not fail if /bin/sh is not found (for now).
-		Is called only when there is a handler. Put a comment
-		in windrbd sample res file that explains.
-
-	Remove windrbdsrv.c
-		Done
-
-	Remove windrbdum service in inf file.
-		Done
-
-	Poll for root device on user mode helper startup.
-		Done
-
-	modprobe
-		Done
-
-	PowerShell patch: move args to platform specific
-		C file.
-		Done, test it.
-
-	Change timeout for user mode helpers (again) because
-	PowerShell is very slow.
-
-	Also change drbdsetup timeout.
-
-	Make release (0.8.10)
-
 TODO: Implement: have an ioctl that returns WinDRBD versions string
 
 	What /proc/drbd would contain.
@@ -206,6 +107,11 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
+TODO: Cannot stop driver when resource was ever Primary and I/O
+
+	Proably some handle leak. Driver stays in STOP_PENDING state.
+	And BSOD when shutting down computer.
+
 TODO: Bug: BSOD when running unattended
 
 	Between Windows Server 2016 and Linux.
@@ -215,6 +121,23 @@ Oct  9 04:01:32 10.43.10.11  U02:01:32.340|c9bcfc80(drbd_a_w0) drbd_ack_receiver
 
 	But errno 11 is EAGAIN, shouldn't fail here. And not BSOD later.
 
+	Happened during network failure test (./iptables-drop-dont-drop-loop.sh
+	on Linux and ./write-fs-loop.sh on Windows), not sure if it is
+	the same BSOD, trying without I/O now.
+
+TODO: Bug: Connection fails sometimes with -EAGAIN
+
+	Update: Probably fixed with 4ecababaa, observe
+
+TODO: Upstream: drbdadm invalidate while primary and connected uptodate/uptodate does nothing.
+
+	And also does not return an error.
+
+TODO: Also BSOD on driver stop while drbdsetup events2 is running.
+
+	BSOD when drbdsetup events2 is exiting (before it is in
+	STOP_PENDING).
+
 TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
 	Sync stalls at 0%. Try to update Linux DRBD before doing
@@ -223,6 +146,8 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 	Update: Upgraded Linux peer.
 
 	After some reboots it worked again. Observe.
+
+	Maybe something with the user mode helpers?
 
 TODO: Bug: sc stop windrbd BSOD's if there are resources up.
 
@@ -3621,4 +3546,109 @@ Rejected: Infrastructure: Why doesn't it work on Phil's machine?
 	Phil doesn't seem to be interested .. I perfectly understand.
 	Just now, MS app store has stopped working on my Windows 10
 	box and I have no idea why .. I guess I just reinstall it.
+
+Done: Installation: Autostart user mode helper daemon and log server
+
+	Someday ...
+	Update: we should do that in modprobe. WinDRBD isn't really
+	working smoothly without them.
+
+	Need to define this as Windows service (in inf file) with
+	type 16 (daemon).
+
+	As a Windows service? Can it be made dependent of the kernel
+	driver?
+
+	Update: Yes we do it as a Windows service (see windrbdsvc.c
+	in drbd-utils/user/windrbd). Current issues are:
+
+	When running as a service /sbin/drbdadm symlink is (obviously)
+	not found.
+
+	Installer inf file currently uses C:\Program Files (x86) as
+	value for the path (because it is a 32-bit app when running
+	make install, it works). Update: now putting it in
+	C:\Windows\System32 somehow this does not work (cygwin
+	DLL not found?).
+
+	log files: we currently don't see output of windrbd processes
+	(windrbd user-mode-helper and windrbd log-server). Something
+	with the dup code does not work correctly. Update: no it
+	was the open(2) flags (O_RDWR was missing), works in
+	console mode.
+
+	Also define somehow where the log files should be located
+	(C:\windrbd\var\log would be the most sane directory)
+
+	Update: better not. Windows admins don't look there.
+	Place it in C:\windrbd
+
+	Installer should include service EXE (this should be easy).
+	Update: should be done, test it.
+
+	Update: We now place all binaries in /cygdrive/c/windrbd/usr/sbin
+	so a make install does the right thing. Also hardcoded this
+	path in drbd_main.c now, so user mode helper finds the helper
+	(currently no way to change that via ioctl). TODO: update
+	installer script.
+
+	Update: Works now, however drbdadm requires /bin/sh (which
+	in turn requires several DLLs we don't want to ship). The
+	basic problem seems to be that when running as a service,
+	/ does not exists (and so don't /tmp , /bin and all the others)
+	However /cygdrive exists. Waiting for stackoverflow answer.
+
+	Proably best for now to have users start user mode helper
+	daemon manually in a cygwin terminal, they are not strictly
+	needed.
+
+	Right now, we do not see the output of the user mode helper
+	daemon (however we see the output of the helper scripts).
+	Update: was printf() being fully buffered, fixed.
+
+	Update: now using cygrunsrv (also to install and remove
+	services) and it seems to work. User must have cygwin
+	installed for using user mode helpers. Later we may support
+	PowerShell.
+
+	Update: when packaging cygrunsrv it fails to find the
+	cygwin installation (cannot exec /bin/sh). We now switched
+	to PowerShell (which has a well known path), this is
+	anyway more likely what the users want (no need to
+	install cygwin at all).
+
+	Left TODO:
+
+	Do not fail if /bin/sh is not found (for now).
+		Is called only when there is a handler. Put a comment
+		in windrbd sample res file that explains.
+
+		Update: we now switch to PowerShell (which has a
+		sort-of defined fixed path).
+
+	Remove windrbdsrv.c
+		Done
+
+	Remove windrbdum service in inf file.
+		Done
+
+	Poll for root device on user mode helper startup.
+		Done
+
+	modprobe
+		Done
+
+	PowerShell patch: move args to platform specific
+		C file.
+		Done, test it.
+
+	Change timeout for user mode helpers (again) because
+	PowerShell is very slow.
+		Done
+
+	Also change drbdsetup timeout.
+		modprobe may take a while.
+		Observe. Right now it is ok.
+
+	Make release (0.8.10)
 

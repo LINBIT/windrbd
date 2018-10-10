@@ -1,3 +1,12 @@
+On linux side:
+
+./iptables-drop-dont-drop-loop.sh
+
+On windows side:
+
+./write-fs-loop.sh
+
+Must sync while connected and never get stuck in NetworkFailure
 -----------------------------------------
 
 test-loop.sh
