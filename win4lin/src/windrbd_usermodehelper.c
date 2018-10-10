@@ -8,11 +8,22 @@
  * since there are DRBD processes stalled while waiting.
  */
 
+/* This timeout is between call_usermodehelper and some daemon to
+ * fetch the request.
+ */
 #define REQUEST_TIMEOUT_MS 1000
+
+/* This timeout is between some daemon to fetch the request and the
+ * daemon returning the requests response (in practice this defines
+ * how long a script may run). Since we are now using PowerShell which
+ * is just too damn slow we put this to 10 seconds for now.
+ */
+#define RETURN_TIMEOUT_MS 10000
 
 struct um_request {
 	struct list_head list;
 	KEVENT request_event;
+	KEVENT return_event;
 	int retval;
 	struct windrbd_usermode_helper helper;
 		/* DO NOT put anything after this member, it contains
@@ -71,7 +82,8 @@ int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait
 	if (new_request == NULL)
 		return -ENOMEM;
 
-        KeInitializeEvent(&new_request->request_event, SynchronizationEvent, FALSE);
+	KeInitializeEvent(&new_request->request_event, SynchronizationEvent, FALSE);
+	KeInitializeEvent(&new_request->return_event, SynchronizationEvent, FALSE);
 	new_request->retval = -ETIMEDOUT;
 	new_request->helper.id = unique_id++;
 	new_request->helper.total_size = total_size_of_helper;
@@ -88,13 +100,23 @@ int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait
 
 	timeout.QuadPart = -10*1000*REQUEST_TIMEOUT_MS;
 
-        status = KeWaitForSingleObject(&new_request->request_event, Executive, KernelMode, FALSE, &timeout);
+	status = KeWaitForSingleObject(&new_request->request_event, Executive, KernelMode, FALSE, &timeout);
 
-	ret = new_request->retval;
-	if (ret == -ETIMEDOUT)
+	if (status == STATUS_TIMEOUT) {
 		printk("User mode helper request timed out after %d milliseconds, is the user mode helper daemon running?\n", REQUEST_TIMEOUT_MS);
-	else
-		printk("User mode helper returned %d (exit status is %d)\n", ret, (ret >> 8) & 0xff);
+		ret = -ETIMEDOUT;
+	} else {
+		timeout.QuadPart = -10*1000*RETURN_TIMEOUT_MS;
+		status = KeWaitForSingleObject(&new_request->return_event, Executive, KernelMode, FALSE, &timeout);
+
+		if (status == STATUS_TIMEOUT) {
+			printk("User mode helper return request timed out after %d milliseconds, is the script running too slow?\n", RETURN_TIMEOUT_MS);
+			ret = -ETIMEDOUT;
+		} else {
+			ret = new_request->retval;
+			printk("User mode helper returned %d (exit status is %d)\n", ret, (ret >> 8) & 0xff);
+		}
+	}
 
 	mutex_lock(&request_mutex);
 	list_del(&new_request->list);
@@ -127,6 +149,8 @@ int windrbd_um_get_next_request(void *buf, size_t max_data_size, size_t *actual_
 
 			list_del(&r->list);
 			list_add(&r->list, &um_requests_running);
+
+			KeSetEvent(&r->request_event, 0, FALSE);
 		} else {
 				/* Userspace only wants to know size */
 			if (max_data_size >= sizeof(r->helper)) {
@@ -159,7 +183,7 @@ int windrbd_um_return_return_value(void *rv_buf)
 	list_for_each_entry(struct um_request, r, &um_requests_running, list) {
 		if (rv->id == r->helper.id) {
 			r->retval = rv->retval;
-			KeSetEvent(&r->request_event, 0, FALSE);
+			KeSetEvent(&r->return_event, 0, FALSE);
 			ret = 0;
 
 			break;
