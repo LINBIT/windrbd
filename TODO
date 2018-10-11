@@ -103,9 +103,28 @@ Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0
 	most likely something that causes Linux DRBD to mistake
 	one Windows host for another.
 
+TODO: Disable driver unload before release
+
+	By setting AddDevice. It causes too many BSOD's.
+	(maybe) Also disable kmalloc debugger.
+
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
+
+TODO: Maybe revert drbd-utils in Program Files.
+
+	inno-setup would check if programs (like drbdsetup events2)
+	are currently running.
+
+TODO: Have a ioctl to set user mode helper program
+
+	And other modparams.
+
+TODO: Make drbd-utils relocateable
+
+	Currently hardcoded to C:\windrbd (in kernel and install scripts)
+	and configure parameter in userland.
 
 TODO: Cannot stop driver when resource was ever Primary and I/O
 
