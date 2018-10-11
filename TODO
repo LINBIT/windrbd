@@ -38,16 +38,6 @@ TODO: Documentation: white paper for linbit website.
 
 	Also document how to run pacemaker under WSL
 
-TODO: Check if pacemaker under WSL works
-
-	And include in documentation.
-
-	Update: our Windows 10 physical machine cannot install
-	apps or updates and a manual download of Ubuntu for WSL
-	does not start. Don't know why. We however need the machine
-	for something else, so get a Windows 10 VM (on much or
-	somewhere else) and try the WSL thing there.
-
 TODO: Documentation: define tests to be run before releases.
 
 	And run them ;)
@@ -112,6 +102,16 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
+TODO: Check if pacemaker under WSL works
+
+	And include in documentation.
+
+	Update: our Windows 10 physical machine cannot install
+	apps or updates and a manual download of Ubuntu for WSL
+	does not start. Don't know why. We however need the machine
+	for something else, so get a Windows 10 VM (on much or
+	somewhere else) and try the WSL thing there.
+
 TODO: Maybe revert drbd-utils in Program Files.
 
 	inno-setup would check if programs (like drbdsetup events2)
@@ -143,10 +143,6 @@ Oct  9 04:01:32 10.43.10.11  U02:01:32.340|c9bcfc80(drbd_a_w0) drbd_ack_receiver
 	Happened during network failure test (./iptables-drop-dont-drop-loop.sh
 	on Linux and ./write-fs-loop.sh on Windows), not sure if it is
 	the same BSOD, trying without I/O now.
-
-TODO: Bug: Connection fails sometimes with -EAGAIN
-
-	Update: Probably fixed with 4ecababaa, observe
 
 TODO: Upstream: drbdadm invalidate while primary and connected uptodate/uptodate does nothing.
 
@@ -3670,4 +3666,9 @@ Done: Installation: Autostart user mode helper daemon and log server
 		Observe. Right now it is ok.
 
 	Make release (0.8.10)
+
+Done: Bug: Connection fails sometimes with -EAGAIN
+
+	Update: Probably fixed with 4ecababaa, observe
+	Update: After some patches this is fixed now.
 
