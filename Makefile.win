@@ -26,6 +26,9 @@ EWDK_BIN := $(EWDK_KIT)\\bin\\x86
 # Name of the pfx file (without extension)
 KEY = linbit-ha
 PASSWD = ""
+
+WINDRBD_SOURCE = Y:\\windrbd
+DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
 ifeq ($(BUILD_ENV),jt-win10)
@@ -37,6 +40,9 @@ EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
 # Name of the pfx file (without extension)
 KEY = linbit
 PASSWD = "a"
+
+WINDRBD_SOURCE = Y:\\windrbd
+DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
 ifeq ($(BUILD_ENV),jt-server2016)
@@ -48,6 +54,9 @@ EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
 # Name of the pfx file (without extension)
 KEY = linbit
 PASSWD = "a"
+
+WINDRBD_SOURCE = X:\\windrbd
+DRBD_UTILS_SOURCE = X:\\drbd-utils-windows
 endif
 
 ifndef EWDK_VERSION
@@ -197,6 +206,6 @@ clean:
 	rm -f *.obj
 
 package: windrbd.sys
-	( cd ../../inno-setup && iscc windrbd.iss )
+	( cd ../../inno-setup && iscc windrbd.iss /DWindrbdSource=$(WINDRBD_SOURCE) /DWindrbdUtilsSource=$(DRBD_UTILS_SOURCE) )
 	chmod a+x ../../inno-setup/install*.exe
 

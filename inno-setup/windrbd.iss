@@ -7,11 +7,12 @@
 
 ; Windows-style path to the root of the source distribution
 ; You probably have to change this.
-#define WindrbdSource "X:\windrbd"
+; Update: those are now in Makefile.win in the BUILD_ENVironments
+; #define WindrbdSource "X:\windrbd"
 ; Where the WinDRBD utils (drbdadm, drbdsetup, drbdmeta and windrbd EXEs)
 ; can be found. Note: the utils are not built by this makefile, you
 ; have to build them seperately.
-#define WindrbdUtilsSource "X:\drbd-utils-windows"
+; #define WindrbdUtilsSource "X:\drbd-utils-windows"
 
 #define MyAppName "WinDRBD"
 #define MyAppPublisher "Linbit"
@@ -78,7 +79,6 @@ Source: "{#WindrbdUtilsSource}\user\v9\drbdadm.exe"; DestDir: "{app}"; Flags: ig
 Source: "{#WindrbdUtilsSource}\user\v9\drbdmeta.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
-Source: "{#WindrbdUtilsSource}\user\windrbd\windrbdsvc.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
