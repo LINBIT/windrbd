@@ -828,7 +828,7 @@ LONG NTAPI Receive(
 		/* Deliver what we have in case we timed out. */
 
 			if (BytesReceived == -EAGAIN) {
-				printk("Timed out, but there is data (%d bytes) returning it.\n");
+				printk("Timed out, but there is data (%d bytes) returning it.\n", Irp->IoStatus.Information);
 				BytesReceived = Irp->IoStatus.Information;
 			} else {
 				printk("Receiving canceled (errno is %d) but data available (%d bytes, will be discarded).\n", BytesReceived, Irp->IoStatus.Information);
