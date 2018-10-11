@@ -100,7 +100,10 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	mvolRootDeviceObject = deviceObject;
 
 	windrbd_set_major_functions(DriverObject);
-//	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
+/* Remove this line to make driver removable (driver removing currently
+ * BSOD's sometimes):
+ */
+	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
 	DriverObject->DriverUnload = mvolUnload;
 
 	downup_rwlock_init(&transport_classes_lock); //init spinlock for transport 
