@@ -1,10 +1,9 @@
-/* TODO: this file is currently duplicated between windrbd and
- * drbd-utils repos. It finally should reside in drbd-headers
- * (windrbd subdirectory).
- */
-
 #ifndef WINDRBD_IOCTL_H
 #define WINDRBD_IOCTL_H
+
+#include <sys/types.h>			/* for int64_t */
+#include <linux/types.h>
+#include <linux/netlink.h>
 
 /* For compiling this for drbd-utils when there are no Windows headers
  * installed, we need this (taken from ReactOS): Hopefully this never
@@ -205,5 +204,24 @@ struct windrbd_minor_mount_point {
  */
 
 #define IOCTL_WINDRBD_ROOT_SET_MOUNT_POINT_FOR_MINOR CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 8, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
+/* Return DRBD version.
+ * Input: none
+ * Output: A (char*) buffer of at least 256 bytes.
+ *
+ * Returns the DRBD REL_VERSION string that this WinDRBD release is
+ * based on.
+ */
+
+#define IOCTL_WINDRBD_ROOT_GET_DRBD_VERSION CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 9, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
+/* Return WinDRBD version.
+ * Input: none
+ * Output: A (char*) buffer of at least 256 bytes.
+ *
+ * Returns the WinDRBD string as reported by git describe --tags
+ */
+
+#define IOCTL_WINDRBD_ROOT_GET_WINDRBD_VERSION CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 10, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 #endif

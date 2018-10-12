@@ -23,7 +23,7 @@ DATE=$(date)
 GITHASH=$(git describe --tags --always)$EXTRA_VERSION
 DRBD_GITHASH="$(cd drbd ; git describe --tags --always)"$EXTRA_VERSION
 
-VER_INTERNALNAME_STR="DRBD4WINDOWS"
+VER_INTERNALNAME_STR="WinDRBD"
 VER_FILEVERSION_STR="${GITHASH}\\0"
 
 mkdir -p ${OUTPATH} || exit 1
@@ -48,8 +48,8 @@ cat <<EOF > ${OUTPATH}/resource.rc
 FILEVERSION    	VER_FILEVERSION
 PRODUCTVERSION 	VER_PRODUCTVERSION
 //These need #include <windows.h>, enable them when integrated into buildsystem
-//FILETYPE	VFT_DRV
-//FILESUBTYPE	VFT2_DRV_SYSTEM
+FILETYPE	3	// VFT_DRV
+FILESUBTYPE	7	// VFT2_DRV_SYSTEM
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
@@ -71,7 +71,7 @@ END
 EOF
 
 ## drbd_buildtag.c
-echo "const char *drbd_buildtag(void){return \"${VER_INTERNALNAME_STR}: ${GITHASH}\";}" > ${OUTPATH}/drbd_buildtag.c
+echo "const char *drbd_buildtag(void){return \"${GITHASH}\";}" > ${OUTPATH}/drbd_buildtag.c
 
 ## drbd.inf
 sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y) ;Replaced by build magic#" ./windows/windrbd.inf.in > ${OUTPATH}/windrbd.inf

@@ -90,6 +90,23 @@ static void fill_partition_info_ex(struct _PARTITION_INFORMATION_EX *p, struct b
 	p->Mbr.HiddenSectors = 0;
 }
 
+static NTSTATUS put_string(const char *s, struct _IO_STACK_LOCATION *sl, struct _IRP *irp)
+{
+	size_t len;
+
+	if (s == NULL)
+		return STATUS_INTERNAL_ERROR;
+
+	len = strlen(s);
+	if (sl->Parameters.DeviceIoControl.OutputBufferLength < len+1)
+		return STATUS_BUFFER_TOO_SMALL;
+
+	strcpy(irp->AssociatedIrp.SystemBuffer, s);
+	irp->IoStatus.Information = len+1;
+
+	return STATUS_SUCCESS;
+}
+
 static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
@@ -209,6 +226,14 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 		}
 
 		irp->IoStatus.Information = 0;
+		break;
+
+	case IOCTL_WINDRBD_ROOT_GET_DRBD_VERSION:
+		status = put_string(REL_VERSION, s, irp);
+		break;
+
+	case IOCTL_WINDRBD_ROOT_GET_WINDRBD_VERSION:
+		status = put_string(drbd_buildtag(), s, irp);
 		break;
 
 	default:
