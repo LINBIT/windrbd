@@ -11,19 +11,6 @@ index 51cfdc8d..4a58ca68 100644
  
  /* See the ifdefs and comments inside that header file.
   * On recent kernels this is not needed. */
-@@ -1109,7 +1111,11 @@ static void bm_page_io_async(struct drbd_bm_aio_ctx *ctx, int page_nr) __must_ho
- 
- 	if (ctx->flags & BM_AIO_COPY_PAGES) {
- 		page = mempool_alloc(drbd_md_io_page_pool, __GFP_HIGHMEM|__GFP_RECLAIM);
--		copy_highpage(page, b->bm_pages[page_nr]);
-+		expect(device, page);
-+
-+		page->private = b->bm_pages[page_nr]->private;
-+		memcpy(page->addr, b->bm_pages[page_nr]->addr, PAGE_SIZE);
-+
- 		bm_store_page_idx(page, page_nr);
- 	} else
- 		page = b->bm_pages[page_nr];
 @@ -1523,7 +1529,7 @@ unsigned int drbd_bm_clear_bits(struct drbd_device *device, unsigned int bitmap_
   *  0 ... bit not set
   * -1 ... first out of bounds access, stop testing for bits!

@@ -14,28 +14,6 @@ index 8274e6a..52cf9fa 100644
  	drbd_backing_dev_free(device, device->ldev);
  	device->ldev = NULL;
  
-@@ -3441,15 +3459,20 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
- 	int vnr = adm_ctx->volume;
- 	enum drbd_ret_code err = ERR_NOMEM;
- 	bool locked = false;
-+	struct block_device *block_device;
- 
- 	device = minor_to_device(minor);
- 	if (device)
- 		return ERR_MINOR_OR_VOLUME_EXISTS;
- 
-+	block_device = bdget(MKDEV(DRBD_MAJOR, minor));
-+	if (block_device == NULL)
-+		return ERR_NO_DISK;
-+
- 	/* GFP_KERNEL, we are outside of all write-out paths */
- 	device = kzalloc(sizeof(struct drbd_device), GFP_KERNEL, '0CWD');
- 	if (!device)
--		return ERR_NOMEM;
-+		goto out_no_device;
- 	kref_init(&device->kref);
- 	kref_debug_init(&device->kref_debug, &device->kref, &kref_class_device);
- 
 @@ -3517,9 +3540,13 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
  	sprintf(disk->disk_name, "drbd%d", minor);
  	disk->private_data = device;

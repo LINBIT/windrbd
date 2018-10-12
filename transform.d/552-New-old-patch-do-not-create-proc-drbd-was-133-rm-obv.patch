@@ -1,0 +1,31 @@
+From c1c9cfe858e68676138b17baf77c6e42b92c299e Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 12 Oct 2018 19:13:27 +0200
+Subject: [PATCH 3/5] New "old" patch: do not create /proc/drbd (was
+ 133-rm-obvious_drbd_init-drbd_main_C.patch)
+
+---
+ drbd/drbd_main.c | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 59c8e3a..e022eea 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -4055,13 +4055,6 @@ int __init drbd_init(void)
+ 		goto fail;
+ 
+ 	err = -ENOMEM;
+-	drbd_proc = proc_create_single("drbd", S_IFREG | 0444 , NULL,
+-			drbd_seq_show);
+-
+-	if (!drbd_proc)	{
+-		pr_err("unable to register proc file\n");
+-		goto fail;
+-	}
+ 
+ 	retry.wq = alloc_ordered_workqueue("drbd-reissue", 0);
+ 	if (!retry.wq) {
+-- 
+2.17.0
+

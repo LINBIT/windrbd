@@ -1,0 +1,32 @@
+From d6ca9926bb1c053c483c1376b440bf283be48912 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 12 Oct 2018 19:16:25 +0200
+Subject: [PATCH 4/5] New "old" patch: was 149-drbd_main_C-no_biosets.patch
+
+---
+ drbd/drbd_main.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index e022eea..e1fd8c1 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -2894,6 +2894,7 @@ static int drbd_create_mempools(void)
+ 	if (drbd_al_ext_cache == NULL)
+ 		goto Enomem;
+ 
++#if 0
+ 	/* mempools */
+ 	ret = bioset_init(&drbd_io_bio_set, BIO_POOL_SIZE, 0, 0);
+ 	if (ret)
+@@ -2903,6 +2904,7 @@ static int drbd_create_mempools(void)
+ 			  BIOSET_NEED_BVECS);
+ 	if (ret)
+ 		goto Enomem;
++#endif
+ 
+ 	ret = mempool_init_page_pool(&drbd_md_io_page_pool, DRBD_MIN_POOL_PAGES, 0);
+ 	if (ret)
+-- 
+2.17.0
+

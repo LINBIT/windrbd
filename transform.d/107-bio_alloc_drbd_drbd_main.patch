@@ -10,10 +10,10 @@ diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
  {
 -	struct bio *bio;
 -
--	if (!drbd_md_io_bio_set)
+-	if (!bioset_initialized(&drbd_md_io_bio_set))
 -		return bio_alloc(gfp_mask, 1);
 -
--	bio = bio_alloc_bioset(gfp_mask, 1, drbd_md_io_bio_set);
+-	bio = bio_alloc_bioset(gfp_mask, 1, &drbd_md_io_bio_set);
 -	if (!bio)
 -		return NULL;
 -#ifdef COMPAT_HAVE_BIO_FREE

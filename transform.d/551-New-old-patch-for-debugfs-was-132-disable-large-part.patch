@@ -1,20 +1,31 @@
+From 41e6c588e7a140d7c903cd5367f5df4a83193367 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 12 Oct 2018 19:09:49 +0200
+Subject: [PATCH 2/5] New "old" patch for debugfs: was
+ 132-disable-large-parts_drbd_debugfs_C.patch
+
+---
+ drbd/drbd_debugfs.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
 diff --git a/drbd/drbd_debugfs.c b/drbd/drbd_debugfs.c
-index ffb2752..6e40c99 100644
+index fa6b142..df60f25 100644
 --- a/drbd/drbd_debugfs.c
 +++ b/drbd/drbd_debugfs.c
-@@ -136,9 +136,11 @@ static void seq_print_one_request(struct seq_file *m, struct drbd_request *req,
+@@ -140,10 +140,12 @@ static void seq_print_one_request(struct seq_file *m, struct drbd_request *req,
+ 	seq_print_age_or_dash(m, s & RQ_IN_ACT_LOG, ktime_sub(now, req->in_actlog_kt));
  	seq_print_age_or_dash(m, s & RQ_LOCAL_PENDING, ktime_sub(now, req->pre_submit_kt));
  
- #define RQ_HDR_3 "\tsent\tacked\tdone"
 +#if 0
  	print_one_age_or_dash(m, req, RQ_NET_SENT, 0, now, offsetof(typeof(*req), pre_send_kt));
  	print_one_age_or_dash(m, req, RQ_NET_SENT, RQ_NET_PENDING, now, offsetof(typeof(*req), acked_kt));
  	print_one_age_or_dash(m, req, RQ_NET_DONE, 0, now, offsetof(typeof(*req), net_done_kt));
+ #endif
 +#endif
- 
  #define RQ_HDR_4 "\tstate\n"
  	seq_print_request_state(m, req);
-@@ -566,6 +568,7 @@ static int resource_state_twopc_show(struct seq_file *m, void *pos)
+ }
+@@ -577,6 +579,7 @@ static int resource_state_twopc_show(struct seq_file *m, void *pos)
  	return 0;
  }
  
@@ -22,8 +33,11 @@ index ffb2752..6e40c99 100644
  /* make sure at *open* time that the respective object won't go away. */
  static int drbd_single_open(struct file *file, int (*show)(struct seq_file *, void *),
  		                void *data, struct kref *kref,
-@@ -1639,3 +1642,4 @@ fail:
+@@ -1785,3 +1788,4 @@ fail:
  	else
  		return -EINVAL;
  }
 +#endif
+-- 
+2.17.0
+

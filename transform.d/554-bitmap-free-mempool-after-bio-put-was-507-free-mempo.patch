@@ -1,0 +1,32 @@
+From a6b0ebe6c33b4ace9798e3c775cb19295093ca73 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 12 Oct 2018 19:20:17 +0200
+Subject: [PATCH 5/5] bitmap: free mempool after bio put (was
+ 507-free-mempool-after-bio-put.patch)
+
+---
+ drbd/drbd_bitmap.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_bitmap.c b/drbd/drbd_bitmap.c
+index 62efe7e..e4cb5ee 100644
+--- a/drbd/drbd_bitmap.c
++++ b/drbd/drbd_bitmap.c
+@@ -1082,10 +1082,13 @@ static void drbd_bm_endio BIO_ENDIO_ARGS(struct bio *bio)
+ 	bm_page_unlock_io(device, idx);
+ 
+ 	if (ctx->flags & BM_AIO_COPY_PAGES)
+-		mempool_free(bio->bi_io_vec[0].bv_page, &drbd_md_io_page_pool);
++		page = bio->bi_io_vec[0].bv_page;
+ 
+ 	bio_put(bio);
+ 
++	if (page)
++		mempool_free(page, drbd_md_io_page_pool);
++
+ 	if (atomic_dec_and_test(&ctx->in_flight)) {
+ 		ctx->done = 1;
+ 		wake_up(&device->misc_wait);
+-- 
+2.17.0
+
