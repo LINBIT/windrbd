@@ -293,3 +293,4 @@ Version history
 			 inno-setup for installation.
  * 0.8.10 (Oct 10,2018): Autostarting user mode helper and log server as
 			 Windows Services.
+ * 0.8.11 (Oct 12,2018): Report kernel driver versions over ioctl's
