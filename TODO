@@ -46,6 +46,16 @@ TODO: Documentation: define tests to be run before releases.
 
 	And run them ;)
 
+TODO: Bug: BSOD on drbdadm up (Windows Server 2016)
+
+	Fix it.
+
+	When peer resource is down no BSOD, however BSOD when it
+	comes up. Most likely this BSOD is when sync starts.
+
+	Upgrade DRBD to 9.0.15 (on both sides) and see if the
+	problem persists.
+
 TODO: Bug: BSOD when running unattended
 
 	Between Windows Server 2016 and Linux.
