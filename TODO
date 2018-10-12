@@ -18,13 +18,17 @@ Planned: Oct 1 2018
 Postponed to; Oct 20 2018
 -----------------------------------------------------------------------
 
-TODO: Implement: have an ioctl that returns WinDRBD versions string
-
-	What /proc/drbd would contain.
-
 TODO: Upgrade to latest DRBD (9.0.15) before testing next beta.
 
 	Update: Wait for 9.0.16 (next week, by Oct 18).
+
+	Update: There's (probably) a sync stall bug in 9.0.14,
+	so upgrade now to 9.0.15 and see if it gone.
+
+TODO: Maybe revert drbd-utils in Program Files.
+
+	inno-setup would check if programs (like drbdsetup events2)
+	are currently running.
 
 TODO: Documentation: white paper for linbit website.
 
@@ -41,6 +45,19 @@ TODO: Documentation: white paper for linbit website.
 TODO: Documentation: define tests to be run before releases.
 
 	And run them ;)
+
+TODO: Bug: BSOD when running unattended
+
+	Between Windows Server 2016 and Linux.
+
+Oct  9 04:01:31 10.43.10.11  U02:01:31.841|c9bcfc80(drbd_a_w0) Receive Receiving canceled (errno is -11) but data available (16 bytes, will be discarded).
+Oct  9 04:01:32 10.43.10.11  U02:01:32.340|c9bcfc80(drbd_a_w0) drbd_ack_receiver <3>drbd w0 pnode-id:3, cs(Connected), prole(Primary), cflag(0x200e), scf(0x2): meta connection shut down by peer.
+
+	But errno 11 is EAGAIN, shouldn't fail here. And not BSOD later.
+
+	Happened during network failure test (./iptables-drop-dont-drop-loop.sh
+	on Linux and ./write-fs-loop.sh on Windows), not sure if it is
+	the same BSOD, trying without I/O now.
 
 TODO: Bug: patch_boot_sector: DRBD signature on peer.
 	Should only be on backing device, never on the wire.
@@ -93,11 +110,6 @@ Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0
 	most likely something that causes Linux DRBD to mistake
 	one Windows host for another.
 
-TODO: Disable driver unload before release
-
-	By setting AddDevice. It causes too many BSOD's.
-	(maybe) Also disable kmalloc debugger.
-
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
@@ -112,11 +124,6 @@ TODO: Check if pacemaker under WSL works
 	for something else, so get a Windows 10 VM (on much or
 	somewhere else) and try the WSL thing there.
 
-TODO: Maybe revert drbd-utils in Program Files.
-
-	inno-setup would check if programs (like drbdsetup events2)
-	are currently running.
-
 TODO: Have a ioctl to set user mode helper program
 
 	And other modparams.
@@ -130,19 +137,6 @@ TODO: Cannot stop driver when resource was ever Primary and I/O
 
 	Proably some handle leak. Driver stays in STOP_PENDING state.
 	And BSOD when shutting down computer.
-
-TODO: Bug: BSOD when running unattended
-
-	Between Windows Server 2016 and Linux.
-
-Oct  9 04:01:31 10.43.10.11  U02:01:31.841|c9bcfc80(drbd_a_w0) Receive Receiving canceled (errno is -11) but data available (16 bytes, will be discarded).
-Oct  9 04:01:32 10.43.10.11  U02:01:32.340|c9bcfc80(drbd_a_w0) drbd_ack_receiver <3>drbd w0 pnode-id:3, cs(Connected), prole(Primary), cflag(0x200e), scf(0x2): meta connection shut down by peer.
-
-	But errno 11 is EAGAIN, shouldn't fail here. And not BSOD later.
-
-	Happened during network failure test (./iptables-drop-dont-drop-loop.sh
-	on Linux and ./write-fs-loop.sh on Windows), not sure if it is
-	the same BSOD, trying without I/O now.
 
 TODO: Upstream: drbdadm invalidate while primary and connected uptodate/uptodate does nothing.
 
@@ -3671,4 +3665,16 @@ Done: Bug: Connection fails sometimes with -EAGAIN
 
 	Update: Probably fixed with 4ecababaa, observe
 	Update: After some patches this is fixed now.
+
+Done: Disable driver unload before release
+
+	By setting AddDevice. It causes too many BSOD's.
+	(maybe) Also disable kmalloc debugger.
+
+Done: Implement: have an ioctl that returns WinDRBD versions string
+
+	What /proc/drbd would contain.
+
+	Update: now have 2 ioctls that just return the interesting
+	parts. Works.
 
