@@ -38,6 +38,10 @@
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
 
+/* TODO: return STATUS_NO_MEMORY instead of STATUS_INSUFFICIENT_RESOURCES
+ * whereever a kmalloc() fails.
+ */
+
 static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject) {

@@ -124,7 +124,9 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
-TODO: Check if pacemaker under WSL works
+TODO: Installation: Windows 2016: Installing a newer version fails when driver is running?
+
+TODO: Research: Check if pacemaker under WSL works
 
 	And include in documentation.
 
@@ -134,16 +136,16 @@ TODO: Check if pacemaker under WSL works
 	for something else, so get a Windows 10 VM (on much or
 	somewhere else) and try the WSL thing there.
 
-TODO: Have a ioctl to set user mode helper program
+TODO: Implement: Have a ioctl to set user mode helper program
 
 	And other modparams.
 
-TODO: Make drbd-utils relocateable
+TODO: Implement: Make drbd-utils relocateable
 
 	Currently hardcoded to C:\windrbd (in kernel and install scripts)
 	and configure parameter in userland.
 
-TODO: Cannot stop driver when resource was ever Primary and I/O
+TODO: Bug: Cannot stop driver when resource was ever Primary and I/O
 
 	Proably some handle leak. Driver stays in STOP_PENDING state.
 	And BSOD when shutting down computer.
@@ -152,7 +154,7 @@ TODO: Upstream: drbdadm invalidate while primary and connected uptodate/uptodate
 
 	And also does not return an error.
 
-TODO: Also BSOD on driver stop while drbdsetup events2 is running.
+TODO: Bug: Also BSOD on driver stop while drbdsetup events2 is running.
 
 	BSOD when drbdsetup events2 is exiting (before it is in
 	STOP_PENDING).
@@ -167,6 +169,9 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 	After some reboots it worked again. Observe.
 
 	Maybe something with the user mode helpers?
+
+	Just happened with a 9.0.15 SyncTarget (Windows) and
+	9.0.15 SyncSource (Linux).
 
 TODO: Bug: sc stop windrbd BSOD's if there are resources up.
 
@@ -220,6 +225,9 @@ TODO: Documentation: drbd-util: Update manpage.
 TODO: Upstream: add .\*.d and the like to .gitignore
 
 TODO: Bug: it seems that free_mdls_and_irp() never gets called.
+
+	After 200 loops of invalidate-loop system runs out of memory.
+	This should be fixed.
 
 TODO: Bug: leaking disk (see TODO in drbd_main.c)
 
