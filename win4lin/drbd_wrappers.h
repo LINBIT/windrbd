@@ -1284,8 +1284,6 @@ static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
 #define nla_parse_nested(tb, maxtype, nla, policy, extack) \
        nla_parse_nested(tb, maxtype, nla, policy)
 
-#endif
-
 #define REQ_OP_WRITE_ZEROES (-3u)
 
 #define PageSlab(p) (0)
@@ -1296,6 +1294,70 @@ static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
 #define drbd_timer_setup(OBJ, MEMBER, TIMER_FN) setup_timer(&OBJ->MEMBER, TIMER_FN, (ULONG_PTR)OBJ)
 #define DRBD_TIMER_CALL_ARG(OBJ, MEMBER) (ULONG_PTR) OBJ
 
+/* taken from commits 020981 and 32e13cff of drbd-kernel-compat */
+
+#ifndef COMPAT_HAVE_BIOSET_INIT
+#define mempool_free(V, P) mempool_free(V, *P)
+#define mempool_alloc(P, F) mempool_alloc(*P, F)
+
+#ifndef COMPAT_HAVE_BIO_CLONE_FAST
+# define bio_clone_fast(bio, gfp, bio_set) bio_clone(bio, gfp)
+#else
+# define bio_clone_fast(BIO, GFP, P) bio_clone_fast(BIO, GFP, *P)
+#endif
+
+#define bio_alloc_bioset(GFP, n, P) bio_alloc_bioset(GFP, n, *P)
+#define DRBD_MEMPOOL_T mempool_t *
+#define DRBD_BIO_SET   bio_set *
+static inline void bioset_exit(struct bio_set **bs)
+{
+	if (*bs) {
+		bioset_free(*bs);
+		*bs = NULL;
+	}
+}
+static inline void mempool_exit(mempool_t **p)
+{
+	if (*p) {
+		mempool_destroy(*p);
+		*p = NULL;
+	}
+}
+#if defined(COMPAT_HAVE_BIOSET_NEED_BVECS)
+#define bioset_init(BS, S, FP, F) __bioset_init(BS, S, FP, F)
+#else
+#define bioset_init(BS, S, FP, F) __bioset_init(BS, S, FP, 0)
+#endif
+static inline int
+__bioset_init(struct bio_set **bs, unsigned int size, unsigned int front_pad, int flags)
+{
+	*bs = bioset_create(size, front_pad);
+	return *bs == NULL ? -ENOMEM : 0;
+}
+static inline int
+mempool_init_page_pool(mempool_t **pool, int min_nr, int order)
+{
+	*pool = mempool_create_page_pool(min_nr, order, 'DRBD');
+	return *pool == NULL ? -ENOMEM : 0;
+}
+static inline int
+mempool_init_slab_pool(mempool_t **pool, int min_nr, struct kmem_cache *mem_cache)
+{
+	*pool = mempool_create_slab_pool(min_nr, mem_cache, 'DRBD');
+	return *pool == NULL ? -ENOMEM : 0;
+}
+static inline bool
+bioset_initialized(struct bio_set **bs)
+{
+	return *bs != NULL;
+}
+#else
+#define DRBD_MEMPOOL_T mempool_t
+#define DRBD_BIO_SET   bio_set
+#endif
+
 /* This is currently not supported by windrbd */
 #define DRBD_REQ_NOUNMAP        0
+
+#endif
 

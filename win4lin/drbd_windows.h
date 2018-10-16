@@ -239,6 +239,7 @@ enum rq_flag_bits {
 #define ECONNABORTED				103
 #define ENODATA					61
 #define ENOTCONN				107
+#define EADDRNOTAVAIL				99
 
 #define SIGCHLD					17
 #define SIGXCPU					100
@@ -724,7 +725,11 @@ struct bio_set {
 };
 
 extern struct bio *bio_clone(struct bio *, int x);
+/* This is patched out of DRBD, patch it in again when implemented.
+ * Careful: this is also a #define in drbd_wrappers expect funny things
+ * to happen.
 extern struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs);
+ */
 extern struct bio_pair *bio_split(struct bio *bi, int first_sectors);
 extern void bio_pair_release(struct bio_pair *dbio);
 extern struct bio_set *bioset_create(unsigned int, unsigned int);
@@ -846,6 +851,7 @@ extern LONG_PTR xchg(LONG_PTR *target, LONG_PTR value);
 extern void atomic_set(atomic_t *v, int i);
 extern void atomic_add(int i, atomic_t *v);
 extern void atomic_add64(LONGLONG a, atomic_t64 *v);
+extern int atomic_add_return(int i, atomic_t *v);
 extern void atomic_sub(int i, atomic_t *v);
 extern void atomic_sub64(LONGLONG a, atomic_t64 *v);
 extern int atomic_sub_return(int i, atomic_t *v); 

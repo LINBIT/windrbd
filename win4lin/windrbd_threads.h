@@ -65,4 +65,11 @@ int wake_up_process(struct task_struct *t);
 
 struct task_struct *kthread_run(int (*threadfn)(void *), void *data, const char *name);
 
+static inline char *get_task_comm(char *buf, struct task_struct *task)
+{
+	/* Linux has here a build bug on sizeof(buf) != TASK_COMM_LEN .. */
+	strncpy(buf, task->comm, TASK_COMM_LEN);
+	return buf;
+}
+
 #endif

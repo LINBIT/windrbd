@@ -5,6 +5,11 @@
 #include <linux/bitsperlong.h>
 #include <linux/types.h>
 
+static void inline barrier(void)
+{
+	KeMemoryBarrier();
+}
+
 #define BIT_MASK(_nr)				(1ULL << ((_nr) % BITS_PER_LONG))
 #define BIT_WORD(_nr)				((_nr) / BITS_PER_LONG)
 
@@ -42,6 +47,13 @@ void set_bit(int bit, volatile ULONG_PTR * base)
 __inline
 void clear_bit(int bit, volatile ULONG_PTR * base)
 {
+    test_and_clear_bit(bit, base);
+}
+
+__inline
+void clear_bit_unlock(int bit, volatile ULONG_PTR * base)
+{
+    barrier();
     test_and_clear_bit(bit, base);
 }
 

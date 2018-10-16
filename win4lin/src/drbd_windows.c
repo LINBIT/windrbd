@@ -434,6 +434,17 @@ void atomic_add64(LONGLONG a, atomic_t64 *v)
 	InterlockedExchangeAdd64((LONGLONG*)v, a);
 }
 
+	/* TODO: atomic? Results may be non-monotonic decreasing, not
+	 * sure if double values can occur.
+	 */
+int atomic_add_return(int i, atomic_t *v)
+{
+	int retval;
+	retval = InterlockedExchangeAdd((LONG*)v, i);
+	retval += i;
+	return retval;
+}
+
 void atomic_sub(int i, atomic_t *v)
 {
 	atomic_sub_return(i, v);
@@ -700,11 +711,6 @@ struct request_queue *bdev_get_queue(struct block_device *bdev)
 	if (bdev && bdev->bd_disk)
 		return bdev->bd_disk->queue;
 
-	return NULL;
-}
-
-struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
-{
 	return NULL;
 }
 

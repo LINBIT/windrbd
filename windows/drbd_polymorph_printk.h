@@ -25,6 +25,29 @@
         /*rcu_read_unlock();	_WIN32 // DW-	*/		\
     } while (0)
 
+/* note the extra __ */
+#define __drbd_printk__peer_req(level, _peer_req, fmt, ...)	\
+    do {								\
+	const struct drbd_peer_device *peer_device;		\
+        const struct drbd_device *__d;				\
+        const struct drbd_connection *__c;			\
+        const struct drbd_resource *__r;			\
+        int __cn;					\
+        /*rcu_read_lock();		_WIN32 // DW-	*/		\
+	peer_device = (_peer_req)->peer_device;			\
+	if (peer_device == NULL) {				\
+		printk(level "peer req device is NULL.\n");	\
+		break;						\
+	}							\
+        __d = (peer_device)->device;				\
+        __c = (peer_device)->connection;			\
+        __r = __d->resource;					\
+        __cn = __c->peer_node_id;	\
+        printk(level "drbd %s/%u minor %u pnode-id:%d, pdsk(%s), prpl(%s), pdvflag(0x%x): " fmt,		\
+            __r->name, __d->vnr, __d->minor, __cn, drbd_disk_str((peer_device)->disk_state[NOW]), drbd_repl_str((peer_device)->repl_state[NOW]), (peer_device)->flags, __VA_ARGS__);\
+        /*rcu_read_unlock();	_WIN32 // DW-	*/		\
+    } while (0)
+
 #define __drbd_printk_resource(level, resource, fmt, ...) \
 	printk(level "drbd %s, r(%s), f(0x%x), scf(0x%x): " fmt, (resource)->name, drbd_role_str((resource)->role[NOW]), (resource)->flags,(resource)->state_change_flags, __VA_ARGS__)
 
@@ -143,6 +166,12 @@ static inline bool static_inline_expect_fn_connection(struct drbd_connection *co
 {
 	if (!expr && drbd_ratelimit())
 		drbd_err(connection, "ASSERTION %s FAILED in %s\n", expr_string, fn);
+	return expr;
+}
+static inline bool static_inline_expect_fn_peer_req(struct drbd_peer_request *_peer_req, int expr, const char *expr_string, const char *fn)
+{
+	if (!expr && drbd_ratelimit())
+		drbd_err(_peer_req, "ASSERTION %s FAILED in %s\n", expr_string, fn);
 	return expr;
 }
 #define expect(x, expr) static_inline_expect_fn_##x(x, !!(expr), #expr, __FUNCTION__)

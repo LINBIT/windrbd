@@ -22,7 +22,7 @@ index 62efe7e..e4cb5ee 100644
  	bio_put(bio);
  
 +	if (page)
-+		mempool_free(page, drbd_md_io_page_pool);
++		mempool_free(page, &drbd_md_io_page_pool);
 +
  	if (atomic_dec_and_test(&ctx->in_flight)) {
  		ctx->done = 1;

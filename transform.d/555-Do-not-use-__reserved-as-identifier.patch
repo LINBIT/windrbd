@@ -1,0 +1,26 @@
+From f95e45340d70af0888e60ad9bbc45d264fccb74a Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 16 Oct 2018 17:27:27 +0200
+Subject: [PATCH 1/4] Do not use __reserved as identifier.
+
+It is used for something else.
+---
+ drbd-headers/drbd_meta_data.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd-headers/drbd_meta_data.h b/drbd-headers/drbd_meta_data.h
+index 35452ae..8b4eb27 100644
+--- a/drbd-headers/drbd_meta_data.h
++++ b/drbd-headers/drbd_meta_data.h
+@@ -91,7 +91,7 @@ struct __packed al_transaction_on_disk {
+ 	/* Some reserved bytes.  Expected usage is a 64bit counter of
+ 	 * sectors-written since device creation, and other data generation tag
+ 	 * supporting usage */
+-	be_u32	__reserved[4];
++	be_u32	__reserved_win[4];
+ 
+ 	/* --- 36 byte used --- */
+ 
+-- 
+2.17.0
+

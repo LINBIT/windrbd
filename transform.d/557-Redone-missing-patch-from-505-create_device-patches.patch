@@ -1,0 +1,39 @@
+From 921e4d27eea165abe9129b934eb7bc39cb162ce2 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 16 Oct 2018 17:33:33 +0200
+Subject: [PATCH 3/4] Redone missing patch from 505 (create_device patches).
+
+---
+ drbd/drbd_main.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 022d036..61473ea 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3634,15 +3634,21 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	int vnr = adm_ctx->volume;
+ 	enum drbd_ret_code err = ERR_NOMEM;
+ 	bool locked = false;
++	struct block_device *block_device;
+ 
+ 	device = minor_to_device(minor);
+ 	if (device)
+ 		return ERR_MINOR_OR_VOLUME_EXISTS;
+ 
++	block_device = bdget(MKDEV(DRBD_MAJOR, minor));
++	if (block_device == NULL)
++		return ERR_NO_DISK;
++
+ 	/* GFP_KERNEL, we are outside of all write-out paths */
+ 	device = kzalloc(sizeof(struct drbd_device), GFP_KERNEL, '0AWD');
+ 	if (!device)
+-		return ERR_NOMEM;
++		goto out_no_device;
++
+ 	kref_init(&device->kref);
+ 	kref_debug_init(&device->kref_debug, &device->kref, &kref_class_device);
+ 
+-- 
+2.17.0
+
