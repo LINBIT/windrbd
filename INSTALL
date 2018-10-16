@@ -23,7 +23,7 @@ also fine):
 	    Download and Install Development tools of cygwin (there is
 		a GUI for that, please don't expect screenshots in here)
 		You need (at least): 
-			autoconf, automake, flex, gcc, g++, git, make
+			autoconf, automake, flex, gcc-core, gcc-g++, git, make
 
 	    Download and install the EWDK as described in:
 
