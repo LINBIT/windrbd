@@ -18,11 +18,6 @@ Planned: Oct 1 2018
 Postponed to; Oct 20 2018
 -----------------------------------------------------------------------
 
-TODO: Maybe revert drbd-utils in Program Files.
-
-	inno-setup would check if programs (like drbdsetup events2)
-	are currently running.
-
 TODO: Documentation: white paper for linbit website.
 
 	Until end of June 2018
@@ -48,6 +43,27 @@ TODO: Bug: BSOD on drbdadm up (Windows Server 2016)
 
 	Upgrade DRBD to 9.0.15 (on both sides) and see if the
 	problem persists.
+
+	Update: upgraded, so far no BSOD, but requires more testing.
+
+TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
+
+	Sync stalls at 0%. Try to update Linux DRBD before doing
+	anything else.
+
+	Update: Upgraded Linux peer.
+
+	After some reboots it worked again. Observe.
+
+	Maybe something with the user mode helpers?
+
+	Just happened with a 9.0.15 SyncTarget (Windows) and
+	9.0.15 SyncSource (Linux).
+
+TODO: Bug: it seems that free_mdls_and_irp() never gets called.
+
+	After 200 loops of invalidate-loop system runs out of memory.
+	This should be fixed.
 
 TODO: Bug: BSOD when running unattended
 
@@ -117,11 +133,13 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
-TODO: Installation: Windows 2016: Installing a newer version fails when driver is running?
+TODO: Maybe revert drbd-utils in Program Files.
 
-	Yes it does. Problem is a sharing violation of the driver
-	file (cannot copy to sysnative directory). We now try to
-	delete the file (which worked on the cygwin cmdline).
+	inno-setup would check if programs (like drbdsetup events2)
+	are currently running.
+
+	Update: Tried, we will have to rewrite installer cmd script
+	in PascalScript for that.
 
 TODO: Research: Check if pacemaker under WSL works
 
@@ -136,6 +154,10 @@ TODO: Research: Check if pacemaker under WSL works
 TODO: Implement: Have a ioctl to set user mode helper program
 
 	And other modparams.
+
+	Update: We now can use the drbdadm from where the windrbd
+	binary lives (without ioctl, it is sufficient for now to
+	do that in user space).
 
 TODO: Implement: Make drbd-utils relocateable
 
@@ -155,20 +177,6 @@ TODO: Bug: Also BSOD on driver stop while drbdsetup events2 is running.
 
 	BSOD when drbdsetup events2 is exiting (before it is in
 	STOP_PENDING).
-
-TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
-
-	Sync stalls at 0%. Try to update Linux DRBD before doing
-	anything else.
-
-	Update: Upgraded Linux peer.
-
-	After some reboots it worked again. Observe.
-
-	Maybe something with the user mode helpers?
-
-	Just happened with a 9.0.15 SyncTarget (Windows) and
-	9.0.15 SyncSource (Linux).
 
 TODO: Bug: sc stop windrbd BSOD's if there are resources up.
 
@@ -193,7 +201,7 @@ TODO: Implement: We want to have some sort of a regression test suite.
 	Update: Yes we will use the agruen test suite. Phil is doing
 	most of the tests so ask him for a primer.
 
-TODO: Research Hyper-V plugin for Linstor
+TODO: Research: Hyper-V plugin for Linstor
 
 TODO: Implement: Make windrbd utils relocateable.
 
@@ -220,11 +228,6 @@ TODO: Documentation: drbd-util: Update manpage.
 	And write one for windrbd utility.
 
 TODO: Upstream: add .\*.d and the like to .gitignore
-
-TODO: Bug: it seems that free_mdls_and_irp() never gets called.
-
-	After 200 loops of invalidate-loop system runs out of memory.
-	This should be fixed.
 
 TODO: Bug: leaking disk (see TODO in drbd_main.c)
 
@@ -350,7 +353,7 @@ TODO: Code quality: Replace WDRBD_ERROR and the like by printk
 
 	The log severities are wrong with these macros.
 
-TODO: forward port drbd_polymorph_printk.h (again).
+TODO: Implement: forward port drbd_polymorph_printk.h (again).
 
 	Or even better use the original file which should also
 	work (currently exit code of user mode helper is not 
@@ -438,6 +441,8 @@ TODO: Implement: Make drbd service stoppable
 	the driver is still in memory a new version of the driver
 	can be loaded without rebooting). Think about including
 	driver unload in beta5.
+
+	Update: no beta5 will be with unloading disabled.
 
 TODO: Feature: Mount to NTFS directories.
 
@@ -3699,4 +3704,13 @@ Done: Upgrade to latest DRBD (9.0.15) before testing next beta.
 
 	Update: There's (probably) a sync stall bug in 9.0.14,
 	so upgrade now to 9.0.15 and see if it gone.
+
+Done: Installation: Windows 2016: Installing a newer version fails when driver is running?
+
+	Yes it does. Problem is a sharing violation of the driver
+	file (cannot copy to sysnative directory). We now try to
+	delete the file (which worked on the cygwin cmdline).
+
+	Update: now running installer script in 64-bit mode (execing
+	from C:\Windows\sysnative\cmd.exe), works now.
 
