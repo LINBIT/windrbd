@@ -34,6 +34,11 @@ TODO: Documentation: define tests to be run before releases.
 
 	And run them ;)
 
+TODO: Bug: it seems that free_mdls_and_irp() never gets called.
+
+	After 200 loops of invalidate-loop system runs out of memory.
+	This should be fixed.
+
 TODO: Bug: BSOD on drbdadm up (Windows Server 2016)
 
 	Fix it.
@@ -60,11 +65,6 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 	Just happened with a 9.0.15 SyncTarget (Windows) and
 	9.0.15 SyncSource (Linux).
 
-TODO: Bug: it seems that free_mdls_and_irp() never gets called.
-
-	After 200 loops of invalidate-loop system runs out of memory.
-	This should be fixed.
-
 TODO: Bug: BSOD when running unattended
 
 	Between Windows Server 2016 and Linux.
@@ -78,23 +78,8 @@ Oct  9 04:01:32 10.43.10.11  U02:01:32.340|c9bcfc80(drbd_a_w0) drbd_ack_receiver
 	on Linux and ./write-fs-loop.sh on Windows), not sure if it is
 	the same BSOD, trying without I/O now.
 
-TODO: Bug: patch_boot_sector: DRBD signature on peer.
-	Should only be on backing device, never on the wire.
-
-	Not when Syncing, only when formatting while connected?
-	Yes. Make a temporary copy of the boot sector when writing
-	in windrbd_generic_make_request(). Do not modify the bio's
-	buffer directly, this might also be the Page Cache (or whatever
-	this is called on Windows) of the file system which causes
-	format to display the weird Boot sector invalid message.
-
-	Update: implemented, weird behaviour when extra field is
-	put after io_status (see separate TODO). It seems to work
-	now (formatting while connected does not copy DRBD signature
-	to peer).
-
-	Update: Reopened: This happens now when invalidating (or otherwise
-	syncing) from a windows peer.
+	Update: Most likely this is an out-of-memory bug, with leak in
+	the I/O path. Fix that leak and retry test.
 
 TODO: Bug: 3 node setup sometimes does not work.
 
@@ -3713,4 +3698,25 @@ Done: Installation: Windows 2016: Installing a newer version fails when driver i
 
 	Update: now running installer script in 64-bit mode (execing
 	from C:\Windows\sysnative\cmd.exe), works now.
+
+Done: Bug: patch_boot_sector: DRBD signature on peer.
+	Should only be on backing device, never on the wire.
+
+	Not when Syncing, only when formatting while connected?
+	Yes. Make a temporary copy of the boot sector when writing
+	in windrbd_generic_make_request(). Do not modify the bio's
+	buffer directly, this might also be the Page Cache (or whatever
+	this is called on Windows) of the file system which causes
+	format to display the weird Boot sector invalid message.
+
+	Update: implemented, weird behaviour when extra field is
+	put after io_status (see separate TODO). It seems to work
+	now (formatting while connected does not copy DRBD signature
+	to peer).
+
+	Update: Reopened: This happens now when invalidating (or otherwise
+	syncing) from a windows peer.
+
+	Fixed with 4c66b503af9: reason was check for bi_first_element
+	was wrong (race with generic_make_request updating it).
 
