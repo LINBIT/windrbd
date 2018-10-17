@@ -637,6 +637,8 @@ struct bio_collection {
 
 };
 
+#define BI_WINDRBD_FLAG_BOOTSECTOR_PATCHED 0
+
 struct bio {
 	struct _IRP **bi_irps;	   /* Used for accessing the backing device */
 	struct _IRP *bi_upper_irp; /* Used for the DRBD device */
@@ -698,6 +700,11 @@ struct bio {
 	 * on backing device on attach.
 	 */
 	bool dont_patch_boot_sector;
+
+	/* Bit 0: Set by read completion routine to avoid calling
+	 * patch_boot_sector multiple times.
+	 */
+	ULONG_PTR bi_windrbd_flags;
 
 	/* For bio's created by windrbd device ("upper") layer, this
 	 * indicates where in the user space MDL the bio starts.

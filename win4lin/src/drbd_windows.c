@@ -401,10 +401,10 @@ int test_and_change_bit(int nr, const ULONG_PTR *addr)
 	ULONG_PTR old;
 	ULONG_PTR flags;
 
-	spin_lock_irq(&g_test_and_change_bit_lock);
+	spin_lock_irqsave(&g_test_and_change_bit_lock, flags);
 	old = *p;
 	*p = old ^ mask;
-	spin_unlock_irq(&g_test_and_change_bit_lock);
+	spin_unlock_irqrestore(&g_test_and_change_bit_lock, flags);
 
 	return (old & mask) != 0;
 }
@@ -1808,9 +1808,11 @@ NTSTATUS DrbdIoCompletion(
 	if (test_inject_faults(&inject_on_completion, "assuming completion routine was send an error (enabled for all devices)"))
 		status = STATUS_IO_DEVICE_ERROR;
 
-	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
-		void *buffer = bio->bi_io_vec[0].bv_page->addr; 
-		patch_boot_sector(buffer, 1, 0);
+	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512 && !bio->dont_patch_boot_sector) {
+		if (test_and_set_bit(BI_WINDRBD_FLAG_BOOTSECTOR_PATCHED, &bio->bi_windrbd_flags) == 0) {
+			void *buffer = bio->bi_io_vec[0].bv_page->addr;
+			patch_boot_sector(buffer, 1, 0);
+		}
 	}
 /*
 	if (stack_location->MajorFunction == IRP_MJ_READ) {
