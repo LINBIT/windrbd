@@ -14,14 +14,6 @@ if not exist c:\windrbd\NUL (
 	unzip -d c:\windrbd sysroot.zip
 )
 
-rem Also note that since the installer is 32 bit the system32
-rem directory (which holds 64 bit applications, hence the name ;)
-rem is called sysnative. Somehow InfDefaultInstall gets confused,
-rem with this it works:
-
-del c:\windows\sysnative\drivers\windrbd.sys
-copy windrbd.sys c:\windows\sysnative\drivers
-
 copy windrbd*.exe c:\windrbd\usr\sbin
 copy drbd*.exe c:\windrbd\usr\sbin
 
