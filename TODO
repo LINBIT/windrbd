@@ -18,13 +18,6 @@ Planned: Oct 1 2018
 Postponed to; Oct 20 2018
 -----------------------------------------------------------------------
 
-TODO: Upgrade to latest DRBD (9.0.15) before testing next beta.
-
-	Update: Wait for 9.0.16 (next week, by Oct 18).
-
-	Update: There's (probably) a sync stall bug in 9.0.14,
-	so upgrade now to 9.0.15 and see if it gone.
-
 TODO: Maybe revert drbd-utils in Program Files.
 
 	inno-setup would check if programs (like drbdsetup events2)
@@ -125,6 +118,10 @@ Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
 TODO: Installation: Windows 2016: Installing a newer version fails when driver is running?
+
+	Yes it does. Problem is a sharing violation of the driver
+	file (cannot copy to sysnative directory). We now try to
+	delete the file (which worked on the cygwin cmdline).
 
 TODO: Research: Check if pacemaker under WSL works
 
@@ -3695,4 +3692,11 @@ Done: Implement: have an ioctl that returns WinDRBD versions string
 
 	Update: now have 2 ioctls that just return the interesting
 	parts. Works.
+
+Done: Upgrade to latest DRBD (9.0.15) before testing next beta.
+
+	Update: Wait for 9.0.16 (next week, by Oct 18).
+
+	Update: There's (probably) a sync stall bug in 9.0.14,
+	so upgrade now to 9.0.15 and see if it gone.
 
