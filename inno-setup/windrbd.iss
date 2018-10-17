@@ -110,7 +110,7 @@ Name: "{group}\Open {#MyAppName} configuration folder"; Filename: "C:\windrbd\et
                                                 
 [Run]
 Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
-Filename: "{app}\install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
+Filename: "{app}\install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated
 
 [UninstallRun]
 Filename: "{app}\uninstall-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
