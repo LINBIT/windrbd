@@ -1,0 +1,11 @@
+.
+./etc
+./etc/drbd.d
+./usr
+./usr/sbin
+./var
+./var/run
+./var/run/drbd
+./var/lib
+./var/lib/drbd
+./var/lock

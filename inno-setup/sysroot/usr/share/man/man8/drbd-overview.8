@@ -1,0 +1,65 @@
+'\" t
+.\"     Title: drbd-overview
+.\"    Author: [see the "Author" section]
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 24 June 2014
+.\"    Manual: System Administration
+.\"    Source: DRBD 9.0.0
+.\"  Language: English
+.\"
+.TH "DRBD\-OVERVIEW" "8" "24 June 2014" "DRBD 9.0.0" "System Administration"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+drbd-overview \- Overview of all configured DRBD resources
+.SH "SYNOPSIS"
+.HP \w'\fBdrbd\-overview\fR\ 'u
+\fBdrbd\-overview\fR
+.SH "DESCRIPTION"
+.PP
+drbd\-overview offers an overview of the state of all configured DRBD resources\&. It provides information about the connection status of each DRBD resource\&. It will also use auxiliary information provided by
+\fBdf\fR(1),
+\fBlvm\fR(8),
+\fBxm\fR(1)
+and
+\fBvirsh\fR(1)
+for DRBD resources used as mounted filesystems, LVM physical volumes, Xen domain backing disks and libvirt instance disks respectively\&.
+.SH "AUTHOR"
+.sp
+Written by Philipp Reisner philipp\&.reisner@linbit\&.com and Lars Ellenberg lars\&.ellenberg@linbit\&.com\&. Initial man\-page contributed by Apollon Oikonomopoulos apoikos@gmail\&.com\&.
+.SH "REPORTING BUGS"
+.sp
+Report bugs to drbd\-user@lists\&.linbit\&.com\&.
+.SH "COPYRIGHT"
+.sp
+Copyright 2008\-2014 LINBIT Information Technologies, Philipp Reisner, Lars Ellenberg\&. This is free software; see the source for copying conditions\&. There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE\&.
+.SH "SEE ALSO"
+.PP
+
+\fBdrbd.conf\fR(5),
+\fBdrbdsetup\fR(8),
+\fBdrbdadm\fR(8),
+\m[blue]\fBDRBD Homepage\fR\m[]\&\s-2\u[1]\d\s+2
+.SH "NOTES"
+.IP " 1." 4
+DRBD Homepage
+.RS 4
+\%http://www.drbd.org/
+.RE

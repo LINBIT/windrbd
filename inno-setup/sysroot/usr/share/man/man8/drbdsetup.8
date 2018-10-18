@@ -1,0 +1,1493 @@
+'\" t
+.\"     Title: drbdsetup
+.\"    Author: [see the "Author" section]
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 3 December 2011
+.\"    Manual: System Administration
+.\"    Source: DRBD 9.0.0
+.\"  Language: English
+.\"
+.TH "DRBDSETUP" "8" "3 December 2011" "DRBD 9.0.0" "System Administration"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+drbdsetup \- Configure the DRBD kernel module.\" drbdsetup
+.SH "SYNOPSIS"
+.HP \w'\fBdrbdsetup\fR\ 'u
+\fBdrbdsetup\fR command {argument...} [option...]
+.SH "DESCRIPTION"
+.PP
+The
+\fBdrbdsetup\fR
+utility serves to configure the DRBD kernel module and to show its current configuration\&. Users usually interact with the
+\fBdrbdadm\fR
+utility, which provides a more high\-level interface to DRBD than
+\fBdrbdsetup\fR\&. (See
+\fBdrbdadm\fR\*(Aqs
+\fB\-\-dry\-run\fR
+option to see how
+\fBdrbdadm\fR
+uses
+\fBdrbdsetup\fR\&.)
+.PP
+Some option arguments have a default scale which applies when a plain number is specified (for example Kilo, or 1024 times the numeric value)\&. Such default scales can be overridden by using a suffix (for example, M for Mega)\&. The common suffixes K = 2^10 = 1024, M = 1024 K, and G = 1024 M are supported\&.
+.SH "COMMANDS"
+.PP
+\fBdrbdsetup\fR attach \fIminor\fR \fIlower_dev\fR \fImeta_data_dev\fR \fImeta_data_index\fR, 
+.br
+\fBdrbdsetup\fR disk\-options \fIminor\fR
+.RS 4
+.\" drbdsetup: disk
+The
+\fBattach\fR
+command attaches a lower\-level device to an existing replicated device\&. The
+\fBdisk\-options\fR
+command changes the disk options of an attached lower\-level device\&. In either case, the replicated device must have been created with
+\fBdrbdsetup new\-minor\fR\&.
+.sp
+Both commands refer to the replicated device by its
+\fIminor\fR
+number\&.
+\fIlower_dev\fR
+is the name of the lower\-level device\&.
+\fImeta_data_dev\fR
+is the name of the device containing the metadata, and may be the same as
+\fIlower_dev\fR\&.
+\fImeta_data_index\fR
+is either a numeric metadata index, or the keyword
+\fBinternal\fR
+for internal metadata, or the keyword
+\fBflexible\fR
+for variable\-size external metadata\&. Available options:
+.PP
+\fB\-\-al\-extents \fR\fB\fIextents\fR\fR
+.RS 4
+DRBD automatically maintains a "hot" or "active" disk area likely to be written to again soon based on the recent write activity\&. The "active" disk area can be written to immediately, while "inactive" disk areas must be "activated" first, which requires a meta\-data write\&. We also refer to this active disk area as the "activity log"\&.
+.sp
+The activity log saves meta\-data writes, but the whole log must be resynced upon recovery of a failed node\&. The size of the activity log is a major factor of how long a resync will take and how fast a replicated disk will become consistent after a crash\&.
+.sp
+The activity log consists of a number of 4\-Megabyte segments; the
+\fIal\-extents\fR
+parameter determines how many of those segments can be active at the same time\&. The default value for
+\fIal\-extents\fR
+is 1237, with a minimum of 7 and a maximum of 65536\&.
+.sp
+Note that the effective maximum may be smaller, depending on how you created the device meta data, see also
+\fBdrbdmeta\fR(8)
+The effective maximum is 919 * (available on\-disk activity\-log ring\-buffer area/4kB \-1), the default 32kB ring\-buffer effects a maximum of 6433 (covers more than 25 GiB of data) We recommend to keep this well within the amount your backend storage and replication link are able to resync inside of about 5 minutes\&.
+.RE
+.PP
+\fB\-\-al\-updates \fR\fB{yes | no}\fR\fB \fR
+.RS 4
+With this parameter, the activity log can be turned off entirely (see the
+\fBal\-extents\fR
+parameter)\&. This will speed up writes because fewer meta\-data writes will be necessary, but the entire device needs to be resynchronized opon recovery of a failed primary node\&. The default value for
+\fBal\-updates\fR
+is
+\fByes\fR\&.
+.RE
+.PP
+\fB\-\-disk\-barrier\fR, 
+.br
+\fB\-\-disk\-flushes\fR, 
+.br
+\fB\-\-disk\-drain\fR
+.RS 4
+DRBD has three methods of handling the ordering of dependent write requests:
+.PP
+\fBdisk\-barrier\fR
+.RS 4
+Use disk barriers to make sure that requests are written to disk in the right order\&. Barriers ensure that all requests submitted before a barrier make it to the disk before any requests submitted after the barrier\&. This is implemented using \*(Aqtagged command queuing\*(Aq on SCSI devices and \*(Aqnative command queuing\*(Aq on SATA devices\&. Only some devices and device stacks support this method\&. The device mapper (LVM) only supports barriers in some configurations\&.
+.sp
+Note that on systems which do not support disk barriers, enabling this option can lead to data loss or corruption\&. Until DRBD 8\&.4\&.1,
+\fBdisk\-barrier\fR
+was turned on if the I/O stack below DRBD did support barriers\&. Kernels since linux\-2\&.6\&.36 (or 2\&.6\&.32 RHEL6) no longer allow to detect if barriers are supported\&. Since drbd\-8\&.4\&.2, this option is off by default and needs to be enabled explicitly\&.
+.RE
+.PP
+\fBdisk\-flushes\fR
+.RS 4
+Use disk flushes between dependent write requests, also referred to as \*(Aqforce unit access\*(Aq by drive vendors\&. This forces all data to disk\&. This option is enabled by default\&.
+.RE
+.PP
+\fBdisk\-drain\fR
+.RS 4
+Wait for the request queue to "drain" (that is, wait for the requests to finish) before submitting a dependent write request\&. This method requires that requests are stable on disk when they finish\&. Before DRBD 8\&.0\&.9, this was the only method implemented\&. This option is enabled by default\&. Do not disable in production environments\&.
+.RE
+.sp
+From these three methods, drbd will use the first that is enabled and supported by the backing storage device\&. If all three of these options are turned off, DRBD will submit write requests without bothering about dependencies\&. Depending on the I/O stack, write requests can be reordered, and they can be submitted in a different order on different cluster nodes\&. This can result in data loss or corruption\&. Therefore, turning off all three methods of controlling write ordering is strongly discouraged\&.
+.sp
+A general guideline for configuring write ordering is to use disk barriers or disk flushes when using ordinary disks (or an ordinary disk array) with a volatile write cache\&. On storage without cache or with a battery backed write cache, disk draining can be a reasonable choice\&.
+.RE
+.PP
+\fB\-\-disk\-timeout\fR
+.RS 4
+If the lower\-level device on which a DRBD device stores its data does not finish an I/O request within the defined
+\fBdisk\-timeout\fR, DRBD treats this as a failure\&. The lower\-level device is detached, and the device\*(Aqs disk state advances to Diskless\&. If DRBD is connected to one or more peers, the failed request is passed on to one of them\&.
+.sp
+This option is
+\fIdangerous and may lead to kernel panic!\fR
+.sp
+"Aborting" requests, or force\-detaching the disk, is intended for completely blocked/hung local backing devices which do no longer complete requests at all, not even do error completions\&. In this situation, usually a hard\-reset and failover is the only way out\&.
+.sp
+By "aborting", basically faking a local error\-completion, we allow for a more graceful swichover by cleanly migrating services\&. Still the affected node has to be rebooted "soon"\&.
+.sp
+By completing these requests, we allow the upper layers to re\-use the associated data pages\&.
+.sp
+If later the local backing device "recovers", and now DMAs some data from disk into the original request pages, in the best case it will just put random data into unused pages; but typically it will corrupt meanwhile completely unrelated data, causing all sorts of damage\&.
+.sp
+Which means delayed successful completion, especially for READ requests, is a reason to panic()\&. We assume that a delayed *error* completion is OK, though we still will complain noisily about it\&.
+.sp
+The default value of
+\fBdisk\-timeout\fR
+is 0, which stands for an infinite timeout\&. Timeouts are specified in units of 0\&.1 seconds\&. This option is available since DRBD 8\&.3\&.12\&.
+.RE
+.PP
+\fB\-\-md\-flushes\fR
+.RS 4
+Enable disk flushes and disk barriers on the meta\-data device\&. This option is enabled by default\&. See the
+\fBdisk\-flushes\fR
+parameter\&.
+.RE
+.PP
+\fB\-\-on\-io\-error \fR\fB\fIhandler\fR\fR
+.RS 4
+Configure how DRBD reacts to I/O errors on a lower\-level device\&. The following policies are defined:
+.PP
+\fBpass_on\fR
+.RS 4
+Change the disk status to Inconsistent, mark the failed block as inconsistent in the bitmap, and retry the I/O operation on a remote cluster node\&.
+.RE
+.PP
+\fBcall\-local\-io\-error\fR
+.RS 4
+Call the
+\fBlocal\-io\-error\fR
+handler (see the
+\fBhandlers\fR
+section)\&.
+.RE
+.PP
+\fBdetach\fR
+.RS 4
+Detach the lower\-level device and continue in diskless mode\&.
+.RE
+.sp
+.RE
+.PP
+\fB\-\-read\-balancing \fR\fB\fIpolicy\fR\fR
+.RS 4
+Distribute read requests among cluster nodes as defined by
+\fIpolicy\fR\&. The supported policies are
+\fBprefer\-local\fR
+(the default),
+\fBprefer\-remote\fR,
+\fBround\-robin\fR,
+\fBleast\-pending\fR,
+\fBwhen\-congested\-remote\fR,
+\fB32K\-striping\fR,
+\fB64K\-striping\fR,
+\fB128K\-striping\fR,
+\fB256K\-striping\fR,
+\fB512K\-striping\fR
+and
+\fB1M\-striping\fR\&.
+.sp
+This option is available since DRBD 8\&.4\&.1\&.
+.RE
+.PP
+\fBresync\-after \fR\fB\fIminor\fR\fR
+.RS 4
+Define that a device should only resynchronize after the specified other device\&. By default, no order between devices is defined, and all devices will resynchronize in parallel\&. Depending on the configuration of the lower\-level devices, and the available network and disk bandwidth, this can slow down the overall resync process\&. This option can be used to form a chain or tree of dependencies among devices\&.
+.RE
+.PP
+\fB\-\-size \fR\fB\fIsize\fR\fR
+.RS 4
+Specify the size of the lower\-level device explicitly instead of determining it automatically\&. The device size must be determined once and is remembered for the lifetime of the device\&. In order to determine it automatically, all the lower\-level devices on all nodes must be attached, and all nodes must be connected\&. If the size is specified explicitly, this is not necessary\&. The
+\fBsize\fR
+value is assumed to be in units of sectors (512 bytes) by default\&.
+.RE
+.PP
+\fB\-\-discard\-zeroes\-if\-aligned \fR\fB{yes | no}\fR
+.RS 4
+There are several aspects to discard/trim/unmap support on linux block devices\&. Even if discard is supported in general, it may fail silently, or may partially ignore discard requests\&. Devices also announce whether reading from unmapped blocks returns defined data (usually zeroes), or undefined data (possibly old data, possibly garbage)\&.
+.sp
+If on different nodes, DRBD is backed by devices with differing discard characteristics, discards may lead to data divergence (old data or garbage left over on one backend, zeroes due to unmapped areas on the other backend)\&. Online verify would now potentially report tons of spurious differences\&. While probably harmless for most use cases (fstrim on a file system), DRBD cannot have that\&.
+.sp
+To play safe, we have to disable discard support, if our local backend (on a Primary) does not support "discard_zeroes_data=true"\&. We also have to translate discards to explicit zero\-out on the receiving side, unless the receiving side (Secondary) supports "discard_zeroes_data=true", thereby allocating areas what were supposed to be unmapped\&.
+.sp
+There are some devices (notably the LVM/DM thin provisioning) that are capable of discard, but announce discard_zeroes_data=false\&. In the case of DM\-thin, discards aligned to the chunk size will be unmapped, and reading from unmapped sectors will return zeroes\&. However, unaligned partial head or tail areas of discard requests will be silently ignored\&.
+.sp
+If we now add a helper to explicitly zero\-out these unaligned partial areas, while passing on the discard of the aligned full chunks, we effectively achieve discard_zeroes_data=true on such devices\&.
+.sp
+Setting
+\fBdiscard\-zeroes\-if\-aligned\fR
+to
+\fByes\fR
+will allow DRBD to use discards, and to announce discard_zeroes_data=true, even on backends that announce discard_zeroes_data=false\&.
+.sp
+Setting
+\fBdiscard\-zeroes\-if\-aligned\fR
+to
+\fBno\fR
+will cause DRBD to always fall\-back to zero\-out on the receiving side, and to not even announce discard capabilities on the Primary, if the respective backend announces discard_zeroes_data=false\&.
+.sp
+We used to ignore the discard_zeroes_data setting completely\&. To not break established and expected behaviour, and suddenly cause fstrim on thin\-provisioned LVs to run out\-of\-space instead of freeing up space, the default value is
+\fByes\fR\&.
+.sp
+This option is available since 8\&.4\&.7\&.
+.RE
+.PP
+\fB\-\-rs\-discard\-granularity \fR\fB\fIbyte\fR\fR
+.RS 4
+When
+\fBrs\-discard\-granularity\fR
+is set to a non zero, positive value then DRBD tries to do a resync operation in requests of this size\&. In case such a block contains only zero bytes on the sync source node, the sync target node will issue a discard/trim/unmap command for the area\&.
+.sp
+The value is constrained by the discard granularity of the backing block device\&. In case
+\fBrs\-discard\-granularity\fR
+is not a multiplier of the discard granularity of the backing block device DRBD rounds it up\&. The feature only gets active if the backing block device reads back zeroes after a discard command\&.
+.sp
+The default value of is 0\&. This option is available since 8\&.4\&.7\&.
+.RE
+.RE
+.PP
+\fBdrbdsetup\fR peer\-device\-options \fIresource\fR \fIpeer_node_id\fR \fIvolume\fR
+.RS 4
+.\" drbdsetup: peer-device-options
+These are options that affect the
+\fIpeer\fR\*(Aqs device\&.
+.PP
+\fB\-\-c\-delay\-target \fR\fB\fIdelay_target\fR\fR, 
+.br
+\fB\-\-c\-fill\-target \fR\fB\fIfill_target\fR\fR, 
+.br
+\fB\-\-c\-max\-rate \fR\fB\fImax_rate\fR\fR, 
+.br
+\fB\-\-c\-plan\-ahead \fR\fB\fIplan_time\fR\fR
+.RS 4
+Dynamically control the resync speed\&. This mechanism is enabled by setting the
+\fBc\-plan\-ahead\fR
+parameter to a positive value\&. The goal is to either fill the buffers along the data path with a defined amount of data if
+\fBc\-fill\-target\fR
+is defined, or to have a defined delay along the path if
+\fBc\-delay\-target\fR
+is defined\&. The maximum bandwidth is limited by the
+\fBc\-max\-rate\fR
+parameter\&.
+.sp
+The
+\fBc\-plan\-ahead\fR
+parameter defines how fast drbd adapts to changes in the resync speed\&. It should be set to five times the network round\-trip time or more\&. Common values for
+\fBc\-fill\-target\fR
+for "normal" data paths range from 4K to 100K\&. If drbd\-proxy is used, it is advised to use
+\fBc\-delay\-target\fR
+instead of
+\fBc\-fill\-target\fR\&. The
+\fBc\-delay\-target\fR
+parameter is used if the
+\fBc\-fill\-target\fR
+parameter is undefined or set to 0\&. The
+\fBc\-delay\-target\fR
+parameter should be set to five times the network round\-trip time or more\&. The
+\fBc\-max\-rate\fR
+option should be set to either the bandwidth available between the DRBD\-hosts and the machines hosting DRBD\-proxy, or to the available disk bandwidth\&.
+.sp
+The default values of these parameters are:
+\fBc\-plan\-ahead\fR
+= 20 (in units of 0\&.1 seconds),
+\fBc\-fill\-target\fR
+= 0 (in units of sectors),
+\fBc\-delay\-target\fR
+= 1 (in units of 0\&.1 seconds), and
+\fBc\-max\-rate\fR
+= 102400 (in units of KiB/s)\&.
+.sp
+Dynamic resync speed control is available since DRBD 8\&.3\&.9\&.
+.RE
+.PP
+.RS 4
+.RE
+.PP
+.RS 4
+.RE
+.PP
+\fB\-\-c\-min\-rate \fR\fB\fImin_rate\fR\fR
+.RS 4
+A node which is primary and sync\-source has to schedule application I/O requests and resync I/O requests\&. The
+\fBc\-min\-rate\fR
+parameter limits how much bandwidth is available for resync I/O; the remaining bandwidth is used for application I/O\&.
+.sp
+A
+\fBc\-min\-rate\fR
+value of 0 means that there is no limit on the resync I/O bandwidth\&. This can slow down application I/O significantly\&. Use a value of 1 (1 KiB/s) for the lowest possible resync rate\&.
+.sp
+The default value of
+\fBc\-min\-rate\fR
+is 4096, in units of KiB/s\&.
+.RE
+.PP
+.RS 4
+.RE
+.PP
+\fB\-\-resync\-rate \fR\fB\fIrate\fR\fR
+.RS 4
+Define how much bandwidth DRBD may use for resynchronizing\&. DRBD allows "normal" application I/O even during a resync\&. If the resync takes up too much bandwidth, application I/O can become very slow\&. This parameter allows to avoid that\&. Please note this is option only works when the dynamic resync controller is disabled\&.
+.RE
+.RE
+.PP
+\fBdrbdsetup\fR check\-resize \fIminor\fR
+.RS 4
+.\" drbdsetup: check-resize
+Remember the current size of the lower\-level device of the specified replicated device\&. Used by drbdadm\&. The size information is stored in file /var/lib/drbd/drbd\-minor\-\fIminor\fR\&.lkbd\&.
+.RE
+.PP
+\fBdrbdsetup\fR new\-peer \fIresource\fR \fIpeer_node_id\fR, 
+.br
+\fBdrbdsetup\fR net\-options \fIresource\fR \fIpeer_node_id\fR
+.RS 4
+.\" drbdsetup: net
+The
+\fBnew\-peer\fR
+command creates a connection within a
+\fIresource\fR\&. The resource must have been created with
+\fBdrbdsetup new\-resource\fR\&. The
+\fBnet\-options\fR
+command changes the network options of an existing connection\&. Before a connection can be activated with the
+\fBconnect\fR
+command, at least one path need to added with the
+\fBnew\-path\fR
+command\&. Available options:
+.PP
+\fB\-\-after\-sb\-0pri \fR\fB\fIpolicy\fR\fR
+.RS 4
+Define how to react if a split\-brain scenario is detected and none of the two nodes is in primary role\&. (We detect split\-brain scenarios when two nodes connect; split\-brain decisions are always between two nodes\&.) The defined policies are:
+.PP
+\fBdisconnect\fR
+.RS 4
+No automatic resynchronization; simply disconnect\&.
+.RE
+.PP
+\fBdiscard\-younger\-primary\fR, 
+.br
+\fBdiscard\-older\-primary\fR
+.RS 4
+Resynchronize from the node which became primary first (\fBdiscard\-younger\-primary\fR) or last (\fBdiscard\-older\-primary\fR)\&. If both nodes became primary independently, the
+\fBdiscard\-least\-changes\fR
+policy is used\&.
+.RE
+.PP
+\fBdiscard\-zero\-changes\fR
+.RS 4
+If only one of the nodes wrote data since the split brain situation was detected, resynchronize from this node to the other\&. If both nodes wrote data, disconnect\&.
+.RE
+.PP
+\fBdiscard\-least\-changes\fR
+.RS 4
+Resynchronize from the node with more modified blocks\&.
+.RE
+.PP
+\fBdiscard\-node\-\fR\fB\fInodename\fR\fR
+.RS 4
+Always resynchronize to the named node\&.
+.RE
+.RE
+.PP
+\fB\-\-after\-sb\-1pri \fR\fB\fIpolicy\fR\fR
+.RS 4
+Define how to react if a split\-brain scenario is detected, with one node in primary role and one node in secondary role\&. (We detect split\-brain scenarios when two nodes connect, so split\-brain decisions are always among two nodes\&.) The defined policies are:
+.PP
+\fBdisconnect\fR
+.RS 4
+No automatic resynchronization, simply disconnect\&.
+.RE
+.PP
+\fBconsensus\fR
+.RS 4
+Discard the data on the secondary node if the
+\fBafter\-sb\-0pri\fR
+algorithm would also discard the data on the secondary node\&. Otherwise, disconnect\&.
+.RE
+.PP
+\fBviolently\-as0p\fR
+.RS 4
+Always take the decision of the
+\fBafter\-sb\-0pri\fR
+algorithm, even if it causes an erratic change of the primary\*(Aqs view of the data\&. This is only useful if a single\-node file system (i\&.e\&., not OCFS2 or GFS) with the
+\fBallow\-two\-primaries\fR
+flag is used\&. This option can cause the primary node to crash, and should not be used\&.
+.RE
+.PP
+\fBdiscard\-secondary\fR
+.RS 4
+Discard the data on the secondary node\&.
+.RE
+.PP
+\fBcall\-pri\-lost\-after\-sb\fR
+.RS 4
+Always take the decision of the
+\fBafter\-sb\-0pri\fR
+algorithm\&. If the decision is to discard the data on the primary node, call the
+\fBpri\-lost\-after\-sb\fR
+handler on the primary node\&.
+.RE
+.RE
+.PP
+\fB\-\-after\-sb\-2pri \fR\fB\fIpolicy\fR\fR
+.RS 4
+Define how to react if a split\-brain scenario is detected and both nodes are in primary role\&. (We detect split\-brain scenarios when two nodes connect, so split\-brain decisions are always among two nodes\&.) The defined policies are:
+.PP
+\fBdisconnect\fR
+.RS 4
+No automatic resynchronization, simply disconnect\&.
+.RE
+.PP
+\fBviolently\-as0p\fR
+.RS 4
+See the
+\fBviolently\-as0p\fR
+policy for
+\fBafter\-sb\-1pri\fR\&.
+.RE
+.PP
+\fBcall\-pri\-lost\-after\-sb\fR
+.RS 4
+Call the
+\fBpri\-lost\-after\-sb\fR
+helper program on one of the machines unless that machine can demote to secondary\&. The helper program is expected to reboot the machine, which brings the node into a secondary role\&. Which machine runs the helper program is determined by the
+\fBafter\-sb\-0pri\fR
+strategy\&.
+.RE
+.RE
+.PP
+\fB\-\-allow\-two\-primaries\fR
+.RS 4
+The most common way to configure DRBD devices is to allow only one node to be primary (and thus writable) at a time\&.
+.sp
+In some scenarios it is preferable to allow two nodes to be primary at once; a mechanism outside of DRBD then must make sure that writes to the shared, replicated device happen in a coordinated way\&. This can be done with a shared\-storage cluster file system like OCFS2 and GFS, or with virtual machine images and a virtual machine manager that can migrate virtual machines between physical machines\&.
+.sp
+The
+\fBallow\-two\-primaries\fR
+parameter tells DRBD to allow two nodes to be primary at the same time\&. Never enable this option when using a non\-distributed file system; otherwise, data corruption and node crashes will result!
+.RE
+.PP
+\fB\-\-always\-asbp\fR
+.RS 4
+Normally the automatic after\-split\-brain policies are only used if current states of the UUIDs do not indicate the presence of a third node\&.
+.sp
+With this option you request that the automatic after\-split\-brain policies are used as long as the data sets of the nodes are somehow related\&. This might cause a full sync, if the UUIDs indicate the presence of a third node\&. (Or double faults led to strange UUID sets\&.)
+.RE
+.PP
+\fB\-\-connect\-int \fR\fB\fItime\fR\fR
+.RS 4
+As soon as a connection between two nodes is configured with
+\fBdrbdsetup connect\fR, DRBD immediately tries to establish the connection\&. If this fails, DRBD waits for
+\fBconnect\-int\fR
+seconds and then repeats\&. The default value of
+\fBconnect\-int\fR
+is 10 seconds\&.
+.RE
+.PP
+\fB\-\-cram\-hmac\-alg \fR\fB\fIhash\-algorithm\fR\fR
+.RS 4
+Configure the hash\-based message authentication code (HMAC) or secure hash algorithm to use for peer authentication\&. The kernel supports a number of different algorithms, some of which may be loadable as kernel modules\&. See the shash algorithms listed in /proc/crypto\&. By default,
+\fBcram\-hmac\-alg\fR
+is unset\&. Peer authentication also requires a
+\fBshared\-secret\fR
+to be configured\&.
+.RE
+.PP
+\fB\-\-csums\-alg \fR\fB\fIhash\-algorithm\fR\fR
+.RS 4
+Normally, when two nodes resynchronize, the sync target requests a piece of out\-of\-sync data from the sync source, and the sync source sends the data\&. With many usage patterns, a significant number of those blocks will actually be identical\&.
+.sp
+When a
+\fBcsums\-alg\fR
+algorithm is specified, when requesting a piece of out\-of\-sync data, the sync target also sends along a hash of the data it currently has\&. The sync source compares this hash with its own version of the data\&. It sends the sync target the new data if the hashes differ, and tells it that the data are the same otherwise\&. This reduces the network bandwidth required, at the cost of higher cpu utilization and possibly increased I/O on the sync target\&.
+.sp
+The
+\fBcsums\-alg\fR
+can be set to one of the secure hash algorithms supported by the kernel; see the shash algorithms listed in /proc/crypto\&. By default,
+\fBcsums\-alg\fR
+is unset\&.
+.RE
+.PP
+\fB\-\-csums\-after\-crash\-only\fR
+.RS 4
+Enabling this option (and csums\-alg, above) makes it possible to use the checksum based resync only for the first resync after primary crash, but not for later "network hickups"\&.
+.sp
+In most cases, block that are marked as need\-to\-be\-resynced are in fact changed, so calculating checksums, and both reading and writing the blocks on the resync target is all effective overhead\&.
+.sp
+The advantage of checksum based resync is mostly after primary crash recovery, where the recovery marked larger areas (those covered by the activity log) as need\-to\-be\-resynced, just in case\&. Introduced in 8\&.4\&.5\&.
+.RE
+.PP
+\fB\-\-data\-integrity\-alg \fR \fIalg\fR
+.RS 4
+DRBD normally relies on the data integrity checks built into the TCP/IP protocol, but if a data integrity algorithm is configured, it will additionally use this algorithm to make sure that the data received over the network match what the sender has sent\&. If a data integrity error is detected, DRBD will close the network connection and reconnect, which will trigger a resync\&.
+.sp
+The
+\fBdata\-integrity\-alg\fR
+can be set to one of the secure hash algorithms supported by the kernel; see the shash algorithms listed in /proc/crypto\&. By default, this mechanism is turned off\&.
+.sp
+Because of the CPU overhead involved, we recommend not to use this option in production environments\&. Also see the notes on data integrity below\&.
+.RE
+.PP
+\fB\-\-fencing \fR\fB\fIfencing_policy\fR\fR
+.RS 4
+
+\fBFencing\fR
+is a preventive measure to avoid situations where both nodes are primary and disconnected\&. This is also known as a split\-brain situation\&. DRBD supports the following fencing policies:
+.PP
+\fBdont\-care\fR
+.RS 4
+No fencing actions are taken\&. This is the default policy\&.
+.RE
+.PP
+\fBresource\-only\fR
+.RS 4
+If a node becomes a disconnected primary, it tries to fence the peer\&. This is done by calling the
+\fBfence\-peer\fR
+handler\&. The handler is supposed to reach the peer over an alternative communication path and call \*(Aq\fBdrbdadm outdate minor\fR\*(Aq there\&.
+.RE
+.PP
+\fBresource\-and\-stonith\fR
+.RS 4
+If a node becomes a disconnected primary, it freezes all its IO operations and calls its fence\-peer handler\&. The fence\-peer handler is supposed to reach the peer over an alternative communication path and call \*(Aq\fBdrbdadm outdate minor\fR\*(Aq there\&. In case it cannot do that, it should stonith the peer\&. IO is resumed as soon as the situation is resolved\&. In case the fence\-peer handler fails, I/O can be resumed manually with \*(Aq\fBdrbdadm resume\-io\fR\*(Aq\&.
+.RE
+.RE
+.PP
+\fB\-\-ko\-count \fR\fB\fInumber\fR\fR
+.RS 4
+If a secondary node fails to complete a write request in
+\fBko\-count\fR
+times the
+\fBtimeout\fR
+parameter, it is excluded from the cluster\&. The primary node then sets the connection to this secondary node to Standalone\&. To disable this feature, you should explicitly set it to 0; defaults may change between versions\&.
+.RE
+.PP
+\fB\-\-max\-buffers \fR\fB\fInumber\fR\fR
+.RS 4
+Limits the memory usage per DRBD minor device on the receiving side, or for internal buffers during resync or online\-verify\&. Unit is PAGE_SIZE, which is 4 KiB on most systems\&. The minimum possible setting is hard coded to 32 (=128 KiB)\&. These buffers are used to hold data blocks while they are written to/read from disk\&. To avoid possible distributed deadlocks on congestion, this setting is used as a throttle threshold rather than a hard limit\&. Once more than max\-buffers pages are in use, further allocation from this pool is throttled\&. You want to increase max\-buffers if you cannot saturate the IO backend on the receiving side\&.
+.RE
+.PP
+\fB\-\-max\-epoch\-size \fR\fB\fInumber\fR\fR
+.RS 4
+Define the maximum number of write requests DRBD may issue before issuing a write barrier\&. The default value is 2048, with a minimum of 1 and a maximum of 20000\&. Setting this parameter to a value below 10 is likely to decrease performance\&.
+.RE
+.PP
+\fB\-\-on\-congestion \fR\fB\fIpolicy\fR\fR, 
+.br
+\fB\-\-congestion\-fill \fR\fB\fIthreshold\fR\fR, 
+.br
+\fB\-\-congestion\-extents \fR\fB\fIthreshold\fR\fR
+.RS 4
+By default, DRBD blocks when the TCP send queue is full\&. This prevents applications from generating further write requests until more buffer space becomes available again\&.
+.sp
+When DRBD is used together with DRBD\-proxy, it can be better to use the
+\fBpull\-ahead\fR
+\fBon\-congestion\fR
+policy, which can switch DRBD into ahead/behind mode before the send queue is full\&. DRBD then records the differences between itself and the peer in its bitmap, but it no longer replicates them to the peer\&. When enough buffer space becomes available again, the node resynchronizes with the peer and switches back to normal replication\&.
+.sp
+This has the advantage of not blocking application I/O even when the queues fill up, and the disadvantage that peer nodes can fall behind much further\&. Also, while resynchronizing, peer nodes will become inconsistent\&.
+.sp
+The available congestion policies are
+\fBblock\fR
+(the default) and
+\fBpull\-ahead\fR\&. The
+\fBcongestion\-fill\fR
+parameter defines how much data is allowed to be "in flight" in this connection\&. The default value is 0, which disables this mechanism of congestion control, with a maximum of 10 GiBytes\&. The
+\fBcongestion\-extents\fR
+parameter defines how many bitmap extents may be active before switching into ahead/behind mode, with the same default and limits as the
+\fBal\-extents\fR
+parameter\&. The
+\fBcongestion\-extents\fR
+parameter is effective only when set to a value smaller than
+\fBal\-extents\fR\&.
+.sp
+Ahead/behind mode is available since DRBD 8\&.3\&.10\&.
+.RE
+.PP
+\fB\-\-ping\-int \fR\fB\fIinterval\fR\fR
+.RS 4
+When the TCP/IP connection to a peer is idle for more than
+\fBping\-int\fR
+seconds, DRBD will send a keep\-alive packet to make sure that a failed peer or network connection is detected reasonably soon\&. The default value is 10 seconds, with a minimum of 1 and a maximum of 120 seconds\&. The unit is seconds\&.
+.RE
+.PP
+\fB\-\-ping\-timeout \fR\fB\fItimeout\fR\fR
+.RS 4
+Define the timeout for replies to keep\-alive packets\&. If the peer does not reply within
+\fBping\-timeout\fR, DRBD will close and try to reestablish the connection\&. The default value is 0\&.5 seconds, with a minimum of 0\&.1 seconds and a maximum of 3 seconds\&. The unit is tenths of a second\&.
+.RE
+.PP
+\fB\-\-socket\-check\-timeout \fR\fB\fItimeout\fR\fR
+.RS 4
+In setups involving a DRBD\-proxy and connections that experience a lot of buffer\-bloat it might be necessary to set
+\fBping\-timeout\fR
+to an unusual high value\&. By default DRBD uses the same value to wait if a newly established TCP\-connection is stable\&. Since the DRBD\-proxy is usually located in the same data center such a long wait time may hinder DRBD\*(Aqs connect process\&.
+.sp
+In such setups
+\fBsocket\-check\-timeout\fR
+should be set to at least to the round trip time between DRBD and DRBD\-proxy\&. I\&.e\&. in most cases to 1\&.
+.sp
+The default unit is tenths of a second, the default value is 0 (which causes DRBD to use the value of
+\fBping\-timeout\fR
+instead)\&. Introduced in 8\&.4\&.5\&.
+.RE
+.PP
+\fB\-\-protocol \fR\fB\fIname\fR\fR
+.RS 4
+Use the specified protocol on this connection\&. The supported protocols are:
+.PP
+\fBA\fR
+.RS 4
+Writes to the DRBD device complete as soon as they have reached the local disk and the TCP/IP send buffer\&.
+.RE
+.PP
+\fBB\fR
+.RS 4
+Writes to the DRBD device complete as soon as they have reached the local disk, and all peers have acknowledged the receipt of the write requests\&.
+.RE
+.PP
+\fBC\fR
+.RS 4
+Writes to the DRBD device complete as soon as they have reached the local and all remote disks\&.
+.RE
+.sp
+.RE
+.PP
+\fB\-\-rcvbuf\-size \fR\fB\fIsize\fR\fR
+.RS 4
+Configure the size of the TCP/IP receive buffer\&. A value of 0 (the default) causes the buffer size to adjust dynamically\&. This parameter usually does not need to be set, but it can be set to a value up to 10 MiB\&. The default unit is bytes\&.
+.RE
+.PP
+\fB\-\-rr\-conflict\fR \fIpolicy\fR
+.RS 4
+This option helps to solve the cases when the outcome of the resync decision is incompatible with the current role assignment in the cluster\&. The defined policies are:
+.PP
+\fBdisconnect\fR
+.RS 4
+No automatic resynchronization, simply disconnect\&.
+.RE
+.PP
+\fBviolently\fR
+.RS 4
+Resync to the primary node is allowed, violating the assumption that data on a block device are stable for one of the nodes\&.
+\fIDo not use this option, it is dangerous\&.\fR
+.RE
+.PP
+\fBcall\-pri\-lost\fR
+.RS 4
+Call the
+\fBpri\-lost\fR
+handler on one of the machines\&. The handler is expected to reboot the machine, which puts it into secondary role\&.
+.RE
+.RE
+.PP
+\fB\-\-shared\-secret \fR\fB\fIsecret\fR\fR
+.RS 4
+Configure the shared secret used for peer authentication\&. The secret is a string of up to 64 characters\&. Peer authentication also requires the
+\fBcram\-hmac\-alg\fR
+parameter to be set\&.
+.RE
+.PP
+\fB\-\-sndbuf\-size \fR\fB\fIsize\fR\fR
+.RS 4
+Configure the size of the TCP/IP send buffer\&. Since DRBD 8\&.0\&.13 / 8\&.2\&.7, a value of 0 (the default) causes the buffer size to adjust dynamically\&. Values below 32 KiB are harmful to the throughput on this connection\&. Large buffer sizes can be useful especially when protocol A is used over high\-latency networks; the maximum value supported is 10 MiB\&.
+.RE
+.PP
+\fB\-\-tcp\-cork\fR
+.RS 4
+By default, DRBD uses the TCP_CORK socket option to prevent the kernel from sending partial messages; this results in fewer and bigger packets on the network\&. Some network stacks can perform worse with this optimization\&. On these, the
+\fBtcp\-cork\fR
+parameter can be used to turn this optimization off\&.
+.RE
+.PP
+\fB\-\-timeout \fR\fB\fItime\fR\fR
+.RS 4
+Define the timeout for replies over the network: if a peer node does not send an expected reply within the specified
+\fBtimeout\fR, it is considered dead and the TCP/IP connection is closed\&. The timeout value must be lower than
+\fBconnect\-int\fR
+and lower than
+\fBping\-int\fR\&. The default is 6 seconds; the value is specified in tenths of a second\&.
+.RE
+.PP
+\fB\-\-use\-rle\fR
+.RS 4
+Each replicated device on a cluster node has a separate bitmap for each of its peer devices\&. The bitmaps are used for tracking the differences between the local and peer device: depending on the cluster state, a disk range can be marked as different from the peer in the device\*(Aqs bitmap, in the peer device\*(Aqs bitmap, or in both bitmaps\&. When two cluster nodes connect, they exchange each other\*(Aqs bitmaps, and they each compute the union of the local and peer bitmap to determine the overall differences\&.
+.sp
+Bitmaps of very large devices are also relatively large, but they usually compress very well using run\-length encoding\&. This can save time and bandwidth for the bitmap transfers\&.
+.sp
+The
+\fBuse\-rle\fR
+parameter determines if run\-length encoding should be used\&. It is on by default since DRBD 8\&.4\&.0\&.
+.RE
+.PP
+\fB\-\-verify\-alg \fR\fB\fIhash\-algorithm\fR\fR
+.RS 4
+Online verification (\fBdrbdadm verify\fR) computes and compares checksums of disk blocks (i\&.e\&., hash values) in order to detect if they differ\&. The
+\fBverify\-alg\fR
+parameter determines which algorithm to use for these checksums\&. It must be set to one of the secure hash algorithms supported by the kernel before online verify can be used; see the shash algorithms listed in /proc/crypto\&.
+.sp
+We recommend to schedule online verifications regularly during low\-load periods, for example once a month\&. Also see the notes on data integrity below\&.
+.RE
+.RE
+.PP
+\fBdrbdsetup\fR new\-path \fIresource\fR \fIpeer_node_id\fR \fIlocal\-addr\fR \fIremote\-addr\fR
+.RS 4
+.\" drbdsetup: net
+The
+\fBnew\-path\fR
+command creates a path within a
+\fIconnection\fR\&. The connection must have been created with
+\fBdrbdsetup new\-peer\fR\&.
+\fILocal_addr\fR
+and
+\fIremote_addr\fR
+refer to the local and remote protocol, network address, and port in the format
+[\fIaddress\-family\fR:]\fIaddress\fR[:\fIport\fR]\&. The address families
+\fBipv4\fR,
+\fBipv6\fR,
+\fBssocks\fR
+(Dolphin Interconnect Solutions\*(Aq "super sockets"),
+\fBsdp\fR
+(Infiniband Sockets Direct Protocol), and
+\fBsci\fR
+are supported (\fBsci\fR
+is an alias for
+\fBssocks\fR)\&. If no address family is specified,
+\fBipv4\fR
+is assumed\&. For all address families except
+\fBipv6\fR, the
+\fIaddress\fR
+uses IPv4 address notation (for example, 1\&.2\&.3\&.4)\&. For
+\fBipv6\fR, the address is enclosed in brackets and uses IPv6 address notation (for example, [fd01:2345:6789:abcd::1])\&. The
+\fIport\fR
+defaults to 7788\&.
+.RE
+.PP
+\fBdrbdsetup\fR connect \fIresource\fR \fIpeer_node_id\fR
+.RS 4
+.\" drbdsetup: net
+The
+\fBconnect\fR
+command activates a connection\&. That means that the DRBD driver will bind and listen on all local addresses of the connection\-\*(Aqs paths\&. It will begin to try to establish one or more paths of the connection\&. Available options:
+.PP
+\fB\-\-tentative\fR
+.RS 4
+Only determine if a connection to the peer can be established and if a resync is necessary (and in which direction) without actually establishing the connection or starting the resync\&. Check the system log to see what DRBD would do without the
+\fB\-\-tentative\fR
+option\&.
+.RE
+.PP
+\fB\-\-discard\-my\-data\fR
+.RS 4
+Discard the local data and resynchronize with the peer that has the most up\-to\-data data\&. Use this option to manually recover from a split\-brain situation\&.
+.RE
+.RE
+.PP
+\fBdrbdsetup\fR del\-peer \fIresource\fR \fIpeer_node_id\fR
+.RS 4
+.\" drbdsetup: net
+The
+\fBdel\-peer\fR
+command removes a connection from a
+\fIresource\fR\&.
+.RE
+.PP
+\fBdrbdsetup\fR del\-path \fIresource\fR \fIpeer_node_id\fR \fIlocal\-addr\fR \fIremote\-addr\fR
+.RS 4
+.\" drbdsetup: net
+The
+\fBdel\-path\fR
+command removes a path from a
+\fIconnection\fR\&. Please not that it fails if the path is necessary to keep a connected connection in tact\&. In order to remove all paths, disconnect the connection first\&.
+.RE
+.PP
+\fBdrbdsetup\fR cstate \fIresource\fR \fIpeer_node_id\fR
+.RS 4
+.\" drbdsetup: cstate
+Show the current state of a connection\&. The connection is identified by the node\-id of the peer; see the
+\fBdrbdsetup connect\fR
+command\&.
+.RE
+.PP
+\fBdrbdsetup\fR del\-minor \fIminor\fR
+.RS 4
+Remove a replicated device\&. No lower\-level device may be attached; see
+\fBdrbdsetup detach\fR\&.
+.RE
+.PP
+\fBdrbdsetup\fR del\-resource \fIresource\fR
+.RS 4
+Remove a resource\&. All volumes and connections must be removed first (\fBdrbdsetup del\-minor\fR,
+\fBdrbdsetup disconnect\fR)\&. Alternatively,
+\fBdrbdsetup down\fR
+can be used to remove a resource together with all its volumes and connections\&.
+.RE
+.PP
+\fBdrbdsetup\fR detach \fIminor\fR
+.RS 4
+.\" drbdsetup: detach
+Detach the lower\-level device of a replicated device\&. Available options:
+.PP
+\fB\-\-force\fR
+.RS 4
+Force the detach and return immediately\&. This puts the lower\-level device into failed state until all pending I/O has completed, and then detaches the device\&. Any I/O not yet submitted to the lower\-level device (for example, because I/O on the device was suspended) is assumed to have failed\&.
+.RE
+.sp
+.RE
+.PP
+\fBdrbdsetup\fR disconnect \fIresource\fR \fIpeer_node_id\fR
+.RS 4
+.\" drbdsetup: disconnect
+Remove a connection to a peer host\&. The connection is identified by the node\-id of the peer; see the
+\fBdrbdsetup connect\fR
+command\&.
+.RE
+.PP
+\fBdrbdsetup\fR down {\fIresource\fR | \fIall\fR}
+.RS 4
+.\" drbdsetup: down
+Take a resource down by removing all volumes, connections, and the resource itself\&.
+.RE
+.PP
+\fBdrbdsetup\fR dstate \fIminor\fR
+.RS 4
+.\" drbdsetup: dstate
+Show the current disk state of a lower\-level device\&.
+.RE
+.PP
+\fBdrbdsetup\fR events2 {\fIresource\fR | \fIall\fR}
+.RS 4
+.\" drbdsetup: events2
+Show the current state of all configured DRBD objects, followed by all changes to the state\&.
+.sp
+The output format is meant to be human as well as machine readable\&. The line starts with a word that indicates the kind of event:
+\fBexists\fR
+for an existing object;
+\fBcreate\fR,
+\fBdestroy\fR, and
+\fBchange\fR
+if an object is created, destroyed, or changed; or
+\fBcall\fR
+or
+\fBresponse\fR
+if an event handler is called or it returns\&. The second word indicates the object the event applies to:
+\fBresource\fR,
+\fBdevice\fR,
+\fBconnection\fR,
+\fBpeer\-device\fR,
+\fBhelper\fR, or a dash (\fB\-\fR) to indicate that the current state has been dumped completely\&.
+.sp
+The remaining words identify the object and describe the state that he object is in\&. Available options:
+.PP
+\fB\-\-now\fR
+.RS 4
+Terminate after reporting the current state\&. The default is to continuously listen and report state changes\&.
+.RE
+.PP
+\fB\-\-statistics\fR
+.RS 4
+Include statistics in the output\&.
+.RE
+.sp
+.RE
+.PP
+\fBdrbdsetup\fR get\-gi \fIresource\fR \fIpeer_node_id\fR \fIvolume\fR
+.RS 4
+.\" drbdsetup: get-gi
+Show the data generation identifiers for a device on a particular connection\&. The device is identified by its volume number\&. The connection is identified by its endpoints; see the
+\fBdrbdsetup connect\fR
+command\&.
+.sp
+The output consists of the current UUID, bitmap UUID, and the first two history UUIDS, folowed by a set of flags\&. The current UUID and history UUIDs are device specific; the bitmap UUID and flags are peer device specific\&. This command only shows the first two history UUIDs\&. Internally, DRBD maintains one history UUID for each possible peer device\&.
+.RE
+.PP
+\fBdrbdsetup\fR invalidate \fIminor\fR
+.RS 4
+.\" drbdsetup: invalidate
+Replace the local data of a device with that of a peer\&. All the local data will be marked out\-of\-sync, and a resync with the specified peer device will be initialted\&.
+.RE
+.PP
+\fBdrbdsetup\fR invalidate\-remote \fIresource\fR \fIpeer_node_id\fR \fIvolume\fR
+.RS 4
+.\" drbdsetup: invalidate-remote
+Replace a peer device\*(Aqs data of a resource with the local data\&. The peer device\*(Aqs data will be marked out\-of\-sync, and a resync from the local node to the specified peer will be initiated\&.
+.RE
+.PP
+\fBdrbdsetup\fR new\-current\-uuid \fIminor\fR
+.RS 4
+.\" drbdsetup: new-current-uuid
+Generate a new current UUID and rotates all other UUID values\&. This has at least two use cases, namely to skip the initial sync, and to reduce network bandwidth when starting in a single node configuration and then later (re\-)integrating a remote site\&.
+.sp
+Available option:
+.PP
+\fB\-\-clear\-bitmap\fR
+.RS 4
+Clears the sync bitmap in addition to generating a new current UUID\&.
+.RE
+.sp
+This can be used to skip the initial sync, if you want to start from scratch\&. This use\-case does only work on "Just Created" meta data\&. Necessary steps:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+On
+\fIboth\fR
+nodes, initialize meta data and configure the device\&.
+.sp
+\fBdrbdadm create\-md \-\-force \fR\fB\fIres\fR\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+They need to do the initial handshake, so they know their sizes\&.
+.sp
+\fBdrbdadm up \fR\fB\fIres\fR\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  3." 4.2
+.\}
+They are now Connected Secondary/Secondary Inconsistent/Inconsistent\&. Generate a new current\-uuid and clear the dirty bitmap\&.
+.sp
+\fBdrbdadm \-\-clear\-bitmap new\-current\-uuid \fR\fB\fIres\fR\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 4.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  4." 4.2
+.\}
+They are now Connected Secondary/Secondary UpToDate/UpToDate\&. Make one side primary and create a file system\&.
+.sp
+\fBdrbdadm primary \fR\fB\fIres\fR\fR
+.sp
+\fBmkfs \-t \fR\fB\fIfs\-type\fR\fR\fB $(drbdadm sh\-dev \fR\fB\fIres\fR\fR\fB)\fR
+.RE
+.sp
+One obvious side\-effect is that the replica is full of old garbage (unless you made them identical using other means), so any online\-verify is expected to find any number of out\-of\-sync blocks\&.
+.sp
+\fIYou must not use this on pre\-existing data!\fR
+Even though it may appear to work at first glance, once you switch to the other node, your data is toast, as it never got replicated\&. So
+\fIdo not leave out the mkfs\fR
+(or equivalent)\&.
+.sp
+This can also be used to shorten the initial resync of a cluster where the second node is added after the first node is gone into production, by means of disk shipping\&. This use\-case works on disconnected devices only, the device may be in primary or secondary role\&.
+.sp
+The necessary steps on the current active server are:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+\fBdrbdsetup new\-current\-uuid \-\-clear\-bitmap \fR\fB\fIminor\fR\fR\fB \fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+Take the copy of the current active server\&. E\&.g\&. by pulling a disk out of the RAID1 controller, or by copying with dd\&. You need to copy the actual data, and the meta data\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  3." 4.2
+.\}
+\fBdrbdsetup new\-current\-uuid \fR\fB\fIminor\fR\fR\fB \fR
+.RE
+.sp
+Now add the disk to the new secondary node, and join it to the cluster\&. You will get a resync of that parts that were changed since the first call to
+\fBdrbdsetup\fR
+in step 1\&.
+.RE
+.PP
+\fBdrbdsetup\fR new\-minor \fIresource\fR \fIminor\fR \fIvolume\fR
+.RS 4
+Create a new replicated device within a resource\&. The command creates a block device inode for the replicated device (by default, /dev/drbd\fIminor\fR)\&. The
+\fIvolume\fR
+number identifies the device within the
+\fIresource\fR\&.
+.RE
+.PP
+\fBdrbdsetup\fR new\-resource \fIresource\fR \fInode_id\fR, 
+.br
+\fBdrbdsetup\fR resource\-options \fIresource\fR
+.RS 4
+The
+\fBnew\-resource\fR
+command creates a new resource\&. The
+\fBresource\-options\fR
+command changes the resource options of an existing resource\&. Available options:
+.PP
+\fB\-\-auto\-promote \fR\fB\fIbool\-value\fR\fR
+.RS 4
+A resource must be promoted to primary role before any of its devices can be mounted or opened for writing\&.
+.sp
+Before DRBD 9, this could only be done explicitly ("drbdadm primary")\&. Since DRBD 9, the
+\fBauto\-promote\fR
+parameter allows to automatically promote a resource to primary role when one of its devices is mounted or opened for writing\&. As soon as all devices are unmounted or closed with no more remaining users, the role of the resource changes back to secondary\&.
+.sp
+Automatic promotion only succeeds if the cluster state allows it (that is, if an explicit
+\fBdrbdadm primary\fR
+command would succeed)\&. Otherwise, mounting or opening the device fails as it already did before DRBD 9: the
+\fBmount\fR(2)
+system call fails with errno set to EROFS (Read\-only file system); the
+\fBopen\fR(2)
+system call fails with errno set to EMEDIUMTYPE (wrong medium type)\&.
+.sp
+Irrespective of the
+\fBauto\-promote\fR
+parameter, if a device is promoted explicitly (\fBdrbdadm primary\fR), it also needs to be demoted explicitly (\fBdrbdadm secondary\fR)\&.
+.sp
+The
+\fBauto\-promote\fR
+parameter is available since DRBD 9\&.0\&.0, and defaults to
+\fByes\fR\&.
+.RE
+.PP
+\fB\-\-cpu\-mask \fR\fB\fIcpu\-mask\fR\fR
+.RS 4
+Set the cpu affinity mask for DRBD kernel threads\&. The cpu mask is specified as a hexadecimal number\&. The default value is 0, which lets the scheduler decide which kernel threads run on which CPUs\&. CPU numbers in
+\fBcpu\-mask\fR
+which do not exist in the system are ignored\&.
+.RE
+.PP
+\fB\-\-on\-no\-data\-accessible \fR\fB\fIpolicy\fR\fR
+.RS 4
+Determine how to deal with I/O requests when the requested data is not available locally or remotely (for example, when all disks have failed)\&. The defined policies are:
+.PP
+\fBio\-error\fR
+.RS 4
+System calls fail with errno set to EIO\&.
+.RE
+.PP
+\fBsuspend\-io\fR
+.RS 4
+The resource suspends I/O\&. I/O can be resumed by (re)attaching the lower\-level device, by connecting to a peer which has access to the data, or by forcing DRBD to resume I/O with
+\fBdrbdadm resume\-io \fR\fB\fIres\fR\fR\&. When no data is available, forcing I/O to resume will result in the same behavior as the
+\fBio\-error\fR
+policy\&.
+.RE
+.sp
+This setting is available since DRBD 8\&.3\&.9; the default policy is
+\fBio\-error\fR\&.
+.RE
+.PP
+\fB\-\-peer\-ack\-window \fR\fB\fIvalue\fR\fR
+.RS 4
+On each node and for each device, DRBD maintains a bitmap of the differences between the local and remote data for each peer device\&. For example, in a three\-node setup (nodes A, B, C) each with a single device, every node maintains one bitmap for each of its peers\&.
+.sp
+When nodes receive write requests, they know how to update the bitmaps for the writing node, but not how to update the bitmaps between themselves\&. In this example, when a write request propagates from node A to B and C, nodes B and C know that they have the same data as node A, but not whether or not they both have the same data\&.
+.sp
+As a remedy, the writing node occasionally sends peer\-ack packets to its peers which tell them which state they are in relative to each other\&.
+.sp
+The
+\fBpeer\-ack\-window\fR
+parameter specifies how much data a primary node may send before sending a peer\-ack packet\&. A low value causes increased network traffic; a high value causes less network traffic but higher memory consumption on secondary nodes and higher resync times between the secondary nodes after primary node failures\&. (Note: peer\-ack packets may be sent due to other reasons as well, e\&.g\&. membership changes or expiry of the
+\fBpeer\-ack\-delay\fR
+timer\&.)
+.sp
+The default value for
+\fBpeer\-ack\-window\fR
+is 2 MiB, the default unit is sectors\&. This option is available since 9\&.0\&.0\&.
+.RE
+.PP
+\fB\-\-peer\-ack\-delay \fR\fB\fIexpiry\-time\fR\fR
+.RS 4
+If after the last finished write request no new write request gets issued for
+\fIexpiry\-time\fR, then a peer\-ack packet is sent\&. If a new write request is issued before the timer expires, the timer gets reset to
+\fIexpiry\-time\fR\&. (Note: peer\-ack packets may be sent due to other reasons as well, e\&.g\&. membership changes or the
+\fBpeer\-ack\-window\fR
+option\&.)
+.sp
+This parameter may influence resync behavior on remote nodes\&. Peer nodes need to wait until they receive an peer\-ack for releasing a lock on an AL\-extent\&. Resync operations between peers may need to wait for for these locks\&.
+.sp
+The default value for
+\fBpeer\-ack\-delay\fR
+is 100 milliseconds, the default unit is milliseconds\&. This option is available since 9\&.0\&.0\&.
+.RE
+.PP
+\fB\-\-quorum \fR\fB\fIvalue\fR\fR
+.RS 4
+DRBD contains a quorum implementation\&. If it activated a cluster (partition) requires quorum in order to modify the replicated data set\&. That means a node in the cluster partition can only be promoted to primary if the cluster partition has primary\&.
+.sp
+If a primary node should execute a write request, but the cluster partition has lost quorum, it will freeze the IO operation and invoke the
+\fBquorum\-lost\fR
+handler\&. The handler might reboot the machine forcefully stop the service, or ignore the event by returning\&.
+.sp
+The option\*(Aqs value might be set to
+\fBoff\fR,
+\fBmajority\fR, or
+\fBall\fR\&. It can be used with fencing or instead of fencing if the resource has more than two nodes with backing disks\&.
+.RE
+.sp
+.RE
+.PP
+\fBdrbdsetup\fR outdate \fIminor\fR
+.RS 4
+.\" drbdsetup: outdate
+Mark the data on a lower\-level device as outdated\&. This is used for fencing, and prevents the resource the device is part of from becoming primary in the future\&. See the
+\fB\-\-fencing\fR
+disk option\&.
+.RE
+.PP
+\fBdrbdsetup\fR pause\-sync \fIresource\fR \fIpeer_node_id\fR \fIvolume\fR
+.RS 4
+.\" drbdsetup: pause-sync
+Stop resynchronizing between a local and a peer device by setting the local pause flag\&. The resync can only resume if the pause flags on both sides of a connection are cleared\&.
+.RE
+.PP
+\fBdrbdsetup\fR primary \fIresource\fR
+.RS 4
+.\" drbdsetup: primary
+Change the role of a node in a resource to primary\&. This allows the replicated devices in this resource to be mounted or opened for writing\&. Available options:
+.PP
+\fB\-\-overwrite\-data\-of\-peer\fR
+.RS 4
+This option is an alias for the
+\fB\-\-force\fR
+option\&.
+.RE
+.PP
+\fB\-\-force\fR
+.RS 4
+Force the resource to become primary even if some devices are not guaranteed to have up\-to\-date data\&. This option is used to turn one of the nodes in a newly created cluster into the primary node, or when manually recovering from a disaster\&.
+.sp
+Note that this can lead to split\-brain scenarios\&. Also, when forcefully turning an inconsistent device into an up\-to\-date device, it is highly recommended to use any integrity checks available (such as a filesystem check) to make sure that the device can at least be used without crashing the system\&.
+.RE
+.sp
+Note that DRBD usually only allows one node in a cluster to be in primary role at any time; this allows DRBD to coordinate access to the devices in a resource across nodes\&. The
+\fB\-\-allow\-two\-primaries\fR
+network option changes this; in that case, a mechanism outside of DRBD needs to coordinate device access\&.
+.RE
+.PP
+\fBdrbdsetup\fR resize \fIminor\fR
+.RS 4
+.\" drbdsetup: resize
+Reexamine the size of the lower\-level devices of a replicated device on all nodes\&. This command is called after the lower\-level devices on all nodes have been grown to adjust the size of the replicated device\&. Available options:
+.PP
+\fB\-\-assume\-peer\-has\-space\fR
+.RS 4
+Resize the device even if some of the peer devices are not connected at the moment\&. DRBD will try to resize the peer devices when they next connect\&. It will refuse to connect to a peer device which is too small\&.
+.RE
+.PP
+\fB\-\-assume\-clean\fR
+.RS 4
+Do not resynchronize the added disk space; instead, assume that it is identical on all nodes\&. This option can be used when the disk space is uninitialized and differences do not matter, or when it is known to be identical on all nodes\&. See the
+\fBdrbdsetup verify\fR
+command\&.
+.RE
+.PP
+\fB\-\-size \fR\fB\fIval\fR\fR
+.RS 4
+This option can be used to online shrink the usable size of a drbd device\&. It\*(Aqs the users responsibility to make sure that a file system on the device is not truncated by that operation\&.
+.RE
+.PP
+\fB\-\-al\-stripes \fR\fB\fIval\fR\fR \fB\-\-al\-stripes \fR\fB\fIval\fR\fR
+.RS 4
+These options may be used to change the layout of the activity log online\&. In case of internal meta data this may invovle shrinking the user visible size at the same time (unsing the
+\fB\-\-size\fR) or increasing the avalable space on the backing devices\&.
+.RE
+.sp
+.RE
+.PP
+\fBdrbdsetup\fR resume\-io \fIminor\fR
+.RS 4
+.\" drbdsetup: resume-io
+Resume I/O on a replicated device\&. See the
+\fB\-\-fencing\fR
+net option\&.
+.RE
+.PP
+\fBdrbdsetup\fR resume\-sync \fIresource\fR \fIpeer_node_id\fR \fIvolume\fR
+.RS 4
+.\" drbdsetup: resume-sync
+Allow resynchronization to resume by clearing the local sync pause flag\&.
+.RE
+.PP
+\fBdrbdsetup\fR role \fIresource\fR
+.RS 4
+.\" drbdsetup: role
+Show the current role of a resource\&.
+.RE
+.PP
+\fBdrbdsetup\fR secondary \fIresource\fR
+.RS 4
+.\" drbdsetup: secondary
+Change the role of a node in a resource to secondary\&. This command fails if the replicated device is in use\&.
+.RE
+.PP
+\fBdrbdsetup\fR show {\fIresource\fR | \fIall\fR}
+.RS 4
+.\" drbdsetup: show
+Show the current configuration of a resource, or of all resources\&. Available options:
+.PP
+\fB\-\-show\-defaults\fR
+.RS 4
+Show all configuration parameters, even the ones with default values\&. Normally, parameters with default values are not shown\&.
+.RE
+.sp
+.RE
+.PP
+\fBdrbdsetup\fR show\-gi \fIresource\fR \fIpeer_node_id\fR \fIvolume\fR
+.RS 4
+.\" drbdsetup: show-gi
+Show the data generation identifiers for a device on a particular connection\&. In addition, explain the output\&. The output otherwise is the same as in the
+\fBdrbdsetup get\-gi\fR
+command\&.
+.RE
+.PP
+\fBdrbdsetup\fR state
+.RS 4
+.\" drbdsetup: state
+This is an alias for
+\fBdrbdsetup role\fR\&. Deprecated\&.
+.RE
+.PP
+\fBdrbdsetup\fR status {\fIresource\fR | \fIall\fR}
+.RS 4
+.\" drbdsetup: status
+Show the status of a resource, or of all resources\&. The output consists of one paragraph for each configured resource\&. Each paragraph contains one line for each resource, followed by one line for each device, and one line for each connection\&. The device and connection lines are indented\&. The connection lines are followed by one line for each peer device; these lines are indented against the connection line\&.
+.sp
+Long lines are wrapped around at terminal width, and indented to indicate how the lines belongs together\&. Available options:
+.PP
+\fB\-\-verbose\fR
+.RS 4
+Include more information in the output even when it is likely redundant or irrelevant\&.
+.RE
+.PP
+\fB\-\-statistics\fR
+.RS 4
+Include data transfer statistics in the output\&.
+.RE
+.PP
+\fB\-\-color=\fR\fB{always | auto | never}\fR\fB \fR
+.RS 4
+Colorize the output\&. With
+\fB\-\-color=auto\fR,
+\fBdrbdsetup\fR
+emits color codes only when standard output is connected to a terminal\&.
+.RE
+.sp
+For example, the non\-verbose output for a resource with only one connection and only one volume could look like this:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+drbd0 role:Primary
+  disk:UpToDate
+  host2\&.example\&.com role:Secondary
+    disk:UpToDate
+	      
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+With the
+\fB\-\-verbose\fR
+option, the same resource could be reported as:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+drbd0 node\-id:1 role:Primary suspended:no
+  volume:0 minor:1 disk:UpToDate blocked:no
+  host2\&.example\&.com local:ipv4:192\&.168\&.123\&.4:7788
+      peer:ipv4:192\&.168\&.123\&.2:7788 node\-id:0 connection:WFReportParams
+      role:Secondary congested:no
+    volume:0 replication:Connected disk:UpToDate resync\-suspended:no
+	      
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RE
+.PP
+\fBdrbdsetup\fR suspend\-io \fIminor\fR
+.RS 4
+.\" drbdsetup: suspend-io
+Suspend I/O on a replicated device\&. It is not usually necessary to use this command\&.
+.RE
+.PP
+\fBdrbdsetup\fR verify \fIresource\fR \fIpeer_node_id\fR \fIvolume\fR
+.RS 4
+.\" drbdsetup: verify
+Start online verification, change which part of the device will be verified, or stop online verification\&. The command requires the specified peer to be connected\&.
+.sp
+Online verification compares each disk block on the local and peer node\&. Blocks which differ between the nodes are marked as out\-of\-sync, but they are
+\fInot\fR
+automatically brought back into sync\&. To bring them into sync, the resource must be disconnected and reconnected\&. Progress can be monitored in the output of
+\fBdrbdsetup status \-\-statistics\fR\&. Available options:
+.PP
+\fB\-\-start \fR\fB\fIposition\fR\fR
+.RS 4
+Define where online verification should start\&. This parameter is ignored if online verification is already in progress\&. If the start parameter is not specified, online verification will continue where it was interrupted (if the connection to the peer was lost while verifying), after the previous stop sector (if the previous online verification has finished), or at the beginning of the device (if the end of the device was reached, or online verify has not run before)\&.
+.sp
+The position on disk is specified in disk sectors (512 bytes) by default\&.
+.RE
+.PP
+\fB\-\-stop \fR\fB\fIposition\fR\fR
+.RS 4
+Define where online verification should stop\&. If online verification is already in progress, the stop position of the active online verification process is changed\&. Use this to stop online verification\&.
+.sp
+The position on disk is specified in disk sectors (512 bytes) by default\&.
+.RE
+.sp
+Also see the notes on data integrity in the
+\fBdrbd.conf\fR(5)
+manual page\&.
+.RE
+.PP
+\fBdrbdsetup\fR wait\-connect\-volume \fIresource\fR \fIpeer_node_id\fR \fIvolume\fR, 
+.br
+\fBdrbdsetup\fR wait\-connect\-connection \fIresource\fR \fIpeer_node_id\fR, 
+.br
+\fBdrbdsetup\fR wait\-connect\-resource \fIresource\fR, 
+.br
+\fBdrbdsetup\fR wait\-sync\-volume \fIresource\fR \fIpeer_node_id\fR \fIvolume\fR, 
+.br
+\fBdrbdsetup\fR wait\-sync\-connection \fIresource\fR \fIpeer_node_id\fR, 
+.br
+\fBdrbdsetup\fR wait\-sync\-resource \fIresource\fR
+.RS 4
+.\" drbdsetup: wait-connect-volume: wait-connect-connection: wait-connect-resource
+.\" drbdsetup: wait-sync-volume: wait-sync-connection: wait-sync-resource
+The
+\fBwait\-connect\-*\fR
+commands waits until a device on a peer is visible\&. The
+\fBwait\-sync\-*\fR
+commands waits until a device on a peer is up to date\&. Available options for both commands:
+.PP
+\fB\-\-degr\-wfc\-timeout \fR\fB\fItimeout\fR\fR
+.RS 4
+Define how long to wait until all peers are connected in case the cluster consisted of a single node only when the system went down\&. This parameter is usually set to a value smaller than
+\fBwfc\-timeout\fR\&. The assumption here is that peers which were unreachable before a reboot are less likely to be be reachable after the reboot, so waiting is less likely to help\&.
+.sp
+The timeout is specified in seconds\&. The default value is 0, which stands for an infinite timeout\&. Also see the
+\fBwfc\-timeout\fR
+parameter\&.
+.RE
+.PP
+\fB\-\-outdated\-wfc\-timeout \fR\fB\fItimeout\fR\fR
+.RS 4
+Define how long to wait until all peers are connected if all peers were outdated when the system went down\&. This parameter is usually set to a value smaller than
+\fBwfc\-timeout\fR\&. The assumption here is that an outdated peer cannot have become primary in the meantime, so we don\*(Aqt need to wait for it as long as for a node which was alive before\&.
+.sp
+The timeout is specified in seconds\&. The default value is 0, which stands for an infinite timeout\&. Also see the
+\fBwfc\-timeout\fR
+parameter\&.
+.RE
+.PP
+\fB\-\-wait\-after\-sb\fR
+.RS 4
+This parameter causes DRBD to continue waiting in the init script even when a split\-brain situation has been detected, and the nodes therefore refuse to connect to each other\&.
+.RE
+.PP
+\fB\-\-wfc\-timeout \fR\fB\fItimeout\fR\fR
+.RS 4
+Define how long the init script waits until all peers are connected\&. This can be useful in combination with a cluster manager which cannot manage DRBD resources: when the cluster manager starts, the DRBD resources will already be up and running\&. With a more capable cluster manager such as Pacemaker, it makes more sense to let the cluster manager control DRBD resources\&. The timeout is specified in seconds\&. The default value is 0, which stands for an infinite timeout\&. Also see the
+\fBdegr\-wfc\-timeout\fR
+parameter\&.
+.RE
+.sp
+.RE
+.PP
+\fBdrbdsetup\fR forget\-peer \fIresource\fR \fIpeer_node_id\fR
+.RS 4
+.\" drbdsetup: forget-peer
+The
+\fBforget\-peer\fR
+command removes all traces of a peer node from the meta\-data\&. It frees a bitmap slot in the meta\-data and make it avalable for futher bitmap slot allocation in case a so\-far never seen node connects\&.
+.sp
+The connection must be taken down before this command may be used\&. In case the peer re\-connects at a later point a bit\-map based resync will be turned into a full\-sync\&.
+.RE
+.SH "EXAMPLES"
+.PP
+Please see the
+\m[blue]\fBDRBD User\*(Aqs Guide\fR\m[]\&\s-2\u[1]\d\s+2
+for examples\&.
+.SH "VERSION"
+.sp
+This document was revised for version 9\&.0\&.0 of the DRBD distribution\&.
+.SH "AUTHOR"
+.sp
+Written by Philipp Reisner philipp\&.reisner@linbit\&.com and Lars Ellenberg lars\&.ellenberg@linbit\&.com\&.
+.SH "REPORTING BUGS"
+.sp
+Report bugs to drbd\-user@lists\&.linbit\&.com\&.
+.SH "COPYRIGHT"
+.sp
+Copyright 2001\-2012 LINBIT Information Technologies, Philipp Reisner, Lars Ellenberg\&. This is free software; see the source for copying conditions\&. There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE\&.
+.SH "SEE ALSO"
+.PP
+\fBdrbd.conf\fR(5),
+\fBdrbd\fR(8),
+\fBdrbddisk\fR(8),
+\fBdrbdadm\fR(8),
+\m[blue]\fBDRBD User\*(Aqs Guide\fR\m[]\&\s-2\u[1]\d\s+2,
+\m[blue]\fBDRBD Web Site\fR\m[]\&\s-2\u[2]\d\s+2
+.SH "NOTES"
+.IP " 1." 4
+DRBD User's Guide
+.RS 4
+\%http://www.drbd.org/users-guide/
+.RE
+.IP " 2." 4
+DRBD Web Site
+.RS 4
+\%http://www.drbd.org/
+.RE

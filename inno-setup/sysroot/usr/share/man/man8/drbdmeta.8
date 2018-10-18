@@ -1,0 +1,208 @@
+'\" t
+.\"     Title: drbdmeta
+.\"    Author: [see the "Author" section]
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 6 December 2012
+.\"    Manual: System Administration
+.\"    Source: DRBD 9.0.0
+.\"  Language: English
+.\"
+.TH "DRBDMETA" "8" "6 December 2012" "DRBD 9.0.0" "System Administration"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+drbdmeta \- Manipulate the DRBD on\-disk metadata.\" drbdmeta
+.SH "SYNOPSIS"
+.HP \w'\fBdrbdmeta\fR\ 'u
+\fBdrbdmeta\fR [\-\-force] [\-\-ignore\-sanity\-checks] {\fIdevice\fR} {v06\ \fIminor\fR | v07\ \fImeta_dev\ index\fR | v08\ \fImeta_dev\ index\fR | v09\ \fImeta_dev\ index\fR} {\fIcommand\fR} [\fIcmd\ args\fR...]
+.SH "DESCRIPTION"
+.PP
+The
+\fBdrbdmeta\fR
+utility is used for creating, displaying, and modifying DRBD\*(Aqs on\-disk metadata\&. Users usually interact with the
+\fBdrbdadm\fR
+utility, which provides a more high\-level interface to DRBD than
+\fBdrbdmeta\fR\&. (See
+\fBdrbdadm\fR\*(Aqs
+\fB\-\-dry\-run\fR
+option to see how
+\fBdrbdadm\fR
+uses
+\fBdrbdmeta\fR\&.)
+.PP
+This utility can only be used on devices which are not currently in use by the kernel\&.
+.PP
+The first argument (\fIdevice\fR) specifies the drbd device associated with a volume, or
+\(lq\-\(rq
+if no device is associated with that volume\&. If the drbd device is specified, the
+\fBdrbdmeta\fR
+utility makes sure that the drbd device does not currently have a volume attached to prevent meta\-data of an active volume from being destroyed\&.
+.PP
+The second argument specifies the metadata version to use (v06, v07, v08, v09)\&. In most metadata versions, the third argument (\fImeta_dev\fR) specifies the device which contains the metadata; this argument can be the same as
+\fIdevice\fR\&. The fourth argument (\fIindex\fR) can be one of the keywords
+\fBinternal\fR
+(for internal metadata),
+\fBflex\-internal\fR
+(in v07 for variable\-sized metadata; v07 otherwise defaults to fixed\-size internal metadata),
+\fBflex\-external\fR
+(for variable\-sized external metadata), or a numeric matadata index (for fixed\-size external metadata)\&. See the
+\fBmeta\-disk\fR
+parameter in
+\fBdrbd.conf\fR(5)\&.
+.SH "OPTIONS"
+.PP
+\-\-force
+.RS 4
+.\" drbdmeta: --force
+Assume yes as the answer to all questions drbdmeta would ask\&.
+.RE
+.PP
+\-\-ignore\-sanity\-checks
+.RS 4
+.\" drbdmeta: --ignore-sanity-checks
+Normally,
+\fBdrbdmeta\fR
+performs some sanity checks before writing to the metadata device: for example, if the device appears to contain a file system, it refuses to destroy the file system by writing into it\&. Use this option to ignore these checks\&.
+.RE
+.SH "COMMANDS"
+.PP
+\fBcreate\-md\fR [\fB\-\-peer\-max\-bio\-size=\fR\fIval\fR] (metadata versions v06, v07, and v08), 
+.br
+\fBcreate\-md\fR {number\-of\-bitmap\-slots} [\fB\-\-peer\-max\-bio\-size=\fR\fIval\fR] [\fB\-\-al\-stripes=\fR\fIval\fR] [\fB\-\-al\-stripe\-size\-kB=\fR\fIval\fR] (metadata version v09)
+.RS 4
+.\" drbdmeta: create-md
+Initialize the metadata\&. This is necessary before a DRBD resource can be attached\&. If
+\fBdrbdmeta\fR
+finds an older version of DRBD metadata on the device, it asks if the format should be converted\&.
+.sp
+When
+\fBdrbdadm\fR
+calls
+\fBdrbdmeta\fR\*(Aqs
+\fBcreate\-md\fR
+command for a device, it sets the
+\fInumber\-of\-bitmap\-slots\fR
+argument to the number of peers in the resource\&. To reserve additional bitmap slots (which allows to add more peers in the future), call
+\fBdrbdmeta\fR
+directly instead\&.
+.sp
+When a device is used before being connected to its peers the first time, DRBD assumes that peers can only handle 4 KiB requests by default\&. The
+\fB\-\-peer\-max\-bio\-size\fR
+option allows to set more optimistic values; use this if the versions of DRBD that this device will connect to are known\&. DRBD supports a maximum bio size of 32 KiB since version 8\&.3\&.8, of 128 KiB since version 8\&.3\&.9, and of 1 MiB since version 8\&.4\&.0\&.
+.sp
+If you want to use more than 6433 activity log extents, or live on top of a spriped RAID, you may specify the number of stripes (\fB\-\-al\-stripes\fR, default 1), and the stripe size (\fB\-\-al\-stripe\-size\-kB\fR, default 32)\&. To just use a larger linear on\-disk ring\-buffer, leave the number of stripes at 1, and increase the size only:
+
+\fBdrbdmeta 0 v08 /dev/vg23/lv42 internal create\-md \-\-al\-stripe\-size 1M\fR
+.sp
+To avoid a single "spindle" from becoming a bottleneck, increase the number of stripes, to achieve an interleaved layout of the on\-disk activity\-log transactions\&. What you give as "stripe\-size" should be what is a\&.k\&.a\&. "chunk size" or "granularity" or "strip unit": the minimum skip to the next "spindle"\&.
+
+\fBdrbdmeta 0 v08 /dev/vg23/lv42 internal create\-md \-\-al\-stripes 7 \-\-al\-stripe\-size 64\fR
+.RE
+.PP
+\fBget\-gi\fR [\fB\-\-node\-id=\fR\fIid\fR]
+.RS 4
+.\" drbdmeta: get-gi
+Show the data generation identifiers for a device on a particular connection\&. DRBD version 9\&.0\&.0 and beyond support multiple peers; use the
+\fInode\-id\fR
+option to define which peer\*(Aqs data generation identifiers to show\&.
+.RE
+.PP
+\fBshow\-gi\fR [\fB\-\-node\-id=\fR\fIid\fR]
+.RS 4
+.\" drbdmeta: show-gi
+Similar to
+\fBget\-gi\fR, but with explanatory information\&.
+.RE
+.PP
+\fBdump\-md\fR
+.RS 4
+.\" drbdmeta: dump-md
+Dump the metadata of a device in text form, including the bitmap and activity log\&.
+.RE
+.PP
+\fBoutdate\fR
+.RS 4
+Mark the data on a lower\-level device as outdated\&. See
+\fBdrbdsetup\fR(8)
+for details\&.
+.RE
+.PP
+\fBdstate\fR
+.RS 4
+Show the current disk state of a lower\-level device\&.
+.RE
+.PP
+\fBcheck\-resize\fR
+.RS 4
+.\" drbdmeta: check-resize
+Examine the device size of a lower\-level device and its last known device size (saved in
+\fB/var/lib/drbd/drbd\-minor\-\fR\fB\fIminor\fR\fR\fB\&.lkbd\fR
+by
+\fBdrbdsetup check\-resize\fR)\&. For internal metadata, if the size of the lower\-level device has changed and the metadata can be found at the previous position, move the metadata to the new position at the end of the block device\&.
+.RE
+.PP
+\fBapply\-al\fR
+.RS 4
+.\" drbdmeta: apply-al
+Apply the activity log of the specified device\&. This is necessary before the device can be attached by the kernel again\&.
+.RE
+.SH "EXPERT COMMANDS"
+.PP
+The
+\fBdrbdmeta\fR
+utility can be used to fine tune metdata\&. Please note that this can lead to destroyed metadata or even silent data corruption; use with great care only\&.
+.PP
+\fBset\-gi\fR \fIgi\fR [\fB\-\-node\-id=\fR\fIid\fR]
+.RS 4
+.\" drbdmeta: set-gi
+Set the generation identifiers\&. The
+\fIgi\fR
+argument is a generation counter for the v06 and v07 formats, and a set of UUIDs for v08 and beyond\&. Accepts the same syntax as in the
+\fBget\-gi\fR
+output\&. DRBD version 9\&.0\&.0 and beyond support multiple peers; use the
+\fI\-\-node\-id\fR
+option to define which peer\*(Aqs data generation identifiers to set\&.
+.RE
+.PP
+\fBrestore\-md\fR \fIdump_file\fR
+.RS 4
+.\" drbdmeta: restore-md
+Replace the metadata on the device with the contents of
+\fIdump_file\fR\&. The dump file format is defined by the output of the
+\fBdump\-md\fR
+command\&.
+.RE
+.SH "VERSION"
+.sp
+This document was revised for version 9\&.0\&.0 of the DRBD distribution\&.
+.SH "AUTHOR"
+.sp
+Written by Philipp Reisner philipp\&.reisner@linbit\&.com and Lars Ellenberg lars\&.ellenberg@linbit\&.com\&.
+.SH "REPORTING BUGS"
+.sp
+Report bugs to drbd\-user@lists\&.linbit\&.com\&.
+.SH "COPYRIGHT"
+.sp
+Copyright 2001\-2008,2012 LINBIT Information Technologies, Philipp Reisner, Lars Ellenberg\&. This is free software; see the source for copying conditions\&. There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE\&.
+.SH "SEE ALSO"
+.PP
+
+\fBdrbdadm\fR(8)
+\fBdrbd.conf\fR(5)
