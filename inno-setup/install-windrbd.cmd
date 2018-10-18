@@ -21,3 +21,5 @@ cygrunsrv.exe -I windrbdlog -p /cygdrive/c/windrbd/usr/sbin/windrbd.exe -a log-s
 cygrunsrv.exe -I windrbdumhelper -p /cygdrive/c/windrbd/usr/sbin/windrbd.exe -auser-mode-helper-daemon -1 /cygdrive/c/windrbd/windrbd-umhelper.log -2 /cygdrive/c/windrbd/windrbd-umhelper.log -t manual
 
 start /wait InfDefaultInstall ".\windrbd.inf"
+
+pause

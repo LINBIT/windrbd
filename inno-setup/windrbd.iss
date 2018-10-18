@@ -17,6 +17,7 @@
 #define MyAppName "WinDRBD"
 #define MyAppPublisher "Linbit"
 #define MyAppURL "http://www.linbit.com/"
+#define SysRoot "C:\windrbd"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -110,7 +111,7 @@ Name: "{group}\Open {#MyAppName} configuration folder"; Filename: "C:\windrbd\et
                                                 
 [Run]
 Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
-Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
+Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec
 
 [UninstallRun]
 Filename: "{app}\uninstall-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
