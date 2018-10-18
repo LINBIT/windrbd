@@ -18,4 +18,7 @@ cygrunsrv -R windrbdumhelper
 
 start /wait rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 C:\windows\inf\windrbd.inf
 del C:\windows\inf\windrbd.inf
+rem should be done by defaultuninstall
 del C:\windows\sysnative\drivers\windrbd.sys
+
+pause

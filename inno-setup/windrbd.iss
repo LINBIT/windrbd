@@ -114,7 +114,7 @@ Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runas
 Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec
 
 [UninstallRun]
-Filename: "{app}\uninstall-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
+Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c uninstall-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec
 
 [Code]
 const
