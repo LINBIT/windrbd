@@ -7,6 +7,9 @@ On windows side:
 ./write-fs-loop.sh
 
 Must sync while connected and never get stuck in NetworkFailure
+
+Between Linux and Windows 7: 763 (fs loop) 164 (drop dont drop) 
+	without errors (except memory leak)
 -----------------------------------------
 
 test-loop.sh

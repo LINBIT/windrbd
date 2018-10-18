@@ -1,5 +1,5 @@
-DRIVE=f
-# DRIVE=k
+# DRIVE=f
+DRIVE=k
 i=0
 while true
 do

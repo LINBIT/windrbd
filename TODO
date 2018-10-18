@@ -30,14 +30,12 @@ TODO: Documentation: white paper for linbit website.
 
 	Also document how to run pacemaker under WSL
 
-TODO: Documentation: define tests to be run before releases.
-
-	And run them ;)
-
 TODO: Bug: it seems that free_mdls_and_irp() never gets called.
 
 	After 200 loops of invalidate-loop system runs out of memory.
 	This should be fixed.
+
+	Leak is about 1% of data written (12kb for 1Meg).
 
 TODO: Bug: BSOD on drbdadm up (Windows Server 2016)
 
@@ -81,6 +79,14 @@ Oct  9 04:01:32 10.43.10.11  U02:01:32.340|c9bcfc80(drbd_a_w0) drbd_ack_receiver
 	Update: Most likely this is an out-of-memory bug, with leak in
 	the I/O path. Fix that leak and retry test.
 
+	Update: Without I/O also happened (Server 2016)
+
+	Probably related: Windows Server 2016 machine doesn't answer
+	ping (last message is destroy_workqueue stopping a workqueue thread)
+
+	This seems to be server 2016 related, does not happen with
+	Windows 7
+
 TODO: Bug: 3 node setup sometimes does not work.
 
 	If node with node-id 1 is missing, node 2 thinks that node
@@ -114,9 +120,18 @@ Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0
 	most likely something that causes Linux DRBD to mistake
 	one Windows host for another.
 
+TODO: Upgrade to DRBD 9.0.16
+
+	Once available.
+
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
+
+TODO: Bug: User mode helper returns 127 where it shouldn't
+
+	Only when run from windrbdumhelper service. PowerShell
+	issue (tried also with exit 0, same result)?
 
 TODO: Research: Check if pacemaker under WSL works
 
@@ -3736,4 +3751,10 @@ Rejected: Installation: Maybe revert drbd-utils in Program Files.
 	this is compatible with make install from drbd-utils. Also
 	inno-setup now can check if the exe files are in use (user
 	must stop services then).
+
+Done: Documentation: define tests to be run before releases.
+
+	And run them ;)
+
+	Update: Now using TESTS file, this is kind-of what we want.
 
