@@ -118,14 +118,6 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
-TODO: Maybe revert drbd-utils in Program Files.
-
-	inno-setup would check if programs (like drbdsetup events2)
-	are currently running.
-
-	Update: Tried, we will have to rewrite installer cmd script
-	in PascalScript for that.
-
 TODO: Research: Check if pacemaker under WSL works
 
 	And include in documentation.
@@ -3719,4 +3711,29 @@ Done: Bug: patch_boot_sector: DRBD signature on peer.
 
 	Fixed with 4c66b503af9: reason was check for bi_first_element
 	was wrong (race with generic_make_request updating it).
+
+Done: Installation: Update usually fails for *.exe files
+
+	If they are running (need to stop userland services and
+	drbdsetup events2).
+
+	Possible solution: install them using inno-setup directly
+	to C:\windrbd (however need to get around zip file extraction
+	first)
+
+	Update: Did that, it at least notifies the user about the
+	error (user must stop services, put a note into README)
+
+Rejected: Installation: Maybe revert drbd-utils in Program Files.
+
+	inno-setup would check if programs (like drbdsetup events2)
+	are currently running.
+
+	Update: Tried, we will have to rewrite installer cmd script
+	in PascalScript for that.
+
+	We leave it now in C:\windrbd\usr\sbin. Advantage is that
+	this is compatible with make install from drbd-utils. Also
+	inno-setup now can check if the exe files are in use (user
+	must stop services then).
 
