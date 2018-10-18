@@ -36,12 +36,12 @@ endif
 ifeq ($(BUILD_ENV),jt-win10)
 export EWDK_BASE := d:
 EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
-EWDK_VERSION := 10.0.17134.0
+EWDK_VERSION := 10.0.17763.0
 EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
 
 # Name of the pfx file (without extension)
-KEY = linbit
-PASSWD = "a"
+KEY = linbit-ha
+PASSWD = ""
 
 WINDRBD_SOURCE = Y:\\windrbd
 DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
