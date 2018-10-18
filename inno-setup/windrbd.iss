@@ -75,23 +75,32 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 [Tasks]
 ; Name: modifypath; Description: &Add application directory to your environmental path;
 
+[Dirs]
+Name: "{#SysRoot}\usr\sbin"
+Name: "{#SysRoot}\var\run\drbd"
+Name: "{#SysRoot}\var\lib\drbd"
+Name: "{#SysRoot}\var\lock"
+
 [Files]
-Source: "{#WindrbdUtilsSource}\user\v9\drbdadm.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
-Source: "{#WindrbdUtilsSource}\user\v9\drbdmeta.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
-Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
-Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "{#WindrbdUtilsSource}\user\v9\drbdadm.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion uninsrestartdelete
+Source: "{#WindrbdUtilsSource}\user\v9\drbdmeta.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion uninsrestartdelete
+Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion uninsrestartdelete
+Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion uninsrestartdelete
+Source: "{#WindrbdSource}\inno-setup\sysroot\README-windrbd.txt"; DestDir: "{#SysRoot}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.conf"; DestDir: "{#SysRoot}\etc"; Flags: ignoreversion confirmoverwrite
+Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\global_common.conf"; DestDir: "{#SysRoot}\etc\drbd.d"; Flags: ignoreversion confirmoverwrite
+Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\windrbd-sample.res"; DestDir: "{#SysRoot}\etc\drbd.d"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
 ; TODO: one day, package the individual files themselves:
-Source: "{#WindrbdSource}\inno-setup\sysroot.zip"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygwin1.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygrunsrv.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygbz2-1.dll"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\unzip.exe"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygwin1.dll"; DestDir: "{app}"; Flags: ignoreversion uninsrestartdelete
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygrunsrv.exe"; DestDir: "{app}"; Flags: ignoreversion uninsrestartdelete
 Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\msgbox.vbs"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+; must be in same folder as the sysfile.
 Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
+
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

@@ -1,5 +1,0 @@
-Needed:
-./etc/drbd.d/global_common.conf
-./etc/drbd.d/windrbd-sample.res
-./etc/drbd.conf
-./README-windrbd.txt
