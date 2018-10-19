@@ -18,6 +18,7 @@ struct sched_param {
 static inline int sched_setscheduler(struct task_struct *p, int policy,
 	                       const struct sched_param *param)
 {
+	/* TODO: at least test for SCHED_RR here ... */
     (void)policy;
     (void)param;
 

@@ -30,6 +30,13 @@ TODO: Documentation: white paper for linbit website.
 
 	Also document how to run pacemaker under WSL
 
+TODO: Installation: some last fixes.
+
+	Call Uninstall only once (see stackoverflow).
+	Remove usr/sbin on Uninstall
+	Do not ask for overwrite of config files (do not overwrite them)
+	Hide cmd scripts again if everything works ok
+
 TODO: Bug: it seems that free_mdls_and_irp() never gets called.
 
 	After 200 loops of invalidate-loop system runs out of memory.
@@ -48,6 +55,9 @@ TODO: Bug: BSOD on drbdadm up (Windows Server 2016)
 	problem persists.
 
 	Update: upgraded, so far no BSOD, but requires more testing.
+
+	Update: BSOD also on disconnect connect loop (after 10-20
+	iterations).
 
 TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 

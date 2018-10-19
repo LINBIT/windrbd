@@ -119,7 +119,17 @@ static void windrbd_thread_setup(void *targ)
 {
 	struct task_struct *t = targ;
 	int ret;
+	NTSTATUS status;
 
+		/* t->windows_thread may be still invalid here, do not
+		 * printk().
+		 */
+
+        status = KeWaitForSingleObject(&t->start_event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+        if (!NT_SUCCESS(status)) {
+		printk("On waiting for start event: KeWaitForSingleObject failed with status %x\n", status);
+		return;
+	}
 	ret = t->threadfn(t->data);
 	if (ret != 0)
 		printk(KERN_WARNING "Thread %s returned non-zero exit status. Ignored, since Windows threads are void.\n", t->comm);
@@ -150,22 +160,22 @@ int wake_up_process(struct task_struct *t)
 	}
 	t->thread_started = 1;
 	spin_unlock_irqrestore(&t->thread_started_lock, flags);
+	KeSetEvent(&t->start_event, 0, FALSE);
 
-	status = windrbd_create_windows_thread(windrbd_thread_setup, t, &t->windows_thread);
-	if (status != STATUS_SUCCESS) {
-			/* TODO: clean up t here .. */
-		printk("Could not start thread %s\n", t->comm);
-		return -1;
-	}
 	return 1;
 }
 
-	/* Creates a new task_struct, but doesn't start the thread (by
-	 * calling PsCreateSystemThread()) yet. This will be done by
-	 * wake_up_process(struct task_struct) later.
+	/* Creates a new task_struct, but start the thread (by
+	 * calling PsCreateSystemThread()). Thread will wait for
+	 * start event which is signalled by wake_up_process(struct
+	 * task_struct) later.
 	 *
-	 * We strive to be as close as possible to the real Linux
-	 * function here.
+	 * If PsCreateSystemThread should fail this returns an
+	 * ERR_PTR(-ENOMEM)
+	 *
+	 * This now 'emulates' Linux behaviour such that no changes
+	 * to driver code should be neccessary (at least not in the
+	 * DRBD code).
 	 */
 
 struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const char *name, ...)
@@ -174,6 +184,7 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	ULONG_PTR flags;
 	va_list args;
 	int i;
+	NTSTATUS status;
 
 	if ((t = kzalloc(sizeof(*t), GFP_KERNEL, 'DRBD')) == NULL)
 		return ERR_PTR(-ENOMEM);
@@ -191,6 +202,7 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	spin_lock_init(&t->thread_started_lock);
 
 	KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
+	KeInitializeEvent(&t->start_event, SynchronizationEvent, FALSE);
 	t->has_sig_event = TRUE;
 	t->sig = -1;
 
@@ -206,6 +218,12 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	next_pid++;
 	t->pid = next_pid;
 	spin_unlock_irqrestore(&next_pid_lock, flags);
+
+	status = windrbd_create_windows_thread(windrbd_thread_setup, t, &t->windows_thread);
+	if (status != STATUS_SUCCESS) {
+		printk("Could not start thread %s\n", t->comm);
+		return ERR_PTR(-ENOMEM);	/* or whatever */
+	}
 
 	spin_lock_irqsave(&thread_list_lock, flags);
 	list_add(&t->list, &thread_list);

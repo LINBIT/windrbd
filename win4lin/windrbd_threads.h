@@ -33,6 +33,7 @@ struct task_struct {
 	KEVENT sig_event;
 	BOOLEAN has_sig_event;
 	int sig; 
+	KEVENT start_event;
 
 	int thread_started:1;
 	int is_zombie:1;
