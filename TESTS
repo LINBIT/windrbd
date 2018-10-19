@@ -1,3 +1,13 @@
+On Windows side:
+
+./disconnect-connect-loop.sh
+
+(with a connectable peer).
+
+Should not BSOD (as it did on Server 2016 before 0a9512aeb).
+
+-----------------------------
+
 On linux side:
 
 ./iptables-drop-dont-drop-loop.sh

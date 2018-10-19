@@ -44,21 +44,6 @@ TODO: Bug: it seems that free_mdls_and_irp() never gets called.
 
 	Leak is about 1% of data written (12kb for 1Meg).
 
-TODO: Bug: BSOD on drbdadm up (Windows Server 2016)
-
-	Fix it.
-
-	When peer resource is down no BSOD, however BSOD when it
-	comes up. Most likely this BSOD is when sync starts.
-
-	Upgrade DRBD to 9.0.15 (on both sides) and see if the
-	problem persists.
-
-	Update: upgraded, so far no BSOD, but requires more testing.
-
-	Update: BSOD also on disconnect connect loop (after 10-20
-	iterations).
-
 TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
 	Sync stalls at 0%. Try to update Linux DRBD before doing
@@ -72,6 +57,8 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
 	Just happened with a 9.0.15 SyncTarget (Windows) and
 	9.0.15 SyncSource (Linux).
+
+	Update: fixed with windrbd_thread race fix?
 
 TODO: Bug: BSOD when running unattended
 
@@ -96,6 +83,8 @@ Oct  9 04:01:32 10.43.10.11  U02:01:32.340|c9bcfc80(drbd_a_w0) drbd_ack_receiver
 
 	This seems to be server 2016 related, does not happen with
 	Windows 7
+
+	Update: fixed with windrbd_thread race fix?
 
 TODO: Bug: 3 node setup sometimes does not work.
 
@@ -3767,4 +3756,24 @@ Done: Documentation: define tests to be run before releases.
 	And run them ;)
 
 	Update: Now using TESTS file, this is kind-of what we want.
+
+Done: Bug: BSOD on drbdadm up (Windows Server 2016)
+
+	Fix it.
+
+	When peer resource is down no BSOD, however BSOD when it
+	comes up. Most likely this BSOD is when sync starts.
+
+	Upgrade DRBD to 9.0.15 (on both sides) and see if the
+	problem persists.
+
+	Update: upgraded, so far no BSOD, but requires more testing.
+
+	Update: BSOD also on disconnect connect loop (after 10-20
+	iterations).
+
+	Update: Fixed a race in windrbd_threads (windows_thread
+	was sometimes invalid at start of a new thread, which
+	caused ack_receiver sched_setscheduler() to BSOD), which
+	hopefully fixes this (and others) BSOD.
 
