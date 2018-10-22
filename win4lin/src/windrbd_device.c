@@ -698,6 +698,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	if (error == 0) {
 		if (bio->bi_rw == READ) {
 			if (!bio->bi_common_data->bc_device_failed && bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
+#if 0
 				char *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
 				if (user_buffer != NULL) {
 					int offset;
@@ -712,6 +713,8 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 					printk(KERN_WARNING "MmGetSystemAddressForMdlSafe returned NULL\n");
 					status = STATUS_INVALID_PARAMETER;
 				}
+#endif
+printk("not copiing READ back\n");
 			}
 		}
 	} else {
@@ -883,7 +886,11 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 		bio->bi_bdev = dev;
 		bio->bi_max_vecs = 1;
 		bio->bi_vcnt = 1;
-		bio->bi_paged_memory = bio->bi_rw == WRITE;
+if (bio->bi_rw == WRITE) {
+printk("is a WRITE request\n");
+}
+// bio->bi_paged_memory = bio->bi_rw == WRITE;
+bio->bi_paged_memory = 1;
 		bio->bi_size = this_bio_size;
 		bio->bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
 		bio->bi_mdl_offset = b*MAX_BIO_SIZE;
