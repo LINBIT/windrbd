@@ -754,14 +754,21 @@ printk("3\n");
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
+printk("3a\n");
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
 		     mdl = next_mdl) {
+printk("3b\n");
 			next_mdl = mdl->Next;
-			if (bio->bi_paged_memory && mdl->MdlFlags & MDL_PAGES_LOCKED) {
+printk("3c\n");
+			if ((bio->bi_might_access_filesystem || bio->bi_paged_memory) && mdl->MdlFlags & MDL_PAGES_LOCKED) {
+printk("3d\n");
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
+printk("3e\n");
 			}
+printk("3f\n");
 			IoFreeMdl(mdl); // This function will also unmap pages.
+printk("3g\n");
 		}
 printk("4\n");
 		bio->bi_irps[r]->MdlAddress = NULL;
@@ -769,7 +776,8 @@ printk("4\n");
 
 			/* TODO: IoCompleteRequest? */
 printk("5\n");
-		IoFreeIrp(bio->bi_irps[r]);
+		// IoFreeIrp(bio->bi_irps[r]);
+		IoCompleteRequest(bio->bi_irps[r], IO_NO_INCREMENT);
 printk("6\n");
 	}
 
@@ -2730,10 +2738,7 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 /* TODO: this might cause a blue screen from time to time.
 	Fix free_mdls_and_irp() to handle this */
 
-/*
 	bio_put(b);
-*/
-
 	kfree(p);
 
 	mutex_unlock(&read_bootsector_mutex);
@@ -2836,6 +2841,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		printk(KERN_INFO "You may want to do something like windrbd hide-filesystem <drive-letter-of-backing-dev>\n");
 		err = -EINVAL;
 		goto out_get_volsize_error;
+// printk("(ignoring the warning)\n");
 	}
 
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
