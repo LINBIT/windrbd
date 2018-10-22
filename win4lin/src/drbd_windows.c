@@ -1837,6 +1837,11 @@ NTSTATUS DrbdIoCompletion(
 
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
+/* TODO: REMOVE again!! */
+if (status != STATUS_SUCCESS) {
+printk("status is %x, fixing DrbdIoComplete\n", status);
+status = STATUS_SUCCESS;
+}
 	}
 
 	if (test_inject_faults(&bio->bi_bdev->inject_on_completion, "assuming completion routine was send an error (enabled for this device)"))
@@ -1919,6 +1924,11 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 	s->FileObject = dev->file_object;
 
 	status = IoCallDriver(dev->windows_device, newIrp);
+// if (status == 0xc0000022) {
+if (status != STATUS_SUCCESS) {
+printk("status is %x, fixing IoCallDriver\n", status);
+status = STATUS_SUCCESS;
+}
 	if (status == STATUS_PENDING) {
 		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 		status = dev->vol_size_io_status.Status;
@@ -2076,7 +2086,7 @@ printk("2\n");
 		}
 	} else {
 printk("leaving page locked\n");
-}
+	}
 		/* Else leave it locked */
 
 	/* Windows tries to split up MDLs and crashes when
