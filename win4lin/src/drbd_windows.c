@@ -736,6 +736,7 @@ static void free_mdls_and_irp(struct bio *bio)
 	struct _MDL *mdl, *next_mdl;
 	int r;
 
+printk("1\n");
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */
@@ -743,11 +744,13 @@ static void free_mdls_and_irp(struct bio *bio)
 	if (bio->bi_irps == NULL)
 		return;
 
+printk("2\n");
 	for (r=0;r<bio->bi_num_requests;r++) {
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
 		 */
+printk("3\n");
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
@@ -760,13 +763,17 @@ static void free_mdls_and_irp(struct bio *bio)
 			}
 			IoFreeMdl(mdl); // This function will also unmap pages.
 		}
+printk("4\n");
 		bio->bi_irps[r]->MdlAddress = NULL;
 		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 
 			/* TODO: IoCompleteRequest? */
+printk("5\n");
 		IoFreeIrp(bio->bi_irps[r]);
+printk("6\n");
 	}
 
+printk("7\n");
 	kfree(bio->bi_irps);
 }
 
@@ -1852,10 +1859,11 @@ NTSTATUS DrbdIoCompletion(
 
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
 		drbd_bio_endio(bio, win_status_to_blk_status(status));
+			/* TODO: to bio_free() */
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
-	} else
-		bio_put(bio);
+	}
+	bio_put(bio);
 
 		/* Tell IO manager that it should not touch the
 		 * irp. It has yet to be freed together with the
