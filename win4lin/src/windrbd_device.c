@@ -729,9 +729,11 @@ printk("not copiing READ back\n");
 
 		status = STATUS_DEVICE_DOES_NOT_EXIST;
 	}
+/*
 	if (bio->bi_rw == READ)
 		for (i=0;i<bio->bi_vcnt;i++)
 			kfree(bio->bi_io_vec[i].bv_page->addr);
+*/
 
         unsigned long flags;
 
@@ -914,9 +916,10 @@ bio->bi_paged_memory = 1;
  *	 intermediate buffer and the extra copy.
  */
 
-		if (bio->bi_rw == READ)
+/*		if (bio->bi_rw == READ)
 			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, 0, 'DRBD');
-		else
+		else */
+printk("not using user buffer\n");
 			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
 
 				/* TODO: fault inject here. */
