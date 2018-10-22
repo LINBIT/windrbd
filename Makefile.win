@@ -18,6 +18,7 @@ BUILD_ENV ?= jt-server2016
 
 # TODO: unset this for production releases.
 KMALLOC_DEBUG = 1
+BIO_REF_DEBUG = 1
 
 ifeq ($(BUILD_ENV),jt-win7)
 export EWDK_BASE := c:\\Ewdk
@@ -100,6 +101,9 @@ C_DEFINES += -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64 # 64bit
 C_DEFINES += -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D DBG=1 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15 
 ifdef KMALLOC_DEBUG
 C_DEFINES += -D KMALLOC_DEBUG=1
+endif
+ifdef BIO_REF_DEBUG
+C_DEFINES += -D BIO_REF_DEBUG=1
 endif
 WIN_CFLAGS += /GF /Gm- /Zp8 /GS /Gy 
 # /fp:precise  # precise - "precise" floating-point model; results are predictable

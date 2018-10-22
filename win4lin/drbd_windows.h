@@ -99,6 +99,32 @@ enum
 #define atomic_t				int
 #define atomic_t64				LONGLONG
 
+#define	atomic_inc_return(_p)		InterlockedIncrement((LONG volatile*)(_p))
+#define	atomic_dec_return(_p)		InterlockedDecrement((LONG volatile*)(_p))
+#define atomic_inc(_v)			atomic_inc_return(_v)
+#define atomic_dec(_v)			atomic_dec_return(_v)
+
+#define	atomic_inc_return64(_p)		InterlockedIncrement64((unsigned long long volatile*)(_p))
+#define	atomic_dec_return64(_p)		InterlockedDecrement64((unsigned long long volatile*)(_p))
+#define atomic_inc64(_v)		atomic_inc_return64(_v)
+#define atomic_dec64(_v)		atomic_dec_return64(_v)
+
+extern LONG_PTR xchg(LONG_PTR *target, LONG_PTR value);
+extern void atomic_set(atomic_t *v, int i);
+extern void atomic_add(int i, atomic_t *v);
+extern void atomic_add64(LONGLONG a, atomic_t64 *v);
+extern int atomic_add_return(int i, atomic_t *v);
+extern void atomic_sub(int i, atomic_t *v);
+extern void atomic_sub64(LONGLONG a, atomic_t64 *v);
+extern int atomic_sub_return(int i, atomic_t *v); 
+extern LONGLONG atomic_sub_return64(LONGLONG a, atomic_t64 *v);
+extern int atomic_dec_and_test(atomic_t *v);
+extern int atomic_sub_and_test(int i, atomic_t *v);
+extern int atomic_cmpxchg(atomic_t *v, int old, int new);
+extern int atomic_read(const atomic_t *v);
+extern LONGLONG atomic_read64(const atomic_t64 *v);
+extern int atomic_xchg(atomic_t *v, int n);
+
 #define WARN_ON(x)				__noop
 #define ATOMIC_INIT(i)			(i)
 
@@ -743,7 +769,22 @@ extern struct bio_set *bioset_create(unsigned int, unsigned int);
 extern void bioset_free(struct bio_set *);
 extern struct bio *bio_alloc(gfp_t, int, ULONG);
 extern struct bio *bio_alloc_bioset(gfp_t, int, struct bio_set *);
+
+#ifdef BIO_REF_DEBUG
+
+extern void bio_get_debug(struct bio *bio, const char *file, int line, const char *func);
+extern void bio_put_debug(struct bio *bio, const char *file, int line, const char *func);
+
+#define bio_get(bio) bio_get_debug(bio, __FILE__, __LINE__, __func__)
+#define bio_put(bio) bio_put_debug(bio, __FILE__, __LINE__, __func__)
+#else
+static inline void bio_get(struct bio *bio)
+{
+	atomic_inc(&bio->bi_cnt);
+}
 extern void bio_put(struct bio *);
+#endif
+
 extern void bio_free(struct bio *bio); 
 extern int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset);
 extern void bio_endio(struct bio *bio, int error);
@@ -843,37 +884,6 @@ extern void set_disk_ro(struct gendisk *disk, int flag);
 
 #define INIT_WORK(_work, _func)                                         \
 	 __INIT_WORK((_work), (_func), 0);  
-
-#define	atomic_inc_return(_p)		InterlockedIncrement((LONG volatile*)(_p))
-#define	atomic_dec_return(_p)		InterlockedDecrement((LONG volatile*)(_p))
-#define atomic_inc(_v)			atomic_inc_return(_v)
-#define atomic_dec(_v)			atomic_dec_return(_v)
-
-#define	atomic_inc_return64(_p)		InterlockedIncrement64((unsigned long long volatile*)(_p))
-#define	atomic_dec_return64(_p)		InterlockedDecrement64((unsigned long long volatile*)(_p))
-#define atomic_inc64(_v)		atomic_inc_return64(_v)
-#define atomic_dec64(_v)		atomic_dec_return64(_v)
-
-extern LONG_PTR xchg(LONG_PTR *target, LONG_PTR value);
-extern void atomic_set(atomic_t *v, int i);
-extern void atomic_add(int i, atomic_t *v);
-extern void atomic_add64(LONGLONG a, atomic_t64 *v);
-extern int atomic_add_return(int i, atomic_t *v);
-extern void atomic_sub(int i, atomic_t *v);
-extern void atomic_sub64(LONGLONG a, atomic_t64 *v);
-extern int atomic_sub_return(int i, atomic_t *v); 
-extern LONGLONG atomic_sub_return64(LONGLONG a, atomic_t64 *v);
-extern int atomic_dec_and_test(atomic_t *v);
-extern int atomic_sub_and_test(int i, atomic_t *v);
-extern int atomic_cmpxchg(atomic_t *v, int old, int new);
-extern int atomic_read(const atomic_t *v);
-extern LONGLONG atomic_read64(const atomic_t64 *v);
-extern int atomic_xchg(atomic_t *v, int n);
-
-static inline void bio_get(struct bio *bio)
-{
-	atomic_inc(&bio->bi_cnt);
-}
 
 // from rcu_list.h
 

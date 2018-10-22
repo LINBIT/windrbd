@@ -770,6 +770,24 @@ static void free_mdls_and_irp(struct bio *bio)
 	kfree(bio->bi_irps);
 }
 
+void bio_get_debug(struct bio *bio, const char *file, int line, const char *func)
+{
+	int cnt;
+	cnt = atomic_inc(&bio->bi_cnt);
+	printk("bio: %p refcount now: %d called from: %s:%d %s()\n", bio, cnt, file, line, func);
+}
+
+void bio_put_debug(struct bio *bio, const char *file, int line, const char *func)
+{
+	int cnt;
+	cnt = atomic_dec(&bio->bi_cnt);
+	printk("bio: %p refcount now: %d called from: %s:%d %s()\n", bio, cnt, file, line, func);
+	if (cnt == 0)
+		bio_free(bio);
+}
+
+#ifndef BIO_REF_DEBUG
+
 void bio_put(struct bio *bio)
 {
 	int cnt;
@@ -777,6 +795,8 @@ void bio_put(struct bio *bio)
 	if (cnt == 0)
 		bio_free(bio);
 }
+
+#endif
 
 void bio_free(struct bio *bio)
 {
