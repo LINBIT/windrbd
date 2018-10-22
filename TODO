@@ -44,6 +44,46 @@ TODO: Bug: it seems that free_mdls_and_irp() never gets called.
 
 	Leak is about 1% of data written (12kb for 1Meg).
 
+	Update: leak fixed (one bio_put in completion was missing).
+	Tested with NTFS as backing device: replacing IoFreeIrp()
+	by IoCompleteRequest() fixed the test for filesystem
+	BSOD. Also now removed the might_access_filesystem checks
+	(behaves as if it is always 1, MmBuildMdlForNonPagedPool never
+	gets called). Also removed the extra copy in the upper
+	device (for READ, we needed that because under Windows 10
+	we could not read the device properly). TODO: test with
+	Windows 10 and find another solution to the copy problem.
+
+	Note that we really cannot do proper tests with NTFS
+	backing devices: access fails (with 0xc0000022, access
+	denied, also sometimes with 0xc0000054 STATUS_FILE_LOCK_CONFLICT).
+	If we ignore them NTFS driver gets invalid data and
+	loops.
+
+	Also TODO: clean up code (printk's).
+
+TODO: Code quality: fix the case where backing device contains a file system.
+	It should not blue screen.
+	(maybe later, this seems to be rather complex)
+	We are now avoiding the case when there is a filesystem
+	on an attached backing device. This blue screen should
+	be fixed but maybe in a later release.
+
+	Update: We found on stackoverflow that one should use
+	IoCompleteRequest() instead of IoFreeIrp(). Does that
+	help?
+
+	Update: Lots of progress, when there is a NTFS filesystem
+	we still have the access denied thing going on but we
+	(currently?) do not blue screen.
+
+TODO: Skip the extra copy on read.
+
+	We cannot have it (currently BSOD's). See if there is a
+	device flag (something like BUFFERED or so) that does the
+	trick (problem is that under Windows 10 a read from the
+	upper device returns garbage).
+
 TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
 	Sync stalls at 0%. Try to update Linux DRBD before doing
@@ -715,17 +755,6 @@ TODO: Bug: test-loop hangs after about 16 iterations.
 	format k: sometimes gets stuck when run from test script.
 
 TODO: Code quality: Re-check the WIN32 / WIN64 thing in drbd_endian.h
-
-TODO: Code quality: fix the case where backing device contains a file system.
-	It should not blue screen.
-	(maybe later, this seems to be rather complex)
-	We are now avoiding the case when there is a filesystem
-	on an attached backing device. This blue screen should
-	be fixed but maybe in a later release.
-
-	Update: We found on stackoverflow that one should use
-	IoCompleteRequest() instead of IoFreeIrp(). Does that
-	help?
 
 TODO: Feature: flush not supported by some (all?) devices: currently we
 	ignore this (as reactOS also does it). Update: ext2
