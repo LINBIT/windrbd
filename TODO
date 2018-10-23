@@ -13,6 +13,9 @@ TODO: Code quality: fake commit history (git rebase -i master)
 	caused some commits that used to compile to simply
 	fail.
 
+	Update: phil ack-ed waiting for Roland. Meanwhile write
+	a commit message.
+
 Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
 Postponed to; Oct 20 2018
@@ -62,6 +65,10 @@ TODO: Bug: it seems that free_mdls_and_irp() never gets called.
 
 	Also TODO: clean up code (printk's).
 
+	Update: Tested with Windows 10 it seems to require some
+	extra copy (reports 'strange' errors) or some flag to be
+	set.
+
 TODO: Code quality: fix the case where backing device contains a file system.
 	It should not blue screen.
 	(maybe later, this seems to be rather complex)
@@ -99,6 +106,8 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 	9.0.15 SyncSource (Linux).
 
 	Update: fixed with windrbd_thread race fix?
+
+	Update: No, just happened with Windows 7 and Windows 10
 
 TODO: Bug: BSOD when running unattended
 
