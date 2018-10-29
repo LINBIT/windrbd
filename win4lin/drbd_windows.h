@@ -116,7 +116,7 @@ extern void atomic_add64(LONGLONG a, atomic_t64 *v);
 extern int atomic_add_return(int i, atomic_t *v);
 extern void atomic_sub(int i, atomic_t *v);
 extern void atomic_sub64(LONGLONG a, atomic_t64 *v);
-extern int atomic_sub_return(int i, atomic_t *v); 
+extern int atomic_sub_return(int i, atomic_t *v);
 extern LONGLONG atomic_sub_return64(LONGLONG a, atomic_t64 *v);
 extern int atomic_dec_and_test(atomic_t *v);
 extern int atomic_sub_and_test(int i, atomic_t *v);
@@ -716,12 +716,6 @@ struct bio {
 	 * locked by IoBuildAsynchronousFsdRequest().
 	 */
 	bool bi_paged_memory;
-
-	/* If set, indicates that the device might contain a file
-	 * system, in which case we should not call
-	 * MmBuildMdlForNonPagedPool() on the memory.
-	 */
-	bool bi_might_access_filesystem;
 
 	/* If set do not modify boot sector file system signature
 	 * on I/O. Currently only used by check for file system

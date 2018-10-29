@@ -736,7 +736,6 @@ static void free_mdls_and_irp(struct bio *bio)
 	struct _MDL *mdl, *next_mdl;
 	int r;
 
-printk("1\n");
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */
@@ -744,45 +743,29 @@ printk("1\n");
 	if (bio->bi_irps == NULL)
 		return;
 
-printk("2\n");
 	for (r=0;r<bio->bi_num_requests;r++) {
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
 		 */
-printk("3\n");
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
-printk("3a\n");
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
 		     mdl = next_mdl) {
-printk("3b\n");
 			next_mdl = mdl->Next;
-printk("3c\n");
-//			if ((bio->bi_might_access_filesystem || bio->bi_paged_memory) && mdl->MdlFlags & MDL_PAGES_LOCKED) {
 			if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
-printk("3d\n");
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
-printk("3e\n");
 			}
-printk("3f\n");
 			IoFreeMdl(mdl); // This function will also unmap pages.
-printk("3g\n");
 		}
-printk("4\n");
 		bio->bi_irps[r]->MdlAddress = NULL;
 		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 
-			/* TODO: IoCompleteRequest? */
-printk("5\n");
-// IoFreeIrp(bio->bi_irps[r]);
 		IoCompleteRequest(bio->bi_irps[r], IO_NO_INCREMENT);
-printk("6\n");
 	}
 
-printk("7\n");
 	kfree(bio->bi_irps);
 }
 
@@ -1837,13 +1820,6 @@ NTSTATUS DrbdIoCompletion(
 
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
-#if 0
-/* TODO: REMOVE again!! */
-if (status != STATUS_SUCCESS) {
-printk("status is %x, fixing DrbdIoComplete\n", status);
-status = STATUS_SUCCESS;
-}
-#endif
 	}
 
 	if (test_inject_faults(&bio->bi_bdev->inject_on_completion, "assuming completion routine was send an error (enabled for this device)"))
@@ -1926,13 +1902,7 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 	s->FileObject = dev->file_object;
 
 	status = IoCallDriver(dev->windows_device, newIrp);
-#if 0
-// if (status == 0xc0000022) {
-if (status != STATUS_SUCCESS) {
-printk("status is %x, fixing IoCallDriver\n", status);
-status = STATUS_SUCCESS;
-}
-#endif
+
 	if (status == STATUS_PENDING) {
 		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 		status = dev->vol_size_io_status.Status;
@@ -2063,7 +2033,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 		 * IoBuildAsynchronousFsdRequest, we must not have
 		 * pages locked while using MmBuildMdlForNonPagedPool()
 		 * (which is used for pages from NONPAGED pool (which
-		 * is what we have).
+		 * is what we have)).
 		 * Update: if there is an NTFS on the backing device,
 		 * MmBuildMdlForNonPagedPool() blue screens.
 		 */
@@ -2073,28 +2043,18 @@ static int windrbd_generic_make_request(struct bio *bio)
 		first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress;
 		if (first_mdl != NULL) {
 			if (first_mdl->MdlFlags & MDL_PAGES_LOCKED) {
-printk("unlocking page\n");
 				MmUnlockPages(first_mdl);
 			}
-printk("1\n");
-/*
-			if (!bio->bi_might_access_filesystem)
-				MmBuildMdlForNonPagedPool(first_mdl);
-*/
-printk("2\n");
-
-			/* Else do nothing. Memory cannot be freed, so
-			 * use static memory for the file system test.
-			 */
-
 		}
-	} else {
-printk("leaving page locked\n");
 	}
 		/* Else leave it locked */
 
 	/* Windows tries to split up MDLs and crashes when
-	 * there are more than 32*4K MDLs.
+	 * there are more than 32*4K MDLs. Other drivers
+	 * (Windows 10 USB storage) blue screen already
+	 * when there is an additional mdl element (mdl->Next
+	 * being non-NULL). We therefore do not use the
+	 * linked list in MDLs to optimize performace.
 	 */
 
 		/* TODO: use bio->bi_size it should be correct now. */
@@ -2115,11 +2075,6 @@ printk("leaving page locked\n");
 
 		if (bio->bi_paged_memory)
 			MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
-/*
-		else
-			if (!bio->bi_might_access_filesystem)
-				MmBuildMdlForNonPagedPool(mdl);
-*/
 	}
 
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
@@ -2746,7 +2701,6 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	bio_set_op_attrs(b, REQ_OP_READ, 0);
 
 	b->bi_end_io = backingdev_check_endio;
-	b->bi_might_access_filesystem = true;
 	b->dont_patch_boot_sector = true;
 
 	DRBD_BIO_BI_SECTOR(b) = 0;
@@ -2758,9 +2712,6 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	wait_for_completion(&c);
 
 	ret = is_filesystem(p->addr);
-
-/* TODO: this might cause a blue screen from time to time.
-	Fix free_mdls_and_irp() to handle this */
 
 	bio_put(b);
 	kfree(p);
@@ -2863,11 +2814,8 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	if (check_if_backingdev_contains_filesystem(block_device)) {
 		printk(KERN_ERR "Backing device contains filesystem, refusing to use it.\n");
 		printk(KERN_INFO "You may want to do something like windrbd hide-filesystem <drive-letter-of-backing-dev>\n");
-/*
 		err = -EINVAL;
 		goto out_get_volsize_error;
-*/
-printk("(ignoring the warning)\n");
 	}
 
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);

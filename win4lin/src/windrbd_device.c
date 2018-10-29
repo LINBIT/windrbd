@@ -690,7 +690,7 @@ static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 static void windrbd_bio_finished(struct bio * bio, int error)
 {
 	PIRP irp = bio->bi_upper_irp;
-	int i, j;
+	int i;
 	NTSTATUS status;
 
 	status = STATUS_SUCCESS;
@@ -698,38 +698,23 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	if (error == 0) {
 		if (bio->bi_rw == READ) {
 			if (!bio->bi_common_data->bc_device_failed && bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
-//				char *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
-//				char *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority);
 				char *user_buffer = bio->bi_upper_irp_buffer;
-printk("user_buffer is %p, bio->bi_mdl_offset is %x\n", user_buffer, bio->bi_mdl_offset);
-//				char *user_buffer = irp->MdlAddress;
-				// if (user_buffer != NULL) {
-				if (1) {
+				if (user_buffer != NULL) {
 					int offset;
 
 					offset = bio->bi_mdl_offset;
 					for (i=0;i<bio->bi_vcnt;i++) {
-printk("RtlCopyMemory(%p, %p, %d)\n", user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
-printk("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
-/*
-if (bio->bi_io_vec[i].bv_len < 4096) {
-memcpy(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
-} else printk("no memcpy()\n");
-*/
-char *src = bio->bi_io_vec[i].bv_page->addr;
-for (j=0;j<bio->bi_io_vec[i].bv_len;j++) user_buffer[offset+j] = src[bio->bi_io_vec[i].bv_offset+j]+1;
-//						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
+// dbg("RtlCopyMemory(%p, %p, %d)\n", user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+// dbg("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+
+						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 						offset += bio->bi_io_vec[i].bv_len;
 					}
 				} else {
 					printk(KERN_WARNING "MmGetSystemAddressForMdlSafe returned NULL\n");
-					// status = STATUS_INVALID_PARAMETER;
+					status = STATUS_INVALID_PARAMETER;
 				}
-/*
-#endif
-printk("not copiing READ back\n");
-*/
 			}
 		}
 	} else {
@@ -863,7 +848,6 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 		printk("I/O buffer from MmGetSystemAddressForMdlSafe() is NULL\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
-printk("buffer is %p\n", buffer);
 // dbg("%s sector: %d this_bio_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, this_bio_size);
 	int bio_count = (total_size-1) / MAX_BIO_SIZE + 1;
 	int this_bio_size;
@@ -902,11 +886,7 @@ printk("buffer is %p\n", buffer);
 		bio->bi_bdev = dev;
 		bio->bi_max_vecs = 1;
 		bio->bi_vcnt = 1;
-if (bio->bi_rw == WRITE) {
-printk("is a WRITE request\n");
-}
-// bio->bi_paged_memory = bio->bi_rw == WRITE;
-bio->bi_paged_memory = 1;
+		bio->bi_paged_memory = bio->bi_rw == WRITE;
 		bio->bi_size = this_bio_size;
 		bio->bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
 		bio->bi_upper_irp_buffer = buffer;
@@ -936,7 +916,6 @@ bio->bi_paged_memory = 1;
 		else
 			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
 
-// printk("not using user buffer\n");
 				/* TODO: fault inject here. */
 		if (bio->bi_io_vec[0].bv_page->addr == NULL) {
 			printk("Couldn't allocate temp buffer for read.\n");
@@ -947,8 +926,8 @@ bio->bi_paged_memory = 1;
 		bio->bi_end_io = windrbd_bio_finished;
 		bio->bi_upper_irp = irp;
 
-printk("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
-printk("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset); 
+// dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
+// dbg("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset);
 
 		drbd_make_request(dev->drbd_device->rq_queue, bio);
 	}
