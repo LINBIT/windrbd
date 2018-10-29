@@ -703,12 +703,14 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 printk("user_buffer is %p, bio->bi_mdl_offset is %x\n", user_buffer, bio->bi_mdl_offset);
 //				char *user_buffer = irp->MdlAddress;
 				// if (user_buffer != NULL) {
-				if (0) {
+				if (1) {
 					int offset;
 
 					offset = bio->bi_mdl_offset;
 					for (i=0;i<bio->bi_vcnt;i++) {
-						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+printk("RtlCopyMemory(%p, %p, %d)\n", user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+printk("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+//						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
 						offset += bio->bi_io_vec[i].bv_len;
 					}
