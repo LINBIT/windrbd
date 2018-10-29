@@ -698,8 +698,9 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	if (error == 0) {
 		if (bio->bi_rw == READ) {
 			if (!bio->bi_common_data->bc_device_failed && bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
-#if 0
-				char *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
+//				char *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
+				char *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority);
+//				char *user_buffer = irp->MdlAddress;
 				if (user_buffer != NULL) {
 					int offset;
 
@@ -713,8 +714,10 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 					printk(KERN_WARNING "MmGetSystemAddressForMdlSafe returned NULL\n");
 					status = STATUS_INVALID_PARAMETER;
 				}
+/*
 #endif
 printk("not copiing READ back\n");
+*/
 			}
 		}
 	} else {
@@ -729,11 +732,9 @@ printk("not copiing READ back\n");
 
 		status = STATUS_DEVICE_DOES_NOT_EXIST;
 	}
-/*
 	if (bio->bi_rw == READ)
 		for (i=0;i<bio->bi_vcnt;i++)
 			kfree(bio->bi_io_vec[i].bv_page->addr);
-*/
 
         unsigned long flags;
 
@@ -916,12 +917,12 @@ bio->bi_paged_memory = 1;
  *	 intermediate buffer and the extra copy.
  */
 
-/*		if (bio->bi_rw == READ)
+		if (bio->bi_rw == READ)
 			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, 0, 'DRBD');
-		else */
-printk("not using user buffer\n");
+		else
 			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
 
+// printk("not using user buffer\n");
 				/* TODO: fault inject here. */
 		if (bio->bi_io_vec[0].bv_page->addr == NULL) {
 			printk("Couldn't allocate temp buffer for read.\n");
