@@ -717,7 +717,7 @@ memcpy(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_v
 } else printk("no memcpy()\n");
 */
 char *src = bio->bi_io_vec[i].bv_page->addr;
-for (j=0;j<bio->bi_io_vec[i].bv_len;j++) user_buffer[offset+j] = src[bio->bi_io_vec[i].bv_offset+j];
+for (j=0;j<bio->bi_io_vec[i].bv_len;j++) user_buffer[offset+j] = src[bio->bi_io_vec[i].bv_offset+j]+1;
 //						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
 						offset += bio->bi_io_vec[i].bv_len;
