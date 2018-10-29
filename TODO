@@ -40,7 +40,7 @@ TODO: Installation: some last fixes.
 	Do not ask for overwrite of config files (do not overwrite them)
 	Hide cmd scripts again if everything works ok
 
-TODO: Bug: it seems that free_mdls_and_irp() never gets called.
+Done: Bug: it seems that free_mdls_and_irp() never gets called.
 
 	After 200 loops of invalidate-loop system runs out of memory.
 	This should be fixed.
@@ -69,7 +69,9 @@ TODO: Bug: it seems that free_mdls_and_irp() never gets called.
 	extra copy (reports 'strange' errors) or some flag to be
 	set.
 
-TODO: Code quality: fix the case where backing device contains a file system.
+	TODO: clean up code and merge.
+
+Rejected: Code quality: fix the case where backing device contains a file system.
 	It should not blue screen.
 	(maybe later, this seems to be rather complex)
 	We are now avoiding the case when there is a filesystem
@@ -84,12 +86,23 @@ TODO: Code quality: fix the case where backing device contains a file system.
 	we still have the access denied thing going on but we
 	(currently?) do not blue screen.
 
-TODO: Skip the extra copy on read.
+	Update: There appears to be some internal NTFS bug, which
+	triggers when data is copied in the completion routine.
+	Since we cannot fix that at the moment (it is not a
+	range check error and also not an error in calling
+	MmGetSystemAddressForMdlSafe(): I checked both).
+
+	"In the wild" this bug doesn't trigger because we refuse
+	to use a device containing NTFS as backing device.
+
+Rejected: Skip the extra copy on read.
 
 	We cannot have it (currently BSOD's). See if there is a
 	device flag (something like BUFFERED or so) that does the
 	trick (problem is that under Windows 10 a read from the
 	upper device returns garbage).
+
+	Rejected. Does not work with Windows 10.
 
 TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
