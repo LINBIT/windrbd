@@ -707,6 +707,8 @@ struct bio {
 	int device_failed;
 	spinlock_t device_failed_lock;
 
+	void *bi_upper_irp_buffer;
+
 	void *patched_bootsector_buffer;
 
 	/* If set, indicates that the memory is paged, in which case
