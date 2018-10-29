@@ -700,8 +700,10 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 			if (!bio->bi_common_data->bc_device_failed && bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
 //				char *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
 				char *user_buffer = MmGetSystemAddressForMdlSafe(bio->bi_upper_irp->MdlAddress, NormalPagePriority);
+printk("user_buffer is %p, bio->bi_mdl_offset is %x\n", user_buffer, bio->bi_mdl_offset);
 //				char *user_buffer = irp->MdlAddress;
-				if (user_buffer != NULL) {
+				// if (user_buffer != NULL) {
+				if (0) {
 					int offset;
 
 					offset = bio->bi_mdl_offset;
@@ -712,7 +714,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 					}
 				} else {
 					printk(KERN_WARNING "MmGetSystemAddressForMdlSafe returned NULL\n");
-					status = STATUS_INVALID_PARAMETER;
+					// status = STATUS_INVALID_PARAMETER;
 				}
 /*
 #endif
@@ -851,6 +853,7 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 		printk("I/O buffer from MmGetSystemAddressForMdlSafe() is NULL\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
+printk("buffer is %p\n", buffer);
 // dbg("%s sector: %d this_bio_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, this_bio_size);
 	int bio_count = (total_size-1) / MAX_BIO_SIZE + 1;
 	int this_bio_size;

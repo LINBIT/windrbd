@@ -135,6 +135,24 @@ Oct  9 04:01:32 10.43.10.11  U02:01:32.340|c9bcfc80(drbd_a_w0) drbd_ack_receiver
 
 	Update: fixed with windrbd_thread race fix?
 
+TODO: Bug: User mode helper returns 127 where it shouldn't
+
+	Only when run from windrbdumhelper service. PowerShell
+	issue (tried also with exit 0, same result)?
+
+	We should fix that, it is a showstopper (cannot sync, always
+	goes into standalone).
+
+TODO: Upgrade to DRBD 9.0.16
+
+	Once available.
+
+TODO: Make windrbd-test compile again.
+
+Milestone: Beta 5
+Planned: Nov 1 2018
+-----------------------------------------------------------------------
+
 TODO: Bug: 3 node setup sometimes does not work.
 
 	If node with node-id 1 is missing, node 2 thinks that node
@@ -168,18 +186,16 @@ Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0
 	most likely something that causes Linux DRBD to mistake
 	one Windows host for another.
 
-TODO: Upgrade to DRBD 9.0.16
+	Update: something with the waiters in the listener:
 
-	Once available.
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr1->ss_family is 2
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr2->ss_family is 2
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr1 is 10.43.10.14
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr2 is 10.43.10.14
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) dtt_incoming_connection <4>Closing unexpected connection from 10.43.10.13
 
-Milestone: Beta 5
-Planned: Nov 1 2018
------------------------------------------------------------------------
-
-TODO: Bug: User mode helper returns 127 where it shouldn't
-
-	Only when run from windrbdumhelper service. PowerShell
-	issue (tried also with exit 0, same result)?
+	showing that 10.43.10.13 is not in the waiters list (the
+	compare is ok). Ask phil. Do it after beta5.
 
 TODO: Research: Check if pacemaker under WSL works
 
