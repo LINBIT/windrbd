@@ -32,6 +32,7 @@ TODO: Documentation: white paper for linbit website.
 	(Windows 2016)
 
 	Also document how to run pacemaker under WSL
+	Update: no serperate tech guide for that please.
 
 TODO: Installation: some last fixes.
 
@@ -40,69 +41,9 @@ TODO: Installation: some last fixes.
 	Do not ask for overwrite of config files (do not overwrite them)
 	Hide cmd scripts again if everything works ok
 
-Done: Bug: it seems that free_mdls_and_irp() never gets called.
+TODO: Bug: BSOD on sync
 
-	After 200 loops of invalidate-loop system runs out of memory.
-	This should be fixed.
-
-	Leak is about 1% of data written (12kb for 1Meg).
-
-	Update: leak fixed (one bio_put in completion was missing).
-	Tested with NTFS as backing device: replacing IoFreeIrp()
-	by IoCompleteRequest() fixed the test for filesystem
-	BSOD. Also now removed the might_access_filesystem checks
-	(behaves as if it is always 1, MmBuildMdlForNonPagedPool never
-	gets called). Also removed the extra copy in the upper
-	device (for READ, we needed that because under Windows 10
-	we could not read the device properly). TODO: test with
-	Windows 10 and find another solution to the copy problem.
-
-	Note that we really cannot do proper tests with NTFS
-	backing devices: access fails (with 0xc0000022, access
-	denied, also sometimes with 0xc0000054 STATUS_FILE_LOCK_CONFLICT).
-	If we ignore them NTFS driver gets invalid data and
-	loops.
-
-	Also TODO: clean up code (printk's).
-
-	Update: Tested with Windows 10 it seems to require some
-	extra copy (reports 'strange' errors) or some flag to be
-	set.
-
-	TODO: clean up code and merge.
-
-Rejected: Code quality: fix the case where backing device contains a file system.
-	It should not blue screen.
-	(maybe later, this seems to be rather complex)
-	We are now avoiding the case when there is a filesystem
-	on an attached backing device. This blue screen should
-	be fixed but maybe in a later release.
-
-	Update: We found on stackoverflow that one should use
-	IoCompleteRequest() instead of IoFreeIrp(). Does that
-	help?
-
-	Update: Lots of progress, when there is a NTFS filesystem
-	we still have the access denied thing going on but we
-	(currently?) do not blue screen.
-
-	Update: There appears to be some internal NTFS bug, which
-	triggers when data is copied in the completion routine.
-	Since we cannot fix that at the moment (it is not a
-	range check error and also not an error in calling
-	MmGetSystemAddressForMdlSafe(): I checked both).
-
-	"In the wild" this bug doesn't trigger because we refuse
-	to use a device containing NTFS as backing device.
-
-Rejected: Skip the extra copy on read.
-
-	We cannot have it (currently BSOD's). See if there is a
-	device flag (something like BUFFERED or so) that does the
-	trick (problem is that under Windows 10 a read from the
-	upper device returns garbage).
-
-	Rejected. Does not work with Windows 10.
+	New BSOD introduced when fixing memory leak.
 
 TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
@@ -122,32 +63,6 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
 	Update: No, just happened with Windows 7 and Windows 10
 
-TODO: Bug: BSOD when running unattended
-
-	Between Windows Server 2016 and Linux.
-
-Oct  9 04:01:31 10.43.10.11  U02:01:31.841|c9bcfc80(drbd_a_w0) Receive Receiving canceled (errno is -11) but data available (16 bytes, will be discarded).
-Oct  9 04:01:32 10.43.10.11  U02:01:32.340|c9bcfc80(drbd_a_w0) drbd_ack_receiver <3>drbd w0 pnode-id:3, cs(Connected), prole(Primary), cflag(0x200e), scf(0x2): meta connection shut down by peer.
-
-	But errno 11 is EAGAIN, shouldn't fail here. And not BSOD later.
-
-	Happened during network failure test (./iptables-drop-dont-drop-loop.sh
-	on Linux and ./write-fs-loop.sh on Windows), not sure if it is
-	the same BSOD, trying without I/O now.
-
-	Update: Most likely this is an out-of-memory bug, with leak in
-	the I/O path. Fix that leak and retry test.
-
-	Update: Without I/O also happened (Server 2016)
-
-	Probably related: Windows Server 2016 machine doesn't answer
-	ping (last message is destroy_workqueue stopping a workqueue thread)
-
-	This seems to be server 2016 related, does not happen with
-	Windows 7
-
-	Update: fixed with windrbd_thread race fix?
-
 TODO: Bug: User mode helper returns 127 where it shouldn't
 
 	Only when run from windrbdumhelper service. PowerShell
@@ -156,15 +71,15 @@ TODO: Bug: User mode helper returns 127 where it shouldn't
 	We should fix that, it is a showstopper (cannot sync, always
 	goes into standalone).
 
-TODO: Upgrade to DRBD 9.0.16
+TODO: Feature: Upgrade to DRBD 9.0.16
 
 	Once available.
-
-TODO: Make windrbd-test compile again.
 
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
+
+TODO: Code Quality: Make windrbd-test compile again.
 
 TODO: Bug: 3 node setup sometimes does not work.
 
@@ -3844,3 +3759,95 @@ Done: Bug: BSOD on drbdadm up (Windows Server 2016)
 	caused ack_receiver sched_setscheduler() to BSOD), which
 	hopefully fixes this (and others) BSOD.
 
+Done: Bug: it seems that free_mdls_and_irp() never gets called.
+
+	After 200 loops of invalidate-loop system runs out of memory.
+	This should be fixed.
+
+	Leak is about 1% of data written (12kb for 1Meg).
+
+	Update: leak fixed (one bio_put in completion was missing).
+	Tested with NTFS as backing device: replacing IoFreeIrp()
+	by IoCompleteRequest() fixed the test for filesystem
+	BSOD. Also now removed the might_access_filesystem checks
+	(behaves as if it is always 1, MmBuildMdlForNonPagedPool never
+	gets called). Also removed the extra copy in the upper
+	device (for READ, we needed that because under Windows 10
+	we could not read the device properly). TODO: test with
+	Windows 10 and find another solution to the copy problem.
+
+	Note that we really cannot do proper tests with NTFS
+	backing devices: access fails (with 0xc0000022, access
+	denied, also sometimes with 0xc0000054 STATUS_FILE_LOCK_CONFLICT).
+	If we ignore them NTFS driver gets invalid data and
+	loops.
+
+	Also TODO: clean up code (printk's).
+
+	Update: Tested with Windows 10 it seems to require some
+	extra copy (reports 'strange' errors) or some flag to be
+	set.
+
+	TODO: clean up code and merge.
+
+Rejected: Code quality: fix the case where backing device contains a file system.
+	It should not blue screen.
+	(maybe later, this seems to be rather complex)
+	We are now avoiding the case when there is a filesystem
+	on an attached backing device. This blue screen should
+	be fixed but maybe in a later release.
+
+	Update: We found on stackoverflow that one should use
+	IoCompleteRequest() instead of IoFreeIrp(). Does that
+	help?
+
+	Update: Lots of progress, when there is a NTFS filesystem
+	we still have the access denied thing going on but we
+	(currently?) do not blue screen.
+
+	Update: There appears to be some internal NTFS bug, which
+	triggers when data is copied in the completion routine.
+	Since we cannot fix that at the moment (it is not a
+	range check error and also not an error in calling
+	MmGetSystemAddressForMdlSafe(): I checked both).
+
+	"In the wild" this bug doesn't trigger because we refuse
+	to use a device containing NTFS as backing device.
+
+Rejected: Skip the extra copy on read.
+
+	We cannot have it (currently BSOD's). See if there is a
+	device flag (something like BUFFERED or so) that does the
+	trick (problem is that under Windows 10 a read from the
+	upper device returns garbage).
+
+	Rejected. Does not work with Windows 10.
+
+Done: Bug: BSOD when running unattended
+
+	Between Windows Server 2016 and Linux.
+
+Oct  9 04:01:31 10.43.10.11  U02:01:31.841|c9bcfc80(drbd_a_w0) Receive Receiving canceled (errno is -11) but data available (16 bytes, will be discarded).
+Oct  9 04:01:32 10.43.10.11  U02:01:32.340|c9bcfc80(drbd_a_w0) drbd_ack_receiver <3>drbd w0 pnode-id:3, cs(Connected), prole(Primary), cflag(0x200e), scf(0x2): meta connection shut down by peer.
+
+	But errno 11 is EAGAIN, shouldn't fail here. And not BSOD later.
+
+	Happened during network failure test (./iptables-drop-dont-drop-loop.sh
+	on Linux and ./write-fs-loop.sh on Windows), not sure if it is
+	the same BSOD, trying without I/O now.
+
+	Update: Most likely this is an out-of-memory bug, with leak in
+	the I/O path. Fix that leak and retry test.
+
+	Update: Without I/O also happened (Server 2016)
+
+	Probably related: Windows Server 2016 machine doesn't answer
+	ping (last message is destroy_workqueue stopping a workqueue thread)
+
+	This seems to be server 2016 related, does not happen with
+	Windows 7
+
+	Update: fixed with windrbd_thread race fix?
+
+	Update: We assume this was the create thread race, which
+	is fixed now. Reopen if it triggers again.
