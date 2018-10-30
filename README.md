@@ -295,3 +295,4 @@ Version history
 			 Windows Services.
  * 0.8.11 (Oct 12,2018): Report kernel driver versions over ioctl's
  * 0.8.12 (Oct 17,2018): Upgraded DRBD to 9.0.15
+ * 0.8.13 (Oct 30,2018): Fixed memory leak in I/O path
