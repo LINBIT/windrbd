@@ -41,10 +41,6 @@ TODO: Installation: some last fixes.
 	Do not ask for overwrite of config files (do not overwrite them)
 	Hide cmd scripts again if everything works ok
 
-TODO: Bug: BSOD on sync
-
-	New BSOD introduced when fixing memory leak.
-
 TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
 	Sync stalls at 0%. Try to update Linux DRBD before doing
@@ -71,13 +67,22 @@ TODO: Bug: User mode helper returns 127 where it shouldn't
 	We should fix that, it is a showstopper (cannot sync, always
 	goes into standalone).
 
+	Use cmd.exe instead of PowerShell (it is way too slow anyways).
+
 TODO: Feature: Upgrade to DRBD 9.0.16
 
 	Once available.
 
+	Is available now.
+
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
+
+TODO: Performance: Teach sync code to handle 1Meg pages.
+
+        For performance reasons. Right now data is split into
+        4K request (lots of them) which makes sync slow.
 
 TODO: Code Quality: Make windrbd-test compile again.
 
@@ -3851,3 +3856,10 @@ Oct  9 04:01:32 10.43.10.11  U02:01:32.340|c9bcfc80(drbd_a_w0) drbd_ack_receiver
 
 	Update: We assume this was the create thread race, which
 	is fixed now. Reopen if it triggers again.
+
+Done: Bug: BSOD on sync
+
+	New BSOD introduced when fixing memory leak.
+
+	Fixed now, do not use IoCompleteRequest on a completed IRP.
+
