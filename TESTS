@@ -1,3 +1,31 @@
+-----------------------------
+Write to NTFS while not connected:
+
+On windows side:
+
+./write-fs-loop.sh
+
+(while not connected to peer).
+
+Oct 31 2018 
+
+-----------------------------
+Write to NTFS while connected:
+
+On windows side:
+
+./write-fs-loop.sh
+
+(while connected to peer).
+
+Oct 31 2018 5:16pm: BSOD after few (<50) iterations (d23c094df1)
+	(but Windows says there's a problem with that drive)
+
+-----------------------------------------
+Oct 19 2018 .. Oct 31 2018
+
+Connect/Disconnect without I/O
+
 On Windows side:
 
 ./disconnect-connect-loop.sh
@@ -5,6 +33,8 @@ On Windows side:
 (with a connectable peer).
 
 Should not BSOD (as it did on Server 2016 before 0a9512aeb).
+
+Update: running for little more than 12 days now (67803 iterations).
 
 -----------------------------
 
