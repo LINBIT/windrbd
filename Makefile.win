@@ -18,7 +18,7 @@ BUILD_ENV ?= jt-server2016
 
 # TODO: unset this for production releases.
 KMALLOC_DEBUG = 1
-BIO_REF_DEBUG = 1
+# BIO_REF_DEBUG = 1
 
 ifeq ($(BUILD_ENV),jt-win7)
 export EWDK_BASE := c:\\Ewdk
