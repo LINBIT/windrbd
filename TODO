@@ -40,6 +40,8 @@ TODO: Installation: some last fixes.
 	Remove usr/sbin on Uninstall
 	Do not ask for overwrite of config files (do not overwrite them)
 	Hide cmd scripts again if everything works ok
+	Stop user mode helpers and logger before upgrade
+		(else cannot overwrite windrbd.exe)
 
 TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
@@ -59,15 +61,8 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
 	Update: No, just happened with Windows 7 and Windows 10
 
-TODO: Bug: User mode helper returns 127 where it shouldn't
-
-	Only when run from windrbdumhelper service. PowerShell
-	issue (tried also with exit 0, same result)?
-
-	We should fix that, it is a showstopper (cannot sync, always
-	goes into standalone).
-
-	Use cmd.exe instead of PowerShell (it is way too slow anyways).
+	Update: again (between server 2016 and linux) rebooting
+	Windows solved it (down / up not, rebooting Linux also not)
 
 TODO: Feature: Upgrade to DRBD 9.0.16
 
@@ -78,6 +73,11 @@ TODO: Feature: Upgrade to DRBD 9.0.16
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
+
+TODO: Upstream: Fix 2 cygrunsrv bugs
+
+	Handle whitespace in PATH components correctly.
+	Find local installation even if moved to another dir.
 
 TODO: Performance: Teach sync code to handle 1Meg pages.
 
@@ -814,7 +814,9 @@ TODO: Research: check out mantech wdrbd and see if it works (and why)
 	If there is spare time have a look on it (at least read
 	the docs, need Chrome for it (!)).
 
-TODO: Nice to have: Cygwin should have /dev/drbd<n> mapped to
+	Update: Installed WDRBD and made it crash with a nc from remote.
+
+TODO: Upstream: Cygwin should have /dev/drbd<n> mapped to
 	\\Device\\Drbd<n>
 
 	Right now, we can read/write the windrbd device via
@@ -3862,4 +3864,26 @@ Done: Bug: BSOD on sync
 	New BSOD introduced when fixing memory leak.
 
 	Fixed now, do not use IoCompleteRequest on a completed IRP.
+
+Done: Bug: User mode helper returns 127 where it shouldn't
+
+	Only when run from windrbdumhelper service. PowerShell
+	issue (tried also with exit 0, same result)?
+
+	We should fix that, it is a showstopper (cannot sync, always
+	goes into standalone).
+
+	Use cmd.exe instead of PowerShell (it is way too slow anyways).
+
+	Doesn't help, still those errors. drbdadm bug?
+
+	No, it was cygwin not finding the cygwin1.dll drbdadm wasn't
+	even called. Root cause is that PATH from kernel is invalid
+	for our setup. We now hardcode a sane PATH (with C:\windrbd\..
+	and C:\Program Files\WinDRBD and the Windows pathes), for
+	the beta that should be enough. Later we may want cygrunsrv
+	get fixed to handle whitespace in PATH components (seperate
+	TODO).
+
+Done: Code quality: remove some logs
 
