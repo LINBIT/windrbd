@@ -98,18 +98,9 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
-TODO: Bug: BSOD on driver unload (Windows Server 2016, Windows 10)
+TODO: Bug: Windows Server 2016 complains about unclean shutdown of file system.
 
-	Last log message was:
-
-Nov  2 15:54:45 10.43.10.11  U14:54:45.640|68fe9510(not_drbd_thread) mvolUnload WinSocket layer shut down.
-Nov  2 15:54:45 10.43.10.11  U14:54:45.640|68fe9510(not_drbd_thread) shutdown_kmalloc_debug kmalloc_debug: Warning: memory leak of size 82, allocated by function SendTo at ../../win4lin/src/wsk2.c:649.
-
-	which is a leak that does not exist on Windows 7.
-
-	Update: This is the buffer for the printk message. Do not
-	free it in cleanup routine (will be freed when the completion
-	comes). Also wait for all network completions.
+	On clicking repair, nothing happens.
 
 TODO: Upstream: Fix 2 cygrunsrv bugs
 
@@ -3941,4 +3932,19 @@ Done: Feature: Upgrade to DRBD 9.0.16
 
 	Is available now.
 	Upgraded. Seems to work.
+
+Done: Bug: BSOD on driver unload (Windows Server 2016, Windows 10)
+
+	Last log message was:
+
+Nov  2 15:54:45 10.43.10.11  U14:54:45.640|68fe9510(not_drbd_thread) mvolUnload WinSocket layer shut down.
+Nov  2 15:54:45 10.43.10.11  U14:54:45.640|68fe9510(not_drbd_thread) shutdown_kmalloc_debug kmalloc_debug: Warning: memory leak of size 82, allocated by function SendTo at ../../win4lin/src/wsk2.c:649.
+
+	which is a leak that does not exist on Windows 7.
+
+	Update: This is the buffer for the printk message. Do not
+	free it in cleanup routine (will be freed when the completion
+	comes). Also wait for all network completions.
+
+	Update: should be fixed with 19fbda0c.
 

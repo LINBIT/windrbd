@@ -1,3 +1,24 @@
+Invalidate loop
+
+Connected (Windows 2016 <> Linux)
+
+./invalidate-loop.sh
+
+19fbda0
+
+started Nov 2 17:30
+
+-----------------------------
+Loading/Unloading of driver
+
+./loop.sh "Load/Unload" 0 ./load-unload.sh
+
+On Windows Server 2016 with 19fbda0
+
+about 100 iterations
+
+Ok, no BSOD.
+
 -----------------------------
 Write to NTFS while not connected:
 
