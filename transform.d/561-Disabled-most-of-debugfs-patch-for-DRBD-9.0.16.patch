@@ -1,31 +1,29 @@
-From 41e6c588e7a140d7c903cd5367f5df4a83193367 Mon Sep 17 00:00:00 2001
+From b06f846715a902fcac5a23fe9df111eb0618c764 Mon Sep 17 00:00:00 2001
 From: Johannes Thoma <johannes@johannesthoma.com>
-Date: Fri, 12 Oct 2018 19:09:49 +0200
-Subject: [PATCH 2/5] New "old" patch for debugfs: was
- 132-disable-large-parts_drbd_debugfs_C.patch
+Date: Fri, 2 Nov 2018 15:10:43 +0100
+Subject: [PATCH 2/2] Disabled most of debugfs (patch for DRBD 9.0.16)
 
 ---
  drbd/drbd_debugfs.c | 4 ++++
  1 file changed, 4 insertions(+)
 
 diff --git a/drbd/drbd_debugfs.c b/drbd/drbd_debugfs.c
-index fa6b142..df60f25 100644
+index 20a13d6..56ca499 100644
 --- a/drbd/drbd_debugfs.c
 +++ b/drbd/drbd_debugfs.c
-@@ -140,10 +140,12 @@ static void seq_print_one_request(struct seq_file *m, struct drbd_request *req,
- 	seq_print_age_or_dash(m, s & RQ_IN_ACT_LOG, ktime_sub(now, req->in_actlog_kt));
+@@ -140,9 +140,11 @@ static void seq_print_one_request(struct seq_file *m, struct drbd_request *req,
  	seq_print_age_or_dash(m, s & RQ_LOCAL_PENDING, ktime_sub(now, req->pre_submit_kt));
  
+ #define RQ_HDR_3 "\tsent\tacked\tdone"
 +#if 0
  	print_one_age_or_dash(m, req, RQ_NET_SENT, 0, now, offsetof(typeof(*req), pre_send_kt));
  	print_one_age_or_dash(m, req, RQ_NET_SENT, RQ_NET_PENDING, now, offsetof(typeof(*req), acked_kt));
  	print_one_age_or_dash(m, req, RQ_NET_DONE, 0, now, offsetof(typeof(*req), net_done_kt));
- #endif
 +#endif
- #define RQ_HDR_4 "\tstate\n"
- 	seq_print_request_state(m, req);
- }
-@@ -577,6 +579,7 @@ static int resource_state_twopc_show(struct seq_file *m, void *pos)
+ #else
+ #define RQ_HDR_2 "\tstart"
+ #define RQ_HDR_3 ""
+@@ -582,6 +584,7 @@ static int resource_state_twopc_show(struct seq_file *m, void *pos)
  	return 0;
  }
  
@@ -33,7 +31,7 @@ index fa6b142..df60f25 100644
  /* make sure at *open* time that the respective object won't go away. */
  static int drbd_single_open(struct file *file, int (*show)(struct seq_file *, void *),
  		                void *data, struct kref *kref,
-@@ -1785,3 +1788,4 @@ fail:
+@@ -1792,3 +1795,4 @@ fail:
  	else
  		return -EINVAL;
  }

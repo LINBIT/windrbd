@@ -864,6 +864,7 @@ extern void put_disk(struct gendisk *disk);
 extern void del_gendisk(struct gendisk *disk);
 extern void set_disk_ro(struct gendisk *disk, int flag);
 
+extern int fsync_bdev(struct block_device *bdev);
 
 #define PREPARE_WORK(_work, _func)                                      \
 	do {                                                            \
@@ -1380,6 +1381,9 @@ extern int vscnprintf(char * buf, size_t size, const char *fmt, va_list args);
 size_t windrbd_vsnprintf(char *buf, size_t bufsize, const char *fmt, va_list args);
 
 void list_cut_position(struct list_head *list, struct list_head *head, struct list_head *entry);
+
+ULONG_PTR find_first_zero_bit(const ULONG_PTR *addr, ULONG_PTR size);
+int find_next_zero_bit(const ULONG_PTR * addr, ULONG_PTR size, ULONG_PTR offset);
 
 // for_each_set_bit = find_first_bit + find_next_bit => reference linux 3.x kernel. 
 #define for_each_set_bit(bit, addr, size) \

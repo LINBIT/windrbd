@@ -714,6 +714,17 @@ struct request_queue *bdev_get_queue(struct block_device *bdev)
 	return NULL;
 }
 
+	/* This probably never gets implemented since we do
+	 * not have auto promote and Windows caches at file
+	 * system level, not at block device level.
+	 */
+
+int fsync_bdev(struct block_device *bdev)
+{
+	printk("function fsync_bdev not implemented\n");
+	return 0;
+}
+
 struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 {
 	struct bio *bio;
