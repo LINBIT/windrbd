@@ -64,6 +64,13 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 	Update: again (between server 2016 and linux) rebooting
 	Windows solved it (down / up not, rebooting Linux also not)
 
+TODO: Bug: BSOD on I/O while connected
+
+	write-fs-loop.sh:
+
+	Windows Server 2016 <> Linux. Does not happen (?) with
+	Windows 7 and Linux.
+
 TODO: Feature: Upgrade to DRBD 9.0.16
 
 	Once available.
