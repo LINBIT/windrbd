@@ -20,8 +20,12 @@ On windows side:
 
 (while connected to peer).
 
-Oct 31 2018 5:16pm: BSOD after few (<50) iterations (d23c094df1)
+Oct 31 2018 17:15: BSOD after few (<50) iterations (d23c094df1)
 	(but Windows says there's a problem with that drive)
+	Windows Server 2016 kvm <> Linux kvm
+
+Nov 2 2018 14:00 - 15:40: running
+	No BSOD so far (about 3000 iterations).
 
 -----------------------------------------
 Oct 19 2018 .. Oct 31 2018

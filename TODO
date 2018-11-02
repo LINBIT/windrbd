@@ -71,12 +71,6 @@ TODO: Bug: BSOD on I/O while connected
 	Windows Server 2016 <> Linux. Does not happen (?) with
 	Windows 7 and Linux.
 
-TODO: Feature: Upgrade to DRBD 9.0.16
-
-	Once available.
-
-	Is available now.
-
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
@@ -3893,4 +3887,11 @@ Done: Bug: User mode helper returns 127 where it shouldn't
 	TODO).
 
 Done: Code quality: remove some logs
+
+Done: Feature: Upgrade to DRBD 9.0.16
+
+	Once available.
+
+	Is available now.
+	Upgraded. Seems to work.
 
