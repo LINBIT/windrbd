@@ -99,8 +99,12 @@ void shutdown_kmalloc_debug(void)
 	struct memory *mem, *memh;
 
 	list_for_each_entry_safe(struct memory, mem, memh, &memory_allocations, list) {
-		printk("kmalloc_debug: Warning: memory leak of size %d, allocated by function %s at %s.\n", mem->size, mem->func, mem->desc);
-		kfree_debug(&mem->data[0], __FILE__, __LINE__, __func__);
+		if (strcmp(mem->func, "SendTo") != 0) {
+			printk("kmalloc_debug: Warning: memory leak of size %d, allocated by function %s at %s.\n", mem->size, mem->func, mem->desc);
+			kfree_debug(&mem->data[0], __FILE__, __LINE__, __func__);
+		}	/* else we are currently printing this, do not free,
+			 * also do not do any more printk's.
+			 */
 	}
 }
 
