@@ -1,13 +1,15 @@
 -----------------------------
 Write to NTFS while not connected:
 
-On windows side:
+On windows (Windows Server 2016 kvm) side:
 
 ./write-fs-loop.sh
 
 (while not connected to peer).
 
-Oct 31 2018 
+Oct 31 2018 17:30 - Nov 02 2018 14:15 (104700 iterations, 5TB data, about 27 MB/sec)
+
+No errors (windrbd-0.8.13).
 
 -----------------------------
 Write to NTFS while connected:
