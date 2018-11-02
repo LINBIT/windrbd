@@ -71,9 +71,45 @@ TODO: Bug: BSOD on I/O while connected
 	Windows Server 2016 <> Linux. Does not happen (?) with
 	Windows 7 and Linux.
 
+	Last log:
+
+Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_create <6>DRBD device create request: opening DRBD device read-only
+Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) add_opener <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x2): openers add: not_drbd_thread(0)
+Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_create <7>drbd_open returned 0
+Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_create <7>status is 0
+Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_cleanup <6>Pretending that cleanup does something.
+Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) __prune_or_free_openers <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x2): openers del: not_d
+rbd_thread(0)Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_close <7>drbd_release returned 0
+Nov  2 16:37:27 10.43.10.11  U15:37:27.647|5e199510(not_drbd_thread) windrbd_device_control attrs->Action is 1
+Nov  2 16:37:27 10.43.10.11  U15:37:27.647|5e199510(not_drbd_thread) windrbd_device_control 1 items
+
+	Which means that somebody requested a TRIM on the DRBD device..
+
+	Update: 
+
+Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) add_opener <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x80002): openers add: not_drbd_thread(0)
+Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_create <7>drbd_open returned 0
+Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_create <7>status is 0
+Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_cleanup <6>Pretending that cleanup does something.
+Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) __prune_or_free_openers <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x80002): openers del: not_drbd_thread(0)
+Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_close <7>drbd_release returned 0
+
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
+
+TODO: Bug: BSOD on driver unload (Windows Server 2016, Windows 10)
+
+	Last log message was:
+
+Nov  2 15:54:45 10.43.10.11  U14:54:45.640|68fe9510(not_drbd_thread) mvolUnload WinSocket layer shut down.
+Nov  2 15:54:45 10.43.10.11  U14:54:45.640|68fe9510(not_drbd_thread) shutdown_kmalloc_debug kmalloc_debug: Warning: memory leak of size 82, allocated by function SendTo at ../../win4lin/src/wsk2.c:649.
+
+	which is a leak that does not exist on Windows 7.
+
+	Update: This is the buffer for the printk message. Do not
+	free it in cleanup routine (will be freed when the completion
+	comes). Also wait for all network completions.
 
 TODO: Upstream: Fix 2 cygrunsrv bugs
 
@@ -130,6 +166,17 @@ Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) dtt_inco
 
 	showing that 10.43.10.13 is not in the waiters list (the
 	compare is ok). Ask phil. Do it after beta5.
+
+TODO: Upstream: Quorum no on Linux with 2 node setup
+
+	Bug?
+
+	johannes@wintestubuntu:~$ drbdadm status
+	w0 role:Secondary
+	  volume:1 disk:UpToDate quorum:no
+	  WIN-F11R93CP9KI role:Primary
+	    volume:1 peer-disk:UpToDate
+
 
 TODO: Research: Check if pacemaker under WSL works
 
