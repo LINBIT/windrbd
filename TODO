@@ -42,6 +42,8 @@ TODO: Installation: some last fixes.
 	Hide cmd scripts again if everything works ok
 	Stop user mode helpers and logger before upgrade
 		(else cannot overwrite windrbd.exe)
+	Offer to delete C:\windrbd on uninstall (warn about
+	config / log files).
 
 TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
@@ -94,9 +96,26 @@ Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_cle
 Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) __prune_or_free_openers <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x80002): openers del: not_drbd_thread(0)
 Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_close <7>drbd_release returned 0
 
+	Update: No BSOD on sync. This is something between the
+	upper device and networking (big pages?).
+
+	Update: No BSOD on Primary Diskless (and connected).
+	Update: No there was one now. Protocol was C. Also BSOD
+	with protocol A.
+
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
+
+TODO: Bug: On re-attach after Primary Diskless stuck in Negotiating
+
+	and blocked: upper
+	When there is I/O
+	I/O hangs
+	Remote shows Disk as UpToDate
+	According to Phil/Lars Negotiating stuck is the cause for
+	blocked: upper (and not vice versa).
+	(dead lock cannot do drbdadm down and driver unload)
 
 TODO: Bug: Windows Server 2016 complains about unclean shutdown of file system.
 

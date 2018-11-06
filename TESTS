@@ -1,3 +1,16 @@
+Invalidate remote loop
+
+Connected (Windows 2016 <> Linux)
+
+./invalidate-remote-loop.sh
+	(with sleep 10, else sync is too slow)
+
+19fbda0
+
+started Nov 5 13:30
+ran until Nov 6 14:20 (8300 iterations)
+
+-----------------------------
 Invalidate loop
 
 Connected (Windows 2016 <> Linux)
@@ -7,6 +20,7 @@ Connected (Windows 2016 <> Linux)
 19fbda0
 
 started Nov 2 17:30
+ran until Nov 5 13:20 (20900 iterations)
 
 -----------------------------
 Loading/Unloading of driver
