@@ -16,6 +16,9 @@ TODO: Code quality: fake commit history (git rebase -i master)
 	Update: phil ack-ed waiting for Roland. Meanwhile write
 	a commit message.
 
+	Update: Minor changes TODO. Roland will do the squeeze,
+	just push the changes upon current dev branch.
+
 Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
 Postponed to; Oct 20 2018
@@ -102,6 +105,21 @@ Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_clo
 	Update: No BSOD on Primary Diskless (and connected).
 	Update: No there was one now. Protocol was C. Also BSOD
 	with protocol A.
+
+TODO: Bug: DRBD hang on Server 2016
+
+	After doing many things (testing BSOD on I/O).
+
+	drbd down does not return, after that drbd commands, unloading
+	windrbd and shutting down the machine hangs.
+
+Nov  6 16:01:51 10.43.10.11  U15:01:51.633|c5aa9510(not_drbd_thread) windrbd_process_netlink_packet drbd cmd(DRBD_ADM_DOWN:27)
+Nov  6 16:01:51 10.43.10.11  U15:01:51.633|c5aa9510(not_drbd_thread) windrbd_create <7>s->Parameters.Create.SecurityContext->DesiredAccess is 80
+Nov  6 16:01:51 10.43.10.11  U15:01:51.633|c5aa9510(not_drbd_thread) windrbd_create <6>DRBD device create request: opening DRBD device read-only
+Nov  6 16:01:51 10.43.10.11  U15:01:51.633|c5aa9510(not_drbd_thread) windrbd_create <7>drbd_open returned -11
+Nov  6 16:01:51 10.43.10.11  U15:01:51.633|c5aa9510(not_drbd_thread) windrbd_create <7>status is c0000010
+
+	After 5 Minutes it worked again ...
 
 Milestone: Beta 5
 Planned: Nov 1 2018

@@ -164,3 +164,17 @@ cd ..
 git commit -a
 
 and adapt patches to new version.
+
+----
+
+Partitionieren:
+
+Windows+R:
+diskmgmt.msc
+
+----
+Delete NTFS partition
+
+dd if=/dev/zero of=/dev/sdXY bs=512 count=1
+/dev/sd muss stimmen!! Achtung bei alten windows versionen aendert sich
+das zwischen reboots.

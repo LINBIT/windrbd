@@ -1,3 +1,17 @@
+Write raw request 1M while connected
+
+Connected (Windows 2016 <> Linux)
+
+./loop.sh x 1 "./write-disk-one-meg.sh f: $[ 49*1024*1024 ] $[ 1024*1024 ] rw "
+
+(cf332ff0 with printks in drbd_sender and drbd_receiver)
+
+started Nov 6 16:15
+
+interrupted after ~300 iterations.
+
+-----------------------------
+
 Invalidate remote loop
 
 Connected (Windows 2016 <> Linux)
