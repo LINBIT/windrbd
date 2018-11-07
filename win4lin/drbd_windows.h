@@ -1038,6 +1038,7 @@ extern void * kzalloc(int x, int flag, ULONG Tag);
 extern void * kmalloc(int size, int flag, ULONG Tag);
 extern void kfree(const void * x);
 extern void kvfree(const void * x);
+extern int dump_memory_allocations(int free_them);
 #endif
 
 static inline void * __get_free_page(int flags)

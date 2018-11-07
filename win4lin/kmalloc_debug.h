@@ -22,6 +22,7 @@ void *kzalloc_debug(size_t size, int flag, const char *file, int line, const cha
 void kfree_debug(const void *data, const char *file, int line, const char *func);
 
 
+int dump_memory_allocations(int free_them);
 void init_kmalloc_debug(void);
 void shutdown_kmalloc_debug(void);
 

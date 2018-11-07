@@ -35,8 +35,12 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	full_size = sizeof(struct memory) + size + sizeof(struct poison_after);
 	mem = ExAllocatePoolWithTag(NonPagedPool, full_size, 'DRBD');
 
-	if (mem == NULL)
+	if (mem == NULL) {
+		if (strcmp(func, "SendTo") != 0)
+			printk("kmalloc_debug: Warning: cannot allocate memory of size %d, %d bytes requested by function %s at %s:%d.\n", full_size, size, func, file, line);
+
 		return NULL;
+	}
 
 	mem->size = size;
 	snprintf(mem->desc, ARRAY_SIZE(mem->desc), "%s:%d", file, line);
@@ -94,17 +98,23 @@ void init_kmalloc_debug(void)
 	spin_lock_init(&memory_lock);
 }
 
-void shutdown_kmalloc_debug(void)
+int dump_memory_allocations(int free_them)
 {
 	struct memory *mem, *memh;
 
 	list_for_each_entry_safe(struct memory, mem, memh, &memory_allocations, list) {
 		if (strcmp(mem->func, "SendTo") != 0) {
-			printk("kmalloc_debug: Warning: memory leak of size %d, allocated by function %s at %s.\n", mem->size, mem->func, mem->desc);
-			kfree_debug(&mem->data[0], __FILE__, __LINE__, __func__);
+			printk("kmalloc_debug: %s of size %d, allocated by function %s at %s.\n", free_them ? "Warning: memory leak" : "allocated memory", mem->size, mem->func, mem->desc);
+			if (free_them)
+				kfree_debug(&mem->data[0], __FILE__, __LINE__, __func__);
 		}	/* else we are currently printing this, do not free,
 			 * also do not do any more printk's.
 			 */
 	}
+	return 0;
 }
 
+void shutdown_kmalloc_debug(void)
+{
+	dump_memory_allocations(1);
+}

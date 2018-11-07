@@ -240,6 +240,11 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 		status = put_string(drbd_buildtag(), s, irp);
 		break;
 
+	case IOCTL_WINDRBD_ROOT_DUMP_ALLOCATED_MEMORY:
+		if (dump_memory_allocations(0) != 0)
+			status = STATUS_INVALID_DEVICE_REQUEST;
+		break;
+
 	default:
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;

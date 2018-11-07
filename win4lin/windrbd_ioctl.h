@@ -224,4 +224,14 @@ struct windrbd_minor_mount_point {
 
 #define IOCTL_WINDRBD_ROOT_GET_WINDRBD_VERSION CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 10, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
+/* Cause WinDRBD to dump allocated memory regions.
+ * Input: none
+ * Output: none
+ *
+ * WinDRBD will printk all currently allocated memory (only if compiled
+ * with kmalloc debug support).
+ */
+
+#define IOCTL_WINDRBD_ROOT_DUMP_ALLOCATED_MEMORY CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 11, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
 #endif

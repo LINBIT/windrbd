@@ -574,14 +574,14 @@ struct page *alloc_page_of_size(int flag, size_t size)
 	}
 	
 		/* Under Windows this is defined to align to a page
-		 * of PAGE_SIZE bytes if size is . PAGE_SIZE itself is always
-		 * 4096 under Windows.
+		 * of PAGE_SIZE bytes if size is >= PAGE_SIZE.
+		 * PAGE_SIZE itself is always 4096 under Windows.
 		 */
 
 	p->addr = kmalloc(size, 0, 'E3DW');
 	if (!p->addr)	{
 		kfree(p); 
-		WDRBD_INFO("alloc_page PAGE_SIZE failed\n");
+		WDRBD_INFO("alloc_page failed (size is %d)\n", size);
 		return NULL;
 	}
 	kref_init(&p->kref);
@@ -678,6 +678,12 @@ void kvfree(const void * x)
 {
 	if (x)
 		ExFreePool((void*)x);
+}
+
+int dump_memory_allocations(int free_them)
+{
+	printk("Cannot dump memory allocations: to enable recompile with KMALLOC_DEBUG defined.\n");
+	return -1;
 }
 
 #endif
