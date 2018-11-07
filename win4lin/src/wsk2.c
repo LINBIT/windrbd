@@ -54,12 +54,12 @@ InitWskData(
 	return STATUS_SUCCESS;
 }
 
-NTSTATUS
-InitWskBuffer(
+static NTSTATUS InitWskBuffer(
 	__in  PVOID		Buffer,
 	__in  ULONG		BufferSize,
 	__out PWSK_BUF	WskBuffer,
-	__in  BOOLEAN	bWriteAccess
+	__in  BOOLEAN	bWriteAccess,
+	__in  BOOLEAN	may_printk
 )
 {
     NTSTATUS Status = STATUS_SUCCESS;
@@ -80,7 +80,8 @@ InitWskBuffer(
 	if (WskBuffer->Mdl != NULL) {
 	    IoFreeMdl(WskBuffer->Mdl);
 	}
-	WDRBD_ERROR("MmProbeAndLockPages failed. exception code=0x%x\n", GetExceptionCode());
+	if (may_printk)
+		WDRBD_ERROR("MmProbeAndLockPages failed. exception code=0x%x\n", GetExceptionCode());
 	return STATUS_INSUFFICIENT_RESOURCES;
     }
     return Status;
@@ -110,8 +111,13 @@ NTAPI SendPageCompletionRoutine(
 
 )
 { 
+	int may_printk = completion->page != NULL;
+
+if (may_printk)
+printk("Completion started.\n");
+
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
-		if (completion->socket->error_status != STATUS_SUCCESS &&
+		if (may_printk && completion->socket->error_status != STATUS_SUCCESS &&
 		    completion->socket->error_status != Irp->IoStatus.Status)
 			printk(KERN_WARNING "Last error status of socket was %x, now got %x\n", completion->socket->error_status, Irp->IoStatus.Status);
 
@@ -128,6 +134,9 @@ NTAPI SendPageCompletionRoutine(
 	kfree(completion);
 	
 	IoFreeIrp(Irp);
+
+if (may_printk)
+printk("Completion finished.\n");
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
@@ -403,7 +412,7 @@ Send(
 	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || ((int) BufferSize <= 0))
 		return SOCKET_ERROR;
 
-	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, FALSE);
+	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, FALSE, TRUE);
 	if (!NT_SUCCESS(Status)) {
 		return SOCKET_ERROR;
 	}
@@ -559,7 +568,8 @@ SendPage(
 		return -ENOMEM;
 	}
 
-	status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE);
+printk("page: %p page->addr: %p page->size: %d offset: %d len: %d page->kref.refcount: %d\n", page, page->addr, page->size, offset, len, page->kref.refcount);
+	status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE, TRUE);
 	if (!NT_SUCCESS(status)) {
 		kfree(completion);
 		kfree(WskBuffer);
@@ -573,6 +583,7 @@ SendPage(
 
 	Irp = IoAllocateIrp(1, FALSE);
 	if (Irp == NULL) {
+		put_page(page);
 		kfree(completion);
 		kfree(WskBuffer);
 		FreeWskBuffer(WskBuffer);
@@ -654,7 +665,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	}
 	memcpy(tmp_buffer, Buffer, BufferSize);
 
-	status = InitWskBuffer(tmp_buffer, BufferSize, WskBuffer, FALSE);
+	status = InitWskBuffer(tmp_buffer, BufferSize, WskBuffer, FALSE, FALSE);
 	if (!NT_SUCCESS(status)) {
 		kfree(completion);
 		kfree(WskBuffer);
@@ -722,7 +733,7 @@ LONG NTAPI Receive(
 		return SOCKET_ERROR;
 	}
 
-	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, TRUE);
+	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, TRUE, TRUE);
 	if (!NT_SUCCESS(Status)) {
 		return SOCKET_ERROR;
 	}
@@ -1108,6 +1119,8 @@ void windrbd_shutdown_wsk(void)
         NTSTATUS status;
 
         status = windrbd_cleanup_windows_thread(init_wsk_thread);
+
+		/* socketsdeinit() ? */
 
         if (!NT_SUCCESS(status))
                 printk("windrbd_cleanup_windows_thread failed with status %x\n", status);

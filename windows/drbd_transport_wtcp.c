@@ -255,7 +255,7 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
 	char* DataBuffer = (char*)buf;
 	int rv, sent = 0;
 
-printk("1\n");
+// printk("1\n");
 	/* THINK  if (signal_pending) return ... ? */
 
 	do {
@@ -268,9 +268,9 @@ printk("1\n");
  * do we need to block DRBD_SIG if sock == &meta.socket ??
  * otherwise wake_asender() might interrupt some send_*Ack !
  */
-printk("2\n");
+// printk("2\n");
 		rv = Send(socket->sk, DataBuffer, iov_len, 0, socket->sk_sndtimeo);
-printk("3\n");
+// printk("3\n");
 
 		if (rv == -EAGAIN) {
 			struct drbd_transport *transport = &tcp_transport->transport;
@@ -278,31 +278,31 @@ printk("3\n");
 				tcp_transport->stream[DATA_STREAM] == socket ?
 					DATA_STREAM : CONTROL_STREAM;
 
-printk("4\n");
+// printk("4\n");
 			if (drbd_stream_send_timed_out(transport, stream))
 				break;
 			else
 				continue;
 		}
-printk("5\n");
+// printk("5\n");
 		if (rv == -EINTR) {
 			flush_signals(current);
 			rv = 0;
 		}
-printk("6\n");
+// printk("6\n");
 		if (rv < 0)
 			break;
 		sent += rv;
 		DataBuffer += rv;
 		iov_len -= rv;
-printk("7\n");
+// printk("7\n");
 	} while (sent < size);
 
-printk("8\n");
+// printk("8\n");
 	if (rv <= 0)
 		return rv;
 
-printk("9\n");
+// printk("9\n");
 	return sent;
 }
 
@@ -1245,25 +1245,25 @@ printk("1\n");
 		return -EIO;
 	}
 	
-printk("2\n");
+// printk("2\n");
 	int len = size;
 	int err = -EIO;
 
 	msg_flags |= MSG_NOSIGNAL;
 	dtt_update_congested(tcp_transport);
-printk("3\n");
+// printk("3\n");
 	do {
 		int sent;
-printk("4\n");
+// printk("4\n");
 		if (stream == DATA_STREAM)
 		{
 			// ignore rcu_dereference
 			transport->ko_count = transport->net_conf->ko_count;
 		}
 
-printk("5\n");
+// printk("5\n");
 		sent = SendPage(socket, page, offset, len, 0);
-printk("6\n");
+// printk("6\n");
 		if (sent <= 0) {
 			if (sent == -EAGAIN) {
 				if (drbd_stream_send_timed_out(transport, stream))
@@ -1276,12 +1276,12 @@ printk("6\n");
 				err = sent;
 			break;
 		}
-printk("7\n");
+// printk("7\n");
 		len    -= sent;
 		offset += sent;
-printk("8\n");
+// printk("8\n");
 	} while (len > 0 /* THINK && peer_device->repl_state[NOW] >= L_ESTABLISHED */);
-printk("9\n");
+// printk("9\n");
 	clear_bit(NET_CONGESTED, &tcp_transport->transport.flags);
 
 	if (len == 0)
@@ -1296,9 +1296,9 @@ static int dtt_send_zc_bio(struct drbd_transport *transport, struct bio *bio)
 	DRBD_BIO_VEC_TYPE bvec;
 	DRBD_ITER_TYPE iter;
 
-printk("1\n");
+// printk("1\n");
 	bio_for_each_segment(bvec, bio, iter) {
-printk("2\n");
+// printk("2\n");
 		int err;
 
 		err = dtt_send_page(transport, DATA_STREAM, bvec BVD bv_page,
@@ -1310,7 +1310,7 @@ printk("2\n");
 		if (bio->bi_rw & DRBD_REQ_WSAME)
 			break;
 	}
-printk("3\n");
+// printk("3\n");
 	return 0;
 }
 

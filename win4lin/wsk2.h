@@ -21,14 +21,7 @@ enum
 NTSTATUS NTAPI SocketsInit();
 VOID NTAPI SocketsDeinit();
 
-NTSTATUS
-InitWskBuffer(
-	__in  PVOID		Buffer,
-	__in  ULONG		BufferSize,
-	__out PWSK_BUF	WskBuffer,
-	__in  BOOLEAN	bWriteAccess
-	);
-
+#if 0
 NTSTATUS
 InitWskData(
 	__out PIRP*		pIrp,
@@ -57,6 +50,7 @@ VOID
 FreeWskData(
 	__in PIRP pIrp
 	);
+#endif
 
 PWSK_SOCKET
 NTAPI
