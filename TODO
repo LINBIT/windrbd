@@ -69,42 +69,7 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 	Update: again (between server 2016 and linux) rebooting
 	Windows solved it (down / up not, rebooting Linux also not)
 
-TODO: Bug: BSOD on I/O while connected
-
-	write-fs-loop.sh:
-
-	Windows Server 2016 <> Linux. Does not happen (?) with
-	Windows 7 and Linux.
-
-	Last log:
-
-Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_create <6>DRBD device create request: opening DRBD device read-only
-Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) add_opener <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x2): openers add: not_drbd_thread(0)
-Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_create <7>drbd_open returned 0
-Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_create <7>status is 0
-Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_cleanup <6>Pretending that cleanup does something.
-Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) __prune_or_free_openers <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x2): openers del: not_d
-rbd_thread(0)Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_close <7>drbd_release returned 0
-Nov  2 16:37:27 10.43.10.11  U15:37:27.647|5e199510(not_drbd_thread) windrbd_device_control attrs->Action is 1
-Nov  2 16:37:27 10.43.10.11  U15:37:27.647|5e199510(not_drbd_thread) windrbd_device_control 1 items
-
-	Which means that somebody requested a TRIM on the DRBD device..
-
-	Update: 
-
-Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) add_opener <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x80002): openers add: not_drbd_thread(0)
-Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_create <7>drbd_open returned 0
-Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_create <7>status is 0
-Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_cleanup <6>Pretending that cleanup does something.
-Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) __prune_or_free_openers <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x80002): openers del: not_drbd_thread(0)
-Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_close <7>drbd_release returned 0
-
-	Update: No BSOD on sync. This is something between the
-	upper device and networking (big pages?).
-
-	Update: No BSOD on Primary Diskless (and connected).
-	Update: No there was one now. Protocol was C. Also BSOD
-	with protocol A.
+	Also reloading driver does not help.
 
 TODO: Bug: DRBD hang on Server 2016
 
@@ -120,6 +85,15 @@ Nov  6 16:01:51 10.43.10.11  U15:01:51.633|c5aa9510(not_drbd_thread) windrbd_cre
 Nov  6 16:01:51 10.43.10.11  U15:01:51.633|c5aa9510(not_drbd_thread) windrbd_create <7>status is c0000010
 
 	After 5 Minutes it worked again ...
+
+	Maybe because of out of memory (see BSOD on I/O TODO)?
+
+TODO: Implement send buffer limit.
+
+	Hard limit is 1GB which is the quota of non-paged memory
+	(at least on Server 2016). But we should stall the sending
+	routine if the configured send buffer memory is in flight
+	(wait for packets being sent).
 
 Milestone: Beta 5
 Planned: Nov 1 2018
@@ -3984,4 +3958,54 @@ Nov  2 15:54:45 10.43.10.11  U14:54:45.640|68fe9510(not_drbd_thread) shutdown_km
 	comes). Also wait for all network completions.
 
 	Update: should be fixed with 19fbda0c.
+
+Done: Bug: BSOD on I/O while connected
+
+	write-fs-loop.sh:
+
+	Windows Server 2016 <> Linux. Does not happen (?) with
+	Windows 7 and Linux.
+
+	Last log:
+
+Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_create <6>DRBD device create request: opening DRBD device read-only
+Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) add_opener <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x2): openers add: not_drbd_thread(0)
+Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_create <7>drbd_open returned 0
+Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_create <7>status is 0
+Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_cleanup <6>Pretending that cleanup does something.
+Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) __prune_or_free_openers <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x2): openers del: not_d
+rbd_thread(0)Nov  2 16:37:20 10.43.10.11  U15:37:20.506|5e199510(not_drbd_thread) windrbd_close <7>drbd_release returned 0
+Nov  2 16:37:27 10.43.10.11  U15:37:27.647|5e199510(not_drbd_thread) windrbd_device_control attrs->Action is 1
+Nov  2 16:37:27 10.43.10.11  U15:37:27.647|5e199510(not_drbd_thread) windrbd_device_control 1 items
+
+	Which means that somebody requested a TRIM on the DRBD device..
+
+	Update: 
+
+Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) add_opener <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x80002): openers add: not_drbd_thread(0)
+Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_create <7>drbd_open returned 0
+Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_create <7>status is 0
+Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_cleanup <6>Pretending that cleanup does something.
+Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) __prune_or_free_openers <7>drbd w0/1 minor 1, ds(UpToDate), dvflag(0x80002): openers del: not_drbd_thread(0)
+Nov  2 16:46:10 10.43.10.11  U15:46:10.683|29be9510(not_drbd_thread) windrbd_close <7>drbd_release returned 0
+
+	Update: No BSOD on sync. This is something between the
+	upper device and networking (big pages?).
+
+	Update: No BSOD on Primary Diskless (and connected).
+	Update: No there was one now. Protocol was C. Also BSOD
+	with protocol A.
+
+	There was a printk in an error path inside a printk
+	(wsk2.c:InitWskData) we fixed that now and the BSOD
+	seems to be gone .. however the real reason is a memory
+	leak.
+
+	Not a memory leak but the Windows send buffer being full
+	(and there is a quota for non-paged memory of 1GB for each
+	driver, which acutally makes sense). When the connection
+	goes down, consumed memory drops to normal level. Also
+	when stopping I/O memory slowly (as being sent) drops
+	down to normal level.
+
 
