@@ -19,38 +19,8 @@ enum
 };
 
 NTSTATUS NTAPI SocketsInit();
+	/* TODO: never called: */
 VOID NTAPI SocketsDeinit();
-
-#if 0
-NTSTATUS
-InitWskData(
-	__out PIRP*		pIrp,
-	__out PKEVENT	CompletionEvent,
-	__in  BOOLEAN	bRawIrp
-	);
-
-NTSTATUS 
-InitWskDataAsync(
-	__out PIRP*		pIrp,
-	__in  BOOLEAN	bRawIrp
-	);
-
-VOID
-ReInitWskData(
-	__out PIRP*		pIrp,
-	__out PKEVENT	CompletionEvent
-	);
-
-VOID
-FreeWskBuffer(
-	__in PWSK_BUF WskBuffer
-	);
-
-VOID
-FreeWskData(
-	__in PIRP pIrp
-	);
-#endif
 
 PWSK_SOCKET
 NTAPI

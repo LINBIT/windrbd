@@ -11,8 +11,7 @@ static WSK_PROVIDER_NPI		g_WskProvider;
 static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 LONG						g_SocketsState = DEINITIALIZED;
 
-NTSTATUS
-NTAPI CompletionRoutine(
+static NTSTATUS NTAPI CompletionRoutine(
 	__in PDEVICE_OBJECT	DeviceObject,
 	__in PIRP			Irp,
 	__in PKEVENT		CompletionEvent
@@ -27,8 +26,7 @@ NTAPI CompletionRoutine(
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-NTSTATUS
-InitWskData(
+static NTSTATUS InitWskData(
 	__out PIRP*		pIrp,
 	__out PKEVENT	CompletionEvent,
 	__in  BOOLEAN	bRawIrp
@@ -87,8 +85,7 @@ static NTSTATUS InitWskBuffer(
     return Status;
 }
 
-VOID
-FreeWskBuffer(
+static VOID FreeWskBuffer(
 __in PWSK_BUF WskBuffer
 )
 {
@@ -103,8 +100,7 @@ struct send_page_completion_info {
 	struct socket *socket;
 };
 
-NTSTATUS
-NTAPI SendPageCompletionRoutine(
+static NTSTATUS NTAPI SendPageCompletionRoutine(
 	__in PDEVICE_OBJECT	DeviceObject,
 	__in PIRP		Irp,
 	__in struct send_page_completion_info *completion
