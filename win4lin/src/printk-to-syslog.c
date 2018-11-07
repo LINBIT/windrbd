@@ -81,6 +81,11 @@ static int open_syslog_socket(void)
 				/* TODO: what if this fails? */
 			Bind(printk_udp_socket.sk, (SOCKADDR *)&local);
 
+			printk_udp_socket.send_buf_max = 4*1024*1024;
+			printk_udp_socket.send_buf_cur = 0;
+			spin_lock_init(&printk_udp_socket.send_buf_counters_lock);
+			KeInitializeEvent(&printk_udp_socket.data_sent, SynchronizationEvent, FALSE);
+
 			printk_udp_socket.error_status = STATUS_SUCCESS;
 			strcpy(printk_udp_socket.name, "debug socket");
 		} else {

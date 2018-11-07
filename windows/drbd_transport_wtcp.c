@@ -403,6 +403,9 @@ static void dtt_setbufsize(struct socket *socket, unsigned int snd,
 	NTSTATUS status;
 
 	if (snd) {
+		socket->send_buf_max = snd;
+			/* TODO: KeSetEvent(&socket->data_sent) ... */
+
 		status = ControlSocket(socket->sk, WskSetOption, SO_SNDBUF, SOL_SOCKET, sizeof(snd), &snd, 0, NULL, NULL);
 		if (status == STATUS_SUCCESS)
 			printk(KERN_DEBUG "Set sendbuf size to %d (unusual we expected this to fail)\n", snd);

@@ -108,6 +108,8 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 )
 { 
 	int may_printk = completion->page != NULL;
+	size_t length;
+	ULONG_PTR flags;
 
 if (may_printk)
 printk("Completion started.\n");
@@ -119,9 +121,16 @@ printk("Completion started.\n");
 
 		completion->socket->error_status = Irp->IoStatus.Status;
 	}
+	length = completion->wsk_buffer->Length;
 		/* Also unmaps the pages of the containg Mdl */
 	FreeWskBuffer(completion->wsk_buffer);
 	kfree(completion->wsk_buffer);
+
+	spin_lock_irqsave(&completion->socket->send_buf_counters_lock, flags);
+	completion->socket->send_buf_cur -= length;
+	spin_unlock_irqrestore(&completion->socket->send_buf_counters_lock, flags);
+
+	KeSetEvent(&completion->socket->data_sent, IO_NO_INCREMENT, FALSE);
 
 	if (completion->page)
 		put_page(completion->page); /* Might free the page if connection is already down */
@@ -135,6 +144,28 @@ if (may_printk)
 printk("Completion finished.\n");
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
+static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
+{
+	ULONG_PTR flags;
+
+		/* TODO: if want_to_send > socket->send_buf_max return error */
+	while (1) {
+		spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
+			/* TODO: if socket->send_buf_cur > socket->send_buf_max) ? 
+			because send_buf_max may be 0 */
+		if (socket->send_buf_cur + want_to_send > socket->send_buf_max) {
+			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
+			/* TODO: with timeout: socket->sk_sndtimeo */
+			KeWaitForSingleObject(&socket->data_sent, Executive, KernelMode, FALSE, NULL);
+		} else {
+			socket->send_buf_cur += want_to_send;
+			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
+			return 0;
+		}
+			/* TODO: if socket closed meanwhile return an error */
+	}
 }
 
 //
@@ -387,6 +418,7 @@ char *GetSockErrorString(NTSTATUS status)
 
 	/* TODO: maybe one day we also eliminate this function. It
 	 * is currently only used for sending the first packet.
+	 * Even more now when we do not have send buf implemented here..
 	 */
 
 LONG
@@ -547,12 +579,19 @@ SendPage(
 	struct _WSK_BUF *WskBuffer;
 	struct send_page_completion_info *completion;
 	NTSTATUS status;
+	int err;
 
 	if (g_SocketsState != INITIALIZED || !socket || !socket->sk || !page || ((int) len <= 0))
 		return -EINVAL;
 
 	if (socket->error_status != STATUS_SUCCESS)
 		return winsock_to_linux_error(socket->error_status);
+
+	err = wait_for_sendbuf(socket, len);
+	if (err < 0)
+		return err;
+
+		/* TODO: on error reset socket->send_buf_cur */
 
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
 	if (WskBuffer == NULL)
@@ -636,12 +675,17 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 
 	char *tmp_buffer;
 	NTSTATUS status;
+	int err;
 
 	if (g_SocketsState != INITIALIZED || !socket || !socket->sk || !Buffer || !BufferSize)
 		return -EINVAL;
 
 	if (socket->error_status != STATUS_SUCCESS)
 		return winsock_to_linux_error(socket->error_status);
+
+	err = wait_for_sendbuf(socket, BufferSize);
+	if (err < 0)
+		return err;
 
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
 	if (WskBuffer == NULL)
@@ -1060,6 +1104,11 @@ int sock_create_kern(
 		goto out;
 	}
 	socket->error_status = STATUS_SUCCESS;
+	socket->send_buf_max = 4*1024*1024;
+	socket->send_buf_cur = 0;
+	spin_lock_init(&socket->send_buf_counters_lock);
+	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
+
 	*out = socket;
 
 out:

@@ -471,6 +471,11 @@ struct socket {
 
 	NTSTATUS error_status;
 
+	size_t send_buf_max;
+	size_t send_buf_cur;
+	spinlock_t send_buf_counters_lock;
+	KEVENT data_sent;
+
 	char name[32];
 };
 
