@@ -100,6 +100,17 @@ struct send_page_completion_info {
 	struct socket *socket;
 };
 
+static void have_sent(struct socket *socket, size_t length)
+{
+	ULONG_PTR flags;
+
+	spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
+	socket->send_buf_cur -= length;
+	spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
+
+	KeSetEvent(&socket->data_sent, IO_NO_INCREMENT, FALSE);
+}
+
 static NTSTATUS NTAPI SendPageCompletionRoutine(
 	__in PDEVICE_OBJECT	DeviceObject,
 	__in PIRP		Irp,
@@ -109,7 +120,6 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 { 
 	int may_printk = completion->page != NULL;
 	size_t length;
-	ULONG_PTR flags;
 
 if (may_printk)
 printk("Completion started.\n");
@@ -126,11 +136,7 @@ printk("Completion started.\n");
 	FreeWskBuffer(completion->wsk_buffer);
 	kfree(completion->wsk_buffer);
 
-	spin_lock_irqsave(&completion->socket->send_buf_counters_lock, flags);
-	completion->socket->send_buf_cur -= length;
-	spin_unlock_irqrestore(&completion->socket->send_buf_counters_lock, flags);
-
-	KeSetEvent(&completion->socket->data_sent, IO_NO_INCREMENT, FALSE);
+	have_sent(completion->socket, length);
 
 	if (completion->page)
 		put_page(completion->page); /* Might free the page if connection is already down */
@@ -597,14 +603,15 @@ SendPage(
 	if (err < 0)
 		return err;
 
-		/* TODO: on error reset socket->send_buf_cur */
-
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
-	if (WskBuffer == NULL)
+	if (WskBuffer == NULL) {
+		have_sent(socket, len);
 		return -ENOMEM;
+	}
 
 	completion = kzalloc(sizeof(*completion), 0, 'DRBD');
 	if (completion == NULL) {
+		have_sent(socket, len);
 		kfree(WskBuffer);
 		return -ENOMEM;
 	}
@@ -612,6 +619,7 @@ SendPage(
 printk("page: %p page->addr: %p page->size: %d offset: %d len: %d page->kref.refcount: %d\n", page, page->addr, page->size, offset, len, page->kref.refcount);
 	status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE, TRUE);
 	if (!NT_SUCCESS(status)) {
+		have_sent(socket, len);
 		kfree(completion);
 		kfree(WskBuffer);
 		return -ENOMEM;
@@ -624,6 +632,7 @@ printk("page: %p page->addr: %p page->size: %d offset: %d len: %d page->kref.ref
 
 	Irp = IoAllocateIrp(1, FALSE);
 	if (Irp == NULL) {
+		have_sent(socket, len);
 		put_page(page);
 		kfree(completion);
 		kfree(WskBuffer);
@@ -694,17 +703,21 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 		return err;
 
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
-	if (WskBuffer == NULL)
+	if (WskBuffer == NULL) {
+		have_sent(socket, BufferSize);
 		return -ENOMEM;
+	}
 
 	completion = kzalloc(sizeof(*completion), 0, 'DRBD');
 	if (completion == NULL) {
+		have_sent(socket, BufferSize);
 		kfree(WskBuffer);
 		return -ENOMEM;
 	}
 
 	tmp_buffer = kmalloc(BufferSize, 0, 'TMPB');
 	if (tmp_buffer == NULL) {
+		have_sent(socket, BufferSize);
 		kfree(completion);
 		kfree(WskBuffer);
 		return -ENOMEM;
@@ -713,6 +726,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 
 	status = InitWskBuffer(tmp_buffer, BufferSize, WskBuffer, FALSE, FALSE);
 	if (!NT_SUCCESS(status)) {
+		have_sent(socket, BufferSize);
 		kfree(completion);
 		kfree(WskBuffer);
 		kfree(tmp_buffer);
@@ -725,6 +739,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 
 	irp = IoAllocateIrp(1, FALSE);
 	if (irp == NULL) {
+		have_sent(socket, BufferSize);
 		kfree(completion);
 		kfree(WskBuffer);
 		kfree(tmp_buffer);
