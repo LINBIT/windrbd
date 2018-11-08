@@ -780,6 +780,10 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	path_t = container_of(path_d, struct dtt_path, path);
 	socket->sk = AcceptSocket;
 	socket->error_status = STATUS_SUCCESS;
+	socket->send_buf_max = 4*1024*1024;
+	socket->send_buf_cur = 0;
+	spin_lock_init(&socket->send_buf_counters_lock);
+	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
 
 	rcu_flags = rcu_read_lock();
 	nc = rcu_dereference(listener->transport->net_conf);
