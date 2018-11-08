@@ -403,12 +403,9 @@ static void dtt_setbufsize(struct socket *socket, unsigned int snd,
 	NTSTATUS status;
 
 	if (snd) {
+printk("setting socket send buffer size to %d\n", snd);
 		socket->send_buf_max = snd;
-			/* TODO: KeSetEvent(&socket->data_sent) ... */
-
-		status = ControlSocket(socket->sk, WskSetOption, SO_SNDBUF, SOL_SOCKET, sizeof(snd), &snd, 0, NULL, NULL);
-		if (status == STATUS_SUCCESS)
-			printk(KERN_DEBUG "Set sendbuf size to %d (unusual we expected this to fail)\n", snd);
+		KeSetEvent(&socket->data_sent, IO_NO_INCREMENT, FALSE);
 	}
 
 	if (rcv) {
@@ -474,6 +471,7 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 
 	socket->sk_rcvtimeo =
 	socket->sk_sndtimeo = connect_int * HZ;
+printk("setting socket sndtimeout to %d\n", socket->sk_sndtimeo);
 
 	dtt_setbufsize(socket, sndbuf_size, rcvbuf_size);
 
@@ -791,6 +789,7 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	rcu_read_unlock(rcu_flags);
 
 	socket->sk_rcvtimeo = socket->sk_sndtimeo = timeout;
+printk("setting socket sndtimeout to %d\n", socket->sk_sndtimeo);
 	dtt_setbufsize(socket, nc->sndbuf_size, nc->rcvbuf_size);
 
 	socket_c->socket = socket;
@@ -1187,7 +1186,9 @@ randomize:
 	rcu_read_unlock(rcu_flags);
 
 	dsocket->sk_sndtimeo = timeout;
+printk("setting socket sndtimeout to %d\n", dsocket->sk_sndtimeo);
 	csocket->sk_sndtimeo = timeout;
+printk("setting socket sndtimeout to %d\n", csocket->sk_sndtimeo);
 
 	return 0;
 
