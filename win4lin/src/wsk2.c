@@ -121,9 +121,6 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	int may_printk = completion->page != NULL;
 	size_t length;
 
-if (may_printk)
-printk("Completion started.\n");
-
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		if (may_printk && completion->socket->error_status != STATUS_SUCCESS &&
 		    completion->socket->error_status != Irp->IoStatus.Status)
@@ -146,9 +143,6 @@ printk("Completion started.\n");
 	
 	IoFreeIrp(Irp);
 
-if (may_printk)
-printk("Completion finished.\n");
-
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
@@ -166,10 +160,8 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 			timeout.QuadPart = -1 * socket->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
 			status = KeWaitForSingleObject(&socket->data_sent, Executive, KernelMode, FALSE, &timeout);
 
-			if (status == STATUS_TIMEOUT) {
-printk("send timeout\n");
+			if (status == STATUS_TIMEOUT)
 				return -ETIMEDOUT;
-			}
 		} else {
 			socket->send_buf_cur += want_to_send;
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
@@ -572,7 +564,7 @@ int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_INVALID_DEVICE_STATE:
 		return -EINVAL;
 	default:
-		printk("Unknown status %x, returning -EIO.\n", status);
+		// printk("Unknown status %x, returning -EIO.\n", status);
 		return -EIO;
 	}
 }
@@ -616,7 +608,6 @@ SendPage(
 		return -ENOMEM;
 	}
 
-printk("page: %p page->addr: %p page->size: %d offset: %d len: %d page->kref.refcount: %d\n", page, page->addr, page->size, offset, len, page->kref.refcount);
 	status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE, TRUE);
 	if (!NT_SUCCESS(status)) {
 		have_sent(socket, len);
