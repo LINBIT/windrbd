@@ -1639,7 +1639,8 @@ void destroy_workqueue(struct workqueue_struct *wq)
 printk("stopping a workqueue thread\n");
 }
 
- void sock_release(struct socket *sock)
+/* TODO: to wsk2.c */
+void sock_release(struct socket *sock)
 {
 	NTSTATUS status;
 	

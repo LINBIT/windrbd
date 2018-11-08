@@ -149,22 +149,28 @@ printk("Completion finished.\n");
 static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 {
 	ULONG_PTR flags;
+	LARGE_INTEGER timeout;
+	NTSTATUS status;
 
-		/* TODO: if want_to_send > socket->send_buf_max return error */
 	while (1) {
 		spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
-			/* TODO: if socket->send_buf_cur > socket->send_buf_max) ? 
-			because send_buf_max may be 0 */
-		if (socket->send_buf_cur + want_to_send > socket->send_buf_max) {
+
+		if (socket->send_buf_cur > socket->send_buf_max) {
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
-			/* TODO: with timeout: socket->sk_sndtimeo */
-			KeWaitForSingleObject(&socket->data_sent, Executive, KernelMode, FALSE, NULL);
+			timeout.QuadPart = -1 * socket->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
+			status = KeWaitForSingleObject(&socket->data_sent, Executive, KernelMode, FALSE, &timeout);
+
+			if (status == STATUS_TIMEOUT) {
+printk("send timeout\n");
+				return -ETIMEDOUT;
+			}
 		} else {
 			socket->send_buf_cur += want_to_send;
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
 			return 0;
 		}
 			/* TODO: if socket closed meanwhile return an error */
+			/* TODO: need socket refcount for doing so */
 	}
 }
 
