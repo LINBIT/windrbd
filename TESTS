@@ -1,3 +1,28 @@
+Write to NTFS while connected:
+
+On windows side:
+
+./write-fs-loop.sh
+
+(while connected to peer).
+
+Protocol A.
+
+Nov 8 19:00 (72b6bcee) started 
+
+-----------------------------------------
+Write to NTFS while connected:
+
+On windows side:
+
+./write-fs-loop.sh
+
+(while connected to peer).
+
+Protocol C. just crashed.
+
+Nov 8 19:00 (72b6bcee) started 
+-----------------------------------------
 Write raw request 1M while connected
 
 Connected (Windows 2016 <> Linux)
