@@ -1,3 +1,30 @@
+-----------------------------------------
+Write to NTFS while connected (Windows 10, Protocol C):
+
+On windows side:
+
+./write-fs-loop.sh
+
+(while connected to peer).
+
+Protocol C.
+
+Nov 9 19:00 (37c29a) started 
+
+-----------------------------------------
+Write to NTFS while connected (Windows 7):
+
+On windows side:
+
+./write-fs-loop.sh
+
+(while connected to peer).
+
+Protocol C.
+
+Nov 9 15:00 - 19:00 still running 8000 iterations
+
+-----------------------------------------
 Write to NTFS while connected:
 
 On windows side:
@@ -9,6 +36,7 @@ On windows side:
 Protocol A.
 
 Nov 8 19:00 (72b6bcee) started 
+Nov 9 15:00 still running 13100 iterations
 
 -----------------------------------------
 Write to NTFS while connected:

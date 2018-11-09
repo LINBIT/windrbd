@@ -53,6 +53,8 @@ TODO: new BSOD on I/O while connected
 	write-fs-loop.sh on Windows side (being primary)
 	Protocol C and attached.
 
+	Put muteces around WskSend/WskReceive: does that help?
+
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
