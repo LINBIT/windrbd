@@ -267,7 +267,7 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
  * do we need to block DRBD_SIG if sock == &meta.socket ??
  * otherwise wake_asender() might interrupt some send_*Ack !
  */
-		rv = Send(socket->sk, DataBuffer, iov_len, 0, socket->sk_sndtimeo);
+		rv = Send(socket, socket->sk, DataBuffer, iov_len, 0, socket->sk_sndtimeo);
 
 		if (rv == -EAGAIN) {
 			struct drbd_transport *transport = &tcp_transport->transport;
@@ -300,7 +300,7 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
 static int dtt_recv_short(struct socket *socket, void *buf, size_t size, int flags)
 {
 	flags = WSK_FLAG_WAITALL;
-	return Receive(socket->sk, buf, size, flags, socket->sk_rcvtimeo);
+	return Receive(socket, socket->sk, buf, size, flags, socket->sk_rcvtimeo);
 }
 
 static int dtt_recv(struct drbd_transport *transport, enum drbd_stream stream, void **buf, size_t size, int flags)
@@ -770,6 +770,7 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	socket->send_buf_max = 4*1024*1024;
 	socket->send_buf_cur = 0;
 	spin_lock_init(&socket->send_buf_counters_lock);
+	mutex_init(&socket->wsk_mutex);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
 
 	rcu_flags = rcu_read_lock();

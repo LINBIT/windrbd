@@ -55,6 +55,7 @@ Disconnect(
 LONG
 NTAPI
   Send(
+	struct socket *socket,
 	__in PWSK_SOCKET	WskSocket,
 	__in PVOID			Buffer,
 	__in ULONG			BufferSize,
@@ -77,6 +78,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 LONG
 NTAPI
 Receive(
+	struct socket *socket,
 	__in  PWSK_SOCKET	WskSocket,
 	__out PVOID			Buffer,
 	__in  ULONG			BufferSize,

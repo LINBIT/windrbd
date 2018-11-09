@@ -476,6 +476,8 @@ struct socket {
 	spinlock_t send_buf_counters_lock;
 	KEVENT data_sent;
 
+	struct mutex wsk_mutex;
+
 	char name[32];
 };
 

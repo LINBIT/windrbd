@@ -118,7 +118,7 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 
 )
 { 
-	int may_printk = completion->page != NULL;
+	int may_printk = completion->page != NULL; /* called from SendPage */
 	size_t length;
 
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
@@ -132,6 +132,9 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 		/* Also unmaps the pages of the containg Mdl */
 	FreeWskBuffer(completion->wsk_buffer);
 	kfree(completion->wsk_buffer);
+
+// if (may_printk)
+// printk("in completion status is %x\n", Irp->IoStatus.Status);
 
 	have_sent(completion->socket, length);
 
@@ -428,6 +431,7 @@ char *GetSockErrorString(NTSTATUS status)
 LONG
 NTAPI
 Send(
+	struct socket *socket,
 	__in PWSK_SOCKET	WskSocket,
 	__in PVOID			Buffer,
 	__in ULONG			BufferSize,
@@ -457,11 +461,15 @@ Send(
 
 	Flags |= WSK_FLAG_NODELAY;
 
+	mutex_lock(&socket->wsk_mutex);
+
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskSend(
 		WskSocket,
 		&WskBuffer,
 		Flags,
 		Irp);
+
+	mutex_unlock(&socket->wsk_mutex);
 
 	if (Status == STATUS_PENDING)
 	{
@@ -608,6 +616,8 @@ SendPage(
 		return -ENOMEM;
 	}
 
+// printk("page: %p page->addr: %p page->size: %d offset: %d len: %d page->kref.refcount: %d\n", page, page->addr, page->size, offset, len, page->kref.refcount);
+
 	status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE, TRUE);
 	if (!NT_SUCCESS(status)) {
 		have_sent(socket, len);
@@ -637,12 +647,17 @@ SendPage(
 	else
 		flags &= ~WSK_FLAG_NODELAY;
 
+// printk("1\n");
+
+	mutex_lock(&socket->wsk_mutex);
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskSend(
 		socket->sk,
 		WskBuffer,
 		flags,
 		Irp);
+	mutex_unlock(&socket->wsk_mutex);
 
+// printk("2 status is %x\n", status);
 
 	switch (status) {
 	case STATUS_PENDING:
@@ -760,6 +775,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 }
 
 LONG NTAPI Receive(
+	struct socket *socket,
 	__in  PWSK_SOCKET	WskSocket,
 	__out PVOID			Buffer,
 	__in  ULONG			BufferSize,
@@ -797,11 +813,13 @@ LONG NTAPI Receive(
 		return SOCKET_ERROR;
 	}
 
+	mutex_lock(&socket->wsk_mutex);
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskReceive(
 				WskSocket,
 				&WskBuffer,
 				Flags,
 				Irp);
+	mutex_unlock(&socket->wsk_mutex);
 
     if (Status == STATUS_PENDING)
     {
@@ -1120,6 +1138,7 @@ int sock_create_kern(
 	socket->send_buf_cur = 0;
 	spin_lock_init(&socket->send_buf_counters_lock);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
+	mutex_init(&socket->wsk_mutex);
 
 	*out = socket;
 

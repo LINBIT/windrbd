@@ -87,6 +87,8 @@ static int open_syslog_socket(void)
 			KeInitializeEvent(&printk_udp_socket.data_sent, SynchronizationEvent, FALSE);
 
 			printk_udp_socket.error_status = STATUS_SUCCESS;
+			mutex_init(&printk_udp_socket.wsk_mutex);
+
 			strcpy(printk_udp_socket.name, "debug socket");
 		} else {
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility. You will NOT see any output produced by printk (and pr_err, ...)\n");
