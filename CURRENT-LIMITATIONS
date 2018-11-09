@@ -8,13 +8,10 @@ System Volume (C:) cannot be used for windrbd.
 
 No 32-Bit version is supported, only 64 bit.
 
-On installation (or upgrade) a system reboot is required.
+On upgrade / uninstall a system reboot is required.
+	(for removing driver)
 
 Windows 7 is minimum (no Vista, no XP) (SP1 required (?))
-
-Setting sendtimeout (via netconf / timeout) is not supported
-
-Setting send buffer size (via netconf / sndbuf-size) is not supported
 
 Windows applications that use undocumented ioctl system calls (like winsat).
 
