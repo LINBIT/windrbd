@@ -92,7 +92,9 @@ static VOID FreeWskBuffer(
 __in PWSK_BUF WskBuffer
 )
 {
-	MmUnlockPages(WskBuffer->Mdl);
+	if (WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) {
+		MmUnlockPages(WskBuffer->Mdl);
+	}
 	IoFreeMdl(WskBuffer->Mdl);
 }
 
