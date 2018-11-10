@@ -773,6 +773,7 @@ static void free_mdls_and_irp(struct bio *bio)
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
 			if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
+printk("MmUnlockPages(%p)\n", mdl);
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 			}
 			IoFreeMdl(mdl); // This function will also unmap pages.
@@ -1657,7 +1658,8 @@ void sock_release(struct socket *sock)
 		return;
 	}
 
-	kfree(sock);
+/* TODO: for now, maybe this is the BSOD ON I/O? */
+//	kfree(sock);
 }
 
 //Linux/block/genhd.c
@@ -2047,6 +2049,8 @@ static int windrbd_generic_make_request(struct bio *bio)
 		return -ENOMEM;
 	}
 
+printk("IoAllocateMdl(%p, %d, ...) -> %p\n", buffer, first_size, bio->bi_irps[bio->bi_this_request]->MdlAddress);
+
 		/* Unlock the MDLs pages locked by
 		 * IoBuildAsynchronousFsdRequest, we must not have
 		 * pages locked while using MmBuildMdlForNonPagedPool()
@@ -2079,6 +2083,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 
 	int total_size = first_size;
 
+		/* TODO: this loop does nothing any more (max_mdls is 1) */
 	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {
 		struct bio_vec *entry = &bio->bi_io_vec[i];
 		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irps[bio->bi_this_request]);
@@ -3041,6 +3046,7 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	bdev_ref = new_device->DeviceExtension;
 	bdev_ref->bdev = bdev;
 
+		/* TODO: makes a difference? */
 	new_device->Flags |= DO_DIRECT_IO;
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 

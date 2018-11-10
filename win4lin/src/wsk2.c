@@ -70,6 +70,9 @@ static NTSTATUS InitWskBuffer(
 	return STATUS_INSUFFICIENT_RESOURCES;
     }
 
+if (may_printk)
+printk("IoAllocateMdl(%p, %d, ...) -> %p\n", Buffer, BufferSize, WskBuffer->Mdl);
+
     try {
 	// DW-1223: Locking with 'IoWriteAccess' affects buffer, which causes infinite I/O from ntfs when the buffer is from mdl of write IRP.
 	// we need write access for receiver, since buffer will be filled.
@@ -130,6 +133,10 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	}
 	length = completion->wsk_buffer->Length;
 		/* Also unmaps the pages of the containg Mdl */
+
+if (may_printk)
+printk("MmUnlockPages(%p)\n", completion->wsk_buffer->Mdl);
+
 	FreeWskBuffer(completion->wsk_buffer);
 	kfree(completion->wsk_buffer);
 
@@ -550,7 +557,9 @@ Send(
 		}
 	}
 
+
 	IoFreeIrp(Irp);
+printk("MmUnlockPages(%p)\n", WskBuffer.Mdl);
 	FreeWskBuffer(&WskBuffer);
 
 	return BytesSent;
@@ -637,6 +646,7 @@ SendPage(
 		put_page(page);
 		kfree(completion);
 		kfree(WskBuffer);
+printk("MmUnlockPages(%p)\n", WskBuffer->Mdl);
 		FreeWskBuffer(WskBuffer);
 		return -ENOMEM;
 	}
@@ -749,6 +759,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 		kfree(completion);
 		kfree(WskBuffer);
 		kfree(tmp_buffer);
+printk("MmUnlockPages(%p)\n", WskBuffer->Mdl);
 		FreeWskBuffer(WskBuffer);
 		return -ENOMEM;
 	}
@@ -809,6 +820,7 @@ LONG NTAPI Receive(
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 
 	if (!NT_SUCCESS(Status)) {
+printk("MmUnlockPages(%p)\n", WskBuffer.Mdl);
 		FreeWskBuffer(&WskBuffer);
 		return SOCKET_ERROR;
 	}
@@ -918,6 +930,7 @@ LONG NTAPI Receive(
 	}
 
 	IoFreeIrp(Irp);
+printk("MmUnlockPages(%p)\n", WskBuffer.Mdl);
 	FreeWskBuffer(&WskBuffer);
 
 	return BytesReceived;
