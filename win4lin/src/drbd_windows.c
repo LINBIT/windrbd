@@ -760,39 +760,39 @@ static void free_mdls_and_irp(struct bio *bio)
 	if (bio->bi_irps == NULL)
 		return;
 
-printk("1\n");
+// printk("1\n");
 
 	for (r=0;r<bio->bi_num_requests;r++) {
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
 		 */
-printk("2\n");
+// printk("2\n");
 		if (bio->bi_irps[r] == NULL)
 			continue;
-printk("3\n");
+// printk("3\n");
 
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
 		     mdl = next_mdl) {
-printk("4\n");
+// printk("4\n");
 			next_mdl = mdl->Next;
 			if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
 				/* TODO: with protocol C we never get here ... */
-printk("MmUnlockPages(%p)\n", mdl);
+// printk("MmUnlockPages(%p)\n", mdl);
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 			}
-printk("5\n");
+// printk("5\n");
 			IoFreeMdl(mdl); // This function will also unmap pages.
-printk("6\n");
+// printk("6\n");
 		}
 		bio->bi_irps[r]->MdlAddress = NULL;
 		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 
-printk("7\n");
+// printk("7\n");
 		IoFreeIrp(bio->bi_irps[r]);
 	}
-printk("8\n");
+// printk("8\n");
 
 	kfree(bio->bi_irps);
 }
@@ -1085,7 +1085,7 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
 
     wq->run = TRUE;
 
-printk("starting a workqueue thread\n");
+// printk("starting a workqueue thread\n");
 
 	status = windrbd_create_windows_thread(run_singlethread_workqueue, wq, &wq->pThread);
 
@@ -1647,7 +1647,7 @@ void destroy_workqueue(struct workqueue_struct *wq)
 	windrbd_cleanup_windows_thread(wq->pThread);
 
 	kfree(wq);
-printk("stopping a workqueue thread\n");
+// printk("stopping a workqueue thread\n");
 }
 
 /* TODO: to wsk2.c */
@@ -2059,7 +2059,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 		return -ENOMEM;
 	}
 
-printk("IoAllocateMdl(%p, %d, ...) -> %p\n", buffer, first_size, bio->bi_irps[bio->bi_this_request]->MdlAddress);
+// printk("IoAllocateMdl(%p, %d, ...) -> %p\n", buffer, first_size, bio->bi_irps[bio->bi_this_request]->MdlAddress);
 
 // #if 0
 		/* Unlock the MDLs pages locked by
@@ -2074,16 +2074,16 @@ printk("IoAllocateMdl(%p, %d, ...) -> %p\n", buffer, first_size, bio->bi_irps[bi
 			 * unlock the pages here ...)
 			 */
 
-			/* However it currently BSODs when becoming primary ... */
+			/* However it currently BSODs when becoming primary ...  either on read or on write (they are different) */
 
-printk("1 buffer: %p\n", buffer);
+// printk("1 buffer: %p\n", buffer);
 	if (!bio->bi_paged_memory) {
 		struct _MDL *first_mdl;
-printk("2 buffer: %p\n", buffer);
+// printk("2 buffer: %p\n", buffer);
 		first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress;
 		if (first_mdl != NULL) {
 			if (first_mdl->MdlFlags & MDL_PAGES_LOCKED) {
-printk("unlock page %p %p\n", buffer, first_mdl);
+// printk("unlock page %p %p\n", buffer, first_mdl);
 				MmUnlockPages(first_mdl);
 			}
 		}
