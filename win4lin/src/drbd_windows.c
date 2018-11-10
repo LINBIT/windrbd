@@ -2061,7 +2061,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 
 printk("IoAllocateMdl(%p, %d, ...) -> %p\n", buffer, first_size, bio->bi_irps[bio->bi_this_request]->MdlAddress);
 
-#if 0
+// #if 0
 		/* Unlock the MDLs pages locked by
 		 * IoBuildAsynchronousFsdRequest, we must not have
 		 * pages locked while using MmBuildMdlForNonPagedPool()
@@ -2073,6 +2073,8 @@ printk("IoAllocateMdl(%p, %d, ...) -> %p\n", buffer, first_size, bio->bi_irps[bi
 			/* TODO: this is probably not a good idea (to
 			 * unlock the pages here ...)
 			 */
+
+			/* However it currently BSODs when becoming primary ... */
 
 printk("1 buffer: %p\n", buffer);
 	if (!bio->bi_paged_memory) {
@@ -2088,7 +2090,9 @@ printk("unlock page %p %p\n", buffer, first_mdl);
 	}
 		/* Else leave it locked */
 
-#endif
+// #endif
+
+	int total_size = first_size;
 
 #if 0
 	/* Windows tries to split up MDLs and crashes when
@@ -2100,8 +2104,6 @@ printk("unlock page %p %p\n", buffer, first_mdl);
 	 */
 
 		/* TODO: use bio->bi_size it should be correct now. */
-
-	int total_size = first_size;
 
 		/* TODO: this loop does nothing any more (max_mdls is 1) */
 	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {
