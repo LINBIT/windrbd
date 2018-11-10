@@ -89,11 +89,15 @@ printk("IoAllocateMdl(%p, %d, ...) -> %p\n", Buffer, BufferSize, WskBuffer->Mdl)
 }
 
 static VOID FreeWskBuffer(
-__in PWSK_BUF WskBuffer
+__in PWSK_BUF WskBuffer,
+int may_printk
 )
 {
 	if (WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) {
 		MmUnlockPages(WskBuffer->Mdl);
+	} else {
+		if (may_printk)
+			printk("Page not locked in FreeWskBuffer\n");
 	}
 	IoFreeMdl(WskBuffer->Mdl);
 }
@@ -139,7 +143,7 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 if (may_printk)
 printk("MmUnlockPages(%p)\n", completion->wsk_buffer->Mdl);
 
-	FreeWskBuffer(completion->wsk_buffer);
+	FreeWskBuffer(completion->wsk_buffer, may_printk);
 	kfree(completion->wsk_buffer);
 
 // if (may_printk)
@@ -464,7 +468,7 @@ Send(
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 	if (!NT_SUCCESS(Status)) {
-		FreeWskBuffer(&WskBuffer);
+		FreeWskBuffer(&WskBuffer, 1);
 		return SOCKET_ERROR;
 	}
 
@@ -562,7 +566,7 @@ Send(
 
 	IoFreeIrp(Irp);
 printk("MmUnlockPages(%p)\n", WskBuffer.Mdl);
-	FreeWskBuffer(&WskBuffer);
+	FreeWskBuffer(&WskBuffer, 1);
 
 	return BytesSent;
 }
@@ -649,7 +653,7 @@ SendPage(
 		kfree(completion);
 		kfree(WskBuffer);
 printk("MmUnlockPages(%p)\n", WskBuffer->Mdl);
-		FreeWskBuffer(WskBuffer);
+		FreeWskBuffer(WskBuffer, 1);
 		return -ENOMEM;
 	}
 	IoSetCompletionRoutine(Irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
@@ -761,8 +765,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 		kfree(completion);
 		kfree(WskBuffer);
 		kfree(tmp_buffer);
-printk("MmUnlockPages(%p)\n", WskBuffer->Mdl);
-		FreeWskBuffer(WskBuffer);
+		FreeWskBuffer(WskBuffer, 0);
 		return -ENOMEM;
 	}
 	IoSetCompletionRoutine(irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
@@ -823,7 +826,7 @@ LONG NTAPI Receive(
 
 	if (!NT_SUCCESS(Status)) {
 printk("MmUnlockPages(%p)\n", WskBuffer.Mdl);
-		FreeWskBuffer(&WskBuffer);
+		FreeWskBuffer(&WskBuffer, 1);
 		return SOCKET_ERROR;
 	}
 
@@ -933,7 +936,7 @@ printk("MmUnlockPages(%p)\n", WskBuffer.Mdl);
 
 	IoFreeIrp(Irp);
 printk("MmUnlockPages(%p)\n", WskBuffer.Mdl);
-	FreeWskBuffer(&WskBuffer);
+	FreeWskBuffer(&WskBuffer, 1);
 
 	return BytesReceived;
 }
