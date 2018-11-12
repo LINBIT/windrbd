@@ -1,5 +1,20 @@
 -----------------------------------------
-Write to NTFS while connected (Windows 10, Protocol C):
+Write to NTFS while connected (Windows Server 2016, Protocol C):
+
+On windows side:
+
+(start this 3 times paralell)
+./write-fs-loop.sh
+
+(while connected to peer).
+
+Protocol C.
+
+Nov 9 19:00 (5d652aa4) started 
+	(with converted-sources at e62341e30, no zero copy patch)
+
+-----------------------------------------
+Write to NTFS while connected (Windows Server 2016, Protocol C):
 
 On windows side:
 

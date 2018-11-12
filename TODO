@@ -55,6 +55,13 @@ TODO: new BSOD on I/O while connected
 
 	Put muteces around WskSend/WskReceive: does that help?
 
+	No. Now also triggered with protocol C and detached.
+
+	Using drbd_send_bio() (instead of drbd_send_zc_bio()) to
+	send the data block. Has an extra copy but maybe there's
+	something in drbd_send_zc_bio() (is there an extra
+	get_page/put_page required?). MSG_MORE flag?
+
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
@@ -85,6 +92,14 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 	Update: This might be an upstream problem, there are some
 	bugs in sync code (we just had 76% on one side and 0% on
 	the other side).
+
+	Update: Now had the case: Linux stalls at 76% Windows at
+	0%
+	(after Primary Diskless on Windows crashed)
+	After down / create-md / up on Windows side: Linux stalls
+	at 0% Windows also at 0%
+	After down / create-md / up on Linux side: both inconsistent
+	After primary --force on Windows side: they sync again.
 
 TODO: Code quality: have refcount on struct socket
 

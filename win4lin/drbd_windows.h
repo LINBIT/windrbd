@@ -275,11 +275,13 @@ TODO: should be:
 #define SIGXCPU					1
 #define SIGHUP					24
 */
+/* TODO: most likely wrong (should be 0x8000) but is ignored (?) */
 #define MSG_MORE				102
 
 #define MAX_ERRNO				4095
 #define IS_ERR_VALUE(_x)		((_x) >= (unsigned long) -MAX_ERRNO)
 
+/* TODO: (should be 0x4000) but is ignored (means do not send SIGPIPE on error) */
 #define MSG_NOSIGNAL			8
 
 #define READ					0
