@@ -1668,8 +1668,7 @@ void sock_release(struct socket *sock)
 		return;
 	}
 
-/* TODO: for now, maybe this is the BSOD ON I/O? */
-//	kfree(sock);
+	kfree(sock);
 }
 
 //Linux/block/genhd.c
