@@ -1,27 +1,7 @@
-TODO: Code quality: fake commit history (git rebase -i master)
-
-	Remove commits reverted later, clean up.
-
-	Update: Phil said best is to have one big patch for everything.
-	That saves a lot of work.
-
-	Update: Rebase once more and sqash commits
-
-	Update: Rebased, not quite clear yet if we should sqash or
-	otherwise clean up the commit history. Problem is that
-	drbd-headers submodule is also rebased, which in turn
-	caused some commits that used to compile to simply
-	fail.
-
-	Update: phil ack-ed waiting for Roland. Meanwhile write
-	a commit message.
-
-	Update: Minor changes TODO. Roland will do the squeeze,
-	just push the changes upon current dev branch.
-
 Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
 Postponed to; Oct 20 2018
+Real: Nov 13 2018
 -----------------------------------------------------------------------
 
 TODO: Documentation: white paper for linbit website.
@@ -89,6 +69,10 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
 	Running Primary Diskless and attach it while I/O seems
 	to trigger the bug.
+
+TODO: Test: repeat the USB stick unplug test (Windows 10).
+
+TODO: Feature: Does it work with Volumes spanning several HDDs?
 
 TODO: Code quality: do not unlock pages
 
@@ -502,8 +486,6 @@ TODO: Research: Understand IRP cancellation
 TODO: Test: Somehow test if referencing overlay thread works as intended.
 
 TODO: Test: Test with MS SQL server
-
-TODO: Test: test disk none
 
 TODO: Build system: have a make depend target
 	Or at least header file dependencies.
@@ -4064,4 +4046,29 @@ Done: new BSOD on I/O while connected
 	get_page/put_page required?). MSG_MORE flag?
 
 	Works now (by using drbd_send_bio instead of drbd_send_zc_bio)
+
+Done: Test: test disk none
+
+Done: Code quality: fake commit history (git rebase -i master)
+
+	Remove commits reverted later, clean up.
+
+	Update: Phil said best is to have one big patch for everything.
+	That saves a lot of work.
+
+	Update: Rebase once more and sqash commits
+
+	Update: Rebased, not quite clear yet if we should sqash or
+	otherwise clean up the commit history. Problem is that
+	drbd-headers submodule is also rebased, which in turn
+	caused some commits that used to compile to simply
+	fail.
+
+	Update: phil ack-ed waiting for Roland. Meanwhile write
+	a commit message.
+
+	Update: Minor changes TODO. Roland will do the squeeze,
+	just push the changes upon current dev branch.
+
+	Update: submitted, waiting for Roland to merge.
 
