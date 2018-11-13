@@ -478,6 +478,7 @@ struct socket {
 	spinlock_t send_buf_counters_lock;
 	KEVENT data_sent;
 
+	/* TODO: this is not needed, remove it again */
 	struct mutex wsk_mutex;
 
 	char name[32];

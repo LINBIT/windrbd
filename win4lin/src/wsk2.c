@@ -70,9 +70,6 @@ static NTSTATUS InitWskBuffer(
 	return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-// if (may_printk)
-// printk("IoAllocateMdl(%p, %d, ...) -> %p\n", Buffer, BufferSize, WskBuffer->Mdl);
-
     try {
 	// DW-1223: Locking with 'IoWriteAccess' affects buffer, which causes infinite I/O from ntfs when the buffer is from mdl of write IRP.
 	// we need write access for receiver, since buffer will be filled.
@@ -140,14 +137,8 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	length = completion->wsk_buffer->Length;
 		/* Also unmaps the pages of the containg Mdl */
 
-// if (may_printk)
-// printk("MmUnlockPages(%p)\n", completion->wsk_buffer->Mdl);
-
 	FreeWskBuffer(completion->wsk_buffer, may_printk);
 	kfree(completion->wsk_buffer);
-
-// if (may_printk)
-// printk("in completion status is %x\n", Irp->IoStatus.Status);
 
 	have_sent(completion->socket, length);
 
@@ -565,7 +556,6 @@ Send(
 
 
 	IoFreeIrp(Irp);
-// printk("MmUnlockPages(%p)\n", WskBuffer.Mdl);
 	FreeWskBuffer(&WskBuffer, 1);
 
 	return BytesSent;
@@ -587,6 +577,7 @@ int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_INVALID_DEVICE_STATE:
 		return -EINVAL;
 	default:
+		/* no printk's */
 		// printk("Unknown status %x, returning -EIO.\n", status);
 		return -EIO;
 	}
@@ -653,7 +644,6 @@ SendPage(
 		put_page(page);
 		kfree(completion);
 		kfree(WskBuffer);
-// printk("MmUnlockPages(%p)\n", WskBuffer->Mdl);
 		FreeWskBuffer(WskBuffer, 1);
 		return -ENOMEM;
 	}
@@ -664,7 +654,6 @@ SendPage(
 	else
 		flags &= ~WSK_FLAG_NODELAY;
 
-// printk("1\n");
 
 	mutex_lock(&socket->wsk_mutex);
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskSend(
@@ -674,7 +663,6 @@ SendPage(
 		Irp);
 	mutex_unlock(&socket->wsk_mutex);
 
-// printk("2 status is %x\n", status);
 
 	switch (status) {
 	case STATUS_PENDING:
@@ -826,7 +814,6 @@ LONG NTAPI Receive(
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 
 	if (!NT_SUCCESS(Status)) {
-// printk("MmUnlockPages(%p)\n", WskBuffer.Mdl);
 		FreeWskBuffer(&WskBuffer, 1);
 		return SOCKET_ERROR;
 	}
@@ -936,7 +923,6 @@ LONG NTAPI Receive(
 	}
 
 	IoFreeIrp(Irp);
-// printk("MmUnlockPages(%p)\n", WskBuffer.Mdl);
 	FreeWskBuffer(&WskBuffer, 1);
 
 	return BytesReceived;
