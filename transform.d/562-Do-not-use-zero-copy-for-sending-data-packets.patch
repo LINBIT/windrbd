@@ -1,0 +1,36 @@
+From 28309b2122cacbc334b79c00de48492f6de68692 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 13 Nov 2018 16:44:28 +0100
+Subject: [PATCH] Do not use zero copy for sending data packets
+
+Even in protocol C and B. Reason is a BSOD which has to be fixed
+first. Delete this patchfile once it is fixed.
+---
+ drbd/drbd_main.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 64a318c..2d45d3f 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -2377,10 +2377,13 @@ int drbd_send_dblock(struct drbd_peer_device *peer_device, struct drbd_request *
+ 		 * out ok after sending on this side, but does not fit on the
+ 		 * receiving side, we sure have detected corruption elsewhere.
+ 		 */
+-		if (!(s & (RQ_EXP_RECEIVE_ACK | RQ_EXP_WRITE_ACK)) || digest_size)
+-			err = _drbd_send_bio(peer_device, req->master_bio);
+-		else
+-			err = _drbd_send_zc_bio(peer_device, req->master_bio);
++
++		/* For WinDRBD this currently always uses the copy variant,
++		 * since zero copy is currently broken and BSOD's from
++		 * time to time.
++		 */
++
++		err = _drbd_send_bio(peer_device, req->master_bio);
+ 
+ 		/* double check digest, sometimes buffers have been modified in flight. */
+ 		if (digest_size > 0 && digest_size <= 64) {
+-- 
+2.17.0
+
