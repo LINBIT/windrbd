@@ -48,20 +48,6 @@ TODO: Installation: some last fixes.
 	Offer to delete C:\windrbd on uninstall (warn about
 	config / log files).
 
-TODO: new BSOD on I/O while connected
-
-	write-fs-loop.sh on Windows side (being primary)
-	Protocol C and attached.
-
-	Put muteces around WskSend/WskReceive: does that help?
-
-	No. Now also triggered with protocol C and detached.
-
-	Using drbd_send_bio() (instead of drbd_send_zc_bio()) to
-	send the data block. Has an extra copy but maybe there's
-	something in drbd_send_zc_bio() (is there an extra
-	get_page/put_page required?). MSG_MORE flag?
-
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
@@ -100,6 +86,23 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 	at 0% Windows also at 0%
 	After down / create-md / up on Linux side: both inconsistent
 	After primary --force on Windows side: they sync again.
+
+	Running Primary Diskless and attach it while I/O seems
+	to trigger the bug.
+
+TODO: Code quality: do not unlock pages
+
+	Not doing so BSODs on drbdadm up on Windows 7 and
+	on Primary (write? read?) on Server 2016. Maybe
+	using MmBuildMdlForNonPagedPool fixes it?
+
+	This may cause BSODs when the system starts paging,
+	so please fix.
+
+TODO: Code quality: fix drbd_send_zc_copy and use it again.
+
+	Maybe just moving get_page before wait_for_sendbuf fixes
+	it.
 
 TODO: Code quality: have refcount on struct socket
 
@@ -4045,4 +4048,20 @@ Done: Implement send buffer limit.
 	Fix remaining TODO's.
 	Done fixing TODO's (except for socket refcount, which we will
 	do later).
+
+Done: new BSOD on I/O while connected
+
+	write-fs-loop.sh on Windows side (being primary)
+	Protocol C and attached.
+
+	Put muteces around WskSend/WskReceive: does that help?
+
+	No. Now also triggered with protocol C and detached.
+
+	Using drbd_send_bio() (instead of drbd_send_zc_bio()) to
+	send the data block. Has an extra copy but maybe there's
+	something in drbd_send_zc_bio() (is there an extra
+	get_page/put_page required?). MSG_MORE flag?
+
+	Works now (by using drbd_send_bio instead of drbd_send_zc_bio)
 

@@ -641,6 +641,7 @@ SendPage(
 		return -ENOMEM;
 	}
 
+		/* TODO: move this before wait_for_sendbuf */
 	get_page(page);
 	completion->page = page;
 	completion->wsk_buffer = WskBuffer;
