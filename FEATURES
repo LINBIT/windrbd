@@ -1,0 +1,52 @@
+On line replication
+	Separate block device
+
+NTFS filesystem atop DRBD device
+
+Proper Install (inno-setup based) and Uninstall
+	Currently reboot required to unload the driver
+
+Internal Meta Data
+
+Diskless Primary (and disk none)
+
+Tolerate Backing device failure (transparent to application)
+	Tested with USB stick
+
+User mode helpers (using cmd.exe shell)
+
+IoCtl based netlink interface
+
+drbdsetup events2
+
+-----
+
+Other filesystems (FAT family)
+
+Driver Unloading
+
+3 (and more) node setups
+
+Mounting to NTFS directories (when they are empty)
+
+Using C:\dirname as DRBD device (but not C:\)
+	For example C:\Program Files might work some day
+
+Relocate C:\windrbd directory
+
+debugfs
+
+trim
+
+32 bit version
+
+ReactOS support
+----
+
+Using System Volume (C:\) as DRBD device
+
+Auto-Promote
+
+Windows applications that use undocumented ioctl system calls (like winsat).
+
+drbdadm status as non-administrator
