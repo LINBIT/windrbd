@@ -166,18 +166,3 @@ begin
 	until Length(Text)=0;
 end;
 
-
-procedure CurStepChanged(CurStep: TSetupStep);
-begin
-	if CurStep = ssPostInstall then begin
-		ModPath();
-	end;
-end;
-
-procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
-begin
-	// only run during actual uninstall
-	if CurUninstallStep = usUninstall then begin
-		ModPath();
-	end;
-end;

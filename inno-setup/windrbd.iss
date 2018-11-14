@@ -133,3 +133,47 @@ begin
 end;
 
 #include "oldver.iss"
+
+#include "services.iss"
+
+var LoggerWasStarted: boolean;
+var UmHelperWasStarted: boolean;
+
+Procedure StopUserModeServices;
+Begin
+	LoggerWasStarted := MyStopService('windrbdlog');
+	UmHelperWasStarted := MyStopService('windrbdumhelper');
+End;
+
+Procedure StartUserModeServices;
+Begin
+	if LoggerWasStarted then begin
+		MyStartService('windrbdlog');
+	End;
+	if UmHelperWasStarted then begin
+		MyStartService('windrbdumhelper');
+	End;
+End;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+	if CurStep = ssPostInstall then begin
+		ModPath();
+	end;
+
+	if CurStep = ssInstall then begin
+		StopUserModeServices();
+	end;
+	if CurStep = ssPostInstall then begin
+		StartUserModeServices();
+	end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+	// only run during actual uninstall
+	if CurUninstallStep = usUninstall then begin
+		ModPath();
+	end;
+	// cmd script stops user mode helpers, no need to do that here
+end;
