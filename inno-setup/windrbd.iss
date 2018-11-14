@@ -82,10 +82,10 @@ Name: "{#SysRoot}\var\lib\drbd"
 Name: "{#SysRoot}\var\lock"
 
 [Files]
-Source: "{#WindrbdUtilsSource}\user\v9\drbdadm.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion uninsrestartdelete
-Source: "{#WindrbdUtilsSource}\user\v9\drbdmeta.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion uninsrestartdelete
-Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion uninsrestartdelete
-Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion uninsrestartdelete
+Source: "{#WindrbdUtilsSource}\user\v9\drbdadm.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion
+Source: "{#WindrbdUtilsSource}\user\v9\drbdmeta.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion
+Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion
+Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\sysroot\README-windrbd.txt"; DestDir: "{#SysRoot}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.conf"; DestDir: "{#SysRoot}\etc"; Flags: ignoreversion onlyifdoesntexist
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\global_common.conf"; DestDir: "{#SysRoot}\etc\drbd.d"; Flags: ignoreversion onlyifdoesntexist
@@ -93,8 +93,8 @@ Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\windrbd-sample.res"; Des
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygwin1.dll"; DestDir: "{app}"; Flags: ignoreversion uninsrestartdelete
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygrunsrv.exe"; DestDir: "{app}"; Flags: ignoreversion uninsrestartdelete
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygwin1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygrunsrv.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\msgbox.vbs"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 ; must be in same folder as the sysfile.
@@ -171,9 +171,16 @@ end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
+	if CurUninstallStep = usAppMutexCheck then begin
+		StopUserModeServices();
+	end;
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
 		ModPath();
 	end;
+	if CurUninstallStep = usDone then begin
+		MsgBox('Uninstall does not remove the C:\Windrbd directory, since it may contain files modified by you. If you do not need them any more, please remove the C:\Windrbd directory manually.', mbInformation, MB_OK);
+	end;
+
 	// cmd script stops user mode helpers, no need to do that here
 end;
