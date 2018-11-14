@@ -298,3 +298,4 @@ Version history
  * 0.8.13 (Oct 30,2018): Fixed memory leak in I/O path
  * 0.8.14 (Nov 02,2018): Upgraded DRBD to 9.0.16
  * 0.8.15 (Nov 13,2018): Sendbuffer limit, fixed BSOD on I/O while connected
+ * 0.8.16 (Nov 14,2018): Some last fixes to installer
