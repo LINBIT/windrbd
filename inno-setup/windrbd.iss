@@ -87,13 +87,12 @@ Source: "{#WindrbdUtilsSource}\user\v9\drbdmeta.exe"; DestDir: "{#SysRoot}\usr\s
 Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion uninsrestartdelete
 Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion uninsrestartdelete
 Source: "{#WindrbdSource}\inno-setup\sysroot\README-windrbd.txt"; DestDir: "{#SysRoot}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.conf"; DestDir: "{#SysRoot}\etc"; Flags: ignoreversion confirmoverwrite
-Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\global_common.conf"; DestDir: "{#SysRoot}\etc\drbd.d"; Flags: ignoreversion confirmoverwrite
+Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.conf"; DestDir: "{#SysRoot}\etc"; Flags: ignoreversion onlyifdoesntexist
+Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\global_common.conf"; DestDir: "{#SysRoot}\etc\drbd.d"; Flags: ignoreversion onlyifdoesntexist
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\windrbd-sample.res"; DestDir: "{#SysRoot}\etc\drbd.d"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
-; TODO: one day, package the individual files themselves:
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygwin1.dll"; DestDir: "{app}"; Flags: ignoreversion uninsrestartdelete
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygrunsrv.exe"; DestDir: "{app}"; Flags: ignoreversion uninsrestartdelete
 Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
@@ -101,17 +100,7 @@ Source: "{#WindrbdSource}\inno-setup\msgbox.vbs"; DestDir: "{app}"; Flags: ignor
 ; must be in same folder as the sysfile.
 Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
 
-
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-
-; [Registry]
-; Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletekey
-; Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: string; ValueName: "Description"; ValueData: "WinDRBD - storage replication over network for Microsoft Windows"
-; Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: dword; ValueName: "Type"; ValueData: 1
-; Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: dword; ValueName: "Start"; ValueData: 3
-; Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: dword; ValueName: "ErrorControl"; ValueData: 0
-; Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: expandsz; ValueName: "ImagePath"; ValueData: "system32\drivers\windrbd.sys"
-; Root: HKLM; Subkey: "System\CurrentControlSet\services\WinDRBD"; Flags: uninsdeletevalue; ValueType: string; ValueName: "DisplayName"; ValueData: "WinDRBD"
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
