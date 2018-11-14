@@ -1,6 +1,6 @@
 Milestone: windrbd merged into drbd-utils and drbd-headers
 Planned: Oct 1 2018
-Postponed to; Oct 20 2018
+Postponed to: Oct 20 2018
 Real: Nov 13 2018
 -----------------------------------------------------------------------
 
@@ -16,17 +16,6 @@ TODO: Documentation: white paper for linbit website.
 
 	Also document how to run pacemaker under WSL
 	Update: no serperate tech guide for that please.
-
-TODO: Installation: some last fixes.
-
-	Call Uninstall only once (see stackoverflow).
-	Remove usr/sbin on Uninstall
-	Do not ask for overwrite of config files (do not overwrite them)
-	Hide cmd scripts again if everything works ok
-	Stop user mode helpers and logger before upgrade
-		(else cannot overwrite windrbd.exe)
-	Offer to delete C:\windrbd on uninstall (warn about
-	config / log files).
 
 Milestone: Beta 5
 Planned: Nov 1 2018
@@ -69,6 +58,11 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 
 	Running Primary Diskless and attach it while I/O seems
 	to trigger the bug.
+
+TODO: Installation: Offer to remove C:\windrbd completely
+
+TODO: Bug: Sometimes permissions of userland binaries are wrong
+	(causing service registration to fail)
 
 TODO: Test: repeat the USB stick unplug test (Windows 10).
 
@@ -4071,4 +4065,15 @@ Done: Code quality: fake commit history (git rebase -i master)
 	just push the changes upon current dev branch.
 
 	Update: submitted, waiting for Roland to merge.
+
+Done: Installation: some last fixes.
+
+	Call Uninstall only once (see stackoverflow).
+	Remove usr/sbin on Uninstall
+	Do not ask for overwrite of config files (do not overwrite them)
+	Hide cmd scripts again if everything works ok
+	Stop user mode helpers and logger before upgrade
+		(else cannot overwrite windrbd.exe)
+	Offer to delete C:\windrbd on uninstall (warn about
+	config / log files).
 
