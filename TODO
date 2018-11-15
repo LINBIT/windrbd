@@ -59,6 +59,190 @@ TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
 	Running Primary Diskless and attach it while I/O seems
 	to trigger the bug.
 
+	Update: Also on Linux/Linux where it stalls at 0%
+	then at 20%, 40% ... and eventually succeeds.
+
+TODO: Bug: 3 node setup sometimes does not work.
+
+	If node with node-id 1 is missing, node 2 thinks that node
+	3 is node 1 during connection establishment:
+
+Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
+
+	(but 10.43.8.188 is WIN-F11R93CP9KI).
+
+	Sometimes connection can be established however we get a
+	BSOD then.
+
+	Connection between 2 nodes (Linux and Windows VirtualBox)
+	works, but 3rd node (Windows 10 physical machine) BSOD's.
+
+	Update: Now managed to have stable 3-node setup between
+	Windows 7 VM, Linux VM and Windows 10 PhysM.
+
+	Update: Happened again, this time without the presence of
+	the DESKTOP-0VHSFB5 node (didn't touch config, before doing
+	experiments with logging (log to a non-existing host) it
+	worked).
+
+Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0VHSFB5: Closing unexpected connection from 192.168.56.101
+
+	(note that this log message is from a drbd-9.0.14 Linux
+	host).
+
+	Update: Rebooting the Linux machine solved the problem
+	(resource on Windows wasn't taken down meanwhile) so
+	most likely something that causes Linux DRBD to mistake
+	one Windows host for another.
+
+	Update: something with the waiters in the listener:
+
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr1->ss_family is 2
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr2->ss_family is 2
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr1 is 10.43.10.14
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr2 is 10.43.10.14
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) dtt_incoming_connection <4>Closing unexpected connection from 10.43.10.13
+
+	showing that 10.43.10.13 is not in the waiters list (the
+	compare is ok). Ask phil. Do it after beta5.
+
+TODO: Bug: sc stop windrbd BSOD's if there are resources up.
+
+	We need a refcount on the root object on mod_inc_use_count().
+	Once we do so we can support driver unloading officially
+	(which also greatly simplifies installation)
+
+TODO: Implement: Test other file systems (FAT, FAT32, ...)
+	FAT does not work (Invalid function when accessing DRBD device)
+	FAT32 also not (something with flushing?)
+	Probably there is one important IOCTL missing.
+
+	UDF and exFAT can be mounted on Linux. FAT and FAT32 show
+	empty (zeroed out) device. So we probably have 2 independent
+	errors. (UDF cannot we written on Linux, this is because it
+	is the DVD format).
+
+	Update: exFAT now can be read (not written to) on Windows,
+	by returning STATUS_INVALID_DEVICE_REQUEST (instead of
+	STATUS_NOT_IMPLEMENTED) for unknown ioctl's.
+
+	Update: implemented some other ioctl's without success so
+	far. On formatting FAT, reads bootsector as last action
+	(before terminating), maybe that's a hint.
+
+TODO: Test: Test with MS SQL server
+
+TODO: Implement: We want to have some sort of a regression test suite.
+
+	Do not use agruen's it is too complicated. Maybe write a simple
+	new one from scratch (or reuse parts of the old DRBD 8 python
+	test suite with ssh support).
+
+	Update: maybe best is to write a simple new one in bash.
+	(see test-io-larger-than-1m.sh).
+
+	Update: Phil probably rejects a seperate testsuite for
+	WinDRBD (which makes sense to me). Since drbdsetup events2
+	is working now, it got easier to get agruen's testsuite
+	working. What is definately missing is a replacement for
+	lvm and (probably) netfilter (we also need lvm replacement
+	for porting LinStor to Windows later).
+
+	Update: Do that right after beta5
+
+	Update: Yes we will use the agruen test suite. Phil is doing
+	most of the tests so ask him for a primer.
+
+TODO: Implement: Make drbd service stoppable
+	This probably takes some while
+	Update: with the new architecture that should be possible
+	one day.
+
+	Probably some setting in the inf section. Or the way DRBD
+	registers itself in DriverEntry? DriverUnload() routine
+	returning something?
+
+	Update: After changing linker options (/DRIVER:WDM to
+	/DRIVER /SUBSYSTEM:WINDOWS) this works in theory. Things
+	we need to clean up include:
+
+	*) Threads (PsCreateSystemThread())
+		alloc_ordered_workqueue()
+		destroy_workqueue()
+	*) Lookaside lists (ExInitializeNPagedLookasideList())
+		kmem_cache_create() see slab.c
+	*) Update: All memory leaks (ExAllocatePoolWithTag(NonPagedPool, ...))
+		kmalloc() and friends. Also for PagedPool?
+
+	Right now, almost everything works, as long as no resources
+	are created. Missing: Terminate reply_reaper thread, wait
+	for wsk init thread completion (or terminate it?), really
+	clean up after resources. Sockets really don't need destroy
+	function?
+
+	Update: Works quite nice, however after a drbdsetup create-resource
+	drbdsetup del-resource some resources are not freed, which in
+	turn causes Unload not being called (which in turn causes
+	driver verifier to BSOD).
+
+	Update: As soon as there is just a single memory leak, driver
+	verifier BSOD's after unload. This will be fun to fix all of
+	those ...
+
+	Update: We need something like dmalloc .. maybe implement some
+	of it for our kmalloc()/kfree() to see at driver unload where
+	we leak (and free it there). At this point also get rid of the
+	Tag patches, we really don't need them. What also would be nice
+	at this point is to be able to inject out of memory faults selected
+	by source line.
+
+	For now defer that TODO to somewhere later (after beta5).
+
+	Update: Or maybe implement kmalloc debugger now and fix some of the
+	leaks (don't deliver beta with kmalloc debugger enabled)
+	but do not unload driver on uninstall. Users may use
+	sc stop windrbd if they really want to.
+
+	Update: kmalloc() debugger implemented and works fine. On drbdadm up
+	down leaks at 3 code paths are found (plus an extra leak that the
+	debugger didn't find, probably kmem_cache_alloc()). Fix them
+	one day (there are probably more than that).
+
+	Update: We just discovered that driver verifier was activated
+	on every make install. Technically, a 'normal' Windows installation
+	doesn't have driver verifier enabled. So we would have saved
+	tons of nerves (and time) if we never had driver verifier
+	enabled (no BSOD at least not so many). Removed the line from
+	the Makefile, now unloading works as expected (tough probably
+	the driver is still in memory a new version of the driver
+	can be loaded without rebooting). Think about including
+	driver unload in beta5.
+
+	Update: no beta5 will be with unloading disabled.
+
+TODO: Code quality: Re-port drbd_transport_tcp.c to windrbd's
+	drbd_transport_wtcp.c.
+	Update: currently it seems that the problem is
+	somewhere else. 
+	However we need those updates. Best way would be to
+	git diff the original drbd transport_tcp to the version
+	we had before and apply the patches manually.
+
+	Update: we should integrate drbd_transport_tcp back to
+	converted-sources.
+
+	Update: it seems to be doable, but first change the
+	wsk2.c API to match the kernel API (Send->kernel_send_msg
+	and so on).
+
+TODO: Upstream: Feature: show reason for going into StandAlone on status
+
+	So one knows if it is split brain or something else.
+
+TODO: Upstream: Feature: skip initial sync command.
+
+	something like drbdmeta option?
+
 TODO: Installation: Offer to remove C:\windrbd completely
 
 TODO: Bug: Sometimes permissions of userland binaries are wrong
@@ -67,6 +251,21 @@ TODO: Bug: Sometimes permissions of userland binaries are wrong
 TODO: Test: repeat the USB stick unplug test (Windows 10).
 
 TODO: Feature: Does it work with Volumes spanning several HDDs?
+
+TODO: Code quality: allow recursive printk's.
+
+	For example within SendTo (check if there is a printk
+	ongoing and write it just into the ring buffer if yes).
+
+TODO: Research: Check if pacemaker under WSL works
+
+	And include in documentation.
+
+	Update: our Windows 10 physical machine cannot install
+	apps or updates and a manual download of Ubuntu for WSL
+	does not start. Don't know why. We however need the machine
+	for something else, so get a Windows 10 VM (on much or
+	somewhere else) and try the WSL thing there.
 
 TODO: Code quality: do not unlock pages
 
@@ -113,50 +312,6 @@ TODO: Performance: Teach sync code to handle 1Meg pages.
 
 TODO: Code Quality: Make windrbd-test compile again.
 
-TODO: Bug: 3 node setup sometimes does not work.
-
-	If node with node-id 1 is missing, node 2 thinks that node
-	3 is node 1 during connection establishment:
-
-Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
-
-	(but 10.43.8.188 is WIN-F11R93CP9KI).
-
-	Sometimes connection can be established however we get a
-	BSOD then.
-
-	Connection between 2 nodes (Linux and Windows VirtualBox)
-	works, but 3rd node (Windows 10 physical machine) BSOD's.
-
-	Update: Now managed to have stable 3-node setup between
-	Windows 7 VM, Linux VM and Windows 10 PhysM.
-
-	Update: Happened again, this time without the presence of
-	the DESKTOP-0VHSFB5 node (didn't touch config, before doing
-	experiments with logging (log to a non-existing host) it
-	worked).
-
-Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0VHSFB5: Closing unexpected connection from 192.168.56.101
-
-	(note that this log message is from a drbd-9.0.14 Linux
-	host).
-
-	Update: Rebooting the Linux machine solved the problem
-	(resource on Windows wasn't taken down meanwhile) so
-	most likely something that causes Linux DRBD to mistake
-	one Windows host for another.
-
-	Update: something with the waiters in the listener:
-
-Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr1->ss_family is 2
-Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr2->ss_family is 2
-Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr1 is 10.43.10.14
-Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr2 is 10.43.10.14
-Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) dtt_incoming_connection <4>Closing unexpected connection from 10.43.10.13
-
-	showing that 10.43.10.13 is not in the waiters list (the
-	compare is ok). Ask phil. Do it after beta5.
-
 TODO: Upstream: Quorum no on Linux with 2 node setup
 
 	Bug?
@@ -166,17 +321,6 @@ TODO: Upstream: Quorum no on Linux with 2 node setup
 	  volume:1 disk:UpToDate quorum:no
 	  WIN-F11R93CP9KI role:Primary
 	    volume:1 peer-disk:UpToDate
-
-
-TODO: Research: Check if pacemaker under WSL works
-
-	And include in documentation.
-
-	Update: our Windows 10 physical machine cannot install
-	apps or updates and a manual download of Ubuntu for WSL
-	does not start. Don't know why. We however need the machine
-	for something else, so get a Windows 10 VM (on much or
-	somewhere else) and try the WSL thing there.
 
 TODO: Implement: Have a ioctl to set user mode helper program
 
@@ -191,42 +335,9 @@ TODO: Implement: Make drbd-utils relocateable
 	Currently hardcoded to C:\windrbd (in kernel and install scripts)
 	and configure parameter in userland.
 
-TODO: Bug: Cannot stop driver when resource was ever Primary and I/O
-
-	Proably some handle leak. Driver stays in STOP_PENDING state.
-	And BSOD when shutting down computer.
-
 TODO: Upstream: drbdadm invalidate while primary and connected uptodate/uptodate does nothing.
 
 	And also does not return an error.
-
-TODO: Bug: Also BSOD on driver stop while drbdsetup events2 is running.
-
-	BSOD when drbdsetup events2 is exiting (before it is in
-	STOP_PENDING).
-
-TODO: Bug: sc stop windrbd BSOD's if there are resources up.
-
-TODO: Implement: We want to have some sort of a regression test suite.
-
-	Do not use agruen's it is too complicated. Maybe write a simple
-	new one from scratch (or reuse parts of the old DRBD 8 python
-	test suite with ssh support).
-
-	Update: maybe best is to write a simple new one in bash.
-	(see test-io-larger-than-1m.sh).
-
-	Update: Phil probably rejects a seperate testsuite for
-	WinDRBD (which makes sense to me). Since drbdsetup events2
-	is working now, it got easier to get agruen's testsuite
-	working. What is definately missing is a replacement for
-	lvm and (probably) netfilter (we also need lvm replacement
-	for porting LinStor to Windows later).
-
-	Update: Do that right after beta5
-
-	Update: Yes we will use the agruen test suite. Phil is doing
-	most of the tests so ask him for a primer.
 
 TODO: Research: Hyper-V plugin for Linstor
 
@@ -264,6 +375,10 @@ TODO: Upstream: Possible race at drbd_thread_setup() (drbdmain.c:567) with
 	Ask phil. IMHO the resource object containing the drbd_thread
 	might get deleted before the spinlock is freed.
 
+TODO: Upstream: Possible race in drbd_send_zc_copy()
+
+	page may be freed by a concurrent thread.
+
 TODO: Feature: Check if it is a network share (currently blue screens)
 	Update: blue screen was something else. Should check if the
 	drive letter is a network share. Unfortunately they do not
@@ -277,24 +392,6 @@ TODO: Upstream: drbdsetup generic_get() handles multiple packets wrong.
 
 	Probably nobody noticed because recvmsg() always returned only
 	one packet (socket is a DGRAM socket).
-
-TODO: Implement: Test other file systems (FAT, FAT32, ...)
-	FAT does not work (Invalid function when accessing DRBD device)
-	FAT32 also not (something with flushing?)
-	Probably there is one important IOCTL missing.
-
-	UDF and exFAT can be mounted on Linux. FAT and FAT32 show
-	empty (zeroed out) device. So we probably have 2 independent
-	errors. (UDF cannot we written on Linux, this is because it
-	is the DVD format).
-
-	Update: exFAT now can be read (not written to) on Windows,
-	by returning STATUS_INVALID_DEVICE_REQUEST (instead of
-	STATUS_NOT_IMPLEMENTED) for unknown ioctl's.
-
-	Update: implemented some other ioctl's without success so
-	far. On formatting FAT, reads bootsector as last action
-	(before terminating), maybe that's a hint.
 
 TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
 
@@ -313,11 +410,6 @@ TODO: Bug: Uninstall currenty BSOD's if there was ever I/O
 	Currently (for beta5) removing the driver is disabled
 	(made it a PnP driver (again) by setting AddDevice which
 	causes sc stop windrbd to fail).
-
-TODO: Code quality: maybe: use file list in innosetup instead of a zip file.
-
-	What would be cool if this makefile automatically builds the
-	utils, installs them to a tmp folder and selects the files.
 
 TODO: Bug: Syncing sometimes stalls now.
 
@@ -394,82 +486,10 @@ TODO: Bug: BSOD on pri-on-incon-degr user mode helper.
 	if this is a problem on Linux, just do a sleep 10 as
 	handler).
 
-TODO: Bug: When installing two times uninstall reports an error.
-
-	Also when installed, running and installing again.
-	Don't know for now, document it and do that later.
-
 TODO: Implement: drbdadm adjust changing mount point doesn't work now.
 
 	Update: Yes. Meaning it doesn't work (as I expected). Do that
 	later.
-
-TODO: Implement: Make drbd service stoppable
-	This probably takes some while
-	Update: with the new architecture that should be possible
-	one day.
-
-	Probably some setting in the inf section. Or the way DRBD
-	registers itself in DriverEntry? DriverUnload() routine
-	returning something?
-
-	Update: After changing linker options (/DRIVER:WDM to
-	/DRIVER /SUBSYSTEM:WINDOWS) this works in theory. Things
-	we need to clean up include:
-
-	*) Threads (PsCreateSystemThread())
-		alloc_ordered_workqueue()
-		destroy_workqueue()
-	*) Lookaside lists (ExInitializeNPagedLookasideList())
-		kmem_cache_create() see slab.c
-	*) Update: All memory leaks (ExAllocatePoolWithTag(NonPagedPool, ...))
-		kmalloc() and friends. Also for PagedPool?
-
-	Right now, almost everything works, as long as no resources
-	are created. Missing: Terminate reply_reaper thread, wait
-	for wsk init thread completion (or terminate it?), really
-	clean up after resources. Sockets really don't need destroy
-	function?
-
-	Update: Works quite nice, however after a drbdsetup create-resource
-	drbdsetup del-resource some resources are not freed, which in
-	turn causes Unload not being called (which in turn causes
-	driver verifier to BSOD).
-
-	Update: As soon as there is just a single memory leak, driver
-	verifier BSOD's after unload. This will be fun to fix all of
-	those ...
-
-	Update: We need something like dmalloc .. maybe implement some
-	of it for our kmalloc()/kfree() to see at driver unload where
-	we leak (and free it there). At this point also get rid of the
-	Tag patches, we really don't need them. What also would be nice
-	at this point is to be able to inject out of memory faults selected
-	by source line.
-
-	For now defer that TODO to somewhere later (after beta5).
-
-	Update: Or maybe implement kmalloc debugger now and fix some of the
-	leaks (don't deliver beta with kmalloc debugger enabled)
-	but do not unload driver on uninstall. Users may use
-	sc stop windrbd if they really want to.
-
-	Update: kmalloc() debugger implemented and works fine. On drbdadm up
-	down leaks at 3 code paths are found (plus an extra leak that the
-	debugger didn't find, probably kmem_cache_alloc()). Fix them
-	one day (there are probably more than that).
-
-	Update: We just discovered that driver verifier was activated
-	on every make install. Technically, a 'normal' Windows installation
-	doesn't have driver verifier enabled. So we would have saved
-	tons of nerves (and time) if we never had driver verifier
-	enabled (no BSOD at least not so many). Removed the line from
-	the Makefile, now unloading works as expected (tough probably
-	the driver is still in memory a new version of the driver
-	can be loaded without rebooting). Think about including
-	driver unload in beta5.
-
-	Update: no beta5 will be with unloading disabled.
 
 TODO: Feature: Mount to NTFS directories.
 
@@ -478,8 +498,6 @@ TODO: Feature: Mount to NTFS directories.
 TODO: Research: Understand IRP cancellation
 
 TODO: Test: Somehow test if referencing overlay thread works as intended.
-
-TODO: Test: Test with MS SQL server
 
 TODO: Build system: have a make depend target
 	Or at least header file dependencies.
@@ -668,6 +686,9 @@ TODO: Test: Test sendbuffer full (rety on Metadata socket).
 
 	Unclear how to test it. Do that later.
 
+	Update: we now implemented send buffer limit, test this
+	somehow.
+
 TODO: Performance: Sync is still somewhat slow when windrbd is SyncTarget
 	And: I/O is slow when connected.
 	Are we waiting for TCP ACK here?
@@ -686,6 +707,9 @@ TODO: Performance: Sync is still somewhat slow when windrbd is SyncTarget
 
 	Update: Now we reworked the local I/O path a bit, did that
 	help?
+
+	Update: Probably will be fixed once we use 1Meg pages on
+	Sync.
 
 TODO: Code quality: eventually use drbd_rate_limit() on some printk's
 
@@ -809,21 +833,6 @@ TODO: Test: Fix windows shutdown bug.
 	Update: just reappeared again.
 
 	Update: still there?
-
-TODO: Code quality: Re-port drbd_transport_tcp.c to windrbd's
-	drbd_transport_wtcp.c.
-	Update: currently it seems that the problem is
-	somewhere else. 
-	However we need those updates. Best way would be to
-	git diff the original drbd transport_tcp to the version
-	we had before and apply the patches manually.
-
-	Update: we should integrate drbd_transport_tcp back to
-	converted-sources.
-
-	Update: it seems to be doable, but first change the
-	wsk2.c API to match the kernel API (Send->kernel_send_msg
-	and so on).
 
 TODO: Code quality: Minimize / Sqash patches to DRBD
 
@@ -4076,4 +4085,31 @@ Done: Installation: some last fixes.
 		(else cannot overwrite windrbd.exe)
 	Offer to delete C:\windrbd on uninstall (warn about
 	config / log files).
+
+Done: Bug: Cannot stop driver when resource was ever Primary and I/O
+
+	Proably some handle leak. Driver stays in STOP_PENDING state.
+	And BSOD when shutting down computer.
+
+	This appears to be fixed. At least it is known to work with
+	current versions.
+
+Done: Bug: Also BSOD on driver stop while drbdsetup events2 is running.
+
+	BSOD when drbdsetup events2 is exiting (before it is in
+	STOP_PENDING).
+
+	Also seems to be fixed.
+
+Done: Code quality: maybe: use file list in innosetup instead of a zip file.
+
+	What would be cool if this makefile automatically builds the
+	utils, installs them to a tmp folder and selects the files.
+
+Done: Bug: When installing two times uninstall reports an error.
+
+	Also when installed, running and installing again.
+	Don't know for now, document it and do that later.
+
+	Now, installer registers uninstall routing only once.
 

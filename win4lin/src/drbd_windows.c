@@ -3051,6 +3051,7 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	bdev_ref->bdev = bdev;
 
 		/* TODO: makes a difference? */
+		/* TODO: also try DO_BUFFERED_IO */
 	new_device->Flags |= DO_DIRECT_IO;
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 

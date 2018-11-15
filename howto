@@ -178,3 +178,8 @@ Delete NTFS partition
 dd if=/dev/zero of=/dev/sdXY bs=512 count=1
 /dev/sd muss stimmen!! Achtung bei alten windows versionen aendert sich
 das zwischen reboots.
+
+-----
+Disconnect network share:
+
+net use y: /delete
