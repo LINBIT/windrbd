@@ -140,6 +140,9 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	FreeWskBuffer(completion->wsk_buffer, may_printk);
 	kfree(completion->wsk_buffer);
 
+if (may_printk)
+printk("Completion %p\n", completion->socket);
+
 	have_sent(completion->socket, length);
 
 	if (completion->page)
@@ -599,6 +602,8 @@ SendPage(
 	NTSTATUS status;
 	int err;
 
+printk("socket is %p\n", socket);
+printk("1\n");
 	if (g_SocketsState != INITIALIZED || !socket || !socket->sk || !page || ((int) len <= 0))
 		return -EINVAL;
 
@@ -609,6 +614,7 @@ SendPage(
 	if (err < 0)
 		return err;
 
+printk("2\n");
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
 	if (WskBuffer == NULL) {
 		have_sent(socket, len);
@@ -655,13 +661,16 @@ SendPage(
 		flags &= ~WSK_FLAG_NODELAY;
 
 
+printk("3\n");
 	mutex_lock(&socket->wsk_mutex);
+printk("4\n");
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskSend(
 		socket->sk,
 		WskBuffer,
 		flags,
 		Irp);
 	mutex_unlock(&socket->wsk_mutex);
+printk("5\n");
 
 
 	switch (status) {
@@ -676,6 +685,7 @@ SendPage(
 			 * error.
 			 */
 
+printk("6\n");
 		return len;
 
 	case STATUS_SUCCESS:
@@ -798,6 +808,7 @@ LONG NTAPI Receive(
     PVOID       waitObjects[2];
     int         wObjCount = 1;
 
+printk("1\n");
 	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || !BufferSize)
 		return SOCKET_ERROR;
 
@@ -818,6 +829,7 @@ LONG NTAPI Receive(
 		return SOCKET_ERROR;
 	}
 
+printk("2\n");
 	mutex_lock(&socket->wsk_mutex);
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskReceive(
 				WskSocket,
@@ -825,6 +837,7 @@ LONG NTAPI Receive(
 				Flags,
 				Irp);
 	mutex_unlock(&socket->wsk_mutex);
+printk("3\n");
 
     if (Status == STATUS_PENDING)
     {
@@ -848,7 +861,9 @@ LONG NTAPI Receive(
             wObjCount = 2;
         } 
 
+printk("4\n");
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
+printk("5\n");
         switch (Status)
         {
         case STATUS_WAIT_0: // waitObjects[0] CompletionEvent
@@ -892,8 +907,10 @@ LONG NTAPI Receive(
 		}
 	}
 
+printk("6\n");
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
+printk("7\n");
 		// cancel irp in wsk subsystem
 		IoCancelIrp(Irp);
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
@@ -925,6 +942,7 @@ LONG NTAPI Receive(
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
+printk("8\n");
 	return BytesReceived;
 }
 
