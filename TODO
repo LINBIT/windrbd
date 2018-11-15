@@ -21,47 +21,6 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
-TODO: Bug: Does not sync with Linux (DRBD 9.0.9)
-
-	Sync stalls at 0%. Try to update Linux DRBD before doing
-	anything else.
-
-	Update: Upgraded Linux peer.
-
-	After some reboots it worked again. Observe.
-
-	Maybe something with the user mode helpers?
-
-	Just happened with a 9.0.15 SyncTarget (Windows) and
-	9.0.15 SyncSource (Linux).
-
-	Update: fixed with windrbd_thread race fix?
-
-	Update: No, just happened with Windows 7 and Windows 10
-
-	Update: again (between server 2016 and linux) rebooting
-	Windows solved it (down / up not, rebooting Linux also not)
-
-	Also reloading driver does not help.
-
-	Update: This might be an upstream problem, there are some
-	bugs in sync code (we just had 76% on one side and 0% on
-	the other side).
-
-	Update: Now had the case: Linux stalls at 76% Windows at
-	0%
-	(after Primary Diskless on Windows crashed)
-	After down / create-md / up on Windows side: Linux stalls
-	at 0% Windows also at 0%
-	After down / create-md / up on Linux side: both inconsistent
-	After primary --force on Windows side: they sync again.
-
-	Running Primary Diskless and attach it while I/O seems
-	to trigger the bug.
-
-	Update: Also on Linux/Linux where it stalls at 0%
-	then at 20%, 40% ... and eventually succeeds.
-
 TODO: Bug: 3 node setup sometimes does not work.
 
 	If node with node-id 1 is missing, node 2 thinks that node
@@ -106,6 +65,27 @@ Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) dtt_inco
 	showing that 10.43.10.13 is not in the waiters list (the
 	compare is ok). Ask phil. Do it after beta5.
 
+TODO: Bug: Sometimes it takes a while until Windows can connect to Windows
+
+	On one side (Windows 10 physical machine):
+
+Jul  9 16:16:37 10.43.8.215  U14:16:34.379|c214be70(receiver) dtt_connect <7>[0xFFFFA88BC20B8380] dtt_connect:(FFFFA88BC20B8380) Accepted:  10.43.8.215:7600 <- 10.43.7.228:7600
+Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) Receive <6>[0xFFFFA88BC20B8380] RECV(receiver) wsk(0xFFFFA88BC43A5688) multiWait err(0xc000020d:CONNECTION_RESET)
+Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) drbd_recv <6>drbd w0 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x200e), scf(0x0): sock was reset by peer
+Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) print_state_change <6>drbd w0 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x200e), scf(0x21): conn( Connecting -> BrokenPipe )
+Jul  9 16:16:38 10.43.8.215  [last message was in IRQ context]
+Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) drbd_recv_all_warn <4>drbd w0 pnode-id:2, cs(BrokenPipe), prole(Unknown), cflag(0x200e), scf(0x0): short read (expected size 8)
+
+	On other side (Windows 7 VM):
+
+Jul  9 16:11:43 192.168.56.101  U14:11:40.240|12904fa0(receiver) dtt_connect <7>[0xFFFFFA800373EA50] dtt_connect: Connected: 10.43.7.228:7600 -> 10.43.8.215:7600
+Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) drbd_recv <6>drbd w0 pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x0), scf(0x0): sock was shut down by peer
+Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) print_state_change <6>drbd w0 pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x0), scf(0x21): conn( Connecting -> BrokenPipe )
+Jul  9 16:11:44 192.168.56.101  [last message was in IRQ context]
+Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) drbd_recv_all_warn <4>drbd w0 pnode-id:1, cs(BrokenPipe), prole(Unknown), cflag(0x0), scf(0x0): short read (expected size 8)
+
+	After a while the two machines find each other.
+
 TODO: Bug: sc stop windrbd BSOD's if there are resources up.
 
 	We need a refcount on the root object on mod_inc_use_count().
@@ -129,6 +109,8 @@ TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	Update: implemented some other ioctl's without success so
 	far. On formatting FAT, reads bootsector as last action
 	(before terminating), maybe that's a hint.
+
+	Also make it work with ReFS (windows server 2016, windows 10).
 
 TODO: Test: Test with MS SQL server
 
@@ -536,27 +518,6 @@ TODO: Bug: Assertion triggered:
 Jul  9 15:28:24 johannes-VirtualBox kernel: [ 4399.169792] drbd w0/17 drbd26 linbit-wdrbd: ASSERTION (n_oos - peer_device->rs_failed) == 0 FAILED in drbd_resync_finished
 
 	on Linux side when injecting faults at request.
-
-TODO: Bug: Sometimes it takes a while until Windows can connect to Windows
-
-	On one side (Windows 10 physical machine):
-
-Jul  9 16:16:37 10.43.8.215  U14:16:34.379|c214be70(receiver) dtt_connect <7>[0xFFFFA88BC20B8380] dtt_connect:(FFFFA88BC20B8380) Accepted:  10.43.8.215:7600 <- 10.43.7.228:7600
-Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) Receive <6>[0xFFFFA88BC20B8380] RECV(receiver) wsk(0xFFFFA88BC43A5688) multiWait err(0xc000020d:CONNECTION_RESET)
-Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) drbd_recv <6>drbd w0 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x200e), scf(0x0): sock was reset by peer
-Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) print_state_change <6>drbd w0 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x200e), scf(0x21): conn( Connecting -> BrokenPipe )
-Jul  9 16:16:38 10.43.8.215  [last message was in IRQ context]
-Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) drbd_recv_all_warn <4>drbd w0 pnode-id:2, cs(BrokenPipe), prole(Unknown), cflag(0x200e), scf(0x0): short read (expected size 8)
-
-	On other side (Windows 7 VM):
-
-Jul  9 16:11:43 192.168.56.101  U14:11:40.240|12904fa0(receiver) dtt_connect <7>[0xFFFFFA800373EA50] dtt_connect: Connected: 10.43.7.228:7600 -> 10.43.8.215:7600
-Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) drbd_recv <6>drbd w0 pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x0), scf(0x0): sock was shut down by peer
-Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) print_state_change <6>drbd w0 pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x0), scf(0x21): conn( Connecting -> BrokenPipe )
-Jul  9 16:11:44 192.168.56.101  [last message was in IRQ context]
-Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) drbd_recv_all_warn <4>drbd w0 pnode-id:1, cs(BrokenPipe), prole(Unknown), cflag(0x0), scf(0x0): short read (expected size 8)
-
-	After a while the two machines find each other.
 
 TODO: Bug: On re-attach USB stick after failure, WinDRBD hangs.
 
@@ -4112,4 +4073,51 @@ Done: Bug: When installing two times uninstall reports an error.
 	Don't know for now, document it and do that later.
 
 	Now, installer registers uninstall routing only once.
+
+Done: Bug: Does not sync with Linux (DRBD 9.0.9)
+
+	Sync stalls at 0%. Try to update Linux DRBD before doing
+	anything else.
+
+	Update: Upgraded Linux peer.
+
+	After some reboots it worked again. Observe.
+
+	Maybe something with the user mode helpers?
+
+	Just happened with a 9.0.15 SyncTarget (Windows) and
+	9.0.15 SyncSource (Linux).
+
+	Update: fixed with windrbd_thread race fix?
+
+	Update: No, just happened with Windows 7 and Windows 10
+
+	Update: again (between server 2016 and linux) rebooting
+	Windows solved it (down / up not, rebooting Linux also not)
+
+	Also reloading driver does not help.
+
+	Update: This might be an upstream problem, there are some
+	bugs in sync code (we just had 76% on one side and 0% on
+	the other side).
+
+	Update: Now had the case: Linux stalls at 76% Windows at
+	0%
+	(after Primary Diskless on Windows crashed)
+	After down / create-md / up on Windows side: Linux stalls
+	at 0% Windows also at 0%
+	After down / create-md / up on Linux side: both inconsistent
+	After primary --force on Windows side: they sync again.
+
+	Running Primary Diskless and attach it while I/O seems
+	to trigger the bug.
+
+	Update: Also on Linux/Linux where it stalls at 0%
+	then at 20%, 40% ... and eventually succeeds.
+
+	Finally found it: Uses network socket stats to check if sendbuffer
+	is half full. However, these are not implemented. We are reading
+	uninitialized data here (that's probably why a reboot helped).
+
+	Observe. But I think it is fixed with d2989fd.
 

@@ -13,6 +13,7 @@ Protocol C.
 Nov 12 19:00 (5d652aa4) started 
 	(with converted-sources at e62341e30, no zero copy patch)
 Nov 13 14:30 still running (3x 2750 iterations)
+Nov 15 17:15 still running (3x 10950 iterations) now need it for something else.
 
 -----------------------------------------
 Write to NTFS while connected (Windows Server 2016, Protocol C):
