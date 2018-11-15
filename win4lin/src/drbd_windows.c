@@ -925,7 +925,7 @@ static  void __add_wait_queue(wait_queue_head_t *head, wait_queue_t *new)
 long schedule(wait_queue_head_t *q, long timeout, char *func, int line) 
 {
 #if 0
-/* TODO ... */
+/* TODO: This uses 100% CPU: don't do that: */
 msleep(1);
 return 0;
 #endif
