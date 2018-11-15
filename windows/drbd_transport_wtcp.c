@@ -381,10 +381,12 @@ static void dtt_stats(struct drbd_transport *transport, struct drbd_transport_st
 	struct socket *socket = tcp_transport->stream[DATA_STREAM];
 
 	if (socket) {
-		/* https://msdn.microsoft.com/de-de/library/ff570818(v=vs.85).aspx */
-		/* TODO: implement */
-		printk("stats not implemented.\n");
-		// not supported
+			/* This prevents sync from stalling.
+			 * thereby disabling the sendbuffer half
+			 * full feature now.
+			 */
+		stats->send_buffer_used = 0;
+		stats->send_buffer_size = socket->send_buf_max;
 	}
 }
 
