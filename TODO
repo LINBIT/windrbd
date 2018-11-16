@@ -21,6 +21,10 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
+TODO: Usability: show how to load driver if drbdadm --version does not work.
+
+	From Devin.
+
 TODO: Bug: 3 node setup sometimes does not work.
 
 	If node with node-id 1 is missing, node 2 thinks that node
