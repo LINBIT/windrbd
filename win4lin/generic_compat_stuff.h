@@ -4,6 +4,7 @@
 #define WDRBD9_GENERIC_COMPAT_STUFF
 
 #include <stdarg.h>
+#include <linux/module.h>
 
 #ifdef WINNT
 /* TODO: eventually we want to enable those warnings again, ther
@@ -114,24 +115,10 @@ static inline int __ffs64(u64 i)
 	return found ? index : 0;
 }
 
-struct module {
-	char version[1];
-};
-
-static inline void module_put(void *module)
-{
-    (void)module;
-}
-
+/* TODO: what does this? */
 static inline void request_module(const char *fmt, ...)
 {
     (void)fmt;
-}
-
-static inline int try_module_get(void *m)
-{
-    (void)m;
-    return 1;
 }
 
 static inline void* __vmalloc(u64 bytes, int flags, int flags2)

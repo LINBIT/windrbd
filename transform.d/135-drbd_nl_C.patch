@@ -272,27 +272,6 @@ index 6aa1ee49..f241e94f 100644
  
  	rcu_read_lock();
  	if (!cb->args[0] && !cb->args[1]) {
-@@ -5242,12 +5277,6 @@ int drbd_adm_new_resource(struct sk_buff *skb, struct genl_info *info)
- 		goto out;
- 	}
- 
--	if (!try_module_get(THIS_MODULE)) {
--		pr_err("drbd: Could not get a module reference\n");
--		retcode = ERR_INVALID_REQUEST;
--		goto out;
--	}
--
- 	resource = drbd_create_resource(adm_ctx.resource_name, &res_opts);
- 	mutex_unlock(&resources_mutex);
- 
-@@ -5259,7 +5288,6 @@ int drbd_adm_new_resource(struct sk_buff *skb, struct genl_info *info)
- 		notify_resource_state(NULL, 0, resource, &resource_info, NOTIFY_CREATE);
- 		mutex_unlock(&notification_mutex);
- 	} else {
--		module_put(THIS_MODULE);
- 		retcode = ERR_NOMEM;
- 	}
- 	goto out_no_unlock;
 @@ -5805,7 +5833,7 @@ void notify_helper(enum drbd_notification_type type,
  	struct drbd_genlmsghdr *dh;
  	int err;

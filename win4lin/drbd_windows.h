@@ -538,6 +538,7 @@ struct work_struct_wrapper {
 
 struct gendisk;
 struct block_device_operations {
+	struct module *owner;
 	int (*open) (struct block_device *, fmode_t);
 	int (*release) (struct gendisk *, fmode_t);
 };
