@@ -2,9 +2,11 @@
 #define LINUX_MODULE_H
 
 #include <linux/types.h>	/* for bool */
+#include "drbd_windows.h"	/* for atomic_t */
 
 struct module {
         char version[1];
+	struct kref kref;
 };
 
 extern struct module windrbd_module;
