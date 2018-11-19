@@ -8,8 +8,10 @@ bool try_module_get(struct module *module)
 {
 	NTSTATUS status;
 
-	if (module != &windrbd_module)
+	if (module != &windrbd_module) {
 		printk("try_module_get for something besides the windrbd_module.\n");
+		return true;
+	}
 
 printk("Referencing root device object (%p)\n", mvolRootDeviceObject);
 	status = ObReferenceObjectByPointer(mvolRootDeviceObject, THREAD_ALL_ACCESS, NULL, KernelMode);
