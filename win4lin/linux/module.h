@@ -6,7 +6,7 @@
 
 struct module {
         char version[1];
-	struct kref kref;
+//	struct kref kref;
 };
 
 extern struct module windrbd_module;

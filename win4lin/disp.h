@@ -24,6 +24,8 @@
 
 #include <mountdev.h>
 
+extern NTSTATUS mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject);
+
 	/* TODO: this should go away also one day. Must figure out
 	   what the root device should do one day. Maybe it is
 	   not needed at all. */

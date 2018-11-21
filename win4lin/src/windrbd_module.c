@@ -13,6 +13,7 @@ bool try_module_get(struct module *module)
 		return true;
 	}
 
+#if 0
 printk("Referencing root device object (%p)\n", mvolRootDeviceObject);
 	status = ObReferenceObjectByPointer(mvolRootDeviceObject, THREAD_ALL_ACCESS, NULL, KernelMode);
 printk("status is %x\n", status);
@@ -20,7 +21,9 @@ printk("status is %x\n", status);
 printk("Referencing driver object (%p)\n", mvolDriverObject);
 	status = ObReferenceObjectByPointer(mvolDriverObject, THREAD_ALL_ACCESS, NULL, KernelMode);
 printk("status is %x\n", status);
+#endif
 
+#if 0
 	HANDLE f;
 	IO_STATUS_BLOCK iostat;
 	OBJECT_ATTRIBUTES attr;
@@ -33,19 +36,31 @@ printk("status is %x\n", status);
 printk("ZwOpenFile status is %x\n", status);
 
 	/* leave it open */
+#endif
+printk("setting AddDevice to %p\n", mvolAddDevice);
+	mvolDriverObject->DriverExtension->AddDevice = mvolAddDevice;
 
 	return true;
 }
 
 void module_put(struct module *module)
 {
-	if (module != &windrbd_module)
+	if (module != &windrbd_module) {
 		printk("module_put for something besides the windrbd_module.\n");
+		return;
+	}
+
+#if 0
 
 printk("Dereferencing root device object (%p)\n", mvolRootDeviceObject);
 	ObDereferenceObject(mvolRootDeviceObject);
 printk("Dereferencing driver object (%p)\n", mvolDriverObject);
 	ObDereferenceObject(mvolDriverObject);
+
+#endif 
+
+printk("setting AddDevice to NULL\n");
+	mvolDriverObject->DriverExtension->AddDevice = NULL;
 }
 
 
