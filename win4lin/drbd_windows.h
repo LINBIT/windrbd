@@ -22,6 +22,7 @@
 
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H
+
 #include <wdm.h>
 #include <ntstrsafe.h>
 #include <linux/list.h>
@@ -96,7 +97,7 @@ enum
 
 /* TODO: this should be a struct containing an int, so compiler
    can tell int's from atomic_t's */
-#define atomic_t				int
+typedef int atomic_t;
 #define atomic_t64				LONGLONG
 
 #define	atomic_inc_return(_p)		InterlockedIncrement((LONG volatile*)(_p))

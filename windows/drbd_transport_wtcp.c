@@ -31,6 +31,7 @@
 // #include <drbd_int.h> A transport layer must not use internals
 #include <linux/drbd_limits.h>
 #include <linux/bitops.h>
+#include <linux/module.h>
 
 struct buffer {
 	void *base;
@@ -100,6 +101,7 @@ static struct drbd_transport_class tcp_transport_class = {
 	.listener_instance_size = sizeof(struct dtt_listener),
 	.init = dtt_init,
 	.list = LIST_HEAD_INIT(tcp_transport_class.list),
+	.module = &windrbd_module
 };
 
 static struct drbd_transport_ops dtt_ops = {

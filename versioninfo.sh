@@ -73,9 +73,16 @@ EOF
 ## drbd_buildtag.c
 echo "const char *drbd_buildtag(void){return \"${GITHASH}\";}" > ${OUTPATH}/drbd_buildtag.c
 
+## windrbd_version.h
+echo "#ifndef __WINDRBD_VERSION_H" > ${OUTPATH}/windrbd_version.h
+echo "#define __WINDRBD_VERSION_H" >> ${OUTPATH}/windrbd_version.h
+echo "#define WINDRBD_VERSION \"${GITHASH}\"" >> ${OUTPATH}/windrbd_version.h
+echo "#endif" >> ${OUTPATH}/windrbd_version.h
+
 ## drbd.inf
 sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y) ;Replaced by build magic#" ./windows/windrbd.inf.in > ${OUTPATH}/windrbd.inf
 
+# TODO: those are not used any more
 ## windrbd.SED
 sed "s#XXX#${DATE} ${GITHASH} ${DRBD_GITHASH}#g" windrbd.SED.in > windrbd.SED
 

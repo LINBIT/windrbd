@@ -4,7 +4,7 @@
 #define WDRBD9_GENERIC_COMPAT_STUFF
 
 #include <stdarg.h>
-#include <linux/module.h>
+// #include <linux/module.h>
 
 #ifdef WINNT
 /* TODO: eventually we want to enable those warnings again, ther

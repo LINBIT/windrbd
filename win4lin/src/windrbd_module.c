@@ -1,8 +1,12 @@
 #include <linux/module.h>
 #include <disp.h>	/* for root device object */
 #include <drbd_windows.h>	/* for printk */
+#include "windrbd_version.h"
 
-struct module windrbd_module;
+struct module windrbd_module = {
+	.version = WINDRBD_VERSION,
+	.refcnt = 0
+};
 
 bool try_module_get(struct module *module)
 {
@@ -13,33 +17,10 @@ bool try_module_get(struct module *module)
 		return true;
 	}
 
-#if 0
-printk("Referencing root device object (%p)\n", mvolRootDeviceObject);
-	status = ObReferenceObjectByPointer(mvolRootDeviceObject, THREAD_ALL_ACCESS, NULL, KernelMode);
-printk("status is %x\n", status);
-
-printk("Referencing driver object (%p)\n", mvolDriverObject);
-	status = ObReferenceObjectByPointer(mvolDriverObject, THREAD_ALL_ACCESS, NULL, KernelMode);
-printk("status is %x\n", status);
-#endif
-
-#if 0
-	HANDLE f;
-	IO_STATUS_BLOCK iostat;
-	OBJECT_ATTRIBUTES attr;
-	UNICODE_STRING rootdev;
-
-        RtlInitUnicodeString(&rootdev, L"\\DosDevices\\" WINDRBD_ROOT_DEVICE_NAME);
-        InitializeObjectAttributes(&attr, &rootdev, OBJ_KERNEL_HANDLE, NULL, NULL);
-        status = ZwOpenFile(&f, GENERIC_READ, &attr, &iostat, FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
-
-printk("ZwOpenFile status is %x\n", status);
-
-	/* leave it open */
-#endif
-printk("setting AddDevice to %p\n", mvolAddDevice);
-	mvolDriverObject->DriverExtension->AddDevice = mvolAddDevice;
-
+	if (atomic_inc_return(&module->refcnt) == 1) {
+		printk("Locking module by setting AddDevice to %p, sc stop windrbd should not work (do a drbdadm down all first)\n", mvolAddDevice);
+		mvolDriverObject->DriverExtension->AddDevice = mvolAddDevice;
+	}
 	return true;
 }
 
@@ -50,17 +31,10 @@ void module_put(struct module *module)
 		return;
 	}
 
-#if 0
-
-printk("Dereferencing root device object (%p)\n", mvolRootDeviceObject);
-	ObDereferenceObject(mvolRootDeviceObject);
-printk("Dereferencing driver object (%p)\n", mvolDriverObject);
-	ObDereferenceObject(mvolDriverObject);
-
-#endif 
-
-printk("setting AddDevice to NULL\n");
-	mvolDriverObject->DriverExtension->AddDevice = NULL;
+	if (atomic_dec_return(&module->refcnt) == 0) {
+		printk("Unlocking module by setting AddDevice to NULL, sc stop windrbd should work now.\n");
+		mvolDriverObject->DriverExtension->AddDevice = NULL;
+	}
 }
 
 

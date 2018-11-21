@@ -5,8 +5,8 @@
 #include "drbd_windows.h"	/* for atomic_t */
 
 struct module {
-        char version[1];
-//	struct kref kref;
+	const char *version;
+	atomic_t refcnt;
 };
 
 extern struct module windrbd_module;
