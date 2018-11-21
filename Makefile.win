@@ -196,8 +196,6 @@ ifeq ($(shell uname -o),Cygwin)
     %.E: %.c
 	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /E > "$@"
 
-# ../../win4lin/src/util.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
-# ../../win4lin/src/thread.obj: WIN_DEF_INCLUDES:=/FI"linux/types.h" /FI"generic_compat_stuff.h" /FI"wingenl.h"
 endif
 
 deps:
