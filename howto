@@ -183,3 +183,8 @@ das zwischen reboots.
 Disconnect network share:
 
 net use y: /delete
+-----
+build and view tech guide:
+
+make tech-guides-pdf-finalize && evince tech-guides/output-pdf/windrbd.pdf 
+

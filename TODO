@@ -96,6 +96,12 @@ TODO: Bug: sc stop windrbd BSOD's if there are resources up.
 	Once we do so we can support driver unloading officially
 	(which also greatly simplifies installation)
 
+	Update: working on refcount, however cannot open any file
+	once driver is STOP_PENDING. What we need is a mechanism
+	to control the stoppable flag programmatically from the
+	kernel (so that sc stop windrbd fails when there are devices
+	configured).
+
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
 	FAT32 also not (something with flushing?)
