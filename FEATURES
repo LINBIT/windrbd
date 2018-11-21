@@ -1,3 +1,5 @@
+---- currently working
+
 On line replication
 	Separate block device
 
@@ -19,11 +21,13 @@ IoCtl based netlink interface
 
 drbdsetup events2
 
------
+Driver Unloading
+
+----- for 1.0
 
 Other filesystems (FAT family)
 
-Driver Unloading
+No reboot on upgrade/uninstall
 
 3 (and more) node setups
 
@@ -34,14 +38,29 @@ Using C:\dirname as DRBD device (but not C:\)
 
 Relocate C:\windrbd directory
 
+Online verify
+
+---- after 1.0
+
 debugfs
 
-trim
+trim / discard
+
+biosets
+
+RB_CONGESTED_REMOTE
+
+disk stats
+
+write same
+
+network stats
 
 32 bit version
 
 ReactOS support
-----
+
+---- most likely never
 
 Using System Volume (C:\) as DRBD device
 
