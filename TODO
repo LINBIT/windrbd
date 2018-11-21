@@ -21,9 +21,9 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
-TODO: Usability: show how to load driver if drbdadm --version does not work.
+TODO: Implement: online verify does not work currently
 
-	From Devin.
+	It reports all blocks out of sync (which isn't true)
 
 TODO: Bug: 3 node setup sometimes does not work.
 
@@ -69,6 +69,9 @@ Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) dtt_inco
 	showing that 10.43.10.13 is not in the waiters list (the
 	compare is ok). Ask phil. Do it after beta5.
 
+	Re-port drbd_transport_tcp first and see if it is still a
+	problem.
+
 TODO: Bug: Sometimes it takes a while until Windows can connect to Windows
 
 	On one side (Windows 10 physical machine):
@@ -89,6 +92,9 @@ Jul  9 16:11:44 192.168.56.101  [last message was in IRQ context]
 Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) drbd_recv_all_warn <4>drbd w0 pnode-id:1, cs(BrokenPipe), prole(Unknown), cflag(0x0), scf(0x0): short read (expected size 8)
 
 	After a while the two machines find each other.
+
+	Re-port drbd_transport_tcp first and see if it is still a
+	problem.
 
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
@@ -132,6 +138,10 @@ TODO: Implement: We want to have some sort of a regression test suite.
 
 	Update: Yes we will use the agruen test suite. Phil is doing
 	most of the tests so ask him for a primer.
+
+	Update: working on fake-lvm, which will be able to understand
+	lvcreate and lvremove (only the needed options, no thin
+	provisioning).
 
 TODO: Implement: Make drbd service stoppable
 	This probably takes some while
@@ -199,6 +209,19 @@ TODO: Implement: Make drbd service stoppable
 	driver unload in beta5.
 
 	Update: no beta5 will be with unloading disabled.
+
+	Update: driver now is not stoppable while there are resources
+	up, just as with Linux. As long as driver verifier isn't enabled
+	no BSODs. Fix the remaining memory leaks and close this
+	TODO.
+
+TODO: Usability: show how to load driver if drbdadm --version does not work.
+
+	From Devin.
+
+TODO: Implement: drbd-proxy-ctl should ignore WinDRBD devices
+
+	From Devin.
 
 TODO: Code quality: Re-port drbd_transport_tcp.c to windrbd's
 	drbd_transport_wtcp.c.
