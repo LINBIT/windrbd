@@ -20,11 +20,11 @@
 */
 
 // #include <Ntifs.h>
-#include <Ntstrsafe.h>
 #include <ntddk.h>
 #include <stdlib.h>
 #include <Mountmgr.h>
 #include <ntddvol.h>
+#include <Ntstrsafe.h>
 
 #include "drbd_windows.h"
 #include "drbd_wingenl.h"
