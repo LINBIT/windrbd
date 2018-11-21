@@ -90,18 +90,6 @@ Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) drbd_recv_all_w
 
 	After a while the two machines find each other.
 
-TODO: Bug: sc stop windrbd BSOD's if there are resources up.
-
-	We need a refcount on the root object on mod_inc_use_count().
-	Once we do so we can support driver unloading officially
-	(which also greatly simplifies installation)
-
-	Update: working on refcount, however cannot open any file
-	once driver is STOP_PENDING. What we need is a mechanism
-	to control the stoppable flag programmatically from the
-	kernel (so that sc stop windrbd fails when there are devices
-	configured).
-
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
 	FAT32 also not (something with flushing?)
@@ -4130,4 +4118,29 @@ Done: Bug: Does not sync with Linux (DRBD 9.0.9)
 	uninitialized data here (that's probably why a reboot helped).
 
 	Observe. But I think it is fixed with d2989fd.
+
+Done: Bug: sc stop windrbd BSOD's if there are resources up.
+
+	We need a refcount on the root object on mod_inc_use_count().
+	Once we do so we can support driver unloading officially
+	(which also greatly simplifies installation)
+
+	Update: working on refcount, however cannot open any file
+	once driver is STOP_PENDING. What we need is a mechanism
+	to control the stoppable flag programmatically from the
+	kernel (so that sc stop windrbd fails when there are devices
+	configured).
+
+        Set AddDevice on module get and unset it on module put.
+
+        That does the trick. Windows checks on sc stop if this
+        member is non-NULL and if yes refuses to stop the driver.
+        If it is reset to NULL again driver can be stopped again
+        (even tough sc query shows it as non stoppable).
+
+	We need a refcount now .. first test it on Windows Server
+	2016 and Windows 10.
+
+	Update: have refcount and seems to work on all tested
+	platforms.
 
