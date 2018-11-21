@@ -300,3 +300,4 @@ Version history
  * 0.8.15 (Nov 13,2018): Sendbuffer limit, fixed BSOD on I/O while connected
  * 0.8.16 (Nov 14,2018): Some last fixes to installer
  * 0.8.17 (Nov 16,2018): Fixed sync stall bug
+ * 0.8.18 (Nov 21,2018): Disallow driver unload when there are resources up
