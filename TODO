@@ -17,9 +17,18 @@ TODO: Documentation: white paper for linbit website.
 	Also document how to run pacemaker under WSL
 	Update: no serperate tech guide for that please.
 
+TODO: Installation: exe containing everything (no zip file please)
+
+	Release number? (0.9.0?)
+	Remove old beta from site.
+	Techguide as pdf seperately.
+	Run a rootkit detector on exe?
+
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
+
+TODO: Test: IPv6
 
 TODO: Implement: online verify does not work currently
 
@@ -237,6 +246,8 @@ TODO: Code quality: Re-port drbd_transport_tcp.c to windrbd's
 	Update: it seems to be doable, but first change the
 	wsk2.c API to match the kernel API (Send->kernel_send_msg
 	and so on).
+
+TODO: Upstream: NO_ERROR -> DRBD_NO_ERROR
 
 TODO: Upstream: Feature: show reason for going into StandAlone on status
 
