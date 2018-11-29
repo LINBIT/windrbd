@@ -21,6 +21,10 @@ Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
+TODO: Make online resize work.
+
+	Some day ..
+
 TODO: Implement: Log rotate
 
 	From Devin: Logfile became 9GB big.
@@ -223,10 +227,6 @@ TODO: Implement: Make drbd service stoppable
 	no BSODs. Fix the remaining memory leaks and close this
 	TODO.
 
-TODO: Usability: show how to load driver if drbdadm --version does not work.
-
-	From Devin.
-
 TODO: Implement: drbd-proxy-ctl should ignore WinDRBD devices
 
 	From Devin.
@@ -257,6 +257,9 @@ TODO: Upstream: Feature: skip initial sync command.
 	something like drbdmeta option?
 
 TODO: Installation: Offer to remove C:\windrbd completely
+
+	Currently there is a panel, which is sometimes not seen
+	(when rebooting)
 
 TODO: Bug: Sometimes permissions of userland binaries are wrong
 	(causing service registration to fail)
@@ -352,10 +355,6 @@ TODO: Upstream: drbdadm invalidate while primary and connected uptodate/uptodate
 
 TODO: Research: Hyper-V plugin for Linstor
 
-TODO: Implement: Make windrbd utils relocateable.
-
-	Do not hardcode C:\windrbd
-
 TODO: Implement: Other mechanism to specify syslog_ip.
 
 	Should be able to change it without rebooting.
@@ -379,6 +378,10 @@ TODO: Documentation: drbd-util: Update manpage.
 TODO: Upstream: add .\*.d and the like to .gitignore
 
 TODO: Bug: leaking disk (see TODO in drbd_main.c)
+
+TODO: Bug: leaking something allocated by fifo_alloc
+
+	Probably also in upstream DRBD.
 
 TODO: Upstream: Possible race at drbd_thread_setup() (drbdmain.c:567) with
 	use-after-free.
@@ -415,21 +418,6 @@ TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
 	So no need for a tmp storage here. (Maybe put an assert
 	at the beginning of spin_lock_irq that tests for IRQL
 	being PASSIVE_LEVEL).
-
-TODO: Bug: Uninstall currenty BSOD's if there was ever I/O
-
-	Currently (for beta5) removing the driver is disabled
-	(made it a PnP driver (again) by setting AddDevice which
-	causes sc stop windrbd to fail).
-
-TODO: Bug: Syncing sometimes stalls now.
-
-	And seems to be slow.
-
-	Update: When WinDRBD is SyncSource it takes around 4-5 seconds
-	When SyncTarget, it takes up to 55 seconds (!).
-
-	cond_wait busy loop?
 
 TODO: Implement: Make windrbd directory unaccessible for non-admins.
 
@@ -552,6 +540,8 @@ TODO: Bug: On re-attach USB stick after failure, WinDRBD hangs.
 
 	When there is I/O ongoing and DRBD is connected. Once we
 	force disconnect on the peer side, DRBD continues.
+
+	Update: It now syncs but is quite unresponsive.
 
 TODO: Research: See if it works under ReactOS
 
@@ -4201,4 +4191,35 @@ Done: Documentation: white paper for linbit website.
 	English. Other than that, done.
 
 	Update: Done, integrate in package.
+
+Duplicate: Implement: Make windrbd utils relocateable.
+
+	Do not hardcode C:\windrbd
+
+Done: Bug: Uninstall currenty BSOD's if there was ever I/O
+
+	Currently (for beta5) removing the driver is disabled
+	(made it a PnP driver (again) by setting AddDevice which
+	causes sc stop windrbd to fail).
+
+	There is a mechanism to block driver unload if resources
+	are up.
+
+Done: Bug: Syncing sometimes stalls now.
+
+	And seems to be slow.
+
+	Update: When WinDRBD is SyncSource it takes around 4-5 seconds
+	When SyncTarget, it takes up to 55 seconds (!).
+
+	cond_wait busy loop?
+
+	We know of a 4k per request issue, fix that and check if sync
+	is faster. The stall was probably because of uninitialized
+	data in network statistics and is fixed now.
+
+Done: Usability: show how to load driver if drbdadm --version does not work.
+
+	From Devin.
+	Done, but shell escaped.
 
