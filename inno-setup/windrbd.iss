@@ -105,9 +105,9 @@ Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.inf"; DestDir: "{app}";
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
+Name: "{group}\View {#MyAppName} Tech Guide"; Filename: "{app}/windrbd.pdf"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{group}\Open {#MyAppName} configuration folder"; Filename: "C:\windrbd\etc\drbd.d"
-Name: "{group}\View {#MyAppName} readme"; Filename: "{app}/windrbd.pdf"
                                                 
 [Run]
 Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
