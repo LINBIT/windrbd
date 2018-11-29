@@ -4,31 +4,30 @@ Postponed to: Oct 20 2018
 Real: Nov 13 2018
 -----------------------------------------------------------------------
 
-TODO: Documentation: white paper for linbit website.
-
-	Until end of June 2018
-	Update: maybe refer to the README.md.
-
-	Update: No we need a TechGuide. Postponed to September.
-
-	Guide how to connect 2 Windows boxes via DRBD.
-	(Windows 2016)
-
-	Also document how to run pacemaker under WSL
-	Update: no serperate tech guide for that please.
-
 TODO: Installation: exe containing everything (no zip file please)
 
 	Release number? (0.9.0?)
 	Remove old beta from site.
 	Techguide as pdf seperately.
 	Run a rootkit detector on exe?
+	Link to download WinDRBD in tech guide
+
+	Done: Start menu entry for techguide
+
+	Push WinDRBD
+	Push drbd-utils
 
 Milestone: Beta 5
 Planned: Nov 1 2018
 -----------------------------------------------------------------------
 
+TODO: Implement: Log rotate
+
+	From Devin: Logfile became 9GB big.
+
 TODO: Test: IPv6
+
+	Doesn't work, but this might be an Ubuntu issue.
 
 TODO: Implement: online verify does not work currently
 
@@ -261,8 +260,6 @@ TODO: Installation: Offer to remove C:\windrbd completely
 
 TODO: Bug: Sometimes permissions of userland binaries are wrong
 	(causing service registration to fail)
-
-TODO: Test: repeat the USB stick unplug test (Windows 10).
 
 TODO: Feature: Does it work with Volumes spanning several HDDs?
 
@@ -4177,4 +4174,31 @@ Done: Bug: sc stop windrbd BSOD's if there are resources up.
 
 	Update: have refcount and seems to work on all tested
 	platforms.
+
+Done: Implement: Use DOS linefeeds for log file
+
+	So one can open it with NotePad.
+
+Done: Test: repeat the USB stick unplug test (Windows 10).
+
+	Done, works. Also resyncs again if stick is plugged
+	and attached.
+
+Done: Documentation: white paper for linbit website.
+
+	Until end of June 2018
+	Update: maybe refer to the README.md.
+
+	Update: No we need a TechGuide. Postponed to September.
+
+	Guide how to connect 2 Windows boxes via DRBD.
+	(Windows 2016)
+
+	Also document how to run pacemaker under WSL
+	Update: no, do a serperate tech guide for that please.
+
+	Update: submitting to Joel for cleaning up my
+	English. Other than that, done.
+
+	Update: Done, integrate in package.
 
