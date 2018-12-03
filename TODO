@@ -4,21 +4,9 @@ Postponed to: Oct 20 2018
 Real: Nov 13 2018
 -----------------------------------------------------------------------
 
-TODO: Installation: exe containing everything (no zip file please)
-
-	Release number? (0.9.0?)
-	Remove old beta from site.
-	Techguide as pdf seperately.
-	Run a rootkit detector on exe?
-	Link to download WinDRBD in tech guide
-
-	Done: Start menu entry for techguide
-
-	Push WinDRBD
-	Push drbd-utils
-
 Milestone: Beta 5
 Planned: Nov 1 2018
+Real: Dec 3 2018
 -----------------------------------------------------------------------
 
 TODO: Make online resize work.
@@ -4222,4 +4210,18 @@ Done: Usability: show how to load driver if drbdadm --version does not work.
 
 	From Devin.
 	Done, but shell escaped.
+
+Done: Installation: exe containing everything (no zip file please)
+
+	Done: Release number? (0.9.0?) yes
+	Done: Remove old beta from site. -> Roland
+	Done: Techguide as pdf seperately. -> Roland
+	Done: Run a rootkit detector on exe?
+	Done: Link to download WinDRBD in tech guide
+	Done: Start menu entry for techguide
+
+	Push WinDRBD -> Phil (after setting 0.9.0 tag)
+	Push drbd-utils -> Lars
+
+	Latest cygwin1.dll (works with current one, no need to change).
 
