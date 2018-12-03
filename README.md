@@ -34,20 +34,21 @@ WinDRBD.
 What else is needed?
 ====================
 
+. If you have a binary package, you don't need to install CygWin since
+the Cygwin DLL comes with the binary package. Commands like drbdadm and
+windrbd should work out-of-the-box with the Windows cmd shell.
+
 For detailed build instructions, please see the file INSTALL. Having
 said that you need a Windows 7 box with CygWin installed (Windows 10
-works in theory, but hasn't been tested. Nor has Windows Subsystem for
-Linux (WSL)) to run WinDRBD. If you have a binary package, you don't
-need to install CygWin since the Cygwin DLL comes with the binary
-package. Commands like drbdadm and windrbd should work out-of-the-box
-with the Windows cmd shell.
+and Windows Server 2016 also work) and a Linux box to build WinDRBD
+from source.
 
 For building you need Ewdk from Microsoft and a separate Linux Box
 with spatch (concinelle) installed.
 
-You need the windrbd branch of drbd-utils. To obtain it, do a:
+You need at least version 9.7.0 of drbd-utils. To obtain it, do a:
 
-git clone --branch windrbd --recursive https://github.com/LINBIT/drbd-utils.git
+git clone --recursive https://github.com/LINBIT/drbd-utils.git
 
 and follow the build instruction in README-windrbd.md file of the
 repo.
@@ -57,7 +58,7 @@ is based on Google Test: see README.md in windrbd-test directory.
 
 You don't need drbdcon: it does not exist in WinDRBD.
 
-We recommend to run Windows 7 in a virtual machine and make
+We recommend to run Windows in a virtual machine and make
 snapshots everytime *before* a new WinDRBD version is installed.
 
 Please also note that once you have installed an officially
@@ -95,6 +96,10 @@ Users guide (be sure to pick the 9.0 version) for more information
 of how to configure and administrate DRBD. Most drbdadm commands
 should work exactly like with the Linux version of DRBD.
 
+There is also a WinDRBD specific tech guide which explains how
+to prepare two Windows Server 2016 nodes for use with WinDRBD.
+Please see the Linbit website for that guide.
+
 Differences to WDRBD
 ====================
 
@@ -115,14 +120,14 @@ This approach has several advantages:
  * Drbdmeta can access internal meta data without special casing offsets
    larger that the DRBD device.
  * Later, the WinDRBD driver doesn't need a reboot if it is changed
-   or installed (we are working on this).
+   (currently it does not need a reboot if installed freshly).
  * drbdcon is not needed, thereby lots of race conditions simply just
    don't exist on WinDRBD.
 
 Another difference is that DRBD source code is derived directly from
 Linbit's sources (using spatch and patch to patch in WinDRBD specific
 changes). This makes it much more easy to maintain and keep up with
-DRBD 9 development (current WinDRBD releases are based on DRBD 9.0.14).
+DRBD 9 development (current WinDRBD releases are based on DRBD 9.0.16).
 
 Differences to Linux DRBD
 =========================
@@ -186,9 +191,6 @@ Our planned 1.0 release will have following restrictions:
 
   * Windows 7 is minimum (no Vista, no XP) (SP1 required (?))
 
-  * Some network settings (send buffer size/send timeout) have
-    no effect.
-
 We might fix following current (0.7.4) restrictions for the
 1.0 release:
 
@@ -204,9 +206,13 @@ We might fix following current (0.7.4) restrictions for the
 Logging
 =======
 
-Since WinDRBD is at a very early development stage, logging is very
-important. We use syslog UDP packets and a Linux host to debug
-WinDRBD.
+To view the log file go to
+
+	C:\windrbd\windrbd-kernel.log
+
+If you need remote logging, please read on.
+
+We use syslog UDP packets and a Linux host to debug WinDRBD.
 
 To configure the log host set a Registry key (string value):
 

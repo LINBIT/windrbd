@@ -40,6 +40,8 @@ Relocate C:\windrbd directory
 
 Online verify
 
+Proper flush request handling
+
 ---- after 1.0
 
 debugfs

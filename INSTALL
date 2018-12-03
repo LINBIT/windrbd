@@ -151,7 +151,19 @@ in the inno-setup directory.
 
 ------------
 
-Note on logging: windrbd currently sends UDP packets to a logging host
+Note on logging: You will find the kernel logs in the file
+C:\windrbd\windrbd-kernel.log . It currently does not logrotate
+so from time to time, do a
+
+        sc stop windrbdlog
+        del c:\windrbd\windrbd-kernel.log
+        sc start windrbdlog
+
+in a cmd shell (rm /cygdrive/c/windrbd/windrbd-kernel.log if in a
+CygWin shell). If you want to dig deeper into logging, please read
+on.
+
+windrbd currently sends UDP packets to a logging host
 for logging. This is meant for use with syslog.
 
 If you don't want to log remotely, you can simply start
@@ -195,12 +207,11 @@ you are screwed.
 
 --------------
 
-Note on drbd-utils: You need the windrbd branch of drbd-utils.
-To obtain it, do a:
+Note on drbd-utils: windrbd branch is now merged into master (should
+appear as version 9.7.0 in the next few days on github). Please clone
+with:
 
-git clone --branch windrbd --recursive https://github.com/LINBIT/drbd-utils.git
+git clone --recursive https://github.com/LINBIT/drbd-utils.git
 
 and follow the build instruction in README-windrbd.md file of the
 repo.
-
-(the windrbd branch will soon be merged into master)
