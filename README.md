@@ -309,3 +309,4 @@ Version history
  * 0.8.18 (Nov 21,2018): Disallow driver unload when there are resources up
  * 0.8.19 (Nov 29,2018): Tech guide
  * 0.9.0 (Dec 03, 2018): Public beta
+ * 0.9.1 (Dec 04, 2018): Fixed a buffer overflow in user space utility
