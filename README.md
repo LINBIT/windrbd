@@ -34,7 +34,7 @@ WinDRBD.
 What else is needed?
 ====================
 
-. If you have a binary package, you don't need to install CygWin since
+If you have a binary package, you don't need to install CygWin since
 the Cygwin DLL comes with the binary package. Commands like drbdadm and
 windrbd should work out-of-the-box with the Windows cmd shell.
 
