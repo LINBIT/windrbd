@@ -605,19 +605,25 @@ SendPage(
 	if (socket->error_status != STATUS_SUCCESS)
 		return winsock_to_linux_error(socket->error_status);
 
+	get_page(page);		/* we might sleep soon, do this before */
+
 	err = wait_for_sendbuf(socket, len);
-	if (err < 0)
+	if (err < 0) {
+		put_page(page);
 		return err;
+	}
 
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
 	if (WskBuffer == NULL) {
 		have_sent(socket, len);
+		put_page(page);
 		return -ENOMEM;
 	}
 
 	completion = kzalloc(sizeof(*completion), 0, 'DRBD');
 	if (completion == NULL) {
 		have_sent(socket, len);
+		put_page(page);
 		kfree(WskBuffer);
 		return -ENOMEM;
 	}
@@ -627,13 +633,12 @@ SendPage(
 	status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE, TRUE);
 	if (!NT_SUCCESS(status)) {
 		have_sent(socket, len);
+		put_page(page);
 		kfree(completion);
 		kfree(WskBuffer);
 		return -ENOMEM;
 	}
 
-		/* TODO: move this before wait_for_sendbuf */
-	get_page(page);
 	completion->page = page;
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
