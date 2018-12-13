@@ -9,6 +9,16 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
+TODO: Blog for Linbit homepage
+
+	Describe 3 use cases:
+
+	Making existing services highly available
+	Virtualization (see OpenNebula project)
+	LinDrive: Diskless Primary on Clients
+
+	Until Mid January 2019
+
 TODO: Make online resize work.
 
 	Some day ..
@@ -268,20 +278,6 @@ TODO: Research: Check if pacemaker under WSL works
 	does not start. Don't know why. We however need the machine
 	for something else, so get a Windows 10 VM (on much or
 	somewhere else) and try the WSL thing there.
-
-TODO: Code quality: do not unlock pages
-
-	Not doing so BSODs on drbdadm up on Windows 7 and
-	on Primary (write? read?) on Server 2016. Maybe
-	using MmBuildMdlForNonPagedPool fixes it?
-
-	This may cause BSODs when the system starts paging,
-	so please fix.
-
-TODO: Code quality: fix drbd_send_zc_copy and use it again.
-
-	Maybe just moving get_page before wait_for_sendbuf fixes
-	it.
 
 TODO: Code quality: have refcount on struct socket
 
@@ -4224,4 +4220,49 @@ Done: Installation: exe containing everything (no zip file please)
 	Push drbd-utils -> Lars
 
 	Latest cygwin1.dll (works with current one, no need to change).
+
+Rejected: Code quality: fix drbd_send_zc_copy and use it again.
+
+	Maybe just moving get_page before wait_for_sendbuf fixes
+	it.
+
+	No.
+
+	BSOD also happens when diskless primary. setting sendbuf
+	to 1 changed behaviour a bit (?). Printk's show that it is
+	most likely something in the completion routine (last line
+	reached changes between runs).
+
+	Maybe because memory is from NTFS driver and we do something
+	in the Irp/MDL handling wrong in that case. Maybe check what
+	happens when copiing write requests also to a tmp buffer
+	(similar to read requests).
+
+	Update: This seems not to happen if the device is accessed
+	directly (without NTFS). Yes, test ran overnight without
+	issue.
+
+	This again seems to be a subtile NTFS driver bug (which is
+	present in Server 2016 but not in Windows 7). Since it
+	works (we would have to copy every write request else to
+	have a stable version) do not use zero copy at all. Don't
+	know how to fix zero copy at the moment.
+
+Rejected: Code quality: do not unlock pages
+
+	Not doing so BSODs on drbdadm up on Windows 7 and
+	on Primary (write? read?) on Server 2016. Maybe
+	using MmBuildMdlForNonPagedPool fixes it?
+
+	This may cause BSODs when the system starts paging,
+	so please fix. Update: Test with memory consumer didn't
+	crash.
+
+	Just calling MmBuildMdlForNonPagedPool() for MDLs allocated
+	by IoBuildAsynchronousFsdRequest() BSODs. Also not unlocking
+	pages BSODs (for NonPaged pages). It seems that the solution
+	we have is the one that works. Leave it like this until
+	someone complains (the Unlock is only done for pages that
+	are in the NonPaged pool and the memory consumer test didn't
+	find anything, so I think we can leave it like this).
 
