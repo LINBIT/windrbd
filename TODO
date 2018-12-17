@@ -9,7 +9,7 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
-TODO: Blog for Linbit homepage
+TODO: Documentation: Blog for Linbit homepage
 
 	Describe 3 use cases:
 
@@ -19,7 +19,32 @@ TODO: Blog for Linbit homepage
 
 	Until Mid January 2019
 
-TODO: Make online resize work.
+TODO: Bug: Diskless Primary BSOD when connection failed
+
+	After failure (still I/O) BSOD after approx. 45 Minutes of
+	I/O while Diskless Primary Unconnected
+
+Dec 15 21:14:50 10.43.10.11  U20:14:50.359|613a95a0(not_drbd_thread) drbd_send_and_submit <3>drbd lindrive2016/1 minor 13, ds(Diskless), dvflag(0x2): IO ERROR: neither local nor remote data, sector 324376+8
+Dec 15 21:14:50 10.43.10.11  [last message was in IRQ context]
+Dec 15 21:14:50 10.43.10.11  U20:14:50.359|613a95a0(not_drbd_thread) bio_endio <6>[0xFFFFD38A23FB6080] thread(not_drbd_thread) bio_endio error with err=-5.
+Dec 15 21:14:50 10.43.10.11  U20:14:50.359|613a95a0(not_drbd_thread) windrbd_bio_finished <3>I/O failed with -5
+
+TODO: Bug: BarrierAck sequence mismatch
+
+Dec 15 20:29:51 10.43.10.11  U19:29:48.137|1df99db0(drbd_s_lindrive2016) dtt_send_page <4>drbd lindrive2016 tcp:wintestubuntu: dtt_send_page: size=24 len=24 sent=-110
+Dec 15 20:29:51 10.43.10.11  U19:29:51.293|1e0398a0(drbd_a_lindrive2016) tl_release <3>drbd lindrive2016 pnode-id:2, cs(Connected), prole(Secondary), cflag(0x2060e), scf(0x0): BAD! BarrierAck #4348980 received, expected #4348979!
+...
+Dec 15 20:29:51 10.43.10.11  U19:29:51.356|613a95a0(not_drbd_thread) drbd_send_and_submit <3>drbd lindrive2016/1 minor 13, ds(Diskless), dvflag(0x2): IO ERROR: neither local nor remote data, sector 324368+8
+Dec 15 20:29:51 10.43.10.11  [last message was in IRQ context]
+Dec 15 20:29:51 10.43.10.11  U19:29:51.356|613a95a0(not_drbd_thread) bio_endio <6>[0xFFFFD38A23C7A080] thread(not_drbd_thread) bio_endio error with err=-5.
+Dec 15 20:29:51 10.43.10.11  U19:29:51.356|613a95a0(not_drbd_thread) windrbd_bio_finished <3>I/O failed with -5
+Dec 15 20:29:52 10.43.10.11  U19:29:52.325|1df91e70(drbd_r_lindrive2016) Disconnect <6>[0xFFFFD38A223ED480] Timeout... Cancel Disconnect socket:FFFFD38A1CCA6A28
+...
+Dec 15 20:29:53 wintestubuntu kernel: [3202762.201483] drbd lindrive2016/1 drbd13 WIN-F11R93CP9KI: Downgrading local disk to D_OUTDATED since current UUID differs.
+
+	Upstream bug?
+
+TODO: Implement: Make online resize work.
 
 	Some day ..
 
@@ -34,6 +59,8 @@ TODO: Test: IPv6
 TODO: Implement: online verify does not work currently
 
 	It reports all blocks out of sync (which isn't true)
+
+TODO: Performance: lindrive (Diskless Primary) is somewhat slow.
 
 TODO: Bug: 3 node setup sometimes does not work.
 
