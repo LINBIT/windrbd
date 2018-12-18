@@ -188,3 +188,10 @@ build and view tech guide:
 
 make tech-guides-pdf-finalize && evince tech-guides/output-pdf/windrbd.pdf 
 
+----
+
+View Generic Script Failover Clustering logs:
+
+Event Viewer (Start / Windows Administrative Tools / EventViewer)
+In the tree, select:
+Event Log / Applications and Services Log / Microsoft / Windows / Failover Clustering / Diagnostics
