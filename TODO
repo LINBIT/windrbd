@@ -19,6 +19,8 @@ TODO: Documentation: Blog for Linbit homepage
 
 	Until Mid January 2019
 
+TODO: Resource agent for Microsoft cluster manager
+
 TODO: Bug: Diskless Primary BSOD when connection failed
 
 	After failure (still I/O) BSOD after approx. 45 Minutes of
@@ -43,6 +45,12 @@ Dec 15 20:29:52 10.43.10.11  U19:29:52.325|1df91e70(drbd_r_lindrive2016) Disconn
 Dec 15 20:29:53 wintestubuntu kernel: [3202762.201483] drbd lindrive2016/1 drbd13 WIN-F11R93CP9KI: Downgrading local disk to D_OUTDATED since current UUID differs.
 
 	Upstream bug?
+
+TODO: Installation: Driver unload sometimes hangs when explorer window is open
+
+	Holds a ref (Server 2016, Windows 10): Hangs in STOP_PENDING.
+	Stops once explorer Window is closed (also was: Timeout on
+	windrbd remote-drive-in-explorer).
 
 TODO: Implement: Make online resize work.
 
@@ -295,16 +303,6 @@ TODO: Code quality: allow recursive printk's.
 
 	For example within SendTo (check if there is a printk
 	ongoing and write it just into the ring buffer if yes).
-
-TODO: Research: Check if pacemaker under WSL works
-
-	And include in documentation.
-
-	Update: our Windows 10 physical machine cannot install
-	apps or updates and a manual download of Ubuntu for WSL
-	does not start. Don't know why. We however need the machine
-	for something else, so get a Windows 10 VM (on much or
-	somewhere else) and try the WSL thing there.
 
 TODO: Code quality: have refcount on struct socket
 
@@ -4292,4 +4290,18 @@ Rejected: Code quality: do not unlock pages
 	someone complains (the Unlock is only done for pages that
 	are in the NonPaged pool and the memory consumer test didn't
 	find anything, so I think we can leave it like this).
+
+Done: Research: Check if pacemaker under WSL works
+
+	And include in documentation.
+
+	Update: our Windows 10 physical machine cannot install
+	apps or updates and a manual download of Ubuntu for WSL
+	does not start. Don't know why. We however need the machine
+	for something else, so get a Windows 10 VM (on much or
+	somewhere else) and try the WSL thing there.
+
+	Update: Got it running. Not suitable for our case (WSL)
+	since WSL is not designed for running services (a poweroff -f
+	for example just closes the Window).
 
