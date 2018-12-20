@@ -7,7 +7,13 @@ Clone this repository with
 
 else you get an incomplete checkout.
 
-If you need installable binaries please contact Linbit (www.linbit.com)
+If you need installable binaries with a signed driver please go to
+
+https://www.linbit.com/en/drbd-community/drbd-download/
+
+(scroll down to DRBD 9 Windows Driver)
+
+If you need support, please contact Linbit (www.linbit.com)
 at sales@linbit.com
 
 What is WinDRBD?
