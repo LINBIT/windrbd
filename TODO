@@ -21,6 +21,8 @@ TODO: Documentation: Blog for Linbit homepage
 
 TODO: Resource agent for Microsoft cluster manager
 
+TODO: Make C:\ as Primary Diskless work
+
 TODO: Bug: Diskless Primary BSOD when connection failed
 
 	After failure (still I/O) BSOD after approx. 45 Minutes of
