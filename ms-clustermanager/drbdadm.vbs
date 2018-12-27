@@ -4,7 +4,8 @@ Function DrbdAdm(Cmd, Res)
 	Set p = shell.Exec("drbdadm.exe " + Cmd + " " + Res) 
 
 	While p.Status = WshRunning
-		WScript.Sleep 50
+'		WScript.Sleep 50
+		Sleep 50
 	Wend
 
 	if p.ExitCode <> 0 Then
