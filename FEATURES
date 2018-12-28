@@ -42,6 +42,8 @@ Online verify
 
 Proper flush request handling
 
+Using System Volume (C:\) as DRBD device (diskless client with PXE boot)
+
 ---- after 1.0
 
 debugfs
@@ -63,8 +65,6 @@ network stats
 ReactOS support
 
 ---- most likely never
-
-Using System Volume (C:\) as DRBD device
 
 Auto-Promote
 
