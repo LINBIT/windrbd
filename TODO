@@ -19,9 +19,11 @@ TODO: Documentation: Blog for Linbit homepage
 
 	Until Mid January 2019
 
-TODO: Resource agent for Microsoft cluster manager
+TODO: Feature: Resource agent for Microsoft cluster manager
 
-TODO: Make C:\ as Primary Diskless work
+TODO: Feature: Make C:\ as Primary Diskless work
+
+TODO: Install: also sign install EXE
 
 TODO: Bug: Diskless Primary BSOD when connection failed
 
