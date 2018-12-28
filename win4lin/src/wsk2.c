@@ -1166,11 +1166,30 @@ static void *init_wsk_thread;
 static NTSTATUS windrbd_init_wsk_thread(void *unused)
 {
 	NTSTATUS status;
+	struct socket *socket;
+        struct sockaddr_storage_win my_addr, peer_addr;
+	int err;
 
         /* We have to do that here, else Windows will deadlock
          * on booting.
          */
         status = SocketsInit();
+
+	err = sock_create_kern(NULL, AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSK_FLAG_CONNECTION_SOCKET, &socket);
+	if (err >= 0) {
+		((struct sockaddr_in *)&my_addr)->sin_addr.s_addr = INADDR_ANY;
+		((struct sockaddr_in *)&my_addr)->sin_port = 0; /* AF_INET & AF_SCI */
+		my_addr.ss_family = AF_INET;
+		Bind(socket->sk, (PSOCKADDR)&my_addr);
+
+		my_inet_aton("192.168.56.102", &((struct sockaddr_in *)&peer_addr)->sin_addr);
+		((struct sockaddr_in *)&peer_addr)->sin_port = htons(5000);
+		peer_addr.ss_family = AF_INET;
+		err = Connect(socket->sk, (struct sockaddr *) &peer_addr);
+		printk("connect err is %x\n", err);
+	} else {
+		printk("sock_create_kern err is %d\n", err);
+	}
 
 	/* No printk's here, we're still booting. Windows will BSOD if we
 	 * do a printk over network here.
