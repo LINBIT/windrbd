@@ -79,17 +79,20 @@ static int open_syslog_socket(void)
 			NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET);
 		if (printk_udp_socket.sk) {
 				/* TODO: what if this fails? */
-			Bind(printk_udp_socket.sk, (SOCKADDR *)&local);
+			if (!NT_SUCCESS(Bind(printk_udp_socket.sk, (SOCKADDR *)&local))) {
+				CloseSocket(printk_udp_socket.sk);
+				printk_udp_socket.sk = NULL;
+			} else {
+				printk_udp_socket.send_buf_max = 4*1024*1024;
+				printk_udp_socket.send_buf_cur = 0;
+				spin_lock_init(&printk_udp_socket.send_buf_counters_lock);
+				KeInitializeEvent(&printk_udp_socket.data_sent, SynchronizationEvent, FALSE);
 
-			printk_udp_socket.send_buf_max = 4*1024*1024;
-			printk_udp_socket.send_buf_cur = 0;
-			spin_lock_init(&printk_udp_socket.send_buf_counters_lock);
-			KeInitializeEvent(&printk_udp_socket.data_sent, SynchronizationEvent, FALSE);
-
-			printk_udp_socket.error_status = STATUS_SUCCESS;
-			mutex_init(&printk_udp_socket.wsk_mutex);
-
-			strcpy(printk_udp_socket.name, "debug socket");
+				printk_udp_socket.error_status = STATUS_SUCCESS;
+				mutex_init(&printk_udp_socket.wsk_mutex);
+	
+				strcpy(printk_udp_socket.name, "debug socket");
+			}
 		} else {
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility. You will NOT see any output produced by printk (and pr_err, ...)\n");
 			return -1;

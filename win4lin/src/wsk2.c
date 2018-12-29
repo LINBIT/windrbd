@@ -185,7 +185,7 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 
 NTSTATUS NTAPI SocketsInit()
 {
-	WSK_CLIENT_NPI	WskClient = { 0 };
+	static WSK_CLIENT_NPI	WskClient = { 0 };
 	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
 
 	if (InterlockedCompareExchange(&g_SocketsState, INITIALIZING, DEINITIALIZED) != DEINITIALIZED)
@@ -200,12 +200,12 @@ NTSTATUS NTAPI SocketsInit()
 		return Status;
 	}
 
-	WDRBD_INFO("WskCaptureProviderNPI start.\n");
+//	WDRBD_INFO("WskCaptureProviderNPI start.\n");
 	Status = WskCaptureProviderNPI(&g_WskRegistration, WSK_INFINITE_WAIT, &g_WskProvider);
-	WDRBD_INFO("WskCaptureProviderNPI done.\n"); // takes long time! msg out after MVL loaded.
+//	WDRBD_INFO("WskCaptureProviderNPI done.\n"); // takes long time! msg out after MVL loaded.
 
 	if (!NT_SUCCESS(Status)) {
-		WDRBD_ERROR("WskCaptureProviderNPI() failed with status 0x%08X\n", Status);
+//		WDRBD_ERROR("WskCaptureProviderNPI() failed with status 0x%08X\n", Status);
 		WskDeregister(&g_WskRegistration);
 		InterlockedExchange(&g_SocketsState, DEINITIALIZED);
 		return Status;
@@ -1175,6 +1175,9 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
          */
         status = SocketsInit();
 
+// printk("karin\n");
+#if 0
+
 	err = sock_create_kern(NULL, AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSK_FLAG_CONNECTION_SOCKET, &socket);
 	if (err >= 0) {
 		((struct sockaddr_in *)&my_addr)->sin_addr.s_addr = INADDR_ANY;
@@ -1186,10 +1189,11 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 		((struct sockaddr_in *)&peer_addr)->sin_port = htons(5000);
 		peer_addr.ss_family = AF_INET;
 		err = Connect(socket->sk, (struct sockaddr *) &peer_addr);
-		printk("connect err is %x\n", err);
+//		printk("connect err is %x\n", err);
 	} else {
-		printk("sock_create_kern err is %d\n", err);
+//		printk("sock_create_kern err is %d\n", err);
 	}
+#endif
 
 	/* No printk's here, we're still booting. Windows will BSOD if we
 	 * do a printk over network here.
@@ -1202,6 +1206,37 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 	return status;
 }
 
+static NTSTATUS windrbd_connect_thread(void *unused)
+{
+	NTSTATUS status;
+	struct socket *socket;
+        struct sockaddr_storage_win my_addr, peer_addr;
+	int err;
+
+// printk("karin\n");
+
+	while (1) {
+		msleep(10*1000);
+
+		err = sock_create_kern(NULL, AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSK_FLAG_CONNECTION_SOCKET, &socket);
+		if (err >= 0) {
+			((struct sockaddr_in *)&my_addr)->sin_addr.s_addr = INADDR_ANY;
+			((struct sockaddr_in *)&my_addr)->sin_port = 0; /* AF_INET & AF_SCI */
+			my_addr.ss_family = AF_INET;
+			Bind(socket->sk, (PSOCKADDR)&my_addr);
+
+			my_inet_aton("192.168.56.102", &((struct sockaddr_in *)&peer_addr)->sin_addr);
+			((struct sockaddr_in *)&peer_addr)->sin_port = htons(5000);
+			peer_addr.ss_family = AF_INET;
+			err = Connect(socket->sk, (struct sockaddr *) &peer_addr);
+			CloseSocket(socket->sk);
+//		printk("connect err is %x\n", err);
+		} else {
+//		printk("sock_create_kern err is %d\n", err);
+		}
+	}
+}
+
 NTSTATUS windrbd_init_wsk(void)
 {
 	HANDLE h;
@@ -1211,6 +1246,8 @@ NTSTATUS windrbd_init_wsk(void)
 
 	if (!NT_SUCCESS(status))
 		printk("Couldn't create thread for initializing socket layer: windrbd_create_windows_thread failed with status 0x%x\n", status);
+
+	status = windrbd_create_windows_thread(windrbd_connect_thread, NULL, &init_wsk_thread);
 
 	return status;
 }
