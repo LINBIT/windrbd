@@ -1163,6 +1163,8 @@ static void *init_wsk_thread;
  * ignore the return value.
  */
 
+// KEVENT net_init_event;
+
 static NTSTATUS windrbd_init_wsk_thread(void *unused)
 {
 	NTSTATUS status;
@@ -1200,8 +1202,10 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 	 */
         if (!NT_SUCCESS(status))
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Failed to initialize socket layer, status is %x.\n", status);
-	else
+	else {
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "WSK initialized, terminating thread.\n");
+	}
+//	KeSetEvent(&net_init_event, IO_NO_INCREMENT, FALSE);
 
 	return status;
 }
@@ -1212,10 +1216,22 @@ static NTSTATUS windrbd_connect_thread(void *unused)
 	struct socket *socket;
         struct sockaddr_storage_win my_addr, peer_addr;
 	int err;
+	int i;
 
 // printk("karin\n");
 
+//	KeWaitForSingleObject(&net_init_event, Executive, KernelMode, FALSE, NULL);
+
+#if 0
 	while (1) {
+		if (g_SocketsState == INITIALIZED)
+			break;
+		msleep(1*1000);
+	}
+#endif
+
+	for (i=0;i<30;i++) {
+//	while (1) {
 		msleep(10*1000);
 
 		err = sock_create_kern(NULL, AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSK_FLAG_CONNECTION_SOCKET, &socket);
@@ -1229,18 +1245,24 @@ static NTSTATUS windrbd_connect_thread(void *unused)
 			((struct sockaddr_in *)&peer_addr)->sin_port = htons(5000);
 			peer_addr.ss_family = AF_INET;
 			err = Connect(socket->sk, (struct sockaddr *) &peer_addr);
+			if (err==0)
+				printk("connected.\n");
+
 			CloseSocket(socket->sk);
 //		printk("connect err is %x\n", err);
 		} else {
 //		printk("sock_create_kern err is %d\n", err);
 		}
 	}
+	return STATUS_SUCCESS;
 }
 
 NTSTATUS windrbd_init_wsk(void)
 {
 	HANDLE h;
 	NTSTATUS status;
+
+//	KeInitializeEvent(&net_init_event, SynchronizationEvent, FALSE);
 
 	status = windrbd_create_windows_thread(windrbd_init_wsk_thread, NULL, &init_wsk_thread);
 
