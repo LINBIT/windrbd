@@ -60,8 +60,10 @@ int my_inet_aton(const char *cp, struct in_addr *inp)
 
 static int open_syslog_socket(void)
 {
+	NTSTATUS status;
+
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
-	if (!printk_udp_socket.sk && net_is_up) {
+	if (!printk_udp_socket.sk /* && net_is_up */) {
 		SOCKADDR_IN local;
 
 		printk_udp_target.sin_family = AF_INET;
@@ -94,6 +96,29 @@ static int open_syslog_socket(void)
 				mutex_init(&printk_udp_socket.wsk_mutex);
 	
 				strcpy(printk_udp_socket.name, "debug socket");
+
+				char *test = "SendTo test";
+				status = SendTo(&printk_udp_socket, 
+						test,
+						strlen(test),
+						(PSOCKADDR)&printk_udp_target);
+
+				if (!NT_SUCCESS(status)) {
+					CloseSocket(printk_udp_socket.sk);
+					printk_udp_socket.sk = NULL;
+				} else {
+					msleep(1000);
+					char *test2 = "SendTo test 2";
+					status = SendTo(&printk_udp_socket, 
+							test2,
+							strlen(test2),
+							(PSOCKADDR)&printk_udp_target);
+
+					if (!NT_SUCCESS(status)) {
+						CloseSocket(printk_udp_socket.sk);
+						printk_udp_socket.sk = NULL;
+					}
+				}
 			}
 		} else {
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility. You will NOT see any output produced by printk (and pr_err, ...)\n");
