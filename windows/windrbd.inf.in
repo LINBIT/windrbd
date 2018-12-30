@@ -49,7 +49,7 @@ StartType        = 0			;start at boot time
 ErrorControl     = 0                    ;SERVICE_ERROR_NORMAL
 AddReg           = WinDRBD.AddRegistry
 ; See HKLM/System/CurrentControlSet/Control/GroupOrderList for a list of possible values
-LoadOrderGroup   = "Primary Disk"
+; LoadOrderGroup   = "Primary Disk"
 
 ;
 ; Registry Modifications (will soon go away)
