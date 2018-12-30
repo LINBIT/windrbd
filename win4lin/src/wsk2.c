@@ -781,7 +781,8 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	if (status == STATUS_PENDING)
 		status = STATUS_SUCCESS;
 
-	return status == STATUS_SUCCESS ? BufferSize : winsock_to_linux_error(status);
+	// return status == STATUS_SUCCESS ? BufferSize : winsock_to_linux_error(status);
+	return status == STATUS_SUCCESS ? BufferSize : status; // tmp patch
 }
 
 LONG NTAPI Receive(
@@ -1211,6 +1212,8 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 }
 
 int net_is_up = 0;
+extern int send_to_failures, send_to_2_failures;
+extern NTSTATUS send_to_error_status;
 
 static NTSTATUS windrbd_connect_thread(void *unused)
 {
@@ -1249,6 +1252,9 @@ static NTSTATUS windrbd_connect_thread(void *unused)
 			peer_addr.ss_family = AF_INET;
 			err = Connect(socket->sk, (struct sockaddr *) &peer_addr);
 			if (err==0) {
+				if (!net_is_up)
+					printk("send_to_failures: %d send_to_2_failures: %d send_to error status: %x\n", send_to_failures, send_to_2_failures, send_to_error_status);
+
 				net_is_up = 1;
 				printk("connected.\n");
 			}

@@ -58,6 +58,10 @@ int my_inet_aton(const char *cp, struct in_addr *inp)
 	return 0;
 }
 
+int send_to_failures = 0;
+int send_to_2_failures = 0;
+NTSTATUS send_to_error_status = STATUS_SUCCESS;
+
 static int open_syslog_socket(void)
 {
 	NTSTATUS status;
@@ -106,6 +110,8 @@ static int open_syslog_socket(void)
 				if (!NT_SUCCESS(status)) {
 					CloseSocket(printk_udp_socket.sk);
 					printk_udp_socket.sk = NULL;
+					send_to_failures++;
+					send_to_error_status = status;
 				} else {
 					msleep(1000);
 					char *test2 = "SendTo test 2";
@@ -117,6 +123,7 @@ static int open_syslog_socket(void)
 					if (!NT_SUCCESS(status)) {
 						CloseSocket(printk_udp_socket.sk);
 						printk_udp_socket.sk = NULL;
+						send_to_2_failures++;
 					}
 				}
 			}
