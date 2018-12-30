@@ -25,6 +25,12 @@ TODO: Feature: Make C:\ as Primary Diskless work
 
 TODO: Install: also sign install EXE
 
+TODO: Bug: clear error state on socket if status is success.
+
+	This caused printk on boot not to work. We now have a
+	workaround (discard the socket if SendTo() returns an
+	error) but one day we want to fix this.
+
 TODO: Bug: Diskless Primary BSOD when connection failed
 
 	After failure (still I/O) BSOD after approx. 45 Minutes of
@@ -3374,9 +3380,15 @@ Done: Bug: loading driver on boot BSOD's now on boot.
 	Note also that driver loaded on boot can be unloaded
 	later (unless there is a memory leak).
 
-Rejected: Feature: flush printk buffer as soon as network is working.
+Done: Feature: flush printk buffer as soon as network is working.
 
 	Don't. Windows will BSOD on boot.
+
+	Update: Fixed something inside creation of UDP socket,
+	doing a SendTo probe now and reopen socket later if
+	SendTo fails. Basic problem is that error state in
+	socket is not cleared (see separate TODO) and SendTo
+	always fails (even if it would be possible).
 
 Done: Implement: Rework mount code.
 
