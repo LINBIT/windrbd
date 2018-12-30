@@ -133,7 +133,10 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 			printk(KERN_WARNING "Last error status of socket was %x, now got %x\n", completion->socket->error_status, Irp->IoStatus.Status);
 
 		completion->socket->error_status = Irp->IoStatus.Status;
-	}
+	}	/* TODO: if success, clear error status? This happens
+		 * on boot when there are no configured network interfaces
+		 * and works later once they are.
+		 */
 	length = completion->wsk_buffer->Length;
 		/* Also unmaps the pages of the containg Mdl */
 
@@ -1177,40 +1180,20 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
         struct sockaddr_storage_win my_addr, peer_addr;
 	int err;
 
-        /* We have to do that here, else Windows will deadlock
-         * on booting.
+        /* We have to do that here in a separate thread, else Windows
+	 * will deadlock on booting.
          */
         status = SocketsInit();
 
-// printk("karin\n");
-#if 0
-
-	err = sock_create_kern(NULL, AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSK_FLAG_CONNECTION_SOCKET, &socket);
-	if (err >= 0) {
-		((struct sockaddr_in *)&my_addr)->sin_addr.s_addr = INADDR_ANY;
-		((struct sockaddr_in *)&my_addr)->sin_port = 0; /* AF_INET & AF_SCI */
-		my_addr.ss_family = AF_INET;
-		Bind(socket->sk, (PSOCKADDR)&my_addr);
-
-		my_inet_aton("192.168.56.102", &((struct sockaddr_in *)&peer_addr)->sin_addr);
-		((struct sockaddr_in *)&peer_addr)->sin_port = htons(5000);
-		peer_addr.ss_family = AF_INET;
-		err = Connect(socket->sk, (struct sockaddr *) &peer_addr);
-//		printk("connect err is %x\n", err);
-	} else {
-//		printk("sock_create_kern err is %d\n", err);
-	}
-#endif
-
-	/* No printk's here, we're still booting. Windows will BSOD if we
-	 * do a printk over network here.
-	 */
-        if (!NT_SUCCESS(status))
+        if (!NT_SUCCESS(status)) {
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Failed to initialize socket layer, status is %x.\n", status);
-	else {
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "WSK initialized, terminating thread.\n");
+			/* and what now? */
+	} else {
+		printk("WSK initialized.\n");
 	}
 	KeSetEvent(&net_init_event, IO_NO_INCREMENT, FALSE);
+
+        /* TODO: here start DRBD boot device (not in DriverInit) */
 
 	return status;
 }
