@@ -1,0 +1,10 @@
+drbdsetup new-resource w0 2
+drbdsetup new-minor w0 5 17
+windrbd -q set-mount-point-for-minor 5 K:
+drbdsetup new-peer w0 3 --_name=johannes-VirtualBox --verify-alg=crc32c --rcvbuf-size=10m --sndbuf-size=64k --use-rle=no --protocol=C
+drbdsetup new-path w0 3 ipv4:192.168.56.101:7600 ipv4:192.168.56.102:7600
+drbdsetup peer-device-options w0 3 17 --c-max-rate=4048000 --c-fill-target=1048000
+windrbd -q hide-filesystem F:
+drbdmeta 5 v09 G: flex-external apply-al
+drbdsetup attach 5 F: G: flexible
+drbdsetup connect w0 3
