@@ -1199,56 +1199,6 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 	return status;
 }
 
-static NTSTATUS windrbd_connect_thread(void *unused)
-{
-	NTSTATUS status;
-	struct socket *socket;
-        struct sockaddr_storage_win my_addr, peer_addr;
-	int err;
-	int i;
-
-// printk("karin\n");
-
-	KeWaitForSingleObject(&net_init_event, Executive, KernelMode, FALSE, NULL);
-
-#if 0
-	while (1) {
-		if (g_SocketsState == INITIALIZED)
-			break;
-		msleep(1*1000);
-	}
-#endif
-
-	for (i=0;i<100;i++) {
-//	while (1) {
-		msleep(1*1000);
-
-		err = sock_create_kern(NULL, AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSK_FLAG_CONNECTION_SOCKET, &socket);
-		if (err >= 0) {
-			((struct sockaddr_in *)&my_addr)->sin_addr.s_addr = INADDR_ANY;
-			((struct sockaddr_in *)&my_addr)->sin_port = 0; /* AF_INET & AF_SCI */
-			my_addr.ss_family = AF_INET;
-			status = Bind(socket->sk, (PSOCKADDR)&my_addr);
-			printk("Bind returned %x\n", status);
-
-			my_inet_aton("192.168.56.102", &((struct sockaddr_in *)&peer_addr)->sin_addr);
-			((struct sockaddr_in *)&peer_addr)->sin_port = htons(5000);
-			peer_addr.ss_family = AF_INET;
-			err = Connect(socket->sk, (struct sockaddr *) &peer_addr);
-			if (err==0) {
-				printk("connected.\n");
-			}
-			else
-				printk("connect err is %x\n", err);
-
-			CloseSocket(socket->sk);
-		} else {
-			printk("sock_create_kern err is %d\n", err);
-		}
-	}
-	return STATUS_SUCCESS;
-}
-
 NTSTATUS windrbd_init_wsk(void)
 {
 	HANDLE h;
@@ -1260,8 +1210,6 @@ NTSTATUS windrbd_init_wsk(void)
 
 	if (!NT_SUCCESS(status))
 		printk("Couldn't create thread for initializing socket layer: windrbd_create_windows_thread failed with status 0x%x\n", status);
-
-	status = windrbd_create_windows_thread(windrbd_connect_thread, NULL, &init_wsk_thread);
 
 	return status;
 }
