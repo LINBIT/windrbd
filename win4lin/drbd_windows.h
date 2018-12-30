@@ -1473,6 +1473,8 @@ int windrbd_um_return_return_value(void *rv_buf);
 int windrbd_init_usermode_helper(void);
 int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_point);
 
+int windrbd_create_boot_device(void);
+
 /* see printk_to_syslog.c */
 int my_inet_aton(const char *cp, struct in_addr *inp);
 /* ugh ... */

@@ -1193,7 +1193,8 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 	}
 	KeSetEvent(&net_init_event, IO_NO_INCREMENT, FALSE);
 
-        /* TODO: here start DRBD boot device (not in DriverInit) */
+	err = windrbd_create_boot_device();
+	printk("windrbd_create_boot_device returned %d\n", err);
 
 	return status;
 }

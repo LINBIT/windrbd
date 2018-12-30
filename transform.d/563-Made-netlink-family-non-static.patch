@@ -1,0 +1,35 @@
+From 153d32c53c2880c74c1947d476c997f5a9533d4c Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Sun, 30 Dec 2018 20:49:38 +0100
+Subject: [PATCH] Made netlink family non-static
+
+This allows us to use drbd_genl_family struct outside of drbd_nl.c
+---
+ drbd-headers/linux/genl_magic_func.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd-headers/linux/genl_magic_func.h b/drbd-headers/linux/genl_magic_func.h
+index a74ee75..c88ac73 100644
+--- a/drbd-headers/linux/genl_magic_func.h
++++ b/drbd-headers/linux/genl_magic_func.h
+@@ -250,7 +250,7 @@ static struct genl_ops ZZZ_genl_ops[] __read_mostly = {
+  *									{{{2
+  */
+ #define ZZZ_genl_family		CONCAT_(GENL_MAGIC_FAMILY, _genl_family)
+-static struct genl_family ZZZ_genl_family;
++struct genl_family ZZZ_genl_family;
+ 
+ /*
+  * Magic: define multicast groups
+@@ -273,7 +273,7 @@ static struct genl_family ZZZ_genl_family;
+ #include <linux/genl_magic_func-genl_register_mc_group.h>
+ #endif
+ 
+-static struct genl_family ZZZ_genl_family __read_mostly = {
++struct genl_family ZZZ_genl_family __read_mostly = {
+ 	/* .id = GENL_ID_GENERATE, which exists no longer, and was 0 anyways */
+ 	.name = __stringify(GENL_MAGIC_FAMILY),
+ 	.version = GENL_MAGIC_VERSION,
+-- 
+2.17.0
+

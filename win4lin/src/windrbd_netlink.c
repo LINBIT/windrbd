@@ -560,3 +560,53 @@ out_free_info:
 	return ret;
 }
 
+static int seq = 1000;
+
+	/* from: drbd-utils/user/shared/libgenl_windrbd.c */
+
+static void fill_in_header(struct sk_buff *skb)
+{
+        struct nlmsghdr *n = (struct nlmsghdr *)skb->data;
+
+        n->nlmsg_len = skb->tail;
+        n->nlmsg_flags |= NLM_F_REQUEST;
+        n->nlmsg_seq = seq++;
+        n->nlmsg_pid = 0;	/* we are kernel */
+}
+
+extern struct genl_family drbd_genl_family;
+
+int windrbd_create_boot_device(void)
+{
+	struct sk_buff *skb;
+	int ret;
+	struct nlattr *nla;
+	struct drbd_genlmsghdr *dhdr;
+
+        drbd_genl_family.id = WINDRBD_NETLINK_FAMILY_ID;
+
+	skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
+	if (skb == NULL)
+		return -ENOMEM;
+
+        dhdr = genlmsg_put(skb, 0, seq, &drbd_genl_family, 0, DRBD_ADM_NEW_RESOURCE);
+	dhdr->minor = -1;
+	dhdr->flags = 0;
+
+	nla = nla_nest_start(skb, DRBD_NLA_CFG_CONTEXT);
+	nla_put_string(skb, T_ctx_resource_name, "w0");
+	nla_nest_end(skb, nla);
+
+	nla = nla_nest_start(skb, DRBD_NLA_RESOURCE_OPTS);
+	nla_put_u32(skb, T_node_id, 2);
+	nla_nest_end(skb, nla);
+
+	fill_in_header(skb);
+
+	ret = windrbd_process_netlink_packet(&skb->data, skb->tail);
+
+	nlmsg_free(skb);
+
+	return ret;
+}
+
