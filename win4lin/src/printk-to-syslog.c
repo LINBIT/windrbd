@@ -18,6 +18,8 @@ static size_t ring_buffer_tail;
 static spinlock_t ring_buffer_lock;
 static struct mutex send_mutex;
 
+extern int net_is_up;
+
 int initialize_syslog_printk(void)
 {
 	spin_lock_init(&ring_buffer_lock);
@@ -59,7 +61,7 @@ int my_inet_aton(const char *cp, struct in_addr *inp)
 static int open_syslog_socket(void)
 {
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
-	if (!printk_udp_socket.sk) {
+	if (!printk_udp_socket.sk && net_is_up) {
 		SOCKADDR_IN local;
 
 		printk_udp_target.sin_family = AF_INET;

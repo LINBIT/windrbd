@@ -1210,6 +1210,8 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 	return status;
 }
 
+int net_is_up = 0;
+
 static NTSTATUS windrbd_connect_thread(void *unused)
 {
 	NTSTATUS status;
@@ -1246,8 +1248,10 @@ static NTSTATUS windrbd_connect_thread(void *unused)
 			((struct sockaddr_in *)&peer_addr)->sin_port = htons(5000);
 			peer_addr.ss_family = AF_INET;
 			err = Connect(socket->sk, (struct sockaddr *) &peer_addr);
-			if (err==0)
+			if (err==0) {
+				net_is_up = 1;
 				printk("connected.\n");
+			}
 			else
 				printk("connect err is %x\n", err);
 
