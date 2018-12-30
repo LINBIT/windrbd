@@ -165,6 +165,8 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 		if (socket->send_buf_cur > socket->send_buf_max) {
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
 			timeout.QuadPart = -1 * socket->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
+
+				/* TODO: no signals? */
 			status = KeWaitForSingleObject(&socket->data_sent, Executive, KernelMode, FALSE, &timeout);
 
 			if (status == STATUS_TIMEOUT)
@@ -576,6 +578,8 @@ int winsock_to_linux_error(NTSTATUS status)
 		return -EAGAIN;
 	case STATUS_INVALID_DEVICE_STATE:
 		return -EINVAL;
+	case STATUS_NETWORK_UNREACHABLE:
+		return -ENETUNREACH;
 	default:
 		/* no printk's */
 		// printk("Unknown status %x, returning -EIO.\n", status);
@@ -781,8 +785,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	if (status == STATUS_PENDING)
 		status = STATUS_SUCCESS;
 
-	// return status == STATUS_SUCCESS ? BufferSize : winsock_to_linux_error(status);
-	return status == STATUS_SUCCESS ? BufferSize : status; // tmp patch
+	return status == STATUS_SUCCESS ? BufferSize : winsock_to_linux_error(status);
 }
 
 LONG NTAPI Receive(
@@ -965,6 +968,7 @@ Bind(
 		Status = Irp->IoStatus.Status;
 	}
 	IoFreeIrp(Irp);
+		/* TODO: winsock_to_linux() one day */
 	return Status;
 }
 
@@ -1211,10 +1215,6 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 	return status;
 }
 
-int net_is_up = 0;
-extern int send_to_failures, send_to_2_failures;
-extern NTSTATUS send_to_error_status;
-
 static NTSTATUS windrbd_connect_thread(void *unused)
 {
 	NTSTATUS status;
@@ -1252,10 +1252,6 @@ static NTSTATUS windrbd_connect_thread(void *unused)
 			peer_addr.ss_family = AF_INET;
 			err = Connect(socket->sk, (struct sockaddr *) &peer_addr);
 			if (err==0) {
-				if (!net_is_up)
-					printk("send_to_failures: %d send_to_2_failures: %d send_to error status: %x\n", send_to_failures, send_to_2_failures, send_to_error_status);
-
-				net_is_up = 1;
 				printk("connected.\n");
 			}
 			else

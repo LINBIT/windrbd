@@ -18,8 +18,6 @@ static size_t ring_buffer_tail;
 static spinlock_t ring_buffer_lock;
 static struct mutex send_mutex;
 
-extern int net_is_up;
-
 int initialize_syslog_printk(void)
 {
 	spin_lock_init(&ring_buffer_lock);
@@ -58,16 +56,12 @@ int my_inet_aton(const char *cp, struct in_addr *inp)
 	return 0;
 }
 
-int send_to_failures = 0;
-int send_to_2_failures = 0;
-NTSTATUS send_to_error_status = STATUS_SUCCESS;
-
 static int open_syslog_socket(void)
 {
-	NTSTATUS status;
+	int err;
 
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
-	if (!printk_udp_socket.sk /* && net_is_up */) {
+	if (!printk_udp_socket.sk) {
 		SOCKADDR_IN local;
 
 		printk_udp_target.sin_family = AF_INET;
@@ -101,30 +95,16 @@ static int open_syslog_socket(void)
 	
 				strcpy(printk_udp_socket.name, "debug socket");
 
-				char *test = "SendTo test";
-				status = SendTo(&printk_udp_socket, 
-						test,
-						strlen(test),
+				char *probe = "Starting printk ...\n";
+				err = SendTo(&printk_udp_socket, 
+						probe,
+						strlen(probe),
 						(PSOCKADDR)&printk_udp_target);
 
-				if (!NT_SUCCESS(status)) {
+					/* -ENETUNREACH on booting */
+				if (err < 0) {
 					CloseSocket(printk_udp_socket.sk);
 					printk_udp_socket.sk = NULL;
-					send_to_failures++;
-					send_to_error_status = status;
-				} else {
-					msleep(1000);
-					char *test2 = "SendTo test 2";
-					status = SendTo(&printk_udp_socket, 
-							test2,
-							strlen(test2),
-							(PSOCKADDR)&printk_udp_target);
-
-					if (!NT_SUCCESS(status)) {
-						CloseSocket(printk_udp_socket.sk);
-						printk_udp_socket.sk = NULL;
-						send_to_2_failures++;
-					}
 				}
 			}
 		} else {
