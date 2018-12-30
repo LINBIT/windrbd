@@ -23,6 +23,8 @@ TODO: Feature: Resource agent for Microsoft cluster manager
 
 TODO: Feature: Make C:\ as Primary Diskless work
 
+TODO: Bug: BSOD on driver unload after up (tmp patches for create boot device)
+
 TODO: Install: also sign install EXE
 
 TODO: Bug: clear error state on socket if status is success.
