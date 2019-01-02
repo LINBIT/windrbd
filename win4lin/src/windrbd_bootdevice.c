@@ -273,7 +273,8 @@ int windrbd_create_boot_device(void)
 	if ((ret = new_peer("w0", "johannes-VirtualBox", 3, 3)) != 0)
 		return ret;
 
-	if ((ret = new_path("w0", 3, "192.168.56.101:7600", "192.168.56.102:7600")) != 0)
+	// if ((ret = new_path("w0", 3, "192.168.56.101:7600", "192.168.56.102:7600")) != 0)
+	if ((ret = new_path("w0", 3, "0.0.0.0:7600", "192.168.56.102:7600")) != 0)
 		return ret;
 
 		/* connect will return SS_SUCCESS which is 1 */
