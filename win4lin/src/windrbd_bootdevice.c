@@ -106,7 +106,9 @@ static int finish_netlink_packet(struct sk_buff *skb, int cmd)
 		return ret;
 
 	rc = reply_code(cmd);
-	if (rc != NO_ERROR) {
+
+		/* connect will return SS_SUCCESS which is 1 */
+	if (rc != NO_ERROR && rc != SS_SUCCESS) {
 		printk("status is %d\n", rc);
 		return rc;
 	}
@@ -258,6 +260,24 @@ static int connect(const char *resource_name, int peer_node_id)
 	return finish_netlink_packet(skb, DRBD_ADM_CONNECT);
 }
 
+static int attach(int minor, const char *backing_dev, const char *meta_dev, int meta_dev_idx)
+{
+	struct sk_buff *skb;
+	struct nlattr *nla;
+
+	skb = prepare_netlink_packet(DRBD_ADM_ATTACH, minor);
+	if (skb == NULL)
+		return -ENOMEM;
+
+	nla = nla_nest_start(skb, DRBD_NLA_DISK_CONF);
+	nla_put_string(skb, T_backing_dev, backing_dev);
+	nla_put_string(skb, T_meta_dev, meta_dev);
+	nla_put_u32(skb, T_meta_dev_idx, meta_dev_idx);
+	nla_nest_end(skb, nla);
+
+	return finish_netlink_packet(skb, DRBD_ADM_ATTACH);
+}
+
 int windrbd_create_boot_device(void)
 {
 	int ret;
@@ -273,20 +293,18 @@ int windrbd_create_boot_device(void)
 	if ((ret = new_peer("w0", "johannes-VirtualBox", 3, 3)) != 0)
 		return ret;
 
-	// if ((ret = new_path("w0", 3, "192.168.56.101:7600", "192.168.56.102:7600")) != 0)
+		/* Since we do not have any interfaces yet, bind listeing
+		 * socket to INADDR_ANY, else it will fail an node
+		 * will go into standalone.
+		 */
 	if ((ret = new_path("w0", 3, "0.0.0.0:7600", "192.168.56.102:7600")) != 0)
 		return ret;
 
-		/* connect will return SS_SUCCESS which is 1 */
-		/* but bind before listen will fail and node goes
-		 * into StandAlone, until network interface is configured.
-		 */
+	if ((ret = attach(5, "\\DosDevices\\F:", "\\DosDevices\\G:", -2)) != 0)
+		printk("attach failed with error code %d (ignored)\n", ret);
+
 	if ((ret = connect("w0", 3)) != 0)
 		return ret;
-
-		/* TODO: check connection status and repeat until
-		 * it is connected ... ?
-		 */
 
 	return 0;
 }
