@@ -560,9 +560,6 @@ out_free_info:
 	return ret;
 }
 
-static int seq = 1000;
-static int expected_seq = 1000;
-
 #define KERNEL_PORT_ID  42
 
 	/* from: drbd-utils/user/shared/libgenl_windrbd.c */
@@ -573,11 +570,12 @@ static void fill_in_header(struct sk_buff *skb)
 
         n->nlmsg_len = skb->tail;
         n->nlmsg_flags |= NLM_F_REQUEST;
-        n->nlmsg_seq = seq++;
         n->nlmsg_pid = KERNEL_PORT_ID;	/* we are kernel */
 }
 
 extern struct genl_family drbd_genl_family;
+
+#define SEQ_START 1000
 
 static int reply_code(int cmd)
 {
@@ -587,6 +585,7 @@ static int reply_code(int cmd)
 	struct nlmsghdr *header;
 	struct genlmsghdr *genlmsg_header;
 	struct drbd_genlmsghdr *drbd_header;
+	static int expected_seq = SEQ_START;
 
 #define MIN_REPLY_SIZE (NLMSG_HDRLEN+GENL_HDRLEN+NLMSG_ALIGN(sizeof(struct drbd_genlmsghdr)))
 
@@ -631,16 +630,17 @@ static struct sk_buff *prepare_netlink_packet(int cmd, int minor)
 {
 	struct sk_buff *skb;
 	struct drbd_genlmsghdr *dhdr;
+	static int seq = SEQ_START;
 
 	skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (skb == NULL)
 		return NULL;
 
         dhdr = genlmsg_put(skb, 0, seq, &drbd_genl_family, 0, cmd);
+	seq++;
+
 	dhdr->minor = minor;
 	dhdr->flags = 0;
-
-	seq++;
 
 	return skb;
 }
@@ -700,6 +700,28 @@ static int new_minor(const char *resource_name, int minor, int volume)
 
 	return finish_netlink_packet(skb, DRBD_ADM_NEW_MINOR);
 }
+
+#if 0
+static int new_peer(const char *resource_name, const char *peer_name, int peer_node_id, int protocol)
+{
+	struct sk_buff *skb;
+	struct nlattr *nla;
+
+	skb = prepare_netlink_packet(DRBD_ADM_NEW_PEER, -1);
+
+	nla = nla_nest_start(skb, DRBD_NLA_CFG_CONTEXT);
+	nla_put_string(skb, T_ctx_resource_name, resource_name);
+	nla_put_u32(skb, T_ctx_peer_node_id, peer_node_id);
+	nla_nest_end(skb, nla);
+
+	nla = nla_nest_start(skb, DRBD_NLA_NET_CONF);
+	nla_put_string(skb, T_ctx_resource_name, resource_name);
+	nla_put_u32(skb, T_ctx_peer_node_id, peer_node_id);
+	nla_nest_end(skb, nla);
+
+	return finish_netlink_packet(skb, DRBD_ADM_NEW_MINOR);
+}
+#endif
 
 int windrbd_create_boot_device(void)
 {
