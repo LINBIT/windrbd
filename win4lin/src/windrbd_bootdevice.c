@@ -139,6 +139,8 @@ static int new_minor(const char *resource_name, int minor, int volume)
 	struct nlattr *nla;
 
 	skb = prepare_netlink_packet(DRBD_ADM_NEW_MINOR, minor);
+	if (skb == NULL)
+		return -ENOMEM;
 
 	nla = nla_nest_start(skb, DRBD_NLA_CFG_CONTEXT);
 	nla_put_string(skb, T_ctx_resource_name, resource_name);
@@ -148,13 +150,14 @@ static int new_minor(const char *resource_name, int minor, int volume)
 	return finish_netlink_packet(skb, DRBD_ADM_NEW_MINOR);
 }
 
-#if 0
 static int new_peer(const char *resource_name, const char *peer_name, int peer_node_id, int protocol)
 {
 	struct sk_buff *skb;
 	struct nlattr *nla;
 
 	skb = prepare_netlink_packet(DRBD_ADM_NEW_PEER, -1);
+	if (skb == NULL)
+		return -ENOMEM;
 
 	nla = nla_nest_start(skb, DRBD_NLA_CFG_CONTEXT);
 	nla_put_string(skb, T_ctx_resource_name, resource_name);
@@ -162,13 +165,98 @@ static int new_peer(const char *resource_name, const char *peer_name, int peer_n
 	nla_nest_end(skb, nla);
 
 	nla = nla_nest_start(skb, DRBD_NLA_NET_CONF);
+	nla_put_string(skb, T_name, peer_name);
+	nla_put_string(skb, T_verify_alg, "crc32c");
+	nla_put_u32(skb, T_rcvbuf_size, 0xa00000);
+	nla_put_u32(skb, T_sndbuf_size, 0xa00000);
+	nla_put_u8(skb, T_use_rle, 0);
+	nla_put_u32(skb, T_wire_protocol, protocol);
+	nla_nest_end(skb, nla);
+
+	return finish_netlink_packet(skb, DRBD_ADM_NEW_PEER);
+}
+
+int my_atoi(const char *c)
+{
+	int i;
+
+	if (c == NULL)
+		return 0;
+
+	i=0;
+	while (*c >= '0' && *c <= '9') {
+		i*=10;
+		i+=*c-'0';
+		c++;
+	}
+	return i;
+}
+
+
+	/* TODO: take sockaddr_from_str from drbd-utils */
+
+static int parse_ipv4_addr(struct sockaddr_in *addr, const char *a)
+{
+	const char *port;
+
+	memset(addr, 0, sizeof(*addr));
+	addr->sin_family = AF_INET;
+	if (my_inet_aton(a, &addr->sin_addr) < 0)
+		return -1;
+
+	port = strchr(a, ':');
+	if (port == NULL)
+		return -1;
+	port++;
+	addr->sin_port = htons(my_atoi(port));
+	return 0;
+}
+
+static int new_path(const char *resource_name, int peer_node_id, const char *local_ip, const char *remote_ip)
+{
+	struct sk_buff *skb;
+	struct nlattr *nla;
+	struct sockaddr_in my_addr;
+	struct sockaddr_in peer_addr;
+
+	if (parse_ipv4_addr(&my_addr, local_ip) < 0)
+		return -EINVAL;
+	if (parse_ipv4_addr(&peer_addr, remote_ip) < 0)
+		return -EINVAL;
+
+	skb = prepare_netlink_packet(DRBD_ADM_NEW_PATH, -1);
+	if (skb == NULL)
+		return -ENOMEM;
+
+	nla = nla_nest_start(skb, DRBD_NLA_CFG_CONTEXT);
 	nla_put_string(skb, T_ctx_resource_name, resource_name);
 	nla_put_u32(skb, T_ctx_peer_node_id, peer_node_id);
 	nla_nest_end(skb, nla);
 
-	return finish_netlink_packet(skb, DRBD_ADM_NEW_MINOR);
+	nla = nla_nest_start(skb, DRBD_NLA_PATH_PARMS);
+	nla_put(skb, T_my_addr, sizeof(my_addr), &my_addr);
+	nla_put(skb, T_peer_addr, sizeof(peer_addr), &peer_addr);
+	nla_nest_end(skb, nla);
+
+	return finish_netlink_packet(skb, DRBD_ADM_NEW_PATH);
 }
-#endif
+
+static int connect(const char *resource_name, int peer_node_id)
+{
+	struct sk_buff *skb;
+	struct nlattr *nla;
+
+	skb = prepare_netlink_packet(DRBD_ADM_CONNECT, -1);
+	if (skb == NULL)
+		return -ENOMEM;
+
+	nla = nla_nest_start(skb, DRBD_NLA_CFG_CONTEXT);
+	nla_put_string(skb, T_ctx_resource_name, resource_name);
+	nla_put_u32(skb, T_ctx_peer_node_id, peer_node_id);
+	nla_nest_end(skb, nla);
+
+	return finish_netlink_packet(skb, DRBD_ADM_CONNECT);
+}
 
 int windrbd_create_boot_device(void)
 {
@@ -182,6 +270,23 @@ int windrbd_create_boot_device(void)
 	if ((ret = new_minor("w0", 5, 17)) != 0)
 		return ret;
 
-	return ret;
+	if ((ret = new_peer("w0", "johannes-VirtualBox", 3, 3)) != 0)
+		return ret;
+
+	if ((ret = new_path("w0", 3, "192.168.56.101:7600", "192.168.56.102:7600")) != 0)
+		return ret;
+
+		/* connect will return SS_SUCCESS which is 1 */
+		/* but bind before listen will fail and node goes
+		 * into StandAlone, until network interface is configured.
+		 */
+	if ((ret = connect("w0", 3)) != 0)
+		return ret;
+
+		/* TODO: check connection status and repeat until
+		 * it is connected ... ?
+		 */
+
+	return 0;
 }
 
