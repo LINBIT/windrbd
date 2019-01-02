@@ -627,20 +627,53 @@ static int reply_code(int cmd)
 	return drbd_header->ret_code;
 }
 
+static struct sk_buff *prepare_netlink_packet(int cmd, int minor)
+{
+	struct sk_buff *skb;
+	struct drbd_genlmsghdr *dhdr;
+
+	skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
+	if (skb == NULL)
+		return NULL;
+
+        dhdr = genlmsg_put(skb, 0, seq, &drbd_genl_family, 0, cmd);
+	dhdr->minor = minor;
+	dhdr->flags = 0;
+
+	seq++;
+
+	return skb;
+}
+
+
+static int finish_netlink_packet(struct sk_buff *skb, int cmd)
+{
+	int ret, rc;
+
+	fill_in_header(skb);
+	ret = windrbd_process_netlink_packet(&skb->data, skb->tail);
+
+	nlmsg_free(skb);
+
+	if (ret != 0)
+		return ret;
+
+	rc = reply_code(cmd);
+	if (rc != NO_ERROR) {
+		printk("status is %d\n", rc);
+		return rc;
+	}
+	return 0;
+}
+
 static int new_resource(const char *resource_name, int my_node_id)
 {
 	struct sk_buff *skb;
 	struct nlattr *nla;
-	struct drbd_genlmsghdr *dhdr;
-	int ret, rc;
 
-	skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
+	skb = prepare_netlink_packet(DRBD_ADM_NEW_RESOURCE, -1);
 	if (skb == NULL)
 		return -ENOMEM;
-
-        dhdr = genlmsg_put(skb, 0, seq, &drbd_genl_family, 0, DRBD_ADM_NEW_RESOURCE);
-	dhdr->minor = -1;
-	dhdr->flags = 0;
 
 	nla = nla_nest_start(skb, DRBD_NLA_CFG_CONTEXT);
 	nla_put_string(skb, T_ctx_resource_name, resource_name);
@@ -650,57 +683,22 @@ static int new_resource(const char *resource_name, int my_node_id)
 	nla_put_u32(skb, T_node_id, my_node_id);
 	nla_nest_end(skb, nla);
 
-	fill_in_header(skb);
-	ret = windrbd_process_netlink_packet(&skb->data, skb->tail);
-
-	nlmsg_free(skb);
-
-	if (ret != 0)
-		return ret;
-
-	rc = reply_code(DRBD_ADM_NEW_RESOURCE);
-	if (rc != NO_ERROR) {
-		printk("status is %d\n", rc);
-		return rc;
-	}
-	return 0;
+	return finish_netlink_packet(skb, DRBD_ADM_NEW_RESOURCE);
 }
 
 static int new_minor(const char *resource_name, int minor, int volume)
 {
 	struct sk_buff *skb;
 	struct nlattr *nla;
-	struct drbd_genlmsghdr *dhdr;
-	int ret, rc;
 
-	skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
-	if (skb == NULL)
-		return -ENOMEM;
-
-        dhdr = genlmsg_put(skb, 0, seq, &drbd_genl_family, 0, DRBD_ADM_NEW_MINOR
-);
-	dhdr->minor = minor;
-	dhdr->flags = 0;
+	skb = prepare_netlink_packet(DRBD_ADM_NEW_MINOR, minor);
 
 	nla = nla_nest_start(skb, DRBD_NLA_CFG_CONTEXT);
 	nla_put_string(skb, T_ctx_resource_name, resource_name);
 	nla_put_u32(skb, T_ctx_volume, volume);
 	nla_nest_end(skb, nla);
 
-	fill_in_header(skb);
-	ret = windrbd_process_netlink_packet(&skb->data, skb->tail);
-
-	nlmsg_free(skb);
-
-	if (ret != 0)
-		return ret;
-
-	rc = reply_code(DRBD_ADM_NEW_MINOR);
-	if (rc != NO_ERROR) {
-		printk("status is %d\n", rc);
-		return rc;
-	}
-	return 0;
+	return finish_netlink_packet(skb, DRBD_ADM_NEW_MINOR);
 }
 
 int windrbd_create_boot_device(void)
