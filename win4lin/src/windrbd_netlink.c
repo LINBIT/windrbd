@@ -561,6 +561,9 @@ out_free_info:
 }
 
 static int seq = 1000;
+static int expected_seq = 1000;
+
+#define KERNEL_PORT_ID  42
 
 	/* from: drbd-utils/user/shared/libgenl_windrbd.c */
 
@@ -571,7 +574,7 @@ static void fill_in_header(struct sk_buff *skb)
         n->nlmsg_len = skb->tail;
         n->nlmsg_flags |= NLM_F_REQUEST;
         n->nlmsg_seq = seq++;
-        n->nlmsg_pid = 0;	/* we are kernel */
+        n->nlmsg_pid = KERNEL_PORT_ID;	/* we are kernel */
 }
 
 extern struct genl_family drbd_genl_family;
@@ -582,6 +585,15 @@ int windrbd_create_boot_device(void)
 	int ret;
 	struct nlattr *nla;
 	struct drbd_genlmsghdr *dhdr;
+	char reply[NLMSG_GOODSIZE];
+	size_t reply_size;
+	int i;
+	struct nlmsghdr *header;
+	struct genlmsghdr *genlmsg_header;
+	struct drbd_genlmsghdr *drbd_header;
+
+	const char *resource_name = "w0";
+	int my_node_id = 2;
 
         drbd_genl_family.id = WINDRBD_NETLINK_FAMILY_ID;
 
@@ -594,11 +606,11 @@ int windrbd_create_boot_device(void)
 	dhdr->flags = 0;
 
 	nla = nla_nest_start(skb, DRBD_NLA_CFG_CONTEXT);
-	nla_put_string(skb, T_ctx_resource_name, "w0");
+	nla_put_string(skb, T_ctx_resource_name, resource_name);
 	nla_nest_end(skb, nla);
 
 	nla = nla_nest_start(skb, DRBD_NLA_RESOURCE_OPTS);
-	nla_put_u32(skb, T_node_id, 2);
+	nla_put_u32(skb, T_node_id, my_node_id);
 	nla_nest_end(skb, nla);
 
 	fill_in_header(skb);
@@ -606,6 +618,35 @@ int windrbd_create_boot_device(void)
 	ret = windrbd_process_netlink_packet(&skb->data, skb->tail);
 
 	nlmsg_free(skb);
+
+	for (i=0;i<100;i++) {
+		reply_size = windrbd_receive_netlink_packets(reply, sizeof(reply), KERNEL_PORT_ID);
+		if (reply_size > 0)
+			break;
+
+		msleep(100);
+	}
+	if (reply_size == 0) {
+		printk("Timeout waiting for netlink packet.\n");
+	} else {
+printk("i: %d\n", i);
+		header = (struct nlmsghdr*) reply;
+		genlmsg_header = nlmsg_data(header);
+		drbd_header = genlmsg_data(genlmsg_header);
+
+		if (header->nlmsg_seq != expected_seq)
+			printk("Warning: header->nlmsg_seq(%d) != expected_seq(%d)\n", header->nlmsg_seq, expected_seq);
+		expected_seq++;
+		if (header->nlmsg_pid != KERNEL_PORT_ID)
+			printk("Warning: header->nlmsg_pid(%d) != KERNEL_PORT_ID\n", header->nlmsg_pid, KERNEL_PORT_ID);
+		if (genlmsg_header->cmd != DRBD_ADM_NEW_RESOURCE)
+			printk("Warning: genlmsg_header->cmd(%d) != DRBD_ADM_NEW_RESOURCE (%d)\n", genlmsg_header->cmd, DRBD_ADM_NEW_RESOURCE);
+
+		printk("minor: %d ret_code: %d\n", drbd_header->minor, drbd_header->ret_code);
+/*		for (i=0;i<reply_size;i++) {
+			printk("reply[%d]: %x(%c)\n", i, (unsigned char) reply[i], (unsigned char) reply[i]);
+		} */
+	}
 
 	return ret;
 }
