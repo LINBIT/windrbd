@@ -77,6 +77,8 @@ For Winsat: IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS	0x560000	inc\api\ntddvol.h	Retr
 0x7400c		IOCTL_DISK_GET_DRIVE_LAYOUT
 0x560000	IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS
 
+0x2d5928	Something with get virtual hard disk (VHD) path: see https://github.com/Chuyu-Team/CPPHelper/blob/master/Base.cpp (we don't need that)
+
 PNP request: IRP_MN_QUERY_DEVICE_RELATIONS Parameters.QueryDeviceRelations.Type is 4
 
 Later (maybe never): 0x70024: FILE_DEVICE_DISK: IOCTL_DISK_PERFORMANCE

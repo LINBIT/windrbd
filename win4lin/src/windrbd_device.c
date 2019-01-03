@@ -560,8 +560,30 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		status = STATUS_SUCCESS;
 		break;
 
+	case IOCTL_DISK_GET_DRIVE_LAYOUT_EX:
+		struct _DRIVE_LAYOUT_INFORMATION_EX *dli;
+
+		dbg(KERN_DEBUG "IOCTL_DISK_GET_DRIVE_LAYOUT_EX: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
+
+		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _DRIVE_LAYOUT_INFORMATION_EX)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+		dli = (struct _DRIVE_LAYOUT_INFORMATION_EX*) irp->AssociatedIrp.SystemBuffer;
+
+		dli->PartitionStyle = 0;	/* MBR */
+		dli->PartitionCount = 1;
+		dli->Mbr.Signature = 0x12345678;
+//		dli->Mbr.Checksum = 0;
+
+		fill_partition_info_ex(&dli->PartitionEntry[0], dev);
+		irp->IoStatus.Information = sizeof(struct _DRIVE_LAYOUT_INFORMATION_EX);
+
+		status = STATUS_SUCCESS;
+		break;
 	default: 
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
+
 		status = STATUS_INVALID_DEVICE_REQUEST;
 	}
 
