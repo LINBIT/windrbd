@@ -195,3 +195,11 @@ View Generic Script Failover Clustering logs:
 Event Viewer (Start / Windows Administrative Tools / EventViewer)
 In the tree, select:
 Event Log / Applications and Services Log / Microsoft / Windows / Failover Clustering / Diagnostics
+
+-------
+
+make new windows boot menu entry:
+
+bcdedit /copy {default} /d "DRBD"
+
+bcdedit /enum all

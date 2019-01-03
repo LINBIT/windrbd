@@ -30,7 +30,7 @@
 #include <ntdddisk.h>
 
 /* Uncomment this if you want more debug output (disable for releases) */
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 #include "drbd_windows.h"
 #include "windrbd_device.h"
@@ -546,6 +546,18 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		irp->IoStatus.Information = 0;
 			/* TODO: trim */
 
+		break;
+
+	/* from reactos */
+
+#define IOCTL_VOLUME_BASE                 ((ULONG) 'V')
+#define IOCTL_VOLUME_IS_PARTITION \
+  CTL_CODE(IOCTL_VOLUME_BASE, 10, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
+	case IOCTL_VOLUME_IS_PARTITION:
+		dbg(KERN_DEBUG "IOCTL_VOLUME_IS_PARTITION: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
+
+		status = STATUS_SUCCESS;
 		break;
 
 	default: 

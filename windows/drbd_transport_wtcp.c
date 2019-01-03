@@ -499,6 +499,7 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 	case STATUS_NETWORK_UNREACHABLE: 	/* ENETUNREACH */
 	case STATUS_HOST_UNREACHABLE: 		/* EHOSTUNREACH */
 	case STATUS_TIMEOUT: 			/* ETIMEDOUT */
+	case STATUS_CONNECTION_ABORTED:
 		err = -EAGAIN;
 		break;
 	default:
