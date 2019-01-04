@@ -13,7 +13,7 @@ struct sockaddr_storage_win {
 }; 
 
 struct socket {
-	PWSK_SOCKET sk;
+	struct _WSK_SOCKET *wsk_socket;
 
 	int sk_sndtimeo;
 	int sk_rcvtimeo;
@@ -53,11 +53,8 @@ NTAPI
     __in ULONG			Flags
     );
 
-NTSTATUS
-NTAPI
-  CloseSocket(
-	__in PWSK_SOCKET WskSocket
-	);
+	/* TODO: static */
+NTSTATUS CloseSocket(struct _WSK_SOCKET *WskSocket);
 
 NTSTATUS
 NTAPI
@@ -107,16 +104,8 @@ __out_opt PVOID		OutputBuffer,
 __out_opt SIZE_T	*OutputSizeReturned
 );
 
-#define HTONS(n)		(((((unsigned short)(n) & 0xFFu  )) << 8) | \
-				(((unsigned short) (n) & 0xFF00u) >> 8))
-
 #define TC_PRIO_INTERACTIVE_BULK	1
 #define TC_PRIO_INTERACTIVE		1
-
-extern void sock_release(void  *sock);
-
-#define HTON_SHORT(n) (((((unsigned short)(n) & 0xFFu  )) << 8) | \
-    (((unsigned short)(n)& 0xFF00u) >> 8))
 
 char *GetSockErrorString(NTSTATUS status);
 

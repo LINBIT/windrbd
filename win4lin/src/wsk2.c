@@ -296,11 +296,7 @@ CreateSocket(
 	return (PWSK_SOCKET) WskSocket;
 }
 
-NTSTATUS
-NTAPI
-CloseSocket(
-	__in PWSK_SOCKET WskSocket
-)
+NTSTATUS CloseSocket(struct _WSK_SOCKET *WskSocket)
 {
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
@@ -460,7 +456,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 	ULONG Flags = 0;
 
-	if (wsk_state != WSK_INITIALIZED || !socket || !socket->sk || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
+	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
 	if (num != 1)
@@ -481,8 +477,8 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	mutex_lock(&socket->wsk_mutex);
 
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskSend(
-		socket->sk,
+	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
+		socket->wsk_socket,
 		&WskBuffer,
 		Flags,
 		Irp);
@@ -526,7 +522,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 				}
 				else
 				{
-					printk("tx error(%s) wsk(0x%p)\n", GetSockErrorString(Irp->IoStatus.Status), socket->sk);
+					printk("tx error(%s) wsk(0x%p)\n", GetSockErrorString(Irp->IoStatus.Status), socket->wsk_socket);
 					switch (Irp->IoStatus.Status)
 					{
 						case STATUS_IO_TIMEOUT:
@@ -615,7 +611,7 @@ SendPage(
 	NTSTATUS status;
 	int err;
 
-	if (wsk_state != WSK_INITIALIZED || !socket || !socket->sk || !page || ((int) len <= 0))
+	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !page || ((int) len <= 0))
 		return -EINVAL;
 
 	if (socket->error_status != STATUS_SUCCESS)
@@ -677,8 +673,8 @@ SendPage(
 
 
 	mutex_lock(&socket->wsk_mutex);
-	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskSend(
-		socket->sk,
+	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
+		socket->wsk_socket,
 		WskBuffer,
 		flags,
 		Irp);
@@ -724,7 +720,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	NTSTATUS status;
 	int err;
 
-	if (wsk_state != WSK_INITIALIZED || !socket || !socket->sk || !Buffer || !BufferSize)
+	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !Buffer || !BufferSize)
 		return -EINVAL;
 
 	if (socket->error_status != STATUS_SUCCESS)
@@ -780,8 +776,8 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	}
 	IoSetCompletionRoutine(irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
 
-	status = ((PWSK_PROVIDER_DATAGRAM_DISPATCH) socket->sk->Dispatch)->WskSendTo(
-		socket->sk,
+	status = ((PWSK_PROVIDER_DATAGRAM_DISPATCH) socket->wsk_socket->Dispatch)->WskSendTo(
+		socket->wsk_socket,
 		WskBuffer,
 		0,
 		RemoteAddress,
@@ -816,7 +812,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	PVOID       waitObjects[2];
 	int         wObjCount = 1;
 
-	if (wsk_state != WSK_INITIALIZED || !socket || !socket->sk || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
+	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
 	if (num != 1)
@@ -835,8 +831,8 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	}
 
 	mutex_lock(&socket->wsk_mutex);
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskReceive(
-				socket->sk,
+	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
+				socket->wsk_socket,
 				&WskBuffer,
 				0,
 				Irp);
@@ -874,7 +870,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
             }
             else
             {
-		printk("RECV(%s) wsk(0x%p) multiWait err(0x%x:%s)\n", thread->comm, socket->sk, Irp->IoStatus.Status, GetSockErrorString(Irp->IoStatus.Status));
+		printk("RECV(%s) wsk(0x%p) multiWait err(0x%x:%s)\n", thread->comm, socket->wsk_socket, Irp->IoStatus.Status, GetSockErrorString(Irp->IoStatus.Status));
 		if(Irp->IoStatus.Status)
 			BytesReceived = -ECONNRESET;
             }
@@ -1100,10 +1096,10 @@ int sock_create_kern(
 		goto out;
 	}
 
-	socket->sk = CreateSocket(AddressFamily, SocketType, Protocol,
+	socket->wsk_socket = CreateSocket(AddressFamily, SocketType, Protocol,
 			SocketContext, Dispatch, Flags);
 
-	if (socket->sk == NULL) {
+	if (socket->wsk_socket == NULL) {
 		err = -ENOMEM;
 		kfree(socket);
 		goto out;
@@ -1119,6 +1115,23 @@ int sock_create_kern(
 
 out:
 	return err;
+}
+
+void sock_release(struct socket *sock)
+{
+	NTSTATUS status;
+
+	if (sock == NULL)
+		return;
+
+	status = CloseSocket(sock->wsk_socket);
+	if (!NT_SUCCESS(status))
+	{
+		WDRBD_ERROR("error=0x%x\n", status);
+		return;
+	}
+
+	kfree(sock);
 }
 
 static void *init_wsk_thread;

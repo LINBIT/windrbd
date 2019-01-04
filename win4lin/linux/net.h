@@ -10,4 +10,6 @@ int kernel_sendmsg(struct socket *sock, struct msghdr *msg, struct kvec *vec,
 int kernel_recvmsg(struct socket *sock, struct msghdr *msg, struct kvec *vec,
 		   size_t num, size_t len, int flags);
 
+extern void sock_release(void  *sock);
+
 #endif

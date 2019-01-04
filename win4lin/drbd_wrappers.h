@@ -297,7 +297,7 @@ static inline int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_c
 {
     //UNREFERENCED_PARAMETER(sock);
     UNREFERENCED_PARAMETER(how);
-	return Disconnect(sock->sk);
+	return Disconnect(sock->wsk_socket);
 }
 #endif
 

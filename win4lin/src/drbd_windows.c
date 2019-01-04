@@ -1646,27 +1646,6 @@ void destroy_workqueue(struct workqueue_struct *wq)
 // printk("stopping a workqueue thread\n");
 }
 
-/* TODO: to wsk2.c */
-void sock_release(struct socket *sock)
-{
-	NTSTATUS status;
-	
-	if (!sock)
-	{
-		WDRBD_WARN("socket is null.\n");
-		return;
-	}
-
-	status = CloseSocket(sock->sk); 
-	if (!NT_SUCCESS(status)) 
-	{
-		WDRBD_ERROR("error=0x%x\n", status);
-		return;
-	}
-
-	kfree(sock);
-}
-
 //Linux/block/genhd.c
 void set_disk_ro(struct gendisk *disk, int flag)
 {
@@ -2940,42 +2919,6 @@ int drbd_backing_bdev_events(struct gendisk *device)
 {
     /* TODO */
 	return 0;
-}
-
-char * get_ip4(char *buf, struct sockaddr_in *sockaddr)
-{
-	sprintf(buf, "%u.%u.%u.%u:%u\0",
-		sockaddr->sin_addr.S_un.S_un_b.s_b1,
-		sockaddr->sin_addr.S_un.S_un_b.s_b2,
-		sockaddr->sin_addr.S_un.S_un_b.s_b3,
-		sockaddr->sin_addr.S_un.S_un_b.s_b4,
-		htons(sockaddr->sin_port)
-		);
-	return buf;
-}
-
-char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr)
-{
-	sprintf(buf, "[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x]:%u\0", 
-			sockaddr->sin6_addr.u.Byte[0],
-			sockaddr->sin6_addr.u.Byte[1],
-			sockaddr->sin6_addr.u.Byte[2],
-			sockaddr->sin6_addr.u.Byte[3],
-			sockaddr->sin6_addr.u.Byte[4],
-			sockaddr->sin6_addr.u.Byte[5],
-			sockaddr->sin6_addr.u.Byte[6],
-			sockaddr->sin6_addr.u.Byte[7],
-			sockaddr->sin6_addr.u.Byte[8],
-			sockaddr->sin6_addr.u.Byte[9],
-			sockaddr->sin6_addr.u.Byte[10],
-			sockaddr->sin6_addr.u.Byte[11],
-			sockaddr->sin6_addr.u.Byte[12],
-			sockaddr->sin6_addr.u.Byte[13],
-			sockaddr->sin6_addr.u.Byte[14],
-			sockaddr->sin6_addr.u.Byte[15],
-			htons(sockaddr->sin6_port)
-			);
-	return buf;
 }
 
 struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data,

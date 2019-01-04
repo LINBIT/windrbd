@@ -419,7 +419,7 @@ static void dtt_setbufsize(struct socket *socket, unsigned int snd,
 	}
 
 	if (rcv) {
-		status = ControlSocket(socket->sk, WskSetOption, SO_RCVBUF, SOL_SOCKET, sizeof(rcv), &rcv, 0, NULL, NULL);
+		status = ControlSocket(socket->wsk_socket, WskSetOption, SO_RCVBUF, SOL_SOCKET, sizeof(rcv), &rcv, 0, NULL, NULL);
 		if (status != STATUS_SUCCESS)
 			printk(KERN_WARNING "Could not set receive buffer size to %d, status is %x\n", rcv, status);
 	}
@@ -492,7 +492,7 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 	*  a free one dynamically.
 	*/
 	what = "bind before connect";
-	status = Bind(socket->sk, (PSOCKADDR)&my_addr);
+	status = Bind(socket->wsk_socket, (PSOCKADDR)&my_addr);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_ERROR("Bind() failed with status 0x%08X \n", status);
 		err = -EINVAL;
@@ -504,7 +504,7 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 	/* connect may fail, peer not yet available.
 	 * stay C_CONNECTING, don't go Disconnecting! */
 	what = "connect";
-	err = Connect(socket->sk, (struct sockaddr *) &peer_addr);
+	err = Connect(socket->wsk_socket, (struct sockaddr *) &peer_addr);
 	/* missing? EINPROGRESS EINTR ERESTARTSYS ECONNRESET EHOSTDOWN */
 	switch (err) {
 	case STATUS_SUCCESS:
@@ -566,7 +566,7 @@ static bool dtt_socket_ok_or_free(struct socket **socket)
 		return false;
 
     SIZE_T out = 0;
-    NTSTATUS Status = ControlSocket( (*socket)->sk, WskIoctl, SIO_WSK_QUERY_RECEIVE_BACKLOG, 0, 0, NULL, sizeof(SIZE_T), &out, NULL );
+    NTSTATUS Status = ControlSocket( (*socket)->wsk_socket, WskIoctl, SIO_WSK_QUERY_RECEIVE_BACKLOG, 0, 0, NULL, sizeof(SIZE_T), &out, NULL );
 	if (!NT_SUCCESS(Status)) {
         WDRBD_ERROR("socket(0x%p), ControlSocket(%s): SIO_WSK_QUERY_RECEIVE_BACKLOG failed=0x%x\n", (*socket), (*socket)->name, Status); // _WIN32
 		kernel_sock_shutdown(*socket, SHUT_RDWR);
@@ -575,7 +575,6 @@ static bool dtt_socket_ok_or_free(struct socket **socket)
         return false;
 	}
 
-    WDRBD_TRACE_SK("socket(0x%p) wsk(0x%p) ControlSocket(%s): backlog=%d\n", (*socket), (*socket)->sk, (*socket)->name, out); // _WIN32
     return true;
 }
 
@@ -786,7 +785,7 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 
 
 	path_t = container_of(path_d, struct dtt_path, path);
-	socket->sk = AcceptSocket;
+	socket->wsk_socket = AcceptSocket;
 	socket->error_status = STATUS_SUCCESS;
 	socket->send_buf_max = 4*1024*1024;
 	socket->send_buf_cur = 0;
@@ -868,7 +867,7 @@ static int dtt_init_listener(struct drbd_transport *transport,
 	}
 	sprintf(s_listen->name, "listen_sock\0");
 
-	status = ControlSocket(s_listen->sk, WskSetOption, SO_REUSEADDR, SOL_SOCKET, sizeof(ULONG), &InputBuffer, 0, NULL, NULL);
+	status = ControlSocket(s_listen->wsk_socket, WskSetOption, SO_REUSEADDR, SOL_SOCKET, sizeof(ULONG), &InputBuffer, 0, NULL, NULL);
 	if (!NT_SUCCESS(status)) {
 		WDRBD_ERROR("ControlSocket: s_listen socket SO_REUSEADDR: failed=0x%x\n", status);
 		err = -1;
@@ -877,7 +876,7 @@ static int dtt_init_listener(struct drbd_transport *transport,
 	dtt_setbufsize(s_listen, sndbuf_size, rcvbuf_size);
 
 	what = "bind before listen";
-	status = Bind(s_listen->sk, (PSOCKADDR)&my_addr);
+	status = Bind(s_listen->wsk_socket, (PSOCKADDR)&my_addr);
 
 	if (!NT_SUCCESS(status)) {
 		if(my_addr.ss_family == AF_INET) {
@@ -899,9 +898,9 @@ static int dtt_init_listener(struct drbd_transport *transport,
 	listener->listener.destroy = dtt_destroy_listener;
 	init_waitqueue_head(&listener->wait);
 
-	status = SetEventCallbacks(s_listen->sk, WSK_EVENT_ACCEPT);
+	status = SetEventCallbacks(s_listen->wsk_socket, WSK_EVENT_ACCEPT);
 	if (!NT_SUCCESS(status)) {
-		printk(KERN_ERR "Could not set event accept mask on socket %p\n", s_listen->sk);
+		printk(KERN_ERR "Could not set event accept mask on socket %p\n", s_listen);
 		/* TODO: clean up */
 		err = -1;
 		goto out;
@@ -964,15 +963,6 @@ static struct dtt_path *dtt_next_path(struct drbd_tcp_transport *tcp_transport, 
 
 	return container_of(drbd_path, struct dtt_path, path);
 }
-extern char * get_ip4(char *buf, struct sockaddr_in *sockaddr);
-extern char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr);
-char* get_ip(char *buf, struct sockaddr_storage_win *addr) {
-	if (addr->ss_family == AF_INET6)
-		get_ip6(buf, (struct sockaddr_in6*)addr);
-	else
-		get_ip4(buf, (struct sockaddr_in*)addr);
-	return buf;
-}
 
 static int dtt_connect(struct drbd_transport *transport)
 {
@@ -1012,9 +1002,6 @@ static int dtt_connect(struct drbd_transport *transport)
 
 	list_for_each_entry(struct drbd_path, drbd_path, &transport->paths, list) {
 		struct dtt_path *path = container_of(drbd_path, struct dtt_path, path);
-		WDRBD_TRACE("dtt_connect: dtt_connect: path: %s -> %s.\n", 
-				get_ip(sbuf, &path->path.my_addr),
-				get_ip(dbuf, &path->path.peer_addr));
 		if (!drbd_path->listener) {
 			kref_get(&drbd_path->kref);
 			mutex_unlock(&tcp_transport->paths_lock);
@@ -1032,16 +1019,9 @@ static int dtt_connect(struct drbd_transport *transport)
 	}
 
 	drbd_path = list_first_entry(&transport->paths, struct drbd_path, list);
-	WDRBD_TRACE("dtt_connect: drbd_path: %s -> %s \n",
-			get_ip(sbuf, &drbd_path->my_addr),
-			get_ip(dbuf, &drbd_path->peer_addr));
-
 
 	connect_to_path = container_of(drbd_path, struct dtt_path, path);
 	mutex_unlock(&tcp_transport->paths_lock);
-	WDRBD_TRACE("dtt_connect: connect_to_path: %s -> %s \n",
-			get_ip(sbuf, &connect_to_path->path.my_addr),
-			get_ip(dbuf, &connect_to_path->path.peer_addr));
 
 	do {
 		struct socket *s = NULL;
@@ -1054,16 +1034,6 @@ static int dtt_connect(struct drbd_transport *transport)
 			goto out;
 
 		if (s) {
-#ifdef WDRBD_TRACE_IP4
-			{
-				if (connect_to_path->path.my_addr.ss_family == AF_INET6) {
-					WDRBD_TRACE("dtt_connect: Connected: %s -> %s\n", get_ip6(sbuf, (struct sockaddr_in6*)&connect_to_path->path.my_addr), get_ip6(dbuf, (struct sockaddr_in6*)&connect_to_path->path.peer_addr));
-				} else {
-					WDRBD_TRACE("dtt_connect: Connected: %s -> %s\n", get_ip4(sbuf, (struct sockaddr_in*)&connect_to_path->path.my_addr), get_ip4(dbuf, (struct sockaddr_in*)&connect_to_path->path.peer_addr));
-				}
-			}
-#endif
-
 			bool use_for_data;
 
 			if (!first_path) {
@@ -1111,9 +1081,6 @@ retry:
 			goto out;
 
 		if (s) {
-			WDRBD_TRACE("dtt_connect:(%p) Accepted:  %s <- %s\n", KeGetCurrentThread(),
-					get_ip(sbuf, &connect_to_path->path.my_addr),
-					get_ip(dbuf, &connect_to_path->path.peer_addr));
 			int fp = dtt_receive_first_packet(tcp_transport, s);
 
 			if (!first_path) {
@@ -1170,7 +1137,7 @@ randomize:
 	drbd_path_event(transport, &connect_to_path->path);
 	dtt_put_listeners(transport);
 
-    status = ControlSocket(csocket->sk, WskSetOption, SO_REUSEADDR, SOL_SOCKET, sizeof(ULONG), &InputBuffer, 0, NULL, NULL);
+    status = ControlSocket(csocket->wsk_socket, WskSetOption, SO_REUSEADDR, SOL_SOCKET, sizeof(ULONG), &InputBuffer, 0, NULL, NULL);
     if (!NT_SUCCESS(status)) {
         WDRBD_ERROR("ControlSocket: SO_REUSEADDR: failed=0x%x\n", status);
         goto out;
@@ -1245,7 +1212,7 @@ static bool dtt_stream_ok(struct drbd_transport *transport, enum drbd_stream str
 
 	struct socket *socket = tcp_transport->stream[stream];
 
-	return socket && socket->sk;
+	return socket && socket->wsk_socket;
 }
 
 static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stream,

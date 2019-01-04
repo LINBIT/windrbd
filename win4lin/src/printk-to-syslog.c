@@ -9,6 +9,7 @@
 
 char g_syslog_ip[SYSLOG_IP_SIZE];
 
+	/* TODO: pointer and use linux-ified API */
 static struct socket printk_udp_socket;
 static SOCKADDR_IN printk_udp_target;
 
@@ -61,7 +62,7 @@ static int open_syslog_socket(void)
 	int err;
 
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
-	if (!printk_udp_socket.sk) {
+	if (!printk_udp_socket.wsk_socket) {
 		SOCKADDR_IN local;
 
 		printk_udp_target.sin_family = AF_INET;
@@ -77,13 +78,12 @@ static int open_syslog_socket(void)
 		local.sin_addr.s_addr = 0;
 		local.sin_port = 0;
 
-		printk_udp_socket.sk = CreateSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+		printk_udp_socket.wsk_socket = CreateSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
 			NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET);
-		if (printk_udp_socket.sk) {
-				/* TODO: what if this fails? */
-			if (!NT_SUCCESS(Bind(printk_udp_socket.sk, (SOCKADDR *)&local))) {
-				CloseSocket(printk_udp_socket.sk);
-				printk_udp_socket.sk = NULL;
+		if (printk_udp_socket.wsk_socket) {
+			if (!NT_SUCCESS(Bind(printk_udp_socket.wsk_socket, (SOCKADDR *)&local))) {
+				CloseSocket(printk_udp_socket.wsk_socket);
+				printk_udp_socket.wsk_socket = NULL;
 			} else {
 				printk_udp_socket.send_buf_max = 4*1024*1024;
 				printk_udp_socket.send_buf_cur = 0;
@@ -103,8 +103,8 @@ static int open_syslog_socket(void)
 
 					/* -ENETUNREACH on booting */
 				if (err < 0) {
-					CloseSocket(printk_udp_socket.sk);
-					printk_udp_socket.sk = NULL;
+					CloseSocket(printk_udp_socket.wsk_socket);
+					printk_udp_socket.wsk_socket = NULL;
 				}
 			}
 		} else {
@@ -245,11 +245,11 @@ int _printk(const char *func, const char *fmt, ...)
 
 	if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
 		mutex_lock(&send_mutex);
-		if (printk_udp_socket.sk == NULL) {
+		if (printk_udp_socket.wsk_socket == NULL) {
 			open_syslog_socket();
 		}
 
-		if (printk_udp_socket.sk) {
+		if (printk_udp_socket.wsk_socket) {
 			size_t last_tail = ring_buffer_tail;
 
 			for (line_pos = 0;
