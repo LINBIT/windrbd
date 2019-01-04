@@ -107,13 +107,6 @@ __out_opt PVOID		OutputBuffer,
 __out_opt SIZE_T	*OutputSizeReturned
 );
 
-NTSTATUS
-NTAPI
-GetRemoteAddress(
-__in PWSK_SOCKET	WskSocket,
-__out PSOCKADDR	pRemoteAddress
-);
-
 #define HTONS(n)		(((((unsigned short)(n) & 0xFFu  )) << 8) | \
 				(((unsigned short) (n) & 0xFF00u) >> 8))
 

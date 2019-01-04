@@ -17,7 +17,7 @@
 
 static LONG wsk_state = WSK_DEINITIALIZED;
 
-static WSK_REGISTRATION			g_WskRegistration;
+static WSK_REGISTRATION		g_WskRegistration;
 static WSK_PROVIDER_NPI		g_WskProvider;
 static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 
@@ -89,7 +89,7 @@ static NTSTATUS InitWskBuffer(
 	    IoFreeMdl(WskBuffer->Mdl);
 	}
 	if (may_printk)
-		WDRBD_ERROR("MmProbeAndLockPages failed. exception code=0x%x\n", GetExceptionCode());
+		printk(KERN_ERR "MmProbeAndLockPages failed. exception code=0x%x\n", GetExceptionCode());
 	return STATUS_INSUFFICIENT_RESOURCES;
     }
     return Status;
@@ -216,12 +216,12 @@ static NTSTATUS SocketsInit(void)
 		return Status;
 	}
 
-	WDRBD_INFO("WskCaptureProviderNPI start.\n");
+	printk("WskCaptureProviderNPI start.\n");
 	Status = WskCaptureProviderNPI(&g_WskRegistration, WSK_INFINITE_WAIT, &g_WskProvider);
-	WDRBD_INFO("WskCaptureProviderNPI done.\n"); // takes long time! msg out after MVL loaded.
+	printk("WskCaptureProviderNPI done.\n"); // takes long time! msg out after MVL loaded.
 
 	if (!NT_SUCCESS(Status)) {
-		WDRBD_ERROR("WskCaptureProviderNPI() failed with status 0x%08X\n", Status);
+		printk(KERN_ERR "WskCaptureProviderNPI() failed with status 0x%08X\n", Status);
 		WskDeregister(&g_WskRegistration);
 		InterlockedExchange(&wsk_state, WSK_DEINITIALIZED);
 		return Status;
@@ -319,7 +319,7 @@ CloseSocket(
 	if (Status == STATUS_PENDING) {
 		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime);
 		if (Status == STATUS_TIMEOUT) { // DW-1316 detour WskCloseSocket hang in Win7/x86.
-			WDRBD_WARN("Timeout... Cancel WskCloseSocket:%p. maybe required to patch WSK Kernel\n", WskSocket);
+			printk(KERN_WARNING "Timeout... Cancel WskCloseSocket:%p. maybe required to patch WSK Kernel\n", WskSocket);
 			IoCancelIrp(Irp);
 			// DW-1388: canceling must be completed before freeing the irp.
 			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
@@ -404,7 +404,7 @@ Disconnect(
 	if (Status == STATUS_PENDING) {
 		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime);
 		if(STATUS_TIMEOUT == Status) { // DW-712 timeout process for fast closesocket in congestion mode, instead of WSK_FLAG_ABORTIVE
-			WDRBD_INFO("Timeout... Cancel Disconnect socket:%p\n",WskSocket);
+			printk("Timeout... Cancel Disconnect socket:%p\n",WskSocket);
 			IoCancelIrp(Irp);
 			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		} 
@@ -526,7 +526,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 				}
 				else
 				{
-					WDRBD_WARN("tx error(%s) wsk(0x%p)\n", GetSockErrorString(Irp->IoStatus.Status), socket->sk);
+					printk("tx error(%s) wsk(0x%p)\n", GetSockErrorString(Irp->IoStatus.Status), socket->sk);
 					switch (Irp->IoStatus.Status)
 					{
 						case STATUS_IO_TIMEOUT:
@@ -549,7 +549,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			//	break;
 
 			default:
-				WDRBD_ERROR("Wait failed. status 0x%x\n", Status);
+				printk(KERN_ERR "Wait failed. status 0x%x\n", Status);
 				BytesSent = SOCKET_ERROR;
 			}
 		}
@@ -559,11 +559,11 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		if (Status == STATUS_SUCCESS)
 		{
 			BytesSent = (LONG) Irp->IoStatus.Information;
-			WDRBD_WARN("(%s) WskSend No pending: but sent(%d)!\n", current->comm, BytesSent);
+			printk("WskSend No pending: but sent(%d)!\n", BytesSent);
 		}
 		else
 		{
-			WDRBD_WARN("(%s) WskSend error(0x%x)\n", current->comm, Status);
+			printk("WskSend error(0x%x)\n", Status);
 			BytesSent = SOCKET_ERROR;
 		}
 	}
@@ -874,11 +874,9 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
             }
             else
             {
-				WDRBD_INFO("RECV(%s) wsk(0x%p) multiWait err(0x%x:%s)\n", thread->comm, socket->sk, Irp->IoStatus.Status, GetSockErrorString(Irp->IoStatus.Status));
-				if(Irp->IoStatus.Status)
-                {
-                    BytesReceived = -ECONNRESET;
-                }
+		printk("RECV(%s) wsk(0x%p) multiWait err(0x%x:%s)\n", thread->comm, socket->sk, Irp->IoStatus.Status, GetSockErrorString(Irp->IoStatus.Status));
+		if(Irp->IoStatus.Status)
+			BytesReceived = -ECONNRESET;
             }
             break;
 
@@ -900,11 +898,11 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		if (Status == STATUS_SUCCESS)
 		{
 			BytesReceived = (LONG) Irp->IoStatus.Information;
-			WDRBD_INFO("(%s) Rx No pending and data(%d) is avail\n", current->comm, BytesReceived);
+			printk("(%s) Rx No pending and data(%d) is avail\n", current->comm, BytesReceived);
 		}
 		else
 		{
-			WDRBD_TRACE("WskReceive Error Status=0x%x\n", Status); // EVENT_LOG!
+			printk("WskReceive Error Status=0x%x\n", Status); // EVENT_LOG!
 		}
 	}
 
@@ -1002,7 +1000,7 @@ ControlSocket(
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 	if (!NT_SUCCESS(Status)) {
-		WDRBD_ERROR("InitWskData() failed with status 0x%08X\n", Status);
+		printk(KERN_ERR "InitWskData() failed with status 0x%08X\n", Status);
 		return SOCKET_ERROR;
 	}
 
@@ -1027,51 +1025,6 @@ ControlSocket(
 	IoFreeIrp(Irp);
 	return Status;
 }
-
-NTSTATUS
-NTAPI
-GetRemoteAddress(
-	__in PWSK_SOCKET	WskSocket,
-	__out PSOCKADDR	pRemoteAddress
-)
-{
-	KEVENT		CompletionEvent = { 0 };
-	PIRP		Irp = NULL;
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
-
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		return SOCKET_ERROR;
-	}
-
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskGetRemoteAddress(WskSocket, pRemoteAddress, Irp);
-	if (Status != STATUS_SUCCESS)
-	{
-		if (Status == STATUS_PENDING) {
-			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-			Status = Irp->IoStatus.Status;
-		}
-
-		if (Status != STATUS_SUCCESS)
-		{
-			if (Status != STATUS_INVALID_DEVICE_STATE)
-			{
-				WDRBD_TRACE("STATUS_INVALID_DEVICE_STATE....\n");
-			}
-			else if (Status != STATUS_FILE_FORCED_CLOSED)
-			{
-				WDRBD_TRACE("STATUS_FILE_FORCED_CLOSED....\n");
-			}
-			else
-			{
-				WDRBD_TRACE("0x%x....\n", Status);
-			}
-		}
-	}
-	IoFreeIrp(Irp);
-	return Status;
-}
-
 
 NTSTATUS
 NTAPI

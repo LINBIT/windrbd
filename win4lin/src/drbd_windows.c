@@ -2949,7 +2949,7 @@ char * get_ip4(char *buf, struct sockaddr_in *sockaddr)
 		sockaddr->sin_addr.S_un.S_un_b.s_b2,
 		sockaddr->sin_addr.S_un.S_un_b.s_b3,
 		sockaddr->sin_addr.S_un.S_un_b.s_b4,
-		HTONS(sockaddr->sin_port)
+		htons(sockaddr->sin_port)
 		);
 	return buf;
 }
@@ -2973,7 +2973,7 @@ char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr)
 			sockaddr->sin6_addr.u.Byte[13],
 			sockaddr->sin6_addr.u.Byte[14],
 			sockaddr->sin6_addr.u.Byte[15],
-			HTONS(sockaddr->sin6_port)
+			htons(sockaddr->sin6_port)
 			);
 	return buf;
 }
