@@ -1171,13 +1171,9 @@ static void *init_wsk_thread;
  * ignore the return value.
  */
 
-KEVENT net_init_event;
-
 static NTSTATUS windrbd_init_wsk_thread(void *unused)
 {
 	NTSTATUS status;
-	struct socket *socket;
-        struct sockaddr_storage_win my_addr, peer_addr;
 	int err;
 
         /* We have to do that here in a separate thread, else Windows
@@ -1191,7 +1187,6 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 	} else {
 		printk("WSK initialized.\n");
 	}
-	KeSetEvent(&net_init_event, IO_NO_INCREMENT, FALSE);
 
 	err = windrbd_create_boot_device();
 	printk("windrbd_create_boot_device returned %d\n", err);
@@ -1203,8 +1198,6 @@ NTSTATUS windrbd_init_wsk(void)
 {
 	HANDLE h;
 	NTSTATUS status;
-
-	KeInitializeEvent(&net_init_event, SynchronizationEvent, FALSE);
 
 	status = windrbd_create_windows_thread(windrbd_init_wsk_thread, NULL, &init_wsk_thread);
 
