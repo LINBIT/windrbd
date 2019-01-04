@@ -1,6 +1,6 @@
 ﻿#include "drbd_windows.h"
 #include "windrbd_threads.h"
-#include "wsk2.h"
+#include <linux/socket.h>
 
 /* TODO: change the API in here to that of Linux kernel (so
  * we don't need to patch the tcp transport file.
@@ -437,27 +437,23 @@ char *GetSockErrorString(NTSTATUS status)
 	 * Even more now when we do not have send buf implemented here..
 	 */
 
-LONG
-NTAPI
-Send(
-	struct socket *socket,
-	__in PWSK_SOCKET	WskSocket,
-	__in PVOID			Buffer,
-	__in ULONG			BufferSize,
-	__in ULONG			Flags,
-	__in ULONG			Timeout
-)
+int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
+                   size_t num, size_t len)
 {
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
 	WSK_BUF		WskBuffer = { 0 };
 	LONG		BytesSent = SOCKET_ERROR; // DRBC_CHECK_WSK: SOCKET_ERROR be mixed EINVAL?
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
+	ULONG Flags = 0;
 
-	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || ((int) BufferSize <= 0))
-		return SOCKET_ERROR;
+	if (g_SocketsState != INITIALIZED || !socket || !socket->sk || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
+		return -EINVAL;
 
-	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, FALSE, TRUE);
+	if (num != 1)
+		return -EOPNOTSUPP;
+
+	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, FALSE, TRUE);
 	if (!NT_SUCCESS(Status)) {
 		return SOCKET_ERROR;
 	}
@@ -472,8 +468,8 @@ Send(
 
 	mutex_lock(&socket->wsk_mutex);
 
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskSend(
-		WskSocket,
+	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskSend(
+		socket->sk,
 		&WskBuffer,
 		Flags,
 		Irp);
@@ -485,13 +481,13 @@ Send(
 		LARGE_INTEGER	nWaitTime;
 		LARGE_INTEGER	*pTime;
 
-		if (Timeout <= 0 || Timeout == MAX_SCHEDULE_TIMEOUT)
+		if (socket->sk_sndtimeo <= 0 || socket->sk_sndtimeo == MAX_SCHEDULE_TIMEOUT)
 		{
 			pTime = NULL;
 		}
 		else
 		{
-			nWaitTime = RtlConvertLongToLargeInteger(-1 * Timeout * 1000 * 10);
+			nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk_sndtimeo * 1000 * 10);
 			pTime = &nWaitTime;
 		}
 		{
@@ -517,7 +513,7 @@ Send(
 				}
 				else
 				{
-					WDRBD_WARN("tx error(%s) wsk(0x%p)\n", GetSockErrorString(Irp->IoStatus.Status), WskSocket);
+					WDRBD_WARN("tx error(%s) wsk(0x%p)\n", GetSockErrorString(Irp->IoStatus.Status), socket->sk);
 					switch (Irp->IoStatus.Status)
 					{
 						case STATUS_IO_TIMEOUT:

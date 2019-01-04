@@ -1,7 +1,39 @@
-﻿#pragma once
+﻿#ifndef _WSK2_H
+#define _WSK2_H
+
 #include <ntddk.h>
 #include <wsk.h>
-#include "drbd_windows.h"
+#include <linux/mutex.h>
+#include <linux/spinlock.h>
+
+#define _K_SS_MAXSIZE	128 
+struct sockaddr_storage_win {
+	unsigned short	ss_family;		/* address family */
+	char	__data[_K_SS_MAXSIZE - sizeof(unsigned short)];
+}; 
+
+struct socket {
+	PWSK_SOCKET sk;
+
+	int sk_sndtimeo;
+	int sk_rcvtimeo;
+
+	int no_delay:1;
+
+	NTSTATUS error_status;
+
+	size_t send_buf_max;
+	size_t send_buf_cur;
+	spinlock_t send_buf_counters_lock;
+	KEVENT data_sent;
+
+	struct mutex wsk_mutex;
+
+	char name[32];
+};
+
+char * get_ip4(char *buf, struct sockaddr_in *sockaddr);
+char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr);
 
 /* TODO: one day we should convert the APIs here to be kernel
  * compatible and revert the drbd_transport_wtcp.c to be based on
@@ -52,16 +84,7 @@ Disconnect(
 	__in PWSK_SOCKET	WskSocket
 	);
 
-LONG
-NTAPI
-  Send(
-	struct socket *socket,
-	__in PWSK_SOCKET	WskSocket,
-	__in PVOID			Buffer,
-	__in ULONG			BufferSize,
-	__in ULONG			Flags,
-	__in ULONG			Timeout
-	);
+struct page;
 
 LONG
 NTAPI
@@ -145,3 +168,5 @@ SetEventCallbacks(
 );
 
 char *get_ip(char *buf, struct sockaddr_storage_win *addr);
+
+#endif

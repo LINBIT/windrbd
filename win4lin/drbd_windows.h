@@ -39,6 +39,8 @@
 #include <linux/bitops.h>
 #include "windrbd_threads.h"
 
+#include <linux/mutex.h>	/* for struct mutex */
+
 void init_windrbd(void);
 void msleep(int ms);
 
@@ -430,10 +432,6 @@ void windrbd_device_error(struct drbd_device *device, const char ** err_str_out,
 	(PCHAR)(ptr) - \
 	(ULONG_PTR)(&((type *)0)->member)))
 
-struct mutex {
-	KMUTEX mtx;
-};
-
 struct semaphore {
     KSEMAPHORE sem;
 };
@@ -456,37 +454,6 @@ struct kobject {
     struct kobj_type    *ktype;
     struct kref         kref;
 };
-
-#define _K_SS_MAXSIZE	128 
-struct sockaddr_storage_win {
-	unsigned short	ss_family;		/* address family */
-	char	__data[_K_SS_MAXSIZE - sizeof(unsigned short)];
-}; 
-
-#include <wsk.h>
-struct socket {
-	PWSK_SOCKET sk;
-
-	int sk_sndtimeo;
-	int sk_rcvtimeo;
-
-	int no_delay:1;
-
-	NTSTATUS error_status;
-
-	size_t send_buf_max;
-	size_t send_buf_cur;
-	spinlock_t send_buf_counters_lock;
-	KEVENT data_sent;
-
-	/* TODO: this is not needed, remove it again */
-	struct mutex wsk_mutex;
-
-	char name[32];
-};
-
-char * get_ip4(char *buf, struct sockaddr_in *sockaddr);
-char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr);
 
 
 #define WQ_MEM_RECLAIM 0
@@ -843,16 +810,7 @@ extern void write_lock_irq(spinlock_t *lock);
 extern void write_lock_bh(spinlock_t *lock);
 extern void write_unlock_irq(spinlock_t *lock);
 
-extern void mutex_init(struct mutex *m);
 extern void sema_init(struct semaphore *s, int limit);
-
-/* TODO: those should return int. These are Linux functions */
-extern NTSTATUS mutex_lock(struct mutex *m);
-extern int mutex_lock_interruptible(struct mutex *m);
-extern NTSTATUS mutex_lock_timeout(struct mutex *m, ULONG msTimeout);
-extern int mutex_is_locked(struct mutex *m);
-extern void mutex_unlock(struct mutex *m);
-extern int mutex_trylock(struct mutex *m);
 
 extern int kref_put(struct kref *kref, void (*release)(struct kref *kref));
 extern void kref_get(struct kref *kref);
@@ -1248,23 +1206,7 @@ void windrbd_shutdown_netlink(void);
 NTSTATUS windrbd_init_wsk(void);
 void windrbd_shutdown_wsk(void);
 
-extern
-NTSTATUS ReleaseWskNetlink();
-
-extern
-NTSTATUS WSKAPI
-NetlinkAcceptEvent(
-_In_  PVOID         SocketContext,
-_In_  ULONG         Flags,
-_In_  PSOCKADDR     LocalAddress,
-_In_  PSOCKADDR     RemoteAddress,
-_In_opt_  PWSK_SOCKET AcceptSocket,
-_Outptr_result_maybenull_ PVOID *AcceptSocketContext,
-_Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
-);
-
 extern int initRegistry(__in PUNICODE_STRING RegistryPath);
-extern void NTAPI NetlinkServerThread(PVOID p);
 extern void delete_block_device(struct kref *kref);
 
 extern void list_add_rcu(struct list_head *new, struct list_head *head);

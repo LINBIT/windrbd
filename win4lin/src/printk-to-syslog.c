@@ -1,7 +1,7 @@
 #include <wdm.h>
-#include <wsk2.h>
-#include <Ntstrsafe.h>
 #include "drbd_windows.h"
+#include <Ntstrsafe.h>
+#include <linux/socket.h>
 
 // #include <dpfilter.h> // included by wdm.h already
 

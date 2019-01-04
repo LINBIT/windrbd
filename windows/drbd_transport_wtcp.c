@@ -32,6 +32,7 @@
 #include <linux/drbd_limits.h>
 #include <linux/bitops.h>
 #include <linux/module.h>
+#include <linux/net.h>
 
 struct buffer {
 	void *base;
@@ -253,11 +254,20 @@ static void dtt_free(struct drbd_transport *transport, enum drbd_tr_free_op free
 static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *socket,
 		      void *buf, size_t size, unsigned msg_flags)
 {
-	size_t iov_len = size;
-	char* DataBuffer = (char*)buf;
+	struct kvec iov;
+	struct msghdr msg;
 	int rv, sent = 0;
 
 	/* THINK  if (signal_pending) return ... ? */
+
+	iov.iov_base = buf;
+	iov.iov_len  = size;
+
+	msg.msg_name       = NULL;
+	msg.msg_namelen    = 0;
+	msg.msg_control    = NULL;
+	msg.msg_controllen = 0;
+	msg.msg_flags      = msg_flags | MSG_NOSIGNAL;
 
 	do {
 		/* STRANGE
@@ -269,8 +279,7 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
  * do we need to block DRBD_SIG if sock == &meta.socket ??
  * otherwise wake_asender() might interrupt some send_*Ack !
  */
-		rv = Send(socket, socket->sk, DataBuffer, iov_len, 0, socket->sk_sndtimeo);
-
+		rv = kernel_sendmsg(socket, &msg, &iov, 1, iov.iov_len);
 		if (rv == -EAGAIN) {
 			struct drbd_transport *transport = &tcp_transport->transport;
 			enum drbd_stream stream =
@@ -289,8 +298,8 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
 		if (rv < 0)
 			break;
 		sent += rv;
-		DataBuffer += rv;
-		iov_len -= rv;
+		iov.iov_base = ((char*) iov.iov_base) + rv;
+		iov.iov_len  -= rv;
 	} while (sent < size);
 
 	if (rv <= 0)
