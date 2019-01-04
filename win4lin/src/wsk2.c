@@ -6,10 +6,20 @@
  * we don't need to patch the tcp transport file.
  */
 
-WSK_REGISTRATION			g_WskRegistration;
+/* Protects from API functions being called before the WSK provider is
+ * initialized (see SocketsInit).
+ */
+
+#define WSK_DEINITIALIZED	0
+#define WSK_DEINITIALIZING	1
+#define WSK_INITIALIZING	2
+#define WSK_INITIALIZED		3
+
+static LONG wsk_state = WSK_DEINITIALIZED;
+
+static WSK_REGISTRATION			g_WskRegistration;
 static WSK_PROVIDER_NPI		g_WskProvider;
 static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
-LONG						g_SocketsState = DEINITIALIZED;
 
 static NTSTATUS NTAPI CompletionRoutine(
 	__in PDEVICE_OBJECT	DeviceObject,
@@ -184,16 +194,17 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 	}
 }
 
-//
-// Library initialization routine
-//
+/* Library initialization routine: registers us and waits for
+ * provider NPI to become ready (which may take some time on boot,
+ * so do not call from DriverEntry, call it in a separate thread)
+ */
 
-NTSTATUS NTAPI SocketsInit()
+static NTSTATUS SocketsInit(void)
 {
 	static WSK_CLIENT_NPI	WskClient = { 0 };
 	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
 
-	if (InterlockedCompareExchange(&g_SocketsState, INITIALIZING, DEINITIALIZED) != DEINITIALIZED)
+	if (InterlockedCompareExchange(&wsk_state, WSK_INITIALIZING, WSK_DEINITIALIZED) != WSK_DEINITIALIZED)
 		return STATUS_ALREADY_REGISTERED;
 
 	WskClient.ClientContext = NULL;
@@ -201,7 +212,7 @@ NTSTATUS NTAPI SocketsInit()
 
 	Status = WskRegister(&WskClient, &g_WskRegistration);
 	if (!NT_SUCCESS(Status)) {
-		InterlockedExchange(&g_SocketsState, DEINITIALIZED);
+		InterlockedExchange(&wsk_state, WSK_DEINITIALIZED);
 		return Status;
 	}
 
@@ -212,26 +223,26 @@ NTSTATUS NTAPI SocketsInit()
 	if (!NT_SUCCESS(Status)) {
 		WDRBD_ERROR("WskCaptureProviderNPI() failed with status 0x%08X\n", Status);
 		WskDeregister(&g_WskRegistration);
-		InterlockedExchange(&g_SocketsState, DEINITIALIZED);
+		InterlockedExchange(&wsk_state, WSK_DEINITIALIZED);
 		return Status;
 	}
 
-	InterlockedExchange(&g_SocketsState, INITIALIZED);
+	InterlockedExchange(&wsk_state, WSK_INITIALIZED);
 	return STATUS_SUCCESS;
 }
 
-//
-// Library deinitialization routine
-//
+/* Deregister network programming interface (NPI) and wsk. Reverse of
+ * SocketsInit()
+ */
 
-VOID NTAPI SocketsDeinit()
+void SocketsDeinit(void)
 {
-	if (InterlockedCompareExchange(&g_SocketsState, INITIALIZED, DEINITIALIZING) != INITIALIZED)
+	if (InterlockedCompareExchange(&wsk_state, WSK_INITIALIZED, WSK_DEINITIALIZING) != WSK_INITIALIZED)
 		return;
 	WskReleaseProviderNPI(&g_WskRegistration);
 	WskDeregister(&g_WskRegistration);
 
-	InterlockedExchange(&g_SocketsState, DEINITIALIZED);
+	InterlockedExchange(&wsk_state, WSK_DEINITIALIZED);
 }
 
 PWSK_SOCKET
@@ -251,7 +262,7 @@ CreateSocket(
 	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
 
 	/* NO _printk HERE, WOULD LOOP */
-	if (g_SocketsState != INITIALIZED)
+	if (wsk_state != WSK_INITIALIZED)
 	{
 		return NULL;
 	}
@@ -297,7 +308,7 @@ CloseSocket(
 	LARGE_INTEGER	nWaitTime;
 	nWaitTime.QuadPart = (-1 * 1000 * 10000);   // wait 1000ms relative 
 
-	if (g_SocketsState != INITIALIZED || !WskSocket)
+	if (wsk_state != WSK_INITIALIZED || !WskSocket)
 		return STATUS_INVALID_PARAMETER;
 
 	Status = InitWskData(&Irp, &CompletionEvent, TRUE);
@@ -331,7 +342,7 @@ Connect(
 	PIRP		Irp = NULL;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
-	if (g_SocketsState != INITIALIZED || !WskSocket || !RemoteAddress)
+	if (wsk_state != WSK_INITIALIZED || !WskSocket || !RemoteAddress)
 		return STATUS_INVALID_PARAMETER;
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
@@ -376,7 +387,7 @@ Disconnect(
 	LARGE_INTEGER	nWaitTime;
 	nWaitTime.QuadPart = (-1 * 1000 * 10000);   // wait 1000ms relative 
 	
-	if (g_SocketsState != INITIALIZED || !WskSocket)
+	if (wsk_state != WSK_INITIALIZED || !WskSocket)
 		return STATUS_INVALID_PARAMETER;
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
@@ -437,6 +448,8 @@ char *GetSockErrorString(NTSTATUS status)
 	 * Even more now when we do not have send buf implemented here..
 	 */
 
+	/* TODO: implement MSG_MORE? */
+
 int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len)
 {
@@ -447,7 +460,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 	ULONG Flags = 0;
 
-	if (g_SocketsState != INITIALIZED || !socket || !socket->sk || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
+	if (wsk_state != WSK_INITIALIZED || !socket || !socket->sk || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
 	if (num != 1)
@@ -602,7 +615,7 @@ SendPage(
 	NTSTATUS status;
 	int err;
 
-	if (g_SocketsState != INITIALIZED || !socket || !socket->sk || !page || ((int) len <= 0))
+	if (wsk_state != WSK_INITIALIZED || !socket || !socket->sk || !page || ((int) len <= 0))
 		return -EINVAL;
 
 	if (socket->error_status != STATUS_SUCCESS)
@@ -711,7 +724,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	NTSTATUS status;
 	int err;
 
-	if (g_SocketsState != INITIALIZED || !socket || !socket->sk || !Buffer || !BufferSize)
+	if (wsk_state != WSK_INITIALIZED || !socket || !socket->sk || !Buffer || !BufferSize)
 		return -EINVAL;
 
 	if (socket->error_status != STATUS_SUCCESS)
@@ -803,7 +816,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	PVOID       waitObjects[2];
 	int         wObjCount = 1;
 
-	if (g_SocketsState != INITIALIZED || !socket || !socket->sk || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
+	if (wsk_state != WSK_INITIALIZED || !socket || !socket->sk || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
 	if (num != 1)
@@ -943,7 +956,7 @@ Bind(
 	PIRP		Irp = NULL;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
-	if (g_SocketsState != INITIALIZED || !WskSocket || !LocalAddress)
+	if (wsk_state != WSK_INITIALIZED || !WskSocket || !LocalAddress)
 		return STATUS_INVALID_PARAMETER;
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
@@ -984,7 +997,7 @@ ControlSocket(
 	PIRP		Irp = NULL;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
-	if (g_SocketsState != INITIALIZED || !WskSocket)
+	if (wsk_state != WSK_INITIALIZED || !WskSocket)
 		return SOCKET_ERROR;
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
@@ -1072,7 +1085,7 @@ __in LONG                      mask
     PWSK_SOCKET                WskSocket = NULL;
     NTSTATUS           Status = STATUS_UNSUCCESSFUL;
 
-    if (g_SocketsState != INITIALIZED)
+    if (wsk_state != WSK_INITIALIZED)
     {
         return Status;
     }
@@ -1208,9 +1221,9 @@ void windrbd_shutdown_wsk(void)
 
         status = windrbd_cleanup_windows_thread(init_wsk_thread);
 
-		/* socketsdeinit() ? */
-
         if (!NT_SUCCESS(status))
                 printk("windrbd_cleanup_windows_thread failed with status %x\n", status);
+
+	SocketsDeinit();
 }
 

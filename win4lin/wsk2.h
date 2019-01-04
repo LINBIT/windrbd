@@ -42,18 +42,6 @@ char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr);
 
 #define SOCKET_ERROR -1
 
-enum
-{
-	DEINITIALIZED,
-	DEINITIALIZING,
-	INITIALIZING,
-	INITIALIZED
-};
-
-NTSTATUS NTAPI SocketsInit();
-	/* TODO: never called: */
-VOID NTAPI SocketsDeinit();
-
 PWSK_SOCKET
 NTAPI
   CreateSocket(
