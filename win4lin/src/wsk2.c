@@ -787,14 +787,11 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	return status == STATUS_SUCCESS ? BufferSize : winsock_to_linux_error(status);
 }
 
-LONG NTAPI Receive(
-	struct socket *socket,
-	__in  PWSK_SOCKET	WskSocket,
-	__out PVOID			Buffer,
-	__in  ULONG			BufferSize,
-	__in  ULONG			Flags,
-	__in ULONG			Timeout
-)
+
+	/* TODO: implement MSG_WAITALL and MSG_NOSIGNAL */
+
+int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
+                   size_t num, size_t len, int flags)
 {
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
@@ -802,19 +799,17 @@ LONG NTAPI Receive(
 	LONG		BytesReceived = SOCKET_ERROR;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
-    struct      task_struct *thread = current;
-    PVOID       waitObjects[2];
-    int         wObjCount = 1;
+	struct      task_struct *thread = current;
+	PVOID       waitObjects[2];
+	int         wObjCount = 1;
 
-	if (g_SocketsState != INITIALIZED || !WskSocket || !Buffer || !BufferSize)
-		return SOCKET_ERROR;
+	if (g_SocketsState != INITIALIZED || !socket || !socket->sk || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
+		return -EINVAL;
 
-	if ((int) BufferSize <= 0)
-	{
-		return SOCKET_ERROR;
-	}
+	if (num != 1)
+		return -EOPNOTSUPP;
 
-	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer, TRUE, TRUE);
+	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, TRUE, TRUE);
 	if (!NT_SUCCESS(Status)) {
 		return SOCKET_ERROR;
 	}
@@ -827,10 +822,10 @@ LONG NTAPI Receive(
 	}
 
 	mutex_lock(&socket->wsk_mutex);
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskReceive(
-				WskSocket,
+	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->sk->Dispatch)->WskReceive(
+				socket->sk,
 				&WskBuffer,
-				Flags,
+				0,
 				Irp);
 	mutex_unlock(&socket->wsk_mutex);
 
@@ -839,13 +834,13 @@ LONG NTAPI Receive(
         LARGE_INTEGER	nWaitTime;
         LARGE_INTEGER	*pTime;
 
-        if (Timeout <= 0 || Timeout == MAX_SCHEDULE_TIMEOUT)
+        if (socket->sk_rcvtimeo <= 0 || socket->sk_rcvtimeo == MAX_SCHEDULE_TIMEOUT)
         {
             pTime = 0;
         }
         else
         {
-            nWaitTime = RtlConvertLongToLargeInteger(-1 * Timeout * 1000 * 10);
+            nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk_rcvtimeo * 1000 * 10);
             pTime = &nWaitTime;
         }
 
@@ -866,7 +861,7 @@ LONG NTAPI Receive(
             }
             else
             {
-				WDRBD_INFO("RECV(%s) wsk(0x%p) multiWait err(0x%x:%s)\n", thread->comm, WskSocket, Irp->IoStatus.Status, GetSockErrorString(Irp->IoStatus.Status));
+				WDRBD_INFO("RECV(%s) wsk(0x%p) multiWait err(0x%x:%s)\n", thread->comm, socket->sk, Irp->IoStatus.Status, GetSockErrorString(Irp->IoStatus.Status));
 				if(Irp->IoStatus.Status)
                 {
                     BytesReceived = -ECONNRESET;

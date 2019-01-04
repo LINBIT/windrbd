@@ -98,17 +98,6 @@ SendPage(
 
 int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress);
 
-LONG
-NTAPI
-Receive(
-	struct socket *socket,
-	__in  PWSK_SOCKET	WskSocket,
-	__out PVOID			Buffer,
-	__in  ULONG			BufferSize,
-	__in  ULONG			Flags,
-	__in ULONG			Timeout
-	);
-
 NTSTATUS
 NTAPI
 Bind(

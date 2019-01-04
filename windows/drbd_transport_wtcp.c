@@ -310,8 +310,15 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
 
 static int dtt_recv_short(struct socket *socket, void *buf, size_t size, int flags)
 {
-	flags = WSK_FLAG_WAITALL;
-	return Receive(socket, socket->sk, buf, size, flags, socket->sk_rcvtimeo);
+        struct kvec iov = {
+                .iov_base = buf,
+                .iov_len = size,
+        };
+        struct msghdr msg = {
+                .msg_flags = (flags ? flags : MSG_WAITALL | MSG_NOSIGNAL)
+        };
+
+        return kernel_recvmsg(socket, &msg, &iov, 1, size, msg.msg_flags);
 }
 
 static int dtt_recv(struct drbd_transport *transport, enum drbd_stream stream, void **buf, size_t size, int flags)
