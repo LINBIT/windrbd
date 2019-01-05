@@ -45,7 +45,8 @@ DisplayName      = "WinDRBD"
 Description      = "WinDRBD - storage replication over network for Microsoft Windows"
 ServiceBinary    = %12%\windrbd.sys     	;%windir%\system32\drivers\windrbd.sys
 ServiceType      = 1                    ;SERVICE_FILE_SYSTEM_DRIVER
-StartType        = 0			;start at boot time
+; StartType        = 0			;start at boot time
+StartType        = 3			;start manually
 ErrorControl     = 0                    ;SERVICE_ERROR_NORMAL
 AddReg           = WinDRBD.AddRegistry
 ; See HKLM/System/CurrentControlSet/Control/GroupOrderList for a list of possible values
