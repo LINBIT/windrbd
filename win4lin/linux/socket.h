@@ -1,7 +1,7 @@
 #ifndef _LINUX_SOCKET_H
 #define _LINUX_SOCKET_H
 
-#include "wsk2.h"
+#include "windrbd_winsocket.h"
 #include <linux/uio.h>	/* for struct kvec */
 
 /* msg flags. Most (but not all) of them unimplemented. */

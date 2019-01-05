@@ -108,7 +108,6 @@ ULONG RtlRandomEx(
 #include <stdint.h>
 #include <stdarg.h>
 #include <intrin.h>
-#include "wsk2.h"
 #include "drbd_wingenl.h"
 #include "linux/idr.h"
 #include "drbd_wrappers.h"

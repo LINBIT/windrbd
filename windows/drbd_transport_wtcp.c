@@ -26,12 +26,12 @@
 #include <linux/drbd_genl_api.h>
 #include <drbd_protocol.h>
 #include "drbd_wrappers.h"
-#include <wsk2.h>
 #include <linux/drbd_endian.h>
 // #include <drbd_int.h> A transport layer must not use internals
 #include <linux/drbd_limits.h>
 #include <linux/bitops.h>
 #include <linux/module.h>
+#include <linux/socket.h>
 #include <linux/net.h>
 
 struct buffer {
