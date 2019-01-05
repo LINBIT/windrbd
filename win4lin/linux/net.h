@@ -88,6 +88,8 @@ int kernel_sendmsg(struct socket *sock, struct msghdr *msg, struct kvec *vec,
 		   size_t num, size_t len);
 int kernel_recvmsg(struct socket *sock, struct msghdr *msg, struct kvec *vec,
 		   size_t num, size_t len, int flags);
+int kernel_setsockopt(struct socket *sock, int level, int optname, char *optval,
+		      unsigned int optlen);
 
 extern void sock_release(void  *sock);
 

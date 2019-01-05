@@ -2,6 +2,7 @@
 #include "windrbd_threads.h"
 #include <linux/socket.h>
 #include <linux/net.h>
+#include <linux/tcp.h>
 
 /* TODO: change the API in here to that of Linux kernel (so
  * we don't need to patch the tcp transport file.
@@ -495,7 +496,10 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return SOCKET_ERROR;
 	}
 
-	Flags |= WSK_FLAG_NODELAY;
+	if (socket->no_delay)
+		Flags |= WSK_FLAG_NODELAY;
+	else
+		Flags &= ~WSK_FLAG_NODELAY;
 
 	mutex_lock(&socket->wsk_mutex);
 
@@ -1009,6 +1013,33 @@ ControlSocket(
 
 	IoFreeIrp(Irp);
 	return Status;
+}
+
+
+int kernel_setsockopt(struct socket *sock, int level, int optname, char *optval,
+		      unsigned int optlen)
+{
+	if (sock == NULL)
+		return -EINVAL;
+
+	switch (level) {
+	case SOL_TCP:
+		switch (optname) {
+		case TCP_NODELAY:
+			if (optlen < 1)
+				return -EINVAL;
+
+			sock->no_delay = *optval;
+			break;
+		default:
+			return -EOPNOTSUPP;
+		}
+		break;
+
+	default:
+		return -EOPNOTSUPP;
+	}
+	return 0;
 }
 
 NTSTATUS

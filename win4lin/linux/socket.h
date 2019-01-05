@@ -41,6 +41,14 @@
 #define MSG_NO_SHARED_FRAGS 0x80000 /* sendpage() internal : page frags are not shared */
 #endif
 
+/* This is defined by Windows already, don't change them here. */
+#if 0
+#define SOL_SOCKET	1
+#endif
+#define SOL_TCP		6
+
+#define SO_KEEPALIVE	9
+
 /* This is somewhere inside arch, we for now only need it here. */
 
 typedef size_t __kernel_size_t;
