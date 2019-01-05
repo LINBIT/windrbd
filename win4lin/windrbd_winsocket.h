@@ -28,12 +28,10 @@ struct socket {
 	KEVENT data_sent;
 
 	struct mutex wsk_mutex;
+	const struct proto_ops *ops;
 
 	char name[32];
 };
-
-char * get_ip4(char *buf, struct sockaddr_in *sockaddr);
-char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr);
 
 /* TODO: one day we should convert the APIs here to be kernel
  * compatible and revert the drbd_transport_wtcp.c to be based on
@@ -42,39 +40,13 @@ char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr);
 
 #define SOCKET_ERROR -1
 
-NTSTATUS
-NTAPI
-  Connect(
-	__in PWSK_SOCKET	WskSocket,
-	__in PSOCKADDR		RemoteAddress
-	);
-
 extern
 NTSTATUS NTAPI
 Disconnect(
 	__in PWSK_SOCKET	WskSocket
 	);
 
-struct page;
-
-LONG
-NTAPI
-SendPage(
-        __in struct socket	*socket,
-        __in struct page        *page,
-        __in ULONG              offset,
-        __in ULONG              len,
-        __in ULONG              Flags
-);
-
 int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress);
-
-NTSTATUS
-NTAPI
-Bind(
-	__in PWSK_SOCKET	WskSocket,
-	__in PSOCKADDR		LocalAddress
-	);
 
 NTSTATUS
 NTAPI
@@ -111,7 +83,5 @@ SetEventCallbacks(
        __in PWSK_SOCKET Socket,
        __in LONG                       mask
 );
-
-char *get_ip(char *buf, struct sockaddr_storage_win *addr);
 
 #endif

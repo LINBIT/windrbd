@@ -492,37 +492,33 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 	*  a free one dynamically.
 	*/
 	what = "bind before connect";
-	status = Bind(socket->wsk_socket, (PSOCKADDR)&my_addr);
-	if (!NT_SUCCESS(status)) {
-		WDRBD_ERROR("Bind() failed with status 0x%08X \n", status);
-		err = -EINVAL;
-		goto out;
-	}
+	err = socket->ops->bind(socket, (struct sockaddr *) &my_addr, path->path.my_addr_len);
 	if (err < 0)
 		goto out;
 
 	/* connect may fail, peer not yet available.
 	 * stay C_CONNECTING, don't go Disconnecting! */
 	what = "connect";
-	err = Connect(socket->wsk_socket, (struct sockaddr *) &peer_addr);
-	/* missing? EINPROGRESS EINTR ERESTARTSYS ECONNRESET EHOSTDOWN */
-	switch (err) {
-	case STATUS_SUCCESS:
-		err = 0;
-		break;
-	case STATUS_CONNECTION_REFUSED: 	/* ECONNREFUSED */
-	case STATUS_INVALID_DEVICE_STATE:
-	case STATUS_NETWORK_UNREACHABLE: 	/* ENETUNREACH */
-	case STATUS_HOST_UNREACHABLE: 		/* EHOSTUNREACH */
-	case STATUS_TIMEOUT: 			/* ETIMEDOUT */
-	case STATUS_CONNECTION_ABORTED:
-		err = -EAGAIN;
-		break;
-	default:
-		tr_err(transport, "%s failed, detailed err = 0x%x\n", what, err);
-		err = - EINVAL;
-		break;
-	}
+        err = socket->ops->connect(socket, (struct sockaddr *) &peer_addr,
+                                   path->path.peer_addr_len, 0);
+        if (err < 0) { 
+                switch (err) {
+                case -ETIMEDOUT:
+                case -EINPROGRESS:
+                case -EINTR:
+                case -ERESTARTSYS:
+                case -ECONNREFUSED:
+                case -ECONNRESET:
+                case -ENETUNREACH:
+                case -EHOSTDOWN:
+                case -EHOSTUNREACH:
+                        err = -EAGAIN;
+                        break;
+                case -EINVAL: 
+                        err = -EADDRNOTAVAIL;
+                        break;
+                }
+        }
 
 out:
 	if (err < 0) {
@@ -739,6 +735,7 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	struct net_conf *nc;
 	KIRQL rcu_flags;
 	int timeout;
+	extern struct proto_ops winsocket_ops;
 
 	/* Already invalid again */
 	if (AcceptSocket == NULL)
@@ -792,6 +789,7 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	spin_lock_init(&socket->send_buf_counters_lock);
 	mutex_init(&socket->wsk_mutex);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
+	socket->ops = &winsocket_ops;
 
 	rcu_flags = rcu_read_lock();
 	nc = rcu_dereference(listener->transport->net_conf);
@@ -834,7 +832,7 @@ static int dtt_init_listener(struct drbd_transport *transport,
 			       const struct sockaddr *addr,
 			       struct drbd_listener *drbd_listener)
 {
-	int err, sndbuf_size, rcvbuf_size; 
+	int err, sndbuf_size, rcvbuf_size, addr_len;
 	struct sockaddr_storage_win my_addr;
 	struct dtt_listener *listener = container_of(drbd_listener, struct dtt_listener, listener);
 	NTSTATUS status;
@@ -875,22 +873,15 @@ static int dtt_init_listener(struct drbd_transport *transport,
 	}
 	dtt_setbufsize(s_listen, sndbuf_size, rcvbuf_size);
 
-	what = "bind before listen";
-	status = Bind(s_listen->wsk_socket, (PSOCKADDR)&my_addr);
+        addr_len = addr->sa_family == AF_INET6 ? sizeof(struct sockaddr_in6)
+                : sizeof(struct sockaddr_in);
 
-	if (!NT_SUCCESS(status)) {
-		if(my_addr.ss_family == AF_INET) {
-			WDRBD_ERROR("AF_INET Failed to socket Bind(). err(0x%x) %02X.%02X.%02X.%02X:0x%X%X\n", status, (UCHAR)my_addr.__data[2], (UCHAR)my_addr.__data[3], (UCHAR)my_addr.__data[4], (UCHAR)my_addr.__data[5],(UCHAR)my_addr.__data[0],(UCHAR)my_addr.__data[1]);
-		} else {
-			WDRBD_ERROR("AF_INET6 Failed to socket Bind(). err(0x%x) [%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X]:0x%X%X\n", status, (UCHAR)my_addr.__data[2],(UCHAR)my_addr.__data[3], (UCHAR)my_addr.__data[4],(UCHAR)my_addr.__data[5],
-					(UCHAR)my_addr.__data[6],(UCHAR)my_addr.__data[7], (UCHAR)my_addr.__data[8],(UCHAR)my_addr.__data[9],
-					(UCHAR)my_addr.__data[10],(UCHAR)my_addr.__data[11], (UCHAR)my_addr.__data[12],(UCHAR)my_addr.__data[13],
-					(UCHAR)my_addr.__data[14],(UCHAR)my_addr.__data[15],(UCHAR)my_addr.__data[16],(UCHAR)my_addr.__data[17],
-					(UCHAR)my_addr.__data[0], (UCHAR)my_addr.__data[1]);
-		}
-		err = -1;
-		goto out;
-	}
+	what = "bind before listen";
+        err = s_listen->ops->bind(s_listen, (struct sockaddr *)&my_addr, addr_len);
+        if (err < 0) {
+                what = "bind before listen";
+                goto out;
+        }
 
 	listener->s_listen = s_listen;
 
@@ -1233,13 +1224,13 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
 	dtt_update_congested(tcp_transport);
 	do {
 		int sent;
-		if (stream == DATA_STREAM)
+		if (stream == DATA_STREAM)	/* TODO: needed? */
 		{
 			// ignore rcu_dereference
 			transport->ko_count = transport->net_conf->ko_count;
 		}
 
-		sent = SendPage(socket, page, offset, len, 0);
+		sent = socket->ops->sendpage(socket, page, offset, len, msg_flags);
 		if (sent <= 0) {
 			if (sent == -EAGAIN) {
 				if (drbd_stream_send_timed_out(transport, stream))

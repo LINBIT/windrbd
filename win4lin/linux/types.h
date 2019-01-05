@@ -86,4 +86,6 @@ typedef void (*call_rcu_func_t)(struct rcu_head *head, rcu_callback_t func);
 #define __packed
 #endif
 
+typedef LONG_PTR ssize_t;
+
 #endif

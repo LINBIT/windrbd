@@ -1,6 +1,7 @@
 ﻿#include "drbd_windows.h"
 #include "windrbd_threads.h"
 #include <linux/socket.h>
+#include <linux/net.h>
 
 /* TODO: change the API in here to that of Linux kernel (so
  * we don't need to patch the tcp transport file.
@@ -20,6 +21,30 @@ static LONG wsk_state = WSK_DEINITIALIZED;
 static WSK_REGISTRATION		g_WskRegistration;
 static WSK_PROVIDER_NPI		g_WskProvider;
 static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
+
+static int winsock_to_linux_error(NTSTATUS status)
+{
+	switch (status) {
+	case STATUS_SUCCESS:
+		return 0;
+	case STATUS_CONNECTION_RESET:
+		return -ECONNRESET;
+	case STATUS_CONNECTION_DISCONNECTED:
+		return -ENOTCONN;
+	case STATUS_CONNECTION_ABORTED:
+		return -ECONNABORTED;
+	case STATUS_IO_TIMEOUT:
+		return -EAGAIN;
+	case STATUS_INVALID_DEVICE_STATE:
+		return -EINVAL;
+	case STATUS_NETWORK_UNREACHABLE:
+		return -ENETUNREACH;
+	default:
+		/* no printk's */
+		// printk("Unknown status %x, returning -EIO.\n", status);
+		return -EIO;
+	}
+}
 
 static NTSTATUS NTAPI CompletionRoutine(
 	__in PDEVICE_OBJECT	DeviceObject,
@@ -325,28 +350,27 @@ NTSTATUS CloseSocket(struct _WSK_SOCKET *WskSocket)
 	return Status;
 }
 
-NTSTATUS
-NTAPI
-Connect(
-	__in PWSK_SOCKET	WskSocket,
-	__in PSOCKADDR		RemoteAddress
-)
+static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockaddr_len, int flags)
 {
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
-	if (wsk_state != WSK_INITIALIZED || !WskSocket || !RemoteAddress)
-		return STATUS_INVALID_PARAMETER;
+		/* TODO: check/implement those: */
+	(void) sockaddr_len;
+	(void) flags;
+
+	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || vaddr == NULL)
+		return -EINVAL;
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 	if (!NT_SUCCESS(Status)) {
-		return Status;
+		return winsock_to_linux_error(Status);
 	}
 
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskConnect(
-		WskSocket,
-		RemoteAddress,
+	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskConnect(
+		socket->wsk_socket,
+		vaddr,
 		0,
 		Irp);
 
@@ -367,7 +391,7 @@ Connect(
 	}
 
 	IoFreeIrp(Irp);
-	return Status;
+	return winsock_to_linux_error(Status);
 }
 
 NTSTATUS NTAPI
@@ -569,39 +593,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	return BytesSent;
 }
 
-int winsock_to_linux_error(NTSTATUS status)
-{
-	switch (status) {
-	case STATUS_SUCCESS:
-		return 0;
-	case STATUS_CONNECTION_RESET:
-		return -ECONNRESET;
-	case STATUS_CONNECTION_DISCONNECTED:
-		return -ENOTCONN;
-	case STATUS_CONNECTION_ABORTED:
-		return -ECONNABORTED;
-	case STATUS_IO_TIMEOUT:
-		return -EAGAIN;
-	case STATUS_INVALID_DEVICE_STATE:
-		return -EINVAL;
-	case STATUS_NETWORK_UNREACHABLE:
-		return -ENETUNREACH;
-	default:
-		/* no printk's */
-		// printk("Unknown status %x, returning -EIO.\n", status);
-		return -EIO;
-	}
-}
-
-LONG
-NTAPI
-SendPage(
-	__in struct socket *socket,
-	__in struct page	*page,
-	__in ULONG		offset,
-	__in ULONG		len,
-	__in ULONG		flags	
-)
+ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_t len, int flags)
 {
 	struct _IRP *Irp;
 	struct _WSK_BUF *WskBuffer;
@@ -937,28 +929,28 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 }
 
 /* Must not printk() from in here, might loop forever */
-NTSTATUS
-NTAPI
-Bind(
-	__in PWSK_SOCKET	WskSocket,
-	__in PSOCKADDR		LocalAddress
+static int wsk_bind(
+	struct socket *socket,
+	struct sockaddr *myaddr,
+	int sockaddr_len
 )
 {
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
+	(void) sockaddr_len;	/* TODO: check this parameter */
 
-	if (wsk_state != WSK_INITIALIZED || !WskSocket || !LocalAddress)
-		return STATUS_INVALID_PARAMETER;
+	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || myaddr == NULL)
+		return -EINVAL;
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 	if (!NT_SUCCESS(Status)) {
-		return Status;
+		return winsock_to_linux_error(Status);
 	}
 
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskBind(
-		WskSocket,
-		LocalAddress,
+	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskBind(
+		socket->wsk_socket,
+		myaddr,
 		0,
 		Irp);
 
@@ -967,8 +959,7 @@ Bind(
 		Status = Irp->IoStatus.Status;
 	}
 	IoFreeIrp(Irp);
-		/* TODO: winsock_to_linux() one day */
-	return Status;
+	return winsock_to_linux_error(Status);
 }
 
 NTSTATUS
@@ -1073,6 +1064,12 @@ __in LONG                      mask
     return Status;
 }
 
+struct proto_ops winsocket_ops = {
+	.bind = wsk_bind,
+	.connect = wsk_connect,
+	.sendpage = wsk_sendpage
+};
+
 int sock_create_kern(
 	PVOID                   net_namespace,
 	ADDRESS_FAMILY		AddressFamily,
@@ -1108,6 +1105,7 @@ int sock_create_kern(
 	spin_lock_init(&socket->send_buf_counters_lock);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
 	mutex_init(&socket->wsk_mutex);
+	socket->ops = &winsocket_ops;
 
 	*out = socket;
 
