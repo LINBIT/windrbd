@@ -60,9 +60,10 @@ int my_inet_aton(const char *cp, struct in_addr *inp)
 static int open_syslog_socket(void)
 {
 	int err;
+	NTSTATUS status;
 
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
-	if (printk_udp_socket) {
+	if (printk_udp_socket == NULL) {
 		SOCKADDR_IN local;
 
 		printk_udp_target.sin_family = AF_INET;
@@ -80,7 +81,10 @@ static int open_syslog_socket(void)
 		err = sock_create_kern(NULL, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
 			NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET, &printk_udp_socket);
 		if (err == 0) {
-			if (!NT_SUCCESS(Bind(printk_udp_socket->wsk_socket, (SOCKADDR *)&local))) {
+			status = Bind(printk_udp_socket->wsk_socket, (SOCKADDR *)&local);
+			if (!NT_SUCCESS(status)) {
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Failed to Bind socket, status is %x\n", status);
+
 				sock_release(printk_udp_socket);
 				printk_udp_socket = NULL;
 			} else {
@@ -92,6 +96,8 @@ static int open_syslog_socket(void)
 
 					/* -ENETUNREACH on booting */
 				if (err < 0) {
+					DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Failed to SendTo to syslog IP %s, err is %x\n", g_syslog_ip, err);
+
 					sock_release(printk_udp_socket);
 					printk_udp_socket = NULL;
 				}
