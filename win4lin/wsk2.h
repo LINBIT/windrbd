@@ -42,20 +42,6 @@ char * get_ip6(char *buf, struct sockaddr_in6 *sockaddr);
 
 #define SOCKET_ERROR -1
 
-PWSK_SOCKET
-NTAPI
-  CreateSocket(
-    __in ADDRESS_FAMILY	AddressFamily,
-    __in USHORT			SocketType,
-    __in ULONG			Protocol,
-    __in PVOID			SocketContext,
-    __in PWSK_CLIENT_LISTEN_DISPATCH Dispatch,
-    __in ULONG			Flags
-    );
-
-	/* TODO: static */
-NTSTATUS CloseSocket(struct _WSK_SOCKET *WskSocket);
-
 NTSTATUS
 NTAPI
   Connect(

@@ -245,9 +245,7 @@ void SocketsDeinit(void)
 	InterlockedExchange(&wsk_state, WSK_DEINITIALIZED);
 }
 
-PWSK_SOCKET
-NTAPI
-CreateSocket(
+static PWSK_SOCKET CreateSocket(
 	__in ADDRESS_FAMILY		AddressFamily,
 	__in USHORT			SocketType,
 	__in ULONG			Protocol,

@@ -1,6 +1,7 @@
 #include <wdm.h>
 #include "drbd_windows.h"
 #include <Ntstrsafe.h>
+#include <linux/net.h>
 #include <linux/socket.h>
 
 // #include <dpfilter.h> // included by wdm.h already
@@ -9,8 +10,7 @@
 
 char g_syslog_ip[SYSLOG_IP_SIZE];
 
-	/* TODO: pointer and use linux-ified API */
-static struct socket printk_udp_socket;
+static struct socket *printk_udp_socket;
 static SOCKADDR_IN printk_udp_target;
 
 static char ring_buffer[RING_BUFFER_SIZE];
@@ -62,12 +62,11 @@ static int open_syslog_socket(void)
 	int err;
 
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
-	if (!printk_udp_socket.wsk_socket) {
+	if (printk_udp_socket) {
 		SOCKADDR_IN local;
 
 		printk_udp_target.sin_family = AF_INET;
-			/* Same as htons(514) ;) */
-		printk_udp_target.sin_port = 514;
+		printk_udp_target.sin_port = htons(514);
 
 		if (my_inet_aton(g_syslog_ip, &printk_udp_target.sin_addr) < 0) {
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Invalid syslog IP address: %s\nYou will NOT see any output produced by printk (and pr_err, ...)\n", g_syslog_ip);
@@ -78,33 +77,23 @@ static int open_syslog_socket(void)
 		local.sin_addr.s_addr = 0;
 		local.sin_port = 0;
 
-		printk_udp_socket.wsk_socket = CreateSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-			NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET);
-		if (printk_udp_socket.wsk_socket) {
-			if (!NT_SUCCESS(Bind(printk_udp_socket.wsk_socket, (SOCKADDR *)&local))) {
-				CloseSocket(printk_udp_socket.wsk_socket);
-				printk_udp_socket.wsk_socket = NULL;
+		err = sock_create_kern(NULL, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+			NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET, &printk_udp_socket);
+		if (err == 0) {
+			if (!NT_SUCCESS(Bind(printk_udp_socket->wsk_socket, (SOCKADDR *)&local))) {
+				sock_release(printk_udp_socket);
+				printk_udp_socket = NULL;
 			} else {
-				printk_udp_socket.send_buf_max = 4*1024*1024;
-				printk_udp_socket.send_buf_cur = 0;
-				spin_lock_init(&printk_udp_socket.send_buf_counters_lock);
-				KeInitializeEvent(&printk_udp_socket.data_sent, SynchronizationEvent, FALSE);
-
-				printk_udp_socket.error_status = STATUS_SUCCESS;
-				mutex_init(&printk_udp_socket.wsk_mutex);
-	
-				strcpy(printk_udp_socket.name, "debug socket");
-
 				char *probe = "Starting printk ...\n";
-				err = SendTo(&printk_udp_socket, 
+				err = SendTo(printk_udp_socket,
 						probe,
 						strlen(probe),
 						(PSOCKADDR)&printk_udp_target);
 
 					/* -ENETUNREACH on booting */
 				if (err < 0) {
-					CloseSocket(printk_udp_socket.wsk_socket);
-					printk_udp_socket.wsk_socket = NULL;
+					sock_release(printk_udp_socket);
+					printk_udp_socket = NULL;
 				}
 			}
 		} else {
@@ -245,11 +234,11 @@ int _printk(const char *func, const char *fmt, ...)
 
 	if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
 		mutex_lock(&send_mutex);
-		if (printk_udp_socket.wsk_socket == NULL) {
+		if (printk_udp_socket == NULL) {
 			open_syslog_socket();
 		}
 
-		if (printk_udp_socket.wsk_socket) {
+		if (printk_udp_socket != NULL) {
 			size_t last_tail = ring_buffer_tail;
 
 			for (line_pos = 0;
@@ -266,7 +255,7 @@ int _printk(const char *func, const char *fmt, ...)
 					if (line_pos == 0)
 						continue;
 
-					status = SendTo(&printk_udp_socket, 
+					status = SendTo(printk_udp_socket,
 							line,
 							line_pos,
 							(PSOCKADDR)&printk_udp_target);
