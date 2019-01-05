@@ -82,6 +82,12 @@ struct proto_ops {
 #endif
 };
 
+enum sock_shutdown_cmd {
+	SHUT_RD = 0,
+	SHUT_WR = 1,
+	SHUT_RDWR = 2,
+};
+
 struct socket;
 
 int kernel_sendmsg(struct socket *sock, struct msghdr *msg, struct kvec *vec,
@@ -90,6 +96,7 @@ int kernel_recvmsg(struct socket *sock, struct msghdr *msg, struct kvec *vec,
 		   size_t num, size_t len, int flags);
 int kernel_setsockopt(struct socket *sock, int level, int optname, char *optval,
 		      unsigned int optlen);
+int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how);
 
 extern void sock_release(void  *sock);
 

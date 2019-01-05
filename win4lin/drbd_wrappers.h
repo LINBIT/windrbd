@@ -288,17 +288,6 @@ static inline void drbd_plug_device(struct request_queue *q)
 
 #ifndef COMPAT_HAVE_SOCK_SHUTDOWN
 #define COMPAT_HAVE_SOCK_SHUTDOWN 1
-enum sock_shutdown_cmd {
-	SHUT_RD = 0,
-	SHUT_WR = 1,
-	SHUT_RDWR = 2,
-};
-static inline int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
-{
-    //UNREFERENCED_PARAMETER(sock);
-    UNREFERENCED_PARAMETER(how);
-	return Disconnect(sock->wsk_socket);
-}
 #endif
 
 

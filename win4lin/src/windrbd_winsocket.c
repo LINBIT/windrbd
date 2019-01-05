@@ -395,27 +395,28 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	return winsock_to_linux_error(Status);
 }
 
-NTSTATUS NTAPI
-Disconnect(
-	__in PWSK_SOCKET	WskSocket
-)
+int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 {
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 	LARGE_INTEGER	nWaitTime;
+		/* TODO: this is also not a good idea ... */
 	nWaitTime.QuadPart = (-1 * 1000 * 10000);   // wait 1000ms relative 
 	
-	if (wsk_state != WSK_INITIALIZED || !WskSocket)
-		return STATUS_INVALID_PARAMETER;
+		/* TODO: one day ... */
+	(void) how;
+
+	if (wsk_state != WSK_INITIALIZED || sock == NULL || sock->wsk_socket == NULL)
+		return -EINVAL;
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 	if (!NT_SUCCESS(Status)) {
-		return Status;
+		return winsock_to_linux_error(Status);
 	}
 	
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskDisconnect(
-		WskSocket,
+	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) sock->wsk_socket->Dispatch)->WskDisconnect(
+		sock->wsk_socket,
 		NULL,
 		0,//WSK_FLAG_ABORTIVE,=> when disconnecting, ABORTIVE was going to standalone, and then we removed ABORTIVE
 		Irp);
@@ -423,7 +424,7 @@ Disconnect(
 	if (Status == STATUS_PENDING) {
 		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime);
 		if(STATUS_TIMEOUT == Status) { // DW-712 timeout process for fast closesocket in congestion mode, instead of WSK_FLAG_ABORTIVE
-			printk("Timeout... Cancel Disconnect socket:%p\n",WskSocket);
+			printk("Timeout... Cancel Disconnect socket:%p\n", sock->wsk_socket);
 			IoCancelIrp(Irp);
 			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		} 
@@ -432,35 +433,9 @@ Disconnect(
 	}
 
 	IoFreeIrp(Irp);
-	return Status;
+	return winsock_to_linux_error(Status);
 }
 
-char *GetSockErrorString(NTSTATUS status)
-{
-	char *ErrorString;
-	switch (status)
-	{
-		case STATUS_CONNECTION_RESET:
-			ErrorString = "CONNECTION_RESET";
-			break;
-		case STATUS_CONNECTION_DISCONNECTED:
-			ErrorString = "CONNECTION_DISCONNECTED";
-			break;
-		case STATUS_CONNECTION_ABORTED:
-			ErrorString = "CONNECTION_ABORTED";
-			break;
-		case STATUS_IO_TIMEOUT:
-			ErrorString = "IO_TIMEOUT";
-			break;
-		case STATUS_INVALID_DEVICE_STATE:
-			ErrorString = "INVALID_DEVICE_STATE";
-			break;
-		default:
-			ErrorString = "SOCKET_IO_ERROR";
-			break;
-	}
-	return ErrorString;
-}
 
 	/* TODO: maybe one day we also eliminate this function. It
 	 * is currently only used for sending the first packet.
@@ -475,7 +450,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
 	WSK_BUF		WskBuffer = { 0 };
-	LONG		BytesSent = SOCKET_ERROR; // DRBC_CHECK_WSK: SOCKET_ERROR be mixed EINVAL?
+	LONG		BytesSent;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 	ULONG Flags = 0;
 
@@ -487,13 +462,13 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, FALSE, TRUE);
 	if (!NT_SUCCESS(Status)) {
-		return SOCKET_ERROR;
+		return winsock_to_linux_error(Status);
 	}
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 	if (!NT_SUCCESS(Status)) {
 		FreeWskBuffer(&WskBuffer, 1);
-		return SOCKET_ERROR;
+		return winsock_to_linux_error(Status);
 	}
 
 	if (socket->no_delay)
@@ -548,7 +523,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 				}
 				else
 				{
-					printk("tx error(%s) wsk(0x%p)\n", GetSockErrorString(Irp->IoStatus.Status), socket->wsk_socket);
+					printk("tx error(%x) wsk(0x%p)\n",Irp->IoStatus.Status, socket->wsk_socket);
 					switch (Irp->IoStatus.Status)
 					{
 						case STATUS_IO_TIMEOUT:
@@ -572,7 +547,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 			default:
 				printk(KERN_ERR "Wait failed. status 0x%x\n", Status);
-				BytesSent = SOCKET_ERROR;
+				BytesSent = winsock_to_linux_error(Status);
 			}
 		}
 	}
@@ -586,7 +561,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		else
 		{
 			printk("WskSend error(0x%x)\n", Status);
-			BytesSent = SOCKET_ERROR;
+			BytesSent = winsock_to_linux_error(Status);
 		}
 	}
 
@@ -799,8 +774,8 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
 	WSK_BUF		WskBuffer = { 0 };
-	LONG		BytesReceived = SOCKET_ERROR;
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
+	LONG		BytesReceived;
+	NTSTATUS	Status;
 
 	struct      task_struct *thread = current;
 	PVOID       waitObjects[2];
@@ -814,14 +789,14 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, TRUE, TRUE);
 	if (!NT_SUCCESS(Status)) {
-		return SOCKET_ERROR;
+		return winsock_to_linux_error(Status);
 	}
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 
 	if (!NT_SUCCESS(Status)) {
 		FreeWskBuffer(&WskBuffer, 1);
-		return SOCKET_ERROR;
+		return winsock_to_linux_error(Status);
 	}
 
 	mutex_lock(&socket->wsk_mutex);
@@ -864,9 +839,8 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
             }
             else
             {
-		printk("RECV(%s) wsk(0x%p) multiWait err(0x%x:%s)\n", thread->comm, socket->wsk_socket, Irp->IoStatus.Status, GetSockErrorString(Irp->IoStatus.Status));
-		if(Irp->IoStatus.Status)
-			BytesReceived = -ECONNRESET;
+		printk("RECV wsk(0x%p) multiWait err(0x%x)\n", socket->wsk_socket, Irp->IoStatus.Status);
+		BytesReceived = winsock_to_linux_error(Irp->IoStatus.Status);
             }
             break;
 
@@ -879,7 +853,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
             break;
 
         default:
-            BytesReceived = SOCKET_ERROR;
+            BytesReceived = winsock_to_linux_error(Status);
             break;
         }
     }
@@ -893,6 +867,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		else
 		{
 			printk("WskReceive Error Status=0x%x\n", Status); // EVENT_LOG!
+			BytesReceived = winsock_to_linux_error(Status);
 		}
 	}
 
@@ -985,12 +960,12 @@ ControlSocket(
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
 	if (wsk_state != WSK_INITIALIZED || !WskSocket)
-		return SOCKET_ERROR;
+		return -EINVAL;
 
 	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
 	if (!NT_SUCCESS(Status)) {
 		printk(KERN_ERR "InitWskData() failed with status 0x%08X\n", Status);
-		return SOCKET_ERROR;
+		return winsock_to_linux_error(Status);
 	}
 
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskControlSocket(
@@ -1019,6 +994,9 @@ ControlSocket(
 int kernel_setsockopt(struct socket *sock, int level, int optname, char *optval,
 		      unsigned int optlen)
 {
+	NTSTATUS status;
+	ULONG flag;
+
 	if (sock == NULL)
 		return -EINVAL;
 
@@ -1035,6 +1013,21 @@ int kernel_setsockopt(struct socket *sock, int level, int optname, char *optval,
 			return -EOPNOTSUPP;
 		}
 		break;
+
+	case SOL_SOCKET:
+		switch (optname) {
+		case SO_REUSEADDR:
+			if (optlen < 1)
+				return -EINVAL;
+
+			flag = *optval;	
+			status = ControlSocket(sock->wsk_socket, WskSetOption, SO_REUSEADDR, SOL_SOCKET, sizeof(flag), &flag, 0, NULL, NULL);
+
+			return winsock_to_linux_error(status);
+
+		default:
+			return -EOPNOTSUPP;
+		}
 
 	default:
 		return -EOPNOTSUPP;

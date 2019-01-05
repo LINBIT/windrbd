@@ -833,7 +833,7 @@ static int dtt_init_listener(struct drbd_transport *transport,
 	struct socket *s_listen;
 	struct net_conf *nc;
 	const char *what;
-	LONG InputBuffer = 1;
+	int val;
 
 	rcu_flags = rcu_read_lock();
 	nc = rcu_dereference(transport->net_conf);
@@ -856,12 +856,11 @@ static int dtt_init_listener(struct drbd_transport *transport,
 		s_listen = NULL;
 		goto out;
 	}
-	sprintf(s_listen->name, "listen_sock\0");
 
-	status = ControlSocket(s_listen->wsk_socket, WskSetOption, SO_REUSEADDR, SOL_SOCKET, sizeof(ULONG), &InputBuffer, 0, NULL, NULL);
-	if (!NT_SUCCESS(status)) {
-		WDRBD_ERROR("ControlSocket: s_listen socket SO_REUSEADDR: failed=0x%x\n", status);
-		err = -1;
+	val = 1;
+	err = kernel_setsockopt(s_listen, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(val));
+	if (err < 0) {
+		printk("kernel_setsockopt SO_REUSEADDR failed\n");
 		goto out;
 	}
 	dtt_setbufsize(s_listen, sndbuf_size, rcvbuf_size);
@@ -962,7 +961,8 @@ static int dtt_connect(struct drbd_transport *transport)
 	int timeout, err;
 	bool ok;
 	char sbuf[128], dbuf[128];
-	LONG InputBuffer = 1;
+	int val;
+
 	ok = FALSE;
 	dsocket = NULL;
 	csocket = NULL;
@@ -1121,11 +1121,26 @@ randomize:
 	drbd_path_event(transport, &connect_to_path->path);
 	dtt_put_listeners(transport);
 
-    status = ControlSocket(csocket->wsk_socket, WskSetOption, SO_REUSEADDR, SOL_SOCKET, sizeof(ULONG), &InputBuffer, 0, NULL, NULL);
-    if (!NT_SUCCESS(status)) {
-        WDRBD_ERROR("ControlSocket: SO_REUSEADDR: failed=0x%x\n", status);
-        goto out;
-    }
+	val = 1;
+	err = kernel_setsockopt(dsocket, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(val));
+	if (err < 0) {
+		printk("kernel_setsockopt SO_REUSEADDR failed\n");
+		goto out;
+	}
+	err = kernel_setsockopt(csocket, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(val));
+	if (err < 0) {
+		printk("kernel_setsockopt SO_REUSEADDR failed\n");
+		goto out;
+	}
+	/* TODO: implement one day */
+/*
+        dsocket->sk->sk_allocation = GFP_NOIO;
+        csocket->sk->sk_allocation = GFP_NOIO;
+
+        dsocket->sk->sk_priority = TC_PRIO_INTERACTIVE_BULK;
+        csocket->sk->sk_priority = TC_PRIO_INTERACTIVE;
+*/
+
 	/* NOT YET ...
 	 * sock.socket->sk->sk_sndtimeo = transport->net_conf->timeout*HZ/10;
 	 * sock.socket->sk->sk_rcvtimeo = MAX_SCHEDULE_TIMEOUT;

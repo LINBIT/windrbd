@@ -38,14 +38,6 @@ struct socket {
  * the original drbd_transport_tcp.c (with some small patches)
  */
 
-#define SOCKET_ERROR -1
-
-extern
-NTSTATUS NTAPI
-Disconnect(
-	__in PWSK_SOCKET	WskSocket
-	);
-
 int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress);
 
 NTSTATUS
@@ -64,8 +56,6 @@ __out_opt SIZE_T	*OutputSizeReturned
 
 #define TC_PRIO_INTERACTIVE_BULK	1
 #define TC_PRIO_INTERACTIVE		1
-
-char *GetSockErrorString(NTSTATUS status);
 
 int sock_create_kern(
 	PVOID                   net_namespace,
