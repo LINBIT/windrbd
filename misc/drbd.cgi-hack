@@ -1,0 +1,66 @@
+#!/bin/bash
+# this is a very simple cgi-bin script that serves a (DRBD)
+# block device for use by a ipxe sanboot over http. To use
+# configure apache2 (or any other webserver) for cgi-bin
+# and copy this script into the cgi-bin directory.
+#
+# It supports the range http header. It does not support keep-alive.
+# TODO: It expects the DRBD minor as parameter 
+#
+# Sample URL:
+# http://example.com/cgi-bin/drbd.cgi?DRBD_MINOR=1
+
+echo 'Content-type: application/octet-stream'
+
+echo "hallo" 1>&2
+# set 1>&2
+
+if [ x"$HTTP_RANGE" == x ] ; then
+# HEAD request? TODO: check
+	echo "No HTTP_RANGE given" 1>&2
+	# fails to boot
+	# echo "Content-length: 34359738368"
+	echo "Content-length: 34359737856"
+	# hangs on boot
+	# echo "Content-length: 30000000000"
+	echo
+	exit 1
+#	HTTP_RANGE='bytes=0-511'
+#	exit 0
+#	exit 1
+fi
+# if [ x"$DRBD_MINOR" == x ] ; then
+# 	echo "No DRBD_MINOR given" 1>&2
+# 	exit 1
+# fi
+
+echo "Range is $HTTP_RANGE" 1>&2
+
+BLOCKSIZE=512
+FROM=`echo $HTTP_RANGE | cut -d= -f 2 | cut -d- -f 1`
+TO=`echo $HTTP_RANGE | cut -d= -f 2 | cut -d- -f 2`
+LENGTH=$[ $TO - $FROM + 1 ]
+
+echo "length is $LENGTH" 1>&2
+echo "Content-length: $LENGTH"
+echo
+
+if [ $[ $FROM % $BLOCKSIZE ] -ne 0 ] ; then
+	echo "Start offset not multiple of $BLOCKSIZE (is $FROM)" 1>&2
+	exit 1
+fi
+if [ $[ $LENGTH % $BLOCKSIZE ] -ne 0 ] ; then
+	echo "Length not multiple of $BLOCKSIZE (is $LENGTH)" 1>&2
+	exit 1
+fi
+FROMBLOCK=$[ $FROM / $BLOCKSIZE ]
+BLOCKS=$[ $LENGTH / $BLOCKSIZE ]
+
+# TODO: make DRBD resource primary.
+
+# DEVICE=/dev/drbd${DRBD_MINOR}
+# DEVICE=/dev/sdd3
+DEVICE=/dev/sdf1
+
+# echo "FROM: $FROM TO: $TO" > /tmp/range-$$
+dd if=$DEVICE bs=$BLOCKSIZE skip=$FROMBLOCK count=$BLOCKS status=none
