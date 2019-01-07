@@ -1213,9 +1213,6 @@ void windrbd_shutdown_wsk(void)
         if (!NT_SUCCESS(status))
                 printk("windrbd_cleanup_windows_thread failed with status %x\n", status);
 
-/* Hangs on shutdown (service stays in PENDING, also umhelper stays in
- * pending. Because of this? :
- */
-//	SocketsDeinit();
+	SocketsDeinit();
 }
 
