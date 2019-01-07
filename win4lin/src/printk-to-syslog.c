@@ -18,12 +18,23 @@ static size_t ring_buffer_head;
 static size_t ring_buffer_tail;
 static spinlock_t ring_buffer_lock;
 static struct mutex send_mutex;
+static int printk_shut_down;
 
 int initialize_syslog_printk(void)
 {
 	spin_lock_init(&ring_buffer_lock);
 	mutex_init(&send_mutex);
 	return 0;
+}
+
+void shutdown_syslog_printk(void)
+{
+	if (printk_udp_socket) {
+		printk("shutting down printk ...\n");
+		sock_release(printk_udp_socket);
+		printk_udp_socket = NULL;
+	}
+	printk_shut_down = 1;
 }
 
 /* To enable UDP logging in rsyslogd
@@ -63,6 +74,10 @@ static int open_syslog_socket(void)
 	NTSTATUS status;
 
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Initializing syslog logging\n");
+	if (printk_shut_down) {
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Cannot create printk socket, printk already shut down.\n");
+		return 0;
+	}
 	if (printk_udp_socket == NULL) {
 		struct sockaddr_in local;
 

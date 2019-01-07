@@ -348,9 +348,8 @@ typedef unsigned int                fmode_t;
 //#define FLTR_COMPONENT              DPFLTR_IHVDRIVER_ID
 #define FEATURE_WDRBD_PRINT
 
-extern void printk_init(void);
-extern void printk_cleanup(void);
 extern int initialize_syslog_printk(void);
+extern void shutdown_syslog_printk(void);
 extern int _printk(const char * func, const char * format, ...);
 
 void windrbd_device_error(struct drbd_device *device, const char ** err_str_out, const char *fmt, ...);

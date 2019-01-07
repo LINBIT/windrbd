@@ -392,6 +392,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	}
 
 	IoFreeIrp(Irp);
+printk("status is %x\n", Status);
 	return winsock_to_linux_error(Status);
 }
 
@@ -1212,6 +1213,9 @@ void windrbd_shutdown_wsk(void)
         if (!NT_SUCCESS(status))
                 printk("windrbd_cleanup_windows_thread failed with status %x\n", status);
 
-	SocketsDeinit();
+/* Hangs on shutdown (service stays in PENDING, also umhelper stays in
+ * pending. Because of this? :
+ */
+//	SocketsDeinit();
 }
 

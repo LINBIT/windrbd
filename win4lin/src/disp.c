@@ -165,12 +165,13 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 	windrbd_shutdown_netlink();
 	printk("Netlink layer shut down.\n");
 
-	windrbd_shutdown_wsk();
 	printk("WinSocket layer shut down.\n");
 #ifdef KMALLOC_DEBUG
 	shutdown_kmalloc_debug();
 	printk("kmalloc_debug shut down, there should be no memory leaks now.\n");
 #endif
+	shutdown_syslog_printk();
+	windrbd_shutdown_wsk();
 }
 
 NTSTATUS
