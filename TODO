@@ -23,6 +23,67 @@ TODO: Feature: Resource agent for Microsoft cluster manager
 
 TODO: Feature: Make C:\ as Primary Diskless work
 
+	TODO: a lot. What currently works is:
+
+	*) Create a (Diskless) WinDRBD device on boot. As soon there is
+	*) Setup a iscsi boot environment
+
+	network the device connects. This is not the System partition.
+	Parameters are currently hard coded.
+
+	*) Boot a WinPE on a Linux block device via ipxe sanboot over http. 
+	This has currently a (slightly less than) 8GB size limit since it
+	uses BIOS interface (int 0x13).
+
+	Left to do:
+
+	*) Setup a iscsi boot environment
+
+	*) Make booting real Windows image work (currently fails with
+	   file not found): reason is
+
+	Range is bytes=-967835648--967834625
+	(see http_format_range() %zd is 32-bit signed in 32-bit arch)
+
+	Update: Fixed (with a hack), TODO: support %lld
+	Update: %lld works now, so does loading directly (without
+	cgi) from a file based image.
+
+	TODO: submit to upstream ipxe
+	TODO: maybe support %llu as well (and %u ..)
+
+	*) Fix drbd.cgi script.
+
+	Done so far. Make keepalive work.
+
+	*) Use drbd device as source device for cgi script.
+
+	*) Test if read access is possible if there are no Primaries.
+
+	*) Configure DHCP for autobooting image
+
+	*) Make device create on boot Primary.
+
+	*) Get WinDRBD parameters somehow (via http / JSON?). Storing
+	it in Registry of the image is not a good idea (also BCD is a
+	registry hive).
+
+	*) Create a WinPE image with network and WinDRBD.
+
+	*) Partitioning: Windows expects a disk not a volume
+
+	*) Fix 8GB size limit (see above)
+
+	*) Make windrbd device open() function wait for primary
+	(this is also interesting for auto promote)
+
+	*) Somehow trick windows into accepting windrbd device as
+	System volume (via BCD?)
+
+TODO: Research: Auto-Promote possible?
+
+	If Windows accesses drive read-only on poll.
+
 TODO: Bug: drbdadm wait-connect does not work as expected
 
 TODO: Bug: BSOD on driver unload after up (tmp patches for create boot device)
