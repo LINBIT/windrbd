@@ -1,0 +1,26 @@
+From cf078bd47f4fa05bf6ca0bf07dae39ca0a916e29 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 9 Jan 2019 18:58:16 +0100
+Subject: [PATCH 3/5] Test for vsnprintf %lld format.
+
+---
+ src/tests/vsprintf_test.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/tests/vsprintf_test.c b/src/tests/vsprintf_test.c
+index f388b3de..9ffec798 100644
+--- a/src/tests/vsprintf_test.c
++++ b/src/tests/vsprintf_test.c
+@@ -100,6 +100,9 @@ static void vsprintf_test_exec ( void ) {
+ 	snprintf_ok ( 16, "-072", "%04d", -72 );
+ 	snprintf_ok ( 16, "4", "%zd", sizeof ( uint32_t ) );
+ 	snprintf_ok ( 16, "123456789", "%d", 123456789 );
++	snprintf_ok ( 64, "123456789123456789", "%lld", 123456789123456789LL );
++	snprintf_ok ( 64, "-123456789123456789", "%lld",
++			   -123456789123456789LL );
+ 
+ 	/* Realistic combinations */
+ 	snprintf_ok ( 64, "DBG 0x1234 thingy at 0x0003f0c0+0x5c\n",
+-- 
+2.17.0
+

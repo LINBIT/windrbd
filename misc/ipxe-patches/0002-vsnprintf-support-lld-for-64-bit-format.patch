@@ -1,0 +1,55 @@
+From 38e450a28cae090ac6b7a7010ebfd37daace3a09 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 8 Jan 2019 19:55:17 +0100
+Subject: [PATCH 2/5] vsnprintf: support %lld for 64-bit format
+
+In order to support images > 2GB for http based booting we need
+to be able to format numbers larger than 2 ** 31.
+---
+ src/core/vsprintf.c    | 8 +++++---
+ src/net/tcp/httpcore.c | 2 +-
+ 2 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/src/core/vsprintf.c b/src/core/vsprintf.c
+index 9d3a97c2..fc52842b 100644
+--- a/src/core/vsprintf.c
++++ b/src/core/vsprintf.c
+@@ -130,7 +130,7 @@ static char * format_hex ( char *end, unsigned long long num, int width,
+  * There must be enough space in the buffer to contain the largest
+  * number that this function can format.
+  */
+-static char * format_decimal ( char *end, signed long num, int width,
++static char * format_decimal ( char *end, signed long long num, int width,
+ 			       int flags ) {
+ 	char *ptr = end;
+ 	int negative = 0;
+@@ -283,9 +283,11 @@ size_t vcprintf ( struct printf_context *ctx, const char *fmt, va_list args ) {
+ 			}
+ 			ptr = format_hex ( ptr, hex, width, flags );
+ 		} else if ( ( *fmt == 'd' ) || ( *fmt == 'i' ) ){
+-			signed long decimal;
++			signed long long decimal;
+ 
+-			if ( *length >= sizeof ( signed long ) ) {
++			if ( *length >= sizeof ( signed long long ) ) {
++				decimal = va_arg ( args, signed long long );
++			} else if ( *length >= sizeof ( signed long ) ) {
+ 				decimal = va_arg ( args, signed long );
+ 			} else {
+ 				decimal = va_arg ( args, signed int );
+diff --git a/src/net/tcp/httpcore.c b/src/net/tcp/httpcore.c
+index bc616188..61dee03d 100644
+--- a/src/net/tcp/httpcore.c
++++ b/src/net/tcp/httpcore.c
+@@ -936,7 +936,7 @@ static int http_format_range ( struct http_transaction *http,
+ 
+ 	/* Construct range, if applicable */
+ 	if ( http->request.range.len ) {
+-		return snprintf ( buf, len, "bytes=0x%llx-0x%llx",
++		return snprintf ( buf, len, "bytes=%lld-%lld",
+ 				  http->request.range.start,
+ 				  ( http->request.range.start +
+ 				    http->request.range.len - 1 ) );
+-- 
+2.17.0
+
