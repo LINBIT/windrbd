@@ -1179,10 +1179,8 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 		printk("WSK initialized.\n");
 	}
 
-#if 0
 	err = windrbd_create_boot_device();
 	printk("windrbd_create_boot_device returned %d\n", err);
-#endif
 
 	return status;
 }
