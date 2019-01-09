@@ -80,6 +80,8 @@ TODO: Feature: Make C:\ as Primary Diskless work
 	*) Somehow trick windows into accepting windrbd device as
 	System volume (via BCD?)
 
+TODO: Bug: printk eats boot messages
+
 TODO: Research: Auto-Promote possible?
 
 	If Windows accesses drive read-only on poll.
