@@ -394,7 +394,6 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	}
 
 	IoFreeIrp(Irp);
-printk("status is %x\n", Status);
 	return winsock_to_linux_error(Status);
 }
 
