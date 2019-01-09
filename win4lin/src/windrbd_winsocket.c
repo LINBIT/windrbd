@@ -40,6 +40,8 @@ static int winsock_to_linux_error(NTSTATUS status)
 		return -EINVAL;
 	case STATUS_NETWORK_UNREACHABLE:
 		return -ENETUNREACH;
+	case STATUS_HOST_UNREACHABLE:
+		return -EHOSTUNREACH;
 	default:
 		/* no printk's */
 		// printk("Unknown status %x, returning -EIO.\n", status);
