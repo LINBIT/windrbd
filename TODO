@@ -26,18 +26,15 @@ TODO: Feature: Make C:\ as Primary Diskless work
 	TODO: a lot. What currently works is:
 
 	*) Create a (Diskless) WinDRBD device on boot. As soon there is
-	*) Setup a iscsi boot environment
 
 	network the device connects. This is not the System partition.
 	Parameters are currently hard coded.
 
 	*) Boot a WinPE on a Linux block device via ipxe sanboot over http. 
 	This has currently a (slightly less than) 8GB size limit since it
-	uses BIOS interface (int 0x13).
-
-	Left to do:
-
-	*) Setup a iscsi boot environment
+	uses BIOS interface (int 0x13). Update: no Windows loads via
+	BIOS extension (function 0x41/0x42) which supports 64-bit
+	block numbers.
 
 	*) Make booting real Windows image work (currently fails with
 	   file not found): reason is
@@ -49,8 +46,22 @@ TODO: Feature: Make C:\ as Primary Diskless work
 	Update: %lld works now, so does loading directly (without
 	cgi) from a file based image.
 
-	TODO: submit to upstream ipxe
+	We now have a limit at about 8GB
+
+	TODO: submit to upstream ipxe if wanted.
 	TODO: maybe support %llu as well (and %u ..)
+
+	Update: When using 64-bit ipxe it works with 32GB image:
+
+	make bin-x86_64-pcbios/ipxe.pxe
+
+	*) Fix 8GB size limit (see above)
+
+	With 64 bit iPXE there is no such limit.
+
+	Left to do:
+
+	*) Setup a iscsi boot environment
 
 	*) Fix drbd.cgi script.
 
@@ -68,17 +79,22 @@ TODO: Feature: Make C:\ as Primary Diskless work
 	it in Registry of the image is not a good idea (also BCD is a
 	registry hive).
 
+	Update: This should be done via DHCP.
+
 	*) Create a WinPE image with network and WinDRBD.
 
 	*) Partitioning: Windows expects a disk not a volume
-
-	*) Fix 8GB size limit (see above)
 
 	*) Make windrbd device open() function wait for primary
 	(this is also interesting for auto promote)
 
 	*) Somehow trick windows into accepting windrbd device as
 	System volume (via BCD?)
+
+TODO: Feature: Autopromote
+
+	If Windows poll the devices read-only, this would make sense
+	(DRBD only attempts to promote if device is opened writable)
 
 TODO: Bug: printk eats boot messages
 
