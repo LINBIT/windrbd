@@ -1,0 +1,41 @@
+From 0e8efa20d6d09c77cf2354d15e6a03e51460cf08 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 10 Jan 2019 16:49:38 +0100
+Subject: [PATCH 6/9] Content length is now uint64_t
+
+This was probably wrong before, not yet sure if it solves the
+7.8GB limit restriction.
+---
+ src/include/ipxe/http.h | 2 +-
+ src/net/tcp/httpcore.c  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/include/ipxe/http.h b/src/include/ipxe/http.h
+index a7458aae..6d479a6b 100644
+--- a/src/include/ipxe/http.h
++++ b/src/include/ipxe/http.h
+@@ -262,7 +262,7 @@ struct http_response_transfer {
+ /** HTTP response content descriptor */
+ struct http_response_content {
+ 	/** Content length (may be zero) */
+-	size_t len;
++	uint64_t len;
+ 	/** Content encoding */
+ 	struct http_content_encoding *encoding;
+ };
+diff --git a/src/net/tcp/httpcore.c b/src/net/tcp/httpcore.c
+index 61dee03d..d99f7985 100644
+--- a/src/net/tcp/httpcore.c
++++ b/src/net/tcp/httpcore.c
+@@ -1345,7 +1345,7 @@ static int http_parse_content_length ( struct http_transaction *http,
+ 	char *endp;
+ 
+ 	/* Parse length */
+-	http->response.content.len = strtoul ( line, &endp, 10 );
++	http->response.content.len = strtoull ( line, &endp, 10 );
+ 	if ( *endp != '\0' ) {
+ 		DBGC ( http, "HTTP %p invalid Content-Length \"%s\"\n",
+ 		       http, line );
+-- 
+2.17.0
+

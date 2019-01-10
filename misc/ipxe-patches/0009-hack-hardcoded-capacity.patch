@@ -1,0 +1,193 @@
+From a466ac68023e3424c9803320f17b48e69e3d24dc Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 10 Jan 2019 20:26:53 +0100
+Subject: [PATCH 9/9] hack: hardcoded capacity
+
+Also changed blockdev read write interface (len is 64 bit even
+on 32 bit systems).
+---
+ src/arch/x86/interface/pcbios/int13.c | 4 ++--
+ src/core/blockdev.c                   | 4 ++--
+ src/core/blocktrans.c                 | 4 ++++
+ src/core/sanboot.c                    | 4 ++--
+ src/drivers/block/ata.c               | 8 ++++----
+ src/drivers/block/scsi.c              | 6 +++---
+ src/include/ipxe/blockdev.h           | 8 ++++----
+ 7 files changed, 21 insertions(+), 17 deletions(-)
+
+diff --git a/src/arch/x86/interface/pcbios/int13.c b/src/arch/x86/interface/pcbios/int13.c
+index 86045a23..31a8a91d 100644
+--- a/src/arch/x86/interface/pcbios/int13.c
++++ b/src/arch/x86/interface/pcbios/int13.c
+@@ -407,8 +407,8 @@ DBGC ( sandev , "int13->cylinders is %d\n", int13->cylinders);
+ 		/* if ( int13->cylinders > 1024 || int13->cylinders == 0) */
+ 		if ( int13->cylinders > 1024 )
+ 			int13->cylinders = 1024;
+-DBGC ( sandev, "making it fail.\n");
+-		int13->cylinders = 0;
++// DBGC ( sandev, "making it fail.\n");
++//		int13->cylinders = 0;
+ 	}
+ 
+ 	return 0;
+diff --git a/src/core/blockdev.c b/src/core/blockdev.c
+index c219d967..2ea8f4f8 100644
+--- a/src/core/blockdev.c
++++ b/src/core/blockdev.c
+@@ -46,7 +46,7 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
+  */
+ int block_read ( struct interface *control, struct interface *data,
+ 		 uint64_t lba, unsigned int count,
+-		 userptr_t buffer, size_t len ) {
++		 userptr_t buffer, uint64_t len ) {
+ 	struct interface *dest;
+ 	block_read_TYPE ( void * ) *op =
+ 		intf_get_dest_op ( control, block_read, &dest );
+@@ -77,7 +77,7 @@ int block_read ( struct interface *control, struct interface *data,
+  */
+ int block_write ( struct interface *control, struct interface *data,
+ 		  uint64_t lba, unsigned int count,
+-		  userptr_t buffer, size_t len ) {
++		  userptr_t buffer, uint64_t len ) {
+ 	struct interface *dest;
+ 	block_write_TYPE ( void * ) *op =
+ 		intf_get_dest_op ( control, block_write, &dest );
+diff --git a/src/core/blocktrans.c b/src/core/blocktrans.c
+index 23cab009..a41cbed0 100644
+--- a/src/core/blocktrans.c
++++ b/src/core/blocktrans.c
+@@ -140,6 +140,10 @@ DBGC ( blktrans, "blktrans_close 2: capacity.blocks is %lld blktrans->xferbuf.le
+ 		capacity.blocks =
+ 			( blktrans->xferbuf.len / blktrans->blksize );
+ DBGC ( blktrans, "blktrans_close 2: capacity.blocks is %lld blktrans->xferbuf.len is %lld blktrans->blksize is %d\n", capacity.blocks, blktrans->xferbuf.len, blktrans->blksize );
++
++		capacity.blocks = 34359738368 / blktrans->blksize;
++DBGC ( blktrans, "blktrans_close 3 HACK: capacity.blocks is %lld blktrans->xferbuf.len is %lld blktrans->blksize is %d\n", capacity.blocks, blktrans->xferbuf.len, blktrans->blksize );
++
+ 		capacity.blksize = blktrans->blksize;
+ 		capacity.max_count = -1U;
+ 
+diff --git a/src/core/sanboot.c b/src/core/sanboot.c
+index 46b10198..ce1735e6 100644
+--- a/src/core/sanboot.c
++++ b/src/core/sanboot.c
+@@ -418,7 +418,7 @@ struct san_command_rw_params {
+ 	/** SAN device read/write operation */
+ 	int ( * block_rw ) ( struct interface *control, struct interface *data,
+ 			     uint64_t lba, unsigned int count,
+-			     userptr_t buffer, size_t len );
++			     userptr_t buffer, uint64_t len );
+ 	/** Data buffer */
+ 	userptr_t buffer;
+ 	/** Starting LBA */
+@@ -596,7 +596,7 @@ static int sandev_rw ( struct san_device *sandev, uint64_t lba,
+ 		       int ( * block_rw ) ( struct interface *control,
+ 					    struct interface *data,
+ 					    uint64_t lba, unsigned int count,
+-					    userptr_t buffer, size_t len ) ) {
++					    userptr_t buffer, uint64_t len ) ) {
+ 	union san_command_params params;
+ 	unsigned int remaining;
+ 	size_t frag_len;
+diff --git a/src/drivers/block/ata.c b/src/drivers/block/ata.c
+index b1c6855a..039ec092 100644
+--- a/src/drivers/block/ata.c
++++ b/src/drivers/block/ata.c
+@@ -455,7 +455,7 @@ static int atadev_command ( struct ata_device *atadev,
+ 			    struct interface *block,
+ 			    struct ata_command_type *type,
+ 			    uint64_t lba, unsigned int count,
+-			    userptr_t buffer, size_t len ) {
++			    userptr_t buffer, uint64_t len ) {
+ 	struct ata_command *atacmd;
+ 	struct ata_cmd command;
+ 	int tag;
+@@ -478,7 +478,7 @@ static int atadev_command ( struct ata_device *atadev,
+ 	/* Sanity check */
+ 	if ( len != ( count * ATA_SECTOR_SIZE ) ) {
+ 		DBGC ( atadev, "ATA %p tag %08x buffer length mismatch (count "
+-		       "%d len %zd)\n", atadev, atacmd->tag, count, len );
++		       "%d len %lld)\n", atadev, atacmd->tag, count, len );
+ 		rc = -EINVAL;
+ 		goto err_len;
+ 	}
+@@ -543,7 +543,7 @@ static int atadev_command ( struct ata_device *atadev,
+ static int atadev_read ( struct ata_device *atadev,
+ 			 struct interface *block,
+ 			 uint64_t lba, unsigned int count,
+-			 userptr_t buffer, size_t len ) {
++			 userptr_t buffer, uint64_t len ) {
+ 	return atadev_command ( atadev, block, &atacmd_read,
+ 				lba, count, buffer, len );
+ }
+@@ -562,7 +562,7 @@ static int atadev_read ( struct ata_device *atadev,
+ static int atadev_write ( struct ata_device *atadev,
+ 			  struct interface *block,
+ 			  uint64_t lba, unsigned int count,
+-			  userptr_t buffer, size_t len ) {
++			  userptr_t buffer, uint64_t len ) {
+ 	return atadev_command ( atadev, block, &atacmd_write,
+ 				lba, count, buffer, len );
+ }
+diff --git a/src/drivers/block/scsi.c b/src/drivers/block/scsi.c
+index f765c976..78a73cd1 100644
+--- a/src/drivers/block/scsi.c
++++ b/src/drivers/block/scsi.c
+@@ -717,7 +717,7 @@ static int scsidev_command ( struct scsi_device *scsidev,
+ 			     struct interface *block,
+ 			     struct scsi_command_type *type,
+ 			     uint64_t lba, unsigned int count,
+-			     userptr_t buffer, size_t len ) {
++			     userptr_t buffer, uint64_t len ) {
+ 	struct scsi_command *scsicmd;
+ 	int rc;
+ 
+@@ -769,7 +769,7 @@ static int scsidev_command ( struct scsi_device *scsidev,
+ static int scsidev_read ( struct scsi_device *scsidev,
+ 			  struct interface *block,
+ 			  uint64_t lba, unsigned int count,
+-			  userptr_t buffer, size_t len ) {
++			  userptr_t buffer, uint64_t len ) {
+ 	return scsidev_command ( scsidev, block, &scsicmd_read,
+ 				 lba, count, buffer, len );
+ }
+@@ -788,7 +788,7 @@ static int scsidev_read ( struct scsi_device *scsidev,
+ static int scsidev_write ( struct scsi_device *scsidev,
+ 			   struct interface *block,
+ 			   uint64_t lba, unsigned int count,
+-			   userptr_t buffer, size_t len ) {
++			   userptr_t buffer, uint64_t len ) {
+ 	return scsidev_command ( scsidev, block, &scsicmd_write,
+ 				 lba, count, buffer, len );
+ }
+diff --git a/src/include/ipxe/blockdev.h b/src/include/ipxe/blockdev.h
+index 418c4300..b5ef137b 100644
+--- a/src/include/ipxe/blockdev.h
++++ b/src/include/ipxe/blockdev.h
+@@ -26,19 +26,19 @@ struct block_device_capacity {
+ 
+ extern int block_read ( struct interface *control, struct interface *data,
+ 			uint64_t lba, unsigned int count,
+-			userptr_t buffer, size_t len );
++			userptr_t buffer, uint64_t len );
+ #define block_read_TYPE( object_type )					\
+ 	typeof ( int ( object_type, struct interface *data,		\
+ 		       uint64_t lba, unsigned int count,		\
+-		       userptr_t buffer, size_t len ) )
++		       userptr_t buffer, uint64_t len ) )
+ 
+ extern int block_write ( struct interface *control, struct interface *data,
+ 			 uint64_t lba, unsigned int count,
+-			 userptr_t buffer, size_t len );
++			 userptr_t buffer, uint64_t len );
+ #define block_write_TYPE( object_type )					\
+ 	typeof ( int ( object_type, struct interface *data,		\
+ 		       uint64_t lba, unsigned int count,		\
+-		       userptr_t buffer, size_t len ) )
++		       userptr_t buffer, uint64_t len ) )
+ 
+ extern int block_read_capacity ( struct interface *control,
+ 				 struct interface *data );
+-- 
+2.17.0
+

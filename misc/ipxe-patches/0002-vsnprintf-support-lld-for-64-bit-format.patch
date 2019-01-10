@@ -1,7 +1,7 @@
 From 38e450a28cae090ac6b7a7010ebfd37daace3a09 Mon Sep 17 00:00:00 2001
 From: Johannes Thoma <johannes@johannesthoma.com>
 Date: Tue, 8 Jan 2019 19:55:17 +0100
-Subject: [PATCH 2/5] vsnprintf: support %lld for 64-bit format
+Subject: [PATCH 2/9] vsnprintf: support %lld for 64-bit format
 
 In order to support images > 2GB for http based booting we need
 to be able to format numbers larger than 2 ** 31.

@@ -1,7 +1,7 @@
 From cf078bd47f4fa05bf6ca0bf07dae39ca0a916e29 Mon Sep 17 00:00:00 2001
 From: Johannes Thoma <johannes@johannesthoma.com>
 Date: Wed, 9 Jan 2019 18:58:16 +0100
-Subject: [PATCH 3/5] Test for vsnprintf %lld format.
+Subject: [PATCH 3/9] Test for vsnprintf %lld format.
 
 ---
  src/tests/vsprintf_test.c | 3 +++

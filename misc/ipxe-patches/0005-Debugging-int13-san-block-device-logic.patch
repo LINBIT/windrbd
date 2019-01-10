@@ -1,7 +1,7 @@
 From 526ac839a2c241dee6ff0d5a3375be557bd21c17 Mon Sep 17 00:00:00 2001
 From: Johannes Thoma <johannes@johannesthoma.com>
 Date: Wed, 9 Jan 2019 19:18:15 +0100
-Subject: [PATCH 5/5] Debugging int13 san block device logic.
+Subject: [PATCH 5/9] Debugging int13 san block device logic.
 
 At that point in time capacity of the san device is 0.
 ---
