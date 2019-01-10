@@ -203,3 +203,25 @@ make new windows boot menu entry:
 bcdedit /copy {default} /d "DRBD"
 
 bcdedit /enum all
+
+-----
+
+Diskless client over TCP/IP
+
+linux: 
+nc -p 5000 -l -k | tee /tmp/ipxe.log
+
+dhcp net1
+boot http://192.168.56.102/~johannes/ipxe/ipxework.pxe
+
+dhcp net1
+sanboot http://192.168.56.102/cgi-bin/drbd.cgi
+
+-----
+
+Build ipxe
+
+make DEBUG=sanboot,int13,httpcore:2,httpblock,blocktrans:2 && cp bin/ipxe.pxe ~/public_html/ipxe/ipxework.pxe
+
+# 64 bit version can boot 32 GB images
+make bin-x86_64-pcbios/ipxe.pxe 
