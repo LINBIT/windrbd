@@ -1,7 +1,7 @@
 From a466ac68023e3424c9803320f17b48e69e3d24dc Mon Sep 17 00:00:00 2001
 From: Johannes Thoma <johannes@johannesthoma.com>
 Date: Thu, 10 Jan 2019 20:26:53 +0100
-Subject: [PATCH 9/9] hack: hardcoded capacity
+Subject: [PATCH 09/13] hack: hardcoded capacity
 
 Also changed blockdev read write interface (len is 64 bit even
 on 32 bit systems).

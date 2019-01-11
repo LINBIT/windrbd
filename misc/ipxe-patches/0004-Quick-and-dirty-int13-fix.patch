@@ -1,7 +1,7 @@
 From d9fc8710b5013711c1e1d32b8e5936fa88f85ff6 Mon Sep 17 00:00:00 2001
 From: Johannes Thoma <johannes@johannesthoma.com>
 Date: Wed, 9 Jan 2019 18:58:45 +0100
-Subject: [PATCH 4/9] Quick and dirty int13 fix.
+Subject: [PATCH 04/13] Quick and dirty int13 fix.
 
 Do not submit this patch.
 

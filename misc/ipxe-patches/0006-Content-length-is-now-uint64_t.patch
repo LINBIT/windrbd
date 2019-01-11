@@ -1,7 +1,7 @@
 From 0e8efa20d6d09c77cf2354d15e6a03e51460cf08 Mon Sep 17 00:00:00 2001
 From: Johannes Thoma <johannes@johannesthoma.com>
 Date: Thu, 10 Jan 2019 16:49:38 +0100
-Subject: [PATCH 6/9] Content length is now uint64_t
+Subject: [PATCH 06/13] Content length is now uint64_t
 
 This was probably wrong before, not yet sure if it solves the
 7.8GB limit restriction.

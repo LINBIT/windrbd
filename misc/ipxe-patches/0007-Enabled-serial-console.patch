@@ -1,7 +1,7 @@
 From d0c2b810ab2f03ef795da8bdcd06172db23d536e Mon Sep 17 00:00:00 2001
 From: Johannes Thoma <johannes@johannesthoma.com>
 Date: Thu, 10 Jan 2019 17:09:45 +0100
-Subject: [PATCH 7/9] Enabled serial console.
+Subject: [PATCH 07/13] Enabled serial console.
 
 Do not submit this.
 ---

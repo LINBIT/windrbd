@@ -1,0 +1,29 @@
+From 3a7a5b5cc022d296e3c687416e3abdc000c823b6 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 11 Jan 2019 18:44:51 +0100
+Subject: [PATCH 12/13] Not making it fail.
+
+Works now *sigh* we had to change lots of internal interfaces.
+Maybe the patch isn't worth it. But it can boot large images now.
+---
+ src/arch/x86/interface/pcbios/int13.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/arch/x86/interface/pcbios/int13.c b/src/arch/x86/interface/pcbios/int13.c
+index 86045a23..c063d6c8 100644
+--- a/src/arch/x86/interface/pcbios/int13.c
++++ b/src/arch/x86/interface/pcbios/int13.c
+@@ -407,8 +407,8 @@ DBGC ( sandev , "int13->cylinders is %d\n", int13->cylinders);
+ 		/* if ( int13->cylinders > 1024 || int13->cylinders == 0) */
+ 		if ( int13->cylinders > 1024 )
+ 			int13->cylinders = 1024;
+-DBGC ( sandev, "making it fail.\n");
+-		int13->cylinders = 0;
++// DBGC ( sandev, "making it fail.\n");
++// 		int13->cylinders = 0;
+ 	}
+ 
+ 	return 0;
+-- 
+2.17.0
+

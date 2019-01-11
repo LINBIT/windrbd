@@ -1,0 +1,109 @@
+From 3abd8fa7f714a6d30e175631391b0ae8213de007 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 11 Jan 2019 17:58:07 +0100
+Subject: [PATCH 10/13] Working ..
+
+making it fail in int13 so we can test it.
+---
+ src/arch/x86/interface/pcbios/int13.c | 4 ++--
+ src/core/blocktrans.c                 | 3 ++-
+ src/core/xfer.c                       | 4 ++--
+ src/core/xferbuf.c                    | 3 ++-
+ src/include/ipxe/xfer.h               | 4 ++--
+ 5 files changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/src/arch/x86/interface/pcbios/int13.c b/src/arch/x86/interface/pcbios/int13.c
+index 31a8a91d..86045a23 100644
+--- a/src/arch/x86/interface/pcbios/int13.c
++++ b/src/arch/x86/interface/pcbios/int13.c
+@@ -407,8 +407,8 @@ DBGC ( sandev , "int13->cylinders is %d\n", int13->cylinders);
+ 		/* if ( int13->cylinders > 1024 || int13->cylinders == 0) */
+ 		if ( int13->cylinders > 1024 )
+ 			int13->cylinders = 1024;
+-// DBGC ( sandev, "making it fail.\n");
+-//		int13->cylinders = 0;
++DBGC ( sandev, "making it fail.\n");
++		int13->cylinders = 0;
+ 	}
+ 
+ 	return 0;
+diff --git a/src/core/blocktrans.c b/src/core/blocktrans.c
+index a41cbed0..7109faee 100644
+--- a/src/core/blocktrans.c
++++ b/src/core/blocktrans.c
+@@ -141,8 +141,9 @@ DBGC ( blktrans, "blktrans_close 2: capacity.blocks is %lld blktrans->xferbuf.le
+ 			( blktrans->xferbuf.len / blktrans->blksize );
+ DBGC ( blktrans, "blktrans_close 2: capacity.blocks is %lld blktrans->xferbuf.len is %lld blktrans->blksize is %d\n", capacity.blocks, blktrans->xferbuf.len, blktrans->blksize );
+ 
+-		capacity.blocks = 34359738368 / blktrans->blksize;
++/*		capacity.blocks = 34359738368 / blktrans->blksize;
+ DBGC ( blktrans, "blktrans_close 3 HACK: capacity.blocks is %lld blktrans->xferbuf.len is %lld blktrans->blksize is %d\n", capacity.blocks, blktrans->xferbuf.len, blktrans->blksize );
++*/
+ 
+ 		capacity.blksize = blktrans->blksize;
+ 		capacity.max_count = -1U;
+diff --git a/src/core/xfer.c b/src/core/xfer.c
+index 0faf3292..765b5ed0 100644
+--- a/src/core/xfer.c
++++ b/src/core/xfer.c
+@@ -347,14 +347,14 @@ int xfer_printf ( struct interface *intf, const char *format, ... ) {
+  * @v offset		Offset to new position
+  * @ret rc		Return status code
+  */
+-int xfer_seek ( struct interface *intf, off_t offset ) {
++int xfer_seek ( struct interface *intf, int64_t offset ) {
+ 	struct io_buffer *iobuf;
+ 	struct xfer_metadata meta = {
+ 		.flags = XFER_FL_ABS_OFFSET,
+ 		.offset = offset,
+ 	};
+ 
+-	DBGC ( INTF_COL ( intf ), "INTF " INTF_FMT " seek to %ld\n",
++	DBGC ( INTF_COL ( intf ), "INTF " INTF_FMT " seek to %lld\n",
+ 	       INTF_DBG ( intf ), offset );
+ 
+ 	/* Allocate and send a zero-length data buffer */
+diff --git a/src/core/xferbuf.c b/src/core/xferbuf.c
+index 24011855..d7dc1a05 100644
+--- a/src/core/xferbuf.c
++++ b/src/core/xferbuf.c
+@@ -152,12 +152,13 @@ int xferbuf_read ( struct xfer_buffer *xferbuf, size_t offset,
+ int xferbuf_deliver ( struct xfer_buffer *xferbuf, struct io_buffer *iobuf,
+ 		      struct xfer_metadata *meta ) {
+ 	size_t len = iob_len ( iobuf );
+-	size_t pos;
++	uint64_t pos;
+ 	int rc;
+ 
+ 	/* Start profiling */
+ 	profile_start ( &xferbuf_deliver_profiler );
+ 
++DBGC ( xferbuf, "xferbuf_deliver: meta->offset is %lld\n", meta->offset);
+ 	/* Calculate new buffer position */
+ 	pos = xferbuf->pos;
+ 	if ( meta->flags & XFER_FL_ABS_OFFSET )
+diff --git a/src/include/ipxe/xfer.h b/src/include/ipxe/xfer.h
+index 3a35fa92..c8a64471 100644
+--- a/src/include/ipxe/xfer.h
++++ b/src/include/ipxe/xfer.h
+@@ -34,7 +34,7 @@ struct xfer_metadata {
+ 	 * relative offset of zero, i.e. no offset from the current
+ 	 * position.)
+ 	 */
+-	off_t offset;
++	int64_t offset;
+ 	/** Source socket address, or NULL */
+ 	struct sockaddr *src;
+ 	/** Destination socket address, or NULL */
+@@ -102,7 +102,7 @@ extern int xfer_vprintf ( struct interface *intf,
+ 			  const char *format, va_list args );
+ extern int __attribute__ (( format ( printf, 2, 3 ) ))
+ xfer_printf ( struct interface *intf, const char *format, ... );
+-extern int xfer_seek ( struct interface *intf, off_t offset );
++extern int xfer_seek ( struct interface *intf, int64_t offset );
+ extern int xfer_check_order ( struct xfer_metadata *meta, size_t *pos,
+ 			      size_t len );
+ 
+-- 
+2.17.0
+

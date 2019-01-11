@@ -1,0 +1,269 @@
+From 2fa02674c63ea10ecb059b85fee556a59d563b04 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 11 Jan 2019 19:02:16 +0100
+Subject: [PATCH 13/13] Removed debug DBGC's
+
+---
+ src/arch/x86/interface/pcbios/int13.c |  9 ---------
+ src/core/blocktrans.c                 | 13 -------------
+ src/core/sanboot.c                    | 10 ----------
+ src/core/xferbuf.c                    |  4 ----
+ src/net/tcp/httpblock.c               |  2 --
+ src/net/tcp/httpcore.c                | 10 ----------
+ 6 files changed, 48 deletions(-)
+
+diff --git a/src/arch/x86/interface/pcbios/int13.c b/src/arch/x86/interface/pcbios/int13.c
+index c063d6c8..ca789a0d 100644
+--- a/src/arch/x86/interface/pcbios/int13.c
++++ b/src/arch/x86/interface/pcbios/int13.c
+@@ -395,20 +395,11 @@ static int int13_guess_geometry ( struct san_device *sandev, void *scratch ) {
+ 	if ( ! int13->cylinders ) {
+ 		/* Avoid attempting a 64-bit divide on a 32-bit system */
+ 		blocks = int13_capacity32 ( sandev );
+-DBGC ( sandev , "blocks is %d\n", blocks);
+-DBGC ( sandev , "sandev_capacity() is %lld\n", sandev_capacity(sandev) );
+-DBGC ( sandev , "sandev->capacity.blocks is %lld\n", sandev->capacity.blocks);
+-
+ 		blocks_per_cyl = ( int13->heads * int13->sectors_per_track );
+-DBGC ( sandev , "blocks_per_cyl is %d\n", blocks_per_cyl);
+ 		assert ( blocks_per_cyl != 0 );
+ 		int13->cylinders = ( blocks / blocks_per_cyl );
+-DBGC ( sandev , "int13->cylinders is %d\n", int13->cylinders);
+-		/* if ( int13->cylinders > 1024 || int13->cylinders == 0) */
+ 		if ( int13->cylinders > 1024 )
+ 			int13->cylinders = 1024;
+-// DBGC ( sandev, "making it fail.\n");
+-// 		int13->cylinders = 0;
+ 	}
+ 
+ 	return 0;
+diff --git a/src/core/blocktrans.c b/src/core/blocktrans.c
+index d7c12204..f902a42f 100644
+--- a/src/core/blocktrans.c
++++ b/src/core/blocktrans.c
+@@ -50,7 +50,6 @@ static int blktrans_xferbuf_realloc ( struct xfer_buffer *xferbuf,
+ 	struct block_translator *blktrans =
+ 		container_of ( xferbuf, struct block_translator, xferbuf );
+ 
+-DBGC ( xferbuf, "len is %lld\n", len);
+ 	/* Record length, if applicable */
+ 	if ( blktrans->buffer ) {
+ 
+@@ -78,7 +77,6 @@ static void blktrans_xferbuf_write ( struct xfer_buffer *xferbuf, int64_t offset
+ 	struct block_translator *blktrans =
+ 		container_of ( xferbuf, struct block_translator, xferbuf );
+ 
+-DBGC ( xferbuf, "blktrans_xferbuf_write offset is %lld len is %zd\n", offset, len );
+ 	/* Write data to buffer, if applicable */
+ 	if ( blktrans->buffer ) {
+ 
+@@ -137,15 +135,9 @@ static void blktrans_close ( struct block_translator *blktrans, int rc ) {
+ 	/* Report block device capacity, if applicable */
+ 	if ( ( rc == 0 ) && ( blktrans->blksize ) ) {
+ 
+-DBGC ( blktrans, "blktrans_close 2: capacity.blocks is %lld blktrans->xferbuf.len is %lld blktrans->blksize is %d\n", capacity.blocks, blktrans->xferbuf.len, blktrans->blksize );
+ 		/* Construct block device capacity */
+ 		capacity.blocks =
+ 			( blktrans->xferbuf.len / blktrans->blksize );
+-DBGC ( blktrans, "blktrans_close 2: capacity.blocks is %lld blktrans->xferbuf.len is %lld blktrans->blksize is %d\n", capacity.blocks, blktrans->xferbuf.len, blktrans->blksize );
+-
+-/*		capacity.blocks = 34359738368 / blktrans->blksize;
+-DBGC ( blktrans, "blktrans_close 3 HACK: capacity.blocks is %lld blktrans->xferbuf.len is %lld blktrans->blksize is %d\n", capacity.blocks, blktrans->xferbuf.len, blktrans->blksize );
+-*/
+ 
+ 		capacity.blksize = blktrans->blksize;
+ 		capacity.max_count = -1U;
+@@ -172,8 +164,6 @@ static int blktrans_deliver ( struct block_translator *blktrans,
+ 			      struct xfer_metadata *meta ) {
+ 	int rc;
+ 
+-DBGC ( blktrans, "blktrans_deliver size is %lld\n", meta->offset );
+-
+ 	/* Deliver to buffer */
+ 	if ( ( rc = xferbuf_deliver ( &blktrans->xferbuf, iob_disown ( iobuf ),
+ 				      meta ) ) != 0 ) {
+@@ -241,7 +231,6 @@ int block_translate ( struct interface *block, userptr_t buffer, uint64_t size )
+ 		rc = -ENOMEM;
+ 		goto err_alloc;
+ 	}
+-DBGC ( blktrans, "block_trans 1 size is %lld\n", size);
+ 	ref_init ( &blktrans->refcnt, NULL );
+ 	intf_init ( &blktrans->block, &blktrans_block_desc, &blktrans->refcnt );
+ 	intf_init ( &blktrans->xfer, &blktrans_xfer_desc, &blktrans->refcnt );
+@@ -249,11 +238,9 @@ DBGC ( blktrans, "block_trans 1 size is %lld\n", size);
+ 	blktrans->buffer = buffer;
+ 	if ( buffer ) {
+ 		blktrans->xferbuf.len = size;
+-DBGC ( blktrans, "block_trans 1a blktrans->xferbuf.len is %lld\n", blktrans->xferbuf.len );
+ 	} else {
+ 		blktrans->blksize = size;
+ 	}
+-DBGC ( blktrans, "block_trans 2\n" );
+ 
+ 	/* Attach to interfaces, mortalise self, and return */
+ 	assert ( block->dest != &null_intf );
+diff --git a/src/core/sanboot.c b/src/core/sanboot.c
+index ce1735e6..713daf05 100644
+--- a/src/core/sanboot.c
++++ b/src/core/sanboot.c
+@@ -477,8 +477,6 @@ sandev_command_read_capacity ( struct san_device *sandev,
+ 	/* Sanity check */
+ 	assert ( sanpath != NULL );
+ 
+-DBGC ( sandev, "sandev_command_read_capacity 1: sandev->capacity.blocks is %lld\n", sandev->capacity.blocks);
+-
+ 	/* Initiate read capacity command */
+ 	if ( ( rc = block_read_capacity ( &sanpath->block,
+ 					  &sandev->command ) ) != 0 ) {
+@@ -486,7 +484,6 @@ DBGC ( sandev, "sandev_command_read_capacity 1: sandev->capacity.blocks is %lld\
+ 		       "%s\n", sandev->drive, sanpath->index, strerror ( rc ) );
+ 		return rc;
+ 	}
+-DBGC ( sandev, "sandev_command_read_capacity 2: sandev->capacity.blocks is %lld\n", sandev->capacity.blocks);
+ 
+ 	return 0;
+ }
+@@ -530,13 +527,11 @@ sandev_command ( struct san_device *sandev,
+ 			continue;
+ 		}
+ 
+-DBGC ( sandev, "sandev_command 1: sandev->capacity.blocks is %lld\n", sandev->capacity.blocks);
+ 		/* Initiate command */
+ 		if ( ( rc = command ( sandev, params ) ) != 0 ) {
+ 			retries++;
+ 			continue;
+ 		}
+-DBGC ( sandev, "sandev_command 2: sandev->capacity.blocks is %lld\n", sandev->capacity.blocks);
+ 
+ 		/* Start expiry timer */
+ 		start_timer_fixed ( &sandev->timer, SAN_COMMAND_TIMEOUT );
+@@ -545,8 +540,6 @@ DBGC ( sandev, "sandev_command 2: sandev->capacity.blocks is %lld\n", sandev->ca
+ 		while ( timer_running ( &sandev->timer ) )
+ 			step();
+ 
+-DBGC ( sandev, "sandev_command 3: sandev->capacity.blocks is %lld\n", sandev->capacity.blocks);
+-
+ 		/* Check command status */
+ 		if ( ( rc = sandev->command_rc ) != 0 ) {
+ 			retries++;
+@@ -876,7 +869,6 @@ int register_sandev ( struct san_device *sandev, unsigned int drive,
+ 		      unsigned int flags ) {
+ 	int rc;
+ 
+-DBGC ( sandev, "register_sandev 1: sandev->capacity.blocks is %lld\n", sandev->capacity.blocks);
+ 	/* Check that drive number is not in use */
+ 	if ( sandev_find ( drive ) != NULL ) {
+ 		DBGC ( sandev, "SAN %#02x is already in use\n", drive );
+@@ -899,13 +891,11 @@ DBGC ( sandev, "register_sandev 1: sandev->capacity.blocks is %lld\n", sandev->c
+ 	if ( ( rc = sandev_describe ( sandev ) ) != 0 )
+ 		goto err_describe;
+ 
+-DBGC ( sandev, "register_sandev 2: sandev->capacity.blocks is %lld\n", sandev->capacity.blocks);
+ 	/* Read device capacity */
+ 	if ( ( rc = sandev_command ( sandev, sandev_command_read_capacity,
+ 				     NULL ) ) != 0 )
+ 		goto err_capacity;
+ 
+-DBGC ( sandev, "register_sandev 3: sandev->capacity.blocks is %lld\n", sandev->capacity.blocks);
+ 	/* Configure as a CD-ROM, if applicable */
+ 	if ( ( rc = sandev_parse_iso9660 ( sandev ) ) != 0 )
+ 		goto err_iso9660;
+diff --git a/src/core/xferbuf.c b/src/core/xferbuf.c
+index e403f276..f9e3ed98 100644
+--- a/src/core/xferbuf.c
++++ b/src/core/xferbuf.c
+@@ -100,13 +100,11 @@ int xferbuf_write ( struct xfer_buffer *xferbuf, int64_t offset,
+ 	int64_t max_len;
+ 	int rc;
+ 
+-DBGC ( xferbuf, "xferbuf_write: offset is %lld\n", offset);
+ 	/* Check for overflow */
+ 	max_len = ( offset + len );
+ 	if ( max_len < offset )
+ 		return -EOVERFLOW;
+ 
+-DBGC ( xferbuf, "xferbuf_write: max_len is %lld len is %zd\n", max_len, len);
+ 	/* Ensure buffer is large enough to contain this write */
+ 	if ( ( rc = xferbuf_ensure_size ( xferbuf, max_len ) ) != 0 )
+ 		return rc;
+@@ -160,14 +158,12 @@ int xferbuf_deliver ( struct xfer_buffer *xferbuf, struct io_buffer *iobuf,
+ 	/* Start profiling */
+ 	profile_start ( &xferbuf_deliver_profiler );
+ 
+-DBGC ( xferbuf, "xferbuf_deliver: meta->offset is %lld\n", meta->offset);
+ 	/* Calculate new buffer position */
+ 	pos = xferbuf->pos;
+ 	if ( meta->flags & XFER_FL_ABS_OFFSET )
+ 		pos = 0;
+ 	pos += meta->offset;
+ 
+-DBGC ( xferbuf, "xferbuf_deliver: pos is %lld len is %zd\n", pos, len);
+ 	/* Write data to buffer */
+ 	if ( ( rc = xferbuf_write ( xferbuf, pos, iobuf->data, len ) ) != 0 )
+ 		goto done;
+diff --git a/src/net/tcp/httpblock.c b/src/net/tcp/httpblock.c
+index ebbd1322..61765b51 100644
+--- a/src/net/tcp/httpblock.c
++++ b/src/net/tcp/httpblock.c
+@@ -95,13 +95,11 @@ int http_block_read_capacity ( struct http_transaction *http,
+ 			       struct interface *data ) {
+ 	int rc;
+ 
+-DBGC ( http, "http_block_read_capacity 1\n");
+ 	/* Start a HEAD request to retrieve the capacity */
+ 	if ( ( rc = http_open ( data, &http_head, http->uri, NULL,
+ 				NULL ) ) != 0 )
+ 		goto err_open;
+ 
+-DBGC ( http, "http_block_read_capacity 2\n");
+ 	/* Insert block device translator */
+ 	if ( ( rc = block_translate ( data, UNULL, HTTP_BLKSIZE ) ) != 0 ) {
+ 		DBGC ( http, "HTTP %p could not insert block translator: %s\n",
+diff --git a/src/net/tcp/httpcore.c b/src/net/tcp/httpcore.c
+index e76ecb12..51820e42 100644
+--- a/src/net/tcp/httpcore.c
++++ b/src/net/tcp/httpcore.c
+@@ -391,9 +391,6 @@ static int http_conn_deliver ( struct http_transaction *http,
+ 			       struct xfer_metadata *meta __unused ) {
+ 	int rc;
+ 
+-
+-DBGC2 ( http, "http_conn_deliver: http->response.content.len is %lld\n", http->response.content.len);
+-
+ 	/* Handle received data */
+ 	profile_start ( &http_rx_profiler );
+ 	while ( iobuf && iob_len ( iobuf ) ) {
+@@ -409,7 +406,6 @@ DBGC2 ( http, "http_conn_deliver: http->response.content.len is %lld\n", http->r
+ 		if ( ( rc = http->state->rx ( http, &iobuf ) ) != 0 )
+ 			goto err;
+ 	}
+-DBGC2 ( http, "http_conn_deliver 2: http->response.content.len is %lld\n", http->response.content.len);
+ 
+ 	/* Free I/O buffer, if applicable */
+ 	free_iob ( iobuf );
+@@ -731,7 +727,6 @@ static int http_transfer_complete ( struct http_transaction *http ) {
+ 	const char *location;
+ 	int rc;
+ 
+-DBGC2 ( http, "http_transfer_complete: http->response.content.len is %lld\n", http->response.content.len);
+ 	/* Keep connection alive if applicable */
+ 	if ( http->response.flags & HTTP_RESPONSE_KEEPALIVE )
+ 		pool_recycle ( &http->conn );
+@@ -1471,14 +1466,9 @@ static int http_rx_headers ( struct http_transaction *http,
+ 	if ( ( line == NULL ) || ( line[0] != '\0' ) )
+ 		return 0;
+ 
+-DBGC ( http, "http_rx_headers: 1\n");
+-DBGC2 ( http, "http_rx_headers: 2\n");
+-
+-DBGC2 ( http, "http_rx_headers 1: http->response.content.len is %lld\n", http->response.content.len);
+ 	/* Process headers */
+ 	if ( ( rc = http_parse_headers ( http ) ) != 0 )
+ 		return rc;
+-DBGC2 ( http, "http_rx_headers 2: http->response.content.len is %lld\n", http->response.content.len);
+ 
+ 	/* Initialise content encoding, if applicable */
+ 	if ( ( content = http->response.content.encoding ) &&
+-- 
+2.17.0
+

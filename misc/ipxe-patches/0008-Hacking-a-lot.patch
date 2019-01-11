@@ -1,7 +1,7 @@
 From bca82a19c29c2b057384d2adef8e6eec06d21184 Mon Sep 17 00:00:00 2001
 From: Johannes Thoma <johannes@johannesthoma.com>
 Date: Thu, 10 Jan 2019 19:20:48 +0100
-Subject: [PATCH 8/9] Hacking a lot.
+Subject: [PATCH 08/13] Hacking a lot.
 
 We're right now attempting to change the block_read_TYPE to
 accept uint64_t as size parameter ...
