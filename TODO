@@ -48,8 +48,7 @@ TODO: Feature: Make C:\ as Primary Diskless work
 
 	We now have a limit at about 8GB
 
-	TODO: submit to upstream ipxe if wanted.
-	TODO: maybe support %llu as well (and %u ..)
+	Maybe submit to upstream ipxe if wanted.
 
 	Update: When using 64-bit ipxe it works with 32GB image:
 
@@ -59,17 +58,29 @@ TODO: Feature: Make C:\ as Primary Diskless work
 
 	With 64 bit iPXE there is no such limit.
 
+	Update: With patches, also works with 32 bit now.
+
+	*) Use drbd device as source device for cgi script.
+
+	Done, works.
+
+	*) Test if read access is possible if there are no Primaries.
+
+		Yes it is. CGI script can serve DRBD device while it
+		is Secondary (and there are no Primaries)
+
 	Left to do:
+
+	*) Make windrbd device open() function wait for primary
+	(this is also interesting for auto promote)
 
 	*) Setup a iscsi boot environment
 
 	*) Fix drbd.cgi script.
 
 	Done so far. Make keepalive work.
-
-	*) Use drbd device as source device for cgi script.
-
-	*) Test if read access is possible if there are no Primaries.
+	Also DRBD_MINOR parameter (need to parse QUERY_STRING,
+	this is dangerous)
 
 	*) Configure DHCP for autobooting image
 
@@ -84,9 +95,6 @@ TODO: Feature: Make C:\ as Primary Diskless work
 	*) Create a WinPE image with network and WinDRBD.
 
 	*) Partitioning: Windows expects a disk not a volume
-
-	*) Make windrbd device open() function wait for primary
-	(this is also interesting for auto promote)
 
 	*) Somehow trick windows into accepting windrbd device as
 	System volume (via BCD?)
