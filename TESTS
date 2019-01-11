@@ -1,4 +1,14 @@
 -----------------------------------------
+
+Basic DRBD functionality on a Windows 7 without Service Pack 1
+
+It works, but Windows fails to accept Linbit certificate. So,
+requirement SP1 remains for the normal user (one has to 
+manually disable driver signature enforcement on every boot,
+just putting it into test mode by running bcdedit does not
+work) Also not with fresh service pack 1.
+
+-----------------------------------------
 Write to NTFS while connected (Windows Server 2016, Protocol C):
 
 On windows side:

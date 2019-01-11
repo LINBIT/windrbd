@@ -221,7 +221,7 @@ sanboot http://192.168.56.102/cgi-bin/drbd.cgi
 
 Build ipxe
 
-make DEBUG=sanboot,int13,httpcore:2,httpblock,blocktrans:2 && cp bin/ipxe.pxe ~/public_html/ipxe/ipxework.pxe
+make DEBUG=sanboot,int13,httpcore:2,httpblock,blocktrans:2,xfer,xferbuf && cp bin/ipxe.pxe ~/public_html/ipxe/ipxework.pxe
 
 # 64 bit version can boot 32 GB images
 make bin-x86_64-pcbios/ipxe.pxe 
