@@ -9,17 +9,9 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
-TODO: Documentation: Blog for Linbit homepage
-
-	Describe 3 use cases:
-
-	Making existing services highly available
-	Virtualization (see OpenNebula project)
-	LinDrive: Diskless Primary on Clients
-
-	Until Mid January 2019
-
 TODO: Feature: Resource agent for Microsoft cluster manager
+
+	In progress: Install Server 2016 machines (again)
 
 TODO: Feature: Make C:\ as Primary Diskless work
 
@@ -59,6 +51,8 @@ TODO: Feature: Make C:\ as Primary Diskless work
 	With 64 bit iPXE there is no such limit.
 
 	Update: With patches, also works with 32 bit now.
+
+	Patches tested and submited, waiting for response
 
 	*) Use drbd device as source device for cgi script.
 
@@ -4411,4 +4405,16 @@ Done: Research: Check if pacemaker under WSL works
 	Update: Got it running. Not suitable for our case (WSL)
 	since WSL is not designed for running services (a poweroff -f
 	for example just closes the Window).
+
+Done: Documentation: Blog for Linbit homepage
+
+	Describe 3 use cases:
+
+	Making existing services highly available
+	Virtualization (see OpenNebula project)
+	LinDrive: Diskless Primary on Clients
+
+	Until Mid January 2019
+
+	Update: until Jan, 23
 
