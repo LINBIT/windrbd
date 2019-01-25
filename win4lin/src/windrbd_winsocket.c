@@ -380,6 +380,8 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	if (Status == STATUS_PENDING) {
 		LARGE_INTEGER	nWaitTime;
 		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk_connecttimeo * 1000 * 10);
+printk("Connect wait nWaitTime is %lld socket->sk_connecttimeo is %d\n", nWaitTime, socket->sk_connecttimeo);
+
 		if ((Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime)) == STATUS_TIMEOUT)
 		{
 			IoCancelIrp(Irp);
