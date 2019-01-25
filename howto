@@ -230,4 +230,10 @@ make bin-x86_64-pcbios/ipxe.pxe
 
 Windows Server 2016: empty password: Start->Windows Verwaltungstools->Lokale Sicherheitsrichtlinie->Kontorichtlinien->Kennwortrichtlinien->Alter auf 0, Komplexit ausschalten.
 
+-----
 
+Change hostname
+
+sysdm.cpl → Computer Name → Change → More... has a "Primary DNS suffix" option, which might be helpful here.
+
+(and reboot)
