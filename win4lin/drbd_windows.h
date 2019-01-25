@@ -449,7 +449,6 @@ struct kobject {
     struct kref         kref;
 };
 
-
 #define WQ_MEM_RECLAIM 0
 #define WQNAME_LEN	32
 struct workqueue_struct {

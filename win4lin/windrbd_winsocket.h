@@ -17,6 +17,7 @@ struct socket {
 
 	int sk_sndtimeo;
 	int sk_rcvtimeo;
+	int sk_connecttimeo;
 
 	int no_delay:1;
 

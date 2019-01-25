@@ -473,7 +473,8 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 	sprintf(socket->name, "conn_sock\0");
 
 	socket->sk_rcvtimeo =
-	socket->sk_sndtimeo = connect_int * HZ;
+	socket->sk_sndtimeo = 
+	socket->sk_connecttimeo = connect_int * HZ;
 
 	dtt_setbufsize(socket, sndbuf_size, rcvbuf_size);
 
@@ -512,7 +513,6 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
                         break;
                 }
         }
-
 out:
 	if (err < 0) {
 		if (socket)
@@ -790,6 +790,7 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	rcu_read_unlock(rcu_flags);
 
 	socket->sk_rcvtimeo = socket->sk_sndtimeo = timeout;
+	socket->sk_connecttimeo = nc->connect_int * HZ;
 	dtt_setbufsize(socket, nc->sndbuf_size, nc->rcvbuf_size);
 
 	socket_c->socket = socket;
@@ -1163,6 +1164,9 @@ randomize:
 
 	dsocket->sk_sndtimeo = timeout;
 	csocket->sk_sndtimeo = timeout;
+
+	dsocket->sk_connecttimeo = nc->connect_int * HZ;
+	csocket->sk_connecttimeo = nc->connect_int * HZ;
 
 	return 0;
 

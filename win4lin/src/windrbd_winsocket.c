@@ -379,8 +379,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 
 	if (Status == STATUS_PENDING) {
 		LARGE_INTEGER	nWaitTime;
-	/* TODO: hard coding timeout to 1 second is most likely wrong. */
-		nWaitTime = RtlConvertLongToLargeInteger(-1 * 1000 * 1000 * 10);
+		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk_connecttimeo * 1000 * 10);
 		if ((Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime)) == STATUS_TIMEOUT)
 		{
 			IoCancelIrp(Irp);
