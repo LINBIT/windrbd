@@ -33,6 +33,7 @@
 #include <linux/module.h>
 #include <linux/socket.h>
 #include <linux/net.h>
+#include <linux/tcp.h>
 
 struct buffer {
 	void *base;
@@ -460,11 +461,10 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 		socket = NULL;
 		goto out;
 	}
-	sprintf(socket->name, "conn_sock\0");
 
-	socket->sk_rcvtimeo =
-	socket->sk_sndtimeo = 
-	socket->sk_connecttimeo = connect_int * HZ;
+	socket->sk->sk_rcvtimeo =
+	socket->sk->sk_sndtimeo = 
+	socket->sk->sk_connecttimeo = connect_int * HZ;
 
 	dtt_setbufsize(socket, sndbuf_size, rcvbuf_size);
 
@@ -483,31 +483,31 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 	/* connect may fail, peer not yet available.
 	 * stay C_CONNECTING, don't go Disconnecting! */
 	what = "connect";
-        err = socket->ops->connect(socket, (struct sockaddr *) &peer_addr,
-                                   path->path.peer_addr_len, 0);
-        if (err < 0) { 
-                switch (err) {
-                case -ETIMEDOUT:
-                case -EINPROGRESS:
-                case -EINTR:
-                case -ERESTARTSYS:
-                case -ECONNREFUSED:
-                case -ECONNRESET:
-                case -ENETUNREACH:
-                case -EHOSTDOWN:
-                case -EHOSTUNREACH:
-                        err = -EAGAIN;
-                        break;
-                case -EINVAL: 
-                        err = -EADDRNOTAVAIL;
-                        break;
-                }
-        }
+	err = socket->ops->connect(socket, (struct sockaddr *) &peer_addr,
+				   path->path.peer_addr_len, 0);
+	if (err < 0) { 
+		switch (err) {
+		case -ETIMEDOUT:
+		case -EINPROGRESS:
+		case -EINTR:
+		case -ERESTARTSYS:
+		case -ECONNREFUSED:
+		case -ECONNRESET:
+		case -ENETUNREACH:
+		case -EHOSTDOWN:
+		case -EHOSTUNREACH:
+			err = -EAGAIN;
+			break;
+		case -EINVAL: 
+			err = -EADDRNOTAVAIL;
+			break;
+		}
+	}
 out:
 	if (err < 0) {
 		if (socket)
 			sock_release(socket);
-		if (err != -EAGAIN)
+		if (err != -EAGAIN && err != -EADDRNOTAVAIL)
 			tr_err(transport, "%s failed, err = %d\n", what, err);
 	} else {
 		*ret_socket = socket;
@@ -544,17 +544,13 @@ static bool dtt_socket_ok_or_free(struct socket **socket)
 	if (!*socket)
 		return false;
 
-    SIZE_T out = 0;
-    NTSTATUS Status = ControlSocket( (*socket)->wsk_socket, WskIoctl, SIO_WSK_QUERY_RECEIVE_BACKLOG, 0, 0, NULL, sizeof(SIZE_T), &out, NULL );
-	if (!NT_SUCCESS(Status)) {
-        WDRBD_ERROR("socket(0x%p), ControlSocket(%s): SIO_WSK_QUERY_RECEIVE_BACKLOG failed=0x%x\n", (*socket), (*socket)->name, Status); // _WIN32
-		kernel_sock_shutdown(*socket, SHUT_RDWR);
-		sock_release(*socket);
-        *socket = NULL;
-        return false;
-	}
+	if ((*socket)->sk->sk_state == TCP_ESTABLISHED)
+		return true;
 
-    return true;
+	kernel_sock_shutdown(*socket, SHUT_RDWR);
+	sock_release(*socket);
+	*socket = NULL;
+        return false;
 }
 
 static bool dtt_connection_established(struct drbd_transport *transport,
@@ -682,7 +678,7 @@ static int dtt_receive_first_packet(struct drbd_tcp_transport *tcp_transport, st
 		rcu_read_unlock(rcu_flags);
 		return -EIO;
 	}
-	socket->sk_rcvtimeo = nc->ping_timeo * 4 * HZ / 10;
+	socket->sk->sk_rcvtimeo = nc->ping_timeo * 4 * HZ / 10;
 	rcu_read_unlock(rcu_flags);
 
 	err = dtt_recv_short(socket, h, header_size, 0);
@@ -700,6 +696,8 @@ static int dtt_receive_first_packet(struct drbd_tcp_transport *tcp_transport, st
 	return be16_to_cpu(h->command);
 }
 
+
+	/* TODO: rework */
 NTSTATUS WSKAPI dtt_incoming_connection (
     _In_  PVOID         SocketContext,
     _In_  ULONG         Flags,
@@ -735,6 +733,9 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 		printk(KERN_ERR "No mem, dropped an incoming connection\n");
 		goto error;
 	}
+	socket->sk = kzalloc(sizeof(*socket->sk), 0, 'XXYY');
+	if (socket->sk == NULL)
+		goto error;
 
 	spin_lock_bh(&listener->listener.waiters_lock);
 	/* In Windows the event triggered function (this here) "eats" the new
@@ -763,7 +764,6 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 		goto error;
 	}
 
-
 	path_t = container_of(path_d, struct dtt_path, path);
 	socket->wsk_socket = AcceptSocket;
 	socket->error_status = STATUS_SUCCESS;
@@ -779,8 +779,8 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	timeout = nc->timeout * HZ / 10;
 	rcu_read_unlock(rcu_flags);
 
-	socket->sk_rcvtimeo = socket->sk_sndtimeo = timeout;
-	socket->sk_connecttimeo = nc->connect_int * HZ;
+	socket->sk->sk_rcvtimeo = socket->sk->sk_sndtimeo = timeout;
+	socket->sk->sk_connecttimeo = nc->connect_int * HZ;
 	dtt_setbufsize(socket, nc->sndbuf_size, nc->rcvbuf_size);
 
 	socket_c->socket = socket;
@@ -1032,12 +1032,10 @@ static int dtt_connect(struct drbd_transport *transport)
 
 			if (use_for_data) {
 				dsocket = s;
-				sprintf(dsocket->name, "data_sock\0");
 				dtt_send_first_packet(tcp_transport, dsocket, P_INITIAL_DATA, DATA_STREAM);
 			} else {
 				clear_bit(RESOLVE_CONFLICTS, &transport->flags);
 				csocket = s;
-				sprintf(csocket->name, "meta_sock\0");
 				dtt_send_first_packet(tcp_transport, csocket, P_INITIAL_META, CONTROL_STREAM);
 			}
 		} else if (!first_path)
@@ -1149,11 +1147,11 @@ randomize:
 	timeout = nc->timeout * HZ / 10;
 	rcu_read_unlock(rcu_flags);
 
-	dsocket->sk_sndtimeo = timeout;
-	csocket->sk_sndtimeo = timeout;
+	dsocket->sk->sk_sndtimeo = timeout;
+	csocket->sk->sk_sndtimeo = timeout;
 
-	dsocket->sk_connecttimeo = nc->connect_int * HZ;
-	csocket->sk_connecttimeo = nc->connect_int * HZ;
+	dsocket->sk->sk_connecttimeo = nc->connect_int * HZ;
+	csocket->sk->sk_connecttimeo = nc->connect_int * HZ;
 
 	return 0;
 
@@ -1182,7 +1180,7 @@ static void dtt_set_rcvtimeo(struct drbd_transport *transport, enum drbd_stream 
 
 	struct socket *socket = tcp_transport->stream[stream];
 
-	socket->sk_rcvtimeo = timeout;
+	socket->sk->sk_rcvtimeo = timeout;
 }
 
 static long dtt_get_rcvtimeo(struct drbd_transport *transport, enum drbd_stream stream)
@@ -1192,7 +1190,7 @@ static long dtt_get_rcvtimeo(struct drbd_transport *transport, enum drbd_stream 
 
 	struct socket *socket = tcp_transport->stream[stream];
 
-	return socket->sk_rcvtimeo;
+	return socket->sk->sk_rcvtimeo;
 }
 
 static bool dtt_stream_ok(struct drbd_transport *transport, enum drbd_stream stream)

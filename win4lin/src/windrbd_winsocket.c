@@ -37,6 +37,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_CONNECTION_ABORTED:
 		return -ECONNABORTED;
 	case STATUS_IO_TIMEOUT:
+	case STATUS_TIMEOUT:
 		return -EAGAIN;
 	case STATUS_INVALID_DEVICE_STATE:
 		return -EINVAL;
@@ -44,6 +45,8 @@ static int winsock_to_linux_error(NTSTATUS status)
 		return -ENETUNREACH;
 	case STATUS_HOST_UNREACHABLE:
 		return -EHOSTUNREACH;
+	case STATUS_CONNECTION_REFUSED:
+		return -ECONNREFUSED;
 	default:
 		/* no printk's */
 		// printk("Unknown status %x, returning -EIO.\n", status);
@@ -207,7 +210,7 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 
 		if (socket->send_buf_cur > socket->send_buf_max) {
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
-			timeout.QuadPart = -1 * socket->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
+			timeout.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
 
 				/* TODO: no signals? */
 			status = KeWaitForSingleObject(&socket->data_sent, Executive, KernelMode, FALSE, &timeout);
@@ -381,8 +384,8 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 
 	if (Status == STATUS_PENDING) {
 		LARGE_INTEGER	nWaitTime;
-		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk_connecttimeo * 1000 * 10);
-printk("Connect wait nWaitTime is %lld socket->sk_connecttimeo is %d\n", nWaitTime, socket->sk_connecttimeo);
+		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_connecttimeo * 1000 * 10);
+printk("Connect wait nWaitTime is %lld socket->sk_connecttimeo is %d\n", nWaitTime, socket->sk->sk_connecttimeo);
 
 		if ((Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime)) == STATUS_TIMEOUT)
 		{
@@ -394,9 +397,13 @@ printk("Connect wait nWaitTime is %lld socket->sk_connecttimeo is %d\n", nWaitTi
 	if (Status == STATUS_SUCCESS)
 	{
 		Status = Irp->IoStatus.Status;
+		if (Status == STATUS_SUCCESS)
+			socket->sk->sk_state = TCP_ESTABLISHED;
 	}
 
 	IoFreeIrp(Irp);
+if (Status != STATUS_SUCCESS)
+printk("connect status is %x\n", Status);
 	return winsock_to_linux_error(Status);
 }
 
@@ -436,6 +443,9 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 
 		Status = Irp->IoStatus.Status;
 	}
+
+	if (Status == STATUS_SUCCESS)
+		sock->sk->sk_state = 0;
 
 	IoFreeIrp(Irp);
 	return winsock_to_linux_error(Status);
@@ -496,13 +506,13 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		LARGE_INTEGER	nWaitTime;
 		LARGE_INTEGER	*pTime;
 
-		if (socket->sk_sndtimeo <= 0 || socket->sk_sndtimeo == MAX_SCHEDULE_TIMEOUT)
+		if (socket->sk->sk_sndtimeo <= 0 || socket->sk->sk_sndtimeo == MAX_SCHEDULE_TIMEOUT)
 		{
 			pTime = NULL;
 		}
 		else
 		{
-			nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk_sndtimeo * 1000 * 10);
+			nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_sndtimeo * 1000 * 10);
 			pTime = &nWaitTime;
 		}
 		{
@@ -817,13 +827,13 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
         LARGE_INTEGER	nWaitTime;
         LARGE_INTEGER	*pTime;
 
-        if (socket->sk_rcvtimeo <= 0 || socket->sk_rcvtimeo == MAX_SCHEDULE_TIMEOUT)
+        if (socket->sk->sk_rcvtimeo <= 0 || socket->sk->sk_rcvtimeo == MAX_SCHEDULE_TIMEOUT)
         {
             pTime = 0;
         }
         else
         {
-            nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk_rcvtimeo * 1000 * 10);
+            nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_rcvtimeo * 1000 * 10);
             pTime = &nWaitTime;
         }
 
@@ -1117,8 +1127,14 @@ int sock_create_kern(
 		goto out;
 	}
 	err = 0;
-	socket = kzalloc(sizeof(struct socket), 0, '3WDW');
+	socket = kzalloc(sizeof(*socket), 0, '3WDW');
 	if (!socket) {
+		err = -ENOMEM; 
+		goto out;
+	}
+	socket->sk = kzalloc(sizeof(*socket->sk), 0, 'KARI');
+	if (!socket->sk) {
+		kfree(socket);
 		err = -ENOMEM; 
 		goto out;
 	}

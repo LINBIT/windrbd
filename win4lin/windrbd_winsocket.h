@@ -5,30 +5,9 @@
 #include <wsk.h>
 #include <linux/mutex.h>
 #include <linux/spinlock.h>
+#include <linux/socket.h>
 
 /* struct sockaddr_storage: we now use the definition from ws2def.h */
-
-struct socket {
-	struct _WSK_SOCKET *wsk_socket;
-
-	int sk_sndtimeo;
-	int sk_rcvtimeo;
-	int sk_connecttimeo;
-
-	int no_delay:1;
-
-	NTSTATUS error_status;
-
-	size_t send_buf_max;
-	size_t send_buf_cur;
-	spinlock_t send_buf_counters_lock;
-	KEVENT data_sent;
-
-	struct mutex wsk_mutex;
-	const struct proto_ops *ops;
-
-	char name[32];
-};
 
 /* TODO: one day we should convert the APIs here to be kernel
  * compatible and revert the drbd_transport_wtcp.c to be based on

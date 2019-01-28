@@ -3,6 +3,7 @@
 
 #include "windrbd_winsocket.h"
 #include <linux/uio.h>	/* for struct kvec */
+#include <linux/net/sock.h>
 
 /* msg flags. Most (but not all) of them unimplemented. */
 
@@ -67,6 +68,26 @@ struct msghdr {
 #if 0
 	struct kiocb	*msg_iocb;	/* ptr to iocb for async requests */
 #endif
+};
+
+struct _WSK_SOCKET;
+
+struct socket {
+	struct _WSK_SOCKET *wsk_socket;
+
+	int no_delay:1;
+
+	NTSTATUS error_status;
+
+	size_t send_buf_max;
+	size_t send_buf_cur;
+	spinlock_t send_buf_counters_lock;
+	KEVENT data_sent;
+
+	struct mutex wsk_mutex;
+	const struct proto_ops *ops;
+
+	struct sock *sk;
 };
 
 #endif
