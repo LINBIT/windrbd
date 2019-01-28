@@ -66,15 +66,10 @@ struct dtt_socket_container {
 	struct socket *socket;
 };
 
-struct dtt_wait_first {
-	struct drbd_transport *transport;
-};
-
 struct dtt_path {
 	struct drbd_path path;
 
 	struct list_head sockets; /* sockets passed to me by other receiver threads */
-	struct dtt_wait_first *first;
 };
 
 static int dtt_init(struct drbd_transport *transport);
@@ -101,8 +96,8 @@ static struct drbd_transport_class tcp_transport_class = {
 	.path_instance_size = sizeof(struct dtt_path),
 	.listener_instance_size = sizeof(struct dtt_listener),
 	.init = dtt_init,
+	.module = THIS_MODULE, 
 	.list = LIST_HEAD_INIT(tcp_transport_class.list),
-	.module = &windrbd_module
 };
 
 static struct drbd_transport_ops dtt_ops = {
@@ -122,7 +117,6 @@ static struct drbd_transport_ops dtt_ops = {
 	.remove_path = dtt_remove_path,
 };
 
-#define SOCKET_SND_DEF_BUFFER       (16384)
 #define DRBD_SIGKILL SIGHUP
 
 /* Might restart iteration, if current element is removed from list!! */
@@ -169,7 +163,7 @@ static void dtt_nodelay(struct socket *socket)
 	(void) kernel_setsockopt(socket, SOL_TCP, TCP_NODELAY, (char *)&val, sizeof(val));
 }
 
-int dtt_init(struct drbd_transport *transport)
+static int dtt_init(struct drbd_transport *transport)
 {
 	struct drbd_tcp_transport *tcp_transport =
 		container_of(transport, struct drbd_tcp_transport, transport);
@@ -958,7 +952,6 @@ static int dtt_connect(struct drbd_transport *transport)
 	struct dtt_path *connect_to_path, *first_path = NULL;
 	struct socket *dsocket, *csocket;
 	struct net_conf *nc;
-	struct dtt_wait_first waiter;
 	int timeout, err;
 	bool ok;
 	char sbuf[128], dbuf[128];
@@ -967,8 +960,6 @@ static int dtt_connect(struct drbd_transport *transport)
 	ok = FALSE;
 	dsocket = NULL;
 	csocket = NULL;
-
-	waiter.transport = transport;
 
 	for_each_path_ref(drbd_path, transport) {
 		struct dtt_path *path = container_of(drbd_path, struct dtt_path, path);
