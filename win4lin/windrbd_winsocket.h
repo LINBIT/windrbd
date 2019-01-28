@@ -6,11 +6,7 @@
 #include <linux/mutex.h>
 #include <linux/spinlock.h>
 
-#define _K_SS_MAXSIZE	128 
-struct sockaddr_storage_win {
-	unsigned short	ss_family;		/* address family */
-	char	__data[_K_SS_MAXSIZE - sizeof(unsigned short)];
-}; 
+/* struct sockaddr_storage: we now use the definition from ws2def.h */
 
 struct socket {
 	struct _WSK_SOCKET *wsk_socket;

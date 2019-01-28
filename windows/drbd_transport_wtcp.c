@@ -173,12 +173,10 @@ static int dtt_init(struct drbd_transport *transport)
 	tcp_transport->transport.ops = &dtt_ops;
 	tcp_transport->transport.class = &tcp_transport_class;
 	for (i = DATA_STREAM; i <= CONTROL_STREAM ; i++) {
-		void *buffer = __get_free_page(GFP_KERNEL);
-		if (!buffer) {
-			tcp_transport->rbuf[i].base = NULL;
-			WDRBD_WARN("dtt_init kzalloc %s allocation fail\n", i ? "CONTROL_STREAM" : "DATA_STREAM" );
+		void *buffer = (void*)__get_free_page(GFP_KERNEL);
+		if (!buffer)
 			goto fail;
-		}
+
 		tcp_transport->rbuf[i].base = buffer;
 		tcp_transport->rbuf[i].pos = buffer;
 	}
@@ -193,7 +191,6 @@ static void dtt_free_one_sock(struct socket *socket)
 {
 	if (socket) {
 		synchronize_rcu();
-
 		kernel_sock_shutdown(socket, SHUT_RDWR);
 		sock_release(socket);
 	}
@@ -297,15 +294,15 @@ static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *so
 
 static int dtt_recv_short(struct socket *socket, void *buf, size_t size, int flags)
 {
-        struct kvec iov = {
-                .iov_base = buf,
-                .iov_len = size,
-        };
-        struct msghdr msg = {
-                .msg_flags = (flags ? flags : MSG_WAITALL | MSG_NOSIGNAL)
-        };
+	struct kvec iov = {
+		.iov_base = buf,
+		.iov_len = size,
+	};
+	struct msghdr msg = {
+		.msg_flags = (flags ? flags : MSG_WAITALL | MSG_NOSIGNAL)
+	};
 
-        return kernel_recvmsg(socket, &msg, &iov, 1, size, msg.msg_flags);
+	return kernel_recvmsg(socket, &msg, &iov, 1, size, msg.msg_flags);
 }
 
 static int dtt_recv(struct drbd_transport *transport, enum drbd_stream stream, void **buf, size_t size, int flags)
@@ -313,8 +310,11 @@ static int dtt_recv(struct drbd_transport *transport, enum drbd_stream stream, v
 	struct drbd_tcp_transport *tcp_transport =
 		container_of(transport, struct drbd_tcp_transport, transport);
 	struct socket *socket = tcp_transport->stream[stream];
-	UCHAR *buffer = NULL; 
+	void *buffer;
 	int rv;
+
+	if (!socket)
+		return -ENOTCONN;
 
 		/* If this should be non-blocking, pretend that we
 		 * haven't received anything. DRBD then will redo
@@ -330,7 +330,7 @@ static int dtt_recv(struct drbd_transport *transport, enum drbd_stream stream, v
 	} else if (flags & GROW_BUFFER) {
 		TR_ASSERT(transport, *buf == tcp_transport->rbuf[stream].base);
 		buffer = tcp_transport->rbuf[stream].pos;
-		TR_ASSERT(transport, (buffer - (UCHAR*)*buf) + size <= PAGE_SIZE);//gcc void* pointer increment is based by 1 byte operation
+		TR_ASSERT(transport, ((char*) buffer - (char*) *buf) + size <= PAGE_SIZE);
 
 		rv = dtt_recv_short(socket, buffer, size, flags & ~GROW_BUFFER);
 	} else {
@@ -342,7 +342,7 @@ static int dtt_recv(struct drbd_transport *transport, enum drbd_stream stream, v
 	}
 
 	if (rv > 0)
-		tcp_transport->rbuf[stream].pos = buffer + rv;
+		tcp_transport->rbuf[stream].pos = ((char*) buffer) + rv;
 
 	return rv;
 }
@@ -354,6 +354,9 @@ static int dtt_recv_pages(struct drbd_transport *transport, struct drbd_page_cha
 	struct socket *socket = tcp_transport->stream[DATA_STREAM];
 	struct page *page;
 	int err;
+
+	if (!socket)
+		return -ENOTCONN;
 
 	drbd_alloc_page_chain(transport, chain, DIV_ROUND_UP(size, PAGE_SIZE), GFP_TRY);
 	page = chain->head;
@@ -374,7 +377,6 @@ static int dtt_recv_pages(struct drbd_transport *transport, struct drbd_page_cha
 	return 0;
 fail:
 	drbd_free_page_chain(transport, chain, 0);
-	kfree(page); // PMaskPR
 	return err;
 }
 
@@ -425,7 +427,7 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 {
 	const char *what;
 	struct socket *socket;
-	struct sockaddr_storage_win my_addr, peer_addr;
+	struct sockaddr_storage my_addr, peer_addr;
 	struct net_conf *nc;
 	int err;
 	int sndbuf_size, rcvbuf_size, connect_int;
@@ -621,7 +623,7 @@ static int dtt_wait_for_connect(struct drbd_transport *drbd_transport,
 {
 	KIRQL rcu_flags;
 	struct dtt_socket_container *socket_c;
-	struct sockaddr_storage_win my_addr, peer_addr;
+	struct sockaddr_storage my_addr, peer_addr;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	PWSK_SOCKET paccept_socket = NULL;
 	int connect_int, peer_addr_len, err = 0;
@@ -745,7 +747,7 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	 * socket; ie. the socket won't be reported by ->WskAccept() any more.
 	 * This means we just store them on the list, and are done. */
 	path_d = drbd_find_path_by_addr(&listener->listener,
-			(struct sockaddr_storage_win*)RemoteAddress);
+			(struct sockaddr_storage*)RemoteAddress);
 	if (!path_d) {
 		struct sockaddr *sa = (struct sockaddr*) RemoteAddress;
 		struct sockaddr_in6 *from_sin6;
@@ -821,7 +823,7 @@ static int dtt_init_listener(struct drbd_transport *transport,
 			       struct drbd_listener *drbd_listener)
 {
 	int err, sndbuf_size, rcvbuf_size, addr_len;
-	struct sockaddr_storage_win my_addr;
+	struct sockaddr_storage my_addr;
 	struct dtt_listener *listener = container_of(drbd_listener, struct dtt_listener, listener);
 	NTSTATUS status;
 	KIRQL rcu_flags;
@@ -840,7 +842,7 @@ static int dtt_init_listener(struct drbd_transport *transport,
 	rcvbuf_size = nc->rcvbuf_size;
 	rcu_read_unlock(rcu_flags);
 
-	my_addr = *(struct sockaddr_storage_win *)addr;
+	my_addr = *(struct sockaddr_storage*)addr;
 	err = 0;
 
 	listener->transport = transport;
