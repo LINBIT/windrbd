@@ -392,25 +392,23 @@ static void dtt_stats(struct drbd_transport *transport, struct drbd_transport_st
 			 * full feature now.
 			 */
 		stats->send_buffer_used = 0;
-		stats->send_buffer_size = socket->send_buf_max;
+		stats->send_buffer_size = socket->sk->sk_sndbuf;
 	}
 }
 
 static void dtt_setbufsize(struct socket *socket, unsigned int snd,
 			   unsigned int rcv)
 {
-	NTSTATUS status;
-
+	/* open coded SO_SNDBUF, SO_RCVBUF */
 	if (snd) {
-		socket->send_buf_max = snd;
-		KeSetEvent(&socket->data_sent, IO_NO_INCREMENT, FALSE);
+		socket->sk->sk_sndbuf = snd;
+		socket->sk->sk_userlocks |= SOCK_SNDBUF_LOCK;
 	}
-
 	if (rcv) {
-		status = ControlSocket(socket->wsk_socket, WskSetOption, SO_RCVBUF, SOL_SOCKET, sizeof(rcv), &rcv, 0, NULL, NULL);
-		if (status != STATUS_SUCCESS)
-			printk(KERN_WARNING "Could not set receive buffer size to %d, status is %x\n", rcv, status);
+		socket->sk->sk_rcvbuf = rcv;
+		socket->sk->sk_userlocks |= SOCK_RCVBUF_LOCK;
 	}
+	platform_update_socket_buffer_sizes(socket);
 }
 
 static bool dtt_path_cmp_addr(struct dtt_path *path)
@@ -651,7 +649,6 @@ static int dtt_wait_for_connect(struct drbd_transport *drbd_transport,
 	} else if (listener->listener.pending_accepts > 0) {
 		panic("must never happen - who did increase pending_accepts??");
 	}
-	WDRBD_TRACE_CO("%p dtt_wait_for_connect ok done.\n", KeGetCurrentThread());
 	spin_unlock_bh(&listener->listener.waiters_lock);
 	*socket = s_estab;
 	*ret_path = path;
@@ -677,7 +674,6 @@ static int dtt_receive_first_packet(struct drbd_tcp_transport *tcp_transport, st
 	rcu_read_unlock(rcu_flags);
 
 	err = dtt_recv_short(socket, h, header_size, 0);
-    WDRBD_TRACE_SK("socket(0x%p) err(%d) header_size(%d)\n", socket, err, header_size);
 	if (err != header_size) {
 		if (err >= 0)
 			err = -EIO;
@@ -762,8 +758,9 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	path_t = container_of(path_d, struct dtt_path, path);
 	socket->wsk_socket = AcceptSocket;
 	socket->error_status = STATUS_SUCCESS;
-	socket->send_buf_max = 4*1024*1024;
+	socket->sk->sk_sndbuf = 4*1024*1024;
 	socket->send_buf_cur = 0;
+	socket->sk->sk_rcvbuf = 4*1024*1024;
 	spin_lock_init(&socket->send_buf_counters_lock);
 	mutex_init(&socket->wsk_mutex);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
@@ -993,10 +990,7 @@ static int dtt_connect(struct drbd_transport *transport)
 	do {
 		struct socket *s = NULL;
 
-/* TODO: needed? */
-// schedule_timeout_interruptible(0.4*HZ);
 		err = dtt_try_connect(transport, connect_to_path, &s);
-
 		if (err < 0 && err != -EAGAIN)
 			goto out;
 
@@ -1172,8 +1166,10 @@ static void dtt_set_rcvtimeo(struct drbd_transport *transport, enum drbd_stream 
 {
 	struct drbd_tcp_transport *tcp_transport =
 		container_of(transport, struct drbd_tcp_transport, transport);
-
 	struct socket *socket = tcp_transport->stream[stream];
+
+	if (!socket)
+		return;
 
 	socket->sk->sk_rcvtimeo = timeout;
 }
@@ -1182,8 +1178,10 @@ static long dtt_get_rcvtimeo(struct drbd_transport *transport, enum drbd_stream 
 {
 	struct drbd_tcp_transport *tcp_transport =
 		container_of(transport, struct drbd_tcp_transport, transport);
-
 	struct socket *socket = tcp_transport->stream[stream];
+
+	if (!socket)
+		return -ENOTCONN;
 
 	return socket->sk->sk_rcvtimeo;
 }
@@ -1192,10 +1190,23 @@ static bool dtt_stream_ok(struct drbd_transport *transport, enum drbd_stream str
 {
 	struct drbd_tcp_transport *tcp_transport =
 		container_of(transport, struct drbd_tcp_transport, transport);
-
 	struct socket *socket = tcp_transport->stream[stream];
 
-	return socket && socket->wsk_socket;
+	return socket && socket->sk;
+}
+
+static void dtt_update_congested(struct drbd_tcp_transport *tcp_transport)
+{
+	struct socket *socket = tcp_transport->stream[DATA_STREAM];
+	struct sock *sock;
+
+	if (!socket)
+		return;
+
+	sock = socket->sk;
+	// if (sock->sk_wmem_queued > sock->sk_sndbuf * 4 / 5)
+	if (socket->send_buf_cur > sock->sk_sndbuf * 4 / 5)
+		set_bit(NET_CONGESTED, &tcp_transport->transport.flags);
 }
 
 static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stream,
@@ -1356,7 +1367,3 @@ static void __exit dtt_cleanup(void)
 	drbd_unregister_transport_class(&tcp_transport_class);
 }
 
-static void dtt_update_congested(struct drbd_tcp_transport *tcp_transport)
-{
-	/* TODO: implement */
-}

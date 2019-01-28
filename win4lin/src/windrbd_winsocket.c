@@ -208,7 +208,7 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 	while (1) {
 		spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
 
-		if (socket->send_buf_cur > socket->send_buf_max) {
+		if (socket->send_buf_cur > socket->sk->sk_sndbuf) {
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
 			timeout.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
 
@@ -956,9 +956,7 @@ static int wsk_bind(
 	return winsock_to_linux_error(Status);
 }
 
-NTSTATUS
-NTAPI
-ControlSocket(
+static NTSTATUS ControlSocket(
 	__in PWSK_SOCKET	WskSocket,
 	__in ULONG			RequestType,
 	__in ULONG		    ControlCode,
@@ -1148,7 +1146,8 @@ int sock_create_kern(
 		goto out;
 	}
 	socket->error_status = STATUS_SUCCESS;
-	socket->send_buf_max = 4*1024*1024;
+	socket->sk->sk_sndbuf = 4*1024*1024;
+	socket->sk->sk_rcvbuf = 4*1024*1024;
 	socket->send_buf_cur = 0;
 	spin_lock_init(&socket->send_buf_counters_lock);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
@@ -1177,6 +1176,26 @@ void sock_release(struct socket *sock)
 
 	kfree(sock);
 }
+
+void platform_update_socket_buffer_sizes(struct socket *socket)
+{
+	NTSTATUS status;
+
+	if (socket == NULL)
+		return;
+
+	if (socket->sk->sk_userlocks & SOCK_SNDBUF_LOCK) {
+                KeSetEvent(&socket->data_sent, IO_NO_INCREMENT, FALSE);
+		socket->sk->sk_userlocks &= ~SOCK_SNDBUF_LOCK;
+	}
+	if (socket->sk->sk_userlocks & SOCK_RCVBUF_LOCK) {
+                status = ControlSocket(socket->wsk_socket, WskSetOption, SO_RCVBUF, SOL_SOCKET, sizeof(socket->sk->sk_rcvbuf), &socket->sk->sk_rcvbuf, 0, NULL, NULL);
+                if (status != STATUS_SUCCESS)
+                        printk(KERN_WARNING "Could not set receive buffer size to %d, status is %x\n", socket->sk->sk_rcvbuf, status);
+		socket->sk->sk_userlocks &= ~SOCK_RCVBUF_LOCK;
+	}
+}
+
 
 static void *init_wsk_thread;
 

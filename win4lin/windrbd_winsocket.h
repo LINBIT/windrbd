@@ -16,20 +16,6 @@
 
 int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress);
 
-NTSTATUS
-NTAPI
-ControlSocket(
-__in PWSK_SOCKET	WskSocket,
-__in ULONG			RequestType,
-__in ULONG		    ControlCode,
-__in ULONG			Level,
-__in SIZE_T			InputSize,
-__in_opt PVOID		InputBuffer,
-__in SIZE_T			OutputSize,
-__out_opt PVOID		OutputBuffer,
-__out_opt SIZE_T	*OutputSizeReturned
-);
-
 #define TC_PRIO_INTERACTIVE_BULK	1
 #define TC_PRIO_INTERACTIVE		1
 
@@ -49,5 +35,7 @@ SetEventCallbacks(
        __in PWSK_SOCKET Socket,
        __in LONG                       mask
 );
+
+void platform_update_socket_buffer_sizes(struct socket *socket);
 
 #endif
