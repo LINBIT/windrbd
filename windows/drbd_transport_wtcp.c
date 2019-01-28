@@ -425,16 +425,13 @@ static bool dtt_path_cmp_addr(struct dtt_path *path)
 
 static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *path, struct socket **ret_socket)
 {
+	KIRQL rcu_flags;
 	const char *what;
 	struct socket *socket;
 	struct sockaddr_storage my_addr, peer_addr;
 	struct net_conf *nc;
 	int err;
 	int sndbuf_size, rcvbuf_size, connect_int;
-	KIRQL rcu_flags;
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	char sbuf[128] = {0,};
-	char dbuf[128] = {0,};
 
 	rcu_flags = rcu_read_lock();
 	nc = rcu_dereference(transport->net_conf);
@@ -442,26 +439,23 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 		rcu_read_unlock(rcu_flags);
 		return -EIO;
 	}
-
 	sndbuf_size = nc->sndbuf_size;
 	rcvbuf_size = nc->rcvbuf_size;
 	connect_int = nc->connect_int;
 	rcu_read_unlock(rcu_flags);
 
 	my_addr = path->path.my_addr;
-	if (my_addr.ss_family == AF_INET6) {
+	if (my_addr.ss_family == AF_INET6)
 		((struct sockaddr_in6 *)&my_addr)->sin6_port = 0;
-	} else {
-		((struct sockaddr_in *)&my_addr)->sin_addr.s_addr = INADDR_ANY; 
+	else
 		((struct sockaddr_in *)&my_addr)->sin_port = 0; /* AF_INET & AF_SCI */
-	}
 
 	/* In some cases, the network stack can end up overwriting
 	   peer_addr.ss_family, so use a copy here. */
 	peer_addr = path->path.peer_addr;
 
 	what = "sock_create_kern";
-	err = sock_create_kern(NULL, my_addr.ss_family, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSK_FLAG_CONNECTION_SOCKET, &socket);
+	err = sock_create_kern(&init_net, my_addr.ss_family, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSK_FLAG_CONNECTION_SOCKET, &socket);
 	if (err < 0) {
 		socket = NULL;
 		goto out;
@@ -848,7 +842,7 @@ static int dtt_init_listener(struct drbd_transport *transport,
 	listener->transport = transport;
 
 	what = "sock_create_kern";
-	err = sock_create_kern(NULL, my_addr.ss_family, SOCK_STREAM, IPPROTO_TCP, listener, &dispatch, WSK_FLAG_LISTEN_SOCKET, &s_listen);
+	err = sock_create_kern(&init_net, my_addr.ss_family, SOCK_STREAM, IPPROTO_TCP, listener, &dispatch, WSK_FLAG_LISTEN_SOCKET, &s_listen);
 	if (err) {
 		s_listen = NULL;
 		goto out;

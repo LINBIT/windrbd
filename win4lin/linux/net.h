@@ -3,6 +3,7 @@
 
 #include <linux/socket.h>
 #include <linux/types.h>	/* for ssize_t */
+#include <linux/net_namespace.h>
 
 struct proto_ops {
 	int		family;

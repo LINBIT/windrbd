@@ -17,6 +17,8 @@
 #define WSK_INITIALIZING	2
 #define WSK_INITIALIZED		3
 
+struct net init_net;
+
 static LONG wsk_state = WSK_DEINITIALIZED;
 
 static WSK_REGISTRATION		g_WskRegistration;
@@ -1110,7 +1112,10 @@ int sock_create_kern(
 	int err;
 	struct socket *socket;
 
-	(void)net_namespace;
+	if (net_namespace != &init_net) {
+		err = -EINVAL;
+		goto out;
+	}
 	err = 0;
 	socket = kzalloc(sizeof(struct socket), 0, '3WDW');
 	if (!socket) {

@@ -93,7 +93,7 @@ static int open_syslog_socket(void)
 		local.sin_addr.s_addr = 0;
 		local.sin_port = 0;
 
-		err = sock_create_kern(NULL, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
+		err = sock_create_kern(&init_net, AF_INET, SOCK_DGRAM, IPPROTO_UDP,
 			NULL, NULL, WSK_FLAG_DATAGRAM_SOCKET, &printk_udp_socket);
 		if (err == 0) {
 			status = printk_udp_socket->ops->bind(printk_udp_socket, (struct sockaddr *) &local, sizeof(local));
