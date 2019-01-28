@@ -27,7 +27,7 @@
 #include <drbd_protocol.h>
 #include "drbd_wrappers.h"
 #include <linux/drbd_endian.h>
-// #include <drbd_int.h> A transport layer must not use internals
+#include <drbd_int.h>	/* for DRBD_SIGKILL, fix wait_event.. and remove again */
 #include <linux/drbd_limits.h>
 #include <linux/bitops.h>
 #include <linux/module.h>
@@ -117,8 +117,6 @@ static struct drbd_transport_ops dtt_ops = {
 	.add_path = dtt_add_path,
 	.remove_path = dtt_remove_path,
 };
-
-#define DRBD_SIGKILL SIGHUP
 
 /* Might restart iteration, if current element is removed from list!! */
 #define for_each_path_ref(path, transport)			\
@@ -607,21 +605,17 @@ static struct dtt_path *dtt_wait_connect_cond(struct drbd_transport *transport)
 }
 
 static int dtt_wait_for_connect(struct drbd_transport *drbd_transport,
-		struct drbd_listener *drbd_listener,
-		struct socket **socket,
+		struct drbd_listener *drbd_listener, struct socket **socket,
 		struct dtt_path **ret_path)
 {
 	KIRQL rcu_flags;
 	struct dtt_socket_container *socket_c;
 	struct sockaddr_storage my_addr, peer_addr;
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	PWSK_SOCKET paccept_socket = NULL;
-	int connect_int, peer_addr_len, err = 0;
-	long timeo;
+	int connect_int, err = 0;
+	long timeo, timeo_ret;
 	struct socket *s_estab = NULL;
 	struct net_conf *nc;
 	struct drbd_path *drbd_path2;
-	struct drbd_tcp_transport *transport = container_of(drbd_transport, struct drbd_tcp_transport, transport);
 	struct dtt_listener *listener = container_of(drbd_listener, struct dtt_listener, listener);
 	struct dtt_path *path = NULL;
 
@@ -637,14 +631,15 @@ static int dtt_wait_for_connect(struct drbd_transport *drbd_transport,
 	timeo = connect_int * HZ;
 	timeo += (prandom_u32() & 1) ? timeo / 7 : -timeo / 7; /* 28.5% random jitter */
 
-	wait_event_interruptible_timeout(timeo, listener->wait,
+		/* TODO: fix the wait_event_interruptible_timeout interface
+		 * and use original source code */
+
+	wait_event_interruptible_timeout(timeo_ret, listener->wait,
 		(path = dtt_wait_connect_cond(drbd_transport)),
 			timeo);
-	if (-DRBD_SIGKILL == timeo)
-	{
-		return -DRBD_SIGKILL;
-	}
-	if (-ETIMEDOUT == timeo)
+	if (timeo_ret == -DRBD_SIGKILL)
+		return -EINTR;
+	if (timeo_ret == -ETIMEDOUT)
 		return -EAGAIN;
 
 	spin_lock_bh(&listener->listener.waiters_lock);
