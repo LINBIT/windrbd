@@ -1374,6 +1374,7 @@ struct blk_plug_cb {
 extern struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data, int size);
 
 extern int dtt_initialize(void);
+extern void dtt_cleanup(void);
 
 struct block_device *bdget(dev_t dev);
 int windrbd_create_windows_device(struct block_device *bdev);

@@ -147,6 +147,9 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 	drbd_cleanup();
 	printk("DRBD cleaned up.\n");
 
+	dtt_cleanup();
+	printk("TCP transport layer cleaned up.\n");
+
 	destroy_workqueue(system_wq);
 	printk("System workqueue destroyed.\n");
 
