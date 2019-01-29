@@ -20,20 +20,22 @@
    along with drbd; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
-#include <drbd_windows.h>
-#include <drbd_transport.h>
-#include "linux/drbd.h"
-#include <linux/drbd_genl_api.h>
-#include <drbd_protocol.h>
-#include "drbd_wrappers.h"
-#include <linux/drbd_endian.h>
-#include <drbd_int.h>	/* for DRBD_SIGKILL, fix wait_event.. and remove again */
-#include <linux/drbd_limits.h>
-#include <linux/bitops.h>
+
 #include <linux/module.h>
+#include <linux/errno.h>
 #include <linux/socket.h>
+#include <linux/pkt_sched.h>
+#include <linux/sched/signal.h>
 #include <linux/net.h>
 #include <linux/tcp.h>
+#include <linux/highmem.h>
+#include <linux/drbd_genl_api.h>
+#include <linux/drbd_config.h>
+#include <drbd_protocol.h>
+#include <drbd_transport.h>
+#include "drbd_wrappers.h"
+
+#include <drbd_int.h>	/* for DRBD_SIGKILL, fix wait_event.. and remove again */
 
 struct buffer {
 	void *base;
@@ -387,12 +389,19 @@ static void dtt_stats(struct drbd_transport *transport, struct drbd_transport_st
 	struct socket *socket = tcp_transport->stream[DATA_STREAM];
 
 	if (socket) {
-			/* This prevents sync from stalling.
-			 * thereby disabling the sendbuffer half
-			 * full feature now.
-			 */
-		stats->send_buffer_used = 0;
-		stats->send_buffer_size = socket->sk->sk_sndbuf;
+		struct sock *sk = socket->sk;
+/*
+		struct tcp_sock *tp = tcp_sk(sk);
+
+		stats->unread_received = tp->rcv_nxt - tp->copied_seq;
+		stats->unacked_send = tp->write_seq - tp->snd_una;
+*/
+
+		stats->unread_received = 0;
+		stats->unacked_send = 0;
+
+		stats->send_buffer_size = sk->sk_sndbuf;
+		stats->send_buffer_used = sk->sk_wmem_queued;
 	}
 }
 
