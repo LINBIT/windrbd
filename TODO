@@ -4418,3 +4418,8 @@ Done: Documentation: Blog for Linbit homepage
 
 	Update: until Jan, 23
 
+Done: Research: typeof() replacement
+
+	It exists, but only when compiled as C++ (which we can't).
+	Is called decltype (expression) and is part of C++ 11. We
+	cannot use it since everything is C, not C++.
