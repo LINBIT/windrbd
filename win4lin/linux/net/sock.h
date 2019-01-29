@@ -13,6 +13,7 @@ struct sock {
         int sk_state;
 
 	size_t sk_sndbuf;
+	int sk_wmem_queued;
 	size_t sk_rcvbuf;
 
 	int sk_userlocks;

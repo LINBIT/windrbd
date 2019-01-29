@@ -759,7 +759,7 @@ NTSTATUS WSKAPI dtt_incoming_connection (
 	socket->wsk_socket = AcceptSocket;
 	socket->error_status = STATUS_SUCCESS;
 	socket->sk->sk_sndbuf = 4*1024*1024;
-	socket->send_buf_cur = 0;
+	socket->sk->sk_wmem_queued = 0;
 	socket->sk->sk_rcvbuf = 4*1024*1024;
 	spin_lock_init(&socket->send_buf_counters_lock);
 	mutex_init(&socket->wsk_mutex);
@@ -1204,8 +1204,7 @@ static void dtt_update_congested(struct drbd_tcp_transport *tcp_transport)
 		return;
 
 	sock = socket->sk;
-	// if (sock->sk_wmem_queued > sock->sk_sndbuf * 4 / 5)
-	if (socket->send_buf_cur > sock->sk_sndbuf * 4 / 5)
+	if (sock->sk_wmem_queued > sock->sk_sndbuf * 4 / 5)
 		set_bit(NET_CONGESTED, &tcp_transport->transport.flags);
 }
 

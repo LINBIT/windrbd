@@ -79,8 +79,6 @@ struct socket {
 
 	NTSTATUS error_status;
 
-	/* TODO: -> socket->sk->sk_wmem_queued */
-	size_t send_buf_cur;
 	spinlock_t send_buf_counters_lock;
 	KEVENT data_sent;
 
