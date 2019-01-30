@@ -6,6 +6,7 @@
 #include <linux/mutex.h>
 #include <linux/spinlock.h>
 #include <linux/socket.h>
+#include <linux/net.h>
 
 /* struct sockaddr_storage: we now use the definition from ws2def.h */
 

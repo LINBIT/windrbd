@@ -658,6 +658,7 @@ static int dtt_wait_for_connect(struct drbd_transport *transport,
 		/* TODO: fix the wait_event_interruptible_timeout interface
 		 * and use original source code */
 
+retry:
 	wait_event_interruptible_timeout(timeo_ret, listener->wait,
 		(path = dtt_wait_connect_cond(transport)),
 			timeo);
@@ -673,12 +674,75 @@ static int dtt_wait_for_connect(struct drbd_transport *transport,
 		list_del(&socket_c->list);
 		kfree(socket_c);
 	} else if (listener->listener.pending_accepts > 0) {
-		panic("must never happen - who did increase pending_accepts??");
+		listener->listener.pending_accepts--;
+		spin_unlock_bh(&listener->listener.waiters_lock);
+
+		s_estab = NULL;
+		err = kernel_accept(listener->s_listen, &s_estab, O_NONBLOCK);
+		if (err < 0)
+			return err;
+
+		/* The established socket inherits the sk_state_change callback
+		   from the listening socket. */
+		unregister_state_change(s_estab->sk, listener);
+
+
+		drbd_always_getpeername(s_estab, (struct sockaddr *)&peer_addr);
+
+		spin_lock_bh(&listener->listener.waiters_lock);
+		drbd_path2 = drbd_find_path_by_addr(&listener->listener, &peer_addr);
+		if (!drbd_path2) {
+			struct sockaddr_in6 *from_sin6;
+			struct sockaddr_in *from_sin;
+
+			switch (peer_addr.ss_family) {
+			case AF_INET6:
+				from_sin6 = (struct sockaddr_in6 *)&peer_addr;
+				tr_err(transport, "Closing unexpected connection from "
+				       "%pI6\n", &from_sin6->sin6_addr);
+				break;
+			default:
+				from_sin = (struct sockaddr_in *)&peer_addr;
+				tr_err(transport, "Closing unexpected connection from "
+					 "%pI4\n", &from_sin->sin_addr);
+				break;
+			}
+
+			goto retry_locked;
+		}
+		if (drbd_path2 != &path->path) {
+			struct dtt_path *path2 =
+				container_of(drbd_path2, struct dtt_path, path);
+
+			socket_c = kmalloc(sizeof(*socket_c), GFP_ATOMIC, 'DRBD');
+			if (!socket_c) {
+				tr_info(transport, /* path2->transport, */
+					"No mem, dropped an incoming connection\n");
+				goto retry_locked;
+			}
+
+			socket_c->socket = s_estab;
+			s_estab = NULL;
+			list_add_tail(&socket_c->list, &path2->sockets);
+			wake_up(&listener->wait);
+			goto retry_locked;
+		}
+		if (s_estab->sk->sk_state != TCP_ESTABLISHED)
+			goto retry_locked;
 	}
 	spin_unlock_bh(&listener->listener.waiters_lock);
 	*socket = s_estab;
 	*ret_path = path;
 	return 0;
+
+retry_locked:
+	spin_unlock_bh(&listener->listener.waiters_lock);
+	if (s_estab) {
+		kernel_sock_shutdown(s_estab, SHUT_RDWR);
+		sock_release(s_estab);
+		s_estab = NULL;
+	}
+	goto retry;
 }
 
 static int dtt_receive_first_packet(struct drbd_tcp_transport *tcp_transport, struct socket *socket)

@@ -1,9 +1,17 @@
 #ifndef _LINUX_SOCKET_H
 #define _LINUX_SOCKET_H
 
-#include "windrbd_winsocket.h"
+#include "drbd_windows.h"
 #include <linux/uio.h>	/* for struct kvec */
 #include <linux/net/sock.h>
+
+/* Originally somewhere in arch, we put it here, since it is only
+ * used for kernel_accept() for now.
+ */
+
+#ifndef O_NONBLOCK
+#define O_NONBLOCK	00004000
+#endif
 
 /* msg flags. Most (but not all) of them unimplemented. */
 
@@ -48,7 +56,10 @@
 #endif
 #define SOL_TCP		6
 
+/* This is defined by Windows already, don't change them here. */
+#if 0
 #define SO_KEEPALIVE	9
+#endif
 
 /* This is somewhere inside arch, we for now only need it here. */
 

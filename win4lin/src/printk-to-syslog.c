@@ -3,6 +3,7 @@
 #include <Ntstrsafe.h>
 #include <linux/net.h>
 #include <linux/socket.h>
+#include "windrbd_winsocket.h"
 
 // #include <dpfilter.h> // included by wdm.h already
 

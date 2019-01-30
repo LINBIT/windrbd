@@ -22,9 +22,11 @@ struct proto_ops {
 				      struct socket *sock2);
 	int		(*accept)    (struct socket *sock,
 				      struct socket *newsock, int flags, bool kern);
+#endif
 	int		(*getname)   (struct socket *sock,
 				      struct sockaddr *addr,
 				      int peer);
+#if 0
 	__poll_t	(*poll)	     (struct file *file, struct socket *sock,
 				      struct poll_table_struct *wait);
 	int		(*ioctl)     (struct socket *sock, unsigned int cmd,
@@ -98,6 +100,7 @@ int kernel_recvmsg(struct socket *sock, struct msghdr *msg, struct kvec *vec,
 int kernel_setsockopt(struct socket *sock, int level, int optname, char *optval,
 		      unsigned int optlen);
 int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how);
+int kernel_accept(struct socket *sock, struct socket **newsock, int flags);
 
 extern void sock_release(void  *sock);
 
