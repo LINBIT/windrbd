@@ -38,7 +38,7 @@ static inline void write_unlock_irq(rwlock_t *lock)
 	spin_unlock((spinlock_t*) lock);
 }
 
-extern void rwlock_init(rwlock_t *lock)
+static inline void rwlock_init(rwlock_t *lock)
 {
 	spin_lock_init((spinlock_t*) lock);
 }

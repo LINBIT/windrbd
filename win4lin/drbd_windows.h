@@ -23,7 +23,6 @@
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H
 
-// #define inline	__inline
 #define __func_	__FUNCTION__
 #define __bitwise__
 

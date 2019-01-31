@@ -284,7 +284,7 @@ static int CreateSocket(
 	__in USHORT			SocketType,
 	__in ULONG			Protocol,
 	__in PVOID			SocketContext,
-	__in struct _WSK_CLIENT_STREAM_DISPATCH *Dispatch,
+	__in struct _WSK_CLIENT_LISTEN_DISPATCH *Dispatch,
 	__in ULONG			Flags,
 	struct _WSK_SOCKET		**out
 )
@@ -457,7 +457,7 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int flags)
 	if (!NT_SUCCESS(Status))
 		return winsock_to_linux_error(Status);
 
-	Status = ((struct _WSK_PROVIDER_STREAM_DISPATCH*) socket->wsk_socket->Dispatch)->WskAccept(
+	Status = ((struct _WSK_PROVIDER_LISTEN_DISPATCH*) socket->wsk_socket->Dispatch)->WskAccept(
 		socket->wsk_socket,
 		0,
 		NULL,
@@ -491,30 +491,12 @@ printk("WskAccept returned STATUS_PENDING, waiting for completion\n");
 
 static int wsk_listen(struct socket *socket, int len)
 {
-	KEVENT CompletionEvent;
-	PIRP Irp;
-	NTSTATUS Status;
-	int err;
+	/* No-op since socket should already be a listen socket.
+	 * We cannot use STREAM sockets since they only exist with
+	 * Windows 10 1703.
+	 */
 
-	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
-		return -EINVAL;
-
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status))
-		return winsock_to_linux_error(Status);
-
-	Status = ((struct _WSK_PROVIDER_STREAM_DISPATCH*) socket->wsk_socket->Dispatch)->WskListen(socket->wsk_socket, Irp);
-
-	if (Status == STATUS_PENDING) {
-			/* TODO: does that happen? */
-printk("WskListen returned STATUS_PENDING, waiting for completion\n");
-		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-		Status = Irp->IoStatus.Status;
-	}
-	err = winsock_to_linux_error(Status);
-
-	IoFreeIrp(Irp);
-	return err;
+	return 0;
 }
 
 int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
@@ -1276,14 +1258,9 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	return STATUS_SUCCESS;
 }
 
-static WSK_CLIENT_LISTEN_DISPATCH listen_dispatch = {
+static struct _WSK_CLIENT_LISTEN_DISPATCH listen_dispatch = {
 	wsk_incoming_connection,
 	NULL,
-	NULL
-};
-
-static WSK_CLIENT_STREAM_DISPATCH stream_dispatch = {
-	&listen_dispatch,
 	NULL
 };
 
@@ -1305,9 +1282,9 @@ static int wsk_sock_create_kern(void *net_namespace,
 	if (err < 0)
 		return err;
 
-	if (Flags == WSK_FLAG_STREAM_SOCKET) {
+	if (Flags == WSK_FLAG_LISTEN_SOCKET) {
 		err = CreateSocket(family, type, protocol,
-				*out, stream_dispatch, Flags, &wsk_socket);
+				*out, &listen_dispatch, Flags, &wsk_socket);
 
 		if (err == 0) {
 			status = SetEventCallbacks(wsk_socket, WSK_EVENT_ACCEPT);
@@ -1338,7 +1315,11 @@ int sock_create_kern(struct net *net, int family, int type, int proto, struct so
 		break;
 
 	case SOCK_STREAM:
-		Flags = WSK_FLAG_STREAM_SOCKET;
+		Flags = WSK_FLAG_CONNECTION_SOCKET;
+		break;
+
+	case SOCK_LISTEN:	/* windrbd specific */
+		Flags = WSK_FLAG_LISTEN_SOCKET;
 		break;
 
 	default:

@@ -99,4 +99,11 @@ struct socket {
 	struct sock *sk;
 };
 
+/* WinDRBD specific: Since Windows distinguishes between LISTEN and
+ * CONNECTION sockets, we use this to signal that we want to LISTEN
+ * socket.
+ */
+
+#define SOCK_LISTEN 16
+
 #endif
