@@ -98,6 +98,10 @@ TODO: Feature: Autopromote
 	If Windows poll the devices read-only, this would make sense
 	(DRBD only attempts to promote if device is opened writable)
 
+TODO: Bug: Right now, sc stop windrbd stalls.
+
+	Works with c8a2ab?
+
 TODO: Bug: printk eats boot messages
 
 TODO: Research: Auto-Promote possible?
