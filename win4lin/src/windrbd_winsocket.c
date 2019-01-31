@@ -294,6 +294,7 @@ static int CreateSocket(
 	PWSK_SOCKET		WskSocket = NULL;
 	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
 
+printk("family: %d type: %d protocol: %d flags: %x\n", AddressFamily, SocketType, Protocol, Flags);
 	/* NO _printk HERE, WOULD LOOP */
 	if (wsk_state != WSK_INITIALIZED || out == NULL)
 		return -EINVAL;
@@ -324,6 +325,7 @@ static int CreateSocket(
 		*out = (struct _WSK_SOCKET*) Irp->IoStatus.Information;
 
 	IoFreeIrp(Irp);
+printk("Status is %x\n", Status);
 	return winsock_to_linux_error(Status);
 }
 
@@ -1320,6 +1322,7 @@ int sock_create_kern(struct net *net, int family, int type, int proto, struct so
 
 	case SOCK_LISTEN:	/* windrbd specific */
 		Flags = WSK_FLAG_LISTEN_SOCKET;
+		type = SOCK_STREAM;
 		break;
 
 	default:
@@ -1391,8 +1394,10 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 		printk("WSK initialized.\n");
 	}
 
+#if 0
 	err = windrbd_create_boot_device();
 	printk("windrbd_create_boot_device returned %d\n", err);
+#endif
 
 	return status;
 }

@@ -5,7 +5,8 @@
 #include <linux/socket.h>
 #include "windrbd_winsocket.h"
 
-// #include <dpfilter.h> // included by wdm.h already
+/* Define this if you do not want to use UDP logging. */
+#define NO_NET_PRINTK 1
 
 #define RING_BUFFER_SIZE 1048576
 
@@ -249,6 +250,10 @@ int _printk(const char *func, const char *fmt, ...)
 	}
 	spin_unlock_irq(&ring_buffer_lock);
 
+#ifdef NO_NET_PRINTK
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "%s\n", buffer);
+#else
+
 		/* When in a DPC or similar context, we must not 
 		 * call waiting functions, like SendTo(). 
 		 */
@@ -299,6 +304,7 @@ int _printk(const char *func, const char *fmt, ...)
 		}
 		mutex_unlock(&send_mutex);
 	}
+#endif
 	return 1;	/* TODO: strlen(buffer) */
 }
 
