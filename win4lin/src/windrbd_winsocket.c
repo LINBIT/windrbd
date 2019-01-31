@@ -5,10 +5,6 @@
 #include <linux/tcp.h>
 #include "windrbd_winsocket.h" 
 
-/* TODO: change the API in here to that of Linux kernel (so
- * we don't need to patch the tcp transport file.
- */
-
 /* Protects from API functions being called before the WSK provider is
  * initialized (see SocketsInit).
  */
@@ -294,7 +290,6 @@ static int CreateSocket(
 	PWSK_SOCKET		WskSocket = NULL;
 	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "family: %d type: %d protocol: %d flags: %x\n", AddressFamily, SocketType, Protocol, Flags);
 	/* NO _printk HERE, WOULD LOOP */
 	if (wsk_state != WSK_INITIALIZED || out == NULL)
 		return -EINVAL;
@@ -325,8 +320,6 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "family: %d type: %d proto
 		*out = (struct _WSK_SOCKET*) Irp->IoStatus.Information;
 
 	IoFreeIrp(Irp);
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Status is %x\n", Status);
-
 	return winsock_to_linux_error(Status);
 }
 
@@ -492,6 +485,46 @@ printk("WskAccept returned STATUS_PENDING, waiting for completion\n");
 	return err;
 }
 
+	/* TODO: Or use the ControlSocket function */
+
+static int wsk_set_event_callbacks(struct socket *socket, int mask)
+{
+	KEVENT CompletionEvent;
+	PIRP Irp;
+	NTSTATUS Status = STATUS_UNSUCCESSFUL;
+	WSK_EVENT_CALLBACK_CONTROL callbackControl;
+
+	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
+		return -EINVAL;
+
+	Status = InitWskData(&Irp, &CompletionEvent,FALSE);
+	if (!NT_SUCCESS(Status))
+		return -ENOMEM;
+
+	callbackControl.NpiId = &NPI_WSK_INTERFACE_ID;
+	callbackControl.EventMask = mask;
+
+	Status = ((PWSK_PROVIDER_BASIC_DISPATCH)socket->wsk_socket->Dispatch)->WskControlSocket(socket->wsk_socket,
+	        WskSetOption,
+		SO_WSK_EVENT_CALLBACK,
+		SOL_SOCKET,
+		sizeof(WSK_EVENT_CALLBACK_CONTROL),
+		&callbackControl,
+		0,
+		NULL,
+		NULL,
+		Irp
+        );
+
+	if (Status == STATUS_PENDING) {
+		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
+		Status = Irp->IoStatus.Status;
+	}
+
+	IoFreeIrp(Irp);
+	return winsock_to_linux_error(Status);
+}
+
 /* This just sets the callback event mask, socket->wsk_socket
  * must be a LISTEN socket (WSK_FLAG_LISTEN_SOCKET).
  */
@@ -505,9 +538,7 @@ static int wsk_listen(struct socket *socket, int len)
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
-	status = SetEventCallbacks(socket->wsk_socket, WSK_EVENT_ACCEPT);
-printk("SetEventCallbacks status is %x\n", status);
-	return winsock_to_linux_error(status);
+	return wsk_set_event_callbacks(socket, WSK_EVENT_ACCEPT);
 }
 
 int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
@@ -1148,59 +1179,6 @@ int kernel_setsockopt(struct socket *sock, int level, int optname, char *optval,
 		return -EOPNOTSUPP;
 	}
 	return 0;
-}
-
-NTSTATUS
-NTAPI
-SetEventCallbacks(
-__in PWSK_SOCKET Socket,
-__in LONG                      mask
-)
-{
-    KEVENT                     CompletionEvent = { 0 };
-    PIRP                       Irp = NULL;
-    PWSK_SOCKET                WskSocket = NULL;
-    NTSTATUS           Status = STATUS_UNSUCCESSFUL;
-
-    if (wsk_state != WSK_INITIALIZED)
-    {
-        return Status;
-    }
-
-    Status = InitWskData(&Irp, &CompletionEvent,FALSE);
-    if (!NT_SUCCESS(Status)) {
-        return Status;
-    }
-
-    WSK_EVENT_CALLBACK_CONTROL callbackControl;
-    callbackControl.NpiId = &NPI_WSK_INTERFACE_ID;
-
-    // Set the event flags for the event callback functions that
-    // are to be enabled on the socket
-    callbackControl.EventMask = mask;
-
-    // Initiate the control operation on the socket
-    Status =
-        ((PWSK_PROVIDER_BASIC_DISPATCH)Socket->Dispatch)->WskControlSocket(
-        Socket,
-        WskSetOption,
-        SO_WSK_EVENT_CALLBACK,
-        SOL_SOCKET,
-        sizeof(WSK_EVENT_CALLBACK_CONTROL),
-        &callbackControl,
-        0,
-        NULL,
-        NULL,
-        Irp
-        );
-
-    if (Status == STATUS_PENDING) {
-        KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-        Status = Irp->IoStatus.Status;
-    }
-
-    IoFreeIrp(Irp);
-    return Status;
 }
 
 struct proto_ops winsocket_ops = {

@@ -10,22 +10,12 @@
 
 /* struct sockaddr_storage: we now use the definition from ws2def.h */
 
-/* TODO: one day we should convert the APIs here to be kernel
- * compatible and revert the drbd_transport_wtcp.c to be based on
- * the original drbd_transport_tcp.c (with some small patches)
- */
+/* TODO: this file should go away. Well, almost ... */
 
 int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress);
 
 #define TC_PRIO_INTERACTIVE_BULK	1
 #define TC_PRIO_INTERACTIVE		1
-
-NTSTATUS
-NTAPI
-SetEventCallbacks(
-       __in PWSK_SOCKET Socket,
-       __in LONG                       mask
-);
 
 void platform_update_socket_buffer_sizes(struct socket *socket);
 
