@@ -436,52 +436,36 @@ printk("connect status is %x\n", Status);
 
 static int sock_create_linux_socket(struct socket **out);
 
-int kernel_accept(struct socket *socket, struct socket **newsock, int flags)
+int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 {
-	KEVENT CompletionEvent;
-	PIRP Irp;
-	NTSTATUS Status;
 	int err;
+	struct _WSK_SOCKET *wsk_socket;
+	struct socket *accept_socket;
+	int flags;
 
-	if ((flags | O_NONBLOCK) == 0)
+	if ((io_flags | O_NONBLOCK) == 0)
 		return -EOPNOTSUPP;
 
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status))
-		return winsock_to_linux_error(Status);
+	spin_lock_irqsave(&socket->accept_socket_lock, flags);
+	if (socket->accept_wsk_socket == NULL) {
+		spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
+		return -EWOULDBLOCK;
+	}
+	wsk_socket = socket->accept_wsk_socket;
+	socket->accept_wsk_socket = NULL;
+	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 
-	Status = ((struct _WSK_PROVIDER_LISTEN_DISPATCH*) socket->wsk_socket->Dispatch)->WskAccept(
-		socket->wsk_socket,
-		0,
-		NULL,
-		NULL,	/* accept socket dispatch? */
-		NULL,
-		NULL,
-		Irp);
-
-	if (Status == STATUS_PENDING) {
-			/* TODO: does that happen? */
-printk("WskAccept returned STATUS_PENDING, waiting for completion\n");
-		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-		Status = Irp->IoStatus.Status;
+	err = sock_create_linux_socket(&accept_socket);
+	if (err < 0)
+		CloseWskSocket(wsk_socket);
+	else {
+		accept_socket->wsk_socket = wsk_socket;
+		*newsock = accept_socket;
 	}
 
-	if (Status == STATUS_SUCCESS) {
-		struct _WSK_SOCKET *wsk_socket;
-		wsk_socket = (struct _WSK_SOCKET*) Irp->IoStatus.Information;
-
-		err = sock_create_linux_socket(newsock);
-		if (err < 0)
-			CloseWskSocket(wsk_socket);
-		else
-			(*newsock)->wsk_socket = wsk_socket;
-	} else
-		err = winsock_to_linux_error(Status);
-
-	IoFreeIrp(Irp);
 	return err;
 }
 
@@ -1210,6 +1194,7 @@ static int sock_create_linux_socket(struct socket **out)
 	socket->error_status = STATUS_SUCCESS;
 
 	spin_lock_init(&socket->send_buf_counters_lock);
+	spin_lock_init(&socket->accept_socket_lock);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
 	mutex_init(&socket->wsk_mutex);
 	socket->ops = &winsocket_ops;
@@ -1238,7 +1223,14 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
     _Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
 )
 {
+	int flags;
 	struct socket *socket = (struct socket*) SocketContext;
+
+	spin_lock_irqsave(&socket->accept_socket_lock, flags);
+	if (socket->accept_wsk_socket != NULL)
+		socket->dropped_accept_sockets++;
+	socket->accept_wsk_socket = AcceptSocket;
+	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 
 	if (socket->sk->sk_state_change)
 		socket->sk->sk_state_change(socket->sk);
