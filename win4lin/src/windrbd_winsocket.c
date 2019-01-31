@@ -294,7 +294,7 @@ static int CreateSocket(
 	PWSK_SOCKET		WskSocket = NULL;
 	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
 
-printk("family: %d type: %d protocol: %d flags: %x\n", AddressFamily, SocketType, Protocol, Flags);
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "family: %d type: %d protocol: %d flags: %x\n", AddressFamily, SocketType, Protocol, Flags);
 	/* NO _printk HERE, WOULD LOOP */
 	if (wsk_state != WSK_INITIALIZED || out == NULL)
 		return -EINVAL;
@@ -325,7 +325,8 @@ printk("family: %d type: %d protocol: %d flags: %x\n", AddressFamily, SocketType
 		*out = (struct _WSK_SOCKET*) Irp->IoStatus.Information;
 
 	IoFreeIrp(Irp);
-printk("Status is %x\n", Status);
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Status is %x\n", Status);
+
 	return winsock_to_linux_error(Status);
 }
 
@@ -491,14 +492,22 @@ printk("WskAccept returned STATUS_PENDING, waiting for completion\n");
 	return err;
 }
 
+/* This just sets the callback event mask, socket->wsk_socket
+ * must be a LISTEN socket (WSK_FLAG_LISTEN_SOCKET).
+ */
+
 static int wsk_listen(struct socket *socket, int len)
 {
-	/* No-op since socket should already be a listen socket.
-	 * We cannot use STREAM sockets since they only exist with
-	 * Windows 10 1703.
-	 */
+	NTSTATUS status;
 
-	return 0;
+	(void) len;
+
+	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
+		return -EINVAL;
+
+	status = SetEventCallbacks(socket->wsk_socket, WSK_EVENT_ACCEPT);
+printk("SetEventCallbacks status is %x\n", status);
+	return winsock_to_linux_error(status);
 }
 
 int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
@@ -1097,7 +1106,6 @@ static NTSTATUS ControlSocket(
 	return Status;
 }
 
-
 int kernel_setsockopt(struct socket *sock, int level, int optname, char *optval,
 		      unsigned int optlen)
 {
@@ -1274,27 +1282,20 @@ static int wsk_sock_create_kern(void *net_namespace,
 	struct socket  		**out)
 {
 	struct _WSK_SOCKET *wsk_socket;
+	struct socket *socket;
 	int err;
 	NTSTATUS status;
 
 	if (net_namespace != &init_net)
 		return -EINVAL;
 
-	err = sock_create_linux_socket(out);
+	err = sock_create_linux_socket(&socket);
 	if (err < 0)
 		return err;
 
 	if (Flags == WSK_FLAG_LISTEN_SOCKET) {
 		err = CreateSocket(family, type, protocol,
-				*out, &listen_dispatch, Flags, &wsk_socket);
-
-		if (err == 0) {
-			status = SetEventCallbacks(wsk_socket, WSK_EVENT_ACCEPT);
-       			if (!NT_SUCCESS(status)) {
-				sock_release(*out);
-				err = winsock_to_linux_error(status);
-			}
-		}
+				socket, &listen_dispatch, Flags, &wsk_socket);
         }
 	else
 		err = CreateSocket(family, type, protocol,
@@ -1303,7 +1304,8 @@ static int wsk_sock_create_kern(void *net_namespace,
 	if (err < 0)
 		return err;
 
-	(*out)->wsk_socket = wsk_socket;
+	socket->wsk_socket = wsk_socket;
+	*out = socket;
 	return 0;
 }
 

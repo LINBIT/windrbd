@@ -6,7 +6,7 @@
 #include "windrbd_winsocket.h"
 
 /* Define this if you do not want to use UDP logging. */
-#define NO_NET_PRINTK 1
+/* #define NO_NET_PRINTK 1 */
 
 #define RING_BUFFER_SIZE 1048576
 
@@ -119,7 +119,7 @@ static int open_syslog_socket(void)
 				}
 			}
 		} else {
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility. You will NOT see any output produced by printk (and pr_err, ...)\n");
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility (error is %d). You will NOT see any output produced by printk (and pr_err, ...)\n", err);
 			return -1;
 		}
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "socket opened, ring_buffer_head: %d ring_buffer_tail: %d\n", ring_buffer_head, ring_buffer_tail);
@@ -221,6 +221,8 @@ int _printk(const char *func, const char *fmt, ...)
 		    DPFLTR_WARNING_LEVEL),
 		    buffer);
 
+#ifndef NO_NET_PRINTK
+
 		/* Include the trailing \0 */
 	len = strlen(buffer)+1;
 
@@ -249,10 +251,6 @@ int _printk(const char *func, const char *fmt, ...)
 			ring_buffer_tail = 0;
 	}
 	spin_unlock_irq(&ring_buffer_lock);
-
-#ifdef NO_NET_PRINTK
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "%s\n", buffer);
-#else
 
 		/* When in a DPC or similar context, we must not 
 		 * call waiting functions, like SendTo(). 
