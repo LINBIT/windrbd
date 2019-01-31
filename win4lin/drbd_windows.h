@@ -23,6 +23,10 @@
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H
 
+// #define inline	__inline
+#define __func_	__FUNCTION__
+#define __bitwise__
+
 #include <wdm.h>
 #include <ntstrsafe.h>
 #include <linux/list.h>
@@ -40,6 +44,8 @@
 #include "windrbd_threads.h"
 
 #include <linux/mutex.h>	/* for struct mutex */
+#include <linux/spinlock.h>
+#include <linux/rwlock.h>
 
 void init_windrbd(void);
 void msleep(int ms);
@@ -52,11 +58,6 @@ enum update_sync_bits_mode;
 
 	/* TODO: This appears very dangerous to me ... */
 #define drbd_conf drbd_device
-
-/// for linux code
-#define inline					__inline
-#define __func__				__FUNCTION__
-#define __bitwise__
 
 #define __GFP_HIGHMEM           (0x02u)
 #define __GFP_ZERO              (0x8000u) 
@@ -780,28 +781,6 @@ static inline int submit_bio(struct bio *bio)
 /* TODO: Sure? */
 #define bio_flagged(bio, flag)  (1) 
 // #define bio_flagged(bio, flag)  ((bio)->bi_flags & (1 << (flag))) 
-
-extern void rwlock_init(void *lock);
-extern void spin_lock_init(spinlock_t *lock);
-///extern void spin_lock_irqsave(spinlock_t *lock, long flags);
-extern void spin_lock_irq(spinlock_t *lock);
-extern void spin_lock_bh(spinlock_t *lock);
-extern void spin_unlock_bh(spinlock_t *lock); 
-extern void spin_lock(spinlock_t *lock);
-extern void spin_unlock(spinlock_t *lock);
-extern void spin_unlock_irq(spinlock_t *lock);
-extern void spin_unlock_irqrestore(spinlock_t *lock, long flags);
-extern long _spin_lock_irqsave(spinlock_t* lock);
-
-#define spin_lock_irqsave(lock, flags) flags = _spin_lock_irqsave(lock); 
-
-extern void read_lock(spinlock_t *lock);
-extern void read_unlock(spinlock_t *lock);	
-extern void write_unlock_bh(spinlock_t *lock);
-extern void write_unlock(spinlock_t *lock);
-extern void write_lock_irq(spinlock_t *lock);
-extern void write_lock_bh(spinlock_t *lock);
-extern void write_unlock_irq(spinlock_t *lock);
 
 extern void sema_init(struct semaphore *s, int limit);
 

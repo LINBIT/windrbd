@@ -63,7 +63,6 @@ struct dtt_listener {
 	struct drbd_listener listener;
 	void (*original_sk_state_change)(struct sock *sk);
 	struct socket *s_listen;
-	struct drbd_transport *transport;
 
 	wait_queue_head_t wait; /* woken if a connection came in */
 };
@@ -468,7 +467,7 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 	peer_addr = path->path.peer_addr;
 
 	what = "sock_create_kern";
-	err = sock_create_kern(&init_net, my_addr.ss_family, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSK_FLAG_CONNECTION_SOCKET, &socket);
+	err = sock_create_kern(&init_net, my_addr.ss_family, SOCK_STREAM, IPPROTO_TCP, &socket);
 	if (err < 0) {
 		socket = NULL;
 		goto out;
@@ -620,12 +619,10 @@ static struct dtt_path *dtt_wait_connect_cond(struct drbd_transport *transport)
 
 static void unregister_state_change(struct sock *sock, struct dtt_listener *listener)
 {
-#if 0
 	write_lock_bh(&sock->sk_callback_lock);
 	sock->sk_state_change = listener->original_sk_state_change;
 	sock->sk_user_data = NULL;
 	write_unlock_bh(&sock->sk_callback_lock);
-#endif
 }
 
 static int dtt_wait_for_connect(struct drbd_transport *transport,
@@ -777,105 +774,18 @@ static int dtt_receive_first_packet(struct drbd_tcp_transport *tcp_transport, st
 	return be16_to_cpu(h->command);
 }
 
-
-	/* TODO: rework */
-NTSTATUS WSKAPI dtt_incoming_connection (
-    _In_  PVOID         SocketContext,
-    _In_  ULONG         Flags,
-    _In_  PSOCKADDR     LocalAddress,
-    _In_  PSOCKADDR     RemoteAddress,
-    _In_opt_  PWSK_SOCKET AcceptSocket,
-    _Outptr_result_maybenull_ PVOID *AcceptSocketContext,
-    _Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
-)
+static void dtt_incoming_connection(struct sock *sock)
 {
-	struct dtt_listener *listener = (struct dtt_listener *)SocketContext;
-	struct socket *socket = NULL;
-	struct dtt_socket_container *socket_c = NULL;
-	struct drbd_path *path_d;
-	struct dtt_path *path_t;
-	struct net_conf *nc;
-	KIRQL rcu_flags;
-	int timeout;
-	extern struct proto_ops winsocket_ops;
+	struct dtt_listener *listener = sock->sk_user_data;
+	void (*state_change)(struct sock *sock);
 
-	/* Already invalid again */
-	if (AcceptSocket == NULL)
-		goto error;
+	state_change = listener->original_sk_state_change;
+	state_change(sock);
 
-	socket_c = kzalloc(sizeof(*socket_c), GFP_ATOMIC, 'CTWD');
-	if (!socket_c) {
-		printk(KERN_ERR "No mem, dropped an incoming connection\n");
-		goto error;
-	}
-
-	socket = kzalloc(sizeof(*socket), GFP_ATOMIC, 'CTWD');
-	if (!socket) {
-		printk(KERN_ERR "No mem, dropped an incoming connection\n");
-		goto error;
-	}
-	socket->sk = kzalloc(sizeof(*socket->sk), 0, 'XXYY');
-	if (socket->sk == NULL)
-		goto error;
-
-	spin_lock_bh(&listener->listener.waiters_lock);
-	/* In Windows the event triggered function (this here) "eats" the new
-	 * socket; ie. the socket won't be reported by ->WskAccept() any more.
-	 * This means we just store them on the list, and are done. */
-	path_d = drbd_find_path_by_addr(&listener->listener,
-			(struct sockaddr_storage*)RemoteAddress);
-	if (!path_d) {
-		struct sockaddr *sa = (struct sockaddr*) RemoteAddress;
-		struct sockaddr_in6 *from_sin6;
-
-		switch (RemoteAddress->sa_family) {
-		case AF_INET6:
-/* TODO: print IPv6 address instead of pointer */
-			from_sin6 = (struct sockaddr_in6 *)&sa->sa_data[2];
-			printk(KERN_WARNING "Closing unexpected connection from "
-					"%pI6\n", &from_sin6->sin6_addr);
-			break;
-		default:
-			printk(KERN_WARNING "Closing unexpected connection from "
-					"%hhu.%hhu.%hhu.%hhu\n", (unsigned char) sa->sa_data[2], (unsigned char) sa->sa_data[3], (unsigned char) sa->sa_data[4], (unsigned char) sa->sa_data[5]);
-			break;
-		}
-
-		spin_unlock(&listener->listener.waiters_lock);
-		goto error;
-	}
-
-	path_t = container_of(path_d, struct dtt_path, path);
-	socket->wsk_socket = AcceptSocket;
-	socket->error_status = STATUS_SUCCESS;
-	socket->sk->sk_sndbuf = 4*1024*1024;
-	socket->sk->sk_wmem_queued = 0;
-	socket->sk->sk_rcvbuf = 4*1024*1024;
-	spin_lock_init(&socket->send_buf_counters_lock);
-	mutex_init(&socket->wsk_mutex);
-	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
-	socket->ops = &winsocket_ops;
-
-	rcu_flags = rcu_read_lock();
-	nc = rcu_dereference(listener->transport->net_conf);
-	timeout = nc->timeout * HZ / 10;
-	rcu_read_unlock(rcu_flags);
-
-	socket->sk->sk_rcvtimeo = socket->sk->sk_sndtimeo = timeout;
-	socket->sk->sk_connecttimeo = nc->connect_int * HZ;
-	dtt_setbufsize(socket, nc->sndbuf_size, nc->rcvbuf_size);
-
-	socket_c->socket = socket;
-	list_add_tail(&socket_c->list, &path_t->sockets);
+	spin_lock(&listener->listener.waiters_lock);
+	listener->listener.pending_accepts++;
 	spin_unlock(&listener->listener.waiters_lock);
 	wake_up(&listener->wait);
-	return STATUS_SUCCESS;
-
-error:
-	kfree(socket);
-	kfree(socket_c);
-
-	return STATUS_REQUEST_NOT_ACCEPTED;
 }
 
 static void dtt_destroy_listener(struct drbd_listener *generic_listener)
@@ -888,22 +798,14 @@ static void dtt_destroy_listener(struct drbd_listener *generic_listener)
 	kfree(listener);
 }
 
-WSK_CLIENT_LISTEN_DISPATCH dispatch = {
-	dtt_incoming_connection,
-	NULL,
-	NULL,
-};
-
-
 static int dtt_init_listener(struct drbd_transport *transport,
 			     const struct sockaddr *addr,
 			     struct drbd_listener *drbd_listener)
 {
+	KIRQL rcu_flags;
 	int err, sndbuf_size, rcvbuf_size, addr_len;
 	struct sockaddr_storage my_addr;
 	struct dtt_listener *listener = container_of(drbd_listener, struct dtt_listener, listener);
-	NTSTATUS status;
-	KIRQL rcu_flags;
 	struct socket *s_listen;
 	struct net_conf *nc;
 	const char *what = "";
@@ -921,9 +823,7 @@ static int dtt_init_listener(struct drbd_transport *transport,
 
 	my_addr = *(struct sockaddr_storage *)addr;
 
-	listener->transport = transport;
-
-	err = sock_create_kern(&init_net, my_addr.ss_family, SOCK_STREAM, IPPROTO_TCP, listener, &dispatch, WSK_FLAG_LISTEN_SOCKET, &s_listen);
+	err = sock_create_kern(&init_net, my_addr.ss_family, SOCK_STREAM, IPPROTO_TCP, &s_listen);
 	if (err) {
 		s_listen = NULL;
 		what = "sock_create_kern";
@@ -948,7 +848,6 @@ static int dtt_init_listener(struct drbd_transport *transport,
 	}
 
 	listener->s_listen = s_listen;
-#if 0
 	write_lock_bh(&s_listen->sk->sk_callback_lock);
 	listener->original_sk_state_change = s_listen->sk->sk_state_change;
 	s_listen->sk->sk_state_change = dtt_incoming_connection;
@@ -960,19 +859,10 @@ static int dtt_init_listener(struct drbd_transport *transport,
 		what = "listen";
 		goto out;
 	}
-#endif
 
 	listener->listener.listen_addr = my_addr;
 	listener->listener.destroy = dtt_destroy_listener;
 	init_waitqueue_head(&listener->wait);
-
-	status = SetEventCallbacks(s_listen->wsk_socket, WSK_EVENT_ACCEPT);
-	if (!NT_SUCCESS(status)) {
-		printk(KERN_ERR "Could not set event accept mask on socket %p\n", s_listen);
-		/* TODO: clean up */
-		err = -1;
-		goto out;
-	}
 
 	return 0;
 out:

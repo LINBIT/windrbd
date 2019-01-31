@@ -20,16 +20,6 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 #define TC_PRIO_INTERACTIVE_BULK	1
 #define TC_PRIO_INTERACTIVE		1
 
-int sock_create_kern(
-	PVOID                   net_namespace,
-	ADDRESS_FAMILY		AddressFamily,
-	USHORT			SocketType,
-	ULONG			Protocol,
-	PVOID			SocketContext,
-	PWSK_CLIENT_LISTEN_DISPATCH Dispatch,
-	ULONG			Flags,
-	struct socket		**out);
-
 NTSTATUS
 NTAPI
 SetEventCallbacks(

@@ -77,7 +77,7 @@ static NTSTATUS InitWskData(
 )
 {
 	// DW-1316 use raw irp.
-	/* TODO: is this still needed? CloseSocket uses it, but why? */
+	/* TODO: is this still needed? CloseWskSocket uses it, but why? */
 	if (bRawIrp) {
 		*pIrp = ExAllocatePoolWithTag(NonPagedPool, IoSizeOfIrp(1), 'FFDW');
 		IoInitializeIrp(*pIrp, IoSizeOfIrp(1), 1);
@@ -284,7 +284,7 @@ static int CreateSocket(
 	__in USHORT			SocketType,
 	__in ULONG			Protocol,
 	__in PVOID			SocketContext,
-	__in PWSK_CLIENT_LISTEN_DISPATCH Dispatch,
+	__in struct _WSK_CLIENT_STREAM_DISPATCH *Dispatch,
 	__in ULONG			Flags,
 	struct _WSK_SOCKET		**out
 )
@@ -327,7 +327,7 @@ static int CreateSocket(
 	return winsock_to_linux_error(Status);
 }
 
-NTSTATUS CloseSocket(struct _WSK_SOCKET *WskSocket)
+NTSTATUS CloseWskSocket(struct _WSK_SOCKET *WskSocket)
 {
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
@@ -438,7 +438,7 @@ printk("connect status is %x\n", Status);
 	return winsock_to_linux_error(Status);
 }
 
-static int sock_create_with_wsk_socket(struct _WSK_SOCKET *wsk_socket, struct socket **out);
+static int sock_create_linux_socket(struct socket **out);
 
 int kernel_accept(struct socket *socket, struct socket **newsock, int flags)
 {
@@ -457,7 +457,7 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int flags)
 	if (!NT_SUCCESS(Status))
 		return winsock_to_linux_error(Status);
 
-	Status = ((PWSK_PROVIDER_LISTEN_DISPATCH) socket->wsk_socket->Dispatch)->WskAccept(
+	Status = ((struct _WSK_PROVIDER_STREAM_DISPATCH*) socket->wsk_socket->Dispatch)->WskAccept(
 		socket->wsk_socket,
 		0,
 		NULL,
@@ -473,10 +473,45 @@ printk("WskAccept returned STATUS_PENDING, waiting for completion\n");
 		Status = Irp->IoStatus.Status;
 	}
 
-	if (Status == STATUS_SUCCESS)
-		err = sock_create_with_wsk_socket((struct _WSK_SOCKET*) Irp->IoStatus.Information, newsock);
-	else
+	if (Status == STATUS_SUCCESS) {
+		struct _WSK_SOCKET *wsk_socket;
+		wsk_socket = (struct _WSK_SOCKET*) Irp->IoStatus.Information;
+
+		err = sock_create_linux_socket(newsock);
+		if (err < 0)
+			CloseWskSocket(wsk_socket);
+		else
+			(*newsock)->wsk_socket = wsk_socket;
+	} else
 		err = winsock_to_linux_error(Status);
+
+	IoFreeIrp(Irp);
+	return err;
+}
+
+static int wsk_listen(struct socket *socket, int len)
+{
+	KEVENT CompletionEvent;
+	PIRP Irp;
+	NTSTATUS Status;
+	int err;
+
+	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
+		return -EINVAL;
+
+	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
+	if (!NT_SUCCESS(Status))
+		return winsock_to_linux_error(Status);
+
+	Status = ((struct _WSK_PROVIDER_STREAM_DISPATCH*) socket->wsk_socket->Dispatch)->WskListen(socket->wsk_socket, Irp);
+
+	if (Status == STATUS_PENDING) {
+			/* TODO: does that happen? */
+printk("WskListen returned STATUS_PENDING, waiting for completion\n");
+		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
+		Status = Irp->IoStatus.Status;
+	}
+	err = winsock_to_linux_error(Status);
 
 	IoFreeIrp(Irp);
 	return err;
@@ -587,7 +622,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		}
 		else
 		{
-			nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_sndtimeo * 1000 * 10);
+			nWaitTime.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
 			pTime = &nWaitTime;
 		}
 		{
@@ -1178,66 +1213,139 @@ __in LONG                      mask
 
 struct proto_ops winsocket_ops = {
 	.bind = wsk_bind,
+	.listen = wsk_listen,
 	.connect = wsk_connect,
 	.sendpage = wsk_sendpage,
 	.getname = wsk_getname
 };
 
-static int sock_create_with_wsk_socket(struct _WSK_SOCKET *wsk_socket, struct socket **out)
+static void wsk_sock_statechange(struct sock *sk)
+{
+}
+
+static int sock_create_linux_socket(struct socket **out)
 {
 	struct socket *socket;
 
 	socket = kzalloc(sizeof(*socket), 0, '3WDW');
-	if (!socket) {
-		CloseSocket(wsk_socket);
+	if (!socket)
 		return -ENOMEM;
-	}
 
 	socket->sk = kzalloc(sizeof(*socket->sk), 0, 'KARI');
 	if (!socket->sk) {
-		CloseSocket(wsk_socket);
 		kfree(socket);
 		return -ENOMEM; 
 	}
 
-	socket->wsk_socket = wsk_socket;
 	socket->error_status = STATUS_SUCCESS;
-	socket->sk->sk_sndbuf = 4*1024*1024;
-	socket->sk->sk_rcvbuf = 4*1024*1024;
-	socket->sk->sk_wmem_queued = 0;
+
 	spin_lock_init(&socket->send_buf_counters_lock);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
 	mutex_init(&socket->wsk_mutex);
 	socket->ops = &winsocket_ops;
+
+	socket->sk->sk_sndbuf = 4*1024*1024;
+	socket->sk->sk_rcvbuf = 4*1024*1024;
+	socket->sk->sk_wmem_queued = 0;
+	socket->sk->sk_socket = socket;
+	socket->sk->sk_sndtimeo = 10*HZ;
+	socket->sk->sk_rcvtimeo = 10*HZ;
+	socket->sk->sk_state_change = wsk_sock_statechange;
+	rwlock_init(&socket->sk->sk_callback_lock);
 
 	*out = socket;
 
 	return 0;
 }
 
-int sock_create_kern(
-	PVOID                   net_namespace,
-	ADDRESS_FAMILY		AddressFamily,
-	USHORT			SocketType,
-	ULONG			Protocol,
-	PVOID			SocketContext,
-	PWSK_CLIENT_LISTEN_DISPATCH Dispatch,
+static NTSTATUS WSKAPI wsk_incoming_connection (
+    _In_  PVOID         SocketContext,
+    _In_  ULONG         Flags,
+    _In_  PSOCKADDR     LocalAddress,
+    _In_  PSOCKADDR     RemoteAddress,
+    _In_opt_  PWSK_SOCKET AcceptSocket,
+    _Outptr_result_maybenull_ PVOID *AcceptSocketContext,
+    _Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
+)
+{
+	struct socket *socket = (struct socket*) SocketContext;
+
+	if (socket->sk->sk_state_change)
+		socket->sk->sk_state_change(socket->sk);
+
+	return STATUS_SUCCESS;
+}
+
+static WSK_CLIENT_LISTEN_DISPATCH listen_dispatch = {
+	wsk_incoming_connection,
+	NULL,
+	NULL
+};
+
+static WSK_CLIENT_STREAM_DISPATCH stream_dispatch = {
+	&listen_dispatch,
+	NULL
+};
+
+static int wsk_sock_create_kern(void *net_namespace,
+	ADDRESS_FAMILY		family,
+	USHORT			type,
+	ULONG			protocol,
 	ULONG			Flags,
 	struct socket  		**out)
 {
 	struct _WSK_SOCKET *wsk_socket;
 	int err;
+	NTSTATUS status;
 
 	if (net_namespace != &init_net)
 		return -EINVAL;
 
-	err = CreateSocket(AddressFamily, SocketType, Protocol,
-			SocketContext, Dispatch, Flags, &wsk_socket);
+	err = sock_create_linux_socket(out);
+	if (err < 0)
+		return err;
+
+	if (Flags == WSK_FLAG_STREAM_SOCKET) {
+		err = CreateSocket(family, type, protocol,
+				*out, stream_dispatch, Flags, &wsk_socket);
+
+		if (err == 0) {
+			status = SetEventCallbacks(wsk_socket, WSK_EVENT_ACCEPT);
+       			if (!NT_SUCCESS(status)) {
+				sock_release(*out);
+				err = winsock_to_linux_error(status);
+			}
+		}
+        }
+	else
+		err = CreateSocket(family, type, protocol,
+				NULL, NULL, Flags, &wsk_socket);
 
 	if (err < 0)
 		return err;
 
-	return sock_create_with_wsk_socket(wsk_socket, out);
+	(*out)->wsk_socket = wsk_socket;
+	return 0;
+}
+
+int sock_create_kern(struct net *net, int family, int type, int proto, struct socket **res)
+{
+	ULONG Flags;
+
+	switch (type) {
+	case SOCK_DGRAM:
+		Flags = WSK_FLAG_DATAGRAM_SOCKET;
+		break;
+
+	case SOCK_STREAM:
+		Flags = WSK_FLAG_STREAM_SOCKET;
+		break;
+
+	default:
+		return -EINVAL;
+	}
+
+	return wsk_sock_create_kern(net, family, type, proto, Flags, res);
 }
 
 void sock_release(struct socket *sock)
@@ -1247,7 +1355,7 @@ void sock_release(struct socket *sock)
 	if (sock == NULL)
 		return;
 
-	status = CloseSocket(sock->wsk_socket);
+	status = CloseWskSocket(sock->wsk_socket);
 	if (!NT_SUCCESS(status))
 	{
 		WDRBD_ERROR("error=0x%x\n", status);
