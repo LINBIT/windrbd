@@ -412,7 +412,6 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	if (Status == STATUS_PENDING) {
 		LARGE_INTEGER	nWaitTime;
 		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_connecttimeo * 1000 * 10);
-printk("Connect wait nWaitTime is %lld socket->sk_connecttimeo is %d\n", nWaitTime, socket->sk->sk_connecttimeo);
 
 		if ((Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime)) == STATUS_TIMEOUT)
 		{
@@ -429,8 +428,7 @@ printk("Connect wait nWaitTime is %lld socket->sk_connecttimeo is %d\n", nWaitTi
 	}
 
 	IoFreeIrp(Irp);
-if (Status != STATUS_SUCCESS)
-printk("connect status is %x\n", Status);
+
 	return winsock_to_linux_error(Status);
 }
 
@@ -443,7 +441,6 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	struct socket *accept_socket;
 	int flags;
 
-printk("socket is %p\n", socket);
 	if ((io_flags | O_NONBLOCK) == 0)
 		return -EOPNOTSUPP;
 
@@ -471,7 +468,6 @@ printk("socket is %p\n", socket);
 		*newsock = accept_socket;
 	}
 
-printk("err is %d accept_socket is %p accept_wsk_socket is %p\n", err, accept_socket, accept_socket->wsk_socket);
 	return err;
 }
 
@@ -1232,7 +1228,6 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	int flags;
 	struct socket *socket = (struct socket*) SocketContext;
 
-printk("got accept callback, socket is %p AcceptSocket is %p\n", socket, AcceptSocket);
 	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket != NULL)
 		socket->dropped_accept_sockets++;
@@ -1242,7 +1237,6 @@ printk("got accept callback, socket is %p AcceptSocket is %p\n", socket, AcceptS
 	if (socket->sk->sk_state_change)
 		socket->sk->sk_state_change(socket->sk);
 
-printk("done\n");
 	return STATUS_SUCCESS;
 }
 

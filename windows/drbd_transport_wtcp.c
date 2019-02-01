@@ -656,7 +656,6 @@ static int dtt_wait_for_connect(struct drbd_transport *transport,
 		 * and use original source code */
 
 retry:
-printk("1\n");
 	wait_event_interruptible_timeout(timeo_ret, listener->wait,
 		(path = dtt_wait_connect_cond(transport)),
 			timeo);
@@ -665,37 +664,30 @@ printk("1\n");
 	if (timeo_ret == -ETIMEDOUT)
 		return -EAGAIN;
 
-printk("2\n");
 	spin_lock_bh(&listener->listener.waiters_lock);
 	socket_c = list_first_entry_or_null(&path->sockets, struct dtt_socket_container, list);
 	if (socket_c) {
-printk("3\n");
 		s_estab = socket_c->socket;
 		list_del(&socket_c->list);
 		kfree(socket_c);
 	} else if (listener->listener.pending_accepts > 0) {
-printk("4\n");
 		listener->listener.pending_accepts--;
 		spin_unlock_bh(&listener->listener.waiters_lock);
 
-printk("into accept\n");
 		s_estab = NULL;
 		err = kernel_accept(listener->s_listen, &s_estab, O_NONBLOCK);
 		if (err < 0)
 			return err;
-printk("out of accept\n");
 
 		/* The established socket inherits the sk_state_change callback
 		   from the listening socket. */
 		unregister_state_change(s_estab->sk, listener);
 
 
-printk("5\n");
 		drbd_always_getpeername(s_estab, (struct sockaddr *)&peer_addr);
 
 		spin_lock_bh(&listener->listener.waiters_lock);
 		drbd_path2 = drbd_find_path_by_addr(&listener->listener, &peer_addr);
-printk("6\n");
 		if (!drbd_path2) {
 			struct sockaddr_in6 *from_sin6;
 			struct sockaddr_in *from_sin;
@@ -715,7 +707,6 @@ printk("6\n");
 
 			goto retry_locked;
 		}
-printk("7\n");
 		if (drbd_path2 != &path->path) {
 			struct dtt_path *path2 =
 				container_of(drbd_path2, struct dtt_path, path);
@@ -726,7 +717,6 @@ printk("7\n");
 					"No mem, dropped an incoming connection\n");
 				goto retry_locked;
 			}
-printk("8\n");
 
 			socket_c->socket = s_estab;
 			s_estab = NULL;
@@ -734,27 +724,21 @@ printk("8\n");
 			wake_up(&listener->wait);
 			goto retry_locked;
 		}
-printk("9\n");
 		if (s_estab->sk->sk_state != TCP_ESTABLISHED)
 			goto retry_locked;
 	}
-printk("a\n");
 	spin_unlock_bh(&listener->listener.waiters_lock);
 	*socket = s_estab;
 	*ret_path = path;
-printk("b\n");
 	return 0;
 
 retry_locked:
 	spin_unlock_bh(&listener->listener.waiters_lock);
-printk("c\n");
 	if (s_estab) {
-printk("d\n");
 		kernel_sock_shutdown(s_estab, SHUT_RDWR);
 		sock_release(s_estab);
 		s_estab = NULL;
 	}
-printk("e\n");
 	goto retry;
 }
 
@@ -795,17 +779,13 @@ static void dtt_incoming_connection(struct sock *sock)
 	struct dtt_listener *listener = sock->sk_user_data;
 	void (*state_change)(struct sock *sock);
 
-printk("1\n");
 	state_change = listener->original_sk_state_change;
 	state_change(sock);
 
-printk("2\n");
 	spin_lock(&listener->listener.waiters_lock);
 	listener->listener.pending_accepts++;
 	spin_unlock(&listener->listener.waiters_lock);
-printk("3\n");
 	wake_up(&listener->wait);
-printk("4\n");
 }
 
 static void dtt_destroy_listener(struct drbd_listener *generic_listener)
@@ -884,7 +864,6 @@ static int dtt_init_listener(struct drbd_transport *transport,
 	listener->listener.destroy = dtt_destroy_listener;
 	init_waitqueue_head(&listener->wait);
 
-printk("init listener ok\n");
 	return 0;
 out:
 	if (s_listen)
@@ -895,7 +874,6 @@ out:
 	    err != -EADDRNOTAVAIL)
 		tr_err(transport, "%s failed, err = %d\n", what, err);
 
-printk("init listener err = %d\n", err);
 	return err;
 }
 
