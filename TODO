@@ -240,6 +240,17 @@ Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) drbd_recv_all_w
 	Re-port drbd_transport_tcp first and see if it is still a
 	problem.
 
+	Update: drbd_tranport_tcp reported, works a little bit better:
+	Currently getting sock_recvmsg returned -11 on one Windows node.
+	Comes into Sync at 0% but then aborts connection.
+
+	We also had:
+
+Feb  1 17:33:29 wintestubuntu kernel: [7339344.294343] drbd vamp-4nodes tcp:server-2016-B: Closing unexpected connection from 10.43.10.10
+
+	(but 10.43.10.10 is jt-win7-vm)
+	(with DRBD 9.0.9) updated DRBD not observed so far.
+
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
 	FAT32 also not (something with flushing?)
