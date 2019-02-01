@@ -443,6 +443,7 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	struct socket *accept_socket;
 	int flags;
 
+printk("socket is %p\n", socket);
 	if ((io_flags | O_NONBLOCK) == 0)
 		return -EOPNOTSUPP;
 
@@ -463,9 +464,14 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 		CloseWskSocket(wsk_socket);
 	else {
 		accept_socket->wsk_socket = wsk_socket;
+		accept_socket->sk->sk_state = TCP_ESTABLISHED;
+		accept_socket->sk->sk_state_change = socket->sk->sk_state_change;
+		accept_socket->sk->sk_user_data = socket->sk->sk_user_data;
+
 		*newsock = accept_socket;
 	}
 
+printk("err is %d accept_socket is %p accept_wsk_socket is %p\n", err, accept_socket, accept_socket->wsk_socket);
 	return err;
 }
 
@@ -1226,6 +1232,7 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	int flags;
 	struct socket *socket = (struct socket*) SocketContext;
 
+printk("got accept callback, socket is %p AcceptSocket is %p\n", socket, AcceptSocket);
 	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket != NULL)
 		socket->dropped_accept_sockets++;
@@ -1235,6 +1242,7 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	if (socket->sk->sk_state_change)
 		socket->sk->sk_state_change(socket->sk);
 
+printk("done\n");
 	return STATUS_SUCCESS;
 }
 
@@ -1263,10 +1271,9 @@ static int wsk_sock_create_kern(void *net_namespace,
 	if (err < 0)
 		return err;
 
-	if (Flags == WSK_FLAG_LISTEN_SOCKET) {
+	if (Flags == WSK_FLAG_LISTEN_SOCKET)
 		err = CreateSocket(family, type, protocol,
 				socket, &listen_dispatch, Flags, &wsk_socket);
-        }
 	else
 		err = CreateSocket(family, type, protocol,
 				NULL, NULL, Flags, &wsk_socket);
@@ -1400,6 +1407,7 @@ void windrbd_shutdown_wsk(void)
         if (!NT_SUCCESS(status))
                 printk("windrbd_cleanup_windows_thread failed with status %x\n", status);
 
-	SocketsDeinit();
+/* TODO: this BSODs or stalls? */
+/*	SocketsDeinit(); */
 }
 
