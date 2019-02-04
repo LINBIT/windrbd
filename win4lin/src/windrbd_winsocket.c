@@ -961,7 +961,8 @@ printk("socket->sk->sk_rcvtimeo is %d nWaitTime.QuadPart is %lld\n", socket->sk-
         }
 
         waitObjects[0] = (PVOID) &CompletionEvent;
-        if (thread->has_sig_event && ((flags | MSG_NOSIGNAL) == 0))
+        // if (thread->has_sig_event && ((flags | MSG_NOSIGNAL) == 0))
+        if (thread->has_sig_event)
         {
             waitObjects[1] = (PVOID) &thread->sig_event;
             wObjCount = 2;
