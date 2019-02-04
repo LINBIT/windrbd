@@ -611,7 +611,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	else
 		Flags &= ~WSK_FLAG_NODELAY;
 
-	mutex_lock(&socket->wsk_mutex);
+//	mutex_lock(&socket->wsk_mutex);
 
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
 		socket->wsk_socket,
@@ -619,7 +619,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		Flags,
 		Irp);
 
-	mutex_unlock(&socket->wsk_mutex);
+//	mutex_unlock(&socket->wsk_mutex);
 
 	if (Status == STATUS_PENDING)
 	{
@@ -776,13 +776,13 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		flags &= ~WSK_FLAG_NODELAY;
 
 
-	mutex_lock(&socket->wsk_mutex);
+//	mutex_lock(&socket->wsk_mutex);
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
 		socket->wsk_socket,
 		WskBuffer,
 		flags,
 		Irp);
-	mutex_unlock(&socket->wsk_mutex);
+//	mutex_unlock(&socket->wsk_mutex);
 
 
 	switch (status) {
@@ -934,13 +934,13 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return winsock_to_linux_error(Status);
 	}
 
-	mutex_lock(&socket->wsk_mutex);
+//	mutex_lock(&socket->wsk_mutex);
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
 				0,
 				Irp);
-	mutex_unlock(&socket->wsk_mutex);
+//	mutex_unlock(&socket->wsk_mutex);
 
     if (Status == STATUS_PENDING)
     {
