@@ -900,9 +900,6 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	return status == STATUS_SUCCESS ? BufferSize : winsock_to_linux_error(status);
 }
 
-
-	/* TODO: implement MSG_WAITALL and MSG_NOSIGNAL */
-
 int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len, int flags)
 {
@@ -911,6 +908,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	WSK_BUF		WskBuffer = { 0 };
 	LONG		BytesReceived;
 	NTSTATUS	Status;
+	ULONG		wsk_flags;
 
 	struct      task_struct *thread = current;
 	PVOID       waitObjects[2];
@@ -934,11 +932,15 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return winsock_to_linux_error(Status);
 	}
 
+	wsk_flags = 0;
+	if (flags | MSG_WAITALL)
+		wsk_flags |= WSK_FLAG_WAITALL;
+
 //	mutex_lock(&socket->wsk_mutex);
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
-				WSK_FLAG_WAITALL,
+				wsk_flags,
 				Irp);
 //	mutex_unlock(&socket->wsk_mutex);
 
@@ -959,7 +961,7 @@ printk("socket->sk->sk_rcvtimeo is %d nWaitTime.QuadPart is %lld\n", socket->sk-
         }
 
         waitObjects[0] = (PVOID) &CompletionEvent;
-        if (thread->has_sig_event)
+        if (thread->has_sig_event && ((flags | MSG_NOSIGNAL) == 0))
         {
             waitObjects[1] = (PVOID) &thread->sig_event;
             wObjCount = 2;
