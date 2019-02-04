@@ -611,15 +611,13 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	else
 		Flags &= ~WSK_FLAG_NODELAY;
 
-//	mutex_lock(&socket->wsk_mutex);
-
+	mutex_lock(&socket->wsk_mutex);
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
 		socket->wsk_socket,
 		&WskBuffer,
 		Flags,
 		Irp);
-
-//	mutex_unlock(&socket->wsk_mutex);
+	mutex_unlock(&socket->wsk_mutex);
 
 	if (Status == STATUS_PENDING)
 	{
@@ -776,14 +774,13 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		flags &= ~WSK_FLAG_NODELAY;
 
 
-//	mutex_lock(&socket->wsk_mutex);
+	mutex_lock(&socket->wsk_mutex);
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
 		socket->wsk_socket,
 		WskBuffer,
 		flags,
 		Irp);
-//	mutex_unlock(&socket->wsk_mutex);
-
+	mutex_unlock(&socket->wsk_mutex);
 
 	switch (status) {
 	case STATUS_PENDING:
@@ -936,13 +933,13 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	if (flags | MSG_WAITALL)
 		wsk_flags |= WSK_FLAG_WAITALL;
 
-//	mutex_lock(&socket->wsk_mutex);
+	mutex_lock(&socket->wsk_mutex);
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
 				wsk_flags,
 				Irp);
-//	mutex_unlock(&socket->wsk_mutex);
+	mutex_unlock(&socket->wsk_mutex);
 
     if (Status == STATUS_PENDING)
     {
@@ -961,7 +958,6 @@ printk("socket->sk->sk_rcvtimeo is %d nWaitTime.QuadPart is %lld\n", socket->sk-
         }
 
         waitObjects[0] = (PVOID) &CompletionEvent;
-        // if (thread->has_sig_event && ((flags | MSG_NOSIGNAL) == 0))
         if (thread->has_sig_event)
         {
             waitObjects[1] = (PVOID) &thread->sig_event;
