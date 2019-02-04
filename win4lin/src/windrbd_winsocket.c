@@ -938,7 +938,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
-				0,
+				WSK_FLAG_WAITALL,
 				Irp);
 //	mutex_unlock(&socket->wsk_mutex);
 
