@@ -9,6 +9,114 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
+TODO: Bug: In 4 node setup cannot make 2 of the nodes primary
+
+	Error message is:
+
+$ drbdadm primary vamp-4nodes
+vamp-4nodes: State change failed: (-19) Concurrent state changes detected and aborted
+Command 'drbdsetup primary vamp-4nodes' terminated with exit code 11
+
+TODO: Bug: In 4 node setup, connection loss on I/O
+
+	Windows Server 2016 machine (Secondary) loses connection
+	to 2 other nodes and cannot establish it unless disconnect/
+	connect is done on the other nodes. The Primary node has
+	to be taken down completely (down/up).
+
+TODO: Bug: Right now, sc stop windrbd stalls.
+
+	Works with c8a2ab?
+
+TODO: Bug: BSOD on driver unload after up (tmp patches for create boot device)
+
+TODO: Bug: Connection instable when connecting two Windows boxes.
+
+	In that case our physical Windows 10 with Windows 7 VM on
+	much.
+
+	And one box is not pingable any more. Maybe something with
+	libvirt? Hangs because logging does not work (was configured
+	to log to Linux VM).
+
+	Update: happens also with VirtualBox (Mac) Windows 7 box.
+	drbdadm down / up on Windows 10 usually solves the problem.
+
+	Update: really? Was split-brain, IP address change.
+
+	Update: We also just had a complete network outage on
+	the testing subnet..
+
+	Update: Windows 10 to Mac VMs seems to have no problems.
+	Problem seems to be only between much VM's and Windows 10.
+
+TODO: Install: also sign install EXE
+
+TODO: Bug: various memory leaks
+
+Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 104, allocated by function fifo_alloc at drbd_sender.c:549.
+Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 56, allocated by function alloc_disk at ../../win4lin/src/drbd_windows.c:2425.
+Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 72, allocated by function blk_alloc_queue at ../../win4lin/src/drbd_windows.c:2415.
+n 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 104, allocated by function sock_create_linux_socket at ../../win4lin/src/windrbd_winsocket.c:1188.
+
+TODO: Implement: Log rotate
+
+	From Devin: Logfile became 9GB big.
+
+	We should fix this for the next release.
+	Maybe ship WinDRBD with net logging disabled and no log-server?
+
+TODO: Implement: Other mechanism to specify syslog_ip.
+
+	Should be able to change it without rebooting.
+
+	Have a windrbd log-to-ip <...> command. Before this command
+	is given, only log to ring buffer internally (or maybe still
+	have the key?).
+
+	Update: No it makes sense to remove the registry key. Users
+	should either start windrbd log-server (which sets the IP
+	internally) or windrbd log-to-ip. Ring buffer is big enough :)
+
+	Update: Best is probably to have a /cygdrive/c/windrbd/etc/windrbd.conf
+	file for the IP or logfile, so that we don't have to touch
+	the config file format.
+
+TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
+
+	Windows doesn't have an equivalent of spin_lock_irq()
+	(without flags) however we can assume that interrupts
+	are enabled when spin_lock_irq is called and reset it
+	to enabled when spin_unlock_irq is called (set it to
+	PASSIVE_LEVEL).
+
+	So no need for a tmp storage here. (Maybe put an assert
+	at the beginning of spin_lock_irq that tests for IRQL
+	being PASSIVE_LEVEL).
+
+TODO: Code quality: RCU needs change
+	At least call_rcu now calls the function. I don't think
+	that it is a good idea to port the linked list thing to
+	windows, we want to stay thin..
+
+	Update: talk to phil about current solution (just call
+	the function). I don't think that it is a good idea to
+	mimic the original intended behaviour in Windows.
+
+	Update: We now call the cleanup / on update function 
+	in the call_rcu() function, which makes the thing work.
+	Double check if that works as expected.
+
+	Update: RCU should currently cause problems on SMP machines
+	only (we always tested single CPU, so this was not a problem).
+	Implement Phil's algorithm.
+
+TODO: Code quality: review TODOs in source code.
+
+Milestone: Release 0.9.2
+Planned: Feb 28 2018
+-----------------------------------------------------------------------
+
 TODO: Feature: Resource agent for Microsoft cluster manager
 
 	In progress: Install Server 2016 machines (again)
@@ -98,21 +206,9 @@ TODO: Feature: Autopromote
 	If Windows poll the devices read-only, this would make sense
 	(DRBD only attempts to promote if device is opened writable)
 
-TODO: Bug: Right now, sc stop windrbd stalls.
-
-	Works with c8a2ab?
-
 TODO: Bug: printk eats boot messages
 
-TODO: Research: Auto-Promote possible?
-
-	If Windows accesses drive read-only on poll.
-
 TODO: Bug: drbdadm wait-connect does not work as expected
-
-TODO: Bug: BSOD on driver unload after up (tmp patches for create boot device)
-
-TODO: Install: also sign install EXE
 
 TODO: Bug: clear error state on socket if status is success.
 
@@ -155,10 +251,6 @@ TODO: Implement: Make online resize work.
 
 	Some day ..
 
-TODO: Implement: Log rotate
-
-	From Devin: Logfile became 9GB big.
-
 TODO: Test: IPv6
 
 	Doesn't work, but this might be an Ubuntu issue.
@@ -168,88 +260,6 @@ TODO: Implement: online verify does not work currently
 	It reports all blocks out of sync (which isn't true)
 
 TODO: Performance: lindrive (Diskless Primary) is somewhat slow.
-
-TODO: Bug: 3 node setup sometimes does not work.
-
-	If node with node-id 1 is missing, node 2 thinks that node
-	3 is node 1 during connection establishment:
-
-Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
-
-	(but 10.43.8.188 is WIN-F11R93CP9KI).
-
-	Sometimes connection can be established however we get a
-	BSOD then.
-
-	Connection between 2 nodes (Linux and Windows VirtualBox)
-	works, but 3rd node (Windows 10 physical machine) BSOD's.
-
-	Update: Now managed to have stable 3-node setup between
-	Windows 7 VM, Linux VM and Windows 10 PhysM.
-
-	Update: Happened again, this time without the presence of
-	the DESKTOP-0VHSFB5 node (didn't touch config, before doing
-	experiments with logging (log to a non-existing host) it
-	worked).
-
-Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0VHSFB5: Closing unexpected connection from 192.168.56.101
-
-	(note that this log message is from a drbd-9.0.14 Linux
-	host).
-
-	Update: Rebooting the Linux machine solved the problem
-	(resource on Windows wasn't taken down meanwhile) so
-	most likely something that causes Linux DRBD to mistake
-	one Windows host for another.
-
-	Update: something with the waiters in the listener:
-
-Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr1->ss_family is 2
-Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr2->ss_family is 2
-Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr1 is 10.43.10.14
-Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr2 is 10.43.10.14
-Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) dtt_incoming_connection <4>Closing unexpected connection from 10.43.10.13
-
-	showing that 10.43.10.13 is not in the waiters list (the
-	compare is ok). Ask phil. Do it after beta5.
-
-	Re-port drbd_transport_tcp first and see if it is still a
-	problem.
-
-TODO: Bug: Sometimes it takes a while until Windows can connect to Windows
-
-	On one side (Windows 10 physical machine):
-
-Jul  9 16:16:37 10.43.8.215  U14:16:34.379|c214be70(receiver) dtt_connect <7>[0xFFFFA88BC20B8380] dtt_connect:(FFFFA88BC20B8380) Accepted:  10.43.8.215:7600 <- 10.43.7.228:7600
-Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) Receive <6>[0xFFFFA88BC20B8380] RECV(receiver) wsk(0xFFFFA88BC43A5688) multiWait err(0xc000020d:CONNECTION_RESET)
-Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) drbd_recv <6>drbd w0 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x200e), scf(0x0): sock was reset by peer
-Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) print_state_change <6>drbd w0 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x200e), scf(0x21): conn( Connecting -> BrokenPipe )
-Jul  9 16:16:38 10.43.8.215  [last message was in IRQ context]
-Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) drbd_recv_all_warn <4>drbd w0 pnode-id:2, cs(BrokenPipe), prole(Unknown), cflag(0x200e), scf(0x0): short read (expected size 8)
-
-	On other side (Windows 7 VM):
-
-Jul  9 16:11:43 192.168.56.101  U14:11:40.240|12904fa0(receiver) dtt_connect <7>[0xFFFFFA800373EA50] dtt_connect: Connected: 10.43.7.228:7600 -> 10.43.8.215:7600
-Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) drbd_recv <6>drbd w0 pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x0), scf(0x0): sock was shut down by peer
-Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) print_state_change <6>drbd w0 pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x0), scf(0x21): conn( Connecting -> BrokenPipe )
-Jul  9 16:11:44 192.168.56.101  [last message was in IRQ context]
-Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) drbd_recv_all_warn <4>drbd w0 pnode-id:1, cs(BrokenPipe), prole(Unknown), cflag(0x0), scf(0x0): short read (expected size 8)
-
-	After a while the two machines find each other.
-
-	Re-port drbd_transport_tcp first and see if it is still a
-	problem.
-
-	Update: drbd_tranport_tcp reported, works a little bit better:
-	Currently getting sock_recvmsg returned -11 on one Windows node.
-	Comes into Sync at 0% but then aborts connection.
-
-	We also had:
-
-Feb  1 17:33:29 wintestubuntu kernel: [7339344.294343] drbd vamp-4nodes tcp:server-2016-B: Closing unexpected connection from 10.43.10.10
-
-	(but 10.43.10.10 is jt-win7-vm)
-	(with DRBD 9.0.9) updated DRBD not observed so far.
 
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
@@ -298,96 +308,9 @@ TODO: Implement: We want to have some sort of a regression test suite.
 	lvcreate and lvremove (only the needed options, no thin
 	provisioning).
 
-TODO: Implement: Make drbd service stoppable
-	This probably takes some while
-	Update: with the new architecture that should be possible
-	one day.
-
-	Probably some setting in the inf section. Or the way DRBD
-	registers itself in DriverEntry? DriverUnload() routine
-	returning something?
-
-	Update: After changing linker options (/DRIVER:WDM to
-	/DRIVER /SUBSYSTEM:WINDOWS) this works in theory. Things
-	we need to clean up include:
-
-	*) Threads (PsCreateSystemThread())
-		alloc_ordered_workqueue()
-		destroy_workqueue()
-	*) Lookaside lists (ExInitializeNPagedLookasideList())
-		kmem_cache_create() see slab.c
-	*) Update: All memory leaks (ExAllocatePoolWithTag(NonPagedPool, ...))
-		kmalloc() and friends. Also for PagedPool?
-
-	Right now, almost everything works, as long as no resources
-	are created. Missing: Terminate reply_reaper thread, wait
-	for wsk init thread completion (or terminate it?), really
-	clean up after resources. Sockets really don't need destroy
-	function?
-
-	Update: Works quite nice, however after a drbdsetup create-resource
-	drbdsetup del-resource some resources are not freed, which in
-	turn causes Unload not being called (which in turn causes
-	driver verifier to BSOD).
-
-	Update: As soon as there is just a single memory leak, driver
-	verifier BSOD's after unload. This will be fun to fix all of
-	those ...
-
-	Update: We need something like dmalloc .. maybe implement some
-	of it for our kmalloc()/kfree() to see at driver unload where
-	we leak (and free it there). At this point also get rid of the
-	Tag patches, we really don't need them. What also would be nice
-	at this point is to be able to inject out of memory faults selected
-	by source line.
-
-	For now defer that TODO to somewhere later (after beta5).
-
-	Update: Or maybe implement kmalloc debugger now and fix some of the
-	leaks (don't deliver beta with kmalloc debugger enabled)
-	but do not unload driver on uninstall. Users may use
-	sc stop windrbd if they really want to.
-
-	Update: kmalloc() debugger implemented and works fine. On drbdadm up
-	down leaks at 3 code paths are found (plus an extra leak that the
-	debugger didn't find, probably kmem_cache_alloc()). Fix them
-	one day (there are probably more than that).
-
-	Update: We just discovered that driver verifier was activated
-	on every make install. Technically, a 'normal' Windows installation
-	doesn't have driver verifier enabled. So we would have saved
-	tons of nerves (and time) if we never had driver verifier
-	enabled (no BSOD at least not so many). Removed the line from
-	the Makefile, now unloading works as expected (tough probably
-	the driver is still in memory a new version of the driver
-	can be loaded without rebooting). Think about including
-	driver unload in beta5.
-
-	Update: no beta5 will be with unloading disabled.
-
-	Update: driver now is not stoppable while there are resources
-	up, just as with Linux. As long as driver verifier isn't enabled
-	no BSODs. Fix the remaining memory leaks and close this
-	TODO.
-
 TODO: Implement: drbd-proxy-ctl should ignore WinDRBD devices
 
 	From Devin.
-
-TODO: Code quality: Re-port drbd_transport_tcp.c to windrbd's
-	drbd_transport_wtcp.c.
-	Update: currently it seems that the problem is
-	somewhere else. 
-	However we need those updates. Best way would be to
-	git diff the original drbd transport_tcp to the version
-	we had before and apply the patches manually.
-
-	Update: we should integrate drbd_transport_tcp back to
-	converted-sources.
-
-	Update: it seems to be doable, but first change the
-	wsk2.c API to match the kernel API (Send->kernel_send_msg
-	and so on).
 
 TODO: Upstream: NO_ERROR -> DRBD_NO_ERROR
 
@@ -443,8 +366,6 @@ TODO: Performance: Teach sync code to handle 1Meg pages.
         For performance reasons. Right now data is split into
         4K request (lots of them) which makes sync slow.
 
-TODO: Code Quality: Make windrbd-test compile again.
-
 TODO: Upstream: Quorum no on Linux with 2 node setup
 
 	Bug?
@@ -474,33 +395,11 @@ TODO: Upstream: drbdadm invalidate while primary and connected uptodate/uptodate
 
 TODO: Research: Hyper-V plugin for Linstor
 
-TODO: Implement: Other mechanism to specify syslog_ip.
-
-	Should be able to change it without rebooting.
-
-	Have a windrbd log-to-ip <...> command. Before this command
-	is given, only log to ring buffer internally (or maybe still
-	have the key?).
-
-	Update: No it makes sense to remove the registry key. Users
-	should either start windrbd log-server (which sets the IP
-	internally) or windrbd log-to-ip. Ring buffer is big enough :)
-
-	Update: Best is probably to have a /cygdrive/c/windrbd/etc/windrbd.conf
-	file for the IP or logfile, so that we don't have to touch
-	the config file format.
-
 TODO: Documentation: drbd-util: Update manpage.
 
 	And write one for windrbd utility.
 
 TODO: Upstream: add .\*.d and the like to .gitignore
-
-TODO: Bug: leaking disk (see TODO in drbd_main.c)
-
-TODO: Bug: leaking something allocated by fifo_alloc
-
-	Probably also in upstream DRBD.
 
 TODO: Upstream: Possible race at drbd_thread_setup() (drbdmain.c:567) with
 	use-after-free.
@@ -526,32 +425,16 @@ TODO: Upstream: drbdsetup generic_get() handles multiple packets wrong.
 	Probably nobody noticed because recvmsg() always returned only
 	one packet (socket is a DGRAM socket).
 
-TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
-
-	Windows doesn't have an equivalent of spin_lock_irq()
-	(without flags) however we can assume that interrupts
-	are enabled when spin_lock_irq is called and reset it
-	to enabled when spin_unlock_irq is called (set it to
-	PASSIVE_LEVEL).
-
-	So no need for a tmp storage here. (Maybe put an assert
-	at the beginning of spin_lock_irq that tests for IRQL
-	being PASSIVE_LEVEL).
-
 TODO: Implement: Make windrbd directory unaccessible for non-admins.
 
 	Non-admins can read the dirs and files but not write them.
 	This is ok for now, later we probably want to deny read access
 	(in case there are shared secrets).
 
-TODO: Code quality: use drbd-headers/windrbd merged branch in Linux DRBD
-
 TODO: Code quality: drbd-patches directory probably should go away.
 
 	Also samples dir. Reorganize a bit (put release description
 	in separate dir, ...)
-
-TODO: Code quality: review TODOs in source code.
 
 TODO: Implement: fix the wait_cond_interruptible busy loop.
 
@@ -756,26 +639,6 @@ TODO: Bug: BSOD on unplugging network cable in 3 node setup
 
 	Update: Does it happen on Linux? Then, maybe an upstream bug.
 
-TODO: Bug: Connection instable when connecting two Windows boxes.
-
-	In that case our physical Windows 10 with Windows 7 VM on
-	much.
-
-	And one box is not pingable any more. Maybe something with
-	libvirt? Hangs because logging does not work (was configured
-	to log to Linux VM).
-
-	Update: happens also with VirtualBox (Mac) Windows 7 box.
-	drbdadm down / up on Windows 10 usually solves the problem.
-
-	Update: really? Was split-brain, IP address change.
-
-	Update: We also just had a complete network outage on
-	the testing subnet..
-
-	Update: Windows 10 to Mac VMs seems to have no problems.
-	Problem seems to be only between much VM's and Windows 10.
-
 TODO: Test: Test sendbuffer full (rety on Metadata socket).
 
 	See if supported at all (have printk's if not). Update:
@@ -882,23 +745,6 @@ TODO: Feature: flush not supported by some (all?) devices: currently we
 
 TODO: Feature: make debugfs work
 
-TODO: Code quality: RCU needs change
-	At least call_rcu now calls the function. I don't think
-	that it is a good idea to port the linked list thing to
-	windows, we want to stay thin..
-
-	Update: talk to phil about current solution (just call
-	the function). I don't think that it is a good idea to
-	mimic the original intended behaviour in Windows.
-
-	Update: We now call the cleanup / on update function 
-	in the call_rcu() function, which makes the thing work.
-	Double check if that works as expected.
-
-	Update: RCU should currently cause problems on SMP machines
-	only (we always tested single CPU, so this was not a problem).
-	Implement Phil's algorithm.
-
 TODO: Feature: mandatory locking for backing device.
 
 	This is unclear. Test how backing device is locked right now
@@ -908,6 +754,8 @@ TODO: Test: Kernel really should report an error if Bind() fails.
 	For example if the local IP address does not exist.
 
 	Update: Test if this is fixed now.
+
+	Update: I've read about an Upstream patch concerning this.
 
 TODO: Performance: Someday we want to pass user level buffer to driver directly
 	on READ requests instead of having a temp buffer (needed
@@ -4438,3 +4286,195 @@ Done: Research: typeof() replacement
 	It exists, but only when compiled as C++ (which we can't).
 	Is called decltype (expression) and is part of C++ 11. We
 	cannot use it since everything is C, not C++.
+
+Done: Bug: 3 node setup sometimes does not work.
+
+	If node with node-id 1 is missing, node 2 thinks that node
+	3 is node 1 during connection establishment:
+
+Jun 26 17:13:17 wintestubuntu kernel: [ 4658.372463] drbd w0 tcp:win7-64: Closing unexpected connection from 10.43.8.188
+
+	(but 10.43.8.188 is WIN-F11R93CP9KI).
+
+	Sometimes connection can be established however we get a
+	BSOD then.
+
+	Connection between 2 nodes (Linux and Windows VirtualBox)
+	works, but 3rd node (Windows 10 physical machine) BSOD's.
+
+	Update: Now managed to have stable 3-node setup between
+	Windows 7 VM, Linux VM and Windows 10 PhysM.
+
+	Update: Happened again, this time without the presence of
+	the DESKTOP-0VHSFB5 node (didn't touch config, before doing
+	experiments with logging (log to a non-existing host) it
+	worked).
+
+Aug  3 22:56:36 johannes-VirtualBox kernel: [12446.338715] drbd w0 tcp:DESKTOP-0VHSFB5: Closing unexpected connection from 192.168.56.101
+
+	(note that this log message is from a drbd-9.0.14 Linux
+	host).
+
+	Update: Rebooting the Linux machine solved the problem
+	(resource on Windows wasn't taken down meanwhile) so
+	most likely something that causes Linux DRBD to mistake
+	one Windows host for another.
+
+	Update: something with the waiters in the listener:
+
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr1->ss_family is 2
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr2->ss_family is 2
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr1 is 10.43.10.14
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) addr_equal addr2 is 10.43.10.14
+Oct 23 18:51:07 192.168.56.101  U16:51:05.086|057ea4f0(not_drbd_thread) dtt_incoming_connection <4>Closing unexpected connection from 10.43.10.13
+
+	showing that 10.43.10.13 is not in the waiters list (the
+	compare is ok). Ask phil. Do it after beta5.
+
+	Re-port drbd_transport_tcp first and see if it is still a
+	problem.
+
+	Update: 4 node setup works now, however some minor errors
+	(see seperate bug entries)
+
+Done: Bug: Sometimes it takes a while until Windows can connect to Windows
+
+	On one side (Windows 10 physical machine):
+
+Jul  9 16:16:37 10.43.8.215  U14:16:34.379|c214be70(receiver) dtt_connect <7>[0xFFFFA88BC20B8380] dtt_connect:(FFFFA88BC20B8380) Accepted:  10.43.8.215:7600 <- 10.43.7.228:7600
+Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) Receive <6>[0xFFFFA88BC20B8380] RECV(receiver) wsk(0xFFFFA88BC43A5688) multiWait err(0xc000020d:CONNECTION_RESET)
+Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) drbd_recv <6>drbd w0 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x200e), scf(0x0): sock was reset by peer
+Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) print_state_change <6>drbd w0 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x200e), scf(0x21): conn( Connecting -> BrokenPipe )
+Jul  9 16:16:38 10.43.8.215  [last message was in IRQ context]
+Jul  9 16:16:38 10.43.8.215  U14:16:34.879|c214be70(receiver) drbd_recv_all_warn <4>drbd w0 pnode-id:2, cs(BrokenPipe), prole(Unknown), cflag(0x200e), scf(0x0): short read (expected size 8)
+
+	On other side (Windows 7 VM):
+
+Jul  9 16:11:43 192.168.56.101  U14:11:40.240|12904fa0(receiver) dtt_connect <7>[0xFFFFFA800373EA50] dtt_connect: Connected: 10.43.7.228:7600 -> 10.43.8.215:7600
+Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) drbd_recv <6>drbd w0 pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x0), scf(0x0): sock was shut down by peer
+Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) print_state_change <6>drbd w0 pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x0), scf(0x21): conn( Connecting -> BrokenPipe )
+Jul  9 16:11:44 192.168.56.101  [last message was in IRQ context]
+Jul  9 16:11:44 192.168.56.101  U14:11:41.271|12904fa0(receiver) drbd_recv_all_warn <4>drbd w0 pnode-id:1, cs(BrokenPipe), prole(Unknown), cflag(0x0), scf(0x0): short read (expected size 8)
+
+	After a while the two machines find each other.
+
+	Re-port drbd_transport_tcp first and see if it is still a
+	problem.
+
+	Update: drbd_tranport_tcp reported, works a little bit better:
+	Currently getting sock_recvmsg returned -11 on one Windows node.
+	Comes into Sync at 0% but then aborts connection.
+
+	We also had:
+
+Feb  1 17:33:29 wintestubuntu kernel: [7339344.294343] drbd vamp-4nodes tcp:server-2016-B: Closing unexpected connection from 10.43.10.10
+
+	(but 10.43.10.10 is jt-win7-vm)
+	(with DRBD 9.0.9) updated DRBD not observed so far.
+
+	Update: fixed a receive error (MSG_WAITALL wasn't implemented)
+	seems to work now.
+
+Duplicate: Research: Auto-Promote possible?
+
+	If Windows accesses drive read-only on poll.
+
+Done: Implement: Make drbd service stoppable
+	This probably takes some while
+	Update: with the new architecture that should be possible
+	one day.
+
+	Probably some setting in the inf section. Or the way DRBD
+	registers itself in DriverEntry? DriverUnload() routine
+	returning something?
+
+	Update: After changing linker options (/DRIVER:WDM to
+	/DRIVER /SUBSYSTEM:WINDOWS) this works in theory. Things
+	we need to clean up include:
+
+	*) Threads (PsCreateSystemThread())
+		alloc_ordered_workqueue()
+		destroy_workqueue()
+	*) Lookaside lists (ExInitializeNPagedLookasideList())
+		kmem_cache_create() see slab.c
+	*) Update: All memory leaks (ExAllocatePoolWithTag(NonPagedPool, ...))
+		kmalloc() and friends. Also for PagedPool?
+
+	Right now, almost everything works, as long as no resources
+	are created. Missing: Terminate reply_reaper thread, wait
+	for wsk init thread completion (or terminate it?), really
+	clean up after resources. Sockets really don't need destroy
+	function?
+
+	Update: Works quite nice, however after a drbdsetup create-resource
+	drbdsetup del-resource some resources are not freed, which in
+	turn causes Unload not being called (which in turn causes
+	driver verifier to BSOD).
+
+	Update: As soon as there is just a single memory leak, driver
+	verifier BSOD's after unload. This will be fun to fix all of
+	those ...
+
+	Update: We need something like dmalloc .. maybe implement some
+	of it for our kmalloc()/kfree() to see at driver unload where
+	we leak (and free it there). At this point also get rid of the
+	Tag patches, we really don't need them. What also would be nice
+	at this point is to be able to inject out of memory faults selected
+	by source line.
+
+	For now defer that TODO to somewhere later (after beta5).
+
+	Update: Or maybe implement kmalloc debugger now and fix some of the
+	leaks (don't deliver beta with kmalloc debugger enabled)
+	but do not unload driver on uninstall. Users may use
+	sc stop windrbd if they really want to.
+
+	Update: kmalloc() debugger implemented and works fine. On drbdadm up
+	down leaks at 3 code paths are found (plus an extra leak that the
+	debugger didn't find, probably kmem_cache_alloc()). Fix them
+	one day (there are probably more than that).
+
+	Update: We just discovered that driver verifier was activated
+	on every make install. Technically, a 'normal' Windows installation
+	doesn't have driver verifier enabled. So we would have saved
+	tons of nerves (and time) if we never had driver verifier
+	enabled (no BSOD at least not so many). Removed the line from
+	the Makefile, now unloading works as expected (tough probably
+	the driver is still in memory a new version of the driver
+	can be loaded without rebooting). Think about including
+	driver unload in beta5.
+
+	Update: no beta5 will be with unloading disabled.
+
+	Update: driver now is not stoppable while there are resources
+	up, just as with Linux. As long as driver verifier isn't enabled
+	no BSODs. Fix the remaining memory leaks and close this
+	TODO.
+
+Done: Code quality: Re-port drbd_transport_tcp.c to windrbd's
+	drbd_transport_wtcp.c.
+	Update: currently it seems that the problem is
+	somewhere else. 
+	However we need those updates. Best way would be to
+	git diff the original drbd transport_tcp to the version
+	we had before and apply the patches manually.
+
+	Update: we should integrate drbd_transport_tcp back to
+	converted-sources.
+
+	Update: it seems to be doable, but first change the
+	wsk2.c API to match the kernel API (Send->kernel_send_msg
+	and so on).
+
+Done: Code Quality: Make windrbd-test compile again.
+
+	Needed 2 patches to drbd-headers/drbd-utils, however.
+
+Duplicate: Bug: leaking disk (see TODO in drbd_main.c)
+
+Duplicate: Bug: leaking something allocated by fifo_alloc
+
+	Probably also in upstream DRBD.
+
+Done: Code quality: use drbd-headers/windrbd merged branch in Linux DRBD
+
