@@ -2,8 +2,16 @@
 #define WINDRBD_IOCTL_H
 
 #include <sys/types.h>			/* for int64_t */
-#include <linux/types.h>
+
+#ifdef __CYGWIN__
+
+#ifndef GENL_NAMSIZ
+#define GENL_NAMSIZ 16
+#endif
+
+#else
 #include <linux/netlink.h>
+#endif
 
 /* For compiling this for drbd-utils when there are no Windows headers
  * installed, we need this (taken from ReactOS): Hopefully this never
@@ -55,11 +63,11 @@ struct windrbd_ioctl_fault_injection {
 #define IOCTL_WINDRBD_INJECT_FAULTS CTL_CODE(WINDRBD_DEVICE_TYPE, 2, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 struct windrbd_ioctl_genl_portid {
-	u32 portid;
+	uint32_t portid;
 };
 
 struct windrbd_ioctl_genl_portid_and_multicast_group {
-	u32 portid;
+	uint32_t portid;
         char name[GENL_NAMSIZ];
 };
 
