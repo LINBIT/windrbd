@@ -954,7 +954,6 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
         {
             nWaitTime.QuadPart = -1LL * socket->sk->sk_rcvtimeo * 1000 * 10 * 1000 / HZ;
             pTime = &nWaitTime;
-printk("socket->sk->sk_rcvtimeo is %d nWaitTime.QuadPart is %lld\n", socket->sk->sk_rcvtimeo, nWaitTime.QuadPart);
         }
 
         waitObjects[0] = (PVOID) &CompletionEvent;
@@ -964,9 +963,7 @@ printk("socket->sk->sk_rcvtimeo is %d nWaitTime.QuadPart is %lld\n", socket->sk-
             wObjCount = 2;
         } 
 
-printk("into KeWaitForMultipleObjects ...\n");
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-printk("out of KeWaitForMultipleObjects Status is %x ...\n", Status);
         switch (Status)
         {
         case STATUS_WAIT_0: // waitObjects[0] CompletionEvent
@@ -1008,18 +1005,11 @@ printk("out of KeWaitForMultipleObjects Status is %x ...\n", Status);
 		}
 	}
 
-printk("1\n");
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
-printk("2\n");
-printk("Irp->IoStatus.Information is %d\n", Irp->IoStatus.Information);
 		// cancel irp in wsk subsystem
 		IoCancelIrp(Irp);
-printk("3\n");
-printk("Irp->IoStatus.Information is %d\n", Irp->IoStatus.Information);
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-printk("4\n");
-printk("Irp->IoStatus.Information is %d\n", Irp->IoStatus.Information);
 		if (Irp->IoStatus.Information > 0)
 		{
 				/* When network is interrupted while we
@@ -1033,7 +1023,6 @@ printk("Irp->IoStatus.Information is %d\n", Irp->IoStatus.Information);
 				 * would deliver EINTR only if no data
 				 * is available.
 				 */
-printk("5\n");
 
 		/* Deliver what we have in case we timed out. */
 
@@ -1044,10 +1033,8 @@ printk("5\n");
 				printk("Receiving canceled (errno is %d) but data available (%d bytes, will be discarded).\n", BytesReceived, Irp->IoStatus.Information);
 			}
 		}
-printk("6\n");
 	}
 
-printk("7\n");
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
