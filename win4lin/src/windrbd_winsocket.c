@@ -1030,7 +1030,8 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 				printk("Timed out, but there is data (%d bytes) returning it.\n", Irp->IoStatus.Information);
 				BytesReceived = Irp->IoStatus.Information;
 			} else {
-				printk("Receiving canceled (errno is %d) but data available (%d bytes, will be discarded).\n", BytesReceived, Irp->IoStatus.Information);
+				printk("Receiving cancelled (errno is %d) but data available (%d bytes, returning it).\n", BytesReceived, Irp->IoStatus.Information);
+				BytesReceived = Irp->IoStatus.Information;
 			}
 		}
 	}
