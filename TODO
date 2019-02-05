@@ -9,13 +9,52 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
-TODO: Bug: In 4 node setup cannot make 2 of the nodes primary
+TODO: Test: Test Primary Diskless after EINTR patch
 
-	Error message is:
+	We introduced this for a reason, see if the patch breaks
+	things.
 
-$ drbdadm primary vamp-4nodes
-vamp-4nodes: State change failed: (-19) Concurrent state changes detected and aborted
-Command 'drbdsetup primary vamp-4nodes' terminated with exit code 11
+TODO: Bug: FIXME in bitmap code
+
+Feb  5 14:01:17 10.43.10.11  U13:01:17.453|4260bc80(drbd_a_vamp-4nodes) bm_print_lock_info <3>drbd vamp-4nodes/1 minor 1, ds(Inconsistent), dvflag(0x0): FIXME drbd_a_vamp-4nodes[8] op clear, bitmap locked for 'receive bitmap' by drbd_r_vamp-4nodes[7]
+
+TODO: Bug: Cancel Disconnect Socket
+
+Feb  5 14:56:43 10.43.10.11  U13:56:43.283|4260b600(drbd_r_vamp-4nodes) drbd_recv <6>drbd vamp-4nodes pnode-id:4, cs(NetworkFailure), prole(Unknown), cflag(0x2000a), scf(0x0): sock_recvmsg returned -4
+....
+Feb  5 14:56:44 10.43.10.11  U13:56:44.283|4260b600(drbd_r_vamp-4nodes) kernel_sock_shutdown Timeout... Cancel Disconnect socket:FFFFBC853E36E4A8
+
+TODO: Bug: BSOD on 4 node setup when doing I/O
+
+	On the node that does I/O (Windows 10 machine).
+
+Feb  5 14:56:49 10.43.10.13  U13:56:45.180|01741f10(drbd_a_vamp-4nodes) print_state_change <6>drbd vamp-4nodes pnode-id:4, cs(Connected), prole(Secondary), cflag(0x2040e), scf(0x21): conn( Connected -> NetworkFailure ) peer( Secondary -> Unknown )
+Feb  5 14:56:49 10.43.10.13  U13:56:45.180|01741f10(drbd_a_vamp-4nodes) print_state_change <6>drbd vamp-4nodes/1 minor 1 pnode-id:4, pdsk(UpToDate), prpl(Established), pdvflag(0xc00): pdsk( UpToDate -> DUnknown ) repl( Established -> Off )
+Feb  5 14:56:49 10.43.10.13  [last 2 messages were in IRQ context]
+Feb  5 14:56:49 10.43.10.13  U13:56:45.180|017417d0(drbd_r_vamp-4nodes) drbd_recv <6>drbd vamp-4nodes pnode-id:4, cs(Connected), prole(Secondary), cflag(0x2040e), scf(0x21): sock_recvmsg returned -4
+Feb  5 14:56:49 10.43.10.13  U13:56:45.180|01741f10(drbd_a_vamp-4nodes) drbd_ack_receiver <6>drbd vamp-4nodes pnode-id:4, cs(NetworkFailure), prole(Unknown), cflag(0x2040e), scf(0x0): ack_receiver terminated
+Feb  5 14:56:49 10.43.10.13  U13:56:45.180|01741f10(drbd_a_vamp-4nodes) drbd_thread_setup <6>drbd vamp-4nodes pnode-id:4, cs(NetworkFailure), prole(Unknown), cflag(0x2040e), scf(0x21): Terminating ack_recv thread
+Feb  5 14:56:49 10.43.10.13  [last message was in IRQ context]
+Feb  5 14:56:49 10.43.10.13  U13:56:45.226|e991b560(not_drbd_thread) windrbd_reap_threads Buried drbd_a_vamp-4nodes thread
+Feb  5 14:56:52 10.43.10.13  U13:56:47.414|f4f10410(drbd_s_vamp-4nodes) dtt_send_page <4>drbd vamp-4nodes tcp:jt-win7-vm: dtt_send_page: size=40 len=40 sent=-110
+Feb  5 14:56:52 10.43.10.13  [last message was in IRQ context]
+Feb  5 14:56:52 10.43.10.13  U13:56:48.758|0171bce0(drbd_w_vamp-4nodes) __drbd_uuid_new_current <6>drbd vamp-4nodes/1 minor 1, ds(UpToDate), dvflag(0x80286): new current UUID: 22A0B49B89D25CEF weak: FFFFFFFFFFFFFFF1
+
+TODO: Bug: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
+
+	Maybe this was introduced during code cleanup. Update: no it wasn't.
+	The reason is that REQ_OP_FLUSH != REQ_OP_WRITE in windrbd,
+	which has to be fixed (they also should be powers of two,
+	see comment in win4lin/drbd_wrappers.h:544.
+
+	The bug appears on testing resync.
+
+	Update: Also happened to Devin.
+
+	Now, changed error message to see the values.
+
+	For now, do a rate limit on the message (it shouldn't fill
+	the log).
 
 TODO: Bug: In 4 node setup, connection loss on I/O
 
@@ -23,6 +62,8 @@ TODO: Bug: In 4 node setup, connection loss on I/O
 	to 2 other nodes and cannot establish it unless disconnect/
 	connect is done on the other nodes. The Primary node has
 	to be taken down completely (down/up).
+
+	Update: After EINTR fix, does this still happen?
 
 TODO: Bug: Right now, sc stop windrbd stalls.
 
@@ -82,6 +123,8 @@ TODO: Implement: Other mechanism to specify syslog_ip.
 	file for the IP or logfile, so that we don't have to touch
 	the config file format.
 
+TODO: Code quality: eventually use drbd_rate_limit() on some printk's
+
 TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
 
 	Windows doesn't have an equivalent of spin_lock_irq()
@@ -116,6 +159,11 @@ TODO: Code quality: review TODOs in source code.
 Milestone: Release 0.9.2
 Planned: Feb 28 2018
 -----------------------------------------------------------------------
+
+TODO: Feature: Allow drbdadm status for non-Administrator
+
+	Implement with a second control device which is accessible
+	to (almost) all.
 
 TODO: Feature: Resource agent for Microsoft cluster manager
 
@@ -673,8 +721,6 @@ TODO: Performance: Sync is still somewhat slow when windrbd is SyncTarget
 	Update: Probably will be fixed once we use 1Meg pages on
 	Sync.
 
-TODO: Code quality: eventually use drbd_rate_limit() on some printk's
-
 TODO: Feature: on patching boot sector, inform Windows that file system is
 	raw now.
 	So that it disappears.
@@ -718,17 +764,6 @@ TODO: Bug: refcnt is 0 on drbd_rs_complete_io
 
 TODO: Performance: On much VM, one CPU core (has 2 cores) goes to 100% on sync.
 	I assume there is an unneccessary (?) copy somewhere.
-
-TODO: Bug: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
-
-	Maybe this was introduced during code cleanup. Update: no it wasn't.
-	The reason is that REQ_OP_FLUSH != REQ_OP_WRITE in windrbd,
-	which has to be fixed (they also should be powers of two,
-	see comment in win4lin/drbd_wrappers.h:544.
-
-	The bug appears on testing resync.
-
-	Update: Also happened to Devin.
 
 TODO: Bug: test-loop hangs after about 16 iterations.
 
@@ -4477,4 +4512,15 @@ Duplicate: Bug: leaking something allocated by fifo_alloc
 	Probably also in upstream DRBD.
 
 Done: Code quality: use drbd-headers/windrbd merged branch in Linux DRBD
+
+Done: Bug: In 4 node setup cannot make 2 of the nodes primary
+
+	Error message is:
+
+$ drbdadm primary vamp-4nodes
+vamp-4nodes: State change failed: (-19) Concurrent state changes detected and aborted
+Command 'drbdsetup primary vamp-4nodes' terminated with exit code 11
+
+	Update: Was -EINTR on receive dropping data. Should not
+	happen any more.
 
