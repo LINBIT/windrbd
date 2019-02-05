@@ -587,8 +587,9 @@ static inline void bio_set_op_attrs(struct bio *bio, const int op, const long fl
      * If we implicitly submit them, we just pass on a cloned bio to
      * generic_make_request().  We expect to use bio_set_op_attrs() with
      * REQ_OP_READ or REQ_OP_WRITE only. */
-    BUG_ON(!(op == REQ_OP_READ || op == REQ_OP_WRITE));
-    bio->bi_rw |= (op | flags);
+	if (!(op == REQ_OP_READ || op == REQ_OP_WRITE))
+		printk("op is %d, expected %d or %d\n", op, REQ_OP_READ, REQ_OP_WRITE);
+	bio->bi_rw |= (op | flags);
 }
 
 
