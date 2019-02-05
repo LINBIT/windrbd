@@ -23,26 +23,33 @@ drbdsetup events2
 
 Driver Unloading
 
------ for 1.0
-
-Other filesystems (FAT family)
-
-No reboot on upgrade/uninstall
+----- for 0.9.2 (February 2019)
 
 3 (and more) node setups
 
-Mounting to NTFS directories (when they are empty)
+----- for 0.9.3 (March 2019)
 
-Using C:\dirname as DRBD device (but not C:\)
-	For example C:\Program Files might work some day
+Auto-Promote
+
+----- for 0.9.4 (April 2019)
+
+Using System Volume (C:\) as DRBD device (diskless client with PXE boot)
+
+----- for 0.9.5 (May 2019)
+
+Other filesystems (FAT family, ReFS)
+
+----- for 1.0
+
+No reboot on upgrade/uninstall
+
+Mounting to NTFS directories (when they are empty)
 
 Relocate C:\windrbd directory
 
 Online verify
 
 Proper flush request handling
-
-Using System Volume (C:\) as DRBD device (diskless client with PXE boot)
 
 ---- after 1.0
 
@@ -64,10 +71,9 @@ network stats
 
 ReactOS support
 
----- most likely never
+drbdadm status as non-administrator
 
-Auto-Promote
+---- most likely never
 
 Windows applications that use undocumented ioctl system calls (like winsat).
 
-drbdadm status as non-administrator
