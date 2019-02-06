@@ -1,4 +1,3 @@
-
 converted-sources*/
 *.bak
 *~
@@ -6,8 +5,3 @@ win4lin/src/*.obj
 win4lin/src/*.pdb
 
 .*.sw?
-windrbd.SED
-windrbd-signed.SED
-
-to-sign
-signed
