@@ -533,9 +533,7 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 	PIRP		Irp = NULL;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 	LARGE_INTEGER	nWaitTime;
-		/* TODO: this is also not a good idea ... */
-	nWaitTime.QuadPart = (-1 * 1000 * 10000);   // wait 1000ms relative 
-	
+
 		/* TODO: one day ... */
 	(void) how;
 
@@ -554,9 +552,12 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 		Irp);
 
 	if (Status == STATUS_PENDING) {
+		nWaitTime = RtlConvertLongToLargeInteger(-1 * sock->sk->sk_connecttimeo * 1000 * 10);
+
 		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime);
-		if(STATUS_TIMEOUT == Status) { // DW-712 timeout process for fast closesocket in congestion mode, instead of WSK_FLAG_ABORTIVE
-			printk("Timeout... Cancel Disconnect socket:%p\n", sock->wsk_socket);
+
+		if (Status == STATUS_TIMEOUT) {
+			printk("Timeout on disconnecting socket, is the peer reachable? (you can safely ignore this)\n");
 			IoCancelIrp(Irp);
 			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		} 
