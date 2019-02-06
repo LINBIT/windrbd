@@ -1,0 +1,35 @@
+What is WinDRBD?
+================
+
+WinDRBD is a port of Linbit's Distributed Replicated Block Device
+(DRBD) Linux driver to Microsoft Windows. Technically it is a thin
+emulation layer that maps Linux specific kernel API calls to the
+Microsoft Windows NT Kernel API.
+
+DRBD itself is used to build High Availability clusters by replicating
+contents of one block device over a network to (up to 31) other nodes.
+
+In order to get professional support for WinDRBD please contact
+sales@linbit.com directly.
+
+To learn how to use WinDRBD to create a 2-node HA cluster based
+on Microsoft Windows, please read the enclosed tech guide.
+
+Since WinDRBD is still beta, it should not be used in production
+environments. Furthermore, it is highly recommended that you
+make a full backup of your Windows Installation before installing
+WinDRBD.
+
+WinDRBD is Open Source and licensed under the GNU general public
+license. To obtain the source code, please go to:
+
+https://www.github.com/LINBIT/WinDRBD
+
+We'd love to get feedback, either over the github site or over
+the DRBD user mailing list (drbd-user@lists.linbit.com, please
+go to http://lists.linbit.com/mailman/listinfo/drbd-user to
+subscribe).
+
+Thank you for participating in WinDRBD development by using it.
+
+- Johannes Thoma
