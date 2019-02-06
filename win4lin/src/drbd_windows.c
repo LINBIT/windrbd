@@ -2506,16 +2506,21 @@ int _DRBD_ratelimit(struct ratelimit_state *rs, const char * func, const char * 
 {
 	int ret;
 	
-	if (!rs ||
-		!rs->interval)
+	if (!rs || rs->interval == 0)
 		return 1;
 
+	/* TODO: why? */
 	if (KeGetCurrentIrql() > DISPATCH_LEVEL)
 	{
 		return 1;
 	}
 
-	//If we contend on this state's lock then almost by definition we are too busy to print a message, in addition to the one that will be printed by the entity that is holding the lock already
+	/*
+	 * If we contend on this state's lock then almost
+	 * by definition we are too busy to print a message,
+	 * in addition to the one that will be printed by
+	 * the entity that is holding the lock already:
+	 */
 	if (!spin_trylock(&rs->lock))
 		return 0;
 
@@ -2524,7 +2529,7 @@ int _DRBD_ratelimit(struct ratelimit_state *rs, const char * func, const char * 
 
 	if (time_is_before_jiffies(rs->begin + rs->interval)){
 		if (rs->missed)
-			WDRBD_WARN("%s(%s@%d): %d callbacks suppressed\n", func, __FILE, __LINE, rs->missed);
+			printk("%s(%s@%d): %d callbacks suppressed\n", func, __FILE, __LINE, rs->missed);
 		rs->begin = jiffies;
 		rs->printed = 0;
 		rs->missed = 0;
