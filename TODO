@@ -9,20 +9,7 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
-TODO: Test: Test Primary Diskless after EINTR patch
-
-	We introduced this for a reason, see if the patch breaks
-	things.
-
-TODO: Bug: FIXME in bitmap code
-
-Feb  5 14:01:17 10.43.10.11  U13:01:17.453|4260bc80(drbd_a_vamp-4nodes) bm_print_lock_info <3>drbd vamp-4nodes/1 minor 1, ds(Inconsistent), dvflag(0x0): FIXME drbd_a_vamp-4nodes[8] op clear, bitmap locked for 'receive bitmap' by drbd_r_vamp-4nodes[7]
-
-TODO: Bug: Cancel Disconnect Socket
-
-Feb  5 14:56:43 10.43.10.11  U13:56:43.283|4260b600(drbd_r_vamp-4nodes) drbd_recv <6>drbd vamp-4nodes pnode-id:4, cs(NetworkFailure), prole(Unknown), cflag(0x2000a), scf(0x0): sock_recvmsg returned -4
-....
-Feb  5 14:56:44 10.43.10.11  U13:56:44.283|4260b600(drbd_r_vamp-4nodes) kernel_sock_shutdown Timeout... Cancel Disconnect socket:FFFFBC853E36E4A8
+TODO: Implement: Create patch file(s) for tcp transport.
 
 TODO: Bug: BSOD on 4 node setup when doing I/O
 
@@ -40,56 +27,46 @@ Feb  5 14:56:52 10.43.10.13  U13:56:47.414|f4f10410(drbd_s_vamp-4nodes) dtt_send
 Feb  5 14:56:52 10.43.10.13  [last message was in IRQ context]
 Feb  5 14:56:52 10.43.10.13  U13:56:48.758|0171bce0(drbd_w_vamp-4nodes) __drbd_uuid_new_current <6>drbd vamp-4nodes/1 minor 1, ds(UpToDate), dvflag(0x80286): new current UUID: 22A0B49B89D25CEF weak: FFFFFFFFFFFFFFF1
 
-TODO: Bug: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
+	Also observed BSOD on Secondary (win7). No BSOD so far
+	on Server 2016 (Primary) (20 hour test).
 
-	Maybe this was introduced during code cleanup. Update: no it wasn't.
-	The reason is that REQ_OP_FLUSH != REQ_OP_WRITE in windrbd,
-	which has to be fixed (they also should be powers of two,
-	see comment in win4lin/drbd_wrappers.h:544.
+	Currently testing with win7 being Primary.
+	No crash (ran 3 hours), now testing with Windows 10 (again).
 
-	The bug appears on testing resync.
+	Crash on Windows 10 when Windows 7 was rebooted (and Windows 10
+	being Primary and doing I/O).
 
-	Update: Also happened to Devin.
+	Also when packets are dropped (via iptables) on the Linux machine
+	(being secondary), however not always.
 
-	Now, changed error message to see the values.
+	Strange: goes into NetworkFailure with congested on (send should
+	report errors) first then freezes then BSOD's
 
-	For now, do a rate limit on the message (it shouldn't fill
-	the log).
+	Test with local VMs (2 nodes) could not reproduce behaviour.
 
-TODO: Bug: In 4 node setup, connection loss on I/O
+	Test with 2 nodes setup (Windows 10 / Linux): error happens,
+	so it is most likely Windows 10 specific.
 
-	Windows Server 2016 machine (Secondary) loses connection
-	to 2 other nodes and cannot establish it unless disconnect/
-	connect is done on the other nodes. The Primary node has
-	to be taken down completely (down/up).
+TODO: Bug: Had a Sync stall in 4 node setup
 
-	Update: After EINTR fix, does this still happen?
+	One node at 98.9 percent other at around 50% (but 130% on its
+	peer).
+
+	According to Roland there are known issues with 4-nodes in
+	Linux as well. He recommended not to test with more than 3
+	nodes for now.
+
+	Do that later.
+
+	No, now, also happens when 2 of the nodes are disconnected.
+
+	Also in 2 node setup?
 
 TODO: Bug: Right now, sc stop windrbd stalls.
 
 	Works with c8a2ab?
 
 TODO: Bug: BSOD on driver unload after up (tmp patches for create boot device)
-
-TODO: Bug: Connection instable when connecting two Windows boxes.
-
-	In that case our physical Windows 10 with Windows 7 VM on
-	much.
-
-	And one box is not pingable any more. Maybe something with
-	libvirt? Hangs because logging does not work (was configured
-	to log to Linux VM).
-
-	Update: happens also with VirtualBox (Mac) Windows 7 box.
-	drbdadm down / up on Windows 10 usually solves the problem.
-
-	Update: really? Was split-brain, IP address change.
-
-	Update: We also just had a complete network outage on
-	the testing subnet..
-
-	Update: Windows 10 to Mac VMs seems to have no problems.
-	Problem seems to be only between much VM's and Windows 10.
 
 TODO: Install: also sign install EXE
 
@@ -210,6 +187,8 @@ TODO: Feature: Make C:\ as Primary Diskless work
 
 	Patches tested and submited, waiting for response
 
+	Update: response came asking to clarify length parameter widening.
+
 	*) Use drbd device as source device for cgi script.
 
 	Done, works.
@@ -253,6 +232,18 @@ TODO: Feature: Autopromote
 
 	If Windows poll the devices read-only, this would make sense
 	(DRBD only attempts to promote if device is opened writable)
+
+TODO: Code quality: restructure directory structure
+
+	have include and src directories.
+
+TODO: Bug: FIXME in bitmap code
+
+	On testing 4 node setup:
+
+Feb  5 14:01:17 10.43.10.11  U13:01:17.453|4260bc80(drbd_a_vamp-4nodes) bm_print_lock_info <3>drbd vamp-4nodes/1 minor 1, ds(Inconsistent), dvflag(0x0): FIXME drbd_a_vamp-4nodes[8] op clear, bitmap locked for 'receive bitmap' by drbd_r_vamp-4nodes[7]
+
+	Upstream bug?
 
 TODO: Bug: printk eats boot messages
 
@@ -479,10 +470,7 @@ TODO: Implement: Make windrbd directory unaccessible for non-admins.
 	This is ok for now, later we probably want to deny read access
 	(in case there are shared secrets).
 
-TODO: Code quality: drbd-patches directory probably should go away.
-
-	Also samples dir. Reorganize a bit (put release description
-	in separate dir, ...)
+TODO: Implement: fix the wait_event_interruptible implementation and interface
 
 TODO: Implement: fix the wait_cond_interruptible busy loop.
 
@@ -855,6 +843,31 @@ TODO: Code quality: fix the macro redefinition problems in drbd_windows.c
 
 	Update: check if the prototypes are still needed.
 	Update: we probably reject this.
+
+TODO: Upstream: submit ?: usage patches (gcc extension)
+
+TODO: Upstream: void pointer arithmetic: submit to upstream
+
+TODO: Code quality: free_page should take a ULONG_PTR?
+
+TODO: Code quality: MSG_DONTWAIT into Receive?
+
+TODO: Code quality: sk_connecttimeo weg (was stattdessen)?
+
+TODO: Code quality: maybe submit: kernel_setsockopt(..., SO_REUSEADDR, ...)
+
+TODO: Implement: tcp stats
+
+TODO: Test: dtt_hint
+
+TODO: Implement: remaining patched out features of TCP transport
+
+	TCP_CORK
+	TCP_QUICKACK
+	SO_KEEPALIVE
+	sk_allocation
+	sk_priority
+	debugfs
 
 -------------------------------------------------------------------------
 
@@ -4523,4 +4536,96 @@ Command 'drbdsetup primary vamp-4nodes' terminated with exit code 11
 
 	Update: Was -EINTR on receive dropping data. Should not
 	happen any more.
+
+Done: Test: Test Primary Diskless after EINTR patch
+
+	We introduced this for a reason, see if the patch breaks
+	things.
+
+    " ... When being the peer of a Diskless Primary doing I/O (sending
+    P_DATA packets) windrbd was stuck in NetworkFailure when
+    the cable was unplugged. ..."
+
+	No NetworkFailure stuckness, behaves as expected.
+
+Done: Bug: Cancel Disconnect Socket
+
+Feb  5 14:56:43 10.43.10.11  U13:56:43.283|4260b600(drbd_r_vamp-4nodes) drbd_recv <6>drbd vamp-4nodes pnode-id:4, cs(NetworkFailure), prole(Unknown), cflag(0x2000a), scf(0x0): sock_recvmsg returned -4
+....
+Feb  5 14:56:44 10.43.10.11  U13:56:44.283|4260b600(drbd_r_vamp-4nodes) kernel_sock_shutdown Timeout... Cancel Disconnect socket:FFFFBC853E36E4A8
+
+	This probably happens if the peer fails to shut down the TCP/IP
+	connection (for example when he is down). Increased timeout to
+	connect_timeo (which makes sense, because on the net connect
+	and disconnect is very similar). Have a message, but users
+	can ignore it.
+
+Done: Bug: Connection instable when connecting two Windows boxes.
+
+	In that case our physical Windows 10 with Windows 7 VM on
+	much.
+
+	And one box is not pingable any more. Maybe something with
+	libvirt? Hangs because logging does not work (was configured
+	to log to Linux VM).
+
+	Update: happens also with VirtualBox (Mac) Windows 7 box.
+	drbdadm down / up on Windows 10 usually solves the problem.
+
+	Update: really? Was split-brain, IP address change.
+
+	Update: We also just had a complete network outage on
+	the testing subnet..
+
+	Update: Windows 10 to Mac VMs seems to have no problems.
+	Problem seems to be only between much VM's and Windows 10.
+
+	Update: After re-porting the transport_tcp code, this seems
+	to be fixed.
+
+Done: Bug: In 4 node setup, connection loss on I/O
+
+	Windows Server 2016 machine (Secondary) loses connection
+	to 2 other nodes and cannot establish it unless disconnect/
+	connect is done on the other nodes. The Primary node has
+	to be taken down completely (down/up).
+
+	Update: After EINTR fix, does this still happen?
+
+	It didn't happen recently, please reopen when it happens again.
+
+Done: Code quality: drbd-patches directory probably should go away.
+
+	Also samples dir. Reorganize a bit (put release description
+	in separate dir, ...)
+
+Done: sendbuf_cur -> into sk
+
+Rejected: try to implement typeof (for list iterators)
+	No we need C++
+
+Done: sock_create_kern extra parameters (SocketContect, Dispatch, Flags)?
+	Now have WinDRBD specific SOCK_LISTEN socket type.
+
+Rejected: Submit platform_update_socket_buffer_sizes()?
+	No.
+
+Done: Bug: bio_set_op_attrs <2>[0xFFFFFA80033783B0] BUG: failure
+
+	Maybe this was introduced during code cleanup. Update: no it wasn't.
+	The reason is that REQ_OP_FLUSH != REQ_OP_WRITE in windrbd,
+	which has to be fixed (they also should be powers of two,
+	see comment in win4lin/drbd_wrappers.h:544.
+
+	The bug appears on testing resync.
+
+	Update: Also happened to Devin.
+
+	Now, changed error message to see the values.
+
+	For now, do a rate limit on the message (it shouldn't fill
+	the log).
+
+	Update: found it: REQ_OP_FLUSH is != REQ_OP_WRITE in WinDRBD,
+	allow for this also.
 
