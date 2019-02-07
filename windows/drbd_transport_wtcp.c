@@ -212,33 +212,33 @@ static void dtt_free(struct drbd_transport *transport, enum drbd_tr_free_op free
 	/* free the socket specific stuff,
 	 * mutexes are handled by caller */
 
-printk("1\n");
+// printk("1\n");
 
 	for (i = DATA_STREAM; i <= CONTROL_STREAM; i++) {
-printk("2\n");
+// printk("2\n");
 		if (tcp_transport->stream[i]) {
-printk("3\n");
+// printk("3\n");
 			dtt_free_one_sock(tcp_transport->stream[i]);
 			tcp_transport->stream[i] = NULL;
 		}
 	}
-printk("4\n");
+// printk("4\n");
 
 	for_each_path_ref(drbd_path, transport) {
-printk("5\n");
+// printk("5\n");
 		bool was_established = drbd_path->established;
 		drbd_path->established = false;
-printk("6\n");
+// printk("6\n");
 		if (was_established)
 			drbd_path_event(transport, drbd_path);
-printk("7\n");
+// printk("7\n");
 	}
 
-printk("8\n");
+// printk("8\n");
 	if (free_op == DESTROY_TRANSPORT) {
 		struct drbd_path *tmp;
 
-printk("9\n");
+// printk("9\n");
 		for (i = DATA_STREAM; i <= CONTROL_STREAM; i++) {
 			free_page(tcp_transport->rbuf[i].base);
 			tcp_transport->rbuf[i].base = NULL;
@@ -250,7 +250,7 @@ printk("9\n");
 		}
 		spin_unlock(&tcp_transport->paths_lock);
 	}
-printk("a\n");
+// printk("a\n");
 }
 
 static int _dtt_send(struct drbd_tcp_transport *tcp_transport, struct socket *socket,
@@ -488,7 +488,7 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 	socket->sk->sk_sndtimeo = 
 	socket->sk->sk_connecttimeo = connect_int * HZ;
 
-socket->sk->sk_sndtimeo *= 3;
+// socket->sk->sk_sndtimeo *= 3;
 
 	dtt_setbufsize(socket, sndbuf_size, rcvbuf_size);
 
@@ -1144,8 +1144,8 @@ randomize:
 	dsocket->sk->sk_sndtimeo = timeout;
 	csocket->sk->sk_sndtimeo = timeout;
 
-dsocket->sk->sk_sndtimeo *= 3;
-dsocket->sk->sk_sndtimeo *= 3;
+// dsocket->sk->sk_sndtimeo *= 3;
+// csocket->sk->sk_sndtimeo *= 3;
 
 /* TODO: implement
 	err = kernel_setsockopt(dsocket, SOL_SOCKET, SO_KEEPALIVE, (char *)&one, sizeof(one));
@@ -1246,9 +1246,9 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
 	do {
 		int sent;
 
-printk("1\n");
+// printk("1\n");
 		sent = socket->ops->sendpage(socket, page, offset, len, msg_flags);
-printk("2 sent is %d\n", sent);
+// printk("2 sent is %d\n", sent);
 		if (sent <= 0) {
 			if (sent == -EAGAIN) {
 				if (drbd_stream_send_timed_out(transport, stream))
