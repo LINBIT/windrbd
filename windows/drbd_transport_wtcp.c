@@ -488,6 +488,8 @@ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *pa
 	socket->sk->sk_sndtimeo = 
 	socket->sk->sk_connecttimeo = connect_int * HZ;
 
+socket->sk->sk_sndtimeo *= 3;
+
 	dtt_setbufsize(socket, sndbuf_size, rcvbuf_size);
 
 	/* explicitly bind to the configured IP as source IP
@@ -1141,6 +1143,9 @@ randomize:
 
 	dsocket->sk->sk_sndtimeo = timeout;
 	csocket->sk->sk_sndtimeo = timeout;
+
+dsocket->sk->sk_sndtimeo *= 3;
+dsocket->sk->sk_sndtimeo *= 3;
 
 /* TODO: implement
 	err = kernel_setsockopt(dsocket, SOL_SOCKET, SO_KEEPALIVE, (char *)&one, sizeof(one));
