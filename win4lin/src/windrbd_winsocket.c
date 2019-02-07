@@ -168,11 +168,13 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	size_t length;
 
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
-		if (may_printk && completion->socket->error_status != STATUS_SUCCESS &&
-		    completion->socket->error_status != Irp->IoStatus.Status)
-			printk(KERN_WARNING "Last error status of socket was %x, now got %x\n", completion->socket->error_status, Irp->IoStatus.Status);
+		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
 
-		completion->socket->error_status = Irp->IoStatus.Status;
+		if (may_printk && completion->socket->error_status != 0 &&
+		    completion->socket->error_status != new_status)
+			printk(KERN_WARNING "Last error status of socket was %d, now got %d (ntstatus %x)\n", completion->socket->error_status, new_status, Irp->IoStatus.Status);
+
+		completion->socket->error_status = new_status;
 	}	/* TODO: if success, clear error status? This happens
 		 * on boot when there are no configured network interfaces
 		 * and works later once they are.
@@ -717,8 +719,8 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !page || ((int) len <= 0))
 		return -EINVAL;
 
-	if (socket->error_status != STATUS_SUCCESS)
-		return winsock_to_linux_error(socket->error_status);
+	if (socket->error_status != 0)
+		return socket->error_status;
 
 	get_page(page);		/* we might sleep soon, do this before */
 
@@ -825,8 +827,8 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !Buffer || !BufferSize)
 		return -EINVAL;
 
-	if (socket->error_status != STATUS_SUCCESS)
-		return winsock_to_linux_error(socket->error_status);
+	if (socket->error_status != 0)
+		return socket->error_status;
 
 	err = wait_for_sendbuf(socket, BufferSize);
 	if (err < 0)
@@ -917,6 +919,9 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	if (num != 1)
 		return -EOPNOTSUPP;
+
+	if (socket->error_status != 0)
+		return socket->error_status;
 
 	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, TRUE, TRUE);
 	if (!NT_SUCCESS(Status)) {
@@ -1039,6 +1044,9 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
+
+	if (BytesReceived < 0)
+		socket->error_status = BytesReceived;
 
 	return BytesReceived;
 }
@@ -1194,7 +1202,7 @@ static int sock_create_linux_socket(struct socket **out)
 		return -ENOMEM; 
 	}
 
-	socket->error_status = STATUS_SUCCESS;
+	socket->error_status = 0;
 
 	spin_lock_init(&socket->send_buf_counters_lock);
 	spin_lock_init(&socket->accept_socket_lock);

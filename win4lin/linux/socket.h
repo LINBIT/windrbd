@@ -88,7 +88,7 @@ struct socket {
 
 	int no_delay:1;
 
-	NTSTATUS error_status;
+	int error_status;
 
 	spinlock_t send_buf_counters_lock;
 	KEVENT data_sent;
