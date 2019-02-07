@@ -66,10 +66,21 @@ static NTSTATUS NTAPI CompletionRoutine(
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
+static NTSTATUS NTAPI completion_free_irp(
+	__in PDEVICE_OBJECT	DeviceObject,
+	__in PIRP			Irp,
+	__in PKEVENT		CompletionEvent
+)
+{
+	IoFreeIrp(Irp);
+
+	return STATUS_MORE_PROCESSING_REQUIRED;  /* meaning do not touch the irp */
+}
+
 static NTSTATUS InitWskData(
-	__out PIRP*		pIrp,
-	__out PKEVENT	CompletionEvent,
-	__in  BOOLEAN	bRawIrp
+	PIRP*		pIrp,
+	PKEVENT	CompletionEvent,
+	BOOLEAN	bRawIrp
 )
 {
 	// DW-1316 use raw irp.
@@ -86,8 +97,12 @@ static NTSTATUS InitWskData(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-	KeInitializeEvent(CompletionEvent, SynchronizationEvent, FALSE);
-	IoSetCompletionRoutine(*pIrp, CompletionRoutine, CompletionEvent, TRUE, TRUE, TRUE);
+	if (CompletionEvent) {
+		KeInitializeEvent(CompletionEvent, SynchronizationEvent, FALSE);
+		IoSetCompletionRoutine(*pIrp, CompletionRoutine, CompletionEvent, TRUE, TRUE, TRUE);
+	} else {
+		IoSetCompletionRoutine(*pIrp, completion_free_irp, NULL, TRUE, TRUE, TRUE);
+	}
 
 	return STATUS_SUCCESS;
 }
@@ -325,35 +340,19 @@ static int CreateSocket(
 	return winsock_to_linux_error(Status);
 }
 
-NTSTATUS CloseWskSocket(struct _WSK_SOCKET *WskSocket)
+	/* We do not wait for completion here, errors are ignored. */
+
+void close_wsk_socket(struct _WSK_SOCKET *WskSocket)
 {
-	KEVENT		CompletionEvent = { 0 };
-	PIRP		Irp = NULL;
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
-	LARGE_INTEGER	nWaitTime;
-	nWaitTime.QuadPart = (-1 * 1000 * 10000);   // wait 1000ms relative 
+	PIRP Irp = NULL;
 
 	if (wsk_state != WSK_INITIALIZED || !WskSocket)
-		return STATUS_INVALID_PARAMETER;
+		return;
 
-	Status = InitWskData(&Irp, &CompletionEvent, TRUE);
-	if (!NT_SUCCESS(Status)) {
-		return Status;
-	}
-	Status = ((PWSK_PROVIDER_BASIC_DISPATCH) WskSocket->Dispatch)->WskCloseSocket(WskSocket, Irp);
-	if (Status == STATUS_PENDING) {
-		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime);
-		if (Status == STATUS_TIMEOUT) { // DW-1316 detour WskCloseSocket hang in Win7/x86.
-			printk(KERN_WARNING "Timeout... Cancel WskCloseSocket:%p. maybe required to patch WSK Kernel\n", WskSocket);
-			IoCancelIrp(Irp);
-			// DW-1388: canceling must be completed before freeing the irp.
-			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-		}
-		Status = Irp->IoStatus.Status;
-	}
-	IoFreeIrp(Irp);
+	if (!NT_SUCCESS(InitWskData(&Irp, NULL, TRUE)))
+		return;
 
-	return Status;
+	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) WskSocket->Dispatch)->WskCloseSocket(WskSocket, Irp);
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
@@ -460,7 +459,7 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 
 	err = sock_create_linux_socket(&accept_socket);
 	if (err < 0)
-		CloseWskSocket(wsk_socket);
+		close_wsk_socket(wsk_socket);
 	else {
 		accept_socket->wsk_socket = wsk_socket;
 		accept_socket->sk->sk_state = TCP_ESTABLISHED;
@@ -542,36 +541,10 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 	if (wsk_state != WSK_INITIALIZED || sock == NULL || sock->wsk_socket == NULL)
 		return -EINVAL;
 
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		return winsock_to_linux_error(Status);
-	}
-	
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) sock->wsk_socket->Dispatch)->WskDisconnect(
-		sock->wsk_socket,
-		NULL,
-		0,//WSK_FLAG_ABORTIVE,=> when disconnecting, ABORTIVE was going to standalone, and then we removed ABORTIVE
-		Irp);
+	sock->sk->sk_state = 0;
+	close_wsk_socket(sock->wsk_socket);
 
-	if (Status == STATUS_PENDING) {
-		nWaitTime = RtlConvertLongToLargeInteger(-1 * sock->sk->sk_connecttimeo * 1000 * 10);
-
-		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime);
-
-		if (Status == STATUS_TIMEOUT) {
-			printk("Timeout on disconnecting socket, is the peer reachable? (you can safely ignore this)\n");
-			IoCancelIrp(Irp);
-			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-		} 
-
-		Status = Irp->IoStatus.Status;
-	}
-
-	if (Status == STATUS_SUCCESS)
-		sock->sk->sk_state = 0;
-
-	IoFreeIrp(Irp);
-	return winsock_to_linux_error(Status);
+	return 0;
 }
 
 
@@ -1045,7 +1018,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
-	if (BytesReceived < 0)
+	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN)
 		socket->error_status = BytesReceived;
 
 	return BytesReceived;
@@ -1321,12 +1294,7 @@ void sock_release(struct socket *sock)
 	if (sock == NULL)
 		return;
 
-	status = CloseWskSocket(sock->wsk_socket);
-	if (!NT_SUCCESS(status))
-	{
-		WDRBD_ERROR("error=0x%x\n", status);
-		return;
-	}
+	close_wsk_socket(sock->wsk_socket);
 
 	kfree(sock->sk);
 	kfree(sock);
