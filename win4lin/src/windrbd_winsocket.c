@@ -352,6 +352,11 @@ void close_wsk_socket(struct _WSK_SOCKET *WskSocket)
 	if (!NT_SUCCESS(InitWskData(&Irp, NULL, TRUE)))
 		return;
 
+		/* TODO: What if we are still sending? */
+		/* This most likely causes the BSOD on Windows 10 on
+		 * connection loss (via iptables on the peer).
+		 */
+
 	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) WskSocket->Dispatch)->WskCloseSocket(WskSocket, Irp);
 }
 
