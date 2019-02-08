@@ -3,7 +3,6 @@
 #include <linux/socket.h>
 #include <linux/net.h>
 #include <linux/tcp.h>
-#include "windrbd_winsocket.h" 
 
 /* Protects from API functions being called before the WSK provider is
  * initialized (see SocketsInit).

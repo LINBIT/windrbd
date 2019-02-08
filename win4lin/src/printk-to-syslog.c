@@ -3,7 +3,6 @@
 #include <Ntstrsafe.h>
 #include <linux/net.h>
 #include <linux/socket.h>
-#include "windrbd_winsocket.h"
 
 /* Define this if you do not want to use UDP logging. */
 /* #define NO_NET_PRINTK 1 */
