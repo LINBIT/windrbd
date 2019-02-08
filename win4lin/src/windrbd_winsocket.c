@@ -51,7 +51,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 	}
 }
 
-static NTSTATUS NTAPI CompletionRoutine(
+static NTSTATUS NTAPI completion_fire_event(
 	__in PDEVICE_OBJECT	DeviceObject,
 	__in PIRP			Irp,
 	__in PKEVENT		CompletionEvent
@@ -77,34 +77,27 @@ static NTSTATUS NTAPI completion_free_irp(
 	return STATUS_MORE_PROCESSING_REQUIRED;  /* meaning do not touch the irp */
 }
 
-static NTSTATUS InitWskData(
-	PIRP*		pIrp,
-	PKEVENT	CompletionEvent,
-	BOOLEAN	bRawIrp
-)
-{
-	// DW-1316 use raw irp.
-	/* TODO: is this still needed? CloseWskSocket uses it, but why? */
-	if (bRawIrp) {
-		*pIrp = ExAllocatePoolWithTag(NonPagedPool, IoSizeOfIrp(1), 'FFDW');
-		IoInitializeIrp(*pIrp, IoSizeOfIrp(1), 1);
-	}
-	else {
-		*pIrp = IoAllocateIrp(1, FALSE);
-	}
+	/* Creates a new IRP for use with wsk functions. If CompletionEvent
+	 * is non-NULL, it is initialized and completion_fire_event (which
+	 * signals the event) is used as completion routine, else
+	 * completion_free_irp is used (which just frees the irp).
+	 */
 
-	if (!*pIrp) {
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
+static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent)
+{
+	struct _IRP *irp;
+
+	irp = IoAllocateIrp(1, FALSE);
+	if (irp == NULL)
+		return NULL;
 
 	if (CompletionEvent) {
 		KeInitializeEvent(CompletionEvent, SynchronizationEvent, FALSE);
-		IoSetCompletionRoutine(*pIrp, CompletionRoutine, CompletionEvent, TRUE, TRUE, TRUE);
+		IoSetCompletionRoutine(irp, completion_fire_event, CompletionEvent, TRUE, TRUE, TRUE);
 	} else {
-		IoSetCompletionRoutine(*pIrp, completion_free_irp, NULL, TRUE, TRUE, TRUE);
+		IoSetCompletionRoutine(irp, completion_free_irp, NULL, TRUE, TRUE, TRUE);
 	}
-
-	return STATUS_SUCCESS;
+	return irp;
 }
 
 static NTSTATUS InitWskBuffer(
@@ -316,8 +309,8 @@ static int CreateSocket(
 	if (wsk_state != WSK_INITIALIZED || out == NULL)
 		return -EINVAL;
 
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status))
+	Irp = wsk_new_irp(&CompletionEvent);
+	if (Irp == NULL)
 		return -ENOMEM;
 
 	Status = g_WskProvider.Dispatch->WskSocket(
@@ -352,12 +345,13 @@ static int CreateSocket(
 
 static void close_wsk_socket(struct _WSK_SOCKET *wsk_socket)
 {
-	PIRP Irp;
+	struct _IRP *Irp;
 
 	if (wsk_state != WSK_INITIALIZED || wsk_socket == NULL)
 		return;
 
-	if (!NT_SUCCESS(InitWskData(&Irp, NULL, TRUE)))
+	Irp = wsk_new_irp(NULL);
+	if (Irp == NULL)
 		return;
 
 	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) wsk_socket->Dispatch)->WskCloseSocket(wsk_socket, Irp);
@@ -369,18 +363,17 @@ static void close_wsk_socket(struct _WSK_SOCKET *wsk_socket)
 
 static void close_socket(struct socket *socket)
 {
-	PIRP Irp;
+	struct _IRP *Irp;
 
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return;
 
-	if (!NT_SUCCESS(InitWskData(&Irp, NULL, TRUE)))
+	Irp = wsk_new_irp(NULL);
+	if (Irp == NULL)
 		return;
 
-		/* TODO: What if we are still sending? */
-		/* This most likely causes the BSOD on Windows 10 on
-		 * connection loss (via iptables on the peer).
-		 */
+		/* TODO: Gracefully disconnect socket first? With what
+		 * timeout? */
 
 	mutex_lock(&socket->wsk_mutex);
 
@@ -402,9 +395,9 @@ static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
-	status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(status))
-		return winsock_to_linux_error(status);
+	Irp = wsk_new_irp(&CompletionEvent);
+	if (Irp == NULL)
+		return -ENOMEM;
 
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskGetRemoteAddress(socket->wsk_socket, uaddr, Irp);
 	if (status != STATUS_SUCCESS)
@@ -435,9 +428,9 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || vaddr == NULL)
 		return -EINVAL;
 
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status))
-		return winsock_to_linux_error(Status);
+	Irp = wsk_new_irp(&CompletionEvent);
+	if (Irp == NULL)
+		return -ENOMEM;
 
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskConnect(
 		socket->wsk_socket,
@@ -519,8 +512,8 @@ static int wsk_set_event_callbacks(struct socket *socket, int mask)
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
-	Status = InitWskData(&Irp, &CompletionEvent,FALSE);
-	if (!NT_SUCCESS(Status))
+	Irp = wsk_new_irp(&CompletionEvent);
+	if (Irp == NULL)
 		return -ENOMEM;
 
 	callbackControl.NpiId = &NPI_WSK_INTERFACE_ID;
@@ -613,10 +606,10 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return winsock_to_linux_error(Status);
 	}
 
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status)) {
+	Irp = wsk_new_irp(&CompletionEvent);
+	if (Irp == NULL) {
 		FreeWskBuffer(&WskBuffer, 1);
-		return winsock_to_linux_error(Status);
+		return -ENOMEM;
 	}
 
 	if (socket->no_delay)
@@ -957,11 +950,10 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return winsock_to_linux_error(Status);
 	}
 
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-
-	if (!NT_SUCCESS(Status)) {
+	Irp = wsk_new_irp(&CompletionEvent);
+	if (Irp == NULL) {
 		FreeWskBuffer(&WskBuffer, 1);
-		return winsock_to_linux_error(Status);
+		return -ENOMEM;
 	}
 
 	wsk_flags = 0;
@@ -1102,10 +1094,9 @@ static int wsk_bind(
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || myaddr == NULL)
 		return -EINVAL;
 
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		return winsock_to_linux_error(Status);
-	}
+	Irp = wsk_new_irp(&CompletionEvent);
+	if (Irp == NULL)
+		return -ENOMEM;
 
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskBind(
 		socket->wsk_socket,
@@ -1140,11 +1131,9 @@ static NTSTATUS ControlSocket(
 	if (wsk_state != WSK_INITIALIZED || !WskSocket)
 		return -EINVAL;
 
-	Status = InitWskData(&Irp, &CompletionEvent, FALSE);
-	if (!NT_SUCCESS(Status)) {
-		printk(KERN_ERR "InitWskData() failed with status 0x%08X\n", Status);
-		return winsock_to_linux_error(Status);
-	}
+	Irp = wsk_new_irp(&CompletionEvent);
+	if (Irp == NULL)
+		return -ENOMEM;
 
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) WskSocket->Dispatch)->WskControlSocket(
 				WskSocket,
