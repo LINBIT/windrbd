@@ -4,6 +4,7 @@
 #include "drbd_windows.h"
 #include <linux/uio.h>	/* for struct kvec */
 #include <linux/net/sock.h>
+#include <wsk.h>	/* for struct sockaddr_storage */
 
 /* Originally somewhere in arch, we put it here, since it is only
  * used for kernel_accept() for now.
