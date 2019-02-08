@@ -8,6 +8,7 @@
 /* Protects from API functions being called before the WSK provider is
  * initialized (see SocketsInit).
  */
+/* TODO: resource deallocation via goto's */
 
 #define WSK_DEINITIALIZED	0
 #define WSK_DEINITIALIZING	1
@@ -340,13 +341,33 @@ static int CreateSocket(
 	return winsock_to_linux_error(Status);
 }
 
-	/* We do not wait for completion here, errors are ignored. */
+	/* Use this only to close a newly created wsk_socket which
+	 * does not have a Linux socket yet (e.g. in accept when
+	 * creating Linux socket fails).
+	 */
 
-void close_wsk_socket(struct _WSK_SOCKET *WskSocket)
+static void close_wsk_socket(struct _WSK_SOCKET *wsk_socket)
 {
-	PIRP Irp = NULL;
+	PIRP Irp;
 
-	if (wsk_state != WSK_INITIALIZED || !WskSocket)
+	if (wsk_state != WSK_INITIALIZED || wsk_socket == NULL)
+		return;
+
+	if (!NT_SUCCESS(InitWskData(&Irp, NULL, TRUE)))
+		return;
+
+	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) wsk_socket->Dispatch)->WskCloseSocket(wsk_socket, Irp);
+}
+
+
+	/* We do not wait for completion here, errors are ignored.
+	 */
+
+static void close_socket(struct socket *socket)
+{
+	PIRP Irp;
+
+	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return;
 
 	if (!NT_SUCCESS(InitWskData(&Irp, NULL, TRUE)))
@@ -357,7 +378,12 @@ void close_wsk_socket(struct _WSK_SOCKET *WskSocket)
 		 * connection loss (via iptables on the peer).
 		 */
 
-	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) WskSocket->Dispatch)->WskCloseSocket(WskSocket, Irp);
+	mutex_lock(&socket->wsk_mutex);
+
+	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
+	socket->wsk_socket = NULL;
+
+	mutex_unlock(&socket->wsk_mutex);
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
@@ -547,7 +573,7 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 		return -EINVAL;
 
 	sock->sk->sk_state = 0;
-	close_wsk_socket(sock->wsk_socket);
+	close_socket(sock);
 
 	return 0;
 }
@@ -593,11 +619,19 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		Flags &= ~WSK_FLAG_NODELAY;
 
 	mutex_lock(&socket->wsk_mutex);
+
+	if (socket->wsk_socket == NULL) {
+		mutex_unlock(&socket->wsk_mutex);
+		FreeWskBuffer(&WskBuffer, 1);
+		return winsock_to_linux_error(Status);
+	}
+
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
 		socket->wsk_socket,
 		&WskBuffer,
 		Flags,
 		Irp);
+
 	mutex_unlock(&socket->wsk_mutex);
 
 	if (Status == STATUS_PENDING)
@@ -756,6 +790,16 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 
 
 	mutex_lock(&socket->wsk_mutex);
+
+	if (socket->wsk_socket == NULL) {
+		mutex_unlock(&socket->wsk_mutex);
+		have_sent(socket, len);
+		put_page(page);
+		kfree(completion);
+		kfree(WskBuffer);
+		FreeWskBuffer(WskBuffer, 1);
+		return -ENOMEM;
+	}
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
 		socket->wsk_socket,
 		WskBuffer,
@@ -918,6 +962,13 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		wsk_flags |= WSK_FLAG_WAITALL;
 
 	mutex_lock(&socket->wsk_mutex);
+
+	if (socket->wsk_socket == NULL) {
+		mutex_unlock(&socket->wsk_mutex);
+		FreeWskBuffer(&WskBuffer, 1);
+		return winsock_to_linux_error(Status);
+	}
+
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
@@ -1202,6 +1253,7 @@ static int sock_create_linux_socket(struct socket **out)
 	return 0;
 }
 
+
 static NTSTATUS WSKAPI wsk_incoming_connection (
     _In_  PVOID         SocketContext,
     _In_  ULONG         Flags,
@@ -1294,12 +1346,11 @@ int sock_create_kern(struct net *net, int family, int type, int proto, struct so
 
 void sock_release(struct socket *sock)
 {
-	NTSTATUS status;
-
 	if (sock == NULL)
 		return;
 
-	close_wsk_socket(sock->wsk_socket);
+		/* In case it is not closed already ... */
+	close_socket(sock);
 
 	kfree(sock->sk);
 	kfree(sock);
