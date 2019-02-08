@@ -9,6 +9,10 @@
  */
 /* TODO: resource deallocation via goto's */
 
+/* TODO: store type of wsk socket (WSK_FLAG_XXX) in socket and check it..
+ * the Dispatcher cast is dangerous.
+ */
+
 #define WSK_DEINITIALIZED	0
 #define WSK_DEINITIALIZING	1
 #define WSK_INITIALIZING	2
@@ -188,6 +192,8 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	}	/* TODO: if success, clear error status? This happens
 		 * on boot when there are no configured network interfaces
 		 * and works later once they are.
+		 *
+		 * Maybe do it for UDP sockets only.
 		 */
 	length = completion->wsk_buffer->Length;
 		/* Also unmaps the pages of the containg Mdl */
@@ -222,6 +228,10 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 			timeout.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
 
 				/* TODO: no signals? */
+				/* TODO: this would be important, maybe that is
+				 * one of the causes for the Windows 10 BSOD.
+				 */
+
 			status = KeWaitForSingleObject(&socket->data_sent, Executive, KernelMode, FALSE, &timeout);
 
 			if (status == STATUS_TIMEOUT) {
@@ -373,7 +383,12 @@ static void close_socket(struct socket *socket)
 		return;
 
 		/* TODO: Gracefully disconnect socket first? With what
-		 * timeout? */
+		 * timeout? Disconnect seems to work now (Linux detects
+		 * disconnect on Windows peer with about 200-300ms delay),
+		 * so not sure if that is neccessary. Current solution
+		 * however does an 'abortive' disconnect (whatever that
+		 * means).
+		 */
 
 	mutex_lock(&socket->wsk_mutex);
 
@@ -579,11 +594,17 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 	/* TODO: maybe one day we also eliminate this function. It
 	 * is currently only used for sending the first packet.
 	 * Even more now when we do not have send buf implemented here..
+	 *
+	 * Update: According to Lars all Linux kernel send functions
+	 * are 'non-blocking' in the sense that they just fill the
+	 * TCP/IP (or UDP) send buffer and return. They only block
+	 * if the send buffer is full.
+	 *
+	 * merge this function with SendTo(), making it non-blocking
 	 */
 
 	/* TODO: implement MSG_MORE? */
 
-	/* TODO: merge this function with SendTo(), making it non-blocking */
 
 int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len)
