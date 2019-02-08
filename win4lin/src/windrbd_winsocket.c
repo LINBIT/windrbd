@@ -230,8 +230,11 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 				/* TODO: no signals? */
 			status = KeWaitForSingleObject(&socket->data_sent, Executive, KernelMode, FALSE, &timeout);
 
-			if (status == STATUS_TIMEOUT)
-				return -ETIMEDOUT;
+			if (status == STATUS_TIMEOUT) {
+				/* TODO: -EAGAIN? */
+				socket->error_status = -ETIMEDOUT;
+				return socket->error_status;
+			}
 		} else {
 			socket->sk->sk_wmem_queued += want_to_send;
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
@@ -378,6 +381,7 @@ static void close_socket(struct socket *socket)
 		 * connection loss (via iptables on the peer).
 		 */
 
+// printk("1\n");
 	mutex_lock(&socket->wsk_mutex);
 
 	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
@@ -586,6 +590,8 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 
 	/* TODO: implement MSG_MORE? */
 
+	/* TODO: merge this function with SendTo(), making it non-blocking */
+
 int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len)
 {
@@ -728,19 +734,25 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	NTSTATUS status;
 	int err;
 
+printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !page || ((int) len <= 0))
 		return -EINVAL;
 
+printk("2\n");
 	if (socket->error_status != 0)
 		return socket->error_status;
 
+printk("3\n");
 	get_page(page);		/* we might sleep soon, do this before */
 
+printk("4\n");
 	err = wait_for_sendbuf(socket, len);
+printk("5\n");
 	if (err < 0) {
 		put_page(page);
 		return err;
 	}
+printk("6\n");
 
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
 	if (WskBuffer == NULL) {
@@ -789,6 +801,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		flags &= ~WSK_FLAG_NODELAY;
 
 
+printk("7\n");
 	mutex_lock(&socket->wsk_mutex);
 
 	if (socket->wsk_socket == NULL) {
@@ -807,6 +820,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		Irp);
 	mutex_unlock(&socket->wsk_mutex);
 
+printk("8\n");
 	switch (status) {
 	case STATUS_PENDING:
 			/* This now behaves just like Linux kernel socket
@@ -825,6 +839,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		return (LONG) Irp->IoStatus.Information;
 
 	default:
+printk("1 status is %d\n", status);
 		return winsock_to_linux_error(status);
 	}
 }
