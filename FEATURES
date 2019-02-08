@@ -27,19 +27,19 @@ Driver Unloading
 
 3 (and more) node setups
 
------ for 0.9.3 (March 2019)
-
-Auto-Promote
-
------ for 0.9.4 (April 2019)
+----- for 0.9.3 (April 2019)
 
 Using System Volume (C:\) as DRBD device (diskless client with PXE boot)
 
------ for 0.9.5 (May 2019)
+----- for 0.9.4 (May 2019)
+
+Auto-Promote (if possible at all)
+
+----- for 0.9.5 (June 2019)
 
 Other filesystems (FAT family, ReFS)
 
------ for 1.0
+----- for 1.0 (Fall 2019)
 
 No reboot on upgrade/uninstall
 
