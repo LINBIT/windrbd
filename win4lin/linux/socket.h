@@ -112,4 +112,10 @@ struct socket {
 
 #define SOCK_LISTEN 16
 
+/* WinDRBD specific: Notify underlying wsk layer about changes in
+ * send/receive buffer sizes.
+ */
+
+void windrbd_update_socket_buffer_sizes(struct socket *socket);
+
 #endif

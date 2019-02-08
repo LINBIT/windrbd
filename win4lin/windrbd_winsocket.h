@@ -14,9 +14,4 @@
 
 int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress);
 
-#define TC_PRIO_INTERACTIVE_BULK	1
-#define TC_PRIO_INTERACTIVE		1
-
-void platform_update_socket_buffer_sizes(struct socket *socket);
-
 #endif

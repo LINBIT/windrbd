@@ -423,7 +423,7 @@ static void dtt_setbufsize(struct socket *socket, unsigned int snd,
 		socket->sk->sk_rcvbuf = rcv;
 		socket->sk->sk_userlocks |= SOCK_RCVBUF_LOCK;
 	}
-	platform_update_socket_buffer_sizes(socket);
+	windrbd_update_socket_buffer_sizes(socket);
 }
 
 static bool dtt_path_cmp_addr(struct dtt_path *path)

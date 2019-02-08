@@ -1364,7 +1364,7 @@ void sock_release(struct socket *sock)
 	kfree(sock);
 }
 
-void platform_update_socket_buffer_sizes(struct socket *socket)
+void windrbd_update_socket_buffer_sizes(struct socket *socket)
 {
 	NTSTATUS status;
 
