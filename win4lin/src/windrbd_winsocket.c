@@ -186,6 +186,8 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
 
+			/* TODO: maybe remove this it sometimes happens
+			 * and is legal then. */
 		if (may_printk && completion->socket->error_status != 0 &&
 		    completion->socket->error_status != new_status)
 			printk(KERN_WARNING "Last error status of socket was %d, now got %d (ntstatus %x)\n", completion->socket->error_status, new_status, Irp->IoStatus.Status);
@@ -381,7 +383,6 @@ static void close_socket(struct socket *socket)
 		 * connection loss (via iptables on the peer).
 		 */
 
-// printk("1\n");
 	mutex_lock(&socket->wsk_mutex);
 
 	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
@@ -734,25 +735,19 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	NTSTATUS status;
 	int err;
 
-printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !page || ((int) len <= 0))
 		return -EINVAL;
 
-printk("2\n");
 	if (socket->error_status != 0)
 		return socket->error_status;
 
-printk("3\n");
 	get_page(page);		/* we might sleep soon, do this before */
 
-printk("4\n");
 	err = wait_for_sendbuf(socket, len);
-printk("5\n");
 	if (err < 0) {
 		put_page(page);
 		return err;
 	}
-printk("6\n");
 
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
 	if (WskBuffer == NULL) {
@@ -801,7 +796,6 @@ printk("6\n");
 		flags &= ~WSK_FLAG_NODELAY;
 
 
-printk("7\n");
 	mutex_lock(&socket->wsk_mutex);
 
 	if (socket->wsk_socket == NULL) {
@@ -820,7 +814,6 @@ printk("7\n");
 		Irp);
 	mutex_unlock(&socket->wsk_mutex);
 
-printk("8\n");
 	switch (status) {
 	case STATUS_PENDING:
 			/* This now behaves just like Linux kernel socket
@@ -839,7 +832,7 @@ printk("8\n");
 		return (LONG) Irp->IoStatus.Information;
 
 	default:
-printk("1 status is %d\n", status);
+		/* TODO: set socket error status? */
 		return winsock_to_linux_error(status);
 	}
 }
