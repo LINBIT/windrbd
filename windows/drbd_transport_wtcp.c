@@ -198,7 +198,9 @@ static void dtt_free_one_sock(struct socket *socket)
 {
 	if (socket) {
 		synchronize_rcu();
+printk("1\n");
 		kernel_sock_shutdown(socket, SHUT_RDWR);
+printk("2\n");
 		sock_release(socket);
 	}
 }
