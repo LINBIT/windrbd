@@ -1,0 +1,65 @@
+From 4fd242e41797bc5bbe4e7b5a45493286de227beb Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 Feb 2019 21:51:00 +0100
+Subject: [PATCH 2/5] drbd_transport_tcp: added type of iterator to list_xxx
+ macros.
+
+struct drbd_path in all cases. We need these patches because
+typeof is gcc specific and there is no equivalent construct in
+Windows C compiler.
+---
+ drbd/drbd_transport_tcp.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index ec48e27..c261350 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -151,7 +151,7 @@ static struct drbd_path *__drbd_next_path_ref(struct drbd_path *drbd_path,
+ 			if (list_is_last(&drbd_path->list, &transport->paths))
+ 				drbd_path = NULL;
+ 			else
+-				drbd_path = list_next_entry(drbd_path, list);
++				drbd_path = list_next_entry(struct drbd_path, drbd_path, list);
+ 		} else {
+ 			/* No longer on the list, element might be freed already, restart from the start */
+ 			drbd_path = list_first_entry_or_null(&transport->paths, struct drbd_path, list);
+@@ -233,7 +233,7 @@ static void dtt_free(struct drbd_transport *transport, enum drbd_tr_free_op free
+ 			tcp_transport->rbuf[i].base = NULL;
+ 		}
+ 		spin_lock(&tcp_transport->paths_lock);
+-		list_for_each_entry_safe(drbd_path, tmp, &transport->paths, list) {
++		list_for_each_entry_safe(struct drbd_path, drbd_path, tmp, &transport->paths, list) {
+ 			list_del_init(&drbd_path->list);
+ 			kref_put(&drbd_path->kref, drbd_destroy_path);
+ 		}
+@@ -582,7 +582,7 @@ static struct dtt_path *dtt_wait_connect_cond(struct drbd_transport *transport)
+ 	bool rv = false;
+ 
+ 	spin_lock(&tcp_transport->paths_lock);
+-	list_for_each_entry(drbd_path, &transport->paths, list) {
++	list_for_each_entry(struct drbd_path, drbd_path, &transport->paths, list) {
+ 		path = container_of(drbd_path, struct dtt_path, path);
+ 		listener = drbd_path->listener;
+ 
+@@ -889,7 +889,7 @@ static struct dtt_path *dtt_next_path(struct drbd_tcp_transport *tcp_transport,
+ 	if (list_is_last(&path->path.list, &transport->paths))
+ 		drbd_path = list_first_entry(&transport->paths, struct drbd_path, list);
+ 	else
+-		drbd_path = list_next_entry(&path->path, list);
++		drbd_path = list_next_entry(struct drbd_path, &path->path, list);
+ 	spin_unlock(&tcp_transport->paths_lock);
+ 
+ 	return container_of(drbd_path, struct dtt_path, path);
+@@ -926,7 +926,7 @@ static int dtt_connect(struct drbd_transport *transport)
+ 		goto out;
+ 	}
+ 
+-	list_for_each_entry(drbd_path, &transport->paths, list) {
++	list_for_each_entry(struct drbd_path, drbd_path, &transport->paths, list) {
+ 		if (!drbd_path->listener) {
+ 			kref_get(&drbd_path->kref);
+ 			spin_unlock(&tcp_transport->paths_lock);
+-- 
+2.17.0
+
