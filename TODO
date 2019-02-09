@@ -9,8 +9,6 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
-TODO: Implement: Create patch file(s) for tcp transport.
-
 TODO: Bug: Had a Sync stall in 4 node setup
 
 	One node at 98.9 percent other at around 50% (but 130% on its
@@ -4645,3 +4643,13 @@ Feb  5 14:56:52 10.43.10.13  U13:56:48.758|0171bce0(drbd_w_vamp-4nodes) __drbd_u
 
 	It appears to be fixed with fca13116f, do some more tests
 	with 4 nodes and close this TODO.
+
+Done: Implement: Create patch file(s) for tcp transport.
+
+	Done. Always use the output of the cocci, perl and shell
+	scripts (with long -> LONG_PTR and the like) as base for
+	manual patches since they are applied before manual patches
+	by the transform script (use make on a linux box without
+	manual patches to create them). We are now using the original
+	DRBD (with patches) TCP transport implementation.
+
