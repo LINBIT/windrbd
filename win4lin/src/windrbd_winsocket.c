@@ -455,7 +455,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 
 	if (Status == STATUS_PENDING) {
 		LARGE_INTEGER	nWaitTime;
-		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_connecttimeo * 1000 * 10);
+		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_sndtimeo * 1000 * 10);
 
 		if ((Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime)) == STATUS_TIMEOUT)
 		{

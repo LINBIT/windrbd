@@ -9,8 +9,6 @@ struct socket;
 struct sock {
         int sk_sndtimeo;
         int sk_rcvtimeo;
-		/* TODO: does not exist on Linux */
-        int sk_connecttimeo;
 
         int sk_state;
 
