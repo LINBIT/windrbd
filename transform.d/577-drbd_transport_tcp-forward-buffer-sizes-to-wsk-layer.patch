@@ -1,0 +1,27 @@
+From 42fbd5fb57c1110a19c83285dccdda782e5c4865 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Sat, 9 Feb 2019 21:52:24 +0100
+Subject: [PATCH 07/16] drbd_transport_tcp: forward buffer sizes to wsk layer.
+
+Since struct sock is just a shadow copy, we need to adjust
+send/receive buffer sizes in a special API function (WinDRBD
+specific, it does not exist on Linux)
+---
+ drbd/drbd_transport_tcp.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 3aedc17..b620033 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -420,6 +420,7 @@ static void dtt_setbufsize(struct socket *socket, unsigned int snd,
+ 		socket->sk->sk_rcvbuf = rcv;
+ 		socket->sk->sk_userlocks |= SOCK_RCVBUF_LOCK;
+ 	}
++	windrbd_update_socket_buffer_sizes(socket);
+ }
+ 
+ static bool dtt_path_cmp_addr(struct dtt_path *path)
+-- 
+2.17.0
+

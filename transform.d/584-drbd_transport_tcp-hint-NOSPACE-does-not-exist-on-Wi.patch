@@ -1,0 +1,29 @@
+From 4ff0423085f207ada891c30ed9870a1934acd5d2 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Sat, 9 Feb 2019 22:14:06 +0100
+Subject: [PATCH 14/16] drbd_transport_tcp: hint NOSPACE does not exist on
+ Windows.
+
+In fact, most of the hints don't exist but are ignored silently.
+---
+ drbd/drbd_transport_tcp.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 1384799..58076dd 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -1299,8 +1299,10 @@ static bool dtt_hint(struct drbd_transport *transport, enum drbd_stream stream,
+ 		dtt_nodelay(socket);
+ 		break;
+ 	case NOSPACE:
++#if 0
+ 		if (socket->sk->sk_socket)
+ 			set_bit(SOCK_NOSPACE, &socket->sk->sk_socket->flags);
++#endif
+ 		break;
+ 	case QUICKACK:
+ 		dtt_quickack(socket);
+-- 
+2.17.0
+

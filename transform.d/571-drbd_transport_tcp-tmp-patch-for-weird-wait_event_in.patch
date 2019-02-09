@@ -1,0 +1,44 @@
+From fda10d85e674aabfe952c61c8ee71f6bf35294ec Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 Feb 2019 21:46:14 +0100
+Subject: [PATCH 01/16] drbd_transport_tcp: tmp patch for weird
+ wait_event_interuptible interface.
+
+We hopefully don't need that patch any more soon.
+---
+ drbd/drbd_transport_tcp.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 1e38292..89ad6fb 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -33,6 +33,7 @@
+ #include <drbd_protocol.h>
+ #include <drbd_transport.h>
+ #include "drbd_wrappers.h"
++#include <drbd_int.h>  /* for DRBD_SIGKILL, fix wait_event.. and remove again */
+ 
+ MODULE_AUTHOR("Philipp Reisner <philipp.reisner@linbit.com>");
+ MODULE_AUTHOR("Lars Ellenberg <lars.ellenberg@linbit.com>");
+@@ -633,11 +634,16 @@ static int dtt_wait_for_connect(struct drbd_transport *transport,
+ 	timeo = connect_int * HZ;
+ 	timeo += (prandom_u32() & 1) ? timeo / 7 : -timeo / 7; /* 28.5% random jitter */
+ 
++		/* TODO: fix the wait_event_interruptible_timeout interface
++		 * and use original source code */
++
+ retry:
+ 	wait_event_interruptible_timeout(timeo, listener->wait,
+ 					 (path = dtt_wait_connect_cond(transport)),
+ 					 timeo);
+-	if (timeo <= 0)
++	if (timeo == -DRBD_SIGKILL)
++		return -EINTR;
++	if (timeo == -ETIMEDOUT)
+ 		return -EAGAIN;
+ 
+ 	spin_lock_bh(&listener->listener.waiters_lock);
+-- 
+2.17.0
+

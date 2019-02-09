@@ -1,0 +1,36 @@
+From 470fd3c788eeb2a820ff1f4777063b83effc9c3a Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 Feb 2019 21:56:44 +0100
+Subject: [PATCH 03/16] drbd_transport_tcp: free_page() takes a pointer as
+ argument.
+
+At least for now. We might change that in a later release.
+---
+ drbd/drbd_transport_tcp.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index b880abc..e0857a4 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -188,7 +188,7 @@ static int dtt_init(struct drbd_transport *transport)
+ 
+ 	return 0;
+ fail:
+-	free_page((ULONG_PTR)tcp_transport->rbuf[0].base);
++	free_page(tcp_transport->rbuf[0].base);
+ 	return -ENOMEM;
+ }
+ 
+@@ -228,7 +228,7 @@ static void dtt_free(struct drbd_transport *transport, enum drbd_tr_free_op free
+ 		struct drbd_path *tmp;
+ 
+ 		for (i = DATA_STREAM; i <= CONTROL_STREAM; i++) {
+-			free_page((ULONG_PTR)tcp_transport->rbuf[i].base);
++			free_page(tcp_transport->rbuf[i].base);
+ 			tcp_transport->rbuf[i].base = NULL;
+ 		}
+ 		spin_lock(&tcp_transport->paths_lock);
+-- 
+2.17.0
+

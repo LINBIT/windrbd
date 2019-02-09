@@ -1,0 +1,27 @@
+From 09feea1bd82cc5345860b4aa98b2ff01cb6eea78 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Sat, 9 Feb 2019 22:04:51 +0100
+Subject: [PATCH 10/16] Initialize before use (see continue in do { } while)
+
+For some reason, gcc never warned about that, however
+MS C and also the IBM AS/400 compilers do. Patch already
+submitted upstream.
+---
+ drbd/drbd_transport_tcp.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 4c0378c..d761fb6 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -970,6 +970,7 @@ static int dtt_connect(struct drbd_transport *transport)
+ 	connect_to_path = container_of(drbd_path, struct dtt_path, path);
+ 	spin_unlock(&tcp_transport->paths_lock);
+ 
++	ok = false;
+ 	do {
+ 		struct socket *s = NULL;
+ 
+-- 
+2.17.0
+

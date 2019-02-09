@@ -1,0 +1,32 @@
+From b2d242c141b4ba3e0159d7b5b89fa3f8fcc22b4f Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Sat, 9 Feb 2019 22:15:27 +0100
+Subject: [PATCH 15/16] drbd_transport_tcp: debugfs: again unread/unacked stats
+ don't exist.
+
+---
+ drbd/drbd_transport_tcp.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 58076dd..4beaf8c 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -1317,12 +1317,14 @@ static bool dtt_hint(struct drbd_transport *transport, enum drbd_stream stream,
+ static void dtt_debugfs_show_stream(struct seq_file *m, struct socket *socket)
+ {
+ 	struct sock *sk = socket->sk;
++#if 0
+ 	struct tcp_sock *tp = tcp_sk(sk);
+ 
+ 	seq_printf(m, "unread receive buffer: %u Byte\n",
+ 		   tp->rcv_nxt - tp->copied_seq);
+ 	seq_printf(m, "unacked send buffer: %u Byte\n",
+ 		   tp->write_seq - tp->snd_una);
++#endif
+ 	seq_printf(m, "send buffer size: %u Byte\n", sk->sk_sndbuf);
+ 	seq_printf(m, "send buffer used: %u Byte\n", sk->sk_wmem_queued);
+ }
+-- 
+2.17.0
+

@@ -1,0 +1,36 @@
+From 966bc3ba78adcc1dcef8a84a930512b79d4c089f Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 Feb 2019 22:01:56 +0100
+Subject: [PATCH 05/16] tcp_transport: Always return empty buffer on
+ MSG_DONTWAIT.
+
+Currently don't know how to implement this in Windows. It does
+not hurt, since DRBD retries with the MSG_DONTWAIT flag unset.
+
+We might move this patch into the internal wsk wrapper functions.
+---
+ drbd/drbd_transport_tcp.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 5801df0..6b96e20 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -321,6 +321,14 @@ static int dtt_recv(struct drbd_transport *transport, enum drbd_stream stream, v
+ 	if (!socket)
+ 		return -ENOTCONN;
+ 
++		/* If this should be non-blocking, pretend that we
++		 * haven't received anything. DRBD then will redo
++		 * the call without this flag set.
++		 */
++
++	if (flags & MSG_DONTWAIT)
++		return 0;
++
+ 	if (flags & CALLER_BUFFER) {
+ 		buffer = *buf;
+ 		rv = dtt_recv_short(socket, buffer, size, flags & ~CALLER_BUFFER);
+-- 
+2.17.0
+

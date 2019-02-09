@@ -1,0 +1,46 @@
+From 18cf07cd6e124796627cc005b06be978cd22986d Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Sat, 9 Feb 2019 22:07:44 +0100
+Subject: [PATCH 11/16] Again, use kernel_setsockopt for setting REUSEADDR.
+
+And sk_allocation and sk_priority do not exist on Windows.
+---
+ drbd/drbd_transport_tcp.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index d761fb6..4d0a285 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -1080,14 +1080,28 @@ randomize:
+ 	drbd_path_event(transport, &connect_to_path->path);
+ 	dtt_put_listeners(transport);
+ 
++#if 0
+ 	dsocket->sk->sk_reuse = SK_CAN_REUSE; /* SO_REUSEADDR */
+ 	csocket->sk->sk_reuse = SK_CAN_REUSE; /* SO_REUSEADDR */
+ 
++	/* TODO: implement those two? */
+ 	dsocket->sk->sk_allocation = GFP_NOIO;
+ 	csocket->sk->sk_allocation = GFP_NOIO;
+ 
+ 	dsocket->sk->sk_priority = TC_PRIO_INTERACTIVE_BULK;
+ 	csocket->sk->sk_priority = TC_PRIO_INTERACTIVE;
++#endif
++
++	err = kernel_setsockopt(dsocket, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof(one));
++	if (err < 0) {
++		printk("kernel_setsockopt SO_REUSEADDR failed\n");
++		goto out;
++	}
++	err = kernel_setsockopt(csocket, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof(one));
++	if (err < 0) {
++		printk("kernel_setsockopt SO_REUSEADDR failed\n");
++		goto out;
++	}
+ 
+ 	/* NOT YET ...
+ 	 * sock.socket->sk->sk_sndtimeo = transport->net_conf->timeout*HZ/10;
+-- 
+2.17.0
+

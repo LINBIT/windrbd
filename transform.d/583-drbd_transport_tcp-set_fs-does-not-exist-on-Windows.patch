@@ -1,0 +1,40 @@
+From d9a302c6995612ce804c2b1620285402bedd6e15 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Sat, 9 Feb 2019 22:10:51 +0100
+Subject: [PATCH 13/16] drbd_transport_tcp: set_fs() does not exist on Windows.
+
+---
+ drbd/drbd_transport_tcp.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 9163e64..1384799 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -1204,7 +1204,6 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
+ 	struct drbd_tcp_transport *tcp_transport =
+ 		container_of(transport, struct drbd_tcp_transport, transport);
+ 	struct socket *socket = tcp_transport->stream[stream];
+-	mm_segment_t oldfs = get_fs();
+ 	int len = size;
+ 	int err = -EIO;
+ 
+@@ -1213,7 +1212,6 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
+ 
+ 	msg_flags |= MSG_NOSIGNAL;
+ 	dtt_update_congested(tcp_transport);
+-	set_fs(KERNEL_DS);
+ 	do {
+ 		int sent;
+ 
+@@ -1233,7 +1231,6 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
+ 		len    -= sent;
+ 		offset += sent;
+ 	} while (len > 0 /* THINK && peer_device->repl_state[NOW] >= L_ESTABLISHED */);
+-	set_fs(oldfs);
+ 	clear_bit(NET_CONGESTED, &tcp_transport->transport.flags);
+ 
+ 	if (len == 0)
+-- 
+2.17.0
+

@@ -1,0 +1,35 @@
+From da151f77f95471d6504919ff0d7c36893b1aef16 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Sat, 9 Feb 2019 21:51:00 +0100
+Subject: [PATCH 06/16] drbd_transport_tcp: Currently not supporting
+ unread_received stats.
+
+These are too deep in the TCP/IP stack, they are, however currently
+unused by DRBD anyway.
+---
+ drbd/drbd_transport_tcp.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 6b96e20..3aedc17 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -394,10 +394,15 @@ static void dtt_stats(struct drbd_transport *transport, struct drbd_transport_st
+ 
+ 	if (socket) {
+ 		struct sock *sk = socket->sk;
++/*
+ 		struct tcp_sock *tp = tcp_sk(sk);
+ 
+ 		stats->unread_received = tp->rcv_nxt - tp->copied_seq;
+ 		stats->unacked_send = tp->write_seq - tp->snd_una;
++*/
++		stats->unread_received = 0;
++		stats->unacked_send = 0;
++
+ 		stats->send_buffer_size = sk->sk_sndbuf;
+ 		stats->send_buffer_used = sk->sk_wmem_queued;
+ 	}
+-- 
+2.17.0
+

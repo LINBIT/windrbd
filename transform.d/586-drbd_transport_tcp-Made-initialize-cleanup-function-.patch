@@ -1,0 +1,36 @@
+From 849582eee5f7b722021c15358f06d2cac92951d4 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Sat, 9 Feb 2019 22:16:23 +0100
+Subject: [PATCH 16/16] drbd_transport_tcp: Made initialize/cleanup function
+ non-static
+
+We call them on DriverEntry/DriverUnload directly. In Windows
+TCP/IP transport is not a seperate driver.
+---
+ drbd/drbd_transport_tcp.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 4beaf8c..fa5f0af 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -1397,14 +1397,14 @@ static int dtt_remove_path(struct drbd_transport *transport, struct drbd_path *d
+ 	return 0;
+ }
+ 
+-static int __init dtt_initialize(void)
++int __init dtt_initialize(void)
+ {
+ 	return drbd_register_transport_class(&tcp_transport_class,
+ 					     DRBD_TRANSPORT_API_VERSION,
+ 					     sizeof(struct drbd_transport));
+ }
+ 
+-static void __exit dtt_cleanup(void)
++void __exit dtt_cleanup(void)
+ {
+ 	drbd_unregister_transport_class(&tcp_transport_class);
+ }
+-- 
+2.17.0
+
