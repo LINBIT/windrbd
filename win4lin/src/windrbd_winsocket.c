@@ -519,7 +519,7 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 		accept_socket->sk->sk_state_change = socket->sk->sk_state_change;
 		accept_socket->sk->sk_user_data = socket->sk->sk_user_data;
 
-// printk("karin accept socket %p\n", accept_socket);
+printk("karin accept socket %p wsk_socket %p\n", accept_socket, wsk_socket);
 		*newsock = accept_socket;
 	}
 
@@ -1307,11 +1307,13 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	int flags;
 	struct socket *socket = (struct socket*) SocketContext;
 
-printk("karin incoming socket %p\n", socket);
+printk("karin incoming socket %p wsk_socket is %p\n", socket, AcceptSocket);
 
 	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket != NULL) {
 printk("dropped incoming connection wsk_socket is old: %p new: %p socket is %p.\n", socket->accept_wsk_socket, AcceptSocket, socket);
+
+	/* TODO: close_wsk_socket the old socket */
 		socket->dropped_accept_sockets++;
 	}
 	socket->accept_wsk_socket = AcceptSocket;
