@@ -28,6 +28,11 @@ int initialize_syslog_printk(void)
 	return 0;
 }
 
+	/* Call this before shuting down socket layer, it would stall
+	 * on releasing the provider network programming interface
+	 * (NPI) when there are any sockets open.
+	 */
+
 void shutdown_syslog_printk(void)
 {
 	if (printk_udp_socket) {
