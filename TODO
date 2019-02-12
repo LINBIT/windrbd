@@ -55,12 +55,6 @@ TODO: Implement: Upgrade DRBD to 9.0.17
 
 	Once it is released.
 
-TODO: Bug: Right now, sc stop windrbd stalls.
-
-	Works with c8a2ab?
-
-TODO: Bug: BSOD on driver unload after up (tmp patches for create boot device)
-
 TODO: Install: also sign install EXE
 
 TODO: Bug: various memory leaks
@@ -4684,4 +4678,20 @@ Done: Implement: Create patch file(s) for tcp transport.
 	by the transform script (use make on a linux box without
 	manual patches to create them). We are now using the original
 	DRBD (with patches) TCP transport implementation.
+
+Done: Bug: Right now, sc stop windrbd stalls.
+
+	Works with c8a2ab?
+
+	Works again with 0f94023c1: need to close all sockets before
+	releasing provider NPI (including printk sockets).
+
+Done: Bug: BSOD on driver unload after up (tmp patches for create boot device)
+
+	2 reasons: kmalloc_debug freeing printk sockets on memory leak
+	cleanup (function name of function doing kmalloc() changed) and
+	there were leaks in sock_create_kern (if CreateSocket() failed,
+	Linux sockets were not deallocated).
+
+	Works with 0f94023c1.
 
