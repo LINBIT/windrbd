@@ -1463,6 +1463,10 @@ void windrbd_shutdown_wsk(void)
         if (!NT_SUCCESS(status))
                 printk("windrbd_cleanup_windows_thread failed with status %x\n", status);
 
+	/* Call this only if all sockets are closed/currently being closed.
+	 * It waits until all sockets are closed, possibly forever.
+	 */
+
 	SocketsDeinit();
 }
 
