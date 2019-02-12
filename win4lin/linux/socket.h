@@ -86,6 +86,7 @@ struct _WSK_SOCKET;
 
 struct socket {
 	struct _WSK_SOCKET *wsk_socket;
+	ULONG wsk_flags;
 
 	int no_delay:1;
 
