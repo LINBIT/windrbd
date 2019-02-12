@@ -1463,7 +1463,6 @@ void windrbd_shutdown_wsk(void)
         if (!NT_SUCCESS(status))
                 printk("windrbd_cleanup_windows_thread failed with status %x\n", status);
 
-/* TODO: this BSODs or stalls? */
-/*	SocketsDeinit(); */
+	SocketsDeinit();
 }
 
