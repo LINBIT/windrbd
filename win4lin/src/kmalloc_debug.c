@@ -104,7 +104,7 @@ int dump_memory_allocations(int free_them)
 
 	list_for_each_entry_safe(struct memory, mem, memh, &memory_allocations, list) {
 			/* exclude memory needed by printk() */
-		if (strcmp(mem->func, "SendTo") != 0 && strcmp(mem->func, "sock_create_kern") != 0) {
+		if (strcmp(mem->func, "SendTo") != 0 && strcmp(mem->func, "sock_create_linux_socket") != 0) {
 			printk("kmalloc_debug: %s of size %d, allocated by function %s at %s.\n", free_them ? "Warning: memory leak" : "allocated memory", mem->size, mem->func, mem->desc);
 			if (free_them)
 				kfree_debug(&mem->data[0], __FILE__, __LINE__, __func__);
