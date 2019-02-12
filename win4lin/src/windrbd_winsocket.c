@@ -1270,6 +1270,18 @@ static int sock_create_linux_socket(struct socket **out)
 	return 0;
 }
 
+	/* Use this only if socket is valid but socket->wsk_socket is
+	 * not.
+	 */
+
+static void sock_free_linux_socket(struct socket *socket)
+{
+	if (socket == NULL)
+		return;
+
+	kfree(socket->sk);
+	kfree(socket);
+}
 
 static NTSTATUS WSKAPI wsk_incoming_connection (
     _In_  PVOID         SocketContext,
@@ -1328,8 +1340,10 @@ static int wsk_sock_create_kern(void *net_namespace,
 		err = CreateSocket(family, type, protocol,
 				NULL, NULL, Flags, &wsk_socket);
 
-	if (err < 0)
+	if (err < 0) {
+		sock_free_linux_socket(socket);
 		return err;
+	}
 
 	socket->wsk_socket = wsk_socket;
 	*out = socket;
@@ -1368,9 +1382,7 @@ void sock_release(struct socket *sock)
 
 		/* In case it is not closed already ... */
 	close_socket(sock);
-
-	kfree(sock->sk);
-	kfree(sock);
+	sock_free_linux_socket(sock);
 }
 
 void windrbd_update_socket_buffer_sizes(struct socket *socket)
