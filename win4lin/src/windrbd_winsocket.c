@@ -382,7 +382,7 @@ static void close_socket(struct socket *socket)
 {
 	struct _IRP *Irp;
 
-	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
+	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
 	Irp = wsk_new_irp(NULL);
@@ -397,15 +397,22 @@ static void close_socket(struct socket *socket)
 		 * means).
 		 */
 
-	mutex_lock(&socket->wsk_mutex);
+	if (socket->wsk_socket != NULL) {
+		mutex_lock(&socket->wsk_mutex);
 
 if (socket->wsk_flags != WSK_FLAG_DATAGRAM_SOCKET)
 printk("karin close socket %p\n", socket);
 
-	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
-	socket->wsk_socket = NULL;
+		(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
+		socket->wsk_socket = NULL;
 
-	mutex_unlock(&socket->wsk_mutex);
+		mutex_unlock(&socket->wsk_mutex);
+	}
+
+	if (socket->accept_wsk_socket != NULL) {
+		close_wsk_socket(socket->accept_wsk_socket);
+		socket->accept_wsk_socket = NULL;
+	}
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
@@ -493,7 +500,6 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	int err;
 	struct _WSK_SOCKET *wsk_socket;
 	struct socket *accept_socket;
-	int flags;
 
 	if ((io_flags | O_NONBLOCK) == 0)
 		return -EOPNOTSUPP;
@@ -501,14 +507,14 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
-	spin_lock_irqsave(&socket->accept_socket_lock, flags);
+	mutex_lock(&socket->accept_socket_mutex);
 	if (socket->accept_wsk_socket == NULL) {
-		spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
+		mutex_unlock(&socket->accept_socket_mutex);
 		return -EWOULDBLOCK;
 	}
 	wsk_socket = socket->accept_wsk_socket;
 	socket->accept_wsk_socket = NULL;
-	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
+	mutex_unlock(&socket->accept_socket_mutex);
 
 	err = sock_create_linux_socket(&accept_socket);
 	if (err < 0)
@@ -1262,7 +1268,7 @@ static int sock_create_linux_socket(struct socket **out)
 	socket->error_status = 0;
 
 	spin_lock_init(&socket->send_buf_counters_lock);
-	spin_lock_init(&socket->accept_socket_lock);
+	mutex_init(&socket->accept_socket_mutex);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
 	mutex_init(&socket->wsk_mutex);
 	socket->ops = &winsocket_ops;
@@ -1304,20 +1310,19 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
     _Outptr_result_maybenull_ CONST WSK_CLIENT_CONNECTION_DISPATCH **AcceptSocketDispatch
 )
 {
-	int flags;
 	struct socket *socket = (struct socket*) SocketContext;
 
 printk("karin incoming socket %p wsk_socket is %p\n", socket, AcceptSocket);
 
-	spin_lock_irqsave(&socket->accept_socket_lock, flags);
+	mutex_lock(&socket->accept_socket_mutex);
 	if (socket->accept_wsk_socket != NULL) {
 printk("dropped incoming connection wsk_socket is old: %p new: %p socket is %p.\n", socket->accept_wsk_socket, AcceptSocket, socket);
 
-	/* TODO: close_wsk_socket the old socket */
+		close_wsk_socket(socket->accept_wsk_socket);
 		socket->dropped_accept_sockets++;
 	}
 	socket->accept_wsk_socket = AcceptSocket;
-	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
+	mutex_unlock(&socket->accept_socket_mutex);
 
 	if (socket->sk->sk_state_change)
 		socket->sk->sk_state_change(socket->sk);

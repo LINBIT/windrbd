@@ -98,7 +98,7 @@ struct socket {
 	struct mutex wsk_mutex;
 	const struct proto_ops *ops;
 
-	spinlock_t accept_socket_lock;
+	struct mutex accept_socket_mutex;
 		/* Later this could be a list ... */
 	struct _WSK_SOCKET *accept_wsk_socket;
 	int dropped_accept_sockets;
