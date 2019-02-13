@@ -44,16 +44,16 @@
 
 static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+
 	if (device == mvolRootDeviceObject) {
-		dbg(KERN_DEBUG "Root device request.\n");
+		dbg(KERN_DEBUG "DRBD root device request not implemented: MajorFunction: 0x%x\n", s->MajorFunction);
 
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
 	}
 
-	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
-	
 	dbg(KERN_DEBUG "DRBD device request not implemented: MajorFunction: 0x%x\n", s->MajorFunction);
 	irp->IoStatus.Status = STATUS_NOT_IMPLEMENTED;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -595,8 +595,6 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject) {
-		dbg(KERN_DEBUG "Root device request.\n");
-
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
@@ -648,8 +646,6 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject) {
-		dbg(KERN_DEBUG "Root device request.\n");
-
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
@@ -696,8 +692,6 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject) {
-		dbg(KERN_DEBUG "Root device request.\n");
-
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
@@ -977,7 +971,7 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject) {
-		dbg(KERN_DEBUG "Root device request.\n");
+		dbg(KERN_WARNING "I/O on root device not supported.\n");
 
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -1031,8 +1025,6 @@ exit:
 static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject) {
-		dbg(KERN_DEBUG "Root device request.\n");
-
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
@@ -1081,7 +1073,7 @@ static void windrbd_bio_flush_finished(struct bio * bio, int error)
 static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject) {
-		dbg(KERN_DEBUG "Root device request.\n");
+		dbg(KERN_WARNING "Flush on root device not supported.\n");
 
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -1128,7 +1120,7 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	NTSTATUS status;
 
 	if (device == mvolRootDeviceObject) {
-		dbg(KERN_DEBUG "Root device request.\n");
+		dbg(KERN_WARNING "PNP requests on root device not supported.\n");
 
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
