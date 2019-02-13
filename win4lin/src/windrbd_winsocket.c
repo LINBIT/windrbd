@@ -968,19 +968,26 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
-	if (num != 1)
+	if (num != 1) {
+dbg("num is %d\n", num);
 		return -EOPNOTSUPP;
+}
 
-	if (socket->error_status != 0)
+	if (socket->error_status != 0) {
+dbg("socket->error_status is %d\n", socket->error_status);
 		return socket->error_status;
+}
+
 
 	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, TRUE, TRUE);
 	if (!NT_SUCCESS(Status)) {
+dbg("InitWskBuffer failed, Status is %x\n", Status);
 		return winsock_to_linux_error(Status);
 	}
 
 	Irp = wsk_new_irp(&CompletionEvent);
 	if (Irp == NULL) {
+dbg("new_irp failed\n");
 		FreeWskBuffer(&WskBuffer, 1);
 		return -ENOMEM;
 	}
@@ -992,8 +999,10 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	mutex_lock(&socket->wsk_mutex);
 
 	if (socket->wsk_socket == NULL) {
+dbg("wsk_socket closed meanwhile\n");
 		mutex_unlock(&socket->wsk_mutex);
 		FreeWskBuffer(&WskBuffer, 1);
+			/* TODO: return error */
 		return winsock_to_linux_error(Status);
 	}
 
@@ -1036,20 +1045,23 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
             }
             else
             {
-		printk("RECV wsk(0x%p) multiWait err(0x%x)\n", socket->wsk_socket, Irp->IoStatus.Status);
+dbg("receive completed with error %x\n", Irp->IoStatus.Status);
 		BytesReceived = winsock_to_linux_error(Irp->IoStatus.Status);
             }
             break;
 
         case STATUS_WAIT_1:
+dbg("receive interrupted by signal\n");
             BytesReceived = -EINTR;
             break;
 
         case STATUS_TIMEOUT:
+dbg("receive timed out\n");
             BytesReceived = -EAGAIN;
             break;
 
         default:
+dbg("wait_event returned error %x\n", Status);
             BytesReceived = winsock_to_linux_error(Status);
             break;
         }
@@ -1059,11 +1071,11 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		if (Status == STATUS_SUCCESS)
 		{
 			BytesReceived = (LONG) Irp->IoStatus.Information;
-			printk("(%s) Rx No pending and data(%d) is avail\n", current->comm, BytesReceived);
+dbg("WskReceive returned immediately, data (%d bytes) is available\n", BytesReceived);
 		}
 		else
 		{
-			printk("WskReceive Error Status=0x%x\n", Status); // EVENT_LOG!
+dbg("WskReceive error status=%x\n", Status);
 			BytesReceived = winsock_to_linux_error(Status);
 		}
 	}
@@ -1090,10 +1102,10 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		/* Deliver what we have in case we timed out. */
 
 			if (BytesReceived == -EAGAIN) {
-				printk("Timed out, but there is data (%d bytes) returning it.\n", Irp->IoStatus.Information);
+dbg("Timed out, but there is data (%d bytes) returning it.\n", Irp->IoStatus.Information);
 				BytesReceived = Irp->IoStatus.Information;
 			} else {
-				printk("Receiving cancelled (errno is %d) but data available (%d bytes, returning it).\n", BytesReceived, Irp->IoStatus.Information);
+dbg("Receiving cancelled (errno is %d) but data available (%d bytes, returning it).\n", BytesReceived, Irp->IoStatus.Information);
 				BytesReceived = Irp->IoStatus.Information;
 			}
 		}
@@ -1102,8 +1114,10 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
-	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN)
+	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
+dbg("setting error status to %d\n", socket->error_status);
 		socket->error_status = BytesReceived;
+}
 
 	return BytesReceived;
 }
