@@ -9,17 +9,6 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
-TODO: Bug: Right now, sc stop windrbd stalls.
-
-	Works with c8a2ab?
-
-	Works again with 0f94023c1: need to close all sockets before
-	releasing provider NPI (including printk sockets).
-
-	Update: But not when there were connections up. We narrowed
-	the problem down to the incoming socket handler (we leak
-	incoming sockets somewhere here).
-
 TODO: Bug: BSOD on Secondary Windows 7 in 4 node setup
 
 	Primary (Windows 10) I/O, 4 nodes connected (mesh).
@@ -65,6 +54,12 @@ TODO: Bug: Had a Sync stall in 4 node setup
 TODO: Implement: Upgrade DRBD to 9.0.17
 
 	Once it is released.
+
+TODO: Code quality: review TODOs in source code.
+
+	Currently 136 total.
+
+	For now (0.9.2), fix the TODOs in winsocket layer.
 
 TODO: Install: also sign install EXE
 
@@ -128,10 +123,6 @@ TODO: Code quality: RCU needs change
 	Update: RCU should currently cause problems on SMP machines
 	only (we always tested single CPU, so this was not a problem).
 	Implement Phil's algorithm.
-
-TODO: Code quality: review TODOs in source code.
-
-	Currently 136 total.
 
 Milestone: Release 0.9.2
 Planned: Feb 28 2018
@@ -4698,4 +4689,19 @@ Done: Bug: BSOD on driver unload after up (tmp patches for create boot device)
 	Linux sockets were not deallocated).
 
 	Works with 0f94023c1.
+
+Done: Bug: Right now, sc stop windrbd stalls.
+
+	Works with c8a2ab?
+
+	Works again with 0f94023c1: need to close all sockets before
+	releasing provider NPI (including printk sockets).
+
+	Update: But not when there were connections up. We narrowed
+	the problem down to the incoming socket handler (we leak
+	incoming sockets somewhere here).
+
+	Update: Also close incoming wsk sockets that are not
+	accepted by DRBD (see 36d3d972). Stall problem is
+	fixed now.
 
