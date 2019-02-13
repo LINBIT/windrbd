@@ -1,4 +1,7 @@
-﻿#include "drbd_windows.h"
+﻿/* Uncomment this if you want more debug output (disable for releases) */
+#define DEBUG 1
+
+#include "drbd_windows.h"
 #include "windrbd_threads.h"
 #include <linux/socket.h>
 #include <linux/net.h>
@@ -342,12 +345,7 @@ static int CreateSocket(
 	}
 
 	if (NT_SUCCESS(Status))
-{
 		*out = (struct _WSK_SOCKET*) Irp->IoStatus.Information;
-
-if (Flags != WSK_FLAG_DATAGRAM_SOCKET)
-printk("karin create socket %p\n", *out);
-}
 
 	IoFreeIrp(Irp);
 	return winsock_to_linux_error(Status);
@@ -368,8 +366,6 @@ static void close_wsk_socket(struct _WSK_SOCKET *wsk_socket)
 	Irp = wsk_new_irp(NULL);
 	if (Irp == NULL)
 		return;
-
-printk("karin 1 close wsk socket %p\n", wsk_socket);
 
 	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) wsk_socket->Dispatch)->WskCloseSocket(wsk_socket, Irp);
 }
@@ -399,9 +395,6 @@ static void close_socket(struct socket *socket)
 
 	if (socket->wsk_socket != NULL) {
 		mutex_lock(&socket->wsk_mutex);
-
-if (socket->wsk_flags != WSK_FLAG_DATAGRAM_SOCKET)
-printk("karin close socket %p\n", socket);
 
 		(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
 		socket->wsk_socket = NULL;
@@ -524,8 +517,6 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 		accept_socket->sk->sk_state = TCP_ESTABLISHED;
 		accept_socket->sk->sk_state_change = socket->sk->sk_state_change;
 		accept_socket->sk->sk_user_data = socket->sk->sk_user_data;
-
-printk("karin accept socket %p wsk_socket %p\n", accept_socket, wsk_socket);
 		*newsock = accept_socket;
 	}
 
@@ -1312,11 +1303,9 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 {
 	struct socket *socket = (struct socket*) SocketContext;
 
-printk("karin incoming socket %p wsk_socket is %p\n", socket, AcceptSocket);
-
 	mutex_lock(&socket->accept_socket_mutex);
 	if (socket->accept_wsk_socket != NULL) {
-printk("dropped incoming connection wsk_socket is old: %p new: %p socket is %p.\n", socket->accept_wsk_socket, AcceptSocket, socket);
+		dbg("dropped incoming connection wsk_socket is old: %p new: %p socket is %p.\n", socket->accept_wsk_socket, AcceptSocket, socket);
 
 		close_wsk_socket(socket->accept_wsk_socket);
 		socket->dropped_accept_sockets++;
