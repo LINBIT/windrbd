@@ -1,0 +1,47 @@
+From c06ceb3dc0afd92cacfff2568cbc65b5b3c4f134 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 13 Feb 2019 20:32:32 +0100
+Subject: [PATCH] Use different identifiers for return value and timeout.
+
+In wait_interruptible_timeout() call of transport_tcp. This
+is broken since first thing it does is setting the return value
+(and also the timeout if it is the same variable) to zero.
+
+TODO: Fix the wait_interruptible code and drop the cocci script
+(and this patch).
+---
+ drbd/drbd_transport_tcp.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index fa5f0af..3d995d0 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -629,7 +629,7 @@ static int dtt_wait_for_connect(struct drbd_transport *transport,
+ 	struct dtt_socket_container *socket_c;
+ 	struct sockaddr_storage peer_addr;
+ 	int connect_int, err = 0;
+-	LONG_PTR timeo;
++	LONG_PTR timeo, timeo_ret;
+ 	struct socket *s_estab = NULL;
+ 	struct net_conf *nc;
+ 	struct drbd_path *drbd_path2;
+@@ -652,12 +652,12 @@ static int dtt_wait_for_connect(struct drbd_transport *transport,
+ 		 * and use original source code */
+ 
+ retry:
+-	wait_event_interruptible_timeout(timeo, listener->wait,
++	wait_event_interruptible_timeout(timeo_ret, listener->wait,
+ 					 (path = dtt_wait_connect_cond(transport)),
+ 					 timeo);
+-	if (timeo == -DRBD_SIGKILL)
++	if (timeo_ret == -DRBD_SIGKILL)
+ 		return -EINTR;
+-	if (timeo == -ETIMEDOUT)
++	if (timeo_ret == -ETIMEDOUT)
+ 		return -EAGAIN;
+ 
+ 	spin_lock_bh(&listener->listener.waiters_lock);
+-- 
+2.17.0
+
