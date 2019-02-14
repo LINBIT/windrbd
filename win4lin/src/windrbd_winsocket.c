@@ -1117,8 +1117,8 @@ dbg("Receiving cancelled (errno is %d) but data available (%d bytes, returning i
 	FreeWskBuffer(&WskBuffer, 1);
 
 	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
-dbg("setting error status to %d\n", socket->error_status);
 		socket->error_status = BytesReceived;
+dbg("setting error status to %d\n", socket->error_status);
 }
 
 	return BytesReceived;
