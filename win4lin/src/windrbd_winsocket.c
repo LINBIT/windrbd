@@ -249,7 +249,8 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 			case STATUS_WAIT_1:
 				return -EINTR;
 			case STATUS_TIMEOUT:
-				return -EAGAIN; /* hangs Win7 VM? */
+//				return -EAGAIN; /* hangs Win7 VM? */
+				return -ETIMEDOUT;
 			default:
 				dbg("KeWaitForMultipleObjects returned unexpected error %x\n", status);
 				return winsock_to_linux_error(status);
