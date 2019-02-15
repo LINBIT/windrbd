@@ -185,16 +185,14 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
 
-			/* TODO: maybe remove this it sometimes happens
-			 * and is legal then. */
 		if (may_printk && completion->socket->error_status != 0 &&
 		    completion->socket->error_status != new_status)
-			printk(KERN_WARNING "Last error status of socket was %d, now got %d (ntstatus %x)\n", completion->socket->error_status, new_status, Irp->IoStatus.Status);
+			dbg(KERN_WARNING "Last error status of socket was %d, now got %d (ntstatus %x)\n", completion->socket->error_status, new_status, Irp->IoStatus.Status);
 
 		completion->socket->error_status = new_status;
 	} else {
 			/* Only for connectionless sockets: clear error
-			 * status (they may "repair" themselves.
+			 * status (they may "repair" themselves).
 			 */
 		if (completion->socket->wsk_flags == WSK_FLAG_DATAGRAM_SOCKET)
 			completion->socket->error_status = 0;
@@ -1007,8 +1005,7 @@ dbg("new_irp failed\n");
 dbg("wsk_socket closed meanwhile\n");
 		mutex_unlock(&socket->wsk_mutex);
 		FreeWskBuffer(&WskBuffer, 1);
-			/* TODO: return error */
-		return winsock_to_linux_error(Status);
+		return -ENOTCONN;
 	}
 
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
