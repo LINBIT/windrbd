@@ -48,6 +48,16 @@ Feb 14 15:47:55 10.43.10.13  U14:47:47.251|d012dee0(drbd_a_vamp-4nodes) drbd_ack
 
 	Happens quite soon (1-10 attempts).
 
+	Update: Implemented -EINTR on signal for wait_for_sendbuf,
+	BSOD after ~25 disconnect / connects.
+
+	Found:
+
+Feb 15 16:39:23 10.43.10.13  U15:39:23.579|3e3eb560(not_drbd_thread) static_inline_expect_fn_peer_device <3>drbd vamp-4nodes/1 minor 1 pnode-id:4, pdsk(UpToDate), prpl(SyncTarget), pdvflag(0xc00): ASSERTION __dec_unacked(peer_device) >= 0 FAILED in e_end_block
+
+	(also in original log). Is this a new upstream bug?
+	(Test with Linux/Linux)
+
 TODO: Bug: Had a Sync stall in 4 node setup
 
 	One node at 98.9 percent other at around 50% (but 130% on its
