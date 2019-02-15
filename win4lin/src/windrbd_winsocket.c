@@ -239,11 +239,8 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 
 			status = KeWaitForSingleObject(&socket->data_sent, Executive, KernelMode, FALSE, &timeout);
 
-			if (status == STATUS_TIMEOUT) {
-				/* TODO: -EAGAIN? */
-				socket->error_status = -ETIMEDOUT;
-				return socket->error_status;
-			}
+			if (status == STATUS_TIMEOUT)
+				return -EAGAIN;
 		} else {
 			socket->sk->sk_wmem_queued += want_to_send;
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
@@ -770,35 +767,27 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	get_page(page);		/* we might sleep soon, do this before */
 
 	err = wait_for_sendbuf(socket, len);
-	if (err < 0) {
-		put_page(page);
-		return err;
-	}
+	if (err < 0)
+		goto out_put_page;
 
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
 	if (WskBuffer == NULL) {
-		have_sent(socket, len);
-		put_page(page);
-		return -ENOMEM;
+		err = -ENOMEM;
+		goto out_have_sent;
 	}
 
 	completion = kzalloc(sizeof(*completion), 0, 'DRBD');
 	if (completion == NULL) {
-		have_sent(socket, len);
-		put_page(page);
-		kfree(WskBuffer);
-		return -ENOMEM;
+		err = -ENOMEM;
+		goto out_free_wsk_buffer;
 	}
 
 // printk("page: %p page->addr: %p page->size: %d offset: %d len: %d page->kref.refcount: %d\n", page, page->addr, page->size, offset, len, page->kref.refcount);
 
 	status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE, TRUE);
 	if (!NT_SUCCESS(status)) {
-		have_sent(socket, len);
-		put_page(page);
-		kfree(completion);
-		kfree(WskBuffer);
-		return -ENOMEM;
+		err = -ENOMEM;
+		goto out_free_completion;
 	}
 
 	completion->page = page;
@@ -807,12 +796,8 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 
 	Irp = IoAllocateIrp(1, FALSE);
 	if (Irp == NULL) {
-		have_sent(socket, len);
-		put_page(page);
-		kfree(completion);
-		kfree(WskBuffer);
-		FreeWskBuffer(WskBuffer, 1);
-		return -ENOMEM;
+		err = -ENOMEM;
+		goto out_free_wsk_buffer_mdl;
 	}
 	IoSetCompletionRoutine(Irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
 
@@ -825,19 +810,15 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	mutex_lock(&socket->wsk_mutex);
 
 	if (socket->wsk_socket == NULL) {
-		mutex_unlock(&socket->wsk_mutex);
-		have_sent(socket, len);
-		put_page(page);
-		kfree(completion);
-		kfree(WskBuffer);
-		FreeWskBuffer(WskBuffer, 1);
-		return -ENOMEM;
+		err = -ENOTCONN;
+		goto out_unlock_mutex;
 	}
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
 		socket->wsk_socket,
 		WskBuffer,
 		flags,
 		Irp);
+
 	mutex_unlock(&socket->wsk_mutex);
 
 	switch (status) {
@@ -856,11 +837,30 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 
 	case STATUS_SUCCESS:
 		return (LONG) Irp->IoStatus.Information;
-
-	default:
-		/* TODO: set socket error status? */
-		return winsock_to_linux_error(status);
 	}
+	err = winsock_to_linux_error(status);
+	if (err != 0 && err != -ENOMEM)
+		socket->error_status = err;
+
+		/* Resources are freed by completion routine. */
+	return err;
+
+out_unlock_mutex:
+	mutex_unlock(&socket->wsk_mutex);
+out_free_wsk_buffer_mdl:
+	FreeWskBuffer(WskBuffer, 1);
+out_free_completion:
+	kfree(completion);
+out_free_wsk_buffer:
+	kfree(WskBuffer);
+out_have_sent:
+	have_sent(socket, len);
+out_put_page:
+	put_page(page);
+
+	if (err != 0 && err != -ENOMEM)
+		socket->error_status = err;
+	return err;
 }
 
 /* Do not use printk's in here, will loop forever... */
