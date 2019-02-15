@@ -1,13 +1,14 @@
 #!/bin/bash
 
+RES=w0
 i=0
 while true
 do
 	i=$[ $i+1 ]
 	echo Disconnect $i
-	drbdadm disconnect w0
-	sleep 5
+	drbdadm disconnect $RES
+	sleep 10
 	echo Connect $i
-	drbdadm connect w0
-	sleep 5 
+	drbdadm connect $RES
+	sleep 10
 done
