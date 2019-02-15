@@ -408,6 +408,7 @@ static void close_socket(struct socket *socket)
 		close_wsk_socket(socket->accept_wsk_socket);
 		socket->accept_wsk_socket = NULL;
 	}
+	socket->error_status = 0;
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
