@@ -222,23 +222,38 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 	ULONG_PTR flags;
 	LARGE_INTEGER timeout;
 	NTSTATUS status;
+	void *wait_objects[2];
+	int num_objects;
 
 	while (1) {
 		spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
 
 		if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf) {
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
+
 			timeout.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
 
-				/* TODO: no signals? */
-				/* TODO: this would be important, maybe that is
-				 * one of the causes for the Windows 10 BSOD.
-				 */
+	/* TODO: once it is fixed, use wait_event_interruptible() here. */
 
-			status = KeWaitForSingleObject(&socket->data_sent, Executive, KernelMode, FALSE, &timeout);
+			wait_objects[0] = &socket->data_sent;
+			num_objects = 1;
+			if (current->has_sig_event) {
+				wait_objects[1] = &current->sig_event;
+				num_objects = 2;
+			}
+			status = KeWaitForMultipleObjects(num_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, &timeout, NULL);
 
-			if (status == STATUS_TIMEOUT)
-				return -EAGAIN;
+			switch (status) {
+			case STATUS_WAIT_0:
+				continue;
+			case STATUS_WAIT_1:
+				return -EINTR;
+			case STATUS_TIMEOUT:
+				return -EAGAIN; /* hangs Win7 VM? */
+			default:
+				dbg("KeWaitForMultipleObjects returned unexpected error %x\n", status);
+				return winsock_to_linux_error(status);
+			}
 		} else {
 			socket->sk->sk_wmem_queued += want_to_send;
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
