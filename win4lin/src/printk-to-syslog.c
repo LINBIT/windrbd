@@ -108,6 +108,12 @@ static int open_syslog_socket(void)
 				sock_release(printk_udp_socket);
 				printk_udp_socket = NULL;
 			} else {
+				/* TODO: UDP sockets now can 'repair'
+				 * themselves ... this probe is needed
+				 * however since SendTo in printk isn't
+				 * retried at the moment. Fix this
+				 * somehow later.
+				 */
 				char *probe = "Starting printk ...\n";
 				err = SendTo(printk_udp_socket,
 						probe,

@@ -192,12 +192,14 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 			printk(KERN_WARNING "Last error status of socket was %d, now got %d (ntstatus %x)\n", completion->socket->error_status, new_status, Irp->IoStatus.Status);
 
 		completion->socket->error_status = new_status;
-	}	/* TODO: if success, clear error status? This happens
-		 * on boot when there are no configured network interfaces
-		 * and works later once they are.
-		 *
-		 * Maybe do it for UDP sockets only.
-		 */
+	} else {
+			/* Only for connectionless sockets: clear error
+			 * status (they may "repair" themselves.
+			 */
+		if (completion->socket->wsk_flags == WSK_FLAG_DATAGRAM_SOCKET)
+			completion->socket->error_status = 0;
+	}
+
 	length = completion->wsk_buffer->Length;
 		/* Also unmaps the pages of the containg Mdl */
 
