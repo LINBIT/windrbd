@@ -2,13 +2,9 @@
 #define __SPINLOCK_H__
 #include <wdm.h>
 
-/* TODO: most of this goes away ... soon */
 typedef struct _tagSPINLOCK
 {
-    KSPIN_LOCK 	spinLock;
-    KIRQL 		saved_oldIrql;
-	PKTHREAD 	OwnerThread; // lock owner
-	LONG		Refcnt; // reference count for protecting recursion
+	KSPIN_LOCK 	spinLock;
 } spinlock_t;
 
 extern void spin_lock_init(spinlock_t *lock);

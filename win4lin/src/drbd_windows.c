@@ -1280,22 +1280,7 @@ void up_read(KSPIN_LOCK* lock)
 void spin_lock_init(spinlock_t *lock)
 {
 	KeInitializeSpinLock(&lock->spinLock);
-	lock->Refcnt = 0;
-	lock->OwnerThread = 0;
 }
-
-void acquireSpinLock(KSPIN_LOCK *lock, KIRQL *flags)
-{
-	KeAcquireSpinLock(lock, flags);
-}
-
-void releaseSpinLock(KSPIN_LOCK *lock, KIRQL flags)
-{
-	KeReleaseSpinLock(lock, flags);
-}
-
-// DW-903 protect lock recursion
-// if current thread equal lock owner thread, just increase refcnt
 
 /* See also defintion of spin_lock_irqsave in drbd_windows.h for handling
  * the flags parameter.
@@ -1303,18 +1288,28 @@ void releaseSpinLock(KSPIN_LOCK *lock, KIRQL flags)
 
 long _spin_lock_irqsave(spinlock_t *lock)
 {
-	KIRQL	oldIrql = 0;
-	PKTHREAD curthread = KeGetCurrentThread();
-	if( curthread == lock->OwnerThread) { 
-		WDRBD_WARN("thread:%p spinlock recursion is happened! function:%s line:%d\n", curthread, __FUNCTION__, __LINE__);
+	KIRQL oldIrql;
+	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
-		/* TODO: and directly into the critical section?! */
-	} else {
-		acquireSpinLock(&lock->spinLock, &oldIrql);
-		lock->OwnerThread = curthread;
-	}
-	InterlockedIncrement(&lock->Refcnt);
 	return (long)oldIrql;
+}
+
+void spin_unlock_irqrestore(spinlock_t *lock, long flags)
+{
+	KeReleaseSpinLock(&lock->spinLock, (KIRQL) flags);
+}
+
+void spin_lock_irq(spinlock_t *lock)
+{
+	KIRQL unused;
+
+	KeAcquireSpinLock(&lock->spinLock, &unused);
+	BUG_ON(unused != PASSIVE_LEVEL);
+}
+
+void spin_unlock_irq(spinlock_t *lock)
+{
+	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
 }
 
 void spin_lock(spinlock_t *lock)
@@ -1327,67 +1322,14 @@ void spin_unlock(spinlock_t *lock)
 	spin_unlock_irq(lock);
 }
 
-// DW-903 protect lock recursion
-// if current thread equal lock owner thread, just increase refcnt
-
-void spin_lock_irq(spinlock_t *lock)
-{
-	PKTHREAD curthread = KeGetCurrentThread();
-	if( curthread == lock->OwnerThread) {//DW-903 protect lock recursion
-		WDRBD_WARN("thread:%p spinlock recursion is happened! function:%s line:%d\n", curthread, __FUNCTION__, __LINE__);
-	} else {
-		acquireSpinLock(&lock->spinLock, &lock->saved_oldIrql);
-		lock->OwnerThread = curthread;
-	}
-	InterlockedIncrement(&lock->Refcnt);
-}
-
-// fisrt, decrease refcnt
-// If refcnt is 0, clear OwnerThread and release lock
-
-void spin_unlock_irq(spinlock_t *lock)
-{
-	InterlockedDecrement(&lock->Refcnt);
-	if(lock->Refcnt == 0) {
-		lock->OwnerThread = 0;
-			/* TODO: This is most likely wrong (flags in lock). */
-		releaseSpinLock(&lock->spinLock, lock->saved_oldIrql);
-	}
-}
-// fisrt, decrease refcnt
-// If refcnt is 0, clear OwnerThread and release lock
-
-void spin_unlock_irqrestore(spinlock_t *lock, long flags)
-{
-	InterlockedDecrement(&lock->Refcnt);
-	if(lock->Refcnt == 0) {
-		lock->OwnerThread = 0;
-		releaseSpinLock(&lock->spinLock, (KIRQL) flags);
-	}
-}
-
-// DW-903 protect lock recursion
-// if current thread equal lock owner thread, just increase refcnt
 void spin_lock_bh(spinlock_t *lock)
 {
-	PKTHREAD curthread = KeGetCurrentThread();
-	if( curthread == lock->OwnerThread) {
-		WDRBD_WARN("thread:%p spinlock recursion is happened! function:%s line:%d\n", curthread, __FUNCTION__, __LINE__);
-	} else {
-		KeAcquireSpinLock(&lock->spinLock, &lock->saved_oldIrql);
-		lock->OwnerThread = curthread;
-	}
-	InterlockedIncrement(&lock->Refcnt);
+	spin_lock_irq(lock);
 }
-// fisrt, decrease refcnt
-// If refcnt is 0, clear OwnerThread and release lock
+
 void spin_unlock_bh(spinlock_t *lock)
 {
-	InterlockedDecrement(&lock->Refcnt);
-	if(lock->Refcnt == 0) {
-		lock->OwnerThread = 0;
-		KeReleaseSpinLock(&lock->spinLock, lock->saved_oldIrql);
-	}
+	spin_unlock_irq(lock);
 }
 
 /* TODO: static? It is also probably not a bad idea to initialize this
@@ -1395,6 +1337,7 @@ void spin_unlock_bh(spinlock_t *lock)
  */
 
 spinlock_t g_irqLock;
+
 void local_irq_disable()
 {	
 	spin_lock_irq(&g_irqLock);
@@ -1405,13 +1348,13 @@ void local_irq_enable()
 	spin_unlock_irq(&g_irqLock);
 }
 
-BOOLEAN spin_trylock(spinlock_t *lock)
+int spin_trylock(spinlock_t *lock)
 {
-	if (FALSE == KeTestSpinLock(&lock->spinLock))
-		return FALSE;
+	if (KeTestSpinLock(&lock->spinLock) == FALSE)
+		return 0;
 	
 	spin_lock(lock);
-	return TRUE;
+	return 1;
 }
 
 void get_random_bytes(char *buf, int nbytes)
