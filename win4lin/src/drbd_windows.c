@@ -1303,8 +1303,11 @@ void spin_lock_irq(spinlock_t *lock)
 {
 	KIRQL unused;
 
+if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+printk("spin lock bug: KeGetCurrentIrql() is %d\n", KeGetCurrentIrql());
+
 	KeAcquireSpinLock(&lock->spinLock, &unused);
-	BUG_ON(unused != PASSIVE_LEVEL);
+//	BUG_ON(unused != PASSIVE_LEVEL);
 }
 
 void spin_unlock_irq(spinlock_t *lock)

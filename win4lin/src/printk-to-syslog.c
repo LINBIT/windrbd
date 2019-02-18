@@ -159,6 +159,7 @@ int _printk(const char *func, const char *fmt, ...)
 	int hour, min, sec, msec, sec_day;
 	static int printks_in_irq_context = 0;
 	static int buffer_overflows = 0;
+	KIRQL flags;
 
 	int is_bind = (strcmp(func, "Bind") == 0);
 	int is_sendto = (strcmp(func, "SendTo") == 0);
@@ -243,7 +244,7 @@ int _printk(const char *func, const char *fmt, ...)
 		s = buffer;
 	}
 
-	spin_lock_irq(&ring_buffer_lock);
+	spin_lock_irqsave(&ring_buffer_lock, flags);
 	if (len + ring_buffer_head > RING_BUFFER_SIZE) {
 		memcpy(ring_buffer + ring_buffer_head, s, RING_BUFFER_SIZE-ring_buffer_head);
 		len -= RING_BUFFER_SIZE-ring_buffer_head;
@@ -260,7 +261,7 @@ int _printk(const char *func, const char *fmt, ...)
 		if (ring_buffer_tail == RING_BUFFER_SIZE)
 			ring_buffer_tail = 0;
 	}
-	spin_unlock_irq(&ring_buffer_lock);
+	spin_unlock_irqrestore(&ring_buffer_lock, flags);
 
 		/* When in a DPC or similar context, we must not 
 		 * call waiting functions, like SendTo(). 
