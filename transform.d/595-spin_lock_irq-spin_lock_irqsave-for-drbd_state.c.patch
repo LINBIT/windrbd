@@ -1,0 +1,38 @@
+From f18ccc425b599ddb43a20bf9a964bafaf19088ea Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 18 Feb 2019 20:31:43 +0100
+Subject: [PATCH 5/8] spin_lock_irq -> spin_lock_irqsave for drbd_state.c
+
+---
+ drbd/drbd_state.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_state.c b/drbd/drbd_state.c
+index 0131455..3607b22 100644
+--- a/drbd/drbd_state.c
++++ b/drbd/drbd_state.c
+@@ -2201,6 +2201,7 @@ static void finish_state_change(struct drbd_resource *resource, struct completio
+ 	bool some_peer_is_primary = false;
+ 	bool some_peer_request_in_flight = false;
+ 	int vnr;
++	int flags;
+ 
+ 	print_state_change(resource, "");
+ 
+@@ -2439,11 +2440,11 @@ static void finish_state_change(struct drbd_resource *resource, struct completio
+ 				if (connection->epochs != 1)
+ 					some_peer_request_in_flight = true;
+ 				else if (!some_peer_request_in_flight) {
+-					spin_lock(&connection->epoch_lock);
++					spin_lock_irqsave(&connection->epoch_lock, flags);
+ 					if (connection->epochs != 1 ||
+ 					    atomic_read(&connection->current_epoch->epoch_size) != 0)
+ 						some_peer_request_in_flight = true;
+-					spin_unlock(&connection->epoch_lock);
++					spin_unlock_irqrestore(&connection->epoch_lock, flags);
+ 				}
+ 				break;
+ 			case C_STANDALONE:
+-- 
+2.17.0
+

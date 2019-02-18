@@ -1,0 +1,34 @@
+From a52ebceabf3b26d9760c787ae1ddfc6dcc119112 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 18 Feb 2019 20:30:41 +0100
+Subject: [PATCH 4/8] spin_lock_irq -> spin_lock_irqsave for drbd_sender.c
+
+---
+ drbd/drbd_sender.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index 3f14f78..14f2f10 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -2529,13 +2529,15 @@ static void maybe_send_state_afer_ahead(struct drbd_connection *connection)
+  */
+ static bool check_sender_todo(struct drbd_connection *connection)
+ {
++	int flags;
++
+ 	tl_next_request_for_connection(connection);
+ 
+ 	/* we did lock_irq above already. */
+ 	/* FIXME can we get rid of this additional lock? */
+-	spin_lock(&connection->sender_work.q_lock);
++	spin_lock_irqsave(&connection->sender_work.q_lock, flags);
+ 	list_splice_tail_init(&connection->sender_work.q, &connection->todo.work_list);
+-	spin_unlock(&connection->sender_work.q_lock);
++	spin_unlock_irqrestore(&connection->sender_work.q_lock, flags);
+ 
+ 	return connection->todo.req
+ 		|| need_unplug(connection)
+-- 
+2.17.0
+

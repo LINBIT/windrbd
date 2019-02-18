@@ -1,0 +1,53 @@
+From 4fec43a990a3a603a9ac55814c60695c54fffd46 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 18 Feb 2019 21:11:39 +0100
+Subject: [PATCH 6/8] spin_lock_irq -> spin_lock_irqsave for
+ drbd_transport_tcp.c
+
+---
+ drbd/drbd_transport_tcp.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 0dd01ac..e61e23e 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -597,15 +597,16 @@ static struct dtt_path *dtt_wait_connect_cond(struct drbd_transport *transport)
+ 	struct drbd_path *drbd_path;
+ 	struct dtt_path *path = NULL;
+ 	bool rv = false;
++	int flags;
+ 
+ 	spin_lock(&tcp_transport->paths_lock);
+ 	list_for_each_entry(struct drbd_path, drbd_path, &transport->paths, list) {
+ 		path = container_of(drbd_path, struct dtt_path, path);
+ 		listener = drbd_path->listener;
+ 
+-		spin_lock_bh(&listener->waiters_lock);
++		spin_lock_irqsave(&listener->waiters_lock, flags);
+ 		rv = listener->pending_accepts > 0 || !list_empty(&path->sockets);
+-		spin_unlock_bh(&listener->waiters_lock);
++		spin_unlock_irqrestore(&listener->waiters_lock, flags);
+ 
+ 		if (rv)
+ 			break;
+@@ -775,13 +776,14 @@ static void dtt_incoming_connection(struct sock *sock)
+ {
+ 	struct dtt_listener *listener = sock->sk_user_data;
+ 	void (*state_change)(struct sock *sock);
++	int flags;
+ 
+ 	state_change = listener->original_sk_state_change;
+ 	state_change(sock);
+ 
+-	spin_lock(&listener->listener.waiters_lock);
++	spin_lock_irqsave(&listener->listener.waiters_lock, flags);
+ 	listener->listener.pending_accepts++;
+-	spin_unlock(&listener->listener.waiters_lock);
++	spin_unlock_irqrestore(&listener->listener.waiters_lock, flags);
+ 	wake_up(&listener->wait);
+ }
+ 
+-- 
+2.17.0
+

@@ -1,0 +1,38 @@
+From f1a8fe6a645d83e4ea8f6dbf87f416e80b361e2a Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 18 Feb 2019 20:23:50 +0100
+Subject: [PATCH 1/8] First patch of 'fixing' spinlocks.
+
+When locking another spinlock inside an already locked spinlock,
+IRQL is 2 (DISPATCH_LEVEL) instead of 0 (PASSIVE_LEVEL). Use
+spin_lock_irqsave to save the raised IRQ level and restore it
+later the proper way.
+---
+ drbd/drbd_main.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 41dbd30..14bf423 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3294,13 +3294,15 @@ static int drbd_alloc_send_buffers(struct drbd_connection *connection)
+ 
+ void drbd_flush_peer_acks(struct drbd_resource *resource)
+ {
+-	spin_lock_irq(&resource->req_lock);
++	int flags;
++
++	spin_lock_irqsave(&resource->req_lock, flags);
+ 	if (resource->peer_ack_req) {
+ 		resource->last_peer_acked_dagtag = resource->peer_ack_req->dagtag_sector;
+ 		drbd_queue_peer_ack(resource, resource->peer_ack_req);
+ 		resource->peer_ack_req = NULL;
+ 	}
+-	spin_unlock_irq(&resource->req_lock);
++	spin_unlock_irqrestore(&resource->req_lock, flags);
+ }
+ 
+ static void peer_ack_timer_fn(DRBD_TIMER_FN_ARG)
+-- 
+2.17.0
+

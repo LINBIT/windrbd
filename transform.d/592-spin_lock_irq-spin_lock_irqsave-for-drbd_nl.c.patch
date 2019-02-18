@@ -1,0 +1,61 @@
+From f1257a6ac6fbfe5da87672401c86125abfb96210 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 18 Feb 2019 20:27:08 +0100
+Subject: [PATCH 2/8] spin_lock_irq -> spin_lock_irqsave for drbd_nl.c
+
+---
+ drbd/drbd_nl.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 8658de4..061128b 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -5044,6 +5044,8 @@ out:
+ static void device_to_statistics(struct device_statistics *s,
+ 				 struct drbd_device *device)
+ {
++	int flags;
++
+ 	memset(s, 0, sizeof(*s));
+ 	s->dev_upper_blocked = !may_inc_ap_bio(device);
+ 	if (get_ldev(device)) {
+@@ -5052,13 +5054,13 @@ static void device_to_statistics(struct device_statistics *s,
+ 		struct request_queue *q;
+ 		int n;
+ 
+-		spin_lock_irq(&md->uuid_lock);
++		spin_lock_irqsave(&md->uuid_lock, flags);
+ 		s->dev_current_uuid = md->current_uuid;
+ 		BUILD_BUG_ON(sizeof(s->history_uuids) != sizeof(md->history_uuids));
+ 		for (n = 0; n < ARRAY_SIZE(md->history_uuids); n++)
+ 			history_uuids[n] = md->history_uuids[n];
+ 		s->history_uuids_len = sizeof(s->history_uuids);
+-		spin_unlock_irq(&md->uuid_lock);
++		spin_unlock_irqrestore(&md->uuid_lock, flags);
+ 
+ 		s->dev_disk_flags = md->flags;
+ 		q = bdev_get_queue(device->ldev->backing_bdev);
+@@ -5350,6 +5352,7 @@ static void peer_device_to_statistics(struct peer_device_statistics *s,
+ 	ULONG_PTR now = jiffies;
+ 	ULONG_PTR rs_left = 0;
+ 	int i;
++	int flags;
+ 
+ 	/* userspace should get "future proof" units,
+ 	 * convert to sectors or milli seconds as appropriate */
+@@ -5404,9 +5407,9 @@ static void peer_device_to_statistics(struct peer_device_statistics *s,
+ 		struct drbd_md *md = &device->ldev->md;
+ 		struct drbd_peer_md *peer_md = &md->peers[pd->node_id];
+ 
+-		spin_lock_irq(&md->uuid_lock);
++		spin_lock_irqsave(&md->uuid_lock, flags);
+ 		s->peer_dev_bitmap_uuid = peer_md->bitmap_uuid;
+-		spin_unlock_irq(&md->uuid_lock);
++		spin_unlock_irqrestore(&md->uuid_lock, flags);
+ 		s->peer_dev_flags = peer_md->flags;
+ 		put_ldev(device);
+ 	}
+-- 
+2.17.0
+
