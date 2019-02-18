@@ -1299,15 +1299,50 @@ void spin_unlock_irqrestore(spinlock_t *lock, long flags)
 	KeReleaseSpinLock(&lock->spinLock, (KIRQL) flags);
 }
 
+#ifdef SPIN_LOCK_DEBUG
+
+void spin_lock_irq_debug(spinlock_t *lock, const char *file, int line, const char *func)
+{
+	KIRQL unused;
+
+	if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+		printk("spin lock bug: KeGetCurrentIrql() is %d (called from %s:%d in %s()\n", KeGetCurrentIrql(), file, line, func);
+
+	KeAcquireSpinLock(&lock->spinLock, &unused);
+}
+
+void spin_unlock_irq_debug(spinlock_t *lock, const char *file, int line, const char *func)
+{
+	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
+}
+
+void spin_lock_debug(spinlock_t *lock, const char *file, int line, const char *func)
+{
+	spin_lock_irq_debug(lock, file, line, func);
+}
+
+void spin_unlock_debug(spinlock_t *lock, const char *file, int line, const char *func)
+{
+	spin_unlock_irq_debug(lock, file, line, func);
+}
+
+void spin_lock_bh_debug(spinlock_t *lock, const char *file, int line, const char *func)
+{
+	spin_lock_irq_debug(lock, file, line, func);
+}
+
+void spin_unlock_bh_debug(spinlock_t *lock, const char *file, int line, const char *func)
+{
+	spin_unlock_irq_debug(lock, file, line, func);
+}
+
+#else
+
 void spin_lock_irq(spinlock_t *lock)
 {
 	KIRQL unused;
 
-if (KeGetCurrentIrql() != PASSIVE_LEVEL)
-printk("spin lock bug: KeGetCurrentIrql() is %d\n", KeGetCurrentIrql());
-
 	KeAcquireSpinLock(&lock->spinLock, &unused);
-//	BUG_ON(unused != PASSIVE_LEVEL);
 }
 
 void spin_unlock_irq(spinlock_t *lock)
@@ -1334,6 +1369,8 @@ void spin_unlock_bh(spinlock_t *lock)
 {
 	spin_unlock_irq(lock);
 }
+
+#endif
 
 /* TODO: static? It is also probably not a bad idea to initialize this
    somewhere ...
