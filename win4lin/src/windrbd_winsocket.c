@@ -52,8 +52,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_CONNECTION_REFUSED:
 		return -ECONNREFUSED;
 	default:
-		/* no printk's */
-		// printk("Unknown status %x, returning -EIO.\n", status);
+		dbg("Unknown status %x, returning -EIO.\n", status);
 		return -EIO;
 	}
 }
@@ -95,8 +94,10 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent)
 	struct _IRP *irp;
 
 	irp = IoAllocateIrp(1, FALSE);
-	if (irp == NULL)
+	if (irp == NULL) {
+		dbg("IoAllocateIrp returned NULL, out of IRPs?\n");
 		return NULL;
+	}
 
 	if (CompletionEvent) {
 		KeInitializeEvent(CompletionEvent, SynchronizationEvent, FALSE);
