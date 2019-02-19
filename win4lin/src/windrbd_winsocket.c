@@ -900,6 +900,12 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	if (socket->error_status != 0)
 		return socket->error_status;
 
+{
+static int x=0;
+if ((x++ % 10) == 0)
+printk("recursion test.\n");
+}
+
 	err = wait_for_sendbuf(socket, BufferSize);
 	if (err < 0)
 		return err;

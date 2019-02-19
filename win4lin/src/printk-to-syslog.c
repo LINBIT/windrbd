@@ -21,10 +21,16 @@ static spinlock_t ring_buffer_lock;
 static struct mutex send_mutex;
 static int printk_shut_down;
 
+static spinlock_t in_printk_lock;
+static int in_printk;
+
 int initialize_syslog_printk(void)
 {
 	spin_lock_init(&ring_buffer_lock);
+	spin_lock_init(&in_printk_lock);
 	mutex_init(&send_mutex);
+	in_printk = 0;
+
 	return 0;
 }
 
@@ -137,6 +143,22 @@ static int open_syslog_socket(void)
 	return 0;
 }
 
+
+int currently_in_printk(void)
+{
+	int flags;
+
+	spin_lock_irqsave(&in_printk_lock, flags);
+	if (in_printk) {
+		spin_unlock_irqrestore(&in_printk_lock, flags);
+		return 1;
+	}
+	in_printk = 1;
+	spin_unlock_irqrestore(&in_printk_lock, flags);
+
+	return 0;
+}
+
 /* Prints the message via DbgPrintEx and sends it to logging host
  * via syslog UDP if we may sleep. Stores message in ring buffer
  * so we also see messages from raised IRQL once we are being 
@@ -161,6 +183,7 @@ int _printk(const char *func, const char *fmt, ...)
 	static int buffer_overflows = 0;
 	KIRQL flags;
 
+#if 0
 	int is_bind = (strcmp(func, "Bind") == 0);
 	int is_sendto = (strcmp(func, "SendTo") == 0);
 
@@ -168,6 +191,7 @@ int _printk(const char *func, const char *fmt, ...)
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, printk called from Bind() or SendTo() (which we need interally).\n");
 	/* TODO: return?? */
 	}
+#endif
 
 	buffer[0] = '\0';
 
@@ -177,9 +201,9 @@ int _printk(const char *func, const char *fmt, ...)
 	/* Indicate how much might be lost on UDP */
 		if (printks_in_irq_context) {
 			if (printks_in_irq_context == 1)
-				status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1, " [last message was in IRQ context]\n");
+				status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1, " [last message was in IRQ context or recursive]\n");
 			else
-				status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1, " [last %d messages were in IRQ context]\n", printks_in_irq_context);
+				status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1, " [last %d messages were in IRQ context or recursive]\n", printks_in_irq_context);
 			printks_in_irq_context = 0;
 		}
 	}
@@ -264,10 +288,12 @@ int _printk(const char *func, const char *fmt, ...)
 	spin_unlock_irqrestore(&ring_buffer_lock, flags);
 
 		/* When in a DPC or similar context, we must not 
-		 * call waiting functions, like SendTo(). 
+		 * call waiting functions, like SendTo(). Also
+		 * if called recursively (currently in printk)
+		 * don't recurse. 
 		 */
 
-	if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
+	if (KeGetCurrentIrql() < DISPATCH_LEVEL && !currently_in_printk()) {
 		mutex_lock(&send_mutex);
 		if (printk_udp_socket == NULL) {
 			open_syslog_socket();
@@ -312,6 +338,8 @@ int _printk(const char *func, const char *fmt, ...)
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, no socket: %s\n", buffer);
 		}
 		mutex_unlock(&send_mutex);
+
+		in_printk = 0;	/* set to 1 by currently_in_printk function */
 	}
 #endif
 	return 1;	/* TODO: strlen(buffer) */
