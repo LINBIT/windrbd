@@ -44,6 +44,24 @@ Feb 14 15:25:41 10.43.10.13  U14:25:40.818|b80f3b50(drbd_r_vamp-4nodes) drbdd <3
 	of the network timeout BSOD we've already fixed). We now
 	try to fix the spinlocks and then try again.
 
+	Update: It was probably the Intel network driver (or a
+	combination of network driver emulation in qemu and the
+	driver). We are now redoing the test with the Realtek
+	driver and NIC emulation, so far no BSOD (but let's wait
+	until tomorrow).
+
+	Update: When using the Realtek driver and NICs, it
+	stopped now working, no BSOD but we could not
+	start any more processes. Opening explorer for example
+	showed a panel saying out of system resources. May have
+	several reasons: most likely we cannot start kernel
+	threads or we are out of IRPs (but then printk wouldn't
+	work either, but it does ...). So it seems to be some
+	resource leak (which also makes sense because it always
+	takes around 1500 iterations of write-fs-loop.sh which
+	equals around 80GB of data). According to task manager
+	it is not the physical RAM.
+
 TODO: Bug: BSOD on Disconnect on Secondary (Windows 10)
 
 	Primary (Windows 7) doing I/O.
@@ -62,6 +80,17 @@ Feb 15 16:39:23 10.43.10.13  U15:39:23.579|3e3eb560(not_drbd_thread) static_inli
 
 	(also in original log). Is this a new upstream bug?
 	(Test with Linux/Linux)
+
+	Update: Now testing with Linux/Windows (Linux doing up-down loop,
+	Windows being Primary and doing I/O). No BSOD so far.
+
+TODO: Bug: System freeze on Windows 2016 Primary on SyncSource (with spinlock patches).
+
+	There's a (probably new) bug that freezes the System: Secondary
+	(Linux) doing Up/Down loop Primary (Server 2016) doing a
+	write-fs-loop.
+
+	Now redoing the test with 82df601 on Server 2016
 
 TODO: Bug: Had a Sync stall in 4 node setup
 
@@ -169,6 +198,23 @@ TODO: Implement: fix the spinlocks (see comments in drbd_windows.c).
 	probably not the way to go finally. Plus Windows 10
 	kernels (and probably others) BSOD if the IRQL is
 	changed in a wrong way (by spin_unlock()).
+
+	Update: We found a (probably 'illegal') way of acquiring
+	a spinlock without touching the IRQL (this is what spin_lock/
+	spin_unlock is supposed to do). Calling
+	KeAcquireSpinLockAtDpcLevel does this (but according to
+	the docs, IRQL is required to be >= DISPATCH_LEVEL here).
+
+	Of the spinlock 'bugs' only a few remained (on Windows 10
+	when becoming Primary, IRQL is a APC_LEVEL (1) when executing
+	I/O finished callbacks). After fixing those is runs quite
+	stable, however more tests are required (we had a new hang on
+	Windows 7 / Secondary on connection loss which is probably
+	due to the KeAcquireSpinLockAtDpcLevel patch).
+
+	If possible revert (some of the) spin_lock_irqsave patches
+	later (they don't hurt, but are probably not neccessary
+	any more).
 
 TODO: Code quality: RCU needs change
 	At least call_rcu now calls the function. I don't think
@@ -446,11 +492,6 @@ TODO: Bug: Sometimes permissions of userland binaries are wrong
 
 TODO: Feature: Does it work with Volumes spanning several HDDs?
 
-TODO: Code quality: allow recursive printk's.
-
-	For example within SendTo (check if there is a printk
-	ongoing and write it just into the ring buffer if yes).
-
 TODO: Code quality: have refcount on struct socket
 
 	Not sure if we do a sock_release() while in SendPage().
@@ -466,9 +507,13 @@ TODO: Bug: On re-attach after Primary Diskless stuck in Negotiating
 	blocked: upper (and not vice versa).
 	(dead lock cannot do drbdadm down and driver unload)
 
+	Update: still there?
+
 TODO: Bug: Windows Server 2016 complains about unclean shutdown of file system.
 
 	On clicking repair, nothing happens.
+
+	Update: still there?
 
 TODO: Upstream: Fix 2 cygrunsrv bugs
 
@@ -4776,4 +4821,13 @@ Done: Bug: Right now, sc stop windrbd stalls.
 	Update: Also close incoming wsk sockets that are not
 	accepted by DRBD (see 36d3d972). Stall problem is
 	fixed now.
+
+Done: Code quality: allow recursive printk's.
+
+	For example within SendTo (check if there is a printk
+	ongoing and write it just into the ring buffer if yes).
+
+	Implemented. Be aware that logging all the time in a
+	function in the printk still endless loops (logging
+	only error conditions should work, tough).
 
