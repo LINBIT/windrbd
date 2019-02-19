@@ -1,0 +1,63 @@
+From 91a100411f78639094e6dba1c09293e8f109ae88 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 19 Feb 2019 16:41:15 +0100
+Subject: [PATCH] spin_lock_irqsave for some functions in drbd_req.c
+
+Needed for Windows 10 (else BSOD on becoming Primary). IRQL is
+1 (APC_LEVEL) when acquiring those locks. Windows 10 BSODs when
+IRQL is restored to a wrong IRQL. We see them in the spinlock
+debugger.
+---
+ drbd/drbd_req.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
+index 68854d8..313841d 100644
+--- a/drbd/drbd_req.c
++++ b/drbd/drbd_req.c
+@@ -1738,8 +1738,9 @@ static void drbd_send_and_submit(struct drbd_device *device, struct drbd_request
+ 	struct bio_and_error m = { NULL, };
+ 	bool no_remote = false;
+ 	bool submit_private_bio = false;
++	int flags;
+ 
+-	spin_lock_irq(&resource->req_lock);
++	spin_lock_irqsave(&resource->req_lock, flags);
+ 	if (rw == WRITE) {
+ 		/* This may temporarily give up the req_lock,
+ 		 * but will re-aquire it before it returns here.
+@@ -1866,7 +1867,7 @@ nodata:
+ 
+ out:
+ 	drbd_req_put_completion_ref(req, &m, 1);
+-	spin_unlock_irq(&resource->req_lock);
++	spin_unlock_irqrestore(&resource->req_lock, flags);
+ 
+ 	/* Even though above is a kref_put(), this is safe.
+ 	 * As long as we still need to submit our private bio,
+@@ -1889,6 +1890,7 @@ static bool inc_ap_bio_cond(struct drbd_device *device, int rw)
+ {
+ 	bool rv = false;
+ 	unsigned int nr_requests;
++	int flags;
+ 
+ 	if (test_bit(NEW_CUR_UUID, &device->flags)) {
+ 		if (!test_and_set_bit(WRITING_NEW_CUR_UUID, &device->flags))
+@@ -1897,12 +1899,12 @@ static bool inc_ap_bio_cond(struct drbd_device *device, int rw)
+ 		return false;
+ 	}
+ 
+-	spin_lock_irq(&device->resource->req_lock);
++	spin_lock_irqsave(&device->resource->req_lock, flags);
+ 	nr_requests = device->resource->res_opts.nr_requests;
+ 	rv = may_inc_ap_bio(device) && atomic_read(&device->ap_bio_cnt[rw]) < nr_requests;
+ 	if (rv)
+ 		atomic_inc(&device->ap_bio_cnt[rw]);
+-	spin_unlock_irq(&device->resource->req_lock);
++	spin_unlock_irqrestore(&device->resource->req_lock, flags);
+ 
+ 	return rv;
+ }
+-- 
+2.17.0
+
