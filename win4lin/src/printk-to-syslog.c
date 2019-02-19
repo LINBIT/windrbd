@@ -183,23 +183,11 @@ int _printk(const char *func, const char *fmt, ...)
 	static int buffer_overflows = 0;
 	KIRQL flags;
 
-#if 0
-	int is_bind = (strcmp(func, "Bind") == 0);
-	int is_sendto = (strcmp(func, "SendTo") == 0);
-
-	if (is_bind || is_sendto) {
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, printk called from Bind() or SendTo() (which we need interally).\n");
-	/* TODO: return?? */
-	}
-#endif
-
 	buffer[0] = '\0';
 
-	if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {
-		printks_in_irq_context++;
-	} else {
-	/* Indicate how much might be lost on UDP */
-		if (printks_in_irq_context) {
+	if (KeGetCurrentIrql() < DISPATCH_LEVEL && in_printk == 0) {
+			/* Indicate how much might be lost on UDP */
+		if (printks_in_irq_context > 0) {
 			if (printks_in_irq_context == 1)
 				status = RtlStringCbPrintfA(buffer, sizeof(buffer)-1, " [last message was in IRQ context or recursive]\n");
 			else
@@ -340,6 +328,8 @@ int _printk(const char *func, const char *fmt, ...)
 		mutex_unlock(&send_mutex);
 
 		in_printk = 0;	/* set to 1 by currently_in_printk function */
+	} else {
+		printks_in_irq_context++;
 	}
 #endif
 	return 1;	/* TODO: strlen(buffer) */
