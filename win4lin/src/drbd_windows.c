@@ -1318,12 +1318,12 @@ void spin_unlock_irq_debug(spinlock_t *lock, const char *file, int line, const c
 
 void spin_lock_debug(spinlock_t *lock, const char *file, int line, const char *func)
 {
-	spin_lock_irq_debug(lock, file, line, func);
+	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
 }
 
 void spin_unlock_debug(spinlock_t *lock, const char *file, int line, const char *func)
 {
-	spin_unlock_irq_debug(lock, file, line, func);
+	KeReleaseSpinLockFromDpcLevel(&lock->spinLock);
 }
 
 void spin_lock_bh_debug(spinlock_t *lock, const char *file, int line, const char *func)
