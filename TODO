@@ -92,6 +92,10 @@ TODO: Bug: System freeze on Windows 2016 Primary on SyncSource (with spinlock pa
 
 	Now redoing the test with 82df601 on Server 2016
 
+	Update: Test ran for 20 hours, no freeze. Also currently
+	testing with 5df572, so far no freeze (1 hour). Maybe
+	this was something else ... can't reproduce at the moment.
+
 TODO: Bug: Had a Sync stall in 4 node setup
 
 	One node at 98.9 percent other at around 50% (but 130% on its

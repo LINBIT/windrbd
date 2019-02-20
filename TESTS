@@ -1,5 +1,46 @@
 -----------------------------------------
 
+Feb 20 2019
+
+Write to NTFS while invalidating remote
+
+Primary (5df5726): Server 2016 doing I/O over file system and invalidate-remote loop (15 seconds interval)
+Secondary (0a978d0): Linux just being connected
+
+After putting I/O:
+
+vamp-2nodes role:Primary
+  volume:1 disk:UpToDate
+  wintestubuntu role:Secondary
+    volume:1 replication:SyncSource peer-disk:Inconsistent
+
+(without progress bar)
+-----------------------------------------
+
+Feb 20
+
+Write to NTFS 
+
+Primary (bc90bb1): Windows 10 phys machine doing I/O over file system
+Secondary (5df5726): Windows 7 VM
+
+Some resource leak (after about 1500 iterations) cannot
+start new processes on Secondary. This seems to be
+Windows 7 specific.
+
+-----------------------------------------
+
+Feb 19 - Feb 20
+
+Write to NTFS while connecting / disconnecting
+
+Primary (82df601): Server 2016 doing I/O over file system
+Secondary (0a978d0): Linux doing up-down loop
+
+Ran 20 hours (36382 iterations, 1.8 TB)
+
+-----------------------------------------
+
 Basic DRBD functionality on a Windows 7 without Service Pack 1
 
 It works, but Windows fails to accept Linbit certificate. So,
