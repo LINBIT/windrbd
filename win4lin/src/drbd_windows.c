@@ -1352,12 +1352,12 @@ void spin_unlock_irq(spinlock_t *lock)
 
 void spin_lock(spinlock_t *lock)
 {
-	spin_lock_irq(lock);
+	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
 }
 
 void spin_unlock(spinlock_t *lock)
 {
-	spin_unlock_irq(lock);
+	KeReleaseSpinLockFromDpcLevel(&lock->spinLock);
 }
 
 void spin_lock_bh(spinlock_t *lock)
