@@ -31,6 +31,9 @@ static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 
 static int winsock_to_linux_error(NTSTATUS status)
 {
+	if (status != STATUS_SUCCESS)
+		printk("got status %x\n", status);
+
 	switch (status) {
 	case STATUS_SUCCESS:
 		return 0;
