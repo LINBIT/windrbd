@@ -25,12 +25,26 @@ struct poison_after {
 	int poison2;
 };
 
+static int kmalloc_errors = 0;
+static int print_kmalloc_error = 0;
+
 void *kmalloc_debug(size_t size, int flag, const char *file, int line, const char *func)
 {
 	struct memory *mem;
 	struct poison_after *poison_after;
 	size_t full_size;
 	ULONG_PTR flags;
+
+	if (kmalloc_errors > 0) {
+
+			/* Don't print all the time, since printk itself
+			 * also kmalloc's.
+			 */
+
+		if (print_kmalloc_error % 10 == 0)
+			printk("%d kmalloc errors so far (%d)\n", kmalloc_errors, print_kmalloc_error);
+		print_kmalloc_error++;
+	}
 
 	full_size = sizeof(struct memory) + size + sizeof(struct poison_after);
 	mem = ExAllocatePoolWithTag(NonPagedPool, full_size, 'DRBD');
@@ -39,6 +53,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 		if (strcmp(func, "SendTo") != 0)
 			printk("kmalloc_debug: Warning: cannot allocate memory of size %d, %d bytes requested by function %s at %s:%d.\n", full_size, size, func, file, line);
 
+		kmalloc_errors++;
 		return NULL;
 	}
 
