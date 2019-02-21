@@ -370,15 +370,15 @@ Feb  5 14:01:17 10.43.10.11  U13:01:17.453|4260bc80(drbd_a_vamp-4nodes) bm_print
 
 	Upstream bug?
 
+TODO: Bug: BSOD on load/unload loop
+
+	Appears to be a resource leak in networking (does not
+	connect since peer resource is down). No BSOD so far
+	when doing only status and also when doing only attach.
+
 TODO: Bug: printk eats boot messages
 
 TODO: Bug: drbdadm wait-connect does not work as expected
-
-TODO: Bug: clear error state on socket if status is success.
-
-	This caused printk on boot not to work. We now have a
-	workaround (discard the socket if SendTo() returns an
-	error) but one day we want to fix this.
 
 TODO: Bug: Diskless Primary BSOD when connection failed
 
@@ -4834,4 +4834,14 @@ Done: Code quality: allow recursive printk's.
 	Implemented. Be aware that logging all the time in a
 	function in the printk still endless loops (logging
 	only error conditions should work, tough).
+
+Done: Code quality: clear error state on socket if status is success.
+
+	This caused printk on boot not to work. We now have a
+	workaround (discard the socket if SendTo() returns an
+	error) but one day we want to fix this.
+
+	Update: we now clear the error status for datagram sockets
+	if status is success later. This allows us to reuse the
+	socket in printk.
 
