@@ -1318,12 +1318,15 @@ void spin_unlock_irq_debug(spinlock_t *lock, const char *file, int line, const c
 
 void spin_lock_debug(spinlock_t *lock, const char *file, int line, const char *func)
 {
-	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
+	spin_lock_irq_debug(lock, file, line, func);
+		/* Using this caused deadlock on Windows Server 2016? */
+	/* KeAcquireSpinLockAtDpcLevel(&lock->spinLock); */
 }
 
 void spin_unlock_debug(spinlock_t *lock, const char *file, int line, const char *func)
 {
-	KeReleaseSpinLockFromDpcLevel(&lock->spinLock);
+	spin_unlock_irq_debug(lock, file, line, func);
+	/* KeReleaseSpinLockFromDpcLevel(&lock->spinLock); */
 }
 
 void spin_lock_bh_debug(spinlock_t *lock, const char *file, int line, const char *func)
@@ -1352,12 +1355,14 @@ void spin_unlock_irq(spinlock_t *lock)
 
 void spin_lock(spinlock_t *lock)
 {
-	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
+	spin_lock_irq(lock);
+	/* KeAcquireSpinLockAtDpcLevel(&lock->spinLock); */
 }
 
 void spin_unlock(spinlock_t *lock)
 {
-	KeReleaseSpinLockFromDpcLevel(&lock->spinLock);
+	spin_unlock_irq(lock);
+	/* KeReleaseSpinLockFromDpcLevel(&lock->spinLock); */
 }
 
 void spin_lock_bh(spinlock_t *lock)
