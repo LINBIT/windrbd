@@ -102,6 +102,7 @@ struct socket {
 		/* Later this could be a list ... */
 	struct _WSK_SOCKET *accept_wsk_socket;
 	int dropped_accept_sockets;
+	KEVENT accept_event;
 
 	struct sock *sk;
 };

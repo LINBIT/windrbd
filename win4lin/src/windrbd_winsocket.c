@@ -513,16 +513,19 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	struct _WSK_SOCKET *wsk_socket;
 	struct socket *accept_socket;
 
-	if ((io_flags | O_NONBLOCK) == 0)
-		return -EOPNOTSUPP;
-
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
+retry:
 	mutex_lock(&socket->accept_socket_mutex);
 	if (socket->accept_wsk_socket == NULL) {
 		mutex_unlock(&socket->accept_socket_mutex);
-		return -EWOULDBLOCK;
+		if ((io_flags & O_NONBLOCK) != 0)
+			return -EWOULDBLOCK;
+
+			/* TODO: handle signals */
+		KeWaitForSingleObject(&socket->accept_event, Executive, KernelMode, FALSE, NULL);
+		goto retry;
 	}
 	wsk_socket = socket->accept_wsk_socket;
 	socket->accept_wsk_socket = NULL;
@@ -1296,6 +1299,7 @@ static int sock_create_linux_socket(struct socket **out)
 	spin_lock_init(&socket->send_buf_counters_lock);
 	mutex_init(&socket->accept_socket_mutex);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
+	KeInitializeEvent(&socket->accept_event, SynchronizationEvent, FALSE);
 	mutex_init(&socket->wsk_mutex);
 	socket->ops = &winsocket_ops;
 
@@ -1347,6 +1351,8 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	}
 	socket->accept_wsk_socket = AcceptSocket;
 	mutex_unlock(&socket->accept_socket_mutex);
+
+	KeSetEvent(&socket->accept_event, IO_NO_INCREMENT, FALSE);
 
 	if (socket->sk->sk_state_change)
 		socket->sk->sk_state_change(socket->sk);
@@ -1452,8 +1458,79 @@ void windrbd_update_socket_buffer_sizes(struct socket *socket)
 	}
 }
 
+static NTSTATUS receive_a_lot(void *unused)
+{
+	struct socket *s, *s2;
+	int err;
+	struct sockaddr_in my_addr;
+	static char bigbuffer[1024*128];
+	size_t bytes_received;
+
+        struct kvec iov = {
+                .iov_base = bigbuffer,
+                .iov_len = sizeof(bigbuffer),
+        };
+        struct msghdr msg = {
+                .msg_flags = MSG_WAITALL
+        };
+
+	err = sock_create_kern(&init_net, AF_INET, SOCK_LISTEN, IPPROTO_TCP, &s);
+
+	if (err < 0) {
+		printk("sock_create_kern returned %d\n", err);
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	my_addr.sin_family = AF_INET;
+	my_addr.sin_addr.s_addr = 0;
+	my_addr.sin_port = htons(5678);
+
+        err = s->ops->bind(s, (struct sockaddr *)&my_addr, sizeof(my_addr));
+	if (err < 0) {
+		printk("bind returned %d\n", err);
+		sock_release(s);
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+        err = s->ops->listen(s, 10);
+	if (err < 0) {
+		printk("listen returned %d\n", err);
+		sock_release(s);
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	err = kernel_accept(s, &s2, 0);
+	if (err < 0) {
+		printk("accept returned %d\n", err);
+		sock_release(s);
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+	printk("connection accepted\n");
+
+	bytes_received = 0;
+	while (1) {
+		err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+		if (err < 0) {
+			printk("receive returned %d\n", err);
+			break;
+		}
+		if (err != iov.iov_len) {
+			printk("short receive (%d, expected %d)\n", err, iov.iov_len);
+			break;
+		}
+		bytes_received += err;
+		if ((bytes_received % (1024*1024)) == 0)
+			printk("%lld bytes received\n", bytes_received);
+	}
+	sock_release(s);
+	sock_release(s2);
+
+	return STATUS_SUCCESS;
+}
 
 static void *init_wsk_thread;
+
+static void *r_thread;
 
 /* This is a separate thread, since it blocks until Windows has finished
  * booting. It initializes everything we need and then exits. You can
@@ -1477,6 +1554,7 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 		printk("WSK initialized.\n");
 	}
 
+	status = windrbd_create_windows_thread(receive_a_lot, NULL, &r_thread);
 #if 0
 	err = windrbd_create_boot_device();
 	printk("windrbd_create_boot_device returned %d\n", err);
