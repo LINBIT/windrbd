@@ -1,0 +1,48 @@
+From c2db4e0aa343c70b69bdc87213206d7fcdfe8a89 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 26 Feb 2019 14:44:20 +0100
+Subject: [PATCH] Use irqsave/irqrestore in lock_all_resources.
+
+No need to save the flags, since we know that IRQL is DISPATCH_LEVEL
+(because inside local_irq_disable, which raises IRQL to DISPATCH_LEVEL),
+so fortunately we don't need to modify the lock_all_resources()
+interface. Nevertheless we want to restore IRQL to the correct
+value (if we don't this might be the reason for a Windows Server 2016
+hang).
+---
+ drbd/drbd_main.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index f073d14..1ff3775 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -5413,19 +5413,22 @@ void lock_all_resources(void)
+ {
+ 	struct drbd_resource *resource;
+ 	int __maybe_unused i = 0;
++	KIRQL unused_flags;
+ 
+ 	mutex_lock(&resources_mutex);
+ 	local_irq_disable();
+ 	for_each_resource(resource, &drbd_resources)
+-		spin_lock_nested(&resource->req_lock, i++);
++		spin_lock_irqsave(&resource->req_lock, unused_flags);
+ }
+ 
+ void unlock_all_resources(void)
+ {
+ 	struct drbd_resource *resource;
+-
++		/* Since local_irq_enable raises IRQL to DISPATCH_LEVEL (2)
++		 * we can savely assume that before local_irq_enable() IRQL			 * is supposed to be DISPATCH_LEVEL.
++		 */
+ 	for_each_resource(resource, &drbd_resources)
+-		spin_unlock(&resource->req_lock);
++		spin_unlock_irqrestore(&resource->req_lock, DISPATCH_LEVEL);
+ 	local_irq_enable();
+ 	mutex_unlock(&resources_mutex);
+ }
+-- 
+2.17.0
+
