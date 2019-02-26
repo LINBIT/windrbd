@@ -9,6 +9,15 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
+TODO: kmalloc errors on Win7 VM (on my Macbook)
+
+	When running
+		drbdadm invalidate-remote ; drbdadm wait-sync
+	in a loop.
+
+	Didn't crash but detached. Probably this is what it is
+	supposed to do...
+
 TODO: Bug: BSOD on Secondary Windows 7 in 4 node setup
 
 	Primary (Windows 10) I/O, 4 nodes connected (mesh).
