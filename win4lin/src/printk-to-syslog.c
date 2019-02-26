@@ -7,6 +7,10 @@
 /* Define this if you do not want to use UDP logging. */
 /* #define NO_NET_PRINTK 1 */
 
+/* TODO: use (and test) O_NONBLOCK sending again, once weird printk
+ * losses are fixed.
+ */
+
 #define RING_BUFFER_SIZE 1048576
 
 char g_syslog_ip[SYSLOG_IP_SIZE];
