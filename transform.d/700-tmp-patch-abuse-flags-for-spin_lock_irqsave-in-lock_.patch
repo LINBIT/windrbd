@@ -1,0 +1,51 @@
+From 6d0150853d09078a956c6785d1850b6c2468d89d Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 26 Feb 2019 19:03:19 +0100
+Subject: [PATCH] tmp patch: abuse flags for spin_lock_irqsave in
+ lock_all_resources.
+
+This only works as long as there is only one resource.
+---
+ drbd/drbd_main.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index b5d6972..60953c5 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -5415,10 +5415,15 @@ void lock_all_resources(KIRQL *flags_p)
+ 	int __maybe_unused i = 0;
+ 	KIRQL unused_flags;
+ 
++printk("1\n");
+ 	mutex_lock(&resources_mutex);
++printk("2\n");
+ 	local_irq_disable(flags_p);
++printk("3 *flags_p is %d\n", *flags_p);
++		/* TODO: only one resource */
+ 	for_each_resource(resource, &drbd_resources)
+-		spin_lock_irqsave(&resource->req_lock, unused_flags);
++		spin_lock_irqsave(&resource->req_lock, *flags_p);
++printk("4 *flags_p is %d\n", *flags_p);
+ }
+ 
+ void unlock_all_resources(KIRQL flags)
+@@ -5427,10 +5432,14 @@ void unlock_all_resources(KIRQL flags)
+ 		/* Since local_irq_enable raises IRQL to DISPATCH_LEVEL (2)
+ 		 * we can savely assume that before local_irq_enable() IRQL			 * is supposed to be DISPATCH_LEVEL.
+ 		 */
++printk("1\n");
+ 	for_each_resource(resource, &drbd_resources)
+-		spin_unlock_irqrestore(&resource->req_lock, DISPATCH_LEVEL);
++		spin_unlock_irqrestore(&resource->req_lock, flags);
++printk("2\n");
+ 	local_irq_enable(flags);
++printk("3\n");
+ 	mutex_unlock(&resources_mutex);
++printk("4\n");
+ }
+ 
+ LONG_PTR twopc_timeout(struct drbd_resource *resource)
+-- 
+2.17.0
+
