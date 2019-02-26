@@ -1386,13 +1386,15 @@ static spinlock_t irq_lock;
 
 void local_irq_disable(KIRQL *flags_p)
 {	
+	KeEnterCriticalRegion();
 		/* This is a macro that sets *flags_p, see spinlock.h */
-	spin_lock_irqsave(&irq_lock, *flags_p);
+//	spin_lock_irqsave(&irq_lock, *flags_p);
 }
 
 void local_irq_enable(KIRQL flags)
 {
-	spin_unlock_irqrestore(&irq_lock, flags);
+	KeLeaveCriticalRegion();
+//	spin_unlock_irqrestore(&irq_lock, flags);
 }
 
 int spin_trylock(spinlock_t *lock)
