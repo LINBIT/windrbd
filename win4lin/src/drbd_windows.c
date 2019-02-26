@@ -1377,20 +1377,22 @@ void spin_unlock_bh(spinlock_t *lock)
 
 #endif
 
-/* TODO: static? It is also probably not a bad idea to initialize this
-   somewhere ...
- */
+static spinlock_t irq_lock;
 
-spinlock_t g_irqLock;
+	/* These just grab a spinlock, thereby raising IRQL to
+	 * DISPATCH_LEVEL (which does not disable interrupts,
+	 * but is sufficient for our purposes ... hopefully).
+	 */
 
-void local_irq_disable()
+void local_irq_disable(KIRQL *flags_p)
 {	
-	spin_lock_irq(&g_irqLock);
+		/* This is a macro that sets *flags_p, see spinlock.h */
+	spin_lock_irqsave(&irq_lock, *flags_p);
 }
 
-void local_irq_enable()
+void local_irq_enable(KIRQL flags)
 {
-	spin_unlock_irq(&g_irqLock);
+	spin_unlock_irqrestore(&irq_lock, flags);
 }
 
 int spin_trylock(spinlock_t *lock)
@@ -3377,5 +3379,6 @@ void init_windrbd(void)
 {
 	mutex_init(&read_bootsector_mutex);
 	spin_lock_init(&g_test_and_change_bit_lock);
+	spin_lock_init(&irq_lock);
 }
 

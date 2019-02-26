@@ -1238,8 +1238,8 @@ static inline void call_rcu(struct rcu_head *head, rcu_callback_t func)
 	ExReleaseSpinLockExclusive(&g_rcuLock, rcu_flags);
 }
 
-extern void local_irq_disable();
-extern void local_irq_enable();
+extern void local_irq_disable(KIRQL *flags);
+extern void local_irq_enable(KIRQL flags);
 
 #define bdevname(dev, buf)   dev->bd_disk->disk_name
 

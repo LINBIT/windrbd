@@ -1,0 +1,75 @@
+From 709c768edf1a52da116c492f9d2f54e2dd23d9b8 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 26 Feb 2019 17:32:55 +0100
+Subject: [PATCH 4/4] drbd_sender: lock/unlock_all_resources: Store current
+ IRQL in flags.
+
+We changed the interface to local_irq_disable, which in turn
+needs some patches in DRBD files.
+---
+ drbd/drbd_sender.c | 19 ++++++++++++-------
+ 1 file changed, 12 insertions(+), 7 deletions(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index a67418f..7d31b0e 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -1725,16 +1725,20 @@ static bool drbd_resume_next(struct drbd_device *device)
+ 
+ void resume_next_sg(struct drbd_device *device)
+ {
+-	lock_all_resources();
++	KIRQL flags;
++
++	lock_all_resources(&flags);
+ 	drbd_resume_next(device);
+-	unlock_all_resources();
++	unlock_all_resources(flags);
+ }
+ 
+ void suspend_other_sg(struct drbd_device *device)
+ {
+-	lock_all_resources();
++	KIRQL flags;
++
++	lock_all_resources(&flags);
+ 	drbd_pause_after(device);
+-	unlock_all_resources();
++	unlock_all_resources(flags);
+ }
+ 
+ /* caller must hold resources_mutex */
+@@ -1916,6 +1920,7 @@ void drbd_start_resync(struct drbd_peer_device *peer_device, enum drbd_repl_stat
+ 	enum drbd_repl_state repl_state;
+ 	int r;
+ 	int flags;
++	KIRQL flags2;
+ 
+ 	spin_lock_irq(&device->resource->req_lock);
+ 	repl_state = peer_device->repl_state[NOW];
+@@ -1968,11 +1973,11 @@ void drbd_start_resync(struct drbd_peer_device *peer_device, enum drbd_repl_stat
+ 		add_timer(&peer_device->start_resync_timer);
+ 		return;
+ 	}
+-	lock_all_resources();
++	lock_all_resources(&flags2);
+ 	clear_bit(B_RS_H_DONE, &peer_device->flags);
+ 	if (connection->cstate[NOW] < C_CONNECTED ||
+ 	    !get_ldev_if_state(device, D_NEGOTIATING)) {
+-		unlock_all_resources();
++		unlock_all_resources(flags2);
+ 		goto out;
+ 	}
+ 
+@@ -2004,7 +2009,7 @@ void drbd_start_resync(struct drbd_peer_device *peer_device, enum drbd_repl_stat
+ 		spin_unlock_irqrestore(&device->al_lock, flags);
+ 	}
+ 
+-	unlock_all_resources();
++	unlock_all_resources(flags2);
+ 
+ 	if (r == SS_SUCCESS) {
+ 		drbd_info(peer_device, "Began resync as %s (will sync %lu KB [%lu bits set]).\n",
+-- 
+2.17.0
+
