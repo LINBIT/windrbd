@@ -76,6 +76,11 @@ Feb 14 15:25:41 10.43.10.13  U14:25:40.818|b80f3b50(drbd_r_vamp-4nodes) drbdd <3
 	available. We hope that this does not happen in blocking
 	mode.
 
+	Update: Now BSODs on network error (no more printk's after
+	receive returned error). We now try with ChargeQuota set
+	to TRUE on IoAllocateIrp. Another idea would also be
+	to associate the Mdl with the Irp (see InitWskData()).
+
 TODO: Bug: BSOD on Disconnect on Secondary (Windows 10)
 
 	Primary (Windows 7) doing I/O.
