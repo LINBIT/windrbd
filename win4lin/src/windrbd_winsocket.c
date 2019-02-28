@@ -97,7 +97,7 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent)
 {
 	struct _IRP *irp;
 
-	irp = IoAllocateIrp(1, FALSE);
+	irp = IoAllocateIrp(1, TRUE);
 	if (irp == NULL) {
 		dbg("IoAllocateIrp returned NULL, out of IRPs?\n");
 		return NULL;
@@ -125,6 +125,7 @@ static NTSTATUS InitWskBuffer(
     WskBuffer->Offset = 0;
     WskBuffer->Length = BufferSize;
 
+		/* TODO: associate IRP? */
     WskBuffer->Mdl = IoAllocateMdl(Buffer, BufferSize, FALSE, FALSE, NULL);
     if (!WskBuffer->Mdl) {
 	return STATUS_INSUFFICIENT_RESOURCES;
@@ -826,7 +827,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
 
-	Irp = IoAllocateIrp(1, FALSE);
+	Irp = IoAllocateIrp(1, TRUE);
 	if (Irp == NULL) {
 		err = -ENOMEM;
 		goto out_free_wsk_buffer_mdl;
@@ -971,7 +972,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 		completion->socket = socket;
 	}
 
-	irp = IoAllocateIrp(1, FALSE);
+	irp = IoAllocateIrp(1, TRUE);
 	if (irp == NULL) {
 		if ((flags & O_NONBLOCK) == O_NONBLOCK) {
 			have_sent(socket, BufferSize);
