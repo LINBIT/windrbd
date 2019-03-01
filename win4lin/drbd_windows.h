@@ -1104,20 +1104,24 @@ TODO: change to static inline and make Linux compatible
 
 #define wait_event_interruptible_timeout(ret, wq, condition, to) \
 	do {\
-		ret = 0;	\
-		int t = 0;\
-		int real_timeout = to/100; /*divide*/\
+		int __ret = 0;	\
+		int __t = 0;\
+		int __real_timeout = to/100; /*divide*/\
 		for (;;) { \
 			if (condition) {   \
 				break;      \
 			} \
-			if (++t > real_timeout) {\
-				ret = -ETIMEDOUT;\
+			if (++__t > __real_timeout) {\
+				__ret = -ETIMEDOUT;\
 				break;\
 			}\
-			ret = schedule(&wq, 100, __FUNCTION__, __LINE__);  /* real_timeout = 0.1 sec*/ \
-			if (-DRBD_SIGKILL == ret) { break; } \
+			__ret = schedule(&wq, 100, __FUNCTION__, __LINE__);  /* __real_timeout = 0.1 sec*/ \
+			if (-DRBD_SIGKILL == __ret) {\
+				__ret = -EAGAIN;\
+				break;\
+			} \
 		}\
+                ret = __ret;\
 	} while (0)
 
 #define wake_up(q) _wake_up(q, __FUNCTION__, __LINE__)
