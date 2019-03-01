@@ -97,6 +97,7 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent)
 {
 	struct _IRP *irp;
 
+		/* TODO: FALSE again ... */
 	irp = IoAllocateIrp(1, TRUE);
 	if (irp == NULL) {
 		dbg("IoAllocateIrp returned NULL, out of IRPs?\n");
