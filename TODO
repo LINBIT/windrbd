@@ -81,6 +81,11 @@ Feb 14 15:25:41 10.43.10.13  U14:25:40.818|b80f3b50(drbd_r_vamp-4nodes) drbdd <3
 	to TRUE on IoAllocateIrp. Another idea would also be
 	to associate the Mdl with the Irp (see InitWskData()).
 
+	Update: We definately lose (up to 20) printk's when
+	resource X (yet unknown) is short, as a test showed.
+	We need to see them (resend them when ack-receiver
+	thread is terminated).
+
 TODO: Bug: BSOD on Disconnect on Secondary (Windows 10)
 
 	Primary (Windows 7) doing I/O.
@@ -118,6 +123,13 @@ TODO: Bug: System freeze on Windows 2016 Primary on SyncSource (with spinlock pa
 	Update: Freeze after 6 hours of running the test. We now
 	fixed the (proably last) spin_lock bug (in lock_all_resources)
 	and hope that the hang does not happen again.
+
+	Update: Freeze with 70bdf4e (after 2-3 hours with sync
+	interrupted on peer).
+
+	Now trying with 0.9.1-1 ... no freeze so far. Also trying
+	with current (0a978d01) DRBD between Linux and Linux
+	(same test).
 
 TODO: Bug: Had a Sync stall in 4 node setup
 
