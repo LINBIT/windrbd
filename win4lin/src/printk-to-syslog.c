@@ -130,7 +130,7 @@ static int open_syslog_socket(void)
 				err = SendTo(printk_udp_socket,
 						probe,
 						strlen(probe),
-						(PSOCKADDR)&printk_udp_target, O_NONBLOCK);
+						(PSOCKADDR)&printk_udp_target, 0);
 
 					/* -ENETUNREACH on booting */
 				if (err < 0) {
@@ -316,7 +316,7 @@ int _printk(const char *func, const char *fmt, ...)
 					status = SendTo(printk_udp_socket,
 							line,
 							line_pos,
-							(PSOCKADDR)&printk_udp_target, O_NONBLOCK);
+							(PSOCKADDR)&printk_udp_target, 0);
 					if (status < 0) {
 						DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, SendTo returned error: %s\n", buffer);
 
