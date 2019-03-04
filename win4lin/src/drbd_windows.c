@@ -1320,6 +1320,7 @@ void spin_lock_debug(spinlock_t *lock, const char *file, int line, const char *f
 {
 	spin_lock_irq_debug(lock, file, line, func);
 		/* Using this caused deadlock on Windows Server 2016? */
+		/* No, it was something else (bug also in 0.9.1) */
 	/* KeAcquireSpinLockAtDpcLevel(&lock->spinLock); */
 }
 
@@ -1386,15 +1387,15 @@ static spinlock_t irq_lock;
 
 void local_irq_disable(KIRQL *flags_p)
 {	
-	KeEnterCriticalRegion();
+//	KeEnterCriticalRegion();
 		/* This is a macro that sets *flags_p, see spinlock.h */
-//	spin_lock_irqsave(&irq_lock, *flags_p);
+	spin_lock_irqsave(&irq_lock, *flags_p);
 }
 
 void local_irq_enable(KIRQL flags)
 {
-	KeLeaveCriticalRegion();
-//	spin_unlock_irqrestore(&irq_lock, flags);
+//	KeLeaveCriticalRegion();
+	spin_unlock_irqrestore(&irq_lock, flags);
 }
 
 int spin_trylock(spinlock_t *lock)
