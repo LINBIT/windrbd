@@ -134,6 +134,8 @@ static void windrbd_thread_setup(void *targ)
 	if (ret != 0)
 		printk(KERN_WARNING "Thread %s returned non-zero exit status. Ignored, since Windows threads are void.\n", t->comm);
 
+printk_reprint(25*100);  /* approx 20-30 lines */ 
+
 	t->is_zombie = 1;
 }
 

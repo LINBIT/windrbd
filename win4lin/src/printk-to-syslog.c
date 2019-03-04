@@ -348,9 +348,6 @@ void printk_reprint(size_t bytes)
 {
 	int flags;
 
-printk("ringbuffer_tail is %d\n", ring_buffer_tail);
-return;
-
         spin_lock_irqsave(&ring_buffer_lock, flags);
 
 	ring_buffer_tail -= bytes;
@@ -358,5 +355,5 @@ return;
 
         spin_unlock_irqrestore(&ring_buffer_lock, flags);
 
-	printk("Last %d bytes printed again\n");
+	printk("Last %d bytes printed again\n", bytes);
 }
