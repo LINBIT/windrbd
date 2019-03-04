@@ -1,0 +1,29 @@
+From 0ee8345441f4d1bb1b147266225e14b5eb9425d9 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 26 Feb 2019 17:31:06 +0100
+Subject: [PATCH 1/4] lock/unlock_all_resources: Store current IRQL in flags.
+
+We changed the interface to local_irq_disable, which in turn
+needs some patches in DRBD files.
+---
+ drbd/drbd_int.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index 515648f..2643b3f 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -252,8 +252,8 @@ enum drbd_stream;
+ 
+ extern int drbd_wait_misc(struct drbd_device *, struct drbd_peer_device *, struct drbd_interval *);
+ 
+-extern void lock_all_resources(void);
+-extern void unlock_all_resources(void);
++extern void lock_all_resources(KIRQL *flags);
++extern void unlock_all_resources(KIRQL flags);
+ 
+ extern enum drbd_disk_state disk_state_from_md(struct drbd_device *);
+ extern bool want_bitmap(struct drbd_peer_device *peer_device);
+-- 
+2.17.0
+
