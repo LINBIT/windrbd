@@ -344,3 +344,19 @@ int _printk(const char *func, const char *fmt, ...)
 	return 1;	/* TODO: strlen(buffer) */
 }
 
+void printk_reprint(size_t bytes)
+{
+	int flags;
+
+printk("ringbuffer_tail is %d\n", ring_buffer_tail);
+return;
+
+        spin_lock_irqsave(&ring_buffer_lock, flags);
+
+	ring_buffer_tail -= bytes;
+	ring_buffer_tail %= RING_BUFFER_SIZE;
+
+        spin_unlock_irqrestore(&ring_buffer_lock, flags);
+
+	printk("Last %d bytes printed again\n");
+}

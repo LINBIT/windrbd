@@ -355,6 +355,7 @@ typedef unsigned int                fmode_t;
 extern int initialize_syslog_printk(void);
 extern void shutdown_syslog_printk(void);
 extern int _printk(const char * func, const char * format, ...);
+extern void printk_reprint(size_t bytes);
 
 void windrbd_device_error(struct drbd_device *device, const char ** err_str_out, const char *fmt, ...);
 
