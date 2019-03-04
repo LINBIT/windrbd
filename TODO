@@ -131,6 +131,10 @@ TODO: Bug: System freeze on Windows 2016 Primary on SyncSource (with spinlock pa
 	with current (0a978d01) DRBD between Linux and Linux
 	(same test).
 
+	Update: system lockup also with 0.9.1-1, so this is definately
+	an 'old' bug. Also not in the DRBD part, since Linux/Linux
+	test is still running (after 3 days).
+
 TODO: Bug: Had a Sync stall in 4 node setup
 
 	One node at 98.9 percent other at around 50% (but 130% on its
