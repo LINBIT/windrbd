@@ -34,6 +34,11 @@ int initialize_syslog_printk(void)
 {
 	spin_lock_init(&ring_buffer_lock);
 	spin_lock_init(&in_printk_lock);
+
+		/* don't debug them ... to avoid endless loop */
+	ring_buffer_lock.printk_lock = 1;
+	in_printk_lock.printk_lock = 1;
+
 	mutex_init(&send_mutex);
 	in_printk = 0;
 

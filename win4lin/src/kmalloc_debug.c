@@ -111,7 +111,10 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 void init_kmalloc_debug(void)
 {
 	spin_lock_init(&memory_lock);
+	memory_lock.printk_lock = 1;
 }
+
+#ifdef KMALLOC_DEBUG
 
 int dump_memory_allocations(int free_them)
 {
@@ -129,6 +132,8 @@ int dump_memory_allocations(int free_them)
 	}
 	return 0;
 }
+
+#endif
 
 void shutdown_kmalloc_debug(void)
 {

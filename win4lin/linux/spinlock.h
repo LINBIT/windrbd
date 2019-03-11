@@ -1,6 +1,8 @@
 ﻿#ifndef __SPINLOCK_H__
 #define __SPINLOCK_H__
+
 #include <wdm.h>
+#include <linux/types.h>
 
 /* Define this to check IRQL at entry of spin_lock_irq() and the like. */
 
@@ -9,6 +11,7 @@
 typedef struct _tagSPINLOCK
 {
 	KSPIN_LOCK 	spinLock;
+	bool printk_lock;	/* non zero if used by printk */
 } spinlock_t;
 
 extern void spin_lock_init(spinlock_t *lock);

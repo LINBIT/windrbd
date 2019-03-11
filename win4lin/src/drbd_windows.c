@@ -1284,6 +1284,7 @@ void up_read(KSPIN_LOCK* lock)
 void spin_lock_init(spinlock_t *lock)
 {
 	KeInitializeSpinLock(&lock->spinLock);
+	lock->printk_lock = 0;
 }
 
 #ifdef SPIN_LOCK_DEBUG
@@ -1307,15 +1308,18 @@ static void add_spinlock(spinlock_t *lock)
 	KIRQL oldIrql;
 	struct spin_lock_currently_held *s;
 
+	if (lock->printk_lock)
+		return;
+
 	s = kmalloc(sizeof(*s), GFP_KERNEL, 'DRBD');
 	if (s == NULL)
 		return;
 
 	s->lock = lock;
-	s->when = jiffies;
-	s->thread = current;
-	s->id = atomic_inc_return(&spinlock_cnt);
-	s->seen = 0;
+//	s->when = jiffies;
+//	s->thread = current;
+//	s->id = atomic_inc_return(&spinlock_cnt);
+//	s->seen = 0;
 
 	KeAcquireSpinLock(&spinlock_lock, &oldIrql);
 	list_add(&s->list, &spin_locks_currently_held);
@@ -1329,6 +1333,9 @@ static void remove_spinlock(spinlock_t *lock)
 	struct spin_lock_currently_held *s;
 	int n = 0;
 
+	if (lock->printk_lock)
+		return;
+
 	KeAcquireSpinLock(&spinlock_lock, &oldIrql);
 	list_for_each_safe(sh, shh, &spin_locks_currently_held) {
 		s = list_entry(sh, struct spin_lock_currently_held, list);
@@ -1340,8 +1347,10 @@ static void remove_spinlock(spinlock_t *lock)
 	}
 	KeReleaseSpinLock(&spinlock_lock, oldIrql);
 
+/*
 	if (n>1)
 		printk("Warning: spinlock %p was %d times on the list\n", lock, n);
+*/
 }
 
 static void see_spinlocks(void)
@@ -1355,7 +1364,7 @@ static void see_spinlocks(void)
 
 		if (s->seen > 1) {
 			printk("Warning: spinlock %p locked since %ld (now is %ld), this is probably too long (seen %d times).\n", s->lock, s->when, jiffies, s->seen);
-			printk("(thread is %s)\n", s->thread->comm);
+//			printk("(thread is %s)\n", s->thread->comm);
 		}
 	}
 	KeReleaseSpinLock(&spinlock_lock, oldIrql);
@@ -1373,11 +1382,12 @@ static int see_all_spinlocks_thread(void *unused)
 int spinlock_debug_init(void)
 {
 	run_spinlock_monitor = 1;
-
+/*
 	if (kthread_run(see_all_spinlocks_thread, NULL, "spinlock_debug") == NULL) {
 		printk("Warning: could not start spinlock monitor\n");
 		return -1;
 	}
+*/
 	return 0;
 }
 
@@ -3510,5 +3520,9 @@ void init_windrbd(void)
 	mutex_init(&read_bootsector_mutex);
 	spin_lock_init(&g_test_and_change_bit_lock);
 	spin_lock_init(&irq_lock);
+
+#ifdef SPIN_LOCK_DEBUG
+	KeInitializeSpinLock(&spinlock_lock);
+#endif
 }
 
