@@ -73,6 +73,11 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	/* Next, the threads subsystem (so DRBD can create threads) */
 	init_windrbd_threads();
 
+#ifdef SPIN_LOCK_DEBUG
+	spinlock_debug_init();
+	printk("spinlock_debug initialized.\n");
+#endif
+
 	/* TODO: This will go away soon */
 	initRegistry(RegistryPath);
 
@@ -165,6 +170,11 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 	idr_shutdown();
 	printk("IDR layer shut down.\n");
 
+#ifdef SPIN_LOCK_DEBUG
+	spinlock_debug_shutdown();
+	printk("spinlock_debug shut down.\n");
+#endif
+
 	windrbd_shutdown_netlink();
 	printk("Netlink layer shut down.\n");
 
@@ -173,6 +183,7 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 	shutdown_kmalloc_debug();
 	printk("kmalloc_debug shut down, there should be no memory leaks now.\n");
 #endif
+
 	shutdown_syslog_printk();
 	windrbd_shutdown_wsk();
 }

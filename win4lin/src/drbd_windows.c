@@ -1286,6 +1286,109 @@ void spin_lock_init(spinlock_t *lock)
 	KeInitializeSpinLock(&lock->spinLock);
 }
 
+#ifdef SPIN_LOCK_DEBUG
+
+struct spin_lock_currently_held {
+	struct list_head list;
+	spinlock_t *lock;
+	ULONG_PTR when;
+	struct task_struct *thread;
+	atomic_t id;
+	int seen;
+};
+
+static LIST_HEAD(spin_locks_currently_held);
+static atomic_t spinlock_cnt;
+static KSPIN_LOCK spinlock_lock;
+static int run_spinlock_monitor;
+
+static void add_spinlock(spinlock_t *lock)
+{
+	KIRQL oldIrql;
+	struct spin_lock_currently_held *s;
+
+	s = kmalloc(sizeof(*s), GFP_KERNEL, 'DRBD');
+	if (s == NULL)
+		return;
+
+	s->lock = lock;
+	s->when = jiffies;
+	s->thread = current;
+	s->id = atomic_inc_return(&spinlock_cnt);
+	s->seen = 0;
+
+	KeAcquireSpinLock(&spinlock_lock, &oldIrql);
+	list_add(&s->list, &spin_locks_currently_held);
+	KeReleaseSpinLock(&spinlock_lock, oldIrql);
+}
+
+static void remove_spinlock(spinlock_t *lock)
+{
+	KIRQL oldIrql;
+	struct list_head *sh, *shh;
+	struct spin_lock_currently_held *s;
+	int n = 0;
+
+	KeAcquireSpinLock(&spinlock_lock, &oldIrql);
+	list_for_each_safe(sh, shh, &spin_locks_currently_held) {
+		s = list_entry(sh, struct spin_lock_currently_held, list);
+		if (s->lock == lock) {
+			list_del(&s->list);
+			kfree(s);
+			n++;
+		}
+	}
+	KeReleaseSpinLock(&spinlock_lock, oldIrql);
+
+	if (n>1)
+		printk("Warning: spinlock %p was %d times on the list\n", lock, n);
+}
+
+static void see_spinlocks(void)
+{
+	struct spin_lock_currently_held *s;
+	KIRQL oldIrql;
+
+	KeAcquireSpinLock(&spinlock_lock, &oldIrql);
+	list_for_each_entry(struct spin_lock_currently_held, s, &spin_locks_currently_held, list) {
+		s->seen++;
+
+		if (s->seen > 1) {
+			printk("Warning: spinlock %p locked since %ld (now is %ld), this is probably too long (seen %d times).\n", s->lock, s->when, jiffies, s->seen);
+			printk("(thread is %s)\n", s->thread->comm);
+		}
+	}
+	KeReleaseSpinLock(&spinlock_lock, oldIrql);
+}
+
+static int see_all_spinlocks_thread(void *unused)
+{
+	while (run_spinlock_monitor) {
+		msleep(100);
+		see_spinlocks();
+	}
+	return 0;
+}
+
+int spinlock_debug_init(void)
+{
+	run_spinlock_monitor = 1;
+
+	if (kthread_run(see_all_spinlocks_thread, NULL, "spinlock_debug") == NULL) {
+		printk("Warning: could not start spinlock monitor\n");
+		return -1;
+	}
+	return 0;
+}
+
+int spinlock_debug_shutdown(void)
+{
+	run_spinlock_monitor = 1;
+	/* and let reaper do the rest */
+
+	return 0;
+}
+
 /* See also defintion of spin_lock_irqsave in drbd_windows.h for handling
  * the flags parameter.
  */
@@ -1293,6 +1396,8 @@ void spin_lock_init(spinlock_t *lock)
 long _spin_lock_irqsave(spinlock_t *lock)
 {
 	KIRQL oldIrql;
+
+	add_spinlock(lock);
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
 	return (long)oldIrql;
@@ -1301,9 +1406,8 @@ long _spin_lock_irqsave(spinlock_t *lock)
 void spin_unlock_irqrestore(spinlock_t *lock, long flags)
 {
 	KeReleaseSpinLock(&lock->spinLock, (KIRQL) flags);
+	remove_spinlock(lock);
 }
-
-#ifdef SPIN_LOCK_DEBUG
 
 void spin_lock_irq_debug(spinlock_t *lock, const char *file, int line, const char *func)
 {
@@ -1312,12 +1416,14 @@ void spin_lock_irq_debug(spinlock_t *lock, const char *file, int line, const cha
 	if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 		printk("spin lock bug: KeGetCurrentIrql() is %d (called from %s:%d in %s()\n", KeGetCurrentIrql(), file, line, func);
 
+	add_spinlock(lock);
 	KeAcquireSpinLock(&lock->spinLock, &unused);
 }
 
 void spin_unlock_irq_debug(spinlock_t *lock, const char *file, int line, const char *func)
 {
 	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
+	remove_spinlock(lock);
 }
 
 void spin_lock_debug(spinlock_t *lock, const char *file, int line, const char *func)
@@ -1345,6 +1451,23 @@ void spin_unlock_bh_debug(spinlock_t *lock, const char *file, int line, const ch
 }
 
 #else
+
+/* See also defintion of spin_lock_irqsave in drbd_windows.h for handling
+ * the flags parameter.
+ */
+
+long _spin_lock_irqsave(spinlock_t *lock)
+{
+	KIRQL oldIrql;
+	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
+
+	return (long)oldIrql;
+}
+
+void spin_unlock_irqrestore(spinlock_t *lock, long flags)
+{
+	KeReleaseSpinLock(&lock->spinLock, (KIRQL) flags);
+}
 
 void spin_lock_irq(spinlock_t *lock)
 {

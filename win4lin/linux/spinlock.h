@@ -15,6 +15,9 @@ extern void spin_lock_init(spinlock_t *lock);
 
 #ifdef SPIN_LOCK_DEBUG
 
+extern int spinlock_debug_init(void);
+extern int spinlock_debug_shutdown(void);
+
 extern void spin_lock_irq_debug(spinlock_t *lock, const char *file, int line, const char *func);
 #define spin_lock_irq(lock) spin_lock_irq_debug(lock, __FILE__, __LINE__, __func__)
 
