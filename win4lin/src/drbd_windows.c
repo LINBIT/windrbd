@@ -1248,6 +1248,10 @@ void up(struct semaphore *s)
     }
 }
 
+	/* TODO: no. Use our spinlock implemetation (with flags patched
+	 * in).
+	 */
+
 KIRQL du_OldIrql;
 
 void downup_rwlock_init(KSPIN_LOCK* lock)
