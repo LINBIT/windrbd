@@ -1316,10 +1316,10 @@ static void add_spinlock(spinlock_t *lock)
 		return;
 
 	s->lock = lock;
-//	s->when = jiffies;
+	s->when = jiffies;
 //	s->thread = current;
-//	s->id = atomic_inc_return(&spinlock_cnt);
-//	s->seen = 0;
+	s->id = atomic_inc_return(&spinlock_cnt);
+	s->seen = 0;
 
 	KeAcquireSpinLock(&spinlock_lock, &oldIrql);
 	list_add(&s->list, &spin_locks_currently_held);
@@ -1374,20 +1374,39 @@ static int see_all_spinlocks_thread(void *unused)
 {
 	while (run_spinlock_monitor) {
 		msleep(100);
+		printk("checking spinlocks\n");
 		see_spinlocks();
 	}
+	return 0;
+}
+
+static int bad_spinlock_test_thread(void *unused)
+{
+	spinlock_t lock;
+	ULONG_PTR now;
+
+	now = jiffies;
+	spin_lock_init(&lock);
+	spin_lock(&lock);
+
+	while (jiffies < now+HZ) ;
+
+	spin_unlock(&lock);
+
 	return 0;
 }
 
 int spinlock_debug_init(void)
 {
 	run_spinlock_monitor = 1;
-/*
 	if (kthread_run(see_all_spinlocks_thread, NULL, "spinlock_debug") == NULL) {
 		printk("Warning: could not start spinlock monitor\n");
 		return -1;
 	}
-*/
+	if (kthread_run(bad_spinlock_test_thread, NULL, "spinlock_test") == NULL) {
+		printk("Warning: could not start spinlock test\n");
+		return -1;
+	}
 	return 0;
 }
 
