@@ -39,6 +39,12 @@ extern void spin_lock_bh_debug(spinlock_t *lock, const char *file, int line, con
 extern void spin_unlock_bh_debug(spinlock_t *lock, const char *file, int line, const char *func);
 #define spin_unlock_bh(lock) spin_unlock_bh_debug(lock, __FILE__, __LINE__, __func__)
 
+extern void spin_unlock_irqrestore_debug(spinlock_t *lock, long flags, const char *file, int line, const char *func);
+#define spin_unlock_irqrestore(lock, flags) spin_unlock_irqrestore_debug(lock, flags, __FILE__, __LINE__, __func__)
+
+extern long _spin_lock_irqsave_debug(spinlock_t* lock, const char *file, int line, const char *func);
+#define spin_lock_irqsave(lock, flags) flags = _spin_lock_irqsave_debug(lock, __FILE__, __LINE__, __func__); 
+
 #else
 
 extern void spin_lock_irq(spinlock_t *lock);
@@ -48,11 +54,11 @@ extern void spin_lock(spinlock_t *lock);
 extern void spin_unlock(spinlock_t *lock);
 extern void spin_unlock_irq(spinlock_t *lock);
 
-#endif
-
 extern void spin_unlock_irqrestore(spinlock_t *lock, long flags);
 extern long _spin_lock_irqsave(spinlock_t* lock);
 
 #define spin_lock_irqsave(lock, flags) flags = _spin_lock_irqsave(lock); 
+
+#endif
 
 #endif

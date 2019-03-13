@@ -1289,6 +1289,9 @@ void spin_lock_init(spinlock_t *lock)
 
 #ifdef SPIN_LOCK_DEBUG
 
+#define DESC_SIZE 256
+#define FUNC_SIZE 256
+
 struct spin_lock_currently_held {
 	struct list_head list;
 	spinlock_t *lock;
@@ -1296,6 +1299,9 @@ struct spin_lock_currently_held {
 	struct task_struct *thread;
 	atomic_t id;
 	int seen;
+
+	char desc[DESC_SIZE];
+	char func[FUNC_SIZE];
 };
 
 static LIST_HEAD(spin_locks_currently_held);
@@ -1303,7 +1309,7 @@ static atomic_t spinlock_cnt;
 static KSPIN_LOCK spinlock_lock;
 static int run_spinlock_monitor;
 
-static void add_spinlock(spinlock_t *lock)
+static void add_spinlock(spinlock_t *lock, const char *file, int line, const char *func)
 {
 	KIRQL oldIrql;
 	struct spin_lock_currently_held *s;
@@ -1320,6 +1326,20 @@ static void add_spinlock(spinlock_t *lock)
 //	s->thread = current;
 	s->id = atomic_inc_return(&spinlock_cnt);
 	s->seen = 0;
+
+		/* TODO: snprintf implementation currently broken, be
+		 * careful with that
+		 */
+
+/*
+	strncpy(s->desc, file);
+	strncpy(s->func, func);
+*/
+
+/*
+	snprintf(s->desc, ARRAY_SIZE(s->desc), "%s:%d", file, line);
+	snprintf(s->func, ARRAY_SIZE(s->func), "%s", func);
+*/
 
 	KeAcquireSpinLock(&spinlock_lock, &oldIrql);
 	list_add(&s->list, &spin_locks_currently_held);
@@ -1349,9 +1369,11 @@ static void remove_spinlock(spinlock_t *lock)
 
 /*
 	if (n>1)
-		printk("Warning: spinlock %p was %d times on the list\n", lock, n);
+		printk("spinlock_debug: Warning: spinlock %p was %d times on the list\n", lock, n);
 */
 }
+
+	/* TODO: run this at very high priority (interrupt) */
 
 static void see_spinlocks(void)
 {
@@ -1363,8 +1385,8 @@ static void see_spinlocks(void)
 		s->seen++;
 
 		if (s->seen > 1) {
-			printk("Warning: spinlock %p locked since %ld (now is %ld), this is probably too long (seen %d times).\n", s->lock, s->when, jiffies, s->seen);
-//			printk("(thread is %s)\n", s->thread->comm);
+			printk("spinlock_debug: Warning: spinlock %p locked since %ld (now is %ld), this is probably too long (seen %d times). Taken at %s (%s())\n", s->lock, s->when, jiffies, s->seen, s->desc, s->func);
+//			printk("spinlock_debug: (thread is %s)\n", s->thread->comm);
 		}
 	}
 	KeReleaseSpinLock(&spinlock_lock, oldIrql);
@@ -1374,7 +1396,6 @@ static int see_all_spinlocks_thread(void *unused)
 {
 	while (run_spinlock_monitor) {
 		msleep(100);
-		printk("checking spinlocks\n");
 		see_spinlocks();
 	}
 	return 0;
@@ -1421,18 +1442,18 @@ int spinlock_debug_shutdown(void)
  * the flags parameter.
  */
 
-long _spin_lock_irqsave(spinlock_t *lock)
+long _spin_lock_irqsave_debug(spinlock_t *lock, const char *file, int line, const char *func)
 {
 	KIRQL oldIrql;
 
 	if (!lock->printk_lock)
-		add_spinlock(lock);
+		add_spinlock(lock, file, line, func);
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
 	return (long)oldIrql;
 }
 
-void spin_unlock_irqrestore(spinlock_t *lock, long flags)
+void spin_unlock_irqrestore_debug(spinlock_t *lock, long flags, const char *file, int line, const char *func)
 {
 	KeReleaseSpinLock(&lock->spinLock, (KIRQL) flags);
 	if (!lock->printk_lock)
@@ -1446,7 +1467,7 @@ void spin_lock_irq_debug(spinlock_t *lock, const char *file, int line, const cha
 	if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 		printk("spin lock bug: KeGetCurrentIrql() is %d (called from %s:%d in %s()\n", KeGetCurrentIrql(), file, line, func);
 
-	add_spinlock(lock);
+	add_spinlock(lock, file, line, func);
 	KeAcquireSpinLock(&lock->spinLock, &unused);
 }
 
