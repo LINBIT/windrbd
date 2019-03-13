@@ -1389,7 +1389,7 @@ static int bad_spinlock_test_thread(void *unused)
 	spin_lock_init(&lock);
 	spin_lock(&lock);
 
-	while (jiffies < now+HZ) ;
+	while (jiffies < now+HZ*5) ;
 
 	spin_unlock(&lock);
 
