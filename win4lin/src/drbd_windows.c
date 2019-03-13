@@ -1414,8 +1414,7 @@ int spinlock_debug_init(void)
 
 int spinlock_debug_shutdown(void)
 {
-	run_spinlock_monitor = 1;
-	/* and let reaper do the rest */
+	run_spinlock_monitor = 0;
 
 	return 0;
 }

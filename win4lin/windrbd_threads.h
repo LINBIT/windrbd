@@ -11,7 +11,12 @@ NTSTATUS windrbd_create_windows_thread(void (*threadfn)(void*), void *data, void
 NTSTATUS windrbd_cleanup_windows_thread(void *thread_object);
 
 void init_windrbd_threads(void);
+
+	/* Currently called by reply_reaper, see netlink code */
 void windrbd_reap_threads(void);
+
+	/* This waits forever, only use this on driver unload */
+void windrbd_reap_all_threads(void);
 
 struct task_struct* windrbd_find_thread(PKTHREAD id);
 #define current	windrbd_find_thread(KeGetCurrentThread())

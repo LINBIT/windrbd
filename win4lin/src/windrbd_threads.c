@@ -110,6 +110,28 @@ void windrbd_reap_threads(void)
 	}
 }
 
+	/* To be called on shutdown. On driver unload all threads must
+	 * be terminated, it is a BSOD if threads are remaining. So
+	 * wait forever. printk still should work, so inform the user
+ 	 * that we are still alive waiting for threads to terminate.
+	 */
+
+void windrbd_reap_all_threads(void)
+{
+	int n = 0;
+
+	windrbd_reap_threads();
+
+	while (!list_empty(&thread_list)) {
+		n++;
+		printk("Still threads alive (%d), waiting for them to terminate ...\n", n);
+			/* TODO: we might want to tell the user which threads they are ... */
+
+		msleep(1000);
+		windrbd_reap_threads();
+	}
+}
+		
 	/* We need this so we clean up the task struct. Linux appears
 	 * to deref the task_struct on thread exit, we also should
 	 * do so.
@@ -134,7 +156,7 @@ static void windrbd_thread_setup(void *targ)
 	if (ret != 0)
 		printk(KERN_WARNING "Thread %s returned non-zero exit status. Ignored, since Windows threads are void.\n", t->comm);
 
-printk_reprint(25*100);  /* approx 20-30 lines */ 
+printk_reprint(25*100);  /* approx 20-30 lines TODO: remove */ 
 
 	t->is_zombie = 1;
 }
