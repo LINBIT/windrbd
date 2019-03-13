@@ -1398,19 +1398,15 @@ static int bad_spinlock_test_thread(void *unused)
 
 int spinlock_debug_init(void)
 {
-/*
 	run_spinlock_monitor = 1;
 	if (kthread_run(see_all_spinlocks_thread, NULL, "spinlock_debug") == NULL) {
 		printk("Warning: could not start spinlock monitor\n");
 		return -1;
 	}
-*/
-/*
 	if (kthread_run(bad_spinlock_test_thread, NULL, "spinlock_test") == NULL) {
 		printk("Warning: could not start spinlock test\n");
 		return -1;
 	}
-*/
 	return 0;
 }
 
