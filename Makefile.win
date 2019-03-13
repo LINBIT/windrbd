@@ -17,7 +17,7 @@
 BUILD_ENV ?= jt-server2016
 
 # TODO: unset this for production releases.
-# KMALLOC_DEBUG = 1
+KMALLOC_DEBUG = 1
 # BIO_REF_DEBUG = 1
 
 ifeq ($(BUILD_ENV),jt-win7)

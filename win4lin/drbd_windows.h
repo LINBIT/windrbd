@@ -1298,6 +1298,7 @@ static int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 	return 0;
 }
 
+/* TODO: bad idea ... */
 #define snprintf(a, b, c,...) memset(a, 0, b); sprintf(a, c, ##__VA_ARGS__)
 
 

@@ -64,12 +64,14 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	 */
 	initialize_syslog_printk();
 
-	printk(KERN_INFO "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
-
 #ifdef KMALLOC_DEBUG
+		/* no printk's before this: */
 	init_kmalloc_debug();
 	printk("kmalloc_debug initialized.\n");
 #endif
+
+	printk(KERN_INFO "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
+
 	/* Next, the threads subsystem (so DRBD can create threads) */
 	init_windrbd_threads();
 

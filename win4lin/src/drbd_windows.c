@@ -1403,10 +1403,12 @@ int spinlock_debug_init(void)
 		printk("Warning: could not start spinlock monitor\n");
 		return -1;
 	}
+/*
 	if (kthread_run(bad_spinlock_test_thread, NULL, "spinlock_test") == NULL) {
 		printk("Warning: could not start spinlock test\n");
 		return -1;
 	}
+*/
 	return 0;
 }
 
@@ -1426,7 +1428,8 @@ long _spin_lock_irqsave(spinlock_t *lock)
 {
 	KIRQL oldIrql;
 
-	add_spinlock(lock);
+	if (!lock->printk_lock)
+		add_spinlock(lock);
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
 	return (long)oldIrql;
@@ -1435,7 +1438,8 @@ long _spin_lock_irqsave(spinlock_t *lock)
 void spin_unlock_irqrestore(spinlock_t *lock, long flags)
 {
 	KeReleaseSpinLock(&lock->spinLock, (KIRQL) flags);
-	remove_spinlock(lock);
+	if (!lock->printk_lock)
+		remove_spinlock(lock);
 }
 
 void spin_lock_irq_debug(spinlock_t *lock, const char *file, int line, const char *func)

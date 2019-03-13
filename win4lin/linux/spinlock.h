@@ -10,7 +10,7 @@
 
 typedef struct _tagSPINLOCK
 {
-	KSPIN_LOCK 	spinLock;
+	KSPIN_LOCK spinLock;
 	bool printk_lock;	/* non zero if used by printk */
 } spinlock_t;
 

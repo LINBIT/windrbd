@@ -35,6 +35,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	size_t full_size;
 	ULONG_PTR flags;
 
+#if 0
 	if (kmalloc_errors > 0) {
 
 			/* Don't print all the time, since printk itself
@@ -45,10 +46,13 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 			printk("%d kmalloc errors so far (%d)\n", kmalloc_errors, print_kmalloc_error);
 		print_kmalloc_error++;
 	}
+#endif
 
 	full_size = sizeof(struct memory) + size + sizeof(struct poison_after);
 	mem = ExAllocatePoolWithTag(NonPagedPool, full_size, 'DRBD');
 
+if (mem == NULL) return NULL;
+#if 0
 	if (mem == NULL) {
 		if (strcmp(func, "SendTo") != 0)
 			printk("kmalloc_debug: Warning: cannot allocate memory of size %d, %d bytes requested by function %s at %s:%d.\n", full_size, size, func, file, line);
@@ -65,9 +69,13 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	poison_after = (struct poison_after*) (&mem->data[size]);
 	poison_after->poison2 = POISON_AFTER;
 
+// printk("memory_lock.printk_lock is %d\n", memory_lock.printk_lock);
+/*
 	spin_lock_irqsave(&memory_lock, flags);
 	list_add(&mem->list, &memory_allocations);
 	spin_unlock_irqrestore(&memory_lock, flags);
+*/
+#endif
 
 	return &mem->data[0];
 }
@@ -89,11 +97,14 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	struct poison_after *poison_after;
 	ULONG_PTR flags;
 
+#if 0
 	if (data == NULL) {
 		printk("kmalloc_debug: Warning: attempt to free the NULL pointer in function %s at %s:%d\n", func, file, line);
 		return;
 	}
+#endif
 	mem = container_of((void*) data, struct memory, data);
+#if 0
 	poison_after = (struct poison_after*) (&mem->data[mem->size]);
 
 	if (mem->poison != POISON_BEFORE)
@@ -101,17 +112,20 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	if (poison_after->poison2 != POISON_AFTER)
 		printk("kmalloc_debug: Warning: Poison before overwritten (is %x should be %x)\n", poison_after->poison2, POISON_AFTER);
 
+/*
 	spin_lock_irqsave(&memory_lock, flags);
 	list_del(&mem->list);
 	spin_unlock_irqrestore(&memory_lock, flags);
+*/
 
+#endif
 	ExFreePool((void*)mem);
 }
 
 void init_kmalloc_debug(void)
 {
 	spin_lock_init(&memory_lock);
-	memory_lock.printk_lock = 1;
+	memory_lock.printk_lock = true;
 }
 
 #ifdef KMALLOC_DEBUG
@@ -119,6 +133,8 @@ void init_kmalloc_debug(void)
 int dump_memory_allocations(int free_them)
 {
 	struct memory *mem, *memh;
+
+/* TODO: spin_lock(&memory_lock)? but then we maybe don't see the printk's ... */
 
 	list_for_each_entry_safe(struct memory, mem, memh, &memory_allocations, list) {
 			/* exclude memory needed by printk() */
