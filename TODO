@@ -9,6 +9,12 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
+TODO: storing function and line patch for spinlock debug currently BSODs
+
+	Have to go home now.
+
+	Also happens with dcbd4227a9f. 7bbb196338?
+
 TODO: kmalloc errors on Win7 VM (on my Macbook)
 
 	When running
@@ -86,6 +92,9 @@ Feb 14 15:25:41 10.43.10.13  U14:25:40.818|b80f3b50(drbd_r_vamp-4nodes) drbdd <3
 	We need to see them (resend them when ack-receiver
 	thread is terminated).
 
+	Update: need to debug via serial console, since we
+	destroy something in the networking stack.
+
 TODO: Bug: BSOD on Disconnect on Secondary (Windows 10)
 
 	Primary (Windows 7) doing I/O.
@@ -134,6 +143,11 @@ TODO: Bug: System freeze on Windows 2016 Primary on SyncSource (with spinlock pa
 	Update: system lockup also with 0.9.1-1, so this is definately
 	an 'old' bug. Also not in the DRBD part, since Linux/Linux
 	test is still running (after 3 days).
+
+	Update: we've implemented a spin lock monitor, however in
+	Windows kernel (at least Windows 7) the spinlocks are really
+	'big kernel locks' that lock the whole machine. Try this with
+	Windows 10 and see if it changed.
 
 TODO: Bug: Had a Sync stall in 4 node setup
 
@@ -408,12 +422,6 @@ TODO: Bug: FIXME in bitmap code
 Feb  5 14:01:17 10.43.10.11  U13:01:17.453|4260bc80(drbd_a_vamp-4nodes) bm_print_lock_info <3>drbd vamp-4nodes/1 minor 1, ds(Inconsistent), dvflag(0x0): FIXME drbd_a_vamp-4nodes[8] op clear, bitmap locked for 'receive bitmap' by drbd_r_vamp-4nodes[7]
 
 	Upstream bug?
-
-TODO: Bug: BSOD on load/unload loop
-
-	Appears to be a resource leak in networking (does not
-	connect since peer resource is down). No BSOD so far
-	when doing only status and also when doing only attach.
 
 TODO: Bug: printk eats boot messages
 
@@ -4883,4 +4891,15 @@ Done: Code quality: clear error state on socket if status is success.
 	Update: we now clear the error status for datagram sockets
 	if status is success later. This allows us to reuse the
 	socket in printk.
+
+Done: Bug: BSOD on load/unload loop
+
+	Appears to be a resource leak in networking (does not
+	connect since peer resource is down). No BSOD so far
+	when doing only status and also when doing only attach.
+
+	Update: now reaping all threads, is this fixed?
+
+	Update: updown loop ran 100 times, no BSOD. Seems to
+	be fixed, reopen on problems.
 
