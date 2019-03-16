@@ -15,6 +15,15 @@ TODO: storing function and line patch for spinlock debug currently BSODs
 
 	Also happens with dcbd4227a9f. 7bbb196338?
 
+	Update: Not with 7bbb196338, however this test was without
+	connecting. Maybe this is the same bug as Windows 10 BSOD
+	on disconnect.
+
+	Update: 'bisect' showed that the bug was introduced with
+	6ca3f51f (support printk blocking again), so it is not
+	related to spinlock patches.
+	
+
 TODO: kmalloc errors on Win7 VM (on my Macbook)
 
 	When running
