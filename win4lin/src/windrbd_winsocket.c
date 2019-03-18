@@ -224,6 +224,11 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
+/* TODO: there is a subtile bug either in this function or the way
+ * it is called in 6ca3f51f fix it and use this function whereever
+ * we wait for an event.
+ */
+
 static int my_wait_interruptible(KEVENT *windows_event_p, int timeout_ms)
 {
 	LARGE_INTEGER timeout;
@@ -260,7 +265,10 @@ static int my_wait_interruptible(KEVENT *windows_event_p, int timeout_ms)
 static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 {
 	ULONG_PTR flags;
-	int err;
+	LARGE_INTEGER timeout;
+	NTSTATUS status;
+	void *wait_objects[2];
+	int num_objects;
 
 	while (1) {
 		spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
@@ -268,11 +276,30 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 		if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf) {
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
 
-			err = my_wait_interruptible(&socket->data_sent, socket->sk->sk_sndtimeo); 
-			if (err == 0)
-				continue;
+			timeout.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
 
-			return err;
+	/* TODO: once it is fixed, use wait_event_interruptible() here. */
+
+			wait_objects[0] = &socket->data_sent;
+			num_objects = 1;
+			if (current->has_sig_event) {
+				wait_objects[1] = &current->sig_event;
+				num_objects = 2;
+			}
+			status = KeWaitForMultipleObjects(num_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, &timeout, NULL);
+
+			switch (status) {
+			case STATUS_WAIT_0:
+				continue;
+			case STATUS_WAIT_1:
+				return -EINTR;
+			case STATUS_TIMEOUT:
+//				return -EAGAIN; /* hangs Win7 VM? */
+				return -ETIMEDOUT;
+			default:
+				dbg("KeWaitForMultipleObjects returned unexpected error %x\n", status);
+				return winsock_to_linux_error(status);
+			}
 		} else {
 			socket->sk->sk_wmem_queued += want_to_send;
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
