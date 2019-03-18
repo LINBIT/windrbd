@@ -1300,6 +1300,7 @@ struct spin_lock_currently_held {
 	atomic_t id;
 	int seen;
 
+	char marker[16];
 	char desc[DESC_SIZE];
 	char func[FUNC_SIZE];
 };
@@ -1332,14 +1333,13 @@ static void add_spinlock(spinlock_t *lock, const char *file, int line, const cha
 		 */
 
 /*
-	strncpy(s->desc, file);
-	strncpy(s->func, func);
+	strncpy(s->desc, file, sizeof(s->desc)-1);
+	strncpy(s->func, func, sizeof(s->func)-1);
 */
 
-/*
 	snprintf(s->desc, ARRAY_SIZE(s->desc), "%s:%d", file, line);
 	snprintf(s->func, ARRAY_SIZE(s->func), "%s", func);
-*/
+	strcpy(s->marker, "SPINLOCK");
 
 	KeAcquireSpinLock(&spinlock_lock, &oldIrql);
 	list_add(&s->list, &spin_locks_currently_held);
@@ -1360,6 +1360,7 @@ static void remove_spinlock(spinlock_t *lock)
 	list_for_each_safe(sh, shh, &spin_locks_currently_held) {
 		s = list_entry(sh, struct spin_lock_currently_held, list);
 		if (s->lock == lock) {
+			strcpy(s->marker, "NOSPINLO");
 			list_del(&s->list);
 			kfree(s);
 			n++;
