@@ -122,6 +122,6 @@ void windrbd_update_socket_buffer_sizes(struct socket *socket);
 
 /* used by printk(): will go away soon (use kernel_sendmsg() instead) */
 
-int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress, int flags);
+int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress);
 
 #endif

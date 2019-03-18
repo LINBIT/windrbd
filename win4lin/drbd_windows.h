@@ -102,10 +102,6 @@ enum
 typedef int atomic_t;
 #define atomic_t64				LONGLONG
 
-/* TODO: cast allows us to specify atomic_inc_return(a) (which BSODs)
- * instead of atomic_inc_return(&a).
- */
-
 #define	atomic_inc_return(_p)		InterlockedIncrement((LONG volatile*)(_p))
 #define	atomic_dec_return(_p)		InterlockedDecrement((LONG volatile*)(_p))
 #define atomic_inc(_v)			atomic_inc_return(_v)

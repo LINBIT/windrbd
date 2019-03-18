@@ -28,8 +28,6 @@ static int printk_shut_down;
 static spinlock_t in_printk_lock;
 static int in_printk;
 
-static atomic_t num_printks;
-
 int initialize_syslog_printk(void)
 {
 	spin_lock_init(&ring_buffer_lock);
@@ -135,7 +133,7 @@ static int open_syslog_socket(void)
 				err = SendTo(printk_udp_socket,
 						probe,
 						strlen(probe),
-						(PSOCKADDR)&printk_udp_target, 0);
+						(PSOCKADDR)&printk_udp_target);
 
 					/* -ENETUNREACH on booting */
 				if (err < 0) {
@@ -193,9 +191,6 @@ int _printk(const char *func, const char *fmt, ...)
 	static int printks_in_irq_context = 0;
 	static int buffer_overflows = 0;
 	KIRQL flags;
-	atomic_t this_printk;
-
-	this_printk = atomic_inc_return(&num_printks);
 
 	buffer[0] = '\0';
 
@@ -224,8 +219,8 @@ int _printk(const char *func, const char *fmt, ...)
 	msec = (time.QuadPart / 10000) % (ULONG_PTR)1e3; // 100nsec to msec
 
 	pos = strlen(buffer);
-	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> [#%d] U%02d:%02d:%02d.%03d|%08.8x(%s) %s ",
-	    level, this_printk, hour, min, sec, msec,
+	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d|%08.8x(%s) %s ",
+	    level, hour, min, sec, msec,
 	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
 //	    ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
 	    current,
@@ -321,7 +316,7 @@ int _printk(const char *func, const char *fmt, ...)
 					status = SendTo(printk_udp_socket,
 							line,
 							line_pos,
-							(PSOCKADDR)&printk_udp_target, 0);
+							(PSOCKADDR)&printk_udp_target);
 					if (status < 0) {
 						DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, SendTo returned error: %s\n", buffer);
 

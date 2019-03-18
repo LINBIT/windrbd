@@ -224,44 +224,6 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-/* TODO: there is a subtile bug either in this function or the way
- * it is called in 6ca3f51f fix it and use this function whereever
- * we wait for an event.
- */
-
-static int my_wait_interruptible(KEVENT *windows_event_p, int timeout_ms)
-{
-	LARGE_INTEGER timeout;
-	NTSTATUS status;
-	void *wait_objects[2];
-	int num_objects;
-
-	timeout.QuadPart = -1 * timeout_ms * 10 * 1000 * 1000 / HZ;
-
-	/* TODO: once it is fixed, use wait_event_interruptible() here. */
-
-	wait_objects[0] = windows_event_p;
-	num_objects = 1;
-	if (current->has_sig_event) {
-		wait_objects[1] = &current->sig_event;
-		num_objects = 2;
-	}
-	status = KeWaitForMultipleObjects(num_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, &timeout, NULL);
-
-	switch (status) {
-	case STATUS_WAIT_0:
-		return 0;
-	case STATUS_WAIT_1:
-		return -EINTR;
-	case STATUS_TIMEOUT:
-//				return -EAGAIN; /* hangs Win7 VM? */
-		return -ETIMEDOUT;
-	default:
-		dbg("KeWaitForMultipleObjects returned unexpected error %x\n", status);
-		return winsock_to_linux_error(status);
-	}
-}
-
 static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 {
 	ULONG_PTR flags;
@@ -926,7 +888,7 @@ out_put_page:
 
 /* Do not use printk's in here, will loop forever... */
 
-int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress, int flags)
+int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress)
 {
 	struct _IRP *irp;
 	struct _WSK_BUF *WskBuffer;
@@ -940,7 +902,6 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	char *tmp_buffer;
 	NTSTATUS status;
 	int err;
-	KEVENT completion_event;
 
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !Buffer || !BufferSize)
 		return -EINVAL;
@@ -948,36 +909,27 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	if (socket->error_status != 0)
 		return socket->error_status;
 
-	if ((flags & O_NONBLOCK) == O_NONBLOCK) {
-		err = wait_for_sendbuf(socket, BufferSize);
-		if (err < 0)
-			return err;
-	}
+	err = wait_for_sendbuf(socket, BufferSize);
+	if (err < 0)
+		return err;
 
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
 	if (WskBuffer == NULL) {
-		if ((flags & O_NONBLOCK) == O_NONBLOCK)
-			have_sent(socket, BufferSize);
-
+		have_sent(socket, BufferSize);
 		return -ENOMEM;
 	}
 
-	if ((flags & O_NONBLOCK) == O_NONBLOCK) {
-		completion = kzalloc(sizeof(*completion), 0, 'DRBD');
-		if (completion == NULL) {
-			have_sent(socket, BufferSize);
-			kfree(WskBuffer);
-			return -ENOMEM;
-		}
-	} else
-		completion = NULL;
+	completion = kzalloc(sizeof(*completion), 0, 'DRBD');
+	if (completion == NULL) {
+		have_sent(socket, BufferSize);
+		kfree(WskBuffer);
+		return -ENOMEM;
+	}
 
 	tmp_buffer = kmalloc(BufferSize, 0, 'TMPB');
 	if (tmp_buffer == NULL) {
-		if ((flags & O_NONBLOCK) == O_NONBLOCK) {
-			have_sent(socket, BufferSize);
-			kfree(completion);
-		}
+		have_sent(socket, BufferSize);
+		kfree(completion);
 		kfree(WskBuffer);
 		return -ENOMEM;
 	}
@@ -985,38 +937,27 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 
 	status = InitWskBuffer(tmp_buffer, BufferSize, WskBuffer, FALSE, FALSE);
 	if (!NT_SUCCESS(status)) {
-		if ((flags & O_NONBLOCK) == O_NONBLOCK) {
-			have_sent(socket, BufferSize);
-			kfree(completion);
-		}
+		have_sent(socket, BufferSize);
+		kfree(completion);
 		kfree(WskBuffer);
 		kfree(tmp_buffer);
 		return -ENOMEM;
 	}
 
-	if ((flags & O_NONBLOCK) == O_NONBLOCK) {
-		completion->data_buffer = tmp_buffer;
-		completion->wsk_buffer = WskBuffer;
-		completion->socket = socket;
-	}
+	completion->data_buffer = tmp_buffer;
+	completion->wsk_buffer = WskBuffer;
+	completion->socket = socket;
 
 	irp = IoAllocateIrp(1, TRUE);
 	if (irp == NULL) {
-		if ((flags & O_NONBLOCK) == O_NONBLOCK) {
-			have_sent(socket, BufferSize);
-			kfree(completion);
-		}
+		have_sent(socket, BufferSize);
+		kfree(completion);
 		kfree(WskBuffer);
 		kfree(tmp_buffer);
 		FreeWskBuffer(WskBuffer, 0);
 		return -ENOMEM;
 	}
-	if ((flags & O_NONBLOCK) == O_NONBLOCK)
-		IoSetCompletionRoutine(irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
-	else {
-		KeInitializeEvent(&completion_event, SynchronizationEvent, FALSE);
-		IoSetCompletionRoutine(irp, completion_fire_event, &completion_event, TRUE, TRUE, TRUE);
-	}
+	IoSetCompletionRoutine(irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
 
 	status = ((PWSK_PROVIDER_DATAGRAM_DISPATCH) socket->wsk_socket->Dispatch)->WskSendTo(
 		socket->wsk_socket,
@@ -1029,17 +970,12 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 
 		/* Again if not yet sent, pretend that it has been sent,
 		 * followup calls to SendTo() on that socket will report
-		 * errors. This is how Linux behaves (if non-blocking).
+		 * errors. This is how Linux behaves.
 		 */
 
-	if (status == STATUS_PENDING) {
-		if ((flags & O_NONBLOCK) == O_NONBLOCK)
-			status = STATUS_SUCCESS;
-		else  {
-			err = my_wait_interruptible(&completion_event, socket->sk->sk_sndtimeo);
-			return err == 0 ? BufferSize : err;
-		}
-	}
+	if (status == STATUS_PENDING)
+		status = STATUS_SUCCESS;
+
 	return status == STATUS_SUCCESS ? BufferSize : winsock_to_linux_error(status);
 }
 
