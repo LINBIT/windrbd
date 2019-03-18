@@ -22,7 +22,23 @@ TODO: storing function and line patch for spinlock debug currently BSODs
 	Update: 'bisect' showed that the bug was introduced with
 	6ca3f51f (support printk blocking again), so it is not
 	related to spinlock patches.
-	
+
+	Update: reverting the wait_for_sendbuf function (see
+	cb56c9c3b9) seems to fix the problem (although
+	my_wait_interruptible is still being used for printk()).
+
+	One day we want to fix this and use it for other functions
+	too (receive, connect, ...)
+
+	Update: happened again (with cb56c9c3b).
+
+TODO: freeze on disconnect-connect-waitconnect loop
+
+	Both nodes Secondary, Windows 7 doing
+	disconnect-connect-waitconnect.
+
+	Introduced with cb56c9c3b987 (also observed with fbc556)?
+	Same as System freeze on Windows 2016 Primary?
 
 TODO: kmalloc errors on Win7 VM (on my Macbook)
 
