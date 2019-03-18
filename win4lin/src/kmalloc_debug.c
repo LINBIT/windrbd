@@ -35,6 +35,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	size_t full_size;
 	ULONG_PTR flags;
 
+#if 0
 	if (kmalloc_errors > 0) {
 
 			/* Don't print all the time, since printk itself
@@ -45,6 +46,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 			printk("%d kmalloc errors so far (%d)\n", kmalloc_errors, print_kmalloc_error);
 		print_kmalloc_error++;
 	}
+#endif
 
 	full_size = sizeof(struct memory) + size + sizeof(struct poison_after);
 	mem = ExAllocatePoolWithTag(NonPagedPool, full_size, 'DRBD');
