@@ -237,3 +237,11 @@ Change hostname
 sysdm.cpl → Computer Name → Change → More... has a "Primary DNS suffix" option, which might be helpful here.
 
 (and reboot)
+--------
+
+Disable automatic upgrades on Ubuntu:
+
+ $ sudo -e /etc/apt/apt.conf.d/10periodic
+Add line:
+APT::Periodic::Unattended-Upgrade "0";
+
