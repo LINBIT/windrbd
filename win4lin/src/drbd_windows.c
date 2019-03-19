@@ -1420,6 +1420,7 @@ static int bad_spinlock_test_thread(void *unused)
 
 int spinlock_debug_init(void)
 {
+/*
 	run_spinlock_monitor = 1;
 	if (kthread_run(see_all_spinlocks_thread, NULL, "spinlock_debug") == NULL) {
 		printk("Warning: could not start spinlock monitor\n");
@@ -1429,6 +1430,7 @@ int spinlock_debug_init(void)
 		printk("Warning: could not start spinlock test\n");
 		return -1;
 	}
+*/
 	return 0;
 }
 
@@ -1447,8 +1449,10 @@ long _spin_lock_irqsave_debug(spinlock_t *lock, const char *file, int line, cons
 {
 	KIRQL oldIrql;
 
+/*
 	if (!lock->printk_lock)
 		add_spinlock(lock, file, line, func);
+*/
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
 	return (long)oldIrql;
@@ -1457,8 +1461,10 @@ long _spin_lock_irqsave_debug(spinlock_t *lock, const char *file, int line, cons
 void spin_unlock_irqrestore_debug(spinlock_t *lock, long flags, const char *file, int line, const char *func)
 {
 	KeReleaseSpinLock(&lock->spinLock, (KIRQL) flags);
+/*
 	if (!lock->printk_lock)
 		remove_spinlock(lock);
+*/
 }
 
 void spin_lock_irq_debug(spinlock_t *lock, const char *file, int line, const char *func)
@@ -1468,14 +1474,18 @@ void spin_lock_irq_debug(spinlock_t *lock, const char *file, int line, const cha
 	if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 		printk("spin lock bug: KeGetCurrentIrql() is %d (called from %s:%d in %s()\n", KeGetCurrentIrql(), file, line, func);
 
+/*
 	add_spinlock(lock, file, line, func);
+*/
 	KeAcquireSpinLock(&lock->spinLock, &unused);
 }
 
 void spin_unlock_irq_debug(spinlock_t *lock, const char *file, int line, const char *func)
 {
 	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
+/*
 	remove_spinlock(lock);
+*/
 }
 
 void spin_lock_debug(spinlock_t *lock, const char *file, int line, const char *func)
