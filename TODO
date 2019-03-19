@@ -9,6 +9,10 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
+TODO: Bug: drbdadm wait-connect does not work as expected
+
+	Please fix, this is helpful for testing.
+
 TODO: storing function and line patch for spinlock debug currently BSODs
 
 	Have to go home now.
@@ -449,8 +453,6 @@ Feb  5 14:01:17 10.43.10.11  U13:01:17.453|4260bc80(drbd_a_vamp-4nodes) bm_print
 	Upstream bug?
 
 TODO: Bug: printk eats boot messages
-
-TODO: Bug: drbdadm wait-connect does not work as expected
 
 TODO: Bug: Diskless Primary BSOD when connection failed
 
