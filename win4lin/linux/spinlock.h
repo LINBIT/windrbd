@@ -5,13 +5,14 @@
 #include <linux/types.h>
 
 /* Define this to check IRQL at entry of spin_lock_irq() and the like. */
+/* It currently probably is buggy. */
 
-#define SPIN_LOCK_DEBUG 1
+/* #define SPIN_LOCK_DEBUG 1 */
 
 typedef struct _tagSPINLOCK
 {
 	KSPIN_LOCK spinLock;
-	bool printk_lock;	/* non zero if used by printk */
+	bool printk_lock;	/* non zero if used by printk: TODO: ifdef debug */
 } spinlock_t;
 
 extern void spin_lock_init(spinlock_t *lock);
