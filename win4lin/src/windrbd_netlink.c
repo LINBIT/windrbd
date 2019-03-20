@@ -23,6 +23,7 @@ struct genl_multicast_element {
 	struct list_head list;
 	u32 portid;
 	char name[GENL_NAMSIZ];
+	struct _FILE_OBJECT *file_object;
 };
 
 static LIST_HEAD(multicast_elements);
@@ -136,6 +137,33 @@ static void delete_reply(struct genl_reply *r)
 	}
 	list_del(&r->list);
 	kfree(r);
+}
+
+static void delete_replies_for_portid(u32 portid)
+{
+	struct list_head *rh, *rhn;
+	struct genl_reply *r;
+
+	list_for_each_safe(rh, rhn, &reply_buffers) {
+		r = list_entry(rh, struct genl_reply, list);
+		if (r->portid == portid)
+			delete_reply(r);
+	}
+}
+
+static void delete_multicast_elements_and_replies_for_file_object(struct _FILE_OBJECT *f)
+{
+	struct list_head *lh, *lhn;
+	struct genl_multicast_element *m;
+
+	list_for_each_safe(lh, lhn, &multicast_elements) {
+		m = list_entry(lh, struct genl_multicast_element, list);
+		if (m->file_object == f) {
+			delete_replies_for_portid(m->portid);
+			list_del(&m->list);
+			kfree(m);
+		}
+	}
 }
 
 #define MAX_REPLY_AGE 10
@@ -290,7 +318,7 @@ int drbd_genl_multicast_events(struct sk_buff * skb, gfp_t flags)
 	return do_genl_multicast(skb, "events");
 }
 
-int windrbd_join_multicast_group(u32 portid, const char *name)
+int windrbd_join_multicast_group(u32 portid, const char *name, struct _FILE_OBJECT *f)
 {
 	struct genl_multicast_element *m;
 
@@ -302,9 +330,23 @@ printk("join %d\n", portid);
 
 	strncpy(m->name, name, sizeof(m->name));
 	m->portid = portid;
+	m->file_object = f;
 	mutex_lock(&genl_multicast_mutex);
 	list_add(&m->list, &multicast_elements);
 	mutex_unlock(&genl_multicast_mutex);
+
+	return 0;
+}
+
+int windrbd_delete_multicast_groups_for_file(struct _FILE_OBJECT *f)
+{
+		/* maybe TODO: also delete other replies here ..
+		 * in that case we won't need the reply_reaper
+		 * any more (but how to associate replies with
+		 * file objects?)
+		 */
+
+	delete_multicast_elements_and_replies_for_file_object(f);
 
 	return 0;
 }

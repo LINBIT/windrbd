@@ -176,7 +176,7 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 		m = (struct windrbd_ioctl_genl_portid_and_multicast_group*) irp->AssociatedIrp.SystemBuffer;
 
 printk("joining %d, file object is %p\n", m->portid, s->FileObject);
-		if (windrbd_join_multicast_group(m->portid, m->name) < 0)
+		if (windrbd_join_multicast_group(m->portid, m->name, s->FileObject) < 0)
 			status = STATUS_INSUFFICIENT_RESOURCES;
 
 		irp->IoStatus.Information = 0;
@@ -649,6 +649,8 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	if (device == mvolRootDeviceObject) {
 struct _IO_STACK_LOCATION *s2 = IoGetCurrentIrpStackLocation(irp);
 printk("closing root device, file object is %p\n", s2->FileObject);
+		windrbd_delete_multicast_groups_for_file(s2->FileObject);
+
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
