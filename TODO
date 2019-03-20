@@ -9,11 +9,7 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
-TODO: Bug: drbdadm wait-connect does not work as expected
-
-	Please fix, this is helpful for testing.
-
-TODO: storing function and line patch for spinlock debug currently BSODs
+TODO: Bug: storing function and line patch for spinlock debug currently BSODs
 
 	Have to go home now.
 
@@ -36,7 +32,7 @@ TODO: storing function and line patch for spinlock debug currently BSODs
 
 	Update: happened again (with cb56c9c3b).
 
-TODO: freeze on disconnect-connect-waitconnect loop
+TODO: Bug: freeze on disconnect-connect-waitconnect loop
 
 	Both nodes Secondary, Windows 7 doing
 	disconnect-connect-waitconnect.
@@ -44,7 +40,7 @@ TODO: freeze on disconnect-connect-waitconnect loop
 	Introduced with cb56c9c3b987 (also observed with fbc556)?
 	Same as System freeze on Windows 2016 Primary?
 
-TODO: kmalloc errors on Win7 VM (on my Macbook)
+TODO: Bug: kmalloc errors on Win7 VM (on my Macbook)
 
 	When running
 		drbdadm invalidate-remote ; drbdadm wait-sync
@@ -4929,4 +4925,37 @@ Done: Bug: BSOD on load/unload loop
 
 	Update: updown loop ran 100 times, no BSOD. Seems to
 	be fixed, reopen on problems.
+
+Done: Bug: drbdadm wait-connect does not work as expected
+
+	Please fix, this is helpful for testing.
+
+    Following happens:
+
+    .) drbdadm wait-connect joins a multicast group with pid X.
+    .) drbdadm wait-connect exits.
+    .) WinDRBD kernel driver continues to send message to that multicast
+       group.
+    .) drbdadm is started later with the same pid (CygWin recycles
+       unused PIDs).
+    .) This drbdadm gets messages sent meanwhile to the mc group
+       with wrong sequence numbers.
+ 
+    We have 2 bugs here:
+
+    .) There is no 'leave multicast' group. multicast groups remain
+       until the driver is unloaded or the system reboots.
+    .) The PID is probably not a good unique ID. However if we
+       fix the above, it wouldn't matter.
+
+    Probably the correct way to solve this is to destroy the multicast
+    group when the file handle that was used to create it is closed
+    (drbd-utils does not explicitly close the handle, it is closed
+    implicitly by the OS when the process exits).
+
+	Update: Implemented removing the multicast group when the
+	file for the root device that was used to create the mc
+	group is closed (i.e. when the drbdsetup command exits).
+
+	It should be fixed with 7b7b90708.
 
