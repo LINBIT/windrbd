@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 RES=w0
 i=0
