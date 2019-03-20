@@ -10,7 +10,7 @@ do
 	sleep 5
 	echo Connect $i
 	drbdadm connect $RES
-	echo Connected $i
 	drbdadm wait-connect $RES
+	echo Connected $i
 	sleep 1
 done
