@@ -295,7 +295,6 @@ static int do_genl_multicast(struct sk_buff *skb, const char *group_name)
 	mutex_lock(&genl_multicast_mutex);
 	list_for_each_entry(struct genl_multicast_element, m, &multicast_elements, list) {
 		if (strncmp(m->name, group_name, sizeof(m->name)) == 0) {
-printk("sending message to pid %d\n", m->portid);
 			ret = do_genlmsg_unicast(skb, m->portid);
 			if (ret != 0)
 				break;
@@ -321,8 +320,6 @@ int drbd_genl_multicast_events(struct sk_buff * skb, gfp_t flags)
 int windrbd_join_multicast_group(u32 portid, const char *name, struct _FILE_OBJECT *f)
 {
 	struct genl_multicast_element *m;
-
-printk("join %d\n", portid);
 
 	m = kmalloc(sizeof(*m), 0, 'DRBD');
 	if (m == NULL)

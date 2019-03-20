@@ -696,8 +696,6 @@ static __inline struct nlmsghdr *
 	nlh->nlmsg_pid = portid;
 	nlh->nlmsg_seq = seq;
 
-printk("seq is %d portid is %d\n", seq, portid);
-
 	if (NLMSG_ALIGN(size) - size != 0)
 		memset((unsigned char*)nlmsg_data(nlh) + len, 0, NLMSG_ALIGN(size) - size);
 
