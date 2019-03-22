@@ -32,6 +32,9 @@ TODO: Bug: storing function and line patch for spinlock debug currently BSODs
 
 	Update: happened again (with cb56c9c3b).
 
+	Update: please see good-bad. BSOD is now at disconnect,
+	somewhere in two phase commit.
+
 TODO: Bug: freeze on disconnect-connect-waitconnect loop
 
 	Both nodes Secondary, Windows 7 doing
