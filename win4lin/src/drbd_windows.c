@@ -1471,8 +1471,10 @@ void spin_lock_irq_debug(spinlock_t *lock, const char *file, int line, const cha
 {
 	KIRQL unused;
 
+/*
 	if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 		printk("spin lock bug: KeGetCurrentIrql() is %d (called from %s:%d in %s()\n", KeGetCurrentIrql(), file, line, func);
+*/
 
 /*
 	add_spinlock(lock, file, line, func);
