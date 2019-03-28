@@ -1287,6 +1287,8 @@ void spin_lock_init(spinlock_t *lock)
 	lock->printk_lock = 0;
 }
 
+static spinlock_t rcu_lock;
+
 #ifdef SPIN_LOCK_DEBUG
 
 #define DESC_SIZE 256
@@ -1506,6 +1508,37 @@ void spin_unlock_bh_debug(spinlock_t *lock, const char *file, int line, const ch
 	spin_unlock_irq_debug(lock, file, line, func);
 }
 
+KIRQL rcu_read_lock_debug(const char *file, int line, const char *func)
+{
+	KIRQL flags;
+
+	flags = _spin_lock_irqsave_debug(&rcu_lock, file, line, func);
+	return flags;
+}
+
+void rcu_read_unlock_debug(KIRQL rcu_flags, const char *file, int line, const char *func)
+{
+	spin_unlock_irqrestore_debug(&rcu_lock, rcu_flags, file, line, func);
+}
+
+void synchronize_rcu_debug(const char *file, int line, const char *func)
+{
+	KIRQL rcu_flags;
+
+	rcu_flags = _spin_lock_irqsave_debug(&rcu_lock, file, line, func);
+	/* compiler barrier */
+	spin_unlock_irqrestore_debug(&rcu_lock, rcu_flags, file, line, func);
+}
+
+void call_rcu_debug(struct rcu_head *head, rcu_callback_t f, const char *file, int line, const char *func)
+{
+	KIRQL rcu_flags;
+
+	rcu_flags = _spin_lock_irqsave_debug(&rcu_lock, file, line, func);
+	f(head);
+	spin_unlock_irqrestore_debug(&rcu_lock, rcu_flags, file, line, func);
+}
+
 #else
 
 /* See also defintion of spin_lock_irqsave in drbd_windows.h for handling
@@ -1559,10 +1592,6 @@ void spin_unlock_bh(spinlock_t *lock)
 	spin_unlock_irq(lock);
 }
 
-#endif
-
-
-static spinlock_t rcu_lock;
 
 KIRQL rcu_read_lock(void)
 {
@@ -1594,6 +1623,8 @@ void call_rcu(struct rcu_head *head, rcu_callback_t func)
 	func(head);
 	spin_unlock_irqrestore(&rcu_lock, rcu_flags);
 }
+
+#endif
 
 /* TODO: static? It is also probably not a bad idea to initialize this
    somewhere ...
