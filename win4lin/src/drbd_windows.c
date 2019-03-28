@@ -1287,7 +1287,8 @@ void spin_lock_init(spinlock_t *lock)
 	lock->printk_lock = 0;
 }
 
-static spinlock_t rcu_lock;
+	/* TODO: later a rw lock */
+static EX_SPIN_LOCK rcu_rw_lock;
 
 #ifdef SPIN_LOCK_DEBUG
 
@@ -1296,7 +1297,7 @@ static spinlock_t rcu_lock;
 
 struct spin_lock_currently_held {
 	struct list_head list;
-	spinlock_t *lock;
+	spinlock_t *lock;	/* NULL meaning the RCU lock (which is a rw_lock) */
 	ULONG_PTR when;
 	struct task_struct *thread;
 	atomic_t id;
@@ -1317,7 +1318,7 @@ static void add_spinlock(spinlock_t *lock, const char *file, int line, const cha
 	KIRQL oldIrql;
 	struct spin_lock_currently_held *s;
 
-	if (lock->printk_lock)
+	if (lock && lock->printk_lock)
 		return;
 
 	s = kmalloc(sizeof(*s), GFP_KERNEL, 'DRBD');
@@ -1355,7 +1356,7 @@ static void remove_spinlock(spinlock_t *lock)
 	struct spin_lock_currently_held *s;
 	int n = 0;
 
-	if (lock->printk_lock)
+	if (lock && lock->printk_lock)
 		return;
 
 	KeAcquireSpinLock(&spinlock_lock, &oldIrql);
@@ -1512,31 +1513,37 @@ KIRQL rcu_read_lock_debug(const char *file, int line, const char *func)
 {
 	KIRQL flags;
 
-	flags = _spin_lock_irqsave_debug(&rcu_lock, file, line, func);
+	add_spinlock(NULL, file, line, func);
+	flags = ExAcquireSpinLockShared(&rcu_rw_lock);
 	return flags;
 }
 
 void rcu_read_unlock_debug(KIRQL rcu_flags, const char *file, int line, const char *func)
 {
-	spin_unlock_irqrestore_debug(&rcu_lock, rcu_flags, file, line, func);
+	ExReleaseSpinLockShared(&rcu_rw_lock, rcu_flags);
+	remove_spinlock(NULL);
 }
 
 void synchronize_rcu_debug(const char *file, int line, const char *func)
 {
 	KIRQL rcu_flags;
 
-	rcu_flags = _spin_lock_irqsave_debug(&rcu_lock, file, line, func);
+	add_spinlock(NULL, file, line, func);
+	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 	/* compiler barrier */
-	spin_unlock_irqrestore_debug(&rcu_lock, rcu_flags, file, line, func);
+	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
+	remove_spinlock(NULL);
 }
 
 void call_rcu_debug(struct rcu_head *head, rcu_callback_t f, const char *file, int line, const char *func)
 {
 	KIRQL rcu_flags;
 
-	rcu_flags = _spin_lock_irqsave_debug(&rcu_lock, file, line, func);
+	add_spinlock(NULL, file, line, func);
+	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 	f(head);
-	spin_unlock_irqrestore_debug(&rcu_lock, rcu_flags, file, line, func);
+	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
+	remove_spinlock(NULL);
 }
 
 #else
@@ -1597,31 +1604,31 @@ KIRQL rcu_read_lock(void)
 {
 	KIRQL flags;
 
-	spin_lock_irqsave(&rcu_lock, flags);
+	flags = ExAcquireSpinLockShared(&rcu_rw_lock);
 	return flags;
 }
 
 void rcu_read_unlock(KIRQL rcu_flags)
 {
-	spin_unlock_irqrestore(&rcu_lock, rcu_flags);
+	ExReleaseSpinLockShared(&rcu_rw_lock, rcu_flags);
 }
 
 void synchronize_rcu(void)
 {
 	KIRQL rcu_flags;
 
-	spin_lock_irqsave(&rcu_lock, rcu_flags);
+	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 	/* compiler barrier */
-	spin_unlock_irqrestore(&rcu_lock, rcu_flags);
+-       ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
 }
 
 void call_rcu(struct rcu_head *head, rcu_callback_t func)
 {
 	KIRQL rcu_flags;
 
-	spin_lock_irqsave(&rcu_lock, rcu_flags);
+	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 	func(head);
-	spin_unlock_irqrestore(&rcu_lock, rcu_flags);
+-       ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
 }
 
 #endif
@@ -3626,7 +3633,7 @@ void init_windrbd(void)
 {
 	mutex_init(&read_bootsector_mutex);
 	spin_lock_init(&g_test_and_change_bit_lock);
-	spin_lock_init(&rcu_lock);
+	rcu_rw_lock = 0;
 
 #ifdef SPIN_LOCK_DEBUG
 	KeInitializeSpinLock(&spinlock_lock);
