@@ -7,7 +7,7 @@
 /* Define this to check IRQL at entry of spin_lock_irq() and the like. */
 /* It currently probably is buggy. */
 
-/* #define SPIN_LOCK_DEBUG 1 */
+#define SPIN_LOCK_DEBUG 1
 
 typedef struct _tagSPINLOCK
 {
