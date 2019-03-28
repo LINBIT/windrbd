@@ -35,6 +35,11 @@ TODO: Bug: storing function and line patch for spinlock debug currently BSODs
 	Update: please see good-bad. BSOD is now at disconnect,
 	somewhere in two phase commit.
 
+	Update: printk's showed that crash is in
+	wait_event_interruptible_timeout(): see conn_try_connect in
+	drbd_nl.c, printk before is seen, after is not (and also
+	not in the memory dump, so it really doesn't happen)
+
 TODO: Bug: freeze on disconnect-connect-waitconnect loop
 
 	Both nodes Secondary, Windows 7 doing
