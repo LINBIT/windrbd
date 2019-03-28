@@ -1561,6 +1561,40 @@ void spin_unlock_bh(spinlock_t *lock)
 
 #endif
 
+
+static spinlock_t rcu_lock;
+
+KIRQL rcu_read_lock(void)
+{
+	KIRQL flags;
+
+	spin_lock_irqsave(&rcu_lock, flags);
+	return flags;
+}
+
+void rcu_read_unlock(KIRQL rcu_flags)
+{
+	spin_unlock_irqrestore(&rcu_lock, rcu_flags);
+}
+
+void synchronize_rcu(void)
+{
+	KIRQL rcu_flags;
+
+	spin_lock_irqsave(&rcu_lock, rcu_flags);
+	/* compiler barrier */
+	spin_unlock_irqrestore(&rcu_lock, rcu_flags);
+}
+
+void call_rcu(struct rcu_head *head, rcu_callback_t func)
+{
+	KIRQL rcu_flags;
+
+	spin_lock_irqsave(&rcu_lock, rcu_flags);
+	func(head);
+	spin_unlock_irqrestore(&rcu_lock, rcu_flags);
+}
+
 /* TODO: static? It is also probably not a bad idea to initialize this
    somewhere ...
  */
@@ -1568,7 +1602,7 @@ void spin_unlock_bh(spinlock_t *lock)
 spinlock_t g_irqLock;
 
 void local_irq_disable()
-{	
+{
 	spin_lock_irq(&g_irqLock);
 }
 
@@ -3561,6 +3595,7 @@ void init_windrbd(void)
 {
 	mutex_init(&read_bootsector_mutex);
 	spin_lock_init(&g_test_and_change_bit_lock);
+	spin_lock_init(&rcu_lock);
 
 #ifdef SPIN_LOCK_DEBUG
 	KeInitializeSpinLock(&spinlock_lock);

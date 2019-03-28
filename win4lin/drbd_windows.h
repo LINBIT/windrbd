@@ -1196,44 +1196,10 @@ extern void list_del_rcu(struct list_head *entry);
 #define rcu_assign_pointer(p, v) 	__rcu_assign_pointer((p), (v))
 #define list_next_rcu(list)		(*((struct list_head **)(&(list)->next)))
 
-
-
-
-/* TODO: those are not implemented? */
-extern EX_SPIN_LOCK g_rcuLock;
-
-static inline KIRQL rcu_read_lock(void)
-{
-	KIRQL rcu_flags = ExAcquireSpinLockShared(&g_rcuLock);
-	WDRBD_TRACE_RCU("rcu_read_lock : currentIrql(%d), rcu_flags(%d:%x) g_rcuLock(%d)\n",
-			KeGetCurrentIrql(), rcu_flags, &rcu_flags, g_rcuLock);
-	return rcu_flags;
-}
-
-static inline void rcu_read_unlock(KIRQL rcu_flags)
-{
-	ExReleaseSpinLockShared(&g_rcuLock, rcu_flags);
-	WDRBD_TRACE_RCU("rcu_read_unlock : currentIrql(%d), rcu_flags(%d:%x) g_rcuLock(%d)\n",
-			KeGetCurrentIrql(), rcu_flags, &rcu_flags, g_rcuLock);
-}
-
-static inline void synchronize_rcu()
-{
-	KIRQL rcu_flags;
-	rcu_flags = ExAcquireSpinLockExclusive(&g_rcuLock);
-	/* compiler barrier */
-	ExReleaseSpinLockExclusive(&g_rcuLock, rcu_flags);
-	WDRBD_TRACE_RCU("synchronize_rcu : currentIrql(%d), rcu_flags(%d:%x) g_rcuLock(%lu)\n",
-			KeGetCurrentIrql(), rcu_flags, &rcu_flags, g_rcuLock);
-}
-
-/* TODO: test this */
-static inline void call_rcu(struct rcu_head *head, rcu_callback_t func)
-{
-	KIRQL rcu_flags = ExAcquireSpinLockExclusive(&g_rcuLock);
-	func(head);
-	ExReleaseSpinLockExclusive(&g_rcuLock, rcu_flags);
-}
+extern KIRQL rcu_read_lock(void);
+extern void rcu_read_unlock(KIRQL rcu_flags);
+extern void synchronize_rcu(void);
+extern void call_rcu(struct rcu_head *head, rcu_callback_t func);
 
 extern void local_irq_disable();
 extern void local_irq_enable();
