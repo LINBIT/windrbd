@@ -1355,6 +1355,7 @@ static void remove_spinlock(spinlock_t *lock)
 	struct list_head *sh, *shh;
 	struct spin_lock_currently_held *s;
 	int n = 0;
+	static int spinlock_id;
 
 	if (lock && lock->printk_lock)
 		return;
@@ -1363,9 +1364,9 @@ static void remove_spinlock(spinlock_t *lock)
 	list_for_each_safe(sh, shh, &spin_locks_currently_held) {
 		s = list_entry(sh, struct spin_lock_currently_held, list);
 		if (s->lock == lock) {
-			strcpy(s->marker, "NOSPINLO");
+			snprintf(s->marker, ARRAY_SIZE(s->marker), "NOSPINLO%d", spinlock_id++);
 			list_del(&s->list);
-			kfree(s);
+//			kfree(s);
 			n++;
 		}
 	}
