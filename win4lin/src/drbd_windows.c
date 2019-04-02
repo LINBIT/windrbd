@@ -1307,6 +1307,7 @@ struct spin_lock_currently_held {
 	char desc[DESC_SIZE];
 	char func[FUNC_SIZE];
 	char thread_comm[TASK_COMM_LEN+1];
+	char id_ascii[16];
 };
 
 static LIST_HEAD(spin_locks_currently_held);
@@ -1328,7 +1329,7 @@ static void add_spinlock(spinlock_t *lock, const char *file, int line, const cha
 
 	s->lock = lock;
 	s->when = jiffies;
-//	s->thread = current;
+	s->thread = current;
 	s->id = atomic_inc_return(&spinlock_cnt);
 	s->seen = 0;
 
@@ -1345,6 +1346,7 @@ static void add_spinlock(spinlock_t *lock, const char *file, int line, const cha
 	snprintf(s->func, ARRAY_SIZE(s->func), "%s", func);
 	strcpy(s->marker, "SPINLOCK");
 	strncpy(s->thread_comm, current->comm, ARRAY_SIZE(s->thread_comm)-1);
+	snprintf(s->id_ascii, ARRAY_SIZE(s->id_ascii), "%d", s->id);
 
 	KeAcquireSpinLock(&spinlock_lock, &oldIrql);
 	list_add(&s->list, &spin_locks_currently_held);
