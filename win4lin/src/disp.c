@@ -57,6 +57,11 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	 */
 	init_windrbd();
 
+	/* Next, the threads subsystem (so DRBD can create threads).
+         * Also makes current valid (needed in spinlock debugging).
+         */
+	init_windrbd_threads();
+
 	/* Then, initialize the printk subsystem (ring buffer). Logging
 	 * can be seen only later when booting is finished (depending on
 	 * OS), on most OSes this is when the first printk on behalf of
@@ -71,9 +76,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 #endif
 
 	printk(KERN_INFO "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
-
-	/* Next, the threads subsystem (so DRBD can create threads) */
-	init_windrbd_threads();
 
 #ifdef SPIN_LOCK_DEBUG
 	spinlock_debug_init();

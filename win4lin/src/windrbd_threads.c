@@ -266,6 +266,7 @@ void init_windrbd_threads(void)
 {
         spin_lock_init(&next_pid_lock);
         spin_lock_init(&thread_list_lock);
+	thread_list_lock.printk_lock = 1;
         INIT_LIST_HEAD(&thread_list);
 }
 
