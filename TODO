@@ -9,6 +9,10 @@ Planned: Nov 1 2018
 Real: Dec 3 2018
 -----------------------------------------------------------------------
 
+TODO: BSOD on drbdadm up
+
+	With new 9.0.17 DRBD code.
+
 TODO: Bug: storing function and line patch for spinlock debug currently BSODs
 
 	Have to go home now.
