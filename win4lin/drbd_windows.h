@@ -1235,6 +1235,8 @@ typedef struct _PTR_ENTRY
 
 // linux-2.6.24 define 
 // kernel.h 
+#define INT_MAX		((int)(~0U>>1))
+#define INT_MIN		(-INT_MAX - 1)
 #define UINT_MAX	(~0U)
 
 //pagemap.h
