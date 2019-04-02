@@ -5,9 +5,13 @@
 #include <linux/types.h>
 
 /* Define this to check IRQL at entry of spin_lock_irq() and the like. */
-/* It currently probably is buggy. */
 
-#define SPIN_LOCK_DEBUG 1
+/* It currently causes some BSOD's to happen more frequently (which
+ * is good for testing but bad for releases), so disable it for
+ * releases.
+ */
+
+/* #define SPIN_LOCK_DEBUG 1 */
 
 typedef struct _tagSPINLOCK
 {

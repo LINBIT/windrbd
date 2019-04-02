@@ -1624,7 +1624,7 @@ void synchronize_rcu(void)
 
 	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 	/* compiler barrier */
--       ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
+	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
 }
 
 void call_rcu(struct rcu_head *head, rcu_callback_t func)
@@ -1633,7 +1633,7 @@ void call_rcu(struct rcu_head *head, rcu_callback_t func)
 
 	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 	func(head);
--       ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
+	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
 }
 
 #endif
