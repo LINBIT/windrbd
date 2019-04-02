@@ -40,6 +40,9 @@ TODO: Bug: storing function and line patch for spinlock debug currently BSODs
 	drbd_nl.c, printk before is seen, after is not (and also
 	not in the memory dump, so it really doesn't happen)
 
+	Update: Do not deliver with spinlock debugging enabled, it
+	changes timings and makes BSOD more frequent.
+
 TODO: Bug: freeze on disconnect-connect-waitconnect loop
 
 	Both nodes Secondary, Windows 7 doing
@@ -128,6 +131,9 @@ Feb 14 15:25:41 10.43.10.13  U14:25:40.818|b80f3b50(drbd_r_vamp-4nodes) drbdd <3
 	Update: need to debug via serial console, since we
 	destroy something in the networking stack.
 
+	Update: Maybe grepping the memory dump (of a BSOD)
+	is sufficient.
+
 TODO: Bug: BSOD on Disconnect on Secondary (Windows 10)
 
 	Primary (Windows 7) doing I/O.
@@ -149,6 +155,9 @@ Feb 15 16:39:23 10.43.10.13  U15:39:23.579|3e3eb560(not_drbd_thread) static_inli
 
 	Update: Now testing with Linux/Windows (Linux doing up-down loop,
 	Windows being Primary and doing I/O). No BSOD so far.
+
+	Update: Maybe this is the same as storing function and line patch ...
+	(BSOD in wait_event_interruptible_timeout on Disconnet).
 
 TODO: Bug: System freeze on Windows 2016 Primary on SyncSource (with spinlock patches).
 
@@ -181,6 +190,15 @@ TODO: Bug: System freeze on Windows 2016 Primary on SyncSource (with spinlock pa
 	Windows kernel (at least Windows 7) the spinlocks are really
 	'big kernel locks' that lock the whole machine. Try this with
 	Windows 10 and see if it changed.
+
+	Update: We now analize the memory dump (Windows 10 has a
+	watchdog facility which BSODs instead of just locking
+	the machine) and found that rcu_read_lock is called
+	twice in a thread (sender thread), so recursively.
+
+	This might be valid with Linux implementation, however current
+	Shared/Exclusive spinlock WinDRBD implemenation doesn't allow
+	this.
 
 TODO: Bug: Had a Sync stall in 4 node setup
 
