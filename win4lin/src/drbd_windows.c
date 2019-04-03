@@ -1304,6 +1304,7 @@ struct spin_lock_currently_held {
 	int seen;
 
 	char marker[16];
+	char taken[16];
 	char desc[DESC_SIZE];
 	char func[FUNC_SIZE];
 	char thread_comm[TASK_COMM_LEN+1];
@@ -1315,17 +1316,17 @@ static atomic_t spinlock_cnt;
 static KSPIN_LOCK spinlock_lock;
 static int run_spinlock_monitor;
 
-static void add_spinlock(spinlock_t *lock, const char *file, int line, const char *func)
+static struct spin_lock_currently_held *add_spinlock(spinlock_t *lock, const char *file, int line, const char *func)
 {
 	KIRQL oldIrql;
 	struct spin_lock_currently_held *s;
 
 	if (lock && lock->printk_lock)
-		return;
+		return NULL;
 
 	s = kmalloc(sizeof(*s), GFP_KERNEL, 'DRBD');
 	if (s == NULL)
-		return;
+		return NULL;
 
 	s->lock = lock;
 	s->when = jiffies;
@@ -1347,10 +1348,13 @@ static void add_spinlock(spinlock_t *lock, const char *file, int line, const cha
 	strcpy(s->marker, "SPINLOCK");
 	strncpy(s->thread_comm, current->comm, ARRAY_SIZE(s->thread_comm)-1);
 	snprintf(s->id_ascii, ARRAY_SIZE(s->id_ascii), "%d", s->id);
+	strcpy(s->taken, "NOTTAKEN");
 
 	KeAcquireSpinLock(&spinlock_lock, &oldIrql);
 	list_add(&s->list, &spin_locks_currently_held);
 	KeReleaseSpinLock(&spinlock_lock, oldIrql);
+
+	return s;
 }
 
 static void remove_spinlock(spinlock_t *lock)
@@ -1456,10 +1460,12 @@ int spinlock_debug_shutdown(void)
 long _spin_lock_irqsave_debug(spinlock_t *lock, const char *file, int line, const char *func)
 {
 	KIRQL oldIrql;
+	struct spin_lock_currently_held *s;
 
-	if (!lock->printk_lock)
-		add_spinlock(lock, file, line, func);
+	s = add_spinlock(lock, file, line, func);
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
+	if (s)
+		strcpy(s->taken, "TAKEN");
 
 	return (long)oldIrql;
 }
@@ -1474,14 +1480,16 @@ void spin_unlock_irqrestore_debug(spinlock_t *lock, long flags, const char *file
 void spin_lock_irq_debug(spinlock_t *lock, const char *file, int line, const char *func)
 {
 	KIRQL unused;
-
+	struct spin_lock_currently_held *s;
 /*
 	if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 		printk("spin lock bug: KeGetCurrentIrql() is %d (called from %s:%d in %s()\n", KeGetCurrentIrql(), file, line, func);
 */
 
-	add_spinlock(lock, file, line, func);
+	s = add_spinlock(lock, file, line, func);
 	KeAcquireSpinLock(&lock->spinLock, &unused);
+	if (s)
+		strcpy(s->taken, "TAKEN");
 }
 
 void spin_unlock_irq_debug(spinlock_t *lock, const char *file, int line, const char *func)
@@ -1517,9 +1525,12 @@ void spin_unlock_bh_debug(spinlock_t *lock, const char *file, int line, const ch
 KIRQL rcu_read_lock_debug(const char *file, int line, const char *func)
 {
 	KIRQL flags;
+	struct spin_lock_currently_held *s;
 
-	add_spinlock(NULL, file, line, func);
+	s = add_spinlock(NULL, file, line, func);
 	flags = ExAcquireSpinLockShared(&rcu_rw_lock);
+	if (s)
+		strcpy(s->taken, "TAKEN");
 	return flags;
 }
 
@@ -1532,9 +1543,12 @@ void rcu_read_unlock_debug(KIRQL rcu_flags, const char *file, int line, const ch
 void synchronize_rcu_debug(const char *file, int line, const char *func)
 {
 	KIRQL rcu_flags;
+	struct spin_lock_currently_held *s;
 
-	add_spinlock(NULL, file, line, func);
+	s = add_spinlock(NULL, file, line, func);
 	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
+	if (s)
+		strcpy(s->taken, "TAKEN");
 	/* compiler barrier */
 	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
 	remove_spinlock(NULL);
@@ -1543,9 +1557,12 @@ void synchronize_rcu_debug(const char *file, int line, const char *func)
 void call_rcu_debug(struct rcu_head *head, rcu_callback_t f, const char *file, int line, const char *func)
 {
 	KIRQL rcu_flags;
+	struct spin_lock_currently_held *s;
 
-	add_spinlock(NULL, file, line, func);
+	s = add_spinlock(NULL, file, line, func);
 	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
+	if (s)
+		strcpy(s->taken, "TAKEN");
 	f(head);
 	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
 	remove_spinlock(NULL);
