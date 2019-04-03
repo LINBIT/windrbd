@@ -851,7 +851,7 @@ struct queue_limits {
 struct request_queue {
 	void * queuedata;
 	struct backing_dev_info backing_dev_info;
-	spinlock_t *queue_lock; // TODO: unused?.
+	spinlock_t *queue_lock;
 	unsigned short logical_block_size;
 	ULONG_PTR queue_flags;
 	long max_hw_sectors;
@@ -860,12 +860,14 @@ struct request_queue {
 
 static inline void queue_flag_set(unsigned int flag, struct request_queue *q)
 {
-	__set_bit(flag, &q->queue_flags);
+	if (((int) flag) >= 0)
+		__set_bit(flag, &q->queue_flags);
 }
 
 static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
 {
-	__clear_bit(flag, &q->queue_flags);
+	if (((int) flag) >= 0)
+		__clear_bit(flag, &q->queue_flags);
 }
 
 /* TODO: returning ULONGLONG? */

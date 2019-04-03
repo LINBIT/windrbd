@@ -2683,10 +2683,23 @@ void list_add_tail_rcu(struct list_head *new, struct list_head *head)
      __list_add_rcu(new, head->prev, head);
 }
 
- struct request_queue *blk_alloc_queue(gfp_t gfp_mask)
- {
-     return kzalloc(sizeof(struct request_queue), 0, 'E5DW');
- }
+static spinlock_t global_queue_lock;
+
+struct request_queue *blk_alloc_queue(gfp_t gfp_mask)
+{
+	struct request_queue *q;
+
+	q = kzalloc(sizeof(struct request_queue), 0, 'E5DW');
+	if (q == NULL)
+		return NULL;
+
+		/* might be overridden later, see drbd_main.c
+		 * It is used only once to set the bit flags.
+		 */
+	q->queue_lock = &global_queue_lock;
+
+	return q;
+}
 
 void blk_cleanup_queue(struct request_queue *q)
 {
@@ -3658,6 +3671,7 @@ void init_windrbd(void)
 	mutex_init(&read_bootsector_mutex);
 	spin_lock_init(&g_test_and_change_bit_lock);
 	rcu_rw_lock = 0;
+	spin_lock_init(&global_queue_lock);
 
 #ifdef SPIN_LOCK_DEBUG
 	KeInitializeSpinLock(&spinlock_lock);
