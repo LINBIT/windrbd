@@ -1308,6 +1308,7 @@ struct spin_lock_currently_held {
 	char desc[DESC_SIZE];
 	char func[FUNC_SIZE];
 	char thread_comm[TASK_COMM_LEN+1];
+	char irq_level[16];
 	char id_ascii[16];
 };
 
@@ -1349,6 +1350,7 @@ static struct spin_lock_currently_held *add_spinlock(spinlock_t *lock, const cha
 	strncpy(s->thread_comm, current->comm, ARRAY_SIZE(s->thread_comm)-1);
 	snprintf(s->id_ascii, ARRAY_SIZE(s->id_ascii), "%d", s->id);
 	strcpy(s->taken, "NOTTAKEN");
+	snprintf(s->irq_level, ARRAY_SIZE(s->irq_level), "IRQL%d", KeGetCurrentIrql());
 
 	KeAcquireSpinLock(&spinlock_lock, &oldIrql);
 	list_add(&s->list, &spin_locks_currently_held);
