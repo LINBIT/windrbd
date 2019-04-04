@@ -1505,6 +1505,7 @@ void spin_lock_debug(spinlock_t *lock, const char *file, int line, const char *f
 	spin_lock_irq_debug(lock, file, line, func);
 		/* Using this caused deadlock on Windows Server 2016? */
 		/* No, it was something else (bug also in 0.9.1) */
+		/* TODO: use this: */
 	/* KeAcquireSpinLockAtDpcLevel(&lock->spinLock); */
 }
 
