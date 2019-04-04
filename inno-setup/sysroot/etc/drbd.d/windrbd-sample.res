@@ -51,11 +51,12 @@ resource "windrbd-sample" {
 # Again, we recommend not to use a drive letter:
 #			meta-disk       "3e56b893-10bf-11e8-aedd-080027421234";
 #
-# Please note that as of 06/2018 Linux drbd-utils do not understand
-# WinDRBD syntax of block devices (yet), so you need to replace the
-# disk, device and meta-disk windows block devices with dummy values
-# (/dev/drbdX, /dev/sdxx) if you want to use the same file on Linux.
-# This will change in upcoming Linux drbd-utils versions.
+# Please note that Linux drbd-utils versions before 9.7.0 do not
+# understand the WinDRBD syntax of block devices, so you need to
+# either upgrade your drbd-utils on Linux to 9.7.0 (recommended)
+# or replace the disk, device and meta-disk windows block devices
+# with dummy values (/dev/drbdX, /dev/sdxx) if you want to use
+# the same file on Linux.
 #
 		}
 	}
