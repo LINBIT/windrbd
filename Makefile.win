@@ -180,7 +180,7 @@ else
 # Windows certificate store in order to load the driver. See
 # readme.txt file in the crypto directory to learn how to create it.
 
-	"$(EWDK_BIN)/signtool.exe" sign /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v /t http://timestamp.verisign.com/scripts/timstamp.dll "$@"
+	"$(EWDK_BIN)/signtool.exe" sign /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v "$@"
 endif
 
 
