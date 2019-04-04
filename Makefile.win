@@ -212,5 +212,8 @@ clean:
 
 package: windrbd.sys
 	( cd ../../inno-setup && iscc windrbd.iss /DWindrbdSource=$(WINDRBD_SOURCE) /DWindrbdUtilsSource=$(DRBD_UTILS_SOURCE) )
+ifdef R
+	( cd ../../inno-setup &&  "$(EWDK_BIN)/signtool.exe" sign /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com install-`sed -e 's/[^"]*"\([^"]*\).*/\1/g' version.iss`.exe )
+endif
 	chmod a+x ../../inno-setup/install*.exe
 
