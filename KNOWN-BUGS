@@ -1,0 +1,29 @@
+Known bugs in 0.9.2
+-------------------
+
+Stability: BSODs on disonnecting (even when there is no I/O)
+
+	About 0.1% of drbdadm disconnect can cause a BSOD. Low level
+	task synchronization (wait_event_interruptible(), schedule()
+	and the like) must be redesigned to fix this (BSOD is in
+	schedule()).
+
+Stability: Windows 7 only: resource leak then Secondary and I/O
+
+	After approx. 3 hour of I/O on Primary when a Windows 7
+	machine is Secondary and connected, no more processes
+	can be started. It might also happen that another Windows
+	driver (Intel networking driver) BSODs because of
+	shortage on resources.
+
+Stability: Machine lockup/BSOD when interrupting Sync on Secondary often
+
+	On Windows 10 a watchdog BSOD happens, on other machines no
+	more task scheduling is done (mouse might still move but
+	else machine is locked).
+
+	The reason is that in the DRBD code path when interrupting
+	Sync, rcu_lock is taken recursively (which is valid in Linux)
+	This case must be explicitly allows (by storing rcu_lock
+	state in the task struct and not taking it again if it
+	already taken by the task).
