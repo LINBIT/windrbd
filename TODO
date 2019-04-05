@@ -204,6 +204,8 @@ TODO: Bug: System freeze on Windows 2016 Primary on SyncSource (with spinlock pa
 	Shared/Exclusive spinlock WinDRBD implemenation doesn't allow
 	this.
 
+	Update: also happened with 4c8c46a4a (0.9.2-rc1).
+
 TODO: Bug: Had a Sync stall in 4 node setup
 
 	One node at 98.9 percent other at around 50% (but 130% on its
