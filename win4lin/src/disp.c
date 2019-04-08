@@ -142,6 +142,8 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	printk(KERN_INFO "Windrbd Driver loaded.\n");
 
+	windrbd_run_tests();
+
 	return STATUS_SUCCESS;
 }
 

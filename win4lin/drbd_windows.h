@@ -1379,4 +1379,7 @@ int my_inet_aton(const char *cp, struct in_addr *inp);
 /* ugh ... */
 #define htons(x) ((((x) & 0xff) << 8) | (((x) & 0xff00) >> 8))
 
+/* Run internal unit tests. */
+void windrbd_run_tests(void);
+
 #endif // DRBD_WINDOWS_H
