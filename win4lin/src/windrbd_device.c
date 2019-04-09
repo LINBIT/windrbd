@@ -373,6 +373,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	case IOCTL_DISK_IS_WRITABLE:
 		break;	/* just return without error */
 
+#if 0
 	case IOCTL_MOUNTDEV_QUERY_DEVICE_NAME:
 	{
 		int length = dev->path_to_device.Length;
@@ -455,6 +456,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		irp->IoStatus.Information = total_length;
 		break;
 	}
+#endif
 
 	case IOCTL_STORAGE_GET_HOTPLUG_INFO:
 		struct _STORAGE_HOTPLUG_INFO *hotplug_info = 
