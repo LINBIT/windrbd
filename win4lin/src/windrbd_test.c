@@ -1,7 +1,7 @@
 #include "drbd_windows.h"
 #include "windrbd_threads.h"
 
-#define WINDRBD_RUN_TESTS 1
+/* #define WINDRBD_RUN_TESTS 1 */
 
 #define WINDRBD_RUN_RCU_LOCK_RECURSION_TEST 1
 /* #define WINDRBD_RUN_RCU_LOCK_SYNCHRONIZE_RECURSION_TEST 1 */
@@ -53,15 +53,20 @@ printk("4 IRQL is %d\n", KeGetCurrentIrql());
 	return 0;
 }
 
+#endif
+
 void windrbd_run_tests(void)
 {
+#ifdef WINDRBD_RUN_TESTS
 #ifdef WINDRBD_RUN_RCU_LOCK_RECURSION_TEST
 	kthread_run(rcu_lock_recursion, NULL, "rcu-lock-rec");
 #endif
 #ifdef WINDRBD_RUN_RCU_LOCK_SYNCHRONIZE_RECURSION_TEST
 	kthread_run(rcu_lock_synchronize_recursion, NULL, "rcu-lock-sync");
 #endif
+#else
+	printk("WinDRBD self-tests disabled, see windrbd_test.c for how to enabled them.\n");
+#endif
 }
 
-#endif
 
