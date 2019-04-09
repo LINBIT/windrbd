@@ -577,6 +577,8 @@ struct block_device {
 
 	struct fault_injection inject_on_completion;
 	struct fault_injection inject_on_request;
+
+	struct _KEVENT primary_event;
 };
 
 	/* Starting with version 0.7.1, this is the device extension

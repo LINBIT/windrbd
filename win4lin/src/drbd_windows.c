@@ -3290,6 +3290,8 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	bdev_ref = new_device->DeviceExtension;
 	bdev_ref->bdev = bdev;
 
+	KeInitializeEvent(&bdev->primary_event, NotificationEvent, FALSE);
+
 		/* TODO: makes a difference? */
 		/* TODO: also try DO_BUFFERED_IO */
 	new_device->Flags |= DO_DIRECT_IO;

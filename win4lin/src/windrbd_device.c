@@ -594,6 +594,18 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
         return status;
 }
 
+static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
+{
+	NTSTATUS status;
+
+printk("waiting for becoming primary...\n");
+	status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
+	if (status != STATUS_SUCCESS)
+		printk("KeWaitForSingleObject returned %x\n", status);
+
+	return status;
+}
+
 static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject) {
@@ -617,6 +629,10 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	int err;
 
 	if (dev->drbd_device != NULL) {
+		status = wait_for_becoming_primary(dev->drbd_device->this_bdev);
+		if (status != STATUS_SUCCESS)
+			goto exit;
+
 		dbg(KERN_DEBUG "s->Parameters.Create.SecurityContext->DesiredAccess is %x\n", s->Parameters.Create.SecurityContext->DesiredAccess);
 
 		mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
@@ -638,6 +654,7 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		status = STATUS_SUCCESS;
 	}
 
+exit:
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 	dbg(KERN_DEBUG "status is %x\n", status);
@@ -1004,8 +1021,11 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 
 	if (dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
-		dbg("I/O request while not primary.\n");
-		goto exit;
+		dbg("I/O request while not primary, waiting for primary.\n");
+
+		status = wait_for_becoming_primary(dev->drbd_device->this_bdev);
+		if (status != STATUS_SUCCESS)
+			goto exit;
 	}
 
 		/* allow I/O when the local disk failed, usually there

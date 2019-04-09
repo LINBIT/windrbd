@@ -1,0 +1,42 @@
+From 3608648dfed7d82f4e5bfb8a9dc0301a2d96d386 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 9 Apr 2019 18:27:48 +0200
+Subject: [PATCH] Waiting for becoming Primary event.
+
+---
+ drbd/drbd_nl.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 71f3069..c0dfea9 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -1037,6 +1037,12 @@ drbd_set_role(struct drbd_resource *resource, enum drbd_role role, bool force, s
+ 	enum chg_state_flags flags = CS_ALREADY_SERIALIZED | CS_DONT_RETRY | CS_WAIT_COMPLETE;
+ 	enum drbd_role old_role = resource->role[NOW];
+ 
++	if (old_role == R_PRIMARY && role == R_SECONDARY) {
++		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr) {
++			KeClearEvent(&device->this_bdev->primary_event);
++		}
++	}
++
+ retry:
+ 	down(&resource->state_sem);
+ 
+@@ -1265,6 +1271,12 @@ retry:
+ 			drbd_kobject_uevent(device);
+ 	}
+ 
++	if (old_role == R_SECONDARY && role == R_PRIMARY) {
++		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr) {
++			KeSetEvent(&device->this_bdev->primary_event, 0, FALSE);
++		}
++	}
++
+ out:
+ 	up(&resource->state_sem);
+ 	if (err_str) {
+-- 
+2.17.0
+
