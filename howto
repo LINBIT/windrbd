@@ -245,3 +245,24 @@ Disable automatic upgrades on Ubuntu:
 Add line:
 APT::Periodic::Unattended-Upgrade "0";
 
+-------
+
+Enable kernel serial console logging
+
+vi /etc/default/grub 
+GRUB_CMDLINE_LINUX="console=ttyS0,38400n8"
+sudo update-grub
+sudo reboot
+
+And log /dev/pts/X on much/vamp to file (Simon)
+
+----------
+
+Dump memory from virtual box VM:
+
+/usr/local/bin/vboxmanage debugvm "WinDRBD 2" dumpvmcore --filename Win7Lockup.elf
+
+Then look for SPINLOCK:
+
+strings Win7Lockup.elf | grep SPINLOCK -A 5 | tee spinlocks-win7.txt
+
