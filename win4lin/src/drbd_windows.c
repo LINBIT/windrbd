@@ -3545,19 +3545,22 @@ int windrbd_mount(struct block_device *dev)
 		return 0;	/* this is legal */
 	}
 
+printk("dev->path_to_device: %S &dev->mount_point: %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
+
 	/* This is basically what mount manager does: leave it here,
 	   in case we revert the mount manager code again.
 	 */
-/*
+
 	status = IoCreateSymbolicLink(&dev->mount_point, &dev->path_to_device);
 	if (status != STATUS_SUCCESS) {
 		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, dev->mount_point.Buffer, status);
 		return -1;
 
 	}
-*/
+/*
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
+*/
 
 	dev->is_mounted = true;
 
