@@ -3300,6 +3300,8 @@ int windrbd_create_windows_device(struct block_device *bdev)
 
 void windrbd_remove_windows_device(struct block_device *bdev)
 {
+printk("removing device %S\n", bdev->path_to_device.Buffer);
+
 	if (bdev->windows_device == NULL) {
 		printk(KERN_WARNING "Windows device does not exist in block device %p.\n", bdev);
 		return;
@@ -3545,7 +3547,7 @@ int windrbd_mount(struct block_device *dev)
 		return 0;	/* this is legal */
 	}
 
-printk("dev->path_to_device: %S &dev->mount_point: %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
+printk("dev->path_to_device: %S dev->mount_point: %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 
 	/* This is basically what mount manager does: leave it here,
 	   in case we revert the mount manager code again.
@@ -3587,6 +3589,7 @@ int windrbd_umount(struct block_device *bdev)
 		printk("windrbd_umount() called while not mounted.\n");
 		return 0;
 	}
+#if 0
 	InitializeObjectAttributes(&attr, &bdev->mount_point, OBJ_KERNEL_HANDLE, NULL, NULL);
 
 	event = IoCreateNotificationEvent(NULL, &event_handle);
@@ -3603,11 +3606,15 @@ int windrbd_umount(struct block_device *bdev)
 		printk("ZwOpenFile failed, status is %x\n", status);
 		return -1;
 	}
+#endif
 
-	if (IoDeleteSymbolicLink(&bdev->mount_point) != STATUS_SUCCESS) {
-		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S\n", bdev->mount_point.Buffer);
+printk("About to IoDeleteSymbolicLink(%S)\n", bdev->mount_point.Buffer);
+	status = IoDeleteSymbolicLink(&bdev->mount_point);
+	if (status != STATUS_SUCCESS) {
+		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S, status is %x\n", bdev->mount_point.Buffer, status);
 	}
 
+#if 0
 	status = ZwFsControlFile(f, event_handle, NULL, NULL, &iostat, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0);
 	if (status == STATUS_PENDING) {
 		KeWaitForSingleObject(event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
@@ -3620,6 +3627,7 @@ int windrbd_umount(struct block_device *bdev)
 		return -1;
 	}
 	ZwClose(f);
+#endif
 
 	bdev->is_mounted = false;
 	return 0;
