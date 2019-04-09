@@ -3517,8 +3517,21 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 	ret = windrbd_set_mount_point_utf16(block_device, mount_point);
 	if (ret == 0)
 		printk("Mount point for minor %d set to %S\n", minor, block_device->mount_point.Buffer);
-	else
+	else {
 		printk("Warning: could not set mount point, error is %d\n", ret);
+		return ret;
+	}
+
+	ret = windrbd_create_windows_device(block_device);
+	if (ret != 0) {
+		printk("Warning: Couldn't create windows device for volume\n");
+		return ret;
+	}
+
+	ret = windrbd_mount(block_device);
+	if (ret != 0)
+		printk("Warning: Couldn't mount volume, perhaps the drive letter (%S) is in use?\n", mount_point);
+
 
 	return ret;
 }
