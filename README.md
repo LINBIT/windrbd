@@ -316,3 +316,4 @@ Version history
  * 0.8.19 (Nov 29,2018): Tech guide
  * 0.9.0 (Dec 03, 2018): Public beta
  * 0.9.1 (Dec 04, 2018): Fixed a buffer overflow in user space utility
+ * 0.9.2 (Apr 10, 2019): DRBD 9.0.17, support for n > 2 nodes
