@@ -155,6 +155,9 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 
 	printk("Unloading windrbd driver.\n");
 
+	windrbd_shutdown_tests();
+	printk("Terminated tests\n");
+
 	drbd_cleanup();
 	printk("DRBD cleaned up.\n");
 

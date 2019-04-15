@@ -1,10 +1,11 @@
 #include "drbd_windows.h"
 #include "windrbd_threads.h"
 
-/* #define WINDRBD_RUN_TESTS 1 */
+#define WINDRBD_RUN_TESTS 1
 
-#define WINDRBD_RUN_RCU_LOCK_RECURSION_TEST 1
+/* #define WINDRBD_RUN_RCU_LOCK_RECURSION_TEST 1 */
 /* #define WINDRBD_RUN_RCU_LOCK_SYNCHRONIZE_RECURSION_TEST 1 */
+#define WINDRBD_PRINTK_PING 1
 
 #ifdef WINDRBD_RUN_TESTS
 
@@ -53,6 +54,21 @@ printk("4 IRQL is %d\n", KeGetCurrentIrql());
 	return 0;
 }
 
+static int run_printk_ping = 1;
+
+static int printk_ping(void *unused)
+{
+	int i;
+
+	i=0;
+	while (run_printk_ping) {
+		printk("ping %d\n", i);
+		i++;
+		msleep(1000);
+	}
+	return 0;
+}
+
 #endif
 
 void windrbd_run_tests(void)
@@ -64,9 +80,18 @@ void windrbd_run_tests(void)
 #ifdef WINDRBD_RUN_RCU_LOCK_SYNCHRONIZE_RECURSION_TEST
 	kthread_run(rcu_lock_synchronize_recursion, NULL, "rcu-lock-sync");
 #endif
+#ifdef WINDRBD_PRINTK_PING
+	kthread_run(printk_ping, NULL, "printk-ping");
+#endif
 #else
 	printk("WinDRBD self-tests disabled, see windrbd_test.c for how to enabled them.\n");
 #endif
 }
 
 
+void windrbd_shutdown_tests(void)
+{
+#ifdef WINDRBD_PRINTK_PING
+	run_printk_ping = 0;
+#endif
+}

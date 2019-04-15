@@ -60,6 +60,18 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 	return STATUS_NOT_IMPLEMENTED;
 }
 
+static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
+{
+	NTSTATUS status;
+
+printk("waiting for becoming primary...\n");
+	status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
+	if (status != STATUS_SUCCESS)
+		printk("KeWaitForSingleObject returned %x\n", status);
+
+	return status;
+}
+
 static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *dev)
 {
 	g->BytesPerSector = dev->bd_block_size;
@@ -272,6 +284,10 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct block_device *dev = ref->bdev;
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
+
+	status = wait_for_becoming_primary(dev);
+	if (status != STATUS_SUCCESS)
+		goto out;
 
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 		/* custom WINDRBD ioctl's */
@@ -589,21 +605,10 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		status = STATUS_INVALID_DEVICE_REQUEST;
 	}
 
+out:
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return status;
-}
-
-static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
-{
-	NTSTATUS status;
-
-printk("waiting for becoming primary...\n");
-	status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
-	if (status != STATUS_SUCCESS)
-		printk("KeWaitForSingleObject returned %x\n", status);
-
-	return status;
 }
 
 static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)

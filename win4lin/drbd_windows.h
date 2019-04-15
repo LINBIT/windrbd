@@ -1383,5 +1383,6 @@ int my_inet_aton(const char *cp, struct in_addr *inp);
 
 /* Run internal unit tests. */
 void windrbd_run_tests(void);
+void windrbd_shutdown_tests(void);
 
 #endif // DRBD_WINDOWS_H
