@@ -220,8 +220,11 @@ bcdedit /enum all
 
 Diskless client over TCP/IP
 
-linux: 
-nc -p 5000 -l -k | tee /tmp/ipxe.log
+sudo chmod o+rw /dev/sdf
+sudo drbdadm up tiny-windows-boot 
+
+# linux: 
+# nc -p 5000 -l -k | tee /tmp/ipxe.log
 
 dhcp net1
 boot http://192.168.56.102/~johannes/ipxe/ipxework.pxe
