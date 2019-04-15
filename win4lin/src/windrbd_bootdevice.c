@@ -331,9 +331,9 @@ printk("3\n");
 		return ret;
 
 /* For now, this will also create the mount point. */
-/* When booting this should be C: */
+/* When booting this should be C: when testing this should be W: */
 printk("4\n");
-	if ((ret = windrbd_set_mount_point_for_minor_utf16(BOOT_MINOR, L"W:")) != 0)
+	if ((ret = windrbd_set_mount_point_for_minor_utf16(BOOT_MINOR, L"C:")) != 0)
 		return ret;
 
 printk("5\n");
