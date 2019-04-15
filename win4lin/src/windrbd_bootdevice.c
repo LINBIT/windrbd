@@ -305,6 +305,11 @@ int windrbd_create_boot_device(void)
 	if ((ret = new_minor(BOOT_RESOURCE, BOOT_MINOR, BOOT_VOLUME)) != 0)
 		return ret;
 
+/* For now, this will also create the mount point. */
+/* When booting this should be C: */
+	if ((ret = windrbd_set_mount_point_for_minor_utf16(BOOT_MINOR, L"W:")) != 0)
+		return ret;
+
 	if ((ret = new_peer(BOOT_RESOURCE, BOOT_PEER, BOOT_PEER_NODE_ID, BOOT_PROTOCOL)) != 0)
 		return ret;
 
