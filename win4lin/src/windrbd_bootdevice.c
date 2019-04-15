@@ -278,32 +278,49 @@ static int attach(int minor, const char *backing_dev, const char *meta_dev, int 
 	return finish_netlink_packet(skb, DRBD_ADM_ATTACH);
 }
 
+/* TODO: later we want to get this parameters via ACPI (or
+ * similar approach).
+ */
+
+#define BOOT_RESOURCE "tiny-windows-boot"
+#define BOOT_NUM_NODES 2
+#define BOOT_MINOR 1
+#define BOOT_VOLUME 1
+#define BOOT_PEER "johannes-VirtualBox"
+#define BOOT_PEER_NODE_ID 1
+#define BOOT_PROTOCOL 3	/* protocol C */
+#define BOOT_MY_ADDRESS "0.0.0.0:7681"
+#define BOOT_PEER_ADDRESS "192.168.56.102:7681"
+
+
 int windrbd_create_boot_device(void)
 {
 	int ret;
 
         drbd_genl_family.id = WINDRBD_NETLINK_FAMILY_ID;
 
-	if ((ret = new_resource("w0", 2)) != 0)
+	if ((ret = new_resource(BOOT_RESOURCE, BOOT_NUM_NODES)) != 0)
 		return ret;
 
-	if ((ret = new_minor("w0", 5, 17)) != 0)
+	if ((ret = new_minor(BOOT_RESOURCE, BOOT_MINOR, BOOT_VOLUME)) != 0)
 		return ret;
 
-	if ((ret = new_peer("w0", "johannes-VirtualBox", 3, 3)) != 0)
+	if ((ret = new_peer(BOOT_RESOURCE, BOOT_PEER, BOOT_PEER_NODE_ID, BOOT_PROTOCOL)) != 0)
 		return ret;
 
 		/* Since we do not have any interfaces yet, bind listeing
 		 * socket to INADDR_ANY, else it will fail an node
 		 * will go into standalone.
 		 */
-	if ((ret = new_path("w0", 3, "0.0.0.0:7600", "192.168.56.102:7600")) != 0)
+	if ((ret = new_path(BOOT_RESOURCE, BOOT_PEER_NODE_ID, BOOT_MY_ADDRESS, BOOT_PEER_ADDRESS)) != 0)
 		return ret;
 
+/*
 	if ((ret = attach(5, "\\DosDevices\\F:", "\\DosDevices\\G:", -2)) != 0)
 		printk("attach failed with error code %d (ignored)\n", ret);
+*/
 
-	if ((ret = connect("w0", 3)) != 0)
+	if ((ret = connect(BOOT_RESOURCE, BOOT_PEER_NODE_ID)) != 0)
 		return ret;
 
 	return 0;
