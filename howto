@@ -220,6 +220,11 @@ bcdedit /enum all
 
 Diskless client over TCP/IP
 
+create a small text file to make sure it is the right image:
+
+copy con xxx.txt
+123^Z
+
 sudo chmod o+rw /dev/sdf
 # adjust IP address of peer in DRBD config:
 sudo vi /etc/drbd.d/tiny-windows-boot.res 
