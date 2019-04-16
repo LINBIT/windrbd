@@ -221,14 +221,19 @@ bcdedit /enum all
 Diskless client over TCP/IP
 
 sudo chmod o+rw /dev/sdf
+# adjust IP address of peer in DRBD config:
+sudo vi /etc/drbd.d/tiny-windows-boot.res 
 sudo drbdadm up tiny-windows-boot 
 
 # linux: 
 # nc -p 5000 -l -k | tee /tmp/ipxe.log
 
+Power on Diskless Client VM
+Press Ctrl-B to interrupt iPXE
 dhcp net1
 boot http://192.168.56.102/~johannes/ipxe/ipxework.pxe
 
+Press Ctrl-B again
 dhcp net1
 sanboot http://192.168.56.102/cgi-bin/drbd.cgi
 
