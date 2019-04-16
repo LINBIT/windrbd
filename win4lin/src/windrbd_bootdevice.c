@@ -357,6 +357,10 @@ printk("6\n");
 */
 
 printk("7\n");
+	if ((ret == windrbd_wait_for_network()) < 0)
+		return ret;
+
+printk("7a\n");
 	if ((ret = connect(BOOT_RESOURCE, BOOT_PEER_NODE_ID)) != 0)
 		return ret;
 

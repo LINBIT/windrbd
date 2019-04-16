@@ -124,4 +124,10 @@ void windrbd_update_socket_buffer_sizes(struct socket *socket);
 
 int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress);
 
+/* WinDRBD specific: wait until network is initialized (used for boot
+ * device).
+ */
+
+int windrbd_wait_for_network(void);
+
 #endif

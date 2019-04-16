@@ -25,6 +25,8 @@ struct net init_net;
 
 static LONG wsk_state = WSK_DEINITIALIZED;
 
+static struct _KEVENT net_initialized_event;
+
 static WSK_REGISTRATION		g_WskRegistration;
 static WSK_PROVIDER_NPI		g_WskProvider;
 static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
@@ -304,7 +306,20 @@ static NTSTATUS SocketsInit(void)
 	}
 
 	InterlockedExchange(&wsk_state, WSK_INITIALIZED);
+	KeSetEvent(&net_initialized_event, 0, FALSE);
 	return STATUS_SUCCESS;
+}
+
+int windrbd_wait_for_network(void)
+{
+	NTSTATUS status;
+
+	status = KeWaitForSingleObject(&net_initialized_event, Executive, KernelMode, FALSE, NULL);
+	if (status != STATUS_SUCCESS) {
+		printk("KeWaitForSingleObject returned %x when waiting for network event\n", status);
+		return -1;
+	}
+	return 0;
 }
 
 /* Deregister network programming interface (NPI) and wsk. Reverse of
@@ -1566,6 +1581,8 @@ NTSTATUS windrbd_init_wsk(void)
 {
 	HANDLE h;
 	NTSTATUS status;
+
+	KeInitializeEvent(&net_initialized_event, NotificationEvent, FALSE);
 
 	status = windrbd_create_windows_thread(windrbd_init_wsk_thread, NULL, &init_wsk_thread);
 
