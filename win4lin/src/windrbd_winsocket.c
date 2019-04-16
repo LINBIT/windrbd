@@ -1559,9 +1559,6 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 	status = windrbd_create_windows_thread(receive_a_lot, NULL, &r_thread);
 #endif
 
-	err = windrbd_create_boot_device();
-	printk("windrbd_create_boot_device returned %d\n", err);
-
 	return status;
 }
 

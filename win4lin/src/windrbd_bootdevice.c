@@ -2,6 +2,7 @@
 #include "drbd_wingenl.h"
 #include "wingenl.h"
 #include "drbd_int.h"
+#include "windrbd_threads.h"
 
 /* This creates a device on boot (called via wsk init thread).
  * It feeds DRBD via netlink packets to create the boot device.
@@ -308,6 +309,8 @@ static int attach(int minor, const char *backing_dev, const char *meta_dev, int 
 #define BOOT_NUM_NODES 2
 #define BOOT_MINOR 1
 #define BOOT_VOLUME 1
+/* TODO: C: for diskless client */
+#define BOOT_DRIVE L"W:"
 #define BOOT_PEER "johannes-VirtualBox"
 #define BOOT_PEER_NODE_ID 1
 #define BOOT_PROTOCOL 3	/* protocol C */
@@ -315,7 +318,7 @@ static int attach(int minor, const char *backing_dev, const char *meta_dev, int 
 #define BOOT_PEER_ADDRESS "192.168.56.102:7681"
 
 
-int windrbd_create_boot_device(void)
+static int windrbd_create_boot_device(void *unused)
 {
 	int ret;
 
@@ -333,8 +336,8 @@ printk("3\n");
 /* For now, this will also create the mount point. */
 /* When booting this should be C: when testing this should be W: */
 printk("4\n");
-	if ((ret = windrbd_set_mount_point_for_minor_utf16(BOOT_MINOR, L"C:")) != 0)
-		return ret;
+	if ((ret = windrbd_set_mount_point_for_minor_utf16(BOOT_MINOR, BOOT_DRIVE)) != 0)
+		printk("Mounting minor %d to %s failed.\n", BOOT_MINOR, BOOT_DRIVE);
 
 printk("5\n");
 	if ((ret = new_peer(BOOT_RESOURCE, BOOT_PEER, BOOT_PEER_NODE_ID, BOOT_PROTOCOL)) != 0)
@@ -371,3 +374,9 @@ printk("c\n");
 	return 0;
 }
 
+void windrbd_init_boot_device(void)
+{
+	if (kthread_run(windrbd_create_boot_device, NULL, "bootdev") == NULL) {
+		printk("Failed to create bootdevice thread.\n");
+	}
+}

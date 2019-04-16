@@ -144,6 +144,9 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	windrbd_run_tests();
 
+	printk("Attempting to start boot device\n");
+	windrbd_init_boot_device();
+
 	return STATUS_SUCCESS;
 }
 
