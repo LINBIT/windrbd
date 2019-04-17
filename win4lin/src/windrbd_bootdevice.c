@@ -310,7 +310,7 @@ static int attach(int minor, const char *backing_dev, const char *meta_dev, int 
 #define BOOT_MINOR 1
 #define BOOT_VOLUME 1
 /* TODO: C: for diskless client, W: for test/dev VM */
-#define BOOT_DRIVE L"W:"
+#define BOOT_DRIVE L"C:"
 #define BOOT_PEER "johannes-VirtualBox"
 #define BOOT_PEER_NODE_ID 1
 #define BOOT_PROTOCOL 3	/* protocol C */
