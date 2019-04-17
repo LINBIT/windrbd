@@ -220,10 +220,26 @@ bcdedit /enum all
 
 Diskless client over TCP/IP
 
-create a small text file to make sure it is the right image:
+When booting directly (image mounted as disk): remove windrbd.sys driver:
 
-copy con xxx.txt
-123^Z
+cd Linbit/tmp
+sudo mount /dev/sdf2 mnt/
+rm mnt/Windows/System32/drivers/windrbd.sys
+sudo umount mnt
+
+Installing driver via Linux:
+
+cd Linbit/tmp
+sudo mount /dev/sdf2 mnt/
+cp ../windrbd/converted-sources/drbd/windrbd.sys mnt/Windows/System32/drivers/windrbd.sys
+sudo umount mnt
+
+(does not touch registry)
+
+# create a small text file to make sure it is the right image:
+
+# copy con xxx.txt
+# 123^Z
 
 sudo chmod o+rw /dev/sdf
 # adjust IP address of peer in DRBD config:
@@ -290,4 +306,10 @@ Dump memory from virtual box VM:
 Then look for SPINLOCK:
 
 strings Win7Lockup.elf | grep SPINLOCK -A 5 | tee spinlocks-win7.txt
+
+-----
+
+Dump memory from DisklessClient (has a terminating space):
+
+/usr/local/bin/vboxmanage debugvm {d3dc244a-ad1f-47c2-a774-7bf04576541d} dumpvmcore --filename DisklessBootNoRootDevice.elf
 
