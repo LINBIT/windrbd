@@ -310,7 +310,7 @@ static int attach(int minor, const char *backing_dev, const char *meta_dev, int 
 #define BOOT_MINOR 1
 #define BOOT_VOLUME 1
 /* TODO: C: for diskless client, W: for test/dev VM */
-#define BOOT_DRIVE L"C:"
+#define BOOT_DRIVE L"W:"
 #define BOOT_PEER "johannes-VirtualBox"
 #define BOOT_PEER_NODE_ID 1
 #define BOOT_PROTOCOL 3	/* protocol C */
@@ -318,7 +318,7 @@ static int attach(int minor, const char *backing_dev, const char *meta_dev, int 
 #define BOOT_PEER_ADDRESS "192.168.56.102:7681"
 
 
-static int windrbd_create_boot_device(void *unused)
+static int windrbd_create_boot_device_stage1(void)
 {
 	int ret;
 
@@ -351,13 +351,20 @@ printk("6\n");
 	if ((ret = new_path(BOOT_RESOURCE, BOOT_PEER_NODE_ID, BOOT_MY_ADDRESS, BOOT_PEER_ADDRESS)) != 0)
 		return ret;
 
+	return 0;
+}
+
 /*
 	if ((ret = attach(5, "\\DosDevices\\F:", "\\DosDevices\\G:", -2)) != 0)
 		printk("attach failed with error code %d (ignored)\n", ret);
 */
 
+static int windrbd_create_boot_device_stage2(void *unused)
+{
+	int ret;
+
 printk("7\n");
-	if ((ret == windrbd_wait_for_network()) < 0)
+	if ((ret = windrbd_wait_for_network()) < 0)
 		return ret;
 
 printk("7a\n");
@@ -380,7 +387,13 @@ printk("c\n");
 
 void windrbd_init_boot_device(void)
 {
-	if (kthread_run(windrbd_create_boot_device, NULL, "bootdev") == NULL) {
+	int ret;
+
+	ret = windrbd_create_boot_device_stage1();
+	if (ret != 0)
+		printk("Warning: stage1 returned %d\n", ret);
+
+	if (kthread_run(windrbd_create_boot_device_stage2, NULL, "bootdev") == NULL) {
 		printk("Failed to create bootdevice thread.\n");
 	}
 }
