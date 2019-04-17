@@ -68,6 +68,8 @@ printk("waiting for becoming primary...\n");
 	status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
 	if (status != STATUS_SUCCESS)
 		printk("KeWaitForSingleObject returned %x\n", status);
+	else
+		printk("Am Primary now, proceeding with I/O request\n");
 
 	return status;
 }
