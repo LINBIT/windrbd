@@ -3245,9 +3245,11 @@ static int minor_to_windows_device_name(UNICODE_STRING *name, int minor)
 	name->Length = 0;
 	name->MaximumLength = (len - 1) * sizeof(name->Buffer[0]);
 
-	// status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
+	status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
+#if 0
 		/* TODO: tmp patch for diskless boot */
 	status = RtlUnicodeStringPrintf(name, L"\\Device\\HarddiskVolume%d", minor);
+#endif
 
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("minor_to_dos_name: couldn't printf device name for minor %d status: %x\n", minor, status);
@@ -3545,6 +3547,7 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 int windrbd_mount(struct block_device *dev)
 {
 	NTSTATUS status;
+	UNICODE_STRING vol;
 
 	if (dev->mount_point.Buffer == NULL) {
 		printk("No mount point set for minor %d, will not be mounted.\n");
@@ -3563,6 +3566,13 @@ printk("dev->path_to_device: %S dev->mount_point: %S\n", dev->path_to_device.Buf
 		return -1;
 
 	}
+RtlInitUnicodeString(&vol, L"\\DosDevices\\Volume{2cfd0dc4-12ab-11e9-b29d-806e6f6e6963}");
+printk("dev->path_to_device: %S vol: %S\n", dev->path_to_device.Buffer, vol.Buffer);
+	status = IoCreateSymbolicLink(&dev->mount_point, &dev->path_to_device);
+	if (status != STATUS_SUCCESS) {
+		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, vol.Buffer, status);
+	}
+
 /*
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
