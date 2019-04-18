@@ -5,7 +5,8 @@
 [Version]
 signature   =   "$Windows NT$"
 ;; inf2cat complains if this is not specified:
-Class       =   "Volume" ; Virtual storage driver (creates block devices)
+; Class       =   "Volume" ; Virtual storage driver (creates block devices)
+Class       =   "DiskDrive" ; Disk Drive (needed for boot?)
 Provider    =   "Linbit"
 DriverVer   =   12/01/2013,0.2.0.0 ;Will get replaced by build magic
 CatalogFile =   windrbd.cat
