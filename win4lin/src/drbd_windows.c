@@ -3568,7 +3568,7 @@ printk("dev->path_to_device: %S dev->mount_point: %S\n", dev->path_to_device.Buf
 	}
 RtlInitUnicodeString(&vol, L"\\DosDevices\\Volume{2cfd0dc4-12ab-11e9-b29d-806e6f6e6963}");
 printk("dev->path_to_device: %S vol: %S\n", dev->path_to_device.Buffer, vol.Buffer);
-	status = IoCreateSymbolicLink(&dev->mount_point, &dev->path_to_device);
+	status = IoCreateSymbolicLink(&vol, &dev->path_to_device);
 	if (status != STATUS_SUCCESS) {
 		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, vol.Buffer, status);
 	}
