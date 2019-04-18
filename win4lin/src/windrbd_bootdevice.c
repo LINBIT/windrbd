@@ -393,7 +393,13 @@ void windrbd_init_boot_device(void)
 	if (ret != 0)
 		printk("Warning: stage1 returned %d\n", ret);
 
+	ret = windrbd_create_boot_device_stage2(NULL);
+	if (ret != 0)
+		printk("Warning: stage1 returned %d\n", ret);
+
+/*
 	if (kthread_run(windrbd_create_boot_device_stage2, NULL, "bootdev") == NULL) {
 		printk("Failed to create bootdevice thread.\n");
 	}
+*/
 }
