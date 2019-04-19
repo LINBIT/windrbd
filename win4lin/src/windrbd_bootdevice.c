@@ -421,8 +421,8 @@ printk("8\n");
 printk("9\n");
 		if (ret == 0)
 			break;
-printk("a\n");
-		msleep(10);
+printk("a 123\n");
+//		msleep(10);
 printk("b\n");
 	}
 printk("c\n");
