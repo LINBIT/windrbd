@@ -305,6 +305,7 @@ static int attach(int minor, const char *backing_dev, const char *meta_dev, int 
  * similar approach).
  */
 
+#if 0
 #define BOOT_RESOURCE "tiny-windows-boot"
 #define BOOT_NUM_NODES 2
 #define BOOT_MINOR 1
@@ -316,13 +317,14 @@ static int attach(int minor, const char *backing_dev, const char *meta_dev, int 
 #define BOOT_PROTOCOL 3	/* protocol C */
 #define BOOT_MY_ADDRESS "0.0.0.0:7681"
 #define BOOT_PEER_ADDRESS "192.168.56.102:7681"
+#endif
 
 static struct drbd_params {
 	char *resource;
 	int num_nodes;
 	int minor;
 	int volume;
-	char *mount_point; /* might be NULL */
+	wchar_t *mount_point; /* might be NULL */
 	char *peer;
 	int peer_node_id;
 	int protocol;	/* 1=A, 2=B or 3=C */
@@ -335,7 +337,7 @@ static struct drbd_params {
 		.num_nodes = 2,
 		.minor = 2,
 		.volume = 1,
-		.mount_point = "C. =",
+		.mount_point = L"C:",
 		.peer = "johannes-VirtualBox",
 		.peer_node_id = 1,
 		.protocol = 3,
@@ -347,7 +349,7 @@ static struct drbd_params {
 		.num_nodes = 2,
 		.minor = 1,
 		.volume = 1,
-		.mount_point = NULL,
+		.mount_point = L"X:", /* dummy so that Volume symlink is created */
 		.peer = "johannes-VirtualBox",
 		.peer_node_id = 1,
 		.protocol = 3,
@@ -376,8 +378,8 @@ printk("3\n");
 /* When booting this should be C: when testing this should be W: */
 printk("4\n");
 	if (p->mount_point) {
-		if ((ret = windrbd_set_mount_point_for_minor_utf16(p->minor, BOOT_DRIVE)) != 0)
-			printk("Mounting minor %d to %s failed.\n", BOOT_MINOR, BOOT_DRIVE);
+		if ((ret = windrbd_set_mount_point_for_minor_utf16(p->minor, p->mount_point)) != 0)
+			printk("Mounting minor %d to %s failed.\n", p->minor, p->mount_point);
 	} else {
 printk("no mount point for %s\n", p->resource);
 	}
