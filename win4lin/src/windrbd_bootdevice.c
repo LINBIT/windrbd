@@ -422,7 +422,7 @@ printk("9\n");
 		if (ret == 0)
 			break;
 printk("a\n");
-		msleep(1000);
+		msleep(10);
 printk("b\n");
 	}
 printk("c\n");
