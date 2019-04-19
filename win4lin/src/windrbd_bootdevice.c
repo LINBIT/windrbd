@@ -317,8 +317,47 @@ static int attach(int minor, const char *backing_dev, const char *meta_dev, int 
 #define BOOT_MY_ADDRESS "0.0.0.0:7681"
 #define BOOT_PEER_ADDRESS "192.168.56.102:7681"
 
+static struct drbd_params {
+	char *resource;
+	int num_nodes;
+	int minor;
+	int volume;
+	char *mount_point; /* might be NULL */
+	char *peer;
+	int peer_node_id;
+	int protocol;	/* 1=A, 2=B or 3=C */
+	char *my_address;
+	char *peer_address;
+} boot_devices[2] = {
+	{
+			/* The "C:" drive -> /Device/HarddiskVolume2 */
+		.resource = "tiny-windows-boot",
+		.num_nodes = 2,
+		.minor = 2,
+		.volume = 1,
+		.mount_point = "C. =",
+		.peer = "johannes-VirtualBox",
+		.peer_node_id = 1,
+		.protocol = 3,
+		.my_address = "0.0.0.0:7681",
+		.peer_address = "192.168.56.102:7681"
+	}, {
+			/* The hidden system partition-> /Device/HarddiskVolume1 , no mount point */
+		.resource = "tiny-windows-system",
+		.num_nodes = 2,
+		.minor = 1,
+		.volume = 1,
+		.mount_point = NULL,
+		.peer = "johannes-VirtualBox",
+		.peer_node_id = 1,
+		.protocol = 3,
+		.my_address = "0.0.0.0:7682",
+		.peer_address = "192.168.56.102:7682"
+	}
+};
 
-static int windrbd_create_boot_device_stage1(void)
+
+static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 {
 	int ret;
 
@@ -326,21 +365,25 @@ printk("1\n");
         drbd_genl_family.id = WINDRBD_NETLINK_FAMILY_ID;
 
 printk("2\n");
-	if ((ret = new_resource(BOOT_RESOURCE, BOOT_NUM_NODES)) != 0)
+	if ((ret = new_resource(p->resource, p->num_nodes)) != 0)
 		return ret;
 
 printk("3\n");
-	if ((ret = new_minor(BOOT_RESOURCE, BOOT_MINOR, BOOT_VOLUME)) != 0)
+	if ((ret = new_minor(p->resource, p->minor, p->volume)) != 0)
 		return ret;
 
 /* For now, this will also create the mount point. */
 /* When booting this should be C: when testing this should be W: */
 printk("4\n");
-	if ((ret = windrbd_set_mount_point_for_minor_utf16(BOOT_MINOR, BOOT_DRIVE)) != 0)
-		printk("Mounting minor %d to %s failed.\n", BOOT_MINOR, BOOT_DRIVE);
+	if (p->mount_point) {
+		if ((ret = windrbd_set_mount_point_for_minor_utf16(p->minor, BOOT_DRIVE)) != 0)
+			printk("Mounting minor %d to %s failed.\n", BOOT_MINOR, BOOT_DRIVE);
+	} else {
+printk("no mount point for %s\n", p->resource);
+	}
 
 printk("5\n");
-	if ((ret = new_peer(BOOT_RESOURCE, BOOT_PEER, BOOT_PEER_NODE_ID, BOOT_PROTOCOL)) != 0)
+	if ((ret = new_peer(p->resource, p->peer, p->peer_node_id, p->protocol)) != 0)
 		return ret;
 
 		/* Since we do not have any interfaces yet, bind listeing
@@ -348,7 +391,7 @@ printk("5\n");
 		 * will go into standalone.
 		 */
 printk("6\n");
-	if ((ret = new_path(BOOT_RESOURCE, BOOT_PEER_NODE_ID, BOOT_MY_ADDRESS, BOOT_PEER_ADDRESS)) != 0)
+	if ((ret = new_path(p->resource, p->peer_node_id, p->my_address, p->peer_address)) != 0)
 		return ret;
 
 	return 0;
@@ -359,21 +402,22 @@ printk("6\n");
 		printk("attach failed with error code %d (ignored)\n", ret);
 */
 
-static int windrbd_create_boot_device_stage2(void *unused)
+static int windrbd_create_boot_device_stage2(void *pp)
 {
+	struct drbd_params *p = pp;
 	int ret;
 
-printk("7\n");
+printk("7 %s\n", p->resource);
 	if ((ret = windrbd_wait_for_network()) < 0)
 		return ret;
 
-printk("7a\n");
-	if ((ret = connect(BOOT_RESOURCE, BOOT_PEER_NODE_ID)) != 0)
+printk("7a %s\n", p->resource);
+	if ((ret = connect(p->resource, p->peer_node_id)) != 0)
 		return ret;
 
 	while (1) {
 printk("8\n");
-		ret = primary(BOOT_RESOURCE);
+		ret = primary(p->resource);
 printk("9\n");
 		if (ret == 0)
 			break;
@@ -388,18 +432,20 @@ printk("c\n");
 void windrbd_init_boot_device(void)
 {
 	int ret;
+	int i;
 
-	ret = windrbd_create_boot_device_stage1();
-	if (ret != 0)
-		printk("Warning: stage1 returned %d\n", ret);
-
+	for (i=0;i<2;i++) {
+		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
+		if (ret != 0)
+			printk("Warning: stage1 returned %d for %s\n", ret, boot_devices[i].resource);
+/*
 	ret = windrbd_create_boot_device_stage2(NULL);
 	if (ret != 0)
 		printk("Warning: stage1 returned %d\n", ret);
-
-/*
-	if (kthread_run(windrbd_create_boot_device_stage2, NULL, "bootdev") == NULL) {
-		printk("Failed to create bootdevice thread.\n");
-	}
 */
+
+		if (kthread_run(windrbd_create_boot_device_stage2, &boot_devices[i], "bootdev") == NULL) {
+			printk("Failed to create bootdevice thread.\n");
+		}
+	}
 }
