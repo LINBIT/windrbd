@@ -62,7 +62,7 @@ static int printk_ping(void *unused)
 
 	i=0;
 	while (run_printk_ping) {
-		printk("ping %d\n", i);
+		printk("ping %d (drbd bus is %p)\n", i, drbd_bus_device);
 		i++;
 		msleep(1000);
 	}

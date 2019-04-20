@@ -35,8 +35,14 @@ typedef struct _ROOT_EXTENSION
 	int dummy;
 } ROOT_EXTENSION, *PROOT_EXTENSION;
 
+typedef struct _BUS_EXTENSION
+{
+	struct _DEVICE_OBJECT *lower_device;
+} BUS_EXTENSION, *PBUS_EXTENSION;
+
 extern PDEVICE_OBJECT		mvolRootDeviceObject;
 extern PDRIVER_OBJECT		mvolDriverObject;
+extern PDEVICE_OBJECT		drbd_bus_device;
 
 extern int drbd_init(void);
 

@@ -434,6 +434,7 @@ printk("c\n");
 
 void windrbd_init_boot_device(void)
 {
+#if 0
 	int ret;
 	int i;
 
@@ -451,4 +452,5 @@ void windrbd_init_boot_device(void)
 			printk("Failed to create bootdevice thread.\n");
 		}
 	}
+#endif
 }

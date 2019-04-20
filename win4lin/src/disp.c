@@ -44,6 +44,8 @@ DRIVER_ADD_DEVICE mvolAddDevice;
 #pragma alloc_text(INIT, DriverEntry)
 #endif
 
+PDEVICE_OBJECT drbd_bus_device;
+
 NTSTATUS
 DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 {
@@ -208,6 +210,46 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 NTSTATUS
 mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject)
 {
-	printk(KERN_INFO "AddDevice NOT DONE\n");
-	return STATUS_NO_SUCH_DEVICE;
+	UNICODE_STRING drbd_bus, drbd_bus_dos;
+	NTSTATUS status;
+	struct _DEVICE_OBJECT *bus_device;
+	struct _BUS_EXTENSION *bus_extension;
+
+	printk(KERN_INFO "AddDevice: PhysicalDeviceObject is %p\n", );
+
+	RtlInitUnicodeString(&drbd_bus, L"\\Device\\Drbd");
+	RtlInitUnicodeString(&drbd_bus_dos, L"\\DosDevices\\Drbd");
+
+	status = IoCreateDevice(DriverObject, sizeof(BUS_EXTENSION), &drbd_bus, FILE_DEVICE_CONTROLLER, FILE_DEVICE_SECURE_OPEN, FALSE, &bus_device);
+	if (status != STATUS_SUCCESS)
+		printk("IoCreateDevice bus device returned %x\n", status);
+	else
+		printk("Bus device object created bus_device is %p\n", bus_device);
+
+	status = IoCreateSymbolicLink(&drbd_bus_dos, &drbd_bus);
+
+	if (status != STATUS_SUCCESS)
+		printk("IoCreateSymbolicLink bus device returned %x\n", status);
+	else
+		printk("Bus device object symlink created\n");
+
+	bus_device->Flags |= DO_DIRECT_IO;                  // FIXME?
+	bus_device->Flags |= DO_POWER_INRUSH;               // FIXME?
+
+	bus_extension = (struct _BUS_EXTENSION*) bus_device->DeviceExtension;
+
+	if (PhysicalDeviceObject != NULL) {
+		bus_extension->lower_device = IoAttachDeviceToDeviceStack(bus_device, PhysicalDeviceObject);
+		if (bus_extension->lower_device == NULL)
+			printk("IoAttachDeviceToDeviceStack failed.\n");
+		else
+			printk("IoAttachDeviceToDeviceStack returned object %p.\n", bus_extension->lower_device);
+	} else {
+		printk("PhysicalDeviceObject is NULL\n");
+	}
+	bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
+
+	drbd_bus_device = bus_device;
+
+	return STATUS_SUCCESS;
 }

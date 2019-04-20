@@ -6,7 +6,9 @@
 signature   =   "$Windows NT$"
 ;; inf2cat complains if this is not specified:
 ; Class       =   "Volume" ; Virtual storage driver (creates block devices)
-Class       =   "DiskDrive" ; Disk Drive (needed for boot?)
+; Class       =   "DiskDrive" ; Disk Drive (needed for boot?)
+Class       =   "SCSIAdapter" ; Disk Drive (needed for boot?)
+ClassGUID   = {4D36E97B-E325-11CE-BFC1-08002BE10318}
 Provider    =   "Linbit"
 DriverVer   =   12/01/2013,0.2.0.0 ;Will get replaced by build magic
 CatalogFile =   windrbd.cat
@@ -24,7 +26,7 @@ OptionDesc          = "WinDRBD - storage replication over network for Microsoft 
 CopyFiles           = WinDRBD.DriverFiles
 
 [DefaultInstall.Services]
-AddService          = "WinDRBD",,WinDRBD.Service
+AddService          = "WinDRBD", 2, WinDRBD.Service ; 2 ... Assign the named service as the PnP function driver (or legacy driver) for the device being installed by this INF
 
 ;;
 ;; Default uninstall sections
