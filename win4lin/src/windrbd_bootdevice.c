@@ -363,6 +363,7 @@ static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 {
 	int ret;
 
+printk("karin %S\n", p->mount_point);
 printk("1\n");
         drbd_genl_family.id = WINDRBD_NETLINK_FAMILY_ID;
 
@@ -424,7 +425,7 @@ printk("9\n");
 		if (ret == 0)
 			break;
 printk("a 123\n");
-//		msleep(10);
+		msleep(200);
 printk("b\n");
 	}
 printk("c\n");
