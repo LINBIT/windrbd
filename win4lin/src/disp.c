@@ -22,6 +22,11 @@
 #include <wdm.h>
 #include <wdmsec.h>
 #include <ntstrsafe.h>
+#ifdef NTDDI_VERSION
+#undef NTDDI_VERSION
+#endif
+#define NTDDI_VERSION 0x06010000
+
 #include <ntddk.h>
 #include "drbd_windows.h"
 #include "windrbd_device.h"
@@ -31,6 +36,8 @@
 
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
+
+NTSTATUS NTAPI IoReportRootDevice(PDRIVER_OBJECT driver);
 
 	/* TODO: find some headers where this fits. */
 void drbd_cleanup(void);
@@ -45,6 +52,7 @@ DRIVER_ADD_DEVICE mvolAddDevice;
 #endif
 
 PDEVICE_OBJECT drbd_bus_device;
+PDEVICE_OBJECT drbd_bus_object1;
 
 NTSTATUS
 DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
@@ -149,6 +157,21 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	printk("Attempting to start boot device\n");
 	windrbd_init_boot_device();
 	printk("Start boot device stage1 returned\n");
+
+/*
+	IoReportDetectedDevice(DriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_bus_object1);
+printk("drbd_bus_object1 is %p\n", drbd_bus_object1);
+	status = mvolAddDevice(DriverObject, drbd_bus_object1);
+	if (status != STATUS_SUCCESS)
+		printk("mvolAddDevice failed status is %x\n", status);
+	else
+		printk("mvolAddDevice bus object succeeded\n");
+*/
+	status = IoReportRootDevice(DriverObject);
+	if (status != STATUS_SUCCESS)
+		printk("IoReportRootDevice failed status is %x\n", status);
+	else
+		printk("IoReportRootDevice succeeded\n");
 
 	return STATUS_SUCCESS;
 }
