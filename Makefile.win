@@ -147,10 +147,10 @@ fPDB = $(patsubst %.c,%.pdb,$(1))
 
 WIN_LDFLAGS += /link # must be first!
 # Was:
-# WIN_LDFLAGS += /DRIVER:WDM /NODEFAULTLIB /ENTRY:DriverEntry
+WIN_LDFLAGS += /DRIVER:WDM /NODEFAULTLIB /ENTRY:DriverEntry
 # However this prevents the driver from being unloaded. We try
 # this now:
-WIN_LDFLAGS += /DRIVER /SUBSYSTEM:WINDOWS /NODEFAULTLIB /ENTRY:DriverEntry
+# WIN_LDFLAGS += /DRIVER /SUBSYSTEM:WINDOWS /NODEFAULTLIB /ENTRY:DriverEntry
 WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x64/"
 WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/$(EWDK_VERSION)/km/x64/"
 WIN_LDFLAGS += /DEBUG:FULL
