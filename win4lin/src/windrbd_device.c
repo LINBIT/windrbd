@@ -1161,10 +1161,13 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 
 	switch (s->MinorFunction) {
 	case IRP_MN_START_DEVICE:
+		dbg("got IRP_MN_START_DEVICE\n");
+
 		KeInitializeEvent(&start_completed_event, NotificationEvent, FALSE);
 		IoCopyCurrentIrpStackLocationToNext(irp);
 		IoSetCompletionRoutine(irp, (PIO_COMPLETION_ROUTINE)start_completed, (PVOID)&start_completed_event, TRUE, TRUE, TRUE);
 
+printk("starting lower device object\n");
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status == STATUS_PENDING) {
 			KeWaitForSingleObject(&start_completed_event, Executive, KernelMode, FALSE, NULL);
@@ -1173,24 +1176,48 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 		if (status != STATUS_SUCCESS)
 			printk("Warning: lower device start returned %x\n", status);
 
+printk("starting device object status is %x\n", status);
+
 		return STATUS_SUCCESS;
 
+	case IRP_MN_QUERY_REMOVE_DEVICE:
+		dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
+		return STATUS_SUCCESS;
+		
+	case IRP_MN_CANCEL_REMOVE_DEVICE:
+		dbg("got IRP_MN_CANCEL_REMOVE_DEVICE\n");
+		return STATUS_SUCCESS;
+		
 	case IRP_MN_REMOVE_DEVICE:
+		dbg("got IRP_MN_REMOVE_DEVICE\n");
+
 		irp->IoStatus.Information = 0;
 		irp->IoStatus.Status = STATUS_SUCCESS;
 		IoSkipCurrentIrpStackLocation(irp);
+printk("removing lower device object\n");
 		status = IoCallDriver(bus_ext->lower_device, irp);
 
 			/* TODO: delete all DRBD devices */
 
+printk("detaching device object\n");
 		IoDetachDevice(bus_ext->lower_device);
-		IoDeleteDevice(device);
+printk("NOT deleting device object (would BSOD)\n");
+//		IoDeleteDevice(device);
 		return status;
 
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
+		dbg("got IRP_MN_QUERY_DEVICE_RELATIONS\n");
+
+		int type = s->Parameters.QueryDeviceRelations.Type;
+dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
+		if (type == BusRelations) {
+printk("about to report DRBD devices ...\n");
+		}
 		return STATUS_NOT_IMPLEMENTED;
 
 	default:
+		dbg("got unimplemented minor %x\n", s->MinorFunction);
+
 		return STATUS_NOT_IMPLEMENTED;
 	}
 }
