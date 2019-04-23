@@ -1152,6 +1152,30 @@ static NTSTATUS start_completed(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
+static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
+{
+        struct drbd_resource *resource;
+	struct drbd_device *drbd_device;
+	int vnr;
+	int count = 0;
+
+	for_each_resource(resource, &drbd_resources) {
+		idr_for_each_entry(struct drbd_device *, &resource->devices, drbd_device, vnr) {
+			if (drbd_device && drbd_device->this_bdev && drbd_device->this_bdev->windows_device) {
+				if (count < max && array != NULL) {
+					array[count] = drbd_device->this_bdev->windows_device;
+				}
+printk("windows device at %p\n", drbd_device->this_bdev->windows_device);
+				count++;
+			}
+		}
+	}
+printk("%d drbd windows devices found\n", count);
+	return count;
+}
+
+
+
 static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
@@ -1230,10 +1254,28 @@ printk("NOT completing IRP\n");
 
 		int type = s->Parameters.QueryDeviceRelations.Type;
 dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
-		if (type == BusRelations) {
+		if (s->Parameters.QueryDeviceRelations.Type == BusRelations) {
 printk("about to report DRBD devices ...\n");
+			int num_devices = get_all_drbd_device_objects(NULL, 0);
+			struct _DEVICE_RELATIONS *device_relations;
+			int n;
+
+			device_relations = kmalloc(sizeof(*device_relations)+num_devices*sizeof(device_relations->Objects[0]), GFP_KERNEL, 'DRBD');
+			if (device_relations == NULL) {
+				status = STATUS_INSUFFICIENT_RESOURCES;
+				break;
+			}
+			n = get_all_drbd_device_objects(&device_relations->Objects[0], num_devices);
+			if (n != num_devices)
+				printk("Warning: number of DRBD devices changed: old %d != new %d\n", num_devices, n);
+			device_relations->Count = num_devices;
+			irp->IoStatus.Information = (ULONG_PTR)device_relations;
+			irp->IoStatus.Status = STATUS_SUCCESS;
+			return STATUS_SUCCESS;
+		} else {
+			return STATUS_NOT_IMPLEMENTED;
 		}
-		return STATUS_NOT_IMPLEMENTED;
+		break;
 
 	default:
 		dbg("got unimplemented minor %x\n", s->MinorFunction);
