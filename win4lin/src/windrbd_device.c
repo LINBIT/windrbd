@@ -1253,7 +1253,7 @@ printk("NOT completing IRP\n");
 		dbg("got IRP_MN_QUERY_DEVICE_RELATIONS\n");
 
 		int type = s->Parameters.QueryDeviceRelations.Type;
-dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
+dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
 		if (s->Parameters.QueryDeviceRelations.Type == BusRelations) {
 printk("about to report DRBD devices ...\n");
 			int num_devices = get_all_drbd_device_objects(NULL, 0);
@@ -1273,7 +1273,7 @@ printk("about to report DRBD devices ...\n");
 			irp->IoStatus.Status = STATUS_SUCCESS;
 			return STATUS_SUCCESS;
 		} else {
-			return STATUS_NOT_IMPLEMENTED;
+			status = STATUS_SUCCESS;
 		}
 		break;
 
