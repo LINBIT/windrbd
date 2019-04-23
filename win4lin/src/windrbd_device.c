@@ -1147,6 +1147,54 @@ exit:
         return status;
 }
 
+static NTSTATUS start_completed(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PKEVENT event) {
+	KeSetEvent(event, 0, FALSE);
+	return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
+static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+	struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
+	NTSTATUS status;
+	KEVENT start_completed_event;
+
+	switch (s->MinorFunction) {
+	case IRP_MN_START_DEVICE:
+		KeInitializeEvent(&start_completed_event, NotificationEvent, FALSE);
+		IoCopyCurrentIrpStackLocationToNext(irp);
+		IoSetCompletionRoutine(irp, (PIO_COMPLETION_ROUTINE)start_completed, (PVOID)&start_completed_event, TRUE, TRUE, TRUE);
+
+		status = IoCallDriver(bus_ext->lower_device, irp);
+		if (status == STATUS_PENDING) {
+			KeWaitForSingleObject(&start_completed_event, Executive, KernelMode, FALSE, NULL);
+		}
+		status = irp->IoStatus.Status;
+		if (status != STATUS_SUCCESS)
+			printk("Warning: lower device start returned %x\n", status);
+
+		return STATUS_SUCCESS;
+
+	case IRP_MN_REMOVE_DEVICE:
+		irp->IoStatus.Information = 0;
+		irp->IoStatus.Status = STATUS_SUCCESS;
+		IoSkipCurrentIrpStackLocation(irp);
+		status = IoCallDriver(bus_ext->lower_device, irp);
+
+			/* TODO: delete all DRBD devices */
+
+		IoDetachDevice(bus_ext->lower_device);
+		IoDeleteDevice(device);
+		return status;
+
+	case IRP_MN_QUERY_DEVICE_RELATIONS:
+		return STATUS_NOT_IMPLEMENTED;
+
+	default:
+		return STATUS_NOT_IMPLEMENTED;
+	}
+}
+
 static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	NTSTATUS status;
@@ -1164,13 +1212,17 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	
-	dbg(KERN_DEBUG "PnP device request not implemented: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
-	if (s->MinorFunction == IRP_MN_START_DEVICE) {
+	dbg(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
+	if (device == drbd_bus_device) {
+printk("bus object\n");
+		status = windrbd_pnp_bus_object(device, irp);
+	} else {
+		if (s->MinorFunction == IRP_MN_START_DEVICE) {
 printk("starting device\n");
-		status = STATUS_SUCCESS;
-	}
-	if (s->MinorFunction == IRP_MN_QUERY_DEVICE_RELATIONS) {
-		dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
+			status = STATUS_SUCCESS;
+		}
+		if (s->MinorFunction == IRP_MN_QUERY_DEVICE_RELATIONS) {
+			dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
 
 #if 0
 
@@ -1184,6 +1236,7 @@ printk("starting device\n");
 			status = STATUS_SUCCESS;
 		}
 #endif
+		}
 	}
 
 	irp->IoStatus.Status = status;
