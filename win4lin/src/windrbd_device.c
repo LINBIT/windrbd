@@ -1191,19 +1191,25 @@ printk("starting device object status is %x\n", status);
 	case IRP_MN_REMOVE_DEVICE:
 		dbg("got IRP_MN_REMOVE_DEVICE\n");
 
-		irp->IoStatus.Information = 0;
+/*		irp->IoStatus.Information = 0;
 		irp->IoStatus.Status = STATUS_SUCCESS;
 		IoSkipCurrentIrpStackLocation(irp);
-printk("removing lower device object\n");
+*/
+printk("NOT removing lower device object\n");
+/*
 		status = IoCallDriver(bus_ext->lower_device, irp);
+
+printk("IoCallDriver returned %x\n", status);
+*/
 
 			/* TODO: delete all DRBD devices */
 
-printk("detaching device object\n");
-		IoDetachDevice(bus_ext->lower_device);
+printk("NOT detaching device object\n");
+//		IoDetachDevice(bus_ext->lower_device);
 printk("NOT deleting device object (would BSOD)\n");
 //		IoDeleteDevice(device);
-		return status;
+//		return status;
+		return STATUS_SUCCESS;
 
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
 		dbg("got IRP_MN_QUERY_DEVICE_RELATIONS\n");
