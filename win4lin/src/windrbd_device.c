@@ -1170,7 +1170,9 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 printk("starting lower device object\n");
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status == STATUS_PENDING) {
+printk("Pening ...\n");
 			KeWaitForSingleObject(&start_completed_event, Executive, KernelMode, FALSE, NULL);
+printk("Completed.\n");
 		}
 		status = irp->IoStatus.Status;
 		if (status != STATUS_SUCCESS)
@@ -1178,38 +1180,50 @@ printk("starting lower device object\n");
 
 printk("starting device object status is %x\n", status);
 
-		return STATUS_SUCCESS;
+		status = STATUS_SUCCESS;
+		irp->IoStatus.Status = status;
+		IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+printk("completed IRP\n");
+
+		return status;
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
 		dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
-		return STATUS_SUCCESS;
-		
+		status = STATUS_SUCCESS;
+		break;
+
 	case IRP_MN_CANCEL_REMOVE_DEVICE:
 		dbg("got IRP_MN_CANCEL_REMOVE_DEVICE\n");
-		return STATUS_SUCCESS;
-		
+		status = STATUS_SUCCESS;
+		break;
+
+	case IRP_MN_SURPRISE_REMOVAL:
+		dbg("got IRP_MN_SURPRISE_REMOVAL\n");
+		status = STATUS_SUCCESS;
+		break;
+
 	case IRP_MN_REMOVE_DEVICE:
 		dbg("got IRP_MN_REMOVE_DEVICE\n");
 
-/*		irp->IoStatus.Information = 0;
+		irp->IoStatus.Information = 0;
 		irp->IoStatus.Status = STATUS_SUCCESS;
 		IoSkipCurrentIrpStackLocation(irp);
-*/
-printk("NOT removing lower device object\n");
-/*
+
+printk("removing lower device object\n");
 		status = IoCallDriver(bus_ext->lower_device, irp);
 
 printk("IoCallDriver returned %x\n", status);
-*/
 
 			/* TODO: delete all DRBD devices */
 
-printk("NOT detaching device object\n");
-//		IoDetachDevice(bus_ext->lower_device);
-printk("NOT deleting device object (would BSOD)\n");
-//		IoDeleteDevice(device);
-//		return status;
-		return STATUS_SUCCESS;
+printk("detaching device object\n");
+		IoDetachDevice(bus_ext->lower_device);
+printk("deleting device object\n");
+		IoDeleteDevice(device);
+printk("device object deleted.\n");
+printk("NOT completing IRP\n");
+		return STATUS_SUCCESS; /* must not do IoCompleteRequest */
 
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
 		dbg("got IRP_MN_QUERY_DEVICE_RELATIONS\n");
@@ -1226,6 +1240,21 @@ printk("about to report DRBD devices ...\n");
 
 		return STATUS_NOT_IMPLEMENTED;
 	}
+
+	if (status != STATUS_SUCCESS) {
+printk("minor %x failed with status %x, not forwarding to lower driver...\n", s->MinorFunction, status);
+		irp->IoStatus.Status = status;
+		IoCompleteRequest(irp, IO_NO_INCREMENT);
+	} else {
+		irp->IoStatus.Status = status;
+		IoSkipCurrentIrpStackLocation(irp);
+printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
+		status = IoCallDriver(bus_ext->lower_device, irp);
+		if (status != STATUS_SUCCESS)
+			printk("Warning: lower device returned status %x\n", status);
+	}
+
+	return status;
 }
 
 static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
@@ -1248,7 +1277,13 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	dbg(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
 	if (device == drbd_bus_device) {
 printk("bus object\n");
-		status = windrbd_pnp_bus_object(device, irp);
+			/* Some minors (REMOVE_DEVICE) might delete the
+			 * device object in which case we must not
+			 * call IoCompleteRequest(). For the minors
+			 * that don't IoCompleteRequest or IoCallDevice
+			 * is done in this function:
+			 */
+		return windrbd_pnp_bus_object(device, irp);
 	} else {
 		if (s->MinorFunction == IRP_MN_START_DEVICE) {
 printk("starting device\n");
