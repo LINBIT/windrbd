@@ -1165,6 +1165,10 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	
 	dbg(KERN_DEBUG "PnP device request not implemented: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
+	if (s->MinorFunction == IRP_MN_START_DEVICE) {
+printk("starting device\n");
+		status = STATUS_SUCCESS;
+	}
 	if (s->MinorFunction == IRP_MN_QUERY_DEVICE_RELATIONS) {
 		dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
 
