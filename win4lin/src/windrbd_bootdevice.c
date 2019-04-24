@@ -337,7 +337,7 @@ static struct drbd_params {
 		.num_nodes = 2,
 		.minor = 2,
 		.volume = 1,
-		.mount_point = L"C:",
+		.mount_point = L"W:",	/* C: later */
 		.peer = "johannes-VirtualBox",
 		.peer_node_id = 1,
 		.protocol = 3,
@@ -425,7 +425,7 @@ printk("9\n");
 		if (ret == 0)
 			break;
 printk("a 123\n");
-		msleep(200);
+		msleep(1000);
 printk("b\n");
 	}
 printk("c\n");
@@ -434,7 +434,6 @@ printk("c\n");
 
 void windrbd_init_boot_device(void)
 {
-#if 0
 	int ret;
 	int i;
 
@@ -452,5 +451,4 @@ void windrbd_init_boot_device(void)
 			printk("Failed to create bootdevice thread.\n");
 		}
 	}
-#endif
 }

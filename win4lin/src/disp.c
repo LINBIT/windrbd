@@ -54,6 +54,8 @@ DRIVER_ADD_DEVICE mvolAddDevice;
 PDEVICE_OBJECT drbd_bus_device;
 PDEVICE_OBJECT drbd_bus_object1;
 
+KEVENT bus_ready_event;
+
 NTSTATUS
 DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 {
@@ -154,10 +156,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	windrbd_run_tests();
 
-	printk("Attempting to start boot device\n");
-	windrbd_init_boot_device();
-	printk("Start boot device stage1 returned\n");
-
 /*
 	IoReportDetectedDevice(DriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_bus_object1);
 printk("drbd_bus_object1 is %p\n", drbd_bus_object1);
@@ -167,11 +165,19 @@ printk("drbd_bus_object1 is %p\n", drbd_bus_object1);
 	else
 		printk("mvolAddDevice bus object succeeded\n");
 */
+	KeInitializeEvent(&bus_ready_event, NotificationEvent, FALSE);
+
 	status = IoReportRootDevice(DriverObject);
 	if (status != STATUS_SUCCESS)
 		printk("IoReportRootDevice failed status is %x\n", status);
 	else
 		printk("IoReportRootDevice succeeded\n");
+
+	status = KeWaitForSingleObject(&bus_ready_event, Executive, KernelMode, FALSE, NULL);
+
+	printk("Attempting to start boot device\n");
+	windrbd_init_boot_device();
+	printk("Start boot device stage1 returned\n");
 
 	return STATUS_SUCCESS;
 }
@@ -274,6 +280,7 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 		bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
 		drbd_bus_device = bus_device;
+		KeSetEvent(&bus_ready_event, 0, FALSE);
 	} else {
 		printk("AddDevice called but bus object (%p) already there.\n", drbd_bus_device);
 	}
