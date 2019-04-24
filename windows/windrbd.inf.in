@@ -17,10 +17,10 @@ CatalogFile =   windrbd.cat
 WinDRBD = WinDRBDDriver,,NTamd64
 
 [WinDRBDDriver]
-"WinDRBD Driver" = WinDRBD,ROOT\WinDRBD
+"WinDRBD Driver" = WinDRBD,ROOT\WinDRBD\0000
 
 [WinDRBDDriver.NTamd64]
-"WinDRBD Driver" = WinDRBD,ROOT\WinDRBD
+"WinDRBD Driver" = WinDRBD,ROOT\WinDRBD\0000
 
 [DestinationDirs]
 DefaultDestDir       = 12
