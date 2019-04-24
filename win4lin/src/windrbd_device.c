@@ -1164,6 +1164,7 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 			if (drbd_device && drbd_device->this_bdev && drbd_device->this_bdev->windows_device) {
 				if (count < max && array != NULL) {
 					array[count] = drbd_device->this_bdev->windows_device;
+					ObReferenceObject(drbd_device->this_bdev->windows_device);
 				}
 printk("windows device at %p\n", drbd_device->this_bdev->windows_device);
 				count++;
@@ -1265,7 +1266,7 @@ printk("about to report DRBD devices ...\n");
 
 printk("1\n");
 			size_t siz = sizeof(*device_relations)+num_devices*sizeof(device_relations->Objects[0]);
-			printk("size of device relations is %zd\n", siz);
+			printk("size of device relations is %d\n", siz);
 			device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
 printk("2\n");
 			if (device_relations == NULL) {
