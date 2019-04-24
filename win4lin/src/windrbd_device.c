@@ -1214,7 +1214,8 @@ printk("completed IRP\n");
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
 		dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
-		status = STATUS_SUCCESS;
+		// status = STATUS_SUCCESS;
+		status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
 		break;
 
 	case IRP_MN_CANCEL_REMOVE_DEVICE:
