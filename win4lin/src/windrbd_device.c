@@ -1248,6 +1248,7 @@ printk("deleting device object\n");
 		IoDeleteDevice(device);
 printk("device object deleted.\n");
 printk("NOT completing IRP\n");
+		drbd_bus_device = NULL;
 		return STATUS_SUCCESS; /* must not do IoCompleteRequest */
 
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
