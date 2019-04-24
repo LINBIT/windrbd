@@ -173,13 +173,23 @@ printk("drbd_bus_object1 is %p\n", drbd_bus_object1);
 	else
 		printk("IoReportRootDevice succeeded\n");
 
-	status = KeWaitForSingleObject(&bus_ready_event, Executive, KernelMode, FALSE, NULL);
-
 	printk("Attempting to start boot device\n");
 	windrbd_init_boot_device();
 	printk("Start boot device stage1 returned\n");
 
 	return STATUS_SUCCESS;
+}
+
+int windrbd_wait_for_bus_object(void)
+{
+	NTSTATUS status;
+
+	status = KeWaitForSingleObject(&bus_ready_event, Executive, KernelMode, FALSE, NULL);
+
+	if (status != STATUS_SUCCESS)
+		return -1;
+
+	return 0;
 }
 
 void mvolUnload(IN PDRIVER_OBJECT DriverObject)
