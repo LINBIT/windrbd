@@ -13,6 +13,12 @@ Provider    =   "WinDRBD"
 DriverVer   =   12/01/2013,0.2.0.0 ;Will get replaced by build magic
 CatalogFile =   windrbd.cat
 
+[Manufacturer]
+WinDRBD = WinDRBDDriver
+
+[WinDRBDDriver]
+"WinDRBD Driver" = WinDRBD,WinDRBD
+
 [DestinationDirs]
 DefaultDestDir       = 12
 WinDRBD.DriverFiles     = 12           ;%windir%\system32\drivers
