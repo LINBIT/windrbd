@@ -3245,10 +3245,10 @@ static int minor_to_windows_device_name(UNICODE_STRING *name, int minor)
 	name->Length = 0;
 	name->MaximumLength = (len - 1) * sizeof(name->Buffer[0]);
 
-//	status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
+	status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
 		/* TODO: tmp patch for diskless boot */
 		/* Update: This seems to be neccessary */
-	status = RtlUnicodeStringPrintf(name, L"\\Device\\HarddiskVolume%d", minor);
+//	status = RtlUnicodeStringPrintf(name, L"\\Device\\HarddiskVolume%d", minor);
 
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("minor_to_dos_name: couldn't printf device name for minor %d status: %x\n", minor, status);
