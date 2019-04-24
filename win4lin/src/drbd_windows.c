@@ -3300,6 +3300,13 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	new_device->Flags |= DO_DIRECT_IO;
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
+		/* Tell the PnP manager that we are there ... */
+	if (drbd_bus_device != NULL) {
+		IoInvalidateDeviceRelations(drbd_bus_device, BusRelations);
+	} else {
+		printk("Warning: no bus objects, Plug and play will not work.\n");
+	}
+
 	return 0;
 }
 
@@ -3314,10 +3321,20 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 
 	bdev->windows_device->DeviceExtension = NULL;
 
+		/* Tell the PnP manager that we are about to disappear.
+		 * The device object will be deleted in a PnP REMOVE_DEVICE
+		 * request.
+		 */
+	if (drbd_bus_device != NULL) {
+		bdev->windows_device = NULL;
+		IoInvalidateDeviceRelations(drbd_bus_device, BusRelations);
+	} else {
+		printk("Warning: no bus objects, Plug and play will not work.\n");
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
-	IoDeleteDevice(bdev->windows_device);
-	bdev->windows_device = NULL;
+		IoDeleteDevice(bdev->windows_device);
+		bdev->windows_device = NULL;
+	}
 }
 
 struct block_device *bdget(dev_t device_no)

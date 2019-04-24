@@ -1327,25 +1327,52 @@ printk("bus object\n");
 			 */
 		return windrbd_pnp_bus_object(device, irp);
 	} else {
-		if (s->MinorFunction == IRP_MN_START_DEVICE) {
+		switch (s->MinorFunction) {
+		case IRP_MN_START_DEVICE:
 printk("starting device\n");
 			status = STATUS_SUCCESS;
-		}
-		if (s->MinorFunction == IRP_MN_QUERY_DEVICE_RELATIONS) {
+			break;
+		case IRP_MN_QUERY_DEVICE_RELATIONS:
 			dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
-
-#if 0
-
-		struct _DEVICE_RELATIONS *rel;
-		rel = kmalloc(sizeof(*rel), 0, 'DRBD');
-		if (rel != NULL) {
-			rel->Count = 1; /* blue screens if this is 0 */
-			rel->Objects[0] = device; /* blue screens because this is not a PDO (yet). Hmmm ... */
-			ObReferenceObject(device);
-			irp->IoStatus.Information = (ULONG_PTR) rel;
 			status = STATUS_SUCCESS;
-		}
-#endif
+			break;
+
+		case IRP_MN_QUERY_REMOVE_DEVICE:
+			dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
+			status = STATUS_SUCCESS;
+			break;
+
+		case IRP_MN_CANCEL_REMOVE_DEVICE:
+			dbg("got IRP_MN_CANCEL_REMOVE_DEVICE\n");
+			status = STATUS_SUCCESS;
+			break;
+
+		case IRP_MN_SURPRISE_REMOVAL:
+			dbg("got IRP_MN_SURPRISE_REMOVAL\n");
+			status = STATUS_SUCCESS;
+			break;
+
+		case IRP_MN_REMOVE_DEVICE:
+			dbg("got IRP_MN_REMOVE_DEVICE\n");
+
+/*
+		irp->IoStatus.Information = 0;
+		irp->IoStatus.Status = STATUS_SUCCESS;
+		IoSkipCurrentIrpStackLocation(irp);
+
+printk("removing lower device object\n");
+		status = IoCallDriver(bus_ext->lower_device, irp);
+
+printk("IoCallDriver returned %x\n", status);
+
+*/
+// printk("detaching device object\n");
+//		IoDetachDevice(bus_ext->lower_device);
+printk("deleting device object\n");
+			IoDeleteDevice(device);
+printk("device object deleted.\n");
+printk("NOT completing IRP\n");
+			return STATUS_SUCCESS; /* must not do IoCompleteRequest */
 		}
 	}
 
