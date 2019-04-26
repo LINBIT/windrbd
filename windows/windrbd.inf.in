@@ -29,7 +29,7 @@ DefaultDestDir       = 12
 WinDRBD.DriverFiles     = 12           ;%windir%\system32\drivers
 
 ;;
-;; Default install sections
+;; WinDRBD device install section .. for the WinDRBD bus
 ;;
 
 [WinDRBD_Device.NT]
@@ -37,6 +37,17 @@ OptionDesc          = "WinDRBD - storage replication over network for Microsoft 
 CopyFiles           = WinDRBD.DriverFiles
 
 [WinDRBD_Device.NT.Services]
+AddService          = "WinDRBD", 2, WinDRBD.Service ; 2 ... Assign the named service as the PnP function driver (or legacy driver) for the device being installed by this INF
+
+;;
+;; Default install sections
+;;
+
+[DefaultInstall]
+OptionDesc          = "WinDRBD - storage replication over network for Microsoft Windows"
+CopyFiles           = WinDRBD.DriverFiles
+
+[DefaultInstall.Services]
 AddService          = "WinDRBD", 2, WinDRBD.Service ; 2 ... Assign the named service as the PnP function driver (or legacy driver) for the device being installed by this INF
 
 ;;
