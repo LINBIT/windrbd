@@ -9,17 +9,19 @@ signature   =   "$Windows NT$"
 ; Class       =   "DiskDrive" ; Disk Drive (needed for boot?)
 Class       =   "SCSIAdapter" ; Disk Drive (needed for boot?)
 ClassGUID   = {4D36E97B-E325-11CE-BFC1-08002BE10318}
+; Class       = "System"
+; ClassGUID   = {4D36E97D-E325-11CE-BFC1-08002BE10318}
 Provider    =   "WinDRBD"
 DriverVer   =   12/01/2013,0.2.0.0 ;Will get replaced by build magic
 CatalogFile =   windrbd.cat
 
 [Manufacturer]
-WinDRBD = WinDRBDDriver,,NTamd64
+WinDRBD = WinDRBDDriver,,NTamd64.6
 
 [WinDRBDDriver]
 "WinDRBD Driver" = WinDRBD,ROOT\WinDRBD\0000
 
-[WinDRBDDriver.NTamd64]
+[WinDRBDDriver.NTamd64.6]
 "WinDRBD Driver" = WinDRBD,ROOT\WinDRBD\0000
 
 [DestinationDirs]
