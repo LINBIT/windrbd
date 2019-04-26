@@ -16,13 +16,13 @@ DriverVer   =   12/01/2013,0.2.0.0 ;Will get replaced by build magic
 CatalogFile =   windrbd.cat
 
 [Manufacturer]
-WinDRBD = WinDRBDDriver,,NTamd64.6
+WinDRBD = WinDRBDDriver, NTamd64
 
 [WinDRBDDriver]
-"WinDRBD Driver" = WinDRBD,ROOT\WinDRBD\0000
+"WinDRBD Driver" = WinDRBD_Device,ROOT\WinDRBD\0000
 
-[WinDRBDDriver.NTamd64.6]
-"WinDRBD Driver" = WinDRBD,ROOT\WinDRBD\0000
+[WinDRBDDriver.NTamd64]
+"WinDRBD Driver 123" = WinDRBD_Device,ROOT\WinDRBD\0000
 
 [DestinationDirs]
 DefaultDestDir       = 12
@@ -32,11 +32,11 @@ WinDRBD.DriverFiles     = 12           ;%windir%\system32\drivers
 ;; Default install sections
 ;;
 
-[DefaultInstall]
+[WinDRBD_Device.NT]
 OptionDesc          = "WinDRBD - storage replication over network for Microsoft Windows"
 CopyFiles           = WinDRBD.DriverFiles
 
-[DefaultInstall.Services]
+[WinDRBD_Device.NT.Services]
 AddService          = "WinDRBD", 2, WinDRBD.Service ; 2 ... Assign the named service as the PnP function driver (or legacy driver) for the device being installed by this INF
 
 ;;
