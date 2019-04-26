@@ -1175,7 +1175,7 @@ printk("%d drbd windows devices found\n", count);
 	return count;
 }
 
-
+extern void windrbd_bus_is_ready(void);
 
 static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
@@ -1210,6 +1210,9 @@ printk("starting device object status is %x\n", status);
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 
 printk("completed IRP\n");
+
+		windrbd_bus_is_ready();
+printk("Set bus ready\n");
 
 		return status;
 

@@ -192,6 +192,11 @@ int windrbd_wait_for_bus_object(void)
 	return 0;
 }
 
+void windrbd_bus_is_ready(void)
+{
+	KeSetEvent(&bus_ready_event, 0, FALSE);
+}
+
 void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 {
 	UNREFERENCED_PARAMETER(DriverObject);
@@ -290,7 +295,6 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 		bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
 		drbd_bus_device = bus_device;
-		KeSetEvent(&bus_ready_event, 0, FALSE);
 	} else {
 		printk("AddDevice called but bus object (%p) already there.\n", drbd_bus_device);
 	}
