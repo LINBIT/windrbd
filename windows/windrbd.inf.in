@@ -11,7 +11,7 @@ Class       =   "SCSIAdapter" ; Disk Drive (needed for boot?)
 ClassGUID   = {4D36E97B-E325-11CE-BFC1-08002BE10318}
 ; Class       = "System"
 ; ClassGUID   = {4D36E97D-E325-11CE-BFC1-08002BE10318}
-Provider    =   "WinDRBD"
+Provider    =   "Linbit"
 DriverVer   =   12/01/2013,0.2.0.0 ;Will get replaced by build magic
 CatalogFile =   windrbd.cat
 
@@ -22,7 +22,7 @@ WinDRBD = WinDRBDDriver, NTamd64
 "WinDRBD Driver" = WinDRBD_Device,ROOT\WinDRBD\0000
 
 [WinDRBDDriver.NTamd64]
-"WinDRBD Driver 123" = WinDRBD_Device,ROOT\WinDRBD\0000
+"WinDRBD Virtual Bus Device" = WinDRBD_Device,ROOT\WinDRBD\0000
 
 [DestinationDirs]
 DefaultDestDir       = 12
