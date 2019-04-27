@@ -1399,7 +1399,8 @@ printk("b\n");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryCompatibleIDs:
-					swprintf(string, L"GenDisk", minor);
+					len = swprintf(string, L"WinDRBD\\Disk%d", minor);
+//					swprintf(string, L"GenDisk", minor);
 printk("c\n");
 					status = STATUS_SUCCESS;
 					break;
