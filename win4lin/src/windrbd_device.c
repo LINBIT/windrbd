@@ -1342,15 +1342,21 @@ printk("bus object\n");
 		struct block_device *bdev = NULL;
 		struct drbd_device *drbd_device = NULL;
 		int minor = -1;
+printk("1\n");
 		if (ref != NULL) {
+printk("2\n");
 			bdev = ref->bdev;
 			if (bdev) {
+printk("3\n");
 				drbd_device = bdev->drbd_device;
-				if (drbd_device)
+				if (drbd_device) {
+printk("4\n");
 					minor = drbd_device->minor;
+				}
 			}
 		}
 
+printk("5\n");
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
 printk("starting device\n");
@@ -1360,43 +1366,58 @@ printk("starting device\n");
 		{
 			wchar_t *string;
 			dbg("Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
+printk("minor is %d\n", minor);
 			if (minor < 0) {
 				status = STATUS_INVALID_DEVICE_REQUEST;
 				break;
 			}
 #define MAX_ID_LEN 512
 			string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), 'DRBD');
+printk("6\n");
 			if (string == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 			} else {
+				memset(string, 0, MAX_ID_LEN*sizeof(wchar_t));
+printk("7\n");
 				switch (s->Parameters.QueryId.IdType) {
 				case BusQueryDeviceID:
 					swprintf(string, L"WinDRBD\\Disk%d", minor);
+printk("8\n");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryInstanceID:
 					swprintf(string, L"WinDRBD%d", minor);
+printk("9\n");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryHardwareIDs:
+printk("a\n");
 					size_t len;
 					len = swprintf(string, L"WinDRBD\\Disk%d", minor);
 					swprintf(&string[len+1], L"GenDisk");
+printk("b\n");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryCompatibleIDs:
 					swprintf(string, L"GenDisk", minor);
+printk("c\n");
 					status = STATUS_SUCCESS;
 					break;
 				default:
+printk("d\n");
 					status = STATUS_NOT_IMPLEMENTED;
 				}
 			}
+printk("e\n");
 			if (status == STATUS_SUCCESS) {
+dbg("Returned string is %S\n", string);
+printk("f\n");
 				irp->IoStatus.Information = (ULONG_PTR) string;
 			} else {
+printk("g\n");
 				ExFreePool(string);
 			}
+printk("h\n");
 			break;
 		}
 
