@@ -1266,31 +1266,22 @@ printk("about to report DRBD devices ...\n");
 			struct _DEVICE_RELATIONS *device_relations;
 			int n;
 
-printk("1\n");
 			size_t siz = sizeof(*device_relations)+num_devices*sizeof(device_relations->Objects[0]);
-			printk("size of device relations is %d\n", siz);
+printk("size of device relations is %d\n", siz);
+		/* must be PagedPool else PnP manager complains */
 			device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
-printk("2\n");
 			if (device_relations == NULL) {
-printk("3\n");
 				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
-printk("4\n");
 			n = get_all_drbd_device_objects(&device_relations->Objects[0], num_devices);
-printk("5\n");
 			if (n != num_devices)
 				printk("Warning: number of DRBD devices changed: old %d != new %d\n", num_devices, n);
-printk("6\n");
 			device_relations->Count = num_devices;
-printk("7\n");
 			irp->IoStatus.Information = (ULONG_PTR)device_relations;
-printk("8\n");
 			irp->IoStatus.Status = STATUS_SUCCESS;
 
-printk("9\n");
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
-printk("a\n");
 			return STATUS_SUCCESS;
 		} else {
 			status = STATUS_NOT_IMPLEMENTED;
@@ -1354,7 +1345,28 @@ printk("starting device\n");
 			break;
 		case IRP_MN_QUERY_DEVICE_RELATIONS:
 			dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
-			status = STATUS_SUCCESS;
+
+			switch (s->Parameters.QueryDeviceRelations.Type) {
+			case TargetDeviceRelation:
+				struct _DEVICE_RELATIONS *device_relations;
+				size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
+				printk("size of device relations is %d\n", siz);
+		/* must be PagedPool else PnP manager complains */
+				device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+				if (device_relations == NULL) {
+					status = STATUS_INSUFFICIENT_RESOURCES;
+					break;
+				}
+				device_relations->Count = 1;
+				device_relations->Objects[0] = device;
+				irp->IoStatus.Information = (ULONG_PTR)device_relations;
+				status = STATUS_SUCCESS;
+				break;
+
+			default:
+				printk("Type %d is not implemented\n");
+				status = STATUS_NOT_IMPLEMENTED;
+			}
 			break;
 
 		case IRP_MN_QUERY_REMOVE_DEVICE:
