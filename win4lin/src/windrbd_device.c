@@ -1394,7 +1394,7 @@ printk("9\n");
 printk("a\n");
 					size_t len;
 					len = swprintf(string, L"WinDRBD\\Disk%d", minor);
-					swprintf(&string[len+1], L"GenDisk");
+//					swprintf(&string[len+1], L"GenDisk");
 printk("b\n");
 					status = STATUS_SUCCESS;
 					break;
