@@ -1338,11 +1338,68 @@ printk("bus object\n");
 			 */
 		return windrbd_pnp_bus_object(device, irp);
 	} else {
+		struct block_device_reference *ref = device->DeviceExtension;
+		struct block_device *bdev = NULL;
+		struct drbd_device *drbd_device = NULL;
+		int minor = -1;
+		if (ref != NULL) {
+			bdev = ref->bdev;
+			if (bdev) {
+				drbd_device = bdev->drbd_device;
+				if (drbd_device)
+					minor = drbd_device->minor;
+			}
+		}
+
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
 printk("starting device\n");
 			status = STATUS_SUCCESS;
 			break;
+		case IRP_MN_QUERY_ID:
+		{
+			wchar_t *string;
+			dbg("Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
+			if (minor < 0) {
+				status = STATUS_INVALID_DEVICE_REQUEST;
+				break;
+			}
+#define MAX_ID_LEN 512
+			string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), 'DRBD');
+			if (string == NULL) {
+				status = STATUS_INSUFFICIENT_RESOURCES;
+			} else {
+				switch (s->Parameters.QueryId.IdType) {
+				case BusQueryDeviceID:
+					swprintf(string, L"WinDRBD\\Disk%d", minor);
+					status = STATUS_SUCCESS;
+					break;
+				case BusQueryInstanceID:
+					swprintf(string, L"WinDRBD%d", minor);
+					status = STATUS_SUCCESS;
+					break;
+				case BusQueryHardwareIDs:
+					size_t len;
+					len = swprintf(string, L"WinDRBD\\Disk%d", minor);
+					swprintf(&string[len+1], L"GenDisk");
+					status = STATUS_SUCCESS;
+					break;
+				case BusQueryCompatibleIDs:
+					swprintf(string, L"GenDisk", minor);
+					status = STATUS_SUCCESS;
+					break;
+				default:
+					status = STATUS_NOT_IMPLEMENTED;
+				}
+			}
+			if (status == STATUS_SUCCESS) {
+				irp->IoStatus.Information = (ULONG_PTR) string;
+			} else {
+				ExFreePool(string);
+			}
+			break;
+		}
+
 		case IRP_MN_QUERY_DEVICE_RELATIONS:
 			dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
 
