@@ -52,7 +52,8 @@ DRIVER_ADD_DEVICE mvolAddDevice;
 #endif
 
 PDEVICE_OBJECT drbd_bus_device;
-PDEVICE_OBJECT drbd_bus_object1;
+static PDEVICE_OBJECT drbd_bus_object1;
+static PDEVICE_OBJECT drbd_physical_bus_device;
 
 KEVENT bus_ready_event;
 
@@ -201,6 +202,16 @@ void windrbd_bus_is_ready(void)
 	KeSetEvent(&bus_ready_event, 0, FALSE);
 }
 
+int windrbd_rescan_bus(void)
+{
+	if (drbd_physical_bus_device != NULL) {
+		IoInvalidateDeviceRelations(drbd_physical_bus_device, BusRelations);
+		return 0;
+	}
+	printk("Warning: physical bus device does not exist (yet)\n");
+	return -1;
+}
+
 void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 {
 	UNREFERENCED_PARAMETER(DriverObject);
@@ -263,7 +274,7 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 	struct _DEVICE_OBJECT *bus_device;
 	struct _BUS_EXTENSION *bus_extension;
 
-	printk(KERN_INFO "AddDevice: PhysicalDeviceObject is %p\n", );
+	printk(KERN_INFO "AddDevice: PhysicalDeviceObject is %p\n", PhysicalDeviceObject);
 
 	if (drbd_bus_device == NULL) {
 		RtlInitUnicodeString(&drbd_bus, L"\\Device\\Drbd");
@@ -299,6 +310,7 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 		bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
 		drbd_bus_device = bus_device;
+		drbd_physical_bus_device = PhysicalDeviceObject;
 	} else {
 		printk("AddDevice called but bus object (%p) already there.\n", drbd_bus_device);
 	}

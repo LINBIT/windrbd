@@ -425,13 +425,7 @@ msleep(1000);
 
 printk("7-2a\n");
                 /* Tell the PnP manager that we are there ... */
-	if (drbd_bus_device != NULL) {
-printk("7-3\n");
-		IoInvalidateDeviceRelations(drbd_bus_device, BusRelations);
-printk("7-4\n");
-	} else {
-		printk("Warning: no bus objects, Plug and play will not work.\n");
-	}
+	windrbd_rescan_bus();
 
 printk("7a %s\n", p->resource);
 	if ((ret = connect(p->resource, p->peer_node_id)) != 0)

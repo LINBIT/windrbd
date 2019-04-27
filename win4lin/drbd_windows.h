@@ -1385,4 +1385,8 @@ int my_inet_aton(const char *cp, struct in_addr *inp);
 void windrbd_run_tests(void);
 void windrbd_shutdown_tests(void);
 
+int windrbd_rescan_bus(void);
+void windrbd_bus_is_ready(void);
+int windrbd_wait_for_bus_object(void);
+
 #endif // DRBD_WINDOWS_H
