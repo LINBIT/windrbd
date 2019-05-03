@@ -23,11 +23,11 @@ Linbit = WinDRBDDiskDriver, NTamd64
 
 [WinDRBDDiskDriver]
 ; "WinDRBD Driver" = WinDRBD,WinDRBD
-"WinDRBD Disk Device" = WinDRBD,WinDRBD\Disk5
+"WinDRBD Disk Device" = WinDRBD,WinDRBDDisk
 
 [WinDRBDDiskDriver.NTamd64]
 ; "WinDRBD Virtual Bus Device" = WinDRBD,WinDRBD
-"WinDRBD Disk Device" = WinDRBD,WinDRBD\Disk5
+"WinDRBD Disk Device" = WinDRBD,WinDRBDDisk
 
 [DestinationDirs]
 DefaultDestDir       = 12
