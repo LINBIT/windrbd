@@ -1393,14 +1393,14 @@ printk("9\n");
 				case BusQueryHardwareIDs:
 printk("a\n");
 					size_t len;
-					len = swprintf(string, L"WinDRBD\\Disk%d", minor);
-					swprintf(&string[len+1], L"GenDisk");
+					len = swprintf(string, L"WinDRBD", minor);
+//					swprintf(&string[len+1], L"GenDisk");
 printk("b\n");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryCompatibleIDs:
-					len = swprintf(string, L"WinDRBD\\Disk%d", minor);
-					swprintf(&string[len+1], L"GenDisk", minor);
+					len = swprintf(string, L"WinDRBD", minor);
+//					swprintf(&string[len+1], L"GenDisk", minor);
 printk("c\n");
 					status = STATUS_SUCCESS;
 					break;
