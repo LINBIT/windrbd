@@ -19,12 +19,12 @@ CatalogFile =   windrbd.cat
 Linbit = WinDRBDDriver, NTamd64
 
 [WinDRBDDriver]
-"WinDRBD Driver" = WinDRBD_Device,ROOT\WinDRBD\0000
-"WinDRBD Disk Device" = WinDRBD_Device,WinDRBD\Disk5
+"WinDRBD Driver" = WinDRBD_Device,WinDRBD
+; "WinDRBD Disk Device" = WinDRBD_Device,WinDRBD\Disk5
 
 [WinDRBDDriver.NTamd64]
-"WinDRBD Virtual Bus Device" = WinDRBD_Device,ROOT\WinDRBD\0000
-"WinDRBD Disk Device" = WinDRBD_Device,WinDRBD\Disk5
+"WinDRBD Virtual Bus Device" = WinDRBD_Device,WinDRBD
+; "WinDRBD Disk Device" = WinDRBD_Device,WinDRBD\Disk5
 
 [DestinationDirs]
 DefaultDestDir       = 12
