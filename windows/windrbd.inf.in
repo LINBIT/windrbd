@@ -19,11 +19,11 @@ CatalogFile =   windrbd.cat
 Linbit = WinDRBDDriver, NTamd64
 
 [WinDRBDDriver]
-"WinDRBD Driver" = WinDRBD_Device,WinDRBD
+"WinDRBD Driver" = WinDRBD,WinDRBD
 ; "WinDRBD Disk Device" = WinDRBD_Device,WinDRBD\Disk5
 
 [WinDRBDDriver.NTamd64]
-"WinDRBD Virtual Bus Device" = WinDRBD_Device,WinDRBD
+"WinDRBD Virtual Bus Device" = WinDRBD,WinDRBD
 ; "WinDRBD Disk Device" = WinDRBD_Device,WinDRBD\Disk5
 
 [DestinationDirs]
@@ -34,11 +34,11 @@ WinDRBD.DriverFiles     = 12           ;%windir%\system32\drivers
 ;; WinDRBD device install section .. for the WinDRBD bus
 ;;
 
-[WinDRBD_Device.NT]
+[WinDRBD.NT]
 OptionDesc          = "WinDRBD - storage replication over network for Microsoft Windows"
 CopyFiles           = WinDRBD.DriverFiles
 
-[WinDRBD_Device.NT.Services]
+[WinDRBD.NT.Services]
 AddService          = "WinDRBD", 2, WinDRBD.Service ; 2 ... Assign the named service as the PnP function driver (or legacy driver) for the device being installed by this INF
 
 ;;
