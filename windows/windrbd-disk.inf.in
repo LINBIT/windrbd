@@ -2,29 +2,32 @@
 ;;; install/uninstall drbd engine driver
 ;;;
 
+; This file describes the WinDRBD disk drives.
+
 [Version]
 signature   =   "$Windows NT$"
 ;; inf2cat complains if this is not specified:
 ; Class       =   "Volume" ; Virtual storage driver (creates block devices)
-; Class       =   "DiskDrive" ; Disk Drive (needed for boot?)
-Class       =   "SCSIAdapter" ; Disk Drive (needed for boot?)
-ClassGUID   = {4D36E97B-E325-11CE-BFC1-08002BE10318}
+Class       =   "DiskDrive" ; Disk Drive (needed for boot?)
+ClassGUID   = {4d36e967-e325-11ce-bfc1-08002be10318}
+; Class       =   "SCSIAdapter" ; Disk Drive (needed for boot?)
+; ClassGUID   = {4D36E97B-E325-11CE-BFC1-08002BE10318}
 ; Class       = "System"
 ; ClassGUID   = {4D36E97D-E325-11CE-BFC1-08002BE10318}
 Provider    =   "Linbit"
 DriverVer   =   12/01/2013,0.2.0.0 ;Will get replaced by build magic
-CatalogFile =   windrbd.cat
+CatalogFile =   windrbd-disk.cat
 
 [Manufacturer]
-Linbit = WinDRBDDriver, NTamd64
+Linbit = WinDRBDDiskDriver, NTamd64
 
-[WinDRBDDriver]
-"WinDRBD Driver" = WinDRBD,WinDRBD
-; "WinDRBD Disk Device" = WinDRBD,WinDRBD\Disk5
+[WinDRBDDiskDriver]
+; "WinDRBD Driver" = WinDRBD,WinDRBD
+"WinDRBD Disk Device" = WinDRBD,WinDRBD\Disk5
 
-[WinDRBDDriver.NTamd64]
-"WinDRBD Virtual Bus Device" = WinDRBD,WinDRBD
-; "WinDRBD Disk Device" = WinDRBD,WinDRBD\Disk5
+[WinDRBDDiskDriver.NTamd64]
+; "WinDRBD Virtual Bus Device" = WinDRBD,WinDRBD
+"WinDRBD Disk Device" = WinDRBD,WinDRBD\Disk5
 
 [DestinationDirs]
 DefaultDestDir       = 12

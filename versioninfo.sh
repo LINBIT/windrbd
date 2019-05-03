@@ -81,6 +81,7 @@ echo "#endif" >> ${OUTPATH}/windrbd_version.h
 
 ## drbd.inf
 sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y) ;Replaced by build magic#" ./windows/windrbd.inf.in > ${OUTPATH}/windrbd.inf
+sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y) ;Replaced by build magic#" ./windows/windrbd-disk.inf.in > ${OUTPATH}/windrbd-disk.inf
 
 ## inno-setup version include file
 echo \#define MyAppVersion \"${GITHASH}\" > inno-setup/version.iss
