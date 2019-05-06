@@ -1216,6 +1216,12 @@ printk("Set bus ready\n");
 
 		return status;
 
+	case IRP_MN_QUERY_PNP_DEVICE_STATE:
+		dbg("got IRP_MN_QUERY_PNP_DEVICE_STATE\n");
+		irp->IoStatus.Information = 0;
+		status = STATUS_SUCCESS;
+		break;
+
 	case IRP_MN_QUERY_REMOVE_DEVICE:
 		dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
 		// status = STATUS_SUCCESS;
