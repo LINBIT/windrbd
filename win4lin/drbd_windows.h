@@ -552,6 +552,8 @@ struct block_device {
 	int minor;	/* in case drbd_device is still NULL we need to shadow it here */
 	struct drbd_device *drbd_device;
 	struct _DEVICE_OBJECT *windows_device;	/* If that is a backing dev, the target device to send the I/O IRPs to. If this is a DRBD device, the device created by bdget()) */
+	struct _DEVICE_OBJECT *upper_windows_device; /* If upper device, this is the device created in AddDevice of the PnP request. */
+	struct _DEVICE_OBJECT *attached_windows_device; /* If upper device, this is the device returned by IoAttachDeviceToDeviceStack in AddDevice of the PnP request. */
 	struct _FILE_OBJECT *file_object; /* As returned by IoGetDeviceObjectPointer() */
 	UNICODE_STRING path_to_device;
 	UNICODE_STRING mount_point;
@@ -588,7 +590,11 @@ struct block_device {
 	 * as we are primary, to avoid caching side effects).
 	 */
 
+#define BLOCK_DEVICE_UPPER_MAGIC 0xa56e3bd1
+#define BLOCK_DEVICE_ATTACHED_MAGIC 0x706fde13
+
 struct block_device_reference {
+	int magic;
 	struct block_device *bdev;
 };
 

@@ -3293,6 +3293,7 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	bdev->windows_device = new_device;
 	bdev_ref = new_device->DeviceExtension;
 	bdev_ref->bdev = bdev;
+	bdev_ref->magic = BLOCK_DEVICE_UPPER_MAGIC;
 
 	KeInitializeEvent(&bdev->primary_event, NotificationEvent, FALSE);
 
