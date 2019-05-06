@@ -57,11 +57,6 @@ static int reply_code(int cmd)
 	genlmsg_header = nlmsg_data(header);
 	drbd_header = genlmsg_data(genlmsg_header);
 
-	if (header->nlmsg_seq != expected_seq) {
-		printk("Warning: header->nlmsg_seq(%d) != expected_seq(%d)\n", header->nlmsg_seq, expected_seq);
-		return -1;
-	}
-	expected_seq++;
 	if (header->nlmsg_pid != KERNEL_PORT_ID) {
 		printk("Warning: header->nlmsg_pid(%d) != KERNEL_PORT_ID\n", header->nlmsg_pid, KERNEL_PORT_ID);
 		return -1;
@@ -70,6 +65,14 @@ static int reply_code(int cmd)
 		printk("Warning: genlmsg_header->cmd(%d) != DRBD_ADM_NEW_RESOURCE (%d)\n", genlmsg_header->cmd, cmd);
 		return -1;
 	}
+		/* TODO: currently does not work because of races
+		 * between two threads. Fix it by having expected
+		 * seq per thread.
+		 */
+	if (header->nlmsg_seq != expected_seq) {
+		printk("Warning: header->nlmsg_seq(%d) != expected_seq(%d)\n", header->nlmsg_seq, expected_seq);
+	}
+	expected_seq++;
 
 	return drbd_header->ret_code;
 }
