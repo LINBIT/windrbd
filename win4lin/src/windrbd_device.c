@@ -1444,7 +1444,7 @@ printk("h\n");
 					break;
 				}
 				device_relations->Count = 1;
-				device_relations->Objects[0] = device;
+				device_relations->Objects[0] = bdev->windows_device;
 				irp->IoStatus.Information = (ULONG_PTR)device_relations;
 				status = STATUS_SUCCESS;
 				break;

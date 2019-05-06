@@ -337,6 +337,7 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 				if (status != STATUS_SUCCESS) {
 					printk("Couldn't create disk device, status is %x\n", status);
 				} else {
+					printk("New upper device object is %p\n", new_disk_device);
 					new_ref = new_disk_device->DeviceExtension;
 					new_ref->bdev = bdev;
 					new_ref->magic = BLOCK_DEVICE_ATTACHED_MAGIC;
