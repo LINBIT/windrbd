@@ -340,7 +340,7 @@ static struct drbd_params {
 		.num_nodes = 2,
 		.minor = 2,
 		.volume = 1,
-		.mount_point = L"W:",	/* C: later */
+		.mount_point = L"C:",
 		.peer = "johannes-VirtualBox",
 		.peer_node_id = 1,
 		.protocol = 3,
