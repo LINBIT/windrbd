@@ -28,6 +28,7 @@
 #include <wdm.h>
 #include <ntddk.h>
 #include <ntdddisk.h>
+#include <wdmguid.h>
 
 /* Uncomment this if you want more debug output (disable for releases) */
 #define DEBUG 1
@@ -1454,6 +1455,24 @@ printk("h\n");
 			}
 			break;
 
+		case IRP_MN_QUERY_BUS_INFORMATION:
+		{
+			struct _PNP_BUS_INFORMATION *bus_info;
+
+			bus_info = ExAllocatePool(PagedPool, sizeof(*bus_info));
+			if (bus_info  == NULL) {
+			        printk("DiskDispatchPnP ExAllocatePool IRP_MN_QUERY_BUS_INFORMATION failed\n");
+			        status = STATUS_INSUFFICIENT_RESOURCES;
+				break;
+			}
+			bus_info->BusTypeGuid = GUID_BUS_TYPE_INTERNAL;
+			bus_info->LegacyBusType = PNPBus;
+			bus_info->BusNumber = 0;
+			irp->IoStatus.Information = (ULONG_PTR)bus_info;
+			status = STATUS_SUCCESS;
+			break;
+		}
+
 		case IRP_MN_QUERY_REMOVE_DEVICE:
 			dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
 			status = STATUS_SUCCESS;
@@ -1490,6 +1509,10 @@ printk("deleting device object\n");
 printk("device object deleted.\n");
 printk("NOT completing IRP\n");
 			return STATUS_SUCCESS; /* must not do IoCompleteRequest */
+
+		default:
+			printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
+			status = STATUS_NOT_IMPLEMENTED;
 		}
 	}
 
