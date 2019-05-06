@@ -1550,7 +1550,8 @@ printk("NOT completing IRP\n");
 
 		default:
 			printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
-			status = STATUS_NOT_IMPLEMENTED;
+			status = irp->IoStatus.Status;
+//			status = STATUS_NOT_IMPLEMENTED;
 		}
 	}
 
