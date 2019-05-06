@@ -1455,6 +1455,10 @@ printk("h\n");
 			}
 			break;
 
+		case IRP_MN_DEVICE_ENUMERATED:
+			status = STATUS_SUCCESS;
+			break;
+
 		case IRP_MN_QUERY_BUS_INFORMATION:
 		{
 			struct _PNP_BUS_INFORMATION *bus_info;
@@ -1473,6 +1477,40 @@ printk("h\n");
 			break;
 		}
 
+		case IRP_MN_QUERY_CAPABILITIES:
+		{
+			struct _DEVICE_CAPABILITIES *DeviceCapabilities;
+			DeviceCapabilities = s->Parameters.DeviceCapabilities.Capabilities;
+printk("got IRP_MN_QUERY_CAPABILITIES\n");
+			if (DeviceCapabilities->Version != 1 || DeviceCapabilities->Size < sizeof(DEVICE_CAPABILITIES)) {
+printk("wrong version of DeviceCapabilities\n");
+				status = STATUS_UNSUCCESSFUL;
+				break;
+			}
+			DeviceCapabilities->DeviceState[PowerSystemWorking] = PowerDeviceD0;
+			if (DeviceCapabilities->DeviceState[PowerSystemSleeping1] != PowerDeviceD0) DeviceCapabilities->DeviceState[PowerSystemSleeping1] = PowerDeviceD1;
+			if (DeviceCapabilities->DeviceState[PowerSystemSleeping2] != PowerDeviceD0) DeviceCapabilities->DeviceState[PowerSystemSleeping2] = PowerDeviceD3;
+//      if (DeviceCapabilities->DeviceState[PowerSystemSleeping3] != PowerDeviceD0) DeviceCapabilities->DeviceState[PowerSystemSleeping3] = PowerDeviceD3;
+			DeviceCapabilities->DeviceWake = PowerDeviceD1;
+			DeviceCapabilities->DeviceD1 = TRUE;
+			DeviceCapabilities->DeviceD2 = FALSE;
+			DeviceCapabilities->WakeFromD0 = FALSE;
+			DeviceCapabilities->WakeFromD1 = FALSE;
+			DeviceCapabilities->WakeFromD2 = FALSE;
+			DeviceCapabilities->WakeFromD3 = FALSE;
+			DeviceCapabilities->D1Latency = 0;
+			DeviceCapabilities->D2Latency = 0;
+			DeviceCapabilities->D3Latency = 0;
+			DeviceCapabilities->EjectSupported = FALSE;
+			DeviceCapabilities->HardwareDisabled = FALSE;
+			DeviceCapabilities->Removable = FALSE;
+			DeviceCapabilities->SurpriseRemovalOK = FALSE;
+			DeviceCapabilities->UniqueID = FALSE;
+			DeviceCapabilities->SilentInstall = FALSE;
+
+			status = STATUS_SUCCESS;
+			break;
+		}
 		case IRP_MN_QUERY_REMOVE_DEVICE:
 			dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
 			status = STATUS_SUCCESS;
