@@ -234,6 +234,10 @@ sudo mount /dev/sdf2 mnt/
 cp ../windrbd/converted-sources/drbd/windrbd.sys mnt/Windows/System32/drivers/windrbd.sys
 sudo umount mnt
 
+(or:
+cp ../inf-files/windrbd-bootc.sys mnt/Windows/System32/drivers/windrbd.sys 
+)
+
 (does not touch registry)
 
 # create a small text file to make sure it is the right image:
