@@ -424,7 +424,7 @@ printk("7-1\n");
 		return ret;
 printk("7-2\n");
 
-msleep(1000);
+// msleep(1000);
 
 printk("7-2a\n");
                 /* Tell the PnP manager that we are there ... */
