@@ -1367,6 +1367,11 @@ printk("5\n");
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
 printk("starting device\n");
+			if (bdev != NULL)
+				wait_for_becoming_primary(bdev);
+			else
+				printk("bdev is NULL on start device, this should not happen\n");
+
 			status = STATUS_SUCCESS;
 			break;
 		case IRP_MN_QUERY_ID:
@@ -1458,6 +1463,8 @@ printk("h\n");
 		case IRP_MN_DEVICE_ENUMERATED:
 			status = STATUS_SUCCESS;
 			break;
+
+/* TODO: set PNP_DEVICE_NOT_DISABLEABLE on IRP_MN_QUERY_PNP_DEVICE_STATE */
 
 		case IRP_MN_QUERY_BUS_INFORMATION:
 		{
