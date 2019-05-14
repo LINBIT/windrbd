@@ -3569,7 +3569,7 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 int windrbd_mount(struct block_device *dev)
 {
 	NTSTATUS status;
-	UNICODE_STRING vol, partition, hddir;
+	UNICODE_STRING vol, partition, hddir, arcname;
 	HANDLE h;
 	OBJECT_ATTRIBUTES attr;
 
@@ -3594,19 +3594,22 @@ if (dev->minor == 1 || dev->minor == 2) {
 RtlInitUnicodeString(&vol, L"nix");
 RtlInitUnicodeString(&partition, L"nix");
 RtlInitUnicodeString(&hddir, L"\\Device\\Harddisk0");
+RtlInitUnicodeString(&arcname, L"nix");
 if (dev->minor == 2) {
 RtlInitUnicodeString(&vol, L"\\DosDevices\\Volume{2cfd0dc4-12ab-11e9-b29d-806e6f6e6963}");
 RtlInitUnicodeString(&partition, L"\\Device\\Harddisk0\\Partition2");
+RtlInitUnicodeString(&arcname, L"\\ArcName\\multi(0)disk(0)rdisk(0)partition(2)");
 }
 if (dev->minor == 1) {
 RtlInitUnicodeString(&vol, L"\\DosDevices\\Volume{2cfd0dc3-12ab-11e9-b29d-806e6f6e6963}");
 RtlInitUnicodeString(&partition, L"\\Device\\Harddisk0\\Partition1");
+RtlInitUnicodeString(&arcname, L"\\ArcName\\multi(0)disk(0)rdisk(0)partition(1)");
 }
 
 printk("dev->path_to_device: %S vol: %S\n", dev->path_to_device.Buffer, vol.Buffer);
 	status = IoCreateSymbolicLink(&vol, &dev->path_to_device);
 	if (status != STATUS_SUCCESS) {
-		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, vol.Buffer, status);
+		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", vol.Buffer, dev->path_to_device.Buffer, status);
 	}
 printk("dev->path_to_device: %S partition: %S hddir: %S\n", dev->path_to_device.Buffer, partition.Buffer, hddir.Buffer);
 
@@ -3620,9 +3623,18 @@ printk("about to create dir ...\n");
 	}
 	ZwClose(h);
 
+printk("linking %S to %S ...\n", partition.Buffer, dev->path_to_device.Buffer);
 	status = IoCreateSymbolicLink(&partition, &dev->path_to_device);
 	if (status != STATUS_SUCCESS) {
-		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, partition.Buffer, status);
+		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", partition.Buffer, dev->path_to_device.Buffer, status);
+	} else {
+printk("linking %S to %S ...\n", arcname.Buffer, partition.Buffer);
+		status = IoCreateSymbolicLink(&arcname, &partition);
+		if (status != STATUS_SUCCESS) {
+			printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", arcname.Buffer, partition.Buffer, status);
+		} else {
+printk("linking arcname succeeded\n");
+		}
 	}
 }
 
