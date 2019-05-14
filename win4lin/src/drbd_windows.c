@@ -3610,7 +3610,8 @@ printk("dev->path_to_device: %S vol: %S\n", dev->path_to_device.Buffer, vol.Buff
 	}
 printk("dev->path_to_device: %S partition: %S hddir: %S\n", dev->path_to_device.Buffer, partition.Buffer, hddir.Buffer);
 
-        InitializeObjectAttributes(&attr, &hddir, OBJ_KERNEL_HANDLE, NULL, NULL);
+	/* TODO: OBJ_OPENIF ? */
+        InitializeObjectAttributes(&attr, &hddir, OBJ_PERMANENT | OBJ_KERNEL_HANDLE, NULL, NULL);
 
 printk("about to create dir ...\n");
 	status = ZwCreateDirectoryObject(&h, DIRECTORY_ALL_ACCESS, &attr);
