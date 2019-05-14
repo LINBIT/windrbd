@@ -1439,6 +1439,7 @@ printk("h\n");
 
 			switch (s->Parameters.QueryDeviceRelations.Type) {
 			case TargetDeviceRelation:
+			{
 				struct _DEVICE_RELATIONS *device_relations;
 				size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
 				printk("size of device relations is %d\n", siz);
@@ -1453,6 +1454,24 @@ printk("h\n");
 				irp->IoStatus.Information = (ULONG_PTR)device_relations;
 				status = STATUS_SUCCESS;
 				break;
+			}
+
+			case BusRelations:
+			{
+				struct _DEVICE_RELATIONS *device_relations;
+				size_t siz = sizeof(*device_relations);
+
+		/* must be PagedPool else PnP manager complains */
+				device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+				if (device_relations == NULL) {
+					status = STATUS_INSUFFICIENT_RESOURCES;
+					break;
+				}
+				device_relations->Count = 0;
+				irp->IoStatus.Information = (ULONG_PTR)device_relations;
+				status = STATUS_SUCCESS;
+				break;
+			}
 
 			default:
 				printk("Type %d is not implemented\n");
