@@ -272,6 +272,7 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 
 static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+printk("1\n");
 	if (device == mvolRootDeviceObject)
 		return windrbd_root_device_control(device, irp);
 
@@ -291,6 +292,8 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	status = wait_for_becoming_primary(dev);
 	if (status != STATUS_SUCCESS)
 		goto out;
+
+printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 		/* custom WINDRBD ioctl's */
@@ -616,11 +619,13 @@ out:
 
 static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+printk("1\n");
 	if (device == mvolRootDeviceObject) {
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
 	}
+printk("2\n");
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL) {
@@ -672,6 +677,7 @@ exit:
 
 static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+printk("1\n");
 	if (device == mvolRootDeviceObject) {
 		struct _IO_STACK_LOCATION *s2 = IoGetCurrentIrpStackLocation(irp);
 		windrbd_delete_multicast_groups_for_file(s2->FileObject);
@@ -721,6 +727,7 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+printk("1\n");
 	if (device == mvolRootDeviceObject) {
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -956,7 +963,7 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 		bio->bi_mdl_offset = b*MAX_BIO_SIZE;
 		bio->bi_common_data = common_data;
 
-// dbg("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
+dbg("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
 
 		bio->bi_io_vec[0].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
 		if (bio->bi_io_vec[0].bv_page == NULL) {
@@ -1000,6 +1007,7 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+printk("1\n");
 	if (device == mvolRootDeviceObject) {
 		dbg(KERN_WARNING "I/O on root device not supported.\n");
 
