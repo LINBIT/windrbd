@@ -1371,14 +1371,14 @@ printk("4\n");
 			}
 		}
 
+		if (bdev != NULL)
+			wait_for_becoming_primary(bdev);
+		else
+			printk("bdev is NULL on start device, this should not happen (minor is %x)\n", s->MinorFunction);
 printk("5\n");
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
 printk("starting device\n");
-			if (bdev != NULL)
-				wait_for_becoming_primary(bdev);
-			else
-				printk("bdev is NULL on start device, this should not happen\n");
 // printk("NOT waiting for becoming Primary\n");
 
 			status = STATUS_SUCCESS;
