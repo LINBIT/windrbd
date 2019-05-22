@@ -1,9 +1,9 @@
 Neccessary steps:
 
-Install WinDRBD Bus driver
+Install WinDRBD Bus driver (unclear if really needed)
 	Device manager: add legacy hardware: windrbd.inf
 
-Install WinDRBD Disk driver
+Install WinDRBD Disk driver (unclear if really needed)
 	(else will not call START_DEVICE PnP request)
 	To do so install windrbd with boot device and wait for
 	primary disabled and do Update driver software in
@@ -16,11 +16,17 @@ Install WinDRBD Disk driver
 	inf file which makes things far more easier.
 
 Install windrbd driver with boot and wait for primary in
-	START_DEVICE enabled.
+	windrbd I/O requests (not windrbd_pnp, but windrbd_create)
+
+Also: Disable UDP logging (NO_NET_PRINTK) in printk-to-syslog
 
 Enable NIC driver
 	E1 something for my VirtualBox
 
-Enable AFD driver
+Enable AFD driver (unclear if really needed)
 
-More drivers? We currently do not get network.
+Enable Broadcom drivers (unclear if really needed)
+
+Currently: Assign a fixed IP address (must match the one in DRBD
+	config). TODO: which driver to load on boot to make
+	DHCP work?
