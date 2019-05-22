@@ -5,7 +5,7 @@
 #include <linux/socket.h>
 
 /* Define this if you do not want to use UDP logging. */
-/* #define NO_NET_PRINTK 1 */
+#define NO_NET_PRINTK 1
 
 /* TODO: use (and test) O_NONBLOCK sending again, once weird printk
  * losses are fixed.
@@ -253,8 +253,6 @@ int _printk(const char *func, const char *fmt, ...)
 		    DPFLTR_WARNING_LEVEL),
 		    buffer);
 
-#ifndef NO_NET_PRINTK
-
 		/* Include the trailing \0 */
 	len = strlen(buffer)+1;
 
@@ -283,6 +281,8 @@ int _printk(const char *func, const char *fmt, ...)
 			ring_buffer_tail = 0;
 	}
 	spin_unlock_irqrestore(&ring_buffer_lock, flags);
+
+#ifndef NO_NET_PRINTK
 
 		/* When in a DPC or similar context, we must not 
 		 * call waiting functions, like SendTo(). Also
