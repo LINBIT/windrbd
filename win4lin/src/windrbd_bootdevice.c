@@ -419,10 +419,13 @@ printk("7 %s\n", p->resource);
 	if ((ret = windrbd_wait_for_network()) < 0)
 		return ret;
 
+printk("NOT waiting for bus object\n");
+#if 0
 printk("7-1\n");
 	if ((ret = windrbd_wait_for_bus_object()) < 0)
 		return ret;
 printk("7-2\n");
+#endif
 
 // msleep(1000);
 
