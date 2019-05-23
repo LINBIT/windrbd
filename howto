@@ -318,3 +318,9 @@ Dump memory from DisklessClient (has a terminating space):
 
 /usr/local/bin/vboxmanage debugvm {d3dc244a-ad1f-47c2-a774-7bf04576541d} dumpvmcore --filename DisklessBootNoRootDevice.elf
 
+-----
+
+Enable driver verifier:
+
+verifier /standard /driver windrbd.sys
+
