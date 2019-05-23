@@ -528,14 +528,15 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	int err;
 	struct _WSK_SOCKET *wsk_socket;
 	struct socket *accept_socket;
+	KIRQL flags;
 
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
 retry:
-	mutex_lock(&socket->accept_socket_mutex);
+	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket == NULL) {
-		mutex_unlock(&socket->accept_socket_mutex);
+		spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 		if ((io_flags & O_NONBLOCK) != 0)
 			return -EWOULDBLOCK;
 
@@ -545,7 +546,7 @@ retry:
 	}
 	wsk_socket = socket->accept_wsk_socket;
 	socket->accept_wsk_socket = NULL;
-	mutex_unlock(&socket->accept_socket_mutex);
+	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 
 	err = sock_create_linux_socket(&accept_socket);
 	if (err < 0)
@@ -1313,7 +1314,7 @@ static int sock_create_linux_socket(struct socket **out)
 	socket->error_status = 0;
 
 	spin_lock_init(&socket->send_buf_counters_lock);
-	mutex_init(&socket->accept_socket_mutex);
+	spin_lock_init(&socket->accept_socket_lock);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
 	KeInitializeEvent(&socket->accept_event, SynchronizationEvent, FALSE);
 	mutex_init(&socket->wsk_mutex);
@@ -1357,16 +1358,21 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 )
 {
 	struct socket *socket = (struct socket*) SocketContext;
+	KIRQL flags;
+	struct _WSK_SOCKET *socket_to_close = NULL;
 
-	mutex_lock(&socket->accept_socket_mutex);
+	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket != NULL) {
 		dbg("dropped incoming connection wsk_socket is old: %p new: %p socket is %p.\n", socket->accept_wsk_socket, AcceptSocket, socket);
 
-		close_wsk_socket(socket->accept_wsk_socket);
+		socket_to_close = socket->accept_wsk_socket;
 		socket->dropped_accept_sockets++;
 	}
 	socket->accept_wsk_socket = AcceptSocket;
-	mutex_unlock(&socket->accept_socket_mutex);
+	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
+
+	if (socket_to_close != NULL)
+		close_wsk_socket(socket_to_close);
 
 	KeSetEvent(&socket->accept_event, IO_NO_INCREMENT, FALSE);
 
