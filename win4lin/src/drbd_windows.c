@@ -3245,10 +3245,10 @@ static int minor_to_windows_device_name(UNICODE_STRING *name, int minor)
 	name->Length = 0;
 	name->MaximumLength = (len - 1) * sizeof(name->Buffer[0]);
 
-//	status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
+	status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
 		/* TODO: tmp patch for diskless boot */
 		/* Update: This seems to be neccessary */
-	status = RtlUnicodeStringPrintf(name, L"\\Device\\HarddiskVolume%d", minor);
+//	status = RtlUnicodeStringPrintf(name, L"\\Device\\HarddiskVolume%d", minor);
 
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("minor_to_dos_name: couldn't printf device name for minor %d status: %x\n", minor, status);
@@ -3580,6 +3580,7 @@ int windrbd_mount(struct block_device *dev)
 
 printk("dev->path_to_device: %S dev->mount_point: %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 
+#if 0
 	/* This is basically what mount manager does: leave it here,
 	   in case we revert the mount manager code again.
 	 */
@@ -3637,11 +3638,10 @@ printk("linking arcname succeeded\n");
 		}
 	}
 }
-
-/*
+#else
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
-*/
+#endif
 
 	dev->is_mounted = true;
 
