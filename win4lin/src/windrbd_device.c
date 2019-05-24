@@ -63,6 +63,7 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 
 static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 {
+#if 0
 	NTSTATUS status;
 
 printk("waiting for becoming primary...\n");
@@ -73,6 +74,10 @@ printk("waiting for becoming primary...\n");
 		printk("Am Primary now, proceeding with I/O request\n");
 
 	return status;
+#else
+	printk("NOT waiting for becoming primary.\n");
+	return STATUS_SUCCESS;
+#endif
 }
 
 static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *dev)
