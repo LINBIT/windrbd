@@ -3580,7 +3580,6 @@ int windrbd_mount(struct block_device *dev)
 
 printk("dev->path_to_device: %S dev->mount_point: %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 
-#if 0
 	/* This is basically what mount manager does: leave it here,
 	   in case we revert the mount manager code again.
 	 */
@@ -3591,6 +3590,7 @@ printk("dev->path_to_device: %S dev->mount_point: %S\n", dev->path_to_device.Buf
 		return -1;
 
 	}
+#if 0
 if (dev->minor == 1 || dev->minor == 2) {
 RtlInitUnicodeString(&vol, L"nix");
 RtlInitUnicodeString(&partition, L"nix");
@@ -3639,8 +3639,16 @@ printk("linking arcname succeeded\n");
 	}
 }
 #else
+#if 0
+		/* this currently does not work. We create the Windows
+		 * devices while not yet Primary, DRBD refuses to open
+		 * them with no medium found and mount manager opens
+		 * the device but fails. For now create the drive letter
+		 * manually.
+		 */
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
+#endif
 #endif
 
 	dev->is_mounted = true;
