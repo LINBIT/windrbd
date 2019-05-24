@@ -1648,12 +1648,55 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		dbg("LUN of SCSI device request is %d (should be 0)\n", srb->Lun);
 		goto out; // STATUS_SUCCESS?
 	}
+	status = STATUS_SUCCESS;	/* optimistic */
+
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
 printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
-	break;
+		switch (cdb->AsByte[0]) {
+		case SCSIOP_TEST_UNIT_READY:
+			srb->SrbStatus = SRB_STATUS_SUCCESS;
+			break;
+
+			/* I/O. Route through DRBD via 
+			 * windrbd_make_drbd_requests() and mark
+			 * IRP pending.
+			 */
+
+		case SCSIOP_READ:
+		case SCSIOP_READ16:
+		case SCSIOP_WRITE:
+		case SCSIOP_WRITE16:
+printk("SCSI I/O ...\n");
+			status = STATUS_NOT_IMPLEMENTED;
+			break;
+
+		default:
+printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
+			status = STATUS_NOT_IMPLEMENTED;
+		}
+		break;
+
+	case SRB_FUNCTION_IO_CONTROL:
+		srb->SrbStatus = SRB_STATUS_INVALID_REQUEST;
+		break;
+
+	case SRB_FUNCTION_CLAIM_DEVICE:
+		srb->DataBuffer = device;
+		break;
+
+	case SRB_FUNCTION_RELEASE_DEVICE:
+		ObDereferenceObject(device);
+		break;
+
+	case SRB_FUNCTION_SHUTDOWN:
+	case SRB_FUNCTION_FLUSH:
+		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		break;
+
 	default:
 printk("got unimplemented SCSI function %x\n", srb->Function);
+		status = STATUS_NOT_IMPLEMENTED;
 	}
 
 out:
