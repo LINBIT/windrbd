@@ -1650,6 +1650,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
+printk("got SCSI function %x\n", srb->Function);
+
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
 printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
@@ -1683,10 +1685,12 @@ printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
 
 	case SRB_FUNCTION_CLAIM_DEVICE:
 		srb->DataBuffer = device;
+		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
 
 	case SRB_FUNCTION_RELEASE_DEVICE:
-		ObDereferenceObject(device);
+//		ObDereferenceObject(device);
+		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
 
 	case SRB_FUNCTION_SHUTDOWN:
