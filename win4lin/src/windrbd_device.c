@@ -29,6 +29,10 @@
 #include <ntddk.h>
 #include <ntdddisk.h>
 #include <wdmguid.h>
+#include <srb.h>
+#include <scsi.h>
+#include <ntddscsi.h>
+#include <ntddstor.h>
 
 /* Uncomment this if you want more debug output (disable for releases) */
 #define DEBUG 1
@@ -849,17 +853,123 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	bio_put(bio);
 }
 
-static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
+static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device *dev, char *buffer, unsigned int total_size, sector_t sector, unsigned long rw)
+{
+	struct bio *bio;
+
+	int b;
+	struct bio_collection *common_data;
+
+	if (sector * dev->bd_block_size >= dev->d_size) {
+		dbg("Attempt to read past the end of the device\n");
+		return STATUS_INVALID_PARAMETER;
+	}
+	if (sector * dev->bd_block_size + total_size > dev->d_size) {
+		dbg("Attempt to read past the end of the device, request shortened\n");
+		total_size = dev->d_size - sector * dev->bd_block_size; 
+	}
+	if (total_size == 0) {
+		printk("I/O request of size 0.\n");
+		return STATUS_INVALID_PARAMETER;
+	}
+	if (buffer == NULL) {
+		printk("I/O buffer (from MmGetSystemAddressForMdlSafe()) is NULL\n");
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+// dbg("%s sector: %d this_bio_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, this_bio_size);
+	int bio_count = (total_size-1) / MAX_BIO_SIZE + 1;
+	int this_bio_size;
+	int last_bio_size = total_size % MAX_BIO_SIZE;
+	if (last_bio_size == 0)
+		last_bio_size = MAX_BIO_SIZE;
+
+	common_data = kzalloc(sizeof(*common_data), 0, 'DRBD');
+	if (common_data == NULL) {
+		printk("Cannot allocate common data.\n");
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+	atomic_set(&common_data->bc_num_completed, 0);
+	common_data->bc_total_size = total_size;
+	common_data->bc_num_requests = bio_count;
+	common_data->bc_device_failed = 0;
+	spin_lock_init(&common_data->bc_device_failed_lock);
+
+	/* Do this before windrbd_bio_finished might be called, else
+	 * this could produce a blue screen.
+	 */
+
+        IoMarkIrpPending(irp);
+
+	for (b=0; b<bio_count; b++) {
+		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
+
+		bio = bio_alloc(GFP_NOIO, 1, 'DBRD');
+		if (bio == NULL) {
+			printk("Couldn't allocate bio.\n");
+			return STATUS_INSUFFICIENT_RESOURCES;
+		}
+		bio->bi_rw = rw;
+		bio->bi_bdev = dev;
+		bio->bi_max_vecs = 1;
+		bio->bi_vcnt = 1;
+		bio->bi_paged_memory = bio->bi_rw == WRITE;
+		bio->bi_size = this_bio_size;
+		bio->bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
+		bio->bi_upper_irp_buffer = buffer;
+		bio->bi_mdl_offset = b*MAX_BIO_SIZE;
+		bio->bi_common_data = common_data;
+
+dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
+
+		bio->bi_io_vec[0].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
+		if (bio->bi_io_vec[0].bv_page == NULL) {
+			printk("Couldn't allocate page.\n");
+			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
+		}
+
+		bio->bi_io_vec[0].bv_len = this_bio_size;
+		bio->bi_io_vec[0].bv_page->size = this_bio_size;
+		kref_init(&bio->bi_io_vec[0].bv_page->kref);
+
+
+/*
+ * TODO: eventually we want to make READ requests work without the
+ *	 intermediate buffer and the extra copy.
+ */
+
+		if (bio->bi_rw == READ)
+			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, 0, 'DRBD');
+		else
+			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
+
+				/* TODO: fault inject here. */
+		if (bio->bi_io_vec[0].bv_page->addr == NULL) {
+			printk("Couldn't allocate temp buffer for read.\n");
+			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
+		}
+
+		bio->bi_io_vec[0].bv_offset = 0;
+		bio->bi_end_io = windrbd_bio_finished;
+		bio->bi_upper_irp = irp;
+
+// dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
+// dbg("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset);
+
+		drbd_make_request(dev->drbd_device->rq_queue, bio);
+	}
+
+	return STATUS_SUCCESS;
+}
+
+static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_device *dev)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct _MDL *mdl = irp->MdlAddress;
-	struct bio *bio;
 
 	unsigned int total_size;
 	sector_t sector;
-	int b;
 	char *buffer;
-	struct bio_collection *common_data;
 	unsigned long rw;
 
 	if (s == NULL) {
@@ -901,18 +1011,6 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 		printk("s->MajorFunction neither read nor write.\n");
 		return STATUS_INVALID_PARAMETER;
 	}
-	if (sector * dev->bd_block_size >= dev->d_size) {
-		dbg("Attempt to read past the end of the device\n");
-		return STATUS_INVALID_PARAMETER;
-	}
-	if (sector * dev->bd_block_size + total_size > dev->d_size) {
-		dbg("Attempt to read past the end of the device, request shortened\n");
-		total_size = dev->d_size - sector * dev->bd_block_size; 
-	}
-	if (total_size == 0) {
-		printk("I/O request of size 0.\n");
-		return STATUS_INVALID_PARAMETER;
-	}
 
 		/* Address returned by MmGetSystemAddressForMdlSafe
 		 * is already offset, not using MmGetMdlByteOffset.
@@ -923,91 +1021,9 @@ static NTSTATUS make_drbd_requests(struct _IRP *irp, struct block_device *dev)
 		printk("I/O buffer from MmGetSystemAddressForMdlSafe() is NULL\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
-// dbg("%s sector: %d this_bio_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, this_bio_size);
-	int bio_count = (total_size-1) / MAX_BIO_SIZE + 1;
-	int this_bio_size;
-	int last_bio_size = total_size % MAX_BIO_SIZE;
-	if (last_bio_size == 0)
-		last_bio_size = MAX_BIO_SIZE;
-
-	common_data = kzalloc(sizeof(*common_data), 0, 'DRBD');
-	if (common_data == NULL) {
-		printk("Cannot allocate common data.\n");
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-	atomic_set(&common_data->bc_num_completed, 0);
-	common_data->bc_total_size = total_size;
-	common_data->bc_num_requests = bio_count;
-	common_data->bc_device_failed = 0;
-	spin_lock_init(&common_data->bc_device_failed_lock);
-
 	rw = s->MajorFunction == IRP_MJ_WRITE ? WRITE : READ;
 
-	/* Do this before windrbd_bio_finished might be called, else
-	 * this could produce a blue screen.
-	 */
-
-        IoMarkIrpPending(irp);
-
-	for (b=0; b<bio_count; b++) {
-		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
-
-		bio = bio_alloc(GFP_NOIO, 1, 'DBRD');
-		if (bio == NULL) {
-			printk("Couldn't allocate bio.\n");
-			return STATUS_INSUFFICIENT_RESOURCES;
-		}
-		bio->bi_rw = rw;
-		bio->bi_bdev = dev;
-		bio->bi_max_vecs = 1;
-		bio->bi_vcnt = 1;
-		bio->bi_paged_memory = bio->bi_rw == WRITE;
-		bio->bi_size = this_bio_size;
-		bio->bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
-		bio->bi_upper_irp_buffer = buffer;
-		bio->bi_mdl_offset = b*MAX_BIO_SIZE;
-		bio->bi_common_data = common_data;
-
-dbg("%s sector: %d total_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, total_size);
-
-		bio->bi_io_vec[0].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
-		if (bio->bi_io_vec[0].bv_page == NULL) {
-			printk("Couldn't allocate page.\n");
-			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
-		}
-
-		bio->bi_io_vec[0].bv_len = this_bio_size;
-		bio->bi_io_vec[0].bv_page->size = this_bio_size;
-		kref_init(&bio->bi_io_vec[0].bv_page->kref);
-
-
-/*
- * TODO: eventually we want to make READ requests work without the
- *	 intermediate buffer and the extra copy.
- */
-
-		if (bio->bi_rw == READ)
-			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, 0, 'DRBD');
-		else
-			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
-
-				/* TODO: fault inject here. */
-		if (bio->bi_io_vec[0].bv_page->addr == NULL) {
-			printk("Couldn't allocate temp buffer for read.\n");
-			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
-		}
-
-		bio->bi_io_vec[0].bv_offset = 0;
-		bio->bi_end_io = windrbd_bio_finished;
-		bio->bi_upper_irp = irp;
-
-// dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
-// dbg("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset);
-
-		drbd_make_request(dev->drbd_device->rq_queue, bio);
-	}
-
-	return STATUS_SUCCESS;
+	return windrbd_make_drbd_requests(irp, dev, buffer, total_size, sector, rw);
 }
 
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
@@ -1055,7 +1071,7 @@ printk("1\n");
 		 * routine later and can report to the application.
 		 */
 
-	status = make_drbd_requests(irp, dev);
+	status = make_drbd_requests_from_irp(irp, dev);
 	if (status != STATUS_SUCCESS)
 		goto exit;
 
@@ -1346,7 +1362,7 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	dbg("Pnp: device: %p irp: %p\n", device, irp);
 
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
-	
+
 	dbg(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
 	if (device == drbd_bus_device) {
 printk("bus object\n");
@@ -1604,6 +1620,48 @@ printk("NOT completing IRP\n");
 	return status;
 }
 
+	/* When installing WinDRBD as PnP Disk driver, the disk.sys driver
+	 * is stacked over us and will send us SCSI requests. Some of them
+	 * are implemented here (like read/write), others like TRIM
+	 * or WRITESAME are not supported yet.
+	 */
+
+static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	NTSTATUS status;
+	struct _SCSI_REQUEST_BLOCK *srb;
+	union _CDB *cdb;
+	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+
+	status = STATUS_INVALID_DEVICE_REQUEST;
+
+	srb = s->Parameters.Scsi.Srb;
+	if (srb == NULL) {
+		goto out;
+	}
+	cdb = (union _CDB*) srb->Cdb;
+
+	srb->SrbStatus = SRB_STATUS_INVALID_REQUEST;
+	srb->ScsiStatus = SCSISTAT_GOOD;
+	irp->IoStatus.Information = 0;
+	if (srb->Lun != 0) {
+		dbg("LUN of SCSI device request is %d (should be 0)\n", srb->Lun);
+		goto out; // STATUS_SUCCESS?
+	}
+	switch (srb->Function) {
+	case SRB_FUNCTION_EXECUTE_SCSI:
+printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
+	break;
+	default:
+printk("got unimplemented SCSI function %x\n", srb->Function);
+	}
+
+out:
+	irp->IoStatus.Status = status;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+	return status;
+}
+
 void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 {
 	int i;
@@ -1621,6 +1679,7 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	obj->MajorFunction[IRP_MJ_PNP] = windrbd_pnp;
 	obj->MajorFunction[IRP_MJ_SHUTDOWN] = windrbd_shutdown;
 	obj->MajorFunction[IRP_MJ_FLUSH_BUFFERS] = windrbd_flush;
+	obj->MajorFunction[IRP_MJ_SCSI] = windrbd_scsi;
 
 	status = IoRegisterShutdownNotification(mvolRootDeviceObject);
 	if (status != STATUS_SUCCESS) {
