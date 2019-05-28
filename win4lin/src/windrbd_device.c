@@ -1743,7 +1743,7 @@ printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
 
 	case SRB_FUNCTION_CLAIM_DEVICE:
 		srb->DataBuffer = device;
-//		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
 
 	case SRB_FUNCTION_RELEASE_DEVICE:
