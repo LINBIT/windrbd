@@ -1407,6 +1407,13 @@ printk("NOT waiting for becoming Primary\n");
 
 			status = STATUS_SUCCESS;
 			break;
+
+		case IRP_MN_QUERY_PNP_DEVICE_STATE:
+printk("got IRP_MN_QUERY_PNP_DEVICE_STATE\n");
+			irp->IoStatus.Information = 0;
+			status = STATUS_SUCCESS;
+			break;
+
 		case IRP_MN_QUERY_ID:
 		{
 			wchar_t *string;
