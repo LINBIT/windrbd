@@ -311,7 +311,9 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 
 		drbd_bus_device = bus_device;
 		drbd_physical_bus_device = PhysicalDeviceObject;
-	} else {
+	}
+#if 0
+ else {
 		struct block_device_reference *ref;
 		struct block_device_reference *new_ref;
 		struct block_device *bdev;
@@ -355,6 +357,7 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 			}
 		}
 	}
+#endif
 
 	return STATUS_SUCCESS;
 }
