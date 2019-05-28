@@ -1655,9 +1655,14 @@ printk("IoCallDriver returned %x\n", status);
 */
 // printk("detaching device object\n");
 //		IoDetachDevice(bus_ext->lower_device);
+#if 0
  printk("deleting device object\n");
 			IoDeleteDevice(device);
 printk("device object deleted.\n");
+#endif
+	/* We would have to do a regular drbdadm down (--force)
+	 * here. For now this is not implemented.
+	 */
 #if 0 
 printk("NOT deleting device object\n");
 //			IoDeleteDevice(device);
@@ -1668,9 +1673,12 @@ printk("NOT completing IRP\n");
 			return STATUS_SUCCESS; /* must not do IoCompleteRequest */
 #endif
 
+#if 0
 printk("returning STATUS_NO_SUCH_DEVICE and completing IRP\n");
 			status = STATUS_NO_SUCH_DEVICE;
 			break;
+#endif
+			return STATUS_NOT_IMPLEMETED;
 
 		default:
 			printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
