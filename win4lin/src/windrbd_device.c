@@ -1451,8 +1451,11 @@ printk("b\n");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryCompatibleIDs:
+/*
 					len = swprintf(string, L"WinDRBDDisk");
 					swprintf(&string[len+1], L"GenDisk");
+*/
+					len = swprintf(string, L"GenDisk");
 printk("c\n");
 					status = STATUS_SUCCESS;
 					break;
@@ -1678,7 +1681,7 @@ printk("returning STATUS_NO_SUCH_DEVICE and completing IRP\n");
 			status = STATUS_NO_SUCH_DEVICE;
 			break;
 #endif
-			return STATUS_NOT_IMPLEMETED;
+			return STATUS_NOT_IMPLEMENTED;
 
 		default:
 			printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
@@ -1758,6 +1761,7 @@ printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
 		break;
 
 	case SRB_FUNCTION_CLAIM_DEVICE:
+printk("got SRB_FUNCTION_CLAIM_DEVICE\n");
 		srb->DataBuffer = device;
 		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
