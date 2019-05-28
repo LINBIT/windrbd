@@ -1655,14 +1655,22 @@ printk("IoCallDriver returned %x\n", status);
 */
 // printk("detaching device object\n");
 //		IoDetachDevice(bus_ext->lower_device);
-/* printk("deleting device object\n");
+ printk("deleting device object\n");
 			IoDeleteDevice(device);
 printk("device object deleted.\n");
-*/
+#if 0 
 printk("NOT deleting device object\n");
 //			IoDeleteDevice(device);
+#endif
+#if 0
 printk("NOT completing IRP\n");
+
 			return STATUS_SUCCESS; /* must not do IoCompleteRequest */
+#endif
+
+printk("returning STATUS_NO_SUCH_DEVICE and completing IRP\n");
+			status = STATUS_NO_SUCH_DEVICE;
+			break;
 
 		default:
 			printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
