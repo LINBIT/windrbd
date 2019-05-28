@@ -1635,6 +1635,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
+printk("SCSI request for device %p\n", device);
+
 	srb = s->Parameters.Scsi.Srb;
 	if (srb == NULL) {
 		goto out;
