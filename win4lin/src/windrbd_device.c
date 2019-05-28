@@ -1602,9 +1602,12 @@ printk("IoCallDriver returned %x\n", status);
 */
 // printk("detaching device object\n");
 //		IoDetachDevice(bus_ext->lower_device);
-printk("deleting device object\n");
+/* printk("deleting device object\n");
 			IoDeleteDevice(device);
 printk("device object deleted.\n");
+*/
+printk("NOT deleting device object\n");
+//			IoDeleteDevice(device);
 printk("NOT completing IRP\n");
 			return STATUS_SUCCESS; /* must not do IoCompleteRequest */
 
