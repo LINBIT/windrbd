@@ -1438,14 +1438,14 @@ printk("9\n");
 				case BusQueryHardwareIDs:
 printk("a\n");
 					size_t len;
-					len = swprintf(string, L"WinDRBDDisk", minor);
+					len = swprintf(string, L"WinDRBDDisk");
 					swprintf(&string[len+1], L"GenDisk");
 printk("b\n");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryCompatibleIDs:
-					len = swprintf(string, L"WinDRBDDisk", minor);
-					swprintf(&string[len+1], L"GenDisk", minor);
+					len = swprintf(string, L"WinDRBDDisk");
+					swprintf(&string[len+1], L"GenDisk");
 printk("c\n");
 					status = STATUS_SUCCESS;
 					break;
@@ -1511,6 +1511,52 @@ printk("h\n");
 				status = STATUS_NOT_IMPLEMENTED;
 			}
 			break;
+
+/*
+		case IRP_MN_QUERY_INTERFACE:
+			IoSkipCurrentStackLocation(irp);
+*/
+
+		case IRP_MN_QUERY_DEVICE_TEXT:
+		{
+			wchar_t *string = NULL;
+			size_t string_length;
+
+			if ((string = (PWCHAR)ExAllocatePool(NonPagedPool, (512 * sizeof(WCHAR)))) == NULL) {
+				status = STATUS_INSUFFICIENT_RESOURCES;
+				break;
+			}
+			RtlZeroMemory(string, (512 * sizeof(WCHAR)));
+			switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
+			case DeviceTextDescription:
+				string_length = swprintf(string, L"DRBD Disk") + 1;
+				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePool(PagedPool, string_length * sizeof(WCHAR));
+				if (irp->IoStatus.Information == 0) {
+					status = STATUS_INSUFFICIENT_RESOURCES;
+					break;
+				}
+				RtlCopyMemory((PWCHAR)irp->IoStatus.Information, string, string_length * sizeof(WCHAR));
+				status = STATUS_SUCCESS;
+				break;
+
+			case DeviceTextLocationInformation:
+				string_length = swprintf(string, L"WinDRBD e%d", minor) + 1;
+
+				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePool(PagedPool, string_length * sizeof(WCHAR));
+				if (irp->IoStatus.Information == 0) {
+					status = STATUS_INSUFFICIENT_RESOURCES;
+					break;
+				}
+				RtlCopyMemory((PWCHAR)irp->IoStatus.Information, string, string_length * sizeof(WCHAR));
+				status = STATUS_SUCCESS;
+				break;
+			default:
+				irp->IoStatus.Information = 0;
+				status = STATUS_NOT_SUPPORTED;
+			}
+			ExFreePool(string);
+			break;
+		}
 
 		case IRP_MN_DEVICE_ENUMERATED:
 			status = STATUS_SUCCESS;
