@@ -1331,7 +1331,7 @@ printk("size of device relations is %d\n", siz);
 		printk("status is %x\n", status);
 	}
 
-	if (status != STATUS_SUCCESS) {
+	if (status != STATUS_SUCCESS && status != STATUS_NOT_SUPPORTED && status != STATUS_NOT_IMPLEMENTED) {
 printk("minor %x failed with status %x, not forwarding to lower driver...\n", s->MinorFunction, status);
 		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -1685,6 +1685,7 @@ printk("returning STATUS_NO_SUCH_DEVICE and completing IRP\n");
 		default:
 			printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
 			if (drbd_bus_device != NULL) {
+printk("irp status is %x\n", irp->IoStatus.Status);
 				IoSkipCurrentIrpStackLocation(irp);
 				status = IoCallDriver(drbd_bus_device, irp);
 				printk("bus object returned %x\n", status);
