@@ -1327,7 +1327,8 @@ printk("size of device relations is %d\n", siz);
 	default:
 		dbg("got unimplemented minor %x\n", s->MinorFunction);
 
-		return STATUS_NOT_IMPLEMENTED;
+		status = irp->IoStatus.Status;
+		printk("status is %x\n", status);
 	}
 
 	if (status != STATUS_SUCCESS) {
@@ -1683,7 +1684,16 @@ printk("returning STATUS_NO_SUCH_DEVICE and completing IRP\n");
 
 		default:
 			printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
-			status = irp->IoStatus.Status;
+			if (drbd_bus_device != NULL) {
+				IoSkipCurrentIrpStackLocation(irp);
+				status = IoCallDriver(drbd_bus_device, irp);
+				printk("bus object returned %x\n", status);
+				return status;
+			}
+			else
+				printk("no bus object, cannot forward irp\n");
+
+//			status = irp->IoStatus.Status;
 //			status = STATUS_NOT_IMPLEMENTED;
 		}
 	}
@@ -1693,14 +1703,46 @@ printk("returning STATUS_NO_SUCH_DEVICE and completing IRP\n");
 	return status;
 }
 
+static NTSTATUS windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+	NTSTATUS status;
+
+	dbg(KERN_DEBUG "got Power device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
+
+	if (device == mvolRootDeviceObject) {
+		dbg(KERN_WARNING "Power requests on root device not supported.\n");
+
+		irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_NOT_SUPPORTED;
+	}
+	dbg("Power: device: %p irp: %p\n", device, irp);
+
+	PoStartNextPowerIrp(irp);
+	if (device == drbd_bus_device) {
+		struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
+		IoSkipCurrentIrpStackLocation(irp);
+printk("Calling PoCallDriver ...\n");
+		status = PoCallDriver(bus_ext->lower_device, irp);
+printk("PoCallDriver returned %x\n", status);
+	} else {
+		irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+		IoCompleteRequest(irp, IO_NO_INCREMENT);
+		status = STATUS_NOT_SUPPORTED;
+	}
+
+printk("status is %x\n", status);
+	return status;
+}
+
 	/* When installing WinDRBD as PnP Disk driver, the disk.sys driver
 	 * is stacked over us and will send us SCSI requests. Some of them
 	 * are implemented here (like read/write), others like TRIM
 	 * or WRITESAME are not supported yet.
 	 */
 
-static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
-{
+static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 	NTSTATUS status;
 	struct _SCSI_REQUEST_BLOCK *srb;
 	union _CDB *cdb;
@@ -1803,6 +1845,7 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	obj->MajorFunction[IRP_MJ_SHUTDOWN] = windrbd_shutdown;
 	obj->MajorFunction[IRP_MJ_FLUSH_BUFFERS] = windrbd_flush;
 	obj->MajorFunction[IRP_MJ_SCSI] = windrbd_scsi;
+	obj->MajorFunction[IRP_MJ_POWER] = windrbd_power;
 
 	status = IoRegisterShutdownNotification(mvolRootDeviceObject);
 	if (status != STATUS_SUCCESS) {
