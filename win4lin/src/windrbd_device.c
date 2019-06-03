@@ -1865,6 +1865,25 @@ printk("SCSI I/O ...\n");
 			status = STATUS_NOT_IMPLEMENTED;
 			break;
 
+		case SCSIOP_MODE_SENSE:
+		{
+			PMODE_PARAMETER_HEADER ModeParameterHeader;
+
+			if (srb->DataTransferLength < sizeof(MODE_PARAMETER_HEADER)) {
+				srb->SrbStatus = SRB_STATUS_DATA_OVERRUN;
+				break;
+			}
+			ModeParameterHeader = (PMODE_PARAMETER_HEADER)srb->DataBuffer;
+			RtlZeroMemory(ModeParameterHeader, srb->DataTransferLength);
+			ModeParameterHeader->ModeDataLength = sizeof(MODE_PARAMETER_HEADER);
+			ModeParameterHeader->MediumType = FixedMedia;
+			ModeParameterHeader->BlockDescriptorLength = 0;
+			srb->DataTransferLength = sizeof(MODE_PARAMETER_HEADER);
+			irp->IoStatus.Information = sizeof(MODE_PARAMETER_HEADER);
+			srb->SrbStatus = SRB_STATUS_SUCCESS;
+			break;
+		}
+
 		default:
 printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
 			status = STATUS_NOT_IMPLEMENTED;
