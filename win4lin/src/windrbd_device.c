@@ -1817,11 +1817,29 @@ printk("status is %x\n", status);
 	 * or WRITESAME are not supported yet.
 	 */
 
+#define REVERSE_BYTES_QUAD(Destination, Source) { \
+  PEIGHT_BYTE d = (PEIGHT_BYTE)(Destination);     \
+  PEIGHT_BYTE s = (PEIGHT_BYTE)(Source);          \
+  d->Byte7 = s->Byte0;                            \
+  d->Byte6 = s->Byte1;                            \
+  d->Byte5 = s->Byte2;                            \
+  d->Byte4 = s->Byte3;                            \
+  d->Byte3 = s->Byte4;                            \
+  d->Byte2 = s->Byte5;                            \
+  d->Byte1 = s->Byte6;                            \
+  d->Byte0 = s->Byte7;                            \
+}
+
 static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 	NTSTATUS status;
 	struct _SCSI_REQUEST_BLOCK *srb;
 	union _CDB *cdb;
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+	LONGLONG StartSector;
+	ULONG SectorCount, Temp;
+	LONGLONG d_size, LargeTemp;
+	struct block_device_reference *ref;
+	struct block_device *bdev = NULL;
 
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
@@ -1841,6 +1859,20 @@ printk("SCSI request for device %p\n", device);
 		goto out; // STATUS_SUCCESS?
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
+
+	d_size = 0;
+	ref = device->DeviceExtension;
+	if (ref != NULL) {
+		bdev = ref->bdev;
+		if (bdev) {
+			if (bdev->d_size > 0) {
+				d_size = ref->bdev->d_size;
+printk("block device size is %lld\n", d_size);
+			} else {
+printk("Warning: block device size not known yet.\n");
+			}
+		}
+	}
 
 printk("got SCSI function %x\n", srb->Function);
 
@@ -1865,6 +1897,41 @@ printk("SCSI I/O ...\n");
 			status = STATUS_NOT_IMPLEMENTED;
 			break;
 
+		/* TODO: at the latest we should be primary here,
+		 * so the capacity is reported correctly */
+
+		case SCSIOP_READ_CAPACITY:
+			Temp = 512;   /* TODO: later from struct */
+			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->BytesPerBlock), &Temp);
+			if (d_size > 0) {
+				if ((d_size - 1) > 0xffffffff) {
+					((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress = -1;
+				} else {
+					Temp = (ULONG)(d_size - 1);
+					REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress), &Temp);
+				}
+			} else  {
+				((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress = 0;
+			}
+			irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA);
+			srb->SrbStatus = SRB_STATUS_SUCCESS;
+			status = STATUS_SUCCESS;
+			break;
+
+		case SCSIOP_READ_CAPACITY16:
+			Temp = 512;
+			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->BytesPerBlock), &Temp);
+			if (d_size > 0) {
+				LargeTemp = d_size - 1;
+				REVERSE_BYTES_QUAD(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->LogicalBlockAddress.QuadPart), &LargeTemp);
+			} else {
+				((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->LogicalBlockAddress.QuadPart = 0;
+			}
+			irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA_EX);
+			srb->SrbStatus = SRB_STATUS_SUCCESS;
+			status = STATUS_SUCCESS;
+			break;
+
 		case SCSIOP_MODE_SENSE:
 		{
 			PMODE_PARAMETER_HEADER ModeParameterHeader;
@@ -1881,6 +1948,7 @@ printk("SCSI I/O ...\n");
 			srb->DataTransferLength = sizeof(MODE_PARAMETER_HEADER);
 			irp->IoStatus.Information = sizeof(MODE_PARAMETER_HEADER);
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
+			status = STATUS_SUCCESS; /* TODO: ?? */
 			break;
 		}
 
