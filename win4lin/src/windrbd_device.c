@@ -1625,6 +1625,12 @@ printk("wrong version of DeviceCapabilities\n");
 			status = STATUS_SUCCESS;
 			break;
 		}
+		case IRP_MN_DEVICE_USAGE_NOTIFICATION:
+printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
+			irp->IoStatus.Information = 0;
+			status = STATUS_SUCCESS;
+			break;
+
 		case IRP_MN_QUERY_REMOVE_DEVICE:
 			dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
 			// status = STATUS_SUCCESS;
