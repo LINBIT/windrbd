@@ -1396,4 +1396,12 @@ int windrbd_rescan_bus(void);
 void windrbd_bus_is_ready(void);
 int windrbd_wait_for_bus_object(void);
 
+	/* Use those internally. bdget will always create a new
+	 * block device. bdput will signal events (primary, capacity)
+	 * to make waiting Windows processes terminate.
+	 */
+
+void windrbd_bdget(struct block_device *this_bdev);
+void windrbd_bdput(struct block_device *this_bdev);
+
 #endif // DRBD_WINDOWS_H

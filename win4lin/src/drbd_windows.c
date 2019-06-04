@@ -3341,6 +3341,12 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 	}
 }
 
+/* This is DRBD specific: DRBD calls this only once (same for
+ * bdput(). Really we should have a list of known upper block_devices
+ * and return an existing for the minor to properly mimic Linux'
+ * behaviour.
+ */
+
 struct block_device *bdget(dev_t device_no)
 {
 	dev_t minor = MINOR(device_no);
@@ -3721,7 +3727,7 @@ printk("About to IoDeleteSymbolicLink(%S)\n", bdev->mount_point.Buffer);
 	return 0;
 }
 
-static void destroy_block_device(struct kref *kref)
+static void windrbd_destroy_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 
@@ -3744,9 +3750,26 @@ static void destroy_block_device(struct kref *kref)
 	kfree(bdev);
 }
 
+void windrbd_bdget(struct block_device *this_bdev)
+{
+	kref_get(&this_bdev->kref);
+}
+
+void windrbd_bdput(struct block_device *this_bdev)
+{
+	kref_put(&this_bdev->kref, windrbd_destroy_block_device);
+}
+
+/* See the comment at bdget(). DRBD calls this (currently) only
+ * once, we shouldn't use that internally.
+ */
+
 void bdput(struct block_device *this_bdev)
 {
-	kref_put(&this_bdev->kref, destroy_block_device);
+	KeSetEvent(&this_bdev->capacity_event, 0, FALSE);
+	/* TODO: also Primary event */
+
+	windrbd_bdput(this_bdev);
 }
 
 

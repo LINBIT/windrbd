@@ -67,6 +67,7 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 
 static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 {
+/* TODO: windrbd_bdget/windrbd_bdput */
 #if 0
 	NTSTATUS status;
 
@@ -1717,11 +1718,20 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 
 		case IRP_MN_REMOVE_DEVICE:
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
+			irp->IoStatus.Information = 0;
+			irp->IoStatus.Status = STATUS_SUCCESS;
+			IoSkipCurrentIrpStackLocation(irp);
+
+printk("removing lower device object\n");
+			status = IoCallDriver(drbd_bus_device, irp);
+printk("call driver returned %x\n", status);
+
 			IoDeleteDevice(device);
 			dbg("device object deleted\n");
 
-			status = STATUS_NO_SUCH_DEVICE;
-			break;
+//			status = STATUS_NO_SUCH_DEVICE;
+//			break;
+			return STATUS_SUCCESS;
 
 		default:
 			printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
@@ -1802,12 +1812,15 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 	struct block_device_reference *ref;
 	struct block_device *bdev = NULL;
 	NTSTATUS status;
+	long long d_size = -1;
 
 	ref = device->DeviceExtension;
 	if (ref != NULL) {
 		bdev = ref->bdev;
 
 		if (bdev != NULL) {
+			windrbd_bdget(bdev);
+
 			dbg("waiting for block device size to become valid.\n");
 			status = KeWaitForSingleObject(&bdev->capacity_event, Executive, KernelMode, FALSE, NULL);
 			if (status == STATUS_SUCCESS) {
@@ -1815,7 +1828,7 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 
 				if (bdev->d_size > 0) {
 					dbg("block device size is %lld\n", bdev->d_size);
-					return bdev->d_size;
+					d_size = bdev->d_size;
 				} else {
 					dbg("Warning: block device size still not known yet.\n");
 				}
@@ -1823,11 +1836,12 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 			else {
 				dbg("KeWaitForSingleObject returned %x\n", status);
 			}
+			windrbd_bdput(bdev);
 		}
 	} else {
 		dbg("ref is NULL!\n");
 	}
-	return -1;
+	return d_size;
 }
 
 static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
