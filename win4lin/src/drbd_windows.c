@@ -3338,10 +3338,6 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 
 		printk("PnP did not work, removing device manually.\n");
 		IoDeleteDevice(windows_device);
-	} else {
-		printk("PnP did work, but didn't remove device object, doing that now\n");
-		IoDeleteDevice(windows_device);
-		printk("Device object %p removed\n", windows_device);
 	}
 }
 
