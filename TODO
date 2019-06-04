@@ -13,6 +13,18 @@ Milestone: Release 0.9.2
 Planned: Feb 28 2018
 -----------------------------------------------------------------------
 
+TODO: BSOD on drbdadm down (with PnP)
+
+TODO: unblock SCSI size requests on drbdadm down
+	Else REMOVE_DEVICE is never called.
+
+TODO: PnP BSOD on opening partition manager
+
+TODO: can't create mount point?
+
+TODO: implement SCSI I/O
+
+-----------------------------------------------------------------------
 TODO: Bug: Allow rcu_read_lock() being called recursively.
 
 	This should fix the system lockup we observed on
