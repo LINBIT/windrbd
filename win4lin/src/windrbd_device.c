@@ -1474,6 +1474,9 @@ printk("5\n");
 		case IRP_MN_START_DEVICE:
 printk("starting device\n");
 printk("NOT waiting for becoming Primary\n");
+// TODO: ObReferenceObjectByPointer(device);
+/* This probably fixes the drbdadm down bug 
+*/
 
 			status = STATUS_SUCCESS;
 			break;
