@@ -1830,6 +1830,38 @@ printk("status is %x\n", status);
   d->Byte0 = s->Byte7;                            \
 }
 
+static long long wait_for_size(struct _DEVICE_OBJECT *device)
+{
+	struct block_device_reference *ref;
+	struct block_device *bdev = NULL;
+	NTSTATUS status;
+
+	ref = device->DeviceExtension;
+	if (ref != NULL) {
+		bdev = ref->bdev;
+
+		if (bdev != NULL) {
+			status = KeWaitForSingleObject(&bdev->capacity_event, Executive, KernelMode, FALSE, NULL);
+			if (status == STATUS_SUCCESS) {
+				printk("Got size now, proceeding with I/O request\n");
+
+				if (bdev->d_size > 0) {
+printk("block device size is %lld\n", bdev->d_size);
+					return bdev->d_size;
+				} else {
+printk("Warning: block device size still not known yet.\n");
+				}
+			}
+			else {
+printk("KeWaitForSingleObject returned %x\n", status);
+			}
+		}
+	} else {
+printk("ref is NULL!\n");
+	}
+	return -1;
+}
+
 static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 	NTSTATUS status;
 	struct _SCSI_REQUEST_BLOCK *srb;
@@ -1838,8 +1870,6 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 	LONGLONG StartSector;
 	ULONG SectorCount, Temp;
 	LONGLONG d_size, LargeTemp;
-	struct block_device_reference *ref;
-	struct block_device *bdev = NULL;
 
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
@@ -1859,20 +1889,6 @@ printk("SCSI request for device %p\n", device);
 		goto out; // STATUS_SUCCESS?
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
-
-	d_size = 0;
-	ref = device->DeviceExtension;
-	if (ref != NULL) {
-		bdev = ref->bdev;
-		if (bdev) {
-			if (bdev->d_size > 0) {
-				d_size = ref->bdev->d_size;
-printk("block device size is %lld\n", d_size);
-			} else {
-printk("Warning: block device size not known yet.\n");
-			}
-		}
-	}
 
 printk("got SCSI function %x\n", srb->Function);
 
@@ -1901,6 +1917,8 @@ printk("SCSI I/O ...\n");
 		 * so the capacity is reported correctly */
 
 		case SCSIOP_READ_CAPACITY:
+			d_size = wait_for_size(device);
+
 			Temp = 512;   /* TODO: later from struct */
 			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->BytesPerBlock), &Temp);
 			if (d_size > 0) {
@@ -1908,6 +1926,7 @@ printk("SCSI I/O ...\n");
 					((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress = -1;
 				} else {
 					Temp = (ULONG)(d_size - 1);
+printk("SCSI: Reporting %lld bytes as capacity ...\n", d_size);
 					REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress), &Temp);
 				}
 			} else  {
@@ -1919,11 +1938,14 @@ printk("SCSI I/O ...\n");
 			break;
 
 		case SCSIOP_READ_CAPACITY16:
+			d_size = wait_for_size(device);
+
 			Temp = 512;
 			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->BytesPerBlock), &Temp);
 			if (d_size > 0) {
 				LargeTemp = d_size - 1;
 				REVERSE_BYTES_QUAD(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->LogicalBlockAddress.QuadPart), &LargeTemp);
+printk("SCSI: Reporting %lld bytes as capacity16 ...\n", d_size);
 			} else {
 				((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->LogicalBlockAddress.QuadPart = 0;
 			}

@@ -3129,6 +3129,9 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 hack_alloc_page(block_device);
 #endif
 
+		/* TODO: unset this again on detach / disconnect */
+	KeSetEvent(&block_device->capacity_event, 0, FALSE);
+
 	return block_device;
 
 out_get_volsize_error:
@@ -3296,8 +3299,6 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	bdev_ref->bdev = bdev;
 	bdev_ref->magic = BLOCK_DEVICE_UPPER_MAGIC;
 
-	KeInitializeEvent(&bdev->primary_event, NotificationEvent, FALSE);
-
 		/* TODO: makes a difference? */
 		/* TODO: also try DO_BUFFERED_IO */
 	new_device->Flags |= DO_DIRECT_IO;
@@ -3377,6 +3378,9 @@ struct block_device *bdget(dev_t device_no)
 
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
+
+	KeInitializeEvent(&block_device->primary_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&block_device->capacity_event, NotificationEvent, FALSE);
 
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);
 	
