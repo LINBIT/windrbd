@@ -1,0 +1,34 @@
+From 15e8d74d4ba13cb67e5b0d8275dc7dda489f52a6 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 4 Jun 2019 18:00:07 +0200
+Subject: [PATCH] SCSI: Set event as soon as there is a valid size of the block
+ device.
+
+And clear the event when size drops to zero again. This is
+neccessary so we report a valid size via the SCSI interface.
+---
+ drbd/drbd_nl.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index c0dfea9..512693d 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -1558,6 +1558,14 @@ void drbd_set_my_capacity(struct drbd_device *device, sector_t size)
+ 	device->this_bdev->d_size = size << 9;
+ 	drbd_info(device, "size = %s (%llu KB)\n",
+ 		ppsize(ppb, size>>1), (unsigned long long)size>>1);
++
++	if (size > 0) {
++		printk("got a valid size, unblocking SCSI capacity requests.\n");
++	        KeSetEvent(&device->this_bdev->capacity_event, 0, FALSE);
++	} else {
++		printk("Size set to 0, am I Diskless/Unconnected?\n");
++	        KeClearEvent(&device->this_bdev->capacity_event);
++	}
+ }
+ 
+ /**
+-- 
+2.17.0
+

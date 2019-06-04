@@ -3129,9 +3129,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 hack_alloc_page(block_device);
 #endif
 
-		/* TODO: unset this again on detach / disconnect */
-	KeSetEvent(&block_device->capacity_event, 0, FALSE);
-
 	return block_device;
 
 out_get_volsize_error:

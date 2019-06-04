@@ -1841,23 +1841,24 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 		bdev = ref->bdev;
 
 		if (bdev != NULL) {
+			dbg("waiting for block device size to become valid.\n");
 			status = KeWaitForSingleObject(&bdev->capacity_event, Executive, KernelMode, FALSE, NULL);
 			if (status == STATUS_SUCCESS) {
-				printk("Got size now, proceeding with I/O request\n");
+				dbg("Got size now, proceeding with I/O request\n");
 
 				if (bdev->d_size > 0) {
-printk("block device size is %lld\n", bdev->d_size);
+					dbg("block device size is %lld\n", bdev->d_size);
 					return bdev->d_size;
 				} else {
-printk("Warning: block device size still not known yet.\n");
+					dbg("Warning: block device size still not known yet.\n");
 				}
 			}
 			else {
-printk("KeWaitForSingleObject returned %x\n", status);
+				dbg("KeWaitForSingleObject returned %x\n", status);
 			}
 		}
 	} else {
-printk("ref is NULL!\n");
+		dbg("ref is NULL!\n");
 	}
 	return -1;
 }
