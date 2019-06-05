@@ -1472,14 +1472,18 @@ printk("4\n");
 printk("5\n");
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
+		{
+			int x;
+
 printk("starting device\n");
 printk("NOT waiting for becoming Primary\n");
-// TODO: ObReferenceObjectByPointer(device);
-/* This probably fixes the drbdadm down bug 
-*/
+
+			x = ObReferenceObject(device);
+printk("ObReferenceObject returned %d\n", x);
 
 			status = STATUS_SUCCESS;
 			break;
+		}
 
 		case IRP_MN_QUERY_PNP_DEVICE_STATE:
 printk("got IRP_MN_QUERY_PNP_DEVICE_STATE\n");
