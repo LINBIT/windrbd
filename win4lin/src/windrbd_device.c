@@ -1478,8 +1478,10 @@ printk("5\n");
 printk("starting device\n");
 printk("NOT waiting for becoming Primary\n");
 
+/*
 			x = ObReferenceObject(device);
 printk("ObReferenceObject returned %d\n", x);
+*/
 
 			status = STATUS_SUCCESS;
 			break;
@@ -1569,6 +1571,8 @@ printk("h\n");
 				}
 				device_relations->Count = 1;
 				device_relations->Objects[0] = bdev->windows_device;
+				ObReferenceObject(bdev->windows_device);
+
 				irp->IoStatus.Information = (ULONG_PTR)device_relations;
 				status = STATUS_SUCCESS;
 				break;
@@ -1725,6 +1729,7 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 
 		case IRP_MN_REMOVE_DEVICE:
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
+/* TODO: really delete the bus object? */
 			irp->IoStatus.Information = 0;
 			irp->IoStatus.Status = STATUS_SUCCESS;
 			IoSkipCurrentIrpStackLocation(irp);
