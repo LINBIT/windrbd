@@ -1921,10 +1921,14 @@ printk("SCSI I/O ...\n");
 			Temp = 512;   /* TODO: later from struct */
 			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->BytesPerBlock), &Temp);
 			if (d_size > 0) {
-				if ((d_size - 1) > 0xffffffff) {
+				if ((d_size % 512) != 0)
+					printk("Warning: device size (%lld) not a multiple of 512\n", d_size);
+				LargeTemp = (d_size / 512) - 1;
+
+				if (LargeTemp > 0xffffffff) {
 					((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress = -1;
 				} else {
-					Temp = (ULONG)(d_size - 1);
+					Temp = (ULONG) LargeTemp;
 printk("SCSI: Reporting %lld bytes as capacity ...\n", d_size);
 					REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress), &Temp);
 				}
@@ -1943,7 +1947,9 @@ printk("SCSI: Reporting %lld bytes as capacity ...\n", d_size);
 			Temp = 512;
 			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->BytesPerBlock), &Temp);
 			if (d_size > 0) {
-				LargeTemp = d_size - 1;
+				if ((d_size % 512) != 0)
+					printk("Warning: device size (%lld) not a multiple of 512\n", d_size);
+				LargeTemp = (d_size / 512) - 1;
 				REVERSE_BYTES_QUAD(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->LogicalBlockAddress.QuadPart), &LargeTemp);
 printk("SCSI: Reporting %lld bytes as capacity16 ...\n", d_size);
 				irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA_EX);
