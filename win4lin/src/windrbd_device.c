@@ -287,7 +287,7 @@ printk("1\n");
 		return windrbd_root_device_control(device, irp);
 
 	struct block_device_reference *ref = device->DeviceExtension;
-	if (ref == NULL || ref->bdev == NULL) {
+	if (ref == (void*) -1 || ref == NULL || ref->bdev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
@@ -706,7 +706,7 @@ printk("1\n");
 printk("2\n");
 
 	struct block_device_reference *ref = device->DeviceExtension;
-	if (ref == NULL || ref->bdev == NULL) {
+	if (ref == (void*) -1 || ref == NULL || ref->bdev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
@@ -766,7 +766,7 @@ printk("1\n");
 	}
 
 	struct block_device_reference *ref = device->DeviceExtension;
-	if (ref == NULL || ref->bdev == NULL) {
+	if (ref == (void*) -1 || ref == NULL || ref->bdev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
@@ -813,7 +813,7 @@ printk("1\n");
 	}
 
 	struct block_device_reference *ref = device->DeviceExtension;
-	if (ref == NULL || ref->bdev == NULL) {
+	if (ref == (void*) -1 || ref == NULL || ref->bdev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
@@ -1107,7 +1107,7 @@ printk("1\n");
 	}
 
 	struct block_device_reference *ref = device->DeviceExtension;
-	if (ref == NULL || ref->bdev == NULL) {
+	if (ref == (void*) -1 || ref == NULL || ref->bdev == NULL) {
 		printk(KERN_WARNING "I/O request: Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
@@ -1212,7 +1212,7 @@ static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 
 	struct block_device_reference *ref = device->DeviceExtension;
-	if (ref == NULL || ref->bdev == NULL) {
+	if (ref == (void*) -1 || ref == NULL || ref->bdev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
@@ -1449,7 +1449,7 @@ printk("bus object\n");
 		struct drbd_device *drbd_device = NULL;
 		int minor = -1;
 printk("1\n");
-		if (ref != NULL) {
+		if (ref != (void*) -1 && ref != NULL) {
 printk("2\n");
 			bdev = ref->bdev;
 			if (bdev) {
@@ -1730,9 +1730,14 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 		case IRP_MN_REMOVE_DEVICE:
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
 
-			dbg("about to delete device object %p\n", device);
-			IoDeleteDevice(device);
-			dbg("device object deleted\n");
+			if (ref != (void*) -1) {
+				device->DeviceExtension = (void*) -1;
+				dbg("about to delete device object %p\n", device);
+				IoDeleteDevice(device);
+				dbg("device object deleted\n");
+			} else {
+				dbg("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
+			}
 
 			return STATUS_SUCCESS;
 
@@ -1818,7 +1823,7 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 	long long d_size = -1;
 
 	ref = device->DeviceExtension;
-	if (ref != NULL) {
+	if (ref != (void*) -1 && ref != NULL) {
 		bdev = ref->bdev;
 
 		if (bdev != NULL) {
@@ -1857,7 +1862,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 	LONGLONG d_size, LargeTemp;
 
 	struct block_device_reference *ref = device->DeviceExtension;
-	if (ref == NULL || ref->bdev == NULL) {
+	if (ref == (void*) -1 || ref == NULL || ref->bdev == NULL) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
