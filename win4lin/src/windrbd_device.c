@@ -929,6 +929,8 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	int b;
 	struct bio_collection *common_data;
 
+printk("transfer buffer is %p\n", buffer);
+
 	if (sector * dev->bd_block_size >= dev->d_size) {
 		dbg("Attempt to read past the end of the device\n");
 		return STATUS_INVALID_PARAMETER;
@@ -1910,8 +1912,8 @@ printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 
 		case SCSIOP_READ:
 		case SCSIOP_READ16:
-//		case SCSIOP_WRITE:
-//		case SCSIOP_WRITE16:
+		case SCSIOP_WRITE:
+		case SCSIOP_WRITE16:
 		{
 			long long start_sector;
 			unsigned long long sector_count, total_size;
@@ -1928,8 +1930,17 @@ printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 				sector_count = (cdb->CDB10.TransferBlocksMsb << 8) + cdb->CDB10.TransferBlocksLsb;
 			}
 
+			if ((((PUCHAR)srb->DataBuffer - (PUCHAR)MmGetMdlVirtualAddress(irp->MdlAddress)) + (PUCHAR)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority)) == NULL) {
+				printk("cannot map transfer buffer\n");
+				status = STATUS_INSUFFICIENT_RESOURCES;
+				irp->IoStatus.Information = 0;
+				break;
+			}
+
+
 printk("SCSI I/O: sector %lld, %d sectors to %p\n", start_sector, sector_count, srb->DataBuffer);
-			status = windrbd_make_drbd_requests(irp, bdev, srb->DataBuffer, sector_count*512, start_sector, rw);
+
+			status = windrbd_make_drbd_requests(irp, bdev, ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority), sector_count*512, start_sector, rw);
 			if (status == STATUS_SUCCESS)
 				return STATUS_PENDING;
 
