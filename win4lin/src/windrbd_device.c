@@ -1910,8 +1910,8 @@ printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 
 		case SCSIOP_READ:
 		case SCSIOP_READ16:
-		case SCSIOP_WRITE:
-		case SCSIOP_WRITE16:
+//		case SCSIOP_WRITE:
+//		case SCSIOP_WRITE16:
 		{
 			long long start_sector;
 			unsigned long long sector_count, total_size;
