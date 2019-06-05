@@ -686,7 +686,7 @@ printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x
 	default: 
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 
-		status = STATUS_INVALID_DEVICE_REQUEST;
+		status = STATUS_INVALID_PARAMETER;
 	}
 
 out:
