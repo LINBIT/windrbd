@@ -1855,11 +1855,13 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 	NTSTATUS status;
 	struct _SCSI_REQUEST_BLOCK *srb;
+	struct _CDB16 *cdb16;
 	union _CDB *cdb;
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	LONGLONG StartSector;
 	ULONG SectorCount, Temp;
 	LONGLONG d_size, LargeTemp;
+	struct block_device *bdev;
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == (void*) -1 || ref == NULL || ref->bdev == NULL) {
@@ -1869,6 +1871,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_NO_SUCH_DEVICE;
 	}
+	bdev = ref->bdev;
 
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
@@ -1879,6 +1882,7 @@ printk("SCSI request for device %p\n", device);
 		goto out;
 	}
 	cdb = (union _CDB*) srb->Cdb;
+	cdb16 = (struct _CDB16*) srb->Cdb;
 
 	srb->SrbStatus = SRB_STATUS_INVALID_REQUEST;
 	srb->ScsiStatus = SCSISTAT_GOOD;
@@ -1908,12 +1912,29 @@ printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 		case SCSIOP_READ16:
 		case SCSIOP_WRITE:
 		case SCSIOP_WRITE16:
-printk("SCSI I/O ...\n");
-			status = STATUS_NOT_IMPLEMENTED;
-			break;
+		{
+			long long start_sector;
+			unsigned long long sector_count, total_size;
+			int rw;
 
-		/* TODO: at the latest we should be primary here,
-		 * so the capacity is reported correctly */
+			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
+
+			if (cdb->AsByte[0] == SCSIOP_READ16 ||
+			    cdb->AsByte[0] == SCSIOP_WRITE16) {
+				REVERSE_BYTES_QUAD(&start_sector, &(cdb16->LogicalBlock[0]));
+				REVERSE_BYTES(&sector_count, &(cdb16->TransferLength[0]));
+			} else {
+				start_sector = (cdb->CDB10.LogicalBlockByte0 << 24) + (cdb->CDB10.LogicalBlockByte1 << 16) + (cdb->CDB10.LogicalBlockByte2 << 8) + cdb->CDB10.LogicalBlockByte3;
+				sector_count = (cdb->CDB10.TransferBlocksMsb << 8) + cdb->CDB10.TransferBlocksLsb;
+			}
+
+printk("SCSI I/O: sector %lld, %d sectors to %p\n", start_sector, sector_count, srb->DataBuffer);
+			status = windrbd_make_drbd_requests(irp, bdev, srb->DataBuffer, sector_count*512, start_sector, rw);
+			if (status == STATUS_SUCCESS)
+				return STATUS_PENDING;
+
+			break;
+		}
 
 		case SCSIOP_READ_CAPACITY:
 			d_size = wait_for_size(device);
