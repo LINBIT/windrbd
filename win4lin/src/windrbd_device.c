@@ -1729,20 +1729,11 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 
 		case IRP_MN_REMOVE_DEVICE:
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
-/* TODO: really delete the bus object? */
-			irp->IoStatus.Information = 0;
-			irp->IoStatus.Status = STATUS_SUCCESS;
-			IoSkipCurrentIrpStackLocation(irp);
 
-printk("removing lower device object\n");
-			status = IoCallDriver(drbd_bus_device, irp);
-printk("call driver returned %x\n", status);
-
+			dbg("about to delete device object %p\n", device);
 			IoDeleteDevice(device);
 			dbg("device object deleted\n");
 
-//			status = STATUS_NO_SUCH_DEVICE;
-//			break;
 			return STATUS_SUCCESS;
 
 		default:
@@ -1923,12 +1914,13 @@ printk("SCSI I/O ...\n");
 printk("SCSI: Reporting %lld bytes as capacity ...\n", d_size);
 					REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress), &Temp);
 				}
-			} else  {
-				((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress = 0;
+				irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA);
+				srb->SrbStatus = SRB_STATUS_SUCCESS;
+				status = STATUS_SUCCESS;
+			} else {
+				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+				status = STATUS_NO_SUCH_DEVICE;
 			}
-			irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA);
-			srb->SrbStatus = SRB_STATUS_SUCCESS;
-			status = STATUS_SUCCESS;
 			break;
 
 		case SCSIOP_READ_CAPACITY16:
@@ -1940,12 +1932,13 @@ printk("SCSI: Reporting %lld bytes as capacity ...\n", d_size);
 				LargeTemp = d_size - 1;
 				REVERSE_BYTES_QUAD(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->LogicalBlockAddress.QuadPart), &LargeTemp);
 printk("SCSI: Reporting %lld bytes as capacity16 ...\n", d_size);
+				irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA_EX);
+				srb->SrbStatus = SRB_STATUS_SUCCESS;
+				status = STATUS_SUCCESS;
 			} else {
-				((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->LogicalBlockAddress.QuadPart = 0;
+				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+				status = STATUS_NO_SUCH_DEVICE;
 			}
-			irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA_EX);
-			srb->SrbStatus = SRB_STATUS_SUCCESS;
-			status = STATUS_SUCCESS;
 			break;
 
 		case SCSIOP_MODE_SENSE:
