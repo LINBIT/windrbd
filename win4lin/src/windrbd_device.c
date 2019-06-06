@@ -1929,6 +1929,24 @@ printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 				start_sector = (cdb->CDB10.LogicalBlockByte0 << 24) + (cdb->CDB10.LogicalBlockByte1 << 16) + (cdb->CDB10.LogicalBlockByte2 << 8) + cdb->CDB10.LogicalBlockByte3;
 				sector_count = (cdb->CDB10.TransferBlocksMsb << 8) + cdb->CDB10.TransferBlocksLsb;
 			}
+			if (sector_count * 512 > srb->DataTransferLength) {
+				dbg("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, srb->DataTransferLength);
+				sector_count = srb->DataTransferLength / 512;
+			}
+
+			if (srb->DataTransferLength % 512 != 0) {
+				dbg("srb->DataTransferLength (%lld) not sector aligned\n", srb->DataTransferLength);
+			}
+			if (srb->DataTransferLength > sector_count * 512) {
+				dbg("srb>DataTransferLength (%lld) too big\n", srb->DataTransferLength);
+			}
+
+			srb->DataTransferLength = sector_count * 512;
+			srb->SrbStatus = SRB_STATUS_SUCCESS;
+			if (sector_count == 0) {
+				irp->IoStatus.Information = 0;
+				break;
+			}
 
 			if ((((PUCHAR)srb->DataBuffer - (PUCHAR)MmGetMdlVirtualAddress(irp->MdlAddress)) + (PUCHAR)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority)) == NULL) {
 				printk("cannot map transfer buffer\n");
