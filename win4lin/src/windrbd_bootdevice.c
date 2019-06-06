@@ -333,20 +333,21 @@ static struct drbd_params {
 	int protocol;	/* 1=A, 2=B or 3=C */
 	char *my_address;
 	char *peer_address;
-} boot_devices[2] = {
+} boot_devices[1] = {
 	{
-			/* The "C:" drive -> /Device/HarddiskVolume2 */
-		.resource = "tiny-windows-boot",
+		.resource = "tiny-windows-disk",
 		.num_nodes = 2,
-		.minor = 2,
+		.minor = 1,
 		.volume = 1,
-		.mount_point = L"C:",
+		.mount_point = NULL, 
 		.peer = "johannes-VirtualBox",
 		.peer_node_id = 1,
 		.protocol = 3,
-		.my_address = "0.0.0.0:7681",
-		.peer_address = "192.168.56.102:7681"
-	}, {
+		.my_address = "0.0.0.0:7683",
+		.peer_address = "192.168.56.102:7683"
+	}
+#if 0
+, {
 			/* The hidden system partition-> /Device/HarddiskVolume1 , no mount point */
 		.resource = "tiny-windows-system",
 		.num_nodes = 2,
@@ -359,6 +360,7 @@ static struct drbd_params {
 		.my_address = "0.0.0.0:7682",
 		.peer_address = "192.168.56.102:7682"
 	}
+#endif
 };
 
 
@@ -381,12 +383,17 @@ printk("3\n");
 /* For now, this will also create the mount point. */
 /* When booting this should be C: when testing this should be W: */
 printk("4\n");
+	
+	if ((ret = windrbd_create_windows_device_for_minor(p->minor)) != 0)
+		printk("Creating windows device for minor %d failed.\n", p->minor);
+#if 0
 	if (p->mount_point) {
 		if ((ret = windrbd_set_mount_point_for_minor_utf16(p->minor, p->mount_point)) != 0)
 			printk("Mounting minor %d to %s failed.\n", p->minor, p->mount_point);
 	} else {
 printk("no mount point for %s\n", p->resource);
 	}
+#endif
 
 printk("5\n");
 	if ((ret = new_peer(p->resource, p->peer, p->peer_node_id, p->protocol)) != 0)
@@ -456,7 +463,7 @@ void windrbd_init_boot_device(void)
 	int ret;
 	int i;
 
-	for (i=0;i<2;i++) {
+	for (i=0;i<1;i++) {
 		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
 		if (ret != 0)
 			printk("Warning: stage1 returned %d for %s\n", ret, boot_devices[i].resource);

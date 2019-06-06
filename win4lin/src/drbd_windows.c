@@ -3573,6 +3573,28 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 	return ret;
 }
 
+int windrbd_create_windows_device_for_minor(int minor)
+{
+	struct drbd_device *drbd_device;
+	struct block_device *block_device;
+	int ret;
+
+	drbd_device = minor_to_device(minor);
+	if (drbd_device == NULL)
+		return -ENOENT;		/* no such minor */
+
+	block_device = drbd_device->this_bdev;
+	if (block_device == NULL)
+		return -ENOENT;
+
+	ret = windrbd_create_windows_device(block_device);
+	if (ret != 0) {
+		printk("Warning: Couldn't create windows device for volume\n");
+		return ret;
+	}
+	return ret;
+}
+
 int windrbd_mount(struct block_device *dev)
 {
 	NTSTATUS status;
@@ -3587,6 +3609,8 @@ int windrbd_mount(struct block_device *dev)
 
 printk("dev->path_to_device: %S dev->mount_point: %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 
+printk("NOT mounting\n");
+#if 0
 	/* This is basically what mount manager does: leave it here,
 	   in case we revert the mount manager code again.
 	 */
@@ -3597,6 +3621,7 @@ printk("dev->path_to_device: %S dev->mount_point: %S\n", dev->path_to_device.Buf
 		return -1;
 
 	}
+#endif
 #if 0
 if (dev->minor == 1 || dev->minor == 2) {
 RtlInitUnicodeString(&vol, L"nix");

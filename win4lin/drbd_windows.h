@@ -1404,4 +1404,6 @@ int windrbd_wait_for_bus_object(void);
 void windrbd_bdget(struct block_device *this_bdev);
 void windrbd_bdput(struct block_device *this_bdev);
 
+int windrbd_create_windows_device_for_minor(int minor);
+
 #endif // DRBD_WINDOWS_H
