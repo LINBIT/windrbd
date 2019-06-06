@@ -852,10 +852,11 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 					offset = bio->bi_mdl_offset;
 					for (i=0;i<bio->bi_vcnt;i++) {
 
-// dbg("RtlCopyMemory(%p, %p, %d)\n", user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
-// dbg("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+dbg("RtlCopyMemory(%p, %p, %d)\n", user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+dbg("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
 						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+{ int j; for (j=0;j<10;j++) { printk("data[%d] is %x\n", j, ((unsigned char*)user_buffer+offset)[j]); } }
 						offset += bio->bi_io_vec[i].bv_len;
 					}
 				} else {
@@ -1940,8 +1941,11 @@ printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 printk("SCSI I/O: sector %lld, %d sectors to %p\n", start_sector, sector_count, srb->DataBuffer);
 
 			status = windrbd_make_drbd_requests(irp, bdev, ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority), sector_count*512, start_sector, rw);
-			if (status == STATUS_SUCCESS)
+			if (status == STATUS_SUCCESS) {
+				irp->IoStatus.Information = 0;
+				irp->IoStatus.Status = STATUS_PENDING;
 				return STATUS_PENDING;
+			}
 
 			break;
 		}
