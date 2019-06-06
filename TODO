@@ -16,9 +16,15 @@ Real: Apr 10 2019
 
 TODO: can't create mount point?
 
-In progress: implement SCSI I/O
+Done: implement SCSI I/O
 
 	Right now, partition manager fails with Invalid function.
+	Works now
+
+TODO: Can also write when secondary.
+
+	DRBD seems to use Linux' mechanism (via open(2)) to check
+	for writability and doesn't check when receiving bio's.
 
 TODO: better solution for double REMOVE_DEVICE
 
