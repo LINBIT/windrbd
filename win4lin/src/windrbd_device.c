@@ -526,8 +526,7 @@ printk("got IOCTL_STORAGE_QUERY_PROPERTY ...\n");
         CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_ADAPTER_DESCRIPTOR)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(STORAGE_ADAPTER_DESCRIPTOR));
         StorageAdapterDescriptor.Version = sizeof(STORAGE_ADAPTER_DESCRIPTOR);
         StorageAdapterDescriptor.Size = sizeof(STORAGE_ADAPTER_DESCRIPTOR);
-		/* TODO: larger */
-        StorageAdapterDescriptor.MaximumTransferLength = 512; // SECTORSIZE * DeviceExtension->Disk.MaxSectorsPerPacket;
+        StorageAdapterDescriptor.MaximumTransferLength = 1024*1024; // SECTORSIZE * DeviceExtension->Disk.MaxSectorsPerPacket;
 //        StorageAdapterDescriptor.MaximumTransferLength = SECTORSIZE * POOLSIZE;
         StorageAdapterDescriptor.MaximumPhysicalPages = (ULONG)-1;
         StorageAdapterDescriptor.AlignmentMask = 0;
