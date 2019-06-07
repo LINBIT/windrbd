@@ -246,6 +246,7 @@ cp ../inf-files/windrbd-bootc.sys mnt/Windows/System32/drivers/windrbd.sys
 # 123^Z
 
 sudo chmod o+rw /dev/sdf
+sudo drbdadm up tiny-windows-disk
 # adjust IP address of peer in DRBD config:
 sudo vi /etc/drbd.d/tiny-windows-boot.res 
 sudo drbdadm up tiny-windows-boot 

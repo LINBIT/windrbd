@@ -67,8 +67,6 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 
 static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 {
-/* TODO: windrbd_bdget/windrbd_bdput */
-#if 0
 	NTSTATUS status;
 
 printk("waiting for becoming primary...\n");
@@ -79,7 +77,7 @@ printk("waiting for becoming primary...\n");
 		printk("Am Primary now, proceeding with I/O request\n");
 
 	return status;
-#else
+#if 0
 	printk("NOT waiting for becoming primary.\n");
 	return STATUS_SUCCESS;
 #endif
@@ -1464,26 +1462,16 @@ printk("4\n");
 			}
 		}
 
-#if 0
-		if (bdev != NULL)
-			wait_for_becoming_primary(bdev);
-		else
-			printk("bdev is NULL on start device, this should not happen (minor is %x)\n", s->MinorFunction);
-#endif
-
 printk("5\n");
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
 		{
-			int x;
-
 printk("starting device\n");
-printk("NOT waiting for becoming Primary\n");
 
-/*
-			x = ObReferenceObject(device);
-printk("ObReferenceObject returned %d\n", x);
-*/
+			if (bdev != NULL)
+				wait_for_becoming_primary(bdev);
+			else
+				printk("bdev is NULL on start device, this should not happen (minor is %x)\n", s->MinorFunction);
 
 			status = STATUS_SUCCESS;
 			break;
@@ -1918,6 +1906,11 @@ printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 			long long start_sector;
 			unsigned long long sector_count, total_size;
 			int rw;
+
+			if (bdev != NULL)
+				wait_for_becoming_primary(bdev);
+			else
+				printk("bdev is NULL on SCSI I/O, this should not happen (minor is %x)\n", s->MinorFunction);
 
 			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
 
