@@ -280,7 +280,6 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 
 static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-printk("1\n");
 	if (device == mvolRootDeviceObject)
 		return windrbd_root_device_control(device, irp);
 
@@ -518,8 +517,6 @@ printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
       STORAGE_ADAPTER_DESCRIPTOR StorageAdapterDescriptor;
       STORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor;
 
-printk("got IOCTL_STORAGE_QUERY_PROPERTY ...\n");
-
       if (StoragePropertyQuery->PropertyId == StorageAdapterProperty && StoragePropertyQuery->QueryType == PropertyStandardQuery) {
         CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_ADAPTER_DESCRIPTOR)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(STORAGE_ADAPTER_DESCRIPTOR));
         StorageAdapterDescriptor.Version = sizeof(STORAGE_ADAPTER_DESCRIPTOR);
@@ -562,7 +559,6 @@ printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x
    }
    case IOCTL_SCSI_GET_ADDRESS:
    {
-      printk("got IOCTL_SCSI_GET_ADDRESS\n");
       size_t CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(SCSI_ADDRESS)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(SCSI_ADDRESS));
       SCSI_ADDRESS ScsiAdress;
 
@@ -694,13 +690,11 @@ out:
 
 static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-printk("1\n");
 	if (device == mvolRootDeviceObject) {
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
 	}
-printk("2\n");
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == (void*) -1 || ref == NULL || ref->bdev == NULL) {
@@ -752,7 +746,6 @@ exit:
 
 static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-printk("1\n");
 	if (device == mvolRootDeviceObject) {
 		struct _IO_STACK_LOCATION *s2 = IoGetCurrentIrpStackLocation(irp);
 		windrbd_delete_multicast_groups_for_file(s2->FileObject);
@@ -802,7 +795,6 @@ printk("1\n");
 
 static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-printk("1\n");
 	if (device == mvolRootDeviceObject) {
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -850,11 +842,11 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 					offset = bio->bi_mdl_offset;
 					for (i=0;i<bio->bi_vcnt;i++) {
 
-dbg("RtlCopyMemory(%p, %p, %d)\n", user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
-dbg("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+// dbg("RtlCopyMemory(%p, %p, %d)\n", user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+// dbg("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
 						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
-{ int j; for (j=0;j<10;j++) { printk("data[%d] is %x\n", j, ((unsigned char*)user_buffer+offset)[j]); } }
+// { int j; for (j=0;j<10;j++) { printk("data[%d] is %x\n", j, ((unsigned char*)user_buffer+offset)[j]); } }
 						offset += bio->bi_io_vec[i].bv_len;
 					}
 				} else {
@@ -926,8 +918,6 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 
 	int b;
 	struct bio_collection *common_data;
-
-printk("transfer buffer is %p\n", buffer);
 
 	if (sector * dev->bd_block_size >= dev->d_size) {
 		dbg("Attempt to read past the end of the device\n");
@@ -1097,7 +1087,6 @@ static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_devic
 
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-printk("1\n");
 	if (device == mvolRootDeviceObject) {
 		dbg(KERN_WARNING "I/O on root device not supported.\n");
 
@@ -1294,7 +1283,7 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 printk("starting lower device object\n");
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status == STATUS_PENDING) {
-printk("Pening ...\n");
+printk("Pending ...\n");
 			KeWaitForSingleObject(&start_completed_event, Executive, KernelMode, FALSE, NULL);
 printk("Completed.\n");
 		}
@@ -1435,7 +1424,6 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 	dbg(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
 	if (device == drbd_bus_device) {
-printk("bus object\n");
 			/* Some minors (REMOVE_DEVICE) might delete the
 			 * device object in which case we must not
 			 * call IoCompleteRequest(). For the minors
@@ -1448,25 +1436,19 @@ printk("bus object\n");
 		struct block_device *bdev = NULL;
 		struct drbd_device *drbd_device = NULL;
 		int minor = -1;
-printk("1\n");
 		if (ref != (void*) -1 && ref != NULL) {
-printk("2\n");
 			bdev = ref->bdev;
 			if (bdev) {
-printk("3\n");
 				drbd_device = bdev->drbd_device;
 				if (drbd_device) {
-printk("4\n");
 					minor = drbd_device->minor;
 				}
 			}
 		}
 
-printk("5\n");
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
 		{
-printk("starting device\n");
 
 			if (bdev != NULL)
 				wait_for_becoming_primary(bdev);
@@ -1494,53 +1476,41 @@ printk("minor is %d\n", minor);
 			}
 #define MAX_ID_LEN 512
 			string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), 'DRBD');
-printk("6\n");
 			if (string == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 			} else {
 				memset(string, 0, MAX_ID_LEN*sizeof(wchar_t));
-printk("7\n");
 				switch (s->Parameters.QueryId.IdType) {
 				case BusQueryDeviceID:
 					swprintf(string, L"WinDRBD\\Disk%d", minor);
-printk("8\n");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryInstanceID:
 					swprintf(string, L"WinDRBD%d", minor);
-printk("9\n");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryHardwareIDs:
-printk("a\n");
 					size_t len;
 					len = swprintf(string, L"WinDRBDDisk");
 					swprintf(&string[len+1], L"GenDisk");
-printk("b\n");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryCompatibleIDs:
 					len = swprintf(string, L"WinDRBDDisk");
 					swprintf(&string[len+1], L"GenDisk");
 //					len = swprintf(string, L"GenDisk");
-printk("c\n");
 					status = STATUS_SUCCESS;
 					break;
 				default:
-printk("d\n");
 					status = STATUS_NOT_IMPLEMENTED;
 				}
 			}
-printk("e\n");
 			if (status == STATUS_SUCCESS) {
 dbg("Returned string is %S\n", string);
-printk("f\n");
 				irp->IoStatus.Information = (ULONG_PTR) string;
 			} else {
-printk("g\n");
 				ExFreePool(string);
 			}
-printk("h\n");
 			break;
 		}
 
@@ -1865,7 +1835,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
-printk("SCSI request for device %p\n", device);
+// printk("SCSI request for device %p\n", device);
 
 	srb = s->Parameters.Scsi.Srb;
 	if (srb == NULL) {
@@ -1883,11 +1853,11 @@ printk("SCSI request for device %p\n", device);
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
-printk("got SCSI function %x\n", srb->Function);
+// printk("got SCSI function %x\n", srb->Function);
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
-printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
+// printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 		switch (cdb->AsByte[0]) {
 		case SCSIOP_TEST_UNIT_READY:
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
@@ -1949,7 +1919,7 @@ printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 			}
 
 
-printk("SCSI I/O: sector %lld, %d sectors to %p\n", start_sector, sector_count, srb->DataBuffer);
+// printk("SCSI I/O: sector %lld, %d sectors to %p\n", start_sector, sector_count, srb->DataBuffer);
 
 			status = windrbd_make_drbd_requests(irp, bdev, ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority), sector_count*512, start_sector, rw);
 			if (status == STATUS_SUCCESS) {
