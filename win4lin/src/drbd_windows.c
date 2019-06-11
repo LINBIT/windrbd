@@ -1376,7 +1376,7 @@ static void remove_spinlock(spinlock_t *lock)
 		if (s->lock == lock) {
 			snprintf(s->marker, ARRAY_SIZE(s->marker), "NOSPINLO%d", spinlock_id++);
 			list_del(&s->list);
-//			kfree(s);
+			kfree(s);
 			n++;
 		}
 	}
