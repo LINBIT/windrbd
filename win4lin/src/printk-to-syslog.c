@@ -4,8 +4,33 @@
 #include <linux/net.h>
 #include <linux/socket.h>
 
-/* Define this if you do not want to use UDP logging. */
-#define NO_NET_PRINTK 1
+/* We have three logging 'targets': One is the standard DbgPrint
+   facility provided by Windows. Use a tool like DbgView to view
+   them on the local host or use a remote kernel debugger (WinDbg)
+   to see them. The mem printk just writes into the ring buffer.
+   It might be useful when Windows runs in a Virtual machine
+   or the Windows dump kernel memory on BSOD is enabled.
+   One can dump the memory core via the virtual machine manager
+   to see the logs (use string utility to make the image a
+   little smaller). The last target is the network. We send
+   UDP packets (later TCP/IP optionally) to a syslog server
+   (this also might be a netcat). This is the standard way
+   we use when debugging under normal conditions. The drawback
+   is that network packets cannot be sent when IRQL is raised
+   (we store messages sent at raised IRQL and send them later
+   but if we blue screen before IRQL is lowered again, we don't
+   see them. Another drawback is that logging via net might
+   affect system stability, so this should be turned off
+   for production releases.
+*/
+
+/* Later: have ioctl to control these, also have ioctl to configure
+ * syslog ip and maybe port and also the protocol (UDP or TCP).
+ */
+
+static int no_windows_printk = 0;
+static int no_memory_printk = 0;
+static int no_net_printk = 1;
 
 /* TODO: use (and test) O_NONBLOCK sending again, once weird printk
  * losses are fixed.
@@ -183,7 +208,7 @@ int _printk(const char *func, const char *fmt, ...)
     
 	int level = '1';
 	const char *fmt_without_level;
-	size_t pos, len;
+	size_t pos, len, len_ret;
 	LARGE_INTEGER time;
 	va_list args;
 	NTSTATUS status;
@@ -228,7 +253,9 @@ int _printk(const char *func, const char *fmt, ...)
 	    func
 	);
 	if (! NT_SUCCESS(status)) {
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, RtlStringCbPrintfA returned error (status = %d).\n", status);
+		if (!no_windows_printk)
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, RtlStringCbPrintfA returned error (status = %d).\n", status);
+
 		buffer_overflows++;
 		return -EINVAL;
 	}
@@ -239,22 +266,29 @@ int _printk(const char *func, const char *fmt, ...)
 		    fmt, args);
 	if (! NT_SUCCESS(status))
 	{
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent (2), RtlStringCbPrintfA returned error (status = %d).\n", status);
+		if (!no_windows_printk)
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent (2), RtlStringCbPrintfA returned error (status = %d).\n", status);
 		buffer_overflows++;
 		return -EINVAL;
 	}
 
-	/* Always print messages to debugging facility, use a tool like
+	/* Print messages to debugging facility, use a tool like
 	 * DbgViewer to see them.
 	 */
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID,
+	if (!no_windows_printk)
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID,
 		   (level <= KERN_ERR[0]  ? DPFLTR_ERROR_LEVEL :
 		    level >= KERN_INFO[0] ? DPFLTR_INFO_LEVEL  :
 		    DPFLTR_WARNING_LEVEL),
 		    buffer);
 
+	len_ret = strlen(buffer);
+
+	if (no_memory_printk)
+		return len_ret;
+
 		/* Include the trailing \0 */
-	len = strlen(buffer)+1;
+	len = len_ret+1;
 
 	if (len > RING_BUFFER_SIZE) {
 		s = buffer+len-RING_BUFFER_SIZE;
@@ -282,7 +316,8 @@ int _printk(const char *func, const char *fmt, ...)
 	}
 	spin_unlock_irqrestore(&ring_buffer_lock, flags);
 
-#ifndef NO_NET_PRINTK
+	if (no_net_printk)
+		return len_ret;
 
 		/* When in a DPC or similar context, we must not 
 		 * call waiting functions, like SendTo(). Also
@@ -340,9 +375,12 @@ int _printk(const char *func, const char *fmt, ...)
 	} else {
 		printks_in_irq_context++;
 	}
-#endif
-	return 1;	/* TODO: strlen(buffer) */
+	return len_ret;
 }
+
+	/* TODO: this probably should go away again, it never worked
+ 	 * properly.
+	 */
 
 void printk_reprint(size_t bytes)
 {
