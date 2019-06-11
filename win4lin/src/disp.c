@@ -176,11 +176,9 @@ printk("drbd_bus_object1 is %p\n", drbd_bus_object1);
 		printk("IoReportRootDevice succeeded\n");
 #endif
 
-#if 0
 	printk("Attempting to start boot device\n");
 	windrbd_init_boot_device();
 	printk("Start boot device stage1 returned\n");
-#endif
 
 	return STATUS_SUCCESS;
 }
