@@ -14,21 +14,165 @@ Planned: Feb 28 2019
 Real: Apr 10 2019
 -----------------------------------------------------------------------
 
-TODO: can't create mount point?
+TODO: Bug: Windows freezes very soon when booted via WinDRBD system volume
 
-Done: implement SCSI I/O
+TODO: Bug: Out of memory very soon on boot
 
-	Right now, partition manager fails with Invalid function.
-	Works now
+	This might have been the leak in add_spinlock(), for testing
+	purposes we removed the corresponding kfree in remove_spinlock().
 
-TODO: Can also write when secondary.
+	There are other memory leaks (lots of pages (8000) allocated,
+	don't know yet if those are real leaks. They exist after
+	taking all devices down, so probably this is wrong.
+
+TODO: Bug: Windows does not switch into graphics mode any more
+
+	We observe about 1800000 drbd packets (sectors?) being read,
+	however Windows does not switch into graphics mode any more.
+	Probably because it crashed several times before? Maybe we
+	need to repair the image.
+
+TODO: Bug: w0 is read-only
+
+	This does not have a MBR on it. To work around it make it primary
+	set it offline with partition manager and set it online
+	again.
+
+TODO: Feature: allow to pass DRBD minor to cgi-script
+
+	DRBD_MINOR parameter (need to parse QUERY_STRING,
+	this is dangerous)
+
+TODO: Performance: make keep-alive work with cgi-script
+
+TODO: Feature: Configure DHCP for autobooting image
+
+	Using standard iPXE booting a sanboot (and probably other
+	DRBD related features) enabled iPXE and then boot Windows
+	via sanboot.
+
+TODO: Feature: Pass DRBD parameters of root device to kernel
+
+	Hopefully this can be done via the --filename option
+	of sanboot. In Windows read and use those parameters 
+	(they are currently hard coded)
+
+	(old entry: Get WinDRBD parameters somehow (via http / JSON?).
+	Storing it in Registry of the image is not a good idea (also BCD
+	is a registry hive).)
+
+TODO: Feature: Create a WinPE image with network and WinDRBD.
+
+	And see if we can install on top of the WinDRBD device
+	It would be nice if we could pass the WinDRBD device
+	parameters also via DHCP so the user does not need
+	to enter them again.
+
+TODO: Bug: can't create mount point?
+	We will later allow the user to choose between disk
+	(where Windows manages the drive letters) and volume
+	(where we have to do that, most likely) device objects.
+	The last is meant for non-sysroot devices only. Not sure
+	yet if we need those but then we probably want to fix
+	the driver letter thing (again)
+
+TODO: Bug: Can also write when secondary.
 
 	DRBD seems to use Linux' mechanism (via open(2)) to check
 	for writability and doesn't check when receiving bio's.
 
-TODO: better solution for double REMOVE_DEVICE
+TODO: Code quality: better solution for double REMOVE_DEVICE
 
-TODO: handle the case where DRBD device size drops to 0 again
+	Setting a pointer to (void*) -1 is not a production ready
+	solution.
+
+TODO: Bug: handle the case where DRBD device size drops to 0 again
+
+	If we loose connection we need to block I/O's again. It
+	seems that DRBD does not call drbd_set_my_capacity() on
+	that event (though this is what I would expect).
+
+TODO: Feature: Make C:\ as Primary Diskless work
+
+	TODO: a lot. What currently works is:
+
+	*) Create a (Diskless) WinDRBD device on boot. As soon there is
+
+	network the device connects. This is not the System partition.
+	Parameters are currently hard coded.
+
+	*) Boot a WinPE on a Linux block device via ipxe sanboot over http. 
+	This has currently a (slightly less than) 8GB size limit since it
+	uses BIOS interface (int 0x13). Update: no Windows loads via
+	BIOS extension (function 0x41/0x42) which supports 64-bit
+	block numbers.
+
+	*) Make booting real Windows image work (currently fails with
+	   file not found): reason is
+
+	Range is bytes=-967835648--967834625
+	(see http_format_range() %zd is 32-bit signed in 32-bit arch)
+
+	Update: Fixed (with a hack), TODO: support %lld
+	Update: %lld works now, so does loading directly (without
+	cgi) from a file based image.
+
+	We now have a limit at about 8GB
+
+	Maybe submit to upstream ipxe if wanted.
+
+	Update: When using 64-bit ipxe it works with 32GB image:
+
+	make bin-x86_64-pcbios/ipxe.pxe
+
+	*) Fix 8GB size limit (see above)
+
+	With 64 bit iPXE there is no such limit.
+
+	Update: With patches, also works with 32 bit now.
+
+	Patches tested and submited, waiting for response
+
+	Update: response came asking to clarify length parameter widening.
+
+	Update: patch without len parameters patched submitted.
+
+	*) Use drbd device as source device for cgi script.
+
+	Done, works.
+
+	*) Test if read access is possible if there are no Primaries.
+
+		Yes it is. CGI script can serve DRBD device while it
+		is Secondary (and there are no Primaries)
+
+	*) Make windrbd device open() function wait for primary
+	(this is also interesting for auto promote)
+
+	*) Setup a iscsi boot environment
+		We now set up a working WinAoE (http://winaoe.org, also
+		now in my github with some patches to make it work
+		with 2019's vblade and Windows 7)
+		This is open source (gpl v3) and we took the relevant
+		parts to make Windows boot via DRBD (we are now a 
+		SCSI port driver, just as winaoe is).
+
+	*) Partitioning: Windows expects a disk not a volume
+		Yes. With the SCSI-port PnP driver architecture,
+		Windows treats the WinDRBD device as disk. This
+		disk can also be partitioned via Windows Partition
+		manager (and hopefully also via the WinPE partition
+		manager), since PARTMGR.SYS is stacked over it.
+
+	*) Somehow trick windows into accepting windrbd device as
+	System volume (via BCD?)
+		This is now done via the disk.sys driver. WinDRBD
+		device (under disk and partmgr) is treated as
+		regular system volume. We don't need to touch
+		BCD (for now) since the device is the first disk
+		in the system (which is usually the boot disk).
+
+	Left to do: see seperate TODO's.
 
 -----------------------------------------------------------------------
 TODO: Bug: Allow rcu_read_lock() being called recursively.
@@ -337,90 +481,6 @@ TODO: Feature: Resource agent for Microsoft cluster manager
 	https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.con.doc/q017940_.htm
 
 	Quote: "Assign a storage device for exclusive use by the queue manager. This device needs to be created as a resource instance before it can be assigned."
-
-TODO: Feature: Make C:\ as Primary Diskless work
-
-	TODO: a lot. What currently works is:
-
-	*) Create a (Diskless) WinDRBD device on boot. As soon there is
-
-	network the device connects. This is not the System partition.
-	Parameters are currently hard coded.
-
-	*) Boot a WinPE on a Linux block device via ipxe sanboot over http. 
-	This has currently a (slightly less than) 8GB size limit since it
-	uses BIOS interface (int 0x13). Update: no Windows loads via
-	BIOS extension (function 0x41/0x42) which supports 64-bit
-	block numbers.
-
-	*) Make booting real Windows image work (currently fails with
-	   file not found): reason is
-
-	Range is bytes=-967835648--967834625
-	(see http_format_range() %zd is 32-bit signed in 32-bit arch)
-
-	Update: Fixed (with a hack), TODO: support %lld
-	Update: %lld works now, so does loading directly (without
-	cgi) from a file based image.
-
-	We now have a limit at about 8GB
-
-	Maybe submit to upstream ipxe if wanted.
-
-	Update: When using 64-bit ipxe it works with 32GB image:
-
-	make bin-x86_64-pcbios/ipxe.pxe
-
-	*) Fix 8GB size limit (see above)
-
-	With 64 bit iPXE there is no such limit.
-
-	Update: With patches, also works with 32 bit now.
-
-	Patches tested and submited, waiting for response
-
-	Update: response came asking to clarify length parameter widening.
-
-	Update: patch without len parameters patched submitted.
-
-	*) Use drbd device as source device for cgi script.
-
-	Done, works.
-
-	*) Test if read access is possible if there are no Primaries.
-
-		Yes it is. CGI script can serve DRBD device while it
-		is Secondary (and there are no Primaries)
-
-	Left to do:
-
-	*) Make windrbd device open() function wait for primary
-	(this is also interesting for auto promote)
-
-	*) Setup a iscsi boot environment
-
-	*) Fix drbd.cgi script.
-
-	Done so far. Make keepalive work.
-	Also DRBD_MINOR parameter (need to parse QUERY_STRING,
-	this is dangerous)
-
-	*) Configure DHCP for autobooting image
-
-	*) Make device create on boot Primary.
-
-	*) Get WinDRBD parameters somehow (via http / JSON?). Storing
-	it in Registry of the image is not a good idea (also BCD is a
-	registry hive).
-
-	Update: This should be done via DHCP.
-
-	*) Create a WinPE image with network and WinDRBD.
-
-	*) Partitioning: Windows expects a disk not a volume
-
-	*) Somehow trick windows into accepting windrbd device as
-	System volume (via BCD?)
 
 TODO: Feature: Autopromote
 
@@ -5067,4 +5127,11 @@ Done: Bug: unblock SCSI size requests on drbdadm down
 	Else REMOVE_DEVICE is never called.
 
 Done: Bug: PnP BSOD on opening partition manager
+
+Done: implement SCSI I/O
+
+	Right now, partition manager fails with Invalid function.
+	Update: Works now (must set SRB status to success)
+
+Done: Make device create on boot Primary.
 
