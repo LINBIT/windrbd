@@ -325,3 +325,11 @@ Enable driver verifier:
 
 verifier /standard /driver windrbd.sys
 
+-------
+
+Installing and configuring DHCP server (Ubuntu)
+
+sudo apt-get install isc-dhcp-server
+(sudo apt-get -o Acquire::ForceIPv4=true install isc-dhcp-server)
+
+

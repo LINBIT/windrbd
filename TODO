@@ -43,6 +43,13 @@ TODO: Feature: allow to pass DRBD minor to cgi-script
 	DRBD_MINOR parameter (need to parse QUERY_STRING,
 	this is dangerous)
 
+TODO: Feature: set netboot flag via iPXE
+
+	Windows defines some services as boot critical when
+	booting from network. It must be told that it is
+	currently netbooting in order to load that drivers
+	(currently we patch the Registry)
+
 TODO: Performance: make keep-alive work with cgi-script
 
 TODO: Feature: Configure DHCP for autobooting image
@@ -91,6 +98,13 @@ TODO: Bug: handle the case where DRBD device size drops to 0 again
 	If we loose connection we need to block I/O's again. It
 	seems that DRBD does not call drbd_set_my_capacity() on
 	that event (though this is what I would expect).
+
+TODO: Feature: Test if it works with Windows 10 and Server 2016 also
+
+TODO: Improve boot speed.
+
+	Right now it takes more than 5 minutes until the system is
+	usable
 
 TODO: Feature: Make C:\ as Primary Diskless work
 
