@@ -65,22 +65,19 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 	return STATUS_NOT_IMPLEMENTED;
 }
 
+	/* Better not do any printk's in here, we are in the I/O
+	 * path.
+	 */
+
 static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 {
 	NTSTATUS status;
 
-printk("waiting for becoming primary...\n");
 	status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
 	if (status != STATUS_SUCCESS)
 		printk("KeWaitForSingleObject returned %x\n", status);
-	else
-		printk("Am Primary now, proceeding with I/O request\n");
 
 	return status;
-#if 0
-	printk("NOT waiting for becoming primary.\n");
-	return STATUS_SUCCESS;
-#endif
 }
 
 static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *dev)
@@ -979,7 +976,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		bio->bi_mdl_offset = b*MAX_BIO_SIZE;
 		bio->bi_common_data = common_data;
 
-dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
+// dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
 
 		bio->bi_io_vec[0].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
 		if (bio->bi_io_vec[0].bv_page == NULL) {
