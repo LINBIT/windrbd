@@ -359,3 +359,18 @@ sudo service isc-dhcp-server restart
 
 DisklessClient should now boot into windows without need to type
 boot commands.
+
+Configure fixed IP Address:
+
+host diskless-client {
+        hardware ethernet 08:00:27:b2:a9:32;
+        fixed-address 192.168.56.150;
+}
+
+Configure dynamic range (don't do this, DRBD needs a fixed address):
+
+subnet 192.168.56.0 netmask 255.255.255.0 {
+        range 192.168.56.160 192.168.56.250;
+}
+
+

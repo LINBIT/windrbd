@@ -95,6 +95,8 @@ TODO: Bug: handle the case where DRBD device size drops to 0 again
 
 TODO: Feature: Test if it works with Windows 10 and Server 2016 also
 
+TODO: Feature: Windows should take IP address from DHCP on boot
+
 TODO: Improve boot speed.
 
 	Right now it takes more than 5 minutes until the system is
