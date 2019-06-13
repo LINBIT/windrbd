@@ -332,4 +332,30 @@ Installing and configuring DHCP server (Ubuntu)
 sudo apt-get install isc-dhcp-server
 (sudo apt-get -o Acquire::ForceIPv4=true install isc-dhcp-server)
 
+sudo vi /etc/dhcp/drbdd.conf
 
+Add:
+
+The options from 
+http://ipxe.org/howto/dhcpd#pxe_chainloading
+
+And further down:
+
+# solution works 'for me'. It tests for iSCSI, where sanboot http://...
+# is sufficient. iscsi seems to be closely related to sanboot. The
+# off the shelf VirtualBox iPXE build does not have iscsi enabled,
+# therefore we load a custom built image which then executes the
+# sanboot command.
+if exists ipxe.iscsi {
+        filename "";
+        option root-path "http://192.168.56.102/cgi-bin/drbd.cgi";
+} else {
+        filename "http://192.168.56.102/~johannes/ipxe/ipxework.pxe";
+}
+
+After changes restart dhcp server with
+
+sudo service isc-dhcp-server restart
+
+DisklessClient should now boot into windows without need to type
+boot commands.

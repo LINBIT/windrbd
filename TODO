@@ -52,12 +52,6 @@ TODO: Feature: set netboot flag via iPXE
 
 TODO: Performance: make keep-alive work with cgi-script
 
-TODO: Feature: Configure DHCP for autobooting image
-
-	Using standard iPXE booting a sanboot (and probably other
-	DRBD related features) enabled iPXE and then boot Windows
-	via sanboot.
-
 TODO: Feature: Pass DRBD parameters of root device to kernel
 
 	Hopefully this can be done via the --filename option
@@ -5148,4 +5142,12 @@ Done: implement SCSI I/O
 	Update: Works now (must set SRB status to success)
 
 Done: Make device create on boot Primary.
+
+Done: Feature: Configure DHCP for autobooting image
+
+	Using standard iPXE booting a sanboot (and probably other
+	DRBD related features) enabled iPXE and then boot Windows
+	via sanboot.
+
+	Done, it is documented in howto
 
