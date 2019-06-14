@@ -273,6 +273,10 @@ make DEBUG=sanboot,int13,httpcore:2,httpblock,blocktrans:2,xfer,xferbuf && cp bi
 # 64 bit version can boot 32 GB images
 make bin-x86_64-pcbios/ipxe.pxe 
 
+# Use this from now on:
+make && cp bin/ipxe.pxe ~/public_html/ipxe/ipxework.pxe
+
+iPXE is configured via header files in src/config
 -----
 
 Windows Server 2016: empty password: Start->Windows Verwaltungstools->Lokale Sicherheitsrichtlinie->Kontorichtlinien->Kennwortrichtlinien->Alter auf 0, Komplexit ausschalten.
@@ -373,4 +377,18 @@ subnet 192.168.56.0 netmask 255.255.255.0 {
         range 192.168.56.160 192.168.56.250;
 }
 
+Not sure yet how it works with 2 networks (iPXE of VirtualBox seems
+not to try the second network if something with the first network
+fails, however this works with the custom built iPXE)
+-------
 
+Disable page file with Windows (captions may differ I have a German
+Windows):
+
+Open cmd.exe as Administrator
+
+SystemPropertiesAdvanced.exe
+
+Then under Advanced Tab click the Performance button (topmost)
+
+Then under Advanced Tab / Virtual Memory / No page file
