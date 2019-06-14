@@ -21,7 +21,6 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 void *kzalloc_debug(size_t size, int flag, const char *file, int line, const char *func);
 void kfree_debug(const void *data, const char *file, int line, const char *func);
 
-
 int dump_memory_allocations(int free_them);
 void init_kmalloc_debug(void);
 void shutdown_kmalloc_debug(void);
@@ -33,4 +32,14 @@ void shutdown_kmalloc_debug(void);
 #define kfree(data) kfree_debug(data, __FILE__, __LINE__, __func__)
 	/* under Windows kfree and kvfree is the same */
 #define kvfree(data) kfree_debug(data, __FILE__, __LINE__, __func__)
+
+struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, int line, const char *func);
+struct page *alloc_page_debug(int flag, const char *file, int line, const char *func);
+void __free_page_debug(struct page *page, const char *file, int line, const char *func);
+void free_page_kref_debug(struct kref *kref, const char *file, int line, const char *func);
+
+#define alloc_page_of_size(flag, size) alloc_page_of_size_debug(flag, size, __FILE__, __LINE__, __func__)
+#define alloc_page(flag) alloc_page_debug(flag,  __FILE__, __LINE__, __func__)
+#define __free_page(page) __free_page_debug(page, __FILE__, __LINE__, __func__)
+#define free_page_kref(kref) free_page_kref_debug(kref, __FILE__, __LINE__, __func__)
 

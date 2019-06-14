@@ -564,6 +564,71 @@ void *page_address(const struct page *page)
 	return page->addr;
 }
 
+#ifdef KMALLOC_DEBUG
+
+struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, int line, const char *func)
+{
+		/* Round up to the next PAGE_SIZE */
+
+	BUG_ON(size==0);
+	size = (((size-1) / PAGE_SIZE)+1)*PAGE_SIZE;
+
+	struct page *p = kzalloc_debug(sizeof(struct page), 0, file, line, func); 
+	if (!p)	{
+		WDRBD_INFO("alloc_page struct page failed\n");
+		return NULL;
+	}
+	
+		/* Under Windows this is defined to align to a page
+		 * of PAGE_SIZE bytes if size is >= PAGE_SIZE.
+		 * PAGE_SIZE itself is always 4096 under Windows.
+		 */
+
+	p->addr = kmalloc_debug(size, 0, file, line, func);
+	if (!p->addr)	{
+		kfree_debug(p, file, line, func); 
+		WDRBD_INFO("alloc_page failed (size is %d)\n", size);
+		return NULL;
+	}
+	kref_init(&p->kref);
+	p->size = size;
+
+	return p;
+}
+
+struct page *alloc_page_debug(int flag, const char *file, int line, const char *func)
+{
+	return alloc_page_of_size_debug(flag, PAGE_SIZE, file, line, func);
+}
+
+void __free_page_debug(struct page *page, const char *file, int line, const char *func)
+{
+	kfree_debug(page->addr, file, line, func);
+	kfree_debug(page, file, line, func); 
+}
+
+
+void free_page_kref_debug(struct kref *kref, const char *file, int line, const char *func)
+{
+	struct page *page = container_of(kref, struct page, kref);
+	__free_page_debug(page, file, line, func);
+}
+
+#undef free_page_kref
+
+	/* This is used as a function pointer parameter to put_page,
+	 * its signature cannot be changed since the number of
+	 * parameters is fixed.
+	 */
+
+void free_page_kref(struct kref *kref)
+{
+	struct page *page = container_of(kref, struct page, kref);
+	__free_page_debug(page, __FILE__, __LINE__, __func__);
+}
+
+#else
+
 struct page *alloc_page_of_size(int flag, size_t size)
 {
 		/* Round up to the next PAGE_SIZE */
@@ -610,6 +675,8 @@ void free_page_kref(struct kref *kref)
 	struct page *page = container_of(kref, struct page, kref);
 	__free_page(page);
 }
+
+#endif
 
 #ifdef _HACK
 
