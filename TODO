@@ -14,7 +14,11 @@ Planned: Feb 28 2019
 Real: Apr 10 2019
 -----------------------------------------------------------------------
 
-TODO: Bug: Windows freezes very soon when booted via WinDRBD system volume
+TODO: Bug: BSOD 0x000000f4 on booting diskless
+
+	Meaning critical process died (similar to Attempt to kill
+	init on Linux) Sometimes no BSOD but Windows disconnects
+	and is not pingable any more.
 
 TODO: Bug: Out of memory very soon on boot
 
@@ -25,18 +29,44 @@ TODO: Bug: Out of memory very soon on boot
 	don't know yet if those are real leaks. They exist after
 	taking all devices down, so probably this is wrong.
 
-TODO: Bug: Windows does not switch into graphics mode any more
+	Update: No those pages (64MB) are mempools which also exist
+	when there are no resources.
 
-	We observe about 1800000 drbd packets (sectors?) being read,
-	however Windows does not switch into graphics mode any more.
-	Probably because it crashed several times before? Maybe we
-	need to repair the image.
+	Update: With 1.5GB of RAM, Diskless client runs quite stable.
+	It seems to be a memory allocation done in the page out
+	path (which fails, which in turn causes Windows to hang).
+
+	Update: Disabled pagefile, it now runs very stable (could
+	install Firefox, CygWin and Ewdk (still downloading)).
+	So, bug is probably in the page out path (TODO: try
+	booting several times without pagefile).
+
+TODO: Bug: Cannot shut down Diskless client
+
+	Hangs. DRBD device is disconnected, hang is most likely
+	in wait_for_primary. Host is not pingable either so
+	this is probably after the network was shut down.
+	(it does not hang always)
 
 TODO: Bug: w0 is read-only
 
 	This does not have a MBR on it. To work around it make it primary
 	set it offline with partition manager and set it online
 	again.
+
+TODO: Bug: w0 not accessible after up/down/up/primary
+
+	It does not show up in partition manager and also no drive
+	letter is assigned. It shows up in device manager, however
+	also the device object \Devices\Drbd5 exists.
+
+	On drbdadm down the device object is not deleted.
+
+TODO: Feature: become Primary automatically after reconnect
+
+	Right now there is no recovery when the boot device
+	is disconnected. It should be done such that Windows
+	never sees an I/O error.
 
 TODO: Feature: allow to pass DRBD minor to cgi-script
 
@@ -96,6 +126,8 @@ TODO: Bug: handle the case where DRBD device size drops to 0 again
 TODO: Feature: Test if it works with Windows 10 and Server 2016 also
 
 TODO: Feature: Windows should take IP address from DHCP on boot
+
+	Right now, we assign a static address.
 
 TODO: Improve boot speed.
 
@@ -5152,4 +5184,17 @@ Done: Feature: Configure DHCP for autobooting image
 	via sanboot.
 
 	Done, it is documented in howto
+
+Done: Bug: Windows does not switch into graphics mode any more
+
+	We observe about 1800000 drbd packets (sectors?) being read,
+	however Windows does not switch into graphics mode any more.
+	Probably because it crashed several times before? Maybe we
+	need to repair the image.
+
+	This seems to be fixed after chkdsk'ing the image
+
+Done: Bug: Windows freezes very soon when booted via WinDRBD system volume
+	Hasn't happened recently after giving it more RAM (and turned
+	off pagefile) and disabling both net and mem printk's
 
