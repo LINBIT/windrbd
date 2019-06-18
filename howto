@@ -392,3 +392,13 @@ SystemPropertiesAdvanced.exe
 Then under Advanced Tab click the Performance button (topmost)
 
 Then under Advanced Tab / Virtual Memory / No page file
+
+----
+
+Avoid chmod of /dev/sdf:
+
+Add www-data user to group disk
+
+Or better add an extra group for drbd devices and use udev(?) to
+control the device node.
+-----

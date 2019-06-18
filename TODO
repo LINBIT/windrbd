@@ -68,6 +68,12 @@ TODO: Feature: become Primary automatically after reconnect
 	is disconnected. It should be done such that Windows
 	never sees an I/O error.
 
+TODO: Security: How to identify clients with cgi-script
+
+	We don't want 'everybody that is on the net' being able
+	to access the DRBD device, not even read only. How
+	is this done with iSCSI? AoE?
+
 TODO: Feature: allow to pass DRBD minor to cgi-script
 
 	DRBD_MINOR parameter (need to parse QUERY_STRING,
