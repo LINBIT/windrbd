@@ -73,9 +73,12 @@ static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 {
 	NTSTATUS status;
 
+printk("Waiting for becoming primary\n");
 	status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
 	if (status != STATUS_SUCCESS)
 		printk("KeWaitForSingleObject returned %x\n", status);
+else
+printk("Am primary now, proceeding with request\n");
 
 	return status;
 }
@@ -1915,8 +1918,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 				break;
 			}
 
-
-// printk("SCSI I/O: sector %lld, %d sectors to %p\n", start_sector, sector_count, srb->DataBuffer);
+printk("SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
 
 			status = windrbd_make_drbd_requests(irp, bdev, ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority), sector_count*512, start_sector, rw);
 			if (status == STATUS_SUCCESS) {
