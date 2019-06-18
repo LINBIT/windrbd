@@ -787,3 +787,13 @@ TEST(windrbd, dismount_volume)
 	CloseHandle(h);
 }
 
+#if 0
+TEST(windrbd, disable_file_cache)
+{
+	bool ret = SetSystemFileCacheSize(0, 0, FILE_CACHE_MAX_HARD_ENABLE);
+	int err = GetLastError();
+
+	EXPECT_NE(ret, 0);
+	EXPECT_EQ(err, ERROR_SUCCESS);
+}
+#endif
