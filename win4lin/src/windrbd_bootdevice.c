@@ -368,34 +368,20 @@ static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 {
 	int ret;
 
-printk("karin %S\n", p->mount_point);
-printk("1\n");
         drbd_genl_family.id = WINDRBD_NETLINK_FAMILY_ID;
 
-printk("2\n");
 	if ((ret = new_resource(p->resource, p->num_nodes)) != 0)
 		return ret;
 
-printk("3\n");
 	if ((ret = new_minor(p->resource, p->minor, p->volume)) != 0)
 		return ret;
 
-/* For now, this will also create the mount point. */
-/* When booting this should be C: when testing this should be W: */
-printk("4\n");
-	
 	if ((ret = windrbd_create_windows_device_for_minor(p->minor)) != 0)
 		printk("Creating windows device for minor %d failed.\n", p->minor);
-#if 0
-	if (p->mount_point) {
-		if ((ret = windrbd_set_mount_point_for_minor_utf16(p->minor, p->mount_point)) != 0)
-			printk("Mounting minor %d to %s failed.\n", p->minor, p->mount_point);
-	} else {
-printk("no mount point for %s\n", p->resource);
-	}
-#endif
+	/* The 'mount_point' is now handled by the disk.sys (or partman.sys)
+	 * driver, no need to do that here.
+	 */
 
-printk("5\n");
 	if ((ret = new_peer(p->resource, p->peer, p->peer_node_id, p->protocol)) != 0)
 		return ret;
 
@@ -403,7 +389,6 @@ printk("5\n");
 		 * socket to INADDR_ANY, else it will fail an node
 		 * will go into standalone.
 		 */
-printk("6\n");
 	if ((ret = new_path(p->resource, p->peer_node_id, p->my_address, p->peer_address)) != 0)
 		return ret;
 
@@ -417,44 +402,32 @@ printk("6\n");
 
 extern int windrbd_wait_for_bus_object(void);
 
+/* This does the networking part of DRBD device setup. We
+ * do this in a separate thread so that DriverEntry can
+ * exit (and followup drivers can initialize the network)
+ */
+
 static int windrbd_create_boot_device_stage2(void *pp)
 {
 	struct drbd_params *p = pp;
 	int ret;
 
-printk("7 %s\n", p->resource);
 	if ((ret = windrbd_wait_for_network()) < 0)
 		return ret;
 
-printk("NOT waiting for bus object\n");
-#if 0
-printk("7-1\n");
-	if ((ret = windrbd_wait_for_bus_object()) < 0)
-		return ret;
-printk("7-2\n");
-#endif
+	/* Usually once network is there, the bus object is also
+	 * there (provided it was installed properly by the installer).
+	 */
 
-// msleep(1000);
-
-printk("7-2a\n");
                 /* Tell the PnP manager that we are there ... */
 	windrbd_rescan_bus();
 
-printk("7a %s\n", p->resource);
 	if ((ret = connect(p->resource, p->peer_node_id)) != 0)
 		return ret;
 
-	while (1) {
-printk("8\n");
-		ret = primary(p->resource);
-printk("9\n");
-		if (ret == 0)
-			break;
-printk("a 123\n");
-		msleep(1000);
-printk("b\n");
-	}
-printk("c\n");
+		/* We are now 'auto-promoting' in the windrbd_device
+		 * layer, so no need to call primary() here */
+
 	return 0;
 }
 
@@ -467,11 +440,6 @@ void windrbd_init_boot_device(void)
 		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
 		if (ret != 0)
 			printk("Warning: stage1 returned %d for %s\n", ret, boot_devices[i].resource);
-/*
-	ret = windrbd_create_boot_device_stage2(NULL);
-	if (ret != 0)
-		printk("Warning: stage1 returned %d\n", ret);
-*/
 
 		if (kthread_run(windrbd_create_boot_device_stage2, &boot_devices[i], "bootdev") == NULL) {
 			printk("Failed to create bootdevice thread.\n");
