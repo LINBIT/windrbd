@@ -69,9 +69,43 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 	 * path.
 	 */
 
+/* 3 hours */
+// #define LONG_TIMEOUT 10000
+#define LONG_TIMEOUT 50
+
 static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 {
 	NTSTATUS status;
+	struct drbd_device *drbd_device;
+	struct drbd_resource *resource;
+	int rv;
+	LONG_PTR timeout = LONG_TIMEOUT * HZ / 10;
+
+	if (bdev->is_bootdevice) {
+		drbd_device = bdev->drbd_device;
+		if (drbd_device != NULL) {
+			resource = drbd_device->resource;
+			if (resource != NULL) {
+				while (resource->role[NOW] == R_SECONDARY) {
+printk("Am secondary, trying to promote ...\n");
+					rv = try_to_promote(drbd_device, timeout, 0);
+
+		/* no uptodate disk: we are not yet connected, wait a bit
+		 * until we are.
+		 */
+printk("rv is %d\n", rv);
+					if (rv < SS_SUCCESS && rv != SS_NO_UP_TO_DATE_DISK) {
+						drbd_info(resource, "Auto-promote failed: %s\n", drbd_set_st_err_str(rv));
+						break;
+					}
+					if (rv == SS_SUCCESS)
+						break;
+
+					msleep(100);
+				}
+			}
+		}
+	}
 
 printk("Waiting for becoming primary\n");
 	status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
@@ -1153,6 +1187,10 @@ static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp
 	printk("System shutdown, for now, don't clean up, there might be DRBD resources online\nin which case we would crash the system.\n");
 
 	printk("device: %p irp: %p\n", device, irp);
+
+/* TODO: signal the devices waiting for primary that it should stop
+ * waiting now.
+ */
 #if 0
 	if (device == mvolRootDeviceObject)
 		drbd_cleanup();

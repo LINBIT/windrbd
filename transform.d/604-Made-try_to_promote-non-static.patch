@@ -1,0 +1,36 @@
+From cfe40eee845ee00603f26320147a62eac8234383 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 18 Jun 2019 14:49:52 +0200
+Subject: [PATCH] Made try_to_promote non-static
+
+We are calling this when a boot device wants to access the
+disk (right now, for all devices for testing purposes). The
+reason is that boot devices are system-critical and must
+be primary all the time.
+
+We are also repeating promotion if there no access to up to date data
+this is common when we are diskless and not connected yet (but
+will be soon).
+
+A follow-up patch can then remove the become primary loop in
+windrbd_bootdevice.c
+---
+ drbd/drbd_main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 408cb1c..790b6f9 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -2516,7 +2516,7 @@ static bool any_disk_is_uptodate(struct drbd_device *device)
+ 	return ret;
+ }
+ 
+-static int try_to_promote(struct drbd_device *device, LONG_PTR timeout, bool ndelay)
++int try_to_promote(struct drbd_device *device, LONG_PTR timeout, bool ndelay)
+ {
+ 	struct drbd_resource *resource = device->resource;
+ 	int rv, retry = timeout / (HZ / 5); /* One try_ every 200ms */
+-- 
+2.17.0
+

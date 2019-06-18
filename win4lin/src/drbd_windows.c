@@ -3442,6 +3442,9 @@ struct block_device *bdget(dev_t device_no)
 	block_device->bd_block_size = 512;
 	block_device->mount_point.Buffer = NULL;
 
+/* TODO: to test 'auto-promote' */
+block_device->is_bootdevice = 1;
+
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
 

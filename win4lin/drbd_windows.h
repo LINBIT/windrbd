@@ -552,12 +552,15 @@ struct block_device {
 	int minor;	/* in case drbd_device is still NULL we need to shadow it here */
 	struct drbd_device *drbd_device;
 	struct _DEVICE_OBJECT *windows_device;	/* If that is a backing dev, the target device to send the I/O IRPs to. If this is a DRBD device, the device created by bdget()) */
+
+		/* TODO: those two will go away again */
 	struct _DEVICE_OBJECT *upper_windows_device; /* If upper device, this is the device created in AddDevice of the PnP request. */
 	struct _DEVICE_OBJECT *attached_windows_device; /* If upper device, this is the device returned by IoAttachDeviceToDeviceStack in AddDevice of the PnP request. */
 	struct _FILE_OBJECT *file_object; /* As returned by IoGetDeviceObjectPointer() */
 	UNICODE_STRING path_to_device;
 	UNICODE_STRING mount_point;
 	bool is_mounted;
+	bool is_bootdevice;
 
 	IO_REMOVE_LOCK remove_lock;
 
@@ -1405,5 +1408,8 @@ void windrbd_bdget(struct block_device *this_bdev);
 void windrbd_bdput(struct block_device *this_bdev);
 
 int windrbd_create_windows_device_for_minor(int minor);
+
+/* See drbd_main.c */
+int try_to_promote(struct drbd_device *device, LONG_PTR timeout, bool ndelay);
 
 #endif // DRBD_WINDOWS_H
