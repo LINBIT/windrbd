@@ -14,6 +14,31 @@ Planned: Feb 28 2019
 Real: Apr 10 2019
 -----------------------------------------------------------------------
 
+TODO: Code quality: better solution for double REMOVE_DEVICE
+
+	Setting a pointer to (void*) -1 is not a production ready
+	solution.
+
+TODO: Bug: w0 not accessible after up/down/up/primary
+
+	It does not show up in partition manager and also no drive
+	letter is assigned. It shows up in device manager, however
+	also the device object \Devices\Drbd5 exists.
+
+	On drbdadm down the device object is not deleted.
+
+	mounting fails (is this the same bug?)
+
+TODO: Feature: Pass DRBD parameters of root device to kernel
+
+	Hopefully this can be done via the --filename option
+	of sanboot. In Windows read and use those parameters 
+	(they are currently hard coded)
+
+	(old entry: Get WinDRBD parameters somehow (via http / JSON?).
+	Storing it in Registry of the image is not a good idea (also BCD
+	is a registry hive).)
+
 TODO: Bug: BSOD 0x000000f4 on booting diskless
 
 	Meaning critical process died (similar to Attempt to kill
@@ -41,32 +66,11 @@ TODO: Bug: Out of memory very soon on boot
 	So, bug is probably in the page out path (TODO: try
 	booting several times without pagefile).
 
-TODO: Bug: Cannot shut down Diskless client
-
-	Hangs. DRBD device is disconnected, hang is most likely
-	in wait_for_primary. Host is not pingable either so
-	this is probably after the network was shut down.
-	(it does not hang always)
-
 TODO: Bug: w0 is read-only
 
 	This does not have a MBR on it. To work around it make it primary
 	set it offline with partition manager and set it online
 	again.
-
-TODO: Bug: w0 not accessible after up/down/up/primary
-
-	It does not show up in partition manager and also no drive
-	letter is assigned. It shows up in device manager, however
-	also the device object \Devices\Drbd5 exists.
-
-	On drbdadm down the device object is not deleted.
-
-TODO: Feature: become Primary automatically after reconnect
-
-	Right now there is no recovery when the boot device
-	is disconnected. It should be done such that Windows
-	never sees an I/O error.
 
 TODO: Security: How to identify clients with cgi-script
 
@@ -88,16 +92,6 @@ TODO: Feature: set netboot flag via iPXE
 
 TODO: Performance: make keep-alive work with cgi-script
 
-TODO: Feature: Pass DRBD parameters of root device to kernel
-
-	Hopefully this can be done via the --filename option
-	of sanboot. In Windows read and use those parameters 
-	(they are currently hard coded)
-
-	(old entry: Get WinDRBD parameters somehow (via http / JSON?).
-	Storing it in Registry of the image is not a good idea (also BCD
-	is a registry hive).)
-
 TODO: Feature: Create a WinPE image with network and WinDRBD.
 
 	And see if we can install on top of the WinDRBD device
@@ -117,11 +111,6 @@ TODO: Bug: Can also write when secondary.
 
 	DRBD seems to use Linux' mechanism (via open(2)) to check
 	for writability and doesn't check when receiving bio's.
-
-TODO: Code quality: better solution for double REMOVE_DEVICE
-
-	Setting a pointer to (void*) -1 is not a production ready
-	solution.
 
 TODO: Bug: handle the case where DRBD device size drops to 0 again
 
@@ -5203,4 +5192,25 @@ Done: Bug: Windows does not switch into graphics mode any more
 Done: Bug: Windows freezes very soon when booted via WinDRBD system volume
 	Hasn't happened recently after giving it more RAM (and turned
 	off pagefile) and disabling both net and mem printk's
+
+Done: Bug: Cannot shut down Diskless client
+
+	Hangs. DRBD device is disconnected, hang is most likely
+	in wait_for_primary. Host is not pingable either so
+	this is probably after the network was shut down.
+	(it does not hang always)
+
+	Problem was wait_for_becoming_primary doing exactly that
+	forever. We now unlock processes waiting for primary
+	when shutting down (exactly: when Windows sends a
+	QUERY_POWER for system power state, which works
+	on Windows 7 but might fail on other systems).
+
+Done: Feature: become Primary automatically after reconnect
+
+	Right now there is no recovery when the boot device
+	is disconnected. It should be done such that Windows
+	never sees an I/O error.
+
+	Done, should work with both data and system disks.
 
