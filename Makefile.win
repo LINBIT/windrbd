@@ -122,6 +122,10 @@ endif
 ifdef BIO_REF_DEBUG
 C_DEFINES += -D BIO_REF_DEBUG=1
 endif
+ifdef BOOT
+C_DEFINES += -D CREATE_BOOT_DEVICE=1
+endif
+
 WIN_CFLAGS += /GF /Gm- /Zp8 /GS /Gy 
 # /fp:precise  # precise - "precise" floating-point model; results are predictable
 WIN_CFLAGS += /Zc:wchar_t- /Zc:forScope /Zc:inline /GR- 
