@@ -583,6 +583,8 @@ struct block_device {
 	struct fault_injection inject_on_completion;
 	struct fault_injection inject_on_request;
 
+	bool powering_down;
+
 	struct _KEVENT primary_event;
 	struct _KEVENT capacity_event;
 };

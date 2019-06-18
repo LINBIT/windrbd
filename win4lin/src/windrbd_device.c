@@ -81,7 +81,7 @@ static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 	int rv;
 	LONG_PTR timeout = LONG_TIMEOUT * HZ / 10;
 
-	if (bdev->is_bootdevice) {
+	if (bdev->is_bootdevice && !bdev->powering_down) {
 		drbd_device = bdev->drbd_device;
 		if (drbd_device != NULL) {
 			resource = drbd_device->resource;
@@ -101,10 +101,18 @@ printk("rv is %d\n", rv);
 					if (rv == SS_SUCCESS)
 						break;
 
+					if (bdev->powering_down)
+						break;
+
 					msleep(100);
 				}
 			}
 		}
+	}
+
+	if (bdev->powering_down) {
+printk("currently powering down, cancelling request\n");
+		return STATUS_NO_SUCH_DEVICE;
 	}
 
 printk("Waiting for becoming primary\n");
@@ -1777,6 +1785,13 @@ static NTSTATUS windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	dbg("Power: device: %p irp: %p\n", device, irp);
 
+	if (s->MinorFunction == IRP_MN_QUERY_POWER) {
+		printk("is IRP_MN_QUERY_POWER for %d\n", s->Parameters.Power.Type);
+	}
+	if (s->MinorFunction == IRP_MN_SET_POWER) {
+		printk("is IRP_MN_SET_POWER for %d\n", s->Parameters.Power.Type);
+	}
+
 	PoStartNextPowerIrp(irp);
 	if (device == drbd_bus_device) {
 		struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
@@ -1785,6 +1800,25 @@ printk("Calling PoCallDriver ...\n");
 		status = PoCallDriver(bus_ext->lower_device, irp);
 printk("PoCallDriver returned %x\n", status);
 	} else {
+			/* TODO: if powering up after sleep / hibernate
+			 * unset this flag again.
+			 */
+
+		if (s->MinorFunction == IRP_MN_QUERY_POWER &&
+		    s->Parameters.Power.Type == SystemPowerState) {
+			struct block_device_reference *ref = device->DeviceExtension;
+			struct block_device *bdev;
+
+			if (ref != (void*) -1 && ref != NULL) {
+				bdev = ref->bdev;
+				if (bdev) {
+					printk("About to power down device %p, not trying to become primary any more.\n", device);
+					bdev->powering_down = 1;
+					KeSetEvent(&bdev->primary_event, 0, FALSE);
+				}
+			}
+		}
+
 		irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 		status = STATUS_NOT_SUPPORTED;
