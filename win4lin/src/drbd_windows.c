@@ -3370,13 +3370,6 @@ int windrbd_create_windows_device(struct block_device *bdev)
 
 		/* Tell the PnP manager that we are there ... */
 	windrbd_rescan_bus();
-#if 0
-	if (drbd_bus_device != NULL) {
-		IoInvalidateDeviceRelations(drbd_bus_device, BusRelations);
-	} else {
-		printk("Warning: no bus objects, Plug and play will not work.\n");
-	}
-#endif
 
 	return 0;
 }
@@ -3419,6 +3412,7 @@ struct block_device *bdget(dev_t device_no)
 	dev_t minor = MINOR(device_no);
 	NTSTATUS status;
 	struct block_device *block_device;
+	int ret;
 
 	block_device = kzalloc(sizeof(struct block_device), 0, 'DRBD');
 	if (block_device == NULL)
@@ -3435,6 +3429,12 @@ struct block_device *bdget(dev_t device_no)
 	if (!NT_SUCCESS(status)) {
 		WDRBD_ERROR("Failed to acquire remove lock, status is %s\n", status);
 		goto out_remove_lock_failed;
+	}
+
+	ret = windrbd_create_windows_device(block_device);
+	if (ret != 0) {
+		printk("Warning: Couldn't create windows device for volume\n");
+		goto create_windows_device_failed;
 	}
 
 	block_device->windows_device = NULL;
@@ -3455,6 +3455,8 @@ block_device->is_bootdevice = 1;
 	
 	return block_device;
 
+create_windows_device_failed:
+	IoReleaseRemoveLock(&block_device->remove_lock, NULL);
 out_remove_lock_failed:
 	kfree(block_device->path_to_device.Buffer);
 out_path_to_device_failed:
@@ -3629,12 +3631,6 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 		return ret;
 	}
 
-	ret = windrbd_create_windows_device(block_device);
-	if (ret != 0) {
-		printk("Warning: Couldn't create windows device for volume\n");
-		return ret;
-	}
-
 	ret = windrbd_mount(block_device);
 	if (ret != 0)
 		printk("Warning: Couldn't mount volume, perhaps the drive letter (%S) is in use?\n", mount_point);
@@ -3642,6 +3638,10 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 
 	return ret;
 }
+
+/* TODO: this function is currently unused. Maybe that changes (again)
+ * in the future, so leave it here for now.
+ */
 
 int windrbd_create_windows_device_for_minor(int minor)
 {
