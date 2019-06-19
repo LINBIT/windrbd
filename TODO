@@ -14,11 +14,6 @@ Planned: Feb 28 2019
 Real: Apr 10 2019
 -----------------------------------------------------------------------
 
-TODO: Code quality: better solution for double REMOVE_DEVICE
-
-	Setting a pointer to (void*) -1 is not a production ready
-	solution.
-
 TODO: Bug: w0 not accessible after up/down/up/primary
 
 	It does not show up in partition manager and also no drive
@@ -29,6 +24,11 @@ TODO: Bug: w0 not accessible after up/down/up/primary
 
 	mounting fails (is this the same bug?)
 
+TODO: Bug: up-down loop fails currently.
+
+	We reworked REMOVE_DEVICE again. Currently we get a
+	SUPRISE_REMOVAL which we must handle.
+
 TODO: Feature: Pass DRBD parameters of root device to kernel
 
 	Hopefully this can be done via the --filename option
@@ -38,6 +38,8 @@ TODO: Feature: Pass DRBD parameters of root device to kernel
 	(old entry: Get WinDRBD parameters somehow (via http / JSON?).
 	Storing it in Registry of the image is not a good idea (also BCD
 	is a registry hive).)
+
+TODO: Feature: Become Primary only on write requests
 
 TODO: Bug: BSOD 0x000000f4 on booting diskless
 
@@ -99,13 +101,7 @@ TODO: Feature: Create a WinPE image with network and WinDRBD.
 	parameters also via DHCP so the user does not need
 	to enter them again.
 
-TODO: Bug: can't create mount point?
-	We will later allow the user to choose between disk
-	(where Windows manages the drive letters) and volume
-	(where we have to do that, most likely) device objects.
-	The last is meant for non-sysroot devices only. Not sure
-	yet if we need those but then we probably want to fix
-	the driver letter thing (again)
+TODO: Feature: support Volume devices
 
 TODO: Bug: Can also write when secondary.
 
@@ -124,7 +120,7 @@ TODO: Feature: Windows should take IP address from DHCP on boot
 
 	Right now, we assign a static address.
 
-TODO: Improve boot speed.
+TODO: Performance: Improve boot speed.
 
 	Right now it takes more than 5 minutes until the system is
 	usable
@@ -212,6 +208,11 @@ TODO: Feature: Make C:\ as Primary Diskless work
 	Left to do: see seperate TODO's.
 
 -----------------------------------------------------------------------
+
+TODO: Feature: implement fsync_bdev
+
+	called on becoming secondary
+
 TODO: Bug: Allow rcu_read_lock() being called recursively.
 
 	This should fix the system lockup we observed on
@@ -5213,4 +5214,27 @@ Done: Feature: become Primary automatically after reconnect
 	never sees an I/O error.
 
 	Done, should work with both data and system disks.
+
+Done: Code quality: better solution for double REMOVE_DEVICE
+
+	Setting a pointer to (void*) -1 is not a production ready
+	solution.
+
+	Done, now have delete_pending flag.
+
+Done: Bug: can't create mount point?
+	We will later allow the user to choose between disk
+	(where Windows manages the drive letters) and volume
+	(where we have to do that, most likely) device objects.
+	The last is meant for non-sysroot devices only. Not sure
+	yet if we need those but then we probably want to fix
+	the driver letter thing (again)
+
+	This was due to a failing of create_windows_device.
+	We now call create_windows_device() directly from
+	bdget and scan the bus at the end of device creation.
+	It works.
+
+	For now all mount related code is commented out
+	not sure if we need it.
 
