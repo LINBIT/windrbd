@@ -3368,9 +3368,6 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	new_device->Flags |= DO_DIRECT_IO;
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
-		/* Tell the PnP manager that we are there ... */
-	windrbd_rescan_bus();
-
 	return 0;
 }
 
@@ -3436,8 +3433,6 @@ struct block_device *bdget(dev_t device_no)
 		printk("Warning: Couldn't create windows device for volume\n");
 		goto create_windows_device_failed;
 	}
-
-	block_device->windows_device = NULL;
 	block_device->minor = minor;
 	block_device->bd_block_size = 512;
 	block_device->mount_point.Buffer = NULL;

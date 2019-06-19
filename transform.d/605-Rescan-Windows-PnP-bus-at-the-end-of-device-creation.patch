@@ -1,0 +1,29 @@
+From b5d92253dc1262f48a3d3502d05bb3fedf6da12c Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 19 Jun 2019 17:31:14 +0200
+Subject: [PATCH] Rescan Windows PnP bus at the end of device creation.
+
+We cannot do this within bdget() because bdget is called at the
+beginning where the drbd_device isn't set up yet. We need the
+drbd_device to find the corresponding windows devices.
+---
+ drbd/drbd_main.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 790b6f9..4cad14e 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3841,6 +3841,9 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 		 */
+ 	device->this_bdev->drbd_device = device;
+ 
++		/* Tell the PnP manager that we are there ... */
++	windrbd_rescan_bus();
++
+ 	return NO_ERROR;
+ 
+ out_remove_peer_device:
+-- 
+2.17.0
+
