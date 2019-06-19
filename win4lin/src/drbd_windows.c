@@ -3381,7 +3381,11 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 		return;
 	}
 
-	bdev->windows_device->DeviceExtension = NULL;
+		/* Delete the reference to the Windows device object.
+		 * Thereby, the windows device will not be reported
+		 * again when rescanning the bus and will be deleted
+		 * by sending a PnP REMOVE_DEVICE request.
+		 */
 
 	windows_device = bdev->windows_device;
 	bdev->windows_device = NULL;
@@ -3792,11 +3796,14 @@ int windrbd_umount(struct block_device *bdev)
 	}
 #endif
 
+/* TODO: reenable this in case we need mounting again */
+#if 0
 printk("About to IoDeleteSymbolicLink(%S)\n", bdev->mount_point.Buffer);
 	status = IoDeleteSymbolicLink(&bdev->mount_point);
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S, status is %x\n", bdev->mount_point.Buffer, status);
 	}
+#endif
 
 #if 0
 	status = ZwFsControlFile(f, event_handle, NULL, NULL, &iostat, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0);

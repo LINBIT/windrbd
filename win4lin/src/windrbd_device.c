@@ -1736,7 +1736,7 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 		case IRP_MN_REMOVE_DEVICE:
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
 
-			if (!bdev->delete_pending) {
+			if (bdev && !bdev->delete_pending) {
 				bdev->delete_pending = true;
 				dbg("about to delete device object %p\n", device);
 				IoDeleteDevice(device);
