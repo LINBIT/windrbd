@@ -363,10 +363,10 @@ static struct drbd_params {
 #endif
 };
 
-
 static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 {
 	int ret;
+	struct drbd_device *drbd_device;
 
         drbd_genl_family.id = WINDRBD_NETLINK_FAMILY_ID;
 
@@ -391,6 +391,12 @@ static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 		 */
 	if ((ret = new_path(p->resource, p->peer_node_id, p->my_address, p->peer_address)) != 0)
 		return ret;
+
+	drbd_device = minor_to_device(p->minor);
+	if (drbd_device != NULL && drbd_device->this_bdev != NULL)
+		drbd_device->this_bdev->is_bootdevice = 1;
+	else
+		printk("internal error: cannot find drbd device for minor %d\n", p->minor);
 
 	return 0;
 }
