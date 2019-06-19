@@ -588,6 +588,7 @@ struct block_device {
 
 	struct _KEVENT primary_event;
 	struct _KEVENT capacity_event;
+	struct _KEVENT device_removed_event;
 };
 
 	/* Starting with version 0.7.1, this is the device extension

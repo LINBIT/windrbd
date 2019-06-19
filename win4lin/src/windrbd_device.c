@@ -1738,7 +1738,6 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 			/* If it is NULL then we already deleted the device */
 
 			if (ref != NULL) {
-//				bdev->delete_pending = true;
 				dbg("about to delete device object %p\n", device);
 				/* Avoid anything more happending to that
 				 * device. Reason is that there is a reference
@@ -1748,6 +1747,9 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 				device->DeviceExtension = NULL;
 				IoDeleteDevice(device);
 				dbg("device object deleted\n");
+
+				if (bdev != NULL)
+					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
 			} else {
 				dbg("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
 			}

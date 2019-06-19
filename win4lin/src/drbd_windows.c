@@ -3392,10 +3392,6 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 	windows_device = bdev->windows_device;
 	bdev->windows_device = NULL;
 
-	ref = windows_device->DeviceExtension;
-	if (ref != NULL)
-		ref->bdev = NULL;
-
 		/* Tell the PnP manager that we are about to disappear.
 		 * The device object will be deleted in a PnP REMOVE_DEVICE
 		 * request.
@@ -3405,6 +3401,8 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 
 		printk("PnP did not work, removing device manually.\n");
 		IoDeleteDevice(windows_device);
+	} else {
+		KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 	}
 }
 
@@ -3455,6 +3453,7 @@ block_device->is_bootdevice = 1;
 
 	KeInitializeEvent(&block_device->primary_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->capacity_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&block_device->device_removed_event, NotificationEvent, FALSE);
 
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);
 	
@@ -3851,10 +3850,6 @@ static void windrbd_destroy_block_device(struct kref *kref)
 	bdev->path_to_device.Buffer = NULL;
 
 	kfree(bdev);
-
-		/* After that, we still might receive a REMOVE_DEVICE
-		 * request, so do not touch the bdev in this path.
-		 */
 }
 
 void windrbd_bdget(struct block_device *this_bdev)
