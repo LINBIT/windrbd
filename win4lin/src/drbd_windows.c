@@ -3374,6 +3374,8 @@ int windrbd_create_windows_device(struct block_device *bdev)
 void windrbd_remove_windows_device(struct block_device *bdev)
 {
 	struct _DEVICE_OBJECT *windows_device;
+	struct block_device_reference *ref;
+
 printk("removing device %S\n", bdev->path_to_device.Buffer);
 
 	if (bdev->windows_device == NULL) {
@@ -3389,6 +3391,10 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 
 	windows_device = bdev->windows_device;
 	bdev->windows_device = NULL;
+
+	ref = windows_device->DeviceExtension;
+	if (ref != NULL)
+		ref->bdev = NULL;
 
 		/* Tell the PnP manager that we are about to disappear.
 		 * The device object will be deleted in a PnP REMOVE_DEVICE
@@ -3845,6 +3851,10 @@ static void windrbd_destroy_block_device(struct kref *kref)
 	bdev->path_to_device.Buffer = NULL;
 
 	kfree(bdev);
+
+		/* After that, we still might receive a REMOVE_DEVICE
+		 * request, so do not touch the bdev in this path.
+		 */
 }
 
 void windrbd_bdget(struct block_device *this_bdev)

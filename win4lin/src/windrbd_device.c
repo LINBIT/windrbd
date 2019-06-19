@@ -1495,7 +1495,6 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
 		{
-
 			if (bdev != NULL)
 				wait_for_becoming_primary(bdev);
 			else
@@ -1736,9 +1735,17 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 		case IRP_MN_REMOVE_DEVICE:
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
 
-			if (bdev && !bdev->delete_pending) {
-				bdev->delete_pending = true;
+			/* If it is NULL then we already deleted the device */
+
+			if (ref != NULL) {
+//				bdev->delete_pending = true;
 				dbg("about to delete device object %p\n", device);
+				/* Avoid anything more happending to that
+				 * device. Reason is that there is a reference
+				 * count on the device, so it might still
+				 * exist for a short period.
+				 */
+				device->DeviceExtension = NULL;
 				IoDeleteDevice(device);
 				dbg("device object deleted\n");
 			} else {
