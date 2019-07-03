@@ -1729,9 +1729,7 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 
 		case IRP_MN_SURPRISE_REMOVAL:
 			dbg("got IRP_MN_SURPRISE_REMOVAL\n");
-			status = STATUS_SUCCESS;
-			break;
-
+				/* fallthru */
 		case IRP_MN_REMOVE_DEVICE:
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
 
@@ -1748,8 +1746,11 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 				IoDeleteDevice(device);
 				dbg("device object deleted\n");
 
-				if (bdev != NULL)
+				if (bdev != NULL) {
+					bdev->powering_down = 1;
+				/* TODO: wait for primary waiters to exit */
 					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
+				}
 			} else {
 				dbg("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
 			}
