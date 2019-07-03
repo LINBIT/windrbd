@@ -3402,6 +3402,7 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 		printk("PnP did not work, removing device manually.\n");
 		IoDeleteDevice(windows_device);
 	} else {
+printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
 		KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 	}
 }

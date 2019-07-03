@@ -81,6 +81,14 @@ static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 	int rv;
 	LONG_PTR timeout = LONG_TIMEOUT * HZ / 10;
 
+	drbd_device = bdev->drbd_device;
+	if (drbd_device != NULL) {
+		resource = drbd_device->resource;
+		if (resource == NULL)
+			return STATUS_INVALID_PARAMETER;
+	} else
+		return STATUS_INVALID_PARAMETER;
+
 	if (bdev->is_bootdevice && !bdev->powering_down) {
 		drbd_device = bdev->drbd_device;
 		if (drbd_device != NULL) {
@@ -108,6 +116,15 @@ printk("rv is %d\n", rv);
 				}
 			}
 		}
+	} else {
+		if (!bdev->powering_down) {
+printk("Waiting for becoming primary\n");
+			status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
+			if (status != STATUS_SUCCESS)
+				printk("KeWaitForSingleObject returned %x\n", status);
+else
+printk("Am primary now, proceeding with request\n");
+		}
 	}
 
 	if (bdev->powering_down) {
@@ -115,14 +132,7 @@ printk("currently powering down, cancelling request\n");
 		return STATUS_NO_SUCH_DEVICE;
 	}
 
-printk("Waiting for becoming primary\n");
-	status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
-	if (status != STATUS_SUCCESS)
-		printk("KeWaitForSingleObject returned %x\n", status);
-else
-printk("Am primary now, proceeding with request\n");
-
-	return status;
+	return (resource->role[NOW] == R_PRIMARY ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL);
 }
 
 static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *dev)
@@ -338,11 +348,10 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
+printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	status = wait_for_becoming_primary(dev);
 	if (status != STATUS_SUCCESS)
 		goto out;
-
-printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 		/* custom WINDRBD ioctl's */
@@ -753,11 +762,11 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	int err;
 
 	if (dev->drbd_device != NULL) {
+		dbg(KERN_DEBUG "s->Parameters.Create.SecurityContext->DesiredAccess is %x\n", s->Parameters.Create.SecurityContext->DesiredAccess);
+
 		status = wait_for_becoming_primary(dev->drbd_device->this_bdev);
 		if (status != STATUS_SUCCESS)
 			goto exit;
-
-		dbg(KERN_DEBUG "s->Parameters.Create.SecurityContext->DesiredAccess is %x\n", s->Parameters.Create.SecurityContext->DesiredAccess);
 
 		mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
        	               (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0;
@@ -1495,9 +1504,10 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
 		{
-			if (bdev != NULL)
+			if (bdev != NULL) {
+printk("starting device ...\n");
 				wait_for_becoming_primary(bdev);
-			else
+			} else
 				printk("bdev is NULL on start device, this should not happen (minor is %x)\n", s->MinorFunction);
 
 			status = STATUS_SUCCESS;
@@ -1959,8 +1969,10 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 			unsigned long long sector_count, total_size;
 			int rw;
 
-			if (bdev != NULL)
+			if (bdev != NULL) {
+printk("SCSI I/O waiting for primary\n");
 				wait_for_becoming_primary(bdev);
+			}
 			else
 				printk("bdev is NULL on SCSI I/O, this should not happen (minor is %x)\n", s->MinorFunction);
 
