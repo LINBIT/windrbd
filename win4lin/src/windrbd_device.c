@@ -960,6 +960,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	for (i=0;i<bio->bi_vcnt;i++)
 		kfree(bio->bi_io_vec[i].bv_page);
 
+	IoReleaseRemoveLock(&bio->bi_bdev->remove_lock, NULL);
 	bio_put(bio);
 }
 
@@ -1166,12 +1167,17 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		goto exit;
 	}
 
+	status = IoAcquireRemoveLock(&dev->remove_lock, NULL);
+	if (!NT_SUCCESS(status))
+		printk("Warning: could not acquire remove lock\n");
+	status = STATUS_INVALID_DEVICE_REQUEST;
+
 	if (dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		dbg("I/O request while not primary, waiting for primary.\n");
 
 		status = wait_for_becoming_primary(dev->drbd_device->this_bdev);
 		if (status != STATUS_SUCCESS)
-			goto exit;
+			goto exit_remove_lock;
 	}
 
 		/* allow I/O when the local disk failed, usually there
@@ -1182,9 +1188,12 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 	status = make_drbd_requests_from_irp(irp, dev);
 	if (status != STATUS_SUCCESS)
-		goto exit;
+		goto exit_remove_lock;
 
 	return STATUS_PENDING;
+
+exit_remove_lock:
+	IoReleaseRemoveLock(&dev->remove_lock, NULL);
 
 exit:
 	irp->IoStatus.Status = status;
@@ -1739,7 +1748,9 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 
 		case IRP_MN_SURPRISE_REMOVAL:
 			dbg("got IRP_MN_SURPRISE_REMOVAL\n");
-				/* fallthru */
+			status = STATUS_SUCCESS;
+			break;
+
 		case IRP_MN_REMOVE_DEVICE:
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
 
@@ -1924,6 +1935,9 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 		return STATUS_NO_SUCH_DEVICE;
 	}
 	bdev = ref->bdev;
+	status = IoAcquireRemoveLock(&bdev->remove_lock, NULL);
+	if (!NT_SUCCESS(status))
+		printk("Warning: could not acquire remove lock\n");
 
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
@@ -2122,6 +2136,8 @@ printk("got unimplemented SCSI function %x\n", srb->Function);
 	}
 
 out:
+	IoReleaseRemoveLock(&bdev->remove_lock, NULL);
+
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 	return status;

@@ -3392,6 +3392,9 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 	windows_device = bdev->windows_device;
 	bdev->windows_device = NULL;
 
+		/* counterpart to acquiring in bdget() */
+	IoReleaseRemoveLock(&bdev->remove_lock, NULL);
+
 		/* Tell the PnP manager that we are about to disappear.
 		 * The device object will be deleted in a PnP REMOVE_DEVICE
 		 * request.
@@ -3429,7 +3432,6 @@ struct block_device *bdget(dev_t device_no)
 
 	kref_init(&block_device->kref);
 
-		/* TODO: release that lock later ... */
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
