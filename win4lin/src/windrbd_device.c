@@ -1764,7 +1764,6 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 			if (ref != NULL) {
 				if (bdev != NULL) {
 					bdev->powering_down = 1; /* meaning no more I/O on that device */
-					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
 					IoAcquireRemoveLock(&bdev->remove_lock, NULL);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
 printk("into IoReleaseRemoveLockAndWait ... \n");
@@ -1781,6 +1780,10 @@ printk("out of IoReleaseRemoveLockAndWait ... \n");
 				 */
 				device->DeviceExtension = NULL;
 				IoDeleteDevice(device);
+				if (bdev != NULL) {
+						/* To allow bdev being removed. */
+					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
+				}
 				dbg("device object deleted\n");
 			} else {
 				dbg("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
