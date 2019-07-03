@@ -3836,6 +3836,7 @@ static void windrbd_destroy_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 
+printk("1\n");
 		/* This is legal. Users may create DRBD devices without
 		 * mount point.
 		 */
@@ -3846,13 +3847,20 @@ static void windrbd_destroy_block_device(struct kref *kref)
 		kfree(bdev->mount_point.Buffer);
 		bdev->mount_point.Buffer = NULL;
 	}
-	if (bdev->windows_device != NULL)
+printk("2\n");
+	if (bdev->windows_device != NULL) {
+printk("3\n");
 		windrbd_remove_windows_device(bdev);
+	}
 
+printk("4\n");
 	kfree(bdev->path_to_device.Buffer);
+printk("5\n");
 	bdev->path_to_device.Buffer = NULL;
 
+printk("6\n");
 	kfree(bdev);
+printk("7\n");
 }
 
 void windrbd_bdget(struct block_device *this_bdev)
