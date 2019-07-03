@@ -1974,11 +1974,11 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
-// printk("got SCSI function %x\n", srb->Function);
+printk("got SCSI function %x\n", srb->Function);
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
-// printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
+printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 		switch (cdb->AsByte[0]) {
 		case SCSIOP_TEST_UNIT_READY:
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
@@ -2049,7 +2049,8 @@ printk("SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : 
 				irp->IoStatus.Status = STATUS_PENDING;
 				return STATUS_PENDING;
 			}
-
+printk("error initiating request status is %x\n", status);
+			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 			break;
 		}
 
