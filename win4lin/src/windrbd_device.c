@@ -25,6 +25,8 @@
  * devices (the 'physical' devices), see drbd_windows.c
  */
 
+/* TODO: delete_pending and powering_down probably do the same thing ... */
+
 #include <wdm.h>
 #include <ntddk.h>
 #include <ntdddisk.h>
@@ -1167,10 +1169,13 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		goto exit;
 	}
 
-	status = IoAcquireRemoveLock(&dev->remove_lock, NULL);
-	if (!NT_SUCCESS(status))
-		printk("Warning: could not acquire remove lock\n");
+	IoAcquireRemoveLock(&dev->remove_lock, NULL);
 	status = STATUS_INVALID_DEVICE_REQUEST;
+
+	if (dev->powering_down) {
+		printk("I/O while device about to be deleted\n");
+		goto exit_remove_lock;
+	}
 
 	if (dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		dbg("I/O request while not primary, waiting for primary.\n");
@@ -1757,6 +1762,17 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 			/* If it is NULL then we already deleted the device */
 
 			if (ref != NULL) {
+				if (bdev != NULL) {
+					bdev->powering_down = 1; /* meaning no more I/O on that device */
+					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
+					IoAcquireRemoveLock(&bdev->remove_lock, NULL);
+		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
+printk("into IoReleaseRemoveLockAndWait ... \n");
+					IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
+printk("out of IoReleaseRemoveLockAndWait ... \n");
+				} else {
+					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
+				}
 				dbg("about to delete device object %p\n", device);
 				/* Avoid anything more happending to that
 				 * device. Reason is that there is a reference
@@ -1766,12 +1782,6 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 				device->DeviceExtension = NULL;
 				IoDeleteDevice(device);
 				dbg("device object deleted\n");
-
-				if (bdev != NULL) {
-					bdev->powering_down = 1;
-				/* TODO: wait for primary waiters to exit */
-					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
-				}
 			} else {
 				dbg("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
 			}
@@ -1935,11 +1945,13 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 		return STATUS_NO_SUCH_DEVICE;
 	}
 	bdev = ref->bdev;
-	status = IoAcquireRemoveLock(&bdev->remove_lock, NULL);
-	if (!NT_SUCCESS(status))
-		printk("Warning: could not acquire remove lock\n");
-
+	IoAcquireRemoveLock(&bdev->remove_lock, NULL);
 	status = STATUS_INVALID_DEVICE_REQUEST;
+
+	if (bdev->powering_down) {
+		printk("I/O while device about to be deleted\n");
+		goto out;
+	}
 
 // printk("SCSI request for device %p\n", device);
 
