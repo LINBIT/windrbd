@@ -3375,6 +3375,8 @@ void windrbd_remove_windows_device(struct block_device *bdev)
 {
 	struct _DEVICE_OBJECT *windows_device;
 	struct block_device_reference *ref;
+	LARGE_INTEGER timeout;
+	NTSTATUS status;
 
 printk("removing device %S\n", bdev->path_to_device.Buffer);
 
@@ -3397,15 +3399,21 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 		 * The device object will be deleted in a PnP REMOVE_DEVICE
 		 * request.
 		 */
-	if (windrbd_rescan_bus() < 0) {
+	do {
+		if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
-		printk("PnP did not work, removing device manually.\n");
-		IoDeleteDevice(bdev->windows_device);
-	} else {
+			printk("PnP did not work, removing device manually.\n");
+			IoDeleteDevice(bdev->windows_device);
+			break;
+		} else {
+			timeout.QuadPart = -1 * 10000 * 1000;  /* 1 sec */
 printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
-		KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
-	}
+			status = KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, &timeout);
+			if (NT_SUCCESS(status))
+				break;
+		}
+	} while (1);
 }
 
 /* This is DRBD specific: DRBD calls this only once (same for
