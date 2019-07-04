@@ -1318,7 +1318,7 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 
 	for_each_resource(resource, &drbd_resources) {
 		idr_for_each_entry(struct drbd_device *, &resource->devices, drbd_device, vnr) {
-			if (drbd_device && drbd_device->this_bdev && drbd_device->this_bdev->windows_device) {
+			if (drbd_device && drbd_device->this_bdev && !drbd_device->this_bdev->detached_from_device_tree) {
 				if (count < max && array != NULL) {
 					array[count] = drbd_device->this_bdev->windows_device;
 					ObReferenceObject(drbd_device->this_bdev->windows_device);

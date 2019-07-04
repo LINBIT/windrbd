@@ -3383,14 +3383,12 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 		return;
 	}
 
-		/* Delete the reference to the Windows device object.
-		 * Thereby, the windows device will not be reported
+		/* Thereby, the windows device will not be reported
 		 * again when rescanning the bus and will be deleted
 		 * by sending a PnP REMOVE_DEVICE request.
 		 */
 
-	windows_device = bdev->windows_device;
-	bdev->windows_device = NULL;
+	bdev->detached_from_device_tree = true;
 
 		/* counterpart to acquiring in bdget() */
 	IoReleaseRemoveLock(&bdev->remove_lock, NULL);
@@ -3403,7 +3401,7 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
 		printk("PnP did not work, removing device manually.\n");
-		IoDeleteDevice(windows_device);
+		IoDeleteDevice(bdev->windows_device);
 	} else {
 printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
 		KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
