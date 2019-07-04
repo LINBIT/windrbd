@@ -1905,7 +1905,15 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 		bdev = ref->bdev;
 
 		if (bdev != NULL && !bdev->delete_pending && !bdev->powering_down) {
-			windrbd_bdget(bdev);
+
+		/* This is racy: if refcount is 0 here, it is incremented
+		 * again and the destroy function is called twice for
+		 * the same object (later in windrbd_bdput(). We now have
+		 * RemoveLocks around the I/O paths and will wait in
+		 * REMOVE_DEVICE for completion of all I/O including
+		 * this one.
+		 */
+//			windrbd_bdget(bdev);
 
 			dbg("waiting for block device size to become valid.\n");
 			status = KeWaitForSingleObject(&bdev->capacity_event, Executive, KernelMode, FALSE, NULL);
@@ -1926,7 +1934,7 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 			else {
 				dbg("KeWaitForSingleObject returned %x\n", status);
 			}
-			windrbd_bdput(bdev);
+//			windrbd_bdput(bdev);
 		}
 	} else {
 		dbg("ref is NULL!\n");
