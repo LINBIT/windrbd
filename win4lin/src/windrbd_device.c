@@ -83,6 +83,8 @@ static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 	int rv;
 	LONG_PTR timeout = LONG_TIMEOUT * HZ / 10;
 
+printk("1\n");
+
 	drbd_device = bdev->drbd_device;
 	if (drbd_device != NULL) {
 		resource = drbd_device->resource;
@@ -111,7 +113,7 @@ printk("rv is %d\n", rv);
 					if (rv == SS_SUCCESS)
 						break;
 
-					if (bdev->powering_down)
+					if (bdev->powering_down || bdev->delete_pending)
 						break;
 
 					msleep(100);
@@ -129,7 +131,7 @@ printk("Am primary now, proceeding with request\n");
 		}
 	}
 
-	if (bdev->powering_down) {
+	if (bdev->powering_down || bdev->delete_pending) {
 printk("currently powering down, cancelling request\n");
 		return STATUS_NO_SUCH_DEVICE;
 	}
@@ -1318,7 +1320,7 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 
 	for_each_resource(resource, &drbd_resources) {
 		idr_for_each_entry(struct drbd_device *, &resource->devices, drbd_device, vnr) {
-			if (drbd_device && drbd_device->this_bdev && !drbd_device->this_bdev->detached_from_device_tree) {
+			if (drbd_device && drbd_device->this_bdev && !drbd_device->this_bdev->delete_pending) {
 				if (count < max && array != NULL) {
 					array[count] = drbd_device->this_bdev->windows_device;
 					ObReferenceObject(drbd_device->this_bdev->windows_device);
@@ -1902,7 +1904,7 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 	if (ref != NULL) {
 		bdev = ref->bdev;
 
-		if (bdev != NULL && !bdev->delete_pending) {
+		if (bdev != NULL && !bdev->delete_pending && !bdev->powering_down) {
 			windrbd_bdget(bdev);
 
 			dbg("waiting for block device size to become valid.\n");
@@ -1910,11 +1912,15 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 			if (status == STATUS_SUCCESS) {
 				dbg("Got size now, proceeding with I/O request\n");
 
-				if (bdev->d_size > 0) {
-					dbg("block device size is %lld\n", bdev->d_size);
-					d_size = bdev->d_size;
+				if (!bdev->powering_down && !bdev->delete_pending) {
+					if (bdev->d_size > 0) {
+						dbg("block device size is %lld\n", bdev->d_size);
+						d_size = bdev->d_size;
+					} else {
+						dbg("Warning: block device size still not known yet.\n");
+					}
 				} else {
-					dbg("Warning: block device size still not known yet.\n");
+					dbg("Warning: device object about to be deleted\n");
 				}
 			}
 			else {

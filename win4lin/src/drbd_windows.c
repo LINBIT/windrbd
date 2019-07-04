@@ -3390,7 +3390,7 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 		 * by sending a PnP REMOVE_DEVICE request.
 		 */
 
-	bdev->detached_from_device_tree = true;
+	bdev->delete_pending = true;
 
 		/* counterpart to acquiring in bdget() */
 	IoReleaseRemoveLock(&bdev->remove_lock, NULL);
