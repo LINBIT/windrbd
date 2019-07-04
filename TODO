@@ -29,6 +29,23 @@ TODO: Bug: up-down loop fails currently.
 	We reworked REMOVE_DEVICE again. Currently we get a
 	SUPRISE_REMOVAL which we must handle.
 
+	After introducing an event and a guard flag for new
+	I/O this got better. Now we probably hang in
+	try_to_promote/wait_event_interruptible.
+
+TODO: Bug: With a no-I/O resource up BSOD on power down
+
+	POWER_STATE_FAILURE
+	Hangs forever in auto promote, maybe we should put a
+	timeout there (we don't get any power or shutdown
+	IRPs on a non-I/O device object, it hangs in the
+	init loop forever waiting for primary)
+
+	When making the resource primary (by drbdadm up on
+	the peer) it continues and Windows is shut down.
+
+TODO: Test: up down when there is lots of I/O
+
 TODO: Feature: Pass DRBD parameters of root device to kernel
 
 	Hopefully this can be done via the --filename option
