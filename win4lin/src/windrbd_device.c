@@ -1857,7 +1857,7 @@ printk("PoCallDriver returned %x\n", status);
 
 			if (ref != NULL) {
 				bdev = ref->bdev;
-				if (bdev && !bdev->delete_pending) {
+				if (bdev) {
 					printk("About to power down device %p, not trying to become primary any more.\n", device);
 					bdev->powering_down = 1;
 					KeSetEvent(&bdev->primary_event, 0, FALSE);
