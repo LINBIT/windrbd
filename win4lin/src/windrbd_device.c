@@ -1950,6 +1950,9 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
+		srb = s->Parameters.Scsi.Srb;
+		if (srb)
+			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_NO_SUCH_DEVICE;
 	}
