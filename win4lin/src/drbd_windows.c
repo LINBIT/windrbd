@@ -3871,12 +3871,16 @@ printk("7\n");
 
 void windrbd_bdget(struct block_device *this_bdev)
 {
+printk("kref before: %d\n", this_bdev->kref.refcount);
 	kref_get(&this_bdev->kref);
+printk("kref after: %d\n", this_bdev->kref.refcount);
 }
 
 void windrbd_bdput(struct block_device *this_bdev)
 {
+printk("kref before: %d\n", this_bdev->kref.refcount);
 	kref_put(&this_bdev->kref, windrbd_destroy_block_device);
+printk("kref after: %d\n", this_bdev->kref.refcount);
 }
 
 /* See the comment at bdget(). DRBD calls this (currently) only
