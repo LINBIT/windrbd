@@ -3886,7 +3886,7 @@ void windrbd_bdput(struct block_device *this_bdev)
 void bdput(struct block_device *this_bdev)
 {
 	KeSetEvent(&this_bdev->capacity_event, 0, FALSE);
-	/* TODO: also Primary event */
+	KeSetEvent(&this_bdev->primary_event, 0, FALSE);
 
 	windrbd_bdput(this_bdev);
 }
