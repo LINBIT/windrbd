@@ -3869,6 +3869,7 @@ printk("6\n");
 printk("7\n");
 }
 
+/* TODO: those 2 function go away */
 void windrbd_bdget(struct block_device *this_bdev)
 {
 printk("kref before: %d\n", this_bdev->kref.refcount);

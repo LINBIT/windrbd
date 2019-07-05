@@ -14,16 +14,6 @@ Planned: Feb 28 2019
 Real: Apr 10 2019
 -----------------------------------------------------------------------
 
-TODO: Bug: w0 not accessible after up/down/up/primary
-
-	It does not show up in partition manager and also no drive
-	letter is assigned. It shows up in device manager, however
-	also the device object \Devices\Drbd5 exists.
-
-	On drbdadm down the device object is not deleted.
-
-	mounting fails (is this the same bug?)
-
 TODO: Bug: up-down loop fails currently.
 
 	We reworked REMOVE_DEVICE again. Currently we get a
@@ -32,6 +22,9 @@ TODO: Bug: up-down loop fails currently.
 	After introducing an event and a guard flag for new
 	I/O this got better. Now we probably hang in
 	try_to_promote/wait_event_interruptible.
+
+	It is most likely the wait_event_interruptible in
+	stable_state_change().
 
 TODO: Bug: With a no-I/O resource up BSOD on power down
 
@@ -5254,4 +5247,16 @@ Done: Bug: can't create mount point?
 
 	For now all mount related code is commented out
 	not sure if we need it.
+
+Done: Bug: w0 not accessible after up/down/up/primary
+
+	It does not show up in partition manager and also no drive
+	letter is assigned. It shows up in device manager, however
+	also the device object \Devices\Drbd5 exists.
+
+	On drbdadm down the device object is not deleted.
+
+	mounting fails (is this the same bug?)
+
+	Fixed drbdadm down code now, should work now.
 
