@@ -444,6 +444,9 @@ static int read_acpi_table(void)
 	NTSTATUS status;
 	ULONG size;
 	char buf[4096];	/* TODO: which maximum is defined? */
+	DWORD all_ids[100];
+	ULONG ids_bytes;
+	int i;
 
 	status = AuxKlibInitialize();
 	if (status != STATUS_SUCCESS) {
@@ -451,13 +454,25 @@ static int read_acpi_table(void)
 		return -EINVAL;
 	}
 
-	status = AuxKlibGetSystemFirmwareTable('ACPI', 'PCAF', buf, sizeof(buf), &size);
+	status = AuxKlibEnumerateSystemFirmwareTables('ACPI', all_ids, sizeof(all_ids), &ids_bytes);
+	if (status != STATUS_SUCCESS) {
+		printk("Couldn't iterate over ACPI IDs\n");
+	} else {
+		printk("%d bytes returned by AuxKlibEnumerateSystemFirmwareTables()\n", ids_bytes);
+
+		for (i=0;i<ids_bytes/sizeof(all_ids[0]);i++) {
+			printk("boot table %d: %c%c%c%c\n", i, all_ids[i] & 0xff, (all_ids[i] >> 8) & 0xff, (all_ids[i] >> 16) & 0xff, (all_ids[i] >> 24) & 0xff);
+		}
+	}
+
+	status = AuxKlibGetSystemFirmwareTable('ACPI', 'TFBi', buf, sizeof(buf), &size);
 
 	if (status == STATUS_SUCCESS) {
-		printk("table PCAF found\n");
+printk("table DRBD found\n");
 		return 0;
 	} else {
-		printk("error searching for table PCAF status is %x\n", status);
+		printk("error searching for ACPI table DRBD status is %x\n", status);
+		printk("Please pass boot parameters via ACPI (use iPXE to do so)\n");
 		return -ENOENT;
 	}
 }
@@ -467,12 +482,13 @@ void windrbd_init_boot_device(void)
 	int ret;
 	int i;
 
-	if (read_acpi_table() < 0)
+	if (read_acpi_table() < 0) {
+		printk("DRBD table not found, proceeding anyway...\n");
 		return;
-
-	printk("ACPI table reading successful, creating boot device now\n");
+	}
 return;
 
+	printk("ACPI table reading successful, creating boot device now\n");
 	for (i=0;i<1;i++) {
 		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
 		if (ret != 0)
