@@ -4,6 +4,8 @@
 #include "drbd_int.h"
 #include "windrbd_threads.h"
 
+#include <aux_klib.h>
+
 /* This creates a device on boot (called via wsk init thread).
  * It feeds DRBD via netlink packets to create the boot device.
  */
@@ -437,10 +439,39 @@ static int windrbd_create_boot_device_stage2(void *pp)
 	return 0;
 }
 
+static int read_acpi_table(void)
+{
+	NTSTATUS status;
+	ULONG size;
+	char buf[4096];	/* TODO: which maximum is defined? */
+
+	status = AuxKlibInitialize();
+	if (status != STATUS_SUCCESS) {
+		printk("Couldn't initialize AuxKlib, status is %x\n", status);
+		return -EINVAL;
+	}
+
+	status = AuxKlibGetSystemFirmwareTable('ACPI', 'PCAF', buf, sizeof(buf), &size);
+
+	if (status == STATUS_SUCCESS) {
+		printk("table PCAF found\n");
+		return 0;
+	} else {
+		printk("error searching for table PCAF status is %x\n", status);
+		return -ENOENT;
+	}
+}
+
 void windrbd_init_boot_device(void)
 {
 	int ret;
 	int i;
+
+	if (read_acpi_table() < 0)
+		return;
+
+	printk("ACPI table reading successful, creating boot device now\n");
+return;
 
 	for (i=0;i<1;i++) {
 		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
