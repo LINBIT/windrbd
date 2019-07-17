@@ -439,6 +439,101 @@ static int windrbd_create_boot_device_stage2(void *pp)
 	return 0;
 }
 
+/* taken from iPXE: ipxe/acpi.h */
+
+#pragma pack(1)
+
+struct acpi_header {
+        /** ACPI signature (4 ASCII characters) */
+        uint32_t signature;
+        /** Length of table, in bytes, including header */
+        uint32_t length;
+        /** ACPI Specification minor version number */
+        uint8_t revision;
+        /** To make sum of entire table == 0 */
+        uint8_t checksum;
+        /** OEM identification */
+        char oem_id[6];
+        /** OEM table identification */
+        char oem_table_id[8];
+        /** OEM revision number */
+        uint32_t oem_revision;
+        /** ASL compiler vendor ID */
+        char asl_compiler_id[4];
+        /** ASL compiler revision number */
+        uint32_t asl_compiler_revision;
+	/** DRBD config */
+	char drbd_config[0];
+} __attribute__ (( __packed__ ));
+
+#pragma pack()
+
+#define ACPI_SIGNATURE( a, b, c, d ) \
+        ( ( (a) << 0 ) | ( (b) << 8 ) | ( (c) << 16 ) | ( (d) << 24 ) )
+
+#define DRBD_SIG ACPI_SIGNATURE ( 'D', 'R', 'B', 'D' )
+
+#define LOWER_MEM_LENGTH 0xa0000
+
+static int search_for_drbd_config(char *drbd_config, size_t buflen)
+{
+	char *first_1m;
+	LARGE_INTEGER zero;
+	int i, j;
+	struct acpi_header *header;
+	uint32_t len;
+	uint8_t sum;
+	int ret;
+
+	zero.QuadPart = 0;
+	first_1m = MmMapIoSpace(zero, LOWER_MEM_LENGTH, MmNonCached);
+	if (first_1m == NULL) {
+		printk("Couldn't map lower physical memory\n");
+		return -1;
+	}
+	ret = -1;
+
+	for (i=0;i<LOWER_MEM_LENGTH;i+=0x10) {
+		header = (struct acpi_header*) (first_1m+i);
+		if (header->signature != DRBD_SIG)
+			continue;
+
+		len = header->length;
+		if (len+i > LOWER_MEM_LENGTH)
+			continue;
+
+		if (header->revision != 1)
+			continue;
+
+		sum = 0;
+		for (j=i;j<i+len;j++)
+			sum+=first_1m[j];
+		if (sum != 0)
+			continue;
+
+		if (len-sizeof(*header) > buflen) {
+			printk("Warning: oversized DRBD config (len is %d buflen is %d)\n", len, buflen);
+			continue;
+		}
+		memcpy(drbd_config, &header->drbd_config, len-sizeof(*header));
+
+		ret = 0;
+		break;
+	}
+	MmUnmapIoSpace(first_1m, LOWER_MEM_LENGTH);
+
+	return ret;
+}
+
+	/* TODO: this does not work. The ACPI driver seems to
+	 * parse the signature and throw away tables with unknown
+	 * signatures. Linux behaves the same, but on the other
+	 * hand, searches in lower memory for the iBFT (iSCSI)
+	 * signature by hand.
+	 *
+	 * Delete this code if it is certain that it isn't needed.
+	 */
+
 static int read_acpi_table(void)
 {
 	NTSTATUS status;
@@ -477,18 +572,22 @@ printk("table DRBD found\n");
 	}
 }
 
+#define MAX_DRBD_CONFIG 16*1024
+
 void windrbd_init_boot_device(void)
 {
 	int ret;
 	int i;
+	static char drbd_config[MAX_DRBD_CONFIG];
 
-	if (read_acpi_table() < 0) {
-		printk("DRBD table not found, proceeding anyway...\n");
+	if (search_for_drbd_config(drbd_config, sizeof(drbd_config)) < 0) {
+		printk("No DRBD config found in first 1Meg, please use iPXE to boot via network.\n");
 		return;
 	}
-return;
-
 	printk("ACPI table reading successful, creating boot device now\n");
+
+printk("drbd config is %s\n", drbd_config);
+
 	for (i=0;i<1;i++) {
 		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
 		if (ret != 0)
