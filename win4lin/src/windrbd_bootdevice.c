@@ -744,7 +744,7 @@ void parser_test(void)
 	if (parse_drbd_params("drbd:tiny-windows-disk;C;2;0.0.0.0:7683;1;1;johannes-VirtualBox;1;192.168.56.102:7683", &p) < 0) {
 		printk("Parser test: error\n");
 	} else {
-		printk("Parsertest results: resource: %s num_nodes: %d minor: %d volume: %d peer: %s peer_node_id: %d protocol: %c my_address: %s peer_address: %s", p.resource, p.num_nodes, p.minor, p.volume, p.peer, p.peer_node_id, p.protocol, p.my_address, p.peer_address);
+		printk("Parsertest results: resource: %s num_nodes: %d minor: %d volume: %d peer: %s peer_node_id: %d protocol: %d my_address: %s peer_address: %s", p.resource, p.num_nodes, p.minor, p.volume, p.peer, p.peer_node_id, p.protocol, p.my_address, p.peer_address);
 	}
 }
 

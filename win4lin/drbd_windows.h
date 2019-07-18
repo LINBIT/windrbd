@@ -1416,4 +1416,7 @@ int windrbd_create_windows_device_for_minor(int minor);
 /* See drbd_main.c */
 int try_to_promote(struct drbd_device *device, LONG_PTR timeout, bool ndelay);
 
+/* See windrbd_bootdevice.c */
+void parser_test(void);
+
 #endif // DRBD_WINDOWS_H

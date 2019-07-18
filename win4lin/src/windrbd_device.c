@@ -324,6 +324,10 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 			status = STATUS_INVALID_DEVICE_REQUEST;
 		break;
 
+	case IOCTL_WINDRBD_ROOT_RUN_PARSER_TEST:
+		parser_test();
+		break;
+
 	default:
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;
