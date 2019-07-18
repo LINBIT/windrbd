@@ -407,3 +407,8 @@ Add www-data user to group disk
 Or better add an extra group for drbd devices and use udev(?) to
 control the device node.
 -----
+
+Temporary format of 'drbd' URI: no colons since they are used by
+IPv6 addresses.
+
+drbd:<res>;<proto>;<num-nodes>;<my-ip>;<my-minor>;<my-volume>;<peer-name>;<peer-node-id>;<peer-address>
