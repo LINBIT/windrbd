@@ -83,8 +83,6 @@ static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 	int rv;
 	LONG_PTR timeout = LONG_TIMEOUT * HZ / 10;
 
-printk("1\n");
-
 	drbd_device = bdev->drbd_device;
 	if (drbd_device != NULL) {
 		resource = drbd_device->resource;
@@ -99,13 +97,13 @@ printk("1\n");
 			resource = drbd_device->resource;
 			if (resource != NULL) {
 				while (resource->role[NOW] == R_SECONDARY) {
-printk("Am secondary, trying to promote ...\n");
+// printk("Am secondary, trying to promote ...\n");
 					rv = try_to_promote(drbd_device, timeout, 0);
 
 		/* no uptodate disk: we are not yet connected, wait a bit
 		 * until we are.
 		 */
-printk("rv is %d\n", rv);
+// printk("rv is %d\n", rv);
 					if (rv < SS_SUCCESS && rv != SS_NO_UP_TO_DATE_DISK) {
 						drbd_info(resource, "Auto-promote failed: %s\n", drbd_set_st_err_str(rv));
 						break;
@@ -122,17 +120,17 @@ printk("rv is %d\n", rv);
 		}
 	} else {
 		if (!bdev->powering_down) {
-printk("Waiting for becoming primary\n");
+// printk("Waiting for becoming primary\n");
 			status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
 			if (status != STATUS_SUCCESS)
 				printk("KeWaitForSingleObject returned %x\n", status);
-else
-printk("Am primary now, proceeding with request\n");
+// else
+// printk("Am primary now, proceeding with request\n");
 		}
 	}
 
 	if (bdev->powering_down || bdev->delete_pending) {
-printk("currently powering down, cancelling request\n");
+// printk("currently powering down, cancelling request\n");
 		return STATUS_NO_SUCH_DEVICE;
 	}
 
@@ -356,7 +354,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
+// printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	status = wait_for_becoming_primary(dev);
 	if (status != STATUS_SUCCESS)
 		goto out;
@@ -612,7 +610,7 @@ printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
         status = STATUS_SUCCESS;
       }
       if (status == STATUS_INVALID_PARAMETER) {
-printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+// printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
       }
       break;
    }
@@ -1329,12 +1327,12 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 					array[count] = drbd_device->this_bdev->windows_device;
 					ObReferenceObject(drbd_device->this_bdev->windows_device);
 				}
-printk("windows device at %p\n", drbd_device->this_bdev->windows_device);
+// printk("windows device at %p\n", drbd_device->this_bdev->windows_device);
 				count++;
 			}
 		}
 	}
-printk("%d drbd windows devices found\n", count);
+// printk("%d drbd windows devices found\n", count);
 	return count;
 }
 
@@ -1355,27 +1353,27 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 		IoCopyCurrentIrpStackLocationToNext(irp);
 		IoSetCompletionRoutine(irp, (PIO_COMPLETION_ROUTINE)start_completed, (PVOID)&start_completed_event, TRUE, TRUE, TRUE);
 
-printk("starting lower device object\n");
+// printk("starting lower device object\n");
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status == STATUS_PENDING) {
-printk("Pending ...\n");
+// printk("Pending ...\n");
 			KeWaitForSingleObject(&start_completed_event, Executive, KernelMode, FALSE, NULL);
-printk("Completed.\n");
+// printk("Completed.\n");
 		}
 		status = irp->IoStatus.Status;
 		if (status != STATUS_SUCCESS)
 			printk("Warning: lower device start returned %x\n", status);
 
-printk("starting device object status is %x\n", status);
+// printk("starting device object status is %x\n", status);
 
 		status = STATUS_SUCCESS;
 		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 
-printk("completed IRP\n");
+// printk("completed IRP\n");
 
 		windrbd_bus_is_ready();
-printk("Set bus ready\n");
+// printk("Set bus ready\n");
 
 		return status;
 
@@ -1408,19 +1406,19 @@ printk("Set bus ready\n");
 		irp->IoStatus.Status = STATUS_SUCCESS;
 		IoSkipCurrentIrpStackLocation(irp);
 
-printk("removing lower device object\n");
+// printk("removing lower device object\n");
 		status = IoCallDriver(bus_ext->lower_device, irp);
 
-printk("IoCallDriver returned %x\n", status);
+// printk("IoCallDriver returned %x\n", status);
 
 			/* TODO: delete all DRBD devices */
 
-printk("detaching device object\n");
+// printk("detaching device object\n");
 		IoDetachDevice(bus_ext->lower_device);
-printk("deleting device object\n");
+// printk("deleting device object\n");
 		IoDeleteDevice(device);
-printk("device object deleted.\n");
-printk("NOT completing IRP\n");
+// printk("device object deleted.\n");
+// printk("NOT completing IRP\n");
 		drbd_bus_device = NULL;
 		return STATUS_SUCCESS; /* must not do IoCompleteRequest */
 
@@ -1430,13 +1428,13 @@ printk("NOT completing IRP\n");
 		int type = s->Parameters.QueryDeviceRelations.Type;
 dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
 		if (s->Parameters.QueryDeviceRelations.Type == BusRelations) {
-printk("about to report DRBD devices ...\n");
+// printk("about to report DRBD devices ...\n");
 			int num_devices = get_all_drbd_device_objects(NULL, 0);
 			struct _DEVICE_RELATIONS *device_relations;
 			int n;
 
 			size_t siz = sizeof(*device_relations)+num_devices*sizeof(device_relations->Objects[0]);
-printk("size of device relations is %d\n", siz);
+// printk("size of device relations is %d\n", siz);
 		/* must be PagedPool else PnP manager complains */
 			device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
 			if (device_relations == NULL) {
@@ -1465,13 +1463,13 @@ printk("size of device relations is %d\n", siz);
 	}
 
 	if (status != STATUS_SUCCESS && status != STATUS_NOT_SUPPORTED && status != STATUS_NOT_IMPLEMENTED) {
-printk("minor %x failed with status %x, not forwarding to lower driver...\n", s->MinorFunction, status);
+// printk("minor %x failed with status %x, not forwarding to lower driver...\n", s->MinorFunction, status);
 		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 	} else {
 		irp->IoStatus.Status = status;
 		IoSkipCurrentIrpStackLocation(irp);
-printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
+// printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			printk("Warning: lower device returned status %x\n", status);
@@ -1525,7 +1523,7 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		case IRP_MN_START_DEVICE:
 		{
 			if (bdev != NULL) {
-printk("starting device ...\n");
+// printk("starting device ...\n");
 				wait_for_becoming_primary(bdev);
 			} else
 				printk("bdev is NULL on start device, this should not happen (minor is %x)\n", s->MinorFunction);
@@ -1535,7 +1533,7 @@ printk("starting device ...\n");
 		}
 
 		case IRP_MN_QUERY_PNP_DEVICE_STATE:
-printk("got IRP_MN_QUERY_PNP_DEVICE_STATE\n");
+// printk("got IRP_MN_QUERY_PNP_DEVICE_STATE\n");
 			irp->IoStatus.Information = 0;
 			status = STATUS_SUCCESS;
 			break;
@@ -1544,7 +1542,7 @@ printk("got IRP_MN_QUERY_PNP_DEVICE_STATE\n");
 		{
 			wchar_t *string;
 			dbg("Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
-printk("minor is %d\n", minor);
+// printk("minor is %d\n", minor);
 			if (minor < 0) {
 				status = STATUS_INVALID_DEVICE_REQUEST;
 				break;
@@ -1710,9 +1708,9 @@ dbg("Returned string is %S\n", string);
 		{
 			struct _DEVICE_CAPABILITIES *DeviceCapabilities;
 			DeviceCapabilities = s->Parameters.DeviceCapabilities.Capabilities;
-printk("got IRP_MN_QUERY_CAPABILITIES\n");
+// printk("got IRP_MN_QUERY_CAPABILITIES\n");
 			if (DeviceCapabilities->Version != 1 || DeviceCapabilities->Size < sizeof(DEVICE_CAPABILITIES)) {
-printk("wrong version of DeviceCapabilities\n");
+// printk("wrong version of DeviceCapabilities\n");
 				status = STATUS_UNSUCCESSFUL;
 				break;
 			}
@@ -1741,7 +1739,7 @@ printk("wrong version of DeviceCapabilities\n");
 			break;
 		}
 		case IRP_MN_DEVICE_USAGE_NOTIFICATION:
-printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
+// printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 			irp->IoStatus.Information = 0;
 			status = STATUS_SUCCESS;
 			break;
@@ -1772,9 +1770,9 @@ printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
 					bdev->powering_down = 1; /* meaning no more I/O on that device */
 					IoAcquireRemoveLock(&bdev->remove_lock, NULL);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
-printk("into IoReleaseRemoveLockAndWait ... \n");
+// printk("into IoReleaseRemoveLockAndWait ... \n");
 					IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
-printk("out of IoReleaseRemoveLockAndWait ... \n");
+// printk("out of IoReleaseRemoveLockAndWait ... \n");
 				} else {
 					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
 				}
@@ -1800,7 +1798,7 @@ printk("out of IoReleaseRemoveLockAndWait ... \n");
 		default:
 			printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
 			if (drbd_bus_device != NULL) {
-printk("irp status is %x\n", irp->IoStatus.Status);
+// printk("irp status is %x\n", irp->IoStatus.Status);
 				IoSkipCurrentIrpStackLocation(irp);
 				status = IoCallDriver(drbd_bus_device, irp);
 				printk("bus object returned %x\n", status);
@@ -1846,9 +1844,9 @@ static NTSTATUS windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	if (device == drbd_bus_device) {
 		struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
 		IoSkipCurrentIrpStackLocation(irp);
-printk("Calling PoCallDriver ...\n");
+// printk("Calling PoCallDriver ...\n");
 		status = PoCallDriver(bus_ext->lower_device, irp);
-printk("PoCallDriver returned %x\n", status);
+// printk("PoCallDriver returned %x\n", status);
 	} else {
 			/* TODO: if powering up after sleep / hibernate
 			 * unset this flag again.
@@ -1874,7 +1872,7 @@ printk("PoCallDriver returned %x\n", status);
 		status = STATUS_NOT_SUPPORTED;
 	}
 
-printk("status is %x\n", status);
+// printk("status is %x\n", status);
 	return status;
 }
 
@@ -1995,11 +1993,11 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
-printk("got SCSI function %x\n", srb->Function);
+// printk("got SCSI function %x\n", srb->Function);
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
-printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
+// printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 		switch (cdb->AsByte[0]) {
 		case SCSIOP_TEST_UNIT_READY:
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
@@ -2020,7 +2018,7 @@ printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 			int rw;
 
 			if (bdev != NULL) {
-printk("SCSI I/O waiting for primary\n");
+// printk("SCSI I/O waiting for primary\n");
 				wait_for_becoming_primary(bdev);
 			}
 			else
@@ -2062,7 +2060,7 @@ printk("SCSI I/O waiting for primary\n");
 				break;
 			}
 
-printk("SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
+// printk("SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
 
 			status = windrbd_make_drbd_requests(irp, bdev, ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority), sector_count*512, start_sector, rw);
 			if (status == STATUS_SUCCESS) {
@@ -2070,7 +2068,7 @@ printk("SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : 
 				irp->IoStatus.Status = STATUS_PENDING;
 				return STATUS_PENDING;
 			}
-printk("error initiating request status is %x\n", status);
+// printk("error initiating request status is %x\n", status);
 			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 			break;
 		}
@@ -2089,7 +2087,7 @@ printk("error initiating request status is %x\n", status);
 					((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress = -1;
 				} else {
 					Temp = (ULONG) LargeTemp;
-printk("SCSI: Reporting %lld bytes as capacity ...\n", d_size);
+// printk("SCSI: Reporting %lld bytes as capacity ...\n", d_size);
 					REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress), &Temp);
 				}
 				irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA);
@@ -2111,7 +2109,7 @@ printk("SCSI: Reporting %lld bytes as capacity ...\n", d_size);
 					printk("Warning: device size (%lld) not a multiple of 512\n", d_size);
 				LargeTemp = (d_size / 512) - 1;
 				REVERSE_BYTES_QUAD(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->LogicalBlockAddress.QuadPart), &LargeTemp);
-printk("SCSI: Reporting %lld bytes as capacity16 ...\n", d_size);
+// printk("SCSI: Reporting %lld bytes as capacity16 ...\n", d_size);
 				irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA_EX);
 				srb->SrbStatus = SRB_STATUS_SUCCESS;
 				status = STATUS_SUCCESS;
@@ -2142,7 +2140,7 @@ printk("SCSI: Reporting %lld bytes as capacity16 ...\n", d_size);
 		}
 
 		default:
-printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
+// printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
 			status = STATUS_NOT_IMPLEMENTED;
 		}
 		break;
@@ -2152,7 +2150,7 @@ printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
 		break;
 
 	case SRB_FUNCTION_CLAIM_DEVICE:
-printk("got SRB_FUNCTION_CLAIM_DEVICE\n");
+// printk("got SRB_FUNCTION_CLAIM_DEVICE\n");
 		srb->DataBuffer = device;
 		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
@@ -2168,7 +2166,7 @@ printk("got SRB_FUNCTION_CLAIM_DEVICE\n");
 		break;
 
 	default:
-printk("got unimplemented SCSI function %x\n", srb->Function);
+// printk("got unimplemented SCSI function %x\n", srb->Function);
 		status = STATUS_NOT_IMPLEMENTED;
 	}
 
