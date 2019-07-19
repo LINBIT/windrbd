@@ -358,6 +358,10 @@ if exists ipxe.iscsi {
         filename "http://192.168.56.102/~johannes/ipxe/ipxework.pxe";
 }
 
+Also add windrbd-root option:
+
+option ipxe.windrbd-root code 196 = string;
+
 After changes restart dhcp server with
 
 sudo service isc-dhcp-server restart
