@@ -1,5 +1,5 @@
 ﻿/* Uncomment this if you want more debug output (disable for releases) */
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 #include "drbd_windows.h"
 #include "windrbd_threads.h"
@@ -1083,6 +1083,8 @@ dbg("wsk_socket closed meanwhile\n");
             if (Irp->IoStatus.Status == STATUS_SUCCESS)
             {
                 BytesReceived = (LONG) Irp->IoStatus.Information;
+if (BytesReceived == 0)
+dbg("BytesReceived is 0, socket closed by peer?\n");
             }
             else
             {
