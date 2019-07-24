@@ -890,6 +890,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 	status = STATUS_SUCCESS;
 
 	if (error == 0) {
+#if 0
 		if (bio->bi_rw == READ) {
 			if (!bio->bi_common_data->bc_device_failed && bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
 				char *user_buffer = bio->bi_upper_irp_buffer;
@@ -912,6 +913,7 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 				}
 			}
 		}
+#endif
 	} else {
 		printk(KERN_ERR "I/O failed with %d\n", error);
 
@@ -924,9 +926,11 @@ static void windrbd_bio_finished(struct bio * bio, int error)
 
 		status = STATUS_DEVICE_DOES_NOT_EXIST;
 	}
+#if 0
 	if (bio->bi_rw == READ)
 		for (i=0;i<bio->bi_vcnt;i++)
 			kfree(bio->bi_io_vec[i].bv_page->addr);
+#endif
 
         unsigned long flags;
 
@@ -1055,9 +1059,12 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
  *	 intermediate buffer and the extra copy.
  */
 
+#if 0
+
 		if (bio->bi_rw == READ)
 			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, 0, 'DRBD');
 		else
+#endif
 			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
 
 				/* TODO: fault inject here. */
