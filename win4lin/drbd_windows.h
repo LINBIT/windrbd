@@ -459,6 +459,7 @@ struct workqueue_struct {
 	int run;
 	KEVENT	wakeupEvent;
 	KEVENT	killEvent;
+	KEVENT	workFinishedEvent;
 	PVOID	pThread;
 	void (*func)();
 	char name[WQNAME_LEN];

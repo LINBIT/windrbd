@@ -1114,6 +1114,7 @@ void run_singlethread_workqueue(struct workqueue_struct * wq)
                     wr->w->func(wr->w);
                     kfree(wr);	/* TODO: sure? */
                 }
+		KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
                 break;
             }
 
@@ -1142,6 +1143,7 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
 
     KeInitializeEvent(&wq->wakeupEvent, SynchronizationEvent, FALSE);
     KeInitializeEvent(&wq->killEvent, SynchronizationEvent, FALSE);
+    KeInitializeEvent(&wq->workFinishedEvent, SynchronizationEvent, FALSE);
     InitializeListHead(&wq->list_head);
     KeInitializeSpinLock(&wq->list_lock);
 
@@ -1167,15 +1169,19 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
 	return wq;
 }
 
-/* TODO: implement */
-
 /* This should ensure that all work on the workqueue is done (has finished).
  * It is typically invoked when a driver shuts down a resource (for example
  * on drbdadm down).
  */
 void flush_workqueue(struct workqueue_struct *wq)
 {
-	printk(KERN_INFO "flush_workqueue not implemented.\n");
+	PVOID waitObjects[2] = { &wq->workFinishedEvent, &wq->killEvent };
+
+	KeResetEvent(&wq->workFinishedEvent);
+	KeSetEvent(&wq->wakeupEvent, 0, FALSE);
+printk("waiting for work to finish ...\n");
+	KeWaitForMultipleObjects(2, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
+printk("work finished (or killed)");
 }
 
 void mutex_init(struct mutex *m)
