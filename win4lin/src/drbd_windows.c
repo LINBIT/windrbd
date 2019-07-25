@@ -1046,7 +1046,9 @@ return 0;
 
 			switch (status) {
 			case STATUS_WAIT_0:
+/*
 				KeResetEvent(&q->wqh_event); // DW-105: use event and polling both.
+*/
 				break;
 
 			case STATUS_WAIT_1:
