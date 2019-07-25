@@ -847,7 +847,7 @@ static __inline void init_waitqueue_head(wait_queue_head_t *q)
 {	
 	spin_lock_init(&(q)->lock);	
 	INIT_LIST_HEAD(&(q)->task_list);
-	KeInitializeEvent(&q->wqh_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&q->wqh_event, SynchronizationEvent, FALSE);
 };
 
 typedef int (congested_fn)(void *, int);
