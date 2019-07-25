@@ -97,7 +97,7 @@ static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 			resource = drbd_device->resource;
 			if (resource != NULL) {
 				while (resource->role[NOW] == R_SECONDARY) {
-// printk("Am secondary, trying to promote ...\n");
+printk("Am secondary, trying to promote ...\n");
 					rv = try_to_promote(drbd_device, timeout, 0);
 
 		/* no uptodate disk: we are not yet connected, wait a bit

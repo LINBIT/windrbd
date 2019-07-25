@@ -1102,23 +1102,29 @@ void run_singlethread_workqueue(struct workqueue_struct * wq)
 
     while (wq->run)
     {
+printk("1\n");
         status = KeWaitForMultipleObjects(maxObj, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
+printk("2\n");
         switch (status)
         {
             case STATUS_WAIT_0:
             {
                 PLIST_ENTRY entry;
+printk("3\n");
                 while ((entry = ExInterlockedRemoveHeadList(&wq->list_head, &wq->list_lock)) != 0)
                 {
                     struct work_struct_wrapper * wr = CONTAINING_RECORD(entry, struct work_struct_wrapper, element);
+printk("4\n");
                     wr->w->func(wr->w);
                     kfree(wr);	/* TODO: sure? */
                 }
 		KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
+printk("5\n");
                 break;
             }
 
             case (STATUS_WAIT_1) :
+printk("6\n");
                 wq->run = FALSE;
                 break;
 
@@ -1126,6 +1132,7 @@ void run_singlethread_workqueue(struct workqueue_struct * wq)
                 continue;
         }
     }
+printk("7 exiting thread\n");
 }
 
 struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ...)
