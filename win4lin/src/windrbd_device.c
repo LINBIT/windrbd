@@ -103,34 +103,44 @@ printk("Am secondary, trying to promote ...\n");
 		/* no uptodate disk: we are not yet connected, wait a bit
 		 * until we are.
 		 */
-// printk("rv is %d\n", rv);
+printk("rv is %d\n", rv);
 					if (rv < SS_SUCCESS && rv != SS_NO_UP_TO_DATE_DISK) {
 						drbd_info(resource, "Auto-promote failed: %s\n", drbd_set_st_err_str(rv));
 						break;
 					}
+printk("1\n");
 					if (rv == SS_SUCCESS)
 						break;
+
+printk("2\n");
 
 					if (bdev->powering_down || bdev->delete_pending)
 						break;
 
+printk("3\n");
 					msleep(100);
+printk("3a\n");
+					if (bdev->powering_down || bdev->delete_pending)
+						break;
+
+printk("4\n");
 				}
 			}
 		}
 	} else {
 		if (!bdev->powering_down) {
-// printk("Waiting for becoming primary\n");
+printk("Waiting for becoming primary\n");
 			status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
 			if (status != STATUS_SUCCESS)
 				printk("KeWaitForSingleObject returned %x\n", status);
-// else
-// printk("Am primary now, proceeding with request\n");
+else
+printk("Am primary now, proceeding with request\n");
 		}
 	}
+printk("5\n");
 
 	if (bdev->powering_down || bdev->delete_pending) {
-// printk("currently powering down, cancelling request\n");
+printk("currently powering down, cancelling request\n");
 		return STATUS_NO_SUCH_DEVICE;
 	}
 
@@ -1529,12 +1539,15 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
 		{
+#if 0
 			if (bdev != NULL) {
 // printk("starting device ...\n");
-				wait_for_becoming_primary(bdev);
-			} else
+				status = wait_for_becoming_primary(bdev);
+			} else {
 				printk("bdev is NULL on start device, this should not happen (minor is %x)\n", s->MinorFunction);
-
+				status = STATUS_UNSUCCESSFUL;
+			}
+#endif
 			status = STATUS_SUCCESS;
 			break;
 		}
@@ -2024,14 +2037,23 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
 			unsigned long long sector_count, total_size;
 			int rw;
 
+			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
+
 			if (bdev != NULL) {
 // printk("SCSI I/O waiting for primary\n");
-				wait_for_becoming_primary(bdev);
-			}
-			else
+				if (rw == WRITE)
+					status = wait_for_becoming_primary(bdev);
+				else
+					status = STATUS_SUCCESS;
+			} else {
 				printk("bdev is NULL on SCSI I/O, this should not happen (minor is %x)\n", s->MinorFunction);
+				status = STATUS_INVALID_DEVICE_REQUEST;
+			}
 
-			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
+			if (status != STATUS_SUCCESS) {
+				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+				break;
+			}
 
 			if (cdb->AsByte[0] == SCSIOP_READ16 ||
 			    cdb->AsByte[0] == SCSIOP_WRITE16) {
