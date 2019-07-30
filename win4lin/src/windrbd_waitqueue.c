@@ -36,6 +36,19 @@ void new_schedule(void)
 	ll_wait(current->wait_queue, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE);
 }
 
+ULONG_PTR new_schedule_timeout(ULONG_PTR timeout)
+{
+	LONG_PTR then = jiffies;
+	LONG_PTR elapsed;
+
+	ll_wait(current->wait_queue, timeout, TASK_INTERRUPTIBLE);
+
+	elapsed = jiffies - then;
+	if ((timeout - elapsed) > 0)
+		return timeout - elapsed;
+	return 0;
+}
+
 	/* TODO: no locks? Assumes that current is always (1) valid and
 	 * (2) unique.
 	 */

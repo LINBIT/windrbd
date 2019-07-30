@@ -27,4 +27,8 @@ typedef struct wait_queue_head
 void prepare_to_wait(struct wait_queue_head *w, void *unused, int interruptible);
 void finish_wait(struct wait_queue_head *w, void *unused);
 
+/* This will be the schedule() function soon ... */
+void new_schedule(void);
+ULONG_PTR new_schedule_timeout(ULONG_PTR timeout);
+
 #endif
