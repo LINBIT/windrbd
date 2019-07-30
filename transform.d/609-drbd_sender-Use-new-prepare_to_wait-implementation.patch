@@ -1,0 +1,28 @@
+From fb33d8980b5064b4a476d0758fe9948c73aa20f8 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 30 Jul 2019 18:16:33 +0200
+Subject: [PATCH 4/4] drbd_sender: Use new prepare_to_wait implementation.
+
+For now, the schedule function is called new_schedule since we
+didn't yet backport the wait_event_XXX macros and still need the
+old schedule implementation.
+---
+ drbd/drbd_sender.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index fb28cc6..0940610 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -2667,7 +2667,7 @@ static void wait_for_sender_todo(struct drbd_connection *connection)
+ 		if (get_t_state(&connection->sender) != RUNNING)
+ 			break;
+ 
+-		schedule(&connection->sender_work.q_wait, SENDER_SCHEDULE_TIMEOUT, __FUNCTION__, __LINE__);
++		new_schedule();
+ 		/* may be woken up for other things but new work, too,
+ 		 * e.g. if the current epoch got closed.
+ 		 * In which case we send the barrier above. */
+-- 
+2.17.0
+

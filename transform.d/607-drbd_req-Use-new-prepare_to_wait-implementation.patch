@@ -1,0 +1,37 @@
+From 185be1ef02de3a8fa3f02997d92d42a7eaf13429 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 30 Jul 2019 18:16:05 +0200
+Subject: [PATCH 2/4] drbd_req: Use new prepare_to_wait implementation.
+
+For now, the schedule function is called new_schedule since we
+didn't yet backport the wait_event_XXX macros and still need the
+old schedule implementation.
+---
+ drbd/drbd_req.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
+index 90dd959..56c5431 100644
+--- a/drbd/drbd_req.c
++++ b/drbd/drbd_req.c
+@@ -1285,7 +1285,7 @@ static void complete_conflicting_writes(struct drbd_request *req)
+ 		prepare_to_wait(&device->misc_wait, &wait, TASK_UNINTERRUPTIBLE);
+ 		i->waiting = true;
+ 		spin_unlock_irq(&device->resource->req_lock);
+-		schedule(&device->misc_wait, MAX_SCHEDULE_TIMEOUT, __FUNCTION__, __LINE__);
++		new_schedule();
+ 
+ 		spin_lock_irq(&device->resource->req_lock);
+ 	}
+@@ -2209,7 +2209,7 @@ void do_submit(struct work_struct *ws)
+ 				break;
+ 
+ 			drbd_kick_lo(device);
+-			schedule(&device->al_wait, MAX_SCHEDULE_TIMEOUT, __FUNCTION__, __LINE__);
++			new_schedule();
+ 
+ 			/* If all currently "hot" activity log extents are kept busy by
+ 			 * incoming requests, we still must not totally starve new
+-- 
+2.17.0
+

@@ -1,0 +1,28 @@
+From b968f0e35bae21d072cf00a3f6ef35795fe56eaf Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 30 Jul 2019 18:14:43 +0200
+Subject: [PATCH 1/4] drbd_main: Use new prepare_to_wait implementation.
+
+For now, the schedule function is called new_schedule since we
+didn't yet backport the wait_event_XXX macros and still need the
+old schedule implementation.
+---
+ drbd/drbd_main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 49f1bad..9d6b9a8 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -5440,7 +5440,7 @@ int drbd_wait_misc(struct drbd_device *device, struct drbd_peer_device *peer_dev
+ 	i->waiting = true;
+ 	prepare_to_wait(&device->misc_wait, &wait, TASK_INTERRUPTIBLE);
+ 	spin_unlock_irq(&device->resource->req_lock);
+-	timeout = schedule_timeout(timeout);
++	timeout = new_schedule_timeout(timeout);
+ 	finish_wait(&device->misc_wait, &wait);
+ 	spin_lock_irq(&device->resource->req_lock);
+ 	if (!timeout || (peer_device && peer_device->repl_state[NOW] < L_ESTABLISHED))
+-- 
+2.17.0
+

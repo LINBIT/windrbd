@@ -1,0 +1,37 @@
+From 90df54c8a72b2326745d0c47712f952e725b4a86 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 30 Jul 2019 18:16:21 +0200
+Subject: [PATCH 3/4] drbd_receiver: Use new prepare_to_wait implementation.
+
+For now, the schedule function is called new_schedule since we
+didn't yet backport the wait_event_XXX macros and still need the
+old schedule implementation.
+---
+ drbd/drbd_receiver.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index 41b96fa..a3921c3 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -368,7 +368,7 @@ struct page *drbd_alloc_pages(struct drbd_transport *transport, unsigned int num
+ 			break;
+ 		}
+ 
+-		if (schedule_timeout(HZ/10) == 0)
++		if (new_schedule_timeout(HZ/10) == 0)
+ 			mxb = UINT_MAX;
+ 	}
+ 	finish_wait(&drbd_pp_wait, &wait);
+@@ -2534,7 +2534,7 @@ static int wait_for_and_update_peer_seq(struct drbd_peer_device *peer_device, co
+ 		rcu_flags = rcu_read_lock();
+ 		timeout = rcu_dereference(connection->transport.net_conf)->ping_timeo*HZ/10;
+ 		rcu_read_unlock(rcu_flags);
+-		timeout = schedule_timeout(timeout);
++		timeout = new_schedule_timeout(timeout);
+ 		spin_lock(&peer_device->peer_seq_lock);
+ 		if (!timeout) {
+ 			ret = -ETIMEDOUT;
+-- 
+2.17.0
+
