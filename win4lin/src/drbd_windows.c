@@ -1017,7 +1017,7 @@ return 0;
 		nWaitTime = RtlConvertLongToLargeInteger((60) * (-1 * 10000000));
 	}
 	pTime = &nWaitTime;
-	if ((q == NULL) || (q == (wait_queue_head_t *)SCHED_Q_INTERRUPTIBLE))
+	if (q == NULL)
 	{
 		KTIMER ktimer;
 		KeInitializeTimer(&ktimer);
