@@ -47,6 +47,11 @@ struct task_struct {
 		 */
 	struct wait_queue_head *wait_queue;
 
+		/* Set to TASK_INTERRUPTIBLE if schedule should also
+		 * wait for signals.
+		 */
+	int interruptible;
+
 	int thread_started:1;
 	int is_zombie:1;
 	spinlock_t thread_started_lock;

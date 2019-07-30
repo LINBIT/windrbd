@@ -1021,7 +1021,6 @@ static __inline wait_queue_t initqueue(wait_queue_t *wq)
 	return *wq; 
 }
 
-#define DEFINE_WAIT(name)
 #define DEFINE_WAIT_FUNC(name)
 
 extern void init_completion(struct completion *x);
