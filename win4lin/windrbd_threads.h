@@ -40,6 +40,13 @@ struct task_struct {
 	int sig; 
 	KEVENT start_event;
 
+		/* Set by prepare_to_wait: a followup call to
+		 * schedule() will wait on that wait queue.
+		 * Note that currently a wait queue has only
+		 * a single event (no internal list).
+		 */
+	struct wait_queue_head *wait_queue;
+
 	int thread_started:1;
 	int is_zombie:1;
 	spinlock_t thread_started_lock;

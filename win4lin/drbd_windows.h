@@ -1035,6 +1035,7 @@ extern void force_sig(int sig, struct task_struct *p);
 extern void flush_signals(struct task_struct *p);
 extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 
+/* TODO: No !! */
 #define SCHED_Q_INTERRUPTIBLE	1
 #define schedule_timeout_interruptible(timeout)  schedule((wait_queue_head_t *)SCHED_Q_INTERRUPTIBLE, (timeout), __FUNCTION__, __LINE__)
 #define schedule_timeout_uninterruptible(timeout) schedule_timeout(timeout) 
