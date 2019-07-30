@@ -19,6 +19,12 @@ TODO: Implement: prepare_to_wait and finish_wait
 	They should register the wait queue with the thread,
 	schedule then should use them.
 
+	Almost done, need more testing.
+
+TODO: Bug: BSOD on up/down when unconnected and have disk
+
+	IRQL BSOD
+
 TODO: Bug: up-down loop fails currently.
 
 	We reworked REMOVE_DEVICE again. Currently we get a
