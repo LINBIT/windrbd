@@ -1099,6 +1099,8 @@ The function will return -ERESTARTSYS if it was interrupted by a signal and 0 if
 TODO: change to static inline and make Linux compatible
 */
 
+#endif
+
 #define __wait_event_interruptible(wq, condition, sig)   \
     do { \
         for (;;) { \
@@ -1136,8 +1138,6 @@ TODO: change to static inline and make Linux compatible
 			if (-DRBD_SIGKILL == ret) { break; } \
 		}\
 	} while (0)
-
-#endif
 
 #define wake_up(q) _wake_up(q, __FUNCTION__, __LINE__)
 

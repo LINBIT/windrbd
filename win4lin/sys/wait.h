@@ -74,6 +74,7 @@ do {									\
 		timeout, TASK_INTERRUPTIBLE);				\
 } while (0);
 
+#if 0
 #define wait_event_interruptible(ret, wait_queue, condition)		\
 do {									\
 	ll_wait_event_macro(ret, wait_queue, condition,			\
@@ -85,6 +86,7 @@ do {									\
 	ll_wait_event_macro(ret, wait_queue, condition,			\
 		timeout, TASK_INTERRUPTIBLE);		\
 } while (0);
+#endif
 
 
 #endif
