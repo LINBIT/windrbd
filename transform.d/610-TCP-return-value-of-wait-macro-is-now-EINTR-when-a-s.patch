@@ -1,0 +1,35 @@
+From bf62cfc88f320baad5acc3906e5cb078fcab55e7 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 31 Jul 2019 19:22:09 +0200
+Subject: [PATCH] TCP: return value of wait macro is now -EINTR when a signal
+ arrives.
+
+---
+ drbd/drbd_transport_tcp.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 99596f9..9a986b3 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -33,7 +33,7 @@
+ #include <drbd_protocol.h>
+ #include <drbd_transport.h>
+ #include "drbd_wrappers.h"
+-#include <drbd_int.h>  /* for DRBD_SIGKILL, fix wait_event.. and remove again */
++#include <drbd_int.h>
+ 
+ MODULE_AUTHOR("Philipp Reisner <philipp.reisner@linbit.com>");
+ MODULE_AUTHOR("Lars Ellenberg <lars.ellenberg@linbit.com>");
+@@ -656,7 +656,7 @@ retry:
+ 	wait_event_interruptible_timeout(timeo_ret, listener->wait,
+ 					 (path = dtt_wait_connect_cond(transport)),
+ 					 timeo);
+-	if (timeo_ret == -DRBD_SIGKILL)
++	if (timeo_ret == -EINTR)
+ 		return -EINTR;
+ 	if (timeo_ret == -ETIMEDOUT)
+ 		return -EAGAIN;
+-- 
+2.17.0
+
