@@ -262,6 +262,14 @@ struct task_struct *kthread_run(int (*threadfn)(void *), void *data, const char 
 	return k;
 }
 
+bool is_windrbd_thread(struct task_struct *t)
+{
+	if (t == NULL)
+		return false;
+
+	return t->has_sig_event;
+}
+
 void init_windrbd_threads(void)
 {
         spin_lock_init(&next_pid_lock);

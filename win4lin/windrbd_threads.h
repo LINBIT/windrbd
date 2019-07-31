@@ -90,4 +90,10 @@ static inline char *get_task_comm(char *buf, struct task_struct *task)
 	return buf;
 }
 
+/* Non-zero if thread is created via the Linux emulation layer (this
+ * file).
+ */
+
+bool is_windrbd_thread(struct task_struct *t);
+
 #endif
