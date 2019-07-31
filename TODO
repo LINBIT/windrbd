@@ -21,6 +21,18 @@ TODO: Implement: prepare_to_wait and finish_wait
 
 	Almost done, need more testing.
 
+TODO: Bug: On up/down loop, cannot create WinDRBD device and later BSODs
+
+	Jul 31 15:54:36 192.168.56.101  U13:54:36.442|020382d0(not_drbd_thread) windrbd_process_netlink_packet drbd cmd(DRBD_ADM_NEW_MINOR:5)
+	Jul 31 15:54:36 192.168.56.101  U13:54:36.442|020382d0(not_drbd_thread) windrbd_create_windows_device Couldn't create new block device \Device\Drbd5 for minor 0 status: c0000035
+	Jul 31 15:54:36 192.168.56.101  U13:54:36.442|020382d0(not_drbd_thread) bdget Warning: Couldn't create windows device for volume
+	Jul 31 15:54:54 192.168.56.101  U13:54:54.271|020382d0(not_drbd_thread) windrbd_pnp Pnp: device: FFFFFA8003019820 irp: FFFFF980145C0E50
+	Jul 31 15:54:54 192.168.56.101  U13:54:54.271|020382d0(not_drbd_thread) windrbd_pnp <7>got PnP device request: MajorFunction: 0x1b, MinorFunction: 2
+	Jul 31 15:54:54 192.168.56.101  U13:54:54.271|020382d0(not_drbd_thread) windrbd_pnp got IRP_MN_REMOVE_DEVICE
+	Jul 31 15:54:54 192.168.56.101  U13:54:54.271|020382d0(not_drbd_thread) windrbd_pnp about to delete device object FFFFFA8003019820
+
+	Error handling should be fixed first.
+
 TODO: Bug: BSOD on up/down when unconnected and have disk
 
 	IRQL BSOD
