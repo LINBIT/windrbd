@@ -29,11 +29,15 @@ void finish_wait(struct wait_queue_head *w, void *unused);
 
 /* This will be the schedule() function soon ... */
 void new_schedule(void);
+/* Returns -EINTR on signal else remaining time. */
 ULONG_PTR new_schedule_timeout(ULONG_PTR timeout);
+/* Returns -EINTR on signal else remaining time. Use only internally. */
+/* TODO: better name for functiokn */
+LONG_PTR new_schedule_timeout_maybe_interrupted(ULONG_PTR timeout);
 
 #define ll_wait_event_macro(wait_queue, condition, timeout, interruptible) \
 do {									\
-	ULONG_PTR __timeout = timeout;					\
+	LONG_PTR __timeout = timeout;					\
 	while (1) {							\
 		prepare_to_wait(&wait_queue, NULL, interruptible);	\
 		if (condition)						\
@@ -42,8 +46,10 @@ do {									\
 		if (__timeout == 0)					\
 			break;						\
 									\
-		__timeout = new_schedule_timeout(__timeout);		\
-/* TODO: if interrupted by signal, break */				\
+		__timeout = new_schedule_timeout_maybe_interrupted(__timeout);\
+		if (interruptible == TASK_INTERRUPTIBLE &&		\
+		   __timeout == -EINTR)					\
+			break;						\
 	}								\
 	finish_wait(&wait_queue, NULL);					\
 } while (0);

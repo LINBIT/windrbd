@@ -36,6 +36,18 @@ TODO: Bug: On up/down loop, cannot create WinDRBD device and later BSODs
 TODO: Bug: BSOD on up/down when unconnected and have disk
 
 	IRQL BSOD
+        Also BSOD on drbdadm down when connected and have disk.
+	Also with d288b29fcc50db so it is not the new event handling code.
+	Observed a system hang with d288b29fcc50db
+
+TODO: Feature: Call test routines via ioctl().
+
+	We should not run them when the driver is loaded since that
+	might Windows stop booting if a test fails. Have a root device
+	ioctl that takes a string and runs that test.
+
+	In particular I would like to test calling KeWaitForMultipleObjects()
+	while IRQL is Dispatch level (I suppose the machine hangs or BSODs).
 
 TODO: Bug: up-down loop fails currently.
 
