@@ -1049,12 +1049,14 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 				} \
 		} while (0)
 
+#if 0
 #define wait_event(wq, condition) \
 	do {\
 		if (condition) \
 			break; \
 		__wait_event(wq, condition, __FUNCTION__, __LINE__); \
 		} while (0)
+#endif
 
 
 #define __wait_event_timeout(wq, condition, ret)  \

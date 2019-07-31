@@ -31,4 +31,24 @@ void finish_wait(struct wait_queue_head *w, void *unused);
 void new_schedule(void);
 ULONG_PTR new_schedule_timeout(ULONG_PTR timeout);
 
+#define ll_wait_event_macro(wait_queue, condition, timeout, interruptible) \
+do {									\
+	ULONG_PTR __timeout = timeout;					\
+	while (1) {							\
+		prepare_to_wait(&wait_queue, NULL, interruptible);	\
+		if (condition)						\
+			break;						\
+									\
+		if (__timeout == 0)					\
+			break;						\
+									\
+		__timeout = new_schedule_timeout(__timeout);		\
+/* TODO: if interrupted by signal, break */				\
+	}								\
+	finish_wait(&wait_queue, NULL);					\
+} while (0);
+
+#define wait_event(wait_queue, condition)				\
+	ll_wait_event_macro(wait_queue, condition, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE)
+
 #endif
