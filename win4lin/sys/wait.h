@@ -39,6 +39,7 @@ LONG_PTR new_schedule_timeout_maybe_interrupted(ULONG_PTR timeout);
  * most likely in here ...
  */
 
+/* TODO ret == 0 if condition is true. Review return values */
 #define ll_wait_event_macro(ret, wait_queue, condition, timeout, interruptible) \
 do {									\
 	LONG_PTR __timeout = timeout;					\
@@ -67,6 +68,7 @@ do {									\
 		MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE);		\
 } while (0);
 
+#if 0
 	/* TODO: this might 'return' -EINTR */
 #define wait_event_timeout(ret, wait_queue, condition, timeout)		\
 do {									\
@@ -74,7 +76,6 @@ do {									\
 		timeout, TASK_INTERRUPTIBLE);				\
 } while (0);
 
-#if 0
 #define wait_event_interruptible(ret, wait_queue, condition)		\
 do {									\
 	ll_wait_event_macro(ret, wait_queue, condition,			\

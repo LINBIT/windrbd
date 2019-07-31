@@ -1057,6 +1057,8 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 		__wait_event(wq, condition, __FUNCTION__, __LINE__); \
 		} while (0)
 
+#endif
+
 #define __wait_event_timeout(wq, condition, ret)  \
 	do {\
 		int i = 0;\
@@ -1098,8 +1100,6 @@ The function will return -ERESTARTSYS if it was interrupted by a signal and 0 if
 
 TODO: change to static inline and make Linux compatible
 */
-
-#endif
 
 #define __wait_event_interruptible(wq, condition, sig)   \
     do { \
