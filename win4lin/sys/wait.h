@@ -66,4 +66,11 @@ do {									\
 		MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE);		\
 } while (0);
 
+	/* TODO: this might 'return' -EINTR */
+#define wait_event_timeout(ret, wait_queue, condition, timeout)		\
+do {									\
+	ll_wait_event_macro(ret, wait_queue, condition,			\
+		timeout, TASK_INTERRUPTIBLE);				\
+} while (0);
+
 #endif
