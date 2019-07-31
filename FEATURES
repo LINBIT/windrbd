@@ -25,15 +25,15 @@ Driver Unloading
 
 3 (and more) node setups (from 0.9.2 on)
 
------ for 0.9.3 (June 2019)
+----- for 0.10.0
 
 Using System Volume (C:\) as DRBD device (diskless client with PXE boot)
 
------ for 0.9.4 (September 2019)
+----- for 0.10.1
 
 Using System Volume (C:\) as DRBD device (with local backing storage disk)
 
------ for 1.0 (End of 2019)
+----- for 1.0
 
 Auto-Promote (if possible at all)
 
@@ -41,7 +41,7 @@ Other filesystems (FAT family, ReFS)
 
 Online verify
 
-No reboot on upgrade/uninstall
+No reboot on upgrade/uninstall (if at all possible)
 
 Relocate C:\windrbd directory
 
