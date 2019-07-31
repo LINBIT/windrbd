@@ -59,6 +59,7 @@ do {									\
 	ret = __timeout;						\
 } while (0);
 
+/* TODO: those two should honor current->state */
 #define wait_event(wait_queue, condition)				\
 do {									\
 	int unused;							\
@@ -72,5 +73,18 @@ do {									\
 	ll_wait_event_macro(ret, wait_queue, condition,			\
 		timeout, TASK_INTERRUPTIBLE);				\
 } while (0);
+
+#define wait_event_interruptible(ret, wait_queue, condition)		\
+do {									\
+	ll_wait_event_macro(ret, wait_queue, condition,			\
+		MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE);		\
+} while (0);
+
+#define wait_event_interruptible_timeout(ret, wait_queue, condition, timeout) \
+do {									\
+	ll_wait_event_macro(ret, wait_queue, condition,			\
+		timeout, TASK_INTERRUPTIBLE);		\
+} while (0);
+
 
 #endif

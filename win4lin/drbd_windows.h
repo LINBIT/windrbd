@@ -1038,6 +1038,7 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 #define schedule_timeout_uninterruptible(timeout) schedule_timeout(timeout) 
 #define schedule_timeout(timeout) schedule((wait_queue_head_t *)NULL, (timeout), __FUNCTION__, __LINE__)
 
+#if 0
 #define __wait_event(wq, condition, __func, __line) \
 	do {\
 		for (;;) {\
@@ -1049,15 +1050,12 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 				} \
 		} while (0)
 
-#if 0
 #define wait_event(wq, condition) \
 	do {\
 		if (condition) \
 			break; \
 		__wait_event(wq, condition, __FUNCTION__, __LINE__); \
 		} while (0)
-#endif
-
 
 #define __wait_event_timeout(wq, condition, ret)  \
 	do {\
@@ -1120,6 +1118,7 @@ TODO: change to static inline and make Linux compatible
         sig = __ret; \
     } while (0)
 
+
 #define wait_event_interruptible_timeout(ret, wq, condition, to) \
 	do {\
 		ret = 0;	\
@@ -1137,6 +1136,8 @@ TODO: change to static inline and make Linux compatible
 			if (-DRBD_SIGKILL == ret) { break; } \
 		}\
 	} while (0)
+
+#endif
 
 #define wake_up(q) _wake_up(q, __FUNCTION__, __LINE__)
 
