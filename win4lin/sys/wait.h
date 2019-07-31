@@ -35,7 +35,11 @@ ULONG_PTR new_schedule_timeout(ULONG_PTR timeout);
 /* TODO: better name for functiokn */
 LONG_PTR new_schedule_timeout_maybe_interrupted(ULONG_PTR timeout);
 
-#define ll_wait_event_macro(wait_queue, condition, timeout, interruptible) \
+/* One macro for all cases of wait_event: if there is a bug it is
+ * most likely in here ...
+ */
+
+#define ll_wait_event_macro(ret, wait_queue, condition, timeout, interruptible) \
 do {									\
 	LONG_PTR __timeout = timeout;					\
 	while (1) {							\
@@ -52,9 +56,14 @@ do {									\
 			break;						\
 	}								\
 	finish_wait(&wait_queue, NULL);					\
+	ret = __timeout;						\
 } while (0);
 
 #define wait_event(wait_queue, condition)				\
-	ll_wait_event_macro(wait_queue, condition, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE)
+do {									\
+	int unused;							\
+	ll_wait_event_macro(unused, wait_queue, condition,		\
+		MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE);		\
+} while (0);
 
 #endif
