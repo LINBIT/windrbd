@@ -45,16 +45,21 @@ do {									\
 	LONG_PTR __timeout = timeout;					\
 	while (1) {							\
 		prepare_to_wait(&wait_queue, NULL, interruptible);	\
-		if (condition)						\
+		if (condition) {					\
+			__timeout = 0;					\
 			break;						\
-									\
-		if (__timeout == 0)					\
-			break;						\
+		}							\
 									\
 		__timeout = new_schedule_timeout_maybe_interrupted(__timeout);\
 		if (interruptible == TASK_INTERRUPTIBLE &&		\
 		   __timeout == -EINTR)					\
 			break;						\
+									\
+		if (__timeout == 0) {					\
+			__timeout = 1;					\
+			break;						\
+		}							\
+									\
 	}								\
 	finish_wait(&wait_queue, NULL);					\
 	ret = __timeout;						\
@@ -68,7 +73,6 @@ do {									\
 		MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE);		\
 } while (0);
 
-#if 0
 	/* TODO: this might 'return' -EINTR */
 #define wait_event_timeout(ret, wait_queue, condition, timeout)		\
 do {									\
@@ -76,6 +80,7 @@ do {									\
 		timeout, TASK_INTERRUPTIBLE);				\
 } while (0);
 
+#if 0
 #define wait_event_interruptible(ret, wait_queue, condition)		\
 do {									\
 	ll_wait_event_macro(ret, wait_queue, condition,			\

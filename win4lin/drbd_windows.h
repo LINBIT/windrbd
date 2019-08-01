@@ -1057,8 +1057,6 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 		__wait_event(wq, condition, __FUNCTION__, __LINE__); \
 		} while (0)
 
-#endif
-
 #define __wait_event_timeout(wq, condition, ret)  \
 	do {\
 		int i = 0;\
@@ -1087,6 +1085,8 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 			__wait_event_timeout(wq, condition, __ret);  \
 		t = __ret; \
         		} while (0)
+#endif
+
 
 
 /* TODO: eventually we want to find something that does not

@@ -50,7 +50,7 @@ static int ll_wait(wait_queue_head_t *q, ULONG_PTR timeout, int interruptible)
 	case STATUS_WAIT_0:
 		if (q) return 0;	/* fallthrough */
 	case STATUS_WAIT_1:
-		return -EINTR;
+		return -EINTR;		/* TODO: -ERESTARTSYS */
 	case STATUS_TIMEOUT:
 		return -ETIMEDOUT;
 	}
