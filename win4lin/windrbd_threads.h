@@ -90,6 +90,19 @@ static inline char *get_task_comm(char *buf, struct task_struct *task)
 	return buf;
 }
 
+        /* Use this to create a task_struct for a Windows thread
+         * This is needed so we can call wait_event_XXX functions
+         * within those threads.
+         */
+
+struct task_struct *make_me_a_windrbd_thread(const char *name, ...);
+
+        /* Call this when a thread returns to the calling Windows
+         * kernel function.
+         */
+
+void return_to_windows(struct task_struct *t);
+
 /* Non-zero if thread is created via the Linux emulation layer (this
  * file).
  */

@@ -262,6 +262,69 @@ struct task_struct *kthread_run(int (*threadfn)(void *), void *data, const char 
 	return k;
 }
 
+	/* Use this to create a task_struct for a Windows thread
+	 * This is needed so we can call wait_event_XXX functions
+	 * within those threads.
+	 */
+
+struct task_struct *make_me_a_windrbd_thread(const char *name, ...)
+{
+	struct task_struct *t;
+	ULONG_PTR flags;
+	va_list args;
+	int i;
+	NTSTATUS status;
+
+	if ((t = kzalloc(sizeof(*t), GFP_KERNEL, 'DRBD')) == NULL)
+		return ERR_PTR(-ENOMEM);
+
+		/* The thread will be created later in wake_up_process(),
+		 * since Windows doesn't know of threads that are stopped
+		 * when created.
+		 */
+
+	t->windows_thread = KeGetCurrentThread();
+	spin_lock_init(&t->thread_started_lock);
+
+	KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
+	KeInitializeEvent(&t->start_event, SynchronizationEvent, FALSE);
+	t->has_sig_event = TRUE;
+	t->sig = -1;
+
+	va_start(args, name);
+	i = _vsnprintf_s(t->comm, sizeof(t->comm)-1, _TRUNCATE, name, args);
+	va_end(args);
+	if (i == -1) {
+		kfree(t);
+		return ERR_PTR(-ERANGE);
+	}
+
+	spin_lock_irqsave(&next_pid_lock, flags);
+	next_pid++;
+	t->pid = next_pid;
+	spin_unlock_irqrestore(&next_pid_lock, flags);
+
+	spin_lock_irqsave(&thread_list_lock, flags);
+	list_add(&t->list, &thread_list);
+	spin_unlock_irqrestore(&thread_list_lock, flags);
+
+	return t;
+}
+
+	/* Call this when a thread returns to the calling Windows
+	 * kernel function.
+	 */
+
+void return_to_windows(struct task_struct *t)
+{
+	ULONG_PTR flags;
+
+	spin_lock_irqsave(&thread_list_lock, flags);
+	list_del(&t->list);
+	kfree(t);
+	spin_unlock_irqrestore(&thread_list_lock, flags);
+}
+
 bool is_windrbd_thread(struct task_struct *t)
 {
 	if (t == NULL)
