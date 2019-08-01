@@ -171,6 +171,11 @@ static void delete_multicast_elements_and_replies_for_file_object(struct _FILE_O
 static int run_reaper;
 static void *reaper_thread_object;
 
+	/* TODO: this should mostly get away. We now know when
+	 * the userland utility exits (device file gets closed)
+	 * and should free the memory there instead.
+	 */
+
 static NTSTATUS reply_reaper(void *unused)
 {
 	LARGE_INTEGER interval;
@@ -522,14 +527,14 @@ struct genl_thread_args {
 	 * while in user mode context.
 	 */
 
-static NTSTATUS windrbd_netlink_thread(void *context)
+static int windrbd_netlink_thread(void *context)
 {
 	struct genl_thread_args *args = (struct genl_thread_args*) context;
 
 		/* This actually calls the routine in drbd_nl.c */
 	args->ret = _genl_ops(args->op, args->info);
 	KeSetEvent(&args->completion_event, 0, FALSE);
-	return STATUS_SUCCESS;
+	return 0;
 }
 
 int windrbd_process_netlink_packet(void *msg, size_t msg_size)
@@ -539,7 +544,7 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 	int ret;
 	NTSTATUS status;
 	struct genl_thread_args args;
-	HANDLE h;
+	struct task_struct *t;
 
 	if (msg == NULL)
 		return -EINVAL;
@@ -575,22 +580,19 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 	KeInitializeEvent(&args.completion_event, SynchronizationEvent, FALSE);
 	args.ret = -ENOMEM;
 
-	status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, windrbd_netlink_thread, (void *) &args);
-	if (!NT_SUCCESS(status)) {
-		printk("Couldn't create netlink thread, status is %x\n", status);
-		ret = -ENOMEM;
+	t = kthread_run(windrbd_netlink_thread, (void *) &args, "netlink");
+	if (IS_ERR(t)) {
+		printk("Couldn't create netlink thread, error is %d\n", PTR_ERR(t));
+		ret = PTR_ERR(t);
 		goto out_unlock_mutex;
 	}
 	status = KeWaitForSingleObject(&args.completion_event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 	if (!NT_SUCCESS(status)) {
 		printk("Couldn't wait for netlink thread completion event, status is %x\n", status);
 		ret = -ENOMEM;
-		goto out_close_handle;
+		goto out_unlock_mutex;
 	}
 	ret = args.ret;
-
-out_close_handle:
-	ZwClose(h);
 
 out_unlock_mutex:
 	mutex_unlock(&genl_drbd_mutex);
