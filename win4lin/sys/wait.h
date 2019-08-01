@@ -46,7 +46,8 @@ do {									\
 	while (1) {							\
 		prepare_to_wait(&wait_queue, NULL, interruptible);	\
 		if (condition) {					\
-			__timeout = 0;					\
+			if (__timeout == 0)				\
+				__timeout = 1;				\
 			break;						\
 		}							\
 									\
@@ -55,10 +56,8 @@ do {									\
 		   __timeout == -EINTR)					\
 			break;						\
 									\
-		if (__timeout == 0) {					\
-			__timeout = 1;					\
+		if (__timeout == 0) 					\
 			break;						\
-		}							\
 									\
 	}								\
 	finish_wait(&wait_queue, NULL);					\
