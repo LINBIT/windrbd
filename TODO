@@ -14,12 +14,32 @@ Planned: Feb 28 2019
 Real: Apr 10 2019
 -----------------------------------------------------------------------
 
+TODO: Implement: fix the wait_event_interruptible implementation and interface
+
+	All timeouts are currently set to 0, which is most likely
+	wrong.
+
+	Update: The whole wait_event and schedule and workqueue
+	implementation is broken and should be redesigned and
+	reimplemented. Do that for 0.9.4. It should also fix
+	the stablity problem that Disconnect sometimes BSODs.
+
 TODO: Implement: prepare_to_wait and finish_wait
 
 	They should register the wait queue with the thread,
 	schedule then should use them.
 
 	Almost done, need more testing.
+
+TODO: Bug: schedule called by non-DRBD thread.
+
+	We should create struct task_struct for all threads. We
+	should do so on the IRP entry points already. Also we
+	should do so for all 'windrbd' (those without a struct
+	task_struct) threads.
+
+	TODO: call the make_me_a_windrbd_thread and return_to_windows
+	functions.
 
 TODO: Bug: On up/down loop, cannot create WinDRBD device and later BSODs
 
@@ -48,6 +68,11 @@ TODO: Feature: Call test routines via ioctl().
 
 	In particular I would like to test calling KeWaitForMultipleObjects()
 	while IRQL is Dispatch level (I suppose the machine hangs or BSODs).
+
+TODO: Implement: implement wake_up_all
+
+	Need to have a list of events, one element for each process
+	waiting. Use the DEFINE_WAIT to allocate those elements.
 
 TODO: Bug: up-down loop fails currently.
 
@@ -262,16 +287,6 @@ TODO: Bug: Allow rcu_read_lock() being called recursively.
 
 	This should fix the system lockup we observed on
 	Server 2016.
-
-TODO: Implement: fix the wait_event_interruptible implementation and interface
-
-	All timeouts are currently set to 0, which is most likely
-	wrong.
-
-	Update: The whole wait_event and schedule and workqueue
-	implementation is broken and should be redesigned and
-	reimplemented. Do that for 0.9.4. It should also fix
-	the stablity problem that Disconnect sometimes BSODs.
 
 TODO: Code quality: windrbd show-drive-in-explorer might take longer than 5 seconds
 
