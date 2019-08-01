@@ -71,8 +71,10 @@ LONG_PTR new_schedule_timeout_maybe_with_error_code(ULONG_PTR timeout, int retur
 	LONG_PTR elapsed;
 	int err;
 
-	if (!is_windrbd_thread(current))
-		printk("Warning: schedule called from a non WinDRBD thread\n");
+	if (!is_windrbd_thread(current)) {
+		printk("Warning: schedule called from a non WinDRBD thread, not waiting\n");
+		return -EINVAL;
+	}
 
 	err = ll_wait(current->wait_queue, timeout, TASK_INTERRUPTIBLE);
 
