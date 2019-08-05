@@ -38,8 +38,27 @@ TODO: Bug: schedule called by non-DRBD thread.
 	should do so for all 'windrbd' (those without a struct
 	task_struct) threads.
 
-	TODO: call the make_me_a_windrbd_thread and return_to_windows
+	Done: call the make_me_a_windrbd_thread and return_to_windows
 	functions.
+
+	Right now we do not get any I/O or SCSI requests. Probably
+	somebody is waiting forever for an event. Update: no something
+	with WinDRBD bus device is not working (couldn't start
+	device). Update: pnp requests were not called (off-by-one
+	when assigning dispatch table). Now still no I/O
+	(hangs inc_ap_bio and wait_for_sender_todo).
+
+TODO: Bug: BSOD on drbdadm down when not connected.
+
+	But has local backing storage.
+
+	Last log lines are
+
+Aug  5 14:14:15 192.168.56.101  U12:14:15.150|0206d2d0(not_drbd_thread) run_singlethread_workqueue 5
+Aug  5 14:14:15 192.168.56.101  U12:14:15.150|0206d2d0(not_drbd_thread) run_singlethread_workqueue 1
+Aug  5 14:14:15 192.168.56.101  U12:14:15.150|036ffd40(netlink) flush_workqueue work finished (or killed)
+
+	Maybe we have to reengineer the worqueue layer as well ...
 
 TODO: Bug: On up/down loop, cannot create WinDRBD device and later BSODs
 
