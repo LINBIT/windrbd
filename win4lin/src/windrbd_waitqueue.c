@@ -6,7 +6,7 @@
 	 */
 
 
-static int ll_wait(wait_queue_head_t *q, ULONG_PTR timeout, int interruptible)
+static int ll_wait(wait_queue_head_t *q, ULONG_PTR timeout, int interruptible, const char *file, int line, const char *func)
 {
 	LARGE_INTEGER wait_time;
 	LARGE_INTEGER *wait_time_p;
@@ -39,9 +39,9 @@ static int ll_wait(wait_queue_head_t *q, ULONG_PTR timeout, int interruptible)
 		printk("Warning: Attempt to schedule at IRQL %d will not sleep\n", KeGetCurrentIrql());
 		return -EINVAL;
 	}
-printk("into KeWaitForMultipleObjects\n");
+printk("into KeWaitForMultipleObjects from %s:%d (%s())\n", file, line, func);
 	status = KeWaitForMultipleObjects(num_wait_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, wait_time_p, NULL);
-printk("out of KeWaitForMultipleObjects\n");
+printk("out of KeWaitForMultipleObjects from %s:%d (%s())\n", file, line, func);
 
 	if (!NT_SUCCESS(status)) {
 		printk("Warning: KeWaitForMultipleObjects returned with status %x\n", status);
@@ -59,15 +59,15 @@ printk("out of KeWaitForMultipleObjects\n");
 	return 0;
 }
 
-void new_schedule(void)
+void new_schedule(const char *file, int line, const char *func)
 {
 	if (!is_windrbd_thread(current))
 		printk("Warning: schedule called from a non WinDRBD thread\n");
 
-	ll_wait(current->wait_queue, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE);
+	ll_wait(current->wait_queue, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
 }
 
-LONG_PTR new_schedule_timeout_maybe_with_error_code(ULONG_PTR timeout, int return_error)
+LONG_PTR new_schedule_timeout_maybe_with_error_code(ULONG_PTR timeout, int return_error, const char *file, int line, const char *func)
 {
 	LONG_PTR then = jiffies;
 	LONG_PTR elapsed;
@@ -78,7 +78,7 @@ LONG_PTR new_schedule_timeout_maybe_with_error_code(ULONG_PTR timeout, int retur
 		return -EINVAL;
 	}
 
-	err = ll_wait(current->wait_queue, timeout, TASK_INTERRUPTIBLE);
+	err = ll_wait(current->wait_queue, timeout, TASK_INTERRUPTIBLE, file, line, func);
 
 	if (err < 0 && return_error)
 		return err;
@@ -89,14 +89,14 @@ LONG_PTR new_schedule_timeout_maybe_with_error_code(ULONG_PTR timeout, int retur
 	return 0;
 }
 
-ULONG_PTR new_schedule_timeout(ULONG_PTR timeout)
+ULONG_PTR new_schedule_timeout(ULONG_PTR timeout, const char *file, int line, const char *func)
 {
-	return new_schedule_timeout_maybe_with_error_code(timeout, 0);
+	return new_schedule_timeout_maybe_with_error_code(timeout, 0, file, line, func);
 }
 
-LONG_PTR new_schedule_timeout_maybe_interrupted(ULONG_PTR timeout)
+LONG_PTR new_schedule_timeout_maybe_interrupted(ULONG_PTR timeout, const char *file, int line, const char *func)
 {
-	return new_schedule_timeout_maybe_with_error_code(timeout, 1);
+	return new_schedule_timeout_maybe_with_error_code(timeout, 1, file, line, func);
 }
 
 	/* TODO: no locks? Assumes that current is always (1) valid and

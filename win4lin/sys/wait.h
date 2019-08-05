@@ -28,12 +28,12 @@ void prepare_to_wait(struct wait_queue_head *w, void *unused, int interruptible)
 void finish_wait(struct wait_queue_head *w, void *unused);
 
 /* This will be the schedule() function soon ... */
-void new_schedule(void);
+void new_schedule(const char *file, int line, const char *func);
 /* Returns -EINTR on signal else remaining time. */
-ULONG_PTR new_schedule_timeout(ULONG_PTR timeout);
+ULONG_PTR new_schedule_timeout(ULONG_PTR timeout, const char *file, int line, const char *func);
 /* Returns -EINTR on signal else remaining time. Use only internally. */
 /* TODO: better name for functiokn */
-LONG_PTR new_schedule_timeout_maybe_interrupted(ULONG_PTR timeout);
+LONG_PTR new_schedule_timeout_maybe_interrupted(ULONG_PTR timeout, const char *file, int line, const char *func);
 
 /* One macro for all cases of wait_event: if there is a bug it is
  * most likely in here ...
@@ -51,7 +51,8 @@ do {									\
 			break;						\
 		}							\
 									\
-		__timeout = new_schedule_timeout_maybe_interrupted(__timeout);\
+		__timeout = new_schedule_timeout_maybe_interrupted(	\
+			__timeout, __FILE__, __LINE__, __func__);	\
 		if (interruptible == TASK_INTERRUPTIBLE &&		\
 		   __timeout == -EINTR)					\
 			break;						\
