@@ -45,6 +45,38 @@
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
 
+static PDRIVER_DISPATCH windrbd_dispatch_table[IRP_MJ_MAXIMUM_FUNCTION + 1];
+static char *thread_names[IRP_MJ_MAXIMUM_FUNCTION + 1] = {
+"create",		/* IRP_MJ_CREATE                     0x00 */
+"createpipe",		/* IRP_MJ_CREATE_NAMED_PIPE          0x01 */
+"close",		/* IRP_MJ_CLOSE                      0x02 */
+"read",			/* IRP_MJ_READ                       0x03 */
+"write",		/* IRP_MJ_WRITE                      0x04 */
+"queryinfo",		/* IRP_MJ_QUERY_INFORMATION          0x05 */
+"setinfo",		/* IRP_MJ_SET_INFORMATION            0x06 */
+"queryea",		/* IRP_MJ_QUERY_EA                   0x07 */
+"setea",		/* IRP_MJ_SET_EA                     0x08 */
+"flush",		/* IRP_MJ_FLUSH_BUFFERS              0x09 */
+"queryvol",		/* IRP_MJ_QUERY_VOLUME_INFORMATION   0x0a */
+"setvol",		/* IRP_MJ_SET_VOLUME_INFORMATION     0x0b */
+"dircontrol",		/* IRP_MJ_DIRECTORY_CONTROL          0x0c */
+"fscontrol",		/* IRP_MJ_FILE_SYSTEM_CONTROL        0x0d */
+"devicecontrol",	/* IRP_MJ_DEVICE_CONTROL             0x0e */
+"scsi",			/* IRP_MJ_SCSI                       0x0f */
+"shutdown",		/* IRP_MJ_SHUTDOWN                   0x10 */
+"lockcontrol",		/* IRP_MJ_LOCK_CONTROL               0x11 */
+"cleanup",		/* IRP_MJ_CLEANUP                    0x12 */
+"createmslot",		/* IRP_MJ_CREATE_MAILSLOT            0x13 */
+"querysec",		/* IRP_MJ_QUERY_SECURITY             0x14 */
+"setsec",		/* IRP_MJ_SET_SECURITY               0x15 */
+"power",		/* IRP_MJ_POWER                      0x16 */
+"syscontrol",		/* IRP_MJ_SYSTEM_CONTROL             0x17 */
+"devchange",		/* IRP_MJ_DEVICE_CHANGE              0x18 */
+"queryquota",		/* IRP_MJ_QUERY_QUOTA                0x19 */
+"setquota",		/* IRP_MJ_SET_QUOTA                  0x1a */
+"pnp",			/* IRP_MJ_PNP                        0x1b */
+};
+
 /* TODO: return STATUS_NO_MEMORY instead of STATUS_INSUFFICIENT_RESOURCES
  * whereever a kmalloc() fails.
  */
@@ -787,7 +819,7 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
        	               (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0;
 
-		dbg(KERN_INFO "DRBD device create request: opening DRBD device %s\n",
+		dbg(KERN_INFO "DRBD device  request: opening DRBD device %s\n",
 			mode == 0 ? "read-only" : "read-write");
 
 		err = drbd_open(dev, mode);
@@ -1964,7 +1996,8 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 	return d_size;
 }
 
-static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) {
+static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) 
+{
 	NTSTATUS status;
 	struct _SCSI_REQUEST_BLOCK *srb;
 	struct _CDB16 *cdb16;
@@ -2207,25 +2240,60 @@ out:
 	return status;
 }
 
+	/* The purpose of this extra dispatch function is to create
+	 * a valid windrbd thread context for everything that happens
+	 * within the windrbd driver. This is neccessary since the
+	 * new wait_event_xxx() implementation requires a valid
+	 * thread object.
+	 */
+
+static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	struct task_struct *t;
+	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+	unsigned int major = s->MajorFunction;
+	NTSTATUS ret;
+
+	if (major > IRP_MJ_MAXIMUM_FUNCTION) {
+		printk("Warning: got major function %x out of range\n", major);
+		return STATUS_INVALID_DEVICE_REQUEST;
+	}
+	t = make_me_a_windrbd_thread(thread_names[major]);
+	if (t == NULL) {
+		printk("Warning: cannot create a thread object for request.\n");
+	}
+printk("got request major is %x\n", major);
+
+	ret = windrbd_dispatch_table[major](device, irp);
+
+	if (t != NULL) {
+		return_to_windows(t);
+	}
+	return ret;
+}
+
 void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 {
 	int i;
 	NTSTATUS status;
 
 	for (i=0; i<IRP_MJ_MAXIMUM_FUNCTION; i++)
-		obj->MajorFunction[i] = windrbd_not_implemented;
+		obj->MajorFunction[i] = windrbd_dispatch;
 
-	obj->MajorFunction[IRP_MJ_DEVICE_CONTROL] = windrbd_device_control;
-	obj->MajorFunction[IRP_MJ_READ] = windrbd_io;
-	obj->MajorFunction[IRP_MJ_WRITE] = windrbd_io;
-	obj->MajorFunction[IRP_MJ_CREATE] = windrbd_create;
-	obj->MajorFunction[IRP_MJ_CLOSE] = windrbd_close;
-	obj->MajorFunction[IRP_MJ_CLEANUP] = windrbd_cleanup;
-	obj->MajorFunction[IRP_MJ_PNP] = windrbd_pnp;
-	obj->MajorFunction[IRP_MJ_SHUTDOWN] = windrbd_shutdown;
-	obj->MajorFunction[IRP_MJ_FLUSH_BUFFERS] = windrbd_flush;
-	obj->MajorFunction[IRP_MJ_SCSI] = windrbd_scsi;
-	obj->MajorFunction[IRP_MJ_POWER] = windrbd_power;
+	for (i=0; i<IRP_MJ_MAXIMUM_FUNCTION; i++)
+		windrbd_dispatch_table[i] = windrbd_not_implemented;
+
+	windrbd_dispatch_table[IRP_MJ_DEVICE_CONTROL] = windrbd_device_control;
+	windrbd_dispatch_table[IRP_MJ_READ] = windrbd_io;
+	windrbd_dispatch_table[IRP_MJ_WRITE] = windrbd_io;
+	windrbd_dispatch_table[IRP_MJ_CREATE] = windrbd_create;
+	windrbd_dispatch_table[IRP_MJ_CLOSE] = windrbd_close;
+	windrbd_dispatch_table[IRP_MJ_CLEANUP] = windrbd_cleanup;
+	windrbd_dispatch_table[IRP_MJ_PNP] = windrbd_pnp;
+	windrbd_dispatch_table[IRP_MJ_SHUTDOWN] = windrbd_shutdown;
+	windrbd_dispatch_table[IRP_MJ_FLUSH_BUFFERS] = windrbd_flush;
+	windrbd_dispatch_table[IRP_MJ_SCSI] = windrbd_scsi;
+	windrbd_dispatch_table[IRP_MJ_POWER] = windrbd_power;
 
 	status = IoRegisterShutdownNotification(mvolRootDeviceObject);
 	if (status != STATUS_SUCCESS) {

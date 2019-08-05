@@ -39,7 +39,9 @@ static int ll_wait(wait_queue_head_t *q, ULONG_PTR timeout, int interruptible)
 		printk("Warning: Attempt to schedule at IRQL %d will not sleep\n", KeGetCurrentIrql());
 		return -EINVAL;
 	}
+printk("into KeWaitForMultipleObjects\n");
 	status = KeWaitForMultipleObjects(num_wait_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, wait_time_p, NULL);
+printk("out of KeWaitForMultipleObjects\n");
 
 	if (!NT_SUCCESS(status)) {
 		printk("Warning: KeWaitForMultipleObjects returned with status %x\n", status);
