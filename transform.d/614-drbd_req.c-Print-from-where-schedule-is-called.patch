@@ -1,0 +1,35 @@
+From 496543ee6e21fe94f1364df7764160e21a8787e1 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 5 Aug 2019 16:35:17 +0200
+Subject: [PATCH 4/4] drbd_req.c: Print from where schedule is called.
+
+This is good for debugging purposes.
+---
+ drbd/drbd_req.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
+index 56c5431..32a0226 100644
+--- a/drbd/drbd_req.c
++++ b/drbd/drbd_req.c
+@@ -1285,7 +1285,7 @@ static void complete_conflicting_writes(struct drbd_request *req)
+ 		prepare_to_wait(&device->misc_wait, &wait, TASK_UNINTERRUPTIBLE);
+ 		i->waiting = true;
+ 		spin_unlock_irq(&device->resource->req_lock);
+-		new_schedule();
++		new_schedule(__FILE__, __LINE__, __func__);
+ 
+ 		spin_lock_irq(&device->resource->req_lock);
+ 	}
+@@ -2209,7 +2209,7 @@ void do_submit(struct work_struct *ws)
+ 				break;
+ 
+ 			drbd_kick_lo(device);
+-			new_schedule();
++			new_schedule(__FILE__, __LINE__, __func__);
+ 
+ 			/* If all currently "hot" activity log extents are kept busy by
+ 			 * incoming requests, we still must not totally starve new
+-- 
+2.17.0
+

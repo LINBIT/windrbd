@@ -1,0 +1,26 @@
+From 16d39289ca4034c0f79d39f0039ffcdcc19406fc Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 5 Aug 2019 16:34:53 +0200
+Subject: [PATCH 3/4] drbd_sender.c: Print from where schedule is called.
+
+This is good for debugging purposes.
+---
+ drbd/drbd_sender.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index 0940610..2b1a9c0 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -2667,7 +2667,7 @@ static void wait_for_sender_todo(struct drbd_connection *connection)
+ 		if (get_t_state(&connection->sender) != RUNNING)
+ 			break;
+ 
+-		new_schedule();
++		new_schedule(__FILE__, __LINE__, __func__);
+ 		/* may be woken up for other things but new work, too,
+ 		 * e.g. if the current epoch got closed.
+ 		 * In which case we send the barrier above. */
+-- 
+2.17.0
+
