@@ -2277,10 +2277,10 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	int i;
 	NTSTATUS status;
 
-	for (i=0; i<IRP_MJ_MAXIMUM_FUNCTION; i++)
+	for (i=0; i<=IRP_MJ_MAXIMUM_FUNCTION; i++)
 		obj->MajorFunction[i] = windrbd_dispatch;
 
-	for (i=0; i<IRP_MJ_MAXIMUM_FUNCTION; i++)
+	for (i=0; i<=IRP_MJ_MAXIMUM_FUNCTION; i++)
 		windrbd_dispatch_table[i] = windrbd_not_implemented;
 
 	windrbd_dispatch_table[IRP_MJ_DEVICE_CONTROL] = windrbd_device_control;
