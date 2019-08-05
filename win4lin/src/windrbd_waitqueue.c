@@ -1,6 +1,11 @@
 #include "drbd_windows.h"
 #include "windrbd_threads.h"
 
+/* TODO: for debugging purposes, record which processes currently
+ * are waiting and have ioctl for printing those .. much like
+ * spinlock_debug()
+ */
+
 	/* Timeout is in jiffies (usually 1ms on WinDRBD)
          * Returns -EINTR, -ETIMEOUT or 0
 	 */
