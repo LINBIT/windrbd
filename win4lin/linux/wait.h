@@ -78,7 +78,6 @@ do {									\
 		timeout, TASK_INTERRUPTIBLE);				\
 } while (0);
 
-#if 0
 #define wait_event_interruptible(ret, wait_queue, condition)		\
 do {									\
 	ll_wait_event_macro(ret, wait_queue, condition,			\
@@ -90,7 +89,6 @@ do {									\
 	ll_wait_event_macro(ret, wait_queue, condition,			\
 		timeout, TASK_INTERRUPTIBLE);		\
 } while (0);
-#endif
 
 #define wake_up(q) wake_up_debug(q, __FILE__, __LINE__, __func__)
 

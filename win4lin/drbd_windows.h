@@ -1085,7 +1085,6 @@ extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 			__wait_event_timeout(wq, condition, __ret);  \
 		t = __ret; \
         		} while (0)
-#endif
 
 
 
@@ -1138,6 +1137,8 @@ TODO: change to static inline and make Linux compatible
 			if (-DRBD_SIGKILL == ret) { break; } \
 		}\
 	} while (0)
+
+#endif
 
 #define MAX_PROC_BUF	2048
 
