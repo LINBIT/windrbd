@@ -949,16 +949,18 @@ int IS_ERR(void *ptr)
 }
 
 
-void _wake_up(wait_queue_head_t *q, char *__func, int __line)
+void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {		
-    KeSetEvent(&q->wqh_event, 0, FALSE);
+printk("wake_up %p %s:%d (%s())\n", q, file, line, func);
+	KeSetEvent(&q->wqh_event, 0, FALSE);
 }
 
 void wake_up_all(wait_queue_head_t *q)
 {
+printk("Warning: wake_up_all called but not implemented yet\n");
 	/* Should cause all threads to wake up and check the condition again */
 	/* TODO: phil check whether the single-wake-up is wrong? */
-    KeSetEvent(&q->wqh_event, 0, FALSE);
+	KeSetEvent(&q->wqh_event, 0, FALSE);
 }
 
 void init_completion(struct completion *completion)
