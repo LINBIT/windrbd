@@ -1,0 +1,39 @@
+From eb17db81ab76b83526f5543679d8c71c436a1d8f Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 6 Aug 2019 17:17:45 +0200
+Subject: [PATCH] drbd_state: fixed stable_state_change.
+
+wait_event_interruptible was called in a wrong way (as an expression,
+but in WinDRBD it is a statement). Also changed local rv to
+__rv since it is shadowed inside the do while loop.
+(this might also be a problem in DRBD).
+---
+ drbd/drbd_state.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_state.h b/drbd/drbd_state.h
+index 4b6b70a..db95ff8 100644
+--- a/drbd/drbd_state.h
++++ b/drbd/drbd_state.h
+@@ -72,14 +72,14 @@ extern union drbd_state drbd_get_connection_state(struct drbd_connection *, enum
+ 		/* TODO: doesn't work that way ... */
+ #define stable_state_change(__ret, resource, change_state)                      \
+ 	do {									\
+-                enum drbd_state_rv rv;                                          \
++                enum drbd_state_rv __rv;                                        \
+                 int err;                                                        \
+-                err = wait_event_interruptible((resource)->state_wait,          \
+-                        (rv = (change_state)) != SS_IN_TRANSIENT_STATE);        \
++                wait_event_interruptible(err, (resource)->state_wait,           \
++                        (__rv = (change_state)) != SS_IN_TRANSIENT_STATE);      \
+                 if (err)                                                        \
+                         err = -SS_UNKNOWN_ERROR;                                \
+                 else                                                            \
+-                        err = rv;                                               \
++                        err = __rv;                                             \
+                 __ret = err;                                                    \
+         } while (0);
+ 
+-- 
+2.17.0
+
