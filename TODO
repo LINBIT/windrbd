@@ -24,29 +24,22 @@ TODO: Implement: fix the wait_event_interruptible implementation and interface
 	reimplemented. Do that for 0.9.4. It should also fix
 	the stablity problem that Disconnect sometimes BSODs.
 
-TODO: Implement: prepare_to_wait and finish_wait
+TODO: Bug: hangs in inc_ap_bio()
 
-	They should register the wait queue with the thread,
-	schedule then should use them.
+	With a7c157c1 sometimes (not always) wait_event in
+	inc_ap_bio is never woken up. Also when there are no
+	printk's (when being disconnected).
 
-	Almost done, need more testing.
+TODO: Implement: implement wake_up_all
 
-TODO: Bug: schedule called by non-DRBD thread.
+	Need to have a list of events, one element for each process
+	waiting. Use the DEFINE_WAIT to allocate those elements.
 
-	We should create struct task_struct for all threads. We
-	should do so on the IRP entry points already. Also we
-	should do so for all 'windrbd' (those without a struct
-	task_struct) threads.
+TODO: Implement: remove remaing calls to old schedule()
 
-	Done: call the make_me_a_windrbd_thread and return_to_windows
-	functions.
+TODO: Implement: Reengineer completions
 
-	Right now we do not get any I/O or SCSI requests. Probably
-	somebody is waiting forever for an event. Update: no something
-	with WinDRBD bus device is not working (couldn't start
-	device). Update: pnp requests were not called (off-by-one
-	when assigning dispatch table). Now still no I/O
-	(hangs inc_ap_bio and wait_for_sender_todo).
+TODO: Implement: Reengineer workqueues
 
 TODO: Bug: BSOD on drbdadm down when not connected.
 
@@ -87,11 +80,6 @@ TODO: Feature: Call test routines via ioctl().
 
 	In particular I would like to test calling KeWaitForMultipleObjects()
 	while IRQL is Dispatch level (I suppose the machine hangs or BSODs).
-
-TODO: Implement: implement wake_up_all
-
-	Need to have a list of events, one element for each process
-	waiting. Use the DEFINE_WAIT to allocate those elements.
 
 TODO: Bug: up-down loop fails currently.
 
@@ -5344,3 +5332,41 @@ Done: Feature: Pass DRBD parameters of root device to kernel
 
 	option ipxe.windrbd-root "drbd:tiny-windows-disk;C;2;0.0.0.0:7683;1;1;johannes-VirtualBox;1;192.168.56.102:7684";
 
+Done: Implement: prepare_to_wait and finish_wait
+
+	They should register the wait queue with the thread,
+	schedule then should use them.
+
+	Almost done, need more testing.
+
+Done: Bug: schedule called by non-DRBD thread.
+
+	We should create struct task_struct for all threads. We
+	should do so on the IRP entry points already. Also we
+	should do so for all 'windrbd' (those without a struct
+	task_struct) threads.
+
+	Done: call the make_me_a_windrbd_thread and return_to_windows
+	functions.
+
+	Right now we do not get any I/O or SCSI requests. Probably
+	somebody is waiting forever for an event. Update: no something
+	with WinDRBD bus device is not working (couldn't start
+	device). Update: pnp requests were not called (off-by-one
+	when assigning dispatch table). Now still no I/O
+	(hangs inc_ap_bio and wait_for_sender_todo).
+
+	Fixed PnP dispatcher off-by-one error and closed this TODO
+
+
+Done: Implement: Fix the stable_state_change macro
+
+	We need a cocci script that expands to the macro. Do that
+	a little later since it work quite well now ...
+
+	Also try if we can write it using a?b:c notation as a
+	real expression.
+
+	Done: After fixing the call to wait_event_interruptible
+	in the stable_state_change macro, it compiles and
+	hopefully works as expected.
