@@ -1139,12 +1139,6 @@ TODO: change to static inline and make Linux compatible
 		}\
 	} while (0)
 
-#define wake_up(q) wake_up_debug(q, __FILE__, __LINE__, __func__)
-
-void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char *func);
-extern void wake_up_all(wait_queue_head_t *q);
-
-
 #define MAX_PROC_BUF	2048
 
 struct crypto_tfm;

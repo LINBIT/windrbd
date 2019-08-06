@@ -45,13 +45,13 @@ static int ll_wait(wait_queue_head_t *q, ULONG_PTR timeout, int interruptible, c
 		return -EINVAL;
 	}
 
-if (line != 48)	/* silence drbd_md_get_buffer */
-printk("into KeWaitForMultipleObjects from %s:%d (%s())\n", file, line, func);
+// if (line != 48)	/* silence drbd_md_get_buffer */
+// printk("into KeWaitForMultipleObjects from %s:%d (%s())\n", file, line, func);
 
 	status = KeWaitForMultipleObjects(num_wait_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, wait_time_p, NULL);
 
-if (line != 48)	/* silence drbd_md_get_buffer */
-printk("out of KeWaitForMultipleObjects from %s:%d (%s())\n", file, line, func);
+// if (line != 48)	/* silence drbd_md_get_buffer */
+// printk("out of KeWaitForMultipleObjects from %s:%d (%s())\n", file, line, func);
 
 	if (!NT_SUCCESS(status)) {
 		printk("Warning: KeWaitForMultipleObjects returned with status %x\n", status);
@@ -127,3 +127,18 @@ void finish_wait(struct wait_queue_head *w, void *unused)
 
 	thread->wait_queue = NULL;
 }
+
+void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
+{		
+// printk("wake_up %p %s:%d (%s())\n", q, file, line, func);
+	KeSetEvent(&q->wqh_event, 0, FALSE);
+}
+
+void wake_up_all(wait_queue_head_t *q)
+{
+// printk("Warning: wake_up_all called but not implemented yet\n");
+	/* Should cause all threads to wake up and check the condition again */
+	/* TODO: phil check whether the single-wake-up is wrong? */
+	KeSetEvent(&q->wqh_event, 0, FALSE);
+}
+

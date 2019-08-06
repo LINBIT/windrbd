@@ -948,21 +948,6 @@ int IS_ERR(void *ptr)
 	return IS_ERR_VALUE((unsigned long) ptr);
 }
 
-
-void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
-{		
-printk("wake_up %p %s:%d (%s())\n", q, file, line, func);
-	KeSetEvent(&q->wqh_event, 0, FALSE);
-}
-
-void wake_up_all(wait_queue_head_t *q)
-{
-printk("Warning: wake_up_all called but not implemented yet\n");
-	/* Should cause all threads to wake up and check the condition again */
-	/* TODO: phil check whether the single-wake-up is wrong? */
-	KeSetEvent(&q->wqh_event, 0, FALSE);
-}
-
 void init_completion(struct completion *completion)
 {
 	memset(completion->wait.eventName, 0, Q_NAME_SZ);
