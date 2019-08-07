@@ -460,9 +460,9 @@ struct workqueue_struct {
 	KEVENT	wakeupEvent;
 	KEVENT	killEvent;
 	KEVENT	workFinishedEvent;
-	PVOID	pThread;
 	void (*func)();
 	char name[WQNAME_LEN];
+	struct task_struct *thread;
 };
 
 struct timer_list {

@@ -1081,7 +1081,7 @@ int queue_work(struct workqueue_struct* queue, struct work_struct* work)
     return TRUE;
 }
 
-void run_singlethread_workqueue(struct workqueue_struct * wq)
+static int run_singlethread_workqueue(struct workqueue_struct * wq)
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     PVOID waitObjects[2] = { &wq->wakeupEvent, &wq->killEvent };
@@ -1120,13 +1120,14 @@ printk("6\n");
         }
     }
 printk("7 exiting thread\n");
+	return 0;
 }
 
 struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ...)
 {
     struct workqueue_struct * wq = kzalloc(sizeof(struct workqueue_struct), 0, '31DW');
     va_list args;
-    va_start(args, flags);
+    va_start(args, flags);	/* TODO: no va_end ?!?! */
     NTSTATUS status;
 
 
@@ -1152,10 +1153,9 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
 
 // printk("starting a workqueue thread\n");
 
-	status = windrbd_create_windows_thread(run_singlethread_workqueue, wq, &wq->pThread);
-
-	if (!NT_SUCCESS(status)) {
-		printk("windrbd_create_windows_thread failed with status 0x%08x\n", status);
+	wq->thread = kthread_run(run_singlethread_workqueue, wq, "workqueue");
+	if (IS_ERR(wq->thread)) {
+		printk("kthread_run failed on creating workqueue thread, err is %d\n", PTR_ERR(wq->thread));
 		kfree(wq);
 		return NULL;
 	}
@@ -1982,8 +1982,8 @@ void del_gendisk(struct gendisk *disk)
 void destroy_workqueue(struct workqueue_struct *wq)
 {
 	KeSetEvent(&wq->killEvent, 0, FALSE);
-	windrbd_cleanup_windows_thread(wq->pThread);
 
+		/* TODO: very bad idea: */
 	kfree(wq);
 // printk("stopping a workqueue thread\n");
 }
