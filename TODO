@@ -24,11 +24,61 @@ TODO: Implement: fix the wait_event_interruptible implementation and interface
 	reimplemented. Do that for 0.9.4. It should also fix
 	the stablity problem that Disconnect sometimes BSODs.
 
+TODO: Bug: Sync sometimes does not start
+
+	On running updown-loop-wait-sync on Linux peer.
+	Linux peer stuck in WFBitMapT, drbdadm status on
+	Windows hangs.
+
+TODO: Bug: Hangs on drbdadm up
+
+	At 100% CPU
+	When enabling wait_event_interruptible new implementation.
+
+	Most likely fixed with 15523aab5068
+
+TODO: Bug: BSOD on up/status/down when never connected.
+
+	IRQL BSOD
+
+TODO: Bug: BSOD when we can't connect
+
+	Last log line is
+
+Aug  7 14:44:44 192.168.56.101  U12:44:44.790|032677f0(drbd_r_w0) ll_wait out of KeWaitForMultipleObjects from drbd_transport_tcp.c:658 (dtt_wait_for_connect())
+
+	Error is C9
+
+	Also observed endless loop of this ll_wait call (loops forever
+	with 100% CPU).
+
+	Most likely fixed with 15523aab5068 (test again)
+
 TODO: Bug: hangs in inc_ap_bio()
 
 	With a7c157c1 sometimes (not always) wait_event in
 	inc_ap_bio is never woken up. Also when there are no
 	printk's (when being disconnected).
+
+	inc_ap_bio returns false in the first if (testing for NEW_CUR_UUID)
+
+TODO: Bug: BSOD 25 seconds after drbdadm down
+
+	There is a suprise removal. We should probably allow for
+	close returning status success.
+
+Aug  7 17:39:33 192.168.56.101  U15:39:33.759|038cb8c0(pnp) windrbd_pnp got IRP_MN_SURPRISE_REMOVAL
+Aug  7 17:39:33 192.168.56.101  U15:39:33.759|038cf330(close) windrbd_dispatch got request major is 2
+Aug  7 17:39:33 192.168.56.101  U15:39:33.759|038cf330(close) windrbd_close <4>Device FFFFFA8002D53890 accessed after it was deleted.
+Aug  7 17:39:33 192.168.56.101  U15:39:33.778|038cf330(close) windrbd_dispatch got request major is 2
+Aug  7 17:39:33 192.168.56.101  U15:39:33.778|038cf330(close) windrbd_close <4>Device FFFFFA8002D53890 accessed after it was deleted.
+Aug  7 17:39:33 192.168.56.101  U15:39:33.873|02064500(not_drbd_thread) windrbd_reap_threads Buried workqueue thread
+....
+Aug  7 17:39:57 192.168.56.101  U15:39:57.177|038c3800(pnp) windrbd_pnp Pnp: device: FFFFFA8002D53890 irp: FFFFF98010F12E50
+Aug  7 17:39:57 192.168.56.101  U15:39:57.177|038c3800(pnp) windrbd_pnp <7>got PnP device request: MajorFunction: 0x1b, MinorFunction: 2
+Aug  7 17:39:57 192.168.56.101  U15:39:57.177|038c3800(pnp) windrbd_pnp got IRP_MN_REMOVE_DEVICE
+Aug  7 17:39:57 192.168.56.101  U15:39:57.177|038c3800(pnp) windrbd_pnp about to delete device object FFFFFA8002D53890
+
 
 TODO: Implement: implement wake_up_all
 
@@ -40,6 +90,10 @@ TODO: Implement: remove remaing calls to old schedule()
 TODO: Implement: Reengineer completions
 
 TODO: Implement: Reengineer workqueues
+
+TODO: Infrastructure: Create a VDI of Windows dev with all snapshots merged
+
+	Need to make space on HDD first.
 
 TODO: Bug: BSOD on drbdadm down when not connected.
 
@@ -71,6 +125,8 @@ TODO: Bug: BSOD on up/down when unconnected and have disk
         Also BSOD on drbdadm down when connected and have disk.
 	Also with d288b29fcc50db so it is not the new event handling code.
 	Observed a system hang with d288b29fcc50db
+
+TODO: Test: dhcp.conf: if exists ipxe.windrbd-root
 
 TODO: Feature: Call test routines via ioctl().
 
@@ -109,6 +165,25 @@ TODO: Test: up down when there is lots of I/O
 TODO: Bug: Several system hangs and BSODs on WinDRBD boot
 
 	Now, try if AoE is more stable.
+
+	Update: Yes it is.
+
+	We found an interresting logline: it seems that the error
+	is our inc_ap_bio() bug (note the timestamps).
+
+<1> U17:03:31.174|02e2f6c0(scsi) inc_ap_bio_cond 5
+<1> U17:03:31.174|02e2f6c0(scsi) ll_wait into KeWaitForMultipleObjects from drbd_req.c:1950 (inc_ap_bio()) timeout is 2147483647
+<1> U17:03:58.565|02639480(scsi) windrbd_dispatch got request major is f
+<1> U17:03:58.565|02639480(scsi) wait_for_becoming_primary 5
+<1> U17:03:58.565|02639480(scsi) __drbd_make_request 1
+
+	Also sometimes wait_for_sender_todo hangs:
+
+<1> U17:34:01.017|02f952d0(scsi) wake_up_debug wake_up FFFFFA80062E6A88 drbd_req.c:360 (wake_all_senders())
+<1> U17:34:01.017|02621130(drbd_s_tiny-windows-disk) ll_wait out of KeWaitForMultipleObjects from drbd_sender.c:2670 (wait_for_sender_todo()) stastus is 0
+<1> U17:34:01.017|02621130(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2670 (wait_for_sender_todo()) timeout is 214748364
+<1> U17:34:09.270|0179ea20(drbd_a_tiny-windows-disk) kernel_recvmsg receive timed out
+<1> U17:34:18.317|026292c0(drbd_r_tiny-windows-disk) kernel_recvmsg receive completed with error c00000b5
 
 TODO: Feature: Become Primary only on write requests
 
@@ -670,6 +745,9 @@ TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	(before terminating), maybe that's a hint.
 
 	Also make it work with ReFS (windows server 2016, windows 10).
+
+	Update: With PnP support this probably works out of the
+	box.
 
 TODO: Test: Test with MS SQL server
 
