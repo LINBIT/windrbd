@@ -45,13 +45,13 @@ static int ll_wait(wait_queue_head_t *q, ULONG_PTR timeout, int interruptible, c
 		return -EINVAL;
 	}
 
-// if (line != 48)	/* silence drbd_md_get_buffer */
-// printk("into KeWaitForMultipleObjects from %s:%d (%s())\n", file, line, func);
+if (line != 48)	/* silence drbd_md_get_buffer */
+printk("into KeWaitForMultipleObjects from %s:%d (%s()) timeout is %d\n", file, line, func, timeout);
 
 	status = KeWaitForMultipleObjects(num_wait_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, wait_time_p, NULL);
 
-// if (line != 48)	/* silence drbd_md_get_buffer */
-// printk("out of KeWaitForMultipleObjects from %s:%d (%s())\n", file, line, func);
+if (line != 48)	/* silence drbd_md_get_buffer */
+printk("out of KeWaitForMultipleObjects from %s:%d (%s()) stastus is %x\n", file, line, func, status);
 
 	if (!NT_SUCCESS(status)) {
 		printk("Warning: KeWaitForMultipleObjects returned with status %x\n", status);
@@ -131,7 +131,7 @@ void finish_wait(struct wait_queue_head *w, void *unused)
 
 void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {		
-// printk("wake_up %p %s:%d (%s())\n", q, file, line, func);
+printk("wake_up %p %s:%d (%s())\n", q, file, line, func);
 	KeSetEvent(&q->wqh_event, 0, FALSE);
 }
 

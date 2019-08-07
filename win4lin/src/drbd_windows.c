@@ -2011,6 +2011,7 @@ void force_sig(int sig, struct task_struct *task)
 
 	if (task && task->has_sig_event)
 	{
+printk("sending signal to task %p (%s)\n", task, task->comm);
 		task->sig = sig;
 		KeSetEvent(&task->sig_event, 0, FALSE);
 	}
