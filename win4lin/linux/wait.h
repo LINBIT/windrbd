@@ -50,11 +50,8 @@ do {									\
 									\
 		__timeout = new_schedule_timeout_maybe_interrupted(	\
 			__timeout, __FILE__, __LINE__, __func__);	\
-		if (interruptible == TASK_INTERRUPTIBLE &&		\
-		   __timeout == -EINTR)					\
-			break;						\
 									\
-		if (__timeout == 0) 					\
+		if (__timeout <= 0) 					\
 			break;						\
 									\
 	}								\

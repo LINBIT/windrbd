@@ -66,7 +66,7 @@ printk("out of KeWaitForMultipleObjects from %s:%d (%s()) stastus is %x\n", file
 	case STATUS_TIMEOUT:
 		return -ETIMEDOUT;
 	}
-	return 0;
+	return 0;	/* TODO: -EINVAL or some other error */
 }
 
 /* TODO: rename to schedule_debug and have schedule macro */
