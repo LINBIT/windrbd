@@ -1,0 +1,29 @@
+From e170b7eace85536cfb0cebcdc73278ba63639572 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 7 Aug 2019 18:18:51 +0200
+Subject: [PATCH] TCP transport dtt_wait_for_connect: always return -EAGAIN on
+ error
+
+This is how original DRBD does it. It should be like that.
+---
+ drbd/drbd_transport_tcp.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 9a986b3..24a0805 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -656,9 +656,7 @@ retry:
+ 	wait_event_interruptible_timeout(timeo_ret, listener->wait,
+ 					 (path = dtt_wait_connect_cond(transport)),
+ 					 timeo);
+-	if (timeo_ret == -EINTR)
+-		return -EINTR;
+-	if (timeo_ret == -ETIMEDOUT)
++	if (timeo_ret <= 0)
+ 		return -EAGAIN;
+ 
+ 	spin_lock_bh(&listener->listener.waiters_lock);
+-- 
+2.17.0
+
