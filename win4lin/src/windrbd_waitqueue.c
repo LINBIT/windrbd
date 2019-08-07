@@ -94,6 +94,9 @@ LONG_PTR new_schedule_timeout_maybe_with_error_code(ULONG_PTR timeout, int retur
 	if (err < 0 && return_error)
 		return err;
 
+	if (timeout == MAX_SCHEDULE_TIMEOUT)
+		return MAX_SCHEDULE_TIMEOUT;
+
 	elapsed = jiffies - then;
 	if ((timeout - elapsed) > 0)
 		return timeout - elapsed;
