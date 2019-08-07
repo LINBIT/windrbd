@@ -4,8 +4,11 @@ do
 	i=$[ $i+1 ]
 	echo "Down $i"
 	sudo drbdadm down w0
-	sleep 10
 	echo "Up $i"
 	sudo drbdadm up w0
-	sleep 10
+	drbdadm status
+	echo "Waiting for sync $i"
+	sudo time drbdadm wait-sync w0
+	drbdadm status
+	sleep 1
 done
