@@ -855,17 +855,24 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 
 	struct block_device_reference *ref = device->DeviceExtension;
+	NTSTATUS status;
+
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
-		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
+
+		if (ref == NULL || ref->bdev == NULL)
+			status = STATUS_NO_SUCH_DEVICE;
+		else
+			status = STATUS_SUCCESS;
+
+		irp->IoStatus.Status = status;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_NO_SUCH_DEVICE;
+		return status;
 	}
 	struct block_device *dev = ref->bdev;
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	int mode;
-	NTSTATUS status;
 	int err;
 
 	if (dev->drbd_device != NULL) {

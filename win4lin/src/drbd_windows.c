@@ -1983,11 +1983,17 @@ void del_gendisk(struct gendisk *disk)
 
 void destroy_workqueue(struct workqueue_struct *wq)
 {
+printk("1\n");
 	if (wq->thread != NULL) {
+printk("2\n");
 		KeSetEvent(&wq->killEvent, 0, FALSE);
+printk("3\n");
 		KeWaitForSingleObject(&wq->readyToFreeEvent, Executive, KernelMode, FALSE, NULL);
+printk("4\n");
 	}
+printk("5\n");
 	kfree(wq);
+printk("6\n");
 // printk("stopping a workqueue thread\n");
 }
 

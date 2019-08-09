@@ -87,6 +87,8 @@ enum
 };
 
 
+/* TODO: no - this has nothing to do with SMP */
+
 #define smp_mb()				KeMemoryBarrier() 
 #define smp_rmb()				KeMemoryBarrier()
 #define smp_wmb()				KeMemoryBarrier()
