@@ -1120,6 +1120,7 @@ printk("6\n");
         }
     }
 printk("7 exiting thread\n");
+	KeSetEvent(&wq->readyToFreeEvent, 0, FALSE);
 	return 0;
 }
 
@@ -1139,6 +1140,7 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
     KeInitializeEvent(&wq->wakeupEvent, SynchronizationEvent, FALSE);
     KeInitializeEvent(&wq->killEvent, SynchronizationEvent, FALSE);
     KeInitializeEvent(&wq->workFinishedEvent, SynchronizationEvent, FALSE);
+    KeInitializeEvent(&wq->readyToFreeEvent, SynchronizationEvent, FALSE);
     InitializeListHead(&wq->list_head);
     KeInitializeSpinLock(&wq->list_lock);
 
@@ -1981,9 +1983,10 @@ void del_gendisk(struct gendisk *disk)
 
 void destroy_workqueue(struct workqueue_struct *wq)
 {
-	KeSetEvent(&wq->killEvent, 0, FALSE);
-
-		/* TODO: very bad idea: */
+	if (wq->thread != NULL) {
+		KeSetEvent(&wq->killEvent, 0, FALSE);
+		KeWaitForSingleObject(&wq->readyToFreeEvent, Executive, KernelMode, FALSE, NULL);
+	}
 	kfree(wq);
 // printk("stopping a workqueue thread\n");
 }
