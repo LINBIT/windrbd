@@ -87,11 +87,11 @@ enum
 };
 
 
-/* TODO: no - this has nothing to do with SMP */
+void flush_all_cpu_caches(void);
 
-#define smp_mb()				KeMemoryBarrier() 
-#define smp_rmb()				KeMemoryBarrier()
-#define smp_wmb()				KeMemoryBarrier()
+#define smp_mb() flush_all_cpu_caches()
+#define smp_rmb() flush_all_cpu_caches()
+#define smp_wmb() flush_all_cpu_caches()
 
 
 #define GFP_KERNEL              1

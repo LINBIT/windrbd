@@ -3919,11 +3919,26 @@ void unregister_blkdev(int major, const char *name)
 	/* does nothing */
 }
 
+static spinlock_t cpu_cache_spinlock;
+
+/* This takes a spinlock and releases it right after, this should
+ * make sure that CPU caches are in sync on SMP machines.
+ */
+
+void flush_all_cpu_caches(void)
+{
+	KIRQL flags;
+
+        spin_lock_irqsave(&cpu_cache_spinlock, flags);
+        spin_unlock_irqrestore(&cpu_cache_spinlock, flags);
+}
+
 	/* NO printk's in here. */
 void init_windrbd(void)
 {
 	mutex_init(&read_bootsector_mutex);
 	spin_lock_init(&g_test_and_change_bit_lock);
+	spin_lock_init(&cpu_cache_spinlock);
 	rcu_rw_lock = 0;
 	spin_lock_init(&global_queue_lock);
 
