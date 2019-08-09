@@ -41,6 +41,21 @@ TODO: Bug: BSOD on up/status/down when never connected.
 
 	IRQL BSOD
 
+TODO: Bug: drbdadm down does not delete device object
+
+	\Devices\Drbd5 still exists which causes followup
+	drbdadm up to fail with device does not have a disk
+	config.
+
+	The problem seems to be that we get a SUPRISE_REMOVAL
+	and later return an error when the device is closed.
+
+	The REMOVE_DEVICE PnP comes about 20-30 seconds later
+	(after the drbdadm down) this also make a drbdadm up
+	fail with device does not have a disk config.
+
+	Sometimes also the machine freezes inside IoDeleteDeviceObject()
+
 TODO: Bug: BSOD when we can't connect
 
 	Last log line is
