@@ -14,60 +14,35 @@ Planned: Feb 28 2019
 Real: Apr 10 2019
 -----------------------------------------------------------------------
 
-TODO: Implement: fix the wait_event_interruptible implementation and interface
-
-	All timeouts are currently set to 0, which is most likely
-	wrong.
-
-	Update: The whole wait_event and schedule and workqueue
-	implementation is broken and should be redesigned and
-	reimplemented. Do that for 0.9.4. It should also fix
-	the stablity problem that Disconnect sometimes BSODs.
-
 TODO: Bug: Sync sometimes does not start
 
 	On running updown-loop-wait-sync on Linux peer.
 	Linux peer stuck in WFBitMapT, drbdadm status on
 	Windows hangs.
 
-TODO: Bug: Hangs on drbdadm up
+TODO: Implement: implement wake_up_all
 
-	At 100% CPU
-	When enabling wait_event_interruptible new implementation.
+	Need to have a list of events, one element for each process
+	waiting. Use the DEFINE_WAIT to allocate those elements.
 
-	Most likely fixed with 15523aab5068
+	This should fix the drbdadm down delay we observe.
 
-TODO: Bug: BSOD on up/status/down when never connected.
+TODO: Test: Make updownloop work again.
 
-	IRQL BSOD
+	It should work:
+		.) With connection
+		.) With sync-complete
+		.) Without connection
+		.) Without local disk but with connection
+		.) Without any successful I/O (diskless unconnected)
 
-TODO: Bug: drbdadm down does not delete device object
+TODO: Bug: drbdadm down takes up to 30 seconds to complete
 
-	\Devices\Drbd5 still exists which causes followup
-	drbdadm up to fail with device does not have a disk
-	config.
+	Problem is that REMOVE_DEVICE is sent only after a long
+	timeout (but why?) sometimes.
 
-	The problem seems to be that we get a SUPRISE_REMOVAL
-	and later return an error when the device is closed.
-
-	The REMOVE_DEVICE PnP comes about 20-30 seconds later
-	(after the drbdadm down) this also make a drbdadm up
-	fail with device does not have a disk config.
-
-	Sometimes also the machine freezes inside IoDeleteDeviceObject()
-
-TODO: Bug: BSOD when we can't connect
-
-	Last log line is
-
-Aug  7 14:44:44 192.168.56.101  U12:44:44.790|032677f0(drbd_r_w0) ll_wait out of KeWaitForMultipleObjects from drbd_transport_tcp.c:658 (dtt_wait_for_connect())
-
-	Error is C9
-
-	Also observed endless loop of this ll_wait call (loops forever
-	with 100% CPU).
-
-	Most likely fixed with 15523aab5068 (test again)
+	Sometimes also hangs 'forever' (>10 minutes). Is this a
+	handle leak? DRBD worker is hanging in drbd_sender.c:3008 ...
 
 TODO: Bug: hangs in inc_ap_bio()
 
@@ -76,29 +51,6 @@ TODO: Bug: hangs in inc_ap_bio()
 	printk's (when being disconnected).
 
 	inc_ap_bio returns false in the first if (testing for NEW_CUR_UUID)
-
-TODO: Bug: BSOD 25 seconds after drbdadm down
-
-	There is a suprise removal. We should probably allow for
-	close returning status success.
-
-Aug  7 17:39:33 192.168.56.101  U15:39:33.759|038cb8c0(pnp) windrbd_pnp got IRP_MN_SURPRISE_REMOVAL
-Aug  7 17:39:33 192.168.56.101  U15:39:33.759|038cf330(close) windrbd_dispatch got request major is 2
-Aug  7 17:39:33 192.168.56.101  U15:39:33.759|038cf330(close) windrbd_close <4>Device FFFFFA8002D53890 accessed after it was deleted.
-Aug  7 17:39:33 192.168.56.101  U15:39:33.778|038cf330(close) windrbd_dispatch got request major is 2
-Aug  7 17:39:33 192.168.56.101  U15:39:33.778|038cf330(close) windrbd_close <4>Device FFFFFA8002D53890 accessed after it was deleted.
-Aug  7 17:39:33 192.168.56.101  U15:39:33.873|02064500(not_drbd_thread) windrbd_reap_threads Buried workqueue thread
-....
-Aug  7 17:39:57 192.168.56.101  U15:39:57.177|038c3800(pnp) windrbd_pnp Pnp: device: FFFFFA8002D53890 irp: FFFFF98010F12E50
-Aug  7 17:39:57 192.168.56.101  U15:39:57.177|038c3800(pnp) windrbd_pnp <7>got PnP device request: MajorFunction: 0x1b, MinorFunction: 2
-Aug  7 17:39:57 192.168.56.101  U15:39:57.177|038c3800(pnp) windrbd_pnp got IRP_MN_REMOVE_DEVICE
-Aug  7 17:39:57 192.168.56.101  U15:39:57.177|038c3800(pnp) windrbd_pnp about to delete device object FFFFFA8002D53890
-
-
-TODO: Implement: implement wake_up_all
-
-	Need to have a list of events, one element for each process
-	waiting. Use the DEFINE_WAIT to allocate those elements.
 
 TODO: Implement: remove remaing calls to old schedule()
 
@@ -121,25 +73,6 @@ Aug  5 14:14:15 192.168.56.101  U12:14:15.150|0206d2d0(not_drbd_thread) run_sing
 Aug  5 14:14:15 192.168.56.101  U12:14:15.150|036ffd40(netlink) flush_workqueue work finished (or killed)
 
 	Maybe we have to reengineer the worqueue layer as well ...
-
-TODO: Bug: On up/down loop, cannot create WinDRBD device and later BSODs
-
-	Jul 31 15:54:36 192.168.56.101  U13:54:36.442|020382d0(not_drbd_thread) windrbd_process_netlink_packet drbd cmd(DRBD_ADM_NEW_MINOR:5)
-	Jul 31 15:54:36 192.168.56.101  U13:54:36.442|020382d0(not_drbd_thread) windrbd_create_windows_device Couldn't create new block device \Device\Drbd5 for minor 0 status: c0000035
-	Jul 31 15:54:36 192.168.56.101  U13:54:36.442|020382d0(not_drbd_thread) bdget Warning: Couldn't create windows device for volume
-	Jul 31 15:54:54 192.168.56.101  U13:54:54.271|020382d0(not_drbd_thread) windrbd_pnp Pnp: device: FFFFFA8003019820 irp: FFFFF980145C0E50
-	Jul 31 15:54:54 192.168.56.101  U13:54:54.271|020382d0(not_drbd_thread) windrbd_pnp <7>got PnP device request: MajorFunction: 0x1b, MinorFunction: 2
-	Jul 31 15:54:54 192.168.56.101  U13:54:54.271|020382d0(not_drbd_thread) windrbd_pnp got IRP_MN_REMOVE_DEVICE
-	Jul 31 15:54:54 192.168.56.101  U13:54:54.271|020382d0(not_drbd_thread) windrbd_pnp about to delete device object FFFFFA8003019820
-
-	Error handling should be fixed first.
-
-TODO: Bug: BSOD on up/down when unconnected and have disk
-
-	IRQL BSOD
-        Also BSOD on drbdadm down when connected and have disk.
-	Also with d288b29fcc50db so it is not the new event handling code.
-	Observed a system hang with d288b29fcc50db
 
 TODO: Test: dhcp.conf: if exists ipxe.windrbd-root
 
@@ -5463,3 +5396,100 @@ Done: Implement: Fix the stable_state_change macro
 	Done: After fixing the call to wait_event_interruptible
 	in the stable_state_change macro, it compiles and
 	hopefully works as expected.
+
+Done: Bug: Hangs on drbdadm up
+
+	At 100% CPU
+	When enabling wait_event_interruptible new implementation.
+
+	Most likely fixed with 15523aab5068
+
+Done: Implement: fix the wait_event_interruptible implementation and interface
+
+	All timeouts are currently set to 0, which is most likely
+	wrong.
+
+	Update: The whole wait_event and schedule and workqueue
+	implementation is broken and should be redesigned and
+	reimplemented. Do that for 0.9.4. It should also fix
+	the stablity problem that Disconnect sometimes BSODs.
+
+	Now in windrbd_waitqueue there is the new implementation
+	(without busy loop).
+
+Done: Bug: drbdadm down does not delete device object
+
+	\Devices\Drbd5 still exists which causes followup
+	drbdadm up to fail with device does not have a disk
+	config.
+
+	The problem seems to be that we get a SUPRISE_REMOVAL
+	and later return an error when the device is closed.
+
+	The REMOVE_DEVICE PnP comes about 20-30 seconds later
+	(after the drbdadm down) this also make a drbdadm up
+	fail with device does not have a disk config.
+
+	Sometimes also the machine freezes inside IoDeleteDeviceObject()
+
+	Should be fixed with fe80d40d.
+
+Done: Bug: BSOD 25 seconds after drbdadm down
+
+	There is a suprise removal. We should probably allow for
+	close returning status success.
+
+Aug  7 17:39:33 192.168.56.101  U15:39:33.759|038cb8c0(pnp) windrbd_pnp got IRP_MN_SURPRISE_REMOVAL
+Aug  7 17:39:33 192.168.56.101  U15:39:33.759|038cf330(close) windrbd_dispatch got request major is 2
+Aug  7 17:39:33 192.168.56.101  U15:39:33.759|038cf330(close) windrbd_close <4>Device FFFFFA8002D53890 accessed after it was deleted.
+Aug  7 17:39:33 192.168.56.101  U15:39:33.778|038cf330(close) windrbd_dispatch got request major is 2
+Aug  7 17:39:33 192.168.56.101  U15:39:33.778|038cf330(close) windrbd_close <4>Device FFFFFA8002D53890 accessed after it was deleted.
+Aug  7 17:39:33 192.168.56.101  U15:39:33.873|02064500(not_drbd_thread) windrbd_reap_threads Buried workqueue thread
+....
+Aug  7 17:39:57 192.168.56.101  U15:39:57.177|038c3800(pnp) windrbd_pnp Pnp: device: FFFFFA8002D53890 irp: FFFFF98010F12E50
+Aug  7 17:39:57 192.168.56.101  U15:39:57.177|038c3800(pnp) windrbd_pnp <7>got PnP device request: MajorFunction: 0x1b, MinorFunction: 2
+Aug  7 17:39:57 192.168.56.101  U15:39:57.177|038c3800(pnp) windrbd_pnp got IRP_MN_REMOVE_DEVICE
+Aug  7 17:39:57 192.168.56.101  U15:39:57.177|038c3800(pnp) windrbd_pnp about to delete device object FFFFFA8002D53890
+
+	Should be fixed with fe80d40d.
+
+Done: Bug: BSOD on up/status/down when never connected.
+
+	IRQL BSOD
+
+	Should be fixed now.
+
+Done: Bug: BSOD when we can't connect
+
+	Last log line is
+
+Aug  7 14:44:44 192.168.56.101  U12:44:44.790|032677f0(drbd_r_w0) ll_wait out of KeWaitForMultipleObjects from drbd_transport_tcp.c:658 (dtt_wait_for_connect())
+
+	Error is C9
+
+	Also observed endless loop of this ll_wait call (loops forever
+	with 100% CPU).
+
+	Most likely fixed with 15523aab5068 (test again)
+
+Done: Bug: On up/down loop, cannot create WinDRBD device and later BSODs
+
+	Jul 31 15:54:36 192.168.56.101  U13:54:36.442|020382d0(not_drbd_thread) windrbd_process_netlink_packet drbd cmd(DRBD_ADM_NEW_MINOR:5)
+	Jul 31 15:54:36 192.168.56.101  U13:54:36.442|020382d0(not_drbd_thread) windrbd_create_windows_device Couldn't create new block device \Device\Drbd5 for minor 0 status: c0000035
+	Jul 31 15:54:36 192.168.56.101  U13:54:36.442|020382d0(not_drbd_thread) bdget Warning: Couldn't create windows device for volume
+	Jul 31 15:54:54 192.168.56.101  U13:54:54.271|020382d0(not_drbd_thread) windrbd_pnp Pnp: device: FFFFFA8003019820 irp: FFFFF980145C0E50
+	Jul 31 15:54:54 192.168.56.101  U13:54:54.271|020382d0(not_drbd_thread) windrbd_pnp <7>got PnP device request: MajorFunction: 0x1b, MinorFunction: 2
+	Jul 31 15:54:54 192.168.56.101  U13:54:54.271|020382d0(not_drbd_thread) windrbd_pnp got IRP_MN_REMOVE_DEVICE
+	Jul 31 15:54:54 192.168.56.101  U13:54:54.271|020382d0(not_drbd_thread) windrbd_pnp about to delete device object FFFFFA8003019820
+
+	Error handling should be fixed first.
+
+	Should be fixed with fe80d40d.
+
+Done: Bug: BSOD on up/down when unconnected and have disk
+
+	IRQL BSOD
+        Also BSOD on drbdadm down when connected and have disk.
+	Also with d288b29fcc50db so it is not the new event handling code.
+	Observed a system hang with d288b29fcc50db
+
