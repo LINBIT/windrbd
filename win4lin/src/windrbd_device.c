@@ -1383,12 +1383,12 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 					array[count] = drbd_device->this_bdev->windows_device;
 					ObReferenceObject(drbd_device->this_bdev->windows_device);
 				}
-// printk("windows device at %p\n", drbd_device->this_bdev->windows_device);
+printk("windows device at %p\n", drbd_device->this_bdev->windows_device);
 				count++;
 			}
 		}
 	}
-// printk("%d drbd windows devices found\n", count);
+printk("%d drbd windows devices found\n", count);
 	return count;
 }
 
@@ -1484,7 +1484,7 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 		int type = s->Parameters.QueryDeviceRelations.Type;
 dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
 		if (s->Parameters.QueryDeviceRelations.Type == BusRelations) {
-// printk("about to report DRBD devices ...\n");
+printk("about to report DRBD devices ...\n");
 			int num_devices = get_all_drbd_device_objects(NULL, 0);
 			struct _DEVICE_RELATIONS *device_relations;
 			int n;
