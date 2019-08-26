@@ -3387,8 +3387,6 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 {
 	struct _DEVICE_OBJECT *windows_device;
 	struct block_device_reference *ref;
-	LARGE_INTEGER timeout;
-	NTSTATUS status;
 
 printk("Start removing device %S\n", bdev->path_to_device.Buffer);
 
@@ -3412,28 +3410,16 @@ printk("Start removing device %S\n", bdev->path_to_device.Buffer);
 		 * request.
 		 */
 
-		/* TODO: the loop should go away (with no timeout on
-		 * waiting for IRP_MN_REMOVE_DEVICE) ... but see
-		 * commit message of 33d7d17b50 ...
-		 */
-	do {
-		if (windrbd_rescan_bus() < 0) {
+	if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
-			printk("PnP did not work, removing device manually.\n");
-			IoDeleteDevice(bdev->windows_device);
-			break;
-		} else {
-			timeout.QuadPart = -1 * 10000 * 1000 * 10;  /* 10 secs */
+		printk("PnP did not work, removing device manually.\n");
+		IoDeleteDevice(bdev->windows_device);
+	} else {
 printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
-			status = KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, &timeout);
-printk("1\n");
-			if (status == STATUS_WAIT_0)
-				break;
-printk("2\n");
-		}
-	} while (1);
-printk("3\n");
+		KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
+printk("finished.\n");
+	}
 }
 
 /* This is DRBD specific: DRBD calls this only once (same for
