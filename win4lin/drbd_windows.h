@@ -1362,7 +1362,7 @@ extern void dtt_cleanup(void);
 
 struct block_device *bdget(dev_t dev);
 int windrbd_create_windows_device(struct block_device *bdev);
-void windrbd_remove_windows_device(struct block_device *bdev);
+// void windrbd_remove_windows_device(struct block_device *bdev);
 
 int windrbd_mount(struct block_device *dev);
 int windrbd_umount(struct block_device *dev);

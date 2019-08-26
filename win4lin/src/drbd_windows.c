@@ -3383,14 +3383,14 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	return 0;
 }
 
-void windrbd_remove_windows_device(struct block_device *bdev)
+static void windrbd_remove_windows_device(struct block_device *bdev)
 {
 	struct _DEVICE_OBJECT *windows_device;
 	struct block_device_reference *ref;
 	LARGE_INTEGER timeout;
 	NTSTATUS status;
 
-printk("removing device %S\n", bdev->path_to_device.Buffer);
+printk("Start removing device %S\n", bdev->path_to_device.Buffer);
 
 	if (bdev->windows_device == NULL) {
 		printk(KERN_WARNING "Windows device does not exist in block device %p.\n", bdev);
@@ -3422,10 +3422,13 @@ printk("removing device %S\n", bdev->path_to_device.Buffer);
 			timeout.QuadPart = -1 * 10000 * 1000;  /* 1 sec */
 printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
 			status = KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, &timeout);
-			if (NT_SUCCESS(status))
+printk("1\n");
+			if (status == STATUS_WAIT_0)
 				break;
+printk("2\n");
 		}
 	} while (1);
+printk("3\n");
 }
 
 /* This is DRBD specific: DRBD calls this only once (same for
@@ -3878,6 +3881,10 @@ printk("5\n");
 
 printk("6\n");
 	kfree(bdev);
+		/* Do not set windows device object->DeviceExtension->ref
+		 * to NULL here. The object already has been deleted
+		 * here.
+		 */
 printk("7\n");
 }
 
