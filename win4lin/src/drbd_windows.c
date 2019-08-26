@@ -3411,6 +3411,11 @@ printk("Start removing device %S\n", bdev->path_to_device.Buffer);
 		 * The device object will be deleted in a PnP REMOVE_DEVICE
 		 * request.
 		 */
+
+		/* TODO: the loop should go away (with no timeout on
+		 * waiting for IRP_MN_REMOVE_DEVICE) ... but see
+		 * commit message of 33d7d17b50 ...
+		 */
 	do {
 		if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
@@ -3419,7 +3424,7 @@ printk("Start removing device %S\n", bdev->path_to_device.Buffer);
 			IoDeleteDevice(bdev->windows_device);
 			break;
 		} else {
-			timeout.QuadPart = -1 * 10000 * 1000;  /* 1 sec */
+			timeout.QuadPart = -1 * 10000 * 1000 * 10;  /* 10 secs */
 printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
 			status = KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, &timeout);
 printk("1\n");
