@@ -950,8 +950,6 @@ int IS_ERR(void *ptr)
 
 void init_completion(struct completion *completion)
 {
-	memset(completion->wait.eventName, 0, Q_NAME_SZ);
-	strcpy(completion->wait.eventName, "completion");
 	init_waitqueue_head(&completion->wait);
 }
 
@@ -978,12 +976,12 @@ ULONG_PTR wait_for_completion_timeout(struct completion *completion, ULONG_PTR t
 
 void complete(struct completion *c)
 {
-    KeSetEvent(&c->wait.wqh_event, 0, FALSE);
+	wake_up(&c->wait);
 }
 
 void complete_all(struct completion *c)
 {
-    KeSetEvent(&c->wait.wqh_event, 0, FALSE);
+	wake_up_all(&c->wait);
 }
 
 #if 0

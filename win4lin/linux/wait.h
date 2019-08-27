@@ -4,25 +4,33 @@
 #include "linux/list.h"
 #include "linux/spinlock.h"
 
-typedef struct wait_queue_entry
+struct wait_queue_entry
 {
-	unsigned int flags;
-	struct list_head task_list;
-} wait_queue_t;
+	struct list_head entry;
+	KEVENT windows_event;
+};
 
-typedef struct wait_queue_head
+struct wait_queue_head
 {
 	spinlock_t lock;
-	struct list_head task_list;
-	KEVENT	wqh_event;
-#define Q_NAME_SZ	16 
-	char eventName[Q_NAME_SZ];
-} wait_queue_head_t;
+	struct list_head head;
+};
 
-#define DEFINE_WAIT(w) void *(w)
+typedef struct wait_queue_head wait_queue_head_t;
 
-void prepare_to_wait(struct wait_queue_head *w, void *unused, int interruptible);
-void finish_wait(struct wait_queue_head *w, void *unused);
+static __inline void init_waitqueue_head(wait_queue_head_t *q)
+{
+	spin_lock_init(&q->lock);
+	INIT_LIST_HEAD(&q->head);
+};
+
+#define DEFINE_WAIT(name) struct wait_queue_entry (name) = {	\
+		.entry = LIST_HEAD_INIT((name).entry),		\
+	};							\
+	KeInitializeEvent(&(name).windows_event, SynchronizationEvent, FALSE);
+
+void prepare_to_wait(struct wait_queue_head *w, struct wait_queue_entry *e, int interruptible);
+void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e);
 
 void schedule_debug(const char *file, int line, const char *func);
 /* Returns -EINTR on signal else remaining time. */
@@ -45,8 +53,10 @@ LONG_PTR schedule_timeout_uninterruptible_debug(ULONG_PTR timeout, const char *f
 #define ll_wait_event_macro(ret, wait_queue, condition, timeout, interruptible) \
 do {									\
 	LONG_PTR __timeout = timeout;					\
+	DEFINE_WAIT(__wait);						\
 	while (1) {							\
-		prepare_to_wait(&wait_queue, NULL, interruptible);	\
+printk("1\n");	\
+		prepare_to_wait(&wait_queue, &__wait, interruptible);	\
 		if (condition) {					\
 			if (__timeout == 0)				\
 				__timeout = 1;				\
@@ -60,7 +70,7 @@ do {									\
 			break;						\
 									\
 	}								\
-	finish_wait(&wait_queue, NULL);					\
+	finish_wait(&wait_queue, &__wait);				\
 	ret = __timeout;						\
 } while (0);
 

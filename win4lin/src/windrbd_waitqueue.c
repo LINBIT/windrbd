@@ -11,7 +11,7 @@
 	 */
 
 
-static int ll_wait(wait_queue_head_t *q, ULONG_PTR timeout, int interruptible, const char *file, int line, const char *func)
+static int ll_wait(struct wait_queue_entry *e, ULONG_PTR timeout, int interruptible, const char *file, int line, const char *func)
 {
 	LARGE_INTEGER wait_time;
 	LARGE_INTEGER *wait_time_p;
@@ -20,6 +20,7 @@ static int ll_wait(wait_queue_head_t *q, ULONG_PTR timeout, int interruptible, c
 	PVOID wait_objects[2] = {0};
 	struct task_struct *thread = current;
 
+printk("1\n");
 	/* Busy looping .. to see where it hangs */
 if (timeout > 5000) timeout = 5000;
 
@@ -30,8 +31,8 @@ if (timeout > 5000) timeout = 5000;
 	else
 		wait_time_p = NULL;
 
-	if (q) {
-		wait_objects[num_wait_objects] = (void *) &q->wqh_event;
+	if (e) {
+		wait_objects[num_wait_objects] = (void *) &e->windows_event;
 		num_wait_objects++;
 	}
 	if (thread->has_sig_event && interruptible == TASK_INTERRUPTIBLE) {
@@ -63,7 +64,7 @@ printk("out of KeWaitForMultipleObjects from %s:%d (%s()) stastus is %x\n", file
 
 	switch (status) {
 	case STATUS_WAIT_0:
-		if (q) return 0;	/* fallthrough */
+		if (e) return 0;	/* fallthrough */
 	case STATUS_WAIT_1:
 		return -EINTR;		/* TODO: -ERESTARTSYS */
 	case STATUS_TIMEOUT:
@@ -77,7 +78,7 @@ void schedule_debug(const char *file, int line, const char *func)
 	if (!is_windrbd_thread(current))
 		printk("Warning: schedule called from a non WinDRBD thread\n");
 
-	ll_wait(current->wait_queue, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
+	ll_wait(current->wait_queue_entry, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
 }
 
 static LONG_PTR ll_schedule_debug(ULONG_PTR timeout, int return_error, int interruptible, const char *file, int line, const char *func)
@@ -91,7 +92,7 @@ static LONG_PTR ll_schedule_debug(ULONG_PTR timeout, int return_error, int inter
 		return -EINVAL;
 	}
 
-	err = ll_wait(current->wait_queue, timeout, interruptible, file, line, func);
+	err = ll_wait(current->wait_queue_entry, timeout, interruptible, file, line, func);
 
 	if (err < 0 && return_error)
 		return err;
@@ -124,25 +125,55 @@ LONG_PTR schedule_timeout_uninterruptible_debug(ULONG_PTR timeout, const char *f
 	 * (2) unique.
 	 */
 
-void prepare_to_wait(struct wait_queue_head *w, void *unused, int interruptible)
+void prepare_to_wait(struct wait_queue_head *w, struct wait_queue_entry *e, int interruptible)
 {
+	KIRQL flags;
 	struct task_struct *thread = current;
 
+	spin_lock_irqsave(&w->lock, flags);
 	thread->interruptible = interruptible;
 	thread->wait_queue = w;
+	thread->wait_queue_entry = e;
+
+	if (list_empty(&e->entry))
+		list_add(&w->head, &e->entry);
+	spin_unlock_irqrestore(&w->lock, flags);
 }
 
-void finish_wait(struct wait_queue_head *w, void *unused)
+void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e)
 {
+	KIRQL flags;
 	struct task_struct *thread = current;
 
+	spin_lock_irqsave(&w->lock, flags);
+
 	thread->wait_queue = NULL;
+	thread->wait_queue_entry = NULL;
+
+	if (!list_empty(&e->entry)) {
+		list_del(&e->entry);
+		INIT_LIST_HEAD(&e->entry);
+	}
+	spin_unlock_irqrestore(&w->lock, flags);
 }
 
 void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {		
-printk("wake_up %p %s:%d (%s())\n", q, file, line, func);
-	KeSetEvent(&q->wqh_event, 0, FALSE);
+	KIRQL flags;
+printk("wake_up %p %p %s:%d (%s())\n", q, file, line, func);
+	struct wait_queue_entry *e;
+
+	spin_lock_irqsave(&q->lock, flags);
+	if (list_empty(&q->head)) {
+		printk("Warning: attempt to wake up with no one waiting.\n");
+		spin_unlock_irqrestore(&q->lock, flags);
+
+		return;
+	}
+	e = list_first_entry(&q->head, struct wait_queue_entry, entry);
+	KeSetEvent(&e->windows_event, 0, FALSE);
+
+	spin_unlock_irqrestore(&q->lock, flags);
 }
 
 void wake_up_all(wait_queue_head_t *q)
@@ -150,6 +181,6 @@ void wake_up_all(wait_queue_head_t *q)
 	printk("Warning: wake_up_all called but not implemented yet\n");
 	/* Should cause all threads to wake up and check the condition again */
 	/* TODO: phil check whether the single-wake-up is wrong? */
-	KeSetEvent(&q->wqh_event, 0, FALSE);
+//	KeSetEvent(&q->wqh_event, 0, FALSE);
 }
 
