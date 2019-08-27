@@ -1019,30 +1019,23 @@ static inline void free_page(void *addr)
 }
 
 
-static __inline wait_queue_t initqueue(wait_queue_t *wq)
-{
-	INIT_LIST_HEAD(&wq->task_list);
-	return *wq; 
-}
-
-#define DEFINE_WAIT_FUNC(name)
-
 extern void init_completion(struct completion *x);
-extern long wait_for_completion(struct completion *x);
-extern long wait_for_completion_timeout(struct completion *x, long timeout);
+extern void wait_for_completion(struct completion *x);
+extern ULONG_PTR wait_for_completion_timeout(struct completion *x, ULONG_PTR timeout);
 extern void complete(struct completion *c);
 extern void complete_all(struct completion *c);
 
 extern int signal_pending(struct task_struct *p);
 extern void force_sig(int sig, struct task_struct *p);
 extern void flush_signals(struct task_struct *p);
+
+#if 0
 extern long schedule(wait_queue_head_t *q, long timeout, char *func, int line);
 
 #define schedule_timeout_interruptible(timeout)  schedule(NULL, (timeout), __FUNCTION__, __LINE__)
 #define schedule_timeout_uninterruptible(timeout) schedule_timeout(timeout) 
 #define schedule_timeout(timeout) schedule((wait_queue_head_t *)NULL, (timeout), __FUNCTION__, __LINE__)
 
-#if 0
 #define __wait_event(wq, condition, __func, __line) \
 	do {\
 		for (;;) {\

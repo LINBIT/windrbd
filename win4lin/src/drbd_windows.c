@@ -955,14 +955,25 @@ void init_completion(struct completion *completion)
 	init_waitqueue_head(&completion->wait);
 }
 
-long wait_for_completion(struct completion *completion)
+void wait_for_completion(struct completion *completion)
 {
-	return schedule(&completion->wait, MAX_SCHEDULE_TIMEOUT, __FUNCTION__, __LINE__);
+	DEFINE_WAIT(w);
+
+	prepare_to_wait(&completion->wait, &w, TASK_INTERRUPTIBLE);
+	schedule();
+	finish_wait(&completion->wait, &w);
 }
 
-long wait_for_completion_timeout(struct completion *completion, long timeout)
+ULONG_PTR wait_for_completion_timeout(struct completion *completion, ULONG_PTR timeout)
 {
-    return schedule(&completion->wait, timeout, __FUNCTION__, __LINE__);
+	ULONG_PTR ret;
+	DEFINE_WAIT(w);
+
+	prepare_to_wait(&completion->wait, &w, TASK_INTERRUPTIBLE);
+	ret = schedule_timeout(timeout);
+	finish_wait(&completion->wait, &w);
+
+	return ret;
 }
 
 void complete(struct completion *c)
@@ -974,6 +985,8 @@ void complete_all(struct completion *c)
 {
     KeSetEvent(&c->wait.wqh_event, 0, FALSE);
 }
+
+#if 0
 
 static  void __add_wait_queue(wait_queue_head_t *head, wait_queue_t *new)
 {
@@ -1064,6 +1077,8 @@ return 0;
 	timeout = expire - jiffies;
 	return timeout < 0 ? 0 : timeout;
 }
+
+#endif
 
 struct workqueue_struct *system_wq;
 

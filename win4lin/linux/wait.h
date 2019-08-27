@@ -4,8 +4,7 @@
 #include "linux/list.h"
 #include "linux/spinlock.h"
 
-	/* TODO: this is unused: */
-typedef struct _wait_queue
+typedef struct wait_queue_entry
 {
 	unsigned int flags;
 	struct list_head task_list;
@@ -25,13 +24,19 @@ typedef struct wait_queue_head
 void prepare_to_wait(struct wait_queue_head *w, void *unused, int interruptible);
 void finish_wait(struct wait_queue_head *w, void *unused);
 
-/* This will be the schedule() function soon ... */
-void new_schedule(const char *file, int line, const char *func);
+void schedule_debug(const char *file, int line, const char *func);
 /* Returns -EINTR on signal else remaining time. */
-ULONG_PTR new_schedule_timeout(ULONG_PTR timeout, const char *file, int line, const char *func);
+ULONG_PTR schedule_timeout_debug(ULONG_PTR timeout, const char *file, int line, const char *func);
 /* Returns -EINTR on signal else remaining time. Use only internally. */
-/* TODO: better name for functiokn */
-LONG_PTR new_schedule_timeout_maybe_interrupted(ULONG_PTR timeout, const char *file, int line, const char *func);
+/* TODO: better name for function */
+LONG_PTR schedule_timeout_maybe_interrupted_debug(ULONG_PTR timeout, const char *file, int line, const char *func);
+LONG_PTR schedule_timeout_uninterruptible_debug(ULONG_PTR timeout, const char *file, int line, const char *func);
+
+#define schedule() schedule_debug(__FILE__, __LINE__, __func__)
+#define schedule_timeout_interruptible(timeout) schedule_timeout_debug((timeout), __FILE__, __LINE__, __func__)
+/* TODO: honor the current->state field */
+#define schedule_timeout(timeout) schedule_timeout_debug((timeout), __FILE__, __LINE__, __func__)
+#define schedule_timeout_uninterruptible(timeout) schedule_timeout_uninterruptible_debug((timeout), __FILE__, __LINE__, __func__)
 
 /* One macro for all cases of wait_event: if there is a bug it is
  * most likely in here ...
@@ -48,7 +53,7 @@ do {									\
 			break;						\
 		}							\
 									\
-		__timeout = new_schedule_timeout_maybe_interrupted(	\
+		__timeout = schedule_timeout_maybe_interrupted_debug(	\
 			__timeout, __FILE__, __LINE__, __func__);	\
 									\
 		if (__timeout <= 0) 					\

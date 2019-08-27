@@ -72,8 +72,7 @@ printk("out of KeWaitForMultipleObjects from %s:%d (%s()) stastus is %x\n", file
 	return 0;	/* TODO: -EINVAL or some other error */
 }
 
-/* TODO: rename to schedule_debug and have schedule macro */
-void new_schedule(const char *file, int line, const char *func)
+void schedule_debug(const char *file, int line, const char *func)
 {
 	if (!is_windrbd_thread(current))
 		printk("Warning: schedule called from a non WinDRBD thread\n");
@@ -81,7 +80,7 @@ void new_schedule(const char *file, int line, const char *func)
 	ll_wait(current->wait_queue, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
 }
 
-LONG_PTR new_schedule_timeout_maybe_with_error_code(ULONG_PTR timeout, int return_error, const char *file, int line, const char *func)
+static LONG_PTR ll_schedule_debug(ULONG_PTR timeout, int return_error, int interruptible, const char *file, int line, const char *func)
 {
 	LONG_PTR then = jiffies;
 	LONG_PTR elapsed;
@@ -92,7 +91,7 @@ LONG_PTR new_schedule_timeout_maybe_with_error_code(ULONG_PTR timeout, int retur
 		return -EINVAL;
 	}
 
-	err = ll_wait(current->wait_queue, timeout, TASK_INTERRUPTIBLE, file, line, func);
+	err = ll_wait(current->wait_queue, timeout, interruptible, file, line, func);
 
 	if (err < 0 && return_error)
 		return err;
@@ -106,14 +105,19 @@ LONG_PTR new_schedule_timeout_maybe_with_error_code(ULONG_PTR timeout, int retur
 	return 0;
 }
 
-ULONG_PTR new_schedule_timeout(ULONG_PTR timeout, const char *file, int line, const char *func)
+ULONG_PTR schedule_timeout_debug(ULONG_PTR timeout, const char *file, int line, const char *func)
 {
-	return new_schedule_timeout_maybe_with_error_code(timeout, 0, file, line, func);
+	return ll_schedule_debug(timeout, 0, TASK_INTERRUPTIBLE, file, line, func);
 }
 
-LONG_PTR new_schedule_timeout_maybe_interrupted(ULONG_PTR timeout, const char *file, int line, const char *func)
+LONG_PTR schedule_timeout_maybe_interrupted_debug(ULONG_PTR timeout, const char *file, int line, const char *func)
 {
-	return new_schedule_timeout_maybe_with_error_code(timeout, 1, file, line, func);
+	return ll_schedule_debug(timeout, 1, TASK_INTERRUPTIBLE, file, line, func);
+}
+
+LONG_PTR schedule_timeout_uninterruptible_debug(ULONG_PTR timeout, const char *file, int line, const char *func)
+{
+	return ll_schedule_debug(timeout, 0, TASK_UNINTERRUPTIBLE, file, line, func);
 }
 
 	/* TODO: no locks? Assumes that current is always (1) valid and
