@@ -1,0 +1,34 @@
+From 06189c5a285ed8a0a03f8a7dd6055fb7ef87f1ba Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 27 Aug 2019 16:28:10 +0200
+Subject: [PATCH 3/4] drbd_req: restored original schedule interface
+
+---
+ drbd/drbd_req.c | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
+index 32a0226..831b7ac 100644
+--- a/drbd/drbd_req.c
++++ b/drbd/drbd_req.c
+@@ -1285,7 +1285,7 @@ static void complete_conflicting_writes(struct drbd_request *req)
+ 		prepare_to_wait(&device->misc_wait, &wait, TASK_UNINTERRUPTIBLE);
+ 		i->waiting = true;
+ 		spin_unlock_irq(&device->resource->req_lock);
+-		new_schedule(__FILE__, __LINE__, __func__);
++		schedule();
+ 
+ 		spin_lock_irq(&device->resource->req_lock);
+ 	}
+@@ -2209,7 +2217,7 @@ void do_submit(struct work_struct *ws)
+ 				break;
+ 
+ 			drbd_kick_lo(device);
+-			new_schedule(__FILE__, __LINE__, __func__);
++			schedule();
+ 
+ 			/* If all currently "hot" activity log extents are kept busy by
+ 			 * incoming requests, we still must not totally starve new
+-- 
+2.17.0
+

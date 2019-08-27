@@ -1,0 +1,34 @@
+From a220e196c4bb57a105057bb0180967f2c0e0a04f Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 27 Aug 2019 16:27:50 +0200
+Subject: [PATCH 2/4] drbd_receiver: restored original schedule interface
+
+---
+ drbd/drbd_receiver.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index 05dcfd2..db54abc 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -368,7 +368,7 @@ struct page *drbd_alloc_pages(struct drbd_transport *transport, unsigned int num
+ 			break;
+ 		}
+ 
+-		if (new_schedule_timeout(HZ/10, __FILE__, __LINE__, __func__) == 0)
++		if (schedule_timeout(HZ/10) == 0)
+ 			mxb = UINT_MAX;
+ 	}
+ 	finish_wait(&drbd_pp_wait, &wait);
+@@ -2534,7 +2534,7 @@ static int wait_for_and_update_peer_seq(struct drbd_peer_device *peer_device, co
+ 		rcu_flags = rcu_read_lock();
+ 		timeout = rcu_dereference(connection->transport.net_conf)->ping_timeo*HZ/10;
+ 		rcu_read_unlock(rcu_flags);
+-		timeout = new_schedule_timeout(timeout,  __FILE__, __LINE__, __func__);
++		timeout = schedule_timeout(timeout);
+ 		spin_lock(&peer_device->peer_seq_lock);
+ 		if (!timeout) {
+ 			ret = -ETIMEDOUT;
+-- 
+2.17.0
+
