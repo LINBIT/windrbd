@@ -75,9 +75,11 @@ printk("out of KeWaitForMultipleObjects from %s:%d (%s()) stastus is %x\n", file
 
 void schedule_debug(const char *file, int line, const char *func)
 {
+printk("1\n");
 	if (!is_windrbd_thread(current))
 		printk("Warning: schedule called from a non WinDRBD thread\n");
 
+printk("2\n");
 	ll_wait(current->wait_queue_entry, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
 }
 
