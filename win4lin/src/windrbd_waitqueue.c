@@ -175,11 +175,27 @@ printk("wake_up %p %s:%d (%s())\n", q, file, line, func);
 	spin_unlock_irqrestore(&q->lock, flags);
 }
 
-void wake_up_all(wait_queue_head_t *q)
+void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {
-	printk("Warning: wake_up_all called but not implemented yet\n");
-	/* Should cause all threads to wake up and check the condition again */
-	/* TODO: phil check whether the single-wake-up is wrong? */
-//	KeSetEvent(&q->wqh_event, 0, FALSE);
+	KIRQL flags;
+printk("wake_up_all %p %s:%d (%s())\n", q, file, line, func);
+	struct wait_queue_entry *e, *e2;
+
+	spin_lock_irqsave(&q->lock, flags);
+	if (list_empty(&q->head)) {
+		printk("Warning: attempt to wake up all with no one waiting.\n");
+		spin_unlock_irqrestore(&q->lock, flags);
+
+		return;
+	}
+		/* Use safe version: entries might get deleted soon by
+		 * woken up waiters.
+		 */
+
+	list_for_each_entry_safe(struct wait_queue_entry, e, e2, &q->head, entry) {
+		KeSetEvent(&e->windows_event, 0, FALSE);
+	}
+
+	spin_unlock_irqrestore(&q->lock, flags);
 }
 
