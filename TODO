@@ -20,13 +20,6 @@ TODO: Bug: Sync sometimes does not start
 	Linux peer stuck in WFBitMapT, drbdadm status on
 	Windows hangs.
 
-TODO: Implement: implement wake_up_all
-
-	Need to have a list of events, one element for each process
-	waiting. Use the DEFINE_WAIT to allocate those elements.
-
-	This should fix the drbdadm down delay we observe.
-
 TODO: Test: Make updownloop work again.
 
 	It should work:
@@ -44,6 +37,10 @@ TODO: Bug: drbdadm down takes up to 30 seconds to complete
 	Sometimes also hangs 'forever' (>10 minutes). Is this a
 	handle leak? DRBD worker is hanging in drbd_sender.c:3008 ...
 
+	Implementing wake_up_all() didn't fix it. Maybe this is
+	some Windows process having an open handle, we should
+	cancel IRPs on drbdadm down...
+
 TODO: Bug: hangs in inc_ap_bio()
 
 	With a7c157c1 sometimes (not always) wait_event in
@@ -52,9 +49,22 @@ TODO: Bug: hangs in inc_ap_bio()
 
 	inc_ap_bio returns false in the first if (testing for NEW_CUR_UUID)
 
-TODO: Implement: remove remaing calls to old schedule()
+TODO: Bug: BSOD after drbdadm down
 
-TODO: Implement: Reengineer completions
+	This is somewhere in the I/O path (it is most likely not the
+	PnP part). We should 'cancel' ongoing I/O (scsi thread is
+	still running and most likely the one that crashes). Also
+	the scsi thread is hanging somewhere in the inc_ap_bio, so
+	this might also be some relation to this bug.
+
+TODO: Feature: Call test routines via ioctl().
+
+	We should not run them when the driver is loaded since that
+	might Windows stop booting if a test fails. Have a root device
+	ioctl that takes a string and runs that test.
+
+	In particular I would like to test calling KeWaitForMultipleObjects()
+	while IRQL is Dispatch level (I suppose the machine hangs or BSODs).
 
 TODO: Implement: Reengineer workqueues
 
@@ -75,15 +85,6 @@ Aug  5 14:14:15 192.168.56.101  U12:14:15.150|036ffd40(netlink) flush_workqueue 
 	Maybe we have to reengineer the worqueue layer as well ...
 
 TODO: Test: dhcp.conf: if exists ipxe.windrbd-root
-
-TODO: Feature: Call test routines via ioctl().
-
-	We should not run them when the driver is loaded since that
-	might Windows stop booting if a test fails. Have a root device
-	ioctl that takes a string and runs that test.
-
-	In particular I would like to test calling KeWaitForMultipleObjects()
-	while IRQL is Dispatch level (I suppose the machine hangs or BSODs).
 
 TODO: Bug: up-down loop fails currently.
 
@@ -132,6 +133,26 @@ TODO: Bug: Several system hangs and BSODs on WinDRBD boot
 <1> U17:34:01.017|02621130(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2670 (wait_for_sender_todo()) timeout is 214748364
 <1> U17:34:09.270|0179ea20(drbd_a_tiny-windows-disk) kernel_recvmsg receive timed out
 <1> U17:34:18.317|026292c0(drbd_r_tiny-windows-disk) kernel_recvmsg receive completed with error c00000b5
+
+	Update: New log:
+
+<1> U17:48:28.421|02df1200(scsi) wake_up_debug wake_up FFFFFA80062E4AB8 drbd_req.c:1848 (drbd_send_and_submit())
+<1> U17:48:28.421|02627280(drbd_s_tiny-windows-disk) ll_wait out of KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) stastus is 0
+<1> U17:48:28.421|02627280(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) timeout is 5000
+<1> U17:48:28.437|02df1200(scsi) windrbd_dispatch got request major is f
+<1> U17:48:28.437|02df1200(scsi) __drbd_make_request 1
+<1> U17:48:28.437|02df1200(scsi) inc_ap_bio_cond 1
+<1> U17:48:28.437|02df1200(scsi) inc_ap_bio_cond 3
+<1> U17:48:28.437|02df1200(scsi) inc_ap_bio_cond 4 rv is 1
+<1> U17:48:28.437|02df1200(scsi) inc_ap_bio_cond 5
+<1> U17:48:28.437|02df1200(scsi) wake_up_debug wake_up FFFFFA80062E4AB8 drbd_req.c:1848 (drbd_send_and_submit())
+<1> U17:48:28.437|02627280(drbd_s_tiny-windows-disk) ll_wait out of KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) stastus is 0
+<1> U17:48:28.437|02627280(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) timeout is 5000
+
+	Maybe the IP network is down for a short period (AoE doesn't
+	use IP as the name suggests). Also do some experiments with
+	other drivers (disable fwsomething driver, see email from
+	Oliver).
 
 TODO: Feature: Become Primary only on write requests
 
@@ -5492,4 +5513,24 @@ Done: Bug: BSOD on up/down when unconnected and have disk
         Also BSOD on drbdadm down when connected and have disk.
 	Also with d288b29fcc50db so it is not the new event handling code.
 	Observed a system hang with d288b29fcc50db
+
+Done: Implement: implement wake_up_all
+
+	Need to have a list of events, one element for each process
+	waiting. Use the DEFINE_WAIT to allocate those elements.
+
+	This should fix the drbdadm down delay we observe.
+
+	Implemented, but does not fix the drbdadm down delay.
+
+Done: Implement: Reengineer completions
+
+	Very simple implementation using wait_event. Currently in
+	drbd_windows.c move it to somewhere else later.
+
+Done: Implement: remove remaing calls to old schedule()
+
+	schedule() and the like interfaces are now Linux compatible
+	(wait_event() not, since there is no way to return a value
+	from the macro as an expression)
 
