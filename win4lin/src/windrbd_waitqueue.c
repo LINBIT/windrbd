@@ -20,7 +20,6 @@ static int ll_wait(struct wait_queue_entry *e, ULONG_PTR timeout, int interrupti
 	PVOID wait_objects[2] = {0};
 	struct task_struct *thread = current;
 
-printk("1\n");
 	/* Busy looping .. to see where it hangs */
 if (timeout > 5000) timeout = 5000;
 
@@ -75,11 +74,9 @@ printk("out of KeWaitForMultipleObjects from %s:%d (%s()) stastus is %x\n", file
 
 void schedule_debug(const char *file, int line, const char *func)
 {
-printk("1\n");
 	if (!is_windrbd_thread(current))
 		printk("Warning: schedule called from a non WinDRBD thread\n");
 
-printk("2\n");
 	ll_wait(current->wait_queue_entry, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
 }
 
@@ -176,7 +173,6 @@ printk("wake_up %p %s:%d (%s())\n", q, file, line, func);
 	KeSetEvent(&e->windows_event, 0, FALSE);
 
 	spin_unlock_irqrestore(&q->lock, flags);
-printk("entry is %p\n", e);
 }
 
 void wake_up_all(wait_queue_head_t *q)

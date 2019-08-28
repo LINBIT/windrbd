@@ -55,7 +55,6 @@ do {									\
 	LONG_PTR __timeout = timeout;					\
 	DEFINE_WAIT(__wait);						\
 	while (1) {							\
-printk("1\n");	\
 		prepare_to_wait(&wait_queue, &__wait, interruptible);	\
 		if (condition) {					\
 			if (__timeout == 0)				\

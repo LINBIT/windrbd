@@ -950,23 +950,16 @@ int IS_ERR(void *ptr)
 
 void init_completion(struct completion *completion)
 {
-printk("1\n");
 	init_waitqueue_head(&completion->wait);
-printk("2\n");
 }
 
 void wait_for_completion(struct completion *completion)
 {
-printk("1\n");
 	DEFINE_WAIT(w);
 
-printk("2\n");
 	prepare_to_wait(&completion->wait, &w, TASK_INTERRUPTIBLE);
-printk("3\n");
 	schedule();
-printk("4\n");
 	finish_wait(&completion->wait, &w);
-printk("5\n");
 }
 
 ULONG_PTR wait_for_completion_timeout(struct completion *completion, ULONG_PTR timeout)
