@@ -6,6 +6,7 @@
 /* #define WINDRBD_RUN_RCU_LOCK_RECURSION_TEST 1 */
 /* #define WINDRBD_RUN_RCU_LOCK_SYNCHRONIZE_RECURSION_TEST 1 */
 /* #define WINDRBD_PRINTK_PING 1 */
+#define WINDRBD_WAIT_EVENT_TEST 1
 
 #ifdef WINDRBD_RUN_TESTS
 
@@ -71,6 +72,54 @@ static int printk_ping(void *unused)
 
 #endif
 
+#ifdef WINDRBD_WAIT_EVENT_TEST
+
+static int cond = 0;
+
+static int wakeup_wait_queue(void *_w)
+{
+	struct wait_queue_head *w = _w;
+
+printk("waiting a bit ...\n");
+	msleep(1000);
+printk("wake up queue ...\n");
+	wake_up(w);
+
+printk("waiting a bit ...\n");
+	msleep(1000);
+printk("setting condition to true (non-zero) ...\n");
+	cond = 1;
+printk("wake up queue ...\n");
+	wake_up(w);
+printk("wait_event_interruptible should have terminated now.\n");
+	return 0;
+}
+
+static int wait_event_test(void *unused)
+{
+	struct wait_queue_head w;
+	int ret;
+
+printk("Waiting 3 minutes so you can uninstall windrbd\n");
+
+	msleep(3*60*1000);
+
+printk("starting wait_event test\n");
+	init_waitqueue_head(&w);
+
+printk("starting waker\n");
+	kthread_run(wakeup_wait_queue, &w, "waker");
+
+printk("waiting for waker\n");
+	wait_event_interruptible(ret, w, cond);
+printk("wait_event_interruptible returned %d\n", ret);
+
+printk("ending test\n");
+	return 0;
+}
+
+#endif
+
 void windrbd_run_tests(void)
 {
 #ifdef WINDRBD_RUN_TESTS
@@ -82,6 +131,9 @@ void windrbd_run_tests(void)
 #endif
 #ifdef WINDRBD_PRINTK_PING
 	kthread_run(printk_ping, NULL, "printk-ping");
+#endif
+#ifdef WINDRBD_WAIT_EVENT_TEST
+	kthread_run(wait_event_test, NULL, "wait-event");
 #endif
 #else
 	printk("WinDRBD self-tests disabled, see windrbd_test.c for how to enabled them.\n");
