@@ -138,7 +138,7 @@ void prepare_to_wait(struct wait_queue_head *w, struct wait_queue_entry *e, int 
 	thread->wait_queue_entry = e;
 
 	if (list_empty(&e->entry))
-		list_add(&w->head, &e->entry);
+		list_add(&e->entry, &w->head);
 	spin_unlock_irqrestore(&w->lock, flags);
 }
 
@@ -162,7 +162,7 @@ void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e)
 void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {		
 	KIRQL flags;
-printk("wake_up %p %p %s:%d (%s())\n", q, file, line, func);
+printk("wake_up %p %s:%d (%s())\n", q, file, line, func);
 	struct wait_queue_entry *e;
 
 	spin_lock_irqsave(&q->lock, flags);
@@ -176,6 +176,7 @@ printk("wake_up %p %p %s:%d (%s())\n", q, file, line, func);
 	KeSetEvent(&e->windows_event, 0, FALSE);
 
 	spin_unlock_irqrestore(&q->lock, flags);
+printk("entry is %p\n", e);
 }
 
 void wake_up_all(wait_queue_head_t *q)
