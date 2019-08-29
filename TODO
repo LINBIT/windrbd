@@ -20,6 +20,16 @@ TODO: Bug: Sync sometimes does not start
 	Linux peer stuck in WFBitMapT, drbdadm status on
 	Windows hangs.
 
+TODO: Bug: BSOD 0x000000f4 on booting diskless / windows hang
+
+	Meaning critical process died (similar to Attempt to kill
+	init on Linux) Sometimes no BSOD but Windows disconnects
+	and is not pingable any more.
+
+	Update: Login screen appears one can enter password but
+	then it hangs in the welcome screen. Network down for
+	some reason (the IP address is hard coded)?
+
 TODO: Test: Make updownloop work again.
 
 	It should work:
@@ -41,6 +51,10 @@ TODO: Bug: drbdadm down takes up to 30 seconds to complete
 	some Windows process having an open handle, we should
 	cancel IRPs on drbdadm down...
 
+	Update: fixed completions but still takes 25-30 seconds
+	for drbdadm down. This seems to be an open handle to
+	the block device. Maybe test with winaoe?
+
 TODO: Bug: hangs in inc_ap_bio()
 
 	With a7c157c1 sometimes (not always) wait_event in
@@ -48,6 +62,9 @@ TODO: Bug: hangs in inc_ap_bio()
 	printk's (when being disconnected).
 
 	inc_ap_bio returns false in the first if (testing for NEW_CUR_UUID)
+
+	Fixed completions: does it also fix this (commit is 
+	4310752cdb3)?
 
 TODO: Bug: BSOD after drbdadm down
 
@@ -86,18 +103,6 @@ Aug  5 14:14:15 192.168.56.101  U12:14:15.150|036ffd40(netlink) flush_workqueue 
 
 TODO: Test: dhcp.conf: if exists ipxe.windrbd-root
 
-TODO: Bug: up-down loop fails currently.
-
-	We reworked REMOVE_DEVICE again. Currently we get a
-	SUPRISE_REMOVAL which we must handle.
-
-	After introducing an event and a guard flag for new
-	I/O this got better. Now we probably hang in
-	try_to_promote/wait_event_interruptible.
-
-	It is most likely the wait_event_interruptible in
-	stable_state_change().
-
 TODO: Bug: With a no-I/O resource up BSOD on power down
 
 	POWER_STATE_FAILURE
@@ -108,8 +113,6 @@ TODO: Bug: With a no-I/O resource up BSOD on power down
 
 	When making the resource primary (by drbdadm up on
 	the peer) it continues and Windows is shut down.
-
-TODO: Test: up down when there is lots of I/O
 
 TODO: Bug: Several system hangs and BSODs on WinDRBD boot
 
@@ -154,13 +157,25 @@ TODO: Bug: Several system hangs and BSODs on WinDRBD boot
 	other drivers (disable fwsomething driver, see email from
 	Oliver).
 
+TODO: Bug: BSOD on drbdadm down (near wait_for_completion)
+
+	Log is:
+
+<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug wake_up FFFFFA800305DC98 drbd_actlog.c:65 (drbd_md_put_buffer())
+<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug Warning: attempt to wake up with no one waiting.
+<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug wake_up FFFFFA800305DC98 y:\windrbd\converted-sources\drbd\drbd_int.h:2614 (put_ldev())
+<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug Warning: attempt to wake up with no one waiting.
+<1> U12:45:13.570|02ce7690(drbd_w_w0) complete completing FFFFF88007616718
+ [last 16 messages were in IRQ context or recursive]
+<1> U12:45:13.570|03509b50(netlink) wait_for_completion_timeout out of wait_event FFFFF88007616718 ...
+<1> U12:45:13.570|03509b50(netlink) drbd_set_role 8
+<1> U12:45:13.570|03509b50(netlink) drbd_set_role 9
+<1> U12:45:13.570|03509b50(netlink) drbd_set_role a
+<1> U12:45:13.570|03509b50(netlink) drbd_set_role b
+<1> U12:45:13.570|03509b50(netlink) drbd_set_role c
+<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug wake_up FFFFF88007616720 ../../win4lin/src/drbd_windows.c:977 (complete())
+
 TODO: Feature: Become Primary only on write requests
-
-TODO: Bug: BSOD 0x000000f4 on booting diskless
-
-	Meaning critical process died (similar to Attempt to kill
-	init on Linux) Sometimes no BSOD but Windows disconnects
-	and is not pingable any more.
 
 TODO: Bug: Out of memory very soon on boot
 
@@ -5533,4 +5548,22 @@ Done: Implement: remove remaing calls to old schedule()
 	schedule() and the like interfaces are now Linux compatible
 	(wait_event() not, since there is no way to return a value
 	from the macro as an expression)
+
+Done: Bug: up-down loop fails currently.
+
+	We reworked REMOVE_DEVICE again. Currently we get a
+	SUPRISE_REMOVAL which we must handle.
+
+	After introducing an event and a guard flag for new
+	I/O this got better. Now we probably hang in
+	try_to_promote/wait_event_interruptible.
+
+	It is most likely the wait_event_interruptible in
+	stable_state_change().
+
+	Update: with 4310752cdb3 this got better there are
+	BSOD's but they take longer to trigger. Since this
+	is duplicate we close this bug for now.
+
+Duplicate: Test: up down when there is lots of I/O
 
