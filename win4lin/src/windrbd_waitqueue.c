@@ -77,6 +77,7 @@ void schedule_debug(const char *file, int line, const char *func)
 	if (!is_windrbd_thread(current))
 		printk("Warning: schedule called from a non WinDRBD thread\n");
 
+printk("wait queue is %p\n", current->wait_queue);
 	ll_wait(current->wait_queue_entry, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
 }
 
@@ -91,6 +92,7 @@ static LONG_PTR ll_schedule_debug(ULONG_PTR timeout, int return_error, int inter
 		return -EINVAL;
 	}
 
+printk("wait queue is %p\n", current->wait_queue);
 	err = ll_wait(current->wait_queue_entry, timeout, interruptible, file, line, func);
 
 	if (err < 0 && return_error)
