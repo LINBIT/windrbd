@@ -1829,9 +1829,9 @@ dbg("Returned string is %S\n", string);
 					bdev->powering_down = 1; /* meaning no more I/O on that device */
 					IoAcquireRemoveLock(&bdev->remove_lock, NULL);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
-// printk("into IoReleaseRemoveLockAndWait ... \n");
+printk("into IoReleaseRemoveLockAndWait ... \n");
 					IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
-// printk("out of IoReleaseRemoveLockAndWait ... \n");
+printk("out of IoReleaseRemoveLockAndWait ... \n");
 				} else {
 					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
 				}
