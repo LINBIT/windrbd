@@ -20,6 +20,12 @@ TODO: Bug: Sync sometimes does not start
 	Linux peer stuck in WFBitMapT, drbdadm status on
 	Windows hangs.
 
+TODO: Bug: Logs (UDP) appear but no Ping/no DRBD
+
+	Also sometimes there is DRBD but not Ping.
+
+	Try to understand how network filter drivers work.
+
 TODO: Bug: BSOD 0x000000f4 on booting diskless / windows hang
 
 	Meaning critical process died (similar to Attempt to kill
@@ -29,6 +35,37 @@ TODO: Bug: BSOD 0x000000f4 on booting diskless / windows hang
 	Update: Login screen appears one can enter password but
 	then it hangs in the welcome screen. Network down for
 	some reason (the IP address is hard coded)?
+
+	Update: When disabling network discovery the whole thing
+	boots (after about 3-5 minute delay on getting network).
+
+	Sometimes: takes longer than 5 minutes to boot (from drivers
+	loaded until there is a DRBD connection), we've aborted
+	those tests. When it runs it is quite stable (wrote 40GB
+	in 30 minutes), however it does not boot always and there
+	is also the (new?) 0x50 BSOD.
+
+TODO: Bug: BSOD 0x00000050 on booting diskless
+
+	Last log lines are:
+
+Aug 29 18:48:43 192.168.56.150  U16:48:42.830|030e7ca0(scsi) inc_ap_bio_cond 4 rv is 1
+Aug 29 18:48:43 192.168.56.150  [last message was in IRQ context or recursive]
+Aug 29 18:48:43 192.168.56.150  U16:48:42.830|030e7ca0(scsi) inc_ap_bio_cond 5
+Aug 29 18:48:43 192.168.56.150  U16:48:42.830|030e7ca0(scsi) wake_up_debug wake_up FFFFFA8005DD8800 drbd_req.c:360 (wake_all_senders())
+Aug 29 18:48:43 192.168.56.150  [last message was in IRQ context or recursive]
+Aug 29 18:48:43 192.168.56.150  U16:48:42.830|05dcba60(drbd_s_tiny-windows-disk) ll_wait out of KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) stastus is 0
+Aug 29 18:48:43 192.168.56.150  U16:48:42.830|05dcba60(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) timeout is 5000
+<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug wake_up FFFFFA800210FC98 y:\windrbd\converted-sources\drbd\drbd_int.h:2500 (__dec_ap_pending())
+<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug Warning: attempt to wake up with no one waiting.
+<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug wake_up FFFFFA8005DD8800 drbd_req.c:360 (wake_all_senders())
+ [last 3 messages were in IRQ context or recursive]
+<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug wake_up FFFFFA800210FC98 y:\windrbd\converted-sources\drbd\drbd_int.h:2657 (dec_ap_bio())
+<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug Warning: attempt to
+
+TODO: Reestablish connection of Diskless machine fails.
+
+	Tested with iptables drop / don't drop.
 
 TODO: Test: Make updownloop work again.
 

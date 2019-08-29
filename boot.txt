@@ -30,3 +30,14 @@ Enable Broadcom drivers (unclear if really needed)
 Currently: Assign a fixed IP address (must match the one in DRBD
 	config). TODO: which driver to load on boot to make
 	DHCP work?
+
+Also Disable Network Discovery (else there is a short time gap
+	in which network is down and Windows needs to access
+	boot device in order to continue):
+
+	(from https://social.technet.microsoft.com/Forums/en-US/675520ed-fe25-455e-a86e-fdb833903b10/windows-takes-an-exceptionally-long-time-to-establish-a-network-connection-after-booting
+
+	Control Panel\Network and Internet\Network and Sharing Center\Advanced sharing settings
+
+	Turn OFF network discovery
+
