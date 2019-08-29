@@ -951,37 +951,39 @@ int IS_ERR(void *ptr)
 void init_completion(struct completion *completion)
 {
 	init_waitqueue_head(&completion->wait);
-}
-
-void wait_for_completion(struct completion *completion)
-{
-	DEFINE_WAIT(w);
-
-	prepare_to_wait(&completion->wait, &w, TASK_INTERRUPTIBLE);
-	schedule();
-	finish_wait(&completion->wait, &w);
+	completion->completed = false;
 }
 
 ULONG_PTR wait_for_completion_timeout(struct completion *completion, ULONG_PTR timeout)
 {
 	ULONG_PTR ret;
-	DEFINE_WAIT(w);
 
-	prepare_to_wait(&completion->wait, &w, TASK_INTERRUPTIBLE);
-	ret = schedule_timeout(timeout);
-	finish_wait(&completion->wait, &w);
+printk("into wait_event %p ...\n", completion);
+	wait_event_interruptible_timeout(ret, completion->wait, completion->completed, timeout);
+printk("out of wait_event %p ...\n", completion);
 
 	return ret;
 }
 
+void wait_for_completion(struct completion *completion)
+{
+	wait_for_completion_timeout(completion, MAX_SCHEDULE_TIMEOUT);
+}
+
 void complete(struct completion *c)
 {
+printk("completing %p\n", c);
+	c->completed = true;
 	wake_up(&c->wait);
+printk("%p completed\n", c);
 }
 
 void complete_all(struct completion *c)
 {
+printk("completing all %p\n", c);
+	c->completed = true;
 	wake_up_all(&c->wait);
+printk("%p completed\n", c);
 }
 
 #if 0

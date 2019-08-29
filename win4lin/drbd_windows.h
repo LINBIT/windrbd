@@ -639,7 +639,7 @@ typedef void(BIO_END_IO_CALLBACK)(struct bio *bio, int error);
 
 
 struct completion {
-	//unsigned int done;
+	bool completed;
 	wait_queue_head_t wait;
 };
 
