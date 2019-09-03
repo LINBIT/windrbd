@@ -515,6 +515,8 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 		if (Status == STATUS_SUCCESS)
 			socket->sk->sk_state = TCP_ESTABLISHED;
 	}
+	if (Status != STATUS_SUCCESS)
+		dbg("WskConnect failed with status = %x\n", Status);
 
 	IoFreeIrp(Irp);
 
@@ -1362,6 +1364,8 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	struct socket *socket = (struct socket*) SocketContext;
 	KIRQL flags;
 	struct _WSK_SOCKET *socket_to_close = NULL;
+
+	dbg("Incoming connection on socket %p\n", socket);
 
 	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket != NULL) {
