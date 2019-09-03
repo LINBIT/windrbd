@@ -836,6 +836,10 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 
 exit:
+	if (status == STATUS_SUCCESS && dev != NULL) {
+		dev->num_openers++;
+		printk("num_openers of device %p is now %d\n", dev, dev->num_openers);
+	}
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 	dbg(KERN_DEBUG "status is %x\n", status);
@@ -898,6 +902,10 @@ printk("pretending that close succeeded\n");
 		status = STATUS_SUCCESS;
 	}
 
+	if (status == STATUS_SUCCESS && dev != NULL) {
+		dev->num_openers--;
+		printk("num_openers of device %p is now %d\n", dev, dev->num_openers);
+	}
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 	return status;

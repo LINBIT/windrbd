@@ -595,7 +595,8 @@ struct block_device {
 	struct _KEVENT capacity_event;
 	struct _KEVENT device_removed_event;
 
-//	int num_openers;
+	/* Used for debugging handle leaks */
+	int num_openers;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
