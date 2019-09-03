@@ -2033,11 +2033,14 @@ void force_sig(int sig, struct task_struct *task)
 		/* TODO: We need to protect against thread
 		 * suddenly dying here. */
 
+printk("1\n");
 	if (task && task->has_sig_event)
 	{
 printk("sending signal to task %p (%s)\n", task, task->comm);
 		task->sig = sig;
+printk("2\n");
 		KeSetEvent(&task->sig_event, 0, FALSE);
+printk("3\n");
 	}
 }
 

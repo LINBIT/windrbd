@@ -2273,7 +2273,7 @@ static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp
 	if (t == NULL) {
 		printk("Warning: cannot create a thread object for request.\n");
 	}
-printk("got request major is %x\n", major);
+printk("got request major is %x device object is %p (is %s device)\n", major, device, device == mvolRootDeviceObject ? "root" : "disk");
 
 	ret = windrbd_dispatch_table[major](device, irp);
 
