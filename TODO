@@ -26,6 +26,11 @@ TODO: Bug: Logs (UDP) appear but no Ping/no DRBD
 
 	Try to understand how network filter drivers work.
 
+	Update: connect (WskConnect) fails with error 0xC000023D
+	STATUS_HOST_UNREACHABLE. It seems that packets can go
+	out (UDP logging) but not go in. The source IP of
+	the UDP packets are correct.
+
 TODO: Bug: BSOD 0x000000f4 on booting diskless / windows hang
 
 	Meaning critical process died (similar to Attempt to kill
