@@ -948,16 +948,18 @@ int IS_ERR(void *ptr)
 	return IS_ERR_VALUE((unsigned long) ptr);
 }
 
-void init_completion(struct completion *completion)
+void init_completion_debug(struct completion *completion, const char *file, int line, const char *func)
 {
+printk("from %s:%d (%s())\n", file, line, func);
 	init_waitqueue_head(&completion->wait);
 	completion->completed = false;
 }
 
-ULONG_PTR wait_for_completion_timeout(struct completion *completion, ULONG_PTR timeout)
+ULONG_PTR wait_for_completion_timeout_debug(struct completion *completion, ULONG_PTR timeout, const char *file, int line, const char *func)
 {
 	ULONG_PTR ret;
 
+printk("from %s:%d (%s())\n", file, line, func);
 printk("into wait_event %p ...\n", completion);
 	wait_event_interruptible_timeout(ret, completion->wait, completion->completed, timeout);
 printk("out of wait_event %p ...\n", completion);
@@ -965,21 +967,24 @@ printk("out of wait_event %p ...\n", completion);
 	return ret;
 }
 
-void wait_for_completion(struct completion *completion)
+void wait_for_completion_debug(struct completion *completion, const char *file, int line, const char *func)
 {
+printk("from %s:%d (%s())\n", file, line, func);
 	wait_for_completion_timeout(completion, MAX_SCHEDULE_TIMEOUT);
 }
 
-void complete(struct completion *c)
+void complete_debug(struct completion *c, const char *file, int line, const char *func)
 {
+printk("from %s:%d (%s())\n", file, line, func);
 printk("completing %p\n", c);
 	c->completed = true;
 	wake_up(&c->wait);
 printk("%p completed\n", c);
 }
 
-void complete_all(struct completion *c)
+void complete_all_debug(struct completion *c, const char *file, int line, const char *func)
 {
+printk("from %s:%d (%s())\n", file, line, func);
 printk("completing all %p\n", c);
 	c->completed = true;
 	wake_up_all(&c->wait);

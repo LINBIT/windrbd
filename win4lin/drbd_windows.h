@@ -594,6 +594,8 @@ struct block_device {
 	struct _KEVENT primary_event;
 	struct _KEVENT capacity_event;
 	struct _KEVENT device_removed_event;
+
+//	int num_openers;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
@@ -1009,11 +1011,17 @@ static inline void free_page(void *addr)
 }
 
 
-extern void init_completion(struct completion *x);
-extern void wait_for_completion(struct completion *x);
-extern ULONG_PTR wait_for_completion_timeout(struct completion *x, ULONG_PTR timeout);
-extern void complete(struct completion *c);
-extern void complete_all(struct completion *c);
+extern void init_completion_debug(struct completion *c, const char *file, int line, const char *func);
+extern void wait_for_completion_debug(struct completion *c, const char *file, int line, const char *func);
+extern ULONG_PTR wait_for_completion_timeout_debug(struct completion *c, ULONG_PTR timeout, const char *file, int line, const char *func);
+extern void complete_debug(struct completion *c, const char *file, int line, const char *func);
+extern void complete_all_debug(struct completion *c, const char *file, int line, const char *func);
+
+#define init_completion(c) init_completion_debug(c, __FILE__, __LINE__, __func__)
+#define wait_for_completion(c) wait_for_completion_debug(c, __FILE__, __LINE__, __func__)
+#define wait_for_completion_timeout(c, t) wait_for_completion_timeout_debug(c, t, __FILE__, __LINE__, __func__)
+#define complete(c) complete_debug(c, __FILE__, __LINE__, __func__)
+#define complete_all(c) complete_all_debug(c, __FILE__, __LINE__, __func__)
 
 extern int signal_pending(struct task_struct *p);
 extern void force_sig(int sig, struct task_struct *p);
