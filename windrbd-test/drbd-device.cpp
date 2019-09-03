@@ -104,6 +104,13 @@ TEST(windrbd, open_and_close_device)
 	CloseHandle(h);
 }
 
+TEST(windrbd, open_device_and_sleep)
+{
+	do_open_device(0);
+	printf("Device opened, waiting 120 seconds ...\n");
+	sleep(120);
+}
+
 TEST(windrbd, is_windrbd_device)
 {
 	HANDLE h = do_open_device(0);
