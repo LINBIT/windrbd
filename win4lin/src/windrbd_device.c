@@ -1663,15 +1663,11 @@ dbg("Returned string is %S\n", string);
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
 				}
-				if (s->Parameters.QueryDeviceRelations.Type != TargetDeviceRelation || (bdev && !bdev->delete_pending)) {
-					device_relations->Count = 1;
-					device_relations->Objects[0] = bdev->windows_device;
-					ObReferenceObject(bdev->windows_device);
+				device_relations->Count = 1;
+				device_relations->Objects[0] = bdev->windows_device;
+				ObReferenceObject(bdev->windows_device);
+
 printk("reporting device %p for type %d\n", bdev->windows_device, s->Parameters.QueryDeviceRelations.Type);
-				} else {
-					device_relations->Count = 0;
-printk("Device about to shut down, not reporting it.\n");
-				}
 
 				irp->IoStatus.Information = (ULONG_PTR)device_relations;
 				status = STATUS_SUCCESS;
