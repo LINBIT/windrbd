@@ -1661,9 +1661,13 @@ dbg("Returned string is %S\n", string);
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
 				}
-				device_relations->Count = 1;
-				device_relations->Objects[0] = bdev->windows_device;
-				ObReferenceObject(bdev->windows_device);
+				if (bdev && !bdev->delete_pending) {
+					device_relations->Count = 1;
+					device_relations->Objects[0] = bdev->windows_device;
+					ObReferenceObject(bdev->windows_device);
+				} else {
+					device_relations->Count = 0;
+				}
 
 				irp->IoStatus.Information = (ULONG_PTR)device_relations;
 				status = STATUS_SUCCESS;
@@ -1688,7 +1692,7 @@ dbg("Returned string is %S\n", string);
 			}
 
 			default:
-				printk("Type %d is not implemented\n");
+				printk("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
 				status = STATUS_NOT_IMPLEMENTED;
 			}
 			break;
