@@ -397,9 +397,11 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	NTSTATUS status = STATUS_SUCCESS;
 
 // printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
+#if 0
 	status = wait_for_becoming_primary(dev);
 	if (status != STATUS_SUCCESS)
 		goto out;
+#endif
 
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 		/* custom WINDRBD ioctl's */
@@ -781,7 +783,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		status = STATUS_INVALID_PARAMETER;
 	}
 
-out:
+// out:
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return status;
@@ -811,6 +813,9 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 	if (dev->drbd_device != NULL) {
 		dbg(KERN_DEBUG "s->Parameters.Create.SecurityContext->DesiredAccess is %x\n", s->Parameters.Create.SecurityContext->DesiredAccess);
+		dbg(KERN_DEBUG "s->Parameters.Create.FileAttributes is %x\n", s->Parameters.Create.FileAttributes);
+		dbg(KERN_DEBUG "s->Parameters.Create.Options is %x\n", s->Parameters.Create.Options);
+		dbg(KERN_DEBUG "FILE_WRITE_DATA is %x\n", FILE_WRITE_DATA);
 
 		status = wait_for_becoming_primary(dev->drbd_device->this_bdev);
 		if (status != STATUS_SUCCESS)
@@ -1042,6 +1047,10 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	int b;
 	struct bio_collection *common_data;
 
+	if (rw == WRITE && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
+		printk("Attempt to write when not Primary\n");
+		return STATUS_INVALID_PARAMETER;
+	}
 	if (sector * dev->bd_block_size >= dev->d_size) {
 		dbg("Attempt to read past the end of the device\n");
 		return STATUS_INVALID_PARAMETER;
@@ -1249,6 +1258,7 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		goto exit_remove_lock;
 	}
 
+#if 0
 	if (dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		dbg("I/O request while not primary, waiting for primary.\n");
 
@@ -1256,6 +1266,7 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		if (status != STATUS_SUCCESS)
 			goto exit_remove_lock;
 	}
+#endif
 
 		/* allow I/O when the local disk failed, usually there
 		 * are peers which can handle the I/O. If not, DRBD will
@@ -2097,9 +2108,11 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 			if (bdev != NULL) {
 // printk("SCSI I/O waiting for primary\n");
+#if 0
 				if (rw == WRITE)
 					status = wait_for_becoming_primary(bdev);
 				else
+#endif
 					status = STATUS_SUCCESS;
 			} else {
 				printk("bdev is NULL on SCSI I/O, this should not happen (minor is %x)\n", s->MinorFunction);
