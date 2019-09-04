@@ -81,6 +81,19 @@ TODO: Test: Make updownloop work again.
 		.) Without local disk but with connection
 		.) Without any successful I/O (diskless unconnected)
 
+TODO: Feature: Fix auto-promote
+
+	We shouldn't call become Primary on write requests,
+	instead we should fail them. We also should finally
+	find how the driver can detect writable open in
+	windrbd_create. Lastly we should invalidate the
+	filesystem cache when becoming Primary.
+
+	Currently Windows does not boot..but we get logs via
+	network. This is an independent bug. We (later) should
+	revert 525a84a or at least wait for primary in
+	CLAIM_DEVICE again.
+
 TODO: Bug: drbdadm down takes up to 30 seconds to complete
 
 	Problem is that REMOVE_DEVICE is sent only after a long
@@ -385,8 +398,6 @@ TODO: Feature: Make C:\ as Primary Diskless work
 
 	Left to do: see seperate TODO's.
 
------------------------------------------------------------------------
-
 TODO: Feature: implement fsync_bdev
 
 	called on becoming secondary
@@ -395,6 +406,8 @@ TODO: Bug: Allow rcu_read_lock() being called recursively.
 
 	This should fix the system lockup we observed on
 	Server 2016.
+
+-----------------------------------------------------------------------
 
 TODO: Code quality: windrbd show-drive-in-explorer might take longer than 5 seconds
 
@@ -5608,4 +5621,10 @@ Done: Bug: up-down loop fails currently.
 	is duplicate we close this bug for now.
 
 Duplicate: Test: up down when there is lots of I/O
+
+Done: Bug: Need access to uptodate data on drbdadm down
+
+	Probably because we overdo autopromote.
+	Fixed with 6df3bc33fe0ab?
+	Didn't happen on 100+ iterations.
 
