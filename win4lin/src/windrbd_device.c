@@ -123,7 +123,7 @@ static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 	} else
 		return STATUS_INVALID_PARAMETER;
 
-	if (bdev->is_bootdevice && !bdev->powering_down) {
+	if ((bdev->is_bootdevice || bdev->my_auto_promote) && !bdev->powering_down) {
 		drbd_device = bdev->drbd_device;
 		if (drbd_device != NULL) {
 			resource = drbd_device->resource;
@@ -2109,12 +2109,10 @@ printk("got SCSI I/O (%x)\n", srb->Function);
 			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
 
 			if (bdev != NULL) {
-// printk("SCSI I/O waiting for primary\n");
-#if 0
-				if (rw == WRITE)
+printk("SCSI I/O waiting for primary\n");
+				if (rw == WRITE && bdev->is_bootdevice)
 					status = wait_for_becoming_primary(bdev);
 				else
-#endif
 					status = STATUS_SUCCESS;
 			} else {
 				printk("bdev is NULL on SCSI I/O, this should not happen (minor is %x)\n", s->MinorFunction);
@@ -2254,6 +2252,7 @@ printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
 
 	case SRB_FUNCTION_CLAIM_DEVICE:
 printk("got SRB_FUNCTION_CLAIM_DEVICE\n");
+#if 0
 		if (bdev != NULL) {
 				/* TODO: only if we are a boot device */
 			status = wait_for_becoming_primary(bdev);
@@ -2261,6 +2260,7 @@ printk("got SRB_FUNCTION_CLAIM_DEVICE\n");
 				printk("Fatal: wait_for_becoming_primary returned non-success (%x) in CLAIM_DEVICE\n", status);
 		} else
 			printk("Fatal: bdev is NULL in CLAIM_DEVICE\n", status);
+#endif
 
 		srb->DataBuffer = device;
 		srb->SrbStatus = SRB_STATUS_SUCCESS;

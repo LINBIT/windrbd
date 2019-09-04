@@ -566,6 +566,8 @@ struct block_device {
 	UNICODE_STRING mount_point;
 	bool is_mounted;
 	bool is_bootdevice;
+		/* TODO: test this should go away */
+	bool my_auto_promote;
 
 	IO_REMOVE_LOCK remove_lock;
 
