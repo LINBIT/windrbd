@@ -2080,13 +2080,14 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
-// printk("got SCSI function %x\n", srb->Function);
+printk("got SCSI function %x\n", srb->Function);
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
-// printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
+printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 		switch (cdb->AsByte[0]) {
 		case SCSIOP_TEST_UNIT_READY:
+printk("got SCSIOP_TEST_UNIT_READY\n");
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
 			break;
 
@@ -2100,6 +2101,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		case SCSIOP_WRITE:
 		case SCSIOP_WRITE16:
 		{
+printk("got SCSI I/O (%x)\n", srb->Function);
 			long long start_sector;
 			unsigned long long sector_count, total_size;
 			int rw;
@@ -2172,6 +2174,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		}
 
 		case SCSIOP_READ_CAPACITY:
+printk("got SCSIOP_READ_CAPACITY\n");
 			d_size = wait_for_size(device);
 
 			Temp = 512;   /* TODO: later from struct */
@@ -2198,6 +2201,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			break;
 
 		case SCSIOP_READ_CAPACITY16:
+printk("got SCSIOP_READ_CAPACITY16\n");
 			d_size = wait_for_size(device);
 
 			Temp = 512;
@@ -2219,6 +2223,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 		case SCSIOP_MODE_SENSE:
 		{
+printk("got SCSIOP_MODE_SENSE\n");
 			PMODE_PARAMETER_HEADER ModeParameterHeader;
 
 			if (srb->DataTransferLength < sizeof(MODE_PARAMETER_HEADER)) {
@@ -2238,7 +2243,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		}
 
 		default:
-// printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
+printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
 			status = STATUS_NOT_IMPLEMENTED;
 		}
 		break;
@@ -2248,23 +2253,37 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		break;
 
 	case SRB_FUNCTION_CLAIM_DEVICE:
-// printk("got SRB_FUNCTION_CLAIM_DEVICE\n");
+printk("got SRB_FUNCTION_CLAIM_DEVICE\n");
+		if (bdev != NULL) {
+				/* TODO: only if we are a boot device */
+			status = wait_for_becoming_primary(bdev);
+			if (status != STATUS_SUCCESS)
+				printk("Fatal: wait_for_becoming_primary returned non-success (%x) in CLAIM_DEVICE\n", status);
+		} else
+			printk("Fatal: bdev is NULL in CLAIM_DEVICE\n", status);
+
 		srb->DataBuffer = device;
 		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
 
 	case SRB_FUNCTION_RELEASE_DEVICE:
+printk("got SRB_FUNCTION_RELEASE_DEVICE\n");
 //		ObDereferenceObject(device);
 		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
 
 	case SRB_FUNCTION_SHUTDOWN:
+printk("got SRB_FUNCTION_SHUTDOWN\n");
+		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		break;
+
 	case SRB_FUNCTION_FLUSH:
+printk("got SRB_FUNCTION_FLUSH\n");
 		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
 
 	default:
-// printk("got unimplemented SCSI function %x\n", srb->Function);
+printk("got unimplemented SCSI function %x\n", srb->Function);
 		status = STATUS_NOT_IMPLEMENTED;
 	}
 
