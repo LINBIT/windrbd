@@ -285,6 +285,10 @@ static NTSTATUS SocketsInit(void)
 	if (InterlockedCompareExchange(&wsk_state, WSK_INITIALIZING, WSK_DEINITIALIZED) != WSK_DEINITIALIZED)
 		return STATUS_ALREADY_REGISTERED;
 
+printk("Waiting for network 123\n");
+msleep(2*60*1000);
+printk("Trying network now 123\n");
+
 	WskClient.ClientContext = NULL;
 	WskClient.Dispatch = &g_WskDispatch;
 
@@ -411,6 +415,7 @@ static void close_socket(struct socket *socket)
 {
 	struct _IRP *Irp;
 
+printk("123\n");
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
@@ -440,6 +445,7 @@ static void close_socket(struct socket *socket)
 		socket->accept_wsk_socket = NULL;
 	}
 	socket->error_status = 0;
+printk("123 exit\n");
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
@@ -497,6 +503,8 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 		0,
 		Irp);
 
+dbg("123 WskConnect returned %x\n", Status);
+
 	if (Status == STATUS_PENDING) {
 		LARGE_INTEGER	nWaitTime;
 		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_sndtimeo * 1000 * 10);
@@ -519,6 +527,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 		dbg("WskConnect failed with status = %x\n", Status);
 
 	IoFreeIrp(Irp);
+dbg("123 wsk_connect returning %x\n", Status);
 
 	return winsock_to_linux_error(Status);
 }
@@ -797,6 +806,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	NTSTATUS status;
 	int err;
 
+printk("123\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !page || ((int) len <= 0))
 		return -EINVAL;
 
@@ -857,6 +867,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		WskBuffer,
 		flags,
 		Irp);
+printk("123 WskSend returned %x\n", status);
 
 	mutex_unlock(&socket->wsk_mutex);
 
@@ -881,6 +892,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	if (err != 0 && err != -ENOMEM)
 		socket->error_status = err;
 
+printk("123 1 wsk_send returning %d\n", err);
 		/* Resources are freed by completion routine. */
 	return err;
 
@@ -896,6 +908,8 @@ out_have_sent:
 	have_sent(socket, len);
 out_put_page:
 	put_page(page);
+
+printk("123 wsk_send returning %d\n", err);
 
 	if (err != 0 && err != -ENOMEM)
 		socket->error_status = err;
@@ -1009,6 +1023,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	PVOID       waitObjects[2];
 	int         wObjCount = 1;
 
+printk("123\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
@@ -1054,6 +1069,7 @@ dbg("wsk_socket closed meanwhile\n");
 				&WskBuffer,
 				wsk_flags,
 				Irp);
+printk("123 WskReceive returned %x\n", Status);
 	mutex_unlock(&socket->wsk_mutex);
 
     if (Status == STATUS_PENDING)
@@ -1070,6 +1086,8 @@ dbg("wsk_socket closed meanwhile\n");
             nWaitTime.QuadPart = -1LL * socket->sk->sk_rcvtimeo * 1000 * 10 * 1000 / HZ;
             pTime = &nWaitTime;
         }
+
+printk("123 socket->sk->sk_rcvtimeo is %d\n", socket->sk->sk_rcvtimeo);
 
         waitObjects[0] = (PVOID) &CompletionEvent;
         if (thread->has_sig_event)
@@ -1164,6 +1182,7 @@ dbg("Receiving cancelled (errno is %d) but data available (%d bytes, returning i
 dbg("setting error status to %d\n", socket->error_status);
 }
 
+printk("123 kern_receive returning %d\n", BytesReceived);
 	return BytesReceived;
 }
 
@@ -1365,8 +1384,6 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	KIRQL flags;
 	struct _WSK_SOCKET *socket_to_close = NULL;
 
-	dbg("Incoming connection on socket %p\n", socket);
-
 	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket != NULL) {
 		dbg("dropped incoming connection wsk_socket is old: %p new: %p socket is %p.\n", socket->accept_wsk_socket, AcceptSocket, socket);
@@ -1422,12 +1439,15 @@ static int wsk_sock_create_kern(void *net_namespace,
 
 	if (err < 0) {
 		sock_free_linux_socket(socket);
+dbg("123 sock_create_kern returning %d\n", err);
 		return err;
 	}
 
 	socket->wsk_socket = wsk_socket;
 	socket->wsk_flags = Flags;
 	*out = socket;
+
+dbg("123 sock_create_kern ok\n");
 
 	return 0;
 }
@@ -1582,9 +1602,9 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 		printk("WSK initialized.\n");
 	}
 
-#if 0
+printk("123 starting receive a lot at port 5678\n");
 	status = windrbd_create_windows_thread(receive_a_lot, NULL, &r_thread);
-#endif
+printk("123 status is %x\n", status);
 
 	return status;
 }
