@@ -41,3 +41,9 @@ Also Disable Network Discovery (else there is a short time gap
 
 	Turn OFF network discovery
 
+Disable NDIS lightweight filter for boot NIC:
+
+	https://support.microsoft.com/en-us/help/976042/windows-may-fail-to-boot-from-an-iscsi-drive-if-networking-hardware-is
+
+	Not clear if that really helps .. still there is a 90 seconds
+	(at least) delay.
