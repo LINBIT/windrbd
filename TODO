@@ -20,16 +20,10 @@ TODO: Bug: Sync sometimes does not start
 	Linux peer stuck in WFBitMapT, drbdadm status on
 	Windows hangs.
 
-TODO: Bug: Logs (UDP) appear but no Ping/no DRBD
+TODO: Bug: Alertboxes showing application 0x... could not write 0x...
 
-	Also sometimes there is DRBD but not Ping.
-
-	Try to understand how network filter drivers work.
-
-	Update: connect (WskConnect) fails with error 0xC000023D
-	STATUS_HOST_UNREACHABLE. It seems that packets can go
-	out (UDP logging) but not go in. The source IP of
-	the UDP packets are correct.
+	This is most likely a data corruption bug and also most
+	likely the same as the BSOD f4 (see seperate TODO).
 
 TODO: Bug: BSOD 0x000000f4 on booting diskless / windows hang
 
@@ -68,9 +62,13 @@ Aug 29 18:48:43 192.168.56.150  U16:48:42.830|05dcba60(drbd_s_tiny-windows-disk)
 <1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug wake_up FFFFFA800210FC98 y:\windrbd\converted-sources\drbd\drbd_int.h:2657 (dec_ap_bio())
 <1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug Warning: attempt to
 
-TODO: Reestablish connection of Diskless machine fails.
+TODO: Bug: Reestablish connection of Diskless machine fails.
 
 	Tested with iptables drop / don't drop.
+
+TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
+
+	First need to implement more than one connection.
 
 TODO: Test: Make updownloop work again.
 
@@ -109,17 +107,6 @@ TODO: Bug: drbdadm down takes up to 30 seconds to complete
 	Update: fixed completions but still takes 25-30 seconds
 	for drbdadm down. This seems to be an open handle to
 	the block device. Maybe test with winaoe?
-
-TODO: Bug: hangs in inc_ap_bio()
-
-	With a7c157c1 sometimes (not always) wait_event in
-	inc_ap_bio is never woken up. Also when there are no
-	printk's (when being disconnected).
-
-	inc_ap_bio returns false in the first if (testing for NEW_CUR_UUID)
-
-	Fixed completions: does it also fix this (commit is 
-	4310752cdb3)?
 
 TODO: Bug: BSOD after drbdadm down
 
@@ -168,49 +155,6 @@ TODO: Bug: With a no-I/O resource up BSOD on power down
 
 	When making the resource primary (by drbdadm up on
 	the peer) it continues and Windows is shut down.
-
-TODO: Bug: Several system hangs and BSODs on WinDRBD boot
-
-	Now, try if AoE is more stable.
-
-	Update: Yes it is.
-
-	We found an interresting logline: it seems that the error
-	is our inc_ap_bio() bug (note the timestamps).
-
-<1> U17:03:31.174|02e2f6c0(scsi) inc_ap_bio_cond 5
-<1> U17:03:31.174|02e2f6c0(scsi) ll_wait into KeWaitForMultipleObjects from drbd_req.c:1950 (inc_ap_bio()) timeout is 2147483647
-<1> U17:03:58.565|02639480(scsi) windrbd_dispatch got request major is f
-<1> U17:03:58.565|02639480(scsi) wait_for_becoming_primary 5
-<1> U17:03:58.565|02639480(scsi) __drbd_make_request 1
-
-	Also sometimes wait_for_sender_todo hangs:
-
-<1> U17:34:01.017|02f952d0(scsi) wake_up_debug wake_up FFFFFA80062E6A88 drbd_req.c:360 (wake_all_senders())
-<1> U17:34:01.017|02621130(drbd_s_tiny-windows-disk) ll_wait out of KeWaitForMultipleObjects from drbd_sender.c:2670 (wait_for_sender_todo()) stastus is 0
-<1> U17:34:01.017|02621130(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2670 (wait_for_sender_todo()) timeout is 214748364
-<1> U17:34:09.270|0179ea20(drbd_a_tiny-windows-disk) kernel_recvmsg receive timed out
-<1> U17:34:18.317|026292c0(drbd_r_tiny-windows-disk) kernel_recvmsg receive completed with error c00000b5
-
-	Update: New log:
-
-<1> U17:48:28.421|02df1200(scsi) wake_up_debug wake_up FFFFFA80062E4AB8 drbd_req.c:1848 (drbd_send_and_submit())
-<1> U17:48:28.421|02627280(drbd_s_tiny-windows-disk) ll_wait out of KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) stastus is 0
-<1> U17:48:28.421|02627280(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) timeout is 5000
-<1> U17:48:28.437|02df1200(scsi) windrbd_dispatch got request major is f
-<1> U17:48:28.437|02df1200(scsi) __drbd_make_request 1
-<1> U17:48:28.437|02df1200(scsi) inc_ap_bio_cond 1
-<1> U17:48:28.437|02df1200(scsi) inc_ap_bio_cond 3
-<1> U17:48:28.437|02df1200(scsi) inc_ap_bio_cond 4 rv is 1
-<1> U17:48:28.437|02df1200(scsi) inc_ap_bio_cond 5
-<1> U17:48:28.437|02df1200(scsi) wake_up_debug wake_up FFFFFA80062E4AB8 drbd_req.c:1848 (drbd_send_and_submit())
-<1> U17:48:28.437|02627280(drbd_s_tiny-windows-disk) ll_wait out of KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) stastus is 0
-<1> U17:48:28.437|02627280(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) timeout is 5000
-
-	Maybe the IP network is down for a short period (AoE doesn't
-	use IP as the name suggests). Also do some experiments with
-	other drivers (disable fwsomething driver, see email from
-	Oliver).
 
 TODO: Bug: BSOD on drbdadm down (near wait_for_completion)
 
@@ -5627,4 +5571,79 @@ Done: Bug: Need access to uptodate data on drbdadm down
 	Probably because we overdo autopromote.
 	Fixed with 6df3bc33fe0ab?
 	Didn't happen on 100+ iterations.
+
+Done: Bug: Logs (UDP) appear but no Ping/no DRBD
+
+	Also sometimes there is DRBD but not Ping.
+
+	Try to understand how network filter drivers work.
+
+	Update: connect (WskConnect) fails with error 0xC000023D
+	STATUS_HOST_UNREACHABLE. It seems that packets can go
+	out (UDP logging) but not go in. The source IP of
+	the UDP packets are correct.
+
+	This was a timeout problem. The default timeouts do
+	not work for the boot device. Should be fixed with
+	a820025d3.
+
+Done: Bug: hangs in inc_ap_bio()
+
+	With a7c157c1 sometimes (not always) wait_event in
+	inc_ap_bio is never woken up. Also when there are no
+	printk's (when being disconnected).
+
+	inc_ap_bio returns false in the first if (testing for NEW_CUR_UUID)
+
+	Fixed completions: does it also fix this (commit is 
+	4310752cdb3)?
+
+	Didn't observe lately, most likely 431075 fixed it.
+
+Done: Bug: Several system hangs and BSODs on WinDRBD boot
+
+	Now, try if AoE is more stable.
+
+	Update: Yes it is.
+
+	We found an interresting logline: it seems that the error
+	is our inc_ap_bio() bug (note the timestamps).
+
+<1> U17:03:31.174|02e2f6c0(scsi) inc_ap_bio_cond 5
+<1> U17:03:31.174|02e2f6c0(scsi) ll_wait into KeWaitForMultipleObjects from drbd_req.c:1950 (inc_ap_bio()) timeout is 2147483647
+<1> U17:03:58.565|02639480(scsi) windrbd_dispatch got request major is f
+<1> U17:03:58.565|02639480(scsi) wait_for_becoming_primary 5
+<1> U17:03:58.565|02639480(scsi) __drbd_make_request 1
+
+	Also sometimes wait_for_sender_todo hangs:
+
+<1> U17:34:01.017|02f952d0(scsi) wake_up_debug wake_up FFFFFA80062E6A88 drbd_req.c:360 (wake_all_senders())
+<1> U17:34:01.017|02621130(drbd_s_tiny-windows-disk) ll_wait out of KeWaitForMultipleObjects from drbd_sender.c:2670 (wait_for_sender_todo()) stastus is 0
+<1> U17:34:01.017|02621130(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2670 (wait_for_sender_todo()) timeout is 214748364
+<1> U17:34:09.270|0179ea20(drbd_a_tiny-windows-disk) kernel_recvmsg receive timed out
+<1> U17:34:18.317|026292c0(drbd_r_tiny-windows-disk) kernel_recvmsg receive completed with error c00000b5
+
+	Update: New log:
+
+<1> U17:48:28.421|02df1200(scsi) wake_up_debug wake_up FFFFFA80062E4AB8 drbd_req.c:1848 (drbd_send_and_submit())
+<1> U17:48:28.421|02627280(drbd_s_tiny-windows-disk) ll_wait out of KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) stastus is 0
+<1> U17:48:28.421|02627280(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) timeout is 5000
+<1> U17:48:28.437|02df1200(scsi) windrbd_dispatch got request major is f
+<1> U17:48:28.437|02df1200(scsi) __drbd_make_request 1
+<1> U17:48:28.437|02df1200(scsi) inc_ap_bio_cond 1
+<1> U17:48:28.437|02df1200(scsi) inc_ap_bio_cond 3
+<1> U17:48:28.437|02df1200(scsi) inc_ap_bio_cond 4 rv is 1
+<1> U17:48:28.437|02df1200(scsi) inc_ap_bio_cond 5
+<1> U17:48:28.437|02df1200(scsi) wake_up_debug wake_up FFFFFA80062E4AB8 drbd_req.c:1848 (drbd_send_and_submit())
+<1> U17:48:28.437|02627280(drbd_s_tiny-windows-disk) ll_wait out of KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) stastus is 0
+<1> U17:48:28.437|02627280(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) timeout is 5000
+
+	Maybe the IP network is down for a short period (AoE doesn't
+	use IP as the name suggests). Also do some experiments with
+	other drivers (disable fwsomething driver, see email from
+	Oliver).
+
+	Update: Need to disable network discovery, the IP network goes
+	down shortly this is enabled. Since we are network booting
+	reading would fail and then deadlock. See boot.txt.
 
