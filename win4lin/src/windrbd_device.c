@@ -875,11 +875,15 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			status = STATUS_SUCCESS;
 
 		irp->IoStatus.Status = status;
+#if 0
 		if (status == STATUS_SUCCESS) {
 printk("pretending that close succeeded\n");
 		} else {
+#endif
 			irp->IoStatus.Information = 0;
+#if 0
 		}
+#endif
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return status;
 	}
