@@ -179,6 +179,10 @@ static int new_peer(const char *resource_name, const char *peer_name, int peer_n
 	nla_put_string(skb, T_verify_alg, "crc32c");
 	nla_put_u32(skb, T_rcvbuf_size, 0xa00000);
 	nla_put_u32(skb, T_sndbuf_size, 0xa00000);
+	nla_put_u32(skb, T_timeout, 6*10);
+	nla_put_u32(skb, T_ping_timeo, 10*10);
+	nla_put_u32(skb, T_ping_int, 10);
+	nla_put_u32(skb, T_connect_int, 10);
 	nla_put_u8(skb, T_use_rle, 0);
 	nla_put_u32(skb, T_wire_protocol, protocol);
 	nla_nest_end(skb, nla);
