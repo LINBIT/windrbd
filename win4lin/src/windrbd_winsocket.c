@@ -238,7 +238,8 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 		if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf) {
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
 
-			timeout.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
+//			timeout.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
+			timeout.QuadPart = -1 * 1000 * 1000 * 10 * 1000 * 1000 / HZ;
 
 	/* TODO: once it is fixed, use wait_event_interruptible() here. */
 
@@ -499,7 +500,8 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 
 	if (Status == STATUS_PENDING) {
 		LARGE_INTEGER	nWaitTime;
-		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_sndtimeo * 1000 * 10);
+//		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_sndtimeo * 1000 * 10);
+		nWaitTime = RtlConvertLongToLargeInteger(-1 * 1000 * 1000 * 1000 * 10);
 
 		if ((Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime)) == STATUS_TIMEOUT)
 		{
@@ -1067,7 +1069,8 @@ dbg("wsk_socket closed meanwhile\n");
         }
         else
         {
-            nWaitTime.QuadPart = -1LL * socket->sk->sk_rcvtimeo * 1000 * 10 * 1000 / HZ;
+            // nWaitTime.QuadPart = -1LL * socket->sk->sk_rcvtimeo * 1000 * 10 * 1000 / HZ;
+            nWaitTime.QuadPart = -1LL * 1000 * 1000 * 1000 * 10 * 1000 / HZ;
             pTime = &nWaitTime;
         }
 
@@ -1471,6 +1474,10 @@ void windrbd_update_socket_buffer_sizes(struct socket *socket)
 
 	if (socket == NULL)
 		return;
+
+socket->sk->sk_sndbuf = 10*1024*1024;
+socket->sk->sk_rcvbuf = 10*1024*1024;
+printk("123 settings buffer sizes to snd: %d rcv: %d\n", socket->sk->sk_sndbuf, socket->sk->sk_rcvbuf);
 
 	if (socket->sk->sk_userlocks & SOCK_SNDBUF_LOCK) {
                 KeSetEvent(&socket->data_sent, IO_NO_INCREMENT, FALSE);
