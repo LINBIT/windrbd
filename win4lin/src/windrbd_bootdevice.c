@@ -436,12 +436,6 @@ static int windrbd_create_boot_device_stage2(void *pp)
                 /* Tell the PnP manager that we are there ... */
 	windrbd_rescan_bus();
 
-/*
-printk("Waiting for network 123\n");
-msleep(2*60*1000);
-printk("Trying network now 123\n");
-*/
-
 	if ((ret = connect(p->resource, p->peer_node_id)) != 0)
 		return ret;
 
