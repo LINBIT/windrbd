@@ -397,11 +397,11 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	NTSTATUS status = STATUS_SUCCESS;
 
 // printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
-#if 0
+// #if 0
 	status = wait_for_becoming_primary(dev);
 	if (status != STATUS_SUCCESS)
 		goto out;
-#endif
+// #endif
 
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 		/* custom WINDRBD ioctl's */
@@ -783,7 +783,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		status = STATUS_INVALID_PARAMETER;
 	}
 
-// out:
+out:
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return status;
@@ -1262,7 +1262,7 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		goto exit_remove_lock;
 	}
 
-#if 0
+// #if 0
 	if (dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		dbg("I/O request while not primary, waiting for primary.\n");
 
@@ -1270,7 +1270,7 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		if (status != STATUS_SUCCESS)
 			goto exit_remove_lock;
 	}
-#endif
+// #endif
 
 		/* allow I/O when the local disk failed, usually there
 		 * are peers which can handle the I/O. If not, DRBD will
