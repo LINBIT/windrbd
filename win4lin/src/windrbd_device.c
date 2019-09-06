@@ -397,11 +397,11 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	NTSTATUS status = STATUS_SUCCESS;
 
 // printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
-// #if 0
-	status = wait_for_becoming_primary(dev);
-	if (status != STATUS_SUCCESS)
-		goto out;
-// #endif
+	if (dev->is_bootdevice) {
+		status = wait_for_becoming_primary(dev);
+		if (status != STATUS_SUCCESS)
+			goto out;
+	}
 
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 		/* custom WINDRBD ioctl's */
@@ -1256,15 +1256,13 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		goto exit_remove_lock;
 	}
 
-// #if 0
-	if (dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
+	if (dev->is_bootdevice && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		dbg("I/O request while not primary, waiting for primary.\n");
 
 		status = wait_for_becoming_primary(dev->drbd_device->this_bdev);
 		if (status != STATUS_SUCCESS)
 			goto exit_remove_lock;
 	}
-// #endif
 
 		/* allow I/O when the local disk failed, usually there
 		 * are peers which can handle the I/O. If not, DRBD will
@@ -2106,7 +2104,7 @@ printk("got SCSI I/O (%x)\n", srb->Function);
 
 			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
 
-			if (bdev != NULL) {
+			if (bdev != NULL && bdev->is_bootdevice) {
 printk("SCSI I/O waiting for primary\n");
 				if (rw == WRITE && bdev->is_bootdevice)
 					status = wait_for_becoming_primary(bdev);
