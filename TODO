@@ -12,59 +12,33 @@ Real: Dec 3 2018
 Milestone: Release 0.9.2
 Planned: Feb 28 2019
 Real: Apr 10 2019
------------------------------------------------------------------------
+TODOs for Release 0.10.0 ----------------------------------------------
 
-TODO: Bug: Sync sometimes does not start
+TODO: Bug: System hangs when low on memory
 
-	On running updown-loop-wait-sync on Linux peer.
-	Linux peer stuck in WFBitMapT, drbdadm status on
-	Windows hangs.
+	This is probably the pagefile issue we expect (we cannot
+	allocate memory in the write out path).
 
-TODO: Bug: Alertboxes showing application 0x... could not write 0x...
+TODO: Documentation: Write howto for setting up Diskless boot via VMs
 
-	This is most likely a data corruption bug and also most
-	likely the same as the BSOD f4 (see seperate TODO).
+TODO: Feature: update inno setup installer
 
-TODO: Bug: BSOD 0x000000f4 on booting diskless / windows hang
-
-	Meaning critical process died (similar to Attempt to kill
-	init on Linux) Sometimes no BSOD but Windows disconnects
-	and is not pingable any more.
-
-	Update: Login screen appears one can enter password but
-	then it hangs in the welcome screen. Network down for
-	some reason (the IP address is hard coded)?
-
-	Update: When disabling network discovery the whole thing
-	boots (after about 3-5 minute delay on getting network).
-
-	Sometimes: takes longer than 5 minutes to boot (from drivers
-	loaded until there is a DRBD connection), we've aborted
-	those tests. When it runs it is quite stable (wrote 40GB
-	in 30 minutes), however it does not boot always and there
-	is also the (new?) 0x50 BSOD.
-
-TODO: Bug: BSOD 0x00000050 on booting diskless
-
-	Last log lines are:
-
-Aug 29 18:48:43 192.168.56.150  U16:48:42.830|030e7ca0(scsi) inc_ap_bio_cond 4 rv is 1
-Aug 29 18:48:43 192.168.56.150  [last message was in IRQ context or recursive]
-Aug 29 18:48:43 192.168.56.150  U16:48:42.830|030e7ca0(scsi) inc_ap_bio_cond 5
-Aug 29 18:48:43 192.168.56.150  U16:48:42.830|030e7ca0(scsi) wake_up_debug wake_up FFFFFA8005DD8800 drbd_req.c:360 (wake_all_senders())
-Aug 29 18:48:43 192.168.56.150  [last message was in IRQ context or recursive]
-Aug 29 18:48:43 192.168.56.150  U16:48:42.830|05dcba60(drbd_s_tiny-windows-disk) ll_wait out of KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) stastus is 0
-Aug 29 18:48:43 192.168.56.150  U16:48:42.830|05dcba60(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) timeout is 5000
-<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug wake_up FFFFFA800210FC98 y:\windrbd\converted-sources\drbd\drbd_int.h:2500 (__dec_ap_pending())
-<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug Warning: attempt to wake up with no one waiting.
-<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug wake_up FFFFFA8005DD8800 drbd_req.c:360 (wake_all_senders())
- [last 3 messages were in IRQ context or recursive]
-<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug wake_up FFFFFA800210FC98 y:\windrbd\converted-sources\drbd\drbd_int.h:2657 (dec_ap_bio())
-<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug Warning: attempt to
+	It should create the bus device and should also
+	install the disk device.
 
 TODO: Bug: Reestablish connection of Diskless machine fails.
 
 	Tested with iptables drop / don't drop.
+
+	Also we do not have logging.
+
+	Update: this might have been the nvspbind command we
+	executed. Don't do that it might render your windows
+	unbootable even when it is booted from disk.
+
+	Logs show that WinDRBD device hangs in NetworkFailure (?)
+
+TODO: Feature: Make timeouts configurable
 
 TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
@@ -73,59 +47,25 @@ TODO: Test: Test boot feature with 2 secondaries (in 3 node setup).
 TODO: Test: Make updownloop work again.
 
 	It should work:
-		.) With connection
+		.) With connection (wait-connect)
 		.) With sync-complete
-		.) Without connection
+		.) Without connection (ran 500 times without problems)
 		.) Without local disk but with connection
 		.) Without any successful I/O (diskless unconnected)
 
-TODO: Feature: Fix auto-promote
+	Update: with ba3d544b9 it runs quite stable, do more tests
+	and close this. Reason was extensive auto promote we did
+	(auto-promote while going down is a bad idea).
 
-	We shouldn't call become Primary on write requests,
-	instead we should fail them. We also should finally
-	find how the driver can detect writable open in
-	windrbd_create. Lastly we should invalidate the
-	filesystem cache when becoming Primary.
+	Update: Just had a IRQL BSOD on wait-connect test.
 
-	Currently Windows does not boot..but we get logs via
-	network. This is an independent bug. We (later) should
-	revert 525a84a or at least wait for primary in
-	CLAIM_DEVICE again.
+TODO: Bug: Sync sometimes does not start
 
-TODO: Bug: drbdadm down takes up to 30 seconds to complete
+	On running updown-loop-wait-sync on Linux peer.
+	Linux peer stuck in WFBitMapT, drbdadm status on
+	Windows hangs.
 
-	Problem is that REMOVE_DEVICE is sent only after a long
-	timeout (but why?) sometimes.
-
-	Sometimes also hangs 'forever' (>10 minutes). Is this a
-	handle leak? DRBD worker is hanging in drbd_sender.c:3008 ...
-
-	Implementing wake_up_all() didn't fix it. Maybe this is
-	some Windows process having an open handle, we should
-	cancel IRPs on drbdadm down...
-
-	Update: fixed completions but still takes 25-30 seconds
-	for drbdadm down. This seems to be an open handle to
-	the block device. Maybe test with winaoe?
-
-TODO: Bug: BSOD after drbdadm down
-
-	This is somewhere in the I/O path (it is most likely not the
-	PnP part). We should 'cancel' ongoing I/O (scsi thread is
-	still running and most likely the one that crashes). Also
-	the scsi thread is hanging somewhere in the inc_ap_bio, so
-	this might also be some relation to this bug.
-
-TODO: Feature: Call test routines via ioctl().
-
-	We should not run them when the driver is loaded since that
-	might Windows stop booting if a test fails. Have a root device
-	ioctl that takes a string and runs that test.
-
-	In particular I would like to test calling KeWaitForMultipleObjects()
-	while IRQL is Dispatch level (I suppose the machine hangs or BSODs).
-
-TODO: Implement: Reengineer workqueues
+	Still a problem? (we've fixed the completions).
 
 TODO: Infrastructure: Create a VDI of Windows dev with all snapshots merged
 
@@ -156,63 +96,92 @@ TODO: Bug: With a no-I/O resource up BSOD on power down
 	When making the resource primary (by drbdadm up on
 	the peer) it continues and Windows is shut down.
 
-TODO: Bug: BSOD on drbdadm down (near wait_for_completion)
-
-	Log is:
-
-<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug wake_up FFFFFA800305DC98 drbd_actlog.c:65 (drbd_md_put_buffer())
-<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug Warning: attempt to wake up with no one waiting.
-<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug wake_up FFFFFA800305DC98 y:\windrbd\converted-sources\drbd\drbd_int.h:2614 (put_ldev())
-<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug Warning: attempt to wake up with no one waiting.
-<1> U12:45:13.570|02ce7690(drbd_w_w0) complete completing FFFFF88007616718
- [last 16 messages were in IRQ context or recursive]
-<1> U12:45:13.570|03509b50(netlink) wait_for_completion_timeout out of wait_event FFFFF88007616718 ...
-<1> U12:45:13.570|03509b50(netlink) drbd_set_role 8
-<1> U12:45:13.570|03509b50(netlink) drbd_set_role 9
-<1> U12:45:13.570|03509b50(netlink) drbd_set_role a
-<1> U12:45:13.570|03509b50(netlink) drbd_set_role b
-<1> U12:45:13.570|03509b50(netlink) drbd_set_role c
-<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug wake_up FFFFF88007616720 ../../win4lin/src/drbd_windows.c:977 (complete())
-
-TODO: Feature: Become Primary only on write requests
-
-TODO: Bug: Out of memory very soon on boot
-
-	This might have been the leak in add_spinlock(), for testing
-	purposes we removed the corresponding kfree in remove_spinlock().
-
-	There are other memory leaks (lots of pages (8000) allocated,
-	don't know yet if those are real leaks. They exist after
-	taking all devices down, so probably this is wrong.
-
-	Update: No those pages (64MB) are mempools which also exist
-	when there are no resources.
-
-	Update: With 1.5GB of RAM, Diskless client runs quite stable.
-	It seems to be a memory allocation done in the page out
-	path (which fails, which in turn causes Windows to hang).
-
-	Update: Disabled pagefile, it now runs very stable (could
-	install Firefox, CygWin and Ewdk (still downloading)).
-	So, bug is probably in the page out path (TODO: try
-	booting several times without pagefile).
-
 TODO: Bug: w0 is read-only
 
 	This does not have a MBR on it. To work around it make it primary
 	set it offline with partition manager and set it online
 	again.
 
-TODO: Security: How to identify clients with cgi-script
-
-	We don't want 'everybody that is on the net' being able
-	to access the DRBD device, not even read only. How
-	is this done with iSCSI? AoE?
+	Still an issue?
 
 TODO: Feature: allow to pass DRBD minor to cgi-script
 
 	DRBD_MINOR parameter (need to parse QUERY_STRING,
 	this is dangerous)
+
+TODO: Bug: Can also write when secondary.
+
+	DRBD seems to use Linux' mechanism (via open(2)) to check
+	for writability and doesn't check when receiving bio's.
+
+	According to phil, DRBD only checks for Primary in the
+	drbd_open() function, not when receiving requests.
+	We just should not set write requests when the current
+	role is secondary. It is ok to send read requests, DRBD
+	finishes them iff there are no primaries on the network.
+
+	Fixed with 6df3bc33fe0? Test this.
+
+TODO: Feature: Test if it works with Windows 10 and Server 2016 also
+
+	For 0.10.0 at least Windows 10.
+
+TODO: Feature: Windows should take IP address from DHCP on boot
+
+	Right now, we assign a static address.
+
+Milestone: Release 0.10.0 (internal && 1 customer only)
+Planned: Oct 31 2019
+Real: ?
+
+TODOs for Release 1.0 ----------------------------------------------
+
+TODO: Feature: Become Primary only on write requests
+
+	Do if (bdev->is_bootdevice && role != PRIMARY)
+
+	Done, fixes the drbdadm down takes long and most BSOD
+	on up-down-loop.sh
+
+	Need to fix the open code (Find out how to find if open
+	is for writing).
+
+TODO: Feature: Fix auto-promote
+
+	We shouldn't call become Primary on write requests,
+	instead we should fail them. We also should finally
+	find how the driver can detect writable open in
+	windrbd_create. Lastly we should invalidate the
+	filesystem cache when becoming Primary.
+
+	Currently Windows does not boot..but we get logs via
+	network. This is an independent bug. We (later) should
+	revert 525a84a or at least wait for primary in
+	CLAIM_DEVICE again.
+
+TODO: Bug: drbdadm down takes up to 30 seconds to complete
+
+	Problem is that REMOVE_DEVICE is sent only after a long
+	timeout (but why?) sometimes.
+
+	Sometimes also hangs 'forever' (>10 minutes). Is this a
+	handle leak? DRBD worker is hanging in drbd_sender.c:3008 ...
+
+	Implementing wake_up_all() didn't fix it. Maybe this is
+	some Windows process having an open handle, we should
+	cancel IRPs on drbdadm down...
+
+	Update: fixed completions but still takes 25-30 seconds
+	for drbdadm down. This seems to be an open handle to
+	the block device. Maybe test with winaoe?
+
+TODO: Implement: Reengineer workqueues
+
+TODO: Security: How to identify clients with cgi-script
+
+	We don't want 'everybody that is on the net' being able
+	to access the DRBD device, not even read only. How
+	is this done with iSCSI? AoE?
 
 TODO: Feature: set netboot flag via iPXE
 
@@ -232,115 +201,30 @@ TODO: Feature: Create a WinPE image with network and WinDRBD.
 
 TODO: Feature: support Volume devices
 
-TODO: Bug: Can also write when secondary.
-
-	DRBD seems to use Linux' mechanism (via open(2)) to check
-	for writability and doesn't check when receiving bio's.
-
-	According to phil, DRBD only checks for Primary in the
-	drbd_open() function, not when receiving requests.
-	We just should not set write requests when the current
-	role is secondary. It is ok to send read requests, DRBD
-	finishes them iff there are no primaries on the network.
-
 TODO: Bug: handle the case where DRBD device size drops to 0 again
 
 	If we loose connection we need to block I/O's again. It
 	seems that DRBD does not call drbd_set_my_capacity() on
 	that event (though this is what I would expect).
 
-TODO: Feature: Test if it works with Windows 10 and Server 2016 also
-
-TODO: Feature: Windows should take IP address from DHCP on boot
-
-	Right now, we assign a static address.
+	Note: blocking is currently done via suspend-io within
+	DRBD. Therefore not sure if we need to fix this.
 
 TODO: Performance: Improve boot speed.
 
 	Right now it takes more than 5 minutes until the system is
 	usable
 
-TODO: Feature: Make C:\ as Primary Diskless work
+	Test showed:
 
-	TODO: a lot. What currently works is:
+	iPXE			0:47
+	drivers loading		2:33
+	first UDP log		1:39
+	DRBD connected		0:25
+	login screen		0:38
 
-	*) Create a (Diskless) WinDRBD device on boot. As soon there is
-
-	network the device connects. This is not the System partition.
-	Parameters are currently hard coded.
-
-	*) Boot a WinPE on a Linux block device via ipxe sanboot over http. 
-	This has currently a (slightly less than) 8GB size limit since it
-	uses BIOS interface (int 0x13). Update: no Windows loads via
-	BIOS extension (function 0x41/0x42) which supports 64-bit
-	block numbers.
-
-	*) Make booting real Windows image work (currently fails with
-	   file not found): reason is
-
-	Range is bytes=-967835648--967834625
-	(see http_format_range() %zd is 32-bit signed in 32-bit arch)
-
-	Update: Fixed (with a hack), TODO: support %lld
-	Update: %lld works now, so does loading directly (without
-	cgi) from a file based image.
-
-	We now have a limit at about 8GB
-
-	Maybe submit to upstream ipxe if wanted.
-
-	Update: When using 64-bit ipxe it works with 32GB image:
-
-	make bin-x86_64-pcbios/ipxe.pxe
-
-	*) Fix 8GB size limit (see above)
-
-	With 64 bit iPXE there is no such limit.
-
-	Update: With patches, also works with 32 bit now.
-
-	Patches tested and submited, waiting for response
-
-	Update: response came asking to clarify length parameter widening.
-
-	Update: patch without len parameters patched submitted.
-
-	*) Use drbd device as source device for cgi script.
-
-	Done, works.
-
-	*) Test if read access is possible if there are no Primaries.
-
-		Yes it is. CGI script can serve DRBD device while it
-		is Secondary (and there are no Primaries)
-
-	*) Make windrbd device open() function wait for primary
-	(this is also interesting for auto promote)
-
-	*) Setup a iscsi boot environment
-		We now set up a working WinAoE (http://winaoe.org, also
-		now in my github with some patches to make it work
-		with 2019's vblade and Windows 7)
-		This is open source (gpl v3) and we took the relevant
-		parts to make Windows boot via DRBD (we are now a 
-		SCSI port driver, just as winaoe is).
-
-	*) Partitioning: Windows expects a disk not a volume
-		Yes. With the SCSI-port PnP driver architecture,
-		Windows treats the WinDRBD device as disk. This
-		disk can also be partitioned via Windows Partition
-		manager (and hopefully also via the WinPE partition
-		manager), since PARTMGR.SYS is stacked over it.
-
-	*) Somehow trick windows into accepting windrbd device as
-	System volume (via BCD?)
-		This is now done via the disk.sys driver. WinDRBD
-		device (under disk and partmgr) is treated as
-		regular system volume. We don't need to touch
-		BCD (for now) since the device is the first disk
-		in the system (which is usually the boot disk).
-
-	Left to do: see seperate TODO's.
+	We should work on drivers loading and first UDP log (the
+	latter is probably the wfplwf issue).
 
 TODO: Feature: implement fsync_bdev
 
@@ -351,7 +235,20 @@ TODO: Bug: Allow rcu_read_lock() being called recursively.
 	This should fix the system lockup we observed on
 	Server 2016.
 
------------------------------------------------------------------------
+TODOs for after Release 1.0 ----------------------------------------------
+
+TODO: Feature: Call test routines via ioctl().
+
+	We should not run them when the driver is loaded since that
+	might Windows stop booting if a test fails. Have a root device
+	ioctl that takes a string and runs that test.
+
+	In particular I would like to test calling KeWaitForMultipleObjects()
+	while IRQL is Dispatch level (I suppose the machine hangs or BSODs).
+
+TODO: Feature: kunit support
+
+	Nice to have, do that when finished with 1.0
 
 TODO: Code quality: windrbd show-drive-in-explorer might take longer than 5 seconds
 
@@ -5646,4 +5543,209 @@ Done: Bug: Several system hangs and BSODs on WinDRBD boot
 	Update: Need to disable network discovery, the IP network goes
 	down shortly this is enabled. Since we are network booting
 	reading would fail and then deadlock. See boot.txt.
+
+Done: Bug: Alertboxes showing application 0x... could not write 0x...
+
+	This is most likely a data corruption bug and also most
+	likely the same as the BSOD f4 (see seperate TODO).
+
+	Fixed with 3beaa4c1c9: We need the copy on read mechanism
+	also on Windows 7 (at least for the boot device).
+
+Done: Bug: BSOD 0x000000f4 on booting diskless / windows hang
+
+	Meaning critical process died (similar to Attempt to kill
+	init on Linux) Sometimes no BSOD but Windows disconnects
+	and is not pingable any more.
+
+	Update: Login screen appears one can enter password but
+	then it hangs in the welcome screen. Network down for
+	some reason (the IP address is hard coded)?
+
+	Update: When disabling network discovery the whole thing
+	boots (after about 3-5 minute delay on getting network).
+
+	Sometimes: takes longer than 5 minutes to boot (from drivers
+	loaded until there is a DRBD connection), we've aborted
+	those tests. When it runs it is quite stable (wrote 40GB
+	in 30 minutes), however it does not boot always and there
+	is also the (new?) 0x50 BSOD.
+
+	Fixed with 3beaa4c1c9: We need the copy on read mechanism
+	also on Windows 7 (at least for the boot device).
+
+Done: Bug: BSOD 0x00000050 on booting diskless
+
+	Last log lines are:
+
+Aug 29 18:48:43 192.168.56.150  U16:48:42.830|030e7ca0(scsi) inc_ap_bio_cond 4 rv is 1
+Aug 29 18:48:43 192.168.56.150  [last message was in IRQ context or recursive]
+Aug 29 18:48:43 192.168.56.150  U16:48:42.830|030e7ca0(scsi) inc_ap_bio_cond 5
+Aug 29 18:48:43 192.168.56.150  U16:48:42.830|030e7ca0(scsi) wake_up_debug wake_up FFFFFA8005DD8800 drbd_req.c:360 (wake_all_senders())
+Aug 29 18:48:43 192.168.56.150  [last message was in IRQ context or recursive]
+Aug 29 18:48:43 192.168.56.150  U16:48:42.830|05dcba60(drbd_s_tiny-windows-disk) ll_wait out of KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) stastus is 0
+Aug 29 18:48:43 192.168.56.150  U16:48:42.830|05dcba60(drbd_s_tiny-windows-disk) ll_wait into KeWaitForMultipleObjects from drbd_sender.c:2672 (wait_for_sender_todo()) timeout is 5000
+<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug wake_up FFFFFA800210FC98 y:\windrbd\converted-sources\drbd\drbd_int.h:2500 (__dec_ap_pending())
+<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug Warning: attempt to wake up with no one waiting.
+<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug wake_up FFFFFA8005DD8800 drbd_req.c:360 (wake_all_senders())
+ [last 3 messages were in IRQ context or recursive]
+<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug wake_up FFFFFA800210FC98 y:\windrbd\converted-sources\drbd\drbd_int.h:2657 (dec_ap_bio())
+<1> U16:48:42.830|0179f2e0(drbd_a_tiny-windows-disk) wake_up_debug Warning: attempt to
+
+	Fixed with 3beaa4c1c9: We need the copy on read mechanism
+	also on Windows 7 (at least for the boot device).
+
+Done: Bug: Out of memory very soon on boot
+
+	This might have been the leak in add_spinlock(), for testing
+	purposes we removed the corresponding kfree in remove_spinlock().
+
+	There are other memory leaks (lots of pages (8000) allocated,
+	don't know yet if those are real leaks. They exist after
+	taking all devices down, so probably this is wrong.
+
+	Update: No those pages (64MB) are mempools which also exist
+	when there are no resources.
+
+	Update: With 1.5GB of RAM, Diskless client runs quite stable.
+	It seems to be a memory allocation done in the page out
+	path (which fails, which in turn causes Windows to hang).
+
+	Update: Disabled pagefile, it now runs very stable (could
+	install Firefox, CygWin and Ewdk (still downloading)).
+	So, bug is probably in the page out path (TODO: try
+	booting several times without pagefile).
+
+	Still a problem?
+
+Done: Feature: Make C:\ as Primary Diskless work
+
+	TODO: a lot. What currently works is:
+
+	*) Create a (Diskless) WinDRBD device on boot. As soon there is
+
+	network the device connects. This is not the System partition.
+	Parameters are currently hard coded.
+
+	*) Boot a WinPE on a Linux block device via ipxe sanboot over http. 
+	This has currently a (slightly less than) 8GB size limit since it
+	uses BIOS interface (int 0x13). Update: no Windows loads via
+	BIOS extension (function 0x41/0x42) which supports 64-bit
+	block numbers.
+
+	*) Make booting real Windows image work (currently fails with
+	   file not found): reason is
+
+	Range is bytes=-967835648--967834625
+	(see http_format_range() %zd is 32-bit signed in 32-bit arch)
+
+	Update: Fixed (with a hack), TODO: support %lld
+	Update: %lld works now, so does loading directly (without
+	cgi) from a file based image.
+
+	We now have a limit at about 8GB
+
+	Maybe submit to upstream ipxe if wanted.
+
+	Update: When using 64-bit ipxe it works with 32GB image:
+
+	make bin-x86_64-pcbios/ipxe.pxe
+
+	*) Fix 8GB size limit (see above)
+
+	With 64 bit iPXE there is no such limit.
+
+	Update: With patches, also works with 32 bit now.
+
+	Patches tested and submited, waiting for response
+
+	Update: response came asking to clarify length parameter widening.
+
+	Update: patch without len parameters patched submitted.
+
+	*) Use drbd device as source device for cgi script.
+
+	Done, works.
+
+	*) Test if read access is possible if there are no Primaries.
+
+		Yes it is. CGI script can serve DRBD device while it
+		is Secondary (and there are no Primaries)
+
+	*) Make windrbd device open() function wait for primary
+	(this is also interesting for auto promote)
+
+	*) Setup a iscsi boot environment
+		We now set up a working WinAoE (http://winaoe.org, also
+		now in my github with some patches to make it work
+		with 2019's vblade and Windows 7)
+		This is open source (gpl v3) and we took the relevant
+		parts to make Windows boot via DRBD (we are now a 
+		SCSI port driver, just as winaoe is).
+
+	*) Partitioning: Windows expects a disk not a volume
+		Yes. With the SCSI-port PnP driver architecture,
+		Windows treats the WinDRBD device as disk. This
+		disk can also be partitioned via Windows Partition
+		manager (and hopefully also via the WinPE partition
+		manager), since PARTMGR.SYS is stacked over it.
+
+	*) Somehow trick windows into accepting windrbd device as
+	System volume (via BCD?)
+		This is now done via the disk.sys driver. WinDRBD
+		device (under disk and partmgr) is treated as
+		regular system volume. We don't need to touch
+		BCD (for now) since the device is the first disk
+		in the system (which is usually the boot disk).
+
+	Left to do: see seperate TODO's.
+
+	Update: Windows boots now, it is a little slow but this
+	is probably because it is short on RAM (4GB on my apple
+	host, which leaves only 768 MB for each VM when we have
+	3 VMs).
+
+	We close this now, it works. See other TODOs for known
+	bugs and missing features.
+
+Done: Bug: Fix the timeouts.
+
+	WinDRBD performance is poor since we've changed that.
+
+	Update: with
+                timeout 60;
+                ping-timeout 30;
+                ping-int 10;
+                connect-int 20;
+	on the Linux side it works.
+
+Done: Bug: BSOD on drbdadm down (near wait_for_completion)
+
+	Log is:
+
+<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug wake_up FFFFFA800305DC98 drbd_actlog.c:65 (drbd_md_put_buffer())
+<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug Warning: attempt to wake up with no one waiting.
+<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug wake_up FFFFFA800305DC98 y:\windrbd\converted-sources\drbd\drbd_int.h:2614 (put_ldev())
+<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug Warning: attempt to wake up with no one waiting.
+<1> U12:45:13.570|02ce7690(drbd_w_w0) complete completing FFFFF88007616718
+ [last 16 messages were in IRQ context or recursive]
+<1> U12:45:13.570|03509b50(netlink) wait_for_completion_timeout out of wait_event FFFFF88007616718 ...
+<1> U12:45:13.570|03509b50(netlink) drbd_set_role 8
+<1> U12:45:13.570|03509b50(netlink) drbd_set_role 9
+<1> U12:45:13.570|03509b50(netlink) drbd_set_role a
+<1> U12:45:13.570|03509b50(netlink) drbd_set_role b
+<1> U12:45:13.570|03509b50(netlink) drbd_set_role c
+<1> U12:45:13.570|02ce7690(drbd_w_w0) wake_up_debug wake_up FFFFF88007616720 ../../win4lin/src/drbd_windows.c:977 (complete())
+
+	Seems to be fixed with ba3d544b9
+
+Done: Bug: BSOD after drbdadm down
+
+	This is somewhere in the I/O path (it is most likely not the
+	PnP part). We should 'cancel' ongoing I/O (scsi thread is
+	still running and most likely the one that crashes). Also
+	the scsi thread is hanging somewhere in the inc_ap_bio, so
+	this might also be some relation to this bug.
+
+	Probably fixed with ba3d544b9.
 
