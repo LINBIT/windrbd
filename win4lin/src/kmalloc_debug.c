@@ -35,6 +35,8 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	size_t full_size;
 	ULONG_PTR flags;
 
+printk("kmalloc %zd bytes from %s:%d (%s())\n", size, file, line, func);
+
 #if 0
 	if (kmalloc_errors > 0) {
 
