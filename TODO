@@ -19,6 +19,21 @@ TODO: Bug: System hangs when low on memory
 	This is probably the pagefile issue we expect (we cannot
 	allocate memory in the write out path).
 
+TODO: Bug: Partition manager hangs when there is a resource without size.
+
+	Create a Diskless Standalone resource and open partition manager.
+	It hangs (most likely in wait_for_size()). Also hang on system
+	shutdown.
+
+TODO: Bug: File not found on initializing DRBD resource with Partition manager
+
+	bdev is NULL in SCSI request, that's most likely the reason.
+
+TODO: Test: Test if 0.9.1 (with last year's certificate) still loads.
+
+	We had problems loading 0.9.1 on one of our VMs. When
+	changing the date to Oct 23 2018, the problem remained.
+
 TODO: Documentation: Write howto for setting up Diskless boot via VMs
 
 TODO: Feature: update inno setup installer
