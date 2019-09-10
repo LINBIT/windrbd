@@ -25,14 +25,8 @@ TODO: Bug: Partition manager hangs when there is a resource without size.
 	It hangs (most likely in wait_for_size()). Also hang on system
 	shutdown.
 
-TODO: Bug: File not found on initializing DRBD resource with Partition manager
-
-	bdev is NULL in SCSI request, that's most likely the reason.
-
-TODO: Test: Test if 0.9.1 (with last year's certificate) still loads.
-
-	We had problems loading 0.9.1 on one of our VMs. When
-	changing the date to Oct 23 2018, the problem remained.
+	It got better but now it hangs in wait_for_becoming_primary().
+	Not sure what to do.
 
 TODO: Documentation: Write howto for setting up Diskless boot via VMs
 
@@ -5763,4 +5757,18 @@ Done: Bug: BSOD after drbdadm down
 	this might also be some relation to this bug.
 
 	Probably fixed with ba3d544b9.
+
+Done: Bug: File not found on initializing DRBD resource with Partition manager
+
+	bdev is NULL in SCSI request, that's most likely the reason.
+	Update: there was a silly logic bug that caused I/O not to
+	work at all for non-bootdevices. Fixed with 9d23014
+
+Done: Test: Test if 0.9.1 (with last year's certificate) still loads.
+
+	We had problems loading 0.9.1 on one of our VMs. When
+	changing the date to Oct 23 2018, the problem remained.
+
+	Maybe on the Windows machine there were not the latest
+	certificates, it works on my dev machine.
 
