@@ -816,6 +816,11 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		dbg(KERN_DEBUG "s->Parameters.Create.FileAttributes is %x\n", s->Parameters.Create.FileAttributes);
 		dbg(KERN_DEBUG "s->Parameters.Create.Options is %x\n", s->Parameters.Create.Options);
 		dbg(KERN_DEBUG "FILE_WRITE_DATA is %x\n", FILE_WRITE_DATA);
+		if (s->FileObject != NULL) {
+			dbg(KERN_DEBUG "file object is %p write access is %d\n", s->FileObject, s->FileObject->WriteAccess);
+		} else {
+			dbg(KERN_DEBUG "file object is NULL\n");
+		}
 
 		status = wait_for_becoming_primary(dev->drbd_device->this_bdev);
 		if (status != STATUS_SUCCESS)
