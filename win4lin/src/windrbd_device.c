@@ -2104,7 +2104,7 @@ printk("got SCSI I/O (%x)\n", srb->Function);
 
 			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
 
-			if (bdev != NULL && bdev->is_bootdevice) {
+			if (bdev != NULL) {
 printk("SCSI I/O waiting for primary\n");
 				if (rw == WRITE && bdev->is_bootdevice)
 					status = wait_for_becoming_primary(bdev);
@@ -2168,8 +2168,18 @@ printk("SCSI I/O waiting for primary\n");
 		}
 
 		case SCSIOP_READ_CAPACITY:
+			if (bdev == NULL) {
+				printk("bdev is NULL on SCSI READ_CAPACITY, this should not happen (minor is %x)\n", s->MinorFunction);
+				status = STATUS_INVALID_DEVICE_REQUEST;
+				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+				break;
+			}
 printk("got SCSIOP_READ_CAPACITY\n");
-			d_size = wait_for_size(device);
+			if (bdev->is_bootdevice) {
+				d_size = wait_for_size(device);
+			} else {
+				d_size = bdev->d_size;
+			}
 
 			Temp = 512;   /* TODO: later from struct */
 			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->BytesPerBlock), &Temp);
@@ -2196,7 +2206,17 @@ printk("got SCSIOP_READ_CAPACITY\n");
 
 		case SCSIOP_READ_CAPACITY16:
 printk("got SCSIOP_READ_CAPACITY16\n");
-			d_size = wait_for_size(device);
+			if (bdev == NULL) {
+				printk("bdev is NULL on SCSI READ_CAPACITY16, this should not happen (minor is %x)\n", s->MinorFunction);
+				status = STATUS_INVALID_DEVICE_REQUEST;
+				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+				break;
+			}
+			if (bdev->is_bootdevice) {
+				d_size = wait_for_size(device);
+			} else {
+				d_size = bdev->d_size;
+			}
 
 			Temp = 512;
 			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->BytesPerBlock), &Temp);
