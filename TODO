@@ -14,19 +14,16 @@ Planned: Feb 28 2019
 Real: Apr 10 2019
 TODOs for Release 0.10.0 ----------------------------------------------
 
-TODO: Bug: System hangs when low on memory
+TODO: Bug: KERNEL_INPAGE_ERROR on shut down and low on memory.
 
-	This is probably the pagefile issue we expect (we cannot
-	allocate memory in the write out path).
+	BSOD is 0x7a. This means kernel could not read a paged out
+	memory page into memory. This is what we expect with the
+	current implementation. This also happens with much
+	RAM (1,5 GB).
 
-TODO: Bug: Partition manager hangs when there is a resource without size.
+TODO: Performance: Retry disable NDIS lightweight filter
 
-	Create a Diskless Standalone resource and open partition manager.
-	It hangs (most likely in wait_for_size()). Also hang on system
-	shutdown.
-
-	It got better but now it hangs in wait_for_becoming_primary().
-	Not sure what to do.
+	We still have the 90 seconds boot delay.
 
 TODO: Documentation: Write howto for setting up Diskless boot via VMs
 
@@ -34,6 +31,9 @@ TODO: Feature: update inno setup installer
 
 	It should create the bus device and should also
 	install the disk device.
+
+	Creating on install works, removing on uninstall not
+	yet.
 
 TODO: Bug: Reestablish connection of Diskless machine fails.
 
@@ -48,6 +48,9 @@ TODO: Bug: Reestablish connection of Diskless machine fails.
 	Logs show that WinDRBD device hangs in NetworkFailure (?)
 
 TODO: Feature: Make timeouts configurable
+
+	Rework syntax. It should be prepared to support n nodes.
+	Also should have more options like syslog_ip=...
 
 TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
@@ -68,6 +71,9 @@ TODO: Test: Make updownloop work again.
 
 	Update: Just had a IRQL BSOD on wait-connect test.
 
+	Update: disconnect / connect / waitconnect ran 1150 times
+	without BSOD.
+
 TODO: Bug: Sync sometimes does not start
 
 	On running updown-loop-wait-sync on Linux peer.
@@ -76,9 +82,21 @@ TODO: Bug: Sync sometimes does not start
 
 	Still a problem? (we've fixed the completions).
 
-TODO: Infrastructure: Create a VDI of Windows dev with all snapshots merged
+	Didn't observe lately, closing this.
 
-	Need to make space on HDD first.
+	Happened again after being secondary (because disks were
+	outdated) and doing a primary --force. Windows was in
+	WFBitMapS, peer (Linux) was uptodate. Followup drbdadm down
+	on Windows side hangs.
+
+TODO: Bug: Partition manager hangs when there is a resource without size.
+
+	Create a Diskless Standalone resource and open partition manager.
+	It hangs (most likely in wait_for_size()). Also hang on system
+	shutdown.
+
+	It got better but now it hangs in wait_for_becoming_primary().
+	Not sure what to do.
 
 TODO: Bug: BSOD on drbdadm down when not connected.
 
@@ -135,11 +153,15 @@ TODO: Feature: Test if it works with Windows 10 and Server 2016 also
 
 	For 0.10.0 at least Windows 10.
 
+	Installed Windows 10 VM from:
+	https://www.microsoft.com/en-us/evalcenter/evaluate-windows-10-enterprise
+	(without Cortana) It takes 2.5GiB RAM (for installation).
+
 TODO: Feature: Windows should take IP address from DHCP on boot
 
 	Right now, we assign a static address.
 
-Milestone: Release 0.10.0 (internal && 1 customer only)
+Milestone: Release 0.10.0
 Planned: Oct 31 2019
 Real: ?
 
@@ -5771,4 +5793,38 @@ Done: Test: Test if 0.9.1 (with last year's certificate) still loads.
 
 	Maybe on the Windows machine there were not the latest
 	certificates, it works on my dev machine.
+
+Done: Infrastructure: Create a VDI of Windows dev with all snapshots merged
+
+	Need to make space on HDD first.
+
+	Now have new 4 TB HDD
+
+Done: Bug: Diskless boot hangs in text mode
+
+	Sometimes diskless boot node does not switch to graphic mode.
+	We had that once and the solution was to revert to last known
+	good settings (via F8 at the beginning of boot) There is
+	I/O via WinDRBD.
+
+	It was most likely updates being installed. We solved it
+	by booting from hard disk and wait about 15 minutes.
+
+Done: Bug: System hangs when low on memory
+
+	This is probably the pagefile issue we expect (we cannot
+	allocate memory in the write out path).
+
+	We now try with pagefile disabled.
+
+	Pagefile was disabled. Same error when booting from harddisk.
+	Now we try with pagefile enabled (with disk no hang).
+
+	It seems that it works even tough we allocate memory in the
+	page out path. This seems to be different behaviour than
+	Linux which would not work when there is a kmalloc (without
+	GPF_NO_IO) in the page out path.
+
+	It seems to work quite stable however swapping over WinDRBD
+	is slower than swapping to disk. This is expected.
 
