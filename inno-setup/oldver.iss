@@ -25,6 +25,7 @@ function InitializeSetup: Boolean;
 var
 	version: String;
 	str: String;
+	buttons: Integer;
 
 begin
 	Result := True;
@@ -32,12 +33,20 @@ begin
 	myNeedRestart := False;
 	if version <> '' then
 	begin
+		buttons := MB_YESNO;
 		if version = '{#SetupSetting("AppVersion")}' then
 			str := 'WinDRBD version '+version+' is already installed. It is not neccessary to install it again, unless you manually destroyed the WinDRBD installation. Do you wish to continue?'
-		else	
-			str := ExpandConstant('Found WinDRBD version '+version+' installed. The version you are about to install is {#SetupSetting("AppVersion")}. You can safely install one over the other, however to restart the driver a reboot is required. Continue?');
+		else begin
+			if pos('0.9.', version) <> 0 then
+			begin
+				str := ExpandConstant('Found WinDRBD version '+version+' installed. The version you are about to install is {#SetupSetting("AppVersion")}. This version temporarily breaks compatibility with 0.9.X devices and should be only installed if you do not have resources with version 0.9.X running. Continue?')
+				buttons := buttons or MB_DEFBUTTON2
+			end
+			else
+				str := ExpandConstant('Found WinDRBD version '+version+' installed. The version you are about to install is {#SetupSetting("AppVersion")}. You can safely install one over the other, however to restart the driver a reboot is required. Continue?');
+		end;
 
-		if MsgBox(str, mbInformation, MB_YESNO) = IDNO then
+		if MsgBox(str, mbConfirmation, buttons) = IDNO then
 		begin
 			MsgBox('Installation aborted.', mbInformation, MB_OK);
 			Result := False;
