@@ -20,4 +20,3 @@ windrbd remove-bus-device C:\windows\inf\windrbd.inf
 
 start /wait rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 C:\windows\inf\windrbd.inf
 
-pause

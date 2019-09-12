@@ -19,4 +19,3 @@ windrbd install-bus-device .\windrbd.inf
 
 start /wait InfDefaultInstall .\windrbd.inf 
 
-pause
