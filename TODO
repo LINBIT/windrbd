@@ -21,9 +21,22 @@ TODO: Bug: KERNEL_INPAGE_ERROR on shut down and low on memory.
 	current implementation. This also happens with much
 	RAM (1,5 GB).
 
+	It might also be an attempt to page in when the DRBD device
+	is already shut down.
+
 TODO: Performance: Retry disable NDIS lightweight filter
 
 	We still have the 90 seconds boot delay.
+
+TODO: Bug: Windows does not mount device
+
+	On drbdadm up it is expected to assign the M: letter
+	to one partition however this never happens now.
+
+	It is done when scanning partitions in partition manager.
+	Maybe the open comes too early (resource gets primary)?
+
+	Is it only when there are no files on the partition?
 
 TODO: Documentation: Write howto for setting up Diskless boot via VMs
 
@@ -33,7 +46,31 @@ TODO: Feature: update inno setup installer
 	install the disk device.
 
 	Creating on install works, removing on uninstall not
-	yet.
+	yet. Also currently installing installs an extra bus
+	device even when it is already there.
+
+	Works partly, right now fails to install bus device
+	when there are no storage class (SCSI) bus devices
+	yet. One has also to create the Storage Controller
+	class (see WinCDEmu).
+
+TODO: Bug: BSOD when running unattended
+
+	IRQL BSOD: 
+
+<1> U13:55:39.757|030cfdf0(scsi) windrbd_scsi got SCSIOP_READ_CAPACITY
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_dispatch got request major is f device object is FFFFFA800357B920 (is disk device)
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI function 0
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SRB_FUNCTION_EXECUTE_SCSI SCSI function is 28
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI I/O (0)
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi SCSI I/O waiting for primary
+<1> U13:55:39.819|030cfdf0(scsi) __drbd_make_request 1
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 1
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 3
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 4 rv is 1
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 5
+
+	Resource was unconnected.
 
 TODO: Bug: Reestablish connection of Diskless machine fails.
 
