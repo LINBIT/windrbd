@@ -590,13 +590,14 @@ struct block_device {
 	struct fault_injection inject_on_completion;
 	struct fault_injection inject_on_request;
 
-	bool powering_down;
-	bool delete_pending;
-	bool about_to_delete;
+	/* Flags controlling end of this bdev: */
+	bool powering_down;	/* Regular windows shutdown, cancel all waiters */
+	bool delete_pending;	/* bdput called. waiting for REMOVE_DEVICE PnP IRP */
+	bool about_to_delete;	/* REMOVE_DEVICE, no more I/O */
 
-	struct _KEVENT primary_event;
-	struct _KEVENT capacity_event;
-	struct _KEVENT device_removed_event;
+	struct _KEVENT primary_event;	/* Set whenever Primary */
+	struct _KEVENT capacity_event;	/* Set whenever size > 0 */
+	struct _KEVENT device_removed_event;	/* Set by REMOVE_DEVICE to signal bdput we're gone */
 
 	/* Used for debugging handle leaks */
 	int num_openers;
