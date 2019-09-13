@@ -592,6 +592,7 @@ struct block_device {
 
 	bool powering_down;
 	bool delete_pending;
+	bool about_to_delete;
 
 	struct _KEVENT primary_event;
 	struct _KEVENT capacity_event;

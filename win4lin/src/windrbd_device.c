@@ -25,8 +25,6 @@
  * devices (the 'physical' devices), see drbd_windows.c
  */
 
-/* TODO: delete_pending and powering_down probably do the same thing ... */
-
 #include <wdm.h>
 #include <ntddk.h>
 #include <ntdddisk.h>
@@ -171,8 +169,8 @@ printk("Am primary now, proceeding with request\n");
 	}
 printk("5\n");
 
-	if (bdev->powering_down || bdev->delete_pending) {
-printk("currently powering down, cancelling request\n");
+	if (bdev->delete_pending) {
+printk("device already deleted, cancelling request\n");
 		return STATUS_NO_SUCH_DEVICE;
 	}
 
@@ -1256,7 +1254,7 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	IoAcquireRemoveLock(&dev->remove_lock, NULL);
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
-	if (dev->powering_down) {
+	if (dev->about_to_delete) {
 		printk("I/O while device about to be deleted\n");
 		goto exit_remove_lock;
 	}
@@ -1854,7 +1852,7 @@ printk("reporting device %p for type %d\n", bdev->windows_device, s->Parameters.
 
 			if (ref != NULL) {
 				if (bdev != NULL) {
-					bdev->powering_down = 1; /* meaning no more I/O on that device */
+					bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 					IoAcquireRemoveLock(&bdev->remove_lock, NULL);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
 printk("into IoReleaseRemoveLockAndWait ... \n");
@@ -1949,7 +1947,9 @@ static NTSTATUS windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				if (bdev) {
 					printk("About to power down device %p, not trying to become primary any more.\n", device);
 					bdev->powering_down = 1;
+						/* Wake up those waiting for us */
 					KeSetEvent(&bdev->primary_event, 0, FALSE);
+					KeSetEvent(&bdev->capacity_event, 0, FALSE);
 				}
 			}
 		}
@@ -2058,7 +2058,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	IoAcquireRemoveLock(&bdev->remove_lock, NULL);
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
-	if (bdev->powering_down) {
+	if (bdev->about_to_delete) {
 		printk("I/O while device about to be deleted\n");
 		goto out;
 	}
