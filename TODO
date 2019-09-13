@@ -24,6 +24,10 @@ TODO: Bug: KERNEL_INPAGE_ERROR on shut down and low on memory.
 	It might also be an attempt to page in when the DRBD device
 	is already shut down.
 
+	BSOD fixed with 8f4eb9a00 but now it hangs in I/O because network
+	is already down and Windows tries to swap in ...
+	Later BSOD POWER_STATE_FAILURE (0x9f)
+
 TODO: Performance: Retry disable NDIS lightweight filter
 
 	We still have the 90 seconds boot delay.
@@ -71,6 +75,10 @@ TODO: Bug: BSOD when running unattended
 <1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 5
 
 	Resource was unconnected.
+
+TODO: Bug: BSOD up-down loop without backing dev and unconnected.
+
+	After ~5 iterations of up-down loop BSOD 0x7e (EXCEPTION_NOT_HANDLED)
 
 TODO: Bug: Reestablish connection of Diskless machine fails.
 
@@ -193,6 +201,9 @@ TODO: Feature: Test if it works with Windows 10 and Server 2016 also
 	Installed Windows 10 VM from:
 	https://www.microsoft.com/en-us/evalcenter/evaluate-windows-10-enterprise
 	(without Cortana) It takes 2.5GiB RAM (for installation).
+
+	Installed Windows 10 Enterprise, but VM aborts frequently.
+	Maybe try a newer release of VirtualBox?
 
 TODO: Feature: Windows should take IP address from DHCP on boot
 
@@ -5864,4 +5875,10 @@ Done: Bug: System hangs when low on memory
 
 	It seems to work quite stable however swapping over WinDRBD
 	is slower than swapping to disk. This is expected.
+
+Done: Bug: Sometimes logging stops.
+
+	This seems to be a bug (or feature) in syslogd. Doing a
+	sudo service syslog restart
+	solves the problem.
 

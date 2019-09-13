@@ -18,7 +18,7 @@ Install WinDRBD Disk driver
 Install windrbd driver with boot and wait for primary in
 	windrbd I/O requests (not windrbd_pnp, but windrbd_create)
 
-Also: Disable UDP logging (NO_NET_PRINTK) in printk-to-syslog
+# Also: Disable UDP logging (NO_NET_PRINTK) in printk-to-syslog
 
 Enable NIC driver
 	E1 something for my VirtualBox
