@@ -14,6 +14,25 @@ Planned: Feb 28 2019
 Real: Apr 10 2019
 TODOs for Release 0.10.0 ----------------------------------------------
 
+TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
+
+	Because it is waiting for size applications that open the
+	WinDRBD device hang. We should not wait for size unless
+	it is the boot device.
+
+	Maybe it is something else. Also, windrbd set-mount-point
+	hangs under Windows 10.
+
+TODO: Feature: Windows 10 add hardware does not allow unsigned INF files
+
+	The third-party INF does not contain digital signature information
+
+	We try now with testsigning enabled.
+
+	Fixed for now: GUI solution from 
+https://www.urtech.ca/2016/01/solved-the-third-party-inf-does-not-contain-digital-signature-information
+	works.
+
 TODO: Bug: KERNEL_INPAGE_ERROR on shut down and low on memory.
 
 	BSOD is 0x7a. This means kernel could not read a paged out
