@@ -20,8 +20,26 @@
 
 # DEVICE=/dev/drbd${DRBD_MINOR}
 # DEVICE=/dev/sdd3
+# WinDRBD disk
 # DEVICE=/dev/sdf
-DEVICE=/dev/sdg
+DEVICE=/dev/sdi
+# DEVICE=/dev/sdf1
+# DEVICE=/dev/drbd38
+# DEVICE=/dev/sdg
+# WinAOE disk
+# DEVICE=/dev/sdh
+
+# TODO: more security checks in particular don't allow / and ..
+
+var=${QUERY_STRING%=*}
+val=${QUERY_STRING#*=}
+
+if [ $var != 'DRBD_MINOR' ] ; then
+	echo 'Required parameter DRBD_MINOR not given' 1>&2
+	exit 1
+fi
+
+DEVICE=/dev/drbd$val
 
 if [ x"$REQUEST_METHOD" == xHEAD ] ; then
 # currently there is a limit somewhere between 8455716864 and 8589934592 bytes
@@ -30,7 +48,8 @@ if [ x"$REQUEST_METHOD" == xHEAD ] ; then
 	TOTAL_LENGTH=`blockdev --getsize64 $DEVICE`
 
 	echo 'Content-type: application/octet-stream'
-        echo "Content-length: $TOTAL_LENGTH"
+	echo "Content-length: $TOTAL_LENGTH"
+#        echo "Content-length: 34359737856"
 	echo
 	exit 0
 fi
