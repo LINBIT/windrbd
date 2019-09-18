@@ -14,6 +14,35 @@ Planned: Feb 28 2019
 Real: Apr 10 2019
 TODOs for Release 0.10.0 ----------------------------------------------
 
+TODO: Documentation: Write howto for setting up Diskless boot via VMs
+
+TODO: Feature: On Windows 10 currently parameters are hardcoded
+
+	Reason is that we cannot map the physical address 0..0xa0000
+	We need to find a way to get the parameters from iPXE.
+
+TODO: Bug: Reestablish connection of Diskless machine fails.
+
+	Tested with iptables drop / don't drop.
+
+	Also we do not have logging.
+
+	Update: this might have been the nvspbind command we
+	executed. Don't do that it might render your windows
+	unbootable even when it is booted from disk.
+
+	Logs show that WinDRBD device hangs in NetworkFailure (?)
+
+TODO: Feature: Make timeouts configurable
+
+	Rework syntax. It should be prepared to support n nodes.
+	Also should have more options like syslog_ip=...
+
+TODO: Test: dhcp.conf: if exists ipxe.windrbd-root
+
+	This does not work currently. Maybe some additional iPXE
+	patch is neccessary.
+
 TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 
 	Because it is waiting for size applications that open the
@@ -61,8 +90,6 @@ TODO: Bug: Windows does not mount device
 
 	Is it only when there are no files on the partition?
 
-TODO: Documentation: Write howto for setting up Diskless boot via VMs
-
 TODO: Feature: update inno setup installer
 
 	It should create the bus device and should also
@@ -98,23 +125,6 @@ TODO: Bug: BSOD when running unattended
 TODO: Bug: BSOD up-down loop without backing dev and unconnected.
 
 	After ~5 iterations of up-down loop BSOD 0x7e (EXCEPTION_NOT_HANDLED)
-
-TODO: Bug: Reestablish connection of Diskless machine fails.
-
-	Tested with iptables drop / don't drop.
-
-	Also we do not have logging.
-
-	Update: this might have been the nvspbind command we
-	executed. Don't do that it might render your windows
-	unbootable even when it is booted from disk.
-
-	Logs show that WinDRBD device hangs in NetworkFailure (?)
-
-TODO: Feature: Make timeouts configurable
-
-	Rework syntax. It should be prepared to support n nodes.
-	Also should have more options like syslog_ip=...
 
 TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
@@ -174,8 +184,6 @@ Aug  5 14:14:15 192.168.56.101  U12:14:15.150|036ffd40(netlink) flush_workqueue 
 
 	Maybe we have to reengineer the worqueue layer as well ...
 
-TODO: Test: dhcp.conf: if exists ipxe.windrbd-root
-
 TODO: Bug: With a no-I/O resource up BSOD on power down
 
 	POWER_STATE_FAILURE
@@ -195,11 +203,6 @@ TODO: Bug: w0 is read-only
 
 	Still an issue?
 
-TODO: Feature: allow to pass DRBD minor to cgi-script
-
-	DRBD_MINOR parameter (need to parse QUERY_STRING,
-	this is dangerous)
-
 TODO: Bug: Can also write when secondary.
 
 	DRBD seems to use Linux' mechanism (via open(2)) to check
@@ -213,16 +216,7 @@ TODO: Bug: Can also write when secondary.
 
 	Fixed with 6df3bc33fe0? Test this.
 
-TODO: Feature: Test if it works with Windows 10 and Server 2016 also
-
-	For 0.10.0 at least Windows 10.
-
-	Installed Windows 10 VM from:
-	https://www.microsoft.com/en-us/evalcenter/evaluate-windows-10-enterprise
-	(without Cortana) It takes 2.5GiB RAM (for installation).
-
-	Installed Windows 10 Enterprise, but VM aborts frequently.
-	Maybe try a newer release of VirtualBox?
+TODO: Feature: Test if it works with Server 2016 also
 
 TODO: Feature: Windows should take IP address from DHCP on boot
 
@@ -5901,3 +5895,28 @@ Done: Bug: Sometimes logging stops.
 	sudo service syslog restart
 	solves the problem.
 
+Done: Feature: allow to pass DRBD minor to cgi-script
+
+	DRBD_MINOR parameter (need to parse QUERY_STRING,
+	this is dangerous)
+
+	drbd.cgi allows for this parameter and checks if
+	value is numeric.
+
+Done: Feature: Test if it works with Windows 10
+
+	For 0.10.0 at least Windows 10.
+
+	Installed Windows 10 VM from:
+	https://www.microsoft.com/en-us/evalcenter/evaluate-windows-10-enterprise
+	(without Cortana) It takes 2.5GiB RAM (for installation).
+
+	Installed Windows 10 Enterprise, but VM aborts frequently.
+	Maybe try a newer release of VirtualBox?
+
+	Update: Newer VirtualBox installed (6.0.12) and no VM crashes.
+
+	Windows 10 boot works now, however needed to hardcode
+	parameters (see seperate TODO) Other than that there is
+	the shutdown bug (see seperate TODO) the long boot time
+	but other then that it works like a charm.
