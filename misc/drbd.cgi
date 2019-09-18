@@ -5,37 +5,24 @@
 # and copy this script into the cgi-bin directory.
 #
 # It supports the range http header. It does not support keep-alive.
-# TODO: It expects the DRBD minor as parameter 
+# It expects the DRBD minor as parameter 
 #
 # Sample URL:
 # http://example.com/cgi-bin/drbd.cgi?DRBD_MINOR=1
 
-# TODO: make DRBD resource primary. Needed?
-
-# iPXE does not support cgi params (drbd.cgi?DRBD_MINOR=5)
-# if [ x"$DRBD_MINOR" == x ] ; then
-# 	echo "No DRBD_MINOR given" 1>&2
-# 	exit 1
-# fi
-
-# DEVICE=/dev/drbd${DRBD_MINOR}
-# DEVICE=/dev/sdd3
-# WinDRBD disk
-# DEVICE=/dev/sdf
-DEVICE=/dev/sdi
-# DEVICE=/dev/sdf1
-# DEVICE=/dev/drbd38
-# DEVICE=/dev/sdg
-# WinAOE disk
-# DEVICE=/dev/sdh
-
-# TODO: more security checks in particular don't allow / and ..
+# Making DRBD resource primary in not needed, since reading works
+# with DRBD 9 also when Secondary and there are no primaries.
 
 var=${QUERY_STRING%=*}
 val=${QUERY_STRING#*=}
 
 if [ $var != 'DRBD_MINOR' ] ; then
 	echo 'Required parameter DRBD_MINOR not given' 1>&2
+	exit 1
+fi
+echo $val | grep ^[0-9][0-9]*$ > /dev/null
+if [ $? -ne 0 ] ; then
+	echo 'DRBD_MINOR value must be numeric' 1>&2
 	exit 1
 fi
 
@@ -49,7 +36,6 @@ if [ x"$REQUEST_METHOD" == xHEAD ] ; then
 
 	echo 'Content-type: application/octet-stream'
 	echo "Content-length: $TOTAL_LENGTH"
-#        echo "Content-length: 34359737856"
 	echo
 	exit 0
 fi
