@@ -492,7 +492,7 @@ static int search_for_drbd_config(char *drbd_config, size_t buflen)
 	int ret;
 
 	zero.QuadPart = 0;
-	first_1m = MmMapIoSpace(zero, LOWER_MEM_LENGTH, MmNonCached);
+	first_1m = MmMapIoSpace(zero, LOWER_MEM_LENGTH, MmCached);
 	if (first_1m == NULL) {
 		printk("Couldn't map lower physical memory\n");
 		return -1;
