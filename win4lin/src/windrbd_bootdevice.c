@@ -343,7 +343,7 @@ static struct drbd_params {
 	char *peer_address;
 } boot_devices[1] = {
 	{
-		.resource = "tiny-windows-disk",
+		.resource = "windows10-boot",
 		.num_nodes = 2,
 		.minor = 1,
 		.volume = 1,
@@ -351,8 +351,8 @@ static struct drbd_params {
 		.peer = "johannes-VirtualBox",
 		.peer_node_id = 1,
 		.protocol = 3,
-		.my_address = "0.0.0.0:7683",
-		.peer_address = "192.168.56.102:7683"
+		.my_address = "0.0.0.0:7690",
+		.peer_address = "192.168.56.102:7690"
 	}
 #if 0
 , {
@@ -757,6 +757,8 @@ void windrbd_init_boot_device(void)
 {
 	int ret;
 	int i;
+	/* does not work with Windows 10 params are hardcoded for now */
+#if 0
 	static char drbd_config[MAX_DRBD_CONFIG];
 
 	if (search_for_drbd_config(drbd_config, sizeof(drbd_config)) < 0) {
@@ -771,6 +773,7 @@ printk("drbd config is %s\n", drbd_config);
 		printk("Error parsing drbd URI (which is '%s') not booting via network\n", drbd_config);
 		return;
 	}
+#endif
 
 	for (i=0;i<1;i++) {
 		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
