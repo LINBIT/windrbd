@@ -481,6 +481,41 @@ struct acpi_header {
 
 #define LOWER_MEM_LENGTH 0xa0000
 
+	/* Test function: under Windows 10 mmap's succeed only
+	 * if the size of the mmap'ed range is <= 2*PAGE_SIZE,
+	 * so mmap each page seperately.
+	 *
+	 * Calling this currently BSODs.
+	 */
+
+static void test_mmap(void)
+{
+	LARGE_INTEGER addr;
+	void *p;
+	int i;
+
+	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
+		addr.QuadPart = i;
+		p = MmMapIoSpace(addr, 0x1000, MmCached);
+		if (p == NULL)
+			printk("mmap(%x, 0x1000, ..) failed\n", i);
+		else {
+			printk("mmap(%x, 0x1000, ..) succeeded\n", i);
+			MmUnmapIoSpace(p, 0x1000);
+		}
+	}
+	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
+		addr.QuadPart = 0;
+		p = MmMapIoSpace(addr, i, MmCached);
+		if (p == NULL)
+			printk("mmap(0, %x, ..) failed\n", i);
+		else {
+			printk("mmap(0, %x, ..) succeeded\n", i);
+			MmUnmapIoSpace(p, 0x1000);
+		}
+	}
+}
+
 static int search_for_drbd_config(char *drbd_config, size_t buflen)
 {
 	char *first_1m;
@@ -774,6 +809,8 @@ printk("drbd config is %s\n", drbd_config);
 		return;
 	}
 #endif
+
+test_mmap();
 
 	for (i=0;i<1;i++) {
 		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
