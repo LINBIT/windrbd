@@ -481,15 +481,13 @@ struct acpi_header {
 
 #define LOWER_MEM_LENGTH 0xa0000
 
-	/* Test function: under Windows 10 mmap's succeed only
-	 * if the size of the mmap'ed range is <= 2*PAGE_SIZE,
-	 * so mmap each page seperately.
-	 *
-	 * Calling this currently BSODs. Remove that code when
-	 * not needed any more.
+	/* This kmalloc's a buffer and copies the content of the
+	 * first 640k (the DOS addressable memory) into this
+	 * kmalloc'ed buffer. Unless NULL is returned, the
+	 * caller needs a free the buffer.
 	 */
 
-static char *test_mmap(void)
+static char *copy_first_640k(void)
 {
 	LARGE_INTEGER addr;
 	void *p;
@@ -505,61 +503,22 @@ static char *test_mmap(void)
 		addr.QuadPart = i;
 		p = MmMapIoSpace(addr, 0x1000, MmCached);
 		if (p == NULL) {
-			printk("mmap(%x, 0x1000, ..) failed\n", i);
+				/* There are some pages which are
+				 * not mappable for whatever reason.
+				 * Our parameters are on mappable
+				 * pages, so ignore them.
+				 */
+			dbg("mmap(%x, 0x1000, ..) failed\n", i);
 			memset(buf+i, 0, 0x1000);
 			failed++;
 		} else {
-			printk("mmap(%x, 0x1000, ..) succeeded\n", i);
+			dbg("mmap(%x, 0x1000, ..) succeeded\n", i);
 			memcpy(buf+i, p, 0x1000);
 			MmUnmapIoSpace(p, 0x1000);
 		}
 	}
-	printk("%d mappings failed\n", failed);
-	return buf;
-/*
-	for (i=0x1000;i<LOWER_MEM_LENGTH;i+=0x1000) {
-		addr.QuadPart = 0;
-		p = MmMapIoSpace(addr, i, MmCached);
-		if (p == NULL)
-			printk("mmap(0, %x, ..) failed\n", i);
-		else {
-			printk("mmap(0, %x, ..) succeeded\n", i);
-			MmUnmapIoSpace(p, i);
-		}
-	}
-*/
-}
+	dbg("%d mappings failed\n", failed);
 
-	/* This kmalloc's a buffer and copies the content of the
-	 * first 640k (the DOS addressable memory) into this
-	 * kmalloc'ed buffer. Unless NULL is returned, the
-	 * caller needs a free the buffer.
-	 */
-
-static char *copy_first_640k(void)
-{
-	LARGE_INTEGER addr;
-	void *p;
-	int i;
-	char *buf;
-
-	buf = kmalloc(LOWER_MEM_LENGTH, GFP_KERNEL, 'DRBD');
-	if (buf == NULL)
-		return NULL;
-
-	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
-		addr.QuadPart = i;
-		p = MmMapIoSpace(addr, 0x1000, MmCached);
-		if (p == NULL) {
-			printk("mmap(%x, 0x1000, ..) failed\n", i);
-			kfree(buf);
-			return NULL;
-		} else {
-			printk("mmap(%x, 0x1000, ..) succeeded\n", i);
-//			memcpy(buf+i, p, 0x1000);
-			MmUnmapIoSpace(p, 0x1000);
-		}
-	}
 	return buf;
 }
 
@@ -574,7 +533,7 @@ static int search_for_drbd_config(char *drbd_config, size_t buflen)
 	int ret;
 
 	zero.QuadPart = 0;
-	first_1m = test_mmap();
+	first_1m = copy_first_640k();
 	if (first_1m == NULL) {
 		printk("Couldn't map lower physical memory\n");
 		return -1;
@@ -839,7 +798,6 @@ void windrbd_init_boot_device(void)
 {
 	int ret;
 	int i;
-	/* does not work with Windows 10 params are hardcoded for now */
 	static char drbd_config[MAX_DRBD_CONFIG];
 
 	if (search_for_drbd_config(drbd_config, sizeof(drbd_config)) < 0) {
@@ -847,18 +805,12 @@ void windrbd_init_boot_device(void)
 		return;
 	}
 	printk("ACPI table reading successful, creating boot device now\n");
-
-printk("drbd config is %s\n", drbd_config);
+	printk("drbd config is %s\n", drbd_config);
 
 	if (parse_drbd_params(drbd_config, &boot_devices[0]) < 0) {
 		printk("Error parsing drbd URI (which is '%s') not booting via network\n", drbd_config);
 		return;
 	}
-
-/*
-	test_mmap();
-	return;
-*/
 
 	for (i=0;i<1;i++) {
 		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
