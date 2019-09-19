@@ -495,6 +495,7 @@ static char *test_mmap(void)
 	void *p;
 	int i;
 	char *buf;
+	int failed = 0;
 
 	buf = kmalloc(LOWER_MEM_LENGTH, GFP_KERNEL, 'DRBD');
 	if (buf == NULL)
@@ -503,13 +504,17 @@ static char *test_mmap(void)
 	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
 		addr.QuadPart = i;
 		p = MmMapIoSpace(addr, 0x1000, MmCached);
-		if (p == NULL)
+		if (p == NULL) {
 			printk("mmap(%x, 0x1000, ..) failed\n", i);
-		else {
+			memset(buf+i, 0, 0x1000);
+			failed++;
+		} else {
 			printk("mmap(%x, 0x1000, ..) succeeded\n", i);
+			memcpy(buf+i, p, 0x1000);
 			MmUnmapIoSpace(p, 0x1000);
 		}
 	}
+	printk("%d mappings failed\n", failed);
 	return buf;
 /*
 	for (i=0x1000;i<LOWER_MEM_LENGTH;i+=0x1000) {
@@ -569,7 +574,7 @@ static int search_for_drbd_config(char *drbd_config, size_t buflen)
 	int ret;
 
 	zero.QuadPart = 0;
-	first_1m = copy_first_640k();
+	first_1m = test_mmap();
 	if (first_1m == NULL) {
 		printk("Couldn't map lower physical memory\n");
 		return -1;
@@ -837,7 +842,6 @@ void windrbd_init_boot_device(void)
 	/* does not work with Windows 10 params are hardcoded for now */
 	static char drbd_config[MAX_DRBD_CONFIG];
 
-/*
 	if (search_for_drbd_config(drbd_config, sizeof(drbd_config)) < 0) {
 		printk("No DRBD config found in first 1Meg, please use iPXE to boot via network.\n");
 		return;
@@ -850,8 +854,11 @@ printk("drbd config is %s\n", drbd_config);
 		printk("Error parsing drbd URI (which is '%s') not booting via network\n", drbd_config);
 		return;
 	}
-*/
+
+/*
 	test_mmap();
+	return;
+*/
 
 	for (i=0;i<1;i++) {
 		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
