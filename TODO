@@ -16,11 +16,6 @@ TODOs for Release 0.10.0 ----------------------------------------------
 
 TODO: Documentation: Write howto for setting up Diskless boot via VMs
 
-TODO: Feature: On Windows 10 currently parameters are hardcoded
-
-	Reason is that we cannot map the physical address 0..0xa0000
-	We need to find a way to get the parameters from iPXE.
-
 TODO: Bug: Reestablish connection of Diskless machine fails.
 
 	Tested with iptables drop / don't drop.
@@ -5920,3 +5915,13 @@ Done: Feature: Test if it works with Windows 10
 	parameters (see seperate TODO) Other than that there is
 	the shutdown bug (see seperate TODO) the long boot time
 	but other then that it works like a charm.
+
+Done: Feature: On Windows 10 currently parameters are hardcoded
+
+	Reason is that we cannot map the physical address 0..0xa0000
+	We need to find a way to get the parameters from iPXE.
+
+	Fixed with 80e41f1d: Some pages cannot be mapped with Windows 10
+	however those are irelevant for boot parameters and are
+	ignored when scanning for parameters.
+
