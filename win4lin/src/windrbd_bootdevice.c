@@ -485,14 +485,20 @@ struct acpi_header {
 	 * if the size of the mmap'ed range is <= 2*PAGE_SIZE,
 	 * so mmap each page seperately.
 	 *
-	 * Calling this currently BSODs.
+	 * Calling this currently BSODs. Remove that code when
+	 * not needed any more.
 	 */
 
-static void test_mmap(void)
+static char *test_mmap(void)
 {
 	LARGE_INTEGER addr;
 	void *p;
 	int i;
+	char *buf;
+
+	buf = kmalloc(LOWER_MEM_LENGTH, GFP_KERNEL, 'DRBD');
+	if (buf == NULL)
+		return NULL;
 
 	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
 		addr.QuadPart = i;
@@ -504,16 +510,52 @@ static void test_mmap(void)
 			MmUnmapIoSpace(p, 0x1000);
 		}
 	}
-	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
+	return buf;
+/*
+	for (i=0x1000;i<LOWER_MEM_LENGTH;i+=0x1000) {
 		addr.QuadPart = 0;
 		p = MmMapIoSpace(addr, i, MmCached);
 		if (p == NULL)
 			printk("mmap(0, %x, ..) failed\n", i);
 		else {
 			printk("mmap(0, %x, ..) succeeded\n", i);
+			MmUnmapIoSpace(p, i);
+		}
+	}
+*/
+}
+
+	/* This kmalloc's a buffer and copies the content of the
+	 * first 640k (the DOS addressable memory) into this
+	 * kmalloc'ed buffer. Unless NULL is returned, the
+	 * caller needs a free the buffer.
+	 */
+
+static char *copy_first_640k(void)
+{
+	LARGE_INTEGER addr;
+	void *p;
+	int i;
+	char *buf;
+
+	buf = kmalloc(LOWER_MEM_LENGTH, GFP_KERNEL, 'DRBD');
+	if (buf == NULL)
+		return NULL;
+
+	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
+		addr.QuadPart = i;
+		p = MmMapIoSpace(addr, 0x1000, MmCached);
+		if (p == NULL) {
+			printk("mmap(%x, 0x1000, ..) failed\n", i);
+			kfree(buf);
+			return NULL;
+		} else {
+			printk("mmap(%x, 0x1000, ..) succeeded\n", i);
+//			memcpy(buf+i, p, 0x1000);
 			MmUnmapIoSpace(p, 0x1000);
 		}
 	}
+	return buf;
 }
 
 static int search_for_drbd_config(char *drbd_config, size_t buflen)
@@ -527,7 +569,7 @@ static int search_for_drbd_config(char *drbd_config, size_t buflen)
 	int ret;
 
 	zero.QuadPart = 0;
-	first_1m = MmMapIoSpace(zero, LOWER_MEM_LENGTH, MmCached);
+	first_1m = copy_first_640k();
 	if (first_1m == NULL) {
 		printk("Couldn't map lower physical memory\n");
 		return -1;
@@ -561,7 +603,7 @@ static int search_for_drbd_config(char *drbd_config, size_t buflen)
 		ret = 0;
 		break;
 	}
-	MmUnmapIoSpace(first_1m, LOWER_MEM_LENGTH);
+	kfree(first_1m);
 
 	return ret;
 }
@@ -793,9 +835,9 @@ void windrbd_init_boot_device(void)
 	int ret;
 	int i;
 	/* does not work with Windows 10 params are hardcoded for now */
-#if 0
 	static char drbd_config[MAX_DRBD_CONFIG];
 
+/*
 	if (search_for_drbd_config(drbd_config, sizeof(drbd_config)) < 0) {
 		printk("No DRBD config found in first 1Meg, please use iPXE to boot via network.\n");
 		return;
@@ -808,9 +850,8 @@ printk("drbd config is %s\n", drbd_config);
 		printk("Error parsing drbd URI (which is '%s') not booting via network\n", drbd_config);
 		return;
 	}
-#endif
-
-test_mmap();
+*/
+	test_mmap();
 
 	for (i=0;i<1;i++) {
 		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
