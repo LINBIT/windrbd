@@ -127,50 +127,44 @@ static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 			resource = drbd_device->resource;
 			if (resource != NULL) {
 				while (resource->role[NOW] == R_SECONDARY) {
-printk("Am secondary, trying to promote ...\n");
+					dbg("Am secondary, trying to promote ...\n");
 					rv = try_to_promote(drbd_device, timeout, 0);
 
 		/* no uptodate disk: we are not yet connected, wait a bit
 		 * until we are.
 		 */
-printk("rv is %d\n", rv);
 					if (rv < SS_SUCCESS && rv != SS_NO_UP_TO_DATE_DISK) {
 						drbd_info(resource, "Auto-promote failed: %s\n", drbd_set_st_err_str(rv));
 						break;
 					}
-printk("1\n");
 					if (rv == SS_SUCCESS)
 						break;
 
-printk("2\n");
 
 					if (bdev->powering_down || bdev->delete_pending)
 						break;
 
-printk("3\n");
 					msleep(100);
-printk("3a\n");
 					if (bdev->powering_down || bdev->delete_pending)
 						break;
 
-printk("4\n");
 				}
 			}
 		}
 	} else {
 		if (!bdev->powering_down) {
-printk("Waiting for becoming primary\n");
+			dbg("Waiting for becoming primary\n");
+
 			status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
 			if (status != STATUS_SUCCESS)
 				printk("KeWaitForSingleObject returned %x\n", status);
-else
-printk("Am primary now, proceeding with request\n");
+			else
+				dbg("Am primary now, proceeding with request\n");
 		}
 	}
-printk("5\n");
 
 	if (bdev->delete_pending) {
-printk("device already deleted, cancelling request\n");
+		dbg("device already deleted, cancelling request\n");
 		return STATUS_NO_SUCH_DEVICE;
 	}
 
@@ -1405,12 +1399,12 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 					array[count] = drbd_device->this_bdev->windows_device;
 					ObReferenceObject(drbd_device->this_bdev->windows_device);
 				}
-printk("windows device at %p\n", drbd_device->this_bdev->windows_device);
+				dbg("windows device at %p\n", drbd_device->this_bdev->windows_device);
 				count++;
 			}
 		}
 	}
-printk("%d drbd windows devices found\n", count);
+	dbg("%d drbd windows devices found\n", count);
 	return count;
 }
 
@@ -1506,7 +1500,6 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 		int type = s->Parameters.QueryDeviceRelations.Type;
 dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
 		if (s->Parameters.QueryDeviceRelations.Type == BusRelations) {
-printk("about to report DRBD devices ...\n");
 			int num_devices = get_all_drbd_device_objects(NULL, 0);
 			struct _DEVICE_RELATIONS *device_relations;
 			int n;
@@ -1689,7 +1682,7 @@ dbg("Returned string is %S\n", string);
 				device_relations->Objects[0] = bdev->windows_device;
 				ObReferenceObject(bdev->windows_device);
 
-printk("reporting device %p for type %d\n", bdev->windows_device, s->Parameters.QueryDeviceRelations.Type);
+				dbg("reporting device %p for type %d\n", bdev->windows_device, s->Parameters.QueryDeviceRelations.Type);
 
 				irp->IoStatus.Information = (ULONG_PTR)device_relations;
 				status = STATUS_SUCCESS;
@@ -1855,9 +1848,7 @@ printk("reporting device %p for type %d\n", bdev->windows_device, s->Parameters.
 					bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 					IoAcquireRemoveLock(&bdev->remove_lock, NULL);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
-printk("into IoReleaseRemoveLockAndWait ... \n");
 					IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
-printk("out of IoReleaseRemoveLockAndWait ... \n");
 				} else {
 					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
 				}
@@ -2081,14 +2072,10 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
-printk("got SCSI function %x\n", srb->Function);
-
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
-printk("got SRB_FUNCTION_EXECUTE_SCSI SCSI function is %x\n", cdb->AsByte[0]);
 		switch (cdb->AsByte[0]) {
 		case SCSIOP_TEST_UNIT_READY:
-printk("got SCSIOP_TEST_UNIT_READY\n");
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
 			break;
 
@@ -2102,7 +2089,6 @@ printk("got SCSIOP_TEST_UNIT_READY\n");
 		case SCSIOP_WRITE:
 		case SCSIOP_WRITE16:
 		{
-printk("got SCSI I/O (%x)\n", srb->Function);
 			long long start_sector;
 			unsigned long long sector_count, total_size;
 			int rw;
@@ -2110,7 +2096,6 @@ printk("got SCSI I/O (%x)\n", srb->Function);
 			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
 
 			if (bdev != NULL) {
-printk("SCSI I/O waiting for primary\n");
 				if (rw == WRITE && bdev->is_bootdevice)
 					status = wait_for_becoming_primary(bdev);
 				else
@@ -2179,7 +2164,6 @@ printk("SCSI I/O waiting for primary\n");
 				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 				break;
 			}
-printk("got SCSIOP_READ_CAPACITY\n");
 			if (bdev->is_bootdevice) {
 				d_size = wait_for_size(device);
 			} else {
@@ -2210,7 +2194,6 @@ printk("got SCSIOP_READ_CAPACITY\n");
 			break;
 
 		case SCSIOP_READ_CAPACITY16:
-printk("got SCSIOP_READ_CAPACITY16\n");
 			if (bdev == NULL) {
 				printk("bdev is NULL on SCSI READ_CAPACITY16, this should not happen (minor is %x)\n", s->MinorFunction);
 				status = STATUS_INVALID_DEVICE_REQUEST;
@@ -2242,7 +2225,6 @@ printk("got SCSIOP_READ_CAPACITY16\n");
 
 		case SCSIOP_MODE_SENSE:
 		{
-printk("got SCSIOP_MODE_SENSE\n");
 			PMODE_PARAMETER_HEADER ModeParameterHeader;
 
 			if (srb->DataTransferLength < sizeof(MODE_PARAMETER_HEADER)) {
@@ -2262,7 +2244,7 @@ printk("got SCSIOP_MODE_SENSE\n");
 		}
 
 		default:
-printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
+			dbg("SCSI OP %x not supported\n", cdb->AsByte[0]);
 			status = STATUS_NOT_IMPLEMENTED;
 		}
 		break;
@@ -2272,7 +2254,6 @@ printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
 		break;
 
 	case SRB_FUNCTION_CLAIM_DEVICE:
-printk("got SRB_FUNCTION_CLAIM_DEVICE\n");
 #if 0
 		if (bdev != NULL) {
 				/* TODO: only if we are a boot device */
@@ -2288,23 +2269,20 @@ printk("got SRB_FUNCTION_CLAIM_DEVICE\n");
 		break;
 
 	case SRB_FUNCTION_RELEASE_DEVICE:
-printk("got SRB_FUNCTION_RELEASE_DEVICE\n");
 //		ObDereferenceObject(device);
 		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
 
 	case SRB_FUNCTION_SHUTDOWN:
-printk("got SRB_FUNCTION_SHUTDOWN\n");
 		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
 
 	case SRB_FUNCTION_FLUSH:
-printk("got SRB_FUNCTION_FLUSH\n");
 		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
 
 	default:
-printk("got unimplemented SCSI function %x\n", srb->Function);
+		dbg("got unimplemented SCSI function %x\n", srb->Function);
 		status = STATUS_NOT_IMPLEMENTED;
 	}
 
@@ -2338,7 +2316,7 @@ static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp
 	if (t == NULL) {
 		printk("Warning: cannot create a thread object for request.\n");
 	}
-printk("got request major is %x device object is %p (is %s device)\n", major, device, device == mvolRootDeviceObject ? "root" : "disk");
+	dbg("got request major is %x device object is %p (is %s device)\n", major, device, device == mvolRootDeviceObject ? "root" : (device == drbd_bus_device ? "bus" : "disk"));
 
 	ret = windrbd_dispatch_table[major](device, irp);
 

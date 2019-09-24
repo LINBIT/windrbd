@@ -48,13 +48,17 @@ if (timeout > 5000) timeout = 5000;
 		return -EINVAL;
 	}
 
+#if 0
 if (line != 48)	/* silence drbd_md_get_buffer */
 printk("into KeWaitForMultipleObjects from %s:%d (%s()) timeout is %d\n", file, line, func, timeout);
+#endif
 
 	status = KeWaitForMultipleObjects(num_wait_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, wait_time_p, NULL);
 
+#if 0
 if (line != 48)	/* silence drbd_md_get_buffer */
 printk("out of KeWaitForMultipleObjects from %s:%d (%s()) stastus is %x\n", file, line, func, status);
+#endif
 
 	if (!NT_SUCCESS(status)) {
 		printk("Warning: KeWaitForMultipleObjects returned with status %x\n", status);
@@ -77,7 +81,6 @@ void schedule_debug(const char *file, int line, const char *func)
 	if (!is_windrbd_thread(current))
 		printk("Warning: schedule called from a non WinDRBD thread\n");
 
-printk("wait queue is %p\n", current->wait_queue);
 	ll_wait(current->wait_queue_entry, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
 }
 
@@ -92,7 +95,6 @@ static LONG_PTR ll_schedule_debug(ULONG_PTR timeout, int return_error, int inter
 		return -EINVAL;
 	}
 
-printk("wait queue is %p\n", current->wait_queue);
 	err = ll_wait(current->wait_queue_entry, timeout, interruptible, file, line, func);
 
 	if (err < 0 && return_error)
@@ -161,12 +163,12 @@ void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e)
 void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {		
 	KIRQL flags;
-printk("wake_up %p %s:%d (%s())\n", q, file, line, func);
+	dbg("wake_up %p %s:%d (%s())\n", q, file, line, func);
 	struct wait_queue_entry *e;
 
 	spin_lock_irqsave(&q->lock, flags);
 	if (list_empty(&q->head)) {
-		printk("Warning: attempt to wake up with no one waiting.\n");
+		dbg("Warning: attempt to wake up with no one waiting.\n");
 		spin_unlock_irqrestore(&q->lock, flags);
 
 		return;
@@ -180,7 +182,7 @@ printk("wake_up %p %s:%d (%s())\n", q, file, line, func);
 void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {
 	KIRQL flags;
-printk("wake_up_all %p %s:%d (%s())\n", q, file, line, func);
+	dbg("wake_up_all %p %s:%d (%s())\n", q, file, line, func);
 	struct wait_queue_entry *e, *e2;
 
 	spin_lock_irqsave(&q->lock, flags);

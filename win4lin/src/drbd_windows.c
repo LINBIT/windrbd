@@ -950,7 +950,7 @@ int IS_ERR(void *ptr)
 
 void init_completion_debug(struct completion *completion, const char *file, int line, const char *func)
 {
-printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
+// printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
 	init_waitqueue_head(&completion->wait);
 	completion->completed = false;
 }
@@ -959,36 +959,36 @@ ULONG_PTR wait_for_completion_timeout_debug(struct completion *completion, ULONG
 {
 	ULONG_PTR ret;
 
-printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
-printk("into wait_event %p ...\n", completion);
+// printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
+// printk("into wait_event %p ...\n", completion);
 	wait_event_interruptible_timeout(ret, completion->wait, completion->completed, timeout);
-printk("out of wait_event %p ...\n", completion);
+// printk("out of wait_event %p ...\n", completion);
 
 	return ret;
 }
 
 void wait_for_completion_debug(struct completion *completion, const char *file, int line, const char *func)
 {
-printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
+// printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
 	wait_for_completion_timeout(completion, MAX_SCHEDULE_TIMEOUT);
 }
 
 void complete_debug(struct completion *c, const char *file, int line, const char *func)
 {
-printk("from %s:%d (%s()) completion is %p\n", file, line, func, c);
-printk("completing %p\n", c);
+// printk("from %s:%d (%s()) completion is %p\n", file, line, func, c);
+// printk("completing %p\n", c);
 	c->completed = true;
 	wake_up(&c->wait);
-printk("%p completed\n", c);
+// printk("%p completed\n", c);
 }
 
 void complete_all_debug(struct completion *c, const char *file, int line, const char *func)
 {
-printk("from %s:%d (%s()) completion is %p\n", file, line, func, c);
-printk("completing all %p\n", c);
+// printk("from %s:%d (%s()) completion is %p\n", file, line, func, c);
+// printk("completing all %p\n", c);
 	c->completed = true;
 	wake_up_all(&c->wait);
-printk("%p completed\n", c);
+// printk("%p completed\n", c);
 }
 
 #if 0
@@ -1109,29 +1109,23 @@ static int run_singlethread_workqueue(struct workqueue_struct * wq)
 
     while (wq->run)
     {
-printk("1\n");
         status = KeWaitForMultipleObjects(maxObj, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
-printk("2\n");
         switch (status)
         {
             case STATUS_WAIT_0:
             {
                 PLIST_ENTRY entry;
-printk("3\n");
                 while ((entry = ExInterlockedRemoveHeadList(&wq->list_head, &wq->list_lock)) != 0)
                 {
                     struct work_struct_wrapper * wr = CONTAINING_RECORD(entry, struct work_struct_wrapper, element);
-printk("4\n");
                     wr->w->func(wr->w);
                     kfree(wr);	/* TODO: sure? */
                 }
 		KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
-printk("5\n");
                 break;
             }
 
             case (STATUS_WAIT_1) :
-printk("6\n");
                 wq->run = FALSE;
                 break;
 
@@ -1139,7 +1133,6 @@ printk("6\n");
                 continue;
         }
     }
-printk("7 exiting thread\n");
 	KeSetEvent(&wq->readyToFreeEvent, 0, FALSE);
 	return 0;
 }
@@ -1195,9 +1188,7 @@ void flush_workqueue(struct workqueue_struct *wq)
 
 	KeResetEvent(&wq->workFinishedEvent);
 	KeSetEvent(&wq->wakeupEvent, 0, FALSE);
-printk("waiting for work to finish ...\n");
 	KeWaitForMultipleObjects(2, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
-printk("work finished (or killed)");
 }
 
 void mutex_init(struct mutex *m)
@@ -2003,17 +1994,11 @@ void del_gendisk(struct gendisk *disk)
 
 void destroy_workqueue(struct workqueue_struct *wq)
 {
-printk("1\n");
 	if (wq->thread != NULL) {
-printk("2\n");
 		KeSetEvent(&wq->killEvent, 0, FALSE);
-printk("3\n");
 		KeWaitForSingleObject(&wq->readyToFreeEvent, Executive, KernelMode, FALSE, NULL);
-printk("4\n");
 	}
-printk("5\n");
 	kfree(wq);
-printk("6\n");
 // printk("stopping a workqueue thread\n");
 }
 
@@ -2038,14 +2023,10 @@ void force_sig(int sig, struct task_struct *task)
 		/* TODO: We need to protect against thread
 		 * suddenly dying here. */
 
-printk("1\n");
 	if (task && task->has_sig_event)
 	{
-printk("sending signal to task %p (%s)\n", task, task->comm);
 		task->sig = sig;
-printk("2\n");
 		KeSetEvent(&task->sig_event, 0, FALSE);
-printk("3\n");
 	}
 }
 
@@ -3411,7 +3392,7 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 	struct _DEVICE_OBJECT *windows_device;
 	struct block_device_reference *ref;
 
-printk("Start removing device %S\n", bdev->path_to_device.Buffer);
+// printk("Start removing device %S\n", bdev->path_to_device.Buffer);
 
 	if (bdev->windows_device == NULL) {
 		printk(KERN_WARNING "Windows device does not exist in block device %p.\n", bdev);
@@ -3439,9 +3420,9 @@ printk("Start removing device %S\n", bdev->path_to_device.Buffer);
 		printk("PnP did not work, removing device manually.\n");
 		IoDeleteDevice(bdev->windows_device);
 	} else {
-printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
+// printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
 		KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
-printk("finished.\n");
+// printk("finished.\n");
 	}
 }
 
@@ -3720,9 +3701,9 @@ int windrbd_mount(struct block_device *dev)
 		return 0;	/* this is legal */
 	}
 
-printk("dev->path_to_device: %S dev->mount_point: %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
+// printk("dev->path_to_device: %S dev->mount_point: %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 
-printk("NOT mounting\n");
+// printk("NOT mounting\n");
 #if 0
 	/* This is basically what mount manager does: leave it here,
 	   in case we revert the mount manager code again.
@@ -3872,7 +3853,6 @@ static void windrbd_destroy_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 
-printk("1\n");
 		/* This is legal. Users may create DRBD devices without
 		 * mount point.
 		 */
@@ -3883,39 +3863,29 @@ printk("1\n");
 		kfree(bdev->mount_point.Buffer);
 		bdev->mount_point.Buffer = NULL;
 	}
-printk("2\n");
 	if (bdev->windows_device != NULL) {
-printk("3\n");
 		windrbd_remove_windows_device(bdev);
 	}
 
-printk("4\n");
 	kfree(bdev->path_to_device.Buffer);
-printk("5\n");
 	bdev->path_to_device.Buffer = NULL;
 
-printk("6\n");
 	kfree(bdev);
 		/* Do not set windows device object->DeviceExtension->ref
 		 * to NULL here. The object already has been deleted
 		 * here.
 		 */
-printk("7\n");
 }
 
 /* TODO: those 2 function go away */
 void windrbd_bdget(struct block_device *this_bdev)
 {
-printk("kref before: %d\n", this_bdev->kref.refcount);
 	kref_get(&this_bdev->kref);
-printk("kref after: %d\n", this_bdev->kref.refcount);
 }
 
 void windrbd_bdput(struct block_device *this_bdev)
 {
-printk("kref before: %d\n", this_bdev->kref.refcount);
 	kref_put(&this_bdev->kref, windrbd_destroy_block_device);
-printk("kref after: %d\n", this_bdev->kref.refcount);
 }
 
 /* See the comment at bdget(). DRBD calls this (currently) only

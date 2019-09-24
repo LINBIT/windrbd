@@ -610,7 +610,6 @@ static int read_acpi_table(void)
 	status = AuxKlibGetSystemFirmwareTable('ACPI', 'TFBi', buf, sizeof(buf), &size);
 
 	if (status == STATUS_SUCCESS) {
-printk("table DRBD found\n");
 		return 0;
 	} else {
 		printk("error searching for ACPI table DRBD status is %x\n", status);

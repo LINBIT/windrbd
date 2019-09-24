@@ -10,7 +10,6 @@ mempool_t *mempool_create_page_pool(int min_nr, int order, ULONG tag)
 	if (!pool)
 		return NULL;
 
-printk("ExInitializeNPagedLookasideList %p\n", pool);
 	pool->type = MEMPOOL_PAGE;
 	ExInitializeNPagedLookasideList(&pool->pageLS, NULL, NULL, 0, sizeof(struct page), tag, 0);
         ExInitializeNPagedLookasideList(&pool->page_addrLS, NULL, NULL, 0, PAGE_SIZE, tag, 0);
@@ -35,7 +34,6 @@ mempool_t *mempool_create_slab_pool(int min_nr, struct kmem_cache *kc, ULONG tag
 void mempool_destroy(mempool_t *pool)
 {
 	if (pool->type == MEMPOOL_PAGE) {
-printk("ExDeleteNPagedLookasideList %p\n", pool);
 		ExDeleteNPagedLookasideList(&pool->pageLS);
 		ExDeleteNPagedLookasideList(&pool->page_addrLS);
 	}
