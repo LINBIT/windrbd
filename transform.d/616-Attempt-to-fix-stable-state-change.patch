@@ -1,0 +1,42 @@
+From 411dc7b993ffda01f0ee60267f58710565e084be Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 6 Aug 2019 15:11:56 +0200
+Subject: [PATCH] Attempt to fix stable state change.
+
+It does not work that way since stable_state_change must
+evaluate to an expression that is passed to a function
+as a parameter. Windows (Microsoft C++ compiler)  does not
+support this.
+
+What we would do is to change the cocci script so that the
+code of stable_state_change is expanded directly into the
+generated source.
+---
+ drbd/drbd_state.h    |  14 +++++++++++++-
+ 5 files changed, 18 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_state.h b/drbd/drbd_state.h
+index cb2dc11..4b6b70a 100644
+--- a/drbd/drbd_state.h
++++ b/drbd/drbd_state.h
+@@ -69,7 +69,19 @@ extern union drbd_state drbd_get_device_state(struct drbd_device *, enum which_s
+ extern union drbd_state drbd_get_peer_device_state(struct drbd_peer_device *, enum which_state);
+ extern union drbd_state drbd_get_connection_state(struct drbd_connection *, enum which_state);
+ 
+-extern int stable_state_change(struct drbd_resource *resource, enum drbd_state_rv change_state);
++		/* TODO: doesn't work that way ... */
++#define stable_state_change(__ret, resource, change_state)                      \
++	do {									\
++                enum drbd_state_rv rv;                                          \
++                int err;                                                        \
++                err = wait_event_interruptible((resource)->state_wait,          \
++                        (rv = (change_state)) != SS_IN_TRANSIENT_STATE);        \
++                if (err)                                                        \
++                        err = -SS_UNKNOWN_ERROR;                                \
++                else                                                            \
++                        err = rv;                                               \
++                __ret = err;                                                    \
++        } while (0);
+ 
+ extern int nested_twopc_work(struct drbd_work *work, int cancel);
+ extern enum drbd_state_rv nested_twopc_request(struct drbd_resource *, int, enum drbd_packet, struct p_twopc_request *);
