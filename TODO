@@ -16,6 +16,32 @@ TODOs for Release 0.10.0 ----------------------------------------------
 
 TODO: Documentation: Write howto for setting up Diskless boot via VMs
 
+	In progress. Need to test it and write sections about
+	troubleshooting and future developments. Also most screenshots
+	are currently missing.
+
+TODO: Feature: Make timeouts configurable
+
+	Rework syntax. It should be prepared to support n nodes.
+	Also should have more options like syslog_ip=...
+
+TODO: Bug: currently SCSI windows 7 sends read/write instead of scsi requests
+
+	Something wrong with the installer. It should not try to
+	create the bus object, this fails when installing while
+	being diskless (and connected).
+
+TODO: Test: redo all steps from howto
+
+	In particular it is not clear if the extra install disk
+	driver step is needed.
+
+Milestone: Release 0.10.0
+Planned: Oct 31 2019
+Real: ?
+
+TODOs for Release 1.0 ----------------------------------------------
+
 TODO: Bug: Reestablish connection of Diskless machine fails.
 
 	Tested with iptables drop / don't drop.
@@ -27,11 +53,6 @@ TODO: Bug: Reestablish connection of Diskless machine fails.
 	unbootable even when it is booted from disk.
 
 	Logs show that WinDRBD device hangs in NetworkFailure (?)
-
-TODO: Feature: Make timeouts configurable
-
-	Rework syntax. It should be prepared to support n nodes.
-	Also should have more options like syslog_ip=...
 
 TODO: Test: dhcp.conf: if exists ipxe.windrbd-root
 
@@ -5924,4 +5945,9 @@ Done: Feature: On Windows 10 currently parameters are hardcoded
 	Fixed with 80e41f1d: Some pages cannot be mapped with Windows 10
 	however those are irelevant for boot parameters and are
 	ignored when scanning for parameters.
+
+Done: Feature: Remove most debug printk's
+
+	Done, right now we get read/write requests (reinstalled
+	with inno-setup package) instead of scsi requests.
 
