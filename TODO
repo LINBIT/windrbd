@@ -20,10 +20,15 @@ TODO: Documentation: Write howto for setting up Diskless boot via VMs
 	troubleshooting and future developments. Also most screenshots
 	are currently missing.
 
-TODO: Test: redo all steps from howto
+TODO: Feature: RELEASE define
 
-	In particular it is not clear if the extra install disk
-	driver step is needed.
+	Undefining DEBUG
+
+TODO: Install: prepare installer for release
+
+	Include ipxe-windrbd.pxe
+	Include drbd.cgi
+	Exclude windrbd.pdf
 
 Milestone: Release 0.10.0
 Planned: Oct 31 2019
@@ -32,6 +37,13 @@ Real: ?
 TODOs for Release 0.10.1 -------------------------------------------
 
 TODOs for Release 1.0 ----------------------------------------------
+
+TODO: Test: redo all steps from howto
+
+	In particular it is not clear if the extra install disk
+	driver step is needed.
+
+	Update: at least on Windows 10 it is not needed.
 
 TODO: Feature: Make timeouts configurable
 
