@@ -20,17 +20,6 @@ TODO: Documentation: Write howto for setting up Diskless boot via VMs
 	troubleshooting and future developments. Also most screenshots
 	are currently missing.
 
-TODO: Feature: Make timeouts configurable
-
-	Rework syntax. It should be prepared to support n nodes.
-	Also should have more options like syslog_ip=...
-
-TODO: Bug: currently SCSI windows 7 sends read/write instead of scsi requests
-
-	Something wrong with the installer. It should not try to
-	create the bus object, this fails when installing while
-	being diskless (and connected).
-
 TODO: Test: redo all steps from howto
 
 	In particular it is not clear if the extra install disk
@@ -40,7 +29,31 @@ Milestone: Release 0.10.0
 Planned: Oct 31 2019
 Real: ?
 
+TODOs for Release 0.10.1 -------------------------------------------
+
 TODOs for Release 1.0 ----------------------------------------------
+
+TODO: Feature: Make timeouts configurable
+
+	Rework syntax. It should be prepared to support n nodes.
+	Also should have more options like syslog_ip=...
+
+TODO: Bug: Restarting fails with Wrong medium type.
+
+	Linux DRBD thinks Windows is still Primary and refuses
+	CGI script read requests. We should wait a bit in the
+	CGI script if the error is Wrong medium type.
+
+TODO: Bug: currently SCSI windows 7 sends read/write instead of scsi requests
+
+	Something wrong with the installer. It should not try to
+	create the bus object, this fails when installing while
+	being diskless (and connected).
+
+	Installer now has been reverted to not touch the bus
+	object. Installing into a Diskless boot machine works
+	now, we get scsi requests after the reboot. This should
+	be fixed after 0.10.0
 
 TODO: Bug: Reestablish connection of Diskless machine fails.
 
