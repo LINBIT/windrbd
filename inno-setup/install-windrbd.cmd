@@ -15,7 +15,8 @@ cygrunsrv.exe -I windrbdlog -p /cygdrive/c/windrbd/usr/sbin/windrbd.exe -a log-s
 cygrunsrv.exe -I windrbdumhelper -p /cygdrive/c/windrbd/usr/sbin/windrbd.exe -auser-mode-helper-daemon -1 /cygdrive/c/windrbd/windrbd-umhelper.log -2 /cygdrive/c/windrbd/windrbd-umhelper.log -t manual
 
 rem this installs the bus device (new in 0.10.0)
-windrbd install-bus-device .\windrbd.inf
+rem This currently does not work. Fix it and reenable this:
+rem windrbd install-bus-device .\windrbd.inf
 
 start /wait InfDefaultInstall .\windrbd.inf 
 
