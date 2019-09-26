@@ -14,29 +14,9 @@ Planned: Feb 28 2019
 Real: Apr 10 2019
 TODOs for Release 0.10.0 ----------------------------------------------
 
-TODO: Documentation: Write howto for setting up Diskless boot via VMs
-
-	In progress. Need to test it and write sections about
-	troubleshooting and future developments. Also most screenshots
-	are currently missing.
-
-TODO: Feature: RELEASE define
-
-	Undefining DEBUG
-
-TODO: Install: prepare installer for release
-
-	Include ipxe-windrbd.pxe
-	Include drbd.cgi
-	Exclude windrbd.pdf
-
 Milestone: Release 0.10.0
 Planned: Oct 31 2019
 Real: ?
-
-TODOs for Release 0.10.1 -------------------------------------------
-
-TODOs for Release 1.0 ----------------------------------------------
 
 TODO: Test: redo all steps from howto
 
@@ -44,6 +24,10 @@ TODO: Test: redo all steps from howto
 	driver step is needed.
 
 	Update: at least on Windows 10 it is not needed.
+
+TODOs for Release 0.10.1 -------------------------------------------
+
+TODOs for Release 1.0 ----------------------------------------------
 
 TODO: Feature: Make timeouts configurable
 
@@ -5975,4 +5959,22 @@ Done: Feature: Remove most debug printk's
 
 	Done, right now we get read/write requests (reinstalled
 	with inno-setup package) instead of scsi requests.
+
+Done: Feature: RELEASE define
+
+	Undefining DEBUG
+
+Done: Install: prepare installer for release
+
+	Include ipxe-windrbd.pxe
+	Include drbd.cgi
+	Exclude windrbd.pdf
+
+Done: Documentation: Write howto for setting up Diskless boot via VMs
+
+	In progress. Need to test it and write sections about
+	troubleshooting and future developments. Also most screenshots
+	are currently missing.
+
+	Update: almost finished, ready for being reviewed.
 
