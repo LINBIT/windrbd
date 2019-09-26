@@ -17,6 +17,7 @@
 #define MyAppName "WinDRBD"
 #define MyAppPublisher "Linbit"
 #define MyAppURL "http://www.linbit.com/"
+#define MyAppURLDocumentation "https://downloads.linbit.com/"
 #define SysRoot "C:\windrbd"
 
 [Setup]
@@ -86,7 +87,6 @@ Source: "{#WindrbdUtilsSource}\user\v9\drbdadm.exe"; DestDir: "{#SysRoot}\usr\sb
 Source: "{#WindrbdUtilsSource}\user\v9\drbdmeta.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion
 Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion
 Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\windrbd.pdf"; DestDir: "{app}"; Flags: ignoreversion isreadme
 Source: "{#WindrbdSource}\inno-setup\sysroot\README-windrbd.txt"; DestDir: "{#SysRoot}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.conf"; DestDir: "{#SysRoot}\etc"; Flags: ignoreversion onlyifdoesntexist
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\global_common.conf"; DestDir: "{#SysRoot}\etc\drbd.d"; Flags: ignoreversion onlyifdoesntexist
@@ -105,7 +105,7 @@ Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.inf"; DestDir: "{app}";
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
-Name: "{group}\View {#MyAppName} Tech Guide"; Filename: "{app}/windrbd.pdf"
+Name: "{group}\View {#MyAppName} Tech Guides"; Filename: "{#MyAppURLDocumentation}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{group}\Open {#MyAppName} configuration folder"; Filename: "C:\windrbd\etc\drbd.d"
                                                 
