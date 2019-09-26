@@ -416,3 +416,65 @@ Temporary format of 'drbd' URI: no colons since they are used by
 IPv6 addresses.
 
 drbd:<res>;<proto>;<num-nodes>;<my-ip>;<my-minor>;<my-volume>;<peer-name>;<peer-node-id>;<peer-address>
+
+----
+
+Build documentation:
+
+make tech-guides-pdf-finalize-docker
+
+-----
+
+Booting
+
+See the tech-guide on booting
+
+Neccessary steps:
+
+Install WinDRBD Bus driver
+	Device manager: add legacy hardware: windrbd.inf
+
+Install WinDRBD Disk driver
+	(else will not call START_DEVICE PnP request)
+	To do so install windrbd with boot device and wait for
+	primary disabled and do Update driver software in
+	device manager (windrbd-disk.inf).
+
+	Do a drbdadm up of a dummy device (does not need to
+	have backing storage or connection)
+
+	TODO: Maybe it is also possible to just doubleclick the
+	inf file which makes things far more easier.
+
+Install windrbd driver with boot and wait for primary in
+	windrbd I/O requests (not windrbd_pnp, but windrbd_create)
+
+# Also: Disable UDP logging (NO_NET_PRINTK) in printk-to-syslog
+
+Enable NIC driver
+	E1 something for my VirtualBox
+
+Enable AFD driver (unclear if really needed)
+
+Enable Broadcom drivers (unclear if really needed)
+
+Currently: Assign a fixed IP address (must match the one in DRBD
+	config). TODO: which driver to load on boot to make
+	DHCP work?
+
+Also Disable Network Discovery (else there is a short time gap
+	in which network is down and Windows needs to access
+	boot device in order to continue):
+
+	(from https://social.technet.microsoft.com/Forums/en-US/675520ed-fe25-455e-a86e-fdb833903b10/windows-takes-an-exceptionally-long-time-to-establish-a-network-connection-after-booting
+
+	Control Panel\Network and Internet\Network and Sharing Center\Advanced sharing settings
+
+	Turn OFF network discovery
+
+Disable NDIS lightweight filter for boot NIC:
+
+	https://support.microsoft.com/en-us/help/976042/windows-may-fail-to-boot-from-an-iscsi-drive-if-networking-hardware-is
+
+	Not clear if that really helps .. still there is a 90 seconds
+	(at least) delay.
