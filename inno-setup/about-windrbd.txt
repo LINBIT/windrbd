@@ -13,7 +13,9 @@ In order to get professional support for WinDRBD please contact
 sales@linbit.com directly.
 
 To learn how to use WinDRBD to create a 2-node HA cluster based
-on Microsoft Windows, please read the enclosed tech guide.
+on Microsoft Windows, or to learn how to use WinDRBD for booting
+Windows from a Linux server please go to https://downloads.linbit.com
+and download the WinDRBD tech guides.
 
 Since WinDRBD is still beta, it should not be used in production
 environments. Furthermore, it is highly recommended that you
