@@ -1,6 +1,12 @@
 ﻿/* Uncomment this if you want more debug output (disable for releases) */
 #define DEBUG 1
 
+#ifdef RELEASE
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#endif
+
 #include "drbd_windows.h"
 #include "windrbd_threads.h"
 #include <linux/socket.h>

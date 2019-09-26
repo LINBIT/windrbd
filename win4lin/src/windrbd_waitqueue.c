@@ -1,3 +1,9 @@
+#ifdef RELEASE
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#endif
+
 #include "drbd_windows.h"
 #include "windrbd_threads.h"
 
