@@ -846,7 +846,7 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 exit:
 	if (status == STATUS_SUCCESS && dev != NULL) {
 		dev->num_openers++;
-		printk("num_openers of device %p is now %d\n", dev, dev->num_openers);
+		dbg("num_openers of device %p is now %d\n", dev, dev->num_openers);
 	}
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -916,7 +916,7 @@ printk("pretending that close succeeded\n");
 
 	if (status == STATUS_SUCCESS && dev != NULL) {
 		dev->num_openers--;
-		printk("num_openers of device %p is now %d\n", dev, dev->num_openers);
+		dbg("num_openers of device %p is now %d\n", dev, dev->num_openers);
 	}
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -1536,7 +1536,7 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 		dbg("got unimplemented minor %x\n", s->MinorFunction);
 
 		status = irp->IoStatus.Status;
-		printk("status is %x\n", status);
+		dbg("status is %x\n", status);
 	}
 
 	if (status != STATUS_SUCCESS && status != STATUS_NOT_SUPPORTED && status != STATUS_NOT_IMPLEMENTED) {
@@ -1549,7 +1549,7 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 // printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
-			printk("Warning: lower device returned status %x\n", status);
+			dbg("Warning: lower device returned status %x\n", status);
 	}
 
 	return status;
@@ -1677,7 +1677,7 @@ dbg("Returned string is %S\n", string);
 			{
 				struct _DEVICE_RELATIONS *device_relations;
 				size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
-				printk("size of device relations is %d\n", siz);
+				dbg("size of device relations is %d\n", siz);
 		/* must be PagedPool else PnP manager complains */
 				device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
 				if (device_relations == NULL) {
@@ -1878,7 +1878,7 @@ dbg("Returned string is %S\n", string);
 			return STATUS_SUCCESS;
 
 		default:
-			printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
+			dbg("got unimplemented minor %x for disk object\n", s->MinorFunction);
 			if (drbd_bus_device != NULL) {
 // printk("irp status is %x\n", irp->IoStatus.Status);
 				IoSkipCurrentIrpStackLocation(irp);

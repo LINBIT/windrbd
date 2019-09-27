@@ -1,3 +1,12 @@
+/* Uncomment this if you want more debug output (disable for releases) */
+#define DEBUG 1
+
+#ifdef RELEASE
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#endif
+
 #include <linux/list.h>
 #include "drbd_windows.h"
 
@@ -94,7 +103,7 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	ULONG_PTR flags;
 
 	if (data == NULL) {
-		printk("kmalloc_debug: Warning: attempt to free the NULL pointer in function %s at %s:%d\n", func, file, line);
+		dbg("kmalloc_debug: Warning: attempt to free the NULL pointer in function %s at %s:%d\n", func, file, line);
 		return;
 	}
 	mem = container_of((void*) data, struct memory, data);
