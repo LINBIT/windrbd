@@ -478,3 +478,11 @@ Disable NDIS lightweight filter for boot NIC:
 
 	Not clear if that really helps .. still there is a 90 seconds
 	(at least) delay.
+
+----
+
+Windows 10: to access network share as guest:
+Windows-R gpedit.msc
+Computer Configuration -> Administrative Templates -> Network -> Lanman Workstation Enable insecure guest logons Set to Enabled and click Ok
+
+
