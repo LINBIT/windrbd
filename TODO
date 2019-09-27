@@ -18,14 +18,13 @@ Milestone: Release 0.10.0
 Planned: Oct 31 2019
 Real: ?
 
-TODO: Test: redo all steps from howto
-
-	In particular it is not clear if the extra install disk
-	driver step is needed.
-
-	Update: at least on Windows 10 it is not needed.
-
 TODOs for Release 0.10.1 -------------------------------------------
+
+TODO: Bug: Sometimes diskless Windows hangs
+
+	The host only network stops working. We get a
+	PingAck didn't arrive in time on both sides. Maybe
+	adjusting the timeouts helps?
 
 TODOs for Release 1.0 ----------------------------------------------
 
@@ -5977,4 +5976,23 @@ Done: Documentation: Write howto for setting up Diskless boot via VMs
 	are currently missing.
 
 	Update: almost finished, ready for being reviewed.
+
+Done: Test: redo all steps from howto
+
+	In particular it is not clear if the extra install disk
+	driver step is needed.
+
+	Update: at least on Windows 10 it is not needed.
+
+	Redone after fixing an error in the config (wrong
+	backing device was used therefore Windows had a
+	wrong IP address) it works.
+
+Done: Installer: Need to install via Have Disk ...
+
+	Try this with a fresh installation. Error was File not
+	found (the windrbd.sys must be in the same directory as
+	the windrbd.inf file).
+
+	Now it works, but is also possible via Have Disk.
 
