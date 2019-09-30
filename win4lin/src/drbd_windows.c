@@ -561,6 +561,10 @@ char *kstrdup(const char *s, int gfp)
 
 void *page_address(const struct page *page)
 {
+		/* This happens sometimes in drbd_drop_unsent() */
+	if (page == NULL)
+		return NULL;
+
 	return page->addr;
 }
 
