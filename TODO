@@ -26,6 +26,8 @@ TODO: Bug: Sometimes diskless Windows hangs
 	PingAck didn't arrive in time on both sides. Maybe
 	adjusting the timeouts helps?
 
+	e50234f64 runs quite stable.
+
 TODOs for Release 1.0 ----------------------------------------------
 
 TODO: Feature: Make timeouts configurable
@@ -76,28 +78,12 @@ TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 	Maybe it is something else. Also, windrbd set-mount-point
 	hangs under Windows 10.
 
-TODO: Feature: Windows 10 add hardware does not allow unsigned INF files
+TODO: Bug: Diskless client hangs on power down
 
-	The third-party INF does not contain digital signature information
+	it hangs in I/O because network is already down and Windows
+	tries to swap in ... need to swap in (disable pagefile)
+	before network goes down.
 
-	We try now with testsigning enabled.
-
-	Fixed for now: GUI solution from 
-https://www.urtech.ca/2016/01/solved-the-third-party-inf-does-not-contain-digital-signature-information
-	works.
-
-TODO: Bug: KERNEL_INPAGE_ERROR on shut down and low on memory.
-
-	BSOD is 0x7a. This means kernel could not read a paged out
-	memory page into memory. This is what we expect with the
-	current implementation. This also happens with much
-	RAM (1,5 GB).
-
-	It might also be an attempt to page in when the DRBD device
-	is already shut down.
-
-	BSOD fixed with 8f4eb9a00 but now it hangs in I/O because network
-	is already down and Windows tries to swap in ...
 	Later BSOD POWER_STATE_FAILURE (0x9f)
 
 TODO: Performance: Retry disable NDIS lightweight filter
@@ -128,64 +114,22 @@ TODO: Feature: update inno setup installer
 	yet. One has also to create the Storage Controller
 	class (see WinCDEmu).
 
-TODO: Bug: BSOD when running unattended
-
-	IRQL BSOD: 
-
-<1> U13:55:39.757|030cfdf0(scsi) windrbd_scsi got SCSIOP_READ_CAPACITY
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_dispatch got request major is f device object is FFFFFA800357B920 (is disk device)
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI function 0
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SRB_FUNCTION_EXECUTE_SCSI SCSI function is 28
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI I/O (0)
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi SCSI I/O waiting for primary
-<1> U13:55:39.819|030cfdf0(scsi) __drbd_make_request 1
-<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 1
-<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 3
-<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 4 rv is 1
-<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 5
-
-	Resource was unconnected.
-
-TODO: Bug: BSOD up-down loop without backing dev and unconnected.
-
-	After ~5 iterations of up-down loop BSOD 0x7e (EXCEPTION_NOT_HANDLED)
-
 TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
 	First need to implement more than one connection.
 
-TODO: Test: Make updownloop work again.
+TODO: Bug: drbdadm down takes long when there is I/O
 
-	It should work:
-		.) With connection (wait-connect)
-		.) With sync-complete
-		.) Without connection (ran 500 times without problems)
-		.) Without local disk but with connection
-		.) Without any successful I/O (diskless unconnected)
+	Up to 1 minute (non-boot resource). I think we already fixed
+	this, but now it is here again ... have to note that we
+	were running with WinDbg attached.
 
-	Update: with ba3d544b9 it runs quite stable, do more tests
-	and close this. Reason was extensive auto promote we did
-	(auto-promote while going down is a bad idea).
+TODO: Bug: BSOD 0xA on running up-down-loop-wait-sync with I/O
 
-	Update: Just had a IRQL BSOD on wait-connect test.
-
-	Update: disconnect / connect / waitconnect ran 1150 times
-	without BSOD.
-
-TODO: Bug: Sync sometimes does not start
-
-	On running updown-loop-wait-sync on Linux peer.
-	Linux peer stuck in WFBitMapT, drbdadm status on
-	Windows hangs.
-
-	Still a problem? (we've fixed the completions).
-
-	Didn't observe lately, closing this.
-
-	Happened again after being secondary (because disks were
-	outdated) and doing a primary --force. Windows was in
-	WFBitMapS, peer (Linux) was uptodate. Followup drbdadm down
-	on Windows side hangs.
+	After 14 iterations, 0b6c79ed988 BSOD'ed. Could not
+	load Debugger symbols, since we already compiled a
+	newer version (don't do this again when in kernel 
+	debugger).
 
 TODO: Bug: Partition manager hangs when there is a resource without size.
 
@@ -226,19 +170,6 @@ TODO: Bug: w0 is read-only
 	again.
 
 	Still an issue?
-
-TODO: Bug: Can also write when secondary.
-
-	DRBD seems to use Linux' mechanism (via open(2)) to check
-	for writability and doesn't check when receiving bio's.
-
-	According to phil, DRBD only checks for Primary in the
-	drbd_open() function, not when receiving requests.
-	We just should not set write requests when the current
-	role is secondary. It is ok to send read requests, DRBD
-	finishes them iff there are no primaries on the network.
-
-	Fixed with 6df3bc33fe0? Test this.
 
 TODO: Feature: Test if it works with Server 2016 also
 
@@ -5995,4 +5926,126 @@ Done: Installer: Need to install via Have Disk ...
 	the windrbd.inf file).
 
 	Now it works, but is also possible via Have Disk.
+
+Done: Feature: Windows 10 add hardware does not allow unsigned INF files
+
+	The third-party INF does not contain digital signature information
+
+	We try now with testsigning enabled.
+
+	Fixed for now: GUI solution from 
+https://www.urtech.ca/2016/01/solved-the-third-party-inf-does-not-contain-digital-signature-information
+	works.
+
+	Update: we now also deliver a signed windrbd.cat file (generated
+	for releases only, using inf2cat) the problem seems to have
+	disappeared.
+
+Done: Bug: BSOD up-down loop without backing dev and unconnected.
+
+	After ~5 iterations of up-down loop BSOD 0x7e (EXCEPTION_NOT_HANDLED)
+
+	No BSOD so far with windrbd-0.9.2-399-g8ce06a4
+	BSOD with windrbd-0.9.2-358-ga527ecb but not with
+	windrbd-0.9.2-399-g8ce06a4 (500 iterations with
+	and without connection). It seems that this bug
+	is fixed now.
+
+Done: Bug: KERNEL_INPAGE_ERROR on shut down and low on memory.
+
+	BSOD is 0x7a. This means kernel could not read a paged out
+	memory page into memory. This is what we expect with the
+	current implementation. This also happens with much
+	RAM (1,5 GB).
+
+	It might also be an attempt to page in when the DRBD device
+	is already shut down.
+
+	BSOD fixed with 8f4eb9a00 but now it hangs in I/O because network
+	is already down and Windows tries to swap in ...
+	Later BSOD POWER_STATE_FAILURE (0x9f)
+
+Done: Bug: BSOD when running unattended
+
+	IRQL BSOD: 
+
+<1> U13:55:39.757|030cfdf0(scsi) windrbd_scsi got SCSIOP_READ_CAPACITY
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_dispatch got request major is f device object is FFFFFA800357B920 (is disk device)
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI function 0
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SRB_FUNCTION_EXECUTE_SCSI SCSI function is 28
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI I/O (0)
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi SCSI I/O waiting for primary
+<1> U13:55:39.819|030cfdf0(scsi) __drbd_make_request 1
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 1
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 3
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 4 rv is 1
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 5
+
+	Resource was unconnected.
+
+	Still a problem?
+
+Done: Bug: Can also write when secondary.
+
+	DRBD seems to use Linux' mechanism (via open(2)) to check
+	for writability and doesn't check when receiving bio's.
+
+	According to phil, DRBD only checks for Primary in the
+	drbd_open() function, not when receiving requests.
+	We just should not set write requests when the current
+	role is secondary. It is ok to send read requests, DRBD
+	finishes them iff there are no primaries on the network.
+
+	Fixed with 6df3bc33fe0? Test this.
+
+Done: Bug: Sync sometimes does not start
+
+	On running updown-loop-wait-sync on Linux peer.
+	Linux peer stuck in WFBitMapT, drbdadm status on
+	Windows hangs.
+
+	Still a problem? (we've fixed the completions).
+
+	Didn't observe lately, closing this.
+
+	Happened again after being secondary (because disks were
+	outdated) and doing a primary --force. Windows was in
+	WFBitMapS, peer (Linux) was uptodate. Followup drbdadm down
+	on Windows side hangs.
+
+	Also Sync stall when there is I/O.
+
+	Update DRBD on both sides to 9.0.20 (once available) to
+	fix this (Linux still has 9.0.14, WinDRBD is based on
+	9.0.17).
+
+	Update: updated DRBD on Linux to 9.0.19 now it seems
+	to work.
+
+Done: Test: Make updownloop work again.
+
+	It should work:
+		.) With connection (wait-connect)
+		.) With sync-complete
+		.) Without connection (ran 500 times without problems)
+		.) Without local disk but with connection
+		.) Without any successful I/O (diskless unconnected)
+
+	Update: with ba3d544b9 it runs quite stable, do more tests
+	and close this. Reason was extensive auto promote we did
+	(auto-promote while going down is a bad idea).
+
+	Update: Just had a IRQL BSOD on wait-connect test.
+
+	Update: disconnect / connect / waitconnect ran 1150 times
+	without BSOD.
+
+	Update: BSOD 7E on I/O and Diskless connected. Reason was
+	page_addr(NULL) called from drbd_drop_unsent(). Fixed in
+	page_addr implementation. Note that drbd_drop_unsent does
+	not exist any more in DRBD, we need to upgrade one day.
+
+	Update: All cases except wait-sync work without BSOD now.
+	Could not test wait-sync since sync never completes (see
+	seperate TODO).
 
