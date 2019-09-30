@@ -1,3 +1,12 @@
+/* Uncomment this if you want more debug output (disable for releases) */
+#define DEBUG 1
+
+#ifdef RELEASE
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#endif
+
 #include "drbd_windows.h"
 #include "windrbd_threads.h"
 #include <wdm.h>
@@ -103,7 +112,7 @@ void windrbd_reap_threads(void)
 
 	list_for_each_entry_safe(struct task_struct, t, tn, &dead_list, list) {
 		windrbd_cleanup_windows_thread(t->windows_thread);
-		printk("Buried %s thread\n", t->comm);
+		dbg("Buried %s thread\n", t->comm);
 
 		list_del(&t->list);
 		kfree(t);
