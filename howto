@@ -486,3 +486,20 @@ Windows-R gpedit.msc
 Computer Configuration -> Administrative Templates -> Network -> Lanman Workstation Enable insecure guest logons Set to Enabled and click Ok
 
 
+-----
+
+Windbg:
+
+Connect Windows VMs via host pipe serial port.
+
+On target (see https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/setting-up-a-null-modem-cable-connection)
+
+bcdedit /debug on
+bcdedit /dbgsettings serial debugport:1 baudrate:115200
+
+Start windbg on debug host (it crashes on connect, just restart
+it with Kernel debug ... (Ctrl-K)) after it crashed, then it should
+connect.
+
+File -> Symbol search path (net use y: \\192.168.56.102\Linbit):
+srv*;Y:\windrbd\win4lin\src;Y:\windrbd\converted-sources\drbd
