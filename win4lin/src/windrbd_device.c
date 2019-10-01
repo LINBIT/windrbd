@@ -143,9 +143,12 @@ static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 						drbd_info(resource, "Auto-promote failed: %s\n", drbd_set_st_err_str(rv));
 						break;
 					}
-					if (rv == SS_SUCCESS)
+					if (rv == SS_SUCCESS) {
+						if (windrbd_rescan_bus() < 0) {
+							printk("Warning: could not rescan bus on becoming primary.\n");
+						}
 						break;
-
+					}
 
 					if (bdev->powering_down || bdev->delete_pending)
 						break;
