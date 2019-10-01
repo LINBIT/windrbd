@@ -7,6 +7,7 @@
 /* #define WINDRBD_RUN_RCU_LOCK_SYNCHRONIZE_RECURSION_TEST 1 */
 /* #define WINDRBD_PRINTK_PING 1 */
 /* #define WINDRBD_WAIT_EVENT_TEST 1 */
+#define WINDRBD_SCHEDULE_UNINTERRUPTIBLE_TEST 1
 
 #ifdef WINDRBD_RUN_TESTS
 
@@ -120,6 +121,27 @@ printk("ending test\n");
 
 #endif
 
+#ifdef WINDRBD_SCHEDULE_UNINTERRUPTIBLE_TEST
+
+static int schedule_uninterruptible_test(void *unused)
+{
+	struct wait_queue_head w;
+	int ret;
+
+printk("Waiting 4 minutes so you can uninstall windrbd\n");
+
+	msleep(4*60*1000);
+
+printk("starting schedule uninterruptible test\n");
+printk("waiting a second ...\n");
+	schedule_timeout_uninterruptible(HZ);
+printk("finished\n");
+
+	return 0;
+}
+
+#endif
+
 void windrbd_run_tests(void)
 {
 #ifdef WINDRBD_RUN_TESTS
@@ -134,6 +156,9 @@ void windrbd_run_tests(void)
 #endif
 #ifdef WINDRBD_WAIT_EVENT_TEST
 	kthread_run(wait_event_test, NULL, "wait-event");
+#endif
+#ifdef WINDRBD_SCHEDULE_UNINTERRUPTIBLE_TEST
+	kthread_run(schedule_uninterruptible_test, NULL, "schedule-unintr");
 #endif
 #else
 	printk("WinDRBD self-tests disabled, see windrbd_test.c for how to enabled them.\n");
