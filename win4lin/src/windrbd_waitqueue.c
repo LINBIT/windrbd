@@ -59,7 +59,15 @@ if (line != 48)	/* silence drbd_md_get_buffer */
 printk("into KeWaitForMultipleObjects from %s:%d (%s()) timeout is %d\n", file, line, func, timeout);
 #endif
 
-	status = KeWaitForMultipleObjects(num_wait_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, wait_time_p, NULL);
+		/* KeWaitForMultipleObjects BSODs when num_wait_objects is
+		 * 0 (on schedule_timeout_uninterruptible() for example).
+		 * So do a simple msleep() like wait.
+		 */
+
+	if (num_wait_objects == 0)
+		status = KeDelayExecutionThread(KernelMode, FALSE, wait_time_p);
+	else
+		status = KeWaitForMultipleObjects(num_wait_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, wait_time_p, NULL);
 
 #if 0
 if (line != 48)	/* silence drbd_md_get_buffer */
