@@ -100,6 +100,17 @@ TODO: Bug: Windows does not mount device
 
 	Is it only when there are no files on the partition?
 
+	Update: Just happened again, please fix this.
+
+	Update: One must read the partition tables. This can done
+	via ioctl(), see windrbd_test: running
+
+	./windrbd-test --gtest_filter=windrbd.get_drive_layout --drive=PhysicalDrive2
+
+	opens the explorer window. Solution is probably (again)
+	a windrbd (drbd-utils) command that reads the device's
+	partition table (but how to find the PhysicalDrive number?)
+
 TODO: Feature: update inno setup installer
 
 	It should create the bus device and should also
@@ -124,12 +135,8 @@ TODO: Bug: drbdadm down takes long when there is I/O
 	this, but now it is here again ... have to note that we
 	were running with WinDbg attached.
 
-TODO: Bug: BSOD 0xA on running up-down-loop-wait-sync with I/O
-
-	After 14 iterations, 0b6c79ed988 BSOD'ed. Could not
-	load Debugger symbols, since we already compiled a
-	newer version (don't do this again when in kernel 
-	debugger).
+	Probably reason is that RemoveLock is taken on I/O even
+	when the device is about to be shut down.
 
 TODO: Bug: Partition manager hangs when there is a resource without size.
 
@@ -6048,4 +6055,15 @@ Done: Test: Make updownloop work again.
 	Update: All cases except wait-sync work without BSOD now.
 	Could not test wait-sync since sync never completes (see
 	seperate TODO).
+
+Done: Bug: BSOD 0xA on running up-down-loop-wait-sync with I/O
+
+	After 14 iterations, 0b6c79ed988 BSOD'ed. Could not
+	load Debugger symbols, since we already compiled a
+	newer version (don't do this again when in kernel 
+	debugger).
+
+	Reason was KeWaitForMultipleObjects() was called with
+	num_objects == 0 which isn't allowed by Windows. Fixed
+	with 5fc2788ef91.
 
