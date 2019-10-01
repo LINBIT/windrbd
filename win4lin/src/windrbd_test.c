@@ -7,7 +7,7 @@
 /* #define WINDRBD_RUN_RCU_LOCK_SYNCHRONIZE_RECURSION_TEST 1 */
 /* #define WINDRBD_PRINTK_PING 1 */
 /* #define WINDRBD_WAIT_EVENT_TEST 1 */
-#define WINDRBD_SCHEDULE_UNINTERRUPTIBLE_TEST 1
+/* #define WINDRBD_SCHEDULE_UNINTERRUPTIBLE_TEST 1 */
 
 #ifdef WINDRBD_RUN_TESTS
 
@@ -122,6 +122,10 @@ printk("ending test\n");
 #endif
 
 #ifdef WINDRBD_SCHEDULE_UNINTERRUPTIBLE_TEST
+
+/* This test just calls schedule_timeout_uninterruptible() - this
+ * function BSOD'ed immediately before 5fc2788ef91.
+ */
 
 static int schedule_uninterruptible_test(void *unused)
 {
