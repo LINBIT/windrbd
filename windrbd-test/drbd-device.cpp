@@ -167,6 +167,23 @@ TEST(windrbd, get_drive_geometry)
 	CloseHandle(h);
 }
 
+TEST(windrbd, get_drive_layout)
+{
+	HANDLE h = do_open_device(0);
+	char layout[10000];
+	DWORD size;
+	BOOL ret;
+	int err;
+
+	ret = DeviceIoControl(h, IOCTL_DISK_GET_DRIVE_LAYOUT_EX, NULL, 0, &layout[0], sizeof(layout), &size, NULL);
+	err = GetLastError();
+printf("size is %d\n", size);
+	EXPECT_EQ(err, ERROR_SUCCESS);
+	EXPECT_NE(ret, 0);
+
+	CloseHandle(h);
+}
+
 TEST(windrbd, get_drive_geometry_invalid)
 {
 	HANDLE h = do_open_device(0);
