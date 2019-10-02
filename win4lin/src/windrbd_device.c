@@ -825,7 +825,9 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			dbg(KERN_DEBUG "file object is NULL\n");
 		}
 
+dbg("into wait_for_becoming_primary\n");
 		status = wait_for_becoming_primary(dev->drbd_device->this_bdev);
+dbg("out of wait_for_becoming_primary, status is %x\n", status);
 		if (status != STATUS_SUCCESS)
 			goto exit;
 
@@ -1674,6 +1676,11 @@ dbg("Returned string is %S\n", string);
 
 		case IRP_MN_QUERY_DEVICE_RELATIONS:
 			dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
+
+			if (!bdev->is_disk_device) {
+				status = STATUS_NOT_IMPLEMENTED;
+				break;
+			} 
 
 			switch (s->Parameters.QueryDeviceRelations.Type) {
 			case TargetDeviceRelation:

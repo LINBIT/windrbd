@@ -603,7 +603,7 @@ struct block_device {
 	int num_openers;
 
 	/* Nonzero when this is a DISK device (with partitions on it) */
-	bool is_disk_device;
+	bool is_disk_device;	/* TODO: rename to is_pnp_device */
 };
 
 	/* Starting with version 0.7.1, this is the device extension
