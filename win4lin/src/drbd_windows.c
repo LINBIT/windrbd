@@ -3364,7 +3364,8 @@ int windrbd_create_windows_device(struct block_device *bdev)
 		 * SDDL_DEVOBJ_SYS_ALL_ADM_ALL as the sddl parameter.
 		 */
 
-	device_type = (bdev->is_disk_device ? FILE_DEVICE_DISK : FILE_DEVICE_UNKNOWN);
+	// device_type = (bdev->is_disk_device ? FILE_DEVICE_DISK : FILE_DEVICE_UNKNOWN);
+	device_type = FILE_DEVICE_DISK;
 
 	status = IoCreateDevice(mvolDriverObject, 
 		                sizeof(struct block_device_reference), 
@@ -3710,11 +3711,14 @@ int windrbd_mount(struct block_device *dev)
 		printk("No mount point set for minor %d, will not be mounted.\n");
 		return 0;	/* this is legal */
 	}
+	if (dev->is_disk_device) {
+		printk("This is a DISK device, mounting will be done for partitions via partition manager.\n");
+		return 0;	/* this is also legal */
+	}
 
 // printk("dev->path_to_device: %S dev->mount_point: %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
 
 // printk("NOT mounting\n");
-#if 0
 	/* This is basically what mount manager does: leave it here,
 	   in case we revert the mount manager code again.
 	 */
@@ -3725,7 +3729,6 @@ int windrbd_mount(struct block_device *dev)
 		return -1;
 
 	}
-#endif
 #if 0
 if (dev->minor == 1 || dev->minor == 2) {
 RtlInitUnicodeString(&vol, L"nix");
@@ -3832,13 +3835,11 @@ int windrbd_umount(struct block_device *bdev)
 #endif
 
 /* TODO: reenable this in case we need mounting again */
-#if 0
 printk("About to IoDeleteSymbolicLink(%S)\n", bdev->mount_point.Buffer);
 	status = IoDeleteSymbolicLink(&bdev->mount_point);
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S, status is %x\n", bdev->mount_point.Buffer, status);
 	}
-#endif
 
 #if 0
 	status = ZwFsControlFile(f, event_handle, NULL, NULL, &iostat, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0);
