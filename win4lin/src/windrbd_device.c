@@ -1405,7 +1405,7 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 
 	for_each_resource(resource, &drbd_resources) {
 		idr_for_each_entry(struct drbd_device *, &resource->devices, drbd_device, vnr) {
-			if (drbd_device && drbd_device->this_bdev && !drbd_device->this_bdev->delete_pending && drbd_device->this_bdev->windows_device != NULL) {
+			if (drbd_device && drbd_device->this_bdev && !drbd_device->this_bdev->delete_pending && drbd_device->this_bdev->windows_device != NULL && drbd_device->this_bdev->is_disk_device) {
 				if (count < max && array != NULL) {
 					array[count] = drbd_device->this_bdev->windows_device;
 					ObReferenceObject(drbd_device->this_bdev->windows_device);
@@ -1721,6 +1721,20 @@ dbg("Returned string is %S\n", string);
 				printk("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
 				status = STATUS_NOT_IMPLEMENTED;
 			}
+	/* forward to lower device: but what is the lower device (bus?) */
+#if 0
+			if (status == STATUS_SUCCESS) {
+				irp->IoStatus.Status = status;
+				IoSkipCurrentIrpStackLocation(irp);
+				struct _IO_STACK_LOCATION s_lower;
+// printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
+				status = IoCallDriver(bus_ext->lower_device, irp);
+			}
+
+		if (status != STATUS_SUCCESS)
+			dbg("Warning: lower device returned status %x\n", status);
+			}
+#endif
 			break;
 
 /*
@@ -1751,7 +1765,7 @@ dbg("Returned string is %S\n", string);
 				break;
 
 			case DeviceTextLocationInformation:
-				string_length = swprintf(string, L"WinDRBD e%d", minor) + 1;
+				string_length = swprintf(string, L"WinDRBD minor %d", minor) + 1;
 
 				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePool(PagedPool, string_length * sizeof(WCHAR));
 				if (irp->IoStatus.Information == 0) {
