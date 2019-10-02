@@ -601,6 +601,9 @@ struct block_device {
 
 	/* Used for debugging handle leaks */
 	int num_openers;
+
+	/* Nonzero when this is a DISK device (with partitions on it) */
+	bool is_disk_device;
 };
 
 	/* Starting with version 0.7.1, this is the device extension

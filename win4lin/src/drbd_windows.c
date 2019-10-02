@@ -3459,11 +3459,6 @@ struct block_device *bdget(dev_t device_no)
 		goto out_remove_lock_failed;
 	}
 
-	ret = windrbd_create_windows_device(block_device);
-	if (ret != 0) {
-		printk("Warning: Couldn't create windows device for volume\n");
-		goto create_windows_device_failed;
-	}
 	block_device->minor = minor;
 	block_device->bd_block_size = 512;
 	block_device->mount_point.Buffer = NULL;
@@ -3482,9 +3477,10 @@ block_device->my_auto_promote = 1;
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);
 	
 	return block_device;
-
+/*
 create_windows_device_failed:
 	IoReleaseRemoveLock(&block_device->remove_lock, NULL);
+*/
 out_remove_lock_failed:
 	kfree(block_device->path_to_device.Buffer);
 out_path_to_device_failed:
@@ -3629,6 +3625,9 @@ int windrbd_set_mount_point_utf16(struct block_device *dev, const wchar_t *mount
 	wcscpy(dev->mount_point.Buffer+dos_devices_len, mount_point);
 #undef DOS_DEVICES
 
+	if (_wcsicmp(mount_point, L"DISK") == 0)
+		dev->is_disk_device = true;
+
 	return 0;
 }
 
@@ -3656,6 +3655,12 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 		printk("Mount point for minor %d set to %S\n", minor, block_device->mount_point.Buffer);
 	else {
 		printk("Warning: could not set mount point, error is %d\n", ret);
+		return ret;
+	}
+
+	ret = windrbd_create_windows_device(block_device);
+	if (ret != 0) {
+		printk("Warning: Couldn't create windows device for volume\n");
 		return ret;
 	}
 

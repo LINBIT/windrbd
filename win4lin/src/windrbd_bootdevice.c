@@ -390,11 +390,9 @@ static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 	if ((ret = new_minor(p->resource, p->minor, p->volume)) != 0)
 		return ret;
 
-	/* The Windows device is now created when creating the minor */
-
-	/* The 'mount_point' is now handled by the disk.sys (or partman.sys)
-	 * driver, no need to do that here.
-	 */
+	/* This will create the Windows device as a DISK */
+	if ((ret = windrbd_set_mount_point_for_minor_utf16(p->minor, L"DISK")) != 0)
+		return ret;
 
 	if ((ret = new_peer(p->resource, p->peer, p->peer_node_id, p->protocol)) != 0)
 		return ret;
