@@ -3420,15 +3420,20 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 		 * request.
 		 */
 
-	if (windrbd_rescan_bus() < 0) {
+	if (bdev->is_disk_device) {
+		if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
-		printk("PnP did not work, removing device manually.\n");
-		IoDeleteDevice(bdev->windows_device);
+			printk("PnP did not work, removing device manually.\n");
+			IoDeleteDevice(bdev->windows_device);
+		} else {
+printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
+			KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
+printk("finished.\n");
+		}
 	} else {
-// printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
-		KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
-// printk("finished.\n");
+		printk("Not a PnP object, removing device manually.\n");
+		IoDeleteDevice(bdev->windows_device);
 	}
 }
 
