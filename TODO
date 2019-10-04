@@ -30,6 +30,26 @@ TODO: Bug: Sometimes diskless Windows hangs
 
 TODOs for Release 1.0 ----------------------------------------------
 
+TODO: Bug: BSOD when running unattended
+
+	IRQL BSOD: 
+
+<1> U13:55:39.757|030cfdf0(scsi) windrbd_scsi got SCSIOP_READ_CAPACITY
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_dispatch got request major is f device object is FFFFFA800357B920 (is disk device)
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI function 0
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SRB_FUNCTION_EXECUTE_SCSI SCSI function is 28
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI I/O (0)
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi SCSI I/O waiting for primary
+<1> U13:55:39.819|030cfdf0(scsi) __drbd_make_request 1
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 1
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 3
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 4 rv is 1
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 5
+
+	Resource was unconnected.
+
+	Still a problem?
+
 TODO: Feature: Make timeouts configurable
 
 	Rework syntax. It should be prepared to support n nodes.
@@ -6023,26 +6043,6 @@ Done: Bug: KERNEL_INPAGE_ERROR on shut down and low on memory.
 	BSOD fixed with 8f4eb9a00 but now it hangs in I/O because network
 	is already down and Windows tries to swap in ...
 	Later BSOD POWER_STATE_FAILURE (0x9f)
-
-Done: Bug: BSOD when running unattended
-
-	IRQL BSOD: 
-
-<1> U13:55:39.757|030cfdf0(scsi) windrbd_scsi got SCSIOP_READ_CAPACITY
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_dispatch got request major is f device object is FFFFFA800357B920 (is disk device)
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI function 0
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SRB_FUNCTION_EXECUTE_SCSI SCSI function is 28
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI I/O (0)
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi SCSI I/O waiting for primary
-<1> U13:55:39.819|030cfdf0(scsi) __drbd_make_request 1
-<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 1
-<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 3
-<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 4 rv is 1
-<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 5
-
-	Resource was unconnected.
-
-	Still a problem?
 
 Done: Bug: Can also write when secondary.
 
