@@ -3632,7 +3632,8 @@ int windrbd_set_mount_point_utf16(struct block_device *dev, const wchar_t *mount
 	wcscpy(dev->mount_point.Buffer+dos_devices_len, mount_point);
 #undef DOS_DEVICES
 
-	if (_wcsicmp(mount_point, L"DISK") == 0)
+	/* For testing: always use PnP */
+//	if (_wcsicmp(mount_point, L"DISK") == 0)
 		dev->is_disk_device = true;
 
 	return 0;
