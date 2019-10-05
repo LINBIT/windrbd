@@ -253,7 +253,25 @@ TODO: Feature: Create a WinPE image with network and WinDRBD.
 	parameters also via DHCP so the user does not need
 	to enter them again.
 
+	In progess: Driver must be signed and WinPE must be
+	64-bit. Then using
+
+		windrbd install-bus-device windrbd.inf
+
+	appears to load the driver (test with
+
+		windrbd inject-faults 1000 all-requests
+
+	). Shouldn't fail.
+
+	Update: Driver now loads when it is signed with official
+	Linbit key. Next issue would be to get a connection, this
+	is probably a firewall issue.
+
 TODO: Feature: support Volume devices
+
+	Not possible. There is no such thing as a Volume device.
+	We need to find another way to provide backwards compatibility.
 
 TODO: Bug: handle the case where DRBD device size drops to 0 again
 
