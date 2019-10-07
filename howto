@@ -503,3 +503,19 @@ connect.
 
 File -> Symbol search path (net use y: \\192.168.56.102\Linbit):
 srv*;Y:\windrbd\win4lin\src;Y:\windrbd\converted-sources\drbd
+
+-----
+
+netsh:
+
+Turn off firewall:
+
+NetSh Advfirewall set allprofiles state off
+
+Check status:
+
+Netsh Advfirewall show allprofiles
+
+# Turn off firewall in Windows PE:
+
+wpeutil disablefirewall
