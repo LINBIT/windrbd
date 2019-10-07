@@ -94,3 +94,14 @@ Formatting FAT:
 0x2d9404
 
 
+------
+
+For installing (using WinPE): setup sends:
+
+0x240008	(FILE_DEVICE_VIRTUAL_DISK)
+0x2d118c	(FILE_DEVICE_MASS_STORAGE)
+
+both are undocumented.
+
+./reactos/sdk/include/reactos/drivers/ntddrdsk.h:#define FSCTL_CREATE_RAM_DISK             CTL_CODE(FILE_DEVICE_VIRTUAL_DISK, 0x0000, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
