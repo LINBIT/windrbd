@@ -168,13 +168,11 @@ printk("drbd_bus_object1 is %p\n", drbd_bus_object1);
 */
 	KeInitializeEvent(&bus_ready_event, NotificationEvent, FALSE);
 
-#if 0
 	status = IoReportRootDevice(DriverObject);
 	if (status != STATUS_SUCCESS)
 		printk("IoReportRootDevice failed status is %x\n", status);
 	else
 		printk("IoReportRootDevice succeeded\n");
-#endif
 
 	printk("Attempting to start boot device\n");
 	windrbd_init_boot_device();
