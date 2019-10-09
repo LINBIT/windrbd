@@ -35,6 +35,10 @@ TODO: Feature: Make timeouts configurable
 	Rework syntax. It should be prepared to support n nodes.
 	Also should have more options like syslog_ip=...
 
+TODO: Feature: have a windrbd create-resource <drbd-URL> command
+
+	This should help with installing via WinPE.
+
 TODO: Bug: Restarting fails with Wrong medium type.
 
 	Linux DRBD thinks Windows is still Primary and refuses
@@ -110,6 +114,8 @@ TODO: Bug: Windows does not mount device
 	opens the explorer window. Solution is probably (again)
 	a windrbd (drbd-utils) command that reads the device's
 	partition table (but how to find the PhysicalDrive number?)
+
+	Update: have an ioctl that reports the drive number
 
 TODO: Feature: update inno setup installer
 
@@ -268,6 +274,13 @@ TODO: Feature: Create a WinPE image with network and WinDRBD.
 	Linbit key. Next issue would be to get a connection, this
 	is probably a firewall issue.
 
+	Update: Working on a winpe howto (to become a techguide)
+	Using WinPE from WADK in conjunction with an extracted
+	install.wim from a Windows 10 ISO, plus neccessary
+	WinDRBD driver and tools is the way to go. Already
+	installed it on a virtual hard drive, next step is
+	to try it with a WinDRBD network device.
+
 TODO: Feature: support Volume devices
 
 	Not possible. There is no such thing as a Volume device.
@@ -306,6 +319,15 @@ TODO: Bug: Allow rcu_read_lock() being called recursively.
 
 	This should fix the system lockup we observed on
 	Server 2016.
+
+TODO: Feature: Set partition ID to 27 to hide partition
+
+	According to a note on 
+
+	https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/configure-biosmbr-based-hard-drive-partitions
+
+	this prevents Windows to mount the partition. Use that for
+	backing devices.
 
 TODOs for after Release 1.0 ----------------------------------------------
 
