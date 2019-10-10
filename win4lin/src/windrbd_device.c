@@ -1649,19 +1649,14 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 					break;
 				case BusQueryHardwareIDs:
 					size_t len;
-/*
 					len = swprintf(string, L"WinDRBDDisk");
 					swprintf(&string[len+1], L"GenDisk");
-*/
-					len = swprintf(string, L"GenDisk");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryCompatibleIDs:
-/*
 					len = swprintf(string, L"WinDRBDDisk");
 					swprintf(&string[len+1], L"GenDisk");
-*/
-					len = swprintf(string, L"GenDisk");
+//					len = swprintf(string, L"GenDisk");
 					status = STATUS_SUCCESS;
 					break;
 				default:
