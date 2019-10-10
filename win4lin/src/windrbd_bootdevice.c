@@ -435,6 +435,14 @@ static int windrbd_create_boot_device_stage2(void *pp)
 	if ((ret = windrbd_wait_for_network()) < 0)
 		return ret;
 
+/* TODO: needed? In case we do not have a bus object configured,
+   we BSOD pretty soon with INACCESSIBLE_BOOT_DEVICE.
+ */
+/*
+	if ((ret = windrbd_wait_bus_object()) < 0)
+		return ret;
+*/
+
 	/* Usually once network is there, the bus object is also
 	 * there (provided it was installed properly by the installer).
 	 */
