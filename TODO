@@ -281,6 +281,21 @@ TODO: Feature: Create a WinPE image with network and WinDRBD.
 	installed it on a virtual hard drive, next step is
 	to try it with a WinDRBD network device.
 
+	Update: Can also install on a WinDRBD device. Next
+	step is to also install WinDRBD driver (need to
+	patch the install.wim file?)
+
+	Update: Right now, booting Windows 10 fails with
+	inaccessible boot device (we do not have bus device
+	and no static IP). Also check if the boot sector
+	magic was done right (BCD config), but it is
+	most likely the missing bus device (PnP does not
+	work without it).
+
+TODO: Bug: Revert fixed syslog ip and fixed boot device config
+
+	Revert a52d180d 54984055d 1cfc405832
+
 TODO: Feature: support Volume devices
 
 	Not possible. There is no such thing as a Volume device.
