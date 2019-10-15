@@ -57,7 +57,7 @@ EWDK_VERSION := 10.0.17763.0
 EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
 
 # Name of the pfx file (without extension)
-KEY = linbit-ha
+KEY = linbit-2019
 PASSWD = ""
 
 WINDRBD_SOURCE = Y:\\windrbd
