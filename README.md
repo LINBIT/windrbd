@@ -317,3 +317,5 @@ Version history
  * 0.9.0 (Dec 03, 2018): Public beta
  * 0.9.1 (Dec 04, 2018): Fixed a buffer overflow in user space utility
  * 0.9.2 (Apr 10, 2019): DRBD 9.0.17, support for n > 2 nodes
+ * 0.10.0 (Oct 15, 2019): Use WinDRBD device as system root ("C:\") (without
+			  local backing storage and in VMs only).
