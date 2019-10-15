@@ -811,7 +811,6 @@ void windrbd_init_boot_device(void)
 {
 	int ret;
 	int i;
-/*
 	static char drbd_config[MAX_DRBD_CONFIG];
 
 	if (search_for_drbd_config(drbd_config, sizeof(drbd_config)) < 0) {
@@ -825,7 +824,6 @@ void windrbd_init_boot_device(void)
 		printk("Error parsing drbd URI (which is '%s') not booting via network\n", drbd_config);
 		return;
 	}
-*/
 
 	for (i=0;i<1;i++) {
 		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
