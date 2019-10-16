@@ -56,6 +56,8 @@ TODO: Bug: currently SCSI windows 7 sends read/write instead of scsi requests
 	now, we get scsi requests after the reboot. This should
 	be fixed after 0.10.0
 
+	Machine is MinimalWindows-SCSIPort.	
+
 TODO: Bug: Reestablish connection of Diskless machine fails.
 
 	Tested with iptables drop / don't drop.
@@ -67,11 +69,6 @@ TODO: Bug: Reestablish connection of Diskless machine fails.
 	unbootable even when it is booted from disk.
 
 	Logs show that WinDRBD device hangs in NetworkFailure (?)
-
-TODO: Test: dhcp.conf: if exists ipxe.windrbd-root
-
-	This does not work currently. Maybe some additional iPXE
-	patch is neccessary.
 
 TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 
@@ -6121,4 +6118,19 @@ Done: Bug: BSOD 0xA on running up-down-loop-wait-sync with I/O
 	Reason was KeWaitForMultipleObjects() was called with
 	num_objects == 0 which isn't allowed by Windows. Fixed
 	with 5fc2788ef91.
+
+Done: Test: dhcp.conf: if exists ipxe.windrbd
+
+	This does not work currently. Maybe some additional iPXE
+	patch is neccessary.
+
+	Update: implemented as if ixpe.windrbd { <windrbd-settings> }
+	else { <chainload windrbd-enabled-ipxe> }
+
+	Needed to patch iPXE, submit this.
+
+Duplicate: Bug: BSOD 0x7B when loosing connection early at boot
+
+	No it is probably related to an already fixed bug
+	(Windows sends read/write instead of SCSI requests).
 
