@@ -3473,6 +3473,12 @@ struct block_device *bdget(dev_t device_no)
 /* TODO: to test 'auto-promote' */
 // block_device->is_bootdevice = 1;
 block_device->my_auto_promote = 1;
+		/* Currently all devices are disk devices, that
+		 * is they are managed by plug and play manager.
+		 * Set this flag early, else Windows will not
+		 * find the disk device.
+		 */
+	block_device->is_disk_device = true;
 
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
@@ -3632,13 +3638,6 @@ int windrbd_set_mount_point_utf16(struct block_device *dev, const wchar_t *mount
 	wcscpy(dev->mount_point.Buffer+dos_devices_len, mount_point);
 #undef DOS_DEVICES
 
-	/* For testing: always use PnP */
-	/* No, I think all devices are disk devices now.
-	 * remove that flag again.
-	 */
-//	if (_wcsicmp(mount_point, L"DISK") == 0)
-		dev->is_disk_device = true;
-
 	return 0;
 }
 
@@ -3692,8 +3691,9 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 	return ret;
 }
 
-/* TODO: this function is currently unused. Maybe that changes (again)
- * in the future, so leave it here for now.
+/* This is intended to be used by boot code where there are
+ * no WinDRBD managed mount points and the device just needs
+ * to be created early so that Windows has a boot device.
  */
 
 int windrbd_create_windows_device_for_minor(int minor)
