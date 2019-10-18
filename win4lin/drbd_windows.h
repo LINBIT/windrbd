@@ -1360,11 +1360,16 @@ extern int dtt_initialize(void);
 extern void dtt_cleanup(void);
 
 struct block_device *bdget(dev_t dev);
+
+	/* TODO: those 3 should become static */
 int windrbd_create_windows_device(struct block_device *bdev);
 // void windrbd_remove_windows_device(struct block_device *bdev);
 
 int windrbd_mount(struct block_device *dev);
 int windrbd_umount(struct block_device *dev);
+
+int windrbd_become_primary(struct drbd_device *device, const char **err_str);
+int windrbd_become_secondary(struct drbd_device *device, const char **err_str);
 
 /* From: include/linux/kdev_t.h : */
 #define MINORBITS	20

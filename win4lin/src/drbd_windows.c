@@ -3633,10 +3633,31 @@ int windrbd_set_mount_point_utf16(struct block_device *dev, const wchar_t *mount
 #undef DOS_DEVICES
 
 	/* For testing: always use PnP */
+	/* No, I think all devices are disk devices now.
+	 * remove that flag again.
+	 */
 //	if (_wcsicmp(mount_point, L"DISK") == 0)
 		dev->is_disk_device = true;
 
 	return 0;
+}
+
+static int create_windows_device_and_mount_it(struct block_device *block_device)
+{
+	int ret;
+
+	ret = windrbd_create_windows_device(block_device);
+	if (ret != 0) {
+		printk("Warning: Couldn't create windows device for volume\n");
+		return ret;
+	}
+
+	ret = windrbd_mount(block_device);
+	if (ret != 0)
+		printk("Warning: Couldn't mount volume, perhaps the drive letter (%S) is in use?\n", block_device->mount_point.Buffer);
+
+
+	return ret;
 }
 
 int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_point)
@@ -3665,17 +3686,8 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 		printk("Warning: could not set mount point, error is %d\n", ret);
 		return ret;
 	}
-
-	ret = windrbd_create_windows_device(block_device);
-	if (ret != 0) {
-		printk("Warning: Couldn't create windows device for volume\n");
-		return ret;
-	}
-
-	ret = windrbd_mount(block_device);
-	if (ret != 0)
-		printk("Warning: Couldn't mount volume, perhaps the drive letter (%S) is in use?\n", mount_point);
-
+	if (block_device->is_bootdevice)
+		ret = create_windows_device_and_mount_it(block_device);
 
 	return ret;
 }
@@ -3717,84 +3729,25 @@ int windrbd_mount(struct block_device *dev)
 		printk("No mount point set for minor %d, will not be mounted.\n");
 		return 0;	/* this is legal */
 	}
+
+#if 0
 	if (dev->is_disk_device) {
 		printk("This is a DISK device, mounting will be done for partitions via partition manager.\n");
 		return 0;	/* this is also legal */
 	}
+#endif
 
-// printk("dev->path_to_device: %S dev->mount_point: %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
-
-// printk("NOT mounting\n");
-	/* This is basically what mount manager does: leave it here,
-	   in case we revert the mount manager code again.
-	 */
-
+/*
 	status = IoCreateSymbolicLink(&dev->mount_point, &dev->path_to_device);
 	if (status != STATUS_SUCCESS) {
 		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, dev->mount_point.Buffer, status);
 		return -1;
 
 	}
-#if 0
-if (dev->minor == 1 || dev->minor == 2) {
-RtlInitUnicodeString(&vol, L"nix");
-RtlInitUnicodeString(&partition, L"nix");
-RtlInitUnicodeString(&hddir, L"\\Device\\Harddisk0");
-RtlInitUnicodeString(&arcname, L"nix");
-if (dev->minor == 2) {
-RtlInitUnicodeString(&vol, L"\\DosDevices\\Volume{2cfd0dc4-12ab-11e9-b29d-806e6f6e6963}");
-RtlInitUnicodeString(&partition, L"\\Device\\Harddisk0\\Partition2");
-RtlInitUnicodeString(&arcname, L"\\ArcName\\multi(0)disk(0)rdisk(0)partition(2)");
-}
-if (dev->minor == 1) {
-RtlInitUnicodeString(&vol, L"\\DosDevices\\Volume{2cfd0dc3-12ab-11e9-b29d-806e6f6e6963}");
-RtlInitUnicodeString(&partition, L"\\Device\\Harddisk0\\Partition1");
-RtlInitUnicodeString(&arcname, L"\\ArcName\\multi(0)disk(0)rdisk(0)partition(1)");
-}
+*/
 
-printk("dev->path_to_device: %S vol: %S\n", dev->path_to_device.Buffer, vol.Buffer);
-	status = IoCreateSymbolicLink(&vol, &dev->path_to_device);
-	if (status != STATUS_SUCCESS) {
-		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", vol.Buffer, dev->path_to_device.Buffer, status);
-	}
-printk("dev->path_to_device: %S partition: %S hddir: %S\n", dev->path_to_device.Buffer, partition.Buffer, hddir.Buffer);
-
-	/* TODO: OBJ_OPENIF ? */
-        InitializeObjectAttributes(&attr, &hddir, OBJ_PERMANENT | OBJ_KERNEL_HANDLE, NULL, NULL);
-
-printk("about to create dir ...\n");
-	status = ZwCreateDirectoryObject(&h, DIRECTORY_ALL_ACCESS, &attr);
-	if (status != STATUS_SUCCESS) {
-		printk("windrbd_mount: couldn't create dir %S status: %x\n", hddir.Buffer, status);
-	}
-	ZwClose(h);
-
-printk("linking %S to %S ...\n", partition.Buffer, dev->path_to_device.Buffer);
-	status = IoCreateSymbolicLink(&partition, &dev->path_to_device);
-	if (status != STATUS_SUCCESS) {
-		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", partition.Buffer, dev->path_to_device.Buffer, status);
-	} else {
-printk("linking %S to %S ...\n", arcname.Buffer, partition.Buffer);
-		status = IoCreateSymbolicLink(&arcname, &partition);
-		if (status != STATUS_SUCCESS) {
-			printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", arcname.Buffer, partition.Buffer, status);
-		} else {
-printk("linking arcname succeeded\n");
-		}
-	}
-}
-#else
-#if 0
-		/* this currently does not work. We create the Windows
-		 * devices while not yet Primary, DRBD refuses to open
-		 * them with no medium found and mount manager opens
-		 * the device but fails. For now create the drive letter
-		 * manually.
-		 */
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
-#endif
-#endif
 
 	dev->is_mounted = true;
 
@@ -3821,7 +3774,6 @@ int windrbd_umount(struct block_device *bdev)
 		printk("windrbd_umount() called while not mounted.\n");
 		return 0;
 	}
-#if 0
 	InitializeObjectAttributes(&attr, &bdev->mount_point, OBJ_KERNEL_HANDLE, NULL, NULL);
 
 	event = IoCreateNotificationEvent(NULL, &event_handle);
@@ -3838,16 +3790,13 @@ int windrbd_umount(struct block_device *bdev)
 		printk("ZwOpenFile failed, status is %x\n", status);
 		return -1;
 	}
-#endif
 
-/* TODO: reenable this in case we need mounting again */
-printk("About to IoDeleteSymbolicLink(%S)\n", bdev->mount_point.Buffer);
+	dbg("About to IoDeleteSymbolicLink(%S)\n", bdev->mount_point.Buffer);
 	status = IoDeleteSymbolicLink(&bdev->mount_point);
 	if (status != STATUS_SUCCESS) {
-		WDRBD_WARN("Failed to remove symbolic link (drive letter) %S, status is %x\n", bdev->mount_point.Buffer, status);
+		printk("Warning: Failed to remove symbolic link (drive letter) %S, status is %x\n", bdev->mount_point.Buffer, status);
 	}
 
-#if 0
 	status = ZwFsControlFile(f, event_handle, NULL, NULL, &iostat, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0);
 	if (status == STATUS_PENDING) {
 		KeWaitForSingleObject(event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
@@ -3860,11 +3809,38 @@ printk("About to IoDeleteSymbolicLink(%S)\n", bdev->mount_point.Buffer);
 		return -1;
 	}
 	ZwClose(f);
-#endif
 
 	bdev->is_mounted = false;
 	return 0;
 }
+
+int windrbd_become_primary(struct drbd_device *device, const char **err_str)
+{
+	if (!device->this_bdev->is_bootdevice) {
+		if (windrbd_create_windows_device(device->this_bdev) != 0)
+			windrbd_device_error(device, err_str, "Warning: Couldn't create windows device for volume %d\n", device->vnr);
+
+		if (windrbd_mount(device->this_bdev) != 0)
+			windrbd_device_error(device, err_str, "Warning: Couldn't mount volume %d, perhaps the drive letter (%S) is in use?\n", device->vnr, device->this_bdev->mount_point.Buffer);
+	}
+	KeSetEvent(&device->this_bdev->primary_event, 0, FALSE);
+
+	return 0;
+}
+
+int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
+{
+	if (!device->this_bdev->is_bootdevice) {
+		if (windrbd_umount(device->this_bdev) != 0)
+			windrbd_device_error(device, err_str, "Warning: couldn't umount volume %d\n", device->vnr);
+		windrbd_remove_windows_device(device->this_bdev);
+	}
+
+	KeClearEvent(&device->this_bdev->primary_event);
+
+	return 0;
+}
+
 
 static void windrbd_destroy_block_device(struct kref *kref)
 {

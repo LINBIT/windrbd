@@ -1,0 +1,37 @@
+From 964aee1dd074defd5d336aa1bf163346a0e94c6c Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 18 Oct 2019 12:56:08 +0200
+Subject: [PATCH] Have WinDRBD hooks when changing role.
+
+We should not hack Windows specific behaviour into a
+patched DRBD file. This patch allows us to do whatever
+we have to do when becoming Primary or Secondary.
+---
+ drbd/drbd_nl.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 94950d3..9dfc380 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -1039,7 +1039,7 @@ drbd_set_role(struct drbd_resource *resource, enum drbd_role role, bool force, s
+ 
+ 	if (old_role == R_PRIMARY && role == R_SECONDARY) {
+ 		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr) {
+-			KeClearEvent(&device->this_bdev->primary_event);
++			windrbd_become_secondary(device, &err_str);
+ 		}
+ 	}
+ 
+@@ -1273,7 +1273,7 @@ retry:
+ 
+ 	if (old_role == R_SECONDARY && role == R_PRIMARY) {
+ 		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr) {
+-			KeSetEvent(&device->this_bdev->primary_event, 0, FALSE);
++			windrbd_become_primary(device, &err_str);
+ 		}
+ 	}
+ 
+-- 
+2.17.0
+
