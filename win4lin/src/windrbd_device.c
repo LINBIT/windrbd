@@ -1707,6 +1707,7 @@ dbg("Returned string is %S\n", string);
 				break;
 			}
 
+#if 0
 			case BusRelations:
 			{
 				struct _DEVICE_RELATIONS *device_relations;
@@ -1723,6 +1724,7 @@ dbg("Returned string is %S\n", string);
 				status = STATUS_SUCCESS;
 				break;
 			}
+#endif
 
 			default:
 				printk("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
