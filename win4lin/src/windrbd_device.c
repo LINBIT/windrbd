@@ -1684,8 +1684,8 @@ dbg("Returned string is %S\n", string);
 
 			switch (s->Parameters.QueryDeviceRelations.Type) {
 			case TargetDeviceRelation:
-			case EjectionRelations:
-			case RemovalRelations:
+/*			case EjectionRelations:
+			case RemovalRelations: */
 			{
 				struct _DEVICE_RELATIONS *device_relations;
 				size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
