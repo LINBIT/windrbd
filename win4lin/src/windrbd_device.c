@@ -506,7 +506,6 @@ printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	case IOCTL_DISK_IS_WRITABLE:
 		break;	/* just return without error */
 
-#if 0
 	case IOCTL_MOUNTDEV_QUERY_DEVICE_NAME:
 	{
 		int length = dev->path_to_device.Length;
@@ -589,7 +588,6 @@ printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		irp->IoStatus.Information = total_length;
 		break;
 	}
-#endif
 
 	case IOCTL_STORAGE_GET_HOTPLUG_INFO:
 		struct _STORAGE_HOTPLUG_INFO *hotplug_info = 
@@ -825,11 +823,13 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			dbg(KERN_DEBUG "file object is NULL\n");
 		}
 
+		if (dev->is_bootdevice) {
 dbg("into wait_for_becoming_primary\n");
-		status = wait_for_becoming_primary(dev->drbd_device->this_bdev);
+			status = wait_for_becoming_primary(dev->drbd_device->this_bdev);
 dbg("out of wait_for_becoming_primary, status is %x\n", status);
-		if (status != STATUS_SUCCESS)
-			goto exit;
+			if (status != STATUS_SUCCESS)
+				goto exit;
+		}
 
 		mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
        	               (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0;
