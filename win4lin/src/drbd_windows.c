@@ -3604,6 +3604,20 @@ NTSTATUS pnp_callback(void *notification, void *context)
 	return STATUS_SUCCESS;
 }
 
+bool windrbd_has_mount_point(struct block_device *dev)
+{
+	if (dev == NULL)
+		return false;
+
+	if (dev->mount_point.Buffer == NULL)
+		return false;
+
+	if (dev->mount_point.Buffer[0] == L'\0')
+		return false;
+
+	return true;
+}
+
 int windrbd_set_mount_point_utf16(struct block_device *dev, const wchar_t *mount_point)
 {
 	if (mount_point == NULL)
