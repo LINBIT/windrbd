@@ -1677,7 +1677,12 @@ dbg("Returned string is %S\n", string);
 		case IRP_MN_QUERY_DEVICE_RELATIONS:
 			dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
 
-			if (!bdev->is_disk_device) {
+		/* Devices that have a WinDRBD assigned mount point
+		 * (via device "X:" minor y;) are non-PnP devices,
+		 * else there are driver verifier blue screens.
+		 */
+
+			if (!bdev->is_disk_device || windrbd_has_mount_point(bdev)) {
 				status = STATUS_NOT_IMPLEMENTED;
 				break;
 			} 
