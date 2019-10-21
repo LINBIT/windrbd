@@ -3420,7 +3420,7 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 		 * request.
 		 */
 
-	if (bdev->is_disk_device) {
+	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
 		if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
@@ -3435,6 +3435,7 @@ printk("finished.\n");
 		printk("Not a PnP object, removing device manually.\n");
 		IoDeleteDevice(bdev->windows_device);
 	}
+	bdev->windows_device = NULL;
 }
 
 /* This is DRBD specific: DRBD calls this only once (same for
@@ -3867,13 +3868,20 @@ static void windrbd_destroy_block_device(struct kref *kref)
 		if (bdev->is_mounted)
 			windrbd_umount(bdev);
 
-		kfree(bdev->mount_point.Buffer);
-		bdev->mount_point.Buffer = NULL;
 	}
 	if (bdev->windows_device != NULL) {
 		windrbd_remove_windows_device(bdev);
 	}
 
+		/* Do this after removing device, so that we
+		 * we know if it was mounted (non-PnP) or not
+		 * (PnP way via REMOVE_DEVICE request).
+		 */
+
+	if (bdev->mount_point.Buffer != NULL) {
+		kfree(bdev->mount_point.Buffer);
+		bdev->mount_point.Buffer = NULL;
+	}
 	kfree(bdev->path_to_device.Buffer);
 	bdev->path_to_device.Buffer = NULL;
 
