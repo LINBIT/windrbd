@@ -3318,7 +3318,7 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
    caller.
  */
 
-static int minor_to_windows_device_name(UNICODE_STRING *name, int minor)
+static int minor_to_windows_device_name(UNICODE_STRING *name, int minor, int dos_device)
 {
 	NTSTATUS status;
 	size_t len = 32;
@@ -3332,10 +3332,10 @@ static int minor_to_windows_device_name(UNICODE_STRING *name, int minor)
 	name->Length = 0;
 	name->MaximumLength = (len - 1) * sizeof(name->Buffer[0]);
 
-	status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
-		/* TODO: tmp patch for diskless boot */
-		/* Update: This seems to be neccessary */
-//	status = RtlUnicodeStringPrintf(name, L"\\Device\\HarddiskVolume%d", minor);
+	if (dos_device)
+		status = RtlUnicodeStringPrintf(name, L"\\DosDevices\\Drbd%d", minor);
+	else
+		status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
 
 	if (status != STATUS_SUCCESS) {
 		WDRBD_WARN("minor_to_dos_name: couldn't printf device name for minor %d status: %x\n", minor, status);
@@ -3347,6 +3347,47 @@ static int minor_to_windows_device_name(UNICODE_STRING *name, int minor)
 
 	return 0;
 }
+
+static int create_dos_link(struct block_device *dev)
+{
+	NTSTATUS status;
+	UNICODE_STRING dos_name;
+
+	if (minor_to_windows_device_name(&dos_name, dev->drbd_device->minor, 1) < 0) {
+		printk("Warning: could not create DOS filename\n");
+		return -1;
+	}
+
+	status = IoCreateSymbolicLink(&dos_name, &dev->path_to_device);
+	if (status != STATUS_SUCCESS) {
+		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, dos_name.Buffer, status);
+		return -1;
+	}
+	printk("Created symlink from %S to %S\n", dos_name.Buffer, dev->path_to_device.Buffer);
+
+	return 0;
+}
+
+static int remove_dos_link(struct block_device *dev)
+{
+	NTSTATUS status;
+	UNICODE_STRING dos_name;
+
+	if (minor_to_windows_device_name(&dos_name, dev->drbd_device->minor, 1) < 0) {
+		printk("Warning: could not create DOS filename\n");
+		return -1;
+	}
+
+	status = IoDeleteSymbolicLink(&dos_name);
+	if (status != STATUS_SUCCESS) {
+		printk("windrbd_mount: couldn't remove symlink %S status: %x\n", dos_name.Buffer, status);
+		return -1;
+	}
+	printk("Created symlink from %S to %S\n", dos_name.Buffer, dev->path_to_device.Buffer);
+
+	return 0;
+}
+
 
 int windrbd_create_windows_device(struct block_device *bdev)
 {
@@ -3395,6 +3436,8 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	new_device->Flags |= DO_DIRECT_IO;
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
+	create_dos_link(bdev);
+
 	return 0;
 }
 
@@ -3419,6 +3462,8 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 
 		/* counterpart to acquiring in bdget() */
 	IoReleaseRemoveLock(&bdev->remove_lock, NULL);
+
+	remove_dos_link(bdev);
 
 		/* Tell the PnP manager that we are about to disappear.
 		 * The device object will be deleted in a PnP REMOVE_DEVICE
@@ -3460,7 +3505,7 @@ struct block_device *bdget(dev_t device_no)
 	if (block_device == NULL)
 		return NULL;
 
-	if (minor_to_windows_device_name(&block_device->path_to_device, minor) < 0)
+	if (minor_to_windows_device_name(&block_device->path_to_device, minor, 0) < 0)
 		goto out_path_to_device_failed;
 
 	kref_init(&block_device->kref);
@@ -3612,15 +3657,19 @@ NTSTATUS pnp_callback(void *notification, void *context)
 
 bool windrbd_has_mount_point(struct block_device *dev)
 {
+printk("1\n");
 	if (dev == NULL)
 		return false;
 
+printk("2\n");
 	if (dev->mount_point.Buffer == NULL)
 		return false;
 
+printk("3\n");
 	if (dev->mount_point.Buffer[0] == L'\0')
 		return false;
 
+printk("4: %S\n", dev->mount_point.Buffer);
 	return true;
 }
 
