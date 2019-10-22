@@ -801,6 +801,11 @@ static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
+
+dbg("ref is %p\n", ref);
+if (ref != NULL)
+dbg("ref->bdev is %p, delete_pending is %d\n", ref->bdev, ref->bdev->delete_pending);
+
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
