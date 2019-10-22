@@ -3380,7 +3380,12 @@ int windrbd_create_windows_device(struct block_device *bdev)
 
 		return -1;
 	}
+	printk("Windows device %p created for block device %p\n", new_device, bdev);
 	bdev->windows_device = new_device;
+		/* It might still be set from a former drbdadm secondary.
+		 */
+	bdev->delete_pending = false;
+
 	bdev_ref = new_device->DeviceExtension;
 	bdev_ref->bdev = bdev;
 	bdev_ref->magic = BLOCK_DEVICE_UPPER_MAGIC;
