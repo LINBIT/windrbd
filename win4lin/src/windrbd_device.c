@@ -1687,7 +1687,8 @@ dbg("Returned string is %S\n", string);
 		 * else there are driver verifier blue screens.
 		 */
 
-			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev) || !bdev->is_bootdevice) {
+//			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev) || !bdev->is_bootdevice) {
+			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev)) {
 				status = STATUS_NOT_IMPLEMENTED;
 				break;
 			} 
