@@ -3426,6 +3426,7 @@ int windrbd_create_windows_device(struct block_device *bdev)
 		/* It might still be set from a former drbdadm secondary.
 		 */
 	bdev->delete_pending = false;
+	bdev->about_to_delete = false;
 
 	bdev_ref = new_device->DeviceExtension;
 	bdev_ref->bdev = bdev;
