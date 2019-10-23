@@ -1688,10 +1688,15 @@ dbg("Returned string is %S\n", string);
 		 */
 
 //			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev) || !bdev->is_bootdevice) {
+
 			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev)) {
 				status = STATUS_NOT_IMPLEMENTED;
 				break;
 			} 
+
+		/* TODO: There is a race .. bdev->windows_device might get deleted
+		 * here.
+		 */
 
 			switch (s->Parameters.QueryDeviceRelations.Type) {
 			case TargetDeviceRelation:
