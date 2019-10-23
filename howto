@@ -519,3 +519,16 @@ Netsh Advfirewall show allprofiles
 # Turn off firewall in Windows PE:
 
 wpeutil disablefirewall
+
+-----
+
+kpartx -a /dev/drbdN
+	creates a /dev/dm-X for each partition on /dev/drbdN 
+	those then can be mounted like any other disk.
+
+kpartx -d /dev/drbdN
+	removes /dev/dm-X for each partition on /dev/drbdN 
+	needed before drbdadm down.
+
+Document this is some user's guide.
+----
