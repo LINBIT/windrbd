@@ -3891,6 +3891,10 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 
 		if (windrbd_mount(device->this_bdev) != 0)
 			windrbd_device_error(device, err_str, "Warning: Couldn't mount volume %d, perhaps the drive letter (%S) is in use?\n", device->vnr, device->this_bdev->mount_point.Buffer);
+
+		if (windrbd_rescan_bus() < 0) {
+			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
+		}
 	}
 	KeSetEvent(&device->this_bdev->primary_event, 0, FALSE);
 
@@ -3903,6 +3907,10 @@ int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 		if (windrbd_umount(device->this_bdev) != 0)
 			windrbd_device_error(device, err_str, "Warning: couldn't umount volume %d\n", device->vnr);
 		windrbd_remove_windows_device(device->this_bdev);
+
+		if (windrbd_rescan_bus() < 0) {
+			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
+		}
 	}
 
 	KeClearEvent(&device->this_bdev->primary_event);
