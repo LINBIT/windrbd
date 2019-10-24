@@ -20,6 +20,22 @@ Real: Oct 16 2019
 
 TODOs for Release 0.10.1 -------------------------------------------
 
+Milestone: Release 0.10.1
+Planned: Nov 8 2019
+Real:
+
+TODO: Code quality: Submit drbd-utils patches.
+
+TODO: Feature: allow missing device name in drbd.conf
+
+	Right now, (Linux) utils assigns /dev/drbd<minor>
+	to volume device name if there is no explicit
+	volume disk name given. For WinDRBD this should
+	be an empty string (/dev/drbd.. has no meaning
+	on WinDRBD).
+
+TODOs for Release 1.0 ----------------------------------------------
+
 TODO: Bug: Sometimes diskless Windows hangs
 
 	The host only network stops working. We get a
@@ -28,32 +44,14 @@ TODO: Bug: Sometimes diskless Windows hangs
 
 	e50234f64 runs quite stable.
 
-TODOs for Release 1.0 ----------------------------------------------
-
-TODO: Bug: BSOD when running unattended
-
-	IRQL BSOD: 
-
-<1> U13:55:39.757|030cfdf0(scsi) windrbd_scsi got SCSIOP_READ_CAPACITY
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_dispatch got request major is f device object is FFFFFA800357B920 (is disk device)
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI function 0
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SRB_FUNCTION_EXECUTE_SCSI SCSI function is 28
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI I/O (0)
-<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi SCSI I/O waiting for primary
-<1> U13:55:39.819|030cfdf0(scsi) __drbd_make_request 1
-<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 1
-<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 3
-<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 4 rv is 1
-<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 5
-
-	Resource was unconnected.
-
-	Still a problem?
-
 TODO: Feature: Make timeouts configurable
 
 	Rework syntax. It should be prepared to support n nodes.
 	Also should have more options like syslog_ip=...
+
+TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
+
+	First need to implement more than one connection.
 
 TODO: Feature: have a windrbd create-resource <drbd-URL> command
 
@@ -64,19 +62,6 @@ TODO: Bug: Restarting fails with Wrong medium type.
 	Linux DRBD thinks Windows is still Primary and refuses
 	CGI script read requests. We should wait a bit in the
 	CGI script if the error is Wrong medium type.
-
-TODO: Bug: currently SCSI windows 7 sends read/write instead of scsi requests
-
-	Something wrong with the installer. It should not try to
-	create the bus object, this fails when installing while
-	being diskless (and connected).
-
-	Installer now has been reverted to not touch the bus
-	object. Installing into a Diskless boot machine works
-	now, we get scsi requests after the reboot. This should
-	be fixed after 0.10.0
-
-	Machine is MinimalWindows-SCSIPort.	
 
 TODO: Bug: Reestablish connection of Diskless machine fails.
 
@@ -111,29 +96,6 @@ TODO: Performance: Retry disable NDIS lightweight filter
 
 	We still have the 90 seconds boot delay.
 
-TODO: Bug: Windows does not mount device
-
-	On drbdadm up it is expected to assign the M: letter
-	to one partition however this never happens now.
-
-	It is done when scanning partitions in partition manager.
-	Maybe the open comes too early (resource gets primary)?
-
-	Is it only when there are no files on the partition?
-
-	Update: Just happened again, please fix this.
-
-	Update: One must read the partition tables. This can done
-	via ioctl(), see windrbd_test: running
-
-	./windrbd-test --gtest_filter=windrbd.get_drive_layout --drive=PhysicalDrive2
-
-	opens the explorer window. Solution is probably (again)
-	a windrbd (drbd-utils) command that reads the device's
-	partition table (but how to find the PhysicalDrive number?)
-
-	Update: have an ioctl that reports the drive number
-
 TODO: Feature: update inno setup installer
 
 	It should create the bus device and should also
@@ -147,10 +109,6 @@ TODO: Feature: update inno setup installer
 	when there are no storage class (SCSI) bus devices
 	yet. One has also to create the Storage Controller
 	class (see WinCDEmu).
-
-TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
-
-	First need to implement more than one connection.
 
 TODO: Bug: drbdadm down takes long when there is I/O
 
@@ -170,18 +128,6 @@ TODO: Bug: Partition manager hangs when there is a resource without size.
 	It got better but now it hangs in wait_for_becoming_primary().
 	Not sure what to do.
 
-TODO: Bug: BSOD on drbdadm down when not connected.
-
-	But has local backing storage.
-
-	Last log lines are
-
-Aug  5 14:14:15 192.168.56.101  U12:14:15.150|0206d2d0(not_drbd_thread) run_singlethread_workqueue 5
-Aug  5 14:14:15 192.168.56.101  U12:14:15.150|0206d2d0(not_drbd_thread) run_singlethread_workqueue 1
-Aug  5 14:14:15 192.168.56.101  U12:14:15.150|036ffd40(netlink) flush_workqueue work finished (or killed)
-
-	Maybe we have to reengineer the worqueue layer as well ...
-
 TODO: Bug: With a no-I/O resource up BSOD on power down
 
 	POWER_STATE_FAILURE
@@ -193,64 +139,11 @@ TODO: Bug: With a no-I/O resource up BSOD on power down
 	When making the resource primary (by drbdadm up on
 	the peer) it continues and Windows is shut down.
 
-TODO: Bug: w0 is read-only
-
-	This does not have a MBR on it. To work around it make it primary
-	set it offline with partition manager and set it online
-	again.
-
-	Still an issue?
-
 TODO: Feature: Test if it works with Server 2016 also
 
 TODO: Feature: Windows should take IP address from DHCP on boot
 
 	Right now, we assign a static address.
-
-Milestone: Release 0.10.0
-Planned: Oct 31 2019
-Real: ?
-
-TODOs for Release 1.0 ----------------------------------------------
-
-TODO: Feature: Become Primary only on write requests
-
-	Do if (bdev->is_bootdevice && role != PRIMARY)
-
-	Done, fixes the drbdadm down takes long and most BSOD
-	on up-down-loop.sh
-
-	Need to fix the open code (Find out how to find if open
-	is for writing).
-
-TODO: Feature: Fix auto-promote
-
-	We shouldn't call become Primary on write requests,
-	instead we should fail them. We also should finally
-	find how the driver can detect writable open in
-	windrbd_create. Lastly we should invalidate the
-	filesystem cache when becoming Primary.
-
-	Currently Windows does not boot..but we get logs via
-	network. This is an independent bug. We (later) should
-	revert 525a84a or at least wait for primary in
-	CLAIM_DEVICE again.
-
-TODO: Bug: drbdadm down takes up to 30 seconds to complete
-
-	Problem is that REMOVE_DEVICE is sent only after a long
-	timeout (but why?) sometimes.
-
-	Sometimes also hangs 'forever' (>10 minutes). Is this a
-	handle leak? DRBD worker is hanging in drbd_sender.c:3008 ...
-
-	Implementing wake_up_all() didn't fix it. Maybe this is
-	some Windows process having an open handle, we should
-	cancel IRPs on drbdadm down...
-
-	Update: fixed completions but still takes 25-30 seconds
-	for drbdadm down. This seems to be an open handle to
-	the block device. Maybe test with winaoe?
 
 TODO: Implement: Reengineer workqueues
 
@@ -259,6 +152,8 @@ TODO: Security: How to identify clients with cgi-script
 	We don't want 'everybody that is on the net' being able
 	to access the DRBD device, not even read only. How
 	is this done with iSCSI? AoE?
+
+	Oliver mentioned MacSEC.
 
 TODO: Feature: set netboot flag via iPXE
 
@@ -308,15 +203,6 @@ TODO: Feature: Create a WinPE image with network and WinDRBD.
 	magic was done right (BCD config), but it is
 	most likely the missing bus device (PnP does not
 	work without it).
-
-TODO: Bug: Revert fixed syslog ip and fixed boot device config
-
-	Revert a52d180d 54984055d 1cfc405832
-
-TODO: Feature: support Volume devices
-
-	Not possible. There is no such thing as a Volume device.
-	We need to find another way to provide backwards compatibility.
 
 TODO: Bug: handle the case where DRBD device size drops to 0 again
 
@@ -6133,4 +6019,160 @@ Duplicate: Bug: BSOD 0x7B when loosing connection early at boot
 
 	No it is probably related to an already fixed bug
 	(Windows sends read/write instead of SCSI requests).
+
+Done: Bug: BSOD when running unattended
+
+	IRQL BSOD: 
+
+<1> U13:55:39.757|030cfdf0(scsi) windrbd_scsi got SCSIOP_READ_CAPACITY
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_dispatch got request major is f device object is FFFFFA800357B920 (is disk device)
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI function 0
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SRB_FUNCTION_EXECUTE_SCSI SCSI function is 28
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi got SCSI I/O (0)
+<1> U13:55:39.819|030cfdf0(scsi) windrbd_scsi SCSI I/O waiting for primary
+<1> U13:55:39.819|030cfdf0(scsi) __drbd_make_request 1
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 1
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 3
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 4 rv is 1
+<1> U13:55:39.819|030cfdf0(scsi) inc_ap_bio_cond 5
+
+	Resource was unconnected.
+
+	Still a problem?
+
+	Closing this for now.
+
+Rejected: Bug: currently SCSI windows 7 sends read/write instead of scsi requests
+
+	Something wrong with the installer. It should not try to
+	create the bus object, this fails when installing while
+	being diskless (and connected).
+
+	Installer now has been reverted to not touch the bus
+	object. Installing into a Diskless boot machine works
+	now, we get scsi requests after the reboot. This should
+	be fixed after 0.10.0
+
+	Machine is MinimalWindows-SCSIPort.	
+
+	Meaning that it is a legacy device. The machine was probably
+	misconfigured by a buggy windrbd install-bus-device (maybe
+	some extra device was destroyed). Rejecting this for now.
+
+Done: Bug: Windows does not mount device
+
+	On drbdadm up it is expected to assign the M: letter
+	to one partition however this never happens now.
+
+	It is done when scanning partitions in partition manager.
+	Maybe the open comes too early (resource gets primary)?
+
+	Is it only when there are no files on the partition?
+
+	Update: Just happened again, please fix this.
+
+	Update: One must read the partition tables. This can done
+	via ioctl(), see windrbd_test: running
+
+	./windrbd-test --gtest_filter=windrbd.get_drive_layout --drive=PhysicalDrive2
+
+	opens the explorer window. Solution is probably (again)
+	a windrbd (drbd-utils) command that reads the device's
+	partition table (but how to find the PhysicalDrive number?)
+
+	Update: have an ioctl that reports the drive number
+
+	Update: We now have windrbd scan-partitions-for-minor
+	and it seems to work quite good.
+
+Done: Bug: BSOD on drbdadm down when not connected.
+
+	But has local backing storage.
+
+	Last log lines are
+
+Aug  5 14:14:15 192.168.56.101  U12:14:15.150|0206d2d0(not_drbd_thread) run_singlethread_workqueue 5
+Aug  5 14:14:15 192.168.56.101  U12:14:15.150|0206d2d0(not_drbd_thread) run_singlethread_workqueue 1
+Aug  5 14:14:15 192.168.56.101  U12:14:15.150|036ffd40(netlink) flush_workqueue work finished (or killed)
+
+	Maybe we have to reengineer the worqueue layer as well ...
+
+	Reengineered the PnP up down primary secondary thing and
+	this should be fixed now.
+
+Done: Bug: w0 is read-only
+
+	This does not have a MBR on it. To work around it make it primary
+	set it offline with partition manager and set it online
+	again.
+
+	Still an issue?
+
+	Should be fixed after reengineering the PnP thing.
+
+Done: Feature: Become Primary only on write requests
+
+	Do if (bdev->is_bootdevice && role != PRIMARY)
+
+	Done, fixes the drbdadm down takes long and most BSOD
+	on up-down-loop.sh
+
+	Need to fix the open code (Find out how to find if open
+	is for writing).
+
+	Update: We now reverted to old behaviour where a windows
+	device only exists if the device is primary (for both
+	legacy and PnP devices). For boot devices however we
+	need to promote whenever we can.
+
+	Unfortunately I still don't know how to detect if windows
+	wants read-only or read-write open (create()).
+
+Rejected: Feature: Fix auto-promote
+
+	We shouldn't call become Primary on write requests,
+	instead we should fail them. We also should finally
+	find how the driver can detect writable open in
+	windrbd_create. Lastly we should invalidate the
+	filesystem cache when becoming Primary.
+
+	Currently Windows does not boot..but we get logs via
+	network. This is an independent bug. We (later) should
+	revert 525a84a or at least wait for primary in
+	CLAIM_DEVICE again.
+
+	Update: auto-promote probably won't make it into
+	the 1.0 release since we create the windows device
+	only on becoming primary (both PnP and non-PnP)
+
+Done: Bug: drbdadm down takes up to 30 seconds to complete
+
+	Problem is that REMOVE_DEVICE is sent only after a long
+	timeout (but why?) sometimes.
+
+	Sometimes also hangs 'forever' (>10 minutes). Is this a
+	handle leak? DRBD worker is hanging in drbd_sender.c:3008 ...
+
+	Implementing wake_up_all() didn't fix it. Maybe this is
+	some Windows process having an open handle, we should
+	cancel IRPs on drbdadm down...
+
+	Update: fixed completions but still takes 25-30 seconds
+	for drbdadm down. This seems to be an open handle to
+	the block device. Maybe test with winaoe?
+
+	Update: This should be fixed now.
+
+Done: Bug: Revert fixed syslog ip and fixed boot device config
+
+	Revert a52d180d 54984055d 1cfc405832
+
+Done: Feature: support Volume devices
+
+	Not possible. There is no such thing as a Volume device.
+	We need to find another way to provide backwards compatibility.
+
+	Now reverted to windows device only when primary and
+	have legacy (with mount point) and PnP (with empty
+	mount point) devices.
 
