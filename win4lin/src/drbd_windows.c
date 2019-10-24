@@ -3427,6 +3427,7 @@ int windrbd_create_windows_device(struct block_device *bdev)
 		 */
 	bdev->delete_pending = false;
 	bdev->about_to_delete = false;
+	KeClearEvent(&bdev->device_removed_event);
 
 	bdev_ref = new_device->DeviceExtension;
 	bdev_ref->bdev = bdev;
