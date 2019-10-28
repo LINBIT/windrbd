@@ -26,14 +26,6 @@ Real:
 
 TODO: Code quality: Submit drbd-utils patches.
 
-TODO: Feature: allow missing device name in drbd.conf
-
-	Right now, (Linux) utils assigns /dev/drbd<minor>
-	to volume device name if there is no explicit
-	volume disk name given. For WinDRBD this should
-	be an empty string (/dev/drbd.. has no meaning
-	on WinDRBD).
-
 TODOs for Release 1.0 ----------------------------------------------
 
 TODO: Bug: Sometimes diskless Windows hangs
@@ -6175,4 +6167,12 @@ Done: Feature: support Volume devices
 	Now reverted to windows device only when primary and
 	have legacy (with mount point) and PnP (with empty
 	mount point) devices.
+
+Done: Feature: allow missing device name in drbd.conf
+
+	Right now, (Linux) utils assigns /dev/drbd<minor>
+	to volume device name if there is no explicit
+	volume disk name given. For WinDRBD this should
+	be an empty string (/dev/drbd.. has no meaning
+	on WinDRBD).
 
