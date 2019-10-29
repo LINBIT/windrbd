@@ -26,6 +26,13 @@ Real:
 
 TODO: Code quality: Submit drbd-utils patches.
 
+TODO: Test: See if booting from WinDRBD device still works.
+
+TODO: Bug: BSOD when accessing ReFS device
+
+	It just disappeared again (when debugging via WinDbg).
+	Unclear where this comes from (IRQL BSOD in ReFS).
+
 TODOs for Release 1.0 ----------------------------------------------
 
 TODO: Bug: Sometimes diskless Windows hangs
