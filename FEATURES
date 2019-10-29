@@ -25,6 +25,9 @@ Driver Unloading
 
 3 (and more) node setups (from 0.9.2 on)
 
+Other filesystems (FAT family, ReFS)
+	Tested for data devices on Windows 10.
+
 ----- for 1.0.0
 
 Using System Volume (C:\) as DRBD device (diskless client with PXE boot)
@@ -36,8 +39,6 @@ Using System Volume (C:\) as DRBD device (with local backing storage disk)
 ----- for 1.2.0
 
 Auto-Promote (if possible at all)
-
-Other filesystems (FAT family, ReFS)
 
 Online verify
 
