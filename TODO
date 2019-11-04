@@ -26,7 +26,15 @@ Real:
 
 TODO: Code quality: Submit drbd-utils patches.
 
-TODO: Test: See if booting from WinDRBD device still works.
+TODO: Test: Test installing signed WinDRBD over signed WinDRBD
+
+	Need to boot from harddisk?
+
+TODOs for Release 0.10.2 -------------------------------------------
+
+Milestone: Release 0.10.2
+Planned:
+Real:
 
 TODO: Bug: BSOD when accessing ReFS device
 
@@ -6182,4 +6190,9 @@ Done: Feature: allow missing device name in drbd.conf
 	volume disk name given. For WinDRBD this should
 	be an empty string (/dev/drbd.. has no meaning
 	on WinDRBD).
+
+Done: Test: See if booting from WinDRBD device still works.
+
+	Yes, but cannot install a signed WinDRBD over a
+	non-signed WinDRBD. 
 
