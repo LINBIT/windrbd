@@ -22,6 +22,12 @@ TODOs for Release 0.10.1 -------------------------------------------
 
 Milestone: Release 0.10.1
 Planned: Nov 8 2019
+Real: Nov 6 2019
+
+TODOs for Release 0.10.2 -------------------------------------------
+
+Milestone: Release 0.10.2
+Planned:
 Real:
 
 TODO: Code quality: Submit drbd-utils patches.
@@ -35,12 +41,6 @@ TODO: Bug: Sometimes driver signature is not recognized.
 	This leads to an unbootable Windows. The error is
 	signature not valid for WinDRBD bus device and also
 	happens with (already released) 0.10.0-signed package.
-
-TODOs for Release 0.10.2 -------------------------------------------
-
-Milestone: Release 0.10.2
-Planned:
-Real:
 
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
