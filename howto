@@ -278,6 +278,10 @@ make bin-x86_64-pcbios/ipxe.pxe
 make && cp bin/ipxe.pxe ~/public_html/ipxe/ipxework.pxe
 
 iPXE is configured via header files in src/config
+
+make DEBUG=ibft:3,iscsi:3
+sudo cp bin/ipxe.pxe /var/www/html/ipxe/ipxe-iscsi.pxe 
+
 -----
 
 Windows Server 2016: empty password: Start->Windows Verwaltungstools->Lokale Sicherheitsrichtlinie->Kontorichtlinien->Kennwortrichtlinien->Alter auf 0, Komplexit ausschalten.
