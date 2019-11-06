@@ -184,14 +184,45 @@ your shell (Windows Explorer in most cases) gets notified
 about the new drive, so you probably will get a panel that
 asks you if the drive should be formatted.
 
+Starting with 0.10.1, we distinguish between data devices
+and disk devices. Data devices are regular block devices
+with a mount point. They can be formatted with NTFS, other
+file systems like FAT family and ReFS are not yet supported.
+
+Disk devices present themselves as a regular PnP disk
+(like a physical hard disk) and appear as disk in the
+Windows partition manager (and also in device manager).
+With partition manager a partition table can be created
+and then paritions (with assigned drive letters) can
+be created on the disk. The partitions can be formatted
+with all supported file systems. The drawback however is
+that there must be a partition table on the disk (under
+Linux, kpartx can be used to create device nodes for
+each partition).
+
+Example for a disk device would be:
+
+	device minor 42;
+
+(with no mount point). Mount points can be assigned with
+partition manager.
+
+A special case of the disk device is the boot device. Booting
+from a remote (Linux) server is possible now (however 
+without local backing storage and installation is quite
+difficult now). There is a document on 
+
+	https://downloads.linbit.com/
+
+("Setting up WinDRBD diskless boot") that describes the
+process (which is subject to change).
+
 Current limitations
 ===================
 
 Our planned 1.0 release will have following restrictions:
 
   * Auto-promote is not supported.
-
-  * System Volume (C:) cannot be used for windrbd.
 
   * No 32-Bit version is supported, only 64 bit.
 
@@ -208,6 +239,13 @@ We might fix following current (0.7.4) restrictions for the
   * Of the DRBD features, the following are currently unsupported:
     discard, biosets, debugfs, online verify, RB_CONGESTED_REMOTE,
     write same, disk stats, trimming.
+
+Following works starting from 0.10.0):
+
+  * System Volume (C:) can be used for windrbd (however without 
+    local backing storage for now).
+
+Please also check the file FEATURES in the repository.
 
 Logging
 =======
