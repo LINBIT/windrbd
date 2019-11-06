@@ -319,3 +319,4 @@ Version history
  * 0.9.2 (Apr 10, 2019): DRBD 9.0.17, support for n > 2 nodes
  * 0.10.0 (Oct 15, 2019): Use WinDRBD device as system root ("C:\") (without
 			  local backing storage and in VMs only).
+ * 0.10.1 (Nov 6, 2019): Data devices and Disk devices work again.
