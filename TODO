@@ -26,9 +26,16 @@ Real: Nov 6 2019
 
 TODOs for Release 0.10.2 -------------------------------------------
 
-Milestone: Release 0.10.2
+Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned:
 Real:
+
+TODO: Bug: windrbd patches to ipxe break iscsi
+
+TODO: Feature: make it work without having to install virtual bus device
+
+	See disp.c: there are IoCreateRootDevice() calls that may
+	do the trick
 
 TODO: Code quality: Submit drbd-utils patches.
 

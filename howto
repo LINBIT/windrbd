@@ -536,3 +536,40 @@ kpartx -d /dev/drbdN
 
 Document this is some user's guide.
 ----
+iISCSI:
+
+sudo apt-get install istgt
+copy config files from /usr/share/doc/istgt/examples/
+gunzip istgt.cont
+
+dd if=/dev/zero of=filename bs=1024 size=$[ 50*1024 ]
+
+edit in /etc/istgt/istgt.conf
+PortalGroup1 IP Address
+InitiatorGroup1 Netmask
+LogicalUnit1 Storage (filename and size)
+
+sudo istgt -D
+sudo istgt -D -t all
+
+sudo apt-get open-iscsi
+sudo iscsi_discovery 192.168.56.102
+
+sudo iscsistart -i test -t iqn.2007-09.jp.ne.peach.istgt:disk1 -g 1 -a 192.168.56.102
+
+sudo iscsiadm -m node -T iqn.2007-09.jp.ne.peach.istgt:disk1 -p 192.168.56.102:3260
+
+sudo iscsiadm -m node -T iqn.2007-09.jp.ne.peach.istgt:disk1 -p 192.168.56.102:3260 --login
+
+Then /dev/sdm exists: can mount it:
+
+sudo mount /dev/sdm mnt
+
+sudo iscsiadm -m node -T iqn.2007-09.jp.ne.peach.istgt:disk1 -p 192.168.56.102:3260 --logout
+----
+iSCSI via iPXE:
+
+dhcp net0
+sanboot -k iscsi:192.168.56.102::::iqn.2007-09.jp.ne.peach.istgt:disk1
+# sanboot iscsi:192.168.56.102::::iqn.2007-09.jp.ne.peach.istgt:disk1
+# sanboot iscsi:192.168.56.102:::1:iqn.2007-09.jp.ne.peach.istgt:disk1
