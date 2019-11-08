@@ -30,12 +30,30 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned:
 Real:
 
+TODO: Feature: Set StartType in inf back to 3 (manual start)
+
+	And set bootflags to 1 (required for network boot).
+
+TODO: Code quality: Squash patches in transform.d
+
+	Redo all changes (we now have patches that revert former
+	patches).
+
+TODO: Feature: Upgrade DRBD to 9.0.21
+
+TODO: Documentation: Draw diagram (from Joel)
+
+TODO: Infrastructure: Move Linbit VMs to new server
+
 TODO: Bug: windrbd patches to ipxe break iscsi
 
 TODO: Feature: make it work without having to install virtual bus device
 
 	See disp.c: there are IoCreateRootDevice() calls that may
 	do the trick
+
+	MS iSCSI initiator can do it (no seperate step to install
+	the Virtual Bus device Microsoft iSCSI Initiator).
 
 TODO: Code quality: Submit drbd-utils patches.
 
