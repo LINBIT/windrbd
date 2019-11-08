@@ -7,11 +7,10 @@ Rework boot URL syntax
         Also have more than one DRBD node
         Also can specify syslog_ip.
 
-Make DHCP on boot device work
-        right now, need to configure a static address
+Don't require configuring the WinDRBD bus device
 
-Netboot flag
-        So we don't have to patch the registry
+(inno-setup: fix creation of bus device)
+	if needed
 
 Make fcgi script for serving boot device
         With keep-alive
@@ -20,8 +19,6 @@ Make reestablish connection work
 
 Make hang on shutdown work
         Reason is swap in from pagefile when there is no more network
-
-inno-setup: fix creation of bus device
 
 stability fixes
         For example, BSOD on running unattendend.
@@ -32,4 +29,10 @@ Done:
 
 0.10.1: Allow whole disk as WinDRBD device (mount as drive): 0.9.2 compat
         And revert behaviour of creating device only on becoming Primary
+
+0.10.2: Make DHCP on boot device work
+        right now, need to configure a static address
+
+0.10.2: Netboot flag
+        So we don't have to patch the registry
 
