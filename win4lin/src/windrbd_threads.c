@@ -242,7 +242,8 @@ printk("1 karinzak\n");
 	t->sig = -1;
 
 	va_start(args, name);
-	i = _vsnprintf_s(t->comm, sizeof(t->comm)-1, sizeof(t->comm)-1, name, args);
+	// i = _vsnprintf_s(t->comm, sizeof(t->comm)-1, sizeof(t->comm)-1, name, args);
+	i = _vsnprintf_s(t->comm, sizeof(t->comm)-1, _TRUNCATE, name, args);
 	va_end(args);
 #if 0
 	if (i == -1) {
