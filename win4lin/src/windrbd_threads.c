@@ -217,8 +217,10 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	int i;
 	NTSTATUS status;
 
-	if ((t = kzalloc(sizeof(*t), GFP_KERNEL, 'DRBD')) == NULL)
+	if ((t = kzalloc(sizeof(*t), GFP_KERNEL, 'DRBD')) == NULL) {
+//		printk("Could not allocate thread structure (%s)\n", name);
 		return ERR_PTR(-ENOMEM);
+	}
 
 		/* The thread will be created later in wake_up_process(),
 		 * since Windows doesn't know of threads that are stopped
@@ -242,6 +244,7 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	va_end(args);
 	if (i == -1) {
 		kfree(t);
+//		printk("Could not assign thread name (%s)\n", name);
 		return ERR_PTR(-ERANGE);
 	}
 
@@ -252,7 +255,8 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 
 	status = windrbd_create_windows_thread(windrbd_thread_setup, t, &t->windows_thread);
 	if (status != STATUS_SUCCESS) {
-		printk("Could not start thread %s\n", t->comm);
+//		printk("Could not start thread %s, status is %x\n", t->comm, status);
+		kfree(t);
 		return ERR_PTR(-ENOMEM);	/* or whatever */
 	}
 
@@ -260,6 +264,7 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	list_add(&t->list, &thread_list);
 	spin_unlock_irqrestore(&thread_list_lock, flags);
 
+// printk("Returning pointer %p\n", t);
 	return t;
 }
 
