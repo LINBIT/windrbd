@@ -1146,7 +1146,6 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
     struct workqueue_struct * wq = kzalloc(sizeof(struct workqueue_struct), 0, '31DW');
     va_list args;
     va_start(args, flags);	/* TODO: no va_end ?!?! */
-    NTSTATUS status;
 
 
     if (!wq)
@@ -1161,16 +1160,9 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
     InitializeListHead(&wq->list_head);
     KeInitializeSpinLock(&wq->list_lock);
 
-    status = RtlStringCbVPrintfA(wq->name, sizeof(wq->name)-1, fmt, args);
 	/* ignore error if string is too long */
-#if 0
-    if (status != STATUS_SUCCESS) {
-	WDRBD_ERROR("Can't RtlStringCbVPrintfA");
-        kfree(wq);
-        return NULL;
-    }
-#endif
-    wq->name[sizeof(wq->name)-1] = '\0';
+	(void) RtlStringCbVPrintfA(wq->name, sizeof(wq->name)-1, fmt, args);
+	wq->name[sizeof(wq->name)-1] = '\0';
 
     wq->run = TRUE;
 

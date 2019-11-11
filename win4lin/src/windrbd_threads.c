@@ -214,15 +214,10 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	struct task_struct *t;
 	ULONG_PTR flags;
 	va_list args;
-	int i;
 	NTSTATUS status;
 
-printk("1 karinzak\n");
-
-	if ((t = kzalloc(sizeof(*t), GFP_KERNEL, 'DRBD')) == NULL) {
-//		printk("Could not allocate thread structure (%s)\n", name);
+	if ((t = kzalloc(sizeof(*t), GFP_KERNEL, 'DRBD')) == NULL)
 		return ERR_PTR(-ENOMEM);
-	}
 
 		/* The thread will be created later in wake_up_process(),
 		 * since Windows doesn't know of threads that are stopped
@@ -241,17 +236,10 @@ printk("1 karinzak\n");
 	t->has_sig_event = TRUE;
 	t->sig = -1;
 
+		/* ignore if string is too long */
 	va_start(args, name);
-	// i = _vsnprintf_s(t->comm, sizeof(t->comm)-1, sizeof(t->comm)-1, name, args);
-	i = _vsnprintf_s(t->comm, sizeof(t->comm)-1, _TRUNCATE, name, args);
+	(void)  _vsnprintf_s(t->comm, sizeof(t->comm)-1, _TRUNCATE, name, args);
 	va_end(args);
-#if 0
-	if (i == -1) {
-		kfree(t);
-//		printk("Could not assign thread name (%s)\n", name);
-		return ERR_PTR(-ERANGE);
-	}
-#endif
 	t->comm[sizeof(t->comm)-1] = '\0';
 
 	spin_lock_irqsave(&next_pid_lock, flags);
@@ -260,9 +248,8 @@ printk("1 karinzak\n");
 	spin_unlock_irqrestore(&next_pid_lock, flags);
 
 	status = windrbd_create_windows_thread(windrbd_thread_setup, t, &t->windows_thread);
-printk("2 karinzak status is %x\n", status);
 	if (status != STATUS_SUCCESS) {
-//		printk("Could not start thread %s, status is %x\n", t->comm, status);
+		printk("Could not start thread %s, status is %x.\n", t->comm, status);
 		kfree(t);
 		return ERR_PTR(-ENOMEM);	/* or whatever */
 	}
@@ -271,7 +258,6 @@ printk("2 karinzak status is %x\n", status);
 	list_add(&t->list, &thread_list);
 	spin_unlock_irqrestore(&thread_list_lock, flags);
 
-// printk("Returning pointer %p\n", t);
 	return t;
 }
 
