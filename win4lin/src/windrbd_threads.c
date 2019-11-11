@@ -217,6 +217,8 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	int i;
 	NTSTATUS status;
 
+printk("1 karinzak\n");
+
 	if ((t = kzalloc(sizeof(*t), GFP_KERNEL, 'DRBD')) == NULL) {
 //		printk("Could not allocate thread structure (%s)\n", name);
 		return ERR_PTR(-ENOMEM);
@@ -240,13 +242,16 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	t->sig = -1;
 
 	va_start(args, name);
-	i = _vsnprintf_s(t->comm, sizeof(t->comm)-1, _TRUNCATE, name, args);
+	i = _vsnprintf_s(t->comm, sizeof(t->comm)-1, sizeof(t->comm)-1, name, args);
 	va_end(args);
+#if 0
 	if (i == -1) {
 		kfree(t);
 //		printk("Could not assign thread name (%s)\n", name);
 		return ERR_PTR(-ERANGE);
 	}
+#endif
+	t->comm[sizeof(t->comm)-1] = '\0';
 
 	spin_lock_irqsave(&next_pid_lock, flags);
 	next_pid++;
@@ -254,6 +259,7 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	spin_unlock_irqrestore(&next_pid_lock, flags);
 
 	status = windrbd_create_windows_thread(windrbd_thread_setup, t, &t->windows_thread);
+printk("2 karinzak status is %x\n", status);
 	if (status != STATUS_SUCCESS) {
 //		printk("Could not start thread %s, status is %x\n", t->comm, status);
 		kfree(t);
