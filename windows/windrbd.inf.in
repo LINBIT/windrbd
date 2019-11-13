@@ -87,7 +87,7 @@ AddReg           = WinDRBD.AddRegistry
 
 [WinDRBD.AddRegistry]
 HKR,,"syslog_ip",0x00000002, "127.0.0.1"
-HKR,,"BootFlags", 0, 0x1		;boot critical when booting via network
+HKR,,"BootFlags", 0x00010001, 1		; DWORD: boot critical when booting via network
 
 [WinDRBD.DelRegistry]
 HKR,,"syslog_ip"
