@@ -27,12 +27,8 @@ Real: Nov 6 2019
 TODOs for Release 0.10.2 -------------------------------------------
 
 Milestone: Release 0.10.2 (netboot flag and configure IP address)
-Planned:
+Planned: Nov 15 2019
 Real:
-
-TODO: Feature: Set StartType in inf back to 3 (manual start)
-
-	And set bootflags to 1 (required for network boot).
 
 TODO: Code quality: Squash patches in transform.d
 
@@ -45,8 +41,6 @@ TODO: Documentation: Draw diagram (from Joel)
 
 TODO: Infrastructure: Move Linbit VMs to new server
 
-TODO: Bug: windrbd patches to ipxe break iscsi
-
 TODO: Feature: make it work without having to install virtual bus device
 
 	See disp.c: there are IoCreateRootDevice() calls that may
@@ -57,15 +51,13 @@ TODO: Feature: make it work without having to install virtual bus device
 
 TODO: Code quality: Submit drbd-utils patches.
 
-TODO: Test: Test installing signed WinDRBD over signed WinDRBD
-
-	Need to boot from harddisk?
-
 TODO: Bug: Sometimes driver signature is not recognized.
 
 	This leads to an unbootable Windows. The error is
 	signature not valid for WinDRBD bus device and also
 	happens with (already released) 0.10.0-signed package.
+
+	Our certificate seems to have a problem with Windows 7.
 
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
@@ -6238,4 +6230,20 @@ Done: Test: See if booting from WinDRBD device still works.
 
 	Yes, but cannot install a signed WinDRBD over a
 	non-signed WinDRBD. 
+
+Done: Feature: Set StartType in inf back to 3 (manual start)
+
+	And set bootflags to 1 (required for network boot).
+	Done, Test it
+	Seems to work. One has to remove the Virtual Bus driver
+	to see WinDRBD not loading when not netbooting.
+
+Done: Bug: windrbd patches to ipxe break iscsi
+
+	Fixed. Now there is a version that works for both.
+
+Done: Test: Test installing signed WinDRBD over signed WinDRBD
+
+	Need to boot from harddisk?
+	No, it works within a netbooted Windows.
 
