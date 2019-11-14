@@ -150,7 +150,7 @@ build drbd-utils-windows (make package take drbdadm, ... from build dir)
 mount ewdk (double click EWDK_rs5_... ISO on Desktop)
 # make BUILD_ENV=jt-win10 R=1 package
 # make clean: rebuild so that DEBUG is always unset (disables debug output).
-make clean && make packages R=1
+make clean && make package R=1
 
 # test install on Windows VM which has no test mode set (must come up after reboot)
 # pass resulting install-windrbd-0.x.0-betay-signed.exe to clients
