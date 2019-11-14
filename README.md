@@ -358,3 +358,5 @@ Version history
  * 0.10.0 (Oct 15, 2019): Use WinDRBD device as system root ("C:\") (without
 			  local backing storage and in VMs only).
  * 0.10.1 (Nov 6, 2019): Data devices and Disk devices work again.
+ * 0.10.2 (Nov 14,2019): iPXE passes network address to kernel: no need for
+			 static IP and StartType registry patch for booting.
