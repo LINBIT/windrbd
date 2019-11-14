@@ -38,6 +38,16 @@
 #include "drbd_wrappers.h"
 
 NTSTATUS NTAPI IoReportRootDevice(PDRIVER_OBJECT driver);
+NTSTATUS NTAPI IoReportDetectedDevice(
+  PDRIVER_OBJECT DriverObject,
+  INTERFACE_TYPE LegacyBusType,
+  ULONG BusNumber,
+  ULONG SlotNumber,
+  PCM_RESOURCE_LIST ResourceList,
+  PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements,
+  BOOLEAN ResourceAssigned,
+  PDEVICE_OBJECT *DeviceObject
+);
 
 	/* TODO: find some headers where this fits. */
 void drbd_cleanup(void);
@@ -52,7 +62,7 @@ DRIVER_ADD_DEVICE mvolAddDevice;
 #endif
 
 PDEVICE_OBJECT drbd_bus_device;
-static PDEVICE_OBJECT drbd_bus_object1;
+static PDEVICE_OBJECT drbd_legacy_bus_object;
 static PDEVICE_OBJECT drbd_physical_bus_device;
 
 KEVENT bus_ready_event;
@@ -157,9 +167,9 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	windrbd_run_tests();
 
+	IoReportDetectedDevice(DriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_legacy_bus_object);
+printk("drbd_legacy_bus_object is %p\n", drbd_legacy_bus_object);
 /*
-	IoReportDetectedDevice(DriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_bus_object1);
-printk("drbd_bus_object1 is %p\n", drbd_bus_object1);
 	status = mvolAddDevice(DriverObject, drbd_bus_object1);
 	if (status != STATUS_SUCCESS)
 		printk("mvolAddDevice failed status is %x\n", status);
