@@ -3656,19 +3656,15 @@ NTSTATUS pnp_callback(void *notification, void *context)
 
 bool windrbd_has_mount_point(struct block_device *dev)
 {
-printk("1\n");
 	if (dev == NULL)
 		return false;
 
-printk("2\n");
 	if (dev->mount_point.Buffer == NULL)
 		return false;
 
-printk("3\n");
 	if (dev->mount_point.Buffer[0] == L'\0')
 		return false;
 
-printk("4: %S\n", dev->mount_point.Buffer);
 	return true;
 }
 
