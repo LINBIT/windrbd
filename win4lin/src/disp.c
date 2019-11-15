@@ -67,6 +67,32 @@ static PDEVICE_OBJECT drbd_physical_bus_device;
 
 KEVENT bus_ready_event;
 
+int create_bus_device(void)
+{
+	NTSTATUS status;
+	PDEVICE_OBJECT new_device;
+	UNICODE_STRING bus_device_name;
+
+        RtlInitUnicodeString(&bus_device_name, L"WinDRBD");
+
+	status = IoCreateDevice(mvolDriverObject,
+				4,	/* 0? */	
+				&bus_device_name,
+				FILE_DEVICE_CONTROLLER,
+                                FILE_DEVICE_SECURE_OPEN,
+                                FALSE,
+                                &new_device);
+
+	if (status != STATUS_SUCCESS || new_device == NULL) {
+		printk("Could not create WinDRBD bus object.\n");
+		return -1;
+	}
+	drbd_bus_device = new_device;
+printk("drbd_bus_device is %p\n", drbd_bus_device);
+
+	return 0;
+}
+
 NTSTATUS
 DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 {
@@ -163,10 +189,13 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	windrbd_init_usermode_helper();
 	windrbd_init_wsk();
 
+	create_bus_device();
+
 	printk(KERN_INFO "Windrbd Driver loaded.\n");
 
 	windrbd_run_tests();
 
+#if 0
 	IoReportDetectedDevice(DriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_legacy_bus_object);
 printk("drbd_legacy_bus_object is %p\n", drbd_legacy_bus_object);
 /*
@@ -176,6 +205,7 @@ printk("drbd_legacy_bus_object is %p\n", drbd_legacy_bus_object);
 	else
 		printk("mvolAddDevice bus object succeeded\n");
 */
+#endif
 	KeInitializeEvent(&bus_ready_event, NotificationEvent, FALSE);
 
 #if 0
@@ -284,6 +314,7 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 
 	printk(KERN_INFO "AddDevice: PhysicalDeviceObject is %p\n", PhysicalDeviceObject);
 
+#if 0
 	if (drbd_bus_device == NULL) {
 		RtlInitUnicodeString(&drbd_bus, L"\\Device\\WinDRBD");
 		RtlInitUnicodeString(&drbd_bus_dos, L"\\DosDevices\\WinDRBD");
@@ -320,6 +351,7 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 		drbd_bus_device = bus_device;
 		drbd_physical_bus_device = PhysicalDeviceObject;
 	}
+#endif
 #if 0
  else {
 		struct block_device_reference *ref;
