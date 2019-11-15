@@ -28,7 +28,7 @@ TODOs for Release 0.10.2 -------------------------------------------
 
 Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
-Real:
+Real: Nov 15 2019
 
 TODO: Code quality: Squash patches in transform.d
 
@@ -50,14 +50,6 @@ TODO: Feature: make it work without having to install virtual bus device
 	the Virtual Bus device Microsoft iSCSI Initiator).
 
 TODO: Code quality: Submit drbd-utils patches.
-
-TODO: Bug: Sometimes driver signature is not recognized.
-
-	This leads to an unbootable Windows. The error is
-	signature not valid for WinDRBD bus device and also
-	happens with (already released) 0.10.0-signed package.
-
-	Our certificate seems to have a problem with Windows 7.
 
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
 	FAT does not work (Invalid function when accessing DRBD device)
@@ -6246,4 +6238,15 @@ Done: Test: Test installing signed WinDRBD over signed WinDRBD
 
 	Need to boot from harddisk?
 	No, it works within a netbooted Windows.
+
+Done: Bug: Sometimes driver signature is not recognized.
+
+	This leads to an unbootable Windows. The error is
+	signature not valid for WinDRBD bus device and also
+	happens with (already released) 0.10.0-signed package.
+
+	Our certificate seems to have a problem with Windows 7.
+
+	Update: This is only with older Windows 7 boxes that
+	have no updates later than 2010 or so. Rejecting.
 

@@ -581,3 +581,11 @@ dhcp net0
 sanboot -k iscsi:192.168.56.102::::iqn.2007-09.jp.ne.peach.istgt:disk1
 # sanboot iscsi:192.168.56.102::::iqn.2007-09.jp.ne.peach.istgt:disk1
 # sanboot iscsi:192.168.56.102:::1:iqn.2007-09.jp.ne.peach.istgt:disk1
+
+----
+
+clone vdi:
+
+vboxmanage clonevdi '/Volumes/Linbit WDRBD/Linbit/WinDRBDNew2019/Snapshots/{b83d7f0d-2a91-49be-b876-bed6fb3fe20e}.vdi' ./WinDRBDRemoteBoot/WinDRBDRemoteBoot.vdi
+
+Where the source is the latest snapshot VDI.
