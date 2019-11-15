@@ -73,7 +73,7 @@ int create_bus_device(void)
 	PDEVICE_OBJECT new_device;
 	UNICODE_STRING bus_device_name;
 
-        RtlInitUnicodeString(&bus_device_name, L"WinDRBD");
+	RtlInitUnicodeString(&bus_device_name, L"\\Device\\WinDRBD");
 
 	status = IoCreateDevice(mvolDriverObject,
 				4,	/* 0? */	
@@ -84,12 +84,20 @@ int create_bus_device(void)
                                 &new_device);
 
 	if (status != STATUS_SUCCESS || new_device == NULL) {
-		printk("Could not create WinDRBD bus object.\n");
+		printk("Could not create WinDRBD bus object, status is %x.\n", status);
 		return -1;
 	}
 	drbd_bus_device = new_device;
-printk("drbd_bus_device is %p\n", drbd_bus_device);
 
+printk("drbd_bus_device is %p\n", drbd_bus_device);
+        drbd_bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
+
+	// status = IoReportDetectedDevice(mvolDriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_bus_device);
+	status = IoReportDetectedDevice(mvolDriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, NULL);
+	if (status != STATUS_SUCCESS) {
+		printk("Could not report WinDRBD bus object, status is %x.\n", status);
+		return -1;
+	}
 	return 0;
 }
 
