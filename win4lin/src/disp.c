@@ -75,6 +75,7 @@ int create_bus_device(void)
 	PDEVICE_OBJECT new_device2;
 	UNICODE_STRING bus_device_name;
 
+#if 0
 	RtlInitUnicodeString(&bus_device_name, L"\\Device\\WinDRBD");
 
 	status = IoCreateDevice(mvolDriverObject,
@@ -99,9 +100,12 @@ printk("characteristics is before %x\n", drbd_bus_device->Characteristics);
 printk("characteristics is after %x\n", drbd_bus_device->Characteristics);
 	drbd_bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
+#endif
+
 printk("1\n");
 //	status = IoReportDetectedDevice(mvolDriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_bus_device);
-	new_device2 = drbd_bus_device;
+//	new_device2 = drbd_bus_device;
+	new_device2 = NULL;
 printk("2 %p\n", new_device2);
 	status = IoReportDetectedDevice(mvolDriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &new_device2);
 printk("3 %p\n", new_device2);
@@ -109,15 +113,10 @@ printk("3 %p\n", new_device2);
 		printk("Could not report WinDRBD bus object, status is %x.\n", status);
 		return -1;
 	}
-	drbd_bus_device = new_device2;
-printk("4 flags is %x\n", drbd_bus_device->Flags);
-
-printk("characteristics is before %x\n", drbd_bus_device->Characteristics);
-	drbd_bus_device->Characteristics |= FILE_CHARACTERISTIC_PNP_DEVICE;
-printk("characteristics is after %x\n", drbd_bus_device->Characteristics);
-
-	drbd_bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
-printk("5 flags is %x\n", drbd_bus_device->Flags);
+	status = mvolAddDevice(mvolDriverObject, new_device2);
+	if (status != STATUS_SUCCESS) {
+		printk("add device returned %x\n", status);
+	}
 
 	return 0;
 }
@@ -272,9 +271,9 @@ void windrbd_bus_is_ready(void)
 int windrbd_rescan_bus(void)
 {
 printk("1 %p\n", drbd_bus_device);
-	if (drbd_bus_device != NULL) {
+	if (drbd_physical_bus_device != NULL) {
 printk("2\n");
-		IoInvalidateDeviceRelations(drbd_bus_device, BusRelations);
+		IoInvalidateDeviceRelations(drbd_physical_bus_device, BusRelations);
 printk("3\n");
 		return 0;
 	}
@@ -346,7 +345,6 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 
 	printk(KERN_INFO "AddDevice: PhysicalDeviceObject is %p\n", PhysicalDeviceObject);
 
-#if 0
 	if (drbd_bus_device == NULL) {
 		RtlInitUnicodeString(&drbd_bus, L"\\Device\\WinDRBD");
 		RtlInitUnicodeString(&drbd_bus_dos, L"\\DosDevices\\WinDRBD");
@@ -383,7 +381,6 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 		drbd_bus_device = bus_device;
 		drbd_physical_bus_device = PhysicalDeviceObject;
 	}
-#endif
 #if 0
  else {
 		struct block_device_reference *ref;

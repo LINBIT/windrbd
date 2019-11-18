@@ -236,6 +236,8 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
+dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCode, device);
+
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 	case IOCTL_WINDRBD_ROOT_IS_WINDRBD_ROOT_DEVICE:
 		break;	/* just return success */
