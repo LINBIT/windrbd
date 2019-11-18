@@ -360,3 +360,4 @@ Version history
  * 0.10.1 (Nov 6, 2019): Data devices and Disk devices work again.
  * 0.10.2 (Nov 14,2019): iPXE passes network address to kernel: no need for
 			 static IP and StartType registry patch for booting.
+ * 0.10.3 (Nov 18,2019): Fixed logging (IP address was hardcoded)
