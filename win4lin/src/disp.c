@@ -75,7 +75,6 @@ int create_bus_device(void)
 	PDEVICE_OBJECT new_device2;
 	UNICODE_STRING bus_device_name;
 
-#if 0
 	RtlInitUnicodeString(&bus_device_name, L"\\Device\\WinDRBD");
 
 	status = IoCreateDevice(mvolDriverObject,
@@ -99,12 +98,11 @@ printk("characteristics is before %x\n", drbd_bus_device->Characteristics);
 	drbd_bus_device->Characteristics |= FILE_CHARACTERISTIC_PNP_DEVICE;
 printk("characteristics is after %x\n", drbd_bus_device->Characteristics);
 	drbd_bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
-#endif
 
 printk("1\n");
 //	status = IoReportDetectedDevice(mvolDriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_bus_device);
-printk("2\n");
-	new_device2 = NULL;
+	new_device2 = drbd_bus_device;
+printk("2 %p\n", new_device2);
 	status = IoReportDetectedDevice(mvolDriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &new_device2);
 printk("3 %p\n", new_device2);
 	if (status != STATUS_SUCCESS) {
