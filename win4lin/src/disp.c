@@ -78,7 +78,8 @@ int create_bus_device(void)
 	status = IoCreateDevice(mvolDriverObject,
 				4,	/* 0? */	
 				&bus_device_name,
-				FILE_DEVICE_CONTROLLER,
+//				FILE_DEVICE_CONTROLLER,
+				FILE_DEVICE_BUS_EXTENDER,
                                 FILE_DEVICE_SECURE_OPEN,
                                 FALSE,
                                 &new_device);
@@ -92,12 +93,15 @@ int create_bus_device(void)
 printk("drbd_bus_device is %p\n", drbd_bus_device);
         drbd_bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
+#if 0
+
 	// status = IoReportDetectedDevice(mvolDriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_bus_device);
 	status = IoReportDetectedDevice(mvolDriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, NULL);
 	if (status != STATUS_SUCCESS) {
 		printk("Could not report WinDRBD bus object, status is %x.\n", status);
 		return -1;
 	}
+#endif
 	return 0;
 }
 
@@ -250,8 +254,11 @@ void windrbd_bus_is_ready(void)
 
 int windrbd_rescan_bus(void)
 {
-	if (drbd_physical_bus_device != NULL) {
-		IoInvalidateDeviceRelations(drbd_physical_bus_device, BusRelations);
+printk("1 %p\n", drbd_bus_device);
+	if (drbd_bus_device != NULL) {
+printk("2\n");
+		IoInvalidateDeviceRelations(drbd_bus_device, BusRelations);
+printk("3\n");
 		return 0;
 	}
 	printk("Warning: physical bus device does not exist (yet)\n");
