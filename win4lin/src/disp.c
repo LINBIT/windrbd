@@ -91,7 +91,10 @@ int create_bus_device(void)
 	drbd_bus_device = new_device;
 
 printk("drbd_bus_device is %p\n", drbd_bus_device);
-        drbd_bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
+printk("characteristics is before %x\n", drbd_bus_device->Characteristics);
+	drbd_bus_device->Characteristics |= FILE_CHARACTERISTIC_PNP_DEVICE;
+printk("characteristics is after %x\n", drbd_bus_device->Characteristics);
+	drbd_bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
 #if 0
 
