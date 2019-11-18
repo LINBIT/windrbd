@@ -92,13 +92,11 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	if (status == STATUS_SUCCESS) {
 		status = RtlUnicodeToUTF8N(g_syslog_ip, SYSLOG_IP_SIZE, &ip_length, (WCHAR*) aucTemp, ulLength);
 	}
-//	if (status != STATUS_SUCCESS) {
-		strcpy(g_syslog_ip, "192.168.56.102");
-/*
+	if (status != STATUS_SUCCESS) {
+		strcpy(g_syslog_ip, "127.0.0.1");
 	} else {
 		g_syslog_ip[ip_length] = '\0';
 	}
-*/
 	printk("syslog_ip is %s", g_syslog_ip);
 
 	return 0;
