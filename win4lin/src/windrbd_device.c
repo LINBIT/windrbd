@@ -1520,6 +1520,8 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 		if (string == NULL) {
 			status = STATUS_INSUFFICIENT_RESOURCES;
 		} else {
+			size_t len;
+
 			memset(string, 0, 512*sizeof(wchar_t));
 			switch (s->Parameters.QueryId.IdType) {
 			case BusQueryDeviceID:
@@ -1534,7 +1536,11 @@ dbg("BusQueryInstanceID\n");
 				break;
 			case BusQueryHardwareIDs:
 dbg("BusQueryHardwareIDs\n");
-				size_t len;
+				len = swprintf(string, L"SCSIAdapter");
+				status = STATUS_SUCCESS;
+				break;
+			case BusQueryCompatibleIDs:
+dbg("BusQueryCompatibleIDs\n");
 				len = swprintf(string, L"SCSIAdapter");
 				status = STATUS_SUCCESS;
 				break;
@@ -1716,6 +1722,8 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			if (string == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 			} else {
+				size_t len;
+
 				memset(string, 0, MAX_ID_LEN*sizeof(wchar_t));
 				switch (s->Parameters.QueryId.IdType) {
 				case BusQueryDeviceID:
@@ -1727,7 +1735,6 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryHardwareIDs:
-					size_t len;
 					len = swprintf(string, L"WinDRBDDisk");
 					swprintf(&string[len+1], L"GenDisk");
 					status = STATUS_SUCCESS;
