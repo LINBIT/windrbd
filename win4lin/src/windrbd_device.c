@@ -1512,12 +1512,52 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 		drbd_bus_device = NULL;
 		return STATUS_SUCCESS; /* must not do IoCompleteRequest */
 
+	case IRP_MN_QUERY_ID:
+	{
+		wchar_t *string;
+		dbg("bus Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
+		string = ExAllocatePoolWithTag(PagedPool, 512*sizeof(wchar_t), 'DRBD');
+		if (string == NULL) {
+			status = STATUS_INSUFFICIENT_RESOURCES;
+		} else {
+			memset(string, 0, 512*sizeof(wchar_t));
+			switch (s->Parameters.QueryId.IdType) {
+			case BusQueryDeviceID:
+dbg("BusQueryDeviceID\n");
+				swprintf(string, L"WinDRBD\\WinDRBD");
+				status = STATUS_SUCCESS;
+				break;
+			case BusQueryInstanceID:
+dbg("BusQueryInstanceID\n");
+				swprintf(string, L"WinDRBD");
+				status = STATUS_SUCCESS;
+				break;
+			case BusQueryHardwareIDs:
+dbg("BusQueryHardwareIDs\n");
+				size_t len;
+				len = swprintf(string, L"WinDRBD");
+				status = STATUS_SUCCESS;
+				break;
+			default:
+				status = STATUS_NOT_IMPLEMENTED;
+			}
+			if (status == STATUS_SUCCESS) {
+dbg("Returned string is %S\n", string);
+				irp->IoStatus.Information = (ULONG_PTR) string;
+			} else {
+				ExFreePool(string);
+			}
+		}
+		break;
+	}
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
 		dbg("got IRP_MN_QUERY_DEVICE_RELATIONS\n");
 
 		int type = s->Parameters.QueryDeviceRelations.Type;
 dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
-		if (s->Parameters.QueryDeviceRelations.Type == BusRelations) {
+		switch (s->Parameters.QueryDeviceRelations.Type) {
+		case BusRelations: 
+		{
 			int num_devices = get_all_drbd_device_objects(NULL, 0);
 			struct _DEVICE_RELATIONS *device_relations;
 			int n;
@@ -1539,7 +1579,29 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
 			return STATUS_SUCCESS;
-		} else {
+		}
+		case TargetDeviceRelation:
+		{
+			struct _DEVICE_RELATIONS *device_relations;
+			size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
+			dbg("size of device relations is %d\n", siz);
+	/* must be PagedPool else PnP manager complains */
+			device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+			if (device_relations == NULL) {
+				status = STATUS_INSUFFICIENT_RESOURCES;
+				break;
+			}
+			device_relations->Count = 1;
+			device_relations->Objects[0] = device;
+			ObReferenceObject(device);
+
+			dbg("reporting device %p for type %d\n", device, s->Parameters.QueryDeviceRelations.Type);
+
+			irp->IoStatus.Information = (ULONG_PTR)device_relations;
+			status = STATUS_SUCCESS;
+			break;
+		}
+		default:
 			status = STATUS_NOT_IMPLEMENTED;
 		}
 		break;
