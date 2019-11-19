@@ -352,8 +352,12 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 	printk(KERN_INFO "AddDevice: PhysicalDeviceObject is %p\n", PhysicalDeviceObject);
 
 	if (drbd_bus_device == NULL) {
-		RtlInitUnicodeString(&drbd_bus, L"\\Device\\WinDRBD");
+/*		RtlInitUnicodeString(&drbd_bus, L"\\Device\\WinDRBD");
 		RtlInitUnicodeString(&drbd_bus_dos, L"\\DosDevices\\WinDRBD");
+*/
+
+		RtlInitUnicodeString(&drbd_bus, L"\\Device\\SCSIAdapter");
+		RtlInitUnicodeString(&drbd_bus_dos, L"\\DosDevices\\SCSIAdapter");
 
 		status = IoCreateDevice(DriverObject, sizeof(BUS_EXTENSION), &drbd_bus, FILE_DEVICE_BUS_EXTENDER, FILE_DEVICE_SECURE_OPEN, FALSE, &bus_device);
 		if (status != STATUS_SUCCESS)
