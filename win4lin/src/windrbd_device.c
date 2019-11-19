@@ -1544,6 +1544,9 @@ dbg("BusQueryHardwareIDs\n");
 			if (status == STATUS_SUCCESS) {
 dbg("Returned string is %S\n", string);
 				irp->IoStatus.Information = (ULONG_PTR) string;
+
+				IoCompleteRequest(irp, IO_NO_INCREMENT);
+				return STATUS_SUCCESS;
 			} else {
 				ExFreePool(string);
 			}
@@ -1599,7 +1602,9 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 
 			irp->IoStatus.Information = (ULONG_PTR)device_relations;
 			status = STATUS_SUCCESS;
-			break;
+
+			IoCompleteRequest(irp, IO_NO_INCREMENT);
+			return STATUS_SUCCESS;
 		}
 		default:
 			status = STATUS_NOT_IMPLEMENTED;
