@@ -121,6 +121,7 @@ printk("3 %p\n", new_device2);
 	if (status != STATUS_SUCCESS) {
 		printk("add device returned %x\n", status);
 	}
+	new_device2->Flags &= ~DO_DEVICE_INITIALIZING;
 
 	return 0;
 }
@@ -354,7 +355,7 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 		RtlInitUnicodeString(&drbd_bus, L"\\Device\\WinDRBD");
 		RtlInitUnicodeString(&drbd_bus_dos, L"\\DosDevices\\WinDRBD");
 
-		status = IoCreateDevice(DriverObject, sizeof(BUS_EXTENSION), &drbd_bus, FILE_DEVICE_CONTROLLER, FILE_DEVICE_SECURE_OPEN, FALSE, &bus_device);
+		status = IoCreateDevice(DriverObject, sizeof(BUS_EXTENSION), &drbd_bus, FILE_DEVICE_BUS_EXTENDER, FILE_DEVICE_SECURE_OPEN, FALSE, &bus_device);
 		if (status != STATUS_SUCCESS)
 			printk("IoCreateDevice bus device returned %x\n", status);
 		else
