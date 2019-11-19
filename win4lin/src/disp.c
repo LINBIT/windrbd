@@ -162,6 +162,8 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	/* TODO: This will go away soon */
 	initRegistry(RegistryPath);
 
+	create_bus_device();
+
 	RtlInitUnicodeString(&nameUnicode, L"\\Device\\" WINDRBD_ROOT_DEVICE_NAME);
 	status = IoCreateDeviceSecure(DriverObject, sizeof(ROOT_EXTENSION),
 			 &nameUnicode, FILE_DEVICE_UNKNOWN,
@@ -216,8 +218,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	windrbd_init_netlink();
 	windrbd_init_usermode_helper();
 	windrbd_init_wsk();
-
-	create_bus_device();
 
 	printk(KERN_INFO "Windrbd Driver loaded.\n");
 
