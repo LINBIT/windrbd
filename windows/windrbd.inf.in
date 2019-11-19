@@ -16,13 +16,13 @@ DriverVer   =   12/01/2013,0.2.0.0 ;Will get replaced by build magic
 CatalogFile =   windrbd.cat
 
 [Manufacturer]
-Linbit = WinDRBDDriver, NTamd64
+Linbit = WinDRBD, NTamd64
 
-[WinDRBDDriver]
+[WinDRBD]
 "WinDRBD Driver" = WinDRBD,WinDRBD
 ; "WinDRBD Disk Device" = WinDRBD,WinDRBD\Disk5
 
-[WinDRBDDriver.NTamd64]
+[WinDRBD.NTamd64]
 "WinDRBD Virtual Bus Device" = WinDRBD,WinDRBD
 ; "WinDRBD Disk Device" = WinDRBD,WinDRBD\Disk5
 
