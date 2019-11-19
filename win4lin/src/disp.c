@@ -28,6 +28,8 @@
 #define NTDDI_VERSION 0x06010000
 
 #include <ntddk.h>
+#include <initguid.h>
+#include <devguid.h>
 #include "drbd_windows.h"
 #include "windrbd_device.h"
 #include "drbd_wingenl.h"	
@@ -48,6 +50,8 @@ NTSTATUS NTAPI IoReportDetectedDevice(
   BOOLEAN ResourceAssigned,
   PDEVICE_OBJECT *DeviceObject
 );
+
+// DEFINE_GUID(GUID_DEVCLASS_SCSIADAPTER, 0x4D36E97B, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18);
 
 	/* TODO: find some headers where this fits. */
 void drbd_cleanup(void);
@@ -342,6 +346,7 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 	NTSTATUS status;
 	struct _DEVICE_OBJECT *bus_device;
 	struct _BUS_EXTENSION *bus_extension;
+	UNICODE_STRING bus_device_name;
 
 	printk(KERN_INFO "AddDevice: PhysicalDeviceObject is %p\n", PhysicalDeviceObject);
 
@@ -368,6 +373,13 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 		bus_extension = (struct _BUS_EXTENSION*) bus_device->DeviceExtension;
 
 		if (PhysicalDeviceObject != NULL) {
+			status = IoRegisterDeviceInterface(PhysicalDeviceObject,
+					&GUID_DEVCLASS_SCSIADAPTER,
+					NULL,
+					&bus_device_name);
+			printk("IoRegisterDeviceInterface returned %x\n", status);
+			printk("bus_device_name is %S\n", bus_device_name.Buffer);
+
 			bus_extension->lower_device = IoAttachDeviceToDeviceStack(bus_device, PhysicalDeviceObject);
 			if (bus_extension->lower_device == NULL)
 				printk("IoAttachDeviceToDeviceStack failed.\n");
