@@ -49,6 +49,13 @@ TODO: Feature: make it work without having to install virtual bus device
 	MS iSCSI initiator can do it (no seperate step to install
 	the Virtual Bus device Microsoft iSCSI Initiator).
 
+	Update: With a5c11309e it boots without having to install
+	the bus device (test it with a fresh installation). However
+	when driver is loaded later (not on boot) the bus device
+	gets deleted by the PnP manager. This is something we should
+	work on, however making it boot without having to install
+	the bus device should work now.
+
 TODO: Code quality: Submit drbd-utils patches.
 
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
