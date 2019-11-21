@@ -56,6 +56,11 @@ TODO: Feature: make it work without having to install virtual bus device
 	work on, however making it boot without having to install
 	the bus device should work now.
 
+	Update: Also works on a freshly installed Windows 10.
+	One only needs to configure firewall and turn off
+	network discovery now (and of course install WinDRBD
+	driver).
+
 TODO: Code quality: Submit drbd-utils patches.
 
 TODO: Implement: Test other file systems (FAT, FAT32, ...)
