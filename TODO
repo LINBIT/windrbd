@@ -273,6 +273,11 @@ TODO: Feature: Create a WinPE image with network and WinDRBD.
 	most likely the missing bus device (PnP does not
 	work without it).
 
+	Update: Bus device is now not necessary (configured
+	by driver on startup). Now it hangs finding a
+	network address (it does not take the address
+	supplied by WinDRBD enabled iPXE).
+
 TODO: Bug: handle the case where DRBD device size drops to 0 again
 
 	If we loose connection we need to block I/O's again. It
