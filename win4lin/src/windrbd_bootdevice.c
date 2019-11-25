@@ -804,6 +804,8 @@ void parser_test(void)
 	}
 }
 
+extern int create_bus_device(void);
+
 void windrbd_init_boot_device(void)
 {
 	int ret;
