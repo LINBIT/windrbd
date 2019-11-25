@@ -1512,6 +1512,7 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 		drbd_bus_device = NULL;
 		return STATUS_SUCCESS; /* must not do IoCompleteRequest */
 
+#if 0
 	case IRP_MN_QUERY_ID:
 	{
 		wchar_t *string;
@@ -1559,6 +1560,7 @@ dbg("Returned string is %S\n", string);
 		}
 		break;
 	}
+#endif
 /*	case IRP_MN_QUERY_INTERFACE:
 		
 	case IRP_MN_QUERY_CAPABILITIES:
