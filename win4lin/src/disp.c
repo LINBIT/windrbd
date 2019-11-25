@@ -222,7 +222,9 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	windrbd_init_usermode_helper();
 	windrbd_init_wsk();
 
+/*
 	create_bus_device();
+*/
 
 	printk(KERN_INFO "Windrbd Driver loaded.\n");
 
