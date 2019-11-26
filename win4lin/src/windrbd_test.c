@@ -5,7 +5,7 @@
 
 /* #define WINDRBD_RUN_RCU_LOCK_RECURSION_TEST 1 */
 /* #define WINDRBD_RUN_RCU_LOCK_SYNCHRONIZE_RECURSION_TEST 1 */
-/* #define WINDRBD_PRINTK_PING 1 */
+#define WINDRBD_PRINTK_PING 1
 /* #define WINDRBD_WAIT_EVENT_TEST 1 */
 /* #define WINDRBD_SCHEDULE_UNINTERRUPTIBLE_TEST 1 */
 
@@ -57,6 +57,8 @@ printk("4 IRQL is %d\n", KeGetCurrentIrql());
 }
 
 static int run_printk_ping = 1;
+extern int num_pnp_requests;
+extern int num_pnp_bus_requests;
 
 static int printk_ping(void *unused)
 {
@@ -64,7 +66,7 @@ static int printk_ping(void *unused)
 
 	i=0;
 	while (run_printk_ping) {
-		printk("ping %d (drbd bus is %p)\n", i, drbd_bus_device);
+		printk("ping %d (drbd bus is %p) num_pnp_requests %d num_pnp_bus_requests %d\n", i, drbd_bus_device, num_pnp_requests, num_pnp_bus_requests);
 		i++;
 		msleep(1000);
 	}

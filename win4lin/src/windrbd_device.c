@@ -1428,12 +1428,17 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 
 extern void windrbd_bus_is_ready(void);
 
+int num_pnp_requests = 0;
+int num_pnp_bus_requests = 0;
+
 static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
 	NTSTATUS status;
 	KEVENT start_completed_event;
+
+	num_pnp_bus_requests++;
 
 	switch (s->MinorFunction) {
 	case IRP_MN_START_DEVICE:
@@ -1465,6 +1470,7 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 		windrbd_bus_is_ready();
 // printk("Set bus ready\n");
 
+		num_pnp_bus_requests--;
 		return status;
 
 	case IRP_MN_QUERY_PNP_DEVICE_STATE:
@@ -1510,6 +1516,7 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 // printk("device object deleted.\n");
 // printk("NOT completing IRP\n");
 		drbd_bus_device = NULL;
+		num_pnp_bus_requests--;
 		return STATUS_SUCCESS; /* must not do IoCompleteRequest */
 
 #if 0
@@ -1594,6 +1601,7 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 			irp->IoStatus.Status = STATUS_SUCCESS;
 
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
+			num_pnp_bus_requests--;
 			return STATUS_SUCCESS;
 		}
 		case TargetDeviceRelation:
@@ -1617,6 +1625,7 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 			status = STATUS_SUCCESS;
 
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
+			num_pnp_bus_requests--;
 			return STATUS_SUCCESS;
 		}
 		default:
@@ -1644,6 +1653,7 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 			dbg("Warning: lower device returned status %x\n", status);
 	}
 
+	num_pnp_bus_requests--;
 	return status;
 }
 
@@ -1661,7 +1671,6 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	status = STATUS_NOT_IMPLEMENTED;
 
 	dbg("Pnp: device: %p irp: %p\n", device, irp);
-
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 
 	dbg(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
@@ -1674,6 +1683,8 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			 */
 		return windrbd_pnp_bus_object(device, irp);
 	} else {
+		num_pnp_requests++;
+
 		struct block_device_reference *ref = device->DeviceExtension;
 		struct block_device *bdev = NULL;
 		struct drbd_device *drbd_device = NULL;
@@ -2000,6 +2011,7 @@ dbg("Returned string is %S\n", string);
 				dbg("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
 			}
 
+			num_pnp_requests--;
 			return STATUS_SUCCESS;
 
 		default:
@@ -2009,6 +2021,7 @@ dbg("Returned string is %S\n", string);
 				IoSkipCurrentIrpStackLocation(irp);
 				status = IoCallDriver(drbd_bus_device, irp);
 				printk("bus object returned %x\n", status);
+				num_pnp_requests--;
 				return status;
 			}
 			else
@@ -2021,6 +2034,8 @@ dbg("Returned string is %S\n", string);
 
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+	num_pnp_requests--;
 	return status;
 }
 
