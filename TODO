@@ -30,6 +30,19 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
+TODO: Bug: BSOD on boot after drivers were installed (Windows 7).
+
+	Windows booted once then installed drivers (bus driver
+	installation failed), now it does not boot any more
+	(BSOD unclear which one, resets machine immediately).
+	Machine VDI is InstallWindows7.vdi (windrbd-install-windows7
+	is the resource name).
+
+	Workaround: One has to manually install the WinDRBD driver
+	for the Unknown device (the bus device). One day we will
+	fix it that this workaround is not necessary any more.
+	(Windows should find the driver by itself).
+
 TODO: Code quality: Squash patches in transform.d
 
 	Redo all changes (we now have patches that revert former
@@ -277,6 +290,12 @@ TODO: Feature: Create a WinPE image with network and WinDRBD.
 	by driver on startup). Now it hangs finding a
 	network address (it does not take the address
 	supplied by WinDRBD enabled iPXE).
+
+	Update: On Windows 7 one has to mark the wfplwf
+	driver (service) as boot critical (set Start key
+	to 0), then it hopefully works. (One has to
+	reinstall the driver for the bus device else
+	there is a BSOD on boot).
 
 TODO: Bug: handle the case where DRBD device size drops to 0 again
 
