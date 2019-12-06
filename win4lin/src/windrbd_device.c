@@ -399,8 +399,9 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-// printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
-	if (dev->is_bootdevice) {
+dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
+	if (dev->is_bootdevice && 
+	    s->Parameters.DeviceIoControl.IoControlCode != IOCTL_STORAGE_QUERY_PROPERTY) {
 		status = wait_for_becoming_primary(dev);
 		if (status != STATUS_SUCCESS)
 			goto out;
