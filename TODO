@@ -6286,3 +6286,17 @@ Done: Bug: Sometimes driver signature is not recognized.
 	Update: This is only with older Windows 7 boxes that
 	have no updates later than 2010 or so. Rejecting.
 
+Done: Bug: BSOD on boot being Secondary (Windows 7 installed via WinPE)
+
+	It seems that root device is not opened and WinDRBD
+	does not become primary. After about 1 minute there
+	is a BSOD (which one).
+
+	Is this because network detection is turned on?
+	No it is something else. Root device is never opened.
+
+	Fixed. The reason was that the bus device object was
+	inproperly installed in the device manager. Need to
+	reinstall bus device on first boot up (see seperate
+	TODO).
+
