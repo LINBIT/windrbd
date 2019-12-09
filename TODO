@@ -43,6 +43,11 @@ TODO: Bug: BSOD on boot after drivers were installed (Windows 7).
 	fix it that this workaround is not necessary any more.
 	(Windows should find the driver by itself).
 
+TODO: Bug: After 6 minutes of connecting Windows 10 BSODs with DRIVER_PNP_WATCHDOG
+
+	waiting for size (already unblocked the QUERY_PROPERTY ioctl).
+	Not sure what to do ... maybe report an error reading the size?
+
 TODO: Code quality: Squash patches in transform.d
 
 	Redo all changes (we now have patches that revert former
