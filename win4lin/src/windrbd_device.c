@@ -119,6 +119,7 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 	struct drbd_device *drbd_device;
 	struct drbd_resource *resource;
 	int rv;
+	int n;
 	LONG_PTR timeout = LONG_TIMEOUT * HZ / 10;
 
 	drbd_device = bdev->drbd_device;
@@ -134,6 +135,7 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 		if (drbd_device != NULL) {
 			resource = drbd_device->resource;
 			if (resource != NULL) {
+				n=0;
 				while (resource->role[NOW] == R_SECONDARY) {
 					dbg("Am secondary, trying to promote (called from %s:%d (%s())...\n", file, line, func);
 					rv = try_to_promote(drbd_device, timeout, 0);
@@ -159,6 +161,10 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 					if (bdev->powering_down || bdev->delete_pending)
 						break;
 
+					if (n++ >= 12) {
+						dbg("Giving up for now, returning timeout (watchdog trigger)\n");
+						return STATUS_TIMEOUT;
+					}
 				}
 			}
 		}
@@ -2271,7 +2277,11 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			}
 
 			if (status != STATUS_SUCCESS) {
-				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+				if (status == STATUS_TIMEOUT)
+					srb->SrbStatus = SRB_STATUS_TIMEOUT;
+				else
+					srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+
 				break;
 			}
 
