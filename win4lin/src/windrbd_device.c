@@ -402,6 +402,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	NTSTATUS status = STATUS_SUCCESS;
 
 dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
+#if 0
 	if (dev->is_bootdevice && 
 	    s->Parameters.DeviceIoControl.IoControlCode != IOCTL_STORAGE_QUERY_PROPERTY &&
 	    s->Parameters.DeviceIoControl.IoControlCode != IOCTL_SCSI_GET_ADDRESS) {
@@ -409,6 +410,7 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		if (status != STATUS_SUCCESS)
 			goto out;
 	}
+#endif
 
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 		/* custom WINDRBD ioctl's */
@@ -788,7 +790,7 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_PARAMETER;
 	}
 
-out:
+// out:
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return status;
