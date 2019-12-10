@@ -2277,11 +2277,13 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			}
 
 			if (status != STATUS_SUCCESS) {
-				if (status == STATUS_TIMEOUT)
-					srb->SrbStatus = SRB_STATUS_TIMEOUT;
-				else
+				if (status == STATUS_TIMEOUT) {
+					status = STATUS_DEVICE_BUSY;
+					srb->SrbStatus = SRB_STATUS_BUSY;
+				} else
 					srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 
+				irp->IoStatus.Information = 0;
 				break;
 			}
 
@@ -2397,8 +2399,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 				status = STATUS_NO_SUCH_DEVICE;
 */
-				srb->SrbStatus = SRB_STATUS_TIMEOUT;
-				status = STATUS_TIMEOUT;
+				srb->SrbStatus = SRB_STATUS_BUSY;
+				status = STATUS_DEVICE_BUSY;
 			}
 			break;
 
