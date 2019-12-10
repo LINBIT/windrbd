@@ -111,7 +111,9 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 // #define LONG_TIMEOUT 10000
 #define LONG_TIMEOUT 50
 
-static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
+#define wait_for_becoming_primary(bdev) wait_for_becoming_primary_debug(bdev, __FILE__, __LINE__, __func__)
+
+static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const char *file, int line, const char *func)
 {
 	NTSTATUS status;
 	struct drbd_device *drbd_device;
@@ -133,7 +135,7 @@ static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 			resource = drbd_device->resource;
 			if (resource != NULL) {
 				while (resource->role[NOW] == R_SECONDARY) {
-					dbg("Am secondary, trying to promote ...\n");
+					dbg("Am secondary, trying to promote (called from %s:%d (%s())...\n", file, line, func);
 					rv = try_to_promote(drbd_device, timeout, 0);
 
 		/* no uptodate disk: we are not yet connected, wait a bit
@@ -162,7 +164,7 @@ static NTSTATUS wait_for_becoming_primary(struct block_device *bdev)
 		}
 	} else {
 		if (!bdev->powering_down) {
-			dbg("Waiting for becoming primary\n");
+			dbg("Waiting for becoming primary (called from %s:%d (%s())...\n", file, line, func);
 
 			status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
 			if (status != STATUS_SUCCESS)
