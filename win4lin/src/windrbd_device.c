@@ -2126,6 +2126,7 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 	struct block_device *bdev = NULL;
 	NTSTATUS status;
 	long long d_size = -1;
+	LARGE_INTEGER timeout;
 
 	ref = device->DeviceExtension;
 	if (ref != NULL) {
@@ -2143,7 +2144,13 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 //			windrbd_bdget(bdev);
 
 			dbg("waiting for block device size to become valid.\n");
-			status = KeWaitForSingleObject(&bdev->capacity_event, Executive, KernelMode, FALSE, NULL);
+		/* Windows 10: it BSODs with a DRIVER_PNP_WATCHDOG if
+		 * it cannot complete within 5-6 minutes. Report an
+		 * error in getting size.
+		 */
+			timeout.QuadPart = -10*1000*1000*60;
+
+			status = KeWaitForSingleObject(&bdev->capacity_event, Executive, KernelMode, FALSE, &timeout);
 			if (status == STATUS_SUCCESS) {
 				dbg("Got size now, proceeding with I/O request\n");
 
@@ -2159,7 +2166,12 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 				}
 			}
 			else {
-				dbg("KeWaitForSingleObject returned %x\n", status);
+				if (status == STATUS_TIMEOUT) {
+					dbg("Waiting for size timed out, returning error for now...\n");
+					d_size=-1;
+				} else {
+					dbg("KeWaitForSingleObject returned %x\n", status);
+				}
 			}
 //			windrbd_bdput(bdev);
 		}
