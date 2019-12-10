@@ -2277,12 +2277,15 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			}
 
 			if (status != STATUS_SUCCESS) {
+/*
 				if (status == STATUS_TIMEOUT) {
 					status = STATUS_DEVICE_BUSY;
 					srb->SrbStatus = SRB_STATUS_BUSY;
 				} else
+*/
 					srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 
+				srb->DataTransferLength = 0;
 				irp->IoStatus.Information = 0;
 				break;
 			}
