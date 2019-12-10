@@ -2260,7 +2260,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
 
 			if (bdev != NULL) {
-				if (rw == WRITE && bdev->is_bootdevice)
+//				if (rw == WRITE && bdev->is_bootdevice)
+				if (bdev->is_bootdevice)
 					status = wait_for_becoming_primary(bdev);
 				else
 					status = STATUS_SUCCESS;
