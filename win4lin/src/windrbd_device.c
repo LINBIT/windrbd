@@ -2382,8 +2382,12 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				srb->SrbStatus = SRB_STATUS_SUCCESS;
 				status = STATUS_SUCCESS;
 			} else {
+/*
 				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 				status = STATUS_NO_SUCH_DEVICE;
+*/
+				srb->SrbStatus = SRB_STATUS_TIMEOUT;
+				status = STATUS_TIMEOUT;
 			}
 			break;
 
