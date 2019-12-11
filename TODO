@@ -123,6 +123,11 @@ TODO: Bug: BSOD when accessing ReFS device
 
 TODOs for Release 1.0 ----------------------------------------------
 
+Milestone: Release 1.0 (stable version)
+Planned: Mar 10 2019
+Real:
+
+
 TODO: Bug: Sometimes diskless Windows hangs
 
 	The host only network stops working. We get a
