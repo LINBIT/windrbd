@@ -136,26 +136,26 @@ TODO: Bug: Sometimes diskless Windows hangs
 
 	e50234f64 runs quite stable.
 
-TODO: Feature: Make timeouts configurable
++TODO: Feature: Make timeouts configurable
 
 	Rework syntax. It should be prepared to support n nodes.
 	Also should have more options like syslog_ip=...
 
-TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
++TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
 	First need to implement more than one connection.
 
-TODO: Feature: have a windrbd create-resource <drbd-URL> command
++TODO: Feature: have a windrbd create-resource <drbd-URL> command
 
 	This should help with installing via WinPE.
 
-TODO: Bug: Restarting fails with Wrong medium type.
++TODO: Bug: Restarting fails with Wrong medium type.
 
 	Linux DRBD thinks Windows is still Primary and refuses
 	CGI script read requests. We should wait a bit in the
 	CGI script if the error is Wrong medium type.
 
-TODO: Bug: Reestablish connection of Diskless machine fails.
++TODO: Bug: Reestablish connection of Diskless machine fails.
 
 	Tested with iptables drop / don't drop.
 
@@ -167,7 +167,7 @@ TODO: Bug: Reestablish connection of Diskless machine fails.
 
 	Logs show that WinDRBD device hangs in NetworkFailure (?)
 
-TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
++TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 
 	Because it is waiting for size applications that open the
 	WinDRBD device hang. We should not wait for size unless
@@ -176,7 +176,7 @@ TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 	Maybe it is something else. Also, windrbd set-mount-point
 	hangs under Windows 10.
 
-TODO: Bug: Diskless client hangs on power down
++TODO: Bug: Diskless client hangs on power down
 
 	it hangs in I/O because network is already down and Windows
 	tries to swap in ... need to swap in (disable pagefile)
@@ -188,7 +188,7 @@ TODO: Performance: Retry disable NDIS lightweight filter
 
 	We still have the 90 seconds boot delay.
 
-TODO: Feature: update inno setup installer
++TODO: Feature: update inno setup installer
 
 	It should create the bus device and should also
 	install the disk device.
@@ -231,11 +231,7 @@ TODO: Bug: With a no-I/O resource up BSOD on power down
 	When making the resource primary (by drbdadm up on
 	the peer) it continues and Windows is shut down.
 
-TODO: Feature: Test if it works with Server 2016 also
-
-TODO: Feature: Windows should take IP address from DHCP on boot
-
-	Right now, we assign a static address.
++TODO: Feature: Test if it works with Server 2016 also
 
 TODO: Implement: Reengineer workqueues
 
@@ -247,16 +243,9 @@ TODO: Security: How to identify clients with cgi-script
 
 	Oliver mentioned MacSEC.
 
-TODO: Feature: set netboot flag via iPXE
++TODO: Performance: make keep-alive work with cgi-script
 
-	Windows defines some services as boot critical when
-	booting from network. It must be told that it is
-	currently netbooting in order to load that drivers
-	(currently we patch the Registry)
-
-TODO: Performance: make keep-alive work with cgi-script
-
-TODO: Feature: Create a WinPE image with network and WinDRBD.
++?TODO: Feature: Create a WinPE image with network and WinDRBD.
 
 	And see if we can install on top of the WinDRBD device
 	It would be nice if we could pass the WinDRBD device
@@ -307,6 +296,9 @@ TODO: Feature: Create a WinPE image with network and WinDRBD.
 	reinstall the driver for the bus device else
 	there is a BSOD on boot).
 
+	Update: everything except stage 2 works. Retry
+	with setup.exe from Windows DVD?
+
 TODO: Bug: handle the case where DRBD device size drops to 0 again
 
 	If we loose connection we need to block I/O's again. It
@@ -316,7 +308,7 @@ TODO: Bug: handle the case where DRBD device size drops to 0 again
 	Note: blocking is currently done via suspend-io within
 	DRBD. Therefore not sure if we need to fix this.
 
-TODO: Performance: Improve boot speed.
++TODO: Performance: Improve boot speed.
 
 	Right now it takes more than 5 minutes until the system is
 	usable
@@ -587,6 +579,13 @@ TODO: Bug: System freeze on Windows 2016 Primary on SyncSource (with spinlock pa
 	Update: also happened with 4c8c46a4a (0.9.2-rc1). On disconnecting
 	after long running I/O test (24 hours).
 
+TODO: Bug: BSOD (0xFC) when adding node to a 4 node setup.
+
+	On drbdadm up of Windows 7 machine (connecting to 2
+	server 2016 and one Linux) there was a (temporary)
+	BSOD (ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY). After
+	rebooting the box, BSOD has gone.
+
 TODO: Code quality: review TODOs in source code.
 
 	Currently 136 total.
@@ -607,7 +606,7 @@ TODO: Implement: Log rotate
 	We should fix this for the next release.
 	Maybe ship WinDRBD with net logging disabled and no log-server?
 
-TODO: Implement: Other mechanism to specify syslog_ip.
++TODO: Implement: Other mechanism to specify syslog_ip.
 
 	Should be able to change it without rebooting.
 
@@ -657,7 +656,7 @@ TODO: Feature: Resource agent for Microsoft cluster manager
 
 	Quote: "Assign a storage device for exclusive use by the queue manager. This device needs to be created as a resource instance before it can be assigned."
 
-TODO: Feature: Autopromote
+-TODO: Feature: Autopromote
 
 	If Windows poll the devices read-only, this would make sense
 	(DRBD only attempts to promote if device is opened writable)
@@ -675,6 +674,8 @@ Feb  5 14:01:17 10.43.10.11  U13:01:17.453|4260bc80(drbd_a_vamp-4nodes) bm_print
 	Upstream bug?
 
 TODO: Bug: printk eats boot messages
+
+	Because of being UDP. Implement TCP/IP logging one day.
 
 TODO: Bug: Diskless Primary BSOD when connection failed
 
@@ -6309,4 +6310,20 @@ Done: Bug: BSOD on boot being Secondary (Windows 7 installed via WinPE)
 	inproperly installed in the device manager. Need to
 	reinstall bus device on first boot up (see seperate
 	TODO).
+
+Done: Feature: Windows should take IP address from DHCP on boot
+
+	Right now, we assign a static address.
+
+	With iBFT, windows now gets the right address and also
+	loads all network critical drivers.
+
+Done: Feature: set netboot flag via iPXE
+
+	Windows defines some services as boot critical when
+	booting from network. It must be told that it is
+	currently netbooting in order to load that drivers
+	(currently we patch the Registry)
+
+	Done, works
 
