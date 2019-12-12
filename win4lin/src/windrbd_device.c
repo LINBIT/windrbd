@@ -119,7 +119,6 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 	struct drbd_device *drbd_device;
 	struct drbd_resource *resource;
 	int rv;
-	int n;
 	LONG_PTR timeout = LONG_TIMEOUT * HZ / 10;
 
 	drbd_device = bdev->drbd_device;
@@ -135,7 +134,6 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 		if (drbd_device != NULL) {
 			resource = drbd_device->resource;
 			if (resource != NULL) {
-				n=0;
 				while (resource->role[NOW] == R_SECONDARY) {
 					dbg("Am secondary, trying to promote (called from %s:%d (%s())...\n", file, line, func);
 					rv = try_to_promote(drbd_device, timeout, 0);
@@ -160,11 +158,6 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 					msleep(100);
 					if (bdev->powering_down || bdev->delete_pending)
 						break;
-
-					if (n++ >= 12) {
-						dbg("Giving up for now, returning timeout (watchdog trigger)\n");
-						return STATUS_TIMEOUT;
-					}
 				}
 			}
 		}
@@ -408,15 +401,11 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	NTSTATUS status = STATUS_SUCCESS;
 
 dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
-#if 0
-	if (dev->is_bootdevice && 
-	    s->Parameters.DeviceIoControl.IoControlCode != IOCTL_STORAGE_QUERY_PROPERTY &&
-	    s->Parameters.DeviceIoControl.IoControlCode != IOCTL_SCSI_GET_ADDRESS) {
+	if (dev->is_bootdevice) {
 		status = wait_for_becoming_primary(dev);
 		if (status != STATUS_SUCCESS)
 			goto out;
 	}
-#endif
 
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 		/* custom WINDRBD ioctl's */
@@ -796,7 +785,7 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_PARAMETER;
 	}
 
-// out:
+out:
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return status;
@@ -2137,7 +2126,6 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 	struct block_device *bdev = NULL;
 	NTSTATUS status;
 	long long d_size = -1;
-	LARGE_INTEGER timeout;
 
 	ref = device->DeviceExtension;
 	if (ref != NULL) {
@@ -2157,11 +2145,10 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 			dbg("waiting for block device size to become valid.\n");
 		/* Windows 10: it BSODs with a DRIVER_PNP_WATCHDOG if
 		 * it cannot complete within 5-6 minutes. Report an
-		 * error in getting size.
+		 * error in getting size. TODO: trigger the watchdog.
 		 */
-			timeout.QuadPart = -10*1000*1000*60;
 
-			status = KeWaitForSingleObject(&bdev->capacity_event, Executive, KernelMode, FALSE, &timeout);
+			status = KeWaitForSingleObject(&bdev->capacity_event, Executive, KernelMode, FALSE, NULL);
 			if (status == STATUS_SUCCESS) {
 				dbg("Got size now, proceeding with I/O request\n");
 
@@ -2177,12 +2164,7 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 				}
 			}
 			else {
-				if (status == STATUS_TIMEOUT) {
-					dbg("Waiting for size timed out, returning error for now...\n");
-					d_size=-1;
-				} else {
-					dbg("KeWaitForSingleObject returned %x\n", status);
-				}
+				dbg("KeWaitForSingleObject returned %x\n", status);
 			}
 //			windrbd_bdput(bdev);
 		}
@@ -2266,8 +2248,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
 
 			if (bdev != NULL) {
-//				if (rw == WRITE && bdev->is_bootdevice)
-				if (bdev->is_bootdevice)
+				if (rw == WRITE && bdev->is_bootdevice)
 					status = wait_for_becoming_primary(bdev);
 				else
 					status = STATUS_SUCCESS;
@@ -2277,13 +2258,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			}
 
 			if (status != STATUS_SUCCESS) {
-/*
-				if (status == STATUS_TIMEOUT) {
-					status = STATUS_DEVICE_BUSY;
-					srb->SrbStatus = SRB_STATUS_BUSY;
-				} else
-*/
-					srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 
 				srb->DataTransferLength = 0;
 				irp->IoStatus.Information = 0;
@@ -2398,12 +2373,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				srb->SrbStatus = SRB_STATUS_SUCCESS;
 				status = STATUS_SUCCESS;
 			} else {
-/*
 				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 				status = STATUS_NO_SUCH_DEVICE;
-*/
-				srb->SrbStatus = SRB_STATUS_BUSY;
-				status = STATUS_DEVICE_BUSY;
 			}
 			break;
 
