@@ -399,7 +399,6 @@ static void close_wsk_socket(struct _WSK_SOCKET *wsk_socket)
 {
 	struct _IRP *Irp;
 
-dbg("1\n");
 	if (wsk_state != WSK_INITIALIZED || wsk_socket == NULL)
 		return;
 
@@ -408,7 +407,6 @@ dbg("1\n");
 		return;
 
 	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) wsk_socket->Dispatch)->WskCloseSocket(wsk_socket, Irp);
-dbg("2\n");
 }
 
 
@@ -488,7 +486,6 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	PIRP		Irp = NULL;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
-dbg("1\n");
 		/* TODO: check/implement those: */
 	(void) sockaddr_len;
 	(void) flags;
@@ -529,7 +526,6 @@ dbg("1\n");
 
 	IoFreeIrp(Irp);
 
-dbg("2\n");
 	return winsock_to_linux_error(Status);
 }
 
@@ -542,7 +538,6 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	struct socket *accept_socket;
 	KIRQL flags;
 
-dbg("1\n");
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
@@ -572,7 +567,6 @@ retry:
 		*newsock = accept_socket;
 	}
 
-dbg("2\n");
 	return err;
 }
 
@@ -1416,7 +1410,6 @@ static int wsk_sock_create_kern(void *net_namespace,
 	int err;
 	NTSTATUS status;
 
-dbg("1\n");
 	if (net_namespace != &init_net)
 		return -EINVAL;
 
@@ -1440,7 +1433,6 @@ dbg("1\n");
 	socket->wsk_flags = Flags;
 	*out = socket;
 
-dbg("2\n");
 	return 0;
 }
 
