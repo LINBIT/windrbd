@@ -1520,7 +1520,6 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 		num_pnp_bus_requests--;
 		return STATUS_SUCCESS; /* must not do IoCompleteRequest */
 
-#if 0
 	case IRP_MN_QUERY_ID:
 	{
 		wchar_t *string;
@@ -1535,22 +1534,22 @@ static NTSTATUS windrbd_pnp_bus_object(struct _DEVICE_OBJECT *device, struct _IR
 			switch (s->Parameters.QueryId.IdType) {
 			case BusQueryDeviceID:
 dbg("BusQueryDeviceID\n");
-				swprintf(string, L"SCSIAdapter\\WinDRBD");
+				swprintf(string, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			case BusQueryInstanceID:
 dbg("BusQueryInstanceID\n");
-				swprintf(string, L"SCSIAdapter");
+				swprintf(string, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			case BusQueryHardwareIDs:
 dbg("BusQueryHardwareIDs\n");
-				len = swprintf(string, L"SCSIAdapter");
+				len = swprintf(string, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			case BusQueryCompatibleIDs:
 dbg("BusQueryCompatibleIDs\n");
-				len = swprintf(string, L"SCSIAdapter");
+				len = swprintf(string, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			default:
@@ -1568,7 +1567,6 @@ dbg("Returned string is %S\n", string);
 		}
 		break;
 	}
-#endif
 /*	case IRP_MN_QUERY_INTERFACE:
 		
 	case IRP_MN_QUERY_CAPABILITIES:
