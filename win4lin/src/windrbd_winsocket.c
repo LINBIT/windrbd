@@ -238,9 +238,7 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 	void *wait_objects[2];
 	int num_objects;
 
-dbg("1\n");
 	while (1) {
-dbg("2\n");
 		spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
 
 		if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf) {
@@ -256,9 +254,7 @@ dbg("2\n");
 				wait_objects[1] = &current->sig_event;
 				num_objects = 2;
 			}
-dbg("3\n");
 			status = KeWaitForMultipleObjects(num_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, &timeout, NULL);
-dbg("4\n");
 
 			switch (status) {
 			case STATUS_WAIT_0:
@@ -267,7 +263,6 @@ dbg("4\n");
 				return -EINTR;
 			case STATUS_TIMEOUT:
 //				return -EAGAIN; /* hangs Win7 VM? */
-dbg("timeout\n");
 				return -ETIMEDOUT;
 			default:
 				dbg("KeWaitForMultipleObjects returned unexpected error %x\n", status);
