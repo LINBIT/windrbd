@@ -685,7 +685,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 	ULONG Flags = 0;
 
-dbg("socket is %p\n", socket);
+// dbg("socket is %p\n", socket);
 
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
@@ -808,7 +808,7 @@ dbg("socket is %p\n", socket);
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
-dbg("returning %d\n", BytesSent);
+// dbg("returning %d\n", BytesSent);
 	return BytesSent;
 }
 
@@ -820,7 +820,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	NTSTATUS status;
 	int err;
 
-dbg("socket is %p\n", socket);
+// dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !page || ((int) len <= 0))
 		return -EINVAL;
 
@@ -906,7 +906,7 @@ dbg("socket is %p\n", socket);
 		socket->error_status = err;
 
 		/* Resources are freed by completion routine. */
-dbg("returning %d\n", err);
+// dbg("returning %d\n", err);
 	return err;
 
 out_unlock_mutex:
@@ -924,7 +924,7 @@ out_put_page:
 
 	if (err != 0 && err != -ENOMEM)
 		socket->error_status = err;
-dbg("returning %d\n", err);
+// dbg("returning %d\n", err);
 	return err;
 }
 
@@ -1035,7 +1035,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	PVOID       waitObjects[2];
 	int         wObjCount = 1;
 
-dbg("socket is %p\n", socket);
+// dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
@@ -1191,7 +1191,7 @@ dbg("Receiving cancelled (errno is %d) but data available (%d bytes, returning i
 dbg("setting error status to %d\n", socket->error_status);
 }
 
-dbg("returning %d\n", BytesReceived);
+// dbg("returning %d\n", BytesReceived);
 	return BytesReceived;
 }
 
