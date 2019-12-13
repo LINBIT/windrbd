@@ -1416,7 +1416,7 @@ static int wsk_sock_create_kern(void *net_namespace,
 	int err;
 	NTSTATUS status;
 
-dbg("1\n");
+if (type == SOCK_STREAM) dbg("1\n");
 	if (net_namespace != &init_net)
 		return -EINVAL;
 
@@ -1440,7 +1440,8 @@ dbg("1\n");
 	socket->wsk_flags = Flags;
 	*out = socket;
 
-dbg("2\n");
+if (type == SOCK_STREAM) dbg("2\n");
+
 	return 0;
 }
 
