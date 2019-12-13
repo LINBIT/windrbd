@@ -105,6 +105,8 @@ struct socket {
 	KEVENT accept_event;
 
 	struct sock *sk;
+
+	int is_closed;
 };
 
 /* WinDRBD specific: Since Windows distinguishes between LISTEN and

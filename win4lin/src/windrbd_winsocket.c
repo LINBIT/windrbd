@@ -419,9 +419,14 @@ static void close_socket(struct socket *socket)
 {
 	struct _IRP *Irp;
 
-dbg("1\n");
+dbg("1 socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
+
+	if (socket->is_closed) {
+		dbg("Socket already closed, refusing to close it again.\n");
+		return;
+	}
 
 	Irp = wsk_new_irp(NULL);
 	if (Irp == NULL)
@@ -449,7 +454,8 @@ dbg("1\n");
 		socket->accept_wsk_socket = NULL;
 	}
 	socket->error_status = 0;
-dbg("2\n");
+	socket->is_closed = 1;
+dbg("2 socket is %p\n", socket);
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
@@ -490,7 +496,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	PIRP		Irp = NULL;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
-dbg("1\n");
+dbg("1 socket is %p\n", socket);
 		/* TODO: check/implement those: */
 	(void) sockaddr_len;
 	(void) flags;
@@ -531,7 +537,7 @@ dbg("1\n");
 
 	IoFreeIrp(Irp);
 
-dbg("2\n");
+dbg("2 socket is %p, returning %d\n", socket, winsock_to_linux_error(Status));
 	return winsock_to_linux_error(Status);
 }
 
@@ -544,7 +550,7 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	struct socket *accept_socket;
 	KIRQL flags;
 
-dbg("1\n");
+dbg("1 socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
@@ -574,7 +580,7 @@ retry:
 		*newsock = accept_socket;
 	}
 
-dbg("2\n");
+dbg("2 socket is %p\n", socket);
 	return err;
 }
 
@@ -900,6 +906,7 @@ dbg("socket is %p\n", socket);
 		socket->error_status = err;
 
 		/* Resources are freed by completion routine. */
+dbg("returning %d\n", err);
 	return err;
 
 out_unlock_mutex:
@@ -1449,7 +1456,7 @@ if (type == SOCK_STREAM) dbg("1\n");
 	socket->wsk_flags = Flags;
 	*out = socket;
 
-if (type == SOCK_STREAM) dbg("2\n");
+if (type == SOCK_STREAM) dbg("2 socket is %p\n", socket);
 
 	return 0;
 }
