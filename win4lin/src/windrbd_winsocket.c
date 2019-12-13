@@ -419,6 +419,7 @@ static void close_socket(struct socket *socket)
 {
 	struct _IRP *Irp;
 
+dbg("1\n");
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
@@ -448,6 +449,7 @@ static void close_socket(struct socket *socket)
 		socket->accept_wsk_socket = NULL;
 	}
 	socket->error_status = 0;
+dbg("2\n");
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
