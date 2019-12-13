@@ -50,7 +50,7 @@ if (timeout > 5000) timeout = 5000;
 		return -EINVAL;
 	}
 	if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
-		printk("Warning: Attempt to schedule at IRQL %d will not sleep\n", KeGetCurrentIrql());
+		printk("Warning: Attempt to schedule at IRQL %d will not sleep (called from %s:%d (%s())\n", KeGetCurrentIrql(), file, line, func);
 		return -EINVAL;
 	}
 
