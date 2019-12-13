@@ -826,6 +826,11 @@ void windrbd_init_boot_device(void)
 /* If booting this should create our bus device. Undefined behaviour
  * if not booting (i.e. loading the driver at a later point in time)
  */
+
+/* TODO: On Windows 10 this creates a Unknown device which must be
+ * installed else it won't boot any more. WinDRBD driver has to
+ * be selected manually from a list.
+ */
 	create_bus_device();
 
 	for (i=0;i<1;i++) {
