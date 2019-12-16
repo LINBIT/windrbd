@@ -516,6 +516,8 @@ connect.
 File -> Symbol search path (net use y: \\192.168.56.102\Linbit):
 srv*;Y:\windrbd\win4lin\src;Y:\windrbd\converted-sources\drbd
 
+srv*;Y:\windrbd-debug\win4lin\src;Y:\windrbd-debug\converted-sources\drbd
+
 -----
 
 netsh:
