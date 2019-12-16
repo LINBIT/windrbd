@@ -454,7 +454,7 @@ dbg("1 socket is %p\n", socket);
 		socket->accept_wsk_socket = NULL;
 	}
 	socket->error_status = 0;
-	socket->is_closed = 1;
+	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
 dbg("2 socket is %p\n", socket);
 }
 
@@ -1124,6 +1124,7 @@ dbg("receive completed with error %x\n", Irp->IoStatus.Status);
 
         case STATUS_WAIT_1:
 dbg("receive interrupted by signal\n");
+            flush_signals(current);
             BytesReceived = -EINTR;
             break;
 
