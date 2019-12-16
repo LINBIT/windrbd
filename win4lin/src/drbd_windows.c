@@ -19,6 +19,15 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+/* Uncomment this if you want more debug output (disable for releases) */
+#define DEBUG 1
+
+#ifdef RELEASE
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#endif
+
 #include <initguid.h>
 
 #include "drbd_windows.h"
@@ -2025,6 +2034,7 @@ void force_sig(int sig, struct task_struct *task)
 
 	if (task && task->has_sig_event)
 	{
+		dbg("sending signal %d to task %p (%s)\n", sig, task, task->comm);
 		task->sig = sig;
 		KeSetEvent(&task->sig_event, 0, FALSE);
 	}
@@ -2036,6 +2046,7 @@ void flush_signals(struct task_struct *task)
 
 	if (task && task->has_sig_event)
 	{
+		dbg("clearing signal event from task %p (%s)\n", task, task->comm);
 		KeClearEvent(&task->sig_event); 
 		task->sig = 0;
 	}
