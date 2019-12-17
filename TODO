@@ -131,7 +131,7 @@ Planned: Mar 10 2019
 Real:
 
 
-TODO: Bug: Sometimes diskless Windows hangs
++TODO: Bug: Sometimes diskless Windows hangs
 
 	The host only network stops working. We get a
 	PingAck didn't arrive in time on both sides. Maybe
