@@ -48,6 +48,9 @@ TODO: Bug: After 6 minutes of connecting Windows 10 BSODs with DRIVER_PNP_WATCHD
 	waiting for size (already unblocked the QUERY_PROPERTY ioctl).
 	Not sure what to do ... maybe report an error reading the size?
 
+	Update: no we should trigger the watchdog somehow. Do not
+	return errors that do not exist.
+
 TODO: Code quality: Squash patches in transform.d
 
 	Redo all changes (we now have patches that revert former
@@ -135,6 +138,8 @@ TODO: Bug: Sometimes diskless Windows hangs
 	adjusting the timeouts helps?
 
 	e50234f64 runs quite stable.
+
+	Update: It gets stuck in NetworkFailure.
 
 +TODO: Feature: Make timeouts configurable
 
