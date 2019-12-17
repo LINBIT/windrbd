@@ -1124,7 +1124,7 @@ dbg("receive completed with error %x\n", Irp->IoStatus.Status);
 
         case STATUS_WAIT_1:
 dbg("receive interrupted by signal\n");
-            flush_signals(current);
+//            flush_signals(current);	/* TODO: this is probably wrong here */
             BytesReceived = -EINTR;
             break;
 
