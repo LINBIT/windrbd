@@ -1,5 +1,6 @@
 #include "drbd_windows.h"
 #include "windrbd_threads.h"
+#include "drbd_int.h"
 
 #define WINDRBD_RUN_TESTS 1
 
@@ -59,14 +60,20 @@ printk("4 IRQL is %d\n", KeGetCurrentIrql());
 static int run_printk_ping = 1;
 extern int num_pnp_requests;
 extern int num_pnp_bus_requests;
+struct drbd_connection *root_connection;
 
 static int printk_ping(void *unused)
 {
 	int i;
+	struct drbd_connection *connection;
 
 	i=0;
 	while (run_printk_ping) {
 		printk("ping %d (drbd bus is %p) num_pnp_requests %d num_pnp_bus_requests %d\n", i, drbd_bus_device, num_pnp_requests, num_pnp_bus_requests);
+		if (root_connection) {
+			connection = root_connection; /* polymorph magic */
+			drbd_info(connection, "root_connection %p", root_connection);
+		}
 		i++;
 		msleep(1000);
 	}
