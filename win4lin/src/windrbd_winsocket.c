@@ -219,6 +219,7 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	if (completion->the_mdl != NULL && completion->the_mdl != completion->wsk_buffer->Mdl) {
 		if (may_printk)
 			printk("Warning: Mdl field changed from %p to %p\n", completion->the_mdl, completion->wsk_buffer->Mdl);
+		/* completion->wsk_buffer->Mdl = completion->the_mdl */
 		bug = 1;
 	}
 		/* if (!bug) */
