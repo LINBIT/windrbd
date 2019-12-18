@@ -172,6 +172,7 @@ struct send_page_completion_info {
 	char *data_buffer;
 	struct _WSK_BUF *wsk_buffer;
 	struct socket *socket;
+	struct _MDL *the_mdl;	/* copy of the pointer. For debugging. */
 };
 
 static void have_sent(struct socket *socket, size_t length)
@@ -194,6 +195,7 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 { 
 	int may_printk = completion->page != NULL; /* called from SendPage */
 	size_t length;
+	int bug = 0;
 
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
@@ -214,6 +216,12 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	length = completion->wsk_buffer->Length;
 		/* Also unmaps the pages of the containg Mdl */
 
+	if (completion->the_mdl != NULL && completion->the_mdl != completion->wsk_buffer->Mdl) {
+		if (may_printk)
+			printk("Warning: Mdl field changed from %p to %p\n", completion->the_mdl, completion->wsk_buffer->Mdl);
+		bug = 1;
+	}
+		/* if (!bug) */
 	FreeWskBuffer(completion->wsk_buffer, may_printk);
 	kfree(completion->wsk_buffer);
 
@@ -855,6 +863,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	completion->page = page;
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
+	completion->the_mdl = WskBuffer->Mdl;
 
 	Irp = IoAllocateIrp(1, FALSE);
 	if (Irp == NULL) {
