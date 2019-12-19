@@ -998,6 +998,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	completion->data_buffer = tmp_buffer;
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
+	completion->the_mdl = WskBuffer->Mdl;
 
 	irp = IoAllocateIrp(1, FALSE);
 	if (irp == NULL) {
