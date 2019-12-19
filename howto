@@ -591,3 +591,12 @@ clone vdi:
 vboxmanage clonevdi '/Volumes/Linbit WDRBD/Linbit/WinDRBDNew2019/Snapshots/{b83d7f0d-2a91-49be-b876-bed6fb3fe20e}.vdi' ./WinDRBDRemoteBoot/WinDRBDRemoteBoot.vdi
 
 Where the source is the latest snapshot VDI.
+
+-----
+
+debugger load symbols:
+
+.reload /i windrbd.sys
+
+forces symbols that do not match (they match but WinDbg thinks they don't
+match).
