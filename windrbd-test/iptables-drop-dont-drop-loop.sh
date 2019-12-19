@@ -6,8 +6,11 @@ do
 	echo "network failure $i"
 	echo "about to drop packets"
 	./iptables-drop.sh
-	sleep 20
+	sleep 10
+	drbdadm status
 	echo "about to not drop packets"
 	./iptables-dont-drop.sh
-	sleep 20
+	sudo drbdadm wait-sync w0
+	sleep 2
+	drbdadm status
 done
