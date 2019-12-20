@@ -13,6 +13,12 @@
 
 #define SPIN_LOCK_DEBUG 1
 
+#ifdef RELEASE
+#ifdef SPIN_LOCK_DEBUG
+#undef SPIN_LOCK_DEBUG
+#endif
+#endif
+
 typedef struct _tagSPINLOCK
 {
 	KSPIN_LOCK spinLock;
