@@ -11,7 +11,7 @@
  * releases.
  */
 
-#define SPIN_LOCK_DEBUG 1
+/* #define SPIN_LOCK_DEBUG 1 */
 
 #ifdef RELEASE
 #ifdef SPIN_LOCK_DEBUG
