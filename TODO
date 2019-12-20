@@ -30,6 +30,24 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
++TODO: After 1-2 days of I/O being primary BSOD
+
+	I suspect that the network completion routine is called
+	twice for the same completion (and Irp, Mdl, ...). Have
+	a patch now. This patch causes sometimes DriverEntry
+	to BSOD (fix it: no kmalloc for printk routines).
+	Have a SendPageCompletionOnlyOnce routine which does
+	the check and use this only for TCP/IP.
+
+	Must not BSOD (this is for testing) when the bug triggers.
+
++TODO: BSOD on iptables drop after around 10 iterations.
+
+	Is probably a DRBD bug (see
+	drbd_sender:tl_mark_for_resend_by_connection()). 
+
+	When there are lots of printk's changing the timing.
+
 TODO: Bug: BSOD on boot after drivers were installed (Windows 7).
 
 	Windows booted once then installed drivers (bus driver
