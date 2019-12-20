@@ -175,6 +175,79 @@ struct send_page_completion_info {
 	struct _MDL *the_mdl;	/* copy of the pointer. For debugging. */
 };
 
+	/* We track active completions to see if there is the completion
+	 * routine called twice on the same completion. This is most likely
+	 * due to a Windows bug which occurs after 2-3 days of running
+	 * an I/O test.
+	 */
+
+struct allocated_completions {
+	struct send_page_completion_info *completion;
+	struct list_head list;
+};
+
+static LIST_HEAD(completions);
+static spinlock_t completions_lock;
+
+static int remove_completion_locked(struct send_page_completion_info *c)
+{
+	struct list_head *lh, *lhn;
+	struct allocated_completions *alloc_completion;
+	int n = 0;
+
+	list_for_each_safe(lh, lhn, &completions) {
+		alloc_completion = list_entry(lh, struct allocated_completions, list);
+		if (alloc_completion->completion == c) {
+			list_del(&alloc_completion->list);
+			kfree(alloc_completion);
+			n++;
+		}
+	}
+	if (n == 0)
+		return -ENOENT;
+	if (n == 1)
+		return 0;
+
+	return -EINVAL;
+}
+
+static int remove_completion(struct send_page_completion_info *c)
+{
+	int rv;
+	ULONG_PTR flags;
+
+	spin_lock_irqsave(&completions_lock, flags);
+	rv = remove_completion_locked(c);
+	spin_unlock_irqrestore(&completions_lock, flags);
+
+	return rv;
+}
+
+static int add_completion(struct send_page_completion_info *c)
+{
+	int rv;
+	ULONG_PTR flags;
+	struct allocated_completions *new_completion;
+
+	new_completion = kmalloc(sizeof(*new_completion), 0, 'DRBD');
+	if (new_completion == NULL)
+		return -ENOMEM;
+
+	spin_lock_irqsave(&completions_lock, flags);
+	rv = remove_completion_locked(c);
+
+	if (rv != -ENOENT) {
+		spin_unlock_irqrestore(&completions_lock, flags);
+		kfree(new_completion);
+		return -EEXIST;
+	}
+	new_completion->completion = c;
+	list_add(&new_completion->list, &completions);
+
+	spin_unlock_irqrestore(&completions_lock, flags);
+	return 0;
+}
+
 static void have_sent(struct socket *socket, size_t length)
 {
 	ULONG_PTR flags;
@@ -193,6 +266,14 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 
 )
 { 
+	int err;
+
+	err = remove_completion(completion);
+	if (err != 0) {
+		int *p = NULL;
+		*p = 42; 	/* bugcheck */
+	}
+
 	int may_printk = completion->page != NULL; /* called from SendPage */
 	size_t length;
 	int bug = 0;
@@ -866,6 +947,14 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	completion->socket = socket;
 	completion->the_mdl = WskBuffer->Mdl;
 
+	int err2;
+
+	err2 = add_completion(completion);
+	if (err2 != 0) {
+		int *p = NULL;
+		*p = 42; 	/* bugcheck */
+	}
+
 	Irp = IoAllocateIrp(1, FALSE);
 	if (Irp == NULL) {
 		err = -ENOMEM;
@@ -999,6 +1088,14 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
 	completion->the_mdl = WskBuffer->Mdl;
+
+	int err2;
+
+	err2 = add_completion(completion);
+	if (err2 != 0) {
+		int *p = NULL;
+		*p = 42; 	/* bugcheck */
+	}
 
 	irp = IoAllocateIrp(1, FALSE);
 	if (irp == NULL) {
@@ -1637,6 +1734,7 @@ NTSTATUS windrbd_init_wsk(void)
 	HANDLE h;
 	NTSTATUS status;
 
+	spin_lock_init(&completions_lock);
 	KeInitializeEvent(&net_initialized_event, NotificationEvent, FALSE);
 
 	status = windrbd_create_windows_thread(windrbd_init_wsk_thread, NULL, &init_wsk_thread);
