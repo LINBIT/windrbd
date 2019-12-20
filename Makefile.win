@@ -207,7 +207,7 @@ windrbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildca
 	rm -f windrbd.pdb "_$@"
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"windrbd.pdb" /OUT:"_$@"
 	mv -f "_$@" "$@"
-	"$(EWDK_BIN)/inf2cat.exe" /driver:. /os:XP_X86,Vista_X86,Vista_X64,7_X86,7_X64,8_X86,8_X64,6_3_X86,6_3_X64,10_X86,10_X64
+#	"$(EWDK_BIN)/inf2cat.exe" /driver:. /os:XP_X86,Vista_X86,Vista_X64,7_X86,7_X64,8_X86,8_X64,6_3_X86,6_3_X64,10_X86,10_X64
 ifdef R
 # Linbit DigiCert certificate (trusted by Microsoft)
 	"$(EWDK_BIN)/signtool.exe" sign /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com "$@"
