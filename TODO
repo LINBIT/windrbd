@@ -48,6 +48,9 @@ Real: Nov 15 2019
 
 	When there are lots of printk's changing the timing.
 
+	Fixed, now hangs in drbd_receiver (receive_protocol(),
+	after line 4466), most likely in synchronize_rcu().
+
 TODO: Bug: BSOD on boot after drivers were installed (Windows 7).
 
 	Windows booted once then installed drivers (bus driver

@@ -1,3 +1,4 @@
+#!/bin/bash
 # run as root on a Linux host port is hardcoded to 7600
 i=0
 while true
