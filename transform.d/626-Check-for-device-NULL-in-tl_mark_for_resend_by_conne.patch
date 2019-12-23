@@ -1,0 +1,30 @@
+From b0f951a6a0de5c503f68e414cdffbbb480584d65 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 20 Dec 2019 18:47:13 +0100
+Subject: [PATCH] Check for device == NULL in
+ tl_mark_for_resend_by_connection()
+
+This happens when running drop-dont-drop loop on peer while
+being primary and doing I/O and there are lots of printk's
+(unrelated) in the drbd_receiver (which change the timings).
+---
+ drbd/drbd_sender.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index 30a3803..04b7591 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -2494,6 +2494,9 @@ restart:
+ 	list_for_each_entry_continue(struct drbd_request, req, &connection->resource->transfer_log, tl_requests) {
+ 		/* potentially needed in complete_master_bio below */
+ 		device = req->device;
++		if (device == NULL)
++			continue;
++
+ 		peer_device = conn_peer_device(connection, device->vnr);
+ 		s = drbd_req_state_by_peer_device(req, peer_device);
+ 
+-- 
+2.17.0
+
