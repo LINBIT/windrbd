@@ -41,6 +41,20 @@ Real: Nov 15 2019
 
 	Must not BSOD (this is for testing) when the bug triggers.
 
+	Test triggers Windows sends completion more than once.
+	Now have detector for duplicate completions and wait
+	for testing (VM currently has no network).
+
++TODO: BSOD in copy_first_640k
+
+	On Server 2016 this sometimes happens (when loading
+	the driver). Not sure yet why (because of the TCP/IP
+	duplicate completion bug workaround?)
+
+	It seems to happen only if the debugger is connected
+	(and on Windows Server 2016). Test if it also happens
+	without the duplicate completion detector.
+
 +TODO: BSOD on iptables drop after around 10 iterations.
 
 	Is probably a DRBD bug (see
