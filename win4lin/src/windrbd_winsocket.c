@@ -266,14 +266,6 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 
 )
 { 
-	int err;
-
-	err = remove_completion(completion);
-	if (err != 0) {
-		int *p = NULL;
-		*p = 42; 	/* bugcheck */
-	}
-
 	int may_printk = completion->page != NULL; /* called from SendPage */
 	size_t length;
 	int bug = 0;
@@ -297,6 +289,7 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	length = completion->wsk_buffer->Length;
 		/* Also unmaps the pages of the containg Mdl */
 
+		/* TODO: remove that again: */
 	if (completion->the_mdl != NULL && completion->the_mdl != completion->wsk_buffer->Mdl) {
 		if (may_printk)
 			printk("Warning: Mdl field changed from %p to %p\n", completion->the_mdl, completion->wsk_buffer->Mdl);
@@ -318,6 +311,23 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	IoFreeIrp(Irp);
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
+int duplicate_completions;
+
+static NTSTATUS NTAPI send_page_completion_onlyonce(
+	__in PDEVICE_OBJECT	DeviceObject,
+	__in PIRP		Irp,
+	__in struct send_page_completion_info *completion)
+{
+	int err;
+
+	err = remove_completion(completion);
+	if (err != 0) {
+		duplicate_completions++;
+		return STATUS_SUCCESS;
+	}
+	return SendPageCompletionRoutine(DeviceObject, Irp, completion);
 }
 
 static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
@@ -907,7 +917,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	struct _WSK_BUF *WskBuffer;
 	struct send_page_completion_info *completion;
 	NTSTATUS status;
-	int err;
+	int err, err2;
 
 // dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !page || ((int) len <= 0))
@@ -947,20 +957,18 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	completion->socket = socket;
 	completion->the_mdl = WskBuffer->Mdl;
 
-	int err2;
-
 	err2 = add_completion(completion);
 	if (err2 != 0) {
-		int *p = NULL;
-		*p = 42; 	/* bugcheck */
+		err = -ENOMEM;
+		goto out_free_wsk_buffer_mdl;
 	}
 
 	Irp = IoAllocateIrp(1, FALSE);
 	if (Irp == NULL) {
 		err = -ENOMEM;
-		goto out_free_wsk_buffer_mdl;
+		goto out_remove_completion;
 	}
-	IoSetCompletionRoutine(Irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
+	IoSetCompletionRoutine(Irp, send_page_completion_onlyonce, completion, TRUE, TRUE, TRUE);
 
 	if (socket->no_delay)
 		flags |= WSK_FLAG_NODELAY;
@@ -1009,6 +1017,8 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 
 out_unlock_mutex:
 	mutex_unlock(&socket->wsk_mutex);
+out_remove_completion:
+	remove_completion(completion);
 out_free_wsk_buffer_mdl:
 	FreeWskBuffer(WskBuffer, 1);
 out_free_completion:
@@ -1088,14 +1098,6 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
 	completion->the_mdl = WskBuffer->Mdl;
-
-	int err2;
-
-	err2 = add_completion(completion);
-	if (err2 != 0) {
-		int *p = NULL;
-		*p = 42; 	/* bugcheck */
-	}
 
 	irp = IoAllocateIrp(1, FALSE);
 	if (irp == NULL) {
