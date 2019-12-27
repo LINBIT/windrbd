@@ -519,6 +519,9 @@ dbg("4\n");
 
 dbg("5\n");
 	if (Status == STATUS_PENDING) {
+dbg("5a\n");
+msleep(1000);
+dbg("5b\n");
 		LARGE_INTEGER	nWaitTime;
 		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_sndtimeo * 1000 * 10);
 
