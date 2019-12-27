@@ -112,7 +112,7 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent)
 	}
 
 	if (CompletionEvent) {
-		KeInitializeEvent(CompletionEvent, SynchronizationEvent, FALSE);
+		KeInitializeEvent(CompletionEvent, NotificationEvent, FALSE);
 		IoSetCompletionRoutine(irp, completion_fire_event, CompletionEvent, TRUE, TRUE, TRUE);
 	} else {
 		IoSetCompletionRoutine(irp, completion_free_irp, NULL, TRUE, TRUE, TRUE);
@@ -1164,9 +1164,12 @@ dbg("WskReceive error status=%x\n", Status);
 
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
+dbg("About to cancel irp\n");
 		// cancel irp in wsk subsystem
 		IoCancelIrp(Irp);
+dbg("waiting for cancel irp to complete\n");
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
+dbg("after KeWaitForSingleObject()\n");
 		if (Irp->IoStatus.Information > 0)
 		{
 				/* When network is interrupted while we
