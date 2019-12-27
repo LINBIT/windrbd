@@ -501,23 +501,28 @@ dbg("1 socket is %p\n", socket);
 	(void) sockaddr_len;
 	(void) flags;
 
+dbg("2\n");
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || vaddr == NULL)
 		return -EINVAL;
 
+dbg("3\n");
 	Irp = wsk_new_irp(&CompletionEvent);
 	if (Irp == NULL)
 		return -ENOMEM;
 
+dbg("4\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskConnect(
 		socket->wsk_socket,
 		vaddr,
 		0,
 		Irp);
 
+dbg("5\n");
 	if (Status == STATUS_PENDING) {
 		LARGE_INTEGER	nWaitTime;
 		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_sndtimeo * 1000 * 10);
 
+dbg("6\n");
 		if ((Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime)) == STATUS_TIMEOUT)
 		{
 			dbg("Timeout (%lld/%d) expired, cancelling connect.\n", nWaitTime, socket->sk->sk_sndtimeo);
@@ -526,18 +531,22 @@ dbg("1 socket is %p\n", socket);
 		}
 	}
 
+dbg("7\n");
 	if (Status == STATUS_SUCCESS)
 	{
+dbg("8\n");
 		Status = Irp->IoStatus.Status;
 		if (Status == STATUS_SUCCESS)
 			socket->sk->sk_state = TCP_ESTABLISHED;
 	}
+dbg("9\n");
 	if (Status != STATUS_SUCCESS)
 		dbg("WskConnect failed with status = %x\n", Status);
 
+dbg("a\n");
 	IoFreeIrp(Irp);
 
-dbg("2 socket is %p, returning %d\n", socket, winsock_to_linux_error(Status));
+dbg("b socket is %p, returning %d\n", socket, winsock_to_linux_error(Status));
 	return winsock_to_linux_error(Status);
 }
 
