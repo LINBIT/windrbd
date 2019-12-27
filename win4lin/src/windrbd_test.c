@@ -65,15 +65,19 @@ struct drbd_connection *root_connection;
 static int printk_ping(void *unused)
 {
 	int i;
+#if 0
 	struct drbd_connection *connection;
+#endif
 
 	i=0;
 	while (run_printk_ping) {
 		printk("ping %d (drbd bus is %p) num_pnp_requests %d num_pnp_bus_requests %d\n", i, drbd_bus_device, num_pnp_requests, num_pnp_bus_requests);
+#if 0
 		if (root_connection) {
 			connection = root_connection; /* polymorph magic */
 			drbd_info(connection, "root_connection %p", root_connection);
 		}
+#endif
 		i++;
 		msleep(1000);
 	}
