@@ -325,7 +325,7 @@ static NTSTATUS NTAPI send_page_completion_onlyonce(
 	err = remove_completion(completion);
 	if (err != 0) {
 		duplicate_completions++;
-		return STATUS_SUCCESS;
+		return STATUS_MORE_PROCESSING_REQUIRED;
 	}
 	return SendPageCompletionRoutine(DeviceObject, Irp, completion);
 }
