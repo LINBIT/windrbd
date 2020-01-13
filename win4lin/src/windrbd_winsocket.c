@@ -306,8 +306,10 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 		put_page(completion->page); /* Might free the page if connection is already down */
 	if (completion->data_buffer)
 		kfree(completion->data_buffer);
+// if (may_printk) printk("About to kfree completion %p\n", completion);
 	kfree(completion);
 	
+// if (may_printk) printk("About to Irp completion %p\n", Irp);
 	IoFreeIrp(Irp);
 
 	return STATUS_MORE_PROCESSING_REQUIRED;

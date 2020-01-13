@@ -112,7 +112,7 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	if (mem->poison != POISON_BEFORE)
 		printk("kmalloc_debug: Warning: Poison before overwritten (is %x should be %x)\n", mem->poison, POISON_BEFORE);
 	if (poison_after->poison2 != POISON_AFTER)
-		printk("kmalloc_debug: Warning: Poison before overwritten (is %x should be %x)\n", poison_after->poison2, POISON_AFTER);
+		printk("kmalloc_debug: Warning: Poison after overwritten (is %x should be %x)\n", poison_after->poison2, POISON_AFTER);
 
 	spin_lock_irqsave(&memory_lock, flags);
 	list_del(&mem->list);
