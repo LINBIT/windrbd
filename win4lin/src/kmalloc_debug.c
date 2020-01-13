@@ -118,6 +118,9 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	list_del(&mem->list);
 	spin_unlock_irqrestore(&memory_lock, flags);
 
+	mem->poison = 'EERF';
+	poison_after->poison2 = 'EERF';
+
 	ExFreePool((void*)mem);
 }
 
