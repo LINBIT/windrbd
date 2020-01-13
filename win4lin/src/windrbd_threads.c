@@ -231,7 +231,8 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	t->is_zombie = 0;
 	spin_lock_init(&t->thread_started_lock);
 
-	KeInitializeEvent(&t->sig_event, NotificationEvent, FALSE);
+	// KeInitializeEvent(&t->sig_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
 	KeInitializeEvent(&t->start_event, SynchronizationEvent, FALSE);
 	t->has_sig_event = TRUE;
 	t->sig = -1;
@@ -293,7 +294,8 @@ struct task_struct *make_me_a_windrbd_thread(const char *name, ...)
 	t->windows_thread = KeGetCurrentThread();
 	spin_lock_init(&t->thread_started_lock);
 
-	KeInitializeEvent(&t->sig_event, NotificationEvent, FALSE);
+//	KeInitializeEvent(&t->sig_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
 	KeInitializeEvent(&t->start_event, SynchronizationEvent, FALSE);
 	t->has_sig_event = TRUE;
 	t->sig = -1;
