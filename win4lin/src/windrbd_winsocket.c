@@ -399,7 +399,6 @@ static void close_wsk_socket(struct _WSK_SOCKET *wsk_socket)
 {
 	struct _IRP *Irp;
 
-dbg("1\n");
 	if (wsk_state != WSK_INITIALIZED || wsk_socket == NULL)
 		return;
 
@@ -408,7 +407,6 @@ dbg("1\n");
 		return;
 
 	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) wsk_socket->Dispatch)->WskCloseSocket(wsk_socket, Irp);
-dbg("2\n");
 }
 
 
@@ -419,7 +417,6 @@ static void close_socket(struct socket *socket)
 {
 	struct _IRP *Irp;
 
-dbg("1 socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
@@ -455,7 +452,6 @@ dbg("1 socket is %p\n", socket);
 	}
 	socket->error_status = 0;
 	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
-dbg("2 socket is %p\n", socket);
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
@@ -496,36 +492,27 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	PIRP		Irp = NULL;
 	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
 
-dbg("1 socket is %p\n", socket);
 		/* TODO: check/implement those: */
 	(void) sockaddr_len;
 	(void) flags;
 
-dbg("2\n");
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || vaddr == NULL)
 		return -EINVAL;
 
-dbg("3\n");
 	Irp = wsk_new_irp(&CompletionEvent);
 	if (Irp == NULL)
 		return -ENOMEM;
 
-dbg("4\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskConnect(
 		socket->wsk_socket,
 		vaddr,
 		0,
 		Irp);
 
-dbg("5\n");
 	if (Status == STATUS_PENDING) {
-dbg("5a\n");
-msleep(1000);
-dbg("5b\n");
 		LARGE_INTEGER	nWaitTime;
 		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_sndtimeo * 1000 * 10);
 
-dbg("6\n");
 		if ((Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime)) == STATUS_TIMEOUT)
 		{
 			dbg("Timeout (%lld/%d) expired, cancelling connect.\n", nWaitTime, socket->sk->sk_sndtimeo);
@@ -534,22 +521,17 @@ dbg("6\n");
 		}
 	}
 
-dbg("7\n");
 	if (Status == STATUS_SUCCESS)
 	{
-dbg("8\n");
 		Status = Irp->IoStatus.Status;
 		if (Status == STATUS_SUCCESS)
 			socket->sk->sk_state = TCP_ESTABLISHED;
 	}
-dbg("9\n");
 	if (Status != STATUS_SUCCESS)
 		dbg("WskConnect failed with status = %x\n", Status);
 
-dbg("a\n");
 	IoFreeIrp(Irp);
 
-dbg("b socket is %p, returning %d\n", socket, winsock_to_linux_error(Status));
 	return winsock_to_linux_error(Status);
 }
 
@@ -562,7 +544,6 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	struct socket *accept_socket;
 	KIRQL flags;
 
-dbg("1 socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
@@ -592,7 +573,6 @@ retry:
 		*newsock = accept_socket;
 	}
 
-dbg("2 socket is %p\n", socket);
 	return err;
 }
 
@@ -1052,12 +1032,10 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return -EINVAL;
 
 	if (num != 1) {
-dbg("num is %d\n", num);
 		return -EOPNOTSUPP;
 }
 
 	if (socket->error_status != 0) {
-dbg("socket->error_status is %d\n", socket->error_status);
 		return socket->error_status;
 }
 
