@@ -1200,6 +1200,20 @@ void flush_workqueue(struct workqueue_struct *wq)
 	KeWaitForMultipleObjects(2, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
 }
 
+int threads_sleeping;
+
+void enter_interruptible(void)
+{
+	printk("Thread %s entering interruptible sleep.\n", current->comm);
+	threads_sleeping++;
+}
+
+void exit_interruptible(void)
+{
+	printk("Thread %s exiting interruptible sleep.\n", current->comm);
+	threads_sleeping--;
+}
+
 void mutex_init(struct mutex *m)
 {
 	KeInitializeMutex(&m->mtx, 0);
@@ -1243,8 +1257,9 @@ int mutex_lock_interruptible(struct mutex *m)
 		waitObjects[1] = (PVOID)&thread->sig_event;
 		wObjCount++;
 	}
-	
+enter_interruptible();	
 	status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
+exit_interruptible();	
 
 	switch (status)
 	{

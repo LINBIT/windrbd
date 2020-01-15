@@ -254,7 +254,9 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 				wait_objects[1] = &current->sig_event;
 				num_objects = 2;
 			}
+enter_interruptible();
 			status = KeWaitForMultipleObjects(num_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, &timeout, NULL);
+exit_interruptible();
 
 			switch (status) {
 			case STATUS_WAIT_0:
@@ -1095,7 +1097,9 @@ dbg("wsk_socket closed meanwhile\n");
             wObjCount = 2;
         } 
 
+enter_interruptible();
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
+exit_interruptible();
         switch (Status)
         {
         case STATUS_WAIT_0: // waitObjects[0] CompletionEvent

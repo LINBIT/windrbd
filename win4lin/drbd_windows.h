@@ -1427,4 +1427,8 @@ int try_to_promote(struct drbd_device *device, LONG_PTR timeout, bool ndelay);
 /* See windrbd_bootdevice.c */
 void parser_test(void);
 
+/* Debug. Might go away again. */
+void enter_interruptible(void);
+void exit_interruptible(void);
+
 #endif // DRBD_WINDOWS_H
