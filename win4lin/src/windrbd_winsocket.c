@@ -512,15 +512,19 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 		Irp);
 
 	if (Status == STATUS_PENDING) {
+/*
 		LARGE_INTEGER	nWaitTime;
 		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_sndtimeo * 1000 * 10);
-
 		if ((Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime)) == STATUS_TIMEOUT)
 		{
 			dbg("Timeout (%lld/%d) expired, cancelling connect.\n", nWaitTime, socket->sk->sk_sndtimeo);
 			IoCancelIrp(Irp);
 			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		}
+*/
+printk("Waiting for WskConnect to complete\n");
+		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
+printk("WskConnect completed with status %x\n", Status);
 	}
 
 	if (Status == STATUS_SUCCESS)
