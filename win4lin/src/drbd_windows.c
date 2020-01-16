@@ -1202,15 +1202,15 @@ void flush_workqueue(struct workqueue_struct *wq)
 
 int threads_sleeping;
 
-void enter_interruptible(void)
+void enter_interruptible_debug(const char *file, int line, const char *func)
 {
-	printk("Thread %s entering interruptible sleep.\n", current->comm);
+	printk("Thread %s entering interruptible sleep (from %s:%d (%s()).\n", current->comm, file, line, func);
 	threads_sleeping++;
 }
 
-void exit_interruptible(void)
+void exit_interruptible_debug(const char *file, int line, const char *func)
 {
-	printk("Thread %s exiting interruptible sleep.\n", current->comm);
+	printk("Thread %s exiting interruptible sleep. (from %s:%d (%s())\n", current->comm, file, line, func);
 	threads_sleeping--;
 }
 

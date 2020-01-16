@@ -1428,7 +1428,10 @@ int try_to_promote(struct drbd_device *device, LONG_PTR timeout, bool ndelay);
 void parser_test(void);
 
 /* Debug. Might go away again. */
-void enter_interruptible(void);
-void exit_interruptible(void);
+void enter_interruptible_debug(const char *file, int line, const char *func);
+void exit_interruptible_debug(const char *file, int line, const char *func);
+
+#define enter_interruptible() enter_interruptible_debug(__FILE__, __LINE__, __func__)
+#define exit_interruptible() exit_interruptible_debug(__FILE__, __LINE__, __func__)
 
 #endif // DRBD_WINDOWS_H
