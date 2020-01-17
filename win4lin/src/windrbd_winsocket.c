@@ -524,17 +524,18 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 */
 printk("Waiting for WskConnect to complete\n");
 		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-printk("WskConnect completed with status %x\n", Status);
+printk("WskConnect completed KeWaitForSingleObject (status is %x)\n", Status);
 	}
 
 	if (Status == STATUS_SUCCESS)
 	{
 		Status = Irp->IoStatus.Status;
+printk("WskConnect completed with status %x\n", Status);
 		if (Status == STATUS_SUCCESS)
 			socket->sk->sk_state = TCP_ESTABLISHED;
 	}
 	if (Status != STATUS_SUCCESS)
-		dbg("WskConnect failed with status = %x\n", Status);
+printk("WskConnect failed with status = %x\n", Status);
 
 	IoFreeIrp(Irp);
 
