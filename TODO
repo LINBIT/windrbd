@@ -45,6 +45,9 @@ Real: Nov 15 2019
 	Now have detector for duplicate completions and wait
 	for testing (VM currently has no network).
 
+	Update: with fix now runs for 4 days (with SPIN_LOCK_DEBUG
+	disabled).
+
 +TODO: BSOD in copy_first_640k
 
 	On Server 2016 this sometimes happens (when loading
@@ -206,6 +209,16 @@ Real:
 	unbootable even when it is booted from disk.
 
 	Logs show that WinDRBD device hangs in NetworkFailure (?)
+
+	Update: many fixes (Kernel Events should be Notification
+	and not Synchronize whereever possible) and correct
+	firewall config (must be on with the WinDRBD port set
+	to Allow, Windows also boots when the WinDRBD port is
+	not set in the firewall, but later fails to reestablish
+	the connection).
+
+	Right now, connection gets reestablished but machine
+	is very slow (some Kernel thread hangs at 100% CPU).
 
 +TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 
