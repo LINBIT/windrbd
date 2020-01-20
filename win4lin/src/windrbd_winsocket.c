@@ -22,6 +22,11 @@
  * the Dispatcher cast is dangerous.
  */
 
+/* TODO: have refcnt on struct socket. Reason is that there might
+ * be use-after-free (in the completion handler) when the socket
+ * is shut down.
+ */
+
 #define WSK_DEINITIALIZED	0
 #define WSK_DEINITIALIZING	1
 #define WSK_INITIALIZING	2
@@ -64,7 +69,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_CONNECTION_REFUSED:
 		return -ECONNREFUSED;
 	default:
-		dbg("Unknown status %x, returning -EIO.\n", status);
+/*		dbg("Unknown status %x, returning -EIO.\n", status); */
 		return -EIO;
 	}
 }
@@ -390,7 +395,7 @@ exit_interruptible();
 static NTSTATUS SocketsInit(void)
 {
 	static WSK_CLIENT_NPI	WskClient = { 0 };
-	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
+	NTSTATUS		Status;
 
 	if (InterlockedCompareExchange(&wsk_state, WSK_INITIALIZING, WSK_DEINITIALIZED) != WSK_DEINITIALIZED)
 		return STATUS_ALREADY_REGISTERED;
@@ -459,7 +464,7 @@ static int CreateSocket(
 	KEVENT			CompletionEvent = { 0 };
 	PIRP			Irp = NULL;
 	PWSK_SOCKET		WskSocket = NULL;
-	NTSTATUS		Status = STATUS_UNSUCCESSFUL;
+	NTSTATUS		Status;
 
 	/* NO _printk HERE, WOULD LOOP */
 	if (wsk_state != WSK_INITIALIZED || out == NULL)
@@ -562,7 +567,7 @@ static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
 {
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
-	NTSTATUS	status = STATUS_UNSUCCESSFUL;
+	NTSTATUS	status;
 
 	if (peer == 0)
 		return -EOPNOTSUPP;
@@ -594,7 +599,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 {
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
+	NTSTATUS	Status;
 
 		/* TODO: check/implement those: */
 	(void) sockaddr_len;
@@ -691,7 +696,7 @@ static int wsk_set_event_callbacks(struct socket *socket, int mask)
 {
 	KEVENT CompletionEvent;
 	PIRP Irp;
-	NTSTATUS Status = STATUS_UNSUCCESSFUL;
+	NTSTATUS Status;
 	WSK_EVENT_CALLBACK_CONTROL callbackControl;
 
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
@@ -745,7 +750,7 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 {
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
+	NTSTATUS	Status;
 	LARGE_INTEGER	nWaitTime;
 
 		/* TODO: one day ... */
@@ -783,7 +788,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	PIRP		Irp = NULL;
 	WSK_BUF		WskBuffer = { 0 };
 	LONG		BytesSent;
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
+	NTSTATUS	Status;
 	ULONG Flags = 0;
 
 // dbg("socket is %p\n", socket);
@@ -1319,7 +1324,7 @@ static int wsk_bind(
 {
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
+	NTSTATUS	Status;
 	(void) sockaddr_len;	/* TODO: check this parameter */
 
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || myaddr == NULL)
@@ -1357,7 +1362,7 @@ static NTSTATUS ControlSocket(
 {
 	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
-	NTSTATUS	Status = STATUS_UNSUCCESSFUL;
+	NTSTATUS	Status;
 
 	if (wsk_state != WSK_INITIALIZED || !WskSocket)
 		return -EINVAL;
@@ -1547,7 +1552,6 @@ static int wsk_sock_create_kern(void *net_namespace,
 	int err;
 	NTSTATUS status;
 
-if (type == SOCK_STREAM) dbg("1\n");
 	if (net_namespace != &init_net)
 		return -EINVAL;
 
@@ -1570,8 +1574,6 @@ if (type == SOCK_STREAM) dbg("1\n");
 	socket->wsk_socket = wsk_socket;
 	socket->wsk_flags = Flags;
 	*out = socket;
-
-if (type == SOCK_STREAM) dbg("2 socket is %p\n", socket);
 
 	return 0;
 }
