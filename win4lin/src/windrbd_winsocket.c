@@ -74,6 +74,26 @@ static int winsock_to_linux_error(NTSTATUS status)
 	}
 }
 
+static void sock_really_free(struct kref *kref)
+{
+	struct socket *socket = container_of(kref, struct socket, kref);
+
+	kfree(socket->sk);
+	kfree(socket);
+}
+
+	/* Use this only if socket is valid but socket->wsk_socket is
+	 * not.
+	 */
+
+static void sock_free_linux_socket(struct socket *socket)
+{
+	if (socket == NULL)
+		return;
+
+	kref_put(&socket->kref, sock_really_free);
+}
+
 static NTSTATUS NTAPI completion_fire_event(
 	__in PDEVICE_OBJECT	DeviceObject,
 	__in PIRP			Irp,
@@ -311,10 +331,11 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 		put_page(completion->page); /* Might free the page if connection is already down */
 	if (completion->data_buffer)
 		kfree(completion->data_buffer);
-// if (may_printk) printk("About to kfree completion %p\n", completion);
+	if (completion->socket != NULL)
+	        kref_put(&completion->socket->kref, sock_really_free);
+
 	kfree(completion);
 	
-// if (may_printk) printk("About to Irp completion %p\n", Irp);
 	IoFreeIrp(Irp);
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
@@ -560,7 +581,11 @@ static void close_socket(struct socket *socket)
 		socket->accept_wsk_socket = NULL;
 	}
 	socket->error_status = 0;
+<<<<<<< HEAD
 	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
+=======
+	socket->is_closed = 1;
+>>>>>>> Socket refcounting.
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
@@ -963,6 +988,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
 	completion->the_mdl = WskBuffer->Mdl;
+	kref_get(&socket->kref);
 
 	err2 = add_completion(completion);
 	if (err2 != 0) {
@@ -1027,6 +1053,7 @@ out_unlock_mutex:
 out_remove_completion:
 	remove_completion(completion);
 out_free_wsk_buffer_mdl:
+        kref_put(&socket->kref, sock_really_free);
 	FreeWskBuffer(WskBuffer, 1);
 out_free_completion:
 	kfree(completion);
@@ -1155,24 +1182,27 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
+<<<<<<< HEAD
 	if (num != 1) {
+=======
+	if (num != 1)
+>>>>>>> Socket refcounting.
 		return -EOPNOTSUPP;
-}
 
+<<<<<<< HEAD
 	if (socket->error_status != 0) {
+=======
+	if (socket->error_status != 0)
+>>>>>>> Socket refcounting.
 		return socket->error_status;
-}
-
 
 	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, TRUE, TRUE);
 	if (!NT_SUCCESS(Status)) {
-dbg("InitWskBuffer failed, Status is %x\n", Status);
 		return winsock_to_linux_error(Status);
 	}
 
 	Irp = wsk_new_irp(&CompletionEvent);
 	if (Irp == NULL) {
-dbg("new_irp failed\n");
 		FreeWskBuffer(&WskBuffer, 1);
 		return -ENOMEM;
 	}
@@ -1184,7 +1214,6 @@ dbg("new_irp failed\n");
 	mutex_lock(&socket->wsk_mutex);
 
 	if (socket->wsk_socket == NULL) {
-dbg("wsk_socket closed meanwhile\n");
 		mutex_unlock(&socket->wsk_mutex);
 		FreeWskBuffer(&WskBuffer, 1);
 		return -ENOTCONN;
@@ -1465,6 +1494,7 @@ static int sock_create_linux_socket(struct socket **out)
 
 	socket->error_status = 0;
 
+	kref_init(&socket->kref);
 	spin_lock_init(&socket->send_buf_counters_lock);
 	spin_lock_init(&socket->accept_socket_lock);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
@@ -1484,19 +1514,6 @@ static int sock_create_linux_socket(struct socket **out)
 	*out = socket;
 
 	return 0;
-}
-
-	/* Use this only if socket is valid but socket->wsk_socket is
-	 * not.
-	 */
-
-static void sock_free_linux_socket(struct socket *socket)
-{
-	if (socket == NULL)
-		return;
-
-	kfree(socket->sk);
-	kfree(socket);
 }
 
 static NTSTATUS WSKAPI wsk_incoming_connection (
