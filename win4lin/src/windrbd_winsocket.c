@@ -1132,9 +1132,11 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
 	completion->the_mdl = WskBuffer->Mdl;
+	kref_get(&socket->kref);
 
 	irp = IoAllocateIrp(1, FALSE);
 	if (irp == NULL) {
+        	kref_put(&socket->kref, sock_really_free);
 		have_sent(socket, BufferSize);
 		kfree(completion);
 		kfree(WskBuffer);
