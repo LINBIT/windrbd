@@ -581,11 +581,7 @@ static void close_socket(struct socket *socket)
 		socket->accept_wsk_socket = NULL;
 	}
 	socket->error_status = 0;
-<<<<<<< HEAD
 	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
-=======
-	socket->is_closed = 1;
->>>>>>> Socket refcounting.
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
@@ -1184,18 +1180,10 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
-<<<<<<< HEAD
-	if (num != 1) {
-=======
 	if (num != 1)
->>>>>>> Socket refcounting.
 		return -EOPNOTSUPP;
 
-<<<<<<< HEAD
-	if (socket->error_status != 0) {
-=======
 	if (socket->error_status != 0)
->>>>>>> Socket refcounting.
 		return socket->error_status;
 
 	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, TRUE, TRUE);
