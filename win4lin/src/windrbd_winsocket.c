@@ -78,6 +78,7 @@ static void sock_really_free(struct kref *kref)
 {
 	struct socket *socket = container_of(kref, struct socket, kref);
 
+printk("freeing socket\n");
 	kfree(socket->sk);
 	kfree(socket);
 }
