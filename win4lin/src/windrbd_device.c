@@ -2470,11 +2470,13 @@ static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp
 	unsigned int major = s->MajorFunction;
 	NTSTATUS ret;
 
+printk("IRQL is %d\n", KeGetCurrentIrql());
 	if (major > IRP_MJ_MAXIMUM_FUNCTION) {
 		printk("Warning: got major function %x out of range\n", major);
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 	t = make_me_a_windrbd_thread(thread_names[major]);
+printk("IRQL is %d\n", KeGetCurrentIrql());
 	if (t == NULL) {
 		printk("Warning: cannot create a thread object for request.\n");
 	}
