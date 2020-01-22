@@ -16,6 +16,7 @@
          * Returns -EINTR, -ETIMEOUT or 0
 	 */
 
+int raised_irql_waits;
 
 static int ll_wait(struct wait_queue_entry *e, ULONG_PTR timeout, int interruptible, const char *file, int line, const char *func)
 {
@@ -51,6 +52,7 @@ if (timeout > 5000) timeout = 5000;
 	}
 	if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
 		printk("Warning: Attempt to schedule at IRQL %d will not sleep (called from %s:%d (%s())\n", KeGetCurrentIrql(), file, line, func);
+		raised_irql_waits++;
 		return -EINVAL;
 	}
 

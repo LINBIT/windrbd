@@ -63,6 +63,7 @@ extern int num_pnp_bus_requests;
 extern int threads_sleeping;
 struct drbd_connection *root_connection;
 extern int duplicate_completions;
+extern int raised_irql_waits;
 
 static int printk_ping(void *unused)
 {
@@ -73,7 +74,7 @@ static int printk_ping(void *unused)
 
 	i=0;
 	while (run_printk_ping) {
-		printk("ping %d (drbd bus is %p) num_pnp_requests %d num_pnp_bus_requests %d currently %d threads sleeping interruptible duplicate_completions %d\n", i, drbd_bus_device, num_pnp_requests, num_pnp_bus_requests, threads_sleeping, duplicate_completions);
+		printk("ping %d (drbd bus is %p) num_pnp_requests %d num_pnp_bus_requests %d currently %d threads sleeping interruptible duplicate_completions %d raised_irql_waits: %d\n", i, drbd_bus_device, num_pnp_requests, num_pnp_bus_requests, threads_sleeping, duplicate_completions, raised_irql_waits);
 #if 0
 		if (root_connection) {
 			connection = root_connection; /* polymorph magic */
