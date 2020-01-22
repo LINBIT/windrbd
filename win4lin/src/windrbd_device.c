@@ -1063,6 +1063,8 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	int b;
 	struct bio_collection *common_data;
 
+printk("IRQL is %d\n", KeGetCurrentIrql());
+
 	if (rw == WRITE && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		printk("Attempt to write when not Primary\n");
 		return STATUS_INVALID_PARAMETER;
@@ -2223,6 +2225,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
+printk("IRQL is %d\n", KeGetCurrentIrql());
+
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
 		switch (cdb->AsByte[0]) {
@@ -2243,6 +2247,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			long long start_sector;
 			unsigned long long sector_count, total_size;
 			int rw;
+
+printk("IRQL is %d\n", KeGetCurrentIrql());
 
 			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
 
@@ -2299,6 +2305,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			}
 
 // printk("SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
+
+printk("IRQL is %d\n", KeGetCurrentIrql());
 
 			status = windrbd_make_drbd_requests(irp, bdev, ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority), sector_count*512, start_sector, rw);
 			if (status == STATUS_SUCCESS) {

@@ -48,6 +48,9 @@ Real: Nov 15 2019
 	Update: with fix now runs for 4 days (with SPIN_LOCK_DEBUG
 	disabled).
 
+	Update: Now, 6 1/2 days. Then unrelated BSOD. Implemented
+	socket ref counting to fix that BSOD. 
+
 +TODO: BSOD in copy_first_640k
 
 	On Server 2016 this sometimes happens (when loading
