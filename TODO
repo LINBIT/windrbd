@@ -71,6 +71,9 @@ Real: Nov 15 2019
 	Fixed, now hangs in drbd_receiver (receive_protocol(),
 	after line 4466), most likely in synchronize_rcu().
 
+	It seems to work quite stable now. A test of iptables
+	drop on a non-boot device ran for 100+ iterations.
+
 TODO: Bug: BSOD on boot after drivers were installed (Windows 7).
 
 	Windows booted once then installed drivers (bus driver
@@ -182,6 +185,8 @@ Real:
 
 	Update: It gets stuck in NetworkFailure.
 
+	Seems to be fixed now.
+
 +TODO: Feature: Make timeouts configurable
 
 	Rework syntax. It should be prepared to support n nodes.
@@ -222,6 +227,12 @@ Real:
 
 	Right now, connection gets reestablished but machine
 	is very slow (some Kernel thread hangs at 100% CPU).
+
+	Reason might be that there is nr_requests becoming
+	negative causing inc_ap_bio_cond return false. In
+	addition WinDRBD drbd_make_request is called at
+	raised IRQL (sometimes 1 sometimes 2) which is
+	not only when swapping.
 
 +TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 
