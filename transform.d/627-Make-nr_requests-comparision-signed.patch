@@ -1,0 +1,33 @@
+From 49f38f880d90472a8ed41ec313a11b8091e0e116 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 23 Jan 2020 18:31:01 +0100
+Subject: [PATCH] Make nr_requests comparision signed.
+
+Else it may fail (and hang forever in inc_ap_bio) when nr_request
+becomes negative. nr_requests being negative is an unrelated bug
+(which happens for example when a network connection is interrupted)
+and should be fixed one day.
+
+This now solves the problem that a Windows booted via WinDRBD survives
+and can recover a failed connection (without performance impact
+when connected again).
+---
+ drbd/drbd_req.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
+index 61c27f4..cc0d36a 100644
+--- a/drbd/drbd_req.c
++++ b/drbd/drbd_req.c
+@@ -1910,7 +1910,7 @@ out:
+ static bool inc_ap_bio_cond(struct drbd_device *device, int rw)
+ {
+ 	bool rv = false;
+-	unsigned int nr_requests;
++	int nr_requests;
+ 	int flags;
+ 
+ 	if (test_bit(NEW_CUR_UUID, &device->flags)) {
+-- 
+2.17.0
+
