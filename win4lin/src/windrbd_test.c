@@ -194,7 +194,9 @@ void windrbd_run_tests(void)
 
 void windrbd_shutdown_tests(void)
 {
+#ifdef WINDRBD_RUN_TESTS
 #ifdef WINDRBD_PRINTK_PING
 	run_printk_ping = 0;
+#endif
 #endif
 }
