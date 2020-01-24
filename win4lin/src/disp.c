@@ -98,21 +98,18 @@ int create_bus_device(void)
 	drbd_bus_device = new_device;
 
 
-printk("drbd_bus_device is %p\n", drbd_bus_device);
-printk("characteristics is before %x\n", drbd_bus_device->Characteristics);
+// printk("drbd_bus_device is %p\n", drbd_bus_device);
+// printk("characteristics is before %x\n", drbd_bus_device->Characteristics);
 	drbd_bus_device->Characteristics |= FILE_CHARACTERISTIC_PNP_DEVICE;
-printk("characteristics is after %x\n", drbd_bus_device->Characteristics);
+// printk("characteristics is after %x\n", drbd_bus_device->Characteristics);
 	drbd_bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
 #endif
 
-printk("1\n");
 //	status = IoReportDetectedDevice(mvolDriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_bus_device);
 //	new_device2 = drbd_bus_device;
 	new_device2 = NULL;
-printk("2 %p\n", new_device2);
 	status = IoReportDetectedDevice(mvolDriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &new_device2);
-printk("3 %p\n", new_device2);
 	if (status != STATUS_SUCCESS) {
 		printk("Could not report WinDRBD bus object, status is %x.\n", status);
 		return -1;
@@ -232,7 +229,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 #if 0
 	IoReportDetectedDevice(DriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_legacy_bus_object);
-printk("drbd_legacy_bus_object is %p\n", drbd_legacy_bus_object);
+// printk("drbd_legacy_bus_object is %p\n", drbd_legacy_bus_object);
 /*
 	status = mvolAddDevice(DriverObject, drbd_bus_object1);
 	if (status != STATUS_SUCCESS)
@@ -277,11 +274,8 @@ void windrbd_bus_is_ready(void)
 
 int windrbd_rescan_bus(void)
 {
-printk("1 %p\n", drbd_bus_device);
 	if (drbd_physical_bus_device != NULL) {
-printk("2\n");
 		IoInvalidateDeviceRelations(drbd_physical_bus_device, BusRelations);
-printk("3\n");
 		return 0;
 	}
 	printk("Warning: physical bus device does not exist (yet)\n");

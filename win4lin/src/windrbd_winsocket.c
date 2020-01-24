@@ -650,20 +650,20 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		}
 */
-printk("Waiting for WskConnect to complete\n");
+dbg("Waiting for WskConnect to complete\n");
 		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-printk("WskConnect completed KeWaitForSingleObject (status is %x)\n", Status);
+dbg("WskConnect completed KeWaitForSingleObject (status is %x)\n", Status);
 	}
 
 	if (Status == STATUS_SUCCESS)
 	{
 		Status = Irp->IoStatus.Status;
-printk("WskConnect completed with status %x\n", Status);
+dbg("WskConnect completed with status %x\n", Status);
 		if (Status == STATUS_SUCCESS)
 			socket->sk->sk_state = TCP_ESTABLISHED;
 	}
 	if (Status != STATUS_SUCCESS)
-printk("WskConnect failed with status = %x\n", Status);
+dbg("WskConnect failed with status = %x\n", Status);
 
 	IoFreeIrp(Irp);
 
@@ -679,36 +679,28 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	struct socket *accept_socket;
 	KIRQL flags;
 
-printk("1\n");
-
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
 retry:
-printk("2\n");
 	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket == NULL) {
 		spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 		if ((io_flags & O_NONBLOCK) != 0)
 			return -EWOULDBLOCK;
 
-printk("3\n");
 			/* TODO: handle signals */
 		KeWaitForSingleObject(&socket->accept_event, Executive, KernelMode, FALSE, NULL);
-printk("4\n");
 		goto retry;
 	}
-printk("5\n");
 	wsk_socket = socket->accept_wsk_socket;
 	socket->accept_wsk_socket = NULL;
 	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 
-printk("6\n");
 	err = sock_create_linux_socket(&accept_socket);
 	if (err < 0)
 		close_wsk_socket(wsk_socket);
 	else {
-printk("7\n");
 		accept_socket->wsk_socket = wsk_socket;
 		accept_socket->sk->sk_state = TCP_ESTABLISHED;
 		accept_socket->sk->sk_state_change = socket->sk->sk_state_change;
@@ -716,7 +708,6 @@ printk("7\n");
 		*newsock = accept_socket;
 	}
 
-printk("8\n");
 	return err;
 }
 
@@ -1529,7 +1520,6 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	KIRQL flags;
 	struct _WSK_SOCKET *socket_to_close = NULL;
 
-printk("1\n");
 	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket != NULL) {
 		dbg("dropped incoming connection wsk_socket is old: %p new: %p socket is %p.\n", socket->accept_wsk_socket, AcceptSocket, socket);
@@ -1540,18 +1530,14 @@ printk("1\n");
 	socket->accept_wsk_socket = AcceptSocket;
 	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 
-printk("2\n");
 	if (socket_to_close != NULL)
 		close_wsk_socket(socket_to_close);
 
-printk("3\n");
 	KeSetEvent(&socket->accept_event, IO_NO_INCREMENT, FALSE);
-printk("4\n");
 
 	if (socket->sk->sk_state_change)
 		socket->sk->sk_state_change(socket->sk);
 
-printk("5\n");
 	return STATUS_SUCCESS;
 }
 

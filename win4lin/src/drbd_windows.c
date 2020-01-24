@@ -3502,9 +3502,9 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 			printk("PnP did not work, removing device manually.\n");
 			IoDeleteDevice(bdev->windows_device);
 		} else {
-printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
+dbg("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
 			KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
-printk("finished.\n");
+dbg("finished.\n");
 		}
 	} else {
 		printk("Not a PnP object, removing device manually.\n");

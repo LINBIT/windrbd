@@ -56,11 +56,6 @@ if (timeout > 5000) timeout = 5000;
 		return -EINVAL;
 	}
 
-#if 0
-if (line != 48)	/* silence drbd_md_get_buffer */
-printk("into KeWaitForMultipleObjects from %s:%d (%s()) timeout is %d\n", file, line, func, timeout);
-#endif
-
 		/* KeWaitForMultipleObjects BSODs when num_wait_objects is
 		 * 0 (on schedule_timeout_uninterruptible() for example).
 		 * So do a simple msleep() like wait.
@@ -72,11 +67,6 @@ enter_interruptible_debug(file, line, func);
 	else
 		status = KeWaitForMultipleObjects(num_wait_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, wait_time_p, NULL);
 exit_interruptible_debug(file, line, func);
-
-#if 0
-if (line != 48)	/* silence drbd_md_get_buffer */
-printk("out of KeWaitForMultipleObjects from %s:%d (%s()) stastus is %x\n", file, line, func, status);
-#endif
 
 	if (!NT_SUCCESS(status)) {
 		printk("Warning: KeWaitForMultipleObjects returned with status %x\n", status);

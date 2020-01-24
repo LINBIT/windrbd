@@ -891,15 +891,8 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			status = STATUS_SUCCESS;
 
 		irp->IoStatus.Status = status;
-#if 0
-		if (status == STATUS_SUCCESS) {
-printk("pretending that close succeeded\n");
-		} else {
-#endif
-			irp->IoStatus.Information = 0;
-#if 0
-		}
-#endif
+		irp->IoStatus.Information = 0;
+
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return status;
 	}
@@ -1063,8 +1056,6 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	int b;
 	struct bio_collection *common_data;
 
-printk("IRQL is %d\n", KeGetCurrentIrql());
-
 	if (rw == WRITE && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		printk("Attempt to write when not Primary\n");
 		return STATUS_INVALID_PARAMETER;
@@ -1166,7 +1157,6 @@ printk("IRQL is %d\n", KeGetCurrentIrql());
 // dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
 // dbg("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset);
 
-printk("IRQL is %d\n", KeGetCurrentIrql());
 		drbd_make_request(dev->drbd_device->rq_queue, bio);
 	}
 
@@ -2225,8 +2215,6 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
-printk("IRQL is %d\n", KeGetCurrentIrql());
-
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
 		switch (cdb->AsByte[0]) {
@@ -2247,8 +2235,6 @@ printk("IRQL is %d\n", KeGetCurrentIrql());
 			long long start_sector;
 			unsigned long long sector_count, total_size;
 			int rw;
-
-printk("IRQL is %d\n", KeGetCurrentIrql());
 
 			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
 
@@ -2305,8 +2291,6 @@ printk("IRQL is %d\n", KeGetCurrentIrql());
 			}
 
 // printk("SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
-
-printk("IRQL is %d\n", KeGetCurrentIrql());
 
 			status = windrbd_make_drbd_requests(irp, bdev, ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority), sector_count*512, start_sector, rw);
 			if (status == STATUS_SUCCESS) {
@@ -2470,13 +2454,11 @@ static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp
 	unsigned int major = s->MajorFunction;
 	NTSTATUS ret;
 
-printk("IRQL is %d\n", KeGetCurrentIrql());
 	if (major > IRP_MJ_MAXIMUM_FUNCTION) {
 		printk("Warning: got major function %x out of range\n", major);
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 	t = make_me_a_windrbd_thread(thread_names[major]);
-printk("IRQL is %d\n", KeGetCurrentIrql());
 	if (t == NULL) {
 		printk("Warning: cannot create a thread object for request.\n");
 	}
