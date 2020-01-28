@@ -29,10 +29,16 @@ fi
 DEVICE=/dev/drbd$val
 
 if [ x"$REQUEST_METHOD" == xHEAD ] ; then
-# currently there is a limit somewhere between 8455716864 and 8589934592 bytes
-# iPXE will report I/O errors
+	while true
+	do 
+		TOTAL_LENGTH=`blockdev --getsize64 $DEVICE`
 
-	TOTAL_LENGTH=`blockdev --getsize64 $DEVICE`
+		if [ $? -eq 0 ] ; then
+			break
+		fi
+
+		sleep 1
+	done
 
 	echo 'Content-type: application/octet-stream'
 	echo "Content-length: $TOTAL_LENGTH"
@@ -69,4 +75,11 @@ echo 'Content-type: application/octet-stream'
 echo "Content-length: $LENGTH"
 echo
 
-dd if=$DEVICE bs=$BLOCKSIZE skip=$FROMBLOCK count=$BLOCKS status=none
+while true
+do
+	dd if=$DEVICE bs=$BLOCKSIZE skip=$FROMBLOCK count=$BLOCKS status=none
+	if [ $? -eq 0 ] ; then
+		break
+	fi
+	sleep 1
+done
