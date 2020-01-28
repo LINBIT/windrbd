@@ -827,11 +827,13 @@ void windrbd_init_boot_device(void)
  * if not booting (i.e. loading the driver at a later point in time)
  */
 
+#if 0
 /* TODO: On Windows 10 this creates a Unknown device which must be
  * installed else it won't boot any more. WinDRBD driver has to
  * be selected manually from a list.
  */
 	create_bus_device();
+#endif
 
 	for (i=0;i<1;i++) {
 		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
