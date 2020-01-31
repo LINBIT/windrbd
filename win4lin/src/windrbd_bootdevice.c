@@ -666,6 +666,59 @@ static char *my_strndup(const char *s, size_t n)
 	return new_string;
 }
 
+enum tokens {
+	TK_INVALID,
+	TK_RESOURCE,
+	TK_MAX
+};
+
+static char *token_strings[TK_MAX] = {
+	"",
+	"resource=",
+};
+
+enum token find_token(const char *s, const char **after)
+{
+	enum token t;
+
+	for (t=TK_INVALID+1;t<TK_MAX;t++) {
+		size_t len = strlen(token_strings[t]);
+		if (strncmp(token_strings[t], s, len) == 0) {
+			*after = s+len;
+			return t;
+		}
+	}
+	return TK_INVALID;
+}
+
+/* resource=<name>;protocol=<A,B or C>; ... */
+
+int parse_drbd_params_new(const char *drbd_config, struct drbd_params *params)
+{
+	enum token t;
+	const char *from, *to;
+
+	if (strncmp(drbd_config, "drbd:", 5) != 0) {
+		printk("Parse error: drbd URL must start with drbd:\n");
+		return -1;
+	}
+	from = drbd_config+5;
+
+	t=find_token(from, &to);
+	if (t != TK_RESOURCE) {
+		printk("Resource expected\n");
+		return -1;
+	}
+	from = to;
+	to = strchr(from, DRBD_CONFIG_SEPERATOR);
+
+	params->resource = my_strndup(from, to-from);
+
+	if (params->resource == NULL) {
+		printk("Cannot allocate memory for resource name\n");
+		return -ENOMEM;
+	}
+
 int parse_drbd_params(const char *drbd_config, struct drbd_params *params)
 {
 	const char *from, *to;
