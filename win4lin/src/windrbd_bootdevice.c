@@ -666,6 +666,8 @@ static char *my_strndup(const char *s, size_t n)
 	return new_string;
 }
 
+#if 0
+
 enum tokens {
 	TK_INVALID,
 	TK_RESOURCE,
@@ -718,6 +720,7 @@ int parse_drbd_params_new(const char *drbd_config, struct drbd_params *params)
 		printk("Cannot allocate memory for resource name\n");
 		return -ENOMEM;
 	}
+#endif
 
 int parse_drbd_params(const char *drbd_config, struct drbd_params *params)
 {
