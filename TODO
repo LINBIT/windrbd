@@ -30,28 +30,7 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
-+TODO: After 1-2 days of I/O being primary BSOD
-
-	I suspect that the network completion routine is called
-	twice for the same completion (and Irp, Mdl, ...). Have
-	a patch now. This patch causes sometimes DriverEntry
-	to BSOD (fix it: no kmalloc for printk routines).
-	Have a SendPageCompletionOnlyOnce routine which does
-	the check and use this only for TCP/IP.
-
-	Must not BSOD (this is for testing) when the bug triggers.
-
-	Test triggers Windows sends completion more than once.
-	Now have detector for duplicate completions and wait
-	for testing (VM currently has no network).
-
-	Update: with fix now runs for 4 days (with SPIN_LOCK_DEBUG
-	disabled).
-
-	Update: Now, 6 1/2 days. Then unrelated BSOD. Implemented
-	socket ref counting to fix that BSOD. 
-
-+TODO: BSOD in copy_first_640k
+TODO: BSOD in copy_first_640k
 
 	On Server 2016 this sometimes happens (when loading
 	the driver). Not sure yet why (because of the TCP/IP
@@ -60,32 +39,6 @@ Real: Nov 15 2019
 	It seems to happen only if the debugger is connected
 	(and on Windows Server 2016). Test if it also happens
 	without the duplicate completion detector.
-
-+TODO: BSOD on iptables drop after around 10 iterations.
-
-	Is probably a DRBD bug (see
-	drbd_sender:tl_mark_for_resend_by_connection()). 
-
-	When there are lots of printk's changing the timing.
-
-	Fixed, now hangs in drbd_receiver (receive_protocol(),
-	after line 4466), most likely in synchronize_rcu().
-
-	It seems to work quite stable now. A test of iptables
-	drop on a non-boot device ran for 100+ iterations.
-
-TODO: Bug: BSOD on boot after drivers were installed (Windows 7).
-
-	Windows booted once then installed drivers (bus driver
-	installation failed), now it does not boot any more
-	(BSOD unclear which one, resets machine immediately).
-	Machine VDI is InstallWindows7.vdi (windrbd-install-windows7
-	is the resource name).
-
-	Workaround: One has to manually install the WinDRBD driver
-	for the Unknown device (the bus device). One day we will
-	fix it that this workaround is not necessary any more.
-	(Windows should find the driver by itself).
 
 TODO: Bug: After 6 minutes of connecting Windows 10 BSODs with DRIVER_PNP_WATCHDOG
 
@@ -100,68 +53,13 @@ TODO: Code quality: Squash patches in transform.d
 	Redo all changes (we now have patches that revert former
 	patches).
 
-TODO: Feature: Upgrade DRBD to 9.0.21
++TODO: Feature: Upgrade DRBD to 9.0.21
 
 TODO: Documentation: Draw diagram (from Joel)
 
 TODO: Infrastructure: Move Linbit VMs to new server
 
-TODO: Feature: make it work without having to install virtual bus device
-
-	See disp.c: there are IoCreateRootDevice() calls that may
-	do the trick
-
-	MS iSCSI initiator can do it (no seperate step to install
-	the Virtual Bus device Microsoft iSCSI Initiator).
-
-	Update: With a5c11309e it boots without having to install
-	the bus device (test it with a fresh installation). However
-	when driver is loaded later (not on boot) the bus device
-	gets deleted by the PnP manager. This is something we should
-	work on, however making it boot without having to install
-	the bus device should work now.
-
-	Update: Also works on a freshly installed Windows 10.
-	One only needs to configure firewall and turn off
-	network discovery now (and of course install WinDRBD
-	driver).
-
-TODO: Code quality: Submit drbd-utils patches.
-
-TODO: Implement: Test other file systems (FAT, FAT32, ...)
-	FAT does not work (Invalid function when accessing DRBD device)
-	FAT32 also not (something with flushing?)
-	Probably there is one important IOCTL missing.
-
-	UDF and exFAT can be mounted on Linux. FAT and FAT32 show
-	empty (zeroed out) device. So we probably have 2 independent
-	errors. (UDF cannot we written on Linux, this is because it
-	is the DVD format).
-
-	Update: exFAT now can be read (not written to) on Windows,
-	by returning STATUS_INVALID_DEVICE_REQUEST (instead of
-	STATUS_NOT_IMPLEMENTED) for unknown ioctl's.
-
-	Update: implemented some other ioctl's without success so
-	far. On formatting FAT, reads bootsector as last action
-	(before terminating), maybe that's a hint.
-
-	Also make it work with ReFS (windows server 2016, windows 10).
-
-	Update: With PnP support this probably works out of the
-	box.
-
-	Under Windows 10 all FAT filesystems (FAT, FAT32 and exFAT)
-	work. Under Windows 7 FAT and FAT32 do not work (cannot
-	complete formatting) exFAT however works.
-
-	FAT and FAT32 (and probably exFAT as well) work when the
-	resource is a PnP disk device (partitioned with partition
-	manager).
-
-	So FAT and FAT32 do not work with Windows 7 when it is
-	a data device (without partition table in it). Everything
-	else works ok.
++TODO: Code quality: Submit drbd-utils patches.
 
 TODO: Bug: BSOD when accessing ReFS device
 
@@ -192,6 +90,9 @@ Real:
 	Rework syntax. It should be prepared to support n nodes.
 	Also should have more options like syslog_ip=...
 
+	Update: in progress, right now implementing DRBD URL
+	parser (for Linux commandline).
+
 +TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
 	First need to implement more than one connection.
@@ -199,12 +100,6 @@ Real:
 +TODO: Feature: have a windrbd create-resource <drbd-URL> command
 
 	This should help with installing via WinPE.
-
-+TODO: Bug: Restarting fails with Wrong medium type.
-
-	Linux DRBD thinks Windows is still Primary and refuses
-	CGI script read requests. We should wait a bit in the
-	CGI script if the error is Wrong medium type.
 
 +TODO: Bug: Reestablish connection of Diskless machine fails.
 
@@ -233,6 +128,10 @@ Real:
 	addition WinDRBD drbd_make_request is called at
 	raised IRQL (sometimes 1 sometimes 2) which is
 	not only when swapping.
+
+	Update: better now, with iptables test it gets
+	the connection, however when unplugging the cable
+	it fails to reconnect (which is the typical case).
 
 +TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 
@@ -451,40 +350,6 @@ TODO: Performance: Sync is still somewhat slow when windrbd is SyncTarget
 
 	Update: Probably will be fixed once we use 1Meg pages on
 	Sync.
-
-TODO: Bug: storing function and line patch for spinlock debug currently BSODs
-
-	Have to go home now.
-
-	Also happens with dcbd4227a9f. 7bbb196338?
-
-	Update: Not with 7bbb196338, however this test was without
-	connecting. Maybe this is the same bug as Windows 10 BSOD
-	on disconnect.
-
-	Update: 'bisect' showed that the bug was introduced with
-	6ca3f51f (support printk blocking again), so it is not
-	related to spinlock patches.
-
-	Update: reverting the wait_for_sendbuf function (see
-	cb56c9c3b9) seems to fix the problem (although
-	my_wait_interruptible is still being used for printk()).
-
-	One day we want to fix this and use it for other functions
-	too (receive, connect, ...)
-
-	Update: happened again (with cb56c9c3b).
-
-	Update: please see good-bad. BSOD is now at disconnect,
-	somewhere in two phase commit.
-
-	Update: printk's showed that crash is in
-	wait_event_interruptible_timeout(): see conn_try_disconnect in
-	drbd_nl.c, printk before is seen, after is not (and also
-	not in the memory dump, so it really doesn't happen)
-
-	Update: Do not deliver with spinlock debugging enabled, it
-	changes timings and makes BSOD more frequent.
 
 TODO: Bug: freeze on disconnect-connect-waitconnect loop
 
@@ -6393,4 +6258,164 @@ Done: Feature: set netboot flag via iPXE
 	(currently we patch the Registry)
 
 	Done, works
+
+Done: After 1-2 days of I/O being primary BSOD
+
+	I suspect that the network completion routine is called
+	twice for the same completion (and Irp, Mdl, ...). Have
+	a patch now. This patch causes sometimes DriverEntry
+	to BSOD (fix it: no kmalloc for printk routines).
+	Have a SendPageCompletionOnlyOnce routine which does
+	the check and use this only for TCP/IP.
+
+	Must not BSOD (this is for testing) when the bug triggers.
+
+	Test triggers Windows sends completion more than once.
+	Now have detector for duplicate completions and wait
+	for testing (VM currently has no network).
+
+	Update: with fix now runs for 4 days (with SPIN_LOCK_DEBUG
+	disabled).
+
+	Update: Now, 6 1/2 days. Then unrelated BSOD. Implemented
+	socket ref counting to fix that BSOD. 
+
+	Update: done, now runs for 12+ days.
+
+Done: BSOD on iptables drop after around 10 iterations.
+
+	Is probably a DRBD bug (see
+	drbd_sender:tl_mark_for_resend_by_connection()). 
+
+	When there are lots of printk's changing the timing.
+
+	Fixed, now hangs in drbd_receiver (receive_protocol(),
+	after line 4466), most likely in synchronize_rcu().
+
+	It seems to work quite stable now. A test of iptables
+	drop on a non-boot device ran for 100+ iterations.
+
+Done: Bug: BSOD on boot after drivers were installed (Windows 7).
+
+	Windows booted once then installed drivers (bus driver
+	installation failed), now it does not boot any more
+	(BSOD unclear which one, resets machine immediately).
+	Machine VDI is InstallWindows7.vdi (windrbd-install-windows7
+	is the resource name).
+
+	Workaround: One has to manually install the WinDRBD driver
+	for the Unknown device (the bus device). One day we will
+	fix it that this workaround is not necessary any more.
+	(Windows should find the driver by itself).
+
+	Update: Creating bus device objects in the driver is
+	a bad idea. If user 'forgets' to register the device
+	properly, the system cannot boot any more. We now
+	do not create the bus device object in the driver instead
+	the installer should learn how to do that.
+
+Rejected: Feature: make it work without having to install virtual bus device
+
+	See disp.c: there are IoCreateRootDevice() calls that may
+	do the trick
+
+	MS iSCSI initiator can do it (no seperate step to install
+	the Virtual Bus device Microsoft iSCSI Initiator).
+
+	Update: With a5c11309e it boots without having to install
+	the bus device (test it with a fresh installation). However
+	when driver is loaded later (not on boot) the bus device
+	gets deleted by the PnP manager. This is something we should
+	work on, however making it boot without having to install
+	the bus device should work now.
+
+	Update: Also works on a freshly installed Windows 10.
+	One only needs to configure firewall and turn off
+	network discovery now (and of course install WinDRBD
+	driver).
+
+	Update: see TODO on BSOD on boot (when driver creates
+	bus object). We should not create the device object
+	from within the driver.
+
+Done: Implement: Test other file systems (FAT, FAT32, ...)
+	FAT does not work (Invalid function when accessing DRBD device)
+	FAT32 also not (something with flushing?)
+	Probably there is one important IOCTL missing.
+
+	UDF and exFAT can be mounted on Linux. FAT and FAT32 show
+	empty (zeroed out) device. So we probably have 2 independent
+	errors. (UDF cannot we written on Linux, this is because it
+	is the DVD format).
+
+	Update: exFAT now can be read (not written to) on Windows,
+	by returning STATUS_INVALID_DEVICE_REQUEST (instead of
+	STATUS_NOT_IMPLEMENTED) for unknown ioctl's.
+
+	Update: implemented some other ioctl's without success so
+	far. On formatting FAT, reads bootsector as last action
+	(before terminating), maybe that's a hint.
+
+	Also make it work with ReFS (windows server 2016, windows 10).
+
+	Update: With PnP support this probably works out of the
+	box.
+
+	Under Windows 10 all FAT filesystems (FAT, FAT32 and exFAT)
+	work. Under Windows 7 FAT and FAT32 do not work (cannot
+	complete formatting) exFAT however works.
+
+	FAT and FAT32 (and probably exFAT as well) work when the
+	resource is a PnP disk device (partitioned with partition
+	manager).
+
+	So FAT and FAT32 do not work with Windows 7 when it is
+	a data device (without partition table in it). Everything
+	else works ok.
+
+Done: Bug: Restarting fails with Wrong medium type.
+
+	Linux DRBD thinks Windows is still Primary and refuses
+	CGI script read requests. We should wait a bit in the
+	CGI script if the error is Wrong medium type.
+
+	CGI script now retries (forever) when there is an
+	I/O error.
+
+Done: Bug: storing function and line patch for spinlock debug currently BSODs
+
+	Have to go home now.
+
+	Also happens with dcbd4227a9f. 7bbb196338?
+
+	Update: Not with 7bbb196338, however this test was without
+	connecting. Maybe this is the same bug as Windows 10 BSOD
+	on disconnect.
+
+	Update: 'bisect' showed that the bug was introduced with
+	6ca3f51f (support printk blocking again), so it is not
+	related to spinlock patches.
+
+	Update: reverting the wait_for_sendbuf function (see
+	cb56c9c3b9) seems to fix the problem (although
+	my_wait_interruptible is still being used for printk()).
+
+	One day we want to fix this and use it for other functions
+	too (receive, connect, ...)
+
+	Update: happened again (with cb56c9c3b).
+
+	Update: please see good-bad. BSOD is now at disconnect,
+	somewhere in two phase commit.
+
+	Update: printk's showed that crash is in
+	wait_event_interruptible_timeout(): see conn_try_disconnect in
+	drbd_nl.c, printk before is seen, after is not (and also
+	not in the memory dump, so it really doesn't happen)
+
+	Update: Do not deliver with spinlock debugging enabled, it
+	changes timings and makes BSOD more frequent.
+
+	Update: Disable (and later remove from source) completly
+	it crashes where it shouldn't.
 
