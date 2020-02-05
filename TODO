@@ -40,6 +40,8 @@ TODO: BSOD in copy_first_640k
 	(and on Windows Server 2016). Test if it also happens
 	without the duplicate completion detector.
 
+	Not sure if we want to fix this.
+
 TODO: Bug: After 6 minutes of connecting Windows 10 BSODs with DRIVER_PNP_WATCHDOG
 
 	waiting for size (already unblocked the QUERY_PROPERTY ioctl).
