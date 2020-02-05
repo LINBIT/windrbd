@@ -1807,12 +1807,12 @@ dbg("Returned string is %S\n", string);
 				break;
 			}
 
-#if 0
 			case BusRelations:
 			{
 				struct _DEVICE_RELATIONS *device_relations;
 				size_t siz = sizeof(*device_relations);
 
+printk("disk BusRelations (Type %d)\n", s->Parameters.QueryDeviceRelations.Type);
 		/* must be PagedPool else PnP manager complains */
 				device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
 				if (device_relations == NULL) {
@@ -1824,7 +1824,6 @@ dbg("Returned string is %S\n", string);
 				status = STATUS_SUCCESS;
 				break;
 			}
-#endif
 
 			default:
 				printk("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
