@@ -35,7 +35,7 @@
 #include <ntddstor.h>
 
 /* Uncomment this if you want more debug output (disable for releases) */
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -1812,7 +1812,7 @@ dbg("Returned string is %S\n", string);
 				struct _DEVICE_RELATIONS *device_relations;
 				size_t siz = sizeof(*device_relations);
 
-printk("disk BusRelations (Type %d)\n", s->Parameters.QueryDeviceRelations.Type);
+				dbg("disk BusRelations (Type %d)\n", s->Parameters.QueryDeviceRelations.Type);
 		/* must be PagedPool else PnP manager complains */
 				device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
 				if (device_relations == NULL) {
