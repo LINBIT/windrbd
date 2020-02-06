@@ -81,6 +81,8 @@ static char *thread_names[IRP_MJ_MAXIMUM_FUNCTION + 1] = {
 "pnp",			/* IRP_MJ_PNP                        0x1b */
 };
 
+static int shutting_down;
+
 /* TODO: return STATUS_NO_MEMORY instead of STATUS_INSUFFICIENT_RESOURCES
  * whereever a kmalloc() fails.
  */
@@ -129,7 +131,7 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 	} else
 		return STATUS_INVALID_PARAMETER;
 
-	if ((bdev->is_bootdevice || bdev->my_auto_promote) && !bdev->powering_down) {
+	if ((bdev->is_bootdevice || bdev->my_auto_promote) && !bdev->powering_down && !shutting_down) {
 		drbd_device = bdev->drbd_device;
 		if (drbd_device != NULL) {
 			resource = drbd_device->resource;
@@ -152,17 +154,17 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 						break;
 					}
 
-					if (bdev->powering_down || bdev->delete_pending)
+					if (bdev->powering_down || bdev->delete_pending || shutting_down)
 						break;
 
 					msleep(100);
-					if (bdev->powering_down || bdev->delete_pending)
+					if (bdev->powering_down || bdev->delete_pending || shutting_down)
 						break;
 				}
 			}
 		}
 	} else {
-		if (!bdev->powering_down) {
+		if (!bdev->powering_down && !shutting_down) {
 			dbg("Waiting for becoming primary (called from %s:%d (%s())...\n", file, line, func);
 
 			status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
@@ -170,6 +172,8 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 				printk("KeWaitForSingleObject returned %x\n", status);
 			else
 				dbg("Am primary now, proceeding with request\n");
+		} else {
+			dbg("bdev->powering_down is %d, shutting_down is %d, system shutdown, not waiting for becoming Primary\n");
 		}
 	}
 
@@ -1297,6 +1301,9 @@ exit:
 
 static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	printk("Got SHUTDOWN request, assuming system is about to shut down\n");
+	shutting_down = 1;
+
 	if (device == mvolRootDeviceObject) {
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -2121,7 +2128,7 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 	if (ref != NULL) {
 		bdev = ref->bdev;
 
-		if (bdev != NULL && !bdev->delete_pending && !bdev->powering_down) {
+		if (bdev != NULL && !bdev->delete_pending && !bdev->powering_down && !shutting_down) {
 
 		/* This is racy: if refcount is 0 here, it is incremented
 		 * again and the destroy function is called twice for
@@ -2142,7 +2149,7 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 			if (status == STATUS_SUCCESS) {
 				dbg("Got size now, proceeding with I/O request\n");
 
-				if (!bdev->powering_down && !bdev->delete_pending) {
+				if (!bdev->powering_down && !bdev->delete_pending && !shutting_down)  {
 					if (bdev->d_size > 0) {
 						dbg("block device size is %lld\n", bdev->d_size);
 						d_size = bdev->d_size;
