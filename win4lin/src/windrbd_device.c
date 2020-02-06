@@ -173,7 +173,7 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 			else
 				dbg("Am primary now, proceeding with request\n");
 		} else {
-			dbg("bdev->powering_down is %d, shutting_down is %d, system shutdown, not waiting for becoming Primary\n");
+			dbg("bdev->powering_down is %d, shutting_down is %d, system shutdown, not waiting for becoming Primary\n", bdev->powering_down, shutting_down);
 		}
 	}
 
