@@ -27,6 +27,13 @@
  * is shut down.
  */
 
+/* TODO: In theory, stack can be swapped out while waiting for
+ * the EVENTs (they are on the stack). See KeSetKernelStackSwapEnable()
+ * To fix use:
+ *	completion_event = kmalloc(sizeof(*completion_event));
+ * instead of events on the stack.
+ */
+
 #define WSK_DEINITIALIZED	0
 #define WSK_DEINITIALIZING	1
 #define WSK_INITIALIZING	2
