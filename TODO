@@ -161,6 +161,12 @@ Real:
 	object). After shutdown of root device there are
 	550 more I/O requests (via scsi).
 
+	Update: Set DRBD on no data to error. Now we see that
+	dxgkrnl.sys accesses the disk when there is no I/O
+	Disabling dxgkrnl (via Registry key: remove from
+	minimal drivers and set service start to 4 (disabled)).
+	seems to help, but we need more tests.
+
 TODO: Performance: Retry disable NDIS lightweight filter
 
 	We still have the 90 seconds boot delay.
