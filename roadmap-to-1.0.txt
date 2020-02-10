@@ -18,10 +18,8 @@ Make fcgi script for serving boot device
 Make reestablish connection work
 
 Make hang on shutdown work
-        Reason is swap in from pagefile when there is no more network
-
-stability fixes
-        For example, BSOD on running unattendend.
+        Reason is swap in from pagefile (or executable, hangs also
+	when pagefile is disabled) when there is no more network
 
 ----
 
@@ -35,4 +33,7 @@ Done:
 
 0.10.2: Netboot flag
         So we don't have to patch the registry
+
+0.10.4: stability fixes
+        For example, BSOD on running unattendend.
 

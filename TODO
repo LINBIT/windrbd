@@ -167,6 +167,10 @@ Real:
 	minimal drivers and set service start to 4 (disabled)).
 	seems to help, but we need more tests.
 
+	Update: Unfortunately BSOD on power down 
+	(KERNEL_INPAGE_DATA_ERROR or so) reappeared for the
+	dxgkrnl driver.
+
 TODO: Performance: Retry disable NDIS lightweight filter
 
 	We still have the 90 seconds boot delay.
