@@ -373,7 +373,10 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		break;
 
 	case IOCTL_WINDRBD_ROOT_RUN_PARSER_TEST:
-		parser_test();
+		/* TODO: this should later take a DRBD URL and create
+		 * the resource described in the URL.
+		 */
+/*		parser_test(); */
 		break;
 
 	default:

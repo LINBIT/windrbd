@@ -9,8 +9,8 @@
 #include "wingenl.h"
 #include "drbd_int.h"
 #include "windrbd_threads.h"
+#include "drbd_url.h"
 
-#include <aux_klib.h>  /* TODO: not needed any more */
 #include <stdlib.h>
 
 /* This creates a device on boot (called via wsk init thread).
@@ -318,96 +318,61 @@ static int attach(int minor, const char *backing_dev, const char *meta_dev, int 
 	return finish_netlink_packet(skb, DRBD_ADM_ATTACH);
 }
 
-/* TODO: later we want to get this parameters via ACPI (or
- * similar approach).
- */
+static struct node *get_this_node(struct drbd_params *p)
+{
+	struct node *n;
 
-#if 0
-#define BOOT_RESOURCE "tiny-windows-boot"
-#define BOOT_NUM_NODES 2
-#define BOOT_MINOR 1
-#define BOOT_VOLUME 1
-/* TODO: C: for diskless client, W: for test/dev VM */
-#define BOOT_DRIVE L"C:"
-#define BOOT_PEER "johannes-VirtualBox"
-#define BOOT_PEER_NODE_ID 1
-#define BOOT_PROTOCOL 3	/* protocol C */
-#define BOOT_MY_ADDRESS "0.0.0.0:7681"
-#define BOOT_PEER_ADDRESS "192.168.56.102:7681"
-#endif
-
-static struct drbd_params {
-	char *resource;
-	int num_nodes;
-	int minor;
-	int volume;
-	wchar_t *mount_point; /* might be NULL */
-	char *peer;
-	int peer_node_id;
-	int protocol;	/* 1=A, 2=B or 3=C */
-	char *my_address;
-	char *peer_address;
-} boot_devices[1] = {
-	{
-		.resource = "new-windows",
-		.num_nodes = 2,
-		.minor = 1,
-		.volume = 1,
-		.mount_point = NULL, 
-		.peer = "johannes-VirtualBox",
-		.peer_node_id = 1,
-		.protocol = 3,
-		.my_address = "0.0.0.0:7691",
-		.peer_address = "192.168.56.102:7691"
+        list_for_each_entry(struct node, n, &p->node_list, list) {
+		if (n->node_id == p->this_node_id)
+			return n;
 	}
-#if 0
-, {
-			/* The hidden system partition-> /Device/HarddiskVolume1 , no mount point */
-		.resource = "tiny-windows-system",
-		.num_nodes = 2,
-		.minor = 1,
-		.volume = 1,
-		.mount_point = L"X:", /* dummy so that Volume symlink is created */
-		.peer = "johannes-VirtualBox",
-		.peer_node_id = 1,
-		.protocol = 3,
-		.my_address = "0.0.0.0:7682",
-		.peer_address = "192.168.56.102:7682"
-	}
-#endif
-};
+	return NULL;
+}
 
 static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 {
 	int ret;
 	struct drbd_device *drbd_device;
+	struct node *this_node = get_this_node(p);
+	struct node *n;
+
+	if (this_node == NULL) {
+		printk("this_node is NULL, this shouldn't happen\n");
+		return -EINVAL;
+	}
 
         drbd_genl_family.id = WINDRBD_NETLINK_FAMILY_ID;
 
 	if ((ret = new_resource(p->resource, p->num_nodes)) != 0)
 		return ret;
 
-	if ((ret = new_minor(p->resource, p->minor, p->volume)) != 0)
+	if ((ret = new_minor(p->resource, this_node->volume.minor, p->volume_id)) != 0)
 		return ret;
 
-	if ((ret = windrbd_create_windows_device_for_minor(p->minor)) != 0)
+	if ((ret = windrbd_create_windows_device_for_minor(this_node->volume.minor)) != 0)
 		return ret;
 
-	if ((ret = new_peer(p->resource, p->peer, p->peer_node_id, p->protocol)) != 0)
-		return ret;
+        list_for_each_entry(struct node, n, &p->node_list, list) {
+		if (n->node_id != p->this_node_id) {
+			if ((ret = new_peer(p->resource, n->hostname, n->node_id, p->protocol)) != 0)
+				return ret;
 
 		/* Since we do not have any interfaces yet, bind listeing
 		 * socket to INADDR_ANY, else it will fail an node
 		 * will go into standalone.
 		 */
-	if ((ret = new_path(p->resource, p->peer_node_id, p->my_address, p->peer_address)) != 0)
-		return ret;
+			if ((ret = new_path(p->resource, n->node_id, this_node->address, n->address)) != 0)
+				return ret;
+		}
+	}
 
-	drbd_device = minor_to_device(p->minor);
+	drbd_device = minor_to_device(this_node->volume.minor);
 	if (drbd_device != NULL && drbd_device->this_bdev != NULL)
 		drbd_device->this_bdev->is_bootdevice = 1;
-	else
-		printk("internal error: cannot find drbd device for minor %d\n", p->minor);
+	else {
+		printk("internal error: cannot find drbd device for minor %d\n", this_node->volume.minor);
+		return -EINVAL;
+	}
 
 	return 0;
 }
@@ -428,6 +393,7 @@ static int windrbd_create_boot_device_stage2(void *pp)
 {
 	struct drbd_params *p = pp;
 	int ret;
+	struct node *n;
 
 	if ((ret = windrbd_wait_for_network()) < 0)
 		return ret;
@@ -447,8 +413,12 @@ static int windrbd_create_boot_device_stage2(void *pp)
                 /* Tell the PnP manager that we are there ... */
 	windrbd_rescan_bus();
 
-	if ((ret = connect(p->resource, p->peer_node_id)) != 0)
-		return ret;
+        list_for_each_entry(struct node, n, &p->node_list, list) {
+		if (n->node_id != p->this_node_id)
+			if ((ret = connect(p->resource, n->node_id)) != 0)
+				return ret;
+	}
+
 
 		/* We are now 'auto-promoting' in the windrbd_device
 		 * layer, so no need to call primary() here */
@@ -583,52 +553,7 @@ static int search_for_drbd_config(char *drbd_config, size_t buflen)
 	return ret;
 }
 
-	/* TODO: this does not work. The ACPI driver seems to
-	 * parse the signature and throw away tables with unknown
-	 * signatures. Linux behaves the same, but on the other
-	 * hand, searches in lower memory for the iBFT (iSCSI)
-	 * signature by hand.
-	 *
-	 * Delete this code if it is certain that it isn't needed.
-	 */
-
-static int read_acpi_table(void)
-{
-	NTSTATUS status;
-	ULONG size;
-	char buf[4096];	/* TODO: which maximum is defined? */
-	DWORD all_ids[100];
-	ULONG ids_bytes;
-	int i;
-
-	status = AuxKlibInitialize();
-	if (status != STATUS_SUCCESS) {
-		printk("Couldn't initialize AuxKlib, status is %x\n", status);
-		return -EINVAL;
-	}
-
-	status = AuxKlibEnumerateSystemFirmwareTables('ACPI', all_ids, sizeof(all_ids), &ids_bytes);
-	if (status != STATUS_SUCCESS) {
-		printk("Couldn't iterate over ACPI IDs\n");
-	} else {
-		printk("%d bytes returned by AuxKlibEnumerateSystemFirmwareTables()\n", ids_bytes);
-
-		for (i=0;i<ids_bytes/sizeof(all_ids[0]);i++) {
-			printk("boot table %d: %c%c%c%c\n", i, all_ids[i] & 0xff, (all_ids[i] >> 8) & 0xff, (all_ids[i] >> 16) & 0xff, (all_ids[i] >> 24) & 0xff);
-		}
-	}
-
-	status = AuxKlibGetSystemFirmwareTable('ACPI', 'TFBi', buf, sizeof(buf), &size);
-
-	if (status == STATUS_SUCCESS) {
-		return 0;
-	} else {
-		printk("error searching for ACPI table DRBD status is %x\n", status);
-		printk("Please pass boot parameters via ACPI (use iPXE to do so)\n");
-		return -ENOENT;
-	}
-}
-
+#if 0
 /* We use (for now) a semicolon, since the colon is also used for
  * IPv6 addresses (and for the port number).
  */
@@ -665,62 +590,6 @@ static char *my_strndup(const char *s, size_t n)
 
 	return new_string;
 }
-
-#if 0
-
-enum tokens {
-	TK_INVALID,
-	TK_RESOURCE,
-	TK_MAX
-};
-
-static char *token_strings[TK_MAX] = {
-	"",
-	"resource=",
-};
-
-enum token find_token(const char *s, const char **after)
-{
-	enum token t;
-
-	for (t=TK_INVALID+1;t<TK_MAX;t++) {
-		size_t len = strlen(token_strings[t]);
-		if (strncmp(token_strings[t], s, len) == 0) {
-			*after = s+len;
-			return t;
-		}
-	}
-	return TK_INVALID;
-}
-
-/* resource=<name>;protocol=<A,B or C>; ... */
-
-int parse_drbd_params_new(const char *drbd_config, struct drbd_params *params)
-{
-	enum token t;
-	const char *from, *to;
-
-	if (strncmp(drbd_config, "drbd:", 5) != 0) {
-		printk("Parse error: drbd URL must start with drbd:\n");
-		return -1;
-	}
-	from = drbd_config+5;
-
-	t=find_token(from, &to);
-	if (t != TK_RESOURCE) {
-		printk("Resource expected\n");
-		return -1;
-	}
-	from = to;
-	to = strchr(from, DRBD_CONFIG_SEPERATOR);
-
-	params->resource = my_strndup(from, to-from);
-
-	if (params->resource == NULL) {
-		printk("Cannot allocate memory for resource name\n");
-		return -ENOMEM;
-	}
-#endif
 
 int parse_drbd_params(const char *drbd_config, struct drbd_params *params)
 {
@@ -847,8 +716,6 @@ int parse_drbd_params(const char *drbd_config, struct drbd_params *params)
 	return 0;
 }
 
-#define MAX_DRBD_CONFIG 16*1024
-
 void parser_test(void)
 {
 	struct drbd_params p;
@@ -860,12 +727,17 @@ void parser_test(void)
 	}
 }
 
+#endif
+
+#define MAX_DRBD_CONFIG 16*1024
+
 extern int create_bus_device(void);
+
+static struct drbd_params boot_device;
 
 void windrbd_init_boot_device(void)
 {
 	int ret;
-	int i;
 	static char drbd_config[MAX_DRBD_CONFIG];
 
 	if (search_for_drbd_config(drbd_config, sizeof(drbd_config)) < 0) {
@@ -875,7 +747,7 @@ void windrbd_init_boot_device(void)
 	printk("ACPI table reading successful, creating boot device now\n");
 	printk("drbd config is %s\n", drbd_config);
 
-	if (parse_drbd_params(drbd_config, &boot_devices[0]) < 0) {
+	if (parse_drbd_url(drbd_config, &boot_device) < 0) {
 		printk("Error parsing drbd URI (which is '%s') not booting via network\n", drbd_config);
 		return;
 	}
@@ -891,13 +763,11 @@ void windrbd_init_boot_device(void)
 	create_bus_device();
 #endif
 
-	for (i=0;i<1;i++) {
-		ret = windrbd_create_boot_device_stage1(&boot_devices[i]);
-		if (ret != 0)
-			printk("Warning: stage1 returned %d for %s\n", ret, boot_devices[i].resource);
+	ret = windrbd_create_boot_device_stage1(&boot_device);
+	if (ret != 0)
+		printk("Warning: stage1 returned %d for %s\n", ret, boot_device.resource);
 
-		if (kthread_run(windrbd_create_boot_device_stage2, &boot_devices[i], "bootdev") == NULL) {
-			printk("Failed to create bootdevice thread.\n");
-		}
+	if (kthread_run(windrbd_create_boot_device_stage2, &boot_device, "bootdev") == NULL) {
+		printk("Failed to create bootdevice thread.\n");
 	}
 }
