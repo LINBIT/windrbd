@@ -143,7 +143,7 @@ static int new_resource(const char *resource_name, int my_node_id)
 
 	nla = nla_nest_start(skb, DRBD_NLA_RESOURCE_OPTS);
 	nla_put_u32(skb, T_node_id, my_node_id);
-//	nla_put_u32(skb, T_on_no_data, OND_SUSPEND_IO);
+	nla_put_u32(skb, T_on_no_data, OND_SUSPEND_IO);
 	nla_nest_end(skb, nla);
 
 	return finish_netlink_packet(skb, DRBD_ADM_NEW_RESOURCE);
