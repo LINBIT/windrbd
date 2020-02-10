@@ -13,6 +13,9 @@
 
 #include <stdlib.h>
 
+/* TODO: take timeouts from config. Also handle syslog-ip. */
+/* TODO: test 3+ nodes setup */
+
 /* This creates a device on boot (called via wsk init thread).
  * It feeds DRBD via netlink packets to create the boot device.
  */
