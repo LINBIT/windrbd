@@ -12,7 +12,7 @@ do
 	echo "network failure $i"
 	echo "about to drop packets"
 	./iptables-drop-port.sh $PORT
-	sleep 20	# ping timeout
+	sleep 30	# ping timeout
 	drbdadm status
 	echo "about to not drop packets"
 	./iptables-dont-drop-port.sh $PORT
