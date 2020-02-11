@@ -169,7 +169,7 @@ static int new_minor(const char *resource_name, int minor, int volume)
 	return finish_netlink_packet(skb, DRBD_ADM_NEW_MINOR);
 }
 
-static int new_peer(const char *resource_name, const char *peer_name, int peer_node_id, int protocol)
+static int new_peer(const char *resource_name, const char *peer_name, int peer_node_id, int protocol, struct net_params *net)
 {
 	struct sk_buff *skb;
 	struct nlattr *nla;
@@ -188,11 +188,11 @@ static int new_peer(const char *resource_name, const char *peer_name, int peer_n
 	nla_put_string(skb, T_verify_alg, "crc32c");
 	nla_put_u32(skb, T_rcvbuf_size, 0xa00000);
 	nla_put_u32(skb, T_sndbuf_size, 0xa00000);
-	nla_put_u32(skb, T_timeout, 60);
-	nla_put_u32(skb, T_ping_timeo, 30);
-	nla_put_u32(skb, T_ping_int, 10);
-	nla_put_u32(skb, T_connect_int, 20);
-/*	nla_put_u8(skb, T_use_rle, 0); */
+	nla_put_u32(skb, T_timeout, net->timeout);
+	nla_put_u32(skb, T_ping_timeo, net->ping_timeout);
+	nla_put_u32(skb, T_ping_int, net->ping_int);
+	nla_put_u32(skb, T_connect_int, net->connect_int);
+	nla_put_u8(skb, T_use_rle, net->use_rle);
 	nla_put_u32(skb, T_wire_protocol, protocol);
 	nla_nest_end(skb, nla);
 
@@ -357,7 +357,7 @@ static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 
         list_for_each_entry(struct node, n, &p->node_list, list) {
 		if (n->node_id != p->this_node_id) {
-			if ((ret = new_peer(p->resource, n->hostname, n->node_id, p->protocol)) != 0)
+			if ((ret = new_peer(p->resource, n->hostname, n->node_id, p->protocol, &p->net)) != 0)
 				return ret;
 
 		/* Since we do not have any interfaces yet, bind listeing
