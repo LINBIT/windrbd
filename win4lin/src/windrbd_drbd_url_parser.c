@@ -78,6 +78,29 @@ static char *token_strings[TK_MAX] = {
 	"this-node-id="
 };
 
+static char *short_token_strings[TK_MAX] = {
+	"",
+	"r=",
+	"pr=",
+	"n",
+	"ur=",
+	"va=",
+	"t=",
+	"pt=",
+	"pi=",
+	"ci=",
+	"cmr=",
+	"cft=",
+	"a=",
+	"h=",
+	"v",
+	"m=",
+	"d=",
+	"md=",
+	"si=",
+	"tn="
+};
+
 bool token_has_index(enum token t)
 {
 	return (t == TK_NODE || t == TK_VOLUME);
@@ -131,10 +154,27 @@ static enum token find_token(const char *s, int *index, const char **params_from
 		return TK_END;
 
 	for (t=TK_INVALID+1;t<TK_END;t++) {
-		size_t len = strlen(token_strings[t]);
-		if (len == 0) continue;
+		size_t tlen = strlen(token_strings[t]);
+		size_t slen = strlen(short_token_strings[t]);
+		size_t len;
+		int match = 0;
 
-		if (strncmp(token_strings[t], s, len) == 0) {
+		if (tlen == 0 || slen == 0) continue;
+
+			/* short version might be a substring of the long
+			 * version. return length of long version instead
+			 * of short version.
+			 */
+		len = 0;
+		if (strncmp(short_token_strings[t], s, slen) == 0) {
+			match = 1;
+			len = slen;
+		}
+		if (strncmp(token_strings[t], s, tlen) == 0) {
+			match = 1;
+			len = tlen;
+		}
+		if (match) {
 			if (token_has_index(t)) {
 				*index = my_strtoul(s+len, params_from, 10);
 			} else {
