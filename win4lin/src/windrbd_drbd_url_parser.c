@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <linux/drbd_limits.h>
+#include "drbd_url.h"
 
 #define printk printf
 #define kmalloc(size, unused, unused2) malloc(size)
@@ -360,6 +361,7 @@ int parse_drbd_url(const char *drbd_config, struct drbd_params *params)
 			case '.':
 				params_from++;
 				t=find_token(params_from, &index, &params_from, &params_to);
+				params_len = params_to-params_from;
 				switch (t) {
 				case TK_ADDRESS:
 					if (node->address != NULL)
@@ -391,6 +393,8 @@ int parse_drbd_url(const char *drbd_config, struct drbd_params *params)
 
 					params_from++;
 					t=find_token(params_from, &index, &params_from, &params_to);
+					params_len = params_to-params_from;
+
 					switch (t) {
 					case TK_MINOR:
 						if (node->volume.minor == -1)
@@ -518,7 +522,7 @@ int main(int argc, const char **argv)
 		printf("Usage: %s <drbd-URL>\n", argv[0]);
 		exit(1);
 	}
-	parse_drbd_params_new(argv[1], &p);
+	parse_drbd_url(argv[1], &p);
 	
 	printf("resource is %s\n", p.resource);
 	printf("protocol is %d\n", p.protocol);
