@@ -46,6 +46,9 @@ static int reply_code(int cmd)
 	struct genlmsghdr *genlmsg_header;
 	struct drbd_genlmsghdr *drbd_header;
 	static int expected_seq = SEQ_START;
+	int rem, rem2;
+	struct nlattr *nla, *nla2, *first_attr;
+	int attr_len;
 
 #define MIN_REPLY_SIZE (NLMSG_HDRLEN+GENL_HDRLEN+NLMSG_ALIGN(sizeof(struct drbd_genlmsghdr)))
 
@@ -86,6 +89,16 @@ static int reply_code(int cmd)
 	}
 	expected_seq++;
 
+	first_attr = nlmsg_attrdata(header, GENL_HDRLEN + drbd_genl_family.hdrsize);
+	attr_len = nlmsg_attrlen(header, GENL_HDRLEN + drbd_genl_family.hdrsize);
+	nla_for_each_attr(nla, first_attr, attr_len, rem) {
+		if (nla_type(nla) == 1) {
+			nla_for_each_nested(nla2, nla, rem2) {
+				if (nla_type(nla2) == 1)
+					printk("found info text: %s\n", (char*) nla_data(nla2));
+			}
+		}
+	}
 	return drbd_header->ret_code;
 }
 
