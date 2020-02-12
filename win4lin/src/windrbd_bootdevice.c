@@ -359,7 +359,7 @@ static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 
         drbd_genl_family.id = WINDRBD_NETLINK_FAMILY_ID;
 
-	if ((ret = new_resource(p->resource, p->num_nodes)) != 0)
+	if ((ret = new_resource(p->resource, p->this_node_id)) != 0)
 		return ret;
 
 	if ((ret = new_minor(p->resource, this_node->volume.minor, p->volume_id)) != 0)
