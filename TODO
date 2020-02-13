@@ -99,6 +99,11 @@ Real:
 
 	First need to implement more than one connection.
 
+	Update: Implemented, now having troubles getting connection
+	to work (three nodes, one of which doesn't exist). We
+	observed this behaviour also when connecting data
+	resources with 4 nodes.
+
 +TODO: Feature: have a windrbd create-resource <drbd-URL> command
 
 	This should help with installing via WinPE.
