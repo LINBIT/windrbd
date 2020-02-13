@@ -942,7 +942,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
-// dbg("returning %d\n", BytesSent);
+dbg("returning %d\n", BytesSent);
 	return BytesSent;
 }
 
@@ -1069,7 +1069,7 @@ out_put_page:
 
 	if (err != 0 && err != -ENOMEM)
 		socket->error_status = err;
-// dbg("returning %d\n", err);
+dbg("returning %d\n", err);
 	return err;
 }
 
@@ -1337,7 +1337,7 @@ dbg("Receiving cancelled (errno is %d) but data available (%d bytes, returning i
 dbg("setting error status to %d\n", socket->error_status);
 }
 
-// dbg("returning %d\n", BytesReceived);
+dbg("returning %d\n", BytesReceived);
 	return BytesReceived;
 }
 
