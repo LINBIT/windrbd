@@ -7,6 +7,8 @@ Rework boot URL syntax
         Also have more than one DRBD node
         Also can specify syslog_ip.
 
+Upgrade DRBD to 9.0.21
+
 Don't require configuring the WinDRBD bus device
 
 (inno-setup: fix creation of bus device)
