@@ -1236,6 +1236,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
         {
             nWaitTime.QuadPart = -1LL * socket->sk->sk_rcvtimeo * 1000 * 10 * 1000 / HZ;
             pTime = &nWaitTime;
+dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadPart, socket->sk->sk_rcvtimeo);
         }
 
         waitObjects[0] = (PVOID) &CompletionEvent;
