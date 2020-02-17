@@ -368,19 +368,7 @@ static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 	if ((ret = windrbd_create_windows_device_for_minor(this_node->volume.minor)) != 0)
 		return ret;
 
-        list_for_each_entry(struct node, n, &p->node_list, list) {
-		if (n->node_id != p->this_node_id) {
-			if ((ret = new_peer(p->resource, n->hostname, n->node_id, p->protocol, &p->net)) != 0)
-				return ret;
-
-		/* Since we do not have any interfaces yet, bind listeing
-		 * socket to INADDR_ANY, else it will fail an node
-		 * will go into standalone.
-		 */
-			if ((ret = new_path(p->resource, n->node_id, this_node->address, n->address)) != 0)
-				return ret;
-		}
-	}
+printk("not creating network config this is done in stage2.\n");
 
 	drbd_device = minor_to_device(this_node->volume.minor);
 	if (drbd_device != NULL && drbd_device->this_bdev != NULL)
@@ -410,6 +398,12 @@ static int windrbd_create_boot_device_stage2(void *pp)
 	struct drbd_params *p = pp;
 	int ret;
 	struct node *n;
+	struct node *this_node = get_this_node(p);
+
+	if (this_node == NULL) {
+		printk("this_node is NULL, this shouldn't happen\n");
+		return -EINVAL;
+	}
 
 	if ((ret = windrbd_wait_for_network()) < 0)
 		return ret;
@@ -428,6 +422,22 @@ static int windrbd_create_boot_device_stage2(void *pp)
 
                 /* Tell the PnP manager that we are there ... */
 	windrbd_rescan_bus();
+
+printk("stage2: doing network config (path, ...)\n");
+
+        list_for_each_entry(struct node, n, &p->node_list, list) {
+		if (n->node_id != p->this_node_id) {
+			if ((ret = new_peer(p->resource, n->hostname, n->node_id, p->protocol, &p->net)) != 0)
+				return ret;
+
+		/* Since we do not have any interfaces yet, bind listeing
+		 * socket to INADDR_ANY, else it will fail an node
+		 * will go into standalone.
+		 */
+			if ((ret = new_path(p->resource, n->node_id, this_node->address, n->address)) != 0)
+				return ret;
+		}
+	}
 
         list_for_each_entry(struct node, n, &p->node_list, list) {
 		if (n->node_id != p->this_node_id)
