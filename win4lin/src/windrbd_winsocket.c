@@ -686,6 +686,7 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	struct socket *accept_socket;
 	KIRQL flags;
 
+printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
@@ -1354,6 +1355,7 @@ static int wsk_bind(
 	NTSTATUS	Status;
 	(void) sockaddr_len;	/* TODO: check this parameter */
 
+printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || myaddr == NULL)
 		return -EINVAL;
 
@@ -1372,6 +1374,7 @@ static int wsk_bind(
 		Status = Irp->IoStatus.Status;
 	}
 	IoFreeIrp(Irp);
+printk("2 bind returning %d\n", winsock_to_linux_error(Status));
 	return winsock_to_linux_error(Status);
 }
 
@@ -1528,6 +1531,7 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	KIRQL flags;
 	struct _WSK_SOCKET *socket_to_close = NULL;
 
+printk("1\n");
 	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket != NULL) {
 		dbg("dropped incoming connection wsk_socket is old: %p new: %p socket is %p.\n", socket->accept_wsk_socket, AcceptSocket, socket);
@@ -1543,9 +1547,11 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 
 	KeSetEvent(&socket->accept_event, IO_NO_INCREMENT, FALSE);
 
+printk("2\n");
 	if (socket->sk->sk_state_change)
 		socket->sk->sk_state_change(socket->sk);
 
+printk("3\n");
 	return STATUS_SUCCESS;
 }
 
@@ -1597,6 +1603,8 @@ int sock_create_kern(struct net *net, int family, int type, int proto, struct so
 {
 	ULONG Flags;
 
+printk("1\n");
+
 	switch (type) {
 	case SOCK_DGRAM:
 		Flags = WSK_FLAG_DATAGRAM_SOCKET;
@@ -1607,6 +1615,7 @@ int sock_create_kern(struct net *net, int family, int type, int proto, struct so
 		break;
 
 	case SOCK_LISTEN:	/* windrbd specific */
+printk("listening socket\n");
 		Flags = WSK_FLAG_LISTEN_SOCKET;
 		type = SOCK_STREAM;
 		break;
