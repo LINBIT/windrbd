@@ -1400,6 +1400,7 @@ void windrbd_init_boot_device(void);
 
 /* see printk_to_syslog.c */
 int my_inet_aton(const char *cp, struct in_addr *inp);
+char *my_inet_ntoa(struct in_addr *addr);
 /* ugh ... */
 #define htons(x) ((((x) & 0xff) << 8) | (((x) & 0xff00) >> 8))
 

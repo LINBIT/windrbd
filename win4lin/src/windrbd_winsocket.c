@@ -629,6 +629,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	PIRP		Irp = NULL;
 	NTSTATUS	Status;
 
+printk("1\n");
 		/* TODO: check/implement those: */
 	(void) sockaddr_len;
 	(void) flags;
@@ -1355,26 +1356,36 @@ static int wsk_bind(
 	NTSTATUS	Status;
 	(void) sockaddr_len;	/* TODO: check this parameter */
 
-printk("1\n");
-	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || myaddr == NULL)
+printk("1 address is %s\n", my_inet_ntoa(&((struct sockaddr_in*)myaddr)->sin_addr));
+
+printk("wsk_state != WSK_INITIALIZED: %d, socket: %p, socket->wsk_socket: %p myaddr: %p\n", wsk_state != WSK_INITIALIZED, socket, socket->wsk_socket, myaddr);
+
+	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || myaddr == NULL) {
+printk("something wrong returning -EINVAL\n");
 		return -EINVAL;
+	}
+
+printk("2\n");
 
 	Irp = wsk_new_irp(&CompletionEvent);
 	if (Irp == NULL)
 		return -ENOMEM;
 
+printk("3\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskBind(
 		socket->wsk_socket,
 		myaddr,
 		0,
 		Irp);
 
+printk("4\n");
 	if (Status == STATUS_PENDING) {
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		Status = Irp->IoStatus.Status;
 	}
+printk("5\n");
 	IoFreeIrp(Irp);
-printk("2 bind returning %d\n", winsock_to_linux_error(Status));
+printk("6 bind returning %d (status is %x)\n", winsock_to_linux_error(Status), Status);
 	return winsock_to_linux_error(Status);
 }
 

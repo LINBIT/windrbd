@@ -114,6 +114,16 @@ int my_inet_aton(const char *cp, struct in_addr *inp)
 	return 0;
 }
 
+/* Reverse of the above. Non threadsafe (returns static variable).
+ */
+char *my_inet_ntoa(struct in_addr *addr)
+{
+        static char s[30];
+
+        snprintf(s, sizeof(s)-1, "%d.%d.%d.%d", addr->s_addr & 0xff, addr->s_addr >> 8 & 0xff, addr->s_addr >> 16 & 0xff, addr->s_addr >> 24);
+        return s;
+}
+
 static int open_syslog_socket(void)
 {
 	int err;
