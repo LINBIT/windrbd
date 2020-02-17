@@ -87,14 +87,6 @@ Real:
 
 	Seems to be fixed now.
 
-+TODO: Feature: Make timeouts configurable
-
-	Rework syntax. It should be prepared to support n nodes.
-	Also should have more options like syslog_ip=...
-
-	Update: in progress, right now implementing DRBD URL
-	parser (for Linux commandline).
-
 +TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
 	First need to implement more than one connection.
@@ -103,6 +95,12 @@ Real:
 	to work (three nodes, one of which doesn't exist). We
 	observed this behaviour also when connecting data
 	resources with 4 nodes.
+
+	Update: incoming_conection never gets called. So the boot
+	machines opened all connections with the Linux box calling
+	accept(2). On the Windows side incoming connections never
+	get handled (they get accepted by the WinSocket layer, as
+	a nc on the port shows).
 
 +TODO: Feature: have a windrbd create-resource <drbd-URL> command
 
@@ -6444,4 +6442,15 @@ Done: Bug: storing function and line patch for spinlock debug currently BSODs
 
 	Update: Disable (and later remove from source) completly
 	it crashes where it shouldn't.
+
+Done: Feature: Make timeouts configurable
+
+	Rework syntax. It should be prepared to support n nodes.
+	Also should have more options like syslog_ip=...
+
+	Update: in progress, right now implementing DRBD URL
+	parser (for Linux commandline).
+
+	There's a key value syntax now (not position dependent).
+	Need to document it, but the implementation is finished.
 
