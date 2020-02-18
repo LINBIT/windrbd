@@ -138,6 +138,12 @@ Real:
 	the connection, however when unplugging the cable
 	it fails to reconnect (which is the typical case).
 
+	Update: When disabling the firewall (from boot on)
+	completely and then unplugging/plug the network cable
+	it can reestablish the connection. Need more tests on
+	this, but it seems that the firewall needs sysroot
+	access to decide if it lets a packet pass or not.
+
 +TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 
 	Because it is waiting for size applications that open the
