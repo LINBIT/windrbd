@@ -424,6 +424,7 @@ static int windrbd_create_boot_device_stage2(void *pp)
 	windrbd_rescan_bus();
 
 printk("waiting a bit for network interface to come up...\n");
+/* TODO: this should be configureable. */
 msleep(60*1000);
 printk("stage2: doing network config (path, ...)\n");
 

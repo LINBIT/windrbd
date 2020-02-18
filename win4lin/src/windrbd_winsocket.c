@@ -1685,6 +1685,7 @@ static NTSTATUS receive_a_lot(void *unused)
                 .msg_flags = MSG_WAITALL
         };
 
+printk("1\n");
 	err = sock_create_kern(&init_net, AF_INET, SOCK_LISTEN, IPPROTO_TCP, &s);
 
 	if (err < 0) {
@@ -1692,6 +1693,7 @@ static NTSTATUS receive_a_lot(void *unused)
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
+printk("2\n");
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_addr.s_addr = 0;
 	my_addr.sin_port = htons(5678);
@@ -1703,6 +1705,7 @@ static NTSTATUS receive_a_lot(void *unused)
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
+printk("3\n");
         err = s->ops->listen(s, 10);
 	if (err < 0) {
 		printk("listen returned %d\n", err);
@@ -1710,6 +1713,7 @@ static NTSTATUS receive_a_lot(void *unused)
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
+printk("4\n");
 	err = kernel_accept(s, &s2, 0);
 	if (err < 0) {
 		printk("accept returned %d\n", err);
@@ -1720,7 +1724,9 @@ static NTSTATUS receive_a_lot(void *unused)
 
 	bytes_received = 0;
 	while (1) {
+printk("5\n");
 		err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+printk("6\n");
 		if (err < 0) {
 			printk("receive returned %d\n", err);
 			break;
@@ -1729,13 +1735,16 @@ static NTSTATUS receive_a_lot(void *unused)
 			printk("short receive (%d, expected %d)\n", err, iov.iov_len);
 			break;
 		}
+printk("7\n");
 		bytes_received += err;
 		if ((bytes_received % (1024*1024)) == 0)
 			printk("%lld bytes received\n", bytes_received);
 	}
+printk("8\n");
 	sock_release(s);
 	sock_release(s2);
 
+printk("9\n");
 	return STATUS_SUCCESS;
 }
 
@@ -1765,9 +1774,7 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 		printk("WSK initialized.\n");
 	}
 
-#if 0
 	status = windrbd_create_windows_thread(receive_a_lot, NULL, &r_thread);
-#endif
 
 	return status;
 }
