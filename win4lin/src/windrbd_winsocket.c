@@ -1685,6 +1685,8 @@ static NTSTATUS receive_a_lot(void *unused)
                 .msg_flags = MSG_WAITALL
         };
 
+printk("Sleeping 5 minutes before doing anything ...\n");
+msleep(5*60*1000);
 printk("1\n");
 	err = sock_create_kern(&init_net, AF_INET, SOCK_LISTEN, IPPROTO_TCP, &s);
 
