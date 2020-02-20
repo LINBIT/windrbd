@@ -30,6 +30,18 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
+TODO: BSOD in drbd_sender:2898 calling callback
+
+	After 26 days of I/O this BSOD (ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY)
+	happened. Unfortunately (we has this BSOD before).
+
+	Code line is:
+
+                err = w->cb(w, connection->cstate[NOW] < C_CONNECTED);
+
+	The list is empty (was only list element). Value of cb is
+	unknown (but most likely garbage).
+
 TODO: BSOD in copy_first_640k
 
 	On Server 2016 this sometimes happens (when loading
