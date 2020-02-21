@@ -114,6 +114,12 @@ Real:
 	get handled (they get accepted by the WinSocket layer, as
 	a nc on the port shows).
 
+	Update: incoming connections work when listening socket
+	is bound to the interface's IP address (instead of 0.0.0.0).
+	To do so we need yet another timeout. Now, in most cases
+	connection establishment works but the connection breaks
+	later in the boot process.
+
 +TODO: Feature: have a windrbd create-resource <drbd-URL> command
 
 	This should help with installing via WinPE.
@@ -155,6 +161,11 @@ Real:
 	it can reestablish the connection. Need more tests on
 	this, but it seems that the firewall needs sysroot
 	access to decide if it lets a packet pass or not.
+
+	Update: When running a I/O test we observed that
+	connection wasn't established again. Probably this
+	is also because of Windows needing disk when getting
+	an adrress via DHCP.
 
 +TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 
