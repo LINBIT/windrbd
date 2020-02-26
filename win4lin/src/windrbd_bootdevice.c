@@ -13,8 +13,9 @@
 
 #include <stdlib.h>
 
-/* TODO: take timeouts from config. Also handle syslog-ip. */
-/* TODO: test 3+ nodes setup */
+/* TODO: Handle syslog-ip. */
+/* TODO: test 3+ nodes setup: right now it fails booting (connection
+   loss on boot) */
 
 /* This creates a device on boot (called via wsk init thread).
  * It feeds DRBD via netlink packets to create the boot device.
@@ -423,10 +424,16 @@ static int windrbd_create_boot_device_stage2(void *pp)
                 /* Tell the PnP manager that we are there ... */
 	windrbd_rescan_bus();
 
+/* TODO: try to bind(2) a socket to the node address and continue
+   once it succeeds (which might be never if the network address
+   is wrong.
+*/
+#if 0
 printk("waiting a bit for network interface to come up...\n");
 /* TODO: this should be configureable. */
 msleep(60*1000);
 printk("stage2: doing network config (path, ...)\n");
+#endif
 
         list_for_each_entry(struct node, n, &p->node_list, list) {
 		if (n->node_id != p->this_node_id) {
@@ -581,182 +588,6 @@ static int search_for_drbd_config(char *drbd_config, size_t buflen)
 
 	return ret;
 }
-
-#if 0
-/* We use (for now) a semicolon, since the colon is also used for
- * IPv6 addresses (and for the port number).
- */
-
-#define DRBD_CONFIG_SEPERATOR ';'
-
-/* This function intentionally does not allow for leading spaces. */
-
-static unsigned long my_strtoul(const char *nptr, char ** endptr, int base)
-{
-	unsigned long val = 0;
-
-	while (isdigit(*nptr)) {
-		val *= 10;
-		val += (*nptr)-'0';
-		nptr++;
-	}
-	if (endptr)
-		*endptr = (char*) nptr;
-
-	return val;
-}
-
-static char *my_strndup(const char *s, size_t n)
-{
-	char *new_string;
-
-	new_string = kmalloc(n+1, 0, 'DRBD');
-	if (new_string == NULL)
-		return NULL;
-
-	strncpy(new_string, s, n);
-	new_string[n] = '\0';
-
-	return new_string;
-}
-
-int parse_drbd_params(const char *drbd_config, struct drbd_params *params)
-{
-	const char *from, *to;
-	char *end, *s;
-
-	if (strncmp(drbd_config, "drbd:", 5) != 0) {
-		printk("Parse error: drbd URL must start with drbd:\n");
-		return -1;
-	}
-	from = drbd_config+5;
-	to = strchr(from, DRBD_CONFIG_SEPERATOR);
-	if (to == NULL) {
-		printk("Parse error: no semicolon after resource name\n");
-		return -1;
-	}
-	params->resource = my_strndup(from, to-from);
-	if (params->resource == NULL) {
-		printk("Cannot allocate memory for resource name\n");
-		return -ENOMEM;
-	}
-
-	to++;
-	if (*to != 'A' && *to != 'B' && *to != 'C') {
-		printk("Parse error: Protocol must be either (captial) A, B or C\n");
-		return -1;
-	}
-	params->protocol = *to - 0x40;
-
-	to++;
-	if (*to != DRBD_CONFIG_SEPERATOR) {
-		printk("Parse error: no semicolon after protocol\n");
-		return -1;
-	}
-	to++;
-
-	params->num_nodes = my_strtoul(to, &end, 10);
-	if (end == to) {
-		printk("Parse error: num-nodes must be a number\n");
-		return -1;
-	}
-	to = end;
-	if (*to != DRBD_CONFIG_SEPERATOR) {
-		printk("Parse error: no semicolon after protocol\n");
-		return -1;
-	}
-	to++;
-
-	from = to;
-	to = strchr(from, DRBD_CONFIG_SEPERATOR);
-	if (to == NULL) {
-		printk("Parse error: no semicolon after resource name\n");
-		return -1;
-	}
-	params->my_address = my_strndup(from, to-from);
-	if (params->my_address == NULL) {
-		printk("Cannot allocate memory for resource name\n");
-		return -ENOMEM;
-	}
-	to++;
-
-	params->minor = my_strtoul(to, &end, 10);
-	if (end == to) {
-		printk("Parse error: num-nodes must be a number\n");
-		return -1;
-	}
-	to = end;
-	if (*to != DRBD_CONFIG_SEPERATOR) {
-		printk("Parse error: no semicolon after protocol\n");
-		return -1;
-	}
-	to++;
-
-	params->volume = my_strtoul(to, &end, 10);
-	if (end == to) {
-		printk("Parse error: num-nodes must be a number\n");
-		return -1;
-	}
-	to = end;
-	if (*to != DRBD_CONFIG_SEPERATOR) {
-		printk("Parse error: no semicolon after protocol\n");
-		return -1;
-	}
-	to++;
-
-	from = to;
-	to = strchr(from, DRBD_CONFIG_SEPERATOR);
-	if (to == NULL) {
-		printk("Parse error: no semicolon after resource name\n");
-		return -1;
-	}
-	params->peer = my_strndup(from, to-from);
-	if (params->peer == NULL) {
-		printk("Cannot allocate memory for resource name\n");
-		return -ENOMEM;
-	}
-	to++;
-
-	params->peer_node_id = my_strtoul(to, &end, 10);
-	if (end == to) {
-		printk("Parse error: num-nodes must be a number\n");
-		return -1;
-	}
-	to = end;
-	if (*to != DRBD_CONFIG_SEPERATOR) {
-		printk("Parse error: no semicolon after protocol\n");
-		return -1;
-	}
-	to++;
-
-	from = to;
-	to = strchr(from, DRBD_CONFIG_SEPERATOR);
-	if (to == NULL) {
-		to = strchr(from, '\0');
-	} else {
-		printk("Warning: excess arguments after peer-address\n");
-	}
-	params->peer_address = my_strndup(from, to-from);
-	if (params->peer_address == NULL) {
-		printk("Cannot allocate memory for resource name\n");
-		return -ENOMEM;
-	}
-
-	return 0;
-}
-
-void parser_test(void)
-{
-	struct drbd_params p;
-
-	if (parse_drbd_params("drbd:tiny-windows-disk;C;2;0.0.0.0:7683;1;1;johannes-VirtualBox;1;192.168.56.102:7683", &p) < 0) {
-		printk("Parser test: error\n");
-	} else {
-		printk("Parsertest results: resource: %s num_nodes: %d minor: %d volume: %d peer: %s peer_node_id: %d protocol: %d my_address: %s peer_address: %s", p.resource, p.num_nodes, p.minor, p.volume, p.peer, p.peer_node_id, p.protocol, p.my_address, p.peer_address);
-	}
-}
-
-#endif
 
 #define MAX_DRBD_CONFIG 16*1024
 

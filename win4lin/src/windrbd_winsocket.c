@@ -629,7 +629,6 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	PIRP		Irp = NULL;
 	NTSTATUS	Status;
 
-printk("1\n");
 		/* TODO: check/implement those: */
 	(void) sockaddr_len;
 	(void) flags;
@@ -687,7 +686,6 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	struct socket *accept_socket;
 	KIRQL flags;
 
-printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
@@ -1257,29 +1255,29 @@ exit_interruptible();
             if (Irp->IoStatus.Status == STATUS_SUCCESS)
             {
                 BytesReceived = (LONG) Irp->IoStatus.Information;
-if (BytesReceived == 0)
-dbg("BytesReceived is 0, socket closed by peer?\n");
+		if (BytesReceived == 0)
+			dbg("BytesReceived is 0, socket closed by peer?\n");
             }
             else
             {
-dbg("receive completed with error %x\n", Irp->IoStatus.Status);
+		dbg("receive completed with error %x\n", Irp->IoStatus.Status);
 		BytesReceived = winsock_to_linux_error(Irp->IoStatus.Status);
             }
             break;
 
         case STATUS_WAIT_1:
-dbg("receive interrupted by signal\n");
+	    dbg("receive interrupted by signal\n");
 //            flush_signals(current);	/* TODO: this is probably wrong here */
             BytesReceived = -EINTR;
             break;
 
         case STATUS_TIMEOUT:
-dbg("receive timed out\n");
+	    dbg("receive timed out\n");
             BytesReceived = -EAGAIN;
             break;
 
         default:
-dbg("wait_event returned error %x\n", Status);
+	    dbg("wait_event returned error %x\n", Status);
             BytesReceived = winsock_to_linux_error(Status);
             break;
         }
@@ -1289,23 +1287,23 @@ dbg("wait_event returned error %x\n", Status);
 		if (Status == STATUS_SUCCESS)
 		{
 			BytesReceived = (LONG) Irp->IoStatus.Information;
-dbg("WskReceive returned immediately, data (%d bytes) is available\n", BytesReceived);
+			dbg("WskReceive returned immediately, data (%d bytes) is available\n", BytesReceived);
 		}
 		else
 		{
-dbg("WskReceive error status=%x\n", Status);
+			dbg("WskReceive error status=%x\n", Status);
 			BytesReceived = winsock_to_linux_error(Status);
 		}
 	}
 
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
-dbg("About to cancel irp\n");
+		dbg("About to cancel irp\n");
 		// cancel irp in wsk subsystem
 		IoCancelIrp(Irp);
-dbg("waiting for cancel irp to complete\n");
+		dbg("waiting for cancel irp to complete\n");
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-dbg("after KeWaitForSingleObject()\n");
+		dbg("after KeWaitForSingleObject()\n");
 		if (Irp->IoStatus.Information > 0)
 		{
 				/* When network is interrupted while we
@@ -1323,10 +1321,10 @@ dbg("after KeWaitForSingleObject()\n");
 		/* Deliver what we have in case we timed out. */
 
 			if (BytesReceived == -EAGAIN) {
-dbg("Timed out, but there is data (%d bytes) returning it.\n", Irp->IoStatus.Information);
+				dbg("Timed out, but there is data (%d bytes) returning it.\n", Irp->IoStatus.Information);
 				BytesReceived = Irp->IoStatus.Information;
 			} else {
-dbg("Receiving cancelled (errno is %d) but data available (%d bytes, returning it).\n", BytesReceived, Irp->IoStatus.Information);
+				dbg("Receiving cancelled (errno is %d) but data available (%d bytes, returning it).\n", BytesReceived, Irp->IoStatus.Information);
 				BytesReceived = Irp->IoStatus.Information;
 			}
 		}
@@ -1337,10 +1335,10 @@ dbg("Receiving cancelled (errno is %d) but data available (%d bytes, returning i
 
 	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
 		socket->error_status = BytesReceived;
-dbg("setting error status to %d\n", socket->error_status);
-}
+		dbg("setting error status to %d\n", socket->error_status);
+	}
 
-dbg("returning %d\n", BytesReceived);
+	dbg("returning %d\n", BytesReceived);
 	return BytesReceived;
 }
 
@@ -1356,38 +1354,24 @@ static int wsk_bind(
 	NTSTATUS	Status;
 	(void) sockaddr_len;	/* TODO: check this parameter */
 
-int print = ((struct sockaddr_in*)myaddr)->sin_addr.s_addr != 0;
-
-if (print) printk("1 address is %s\n", my_inet_ntoa(&((struct sockaddr_in*)myaddr)->sin_addr));
-
-if (print) printk("wsk_state != WSK_INITIALIZED: %d, socket: %p, socket->wsk_socket: %p myaddr: %p\n", wsk_state != WSK_INITIALIZED, socket, socket->wsk_socket, myaddr);
-
-	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || myaddr == NULL) {
-if (print) printk("something wrong returning -EINVAL\n");
+	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || myaddr == NULL)
 		return -EINVAL;
-	}
-
-if (print) printk("2\n");
 
 	Irp = wsk_new_irp(&CompletionEvent);
 	if (Irp == NULL)
 		return -ENOMEM;
 
-if (print) printk("3\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskBind(
 		socket->wsk_socket,
 		myaddr,
 		0,
 		Irp);
 
-if (print) printk("4\n");
 	if (Status == STATUS_PENDING) {
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		Status = Irp->IoStatus.Status;
 	}
-if (print) printk("5\n");
 	IoFreeIrp(Irp);
-if (print) printk("6 bind returning %d (status is %x)\n", winsock_to_linux_error(Status), Status);
 	return winsock_to_linux_error(Status);
 }
 
@@ -1544,7 +1528,6 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	KIRQL flags;
 	struct _WSK_SOCKET *socket_to_close = NULL;
 
-printk("1\n");
 	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket != NULL) {
 		dbg("dropped incoming connection wsk_socket is old: %p new: %p socket is %p.\n", socket->accept_wsk_socket, AcceptSocket, socket);
@@ -1560,11 +1543,9 @@ printk("1\n");
 
 	KeSetEvent(&socket->accept_event, IO_NO_INCREMENT, FALSE);
 
-printk("2\n");
 	if (socket->sk->sk_state_change)
 		socket->sk->sk_state_change(socket->sk);
 
-printk("3\n");
 	return STATUS_SUCCESS;
 }
 
@@ -1616,8 +1597,6 @@ int sock_create_kern(struct net *net, int family, int type, int proto, struct so
 {
 	ULONG Flags;
 
-printk("1\n");
-
 	switch (type) {
 	case SOCK_DGRAM:
 		Flags = WSK_FLAG_DATAGRAM_SOCKET;
@@ -1628,7 +1607,6 @@ printk("1\n");
 		break;
 
 	case SOCK_LISTEN:	/* windrbd specific */
-printk("listening socket\n");
 		Flags = WSK_FLAG_LISTEN_SOCKET;
 		type = SOCK_STREAM;
 		break;
@@ -1685,9 +1663,11 @@ static NTSTATUS receive_a_lot(void *unused)
                 .msg_flags = MSG_WAITALL
         };
 
+/*
 printk("Sleeping 5 minutes before doing anything ...\n");
 msleep(5*60*1000);
 printk("1\n");
+*/
 	err = sock_create_kern(&init_net, AF_INET, SOCK_LISTEN, IPPROTO_TCP, &s);
 
 	if (err < 0) {
@@ -1695,7 +1675,6 @@ printk("1\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-printk("2\n");
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_addr.s_addr = 0;
 	my_addr.sin_port = htons(5678);
@@ -1707,7 +1686,6 @@ printk("2\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-printk("3\n");
         err = s->ops->listen(s, 10);
 	if (err < 0) {
 		printk("listen returned %d\n", err);
@@ -1715,7 +1693,6 @@ printk("3\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-printk("4\n");
 	err = kernel_accept(s, &s2, 0);
 	if (err < 0) {
 		printk("accept returned %d\n", err);
@@ -1726,9 +1703,7 @@ printk("4\n");
 
 	bytes_received = 0;
 	while (1) {
-printk("5\n");
 		err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
-printk("6\n");
 		if (err < 0) {
 			printk("receive returned %d\n", err);
 			break;
@@ -1737,16 +1712,13 @@ printk("6\n");
 			printk("short receive (%d, expected %d)\n", err, iov.iov_len);
 			break;
 		}
-printk("7\n");
 		bytes_received += err;
 		if ((bytes_received % (1024*1024)) == 0)
 			printk("%lld bytes received\n", bytes_received);
 	}
-printk("8\n");
 	sock_release(s);
 	sock_release(s2);
 
-printk("9\n");
 	return STATUS_SUCCESS;
 }
 
