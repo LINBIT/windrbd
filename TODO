@@ -120,6 +120,9 @@ Real:
 	connection establishment works but the connection breaks
 	later in the boot process.
 
+	Update: see if getname() does the right thing .. it is used
+	to have a load order between nodes.
+
 +TODO: Feature: have a windrbd create-resource <drbd-URL> command
 
 	This should help with installing via WinPE.
