@@ -223,6 +223,12 @@ static void init_params(struct drbd_params *p)
 				return -EINVAL; \
 			} while (0);
 
+#define parse_error_with_context(s) do {\
+				printk("near %s :\n", from); \
+				printk("%s", s); \
+				return -EINVAL; \
+			} while (0);
+
 static struct node *lookup_node(struct drbd_params *p, int node_id)
 {
 	struct node *n;
@@ -337,8 +343,7 @@ int parse_drbd_url(const char *drbd_config, struct drbd_params *params)
 	while (1) {
 		t=find_token(from, &index, &params_from, &params_to);
 		if (t == TK_INVALID) {
-			printk("near %s:\n", from);
-			parse_error("Invalid token\n");
+			parse_error_with_context("Invalid token\n");
 		}
 
 		if (t == TK_END)
@@ -349,31 +354,31 @@ int parse_drbd_url(const char *drbd_config, struct drbd_params *params)
 		switch (t) {
 		case TK_RESOURCE:
 			if (params->resource != NULL)
-				parse_error("Duplicate resource= parameter\n");
+				parse_error_with_context("Duplicate resource= parameter\n");
 
 			params->resource = my_strndup(params_from, params_len);
 
 			if (params->resource == NULL)
-				parse_error("Cannot allocate memory for resource name\n");
+				parse_error_with_context("Cannot allocate memory for resource name\n");
 			break;
 
 		case TK_SYSLOG_IP:
 			if (params->syslog_ip != NULL)
-				parse_error("Duplicate syslog_ip= parameter\n");
+				parse_error_with_context("Duplicate syslog_ip= parameter\n");
 
 			params->syslog_ip = my_strndup(params_from, params_len);
 
 			if (params->syslog_ip == NULL)
-				parse_error("Cannot allocate memory for syslog_ip\n");
+				parse_error_with_context("Cannot allocate memory for syslog_ip\n");
 			break;
 
 		case TK_THIS_NODE_ID:
 			if (params->this_node_id == -1) {
 				params->this_node_id = my_strtoul(params_from, &end_of_number, 10);
 				if (end_of_number != params_to)
-					parse_error("this node id should be numeric\n");
+					parse_error_with_context("this node id should be numeric\n");
 			} else {
-				parse_error("this node id is duplicate\n");
+				parse_error_with_context("this node id is duplicate\n");
 			}
 
 			break;
@@ -383,11 +388,11 @@ int parse_drbd_url(const char *drbd_config, struct drbd_params *params)
 			char c;
 
 			if (params->protocol != -1)
-				parse_error("Duplicate protocol= parameter\n");
+				parse_error_with_context("Duplicate protocol= parameter\n");
 
 			c = toupper(*params_from);
 			if (c < 'A' || c > 'C')
-				parse_error("Protocol must be either A, B or C\n");
+				parse_error_with_context("Protocol must be either A, B or C\n");
 			params->protocol = c - 0x40;
 			break;
 		}
@@ -397,7 +402,7 @@ int parse_drbd_url(const char *drbd_config, struct drbd_params *params)
 
 			node = lookup_or_create_node(params, index);
 			if (node == NULL)
-				parse_error("Out of memory\n");
+				parse_error_with_context("Out of memory\n");
 
 			switch (*params_from) {
 			case '.':
@@ -407,31 +412,31 @@ int parse_drbd_url(const char *drbd_config, struct drbd_params *params)
 				switch (t) {
 				case TK_ADDRESS:
 					if (node->address != NULL)
-						parse_error("Duplicate address for node parameter\n");
+						parse_error_with_context("Duplicate address for node parameter\n");
 
 					node->address = my_strndup(params_from, params_len);
 					if (node->address == NULL)
-						parse_error("Cannot allocate memory for hostname\n");
+						parse_error_with_context("Cannot allocate memory for hostname\n");
 
 					break;
 
 				case TK_HOSTNAME:
 					if (node->hostname != NULL)
-						parse_error("Duplicate node<n>.hostname=<hostname> parameter\n");
+						parse_error_with_context("Duplicate node<n>.hostname=<hostname> parameter\n");
 
 					node->hostname = my_strndup(params_from, params_len);
 					if (node->hostname == NULL)
-						parse_error("Cannot allocate memory for hostname\n");
+						parse_error_with_context("Cannot allocate memory for hostname\n");
 					break;
 
 				case TK_VOLUME:
 					if (params->volume_id == -1)
 						params->volume_id = index;
 					else if (params->volume_id != index)
-						parse_error("Sorry, only one volume supported for now.\n");
+						parse_error_with_context("Sorry, only one volume supported for now.\n");
 
 					if (*params_from != '.')
-						parse_error("dot expected\n");
+						parse_error_with_context("dot expected\n");
 
 					params_from++;
 					t=find_token(params_from, &index, &params_from, &params_to);
@@ -442,49 +447,49 @@ int parse_drbd_url(const char *drbd_config, struct drbd_params *params)
 						if (node->volume.minor == -1)
 							node->volume.minor = my_strtoul(params_from, NULL, 10);
 						else
-							parse_error("volume minor is duplicate\n");
+							parse_error_with_context("volume minor is duplicate\n");
 						break;
 
 					case TK_DISK:
 						if (node->volume.disk != NULL)
-							parse_error("Duplicate volume.disk parameter\n");
+							parse_error_with_context("Duplicate volume.disk parameter\n");
 						node->volume.disk = my_strndup(params_from, params_to-params_from);
 						if (node->volume.disk == NULL)
-							parse_error("Cannot allocate memory for volume.disk\n");
+							parse_error_with_context("Cannot allocate memory for volume.disk\n");
 						break;
 
 					case TK_META_DISK:
 						if (node->volume.meta_disk != NULL)
-							parse_error("Duplicate volume.meta-disk parameter\n");
+							parse_error_with_context("Duplicate volume.meta-disk parameter\n");
 						node->volume.meta_disk = my_strndup(params_from, params_to-params_from);
 						if (node->volume.meta_disk == NULL)
-							parse_error("Cannot allocate memory for volume.meta-disk\n");
+							parse_error_with_context("Cannot allocate memory for volume.meta-disk\n");
 						break;
 					default: 
-						parse_error("Token invalid for volume\n");
+						parse_error_with_context("Token invalid for volume\n");
 					}
 					break;
 
 				default: 
-					parse_error("Token invalid for node\n");
+					parse_error_with_context("Token invalid for node\n");
 				}
 				break;
 
 			case '=':
 				if (params_len == 0)
-					parse_error("expected hostname\n");
+					parse_error_with_context("expected hostname\n");
 
 				params_from++;
 				params_len--;
 				if (node->hostname != NULL)
-					parse_error("Duplicate node<n>=<hostname> parameter\n");
+					parse_error_with_context("Duplicate node<n>=<hostname> parameter\n");
 
 				node->hostname = my_strndup(params_from, params_len);
 				if (node->hostname == NULL)
-					parse_error("Cannot allocate memory for hostname\n");
+					parse_error_with_context("Cannot allocate memory for hostname\n");
 				break;
 			default:
-				parse_error("expected '.' or '=' after node\n");
+				parse_error_with_context("expected '.' or '=' after node\n");
 			}
 
 
@@ -499,50 +504,50 @@ int parse_drbd_url(const char *drbd_config, struct drbd_params *params)
 
 		case TK_VERIFY_ALG:
 			if (params->net.verify_alg != NULL)
-				parse_error("Duplicate verify-alg parameter\n");
+				parse_error_with_context("Duplicate verify-alg parameter\n");
 			params->net.verify_alg = my_strndup(params_from, params_len);
 			if (params->net.verify_alg == NULL)
-				parse_error("Cannot allocate memory for hostname\n");
+				parse_error_with_context("Cannot allocate memory for hostname\n");
 			break;
 
 		case TK_TIMEOUT:
 			params->net.timeout = my_strtoul(params_from, &end_of_number, 10);
 			if (end_of_number != params_to)
-				parse_error("timeout should be numeric\n");
+				parse_error_with_context("timeout should be numeric\n");
 			break;
 
 		case TK_PING_TIMEOUT:
 			params->net.ping_timeout = my_strtoul(params_from, &end_of_number, 10);
 			if (end_of_number != params_to)
-				parse_error("ping-timeout should be numeric\n");
+				parse_error_with_context("ping-timeout should be numeric\n");
 			break;
 
 		case TK_PING_INT:
 			params->net.ping_int = my_strtoul(params_from, &end_of_number, 10);
 			if (end_of_number != params_to)
-				parse_error("ping-int should be numeric\n");
+				parse_error_with_context("ping-int should be numeric\n");
 			break;
 
 		case TK_CONNECT_INT:
 			params->net.connect_int = my_strtoul(params_from, &end_of_number, 10);
 			if (end_of_number != params_to)
-				parse_error("connect-int should be numeric\n");
+				parse_error_with_context("connect-int should be numeric\n");
 			break;
 
 		case TK_C_MAX_RATE:
 			params->disk.c_max_rate = my_strtoul(params_from, &end_of_number, 10);
 			if (end_of_number != params_to)
-				parse_error("c-max-rate should be numeric\n");
+				parse_error_with_context("c-max-rate should be numeric\n");
 			break;
 
 		case TK_C_FILL_TARGET:
 			params->disk.c_fill_target = my_strtoul(params_from, &end_of_number, 10);
 			if (end_of_number != params_to)
-				parse_error("c-fill-target should be numeric\n");
+				parse_error_with_context("c-fill-target should be numeric\n");
 			break;
 
 		default:
-			parse_error("Token invalid\n");
+			parse_error_with_context("Token invalid\n");
 			break;
 		}
 		if (*params_to == '\0')
