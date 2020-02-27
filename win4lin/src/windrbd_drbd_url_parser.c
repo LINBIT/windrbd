@@ -336,8 +336,10 @@ int parse_drbd_url(const char *drbd_config, struct drbd_params *params)
 
 	while (1) {
 		t=find_token(from, &index, &params_from, &params_to);
-		if (t == TK_INVALID)
+		if (t == TK_INVALID) {
+			printk("near %s:\n", from);
 			parse_error("Invalid token\n");
+		}
 
 		if (t == TK_END)
 			break;
