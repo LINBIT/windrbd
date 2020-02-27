@@ -54,7 +54,8 @@ if [ x"$HTTP_RANGE" == x ] ; then
 	FROM=0
 	TO=$[ $TOTAL_SIZE - 1 ]
 else
-	echo "Range is $HTTP_RANGE" 1>&2
+# Valid data request: no entry in error.log (this confuses users)
+#	echo "Range is $HTTP_RANGE" 1>&2
 	FROM=$[ `echo $HTTP_RANGE | cut -d= -f 2 | cut -d- -f 1` ]
 	TO=$[ `echo $HTTP_RANGE | cut -d= -f 2 | cut -d- -f 2` ]
 fi
