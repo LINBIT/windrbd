@@ -321,6 +321,12 @@ TODO: Security: How to identify clients with cgi-script
 	Update: everything except stage 2 works. Retry
 	with setup.exe from Windows DVD?
 
+	Update: Setup refuses to install, GetMachineInfo
+	does not report boot disk. Probably some missing
+	I/O control. (Couldn't find boot disk on this
+	BIOS based computer, see X:\Windows\panther\setuperr.log)
+	Try with ioctl logging on.
+
 TODO: Bug: handle the case where DRBD device size drops to 0 again
 
 	If we loose connection we need to block I/O's again. It
