@@ -617,8 +617,10 @@ static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
 	}
 	IoFreeIrp(Irp);
 
-	if (status == STATUS_SUCCESS)
+	if (status == STATUS_SUCCESS) {
+		dbg("peer address is %s\n", my_inet_ntoa(&((struct sockaddr_in*) uaddr)->sin_addr));
 		return sizeof(*uaddr);
+	}
 
 	return winsock_to_linux_error(status);
 }
