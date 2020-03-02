@@ -362,3 +362,4 @@ Version history
 			 static IP and StartType registry patch for booting.
  * 0.10.3 (Nov 18,2019): Fixed logging (IP address was hardcoded)
  * 0.10.4 (Jan 31,2020): Stability fixes
+ * 0.10.5 (Mar 03,2020): Key/Value based boot config
