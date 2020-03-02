@@ -407,7 +407,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
+dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	if (dev->is_bootdevice) {
 		status = wait_for_becoming_primary(dev);
 		if (status != STATUS_SUCCESS)
@@ -487,7 +487,7 @@ printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 			break;
 		}
 		struct _PARTITION_INFORMATION *p = irp->AssociatedIrp.SystemBuffer;
-printk("IOCTL_DISK_GET_PARTITION_INFO bootable TRUE\n");
+// printk("IOCTL_DISK_GET_PARTITION_INFO bootable TRUE\n");
 		fill_partition_info(p, dev);
 		irp->IoStatus.Information = sizeof(struct _PARTITION_INFORMATION);
 		break;
@@ -498,7 +498,7 @@ printk("IOCTL_DISK_GET_PARTITION_INFO bootable TRUE\n");
 			break;
 		}
 		struct _PARTITION_INFORMATION_EX *pe = irp->AssociatedIrp.SystemBuffer;
-printk("IOCTL_DISK_GET_PARTITION_INFO_EX bootable TRUE\n");
+// printk("IOCTL_DISK_GET_PARTITION_INFO_EX bootable TRUE\n");
 		fill_partition_info_ex(pe, dev);
 		irp->IoStatus.Information = sizeof(struct _PARTITION_INFORMATION_EX);
 		break;
