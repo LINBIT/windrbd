@@ -1,17 +1,16 @@
 Roadmap to 1.0
 --------------
 
-Installer (WinPE)
-
 Upgrade DRBD to 9.0.21
 
-Don't require configuring the WinDRBD bus device
+-----
 
-(inno-setup: fix creation of bus device)
-	if needed
+Maybe:
 
-Make fcgi script for serving boot device
-        With keep-alive
+Installer (WinPE)
+
+inno-setup: fix creation of bus device
+	Maybe
 
 Make reestablish connection work
 
@@ -35,7 +34,16 @@ Done:
 0.10.4: stability fixes
         For example, BSOD on running unattendend.
 
-Rework boot URL syntax
+0.10.5: Rework boot URL syntax
         Also have more than one DRBD node
         Also can specify syslog_ip.
+
+----
+
+Rejected:
+
+Make fcgi script for serving boot device
+        With keep-alive
+
+Don't require configuring the WinDRBD bus device
 
