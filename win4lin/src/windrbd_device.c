@@ -201,7 +201,7 @@ static void fill_partition_info(struct _PARTITION_INFORMATION *p, struct block_d
 	p->HiddenSectors = 0;
 	p->PartitionNumber = 1;
 	p->PartitionType = PARTITION_ENTRY_UNUSED;
-	p->BootIndicator = FALSE;
+	p->BootIndicator = TRUE;
 	p->RecognizedPartition = TRUE;
 	p->RewritePartition = FALSE;
 }
@@ -214,7 +214,7 @@ static void fill_partition_info_ex(struct _PARTITION_INFORMATION_EX *p, struct b
 	p->PartitionNumber = 1;
 	p->RewritePartition = FALSE;
 	p->Mbr.PartitionType = PARTITION_EXTENDED;
-	p->Mbr.BootIndicator = FALSE;
+	p->Mbr.BootIndicator = TRUE;
 	p->Mbr.RecognizedPartition = TRUE;
 	p->Mbr.HiddenSectors = 0;
 }
@@ -407,7 +407,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
+printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	if (dev->is_bootdevice) {
 		status = wait_for_becoming_primary(dev);
 		if (status != STATUS_SUCCESS)
@@ -487,6 +487,7 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 			break;
 		}
 		struct _PARTITION_INFORMATION *p = irp->AssociatedIrp.SystemBuffer;
+printk("IOCTL_DISK_GET_PARTITION_INFO bootable TRUE\n");
 		fill_partition_info(p, dev);
 		irp->IoStatus.Information = sizeof(struct _PARTITION_INFORMATION);
 		break;
@@ -497,6 +498,7 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 			break;
 		}
 		struct _PARTITION_INFORMATION_EX *pe = irp->AssociatedIrp.SystemBuffer;
+printk("IOCTL_DISK_GET_PARTITION_INFO_EX bootable TRUE\n");
 		fill_partition_info_ex(pe, dev);
 		irp->IoStatus.Information = sizeof(struct _PARTITION_INFORMATION_EX);
 		break;
