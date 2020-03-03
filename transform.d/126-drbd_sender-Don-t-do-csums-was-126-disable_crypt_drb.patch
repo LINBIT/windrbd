@@ -1,0 +1,47 @@
+From 5f1641a09e5aa18219435011a9dd3981da56e23e Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 3 Mar 2020 20:14:34 +0100
+Subject: [PATCH 2/2] drbd_sender: Don't do csums (was
+ 126-disable_crypt_drbd_send)
+
+---
+ drbd/drbd_sender.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index b9b4b26..621f6c0 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -313,6 +313,7 @@ void drbd_request_endio(struct bio *bio)
+ void drbd_csum_pages(struct crypto_shash *tfm, struct page *page, void *digest)
+ /* kmap compat: KM_USER1 */
+ {
++#if 0
+ 	SHASH_DESC_ON_STACK(desc, tfm);
+ 
+ 	desc->tfm = tfm;
+@@ -329,11 +330,13 @@ void drbd_csum_pages(struct crypto_shash *tfm, struct page *page, void *digest)
+ 	}
+ 	crypto_shash_final(desc, digest);
+ 	shash_desc_zero(desc);
++#endif
+ }
+ 
+ void drbd_csum_bio(struct crypto_shash *tfm, struct bio *bio, void *digest)
+ /* kmap compat: KM_USER1 */
+ {
++#if 0
+ 	struct bio_vec bvec;
+ 	struct bvec_iter iter;
+ 	SHASH_DESC_ON_STACK(desc, tfm);
+@@ -354,6 +357,7 @@ void drbd_csum_bio(struct crypto_shash *tfm, struct bio *bio, void *digest)
+ 	}
+ 	crypto_shash_final(desc, digest);
+ 	shash_desc_zero(desc);
++#endif
+ }
+ 
+ /* MAYBE merge common code with w_e_end_ov_req */
+-- 
+2.17.0
+
