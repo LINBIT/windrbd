@@ -13,14 +13,14 @@ diff --git a/drbd/drbd_bitmap.c b/drbd/drbd_bitmap.c
 index dc826a7..2aadf25 100644
 --- a/drbd/drbd_bitmap.c
 +++ b/drbd/drbd_bitmap.c
-@@ -462,7 +462,7 @@ static inline unsigned long bit_to_page_interleaved(struct drbd_bitmap *bitmap,
- #define ____bm_op(device, bitmap_index, start, end, op, buffer, km_type) \
- 	____bm_op(device, bitmap_index, start, end, op, buffer)
- #endif
+@@ -478,7 +478,7 @@ static void bm_unmap(struct drbd_bitmap *bitmap, void *addr)
+                kunmap_atomic(addr);
+ }
+
 -static __always_inline unsigned long
 +static __always_inline ULONG_PTR
  ____bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start, ULONG_PTR end,
- 	 enum bitmap_operations op, __le32 *buffer, enum km_type km_type)
+         enum bitmap_operations op, __le32 *buffer)
  {
 @@ -693,7 +693,7 @@ ____bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start
  }
