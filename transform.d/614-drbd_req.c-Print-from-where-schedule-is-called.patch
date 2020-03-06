@@ -21,15 +21,6 @@ index 56c5431..32a0226 100644
  
  		spin_lock_irq(&device->resource->req_lock);
  	}
-@@ -2209,7 +2209,7 @@ void do_submit(struct work_struct *ws)
- 				break;
- 
- 			drbd_kick_lo(device);
--			new_schedule();
-+			new_schedule(__FILE__, __LINE__, __func__);
- 
- 			/* If all currently "hot" activity log extents are kept busy by
- 			 * incoming requests, we still must not totally starve new
 -- 
 2.17.0
 

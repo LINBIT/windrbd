@@ -52,15 +52,6 @@ index e1e9595b..100a6e49 100644
  		spin_lock_irq(&device->resource->req_lock);
  	}
  	finish_wait(&device->misc_wait, &wait);
-@@ -1627,7 +1637,7 @@
- 		kref_put(&tmp->kref, drbd_req_destroy);
- }
- #else
--struct drbd_plug_cb { };
-+struct drbd_plug_cb { char unused; };
- static void * drbd_check_plugged(struct drbd_resource *resource) { return NULL; };
- static void drbd_update_plug(struct drbd_plug_cb *plug, struct drbd_request *req) { };
- #endif
 @@ -1736,9 +1681,15 @@ static void drbd_send_and_submit(struct drbd_device *device, struct drbd_request
  		submit_private_bio = true;
  	} else if (no_remote) {
@@ -79,12 +70,3 @@ index e1e9595b..100a6e49 100644
  		/* A write may have been queued for send_oos, however.
  		 * So we can not simply free it, we must go through drbd_req_put_completion_ref() */
  	}
-@@ -2033,7 +1988,7 @@ void do_submit(struct work_struct *ws)
- 				break;
- 
- 			drbd_kick_lo(device);
--			schedule();
-+			schedule(&device->al_wait, MAX_SCHEDULE_TIMEOUT, __FUNCTION__, __LINE__);
- 
- 			/* If all currently "hot" activity log extents are kept busy by
- 			 * incoming requests, we still must not totally starve new

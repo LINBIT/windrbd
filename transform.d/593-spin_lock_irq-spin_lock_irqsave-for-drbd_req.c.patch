@@ -11,25 +11,25 @@ diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
 index 1652851..68854d8 100644
 --- a/drbd/drbd_req.c
 +++ b/drbd/drbd_req.c
-@@ -2446,6 +2446,7 @@ static bool net_timeout_reached(struct drbd_request *net_req,
- void request_timer_fn(DRBD_TIMER_FN_ARG)
+@@ -2324,6 +2324,7 @@ static bool net_timeout_reached(struct drbd_request *net_req,
+ void request_timer_fn(struct timer_list *t)
  {
  	KIRQL rcu_flags;
 +	KIRQL flags;
- 	struct drbd_device *device = DRBD_TIMER_ARG2OBJ(device, request_timer);
+ 	struct drbd_device *device = from_timer(device, t, request_timer);
  	struct drbd_connection *connection;
  	struct drbd_request *req_read, *req_write;
-@@ -2464,7 +2465,7 @@ void request_timer_fn(DRBD_TIMER_FN_ARG)
+@@ -2341,7 +2342,7 @@ void request_timer_fn(struct timer_list *t)
+ 	}
  	rcu_read_unlock(rcu_flags);
  
- 	/* FIXME right now, this basically does a full transfer log walk *every time* */
 -	spin_lock_irq(&device->resource->req_lock);
 +	spin_lock_irqsave(&device->resource->req_lock, flags);
  	if (dt) {
- 		ULONG_PTR write_pre_submit_jif, read_pre_submit_jif;
+ 		ULONG_PTR write_pre_submit_jif = now, read_pre_submit_jif = now;
  		req_read = list_first_entry_or_null(&device->pending_completion[0], struct drbd_request, req_pending_local);
 @@ -2549,7 +2550,7 @@ void request_timer_fn(DRBD_TIMER_FN_ARG)
- 			end_state_change_locked(device->resource);
+			end_state_change_locked(device->resource);
  		}
  	}
 -	spin_unlock_irq(&device->resource->req_lock);
