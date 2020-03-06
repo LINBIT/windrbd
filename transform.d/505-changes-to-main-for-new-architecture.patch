@@ -2,18 +2,6 @@ diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
 index 8274e6a..52cf9fa 100644
 --- a/drbd/drbd_main.c
 +++ b/drbd/drbd_main.c
-@@ -2760,11 +2781,6 @@ static void drbd_device_finalize_work_fn(struct work_struct *work)
- 	if (device->this_bdev)
- 		bdput(device->this_bdev);
- 
--	if (device->vdisk->pDeviceExtension) {
--		// just in case existing a VolumeExtension
--		device->vdisk->pDeviceExtension->dev = NULL;
--	}
--
- 	drbd_backing_dev_free(device, device->ldev);
- 	device->ldev = NULL;
- 
 @@ -3517,9 +3540,13 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
  	sprintf(disk->disk_name, "drbd%d", minor);
  	disk->private_data = device;

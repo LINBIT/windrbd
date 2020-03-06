@@ -31,13 +31,13 @@ index e207d80..56fcab0 100644
  	idr_init(&drbd_devices);
  
  	mutex_init(&resources_mutex);
-@@ -3886,9 +3873,6 @@ static int __init drbd_init(void)
+@@ -4086,7 +4086,9 @@ int __init drbd_init(void)
  	spin_lock_init(&retry.lock);
  	INIT_LIST_HEAD(&retry.writes);
  
--	if (drbd_debugfs_init())
--		pr_notice("failed to initialize debugfs -- will not be available\n");
--
++#if 0
+ 	drbd_debugfs_init();
++#endif
+ 
  	pr_info("initialized. "
  	       "Version: " REL_VERSION " (api:%d/proto:%d-%d)\n",
- 	       GENL_MAGIC_VERSION, PRO_VERSION_MIN, PRO_VERSION_MAX);

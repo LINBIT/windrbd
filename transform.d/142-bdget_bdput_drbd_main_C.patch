@@ -2,18 +2,6 @@ diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
 index a364cef..da885c0 100644
 --- a/drbd/drbd_main.c
 +++ b/drbd/drbd_main.c
-@@ -2747,6 +2747,11 @@ void drbd_destroy_device(struct kref *kref)
- 	if (device->this_bdev)
- 		bdput(device->this_bdev);
- 
-+	if (device->vdisk->pDeviceExtension) {
-+		// just in case existing a VolumeExtension
-+		device->vdisk->pDeviceExtension->dev = NULL;
-+	}
-+
- 	drbd_backing_dev_free(device, device->ldev);
- 	device->ldev = NULL;
- 
 @@ -2764,6 +2769,8 @@ void drbd_destroy_device(struct kref *kref)
  	}
 

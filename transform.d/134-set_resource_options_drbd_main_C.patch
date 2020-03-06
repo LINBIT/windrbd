@@ -1,69 +1,34 @@
+From db6e8c2780c2044617c00913846a22fec91ec454 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 6 Mar 2020 18:22:16 +0100
+Subject: [PATCH 4/7] drbd_main: set_resource_options is a NOOP.
+
+---
+ drbd/drbd_main.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
 diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
-index e207d80..1ef1be7 100644
+index 95672d4..85fdf53 100644
 --- a/drbd/drbd_main.c
 +++ b/drbd/drbd_main.c
-@@ -3173,63 +3173,8 @@ static void wake_all_device_misc(struct drbd_resource *resource)
+@@ -3308,5 +3308,6 @@ static void wake_all_device_misc(struct drbd_resource *resource)
  
  int set_resource_options(struct drbd_resource *resource, struct res_opts *res_opts)
  {
--	struct drbd_connection *connection;
--	cpumask_var_t new_cpu_mask;
--	int err;
--	bool wake_device_misc = false;
++#if 0
+ 	struct drbd_connection *connection;
+ 	cpumask_var_t new_cpu_mask;
+@@ -3388,7 +3389,9 @@ int set_resource_options(struct drbd_resource *resource, struct res_opts *res_op
+ fail:
+ 	free_cpumask_var(new_cpu_mask);
+ 	return err;
 -
--	if (!zalloc_cpumask_var(&new_cpu_mask, GFP_KERNEL))
--		return -ENOMEM;
--
--	/* silently ignore cpu mask on UP kernel */
--	if (nr_cpu_ids > 1 && res_opts->cpu_mask[0] != 0) {
--		err = bitmap_parse(res_opts->cpu_mask, DRBD_CPU_MASK_SIZE,
--				   cpumask_bits(new_cpu_mask), nr_cpu_ids);
--		if (err == -EOVERFLOW) {
--			/* So what. mask it out. */
--			cpumask_var_t tmp_cpu_mask;
--			if (zalloc_cpumask_var(&tmp_cpu_mask, GFP_KERNEL)) {
--				cpumask_setall(tmp_cpu_mask);
--				cpumask_and(new_cpu_mask, new_cpu_mask, tmp_cpu_mask);
--				drbd_warn(resource, "Overflow in bitmap_parse(%.12s%s), truncating to %u bits\n",
--					res_opts->cpu_mask,
--					strlen(res_opts->cpu_mask) > 12 ? "..." : "",
--					nr_cpu_ids);
--				free_cpumask_var(tmp_cpu_mask);
--				err = 0;
--			}
--		}
--		if (err) {
--			drbd_warn(resource, "bitmap_parse() failed with %d\n", err);
--			/* retcode = ERR_CPU_MASK_PARSE; */
--			goto fail;
--		}
--	}
--	if (res_opts->nr_requests < DRBD_NR_REQUESTS_MIN)
--		res_opts->nr_requests = DRBD_NR_REQUESTS_MIN;
--	if (resource->res_opts.nr_requests < res_opts->nr_requests)
--		wake_device_misc = true;
--
- 	resource->res_opts = *res_opts;
--	if (cpumask_empty(new_cpu_mask))
--		drbd_calc_cpu_mask(&new_cpu_mask);
--	if (!cpumask_equal(resource->cpu_mask, new_cpu_mask)) {
--		cpumask_copy(resource->cpu_mask, new_cpu_mask);
--		rcu_read_lock();
--		for_each_connection_rcu(connection, resource) {
--			connection->receiver.reset_cpu_mask = 1;
--			connection->ack_receiver.reset_cpu_mask = 1;
--			connection->sender.reset_cpu_mask = 1;
--		}
--		rcu_read_unlock();
--	}
--	err = 0;
--	if (wake_device_misc)
--		wake_all_device_misc(resource);
--
--fail:
--	free_cpumask_var(new_cpu_mask);
--	return err;
++#else
 +	return 0;
- 
++#endif
  }
  
+ struct drbd_resource *drbd_create_resource(const char *name,
+-- 
+2.17.0
+

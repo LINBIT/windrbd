@@ -2,16 +2,14 @@ diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
 index f332da2..7ef6dc4 100644
 --- a/drbd/drbd_main.c
 +++ b/drbd/drbd_main.c
-@@ -2255,9 +2230,13 @@ int drbd_send_dblock(struct drbd_peer_device *peer_device, struct drbd_request *
- 		drbd_csum_bio(peer_device->connection->integrity_tfm, req->master_bio, digest_out);
+@@ -2328,9 +2328,11 @@ int drbd_send_dblock(struct drbd_peer_device *peer_device, struct drbd_request *
  
+ 	err = 0;
  	if (wsame) {
 +#if 0
  		additional_size_command(peer_device->connection, DATA_STREAM,
- 					bio_iovec(req->master_bio)->bv_len);
+ 					bio_iovec(req->master_bio).bv_len);
  		err = __send_command(peer_device->connection, device->vnr, P_WSAME, DATA_STREAM);
-+#else
-+		/* Currently not supported on windows */
 +#endif
  	} else {
  		additional_size_command(peer_device->connection, DATA_STREAM, req->i.size);

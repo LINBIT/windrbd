@@ -1,17 +1,17 @@
-From 921e4d27eea165abe9129b934eb7bc39cb162ce2 Mon Sep 17 00:00:00 2001
+From 11e646185a99cd61e5bea2ec4ff8b0628624301b Mon Sep 17 00:00:00 2001
 From: Johannes Thoma <johannes@johannesthoma.com>
-Date: Tue, 16 Oct 2018 17:33:33 +0200
-Subject: [PATCH 3/4] Redone missing patch from 505 (create_device patches).
+Date: Fri, 6 Mar 2020 18:33:57 +0100
+Subject: [PATCH 7/7] drbd_main: create block_device (was 557)
 
 ---
  drbd/drbd_main.c | 8 +++++++-
  1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
-index 022d036..61473ea 100644
+index bf9aeaa..65c2bc4 100644
 --- a/drbd/drbd_main.c
 +++ b/drbd/drbd_main.c
-@@ -3634,15 +3634,21 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+@@ -3658,15 +3658,21 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
  	int vnr = adm_ctx->volume;
  	enum drbd_ret_code err = ERR_NOMEM;
  	bool locked = false;

@@ -16,7 +16,7 @@ diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
 index 9183640..13248d6 100644
 --- a/drbd/drbd_main.c
 +++ b/drbd/drbd_main.c
-@@ -881,17 +881,19 @@ static void prepare_header(struct drbd_connection *connection, int vnr,
+@@ -919,17 +919,19 @@ static void prepare_header(struct drbd_connection *connection, int vnr,
  		prepare_header80(buffer, cmd, size);
  }
  
@@ -36,12 +36,12 @@ index 9183640..13248d6 100644
 +				goto have_page;
 +		}
  
--		page = alloc_page(GFP_KERNEL);
-+		page = alloc_page_of_size(GFP_KERNEL, size);
+-		page = alloc_page(GFP_NOIO | __GFP_NORETRY | __GFP_NOWARN);
++		page = alloc_page_of_size(GFP_NOIO | __GFP_NORETRY | __GFP_NOWARN, size);
  		if (page) {
  			put_page(sbuf->page);
  			sbuf->page = page;
-@@ -911,9 +913,9 @@ static char *alloc_send_buffer(struct drbd_connection *connection, int size,
+@@ -949,9 +949,9 @@ static char *alloc_send_buffer(struct drbd_connection *connection, int size,
  	struct drbd_send_buffer *sbuf = &connection->send_buffer[drbd_stream];
  	char *page_start = page_address(sbuf->page);
  

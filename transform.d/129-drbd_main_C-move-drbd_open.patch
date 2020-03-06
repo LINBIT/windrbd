@@ -2,13 +2,14 @@ diff --git i/drbd/drbd_main.c w/drbd/drbd_main.c
 index e207d805..8d173dd3 100644
 --- i/drbd/drbd_main.c
 +++ w/drbd/drbd_main.c
-@@ -74,7 +74,6 @@
- #define DRBD_RELEASE_RETURN int
- #endif
+@@ -52,7 +52,7 @@
+ #include "drbd_meta_data.h"
+ #include "drbd_dax_pmem.h"
  
 -static int drbd_open(struct block_device *bdev, fmode_t mode);
- static DRBD_RELEASE_RETURN drbd_release(struct gendisk *gd, fmode_t mode);
- static void md_sync_timer_fn(unsigned long data);
++int drbd_open(struct block_device *bdev, fmode_t mode);
+ static void drbd_release(struct gendisk *gd, fmode_t mode);
+ static void md_sync_timer_fn(struct timer_list *t);
  static int w_bitmap_io(struct drbd_work *w, int unused);
 @@ -2478,7 +2477,7 @@ static int ro_open_cond(struct drbd_device *device)
  		return -EAGAIN;
