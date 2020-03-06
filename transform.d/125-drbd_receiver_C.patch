@@ -48,19 +48,6 @@ index 13ec23c3..daa95b20 100644
  	return 0;
  }
  
-@@ -1254,12 +1268,10 @@ void drbd_bump_write_ordering(struct drbd_resource *resource, struct drbd_backin
- int drbd_issue_discard_or_zero_out(struct drbd_device *device, sector_t start, unsigned int nr_sectors, bool discard)
- {
- 	struct block_device *bdev = device->ldev->backing_bdev;
--#ifdef QUEUE_FLAG_DISCARD
- 	struct request_queue *q = bdev_get_queue(bdev);
- 	sector_t tmp, nr;
- 	unsigned int max_discard_sectors, granularity;
- 	int alignment;
--#endif
- 	int err = 0;
- 
- 	if (!discard)
 @@ -1800,7 +1812,7 @@ read_in_block(struct drbd_peer_device *peer_device, struct drbd_peer_request_det
  		drbd_err(device, "Fault injection: Corrupting data on receive, sector %llu\n",
  				d->sector);
@@ -70,24 +57,15 @@ index 13ec23c3..daa95b20 100644
  		data[0] = ~data[0];
  		kunmap(page);
  	}
-@@ -1864,7 +1876,7 @@ static int recv_dless_read(struct drbd_peer_device *peer_device, struct drbd_req
- 	D_ASSERT(peer_device->device, sector == DRBD_BIO_BI_SECTOR(bio));
+@@ -2062,7 +2062,7 @@ static int recv_dless_read(struct drbd_peer_device *peer_device, struct drbd_req
+ 	D_ASSERT(peer_device->device, sector == bio->bi_iter.bi_sector);
  
  	bio_for_each_segment(bvec, bio, iter) {
--		void *mapped = kmap(bvec->bv_page) + bvec->bv_offset;
-+		void *mapped = ((u8*)kmap(bvec->bv_page)) + bvec->bv_offset;
- 		expect = min_t(int, data_size, bvec->bv_len);
+-		void *mapped = kmap(bvec.bv_page) + bvec.bv_offset;
++		void *mapped = ((u8*)kmap(bvec.bv_page)) + bvec.bv_offset;
+ 		expect = min_t(int, data_size, bvec.bv_len);
  		err = drbd_recv_into(peer_device->connection, mapped, expect);
- 		kunmap(bvec->bv_page);
-@@ -2861,7 +2873,7 @@ static int receive_DataRequest(struct drbd_connection *connection, struct packet
- 	struct drbd_peer_request *peer_req;
- 	struct digest_info *di = NULL;
- 	int size, verb;
--	unsigned int fault_type;
-+	unsigned int fault_type = 0;
- 	struct p_block_req *p =	pi->data;
- 	enum drbd_disk_state min_d_state;
- 	int err;
+ 		kunmap(bvec.bv_page);
 @@ -5172,8 +5184,9 @@ static int receive_req_state(struct drbd_connection *connection, struct packet_i
  	if (pi->cmd == P_STATE_CHG_REQ) {
  		peer_device = conn_peer_device(connection, pi->vnr);
