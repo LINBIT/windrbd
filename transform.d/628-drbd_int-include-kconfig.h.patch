@@ -1,0 +1,25 @@
+From f8764ed1f83018c8c99717a2969c872d42bb9d08 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 9 Mar 2020 18:24:28 +0100
+Subject: [PATCH] drbd_int: include kconfig.h
+
+Needed for IS_DEFINED macro test.
+---
+ drbd/drbd_int.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index f9f676f..05eeb0d 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -35,6 +35,7 @@
+ #include <linux/drbd.h>
+ #include <linux/drbd_config.h>
+ #include <linux/ktime.h>
++#include <linux/kconfig.h>
+ 
+ #include "drbd_wrappers.h"
+ #include "drbd_strings.h"
+-- 
+2.17.0
+
