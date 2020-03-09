@@ -196,6 +196,11 @@ WIN_LINK_INPUT += wdmsec.lib
 WIN_LINK_INPUT += "$(EWDK_LIB)/win8/km/x64/aux_klib.lib"
 # WIN_LINK_INPUT += setupapi.lib
 
+DRBD_FILES = drbd_buildtag.c drbd_bitmap.c drbd_proc.c
+DRBD_FILES += drbd_sender.c drbd_receiver.c drbd_req.c drbd_actlog.c
+DRBD_FILES += lru_cache.c drbd_main.c drbd_strings.c drbd_nl.c
+DRBD_FILES += drbd_interval.c drbd_state.c
+DRBD_FILES += drbd_nla.c drbd_transport.c
 
 all: versioninfo windrbd.sys
 
@@ -203,7 +208,7 @@ all: versioninfo windrbd.sys
 versioninfo:
 	cd ../.. && ./versioninfo.sh converted-sources $(EXTRA_VERSION) || true
 
-windrbd.sys: $(patsubst %.c,%.obj,$(wildcard *.c)) $(patsubst %.c,%.obj,$(wildcard ../../win4lin/src/*.c)) resource.res
+windrbd.sys: $(patsubst %.c,%.obj,$(DRBD_FILES)) $(patsubst %.c,%.obj,$(wildcard ../../win4lin/src/*.c)) resource.res
 	rm -f windrbd.pdb "_$@"
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"windrbd.pdb" /OUT:"_$@"
 	mv -f "_$@" "$@"
