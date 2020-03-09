@@ -461,6 +461,46 @@ static __inline int nla_put_u64(struct sk_buff *msg, int attrtype, __u64 value)
     return nla_put(msg, attrtype, sizeof(__u64), &value);
 }
 
+static inline bool nla_need_padding_for_64bit(struct sk_buff *skb)
+{
+	return false;
+}
+
+static inline int nla_total_size_64bit(int payload)
+{
+	return NLA_ALIGN(nla_attr_size(payload));
+}
+
+static __inline struct nlattr *__nla_reserve_64bit(struct sk_buff *skb, int attrtype,
+				   int attrlen, int padattr)
+{
+	return __nla_reserve(skb, attrtype, attrlen);
+}
+
+static __inline void __nla_put_64bit(struct sk_buff *skb, int attrtype, int attrlen,
+		     const void *data, int padattr)
+{
+	struct nlattr *nla;
+
+	nla = __nla_reserve_64bit(skb, attrtype, attrlen, padattr);
+	memcpy(nla_data(nla), data, attrlen);
+}
+
+static __inline int nla_put_64bit(struct sk_buff *skb, int attrtype, int attrlen,
+		  const void *data, int padattr)
+{
+	size_t len;
+
+	if (nla_need_padding_for_64bit(skb))
+		len = nla_total_size_64bit(attrlen);
+	else
+		len = nla_total_size(attrlen);
+	if (unlikely(skb_tailroom(skb) < len))
+		return -EMSGSIZE;
+
+	__nla_put_64bit(skb, attrtype, attrlen, data, padattr);
+	return 0;
+}
 /**
 * nla_put_string - Add a string netlink attribute to a message buffer
 * @msg: message buffer to add attribute to
