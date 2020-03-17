@@ -28,7 +28,7 @@ DRBD itself is used to build High Availability clusters by replicating
 contents of one block device over a network to (up to 31) other nodes.
 
 WinDRBD is based on DRBD 9. It was originally started by Korean
-company Mantech and later resigned by Johannes Thoma for Linbit
+company Mantech and later redesigned by Johannes Thoma for Linbit
 to match more closely the Linux device model. In particular the
 DRBD devices are not stacked over existing Windows devices (like
 Mantech WDRBD does it) but creates DRBD devices upon creation with
