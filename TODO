@@ -894,14 +894,6 @@ TODO: Code quality: use zero-sized arrays at the end of structs
 
 	MS compiler seems to accept them (ask why this patch was neccessary).
 
-TODO: Code quality: List C files to compile in Makefile
-
-	Instead of just using globbing (*.c)
-
-TODO: Code quality: Replace WDRBD_ERROR and the like by printk
-
-	The log severities are wrong with these macros.
-
 TODO: Implement: forward port drbd_polymorph_printk.h (again).
 
 	Or even better use the original file which should also
@@ -6491,4 +6483,12 @@ Done: Feature: Make timeouts configurable
 
 	There's a key value syntax now (not position dependent).
 	Need to document it, but the implementation is finished.
+
+Done: Code quality: Replace WDRBD_ERROR and the like by printk
+
+	The log severities are wrong with these macros.
+
+Done: Code quality: List C files to compile in Makefile
+
+	Instead of just using globbing (*.c)
 
