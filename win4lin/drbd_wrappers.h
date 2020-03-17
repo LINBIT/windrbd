@@ -218,10 +218,6 @@ static inline blk_status_t errno_to_blk_status(int errno)
 }
 
 #define FAULT_TEST_FLAG     ((ULONG_PTR)0x11223344)
-static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
-{
-        bio_endio(bio, blk_status_to_errno(status));
-}
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 #define part_inc_in_flight(A, B) part_inc_in_flight(A)
@@ -1250,16 +1246,6 @@ static inline int atomic_dec_if_positive(atomic_t *v)
         }
         return dec;
 }
-#endif
-
-#ifdef COMPAT_HAVE_BIO_BI_STATUS
-static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
-{
-        bio->bi_status = status;
-        bio_endio(bio);
-}
-#else
-
 #endif
 
 #ifndef COMPAT_HAVE_BIO_CLONE_FAST

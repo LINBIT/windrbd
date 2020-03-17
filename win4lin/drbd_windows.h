@@ -746,6 +746,8 @@ struct bio {
 	 */
 	IO_STATUS_BLOCK io_stat;
 
+	blk_status_t bi_status;
+
 	/* TODO: may be put members here again? Update: Not sure,
 	 * we've put a KEVENT here and it didn't work .. might also
 	 * have been something else.
@@ -788,7 +790,7 @@ extern void bio_put(struct bio *);
 
 extern void bio_free(struct bio *bio); 
 extern int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset);
-extern void bio_endio(struct bio *bio, int error);
+extern void bio_endio(struct bio *bio);
 
 int generic_make_request(struct bio *bio);
 static inline int submit_bio(struct bio *bio)

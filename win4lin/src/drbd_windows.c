@@ -2143,7 +2143,8 @@ NTSTATUS DrbdIoCompletion(
 	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
 
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
-		drbd_bio_endio(bio, win_status_to_blk_status(status));
+		bio->bi_status = win_status_to_blk_status(status);
+		bio_endio(bio);
 			/* TODO: to bio_free() */
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
@@ -2478,7 +2479,8 @@ int generic_make_request(struct bio *bio)
 		bio->bi_num_requests = (bio->bi_vcnt-1)/max_mdl_elements + 1 + flush_request;
 
 	if (bio->bi_num_requests == 0) {
-		drbd_bio_endio(bio, 0);
+		bio->bi_status = 0;
+		bio_endio(bio);
 		bio_put(bio);
 		return 0;
 	}
@@ -2488,7 +2490,8 @@ int generic_make_request(struct bio *bio)
 		 */
 	bio->bi_irps = kzalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, 0, 'XXXX');
 	if (bio->bi_irps == NULL) {
-		drbd_bio_endio(bio, BLK_STS_IOERR);
+		bio->bi_status = BLK_STS_IOERR;
+		bio_endio(bio);
 		bio_put(bio);
 		return -ENOMEM;
 	}
@@ -2516,7 +2519,8 @@ int generic_make_request(struct bio *bio)
 
 		ret = windrbd_generic_make_request(bio);
 		if (ret < 0) {
-			drbd_bio_endio(bio, BLK_STS_IOERR);
+			bio->bi_status = BLK_STS_IOERR;
+			bio_endio(bio);
 			goto out;
 		}
 		if (ret > 0)
@@ -2525,8 +2529,10 @@ int generic_make_request(struct bio *bio)
 	}
 	if (flush_request) {
 		ret = make_flush_request(bio);
-		if (ret < 0)
-			drbd_bio_endio(bio, BLK_STS_IOERR);
+		if (ret < 0) {
+			bio->bi_status = BLK_STS_IOERR;
+			bio_endio(bio);
+		}
 	}
 
 	if (ret > 0)
@@ -2541,8 +2547,10 @@ out:
 	return ret;
 }
 
-void bio_endio(struct bio *bio, int error)
+void bio_endio(struct bio *bio)
 {
+	int error = blk_status_to_errno(bio->bi_status);
+
 	if (bio->bi_end_io != NULL) {
 		if (error != 0)
 			WDRBD_INFO("thread(%s) bio_endio error with err=%d.\n", current->comm, error);
@@ -2990,7 +2998,7 @@ static struct _DEVICE_OBJECT *find_windows_device(UNICODE_STRING *path, struct _
 	return windows_device;
 }
 
-static void backingdev_check_endio BIO_ENDIO_ARGS(struct bio *bio)
+static void backingdev_check_endio(struct bio *bio)
 {
 	struct completion *c = (struct completion*) bio->bi_private;
 	complete(c);
