@@ -1327,4 +1327,6 @@ void exit_interruptible_debug(const char *file, int line, const char *func);
 #define enter_interruptible() enter_interruptible_debug(__FILE__, __LINE__, __func__)
 #define exit_interruptible() exit_interruptible_debug(__FILE__, __LINE__, __func__)
 
+#define __release(unused) do { } while (0);
+
 #endif // DRBD_WINDOWS_H

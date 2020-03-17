@@ -217,24 +217,11 @@ static inline blk_status_t errno_to_blk_status(int errno)
         return status;
 }
 
-typedef void BIO_ENDIO_TYPE;
 #define FAULT_TEST_FLAG     ((ULONG_PTR)0x11223344)
 static inline void drbd_bio_endio(struct bio *bio, blk_status_t status)
 {
         bio_endio(bio, blk_status_to_errno(status));
 }
-#define BIO_ENDIO_ARGS(b) (b, int error)
-#define BIO_ENDIO_FN_START      \
-        int status = errno_to_blk_status(error); \
-        int uptodate = bio_flagged(bio, BIO_UPTODATE); \
-        if (!error && !uptodate) { error = -EIO; status = BLK_STS_IOERR; }
-#define BIO_ENDIO_FN_RETURN return
-
-/* bi_end_io handlers */
-extern BIO_ENDIO_TYPE drbd_md_endio BIO_ENDIO_ARGS(struct bio *bio);
-extern BIO_ENDIO_TYPE drbd_peer_request_endio BIO_ENDIO_ARGS(struct bio *bio);
-extern BIO_ENDIO_TYPE drbd_request_endio BIO_ENDIO_ARGS(struct bio *bio);
-
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 #define part_inc_in_flight(A, B) part_inc_in_flight(A)
