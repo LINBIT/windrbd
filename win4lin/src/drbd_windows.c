@@ -588,7 +588,7 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 
 	struct page *p = kzalloc_debug(sizeof(struct page), 0, file, line, func); 
 	if (!p)	{
-		WDRBD_INFO("alloc_page struct page failed\n");
+		printk("alloc_page struct page failed\n");
 		return NULL;
 	}
 	
@@ -600,7 +600,7 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 	p->addr = kmalloc_debug(size, 0, file, line, func);
 	if (!p->addr)	{
 		kfree_debug(p, file, line, func); 
-		WDRBD_INFO("alloc_page failed (size is %d)\n", size);
+		printk("alloc_page failed (size is %d)\n", size);
 		return NULL;
 	}
 	kref_init(&p->kref);
@@ -651,7 +651,7 @@ struct page *alloc_page_of_size(int flag, size_t size)
 
 	struct page *p = kzalloc(sizeof(struct page),0, 'D3DW'); 
 	if (!p)	{
-		WDRBD_INFO("alloc_page struct page failed\n");
+		printk("alloc_page struct page failed\n");
 		return NULL;
 	}
 	
@@ -663,7 +663,7 @@ struct page *alloc_page_of_size(int flag, size_t size)
 	p->addr = kmalloc(size, 0, 'E3DW');
 	if (!p->addr)	{
 		kfree(p); 
-		WDRBD_INFO("alloc_page failed (size is %d)\n", size);
+		printk("alloc_page failed (size is %d)\n", size);
 		return NULL;
 	}
 	kref_init(&p->kref);
@@ -1177,7 +1177,7 @@ exit_interruptible();
 		break;
 	default:
 		err = -EIO;
-		WDRBD_ERROR("KeWaitForMultipleObjects returned unexpected status(0x%x)", status);
+		printk("KeWaitForMultipleObjects returned unexpected status(0x%x)", status);
 		break;
 	}
 
@@ -1215,14 +1215,11 @@ void mutex_unlock(struct mutex *m)
 void sema_init(struct semaphore *s, int limit)
 {
     KeInitializeSemaphore(&s->sem, limit, limit);    
-    WDRBD_TRACE_SEM("KeInitializeSemaphore!  KeReadStateSemaphore (%d)\n", KeReadStateSemaphore(&s->sem));
 }
 
 void down(struct semaphore *s)
 {
-    WDRBD_TRACE_SEM("KeWaitForSingleObject before! KeReadStateSemaphore (%d)\n", KeReadStateSemaphore(&s->sem));
     KeWaitForSingleObject(&s->sem, Executive, KernelMode, FALSE, NULL);
-    WDRBD_TRACE_SEM("KeWaitForSingleObject after! KeReadStateSemaphore (%d)\n", KeReadStateSemaphore(&s->sem));
 }
 
 /**
@@ -1240,12 +1237,10 @@ int down_trylock(struct semaphore *s)
     
     if (KeWaitForSingleObject(&s->sem, Executive, KernelMode, FALSE, &Timeout) == STATUS_SUCCESS)
     {
-        WDRBD_TRACE_SEM("success! KeReadStateSemaphore (%d)\n", KeReadStateSemaphore(&s->sem));
         return 0;
     }
     else
     {
-        WDRBD_TRACE_SEM("fail! KeReadStateSemaphore (%d)\n", KeReadStateSemaphore(&s->sem));
         return 1;
     }
 }
@@ -1254,9 +1249,7 @@ void up(struct semaphore *s)
 {
     if (KeReadStateSemaphore(&s->sem) < s->sem.Limit)
     {
-        WDRBD_TRACE_SEM("KeReleaseSemaphore before! KeReadStateSemaphore (%d)\n", KeReadStateSemaphore(&s->sem));
         KeReleaseSemaphore(&s->sem, IO_NO_INCREMENT, 1, FALSE);
-        WDRBD_TRACE_SEM("KeReleaseSemaphore after! KeReadStateSemaphore (%d)\n", KeReadStateSemaphore(&s->sem));
     }
 }
 
@@ -1872,7 +1865,6 @@ void kobject_put(struct kobject *kobj)
     {
         if (kobj->name == NULL)
         {
-            //WDRBD_WARN("%p name is null.\n", kobj);
             return;
         }
 
@@ -1889,7 +1881,6 @@ void kobject_put(struct kobject *kobj)
     }
     else
     {
-        //WDRBD_WARN("kobj is null.\n");
         return;
     }
 }
@@ -1898,7 +1889,6 @@ void kobject_del(struct kobject *kobj)
 {
     if (!kobj)
     {
-        WDRBD_WARN("kobj is null.\n");
         return;
     }
     kobject_put(kobj->parent); 
@@ -1912,7 +1902,6 @@ void kobject_get(struct kobject *kobj)
     }
     else
     {
-        WDRBD_INFO("kobj is null.\n");
         return;
     }
 }
@@ -1959,6 +1948,11 @@ void force_sig(int sig, struct task_struct *task)
 		task->sig = sig;
 		KeSetEvent(&task->sig_event, 0, FALSE);
 	}
+}
+
+void send_sig(int sig, struct task_struct *task, int priv)
+{
+	force_sig(sig, task);
 }
 
 void flush_signals(struct task_struct *task)
@@ -2172,7 +2166,7 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 	memset(&dev->vol_size_length_information, 0, sizeof(dev->vol_size_length_information));
 
 	if (KeGetCurrentIrql() > APC_LEVEL) {
-		WDRBD_ERROR("cannot run IoBuildDeviceIoControlRequest becauseof IRP(%d)\n", KeGetCurrentIrql());
+		printk("cannot run IoBuildDeviceIoControlRequest becauseof IRP(%d)\n", KeGetCurrentIrql());
 		mutex_unlock(&dev->vol_size_mutex);
 
 		return -1;
@@ -2185,7 +2179,7 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 		FALSE, &event, &dev->vol_size_io_status);
 
 	if (!newIrp) {
-		WDRBD_ERROR("cannot alloc new IRP\n");
+		printk("cannot alloc new IRP\n");
 		mutex_unlock(&dev->vol_size_mutex);
 
 		return -1;
@@ -2202,7 +2196,7 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 		status = dev->vol_size_io_status.Status;
 	}
 	if (!NT_SUCCESS(status)) {
-	        WDRBD_ERROR("cannot get volume information, err=0x%x\n", status);
+	        printk("cannot get volume information, err=0x%x\n", status);
 		mutex_unlock(&dev->vol_size_mutex);
 		return -1;
 	}
@@ -2236,7 +2230,7 @@ static int make_flush_request(struct bio *bio)
 
 	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
 	if (!NT_SUCCESS(status)) {
-		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
+		printk("ObReferenceObjectByPointer failed with status %x\n", status);
 		return -EIO;
 	}
 
@@ -2399,7 +2393,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 
 	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
 	if (!NT_SUCCESS(status)) {
-		WDRBD_WARN("ObReferenceObjectByPointer failed with status %x\n", status);
+		printk("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
 	bio_get(bio);	/* To be put in completion routine */
@@ -2553,11 +2547,11 @@ void bio_endio(struct bio *bio)
 
 	if (bio->bi_end_io != NULL) {
 		if (error != 0)
-			WDRBD_INFO("thread(%s) bio_endio error with err=%d.\n", current->comm, error);
+			printk("Warning: thread(%s) bio_endio error with err=%d.\n", current->comm, error);
 
-		bio->bi_end_io(bio, error);
+		bio->bi_end_io(bio);
 	} else
-		WDRBD_WARN("thread(%s) bio(%p) no bi_end_io function.\n", current->comm, bio);
+		printk("Warning: thread(%s) bio(%p) no bi_end_io function.\n", current->comm, bio);
 }
 
 void __list_del_entry(struct list_head *entry)
@@ -2776,7 +2770,7 @@ unsigned char *skb_put(struct sk_buff *skb, unsigned int len)
 
 	if (skb->tail > skb->end)
 	{
-		WDRBD_ERROR("drbd:skb_put: skb_over_panic\n");
+		printk("drbd:skb_put: skb_over_panic\n");
 	}
 
 	return tmp;
@@ -2931,17 +2925,17 @@ static NTSTATUS resolve_nt_kernel_link(UNICODE_STRING *upath, UNICODE_STRING *li
 	InitializeObjectAttributes(&device_attributes, upath, OBJ_FORCE_ACCESS_CHECK, NULL, NULL);
 	status = ZwOpenSymbolicLinkObject(&link_handle, GENERIC_READ, &device_attributes);
 	if (!NT_SUCCESS(status)) {
-		WDRBD_WARN("ZwOpenSymbolicLinkObject: Cannot open link object, status = %x, path = %S\n", status, upath->Buffer);
+		printk("ZwOpenSymbolicLinkObject: Cannot open link object, status = %x, path = %S\n", status, upath->Buffer);
 		return status;
 	}
 
 	status = ZwQuerySymbolicLinkObject(link_handle, link_target, &link_target_length);
 	if (!NT_SUCCESS(status)) {
-		WDRBD_WARN("ZwQuerySymbolicLinkObject: Cannot get link target name, status = %x, path = %S\n", status, upath->Buffer);
+		printk("ZwQuerySymbolicLinkObject: Cannot get link target name, status = %x, path = %S\n", status, upath->Buffer);
 		goto out_close_handle;
 	}
 	if (link_target_length >= link_target->MaximumLength) {
-		WDRBD_WARN("ZwQuerySymbolicLinkObject: Link target name exceeds %lu bytes (is %lu bytes), path = %S\n", link_target->MaximumLength, link_target_length, upath->Buffer);
+		printk("ZwQuerySymbolicLinkObject: Link target name exceeds %lu bytes (is %lu bytes), path = %S\n", link_target->MaximumLength, link_target_length, upath->Buffer);
 		goto out_close_handle;
 	}
 	link_target->Buffer[link_target_length] = 0;
@@ -2971,9 +2965,9 @@ int resolve_ascii_path(const char *path, UNICODE_STRING *path_to_device)
 	path_to_device->MaximumLength = 1024-1;
 	path_to_device->Length = 0;
 
-	WDRBD_TRACE("Link is %S\n", link_name.Buffer);
+	printk("Link is %S\n", link_name.Buffer);
 	if (resolve_nt_kernel_link(&link_name, path_to_device) != STATUS_SUCCESS) {
-		WDRBD_ERROR("Could not resolve link.\n");
+		printk("Could not resolve link.\n");
 		return -EINVAL;
 	}
 	return 0;
@@ -2992,7 +2986,7 @@ static struct _DEVICE_OBJECT *find_windows_device(UNICODE_STRING *path, struct _
 		printk(KERN_ERR "Cannot get device object for %s status: %x, does it exist?\n", path, status);
 		return NULL;
 	}
-	WDRBD_TRACE("IoGetDeviceObjectPointer %S succeeded, targetdev is %p\n", path->Buffer, windows_device);
+	printk("IoGetDeviceObjectPointer %S succeeded, targetdev is %p\n", path->Buffer, windows_device);
 
 	*file_object = FileObject;
 	return windows_device;
@@ -3086,7 +3080,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	block_device = kzalloc(sizeof(struct block_device), 0, 'DBRD');
 	if (block_device == NULL) {
-		WDRBD_ERROR("could not allocate block_device.\n");
+		printk("could not allocate block_device.\n");
 		err = -ENOMEM;
 		goto out_no_block_device;
 	}
@@ -3094,7 +3088,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	block_device->bd_disk = alloc_disk(0);
 	if (!block_device->bd_disk)
 	{
-		WDRBD_ERROR("Failed to allocate gendisk NonPagedMemory\n");
+		printk("Failed to allocate gendisk NonPagedMemory\n");
 		err = -ENOMEM;
 		goto out_no_disk;
 	}
@@ -3102,14 +3096,14 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	block_device->bd_disk->queue = blk_alloc_queue(0);
 	if (!block_device->bd_disk->queue)
 	{
-		WDRBD_ERROR("Failed to allocate request_queue NonPagedMemory\n");
+		printk("Failed to allocate request_queue NonPagedMemory\n");
 		err = -ENOMEM;
 		goto out_no_queue;
 	}
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
-		WDRBD_ERROR("Failed to acquire remove lock, status is %s\n", status);
+		printk("Failed to acquire remove lock, status is %s\n", status);
 		err = -EBUSY;
 		goto out_remove_lock_error;
 	}
@@ -3230,12 +3224,6 @@ void list_cut_position(struct list_head *list, struct list_head *head, struct li
 		__list_cut_position(list, head, entry);
 }
 
-int drbd_backing_bdev_events(struct gendisk *device)
-{
-    /* TODO */
-	return 0;
-}
-
 struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data,
 				      int size)
 {
@@ -3263,7 +3251,7 @@ static int minor_to_windows_device_name(UNICODE_STRING *name, int minor, int dos
 	name->Buffer = kmalloc(len * sizeof(name->Buffer[0]), GFP_KERNEL, 'DRBD');
 
 	if (name->Buffer == NULL) {
-		WDRBD_WARN("couldn't allocate memory for name buffer\n");
+		printk("couldn't allocate memory for name buffer\n");
 		return -ENOMEM;
 	}
 	name->Length = 0;
@@ -3275,7 +3263,7 @@ static int minor_to_windows_device_name(UNICODE_STRING *name, int minor, int dos
 		status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
 
 	if (status != STATUS_SUCCESS) {
-		WDRBD_WARN("minor_to_dos_name: couldn't printf device name for minor %d status: %x\n", minor, status);
+		printk("minor_to_dos_name: couldn't printf device name for minor %d status: %x\n", minor, status);
 
 		kfree(name->Buffer);
 		return -EINVAL;
@@ -3452,7 +3440,7 @@ struct block_device *bdget(dev_t device_no)
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
-		WDRBD_ERROR("Failed to acquire remove lock, status is %s\n", status);
+		printk("Failed to acquire remove lock, status is %s\n", status);
 		goto out_remove_lock_failed;
 	}
 

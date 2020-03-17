@@ -171,7 +171,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 			&SDDL_DEVOBJ_SYS_ALL_ADM_ALL, NULL, &deviceObject);
 	if (!NT_SUCCESS(status))
 	{
-		WDRBD_ERROR("Can't create root, err=%x\n", status);
+		printk("Can't create root, err=%x\n", status);
 		return status;
 	}
 
@@ -179,7 +179,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	status = IoCreateSymbolicLink(&linkUnicode, &nameUnicode);
 	if (!NT_SUCCESS(status))
 	{
-		WDRBD_ERROR("cannot create symbolic link, err=%x\n", status);
+		printk("cannot create symbolic link, err=%x\n", status);
 		IoDeleteDevice(deviceObject);
 		return status;
 	}

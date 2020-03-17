@@ -344,11 +344,8 @@ typedef unsigned int                fmode_t;
 
 #define MAX_SPLIT_BLOCK_SZ			(1 << 20)
 
-#define WDRBD_THREAD_POINTER
-
 #define FLTR_COMPONENT              DPFLTR_DEFAULT_ID
 //#define FLTR_COMPONENT              DPFLTR_IHVDRIVER_ID
-#define FEATURE_WDRBD_PRINT
 
 extern int initialize_syslog_printk(void);
 extern void shutdown_syslog_printk(void);
@@ -365,56 +362,6 @@ void windrbd_device_error(struct drbd_device *device, const char ** err_str_out,
     _printk(__FUNCTION__, format, __VA_ARGS__)
 #else
 #define dbg(format, ...)   __noop
-#endif
-
-
-#if defined (WDRBD_THREAD_POINTER)
-#define WDRBD_FATAL(_m_, ...)   printk(KERN_CRIT "[0x%p] "##_m_, KeGetCurrentThread(), __VA_ARGS__)
-#else
-#define WDRBD_FATAL(_m_, ...)   printk(KERN_CRIT ##_m_, __VA_ARGS__)
-#endif
-
-#if defined (WDRBD_THREAD_POINTER)
-#define WDRBD_ERROR(_m_, ...)   printk(KERN_ERR "[0x%p] "##_m_, KeGetCurrentThread(), __VA_ARGS__)
-#else
-#define WDRBD_ERROR(_m_, ...)   printk(KERN_ERR ##_m_, __VA_ARGS__)
-#endif
-
-#if defined(WDRBD_THREAD_POINTER)
-#define WDRBD_WARN(_m_, ...)    printk(KERN_WARNING "[0x%p] "##_m_, KeGetCurrentThread(), __VA_ARGS__)
-#else
-#define WDRBD_WARN(_m_, ...)    printk(KERN_WARNING ##_m_, __VA_ARGS__)
-#endif
-
-#if defined (WDRBD_THREAD_POINTER)
-#define WDRBD_TRACE(_m_, ...)   printk(KERN_DEBUG "[0x%p] "##_m_, KeGetCurrentThread(), __VA_ARGS__)
-#else
-#define WDRBD_TRACE(_m_, ...)   printk(KERN_DEBUG ##_m_, __VA_ARGS__)
-#endif
-
-#if defined (WDRBD_THREAD_POINTER)
-#define WDRBD_INFO(_m_, ...)    printk(KERN_INFO "[0x%p] "##_m_, KeGetCurrentThread(), __VA_ARGS__)
-#else
-#define WDRBD_INFO(_m_, ...)    printk(KERN_INFO ##_m_, __VA_ARGS__)
-#endif
-#define WDRBD_TRACE_NETLINK
-#define WDRBD_TRACE_TM					// about timer
-#define WDRBD_TRACE_RCU					// about rcu
-#define WDRBD_TRACE_REQ_LOCK			// for lock_all_resources(), unlock_all_resources()
-#define WDRBD_TRACE_TR		
-#define WDRBD_TRACE_WQ
-#define WDRBD_TRACE_RS
-#define WDRBD_TRACE_SK					// about socket
-#define WDRBD_TRACE_SEM
-#define WDRBD_TRACE_IP4					
-#define WDRBD_TRACE_SB
-#define WDRBD_TRACE_CO
-
-#ifndef FEATURE_WDRBD_PRINT
-#define WDRBD_ERROR     __noop
-#define WDRBD_WARN      __noop
-#define WDRBD_TRACE     __noop
-#define WDRBD_INFO      __noop
 #endif
 
 #define ARRAY_SIZE(_x)				(sizeof(_x) / sizeof((_x)[0]))
@@ -646,7 +593,7 @@ struct bio_vec {
 struct bio;
 typedef u8 blk_status_t;
 
-typedef void(BIO_END_IO_CALLBACK)(struct bio *bio, int error);
+typedef void(BIO_END_IO_CALLBACK)(struct bio *bio);
 
 
 struct completion {
@@ -964,12 +911,12 @@ struct scatterlist {
 
 #define MINORMASK	0xff
 
-#define BUG()   WDRBD_FATAL("BUG: failure\n")
+#define BUG()   printk("BUG: failure\n")
 
 #define BUG_ON(_condition)	\
     do {	\
         if(_condition) { \
-            WDRBD_FATAL("BUG: failure\n"); \
+            printk("BUG: failure\n"); \
         }\
     } while (0)
 
@@ -1033,10 +980,6 @@ extern void complete_all_debug(struct completion *c, const char *file, int line,
 #define wait_for_completion_timeout(c, t) wait_for_completion_timeout_debug(c, t, __FILE__, __LINE__, __func__)
 #define complete(c) complete_debug(c, __FILE__, __LINE__, __func__)
 #define complete_all(c) complete_all_debug(c, __FILE__, __LINE__, __func__)
-
-extern int signal_pending(struct task_struct *p);
-extern void force_sig(int sig, struct task_struct *p);
-extern void flush_signals(struct task_struct *p);
 
 #define MAX_PROC_BUF	2048
 
@@ -1212,8 +1155,6 @@ int find_next_zero_bit(const ULONG_PTR * addr, ULONG_PTR size, ULONG_PTR offset)
 	for ((bit) = find_first_bit((addr), (size));		\
 	     (bit) < (size);					\
 	     (bit) = find_next_bit((addr), (size), (bit) + 1))
-
-extern int drbd_backing_bdev_events(struct gendisk *device);
 
 static inline unsigned int queue_io_min(struct request_queue *q)
 {

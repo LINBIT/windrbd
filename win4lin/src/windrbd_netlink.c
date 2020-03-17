@@ -449,7 +449,7 @@ static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netli
 	nlh = nlmsg_put(skb, cb->nlh->nlmsg_pid, cb->nlh->nlmsg_seq, NLMSG_DONE, GENL_HDRLEN, NLM_F_ACK);
 
         // -ENODEV : occured by first drbdadm adjust. response?
-        WDRBD_WARN("drbd_adm_get_status_all err = %d\n", err);
+        printk("drbd_adm_get_status_all err = %d\n", err);
     }
 
     if (nlh)
