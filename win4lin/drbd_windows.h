@@ -617,6 +617,19 @@ struct bio_collection {
 
 #define BI_WINDRBD_FLAG_BOOTSECTOR_PATCHED 0
 
+/* from: linux/blk_types.h */
+
+struct bvec_iter {
+	sector_t		bi_sector;	/* device address in 512 byte
+						   sectors */
+	unsigned int		bi_size;	/* residual I/O count */
+
+	unsigned int		bi_idx;		/* current index into bvl_vec */
+
+	unsigned int            bi_bvec_done;	/* number of bytes completed in
+						   current bvec */
+};
+
 struct bio {
 	struct _IRP **bi_irps;	   /* Used for accessing the backing device */
 	struct _IRP *bi_upper_irp; /* Used for the DRBD device */
@@ -640,8 +653,9 @@ struct bio {
 	Drbd_req.h (drbd):	bio->bi_end_io   = drbd_request_endio;
 	*/
 	BIO_END_IO_CALLBACK*	bi_end_io; 
-	void*					bi_private; 
-	unsigned int			bi_max_vecs;    /* max bvl_vecs we can hold */
+	void*			bi_private; 
+	unsigned int		bi_max_vecs;    /* max bvl_vecs we can hold */
+	struct bvec_iter	bi_iter;
 
 		/* Windows backing device driver cannot handle more than
 		 * 32 vector elements. Split the IoCalldriver calls into
@@ -1271,5 +1285,12 @@ void exit_interruptible_debug(const char *file, int line, const char *func);
 #define exit_interruptible() exit_interruptible_debug(__FILE__, __LINE__, __func__)
 
 #define __release(unused) do { } while (0);
+
+/* TODO: to another header: */
+
+#define kmap(page)		(page->addr)
+#define kmap_atomic(page)	(page->addr)
+#define kunmap(addr)		do { } while (0)
+#define kunmap_atomic(addr)	do { } while (0)
 
 #endif // DRBD_WINDOWS_H

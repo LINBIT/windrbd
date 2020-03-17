@@ -1025,21 +1025,6 @@ static __inline int kref_get_unless_zero(struct kref *kref)
 }
 #endif
 
-#ifdef COMPAT_KMAP_ATOMIC_PAGE_ONLY
-/* see 980c19e3
- * highmem: mark k[un]map_atomic() with two arguments as deprecated */
-#define drbd_kmap_atomic(page, km)	kmap_atomic(page)
-#define drbd_kunmap_atomic(addr, km)	kunmap_atomic(addr)
-#else
-
-#define drbd_kmap_atomic(page, km)	(page->addr)
-#define drbd_kunmap_atomic(addr, km)	(addr)
-#define kunmap_atomic(page)	(page->addr)	
-#define kmap(page)	(page->addr)	
-#define kunmap(page)	(page->addr)	
-
-#endif
-
 #ifndef COMPAT_HAVE_THREE_PARAMATER_HLIST_FOR_EACH_ENTRY
 #undef hlist_for_each_entry
 #define hlist_for_each_entry(type, pos, head, member)				\
@@ -1276,9 +1261,6 @@ static inline int atomic_dec_if_positive(atomic_t *v)
 /* taken from commits 020981 and 32e13cff of drbd-kernel-compat */
 
 #ifndef COMPAT_HAVE_BIOSET_INIT
-#define mempool_free(V, P) mempool_free(V, *P)
-#define mempool_alloc(P, F) mempool_alloc(*P, F)
-
 #ifndef COMPAT_HAVE_BIO_CLONE_FAST
 # define bio_clone_fast(bio, gfp, bio_set) bio_clone(bio, gfp)
 #else
