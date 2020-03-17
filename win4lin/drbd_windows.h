@@ -1285,6 +1285,7 @@ void exit_interruptible_debug(const char *file, int line, const char *func);
 #define exit_interruptible() exit_interruptible_debug(__FILE__, __LINE__, __func__)
 
 #define __release(unused) do { } while (0);
+#define __releases(unused)
 
 /* TODO: to another header: */
 
