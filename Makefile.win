@@ -161,7 +161,7 @@ WIN_CFLAGS += /wd4200
 
 WIN_INCLUDE_DIRS += -I"..\\..\\win4lin"
 WIN_INCLUDE_DIRS += -I"."
-WIN_INCLUDE_DIRS += -I"..\\drbd-headers"
+WIN_INCLUDE_DIRS += -I".\\drbd-headers"
 
 WIN_CFLAGS += $(WIN_INCLUDE_DIRS)
 ifeq (V,1)
