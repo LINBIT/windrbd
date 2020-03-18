@@ -3911,6 +3911,25 @@ void unregister_blkdev(int major, const char *name)
 	/* does nothing */
 }
 
+/* To be implemented. See also
+ *   https://msdn.microsoft.com/de-de/library/ff552562(v=vs.85).aspx
+ *   https://msdn.microsoft.com/de-de/library/hh439649(v=vs.85).aspx
+*/
+int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+        sector_t nr_sects, gfp_t gfp_mask, ULONG_PTR flags)
+{
+	printk("Warning: blkdev_issue_discard not implemented.\n");
+	return -EIO;
+}
+
+int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
+				sector_t nr_sects, gfp_t gfp_mask,
+				struct page *page)
+{
+	printk("Warning: blkdev_issue_write_same not implemented.\n");
+	return -EIO;
+}
+
 static spinlock_t cpu_cache_spinlock;
 
 /* This takes a spinlock and releases it right after, this should

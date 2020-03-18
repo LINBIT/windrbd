@@ -11,25 +11,6 @@ index 13ec23c3..daa95b20 100644
  
  #define PRO_FEATURES (DRBD_FF_TRIM|DRBD_FF_THIN_RESYNC|DRBD_FF_WSAME)
  
-@@ -78,6 +80,18 @@ static int process_twopc(struct drbd_connection *, struct twopc_reply *, struct
- static void drbd_resync(struct drbd_peer_device *, enum resync_reason) __must_hold(local);
- static void drbd_unplug_all_devices(struct drbd_connection *connection);
- 
-+
-+/* To be implemented. See also
-+ *   https://msdn.microsoft.com/de-de/library/ff552562(v=vs.85).aspx
-+ *   https://msdn.microsoft.com/de-de/library/hh439649(v=vs.85).aspx
-+*/
-+int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
-+	sector_t nr_sects, gfp_t gfp_mask, unsigned long flags)
-+{
-+	return -EIO;
-+}
-+
-+
- static struct drbd_epoch *previous_epoch(struct drbd_connection *connection, struct drbd_epoch *epoch)
- {
- 	struct drbd_epoch *prev;
 @@ -101,7 +115,7 @@ static struct drbd_epoch *previous_epoch(struct drbd_connection *connection, str
  static struct page *page_chain_del(struct page **head, int n)
  {

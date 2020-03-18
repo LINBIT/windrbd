@@ -21,4 +21,9 @@ typedef u8 blk_status_t;
 #define BLK_STS_RESOURCE	((blk_status_t)9)
 #define BLK_STS_IOERR		((blk_status_t)10)
 
+extern int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
+		sector_t nr_sects, gfp_t gfp_mask, struct page *page);
+extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+        sector_t nr_sects, gfp_t gfp_mask, ULONG_PTR flags);
+
 #endif
