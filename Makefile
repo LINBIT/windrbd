@@ -6,7 +6,7 @@ TRANS_DEST := converted-sources/
 WIN4LIN := win4lin/
 
 TRANSFORMATIONS := $(sort $(wildcard transform.d/*))
-ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c|drbd_buildtag.c')
+ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c|drbd_buildtag.c|compat.h')
 TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG))
 
 export SHELL=bash
