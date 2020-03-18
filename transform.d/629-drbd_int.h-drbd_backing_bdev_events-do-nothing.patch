@@ -1,0 +1,32 @@
+From 626002b88d3b7bf226e7e6913b8e4bf5eeb15fa0 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 17 Mar 2020 16:26:05 +0100
+Subject: [PATCH] drbd_int.h: drbd_backing_bdev_events: do nothing
+
+We don't have (easy) access to block device I/O statistics.
+For now leave out this feature.
+---
+ drbd/drbd_int.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index 05eeb0d..ece9a18 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -2254,9 +2254,13 @@ static inline void drbd_chk_io_error_(struct drbd_device *device,
+ 
+ static inline int drbd_backing_bdev_events(struct drbd_device *device)
+ {
++#if 0
+ 	struct hd_struct *part = &device->ldev->backing_bdev->bd_contains->bd_disk->part0;
+ 	return (int)part_stat_read(part, sectors[0])
+ 	     + (int)part_stat_read(part, sectors[1]);
++#else
++	return 0;
++#endif
+ }
+ 
+ /**
+-- 
+2.17.0
+
