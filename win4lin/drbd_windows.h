@@ -387,15 +387,8 @@ struct workqueue_struct {
 struct timer_list {
     KTIMER ktimer;
     KDPC dpc;
-    void (*function)(ULONG_PTR data);
-    union {
-	ULONG_PTR data;
-	PVOID pdata;
-    };
+    void (*function)(struct timer_list *data);
     ULONG_PTR expires; 
-#ifdef DBG
-    char name[32];
-#endif
 };
 
 extern void add_timer(struct timer_list *t);
@@ -404,8 +397,8 @@ extern void del_timer(struct timer_list *t);
 extern int mod_timer(struct timer_list *t, ULONG_PTR expires);
 
 extern int mod_timer_pending(struct timer_list *timer, ULONG_PTR expires);
+void timer_setup(struct timer_list *timer, void(*callback)(struct timer_list *timer), ULONG_PTR flags_unused);
 
-extern void setup_timer(struct timer_list * timer, void(*function)(ULONG_PTR data), ULONG_PTR data);
 
 struct work_struct {
 	struct list_head entry;

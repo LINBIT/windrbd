@@ -5,8 +5,8 @@
 int mempool_init_page_pool(mempool_t *pool, int min_nr, int order)
 {
 	pool->type = MEMPOOL_PAGE;
-	ExInitializeNPagedLookasideList(&pool->pageLS, NULL, NULL, 0, sizeof(struct page), tag, 0);
-        ExInitializeNPagedLookasideList(&pool->page_addrLS, NULL, NULL, 0, PAGE_SIZE, tag, 0);
+	ExInitializeNPagedLookasideList(&pool->pageLS, NULL, NULL, 0, sizeof(struct page), 'DRBD', 0);
+        ExInitializeNPagedLookasideList(&pool->page_addrLS, NULL, NULL, 0, PAGE_SIZE, 'DRBD', 0);
 
 	return 0;
 }

@@ -1749,13 +1749,12 @@ static void timer_callback(PKDPC dpc, struct timer_list* timer, PVOID arg1, PVOI
 	(void)arg1;
 	(void)arg2;
 	(void)dpc;
-	timer->function(timer->data);
+	timer->function(timer);
 }
 
-void setup_timer(struct timer_list * timer, void(*function)(ULONG_PTR data), ULONG_PTR data)
+void timer_setup(struct timer_list *timer, void(*callback)(struct timer_list *timer), ULONG_PTR flags_unused)
 {
-	timer->function = function;
-	timer->data = data;
+	timer->function = callback;
 	KeInitializeTimer(&timer->ktimer);
 	KeInitializeDpc(&timer->dpc, (PKDEFERRED_ROUTINE)timer_callback, timer);
 }
