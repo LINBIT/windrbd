@@ -920,9 +920,8 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			mode == 0 ? "read-only" : "read-write");
 */
 
-		err = dev->bd_disk->fops->release(dev->bd_disk, mode);
-		dbg(KERN_DEBUG "drbd_release returned %d\n", err);
-		status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
+		dev->bd_disk->fops->release(dev->bd_disk, mode);
+		status = STATUS_SUCCESS;
 	} else {
 		dbg("Close request while device isn't set up yet.\n");
 			/* See comment in windrbd_create() */

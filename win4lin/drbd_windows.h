@@ -189,6 +189,7 @@ extern int atomic_xchg(atomic_t *v, int n);
 
 #define EINVAL					22
 #define EOPNOTSUPP				95
+#define ENOTSUPP				95
 #define ENOMEM					12
 #define ENOENT					2
 #define EMEDIUMTYPE				124
@@ -224,6 +225,7 @@ extern int atomic_xchg(atomic_t *v, int n);
 #define ENODATA					61
 #define ENOTCONN				107
 #define EADDRNOTAVAIL				99
+#define ENOTSUP					95
 
 #define SIGCHLD					17
 #define SIGXCPU					100
@@ -1246,6 +1248,7 @@ void exit_interruptible_debug(const char *file, int line, const char *func);
 #define __releases(unused)
 #define __acquire(x) (void)0
 #define __release(x) (void)0
+#define __maybe_unused
 
 /* TODO: to another header: */
 

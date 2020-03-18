@@ -1,0 +1,34 @@
+From 5cacfb7d929a4af67dcba5dd7ed29e8e4ba5bc46 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 18 Mar 2020 20:43:41 +0100
+Subject: [PATCH] drbd_main: type for from_timer macro
+
+---
+ drbd/drbd_main.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 8f87873..c3bf7a8 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3275,7 +3275,7 @@ void drbd_flush_peer_acks(struct drbd_resource *resource)
+ 
+ static void peer_ack_timer_fn(struct timer_list *t)
+ {
+-	struct drbd_resource *resource = from_timer(resource, t, peer_ack_timer);
++	struct drbd_resource *resource = from_timer(resource, t, peer_ack_timer, struct drbd_resource);
+ 
+ 	drbd_flush_peer_acks(resource);
+ }
+@@ -5559,7 +5559,7 @@ bool drbd_md_test_peer_flag(struct drbd_peer_device *peer_device, enum mdf_peer_
+ 
+ static void md_sync_timer_fn(struct timer_list *t)
+ {
+-	struct drbd_device *device = from_timer(device, t, md_sync_timer);
++	struct drbd_device *device = from_timer(device, t, md_sync_timer, struct drbd_device);
+ 	drbd_device_post_work(device, MD_SYNC);
+ }
+ 
+-- 
+2.17.0
+

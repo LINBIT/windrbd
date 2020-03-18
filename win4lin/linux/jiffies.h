@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <linux/time64.h>
+#include <linux/math64.h>
 #include <linux/types.h>
 
 #define HZ 1000

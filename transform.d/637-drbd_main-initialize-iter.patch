@@ -1,0 +1,26 @@
+From 77148bd288a8499508e629e250eb71c09dea8cc8 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 18 Mar 2020 20:58:20 +0100
+Subject: [PATCH] drbd_main: initialize iter.
+
+This fixes a false positive error (complain about uninitialized
+variable)
+---
+ drbd/drbd_main.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index c3bf7a8..5ac916d 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -2157,6 +2157,7 @@ static int _drbd_send_bio(struct drbd_peer_device *peer_device, struct bio *bio)
+ 	connection->send_buffer[DATA_STREAM].allocated_size = 0;
+ 
+ 	/* hint all but last page with MSG_MORE */
++	iter = bio->bi_iter;
+ 	bio_for_each_segment(bvec, bio, iter) {
+ 		int err;
+ 
+-- 
+2.17.0
+
