@@ -10,6 +10,7 @@
 #include "drbd_windows.h"
 
 #include "linux/backing-dev.h"
+#include <linux/blkdev.h>
 
 #ifndef pr_fmt
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
