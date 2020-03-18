@@ -969,11 +969,12 @@ static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 #define MAX_BIO_SIZE (1024*1024)
 
-static void windrbd_bio_finished(struct bio * bio, int error)
+static void windrbd_bio_finished(struct bio * bio)
 {
 	PIRP irp = bio->bi_upper_irp;
 	int i;
 	NTSTATUS status;
+	int error = blk_status_to_errno(bio->bi_status);
 
 	status = STATUS_SUCCESS;
 
@@ -1335,9 +1336,10 @@ static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp
         return STATUS_SUCCESS;
 }
 
-static void windrbd_bio_flush_finished(struct bio * bio, int error)
+static void windrbd_bio_flush_finished(struct bio * bio)
 {
 	PIRP irp = bio->bi_upper_irp;
+	int error = blk_status_to_errno(bio->bi_status);
 
 	if (error == 0) {
 		irp->IoStatus.Information = bio->bi_size;
@@ -1417,7 +1419,7 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 	int count = 0;
 
 	for_each_resource(resource, &drbd_resources) {
-		idr_for_each_entry(struct drbd_device *, &resource->devices, drbd_device, vnr) {
+		idr_for_each_entry(&resource->devices, drbd_device, vnr) {
 			if (drbd_device && drbd_device->this_bdev && !drbd_device->this_bdev->delete_pending && drbd_device->this_bdev->windows_device != NULL && drbd_device->this_bdev->is_disk_device && !windrbd_has_mount_point(drbd_device->this_bdev)) {
 				if (count < max && array != NULL) {
 					array[count] = drbd_device->this_bdev->windows_device;
