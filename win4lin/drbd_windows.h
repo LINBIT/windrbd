@@ -167,55 +167,6 @@ extern int atomic_xchg(atomic_t *v, int n);
 
 #define KBUILD_MODNAME      __FILE__
 
-/*
- * Request flags.  For use in the cmd_flags field of struct request, and in
- * bi_rw of struct bio.  Note that some flags are only valid in either one.
- */
-enum rq_flag_bits {
-	/* common flags */
-	__REQ_WRITE,		/* not set, read. set, write */
-	__REQ_FAILFAST_DEV,	/* no driver retries of device errors */
-	__REQ_FAILFAST_TRANSPORT, /* no driver retries of transport errors */
-	__REQ_FAILFAST_DRIVER,	/* no driver retries of driver errors */
-
-	__REQ_SYNC,		/* request is sync (sync write or read) */
-	__REQ_META,		/* metadata io request */
-	__REQ_PRIO,		/* boost priority in cfq */
-	__REQ_DISCARD,		/* request to discard sectors */
-	__REQ_SECURE,		/* secure discard (used with __REQ_DISCARD) */
-	__REQ_WRITE_SAME,	/* write same block many times */
-
-	__REQ_NOIDLE,		/* don't anticipate more IO after this one */
-	__REQ_FUA,		/* forced unit access */
-	__REQ_FLUSH,		/* request for cache flush */
-
-	/* bio only flags */
-	__REQ_RAHEAD,		/* read ahead, can fail anytime */
-	__REQ_THROTTLED,	/* This bio has already been subjected to
-				 * throttling rules. Don't do it again. */
-
-	/* request only flags */
-	__REQ_SORTED,		/* elevator knows about this request */
-	__REQ_SOFTBARRIER,	/* may not be passed by ioscheduler */
-	__REQ_NOMERGE,		/* don't touch this for merging */
-	__REQ_STARTED,		/* drive already may have started this one */
-	__REQ_DONTPREP,		/* don't call prep for this one */
-	__REQ_QUEUED,		/* uses queueing */
-	__REQ_ELVPRIV,		/* elevator private data attached */
-	__REQ_FAILED,		/* set if the request failed */
-	__REQ_QUIET,		/* don't worry about errors */
-	__REQ_PREEMPT,		/* set for "ide_preempt" requests */
-	__REQ_ALLOCED,		/* request came from our alloc pool */
-	__REQ_COPY_USER,	/* contains copies of user pages */
-	__REQ_FLUSH_SEQ,	/* request for flush sequence */
-	__REQ_IO_STAT,		/* account I/O stat */
-	__REQ_MIXED_MERGE,	/* merge of different types, fail separately */
-	__REQ_KERNEL, 		/* direct IO to kernel pages */
-	__REQ_PM,		/* runtime pm request */
-	__REQ_END,		/* last of chain of requests */
-	__REQ_NR_BITS,		/* stops here */
-};
-
 // from fs.h
 /* file is open for reading */
 #define FMODE_READ				    0x1
@@ -759,6 +710,7 @@ static inline int submit_bio(struct bio *bio)
 	return generic_make_request(bio);
 }
 
+#if 0
 #define bio_iovec_idx(bio, idx)		(&((bio)->bi_io_vec[(idx)]))
 #define __bio_for_each_segment(bvl, bio, i, start_idx)			\
 	for (bvl = bio_iovec_idx((bio), (start_idx)), i = (start_idx);	\
@@ -767,6 +719,8 @@ static inline int submit_bio(struct bio *bio)
 
 #define bio_for_each_segment(bvl, bio, i)				\
 	__bio_for_each_segment(bvl, bio, i, (bio)->bi_idx)
+
+#endif
 
 #define RW_MASK                 1 //  REQ_WRITE
 #define bio_data_dir(bio)       ((bio)->bi_rw & 1)

@@ -524,43 +524,9 @@ static inline void blk_queue_max_segments(struct request_queue *q, unsigned shor
 #define DRBD_REQ_WSAME          0
 #endif
 
-
-/* From include/linux/blk_types.h */
-
-	/* TODO: This is most likely wrong. REQ_PREFLUSH is supposed
-	 * to be a single bit, instead it equals to 7 here .. result
-	 * is that any write request is flushed.
-	 */
-
-enum req_op {
-        REQ_OP_READ,
-        REQ_OP_WRITE,
-        REQ_OP_DISCARD,         /* request to discard sectors */
-        REQ_OP_SECURE_ERASE,    /* request to securely erase sectors */
-        REQ_OP_WRITE_SAME,      /* write same block many times */
-        REQ_OP_FLUSH,           /* request for cache flush */
-        REQ_RAHEAD,
-        REQ_PREFLUSH,
-};
-
 #define REQ_WRITE			REQ_OP_WRITE
 /* https://msdn.microsoft.com/en-us/library/windows/hardware/ff549235(v=vs.85).aspx */
 #define DRBD_REQ_PREFLUSH	REQ_PREFLUSH
-
-
-#define bio_op(bio)                            (op_from_rq_bits((bio)->bi_rw))
-
-static inline int op_from_rq_bits(u64 flags)
-{
-	if (flags & DRBD_REQ_DISCARD)
-		return REQ_OP_DISCARD;
-	else if (flags & DRBD_REQ_WSAME)
-		return REQ_OP_WRITE_SAME;
-	else if (flags & REQ_WRITE)
-		return REQ_OP_WRITE;
-	else
-		return REQ_OP_READ;
-}
 
 static inline void bio_set_op_attrs(struct bio *bio, const int op, const long flags)
 {
