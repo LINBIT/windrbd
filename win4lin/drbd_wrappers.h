@@ -612,17 +612,9 @@ static inline void bio_set_op_attrs(struct bio *bio, const int op, const long fl
 #define REQ_NOIDLE 0
 #endif
 
-#ifndef COMPAT_HAVE_REFCOUNT_INC
-#define refcount_inc(R) atomic_inc(R)
-#define refcount_read(R) atomic_read(R)
-#define refcount_dec_and_test(R) atomic_dec_and_test(R)
-#endif
-
-
 #ifndef KREF_INIT
 #define KREF_INIT(N) { ATOMIC_INIT(N) }
 #endif
-
 
 #define _adjust_ra_pages(qrap, brap) do { \
 	if (qrap != brap) { \

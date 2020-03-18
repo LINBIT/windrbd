@@ -778,7 +778,7 @@ int kref_put(struct kref *kref, void (*release)(struct kref *kref))
 	WARN_ON(release == NULL);
 	WARN_ON(release == (void (*)(struct kref *))kfree);
 
-	if (atomic_dec_and_test(&kref->refcount))
+	if (atomic_dec_and_test(&kref->refcount.refs))
 	{
 		release(kref);
 		return 1;
@@ -788,12 +788,12 @@ int kref_put(struct kref *kref, void (*release)(struct kref *kref))
 
 void kref_get(struct kref *kref)
 {
-	atomic_inc(&kref->refcount);
+	atomic_inc(&kref->refcount.refs);
 }
 
 void kref_init(struct kref *kref)
 {
-	atomic_set(&kref->refcount, 1);
+	atomic_set(&kref->refcount.refs, 1);
 }
 
 struct request_queue *bdev_get_queue(struct block_device *bdev)
@@ -1741,7 +1741,7 @@ unsigned int crypto_tfm_alg_digestsize(struct crypto_tfm *tfm)
 
 int page_count(struct page *page)
 {
-	return page->kref.refcount;
+	return atomic_read(&page->kref.refcount.refs);
 }
 
 static void timer_callback(PKDPC dpc, struct timer_list* timer, PVOID arg1, PVOID arg2)
@@ -1868,7 +1868,7 @@ void kobject_put(struct kobject *kobj)
             return;
         }
 
-		if (atomic_sub_and_test(1, &kobj->kref.refcount))
+		if (atomic_sub_and_test(1, &kobj->kref.refcount.refs))
 		{
 			void(*release)(struct kobject *kobj);
 			release = kobj->ktype->release;
