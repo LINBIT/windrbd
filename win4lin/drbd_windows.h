@@ -331,8 +331,23 @@ struct semaphore {
     KSEMAPHORE sem;
 };
 
+typedef struct refcount_struct {
+	atomic_t refs;
+} refcount_t;
+
+static inline void refcount_set(refcount_t *r, int val)
+{
+	atomic_set(&r->refs, val);
+}
+
+static inline bool refcount_dec_and_test(refcount_t *r)
+{
+        return atomic_dec_and_test(&r->refs);
+}
+
+
 struct kref {
-	atomic_t refcount;
+	refcount_t refcount;
 };
 
 struct hlist_head {
@@ -736,12 +751,6 @@ extern void sema_init(struct semaphore *s, int limit);
 extern int kref_put(struct kref *kref, void (*release)(struct kref *kref));
 extern void kref_get(struct kref *kref);
 extern void kref_init(struct kref *kref);
-
-/* TODO: eventually use refcount_t from linux */
-static inline void refcount_set(int *r, int val)
-{
-	(*r) = val;
-}
 
 extern struct request_queue *bdev_get_queue(struct block_device *bdev);
 extern void blk_cleanup_queue(struct request_queue *q);
