@@ -16,7 +16,7 @@ index 71f3069..c0dfea9 100644
  	enum drbd_role old_role = resource->role[NOW];
  
 +	if (old_role == R_PRIMARY && role == R_SECONDARY) {
-+		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr) {
++		idr_for_each_entry(&resource->devices, device, vnr) {
 +			KeClearEvent(&device->this_bdev->primary_event);
 +		}
 +	}
@@ -29,7 +29,7 @@ index 71f3069..c0dfea9 100644
  	}
  
 +	if (old_role == R_SECONDARY && role == R_PRIMARY) {
-+		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr) {
++		idr_for_each_entry(&resource->devices, device, vnr) {
 +			KeSetEvent(&device->this_bdev->primary_event, 0, FALSE);
 +		}
 +	}

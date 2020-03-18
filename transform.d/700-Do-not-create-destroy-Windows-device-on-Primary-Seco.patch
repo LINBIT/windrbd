@@ -20,7 +20,7 @@ index 06c5a32..71f3069 100644
  	enum drbd_role old_role = resource->role[NOW];
  
 -	if (old_role == R_PRIMARY && role == R_SECONDARY) {
--		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr) {
+-		idr_for_each_entry(&resource->devices, device, vnr) {
 -			if (windrbd_umount(device->this_bdev) != 0)
 -				windrbd_device_error(device, &err_str, "Warning: couldn't umount volume %d\n", vnr);
 -			windrbd_remove_windows_device(device->this_bdev);
@@ -35,7 +35,7 @@ index 06c5a32..71f3069 100644
  	}
  
 -	if (old_role == R_SECONDARY && role == R_PRIMARY) {
--		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr) {
+-		idr_for_each_entry(&resource->devices, device, vnr) {
 -			if (windrbd_create_windows_device(device->this_bdev) != 0)
 -				windrbd_device_error(device, &err_str, "Warning: Couldn't create windows device for volume %d\n", vnr);
 -			if (windrbd_mount(device->this_bdev) != 0)

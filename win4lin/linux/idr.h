@@ -114,4 +114,8 @@ struct ida {
 	struct ida_bitmap	*free_bitmap;
 };
 
+
+#define idr_for_each_entry(idr, entry, id)			\
+	for (id = 0; ((entry) = idr_get_next(idr, &(id))) != NULL; id += 1U)
+
 #endif /* __IDR_H__ */

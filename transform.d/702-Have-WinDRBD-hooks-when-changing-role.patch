@@ -17,7 +17,7 @@ index 94950d3..9dfc380 100644
 @@ -1039,7 +1039,7 @@ drbd_set_role(struct drbd_resource *resource, enum drbd_role role, bool force, s
  
  	if (old_role == R_PRIMARY && role == R_SECONDARY) {
- 		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr) {
+ 		idr_for_each_entry(&resource->devices, device, vnr) {
 -			KeClearEvent(&device->this_bdev->primary_event);
 +			windrbd_become_secondary(device, &err_str);
  		}
@@ -26,7 +26,7 @@ index 94950d3..9dfc380 100644
 @@ -1273,7 +1273,7 @@ retry:
  
  	if (old_role == R_SECONDARY && role == R_PRIMARY) {
- 		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr) {
+ 		idr_for_each_entry(&resource->devices, device, vnr) {
 -			KeSetEvent(&device->this_bdev->primary_event, 0, FALSE);
 +			windrbd_become_primary(device, &err_str);
  		}

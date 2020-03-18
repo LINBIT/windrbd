@@ -16,7 +16,7 @@ index dd9df59..518b6ac 100644
  	enum chg_state_flags flags = CS_ALREADY_SERIALIZED | CS_DONT_RETRY | CS_WAIT_COMPLETE;
  
 +	if (resource->role[NOW] == R_PRIMARY && role == R_SECONDARY)
-+		idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr)
++		idr_for_each_entry(&resource->devices, device, vnr)
 +			if (windrbd_umount(device->this_bdev) != 0)
 +				drbd_warn(device, "Couldn't umount volume %d\n", vnr);
 +

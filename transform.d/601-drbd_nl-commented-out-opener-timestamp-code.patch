@@ -19,7 +19,7 @@ index cdcd285..06c5a32 100644
  	mutex_lock(&resource->open_release);
  
 +#if 0
- 	idr_for_each_entry(struct drbd_device *, &resource->devices, device, i) {
+ 	idr_for_each_entry(&resource->devices, device, i) {
  		struct timespec64 ts;
  		struct tm tm;
 @@ -1332,6 +1333,7 @@ static void opener_info(struct drbd_resource *resource,

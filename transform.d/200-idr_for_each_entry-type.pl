@@ -31,21 +31,6 @@ sub BEGIN {
 };
 
 
-# - idr_for_each_entry(&resource->devices, device, vnr)
-# + idr_for_each_entry(struct drbd_device *, &resource->devices, device, vnr)
-# But only at line start, not after #define.
-s{ ^
-	( \s+ idr_for_each_entry (?: _continue)? \( )
-	( [^,]+ ) , \s*
-	(\w+), \s*
-	(\w+)
-	\)
-}{
-	my $t = $types{$3};
-	$1 . "struct $t *, $2, $3, $4)"
-}xe;
-
-
 # Only at line start, not after #define.
 s{ ^
 	( \s+ (?: h? list_for_each_entry ( _continue | _safe | _reverse | _rcu )*
