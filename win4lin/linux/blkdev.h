@@ -26,4 +26,7 @@ extern int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
 extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
         sector_t nr_sects, gfp_t gfp_mask, ULONG_PTR flags);
 
+#define REQ_OP_BITS	8
+#define REQ_OP_MASK	((1 << REQ_OP_BITS) - 1)
+
 #endif
