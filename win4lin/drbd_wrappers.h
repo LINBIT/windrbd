@@ -1119,7 +1119,6 @@ static inline void blk_set_stacking_limits(struct queue_limits *lim)
 
 /* Attention: The backward comp version of this macro accesses bio from
    calling namespace */
-#define bio_iter_last(BVEC, ITER) ((ITER) == bio->bi_vcnt - 1)
 #endif
 
 #ifndef COMPAT_HAVE_RCU_DEREFERENCE_PROTECTED
@@ -1231,20 +1230,7 @@ static inline int atomic_dec_if_positive(atomic_t *v)
 #define bio_alloc_bioset(GFP, n, P) bio_alloc_bioset(GFP, n, *P)
 #define DRBD_MEMPOOL_T mempool_t *
 #define DRBD_BIO_SET   bio_set *
-static inline void bioset_exit(struct bio_set **bs)
-{
-	if (*bs) {
-		bioset_free(*bs);
-		*bs = NULL;
-	}
-}
-static inline void mempool_exit(mempool_t **p)
-{
-	if (*p) {
-		mempool_destroy(*p);
-		*p = NULL;
-	}
-}
+
 #if defined(COMPAT_HAVE_BIOSET_NEED_BVECS)
 #define bioset_init(BS, S, FP, F) __bioset_init(BS, S, FP, F)
 #else
@@ -1255,18 +1241,6 @@ __bioset_init(struct bio_set **bs, unsigned int size, unsigned int front_pad, in
 {
 	*bs = bioset_create(size, front_pad);
 	return *bs == NULL ? -ENOMEM : 0;
-}
-static inline int
-mempool_init_page_pool(mempool_t **pool, int min_nr, int order)
-{
-	*pool = mempool_create_page_pool(min_nr, order, 'DRBD');
-	return *pool == NULL ? -ENOMEM : 0;
-}
-static inline int
-mempool_init_slab_pool(mempool_t **pool, int min_nr, struct kmem_cache *mem_cache)
-{
-	*pool = mempool_create_slab_pool(min_nr, mem_cache, 'DRBD');
-	return *pool == NULL ? -ENOMEM : 0;
 }
 static inline bool
 bioset_initialized(struct bio_set **bs)

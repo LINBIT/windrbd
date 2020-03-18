@@ -794,8 +794,9 @@ struct backing_dev_info {
 
 struct queue_limits {
 	unsigned int            max_discard_sectors;
+	unsigned int            max_write_same_sectors;
 	unsigned int            discard_granularity;    
-	unsigned int			discard_zeroes_data;
+	unsigned int		discard_zeroes_data;
 };
 
 struct request_queue {

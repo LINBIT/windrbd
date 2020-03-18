@@ -24,4 +24,13 @@ extern mempool_t *mempool_create_slab_pool(int min_nr, struct kmem_cache *kc, UL
 extern void mempool_destroy(mempool_t *pool);
 extern void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask);
 extern void mempool_free(void *element, mempool_t *pool);
+
+static inline void mempool_exit(mempool_t *pool)
+{
+	mempool_destroy(pool);
+}
+
+int mempool_init_page_pool(mempool_t *pool, int min_nr, int order);
+int mempool_init_slab_pool(mempool_t *pool, int min_nr, struct kmem_cache *kc);
+
 #endif

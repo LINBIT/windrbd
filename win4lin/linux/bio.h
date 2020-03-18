@@ -37,4 +37,11 @@ static inline void bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
 #define bio_for_each_segment(bvl, bio, iter)				\
 	__bio_for_each_segment(bvl, bio, iter, (bio)->bi_iter)
 
+#define bio_iter_last(bvec, iter) ((iter).bi_size == (bvec).bv_len)
+
+static inline void bioset_exit(struct bio_set *b)
+{
+	bioset_free(b);
+}
+
 #endif

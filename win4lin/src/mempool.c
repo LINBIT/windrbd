@@ -2,6 +2,15 @@
 #include <linux/slab.h>
 #include "drbd_windows.h"
 
+int mempool_init_page_pool(mempool_t *pool, int min_nr, int order)
+{
+	pool->type = MEMPOOL_PAGE;
+	ExInitializeNPagedLookasideList(&pool->pageLS, NULL, NULL, 0, sizeof(struct page), tag, 0);
+        ExInitializeNPagedLookasideList(&pool->page_addrLS, NULL, NULL, 0, PAGE_SIZE, tag, 0);
+
+	return 0;
+}
+
 mempool_t *mempool_create_page_pool(int min_nr, int order, ULONG tag)
 {
 	mempool_t *pool;
@@ -10,11 +19,19 @@ mempool_t *mempool_create_page_pool(int min_nr, int order, ULONG tag)
 	if (!pool)
 		return NULL;
 
-	pool->type = MEMPOOL_PAGE;
-	ExInitializeNPagedLookasideList(&pool->pageLS, NULL, NULL, 0, sizeof(struct page), tag, 0);
-        ExInitializeNPagedLookasideList(&pool->page_addrLS, NULL, NULL, 0, PAGE_SIZE, tag, 0);
-
+	if (mempool_init_page_pool(pool, min_nr, order) != 0) {
+		kfree(pool);
+		return NULL;
+	}
 	return pool;
+}
+
+int mempool_init_slab_pool(mempool_t *pool, int min_nr, struct kmem_cache *kc)
+{
+	pool->type = MEMPOOL_SLAB;
+	pool->cache = kc;
+
+	return 0;
 }
 
 mempool_t *mempool_create_slab_pool(int min_nr, struct kmem_cache *kc, ULONG tag)
@@ -25,9 +42,10 @@ mempool_t *mempool_create_slab_pool(int min_nr, struct kmem_cache *kc, ULONG tag
 	if (!pool)
 		return NULL;
 
-	pool->type = MEMPOOL_SLAB;
-	pool->cache = kc;
-
+	if (mempool_init_slab_pool(pool, min_nr, kc) != 0) {
+		kfree(pool);
+		return NULL;
+	}
 	return pool;
 }
 
