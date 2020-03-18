@@ -1,0 +1,25 @@
+From 625899a9366c973138f0c87222430e0e7f8ffbae Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 18 Mar 2020 17:27:49 +0100
+Subject: [PATCH] drbd_req: type for from_timer
+
+---
+ drbd/drbd_req.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
+index 4e78a6e..8dfcaf4 100644
+--- a/drbd/drbd_req.c
++++ b/drbd/drbd_req.c
+@@ -2326,7 +2325,7 @@ void request_timer_fn(struct timer_list *t)
+ {
+ 	KIRQL rcu_flags;
+ 	KIRQL flags;
+-	struct drbd_device *device = from_timer(device, t, request_timer);
++	struct drbd_device *device = from_timer(device, t, request_timer, struct drbd_device);
+ 	struct drbd_connection *connection;
+ 	struct drbd_request *req_read, *req_write;
+ 	ULONG_PTR oldest_submit_jif;
+-- 
+2.17.0
+

@@ -119,6 +119,8 @@ static inline void blk_queue_logical_block_size(struct request_queue *q, unsigne
 	q->logical_block_size = size;
 }
 
+#define blk_queue_split(q,b) do { } while (0)
+
 #ifndef COMPAT_QUEUE_LIMITS_HAS_DISCARD_ZEROES_DATA
 static inline unsigned int queue_discard_zeroes_data(struct request_queue *q)
 {

@@ -15,6 +15,10 @@
 
 /* originally in linux/blk_types.h */
 typedef unsigned int blk_qc_t;
+#define BLK_QC_T_NONE		-1U
+#define BLK_QC_T_EAGAIN		-2U
+#define BLK_QC_T_SHIFT		16
+#define BLK_QC_T_INTERNAL	(1U << 31)
 
 /* originally in linux/blk_types.h */
 typedef u8 blk_status_t;
