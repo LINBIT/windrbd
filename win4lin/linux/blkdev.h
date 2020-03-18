@@ -2,6 +2,7 @@
 #define BLKDEV_H
 
 #include <linux/bio.h>
+#include <linux/timer.h>
 
 /* originally in linux/blk_types.h */
 typedef unsigned int blk_qc_t;

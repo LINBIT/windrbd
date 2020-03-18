@@ -1,0 +1,27 @@
+From 46fcb8f1c8ef3c2c593316b0a90fff1898c4834d Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 18 Mar 2020 10:38:32 +0100
+Subject: [PATCH] drbd_sender: include type in from_timer macro
+
+Because we don't have typeof we need to explicitly specify
+the type.
+---
+ drbd/drbd_sender.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index 621f6c0..fefd72f 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -489,7 +489,7 @@ int w_send_uuids(struct drbd_work *w, int cancel)
+ 
+ void resync_timer_fn(struct timer_list *t)
+ {
+-	struct drbd_peer_device *peer_device = from_timer(peer_device, t, resync_timer);
++	struct drbd_peer_device *peer_device = from_timer(peer_device, t, resync_timer, struct drbd_peer_device);
+ 
+ 	if (test_bit(SYNC_TARGET_TO_BEHIND, &peer_device->flags))
+ 		return;
+-- 
+2.17.0
+
