@@ -1,0 +1,26 @@
+From b89a4aa45814fb1203eb2aff528e330c00d4b030 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 18 Mar 2020 18:22:22 +0100
+Subject: [PATCH] drbd_main: removed a const qualifier.
+
+MS C complains (while GNU C does not)
+---
+ drbd/drbd_main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 2a88368..8f87873 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -1542,7 +1542,7 @@ void drbd_gen_and_send_sync_uuid(struct drbd_peer_device *peer_device)
+ }
+ 
+ /* All callers hold resource->conf_update */
+-int drbd_attach_peer_device(struct drbd_peer_device *const peer_device) 
++int drbd_attach_peer_device(struct drbd_peer_device *peer_device)
+ {
+ 	struct lru_cache *resync_lru = NULL;
+ 	int err = -ENOMEM;
+-- 
+2.17.0
+

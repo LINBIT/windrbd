@@ -63,6 +63,8 @@ enum update_sync_bits_mode;
 #define __GFP_WAIT              (0x10u) 
 #define __GFP_NOWARN            (0x200u)
 #define __GFP_RECLAIM           (0x400u)
+#define __GFP_NORETRY		(0x10000u)
+
 #define GFP_HIGHUSER            (7)
 
 #define	KERN_EMERG				"<0>"	/* system is unusable			*/
@@ -420,7 +422,7 @@ struct gendisk;
 struct block_device_operations {
 	struct module *owner;
 	int (*open) (struct block_device *, fmode_t);
-	int (*release) (struct gendisk *, fmode_t);
+	void (*release) (struct gendisk *, fmode_t);
 };
 
 struct kobj_type {
