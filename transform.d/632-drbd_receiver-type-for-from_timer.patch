@@ -1,0 +1,43 @@
+From 548fd0e08044a84451efad75093cfaea6e5b90c4 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 18 Mar 2020 11:20:59 +0100
+Subject: [PATCH] drbd_receiver: type for from_timer
+
+---
+ drbd/drbd_receiver.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index f64739b..d714a07 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -705,7 +705,7 @@ int drbd_connected(struct drbd_peer_device *peer_device)
+ 
+ void connect_timer_fn(struct timer_list *t)
+ {
+-	struct drbd_connection *connection = from_timer(connection, t, connect_timer);
++	struct drbd_connection *connection = from_timer(connection, t, connect_timer, struct drbd_connection);
+ 	struct drbd_resource *resource = connection->resource;
+ 	ULONG_PTR irq_flags;
+ 
+@@ -5813,7 +5813,7 @@ int abort_nested_twopc_work(struct drbd_work *work, int cancel)
+ 
+ void twopc_timer_fn(struct timer_list *t)
+ {
+-	struct drbd_resource *resource = from_timer(resource, t, twopc_timer);
++	struct drbd_resource *resource = from_timer(resource, t, twopc_timer, struct drbd_resource);
+ 	ULONG_PTR irq_flags;
+ 
+ 	spin_lock_irqsave(&resource->req_lock, irq_flags);
+@@ -6073,7 +6073,7 @@ static int queued_twopc_work(struct drbd_work *w, int cancel)
+ 
+ void queued_twopc_timer_fn(struct timer_list *t)
+ {
+-	struct drbd_resource *resource = from_timer(resource, t, queued_twopc_timer);
++	struct drbd_resource *resource = from_timer(resource, t, queued_twopc_timer, struct drbd_resource);
+ 	struct queued_twopc *q;
+ 	ULONG_PTR irq_flags;
+ 	ULONG_PTR time = twopc_timeout(resource) / 4;
+-- 
+2.17.0
+
