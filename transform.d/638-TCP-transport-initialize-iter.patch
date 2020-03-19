@@ -1,0 +1,25 @@
+From a88e0a0383f929a0cf53f5226bb7df678d898e20 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 19 Mar 2020 11:28:44 +0100
+Subject: [PATCH] TCP transport: initialize iter.
+
+Probably a weird compiler bug (false positive).
+---
+ drbd/drbd_transport_tcp.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 4689333..eef9231 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -1229,6 +1229,7 @@ static int dtt_send_zc_bio(struct drbd_transport *transport, struct bio *bio)
+ 	struct bio_vec bvec;
+ 	struct bvec_iter iter;
+ 
++	iter = bio->bi_iter;
+ 	bio_for_each_segment(bvec, bio, iter) {
+ 		int err;
+ 
+-- 
+2.17.0
+
