@@ -339,6 +339,11 @@ typedef struct refcount_struct {
 	atomic_t refs;
 } refcount_t;
 
+static inline unsigned int refcount_read(const refcount_t *r)
+{
+	return atomic_read(&r->refs);
+}
+
 static inline void refcount_set(refcount_t *r, int val)
 {
 	atomic_set(&r->refs, val);

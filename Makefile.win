@@ -200,7 +200,7 @@ DRBD_FILES = drbd_buildtag.c drbd_bitmap.c drbd_proc.c
 DRBD_FILES += drbd_sender.c drbd_receiver.c drbd_req.c drbd_actlog.c
 DRBD_FILES += lru_cache.c drbd_main.c drbd_strings.c drbd_nl.c
 DRBD_FILES += drbd_interval.c drbd_state.c
-DRBD_FILES += drbd_nla.c drbd_transport.c
+DRBD_FILES += drbd_nla.c drbd_transport.c kref_debug.c
 
 WINDRBD_SRCDIR = ../../win4lin/src
 

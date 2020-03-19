@@ -44,7 +44,7 @@ static inline void blk_queue_flag_clear(unsigned int flag, struct request_queue 
 	clear_bit(flag, &q->queue_flags);
 }
 
-void blk_queue_max_write_same_sectors(struct request_queue *q,
+static inline void blk_queue_max_write_same_sectors(struct request_queue *q,
 				      unsigned int max_write_same_sectors)
 {
 	if (max_write_same_sectors > 0)
