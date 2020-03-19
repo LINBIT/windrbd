@@ -34,6 +34,26 @@ typedef u8 blk_status_t;
 #define BLK_STS_RESOURCE	((blk_status_t)9)
 #define BLK_STS_IOERR		((blk_status_t)10)
 
+static inline void blk_queue_flag_set(unsigned int flag, struct request_queue *q)
+{
+	set_bit(flag, &q->queue_flags);
+}
+
+static inline void blk_queue_flag_clear(unsigned int flag, struct request_queue *q)
+{
+	clear_bit(flag, &q->queue_flags);
+}
+
+void blk_queue_max_write_same_sectors(struct request_queue *q,
+				      unsigned int max_write_same_sectors)
+{
+	if (max_write_same_sectors > 0)
+		printk("Warning: attempt to set max_write_same_sectors > 0 (%d)\n", max_write_same_sectors);
+	
+		/* We force it to 0, since write same is not supported. */
+	q->limits.max_write_same_sectors = 0;
+}
+
 extern int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
 		sector_t nr_sects, gfp_t gfp_mask, struct page *page);
 extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,

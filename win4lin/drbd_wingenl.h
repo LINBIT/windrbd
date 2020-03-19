@@ -18,6 +18,15 @@ struct sk_buff
     unsigned int tail;
     unsigned int end;
 
+	/*
+	 * This is the control buffer. It is free to use for every
+	 * layer. Please put your private variables there. If you
+	 * want to keep them across layers you have to do a skb_clone()
+	 * first. This is owned by whoever has the skb queued ATM.
+	 */
+
+    char cb[48];
+
     unsigned char data[1];
 };
 
@@ -91,6 +100,7 @@ struct genl_family
     struct list_head	ops_list;	/* private */
     struct list_head	family_list;	/* private */
     struct list_head	mcast_groups;	/* private */
+    const struct nla_policy *policy;
 };
 
 /**
@@ -663,6 +673,29 @@ static __inline struct nlattr *nla_nest_start(struct sk_buff *msg, int attrtype)
 	struct nlattr *start = (struct nlattr *)skb_tail_pointer(msg);
 
 	if (nla_put(msg, attrtype, 0, NULL) < 0)
+		return NULL;
+
+	return start;
+}
+
+/**
+ * nla_nest_start_noflag - Start a new level of nested attributes
+ * @skb: socket buffer to add attributes to
+ * @attrtype: attribute type of container
+ *
+ * This function exists for backward compatibility to use in APIs which never
+ * marked their nest attributes with NLA_F_NESTED flag. New APIs should use
+ * nla_nest_start() which sets the flag.
+ *
+ * Returns the container attribute or NULL on error
+ */
+
+static inline struct nlattr *nla_nest_start_noflag(struct sk_buff *skb,
+						   int attrtype)
+{
+	struct nlattr *start = (struct nlattr *)skb_tail_pointer(skb);
+
+	if (nla_put(skb, attrtype, 0, NULL) < 0)
 		return NULL;
 
 	return start;
