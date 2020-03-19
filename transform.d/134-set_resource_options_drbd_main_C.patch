@@ -18,12 +18,13 @@ index 95672d4..85fdf53 100644
 +#if 0
  	struct drbd_connection *connection;
  	cpumask_var_t new_cpu_mask;
-@@ -3388,7 +3389,9 @@ int set_resource_options(struct drbd_resource *resource, struct res_opts *res_op
+@@ -3388,7 +3389,10 @@ int set_resource_options(struct drbd_resource *resource, struct res_opts *res_op
  fail:
  	free_cpumask_var(new_cpu_mask);
  	return err;
 -
 +#else
++	resource->res_opts = *res_opts;
 +	return 0;
 +#endif
  }
