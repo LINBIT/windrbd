@@ -897,14 +897,8 @@ static inline struct sk_buff *genlmsg_new(size_t payload, gfp_t flags)
 }
 #endif
 
-/*
- * genlmsg_put() was introduced in mainline commit 482a8524 (v2.6.15-rc1) and
- * changed in 17c157c8 (v2.6.20-rc2).  genlmsg_put_reply() was introduced in
- * 17c157c8.  We replace the compat_genlmsg_put() from 482a8524.
- */
-extern void *compat_genlmsg_put(struct sk_buff *skb, u32 pid, u32 seq,
+extern void *genlmsg_put(struct sk_buff *skb, u32 pid, u32 seq,
 		           struct genl_family *family, int flags, u8 cmd);
-#define genlmsg_put compat_genlmsg_put
 
 extern void *genlmsg_put_reply(struct sk_buff *skb,
                          struct genl_info *info,

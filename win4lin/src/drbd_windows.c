@@ -2775,7 +2775,7 @@ unsigned char *skb_put(struct sk_buff *skb, unsigned int len)
 	return tmp;
 }
 
-void *compat_genlmsg_put(struct sk_buff *skb, u32 pid, u32 seq,
+void *genlmsg_put(struct sk_buff *skb, u32 pid, u32 seq,
 				       struct genl_family *family, int flags, u8 cmd)
 {
 	struct nlmsghdr *nlh;
