@@ -118,4 +118,17 @@ struct ida {
 #define idr_for_each_entry(idr, entry, id)			\
 	for (id = 0; ((entry) = idr_get_next(idr, &(id))) != NULL; id += 1U)
 
+/**
+ * idr_for_each_entry_continue() - Continue iteration over an IDR's elements of a given type
+ * @idr: IDR handle.
+ * @entry: The type * to use as a cursor.
+ * @id: Entry ID.
+ *
+ * Continue to iterate over entries, continuing after the current position.
+ */
+#define idr_for_each_entry_continue(idr, entry, id)			\
+	for ((entry) = idr_get_next((idr), &(id));			\
+	     entry;							\
+	     ++id, (entry) = idr_get_next((idr), &(id)))
+
 #endif /* __IDR_H__ */
