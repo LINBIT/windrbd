@@ -374,6 +374,8 @@ TODO: Feature: Set partition ID to 27 to hide partition
 	this prevents Windows to mount the partition. Use that for
 	backing devices.
 
+TODO: Do not patch boot sector when it is a disk device
+
 TODOs for after Release 1.0 ----------------------------------------------
 
 TODO: Feature: Call test routines via ioctl().
