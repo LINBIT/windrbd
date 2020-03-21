@@ -265,6 +265,7 @@ found:
 
 ULONG_PTR find_next_bit(const ULONG_PTR *addr, ULONG_PTR size, ULONG_PTR offset)
 {
+printk("addr is %p, *addr is %llx size is %lld, offset is %lld\n", addr, *addr, size, offset);
 	const ULONG_PTR *p = addr + BITOP_WORD(offset);
 	ULONG_PTR result = offset & ~(BITS_PER_LONG - 1);
 	ULONG_PTR tmp;
@@ -1751,6 +1752,7 @@ static void timer_callback(PKDPC dpc, struct timer_list* timer, PVOID arg1, PVOI
 	(void)dpc;
 printk("Debug 1\n");
 	timer->function(timer);
+printk("Debug 2\n");
 }
 
 void timer_setup(struct timer_list *timer, void(*callback)(struct timer_list *timer), ULONG_PTR flags_unused)

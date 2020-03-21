@@ -1258,8 +1258,8 @@ void exit_interruptible_debug(const char *file, int line, const char *func);
 
 /* TODO: to another header: */
 
-#define kmap(page)		(page->addr)
-#define kmap_atomic(page)	(page->addr)
+#define kmap(_page)		(_page->addr)
+#define kmap_atomic(_page)	(_page->addr)
 #define kunmap(addr)		do { } while (0)
 #define kunmap_atomic(addr)	do { } while (0)
 
