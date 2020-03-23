@@ -34,11 +34,11 @@ void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e);
 
 void schedule_debug(const char *file, int line, const char *func);
 /* Returns -EINTR on signal else remaining time. */
-ULONG_PTR schedule_timeout_debug(ULONG_PTR timeout, const char *file, int line, const char *func);
+LONG_PTR schedule_timeout_debug(LONG_PTR timeout, const char *file, int line, const char *func);
 /* Returns -EINTR on signal else remaining time. Use only internally. */
 /* TODO: better name for function */
-LONG_PTR schedule_timeout_maybe_interrupted_debug(ULONG_PTR timeout, const char *file, int line, const char *func);
-LONG_PTR schedule_timeout_uninterruptible_debug(ULONG_PTR timeout, const char *file, int line, const char *func);
+LONG_PTR schedule_timeout_maybe_interrupted_debug(LONG_PTR timeout, const char *file, int line, const char *func);
+LONG_PTR schedule_timeout_uninterruptible_debug(LONG_PTR timeout, const char *file, int line, const char *func);
 
 #define schedule() schedule_debug(__FILE__, __LINE__, __func__)
 #define schedule_timeout_interruptible(timeout) schedule_timeout_debug((timeout), __FILE__, __LINE__, __func__)

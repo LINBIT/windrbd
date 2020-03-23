@@ -18,7 +18,7 @@
 
 int raised_irql_waits;
 
-static int ll_wait(struct wait_queue_entry *e, ULONG_PTR timeout, int interruptible, const char *file, int line, const char *func)
+static int ll_wait(struct wait_queue_entry *e, LONG_PTR timeout, int interruptible, const char *file, int line, const char *func)
 {
 	LARGE_INTEGER wait_time;
 	LARGE_INTEGER *wait_time_p;
@@ -28,7 +28,7 @@ static int ll_wait(struct wait_queue_entry *e, ULONG_PTR timeout, int interrupti
 	struct task_struct *thread = current;
 
 	/* Busy looping .. to see where it hangs */
-if (timeout > 10000) timeout = 10000;
+// if (timeout > 10000) timeout = 10000;
 
 	if(timeout != MAX_SCHEDULE_TIMEOUT) {
 		wait_time.QuadPart = timeout * (-1 * 1000 * 1000 * 10 / HZ);
@@ -92,7 +92,7 @@ void schedule_debug(const char *file, int line, const char *func)
 	ll_wait(current->wait_queue_entry, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
 }
 
-static LONG_PTR ll_schedule_debug(ULONG_PTR timeout, int return_error, int interruptible, const char *file, int line, const char *func)
+static LONG_PTR ll_schedule_debug(LONG_PTR timeout, int return_error, int interruptible, const char *file, int line, const char *func)
 {
 	LONG_PTR then = jiffies;
 	LONG_PTR elapsed;
@@ -117,17 +117,17 @@ static LONG_PTR ll_schedule_debug(ULONG_PTR timeout, int return_error, int inter
 	return 0;
 }
 
-ULONG_PTR schedule_timeout_debug(ULONG_PTR timeout, const char *file, int line, const char *func)
+LONG_PTR schedule_timeout_debug(LONG_PTR timeout, const char *file, int line, const char *func)
 {
 	return ll_schedule_debug(timeout, 0, TASK_INTERRUPTIBLE, file, line, func);
 }
 
-LONG_PTR schedule_timeout_maybe_interrupted_debug(ULONG_PTR timeout, const char *file, int line, const char *func)
+LONG_PTR schedule_timeout_maybe_interrupted_debug(LONG_PTR timeout, const char *file, int line, const char *func)
 {
 	return ll_schedule_debug(timeout, 1, TASK_INTERRUPTIBLE, file, line, func);
 }
 
-LONG_PTR schedule_timeout_uninterruptible_debug(ULONG_PTR timeout, const char *file, int line, const char *func)
+LONG_PTR schedule_timeout_uninterruptible_debug(LONG_PTR timeout, const char *file, int line, const char *func)
 {
 	return ll_schedule_debug(timeout, 0, TASK_UNINTERRUPTIBLE, file, line, func);
 }
