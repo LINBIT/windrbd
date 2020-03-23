@@ -302,6 +302,8 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	size_t length;
 	int bug = 0;
 
+if (may_printk)
+printk("Irp->IoStatus.Status is %x\n", Irp->IoStatus.Status);
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
 
@@ -956,13 +958,16 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	NTSTATUS status;
 	int err, err2;
 
+printk("Debug5: size is %d\n", len);
 // dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !page || ((int) len <= 0))
 		return -EINVAL;
 
+printk("Debug5: socket->error_status is %d\n", socket->error_status);
 	if (socket->error_status != 0)
 		return socket->error_status;
 
+printk("Debug5: 1\n");
 	get_page(page);		/* we might sleep soon, do this before */
 
 	err = wait_for_sendbuf(socket, len);
@@ -1040,9 +1045,11 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 			 * error.
 			 */
 
+printk("len is %d\n", len);
 		return len;
 
 	case STATUS_SUCCESS:
+printk("Irp->IoStatus.Information is %d\n", Irp->IoStatus.Information);
 		return (LONG) Irp->IoStatus.Information;
 	}
 	err = winsock_to_linux_error(status);
@@ -1051,6 +1058,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 
 		/* Resources are freed by completion routine. */
 // dbg("returning %d\n", err);
+printk("Debug3 1: returning %d\n", err);
 	return err;
 
 out_unlock_mutex:
@@ -1071,7 +1079,7 @@ out_put_page:
 
 	if (err != 0 && err != -ENOMEM)
 		socket->error_status = err;
-dbg("returning %d\n", err);
+printk("Debug3: returning %d\n", err);
 	return err;
 }
 
@@ -1185,6 +1193,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	PVOID       waitObjects[2];
 	int         wObjCount = 1;
 
+printk("Debug3: size is %d\n", len);
 // dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
@@ -1218,6 +1227,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return -ENOTCONN;
 	}
 
+printk("Debug3: 2\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
@@ -1249,7 +1259,9 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
         } 
 
 enter_interruptible();
+printk("Debug3: 3\n");
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
+printk("Debug3: 4\n");
 exit_interruptible();
         switch (Status)
         {
@@ -1340,7 +1352,7 @@ exit_interruptible();
 		dbg("setting error status to %d\n", socket->error_status);
 	}
 
-	dbg("returning %d\n", BytesReceived);
+printk("returning %d\n", BytesReceived);
 	return BytesReceived;
 }
 
