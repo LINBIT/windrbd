@@ -265,7 +265,7 @@ found:
 
 ULONG_PTR find_next_bit(const ULONG_PTR *addr, ULONG_PTR size, ULONG_PTR offset)
 {
-printk("addr is %p, *addr is %llx size is %lld, offset is %lld\n", addr, *addr, size, offset);
+// printk("addr is %p, *addr is %llx size is %lld, offset is %lld\n", addr, *addr, size, offset);
 	const ULONG_PTR *p = addr + BITOP_WORD(offset);
 	ULONG_PTR result = offset & ~(BITS_PER_LONG - 1);
 	ULONG_PTR tmp;
@@ -1750,29 +1750,23 @@ static void timer_callback(PKDPC dpc, struct timer_list* timer, PVOID arg1, PVOI
 	(void)arg1;
 	(void)arg2;
 	(void)dpc;
-printk("Debug 1\n");
 	timer->function(timer);
-printk("Debug 2\n");
 }
 
 void timer_setup(struct timer_list *timer, void(*callback)(struct timer_list *timer), ULONG_PTR flags_unused)
 {
-printk("Debug 1\n");
 	timer->function = callback;
 	KeInitializeTimer(&timer->ktimer);
 	KeInitializeDpc(&timer->dpc, (PKDEFERRED_ROUTINE)timer_callback, timer);
-printk("Debug 2\n");
 }
 
 void add_timer(struct timer_list *t)
 {
-printk("Debug 1\n");
 	mod_timer(t, t->expires);
 }
 
 void del_timer(struct timer_list *t)
 {
-printk("Debug 1\n");
 	KeCancelTimer(&t->ktimer);
     t->expires = 0;
 }
@@ -1789,7 +1783,6 @@ printk("Debug 1\n");
  */
 static __inline int timer_pending(const struct timer_list * timer)
 {
-printk("Debug 1\n");
     return timer->ktimer.Header.Inserted;
 }
 
@@ -1817,29 +1810,22 @@ int del_timer_sync(struct timer_list *t)
 static int
 __mod_timer(struct timer_list *timer, ULONG_PTR expires, bool pending_only)
 {
-printk("Debug expires is %ld\n", expires);
-printk("Debug 1\n");
     if (!timer_pending(timer) && pending_only)
     {
 		return 0;
     }
 
-printk("Debug 2\n");
     LARGE_INTEGER nWaitTime = { .QuadPart = 0 };
     ULONG_PTR current_milisec = jiffies;
 
-printk("Debug 3\n");
     timer->expires = expires;
 
-printk("Debug 4\n");
     if (current_milisec >= expires)
     {
-printk("Debug 5\n");
 		nWaitTime.QuadPart = -1;
     }
 	else
 	{
-printk("Debug 6\n");
 		expires -= current_milisec;
 		nWaitTime = RtlConvertLongToLargeInteger(RELATIVE(MILLISECONDS(expires)));
 	}
@@ -1849,9 +1835,7 @@ printk("Debug 6\n");
         timer->name, timer, current_milisec, timer->expires, timer->expires - current_milisec, nWaitTime.QuadPart);
 */
 
-printk("Debug 7\n");
     KeSetTimer(&timer->ktimer, nWaitTime, &timer->dpc);
-printk("Debug 8\n");
     return 1;
 }
 
@@ -2478,7 +2462,6 @@ int generic_make_request(struct bio *bio)
 #endif
 
 	bio_get(bio);
-printk("bio_data_dir(bio) is %d\n", bio_data_dir(bio));
 
 	flush_request = ((bio->bi_opf & REQ_PREFLUSH) != 0);
 

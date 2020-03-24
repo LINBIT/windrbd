@@ -1118,7 +1118,6 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 			return STATUS_INSUFFICIENT_RESOURCES;
 		}
 		bio->bi_opf = (rw == WRITE ? REQ_OP_WRITE : REQ_OP_READ);
-printk("bio->bi_opf is %d bio_data_dir(bio) is %d\n", bio->bi_opf, bio_data_dir(bio));
 		bio->bi_bdev = dev;
 		bio->bi_max_vecs = 1;
 		bio->bi_vcnt = 1;

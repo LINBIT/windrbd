@@ -369,8 +369,6 @@ static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 	if ((ret = windrbd_create_windows_device_for_minor(this_node->volume.minor)) != 0)
 		return ret;
 
-printk("not creating network config this is done in stage2.\n");
-
 	drbd_device = minor_to_device(this_node->volume.minor);
 	if (drbd_device != NULL && drbd_device->this_bdev != NULL)
 		drbd_device->this_bdev->is_bootdevice = 1;
@@ -428,12 +426,6 @@ static int windrbd_create_boot_device_stage2(void *pp)
    once it succeeds (which might be never if the network address
    is wrong.
 */
-#if 0
-printk("waiting a bit for network interface to come up...\n");
-/* TODO: this should be configureable. */
-msleep(60*1000);
-printk("stage2: doing network config (path, ...)\n");
-#endif
 
         list_for_each_entry(struct node, n, &p->node_list, list) {
 		if (n->node_id != p->this_node_id) {
