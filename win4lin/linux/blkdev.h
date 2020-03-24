@@ -11,6 +11,21 @@
 #define bio_op(bio) \
 	((bio)->bi_opf & REQ_OP_MASK)
 
+/* obsolete, don't use in new code */
+static inline void bio_set_op_attrs(struct bio *bio, unsigned op,
+		unsigned op_flags)
+{
+	bio->bi_opf = op | op_flags;
+}
+
+static inline bool op_is_write(unsigned int op)
+{
+	return (op & 1);
+}
+
+#define bio_data_dir(bio) \
+	(op_is_write(bio_op(bio)) ? WRITE : READ)
+
 #include <linux/timer.h>
 
 /* originally in linux/blk_types.h */

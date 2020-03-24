@@ -239,10 +239,9 @@ TODO: should be:
 #define MAX_ERRNO				4095
 #define IS_ERR_VALUE(_x)		((_x) >= (unsigned long) -MAX_ERRNO)
 
+/* See kernel.h */
 #define READ					0
 #define WRITE					1
-/* TODO: ?? should flush ?? */
-#define WRITE_SYNC				WRITE	// REQ_SYNC | REQ_NOIDLE not used.
 
 // for drbd_actlog.c
 #define __attribute__(packed)
@@ -606,7 +605,6 @@ struct bio {
 	struct bio*				bi_next;	/* request queue link */
 	struct block_device*	bi_bdev;
 	unsigned long			bi_flags;	/* status, command, etc */
-	unsigned long			bi_rw;
 	unsigned int			bi_opf;		/* bottom bits req flags, top bits REQ_OP. Use accessors. */
 	unsigned short			bi_vcnt;	/* how many bio_vec's */
 	unsigned short			bi_idx;		/* current index into bvl_vec */
@@ -738,10 +736,6 @@ static inline int submit_bio(struct bio *bio)
 	__bio_for_each_segment(bvl, bio, i, (bio)->bi_idx)
 
 #endif
-
-#define RW_MASK                 1 //  REQ_WRITE
-#define bio_data_dir(bio)       ((bio)->bi_rw & 1)
-#define bio_rw(bio)             ((bio)->bi_rw & (RW_MASK))
 
 // DRBD_DOC: not support, it is always newest updated block for windows.
 /* TODO: Sure? */

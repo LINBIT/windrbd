@@ -531,32 +531,6 @@ static inline void blk_queue_max_segments(struct request_queue *q, unsigned shor
 /* https://msdn.microsoft.com/en-us/library/windows/hardware/ff549235(v=vs.85).aspx */
 #define DRBD_REQ_PREFLUSH	REQ_PREFLUSH
 
-static inline void bio_set_op_attrs(struct bio *bio, const int op, const long flags)
-{
-    /* If we explicitly issue discards or write_same, we use
-     * blkdev_isse_discard() and blkdev_issue_write_same() helpers.
-     * If we implicitly submit them, we just pass on a cloned bio to
-     * generic_make_request().  We expect to use bio_set_op_attrs() with
-     * REQ_OP_READ or REQ_OP_WRITE only. */
-
-    /* For WinDRBD REQ_OP_FLUSH is != REQ_OP_WRITE, REQ_OP_FLUSH is also
-     * valid here.
-     */
-	if (!(op == REQ_OP_READ || op == REQ_OP_WRITE || op == REQ_OP_FLUSH))
-		printk("op is %d, expected %d or %d or %d\n", op, REQ_OP_READ, REQ_OP_WRITE, REQ_OP_FLUSH);
-	bio->bi_rw |= (op | flags);
-}
-
-
-
-
-#ifndef WRITE_FLUSH
-#ifndef WRITE_SYNC
-#error  FIXME WRITE_SYNC undefined??
-#endif
-#define WRITE_FLUSH	(WRITE_SYNC | DRBD_REQ_FLUSH)
-#endif
-
 /* this results in:
 	bi_rw   -> dp_flags
 

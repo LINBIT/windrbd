@@ -919,7 +919,7 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->bi_sector = bio_src->bi_sector;
 	bio->bi_bdev = bio_src->bi_bdev;
 	//bio->bi_flags |= 1 << BIO_CLONED;
-	bio->bi_rw = bio_src->bi_rw;
+	bio->bi_opf = bio_src->bi_opf;
 	bio->bi_vcnt = bio_src->bi_vcnt;
 	bio->bi_size = bio_src->bi_size;
 	bio->bi_idx = bio_src->bi_idx;
@@ -2287,7 +2287,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 		printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
 		return -EIO;
 	}
-	if (bio->bi_rw & WRITE) {
+	if (bio_data_dir(bio) == WRITE) {
 		io = IRP_MJ_WRITE;
 	} else {
 		io = IRP_MJ_READ;
@@ -2479,10 +2479,7 @@ int generic_make_request(struct bio *bio)
 
 	bio_get(bio);
 
-printk("Debug11: bio->bi_rw is %d\n", bio->bi_rw);
-/* TODO: reenable again after fixing DRBD_REQ_PREFLUSH define */
-//	flush_request = (bio->bi_rw & DRBD_REQ_PREFLUSH) != 0;
-	flush_request = 0;
+	flush_request = ((bio->bi_opf & REQ_PREFLUSH) != 0);
 
 	if (bio->bi_vcnt == 0)
 		bio->bi_num_requests = flush_request;

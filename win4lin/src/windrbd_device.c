@@ -978,7 +978,7 @@ static void windrbd_bio_finished(struct bio * bio)
 	status = STATUS_SUCCESS;
 
 	if (error == 0) {
-		if (bio->bi_rw == READ) {
+		if (bio_data_dir(bio) == READ) {
 			if (!bio->bi_common_data->bc_device_failed && bio->bi_upper_irp && bio->bi_upper_irp->MdlAddress) {
 				char *user_buffer = bio->bi_upper_irp_buffer;
 				if (user_buffer != NULL) {
@@ -1012,7 +1012,7 @@ static void windrbd_bio_finished(struct bio * bio)
 
 		status = STATUS_DEVICE_DOES_NOT_EXIST;
 	}
-	if (bio->bi_rw == READ)
+	if (bio_data_dir(bio) == READ)
 		for (i=0;i<bio->bi_vcnt;i++)
 			kfree(bio->bi_io_vec[i].bv_page->addr);
 
@@ -1118,11 +1118,11 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 			printk("Couldn't allocate bio.\n");
 			return STATUS_INSUFFICIENT_RESOURCES;
 		}
-		bio->bi_rw = rw;
+		bio->bi_opf = (rw == WRITE ? REQ_OP_WRITE : REQ_OP_READ);
 		bio->bi_bdev = dev;
 		bio->bi_max_vecs = 1;
 		bio->bi_vcnt = 1;
-		bio->bi_paged_memory = bio->bi_rw == WRITE;
+		bio->bi_paged_memory = (bio_data_dir(bio) == WRITE);
 		bio->bi_size = this_bio_size;
 		bio->bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
 		bio->bi_upper_irp_buffer = buffer;
@@ -1148,7 +1148,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
  */
 
 
-		if (bio->bi_rw == READ)
+		if (bio_data_dir(bio) == READ)
 			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, 0, 'DRBD');
 		else
 			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
@@ -1387,7 +1387,7 @@ static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		status = STATUS_INSUFFICIENT_RESOURCES;
 		goto exit;
 	}
-	bio->bi_rw = WRITE | DRBD_REQ_PREFLUSH;
+	bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
 	bio->bi_size = 0;
 	bio->bi_end_io = windrbd_bio_flush_finished;
 	bio->bi_upper_irp = irp;
