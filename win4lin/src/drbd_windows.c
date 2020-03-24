@@ -2479,6 +2479,7 @@ int generic_make_request(struct bio *bio)
 
 	bio_get(bio);
 
+printk("Debug11: bio->bi_rw is %d\n", bio->bi_rw);
 /* TODO: reenable again after fixing DRBD_REQ_PREFLUSH define */
 //	flush_request = (bio->bi_rw & DRBD_REQ_PREFLUSH) != 0;
 	flush_request = 0;
