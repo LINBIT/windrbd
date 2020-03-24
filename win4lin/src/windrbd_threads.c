@@ -1,5 +1,5 @@
 /* Uncomment this if you want more debug output (disable for releases) */
-#define DEBUG 1
+/* #define DEBUG 1 */
 
 #ifdef RELEASE
 #ifdef DEBUG

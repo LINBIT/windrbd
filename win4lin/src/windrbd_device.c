@@ -35,7 +35,7 @@
 #include <ntddstor.h>
 
 /* Uncomment this if you want more debug output (disable for releases) */
-#define DEBUG 1
+/* #define DEBUG 1 */
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -169,7 +169,7 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 
 			status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
 			if (status != STATUS_SUCCESS)
-				printk("KeWaitForSingleObject returned %x\n", status);
+				dbg("KeWaitForSingleObject returned %x\n", status);
 			else
 				dbg("Am primary now, proceeding with request\n");
 		} else {
