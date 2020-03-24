@@ -2478,6 +2478,7 @@ int generic_make_request(struct bio *bio)
 #endif
 
 	bio_get(bio);
+printk("bio_data_dir(bio) is %d\n", bio_data_dir(bio));
 
 	flush_request = ((bio->bi_opf & REQ_PREFLUSH) != 0);
 

@@ -1086,7 +1086,6 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-// dbg("%s sector: %d this_bio_size: %d\n", s->MajorFunction == IRP_MJ_WRITE ? "WRITE" : "READ", sector, this_bio_size);
 	int bio_count = (total_size-1) / MAX_BIO_SIZE + 1;
 	int this_bio_size;
 	int last_bio_size = total_size % MAX_BIO_SIZE;
@@ -1119,6 +1118,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 			return STATUS_INSUFFICIENT_RESOURCES;
 		}
 		bio->bi_opf = (rw == WRITE ? REQ_OP_WRITE : REQ_OP_READ);
+printk("bio->bi_opf is %d bio_data_dir(bio) is %d\n", bio->bi_opf, bio_data_dir(bio));
 		bio->bi_bdev = dev;
 		bio->bi_max_vecs = 1;
 		bio->bi_vcnt = 1;
