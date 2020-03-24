@@ -30,7 +30,15 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
-TODO: BSOD in drbd_sender:2898 calling callback
+TODO: Bug: BSOD on sync finish.
+
+	7E (?)
+
+TODO: Bug: scan-partitions-for-minor sometimes does not find device.
+
+	Maybe sleep a little until opening succeeds.
+
+TODO: Bug: BSOD in drbd_sender:2898 calling callback
 
 	After 26 days of I/O this BSOD (ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY)
 	happened. Unfortunately (we has this BSOD before).
@@ -42,7 +50,7 @@ TODO: BSOD in drbd_sender:2898 calling callback
 	The list is empty (was only list element). Value of cb is
 	unknown (but most likely garbage).
 
-TODO: BSOD in copy_first_640k
+TODO: Bug: BSOD in copy_first_640k
 
 	On Server 2016 this sometimes happens (when loading
 	the driver). Not sure yet why (because of the TCP/IP
@@ -73,11 +81,18 @@ TODO: Code quality: Squash patches in transform.d
 	set_resource_options() (else node-id becomes 0), done now it
 	connects. Now Sync stall at 8%
 
+	Update: Fixed 3 bugs. Sync now works (BSOD? see seperate TODO)
+	so does replication. Doing endurance tests now.
+
+TODO: Feature: Upgrade DRDB to 9.0.22
+
 TODO: Documentation: Draw diagram (from Joel)
 
 TODO: Infrastructure: Move Linbit VMs to new server
 
 +TODO: Code quality: Submit drbd-utils patches.
+
+	Need to implement create-resource for windrbd first.
 
 TODO: Bug: BSOD when accessing ReFS device
 
