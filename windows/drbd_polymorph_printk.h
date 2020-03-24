@@ -133,7 +133,7 @@ extern int _DRBD_ratelimit(struct ratelimit_state *rs, const char * func, const 
 #define D_ASSERT(x, exp) \
 	do { \
 		if (!(exp))	{ \
-			DbgPrint("\n\nASSERTION %s FAILED in %s #########\n\n",	\
+			printk("\n\nASSERTION %s FAILED in %s #########\n\n",	\
 				 #exp, __func__); \
 		} \
 	} while (0)
