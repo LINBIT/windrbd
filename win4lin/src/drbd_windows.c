@@ -728,7 +728,7 @@ void hack_alloc_page(struct block_device *dev)
 	}
 	printk("5a\n");
 	b->bi_end_io = hack_endio;
-	DRBD_BIO_BI_SECTOR(b) = 1;
+	b->bi_iter.sector = 1;
 	printk("6\n");
 	init_completion(&c);
 	printk("7\n");
@@ -916,12 +916,12 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
     }
 
 	memcpy(bio->bi_io_vec, bio_src->bi_io_vec, bio_src->bi_max_vecs * sizeof(struct bio_vec));
-	bio->bi_sector = bio_src->bi_sector;
+	bio->bi_iter.bi_sector = bio_src->bi_iter.bi_sector;
 	bio->bi_bdev = bio_src->bi_bdev;
 	//bio->bi_flags |= 1 << BIO_CLONED;
 	bio->bi_opf = bio_src->bi_opf;
 	bio->bi_vcnt = bio_src->bi_vcnt;
-	bio->bi_size = bio_src->bi_size;
+	bio->bi_iter.bi_size = bio_src->bi_iter.bi_size;
 	bio->bi_idx = bio_src->bi_idx;
 
 	return bio;
@@ -934,7 +934,7 @@ int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned i
 	bvec->bv_page = page;
 	bvec->bv_len = len;
 	bvec->bv_offset = offset;
-	bio->bi_size += len;
+	bio->bi_iter.bi_size += len;
 
 	return len;
 }
@@ -2131,7 +2131,7 @@ NTSTATUS DrbdIoCompletion(
 	if (test_inject_faults(&inject_on_completion, "assuming completion routine was send an error (enabled for all devices)"))
 		status = STATUS_IO_DEVICE_ERROR;
 
-	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_sector == 0 && bio->bi_size >= 512 && !bio->dont_patch_boot_sector) {
+	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_iter.bi_sector == 0 && bio->bi_iter.bi_size >= 512 && !bio->dont_patch_boot_sector) {
 		if (test_and_set_bit(BI_WINDRBD_FLAG_BOOTSECTOR_PATCHED, &bio->bi_windrbd_flags) == 0) {
 			void *buffer = bio->bi_io_vec[0].bv_page->addr;
 			patch_boot_sector(buffer, 1, 0);
@@ -2293,12 +2293,12 @@ static int windrbd_generic_make_request(struct bio *bio)
 		io = IRP_MJ_READ;
 	}
 
-	bio->bi_io_vec[bio->bi_first_element].offset.QuadPart = bio->bi_sector << 9;
+	bio->bi_io_vec[bio->bi_first_element].offset.QuadPart = bio->bi_iter.bi_sector << 9;
 	buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_first_element].bv_page->addr) + bio->bi_io_vec[bio->bi_first_element].bv_offset); 
 	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-// printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element);
+// printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element);
 // }
 
 /* Make a copy of the (page cache) buffer and write the copy to the
@@ -2308,7 +2308,7 @@ static int windrbd_generic_make_request(struct bio *bio)
  */
 
 
-	if (io == IRP_MJ_WRITE && bio->bi_sector == 0 && bio->bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
+	if (io == IRP_MJ_WRITE && bio->bi_iter.bi_sector == 0 && bio->bi_iter.bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
 		bio->patched_bootsector_buffer = kmalloc(first_size, 0, 'DRBD');
 		if (bio->patched_bootsector_buffer == NULL)
 			return -ENOMEM;
@@ -2369,7 +2369,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	 * linked list in MDLs to optimize performace.
 	 */
 
-		/* TODO: use bio->bi_size it should be correct now. */
+		/* TODO: use bio->bi_iter.bi_size it should be correct now. */
 
 		/* TODO: this loop does nothing any more (max_mdls is 1) */
 	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {
@@ -2506,8 +2506,8 @@ printk("bio_data_dir(bio) is %d\n", bio_data_dir(bio));
 	}
 	atomic_set(&bio->bi_requests_completed, 0);
 
-	orig_sector = sector = bio->bi_sector;
-	orig_size = bio->bi_size;
+	orig_sector = sector = bio->bi_iter.bi_sector;
+	orig_size = bio->bi_iter.bi_size;
 
 	ret = 0;
 
@@ -2523,8 +2523,8 @@ printk("bio_data_dir(bio) is %d\n", bio_data_dir(bio));
 		for (e = bio->bi_first_element; e < bio->bi_last_element; e++)
 			total_size += bio->bi_io_vec[e].bv_len;
 
-		bio->bi_sector = sector;
-		bio->bi_size = total_size;
+		bio->bi_iter.bi_sector = sector;
+		bio->bi_iter.bi_size = total_size;
 
 		ret = windrbd_generic_make_request(bio);
 		if (ret < 0) {
@@ -2548,8 +2548,8 @@ printk("bio_data_dir(bio) is %d\n", bio_data_dir(bio));
 		ret = -ret;
 
 out:
-	bio->bi_sector = orig_sector;
-	bio->bi_size = orig_size;
+	bio->bi_iter.bi_sector = orig_sector;
+	bio->bi_iter.bi_size = orig_size;
 
 	bio_put(bio);
 
@@ -3039,7 +3039,7 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	b->bi_end_io = backingdev_check_endio;
 	b->dont_patch_boot_sector = true;
 
-	DRBD_BIO_BI_SECTOR(b) = 0;
+	b->bi_iter.bi_sector = 0;
 	init_completion(&c);
 	b->bi_private = &c;
 	bio_set_dev(b, dev);

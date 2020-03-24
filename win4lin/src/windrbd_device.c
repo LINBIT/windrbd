@@ -1123,8 +1123,8 @@ printk("bio->bi_opf is %d bio_data_dir(bio) is %d\n", bio->bi_opf, bio_data_dir(
 		bio->bi_max_vecs = 1;
 		bio->bi_vcnt = 1;
 		bio->bi_paged_memory = (bio_data_dir(bio) == WRITE);
-		bio->bi_size = this_bio_size;
-		bio->bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
+		bio->bi_iter.bi_size = this_bio_size;
+		bio->bi_iter.bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
 		bio->bi_upper_irp_buffer = buffer;
 		bio->bi_mdl_offset = b*MAX_BIO_SIZE;
 		bio->bi_common_data = common_data;
@@ -1164,7 +1164,7 @@ printk("bio->bi_opf is %d bio_data_dir(bio) is %d\n", bio->bi_opf, bio_data_dir(
 		bio->bi_upper_irp = irp;
 
 // dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
-// dbg("bio->bi_size: %d bio->bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_size, bio->bi_sector, bio->bi_mdl_offset);
+// dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_iter.bi_size, bio->bi_iter.bi_sector, bio->bi_mdl_offset);
 
 		drbd_make_request(dev->drbd_device->rq_queue, bio);
 	}
@@ -1341,7 +1341,7 @@ static void windrbd_bio_flush_finished(struct bio * bio)
 	int error = blk_status_to_errno(bio->bi_status);
 
 	if (error == 0) {
-		irp->IoStatus.Information = bio->bi_size;
+		irp->IoStatus.Information = bio->bi_iter.bi_size;
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	} else {
 		printk(KERN_ERR "Flush failed with %d\n", error);
@@ -1388,7 +1388,7 @@ static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		goto exit;
 	}
 	bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
-	bio->bi_size = 0;
+	bio->bi_iter.bi_size = 0;
 	bio->bi_end_io = windrbd_bio_flush_finished;
 	bio->bi_upper_irp = irp;
 	bio->bi_bdev = dev;

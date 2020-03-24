@@ -584,7 +584,7 @@ struct bio_collection {
 
 #define BI_WINDRBD_FLAG_BOOTSECTOR_PATCHED 0
 
-/* from: linux/blk_types.h */
+/* from: linux/bvec.h */
 
 struct bvec_iter {
 	sector_t		bi_sector;	/* device address in 512 byte
@@ -597,18 +597,18 @@ struct bvec_iter {
 						   current bvec */
 };
 
+/* from: linux/blk_types.h */
+
 struct bio {
 	struct _IRP **bi_irps;	   /* Used for accessing the backing device */
 	struct _IRP *bi_upper_irp; /* Used for the DRBD device */
 
-	sector_t				bi_sector;	/* device address in 512 byte sectors */
 	struct bio*				bi_next;	/* request queue link */
 	struct block_device*	bi_bdev;
 	unsigned long			bi_flags;	/* status, command, etc */
 	unsigned int			bi_opf;		/* bottom bits req flags, top bits REQ_OP. Use accessors. */
 	unsigned short			bi_vcnt;	/* how many bio_vec's */
 	unsigned short			bi_idx;		/* current index into bvl_vec */
-	unsigned int			bi_size;	/* residual I/O count */
 	atomic_t				bi_cnt;		/* pin count */
 	/* bi_end_io is assigned in next comment places.
 	Blkdev_issue_zeroout.c (drbd\drbd-kernel-compat):		bio->bi_end_io = bio_batch_end_io;
