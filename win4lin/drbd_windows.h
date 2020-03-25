@@ -1099,6 +1099,7 @@ extern void down_write(struct rw_semaphore *sem);
 extern void down_read(struct rw_semaphore *sem);
 extern void up_write(struct rw_semaphore *sem);
 extern void up_read(struct rw_semaphore *sem);
+extern void downgrade_write(struct rw_semaphore *sem);
 
 /* This does not initialize the rw_semaphore (we would need to call
    a Windows API function in the initializer). Initialize it from

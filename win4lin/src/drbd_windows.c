@@ -1254,7 +1254,7 @@ void up(struct semaphore *s)
     }
 }
 
-	/* TODO: no. Implement rw_semaphores using list of waiters
+	/* TODO: Implement rw_semaphores using list of waiters
 	 * and a real semaphore.
 	 */
 
@@ -1282,6 +1282,14 @@ void down_read(struct rw_semaphore *sem)
 void up_read(struct rw_semaphore *sem)
 {
 	KeReleaseSpinLock(&sem->the_lock, sem->old_irql);
+}
+
+	/* noop because there is no difference between read and write
+	 * locks for now.
+	 */
+
+void downgrade_write(struct rw_semaphore *sem)
+{
 }
 
 void spin_lock_init(spinlock_t *lock)
