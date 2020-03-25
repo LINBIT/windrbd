@@ -30,15 +30,19 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
+TODO: Bug: invalidate-remote while I/O sync stall on sync start
+
+	And remote is uptodate.
+
 TODO: Bug: BSOD on sync finish.
 
-	7E (?)
+	7E (?) could not reproduce now.
 
 TODO: Bug: scan-partitions-for-minor sometimes does not find device.
 
 	Maybe sleep a little until opening succeeds.
 
-TODO: Bug: BSOD in drbd_sender:2898 calling callback
++TODO: Bug: BSOD in drbd_sender:2898 calling callback
 
 	After 26 days of I/O this BSOD (ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY)
 	happened. Unfortunately (we has this BSOD before).

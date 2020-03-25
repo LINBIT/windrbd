@@ -173,7 +173,7 @@ EMail to drbd-user@lists.linbit.com
 Upgrade DRBD
 
 cd drbd
-git checkout master
+git checkout drbd-9.0
 git pull
 git submodule update
 cd ..
