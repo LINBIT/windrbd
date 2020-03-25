@@ -284,9 +284,9 @@ TODO: Security: How to identify clients with cgi-script
 
 	Oliver mentioned MacSEC.
 
-+TODO: Performance: make keep-alive work with cgi-script
+TODO: Performance: make keep-alive work with cgi-script
 
-+?TODO: Feature: Create a WinPE image with network and WinDRBD.
+TODO: Feature: Create a WinPE image with network and WinDRBD.
 
 	And see if we can install on top of the WinDRBD device
 	It would be nice if we could pass the WinDRBD device
@@ -355,7 +355,7 @@ TODO: Bug: handle the case where DRBD device size drops to 0 again
 	Note: blocking is currently done via suspend-io within
 	DRBD. Therefore not sure if we need to fix this.
 
-+TODO: Performance: Improve boot speed.
+TODO: Performance: Improve boot speed.
 
 	Right now it takes more than 5 minutes until the system is
 	usable

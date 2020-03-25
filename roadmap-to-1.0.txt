@@ -3,14 +3,14 @@ Roadmap to 1.0
 
 Upgrade DRBD to 9.0.21
 
+inno-setup: fix creation of bus device
+	Maybe
+
 -----
 
 Maybe:
 
 Installer (WinPE)
-
-inno-setup: fix creation of bus device
-	Maybe
 
 Make reestablish connection work
 
