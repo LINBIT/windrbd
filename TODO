@@ -30,6 +30,10 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
+TODO: Performance: rw_sem are spinlocks now
+
+	Which is slow.
+
 TODO: Bug: invalidate-remote while I/O sync stall on sync start
 
 	And remote is uptodate.
