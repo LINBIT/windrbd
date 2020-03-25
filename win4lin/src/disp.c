@@ -123,6 +123,10 @@ int create_bus_device(void)
 	return 0;
 }
 
+/* see drbd_transport.c */
+
+extern struct rw_semaphore transport_classes_lock;
+
 NTSTATUS
 DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 {
@@ -194,10 +198,8 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
 	DriverObject->DriverUnload = mvolUnload;
 
-	downup_rwlock_init(&transport_classes_lock); //init spinlock for transport 
+	init_rwsem(&transport_classes_lock);
 	mutex_init(&notification_mutex);
-		/* TODO: this is unneccessary */
-	KeInitializeSpinLock(&transport_classes_lock);
 
 	dtt_initialize();
 

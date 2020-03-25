@@ -1254,37 +1254,34 @@ void up(struct semaphore *s)
     }
 }
 
-	/* TODO: no. Use our spinlock implemetation (with flags patched
-	 * in).
+	/* TODO: no. Implement rw_semaphores using list of waiters
+	 * and a real semaphore.
 	 */
 
-KIRQL du_OldIrql;
-
-void downup_rwlock_init(KSPIN_LOCK* lock)
+void init_rwsem(struct rw_semaphore *sem)
 {
-	KeInitializeSpinLock(lock);
+	KeInitializeSpinLock(&sem->the_lock);
+	sem->old_irql = PASSIVE_LEVEL;
 }
 
-KIRQL down_write(KSPIN_LOCK* lock)
+void down_write(struct rw_semaphore *sem)
 {
-	return KeAcquireSpinLock(lock, &du_OldIrql);
+	KeAcquireSpinLock(&sem->the_lock, &sem->old_irql);
 }
 
-void up_write(KSPIN_LOCK* lock)
+void up_write(struct rw_semaphore *sem)
 {
-	KeReleaseSpinLock(lock, du_OldIrql);
-	return;
+	KeReleaseSpinLock(&sem->the_lock, sem->old_irql);
 }
 
-KIRQL down_read(KSPIN_LOCK* lock)
+void down_read(struct rw_semaphore *sem)
 {
-	return KeAcquireSpinLock(lock, &du_OldIrql);
+	KeAcquireSpinLock(&sem->the_lock, &sem->old_irql);
 }
 
-void up_read(KSPIN_LOCK* lock)
+void up_read(struct rw_semaphore *sem)
 {
-	KeReleaseSpinLock(lock, du_OldIrql);
-	return;
+	KeReleaseSpinLock(&sem->the_lock, sem->old_irql);
 }
 
 void spin_lock_init(spinlock_t *lock)

@@ -1089,19 +1089,24 @@ extern void down(struct semaphore *s);
 extern int down_trylock(struct semaphore *s);
 extern void up(struct semaphore *s);
 
-// down_up RW lock port with spinlock
-extern KSPIN_LOCK transport_classes_lock;
+struct rw_semaphore {
+	KSPIN_LOCK the_lock;
+	KIRQL old_irql;
+};
 
-extern void downup_rwlock_init(KSPIN_LOCK* lock); // init spinlock one time at driverentry 
-//extern void down_write(struct semaphore *sem);
-extern KIRQL down_write(KSPIN_LOCK* lock);
-//extern void down_read(struct semaphore *sem);
-extern KIRQL down_read(KSPIN_LOCK* lock);
-//extern void up_write(struct semaphore *sem);
-extern void up_write(KSPIN_LOCK* lock);
-//extern void up_read(struct semaphore *sem);
-extern void up_read(KSPIN_LOCK* lock);
+extern void init_rwsem(struct rw_semaphore *sem);
+extern void down_write(struct rw_semaphore *sem);
+extern void down_read(struct rw_semaphore *sem);
+extern void up_write(struct rw_semaphore *sem);
+extern void up_read(struct rw_semaphore *sem);
 
+/* This does not initialize the rw_semaphore (we would need to call
+   a Windows API function in the initializer). Initialize it from
+   the DriverEntry function.
+ */
+
+#define DECLARE_RWSEM(sem) \
+	struct rw_semaphore sem;
 
 static int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 	sector_t nr_sects, gfp_t gfp_mask, bool discard)
