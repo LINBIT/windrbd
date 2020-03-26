@@ -82,6 +82,7 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	ULONG ip_length;
 	UCHAR aucTemp[255] = { 0 };
 	NTSTATUS status;
+	char syslog_ip[255];
 
 	ip_length = 0;
 
@@ -90,14 +91,15 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 		 */
 	status = GetRegistryValue(L"syslog_ip", &ulLength, (UCHAR*)&aucTemp, RegPath_unicode);
 	if (status == STATUS_SUCCESS) {
-		status = RtlUnicodeToUTF8N(g_syslog_ip, SYSLOG_IP_SIZE, &ip_length, (WCHAR*) aucTemp, ulLength);
+		status = RtlUnicodeToUTF8N(syslog_ip, ARRAY_SIZE(syslog_ip)-1, &ip_length, (WCHAR*) aucTemp, ulLength);
 	}
 	if (status != STATUS_SUCCESS) {
-		strcpy(g_syslog_ip, "127.0.0.1");
+		strcpy(syslog_ip, "127.0.0.1");
 	} else {
-		g_syslog_ip[ip_length] = '\0';
+		syslog_ip[ip_length] = '\0';
 	}
-	printk("syslog_ip is %s", g_syslog_ip);
+	set_syslog_ip(syslog_ip);
+	printk("syslog_ip from registry is %s", syslog_ip);
 
 	return 0;
 }

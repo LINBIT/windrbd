@@ -13,7 +13,6 @@
 
 #include <stdlib.h>
 
-/* TODO: Handle syslog-ip. */
 /* TODO: test 3+ nodes setup: right now it fails booting (connection
    loss on boot) */
 
@@ -614,6 +613,9 @@ void windrbd_init_boot_device(void)
  */
 	create_bus_device();
 #endif
+
+	if (boot_device.syslog_ip != NULL)
+		set_syslog_ip(boot_device.syslog_ip);
 
 	ret = windrbd_create_boot_device_stage1(&boot_device);
 	if (ret != 0)

@@ -303,6 +303,8 @@ typedef unsigned int                fmode_t;
 
 extern int initialize_syslog_printk(void);
 extern void shutdown_syslog_printk(void);
+extern void set_syslog_ip(const char *ip);
+
 extern int _printk(const char * func, const char * format, ...);
 extern void printk_reprint(size_t bytes);
 
@@ -1001,9 +1003,6 @@ struct sk_buff;
 extern unsigned char *skb_put(struct sk_buff *skb, unsigned int len);
 extern char *kstrdup(const char *s, int gfp);
 extern void panic(const char *fmt, ...);
-
-#define SYSLOG_IP_SIZE 64
-extern char g_syslog_ip[];
 
 void windrbd_init_netlink(void);
 void windrbd_shutdown_netlink(void);

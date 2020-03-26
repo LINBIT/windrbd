@@ -38,7 +38,7 @@ static int no_net_printk = 0;
 
 #define RING_BUFFER_SIZE 1048576
 
-char g_syslog_ip[SYSLOG_IP_SIZE];
+static char syslog_ip[64];
 
 static struct socket *printk_udp_socket;
 static SOCKADDR_IN printk_udp_target;
@@ -68,6 +68,28 @@ int initialize_syslog_printk(void)
 	return 0;
 }
 
+static void stop_net_printk(void)
+{
+	if (printk_udp_socket) {
+		printk("shutting down printk ...\n");
+		sock_release(printk_udp_socket);
+		printk_udp_socket = NULL;
+	}
+}
+
+void set_syslog_ip(const char *ip)
+{
+	if (strcmp(ip, syslog_ip) == 0)
+		return;
+
+	strncpy(syslog_ip, ip, ARRAY_SIZE(syslog_ip)-1);
+	stop_net_printk();
+
+		/* will be started again with next printk */
+
+	printk("syslog_ip set to %s\n", syslog_ip);
+}
+
 	/* Call this before shuting down socket layer, it would stall
 	 * on releasing the provider network programming interface
 	 * (NPI) when there are any sockets open.
@@ -75,11 +97,8 @@ int initialize_syslog_printk(void)
 
 void shutdown_syslog_printk(void)
 {
-	if (printk_udp_socket) {
-		printk("shutting down printk ...\n");
-		sock_release(printk_udp_socket);
-		printk_udp_socket = NULL;
-	}
+	stop_net_printk();
+
 	printk_shut_down = 1;
 }
 
@@ -140,8 +159,8 @@ static int open_syslog_socket(void)
 		printk_udp_target.sin_family = AF_INET;
 		printk_udp_target.sin_port = htons(514);
 
-		if (my_inet_aton(g_syslog_ip, &printk_udp_target.sin_addr) < 0) {
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Invalid syslog IP address: %s\nYou will NOT see any output produced by printk (and pr_err, ...)\n", g_syslog_ip);
+		if (my_inet_aton(syslog_ip, &printk_udp_target.sin_addr) < 0) {
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Invalid syslog IP address: %s\nYou will NOT see any output produced by printk (and pr_err, ...)\n", syslog_ip);
 			return -1;
 		}
 
@@ -172,7 +191,7 @@ static int open_syslog_socket(void)
 
 					/* -ENETUNREACH on booting */
 				if (err < 0) {
-					DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Failed to SendTo to syslog IP %s, err is %x\n", g_syslog_ip, err);
+					DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Failed to SendTo to syslog IP %s, err is %x\n", syslog_ip, err);
 
 					sock_release(printk_udp_socket);
 					printk_udp_socket = NULL;
@@ -388,20 +407,3 @@ int _printk(const char *func, const char *fmt, ...)
 	return len_ret;
 }
 
-	/* TODO: this probably should go away again, it never worked
- 	 * properly.
-	 */
-
-void printk_reprint(size_t bytes)
-{
-	int flags;
-
-        spin_lock_irqsave(&ring_buffer_lock, flags);
-
-	ring_buffer_tail -= bytes;
-	ring_buffer_tail %= RING_BUFFER_SIZE;
-
-        spin_unlock_irqrestore(&ring_buffer_lock, flags);
-
-	printk("Last %d bytes printed again\n", bytes);
-}
