@@ -1,6 +1,62 @@
 TODO: define tests to be run before releases.
 
 -----------------------------------------
+Mar 26 2020
+
+detach attach loop (without I/O, without connection)
+
+works very well (800 iterations).
+
+-----------------------------------------
+Mar 26 2020
+
+disconnect connect and wait sync (while I/O
+
+works very well (130 iterations).
+
+-----------------------------------------
+Mar 26 2020
+
+detach attach waitsync loop on a disk device and a linux peer
+
+attach stalls after 100 iterations (of detach attach loop)
+
+-----------------------------------------
+Mar 26 2020
+
+up down loop on a disk device and a linux peer
+
+works very well.
+
+-----------------------------------------
+
+Mar 26 2020
+
+primary secondary loop on a disk device
+
+secondary takes 30-60 seconds to complete. Reason is
+that we get a SUPRISE_REMOVAL (need to unmount device
+from user space).
+
+Apart from that, everything ok
+
+-----------------------------------------
+
+Mar 26 2020
+
+Write to NTFS while invalidating remote
+
+Still stalling on sync start (after ~50 iterations).
+
+-----------------------------------------
+
+Mar 25 2020
+
+Write to NTFS while connected
+
+Ok (2 hours).
+
+-----------------------------------------
 
 Feb 20 2019
 
