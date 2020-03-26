@@ -27,18 +27,20 @@ Driver Unloading
 
 ----- for 1.0.0
 
-Using System Volume (C:\) as DRBD device (diskless client with PXE boot)
+2 node (Windows / Linux) setup production ready.
 
 ----- for 1.1.0
 
-Using System Volume (C:\) as DRBD device (with local backing storage disk)
+Using System Volume (C:\) as DRBD device (diskless client with PXE boot)
 
 ----- for 1.2.0
 
+Using System Volume (C:\) as DRBD device (with local backing storage disk)
+
+----- for 1.3.0
+
 Other filesystems (FAT family, ReFS)
 	Tested for data devices on Windows 10.
-
-Auto-Promote (if possible at all)
 
 Online verify
 
@@ -46,7 +48,7 @@ No reboot on upgrade/uninstall (if at all possible)
 
 Relocate C:\windrbd directory
 
----- after 1.2.0
+---- after 1.3.0
 
 Mounting to NTFS directories (when they are empty)
 
@@ -71,4 +73,9 @@ ReactOS support
 drbdadm status as non-administrator
 
 Windows applications that use undocumented ioctl system calls (like winsat).
+
+Most likely never
+-----------------
+
+Auto-Promote (if possible at all)
 

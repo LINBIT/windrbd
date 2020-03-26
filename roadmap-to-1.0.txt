@@ -8,7 +8,7 @@ inno-setup: fix creation of bus device
 
 -----
 
-Maybe:
+Roadmap to 1.1:
 
 Installer (WinPE)
 
