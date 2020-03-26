@@ -30,6 +30,11 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
+TODO: Bug: boot feature does not work with DRBD 9.0.22 upgrade
+
+	BSOD when reading first few sectors. It works with 0.10.5
+	but not with the recent patches.
+
 TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
 
 	After ~100 iterations. Not clear why. Resource was connected.
@@ -712,9 +717,12 @@ Feb  5 14:01:17 10.43.10.11  U13:01:17.453|4260bc80(drbd_a_vamp-4nodes) bm_print
 
 	Upstream bug?
 
-TODO: Bug: printk eats boot messages
++TODO: Bug: printk eats boot messages
 
 	Because of being UDP. Implement TCP/IP logging one day.
+
+	Delay a bit before sending first printk, maybe that
+	helps...
 
 TODO: Bug: Diskless Primary BSOD when connection failed
 
