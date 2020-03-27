@@ -35,7 +35,7 @@
 #include <ntddstor.h>
 
 /* Uncomment this if you want more debug output (disable for releases) */
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -974,6 +974,9 @@ static void windrbd_bio_finished(struct bio * bio)
 	int i;
 	NTSTATUS status;
 	int error = blk_status_to_errno(bio->bi_status);
+
+printk("Debug: error is %d bio->bi_status is %d\n", error, bio->bi_status);
+printk("Debug: bio->bi_iter.bi_sector is %d\n", bio->bi_iter.bi_sector);
 
 	status = STATUS_SUCCESS;
 
@@ -2301,7 +2304,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				break;
 			}
 
-// printk("SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
+printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
 
 			status = windrbd_make_drbd_requests(irp, bdev, ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority), sector_count*512, start_sector, rw);
 			if (status == STATUS_SUCCESS) {
