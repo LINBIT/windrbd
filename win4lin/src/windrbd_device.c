@@ -994,7 +994,8 @@ printk("Debug: bio->bi_iter.bi_sector is %d\n", bio->bi_iter.bi_sector);
 // dbg("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
 						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
-// { int j; for (j=0;j<10;j++) { printk("data[%d] is %x\n", j, ((unsigned char*)user_buffer+offset)[j]); } }
+{ int j; for (j=0;j<10;j++) { 
+printk("Debug data[%d] is %x\n", j, ((unsigned char*)user_buffer+offset)[j]); } }
 						offset += bio->bi_io_vec[i].bv_len;
 					}
 				} else {
