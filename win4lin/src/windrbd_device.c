@@ -967,9 +967,12 @@ static void dump_data(const char *tag, char *data, size_t len, size_t offset_on_
 	size_t i;
 
 	for (i=0;i<len;i++) {
+/*
 		if (i % 16 == 0)
 			printk("\n%s: %x ", tag, offset_on_disk+i);
 		printk("%x ", (unsigned char) (data[i]));
+*/
+		printk("%s: %x %x\n", tag, offset_on_disk+i, (unsigned char) (data[i]));
 	}
 }
 
