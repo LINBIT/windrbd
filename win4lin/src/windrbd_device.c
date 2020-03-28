@@ -962,6 +962,17 @@ static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	return status;
 }
 
+static void dump_data(const char *tag, char *data, size_t len, size_t offset_on_disk)
+{
+	size_t i;
+
+	for (i=0;i<len;i++) {
+		if (i % 16 == 0)
+			printk("\n%s: %x ", tag, offset_on_disk+i);
+		printk("%x ", (unsigned char) (data[i]));
+	}
+}
+
 /* Limit imposed by DRBD over the wire protocol. This will not change
  * in the next 5+ years, most likely never.
  */
@@ -976,7 +987,7 @@ static void windrbd_bio_finished(struct bio * bio)
 	int error = blk_status_to_errno(bio->bi_status);
 
 printk("Debug: error is %d bio->bi_status is %d\n", error, bio->bi_status);
-printk("Debug: bio->bi_iter.bi_sector is %d\n", bio->bi_iter.bi_sector);
+printk("Debug: bio->bi_iter.bi_sector is %d, bio->bi_iter.bi_size is %d\n", bio->bi_iter.bi_sector, bio->bi_iter.bi_size);
 
 	status = STATUS_SUCCESS;
 
@@ -994,8 +1005,13 @@ printk("Debug: bio->bi_iter.bi_sector is %d\n", bio->bi_iter.bi_sector);
 // dbg("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
 						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+
+dump_data("Debug", user_buffer+offset, bio->bi_io_vec[i].bv_len, bio->bi_iter.bi_sector*512+offset);
+
+/*
 { int j; for (j=0;j<10;j++) { 
 printk("Debug data[%d] is %x\n", j, ((unsigned char*)user_buffer+offset)[j]); } }
+*/
 						offset += bio->bi_io_vec[i].bv_len;
 					}
 				} else {
