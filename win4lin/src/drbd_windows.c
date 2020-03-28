@@ -2120,8 +2120,11 @@ NTSTATUS DrbdIoCompletion(
 	if (test_inject_faults(&inject_on_completion, "assuming completion routine was send an error (enabled for all devices)"))
 		status = STATUS_IO_DEVICE_ERROR;
 
+printk("Debug stack_location->MajorFunction is %d bio->bi_iter.bi_sector is %d bio->bi_iter.bi_size >= 512 is %d bio->bi_first_element is %d bio->dont_patch_boot_sector is %d\n", stack_location->MajorFunction, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, bio->bi_first_element, bio->dont_patch_boot_sector);
 	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_iter.bi_sector == 0 && bio->bi_iter.bi_size >= 512 && !bio->dont_patch_boot_sector) {
+printk("Debug 1\n");
 		if (test_and_set_bit(BI_WINDRBD_FLAG_BOOTSECTOR_PATCHED, &bio->bi_windrbd_flags) == 0) {
+printk("Debug 2\n");
 			void *buffer = bio->bi_io_vec[0].bv_page->addr;
 			patch_boot_sector(buffer, 1, 0);
 		}
@@ -2297,7 +2300,10 @@ static int windrbd_generic_make_request(struct bio *bio)
  */
 
 
+printk("Debug io is %d bio->bi_iter.bi_sector is %d bio->bi_iter.bi_size >= 512 is %d bio->bi_first_element is %d bio->dont_patch_boot_sector is %d\n", io, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, bio->bi_first_element, bio->dont_patch_boot_sector);
+
 	if (io == IRP_MJ_WRITE && bio->bi_iter.bi_sector == 0 && bio->bi_iter.bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
+printk("Debug 1\n");
 		bio->patched_bootsector_buffer = kmalloc(first_size, 0, 'DRBD');
 		if (bio->patched_bootsector_buffer == NULL)
 			return -ENOMEM;
