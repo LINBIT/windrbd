@@ -1012,7 +1012,7 @@ dbg("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %
 {
 static int sectors;
 if (sectors++ < 20) dump_data("Debug", user_buffer+offset, bio->bi_io_vec[i].bv_len, bio->bi_iter.bi_sector*512+offset);
-if (sectors < 20) dump_data("Debug2", ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len, bio->bi_iter.bi_sector*512+offset);
+// if (sectors < 20) dump_data("Debug2", ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len, bio->bi_iter.bi_sector*512+offset);
 }
 
 /*
