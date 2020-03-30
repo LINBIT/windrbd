@@ -35,6 +35,11 @@ TODO: Bug: boot feature does not work with DRBD 9.0.22 upgrade
 	BSOD when reading first few sectors. It works with 0.10.5
 	but not with the recent patches.
 
+	Reason is that DRBD cannot handle bvec elements larger
+	than PAGE_SIZE. Revert commit a0206c0b (we once had it
+	in but then threw it out for performance reasons), or
+	patch DRBD to handle bvec elements larger than PAGE_SIZE.
+
 TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
 
 	After ~100 iterations. Not clear why. Resource was connected.
