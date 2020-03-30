@@ -1004,14 +1004,15 @@ printk("Debug: bio->bi_iter.bi_sector is %d, bio->bi_iter.bi_size is %d\n", bio-
 					offset = bio->bi_mdl_offset;
 					for (i=0;i<bio->bi_vcnt;i++) {
 
-// dbg("RtlCopyMemory(%p, %p, %d)\n", user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
-// dbg("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+dbg("RtlCopyMemory(%p, %p, %d)\n", user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+dbg("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
 						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
 {
 static int sectors;
 if (sectors++ < 20) dump_data("Debug", user_buffer+offset, bio->bi_io_vec[i].bv_len, bio->bi_iter.bi_sector*512+offset);
+if (sectors < 20) dump_data("Debug2", ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len, bio->bi_iter.bi_sector*512+offset);
 }
 
 /*
@@ -1173,8 +1174,12 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
  */
 
 
-		if (bio_data_dir(bio) == READ)
+		if (bio_data_dir(bio) == READ) {
+int x;
 			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, 0, 'DRBD');
+for (x=0;x<this_bio_size;x++) ((char*)bio->bi_io_vec[0].bv_page->addr)[x] = 0xab;
+}
+
 		else
 			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
 
