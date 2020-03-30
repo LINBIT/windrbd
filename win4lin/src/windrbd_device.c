@@ -1009,7 +1009,10 @@ printk("Debug: bio->bi_iter.bi_sector is %d, bio->bi_iter.bi_size is %d\n", bio-
 
 						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
-if (bio->bi_iter.bi_sector == 0) dump_data("Debug", user_buffer+offset, bio->bi_io_vec[i].bv_len, bio->bi_iter.bi_sector*512+offset);
+{
+static int sectors;
+if (sectors++ < 20) dump_data("Debug", user_buffer+offset, bio->bi_io_vec[i].bv_len, bio->bi_iter.bi_sector*512+offset);
+}
 
 /*
 { int j; for (j=0;j<10;j++) { 
