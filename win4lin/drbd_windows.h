@@ -610,7 +610,6 @@ struct bio {
 	unsigned long			bi_flags;	/* status, command, etc */
 	unsigned int			bi_opf;		/* bottom bits req flags, top bits REQ_OP. Use accessors. */
 	unsigned short			bi_vcnt;	/* how many bio_vec's */
-	unsigned short			bi_idx;		/* current index into bvl_vec */
 	atomic_t				bi_cnt;		/* pin count */
 	/* bi_end_io is assigned in next comment places.
 	Blkdev_issue_zeroout.c (drbd\drbd-kernel-compat):		bio->bi_end_io = bio_batch_end_io;

@@ -922,7 +922,7 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->bi_opf = bio_src->bi_opf;
 	bio->bi_vcnt = bio_src->bi_vcnt;
 	bio->bi_iter.bi_size = bio_src->bi_iter.bi_size;
-	bio->bi_idx = bio_src->bi_idx;
+	bio->bi_iter.bi_idx = bio_src->bi_iter.bi_idx;
 
 	return bio;
 }
