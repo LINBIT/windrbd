@@ -726,7 +726,6 @@ static inline int submit_bio(struct bio *bio)
 	return generic_make_request(bio);
 }
 
-#if 0
 #define bio_iovec_idx(bio, idx)		(&((bio)->bi_io_vec[(idx)]))
 #define __bio_for_each_segment(bvl, bio, i, start_idx)			\
 	for (bvl = bio_iovec_idx((bio), (start_idx)), i = (start_idx);	\
@@ -734,9 +733,11 @@ static inline int submit_bio(struct bio *bio)
 		bvl++, i++)
 
 #define bio_for_each_segment(bvl, bio, i)				\
-	__bio_for_each_segment(bvl, bio, i, (bio)->bi_idx)
+	__bio_for_each_segment(bvl, bio, i, (bio)->bi_iter.bi_idx)
 
-#endif
+/* Attention: The backward comp version of this macro accesses bio from
+   calling namespace */
+#define bio_iter_last(BVEC, ITER) ((ITER) == bio->bi_vcnt - 1)
 
 // DRBD_DOC: not support, it is always newest updated block for windows.
 /* TODO: Sure? */
