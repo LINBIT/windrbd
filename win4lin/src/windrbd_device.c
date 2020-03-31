@@ -989,8 +989,8 @@ static void windrbd_bio_finished(struct bio * bio)
 	NTSTATUS status;
 	int error = blk_status_to_errno(bio->bi_status);
 
-printk("Debug: error is %d bio->bi_status is %d\n", error, bio->bi_status);
-printk("Debug: bio->bi_iter.bi_sector is %d, bio->bi_iter.bi_size is %d\n", bio->bi_iter.bi_sector, bio->bi_iter.bi_size);
+// printk("Debug: error is %d bio->bi_status is %d\n", error, bio->bi_status);
+// printk("Debug: bio->bi_iter.bi_sector is %d, bio->bi_iter.bi_size is %d\n", bio->bi_iter.bi_sector, bio->bi_iter.bi_size);
 
 	status = STATUS_SUCCESS;
 
@@ -1004,21 +1004,18 @@ printk("Debug: bio->bi_iter.bi_sector is %d, bio->bi_iter.bi_size is %d\n", bio-
 					offset = bio->bi_mdl_offset;
 					for (i=0;i<bio->bi_vcnt;i++) {
 
-dbg("RtlCopyMemory(%p, %p, %d)\n", user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
-dbg("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+// dbg("RtlCopyMemory(%p, %p, %d)\n", user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
+// dbg("i is %d offset is %d user_buffer is %p bio->bi_io_vec[i].bv_page->addr is %p bio->bi_io_vec[i].bv_offset is %d bio->bi_io_vec[i].bv_len is %d\n", i, offset, user_buffer, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
 						RtlCopyMemory(user_buffer+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len);
 
+#if 0
 {
 static int sectors;
 if (sectors++ < 20) dump_data("Debug", user_buffer+offset, bio->bi_io_vec[i].bv_len, bio->bi_iter.bi_sector*512+offset);
 // if (sectors < 20) dump_data("Debug2", ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, bio->bi_io_vec[i].bv_len, bio->bi_iter.bi_sector*512+offset);
 }
-
-/*
-{ int j; for (j=0;j<10;j++) { 
-printk("Debug data[%d] is %x\n", j, ((unsigned char*)user_buffer+offset)[j]); } }
-*/
+#endif
 						offset += bio->bi_io_vec[i].bv_len;
 					}
 				} else {
@@ -1177,7 +1174,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		if (bio_data_dir(bio) == READ) {
 int x;
 			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, 0, 'DRBD');
-for (x=0;x<this_bio_size;x++) ((char*)bio->bi_io_vec[0].bv_page->addr)[x] = 0xab;
+// for (x=0;x<this_bio_size;x++) ((char*)bio->bi_io_vec[0].bv_page->addr)[x] = 0xab;
 }
 
 		else
@@ -2332,7 +2329,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				break;
 			}
 
-printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
+// printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
 
 			status = windrbd_make_drbd_requests(irp, bdev, ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority), sector_count*512, start_sector, rw);
 			if (status == STATUS_SUCCESS) {
