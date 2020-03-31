@@ -1,3 +1,11 @@
+What's new in version 0.10.6
+----------------------------
+
+Upgraded DRBD version from 9.0.17 to 9.0.22
+
+Can set syslog-ip via boot parameters (no need to hack the
+registry).
+
 What's new in version 0.10.5
 ----------------------------
 
