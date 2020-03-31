@@ -2,7 +2,7 @@
 #include "windrbd_threads.h"
 #include "drbd_int.h"
 
-#define WINDRBD_RUN_TESTS 1
+/* #define WINDRBD_RUN_TESTS 1 */
 
 #ifdef RELEASE
 #ifdef WINDRBD_RUN_TESTS
