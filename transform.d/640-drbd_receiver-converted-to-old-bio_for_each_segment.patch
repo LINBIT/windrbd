@@ -22,17 +22,15 @@ index dc4adc3..f890c5f 100644
  	struct bio *bio;
  	int digest_size, err, expect;
  	void *dig_in = peer_device->connection->int_dig_in;
-@@ -2055,14 +2055,14 @@ static int recv_dless_read(struct drbd_peer_device *peer_device, struct drbd_req
+@@ -2055,12 +2055,12 @@ static int recv_dless_read(struct drbd_peer_device *peer_device, struct drbd_req
  	bio = req->master_bio;
  	D_ASSERT(peer_device->device, sector == bio->bi_iter.bi_sector);
  
 -	iter = bio->bi_iter;
 +	iter = 0;
  	bio_for_each_segment(bvec, bio, iter) {
- /*		void *mapped = ((u8*)kmap(bvec.bv_page)) + bvec.bv_offset + bio->bi_io_vec[iter.bi_idx].bv_len - iter.bi_size; */
 -		void *mapped = ((u8*)kmap(bvec.bv_page)) + bvec.bv_offset;
 +		void *mapped = ((u8*)kmap(bvec->bv_page)) + bvec->bv_offset;
- 
 -		expect = min_t(int, data_size, bvec.bv_len);
 +		expect = min_t(int, data_size, bvec->bv_len);
  		err = drbd_recv_into(peer_device->connection, mapped, expect);
