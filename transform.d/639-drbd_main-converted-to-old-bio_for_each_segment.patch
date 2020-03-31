@@ -1,0 +1,70 @@
+From d4a5d4af2fe01131fc479f6420d6e3d30c7298aa Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 31 Mar 2020 15:19:18 +0200
+Subject: [PATCH 1/3] drbd_main: converted to old bio_for_each_segment
+
+---
+ drbd/drbd_main.c | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 74d05d4..f9b0299 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -2157,20 +2157,20 @@ static int _drbd_no_send_page(struct drbd_peer_device *peer_device, struct page
+ static int _drbd_send_bio(struct drbd_peer_device *peer_device, struct bio *bio)
+ {
+ 	struct drbd_connection *connection = peer_device->connection;
+-	struct bio_vec bvec;
+-	struct bvec_iter iter;
++	struct bio_vec *bvec;
++	int iter;
+ 
+ 	/* Flush send buffer and make sure PAGE_SIZE is available... */
+ 	alloc_send_buffer(connection, PAGE_SIZE, DATA_STREAM);
+ 	connection->send_buffer[DATA_STREAM].allocated_size = 0;
+ 
+ 	/* hint all but last page with MSG_MORE */
+-	iter = bio->bi_iter;
++	iter = 0;
+ 	bio_for_each_segment(bvec, bio, iter) {
+ 		int err;
+ 
+-		err = _drbd_no_send_page(peer_device, bvec.bv_page,
+-					 bvec.bv_offset, bvec.bv_len,
++		err = _drbd_no_send_page(peer_device, bvec->bv_page,
++					 bvec->bv_offset, bvec->bv_len,
+ 					 bio_iter_last(bvec, iter) ? 0 : MSG_MORE);
+ 		if (err)
+ 			return err;
+@@ -2178,15 +2178,15 @@ static int _drbd_send_bio(struct drbd_peer_device *peer_device, struct bio *bio)
+ 		if (bio_op(bio) == REQ_OP_WRITE_SAME)
+ 			break;
+ 
+-		peer_device->send_cnt += bvec.bv_len >> 9;
++		peer_device->send_cnt += bvec->bv_len >> 9;
+ 	}
+ 	return 0;
+ }
+ 
+ static int _drbd_send_zc_bio(struct drbd_peer_device *peer_device, struct bio *bio)
+ {
+-	struct bio_vec bvec;
+-	struct bvec_iter iter;
++	struct bio_vec *bvec;
++	int iter;
+ 	bool no_zc = drbd_disable_sendpage;
+ 
+ 	/* e.g. XFS meta- & log-data is in slab pages, which have a
+@@ -2197,7 +2197,7 @@ static int _drbd_send_zc_bio(struct drbd_peer_device *peer_device, struct bio *b
+ 	 * by someone, leading to some obscure delayed Oops somewhere else. */
+ 	if (!no_zc)
+ 		bio_for_each_segment(bvec, bio, iter) {
+-			struct page *page = bvec.bv_page;
++			struct page *page = bvec->bv_page;
+ 
+ 			if (page_count(page) < 1 || PageSlab(page)) {
+ 				no_zc = true;
+-- 
+2.17.0
+

@@ -1,0 +1,37 @@
+From 9d86d1761d33daf54473742c2ab9fd7860f03abe Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 31 Mar 2020 15:19:59 +0200
+Subject: [PATCH 3/3] drbd_transport_tcp: converted to old bio_for_each_segment
+
+---
+ drbd/drbd_transport_tcp.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 26a4389..7328c4a 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -1226,15 +1226,15 @@ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream stre
+ 
+ static int dtt_send_zc_bio(struct drbd_transport *transport, struct bio *bio)
+ {
+-	struct bio_vec bvec;
+-	struct bvec_iter iter;
++	struct bio_vec *bvec;
++	int iter;
+ 
+-	iter = bio->bi_iter;
++	iter = 0;
+ 	bio_for_each_segment(bvec, bio, iter) {
+ 		int err;
+ 
+-		err = dtt_send_page(transport, DATA_STREAM, bvec.bv_page,
+-				      bvec.bv_offset, bvec.bv_len,
++		err = dtt_send_page(transport, DATA_STREAM, bvec->bv_page,
++				      bvec->bv_offset, bvec->bv_len,
+ 				      bio_iter_last(bvec, iter) ? 0 : MSG_MORE);
+ 		if (err)
+ 			return err;
+-- 
+2.17.0
+

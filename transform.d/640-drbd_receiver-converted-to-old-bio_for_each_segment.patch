@@ -1,0 +1,46 @@
+From 547f88d5640c0edb64c2db349221022409154496 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 31 Mar 2020 15:19:46 +0200
+Subject: [PATCH 2/3] drbd_receiver: converted to old bio_for_each_segment
+
+---
+ drbd/drbd_receiver.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index dc4adc3..f890c5f 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -2032,8 +2032,8 @@ static int ignore_remaining_packet(struct drbd_connection *connection, int size)
+ static int recv_dless_read(struct drbd_peer_device *peer_device, struct drbd_request *req,
+ 			   sector_t sector, int data_size)
+ {
+-	struct bio_vec bvec;
+-	struct bvec_iter iter;
++	struct bio_vec *bvec;
++	int iter;
+ 	struct bio *bio;
+ 	int digest_size, err, expect;
+ 	void *dig_in = peer_device->connection->int_dig_in;
+@@ -2055,14 +2055,14 @@ static int recv_dless_read(struct drbd_peer_device *peer_device, struct drbd_req
+ 	bio = req->master_bio;
+ 	D_ASSERT(peer_device->device, sector == bio->bi_iter.bi_sector);
+ 
+-	iter = bio->bi_iter;
++	iter = 0;
+ 	bio_for_each_segment(bvec, bio, iter) {
+ /*		void *mapped = ((u8*)kmap(bvec.bv_page)) + bvec.bv_offset + bio->bi_io_vec[iter.bi_idx].bv_len - iter.bi_size; */
+-		void *mapped = ((u8*)kmap(bvec.bv_page)) + bvec.bv_offset;
++		void *mapped = ((u8*)kmap(bvec->bv_page)) + bvec->bv_offset;
+ 
+-		expect = min_t(int, data_size, bvec.bv_len);
++		expect = min_t(int, data_size, bvec->bv_len);
+ 		err = drbd_recv_into(peer_device->connection, mapped, expect);
+-		kunmap(bvec.bv_page);
++		kunmap(bvec->bv_page);
+ 		if (err)
+ 			return err;
+ 		data_size -= expect;
+-- 
+2.17.0
+
