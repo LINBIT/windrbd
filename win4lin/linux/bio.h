@@ -5,6 +5,12 @@
 #include <linux/bvec.h>
 #include <linux/blkdev.h>
 
+/* Since this code assumes that a 'page' is always PAGE_SIZE (which
+ * is not true for WinDRBD for performance reasons) we are using
+ * the old implementation that simply iterates through the biovec
+ * elements.
+ */
+
 #if 0
 
 static inline bool bio_no_advance_iter(struct bio *bio)
