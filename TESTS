@@ -1,5 +1,19 @@
 TODO: define tests to be run before releases.
 
+Mar 31 2020
+
+disconnect connect and wait sync (while I/O)
+
+works very well (80 iterations).
+
+-----------------------------------------
+
+Mar 31 2020
+
+I/O test over diskless boot device
+
+Ran until Windows shut down (no license)
+
 -----------------------------------------
 Mar 26 2020
 
