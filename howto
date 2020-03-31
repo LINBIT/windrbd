@@ -137,6 +137,8 @@ makes everything much more easy.
 Run cygwin update
 Update cygwin1.dll to newest version (in inno-setup/cygwin-binaries)
 
+Document changes in WHATSNEW.md
+
 Add entry to README.md
 git add README.md
 git commit -m "Release 0.x.0 (Beta y)"
