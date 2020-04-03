@@ -146,6 +146,20 @@ char *my_inet_ntoa(struct in_addr *addr)
         return s;
 }
 
+static int wait_a_bit_and_then_printk(void *unused)
+{
+	msleep((initial_send_delay + 2) * 1000);
+
+		/* If we still can't send, this printk will
+		 * call open_syslog_socket and create a new
+		 * thread that tries again.
+		 */
+
+	printk("Starting sending printk's over network\n");
+
+	return 0;
+}
+
 static int open_syslog_socket(void)
 {
 	int err;
@@ -209,6 +223,8 @@ static int open_syslog_socket(void)
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "socket opened, ring_buffer_head: %d ring_buffer_tail: %d\n", ring_buffer_head, ring_buffer_tail);
 
 		when_to_start_sending = jiffies + initial_send_delay * HZ;
+
+		kthread_run(wait_a_bit_and_then_printk, NULL, "printk-init");
 	}
 	return 0;
 }
