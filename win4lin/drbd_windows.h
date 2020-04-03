@@ -818,9 +818,8 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
 		__clear_bit(flag, &q->queue_flags);
 }
 
-/* TODO: returning ULONGLONG? */
 /* TODO: compute with HZ */
-static __inline ULONG_PTR JIFFIES()
+static __inline unsigned long long JIFFIES()
 {
 	LARGE_INTEGER Tick;
 	LARGE_INTEGER Elapse;
