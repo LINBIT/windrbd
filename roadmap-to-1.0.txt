@@ -1,8 +1,6 @@
 Roadmap to 1.0
 --------------
 
-Upgrade DRBD to 9.0.21
-
 inno-setup: fix creation of bus device
 	Maybe
 
@@ -37,6 +35,8 @@ Done:
 0.10.5: Rework boot URL syntax
         Also have more than one DRBD node
         Also can specify syslog_ip.
+
+0.10.6: Upgrade DRBD to 9.0.22
 
 ----
 
