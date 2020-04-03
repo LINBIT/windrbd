@@ -247,8 +247,28 @@ struct windrbd_minor_mount_point {
  * Output: none
  *
  * WinDRBD will printk results from the parser test.
+ *
+ * TODO: reuse this to run other tests as well.
  */
 
 #define IOCTL_WINDRBD_ROOT_RUN_PARSER_TEST CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 12, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
+/* Set syslog IP
+ * Input: The syslog IP (must be v4) as a char*
+ * Output: none
+ *
+ * Direct network printk's to this IP address.
+ */
+
+#define IOCTL_WINDRBD_ROOT_SET_SYSLOG_IP CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 13, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
+/* Create resource from URL
+ * Input: The DRBD URL (see documentation on boot device) as a char*
+ * Output: none
+ *
+ * Create a DRBD resource from an WinDRBD URL.
+ */
+
+#define IOCTL_WINDRBD_ROOT_CREATE_RESOURCE_FROM_URL CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 14, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 #endif

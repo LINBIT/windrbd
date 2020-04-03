@@ -1,6 +1,7 @@
 #include "drbd_windows.h"
 #include "drbd_wrappers.h"
 #include "windrbd_ioctl.h"
+/* #include "windrbd/windrbd_ioctl.h" */
 #include <linux/list.h>
 
 /* In case daemon is not running or a process takes longer than that

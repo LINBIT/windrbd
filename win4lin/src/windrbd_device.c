@@ -47,6 +47,7 @@
 #include "drbd_windows.h"
 #include "windrbd_device.h"
 #include "windrbd_ioctl.h"
+/* #include "windrbd/windrbd_ioctl.h" */
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
 
@@ -374,10 +375,17 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		break;
 
 	case IOCTL_WINDRBD_ROOT_RUN_PARSER_TEST:
-		/* TODO: this should later take a DRBD URL and create
-		 * the resource described in the URL.
-		 */
 /*		parser_test(); */
+		break;
+
+	case IOCTL_WINDRBD_ROOT_SET_SYSLOG_IP:
+		const char *syslog_ip = irp->AssociatedIrp.SystemBuffer;
+
+		if (syslog_ip == NULL)
+			status = STATUS_INVALID_DEVICE_REQUEST;
+		else
+			set_syslog_ip(syslog_ip);
+
 		break;
 
 	default:
