@@ -194,7 +194,60 @@ begin
 	// cmd script stops user mode helpers, no need to do that here
 end;
 
+var InstallBusDeviceCheckBox: TNewCheckBox;  
+
+procedure InitializeWizard;
+var  
+	InstallBusDeviceLabel1: TLabel;  
+	InstallBusDeviceLabel2: TLabel;  
+	InstallBusDeviceLabel3: TLabel;  
+	InstallBusDeviceLabel4: TLabel;  
+	InstallBusDeviceLabel5: TLabel;  
+
+	MainPage: TWizardPage;  
+
+begin
+	MainPage := CreateCustomPage(wpSelectTasks, 'Options', 'Please select installation options below.');
+	InstallBusDeviceLabel1 := TLabel.Create(MainPage);
+	InstallBusDeviceLabel1.Parent := MainPage.Surface;
+	InstallBusDeviceLabel1.Top := 0;
+	InstallBusDeviceLabel1.Left := 0;
+	InstallBusDeviceLabel1.Caption := 'In order to support disk devices and boot devices, a virtual SCSI bus device has';
+
+	InstallBusDeviceLabel2 := TLabel.Create(MainPage);
+	InstallBusDeviceLabel2.Parent := MainPage.Surface;
+	InstallBusDeviceLabel2.Top := InstallBusDeviceLabel1.Top + InstallBusDeviceLabel1.Height;
+	InstallBusDeviceLabel2.Left := 0;
+	InstallBusDeviceLabel2.Caption := 'to be installed on the system. This installer can do this, please uncheck this';
+
+	InstallBusDeviceLabel3 := TLabel.Create(MainPage);
+	InstallBusDeviceLabel3.Parent := MainPage.Surface;
+	InstallBusDeviceLabel3.Top := InstallBusDeviceLabel2.Top + InstallBusDeviceLabel2.Height;
+	InstallBusDeviceLabel3.Left := 0;
+	InstallBusDeviceLabel3.Caption := 'checkbox if automatic creation of the bus device causes troubles. You can';
+
+	InstallBusDeviceLabel4 := TLabel.Create(MainPage);
+	InstallBusDeviceLabel4.Parent := MainPage.Surface;
+	InstallBusDeviceLabel4.Top := InstallBusDeviceLabel3.Top + InstallBusDeviceLabel3.Height;
+	InstallBusDeviceLabel4.Left := 0;
+	InstallBusDeviceLabel4.Caption := 'always create the bus device later with device manager (see the tech guide on';
+
+	InstallBusDeviceLabel5 := TLabel.Create(MainPage);
+	InstallBusDeviceLabel5.Parent := MainPage.Surface;
+	InstallBusDeviceLabel5.Top := InstallBusDeviceLabel4.Top + InstallBusDeviceLabel4.Height;
+	InstallBusDeviceLabel5.Left := 0;
+	InstallBusDeviceLabel5.Caption := 'the boot device for a howto).';
+
+	InstallBusDeviceCheckBox := TNewCheckBox.Create(MainPage);
+	InstallBusDeviceCheckBox.Parent := MainPage.Surface;
+	InstallBusDeviceCheckBox.Top := InstallBusDeviceLabel5.Top + InstallBusDeviceLabel5.Height + 8;
+	InstallBusDeviceCheckBox.Left := 0;
+	InstallBusDeviceCheckBox.Width := 100;
+	InstallBusDeviceCheckBox.Caption := 'Install bus device';
+	InstallBusDeviceCheckBox.Checked := true;
+end;
+
 function DoCreateBusDevice: Boolean;
 begin
-	Result := False;
+	Result := InstallBusDeviceCheckBox.Checked;
 end;
