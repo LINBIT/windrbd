@@ -231,24 +231,6 @@ TODO: Performance: Retry disable NDIS lightweight filter
 
 	We still have the 90 seconds boot delay.
 
-+TODO: Feature: update inno setup installer
-
-	It should create the bus device and should also
-	install the disk device.
-
-	Creating on install works, removing on uninstall not
-	yet. Also currently installing installs an extra bus
-	device even when it is already there.
-
-	Works partly, right now fails to install bus device
-	when there are no storage class (SCSI) bus devices
-	yet. One has also to create the Storage Controller
-	class (see WinCDEmu).
-
-	Update: Tried again with a almost fresh Windows 7
-	installation, install-bus-device worked even tough
-	there was no Storage Class configured (it was 
-	configured when running the install-bus-device command).
 
 TODO: Bug: drbdadm down takes long when there is I/O
 
@@ -6569,4 +6551,27 @@ Done: Bug: Sometimes diskless Windows hangs
 	Seems to be fixed now.
 
 	Closing for now.
+
+Done: Feature: update inno setup installer
+
+	It should create the bus device and should also
+	install the disk device.
+
+	Creating on install works, removing on uninstall not
+	yet. Also currently installing installs an extra bus
+	device even when it is already there.
+
+	Works partly, right now fails to install bus device
+	when there are no storage class (SCSI) bus devices
+	yet. One has also to create the Storage Controller
+	class (see WinCDEmu).
+
+	Update: Tried again with a almost fresh Windows 7
+	installation, install-bus-device worked even tough
+	there was no Storage Class configured (it was 
+	configured when running the install-bus-device command).
+
+	Update: integrated into inno-setup installer with an
+	option to turn it off. It takes long to complete at
+	the installation, this is somehow annoying.
 

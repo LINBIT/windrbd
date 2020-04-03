@@ -1,9 +1,6 @@
 Roadmap to 1.0
 --------------
 
-inno-setup: fix creation of bus device
-	Maybe
-
 -----
 
 Roadmap to 1.1:
@@ -38,6 +35,10 @@ Done:
 
 0.10.6: Upgrade DRBD to 9.0.22
 
+0.10.7: inno-setup: fix creation of bus device
+	Done. Need to get feedback from users if that breaks
+	things.
+
 ----
 
 Rejected:
@@ -46,4 +47,4 @@ Make fcgi script for serving boot device
         With keep-alive
 
 Don't require configuring the WinDRBD bus device
-
+	This is done by the installer now.
