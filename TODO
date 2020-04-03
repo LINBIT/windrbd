@@ -30,16 +30,6 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
-TODO: Bug: boot feature does not work with DRBD 9.0.22 upgrade
-
-	BSOD when reading first few sectors. It works with 0.10.5
-	but not with the recent patches.
-
-	Reason is that DRBD cannot handle bvec elements larger
-	than PAGE_SIZE. Revert commit a0206c0b (we once had it
-	in but then threw it out for performance reasons), or
-	patch DRBD to handle bvec elements larger than PAGE_SIZE.
-
 TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
 
 	After ~100 iterations. Not clear why. Resource was connected.
@@ -109,17 +99,6 @@ TODO: Code quality: Squash patches in transform.d
 	Redo all changes (we now have patches that revert former
 	patches).
 
-+TODO: Feature: Upgrade DRBD to 9.0.21
-
-	In progress. It compiles and does something. Need to uncomment
-	set_resource_options() (else node-id becomes 0), done now it
-	connects. Now Sync stall at 8%
-
-	Update: Fixed 3 bugs. Sync now works (BSOD? see seperate TODO)
-	so does replication. Doing endurance tests now.
-
-TODO: Feature: Upgrade DRDB to 9.0.22
-
 TODO: Documentation: Draw diagram (from Joel)
 
 TODO: Infrastructure: Move Linbit VMs to new server
@@ -136,21 +115,8 @@ TODO: Bug: BSOD when accessing ReFS device
 TODOs for Release 1.0 ----------------------------------------------
 
 Milestone: Release 1.0 (stable version)
-Planned: Mar 10 2019
+Planned: July 2 2020
 Real:
-
-
-+TODO: Bug: Sometimes diskless Windows hangs
-
-	The host only network stops working. We get a
-	PingAck didn't arrive in time on both sides. Maybe
-	adjusting the timeouts helps?
-
-	e50234f64 runs quite stable.
-
-	Update: It gets stuck in NetworkFailure.
-
-	Seems to be fixed now.
 
 +TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
@@ -232,6 +198,8 @@ Real:
 	Maybe it is something else. Also, windrbd set-mount-point
 	hangs under Windows 10.
 
+	Still a problem?
+
 +TODO: Bug: Diskless client hangs on power down
 
 	it hangs in I/O because network is already down and Windows
@@ -277,6 +245,11 @@ TODO: Performance: Retry disable NDIS lightweight filter
 	yet. One has also to create the Storage Controller
 	class (see WinCDEmu).
 
+	Update: Tried again with a almost fresh Windows 7
+	installation, install-bus-device worked even tough
+	there was no Storage Class configured (it was 
+	configured when running the install-bus-device command).
+
 TODO: Bug: drbdadm down takes long when there is I/O
 
 	Up to 1 minute (non-boot resource). I think we already fixed
@@ -285,6 +258,10 @@ TODO: Bug: drbdadm down takes long when there is I/O
 
 	Probably reason is that RemoveLock is taken on I/O even
 	when the device is about to be shut down.
+
+	No it is probably PnP sending REMOVE_DEVICE late (because
+	it is a SUPRISE_REMOVAL), delete Windows device from
+	userspace.
 
 TODO: Bug: Partition manager hangs when there is a resource without size.
 
@@ -6549,4 +6526,47 @@ Done: Code quality: Replace WDRBD_ERROR and the like by printk
 Done: Code quality: List C files to compile in Makefile
 
 	Instead of just using globbing (*.c)
+
+Done: Bug: boot feature does not work with DRBD 9.0.22 upgrade
+
+	BSOD when reading first few sectors. It works with 0.10.5
+	but not with the recent patches.
+
+	Reason is that DRBD cannot handle bvec elements larger
+	than PAGE_SIZE. Revert commit a0206c0b (we once had it
+	in but then threw it out for performance reasons), or
+	patch DRBD to handle bvec elements larger than PAGE_SIZE.
+
+	Update: Patched DRBD to support elements larger than
+	PAGE_SIZE (reverted bio_for_each_element macro to
+	old version). Boots and runs stable now.
+
+Done: Feature: Upgrade DRBD to 9.0.21
+
+	In progress. It compiles and does something. Need to uncomment
+	set_resource_options() (else node-id becomes 0), done now it
+	connects. Now Sync stall at 8%
+
+	Update: Fixed 3 bugs. Sync now works (BSOD? see seperate TODO)
+	so does replication. Doing endurance tests now.
+
+	Update: BSOD fixed, update completed.
+
+Done: Feature: Upgrade DRDB to 9.0.22
+
+	Done, was very easy.
+
+Done: Bug: Sometimes diskless Windows hangs
+
+	The host only network stops working. We get a
+	PingAck didn't arrive in time on both sides. Maybe
+	adjusting the timeouts helps?
+
+	e50234f64 runs quite stable.
+
+	Update: It gets stuck in NetworkFailure.
+
+	Seems to be fixed now.
+
+	Closing for now.
 
