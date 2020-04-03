@@ -53,6 +53,9 @@ static int printk_shut_down;
 static spinlock_t in_printk_lock;
 static int in_printk;
 
+static unsigned long long when_to_start_sending;
+static int initial_send_delay = 5;	/* in seconds */
+
 int initialize_syslog_printk(void)
 {
 	spin_lock_init(&ring_buffer_lock);
@@ -156,6 +159,8 @@ static int open_syslog_socket(void)
 	if (printk_udp_socket == NULL) {
 		struct sockaddr_in local;
 
+		when_to_start_sending = 0;
+
 		printk_udp_target.sin_family = AF_INET;
 		printk_udp_target.sin_port = htons(514);
 
@@ -202,6 +207,8 @@ static int open_syslog_socket(void)
 			return -1;
 		}
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "socket opened, ring_buffer_head: %d ring_buffer_tail: %d\n", ring_buffer_head, ring_buffer_tail);
+
+		when_to_start_sending = jiffies + initial_send_delay * HZ;
 	}
 	return 0;
 }
@@ -360,7 +367,7 @@ int _printk(const char *func, const char *fmt, ...)
 			open_syslog_socket();
 		}
 
-		if (printk_udp_socket != NULL) {
+		if (printk_udp_socket != NULL && when_to_start_sending != 0 && jiffies > when_to_start_sending) {
 			size_t last_tail = ring_buffer_tail;
 
 			for (line_pos = 0;
