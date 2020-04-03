@@ -116,7 +116,7 @@ Name: "{group}\Open {#MyAppName} application folder"; Filename: "{app}"
 [Run]
 Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
 Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
-Filename: "C:\windrbd\usr\sbin\windrbd.exe"; Parameters: "install-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
+Filename: "C:\windrbd\usr\sbin\windrbd.exe"; Parameters: "install-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; Check: DoCreateBusDevice
 Filename: "{#MyAppURLDocumentation}"; Description: "Download WinDRBD documentation"; Flags: postinstall shellexec
 
 [UninstallRun]
@@ -192,4 +192,9 @@ begin
 	end;
 
 	// cmd script stops user mode helpers, no need to do that here
+end;
+
+function DoCreateBusDevice: Boolean;
+begin
+	Result := False;
 end;
