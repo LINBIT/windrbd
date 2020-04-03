@@ -374,7 +374,7 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 			status = STATUS_INVALID_DEVICE_REQUEST;
 		break;
 
-	case IOCTL_WINDRBD_ROOT_RUN_PARSER_TEST:
+	case IOCTL_WINDRBD_ROOT_RUN_TEST:
 /*		parser_test(); */
 		break;
 

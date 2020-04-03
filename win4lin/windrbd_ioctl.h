@@ -243,15 +243,13 @@ struct windrbd_minor_mount_point {
 #define IOCTL_WINDRBD_ROOT_DUMP_ALLOCATED_MEMORY CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 11, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 /* Cause WinDRBD to run DRBD URI parser test
- * Input: none
+ * Input: Test name and parameters (as a char*), currently none defined.
  * Output: none
  *
  * WinDRBD will printk results from the parser test.
- *
- * TODO: reuse this to run other tests as well.
  */
 
-#define IOCTL_WINDRBD_ROOT_RUN_PARSER_TEST CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 12, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_WINDRBD_ROOT_RUN_TEST CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 12, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 /* Set syslog IP
  * Input: The syslog IP (must be v4) as a char*
