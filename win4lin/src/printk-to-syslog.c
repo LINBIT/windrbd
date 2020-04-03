@@ -55,6 +55,7 @@ static int in_printk;
 
 static unsigned long long when_to_start_sending;
 static int initial_send_delay = 5;	/* in seconds */
+static int printk_thread_started;
 
 int initialize_syslog_printk(void)
 {
@@ -150,6 +151,8 @@ static int wait_a_bit_and_then_printk(void *unused)
 {
 	msleep((initial_send_delay + 2) * 1000);
 
+	printk_thread_started = 0;
+
 		/* If we still can't send, this printk will
 		 * call open_syslog_socket and create a new
 		 * thread that tries again.
@@ -224,7 +227,10 @@ static int open_syslog_socket(void)
 
 		when_to_start_sending = jiffies + initial_send_delay * HZ;
 
-		kthread_run(wait_a_bit_and_then_printk, NULL, "printk-init");
+		if (!printk_thread_started) {
+			printk_thread_started = 1;
+			kthread_run(wait_a_bit_and_then_printk, NULL, "printk-init");
+		}
 	}
 	return 0;
 }
