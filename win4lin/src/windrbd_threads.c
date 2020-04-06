@@ -342,6 +342,18 @@ bool is_windrbd_thread(struct task_struct *t)
 	return t->has_sig_event;
 }
 
+void windrbd_set_realtime_priority(struct task_struct *t)
+{
+	KPRIORITY old_priority;
+
+	if (t == NULL)
+		return;
+
+	old_priority = KeSetPriorityThread(t->windows_thread, LOW_REALTIME_PRIORITY);
+
+printk("old priority is %d\n", old_priority);
+}
+
 void init_windrbd_threads(void)
 {
         spin_lock_init(&next_pid_lock);

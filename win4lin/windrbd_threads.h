@@ -108,4 +108,8 @@ void return_to_windows(struct task_struct *t);
 
 bool is_windrbd_thread(struct task_struct *t);
 
+/* Set realtime priority. Used for asender */
+
+void windrbd_set_realtime_priority(struct task_struct *t);
+
 #endif
