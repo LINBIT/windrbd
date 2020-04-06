@@ -1210,6 +1210,8 @@ int windrbd_init_usermode_helper(void);
 int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_point);
 bool windrbd_has_mount_point(struct block_device *dev);
 
+	/* see windrbd_bootdevice.c */
+int create_drbd_resource_from_url(const char *url);
 void windrbd_init_boot_device(void);
 
 /* see printk_to_syslog.c */
