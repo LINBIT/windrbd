@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include "../win4lin/windrbd_ioctl.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 struct params p = {
 	drive: "H:",
 	expected_size: 52387840,
@@ -821,3 +825,26 @@ TEST(windrbd, disable_file_cache)
 	EXPECT_EQ(err, ERROR_SUCCESS);
 }
 #endif
+
+TEST(windrbd, io_depth)
+{
+	int fd;
+	int i, j;
+	static char data[1024*4096];
+
+	fd = open("test.img", O_DIRECT | O_RDWR | O_NONBLOCK | O_CREAT | O_SYNC);
+	if (fd < 0) {
+		printf("couldn't open test.img\n");
+		return;
+	}
+
+	for (j=1;1;j++) {
+		printf("round %d\n", j);
+		for (i=0;i<100;i++) {
+			write(fd, data, sizeof(data));
+		}
+		lseek(fd, 0, SEEK_SET);
+	}
+	close(fd);
+}
+
