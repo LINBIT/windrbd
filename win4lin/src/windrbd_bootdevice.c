@@ -389,6 +389,9 @@ extern int windrbd_wait_for_bus_object(void);
 /* This does the networking part of DRBD device setup. We
  * do this in a separate thread so that DriverEntry can
  * exit (and followup drivers can initialize the network)
+ *
+ * This frees the user data pointer (drbd_params struct)
+ * once it is not needed any more.
  */
 
 static int windrbd_create_boot_device_stage2(void *pp)
@@ -449,6 +452,9 @@ static int windrbd_create_boot_device_stage2(void *pp)
 
 		/* We are now 'auto-promoting' in the windrbd_device
 		 * layer, so no need to call primary() here */
+
+	free_drbd_params_contents(p);
+	kfree(p);
 
 	return 0;
 }
@@ -582,13 +588,45 @@ static int search_for_drbd_config(char *drbd_config, size_t buflen)
 
 #define MAX_DRBD_CONFIG 16*1024
 
-extern int create_bus_device(void);
+int create_drbd_resource_from_url(const char *url)
+{
+	int ret;
+	struct drbd_params *boot_device_params;
 
-static struct drbd_params boot_device;
+	boot_device_params = kmalloc(sizeof(*boot_device_params), GFP_KERNEL, 'DRBD');
+	if (boot_device_params == NULL) {
+		printk("Failed to allocate boot device params\n");
+		return -ENOMEM;
+	}
+	if (parse_drbd_url(url, boot_device_params) < 0) {
+		printk("Error parsing drbd URI (which is '%s') not booting via network\n", url);
+		kfree(boot_device_params);
+		return -EINVAL;
+	}
+	if (boot_device_params->syslog_ip != NULL)
+		set_syslog_ip(boot_device_params->syslog_ip);
+
+	ret = windrbd_create_boot_device_stage1(boot_device_params);
+	if (ret != 0) {
+		printk("Warning: stage1 returned %d for %s\n", ret, boot_device_params->resource);
+		kfree(boot_device_params);
+		return ret;
+	}
+
+	if (kthread_run(windrbd_create_boot_device_stage2, boot_device_params, "bootdev") == NULL) {
+		printk("Failed to create bootdevice thread.\n");
+		kfree(boot_device_params);
+		return -ENOMEM;
+	}
+		/* boot_device_params will be freed by thread once not needed
+		 * any more 
+		 */
+
+	return 0;
+}
 
 void windrbd_init_boot_device(void)
 {
-	int ret;
 	static char drbd_config[MAX_DRBD_CONFIG];
 
 	if (search_for_drbd_config(drbd_config, sizeof(drbd_config)) < 0) {
@@ -598,30 +636,5 @@ void windrbd_init_boot_device(void)
 	printk("ACPI table reading successful, creating boot device now\n");
 	printk("drbd config is %s\n", drbd_config);
 
-	if (parse_drbd_url(drbd_config, &boot_device) < 0) {
-		printk("Error parsing drbd URI (which is '%s') not booting via network\n", drbd_config);
-		return;
-	}
-/* If booting this should create our bus device. Undefined behaviour
- * if not booting (i.e. loading the driver at a later point in time)
- */
-
-#if 0
-/* TODO: On Windows 10 this creates a Unknown device which must be
- * installed else it won't boot any more. WinDRBD driver has to
- * be selected manually from a list.
- */
-	create_bus_device();
-#endif
-
-	if (boot_device.syslog_ip != NULL)
-		set_syslog_ip(boot_device.syslog_ip);
-
-	ret = windrbd_create_boot_device_stage1(&boot_device);
-	if (ret != 0)
-		printk("Warning: stage1 returned %d for %s\n", ret, boot_device.resource);
-
-	if (kthread_run(windrbd_create_boot_device_stage2, &boot_device, "bootdev") == NULL) {
-		printk("Failed to create bootdevice thread.\n");
-	}
+	create_drbd_resource_from_url(drbd_config);
 }

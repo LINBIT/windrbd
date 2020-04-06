@@ -81,3 +81,4 @@ struct drbd_params {
 	/* Returns 0 on success, negative values on failure. */
 
 int parse_drbd_url(const char *drbd_config, struct drbd_params *params);
+void free_drbd_params_contents(struct drbd_params *p);
