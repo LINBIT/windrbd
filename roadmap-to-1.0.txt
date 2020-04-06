@@ -1,6 +1,9 @@
 Roadmap to 1.0
 --------------
 
+drbd-utils updates
+	new commands of windrbd utility.
+
 -----
 
 Roadmap to 1.1:
@@ -12,6 +15,8 @@ Make reestablish connection work
 Make hang on shutdown work
         Reason is swap in from pagefile (or executable, hangs also
 	when pagefile is disabled) when there is no more network
+
+Make fio utility work
 
 ----
 

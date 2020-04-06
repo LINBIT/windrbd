@@ -1,3 +1,12 @@
+What's new in version 0.10.7
+----------------------------
+
+Installer creates WinDRBD bus device
+
+Don't lose network printk's on boot.
+
+windrbd set-syslog-ip command
+
 What's new in version 0.10.6
 ----------------------------
 

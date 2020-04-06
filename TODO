@@ -58,10 +58,6 @@ TODO: Bug: BSOD on sync finish.
 
 	7E (?) could not reproduce now.
 
-TODO: Bug: scan-partitions-for-minor sometimes does not find device.
-
-	Maybe sleep a little until opening succeeds.
-
 +TODO: Bug: BSOD in drbd_sender:2898 calling callback
 
 	After 26 days of I/O this BSOD (ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY)
@@ -107,6 +103,8 @@ TODO: Infrastructure: Move Linbit VMs to new server
 
 	Need to implement create-resource for windrbd first.
 
+	Implemented. Now need eject-device command.
+
 TODO: Bug: BSOD when accessing ReFS device
 
 	It just disappeared again (when debugging via WinDbg).
@@ -141,10 +139,6 @@ Real:
 
 	Update: see if getname() does the right thing .. it is used
 	to have a load order between nodes.
-
-+TODO: Feature: have a windrbd create-resource <drbd-URL> command
-
-	This should help with installing via WinPE.
 
 +TODO: Bug: Reestablish connection of Diskless machine fails.
 
@@ -385,15 +379,6 @@ TODO: Feature: Set partition ID to 27 to hide partition
 +TODO: Do not patch boot sector when it is a disk device
 
 TODOs for after Release 1.0 ----------------------------------------------
-
-TODO: Feature: Call test routines via ioctl().
-
-	We should not run them when the driver is loaded since that
-	might Windows stop booting if a test fails. Have a root device
-	ioctl that takes a string and runs that test.
-
-	In particular I would like to test calling KeWaitForMultipleObjects()
-	while IRQL is Dispatch level (I suppose the machine hangs or BSODs).
 
 TODO: Feature: kunit support
 
@@ -6574,4 +6559,26 @@ Done: Feature: update inno setup installer
 	Update: integrated into inno-setup installer with an
 	option to turn it off. It takes long to complete at
 	the installation, this is somehow annoying.
+
+Rejected: Bug: scan-partitions-for-minor sometimes does not find device.
+
+	Maybe sleep a little until opening succeeds.
+
+	We removed scan-partitions-for-minor now, it seems to
+	open explorer also without scan-partitions-for-minor.
+
+Done: Feature: have a windrbd create-resource <drbd-URL> command
+
+	This should help with installing via WinPE.
+
+	Done, seems to work.
+
+Done: Feature: Call test routines via ioctl().
+
+	We should not run them when the driver is loaded since that
+	might Windows stop booting if a test fails. Have a root device
+	ioctl that takes a string and runs that test.
+
+	In particular I would like to test calling KeWaitForMultipleObjects()
+	while IRQL is Dispatch level (I suppose the machine hangs or BSODs).
 
