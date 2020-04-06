@@ -1,0 +1,26 @@
+From 099e209ce7e5d6e1e038cb5036bb9534860ffcdd Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 6 Apr 2020 22:59:12 +0200
+Subject: [PATCH] Run ack-receiver with real time priority.
+
+This should solve crash and system hangs with testing with
+Jens Axboe's fio tester (with iodepth=1000 and direct=1)
+---
+ drbd/drbd_receiver.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index df67f00..9651d0a 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -893,6 +893,7 @@ start:
+ 	have_mutex = false;
+ 
+ 	drbd_thread_start(&connection->ack_receiver);
++	windrbd_set_realtime_priority(connection->ack_receiver.task);
+ 	connection->ack_sender =
+ 		alloc_ordered_workqueue("drbd_as_%s", WQ_MEM_RECLAIM, connection->resource->name);
+ 	if (!connection->ack_sender) {
+-- 
+2.17.0
+
