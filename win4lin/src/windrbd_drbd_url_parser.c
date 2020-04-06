@@ -18,6 +18,7 @@
 
 #define printk printf
 #define kmalloc(size, unused, unused2) malloc(size)
+#define kfree(p) free(p)
 
 #else		/* windows kernel */
 
@@ -558,6 +559,23 @@ int parse_drbd_url(const char *drbd_config, struct drbd_params *params)
 	return check_values(params);
 }
 
+void free_drbd_params_contents(struct drbd_params *p)
+{
+	struct node *n, *n2;
+
+	list_for_each_entry_safe(struct node, n, n2, &p->node_list, list) {
+		kfree(n->hostname);
+		kfree(n->address);
+		kfree(n->volume.disk);
+		kfree(n->volume.meta_disk);
+		list_del(&n->list);
+		kfree(n);
+	}
+	kfree(p->net.verify_alg);
+	kfree(p->resource);
+	kfree(p->syslog_ip);
+}
+
 #ifdef USER_MODE
 
 int main(int argc, const char **argv)
@@ -576,6 +594,7 @@ int main(int argc, const char **argv)
 	list_for_each_entry(struct node, n, &p.node_list, list) {
 		printf("node %d\n", n->node_id);
 	}
+	free_drbd_params_contents(&p);
 
 	return 0;
 }
