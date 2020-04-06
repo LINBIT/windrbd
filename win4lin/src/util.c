@@ -30,8 +30,7 @@
 #include "drbd_wingenl.h"
 #include "drbd_int.h"
 
-/* TODO: goes away soon */
-static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG *pReturnLength, UCHAR *pucReturnBuffer, PUNICODE_STRING pRegistryPath)
+static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG *pReturnLength, UCHAR *pucReturnBuffer, size_t buflen, PUNICODE_STRING pRegistryPath)
 {
     HANDLE hKey;
     ULONG ulLength;
@@ -68,8 +67,12 @@ static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG *pReturnLength, UCH
     status = ZwQueryValueKey(hKey, &valueName, KeyValuePartialInformation, pstKeyInfo, ulLength, &ulLength);
     if (NT_SUCCESS(status))
     {
+        if (ulLength >= buflen)
+            status = STATUS_BUFFER_TOO_SMALL;
+        else
+            RtlCopyMemory(pucReturnBuffer, pstKeyInfo->Data, pstKeyInfo->DataLength);
+
         *pReturnLength = pstKeyInfo->DataLength;
-        RtlCopyMemory(pucReturnBuffer, pstKeyInfo->Data, pstKeyInfo->DataLength);
     }
     ExFreePool(pstKeyInfo);
     ZwClose(hKey);
@@ -86,10 +89,7 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 
 	ip_length = 0;
 
-		/* TODO: there is most likely a buffer overflow in there.
-		 * do we need the registry at all?
-		 */
-	status = GetRegistryValue(L"syslog_ip", &ulLength, (UCHAR*)&aucTemp, RegPath_unicode);
+	status = GetRegistryValue(L"syslog_ip", &ulLength, (UCHAR*)&aucTemp, sizeof(aucTemp), RegPath_unicode);
 	if (status == STATUS_SUCCESS) {
 		status = RtlUnicodeToUTF8N(syslog_ip, ARRAY_SIZE(syslog_ip)-1, &ip_length, (WCHAR*) aucTemp, ulLength);
 	}
