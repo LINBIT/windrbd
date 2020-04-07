@@ -24,7 +24,13 @@
 )
 #endif
 
+/* Mostly only used for sending ioctl's. User is a device object
+ * accessible by anyone. This allows us for drbdadm status as
+ * a non-Administrator user.
+ */
+
 #define WINDRBD_ROOT_DEVICE_NAME "windrbd_control"
+#define WINDRBD_USER_DEVICE_NAME "windrbd_control_user"
 
 /* TODO: are these used by someone else? Doc states that <= 0x8000
  * is reserved by Microsoft, but it does not state how to obtain

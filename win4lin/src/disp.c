@@ -40,21 +40,6 @@
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
 
-NTSTATUS NTAPI IoReportRootDevice(PDRIVER_OBJECT driver);
-NTSTATUS NTAPI IoReportDetectedDevice(
-  PDRIVER_OBJECT DriverObject,
-  INTERFACE_TYPE LegacyBusType,
-  ULONG BusNumber,
-  ULONG SlotNumber,
-  PCM_RESOURCE_LIST ResourceList,
-  PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements,
-  BOOLEAN ResourceAssigned,
-  PDEVICE_OBJECT *DeviceObject
-);
-
-// DEFINE_GUID(GUID_DEVCLASS_SCSIADAPTER, 0x4D36E97B, 0xE325, 0x11CE, 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18);
-
-	/* TODO: find some headers where this fits. */
 void drbd_cleanup(void);
 void idr_shutdown(void);
 
@@ -66,6 +51,22 @@ DRIVER_ADD_DEVICE mvolAddDevice;
 #pragma alloc_text(INIT, DriverEntry)
 #endif
 
+PDEVICE_OBJECT	mvolRootDeviceObject;
+PDEVICE_OBJECT	user_device_object;
+PDRIVER_OBJECT	mvolDriverObject;
+
+int seq_file_idx = 0;
+
+struct ratelimit_state drbd_ratelimit_state;
+
+struct mutex notification_mutex;
+
+/* https://vxlab.info/wasm/print.php-article=npi_subvert.htm */
+const NPIID NPI_WSK_INTERFACE_ID = {
+	0x2227E803, 0x8D8B, 0x11D4,
+	{0xAB, 0xAD, 0x00, 0x90, 0x27, 0x71, 0x9E, 0x09}
+};
+
 PDEVICE_OBJECT drbd_bus_device;
 static PDEVICE_OBJECT drbd_bus_device2;
 static PDEVICE_OBJECT drbd_legacy_bus_object;
@@ -73,67 +74,46 @@ static PDEVICE_OBJECT drbd_physical_bus_device;
 
 KEVENT bus_ready_event;
 
-int create_bus_device(void)
+static NTSTATUS create_device(const char *name, const UNICODE_STRING *sddl_perms, struct _DEVICE_OBJECT **d)
 {
 	NTSTATUS status;
-	PDEVICE_OBJECT new_device;
-	PDEVICE_OBJECT new_device2;
-	UNICODE_STRING bus_device_name;
+	PDEVICE_OBJECT deviceObject;
+	UNICODE_STRING nameUnicode, linkUnicode;
+	wchar_t tmp[100], tmp2[100];
 
-#if 0
-	RtlInitUnicodeString(&bus_device_name, L"\\Device\\WinDRBD");
-
-	status = IoCreateDevice(mvolDriverObject,
-				4,	/* 0? */	
-				&bus_device_name,
-//				FILE_DEVICE_CONTROLLER,
-				FILE_DEVICE_BUS_EXTENDER,
-                                FILE_DEVICE_SECURE_OPEN,
-                                FALSE,
-                                &new_device);
-
-	if (status != STATUS_SUCCESS || new_device == NULL) {
-		printk("Could not create WinDRBD bus object, status is %x.\n", status);
-		return -1;
+	_snwprintf(tmp, ARRAY_SIZE(tmp), L"\\Device\\%S", name);
+	RtlInitUnicodeString(&nameUnicode, tmp);
+	printk("About to create device %S with permissions %S\n", nameUnicode.Buffer, sddl_perms->Buffer);
+	status = IoCreateDeviceSecure(mvolDriverObject, sizeof(ROOT_EXTENSION),
+			 &nameUnicode, FILE_DEVICE_UNKNOWN,
+			FILE_DEVICE_SECURE_OPEN, FALSE,
+			sddl_perms, NULL, &deviceObject);
+	if (!NT_SUCCESS(status))
+	{
+		printk("Can't create root, err=%x\n", status);
+		return status;
 	}
-	drbd_bus_device = new_device;
 
-
-// printk("drbd_bus_device is %p\n", drbd_bus_device);
-// printk("characteristics is before %x\n", drbd_bus_device->Characteristics);
-	drbd_bus_device->Characteristics |= FILE_CHARACTERISTIC_PNP_DEVICE;
-// printk("characteristics is after %x\n", drbd_bus_device->Characteristics);
-	drbd_bus_device->Flags &= ~DO_DEVICE_INITIALIZING;
-
-#endif
-
-//	status = IoReportDetectedDevice(mvolDriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_bus_device);
-//	new_device2 = drbd_bus_device;
-	new_device2 = NULL;
-	status = IoReportDetectedDevice(mvolDriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &new_device2);
-	if (status != STATUS_SUCCESS) {
-		printk("Could not report WinDRBD bus object, status is %x.\n", status);
-		return -1;
+	_snwprintf(tmp2, ARRAY_SIZE(tmp2), L"\\DosDevices\\%S", name);
+	RtlInitUnicodeString(&linkUnicode, tmp2);
+	printk("About to create symbolic link from %S to %S\n", linkUnicode.Buffer, nameUnicode.Buffer);
+	status = IoCreateSymbolicLink(&linkUnicode, &nameUnicode);
+	if (!NT_SUCCESS(status))
+	{
+		printk("cannot create symbolic link, err=%x\n", status);
+		IoDeleteDevice(deviceObject);
+		return status;
 	}
-	status = mvolAddDevice(mvolDriverObject, new_device2);
-	if (status != STATUS_SUCCESS) {
-		printk("add device returned %x\n", status);
-	}
-	new_device2->Flags &= ~DO_DEVICE_INITIALIZING;
+	if (d)
+		*d = deviceObject;
 
-	return 0;
+	return STATUS_SUCCESS;
 }
-
-/* see drbd_transport.c */
-
-extern struct rw_semaphore transport_classes_lock;
 
 NTSTATUS
 DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 {
 	NTSTATUS            		status;
-	PDEVICE_OBJECT      		deviceObject;
-	UNICODE_STRING      		nameUnicode, linkUnicode;
 	int ret;
 
 	/* Init windrbd primitives (spinlocks, ...) before doing anything
@@ -166,31 +146,17 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	printk("spinlock_debug initialized.\n");
 #endif
 
-	/* TODO: This will go away soon */
 	initRegistry(RegistryPath);
 
-	RtlInitUnicodeString(&nameUnicode, L"\\Device\\" WINDRBD_ROOT_DEVICE_NAME);
-	status = IoCreateDeviceSecure(DriverObject, sizeof(ROOT_EXTENSION),
-			 &nameUnicode, FILE_DEVICE_UNKNOWN,
-			FILE_DEVICE_SECURE_OPEN, FALSE,
-			&SDDL_DEVOBJ_SYS_ALL_ADM_ALL, NULL, &deviceObject);
-	if (!NT_SUCCESS(status))
-	{
-		printk("Can't create root, err=%x\n", status);
-		return status;
-	}
-
-	RtlInitUnicodeString(&linkUnicode, L"\\DosDevices\\" WINDRBD_ROOT_DEVICE_NAME);
-	status = IoCreateSymbolicLink(&linkUnicode, &nameUnicode);
-	if (!NT_SUCCESS(status))
-	{
-		printk("cannot create symbolic link, err=%x\n", status);
-		IoDeleteDevice(deviceObject);
-		return status;
-	}
-
 	mvolDriverObject = DriverObject;
-	mvolRootDeviceObject = deviceObject;
+
+	status = create_device(WINDRBD_ROOT_DEVICE_NAME, &SDDL_DEVOBJ_SYS_ALL_ADM_ALL, &mvolRootDeviceObject);
+	if (status != STATUS_SUCCESS)
+		return status;
+
+	status = create_device(WINDRBD_USER_DEVICE_NAME, &SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_R, &user_device_object);
+	if (status != STATUS_SUCCESS)
+		return status;
 
 	windrbd_set_major_functions(DriverObject);
 /* Remove this line to make driver removable (driver removing currently
@@ -199,21 +165,24 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
 	DriverObject->DriverUnload = mvolUnload;
 
-	init_rwsem(&transport_classes_lock);
 	mutex_init(&notification_mutex);
 
 	dtt_initialize();
 
 	system_wq = alloc_ordered_workqueue("system workqueue", 0);
 	if (system_wq == NULL) {
-		pr_err("Could not allocate system work queue\n");
+		printk("Could not allocate system work queue\n");
+		IoDeleteDevice(mvolRootDeviceObject);
+		IoDeleteDevice(user_device_object);
+
 		return STATUS_NO_MEMORY;
 	}
 
 	ret = drbd_init();
 	if (ret != 0) {
 		printk(KERN_ERR "cannot init drbd, error is %d", ret);
-		IoDeleteDevice(deviceObject);
+		IoDeleteDevice(mvolRootDeviceObject);
+		IoDeleteDevice(user_device_object);
 
 		return STATUS_TIMEOUT;
 	}
@@ -222,34 +191,11 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	windrbd_init_usermode_helper();
 	windrbd_init_wsk();
 
-/*
-	create_bus_device();
-*/
-
 	printk(KERN_INFO "Windrbd Driver loaded.\n");
 
 	windrbd_run_tests();
 
-#if 0
-	IoReportDetectedDevice(DriverObject, InterfaceTypeUndefined, -1, -1, NULL, NULL, FALSE, &drbd_legacy_bus_object);
-// printk("drbd_legacy_bus_object is %p\n", drbd_legacy_bus_object);
-/*
-	status = mvolAddDevice(DriverObject, drbd_bus_object1);
-	if (status != STATUS_SUCCESS)
-		printk("mvolAddDevice failed status is %x\n", status);
-	else
-		printk("mvolAddDevice bus object succeeded\n");
-*/
-#endif
 	KeInitializeEvent(&bus_ready_event, NotificationEvent, FALSE);
-
-#if 0
-	status = IoReportRootDevice(DriverObject);
-	if (status != STATUS_SUCCESS)
-		printk("IoReportRootDevice failed status is %x\n", status);
-	else
-		printk("IoReportRootDevice succeeded\n");
-#endif
 
 	printk("Attempting to start boot device\n");
 	windrbd_init_boot_device();
@@ -311,6 +257,7 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 		printk("Cannot delete root device link, status is %x.\n", status);
 
         IoDeleteDevice(mvolRootDeviceObject);
+        IoDeleteDevice(user_device_object);
 
 	printk("Root device deleted.\n");
 
@@ -350,13 +297,13 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 
 	printk(KERN_INFO "AddDevice: PhysicalDeviceObject is %p\n", PhysicalDeviceObject);
 
+	/* This assumes that the bus device object is the first
+	 * object being attached, which is 'normally' the case.
+	 */
+
 	if (drbd_bus_device == NULL) {
-		RtlInitUnicodeString(&drbd_bus, L"\\Device\\WinDRBD");
-		RtlInitUnicodeString(&drbd_bus_dos, L"\\DosDevices\\WinDRBD");
-/*
-		RtlInitUnicodeString(&drbd_bus, L"\\Device\\SCSIAdapter");
-		RtlInitUnicodeString(&drbd_bus_dos, L"\\DosDevices\\SCSIAdapter");
-*/
+		RtlInitUnicodeString(&drbd_bus, L"\\Device\\windrbd_bus_device");
+		RtlInitUnicodeString(&drbd_bus_dos, L"\\DosDevices\\windrbd_bus_device");
 
 		status = IoCreateDevice(DriverObject, sizeof(BUS_EXTENSION), &drbd_bus, FILE_DEVICE_BUS_EXTENDER, FILE_DEVICE_SECURE_OPEN, FALSE, &bus_device);
 		if (status != STATUS_SUCCESS)
@@ -397,52 +344,6 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 		drbd_bus_device = bus_device;
 		drbd_physical_bus_device = PhysicalDeviceObject;
 	}
-#if 0
- else {
-		struct block_device_reference *ref;
-		struct block_device_reference *new_ref;
-		struct block_device *bdev;
-		struct _DEVICE_OBJECT *new_disk_device;
-		struct _DEVICE_OBJECT *attached_disk_device;
-
-		printk("AddDevice called but bus object (%p) already there, maybe it is a DISK device.\n", drbd_bus_device);
-
-		ref = PhysicalDeviceObject->DeviceExtension;
-			/* TODO: we shoud really have a magic in the
-			 * device extension to check if it is really
-			 * Windows block device for a DRBD minor.
-			 */
-		if (ref == NULL || ref->bdev == NULL) {
-			printk("This is not a valid WinDRBD block device.\n");
-		} else {
-			if (ref->magic != BLOCK_DEVICE_UPPER_MAGIC) {
-				printk("This is not a valid WinDRBD block device, magic is %x (expected %x).\n", ref->magic, BLOCK_DEVICE_UPPER_MAGIC);
-			} else {
-				bdev = ref->bdev;
-
-				status = IoCreateDevice(DriverObject, sizeof(struct block_device_reference), NULL, FILE_DEVICE_DISK, FILE_AUTOGENERATED_DEVICE_NAME | FILE_DEVICE_SECURE_OPEN, FALSE, &new_disk_device);
-				if (status != STATUS_SUCCESS) {
-					printk("Couldn't create disk device, status is %x\n", status);
-				} else {
-					printk("New upper device object is %p\n", new_disk_device);
-					new_ref = new_disk_device->DeviceExtension;
-					new_ref->bdev = bdev;
-					new_ref->magic = BLOCK_DEVICE_ATTACHED_MAGIC;
-					bdev->upper_windows_device = new_disk_device;
-					if (PhysicalDeviceObject != NULL) {
-						bdev->attached_windows_device = IoAttachDeviceToDeviceStack(new_disk_device, PhysicalDeviceObject);
-						if (bdev->attached_windows_device == NULL)
-							printk("IoAttachDeviceToDeviceStack failed.\n");
-						else
-							printk("IoAttachDeviceToDeviceStack returned object %p.\n", bdev->attached_windows_device);
-					} else {
-						printk("PhysicalDeviceObject is NULL\n");
-					}
-				}
-			}
-		}
-	}
-#endif
 
 	return STATUS_SUCCESS;
 }

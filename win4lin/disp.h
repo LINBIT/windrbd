@@ -41,6 +41,7 @@ typedef struct _BUS_EXTENSION
 } BUS_EXTENSION, *PBUS_EXTENSION;
 
 extern PDEVICE_OBJECT		mvolRootDeviceObject;
+extern PDEVICE_OBJECT		user_device_object;
 extern PDRIVER_OBJECT		mvolDriverObject;
 extern PDEVICE_OBJECT		drbd_bus_device;
 
