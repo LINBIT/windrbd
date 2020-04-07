@@ -53,6 +53,7 @@ struct task_struct {
 
 	int thread_started:1;
 	int is_zombie:1;
+	int is_root:1;
 	spinlock_t thread_started_lock;
 
 		/* TODO: needed? */
@@ -111,5 +112,8 @@ bool is_windrbd_thread(struct task_struct *t);
 /* Set realtime priority. Used for asender */
 
 void windrbd_set_realtime_priority(struct task_struct *t);
+
+/* Become super user */
+void sudo(void);
 
 #endif

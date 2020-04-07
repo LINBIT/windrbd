@@ -5,7 +5,6 @@
 //#include "linux-compat/jiffies.h"
 //#endif
 #define AF_NETLINK	16
-#define NETLINK_PORT			5678
 
 struct nlmsghdr
 {

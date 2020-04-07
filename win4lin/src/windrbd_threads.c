@@ -45,6 +45,7 @@ struct task_struct* windrbd_find_thread(PKTHREAD id)
 		t = &g_dummy_current;
 		t->pid = 0;
 		t->has_sig_event = FALSE;
+		t->is_root = 0;
 		strcpy(t->comm, "not_drbd_thread");
 	}
 	spin_unlock_irqrestore(&thread_list_lock, flags);
@@ -229,6 +230,7 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	t->data = data;
 	t->thread_started = 0;
 	t->is_zombie = 0;
+	t->is_root = current->is_root;	/* inherit user ID */
 	spin_lock_init(&t->thread_started_lock);
 
 	// KeInitializeEvent(&t->sig_event, NotificationEvent, FALSE);
@@ -299,6 +301,7 @@ struct task_struct *make_me_a_windrbd_thread(const char *name, ...)
 	KeInitializeEvent(&t->start_event, SynchronizationEvent, FALSE);
 	t->has_sig_event = TRUE;
 	t->sig = -1;
+	t->is_root = 0;
 
 	va_start(args, name);
 	i = _vsnprintf_s(t->comm, sizeof(t->comm)-1, _TRUNCATE, name, args);
@@ -352,6 +355,12 @@ void windrbd_set_realtime_priority(struct task_struct *t)
 	old_priority = KeSetPriorityThread(t->windows_thread, HIGH_PRIORITY);
 
 printk("old priority is %d\n", old_priority);
+}
+
+void sudo(void)
+{
+	if (is_windrbd_thread(current))
+		current->is_root = 1;
 }
 
 void init_windrbd_threads(void)

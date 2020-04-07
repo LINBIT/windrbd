@@ -471,6 +471,9 @@ static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netli
 
 static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 {
+	if ((pops->flags & GENL_ADMIN_PERM) && (current->is_root == 0))
+		return -EPERM;
+
 	/* TODO: and if dump? According to net/netlink/genetlink.c:500
 	 * (function genl_family_rcv_msg) this has to be checked first.
 	 */

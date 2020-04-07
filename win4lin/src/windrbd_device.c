@@ -2498,6 +2498,9 @@ static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp
 	if (t == NULL) {
 		printk("Warning: cannot create a thread object for request.\n");
 	}
+	if (device == mvolRootDeviceObject)
+		t->is_root = 1;
+
 	dbg("got request major is %x device object is %p (is %s device)\n", major, device, device == mvolRootDeviceObject ? "root" : (device == drbd_bus_device ? "bus" : "disk"));
 
 	ret = windrbd_dispatch_table[major](device, irp);
