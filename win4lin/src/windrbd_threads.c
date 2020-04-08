@@ -352,7 +352,9 @@ void windrbd_set_realtime_priority(struct task_struct *t)
 	if (t == NULL)
 		return;
 
-	old_priority = KeSetPriorityThread(t->windows_thread, HIGH_PRIORITY);
+	// old_priority = KeSetPriorityThread(t->windows_thread, HIGH_PRIORITY);
+printk("setting %s thread to LOW_REALTIME_PRIORITY\n", current->comm);
+	old_priority = KeSetPriorityThread(t->windows_thread, LOW_REALTIME_PRIORITY);
 
 printk("old priority is %d\n", old_priority);
 }
