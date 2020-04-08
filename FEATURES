@@ -21,7 +21,9 @@ IoCtl based netlink interface
 
 drbdsetup events2
 
-Driver Unloading
+drbdadm status as non-administrator
+
+Windows applications that use undocumented ioctl system calls (like winsat).
 
 3 (and more) node setups (from 0.9.2 on)
 
@@ -70,9 +72,7 @@ network stats
 
 ReactOS support
 
-drbdadm status as non-administrator
-
-Windows applications that use undocumented ioctl system calls (like winsat).
+Driver Unloading
 
 Most likely never
 -----------------
