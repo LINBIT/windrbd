@@ -1,0 +1,63 @@
+From 7928d7b997b73a9ec4d0cb6d1c70a3280ca2ef48 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 9 Apr 2020 22:28:11 +0200
+Subject: [PATCH] drbd_sender: enabled drbd_csums_...() functions.
+
+We support only a minimum (crc32c) of what Linux supports.
+For online verify this should be enough.
+---
+ drbd/drbd_sender.c | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index 2b249a0..9f2b4a0 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -313,7 +313,6 @@ void drbd_request_endio(struct bio *bio)
+ void drbd_csum_pages(struct crypto_shash *tfm, struct page *page, void *digest)
+ /* kmap compat: KM_USER1 */
+ {
+-#if 0
+ 	SHASH_DESC_ON_STACK(desc, tfm);
+ 
+ 	desc->tfm = tfm;
+@@ -330,15 +329,13 @@ void drbd_csum_pages(struct crypto_shash *tfm, struct page *page, void *digest)
+ 	}
+ 	crypto_shash_final(desc, digest);
+ 	shash_desc_zero(desc);
+-#endif
+ }
+ 
+ void drbd_csum_bio(struct crypto_shash *tfm, struct bio *bio, void *digest)
+ /* kmap compat: KM_USER1 */
+ {
+-#if 0
+-	struct bio_vec bvec;
+-	struct bvec_iter iter;
++	struct bio_vec *bvec;
++	int iter;
+ 	SHASH_DESC_ON_STACK(desc, tfm);
+ 
+ 	desc->tfm = tfm;
+@@ -347,8 +344,8 @@ void drbd_csum_bio(struct crypto_shash *tfm, struct bio *bio, void *digest)
+ 
+ 	bio_for_each_segment(bvec, bio, iter) {
+ 		u8 *src;
+-		src = kmap_atomic(bvec.bv_page);
+-		crypto_shash_update(desc, src + bvec.bv_offset, bvec.bv_len);
++		src = kmap_atomic(bvec->bv_page);
++		crypto_shash_update(desc, src + bvec->bv_offset, bvec->bv_len);
+ 		kunmap_atomic(src);
+ 		/* WRITE_SAME has only one segment,
+ 		 * checksum the payload only once. */
+@@ -357,7 +354,6 @@ void drbd_csum_bio(struct crypto_shash *tfm, struct bio *bio, void *digest)
+ 	}
+ 	crypto_shash_final(desc, digest);
+ 	shash_desc_zero(desc);
+-#endif
+ }
+ 
+ /* MAYBE merge common code with w_e_end_ov_req */
+-- 
+2.17.0
+
