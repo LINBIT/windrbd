@@ -139,6 +139,9 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	printk("kmalloc_debug initialized.\n");
 #endif
 
+	make_me_a_windrbd_thread("driver-init");
+	sudo();
+
 	printk(KERN_INFO "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
 
 #ifdef SPIN_LOCK_DEBUG
