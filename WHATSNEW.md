@@ -1,6 +1,10 @@
 What's new in version 0.10.7
 ----------------------------
 
+drbdadm status and drbdsetup events2 as non-Adminitrator user.
+
+windrbd create-resource-from-url command
+
 Installer creates WinDRBD bus device
 
 Don't lose network printk's on boot.

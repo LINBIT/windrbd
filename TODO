@@ -30,6 +30,10 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
+TODO: Bug: Make boot device intentionally diskless
+
+	Diskless is red in drbdadm status
+
 TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
 
 	After ~100 iterations. Not clear why. Resource was connected.
