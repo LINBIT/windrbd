@@ -4,6 +4,8 @@ Roadmap to 1.0
 drbd-utils updates
 	new commands of windrbd utility.
 
+fix 26 days bug
+
 -----
 
 Roadmap to 1.1:
