@@ -51,7 +51,9 @@ static inline unsigned int crypto_shash_digestsize(struct crypto_shash *tfm)
 static inline int crypto_shash_init(struct shash_desc *desc)
 {
 	// desc->crc = 0;
-	desc->crc = 0x98f94189;
+	// desc->crc = 0x98f94189;
+	desc->crc = 0xffffffff;
+printk("initializing hash to %x\n", desc->crc);
 
 	return 0;
 }
@@ -67,7 +69,7 @@ static inline int crypto_shash_update(struct shash_desc *desc,
 
 static inline int crypto_shash_final(struct shash_desc *desc, uint8_t *out)
 {
-	*((uint32_t*)out) = desc->crc;
+	*((uint32_t*)out) = ~(desc->crc);
 
 	return 0;
 }
