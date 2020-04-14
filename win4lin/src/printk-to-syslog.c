@@ -50,6 +50,9 @@ static spinlock_t ring_buffer_lock;
 static struct mutex send_mutex;
 static int printk_shut_down;
 
+static unsigned long long serial_number;
+static spinlock_t serial_number_lock;
+
 static spinlock_t in_printk_lock;
 static int in_printk;
 
@@ -61,10 +64,12 @@ int initialize_syslog_printk(void)
 {
 	spin_lock_init(&ring_buffer_lock);
 	spin_lock_init(&in_printk_lock);
+	spin_lock_init(&serial_number_lock);
 
 		/* don't debug them ... to avoid endless loop */
 	ring_buffer_lock.printk_lock = true;
 	in_printk_lock.printk_lock = true;
+	serial_number_lock.printk_lock = true;
 
 	mutex_init(&send_mutex);
 	in_printk = 0;
@@ -301,13 +306,18 @@ int _printk(const char *func, const char *fmt, ...)
 	hour = sec_day / 3600;
 	msec = (time.QuadPart / 10000) % (ULONG_PTR)1e3; // 100nsec to msec
 
+	spin_lock_irqsave(&serial_number_lock, flags);
+	serial_number++;
+	spin_unlock_irqrestore(&serial_number_lock, flags);
+
 	pos = strlen(buffer);
-	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d|%08.8x(%s) %s ",
+	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d|%08.8x(%s) #%llu %s ",
 	    level, hour, min, sec, msec,
 	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
 //	    ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
 	    current,
             current->comm,
+            serial_number,
 	    func
 	);
 	if (! NT_SUCCESS(status)) {
