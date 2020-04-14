@@ -49,8 +49,8 @@
 }xe;
 
 # 1UL -> ((ULONG_PTR)1)
-# 1ULL -> ((ULONG_PTR)1)
-s{((?:0x)?[0-9]+)ULL?}
+# Leave 1ULL alone
+s{((?:0x)?[0-9]+)UL[^L]}
  {((ULONG_PTR)$1)}g;
 
 # test line:
