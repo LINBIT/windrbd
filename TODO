@@ -603,26 +603,6 @@ TODO: Implement: Log rotate
 	We should fix this for the next release.
 	Maybe ship WinDRBD with net logging disabled and no log-server?
 
-+TODO: Implement: Other mechanism to specify syslog_ip.
-
-	Should be able to change it without rebooting.
-
-	Have a windrbd log-to-ip <...> command. Before this command
-	is given, only log to ring buffer internally (or maybe still
-	have the key?).
-
-	Update: No it makes sense to remove the registry key. Users
-	should either start windrbd log-server (which sets the IP
-	internally) or windrbd log-to-ip. Ring buffer is big enough :)
-
-	Update: Best is probably to have a /cygdrive/c/windrbd/etc/windrbd.conf
-	file for the IP or logfile, so that we don't have to touch
-	the config file format.
-
-	The problem is that on uninstall and reinstall WinDRBD the
-	registry entries get lost, so probably better to have
-	it in config file (drbd.conf global section?)
-
 TODO: Code quality: eventually use drbd_rate_limit() on some printk's
 
 TODO: Bug: Connection loss on drbdadm detach on secondary
@@ -635,11 +615,6 @@ Feb 14 14:58:01 10.43.10.10  U13:57:59.490|083959c0(drbd_a_vamp-4nodes) drbd_ack
 
 	Most likely an upstream bug (try Linux/Linux). Not severe,
 	connection is re-established rightafter.
-
-TODO: Feature: Allow drbdadm status for non-Administrator
-
-	Implement with a second control device which is accessible
-	to (almost) all.
 
 TODO: Feature: Resource agent for Microsoft cluster manager
 
@@ -708,11 +683,7 @@ TODO: Installation: Driver unload sometimes hangs when explorer window is open
 	Stops once explorer Window is closed (also was: Timeout on
 	windrbd remote-drive-in-explorer).
 
-TODO: Implement: Make online resize work.
-
-	Some day ..
-
-TODO: Test: IPv6
++TODO: Test: IPv6
 
 	Doesn't work, but this might be an Ubuntu issue.
 
@@ -867,17 +838,6 @@ TODO: Implement: Make windrbd directory unaccessible for non-admins.
 	This is ok for now, later we probably want to deny read access
 	(in case there are shared secrets).
 
-TODO: Implement: fix the wait_cond_interruptible busy loop.
-
-	DRBD does a wake_up() call whenever the condition might change.
-
-TODO: Features: implement flush_workqueue
-
-	For example, drbdadm down takes long when connection goes
-	down. Update: when touching this also refactor workqueue
-	code (use Linux locking primitives, don't have helper struct,
-	...).
-
 TODO: Code quality: Implement function stubs created when integrating DRBD 9.0.9
 
 TODO: Code quality: Reenable Windows Compiler Warnings and fix them.
@@ -914,6 +874,9 @@ TODO: Implement: drbdadm adjust changing mount point doesn't work now.
 
 	Update: Yes. Meaning it doesn't work (as I expected). Do that
 	later.
+
+	Update: We think about to discontinue data devices because
+	some programs (MS SQL server?) do not work atop of them.
 
 TODO: Feature: Mount to NTFS directories.
 
@@ -6589,4 +6552,53 @@ Done: Implement: online verify does not work currently
 	Done. Implementation of hash functions were not finished.
 	Tested with patching lower device. We had an (independent)
 	issue with Disk being UpToDate but all bits in bitmap set.
+
+Done: Implement: Other mechanism to specify syslog_ip.
+
+	Should be able to change it without rebooting.
+
+	Have a windrbd log-to-ip <...> command. Before this command
+	is given, only log to ring buffer internally (or maybe still
+	have the key?).
+
+	Update: No it makes sense to remove the registry key. Users
+	should either start windrbd log-server (which sets the IP
+	internally) or windrbd log-to-ip. Ring buffer is big enough :)
+
+	Update: Best is probably to have a /cygdrive/c/windrbd/etc/windrbd.conf
+	file for the IP or logfile, so that we don't have to touch
+	the config file format.
+
+	The problem is that on uninstall and reinstall WinDRBD the
+	registry entries get lost, so probably better to have
+	it in config file (drbd.conf global section?)
+
+	Update: windrbd set-syslog-ip and setting via boot URL
+	works now.
+
+Done: Feature: Allow drbdadm status for non-Administrator
+
+	Implement with a second control device which is accessible
+	to (almost) all.
+
+	Update: implemented, WinDRBD threads now know permissions
+	and inherit them to their children.
+
+Done: Implement: Make online resize work.
+
+	Some day ..
+	Now it works.
+
+Done: Implement: fix the wait_cond_interruptible busy loop.
+
+	DRBD does a wake_up() call whenever the condition might change.
+
+	Done, rewrote the whole event handling.
+
+Done: Features: implement flush_workqueue
+
+	For example, drbdadm down takes long when connection goes
+	down. Update: when touching this also refactor workqueue
+	code (use Linux locking primitives, don't have helper struct,
+	...).
 
