@@ -50,8 +50,8 @@
 
 # 1UL -> ((ULONG_PTR)1)
 # Leave 1ULL alone
-s{((?:0x)?[0-9]+)UL[^L]}
- {((ULONG_PTR)$1)}g;
+s{((?:0x)?[-0-9]+)UL([^L])}
+ {((ULONG_PTR)$1)$2}g;
 
 # test line:
 # :T cp drbd/drbd/drbd_receiver.c converted-sources/drbd/ ; conversion-scripts/0200-types.sh converted-sources/drbd/drbd_receiver.c ; diff -u drbd/drbd/drbd_receiver.c converted-sources/drbd/drbd_receiver.c \| colordiff
