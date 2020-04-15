@@ -1,0 +1,80 @@
+From d9f4af38ca8369e5ab8974fda6ceab010549a35b Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 15 Apr 2020 15:31:45 +0200
+Subject: [PATCH] drbd_main.c: Apply rcu_lock cocci patches manually.
+
+In 3 places the cocci script stopped working.
+---
+ drbd/drbd_main.c | 15 +++++++++------
+ 1 file changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index f2ae64b..7152a96 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -1816,6 +1816,7 @@ static int fill_bitmap_rle_bits(struct drbd_peer_device *peer_device,
+ 				unsigned int size,
+ 				struct bm_xfer_ctx *c)
+ {
++	KIRQL rcu_flags;
+ 	struct bitstream bs;
+ 	ULONG_PTR plain_bits;
+ 	ULONG_PTR tmp;
+@@ -1825,9 +1826,9 @@ static int fill_bitmap_rle_bits(struct drbd_peer_device *peer_device,
+ 	int bits, use_rle;
+ 
+ 	/* may we use this feature? */
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	use_rle = rcu_dereference(peer_device->connection->transport.net_conf)->use_rle;
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	if (!use_rle || peer_device->connection->agreed_pro_version < 90)
+ 		return 0;
+ 
+@@ -5128,6 +5129,7 @@ static const char* name_of_node_id(struct drbd_resource *resource, int node_id)
+ 
+ static void forget_bitmap(struct drbd_device *device, int node_id) 
+ {
++	KIRQL rcu_flags;
+ 	int bitmap_index = device->ldev->md.peers[node_id].bitmap_index;
+ 	const char* name;
+ 
+@@ -5135,11 +5137,11 @@ static void forget_bitmap(struct drbd_device *device, int node_id)
+ 		return;
+ 
+ 	spin_unlock_irq(&device->ldev->md.uuid_lock);
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	name = name_of_node_id(device->resource, node_id);
+ 	drbd_info(device, "clearing bitmap UUID and content (%lu bits) for node %d (%s)(slot %d)\n",
+ 		  _drbd_bm_total_weight(device, bitmap_index), node_id, name, bitmap_index);
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	drbd_suspend_io(device, WRITE_ONLY);
+ 	drbd_bm_lock(device, "forget_bitmap()", BM_LOCK_TEST | BM_LOCK_SET);
+ 	_drbd_bm_clear_many_bits(device, bitmap_index, 0, ((ULONG_PTR)-1));
+@@ -5151,17 +5153,18 @@ static void forget_bitmap(struct drbd_device *device, int node_id)
+ 
+ static void copy_bitmap(struct drbd_device *device, int from_id, int to_id) 
+ {
++	KIRQL rcu_flags;
+ 	int from_index = device->ldev->md.peers[from_id].bitmap_index;
+ 	int to_index = device->ldev->md.peers[to_id].bitmap_index;
+ 	const char *from_name, *to_name;
+ 
+ 	spin_unlock_irq(&device->ldev->md.uuid_lock);
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	from_name = name_of_node_id(device->resource, from_id);
+ 	to_name = name_of_node_id(device->resource, to_id);
+ 	drbd_info(device, "Node %d (%s) synced up to node %d (%s). copying bitmap slot %d to %d.\n",
+ 		  to_id, to_name, from_id, from_name, from_index, to_index);
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	drbd_suspend_io(device, WRITE_ONLY);
+ 	drbd_bm_lock(device, "copy_bitmap()", BM_LOCK_ALL);
+ 	drbd_bm_copy_slot(device, from_index, to_index);
+-- 
+2.17.0
+
