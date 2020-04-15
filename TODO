@@ -716,10 +716,6 @@ TODO: Test: IPv6
 
 	Doesn't work, but this might be an Ubuntu issue.
 
-TODO: Implement: online verify does not work currently
-
-	It reports all blocks out of sync (which isn't true)
-
 TODO: Performance: lindrive (Diskless Primary) is somewhat slow.
 
 TODO: Test: Test with MS SQL server
@@ -6585,4 +6581,12 @@ Done: Feature: Call test routines via ioctl().
 
 	In particular I would like to test calling KeWaitForMultipleObjects()
 	while IRQL is Dispatch level (I suppose the machine hangs or BSODs).
+
+Done: Implement: online verify does not work currently
+
+	It reports all blocks out of sync (which isn't true)
+
+	Done. Implementation of hash functions were not finished.
+	Tested with patching lower device. We had an (independent)
+	issue with Disk being UpToDate but all bits in bitmap set.
 
