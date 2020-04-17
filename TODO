@@ -39,6 +39,11 @@ TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
 	After ~100 iterations. Not clear why. Resource was connected.
 	I/O was done over ntfs.
 
+Apr 17 14:03:09 192.168.56.103  U12:03:09.678|038771a0(netlink) #6419 blkdev_get_by_path <7>blkdev_get_by_path succeeded FFFFFA8003B03130 windows_device FFFFFA8003699620.
+Apr 17 14:03:09 192.168.56.103  U12:03:09.678|038771a0(netlink) #6420 drbd_md_read <6>drbd w0/17 minor 5, ds(Diskless), dvflag(0x80002): meta-data IO uses: blk-bio
+Apr 17 14:06:33 192.168.56.103  U12:06:33.944|03919c90(devicecontrol) #6421 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_RESOURCES:30)
+Apr 17 14:06:38 192.168.56.103  U12:06:38.944|03919c90(devicecontrol) #6422 windrbd_process_netlink_packet failed to acquire the mutex, probably a previous drbd command is stuck.
+
 TODO: Bug: drbdsetup secondary takes long to complete
 
 	Nice to fix that one day. Update: no fix it it takes
@@ -57,6 +62,16 @@ TODO: Performance: rw_sem are spinlocks now
 TODO: Bug: invalidate-remote while I/O sync stall on sync start
 
 	And remote is uptodate.
+
+Apr 17 13:16:56 192.168.56.103  U11:16:54.920|06713390(drbd_a_w0) #3268 bm_print_lock_info <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x20282): FIXME drbd_a_w0[146] op clear, bitmap locked for 'set_n_write from StartingSync' by drbd_w_w0[31]
+
+	After reboot verify is ok.
+
+	Also: 
+
+Apr 17 20:13:12 192.168.56.103  U18:13:13.257|0364f420(drbd_s_w0) #455 drbd_rs_complete_io <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x282): drbd_rs_complete_io(,92160 [=0]) called, but refcnt is 0!?
+
+	then machine lock up (mouse does not move any more)
 
 TODO: Bug: BSOD on sync finish.
 
@@ -1188,6 +1203,8 @@ TODO: Code quality: sk_connecttimeo weg (was stattdessen)?
 TODO: Code quality: maybe submit: kernel_setsockopt(..., SO_REUSEADDR, ...)
 
 TODO: Implement: tcp stats
+
+	Implemented already?
 
 TODO: Test: dtt_hint
 
