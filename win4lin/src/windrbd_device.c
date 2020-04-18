@@ -1565,19 +1565,19 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 		irp->IoStatus.Status = STATUS_SUCCESS;
 		IoSkipCurrentIrpStackLocation(irp);
 
-// printk("removing lower device object\n");
+printk("removing lower device object\n");
 		status = IoCallDriver(bus_ext->lower_device, irp);
 
-// printk("IoCallDriver returned %x\n", status);
+printk("IoCallDriver returned %x\n", status);
 
 			/* TODO: delete all DRBD devices */
 
-// printk("detaching device object\n");
+printk("detaching device object\n");
 		IoDetachDevice(bus_ext->lower_device);
-// printk("deleting device object\n");
+printk("deleting device object\n");
 		IoDeleteDevice(device);
-// printk("device object deleted.\n");
-// printk("NOT completing IRP\n");
+printk("device object deleted.\n");
+printk("NOT completing IRP\n");
 		drbd_bus_device = NULL;
 		num_pnp_bus_requests--;
 		return STATUS_SUCCESS; /* must not do IoCompleteRequest */
