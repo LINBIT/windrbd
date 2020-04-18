@@ -1606,24 +1606,33 @@ void spin_lock_irq(spinlock_t *lock)
 	KIRQL unused;
 
 	KeAcquireSpinLock(&lock->spinLock, &unused);
+		/* TODO: remove this check again later */
+	if (unused != PASSIVE_LEVEL)
+		printk("Bug: IRQL > PASSIVE_LEVEL (is %d)\n", unused);
+	else
+		printk("IRQL is PASSIVE_LEVEL (%d), no bug\n", unused);
 }
 
 void spin_unlock_irq(spinlock_t *lock)
 {
+	printk("IRQL is %d\n", KeGetCurrentIrql());
 		/* TODO: sure? */
 	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
+	printk("IRQL is %d\n", KeGetCurrentIrql());
 }
 
 void spin_lock(spinlock_t *lock)
 {
-	spin_lock_irq(lock);
-	/* KeAcquireSpinLockAtDpcLevel(&lock->spinLock); */
+//	spin_lock_irq(lock);
+	printk("IRQL is %d\n", KeGetCurrentIrql());
+	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
 }
 
 void spin_unlock(spinlock_t *lock)
 {
-	spin_unlock_irq(lock);
-	/* KeReleaseSpinLockFromDpcLevel(&lock->spinLock); */
+//	spin_unlock_irq(lock);
+	KeReleaseSpinLockFromDpcLevel(&lock->spinLock);
+	printk("IRQL is %d\n", KeGetCurrentIrql());
 }
 
 void spin_lock_bh(spinlock_t *lock)
