@@ -30,6 +30,17 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
+TODO: Code quality: implement sched_setscheduler()
+
+	And remove extra windrbd_set_priority or so patch.
+
+TODO: Bug: spin_unlock_irq sets IRQL to PASSIVE_LEVEL
+
+	It was DISPATCH_LEVEL in some cases before spin_lock_irq was
+	called. Solution is probably to not support spin_lock_irq
+	on Windows and replace spin_lock_irq by spin_lock_irqsave
+	(with a cocci script, see the rcu script for a template).
+
 TODO: Bug: Make boot device intentionally diskless
 
 	Diskless is red in drbdadm status
