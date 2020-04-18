@@ -50,8 +50,7 @@ static inline unsigned int crypto_shash_digestsize(struct crypto_shash *tfm)
 
 static inline int crypto_shash_init(struct shash_desc *desc)
 {
-	// desc->crc = 0xffffffff;
-	desc->crc = 0;
+	desc->crc = 0xffffffff;
 
 	return 0;
 }
