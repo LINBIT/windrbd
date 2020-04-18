@@ -1610,6 +1610,7 @@ void spin_lock_irq(spinlock_t *lock)
 
 void spin_unlock_irq(spinlock_t *lock)
 {
+		/* TODO: sure? */
 	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
 }
 
