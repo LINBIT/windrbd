@@ -1200,6 +1200,7 @@ int mutex_trylock(struct mutex *m)
 
 	if (KeWaitForMutexObject(&m->mtx, Executive, KernelMode, FALSE, &Timeout) == STATUS_SUCCESS)
 	{
+		/* TODO: acquire ?? */
 		return 1;
 	}
 	else
@@ -1238,6 +1239,7 @@ int down_trylock(struct semaphore *s)
     
     if (KeWaitForSingleObject(&s->sem, Executive, KernelMode, FALSE, &Timeout) == STATUS_SUCCESS)
     {
+	 	/* TODO: Acquire?? */
         return 0;
     }
     else
@@ -1256,6 +1258,9 @@ void up(struct semaphore *s)
 
 	/* TODO: Implement rw_semaphores using list of waiters
 	 * and a real semaphore.
+	 * TODO: this is completly broken since it uses storage
+	 * in the semaphore (the spinlock) for storing old_irql
+	 * (gets overwritten by a concurrent thread)
 	 */
 
 void init_rwsem(struct rw_semaphore *sem)
@@ -1601,16 +1606,17 @@ void spin_unlock_irqrestore(spinlock_t *lock, long flags)
 	KeReleaseSpinLock(&lock->spinLock, (KIRQL) flags);
 }
 
-void spin_lock_irq(spinlock_t *lock)
+// void spin_lock_irq(spinlock_t *lock)
+void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const char *func)
 {
 	KIRQL unused;
 
 	KeAcquireSpinLock(&lock->spinLock, &unused);
 		/* TODO: remove this check again later */
 	if (unused != PASSIVE_LEVEL)
-		printk("Bug: IRQL > PASSIVE_LEVEL (is %d)\n", unused);
+		printk("Bug: IRQL > PASSIVE_LEVEL (is %d) at %s:%d (%s)\n", unused, file, line, func);
 	else
-		printk("IRQL is PASSIVE_LEVEL (%d), no bug\n", unused);
+		printk("IRQL is PASSIVE_LEVEL (%d), no bug at %s:%d (%s)\n", unused, file, line, func);
 }
 
 void spin_unlock_irq(spinlock_t *lock)
