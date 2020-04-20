@@ -96,7 +96,7 @@ exit_interruptible();
 // Returns 1 if the mutex is locked, 0 if unlocked.
 int mutex_is_locked(struct mutex *m)
 {
-	return (KeReadStateMutex(&m->mtx) == 0) ? 1 : 0;
+	return (KeReadStateMutex(&m->mtx) == 1) ? 0 : 1;
 }
 
 // Try to acquire the mutex atomically. 
@@ -110,7 +110,6 @@ printk("1\n");
 	if (KeWaitForMutexObject(&m->mtx, Executive, KernelMode, FALSE, &Timeout) == STATUS_SUCCESS)
 	{
 printk("2\n");
-		/* TODO: acquire ?? */
 		return 1;
 	}
 	else

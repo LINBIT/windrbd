@@ -209,27 +209,24 @@ void mutex_trylock_test(void)
 	mutex_init(&m);
 	mutex_init(&m2);
 
+		/* TODO: muteces are recursive ... */
 	i = mutex_trylock(&m);
 	if (i) {
 		i2 = mutex_trylock(&m);
 		if (i2)
-			printk("Error: mutex_trylock does not lock\n");
+			printk("mutex_trylock succeeded twice\n");
 	}
-printk("2\n");
 	while (mutex_is_locked(&m)) {
 		printk("mutex_unlock ...\n");
 		mutex_unlock(&m);
 	}
-printk("3\n");
+		/* here all mutexes must be unlocked (=signalled state)
+		 * else BSOD on returning to user space.
+		 */
 }
 
 void test_main(const char *arg)
 {
-printk("1\n");
-/*
 	if (strcmp(arg, "mutex_trylock_test") == 0)
 		mutex_trylock_test();
-*/
-
-printk("2\n");
 }
