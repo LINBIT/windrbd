@@ -33,6 +33,7 @@
 #include <scsi.h>
 #include <ntddscsi.h>
 #include <ntddstor.h>
+#include <linux/module.h>
 
 /* Uncomment this if you want more debug output (disable for releases) */
 
@@ -1578,6 +1579,13 @@ printk("deleting device object\n");
 		IoDeleteDevice(device);
 printk("device object deleted.\n");
 printk("NOT completing IRP\n");
+
+			/* This should allow unload of the driver
+			 * once there are also no primary DRBD resources
+			 */
+
+		module_put(&windrbd_module);
+
 		drbd_bus_device = NULL;
 		num_pnp_bus_requests--;
 		return STATUS_SUCCESS; /* must not do IoCompleteRequest */

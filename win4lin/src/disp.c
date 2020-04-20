@@ -35,6 +35,7 @@
 #include "drbd_wingenl.h"	
 #include "disp.h"
 #include "windrbd_ioctl.h"
+#include <linux/module.h>
 /* #include "windrbd/windrbd_ioctl.h" */
 
 #include "drbd_int.h"
@@ -167,6 +168,12 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
  */
 	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
 	DriverObject->DriverUnload = mvolUnload;
+
+		/* For bus object: TODO: don't do this if there
+		 * is no bus object. (Maybe move to AddDevice)
+		 */
+
+	try_module_get(&windrbd_module);
 
 	mutex_init(&notification_mutex);
 
