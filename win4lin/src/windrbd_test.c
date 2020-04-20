@@ -200,3 +200,29 @@ void windrbd_shutdown_tests(void)
 #endif
 #endif
 }
+
+void mutex_trylock_test(void)
+{
+	static struct mutex m, m2;
+	int i, i2;
+
+	mutex_init(&m);
+	mutex_init(&m2);
+
+	i = mutex_trylock(&m);
+	if (i) {
+		i2 = mutex_trylock(&m);
+		if (i2)
+			printk("Error: mutex_trylock does not lock\n");
+	}
+	while (mutex_is_locked(&m)) {
+		printk("mutex_unlock ...\n");
+		mutex_unlock(&m);
+	}
+}
+
+void test_main(const char *arg)
+{
+	if (strcmp(arg, "mutex_trylock_test") == 0)
+		mutex_trylock_test();
+}

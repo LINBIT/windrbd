@@ -106,13 +106,16 @@ int mutex_trylock(struct mutex *m)
 	LARGE_INTEGER Timeout;
 	Timeout.QuadPart = 0; 
 
+printk("1\n");
 	if (KeWaitForMutexObject(&m->mtx, Executive, KernelMode, FALSE, &Timeout) == STATUS_SUCCESS)
 	{
+printk("2\n");
 		/* TODO: acquire ?? */
 		return 1;
 	}
 	else
 	{
+printk("3\n");
 		return 0;
 	}
 }

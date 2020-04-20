@@ -1263,4 +1263,6 @@ void exit_interruptible_debug(const char *file, int line, const char *func);
 #define kunmap(addr)		do { } while (0)
 #define kunmap_atomic(addr)	do { } while (0)
 
+void test_main(const char *arg);
+
 #endif // DRBD_WINDOWS_H

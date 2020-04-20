@@ -403,7 +403,12 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		break;
 
 	case IOCTL_WINDRBD_ROOT_RUN_TEST:
-/*		parser_test(); */
+		const char *test_args = irp->AssociatedIrp.SystemBuffer;
+		if (test_args == NULL)
+			status = STATUS_INVALID_DEVICE_REQUEST;
+		else
+			test_main(test_args);
+
 		break;
 
 	case IOCTL_WINDRBD_ROOT_SET_SYSLOG_IP:
