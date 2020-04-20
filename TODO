@@ -30,6 +30,13 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
+TODO: windrbd install-bus-device takes long to complete
+
+TODO: Feature: On loading kernel module, umhelper and logger should also be started.
+
+	When loading the kernel via bus object (pnp manager starts it).
+	I am sure there is such a thing as a dependecy between services.
+
 TODO: Code quality: implement sched_setscheduler()
 
 	And remove extra windrbd_set_priority or so patch.
