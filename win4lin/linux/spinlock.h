@@ -74,4 +74,7 @@ extern long _spin_lock_irqsave(spinlock_t* lock);
 
 #endif
 
+int spin_trylock(spinlock_t *lock);
+void init_locking(void);
+
 #endif
