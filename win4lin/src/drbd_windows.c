@@ -3192,7 +3192,7 @@ void panic(const char *fmt, ...)
 	printk(fmt, args);
 	va_end(args);
 		/* TODO: no */
-	KeBugCheckEx(0xddbd, (ULONG_PTR)__FILE__, (ULONG_PTR)__func__, 0x12345678, 0xd8bdd8bd);
+//	KeBugCheckEx(0xddbd, (ULONG_PTR)__FILE__, (ULONG_PTR)__func__, 0x12345678, 0xd8bdd8bd);
 }
 
 int scnprintf(char * buf, size_t size, const char *fmt, ...)
