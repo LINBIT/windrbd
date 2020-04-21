@@ -167,20 +167,14 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 /* Remove this line to make driver removable (driver removing currently
  * BSOD's sometimes):
  */
-
-/* Temporarily disabled for implementing locking tests.
- * Must not have a bus device configured.
 	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
-*/
 	DriverObject->DriverUnload = mvolUnload;
 
 		/* For bus object: TODO: don't do this if there
 		 * is no bus object. (Maybe move to AddDevice)
 		 */
 
-/* Temporarily disabled see above
 	try_module_get(&windrbd_module);
-*/
 
 	mutex_init(&notification_mutex);
 
