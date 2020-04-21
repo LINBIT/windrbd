@@ -520,18 +520,20 @@ void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const
 
 	KeAcquireSpinLock(&lock->spinLock, &unused);
 		/* TODO: remove this check again later */
+#if 0
 	if (unused != PASSIVE_LEVEL)
 		printk("Bug: IRQL > PASSIVE_LEVEL (is %d) at %s:%d (%s)\n", unused, file, line, func);
 	else
 		printk("IRQL is PASSIVE_LEVEL (%d), no bug at %s:%d (%s)\n", unused, file, line, func);
+#endif
 }
 
 void spin_unlock_irq(spinlock_t *lock)
 {
-	printk("IRQL is %d\n", KeGetCurrentIrql());
+//	printk("IRQL is %d\n", KeGetCurrentIrql());
 		/* TODO: sure? */
 	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
-	printk("IRQL is %d\n", KeGetCurrentIrql());
+//	printk("IRQL is %d\n", KeGetCurrentIrql());
 }
 
 void spin_lock(spinlock_t *lock)
