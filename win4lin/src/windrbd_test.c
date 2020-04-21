@@ -204,15 +204,30 @@ void windrbd_shutdown_tests(void)
 static long long non_atomic_int = 0;
 static spinlock_t test_lock;
 
-#define N 1000000000ULL
-#define NUM_THREADS 100ULL
+static unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base)
+{
+        unsigned long long val = 0;
+
+        while (isdigit(*nptr)) {
+                val *= 10;
+                val += (*nptr)-'0';
+                nptr++;
+        }
+        if (endptr)
+                *endptr = nptr;
+
+        return val;
+}
+
+static unsigned long long n;
+static unsigned long long num_threads;
 
 int concurrency_thread(void *unused)
 {
 	long long j;
 	volatile long long val;
 
-	for (j=0;j<N;j++) {
+	for (j=0;j<n;j++) {
 //		spin_lock(&test_lock);
 		val = non_atomic_int;
 		val++;
@@ -225,18 +240,34 @@ int concurrency_thread(void *unused)
 	return 0;
 }
 
-void concurrency_test(void)
+void concurrency_test(const char *arg)
 {
+	const char *s, *s2;
 	int i;
 
+	s = arg;
+	while (*s != ' ' && *s != '\0') s++;
+	if (s == '\0')
+		printk("Usage: concurrency_test <num_threads> <n>\n");
+	while (*s == ' ') s++;
+	num_threads = my_strtoull(s, &s2, 10);
+
+	s = s2;
+	while (*s != ' ' && *s != '\0') s++;
+	if (s == '\0')
+		printk("Usage: concurrency_test <num_threads> <n>\n");
+	while (*s == ' ') s++;
+	n = my_strtoull(s, &s2, 10);
+
+	printk("n is %llu num_threads is %llu\n", n, num_threads);
 	printk("sizeof(non_atomic_int) is %d\n", sizeof(non_atomic_int));
 
 	spin_lock_init(&test_lock);
-	for (i=0;i<NUM_THREADS;i++)
+	for (i=0;i<num_threads;i++)
 		kthread_run(concurrency_thread, NULL, "concurrency_test");
 
 	msleep(10*1000);
-	printk("non_atomic_int is %lld (should be %lld)\n", non_atomic_int, N*NUM_THREADS);
+	printk("non_atomic_int is %lld (should be %lld)\n", non_atomic_int, n*num_threads);
 }
 
 void mutex_trylock_test(void)
@@ -267,6 +298,6 @@ void test_main(const char *arg)
 {
 	if (strcmp(arg, "mutex_trylock_test") == 0)
 		mutex_trylock_test();
-	if (strcmp(arg, "concurrency_test") == 0)
-		concurrency_test();
+	if (strncmp(arg, "concurrency_test", strlen("concurrency_test")) == 0)
+		concurrency_test(arg);
 }
