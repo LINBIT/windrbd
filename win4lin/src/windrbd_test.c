@@ -222,10 +222,11 @@ static unsigned long long my_strtoull(const char *nptr, const char ** endptr, in
 static unsigned long long n;
 static unsigned long long num_threads;
 
-int concurrency_thread(void *unused)
+int concurrency_thread(void *c)
 {
 	long long j;
 	volatile long long val;
+	struct completion *completion = c;
 
 	for (j=0;j<n;j++) {
 //		spin_lock(&test_lock);
@@ -237,6 +238,7 @@ int concurrency_thread(void *unused)
 
 	printk("thread finished\n");
 
+	complete(c);
 	return 0;
 }
 
@@ -244,29 +246,47 @@ void concurrency_test(const char *arg)
 {
 	const char *s, *s2;
 	int i;
+	struct completion **completions;
 
 	s = arg;
 	while (*s != ' ' && *s != '\0') s++;
-	if (s == '\0')
+	if (s == '\0') {
 		printk("Usage: concurrency_test <num_threads> <n>\n");
+		return;
+	}
 	while (*s == ' ') s++;
 	num_threads = my_strtoull(s, &s2, 10);
 
 	s = s2;
 	while (*s != ' ' && *s != '\0') s++;
-	if (s == '\0')
+	if (s == '\0') {
 		printk("Usage: concurrency_test <num_threads> <n>\n");
+		return;
+	}
 	while (*s == ' ') s++;
 	n = my_strtoull(s, &s2, 10);
 
 	printk("n is %llu num_threads is %llu\n", n, num_threads);
 	printk("sizeof(non_atomic_int) is %d\n", sizeof(non_atomic_int));
 
+	non_atomic_int = 0;
 	spin_lock_init(&test_lock);
-	for (i=0;i<num_threads;i++)
-		kthread_run(concurrency_thread, NULL, "concurrency_test");
+	completions = kmalloc(sizeof(*completions)*num_threads, 0, '1234');
+	if (completions == NULL) {
+		printk("Not enough memory\n");
+		return;
+	}
 
-	msleep(10*1000);
+	for (i=0;i<num_threads;i++) {
+		init_completion(completions[i]);
+		printk("about to start thread %i\n", i);
+		kthread_run(concurrency_thread, completions[i], "concurrency_test");
+	}
+	for (i=0;i<num_threads;i++) {
+		wait_for_completion(completions[i]);
+		printk("thread %i completed\n", i);
+	}
+
 	printk("non_atomic_int is %lld (should be %lld)\n", non_atomic_int, n*num_threads);
 }
 
