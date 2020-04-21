@@ -5,9 +5,9 @@
 [Version]
 signature   =   "$Windows NT$"
 ;; inf2cat complains if this is not specified:
-; Class       =   "Volume" ; Virtual storage driver (creates block devices)
+Class       =   "Volume" ; Virtual storage driver (creates block devices)
 ; Class       =   "DiskDrive" ; Disk Drive (needed for boot?)
-Class       =   "SCSIAdapter" ; Disk Drive (needed for boot?)
+; Class       =   "SCSIAdapter" ; Disk Drive (needed for boot?)
 ClassGUID   = {4D36E97B-E325-11CE-BFC1-08002BE10318}
 ; Class       = "System"
 ; ClassGUID   = {4D36E97D-E325-11CE-BFC1-08002BE10318}
