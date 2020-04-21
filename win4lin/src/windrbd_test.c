@@ -221,6 +221,7 @@ static unsigned long long my_strtoull(const char *nptr, const char ** endptr, in
 
 static unsigned long long n;
 static unsigned long long num_threads;
+static int test_debug;
 
 int concurrency_thread(void *c)
 {
@@ -236,7 +237,8 @@ int concurrency_thread(void *c)
 		spin_unlock(&test_lock);
 	}
 
-	printk("thread finished\n");
+	if (test_debug)
+		printk("thread finished\n");
 
 	complete(c);
 	return 0;
@@ -250,13 +252,26 @@ void concurrency_test(const char *arg)
 	int i;
 	struct completion **completions;
 
+	test_debug = 0;
+
 	s = arg;
 	while (*s != ' ' && *s != '\0') s++;
 	if (s == '\0') {
-		printk("Usage: concurrency_test <num_threads> <n>\n");
+		printk("Usage: concurrency_test [-d] <num_threads> <n>\n");
 		return;
 	}
 	while (*s == ' ') s++;
+	if (*s == '-') {
+		s++;
+		switch (*s) {
+		case 'd': test_debug = 1; break;
+		default:
+			printk("Usage: concurrency_test [-d] <num_threads> <n>\n");
+			return;
+		}
+		while (*s != ' ' && *s != '\0') s++;
+		while (*s == ' ') s++;
+	}
 	num_threads = my_strtoull(s, &s2, 10);
 
 	s = s2;
@@ -268,8 +283,10 @@ void concurrency_test(const char *arg)
 	while (*s == ' ') s++;
 	n = my_strtoull(s, &s2, 10);
 
-	printk("n is %llu num_threads is %llu\n", n, num_threads);
-	printk("sizeof(non_atomic_int) is %d\n", sizeof(non_atomic_int));
+	if (test_debug) {
+		printk("n is %llu num_threads is %llu\n", n, num_threads);
+		printk("sizeof(non_atomic_int) is %d\n", sizeof(non_atomic_int));
+	}
 
 	non_atomic_int = 0;
 	spin_lock_init(&test_lock);
@@ -287,16 +304,23 @@ void concurrency_test(const char *arg)
 		}
 
 		init_completion(completions[i]);
-		printk("about to start thread %i\n", i);
+
+		if (test_debug)
+			printk("about to start thread %i\n", i);
+
 		kthread_run(concurrency_thread, completions[i], "concurrency_test");
 	}
 	for (i=0;i<num_threads;i++) {
 		wait_for_completion(completions[i]);
-		printk("thread %i completed\n", i);
+		if (test_debug)
+			printk("thread %i completed\n", i);
 		kfree(completions[i]);
 	}
 	kfree(completions);
 
+	if (non_atomic_int != n*num_threads) {
+		printk("Test failed\n");
+	}
 	printk("non_atomic_int is %lld (should be %lld)\n", non_atomic_int, n*num_threads);
 }
 
