@@ -203,6 +203,7 @@ void windrbd_shutdown_tests(void)
 
 static long long non_atomic_int = 0;
 static spinlock_t test_lock;
+static struct mutex test_mutex;
 
 static unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base)
 {
@@ -223,9 +224,9 @@ static unsigned long long n;
 static unsigned long long num_threads;
 static int test_debug;
 
-enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_LAST };
+enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_MUTEX, LM_LAST };
 static char *lock_methods[LM_LAST] = {
-	"none", "spin_lock", "spin_lock_irq"
+	"none", "spin_lock", "spin_lock_irq", "mutex"
 };
 static enum lock_methods lock_method;
 
@@ -237,6 +238,10 @@ int concurrency_thread(void *c)
 
 	for (j=0;j<n;j++) {
 		switch (lock_method) {
+		case LM_MUTEX:
+			mutex_lock(&test_mutex);
+			break;
+
 		case LM_SPIN_LOCK:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
@@ -263,6 +268,10 @@ int concurrency_thread(void *c)
 		non_atomic_int = val;
 
 		switch (lock_method) {
+		case LM_MUTEX:
+			mutex_unlock(&test_mutex);
+			break;
+
 		case LM_SPIN_LOCK:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_unlock\n", KeGetCurrentIrql());
@@ -359,6 +368,7 @@ void concurrency_test(const char *arg)
 
 	non_atomic_int = 0;
 	spin_lock_init(&test_lock);
+	mutex_init(&test_mutex);
 	completions = kmalloc(sizeof(*completions)*num_threads, 0, '1234');
 	if (completions == NULL) {
 		printk("Not enough memory\n");
