@@ -224,9 +224,9 @@ static unsigned long long n;
 static unsigned long long num_threads;
 static int test_debug;
 
-enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_MUTEX, LM_LAST };
+enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_SPIN_LOCK_IRQSAVE, LM_MUTEX, LM_LAST };
 static char *lock_methods[LM_LAST] = {
-	"none", "spin_lock", "spin_lock_irq", "mutex"
+	"none", "spin_lock", "spin_lock_irq", "spin_lock_irqsave", "mutex"
 };
 static enum lock_methods lock_method;
 
@@ -235,7 +235,9 @@ int concurrency_thread(void *c)
 	long long j;
 	volatile long long val;
 	struct completion *completion = c;
+	KIRQL flags;
 
+	flags = 0;
 	for (j=0;j<n;j++) {
 		switch (lock_method) {
 		case LM_MUTEX:
@@ -249,12 +251,23 @@ int concurrency_thread(void *c)
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
+
 		case LM_SPIN_LOCK_IRQ:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
 			spin_lock_irq(&test_lock);
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
+			break;
+
+		case LM_SPIN_LOCK_IRQSAVE:
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
+			spin_lock_irqsave(&test_lock, flags); /* is a macro */
+			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
+			if (flags != PASSIVE_LEVEL)
+				printk("Warning: flags is %d\n", flags);
 			break;
 		case LM_NONE:
 			break;
@@ -283,6 +296,13 @@ int concurrency_thread(void *c)
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
 			spin_unlock_irq(&test_lock);
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
+			break;
+		case LM_SPIN_LOCK_IRQSAVE:
+			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
+			spin_unlock_irqrestore(&test_lock, flags);
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
