@@ -242,6 +242,8 @@ int concurrency_thread(void *c)
 	return 0;
 }
 
+/* windrbd run-test 'concurrency_test 100 10000000' */
+
 void concurrency_test(const char *arg)
 {
 	const char *s, *s2;
@@ -278,6 +280,12 @@ void concurrency_test(const char *arg)
 	}
 
 	for (i=0;i<num_threads;i++) {
+		completions[i] = kmalloc(sizeof(struct completion), 0, '1234');
+		if (completions[i] == NULL) {
+			printk("Not enough memory\n");
+			return;
+		}
+
 		init_completion(completions[i]);
 		printk("about to start thread %i\n", i);
 		kthread_run(concurrency_thread, completions[i], "concurrency_test");
@@ -285,7 +293,9 @@ void concurrency_test(const char *arg)
 	for (i=0;i<num_threads;i++) {
 		wait_for_completion(completions[i]);
 		printk("thread %i completed\n", i);
+		kfree(completions[i]);
 	}
+	kfree(completions);
 
 	printk("non_atomic_int is %lld (should be %lld)\n", non_atomic_int, n*num_threads);
 }
