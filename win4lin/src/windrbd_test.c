@@ -223,6 +223,12 @@ static unsigned long long n;
 static unsigned long long num_threads;
 static int test_debug;
 
+enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_LAST };
+static char *lock_methods[LM_LAST] = {
+	"none", "spin_lock", "spin_lock_irq"
+};
+static enum lock_methods lock_method;
+
 int concurrency_thread(void *c)
 {
 	long long j;
@@ -230,11 +236,53 @@ int concurrency_thread(void *c)
 	struct completion *completion = c;
 
 	for (j=0;j<n;j++) {
-		spin_lock(&test_lock);
+		switch (lock_method) {
+		case LM_SPIN_LOCK:
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
+			spin_lock(&test_lock);
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
+			break;
+		case LM_SPIN_LOCK_IRQ:
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
+			spin_lock_irq(&test_lock);
+			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
+			break;
+		case LM_NONE:
+			break;
+		default:
+			printk("lock method %d not supported.\n", lock_method);
+			return -1;
+		}
+
 		val = non_atomic_int;
 		val++;
 		non_atomic_int = val;
-		spin_unlock(&test_lock);
+
+		switch (lock_method) {
+		case LM_SPIN_LOCK:
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d before spin_unlock\n", KeGetCurrentIrql());
+			spin_unlock(&test_lock);
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d after spin_unlock\n", KeGetCurrentIrql());
+			break;
+		case LM_SPIN_LOCK_IRQ:
+			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
+			spin_unlock_irq(&test_lock);
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
+			break;
+		case LM_NONE:
+			break;
+		default:
+			printk("lock method %d not supported.\n", lock_method);
+			return -1;
+		}
 	}
 
 	if (test_debug)
@@ -251,12 +299,13 @@ void concurrency_test(const char *arg)
 	const char *s, *s2;
 	int i;
 	struct completion **completions;
+	enum lock_methods m;
 
 	test_debug = 0;
 
 	s = arg;
 	while (*s != ' ' && *s != '\0') s++;
-	if (s == '\0') {
+	if (*s == '\0') {
 		printk("Usage: concurrency_test [-d] <num_threads> <n>\n");
 		return;
 	}
@@ -276,12 +325,32 @@ void concurrency_test(const char *arg)
 
 	s = s2;
 	while (*s != ' ' && *s != '\0') s++;
-	if (s == '\0') {
-		printk("Usage: concurrency_test <num_threads> <n>\n");
+	if (*s == '\0') {
+		printk("Usage: concurrency_test [-d] <num_threads> <n>\n");
 		return;
 	}
 	while (*s == ' ') s++;
 	n = my_strtoull(s, &s2, 10);
+
+	s = s2;
+	while (*s != ' ' && *s != '\0') s++;
+	if (*s == '\0') {
+		printk("Usage: concurrency_test [-d] <num_threads> <n> <lock-method>\n");
+		return;
+	}
+	while (*s == ' ') s++;
+
+	for (m=LM_NONE;m<LM_LAST;m++) {
+		if (strncmp(lock_methods[m], s, strlen(lock_methods[m])) == 0 &&
+			(s[strlen(lock_methods[m])] == '\0' ||
+			 s[strlen(lock_methods[m])] == ' '))
+			break;
+	}
+	if (m == LM_LAST) {
+		printk("Usage: concurrency_test [-d] <num_threads> <n> <lock-method>\n");
+		return;
+	}
+	lock_method = m;
 
 	if (test_debug) {
 		printk("n is %llu num_threads is %llu\n", n, num_threads);
