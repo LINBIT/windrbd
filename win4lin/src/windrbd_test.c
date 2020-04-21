@@ -229,11 +229,11 @@ int concurrency_thread(void *c)
 	struct completion *completion = c;
 
 	for (j=0;j<n;j++) {
-//		spin_lock(&test_lock);
+		spin_lock(&test_lock);
 		val = non_atomic_int;
 		val++;
 		non_atomic_int = val;
-//		spin_unlock(&test_lock);
+		spin_unlock(&test_lock);
 	}
 
 	printk("thread finished\n");
