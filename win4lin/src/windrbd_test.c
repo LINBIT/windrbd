@@ -201,6 +201,31 @@ void windrbd_shutdown_tests(void)
 #endif
 }
 
+static long long non_atomic_int = 0;
+
+int concurrency_thread(void *unused)
+{
+	long long j;
+
+	for (j=0;j<1000000000;j++)
+		non_atomic_int++;
+
+	printk("thread finished\n");
+
+	return 0;
+}
+
+void concurrency_test(void)
+{
+	int i;
+
+	for (i=0;i<100;i++)
+		kthread_run(concurrency_thread, NULL, "concurrency_test");
+
+	msleep(10*1000);
+	printk("non_atomic_int is %d\n", non_atomic_int);
+}
+
 void mutex_trylock_test(void)
 {
 	static struct mutex m, m2;
@@ -229,4 +254,6 @@ void test_main(const char *arg)
 {
 	if (strcmp(arg, "mutex_trylock_test") == 0)
 		mutex_trylock_test();
+	if (strcmp(arg, "concurrency_test") == 0)
+		concurrency_test();
 }
