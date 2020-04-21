@@ -202,13 +202,23 @@ void windrbd_shutdown_tests(void)
 }
 
 static long long non_atomic_int = 0;
+static spinlock_t test_lock;
+
+#define N 1000000000ULL
+#define NUM_THREADS 100ULL
 
 int concurrency_thread(void *unused)
 {
 	long long j;
+	volatile long long val;
 
-	for (j=0;j<1000000000;j++)
-		non_atomic_int++;
+	for (j=0;j<N;j++) {
+//		spin_lock(&test_lock);
+		val = non_atomic_int;
+		val++;
+		non_atomic_int = val;
+//		spin_unlock(&test_lock);
+	}
 
 	printk("thread finished\n");
 
@@ -219,11 +229,14 @@ void concurrency_test(void)
 {
 	int i;
 
-	for (i=0;i<100;i++)
+	printk("sizeof(non_atomic_int) is %d\n", sizeof(non_atomic_int));
+
+	spin_lock_init(&test_lock);
+	for (i=0;i<NUM_THREADS;i++)
 		kthread_run(concurrency_thread, NULL, "concurrency_test");
 
 	msleep(10*1000);
-	printk("non_atomic_int is %d\n", non_atomic_int);
+	printk("non_atomic_int is %lld (should be %lld)\n", non_atomic_int, N*NUM_THREADS);
 }
 
 void mutex_trylock_test(void)
