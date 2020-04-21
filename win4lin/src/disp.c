@@ -218,8 +218,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	windrbd_init_boot_device();
 	printk("Start boot device stage1 returned\n");
 
-
-printk("DriverObject->DriverExtension->AddDevice is %p\n", DriverObject->DriverExtension->AddDevice);
 	return STATUS_SUCCESS;
 }
 
