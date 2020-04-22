@@ -323,62 +323,48 @@ int concurrency_thread(void *c)
 
 /* windrbd run-test 'concurrency_test 100 10000000' */
 
-void concurrency_test(const char *arg)
+void concurrency_test(int argc, const char **argv)
 {
-	const char *s, *s2;
 	int i;
+	const char *s;
+	size_t len;
 	struct completion **completions;
 	enum lock_methods m;
 
 	test_debug = 0;
 
-	s = arg;
-	while (*s != ' ' && *s != '\0') s++;
-	if (*s == '\0') {
-		printk("Usage: concurrency_test [-d] <num_threads> <n>\n");
-		return;
-	}
-	while (*s == ' ') s++;
-	if (*s == '-') {
-		s++;
-		switch (*s) {
+	if (argc < 4)
+		goto usage;
+
+	i=1;
+	if (argv[1][0] == '-') {
+		switch (argv[1][1]) {
 		case 'd': test_debug = 1; break;
-		default:
-			printk("Usage: concurrency_test [-d] <num_threads> <n>\n");
-			return;
+		default: goto usage;
 		}
-		while (*s != ' ' && *s != '\0') s++;
-		while (*s == ' ') s++;
+		i++;
 	}
-	num_threads = my_strtoull(s, &s2, 10);
+	if (argc != i+3)
+		goto usage;
 
-	s = s2;
-	while (*s != ' ' && *s != '\0') s++;
-	if (*s == '\0') {
-		printk("Usage: concurrency_test [-d] <num_threads> <n>\n");
-		return;
-	}
-	while (*s == ' ') s++;
-	n = my_strtoull(s, &s2, 10);
+	num_threads = my_strtoull(argv[i], &s, 10);
+	if (*s != '\0')
+		goto usage;
 
-	s = s2;
-	while (*s != ' ' && *s != '\0') s++;
-	if (*s == '\0') {
-		printk("Usage: concurrency_test [-d] <num_threads> <n> <lock-method>\n");
-		return;
-	}
-	while (*s == ' ') s++;
+	i++;
+	n = my_strtoull(argv[i], &s, 10);
+	if (*s != '\0')
+		goto usage;
 
+	i++;
 	for (m=LM_NONE;m<LM_LAST;m++) {
-		if (strncmp(lock_methods[m], s, strlen(lock_methods[m])) == 0 &&
-			(s[strlen(lock_methods[m])] == '\0' ||
-			 s[strlen(lock_methods[m])] == ' '))
+		len = strlen(lock_methods[m]);
+		if (strncmp(lock_methods[m], argv[i], len) == 0 &&
+		   (argv[i][len] == '\0'))
 			break;
 	}
-	if (m == LM_LAST) {
-		printk("Usage: concurrency_test [-d] <num_threads> <n> <lock-method>\n");
-		return;
-	}
+	if (m == LM_LAST) 
+		goto usage;
 	lock_method = m;
 
 	if (test_debug) {
@@ -421,6 +407,10 @@ void concurrency_test(const char *arg)
 		printk("Test failed\n");
 	}
 	printk("non_atomic_int is %lld (should be %lld)\n", non_atomic_int, n*num_threads);
+	return;
+
+usage:
+	printk("Usage: concurrency_test [-d] <num_threads> <n> <lock-method>\n");
 }
 
 void mutex_trylock_test(void)
@@ -505,7 +495,7 @@ void test_main(const char *arg)
 	if (strcmp(argv[0], "mutex_trylock_test") == 0)
 		mutex_trylock_test();
 	if (strcmp(argv[0], "concurrency_test") == 0)
-		concurrency_test(arg);
+		concurrency_test(argc, argv);
 	if (strcmp(argv[0], "argv_test") == 0)
 		argv_test(argc, argv);
 
