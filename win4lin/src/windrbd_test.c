@@ -447,10 +447,70 @@ void mutex_trylock_test(void)
 		 */
 }
 
+void argv_test(int argc, char ** argv)
+{
+	int i;
+
+	for (i=0; i<argc; i++)
+		printk("argv[%d] is %s\n", i, argv[i]);
+}
+
 void test_main(const char *arg)
 {
-	if (strcmp(arg, "mutex_trylock_test") == 0)
+	char *arg_mutable, *s;
+	char **argv;
+	int argc;
+	int i;
+
+	arg_mutable = kstrdup(arg, 0);
+	if (arg_mutable == NULL) {
+		printk("Sorry no memory.\n");
+		return;
+	}
+	s = arg_mutable;
+	argc = 0;
+
+	while (1) {
+		while (*s == ' ') s++;
+		if (*s == '\0')
+			break;
+		argc++;
+		while (*s != ' ' && *s != '\0') s++;
+	}
+	argv = kmalloc(sizeof(*argv)*(argc+1), 0, 'DRBD');
+	if (argv == NULL) {
+		printk("Sorry no memory.\n");
+		goto kfree_arg_mutable;
+	}
+
+	i = 0;
+	s = arg_mutable;
+	while (1) {
+		while (*s == ' ') s++;
+		if (*s == '\0')
+			break;
+		argv[i] = s;
+		i++;
+		while (*s != ' ' && *s != '\0') s++;
+		if (*s != '\0') {
+			*s = '\0';
+			s++;
+		}
+	}
+	if (i!=argc) {
+		printk("Bug: i (%d) != argc(%d)\n", i, argc);
+		goto kfree_argv;
+	}
+
+	if (strcmp(argv[0], "mutex_trylock_test") == 0)
 		mutex_trylock_test();
-	if (strncmp(arg, "concurrency_test", strlen("concurrency_test")) == 0)
+	if (strcmp(argv[0], "concurrency_test") == 0)
 		concurrency_test(arg);
+	if (strcmp(argv[0], "argv_test") == 0)
+		argv_test(argc, argv);
+
+kfree_argv:
+	kfree(argv);
+kfree_arg_mutable:
+	kfree(arg_mutable);
 }
