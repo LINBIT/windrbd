@@ -220,6 +220,111 @@ static unsigned long long my_strtoull(const char *nptr, const char ** endptr, in
         return val;
 }
 
+static long long rcu_n;
+
+struct rcu_struct {
+	long long a;
+	long long b;
+} *non_atomic_rcu;
+
+static int rcu_reader(void *arg)
+{
+	long long i;
+	volatile long long val1, val2;
+	KIRQL flags;
+	struct rcu_struct *the_rcu;
+
+	for (i=0;i<rcu_n;i++) {
+		flags = rcu_read_lock();
+
+		the_rcu = rcu_dereference(non_atomic_rcu);
+
+		val1 = the_rcu->a;
+		val2 = the_rcu->a;
+		rcu_read_unlock(flags);
+
+		if (val1 != val2) {
+			printk("val1 (%llu) != val2 (%llu)\n", val1, val2);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+static int rcu_writer(void *arg)
+{
+	long long i;
+	volatile long long val;
+	struct rcu_struct *new_rcu, *old_rcu;
+
+	for (i=0;i<rcu_n;i++) {
+		old_rcu = non_atomic_rcu;
+		new_rcu = kmalloc(sizeof(*new_rcu), 0, '1234');
+		if (new_rcu == NULL) {
+			printk("no memory\n");
+			return -1;
+		}
+		*new_rcu = *non_atomic_rcu;
+
+		val = new_rcu->a;
+		val++;
+		new_rcu->a = val;
+
+		val = new_rcu->b;
+		val++;
+		new_rcu->b = val;
+
+		rcu_assign_pointer(non_atomic_rcu, new_rcu);
+		synchronize_rcu();
+		kfree(old_rcu);
+	}
+	return 0;
+}
+
+static void rcu_test(int argc, const char **argv)
+{
+	const char *s;
+	int num_readers;
+	int num_writers;
+	long long rcu_n;
+	int i;
+
+	if (argc != 4)
+		goto usage;
+
+	num_readers = my_strtoull(argv[1], &s, 10);
+	if (*s != '\0')
+		goto usage;
+
+	num_writers = my_strtoull(argv[2], &s, 10);
+	if (*s != '\0')
+		goto usage;
+
+	rcu_n = my_strtoull(argv[3], &s, 10);
+	if (*s != '\0')
+		goto usage;
+
+	non_atomic_rcu = kmalloc(sizeof(*non_atomic_rcu), 0, '1234');
+	if (non_atomic_rcu == NULL) {
+		printk("No memory\n");
+		return;
+	}
+	non_atomic_rcu->a = 0;
+	non_atomic_rcu->b = 0;
+
+	for (i=0;i<num_readers;i++) {
+		kthread_run(rcu_reader, NULL, "rcu_reader");
+	}
+	for (i=0;i<num_writers;i++) {
+		kthread_run(rcu_writer, NULL, "rcu_writer");
+	}
+
+	return;
+usage:
+	printk("Usage: rcu_test <num-readers> <num-writers> <n>\n");
+}
+
 static unsigned long long n;
 static unsigned long long num_threads;
 static int test_debug;
@@ -367,7 +472,7 @@ int concurrency_thread(void *p)
 	return 0;
 }
 
-/* windrbd run-test 'concurrency_test 100 10000000' */
+/* windrbd run-test 'concurrency_test 100 10000000 spin_lock' */
 
 void concurrency_test(int argc, const char **argv)
 {
@@ -560,6 +665,8 @@ void test_main(const char *arg)
 		concurrency_test(argc, argv);
 	if (strcmp(argv[0], "argv_test") == 0)
 		argv_test(argc, argv);
+	if (strcmp(argv[0], "rcu_test") == 0)
+		rcu_test(argc, argv);
 
 kfree_argv:
 	kfree(argv);
