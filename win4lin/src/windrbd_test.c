@@ -201,6 +201,8 @@ void windrbd_shutdown_tests(void)
 #endif
 }
 
+static int test_debug;
+
 static long long non_atomic_int = 0;
 static spinlock_t test_locks[2];
 static struct mutex test_mutex;
@@ -240,9 +242,9 @@ static int rcu_reader(void *arg)
 		flags = rcu_read_lock();
 
 		the_rcu = rcu_dereference(non_atomic_rcu);
-
 		val1 = the_rcu->a;
-		val2 = the_rcu->a;
+		val2 = the_rcu->b;
+
 		rcu_read_unlock(flags);
 
 		if (val1 != val2) {
@@ -301,18 +303,28 @@ static void rcu_test(int argc, const char **argv)
 	int i;
 	struct completion **completions;
 
-	if (argc != 4)
+	test_debug = 0;
+
+	i=1;
+	if (argv[1][0] == '-') {
+		switch (argv[1][1]) {
+		case 'd': test_debug = 1; break;
+		default: goto usage;
+		}
+		i++;
+	}
+	if (argc != i+3)
 		goto usage;
 
-	num_readers = my_strtoull(argv[1], &s, 10);
+	num_readers = my_strtoull(argv[i], &s, 10);
 	if (*s != '\0')
 		goto usage;
 
-	num_writers = my_strtoull(argv[2], &s, 10);
+	num_writers = my_strtoull(argv[i+1], &s, 10);
 	if (*s != '\0')
 		goto usage;
 
-	rcu_n = my_strtoull(argv[3], &s, 10);
+	rcu_n = my_strtoull(argv[i+2], &s, 10);
 	if (*s != '\0')
 		goto usage;
 
@@ -353,7 +365,7 @@ static void rcu_test(int argc, const char **argv)
 	}
 	for (i=0;i<num_readers+num_writers;i++) {
 		wait_for_completion(completions[i]);
-//		if (test_debug)
+		if (test_debug)
 			printk("thread %i completed\n", i);
 		kfree(completions[i]);
 	}
@@ -366,7 +378,6 @@ usage:
 
 static unsigned long long n;
 static unsigned long long num_threads;
-static int test_debug;
 
 enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_SPIN_LOCK_IRQSAVE, LM_MUTEX, LM_CRITICAL_REGION, LM_TWO_SPINLOCKS, LM_TWO_SPINLOCKS_PASSIVE_LEVEL, LM_LAST };
 static char *lock_methods[LM_LAST] = {
