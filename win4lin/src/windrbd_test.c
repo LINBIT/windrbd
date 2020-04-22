@@ -230,6 +230,12 @@ struct rcu_struct {
 	long long b;
 } *non_atomic_rcu;
 
+enum rcu_lock_methods { RCU_NONE, RCU_READ_LOCK, RCU_LAST };
+static char *rcu_lock_methods[RCU_LAST] = {
+	"none", "rcu_read_lock"
+};
+static enum rcu_lock_methods rcu_lock_method;
+
 static int rcu_reader(void *arg)
 {
 	long long i;
@@ -238,14 +244,18 @@ static int rcu_reader(void *arg)
 	struct rcu_struct *the_rcu;
 	struct completion *c = arg;
 
-	for (i=0;i<rcu_n;i++) {
-		flags = rcu_read_lock();
+	flags = 0;
+	for (i=0;i<rcu_n*1000;i++) {
+		msleep(1);
+		if (rcu_lock_method == RCU_READ_LOCK)
+			flags = rcu_read_lock();
 
 		the_rcu = rcu_dereference(non_atomic_rcu);
 		val1 = the_rcu->a;
 		val2 = the_rcu->b;
 
-		rcu_read_unlock(flags);
+		if (rcu_lock_method == RCU_READ_LOCK)
+			rcu_read_unlock(flags);
 
 		if (val1 != val2) {
 			printk("val1 (%llu) != val2 (%llu)\n", val1, val2);
@@ -265,7 +275,7 @@ static int rcu_writer(void *arg)
 	struct completion *c = arg;
 
 	for (i=0;i<rcu_n;i++) {
-		spin_lock(&rcu_writer_lock);
+//		spin_lock(&rcu_writer_lock);
 
 		old_rcu = non_atomic_rcu;
 		new_rcu = kmalloc(sizeof(*new_rcu), 0, '1234');
@@ -285,7 +295,7 @@ static int rcu_writer(void *arg)
 		new_rcu->b = val;
 
 		rcu_assign_pointer(non_atomic_rcu, new_rcu);
-		spin_unlock(&rcu_writer_lock);
+//		spin_unlock(&rcu_writer_lock);
 
 		synchronize_rcu();
 		kfree(old_rcu);
@@ -302,6 +312,8 @@ static void rcu_test(int argc, const char **argv)
 	int num_writers;
 	int i;
 	struct completion **completions;
+	enum rcu_lock_methods m;
+	size_t len;
 
 	test_debug = 0;
 
@@ -313,7 +325,7 @@ static void rcu_test(int argc, const char **argv)
 		}
 		i++;
 	}
-	if (argc != i+3)
+	if (argc != i+4)
 		goto usage;
 
 	num_readers = my_strtoull(argv[i], &s, 10);
@@ -327,6 +339,16 @@ static void rcu_test(int argc, const char **argv)
 	rcu_n = my_strtoull(argv[i+2], &s, 10);
 	if (*s != '\0')
 		goto usage;
+
+	for (m=RCU_NONE;m<RCU_LAST;m++) {
+		len = strlen(rcu_lock_methods[m]);
+		if (strncmp(rcu_lock_methods[m], argv[i+3], len) == 0 &&
+		   (argv[i+3][len] == '\0'))
+			break;
+	}
+	if (m == RCU_LAST) 
+		goto usage;
+	rcu_lock_method = m;
 
 	non_atomic_rcu = kmalloc(sizeof(*non_atomic_rcu), 0, '1234');
 	if (non_atomic_rcu == NULL) {
@@ -373,7 +395,7 @@ static void rcu_test(int argc, const char **argv)
 
 	return;
 usage:
-	printk("Usage: rcu_test <num-readers> <num-writers> <n>\n");
+	printk("Usage: rcu_test <num-readers> <num-writers> <n> <none|rcu_read_lock>\n");
 }
 
 static unsigned long long n;
