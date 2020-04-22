@@ -202,7 +202,7 @@ void windrbd_shutdown_tests(void)
 }
 
 static long long non_atomic_int = 0;
-static spinlock_t test_lock;
+static spinlock_t test_locks[2];
 static struct mutex test_mutex;
 
 static unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base)
@@ -224,22 +224,40 @@ static unsigned long long n;
 static unsigned long long num_threads;
 static int test_debug;
 
-enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_SPIN_LOCK_IRQSAVE, LM_MUTEX, LM_LAST };
+enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_SPIN_LOCK_IRQSAVE, LM_MUTEX, LM_CRITICAL_REGION, LM_TWO_SPINLOCKS, LM_LAST };
 static char *lock_methods[LM_LAST] = {
-	"none", "spin_lock", "spin_lock_irq", "spin_lock_irqsave", "mutex"
+	"none", "spin_lock", "spin_lock_irq", "spin_lock_irqsave", "mutex", "critical_region", "two_spinlocks"
 };
 static enum lock_methods lock_method;
 
-int concurrency_thread(void *c)
+struct params {
+	int thread_num;
+	struct completion *c;
+};
+
+int concurrency_thread(void *p)
 {
 	long long j;
 	volatile long long val;
-	struct completion *completion = c;
+	struct params *param = p;
+	struct completion *completion = param->c;
 	KIRQL flags;
 
 	flags = 0;
 	for (j=0;j<n;j++) {
 		switch (lock_method) {
+		case LM_TWO_SPINLOCKS:
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
+			spin_lock_irq(&test_locks[param->thread_num & 1]);
+			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
+			break;
+
+		case LM_CRITICAL_REGION:
+			KeEnterCriticalRegion();
+			break;
+
 		case LM_MUTEX:
 			mutex_lock(&test_mutex);
 			break;
@@ -247,7 +265,7 @@ int concurrency_thread(void *c)
 		case LM_SPIN_LOCK:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
-			spin_lock(&test_lock);
+			spin_lock(&test_locks[0]);
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
@@ -255,7 +273,7 @@ int concurrency_thread(void *c)
 		case LM_SPIN_LOCK_IRQ:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
-			spin_lock_irq(&test_lock);
+			spin_lock_irq(&test_locks[0]);
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
@@ -263,7 +281,7 @@ int concurrency_thread(void *c)
 		case LM_SPIN_LOCK_IRQSAVE:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
-			spin_lock_irqsave(&test_lock, flags); /* is a macro */
+			spin_lock_irqsave(&test_locks[0], flags); /* is a macro */
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			if (flags != PASSIVE_LEVEL)
@@ -281,6 +299,18 @@ int concurrency_thread(void *c)
 		non_atomic_int = val;
 
 		switch (lock_method) {
+		case LM_TWO_SPINLOCKS:
+			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
+			spin_unlock_irq(&test_locks[param->thread_num & 1]);
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
+			break;
+
+		case LM_CRITICAL_REGION:
+			KeLeaveCriticalRegion();
+			break;
+
 		case LM_MUTEX:
 			mutex_unlock(&test_mutex);
 			break;
@@ -288,21 +318,21 @@ int concurrency_thread(void *c)
 		case LM_SPIN_LOCK:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_unlock\n", KeGetCurrentIrql());
-			spin_unlock(&test_lock);
+			spin_unlock(&test_locks[0]);
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_unlock\n", KeGetCurrentIrql());
 			break;
 		case LM_SPIN_LOCK_IRQ:
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
-			spin_unlock_irq(&test_lock);
+			spin_unlock_irq(&test_locks[0]);
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
 		case LM_SPIN_LOCK_IRQSAVE:
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
-			spin_unlock_irqrestore(&test_lock, flags);
+			spin_unlock_irqrestore(&test_locks[0], flags);
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
@@ -315,9 +345,9 @@ int concurrency_thread(void *c)
 	}
 
 	if (test_debug)
-		printk("thread finished\n");
+		printk("thread #%d finished\n", param->thread_num);
 
-	complete(c);
+	complete(completion);
 	return 0;
 }
 
@@ -329,6 +359,7 @@ void concurrency_test(int argc, const char **argv)
 	const char *s;
 	size_t len;
 	struct completion **completions;
+	struct params **params;
 	enum lock_methods m;
 
 	test_debug = 0;
@@ -368,15 +399,21 @@ void concurrency_test(int argc, const char **argv)
 	lock_method = m;
 
 	if (test_debug) {
-		printk("n is %llu num_threads is %llu\n", n, num_threads);
+		printk("n is %llu num_threads is %llu lock_method is %s\n", n, num_threads, lock_methods[m]);
 		printk("sizeof(non_atomic_int) is %d\n", sizeof(non_atomic_int));
 	}
 
 	non_atomic_int = 0;
-	spin_lock_init(&test_lock);
+	spin_lock_init(&test_locks[0]);
+	spin_lock_init(&test_locks[1]);
 	mutex_init(&test_mutex);
 	completions = kmalloc(sizeof(*completions)*num_threads, 0, '1234');
 	if (completions == NULL) {
+		printk("Not enough memory\n");
+		return;
+	}
+	params = kmalloc(sizeof(*params)*num_threads, 0, '1234');
+	if (params == NULL) {
 		printk("Not enough memory\n");
 		return;
 	}
@@ -389,19 +426,28 @@ void concurrency_test(int argc, const char **argv)
 		}
 
 		init_completion(completions[i]);
+		params[i] = kmalloc(sizeof(struct params), 0, '1234');
+		if (params[i] == NULL) {
+			printk("Not enough memory\n");
+			return;
+		}
+		params[i]->c = completions[i];
+		params[i]->thread_num = i;
 
 		if (test_debug)
 			printk("about to start thread %i\n", i);
 
-		kthread_run(concurrency_thread, completions[i], "concurrency_test");
+		kthread_run(concurrency_thread, params[i], "concurrency_test");
 	}
 	for (i=0;i<num_threads;i++) {
 		wait_for_completion(completions[i]);
 		if (test_debug)
 			printk("thread %i completed\n", i);
 		kfree(completions[i]);
+		kfree(params[i]);
 	}
 	kfree(completions);
+	kfree(params);
 
 	if (non_atomic_int != n*num_threads) {
 		printk("Test failed\n");
