@@ -221,6 +221,7 @@ static unsigned long long my_strtoull(const char *nptr, const char ** endptr, in
 }
 
 static long long rcu_n;
+static spinlock_t rcu_writer_lock;
 
 struct rcu_struct {
 	long long a;
@@ -233,6 +234,7 @@ static int rcu_reader(void *arg)
 	volatile long long val1, val2;
 	KIRQL flags;
 	struct rcu_struct *the_rcu;
+	struct completion *c = arg;
 
 	for (i=0;i<rcu_n;i++) {
 		flags = rcu_read_lock();
@@ -248,6 +250,7 @@ static int rcu_reader(void *arg)
 			return -1;
 		}
 	}
+	complete(c);
 
 	return 0;
 }
@@ -257,12 +260,16 @@ static int rcu_writer(void *arg)
 	long long i;
 	volatile long long val;
 	struct rcu_struct *new_rcu, *old_rcu;
+	struct completion *c = arg;
 
 	for (i=0;i<rcu_n;i++) {
+		spin_lock(&rcu_writer_lock);
+
 		old_rcu = non_atomic_rcu;
 		new_rcu = kmalloc(sizeof(*new_rcu), 0, '1234');
 		if (new_rcu == NULL) {
 			printk("no memory\n");
+			spin_unlock(&rcu_writer_lock);
 			return -1;
 		}
 		*new_rcu = *non_atomic_rcu;
@@ -276,9 +283,13 @@ static int rcu_writer(void *arg)
 		new_rcu->b = val;
 
 		rcu_assign_pointer(non_atomic_rcu, new_rcu);
+		spin_unlock(&rcu_writer_lock);
+
 		synchronize_rcu();
 		kfree(old_rcu);
 	}
+	complete(c);
+
 	return 0;
 }
 
@@ -287,8 +298,8 @@ static void rcu_test(int argc, const char **argv)
 	const char *s;
 	int num_readers;
 	int num_writers;
-	long long rcu_n;
 	int i;
+	struct completion **completions;
 
 	if (argc != 4)
 		goto usage;
@@ -313,12 +324,40 @@ static void rcu_test(int argc, const char **argv)
 	non_atomic_rcu->a = 0;
 	non_atomic_rcu->b = 0;
 
+	completions = kmalloc(sizeof(*completions)*(num_readers+num_writers), 0, '1234');
+	if (completions == NULL) {
+		printk("No memory\n");
+		return;
+	}
+	spin_lock_init(&rcu_writer_lock);
+
 	for (i=0;i<num_readers;i++) {
-		kthread_run(rcu_reader, NULL, "rcu_reader");
+		completions[i] = kmalloc(sizeof(struct completion), 0, '1234');
+		if (completions[i] == NULL) {
+			printk("Not enough memory\n");
+			return;
+		}
+
+		init_completion(completions[i]);
+		kthread_run(rcu_reader, completions[i], "rcu_reader");
 	}
-	for (i=0;i<num_writers;i++) {
-		kthread_run(rcu_writer, NULL, "rcu_writer");
+	for (;i<num_writers+num_readers;i++) {
+		completions[i] = kmalloc(sizeof(struct completion), 0, '1234');
+		if (completions[i] == NULL) {
+			printk("Not enough memory\n");
+			return;
+		}
+
+		init_completion(completions[i]);
+		kthread_run(rcu_writer, completions[i], "rcu_writer");
 	}
+	for (i=0;i<num_readers+num_writers;i++) {
+		wait_for_completion(completions[i]);
+//		if (test_debug)
+			printk("thread %i completed\n", i);
+		kfree(completions[i]);
+	}
+	kfree(completions);
 
 	return;
 usage:
