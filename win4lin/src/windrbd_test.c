@@ -224,9 +224,9 @@ static unsigned long long n;
 static unsigned long long num_threads;
 static int test_debug;
 
-enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_SPIN_LOCK_IRQSAVE, LM_MUTEX, LM_CRITICAL_REGION, LM_TWO_SPINLOCKS, LM_LAST };
+enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_SPIN_LOCK_IRQSAVE, LM_MUTEX, LM_CRITICAL_REGION, LM_TWO_SPINLOCKS, LM_TWO_SPINLOCKS_PASSIVE_LEVEL, LM_LAST };
 static char *lock_methods[LM_LAST] = {
-	"none", "spin_lock", "spin_lock_irq", "spin_lock_irqsave", "mutex", "critical_region", "two_spinlocks"
+	"none", "spin_lock", "spin_lock_irq", "spin_lock_irqsave", "mutex", "critical_region", "two_spinlocks", "two_spinlocks_passive_level"
 };
 static enum lock_methods lock_method;
 
@@ -246,6 +246,14 @@ int concurrency_thread(void *p)
 	flags = 0;
 	for (j=0;j<n;j++) {
 		switch (lock_method) {
+		case LM_TWO_SPINLOCKS_PASSIVE_LEVEL:
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
+			spin_lock(&test_locks[param->thread_num & 1]);
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
+			break;
+
 		case LM_TWO_SPINLOCKS:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
@@ -299,6 +307,14 @@ int concurrency_thread(void *p)
 		non_atomic_int = val;
 
 		switch (lock_method) {
+		case LM_TWO_SPINLOCKS_PASSIVE_LEVEL:
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
+			spin_unlock(&test_locks[param->thread_num & 1]);
+			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
+			break;
+
 		case LM_TWO_SPINLOCKS:
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
