@@ -249,7 +249,7 @@ static int rcu_reader(void *arg)
 	long long i;
 	volatile long long val1, val2;
 	KIRQL flags;
-	struct rcu_struct *the_rcu;
+	struct rcu_struct volatile *the_rcu;
 	struct completion *c = arg;
 
 	flags = 0;
@@ -262,7 +262,7 @@ static int rcu_reader(void *arg)
 			spin_lock_irq(&rcu_writer_lock);
 
 #if 1
-		the_rcu = rcu_dereference(non_atomic_rcu);
+		the_rcu = rcu_dereference((struct rcu_struct volatile *) non_atomic_rcu);
 		val1 = the_rcu->a;
 		val2 = the_rcu->b;
 #else
@@ -308,8 +308,12 @@ static int rcu_writer(void *arg)
 		new_rcu = kmalloc(sizeof(*new_rcu), 0, '1234');
 		if (new_rcu == NULL) {
 			printk("no memory\n");
-			if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK)
+			if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK ||
+		    	    rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_LONG)
 				spin_unlock(&rcu_writer_lock);
+			if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ ||
+		    	    rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ_LONG)
+				spin_unlock_irq(&rcu_writer_lock);
 
 			complete(c);
 			return -1;
