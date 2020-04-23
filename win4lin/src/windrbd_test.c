@@ -242,6 +242,7 @@ static char *rcu_writer_lock_methods[RCU_WRITER_LAST] = {
 };
 static enum rcu_writer_lock_methods rcu_writer_lock_method;
 static int rcu_writers_finished;
+static atomic_t rcu_num_read_errors;
 
 static int rcu_reader(void *arg)
 {
@@ -256,19 +257,21 @@ static int rcu_reader(void *arg)
 		if (rcu_lock_method == RCU_READ_LOCK)
 			flags = rcu_read_lock();
 
-#if 0
+#if 1
 		the_rcu = rcu_dereference(non_atomic_rcu);
 		val1 = the_rcu->a;
 		val2 = the_rcu->b;
-#endif
+#else
 		val1 = non_atomic_rcu->a;
 		val2 = non_atomic_rcu->b;
+#endif
 
 		if (rcu_lock_method == RCU_READ_LOCK)
 			rcu_read_unlock(flags);
 
 		if (val1 != val2) {
 			printk("val1 (%llu) != val2 (%llu)\n", val1, val2);
+			atomic_inc(&rcu_num_read_errors);
 			complete(c);
 			return -1;
 		}
@@ -314,6 +317,11 @@ static int rcu_writer(void *arg)
 			spin_unlock(&rcu_writer_lock);
 
 		synchronize_rcu();
+
+/* too noisy 
+		if (test_debug)
+			printk("about to free old RCU at %p\n", old_rcu);
+*/
 		kfree(old_rcu);
 	}
 	complete(c);
@@ -386,6 +394,8 @@ static void rcu_test(int argc, const char **argv)
 	non_atomic_rcu->a = 0;
 	non_atomic_rcu->b = 0;
 
+	atomic_set(&rcu_num_read_errors, 0);
+
 	if (test_debug)
 		printk("alloc %zd bytes for completion\n", sizeof(*completions)*(num_readers+num_writers));
 
@@ -442,10 +452,14 @@ static void rcu_test(int argc, const char **argv)
 		kfree(completions[i]);
 	}
 	kfree(completions);
+	if (atomic_read(&rcu_num_read_errors) > 0)
+		printk("%d read errors\n", atomic_read(&rcu_num_read_errors));
+	else
+		printk("Test succeeded\n");
 
 	return;
 usage:
-	printk("Usage: rcu_test <num-readers> <num-writers> <n> <none|rcu_read_lock>\n");
+	printk("Usage: rcu_test <num-readers> <num-writers> <n> <none|rcu_read_lock> <none|spin_lock>\n");
 }
 
 static unsigned long long n;
