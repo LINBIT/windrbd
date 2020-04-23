@@ -386,6 +386,9 @@ static void rcu_test(int argc, const char **argv)
 	non_atomic_rcu->a = 0;
 	non_atomic_rcu->b = 0;
 
+	if (test_debug)
+		printk("alloc %zd bytes for completion\n", sizeof(*completions)*(num_readers+num_writers));
+
 	completions = kmalloc(sizeof(*completions)*(num_readers+num_writers), 0, '1234');
 	if (completions == NULL) {
 		printk("No memory\n");
@@ -394,6 +397,9 @@ static void rcu_test(int argc, const char **argv)
 	spin_lock_init(&rcu_writer_lock);
 
 	for (i=0;i<num_writers;i++) {
+		if (test_debug)
+			printk("alloc writer %d\n", i);
+
 		completions[i] = kmalloc(sizeof(struct completion), 0, '1234');
 		if (completions[i] == NULL) {
 			printk("Not enough memory\n");
@@ -403,7 +409,10 @@ static void rcu_test(int argc, const char **argv)
 		init_completion(completions[i]);
 		kthread_run(rcu_writer, completions[i], "rcu_writer");
 	}
-	for (;i<num_readers+num_readers;i++) {
+	for (;i<num_readers+num_writers;i++) {
+		if (test_debug)
+			printk("alloc reader %d\n", i);
+
 		completions[i] = kmalloc(sizeof(struct completion), 0, '1234');
 		if (completions[i] == NULL) {
 			printk("Not enough memory\n");
@@ -414,6 +423,9 @@ static void rcu_test(int argc, const char **argv)
 		kthread_run(rcu_reader, completions[i], "rcu_reader");
 	}
 	for (i=0;i<num_writers;i++) {
+		if (test_debug)
+			printk("wait for completion writer %d\n", i);
+
 		wait_for_completion(completions[i]);
 		if (test_debug)
 			printk("thread %i completed\n", i);
@@ -421,6 +433,9 @@ static void rcu_test(int argc, const char **argv)
 	}
 	rcu_writers_finished = 1;
 	for (;i<num_readers+num_writers;i++) {
+		if (test_debug)
+			printk("wait for completion reader %d\n", i);
+
 		wait_for_completion(completions[i]);
 		if (test_debug)
 			printk("thread %i completed\n", i);
