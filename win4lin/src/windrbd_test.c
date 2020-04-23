@@ -230,15 +230,15 @@ struct rcu_struct {
 	long long b;
 } *non_atomic_rcu;
 
-enum rcu_lock_methods { RCU_NONE, RCU_READ_LOCK, RCU_LAST };
+enum rcu_lock_methods { RCU_NONE, RCU_READ_LOCK, RCU_SPIN_LOCK, RCU_SPIN_LOCK_IRQ, RCU_LAST };
 static char *rcu_lock_methods[RCU_LAST] = {
-	"none", "rcu_read_lock"
+	"none", "rcu_read_lock", "spin_lock", "spin_lock_irq"
 };
 static enum rcu_lock_methods rcu_lock_method;
 
-enum rcu_writer_lock_methods { RCU_WRITER_NONE, RCU_WRITER_SPIN_LOCK, RCU_WRITER_SPIN_LOCK_IRQ, RCU_WRITER_LAST };
+enum rcu_writer_lock_methods { RCU_WRITER_NONE, RCU_WRITER_SPIN_LOCK, RCU_WRITER_SPIN_LOCK_IRQ, RCU_WRITER_SPIN_LOCK_LONG, RCU_WRITER_SPIN_LOCK_IRQ_LONG, RCU_WRITER_LAST };
 static char *rcu_writer_lock_methods[RCU_WRITER_LAST] = {
-	"none", "spin_lock", "spin_lock_irq"
+	"none", "spin_lock", "spin_lock_irq", "spin_lock_long", "spin_lock_irq_long"
 };
 static enum rcu_writer_lock_methods rcu_writer_lock_method;
 static int rcu_writers_finished;
@@ -256,6 +256,10 @@ static int rcu_reader(void *arg)
 	while (!rcu_writers_finished) {
 		if (rcu_lock_method == RCU_READ_LOCK)
 			flags = rcu_read_lock();
+		if (rcu_lock_method == RCU_SPIN_LOCK)
+			spin_lock(&rcu_writer_lock);
+		if (rcu_lock_method == RCU_SPIN_LOCK_IRQ)
+			spin_lock_irq(&rcu_writer_lock);
 
 #if 1
 		the_rcu = rcu_dereference(non_atomic_rcu);
@@ -268,6 +272,10 @@ static int rcu_reader(void *arg)
 
 		if (rcu_lock_method == RCU_READ_LOCK)
 			rcu_read_unlock(flags);
+		if (rcu_lock_method == RCU_SPIN_LOCK)
+			spin_unlock(&rcu_writer_lock);
+		if (rcu_lock_method == RCU_SPIN_LOCK_IRQ)
+			spin_unlock_irq(&rcu_writer_lock);
 
 		if (val1 != val2) {
 			printk("val1 (%llu) != val2 (%llu)\n", val1, val2);
@@ -289,9 +297,11 @@ static int rcu_writer(void *arg)
 	struct completion *c = arg;
 
 	for (i=0;i<rcu_n;i++) {
-		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK)
+		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK ||
+		    rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_LONG)
 			spin_lock(&rcu_writer_lock);
-		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ)
+		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ ||
+		    rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ_LONG)
 			spin_lock_irq(&rcu_writer_lock);
 
 		old_rcu = non_atomic_rcu;
@@ -327,6 +337,11 @@ static int rcu_writer(void *arg)
 			printk("about to free old RCU at %p\n", old_rcu);
 */
 		kfree(old_rcu);
+
+		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_LONG)
+			spin_unlock(&rcu_writer_lock);
+		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ_LONG)
+			spin_unlock_irq(&rcu_writer_lock);
 	}
 	complete(c);
 
@@ -456,6 +471,11 @@ static void rcu_test(int argc, const char **argv)
 		kfree(completions[i]);
 	}
 	kfree(completions);
+
+	printk("non_atomic_rcu->a is %lld non_atomic_rcu->b is %lld\n",
+		non_atomic_rcu->a, non_atomic_rcu->b);
+	kfree(non_atomic_rcu);
+
 	if (atomic_read(&rcu_num_read_errors) > 0)
 		printk("%d read errors\n", atomic_read(&rcu_num_read_errors));
 	else
@@ -463,7 +483,7 @@ static void rcu_test(int argc, const char **argv)
 
 	return;
 usage:
-	printk("Usage: rcu_test <num-readers> <num-writers> <n> <none|rcu_read_lock> <none|spin_lock|spin_lock_irq>\n");
+	printk("Usage: rcu_test <num-readers> <num-writers> <n> <none|rcu_read_lock|spin_lock|spin_lock_irq> <none|spin_lock|spin_lock_irq|spin_lock_long|spin_lock_irq_long>\n");
 }
 
 static unsigned long long n;
