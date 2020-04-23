@@ -235,6 +235,12 @@ static char *rcu_lock_methods[RCU_LAST] = {
 	"none", "rcu_read_lock"
 };
 static enum rcu_lock_methods rcu_lock_method;
+
+enum rcu_writer_lock_methods { RCU_WRITER_NONE, RCU_WRITER_SPIN_LOCK, RCU_WRITER_LAST };
+static char *rcu_writer_lock_methods[RCU_WRITER_LAST] = {
+	"none", "spin_lock"
+};
+static enum rcu_writer_lock_methods rcu_writer_lock_method;
 static int rcu_writers_finished;
 
 static int rcu_reader(void *arg)
@@ -263,6 +269,7 @@ static int rcu_reader(void *arg)
 
 		if (val1 != val2) {
 			printk("val1 (%llu) != val2 (%llu)\n", val1, val2);
+			complete(c);
 			return -1;
 		}
 	}
@@ -279,13 +286,17 @@ static int rcu_writer(void *arg)
 	struct completion *c = arg;
 
 	for (i=0;i<rcu_n;i++) {
-//		spin_lock(&rcu_writer_lock);
+		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK)
+			spin_lock(&rcu_writer_lock);
 
 		old_rcu = non_atomic_rcu;
 		new_rcu = kmalloc(sizeof(*new_rcu), 0, '1234');
 		if (new_rcu == NULL) {
 			printk("no memory\n");
-			spin_unlock(&rcu_writer_lock);
+			if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK)
+				spin_unlock(&rcu_writer_lock);
+
+			complete(c);
 			return -1;
 		}
 		*new_rcu = *non_atomic_rcu;
@@ -299,7 +310,8 @@ static int rcu_writer(void *arg)
 		new_rcu->b = val;
 
 		rcu_assign_pointer(non_atomic_rcu, new_rcu);
-//		spin_unlock(&rcu_writer_lock);
+		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK)
+			spin_unlock(&rcu_writer_lock);
 
 		synchronize_rcu();
 		kfree(old_rcu);
@@ -317,6 +329,7 @@ static void rcu_test(int argc, const char **argv)
 	int i;
 	struct completion **completions;
 	enum rcu_lock_methods m;
+	enum rcu_writer_lock_methods mw;
 	size_t len;
 
 	test_debug = 0;
@@ -330,7 +343,7 @@ static void rcu_test(int argc, const char **argv)
 		}
 		i++;
 	}
-	if (argc != i+4)
+	if (argc != i+5)
 		goto usage;
 
 	num_readers = my_strtoull(argv[i], &s, 10);
@@ -354,6 +367,16 @@ static void rcu_test(int argc, const char **argv)
 	if (m == RCU_LAST) 
 		goto usage;
 	rcu_lock_method = m;
+
+	for (mw=RCU_WRITER_NONE;m<RCU_WRITER_LAST;m++) {
+		len = strlen(rcu_writer_lock_methods[mw]);
+		if (strncmp(rcu_writer_lock_methods[mw], argv[i+4], len) == 0 &&
+		   (argv[i+4][len] == '\0'))
+			break;
+	}
+	if (mw == RCU_WRITER_LAST) 
+		goto usage;
+	rcu_lock_method = mw;
 
 	non_atomic_rcu = kmalloc(sizeof(*non_atomic_rcu), 0, '1234');
 	if (non_atomic_rcu == NULL) {
