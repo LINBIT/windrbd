@@ -236,9 +236,9 @@ static char *rcu_lock_methods[RCU_LAST] = {
 };
 static enum rcu_lock_methods rcu_lock_method;
 
-enum rcu_writer_lock_methods { RCU_WRITER_NONE, RCU_WRITER_SPIN_LOCK, RCU_WRITER_LAST };
+enum rcu_writer_lock_methods { RCU_WRITER_NONE, RCU_WRITER_SPIN_LOCK, RCU_WRITER_SPIN_LOCK_IRQ, RCU_WRITER_LAST };
 static char *rcu_writer_lock_methods[RCU_WRITER_LAST] = {
-	"none", "spin_lock"
+	"none", "spin_lock", "spin_lock_irq"
 };
 static enum rcu_writer_lock_methods rcu_writer_lock_method;
 static int rcu_writers_finished;
@@ -291,6 +291,8 @@ static int rcu_writer(void *arg)
 	for (i=0;i<rcu_n;i++) {
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK)
 			spin_lock(&rcu_writer_lock);
+		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ)
+			spin_lock_irq(&rcu_writer_lock);
 
 		old_rcu = non_atomic_rcu;
 		new_rcu = kmalloc(sizeof(*new_rcu), 0, '1234');
@@ -315,6 +317,8 @@ static int rcu_writer(void *arg)
 		rcu_assign_pointer(non_atomic_rcu, new_rcu);
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK)
 			spin_unlock(&rcu_writer_lock);
+		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ)
+			spin_unlock_irq(&rcu_writer_lock);
 
 		synchronize_rcu();
 
@@ -459,7 +463,7 @@ static void rcu_test(int argc, const char **argv)
 
 	return;
 usage:
-	printk("Usage: rcu_test <num-readers> <num-writers> <n> <none|rcu_read_lock> <none|spin_lock>\n");
+	printk("Usage: rcu_test <num-readers> <num-writers> <n> <none|rcu_read_lock> <none|spin_lock|spin_lock_irq>\n");
 }
 
 static unsigned long long n;

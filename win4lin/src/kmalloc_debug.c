@@ -110,13 +110,13 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	poison_after = (struct poison_after*) (&mem->data[mem->size]);
 
 	if (mem->poison != POISON_BEFORE) {
-		printk("kmalloc_debug: Warning: Poison before overwritten (is %x should be %x), allocated from %s %s\n", mem->poison, POISON_BEFORE, mem->desc, mem->func);
+		printk("kmalloc_debug: Warning: Poison before overwritten (is %x should be %x), allocated from %s %s(), freed from %s:%d %s()\n", mem->poison, POISON_BEFORE, mem->desc, mem->func, file, line, func);
 		if (mem->poison == 'EERF')
 			printk("This is most likely a double free.\n");
 	}
 
 	if (poison_after->poison2 != POISON_AFTER) {
-		printk("kmalloc_debug: Warning: Poison after overwritten (is %x should be %x), allocated from %s %s\n", poison_after->poison2, POISON_AFTER, mem->desc, mem->func);
+		printk("kmalloc_debug: Warning: Poison after overwritten (is %x should be %x), allocated from %s %s(), freed from %s:%d %s()\n", poison_after->poison2, POISON_AFTER, mem->desc, mem->func, file, line, func);
 		if (mem->poison == 'EERF')
 			printk("This is most likely a double free.\n");
 	}
