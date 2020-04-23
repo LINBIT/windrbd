@@ -235,6 +235,7 @@ static char *rcu_lock_methods[RCU_LAST] = {
 	"none", "rcu_read_lock"
 };
 static enum rcu_lock_methods rcu_lock_method;
+static int rcu_writers_finished;
 
 static int rcu_reader(void *arg)
 {
@@ -245,14 +246,17 @@ static int rcu_reader(void *arg)
 	struct completion *c = arg;
 
 	flags = 0;
-	for (i=0;i<rcu_n*1000;i++) {
-		msleep(1);
+	while (!rcu_writers_finished) {
 		if (rcu_lock_method == RCU_READ_LOCK)
 			flags = rcu_read_lock();
 
+#if 0
 		the_rcu = rcu_dereference(non_atomic_rcu);
 		val1 = the_rcu->a;
 		val2 = the_rcu->b;
+#endif
+		val1 = non_atomic_rcu->a;
+		val2 = non_atomic_rcu->b;
 
 		if (rcu_lock_method == RCU_READ_LOCK)
 			rcu_read_unlock(flags);
@@ -316,6 +320,7 @@ static void rcu_test(int argc, const char **argv)
 	size_t len;
 
 	test_debug = 0;
+	rcu_writers_finished = 0;
 
 	i=1;
 	if (argv[1][0] == '-') {
@@ -365,17 +370,7 @@ static void rcu_test(int argc, const char **argv)
 	}
 	spin_lock_init(&rcu_writer_lock);
 
-	for (i=0;i<num_readers;i++) {
-		completions[i] = kmalloc(sizeof(struct completion), 0, '1234');
-		if (completions[i] == NULL) {
-			printk("Not enough memory\n");
-			return;
-		}
-
-		init_completion(completions[i]);
-		kthread_run(rcu_reader, completions[i], "rcu_reader");
-	}
-	for (;i<num_writers+num_readers;i++) {
+	for (i=0;i<num_writers;i++) {
 		completions[i] = kmalloc(sizeof(struct completion), 0, '1234');
 		if (completions[i] == NULL) {
 			printk("Not enough memory\n");
@@ -385,7 +380,24 @@ static void rcu_test(int argc, const char **argv)
 		init_completion(completions[i]);
 		kthread_run(rcu_writer, completions[i], "rcu_writer");
 	}
-	for (i=0;i<num_readers+num_writers;i++) {
+	for (;i<num_readers+num_readers;i++) {
+		completions[i] = kmalloc(sizeof(struct completion), 0, '1234');
+		if (completions[i] == NULL) {
+			printk("Not enough memory\n");
+			return;
+		}
+
+		init_completion(completions[i]);
+		kthread_run(rcu_reader, completions[i], "rcu_reader");
+	}
+	for (i=0;i<num_writers;i++) {
+		wait_for_completion(completions[i]);
+		if (test_debug)
+			printk("thread %i completed\n", i);
+		kfree(completions[i]);
+	}
+	rcu_writers_finished = 1;
+	for (;i<num_readers+num_writers;i++) {
 		wait_for_completion(completions[i]);
 		if (test_debug)
 			printk("thread %i completed\n", i);
