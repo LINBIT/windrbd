@@ -48,6 +48,9 @@ TODO: Bug: spin_unlock_irq sets IRQL to PASSIVE_LEVEL
 	on Windows and replace spin_lock_irq by spin_lock_irqsave
 	(with a cocci script, see the rcu script for a template).
 
+	Update: this is in progress. Machine hangs sometimes.
+	(schedule() called at IRQL == DISPATCH_LEVEL)
+
 TODO: Bug: Make boot device intentionally diskless
 
 	Diskless is red in drbdadm status
