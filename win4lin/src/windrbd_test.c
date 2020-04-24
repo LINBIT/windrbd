@@ -230,9 +230,15 @@ struct rcu_struct {
 	long long b;
 } *non_atomic_rcu;
 
-enum rcu_lock_methods { RCU_NONE, RCU_READ_LOCK, RCU_SPIN_LOCK, RCU_SPIN_LOCK_IRQ, RCU_LAST };
+enum rcu_read_methods { RRM_DEREFERENCE, RRM_DIRECT, RRM_LAST };
+static char *rcu_read_methods[RRM_LAST] = {
+	"dereference", "direct"
+};
+static enum rcu_read_methods rcu_read_method;
+
+enum rcu_lock_methods { RCU_NONE, RCU_READ_LOCK, RCU_SPIN_LOCK, RCU_SPIN_LOCK_IRQ, RCU_CRITICAL_REGION, RCU_LAST };
 static char *rcu_lock_methods[RCU_LAST] = {
-	"none", "rcu_read_lock", "spin_lock", "spin_lock_irq"
+	"none", "rcu_read_lock", "spin_lock", "spin_lock_irq", "critical_region"
 };
 static enum rcu_lock_methods rcu_lock_method;
 
@@ -260,15 +266,17 @@ static int rcu_reader(void *arg)
 			spin_lock(&rcu_writer_lock);
 		if (rcu_lock_method == RCU_SPIN_LOCK_IRQ)
 			spin_lock_irq(&rcu_writer_lock);
+		if (rcu_lock_method == RCU_CRITICAL_REGION)
+			KeEnterCriticalRegion();
 
-#if 1
-		the_rcu = rcu_dereference((struct rcu_struct volatile *) non_atomic_rcu);
-		val1 = the_rcu->a;
-		val2 = the_rcu->b;
-#else
-		val1 = non_atomic_rcu->a;
-		val2 = non_atomic_rcu->b;
-#endif
+		if (rcu_read_method == RRM_DEREFERENCE) {
+			the_rcu = rcu_dereference((struct rcu_struct volatile *) non_atomic_rcu);
+			val1 = the_rcu->a;
+			val2 = the_rcu->b;
+		} else {
+			val1 = non_atomic_rcu->a;
+			val2 = non_atomic_rcu->b;
+		}
 
 		if (rcu_lock_method == RCU_READ_LOCK)
 			rcu_read_unlock(flags);
@@ -276,6 +284,8 @@ static int rcu_reader(void *arg)
 			spin_unlock(&rcu_writer_lock);
 		if (rcu_lock_method == RCU_SPIN_LOCK_IRQ)
 			spin_unlock_irq(&rcu_writer_lock);
+		if (rcu_lock_method == RCU_CRITICAL_REGION)
+			KeLeaveCriticalRegion();
 
 		if (val1 != val2) {
 			printk("val1 (%llu) != val2 (%llu)\n", val1, val2);
@@ -361,6 +371,7 @@ static void rcu_test(int argc, const char **argv)
 	struct completion **completions;
 	enum rcu_lock_methods m;
 	enum rcu_writer_lock_methods mw;
+	enum rcu_read_methods rrm;
 	size_t len;
 
 	test_debug = 0;
@@ -374,7 +385,7 @@ static void rcu_test(int argc, const char **argv)
 		}
 		i++;
 	}
-	if (argc != i+5)
+	if (argc != i+6)
 		goto usage;
 
 	num_readers = my_strtoull(argv[i], &s, 10);
@@ -399,7 +410,7 @@ static void rcu_test(int argc, const char **argv)
 		goto usage;
 	rcu_lock_method = m;
 
-	for (mw=RCU_WRITER_NONE;m<RCU_WRITER_LAST;m++) {
+	for (mw=RCU_WRITER_NONE;mw<RCU_WRITER_LAST;mw++) {
 		len = strlen(rcu_writer_lock_methods[mw]);
 		if (strncmp(rcu_writer_lock_methods[mw], argv[i+4], len) == 0 &&
 		   (argv[i+4][len] == '\0'))
@@ -407,7 +418,19 @@ static void rcu_test(int argc, const char **argv)
 	}
 	if (mw == RCU_WRITER_LAST) 
 		goto usage;
-	rcu_lock_method = mw;
+	rcu_writer_lock_method = mw;
+
+	for (rrm=RRM_DEREFERENCE;rrm<RRM_LAST;rrm++) {
+		len = strlen(rcu_read_methods[rrm]);
+		if (strncmp(rcu_read_methods[rrm], argv[i+5], len) == 0 &&
+		   (argv[i+5][len] == '\0'))
+			break;
+	}
+	if (rrm == RRM_LAST) 
+		goto usage;
+	rcu_read_method = rrm;
+
+	printk("rcu_lock_method is %d (%s) rcu_writer_lock_method is %d (%s)\n", rcu_lock_method, rcu_lock_methods[rcu_lock_method], rcu_writer_lock_method, rcu_writer_lock_methods[rcu_writer_lock_method]);
 
 	non_atomic_rcu = kmalloc(sizeof(*non_atomic_rcu), 0, '1234');
 	if (non_atomic_rcu == NULL) {
@@ -487,7 +510,7 @@ static void rcu_test(int argc, const char **argv)
 
 	return;
 usage:
-	printk("Usage: rcu_test <num-readers> <num-writers> <n> <none|rcu_read_lock|spin_lock|spin_lock_irq> <none|spin_lock|spin_lock_irq|spin_lock_long|spin_lock_irq_long>\n");
+	printk("Usage: rcu_test <num-readers> <num-writers> <n> <none|rcu_read_lock|spin_lock|spin_lock_irq> <none|spin_lock|spin_lock_irq|spin_lock_long|spin_lock_irq_long> <dereference|direct>\n");
 }
 
 static unsigned long long n;
