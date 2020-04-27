@@ -1,0 +1,31 @@
+From ca6821f3c472224e5941f6fcd94c175aa7e7c944 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 27 Apr 2020 20:15:14 +0200
+Subject: [PATCH] init_transport function.
+
+We cannot initialize a KSEMAPHORE using a static initializer,
+therefore init_rwsem() has to be called early (before initializing
+TCP/IP transport).
+---
+ drbd/drbd_transport.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drbd/drbd_transport.c b/drbd/drbd_transport.c
+index 627a21a..e600803 100644
+--- a/drbd/drbd_transport.c
++++ b/drbd/drbd_transport.c
+@@ -331,6 +331,11 @@ void drbd_path_event(struct drbd_transport *transport, struct drbd_path *path)
+ 	notify_path(connection, path, NOTIFY_CHANGE);
+ }
+ 
++void init_transport(void)
++{
++	init_rwsem(&transport_classes_lock);
++}
++
+ /* Network transport abstractions */
+ EXPORT_SYMBOL_GPL(drbd_register_transport_class);
+ EXPORT_SYMBOL_GPL(drbd_unregister_transport_class);
+-- 
+2.17.0
+
