@@ -30,7 +30,7 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
-TODO: windrbd install-bus-device takes long to complete
+TODO: Code quality: windrbd install-bus-device takes long to complete
 
 TODO: Feature: On loading kernel module, umhelper and logger should also be started.
 
@@ -50,6 +50,10 @@ TODO: Bug: spin_unlock_irq sets IRQL to PASSIVE_LEVEL
 
 	Update: this is in progress. Machine hangs sometimes.
 	(schedule() called at IRQL == DISPATCH_LEVEL)
+
+	Machine hang fixed (was down_read() using spin locks and
+	raising IRQL to 2). Need to review some code pieces
+	(see file spin-lock-review)
 
 TODO: Bug: Make boot device intentionally diskless
 
@@ -80,6 +84,9 @@ TODO: Performance: rw_sem are spinlocks now
 
 	Which is slow.
 
+	Update: Converted to semaphores (not read/write semaphores,
+	this needs to be implemented).
+
 TODO: Bug: invalidate-remote while I/O sync stall on sync start
 
 	And remote is uptodate.
@@ -97,6 +104,12 @@ Apr 17 20:13:12 192.168.56.103  U18:13:13.257|0364f420(drbd_s_w0) #455 drbd_rs_c
 TODO: Bug: BSOD on sync finish.
 
 	7E (?) could not reproduce now.
+
+TODO: Bug: Connection loss while I/O
+
+	About twice a day DRBD connection between server 2016 breaks.
+	Unfortunately sometimes connection cannot be reestablished
+	(in a 4 node setup).
 
 +TODO: Bug: BSOD in drbd_sender:2898 calling callback
 
