@@ -73,6 +73,8 @@ static PDEVICE_OBJECT drbd_bus_device2;
 static PDEVICE_OBJECT drbd_legacy_bus_object;
 static PDEVICE_OBJECT drbd_physical_bus_device;
 
+extern void init_transport(void);
+
 KEVENT bus_ready_event;
 
 static NTSTATUS create_device(const char *name, const UNICODE_STRING *sddl_perms, struct _DEVICE_OBJECT **d)
@@ -140,6 +142,8 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	init_kmalloc_debug();
 	printk("kmalloc_debug initialized.\n");
 #endif
+
+	init_transport();
 
 	make_me_a_windrbd_thread("driver-init");
 	sudo();

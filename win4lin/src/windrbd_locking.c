@@ -121,14 +121,14 @@ void mutex_unlock(struct mutex *m)
 	KeReleaseMutex(&m->mtx, FALSE);
 }
 
-void sema_init(struct semaphore *s, int limit)
+void sema_init(struct semaphore *s, int val)
 {
-    KeInitializeSemaphore(&s->sem, limit, limit);    
+	KeInitializeSemaphore(&s->sem, val, LONG_MAX);
 }
 
 void down(struct semaphore *s)
 {
-    KeWaitForSingleObject(&s->sem, Executive, KernelMode, FALSE, NULL);
+	KeWaitForSingleObject(&s->sem, Executive, KernelMode, FALSE, NULL);
 }
 
 /**
@@ -141,59 +141,50 @@ void down(struct semaphore *s)
 
 int down_trylock(struct semaphore *s)
 {
-    LARGE_INTEGER Timeout;
-    Timeout.QuadPart = 0;
+	LARGE_INTEGER Timeout;
+	Timeout.QuadPart = 0;
     
-    if (KeWaitForSingleObject(&s->sem, Executive, KernelMode, FALSE, &Timeout) == STATUS_SUCCESS)
-    {
-	 	/* TODO: Acquire?? */
-        return 0;
-    }
-    else
-    {
-        return 1;
-    }
+	if (KeWaitForSingleObject(&s->sem, Executive, KernelMode, FALSE, &Timeout) == STATUS_SUCCESS)
+		return 0;
+
+	return 1;
 }
 
 void up(struct semaphore *s)
 {
-    if (KeReadStateSemaphore(&s->sem) < s->sem.Limit)
-    {
-        KeReleaseSemaphore(&s->sem, IO_NO_INCREMENT, 1, FALSE);
-    }
+	if (KeReadStateSemaphore(&s->sem) < s->sem.Limit)
+		KeReleaseSemaphore(&s->sem, IO_NO_INCREMENT, 1, FALSE);
+	else
+		printk("BUG: Semaphore limit reached: %d\n", s->sem.Limit);
 }
 
 	/* TODO: Implement rw_semaphores using list of waiters
 	 * and a real semaphore.
-	 * TODO: this is completly broken since it uses storage
-	 * in the semaphore (the spinlock) for storing old_irql
-	 * (gets overwritten by a concurrent thread)
 	 */
 
 void init_rwsem(struct rw_semaphore *sem)
 {
-	KeInitializeSpinLock(&sem->the_lock);
-	sem->old_irql = PASSIVE_LEVEL;
+	sema_init(&sem->the_semaphore, 1);
 }
 
 void down_write(struct rw_semaphore *sem)
 {
-	KeAcquireSpinLock(&sem->the_lock, &sem->old_irql);
+	down(&sem->the_semaphore);
 }
 
 void up_write(struct rw_semaphore *sem)
 {
-	KeReleaseSpinLock(&sem->the_lock, sem->old_irql);
+	up(&sem->the_semaphore);
 }
 
 void down_read(struct rw_semaphore *sem)
 {
-	KeAcquireSpinLock(&sem->the_lock, &sem->old_irql);
+	down(&sem->the_semaphore);
 }
 
 void up_read(struct rw_semaphore *sem)
 {
-	KeReleaseSpinLock(&sem->the_lock, sem->old_irql);
+	up(&sem->the_semaphore);
 }
 
 	/* noop because there is no difference between read and write

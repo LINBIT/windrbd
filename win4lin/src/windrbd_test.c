@@ -206,6 +206,8 @@ static int test_debug;
 static long long non_atomic_int = 0;
 static spinlock_t test_locks[2];
 static struct mutex test_mutex;
+static struct semaphore test_semaphore;
+static struct rw_semaphore test_rw_semaphore;
 
 static unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base)
 {
@@ -516,9 +518,9 @@ usage:
 static unsigned long long n;
 static unsigned long long num_threads;
 
-enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_SPIN_LOCK_IRQSAVE, LM_MUTEX, LM_CRITICAL_REGION, LM_TWO_SPINLOCKS, LM_TWO_SPINLOCKS_PASSIVE_LEVEL, LM_LAST };
+enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_SPIN_LOCK_IRQSAVE, LM_MUTEX, LM_CRITICAL_REGION, LM_TWO_SPINLOCKS, LM_TWO_SPINLOCKS_PASSIVE_LEVEL, LM_SEMAPHORE, LM_RW_SEMAPHORE_READ, LM_RW_SEMAPHORE_WRITE, LM_LAST };
 static char *lock_methods[LM_LAST] = {
-	"none", "spin_lock", "spin_lock_irq", "spin_lock_irqsave", "mutex", "critical_region", "two_spinlocks", "two_spinlocks_passive_level"
+	"none", "spin_lock", "spin_lock_irq", "spin_lock_irqsave", "mutex", "critical_region", "two_spinlocks", "two_spinlocks_passive_level", "semaphore", "rw_semaphore_read", "rw_semaphore_write"
 };
 static enum lock_methods lock_method;
 
@@ -538,6 +540,18 @@ int concurrency_thread(void *p)
 	flags = 0;
 	for (j=0;j<n;j++) {
 		switch (lock_method) {
+		case LM_RW_SEMAPHORE_READ:
+			down_read(&test_rw_semaphore);
+			break;
+
+		case LM_RW_SEMAPHORE_WRITE:
+			down_write(&test_rw_semaphore);
+			break;
+
+		case LM_SEMAPHORE:
+			down(&test_semaphore);
+			break;
+
 		case LM_TWO_SPINLOCKS_PASSIVE_LEVEL:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
@@ -599,6 +613,18 @@ int concurrency_thread(void *p)
 		non_atomic_int = val;
 
 		switch (lock_method) {
+		case LM_RW_SEMAPHORE_READ:
+			up_read(&test_rw_semaphore);
+			break;
+
+		case LM_RW_SEMAPHORE_WRITE:
+			up_write(&test_rw_semaphore);
+			break;
+
+		case LM_SEMAPHORE:
+			up(&test_semaphore);
+			break;
+
 		case LM_TWO_SPINLOCKS_PASSIVE_LEVEL:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
@@ -715,6 +741,9 @@ void concurrency_test(int argc, const char **argv)
 	spin_lock_init(&test_locks[0]);
 	spin_lock_init(&test_locks[1]);
 	mutex_init(&test_mutex);
+	sema_init(&test_semaphore, 1);
+	init_rwsem(&test_rw_semaphore);
+
 	completions = kmalloc(sizeof(*completions)*num_threads, 0, '1234');
 	if (completions == NULL) {
 		printk("Not enough memory\n");

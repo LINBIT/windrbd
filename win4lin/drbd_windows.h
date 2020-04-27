@@ -1088,8 +1088,7 @@ extern int down_trylock(struct semaphore *s);
 extern void up(struct semaphore *s);
 
 struct rw_semaphore {
-	KSPIN_LOCK the_lock;
-	KIRQL old_irql;
+	struct semaphore the_semaphore;
 };
 
 extern void init_rwsem(struct rw_semaphore *sem);
