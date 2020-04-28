@@ -1,6 +1,8 @@
 Roadmap to 1.0
 --------------
 
+From phil: MS clustermanager support
+
 drbd-utils updates
 	new commands of windrbd utility.
 

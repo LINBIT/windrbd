@@ -53,7 +53,21 @@ TODO: Bug: spin_unlock_irq sets IRQL to PASSIVE_LEVEL
 
 	Machine hang fixed (was down_read() using spin locks and
 	raising IRQL to 2). Need to review some code pieces
-	(see file spin-lock-review)
+
+	drbdadm_main.c: 3814
+	drbdadm_main.c: 5156
+	drbdadm_main.c: 5671
+	drbdadm_main.c: 5690
+	drbdadm_receiver.c: 2635
+	drbdadm_receiver.c: 6024
+	drbdadm_receiver.c: 6040
+	drbdadm_receiver.c: 6428
+	drbd_req.c: 1129
+	drbd_sender.c: 2602
+	drbd_transport_tcp.c: 645
+
+	Reviewed and converted to spin_lock_irqsave/spin_unlock_irqrestore
+	where possible.
 
 TODO: Bug: Make boot device intentionally diskless
 
