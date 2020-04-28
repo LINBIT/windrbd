@@ -20,7 +20,7 @@ struct sock {
 
 	void *sk_user_data;
 	void (*sk_state_change)(struct sock *sk);
-	rwlock_t sk_callback_lock;
+	spinlock_t sk_callback_lock;
 
 	struct socket *sk_socket;
 };
