@@ -21,7 +21,7 @@
 
 /* This used to be a part of drbd_windows.c . It contains implementation
  * of muteces, spin locks, semaphores, read/write semaphores, RCU
- * handling routines and routines to contol IRQL directly.
+ * handling routines and routines to control IRQL directly.
  */
 
 #include "drbd_windows.h"
