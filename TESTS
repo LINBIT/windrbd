@@ -1,5 +1,12 @@
 TODO: define tests to be run before releases.
 
+Apr 28 2020
+
+invalidate remote loop without I/O
+
+works (400 iterations)
+
+-----------------------------------------
 Mar 31 2020
 
 disconnect connect and wait sync (while I/O)
