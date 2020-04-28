@@ -1,0 +1,62 @@
+From 282db621f8269b513a95b29197a5daf59de90f7e Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 28 Apr 2020 13:55:14 +0200
+Subject: [PATCH 3/6] drbd_receiver: spin_lock_irqsave in failure path.
+
+---
+ drbd/drbd_receiver.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index 93e2efe..cb1e949 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -2613,7 +2613,7 @@ static unsigned long wire_flags_to_bio(struct drbd_connection *connection, u32 d
+ 	return opf;
+ }
+ 
+-static void fail_postponed_requests(struct drbd_peer_request *peer_req)
++static void fail_postponed_requests(struct drbd_peer_request *peer_req, KIRQL *spin_lock_irq_flags_p)
+ {
+ 	struct drbd_device *device = peer_req->peer_device->device;
+ 	struct drbd_interval *i;
+@@ -2632,15 +2632,15 @@ static void fail_postponed_requests(struct drbd_peer_request *peer_req)
+ 			continue;
+ 		req->local_rq_state &= ~RQ_POSTPONED;
+ 		__req_mod(req, NEG_ACKED, peer_req->peer_device, &m);
+-		spin_unlock_irq(&device->resource->req_lock);
++		spin_unlock_irqrestore(&device->resource->req_lock, *spin_lock_irq_flags_p);
+ 		if (m.bio)
+ 			complete_master_bio(device, &m);
+-		spin_lock_irq(&device->resource->req_lock);
++		spin_lock_irqsave(&device->resource->req_lock, *spin_lock_irq_flags_p);
+ 		goto repeat;
+ 	}
+ }
+ 
+-static int handle_write_conflicts(struct drbd_peer_request *peer_req)
++static int handle_write_conflicts(struct drbd_peer_request *peer_req, KIRQL *spin_lock_irq_flags_p)
+ {
+ 	struct drbd_peer_device *peer_device = peer_req->peer_device;
+ 	struct drbd_device *device = peer_device->device;
+@@ -2732,7 +2732,7 @@ static int handle_write_conflicts(struct drbd_peer_request *peer_req)
+ 					begin_state_change_locked(connection->resource, CS_HARD);
+ 					__change_cstate(connection, C_TIMEOUT);
+ 					end_state_change_locked(connection->resource);
+-					fail_postponed_requests(peer_req);
++					fail_postponed_requests(peer_req, spin_lock_irq_flags_p);
+ 					goto out;
+ 				}
+ 				goto repeat;
+@@ -3003,7 +3003,7 @@ static int receive_Data(struct drbd_connection *connection, struct packet_info *
+ 			goto out_interrupted;
+ 		spin_lock_irqsave(&device->resource->req_lock,
+ 				  spin_lock_irq_flags);
+-		err = handle_write_conflicts(peer_req);
++		err = handle_write_conflicts(peer_req, &spin_lock_irq_flags);
+ 		if (err) {
+ 			spin_unlock_irqrestore(&device->resource->req_lock,
+ 					       spin_lock_irq_flags);
+-- 
+2.17.0
+

@@ -1,0 +1,94 @@
+From 8e3170dd5c94facbec8c5eca75c84742d7fe5455 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 28 Apr 2020 16:33:31 +0200
+Subject: [PATCH 6/6] drbd_debugfs: spin_lock_irqsave
+
+---
+ drbd/drbd_debugfs.c | 15 +++++++++------
+ 1 file changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/drbd/drbd_debugfs.c b/drbd/drbd_debugfs.c
+index f61c42c..46a8ad0 100644
+--- a/drbd/drbd_debugfs.c
++++ b/drbd/drbd_debugfs.c
+@@ -773,6 +773,7 @@ static int connection_callback_history_show(struct seq_file *m, void *ignored)
+ 
+ static int connection_oldest_requests_show(struct seq_file *m, void *ignored)
+ {
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_connection *connection = m->private;
+ 	ktime_t now = ktime_get();
+ 	ULONG_PTR jif = jiffies;
+@@ -781,7 +782,7 @@ static int connection_oldest_requests_show(struct seq_file *m, void *ignored)
+ 	/* BUMP me if you change the file format/content/presentation */
+ 	seq_printf(m, "v: %u\n\n", 0);
+ 
+-	spin_lock_irq(&connection->resource->req_lock);
++	spin_lock_irqsave(&connection->resource->req_lock, spin_lock_irq_flags);
+ 	r1 = connection->todo.req_next;
+ 	if (r1)
+ 		seq_print_minor_vnr_req(m, r1, now, jif);
+@@ -793,7 +794,7 @@ static int connection_oldest_requests_show(struct seq_file *m, void *ignored)
+ 	r2 = connection->req_not_net_done;
+ 	if (r2 && r2 != r1)
+ 		seq_print_minor_vnr_req(m, r2, now, jif);
+-	spin_unlock_irq(&connection->resource->req_lock);
++	spin_unlock_irqrestore(&connection->resource->req_lock, spin_lock_irq_flags);
+ 	return 0;
+ }
+ 
+@@ -1007,6 +1008,7 @@ static int device_act_log_extents_show(struct seq_file *m, void *ignored)
+ 
+ static int device_oldest_requests_show(struct seq_file *m, void *ignored)
+ {
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device = m->private;
+ 	struct drbd_resource *resource = device->resource;
+ 	ktime_t now = ktime_get();
+@@ -1018,7 +1020,7 @@ static int device_oldest_requests_show(struct seq_file *m, void *ignored)
+ 	seq_printf(m, "v: %u\n\n", 0);
+ 
+ 	seq_puts(m, RQ_HDR);
+-	spin_lock_irq(&resource->req_lock);
++	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags);
+ 	/* WRITE, then READ */
+ 	for (i = 1; i >= 0; --i) {
+ 		r1 = list_first_entry_or_null(&device->pending_master_completion[i],
+@@ -1030,7 +1032,7 @@ static int device_oldest_requests_show(struct seq_file *m, void *ignored)
+ 		if (r2 && r2 != r1)
+ 			seq_print_one_request(m, r2, now, jif);
+ 	}
+-	spin_unlock_irq(&resource->req_lock);
++	spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags);
+ 	return 0;
+ }
+ 
+@@ -1064,6 +1066,7 @@ static int device_md_io_show(struct seq_file *m, void *ignored)
+ 
+ static int device_data_gen_id_show(struct seq_file *m, void *ignored)
+ {
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device = m->private;
+ 	struct drbd_md *md;
+ 	int node_id, i = 0;
+@@ -1073,7 +1076,7 @@ static int device_data_gen_id_show(struct seq_file *m, void *ignored)
+ 
+ 	md = &device->ldev->md;
+ 
+-	spin_lock_irq(&md->uuid_lock);
++	spin_lock_irqsave(&md->uuid_lock, spin_lock_irq_flags);
+ 	seq_printf(m, "0x%016llX\n", drbd_current_uuid(device));
+ 
+ 	for (node_id = 0; node_id < DRBD_NODE_ID_MAX; node_id++) {
+@@ -1086,7 +1089,7 @@ static int device_data_gen_id_show(struct seq_file *m, void *ignored)
+ 
+ 	for (i = 0; i < HISTORY_UUIDS; i++)
+ 		seq_printf(m, "0x%016llX\n", drbd_history_uuid(device, i));
+-	spin_unlock_irq(&md->uuid_lock);
++	spin_unlock_irqrestore(&md->uuid_lock, spin_lock_irq_flags);
+ 	put_ldev(device);
+ 	return 0;
+ }
+-- 
+2.17.0
+

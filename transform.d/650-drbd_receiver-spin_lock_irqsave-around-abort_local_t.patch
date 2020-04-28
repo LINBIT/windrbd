@@ -1,0 +1,140 @@
+From 4e0a76c5388a2d4e840dba12511149c97f9b2197 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 28 Apr 2020 16:02:07 +0200
+Subject: [PATCH 4/6] drbd_receiver: spin_lock_irqsave around
+ abort_local_transaction()
+
+---
+ drbd/drbd_receiver.c | 32 ++++++++++++++++----------------
+ 1 file changed, 16 insertions(+), 16 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index cb1e949..26f6675 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -6018,29 +6018,28 @@ enum alt_rv {
+ 	ALT_TIMEOUT,
+ };
+ 
+-static enum alt_rv when_done_lock(struct drbd_resource *resource, unsigned int for_tid)
++static enum alt_rv when_done_lock(struct drbd_resource *resource, unsigned int for_tid, KIRQL *spin_lock_irq_flags_p)
+ {
+-	KIRQL spin_lock_irq_flags;
+-	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags);
++	spin_lock_irqsave(&resource->req_lock, *spin_lock_irq_flags_p);
+ 	if (!resource->remote_state_change)
+ 		return ALT_LOCKED;
+-	spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags);
++	spin_unlock_irqrestore(&resource->req_lock, *spin_lock_irq_flags_p);
+ 	if (resource->twopc_reply.tid == for_tid)
+ 		return ALT_MATCH;
+ 
+ 	return ALT_TIMEOUT;
+ }
+-static enum alt_rv abort_local_transaction(struct drbd_resource *resource, unsigned int for_tid)
++static enum alt_rv abort_local_transaction(struct drbd_resource *resource, unsigned int for_tid, KIRQL *spin_lock_irq_flags_p)
+ {
+ 	long remaining_time;
+ 	LONG_PTR t = twopc_timeout(resource) / 8;
+ 	enum alt_rv rv;
+ 
+ 	set_bit(TWOPC_ABORT_LOCAL, &resource->flags);
+-	spin_unlock_irq(&resource->req_lock);
++	spin_unlock_irqrestore(&resource->req_lock, *spin_lock_irq_flags_p);
+ 	wake_up(&resource->state_wait);
+ 	wait_event_timeout(remaining_time, resource->twopc_wait,
+-			   (rv = when_done_lock(resource, for_tid)) != ALT_TIMEOUT,
++			   (rv = when_done_lock(resource, for_tid, spin_lock_irq_flags_p)) != ALT_TIMEOUT,
+ 			   t);
+ 	clear_bit(TWOPC_ABORT_LOCAL, &resource->flags);
+ 	return rv;
+@@ -6415,6 +6414,7 @@ static int process_twopc(struct drbd_connection *connection,
+ 			 ULONG_PTR receive_jif)
+ {
+ 	KIRQL spin_lock_irq_flags;
++	KIRQL spin_lock_irq_flags2;
+ 	struct drbd_connection *affected_connection = connection;
+ 	struct drbd_resource *resource = connection->resource;
+ 	struct drbd_peer_device *peer_device = NULL;
+@@ -6425,21 +6425,21 @@ static int process_twopc(struct drbd_connection *connection,
+ 	enum csc_rv csc_rv;
+ 
+ 	/* Check for concurrent transactions and duplicate packets. */
+-	spin_lock_irq(&resource->req_lock);
++	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags2);
+ 
+ 	csc_rv = check_concurrent_transactions(resource, reply);
+ 
+ 	if (csc_rv == CSC_CLEAR && pi->cmd != P_TWOPC_ABORT) {
+ 		if (!is_prepare(pi->cmd)) {
+ 			/* We have committed or aborted this transaction already. */
+-			spin_unlock_irq(&resource->req_lock);
++			spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags2);
+ 			drbd_debug(connection, "Ignoring %s packet %u\n",
+ 				   drbd_packet_name(pi->cmd),
+ 				   reply->tid);
+ 			return 0;
+ 		}
+ 		if (reply->is_aborted) {
+-			spin_unlock_irq(&resource->req_lock);
++			spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags2);
+ 			return 0;
+ 		}
+ 		resource->starting_queued_twopc = NULL;
+@@ -6452,7 +6452,7 @@ static int process_twopc(struct drbd_connection *connection,
+ 		flags |= CS_PREPARED;
+ 
+ 		if (test_and_set_bit(TWOPC_EXECUTED, &resource->flags)) {
+-			spin_unlock_irq(&resource->req_lock);
++			spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags2);
+ 			drbd_info(connection, "Ignoring redundant %s packet %u.\n",
+ 				  drbd_packet_name(pi->cmd),
+ 				  reply->tid);
+@@ -6465,7 +6465,7 @@ static int process_twopc(struct drbd_connection *connection,
+ 			  "state change %u.\n",
+ 			  resource->twopc_reply.tid,
+ 			  reply->tid);
+-		alt_rv = abort_local_transaction(resource, reply->tid);
++		alt_rv = abort_local_transaction(resource, reply->tid, &spin_lock_irq_flags2);
+ 		if (alt_rv == ALT_MATCH) {
+ 			/* abort_local_transaction() comes back unlocked in this case... */
+ 			goto match;
+@@ -6480,7 +6480,7 @@ static int process_twopc(struct drbd_connection *connection,
+ 		}
+ 		/* abort_local_transaction() returned with the req_lock */
+ 		if (reply->is_aborted) {
+-			spin_unlock_irq(&resource->req_lock);
++			spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags2);
+ 			return 0;
+ 		}
+ 		resource->starting_queued_twopc = NULL;
+@@ -6494,7 +6494,7 @@ static int process_twopc(struct drbd_connection *connection,
+ 		int err;
+ 
+ 		err = abort_starting_twopc(resource, reply);
+-		spin_unlock_irq(&resource->req_lock);
++		spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags2);
+ 		if (err) {
+ 			err = abort_queued_twopc(resource, reply);
+ 			if (err)
+@@ -6506,7 +6506,7 @@ static int process_twopc(struct drbd_connection *connection,
+ 		nested_twopc_abort(resource, pi->vnr, pi->cmd, p);
+ 		return 0;
+ 	} else {
+-		spin_unlock_irq(&resource->req_lock);
++		spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags2);
+ 
+ 		if (csc_rv == CSC_REJECT) {
+ 		reject:
+@@ -6646,7 +6646,7 @@ static int process_twopc(struct drbd_connection *connection,
+ 	}
+ 
+ 	resource->twopc_reply = *reply;
+-	spin_unlock_irq(&resource->req_lock);
++	spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags2);
+ 
+ 	switch(pi->cmd) {
+ 	case P_TWOPC_PREPARE:
+-- 
+2.17.0
+
