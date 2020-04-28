@@ -153,8 +153,6 @@ static inline void might_sleep() { }
 
 #define CRYPTO_MAX_ALG_NAME (64)
 
-#define spin_lock_nested(__lock, __subclass) spin_lock(__lock)
-
 char *kvasprintf(int flags, const char *fmt, va_list args);
 
 

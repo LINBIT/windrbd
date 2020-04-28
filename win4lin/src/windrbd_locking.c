@@ -541,6 +541,11 @@ void spin_unlock(spinlock_t *lock)
 //	printk("IRQL is %d\n", KeGetCurrentIrql());
 }
 
+void spin_lock_nested(spinlock_t *lock, int level)
+{
+	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
+}
+
 void spin_lock_bh(spinlock_t *lock)
 {
 	spin_lock_irq(lock);

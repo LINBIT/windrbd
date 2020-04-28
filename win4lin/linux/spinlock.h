@@ -66,6 +66,7 @@ extern void spin_unlock_bh(spinlock_t *lock);
 extern void spin_lock(spinlock_t *lock);
 extern void spin_unlock(spinlock_t *lock);
 extern void spin_unlock_irq(spinlock_t *lock);
+extern void spin_lock_nested(spinlock_t *lock, int level);
 
 extern void spin_unlock_irqrestore(spinlock_t *lock, long flags);
 extern long _spin_lock_irqsave(spinlock_t* lock);
