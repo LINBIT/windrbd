@@ -585,20 +585,20 @@ void call_rcu(struct rcu_head *head, rcu_callback_t func)
 
 #endif
 
-/* TODO: static? It is also probably not a bad idea to initialize this
-   somewhere ...
- */
-
-spinlock_t g_irqLock;
+static spinlock_t irq_lock;
 
 void local_irq_disable()
 {
-	spin_lock_irq(&g_irqLock);
+	KIRQL hopefully_passive;
+
+	KeAcquireSpinLock(&irq_lock.spinLock, &hopefully_passive);
+	if (hopefully_passive != PASSIVE_LEVEL)
+		printk("Bug: IRQL not passive before local_irq_disable().\n");
 }
 
 void local_irq_enable()
 {
-	spin_unlock_irq(&g_irqLock);
+	KeReleaseSpinLock(&irq_lock.spinLock, PASSIVE_LEVEL);
 }
 
 int spin_trylock(spinlock_t *lock)
@@ -613,4 +613,5 @@ int spin_trylock(spinlock_t *lock)
 void init_locking(void)
 {
         rcu_rw_lock = 0;
+	spin_lock_init(&irq_lock);
 }
