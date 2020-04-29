@@ -51,13 +51,11 @@ NTSTATUS mutex_lock_timeout(struct mutex *m, ULONG msTimeout)
 	return status;
 }
 
-__inline
 NTSTATUS mutex_lock(struct mutex *m)
 {
     return KeWaitForMutexObject(&m->mtx, Executive, KernelMode, FALSE, NULL);
 }
 
-__inline
 int mutex_lock_interruptible(struct mutex *m)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -201,7 +199,6 @@ void spin_lock_init(spinlock_t *lock)
 	lock->printk_lock = 0;
 }
 
-	/* TODO: later a rw lock */
 static EX_SPIN_LOCK rcu_rw_lock;
 
 #ifdef SPIN_LOCK_DEBUG
@@ -519,43 +516,37 @@ void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const
 #endif
 }
 
+/* This resets the IRQL to PASSIVE_LEVEL. This is normally not
+ * what you want. Use spin_lock_irqsave/spin_unlock_irqrestore
+ * whereever possible.
+ */
+
 void spin_unlock_irq(spinlock_t *lock)
 {
-//	printk("IRQL is %d\n", KeGetCurrentIrql());
-		/* TODO: sure? */
 	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
-//	printk("IRQL is %d\n", KeGetCurrentIrql());
 }
+
+/* This does not change the IRQL. In particular if IRQL is
+ * at PASSIVE_LEVEL it stays at PASSIVE_LEVEL which means
+ * that the critical section may be preempted. Again,
+ * use spin_lock_irqsave/spin_unlock_irqrestore whereever
+ * possible.
+ */
 
 void spin_lock(spinlock_t *lock)
 {
-//	spin_lock_irq(lock);
-//	printk("IRQL is %d\n", KeGetCurrentIrql());
 	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
 }
 
 void spin_unlock(spinlock_t *lock)
 {
-//	spin_unlock_irq(lock);
 	KeReleaseSpinLockFromDpcLevel(&lock->spinLock);
-//	printk("IRQL is %d\n", KeGetCurrentIrql());
 }
 
 void spin_lock_nested(spinlock_t *lock, int level)
 {
 	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
 }
-
-void spin_lock_bh(spinlock_t *lock)
-{
-	spin_lock_irq(lock);
-}
-
-void spin_unlock_bh(spinlock_t *lock)
-{
-	spin_unlock_irq(lock);
-}
-
 
 KIRQL rcu_read_lock(void)
 {

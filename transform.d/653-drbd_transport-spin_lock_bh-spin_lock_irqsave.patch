@@ -1,0 +1,77 @@
+From f1be43822ea5ed5bdc63050143ee80e6d1e45411 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 29 Apr 2020 16:49:20 +0200
+Subject: [PATCH] drbd_transport: spin_lock_bh -> spin_lock_irqsave
+
+---
+ drbd/drbd_transport.c | 15 +++++++++------
+ 1 file changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/drbd/drbd_transport.c b/drbd/drbd_transport.c
+index e600803..d83f325 100644
+--- a/drbd/drbd_transport.c
++++ b/drbd/drbd_transport.c
+@@ -180,6 +180,7 @@ static struct drbd_listener *find_listener(struct drbd_connection *connection,
+ int drbd_get_listener(struct drbd_transport *transport, struct drbd_path *path,
+ 		      int (*init_listener)(struct drbd_transport *, const struct sockaddr *addr, struct drbd_listener *))
+ {
++	KIRQL spin_lock_bh_flags;
+ 	struct drbd_connection *connection =
+ 		container_of(transport, struct drbd_connection, transport);
+ 	struct sockaddr *addr = (struct sockaddr *)&path->my_addr;
+@@ -188,7 +189,7 @@ int drbd_get_listener(struct drbd_transport *transport, struct drbd_path *path,
+ 	int err, tries = 0;
+ 
+ 	while (1) {
+-		spin_lock_bh(&resource->listeners_lock);
++		spin_lock_irqsave(&resource->listeners_lock, spin_lock_bh_flags);
+ 		listener = find_listener(connection, (struct sockaddr_storage *)addr);
+ 		if (!listener && new_listener) {
+ 			list_add(&new_listener->list, &resource->listeners);
+@@ -199,7 +200,7 @@ int drbd_get_listener(struct drbd_transport *transport, struct drbd_path *path,
+ 			list_add(&path->listener_link, &listener->waiters);
+ 			path->listener = listener;
+ 		}
+-		spin_unlock_bh(&resource->listeners_lock);
++		spin_unlock_irqrestore(&resource->listeners_lock, spin_lock_bh_flags);
+ 
+ 		if (new_listener)
+ 			new_listener->destroy(new_listener);
+@@ -232,18 +233,20 @@ int drbd_get_listener(struct drbd_transport *transport, struct drbd_path *path,
+ 
+ static void drbd_listener_destroy(struct kref *kref)
+ {
++	KIRQL spin_lock_bh_flags;
+ 	struct drbd_listener *listener = container_of(kref, struct drbd_listener, kref);
+ 	struct drbd_resource *resource = listener->resource;
+ 
+-	spin_lock_bh(&resource->listeners_lock);
++	spin_lock_irqsave(&resource->listeners_lock, spin_lock_bh_flags);
+ 	list_del(&listener->list);
+-	spin_unlock_bh(&resource->listeners_lock);
++	spin_unlock_irqrestore(&resource->listeners_lock, spin_lock_bh_flags);
+ 
+ 	listener->destroy(listener);
+ }
+ 
+ void drbd_put_listener(struct drbd_path *path)
+ {
++	KIRQL spin_lock_bh_flags;
+ 	struct drbd_resource *resource;
+ 	struct drbd_listener *listener;
+ 
+@@ -252,9 +255,9 @@ void drbd_put_listener(struct drbd_path *path)
+ 		return;
+ 
+ 	resource = listener->resource;
+-	spin_lock_bh(&resource->listeners_lock);
++	spin_lock_irqsave(&resource->listeners_lock, spin_lock_bh_flags);
+ 	list_del(&path->listener_link);
+-	spin_unlock_bh(&resource->listeners_lock);
++	spin_unlock_irqrestore(&resource->listeners_lock, spin_lock_bh_flags);
+ 	kref_put(&listener->kref, drbd_listener_destroy);
+ }
+ 
+-- 
+2.17.0
+

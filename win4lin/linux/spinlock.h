@@ -61,8 +61,6 @@ extern long _spin_lock_irqsave_debug(spinlock_t* lock, const char *file, int lin
 extern void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const char *func);
 #define spin_lock_irq(lock) spin_lock_irq_debug_new(lock, __FILE__, __LINE__, __func__)
 // extern void spin_lock_irq(spinlock_t *lock);
-extern void spin_lock_bh(spinlock_t *lock);
-extern void spin_unlock_bh(spinlock_t *lock);
 extern void spin_lock(spinlock_t *lock);
 extern void spin_unlock(spinlock_t *lock);
 extern void spin_unlock_irq(spinlock_t *lock);
