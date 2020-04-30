@@ -1,6 +1,8 @@
 What's new in version 0.10.7
 ----------------------------
 
+Refactored locking
+
 Online verify
 
 drbdadm status and drbdsetup events2 as non-Adminitrator user.

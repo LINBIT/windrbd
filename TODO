@@ -41,39 +41,11 @@ TODO: Code quality: implement sched_setscheduler()
 
 	And remove extra windrbd_set_priority or so patch.
 
-TODO: Bug: spin_unlock_irq sets IRQL to PASSIVE_LEVEL
-
-	It was DISPATCH_LEVEL in some cases before spin_lock_irq was
-	called. Solution is probably to not support spin_lock_irq
-	on Windows and replace spin_lock_irq by spin_lock_irqsave
-	(with a cocci script, see the rcu script for a template).
-
-	Update: this is in progress. Machine hangs sometimes.
-	(schedule() called at IRQL == DISPATCH_LEVEL)
-
-	Machine hang fixed (was down_read() using spin locks and
-	raising IRQL to 2). Need to review some code pieces
-
-	drbdadm_main.c: 3814
-	drbdadm_main.c: 5156
-	drbdadm_main.c: 5671
-	drbdadm_main.c: 5690
-	drbdadm_receiver.c: 2635
-	drbdadm_receiver.c: 6024
-	drbdadm_receiver.c: 6040
-	drbdadm_receiver.c: 6428
-	drbd_req.c: 1129
-	drbd_sender.c: 2602
-	drbd_transport_tcp.c: 645
-
-	Reviewed and converted to spin_lock_irqsave/spin_unlock_irqrestore
-	where possible.
-
 TODO: Bug: Make boot device intentionally diskless
 
 	Diskless is red in drbdadm status
 
-TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
++TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
 
 	After ~100 iterations. Not clear why. Resource was connected.
 	I/O was done over ntfs.
@@ -94,14 +66,7 @@ TODO: Bug: drbdsetup secondary takes long to complete
 	deveject for sample API (setup API CM_Request_Device_EjectA()
 	function).
 
-TODO: Performance: rw_sem are spinlocks now
-
-	Which is slow.
-
-	Update: Converted to semaphores (not read/write semaphores,
-	this needs to be implemented).
-
-TODO: Bug: invalidate-remote while I/O sync stall on sync start
++TODO: Bug: invalidate-remote while I/O sync stall on sync start
 
 	And remote is uptodate.
 
@@ -114,10 +79,6 @@ Apr 17 13:16:56 192.168.56.103  U11:16:54.920|06713390(drbd_a_w0) #3268 bm_print
 Apr 17 20:13:12 192.168.56.103  U18:13:13.257|0364f420(drbd_s_w0) #455 drbd_rs_complete_io <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x282): drbd_rs_complete_io(,92160 [=0]) called, but refcnt is 0!?
 
 	then machine lock up (mouse does not move any more)
-
-TODO: Bug: BSOD on sync finish.
-
-	7E (?) could not reproduce now.
 
 TODO: Bug: Connection loss while I/O
 
@@ -137,6 +98,8 @@ TODO: Bug: Connection loss while I/O
 	The list is empty (was only list element). Value of cb is
 	unknown (but most likely garbage).
 
+	We've reworked locking, maybe the bug is gone now.
+
 TODO: Bug: BSOD in copy_first_640k
 
 	On Server 2016 this sometimes happens (when loading
@@ -149,28 +112,12 @@ TODO: Bug: BSOD in copy_first_640k
 
 	Not sure if we want to fix this.
 
-TODO: Bug: After 6 minutes of connecting Windows 10 BSODs with DRIVER_PNP_WATCHDOG
-
-	waiting for size (already unblocked the QUERY_PROPERTY ioctl).
-	Not sure what to do ... maybe report an error reading the size?
-
-	Update: no we should trigger the watchdog somehow. Do not
-	return errors that do not exist.
-
 TODO: Code quality: Squash patches in transform.d
 
 	Redo all changes (we now have patches that revert former
 	patches).
 
 TODO: Documentation: Draw diagram (from Joel)
-
-TODO: Infrastructure: Move Linbit VMs to new server
-
-+TODO: Code quality: Submit drbd-utils patches.
-
-	Need to implement create-resource for windrbd first.
-
-	Implemented. Now need eject-device command.
 
 TODO: Bug: BSOD when accessing ReFS device
 
@@ -292,19 +239,6 @@ TODO: Performance: Retry disable NDIS lightweight filter
 
 	We still have the 90 seconds boot delay.
 
-
-TODO: Bug: drbdadm down takes long when there is I/O
-
-	Up to 1 minute (non-boot resource). I think we already fixed
-	this, but now it is here again ... have to note that we
-	were running with WinDbg attached.
-
-	Probably reason is that RemoveLock is taken on I/O even
-	when the device is about to be shut down.
-
-	No it is probably PnP sending REMOVE_DEVICE late (because
-	it is a SUPRISE_REMOVAL), delete Windows device from
-	userspace.
 
 TODO: Bug: Partition manager hangs when there is a resource without size.
 
@@ -429,11 +363,6 @@ TODO: Feature: implement fsync_bdev
 
 	called on becoming secondary
 
-TODO: Bug: Allow rcu_read_lock() being called recursively.
-
-	This should fix the system lockup we observed on
-	Server 2016.
-
 TODO: Feature: Set partition ID to 27 to hide partition
 
 	According to a note on 
@@ -450,6 +379,8 @@ TODOs for after Release 1.0 ----------------------------------------------
 TODO: Feature: kunit support
 
 	Nice to have, do that when finished with 1.0
+
+	We now have our own unit test which works very well.
 
 TODO: Code quality: windrbd show-drive-in-explorer might take longer than 5 seconds
 
@@ -707,13 +638,6 @@ TODO: Bug: FIXME in bitmap code
 Feb  5 14:01:17 10.43.10.11  U13:01:17.453|4260bc80(drbd_a_vamp-4nodes) bm_print_lock_info <3>drbd vamp-4nodes/1 minor 1, ds(Inconsistent), dvflag(0x0): FIXME drbd_a_vamp-4nodes[8] op clear, bitmap locked for 'receive bitmap' by drbd_r_vamp-4nodes[7]
 
 	Upstream bug?
-
-+TODO: Bug: printk eats boot messages
-
-	Because of being UDP. Implement TCP/IP logging one day.
-
-	Delay a bit before sending first printk, maybe that
-	helps...
 
 TODO: Bug: Diskless Primary BSOD when connection failed
 
@@ -6666,4 +6590,95 @@ Done: Features: implement flush_workqueue
 	down. Update: when touching this also refactor workqueue
 	code (use Linux locking primitives, don't have helper struct,
 	...).
+
+Done: Bug: spin_unlock_irq sets IRQL to PASSIVE_LEVEL
+
+	It was DISPATCH_LEVEL in some cases before spin_lock_irq was
+	called. Solution is probably to not support spin_lock_irq
+	on Windows and replace spin_lock_irq by spin_lock_irqsave
+	(with a cocci script, see the rcu script for a template).
+
+	Update: this is in progress. Machine hangs sometimes.
+	(schedule() called at IRQL == DISPATCH_LEVEL)
+
+	Machine hang fixed (was down_read() using spin locks and
+	raising IRQL to 2). Need to review some code pieces
+
+	drbdadm_main.c: 3814
+	drbdadm_main.c: 5156
+	drbdadm_main.c: 5671
+	drbdadm_main.c: 5690
+	drbdadm_receiver.c: 2635
+	drbdadm_receiver.c: 6024
+	drbdadm_receiver.c: 6040
+	drbdadm_receiver.c: 6428
+	drbd_req.c: 1129
+	drbd_sender.c: 2602
+	drbd_transport_tcp.c: 645
+
+	Reviewed and converted to spin_lock_irqsave/spin_unlock_irqrestore
+	where possible.
+
+Done: Performance: rw_sem are spinlocks now
+
+	Which is slow.
+
+	Update: Converted to semaphores (not read/write semaphores,
+	this needs to be implemented).
+
+Done: Bug: BSOD on sync finish.
+
+	7E (?) could not reproduce now.
+
+	Did not happen for several months now.
+
+Done: Bug: Allow rcu_read_lock() being called recursively.
+
+	This should fix the system lockup we observed on
+	Server 2016.
+
+	Refactored locking: RCU is a Shared spinlock now
+	(something like a read write lock). 
+
+Rejected: Bug: After 6 minutes of connecting Windows 10 BSODs with DRIVER_PNP_WATCHDOG
+
+	waiting for size (already unblocked the QUERY_PROPERTY ioctl).
+	Not sure what to do ... maybe report an error reading the size?
+
+	Update: no we should trigger the watchdog somehow. Do not
+	return errors that do not exist.
+
+Rejected: Infrastructure: Move Linbit VMs to new server
+
+	Simon said, the OpenNebula is not for testing.
+
+Duplicate: Bug: drbdadm down takes long when there is I/O
+
+	Up to 1 minute (non-boot resource). I think we already fixed
+	this, but now it is here again ... have to note that we
+	were running with WinDbg attached.
+
+	Probably reason is that RemoveLock is taken on I/O even
+	when the device is about to be shut down.
+
+	No it is probably PnP sending REMOVE_DEVICE late (because
+	it is a SUPRISE_REMOVAL), delete Windows device from
+	userspace.
+
+Done: Bug: printk eats boot messages
+
+	Because of being UDP. Implement TCP/IP logging one day.
+
+	Delay a bit before sending first printk, maybe that
+	helps...
+
+	Done, we start about 5 seconds later then it works.
+
+Done: Code quality: Submit drbd-utils patches.
+
+	Need to implement create-resource for windrbd first.
+
+	Implemented. Now need eject-device command.
+
+	In progress, submitting today.
 
