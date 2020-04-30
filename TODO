@@ -590,13 +590,6 @@ Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_mem
 Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 72, allocated by function blk_alloc_queue at ../../win4lin/src/drbd_windows.c:2415.
 n 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 104, allocated by function sock_create_linux_socket at ../../win4lin/src/windrbd_winsocket.c:1188.
 
-TODO: Implement: Log rotate
-
-	From Devin: Logfile became 9GB big.
-
-	We should fix this for the next release.
-	Maybe ship WinDRBD with net logging disabled and no log-server?
-
 TODO: Code quality: eventually use drbd_rate_limit() on some printk's
 
 TODO: Bug: Connection loss on drbdadm detach on secondary
@@ -610,7 +603,7 @@ Feb 14 14:58:01 10.43.10.10  U13:57:59.490|083959c0(drbd_a_vamp-4nodes) drbd_ack
 	Most likely an upstream bug (try Linux/Linux). Not severe,
 	connection is re-established rightafter.
 
-TODO: Feature: Resource agent for Microsoft cluster manager
++TODO: Feature: Resource agent for Microsoft cluster manager
 
 	In progress: Install Server 2016 machines (again)
 
@@ -621,11 +614,6 @@ TODO: Feature: Resource agent for Microsoft cluster manager
 	https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.con.doc/q017940_.htm
 
 	Quote: "Assign a storage device for exclusive use by the queue manager. This device needs to be created as a resource instance before it can be assigned."
-
--TODO: Feature: Autopromote
-
-	If Windows poll the devices read-only, this would make sense
-	(DRBD only attempts to promote if device is opened writable)
 
 TODO: Code quality: restructure directory structure
 
@@ -674,9 +662,9 @@ TODO: Installation: Driver unload sometimes hangs when explorer window is open
 
 	Doesn't work, but this might be an Ubuntu issue.
 
-TODO: Performance: lindrive (Diskless Primary) is somewhat slow.
++TODO: Test: Test with MS SQL server
 
-TODO: Test: Test with MS SQL server
++TODO: Test: Test with IIS
 
 TODO: Implement: We want to have some sort of a regression test suite.
 
@@ -727,11 +715,6 @@ TODO: Bug: Sometimes permissions of userland binaries are wrong
 
 TODO: Feature: Does it work with Volumes spanning several HDDs?
 
-TODO: Code quality: have refcount on struct socket
-
-	Not sure if we do a sock_release() while in SendPage().
-	(right now, no BSOD's but probably one day ...)
-
 TODO: Bug: On re-attach after Primary Diskless stuck in Negotiating
 
 	and blocked: upper
@@ -778,7 +761,7 @@ TODO: Implement: Have a ioctl to set user mode helper program
 	binary lives (without ioctl, it is sufficient for now to
 	do that in user space).
 
-TODO: Implement: Make drbd-utils relocateable
++TODO: Implement: Make drbd-utils relocateable
 
 	Currently hardcoded to C:\windrbd (in kernel and install scripts)
 	and configure parameter in userland.
@@ -786,8 +769,6 @@ TODO: Implement: Make drbd-utils relocateable
 TODO: Upstream: drbdadm invalidate while primary and connected uptodate/uptodate does nothing.
 
 	And also does not return an error.
-
-TODO: Research: Hyper-V plugin for Linstor
 
 TODO: Documentation: drbd-util: Update manpage.
 
@@ -819,15 +800,7 @@ TODO: Upstream: drbdsetup generic_get() handles multiple packets wrong.
 	Probably nobody noticed because recvmsg() always returned only
 	one packet (socket is a DGRAM socket).
 
-TODO: Implement: Make windrbd directory unaccessible for non-admins.
-
-	Non-admins can read the dirs and files but not write them.
-	This is ok for now, later we probably want to deny read access
-	(in case there are shared secrets).
-
-TODO: Code quality: Implement function stubs created when integrating DRBD 9.0.9
-
-TODO: Code quality: Reenable Windows Compiler Warnings and fix them.
++TODO: Code quality: Reenable Windows Compiler Warnings and fix them.
 
 TODO: Implement: get drbdmon (and drbdsetup events2) working.
 
@@ -865,15 +838,13 @@ TODO: Implement: drbdadm adjust changing mount point doesn't work now.
 	Update: We think about to discontinue data devices because
 	some programs (MS SQL server?) do not work atop of them.
 
-TODO: Feature: Mount to NTFS directories.
-
-	For now, at least prepare user space to support that.
-
 TODO: Research: Understand IRP cancellation
 
 TODO: Test: Somehow test if referencing overlay thread works as intended.
 
-TODO: Build system: have a make depend target
+	?
+
++TODO: Build system: have a make depend target
 	Or at least header file dependencies.
 
 	Working on it .. make deps creates the Makefile.deps
@@ -1028,7 +999,7 @@ TODO: Feature: on patching boot sector, inform Windows that file system is
 	raw now.
 	So that it disappears.
 
-TODO: Test: how and when is flush to backing device done?
++TODO: Test: how and when is flush to backing device done?
 	This is important. Right now NTFS files only appear on
 	Linux when sync is done manually. Should sync at least
 	when becoming secondary. sync must be done while primary
@@ -1135,16 +1106,6 @@ TODO: Performance: I/O seems to be rather slow even when being unconnected (and 
 
 	We now patched request to be 1M (instead of 4K). Is it still
 	there?
-
-TODO: Research: check out mantech wdrbd and see if it works (and why)
-	Update: mantech WDRBD lacks many features we have
-	in windrbd most notably: it cannot connect to a
-	Linux DRBD. It does not support internal meta disk.
-
-	If there is spare time have a look on it (at least read
-	the docs, need Chrome for it (!)).
-
-	Update: Installed WDRBD and made it crash with a nc from remote.
 
 TODO: Upstream: Cygwin should have /dev/drbd<n> mapped to
 	\\Device\\Drbd<n>
@@ -6681,4 +6642,47 @@ Done: Code quality: Submit drbd-utils patches.
 	Implemented. Now need eject-device command.
 
 	In progress, submitting today.
+
+Rejected: Feature: Autopromote
+
+	If Windows poll the devices read-only, this would make sense
+	(DRBD only attempts to promote if device is opened writable)
+
+	Rejected for now. We do not have a windows device as long
+	we are secondary. In addition I still don't know how to
+	determine if a file opens read only or read write.
+
+Done: Code quality: have refcount on struct socket
+
+	Not sure if we do a sock_release() while in SendPage().
+	(right now, no BSOD's but probably one day ...)
+
+Done: Implement: Make windrbd directory unaccessible for non-admins.
+
+	Non-admins can read the dirs and files but not write them.
+	This is ok for now, later we probably want to deny read access
+	(in case there are shared secrets).
+
+Done: Code quality: Implement function stubs created when integrating DRBD 9.0.9
+
+Rejected: Implement: Log rotate
+
+	From Devin: Logfile became 9GB big.
+
+	We should fix this for the next release.
+	Maybe ship WinDRBD with net logging disabled and no log-server?
+
+	We now have a mechanism that turns of debug printk's for
+	releases.
+
+Rejected: Performance: lindrive (Diskless Primary) is somewhat slow.
+
+Rejected: Research: Hyper-V plugin for Linstor
+
+Rejected: Feature: Mount to NTFS directories.
+
+	For now, at least prepare user space to support that.
+
+	This probably never happens since we have SCSI port devices
+	now.
 
