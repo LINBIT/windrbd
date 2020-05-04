@@ -30,20 +30,29 @@ Milestone: Release 0.10.2 (netboot flag and configure IP address)
 Planned: Nov 15 2019
 Real: Nov 15 2019
 
-TODO: Code quality: windrbd install-bus-device takes long to complete
+TODOs for Release 1.0 ----------------------------------------------
 
-TODO: Feature: On loading kernel module, umhelper and logger should also be started.
+Milestone: Release 1.0 (stable version)
+Planned: July 2 2020
+Real:
 
-	When loading the kernel via bus object (pnp manager starts it).
-	I am sure there is such a thing as a dependecy between services.
++TODO: Test: Test with MS SQL server
 
-TODO: Code quality: implement sched_setscheduler()
++TODO: Test: Test with IIS
 
-	And remove extra windrbd_set_priority or so patch.
++TODO: Feature: Resource agent for Microsoft cluster manager
 
-TODO: Bug: Make boot device intentionally diskless
+	In progress: Install Server 2016 machines (again)
 
-	Diskless is red in drbdadm status
+	Done, when there is time, start working on that again.
+
+	From Phil: IBM uses MSCM: see
+
+	https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.con.doc/q017940_.htm
+
+	Quote: "Assign a storage device for exclusive use by the queue manager. This device needs to be created as a resource instance before it can be assigned."
+
++TODO: Documentation: User's guide
 
 +TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
 
@@ -54,17 +63,6 @@ Apr 17 14:03:09 192.168.56.103  U12:03:09.678|038771a0(netlink) #6419 blkdev_get
 Apr 17 14:03:09 192.168.56.103  U12:03:09.678|038771a0(netlink) #6420 drbd_md_read <6>drbd w0/17 minor 5, ds(Diskless), dvflag(0x80002): meta-data IO uses: blk-bio
 Apr 17 14:06:33 192.168.56.103  U12:06:33.944|03919c90(devicecontrol) #6421 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_RESOURCES:30)
 Apr 17 14:06:38 192.168.56.103  U12:06:38.944|03919c90(devicecontrol) #6422 windrbd_process_netlink_packet failed to acquire the mutex, probably a previous drbd command is stuck.
-
-TODO: Bug: drbdsetup secondary takes long to complete
-
-	Nice to fix that one day. Update: no fix it it takes
-	30 seconds to complete and drbdadm status does not
-	work while drbdadm secondary is still running.
-
-	Update: Need to remove device from user space (only
-	the Windows device not the DRBD device), see
-	deveject for sample API (setup API CM_Request_Device_EjectA()
-	function).
 
 +TODO: Bug: invalidate-remote while I/O sync stall on sync start
 
@@ -80,12 +78,6 @@ Apr 17 20:13:12 192.168.56.103  U18:13:13.257|0364f420(drbd_s_w0) #455 drbd_rs_c
 
 	then machine lock up (mouse does not move any more)
 
-TODO: Bug: Connection loss while I/O
-
-	About twice a day DRBD connection between server 2016 breaks.
-	Unfortunately sometimes connection cannot be reestablished
-	(in a 4 node setup).
-
 +TODO: Bug: BSOD in drbd_sender:2898 calling callback
 
 	After 26 days of I/O this BSOD (ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY)
@@ -99,6 +91,57 @@ TODO: Bug: Connection loss while I/O
 	unknown (but most likely garbage).
 
 	We've reworked locking, maybe the bug is gone now.
+
++TODO: Do not patch boot sector when it is a disk device
+
++TODO: Test: how and when is flush to backing device done?
+	This is important. Right now NTFS files only appear on
+	Linux when sync is done manually. Should sync at least
+	when becoming secondary. sync must be done while primary
+	(when secondary it would fail)
+
+	Update: is this fixed now?
+
+	I recently didn't observe data loss on writing to an
+	NTFS then doing secondary / primary on remote. However
+	since Windows does caching at file level (not at block
+	device level) it should fail. Maybe write a test that
+	writes a large file and then immeadiately does a
+	drbdadm secondary (without syncing the file).
+
+TODOs for after Release 1.0 ----------------------------------------
+
+TODO: Code quality: windrbd install-bus-device takes long to complete
+
+TODO: Feature: On loading kernel module, umhelper and logger should also be started.
+
+	When loading the kernel via bus object (pnp manager starts it).
+	I am sure there is such a thing as a dependecy between services.
+
+TODO: Code quality: implement sched_setscheduler()
+
+	And remove extra windrbd_set_priority or so patch.
+
+TODO: Bug: Make boot device intentionally diskless
+
+	Diskless is red in drbdadm status
+
+TODO: Bug: drbdsetup secondary takes long to complete
+
+	Nice to fix that one day. Update: no fix it it takes
+	30 seconds to complete and drbdadm status does not
+	work while drbdadm secondary is still running.
+
+	Update: Need to remove device from user space (only
+	the Windows device not the DRBD device), see
+	deveject for sample API (setup API CM_Request_Device_EjectA()
+	function).
+
+TODO: Bug: Connection loss while I/O
+
+	About twice a day DRBD connection between server 2016 breaks.
+	Unfortunately sometimes connection cannot be reestablished
+	(in a 4 node setup).
 
 TODO: Bug: BSOD in copy_first_640k
 
@@ -124,13 +167,7 @@ TODO: Bug: BSOD when accessing ReFS device
 	It just disappeared again (when debugging via WinDbg).
 	Unclear where this comes from (IRQL BSOD in ReFS).
 
-TODOs for Release 1.0 ----------------------------------------------
-
-Milestone: Release 1.0 (stable version)
-Planned: July 2 2020
-Real:
-
-+TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
+TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
 	First need to implement more than one connection.
 
@@ -154,7 +191,7 @@ Real:
 	Update: see if getname() does the right thing .. it is used
 	to have a load order between nodes.
 
-+TODO: Bug: Reestablish connection of Diskless machine fails.
+TODO: Bug: Reestablish connection of Diskless machine fails.
 
 	Tested with iptables drop / don't drop.
 
@@ -197,7 +234,7 @@ Real:
 	is also because of Windows needing disk when getting
 	an adrress via DHCP.
 
-+TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
+TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 
 	Because it is waiting for size applications that open the
 	WinDRBD device hang. We should not wait for size unless
@@ -208,7 +245,7 @@ Real:
 
 	Still a problem?
 
-+TODO: Bug: Diskless client hangs on power down
+TODO: Bug: Diskless client hangs on power down
 
 	it hangs in I/O because network is already down and Windows
 	tries to swap in ... need to swap in (disable pagefile)
@@ -259,8 +296,6 @@ TODO: Bug: With a no-I/O resource up BSOD on power down
 
 	When making the resource primary (by drbdadm up on
 	the peer) it continues and Windows is shut down.
-
-+TODO: Feature: Test if it works with Server 2016 also
 
 TODO: Implement: Reengineer workqueues
 
@@ -371,8 +406,6 @@ TODO: Feature: Set partition ID to 27 to hide partition
 
 	this prevents Windows to mount the partition. Use that for
 	backing devices.
-
-+TODO: Do not patch boot sector when it is a disk device
 
 TODOs for after Release 1.0 ----------------------------------------------
 
@@ -603,18 +636,6 @@ Feb 14 14:58:01 10.43.10.10  U13:57:59.490|083959c0(drbd_a_vamp-4nodes) drbd_ack
 	Most likely an upstream bug (try Linux/Linux). Not severe,
 	connection is re-established rightafter.
 
-+TODO: Feature: Resource agent for Microsoft cluster manager
-
-	In progress: Install Server 2016 machines (again)
-
-	Done, when there is time, start working on that again.
-
-	From Phil: IBM uses MSCM: see
-
-	https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.con.doc/q017940_.htm
-
-	Quote: "Assign a storage device for exclusive use by the queue manager. This device needs to be created as a resource instance before it can be assigned."
-
 TODO: Code quality: restructure directory structure
 
 	have include and src directories.
@@ -658,13 +679,9 @@ TODO: Installation: Driver unload sometimes hangs when explorer window is open
 	Stops once explorer Window is closed (also was: Timeout on
 	windrbd remote-drive-in-explorer).
 
-+TODO: Test: IPv6
+TODO: Test: IPv6
 
 	Doesn't work, but this might be an Ubuntu issue.
-
-+TODO: Test: Test with MS SQL server
-
-+TODO: Test: Test with IIS
 
 TODO: Implement: We want to have some sort of a regression test suite.
 
@@ -761,7 +778,7 @@ TODO: Implement: Have a ioctl to set user mode helper program
 	binary lives (without ioctl, it is sufficient for now to
 	do that in user space).
 
-+TODO: Implement: Make drbd-utils relocateable
+TODO: Implement: Make drbd-utils relocateable
 
 	Currently hardcoded to C:\windrbd (in kernel and install scripts)
 	and configure parameter in userland.
@@ -800,7 +817,7 @@ TODO: Upstream: drbdsetup generic_get() handles multiple packets wrong.
 	Probably nobody noticed because recvmsg() always returned only
 	one packet (socket is a DGRAM socket).
 
-+TODO: Code quality: Reenable Windows Compiler Warnings and fix them.
+TODO: Code quality: Reenable Windows Compiler Warnings and fix them.
 
 TODO: Implement: get drbdmon (and drbdsetup events2) working.
 
@@ -844,7 +861,7 @@ TODO: Test: Somehow test if referencing overlay thread works as intended.
 
 	?
 
-+TODO: Build system: have a make depend target
+TODO: Build system: have a make depend target
 	Or at least header file dependencies.
 
 	Working on it .. make deps creates the Makefile.deps
@@ -998,21 +1015,6 @@ TODO: Test: Test sendbuffer full (rety on Metadata socket).
 TODO: Feature: on patching boot sector, inform Windows that file system is
 	raw now.
 	So that it disappears.
-
-+TODO: Test: how and when is flush to backing device done?
-	This is important. Right now NTFS files only appear on
-	Linux when sync is done manually. Should sync at least
-	when becoming secondary. sync must be done while primary
-	(when secondary it would fail)
-
-	Update: is this fixed now?
-
-	I recently didn't observe data loss on writing to an
-	NTFS then doing secondary / primary on remote. However
-	since Windows does caching at file level (not at block
-	device level) it should fail. Maybe write a test that
-	writes a large file and then immeadiately does a
-	drbdadm secondary (without syncing the file).
 
 TODO: Test: Check if windows device is really deleted on becoming secondary
 
@@ -6685,4 +6687,6 @@ Rejected: Feature: Mount to NTFS directories.
 
 	This probably never happens since we have SCSI port devices
 	now.
+
+Done: Feature: Test if it works with Server 2016 also
 
