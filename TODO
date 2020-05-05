@@ -44,6 +44,12 @@ Real:
 
 +TODO: Test: Test with IIS
 
+	Basic test passed. Note that IIS itself cannot be installed
+	to a non-System-Drive (according to MicroSoft) but the web
+	contents can be hosted on all drives (also on samba shares).
+	Serving from a WinDRBD disk device works. Maybe also test
+	a data device.
+
 +TODO: Feature: Resource agent for Microsoft cluster manager
 
 	In progress: Install Server 2016 machines (again)
