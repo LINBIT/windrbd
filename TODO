@@ -38,6 +38,10 @@ Real:
 
 +TODO: Test: Test with MS SQL server
 
+	BSOD on installing to a disk device: ObReferenceObjectByPointer
+	in windrbd_generic_name_request wrong reference count (which
+	one?)
+
 +TODO: Test: Test with IIS
 
 +TODO: Feature: Resource agent for Microsoft cluster manager
