@@ -3,10 +3,8 @@ Roadmap to 1.0
 
 From phil: MS clustermanager support
 
-drbd-utils updates
-	new commands of windrbd utility.
-
 fix 26 days bug
+	Hopefully fixed by refactoring the locks.
 
 -----
 
@@ -47,6 +45,9 @@ Done:
 0.10.7: inno-setup: fix creation of bus device
 	Done. Need to get feedback from users if that breaks
 	things.
+
+0.10.7: drbd-utils updates
+	new commands of windrbd utility.
 
 ----
 
