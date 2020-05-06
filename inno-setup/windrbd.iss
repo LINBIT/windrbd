@@ -44,6 +44,7 @@ PrivilegesRequired=admin
 Compression=lzma
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
+SetupIconFile=windrbd.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
