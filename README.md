@@ -364,3 +364,5 @@ Version history
  * 0.10.4 (Jan 31,2020): Stability fixes
  * 0.10.5 (Mar 03,2020): Key/Value based boot config
  * 0.10.6 (Apr 1, 2020): Upgraded DRBD to 9.0.22
+ * 0.10.7 (May 6, 2020): Online verify, drbdadm status as non-admin and other
+			 useful mini-features (see WHATSNEW.md).
