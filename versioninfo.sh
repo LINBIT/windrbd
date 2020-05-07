@@ -22,6 +22,10 @@ VERSION=$(date +%Y,%m,%d,%H)
 DATE=$(date)
 GITHASH=$(git describe --tags --always)$EXTRA_VERSION
 DRBD_GITHASH="$(cd drbd ; git describe --tags --always)"$EXTRA_VERSION
+WINDRBD_VERSION=$( echo $GITHASH | sed -e 's/^windrbd-\([0-9.]*\).*$/\1/g' ).0
+RESOURCE_VERSION=$( echo $WINDRBD_VERSION | tr . , )
+
+echo WinDRBD version is $WINDRBD_VERSION, Resource version is $RESOURCE_VERSION
 
 VER_INTERNALNAME_STR="WinDRBD"
 VER_FILEVERSION_STR="${GITHASH}\\0"
@@ -30,24 +34,25 @@ mkdir -p ${OUTPATH} || exit 1
 
 ## resource.rc
 cat <<EOF > ${OUTPATH}/resource.rc
-#define VER_FILEVERSION		${VERSION}
+#define VER_FILEVERSION		${RESOURCE_VERSION}
 #define VER_FILEVERSION_STR	"${VER_FILEVERSION_STR}"
 #define VER_PRODUCTVERSION	VER_FILEVERSION
 #define VER_PRODUCTVERSION_STR	VER_FILEVERSION_STR
 
-#define VER_COMPANYNAME_STR	 	"LINBIT"
-#define VER_FILEDESCRIPTION_STR		"TODO"
+#define VER_COMPANYNAME_STR	 	"Linbit"
+#define VER_FILEDESCRIPTION_STR		"DRBD driver for Windows"
 #define VER_INTERNALNAME_STR		"${VER_INTERNALNAME_STR}"
-#define VER_LEGALCOPYRIGHT_STR		"TODO"
-#define VER_LEGALTRADEMARKS1_STR	"TODO"
-#define VER_LEGALTRADEMARKS2_STR	"TODO"
-#define VER_ORIGINALFILENAME_STR	"TODO"
+#define VER_LEGALCOPYRIGHT_STR		"GPL"
+#define VER_LEGALTRADEMARKS1_STR	"DRBD"
+#define VER_LEGALTRADEMARKS2_STR	"WinDRBD"
+#define VER_ORIGINALFILENAME_STR	"WinDRBD"
 #define VER_PRODUCTNAME_STR		VER_INTERNALNAME_STR
 
 1 VERSIONINFO
 FILEVERSION    	VER_FILEVERSION
 PRODUCTVERSION 	VER_PRODUCTVERSION
-//These need #include <windows.h>, enable them when integrated into buildsystem
+
+// The constants need #include <windows.h> which we don't have here.
 FILETYPE	3	// VFT_DRV
 FILESUBTYPE	7	// VFT2_DRV_SYSTEM
 BEGIN
@@ -80,7 +85,8 @@ echo "#define WINDRBD_VERSION \"${GITHASH}\"" >> ${OUTPATH}/windrbd_version.h
 echo "#endif" >> ${OUTPATH}/windrbd_version.h
 
 ## windrbd.inf
-sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y),0.10.7.0 ;Replaced by build magic#" ./windrbd/windrbd.inf.in > ${OUTPATH}/windrbd.inf
+sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y),${WINDRBD_VERSION}  ;Replaced by build magic#" ./windrbd/windrbd.inf.in > ${OUTPATH}/windrbd.inf
 
 ## inno-setup version include file
 echo \#define MyAppVersion \"${GITHASH}\" > inno-setup/version.iss
+echo \#define MyResourceVersion \"${WINDRBD_VERSION}\" >> inno-setup/version.iss

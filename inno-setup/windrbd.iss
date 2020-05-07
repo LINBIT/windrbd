@@ -27,6 +27,8 @@
 AppId={{EB75FCBA-83D5-4DBF-9047-30F2B6C72DC9}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+AppCopyright=GPL
+VersionInfoVersion={#MyResourceVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
