@@ -121,8 +121,6 @@ Apr 17 20:13:12 192.168.56.103  U18:13:13.257|0364f420(drbd_s_w0) #455 drbd_rs_c
 
 TODOs for after Release 1.0 ----------------------------------------
 
-TODO: Code quality: should display correct version in device manager
-
 TODO: Code quality: windrbd install-bus-device takes long to complete
 
 TODO: Feature: On loading kernel module, umhelper and logger should also be started.
@@ -6701,4 +6699,6 @@ Rejected: Feature: Mount to NTFS directories.
 	now.
 
 Done: Feature: Test if it works with Server 2016 also
+
+Done: Code quality: should display correct version in device manager
 
