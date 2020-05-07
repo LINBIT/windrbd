@@ -159,7 +159,7 @@ WIN_CFLAGS += /wd4201
 # drbd-headers\drbd_protocol.h(466): warning C4200: nonstandard extension used: zero-sized array in struct/union
 WIN_CFLAGS += /wd4200
 
-WIN_INCLUDE_DIRS += -I"..\\..\\win4lin"
+WIN_INCLUDE_DIRS += -I"..\\..\\windrbd"
 WIN_INCLUDE_DIRS += -I"."
 WIN_INCLUDE_DIRS += -I".\\drbd-headers"
 
@@ -202,7 +202,7 @@ DRBD_FILES += lru_cache.c drbd_main.c drbd_strings.c drbd_nl.c
 DRBD_FILES += drbd_interval.c drbd_state.c drbd_kref_debug.c
 DRBD_FILES += drbd_nla.c drbd_transport.c drbd_transport_tcp.c kref_debug.c
 
-WINDRBD_SRCDIR = ../../win4lin/src
+WINDRBD_SRCDIR = ../../windrbd/src
 
 WINDRBD_FILES = $(WINDRBD_SRCDIR)/Attr.c $(WINDRBD_SRCDIR)/disp.c $(WINDRBD_SRCDIR)/drbd_windows.c $(WINDRBD_SRCDIR)/hweight.c \
 		$(WINDRBD_SRCDIR)/idr.c $(WINDRBD_SRCDIR)/kmalloc_debug.c $(WINDRBD_SRCDIR)/mempool.c $(WINDRBD_SRCDIR)/printk-to-syslog.c \
@@ -253,7 +253,7 @@ ifeq ($(shell uname -o),Cygwin)
 endif
 
 deps:
-	gcc -D BITS_PER_LONG=64 -D _MSC_VER=1300 -D _WIN32=1 $(C_DEFINES) $(WIN_INCLUDE_DIRS) $(subst /FI,-include ,$(WIN_DEF_INCLUDES)) -M *.c ../../win4lin/src/*.c | perl -pe 's/^(\S+)\.o:/\1.obj \1.E:/' > Makefile.deps 
+	gcc -D BITS_PER_LONG=64 -D _MSC_VER=1300 -D _WIN32=1 $(C_DEFINES) $(WIN_INCLUDE_DIRS) $(subst /FI,-include ,$(WIN_DEF_INCLUDES)) -M *.c ../../windrbd/src/*.c | perl -pe 's/^(\S+)\.o:/\1.obj \1.E:/' > Makefile.deps 
 
 install:
 	bash -c 'cwd=`pwd` ; /cygdrive/c/Windows/System32/InfDefaultInstall.exe `cygpath -w "$${cwd}"`\\windrbd.inf'

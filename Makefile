@@ -3,7 +3,7 @@ export TMPDIR = /tmp
 
 TRANS_SRC := drbd/
 TRANS_DEST := converted-sources/
-WIN4LIN := win4lin/
+WIN4LIN := windrbd/
 
 TRANSFORMATIONS := $(sort $(wildcard transform.d/*))
 ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c|drbd_buildtag.c|compat.h')

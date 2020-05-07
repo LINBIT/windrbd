@@ -1,7 +1,7 @@
 converted-sources*/
 *.bak
 *~
-win4lin/src/*.obj
-win4lin/src/*.pdb
+windrbd/src/*.obj
+windrbd/src/*.pdb
 
 .*.sw?
