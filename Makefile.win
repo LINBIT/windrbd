@@ -159,7 +159,7 @@ WIN_CFLAGS += /wd4201
 # drbd-headers\drbd_protocol.h(466): warning C4200: nonstandard extension used: zero-sized array in struct/union
 WIN_CFLAGS += /wd4200
 
-WIN_INCLUDE_DIRS += -I"..\\..\\windrbd"
+WIN_INCLUDE_DIRS += -I"..\\..\\windrbd\\include"
 WIN_INCLUDE_DIRS += -I"."
 WIN_INCLUDE_DIRS += -I".\\drbd-headers"
 
