@@ -1862,7 +1862,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	}
 	return 0;
 
-out_free_irp:
+// out_free_irp:
 	free_mdls_and_irp(bio);
 
 	return err;
