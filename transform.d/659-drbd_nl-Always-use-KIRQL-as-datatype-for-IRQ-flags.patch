@@ -1,0 +1,79 @@
+From cc6fbbb6513e0b4a95e99702d022e26f2c8cd092 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 May 2020 16:38:16 +0200
+Subject: [PATCH 05/12] drbd_nl: Always use KIRQL as datatype for IRQ flags.
+
+---
+ drbd/drbd_nl.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index ff71dfd..187d100 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -829,7 +829,7 @@ bool conn_try_outdate_peer(struct drbd_connection *connection)
+ 	enum drbd_disk_state disk_state;
+ 	char *ex_to_string;
+ 	int r;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 
+ 	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags);
+ 	if (connection->cstate[NOW] >= C_CONNECTED) {
+@@ -4738,7 +4738,7 @@ static enum drbd_state_rv invalidate_no_resync(struct drbd_device *device)
+ 	struct drbd_resource *resource = device->resource;
+ 	struct drbd_peer_device *peer_device;
+ 	struct drbd_connection *connection;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	enum drbd_state_rv rv;
+ 
+ 	begin_state_change(resource, &irq_flags, CS_VERBOSE);
+@@ -4986,7 +4986,7 @@ int drbd_adm_resume_io(struct sk_buff *skb, struct genl_info *info)
+ 	struct drbd_connection *connection;
+ 	struct drbd_resource *resource;
+ 	struct drbd_device *device;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	int retcode; /* enum drbd_ret_code rsp. enum drbd_state_rv */
+ 
+ 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
+@@ -5169,7 +5169,7 @@ out:
+ static void device_to_statistics(struct device_statistics *s,
+ 				 struct drbd_device *device)
+ {
+-	int flags;
++	KIRQL flags;
+ 
+ 	memset(s, 0, sizeof(*s));
+ 	s->dev_upper_blocked = !may_inc_ap_bio(device);
+@@ -5477,7 +5477,7 @@ static void peer_device_to_statistics(struct peer_device_statistics *s,
+ 	ULONG_PTR now = jiffies;
+ 	ULONG_PTR rs_left = 0;
+ 	int i;
+-	int flags;
++	KIRQL flags;
+ 
+ 	/* userspace should get "future proof" units,
+ 	 * convert to sectors or milli seconds as appropriate */
+@@ -5781,7 +5781,7 @@ int drbd_adm_new_c_uuid(struct sk_buff *skb, struct genl_info *info)
+ 	drbd_uuid_new_current_by_user(device); /* New current, previous to UI_BITMAP */
+ 
+ 	if (args.force_resync) {
+-		ULONG_PTR irq_flags;
++		KIRQL irq_flags;
+ 		begin_state_change(device->resource, &irq_flags, CS_VERBOSE);
+ 		__change_disk_state(device, D_UP_TO_DATE);
+ 		end_state_change(device->resource, &irq_flags);
+@@ -5801,7 +5801,7 @@ int drbd_adm_new_c_uuid(struct sk_buff *skb, struct genl_info *info)
+ 	}
+ 
+ 	if (args.clear_bm) {
+-		ULONG_PTR irq_flags;
++		KIRQL irq_flags;
+ 
+ 		err = drbd_bitmap_io(device, &drbd_bmio_clear_all_n_write,
+ 			"clear_n_write from new_c_uuid", BM_LOCK_ALL, NULL);
+-- 
+2.17.0
+

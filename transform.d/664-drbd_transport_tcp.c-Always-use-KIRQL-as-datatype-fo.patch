@@ -1,0 +1,35 @@
+From 35954cffa1cd8b5c4f037f1476568d92a6b31109 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 May 2020 16:39:20 +0200
+Subject: [PATCH 10/12] drbd_transport_tcp.c: Always use KIRQL as datatype for
+ IRQ flags.
+
+---
+ drbd/drbd_transport_tcp.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index c5ac154..2ccbfba 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -578,7 +578,7 @@ static struct dtt_path *dtt_wait_connect_cond(struct drbd_transport *transport)
+ 	struct drbd_path *drbd_path;
+ 	struct dtt_path *path = NULL;
+ 	bool rv = false;
+-	int flags;
++	KIRQL flags;
+ 
+ 	spin_lock_irqsave(&tcp_transport->paths_lock, spin_lock_flags);
+ 	list_for_each_entry(struct drbd_path, drbd_path, &transport->paths, list) {
+@@ -758,7 +758,7 @@ static void dtt_incoming_connection(struct sock *sock)
+ {
+ 	struct dtt_listener *listener = sock->sk_user_data;
+ 	void (*state_change)(struct sock *sock);
+-	int flags;
++	KIRQL flags;
+ 
+ 	state_change = listener->original_sk_state_change;
+ 	state_change(sock);
+-- 
+2.17.0
+

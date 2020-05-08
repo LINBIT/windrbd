@@ -1079,7 +1079,7 @@ static void windrbd_bio_finished(struct bio * bio)
 		for (i=0;i<bio->bi_vcnt;i++)
 			kfree(bio->bi_io_vec[i].bv_page->addr);
 
-        unsigned long flags;
+	KIRQL flags;
 
 		/* TODO: later when we patch out the extra copy
 		 * on read, this also can be done much easier.

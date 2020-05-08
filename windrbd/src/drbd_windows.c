@@ -413,7 +413,7 @@ int test_and_change_bit(int nr, const ULONG_PTR *addr)
 	ULONG_PTR mask = BIT_MASK(nr);
 	ULONG_PTR *p = ((ULONG_PTR *) addr);
 	ULONG_PTR old;
-	ULONG_PTR flags;
+	KIRQL flags;
 
 	spin_lock_irqsave(&g_test_and_change_bit_lock, flags);
 	old = *p;
@@ -1530,7 +1530,7 @@ NTSTATUS DrbdIoCompletion(
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
 	int i;
 	NTSTATUS status = Irp->IoStatus.Status;
-	unsigned long flags;
+	KIRQL flags;
 
 	if (status != STATUS_SUCCESS) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)

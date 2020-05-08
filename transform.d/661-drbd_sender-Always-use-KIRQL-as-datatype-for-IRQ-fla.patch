@@ -1,0 +1,62 @@
+From 35e917aca80756ebbef52c2d2530aa2c63f0850f Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 May 2020 16:38:39 +0200
+Subject: [PATCH 07/12] drbd_sender: Always use KIRQL as datatype for IRQ
+ flags.
+
+---
+ drbd/drbd_sender.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index 70530c6..8e7359a 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -87,7 +87,7 @@ void drbd_md_endio(struct bio *bio)
+  */
+ static void drbd_endio_read_sec_final(struct drbd_peer_request *peer_req) __releases(local)
+ {
+-	ULONG_PTR flags = 0;
++	KIRQL flags;
+ 	struct drbd_peer_device *peer_device = peer_req->peer_device;
+ 	struct drbd_device *device = peer_device->device;
+ 	struct drbd_connection *connection = peer_device->connection;
+@@ -115,7 +115,7 @@ static int is_failed_barrier(int ee_flags)
+  * "submitted" by the receiver, final stage.  */
+ void drbd_endio_write_sec_final(struct drbd_peer_request *peer_req) __releases(local)
+ {
+-	ULONG_PTR flags = 0;
++	KIRQL flags;
+ 	struct drbd_peer_device *peer_device = peer_req->peer_device;
+ 	struct drbd_device *device = peer_device->device;
+ 	struct drbd_connection *connection = peer_device->connection;
+@@ -233,7 +233,7 @@ void drbd_panic_after_delayed_completion_of_aborted_request(struct drbd_device *
+  */
+ void drbd_request_endio(struct bio *bio)
+ {
+-	ULONG_PTR flags;
++	KIRQL flags;
+ 	struct drbd_request *req = bio->bi_private;
+ 	struct drbd_device *device = req->device;
+ 	struct bio_and_error m;
+@@ -2004,7 +2004,7 @@ void drbd_start_resync(struct drbd_peer_device *peer_device, enum drbd_repl_stat
+ 	enum drbd_disk_state finished_resync_pdsk = D_UNKNOWN;
+ 	enum drbd_repl_state repl_state;
+ 	int r;
+-	int flags;
++	KIRQL flags;
+ 
+ 	spin_lock_irqsave(&device->resource->req_lock, spin_lock_irq_flags);
+ 	repl_state = peer_device->repl_state[NOW];
+@@ -2653,7 +2653,7 @@ static void maybe_send_state_afer_ahead(struct drbd_connection *connection)
+  */
+ static bool check_sender_todo(struct drbd_connection *connection)
+ {
+-	int flags;
++	KIRQL flags;
+ 
+ 	tl_next_request_for_connection(connection);
+ 
+-- 
+2.17.0
+

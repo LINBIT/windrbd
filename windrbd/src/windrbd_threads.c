@@ -36,7 +36,7 @@ static struct task_struct *__find_thread(PKTHREAD id)
 struct task_struct* windrbd_find_thread(PKTHREAD id)
 {
 	struct task_struct *t;
-	ULONG_PTR flags;
+	KIRQL flags;
 
 	spin_lock_irqsave(&thread_list_lock, flags);
 	t = __find_thread(id);
@@ -97,7 +97,7 @@ NTSTATUS windrbd_cleanup_windows_thread(void *thread_object)
 void windrbd_reap_threads(void)
 {
 	struct task_struct *t, *tn;
-	ULONG_PTR flags;
+	KIRQL flags;
 	LIST_HEAD(dead_list);
 
 	INIT_LIST_HEAD(&dead_list);
@@ -182,7 +182,7 @@ static void windrbd_thread_setup(void *targ)
 
 int wake_up_process(struct task_struct *t)
 {
-	ULONG_PTR flags;
+	KIRQL flags;
 	NTSTATUS status;
 
 	spin_lock_irqsave(&t->thread_started_lock, flags);
@@ -213,7 +213,7 @@ int wake_up_process(struct task_struct *t)
 struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const char *name, ...)
 {
 	struct task_struct *t;
-	ULONG_PTR flags;
+	KIRQL flags;
 	va_list args;
 	NTSTATUS status;
 
@@ -280,7 +280,7 @@ struct task_struct *kthread_run(int (*threadfn)(void *), void *data, const char 
 struct task_struct *make_me_a_windrbd_thread(const char *name, ...)
 {
 	struct task_struct *t;
-	ULONG_PTR flags;
+	KIRQL flags;
 	va_list args;
 	int i;
 	NTSTATUS status;
@@ -329,7 +329,7 @@ struct task_struct *make_me_a_windrbd_thread(const char *name, ...)
 
 void return_to_windows(struct task_struct *t)
 {
-	ULONG_PTR flags;
+	KIRQL flags;
 
 	spin_lock_irqsave(&thread_list_lock, flags);
 	list_del(&t->list);

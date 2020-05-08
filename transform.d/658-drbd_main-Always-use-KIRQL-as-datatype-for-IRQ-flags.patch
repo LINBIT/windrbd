@@ -1,0 +1,126 @@
+From 93ebbdd6ef277c159c0eea55a8191f642cee2ef1 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 May 2020 16:38:04 +0200
+Subject: [PATCH 04/12] drbd_main:  Always use KIRQL as datatype for IRQ flags.
+
+---
+ drbd/drbd_main.c | 26 +++++++++++++-------------
+ 1 file changed, 13 insertions(+), 13 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index b848c44..4c5fcec 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -589,7 +589,7 @@ int drbd_thread_setup(void *arg)
+ 	struct drbd_thread *thi = (struct drbd_thread *) arg;
+ 	struct drbd_resource *resource = thi->resource;
+ 	struct drbd_connection *connection = thi->connection;
+-	ULONG_PTR flags;
++	KIRQL flags;
+ 	int retval;
+ 
+ 	allow_kernel_signal(DRBD_SIGKILL);
+@@ -663,7 +663,7 @@ int drbd_thread_start(struct drbd_thread *thi)
+ 	struct drbd_resource *resource = thi->resource;
+ 	struct drbd_connection *connection = thi->connection;
+ 	struct task_struct *nt;
+-	ULONG_PTR flags;
++	KIRQL flags;
+ 
+ 	/* is used from state engine doing drbd_thread_stop_nowait,
+ 	 * while holding the req lock irqsave */
+@@ -723,7 +723,7 @@ int drbd_thread_start(struct drbd_thread *thi)
+ 
+ void _drbd_thread_stop(struct drbd_thread *thi, int restart, int wait)
+ {
+-	ULONG_PTR flags;
++	KIRQL flags;
+ 
+ 	enum drbd_thread_state ns = restart ? RESTARTING : EXITING;
+ 
+@@ -2987,7 +2987,7 @@ void drbd_reclaim_resource(struct rcu_head *rp)
+ 	struct drbd_resource *resource = container_of(rp, struct drbd_resource, rcu);
+ 	struct queued_twopc *q, *q1;
+ 	struct drbd_connection *connection, *tmp;
+-	int flags;
++	KIRQL flags;
+ 
+ 	spin_lock_irqsave(&resource->queued_twopc_lock, flags);
+ 	list_for_each_entry_safe(struct queued_twopc, q, q1, &resource->queued_twopc, w.list) {
+@@ -3088,7 +3088,7 @@ static void do_retry(struct work_struct *ws)
+  * holds resource->req_lock */
+ void drbd_restart_request(struct drbd_request *req)
+ {
+-	ULONG_PTR flags;
++	KIRQL flags;
+ 	spin_lock_irqsave(&retry.lock, flags);
+ 	list_move_tail(&req->tl_requests, &retry.writes);
+ 	spin_unlock_irqrestore(&retry.lock, flags);
+@@ -3211,7 +3211,7 @@ static int w_complete(struct drbd_work *w, int cancel)
+ 
+ void drbd_queue_work(struct drbd_work_queue *q, struct drbd_work *w)
+ {
+-	ULONG_PTR flags;
++	KIRQL flags;
+ 
+ 	spin_lock_irqsave(&q->q_lock, flags);
+ 	list_add_tail(&w->list, &q->q);
+@@ -3284,7 +3284,7 @@ static int drbd_alloc_send_buffers(struct drbd_connection *connection)
+ 
+ void drbd_flush_peer_acks(struct drbd_resource *resource)
+ {
+-	int flags;
++	KIRQL flags;
+ 
+ 	spin_lock_irqsave(&resource->req_lock, flags);
+ 	if (resource->peer_ack_req) {
+@@ -4641,7 +4641,7 @@ static void __drbd_uuid_set_bitmap(struct drbd_peer_device *peer_device, u64 val
+ 
+ void _drbd_uuid_set_current(struct drbd_device *device, u64 val) 
+ {
+-	ULONG_PTR flags;
++	KIRQL flags;
+ 
+ 	spin_lock_irqsave(&device->ldev->md.uuid_lock, flags);
+ 	__drbd_uuid_set_current(device, val);
+@@ -4651,7 +4651,7 @@ void _drbd_uuid_set_current(struct drbd_device *device, u64 val)
+ void _drbd_uuid_set_bitmap(struct drbd_peer_device *peer_device, u64 val) 
+ {
+ 	struct drbd_device *device = peer_device->device;
+-	ULONG_PTR flags;
++	KIRQL flags;
+ 
+ 	down_write(&device->uuid_sem);
+ 	spin_lock_irqsave(&device->ldev->md.uuid_lock, flags);
+@@ -4663,7 +4663,7 @@ void _drbd_uuid_set_bitmap(struct drbd_peer_device *peer_device, u64 val)
+ void drbd_uuid_set_bitmap(struct drbd_peer_device *peer_device, u64 uuid) 
+ {
+ 	struct drbd_device *device = peer_device->device;
+-	ULONG_PTR flags;
++	KIRQL flags;
+ 	u64 previous_uuid;
+ 
+ 	down_write(&device->uuid_sem);
+@@ -5119,7 +5119,7 @@ void drbd_uuid_resync_starting(struct drbd_peer_device *peer_device)
+ u64 drbd_uuid_resync_finished(struct drbd_peer_device *peer_device) 
+ {
+ 	struct drbd_device *device = peer_device->device;
+-	ULONG_PTR flags;
++	KIRQL flags;
+ 	u64 ss_nz_bm; /* sync_source has non zero bitmap for. expressed as nodemask */
+ 	u64 pwcu; /* peers with current uuid */
+ 	u64 newer;
+@@ -5446,8 +5446,8 @@ static int w_bitmap_io(struct drbd_work *w, int unused)
+ 
+ void drbd_queue_pending_bitmap_work(struct drbd_device *device)
+ {
+-	ULONG_PTR flags;
+-	int flags2;
++	KIRQL flags;
++	KIRQL flags2;
+ 
+ 	spin_lock_irqsave(&device->pending_bitmap_work.q_lock, flags);
+ 	spin_lock_irqsave(&device->resource->work.q_lock, flags2);
+-- 
+2.17.0
+

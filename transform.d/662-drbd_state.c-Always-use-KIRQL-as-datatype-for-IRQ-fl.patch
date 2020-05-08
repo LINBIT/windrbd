@@ -1,0 +1,202 @@
+From 161a992484ed18140d12bb19f0f9e9396d5ebdb1 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 May 2020 16:38:48 +0200
+Subject: [PATCH 08/12] drbd_state.c:  Always use KIRQL as datatype for IRQ
+ flags.
+
+---
+ drbd/drbd_state.c | 42 +++++++++++++++++++++---------------------
+ 1 file changed, 21 insertions(+), 21 deletions(-)
+
+diff --git a/drbd/drbd_state.c b/drbd/drbd_state.c
+index 57cc59f..2b69a67 100644
+--- a/drbd/drbd_state.c
++++ b/drbd/drbd_state.c
+@@ -78,7 +78,7 @@ static enum drbd_state_rv is_valid_soft_transition(struct drbd_resource *);
+ static enum drbd_state_rv is_valid_transition(struct drbd_resource *resource);
+ static void sanitize_state(struct drbd_resource *resource);
+ static enum drbd_state_rv change_peer_state(struct drbd_connection *, int, union drbd_state,
+-					    union drbd_state, ULONG_PTR *);
++					    union drbd_state, KIRQL *);
+ 
+ /* We need to stay consistent if we are neighbor of a diskless primary with
+    different UUID. This function should be used if the device was D_UP_TO_DATE
+@@ -798,7 +798,7 @@ out:
+ 	return rv;
+ }
+ 
+-void state_change_lock(struct drbd_resource *resource, ULONG_PTR *irq_flags, enum chg_state_flags flags)
++void state_change_lock(struct drbd_resource *resource, KIRQL *irq_flags, enum chg_state_flags flags)
+ {
+ 	if ((flags & CS_SERIALIZE) && !(flags & (CS_ALREADY_SERIALIZED | CS_PREPARED))) {
+ 		WARN_ONCE(current == resource->worker.task,
+@@ -809,7 +809,7 @@ void state_change_lock(struct drbd_resource *resource, ULONG_PTR *irq_flags, enu
+ 	resource->state_change_flags = flags;
+ }
+ 
+-static void __state_change_unlock(struct drbd_resource *resource, ULONG_PTR *irq_flags, struct completion *done)
++static void __state_change_unlock(struct drbd_resource *resource, KIRQL *irq_flags, struct completion *done)
+ {
+ 	enum chg_state_flags flags = resource->state_change_flags;
+ 
+@@ -821,7 +821,7 @@ static void __state_change_unlock(struct drbd_resource *resource, ULONG_PTR *irq
+ 		up(&resource->state_sem);
+ }
+ 
+-void state_change_unlock(struct drbd_resource *resource, ULONG_PTR *irq_flags)
++void state_change_unlock(struct drbd_resource *resource, KIRQL *irq_flags)
+ {
+ 	__state_change_unlock(resource, irq_flags, NULL);
+ }
+@@ -849,7 +849,7 @@ enum drbd_state_rv end_state_change_locked(struct drbd_resource *resource)
+ 	return ___end_state_change(resource, NULL, SS_SUCCESS);
+ }
+ 
+-void begin_state_change(struct drbd_resource *resource, ULONG_PTR *irq_flags, enum chg_state_flags flags)
++void begin_state_change(struct drbd_resource *resource, KIRQL *irq_flags, enum chg_state_flags flags)
+ {
+ 	state_change_lock(resource, irq_flags, flags);
+ 	__begin_state_change(resource);
+@@ -875,7 +875,7 @@ static bool all_peer_devices_connected(struct drbd_connection *connection)
+ }
+ 
+ static enum drbd_state_rv __end_state_change(struct drbd_resource *resource,
+-					     ULONG_PTR *irq_flags,
++					     KIRQL *irq_flags,
+ 					     enum drbd_state_rv rv)
+ {
+ 	enum chg_state_flags flags = resource->state_change_flags;
+@@ -890,12 +890,12 @@ static enum drbd_state_rv __end_state_change(struct drbd_resource *resource,
+ 	return rv;
+ }
+ 
+-enum drbd_state_rv end_state_change(struct drbd_resource *resource, ULONG_PTR *irq_flags)
++enum drbd_state_rv end_state_change(struct drbd_resource *resource, KIRQL *irq_flags)
+ {
+ 	return __end_state_change(resource, irq_flags, SS_SUCCESS);
+ }
+ 
+-void abort_state_change(struct drbd_resource *resource, ULONG_PTR *irq_flags)
++void abort_state_change(struct drbd_resource *resource, KIRQL *irq_flags)
+ {
+ 	resource->state_change_flags &= ~CS_VERBOSE;
+ 	__end_state_change(resource, irq_flags, SS_UNKNOWN_ERROR);
+@@ -907,7 +907,7 @@ void abort_state_change_locked(struct drbd_resource *resource)
+ 	___end_state_change(resource, NULL, SS_UNKNOWN_ERROR);
+ }
+ 
+-static void begin_remote_state_change(struct drbd_resource *resource, ULONG_PTR *irq_flags)
++static void begin_remote_state_change(struct drbd_resource *resource, KIRQL *irq_flags)
+ {
+ 	rcu_read_unlock(resource->wrcu_flags);
+ 	spin_unlock_irqrestore(&resource->req_lock, *irq_flags);
+@@ -920,14 +920,14 @@ resource->wrcu_flags = rcu_read_lock();
+ 	___begin_state_change(resource);
+ }
+ 
+-static void end_remote_state_change(struct drbd_resource *resource, ULONG_PTR *irq_flags, enum chg_state_flags flags)
++static void end_remote_state_change(struct drbd_resource *resource, KIRQL *irq_flags, enum chg_state_flags flags)
+ {
+ 	spin_lock_irqsave(&resource->req_lock, *irq_flags);
+ 	__end_remote_state_change(resource, flags);
+ }
+ 
+ void clear_remote_state_change(struct drbd_resource *resource) {
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 
+ 	spin_lock_irqsave(&resource->req_lock, irq_flags);
+ 	__clear_remote_state_change(resource);
+@@ -3138,7 +3138,7 @@ static void check_may_resume_io_after_fencing(struct drbd_state_change *state_ch
+ 	bool all_peer_disks_outdated = true;
+ 	bool all_peer_disks_connected = true;
+ 	struct drbd_peer_device *peer_device;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	int vnr, n_device;
+ 
+ 	for (n_device = 0; n_device < state_change->n_devices; n_device++) {
+@@ -3293,7 +3293,7 @@ static int w_after_state_change(struct drbd_work *w, int unused)
+ 					what = RESEND;
+ 
+ 				if (what != NOTHING) {
+-					ULONG_PTR irq_flags;
++					KIRQL irq_flags;
+ 
+ 					/* Is this too early?  We should only
+ 					 * resume after the iteration over all
+@@ -3727,7 +3727,7 @@ static enum drbd_state_rv __peer_reply(struct drbd_connection *connection)
+ }
+ 
+ static bool when_done_lock(struct drbd_resource *resource,
+-			   ULONG_PTR *irq_flags)
++			   KIRQL *irq_flags)
+ {
+ 	spin_lock_irqsave(&resource->req_lock, *irq_flags);
+ 	if (!resource->remote_state_change && resource->twopc_work.cb == NULL)
+@@ -3740,7 +3740,7 @@ static bool when_done_lock(struct drbd_resource *resource,
+  * complete_remote_state_change  -  Wait for other remote state changes to complete
+  */
+ static void complete_remote_state_change(struct drbd_resource *resource,
+-					 ULONG_PTR *irq_flags)
++					 KIRQL *irq_flags)
+ {
+ 	if (resource->remote_state_change) {
+ 		enum chg_state_flags flags = resource->state_change_flags;
+@@ -3766,7 +3766,7 @@ static void complete_remote_state_change(struct drbd_resource *resource,
+ 
+ static enum drbd_state_rv
+ change_peer_state(struct drbd_connection *connection, int vnr,
+-		  union drbd_state mask, union drbd_state val, ULONG_PTR *irq_flags)
++		  union drbd_state mask, union drbd_state val, KIRQL *irq_flags)
+ {
+ 	struct drbd_resource *resource = connection->resource;
+ 	enum chg_state_flags flags = resource->state_change_flags | CS_TWOPC;
+@@ -4103,7 +4103,7 @@ change_cluster_wide_state(bool (*change)(struct change_context *, enum change_ph
+ 	KIRQL rcu_flags;
+ 	long remaining_time;
+ 	struct drbd_resource *resource = context->resource;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	struct p_twopc_request request;
+ 	struct twopc_reply *reply = &resource->twopc_reply;
+ 	struct drbd_connection *connection, *target_connection = NULL;
+@@ -4397,7 +4397,7 @@ change_cluster_wide_device_size(struct drbd_device *device,
+ 	struct twopc_reply *reply = &resource->twopc_reply;
+ 	struct p_twopc_request request;
+ 	ULONG_PTR start_time;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	enum drbd_state_rv rv;
+ 	enum determine_dev_size dd;
+ 	u64 reach_immediately;
+@@ -4698,7 +4698,7 @@ enum drbd_state_rv change_io_susp_user(struct drbd_resource *resource,
+ 				       bool value,
+ 				       enum chg_state_flags flags)
+ {
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 
+ 	begin_state_change(resource, &irq_flags, flags);
+ 	__change_io_susp_user(resource, value);
+@@ -5158,7 +5158,7 @@ enum drbd_state_rv change_peer_disk_state(struct drbd_peer_device *peer_device,
+ 					  enum chg_state_flags flags)
+ {
+ 	struct drbd_resource *resource = peer_device->device->resource;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 
+ 	begin_state_change(resource, &irq_flags, flags);
+ 	__change_peer_disk_state(peer_device, disk_state);
+@@ -5176,7 +5176,7 @@ enum drbd_state_rv change_resync_susp_user(struct drbd_peer_device *peer_device,
+ 						   enum chg_state_flags flags)
+ {
+ 	struct drbd_resource *resource = peer_device->device->resource;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 
+ 	begin_state_change(resource, &irq_flags, flags);
+ 	__change_resync_susp_user(peer_device, value);
+-- 
+2.17.0
+

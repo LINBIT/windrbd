@@ -1,0 +1,43 @@
+From 04497739ed3a250a5f10ad77c9ca5bf52c8204f5 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 May 2020 16:40:58 +0200
+Subject: [PATCH 12/12] drbd_req: Always use KIRQL as datatype for IRQ flags.
+
+---
+ drbd/drbd_req.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
+index 155ce86..3e984e9 100644
+--- a/drbd/drbd_req.c
++++ b/drbd/drbd_req.c
+@@ -164,7 +164,7 @@ void drbd_req_destroy(struct kref *kref)
+ 
+ #ifdef CONFIG_DRBD_TIMING_STATS
+ 	if (s & RQ_WRITE) {
+-		ULONG_PTR flags;
++		KIRQL flags;
+ 
+ 		spin_lock_irqsave(&device->timing_lock, flags);
+ 		device->reqs++;
+@@ -1705,7 +1705,7 @@ static void drbd_send_and_submit(struct drbd_device *device, struct drbd_request
+ 	struct bio_and_error m = { NULL, };
+ 	bool no_remote = false;
+ 	bool submit_private_bio = false;
+-	int flags;
++	KIRQL flags;
+ 
+ 	spin_lock_irqsave(&resource->req_lock, flags);
+ 	if (rw == WRITE) {
+@@ -1857,7 +1857,7 @@ static bool inc_ap_bio_cond(struct drbd_device *device, int rw)
+ {
+ 	bool rv = false;
+ 	int nr_requests;
+-	int flags;
++	KIRQL flags;
+ 
+ 	if (test_bit(NEW_CUR_UUID, &device->flags)) {
+ 		if (!test_and_set_bit(WRITING_NEW_CUR_UUID, &device->flags))
+-- 
+2.17.0
+

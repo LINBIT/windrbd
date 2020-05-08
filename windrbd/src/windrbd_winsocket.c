@@ -246,7 +246,7 @@ static int remove_completion_locked(struct send_page_completion_info *c)
 static int remove_completion(struct send_page_completion_info *c)
 {
 	int rv;
-	ULONG_PTR flags;
+	KIRQL flags;
 
 	spin_lock_irqsave(&completions_lock, flags);
 	rv = remove_completion_locked(c);
@@ -258,7 +258,7 @@ static int remove_completion(struct send_page_completion_info *c)
 static int add_completion(struct send_page_completion_info *c)
 {
 	int rv;
-	ULONG_PTR flags;
+	KIRQL flags;
 	struct allocated_completions *new_completion;
 
 	new_completion = kmalloc(sizeof(*new_completion), 0, 'DRBD');
@@ -282,7 +282,7 @@ static int add_completion(struct send_page_completion_info *c)
 
 static void have_sent(struct socket *socket, size_t length)
 {
-	ULONG_PTR flags;
+	KIRQL flags;
 
 	spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
 	socket->sk->sk_wmem_queued -= length;
@@ -367,7 +367,7 @@ static NTSTATUS NTAPI send_page_completion_onlyonce(
 
 static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 {
-	ULONG_PTR flags;
+	KIRQL flags;
 	LARGE_INTEGER timeout;
 	NTSTATUS status;
 	void *wait_objects[2];

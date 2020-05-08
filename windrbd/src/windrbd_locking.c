@@ -370,7 +370,7 @@ int spinlock_debug_shutdown(void)
  * the flags parameter.
  */
 
-long _spin_lock_irqsave_debug(spinlock_t *lock, const char *file, int line, const char *func)
+KIRQL _spin_lock_irqsave_debug(spinlock_t *lock, const char *file, int line, const char *func)
 {
 	KIRQL oldIrql;
 	struct spin_lock_currently_held *s;
@@ -380,7 +380,7 @@ long _spin_lock_irqsave_debug(spinlock_t *lock, const char *file, int line, cons
 	if (s)
 		strcpy(s->taken, "TAKEN");
 
-	return (long)oldIrql;
+	return oldIrql;
 }
 
 void spin_unlock_irqrestore_debug(spinlock_t *lock, long flags, const char *file, int line, const char *func)
@@ -484,21 +484,21 @@ void call_rcu_debug(struct rcu_head *head, rcu_callback_t f, const char *file, i
 
 #else
 
-/* See also defintion of spin_lock_irqsave in drbd_windows.h for handling
+/* See also defintion of spin_lock_irqsave in linux/spinlock.h for handling
  * the flags parameter.
  */
 
-long _spin_lock_irqsave(spinlock_t *lock)
+KIRQL _spin_lock_irqsave(spinlock_t *lock)
 {
 	KIRQL oldIrql;
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
-	return (long)oldIrql;
+	return oldIrql;
 }
 
-void spin_unlock_irqrestore(spinlock_t *lock, long flags)
+void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags)
 {
-	KeReleaseSpinLock(&lock->spinLock, (KIRQL) flags);
+	KeReleaseSpinLock(&lock->spinLock, flags);
 }
 
 // void spin_lock_irq(spinlock_t *lock)

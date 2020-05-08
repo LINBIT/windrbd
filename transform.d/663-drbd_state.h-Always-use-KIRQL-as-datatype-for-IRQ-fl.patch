@@ -1,0 +1,35 @@
+From e577db5910ccb4013dffac50aea02d2333a54bd5 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 May 2020 16:39:01 +0200
+Subject: [PATCH 09/12] drbd_state.h: Always use KIRQL as datatype for IRQ
+ flags.
+
+---
+ drbd/drbd_state.h | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/drbd/drbd_state.h b/drbd/drbd_state.h
+index 7d5a5a9..f43ed53 100644
+--- a/drbd/drbd_state.h
++++ b/drbd/drbd_state.h
+@@ -50,12 +50,12 @@ extern void drbd_resume_al(struct drbd_device *device);
+ enum drbd_disk_state conn_highest_disk(struct drbd_connection *connection);
+ enum drbd_disk_state conn_highest_pdsk(struct drbd_connection *connection);
+ 
+-extern void state_change_lock(struct drbd_resource *, ULONG_PTR *, enum chg_state_flags);
+-extern void state_change_unlock(struct drbd_resource *, ULONG_PTR *);
++extern void state_change_lock(struct drbd_resource *, KIRQL *, enum chg_state_flags);
++extern void state_change_unlock(struct drbd_resource *, KIRQL *);
+ 
+-extern void begin_state_change(struct drbd_resource *, ULONG_PTR *, enum chg_state_flags);
+-extern enum drbd_state_rv end_state_change(struct drbd_resource *, ULONG_PTR *);
+-extern void abort_state_change(struct drbd_resource *, ULONG_PTR *);
++extern void begin_state_change(struct drbd_resource *, KIRQL *, enum chg_state_flags);
++extern enum drbd_state_rv end_state_change(struct drbd_resource *, KIRQL *);
++extern void abort_state_change(struct drbd_resource *, KIRQL *);
+ extern void abort_state_change_locked(struct drbd_resource *resource);
+ 
+ extern void begin_state_change_locked(struct drbd_resource *, enum chg_state_flags);
+-- 
+2.17.0
+

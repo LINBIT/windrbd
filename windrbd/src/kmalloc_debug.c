@@ -42,7 +42,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	struct memory *mem;
 	struct poison_after *poison_after;
 	size_t full_size;
-	ULONG_PTR flags;
+	KIRQL flags;
 
 // printk("kmalloc %zd bytes from %s:%d (%s())\n", size, file, line, func);
 
@@ -100,7 +100,7 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 {
 	struct memory *mem;
 	struct poison_after *poison_after;
-	ULONG_PTR flags;
+	KIRQL flags;
 
 	if (data == NULL) {
 		dbg("kmalloc_debug: Warning: attempt to free the NULL pointer in function %s at %s:%d\n", func, file, line);

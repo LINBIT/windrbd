@@ -1,0 +1,52 @@
+From 6d21677c26a8350e23f420e5ba0161ed0ad4fa38 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 May 2020 16:39:35 +0200
+Subject: [PATCH 11/12] kref_debug: Always use KIRQL as datatype for IRQ flags.
+
+---
+ drbd/kref_debug.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/kref_debug.c b/drbd/kref_debug.c
+index fca8299..2158830 100644
+--- a/drbd/kref_debug.c
++++ b/drbd/kref_debug.c
+@@ -19,7 +19,7 @@ void kref_debug_init(struct kref_debug_info *debug_info,
+ 		     struct kref *kref,
+ 		     const struct kref_debug_class *class)
+ {
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	int i;
+ 
+ 	debug_info->class = class;
+@@ -48,7 +48,7 @@ static bool has_refs(struct kref_debug_info *debug_info)
+ 
+ void kref_debug_destroy(struct kref_debug_info *debug_info)
+ {
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	int i;
+ 
+ 	spin_lock_irqsave(&kref_debug_lock, irq_flags);
+@@ -70,7 +70,7 @@ void kref_debug_destroy(struct kref_debug_info *debug_info)
+ 
+ void kref_debug_get(struct kref_debug_info *debug_info, int holder_nr)
+ {
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 
+ 	if (holder_nr >= KREF_DEBUG_HOLDER_MAX) {
+ 		pr_err("Increase KREF_DEBUG_HOLDER_MAX\n");
+@@ -84,7 +84,7 @@ void kref_debug_get(struct kref_debug_info *debug_info, int holder_nr)
+ 
+ void kref_debug_sub(struct kref_debug_info *debug_info, int refs, int holder_nr)
+ {
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 
+ 	if (holder_nr >= KREF_DEBUG_HOLDER_MAX) {
+ 		pr_err("Increase KREF_DEBUG_HOLDER_MAX\n");
+-- 
+2.17.0
+

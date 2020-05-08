@@ -1,0 +1,53 @@
+From 8967adb20ba7a956bd4d73949d8ea1c8dfe1fe65 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 May 2020 16:37:29 +0200
+Subject: [PATCH 02/12] drbd_bitmap: Always use KIRQL as datatype for IRQ
+ flags.
+
+---
+ drbd/drbd_bitmap.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_bitmap.c b/drbd/drbd_bitmap.c
+index 626c796..a151cba 100644
+--- a/drbd/drbd_bitmap.c
++++ b/drbd/drbd_bitmap.c
+@@ -753,7 +753,7 @@ bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start, UL
+       enum bitmap_operations op, __le32 *buffer)
+ {
+ 	struct drbd_bitmap *bitmap = device->bitmap;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	ULONG_PTR count;
+ 
+ 	spin_lock_irqsave(&bitmap->bm_lock, irq_flags);
+@@ -989,7 +989,7 @@ ULONG_PTR _drbd_bm_total_weight(struct drbd_device *device, int bitmap_index)
+ {
+ 	struct drbd_bitmap *b = device->bitmap;
+ 	ULONG_PTR s;
+-	ULONG_PTR flags;
++	KIRQL flags;
+ 
+ 	if (!expect(device, b))
+ 		return 0;
+@@ -1071,7 +1071,7 @@ void drbd_bm_get_lel(struct drbd_peer_device *peer_device, size_t offset, size_t
+ static void drbd_bm_aio_ctx_destroy(struct kref *kref)
+ {
+ 	struct drbd_bm_aio_ctx *ctx = container_of(kref, struct drbd_bm_aio_ctx, kref);
+-	ULONG_PTR flags;
++	KIRQL flags;
+ 
+ 	spin_lock_irqsave(&ctx->device->resource->req_lock, flags);
+ 	list_del(&ctx->list);
+@@ -1593,7 +1593,7 @@ unsigned int drbd_bm_clear_bits(struct drbd_device *device, unsigned int bitmap_
+ int drbd_bm_test_bit(struct drbd_peer_device *peer_device, ULONG_PTR bitnr)
+ {
+ 	struct drbd_bitmap *bitmap = peer_device->device->bitmap;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	int ret;
+ 
+ 	spin_lock_irqsave(&bitmap->bm_lock, irq_flags);
+-- 
+2.17.0
+

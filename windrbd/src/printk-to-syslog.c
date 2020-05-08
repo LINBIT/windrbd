@@ -243,7 +243,7 @@ static int open_syslog_socket(void)
 
 int currently_in_printk(void)
 {
-	int flags;
+	KIRQL flags;
 
 	spin_lock_irqsave(&in_printk_lock, flags);
 	if (in_printk) {

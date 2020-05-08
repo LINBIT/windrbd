@@ -1,0 +1,152 @@
+From d7a97fb4657b2410e6cae3b56927243814c24829 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 8 May 2020 16:38:29 +0200
+Subject: [PATCH 06/12] drbd_receiver: Always use KIRQL as datatype for IRQ
+ flags.
+
+---
+ drbd/drbd_receiver.c | 30 +++++++++++++++---------------
+ 1 file changed, 15 insertions(+), 15 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index 26f6675..f9a03c2 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -709,7 +709,7 @@ void connect_timer_fn(struct timer_list *t)
+ {
+ 	struct drbd_connection *connection = from_timer(connection, t, connect_timer, struct drbd_connection);
+ 	struct drbd_resource *resource = connection->resource;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 
+ 	spin_lock_irqsave(&resource->req_lock, irq_flags);
+ 	drbd_queue_work(&connection->sender_work, &connection->connect_timer_work);
+@@ -5311,7 +5311,7 @@ static int __receive_uuids(struct drbd_peer_device *peer_device, u64 node_mask)
+ 			drbd_current_uuid(device) == UUID_JUST_CREATED &&
+ 			(peer_device->uuid_flags & UUID_FLAG_SKIP_INITIAL_SYNC);
+ 		if (skip_initial_sync) {
+-			ULONG_PTR irq_flags;
++			KIRQL irq_flags;
+ 
+ 			drbd_info(device, "Accepted new current UUID, preparing to skip initial sync\n");
+ 			drbd_bitmap_io(device, &drbd_bmio_clear_all_n_write,
+@@ -5342,7 +5342,7 @@ static int __receive_uuids(struct drbd_peer_device *peer_device, u64 node_mask)
+ 
+ 			if (strategy == SYNC_TARGET_SET_BITMAP || strategy == SYNC_TARGET_USE_BITMAP) {
+ 				struct drbd_resource *resource = device->resource;
+-				ULONG_PTR irq_flags;
++				KIRQL irq_flags;
+ 
+ 				begin_state_change(resource, &irq_flags, CS_VERBOSE);
+ 				if (device->disk_state[NEW] > D_OUTDATED)
+@@ -5694,7 +5694,7 @@ change_connection_state(struct drbd_connection *connection,
+ {
+ 	struct drbd_resource *resource = connection->resource;
+ 	struct drbd_peer_device *peer_device;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	enum drbd_state_rv rv;
+ 	int vnr;
+ 	LONG_PTR t = resource->res_opts.auto_promote_timeout * HZ / 10;
+@@ -5756,7 +5756,7 @@ change_peer_device_state(struct drbd_peer_device *peer_device,
+ 			 enum chg_state_flags flags)
+ {
+ 	struct drbd_connection *connection = peer_device->connection;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	enum drbd_state_rv rv;
+ 
+ 	mask = convert_state(mask);
+@@ -5887,7 +5887,7 @@ int abort_nested_twopc_work(struct drbd_work *work, int cancel)
+ void twopc_timer_fn(struct timer_list *t)
+ {
+ 	struct drbd_resource *resource = from_timer(resource, t, twopc_timer, struct drbd_resource);
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 
+ 	spin_lock_irqsave(&resource->req_lock, irq_flags);
+ 	if (resource->twopc_work.cb == NULL) {
+@@ -5909,7 +5909,7 @@ static enum drbd_state_rv outdate_if_weak(struct drbd_resource *resource,
+ 		NODE_MASK(resource->res_opts.node_id);
+ 
+ 	if (reply->primary_nodes & ~directly_reachable) {
+-		ULONG_PTR irq_flags;
++		KIRQL irq_flags;
+ 
+ 		begin_state_change(resource, &irq_flags, flags);
+ 		__outdate_myself(resource);
+@@ -5954,7 +5954,7 @@ far_away_change(struct drbd_connection *connection, union drbd_state mask,
+ 
+ 		affected_connection = drbd_get_connection_by_node_id(resource, initiator_node_id);
+ 		if (affected_connection) {
+-			ULONG_PTR irq_flags;
++			KIRQL irq_flags;
+ 			enum drbd_state_rv rv;
+ 
+ 			begin_state_change(resource, &irq_flags, flags);
+@@ -6153,7 +6153,7 @@ void queued_twopc_timer_fn(struct timer_list *t)
+ {
+ 	struct drbd_resource *resource = from_timer(resource, t, queued_twopc_timer, struct drbd_resource);
+ 	struct queued_twopc *q;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	ULONG_PTR time = twopc_timeout(resource) / 4;
+ 
+ 	spin_lock_irqsave(&resource->queued_twopc_lock, irq_flags);
+@@ -6175,7 +6175,7 @@ void queued_twopc_timer_fn(struct timer_list *t)
+ void queue_queued_twopc(struct drbd_resource *resource)
+ {
+ 	struct queued_twopc *q;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 
+ 	spin_lock_irqsave(&resource->queued_twopc_lock, irq_flags);
+ 	q = list_first_entry_or_null(&resource->queued_twopc, struct queued_twopc, w.list);
+@@ -6208,7 +6208,7 @@ static int abort_starting_twopc(struct drbd_resource *resource, struct twopc_rep
+ static int abort_queued_twopc(struct drbd_resource *resource, struct twopc_reply *twopc)
+ {
+ 	struct queued_twopc *q;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 
+ 	spin_lock_irqsave(&resource->queued_twopc_lock, irq_flags);
+ 	list_for_each_entry(struct queued_twopc, q, &resource->queued_twopc, w.list) {
+@@ -6811,7 +6811,7 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
+ 
+ 	if (pi->vnr == -1) {
+ 		if (peer_state.role == R_SECONDARY) {
+-			ULONG_PTR irq_flags;
++			KIRQL irq_flags;
+ 
+ 			begin_state_change(resource, &irq_flags, CS_HARD | CS_VERBOSE);
+ 			__change_peer_role(connection, R_SECONDARY);
+@@ -7055,7 +7055,7 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
+ 	    drbd_suspended(device) &&
+ 	    repl_state[OLD] < L_ESTABLISHED && repl_state[NEW] == L_ESTABLISHED &&
+ 	    test_and_clear_bit(NEW_CUR_UUID, &device->flags)) {
+-		ULONG_PTR irq_flags;
++		KIRQL irq_flags;
+ 
+ 		/* Do not allow RESEND for a rebooted peer. We can only allow this
+ 		   for temporary network outages! */
+@@ -7615,7 +7615,7 @@ static int receive_peer_dagtag(struct drbd_connection *connection, struct packet
+ 	}
+ 
+ 	if (new_repl_state != L_ESTABLISHED) {
+-		ULONG_PTR irq_flags;
++		KIRQL irq_flags;
+ 		enum drbd_state_rv rv;
+ 
+ 		if (new_repl_state == L_WF_BITMAP_T) {
+@@ -8014,7 +8014,7 @@ void conn_disconnect(struct drbd_connection *connection)
+ 	struct drbd_resource *resource = connection->resource;
+ 	struct drbd_peer_device *peer_device;
+ 	enum drbd_conn_state oc;
+-	ULONG_PTR irq_flags;
++	KIRQL irq_flags;
+ 	int vnr, i;
+ 
+ 	clear_bit(CONN_DRY_RUN, &connection->flags);
+-- 
+2.17.0
+
