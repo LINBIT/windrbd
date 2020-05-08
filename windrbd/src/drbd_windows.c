@@ -864,7 +864,7 @@ static void free_mdls_and_irp(struct bio *bio)
 			IoFreeMdl(mdl); // This function will also unmap pages.
 		}
 		bio->bi_irps[r]->MdlAddress = NULL;
-		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
+//		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 
 		IoFreeIrp(bio->bi_irps[r]);
 	}
@@ -1660,11 +1660,13 @@ static int make_flush_request(struct bio *bio)
 
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
+/*
 	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
 	if (!NT_SUCCESS(status)) {
 		printk("ObReferenceObjectByPointer failed with status %x\n", status);
 		return -EIO;
 	}
+*/
 
 	next_stack_location = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
 
@@ -1823,11 +1825,13 @@ static int windrbd_generic_make_request(struct bio *bio)
 		 * in the IRP.
 		 */
 
+/*
 	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
 	if (!NT_SUCCESS(status)) {
 		printk("ObReferenceObjectByPointer failed with status %x\n", status);
 		goto out_free_irp;
 	}
+*/
 	bio_get(bio);	/* To be put in completion routine */
 
 	if (bio->device_failed ||
