@@ -1154,6 +1154,8 @@ static inline int atomic_dec_if_positive(atomic_t *v)
 #define nla_parse_nested(tb, maxtype, nla, policy, extack) \
        nla_parse_nested(tb, maxtype, nla, policy)
 
+struct netlink_ext_ack;
+
 static inline int nla_parse_nested_deprecated(struct nlattr *tb[], int maxtype,
 					      const struct nlattr *nla,
 					      const struct nla_policy *policy,

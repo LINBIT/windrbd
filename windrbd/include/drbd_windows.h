@@ -308,6 +308,7 @@ extern void set_syslog_ip(const char *ip);
 extern int _printk(const char * func, const char * format, ...);
 extern void printk_reprint(size_t bytes);
 
+struct drbd_device;
 void windrbd_device_error(struct drbd_device *device, const char ** err_str_out, const char *fmt, ...);
 
 #define printk(format, ...)   \
@@ -419,7 +420,9 @@ struct work_struct_wrapper {
     LIST_ENTRY  element;
 };
 
+struct block_device;
 struct gendisk;
+
 struct block_device_operations {
 	struct module *owner;
 	int (*open) (struct block_device *, fmode_t);
@@ -885,8 +888,6 @@ struct scatterlist {
 	unsigned int length;
 };
 
-#define MINORMASK	0xff
-
 #define BUG()   printk("BUG: failure\n")
 
 #define BUG_ON(_condition)	\
@@ -1214,6 +1215,8 @@ int create_drbd_resource_from_url(const char *url);
 void windrbd_init_boot_device(void);
 
 /* see printk_to_syslog.c */
+struct in_addr;
+
 int my_inet_aton(const char *cp, struct in_addr *inp);
 char *my_inet_ntoa(struct in_addr *addr);
 /* ugh ... */

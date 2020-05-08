@@ -10,13 +10,13 @@
 
 struct sk_buff
 {
-    int len;
+	size_t len;
 		/* Maybe TODO: In current Linux versions these are
 		 * pointers into the data buffer.
 		 */
 
-    unsigned int tail;
-    unsigned int end;
+	size_t tail;
+	size_t end;
 
 	/*
 	 * This is the control buffer. It is free to use for every
@@ -25,12 +25,12 @@ struct sk_buff
 	 * first. This is owned by whoever has the skb queued ATM.
 	 */
 
-    char cb[48];
+	char cb[48];
 
-    unsigned char data[1];
+	unsigned char data[1];
 };
 
-static __inline int skb_is_nonlinear(const struct sk_buff *skb)
+static __inline size_t skb_is_nonlinear(const struct sk_buff *skb)
 {
 	return skb->len;
 }
@@ -46,7 +46,7 @@ static __inline unsigned char *skb_tail_pointer(const struct sk_buff *skb)
  *
  *	Return the number of bytes of free space at the tail of an sk_buff
  */
-static __inline int skb_tailroom(const struct sk_buff *skb)
+static __inline size_t skb_tailroom(const struct sk_buff *skb)
 {
 	return skb->end - skb->tail;
 }
@@ -711,7 +711,7 @@ static inline struct nlattr *nla_nest_start_noflag(struct sk_buff *skb,
  *
  * Returns the total data length of the msg.
  */
-static __inline int nla_nest_end(struct sk_buff *msg, struct nlattr *start)
+static __inline size_t nla_nest_end(struct sk_buff *msg, struct nlattr *start)
 {
 	start->nla_len = (u16)(skb_tail_pointer(msg) - (unsigned char *)start);
 	return msg->len;
@@ -781,13 +781,13 @@ static __inline struct nlmsghdr *nlmsg_put(struct sk_buff *skb, u32 portid, u32 
 	return __nlmsg_put(skb, portid, seq, type, payload, flags);
 }
 
-static __inline int nlmsg_end(struct sk_buff *skb, struct nlmsghdr *nlh)
+static __inline ssize_t nlmsg_end(struct sk_buff *skb, struct nlmsghdr *nlh)
 {
     nlh->nlmsg_len = (u16)(skb_tail_pointer(skb) - (unsigned char *)nlh);
     return skb->len;
 }
 
-static __inline int genlmsg_end(struct sk_buff *skb, void *hdr)
+static __inline ssize_t genlmsg_end(struct sk_buff *skb, void *hdr)
 {
     return nlmsg_end(skb, (void*)((ULONG_PTR)hdr - GENL_HDRLEN - NLMSG_HDRLEN) );
 }

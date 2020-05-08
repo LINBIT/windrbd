@@ -43,6 +43,11 @@ typedef union ktime ktime_t;		/* Kill this */
 /* Convert ktime_t to nanoseconds - NOP in the scalar storage format: */
 #define ktime_to_ns(kt)                 ((kt).tv64)
 
+/* Silence warning C4204: nonstandard extension used: non-constant aggregate initializer */
+
+#pragma warning(push)
+#pragma warning(disable: 4204)
+
 /**
  * ktime_set - Set a ktime_t variable from a seconds/nanoseconds value
  * @secs:	seconds to set
@@ -96,6 +101,8 @@ static inline ktime_t ktime_sub_ns(const ktime_t kt, const u64 nsval)
 {
 	return (ktime_t){ .tv64 = (kt).tv64 - (nsval) };
 }
+
+#pragma warning(pop)
 
 /**
  * ktime_equal - Compares two ktime_t variables to see if they are equal
