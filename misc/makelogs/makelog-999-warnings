@@ -1,0 +1,1267 @@
+make[1]: Verzeichnis „/cygdrive/y/windrbd/converted-sources/drbd“ wird betreten
+cd ../.. && ./versioninfo.sh converted-sources  || true
+WinDRBD version is 0.10.7.0, Resource version is 0,10,7,0
+rm -f "drbd_buildtag.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_buildtag.c" /c /Fo:"drbd_buildtag.obj" /Fd:"drbd_buildtag.pdb"
+drbd_buildtag.c
+echo "-- drbd_buildtag.obj done --"
+-- drbd_buildtag.obj done --
+rm -f "drbd_bitmap.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_bitmap.c" /c /Fo:"drbd_bitmap.obj" /Fd:"drbd_bitmap.pdb"
+drbd_bitmap.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+drbd_bitmap.c(259): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_bitmap.c(259): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_bitmap.c(365): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+drbd_bitmap.c(438): warning C4242: 'return': conversion from 'ULONG_PTR' to 'unsigned long', possible loss of data
+drbd_bitmap.c(443): warning C4242: 'return': conversion from 'ULONG_PTR' to 'unsigned long', possible loss of data
+drbd_bitmap.c(457): warning C4242: 'return': conversion from 'ULONG_PTR' to 'unsigned long', possible loss of data
+drbd_bitmap.c(537): warning C4242: '=': conversion from 'ULONG_PTR' to 'unsigned int', possible loss of data
+drbd_bitmap.c(565): warning C4245: '=': conversion from 'int' to '__le32', signed/unsigned mismatch
+drbd_bitmap.c(581): warning C4242: '=': conversion from 'ULONG_PTR' to 'unsigned int', possible loss of data
+drbd_bitmap.c(648): warning C4242: '=': conversion from 'ULONG_PTR' to 'unsigned int', possible loss of data
+drbd_bitmap.c(646): warning C4242: 'initializing': conversion from 'ULONG_PTR' to 'unsigned int', possible loss of data
+drbd_bitmap.c(656): warning C4242: 'initializing': conversion from 'ULONG_PTR' to 'unsigned int', possible loss of data
+drbd_bitmap.c(902): warning C4127: conditional expression is constant
+drbd_bitmap.c(1259): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+drbd_bitmap.c(1235): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_bitmap.c(1499): warning C4242: 'return': conversion from 'ULONG_PTR' to 'unsigned int', possible loss of data
+drbd_bitmap.c(1567): warning C4245: 'function': conversion from 'int' to 'ULONG_PTR', signed/unsigned mismatch
+drbd_bitmap.c(1577): warning C4245: 'function': conversion from 'int' to 'ULONG_PTR', signed/unsigned mismatch
+drbd_bitmap.c(1583): warning C4242: 'return': conversion from 'ULONG_PTR' to 'unsigned int', possible loss of data
+drbd_bitmap.c(1604): warning C4242: '=': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_bitmap.c(1612): warning C4242: 'return': conversion from 'ULONG_PTR' to 'int', possible loss of data
+make[1]: *** [Makefile:246: drbd_bitmap.obj] Fehler 2
+rm -f "drbd_proc.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_proc.c" /c /Fo:"drbd_proc.obj" /Fd:"drbd_proc.pdb"
+drbd_proc.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+make[1]: *** [Makefile:246: drbd_proc.obj] Fehler 2
+rm -f "drbd_sender.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_sender.c" /c /Fo:"drbd_sender.obj" /Fd:"drbd_sender.pdb"
+drbd_sender.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+drbd_sender.c(128): warning C4242: 'function': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_sender.c(505): warning C4018: '<': signed/unsigned mismatch
+drbd_sender.c(526): warning C4018: '<': signed/unsigned mismatch
+drbd_sender.c(567): warning C4242: 'function': conversion from 'u64' to 'u32', possible loss of data
+drbd_sender.c(581): warning C4242: 'function': conversion from 'u64' to 'u32', possible loss of data
+drbd_sender.c(582): warning C4242: '=': conversion from 'u64' to 'unsigned int', possible loss of data
+drbd_sender.c(597): warning C4242: '=': conversion from 'u64' to 'int', possible loss of data
+drbd_sender.c(609): warning C4242: '=': conversion from 'u64' to 'int', possible loss of data
+drbd_sender.c(792): warning C4242: '=': conversion from 'const sector_t' to 'int', possible loss of data
+drbd_sender.c(888): warning C4242: '=': conversion from 'const sector_t' to 'int', possible loss of data
+drbd_sender.c(936): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_sender.c(934): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_sender.c(1168): warning C4242: 'initializing': conversion from 'const ULONG_PTR' to 'const int', possible loss of data
+drbd_sender.c(2363): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_sender.c(2375): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_sender.c(2362): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_sender.c(2375): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_sender.c(2448): warning C4242: 'function': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_sender.c(2449): warning C4242: 'return': conversion from 'ULONG_PTR' to 'unsigned long', possible loss of data
+drbd_sender.c(2675): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_sender.c(2777): warning C4389: '!=': signed/unsigned mismatch
+drbd_sender.c(2956): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(2960): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(2969): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(2979): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(3012): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(3083): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(3086): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_sender.c(3089): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(3094): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(3098): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(3118): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(3125): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(3129): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(3133): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(3139): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_sender.c(3073): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_sender.c(3084): warning C4204: nonstandard extension used: non-constant aggregate initializer
+make[1]: *** [Makefile:246: drbd_sender.obj] Fehler 2
+rm -f "drbd_receiver.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_receiver.c" /c /Fo:"drbd_receiver.obj" /Fd:"drbd_receiver.pdb"
+drbd_receiver.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+y:\windrbd\converted-sources\drbd\drbd_vli.h(257): warning C4018: '>=': signed/unsigned mismatch
+y:\windrbd\converted-sources\drbd\drbd_vli.h(290): warning C4018: '>=': signed/unsigned mismatch
+y:\windrbd\converted-sources\drbd\drbd_vli.h(292): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+drbd_receiver.c(298): warning C4018: '>=': signed/unsigned mismatch
+drbd_receiver.c(363): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(409): warning C4018: '<': signed/unsigned mismatch
+drbd_receiver.c(422): warning C4018: '<': signed/unsigned mismatch
+drbd_receiver.c(402): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(461): warning C4018: '>': signed/unsigned mismatch
+drbd_receiver.c(538): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(559): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(560): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(618): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(762): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(918): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_receiver.c(1019): warning C4389: '!=': signed/unsigned mismatch
+drbd_receiver.c(1035): warning C4389: '!=': signed/unsigned mismatch
+drbd_receiver.c(1479): warning C4389: '!=': signed/unsigned mismatch
+drbd_receiver.c(1490): warning C4242: '-=': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_receiver.c(1507): warning C4242: '-=': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_receiver.c(1583): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_receiver.c(1583): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(1693): warning C4244: '=': conversion from 'unsigned int' to 'unsigned short', possible loss of data
+drbd_receiver.c(1834): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_receiver.c(1832): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(1846): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_receiver.c(1844): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(1941): warning C4242: '=': conversion from 'unsigned __int64' to 'uint32_t', possible loss of data
+drbd_receiver.c(2108): warning C4189: 'device': local variable is initialized but not referenced
+drbd_receiver.c(2543): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(2613): warning C4242: 'return': conversion from 'ULONG_PTR' to 'unsigned long', possible loss of data
+drbd_receiver.c(3037): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_receiver.c(3037): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(3456): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_receiver.c(3473): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_receiver.c(3484): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_receiver.c(4467): warning C4389: '!=': signed/unsigned mismatch
+drbd_receiver.c(4472): warning C4389: '!=': signed/unsigned mismatch
+drbd_receiver.c(4477): warning C4389: '!=': signed/unsigned mismatch
+drbd_receiver.c(4482): warning C4389: '!=': signed/unsigned mismatch
+drbd_receiver.c(4553): warning C4242: '=': conversion from 'int' to 'char', possible loss of data
+drbd_receiver.c(4752): warning C4389: '!=': signed/unsigned mismatch
+drbd_receiver.c(4772): warning C4267: '=': conversion from 'size_t' to '__u32', possible loss of data
+drbd_receiver.c(4779): warning C4267: '=': conversion from 'size_t' to '__u32', possible loss of data
+drbd_receiver.c(5437): warning C4242: '=': conversion from 'unsigned __int64' to 'int', possible loss of data
+drbd_receiver.c(5470): warning C4245: '=': conversion from 'int' to 'u64', signed/unsigned mismatch
+drbd_receiver.c(5551): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_receiver.c(5550): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(5730): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(6002): warning C4389: '==': signed/unsigned mismatch
+drbd_receiver.c(6043): warning C4242: '=': conversion from 'LONG_PTR' to 'long', possible loss of data
+drbd_receiver.c(6041): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(6124): warning C4127: conditional expression is constant
+drbd_receiver.c(6112): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(6573): warning C4389: '!=': signed/unsigned mismatch
+drbd_receiver.c(6582): warning C4389: '==': signed/unsigned mismatch
+drbd_receiver.c(6591): warning C4389: '!=': signed/unsigned mismatch
+drbd_receiver.c(7125): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_receiver.c(7121): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(7158): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+drbd_receiver.c(7297): warning C4242: 'initializing': conversion from 'ULONG_PTR' to 'unsigned int', possible loss of data
+drbd_receiver.c(7367): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_receiver.c(7366): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(7373): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(7525): warning C4389: '==': signed/unsigned mismatch
+drbd_receiver.c(7601): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_receiver.c(7600): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(7832): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_receiver.c(7858): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_receiver.c(7862): warning C4267: '-=': conversion from 'size_t' to 'unsigned int', possible loss of data
+drbd_receiver.c(7865): warning C4152: nonstandard extension, function/data pointer conversion in expression
+drbd_receiver.c(7973): warning C4389: '==': signed/unsigned mismatch
+drbd_receiver.c(7974): warning C4389: '==': signed/unsigned mismatch
+drbd_receiver.c(7975): warning C4389: '==': signed/unsigned mismatch
+drbd_receiver.c(7976): warning C4389: '==': signed/unsigned mismatch
+drbd_receiver.c(8190): warning C4389: '!=': signed/unsigned mismatch
+drbd_receiver.c(8568): warning C4389: '==': signed/unsigned mismatch
+drbd_receiver.c(8585): warning C4389: '==': signed/unsigned mismatch
+drbd_receiver.c(8587): warning C4389: '==': signed/unsigned mismatch
+drbd_receiver.c(8962): warning C4242: '=': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_receiver.c(9101): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_receiver.c(9319): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+drbd_receiver.c(9277): warning C4204: nonstandard extension used: non-constant aggregate initializer
+make[1]: *** [Makefile:246: drbd_receiver.obj] Fehler 2
+rm -f "drbd_req.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_req.c" /c /Fo:"drbd_req.obj" /Fd:"drbd_req.pdb"
+drbd_req.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+drbd_req.c(234): warning C4245: 'initializing': conversion from 'int' to 'ULONG_PTR', signed/unsigned mismatch
+drbd_req.c(433): warning C4389: '==': signed/unsigned mismatch
+drbd_req.c(947): warning C4018: '>=': signed/unsigned mismatch
+drbd_req.c(1165): warning C4101: 'bdi': unreferenced local variable
+drbd_req.c(1208): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_req.c(1282): warning C4018: '>=': signed/unsigned mismatch
+drbd_req.c(1409): warning C4127: conditional expression is constant
+drbd_req.c(1889): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_req.c(1889): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_req.c(1970): warning C4101: 'plug': unreferenced local variable
+drbd_req.c(2070): warning C4101: 'plug': unreferenced local variable
+drbd_req.c(2118): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_req.c(2252): warning C4242: 'return': conversion from 'ULONG_PTR' to 'unsigned long', possible loss of data
+drbd_req.c(2281): warning C4389: '==': signed/unsigned mismatch
+make[1]: *** [Makefile:246: drbd_req.obj] Fehler 2
+rm -f "drbd_actlog.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_actlog.c" /c /Fo:"drbd_actlog.obj" /Fd:"drbd_actlog.pdb"
+drbd_actlog.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+drbd_actlog.c(34): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_actlog.c(69): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_actlog.c(253): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_actlog.c(261): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_actlog.c(319): warning C4127: conditional expression is constant
+drbd_actlog.c(313): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_actlog.c(314): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_actlog.c(391): warning C4242: 'function': conversion from 'unsigned int' to 'unsigned short', possible loss of data
+drbd_actlog.c(405): warning C4242: 'function': conversion from 'int' to 'unsigned short', possible loss of data
+drbd_actlog.c(407): warning C4245: 'function': conversion from 'int' to 'unsigned short', signed/unsigned mismatch
+drbd_actlog.c(411): warning C4242: 'function': conversion from 'unsigned int' to 'unsigned short', possible loss of data
+drbd_actlog.c(412): warning C4242: 'function': conversion from 'int' to 'unsigned short', possible loss of data
+drbd_actlog.c(425): warning C4018: '>=': signed/unsigned mismatch
+drbd_actlog.c(528): warning C4127: conditional expression is constant
+drbd_actlog.c(535): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_actlog.c(533): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_actlog.c(602): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_actlog.c(603): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_actlog.c(622): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_actlog.c(656): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_actlog.c(657): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_actlog.c(660): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_actlog.c(716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_actlog.c(717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_actlog.c(752): warning C4018: '<': signed/unsigned mismatch
+drbd_actlog.c(756): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_actlog.c(756): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_actlog.c(808): warning C4242: '=': conversion from 'unsigned __int64' to 'int', possible loss of data
+drbd_actlog.c(824): warning C4127: conditional expression is constant
+drbd_actlog.c(888): warning C4242: 'return': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_actlog.c(1097): warning C4242: 'function': conversion from 'ULONG_PTR' to 'unsigned int', possible loss of data
+drbd_actlog.c(1097): warning C4242: 'function': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_actlog.c(1119): warning C4242: 'return': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_actlog.c(1192): warning C4242: 'return': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_actlog.c(1197): warning C4245: 'function': conversion from 'int' to 'ULONG_PTR', signed/unsigned mismatch
+drbd_actlog.c(1270): warning C4242: '=': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_actlog.c(1357): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_actlog.c(1369): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_actlog.c(1350): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_actlog.c(1356): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_actlog.c(1368): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_actlog.c(1403): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_actlog.c(1531): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+drbd_actlog.c(1600): warning C4018: '<': signed/unsigned mismatch
+drbd_actlog.c(1644): warning C4242: 'function': conversion from 'sector_t' to 'unsigned int', possible loss of data
+make[1]: *** [Makefile:246: drbd_actlog.obj] Fehler 2
+rm -f "lru_cache.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "lru_cache.c" /c /Fo:"lru_cache.obj" /Fd:"lru_cache.pdb"
+lru_cache.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+lru_cache.c(583): warning C4018: '>=': signed/unsigned mismatch
+lru_cache.c(618): warning C4018: '<': signed/unsigned mismatch
+make[1]: *** [Makefile:246: lru_cache.obj] Fehler 2
+rm -f "drbd_main.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_main.c" /c /Fo:"drbd_main.obj" /Fd:"drbd_main.pdb"
+drbd_main.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+y:\windrbd\converted-sources\drbd\drbd_vli.h(257): warning C4018: '>=': signed/unsigned mismatch
+y:\windrbd\converted-sources\drbd\drbd_vli.h(290): warning C4018: '>=': signed/unsigned mismatch
+y:\windrbd\converted-sources\drbd\drbd_vli.h(292): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+drbd_main.c(408): warning C4389: '!=': signed/unsigned mismatch
+drbd_main.c(441): warning C4115: 'drbd_req': named type definition in parentheses
+drbd_main.c(449): warning C4389: '!=': signed/unsigned mismatch
+drbd_main.c(460): warning C4389: '!=': signed/unsigned mismatch
+drbd_main.c(466): warning C4389: '!=': signed/unsigned mismatch
+drbd_main.c(496): warning C4389: '==': signed/unsigned mismatch
+drbd_main.c(500): warning C4389: '!=': signed/unsigned mismatch
+drbd_main.c(516): warning C4389: '==': signed/unsigned mismatch
+drbd_main.c(889): warning C4267: 'function': conversion from 'size_t' to 'unsigned short', possible loss of data
+drbd_main.c(903): warning C4242: 'function': conversion from 'int' to 'unsigned short', possible loss of data
+drbd_main.c(953): warning C4018: '>': signed/unsigned mismatch
+drbd_main.c(1044): warning C4242: '=': conversion from '__int64' to 'int', possible loss of data
+drbd_main.c(1064): warning C4242: '=': conversion from '__int64' to 'int', possible loss of data
+drbd_main.c(1221): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+drbd_main.c(1278): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+drbd_main.c(1396): warning C4245: '=': conversion from 'int' to 'u64', signed/unsigned mismatch
+drbd_main.c(1490): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+drbd_main.c(1586): warning C4242: '=': conversion from 'unsigned int' to 'uint8_t', possible loss of data
+drbd_main.c(1653): warning C4242: 'function': conversion from 'int' to 'unsigned short', possible loss of data
+drbd_main.c(1807): warning C4244: '=': conversion from 'int' to 'uint8_t', possible loss of data
+drbd_main.c(1818): warning C4244: '=': conversion from 'int' to 'uint8_t', possible loss of data
+drbd_main.c(1898): warning C4242: '=': conversion from '__int64' to 'unsigned int', possible loss of data
+drbd_main.c(1961): warning C4242: '=': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_main.c(2014): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_main.c(2133): warning C4267: '+=': conversion from 'size_t' to 'unsigned int', possible loss of data
+drbd_main.c(2148): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+drbd_main.c(2503): warning C4242: 'initializing': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_main.c(2518): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_main.c(2526): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_main.c(2677): warning C4242: '=': conversion from 'LONG_PTR' to 'long', possible loss of data
+drbd_main.c(2648): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_main.c(2674): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_main.c(3038): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_main.c(3141): warning C4101: 'q': unreferenced local variable
+drbd_main.c(3140): warning C4189: 'device': local variable is initialized but not referenced
+drbd_main.c(3434): warning C4127: conditional expression is constant
+drbd_main.c(3685): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_main.c(3686): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_main.c(3999): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_main.c(4192): warning C4127: conditional expression is constant
+drbd_main.c(4299): warning C4242: '=': conversion from 'u64' to 'u32', possible loss of data
+drbd_main.c(4344): warning C4018: '<': signed/unsigned mismatch
+drbd_main.c(4372): warning C4389: '!=': signed/unsigned mismatch
+drbd_main.c(4472): warning C4018: '>=': signed/unsigned mismatch
+drbd_main.c(4519): warning C4127: conditional expression is constant
+drbd_main.c(4524): warning C4127: conditional expression is constant
+drbd_main.c(4739): warning C4242: '=': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_main.c(4746): warning C4018: '<': signed/unsigned mismatch
+drbd_main.c(5581): warning C4389: '!=': signed/unsigned mismatch
+drbd_main.c(5651): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_main.c(5857): warning C4018: '<=': signed/unsigned mismatch
+make[1]: *** [Makefile:246: drbd_main.obj] Fehler 2
+rm -f "drbd_strings.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_strings.c" /c /Fo:"drbd_strings.obj" /Fd:"drbd_strings.pdb"
+drbd_strings.c
+echo "-- drbd_strings.obj done --"
+-- drbd_strings.obj done --
+rm -f "drbd_nl.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_nl.c" /c /Fo:"drbd_nl.obj" /Fd:"drbd_nl.pdb"
+drbd_nl.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(89): warning C4267: '=': conversion from 'size_t' to '__u32', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(89): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(103): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(103): warning C4267: '=': conversion from 'size_t' to '__u32', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(131): warning C4267: '=': conversion from 'size_t' to '__u32', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(131): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(147): warning C4267: '=': conversion from 'size_t' to '__u32', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(147): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(184): warning C4267: '=': conversion from 'size_t' to '__u32', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(184): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(188): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(196): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(201): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(206): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(210): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(214): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(219): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(224): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(232): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(238): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(243): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(252): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(256): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(273): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(279): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(308): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(312): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(317): warning C4267: '=': conversion from 'size_t' to '__u32', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(317): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(321): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(325): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(335): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(340): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(345): warning C4127: conditional expression is constant
+Y:\windrbd\converted-sources\drbd\drbd-headers\linux/drbd_genl.h(349): warning C4127: conditional expression is constant
+drbd_nl.c(144): warning C4131: 'DEFINE_MUTEX': uses old-style declarator
+drbd_nl.c(144): warning C4218: nonstandard extension used: must specify at least a storage class or a type
+drbd_nl.c(211): warning C4242: '=': conversion from 'int' to '__u16', possible loss of data
+drbd_nl.c(559): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+drbd_nl.c(643): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(997): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(997): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(1045): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(1077): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(1094): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(1120): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(1223): warning C4018: '>': signed/unsigned mismatch
+drbd_nl.c(1077): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(1094): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(1119): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(1318): warning C4101: 'i': unreferenced local variable
+drbd_nl.c(1316): warning C4101: 'device': unreferenced local variable
+drbd_nl.c(1317): warning C4101: 'o': unreferenced local variable
+drbd_nl.c(1471): warning C4242: '=': conversion from 'sector_t' to 'u32', possible loss of data
+drbd_nl.c(1487): warning C4242: '=': conversion from 'sector_t' to 'u32', possible loss of data
+drbd_nl.c(1489): warning C4242: '=': conversion from 'sector_t' to 's32', possible loss of data
+drbd_nl.c(1532): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(1530): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(1721): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(1723): warning C4127: conditional expression is constant
+drbd_nl.c(1724): warning C4127: conditional expression is constant
+drbd_nl.c(1721): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(1819): warning C4189: 'pdsk': local variable is initialized but not referenced
+drbd_nl.c(1965): warning C4018: '<': signed/unsigned mismatch
+drbd_nl.c(1993): warning C4245: 'initializing': conversion from 'int' to 'u32', signed/unsigned mismatch
+drbd_nl.c(2060): warning C4245: 'function': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
+drbd_nl.c(2062): warning C4245: 'function': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
+drbd_nl.c(2137): warning C4242: 'function': conversion from 'unsigned int' to 'unsigned short', possible loss of data
+drbd_nl.c(2305): warning C4127: conditional expression is constant
+drbd_nl.c(2335): warning C4242: '=': conversion from 'uint64_t' to 'unsigned int', possible loss of data
+drbd_nl.c(2366): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(2366): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(2835): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(2904): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(2908): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(2913): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(2931): warning C4389: '!=': signed/unsigned mismatch
+drbd_nl.c(2975): warning C4018: '>': signed/unsigned mismatch
+drbd_nl.c(3029): warning C4127: conditional expression is constant
+drbd_nl.c(3033): warning C4127: conditional expression is constant
+drbd_nl.c(3171): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(2835): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(2904): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(2906): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(2912): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(3170): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(3239): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(3243): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(3247): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(3238): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(3242): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(3246): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(3601): warning C4389: '!=': signed/unsigned mismatch
+drbd_nl.c(3912): warning C4018: '>': signed/unsigned mismatch
+drbd_nl.c(4331): warning C4242: '=': conversion from 'LONG_PTR' to 'long', possible loss of data
+drbd_nl.c(4304): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(4328): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(4731): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(4730): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(4811): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(4811): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(4878): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(4878): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(4976): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(4975): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(5046): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(5045): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(5203): warning C4242: '=': conversion from 'int' to 'char', possible loss of data
+drbd_nl.c(5252): warning C4242: '=': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_nl.c(5343): warning C4242: '=': conversion from 'int' to 'char', possible loss of data
+drbd_nl.c(5576): warning C4242: '=': conversion from 'ULONG_PTR' to 'int', possible loss of data
+drbd_nl.c(5715): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(5715): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(6042): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_nl.c(6042): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(6223): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(6500): warning C4267: '=': conversion from 'size_t' to '__u32', possible loss of data
+drbd_nl.c(6592): warning C4242: '=': conversion from 'ULONG_PTR' to 'unsigned int', possible loss of data
+drbd_nl.c(6578): warning C4242: 'initializing': conversion from 'ULONG_PTR' to 'unsigned int', possible loss of data
+drbd_nl.c(6634): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_nl.c(6650): warning C4204: nonstandard extension used: non-constant aggregate initializer
+make[1]: *** [Makefile:246: drbd_nl.obj] Fehler 2
+rm -f "drbd_interval.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_interval.c" /c /Fo:"drbd_interval.obj" /Fd:"drbd_interval.pdb"
+drbd_interval.c
+y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+make[1]: *** [Makefile:246: drbd_interval.obj] Fehler 2
+rm -f "drbd_state.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_state.c" /c /Fo:"drbd_state.obj" /Fd:"drbd_state.pdb"
+drbd_state.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+drbd_state.c(939): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(1031): warning C4018: '<': signed/unsigned mismatch
+drbd_state.c(1122): warning C4242: 'return': conversion from '__int64' to 'int', possible loss of data
+drbd_state.c(1144): warning C4242: 'return': conversion from '__int64' to 'int', possible loss of data
+drbd_state.c(2752): warning C4018: '<': signed/unsigned mismatch
+drbd_state.c(2772): warning C4018: '<': signed/unsigned mismatch
+drbd_state.c(2831): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(2848): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(2876): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(2993): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(3006): warning C4018: '<=': signed/unsigned mismatch
+drbd_state.c(3065): warning C4018: '<': signed/unsigned mismatch
+drbd_state.c(3081): warning C4018: '<': signed/unsigned mismatch
+drbd_state.c(3144): warning C4018: '<': signed/unsigned mismatch
+drbd_state.c(3206): warning C4018: '<': signed/unsigned mismatch
+drbd_state.c(3224): warning C4018: '<': signed/unsigned mismatch
+drbd_state.c(3246): warning C4018: '<': signed/unsigned mismatch
+drbd_state.c(3591): warning C4018: '<': signed/unsigned mismatch
+drbd_state.c(3647): warning C4018: '<': signed/unsigned mismatch
+drbd_state.c(3668): warning C4018: '<': signed/unsigned mismatch
+drbd_state.c(3752): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(3787): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_state.c(3786): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(4251): warning C4242: '=': conversion from 'LONG_PTR' to 'long', possible loss of data
+drbd_state.c(4249): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(4424): warning C4245: '=': conversion from 'int' to 'uint32_t', signed/unsigned mismatch
+drbd_state.c(4454): warning C4242: '=': conversion from 'LONG_PTR' to 'long', possible loss of data
+drbd_state.c(4452): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(4528): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(4684): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_state.c(4660): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(4664): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(4659): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(4684): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(4828): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(4877): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(4881): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(4876): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(5030): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(5034): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(5029): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(5099): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(5103): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(5098): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_state.c(5133): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_state.c(5132): warning C4204: nonstandard extension used: non-constant aggregate initializer
+make[1]: *** [Makefile:246: drbd_state.obj] Fehler 2
+rm -f "drbd_kref_debug.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_kref_debug.c" /c /Fo:"drbd_kref_debug.obj" /Fd:"drbd_kref_debug.pdb"
+drbd_kref_debug.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+make[1]: *** [Makefile:246: drbd_kref_debug.obj] Fehler 2
+rm -f "drbd_nla.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_nla.c" /c /Fo:"drbd_nla.obj" /Fd:"drbd_nla.pdb"
+drbd_nla.c
+y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+make[1]: *** [Makefile:246: drbd_nla.obj] Fehler 2
+rm -f "drbd_transport.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_transport.c" /c /Fo:"drbd_transport.obj" /Fd:"drbd_transport.pdb"
+drbd_transport.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(193): warning C4115: 'seq_file': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+drbd_transport.c(343): warning C4131: 'EXPORT_SYMBOL_GPL': uses old-style declarator
+drbd_transport.c(343): warning C4218: nonstandard extension used: must specify at least a storage class or a type
+drbd_transport.c(344): warning C4131: 'EXPORT_SYMBOL_GPL': uses old-style declarator
+drbd_transport.c(344): warning C4218: nonstandard extension used: must specify at least a storage class or a type
+drbd_transport.c(345): warning C4131: 'EXPORT_SYMBOL_GPL': uses old-style declarator
+drbd_transport.c(345): warning C4218: nonstandard extension used: must specify at least a storage class or a type
+drbd_transport.c(346): warning C4131: 'EXPORT_SYMBOL_GPL': uses old-style declarator
+drbd_transport.c(346): warning C4218: nonstandard extension used: must specify at least a storage class or a type
+drbd_transport.c(347): warning C4131: 'EXPORT_SYMBOL_GPL': uses old-style declarator
+drbd_transport.c(347): warning C4218: nonstandard extension used: must specify at least a storage class or a type
+drbd_transport.c(348): warning C4131: 'EXPORT_SYMBOL_GPL': uses old-style declarator
+drbd_transport.c(348): warning C4218: nonstandard extension used: must specify at least a storage class or a type
+drbd_transport.c(349): warning C4131: 'EXPORT_SYMBOL_GPL': uses old-style declarator
+drbd_transport.c(349): warning C4218: nonstandard extension used: must specify at least a storage class or a type
+drbd_transport.c(350): warning C4131: 'EXPORT_SYMBOL_GPL': uses old-style declarator
+drbd_transport.c(350): warning C4218: nonstandard extension used: must specify at least a storage class or a type
+make[1]: *** [Makefile:246: drbd_transport.obj] Fehler 2
+rm -f "drbd_transport_tcp.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_transport_tcp.c" /c /Fo:"drbd_transport_tcp.obj" /Fd:"drbd_transport_tcp.pdb"
+drbd_transport_tcp.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\linux/tcp.h(6): warning C4005: 'TCP_NODELAY': macro redefinition
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\shared\ws2def.h(228): note: see previous definition of 'TCP_NODELAY'
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(193): warning C4115: 'seq_file': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+drbd_transport_tcp.c(284): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_transport_tcp.c(288): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_transport_tcp.c(348): warning C4267: 'function': conversion from 'size_t' to 'unsigned int', possible loss of data
+drbd_transport_tcp.c(359): warning C4267: '=': conversion from 'size_t' to 'unsigned short', possible loss of data
+drbd_transport_tcp.c(388): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+drbd_transport_tcp.c(642): warning C4204: nonstandard extension used: non-constant aggregate initializer
+drbd_transport_tcp.c(744): warning C4389: '!=': signed/unsigned mismatch
+drbd_transport_tcp.c(1157): warning C4242: '=': conversion from 'LONG_PTR' to 'int', possible loss of data
+drbd_transport_tcp.c(1211): warning C4242: '=': conversion from 'ssize_t' to 'int', possible loss of data
+drbd_transport_tcp.c(1200): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+make[1]: *** [Makefile:246: drbd_transport_tcp.obj] Fehler 2
+rm -f "kref_debug.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "kref_debug.c" /c /Fo:"kref_debug.obj" /Fd:"kref_debug.pdb"
+kref_debug.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+make[1]: *** [Makefile:246: kref_debug.obj] Fehler 2
+rm -f "../../windrbd/src/Attr.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/Attr.c" /c /Fo:"../../windrbd/src/Attr.obj" /Fd:"../../windrbd/src/Attr.pdb"
+Attr.c
+y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+../../windrbd/src/Attr.c(145): warning C4242: 'initializing': conversion from 'int' to 'u16', possible loss of data
+../../windrbd/src/Attr.c(249): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/Attr.c(264): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/Attr.c(290): warning C4242: '=': conversion from 'int' to '__u16', possible loss of data
+../../windrbd/src/Attr.c(291): warning C4242: '=': conversion from 'int' to '__u16', possible loss of data
+make[1]: *** [Makefile:246: ../../windrbd/src/Attr.obj] Fehler 2
+rm -f "../../windrbd/src/disp.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/disp.c" /c /Fo:"../../windrbd/src/disp.obj" /Fd:"../../windrbd/src/disp.pdb"
+disp.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+make[1]: *** [Makefile:246: ../../windrbd/src/disp.obj] Fehler 2
+rm -f "../../windrbd/src/drbd_windows.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/drbd_windows.c" /c /Fo:"../../windrbd/src/drbd_windows.obj" /Fd:"../../windrbd/src/drbd_windows.pdb"
+drbd_windows.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\km\crt\stddef.h(75): warning C4005: 'offsetof': macro redefinition
+Y:\windrbd\windrbd\include\linux/stddef.h(10): note: see previous definition of 'offsetof'
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\km\crt\limits.h(42): warning C4005: 'INT_MIN': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(1070): note: see previous definition of 'INT_MIN'
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\km\crt\limits.h(43): warning C4005: 'INT_MAX': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(1069): note: see previous definition of 'INT_MAX'
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\km\crt\limits.h(44): warning C4005: 'UINT_MAX': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(1071): note: see previous definition of 'UINT_MAX'
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\km\crt\limits.h(46): warning C4005: 'LONG_MAX': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(252): note: see previous definition of 'LONG_MAX'
+../../windrbd/src/drbd_windows.c(386): warning C4242: 'return': conversion from 'ULONG_PTR' to 'int', possible loss of data
+../../windrbd/src/drbd_windows.c(398): warning C4242: 'return': conversion from 'ULONG_PTR' to 'int', possible loss of data
+../../windrbd/src/drbd_windows.c(400): warning C4242: 'return': conversion from 'ULONG_PTR' to 'int', possible loss of data
+../../windrbd/src/drbd_windows.c(406): warning C4242: 'return': conversion from 'ULONG_PTR' to 'int', possible loss of data
+../../windrbd/src/drbd_windows.c(978): warning C4204: nonstandard extension used: non-constant aggregate initializer
+../../windrbd/src/drbd_windows.c(1027): warning C4204: nonstandard extension used: non-constant aggregate initializer
+../../windrbd/src/drbd_windows.c(1103): warning C4204: nonstandard extension used: non-constant aggregate initializer
+../../windrbd/src/drbd_windows.c(1157): warning C4242: '=': conversion from 'ULONG_PTR' to 'ULONG', possible loss of data
+../../windrbd/src/drbd_windows.c(1129): warning C4101: 'rnt': unreferenced local variable
+../../windrbd/src/drbd_windows.c(1262): warning C4242: 'function': conversion from '__int64' to 'LONG', possible loss of data
+../../windrbd/src/drbd_windows.c(1529): warning C4101: 'mdl': unreferenced local variable
+../../windrbd/src/drbd_windows.c(1531): warning C4101: 'i': unreferenced local variable
+../../windrbd/src/drbd_windows.c(1529): warning C4101: 'nextMdl': unreferenced local variable
+../../windrbd/src/drbd_windows.c(1697): warning C4101: 'mdl': unreferenced local variable
+../../windrbd/src/drbd_windows.c(1698): warning C4101: 'i': unreferenced local variable
+../../windrbd/src/drbd_windows.c(1697): warning C4101: 'nextMdl': unreferenced local variable
+../../windrbd/src/drbd_windows.c(1924): warning C4242: '=': conversion from 'sector_t' to 'int', possible loss of data
+../../windrbd/src/drbd_windows.c(2215): warning C4242: 'function': conversion from 'unsigned int' to 'u16', possible loss of data
+../../windrbd/src/drbd_windows.c(2215): warning C4242: 'function': conversion from 'unsigned __int64' to 'u16', possible loss of data
+../../windrbd/src/drbd_windows.c(2215): warning C4242: 'function': conversion from 'int' to 'u16', possible loss of data
+../../windrbd/src/drbd_windows.c(2221): warning C4242: '=': conversion from 'unsigned int' to '__u8', possible loss of data
+../../windrbd/src/drbd_windows.c(2434): warning C4101: 'i': unreferenced local variable
+../../windrbd/src/drbd_windows.c(2617): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/drbd_windows.c(2625): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/drbd_windows.c(2688): warning C4267: '=': conversion from 'size_t' to 'USHORT', possible loss of data
+../../windrbd/src/drbd_windows.c(2804): warning C4101: 'ref': unreferenced local variable
+../../windrbd/src/drbd_windows.c(2803): warning C4101: 'windows_device': unreferenced local variable
+../../windrbd/src/drbd_windows.c(2859): warning C4101: 'ret': unreferenced local variable
+../../windrbd/src/drbd_windows.c(2971): warning C4267: 'function': conversion from 'size_t' to 'ULONG', possible loss of data
+../../windrbd/src/drbd_windows.c(3056): warning C4267: '=': conversion from 'size_t' to 'USHORT', possible loss of data
+../../windrbd/src/drbd_windows.c(3057): warning C4267: '=': conversion from 'size_t' to 'USHORT', possible loss of data
+../../windrbd/src/drbd_windows.c(3051): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/drbd_windows.c(3146): warning C4101: 'hddir': unreferenced local variable
+../../windrbd/src/drbd_windows.c(3145): warning C4101: 'status': unreferenced local variable
+../../windrbd/src/drbd_windows.c(3146): warning C4101: 'vol': unreferenced local variable
+../../windrbd/src/drbd_windows.c(3146): warning C4101: 'arcname': unreferenced local variable
+../../windrbd/src/drbd_windows.c(3148): warning C4101: 'attr': unreferenced local variable
+../../windrbd/src/drbd_windows.c(3146): warning C4101: 'partition': unreferenced local variable
+../../windrbd/src/drbd_windows.c(3147): warning C4101: 'h': unreferenced local variable
+../../windrbd/src/drbd_windows.c(3183): warning C4101: 'drive': unreferenced local variable
+../../windrbd/src/drbd_windows.c(3336): warning C4204: nonstandard extension used: non-constant aggregate initializer
+make[1]: *** [Makefile:246: ../../windrbd/src/drbd_windows.obj] Fehler 2
+rm -f "../../windrbd/src/hweight.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/hweight.c" /c /Fo:"../../windrbd/src/hweight.obj" /Fd:"../../windrbd/src/hweight.pdb"
+hweight.c
+echo "-- ../../windrbd/src/hweight.obj done --"
+-- ../../windrbd/src/hweight.obj done --
+rm -f "../../windrbd/src/idr.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/idr.c" /c /Fo:"../../windrbd/src/idr.obj" /Fd:"../../windrbd/src/idr.pdb"
+idr.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+../../windrbd/src/idr.c(117): warning C4242: '=': conversion from 'ULONG_PTR' to 'int', possible loss of data
+make[1]: *** [Makefile:246: ../../windrbd/src/idr.obj] Fehler 2
+rm -f "../../windrbd/src/kmalloc_debug.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/kmalloc_debug.c" /c /Fo:"../../windrbd/src/kmalloc_debug.obj" /Fd:"../../windrbd/src/kmalloc_debug.pdb"
+kmalloc_debug.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+make[1]: *** [Makefile:246: ../../windrbd/src/kmalloc_debug.obj] Fehler 2
+rm -f "../../windrbd/src/mempool.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/mempool.c" /c /Fo:"../../windrbd/src/mempool.obj" /Fd:"../../windrbd/src/mempool.pdb"
+mempool.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+make[1]: *** [Makefile:246: ../../windrbd/src/mempool.obj] Fehler 2
+rm -f "../../windrbd/src/printk-to-syslog.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/printk-to-syslog.c" /c /Fo:"../../windrbd/src/printk-to-syslog.obj" /Fd:"../../windrbd/src/printk-to-syslog.pdb"
+printk-to-syslog.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+../../windrbd/src/printk-to-syslog.c(356): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/printk-to-syslog.c(388): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/printk-to-syslog.c(446): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+make[1]: *** [Makefile:246: ../../windrbd/src/printk-to-syslog.obj] Fehler 2
+rm -f "../../windrbd/src/rbtree.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/rbtree.c" /c /Fo:"../../windrbd/src/rbtree.obj" /Fd:"../../windrbd/src/rbtree.pdb"
+rbtree.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+make[1]: *** [Makefile:246: ../../windrbd/src/rbtree.obj] Fehler 2
+rm -f "../../windrbd/src/seq_file.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/seq_file.c" /c /Fo:"../../windrbd/src/seq_file.obj" /Fd:"../../windrbd/src/seq_file.pdb"
+seq_file.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+make[1]: *** [Makefile:246: ../../windrbd/src/seq_file.obj] Fehler 2
+rm -f "../../windrbd/src/slab.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/slab.c" /c /Fo:"../../windrbd/src/slab.obj" /Fd:"../../windrbd/src/slab.pdb"
+slab.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+make[1]: *** [Makefile:246: ../../windrbd/src/slab.obj] Fehler 2
+rm -f "../../windrbd/src/util.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/util.c" /c /Fo:"../../windrbd/src/util.obj" /Fd:"../../windrbd/src/util.pdb"
+util.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1069): warning C4005: 'INT_MAX': macro redefinition
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\km\crt\limits.h(43): note: see previous definition of 'INT_MAX'
+Y:\windrbd\windrbd\include\drbd_windows.h(1070): warning C4005: 'INT_MIN': macro redefinition
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\km\crt\limits.h(42): note: see previous definition of 'INT_MIN'
+Y:\windrbd\windrbd\include\drbd_windows.h(1071): warning C4005: 'UINT_MAX': macro redefinition
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\km\crt\limits.h(44): note: see previous definition of 'UINT_MAX'
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+make[1]: *** [Makefile:246: ../../windrbd/src/util.obj] Fehler 2
+rm -f "../../windrbd/src/windrbd_bootdevice.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/windrbd_bootdevice.c" /c /Fo:"../../windrbd/src/windrbd_bootdevice.obj" /Fd:"../../windrbd/src/windrbd_bootdevice.pdb"
+windrbd_bootdevice.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\km\crt\limits.h(42): warning C4005: 'INT_MIN': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(1070): note: see previous definition of 'INT_MIN'
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\km\crt\limits.h(43): warning C4005: 'INT_MAX': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(1069): note: see previous definition of 'INT_MAX'
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\km\crt\limits.h(44): warning C4005: 'UINT_MAX': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(1071): note: see previous definition of 'UINT_MAX'
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\km\crt\limits.h(46): warning C4005: 'LONG_MAX': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(252): note: see previous definition of 'LONG_MAX'
+../../windrbd/src/windrbd_bootdevice.c(87): warning C4389: '!=': signed/unsigned mismatch
+../../windrbd/src/windrbd_bootdevice.c(115): warning C4242: 'function': conversion from 'int' to 'u8', possible loss of data
+../../windrbd/src/windrbd_bootdevice.c(353): warning C4101: 'n': unreferenced local variable
+../../windrbd/src/windrbd_bootdevice.c(570): warning C4018: '<': signed/unsigned mismatch
+make[1]: *** [Makefile:246: ../../windrbd/src/windrbd_bootdevice.obj] Fehler 2
+rm -f "../../windrbd/src/windrbd_device.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/windrbd_device.c" /c /Fo:"../../windrbd/src/windrbd_device.obj" /Fd:"../../windrbd/src/windrbd_device.pdb"
+windrbd_device.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+../../windrbd/src/windrbd_device.c(95): warning C4189: 's': local variable is initialized but not referenced
+../../windrbd/src/windrbd_device.c(588): warning C4242: '=': conversion from 'int' to 'USHORT', possible loss of data
+../../windrbd/src/windrbd_device.c(589): warning C4018: '<': signed/unsigned mismatch
+../../windrbd/src/windrbd_device.c(614): warning C4242: '=': conversion from 'int' to 'USHORT', possible loss of data
+../../windrbd/src/windrbd_device.c(615): warning C4018: '<': signed/unsigned mismatch
+../../windrbd/src/windrbd_device.c(646): warning C4242: '=': conversion from 'int' to 'USHORT', possible loss of data
+../../windrbd/src/windrbd_device.c(647): warning C4018: '<': signed/unsigned mismatch
+../../windrbd/src/windrbd_device.c(739): warning C4242: '=': conversion from 'int' to 'UCHAR', possible loss of data
+../../windrbd/src/windrbd_device.c(785): warning C4245: '=': conversion from 'int' to 'ULONG', signed/unsigned mismatch
+../../windrbd/src/windrbd_device.c(638): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/windrbd_device.c(807): warning C4189: 'items': local variable is initialized but not referenced
+../../windrbd/src/windrbd_device.c(570): warning C4189: 'pi': local variable is initialized but not referenced
+../../windrbd/src/windrbd_device.c(968): warning C4189: 's': local variable is initialized but not referenced
+../../windrbd/src/windrbd_device.c(970): warning C4101: 'err': unreferenced local variable
+../../windrbd/src/windrbd_device.c(1015): warning C4189: 'dev': local variable is initialized but not referenced
+../../windrbd/src/windrbd_device.c(1055): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/windrbd_device.c(1093): warning C4189: 'device_failed': local variable is initialized but not referenced
+../../windrbd/src/windrbd_device.c(1141): warning C4242: '=': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+../../windrbd/src/windrbd_device.c(1653): warning C4189: 'type': local variable is initialized but not referenced
+../../windrbd/src/windrbd_device.c(2360): warning C4242: '=': conversion from 'unsigned __int64' to 'ULONG', possible loss of data
+../../windrbd/src/windrbd_device.c(2376): warning C4242: 'function': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+../../windrbd/src/windrbd_device.c(2410): warning C4245: '=': conversion from 'int' to 'ULONG', signed/unsigned mismatch
+../../windrbd/src/windrbd_device.c(2256): warning C4101: 'StartSector': unreferenced local variable
+../../windrbd/src/windrbd_device.c(2257): warning C4101: 'SectorCount': unreferenced local variable
+../../windrbd/src/windrbd_device.c(2317): warning C4101: 'total_size': unreferenced local variable
+make[1]: *** [Makefile:246: ../../windrbd/src/windrbd_device.obj] Fehler 2
+rm -f "../../windrbd/src/windrbd_drbd_url_parser.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/windrbd_drbd_url_parser.c" /c /Fo:"../../windrbd/src/windrbd_drbd_url_parser.obj" /Fd:"../../windrbd/src/windrbd_drbd_url_parser.pdb"
+windrbd_drbd_url_parser.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+../../windrbd/src/windrbd_drbd_url_parser.c(394): warning C4242: '=': conversion from 'int' to 'char', possible loss of data
+make[1]: *** [Makefile:246: ../../windrbd/src/windrbd_drbd_url_parser.obj] Fehler 2
+rm -f "../../windrbd/src/windrbd_module.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/windrbd_module.c" /c /Fo:"../../windrbd/src/windrbd_module.obj" /Fd:"../../windrbd/src/windrbd_module.pdb"
+windrbd_module.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+../../windrbd/src/windrbd_module.c(13): warning C4101: 'status': unreferenced local variable
+make[1]: *** [Makefile:246: ../../windrbd/src/windrbd_module.obj] Fehler 2
+rm -f "../../windrbd/src/windrbd_netlink.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/windrbd_netlink.c" /c /Fo:"../../windrbd/src/windrbd_netlink.obj" /Fd:"../../windrbd/src/windrbd_netlink.pdb"
+windrbd_netlink.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+../../windrbd/src/windrbd_netlink.c(78): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/windrbd_netlink.c(390): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+../../windrbd/src/windrbd_netlink.c(413): warning C4101: 'h': unreferenced local variable
+../../windrbd/src/windrbd_netlink.c(561): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/windrbd_netlink.c(566): warning C4242: 'function': conversion from 'unsigned int' to 'u8', possible loss of data
+../../windrbd/src/windrbd_netlink.c(572): warning C4242: 'function': conversion from 'unsigned int' to 'u8', possible loss of data
+make[1]: *** [Makefile:246: ../../windrbd/src/windrbd_netlink.obj] Fehler 2
+rm -f "../../windrbd/src/windrbd_test.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/windrbd_test.c" /c /Fo:"../../windrbd/src/windrbd_test.obj" /Fd:"../../windrbd/src/windrbd_test.pdb"
+windrbd_test.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\linux/ktime.h(58): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(64): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(70): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(79): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(88): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\linux/ktime.h(97): warning C4204: nonstandard extension used: non-constant aggregate initializer
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+Y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h(308): warning C4101: 'dummy': unreferenced local variable
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1716): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(1717): warning C4242: 'initializing': conversion from 'sector_t' to 'unsigned int', possible loss of data
+Y:\windrbd\converted-sources\drbd\drbd_int.h(2608): warning C4389: '==': signed/unsigned mismatch
+../../windrbd/src/windrbd_test.c(257): warning C4101: 'i': unreferenced local variable
+../../windrbd/src/windrbd_test.c(393): warning C4242: '=': conversion from 'unsigned __int64' to 'int', possible loss of data
+../../windrbd/src/windrbd_test.c(397): warning C4242: '=': conversion from 'unsigned __int64' to 'int', possible loss of data
+../../windrbd/src/windrbd_test.c(541): warning C4018: '<': signed/unsigned mismatch
+../../windrbd/src/windrbd_test.c(789): warning C4389: '!=': signed/unsigned mismatch
+make[1]: *** [Makefile:246: ../../windrbd/src/windrbd_test.obj] Fehler 2
+rm -f "../../windrbd/src/windrbd_threads.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/windrbd_threads.c" /c /Fo:"../../windrbd/src/windrbd_threads.obj" /Fd:"../../windrbd/src/windrbd_threads.pdb"
+windrbd_threads.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+../../windrbd/src/windrbd_threads.c(101): warning C4204: nonstandard extension used: non-constant aggregate initializer
+../../windrbd/src/windrbd_threads.c(186): warning C4101: 'status': unreferenced local variable
+../../windrbd/src/windrbd_threads.c(286): warning C4101: 'status': unreferenced local variable
+make[1]: *** [Makefile:246: ../../windrbd/src/windrbd_threads.obj] Fehler 2
+rm -f "../../windrbd/src/windrbd_usermodehelper.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/windrbd_usermodehelper.c" /c /Fo:"../../windrbd/src/windrbd_usermodehelper.obj" /Fd:"../../windrbd/src/windrbd_usermodehelper.pdb"
+windrbd_usermodehelper.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+y:\windrbd\windrbd\include\drbd_wingenl.h(303): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+y:\windrbd\windrbd\include\drbd_wingenl.h(304): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+Y:\windrbd\windrbd\include\drbd_wrappers.h(1160): warning C4115: 'netlink_ext_ack': named type definition in parentheses
+make[1]: *** [Makefile:246: ../../windrbd/src/windrbd_usermodehelper.obj] Fehler 2
+rm -f "../../windrbd/src/windrbd_waitqueue.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/windrbd_waitqueue.c" /c /Fo:"../../windrbd/src/windrbd_waitqueue.obj" /Fd:"../../windrbd/src/windrbd_waitqueue.pdb"
+windrbd_waitqueue.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+make[1]: *** [Makefile:246: ../../windrbd/src/windrbd_waitqueue.obj] Fehler 2
+rm -f "../../windrbd/src/windrbd_winsocket.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/windrbd_winsocket.c" /c /Fo:"../../windrbd/src/windrbd_winsocket.obj" /Fd:"../../windrbd/src/windrbd_winsocket.pdb"
+windrbd_winsocket.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+Y:\windrbd\windrbd\include\linux/tcp.h(6): warning C4005: 'TCP_NODELAY': macro redefinition
+c:\Ewdk\Program Files\Windows Kits\10\Include\10.0.15063.0\shared\ws2def.h(228): note: see previous definition of 'TCP_NODELAY'
+../../windrbd/src/windrbd_winsocket.c(288): warning C4267: '-=': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/windrbd_winsocket.c(409): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/windrbd_winsocket.c(494): warning C4189: 'WskSocket': local variable is initialized but not referenced
+../../windrbd/src/windrbd_winsocket.c(769): warning C4101: 'status': unreferenced local variable
+../../windrbd/src/windrbd_winsocket.c(781): warning C4189: 'CompletionEvent': local variable is initialized but not referenced
+../../windrbd/src/windrbd_winsocket.c(783): warning C4101: 'Status': unreferenced local variable
+../../windrbd/src/windrbd_winsocket.c(782): warning C4189: 'Irp': local variable is initialized but not referenced
+../../windrbd/src/windrbd_winsocket.c(784): warning C4101: 'nWaitTime': unreferenced local variable
+../../windrbd/src/windrbd_winsocket.c(832): warning C4267: 'function': conversion from 'size_t' to 'ULONG', possible loss of data
+../../windrbd/src/windrbd_winsocket.c(879): warning C4189: 'thread': local variable is initialized but not referenced
+../../windrbd/src/windrbd_winsocket.c(985): warning C4267: 'function': conversion from 'size_t' to 'ULONG', possible loss of data
+../../windrbd/src/windrbd_winsocket.c(1125): warning C4267: 'function': conversion from 'size_t' to 'ULONG', possible loss of data
+../../windrbd/src/windrbd_winsocket.c(1169): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+../../windrbd/src/windrbd_winsocket.c(1196): warning C4267: 'function': conversion from 'size_t' to 'ULONG', possible loss of data
+../../windrbd/src/windrbd_winsocket.c(1326): warning C4242: '=': conversion from 'ULONG_PTR' to 'LONG', possible loss of data
+../../windrbd/src/windrbd_winsocket.c(1329): warning C4242: '=': conversion from 'ULONG_PTR' to 'LONG', possible loss of data
+../../windrbd/src/windrbd_winsocket.c(1567): warning C4101: 'status': unreferenced local variable
+../../windrbd/src/windrbd_winsocket.c(1617): warning C4242: 'function': conversion from 'int' to 'ADDRESS_FAMILY', possible loss of data
+../../windrbd/src/windrbd_winsocket.c(1617): warning C4242: 'function': conversion from 'int' to 'USHORT', possible loss of data
+../../windrbd/src/windrbd_winsocket.c(1731): warning C4101: 'err': unreferenced local variable
+../../windrbd/src/windrbd_winsocket.c(1754): warning C4101: 'h': unreferenced local variable
+make[1]: *** [Makefile:246: ../../windrbd/src/windrbd_winsocket.obj] Fehler 2
+rm -f "../../windrbd/src/windrbd_locking.pdb"
+/cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /GS /Gy  /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64  -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15  -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D _WIN64=1 -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "../../windrbd/src/windrbd_locking.c" /c /Fo:"../../windrbd/src/windrbd_locking.obj" /Fd:"../../windrbd/src/windrbd_locking.pdb"
+windrbd_locking.c
+Y:\windrbd\windrbd\include\drbd_windows.h(311): error C2220: warning treated as error - no 'object' file generated
+Y:\windrbd\windrbd\include\drbd_windows.h(311): warning C4115: 'drbd_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(425): warning C4115: 'block_device': named type definition in parentheses
+Y:\windrbd\windrbd\include\drbd_windows.h(1190): warning C4005: 'MINORMASK': macro redefinition
+Y:\windrbd\windrbd\include\drbd_windows.h(888): note: see previous definition of 'MINORMASK'
+Y:\windrbd\windrbd\include\drbd_windows.h(1217): warning C4115: 'in_addr': named type definition in parentheses
+make[1]: *** [Makefile:246: ../../windrbd/src/windrbd_locking.obj] Fehler 2
+"c:\\Ewdk\\Program Files\\Windows Kits\\10\\bin\\x86/rc.exe" resource.rc
+Microsoft (R) Windows (R) Resource Compiler Version 10.0.10011.16384
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+make[1]: Das Ziel „all“ wurde wegen Fehlern nicht aktualisiert.
+make[1]: Verzeichnis „/cygdrive/y/windrbd/converted-sources/drbd“ wird verlassen
+make: *** [Makefile:49: build] Fehler 2
+make: Das Ziel „all“ wurde wegen Fehlern nicht aktualisiert.
