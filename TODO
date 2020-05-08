@@ -36,13 +36,13 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-+TODO: Test: Test with MS SQL server
+TODO: Test: Test with MS SQL server
 
 	BSOD on installing to a disk device: ObReferenceObjectByPointer
 	in windrbd_generic_name_request wrong reference count (which
 	one?)
 
-+TODO: Test: Test with IIS
+TODO: Test: Test with IIS
 
 	Basic test passed. Note that IIS itself cannot be installed
 	to a non-System-Drive (according to MicroSoft) but the web
@@ -50,7 +50,7 @@ Real:
 	Serving from a WinDRBD disk device works. Maybe also test
 	a data device.
 
-+TODO: Feature: Resource agent for Microsoft cluster manager
+TODO: Feature: Resource agent for Microsoft cluster manager
 
 	In progress: Install Server 2016 machines (again)
 
@@ -62,9 +62,13 @@ Real:
 
 	Quote: "Assign a storage device for exclusive use by the queue manager. This device needs to be created as a resource instance before it can be assigned."
 
-+TODO: Documentation: User's guide
+TODO: Documentation: User's guide
 
-+TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
+TODO: Bug: Random crashes (BSOD, ..) when running windrbd install-bus-device
+
+	These might be a problem with WinDRBD bus devices installed manually.
+
+TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
 
 	After ~100 iterations. Not clear why. Resource was connected.
 	I/O was done over ntfs.
@@ -74,7 +78,7 @@ Apr 17 14:03:09 192.168.56.103  U12:03:09.678|038771a0(netlink) #6420 drbd_md_re
 Apr 17 14:06:33 192.168.56.103  U12:06:33.944|03919c90(devicecontrol) #6421 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_RESOURCES:30)
 Apr 17 14:06:38 192.168.56.103  U12:06:38.944|03919c90(devicecontrol) #6422 windrbd_process_netlink_packet failed to acquire the mutex, probably a previous drbd command is stuck.
 
-+TODO: Bug: invalidate-remote while I/O sync stall on sync start
+TODO: Bug: invalidate-remote while I/O sync stall on sync start
 
 	And remote is uptodate.
 
@@ -88,7 +92,7 @@ Apr 17 20:13:12 192.168.56.103  U18:13:13.257|0364f420(drbd_s_w0) #455 drbd_rs_c
 
 	then machine lock up (mouse does not move any more)
 
-+TODO: Bug: BSOD in drbd_sender:2898 calling callback
+TODO: Bug: BSOD in drbd_sender:2898 calling callback
 
 	After 26 days of I/O this BSOD (ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY)
 	happened. Unfortunately (we has this BSOD before).
@@ -102,9 +106,9 @@ Apr 17 20:13:12 192.168.56.103  U18:13:13.257|0364f420(drbd_s_w0) #455 drbd_rs_c
 
 	We've reworked locking, maybe the bug is gone now.
 
-+TODO: Do not patch boot sector when it is a disk device
+TODO: Do not patch boot sector when it is a disk device
 
-+TODO: Test: how and when is flush to backing device done?
+TODO: Test: how and when is flush to backing device done?
 	This is important. Right now NTFS files only appear on
 	Linux when sync is done manually. Should sync at least
 	when becoming secondary. sync must be done while primary
@@ -828,6 +832,8 @@ TODO: Upstream: drbdsetup generic_get() handles multiple packets wrong.
 	one packet (socket is a DGRAM socket).
 
 TODO: Code quality: Reenable Windows Compiler Warnings and fix them.
+
+	In progress. Fixed 630 warnings (out of 1293), 663 remaining.
 
 TODO: Implement: get drbdmon (and drbdsetup events2) working.
 
