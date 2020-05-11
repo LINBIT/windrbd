@@ -1825,6 +1825,10 @@ static int windrbd_generic_make_request(struct bio *bio)
 		 * in the IRP.
 		 */
 
+	/* TODO: ManTech also removed this. When this is done there is
+	 * a BSOD on installing MSSQL server onto a WinDRBD disk device.
+	 */
+
 /*
 	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
 	if (!NT_SUCCESS(status)) {
