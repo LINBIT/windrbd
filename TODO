@@ -36,13 +36,32 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Upstream: DRBD Does not compile under Ubuntu 18.04
+
+	minus: parse error:
+	  File "drbd-kernel-compat/cocci_cache/df0cdbb440e3403d74a63bccb4d1ed80/.compat.cocci", line 85, column 24, charpos = 1184
+	  around = 'getname',
+	  whole content = - addr_len = sock->ops->getname(sock, uaddr, peer);
+
+	cocci is:
+	johannes@jt-ubuntu18:~/drbd/drbd-9.0/drbd$ spatch --version
+	spatch version 1.0.8-00087-g7cf2c23e compiled with OCaml version 4.05.0
+	Flags passed to the configure script: [none]
+	OCaml scripting support: yes
+	Python scripting support: yes
+	Syntax of regular expressions: PCRE
+
 TODO: Test: Test with MS SQL server
 
 	BSOD on installing to a disk device: ObReferenceObjectByPointer
 	in windrbd_generic_name_request wrong reference count (which
 	one?)
 
-TODO: Test: Test with IIS
+	Removed reference counting on IRP threads, BSDO is gone now
+	(ManTech also removed this reference counting). Need more
+	endurance testing.
+
+Done: Test: Test with IIS
 
 	Basic test passed. Note that IIS itself cannot be installed
 	to a non-System-Drive (according to MicroSoft) but the web
@@ -61,6 +80,18 @@ TODO: Feature: Resource agent for Microsoft cluster manager
 	https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.con.doc/q017940_.htm
 
 	Quote: "Assign a storage device for exclusive use by the queue manager. This device needs to be created as a resource instance before it can be assigned."
+
+TODO: Bug: freeze on disconnect-connect-waitconnect loop
+
+	Both nodes Secondary, Windows 7 doing
+	disconnect-connect-waitconnect.
+
+	Introduced with cb56c9c3b987 (also observed with fbc556)?
+	Same as System freeze on Windows 2016 Primary?
+
+	Currently testing it with 08c5bd7 it is still there (it
+	froze for one minute or so on disconnect, which caused the
+	test to terminate).
 
 TODO: Documentation: User's guide
 
@@ -423,6 +454,19 @@ TODO: Feature: Set partition ID to 27 to hide partition
 
 TODOs for after Release 1.0 ----------------------------------------------
 
+TODO: Make it build under Windows only
+
+	Done: install ocaml for CygWin
+	In progress: Cross compile conccinelle for CygWin
+		If possible, do not try to fix too many things.
+		Update: compiles but does not link currently
+	TODO: make should build everything under Windows
+
+TODO: Feature: Understand SCSI addressing
+
+	Right now we just have TargetId, which limits minors to
+	255. What's a Lun and how many can there be?
+
 TODO: Feature: kunit support
 
 	Nice to have, do that when finished with 1.0
@@ -456,14 +500,6 @@ TODO: Performance: Sync is still somewhat slow when windrbd is SyncTarget
 
 	Update: Probably will be fixed once we use 1Meg pages on
 	Sync.
-
-TODO: Bug: freeze on disconnect-connect-waitconnect loop
-
-	Both nodes Secondary, Windows 7 doing
-	disconnect-connect-waitconnect.
-
-	Introduced with cb56c9c3b987 (also observed with fbc556)?
-	Same as System freeze on Windows 2016 Primary?
 
 TODO: Bug: kmalloc errors on Win7 VM (on my Macbook)
 
@@ -1245,10 +1281,6 @@ Done: Revert to original build layout
 		seems to be broken.
 	Done: see if there is a cygwin package for coccinelle
 		No
-	Rejected: install ocaml for CygWin
-	Rejected: Cross compile conccinelle for CygWin
-		If possible, do not try to fix too many things.
-	Rejected: make should build everything under Windows
 
 Done: make install should install the driver and activate it
 	(Rethink: only install the service User should do 
