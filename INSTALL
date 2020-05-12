@@ -215,3 +215,24 @@ git clone --recursive https://github.com/LINBIT/drbd-utils.git
 
 and follow the build instruction in README-windrbd.md file of the
 repo.
+
+---------------
+
+Note on cocinelle on Windows:
+
+Install autotools, ocaml, ocamlfind, ocamldoc, opam via cygwin setup (TODO: what else?)
+
+opam init
+opam install stdcompat
+opam install pyml	(?)
+
+Need to install pyml (and stdcompat) from github sources
+	(else win_fd something is not found)
+
+git clone https://github.com/coccinelle/coccinelle.git
+
+autogen
+./configure --disable-python
+# configure
+make
+make install
