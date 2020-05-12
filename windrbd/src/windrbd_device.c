@@ -2373,14 +2373,17 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 // printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
 
+			irp->IoStatus.Information = 0;
+			irp->IoStatus.Status = STATUS_PENDING;
+
 			status = windrbd_make_drbd_requests(irp, bdev, ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority), sector_count*512, start_sector, rw);
 
+			/* irp may already be freed here, don't access it. */
+
 // printk("windrbd_make_drbd_requests returned, status is %x\n", status);
-			if (status == STATUS_SUCCESS) {
-				irp->IoStatus.Information = 0;
-				irp->IoStatus.Status = STATUS_PENDING;
+			if (status == STATUS_SUCCESS)
 				return STATUS_PENDING;
-			}
+
 // printk("error initiating request status is %x\n", status);
 			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 			break;
