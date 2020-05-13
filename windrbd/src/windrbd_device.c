@@ -25,16 +25,6 @@
  * devices (the 'physical' devices), see drbd_windows.c
  */
 
-#include <wdm.h>
-#include <ntddk.h>
-#include <ntdddisk.h>
-#include <wdmguid.h>
-#include <srb.h>
-#include <scsi.h>
-#include <ntddscsi.h>
-#include <ntddstor.h>
-#include <linux/module.h>
-
 /* Uncomment this if you want more debug output (disable for releases) */
 
 #define DEBUG 1
@@ -44,6 +34,16 @@
 #undef DEBUG
 #endif
 #endif
+
+#include <wdm.h>
+#include <ntddk.h>
+#include <ntdddisk.h>
+#include <wdmguid.h>
+#include <srb.h>
+#include <scsi.h>
+#include <ntddscsi.h>
+#include <ntddstor.h>
+#include <linux/module.h>
 
 #include "drbd_windows.h"
 #include "windrbd_device.h"
