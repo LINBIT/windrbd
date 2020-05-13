@@ -37,7 +37,7 @@
 
 /* Uncomment this if you want more debug output (disable for releases) */
 
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -1170,7 +1170,9 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	 * this could produce a blue screen.
 	 */
 
+printk("1\n");
         IoMarkIrpPending(irp);
+printk("2 bio count is %d\n", bio_count);
 
 	for (b=0; b<bio_count; b++) {
 		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
@@ -1191,7 +1193,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		bio->bi_mdl_offset = b*MAX_BIO_SIZE;
 		bio->bi_common_data = common_data;
 
-// dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
+dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
 
 		bio->bi_io_vec[0].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
 		if (bio->bi_io_vec[0].bv_page == NULL) {
@@ -1226,9 +1228,10 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		bio->bi_upper_irp = irp;
 
 // dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
-// dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_iter.bi_size, bio->bi_iter.bi_sector, bio->bi_mdl_offset);
+dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_iter.bi_size, bio->bi_iter.bi_sector, bio->bi_mdl_offset);
 
 		drbd_make_request(dev->drbd_device->rq_queue, bio);
+printk("drbd_make_request returned.\n");
 	}
 
 	return STATUS_SUCCESS;
@@ -2371,7 +2374,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				break;
 			}
 
-// printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
+printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
 
 			irp->IoStatus.Information = 0;
 			irp->IoStatus.Status = STATUS_PENDING;
@@ -2380,7 +2383,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 			/* irp may already be freed here, don't access it. */
 
-// printk("windrbd_make_drbd_requests returned, status is %x\n", status);
+printk("Debug: windrbd_make_drbd_requests returned, status is %x\n", status);
 			if (status == STATUS_SUCCESS)
 				return STATUS_PENDING;
 
