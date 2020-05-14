@@ -39,7 +39,8 @@ Real:
 TODO: Bug: Fix fio sequential write connection loss.
 
 	Progress..somewhere around complete_conflicting_writes there
-	it may be.
+	it may be. Update: yes we hand in conflicting writes. The exit
+	condition is never met (tried with busy looping).
 
 TODO: Test: Test with MS SQL server
 
