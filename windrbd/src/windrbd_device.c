@@ -1043,7 +1043,7 @@ static void windrbd_bio_finished(struct bio * bio)
 	NTSTATUS status;
 	int error = blk_status_to_errno(bio->bi_status);
 
-printk("bio finished\n");
+// printk("bio finished\n");
 	status = STATUS_SUCCESS;
 
 	if (error == 0) {
