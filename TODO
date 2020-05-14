@@ -36,6 +36,11 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: Fix fio sequential write connection loss.
+
+	Progress..somewhere around complete_conflicting_writes there
+	it may be.
+
 TODO: Test: Test with MS SQL server
 
 	BSOD on installing to a disk device: ObReferenceObjectByPointer
