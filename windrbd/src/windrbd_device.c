@@ -1043,6 +1043,7 @@ static void windrbd_bio_finished(struct bio * bio)
 	NTSTATUS status;
 	int error = blk_status_to_errno(bio->bi_status);
 
+printk("bio finished\n");
 	status = STATUS_SUCCESS;
 
 	if (error == 0) {
@@ -2298,6 +2299,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		goto out; // STATUS_SUCCESS?
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
+
+printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:

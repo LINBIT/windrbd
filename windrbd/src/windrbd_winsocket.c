@@ -302,6 +302,9 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	size_t length;
 	int bug = 0;
 
+if (may_printk)
+printk("Debug: SendPage completion\n");
+
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
 
