@@ -1043,7 +1043,7 @@ static void windrbd_bio_finished(struct bio * bio)
 	NTSTATUS status;
 	int error = blk_status_to_errno(bio->bi_status);
 
-// printk("bio finished\n");
+cond_printk("bio finished\n");
 	status = STATUS_SUCCESS;
 
 	if (error == 0) {
@@ -1171,9 +1171,9 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	 * this could produce a blue screen.
 	 */
 
-printk("1\n");
+cond_printk("1\n");
         IoMarkIrpPending(irp);
-printk("2 bio count is %d\n", bio_count);
+cond_printk("2 bio count is %d\n", bio_count);
 
 	for (b=0; b<bio_count; b++) {
 		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
@@ -1232,7 +1232,7 @@ dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, to
 dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_iter.bi_size, bio->bi_iter.bi_sector, bio->bi_mdl_offset);
 
 		drbd_make_request(dev->drbd_device->rq_queue, bio);
-printk("drbd_make_request returned.\n");
+cond_printk("drbd_make_request returned.\n");
 	}
 
 	return STATUS_SUCCESS;
@@ -1575,19 +1575,19 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 		irp->IoStatus.Status = STATUS_SUCCESS;
 		IoSkipCurrentIrpStackLocation(irp);
 
-printk("removing lower device object\n");
+dbg("removing lower device object\n");
 		status = IoCallDriver(bus_ext->lower_device, irp);
 
-printk("IoCallDriver returned %x\n", status);
+dbg("IoCallDriver returned %x\n", status);
 
 			/* TODO: delete all DRBD devices */
 
-printk("detaching device object\n");
+dbg("detaching device object\n");
 		IoDetachDevice(bus_ext->lower_device);
-printk("deleting device object\n");
+dbg("deleting device object\n");
 		IoDeleteDevice(device);
-printk("device object deleted.\n");
-printk("NOT completing IRP\n");
+dbg("device object deleted.\n");
+dbg("NOT completing IRP\n");
 
 			/* This should allow unload of the driver
 			 * once there are also no primary DRBD resources
@@ -2300,7 +2300,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
-printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
+cond_printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
@@ -2377,7 +2377,7 @@ printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
 				break;
 			}
 
-printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
+cond_printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
 
 			irp->IoStatus.Information = 0;
 			irp->IoStatus.Status = STATUS_PENDING;
@@ -2386,7 +2386,7 @@ printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Read
 
 			/* irp may already be freed here, don't access it. */
 
-printk("Debug: windrbd_make_drbd_requests returned, status is %x\n", status);
+cond_printk("Debug: windrbd_make_drbd_requests returned, status is %x\n", status);
 			if (status == STATUS_SUCCESS)
 				return STATUS_PENDING;
 

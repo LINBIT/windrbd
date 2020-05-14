@@ -2,6 +2,8 @@
 #include "windrbd_threads.h"
 #include "drbd_int.h"
 
+int debug_printks_enabled = 0;
+
 /* #define WINDRBD_RUN_TESTS 1 */
 
 #ifdef RELEASE
@@ -883,6 +885,10 @@ void test_main(const char *arg)
 		argv_test(argc, argv);
 	if (strcmp(argv[0], "rcu_test") == 0)
 		rcu_test(argc, argv);
+	if (strcmp(argv[0], "enable_debug_printks") == 0)
+		debug_printks_enabled = 1;
+	if (strcmp(argv[0], "disable_debug_printks") == 0)
+		debug_printks_enabled = 0;
 
 kfree_argv:
 	kfree(argv);

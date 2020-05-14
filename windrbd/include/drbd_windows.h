@@ -321,6 +321,12 @@ void windrbd_device_error(struct drbd_device *device, const char ** err_str_out,
 #define dbg(format, ...)   __noop
 #endif
 
+extern int debug_printks_enabled;
+
+#define cond_printk(format, ...) \
+	if (debug_printks_enabled) \
+		_printk(__FUNCTION__, format, __VA_ARGS__)
+
 #define ARRAY_SIZE(_x)				(sizeof(_x) / sizeof((_x)[0]))
 
 #define min_t(_type, _x, _y)		((_type)_x < (_type)_y ? (_type)_x : (_type)_y)
