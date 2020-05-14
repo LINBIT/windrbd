@@ -1111,13 +1111,13 @@ int threads_sleeping;
 
 void enter_interruptible_debug(const char *file, int line, const char *func)
 {
-//	printk("Thread %s entering interruptible sleep (from %s:%d (%s()).\n", current->comm, file, line, func);
+cond_printk("Thread %s entering interruptible sleep (from %s:%d (%s()).\n", current->comm, file, line, func);
 	threads_sleeping++;
 }
 
 void exit_interruptible_debug(const char *file, int line, const char *func)
 {
-//	printk("Thread %s exiting interruptible sleep. (from %s:%d (%s())\n", current->comm, file, line, func);
+cond_printk("Thread %s exiting interruptible sleep. (from %s:%d (%s())\n", current->comm, file, line, func);
 	threads_sleeping--;
 }
 
