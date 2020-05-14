@@ -360,6 +360,9 @@ static NTSTATUS NTAPI send_page_completion_onlyonce(
 {
 	int err;
 
+if (completion != NULL && completion->page != NULL)
+cond_printk("Debug: send_page_completion onlyonce completion\n");
+
 	err = remove_completion(completion);
 	if (err != 0) {
 		duplicate_completions++;

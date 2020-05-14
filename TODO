@@ -42,6 +42,10 @@ TODO: Bug: Fix fio sequential write connection loss.
 	it may be. Update: yes we hand in conflicting writes. The exit
 	condition is never met (tried with busy looping).
 
+	It seems that a write request is never completed. We don't
+	get any completion from the network layer at a certain point.
+	(SendPageCompletion never called).
+
 TODO: Test: Test with MS SQL server
 
 	BSOD on installing to a disk device: ObReferenceObjectByPointer
