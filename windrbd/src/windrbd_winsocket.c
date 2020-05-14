@@ -303,7 +303,7 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	int bug = 0;
 
 if (may_printk)
-cond_printk("Debug: SendPage completion\n");
+cond_printk("Debug: SendPage completion %p\n", completion);
 
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
@@ -361,7 +361,7 @@ static NTSTATUS NTAPI send_page_completion_onlyonce(
 	int err;
 
 if (completion != NULL && completion->page != NULL)
-cond_printk("Debug: send_page_completion onlyonce completion\n");
+cond_printk("Debug: send_page_completion onlyonce completion %p\n", completion);
 
 	err = remove_completion(completion);
 	if (err != 0) {
@@ -1012,6 +1012,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		goto out_remove_completion;
 	}
 	IoSetCompletionRoutine(Irp, send_page_completion_onlyonce, completion, TRUE, TRUE, TRUE);
+cond_printk("completion is %p\n", completion);
 
 	if (socket->no_delay)
 		flags |= WSK_FLAG_NODELAY;
