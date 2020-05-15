@@ -46,6 +46,9 @@ TODO: Bug: Fix fio sequential write connection loss.
 	get any completion from the network layer at a certain point.
 	(SendPageCompletion never called).
 
+	Update: SendPageCompletion is ok but we stop receiving (recv()
+	not called any more).
+
 TODO: Test: Test with MS SQL server
 
 	BSOD on installing to a disk device: ObReferenceObjectByPointer
