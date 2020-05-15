@@ -1076,6 +1076,7 @@ cond_printk("bio finished\n");
 
 		status = STATUS_DEVICE_DOES_NOT_EXIST;
 	}
+cond_printk("2\n");
 	if (bio_data_dir(bio) == READ)
 		for (i=0;i<bio->bi_vcnt;i++)
 			kfree(bio->bi_io_vec[i].bv_page->addr);
@@ -1086,6 +1087,7 @@ cond_printk("bio finished\n");
 		 * on read, this also can be done much easier.
 		 */
 
+cond_printk("3\n");
 	int total_num_completed = bio->bi_common_data->bc_num_requests;
 	size_t total_size = bio->bi_common_data->bc_total_size;
 
@@ -1095,12 +1097,14 @@ cond_printk("bio finished\n");
         if (status != STATUS_SUCCESS)
                 bio->bi_common_data->bc_device_failed = 1;
         spin_unlock_irqrestore(&bio->bi_common_data->bc_device_failed_lock, flags);
+cond_printk("4\n");
 
 		/* Do not access bio->bi_common_data here as it might be
 		 * already freed.
 		 */
 
 	if (num_completed == total_num_completed) {
+cond_printk("5\n");
 		if (status == STATUS_SUCCESS)
 			irp->IoStatus.Information = total_size;
 		else
@@ -1115,11 +1119,15 @@ cond_printk("bio finished\n");
 		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 		kfree(bio->bi_common_data);
 	}
+cond_printk("6\n");
 	for (i=0;i<bio->bi_vcnt;i++)
 		kfree(bio->bi_io_vec[i].bv_page);
 
+cond_printk("7\n");
 	IoReleaseRemoveLock(&bio->bi_bdev->remove_lock, NULL);
+cond_printk("8\n");
 	bio_put(bio);
+cond_printk("9\n");
 }
 
 static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device *dev, char *buffer, unsigned int total_size, sector_t sector, unsigned long rw)
