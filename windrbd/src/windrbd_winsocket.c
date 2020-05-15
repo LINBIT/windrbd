@@ -1345,6 +1345,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
 		socket->error_status = BytesReceived;
 		dbg("setting error status to %d\n", socket->error_status);
 	}
+cond_printk("Received %d bytes\n", BytesReceived);
 	return BytesReceived;
 }
 
