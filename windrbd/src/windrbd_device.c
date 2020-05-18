@@ -1115,8 +1115,11 @@ cond_printk("5\n");
 				 */
 			irp->IoStatus.Information = 0;
 
+cond_printk("5a\n");
 		irp->IoStatus.Status = status;
+cond_printk("XXX into IoCompleteRequest bio->bi_iter.bi_sector is %d\n", bio->bi_iter.bi_sector);
 		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+cond_printk("XXX out of IoCompleteRequest\n");
 		kfree(bio->bi_common_data);
 	}
 cond_printk("6\n");
@@ -2385,7 +2388,7 @@ cond_printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
 				break;
 			}
 
-cond_printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
+cond_printk("XXX Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
 
 			irp->IoStatus.Information = 0;
 			irp->IoStatus.Status = STATUS_PENDING;
@@ -2394,7 +2397,7 @@ cond_printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? 
 
 			/* irp may already be freed here, don't access it. */
 
-cond_printk("Debug: windrbd_make_drbd_requests returned, status is %x\n", status);
+cond_printk("XXX Debug: windrbd_make_drbd_requests returned, status is %x\n", status);
 			if (status == STATUS_SUCCESS)
 				return STATUS_PENDING;
 
