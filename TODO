@@ -49,6 +49,12 @@ TODO: Bug: Fix fio sequential write connection loss.
 	Update: SendPageCompletion is ok but we stop receiving (recv()
 	not called any more).
 
+	Update: Now serializing IoCompleteRequest() calls, which made
+	things better but did not solve the problem. We found that
+	for one sector, there are 11 SCSI requests but 12 IoCompleteRequests
+	(IoCompleteRequest for an I/O that did not exist) which is
+	probably the root cause of the problem.
+
 TODO: Test: Test with MS SQL server
 
 	BSOD on installing to a disk device: ObReferenceObjectByPointer
