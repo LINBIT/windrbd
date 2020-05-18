@@ -1118,7 +1118,9 @@ cond_printk("5\n");
 cond_printk("5a\n");
 		irp->IoStatus.Status = status;
 cond_printk("XXX into IoCompleteRequest bio->bi_iter.bi_sector is %d\n", bio->bi_iter.bi_sector);
+		spin_lock_irqsave(&bio->bi_bdev->complete_request_spinlock, flags);
 		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+		spin_unlock_irqrestore(&bio->bi_bdev->complete_request_spinlock, flags);
 cond_printk("XXX out of IoCompleteRequest\n");
 		kfree(bio->bi_common_data);
 	}

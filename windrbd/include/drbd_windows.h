@@ -528,8 +528,12 @@ struct block_device {
 	int num_openers;
 
 	/* Nonzero when this is a DISK device (with partitions on it) */
-	bool is_disk_device;	/* TODO: all devices are PnP, this
-				 * should go away again. */
+	bool is_disk_device;
+
+	/* This spinlock ensures that IoCompleteRequest (see bio_finished)
+	 * is called sequentially.
+	 */
+	spinlock_t complete_request_spinlock;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
