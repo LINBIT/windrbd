@@ -55,6 +55,8 @@ TODO: Bug: Fix fio sequential write connection loss.
 	(IoCompleteRequest for an I/O that did not exist) which is
 	probably the root cause of the problem.
 
+	ack_receiver calls end_io().
+
 TODO: Test: Test with MS SQL server
 
 	BSOD on installing to a disk device: ObReferenceObjectByPointer
