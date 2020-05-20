@@ -57,23 +57,13 @@ TODO: Bug: Fix fio sequential write connection loss.
 
 	ack_receiver calls end_io(). In some cmd handler (which one?)
 
-TODO: Test: Test with MS SQL server
+	recheck firewall rules (maybe we can reconnect) on windows10
+	boot VM.
 
-	BSOD on installing to a disk device: ObReferenceObjectByPointer
-	in windrbd_generic_name_request wrong reference count (which
-	one?)
-
-	Removed reference counting on IRP threads, BSDO is gone now
-	(ManTech also removed this reference counting). Need more
-	endurance testing.
-
-TODO: Test: Test with IIS
-
-	Basic test passed. Note that IIS itself cannot be installed
-	to a non-System-Drive (according to MicroSoft) but the web
-	contents can be hosted on all drives (also on samba shares).
-	Serving from a WinDRBD disk device works. Maybe also test
-	a data device.
+	It seems only a problem on Windows 10 (it works with Windows 7)
+	and it is independent of boot source (also happens with disk
+	device diskless primary on a directly booted windows 10).
+	data device? diskful primary?
 
 TODO: Feature: Resource agent for Microsoft cluster manager
 
@@ -6772,4 +6762,35 @@ Done: Bug: New BSOD (use after free) when running fio tests (no remote boot)
 
 	Reason was: IRP accessed after make_request(), but here it
 	might already be freed.
+
+Done: Test: Test with MS SQL server
+
+	BSOD on installing to a disk device: ObReferenceObjectByPointer
+	in windrbd_generic_name_request wrong reference count (which
+	one?)
+
+	Removed reference counting on IRP threads, BSDO is gone now
+	(ManTech also removed this reference counting). Need more
+	endurance testing.
+
+	Update: Removing that reference counting also solved Windows 7
+	out of resources bug. It seems to run quite stable.
+
+	Now testing with vamp-4nodes.
+
+	Once again testing MSSQL server install on WinDRBD Disk device.
+	Server was installed to C: (can't be changed) instance (data
+	files) were on WinDRBD device. Basic tests succeeded, so I
+	think we can close this.
+	
+	Update: With 4 node resource we had out of resources bug
+	in Windows 7.
+
+Done: Test: Test with IIS
+
+	Basic test passed. Note that IIS itself cannot be installed
+	to a non-System-Drive (according to MicroSoft) but the web
+	contents can be hosted on all drives (also on samba shares).
+	Serving from a WinDRBD disk device works. Maybe also test
+	a data device.
 
