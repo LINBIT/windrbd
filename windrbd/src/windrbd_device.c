@@ -1030,6 +1030,83 @@ static void dump_data(const char *tag, char *data, size_t len, size_t offset_on_
 	}
 }
 
+struct irps_in_progress {
+	struct list_head list;
+	struct _IRP *irp;
+	struct block_device *dev;
+};
+
+static LIST_HEAD(irps_in_progress);
+static spinlock_t irps_in_progress_lock;
+
+static struct irps_in_progress *find_irp_locked(struct _IRP *irp)
+{
+	struct irps_in_progress *i;
+
+	list_for_each_entry(struct irps_in_progress, i, &irps_in_progress, list) {
+		if (i->irp == irp)
+			return i;
+	}
+	return NULL;
+}
+
+static int add_irp(struct _IRP *irp, struct block_device *dev)
+{
+	struct irps_in_progress *new_i;
+	KIRQL flags;
+
+	spin_lock_irqsave(&irps_in_progress_lock, flags);
+
+	if (find_irp_locked(irp) != NULL) {
+		spin_unlock_irqrestore(&irps_in_progress_lock, flags);
+		printk("Warning: IRP %p is already there.\n", irp);
+		return -EEXIST;
+	}
+	new_i = kmalloc(sizeof(*new_i), 0, 'DRBD');
+	if (new_i == NULL) {
+		spin_unlock_irqrestore(&irps_in_progress_lock, flags);
+		printk("Warning: could not allocate memory for irp registry %p.\n", irp);
+		return -ENOMEM;
+	}
+	new_i->irp = irp;
+	new_i->dev = dev;
+
+	list_add(&new_i->list, &irps_in_progress);
+	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
+
+	return 0;
+}
+
+static int remove_irp(struct _IRP *irp, struct block_device *dev)
+{
+	struct irps_in_progress *old_i;
+	KIRQL flags;
+
+	spin_lock_irqsave(&irps_in_progress_lock, flags);
+
+	old_i = find_irp_locked(irp);
+	if (old_i == NULL) {
+		spin_unlock_irqrestore(&irps_in_progress_lock, flags);
+		printk("Warning: IRP %p not found. Either already completed or it was never there\n", irp);
+		return -ENOENT;
+	}
+	if (old_i->irp != irp) {
+		spin_unlock_irqrestore(&irps_in_progress_lock, flags);
+		printk("Warning: IRP %p logic bug, irp!=old_i->irp\n", irp);
+		return -EINVAL;
+	}
+
+	list_del(&old_i->list);
+	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
+
+	if (old_i->dev != dev)
+		printk("Warning: Device for IRP has changed (%p != %p)\n", dev, old_i->dev);
+
+	kfree(old_i);
+
+	return 0;
+}
+
 /* Limit imposed by DRBD over the wire protocol. This will not change
  * in the next 5+ years, most likely never.
  */
@@ -1118,6 +1195,11 @@ cond_printk("5\n");
 cond_printk("5a\n");
 		irp->IoStatus.Status = status;
 cond_printk("XXX into IoCompleteRequest bio->bi_iter.bi_sector is %d\n", bio->bi_iter.bi_sector);
+
+			/* do not complete? */
+		if (remove_irp(irp, bio->bi_bdev) != 0)
+			printk("IRP not registered, let's see what happens\n");
+
 		spin_lock_irqsave(&bio->bi_bdev->complete_request_spinlock, flags);
 		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 		spin_unlock_irqrestore(&bio->bi_bdev->complete_request_spinlock, flags);
@@ -1243,6 +1325,10 @@ dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, to
 
 // dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
 dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_iter.bi_size, bio->bi_iter.bi_sector, bio->bi_mdl_offset);
+
+		if (b == 0)
+			if (add_irp(irp, bio->bi_bdev) != 0)
+				printk("IRP already there?\n");
 
 		drbd_make_request(dev->drbd_device->rq_queue, bio);
 cond_printk("drbd_make_request returned.\n");
@@ -2607,4 +2693,5 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	if (status != STATUS_SUCCESS) {
 		printk("Could not register shutdown notification.\n");
 	}
+	spin_lock_init(&irps_in_progress_lock);
 }
