@@ -1035,6 +1035,7 @@ struct irps_in_progress {
 	struct _IRP *irp;
 	struct block_device *dev;
 	uint64_t submitted_to_drbd;
+	int cancelled;
 };
 
 static LIST_HEAD(irps_in_progress);
@@ -1049,6 +1050,21 @@ static struct irps_in_progress *find_irp_locked(struct _IRP *irp)
 			return i;
 	}
 	return NULL;
+}
+
+static void cancel_irp(struct _DEVICE_OBJECT *windows_device, struct _IRP *irp)
+{
+	struct irps_in_progress *i;
+	KIRQL flags;
+
+printk("IRP %p cancelled\n", irp);
+	spin_lock_irqsave(&irps_in_progress_lock, flags);
+
+	i=find_irp_locked(irp);
+	if (i != NULL)
+		i->cancelled = 1;
+
+	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
 }
 
 static int add_irp(struct _IRP *irp, struct block_device *dev)
@@ -1072,9 +1088,14 @@ static int add_irp(struct _IRP *irp, struct block_device *dev)
 	new_i->irp = irp;
 	new_i->dev = dev;
 	new_i->submitted_to_drbd = jiffies;
+	new_i->cancelled = 0;
 
 	list_add(&new_i->list, &irps_in_progress);
 	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
+
+	IoAcquireCancelSpinLock(&flags);
+	IoSetCancelRoutine(irp, cancel_irp);
+	IoReleaseCancelSpinLock(flags);
 
 	return 0;
 }
@@ -1105,6 +1126,9 @@ static int remove_irp(struct _IRP *irp, struct block_device *dev)
 		printk("Warning: Device for IRP has changed (%p != %p)\n", dev, old_i->dev);
 
 	printk("Age of IRP %p is %d msecs\n", irp, (jiffies - old_i->submitted_to_drbd) * 1000 / HZ);
+	if (old_i->cancelled)
+		printk("Warning: IRP already cancelled\n");
+
 	kfree(old_i);
 
 	return 0;
