@@ -1034,6 +1034,7 @@ struct irps_in_progress {
 	struct list_head list;
 	struct _IRP *irp;
 	struct block_device *dev;
+	uint64_t submitted_to_drbd;
 };
 
 static LIST_HEAD(irps_in_progress);
@@ -1070,6 +1071,7 @@ static int add_irp(struct _IRP *irp, struct block_device *dev)
 	}
 	new_i->irp = irp;
 	new_i->dev = dev;
+	new_i->submitted_to_drbd = jiffies;
 
 	list_add(&new_i->list, &irps_in_progress);
 	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
@@ -1102,6 +1104,7 @@ static int remove_irp(struct _IRP *irp, struct block_device *dev)
 	if (old_i->dev != dev)
 		printk("Warning: Device for IRP has changed (%p != %p)\n", dev, old_i->dev);
 
+	printk("Age of IRP %p is %d msecs\n", irp, (jiffies - old_i->submitted_to_drbd) * 1000 / HZ);
 	kfree(old_i);
 
 	return 0;
