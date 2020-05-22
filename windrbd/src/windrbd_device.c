@@ -1036,6 +1036,7 @@ struct irps_in_progress {
 	struct block_device *dev;
 	uint64_t submitted_to_drbd;
 	int cancelled;
+	int in_completion;
 };
 
 static LIST_HEAD(irps_in_progress);
@@ -1089,6 +1090,7 @@ static int add_irp(struct _IRP *irp, struct block_device *dev)
 	new_i->dev = dev;
 	new_i->submitted_to_drbd = jiffies;
 	new_i->cancelled = 0;
+	new_i->in_completion = 0;
 
 	list_add(&new_i->list, &irps_in_progress);
 	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
@@ -1100,7 +1102,38 @@ static int add_irp(struct _IRP *irp, struct block_device *dev)
 	return 0;
 }
 
-static int remove_irp(struct _IRP *irp, struct block_device *dev)
+static int about_to_remove_irp(struct _IRP *irp, struct block_device *dev)
+{
+	struct irps_in_progress *old_i;
+	KIRQL flags;
+
+	spin_lock_irqsave(&irps_in_progress_lock, flags);
+
+	old_i = find_irp_locked(irp);
+	if (old_i == NULL) {
+		spin_unlock_irqrestore(&irps_in_progress_lock, flags);
+		printk("Warning: IRP %p not found. Either already completed or it was never there\n", irp);
+		return -ENOENT;
+	}
+	if (old_i->irp != irp) {
+		spin_unlock_irqrestore(&irps_in_progress_lock, flags);
+		printk("Warning: IRP %p logic bug, irp!=old_i->irp\n", irp);
+		return -EINVAL;
+	}
+	old_i->in_completion = 1;
+	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
+
+	int age = (jiffies - old_i->submitted_to_drbd) * 1000 / HZ;	
+	if (age > 1000)
+		printk("Age of IRP %p is %d msecs\n", irp, age);
+
+	if (old_i->cancelled)
+		printk("Warning: IRP already cancelled\n");
+
+	return 0;
+}
+
+static int really_remove_irp(struct _IRP *irp, struct block_device *dev)
 {
 	struct irps_in_progress *old_i;
 	KIRQL flags;
@@ -1122,10 +1155,14 @@ static int remove_irp(struct _IRP *irp, struct block_device *dev)
 	list_del(&old_i->list);
 	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
 
+	if (old_i->in_completion == 0)
+		printk("Warning: irp %p not in completion\n", irp);
 	if (old_i->dev != dev)
 		printk("Warning: Device for IRP has changed (%p != %p)\n", dev, old_i->dev);
 
-	printk("Age of IRP %p is %d msecs\n", irp, (jiffies - old_i->submitted_to_drbd) * 1000 / HZ);
+	int age = (jiffies - old_i->submitted_to_drbd) * 1000 / HZ;	
+	if (age > 1000)
+		printk("Age of IRP %p is %d msecs\n", irp, age);
 	if (old_i->cancelled)
 		printk("Warning: IRP already cancelled\n");
 
@@ -1224,12 +1261,16 @@ cond_printk("5a\n");
 cond_printk("XXX into IoCompleteRequest bio->bi_iter.bi_sector is %d\n", bio->bi_iter.bi_sector);
 
 			/* do not complete? */
-		if (remove_irp(irp, bio->bi_bdev) != 0)
+		if (about_to_remove_irp(irp, bio->bi_bdev) != 0)
 			printk("IRP not registered, let's see what happens\n");
 
 //		spin_lock_irqsave(&bio->bi_bdev->complete_request_spinlock, flags);
 // printk("into IoCompleteRequest irp is %p\n", irp);
 		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+
+		if (really_remove_irp(irp, bio->bi_bdev) != 0)
+			printk("IRP not registered, let's see what happens\n");
+
 // printk("out of IoCompleteRequest irp is %p\n", irp);
 //		spin_unlock_irqrestore(&bio->bi_bdev->complete_request_spinlock, flags);
 cond_printk("XXX out of IoCompleteRequest irp is %p\n", irp);
