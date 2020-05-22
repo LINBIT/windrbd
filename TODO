@@ -65,6 +65,14 @@ TODO: Bug: Fix fio sequential write connection loss.
 	device diskless primary on a directly booted windows 10).
 	data device? diskful primary?
 
+	Update: Not on diskful primary but on data device. Seems to
+	happen only when there is a partition table on the device.
+
+	Solution is to monitor IRPs and complete IRPs (again) with an
+	error if completion takes longer than, say 5 seconds. Then
+	hopefully ack_receiver thread can continue. (also 1 second
+	would be ok, completion usually takes some milliseconds).
+
 TODO: Feature: Resource agent for Microsoft cluster manager
 
 	In progress: Install Server 2016 machines (again)
