@@ -1228,9 +1228,9 @@ cond_printk("XXX into IoCompleteRequest bio->bi_iter.bi_sector is %d\n", bio->bi
 			printk("IRP not registered, let's see what happens\n");
 
 //		spin_lock_irqsave(&bio->bi_bdev->complete_request_spinlock, flags);
-printk("into IoCompleteRequest irp is %p\n", irp);
+// printk("into IoCompleteRequest irp is %p\n", irp);
 		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
-printk("out of IoCompleteRequest irp is %p\n", irp);
+// printk("out of IoCompleteRequest irp is %p\n", irp);
 //		spin_unlock_irqrestore(&bio->bi_bdev->complete_request_spinlock, flags);
 cond_printk("XXX out of IoCompleteRequest irp is %p\n", irp);
 		kfree(bio->bi_common_data);
@@ -1356,14 +1356,14 @@ dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, to
 dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_iter.bi_size, bio->bi_iter.bi_sector, bio->bi_mdl_offset);
 
 		if (b == 0) {
-printk("into drbd_make_request irp is %p\n", irp);
+// printk("into drbd_make_request irp is %p\n", irp);
 			if (add_irp(irp, bio->bi_bdev) != 0)
 				printk("IRP already there?\n");
 		}
 
 		drbd_make_request(dev->drbd_device->rq_queue, bio);
 cond_printk("drbd_make_request returned.\n");
-if (b==0) printk("out of drbd_make_request irp is %p\n", irp);
+// if (b==0) printk("out of drbd_make_request irp is %p\n", irp);
 	}
 
 	return STATUS_SUCCESS;
