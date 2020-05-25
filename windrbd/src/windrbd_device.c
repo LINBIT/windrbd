@@ -1035,6 +1035,7 @@ struct irps_in_progress {
 	struct _IRP *irp;
 	struct block_device *dev;
 	uint64_t submitted_to_drbd;
+	uint64_t about_to_complete;
 	int cancelled;
 	int in_completion;
 };
@@ -1121,6 +1122,8 @@ static int about_to_remove_irp(struct _IRP *irp, struct block_device *dev)
 		return -EINVAL;
 	}
 	old_i->in_completion = 1;
+	old_i->about_to_complete = jiffies;
+
 	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
 
 	int age = (jiffies - old_i->submitted_to_drbd) * 1000 / HZ;	
@@ -1168,6 +1171,35 @@ static int really_remove_irp(struct _IRP *irp, struct block_device *dev)
 
 	kfree(old_i);
 
+	return 0;
+}
+
+static void check_irps(void)
+{
+	struct irps_in_progress *i;
+	uint64_t age_completed;
+	KIRQL flags;
+
+	spin_lock_irqsave(&irps_in_progress_lock, flags);
+
+	list_for_each_entry(struct irps_in_progress, i, &irps_in_progress, list) {
+		if (i->in_completion) {
+			age_completed = (jiffies - i->about_to_complete) * 1000 / HZ;
+			if (age_completed > 1000) {
+				printk("Warning: irp %p longer than 1 second in completion (%llu msecs), we should do something\n", i->irp, age_completed);
+			}
+		}
+	}
+	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
+}
+
+static int check_irps_thread(void *unused)
+{
+		/* later: while (running) */
+	while (1) {
+		check_irps();
+		msleep(1000);
+	}
 	return 0;
 }
 
@@ -2767,4 +2799,5 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 		printk("Could not register shutdown notification.\n");
 	}
 	spin_lock_init(&irps_in_progress_lock);
+	kthread_run(check_irps_thread, NULL, "check-irps");
 }
