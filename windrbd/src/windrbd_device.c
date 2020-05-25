@@ -1185,7 +1185,6 @@ static void check_irps(void)
 	struct irps_in_progress *i;
 	uint64_t age_completed;
 	KIRQL flags;
-	BOOLEAN b;
 
 	spin_lock_irqsave(&irps_in_progress_lock, flags);
 
@@ -1193,9 +1192,9 @@ static void check_irps(void)
 		if (i->in_completion) {
 			age_completed = (jiffies - i->about_to_complete) * 1000 / HZ;
 			if (age_completed > 1000) {
-				printk("Warning: irp %p longer than 1 second in completion (%llu msecs), cancelling it\n", i->irp, age_completed);
-				b = IoCancelIrp(i->irp);
-				printk("IoCancelIrp returned %d\n", b);
+				printk("Warning: irp %p longer than 1 second in completion (%llu msecs), completing it again\n", i->irp, age_completed);
+				IoCompleteRequest(i->irp, IO_NO_INCREMENT);
+				printk("IoCompleteRequest returned\n");
 			}
 		}
 	}
