@@ -1096,9 +1096,15 @@ static int add_irp(struct _IRP *irp, struct block_device *dev)
 	list_add(&new_i->list, &irps_in_progress);
 	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
 
+#if 0
+		/* Calling cancel while holding spin lock is a bad
+		 * idea and locks the machine.
+		 */
+
 	IoAcquireCancelSpinLock(&flags);
 	IoSetCancelRoutine(irp, cancel_irp);
 	IoReleaseCancelSpinLock(flags);
+#endif
 
 	return 0;
 }
