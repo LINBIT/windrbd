@@ -1192,9 +1192,11 @@ static void check_irps(void)
 		if (i->in_completion) {
 			age_completed = (jiffies - i->about_to_complete) * 1000 / HZ;
 			if (age_completed > 1000) {
-				printk("Warning: irp %p longer than 1 second in completion (%llu msecs), we should do something\n", i->irp, age_completed);
-//				IoCompleteRequest(i->irp, IO_NO_INCREMENT);
-//				printk("IoCompleteRequest returned\n");
+				printk("Warning: irp %p longer than 1 second in completion (%llu msecs), completing again with timeout\n", i->irp, age_completed);
+				i->irp->IoStatus.Status = STATUS_TIMEOUT;
+				i->irp->IoStatus.Information = 0;
+				IoCompleteRequest(i->irp, IO_NO_INCREMENT);
+				printk("IoCompleteRequest returned\n");
 			}
 		}
 	}
