@@ -73,6 +73,9 @@ TODO: Bug: Fix fio sequential write connection loss.
 	hopefully ack_receiver thread can continue. (also 1 second
 	would be ok, completion usually takes some milliseconds).
 
+	Update: No this hangs the machine. Fix it later (seems to
+	be some sort of Windows bug)...
+
 TODO: Feature: Resource agent for Microsoft cluster manager
 
 	In progress: Install Server 2016 machines (again)
