@@ -302,9 +302,6 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	size_t length;
 	int bug = 0;
 
-if (may_printk)
-cond_printk("Debug: SendPage completion %p\n", completion);
-
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
 
@@ -359,9 +356,6 @@ static NTSTATUS NTAPI send_page_completion_onlyonce(
 	__in struct send_page_completion_info *completion)
 {
 	int err;
-
-if (completion != NULL && completion->page != NULL)
-cond_printk("Debug: send_page_completion onlyonce completion %p\n", completion);
 
 	err = remove_completion(completion);
 	if (err != 0) {
@@ -1012,7 +1006,6 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		goto out_remove_completion;
 	}
 	IoSetCompletionRoutine(Irp, send_page_completion_onlyonce, completion, TRUE, TRUE, TRUE);
-cond_printk("completion is %p\n", completion);
 
 	if (socket->no_delay)
 		flags |= WSK_FLAG_NODELAY;
@@ -1190,7 +1183,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	PVOID       waitObjects[2];
 	int         wObjCount = 1;
 
-cond_printk("in recvmsg: size is %zd\n", len);
+// cond_printk("in recvmsg: size is %zd\n", len);
 // dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
@@ -1346,7 +1339,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
 		socket->error_status = BytesReceived;
 		dbg("setting error status to %d\n", socket->error_status);
 	}
-cond_printk("Received %d bytes\n", BytesReceived);
+// cond_printk("Received %d bytes\n", BytesReceived);
 	return BytesReceived;
 }
 

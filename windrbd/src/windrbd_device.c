@@ -1030,6 +1030,8 @@ static void dump_data(const char *tag, char *data, size_t len, size_t offset_on_
 	}
 }
 
+#if 0
+
 struct irps_in_progress {
 	struct list_head list;
 	struct _IRP *irp;
@@ -1061,7 +1063,7 @@ static void cancel_irp(struct _DEVICE_OBJECT *windows_device, struct _IRP *irp)
 	struct irps_in_progress *i;
 	KIRQL flags;
 
-printk("IRP %p cancelled\n", irp);
+	printk("IRP %p cancelled\n", irp);
 	spin_lock_irqsave(&irps_in_progress_lock, flags);
 
 	i=find_irp_locked(irp);
@@ -1245,6 +1247,8 @@ static int check_irps_thread(void *unused)
 	return 0;
 }
 
+#endif
+
 /* Limit imposed by DRBD over the wire protocol. This will not change
  * in the next 5+ years, most likely never.
  */
@@ -1258,7 +1262,6 @@ static void windrbd_bio_finished(struct bio * bio)
 	NTSTATUS status;
 	int error = blk_status_to_errno(bio->bi_status);
 
-cond_printk("bio finished\n");
 	status = STATUS_SUCCESS;
 
 	if (error == 0) {
@@ -1291,7 +1294,6 @@ cond_printk("bio finished\n");
 
 		status = STATUS_DEVICE_DOES_NOT_EXIST;
 	}
-cond_printk("2\n");
 	if (bio_data_dir(bio) == READ)
 		for (i=0;i<bio->bi_vcnt;i++)
 			kfree(bio->bi_io_vec[i].bv_page->addr);
@@ -1302,7 +1304,6 @@ cond_printk("2\n");
 		 * on read, this also can be done much easier.
 		 */
 
-cond_printk("3\n");
 	int total_num_completed = bio->bi_common_data->bc_num_requests;
 	size_t total_size = bio->bi_common_data->bc_total_size;
 
@@ -1312,14 +1313,12 @@ cond_printk("3\n");
         if (status != STATUS_SUCCESS)
                 bio->bi_common_data->bc_device_failed = 1;
         spin_unlock_irqrestore(&bio->bi_common_data->bc_device_failed_lock, flags);
-cond_printk("4\n");
 
 		/* Do not access bio->bi_common_data here as it might be
 		 * already freed.
 		 */
 
 	if (num_completed == total_num_completed) {
-cond_printk("5\n");
 		if (status == STATUS_SUCCESS)
 			irp->IoStatus.Information = total_size;
 		else
@@ -1330,17 +1329,18 @@ cond_printk("5\n");
 				 */
 			irp->IoStatus.Information = 0;
 
-cond_printk("5a\n");
 		irp->IoStatus.Status = status;
-printk("XXX into IoCompleteRequest irp is %p bio->bi_iter.bi_sector is %lld\n", irp, bio->bi_iter.bi_sector);
 
+#if 0
 			/* do not complete? */
 		if (about_to_remove_irp(irp, bio->bi_bdev) != 0)
 			printk("XXX IRP %p not registered, let's see what happens\n", irp);
 
 //		spin_lock_irqsave(&bio->bi_bdev->complete_request_spinlock, flags);
-// printk("into IoCompleteRequest irp is %p\n", irp);
-		// IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+#endif
+
+		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+#if 0
 		if (!irp_already_completed(irp))
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
 
@@ -1349,18 +1349,16 @@ printk("XXX into IoCompleteRequest irp is %p bio->bi_iter.bi_sector is %lld\n", 
 
 // printk("out of IoCompleteRequest irp is %p\n", irp);
 //		spin_unlock_irqrestore(&bio->bi_bdev->complete_request_spinlock, flags);
-printk("XXX out of IoCompleteRequest irp is %p sector is %lld\n", irp, bio->bi_iter.bi_sector);
+	printk("XXX out of IoCompleteRequest irp is %p sector is %lld\n", irp, bio->bi_iter.bi_sector);
+#endif
+
 		kfree(bio->bi_common_data);
 	}
-cond_printk("6\n");
 	for (i=0;i<bio->bi_vcnt;i++)
 		kfree(bio->bi_io_vec[i].bv_page);
 
-cond_printk("7\n");
 	IoReleaseRemoveLock(&bio->bi_bdev->remove_lock, NULL);
-cond_printk("8\n");
 	bio_put(bio);
-cond_printk("9\n");
 }
 
 static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device *dev, char *buffer, unsigned int total_size, sector_t sector, unsigned long rw)
@@ -1412,9 +1410,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	 * this could produce a blue screen.
 	 */
 
-cond_printk("1\n");
         IoMarkIrpPending(irp);
-cond_printk("2 bio count is %d\n", bio_count);
 
 	for (b=0; b<bio_count; b++) {
 		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
@@ -1472,15 +1468,15 @@ dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, to
 // dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
 dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_iter.bi_size, bio->bi_iter.bi_sector, bio->bi_mdl_offset);
 
+#if 0
 		if (b == 0) {
 // printk("into drbd_make_request irp is %p\n", irp);
 			if (add_irp(irp, bio->bi_bdev, bio->bi_iter.bi_sector) != 0)
 				printk("IRP already there?\n");
 		}
+#endif
 
 		drbd_make_request(dev->drbd_device->rq_queue, bio);
-cond_printk("drbd_make_request returned.\n");
-// if (b==0) printk("out of drbd_make_request irp is %p\n", irp);
 	}
 
 	return STATUS_SUCCESS;
@@ -2548,7 +2544,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
-cond_printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
+// cond_printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
@@ -2625,7 +2621,7 @@ cond_printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
 				break;
 			}
 
-printk("XXX Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
+// printk("XXX Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
 
 			irp->IoStatus.Information = 0;
 			irp->IoStatus.Status = STATUS_PENDING;
@@ -2634,7 +2630,7 @@ printk("XXX Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw =
 
 			/* irp may already be freed here, don't access it. */
 
-printk("XXX Debug: windrbd_make_drbd_requests returned, status is %x sector is %lld irp is %p\n", status, start_sector, irp);
+// printk("XXX Debug: windrbd_make_drbd_requests returned, status is %x sector is %lld irp is %p\n", status, start_sector, irp);
 			if (status == STATUS_SUCCESS)
 				return STATUS_PENDING;
 
@@ -2842,6 +2838,8 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	if (status != STATUS_SUCCESS) {
 		printk("Could not register shutdown notification.\n");
 	}
+#if 0
 	spin_lock_init(&irps_in_progress_lock);
 	kthread_run(check_irps_thread, NULL, "check-irps");
+#endif
 }
