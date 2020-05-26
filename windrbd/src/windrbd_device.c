@@ -1039,6 +1039,7 @@ struct irps_in_progress {
 	int cancelled;
 	int in_completion;
 	sector_t sector;
+	int completed_by_checker;
 };
 
 static LIST_HEAD(irps_in_progress);
@@ -1094,6 +1095,7 @@ static int add_irp(struct _IRP *irp, struct block_device *dev, sector_t sector)
 	new_i->cancelled = 0;
 	new_i->in_completion = 0;
 	new_i->sector = sector;
+	new_i->completed_by_checker = 0;
 
 	list_add(&new_i->list, &irps_in_progress);
 	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
@@ -1109,6 +1111,18 @@ static int add_irp(struct _IRP *irp, struct block_device *dev, sector_t sector)
 #endif
 
 	return 0;
+}
+
+static int irp_already_completed(struct _IRP *irp)
+{
+	struct irps_in_progress *i;
+	KIRQL flags;
+
+	spin_lock_irqsave(&irps_in_progress_lock, flags);
+	i = find_irp_locked(irp);
+	spin_unlock_irqrestore(&irps_in_progress_lock, flags);
+
+	return (i && i->completed_by_checker);
 }
 
 static int about_to_remove_irp(struct _IRP *irp, struct block_device *dev)
@@ -1187,20 +1201,34 @@ static void check_irps(void)
 	struct irps_in_progress *i;
 	uint64_t age_completed;
 	KIRQL flags;
+	int complete_irps;
 
 	spin_lock_irqsave(&irps_in_progress_lock, flags);
 
+	complete_irps = 0;
 	list_for_each_entry(struct irps_in_progress, i, &irps_in_progress, list) {
 		if (i->in_completion) {
 			age_completed = (jiffies - i->about_to_complete) * 1000 / HZ;
 			if (age_completed > 1000) {
 				printk("XXX Warning: irp %p longer than 1 second in completion (%llu msecs), sector is %lld we should do something\n", i->irp, age_completed, i->sector);
+				complete_irps = 1;
 #if 0
 				i->irp->IoStatus.Status = STATUS_TIMEOUT;
 				i->irp->IoStatus.Information = 0;
 				IoCompleteRequest(i->irp, IO_NO_INCREMENT);
 				printk("IoCompleteRequest returned\n");
 #endif
+			}
+		}
+	}
+	if (complete_irps) {
+		list_for_each_entry(struct irps_in_progress, i, &irps_in_progress, list) {
+			if (!i->in_completion) {
+				i->irp->IoStatus.Status = STATUS_TIMEOUT;
+				i->irp->IoStatus.Information = 0;
+				IoCompleteRequest(i->irp, IO_NO_INCREMENT);
+				i->completed_by_checker = 1;
+				printk("IoCompleteRequest returned\n");
 			}
 		}
 	}
@@ -1304,19 +1332,20 @@ cond_printk("5\n");
 
 cond_printk("5a\n");
 		irp->IoStatus.Status = status;
-printk("XXX into IoCompleteRequest bio->bi_iter.bi_sector is %lld\n", bio->bi_iter.bi_sector);
+printk("XXX into IoCompleteRequest irp is %p bio->bi_iter.bi_sector is %lld\n", irp, bio->bi_iter.bi_sector);
 
 			/* do not complete? */
 		if (about_to_remove_irp(irp, bio->bi_bdev) != 0)
-			printk("IRP not registered, let's see what happens\n");
+			printk("XXX IRP %p not registered, let's see what happens\n", irp);
 
 //		spin_lock_irqsave(&bio->bi_bdev->complete_request_spinlock, flags);
 // printk("into IoCompleteRequest irp is %p\n", irp);
 		// IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
-		IoCompleteRequest(irp, IO_NO_INCREMENT);
+		if (!irp_already_completed(irp))
+			IoCompleteRequest(irp, IO_NO_INCREMENT);
 
 		if (really_remove_irp(irp, bio->bi_bdev) != 0)
-			printk("IRP not registered, let's see what happens\n");
+			printk("XXX IRP %p not registered, let's see what happens\n", irp);
 
 // printk("out of IoCompleteRequest irp is %p\n", irp);
 //		spin_unlock_irqrestore(&bio->bi_bdev->complete_request_spinlock, flags);
@@ -2596,7 +2625,7 @@ cond_printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
 				break;
 			}
 
-printk("XXX Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer);
+printk("XXX Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
 
 			irp->IoStatus.Information = 0;
 			irp->IoStatus.Status = STATUS_PENDING;
@@ -2605,7 +2634,7 @@ printk("XXX Debug: SCSI I/O: %s sector %lld, %d sectors to %p\n", rw == READ ? "
 
 			/* irp may already be freed here, don't access it. */
 
-printk("XXX Debug: windrbd_make_drbd_requests returned, status is %x sector is %lld\n", status, start_sector);
+printk("XXX Debug: windrbd_make_drbd_requests returned, status is %x sector is %lld irp is %p\n", status, start_sector, irp);
 			if (status == STATUS_SUCCESS)
 				return STATUS_PENDING;
 
