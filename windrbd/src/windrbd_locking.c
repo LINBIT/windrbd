@@ -197,6 +197,7 @@ void spin_lock_init(spinlock_t *lock)
 {
 	KeInitializeSpinLock(&lock->spinLock);
 	lock->printk_lock = 0;
+	lock->locked_by_thread = NULL;
 }
 
 static EX_SPIN_LOCK rcu_rw_lock;
@@ -488,9 +489,19 @@ void call_rcu_debug(struct rcu_head *head, rcu_callback_t f, const char *file, i
  * the flags parameter.
  */
 
-KIRQL _spin_lock_irqsave(spinlock_t *lock)
+KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, const char *func)
 {
 	KIRQL oldIrql;
+
+		/* this introduces about 1000 more races, but is here just
+		 * for debugging purposes.
+		 */
+	if (lock->locked_by_thread == KeGetCurrentThread()) {
+		printk("Warning: Spin lock recursion detected at %s:%d (%s())\n", file, line, func);
+		return DISPATCH_LEVEL;
+	}
+	lock->locked_by_thread = KeGetCurrentThread();
+
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
 	return oldIrql;
@@ -498,6 +509,7 @@ KIRQL _spin_lock_irqsave(spinlock_t *lock)
 
 void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags)
 {
+	lock->locked_by_thread = NULL;
 	KeReleaseSpinLock(&lock->spinLock, flags);
 }
 

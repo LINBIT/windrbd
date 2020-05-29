@@ -78,6 +78,10 @@ TODO: Bug: Fix fio sequential write connection loss.
 
 	Now, try with seperate thread(s) doing the completion.
 
+	Update: Yes this solves it (creating seperate thread for
+	every completion now, this is bad for throughput but it
+	fixes the fio problem).
+
 TODO: Feature: Resource agent for Microsoft cluster manager
 
 	In progress: Install Server 2016 machines (again)

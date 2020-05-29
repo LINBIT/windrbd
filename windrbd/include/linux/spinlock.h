@@ -23,7 +23,12 @@ typedef struct _tagSPINLOCK
 {
 	KSPIN_LOCK spinLock;
 	bool printk_lock;	/* non zero if used by printk: TODO: ifdef debug */
-//	PKTHREAD locked_by_thread;
+	PKTHREAD locked_by_thread;
+/*
+	atomic_t recursion_depth;
+	char locked_by_desc[64];
+	char locked_by_func[32];
+*/
 } spinlock_t;
 
 extern void spin_lock_init(spinlock_t *lock);
@@ -68,9 +73,11 @@ extern void spin_unlock_irq(spinlock_t *lock);
 extern void spin_lock_nested(spinlock_t *lock, int level);
 
 extern void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags);
-extern KIRQL _spin_lock_irqsave(spinlock_t* lock);
 
-#define spin_lock_irqsave(lock, flags) flags = _spin_lock_irqsave(lock); 
+extern KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, const char *func);
+// extern KIRQL _spin_lock_irqsave(spinlock_t* lock);
+
+#define spin_lock_irqsave(lock, flags) flags = spin_lock_irqsave_debug_new(lock, __FILE__, __LINE__, __func__)
 
 #endif
 
