@@ -23,6 +23,7 @@ typedef struct _tagSPINLOCK
 {
 	KSPIN_LOCK spinLock;
 	bool printk_lock;	/* non zero if used by printk: TODO: ifdef debug */
+//	PKTHREAD locked_by_thread;
 } spinlock_t;
 
 extern void spin_lock_init(spinlock_t *lock);

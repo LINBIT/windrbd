@@ -1249,6 +1249,20 @@ static int check_irps_thread(void *unused)
 
 #endif
 
+static int io_complete_thread(void *irp_p)
+{
+	uint64_t started, elapsed;
+	struct _IRP *irp = (struct _IRP*) irp_p;
+
+	started = jiffies;
+	IoCompleteRequest(irp, IO_NO_INCREMENT);
+	elapsed = jiffies - started;
+	if (elapsed > 1000)
+		printk("IoCompleteRequest %p took %lld ms.\n", elapsed);
+
+	return 0;
+}
+
 /* Limit imposed by DRBD over the wire protocol. This will not change
  * in the next 5+ years, most likely never.
  */
@@ -1338,8 +1352,9 @@ static void windrbd_bio_finished(struct bio * bio)
 
 //		spin_lock_irqsave(&bio->bi_bdev->complete_request_spinlock, flags);
 #endif
+		kthread_run(io_complete_thread, irp, "complete-irp");
 
-		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+//		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 #if 0
 		if (!irp_already_completed(irp))
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
