@@ -496,11 +496,14 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 		/* this introduces about 1000 more races, but is here just
 		 * for debugging purposes.
 		 */
-	if (lock->locked_by_thread == KeGetCurrentThread()) {
-		printk("Warning: Spin lock recursion detected at %s:%d (%s())\n", file, line, func);
+	if (!lock->printk_lock && lock->locked_by_thread == KeGetCurrentThread()) {
+		printk("Warning: Spin lock recursion detected at %s:%d (%s()), first called at %s\n", file, line, func, lock->locked_by);
+
+			/* From here on, everything may happen */
 		return DISPATCH_LEVEL;
 	}
 	lock->locked_by_thread = KeGetCurrentThread();
+	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 

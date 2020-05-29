@@ -26,9 +26,8 @@ typedef struct _tagSPINLOCK
 	PKTHREAD locked_by_thread;
 /*
 	atomic_t recursion_depth;
-	char locked_by_desc[64];
-	char locked_by_func[32];
 */
+	char locked_by[64];
 } spinlock_t;
 
 extern void spin_lock_init(spinlock_t *lock);
