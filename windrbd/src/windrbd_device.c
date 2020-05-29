@@ -1258,7 +1258,7 @@ static int io_complete_thread(void *irp_p)
 	IoCompleteRequest(irp, IO_NO_INCREMENT);
 	elapsed = jiffies - started;
 	if (elapsed > 1000)
-		printk("IoCompleteRequest %p took %lld ms.\n", elapsed);
+		printk("IoCompleteRequest %p took %lld ms.\n", irp, elapsed);
 
 	return 0;
 }
