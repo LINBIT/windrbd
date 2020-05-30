@@ -502,10 +502,10 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 			/* From here on, everything may happen */
 		return KeGetCurrentIrql();
 	}
+	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
+
 	lock->locked_by_thread = KeGetCurrentThread();
 	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
-
-	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
 	return oldIrql;
 }
@@ -521,14 +521,25 @@ void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const
 {
 	KIRQL unused;
 
+		/* this introduces about 1000 more races, but is here just
+		 * for debugging purposes.
+		 */
+	if (!lock->printk_lock && lock->locked_by_thread == KeGetCurrentThread()) {
+		printk("Warning: Spin lock recursion detected at %s:%d (%s()), first called at %s current IRQL is %d\n", file, line, func, lock->locked_by, KeGetCurrentIrql());
+
+			/* From here on, everything may happen */
+		return;
+	}
 	KeAcquireSpinLock(&lock->spinLock, &unused);
+
+	lock->locked_by_thread = KeGetCurrentThread();
+	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
+
 		/* TODO: remove this check again later */
-#if 0
 	if (unused != PASSIVE_LEVEL)
 		printk("Bug: IRQL > PASSIVE_LEVEL (is %d) at %s:%d (%s)\n", unused, file, line, func);
-	else
-		printk("IRQL is PASSIVE_LEVEL (%d), no bug at %s:%d (%s)\n", unused, file, line, func);
-#endif
+/*	else
+		printk("IRQL is PASSIVE_LEVEL (%d), no bug at %s:%d (%s)\n", unused, file, line, func); */
 }
 
 /* This resets the IRQL to PASSIVE_LEVEL. This is normally not
@@ -538,6 +549,7 @@ void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const
 
 void spin_unlock_irq(spinlock_t *lock)
 {
+	lock->locked_by_thread = NULL;
 	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
 }
 
