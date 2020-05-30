@@ -505,7 +505,9 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
 	lock->locked_by_thread = KeGetCurrentThread();
-	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
+	strncpy(lock->locked_by, func, ARRAY_SIZE(lock->locked_by)-1);
+	lock->locked_by[ARRAY_SIZE(lock->locked_by)-1] = '\0';
+//	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 
 	return oldIrql;
 }
@@ -533,7 +535,9 @@ void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const
 	KeAcquireSpinLock(&lock->spinLock, &unused);
 
 	lock->locked_by_thread = KeGetCurrentThread();
-	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
+	strncpy(lock->locked_by, func, ARRAY_SIZE(lock->locked_by)-1);
+	lock->locked_by[ARRAY_SIZE(lock->locked_by)-1] = '\0';
+//	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 
 		/* TODO: remove this check again later */
 	if (unused != PASSIVE_LEVEL)
