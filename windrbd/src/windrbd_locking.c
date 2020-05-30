@@ -497,10 +497,10 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 		 * for debugging purposes.
 		 */
 	if (!lock->printk_lock && lock->locked_by_thread == KeGetCurrentThread()) {
-		printk("Warning: Spin lock recursion detected at %s:%d (%s()), first called at %s\n", file, line, func, lock->locked_by);
+		printk("Warning: Spin lock recursion detected at %s:%d (%s()), first called at %s current IRQL is %d\n", file, line, func, lock->locked_by, KeGetCurrentIrql());
 
 			/* From here on, everything may happen */
-		return DISPATCH_LEVEL;
+		return KeGetCurrentIrql();
 	}
 	lock->locked_by_thread = KeGetCurrentThread();
 	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
