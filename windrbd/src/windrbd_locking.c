@@ -506,7 +506,9 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
 	lock->locked_by_thread = KeGetCurrentThread();
-	strncpy(lock->locked_by, func, ARRAY_SIZE(lock->locked_by)-1);
+	strncpy(lock->marker, "SPIN_LOCK456", ARRAY_SIZE(lock->marker)-1);
+	strncpy(lock->locked_by, func, 24);
+	strncpy(&lock->locked_by[24], file, 32);
 	lock->locked_by[ARRAY_SIZE(lock->locked_by)-1] = '\0';
 //	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 
@@ -516,6 +518,7 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags)
 {
 	lock->locked_by_thread = NULL;
+	strncpy(lock->marker, "SPIN_LOCK123", ARRAY_SIZE(lock->marker)-1);
 	strncpy(lock->locked_by, "NONE", ARRAY_SIZE(lock->locked_by)-1);
 	KeReleaseSpinLock(&lock->spinLock, flags);
 }
@@ -537,7 +540,9 @@ void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const
 	KeAcquireSpinLock(&lock->spinLock, &unused);
 
 	lock->locked_by_thread = KeGetCurrentThread();
-	strncpy(lock->locked_by, func, ARRAY_SIZE(lock->locked_by)-1);
+	strncpy(lock->marker, "SPIN_LOCK456", ARRAY_SIZE(lock->marker)-1);
+	strncpy(lock->locked_by, func, 24);
+	strncpy(&lock->locked_by[24], file, 32);
 	lock->locked_by[ARRAY_SIZE(lock->locked_by)-1] = '\0';
 //	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 
@@ -557,6 +562,7 @@ void spin_unlock_irq(spinlock_t *lock)
 {
 	lock->locked_by_thread = NULL;
 	strncpy(lock->locked_by, "NONE", ARRAY_SIZE(lock->locked_by)-1);
+	strncpy(lock->marker, "SPIN_LOCK123", ARRAY_SIZE(lock->marker)-1);
 	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
 }
 
