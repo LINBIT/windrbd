@@ -1352,9 +1352,9 @@ static void windrbd_bio_finished(struct bio * bio)
 
 //		spin_lock_irqsave(&bio->bi_bdev->complete_request_spinlock, flags);
 #endif
-		kthread_run(io_complete_thread, irp, "complete-irp");
+//		kthread_run(io_complete_thread, irp, "complete-irp");
 
-//		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 #if 0
 		if (!irp_already_completed(irp))
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
