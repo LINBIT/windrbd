@@ -1,7 +1,12 @@
 Roadmap to 1.0
 --------------
 
+From phil: upgrade DRBD to 9.0.23
+
 From phil: MS clustermanager support
+
+Fix fio bug
+	From phil: possible via DRBD
 
 fix 26 days bug
 	Hopefully fixed by refactoring the locks.

@@ -602,3 +602,18 @@ debugger load symbols:
 
 forces symbols that do not match (they match but WinDbg thinks they don't
 match).
+-------
+Create failover cluster (Windows HA)
+
+https://docs.microsoft.com/en-us/windows-server/failover-clustering/create-failover-cluster#install-the-failover-clustering-feature
+
+Active Domain: 
+
+https://www.whitewinterwolf.com/posts/2017/09/26/how-to-create-an-active-directory-domain/
+
+In the Server Manager (it should automatically open when opening a session, otherwise it can be found in the Start menu), click on Add roles and features, and enable both Active Directory Domain Services and DNS Server roles.
+
+Once the new roles have been installed, you must promote the server as a Domain Controller. On the top bar of the Server Manager you should see a warning sign (➀), click on it then on the Promote this server to a domain controller link (➁).
+
+Must configure DNS when adding Computers to domain (Windows uses DNS to find
+the Domain Controller). (Adapter Settings / IPv4 Properties)
