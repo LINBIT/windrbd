@@ -332,6 +332,7 @@ int _printk(const char *func, const char *fmt, ...)
 	va_start(args, fmt);
 	status = RtlStringCbVPrintfA(buffer+pos, sizeof(buffer)-1-pos,
 		    fmt, args);
+/* TODO: va_end ! */
 	if (! NT_SUCCESS(status))
 	{
 		if (!no_windows_printk)
