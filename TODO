@@ -36,6 +36,13 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: Primary detaches when secondary hard fails.
+
+	In (at least) a WinDRBD::WinDRBD setup primary detaches
+	when the secondary (blue screen) fails.
+
+	Reported by: Abhishek Jain <abhishek@maxisinfotech.com>
+
 TODO: Bug: Fix fio sequential write connection loss.
 
 	Progress..somewhere around complete_conflicting_writes there
