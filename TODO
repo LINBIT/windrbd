@@ -36,6 +36,23 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: BSOD when connecting with split brain.
+
+	When experimenting with MS cluster manager integration, we
+	ran into a split brain and later BSOD.
+
+Jun 29 15:45:15 10.43.10.11  U13:45:15.382|a297f1c0(drbd_r_windows-windows) #221 drbd_sync_handshake <1>drbd windows-windows/1 minor 29, ds(UpToDate), dvflag(0x0): Split-Brain detected but unresolved, dropping connection!
+Jun 29 15:45:15 10.43.10.11  U13:45:15.382|a297f1c0(drbd_r_windows-windows) #222 drbd_khelper <6>drbd windows-windows/1 minor 29 pnode-id:2, pdsk(DUnknown), prpl(Off), pdvflag(0x40000): helper command: /cygdrive/c/windrbd/usr/sbin/drbdadm split-brain
+Jun 29 15:45:16 10.43.10.11  U13:45:16.099|a2993a40(devicecontrol) #223 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_RESOURCES:30)
+Jun 29 15:45:16 10.43.10.11  U13:45:16.100|a2993a40(devicecontrol) #224 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_DEVICES:31)
+Jun 29 15:45:16 10.43.10.11  U13:45:16.100|a2993a40(devicecontrol) #225 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_CONNECTIONS:32)
+Jun 29 15:45:16 10.43.10.11  U13:45:16.101|a2993a40(devicecontrol) #226 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_PEER_DEVICES:33)
+Jun 29 15:45:16 10.43.10.11  U13:45:16.384|a297f1c0(drbd_r_windows-windows) #227 call_usermodehelper User mode helper request timed out after 1000 milliseconds, is the user mode helper daemon running?
+Jun 29 15:45:16 10.43.10.11  U13:45:16.384|a297f1c0(drbd_r_windows-windows) #228 drbd_khelper <4>drbd windows-windows/1 minor 29 pnode-id:2, pdsk(DUnknown), prpl(Off), pdvflag(0x40000): helper command: /cygdrive/c/windrbd/usr/sbin/drbdadm split-brain exit code 255 (0xffffff92)
+Jun 29 15:45:16 10.43.10.11  U13:45:16.384|a297f1c0(drbd_r_windows-windows) #229 print_state_change <6>drbd windows-windows pnode-id:2, cs(NetworkFailure), prole(Unknown), cflag(0x10c), scf(0x21): conn( NetworkFailure -> Disconnecting )
+Jun 29 15:45:16 10.43.10.11  [last message was in IRQ context or recursive]
+Jun 29 15:45:16 10.43.10.11  U13:45:16.384|a297f1c0(drbd_r_windows-windows) #230 drbdd <3>drbd windows-windows pnode-id:2, cs(Disconnecting), prole(Unknown), cflag(0x10c), scf(0x0): error receiving P_STATE, e: -5 l: 0!
+
 TODO: Bug: Primary detaches when secondary hard fails.
 
 	In (at least) a WinDRBD::WinDRBD setup primary detaches
