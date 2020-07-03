@@ -2171,7 +2171,7 @@ dbg("Returned string is %S\n", string);
 			}
 
 			default:
-				printk("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
+				dbg("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
 				status = STATUS_NOT_IMPLEMENTED;
 			}
 	/* forward to lower device: but what is the lower device (bus?) */
@@ -2356,12 +2356,12 @@ dbg("Returned string is %S\n", string);
 // printk("irp status is %x\n", irp->IoStatus.Status);
 				IoSkipCurrentIrpStackLocation(irp);
 				status = IoCallDriver(drbd_bus_device, irp);
-				printk("bus object returned %x\n", status);
+				dbg("bus object returned %x\n", status);
 				num_pnp_requests--;
 				return status;
 			}
 			else
-				printk("no bus object, cannot forward irp\n");
+				dbg("no bus object, cannot forward irp\n");
 
 //			status = irp->IoStatus.Status;
 //			status = STATUS_NOT_IMPLEMENTED;
@@ -2392,10 +2392,10 @@ static NTSTATUS windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	dbg("Power: device: %p irp: %p\n", device, irp);
 
 	if (s->MinorFunction == IRP_MN_QUERY_POWER) {
-		printk("is IRP_MN_QUERY_POWER for %d\n", s->Parameters.Power.Type);
+		dbg("is IRP_MN_QUERY_POWER for %d\n", s->Parameters.Power.Type);
 	}
 	if (s->MinorFunction == IRP_MN_SET_POWER) {
-		printk("is IRP_MN_SET_POWER for %d\n", s->Parameters.Power.Type);
+		dbg("is IRP_MN_SET_POWER for %d\n", s->Parameters.Power.Type);
 	}
 
 	PoStartNextPowerIrp(irp);
