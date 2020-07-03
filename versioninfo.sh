@@ -89,4 +89,4 @@ sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y),${WINDRBD_VERSION}  ;Replaced 
 
 ## inno-setup version include file
 echo \#define MyAppVersion \"${GITHASH}\" > inno-setup/version.iss
-echo \#define MyResourceVersion \"${WINDRBD_VERSION}\" >> inno-setup/version.iss
+echo \#define MyResourceVersion \"${WINDRBD_VERSION}\" > inno-setup/resource-version.iss
