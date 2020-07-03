@@ -1,3 +1,8 @@
+What's new in version 1.0.0-rc1
+-------------------------------
+
+Stability fixes
+
 What's new in version 0.10.7
 ----------------------------
 
