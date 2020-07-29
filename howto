@@ -617,3 +617,15 @@ Once the new roles have been installed, you must promote the server as a Domain 
 
 Must configure DNS when adding Computers to domain (Windows uses DNS to find
 the Domain Controller). (Adapter Settings / IPv4 Properties)
+
+------
+
+https://answers.microsoft.com/en-us/windows/forum/windows_10-update/can-i-disable-updates-using-windows-10-enterprise/1b4bb42d-355f-41f7-9954-8b2a78a4debc
+
+ Windows 10 Enterprise includes advanced options for disabling Windows Updates.
+
+
+Press the Windows key + R then type gpedit.msc and click OK.
+Go to Computer Configuration > Administrative Templates > Windows Components > Windows Update.
+Double-click Configure Automatic Updates.
+Select Disabled in Configured Automatic Updates on the left, and click Apply and OK to disable the Windows automatic update feature. 
