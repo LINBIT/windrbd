@@ -1376,6 +1376,20 @@ static void windrbd_bio_finished(struct bio * bio)
 	bio_put(bio);
 }
 
+struct io_request {
+	struct work_struct w;
+	struct drbd_device *drbd_device;
+	struct bio *bio;
+};
+
+static void drbd_make_request_work(struct work_struct *w)
+{
+	struct io_request *ioreq = container_of(w, struct io_request, w);
+
+	drbd_make_request(ioreq->drbd_device->rq_queue, ioreq->bio);
+	kfree(ioreq);
+}
+
 static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device *dev, char *buffer, unsigned int total_size, sector_t sector, unsigned long rw)
 {
 	struct bio *bio;
@@ -1491,7 +1505,19 @@ dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\
 		}
 #endif
 
-		drbd_make_request(dev->drbd_device->rq_queue, bio);
+		/* drbd_make_request(dev->drbd_device->rq_queue, bio); */
+		struct io_request *ioreq;
+
+		ioreq = kzalloc(sizeof(*ioreq), 0, 'DRBD');
+		if (ioreq == NULL) {
+			return -ENOMEM;	/* TODO: cleanup */
+		}
+		ioreq->w.func = drbd_make_request_work;
+		INIT_LIST_HEAD(&ioreq->w.entry);
+		ioreq->drbd_device = dev->drbd_device; /* TODO: ref count ! */
+		ioreq->bio = bio;
+
+		queue_work(dev->io_workqueue, &ioreq->w);
 	}
 
 	return STATUS_SUCCESS;

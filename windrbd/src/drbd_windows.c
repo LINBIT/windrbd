@@ -1039,7 +1039,7 @@ static int run_singlethread_workqueue(struct workqueue_struct * wq)
                 {
                     struct work_struct_wrapper * wr = CONTAINING_RECORD(entry, struct work_struct_wrapper, element);
                     wr->w->func(wr->w);
-                    kfree(wr);	/* TODO: sure? */
+                    kfree(wr);
                 }
 		KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
                 break;
