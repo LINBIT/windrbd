@@ -534,6 +534,13 @@ struct block_device {
 	 * is called sequentially.
 	 */
 	spinlock_t complete_request_spinlock;
+
+	/* Workqueues for I/O. I/O sometimes happens in DPC (something
+	 * like a bottom half) and must not sleep (else BSOD). Call
+	 * drbd_make_request in this workqueue instead.
+	 */
+
+	struct workqueue_struct *io_workqueue;
 };
 
 	/* Starting with version 0.7.1, this is the device extension

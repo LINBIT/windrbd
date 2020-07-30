@@ -3245,6 +3245,27 @@ int windrbd_umount(struct block_device *bdev)
 	return 0;
 }
 
+static int windrbd_allocate_io_workqueue(struct block_device *bdev)
+{
+	bdev->io_workqueue = alloc_ordered_workqueue("windrbd_io", 0);
+
+	if (bdev->io_workqueue == NULL)
+		return -ENOMEM;
+
+	return 0;
+}
+
+static void windrbd_destroy_io_workqueue(struct block_device *bdev)
+{
+	if (bdev->io_workqueue != NULL) {
+		flush_workqueue(bdev->io_workqueue);
+		destroy_workqueue(bdev->io_workqueue);
+		bdev->io_workqueue = NULL;
+	} else {
+		printk("Warning windrbd_destroy_io_workqueue called without workqueue being allocated.\n");
+	}
+}
+
 int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 {
 	if (!device->this_bdev->is_bootdevice) {
@@ -3256,6 +3277,9 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
+		}
+		if (windrbd_allocate_io_workqueue(device->this_bdev) < 0) {
+			printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");
 		}
 	}
 	KeSetEvent(&device->this_bdev->primary_event, 0, FALSE);
@@ -3273,6 +3297,7 @@ int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
 		}
+		windrbd_destroy_io_workqueue(device->this_bdev);
 	}
 
 	KeClearEvent(&device->this_bdev->primary_event);
