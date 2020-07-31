@@ -367,3 +367,4 @@ Version history
  * 0.10.7 (May 6, 2020): Online verify, drbdadm status as non-admin and other
 			 useful mini-features (see WHATSNEW.md).
  * 1.0.0-rc1 (Jul 3, 2020): Stability fixes
+ * 1.0.0-rc2 (Jul 3, 2020): Fixed fio BSOD

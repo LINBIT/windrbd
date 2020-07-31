@@ -1,3 +1,8 @@
+What's new in version 1.0.0-rc2
+-------------------------------
+
+Fixed fio BSOD as reported as issue #2 on github
+
 What's new in version 1.0.0-rc1
 -------------------------------
 
