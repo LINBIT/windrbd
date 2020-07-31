@@ -1505,6 +1505,10 @@ dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\
 		}
 #endif
 
+		if (dev->io_workqueue == NULL) {
+			printk("Warning: dev->io_workqueue is NULL on I/O handler.\n");
+			return -EINVAL;	/* TODO: cleanup */
+		}
 		/* drbd_make_request(dev->drbd_device->rq_queue, bio); */
 		struct io_request *ioreq;
 
