@@ -1518,7 +1518,12 @@ dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\
 		}
 		ioreq->w.func = drbd_make_request_work;
 		INIT_LIST_HEAD(&ioreq->w.entry);
-		ioreq->drbd_device = dev->drbd_device; /* TODO: ref count ! */
+
+			/* No need for refcount. workqueue is flushed
+			 * and destroyed when becoming secondary, so
+			 * no in-flight requests on drbdadm down.
+			 */
+		ioreq->drbd_device = dev->drbd_device;
 		ioreq->bio = bio;
 
 		queue_work(dev->io_workqueue, &ioreq->w);
