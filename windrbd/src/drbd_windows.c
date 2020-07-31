@@ -3269,6 +3269,9 @@ static void windrbd_destroy_io_workqueue(struct block_device *bdev)
 int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 {
 	if (!device->this_bdev->is_bootdevice) {
+		if (windrbd_allocate_io_workqueue(device->this_bdev) < 0) {
+			printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");
+		}
 		if (windrbd_create_windows_device(device->this_bdev) != 0)
 			windrbd_device_error(device, err_str, "Warning: Couldn't create windows device for volume %d\n", device->vnr);
 
@@ -3277,9 +3280,6 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
-		}
-		if (windrbd_allocate_io_workqueue(device->this_bdev) < 0) {
-			printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");
 		}
 	}
 	KeSetEvent(&device->this_bdev->primary_event, 0, FALSE);
