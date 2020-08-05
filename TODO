@@ -141,6 +141,9 @@ TODO: Bug: Random crashes (BSOD, ..) when running windrbd install-bus-device
 
 	These might be a problem with WinDRBD bus devices installed manually.
 
+	Update: AddDevice was NULL sometimes, maybe that's the bug?
+	(fixed with 1.0.0-rc3)
+
 TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
 
 	After ~100 iterations. Not clear why. Resource was connected.
