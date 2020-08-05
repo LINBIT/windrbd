@@ -3072,6 +3072,13 @@ int windrbd_set_mount_point_utf16(struct block_device *dev, const wchar_t *mount
 	return 0;
 }
 
+
+/* TODO: IMHO this is dead code. Boot devices get their mount points
+ * from the Windows kernel (partition manager or something like that).
+ */
+
+#if 0
+
 static int create_windows_device_and_mount_it(struct block_device *block_device)
 {
 	int ret;
@@ -3089,6 +3096,8 @@ static int create_windows_device_and_mount_it(struct block_device *block_device)
 
 	return ret;
 }
+
+#endif
 
 int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_point)
 {
@@ -3116,10 +3125,33 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 		printk("Warning: could not set mount point, error is %d\n", ret);
 		return ret;
 	}
+/*
 	if (block_device->is_bootdevice)
 		ret = create_windows_device_and_mount_it(block_device);
+*/
 
 	return ret;
+}
+
+static int windrbd_allocate_io_workqueue(struct block_device *bdev)
+{
+	bdev->io_workqueue = alloc_ordered_workqueue("windrbd_io", 0);
+
+	if (bdev->io_workqueue == NULL)
+		return -ENOMEM;
+
+	return 0;
+}
+
+static void windrbd_destroy_io_workqueue(struct block_device *bdev)
+{
+	if (bdev->io_workqueue != NULL) {
+		flush_workqueue(bdev->io_workqueue);
+		destroy_workqueue(bdev->io_workqueue);
+		bdev->io_workqueue = NULL;
+	} else {
+		printk("Warning windrbd_destroy_io_workqueue called without workqueue being allocated.\n");
+	}
 }
 
 /* This is intended to be used by boot code where there are
@@ -3140,6 +3172,10 @@ int windrbd_create_windows_device_for_minor(int minor)
 	block_device = drbd_device->this_bdev;
 	if (block_device == NULL)
 		return -ENOENT;
+
+	if (windrbd_allocate_io_workqueue(block_device) < 0) {
+		printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");
+	}
 
 	ret = windrbd_create_windows_device(block_device);
 	if (ret != 0) {
@@ -3245,27 +3281,6 @@ int windrbd_umount(struct block_device *bdev)
 	return 0;
 }
 
-static int windrbd_allocate_io_workqueue(struct block_device *bdev)
-{
-	bdev->io_workqueue = alloc_ordered_workqueue("windrbd_io", 0);
-
-	if (bdev->io_workqueue == NULL)
-		return -ENOMEM;
-
-	return 0;
-}
-
-static void windrbd_destroy_io_workqueue(struct block_device *bdev)
-{
-	if (bdev->io_workqueue != NULL) {
-		flush_workqueue(bdev->io_workqueue);
-		destroy_workqueue(bdev->io_workqueue);
-		bdev->io_workqueue = NULL;
-	} else {
-		printk("Warning windrbd_destroy_io_workqueue called without workqueue being allocated.\n");
-	}
-}
-
 int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 {
 	if (!device->this_bdev->is_bootdevice) {
@@ -3320,6 +3335,7 @@ static void windrbd_destroy_block_device(struct kref *kref)
 	}
 	if (bdev->windows_device != NULL) {
 		windrbd_remove_windows_device(bdev);
+		windrbd_destroy_io_workqueue(bdev);
 	}
 
 		/* Do this after removing device, so that we
