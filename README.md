@@ -369,3 +369,4 @@ Version history
  * 1.0.0-rc1 (Jul 3, 2020): Stability fixes
  * 1.0.0-rc2 (Jul 30, 2020): Fixed fio BSOD
  * 1.0.0-rc3 (Aug 4, 2020): Fixed BSOD on upgrade
+ * 1.0.0-rc4 (Aug 5, 2020): Fixed boot failure introduced with 1.0.0-rc2

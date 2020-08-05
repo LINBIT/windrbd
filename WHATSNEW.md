@@ -1,3 +1,8 @@
+What's new in version 1.0.0-rc4
+-------------------------------
+
+Fixed boot failure introduced with 1.0.0-rc2
+
 What's new in version 1.0.0-rc3
 -------------------------------
 
