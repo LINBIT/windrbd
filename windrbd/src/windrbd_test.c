@@ -211,6 +211,8 @@ static struct mutex test_mutex;
 static struct semaphore test_semaphore;
 static struct rw_semaphore test_rw_semaphore;
 
+	/* TODO: base is always 10 */
+
 static unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base)
 {
         unsigned long long val = 0;
@@ -822,6 +824,52 @@ void mutex_trylock_test(void)
 		 */
 }
 
+struct object {
+	struct work_struct work;
+	int counter;
+};
+
+static void workqueue_worker(struct work_struct *work)
+{
+	struct object *obj = container_of(work, struct object, work);
+
+	obj->counter++;
+}
+
+static void workqueue_test(int argc, const char ** argv)
+{
+	struct workqueue_struct *w;
+	struct object *obj;
+
+	int i, n;
+
+	if (argc > 1)
+		n = my_strtoull(argv[1], NULL, 10);
+	else
+		n = 100;
+
+	w = alloc_ordered_workqueue("test%d", 0, 1);
+	if (w == NULL) {
+		printk("could not allocate workqueue\n");
+		return;
+	}
+	obj = kmalloc(sizeof(*obj), 0, 'DRBD');
+	if (obj == NULL) {
+		printk("could not allocate object\n");
+		return;
+	}
+	obj->work.func = workqueue_worker;
+
+	for (i=0;i<n;i++)
+		queue_work(w, &obj->work);
+
+	flush_workqueue(w);
+	printk("obj->counter is %d (should be %d)\n", obj->counter, n);
+
+	kfree(obj);
+	destroy_workqueue(w);
+}
+
 void argv_test(int argc, char ** argv)
 {
 	int i;
@@ -889,6 +937,8 @@ void test_main(const char *arg)
 		debug_printks_enabled = 1;
 	if (strcmp(argv[0], "disable_debug_printks") == 0)
 		debug_printks_enabled = 0;
+	if (strcmp(argv[0], "workqueue_test") == 0)
+		workqueue_test(argc, argv);
 
 kfree_argv:
 	kfree(argv);
