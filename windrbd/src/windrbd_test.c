@@ -836,17 +836,43 @@ static void workqueue_worker(struct work_struct *work)
 	obj->counter++;
 }
 
+struct workqueue_params {
+	struct object *obj;
+	struct workqueue_struct *w;
+	long long n;
+	struct completion completion;
+};
+
+static int queue_work_thread(void *pp)
+{
+	struct workqueue_params *p = pp;
+	long long i;
+
+	for (i=0;i<p->n;i++)
+		queue_work(p->w, &p->obj->work);
+
+	complete(&p->completion);
+
+	return 0;
+}
+
 static void workqueue_test(int argc, const char ** argv)
 {
 	struct workqueue_struct *w;
 	struct object *obj;
 
-	int i, n;
+	long long i, n;
+	int j, num_threads;
+
+	struct workqueue_params **params;
+
+	n = 100;
+	num_threads = 1;
 
 	if (argc > 1)
 		n = my_strtoull(argv[1], NULL, 10);
-	else
-		n = 100;
+	if (argc > 2)
+		num_threads = my_strtoull(argv[2], NULL, 10);
 
 	w = alloc_ordered_workqueue("test%d", 0, 1);
 	if (w == NULL) {
@@ -860,11 +886,24 @@ static void workqueue_test(int argc, const char ** argv)
 	}
 	obj->work.func = workqueue_worker;
 
-	for (i=0;i<n;i++)
-		queue_work(w, &obj->work);
+	params = kmalloc(sizeof(**params)*num_threads, 0, 'DRBD');
+	if (params == NULL) {
+		printk("Could not allocate params\n");
+		return;
+	}
+	for (j=0;j<num_threads;j++) {
+		params[j]->n = n;
+		params[j]->obj = obj;
+		params[j]->w = w;
+		init_completion(&params[j]->completion);
+
+		kthread_run(queue_work_thread, &params[j], "workqueue_submitter");
+	}
+	for (j=0;j<num_threads;j++)
+		wait_for_completion(&params[j]->completion);
 
 	flush_workqueue(w);
-	printk("obj->counter is %d (should be %d)\n", obj->counter, n);
+	printk("obj->counter is %d (should be %d)\n", obj->counter, n*num_threads);
 
 	kfree(obj);
 	destroy_workqueue(w);
