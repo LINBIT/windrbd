@@ -850,8 +850,10 @@ static int queue_work_thread(void *pp)
 	long long i;
 
 printk("thread %d before queue_work\n", p->thread_num);
+/*
 	for (i=0;i<p->n;i++)
 		queue_work(p->w, &p->obj->work);
+*/
 
 printk("thread %d after queue_work\n", p->thread_num);
 
@@ -861,6 +863,8 @@ printk("queue_work thread %d completed\n", p->thread_num);
 
 	return 0;
 }
+
+/* windrbd 'workqueue-test 1000000 10' freezes the machine sometimes */
 
 static void workqueue_test(int argc, const char ** argv)
 {
