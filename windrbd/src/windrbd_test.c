@@ -864,7 +864,7 @@ static void workqueue_test(int argc, const char ** argv)
 	long long i, n;
 	int j, num_threads;
 
-	struct workqueue_params **params;
+	struct workqueue_params *params;
 
 	n = 100;
 	num_threads = 1;
@@ -886,27 +886,28 @@ static void workqueue_test(int argc, const char ** argv)
 	}
 	obj->work.func = workqueue_worker;
 
-	params = kmalloc(sizeof(**params)*num_threads, 0, 'DRBD');
+	params = kmalloc(sizeof(*params)*num_threads, 0, 'DRBD');
 	if (params == NULL) {
 		printk("Could not allocate params\n");
 		return;
 	}
 	for (j=0;j<num_threads;j++) {
-		params[j]->n = n;
-		params[j]->obj = obj;
-		params[j]->w = w;
-		init_completion(&params[j]->completion);
+		params[j].n = n;
+		params[j].obj = obj;
+		params[j].w = w;
+		init_completion(&params[j].completion);
 
 		kthread_run(queue_work_thread, &params[j], "workqueue_submitter");
 	}
 	for (j=0;j<num_threads;j++)
-		wait_for_completion(&params[j]->completion);
+		wait_for_completion(&params[j].completion);
 
 	flush_workqueue(w);
 	printk("obj->counter is %d (should be %d)\n", obj->counter, n*num_threads);
 
 	kfree(obj);
 	destroy_workqueue(w);
+	kfree(params);
 }
 
 void argv_test(int argc, char ** argv)
