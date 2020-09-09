@@ -1017,10 +1017,11 @@ void queue_work(struct workqueue_struct* queue, struct work_struct* work)
 		return;
 	}
 	work->pending = 1;
+	spin_unlock_irqrestore(&work->pending_lock, flags);
+
 	spin_lock_irqsave(&queue->work_list_lock, flags2);
 	list_add(&work->work_list, &queue->work_list);
 	spin_unlock_irqrestore(&queue->work_list_lock, flags2);
-	spin_unlock_irqrestore(&work->pending_lock, flags);
 
 		/* signal to run_singlethread_workqueue */
 	KeSetEvent(&queue->wakeupEvent, 0, FALSE);
@@ -1046,7 +1047,9 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 					break;
 				}
 				w = list_first_entry(&wq->work_list, struct work_struct, work_list);
+				list_del(&w->work_list);
 				spin_unlock_irqrestore(&wq->work_list_lock, flags);
+
 
 					/* TODO: needed? */
 				spin_lock_irqsave(&w->pending_lock, flags);
