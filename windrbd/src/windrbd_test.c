@@ -850,10 +850,8 @@ static int queue_work_thread(void *pp)
 	long long i;
 
 printk("thread %d before queue_work\n", p->thread_num);
-/*
 	for (i=0;i<p->n;i++)
 		queue_work(p->w, &p->obj->work);
-*/
 
 printk("thread %d after queue_work\n", p->thread_num);
 
