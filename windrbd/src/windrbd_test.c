@@ -840,6 +840,7 @@ struct workqueue_params {
 	struct object *obj;
 	struct workqueue_struct *w;
 	long long n;
+	int thread_num;
 	struct completion completion;
 };
 
@@ -848,10 +849,15 @@ static int queue_work_thread(void *pp)
 	struct workqueue_params *p = pp;
 	long long i;
 
+printk("thread %d before queue_work\n", p->thread_num);
 	for (i=0;i<p->n;i++)
 		queue_work(p->w, &p->obj->work);
 
+printk("thread %d after queue_work\n", p->thread_num);
+
 	complete(&p->completion);
+
+printk("queue_work thread %d completed\n", p->thread_num);
 
 	return 0;
 }
@@ -895,13 +901,16 @@ static void workqueue_test(int argc, const char ** argv)
 		params[j].n = n;
 		params[j].obj = obj;
 		params[j].w = w;
+		params[j].thread_num = j;
 		init_completion(&params[j].completion);
 
 		kthread_run(queue_work_thread, &params[j], "workqueue_submitter");
 	}
+printk("threads started now waiting for completion.\n");
 	for (j=0;j<num_threads;j++)
 		wait_for_completion(&params[j].completion);
 
+printk("threads completed now waiting for workqueue.\n");
 	flush_workqueue(w);
 	printk("obj->counter is %d (should be %d)\n", obj->counter, n*num_threads);
 
