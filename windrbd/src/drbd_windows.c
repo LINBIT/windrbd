@@ -1007,80 +1007,92 @@ void complete_all_debug(struct completion *c, const char *file, int line, const 
 
 struct workqueue_struct *system_wq;
 
-	/* TODO: make this void again, and get rid of struct wrapper */
-int queue_work(struct workqueue_struct* queue, struct work_struct* work)
+void queue_work(struct workqueue_struct* queue, struct work_struct* work)
 {
-    struct work_struct_wrapper * wr = kzalloc(sizeof(struct work_struct_wrapper), 0, '68DW');
-	if(!wr) {
-		return FALSE;
-	}
-    wr->w = work;
-    ExInterlockedInsertTailList(&queue->list_head, &wr->element, &queue->list_lock);
-    KeSetEvent(&queue->wakeupEvent, 0, FALSE); // signal to run_singlethread_workqueue
+	KIRQL flags, flags2;
 
-    return TRUE;
+	spin_lock_irqsave(&work->pending_lock, flags);
+	if (work->pending) {
+		spin_unlock_irqrestore(&work->pending_lock, flags);
+		return;
+	}
+	work->pending = 1;
+	spin_lock_irqsave(&queue->work_list_lock, flags2);
+	list_add(&work->work_list, &queue->work_list);
+	spin_unlock_irqrestore(&queue->work_list_lock, flags2);
+	spin_unlock_irqrestore(&work->pending_lock, flags);
+
+		/* signal to run_singlethread_workqueue */
+	KeSetEvent(&queue->wakeupEvent, 0, FALSE);
 }
 
-static int run_singlethread_workqueue(struct workqueue_struct * wq)
+static int run_singlethread_workqueue(struct workqueue_struct* wq)
 {
-    NTSTATUS status = STATUS_UNSUCCESSFUL;
-    PVOID waitObjects[2] = { &wq->wakeupEvent, &wq->killEvent };
-    int maxObj = 2;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	PVOID waitObjects[2] = { &wq->wakeupEvent, &wq->killEvent };
+	int maxObj = 2;
+	struct work_struct *w;
+	KIRQL flags;
 
-    while (wq->run)
-    {
-        status = KeWaitForMultipleObjects(maxObj, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
-        switch (status)
-        {
-            case STATUS_WAIT_0:
-            {
-                PLIST_ENTRY entry;
-                while ((entry = ExInterlockedRemoveHeadList(&wq->list_head, &wq->list_lock)) != 0)
-                {
-                    struct work_struct_wrapper * wr = CONTAINING_RECORD(entry, struct work_struct_wrapper, element);
-                    wr->w->func(wr->w);
-                    kfree(wr);
-                }
-		KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
-                break;
-            }
+	while (wq->run) {
+		status = KeWaitForMultipleObjects(maxObj, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
 
-            case (STATUS_WAIT_1) :
-                wq->run = FALSE;
-                break;
+		switch (status) {
+		case STATUS_WAIT_0:
+			while (1) {
+				spin_lock_irqsave(&wq->work_list_lock, flags);
+				if (list_empty(&wq->work_list)) {
+					spin_unlock_irqrestore(&wq->work_list_lock, flags);
+					break;
+				}
+				w = list_first_entry(&wq->work_list, struct work_struct, work_list);
+				spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
-            default:
-                continue;
-        }
-    }
+					/* TODO: needed? */
+				spin_lock_irqsave(&w->pending_lock, flags);
+				w->pending = 0;
+				spin_unlock_irqrestore(&w->pending_lock, flags);
+
+				w->func(w);
+			}
+			KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
+			break;
+
+		case STATUS_WAIT_1:
+			wq->run = FALSE;
+			break;
+		}
+	}
 	KeSetEvent(&wq->readyToFreeEvent, 0, FALSE);
 	return 0;
 }
 
 struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ...)
 {
-    struct workqueue_struct * wq = kzalloc(sizeof(struct workqueue_struct), 0, '31DW');
-    va_list args;
-    va_start(args, flags);	/* TODO: no va_end ?!?! */
+	struct workqueue_struct *wq;
+	va_list args;
 
+	wq = kzalloc(sizeof(*wq), 0, '31DW');
+	if (wq == NULL) {
+		printk("Warning: not enough memory for workqueue\n");
+		return NULL;
+	}
 
-    if (!wq)
-    {
-        return NULL;
-    }
+	KeInitializeEvent(&wq->wakeupEvent, SynchronizationEvent, FALSE);
+	KeInitializeEvent(&wq->killEvent, SynchronizationEvent, FALSE);
+	KeInitializeEvent(&wq->workFinishedEvent, SynchronizationEvent, FALSE);
+	KeInitializeEvent(&wq->readyToFreeEvent, SynchronizationEvent, FALSE);
 
-    KeInitializeEvent(&wq->wakeupEvent, SynchronizationEvent, FALSE);
-    KeInitializeEvent(&wq->killEvent, SynchronizationEvent, FALSE);
-    KeInitializeEvent(&wq->workFinishedEvent, SynchronizationEvent, FALSE);
-    KeInitializeEvent(&wq->readyToFreeEvent, SynchronizationEvent, FALSE);
-    InitializeListHead(&wq->list_head);
-    KeInitializeSpinLock(&wq->list_lock);
+	INIT_LIST_HEAD(&wq->work_list);
+	spin_lock_init(&wq->work_list_lock);
 
-	/* ignore error if string is too long */
+	va_start(args, flags);
+		/* ignore error if string is too long */
 	(void) RtlStringCbVPrintfA(wq->name, sizeof(wq->name)-1, fmt, args);
 	wq->name[sizeof(wq->name)-1] = '\0';
+	va_end(args);
 
-    wq->run = TRUE;
+	wq->run = TRUE;
 
 // printk("starting a workqueue thread\n");
 

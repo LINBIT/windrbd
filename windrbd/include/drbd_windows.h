@@ -385,8 +385,8 @@ struct kobject {
 #define WQ_MEM_RECLAIM 0
 #define WQNAME_LEN	32
 struct workqueue_struct {
-	LIST_ENTRY list_head;
-	KSPIN_LOCK list_lock;
+	struct list_head work_list;
+	spinlock_t work_list_lock;
 
 	int run;
 	KEVENT	wakeupEvent;
@@ -416,14 +416,11 @@ void timer_setup(struct timer_list *timer, void(*callback)(struct timer_list *ti
 
 
 struct work_struct {
-	struct list_head entry;
-	void (*func)(struct work_struct *work);
-};
+	int pending;
+	spinlock_t pending_lock;
+	struct list_head work_list;
 
-/* TODO: needed? element could be part of work_struct */
-struct work_struct_wrapper {
-    struct work_struct * w;
-    LIST_ENTRY  element;
+	void (*func)(struct work_struct *work);
 };
 
 struct block_device;
@@ -793,8 +790,10 @@ extern int fsync_bdev(struct block_device *bdev);
 	 do {                                                           \
 	       /* __init_work((_work), _onstack);        */  \
 	       /*  (_work)->data = (atomic_long_t) WORK_DATA_INIT(); */ \
-		INIT_LIST_HEAD(&(_work)->entry);                        \
+		INIT_LIST_HEAD(&(_work)->work_list);			\
+		spin_lock_init(&(_work)->pending_lock);			\
 		PREPARE_WORK((_work), (_func));                         \
+		(_work)->pending = 0;					\
 	} while (0)
 
 #define INIT_WORK(_work, _func)                                         \
@@ -923,15 +922,15 @@ static inline void assert_spin_locked(spinlock_t *lock)
 
 
 struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ...);
-extern int queue_work(struct workqueue_struct* queue, struct work_struct* work);
+extern void queue_work(struct workqueue_struct* queue, struct work_struct* work);
 extern void flush_workqueue(struct workqueue_struct *wq);
 extern void destroy_workqueue(struct workqueue_struct *wq);
 
 extern struct workqueue_struct *system_wq;
 
-static inline bool schedule_work(struct work_struct *work)
+static inline void schedule_work(struct work_struct *work)
 {
-	return queue_work(system_wq, work);
+	queue_work(system_wq, work);
 }
 
 

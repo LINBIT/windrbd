@@ -1516,8 +1516,7 @@ dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\
 		if (ioreq == NULL) {
 			return -ENOMEM;	/* TODO: cleanup */
 		}
-		ioreq->w.func = drbd_make_request_work;
-		INIT_LIST_HEAD(&ioreq->w.entry);
+		INIT_WORK(&ioreq->w, drbd_make_request_work);
 
 			/* No need for refcount. workqueue is flushed
 			 * and destroyed when becoming secondary, so
