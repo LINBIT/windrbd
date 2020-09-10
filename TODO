@@ -36,6 +36,10 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: find a solution for the flush issue.
+
+	It should not print silly messages.
+
 TODO: Bug: inject-faults does BSOD with SCSI port devices
 
 	This hasn't been touched for a while and should be easy to
