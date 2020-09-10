@@ -1011,30 +1011,20 @@ void queue_work(struct workqueue_struct* queue, struct work_struct* work)
 {
 	KIRQL flags, flags2;
 
-printk("1\n");
 	spin_lock_irqsave(&work->pending_lock, flags);
-printk("2\n");
 	if (work->pending) {
-printk("3\n");
 		spin_unlock_irqrestore(&work->pending_lock, flags);
-printk("4\n");
 		return;
 	}
-printk("5\n");
 	work->pending = 1;
 	spin_unlock_irqrestore(&work->pending_lock, flags);
-printk("6\n");
 
 	spin_lock_irqsave(&queue->work_list_lock, flags2);
-printk("7\n");
 	list_add(&work->work_list, &queue->work_list);
-printk("8\n");
 	spin_unlock_irqrestore(&queue->work_list_lock, flags2);
-printk("9\n");
 
 		/* signal to run_singlethread_workqueue */
 	KeSetEvent(&queue->wakeupEvent, 0, FALSE);
-printk("a\n");
 }
 
 static int run_singlethread_workqueue(struct workqueue_struct* wq)
@@ -1046,46 +1036,29 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 	KIRQL flags;
 
 	while (wq->run) {
-printk("1\n");
 		status = KeWaitForMultipleObjects(maxObj, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
-printk("2\n");
 
 		switch (status) {
 		case STATUS_WAIT_0:
-printk("3\n");
 			while (1) {
-printk("4\n");
 				spin_lock_irqsave(&wq->work_list_lock, flags);
-printk("5\n");
 				if (list_empty(&wq->work_list)) {
-printk("6\n");
 					spin_unlock_irqrestore(&wq->work_list_lock, flags);
-printk("7\n");
 					break;
 				}
-printk("8\n");
 				w = list_first_entry(&wq->work_list, struct work_struct, work_list);
-printk("9\n");
 				list_del(&w->work_list);
-printk("a\n");
 				spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
-printk("b\n");
 
 					/* TODO: needed? */
 				spin_lock_irqsave(&w->pending_lock, flags);
-printk("c\n");
 				w->pending = 0;
-printk("d\n");
 				spin_unlock_irqrestore(&w->pending_lock, flags);
-printk("e\n");
 
 				w->func(w);
-printk("f\n");
 			}
-printk("g\n");
 			KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
-printk("h\n");
 			break;
 
 		case STATUS_WAIT_1:
