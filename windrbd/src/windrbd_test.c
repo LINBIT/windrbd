@@ -863,6 +863,9 @@ printk("queue_work thread %d completed\n", p->thread_num);
 }
 
 /* windrbd 'workqueue-test 1000000 10' freezes the machine sometimes */
+/* with new implementation windrbd 'workqueue-test 10000000 100' does
+   not freeze (however counter is less than expected value because
+   of pending logic). */
 
 static void workqueue_test(int argc, const char ** argv)
 {
@@ -892,6 +895,7 @@ static void workqueue_test(int argc, const char ** argv)
 		printk("could not allocate object\n");
 		return;
 	}
+	obj->counter = 0;
 	INIT_WORK(&obj->work, workqueue_worker);
 
 	params = kmalloc(sizeof(*params)*num_threads, 0, 'DRBD');
@@ -914,7 +918,7 @@ printk("threads started now waiting for completion.\n");
 
 printk("threads completed now waiting for workqueue.\n");
 	flush_workqueue(w);
-	printk("obj->counter is %d (should be %d)\n", obj->counter, n*num_threads);
+	printk("obj->counter is %d (should be max %d)\n", obj->counter, n*num_threads);
 
 	kfree(obj);
 	destroy_workqueue(w);
