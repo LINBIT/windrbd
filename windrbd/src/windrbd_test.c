@@ -892,7 +892,7 @@ static void workqueue_test(int argc, const char ** argv)
 		printk("could not allocate object\n");
 		return;
 	}
-	obj->work.func = workqueue_worker;
+	INIT_WORK(&obj->work, workqueue_worker);
 
 	params = kmalloc(sizeof(*params)*num_threads, 0, 'DRBD');
 	if (params == NULL) {
