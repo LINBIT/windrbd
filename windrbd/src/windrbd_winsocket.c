@@ -399,8 +399,12 @@ exit_interruptible();
 			case STATUS_WAIT_1:
 				return -EINTR;
 			case STATUS_TIMEOUT:
-//				return -EAGAIN; /* hangs Win7 VM? */
-				return -ETIMEDOUT;
+					/* Returning -ETIMEOUT here causes
+					 * the connection to be disconnected
+					 * which we don't want here. DRBD
+					 * knows how to handle this.
+					 */
+				return -EAGAIN;
 			default:
 				dbg("KeWaitForMultipleObjects returned unexpected error %x\n", status);
 				return winsock_to_linux_error(status);

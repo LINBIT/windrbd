@@ -40,6 +40,8 @@ TODO: Bug: find a solution for the flush issue.
 
 	It should not print silly messages.
 
+TODO: Code quality: maybe printk->dbg netlink message.
+
 TODO: Bug: inject-faults does BSOD with SCSI port devices
 
 	This hasn't been touched for a while and should be easy to
