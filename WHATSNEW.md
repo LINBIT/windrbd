@@ -1,3 +1,12 @@
+What's new in version 1.0.0-rc5
+-------------------------------
+
+Use SHA256 for signing files (EXE, SYS and CAT)
+
+Fixed connection loss bug
+
+Reengineered workqueues (improves system stability)
+
 What's new in version 1.0.0-rc4
 -------------------------------
 
