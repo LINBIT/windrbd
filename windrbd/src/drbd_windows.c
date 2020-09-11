@@ -1694,7 +1694,10 @@ static int make_flush_request(struct bio *bio)
 
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST) {
-			printk(KERN_INFO "Flush not supported by windows device, ignored\n");
+				/* seems to be the common case, only
+				   print for debugging.
+				 */
+			dbg(KERN_INFO "Flush not supported by windows device, ignored\n");
 			return 0;
 		}
 		printk(KERN_WARNING "flush request failed with status %x\n", status);
