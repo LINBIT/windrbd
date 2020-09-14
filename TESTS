@@ -1,5 +1,14 @@
 TODO: define tests to be run before releases.
 
+Sep 14 2020 
+1.0.0-rc5
+
+invalidate wait sync loop on secondary (Linux) primary doing I/O (Windows 7)
+
+After 6 iterations blocked:upper UpToDate on secondary, blocked:upper and StartingSyncS on Primary (Windows)
+
+-----------------------------------------
+
 Apr 28 2020
 
 invalidate remote loop without I/O
