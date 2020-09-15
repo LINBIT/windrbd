@@ -370,4 +370,4 @@ Version history
  * 1.0.0-rc2 (Jul 30, 2020): Fixed fio BSOD
  * 1.0.0-rc3 (Aug 4, 2020): Fixed BSOD on upgrade
  * 1.0.0-rc4 (Aug 5, 2020): Fixed boot failure introduced with 1.0.0-rc2
- * 1.0.0-rc4 (Sep 14, 2020): Reengineered workqueues, stability fixes.
+ * 1.0.0-rc5 (Sep 14, 2020): Reengineered workqueues, stability fixes.
