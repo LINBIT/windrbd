@@ -966,7 +966,7 @@ printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !page || ((int) len <= 0))
 		return -EINVAL;
 
-printk("2\n");
+printk("2 socket->error_status is %d\n", socket->error_status);
 	if (socket->error_status != 0)
 		return socket->error_status;
 
@@ -1063,7 +1063,7 @@ printk("c\n");
 		return (LONG) Irp->IoStatus.Information;
 	}
 	err = winsock_to_linux_error(status);
-	if (err != 0 && err != -ENOMEM && err != EAGAIN)
+	if (err != 0 && err != -ENOMEM && err != EAGAIN && err != EINTR)
 		socket->error_status = err;
 
 		/* Resources are freed by completion routine. */
@@ -1086,7 +1086,7 @@ out_have_sent:
 out_put_page:
 	put_page(page);
 
-	if (err != 0 && err != -ENOMEM && err != EAGAIN)
+	if (err != 0 && err != -ENOMEM && err != EAGAIN && err != EINTR)
 		socket->error_status = err;
 	return err;
 }
