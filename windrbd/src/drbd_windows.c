@@ -3266,17 +3266,21 @@ int windrbd_umount(struct block_device *bdev)
 	PKEVENT event;
 	HANDLE event_handle;
 
+printk("1\n");
 	if (bdev->mount_point.Buffer == NULL) {
 		printk("windrbd_umount() called without a known mount_point.\n");
 		return 0;
 	}
+printk("mount point is \"%S\"\n", bdev->mount_point.Buffer);
 	if (!bdev->is_mounted) {
 		printk("windrbd_umount() called while not mounted.\n");
 		return 0;
 	}
+printk("2\n");
 	InitializeObjectAttributes(&attr, &bdev->mount_point, OBJ_KERNEL_HANDLE, NULL, NULL);
 
 	event = IoCreateNotificationEvent(NULL, &event_handle);
+printk("3\n");
 	if (event == NULL) {
 		printk("IoCreateNotificationEvent failed.\n");
 		return -1;
@@ -3285,23 +3289,29 @@ int windrbd_umount(struct block_device *bdev)
 		 * not open the DRBD device, it is already freed.
 		 */
 
+printk("4\n");
 	status = ZwOpenFile(&f, GENERIC_READ, &attr, &iostat, FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
+printk("5\n");
 	if (status != STATUS_SUCCESS) {
 		printk("ZwOpenFile failed, status is %x\n", status);
 		return -1;
 	}
 
 	dbg("About to IoDeleteSymbolicLink(%S)\n", bdev->mount_point.Buffer);
+printk("6\n");
 	status = IoDeleteSymbolicLink(&bdev->mount_point);
+printk("7\n");
 	if (status != STATUS_SUCCESS) {
 		printk("Warning: Failed to remove symbolic link (drive letter) %S, status is %x\n", bdev->mount_point.Buffer, status);
 	}
 
+printk("8\n");
 	status = ZwFsControlFile(f, event_handle, NULL, NULL, &iostat, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0);
 	if (status == STATUS_PENDING) {
 		KeWaitForSingleObject(event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 		status = iostat.Status;
 	}
+printk("9\n");
 	ZwClose(event_handle);
 	if (status != STATUS_SUCCESS) {
 		printk("ZwFsControlFile failed, status is %x\n", status);
@@ -3310,7 +3320,9 @@ int windrbd_umount(struct block_device *bdev)
 	}
 	ZwClose(f);
 
+printk("a\n");
 	bdev->is_mounted = false;
+printk("b\n");
 	return 0;
 }
 

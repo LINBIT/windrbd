@@ -374,6 +374,7 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 	int num_objects;
 
 	while (1) {
+printk("1\n");
 		spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
 
 		if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf) {
@@ -389,9 +390,11 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 				wait_objects[1] = &current->sig_event;
 				num_objects = 2;
 			}
+printk("2 timeout is %lld\n", timeout.QuadPart);
 enter_interruptible();
 			status = KeWaitForMultipleObjects(num_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, &timeout, NULL);
 exit_interruptible();
+printk("3\n");
 
 			switch (status) {
 			case STATUS_WAIT_0:
@@ -960,23 +963,29 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	NTSTATUS status;
 	int err, err2;
 
+printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !page || ((int) len <= 0))
 		return -EINVAL;
 
+printk("2\n");
 	if (socket->error_status != 0)
 		return socket->error_status;
 
+printk("3\n");
 	get_page(page);		/* we might sleep soon, do this before */
 
+printk("4\n");
 	err = wait_for_sendbuf(socket, len);
 	if (err < 0)
 		goto out_put_page;
+printk("5\n");
 
 	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
 	if (WskBuffer == NULL) {
 		err = -ENOMEM;
 		goto out_have_sent;
 	}
+printk("6\n");
 
 	completion = kzalloc(sizeof(*completion), 0, 'DRBD');
 	if (completion == NULL) {
@@ -984,6 +993,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		goto out_free_wsk_buffer;
 	}
 
+printk("7\n");
 // printk("page: %p page->addr: %p page->size: %d offset: %d len: %d page->kref.refcount: %d\n", page, page->addr, page->size, offset, len, page->kref.refcount);
 
 	status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE, TRUE);
@@ -991,6 +1001,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		err = -ENOMEM;
 		goto out_free_completion;
 	}
+printk("8\n");
 
 	completion->page = page;
 	completion->wsk_buffer = WskBuffer;
@@ -998,12 +1009,14 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	completion->the_mdl = WskBuffer->Mdl;
 	kref_get(&socket->kref);
 
+printk("9\n");
 	err2 = add_completion(completion);
 	if (err2 != 0) {
 		err = -ENOMEM;
 		goto out_free_wsk_buffer_mdl;
 	}
 
+printk("a\n");
 	Irp = IoAllocateIrp(1, FALSE);
 	if (Irp == NULL) {
 		err = -ENOMEM;
@@ -1011,12 +1024,14 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	}
 	IoSetCompletionRoutine(Irp, send_page_completion_onlyonce, completion, TRUE, TRUE, TRUE);
 
+printk("b\n");
 	if (socket->no_delay)
 		flags |= WSK_FLAG_NODELAY;
 	else
 		flags &= ~WSK_FLAG_NODELAY;
 
 
+printk("c\n");
 	mutex_lock(&socket->wsk_mutex);
 
 	if (socket->wsk_socket == NULL) {

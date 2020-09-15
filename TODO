@@ -36,6 +36,11 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: ko-count = 0 freezes system
+
+	Doesn't wait for response when decrementing KO count after
+	50000 iterations of filling the log system freezes.
+
 TODO: Bug: find a solution for the flush issue.
 
 	It should not print silly messages.
