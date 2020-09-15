@@ -1049,7 +1049,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		return (LONG) Irp->IoStatus.Information;
 	}
 	err = winsock_to_linux_error(status);
-	if (err != 0 && err != -ENOMEM)
+	if (err != 0 && err != -ENOMEM && err != EAGAIN)
 		socket->error_status = err;
 
 		/* Resources are freed by completion routine. */
@@ -1072,7 +1072,7 @@ out_have_sent:
 out_put_page:
 	put_page(page);
 
-	if (err != 0 && err != -ENOMEM)
+	if (err != 0 && err != -ENOMEM && err != EAGAIN)
 		socket->error_status = err;
 	return err;
 }
