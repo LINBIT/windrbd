@@ -365,6 +365,8 @@ static NTSTATUS NTAPI send_page_completion_onlyonce(
 	return SendPageCompletionRoutine(DeviceObject, Irp, completion);
 }
 
+	/* NO printk's here it is in the UDP send path. */
+
 static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 {
 	KIRQL flags;
@@ -374,7 +376,6 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 	int num_objects;
 
 	while (1) {
-printk("1\n");
 		spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
 
 		if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf) {
@@ -390,11 +391,9 @@ printk("1\n");
 				wait_objects[1] = &current->sig_event;
 				num_objects = 2;
 			}
-printk("2 timeout is %lld\n", timeout.QuadPart);
 enter_interruptible();
 			status = KeWaitForMultipleObjects(num_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, &timeout, NULL);
 exit_interruptible();
-printk("3\n");
 
 			switch (status) {
 			case STATUS_WAIT_0:
