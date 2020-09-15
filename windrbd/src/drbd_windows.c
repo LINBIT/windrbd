@@ -2831,10 +2831,12 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 
 // printk("Start removing device %S\n", bdev->path_to_device.Buffer);
 
+printk("1\n");
 	if (bdev->windows_device == NULL) {
 		printk(KERN_WARNING "Windows device does not exist in block device %p.\n", bdev);
 		return;
 	}
+printk("2\n");
 
 		/* Thereby, the windows device will not be reported
 		 * again when rescanning the bus and will be deleted
@@ -2843,17 +2845,22 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 
 	bdev->delete_pending = true;
 
+printk("3\n");
 		/* counterpart to acquiring in bdget() */
 	IoReleaseRemoveLock(&bdev->remove_lock, NULL);
+printk("4\n");
 
 	remove_dos_link(bdev);
+printk("5\n");
 
 		/* Tell the PnP manager that we are about to disappear.
 		 * The device object will be deleted in a PnP REMOVE_DEVICE
 		 * request.
 		 */
 
+printk("6\n");
 	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
+printk("7\n");
 		if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
@@ -2868,7 +2875,9 @@ dbg("finished.\n");
 		printk("Not a PnP object, removing device manually.\n");
 		IoDeleteDevice(bdev->windows_device);
 	}
+printk("8\n");
 	bdev->windows_device = NULL;
+printk("9\n");
 }
 
 /* This is DRBD specific: DRBD calls this only once (same for
@@ -3163,13 +3172,19 @@ static int windrbd_allocate_io_workqueue(struct block_device *bdev)
 
 static void windrbd_destroy_io_workqueue(struct block_device *bdev)
 {
+printk("1\n");
 	if (bdev->io_workqueue != NULL) {
+printk("2\n");
 		flush_workqueue(bdev->io_workqueue);
+printk("3\n");
 		destroy_workqueue(bdev->io_workqueue);
+printk("4\n");
 		bdev->io_workqueue = NULL;
+printk("5\n");
 	} else {
 		printk("Warning windrbd_destroy_io_workqueue called without workqueue being allocated.\n");
 	}
+printk("6\n");
 }
 
 /* This is intended to be used by boot code where there are
@@ -3322,19 +3337,27 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 
 int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 {
+printk("1\n");
 	if (!device->this_bdev->is_bootdevice) {
+printk("2\n");
 		if (windrbd_umount(device->this_bdev) != 0)
 			windrbd_device_error(device, err_str, "Warning: couldn't umount volume %d\n", device->vnr);
+printk("3\n");
 		windrbd_remove_windows_device(device->this_bdev);
+printk("4\n");
 
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
 		}
+printk("5\n");
 		windrbd_destroy_io_workqueue(device->this_bdev);
+printk("6\n");
 	}
 
+printk("7\n");
 	KeClearEvent(&device->this_bdev->primary_event);
 
+printk("8\n");
 	return 0;
 }
 
