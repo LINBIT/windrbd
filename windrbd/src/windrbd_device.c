@@ -1386,7 +1386,9 @@ static void drbd_make_request_work(struct work_struct *w)
 {
 	struct io_request *ioreq = container_of(w, struct io_request, w);
 
+printk("1\n");
 	drbd_make_request(ioreq->drbd_device->rq_queue, ioreq->bio);
+printk("2\n");
 	kfree(ioreq);
 }
 
@@ -1397,6 +1399,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	int b;
 	struct bio_collection *common_data;
 
+printk("1\n");
 	if (rw == WRITE && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		printk("Attempt to write when not Primary\n");
 		return STATUS_INVALID_PARAMETER;
@@ -1525,7 +1528,9 @@ dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\
 		ioreq->drbd_device = dev->drbd_device;
 		ioreq->bio = bio;
 
+printk("2\n");
 		queue_work(dev->io_workqueue, &ioreq->w);
+printk("3\n");
 	}
 
 	return STATUS_SUCCESS;
