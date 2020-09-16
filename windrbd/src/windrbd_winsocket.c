@@ -305,11 +305,13 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
 
-		if (may_printk && completion->socket->error_status != 0 &&
-		    completion->socket->error_status != new_status)
-			dbg(KERN_WARNING "Last error status of socket was %d, now got %d (ntstatus %x)\n", completion->socket->error_status, new_status, Irp->IoStatus.Status);
+		if (new_status != -EAGAIN && new_status != -EINTR) {
+			if (may_printk && completion->socket->error_status != 0 &&
+			    completion->socket->error_status != new_status)
+				dbg(KERN_WARNING "Last error status of socket was %d, now got %d (ntstatus %x)\n", completion->socket->error_status, new_status, Irp->IoStatus.Status);
 
-		completion->socket->error_status = new_status;
+			completion->socket->error_status = new_status;
+		}
 	} else {
 			/* Only for connectionless sockets: clear error
 			 * status (they may "repair" themselves).
@@ -1063,7 +1065,7 @@ printk("c\n");
 		return (LONG) Irp->IoStatus.Information;
 	}
 	err = winsock_to_linux_error(status);
-	if (err != 0 && err != -ENOMEM && err != EAGAIN && err != EINTR)
+	if (err != 0 && err != -ENOMEM && err != -EAGAIN && err != -EINTR)
 		socket->error_status = err;
 
 		/* Resources are freed by completion routine. */
@@ -1086,7 +1088,7 @@ out_have_sent:
 out_put_page:
 	put_page(page);
 
-	if (err != 0 && err != -ENOMEM && err != EAGAIN && err != EINTR)
+	if (err != 0 && err != -ENOMEM && err != -EAGAIN && err != -EINTR)
 		socket->error_status = err;
 	return err;
 }
