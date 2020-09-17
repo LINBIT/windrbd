@@ -1007,13 +1007,14 @@ void complete_all_debug(struct completion *c, const char *file, int line, const 
 
 struct workqueue_struct *system_wq;
 
-void queue_work(struct workqueue_struct* queue, struct work_struct* work)
+void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 {
 	KIRQL flags, flags2;
 
 	spin_lock_irqsave(&work->pending_lock, flags);
 	if (work->pending) {
 		spin_unlock_irqrestore(&work->pending_lock, flags);
+printk("work %p pending on queue %s.\n", work, queue->name);
 		return;
 	}
 	work->pending = 1;

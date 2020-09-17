@@ -1276,6 +1276,7 @@ static void windrbd_bio_finished(struct bio * bio)
 	NTSTATUS status;
 	int error = blk_status_to_errno(bio->bi_status);
 
+printk("1 error is %d\n", error);
 	status = STATUS_SUCCESS;
 
 	if (error == 0) {

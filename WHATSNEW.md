@@ -1,3 +1,8 @@
+What's new in version 1.0.0-rc6
+-------------------------------
+
+Fixed ko count mechanism (connection is more stable)
+
 What's new in version 1.0.0-rc5
 -------------------------------
 
