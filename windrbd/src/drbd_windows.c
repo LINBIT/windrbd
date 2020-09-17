@@ -1697,12 +1697,14 @@ static int make_flush_request(struct bio *bio)
 				/* seems to be the common case, only
 				   print for debugging.
 				 */
-			dbg(KERN_INFO "Flush not supported by windows device, ignored\n");
+			printk(KERN_INFO "Flush not supported by windows device, ignored\n");
 			return 0;
 		}
 		printk(KERN_WARNING "flush request failed with status %x\n", status);
 		return EIO;	/* Positive value means do not call endio function */
 	}
+
+printk("flush succeeded\n");
 
 	return 0;
 }
