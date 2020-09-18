@@ -2850,12 +2850,10 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 
 // printk("Start removing device %S\n", bdev->path_to_device.Buffer);
 
-printk("1\n");
 	if (bdev->windows_device == NULL) {
 		printk(KERN_WARNING "Windows device does not exist in block device %p.\n", bdev);
 		return;
 	}
-printk("2\n");
 
 		/* Thereby, the windows device will not be reported
 		 * again when rescanning the bus and will be deleted
@@ -2864,22 +2862,17 @@ printk("2\n");
 
 	bdev->delete_pending = true;
 
-printk("3\n");
 		/* counterpart to acquiring in bdget() */
 	IoReleaseRemoveLock(&bdev->remove_lock, NULL);
-printk("4\n");
 
 	remove_dos_link(bdev);
-printk("5\n");
 
 		/* Tell the PnP manager that we are about to disappear.
 		 * The device object will be deleted in a PnP REMOVE_DEVICE
 		 * request.
 		 */
 
-printk("6\n");
 	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
-printk("7\n");
 		if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
@@ -2894,9 +2887,7 @@ dbg("finished.\n");
 		printk("Not a PnP object, removing device manually.\n");
 		IoDeleteDevice(bdev->windows_device);
 	}
-printk("8\n");
 	bdev->windows_device = NULL;
-printk("9\n");
 }
 
 /* This is DRBD specific: DRBD calls this only once (same for
@@ -3191,19 +3182,13 @@ static int windrbd_allocate_io_workqueue(struct block_device *bdev)
 
 static void windrbd_destroy_io_workqueue(struct block_device *bdev)
 {
-printk("1\n");
 	if (bdev->io_workqueue != NULL) {
-printk("2\n");
 		flush_workqueue(bdev->io_workqueue);
-printk("3\n");
 		destroy_workqueue(bdev->io_workqueue);
-printk("4\n");
 		bdev->io_workqueue = NULL;
-printk("5\n");
 	} else {
 		printk("Warning windrbd_destroy_io_workqueue called without workqueue being allocated.\n");
 	}
-printk("6\n");
 }
 
 /* This is intended to be used by boot code where there are
@@ -3285,21 +3270,18 @@ int windrbd_umount(struct block_device *bdev)
 	PKEVENT event;
 	HANDLE event_handle;
 
-printk("1\n");
 	if (bdev->mount_point.Buffer == NULL) {
 		printk("windrbd_umount() called without a known mount_point.\n");
 		return 0;
 	}
-printk("mount point is \"%S\"\n", bdev->mount_point.Buffer);
+// printk("mount point is \"%S\"\n", bdev->mount_point.Buffer);
 	if (!bdev->is_mounted) {
 		printk("windrbd_umount() called while not mounted.\n");
 		return 0;
 	}
-printk("2\n");
 	InitializeObjectAttributes(&attr, &bdev->mount_point, OBJ_KERNEL_HANDLE, NULL, NULL);
 
 	event = IoCreateNotificationEvent(NULL, &event_handle);
-printk("3\n");
 	if (event == NULL) {
 		printk("IoCreateNotificationEvent failed.\n");
 		return -1;
@@ -3308,29 +3290,23 @@ printk("3\n");
 		 * not open the DRBD device, it is already freed.
 		 */
 
-printk("4\n");
 	status = ZwOpenFile(&f, GENERIC_READ, &attr, &iostat, FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
-printk("5\n");
 	if (status != STATUS_SUCCESS) {
 		printk("ZwOpenFile failed, status is %x\n", status);
 		return -1;
 	}
 
 	dbg("About to IoDeleteSymbolicLink(%S)\n", bdev->mount_point.Buffer);
-printk("6\n");
 	status = IoDeleteSymbolicLink(&bdev->mount_point);
-printk("7\n");
 	if (status != STATUS_SUCCESS) {
 		printk("Warning: Failed to remove symbolic link (drive letter) %S, status is %x\n", bdev->mount_point.Buffer, status);
 	}
 
-printk("8\n");
 	status = ZwFsControlFile(f, event_handle, NULL, NULL, &iostat, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0);
 	if (status == STATUS_PENDING) {
 		KeWaitForSingleObject(event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 		status = iostat.Status;
 	}
-printk("9\n");
 	ZwClose(event_handle);
 	if (status != STATUS_SUCCESS) {
 		printk("ZwFsControlFile failed, status is %x\n", status);
@@ -3339,9 +3315,7 @@ printk("9\n");
 	}
 	ZwClose(f);
 
-printk("a\n");
 	bdev->is_mounted = false;
-printk("b\n");
 	return 0;
 }
 
@@ -3368,27 +3342,19 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 
 int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 {
-printk("1\n");
 	if (!device->this_bdev->is_bootdevice) {
-printk("2\n");
 		if (windrbd_umount(device->this_bdev) != 0)
 			windrbd_device_error(device, err_str, "Warning: couldn't umount volume %d\n", device->vnr);
-printk("3\n");
 		windrbd_remove_windows_device(device->this_bdev);
-printk("4\n");
 
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
 		}
-printk("5\n");
 		windrbd_destroy_io_workqueue(device->this_bdev);
-printk("6\n");
 	}
 
-printk("7\n");
 	KeClearEvent(&device->this_bdev->primary_event);
 
-printk("8\n");
 	return 0;
 }
 

@@ -36,11 +36,6 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Bug: ko-count = 0 freezes system
-
-	Doesn't wait for response when decrementing KO count after
-	50000 iterations of filling the log system freezes.
-
 TODO: Bug: find a solution for the flush issue.
 
 	It should not print silly messages.
@@ -6853,4 +6848,9 @@ Done: Test: Test with IIS
 	contents can be hosted on all drives (also on samba shares).
 	Serving from a WinDRBD disk device works. Maybe also test
 	a data device.
+
+Done: Bug: ko-count = 0 freezes system
+
+	Doesn't wait for response when decrementing KO count after
+	50000 iterations of filling the log system freezes.
 
