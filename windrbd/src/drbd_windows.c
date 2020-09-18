@@ -1010,7 +1010,9 @@ struct workqueue_struct *system_wq;
 void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 {
 	KIRQL flags, flags2;
+	struct run_work_struct *run_work;
 
+#if 0
 	spin_lock_irqsave(&work->pending_lock, flags);
 	if (work->pending) {
 		spin_unlock_irqrestore(&work->pending_lock, flags);
@@ -1019,9 +1021,19 @@ printk("work %p pending on queue %s.\n", work, queue->name);
 	}
 	work->pending = 1;
 	spin_unlock_irqrestore(&work->pending_lock, flags);
+#endif
+
+	run_work = kmalloc(sizeof(*run_work), 0, 'DRBD');
+	if (run_work == NULL) {
+		printk("Warning: could not allocate run_work.\n");
+		return;
+	}
+
+	run_work->work = work;
+	run_work->func = work->func;
 
 	spin_lock_irqsave(&queue->work_list_lock, flags2);
-	list_add(&work->work_list, &queue->work_list);
+	list_add(&run_work->work_list, &queue->work_list);
 	spin_unlock_irqrestore(&queue->work_list_lock, flags2);
 
 		/* signal to run_singlethread_workqueue */
@@ -1033,7 +1045,8 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	PVOID waitObjects[2] = { &wq->wakeupEvent, &wq->killEvent };
 	int maxObj = 2;
-	struct work_struct *w;
+//	struct work_struct *w;
+	struct run_work_struct *run_work;
 	KIRQL flags;
 
 	while (wq->run) {
@@ -1047,17 +1060,20 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 					spin_unlock_irqrestore(&wq->work_list_lock, flags);
 					break;
 				}
-				w = list_first_entry(&wq->work_list, struct work_struct, work_list);
-				list_del(&w->work_list);
+				run_work = list_first_entry(&wq->work_list, struct run_work_struct, work_list);
+				list_del(&run_work->work_list);
 				spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
 
+#if 0
 					/* TODO: needed? */
 				spin_lock_irqsave(&w->pending_lock, flags);
 				w->pending = 0;
 				spin_unlock_irqrestore(&w->pending_lock, flags);
+#endif
 
-				w->func(w);
+				run_work->func(run_work->work);
+				kfree(run_work);
 			}
 			KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
 			break;
