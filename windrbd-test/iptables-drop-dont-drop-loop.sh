@@ -1,10 +1,10 @@
 #!/bin/bash
 # run as root on a Linux host port is hardcoded to 7600
 i=0
-# PORT=7600
-# RES=w0
-PORT=7695
-RES=windows10-boot
+PORT=7600
+RES=w0
+# PORT=7695
+# RES=windows10-boot
 
 while true
 do 
