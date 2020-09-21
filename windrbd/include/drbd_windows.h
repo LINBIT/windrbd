@@ -416,16 +416,9 @@ void timer_setup(struct timer_list *timer, void(*callback)(struct timer_list *ti
 
 
 struct work_struct {
-/*	int pending;
+	int pending;
 	spinlock_t pending_lock;
-*/
-
-	void (*func)(struct work_struct *work);
-};
-
-struct run_work_struct {
 	struct list_head work_list;
-	struct work_struct *work;
 
 	void (*func)(struct work_struct *work);
 };
@@ -795,7 +788,12 @@ extern int fsync_bdev(struct block_device *bdev);
 
 #define __INIT_WORK(_work, _func, _onstack)                             \
 	 do {                                                           \
+	       /* __init_work((_work), _onstack);        */  \
+	       /*  (_work)->data = (atomic_long_t) WORK_DATA_INIT(); */ \
+		INIT_LIST_HEAD(&(_work)->work_list);			\
+		spin_lock_init(&(_work)->pending_lock);			\
 		PREPARE_WORK((_work), (_func));                         \
+		(_work)->pending = 0;					\
 	} while (0)
 
 #define INIT_WORK(_work, _func)                                         \
