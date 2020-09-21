@@ -1696,17 +1696,17 @@ static int make_flush_request(struct bio *bio)
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST) {
 				/* seems to be the common case, only
-				   print for debugging.
+				   print for debugging. For Windows7.
 				 */
-			printk(KERN_INFO "Flush not supported by windows device, ignored\n");
+			dbg(KERN_INFO "Flush not supported by windows device, ignored\n");
 			return 0;
 		}
 		printk(KERN_WARNING "flush request failed with status %x\n", status);
 		return EIO;	/* Positive value means do not call endio function */
 	}
 
-printk("flush succeeded\n");
-
+	/* For Server 2016 (probably also Windows 10) kernels this succeeds. */
+	dbg("flush succeeded\n");
 	return 0;
 }
 
