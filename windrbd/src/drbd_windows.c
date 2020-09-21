@@ -1014,11 +1014,15 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 	spin_lock_irqsave(&work->pending_lock, flags);
 	if (work->pending) {
 		spin_unlock_irqrestore(&work->pending_lock, flags);
-printk("work %p pending on queue %s.\n", work, queue->name);
+		if (queue != work->orig_queue || work->orig_func != work->func)
+			printk("work %p pending on queue %s: queue or func have changed: queue is %p (%s) work->orig_queue is %p (%s) work->orig_func is %p work->func is %p\n", queue, queue->name, work->orig_queue, work->orig_queue->name, work->orig_func, work->func);
 		return;
 	}
 	work->pending = 1;
 	spin_unlock_irqrestore(&work->pending_lock, flags);
+
+	work->orig_queue = queue;
+	work->orig_func = work->func;
 
 	spin_lock_irqsave(&queue->work_list_lock, flags2);
 	list_add(&work->work_list, &queue->work_list);

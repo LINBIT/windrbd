@@ -421,6 +421,10 @@ struct work_struct {
 	struct list_head work_list;
 
 	void (*func)(struct work_struct *work);
+
+		/* For checking if they change */
+	struct workqueue_struct *orig_queue;
+	void (*orig_func)(struct work_struct *work);
 };
 
 struct block_device;
