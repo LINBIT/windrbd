@@ -36,11 +36,28 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Bug: find a solution for the flush issue.
-
-	It should not print silly messages.
-
 TODO: Code quality: maybe printk->dbg netlink message.
+
+TODO: Bug: Hangs in Disconnecting on Disconnect
+
+	Server 2016 (Seconary) doing Connect/Disconnect loop
+	after ~6 iterations it hangs. Commit is 06db1f15
+	(with pending flag in work queues).
+
+	Server 2016 (Primary) doing I/O.
+
+	Update: Probably related: BSOD 0xD1 on Windows 7 side
+	when interrupting sync (by running drbdadm disconnect)
+	This time with I/O running on peer (Linux).
+
+TODO: Bug: BSOD when removing network interface
+
+	This is an uncommon cause but should be fixed. When
+	doing:
+
+	ipconfig /release <eth-interface>
+
+	it (WinDRBD?) sometimes BSODs.
 
 TODO: Bug: inject-faults does BSOD with SCSI port devices
 
@@ -71,52 +88,6 @@ TODO: Bug: Primary detaches when secondary hard fails.
 
 	Reported by: Abhishek Jain <abhishek@maxisinfotech.com>
 
-TODO: Bug: Fix fio sequential write connection loss.
-
-	Progress..somewhere around complete_conflicting_writes there
-	it may be. Update: yes we hand in conflicting writes. The exit
-	condition is never met (tried with busy looping).
-
-	It seems that a write request is never completed. We don't
-	get any completion from the network layer at a certain point.
-	(SendPageCompletion never called).
-
-	Update: SendPageCompletion is ok but we stop receiving (recv()
-	not called any more).
-
-	Update: Now serializing IoCompleteRequest() calls, which made
-	things better but did not solve the problem. We found that
-	for one sector, there are 11 SCSI requests but 12 IoCompleteRequests
-	(IoCompleteRequest for an I/O that did not exist) which is
-	probably the root cause of the problem.
-
-	ack_receiver calls end_io(). In some cmd handler (which one?)
-
-	recheck firewall rules (maybe we can reconnect) on windows10
-	boot VM.
-
-	It seems only a problem on Windows 10 (it works with Windows 7)
-	and it is independent of boot source (also happens with disk
-	device diskless primary on a directly booted windows 10).
-	data device? diskful primary?
-
-	Update: Not on diskful primary but on data device. Seems to
-	happen only when there is a partition table on the device.
-
-	Solution is to monitor IRPs and complete IRPs (again) with an
-	error if completion takes longer than, say 5 seconds. Then
-	hopefully ack_receiver thread can continue. (also 1 second
-	would be ok, completion usually takes some milliseconds).
-
-	Update: No this hangs the machine. Fix it later (seems to
-	be some sort of Windows bug)...
-
-	Now, try with seperate thread(s) doing the completion.
-
-	Update: Yes this solves it (creating seperate thread for
-	every completion now, this is bad for throughput but it
-	fixes the fio problem).
-
 TODO: Feature: Resource agent for Microsoft cluster manager
 
 	In progress: Install Server 2016 machines (again)
@@ -142,13 +113,6 @@ TODO: Bug: freeze on disconnect-connect-waitconnect loop
 	test to terminate).
 
 TODO: Documentation: User's guide
-
-TODO: Bug: Random crashes (BSOD, ..) when running windrbd install-bus-device
-
-	These might be a problem with WinDRBD bus devices installed manually.
-
-	Update: AddDevice was NULL sometimes, maybe that's the bug?
-	(fixed with 1.0.0-rc3)
 
 TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
 
@@ -6853,4 +6817,67 @@ Done: Bug: ko-count = 0 freezes system
 
 	Doesn't wait for response when decrementing KO count after
 	50000 iterations of filling the log system freezes.
+
+Done: Bug: Fix fio sequential write connection loss.
+
+	Progress..somewhere around complete_conflicting_writes there
+	it may be. Update: yes we hand in conflicting writes. The exit
+	condition is never met (tried with busy looping).
+
+	It seems that a write request is never completed. We don't
+	get any completion from the network layer at a certain point.
+	(SendPageCompletion never called).
+
+	Update: SendPageCompletion is ok but we stop receiving (recv()
+	not called any more).
+
+	Update: Now serializing IoCompleteRequest() calls, which made
+	things better but did not solve the problem. We found that
+	for one sector, there are 11 SCSI requests but 12 IoCompleteRequests
+	(IoCompleteRequest for an I/O that did not exist) which is
+	probably the root cause of the problem.
+
+	ack_receiver calls end_io(). In some cmd handler (which one?)
+
+	recheck firewall rules (maybe we can reconnect) on windows10
+	boot VM.
+
+	It seems only a problem on Windows 10 (it works with Windows 7)
+	and it is independent of boot source (also happens with disk
+	device diskless primary on a directly booted windows 10).
+	data device? diskful primary?
+
+	Update: Not on diskful primary but on data device. Seems to
+	happen only when there is a partition table on the device.
+
+	Solution is to monitor IRPs and complete IRPs (again) with an
+	error if completion takes longer than, say 5 seconds. Then
+	hopefully ack_receiver thread can continue. (also 1 second
+	would be ok, completion usually takes some milliseconds).
+
+	Update: No this hangs the machine. Fix it later (seems to
+	be some sort of Windows bug)...
+
+	Now, try with seperate thread(s) doing the completion.
+
+	Update: Yes this solves it (creating seperate thread for
+	every completion now, this is bad for throughput but it
+	fixes the fio problem).
+
+	Update: Yannis confirmed that it works now, issue closed.
+
+Done: Bug: find a solution for the flush issue.
+
+	It should not print silly messages.
+	Update: It succeeds on Windows Server 2016 but not on
+	Windows 7 (which is unsupported).
+
+Done: Bug: Random crashes (BSOD, ..) when running windrbd install-bus-device
+
+	These might be a problem with WinDRBD bus devices installed manually.
+
+	Update: AddDevice was NULL sometimes, maybe that's the bug?
+	(fixed with 1.0.0-rc3)
+
+	Not observed lately, please re-open when it does happen again.
 
