@@ -1121,10 +1121,15 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
 void flush_workqueue(struct workqueue_struct *wq)
 {
 	PVOID waitObjects[2] = { &wq->workFinishedEvent, &wq->killEvent };
+	NTSTATUS status;
 
+printk("1\n");
 	KeResetEvent(&wq->workFinishedEvent);
+printk("2\n");
 	KeSetEvent(&wq->wakeupEvent, 0, FALSE);
-	KeWaitForMultipleObjects(2, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
+printk("3\n");
+	status = KeWaitForMultipleObjects(2, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
+printk("4 status is %x\n", status);
 }
 
 int threads_sleeping;
