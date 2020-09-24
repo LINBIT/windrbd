@@ -50,6 +50,14 @@ TODO: Bug: Hangs in Disconnecting on Disconnect
 	when interrupting sync (by running drbdadm disconnect)
 	This time with I/O running on peer (Linux).
 
+	Update: Use-after-free in conn_disconnect (_drbd_free_peer_req
+	called twice on same peer_req? Also cleanup_unacked_peer_requests
+	uses peer requests that already have been freed). Changing
+	mempool to kmalloc() and not freeing peer_req's in _drbd_free_peer_req
+	solves the BSOD. With mempool and removing mempool_free() it
+	does BSOD.
+	
+
 TODO: Bug: BSOD when removing network interface
 
 	This is an uncommon cause but should be fixed. When
