@@ -183,6 +183,12 @@ TODO: Test: how and when is flush to backing device done?
 
 TODOs for after Release 1.0 ----------------------------------------
 
+TODO: Bug: Several issues with 3 nodes setups.
+
+	As reported by Henry Kellner, connection problems and
+	sync inconsitency (node disk shows up as UpToDate and
+	Inconsitent on different nodes)
+
 TODO: Code quality: windrbd install-bus-device takes long to complete
 
 TODO: Feature: On loading kernel module, umhelper and logger should also be started.
