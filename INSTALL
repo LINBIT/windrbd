@@ -231,8 +231,25 @@ Need to install pyml (and stdcompat) from github sources
 
 git clone https://github.com/coccinelle/coccinelle.git
 
-autogen
+./autogen
 ./configure --disable-python
 # configure
 make
 make install
+
+----------
+
+Building DRBD:
+
+(need spatch --version at least 1.0.8 something see above for howto)
+
+git clone --recursive https://github.com/linbit/drbd-9.0
+cd drbd-9.0
+git checkout drbd-9.0
+git submodule update --checkout
+# DRBD 9.0.22
+git checkout fe2b59836bd
+git checkout -b jt/use-after-free
+git submodule update --checkout
+# DRBD 9.0.22 end
+make
