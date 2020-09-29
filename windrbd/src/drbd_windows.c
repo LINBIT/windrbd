@@ -1104,7 +1104,7 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
 
 // printk("starting a workqueue thread\n");
 
-	wq->thread = kthread_run(run_singlethread_workqueue, wq, "workqueue");
+	wq->thread = kthread_run(run_singlethread_workqueue, wq, wq->name);
 	if (IS_ERR(wq->thread)) {
 		printk("kthread_run failed on creating workqueue thread, err is %d\n", PTR_ERR(wq->thread));
 		kfree(wq);
