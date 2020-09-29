@@ -627,3 +627,13 @@ Press the Windows key + R then type gpedit.msc and click OK.
 Go to Computer Configuration > Administrative Templates > Windows Components > Windows Update.
 Double-click Configure Automatic Updates.
 Select Disabled in Configured Automatic Updates on the left, and click Apply and OK to disable the Windows automatic update feature. 
+
+--------
+
+Find ethernet address:
+
+virsh dump-xml <domain>
+
+plug/unplug network cable:
+
+virsh domif-setlink meine-windoof-vm de:ad:ba:ba:06:66 down
