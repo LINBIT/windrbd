@@ -1061,6 +1061,7 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 				w->pending = 0;
 				spin_unlock_irqrestore(&w->pending_lock, flags);
 
+printk("calling func ...\n");
 				w->func(w);
 			}
 			KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
@@ -1372,12 +1373,17 @@ void del_gendisk(struct gendisk *disk)
 
 void destroy_workqueue(struct workqueue_struct *wq)
 {
+printk("1\n");
 	if (wq->thread != NULL) {
+printk("2\n");
 		KeSetEvent(&wq->killEvent, 0, FALSE);
+printk("3\n");
 		KeWaitForSingleObject(&wq->readyToFreeEvent, Executive, KernelMode, FALSE, NULL);
+printk("4\n");
 	}
+printk("5\n");
 	kfree(wq);
-// printk("stopping a workqueue thread\n");
+printk("stopping a workqueue thread\n");
 }
 
 //Linux/block/genhd.c
