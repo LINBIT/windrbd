@@ -1063,14 +1063,12 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 				spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
 
-					/* TODO: needed? */
-					/* TODO: move after calling func! */
+// printk("calling func ...\n");
+				w->func(w);
+
 				spin_lock_irqsave(&w->pending_lock, flags);
 				w->pending = 0;
 				spin_unlock_irqrestore(&w->pending_lock, flags);
-
-// printk("calling func ...\n");
-				w->func(w);
 			}
 			KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
 			break;
