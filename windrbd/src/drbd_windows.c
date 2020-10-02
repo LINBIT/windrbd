@@ -1012,7 +1012,7 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 	KIRQL flags, flags2;
 
 // printk("1\n");
-	if (current != queue->thread) {
+//	if (current != queue->thread) {
 		spin_lock_irqsave(&work->pending_lock, flags);
 		if (work->pending) {
 			spin_unlock_irqrestore(&work->pending_lock, flags);
@@ -1020,14 +1020,17 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 				printk("work %p pending on queue %s: queue or func have changed: queue is %p (%s) work->orig_queue is %p (%s) work->orig_func is %p work->func is %p\n", queue, queue->name, work->orig_queue, work->orig_queue->name, work->orig_func, work->func);
 
 /* We get BSOD's again when commenting this out? */
-printk("queue_work: work %p already queued on queue %s\n", work, queue->name);
+// printk("queue_work: work %p already queued on queue %s\n", work, queue->name);
 			return;
 		}
 		work->pending = 1;
 		spin_unlock_irqrestore(&work->pending_lock, flags);
+#if 0
 	} else {	/* else we are in work function which may requeue always */
 		printk("worker function %p on queue %s rescheduled itself.\n", work, queue->name);
 	}
+#endif
+
 // printk("2\n");
 	work->orig_queue = queue;
 	work->orig_func = work->func;
