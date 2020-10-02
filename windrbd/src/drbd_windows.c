@@ -1011,7 +1011,7 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 {
 	KIRQL flags, flags2;
 
-printk("1\n");
+// printk("1\n");
 	spin_lock_irqsave(&work->pending_lock, flags);
 	if (work->pending) {
 		spin_unlock_irqrestore(&work->pending_lock, flags);
@@ -1022,19 +1022,19 @@ printk("1\n");
 	work->pending = 1;
 	spin_unlock_irqrestore(&work->pending_lock, flags);
 
-printk("2\n");
+// printk("2\n");
 	work->orig_queue = queue;
 	work->orig_func = work->func;
 
-printk("3\n");
+// printk("3\n");
 	spin_lock_irqsave(&queue->work_list_lock, flags2);
-	list_add(&work->work_list, &queue->work_list);
+	list_add_tail(&work->work_list, &queue->work_list);
 	spin_unlock_irqrestore(&queue->work_list_lock, flags2);
-printk("4\n");
+// printk("4\n");
 
 		/* signal to run_singlethread_workqueue */
 	KeSetEvent(&queue->wakeupEvent, 0, FALSE);
-printk("5\n");
+// printk("5\n");
 }
 
 static int run_singlethread_workqueue(struct workqueue_struct* wq)
@@ -1066,19 +1066,19 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 				w->pending = 0;
 				spin_unlock_irqrestore(&w->pending_lock, flags);
 
-printk("calling func ...\n");
+// printk("calling func ...\n");
 				w->func(w);
 			}
 			KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
 			break;
 
 		case STATUS_WAIT_1:
-printk("STATUS_WAIT_1\n");
+// printk("STATUS_WAIT_1\n");
 			wq->run = FALSE;
 			break;
 		}
 	}
-printk("exiting workqueue thread ...\n");
+// printk("exiting workqueue thread ...\n");
 	KeSetEvent(&wq->readyToFreeEvent, 0, FALSE);
 	return 0;
 }
@@ -1133,33 +1133,33 @@ void flush_workqueue(struct workqueue_struct *wq)
 	PVOID waitObjects[2] = { &wq->workFinishedEvent, &wq->killEvent };
 	NTSTATUS status;
 
-printk("1\n");
+// printk("1\n");
 	KeResetEvent(&wq->workFinishedEvent);
-printk("2\n");
+// printk("2\n");
 	KeSetEvent(&wq->wakeupEvent, 0, FALSE);
-printk("3\n");
+// printk("3\n");
 	status = KeWaitForMultipleObjects(2, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
-printk("4 status is %x\n", status);
-if (!list_empty(&wq->work_list)) {
-printk("Warning: wq->work_list not empty at exiting flush_workqueue\n");
-}
+// printk("4 status is %x\n", status);
+	if (!list_empty(&wq->work_list)) {
+		printk("Warning: wq->work_list not empty at exiting flush_workqueue\n");
+	}
 }
 
 void destroy_workqueue(struct workqueue_struct *wq)
 {
-printk("1\n");
+// printk("1\n");
 	if (wq->thread != NULL) {
-printk("about to flush workqueue ...\n");
+// printk("about to flush workqueue ...\n");
 		flush_workqueue(wq);
-printk("2 out of flush_workqueue\n");
+// printk("2 out of flush_workqueue\n");
 		KeSetEvent(&wq->killEvent, 0, FALSE);
-printk("3\n");
+// printk("3\n");
 		KeWaitForSingleObject(&wq->readyToFreeEvent, Executive, KernelMode, FALSE, NULL);
-printk("4\n");
+// printk("4\n");
 	}
-printk("5\n");
+// printk("5\n");
 	kfree(wq);
-printk("stopping a workqueue thread\n");
+// printk("stopping a workqueue thread\n");
 }
 
 int threads_sleeping;
