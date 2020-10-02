@@ -1012,18 +1012,20 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 	KIRQL flags, flags2;
 
 // printk("1\n");
-	spin_lock_irqsave(&work->pending_lock, flags);
-	if (work->pending) {
-		spin_unlock_irqrestore(&work->pending_lock, flags);
-		if (queue != work->orig_queue || work->orig_func != work->func)
-			printk("work %p pending on queue %s: queue or func have changed: queue is %p (%s) work->orig_queue is %p (%s) work->orig_func is %p work->func is %p\n", queue, queue->name, work->orig_queue, work->orig_queue->name, work->orig_func, work->func);
+	if (current != queue->thread) {
+		spin_lock_irqsave(&work->pending_lock, flags);
+		if (work->pending) {
+			spin_unlock_irqrestore(&work->pending_lock, flags);
+			if (queue != work->orig_queue || work->orig_func != work->func)
+				printk("work %p pending on queue %s: queue or func have changed: queue is %p (%s) work->orig_queue is %p (%s) work->orig_func is %p work->func is %p\n", queue, queue->name, work->orig_queue, work->orig_queue->name, work->orig_func, work->func);
 
 /* We get BSOD's again when commenting this out? */
-// printk("queue_work: work %p already queued on queue %s\n", work, queue->name);
-		return;
-	}
-	work->pending = 1;
-	spin_unlock_irqrestore(&work->pending_lock, flags);
+printk("queue_work: work %p already queued on queue %s\n", work, queue->name);
+			return;
+		}
+		work->pending = 1;
+		spin_unlock_irqrestore(&work->pending_lock, flags);
+	}	/* else we are in work function which may requeue always */
 
 // printk("2\n");
 	work->orig_queue = queue;
@@ -1063,6 +1065,9 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 				list_del(&w->work_list);
 				spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
+// printk("calling func ...\n");
+				w->func(w);
+
 		/* If we do this after calling func, it hangs in Disconnecting
 		 * (or disk Failed) state forever ... Update: no this also
 		 * happens when this is after calling func. Must be something
@@ -1072,8 +1077,6 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 				w->pending = 0;
 				spin_unlock_irqrestore(&w->pending_lock, flags);
 
-// printk("calling func ...\n");
-				w->func(w);
 			}
 			KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
 			break;
