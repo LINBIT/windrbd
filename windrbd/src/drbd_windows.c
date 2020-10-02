@@ -1025,8 +1025,9 @@ printk("queue_work: work %p already queued on queue %s\n", work, queue->name);
 		}
 		work->pending = 1;
 		spin_unlock_irqrestore(&work->pending_lock, flags);
-	}	/* else we are in work function which may requeue always */
-
+	} else {	/* else we are in work function which may requeue always */
+		printk("worker function rescheduled itself.\n");
+	}
 // printk("2\n");
 	work->orig_queue = queue;
 	work->orig_func = work->func;
