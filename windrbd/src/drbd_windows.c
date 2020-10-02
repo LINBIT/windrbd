@@ -1017,6 +1017,8 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 		spin_unlock_irqrestore(&work->pending_lock, flags);
 		if (queue != work->orig_queue || work->orig_func != work->func)
 			printk("work %p pending on queue %s: queue or func have changed: queue is %p (%s) work->orig_queue is %p (%s) work->orig_func is %p work->func is %p\n", queue, queue->name, work->orig_queue, work->orig_queue->name, work->orig_func, work->func);
+
+printk("queue_work: work %p already queued on queue %s\n", work, queue->name);
 		return;
 	}
 	work->pending = 1;
@@ -1062,6 +1064,7 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 
 
 					/* TODO: needed? */
+					/* TODO: move after calling func! */
 				spin_lock_irqsave(&w->pending_lock, flags);
 				w->pending = 0;
 				spin_unlock_irqrestore(&w->pending_lock, flags);
