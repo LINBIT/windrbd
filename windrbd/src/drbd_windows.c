@@ -1011,11 +1011,13 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 {
 	KIRQL flags, flags2;
 
+	spin_lock_irqsave(&queue->work_list_lock, flags2);
 // printk("1\n");
 //	if (current != queue->thread) {
 		spin_lock_irqsave(&work->pending_lock, flags);
 		if (work->pending) {
 			spin_unlock_irqrestore(&work->pending_lock, flags);
+			spin_unlock_irqrestore(&queue->work_list_lock, flags2);
 			if (queue != work->orig_queue || work->orig_func != work->func)
 				printk("work %p pending on queue %s: queue or func have changed: queue is %p (%s) work->orig_queue is %p (%s) work->orig_func is %p work->func is %p\n", queue, queue->name, work->orig_queue, work->orig_queue->name, work->orig_func, work->func);
 
@@ -1024,7 +1026,6 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 			return;
 		}
 		work->pending = 1;
-		spin_unlock_irqrestore(&work->pending_lock, flags);
 #if 0
 	} else {	/* else we are in work function which may requeue always */
 		printk("worker function %p on queue %s rescheduled itself.\n", work, queue->name);
@@ -1036,9 +1037,9 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 	work->orig_func = work->func;
 
 // printk("3\n");
-	spin_lock_irqsave(&queue->work_list_lock, flags2);
 	list_add_tail(&work->work_list, &queue->work_list);
 	spin_unlock_irqrestore(&queue->work_list_lock, flags2);
+	spin_unlock_irqrestore(&work->pending_lock, flags);
 // printk("4\n");
 
 		/* signal to run_singlethread_workqueue */
@@ -1052,7 +1053,7 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 	PVOID waitObjects[2] = { &wq->wakeupEvent, &wq->killEvent };
 	int maxObj = 2;
 	struct work_struct *w;
-	KIRQL flags;
+	KIRQL flags, flags2;
 
 	while (wq->run) {
 		status = KeWaitForMultipleObjects(maxObj, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
@@ -1066,18 +1067,18 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 					break;
 				}
 				w = list_first_entry(&wq->work_list, struct work_struct, work_list);
+				spin_lock_irqsave(&w->pending_lock, flags2);
 				list_del(&w->work_list);
-				spin_unlock_irqrestore(&wq->work_list_lock, flags);
-
 
 		/* If we do this after calling func, it hangs in Disconnecting
 		 * (or disk Failed) state forever ... Update: no this also
 		 * happens when this is after calling func. Must be something
 		 * else ... If this is here we get use after free.
 		 */
-				spin_lock_irqsave(&w->pending_lock, flags);
 				w->pending = 0;
-				spin_unlock_irqrestore(&w->pending_lock, flags);
+				spin_unlock_irqrestore(&w->pending_lock, flags2);
+				spin_unlock_irqrestore(&wq->work_list_lock, flags);
+
 
 // printk("calling func ...\n");
 				w->func(w);
