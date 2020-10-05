@@ -1038,8 +1038,8 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 
 // printk("3\n");
 	list_add_tail(&work->work_list, &queue->work_list);
-	spin_unlock_irqrestore(&queue->work_list_lock, flags2);
 	spin_unlock_irqrestore(&work->pending_lock, flags);
+	spin_unlock_irqrestore(&queue->work_list_lock, flags2);
 // printk("4\n");
 
 		/* signal to run_singlethread_workqueue */
