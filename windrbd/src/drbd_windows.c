@@ -1080,6 +1080,8 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 				spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
 
+if (KeGetCurrentIrql() > PASSIVE_LEVEL)
+printk("Warning: irql is %d\n", KeGetCurrentIrql());
 // printk("calling func ...\n");
 				w->func(w);
 			}
