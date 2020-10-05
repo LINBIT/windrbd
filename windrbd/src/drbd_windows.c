@@ -1069,8 +1069,6 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 				list_del(&w->work_list);
 				spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
-// printk("calling func ...\n");
-				w->func(w);
 
 		/* If we do this after calling func, it hangs in Disconnecting
 		 * (or disk Failed) state forever ... Update: no this also
@@ -1081,6 +1079,8 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 				w->pending = 0;
 				spin_unlock_irqrestore(&w->pending_lock, flags);
 
+// printk("calling func ...\n");
+				w->func(w);
 			}
 			KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
 			break;
