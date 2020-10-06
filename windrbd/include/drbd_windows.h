@@ -389,6 +389,7 @@ struct workqueue_struct {
 	spinlock_t work_list_lock;
 
 	int run;
+	int about_to_destroy;
 	KEVENT	wakeupEvent;
 	KEVENT	killEvent;
 	KEVENT	workFinishedEvent;

@@ -1011,6 +1011,10 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 {
 	KIRQL flags, flags2;
 
+	if (queue->about_to_destroy) {
+		printk("Warning: Attempt to queue_work while destroying workqueue\n");
+		return;
+	}
 	spin_lock_irqsave(&queue->work_list_lock, flags2);
 // printk("1\n");
 //	if (current != queue->thread) {
@@ -1117,6 +1121,7 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
 
 	INIT_LIST_HEAD(&wq->work_list);
 	spin_lock_init(&wq->work_list_lock);
+	wq->about_to_destroy = 0;
 
 	va_start(args, flags);
 		/* ignore error if string is too long */
@@ -1164,6 +1169,7 @@ void flush_workqueue(struct workqueue_struct *wq)
 void destroy_workqueue(struct workqueue_struct *wq)
 {
 // printk("1\n");
+	wq->about_to_destroy = 1;
 	if (wq->thread != NULL) {
 // printk("about to flush workqueue ...\n");
 		flush_workqueue(wq);
