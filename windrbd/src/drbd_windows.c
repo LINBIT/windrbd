@@ -1087,7 +1087,12 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 if (KeGetCurrentIrql() > PASSIVE_LEVEL)
 printk("Warning: irql is %d\n", KeGetCurrentIrql());
 // printk("calling func ...\n");
-				w->func(w);
+
+				if (wq->about_to_destroy) {
+					printk("About to destroy workqueue %s not calling function\n", wq->name);
+				} else {
+					w->func(w);
+				}
 			}
 			KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
 			break;
