@@ -1084,8 +1084,8 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 				spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
 
-if (KeGetCurrentIrql() > PASSIVE_LEVEL)
-printk("Warning: irql is %d\n", KeGetCurrentIrql());
+// if (KeGetCurrentIrql() > PASSIVE_LEVEL)
+// printk("Warning: irql is %d\n", KeGetCurrentIrql());
 // printk("calling func ...\n");
 
 				if (wq->about_to_destroy) {
@@ -1174,7 +1174,7 @@ void flush_workqueue(struct workqueue_struct *wq)
 void destroy_workqueue(struct workqueue_struct *wq)
 {
 // printk("1\n");
-printk("about to destroy workqueue %s ...\n", wq->name);
+// printk("about to destroy workqueue %s ...\n", wq->name);
 	wq->about_to_destroy = 1;
 //	if (wq->thread != NULL) {
 // printk("about to flush workqueue ...\n");
@@ -1186,7 +1186,7 @@ printk("about to destroy workqueue %s ...\n", wq->name);
 // printk("4\n");
 //	}
 // printk("5\n");
-printk("stopped workqueue %s ...\n", wq->name);
+// printk("stopped workqueue %s ...\n", wq->name);
 	kfree(wq);
 }
 
