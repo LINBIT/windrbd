@@ -1171,7 +1171,7 @@ void destroy_workqueue(struct workqueue_struct *wq)
 // printk("1\n");
 printk("about to destroy workqueue %s ...\n", wq->name);
 	wq->about_to_destroy = 1;
-	if (wq->thread != NULL) {
+//	if (wq->thread != NULL) {
 // printk("about to flush workqueue ...\n");
 		flush_workqueue(wq);
 // printk("2 out of flush_workqueue\n");
@@ -1179,10 +1179,10 @@ printk("about to destroy workqueue %s ...\n", wq->name);
 // printk("3\n");
 		KeWaitForSingleObject(&wq->readyToFreeEvent, Executive, KernelMode, FALSE, NULL);
 // printk("4\n");
-	}
+//	}
 // printk("5\n");
+printk("stopped workqueue %s ...\n", wq->name);
 	kfree(wq);
-// printk("stopping a workqueue thread\n");
 }
 
 int threads_sleeping;
