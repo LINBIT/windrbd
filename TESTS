@@ -1,5 +1,17 @@
 TODO: define tests to be run before releases.
 
+Oct 7 2020 
+1.0.0-rc6
+
+disconnect while sync (with connect retry and attach)
+
+367 (275) iterations until BSOD (with 
+ASSERTION atomic_read(&peer_req->pending_bios) == 0 FAILED in __drbd_free_peer_req #########
+) probably a DRBD bug. BSOD after 5 iterations fixed by fixing
+workqueue implementation.
+
+-----------------------------------------
+
 Sep 14 2020 
 1.0.0-rc5
 
