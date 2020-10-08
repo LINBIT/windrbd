@@ -1016,39 +1016,27 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 		return;
 	}
 	spin_lock_irqsave(&queue->work_list_lock, flags2);
-// printk("1\n");
-//	if (current != queue->thread) {
-		spin_lock_irqsave(&work->pending_lock, flags);
-		if (work->pending) {
-			spin_unlock_irqrestore(&work->pending_lock, flags);
-			spin_unlock_irqrestore(&queue->work_list_lock, flags2);
-			if (queue != work->orig_queue || work->orig_func != work->func)
-				printk("work %p pending on queue %s: queue or func have changed: queue is %p (%s) work->orig_queue is %p (%s) work->orig_func is %p work->func is %p\n", queue, queue->name, work->orig_queue, work->orig_queue->name, work->orig_func, work->func);
+	spin_lock_irqsave(&work->pending_lock, flags);
 
-/* We get BSOD's again when commenting this out? */
-// printk("queue_work: work %p already queued on queue %s\n", work, queue->name);
-			return;
-		}
-		work->pending = 1;
-#if 0
-	} else {	/* else we are in work function which may requeue always */
-		printk("worker function %p on queue %s rescheduled itself.\n", work, queue->name);
+	if (work->pending) {
+		spin_unlock_irqrestore(&work->pending_lock, flags);
+		spin_unlock_irqrestore(&queue->work_list_lock, flags2);
+		if (queue != work->orig_queue || work->orig_func != work->func)
+			printk("work %p pending on queue %s: queue or func have changed: queue is %p (%s) work->orig_queue is %p (%s) work->orig_func is %p work->func is %p\n", queue, queue->name, work->orig_queue, work->orig_queue->name, work->orig_func, work->func);
+
+		return;
 	}
-#endif
+	work->pending = 1;
 
-// printk("2\n");
 	work->orig_queue = queue;
 	work->orig_func = work->func;
 
-// printk("3\n");
 	list_add_tail(&work->work_list, &queue->work_list);
 	spin_unlock_irqrestore(&work->pending_lock, flags);
 	spin_unlock_irqrestore(&queue->work_list_lock, flags2);
-// printk("4\n");
 
 		/* signal to run_singlethread_workqueue */
 	KeSetEvent(&queue->wakeupEvent, 0, FALSE);
-// printk("5\n");
 }
 
 static int run_singlethread_workqueue(struct workqueue_struct* wq)
@@ -1083,11 +1071,6 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 				spin_unlock_irqrestore(&w->pending_lock, flags2);
 				spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
-
-// if (KeGetCurrentIrql() > PASSIVE_LEVEL)
-// printk("Warning: irql is %d\n", KeGetCurrentIrql());
-// printk("calling func ...\n");
-
 				if (wq->about_to_destroy) {
 					printk("About to destroy workqueue %s not calling function\n", wq->name);
 				} else {
@@ -1098,12 +1081,10 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 			break;
 
 		case STATUS_WAIT_1:
-// printk("STATUS_WAIT_1\n");
 			wq->run = FALSE;
 			break;
 		}
 	}
-// printk("exiting workqueue thread ...\n");
 	KeSetEvent(&wq->readyToFreeEvent, 0, FALSE);
 	return 0;
 }
@@ -1136,10 +1117,7 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
 
 	wq->run = TRUE;
 
-// printk("starting a workqueue thread\n");
-
 	wq->thread = kthread_create(run_singlethread_workqueue, wq, "wq_%s", wq->name);
-//	wq->thread = kthread_run(run_singlethread_workqueue, wq, "workqueue");
 	if (IS_ERR(wq->thread)) {
 		printk("kthread_run failed on creating workqueue thread, err is %d\n", PTR_ERR(wq->thread));
 		kfree(wq);
@@ -1159,13 +1137,9 @@ void flush_workqueue(struct workqueue_struct *wq)
 	PVOID waitObjects[2] = { &wq->workFinishedEvent, &wq->killEvent };
 	NTSTATUS status;
 
-// printk("1\n");
 	KeResetEvent(&wq->workFinishedEvent);
-// printk("2\n");
 	KeSetEvent(&wq->wakeupEvent, 0, FALSE);
-// printk("3\n");
 	status = KeWaitForMultipleObjects(2, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
-// printk("4 status is %x\n", status);
 	if (!list_empty(&wq->work_list)) {
 		printk("Warning: wq->work_list not empty at exiting flush_workqueue\n");
 	}
@@ -1173,20 +1147,11 @@ void flush_workqueue(struct workqueue_struct *wq)
 
 void destroy_workqueue(struct workqueue_struct *wq)
 {
-// printk("1\n");
-// printk("about to destroy workqueue %s ...\n", wq->name);
 	wq->about_to_destroy = 1;
-//	if (wq->thread != NULL) {
-// printk("about to flush workqueue ...\n");
-		flush_workqueue(wq);
-// printk("2 out of flush_workqueue\n");
-		KeSetEvent(&wq->killEvent, 0, FALSE);
-// printk("3\n");
-		KeWaitForSingleObject(&wq->readyToFreeEvent, Executive, KernelMode, FALSE, NULL);
-// printk("4\n");
-//	}
-// printk("5\n");
-// printk("stopped workqueue %s ...\n", wq->name);
+	flush_workqueue(wq);
+	KeSetEvent(&wq->killEvent, 0, FALSE);
+	KeWaitForSingleObject(&wq->readyToFreeEvent, Executive, KernelMode, FALSE, NULL);
+
 	kfree(wq);
 }
 
