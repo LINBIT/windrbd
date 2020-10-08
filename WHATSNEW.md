@@ -1,6 +1,9 @@
 What's new in version 1.0.0-rc6
 -------------------------------
 
+Fixed several bugs in workqueue implementation (fixes most BSODs
+on disconnect while sync).
+
 Fixed ko count mechanism (connection is more stable)
 
 What's new in version 1.0.0-rc5
