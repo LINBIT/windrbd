@@ -226,6 +226,7 @@ extern int atomic_xchg(atomic_t *v, int n);
 #define ENOTCONN				107
 #define EADDRNOTAVAIL				99
 #define ENOTSUP					95
+#define EACCES					13
 
 #define SIGCHLD					17
 #define SIGXCPU					100
