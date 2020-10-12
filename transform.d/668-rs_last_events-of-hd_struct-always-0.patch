@@ -1,0 +1,28 @@
+From 04981584621c5c2491200dc480013d026edae5c2 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 12 Oct 2020 13:54:33 +0200
+Subject: [PATCH 2/6] rs_last_events of hd_struct always 0.
+
+Sync throtteling does not work at the moment. We'll implement it
+upon customer request.
+---
+ drbd/drbd_sender.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index ac3cdb0..ddd3d83 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -1891,8 +1891,7 @@ void drbd_rs_controller_reset(struct drbd_peer_device *peer_device)
+ 	atomic_set(&peer_device->device->rs_sect_ev, 0);  /* FIXME: ??? */
+ 	peer_device->rs_last_mk_req_kt = ktime_get();
+ 	peer_device->rs_in_flight = 0;
+-	peer_device->rs_last_events = (int)part_stat_read(part, sectors[0])
+-		+ (int)part_stat_read(part, sectors[1]);
++	peer_device->rs_last_events = 0;	/* TODO: rs_last_events and drbd_backing_bdev_events not implemented sync throtteling does not work. */
+ 
+ 	/* Updating the RCU protected object in place is necessary since
+ 	   this function gets called from atomic context.
+-- 
+2.17.0
+

@@ -1,0 +1,38 @@
+From 48b44b7eef822f6d5fbc5b864f337797baaae236 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 12 Oct 2020 14:17:01 +0200
+Subject: [PATCH 4/6] Disabled resync throtteling.
+
+We currently don't have info about disk I/O in flight, so
+this feature is disabled at the moment. We can enable it
+once disk stat is implemented.
+---
+ drbd/drbd_receiver.c | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index ec26acf..c7f1448 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -3230,7 +3230,6 @@ bool drbd_rs_c_min_rate_throttle(struct drbd_peer_device *peer_device)
+ {
+ 	KIRQL rcu_flags;
+ 	struct drbd_device *device = peer_device->device;
+-	struct hd_struct *part = &device->ldev->backing_bdev->bd_contains->bd_disk->part0;
+ 	ULONG_PTR db, dt, dbdt;
+ 	unsigned int c_min_rate;
+ 	int curr_events;
+@@ -3243,9 +3242,7 @@ bool drbd_rs_c_min_rate_throttle(struct drbd_peer_device *peer_device)
+ 	if (c_min_rate == 0)
+ 		return false;
+ 
+-	curr_events = (int)part_stat_read(part, sectors[0])
+-		+ (int)part_stat_read(part, sectors[1])
+-		- atomic_read(&device->rs_sect_ev);
++	curr_events = 0;	/* TODO: disabled throtteling */
+ 
+ 	if (atomic_read(&device->ap_actlog_cnt) || curr_events - peer_device->rs_last_events > 64) {
+ 		ULONG_PTR rs_left;
+-- 
+2.17.0
+

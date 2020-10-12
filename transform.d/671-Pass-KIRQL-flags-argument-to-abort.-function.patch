@@ -1,0 +1,27 @@
+From 86a8b7140100400cf22a4ab2314c694be56c00c6 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 12 Oct 2020 14:30:49 +0200
+Subject: [PATCH 5/6] Pass KIRQL flags argument to abort..() function.
+
+It uses this flag for resetting the current IRQL when releasing
+the req lock.
+---
+ drbd/drbd_receiver.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index c7f1448..eabc1e3 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -8142,7 +8142,7 @@ static void cleanup_remote_state_change(struct drbd_connection *connection)
+ 		if (remote) {
+ 			__clear_remote_state_change(resource);
+ 		} else {
+-			enum alt_rv alt_rv = abort_local_transaction(resource, 0);
++			enum alt_rv alt_rv = abort_local_transaction(resource, 0, &spin_lock_irq_flags);
+ 			if (alt_rv != ALT_LOCKED)
+ 				return;
+ 		}
+-- 
+2.17.0
+

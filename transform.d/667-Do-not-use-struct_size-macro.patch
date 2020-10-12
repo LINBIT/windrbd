@@ -1,0 +1,26 @@
+From 1ea0c39f6f333d8ea004bfeec4066cbf15d20953 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 12 Oct 2020 13:41:14 +0200
+Subject: [PATCH 1/6] Do not use struct_size macro
+
+It uses typeof() and several other Linux specific macros.
+---
+ drbd/drbd_sender.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index 55087b7..ac3cdb0 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -533,7 +533,7 @@ struct fifo_buffer *fifo_alloc(unsigned int fifo_size)
+ {
+ 	struct fifo_buffer *fb;
+ 
+-	fb = kzalloc(struct_size(fb, values, fifo_size), GFP_NOIO);
++	fb = kzalloc(sizeof(struct fifo_buffer) + sizeof(int) * fifo_size, GFP_NOIO, '00WD');
+ 	if (!fb)
+ 		return NULL;
+ 
+-- 
+2.17.0
+
