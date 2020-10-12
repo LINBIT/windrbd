@@ -1,0 +1,1 @@
+/* Dummy header. We do not support disk stats at the moment. */
