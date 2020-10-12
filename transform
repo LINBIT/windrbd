@@ -33,7 +33,7 @@ for TRANS in $TRANSFORMATIONS; do
 	    PATCH_TARGET=${FIRST_LINE_OF_PATCH##*/}
 	    if [ $PATCH_TARGET = $TARGET_FILE ]; then
 		msg " PATCH    : %-40s %s\n" $TRANS_NAME $TARGET
-		patch --batch --silent $TMP $TRANS
+		patch -N --batch --silent $TMP $TRANS
 	    fi
 	;;
 	cocci)

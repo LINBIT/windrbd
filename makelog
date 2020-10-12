@@ -1,0 +1,775 @@
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_state.h
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_state.h
+ PATCH    : 114-stable_state_change_drbd_state_H.patch converted-sources/drbd/drbd_state.h
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_state.h
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_state.h
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_state.h
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_state.h
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_state.h
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_state.h
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_state.h
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_state.h
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_state.h
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_state.h
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_state.h
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_state.h
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_state.h
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_state.h
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_state.h
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_state.h
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_state.h
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_state.h
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_state.h
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_state.h
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_state.h
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_state.h
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_state.h
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_state.h
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_state.h
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_state.h
+ PATCH    : 539-Un-inlined-stable_state_change-function-header-patch.patch converted-sources/drbd/drbd_state.h
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_state.h
+ PATCH    : 616-Attempt-to-fix-stable-state-change.patch converted-sources/drbd/drbd_state.h
+ PATCH    : 620-drbd_state-fixed-stable_state_change.patch converted-sources/drbd/drbd_state.h
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_state.h
+ PATCH    : 663-drbd_state.h-Always-use-KIRQL-as-datatype-for-IRQ-fl.patch converted-sources/drbd/drbd_state.h
+ MOVE     : converted-sources/drbd/drbd_state.h.tmp  converted-sources/drbd/drbd_state.h
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_req.h
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_req.h
+ PATCH    : 100-undef_NOTHING.patch                  converted-sources/drbd/drbd_req.h
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_req.h
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_req.h
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_req.h
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_req.h
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_req.h
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_req.h
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_req.h
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_req.h
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_req.h
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_req.h
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_req.h
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_req.h
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_req.h
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_req.h
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_req.h
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_req.h
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_req.h
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_req.h
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_req.h
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_req.h
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_req.h
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_req.h
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_req.h
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_req.h
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_req.h
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_req.h
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_req.h
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_req.h
+ MOVE     : converted-sources/drbd/drbd_req.h.tmp    converted-sources/drbd/drbd_req.h
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/kref_debug.c
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/kref_debug.c
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/kref_debug.c
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/kref_debug.c
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/kref_debug.c
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/kref_debug.c
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/kref_debug.c
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/kref_debug.c
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/kref_debug.c
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/kref_debug.c
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/kref_debug.c
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/kref_debug.c
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/kref_debug.c
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/kref_debug.c
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/kref_debug.c
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/kref_debug.c
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/kref_debug.c
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/kref_debug.c
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/kref_debug.c
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/kref_debug.c
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/kref_debug.c
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/kref_debug.c
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/kref_debug.c
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/kref_debug.c
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/kref_debug.c
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/kref_debug.c
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/kref_debug.c
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/kref_debug.c
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/kref_debug.c
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/kref_debug.c
+ PATCH    : 665-kref_debug-Always-use-KIRQL-as-datatype-for-IRQ-flag.patch converted-sources/drbd/kref_debug.c
+ MOVE     : converted-sources/drbd/kref_debug.c.tmp  converted-sources/drbd/kref_debug.c
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_state_change.h
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_state_change.h
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_state_change.h
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_state_change.h
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_state_change.h
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_state_change.h
+ MOVE     : converted-sources/drbd/drbd_state_change.h.tmp converted-sources/drbd/drbd_state_change.h
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_dax_pmem.c
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_dax_pmem.c
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_dax_pmem.c
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_dax_pmem.c
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_dax_pmem.c
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_dax_pmem.c
+ MOVE     : converted-sources/drbd/drbd_dax_pmem.c.tmp converted-sources/drbd/drbd_dax_pmem.c
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_sender.c
+ PATCH    : 122-drbd_sender-all_zero-always-false-was-122-all_zero.patch converted-sources/drbd/drbd_sender.c
+ PATCH    : 126-drbd_sender-Don-t-do-csums-was-126-disable_crypt_drb.patch converted-sources/drbd/drbd_sender.c
+ PATCH    : 127-schedule_drbd_sender_C.patch         converted-sources/drbd/drbd_sender.c
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_sender.c
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_sender.c
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_sender.c
+ PATCH    : 594-spin_lock_irq-spin_lock_irqsave-for-drbd_sender.c.patch converted-sources/drbd/drbd_sender.c
+ PATCH    : 598-More-spin_lock_irqsave-for-drbd_sender.patch converted-sources/drbd/drbd_sender.c
+ PATCH    : 609-drbd_sender-Use-new-prepare_to_wait-implementation.patch converted-sources/drbd/drbd_sender.c
+ PATCH    : 613-drbd_sender.c-Print-from-where-schedule-is-called.patch converted-sources/drbd/drbd_sender.c
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_sender.c
+ PATCH    : 625-drbd_sender-restored-original-schedule-interface.patch converted-sources/drbd/drbd_sender.c
+ PATCH    : 626-Check-for-device-NULL-in-tl_mark_for_resend_by_conne.patch converted-sources/drbd/drbd_sender.c
+ PATCH    : 630-drbd_sender-include-type-in-from_timer-macro.patch converted-sources/drbd/drbd_sender.c
+ PATCH    : 631-drbd_sender-more-types-for-from_timer-macro.patch converted-sources/drbd/drbd_sender.c
+ PATCH    : 643-drbd_sender-enabled-drbd_csums_.-functions.patch converted-sources/drbd/drbd_sender.c
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_sender.c
+ PATCH    : 661-drbd_sender-Always-use-KIRQL-as-datatype-for-IRQ-fla.patch converted-sources/drbd/drbd_sender.c
+ MOVE     : converted-sources/drbd/drbd_sender.c.tmp converted-sources/drbd/drbd_sender.c
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_kref_debug.c
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_kref_debug.c
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_kref_debug.c
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_kref_debug.c
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_kref_debug.c
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_kref_debug.c
+ MOVE     : converted-sources/drbd/drbd_kref_debug.c.tmp converted-sources/drbd/drbd_kref_debug.c
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_bitmap.c
+ PATCH    : 110-drbd_bitmap_C.patch                  converted-sources/drbd/drbd_bitmap.c
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_bitmap.c
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_bitmap.c
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_bitmap.c
+ PATCH    : 507-free-mempool-after-bio-put.patch     converted-sources/drbd/drbd_bitmap.c
+ PATCH    : 511-Make-bm_op-return-ULONG_PTR.patch    converted-sources/drbd/drbd_bitmap.c
+ PATCH    : 550-New-old-patch-for-bitmap-was-in-110-drbd_bitmap_C.pa.patch converted-sources/drbd/drbd_bitmap.c
+ PATCH    : 554-bitmap-free-mempool-after-bio-put-was-507-free-mempo.patch converted-sources/drbd/drbd_bitmap.c
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_bitmap.c
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_bitmap.c
+ PATCH    : 656-drbd_bitmap-Always-use-KIRQL-as-datatype-for-IRQ-fla.patch converted-sources/drbd/drbd_bitmap.c
+ MOVE     : converted-sources/drbd/drbd_bitmap.c.tmp converted-sources/drbd/drbd_bitmap.c
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_req.c
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_req.c
+ PATCH    : 117-drbd_req-C.patch                     converted-sources/drbd/drbd_req.c
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_req.c
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_req.c
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_req.c
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_req.c
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_req.c
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_req.c
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_req.c
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_req.c
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_req.c
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_req.c
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_req.c
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_req.c
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_req.c
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_req.c
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_req.c
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_req.c
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_req.c
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_req.c
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_req.c
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_req.c
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_req.c
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_req.c
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_req.c
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_req.c
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_req.c
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_req.c
+ PATCH    : 520-Disable-unintialized-local-variable-warning.patch converted-sources/drbd/drbd_req.c
+ PATCH    : 593-spin_lock_irq-spin_lock_irqsave-for-drbd_req.c.patch converted-sources/drbd/drbd_req.c
+ PATCH    : 599-spin_lock_irqsave-for-some-functions-in-drbd_req.c.patch converted-sources/drbd/drbd_req.c
+ PATCH    : 607-drbd_req-Use-new-prepare_to_wait-implementation.patch converted-sources/drbd/drbd_req.c
+ PATCH    : 614-drbd_req.c-Print-from-where-schedule-is-called.patch converted-sources/drbd/drbd_req.c
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_req.c
+ PATCH    : 624-drbd_req-restored-original-schedule-interface.patch converted-sources/drbd/drbd_req.c
+ PATCH    : 627-Make-nr_requests-comparision-signed.patch converted-sources/drbd/drbd_req.c
+ PATCH    : 634-drbd_req-type-for-from_timer.patch   converted-sources/drbd/drbd_req.c
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_req.c
+ PATCH    : 666-drbd_req-Always-use-KIRQL-as-datatype-for-IRQ-flags.patch converted-sources/drbd/drbd_req.c
+ MOVE     : converted-sources/drbd/drbd_req.c.tmp    converted-sources/drbd/drbd_req.c
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_dax_pmem.h
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_dax_pmem.h
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_dax_pmem.h
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_dax_pmem.h
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_dax_pmem.h
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_dax_pmem.h
+ MOVE     : converted-sources/drbd/drbd_dax_pmem.h.tmp converted-sources/drbd/drbd_dax_pmem.h
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_kref_debug.h
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_kref_debug.h
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_kref_debug.h
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_kref_debug.h
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_kref_debug.h
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_kref_debug.h
+ MOVE     : converted-sources/drbd/drbd_kref_debug.h.tmp converted-sources/drbd/drbd_kref_debug.h
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_nl.c
+ PATCH    : 104-helper-return-codes.patch            converted-sources/drbd/drbd_nl.c
+ PATCH    : 135-drbd_nl_C.patch                      converted-sources/drbd/drbd_nl.c
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_nl.c
+ PATCH    : 147-drbd_nl_C-vsnprintf.patch            converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_nl.c
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_nl.c
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_nl.c
+ PATCH    : 521-Patched-set_my_capacity.patch        converted-sources/drbd/drbd_nl.c
+ PATCH    : 524-umount-volumes-on-state-change-primary-secondary.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 526-mount-windrbd-device-on-role-change-secondary-primar.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 527-Create-remove-windows-device-on-becoming-primary-sec.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 529-Send-warning-to-user-space-if-mounting-on-primary-fa.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 532-Moved-netlink.c_inc-to-seperate-file.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 533-Netlink-family-now-set-to-a-sane-value-28.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 534-Undone-two-patches-by-mantech-that-broke-user-mode-h.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 536-Removed-kthread_run-ad-hoc-code.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 592-spin_lock_irq-spin_lock_irqsave-for-drbd_nl.c.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 601-drbd_nl-commented-out-opener-timestamp-code.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 603-SCSI-Set-event-as-soon-as-there-is-a-valid-size-of-t.patch converted-sources/drbd/drbd_nl.c
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_nl.c
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_nl.c
+ PATCH    : 659-drbd_nl-Always-use-KIRQL-as-datatype-for-IRQ-flags.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 700-Do-not-create-destroy-Windows-device-on-Primary-Seco.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 701-Waiting-for-becoming-Primary-event.patch converted-sources/drbd/drbd_nl.c
+ PATCH    : 702-Have-WinDRBD-hooks-when-changing-role.patch converted-sources/drbd/drbd_nl.c
+ MOVE     : converted-sources/drbd/drbd_nl.c.tmp     converted-sources/drbd/drbd_nl.c
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_debugfs.h
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_debugfs.h
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_debugfs.h
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_debugfs.h
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_debugfs.h
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_debugfs.h
+ MOVE     : converted-sources/drbd/drbd_debugfs.h.tmp converted-sources/drbd/drbd_debugfs.h
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_nla.h
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_nla.h
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_nla.h
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_nla.h
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_nla.h
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_nla.h
+ MOVE     : converted-sources/drbd/drbd_nla.h.tmp    converted-sources/drbd/drbd_nla.h
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/compat.4.15.18.h
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/compat.4.15.18.h
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/compat.4.15.18.h
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/compat.4.15.18.h
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/compat.4.15.18.h
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/compat.4.15.18.h
+ MOVE     : converted-sources/drbd/compat.4.15.18.h.tmp converted-sources/drbd/compat.4.15.18.h
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_strings.c
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_strings.c
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_strings.c
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_strings.c
+ PATCH    : 530-Ignore-signed-unsigned-mismatch-in-drbd_strings.patch converted-sources/drbd/drbd_strings.c
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_strings.c
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_strings.c
+ MOVE     : converted-sources/drbd/drbd_strings.c.tmp converted-sources/drbd/drbd_strings.c
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/kref_debug.h
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/kref_debug.h
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/kref_debug.h
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/kref_debug.h
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/kref_debug.h
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/kref_debug.h
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/kref_debug.h
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/kref_debug.h
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/kref_debug.h
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/kref_debug.h
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/kref_debug.h
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/kref_debug.h
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/kref_debug.h
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/kref_debug.h
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/kref_debug.h
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/kref_debug.h
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/kref_debug.h
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/kref_debug.h
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/kref_debug.h
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/kref_debug.h
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/kref_debug.h
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/kref_debug.h
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/kref_debug.h
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/kref_debug.h
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/kref_debug.h
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/kref_debug.h
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/kref_debug.h
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/kref_debug.h
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/kref_debug.h
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/kref_debug.h
+ MOVE     : converted-sources/drbd/kref_debug.h.tmp  converted-sources/drbd/kref_debug.h
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/lru_cache.c
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/lru_cache.c
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/lru_cache.c
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/lru_cache.c
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/lru_cache.c
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/lru_cache.c
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/lru_cache.c
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/lru_cache.c
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/lru_cache.c
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/lru_cache.c
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/lru_cache.c
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/lru_cache.c
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/lru_cache.c
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/lru_cache.c
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/lru_cache.c
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/lru_cache.c
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/lru_cache.c
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/lru_cache.c
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/lru_cache.c
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/lru_cache.c
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/lru_cache.c
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/lru_cache.c
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/lru_cache.c
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/lru_cache.c
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/lru_cache.c
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/lru_cache.c
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/lru_cache.c
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/lru_cache.c
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/lru_cache.c
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/lru_cache.c
+ MOVE     : converted-sources/drbd/lru_cache.c.tmp   converted-sources/drbd/lru_cache.c
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_int.h
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_int.h
+ PATCH    : 103-expect-and-the-polymorphic-printk.patch converted-sources/drbd/drbd_int.h
+ PATCH    : 105-resource-add-wrcu.patch              converted-sources/drbd/drbd_int.h
+ PATCH    : 108-bio_alloc_drbd_drbd_int.patch        converted-sources/drbd/drbd_int.h
+ PATCH    : 111-kthread_drbd_int.patch               converted-sources/drbd/drbd_int.h
+ PATCH    : 112-get_ldev_if_state_drbd_int.patch     converted-sources/drbd/drbd_int.h
+ PATCH    : 116-typecheck-in-dagtag_newer.patch      converted-sources/drbd/drbd_int.h
+ PATCH    : 118-drbd_int-H.patch                     converted-sources/drbd/drbd_int.h
+ PATCH    : 121-dec_rs_pending_drbd_int-H.patch      converted-sources/drbd/drbd_int.h
+ PATCH    : 130-drbd_int_H-move-drbd_open.patch      converted-sources/drbd/drbd_int.h
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_int.h
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_int.h
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_int.h
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_int.h
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_int.h
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_int.h
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_int.h
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_int.h
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_int.h
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_int.h
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_int.h
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_int.h
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_int.h
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_int.h
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_int.h
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_int.h
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_int.h
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_int.h
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_int.h
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_int.h
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_int.h
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_int.h
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_int.h
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_int.h
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_int.h
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_int.h
+ PATCH    : 501-drbd-int-declare-drbd_thread_setup.patch converted-sources/drbd/drbd_int.h
+ PATCH    : 502-add-ktime.h-to-drbd_int-includes.patch converted-sources/drbd/drbd_int.h
+ PATCH    : 514-wdrbd_get_capacity-windrbd_get_capacity.patch converted-sources/drbd/drbd_int.h
+ PATCH    : 537-Removed-unneccessary-fields-in-struct-drbd_thread.patch converted-sources/drbd/drbd_int.h
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_int.h
+ PATCH    : 628-drbd_int-include-kconfig.h.patch     converted-sources/drbd/drbd_int.h
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_int.h
+ PATCH    : 657-drbd_int.h-Always-use-KIRQL-as-datatype-for-IRQ-flag.patch converted-sources/drbd/drbd_int.h
+ MOVE     : converted-sources/drbd/drbd_int.h.tmp    converted-sources/drbd/drbd_int.h
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_state.c
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_state.c
+ PATCH    : 113-typof_drbd_state.patch               converted-sources/drbd/drbd_state.c
+ PATCH    : 115-stable_state_change_drbd_state_C.patch converted-sources/drbd/drbd_state.c
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_state.c
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_state.c
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_state.c
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_state.c
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_state.c
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_state.c
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_state.c
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_state.c
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_state.c
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_state.c
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_state.c
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_state.c
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_state.c
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_state.c
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_state.c
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_state.c
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_state.c
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_state.c
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_state.c
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_state.c
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_state.c
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_state.c
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_state.c
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_state.c
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_state.c
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_state.c
+ PATCH    : 538-Un-inlined-stable_state_change-function.patch converted-sources/drbd/drbd_state.c
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_state.c
+ PATCH    : 617-Attempt-to-fix-stable-state-change.patch converted-sources/drbd/drbd_state.c
+ CACHED CO: 645-spin_lock_irqrestore.cocci           converted-sources/drbd/drbd_state.c
+ PATCH    : 662-drbd_state.c-Always-use-KIRQL-as-datatype-for-IRQ-fl.patch converted-sources/drbd/drbd_state.c
+ MOVE     : converted-sources/drbd/drbd_state.c.tmp  converted-sources/drbd/drbd_state.c
+ TRANSFORM: 000-remove-__must_hold.sh                converted-sources/drbd/drbd_main.c
+ TRANSFORM: 001-remove-other-preproc.pl              converted-sources/drbd/drbd_main.c
+ PATCH    : 107-drbd_main-bio_alloc_drbd-patch-replaces-107.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 109-kthread_create_drbd_main.patch       converted-sources/drbd/drbd_main.c
+ PATCH    : 119-assign_p_sizes_qlim_drbd_main.patch  converted-sources/drbd/drbd_main.c
+ PATCH    : 129-drbd_main_C-move-drbd_open.patch     converted-sources/drbd/drbd_main.c
+ PATCH    : 133-rm-obvious_drbd_init-drbd_main_C.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 134-set_resource_options_drbd_main_C.patch converted-sources/drbd/drbd_main.c
+ IGNORED  : 137-QUEUE_FLAG_DISCARD-drbd_receiver_C.patch.x converted-sources/drbd/drbd_main.c
+ PATCH    : 140-some-bio-BDI-drbd_main_C.patch       converted-sources/drbd/drbd_main.c
+ PATCH    : 141-drbd_main_C-struct.retry-worker.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 142-bdget_bdput_drbd_main_C.patch        converted-sources/drbd/drbd_main.c
+ PATCH    : 144-drbd_main_C-alloc_ordered_workqueue.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 146-drbd_main_C-initialize-var.patch     converted-sources/drbd/drbd_main.c
+ PATCH    : 148-drbd_main_C-drbd_cleanup_by_win_shutdown.patch converted-sources/drbd/drbd_main.c
+ TRANSFORM: 200-idr_for_each_entry-type.pl           converted-sources/drbd/drbd_main.c
+ TRANSFORM: 202-except-is-a-keyword.pl               converted-sources/drbd/drbd_main.c
+ TRANSFORM: 203-list_first_or_null_rcu-return.pl     converted-sources/drbd/drbd_main.c
+ TRANSFORM: 204-timer_fn-arguments.pl                converted-sources/drbd/drbd_main.c
+ TRANSFORM: 206-empty-structures-initialize.pl       converted-sources/drbd/drbd_main.c
+ TRANSFORM: 207-ternary-with-2-terms.pl              converted-sources/drbd/drbd_main.c
+ TRANSFORM: 209-macro-giving-code-as-expr.pl         converted-sources/drbd/drbd_main.c
+ TRANSFORM: 211-macro-varargs.pl                     converted-sources/drbd/drbd_main.c
+ TRANSFORM: 212-kzalloc-tag.pl                       converted-sources/drbd/drbd_main.c
+ TRANSFORM: 213-bitops-include.pl                    converted-sources/drbd/drbd_main.c
+ TRANSFORM: 215-drbd_protocol_h-packed.pl            converted-sources/drbd/drbd_main.c
+ TRANSFORM: 216-i_size_read.pl                       converted-sources/drbd/drbd_main.c
+ TRANSFORM: 217-cmpxchg-to-atomic.pl                 converted-sources/drbd/drbd_main.c
+ TRANSFORM: 218-inject-includes.pl                   converted-sources/drbd/drbd_main.c
+ TRANSFORM: 219-tr_printk-and-rcu_read_lock.pl       converted-sources/drbd/drbd_main.c
+ TRANSFORM: 220-kmem-cache-size.sh                   converted-sources/drbd/drbd_main.c
+ TRANSFORM: 220-set_capacity.pl                      converted-sources/drbd/drbd_main.c
+ TRANSFORM: 221-kobject_uevent.pl                    converted-sources/drbd/drbd_main.c
+ TRANSFORM: 222-types.sh                             converted-sources/drbd/drbd_main.c
+ TRANSFORM: 223-bitmap.sh                            converted-sources/drbd/drbd_main.c
+ TRANSFORM: 224-zero-sized-array-in-struct.sh        converted-sources/drbd/drbd_main.c
+ TRANSFORM: 226-list_next_entry.pl                   converted-sources/drbd/drbd_main.c
+ CACHED CO: 300-wait_event_timeout-return.cocci      converted-sources/drbd/drbd_main.c
+ CACHED CO: 301-rcu_read_lock.cocci                  converted-sources/drbd/drbd_main.c
+ TRANSFORM: 400-rcu-unbalanced.sh                    converted-sources/drbd/drbd_main.c
+ PATCH    : 500-drbd_main-drbd_thread_setup-nonstatic.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 505-changes-to-main-for-new-architecture.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 508-Handle-out-no-device-kmalloc-error.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 510-Removed-PVOLUME_EXTENSION-from-drbd_main.c.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 512-Exporting-the-drbd_cleanup-function.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 513-Enabled-assign_p_sizes_qlim-again.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 515-win_drbd_thread_setup-windrbd_thread_setup.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 518-Call-windrbd_mount-on-device-creation.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 519-Mount-windrbd-device-at-end-of-drbd_create_device.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 522-drbd-create-device-fixes.patch       converted-sources/drbd/drbd_main.c
+ PATCH    : 525-Only-store-mount-point-on-drbdadm-create-minor.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 528-Also-cleaning-up-submit-workqueue.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 531-Allow-for-pages-greater-than-PAGE_SIZE.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 535-Removed-ManTech-s-create-thread-code-reverted-to-ori.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 540-Removed-setting-mount_point-in-drbd_create_device.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 543-Changed-default-of-user-mode-helper.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 552-New-old-patch-do-not-create-proc-drbd-was-133-rm-obv.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 553-New-old-patch-was-149-drbd_main_C-no_biosets.patch.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 556-Commented-out-module-parameter-code-added-type-to-li.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 557-Redone-missing-patch-from-505-create_device-patches.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 562-Do-not-use-zero-copy-for-sending-data-packets.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 591-First-patch-of-fixing-spinlocks.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 597-More-spin_lock_irqsave-for-drbd_main.c.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 602-drbd_main-also-commented-out-opener-time-info.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 604-Made-try_to_promote-non-static.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 605-Rescan-Windows-PnP-bus-at-the-end-of-device-creation.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 606-drbd_main-Use-new-prepare_to_wait-implementation.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 611-drbd_main.c-Print-from-where-schedule-is-called.patch converted-sources/drbd/drbd_main.c
+ CACHED CO: 615-stable-state-change-return.cocci     converted-sources/drbd/drbd_main.c
+ PATCH    : 622-drbd_main-restored-original-schedule-interface.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 635-drbd_main-removed-a-const-qualifier.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 636-drbd_main-type-for-from_timer-macro.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 637-drbd_main-initialize-iter.patch      converted-sources/drbd/drbd_main.c
+ PATCH    : 639-drbd_main-converted-to-old-bio_for_each_segment.patch converted-sources/drbd/drbd_main.c
+ PATCH    : 644-drbd_main.c-Apply-rcu_lock-cocci-patches-manually.patch converted-sources/drbd/drbd_main.c
+Reversed (or previously applied) patch detected!  Skipping patch.
+5 out of 5 hunks ignored -- saving rejects to file converted-sources/drbd/drbd_main.c.tmp.rej
+Makefile:25: recipe for target 'converted-sources/drbd/drbd_main.c' failed
+make: *** [converted-sources/drbd/drbd_main.c] Error 1
