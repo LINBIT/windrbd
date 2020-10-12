@@ -743,6 +743,28 @@ extern void bio_free(struct bio *bio);
 extern int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset);
 extern void bio_endio(struct bio *bio);
 
+/**
+ * bio_start_io_acct - start I/O accounting for bio based drivers
+ * @bio:	bio to start account for
+ *
+ * Returns the start time that should be passed back to bio_end_io_acct().
+ * TODO: not implemented.
+ */
+static inline unsigned long bio_start_io_acct(struct bio *bio)
+{
+	return 0;
+}
+
+/**
+ * bio_end_io_acct - end I/O accounting for bio based drivers
+ * @bio:	bio to end account for
+ * @start:	start time returned by bio_start_io_acct()
+ * TODO: not implemented.
+ */
+static inline void bio_end_io_acct(struct bio *bio, unsigned long start_time)
+{
+}
+
 int generic_make_request(struct bio *bio);
 static inline int submit_bio(struct bio *bio)
 {
