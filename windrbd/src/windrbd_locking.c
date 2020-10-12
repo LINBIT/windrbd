@@ -180,7 +180,17 @@ void down_read(struct rw_semaphore *sem)
 	down(&sem->the_semaphore);
 }
 
+void down_read_non_owner(struct rw_semaphore *sem)
+{
+	down(&sem->the_semaphore);
+}
+
 void up_read(struct rw_semaphore *sem)
+{
+	up(&sem->the_semaphore);
+}
+
+void up_read_non_owner(struct rw_semaphore *sem)
 {
 	up(&sem->the_semaphore);
 }
