@@ -372,3 +372,4 @@ Version history
  * 1.0.0-rc4 (Aug 5, 2020): Fixed boot failure introduced with 1.0.0-rc2
  * 1.0.0-rc5 (Sep 14, 2020): Reengineered workqueues, stability fixes.
  * 1.0.0-rc6 (Oct 8, 2020): Fixed workqueues and ko-count mechanism
+ * 1.0.0-rc7 (Oct 14, 2020): Upgrade to DRBD 9.0.25

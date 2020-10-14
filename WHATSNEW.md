@@ -1,3 +1,8 @@
+What's new in version 1.0.0-rc7
+-------------------------------
+
+Upgraded DRBD to 9.0.25
+
 What's new in version 1.0.0-rc6
 -------------------------------
 
