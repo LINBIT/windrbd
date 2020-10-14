@@ -44,26 +44,6 @@ TODO: Bug: Secondary becomes unresponsive and eventually reboots
 
 TODO: Code quality: maybe printk->dbg netlink message.
 
-TODO: Bug: Hangs in Disconnecting on Disconnect
-
-	Server 2016 (Seconary) doing Connect/Disconnect loop
-	after ~6 iterations it hangs. Commit is 06db1f15
-	(with pending flag in work queues).
-
-	Server 2016 (Primary) doing I/O.
-
-	Update: Probably related: BSOD 0xD1 on Windows 7 side
-	when interrupting sync (by running drbdadm disconnect)
-	This time with I/O running on peer (Linux).
-
-	Update: Use-after-free in conn_disconnect (_drbd_free_peer_req
-	called twice on same peer_req? Also cleanup_unacked_peer_requests
-	uses peer requests that already have been freed). Changing
-	mempool to kmalloc() and not freeing peer_req's in _drbd_free_peer_req
-	solves the BSOD. With mempool and removing mempool_free() it
-	does BSOD.
-	
-
 TODO: Bug: BSOD when removing network interface
 
 	This is an uncommon cause but should be fixed. When
@@ -6900,4 +6880,46 @@ Done: Bug: Random crashes (BSOD, ..) when running windrbd install-bus-device
 	(fixed with 1.0.0-rc3)
 
 	Not observed lately, please re-open when it does happen again.
+
+Github: Bug: Sync hangs in WFBitMapT and protocol error receiving P_SIZES
+
+	Primary (Windows 7) doing I/O Secondary (Linux) doing
+	disonnect-connect-wait-connected loop. After about 10
+	iterations Primary hangs in ProtocolError loop with
+	blocked: upper (no I/O possible on the resource). Also
+	drbdadm status does not work any more.
+
+	Secondary (Linux) shows that we make it into WFBitMapT
+	but then disconnect. Relevant log lines:
+
+Oct 14 16:21:25 johannes-VirtualBox kernel: [ 6027.367265] drbd w0 linbit-wdrbd: conn( Connecting -> Connected ) peer( Unknown -> Primary )
+Oct 14 16:21:25 johannes-VirtualBox kernel: [ 6027.367268] drbd w0/17 drbd26 linbit-wdrbd: pdsk( DUnknown -> UpToDate ) repl( Off -> WFBitMapT )
+Oct 14 16:21:33 192.168.56.103  U14:21:25.603|03441960(drbd_s_w0) #1249 print_state_change <6>drbd w0 pnode-id:3, cs(Connecting), prole(Unknown), cflag(0x240e), scf(0xa1a): conn( Connecting -> Connected ) peer( Unknown -> Secondary )
+Oct 14 16:21:33 192.168.56.103  U14:21:25.603|03441960(drbd_s_w0) #1250 print_state_change <6>drbd w0/17 minor 5 pnode-id:3, pdsk(Inconsistent), prpl(Off), pdvflag(0x81400): repl( Off -> WFBitMapS )
+Oct 14 16:21:33 192.168.56.103  [last 2 messages were in IRQ context or recursive]
+Oct 14 16:21:33 192.168.56.103  U14:21:33.494|03441550(drbd_r_w0) #1251 drbdd <3>drbd w0 pnode-id:3, cs(Connected), prole(Secondary), cflag(0x200e), scf(0x0): error receiving P_SIZES, e: -5 l: 0!
+Oct 14 16:21:33 192.168.56.103  U14:21:33.494|03441550(drbd_r_w0) #1252 print_state_change <6>drbd w0 pnode-id:3, cs(Connected), prole(Secondary), cflag(0x200e), scf(0x21): conn( Connected -> ProtocolError ) peer( Secondary -> Unknown )
+Oct 14 16:21:33 192.168.56.103  U14:21:33.494|03441550(drbd_r_w0) #1253 print_state_change <6>drbd w0/17 minor 5 pnode-id:3, pdsk(Inconsistent), prpl(WFBitMapS), pdvflag(0x81400): repl( WFBitMapS -> Off )
+Oct 14 16:21:33 192.168.56.103  [last 2 messages were in IRQ context or recursive]
+Oct 14 16:21:33 192.168.56.103  U14:21:33.494|0352b2a0(drbd_a_w0) #1254 drbd_ack_receiver <6>drbd w0 pnode-id:3, cs(ProtocolError), prole(Unknown), cflag(0x200e), scf(0x0): ack_receiver terminated
+
+Github: Bug: Hangs in Disconnecting on Disconnect
+
+	Server 2016 (Seconary) doing Connect/Disconnect loop
+	after ~6 iterations it hangs. Commit is 06db1f15
+	(with pending flag in work queues).
+
+	Server 2016 (Primary) doing I/O.
+
+	Update: Probably related: BSOD 0xD1 on Windows 7 side
+	when interrupting sync (by running drbdadm disconnect)
+	This time with I/O running on peer (Linux).
+
+	Update: Use-after-free in conn_disconnect (_drbd_free_peer_req
+	called twice on same peer_req? Also cleanup_unacked_peer_requests
+	uses peer requests that already have been freed). Changing
+	mempool to kmalloc() and not freeing peer_req's in _drbd_free_peer_req
+	solves the BSOD. With mempool and removing mempool_free() it
+	does BSOD.
+	
 

@@ -29,6 +29,6 @@ do
 	drbdadm wait-connect $RES
 #	drbdadm status
 	echo Connected $i
-	sleep 3
+	sleep 5
 #	drbdadm status
 done
