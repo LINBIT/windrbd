@@ -42,21 +42,10 @@ TODO: Bug: Secondary becomes unresponsive and eventually reboots
 	(both Windows 2016) gets unrepsonive and eventually reboots
 	(BSOD?) Maybe a memory leak?
 
+	Retrying with sleep 10 between I/O sync, still responsive 
+	after 4 days.
+
 TODO: Code quality: maybe printk->dbg netlink message.
-
-TODO: Bug: BSOD when removing network interface
-
-	This is an uncommon cause but should be fixed. When
-	doing:
-
-	ipconfig /release <eth-interface>
-
-	it (WinDRBD?) sometimes BSODs.
-
-TODO: Bug: inject-faults does BSOD with SCSI port devices
-
-	This hasn't been touched for a while and should be easy to
-	fix.
 
 TODO: Bug: BSOD when connecting with split brain.
 
@@ -94,47 +83,7 @@ TODO: Feature: Resource agent for Microsoft cluster manager
 
 	Quote: "Assign a storage device for exclusive use by the queue manager. This device needs to be created as a resource instance before it can be assigned."
 
-TODO: Bug: freeze on disconnect-connect-waitconnect loop
-
-	Both nodes Secondary, Windows 7 doing
-	disconnect-connect-waitconnect.
-
-	Introduced with cb56c9c3b987 (also observed with fbc556)?
-	Same as System freeze on Windows 2016 Primary?
-
-	Currently testing it with 08c5bd7 it is still there (it
-	froze for one minute or so on disconnect, which caused the
-	test to terminate).
-
 TODO: Documentation: User's guide
-
-TODO: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
-
-	After ~100 iterations. Not clear why. Resource was connected.
-	I/O was done over ntfs.
-
-Apr 17 14:03:09 192.168.56.103  U12:03:09.678|038771a0(netlink) #6419 blkdev_get_by_path <7>blkdev_get_by_path succeeded FFFFFA8003B03130 windows_device FFFFFA8003699620.
-Apr 17 14:03:09 192.168.56.103  U12:03:09.678|038771a0(netlink) #6420 drbd_md_read <6>drbd w0/17 minor 5, ds(Diskless), dvflag(0x80002): meta-data IO uses: blk-bio
-Apr 17 14:06:33 192.168.56.103  U12:06:33.944|03919c90(devicecontrol) #6421 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_RESOURCES:30)
-Apr 17 14:06:38 192.168.56.103  U12:06:38.944|03919c90(devicecontrol) #6422 windrbd_process_netlink_packet failed to acquire the mutex, probably a previous drbd command is stuck.
-
-	Tested linux/linux: no error, this is a WinDRBD bug.
-
-TODO: Bug: invalidate-remote while I/O sync stall on sync start
-
-	And remote is uptodate.
-
-Apr 17 13:16:56 192.168.56.103  U11:16:54.920|06713390(drbd_a_w0) #3268 bm_print_lock_info <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x20282): FIXME drbd_a_w0[146] op clear, bitmap locked for 'set_n_write from StartingSync' by drbd_w_w0[31]
-
-	After reboot verify is ok.
-
-	Also: 
-
-Apr 17 20:13:12 192.168.56.103  U18:13:13.257|0364f420(drbd_s_w0) #455 drbd_rs_complete_io <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x282): drbd_rs_complete_io(,92160 [=0]) called, but refcnt is 0!?
-
-	then machine lock up (mouse does not move any more)
-
-	Tested linux/linux: no error, this is a WinDRBD bug.
 
 TODO: Bug: BSOD in drbd_sender:2898 calling callback
 
@@ -150,24 +99,28 @@ TODO: Bug: BSOD in drbd_sender:2898 calling callback
 
 	We've reworked locking, maybe the bug is gone now.
 
-TODO: Do not patch boot sector when it is a disk device
-
-TODO: Test: how and when is flush to backing device done?
-	This is important. Right now NTFS files only appear on
-	Linux when sync is done manually. Should sync at least
-	when becoming secondary. sync must be done while primary
-	(when secondary it would fail)
-
-	Update: is this fixed now?
-
-	I recently didn't observe data loss on writing to an
-	NTFS then doing secondary / primary on remote. However
-	since Windows does caching at file level (not at block
-	device level) it should fail. Maybe write a test that
-	writes a large file and then immeadiately does a
-	drbdadm secondary (without syncing the file).
+TODO: Code quality: Do not patch boot sector when it is a disk device
 
 TODOs for after Release 1.0 ----------------------------------------
+
+TODO: Bug: BSOD when removing network interface
+
+	This is an uncommon cause but should be fixed. When
+	doing:
+
+	ipconfig /release <eth-interface>
+
+	it (WinDRBD?) sometimes BSODs.
+
+	Update: tried with deactivating network interface (via
+	Control Panel), no BSOD, just disconnect (and logging
+	stopped working but this might be unrelated). But this
+	was Windows7 not Windows Server 2016...
+
+TODO: Bug: inject-faults does BSOD with SCSI port devices
+
+	This hasn't been touched for a while and should be easy to
+	fix.
 
 TODO: Bug: Several issues with 3 nodes setups.
 
@@ -186,26 +139,9 @@ TODO: Code quality: implement sched_setscheduler()
 
 	And remove extra windrbd_set_priority or so patch.
 
-TODO: Bug: Make boot device intentionally diskless
+TODO: Code quality: Make boot device intentionally diskless
 
 	Diskless is red in drbdadm status
-
-TODO: Bug: drbdsetup secondary takes long to complete
-
-	Nice to fix that one day. Update: no fix it it takes
-	30 seconds to complete and drbdadm status does not
-	work while drbdadm secondary is still running.
-
-	Update: Need to remove device from user space (only
-	the Windows device not the DRBD device), see
-	deveject for sample API (setup API CM_Request_Device_EjectA()
-	function).
-
-TODO: Bug: Connection loss while I/O
-
-	About twice a day DRBD connection between server 2016 breaks.
-	Unfortunately sometimes connection cannot be reestablished
-	(in a 4 node setup).
 
 TODO: Bug: BSOD in copy_first_640k
 
@@ -6922,4 +6858,105 @@ Github: Bug: Hangs in Disconnecting on Disconnect
 	solves the BSOD. With mempool and removing mempool_free() it
 	does BSOD.
 	
+Github: Bug: invalidate-remote while I/O sync stall on sync start
+
+	And remote is uptodate.
+
+Apr 17 13:16:56 192.168.56.103  U11:16:54.920|06713390(drbd_a_w0) #3268 bm_print_lock_info <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x20282): FIXME drbd_a_w0[146] op clear, bitmap locked for 'set_n_write from StartingSync' by drbd_w_w0[31]
+
+	After reboot verify is ok.
+
+	Also: 
+
+Apr 17 20:13:12 192.168.56.103  U18:13:13.257|0364f420(drbd_s_w0) #455 drbd_rs_complete_io <3>drbd w0/17 minor 5, ds(UpToDate), dvflag(0x282): drbd_rs_complete_io(,92160 [=0]) called, but refcnt is 0!?
+
+	then machine lock up (mouse does not move any more)
+
+	Tested linux/linux: no error, this is a WinDRBD bug.
+
+Done: Bug: freeze on disconnect-connect-waitconnect loop
+
+	Both nodes Secondary, Windows 7 doing
+	disconnect-connect-waitconnect.
+
+	Introduced with cb56c9c3b987 (also observed with fbc556)?
+	Same as System freeze on Windows 2016 Primary?
+
+	Currently testing it with 08c5bd7 it is still there (it
+	froze for one minute or so on disconnect, which caused the
+	test to terminate).
+
+	Tested with 1.0.0-rc7, no hangs or BSODs when disconnecting
+	without I/O.
+
+Github: Bug: drbdadm attach stuck when running detach-attach-waitsync loop
+
+	After ~100 iterations. Not clear why. Resource was connected.
+	I/O was done over ntfs.
+
+Apr 17 14:03:09 192.168.56.103  U12:03:09.678|038771a0(netlink) #6419 blkdev_get_by_path <7>blkdev_get_by_path succeeded FFFFFA8003B03130 windows_device FFFFFA8003699620.
+Apr 17 14:03:09 192.168.56.103  U12:03:09.678|038771a0(netlink) #6420 drbd_md_read <6>drbd w0/17 minor 5, ds(Diskless), dvflag(0x80002): meta-data IO uses: blk-bio
+Apr 17 14:06:33 192.168.56.103  U12:06:33.944|03919c90(devicecontrol) #6421 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_RESOURCES:30)
+Apr 17 14:06:38 192.168.56.103  U12:06:38.944|03919c90(devicecontrol) #6422 windrbd_process_netlink_packet failed to acquire the mutex, probably a previous drbd command is stuck.
+
+	Tested linux/linux: no error, this is a WinDRBD bug.
+
+	Tested again with 1.0.0-rc7: Bug is still there:
+
+Oct 15 20:15:27 192.168.56.103  U18:15:27.753|05243c60(netlink) #8788 resolve_ascii_path Link is \DosDevices\G:
+Oct 15 20:15:27 192.168.56.103  U18:15:27.753|05243c60(netlink) #8789 resolve_nt_kernel_link <6>Symbolic link points to \Device\HarddiskVolume4
+Oct 15 20:15:27 192.168.56.103  U18:15:27.769|05243c60(netlink) #8790 find_windows_device IoGetDeviceObjectPointer \Device\HarddiskVolume4 succeeded, targetdev is FFFFFA80036CF2B0
+Oct 15 20:15:27 192.168.56.103  U18:15:27.769|05243c60(netlink) #8791 blkdev_get_by_path <7>blkdev_get_by_path succeeded FFFFFA8005C59850 windows_device FFFFFA80036CF2B0.
+Oct 15 20:15:27 192.168.56.103  U18:15:27.769|05243c60(netlink) #8792 drbd_md_read <6>drbd w0/17 minor 5, ds(Diskless), dvflag(0x80002): meta-data IO uses: blk-bio
+Oct 15 20:15:27 192.168.56.103  U18:15:27.769|05243c60(netlink) #8793 print_state_change <6>drbd w0/17 minor 5, ds(Diskless), dvflag(0x80002): disk( Diskless -> Attaching )
+Oct 15 20:15:27 192.168.56.103  [last message was in IRQ context or recursive]
+Oct 15 20:15:27 192.168.56.103  U18:15:27.769|05243c60(netlink) #8794 drbd_adm_attach <6>drbd w0/17 minor 5, ds(Attaching), dvflag(0x80002): Maximum number of peer devices = 1
+Oct 15 20:15:27 192.168.56.103  U18:15:27.769|05243c60(netlink) #8795 drbd_bm_resize <6>drbd w0/17 minor 5, ds(Attaching), dvflag(0x80006): drbd_bm_resize called with capacity == 102400
+Oct 15 20:15:27 192.168.56.103  U18:15:27.769|05243c60(netlink) #8796 drbd_bm_resize <6>drbd w0/17 minor 5, ds(Attaching), dvflag(0x80006): resync bitmap: bits=12800 words=200 pages=1
+Oct 15 20:15:27 192.168.56.103  U18:15:27.769|05243c60(netlink) #8797 drbd_set_my_capacity <6>drbd w0/17 minor 5, ds(Attaching), dvflag(0x80006): size = 50 MB (51200 KB)
+Oct 15 20:15:27 192.168.56.103  U18:15:27.769|05243c60(netlink) #8798 drbd_set_my_capacity got a valid size, unblocking SCSI capacity requests.
+Oct 15 20:15:27 192.168.56.103  U18:15:27.769|05243c60(netlink) #8799 drbd_determine_dev_size <6>drbd w0/17 minor 5, ds(Attaching), dvflag(0x80006): size = 50 MB (51200 KB)
+Oct 15 20:15:28 192.168.56.103  U18:15:28.066|0536bee0(devicecontrol) #8800 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_RESOURCES:30)
+Oct 15 20:15:33 192.168.56.103  U18:15:33.066|0536bee0(devicecontrol) #8801 windrbd_process_netlink_packet failed to acquire the mutex, probably a previous drbd command is stuck.
+Oct 15 20:15:38 192.168.56.103  U18:15:38.207|05c59ae0(devicecontrol) #8802 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_RESOURCES:30)
+
+	drbdadm status hangs (mutex cannot be acquired).
+
+Done: Test: how and when is flush to backing device done?
+	This is important. Right now NTFS files only appear on
+	Linux when sync is done manually. Should sync at least
+	when becoming secondary. sync must be done while primary
+	(when secondary it would fail)
+
+	Update: is this fixed now?
+
+	I recently didn't observe data loss on writing to an
+	NTFS then doing secondary / primary on remote. However
+	since Windows does caching at file level (not at block
+	device level) it should fail. Maybe write a test that
+	writes a large file and then immeadiately does a
+	drbdadm secondary (without syncing the file).
+
+	Flush works on the Server versions it does not work
+	on Windows 7 (which is unsupported). Windows 10?
+
+Github: Bug: drbdsetup secondary takes long to complete
+
+	Nice to fix that one day. Update: no fix it it takes
+	30 seconds to complete and drbdadm status does not
+	work while drbdadm secondary is still running.
+
+	Update: Need to remove device from user space (only
+	the Windows device not the DRBD device), see
+	deveject for sample API (setup API CM_Request_Device_EjectA()
+	function).
+
+Done: Bug: Connection loss while I/O
+
+	About twice a day DRBD connection between server 2016 breaks.
+	Unfortunately sometimes connection cannot be reestablished
+	(in a 4 node setup).
+
+	Fixed ko count mechanism and return value (ETIMEDOUT -> EAGAIN).
+	Now connection is very stable (with ko count = 60).
 
