@@ -117,11 +117,6 @@ TODO: Bug: BSOD when removing network interface
 	stopped working but this might be unrelated). But this
 	was Windows7 not Windows Server 2016...
 
-TODO: Bug: inject-faults does BSOD with SCSI port devices
-
-	This hasn't been touched for a while and should be easy to
-	fix.
-
 TODO: Bug: Several issues with 3 nodes setups.
 
 	As reported by Henry Kellner, connection problems and
@@ -244,33 +239,6 @@ TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 	hangs under Windows 10.
 
 	Still a problem?
-
-TODO: Bug: Diskless client hangs on power down
-
-	it hangs in I/O because network is already down and Windows
-	tries to swap in ... need to swap in (disable pagefile)
-	before network goes down.
-
-	Later BSOD POWER_STATE_FAILURE (0x9f)
-
-	Update: hang also when there is no swapfile. Must be
-	something else (BusRelations for disk object?)
-
-	Update: No this was queried on booting not on
-	shutdown. The 'good' case sends scsi requests until
-	it finally reboots (after sending shutdown to root
-	object). After shutdown of root device there are
-	550 more I/O requests (via scsi).
-
-	Update: Set DRBD on no data to error. Now we see that
-	dxgkrnl.sys accesses the disk when there is no I/O
-	Disabling dxgkrnl (via Registry key: remove from
-	minimal drivers and set service start to 4 (disabled)).
-	seems to help, but we need more tests.
-
-	Update: Unfortunately BSOD on power down 
-	(KERNEL_INPAGE_DATA_ERROR or so) reappeared for the
-	dxgkrnl driver.
 
 TODO: Performance: Retry disable NDIS lightweight filter
 
@@ -6959,4 +6927,40 @@ Done: Bug: Connection loss while I/O
 
 	Fixed ko count mechanism and return value (ETIMEDOUT -> EAGAIN).
 	Now connection is very stable (with ko count = 60).
+
+Github: Bug: Diskless client hangs on power down
+
+	it hangs in I/O because network is already down and Windows
+	tries to swap in ... need to swap in (disable pagefile)
+	before network goes down.
+
+	Later BSOD POWER_STATE_FAILURE (0x9f)
+
+	Update: hang also when there is no swapfile. Must be
+	something else (BusRelations for disk object?)
+
+	Update: No this was queried on booting not on
+	shutdown. The 'good' case sends scsi requests until
+	it finally reboots (after sending shutdown to root
+	object). After shutdown of root device there are
+	550 more I/O requests (via scsi).
+
+	Update: Set DRBD on no data to error. Now we see that
+	dxgkrnl.sys accesses the disk when there is no I/O
+	Disabling dxgkrnl (via Registry key: remove from
+	minimal drivers and set service start to 4 (disabled)).
+	seems to help, but we need more tests.
+
+	Update: Unfortunately BSOD on power down 
+	(KERNEL_INPAGE_DATA_ERROR or so) reappeared for the
+	dxgkrnl driver.
+
+	Also reported by Yannis Milios.
+
+Done: Bug: inject-faults does BSOD with SCSI port devices
+
+	This hasn't been touched for a while and should be easy to
+	fix.
+
+	Can't reproduce this now, closing.
 
