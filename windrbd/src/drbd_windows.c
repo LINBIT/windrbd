@@ -1608,9 +1608,12 @@ printk("completing bio %p\n", bio);
 		bio->device_failed = 1;
 	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
 
+printk("num_completed is %d bio->bi_num_requests is %d bio is %p\n", num_completed, atomic_read(&bio->bi_num_requests), bio);
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
 		bio->bi_status = win_status_to_blk_status(status);
+printk("into bio_endio bio is %p\n", bio);
 		bio_endio(bio);
+printk("out of bio_endio bio is %p\n", bio);
 			/* TODO: to bio_free() */
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
@@ -1714,6 +1717,8 @@ static int make_flush_request(struct bio *bio)
 	next_stack_location->FileObject = bio->bi_bdev->file_object;
 
 	bio_get(bio);
+
+printk("flush %p\n", bio);
 
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
