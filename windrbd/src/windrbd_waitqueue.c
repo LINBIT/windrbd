@@ -27,10 +27,8 @@ static int ll_wait(struct wait_queue_entry *e, LONG_PTR timeout, int interruptib
 	PVOID wait_objects[2] = {0};
 	struct task_struct *thread = current;
 
-#if 0
 	/* Busy looping .. to see where it hangs */
-if (timeout > 1000) timeout = 1000;
-#endif
+if (timeout > 30000) timeout = 30000;
 
 	if(timeout != MAX_SCHEDULE_TIMEOUT) {
 		wait_time.QuadPart = timeout * (-1 * 1000 * 1000 * 10 / HZ);
