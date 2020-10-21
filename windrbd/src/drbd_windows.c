@@ -1570,6 +1570,8 @@ NTSTATUS DrbdIoCompletion(
 	NTSTATUS status = Irp->IoStatus.Status;
 	KIRQL flags;
 
+printk("completing bio %p\n", bio);
+
 	if (status != STATUS_SUCCESS) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)
 			status = STATUS_SUCCESS;
@@ -1759,7 +1761,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-// printk("karin (%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element);
+printk("(%s)Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element, bio);
 // }
 
 /* Make a copy of the (page cache) buffer and write the copy to the
@@ -1944,6 +1946,7 @@ int generic_make_request(struct bio *bio)
 	static int max_mdl_elements = MAX_MDL_ELEMENTS;
 #endif
 
+printk("bio is %p\n", bio);
 	bio_get(bio);
 
 	flush_request = ((bio->bi_opf & REQ_PREFLUSH) != 0);
