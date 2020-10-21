@@ -79,6 +79,7 @@ exit_interruptible_debug(file, line, func);
 	case STATUS_WAIT_1:
 		return -EINTR;		/* TODO: -ERESTARTSYS */
 	case STATUS_TIMEOUT:
+printk("TIMED OUT after %d milliseconds\n", timeout);
 		return -ETIMEDOUT;
 	}
 	return 0;	/* TODO: -EINVAL or some other error */
