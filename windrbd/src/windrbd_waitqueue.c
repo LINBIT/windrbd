@@ -79,7 +79,7 @@ exit_interruptible_debug(file, line, func);
 	case STATUS_WAIT_1:
 		return -EINTR;		/* TODO: -ERESTARTSYS */
 	case STATUS_TIMEOUT:
-printk("TIMED OUT after %d milliseconds\n", timeout);
+printk("TIMED OUT after %d milliseconds (%s:%d %s()) wait queue entry is %p\n", timeout, file, line, func, e);
 		return -ETIMEDOUT;
 	}
 	return 0;	/* TODO: -EINVAL or some other error */
@@ -177,7 +177,7 @@ void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char 
 
 	spin_lock_irqsave(&q->lock, flags);
 	if (list_empty(&q->head)) {
-		printk("Warning: attempt to wake up with no one waiting.\n");
+		printk("Warning: attempt to wake up with no one waiting (%s:%d %s()). queue is %p\n", file, line, func, q);
 		spin_unlock_irqrestore(&q->lock, flags);
 
 		return;
@@ -196,7 +196,7 @@ void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const c
 
 	spin_lock_irqsave(&q->lock, flags);
 	if (list_empty(&q->head)) {
-		dbg("Warning: attempt to wake up all with no one waiting.\n");
+		printk("Warning: attempt to wake up all with no one waiting (%s:%d %s()) queue is %p.\n", file, line, func, q);
 		spin_unlock_irqrestore(&q->lock, flags);
 
 		return;
