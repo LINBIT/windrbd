@@ -36,15 +36,6 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Bug: Secondary becomes unresponsive and eventually reboots
-
-	Just connected and doing I/O after one week secondary
-	(both Windows 2016) gets unrepsonive and eventually reboots
-	(BSOD?) Maybe a memory leak?
-
-	Retrying with sleep 10 between I/O sync, still responsive 
-	after 4 days.
-
 TODO: Code quality: maybe printk->dbg netlink message.
 
 TODO: Bug: BSOD when connecting with split brain.
@@ -6963,4 +6954,13 @@ Done: Bug: inject-faults does BSOD with SCSI port devices
 	fix.
 
 	Can't reproduce this now, closing.
+
+Github: Bug: Secondary becomes unresponsive and eventually reboots
+
+	Just connected and doing I/O after one week secondary
+	(both Windows 2016) gets unrepsonive and eventually reboots
+	(BSOD?) Maybe a memory leak?
+
+	Retrying with sleep 10 between I/O sync, still responsive 
+	after 4 days.
 
