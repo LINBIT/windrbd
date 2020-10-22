@@ -177,7 +177,7 @@ void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char 
 
 	spin_lock_irqsave(&q->lock, flags);
 	if (list_empty(&q->head)) {
-		dbg("Warning: attempt to wake up with no one waiting.\n");
+		printk("Warning: attempt to wake up with no one waiting.\n");
 		spin_unlock_irqrestore(&q->lock, flags);
 
 		return;
