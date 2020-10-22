@@ -36,8 +36,6 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Test: Does connection establishment in 4 node setting work now?
-
 TODO: Code quality: maybe printk->dbg netlink message.
 
 TODO: Bug: BSOD when connecting with split brain.
@@ -6965,4 +6963,9 @@ Github: Bug: Secondary becomes unresponsive and eventually reboots
 
 	Retrying with sleep 10 between I/O sync, still responsive 
 	after 4 days.
+
+Done: Test: Does connection establishment in 4 node setting work now?
+
+	Yes works well (10 iterations, about 8-10 seconds until
+	wait-connect terminates, sometimes it takes up to 30 seconds)
 
