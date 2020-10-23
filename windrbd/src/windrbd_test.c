@@ -1002,7 +1002,7 @@ printk("out of wait_event cond is %d\n", cond);
 
 	return;
 usage:
-	printk("usage: wait_event_test <no-wait|simple>\n");
+	printk("usage: wait_event_test <no-wait|simple|fast|no-sleep>\n");
 }
 
 void argv_test(int argc, char ** argv)
