@@ -925,6 +925,37 @@ printk("threads completed now waiting for workqueue.\n");
 	kfree(params);
 }
 
+static int cond = 0;
+
+static int waker_task(void *wqparam)
+{
+	wait_queue_head_t *wq = wqparam;
+
+printk("waker started\n");
+	msleep(1000);
+printk("waking up #1\n");
+	wake_up(wq);
+	msleep(1000);
+printk("waking up #2 (with cond true)\n");
+	cond = 1;
+	wake_up(wq);
+printk("waker end\n");
+	return 0;
+}
+
+static void wait_event_test(int argc, const char ** argv)
+{
+	wait_queue_head_t wq;
+	init_waitqueue_head(&wq);
+
+	kthread_run(waker_task, &wq, "waker");
+
+printk("into wait_event ...\n");
+	cond = 0;
+	wait_event(wq, cond);
+printk("out of wait_event cond is %d\n", cond);
+}
+
 void argv_test(int argc, char ** argv)
 {
 	int i;
@@ -994,6 +1025,8 @@ void test_main(const char *arg)
 		debug_printks_enabled = 0;
 	if (strcmp(argv[0], "workqueue_test") == 0)
 		workqueue_test(argc, argv);
+	if (strcmp(argv[0], "wait_event_test") == 0)
+		wait_event_test(argc, argv);
 
 kfree_argv:
 	kfree(argv);
