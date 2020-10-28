@@ -169,25 +169,6 @@ void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e)
 	spin_unlock_irqrestore(&w->lock, flags);
 }
 
-void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
-{		
-	KIRQL flags;
-	dbg("wake_up %p %s:%d (%s())\n", q, file, line, func);
-	struct wait_queue_entry *e;
-
-	spin_lock_irqsave(&q->lock, flags);
-	if (list_empty(&q->head)) {
-		printk("Warning: attempt to wake up with no one waiting (%s:%d %s()). queue is %p\n", file, line, func, q);
-		spin_unlock_irqrestore(&q->lock, flags);
-
-		return;
-	}
-	e = list_first_entry(&q->head, struct wait_queue_entry, entry);
-	KeSetEvent(&e->windows_event, 0, FALSE);
-
-	spin_unlock_irqrestore(&q->lock, flags);
-}
-
 void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {
 	KIRQL flags;
@@ -210,5 +191,14 @@ void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const c
 	}
 
 	spin_unlock_irqrestore(&q->lock, flags);
+}
+
+	/* This wakes up all non-exclusive tasks. Since we only have
+	 * non-exclusive tasks, this does the same as wake_up_all().
+	 */
+
+void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
+{
+	wake_up_all_debug(q, file, line, func);
 }
 
