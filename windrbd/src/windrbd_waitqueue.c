@@ -179,7 +179,7 @@ void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const c
 
 	spin_lock_irqsave(&q->lock, flags);
 	if (list_empty(&q->head)) {
-		printk("Warning: attempt to wake up all with no one waiting (%s:%d %s()) queue is %p.\n", file, line, func, q);
+		dbg("Warning: attempt to wake up all with no one waiting (%s:%d %s()) queue is %p.\n", file, line, func, q);
 		spin_unlock_irqrestore(&q->lock, flags);
 
 		return;
