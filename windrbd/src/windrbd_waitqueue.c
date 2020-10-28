@@ -81,7 +81,7 @@ exit_interruptible_debug(file, line, func);
 	case STATUS_WAIT_1:
 		return -EINTR;		/* TODO: -ERESTARTSYS */
 	case STATUS_TIMEOUT:
-printk("TIMED OUT after %d milliseconds (%s:%d %s()) wait queue entry is %p\n", timeout, file, line, func, e);
+// printk("TIMED OUT after %d milliseconds (%s:%d %s()) wait queue entry is %p\n", timeout, file, line, func, e);
 		return -ETIMEDOUT;
 	}
 	return 0;	/* TODO: -EINVAL or some other error */

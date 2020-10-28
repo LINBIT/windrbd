@@ -25,7 +25,7 @@ bool try_module_get(struct module *module)
 		printk("Would lock driver now.\n");
 #endif
 	}
-printk("module->refcnt is %d\n", atomic_read(&module->refcnt));
+// printk("module->refcnt is %d\n", atomic_read(&module->refcnt));
 	return true;
 }
 
@@ -44,7 +44,7 @@ void module_put(struct module *module)
 		printk("Would unlock driver now.\n");
 #endif
 	}
-printk("module->refcnt is %d\n", atomic_read(&module->refcnt));
+// printk("module->refcnt is %d\n", atomic_read(&module->refcnt));
 }
 
 
