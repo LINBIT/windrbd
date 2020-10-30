@@ -1074,6 +1074,7 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 				if (wq->about_to_destroy) {
 					printk("About to destroy workqueue %s not calling function\n", wq->name);
 				} else {
+printk("into func\n");
 					w->func(w);
 				}
 			}
@@ -1147,12 +1148,18 @@ void flush_workqueue(struct workqueue_struct *wq)
 
 void destroy_workqueue(struct workqueue_struct *wq)
 {
+printk("1 wq is %s\n", wq->name);
 	wq->about_to_destroy = 1;
+printk("2 wq is %s\n", wq->name);
 	flush_workqueue(wq);
+printk("3 wq is %s\n", wq->name);
 	KeSetEvent(&wq->killEvent, 0, FALSE);
+printk("4 wq is %s\n", wq->name);
 	KeWaitForSingleObject(&wq->readyToFreeEvent, Executive, KernelMode, FALSE, NULL);
+printk("5 wq is %s\n", wq->name);
 
 	kfree(wq);
+printk("6 wq is %s\n", wq->name);
 }
 
 int threads_sleeping;
