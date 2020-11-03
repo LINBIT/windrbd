@@ -1615,7 +1615,7 @@ printk("completing bio %p\n", bio);
 		bio->device_failed = 1;
 	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
 
-// printk("num_completed is %d bio->bi_num_requests is %d bio is %p\n", num_completed, atomic_read(&bio->bi_num_requests), bio);
+printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
 		bio->bi_status = win_status_to_blk_status(status);
 printk("into bio_endio bio is %p\n", bio);
