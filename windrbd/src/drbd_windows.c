@@ -1074,7 +1074,7 @@ static int run_singlethread_workqueue(struct workqueue_struct* wq)
 				if (wq->about_to_destroy) {
 					printk("About to destroy workqueue %s not calling function\n", wq->name);
 				} else {
-printk("into func\n");
+// printk("into func\n");
 					w->func(w);
 				}
 			}
@@ -1148,18 +1148,18 @@ void flush_workqueue(struct workqueue_struct *wq)
 
 void destroy_workqueue(struct workqueue_struct *wq)
 {
-printk("1 wq is %s\n", wq->name);
+// printk("1 wq is %s\n", wq->name);
 	wq->about_to_destroy = 1;
-printk("2 wq is %s\n", wq->name);
+// printk("2 wq is %s\n", wq->name);
 	flush_workqueue(wq);
-printk("3 wq is %s\n", wq->name);
+// printk("3 wq is %s\n", wq->name);
 	KeSetEvent(&wq->killEvent, 0, FALSE);
-printk("4 wq is %s\n", wq->name);
+// printk("4 wq is %s\n", wq->name);
 	KeWaitForSingleObject(&wq->readyToFreeEvent, Executive, KernelMode, FALSE, NULL);
-printk("5 wq is %s\n", wq->name);
+// printk("5 wq is %s\n", wq->name);
 
 	kfree(wq);
-printk("6 wq is %s\n", wq->name);
+// printk("6 wq is %s\n", wq->name);
 }
 
 int threads_sleeping;
@@ -1577,7 +1577,7 @@ NTSTATUS DrbdIoCompletion(
 	NTSTATUS status = Irp->IoStatus.Status;
 	KIRQL flags;
 
-printk("completing bio %p\n", bio);
+// printk("completing bio %p\n", bio);
 
 	if (status != STATUS_SUCCESS) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)
@@ -1615,12 +1615,12 @@ printk("completing bio %p\n", bio);
 		bio->device_failed = 1;
 	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
 
-printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
+// printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
 		bio->bi_status = win_status_to_blk_status(status);
-printk("into bio_endio bio is %p\n", bio);
+// printk("into bio_endio bio is %p\n", bio);
 		bio_endio(bio);
-printk("out of bio_endio bio is %p\n", bio);
+// printk("out of bio_endio bio is %p\n", bio);
 			/* TODO: to bio_free() */
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
@@ -1773,7 +1773,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element, bio);
+// printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element, bio);
 // }
 
 /* Make a copy of the (page cache) buffer and write the copy to the

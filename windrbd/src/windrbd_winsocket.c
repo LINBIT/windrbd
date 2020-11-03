@@ -562,22 +562,22 @@ static void close_socket(struct socket *socket)
 {
 	struct _IRP *Irp;
 
-printk("1\n");
+// printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
-printk("2\n");
+// printk("2\n");
 	if (socket->is_closed) {
 		dbg("Socket already closed, refusing to close it again.\n");
 		return;
 	}
-printk("3\n");
+// printk("3\n");
 
 	Irp = wsk_new_irp(NULL);
 	if (Irp == NULL)
 		return;
 
-printk("4\n");
+// printk("4\n");
 		/* TODO: Gracefully disconnect socket first? With what
 		 * timeout? Disconnect seems to work now (Linux detects
 		 * disconnect on Windows peer with about 200-300ms delay),
@@ -587,28 +587,28 @@ printk("4\n");
 		 */
 
 	if (socket->wsk_socket != NULL) {
-printk("5\n");
+// printk("5\n");
 		mutex_lock(&socket->wsk_mutex);
 
-printk("6\n");
+// printk("6\n");
 		(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
 		socket->wsk_socket = NULL;
 
-printk("7\n");
+// printk("7\n");
 		mutex_unlock(&socket->wsk_mutex);
-printk("8\n");
+// printk("8\n");
 	}
 
-printk("9\n");
+// printk("9\n");
 	if (socket->accept_wsk_socket != NULL) {
 		close_wsk_socket(socket->accept_wsk_socket);
-printk("a\n");
+// printk("a\n");
 		socket->accept_wsk_socket = NULL;
 	}
-printk("b\n");
+// printk("b\n");
 	socket->error_status = 0;
 	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
-printk("c\n");
+// printk("c\n");
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
@@ -1203,7 +1203,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	PVOID       waitObjects[2];
 	int         wObjCount = 1;
 
-printk("in recvmsg: size is %d\n", len);
+// printk("in recvmsg: size is %d\n", len);
 // dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
@@ -1359,7 +1359,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
 		socket->error_status = BytesReceived;
 		dbg("setting error status to %d\n", socket->error_status);
 	}
-printk("Received %d bytes\n", BytesReceived);
+// printk("Received %d bytes\n", BytesReceived);
 	return BytesReceived;
 }
 
