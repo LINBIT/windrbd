@@ -86,6 +86,10 @@ do {									\
 do {									\
 	ll_wait_event_macro(ret, wait_queue, condition,			\
 		timeout, TASK_INTERRUPTIBLE);				\
+	if (ret == -ETIMEDOUT) {					\
+printk("wait_event_timeout: timed out returning 0\n");			\
+		ret = 0;						\
+	}								\
 } while (0);
 
 #define wait_event_interruptible(ret, wait_queue, condition)		\
