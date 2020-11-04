@@ -101,7 +101,9 @@ do {									\
 #define wait_event_interruptible_timeout(ret, wait_queue, condition, timeout) \
 do {									\
 	ll_wait_event_macro(ret, wait_queue, condition,			\
-		timeout, TASK_INTERRUPTIBLE);		\
+		timeout, TASK_INTERRUPTIBLE);				\
+	if (ret == -ETIMEDOUT) 						\
+		ret = 0;						\
 } while (0);
 
 void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char *func);
