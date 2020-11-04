@@ -1943,8 +1943,8 @@ printk("offset is %llu\n", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart
 int generic_make_request(struct bio *bio)
 {
 	int ret;
-	int sector;
-	int orig_sector;
+	sector_t sector;
+	sector_t orig_sector;
 	int total_size;
 	int orig_size;
 	int e;
