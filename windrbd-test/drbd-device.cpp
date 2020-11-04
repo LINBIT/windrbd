@@ -535,9 +535,13 @@ TEST(windrbd, do_read_at_end_of_device)
 	char buf[1024];
 	DWORD px;
 	DWORD bytes_read;
+	LONG high_pos;
 
-	px = SetFilePointer(h, p.expected_size-512, NULL, FILE_BEGIN);
+	high_pos = (p.expected_size-512) >> 32;
+printf("high_pos before SetFilePointer is %d\n", high_pos);
+	px = SetFilePointer(h, p.expected_size-512, &high_pos, FILE_BEGIN);
 	err = GetLastError();
+printf("high_pos after SetFilePointer is %d\n", high_pos);
 	printf("px is %d err is %d\n", px, err);
 	ret = ReadFile(h, buf, sizeof(buf), &bytes_read,  NULL);
 	err = GetLastError();
