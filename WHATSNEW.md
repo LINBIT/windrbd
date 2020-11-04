@@ -4,6 +4,9 @@ What's new in version 1.0.0-rc8
 Fixed bug in wait_queue which caused some operations (drbdadm down right
 after drbdadm up, drbdadm attach) to hang forever.
 
+Fixed bug in backing device interface that caused I/O on backing devices
+larger than 2TB to fail.
+
 What's new in version 1.0.0-rc7
 -------------------------------
 
