@@ -1768,6 +1768,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 		io = IRP_MJ_READ;
 	}
 
+printk("bio->bi_iter.bi_sector is %llu << 9 is %llu\n", bio->bi_iter.bi_sector, bio->bi_iter.bi_sector << 9);
 	bio->bi_io_vec[bio->bi_first_element].offset.QuadPart = bio->bi_iter.bi_sector << 9;
 	buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_first_element].bv_page->addr) + bio->bi_io_vec[bio->bi_first_element].bv_offset); 
 	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
@@ -1794,6 +1795,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 		patch_boot_sector(buffer, 0, 0);
 	}
 
+printk("offset is %llu\n", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart);
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
