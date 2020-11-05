@@ -1,0 +1,37 @@
+From 2d8c2d19331d04d3b33a07b730a8495b099d4c39 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 30 Oct 2020 13:30:26 +0100
+Subject: [PATCH 2/6] drbd_receiver.c: Eliminate spin_lock_irq from
+ drbd_wait_misc().
+
+We should only use the spin_lock_irqsave/spin_unlock_irqrestore
+macros.
+---
+ drbd/drbd_receiver.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index 64a37ac..a5e7493 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -2728,7 +2728,7 @@ static int handle_write_conflicts(struct drbd_peer_request *peer_req, KIRQL *spi
+ 			 * should not happen in a two-node setup.  Wait for the
+ 			 * earlier peer request to complete.
+ 			 */
+-			err = drbd_wait_misc(device, peer_device, i);
++			err = drbd_wait_misc(device, peer_device, i, spin_lock_irq_flags_p);
+ 			if (err)
+ 				goto out;
+ 			goto repeat;
+@@ -2783,7 +2783,7 @@ static int handle_write_conflicts(struct drbd_peer_request *peer_req, KIRQL *spi
+ 				 * request to finish locally before submitting
+ 				 * the conflicting peer request.
+ 				 */
+-				err = drbd_wait_misc(device, NULL, &req->i);
++				err = drbd_wait_misc(device, NULL, &req->i, spin_lock_irq_flags_p);
+ 				if (err) {
+ 					begin_state_change_locked(connection->resource, CS_HARD);
+ 					__change_cstate(connection, C_TIMEOUT);
+-- 
+2.17.0
+

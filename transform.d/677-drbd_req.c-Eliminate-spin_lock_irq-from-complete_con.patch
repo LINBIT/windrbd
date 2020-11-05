@@ -1,0 +1,50 @@
+From 3b01cf7ed27f9ea080bad888b02c6e0f339aefac Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 30 Oct 2020 13:43:03 +0100
+Subject: [PATCH 5/6] drbd_req.c: Eliminate spin_lock_irq from
+ complete_conflicting_writes().
+
+We should only use the spin_lock_irqsave/spin_unlock_irqrestore
+macros.
+---
+ drbd/drbd_req.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
+index 07833a2..a1aeeb6 100644
+--- a/drbd/drbd_req.c
++++ b/drbd/drbd_req.c
+@@ -1185,7 +1185,7 @@ static bool remote_due_to_read_balancing(struct drbd_device *device,
+  *
+  * Only way out: remove the conflicting intervals from the tree.
+  */
+-static void complete_conflicting_writes(struct drbd_request *req)
++static void complete_conflicting_writes(struct drbd_request *req, KIRQL *flags_p)
+ {
+ 	DEFINE_WAIT(wait);
+ 	struct drbd_device *device = req->device;
+@@ -1208,10 +1208,10 @@ static void complete_conflicting_writes(struct drbd_request *req)
+ 		/* Indicate to wake up device->misc_wait on progress.  */
+ 		prepare_to_wait(&device->misc_wait, &wait, TASK_UNINTERRUPTIBLE);
+ 		i->waiting = true;
+-		spin_unlock_irq(&device->resource->req_lock);
++		spin_unlock_irqrestore(&device->resource->req_lock, *flags_p);
+ 		schedule();
+ 
+-		spin_lock_irq(&device->resource->req_lock);
++		spin_lock_irqsave(&device->resource->req_lock, *flags_p);
+ 	}
+ 	finish_wait(&device->misc_wait, &wait);
+ }
+@@ -1694,7 +1694,7 @@ static void drbd_send_and_submit(struct drbd_device *device, struct drbd_request
+ 		/* This may temporarily give up the req_lock,
+ 		 * but will re-acquire it before it returns here.
+ 		 * Needs to be before the check on drbd_suspended() */
+-		complete_conflicting_writes(req);
++		complete_conflicting_writes(req, &flags);
+ 		/* no more giving up req_lock from now on! */
+ 
+ 		/* check for congestion, and potentially stop sending
+-- 
+2.17.0
+

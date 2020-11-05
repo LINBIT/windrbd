@@ -1,0 +1,114 @@
+From 696c721f7ea8f1764f5ae0d8eb361163f61088d3 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 30 Oct 2020 13:58:25 +0100
+Subject: [PATCH 6/6] drbd_sender.c: Eliminate spin_lock_irq from
+ tl_mark_for_resend_by_connection().
+
+We should only use the spin_lock_irqsave/spin_unlock_irqrestore
+macros.
+---
+ drbd/drbd_sender.c | 24 ++++++++++++------------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index 97912c6..1729115 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -2545,7 +2545,7 @@ static struct drbd_request *__next_request_for_connection(
+ }
+ 
+ /* holds req_lock on entry, may give up and reacquire temporarily */
+-static struct drbd_request *tl_mark_for_resend_by_connection(struct drbd_connection *connection)
++static struct drbd_request *tl_mark_for_resend_by_connection(struct drbd_connection *connection, KIRQL *flags_p)
+ {
+ 	struct bio_and_error m;
+ 	struct drbd_request *req;
+@@ -2610,11 +2610,11 @@ restart:
+ 		 * RESEND actually caused this request to be finished off, we
+ 		 * complete the master bio, outside of the lock. */
+ 		if (m.bio || need_resched()) {
+-			spin_unlock_irq(&connection->resource->req_lock);
++			spin_unlock_irqrestore(&connection->resource->req_lock, *flags_p);
+ 			if (m.bio)
+ 				complete_master_bio(device, &m);
+ 			cond_resched();
+-			spin_lock_irq(&connection->resource->req_lock);
++			spin_lock_irqsave(&connection->resource->req_lock, *flags_p);
+ 			goto restart;
+ 		}
+ 		if (!req_oldest)
+@@ -2623,10 +2623,10 @@ restart:
+ 	return req_oldest;
+ }
+ 
+-static struct drbd_request *tl_next_request_for_connection(struct drbd_connection *connection)
++static struct drbd_request *tl_next_request_for_connection(struct drbd_connection *connection, KIRQL *flags_p)
+ {
+ 	if (connection->todo.req_next == TL_NEXT_REQUEST_RESEND)
+-		connection->todo.req_next = tl_mark_for_resend_by_connection(connection);
++		connection->todo.req_next = tl_mark_for_resend_by_connection(connection, flags_p);
+ 
+ 	else if (connection->todo.req_next == NULL)
+ 		connection->todo.req_next = __next_request_for_connection(connection, NULL);
+@@ -2662,11 +2662,11 @@ static void maybe_send_state_afer_ahead(struct drbd_connection *connection)
+  * It also moves all currently queued connection->sender_work
+  * to connection->todo.work_list.
+  */
+-static bool check_sender_todo(struct drbd_connection *connection)
++static bool check_sender_todo(struct drbd_connection *connection, KIRQL *flags_p)
+ {
+ 	KIRQL flags;
+ 
+-	tl_next_request_for_connection(connection);
++	tl_next_request_for_connection(connection, flags_p);
+ 
+ 	/* we did lock_irq above already. */
+ 	/* FIXME can we get rid of this additional lock? */
+@@ -2690,7 +2690,7 @@ static void wait_for_sender_todo(struct drbd_connection *connection)
+ 
+ 	spin_lock_irqsave(&connection->resource->req_lock,
+ 		          spin_lock_irq_flags);
+-	got_something = check_sender_todo(connection);
++	got_something = check_sender_todo(connection, &spin_lock_irq_flags);
+ 	spin_unlock_irqrestore(&connection->resource->req_lock,
+ 		               spin_lock_irq_flags);
+ 	if (got_something)
+@@ -2715,7 +2715,7 @@ static void wait_for_sender_todo(struct drbd_connection *connection)
+ 				TASK_INTERRUPTIBLE);
+ 		spin_lock_irqsave(&connection->resource->req_lock,
+ 				  spin_lock_irq_flags);
+-		if (check_sender_todo(connection) || signal_pending(current)) {
++		if (check_sender_todo(connection, &spin_lock_irq_flags) || signal_pending(current)) {
+ 			spin_unlock_irqrestore(&connection->resource->req_lock,
+ 				               spin_lock_irq_flags);
+ 			break;
+@@ -2937,7 +2937,7 @@ static int process_one_request(struct drbd_connection *connection)
+ 
+ 	/* As we hold the request lock anyways here,
+ 	 * this is a convenient place to check for new things to do. */
+-	check_sender_todo(connection);
++	check_sender_todo(connection, &spin_lock_irq_flags);
+ 
+ 	spin_unlock_irqrestore(&connection->resource->req_lock,
+ 			       spin_lock_irq_flags);
+@@ -3045,7 +3045,7 @@ int drbd_sender(struct drbd_thread *thi)
+ 	if (!connection->todo.req) {
+ 		spin_lock_irqsave(&connection->resource->req_lock,
+ 				  spin_lock_irq_flags);
+-		tl_next_request_for_connection(connection);
++		tl_next_request_for_connection(connection, &spin_lock_irq_flags);
+ 		spin_unlock_irqrestore(&connection->resource->req_lock,
+ 				       spin_lock_irq_flags);
+ 	}
+@@ -3058,7 +3058,7 @@ int drbd_sender(struct drbd_thread *thi)
+ 		spin_lock_irqsave(&connection->resource->req_lock,
+ 				  spin_lock_irq_flags);
+ 		__req_mod(req, SEND_CANCELED, peer_device, &m);
+-		tl_next_request_for_connection(connection);
++		tl_next_request_for_connection(connection, &spin_lock_irq_flags);
+ 		spin_unlock_irqrestore(&connection->resource->req_lock,
+ 				       spin_lock_irq_flags);
+ 		if (m.bio)
+-- 
+2.17.0
+

@@ -1,0 +1,45 @@
+From aa7cf2a588f383bc5ebe35b17c0d982a606fc47c Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 30 Oct 2020 13:37:22 +0100
+Subject: [PATCH 4/6] drbd_receiver.c: Eliminate spin_lock_irq from
+ drbd_recv_uuids110().
+
+We should only use the spin_lock_irqsave/spin_unlock_irqrestore
+macros.
+---
+ drbd/drbd_receiver.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index a5e7493..32ef098 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -5519,6 +5519,7 @@ static int receive_uuids110(struct drbd_connection *connection, struct packet_in
+ 	u64 bitmap_uuids_mask, node_mask;
+ 	struct drbd_peer_md *peer_md = NULL;
+ 	struct drbd_device *device;
++	KIRQL flags = KeGetCurrentIrql();
+ 
+ 	peer_device = conn_peer_device(connection, pi->vnr);
+ 	if (!peer_device)
+@@ -5551,7 +5552,7 @@ static int receive_uuids110(struct drbd_connection *connection, struct packet_in
+ 
+ 	if (get_ldev(device)) {
+ 		peer_md = device->ldev->md.peers;
+-		spin_lock_irq(&device->ldev->md.uuid_lock);
++		spin_lock_irqsave(&device->ldev->md.uuid_lock, flags);
+ 	}
+ 	peer_device->current_uuid = be64_to_cpu(p->current_uuid);
+ 	peer_device->dirty_bits = be64_to_cpu(p->dirty_bits);
+@@ -5579,7 +5580,7 @@ static int receive_uuids110(struct drbd_connection *connection, struct packet_in
+ 		peer_device->history_uuids[i++] = 0;
+ 	peer_device->uuids_received = true;
+ 	if (peer_md) {
+-		spin_unlock_irq(&device->ldev->md.uuid_lock);
++		spin_unlock_irqrestore(&device->ldev->md.uuid_lock, flags);
+ 		put_ldev(device);
+ 	}
+ 
+-- 
+2.17.0
+

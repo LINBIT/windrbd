@@ -1,0 +1,28 @@
+From 5cfc9e8c3ee1fd003b66ef8975346659370b5029 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 30 Oct 2020 13:36:34 +0100
+Subject: [PATCH 3/6] drbd_int.h: Eliminate spin_lock_irq from
+ drbd_wait_misc().
+
+We should only use the spin_lock_irqsave/spin_unlock_irqrestore
+macros.
+---
+ drbd/drbd_int.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index e601d21..2c95ea9 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -227,7 +227,7 @@ enum drbd_stream;
+ 
+ #include "drbd_interval.h"
+ 
+-extern int drbd_wait_misc(struct drbd_device *, struct drbd_peer_device *, struct drbd_interval *);
++extern int drbd_wait_misc(struct drbd_device *, struct drbd_peer_device *, struct drbd_interval *, KIRQL *);
+ 
+ extern void lock_all_resources(void);
+ extern void unlock_all_resources(void);
+-- 
+2.17.0
+
