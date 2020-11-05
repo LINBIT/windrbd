@@ -38,6 +38,11 @@ Real:
 
 TODO: Code quality: maybe printk->dbg netlink message.
 
+TODO: Bug: BSOD in wsk_incoming_connection
+
+	When running disconnect_connect_wait_connected loop on Linux (secondary)
+	and Primary (Windows) doing I/O. After 50-100 iterations or so...
+
 TODO: Bug: BSOD when connecting with split brain.
 
 	When experimenting with MS cluster manager integration, we
