@@ -7,6 +7,10 @@ after drbdadm up, drbdadm attach) to hang forever.
 Fixed bug in backing device interface that caused I/O on backing devices
 larger than 2TB to fail.
 
+Eliminated spin_lock_irq calls
+
+Fixed return value of timeout case in wait_event_XXX_timeout
+
 What's new in version 1.0.0-rc7
 -------------------------------
 
