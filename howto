@@ -640,3 +640,9 @@ virsh dump-xml <domain>
 plug/unplug network cable:
 
 virsh domif-setlink meine-windoof-vm de:ad:ba:ba:06:66 down
+
+---------
+
+create large backing devices (up to 512? tb):
+
+VBoxManage createhd --filename 64tb-win10-diskless-boot.vdi --size $[ 64*1024*1024 ] --format VDI --variant Standard
