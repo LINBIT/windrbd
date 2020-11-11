@@ -1855,6 +1855,7 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 		dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
 		status = STATUS_SUCCESS;
 		dbg("Returning SUCCESS\n");
+/* TODO: SUCCESS only when about to delete. */
 		// status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
 		break;
 
@@ -2350,6 +2351,7 @@ dbg("Returned string is %S\n", string);
 			dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
 			status = STATUS_SUCCESS;
 			dbg("Returning SUCCESS\n");
+/* TODO: SUCCESS only when about to delete. */
 //			status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
 			break;
 
