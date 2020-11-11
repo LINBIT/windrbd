@@ -27,7 +27,7 @@
 
 /* Uncomment this if you want more debug output (disable for releases) */
 
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -2010,6 +2010,11 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 		}
 		break;
 
+	case IRP_MN_EJECT:
+		dbg("got IRP_MN_EJECT\n");
+		status = STATUS_SUCCESS;
+		break;
+
 	default:
 		dbg("got unimplemented minor %x\n", s->MinorFunction);
 
@@ -2324,10 +2329,10 @@ dbg("Returned string is %S\n", string);
 			DeviceCapabilities->D1Latency = 0;
 			DeviceCapabilities->D2Latency = 0;
 			DeviceCapabilities->D3Latency = 0;
-			DeviceCapabilities->EjectSupported = FALSE;
+			DeviceCapabilities->EjectSupported = TRUE;
 			DeviceCapabilities->HardwareDisabled = FALSE;
-			DeviceCapabilities->Removable = FALSE;
-			DeviceCapabilities->SurpriseRemovalOK = FALSE;
+			DeviceCapabilities->Removable = TRUE;
+			DeviceCapabilities->SurpriseRemovalOK = TRUE;
 			DeviceCapabilities->UniqueID = FALSE;
 			DeviceCapabilities->SilentInstall = FALSE;
 
@@ -2389,6 +2394,10 @@ dbg("Returned string is %S\n", string);
 
 			num_pnp_requests--;
 			return STATUS_SUCCESS;
+
+		case IRP_MN_EJECT:
+			dbg("got IRP_MN_EJECT\n");
+			break;
 
 		default:
 			dbg("got unimplemented minor %x for disk object\n", s->MinorFunction);
