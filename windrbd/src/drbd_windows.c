@@ -20,7 +20,7 @@
 */
 
 /* Uncomment this if you want more debug output (disable for releases) */
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -2898,6 +2898,9 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 		 */
 
 	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
+dbg("Requesting eject of Windows device\n");
+		IoRequestDeviceEject(bdev->windows_device);
+dbg("Eject returned\n");
 		if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
