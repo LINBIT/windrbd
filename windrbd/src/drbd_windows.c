@@ -2899,6 +2899,7 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 
 	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
 dbg("Requesting eject of Windows device\n");
+/* TODO: this sometimes BSODs (when not primary yet) */
 		IoRequestDeviceEject(bdev->windows_device);
 dbg("Eject returned\n");
 #if 0
