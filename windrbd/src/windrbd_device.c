@@ -1853,8 +1853,9 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
 		dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
-		// status = STATUS_SUCCESS;
-		status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
+		status = STATUS_SUCCESS;
+		dbg("Returning SUCCESS\n");
+		// status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
 		break;
 
 	case IRP_MN_CANCEL_REMOVE_DEVICE:
@@ -2347,8 +2348,9 @@ dbg("Returned string is %S\n", string);
 
 		case IRP_MN_QUERY_REMOVE_DEVICE:
 			dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
-			// status = STATUS_SUCCESS;
-			status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
+			status = STATUS_SUCCESS;
+			dbg("Returning SUCCESS\n");
+//			status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
 			break;
 
 		case IRP_MN_CANCEL_REMOVE_DEVICE:
