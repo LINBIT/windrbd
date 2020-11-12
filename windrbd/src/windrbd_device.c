@@ -2362,6 +2362,12 @@ dbg("Returned string is %S\n", string);
 			if (bdev->delete_pending) {
 				status = STATUS_SUCCESS;
 				dbg("Returning SUCCESS\n");
+
+				/* On becoming secondary wait for EJECT to
+				 * be sent before rescanning devices. This
+				 * should avoid SURPRISE_REMOVAL.
+				 */
+				KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
 			} else {
 				status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
 			}
@@ -2413,13 +2419,6 @@ dbg("Returned string is %S\n", string);
 
 		case IRP_MN_EJECT:
 			dbg("got IRP_MN_EJECT\n");
-			if (bdev != NULL) {
-				/* On becoming secondary wait for EJECT to
-				 * be sent before rescanning devices. This
-				 * should avoid SURPRISE_REMOVAL.
-				 */
-				KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
-			}
 			break;
 
 		default:
