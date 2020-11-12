@@ -2825,6 +2825,7 @@ int windrbd_create_windows_device(struct block_device *bdev)
 		printk(KERN_WARNING "Warning: block device %p already has a windows device (%p)\n", bdev, bdev->windows_device);
 
 	KeClearEvent(&bdev->device_started_event);
+	KeClearEvent(&bdev->device_ejected_event);
 
 		/* By default, this creates an object accessible only
 		 * by the Administrator user from user space. If this
@@ -2901,21 +2902,20 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 
 	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
 dbg("Requesting eject of Windows device\n");
-/* TODO: this sometimes BSODs (when not primary yet) */
 		IoRequestDeviceEject(bdev->windows_device);
 dbg("Eject returned\n");
-#if 0
+		KeWaitForSingleObject(&bdev->device_ejected_event, Executive, KernelMode, FALSE, NULL);
+dbg("Device ejected\n");
 		if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
 			printk("PnP did not work, removing device manually.\n");
 			IoDeleteDevice(bdev->windows_device);
 		} else {
-#endif
 dbg("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
 			KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
 dbg("finished.\n");
-//		}
+		}
 	} else {
 		printk("Not a PnP object, removing device manually.\n");
 		IoDeleteDevice(bdev->windows_device);
@@ -2973,6 +2973,7 @@ block_device->my_auto_promote = 1;
 	KeInitializeEvent(&block_device->capacity_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->device_removed_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->device_started_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&block_device->device_ejected_event, NotificationEvent, FALSE);
 	spin_lock_init(&block_device->complete_request_spinlock);
 
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);

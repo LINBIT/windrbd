@@ -526,7 +526,8 @@ struct block_device {
 	struct _KEVENT primary_event;	/* Set whenever Primary */
 	struct _KEVENT capacity_event;	/* Set whenever size > 0 */
 	struct _KEVENT device_removed_event;	/* Set by REMOVE_DEVICE to signal bdput we're gone */
-	struct _KEVENT device_started_event; /* Set on receving IRP_MN_START_DEVICE PnP request (primary waits for this) */
+	struct _KEVENT device_started_event; /* Set on receving IRP_MN_START_DEVICE PnP request (drbdadm primary waits for this) */
+	struct _KEVENT device_ejected_event; /* Set on receving IRP_MN_EJECT_DEVICE PnP request (drbdadm secondary waits for this) */
 
 	/* Used for debugging handle leaks */
 	int num_openers;
