@@ -2083,6 +2083,15 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
 		{
+			dbg("got IRP_MN_START_DEVICE\n");
+			if (bdev != NULL) {
+
+					/* On drbdadm primary wait for this
+					 * to happen, else a followup secondary
+					 * will BSOD.
+					 */
+				KeSetEvent(&bdev->device_started_event, 0, FALSE);
+			}
 #if 0
 			if (bdev != NULL) {
 // printk("starting device ...\n");

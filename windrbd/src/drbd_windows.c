@@ -2824,6 +2824,8 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	if (bdev->windows_device != NULL)
 		printk(KERN_WARNING "Warning: block device %p already has a windows device (%p)\n", bdev, bdev->windows_device);
 
+	KeClearEvent(&bdev->device_started_event);
+
 		/* By default, this creates an object accessible only
 		 * by the Administrator user from user space. If this
 		 * does not work one day, use IoCreateDeviceSecure with
@@ -2970,6 +2972,7 @@ block_device->my_auto_promote = 1;
 	KeInitializeEvent(&block_device->primary_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->capacity_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->device_removed_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&block_device->device_started_event, NotificationEvent, FALSE);
 	spin_lock_init(&block_device->complete_request_spinlock);
 
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);
@@ -3364,6 +3367,13 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
+		}
+			/* A PnP disk device. Wait for PnP manager to 
+			 * properly start the device else races may happen
+			 * (drbdadm secondary might BSOD).
+			 */
+		if (device->this_bdev->mount_point.Buffer == NULL) {
+			KeWaitForSingleObject(&device->this_bdev->device_started_event, Executive, KernelMode, FALSE, NULL);
 		}
 	}
 	KeSetEvent(&device->this_bdev->primary_event, 0, FALSE);
