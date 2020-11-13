@@ -2369,6 +2369,7 @@ dbg("Returned string is %S\n", string);
 				 * be sent before rescanning devices. This
 				 * should avoid SURPRISE_REMOVAL.
 				 */
+				dbg("set ejected event\n");
 				KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
 			} else {
 				status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
@@ -2377,6 +2378,15 @@ dbg("Returned string is %S\n", string);
 
 		case IRP_MN_CANCEL_REMOVE_DEVICE:
 			dbg("got IRP_MN_CANCEL_REMOVE_DEVICE\n");
+				/* Sometimes we get CANCEL_REMOVE_DEVICE
+				 * without a QUERY_REMOVE_DEVICE. Set ejected
+				 * so we don't hang forever in drbdadm
+				 * secondary. We probably later get a
+				 * SURPRISE_REMOVAL but what can you do ...
+				 */
+			dbg("set ejected event\n");
+			KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
+
 			status = STATUS_SUCCESS;
 			break;
 
