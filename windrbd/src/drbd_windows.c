@@ -22,11 +22,13 @@
 /* Uncomment this if you want more debug output (disable for releases) */
 #define DEBUG 1
 
+/*
 #ifdef RELEASE
 #ifdef DEBUG
 #undef DEBUG
 #endif
 #endif
+*/
 
 #include <initguid.h>
 

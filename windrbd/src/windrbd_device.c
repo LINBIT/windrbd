@@ -29,11 +29,13 @@
 
 #define DEBUG 1
 
+/*
 #ifdef RELEASE
 #ifdef DEBUG
 #undef DEBUG
 #endif
 #endif
+*/
 
 #include <wdm.h>
 #include <ntddk.h>
