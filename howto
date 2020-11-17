@@ -652,3 +652,22 @@ VBoxManage createhd --filename 64tb-win10-diskless-boot.vdi --size $[ 64*1024*10
 Install DigiCert SafeNetAuthentication Client:
 
 https://www.digicert.com/kb/code-signing/safenet-client-installation.htm
+
+------
+
+From support chat:
+
+https://www.digicert.com/StaticFiles/SafeNetAuthenticationClient-x64.msi
+2:24
+https://www.digicert.com/StaticFiles/SafeNetAuthenticationClient-x32.msi
+
+Few things to note:
+1) Make sure you are not on a Virtual Machine or remote accessing the device you are installing the token.
+2) With the token plugged into the device go to Device manager and uninstall all Aladdin, Rainbow Microsoft USBCCID, Safenet and the USB token under “Universal Bus Controllers” and any related categories ("Smart Card Readers").
+3) Unplug Token.
+4) Uninstall Safenet drivers from the programs.
+5) Reboot the device
+6) Reinstall the latest Safenet drivers as administrator.
+7) Re plug in token.
+
+
