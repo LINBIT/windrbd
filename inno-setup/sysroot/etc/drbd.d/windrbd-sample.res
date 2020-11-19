@@ -23,7 +23,7 @@ resource "windrbd-sample" {
 # For Linux use /dev notation
 			disk		/dev/sdb1;
 			device		/dev/drbd1;
-			flexible-meta-disk	internal;
+			meta-disk	internal;
 		}
 	}
 	on windowshost {
