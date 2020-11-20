@@ -1,3 +1,16 @@
+What's new in version 1.0.0-rc9
+-------------------------------
+
+Use device ejection API on drbdadm secondary (or down). This should
+solve a BSOD on drbdadm secondary a client had.
+
+Force open counts to 0 on drbdadm secondary (or down). This should
+solve a handle leak (peer cannot be promoted to Primary) a client
+had.
+
+Updated drbd-utils shipped to 9.15.0 (was 9.12.0). Amongst other
+things this makes the disconnected user mode helper work.
+
 What's new in version 1.0.0-rc8
 -------------------------------
 

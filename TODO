@@ -36,8 +36,6 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Code quality: maybe printk->dbg netlink message.
-
 TODO: Bug: BSOD in wsk_incoming_connection
 
 	When running disconnect_connect_wait_connected loop on Linux (secondary)
@@ -6973,4 +6971,8 @@ Done: Test: Does connection establishment in 4 node setting work now?
 
 	Yes works well (10 iterations, about 8-10 seconds until
 	wait-connect terminates, sometimes it takes up to 30 seconds)
+
+Rejected: Code quality: maybe printk->dbg netlink message.
+
+	It help a lot when debugging people's log.
 
