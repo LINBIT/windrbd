@@ -1,0 +1,41 @@
+From 21eb156593be03d89dce9d8e48d8ea8f5705ea1f Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 20 Nov 2020 13:46:58 +0100
+Subject: [PATCH] drbd_release: make sure open counts don't get negative
+
+When becoming secondary we force the open counts to 0 so
+that there are no stale file handles open which might prevent
+other nodes to become Primary.
+---
+ drbd/drbd_main.c | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index b866471..b9880bb 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -2739,10 +2739,17 @@ static void drbd_release(struct gendisk *gd, fmode_t mode)
+ 	int open_rw_cnt, open_ro_cnt;
+ 
+ 	mutex_lock(&resource->open_release);
+-	if (mode & FMODE_WRITE)
+-		device->open_rw_cnt--;
+-	else
+-		device->open_ro_cnt--;
++	if (mode & FMODE_WRITE) {
++		if (device->open_rw_cnt > 0)
++			device->open_rw_cnt--;
++		else
++			printk("DRBD device already closed (device->open_rw_cnt is %d).\n", device->open_rw_cnt);
++	} else {
++		if (device->open_ro_cnt > 0)
++			device->open_ro_cnt--;
++		else
++			printk("DRBD device already closed (device->open_ro_cnt is %d).\n", device->open_ro_cnt);
++	}
+ 
+ 	drbd_open_counts(resource, &open_rw_cnt, &open_ro_cnt);
+ 
+-- 
+2.17.0
+
