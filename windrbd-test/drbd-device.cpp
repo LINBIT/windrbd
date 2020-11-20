@@ -852,3 +852,12 @@ TEST(windrbd, io_depth)
 	close(fd);
 }
 
+TEST(windrbd, keep_open)
+{
+	HANDLE h = do_open_device(0);
+
+	printf("Device opened, press enter to terminate test.\n");
+	getchar();
+
+	CloseHandle(h);
+}
