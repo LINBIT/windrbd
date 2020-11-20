@@ -330,7 +330,8 @@ int windrbd_join_multicast_group(u32 portid, const char *name, struct _FILE_OBJE
 	if (m == NULL)
 		return -ENOMEM;
 
-	strncpy(m->name, name, sizeof(m->name));
+	strncpy(m->name, name, sizeof(m->name)-1);
+	m->name[sizeof(m->name)-1] = '\0';
 	m->portid = portid;
 	m->file_object = f;
 	mutex_lock(&genl_multicast_mutex);
