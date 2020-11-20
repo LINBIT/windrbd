@@ -92,6 +92,8 @@ void set_syslog_ip(const char *ip)
 		return;
 
 	strncpy(syslog_ip, ip, ARRAY_SIZE(syslog_ip)-1);
+	syslog_ip[ARRAY_SIZE(syslog_ip)-1] = '\0';
+
 	stop_net_printk();
 
 		/* will be started again with next printk */
