@@ -215,6 +215,13 @@ void spin_lock_init(spinlock_t *lock)
 
 static EX_SPIN_LOCK rcu_rw_lock;
 
+	/* TODO: this whole spin_lock_debug thing is broken, remove that
+	 * code. We haven't had any system lockup ever since we fixed
+	 * it by using only spin_lock_irqsave / spin_unlock_irqrestore.
+	 * (other spin lock calls are not supported in Windows). Also
+	 * fixing the wake_up call in windrbd_waitqueue.c helped a lot.
+	 */
+
 #ifdef SPIN_LOCK_DEBUG
 
 #define DESC_SIZE 256
