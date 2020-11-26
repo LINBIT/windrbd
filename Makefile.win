@@ -30,7 +30,7 @@ EWDK_BIN := $(EWDK_KIT)\\bin\\x86
 KEY = linbit-2019
 PASSWD = ""
 
-WINDRBD_SOURCE = Y:\\windrbd
+WINDRBD_SOURCE = Y:\\windrbd-backing-dev-cache\\windrbd
 DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
