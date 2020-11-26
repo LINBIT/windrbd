@@ -1925,7 +1925,10 @@ static int windrbd_generic_make_request(struct bio *bio)
 	if (test_inject_faults(&inject_on_request, "assuming request failed (enabled for all devices)"))
 		return -EIO;
 
-/* DrbdIoCompletion(NULL, irp, bio); */
+if (io == IRP_MJ_WRITE) {
+DrbdIoCompletion(NULL, bio->bi_irps[bio->bi_this_request], bio);
+return 0;
+}
 
 atomic_inc(&bio->bi_bdev->num_irps_pending);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
