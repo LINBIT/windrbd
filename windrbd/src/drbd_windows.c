@@ -1987,6 +1987,12 @@ int generic_make_request(struct bio *bio)
 #else
 	static int max_mdl_elements = MAX_MDL_ELEMENTS;
 #endif
+	if (bio_data_dir(bio) == WRITE) {
+		bio->bi_status = 0;
+		bio_endio(bio);
+
+		return 0;
+	}
 
 	atomic_inc(&bio->bi_bdev->num_bios_pending);
 // printk("bio is %p\n", bio);
