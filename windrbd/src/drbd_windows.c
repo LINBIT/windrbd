@@ -1987,7 +1987,16 @@ int generic_make_request(struct bio *bio)
 #else
 	static int max_mdl_elements = MAX_MDL_ELEMENTS;
 #endif
-	if (bio_data_dir(bio) == WRITE) {
+if (bio_data_dir(bio) == WRITE) {
+
+static unsigned long long skipped_bytes = 0;
+static unsigned long long skipped_bytes2 = 0;
+skipped_bytes += bio->bi_iter.bi_size;
+skipped_bytes2 += bio->bi_iter.bi_size;
+if (skipped_bytes2 > 256*1024*1024) {
+skipped_bytes2 = 0;
+printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (1024*1024));
+}
 		bio->bi_status = 0;
 		bio_endio(bio);
 
