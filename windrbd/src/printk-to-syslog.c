@@ -275,6 +275,7 @@ int _printk(const char *func, const char *fmt, ...)
 	const char *fmt_without_level;
 	size_t pos, len, len_ret;
 	LARGE_INTEGER time;
+	LARGE_INTEGER hr_timer, hr_frequency;
 	va_list args;
 	NTSTATUS status;
 	int hour, min, sec, msec, sec_day;
@@ -312,9 +313,12 @@ int _printk(const char *func, const char *fmt, ...)
 	serial_number++;
 	spin_unlock_irqrestore(&serial_number_lock, flags);
 
+	hr_timer = KeQueryPerformanceCounter(&hr_frequency);
+
 	pos = strlen(buffer);
-	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d|%08.8x(%s) #%llu %s ",
+	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8x(%s) #%llu %s ",
 	    level, hour, min, sec, msec,
+	    hr_timer.QuadPart, hr_frequency.QuadPart,
 	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
 //	    ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
 	    current,
