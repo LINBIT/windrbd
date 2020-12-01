@@ -46,6 +46,8 @@
 #include <linux/spinlock.h>
 #include <linux/rwlock.h>
 
+#include "tiktok.h"
+
 void init_windrbd(void);
 void msleep(int ms);
 

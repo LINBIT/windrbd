@@ -224,7 +224,8 @@ WINDRBD_FILES = $(WINDRBD_SRCDIR)/Attr.c $(WINDRBD_SRCDIR)/disp.c $(WINDRBD_SRCD
 		$(WINDRBD_SRCDIR)/windrbd_device.c $(WINDRBD_SRCDIR)/windrbd_drbd_url_parser.c $(WINDRBD_SRCDIR)/windrbd_module.c \
 		$(WINDRBD_SRCDIR)/windrbd_netlink.c $(WINDRBD_SRCDIR)/windrbd_test.c $(WINDRBD_SRCDIR)/windrbd_threads.c \
 		$(WINDRBD_SRCDIR)/windrbd_usermodehelper.c $(WINDRBD_SRCDIR)/windrbd_waitqueue.c \
-		$(WINDRBD_SRCDIR)/windrbd_winsocket.c $(WINDRBD_SRCDIR)/windrbd_locking.c
+		$(WINDRBD_SRCDIR)/windrbd_winsocket.c $(WINDRBD_SRCDIR)/windrbd_locking.c \
+		$(WINDRBD_SRCDIR)/tiktok.c
 
 all: versioninfo windrbd.sys
 
