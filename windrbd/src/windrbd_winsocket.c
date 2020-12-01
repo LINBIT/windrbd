@@ -1204,6 +1204,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	int         wObjCount = 1;
 
 printk("in recvmsg: size is %d\n", len);
+tik();
 // dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
@@ -1359,6 +1360,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
 		socket->error_status = BytesReceived;
 		dbg("setting error status to %d\n", socket->error_status);
 	}
+tok();
 printk("Received %d bytes\n", BytesReceived);
 	return BytesReceived;
 }

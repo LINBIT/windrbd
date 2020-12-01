@@ -10,6 +10,10 @@ static const char *from_func;
 void tik_debug(const char *file, int line, const char *func)
 {
 	hr_timer = KeQueryPerformanceCounter(NULL);
+
+	from_file = file;
+	from_line = line;
+	from_func = func;
 }
 
 void tok_debug(const char *file, int line, const char *func)
