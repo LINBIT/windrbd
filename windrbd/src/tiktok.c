@@ -4,7 +4,7 @@
 static LARGE_INTEGER hr_timer;
 
 static const char *from_file;
-static int *from_line;
+static int from_line;
 static const char *from_func;
 
 void tik_debug(const char *file, int line, const char *func)
