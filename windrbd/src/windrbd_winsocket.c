@@ -1238,6 +1238,7 @@ if (len >= 4096) tik(1);
 		return -ENOTCONN;
 	}
 
+if (len >= 4096) tik(2);
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
@@ -1318,6 +1319,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
 			BytesReceived = winsock_to_linux_error(Status);
 		}
 	}
+if (len >= 4096) tok(2);
 
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
