@@ -24,6 +24,8 @@ void tik_debug(int n, const char *file, int line, const char *func)
 	tiktoks[n].from_file = file;
 	tiktoks[n].from_line = line;
 	tiktoks[n].from_func = func;
+
+	printk("TIKTOK channel %d started at %s:%d (%s) 0 ticks\n", n, file, line, func);
 }
 
 void tok_debug(int n, const char *file, int line, const char *func)
