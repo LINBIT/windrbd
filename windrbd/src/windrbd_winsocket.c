@@ -1203,7 +1203,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	PVOID       waitObjects[2];
 	int         wObjCount = 1;
 
-printk("in recvmsg: size is %d\n", len);
+// printk("in recvmsg: size is %d\n", len);
 if (len >= 4096) tik(1);
 // dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
@@ -1363,7 +1363,7 @@ if (len >= 4096) tok(2);
 		dbg("setting error status to %d\n", socket->error_status);
 	}
 if (len >= 4096) tok(1);
-printk("Received %d bytes\n", BytesReceived);
+// printk("Received %d bytes\n", BytesReceived);
 	return BytesReceived;
 }
 
