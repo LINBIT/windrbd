@@ -1925,6 +1925,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	if (test_inject_faults(&inject_on_request, "assuming request failed (enabled for all devices)"))
 		return -EIO;
 
+#if 0
 if (io == IRP_MJ_WRITE) {
 static unsigned long long skipped_bytes = 0;
 static unsigned long long skipped_bytes2 = 0;
@@ -1937,6 +1938,7 @@ printk("%llu bytes (%llu MiB) skipped\n", skipped_bytes, skipped_bytes / (1024*1
 DrbdIoCompletion(NULL, bio->bi_irps[bio->bi_this_request], bio);
 return 0;
 }
+#endif
 
 atomic_inc(&bio->bi_bdev->num_irps_pending);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
@@ -1987,6 +1989,8 @@ int generic_make_request(struct bio *bio)
 #else
 	static int max_mdl_elements = MAX_MDL_ELEMENTS;
 #endif
+
+#if 0
 if (bio_data_dir(bio) == WRITE) {
 
 static unsigned long long skipped_bytes = 0;
@@ -2002,6 +2006,7 @@ printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (
 
 		return 0;
 	}
+#endif
 
 	atomic_inc(&bio->bi_bdev->num_bios_pending);
 // printk("bio is %p\n", bio);
