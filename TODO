@@ -1007,6 +1007,8 @@ TODO: Bug: refcnt is 0 on drbd_rs_complete_io
 		sudo drbdadm invalidate w0 ; sleep 1 ; sudo drbdadm down w0
 	on Linux side.
 
+	Update: still there. When Windows is SyncSource and Linux is SyncTarget.
+
 TODO: Performance: On much VM, one CPU core (has 2 cores) goes to 100% on sync.
 	I assume there is an unneccessary (?) copy somewhere.
 
