@@ -3,6 +3,12 @@
 
 /* #define TIKTOK */
 
+#ifdef RELEASE
+#ifdef TIKTOK
+#undef TIKTOK
+#endif
+#endif
+
 #ifndef TIKTOK
 
 #define tik(n) do { } while (0);
