@@ -2,6 +2,7 @@
 #define _TIKTOK_H
 
 /* #define TIKTOK */
+
 #ifndef TIKTOK
 
 #define tik(n) do { } while (0);

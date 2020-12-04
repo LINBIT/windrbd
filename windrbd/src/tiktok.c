@@ -1,7 +1,7 @@
 #include <wdm.h>
 #include "drbd_windows.h"
 
-#define MAX_TIKTOKS 10
+#define MAX_TIKTOKS 50
 
 struct tiktok {
 	LARGE_INTEGER hr_timer;
