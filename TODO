@@ -396,28 +396,6 @@ TODO: Code quality: drbdsetup disconnect might take longer than 5 seconds
 
 	This makes some tests fail with false negatives.
 
-TODO: Performance: Sync is still somewhat slow when windrbd is SyncTarget
-	And: I/O is slow when connected.
-	Are we waiting for TCP ACK here?
-
-	Also need to set c-fill-target and/or c-max-rate with
-	defaults it is just too slow...
-
-	Update: Also implement no-wait sending for Send() function.
-
-	Update: This function is only used for the first packet.
-	and must remain synchronous.
-
-	Update: Probably not the networking code, maybe I/O on
-	backing device is slow? When Windows is SyncTarget it is
-	faster (3 sec) than when it is SyncSource (7 sec) doing I/O
-
-	Update: Now we reworked the local I/O path a bit, did that
-	help?
-
-	Update: Probably will be fixed once we use 1Meg pages on
-	Sync.
-
 TODO: Bug: kmalloc errors on Win7 VM (on my Macbook)
 
 	When running
@@ -6977,4 +6955,29 @@ Done: Test: Does connection establishment in 4 node setting work now?
 Rejected: Code quality: maybe printk->dbg netlink message.
 
 	It help a lot when debugging people's log.
+
+Done: Performance: Sync is still somewhat slow when windrbd is SyncTarget
+	And: I/O is slow when connected.
+	Are we waiting for TCP ACK here?
+
+	Also need to set c-fill-target and/or c-max-rate with
+	defaults it is just too slow...
+
+	Update: Also implement no-wait sending for Send() function.
+
+	Update: This function is only used for the first packet.
+	and must remain synchronous.
+
+	Update: Probably not the networking code, maybe I/O on
+	backing device is slow? When Windows is SyncTarget it is
+	faster (3 sec) than when it is SyncSource (7 sec) doing I/O
+
+	Update: Now we reworked the local I/O path a bit, did that
+	help?
+
+	Update: Probably will be fixed once we use 1Meg pages on
+	Sync.
+
+	12/04/2020: Using big pages (up to 1Mb) for sync target
+	reading now, it is now 5 times faster than before.
 
