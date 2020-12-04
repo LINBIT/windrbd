@@ -1,0 +1,32 @@
+From 25687c76ca857b7cb59d5aa8d8162d3bdbeeabb2 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 4 Dec 2020 17:15:34 +0100
+Subject: [PATCH 3/4] drbd_sender: patch set for speeding up sync then
+ SyncTarget.
+
+We use 'big pages': since pages are regular memory allocated by
+kmalloc() we can have pages of any size. With this patch we do not
+split resync requests > 4K into 4K blocks (which would be submitted
+one per one to the backing device, which makes it slow). Instead
+we handle the resync request with one big pages (and also submit
+that one big page to the backing device).
+---
+ drbd/drbd_sender.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index 1729115..f12001e 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -415,7 +415,7 @@ static int read_for_csum(struct drbd_peer_device *peer_device, sector_t sector,
+ 		goto defer;
+ 	if (size) {
+ 		drbd_alloc_page_chain(&peer_device->connection->transport,
+-			&peer_req->page_chain, DIV_ROUND_UP(size, PAGE_SIZE), GFP_TRY);
++			&peer_req->page_chain, DIV_ROUND_UP(size, PAGE_SIZE), GFP_TRY, 0);
+ 		if (!peer_req->page_chain.head)
+ 			goto defer2;
+ 	}
+-- 
+2.17.0
+

@@ -1,0 +1,40 @@
+From f9bf72bf437e9667c3e13db370ee57c3483666bb Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 4 Dec 2020 17:15:51 +0100
+Subject: [PATCH 4/4] drbd_transport_tcp: patch set for speeding up sync then
+ SyncTarget.
+
+We use 'big pages': since pages are regular memory allocated by
+kmalloc() we can have pages of any size. With this patch we do not
+split resync requests > 4K into 4K blocks (which would be submitted
+one per one to the backing device, which makes it slow). Instead
+we handle the resync request with one big pages (and also submit
+that one big page to the backing device).
+---
+ drbd/drbd_transport_tcp.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index f3e4179..8123e3c 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -345,13 +345,14 @@ static int dtt_recv_pages(struct drbd_transport *transport, struct drbd_page_cha
+ 	if (!socket)
+ 		return -ENOTCONN;
+ 
+-	drbd_alloc_page_chain(transport, chain, DIV_ROUND_UP(size, PAGE_SIZE), GFP_TRY);
++	drbd_alloc_page_chain(transport, chain, DIV_ROUND_UP(size, PAGE_SIZE), GFP_TRY, 1);
++
+ 	page = chain->head;
+ 	if (!page)
+ 		return -ENOMEM;
+ 
+ 	page_chain_for_each(page) {
+-		size_t len = min_t(int, size, PAGE_SIZE);
++		size_t len = size;
+ 		void *data = kmap(page);
+ 		err = dtt_recv_short(socket, data, len, 0);
+ 		kunmap(page);
+-- 
+2.17.0
+
