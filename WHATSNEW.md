@@ -11,6 +11,9 @@ had.
 Updated drbd-utils shipped to 9.15.0 (was 9.12.0). Amongst other
 things this makes the disconnected user mode helper work.
 
+Use big pages for receiving sync packets (when sync target). This speeds
+up sync by a factor 5 when WinDRBD is SyncTarget.
+
 What's new in version 1.0.0-rc8
 -------------------------------
 
