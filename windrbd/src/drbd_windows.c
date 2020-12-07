@@ -1572,6 +1572,20 @@ int print_pending_bios(void)
 	return 0;
 }
 
+/* TODO: per device. */
+struct wait_queue_head bios_event;
+
+int wait_for_bios_to_complete(void)
+{
+	printk("%d bios pending before wait_event\n", atomic_read(&num_bios_pending));
+	printk("%d IRPs pending before wait_event\n", atomic_read(&num_irps_pending));
+	wait_event(bios_event, (atomic_read(&num_bios_pending) == 0));
+	printk("%d bios pending after wait_event\n", atomic_read(&num_bios_pending));
+	printk("%d IRPs pending after wait_event\n", atomic_read(&num_irps_pending));
+
+	return 0;
+}
+
 NTSTATUS DrbdIoCompletion(
   _In_     PDEVICE_OBJECT DeviceObject,
   _In_     PIRP           Irp,
@@ -2060,6 +2074,7 @@ void bio_endio(struct bio *bio)
 	int error = blk_status_to_errno(bio->bi_status);
 
 atomic_dec(&num_bios_pending);
+wake_up(&bios_event);
 
 	if (bio->bi_end_io != NULL) {
 		if (error != 0)
@@ -2644,6 +2659,8 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_get_volsize_error;
 	}
 	block_device->path_to_device = path_to_device;
+
+init_waitqueue_head(&bios_event);
 
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
