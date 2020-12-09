@@ -546,6 +546,19 @@ struct block_device {
 	 */
 
 	struct workqueue_struct *io_workqueue;
+
+	/* Wait queue for waiting for all bios completed. This solves
+	 * a BSOD on disconnect while sync. To be called at the 
+	 * beginning of conn_disconnect() (see drbd_receiver.c).
+	 */
+
+	struct wait_queue_head bios_event;
+
+	/* Num pending counts. Must be 0 when disconnecting.
+	 */
+
+	atomic_t num_bios_pending;
+	atomic_t num_irps_pending;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
@@ -725,6 +738,11 @@ extern struct bio_set *bioset_create(unsigned int, unsigned int);
 extern void bioset_free(struct bio_set *);
 extern struct bio *bio_alloc(gfp_t, int, ULONG);
 extern struct bio *bio_alloc_bioset(gfp_t, int, struct bio_set *);
+
+	/* To be called at the beginning of conn_disconnect, else
+	 * BSOD.
+	 */
+extern int wait_for_bios_to_complete(struct block_device *bdev);
 
 #ifdef BIO_REF_DEBUG
 

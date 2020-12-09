@@ -1562,26 +1562,14 @@ int windrbd_inject_faults(int after, enum fault_injection_location where, struct
 	return -1;
 }
 
-atomic_t num_bios_pending;
-atomic_t num_irps_pending;
-
-int print_pending_bios(void)
+int wait_for_bios_to_complete(struct block_device *bdev)
 {
-	printk("%d bios pending\n", atomic_read(&num_bios_pending));
-	printk("%d IRPs pending\n", atomic_read(&num_irps_pending));
-	return 0;
-}
-
-/* TODO: per device. */
-struct wait_queue_head bios_event;
-
-int wait_for_bios_to_complete(void)
-{
-	printk("%d bios pending before wait_event\n", atomic_read(&num_bios_pending));
-	printk("%d IRPs pending before wait_event\n", atomic_read(&num_irps_pending));
-	wait_event(bios_event, (atomic_read(&num_bios_pending) == 0));
-	printk("%d bios pending after wait_event\n", atomic_read(&num_bios_pending));
-	printk("%d IRPs pending after wait_event\n", atomic_read(&num_irps_pending));
+	if (atomic_read(&bdev->num_bios_pending) > 0) {
+/* TODO: dbg */
+		printk("%d bios pending before wait_event\n", atomic_read(&bdev->num_bios_pending));
+		printk("%d IRPs pending before wait_event\n", atomic_read(&bdev->num_irps_pending));
+	}
+	wait_event(bdev->bios_event, (atomic_read(&bdev->num_bios_pending) == 0));
 
 	return 0;
 }
@@ -1602,7 +1590,7 @@ NTSTATUS DrbdIoCompletion(
 	KIRQL flags;
 
 // printk("completing bio %p\n", bio);
-atomic_dec(&num_irps_pending);
+	atomic_dec(&bio->bi_bdev->num_irps_pending);
 
 	if (status != STATUS_SUCCESS) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)
@@ -1752,7 +1740,7 @@ static int make_flush_request(struct bio *bio)
 
 // printk("flush %p\n", bio);
 
-atomic_inc(&num_irps_pending);
+	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
@@ -1939,7 +1927,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 
 /* DrbdIoCompletion(NULL, irp, bio); */
 
-atomic_inc(&num_irps_pending);
+atomic_inc(&bio->bi_bdev->num_irps_pending);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
@@ -1989,7 +1977,7 @@ int generic_make_request(struct bio *bio)
 	static int max_mdl_elements = MAX_MDL_ELEMENTS;
 #endif
 
-atomic_inc(&num_bios_pending);
+	atomic_inc(&bio->bi_bdev->num_bios_pending);
 // printk("bio is %p\n", bio);
 	bio_get(bio);
 
@@ -2073,8 +2061,9 @@ void bio_endio(struct bio *bio)
 {
 	int error = blk_status_to_errno(bio->bi_status);
 
-atomic_dec(&num_bios_pending);
-wake_up(&bios_event);
+	atomic_dec(&bio->bi_bdev->num_bios_pending);
+	if (atomic_read(&bio->bi_bdev->num_bios_pending) == 0)
+		wake_up(&bio->bi_bdev->bios_event);
 
 	if (bio->bi_end_io != NULL) {
 		if (error != 0)
@@ -2660,7 +2649,9 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	}
 	block_device->path_to_device = path_to_device;
 
-init_waitqueue_head(&bios_event);
+	init_waitqueue_head(&block_device->bios_event);
+	atomic_set(&block_device->num_bios_pending, 0);
+	atomic_set(&block_device->num_irps_pending, 0);
 
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
