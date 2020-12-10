@@ -1,0 +1,47 @@
+From a99b560e631088086b0ed881b034386d7bb4e7e3 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 10 Dec 2020 15:53:40 +0100
+Subject: [PATCH] drbd_receiver.c: Wait for all bios to complete on disconnect.
+
+Before doing anything else wait until all bios for all backing
+devices (for all volumes) are completed. This usually takes
+100 msecs and solves the disconnect while sync BSOD.
+---
+ drbd/drbd_receiver.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index a1731ce..983d8f1 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -8166,6 +8166,27 @@ void conn_disconnect(struct drbd_connection *connection)
+ 	if (connection->cstate[NOW] == C_STANDALONE)
+ 		return;
+ 
++		/* For each backing device (all volumes, data and meta data
++		 * flush pedning write requests. Should fix the BSOD on
++		 * disconnect while sync.
++		 */
++
++	rcu_flags = rcu_read_lock();
++	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
++		struct drbd_device *device = peer_device->device;
++
++		if (device != NULL && device->ldev != NULL) {
++			rcu_read_unlock(rcu_flags);
++
++			if (device->ldev->backing_bdev != NULL)
++				wait_for_bios_to_complete(device->ldev->backing_bdev);
++			if (device->ldev->md_bdev != NULL)
++				wait_for_bios_to_complete(device->ldev->md_bdev);
++			rcu_flags = rcu_read_lock();
++		}
++	}
++	rcu_read_unlock(rcu_flags);
++
+ 	/* We are about to start the cleanup after connection loss.
+ 	 * Make sure drbd_make_request knows about that.
+ 	 * Usually we should be in some network failure state already,
+-- 
+2.17.0
+
