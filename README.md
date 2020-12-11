@@ -374,3 +374,5 @@ Version history
  * 1.0.0-rc6 (Oct 8, 2020): Fixed workqueues and ko-count mechanism
  * 1.0.0-rc7 (Oct 14, 2020): Upgrade to DRBD 9.0.25
  * 1.0.0-rc8 (Nov 6, 2020): Fixed many lockups, fixed 2TB limit
+ * 1.0.0-rc9 (Dec 11, 2020): Optimized SyncTarget, many fixes when becoming
+			     secondary and fixed BSOD on disconnect while sync
