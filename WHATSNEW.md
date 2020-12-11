@@ -14,6 +14,9 @@ things this makes the disconnected user mode helper work.
 Use big pages for receiving sync packets (when sync target). This speeds
 up sync by a factor 5 when WinDRBD is SyncTarget.
 
+Fixed disconnect while sync bug: On disconnect wait until all
+bios are completed.
+
 What's new in version 1.0.0-rc8
 -------------------------------
 
