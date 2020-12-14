@@ -1967,6 +1967,23 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 
 static int flush_bios(struct block_device *bdev)
 {
+	KIRQL flags;
+	struct bio *bio, *bio2;
+	int ret;
+
+		/* TODO: more finegrained locking possible? */
+
+	spin_lock_irqsave(&bdev->write_cache_lock, flags);
+	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->write_cache, cache_list) {
+		list_del(&bio->cache_list);
+		ret = windrbd_generic_make_request(bio);
+		if (ret != 0)	/* TODO: cleanup ?! */ {
+			spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
+			return ret;
+		}
+	}
+
+	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
 	return 0;
 }
 
@@ -1998,6 +2015,18 @@ static int queue_bio(struct bio *bio)
 	spin_lock_irqsave(&bdev->write_cache_lock, flags);
 	list_add(&new_bio->cache_list, &bdev->write_cache);
 	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
+
+	return 0;
+}
+
+static int bdflush_thread_fn(void *bdev_p)
+{
+	struct block_device *bdev = bdev_p;
+
+	while (1) {
+		flush_bios(bdev);
+		msleep(1000);
+	}
 
 	return 0;
 }
@@ -2099,7 +2128,6 @@ printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (
 		bio->bi_iter.bi_sector = sector;
 		bio->bi_iter.bi_size = total_size;
 
-//		ret = windrbd_generic_make_request(bio);
 		ret = queue_bio(bio);
 		if (ret < 0) {
 			bio->bi_status = BLK_STS_IOERR;
@@ -2742,6 +2770,12 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
+
+	block_device->bdflush_thread = kthread_run(bdflush_thread_fn, block_device, "backingdev_flush");
+
+	if (block_device->bdflush_thread == NULL) {
+		printk("Warning: Couldn't start bdflush thread\n");
+	}
 
 #ifdef _HACK
 hack_alloc_page(block_device);
