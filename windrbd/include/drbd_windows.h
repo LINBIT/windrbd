@@ -565,6 +565,7 @@ struct block_device {
 	/* The simple write cache: list of pending bios */
 	struct list_head write_cache;
 	spinlock_t write_cache_lock;
+	struct task_struct *bdflush_thread;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
