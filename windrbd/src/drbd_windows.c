@@ -1591,6 +1591,17 @@ NTSTATUS DrbdIoCompletion(
 	NTSTATUS status = Irp->IoStatus.Status;
 	KIRQL flags;
 
+	if (bio->master_bio != NULL) {
+		struct bio *slave_bio = bio;
+		bio = bio->master_bio;
+		bio_free(slave_bio);
+			/* More slaves hanging on this bio .. */
+		if (atomic_dec_return(&bio->num_slave_bios) > 0) {
+			/* TODO: ?? */
+			return STATUS_MORE_PROCESSING_REQUIRED;
+		}
+	}
+
 // printk("completing bio %p\n", bio);
 	atomic_dec(&bio->bi_bdev->num_irps_pending);
 
@@ -1976,6 +1987,7 @@ static int flush_bios(struct block_device *bdev)
 	spin_lock_irqsave(&bdev->write_cache_lock, flags);
 	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->write_cache, cache_list) {
 		list_del(&bio->cache_list);
+
 		ret = windrbd_generic_make_request(bio);
 		if (ret != 0)	/* TODO: cleanup ?! */ {
 			spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
