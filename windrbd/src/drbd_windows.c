@@ -830,6 +830,8 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_vcnt = 0;
 	spin_lock_init(&bio->device_failed_lock);
 
+	INIT_LIST_HEAD(&bio->cache_list);
+
 	return bio;
 }
 
@@ -1961,6 +1963,45 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 	return err;
 }
 
+	/* Submit bios to lower device */
+
+static int flush_bios(struct block_device *bdev)
+{
+	return 0;
+}
+
+	/* See if we can replace many bios by one */
+
+static int join_bios(struct block_device *bdev)
+{
+	return 0;
+}
+
+	/* copy bio and queue into list */
+
+static int queue_bio(struct bio *bio)
+{
+	struct bio *new_bio;
+	struct block_device *bdev = bio->bi_bdev;
+	KIRQL flags;
+
+	if (bdev == NULL)
+		return -ENODEV;
+
+	new_bio = bio_clone(bio, 0);
+	if (new_bio == NULL)
+		return -ENOMEM;
+
+	new_bio->master_bio = bio;
+	atomic_inc(&bio->num_slave_bios);
+
+	spin_lock_irqsave(&bdev->write_cache_lock, flags);
+	list_add(&new_bio->cache_list, &bdev->write_cache);
+	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
+
+	return 0;
+}
+
 	/* This just ensures that DRBD gets I/O errors in case something
 	 * in processing the request before submitting it to the lower
 	 * level driver goes wrong. It also splits the I/O requests
@@ -2058,7 +2099,8 @@ printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (
 		bio->bi_iter.bi_sector = sector;
 		bio->bi_iter.bi_size = total_size;
 
-		ret = windrbd_generic_make_request(bio);
+//		ret = windrbd_generic_make_request(bio);
+		ret = queue_bio(bio);
 		if (ret < 0) {
 			bio->bi_status = BLK_STS_IOERR;
 			bio_endio(bio);
@@ -2683,6 +2725,9 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	init_waitqueue_head(&block_device->bios_event);
 	atomic_set(&block_device->num_bios_pending, 0);
 	atomic_set(&block_device->num_irps_pending, 0);
+
+	INIT_LIST_HEAD(&block_device->write_cache);
+	spin_lock_init(&block_device->write_cache_lock);
 
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
