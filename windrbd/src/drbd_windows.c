@@ -925,6 +925,8 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->bi_vcnt = bio_src->bi_vcnt;
 	bio->bi_iter.bi_size = bio_src->bi_iter.bi_size;
 	bio->bi_iter.bi_idx = bio_src->bi_iter.bi_idx;
+	bio->bi_num_requests = bio_src->bi_num_requests;
+	bio->bi_this_request = bio_src->bi_this_request;
 
 	return bio;
 }
@@ -1996,7 +1998,15 @@ static int flush_bios(struct block_device *bdev)
 	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->write_cache, cache_list) {
 		list_del(&bio->cache_list);
 
+		bio->bi_irps = kzalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, 0, 'DRBD');
+		if (bio->bi_irps == NULL) {
+			spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
+			return -ENOMEM;
+		}
+
+printk("into windrbd_generic_make_request(%p) ...\n", bio);
 		ret = windrbd_generic_make_request(bio);
+printk("out of windrbd_generic_make_request(%p) ...\n", bio);
 		if (ret != 0)	/* TODO: cleanup ?! */ {
 			spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
 			return ret;
@@ -2044,6 +2054,7 @@ static int bdflush_thread_fn(void *bdev_p)
 	struct block_device *bdev = bdev_p;
 
 	while (1) {
+printk("flush bios...\n");
 		flush_bios(bdev);
 		msleep(1000);
 	}
@@ -2148,7 +2159,11 @@ printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (
 		bio->bi_iter.bi_sector = sector;
 		bio->bi_iter.bi_size = total_size;
 
-		ret = queue_bio(bio);
+		if (bio_data_dir(bio) == WRITE)
+			ret = queue_bio(bio);
+		else
+			ret = windrbd_generic_make_request(bio);
+
 		if (ret < 0) {
 			bio->bi_status = BLK_STS_IOERR;
 			bio_endio(bio);
