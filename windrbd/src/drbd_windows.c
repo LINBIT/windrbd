@@ -1643,7 +1643,7 @@ printk("is last bio of master bio %p\n", master_bio);
 		bio->device_failed = 1;
 	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
 
-// printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
+printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
 		if (bio->master_bio != NULL) {
 			if (master_bio) {
@@ -1673,6 +1673,7 @@ printk("out of bio_endio bio is %p\n", bio);
 		 * bio.
 		 */
 
+printk("completing bio returning bio is %p master bio is %p\n", bio, master_bio);
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
@@ -1816,7 +1817,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-// printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element, bio);
+printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element, bio);
 // }
 
 /* Make a copy of the (page cache) buffer and write the copy to the
@@ -2002,10 +2003,10 @@ static int flush_bios(struct block_device *bdev)
 	spin_lock_irqsave(&bdev->write_cache_lock, flags);
 	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->write_cache, cache_list) {
 		list_del(&bio->cache_list);
+		spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
 
 		bio->bi_irps = kzalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, 0, 'DRBD');
 		if (bio->bi_irps == NULL) {
-			spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
 			return -ENOMEM;
 		}
 
@@ -2013,9 +2014,9 @@ printk("into windrbd_generic_make_request(%p) ...\n", bio);
 		ret = windrbd_generic_make_request(bio);
 printk("out of windrbd_generic_make_request(%p) ...\n", bio);
 		if (ret != 0)	/* TODO: cleanup ?! */ {
-			spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
 			return ret;
 		}
+		spin_lock_irqsave(&bdev->write_cache_lock, flags);
 	}
 
 	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
@@ -2120,6 +2121,8 @@ printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (
 
 	flush_request = ((bio->bi_opf & REQ_PREFLUSH) != 0);
 
+printk("flush_request is %d\n", flush_request);
+
 	if (bio->bi_vcnt == 0)
 		bio->bi_num_requests = flush_request;
 	else
@@ -2179,11 +2182,14 @@ printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (
 		sector += total_size >> 9;
 	}
 	if (flush_request) {
+printk("flush_request skipped ...\n");
+#if 0
 		ret = make_flush_request(bio);
 		if (ret < 0) {
 			bio->bi_status = BLK_STS_IOERR;
 			bio_endio(bio);
 		}
+#endif
 	}
 
 	if (ret > 0)
