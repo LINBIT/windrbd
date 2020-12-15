@@ -561,6 +561,11 @@ struct block_device {
 
 	atomic_t num_bios_pending;
 	atomic_t num_irps_pending;
+
+	/* The simple write cache: list of pending bios */
+	struct list_head write_cache;
+	spinlock_t write_cache_lock;
+	struct task_struct *bdflush_thread;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
@@ -715,6 +720,11 @@ struct bio {
 	IO_STATUS_BLOCK io_stat;
 
 	blk_status_t bi_status;
+
+	struct bio *master_bio;
+	struct list_head cache_list;
+
+	atomic_t num_slave_bios;
 
 	/* TODO: may be put members here again? Update: Not sure,
 	 * we've put a KEVENT here and it didn't work .. might also

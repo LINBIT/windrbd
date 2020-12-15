@@ -830,6 +830,8 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_vcnt = 0;
 	spin_lock_init(&bio->device_failed_lock);
 
+	INIT_LIST_HEAD(&bio->cache_list);
+
 	return bio;
 }
 
@@ -1583,11 +1585,18 @@ NTSTATUS DrbdIoCompletion(
 /* TODO: Device object is NULL here. Fix that in case we need it one day. */
 
 	struct bio *bio = Context;
+	struct bio *master_bio = NULL;
 	PMDL mdl, nextMdl;
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
 	int i;
 	NTSTATUS status = Irp->IoStatus.Status;
 	KIRQL flags;
+
+	if (bio->master_bio != NULL) {
+		if (atomic_dec_return(&bio->master_bio->num_slave_bios) == 0) {
+			master_bio = bio->master_bio;
+		}
+	}
 
 // printk("completing bio %p\n", bio);
 	atomic_dec(&bio->bi_bdev->num_irps_pending);
@@ -1630,15 +1639,27 @@ NTSTATUS DrbdIoCompletion(
 
 // printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
-		bio->bi_status = win_status_to_blk_status(status);
 // printk("into bio_endio bio is %p\n", bio);
-		bio_endio(bio);
+		if (bio->master_bio != NULL) {
+			if (master_bio) {
+				master_bio->bi_status = win_status_to_blk_status(status);
+				bio_endio(master_bio);
+			}
+				/* Else there are more bios .. wait until
+				 * they are processed. */
+		} else {
+			bio->bi_status = win_status_to_blk_status(status);
+			bio_endio(bio);
+		}
 // printk("out of bio_endio bio is %p\n", bio);
 			/* TODO: to bio_free() */
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
 	}
 	bio_put(bio);
+
+	if (master_bio)
+		bio_put(master_bio);
 
 		/* Tell IO manager that it should not touch the
 		 * irp. It has yet to be freed together with the
@@ -1961,6 +1982,75 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 	return err;
 }
 
+	/* Submit bios to lower device */
+
+static int flush_bios(struct block_device *bdev)
+{
+	KIRQL flags;
+	struct bio *bio, *bio2;
+	int ret;
+
+		/* TODO: more finegrained locking possible? */
+
+	spin_lock_irqsave(&bdev->write_cache_lock, flags);
+	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->write_cache, cache_list) {
+		list_del(&bio->cache_list);
+
+		ret = windrbd_generic_make_request(bio);
+		if (ret != 0)	/* TODO: cleanup ?! */ {
+			spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
+			return ret;
+		}
+	}
+
+	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
+	return 0;
+}
+
+	/* See if we can replace many bios by one */
+
+static int join_bios(struct block_device *bdev)
+{
+	return 0;
+}
+
+	/* copy bio and queue into list */
+
+static int queue_bio(struct bio *bio)
+{
+	struct bio *new_bio;
+	struct block_device *bdev = bio->bi_bdev;
+	KIRQL flags;
+
+	if (bdev == NULL)
+		return -ENODEV;
+
+	new_bio = bio_clone(bio, 0);
+	if (new_bio == NULL)
+		return -ENOMEM;
+
+	new_bio->master_bio = bio;
+	atomic_inc(&bio->num_slave_bios);
+
+	spin_lock_irqsave(&bdev->write_cache_lock, flags);
+	list_add(&new_bio->cache_list, &bdev->write_cache);
+	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
+
+	return 0;
+}
+
+static int bdflush_thread_fn(void *bdev_p)
+{
+	struct block_device *bdev = bdev_p;
+
+	while (1) {
+		flush_bios(bdev);
+		msleep(1000);
+	}
+
+	return 0;
+}
+
 	/* This just ensures that DRBD gets I/O errors in case something
 	 * in processing the request before submitting it to the lower
 	 * level driver goes wrong. It also splits the I/O requests
@@ -2058,7 +2148,7 @@ printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (
 		bio->bi_iter.bi_sector = sector;
 		bio->bi_iter.bi_size = total_size;
 
-		ret = windrbd_generic_make_request(bio);
+		ret = queue_bio(bio);
 		if (ret < 0) {
 			bio->bi_status = BLK_STS_IOERR;
 			bio_endio(bio);
@@ -2684,6 +2774,9 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	atomic_set(&block_device->num_bios_pending, 0);
 	atomic_set(&block_device->num_irps_pending, 0);
 
+	INIT_LIST_HEAD(&block_device->write_cache);
+	spin_lock_init(&block_device->write_cache_lock);
+
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
 
@@ -2697,6 +2790,12 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
+
+	block_device->bdflush_thread = kthread_run(bdflush_thread_fn, block_device, "backingdev_flush");
+
+	if (block_device->bdflush_thread == NULL) {
+		printk("Warning: Couldn't start bdflush thread\n");
+	}
 
 #ifdef _HACK
 hack_alloc_page(block_device);
