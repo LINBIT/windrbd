@@ -927,6 +927,8 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->bi_iter.bi_idx = bio_src->bi_iter.bi_idx;
 	bio->bi_num_requests = bio_src->bi_num_requests;
 	bio->bi_this_request = bio_src->bi_this_request;
+	bio->bi_first_element = bio_src->bi_first_element;
+	bio->bi_last_element = bio_src->bi_last_element;
 
 	return bio;
 }
@@ -1594,13 +1596,15 @@ NTSTATUS DrbdIoCompletion(
 	NTSTATUS status = Irp->IoStatus.Status;
 	KIRQL flags;
 
+printk("completing bio %p\n", bio);
+
 	if (bio->master_bio != NULL) {
 		if (atomic_dec_return(&bio->master_bio->num_slave_bios) == 0) {
 			master_bio = bio->master_bio;
+printk("is last bio of master bio %p\n", master_bio);
 		}
 	}
 
-// printk("completing bio %p\n", bio);
 	atomic_dec(&bio->bi_bdev->num_irps_pending);
 
 	if (status != STATUS_SUCCESS) {
@@ -1641,19 +1645,20 @@ NTSTATUS DrbdIoCompletion(
 
 // printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
-// printk("into bio_endio bio is %p\n", bio);
 		if (bio->master_bio != NULL) {
 			if (master_bio) {
 				master_bio->bi_status = win_status_to_blk_status(status);
+printk("into bio_endio master_bio is %p\n", master_bio);
 				bio_endio(master_bio);
 			}
 				/* Else there are more bios .. wait until
 				 * they are processed. */
 		} else {
 			bio->bi_status = win_status_to_blk_status(status);
+printk("into bio_endio bio is %p\n", bio);
 			bio_endio(bio);
 		}
-// printk("out of bio_endio bio is %p\n", bio);
+printk("out of bio_endio bio is %p\n", bio);
 			/* TODO: to bio_free() */
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
