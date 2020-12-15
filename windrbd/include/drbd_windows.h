@@ -725,6 +725,7 @@ struct bio {
 	struct list_head cache_list;
 
 	atomic_t num_slave_bios;
+	int is_flush;
 
 	/* TODO: may be put members here again? Update: Not sure,
 	 * we've put a KEVENT here and it didn't work .. might also

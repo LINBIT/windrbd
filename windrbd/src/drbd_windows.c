@@ -2010,9 +2010,11 @@ static int flush_bios(struct block_device *bdev)
 			return -ENOMEM;
 		}
 
-printk("into windrbd_generic_make_request(%p) ...\n", bio);
-		ret = windrbd_generic_make_request(bio);
-printk("out of windrbd_generic_make_request(%p) ...\n", bio);
+		if (bio->is_flush)
+			ret = make_flush_request(bio);
+		else
+			ret = windrbd_generic_make_request(bio);
+
 		if (ret != 0)	/* TODO: cleanup ?! */ {
 			return ret;
 		}
@@ -2032,7 +2034,7 @@ static int join_bios(struct block_device *bdev)
 
 	/* copy bio and queue into list */
 
-static int queue_bio(struct bio *bio)
+static int queue_bio(struct bio *bio, int is_flush)
 {
 	struct bio *new_bio;
 	struct block_device *bdev = bio->bi_bdev;
@@ -2046,6 +2048,7 @@ static int queue_bio(struct bio *bio)
 		return -ENOMEM;
 
 	new_bio->master_bio = bio;
+	new_bio->is_flush = is_flush;
 	atomic_inc(&bio->num_slave_bios);
 
 	spin_lock_irqsave(&bdev->write_cache_lock, flags);
@@ -2060,7 +2063,6 @@ static int bdflush_thread_fn(void *bdev_p)
 	struct block_device *bdev = bdev_p;
 
 	while (1) {
-printk("flush bios...\n");
 		flush_bios(bdev);
 		msleep(1000);
 	}
@@ -2168,7 +2170,7 @@ printk("flush_request is %d\n", flush_request);
 		bio->bi_iter.bi_size = total_size;
 
 		if (bio_data_dir(bio) == WRITE)
-			ret = queue_bio(bio);
+			ret = queue_bio(bio, 0);
 		else
 			ret = windrbd_generic_make_request(bio);
 
@@ -2182,14 +2184,16 @@ printk("flush_request is %d\n", flush_request);
 		sector += total_size >> 9;
 	}
 	if (flush_request) {
-printk("flush_request skipped ...\n");
-#if 0
-		ret = make_flush_request(bio);
+		if (bio_data_dir(bio) == WRITE)
+			ret = queue_bio(bio, 1);
+		else
+			ret = make_flush_request(bio);
+
+/* TODO: wake up bdflush */
 		if (ret < 0) {
 			bio->bi_status = BLK_STS_IOERR;
 			bio_endio(bio);
 		}
-#endif
 	}
 
 	if (ret > 0)
