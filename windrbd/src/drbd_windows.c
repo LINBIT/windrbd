@@ -1636,12 +1636,23 @@ printk("is last bio of master bio %p\n", master_bio);
 	}
 */
 
-	spin_lock_irqsave(&bio->device_failed_lock, flags);
-	int num_completed = atomic_inc_return(&bio->bi_requests_completed);
-	int device_failed = bio->device_failed;
-	if (status != STATUS_SUCCESS)
-		bio->device_failed = 1;
-	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
+	int num_completed, device_failed;
+
+	if (bio->master_bio != NULL) {
+		spin_lock_irqsave(&bio->master_bio->device_failed_lock, flags);
+		num_completed = atomic_inc_return(&bio->master_bio->bi_requests_completed);
+		device_failed = bio->master_bio->device_failed;
+		if (status != STATUS_SUCCESS)
+			bio->master_bio->device_failed = 1;
+		spin_unlock_irqrestore(&bio->master_bio->device_failed_lock, flags);
+	} else {
+		spin_lock_irqsave(&bio->device_failed_lock, flags);
+		num_completed = atomic_inc_return(&bio->bi_requests_completed);
+		device_failed = bio->device_failed;
+		if (status != STATUS_SUCCESS)
+			bio->device_failed = 1;
+		spin_unlock_irqrestore(&bio->device_failed_lock, flags);
+	}
 
 printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
@@ -1940,7 +1951,9 @@ printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x
 */
 	bio_get(bio);	/* To be put in completion routine */
 
-	if (bio->device_failed ||
+	int device_failed = bio->master_bio ? bio->master_bio->device_failed : bio->device_failed;
+
+	if (device_failed ||
 	    (bio->bi_bdev && bio->bi_bdev->drbd_device &&
 	     bio->bi_bdev->drbd_device->disk_state[NOW] <= D_FAILED)) {
 		printk("Device already failed, cancelling IRP\n");
