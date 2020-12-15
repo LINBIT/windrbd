@@ -1585,6 +1585,7 @@ NTSTATUS DrbdIoCompletion(
 /* TODO: Device object is NULL here. Fix that in case we need it one day. */
 
 	struct bio *bio = Context;
+	struct bio *master_bio = NULL;
 	PMDL mdl, nextMdl;
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
 	int i;
@@ -1592,13 +1593,8 @@ NTSTATUS DrbdIoCompletion(
 	KIRQL flags;
 
 	if (bio->master_bio != NULL) {
-		struct bio *slave_bio = bio;
-		bio = bio->master_bio;
-		bio_free(slave_bio);
-			/* More slaves hanging on this bio .. */
-		if (atomic_dec_return(&bio->num_slave_bios) > 0) {
-			/* TODO: ?? */
-			return STATUS_MORE_PROCESSING_REQUIRED;
+		if (atomic_dec_return(&bio->master_bio->num_slave_bios) == 0) {
+			master_bio = bio->master_bio;
 		}
 	}
 
@@ -1643,15 +1639,27 @@ NTSTATUS DrbdIoCompletion(
 
 // printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
-		bio->bi_status = win_status_to_blk_status(status);
 // printk("into bio_endio bio is %p\n", bio);
-		bio_endio(bio);
+		if (bio->master_bio != NULL) {
+			if (master_bio) {
+				master_bio->bi_status = win_status_to_blk_status(status);
+				bio_endio(master_bio);
+			}
+				/* Else there are more bios .. wait until
+				 * they are processed. */
+		} else {
+			bio->bi_status = win_status_to_blk_status(status);
+			bio_endio(bio);
+		}
 // printk("out of bio_endio bio is %p\n", bio);
 			/* TODO: to bio_free() */
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
 	}
 	bio_put(bio);
+
+	if (master_bio)
+		bio_put(master_bio);
 
 		/* Tell IO manager that it should not touch the
 		 * irp. It has yet to be freed together with the
