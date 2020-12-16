@@ -521,6 +521,8 @@ srv*;Y:\windrbd\windrbd\src;Y:\windrbd\converted-sources\drbd
 
 srv*;Y:\windrbd-debug\win4lin\src;Y:\windrbd-debug\converted-sources\drbd
 
+srv*;Y:\windrbd-backing-dev-cache\windrbd\win4lin\src;Y:\windrbd-backing-dev-cache\windrbd\converted-sources\drbd
+
 -----
 
 netsh:

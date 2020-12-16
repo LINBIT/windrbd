@@ -95,6 +95,11 @@ TODO: Bug: BSOD in drbd_sender:2898 calling callback
 
 TODO: Code quality: Do not patch boot sector when it is a disk device
 
+TODO: Bug: BSOD on Syncing (when running disconnect while sync)
+
+	This is a different bug (not on disconnect but while syncing)
+	and is probably new with the SyncTarget big pages patch.
+
 TODOs for after Release 1.0 ----------------------------------------
 
 TODO: Bug: BSOD when removing network interface
