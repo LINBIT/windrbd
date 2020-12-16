@@ -832,7 +832,7 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 
 	INIT_LIST_HEAD(&bio->cache_list);
 
-printk("new bio %p\n", bio);
+// printk("new bio %p\n", bio);
 	return bio;
 }
 
@@ -1597,12 +1597,12 @@ NTSTATUS DrbdIoCompletion(
 	NTSTATUS status = Irp->IoStatus.Status;
 	KIRQL flags;
 
-printk("completing bio %p\n", bio);
+// printk("completing bio %p\n", bio);
 
 	if (bio->master_bio != NULL) {
 		if (atomic_dec_return(&bio->master_bio->num_slave_bios) == 0) {
 			master_bio = bio->master_bio;
-printk("is last bio of master bio %p\n", master_bio);
+// printk("is last bio of master bio %p\n", master_bio);
 		}
 	}
 
@@ -1655,22 +1655,22 @@ printk("is last bio of master bio %p\n", master_bio);
 		spin_unlock_irqrestore(&bio->device_failed_lock, flags);
 	}
 
-printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
+// printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
 		if (bio->master_bio != NULL) {
 			if (master_bio) {
 				master_bio->bi_status = win_status_to_blk_status(status);
-printk("into bio_endio master_bio is %p\n", master_bio);
+// printk("into bio_endio master_bio is %p\n", master_bio);
 				bio_endio(master_bio);
 			}
 				/* Else there are more bios .. wait until
 				 * they are processed. */
 		} else {
 			bio->bi_status = win_status_to_blk_status(status);
-printk("into bio_endio bio is %p\n", bio);
+// printk("into bio_endio bio is %p\n", bio);
 			bio_endio(bio);
 		}
-printk("out of bio_endio bio is %p\n", bio);
+// printk("out of bio_endio bio is %p\n", bio);
 			/* TODO: to bio_free() */
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
@@ -1685,7 +1685,7 @@ printk("out of bio_endio bio is %p\n", bio);
 		 * bio.
 		 */
 
-printk("completing bio returning bio is %p master bio is %p\n", bio, master_bio);
+// printk("completing bio returning bio is %p master bio is %p\n", bio, master_bio);
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
@@ -1829,7 +1829,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element, bio);
+// printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element, bio);
 // }
 
 /* Make a copy of the (page cache) buffer and write the copy to the
@@ -1976,7 +1976,7 @@ skipped_bytes += total_size;
 skipped_bytes2 += total_size;
 if (skipped_bytes2 > 256*1024*1024) {
 skipped_bytes2 = 0;
-printk("%llu bytes (%llu MiB) skipped\n", skipped_bytes, skipped_bytes / (1024*1024));
+// printk("%llu bytes (%llu MiB) skipped\n", skipped_bytes, skipped_bytes / (1024*1024));
 }
 DrbdIoCompletion(NULL, bio->bi_irps[bio->bi_this_request], bio);
 return 0;
@@ -2122,7 +2122,7 @@ skipped_bytes += bio->bi_iter.bi_size;
 skipped_bytes2 += bio->bi_iter.bi_size;
 if (skipped_bytes2 > 256*1024*1024) {
 skipped_bytes2 = 0;
-printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (1024*1024));
+// printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (1024*1024));
 }
 		bio->bi_status = 0;
 		bio_endio(bio);
@@ -2137,7 +2137,7 @@ printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (
 
 	flush_request = ((bio->bi_opf & REQ_PREFLUSH) != 0);
 
-printk("flush_request is %d\n", flush_request);
+// printk("flush_request is %d\n", flush_request);
 
 	if (bio->bi_vcnt == 0)
 		bio->bi_num_requests = flush_request;
