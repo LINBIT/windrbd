@@ -832,6 +832,7 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 
 	INIT_LIST_HEAD(&bio->cache_list);
 
+printk("new bio %p\n", bio);
 	return bio;
 }
 
@@ -2077,7 +2078,7 @@ static int bdflush_thread_fn(void *bdev_p)
 
 	while (1) {
 		flush_bios(bdev);
-		msleep(1000);
+		msleep(10);
 	}
 
 	return 0;
@@ -2182,9 +2183,11 @@ printk("flush_request is %d\n", flush_request);
 		bio->bi_iter.bi_sector = sector;
 		bio->bi_iter.bi_size = total_size;
 
+#if 0
 		if (bio_data_dir(bio) == WRITE)
 			ret = queue_bio(bio, 0);
 		else
+#endif
 			ret = windrbd_generic_make_request(bio);
 
 		if (ret < 0) {
@@ -2197,9 +2200,11 @@ printk("flush_request is %d\n", flush_request);
 		sector += total_size >> 9;
 	}
 	if (flush_request) {
+#if 0
 		if (bio_data_dir(bio) == WRITE)
 			ret = queue_bio(bio, 1);
 		else
+#endif
 			ret = make_flush_request(bio);
 
 /* TODO: wake up bdflush */
