@@ -1677,8 +1677,10 @@ NTSTATUS DrbdIoCompletion(
 	}
 	bio_put(bio);
 
+/*
 	if (master_bio)
 		bio_put(master_bio);
+*/
 
 		/* Tell IO manager that it should not touch the
 		 * irp. It has yet to be freed together with the
