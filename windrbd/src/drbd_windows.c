@@ -832,7 +832,7 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 
 	INIT_LIST_HEAD(&bio->cache_list);
 
-// printk("new bio %p\n", bio);
+printk("new bio %p\n", bio);
 	return bio;
 }
 
@@ -1677,10 +1677,10 @@ NTSTATUS DrbdIoCompletion(
 	}
 	bio_put(bio);
 
-/*
-	if (master_bio)
+	if (master_bio) {
+printk("bio_put master_bio is %p bio is %p\n", master_bio, bio);
 		bio_put(master_bio);
-*/
+	}
 
 		/* Tell IO manager that it should not touch the
 		 * irp. It has yet to be freed together with the
@@ -2011,6 +2011,7 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 	*) implement join_bios
 	*) fix bio_put(master_bio) (DrbdIoCompletion) BSOD
 	*) (from phil) allow for disable (bypass) write cache.
+	*) Test with fault injection
 
 */
 
