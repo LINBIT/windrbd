@@ -841,6 +841,7 @@ static void free_mdls_and_irp(struct bio *bio)
 	struct _MDL *mdl, *next_mdl;
 	int r;
 
+printk("free_mdls_and_irp bio is %p\n", bio);
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */
@@ -856,6 +857,9 @@ static void free_mdls_and_irp(struct bio *bio)
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
+printk("about to free IRP %p\n", bio->bi_irps[r]);
+
+#if 0
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
 		     mdl = next_mdl) {
@@ -870,9 +874,11 @@ static void free_mdls_and_irp(struct bio *bio)
 //		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 
 		IoFreeIrp(bio->bi_irps[r]);
+#endif
 	}
 
 	kfree(bio->bi_irps);
+printk("out\n");
 }
 
 void bio_get_debug(struct bio *bio, const char *file, int line, const char *func)
