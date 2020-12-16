@@ -2006,6 +2006,14 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 	return err;
 }
 
+/* TODO's for simple write cache:
+	*) Terminate bdflush thread properly.
+	*) implement join_bios
+	*) fix bio_put(master_bio) (DrbdIoCompletion) BSOD
+	*) (from phil) allow for disable (bypass) write cache.
+
+*/
+
 	/* Submit bios to lower device */
 
 static int flush_bios(struct block_device *bdev)
@@ -2041,7 +2049,7 @@ static int flush_bios(struct block_device *bdev)
 	}
 
 	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
-printk("%d bios flushed\n", num_bios);
+// printk("%d bios flushed\n", num_bios);
 	return 0;
 }
 
