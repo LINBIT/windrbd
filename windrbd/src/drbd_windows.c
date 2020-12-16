@@ -1590,7 +1590,7 @@ NTSTATUS DrbdIoCompletion(
 /* TODO: Device object is NULL here. Fix that in case we need it one day. */
 
 	struct bio *bio = Context;
-	struct bio *master_bio = NULL;
+	struct bio *master_bio = NULL; /* only non-zero when bio is the last remaining slave bio */
 	PMDL mdl, nextMdl;
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
 	int i;
@@ -2013,13 +2013,16 @@ static int flush_bios(struct block_device *bdev)
 	KIRQL flags;
 	struct bio *bio, *bio2;
 	int ret;
+	int num_bios;
 
-		/* TODO: more finegrained locking possible? */
+	num_bios = 0;
 
 	spin_lock_irqsave(&bdev->write_cache_lock, flags);
 	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->write_cache, cache_list) {
 		list_del(&bio->cache_list);
 		spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
+
+		num_bios++;
 
 		bio->bi_irps = kzalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, 0, 'DRBD');
 		if (bio->bi_irps == NULL) {
@@ -2038,6 +2041,7 @@ static int flush_bios(struct block_device *bdev)
 	}
 
 	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
+printk("%d bios flushed\n", num_bios);
 	return 0;
 }
 
