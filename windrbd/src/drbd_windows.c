@@ -2183,11 +2183,9 @@ skipped_bytes2 = 0;
 		bio->bi_iter.bi_sector = sector;
 		bio->bi_iter.bi_size = total_size;
 
-#if 0
 		if (bio_data_dir(bio) == WRITE)
 			ret = queue_bio(bio, 0);
 		else
-#endif
 			ret = windrbd_generic_make_request(bio);
 
 		if (ret < 0) {
@@ -2200,11 +2198,9 @@ skipped_bytes2 = 0;
 		sector += total_size >> 9;
 	}
 	if (flush_request) {
-#if 0
 		if (bio_data_dir(bio) == WRITE)
 			ret = queue_bio(bio, 1);
 		else
-#endif
 			ret = make_flush_request(bio);
 
 /* TODO: wake up bdflush */
