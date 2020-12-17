@@ -82,6 +82,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	list_add(&mem->list, &memory_allocations);
 	spin_unlock_irqrestore(&memory_lock, flags);
 
+printk("kmalloc(%d) = %p from %s:%d %s()\n", size, &mem->data[0], file, line, func);
 	return &mem->data[0];
 }
 
@@ -101,6 +102,8 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	struct memory *mem;
 	struct poison_after *poison_after;
 	KIRQL flags;
+
+printk("kfree(%p) %s:%d (%s)\n", data, file, line, func);
 
 	if (data == NULL) {
 		dbg("kmalloc_debug: Warning: attempt to free the NULL pointer in function %s at %s:%d\n", func, file, line);

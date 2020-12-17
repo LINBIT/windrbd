@@ -878,6 +878,8 @@ printk("about to free IRP %p\n", bio->bi_irps[r]);
 	}
 
 	kfree(bio->bi_irps);
+
+bio->bi_irps = NULL;
 printk("out\n");
 }
 
@@ -903,6 +905,7 @@ void bio_put(struct bio *bio)
 {
 	int cnt;
 	cnt = atomic_dec(&bio->bi_cnt);
+printk("bio is %p cnt is %d\n", bio, cnt);
 	if (cnt == 0)
 		bio_free(bio);
 }
@@ -911,6 +914,7 @@ void bio_put(struct bio *bio)
 
 void bio_free(struct bio *bio)
 {
+printk("bio_free bio is %p\n", bio);
 	free_mdls_and_irp(bio);
 	kfree(bio);
 }
@@ -2006,10 +2010,12 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 	}
 	return 0;
 
+#if 0
 // out_free_irp:
 	free_mdls_and_irp(bio);
 
 	return err;
+#endif
 }
 
 /* TODO's for simple write cache:
