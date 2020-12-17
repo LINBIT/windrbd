@@ -1687,10 +1687,12 @@ NTSTATUS DrbdIoCompletion(
 	}
 	bio_put(bio);
 
-	if (master_bio) {
+	if (bio->master_bio) {
 printk("bio_put master_bio is %p bio is %p\n", master_bio, bio);
-		bio_put(master_bio);
+		bio_put(bio->master_bio);
 	}
+	if (master_bio)	/* last time 2x bio_get () */
+		bio_put(master_bio);
 
 		/* Tell IO manager that it should not touch the
 		 * irp. It has yet to be freed together with the
@@ -1790,6 +1792,8 @@ static int make_flush_request(struct bio *bio)
 	next_stack_location->FileObject = bio->bi_bdev->file_object;
 
 	bio_get(bio);
+	if (bio->master_bio)
+		bio_get(bio->master_bio);
 
 // printk("flush %p\n", bio);
 
@@ -1963,6 +1967,8 @@ static int windrbd_generic_make_request(struct bio *bio)
 	}
 */
 	bio_get(bio);	/* To be put in completion routine */
+	if (bio->master_bio)
+		bio_get(bio->master_bio);
 
 	int device_failed = bio->master_bio ? bio->master_bio->device_failed : bio->device_failed;
 
@@ -2194,6 +2200,13 @@ skipped_bytes2 = 0;
 	orig_size = bio->bi_iter.bi_size;
 
 	ret = 0;
+
+		/* Additional bio_get: bio_put is called once all
+		 * slave bios are completed.
+		 */
+
+	if (bio_data_dir(bio) == WRITE)
+		bio_get(bio);
 
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<(bio->bi_num_requests - flush_request); 
