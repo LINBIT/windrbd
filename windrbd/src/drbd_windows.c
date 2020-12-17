@@ -832,7 +832,6 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 
 	INIT_LIST_HEAD(&bio->cache_list);
 
-printk("new bio %p\n", bio);
 	return bio;
 }
 
@@ -841,7 +840,6 @@ static void free_mdls_and_irp(struct bio *bio)
 	struct _MDL *mdl, *next_mdl;
 	int r;
 
-printk("free_mdls_and_irp bio is %p\n", bio);
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */
@@ -857,9 +855,6 @@ printk("free_mdls_and_irp bio is %p\n", bio);
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
-printk("about to free IRP %p\n", bio->bi_irps[r]);
-
-#if 0
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
 		     mdl = next_mdl) {
@@ -874,13 +869,9 @@ printk("about to free IRP %p\n", bio->bi_irps[r]);
 //		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 
 		IoFreeIrp(bio->bi_irps[r]);
-#endif
 	}
 
 	kfree(bio->bi_irps);
-
-bio->bi_irps = NULL;
-printk("out\n");
 }
 
 void bio_get_debug(struct bio *bio, const char *file, int line, const char *func)
@@ -905,7 +896,6 @@ void bio_put(struct bio *bio)
 {
 	int cnt;
 	cnt = atomic_dec(&bio->bi_cnt);
-printk("bio is %p cnt is %d\n", bio, cnt);
 	if (cnt == 0)
 		bio_free(bio);
 }
@@ -914,7 +904,6 @@ printk("bio is %p cnt is %d\n", bio, cnt);
 
 void bio_free(struct bio *bio)
 {
-printk("bio_free bio is %p\n", bio);
 	free_mdls_and_irp(bio);
 	kfree(bio);
 }
@@ -1688,7 +1677,6 @@ NTSTATUS DrbdIoCompletion(
 	bio_put(bio);
 
 	if (bio->master_bio) {
-printk("bio_put master_bio is %p bio is %p\n", master_bio, bio);
 		bio_put(bio->master_bio);
 	}
 	if (master_bio)	/* last time 2x bio_get () */
@@ -2015,13 +2003,6 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 			     */
 	}
 	return 0;
-
-#if 0
-// out_free_irp:
-	free_mdls_and_irp(bio);
-
-	return err;
-#endif
 }
 
 /* TODO's for simple write cache:

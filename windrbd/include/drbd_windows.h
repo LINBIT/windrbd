@@ -23,8 +23,8 @@
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H
 
-	/* TODO: undef this again */
-#define BIO_REF_DEBUG 1
+/* Enable this (and recompile all) to enable bio allocation debugging */
+/* #define BIO_REF_DEBUG 1 */
 
 #define __func_	__FUNCTION__
 #define __bitwise__
