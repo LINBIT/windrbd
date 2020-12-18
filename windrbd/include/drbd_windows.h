@@ -24,7 +24,7 @@
 #define DRBD_WINDOWS_H
 
 /* Enable this (and recompile all) to enable bio allocation debugging */
-/* #define BIO_REF_DEBUG 1 */
+#define BIO_REF_DEBUG 1
 
 #define __func_	__FUNCTION__
 #define __bitwise__
@@ -468,6 +468,11 @@ struct fault_injection {
 	int nr_requests;
 };
 
+struct completion {
+	bool completed;
+	wait_queue_head_t wait;
+};
+
 /* TODO: this is used as device extension for the DRBD devices and
    also as block device for the backing devices. This is probably
    not a good idea.
@@ -569,6 +574,10 @@ struct block_device {
 	struct list_head write_cache;
 	spinlock_t write_cache_lock;
 	struct task_struct *bdflush_thread;
+	int bdflush_should_run;
+
+	struct wait_queue_head bdflush_event;
+	struct completion bdflush_terminated;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
@@ -612,11 +621,6 @@ typedef u8 blk_status_t;
 
 typedef void(BIO_END_IO_CALLBACK)(struct bio *bio);
 
-
-struct completion {
-	bool completed;
-	wait_queue_head_t wait;
-};
 
 	/* When we create more bio's upon request for a single MDL,
 	 * this is common data shared between all that bios.

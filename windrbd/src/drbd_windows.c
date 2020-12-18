@@ -831,6 +831,7 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	spin_lock_init(&bio->device_failed_lock);
 
 	INIT_LIST_HEAD(&bio->cache_list);
+printk("bio_alloc returned %p\n", bio);
 
 	return bio;
 }
@@ -930,6 +931,7 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->bi_first_element = bio_src->bi_first_element;
 	bio->bi_last_element = bio_src->bi_last_element;
 
+printk("bio_clone returned %p\n", bio);
 	return bio;
 }
 
@@ -1674,13 +1676,13 @@ NTSTATUS DrbdIoCompletion(
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
 	}
-	bio_put(bio);
-
 	if (bio->master_bio) {
 		bio_put(bio->master_bio);
 	}
 	if (master_bio)	/* last time 2x bio_get () */
 		bio_put(master_bio);
+
+	bio_put(bio);
 
 		/* Tell IO manager that it should not touch the
 		 * irp. It has yet to be freed together with the
@@ -2009,6 +2011,7 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 	*) Terminate bdflush thread properly.
 	*) implement join_bios
 	*) fix bio_put(master_bio) (DrbdIoCompletion) BSOD
+	*) fix boot sector bug (something with patching broken).
 	*) (from phil) allow for disable (bypass) write cache.
 	*) Test with fault injection
 
@@ -2083,6 +2086,8 @@ static int queue_bio(struct bio *bio, int is_flush)
 	list_add(&new_bio->cache_list, &bdev->write_cache);
 	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
 
+	wake_up(&bdev->bdflush_event);
+
 	return 0;
 }
 
@@ -2090,10 +2095,21 @@ static int bdflush_thread_fn(void *bdev_p)
 {
 	struct block_device *bdev = bdev_p;
 
-	while (1) {
+	while (bdev->bdflush_should_run) {
+		wait_event(bdev->bdflush_event, (!bdev->bdflush_should_run) || !list_empty(&bdev->write_cache));
+
+			/* Wait for more bios to arrive ... this way we can
+			 * join them into larger bios if they are adjacent.
+			 */
+		if (bdev->bdflush_should_run)
+			msleep(10);
+
+				/* else we are about to terminate, flush
+				 * everything remaining here.
+				 */
 		flush_bios(bdev);
-		msleep(10);
 	}
+	complete(&bdev->bdflush_terminated);
 
 	return 0;
 }
@@ -2609,6 +2625,13 @@ void *idr_get_next(struct idr *idp, int *nextidp)
 void delete_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
+
+	if (bdev->bdflush_thread != NULL) {
+		bdev->bdflush_should_run = 0;
+		wake_up(&bdev->bdflush_event);
+		wait_for_completion(&bdev->bdflush_terminated);
+		bdev->bdflush_thread = NULL;
+	}
 	if (bdev->bd_disk) {
 		if (bdev->bd_disk->queue)
 			blk_cleanup_queue(bdev->bd_disk->queue);
@@ -2856,6 +2879,9 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
 
+	init_waitqueue_head(&block_device->bdflush_event);
+	init_completion(&block_device->bdflush_terminated);
+	block_device->bdflush_should_run = 1;
 	block_device->bdflush_thread = kthread_run(bdflush_thread_fn, block_device, "backingdev_flush");
 
 	if (block_device->bdflush_thread == NULL) {
