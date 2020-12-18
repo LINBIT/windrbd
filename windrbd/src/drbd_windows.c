@@ -2008,13 +2008,17 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 }
 
 /* TODO's for simple write cache:
-	*) Terminate bdflush thread properly.
 	*) implement join_bios
-	*) fix bio_put(master_bio) (DrbdIoCompletion) BSOD
+	*) fix bio handle leak
 	*) fix boot sector bug (something with patching broken).
 	*) (from phil) allow for disable (bypass) write cache.
 	*) Test with fault injection
+	*) Proably there is a bio leak now?
+	*) Close windows on becoming secondary (probably unrelated).
 
+Done:
+	*) Terminate bdflush thread properly.
+	*) fix bio_put(master_bio) (DrbdIoCompletion) BSOD
 */
 
 	/* Submit bios to lower device */
@@ -2052,7 +2056,7 @@ static int flush_bios(struct block_device *bdev)
 	}
 
 	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
-// printk("%d bios flushed\n", num_bios);
+printk("%d bios flushed\n", num_bios);
 	return 0;
 }
 
@@ -2111,6 +2115,7 @@ static int bdflush_thread_fn(void *bdev_p)
 	}
 	complete(&bdev->bdflush_terminated);
 
+printk("bdflush_thread_fn terminated.\n");
 	return 0;
 }
 
