@@ -1781,9 +1781,10 @@ static int make_flush_request(struct bio *bio)
 	next_stack_location->DeviceObject = bio->bi_bdev->windows_device;
 	next_stack_location->FileObject = bio->bi_bdev->file_object;
 
-	bio_get(bio);
 	if (bio->master_bio)
 		bio_get(bio->master_bio);
+	else
+		bio_get(bio);	/* To be put in completion routine (bi_endio) */
 
 // printk("flush %p\n", bio);
 
@@ -1956,9 +1957,10 @@ static int windrbd_generic_make_request(struct bio *bio)
 		goto out_free_irp;
 	}
 */
-	bio_get(bio);	/* To be put in completion routine */
 	if (bio->master_bio)
 		bio_get(bio->master_bio);
+	else
+		bio_get(bio);	/* To be put in completion routine (bi_endio) */
 
 	int device_failed = bio->master_bio ? bio->master_bio->device_failed : bio->device_failed;
 
