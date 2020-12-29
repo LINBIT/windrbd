@@ -2011,16 +2011,21 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 
 /* TODO's for simple write cache:
 	*) implement join_bios
-	*) fix bio handle leak
-	*) fix boot sector bug (something with patching broken).
 	*) (from phil) allow for disable (bypass) write cache.
 	*) Test with fault injection
-	*) Proably there is a bio leak now?
-	*) Close windows on becoming secondary (probably unrelated).
 
 Done:
 	*) Terminate bdflush thread properly.
+	*) fix bio handle leak
 	*) fix bio_put(master_bio) (DrbdIoCompletion) BSOD
+	*) Close windows on becoming secondary (probably unrelated).
+	   (device is in use): This appears when using SCSI interface
+	   on a partitionless disk (when migrating from block device
+	   interface to SCSI interface this might happen): don't do
+	   that.
+	*) fix boot sector bug (something with patching broken).
+	   Also this was with a non-partitioned SCSI disk.
+
 */
 
 	/* Submit bios to lower device */
