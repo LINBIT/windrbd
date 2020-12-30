@@ -28,7 +28,7 @@ typedef struct _tagSPINLOCK
 	atomic_t recursion_depth;
 */
 	char marker[16];
-	char locked_by[64];
+	char locked_by[128];
 } spinlock_t;
 
 extern void spin_lock_init(spinlock_t *lock);

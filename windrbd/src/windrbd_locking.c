@@ -207,10 +207,9 @@ void spin_lock_init(spinlock_t *lock)
 {
 	KeInitializeSpinLock(&lock->spinLock);
 	lock->printk_lock = 0;
-#ifdef SPIN_LOCK_DEBUG2
 	lock->locked_by_thread = NULL;
 	strncpy(lock->marker, "SPIN_LOCK123", ARRAY_SIZE(lock->marker)-1);
-#endif
+	strncpy(lock->locked_by, "NONE", ARRAY_SIZE(lock->locked_by)-1);
 }
 
 static EX_SPIN_LOCK rcu_rw_lock;
@@ -525,13 +524,9 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
 	lock->locked_by_thread = KeGetCurrentThread();
-#ifdef SPIN_LOCK_DEBUG2
 	strncpy(lock->marker, "SPIN_LOCK456", ARRAY_SIZE(lock->marker)-1);
-	strncpy(lock->locked_by, func, 24);
-	strncpy(&lock->locked_by[24], file, 32);
+	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 	lock->locked_by[ARRAY_SIZE(lock->locked_by)-1] = '\0';
-//	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
-#endif
 
 	return oldIrql;
 }
@@ -539,10 +534,9 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags)
 {
 	lock->locked_by_thread = NULL;
-#ifdef SPIN_LOCK_DEBUG2
 	strncpy(lock->marker, "SPIN_LOCK123", ARRAY_SIZE(lock->marker)-1);
 	strncpy(lock->locked_by, "NONE", ARRAY_SIZE(lock->locked_by)-1);
-#endif
+
 	KeReleaseSpinLock(&lock->spinLock, flags);
 }
 
@@ -563,19 +557,15 @@ void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const
 	KeAcquireSpinLock(&lock->spinLock, &unused);
 
 	lock->locked_by_thread = KeGetCurrentThread();
-#ifdef SPIN_LOCK_DEBUG2
 	strncpy(lock->marker, "SPIN_LOCK456", ARRAY_SIZE(lock->marker)-1);
-	strncpy(lock->locked_by, func, 24);
-	strncpy(&lock->locked_by[24], file, 32);
+	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 	lock->locked_by[ARRAY_SIZE(lock->locked_by)-1] = '\0';
-//	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 
 		/* TODO: remove this check again later */
 	if (unused != PASSIVE_LEVEL)
 		printk("Bug: IRQL > PASSIVE_LEVEL (is %d) at %s:%d (%s)\n", unused, file, line, func);
 /*	else
 		printk("IRQL is PASSIVE_LEVEL (%d), no bug at %s:%d (%s)\n", unused, file, line, func); */
-#endif
 }
 
 /* This resets the IRQL to PASSIVE_LEVEL. This is normally not
@@ -586,10 +576,8 @@ void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const
 void spin_unlock_irq(spinlock_t *lock)
 {
 	lock->locked_by_thread = NULL;
-#ifdef SPIN_LOCK_DEBUG2
 	strncpy(lock->locked_by, "NONE", ARRAY_SIZE(lock->locked_by)-1);
 	strncpy(lock->marker, "SPIN_LOCK123", ARRAY_SIZE(lock->marker)-1);
-#endif
 	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
 }
 
@@ -598,6 +586,8 @@ void spin_unlock_irq(spinlock_t *lock)
  * that the critical section may be preempted. Again,
  * use spin_lock_irqsave/spin_unlock_irqrestore whereever
  * possible.
+ *
+ * TODO: these functions are deprecated and should go away.
  */
 
 void spin_lock(spinlock_t *lock)
