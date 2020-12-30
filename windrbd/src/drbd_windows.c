@@ -831,7 +831,6 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	spin_lock_init(&bio->device_failed_lock);
 
 	INIT_LIST_HEAD(&bio->cache_list);
-printk("bio_alloc returned %p\n", bio);
 
 	return bio;
 }
@@ -879,14 +878,14 @@ void bio_get_debug(struct bio *bio, const char *file, int line, const char *func
 {
 	int cnt;
 	cnt = atomic_inc(&bio->bi_cnt);
-	printk("bio: %p refcount now: %d called from: %s:%d %s()\n", bio, cnt, file, line, func);
+// printk("bio: %p refcount now: %d called from: %s:%d %s()\n", bio, cnt, file, line, func);
 }
 
 void bio_put_debug(struct bio *bio, const char *file, int line, const char *func)
 {
 	int cnt;
 	cnt = atomic_dec(&bio->bi_cnt);
-	printk("bio: %p refcount now: %d called from: %s:%d %s()\n", bio, cnt, file, line, func);
+// printk("bio: %p refcount now: %d called from: %s:%d %s()\n", bio, cnt, file, line, func);
 	if (cnt == 0)
 		bio_free(bio);
 }
@@ -931,7 +930,6 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->bi_first_element = bio_src->bi_first_element;
 	bio->bi_last_element = bio_src->bi_last_element;
 
-printk("bio_clone returned %p\n", bio);
 	return bio;
 }
 
@@ -2056,14 +2054,23 @@ static int flush_bios(struct block_device *bdev)
 		else
 			ret = windrbd_generic_make_request(bio);
 
-		if (ret != 0)	/* TODO: cleanup ?! */ {
+		if (ret < 0) {
+			if (bio->master_bio) {
+				bio->master_bio->bi_status = BLK_STS_IOERR;
+				bio_endio(bio->master_bio);
+			} else {
+				bio->bi_status = BLK_STS_IOERR;
+				bio_endio(bio);
+			}
 			return ret;
 		}
+		if (ret > 0)
+			return -ret;
+
 		spin_lock_irqsave(&bdev->write_cache_lock, flags);
 	}
 
 	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
-printk("%d bios flushed\n", num_bios);
 	return 0;
 }
 
@@ -2105,7 +2112,9 @@ static int queue_bio(struct bio *bio, int is_flush)
 static int bdflush_thread_fn(void *bdev_p)
 {
 	struct block_device *bdev = bdev_p;
+	int err;
 
+	err = 0;
 	while (bdev->bdflush_should_run) {
 		wait_event(bdev->bdflush_event, (!bdev->bdflush_should_run) || !list_empty(&bdev->write_cache));
 
@@ -2118,12 +2127,21 @@ static int bdflush_thread_fn(void *bdev_p)
 				/* else we are about to terminate, flush
 				 * everything remaining here.
 				 */
-		flush_bios(bdev);
+		err = join_bios(bdev);
+		if (err < 0) {
+			printk("join bios failed, terminating bdflush thread.\n");
+			break;
+		}
+
+		err = flush_bios(bdev);
+		if (err < 0) {
+			printk("flush bios failed, terminating bdflush thread.\n");
+			break;
+		}
 	}
 	complete(&bdev->bdflush_terminated);
 
-printk("bdflush_thread_fn terminated.\n");
-	return 0;
+	return err;
 }
 
 	/* This just ensures that DRBD gets I/O errors in case something
