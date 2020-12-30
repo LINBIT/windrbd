@@ -1657,10 +1657,11 @@ NTSTATUS DrbdIoCompletion(
 // printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
 		if (bio->master_bio != NULL) {
-			if (master_bio) {
-				master_bio->bi_status = win_status_to_blk_status(status);
+			int bi_status = win_status_to_blk_status(status);
+			if (master_bio || bi_status != 0) {
+				bio->master_bio->bi_status = bi_status;
 // printk("into bio_endio master_bio is %p\n", master_bio);
-				bio_endio(master_bio);
+				bio_endio(bio->master_bio);
 			}
 				/* Else there are more bios .. wait until
 				 * they are processed. */
