@@ -1200,9 +1200,8 @@ static int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 	return 0;
 }
 
-/* TODO: bad idea ... */
-#define snprintf(a, b, c,...) memset(a, 0, b); sprintf(a, c, ##__VA_ARGS__)
 
+#define snprintf(a, b, c,...) scnprintf(a, b, c, ##__VA_ARGS__)
 
 extern int scnprintf(char * buf, size_t size, const char *fmt, ...);
 extern int vscnprintf(char * buf, size_t size, const char *fmt, va_list args);
