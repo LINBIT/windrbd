@@ -2011,7 +2011,6 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 /* TODO's for simple write cache:
 	*) implement join_bios
 	*) (from phil) allow for disable (bypass) write cache.
-	*) Test with fault injection
 
 Done:
 	*) Terminate bdflush thread properly.
@@ -2024,6 +2023,7 @@ Done:
 	   that.
 	*) fix boot sector bug (something with patching broken).
 	   Also this was with a non-partitioned SCSI disk.
+	*) Test with fault injection
 
 */
 
