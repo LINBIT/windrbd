@@ -2129,14 +2129,14 @@ static int bdflush_thread_fn(void *bdev_p)
 				 */
 		err = join_bios(bdev);
 		if (err < 0) {
-			printk("join bios failed, terminating bdflush thread.\n");
-			break;
+			printk("join bios failed, not terminating bdflush thread for now.\n");
+			continue;
 		}
 
 		err = flush_bios(bdev);
 		if (err < 0) {
-			printk("flush bios failed, terminating bdflush thread.\n");
-			break;
+			printk("flush bios failed, not terminating bdflush thread for now.\n");
+			continue;
 		}
 	}
 	complete(&bdev->bdflush_terminated);
