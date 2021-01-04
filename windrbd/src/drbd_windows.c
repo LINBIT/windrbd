@@ -1599,9 +1599,12 @@ NTSTATUS DrbdIoCompletion(
 // printk("completing bio %p\n", bio);
 
 	if (bio->master_bio != NULL) {
-		if (atomic_dec_return(&bio->master_bio->num_slave_bios) == 0) {
+		if (atomic_dec_return(&bio->master_bio->num_slave_bios) <= 0) {
 			master_bio = bio->master_bio;
 // printk("is last bio of master bio %p\n", master_bio);
+		}
+		if (atomic_read(&bio->master_bio->num_slave_bios) < 0) {
+			printk("Warning: num_slave_bios got negative (%d) in WinDRBD completion routine\n", atomic_read(&bio->master_bio->num_slave_bios));
 		}
 	}
 
