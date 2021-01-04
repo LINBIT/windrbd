@@ -2128,7 +2128,8 @@ printk("joining %d bios (%d bytes)\n", num_bios_to_join, num_bytes_to_join);
 						bio_endio(bio3->master_bio);
 					}
 					list_del(&bio3->cache_list);
-					put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
+/* Should be in the endio() function: */
+//					put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
 					bio_put(bio3);
 				}
 			}
