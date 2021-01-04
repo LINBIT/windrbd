@@ -2125,7 +2125,7 @@ printk("joining %d bios (%d bytes)\n", num_bios_to_join, num_bytes_to_join);
 				bio4 = list_entry(bio3->cache_list.next, struct bio, cache_list);
 				if (n > 0) {
 					if (atomic_dec_return(&bio3->master_bio->num_slave_bios) <= 0) {
-						printk("Warning: num_slave_bios got 0 (%d) in join_bios\n", atomic_read(&bio3->master_bio->num_slave_bios));
+						bio_endio(bio3->master_bio);
 					}
 					list_del(&bio3->cache_list);
 					put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
