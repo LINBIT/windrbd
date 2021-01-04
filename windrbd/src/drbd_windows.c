@@ -2126,10 +2126,11 @@ printk("joining %d bios (%d bytes)\n", num_bios_to_join, num_bytes_to_join);
 				if (n > 0) {
 					if (atomic_dec_return(&bio3->master_bio->num_slave_bios) <= 0) {
 						bio_endio(bio3->master_bio);
+					} else {
+/* TODO: get_page() somewhere else? */
+						put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
 					}
 					list_del(&bio3->cache_list);
-/* Should be in the endio() function: */
-//					put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
 					bio_put(bio3);
 				}
 			}
