@@ -2102,7 +2102,7 @@ static int queue_bio(struct bio *bio, int is_flush)
 	atomic_inc(&bio->num_slave_bios);
 
 	spin_lock_irqsave(&bdev->write_cache_lock, flags);
-	list_add(&new_bio->cache_list, &bdev->write_cache);
+	list_add_tail(&new_bio->cache_list, &bdev->write_cache);
 	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
 
 	wake_up(&bdev->bdflush_event);
