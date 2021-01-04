@@ -2079,6 +2079,62 @@ static int flush_bios(struct block_device *bdev)
 
 static int join_bios(struct block_device *bdev)
 {
+	struct bio *bio, *bio3, *bio4;
+	int num_bios_to_join, n;
+	size_t num_bytes_to_join;
+	KIRQL flags;
+	struct page *big_buffer;
+	size_t big_buffer_index;
+
+	spin_lock_irqsave(&bdev->write_cache_lock, flags);
+	list_for_each_entry(struct bio, bio, &bdev->write_cache, cache_list) {
+		if (bio->bi_last_element - bio->bi_first_element != 1) {
+			printk("Warning: more than one element in bio bio->bi_first_element is %d bio->bi_last_element is %d\n", bio->bi_first_element, bio->bi_last_element);
+			continue;
+		}
+		num_bios_to_join = 0;
+		num_bytes_to_join = bio->bi_io_vec[bio->bi_first_element].bv_len;
+
+		bio3 = bio;
+		list_for_each_entry_continue(struct bio, bio3, &bdev->write_cache, cache_list) {
+				/* TODO: with bi_first_element ... */
+			if (bio3->bi_iter.bi_sector - (num_bytes_to_join / 512) != bio->bi_iter.bi_sector)
+				break;
+			num_bios_to_join++;
+			num_bytes_to_join += bio3->bi_io_vec[bio3->bi_first_element].bv_len;
+
+		}
+		if (num_bios_to_join > 0)
+		{
+			big_buffer = alloc_page_of_size(0, num_bytes_to_join);
+			if (big_buffer == NULL)
+				continue;
+
+printk("joining %d bios (%d bytes)\n", num_bios_to_join, num_bytes_to_join);
+
+			big_buffer_index = 0;
+
+			bio4 = bio;
+			for (bio3=bio4,n=0;n<num_bios_to_join;n++,bio3=bio4) {
+				memcpy(&((unsigned char*) big_buffer->addr)[big_buffer_index], &((unsigned char*) bio3->bi_io_vec[bio3->bi_first_element].bv_page->addr)[bio3->bi_io_vec[bio3->bi_first_element].bv_offset], bio3->bi_io_vec[bio3->bi_first_element].bv_len);
+				big_buffer_index += bio3->bi_io_vec[bio3->bi_first_element].bv_len;
+
+				bio4 = list_entry(bio3->cache_list.next, struct bio, cache_list);
+				if (n > 0) {
+					list_del(&bio3->cache_list);
+					put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
+					bio_put(bio3);
+				}
+			}
+			bio->bi_first_element = 0;
+			bio->bi_last_element = 1;
+			bio->bi_io_vec[0].bv_page = big_buffer;
+			bio->bi_io_vec[0].bv_len = num_bytes_to_join;
+			bio->bi_io_vec[0].bv_offset = 0;
+		}
+	}
+	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
+
 	return 0;
 }
 
