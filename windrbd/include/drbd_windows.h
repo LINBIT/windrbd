@@ -733,6 +733,7 @@ struct bio {
 
 	atomic_t num_slave_bios;
 	int is_flush;
+	int has_big_buffer;
 
 	/* TODO: may be put members here again? Update: Not sure,
 	 * we've put a KEVENT here and it didn't work .. might also

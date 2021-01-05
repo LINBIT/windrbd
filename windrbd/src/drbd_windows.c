@@ -1677,6 +1677,9 @@ NTSTATUS DrbdIoCompletion(
 			/* TODO: to bio_free() */
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
+
+		if (bio->has_big_buffer)
+			put_page(bio->bi_io_vec[0].bv_page);
 	}
 	if (bio->master_bio) {
 		bio_put(bio->master_bio);
@@ -2137,15 +2140,16 @@ static int join_bios(struct block_device *bdev)
 						bio_put(bio3);
 */
 					bio_put(bio3);
-				} else {
+				} /* else {
 					put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
-				}
+				} */
 			}
 			bio->bi_first_element = 0;
 			bio->bi_last_element = 1;
 			bio->bi_io_vec[0].bv_page = big_buffer;
 			bio->bi_io_vec[0].bv_len = num_bytes_to_join;
 			bio->bi_io_vec[0].bv_offset = 0;
+			bio->has_big_buffer = 1;
 		}
 	}
 	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
