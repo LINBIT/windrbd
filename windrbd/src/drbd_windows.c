@@ -2139,6 +2139,7 @@ static int join_bios(struct block_device *bdev)
 					if (bio3->master_bio)
 						bio_put(bio3);
 */
+printk("bio3->bi_cnt is %d\n", bio3->bi_cnt);
 					bio_put(bio3);
 				} /* else {
 					put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
@@ -2150,6 +2151,7 @@ static int join_bios(struct block_device *bdev)
 			bio->bi_io_vec[0].bv_len = num_bytes_to_join;
 			bio->bi_io_vec[0].bv_offset = 0;
 			bio->has_big_buffer = 1;
+printk("bio->bi_cnt is %d\n", bio->bi_cnt);
 		}
 	}
 	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
