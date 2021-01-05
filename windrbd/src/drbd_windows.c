@@ -2012,7 +2012,6 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 }
 
 /* TODO's for simple write cache:
-	*) implement join_bios
 	*) (from phil) allow for disable (bypass) write cache.
 
 Done:
@@ -2027,6 +2026,7 @@ Done:
 	*) fix boot sector bug (something with patching broken).
 	   Also this was with a non-partitioned SCSI disk.
 	*) Test with fault injection
+	*) implement join_bios
 
 */
 
@@ -2089,6 +2089,7 @@ static int join_bios(struct block_device *bdev)
 	struct page *big_buffer;
 	size_t big_buffer_index;
 
+// printk("join_bios start\n");
 	spin_lock_irqsave(&bdev->write_cache_lock, flags);
 	list_for_each_entry(struct bio, bio, &bdev->write_cache, cache_list) {
 		if (bio->bi_last_element - bio->bi_first_element != 1) {
@@ -2113,7 +2114,7 @@ static int join_bios(struct block_device *bdev)
 			if (big_buffer == NULL)
 				continue;
 
-printk("joining %d bios (%d bytes)\n", num_bios_to_join, num_bytes_to_join);
+// printk("joining %d bios (%d bytes)\n", num_bios_to_join, num_bytes_to_join);
 
 			big_buffer_index = 0;
 
@@ -2131,7 +2132,13 @@ printk("joining %d bios (%d bytes)\n", num_bios_to_join, num_bytes_to_join);
 						put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
 					}
 					list_del(&bio3->cache_list);
+/*
+					if (bio3->master_bio)
+						bio_put(bio3);
+*/
 					bio_put(bio3);
+				} else {
+					put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
 				}
 			}
 			bio->bi_first_element = 0;
@@ -2142,6 +2149,7 @@ printk("joining %d bios (%d bytes)\n", num_bios_to_join, num_bytes_to_join);
 		}
 	}
 	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
+// printk("join_bios end\n");
 
 	return 0;
 }
