@@ -2014,10 +2014,24 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 	return 0;
 }
 
+static int enable_simple_write_cache = 0;
+static int simple_write_cache_collect_time_ms = 10;
+
+extern NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default);
+
+void read_simple_write_cache_config(void)
+{
+	get_registry_int(L"enable_simple_write_cache", &enable_simple_write_cache, 0);
+	get_registry_int(L"simple_write_cache_collect_time_ms", &simple_write_cache_collect_time_ms, 10);
+}
+
 /* TODO's for simple write cache:
-	*) (from phil) allow for disable (bypass) write cache.
+	*) Optimize ... right now there is no speedup (or maybe 20% or so ...)
 
 Done:
+	*) (from phil) allow for disable (bypass) write cache.
+		Solved via registry which is the easiest way to do this.
+		One day maybe via drbd.conf ...
 	*) Terminate bdflush thread properly.
 	*) fix bio handle leak
 	*) fix bio_put(master_bio) (DrbdIoCompletion) BSOD
@@ -2201,7 +2215,7 @@ static int bdflush_thread_fn(void *bdev_p)
 			 * join them into larger bios if they are adjacent.
 			 */
 		if (bdev->bdflush_should_run)
-			msleep(10);
+			msleep(simple_write_cache_collect_time_ms);
 
 				/* else we are about to terminate, flush
 				 * everything remaining here.
@@ -2329,7 +2343,7 @@ skipped_bytes2 = 0;
 		bio->bi_iter.bi_sector = sector;
 		bio->bi_iter.bi_size = total_size;
 
-		if (bio_data_dir(bio) == WRITE)
+		if (enable_simple_write_cache && bio_data_dir(bio) == WRITE)
 			ret = queue_bio(bio, 0);
 		else
 			ret = windrbd_generic_make_request(bio);
@@ -2344,7 +2358,7 @@ skipped_bytes2 = 0;
 		sector += total_size >> 9;
 	}
 	if (flush_request) {
-		if (bio_data_dir(bio) == WRITE)
+		if (enable_simple_write_cache && bio_data_dir(bio) == WRITE)
 			ret = queue_bio(bio, 1);
 		else
 			ret = make_flush_request(bio);
@@ -2988,13 +3002,20 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
 
-	init_waitqueue_head(&block_device->bdflush_event);
-	init_completion(&block_device->bdflush_terminated);
-	block_device->bdflush_should_run = 1;
-	block_device->bdflush_thread = kthread_run(bdflush_thread_fn, block_device, "backingdev_flush");
+	read_simple_write_cache_config();
 
-	if (block_device->bdflush_thread == NULL) {
-		printk("Warning: Couldn't start bdflush thread\n");
+	if (enable_simple_write_cache) {
+		printk("Simple write cache is enabled, simple_write_cache_collect_time_ms is %d.\n", simple_write_cache_collect_time_ms);
+		init_waitqueue_head(&block_device->bdflush_event);
+		init_completion(&block_device->bdflush_terminated);
+		block_device->bdflush_should_run = 1;
+		block_device->bdflush_thread = kthread_run(bdflush_thread_fn, block_device, "backingdev_flush");
+
+		if (block_device->bdflush_thread == NULL) {
+			printk("Warning: Couldn't start bdflush thread\n");
+		}
+	} else {
+		printk("Simple write cache is disabled.\n");
 	}
 
 #ifdef _HACK
