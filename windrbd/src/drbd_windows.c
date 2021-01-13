@@ -1843,7 +1843,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
-printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element, bio);
+// printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element, bio);
 // }
 
 /* Make a copy of the (page cache) buffer and write the copy to the
@@ -2108,7 +2108,7 @@ static int join_bios(struct block_device *bdev)
 	struct page *big_buffer;
 	size_t big_buffer_index;
 
-printk("join_bios start\n");
+// printk("join_bios start\n");
 	spin_lock_irqsave(&bdev->write_cache_lock, flags);
 	list_for_each_entry(struct bio, bio, &bdev->write_cache, cache_list) {
 		if (bio->bi_last_element - bio->bi_first_element != 1) {
@@ -2133,7 +2133,7 @@ printk("join_bios start\n");
 			if (big_buffer == NULL)
 				continue;
 
-printk("joining %d bios (%d bytes)\n", num_bios_to_join, num_bytes_to_join);
+// printk("joining %d bios (%d bytes)\n", num_bios_to_join, num_bytes_to_join);
 
 			big_buffer_index = 0;
 
@@ -2155,7 +2155,7 @@ printk("joining %d bios (%d bytes)\n", num_bios_to_join, num_bytes_to_join);
 					if (bio3->master_bio)
 						bio_put(bio3);
 */
-printk("bio3->bi_cnt is %d\n", bio3->bi_cnt);
+// printk("bio3->bi_cnt is %d\n", bio3->bi_cnt);
 					bio_put(bio3);
 				} /* else {
 					put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
@@ -2167,11 +2167,11 @@ printk("bio3->bi_cnt is %d\n", bio3->bi_cnt);
 			bio->bi_io_vec[0].bv_len = num_bytes_to_join;
 			bio->bi_io_vec[0].bv_offset = 0;
 			bio->has_big_buffer = 1;
-printk("bio->bi_cnt is %d\n", bio->bi_cnt);
+// printk("bio->bi_cnt is %d\n", bio->bi_cnt);
 		}
 	}
 	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
-printk("join_bios end\n");
+// printk("join_bios end\n");
 
 	return 0;
 }
