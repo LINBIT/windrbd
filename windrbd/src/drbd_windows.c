@@ -1985,7 +1985,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	if (test_inject_faults(&inject_on_request, "assuming request failed (enabled for all devices)"))
 		return -EIO;
 
-#if 0
+#if 1 
 if (io == IRP_MJ_WRITE) {
 static unsigned long long skipped_bytes = 0;
 static unsigned long long skipped_bytes2 = 0;
@@ -1993,7 +1993,7 @@ skipped_bytes += total_size;
 skipped_bytes2 += total_size;
 if (skipped_bytes2 > 256*1024*1024) {
 skipped_bytes2 = 0;
-// printk("%llu bytes (%llu MiB) skipped\n", skipped_bytes, skipped_bytes / (1024*1024));
+printk("%llu bytes (%llu MiB) skipped\n", skipped_bytes, skipped_bytes / (1024*1024));
 }
 DrbdIoCompletion(NULL, bio->bi_irps[bio->bi_this_request], bio);
 return 0;
