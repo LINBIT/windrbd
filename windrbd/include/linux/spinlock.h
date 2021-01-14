@@ -12,23 +12,30 @@
  */
 
 /* #define SPIN_LOCK_DEBUG 1 */
+/* #define SPIN_LOCK_DEBUG2 1 */
 
 #ifdef RELEASE
 #ifdef SPIN_LOCK_DEBUG
 #undef SPIN_LOCK_DEBUG
+#endif
+#ifdef SPIN_LOCK_DEBUG2
+#undef SPIN_LOCK_DEBUG2
 #endif
 #endif
 
 typedef struct _tagSPINLOCK
 {
 	KSPIN_LOCK spinLock;
+
 	bool printk_lock;	/* non zero if used by printk: TODO: ifdef debug */
+#if (defined SPIN_LOCK_DEBUG || defined SPIN_LOCK_DEBUG2)
 	PKTHREAD locked_by_thread;
 /*
 	atomic_t recursion_depth;
 */
 	char marker[16];
 	char locked_by[128];
+#endif
 } spinlock_t;
 
 extern void spin_lock_init(spinlock_t *lock);
