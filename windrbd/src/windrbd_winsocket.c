@@ -1319,7 +1319,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
 			BytesReceived = winsock_to_linux_error(Status);
 		}
 	}
-if (len >= 4096) tok(2);
+// if (len >= 4096) tok(2);
 
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
@@ -1362,7 +1362,7 @@ if (len >= 4096) tok(2);
 		socket->error_status = BytesReceived;
 		dbg("setting error status to %d\n", socket->error_status);
 	}
-if (len >= 4096) tok(1);
+// if (len >= 4096) tok(1);
 // printk("Received %d bytes\n", BytesReceived);
 	return BytesReceived;
 }
