@@ -1204,7 +1204,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	int         wObjCount = 1;
 
 // printk("in recvmsg: size is %d\n", len);
-if (len >= 4096) tik(1);
+// if (len >= 4096) tik(1);
 // dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
@@ -1238,7 +1238,7 @@ if (len >= 4096) tik(1);
 		return -ENOTCONN;
 	}
 
-if (len >= 4096) tik(2);
+// if (len >= 4096) tik(2);
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
