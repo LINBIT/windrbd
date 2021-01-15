@@ -1985,7 +1985,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	if (test_inject_faults(&inject_on_request, "assuming request failed (enabled for all devices)"))
 		return -EIO;
 
-#if 1 
+#if 0
 if (io == IRP_MJ_WRITE) {
 static unsigned long long skipped_bytes = 0;
 static unsigned long long skipped_bytes2 = 0;
@@ -2139,7 +2139,7 @@ static int join_bios(struct block_device *bdev)
 
 			bio4 = bio;
 			for (bio3=bio4,n=0;n<num_bios_to_join;n++,bio3=bio4) {
-//				memcpy(&((unsigned char*) big_buffer->addr)[big_buffer_index], &((unsigned char*) bio3->bi_io_vec[bio3->bi_first_element].bv_page->addr)[bio3->bi_io_vec[bio3->bi_first_element].bv_offset], bio3->bi_io_vec[bio3->bi_first_element].bv_len);
+				memcpy(&((unsigned char*) big_buffer->addr)[big_buffer_index], &((unsigned char*) bio3->bi_io_vec[bio3->bi_first_element].bv_page->addr)[bio3->bi_io_vec[bio3->bi_first_element].bv_offset], bio3->bi_io_vec[bio3->bi_first_element].bv_len);
 				big_buffer_index += bio3->bi_io_vec[bio3->bi_first_element].bv_len;
 
 				bio4 = list_entry(bio3->cache_list.next, struct bio, cache_list);
@@ -2268,7 +2268,7 @@ int generic_make_request(struct bio *bio)
 	static int max_mdl_elements = MAX_MDL_ELEMENTS;
 #endif
 
-#if 1 
+#if 0
 if (bio_data_dir(bio) == WRITE) {
 
 static unsigned long long skipped_bytes = 0;
