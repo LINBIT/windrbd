@@ -15,7 +15,7 @@ struct tiktok {
 	const char *desc;
 };
 
-static struct tiktok tiktoks[MAX_TIKTOKS];
+static struct tiktok tiktoks[MAX_TIKTOKS] = { 0 };
 
 void tik_debug(int n, const char *desc, const char *file, int line, const char *func)
 {
@@ -30,11 +30,13 @@ void tik_debug(int n, const char *desc, const char *file, int line, const char *
 	tiktoks[n].from_line = line;
 	tiktoks[n].from_func = func;
 
-	if (tiktoks[n].n == 0)
+	if (tiktoks[n].n == 0) {
 		tiktoks[n].start_timer = tiktoks[n].hr_timer;
+		tiktoks[n].timer_sum.QuadPart = 0ULL;
+	}
 	tiktoks[n].n++;
 
-	printk("TIKTOK channel %d \"%s\" (#%d) started at %s:%d (%s) 0 ticks\n", n, tiktoks[n].desc, tiktoks[n].n, file, line, func);
+	printk("TIKTOK channel %d \"%s\" (#%d) started at %s:%d (%s) current ticks is %llu\n", n, tiktoks[n].desc, tiktoks[n].n, file, line, func, tiktoks[n].hr_timer.QuadPart);
 }
 
 void tok_debug(int n, const char *file, int line, const char *func)
@@ -55,6 +57,6 @@ void tok_debug(int n, const char *file, int line, const char *func)
 
 	percentage.QuadPart = 10000*tiktoks[n].timer_sum.QuadPart/total_runtime.QuadPart;
 
-	printk("TIKTOK channel %d \"%s\" (#%d) %s:%d (%s) until %s:%d (%s) took %llu ticks (1/%llu th seconds)\n", n, tiktoks[n].desc, tiktoks[n].n, tiktoks[n].from_file, tiktoks[n].from_line, tiktoks[n].from_func, file, line, func, this_runtime.QuadPart, hr_freq.QuadPart);
-	printk("TIKTOK channel %d \"%s\" (#%d) %s:%d (%s) percentage is %llu.%.02d total runtime is %llu ticks time spent in region %llu ticks.\n", n, tiktoks[n].desc, tiktoks[n].n, file, line, func, percentage.QuadPart/100, percentage.QuadPart%100, total_runtime.QuadPart, tiktoks[n].timer_sum.QuadPart);
+	printk("TIKTOK channel %d \"%s\" (#%d) %s:%d (%s) until %s:%d (%s) took %llu ticks (1/%llu th seconds), started at %llu\n", n, tiktoks[n].desc, tiktoks[n].n, tiktoks[n].from_file, tiktoks[n].from_line, tiktoks[n].from_func, file, line, func, this_runtime.QuadPart, hr_freq.QuadPart, tiktoks[n].hr_timer.QuadPart);
+	printk("TIKTOK channel %d \"%s\" (#%d) %s:%d (%s) percentage is %llu.%.02d total runtime is %llu ticks total time spent in region %llu ticks.\n", n, tiktoks[n].desc, tiktoks[n].n, file, line, func, percentage.QuadPart/100, percentage.QuadPart%100, total_runtime.QuadPart, tiktoks[n].timer_sum.QuadPart);
 }
