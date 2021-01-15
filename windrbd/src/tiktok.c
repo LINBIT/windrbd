@@ -41,7 +41,7 @@ void tok_debug(int n, const char *file, int line, const char *func)
 {
 	LARGE_INTEGER hr_timer2, hr_freq;
 	LARGE_INTEGER total_runtime;
-	float percentage;
+	LARGE_INTEGER percentage;
 
 	if (n < 0 || n >= MAX_TIKTOKS) {
 		printk("Warning: n (%d) out of range\n", n);
@@ -52,8 +52,8 @@ void tok_debug(int n, const char *file, int line, const char *func)
 	tiktoks[n].timer_sum.QuadPart += hr_timer2.QuadPart;
 	total_runtime.QuadPart = hr_timer2.QuadPart - tiktoks[n].start_timer.QuadPart;
 
-	percentage = 100*tiktoks[n].timer_sum.QuadPart/total_runtime.QuadPart;
+	percentage.QuadPart = 10000*tiktoks[n].timer_sum.QuadPart/total_runtime.QuadPart;
 
 	printk("TIKTOK channel %d \"%s\" (#%d) %s:%d (%s) until %s:%d (%s) took %llu ticks (1/%llu th seconds)\n", n, tiktoks[n].desc, tiktoks[n].n, tiktoks[n].from_file, tiktoks[n].from_line, tiktoks[n].from_func, file, line, func, hr_timer2.QuadPart - tiktoks[n].hr_timer.QuadPart, hr_freq.QuadPart);
-	printk("TIKTOK channel %d \"%s\" (#%d) %s:%d (%s) percentage is %.02f total runtime is %llu ticks time spent in region %llu ticks.\n", n, tiktoks[n].desc, tiktoks[n].n, file, line, func, percentage, total_runtime.QuadPart, tiktoks[n].timer_sum.QuadPart);
+	printk("TIKTOK channel %d \"%s\" (#%d) %s:%d (%s) percentage is %llu.%.02d total runtime is %llu ticks time spent in region %llu ticks.\n", n, tiktoks[n].desc, tiktoks[n].n, file, line, func, percentage.QuadPart/100, percentage.QuadPart%100, total_runtime.QuadPart, tiktoks[n].timer_sum.QuadPart);
 }
