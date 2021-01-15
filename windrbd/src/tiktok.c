@@ -3,8 +3,11 @@
 
 #define MAX_TIKTOKS 50
 
+enum op { OP_NONE, OP_TIK, OP_TOK };
+
 struct tiktok {
 	int n;
+	enum op op;
 	LARGE_INTEGER hr_timer;
 	LARGE_INTEGER start_timer;
 	LARGE_INTEGER timer_sum;
@@ -20,9 +23,13 @@ static struct tiktok tiktoks[MAX_TIKTOKS] = { 0 };
 void tik_debug(int n, const char *desc, const char *file, int line, const char *func)
 {
 	if (n < 0 || n >= MAX_TIKTOKS) {
-		printk("Warning: n (%d) out of range\n", n);
+		printk("TIKTOK Warning: n (%d) out of range\n", n);
 		return;
 	}
+	if (tiktoks[n].op == OP_TIK)
+		printk("TIKTOK Warning: tiktok sequence mismatch is %d expected something other than %d\n", tiktoks[n].op, OP_TIK);
+	tiktoks[n].op = OP_TIK;
+
 	tiktoks[n].hr_timer = KeQueryPerformanceCounter(NULL);
 
 	tiktoks[n].desc = desc;
@@ -46,9 +53,13 @@ void tok_debug(int n, const char *file, int line, const char *func)
 	LARGE_INTEGER percentage;
 
 	if (n < 0 || n >= MAX_TIKTOKS) {
-		printk("Warning: n (%d) out of range\n", n);
+		printk("TIKTOK Warning: n (%d) out of range\n", n);
 		return;
 	}
+	if (tiktoks[n].op != OP_TIK)
+		printk("TIKTOK Warning: tiktok sequence mismatch is %d expected %d\n", tiktoks[n].op, OP_TIK);
+	tiktoks[n].op = OP_TOK;
+
 
 	hr_timer2 = KeQueryPerformanceCounter(&hr_freq);
 	this_runtime.QuadPart = hr_timer2.QuadPart - tiktoks[n].hr_timer.QuadPart;
