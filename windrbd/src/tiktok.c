@@ -27,7 +27,7 @@ void tik_debug(int n, const char *desc, const char *file, int line, const char *
 		return;
 	}
 	if (tiktoks[n].op == OP_TIK)
-		printk("TIKTOK Warning: tiktok sequence mismatch is %d expected something other than %d\n", tiktoks[n].op, OP_TIK);
+		printk("TIKTOK Warning: channel %d tiktok sequence mismatch is %d expected something other than %d\n", n, tiktoks[n].op, OP_TIK);
 	tiktoks[n].op = OP_TIK;
 
 	tiktoks[n].hr_timer = KeQueryPerformanceCounter(NULL);
@@ -57,7 +57,7 @@ void tok_debug(int n, const char *file, int line, const char *func)
 		return;
 	}
 	if (tiktoks[n].op != OP_TIK)
-		printk("TIKTOK Warning: tiktok sequence mismatch is %d expected %d\n", tiktoks[n].op, OP_TIK);
+		printk("TIKTOK Warning: channel %d tiktok sequence mismatch is %d expected %d\n", n, tiktoks[n].op, OP_TIK);
 	tiktoks[n].op = OP_TOK;
 
 
