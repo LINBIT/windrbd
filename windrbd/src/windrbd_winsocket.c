@@ -1238,6 +1238,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return -ENOTCONN;
 	}
 
+tik(3, "WskReceive");
 // if (len >= 4096) tik(2);
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
@@ -1272,6 +1273,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
 	enter_interruptible();
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
 	exit_interruptible();
+tok(3);
 
         switch (Status)
         {
@@ -1308,6 +1310,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
     }
 	else
 	{
+tok(3);
 		if (Status == STATUS_SUCCESS)
 		{
 			BytesReceived = (LONG) Irp->IoStatus.Information;
