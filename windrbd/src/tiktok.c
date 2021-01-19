@@ -16,6 +16,7 @@ struct tiktok {
 	int from_line;
 	const char *from_func;
 	const char *desc;
+	bool started;
 };
 
 static struct tiktok tiktoks[MAX_TIKTOKS] = { 0 };
@@ -26,6 +27,9 @@ void tik_debug(int n, const char *desc, const char *file, int line, const char *
 		printk("TIKTOK Warning: n (%d) out of range\n", n);
 		return;
 	}
+	if (!tiktoks[n].started)
+		return;
+
 	if (tiktoks[n].op == OP_TIK)
 		printk("TIKTOK Warning: channel %d tiktok sequence mismatch is %d expected something other than %d\n", n, tiktoks[n].op, OP_TIK);
 	tiktoks[n].op = OP_TIK;
@@ -56,6 +60,9 @@ void tok_debug(int n, const char *file, int line, const char *func)
 		printk("TIKTOK Warning: n (%d) out of range\n", n);
 		return;
 	}
+	if (!tiktoks[n].started)
+		return;
+
 	if (tiktoks[n].op != OP_TIK)
 		printk("TIKTOK Warning: channel %d tiktok sequence mismatch is %d expected %d\n", n, tiktoks[n].op, OP_TIK);
 	tiktoks[n].op = OP_TOK;
@@ -70,4 +77,20 @@ void tok_debug(int n, const char *file, int line, const char *func)
 
 	printk("TIKTOK channel %d \"%s\" (#%d) %s:%d (%s) until %s:%d (%s) took %llu ticks (1/%llu th seconds), started at %llu\n", n, tiktoks[n].desc, tiktoks[n].n, tiktoks[n].from_file, tiktoks[n].from_line, tiktoks[n].from_func, file, line, func, this_runtime.QuadPart, hr_freq.QuadPart, tiktoks[n].hr_timer.QuadPart);
 	printk("TIKTOK channel %d \"%s\" (#%d) %s:%d (%s) percentage is %llu.%.02d total runtime is %llu ticks total time spent in region %llu ticks.\n", n, tiktoks[n].desc, tiktoks[n].n, file, line, func, percentage.QuadPart/100, percentage.QuadPart%100, total_runtime.QuadPart, tiktoks[n].timer_sum.QuadPart);
+}
+
+void start_tiktok(int argc, const char ** argv)
+{
+	int i, n;
+
+	if (argc == 1) {
+		for (n=0;n<MAX_TIKTOKS;n++)
+			tiktoks[n].started = true;
+	} else {
+		for (i=1;i<argc;i++) {
+			n = my_atoi(argv[i]);
+			if (n >= 0 && n < MAX_TIKTOKS)
+				tiktoks[n].started = true;
+		}
+	}
 }

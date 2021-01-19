@@ -1353,4 +1353,6 @@ void exit_interruptible_debug(const char *file, int line, const char *func);
 
 void test_main(const char *arg);
 
+int my_atoi(const char *c);
+
 #endif // DRBD_WINDOWS_H

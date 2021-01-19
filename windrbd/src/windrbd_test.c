@@ -1013,6 +1013,8 @@ void argv_test(int argc, char ** argv)
 		printk("argv[%d] is %s\n", i, argv[i]);
 }
 
+extern void start_tiktok(int argc, const char ** argv);
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1076,6 +1078,8 @@ void test_main(const char *arg)
 		workqueue_test(argc, argv);
 	if (strcmp(argv[0], "wait_event_test") == 0)
 		wait_event_test(argc, argv);
+	if (strcmp(argv[0], "start_tiktok") == 0)
+		start_tiktok(argc, argv);
 
 kfree_argv:
 	kfree(argv);
