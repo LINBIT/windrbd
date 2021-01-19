@@ -1686,7 +1686,8 @@ static NTSTATUS receive_a_lot(void *unused)
         struct kvec iov = {
                 .iov_base = bigbuffer,
                 // .iov_len = sizeof(bigbuffer),
-                .iov_len = 4096,
+                .iov_len = 16,
+//                .iov_len = 4096,
         };
         struct msghdr msg = {
                 .msg_flags = MSG_WAITALL
