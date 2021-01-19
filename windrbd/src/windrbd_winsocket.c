@@ -1685,7 +1685,8 @@ static NTSTATUS receive_a_lot(void *unused)
 
         struct kvec iov = {
                 .iov_base = bigbuffer,
-                .iov_len = sizeof(bigbuffer),
+                // .iov_len = sizeof(bigbuffer),
+                .iov_len = 4096,
         };
         struct msghdr msg = {
                 .msg_flags = MSG_WAITALL
@@ -1716,28 +1717,30 @@ static NTSTATUS receive_a_lot(void *unused)
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-	err = kernel_accept(s, &s2, 0);
-	if (err < 0) {
-		printk("accept returned %d\n", err);
-		sock_release(s);
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-	printk("connection accepted\n");
-
-	bytes_received = 0;
 	while (1) {
-		err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+		err = kernel_accept(s, &s2, 0);
 		if (err < 0) {
-			printk("receive returned %d\n", err);
-			break;
+			printk("accept returned %d\n", err);
+			sock_release(s);
+			return STATUS_INSUFFICIENT_RESOURCES;
 		}
-		if (err != iov.iov_len) {
-			printk("short receive (%d, expected %d)\n", err, iov.iov_len);
-			break;
+		printk("connection accepted\n");
+
+		bytes_received = 0;
+		while (1) {
+			err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+			if (err < 0) {
+				printk("receive returned %d\n", err);
+				break;
+			}
+			if (err != iov.iov_len) {
+				printk("short receive (%d, expected %d)\n", err, iov.iov_len);
+				break;
+			}
+			bytes_received += err;
+			if ((bytes_received % (1024*1024)) == 0)
+				printk("%lld bytes received\n", bytes_received);
 		}
-		bytes_received += err;
-		if ((bytes_received % (1024*1024)) == 0)
-			printk("%lld bytes received\n", bytes_received);
 	}
 	sock_release(s);
 	sock_release(s2);
@@ -1771,7 +1774,7 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 		printk("WSK initialized.\n");
 	}
 
-#if 0
+#if 1
 	status = windrbd_create_windows_thread(receive_a_lot, NULL, &r_thread);
 #endif
 
