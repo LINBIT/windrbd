@@ -705,7 +705,7 @@ dbg("WskConnect failed with status = %x\n", Status);
 	return winsock_to_linux_error(Status);
 }
 
-static int sock_create_linux_socket(struct socket **out);
+static int sock_create_linux_socket(struct socket **out, unsigned short type);
 
 int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 {
@@ -732,7 +732,7 @@ retry:
 	socket->accept_wsk_socket = NULL;
 	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 
-	err = sock_create_linux_socket(&accept_socket);
+	err = sock_create_linux_socket(&accept_socket, SOCK_STREAM);
 	if (err < 0)
 		close_wsk_socket(wsk_socket);
 	else {
@@ -1612,7 +1612,7 @@ static void wsk_sock_statechange(struct sock *sk)
 {
 }
 
-static int sock_create_linux_socket(struct socket **out)
+static int sock_create_linux_socket(struct socket **out, unsigned short type)
 {
 	struct socket *socket;
 
@@ -1641,6 +1641,7 @@ static int sock_create_linux_socket(struct socket **out)
 	init_waitqueue_head(&socket->buffer_available);
 	init_waitqueue_head(&socket->data_available);
 	init_completion(&socket->receiver_thread_completion);
+	socket->receive_thread_should_run = true;
 
 	socket->sk->sk_sndbuf = 4*1024*1024;
 	socket->sk->sk_rcvbuf = 4*1024*1024;
@@ -1651,7 +1652,11 @@ static int sock_create_linux_socket(struct socket **out)
 	socket->sk->sk_state_change = wsk_sock_statechange;
 	rwlock_init(&socket->sk->sk_callback_lock);
 
-	kthread_run(socket_receive_thread, socket, "receive_cache");
+/* TODO: also for SOCK_DGRAM but not for printk socket. printk at the
+ * moment the only one using SOCK_DGRAM but this may change...
+ */
+	if (type == SOCK_STREAM)
+		kthread_run(socket_receive_thread, socket, "receive_cache");
 
 	*out = socket;
 
@@ -1714,7 +1719,7 @@ static int wsk_sock_create_kern(void *net_namespace,
 	if (net_namespace != &init_net)
 		return -EINVAL;
 
-	err = sock_create_linux_socket(&socket);
+	err = sock_create_linux_socket(&socket, type);
 	if (err < 0)
 		return err;
 
