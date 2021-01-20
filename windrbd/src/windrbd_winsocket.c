@@ -1682,15 +1682,17 @@ static NTSTATUS receive_a_lot(void *unused)
 	struct sockaddr_in my_addr;
 	static char bigbuffer[1024*128];
 	size_t bytes_received;
+	int short_reads;
 
         struct kvec iov = {
                 .iov_base = bigbuffer,
                 // .iov_len = sizeof(bigbuffer),
-                .iov_len = 16,
-//                .iov_len = 4096,
+               // .iov_len = 16,
+		.iov_len = 4096,
         };
         struct msghdr msg = {
-                .msg_flags = MSG_WAITALL
+//                .msg_flags = MSG_WAITALL
+		.msg_flags = 0
         };
 
 	err = sock_create_kern(&init_net, AF_INET, SOCK_LISTEN, IPPROTO_TCP, &s);
@@ -1728,20 +1730,29 @@ static NTSTATUS receive_a_lot(void *unused)
 		printk("connection accepted\n");
 
 		bytes_received = 0;
+		short_reads = 0;
 		while (1) {
 			err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
 			if (err < 0) {
 				printk("receive returned %d\n", err);
 				break;
 			}
+			if (err == 0) {
+				printk("receive returned %d, connection closed\n", err);
+				break;
+			}
 			if (err != iov.iov_len) {
+/*
 				printk("short receive (%d, expected %d)\n", err, iov.iov_len);
 				break;
+*/
+				short_reads++;
 			}
 			bytes_received += err;
 			if ((bytes_received % (1024*1024)) == 0)
 				printk("%lld bytes received\n", bytes_received);
 		}
+		printk("%d short reads\n", short_reads);
 	}
 	sock_release(s);
 	sock_release(s2);
