@@ -1189,7 +1189,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	return status == STATUS_SUCCESS ? BufferSize : winsock_to_linux_error(status);
 }
 
-int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
+static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len, int flags)
 {
 	KEVENT		CompletionEvent = { 0 };
@@ -1368,6 +1368,45 @@ tok(3);
 // if (len >= 4096) tok(1);
 // printk("Received %d bytes\n", BytesReceived);
 	return BytesReceived;
+}
+
+int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
+                   size_t num, size_t len, int flags)
+{
+	return -ENOTSUP;
+}
+
+void socket_receive_thread(void *p)
+{
+	struct socket *s = p;
+        struct kvec iov = { 0 };
+        struct msghdr msg = { 0 };
+	int err;
+
+	while (1) {
+		wait_event(s->buffer_available, !(s->write_index+1 == s->read_index || (s->write_index == RECEIVE_BUFFER_SIZE-1 && s->read_index == 0)));
+
+		iov.iov_base = &s->receive_buffer[s->write_index];
+		if (s->read_index <= s->write_index)
+			iov.iov_len = RECEIVE_BUFFER_SIZE-s->write_index;
+		else
+			iov.iov_len = s->read_index-s->write_index-1;
+
+		if (iov.iov_len == 0) {
+			printk("Warning: iov.iov_len is 0 in WinDRBD receiver thread .. should not happen.\n");
+			continue;	/* wait_event should block */
+		}
+		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+
+		if (err <= 0)
+			break;
+
+		s->write_index+=err;
+		if (s->write_index == RECEIVE_BUFFER_SIZE)
+			s->write_index = 0;
+
+		wake_up(&s->data_available);
+	}
 }
 
 /* Must not printk() from in here, might loop forever */
@@ -1686,9 +1725,9 @@ static NTSTATUS receive_a_lot(void *unused)
 
         struct kvec iov = {
                 .iov_base = bigbuffer,
-                // .iov_len = sizeof(bigbuffer),
+                .iov_len = sizeof(bigbuffer),
                // .iov_len = 16,
-		.iov_len = 4096,
+	       // .iov_len = 4096,
         };
         struct msghdr msg = {
 //                .msg_flags = MSG_WAITALL

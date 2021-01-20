@@ -84,6 +84,9 @@ struct msghdr {
 
 struct _WSK_SOCKET;
 
+/* TODO: make this configurable */
+#define RECEIVE_BUFFER_SIZE (128*1024)
+
 struct socket {
 	struct _WSK_SOCKET *wsk_socket;
 	ULONG wsk_flags;
@@ -108,6 +111,12 @@ struct socket {
 	struct sock *sk;
 
 	int is_closed;
+
+	char receive_buffer[RECEIVE_BUFFER_SIZE];
+	int write_index;
+	int read_index;
+	struct wait_queue_head buffer_available;
+	struct wait_queue_head data_available;
 };
 
 /* WinDRBD specific: Since Windows distinguishes between LISTEN and
