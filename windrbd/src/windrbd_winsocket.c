@@ -1381,7 +1381,59 @@ tok(3);
 int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len, int flags)
 {
-	return -ENOTSUP;
+	size_t bytes_to_copy;
+	size_t return_buffer_index;
+
+	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
+		return -EINVAL;
+
+	if (num != 1)
+		return -EOPNOTSUPP;
+
+	if (socket->error_status != 0)
+		return socket->error_status;
+
+	return_buffer_index = 0;
+
+	while (1) {
+		wait_event(socket->data_available, socket->write_index != socket->read_index);
+
+		if (socket->error_status != 0)
+			return socket->error_status;
+		if (socket->sk->sk_state != TCP_ESTABLISHED)
+			return 0;
+
+/* TODO: spinlock? */
+		if (socket->read_index <= socket->write_index)
+			bytes_to_copy = socket->write_index - socket->read_index;
+		else
+			bytes_to_copy = RECEIVE_BUFFER_SIZE - socket->read_index;
+		if (bytes_to_copy > len)
+			bytes_to_copy = len;
+
+		if (bytes_to_copy == 0)
+			printk("Warning: nothing to copy?\n");
+
+		memcpy(&((char*)vec[0].iov_base)[return_buffer_index], 
+			&socket->receive_buffer[socket->read_index],
+			bytes_to_copy);
+
+		return_buffer_index += bytes_to_copy;
+		socket->read_index += bytes_to_copy;
+
+		if (socket->read_index == RECEIVE_BUFFER_SIZE)
+			socket->read_index = 0;
+
+		wake_up(&socket->buffer_available);
+
+		if (flags | MSG_WAITALL) {
+			if (return_buffer_index == len)
+				return return_buffer_index;
+		} else {
+			return return_buffer_index;
+		}
+	}
+	return -EINVAL;
 }
 
 static int socket_receive_thread(void *p)
