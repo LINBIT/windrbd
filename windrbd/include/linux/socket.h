@@ -117,7 +117,9 @@ struct socket {
 	int read_index;
 	struct wait_queue_head buffer_available;
 	struct wait_queue_head data_available;
+	bool receive_thread_should_run;
 };
+
 
 /* WinDRBD specific: Since Windows distinguishes between LISTEN and
  * CONNECTION sockets, we use this to signal that we want to LISTEN

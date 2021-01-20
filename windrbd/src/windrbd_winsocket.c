@@ -688,8 +688,10 @@ dbg("WskConnect completed KeWaitForSingleObject (status is %x)\n", Status);
 	{
 		Status = Irp->IoStatus.Status;
 dbg("WskConnect completed with status %x\n", Status);
-		if (Status == STATUS_SUCCESS)
+		if (Status == STATUS_SUCCESS) {
 			socket->sk->sk_state = TCP_ESTABLISHED;
+			wake_up(&socket->buffer_available);
+		}
 	}
 	if (Status != STATUS_SUCCESS)
 dbg("WskConnect failed with status = %x\n", Status);
@@ -734,6 +736,8 @@ retry:
 		accept_socket->sk->sk_state = TCP_ESTABLISHED;
 		accept_socket->sk->sk_state_change = socket->sk->sk_state_change;
 		accept_socket->sk->sk_user_data = socket->sk->sk_user_data;
+
+		wake_up(&accept_socket->buffer_available);
 		*newsock = accept_socket;
 	}
 
@@ -1376,7 +1380,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	return -ENOTSUP;
 }
 
-void socket_receive_thread(void *p)
+static int socket_receive_thread(void *p)
 {
 	struct socket *s = p;
         struct kvec iov = { 0 };
@@ -1384,7 +1388,13 @@ void socket_receive_thread(void *p)
 	int err;
 
 	while (1) {
-		wait_event(s->buffer_available, !(s->write_index+1 == s->read_index || (s->write_index == RECEIVE_BUFFER_SIZE-1 && s->read_index == 0)));
+		wait_event(s->buffer_available, 
+			s->receive_thread_should_run &&
+			s->sk->sk_state == TCP_ESTABLISHED &&
+			(!(s->write_index+1 == s->read_index || (s->write_index == RECEIVE_BUFFER_SIZE-1 && s->read_index == 0))));
+
+		if (!s->receive_thread_should_run)
+			break;
 
 		iov.iov_base = &s->receive_buffer[s->write_index];
 		if (s->read_index <= s->write_index)
@@ -1407,6 +1417,7 @@ void socket_receive_thread(void *p)
 
 		wake_up(&s->data_available);
 	}
+	return 0;
 }
 
 /* Must not printk() from in here, might loop forever */
@@ -1567,6 +1578,11 @@ static int sock_create_linux_socket(struct socket **out)
 	mutex_init(&socket->wsk_mutex);
 	socket->ops = &winsocket_ops;
 
+	socket->write_index = 0;
+	socket->read_index = 0;
+	init_waitqueue_head(&socket->buffer_available);
+	init_waitqueue_head(&socket->data_available);
+
 	socket->sk->sk_sndbuf = 4*1024*1024;
 	socket->sk->sk_rcvbuf = 4*1024*1024;
 	socket->sk->sk_wmem_queued = 0;
@@ -1575,6 +1591,8 @@ static int sock_create_linux_socket(struct socket **out)
 	socket->sk->sk_rcvtimeo = 10*HZ;
 	socket->sk->sk_state_change = wsk_sock_statechange;
 	rwlock_init(&socket->sk->sk_callback_lock);
+
+	kthread_run(socket_receive_thread, socket, "receive_cache");
 
 	*out = socket;
 
