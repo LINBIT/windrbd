@@ -118,6 +118,7 @@ struct socket {
 	struct wait_queue_head buffer_available;
 	struct wait_queue_head data_available;
 	bool receive_thread_should_run;
+	struct completion receiver_thread_completion;
 };
 
 

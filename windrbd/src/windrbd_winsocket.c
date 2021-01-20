@@ -85,6 +85,10 @@ static void sock_really_free(struct kref *kref)
 {
 	struct socket *socket = container_of(kref, struct socket, kref);
 
+	socket->receive_thread_should_run = false;
+	wake_up(&socket->buffer_available);
+	wait_for_completion(&socket->receiver_thread_completion);
+
 	kfree(socket->sk);
 	kfree(socket);
 }
@@ -1417,6 +1421,8 @@ static int socket_receive_thread(void *p)
 
 		wake_up(&s->data_available);
 	}
+
+	complete(&s->receiver_thread_completion);
 	return 0;
 }
 
@@ -1582,6 +1588,7 @@ static int sock_create_linux_socket(struct socket **out)
 	socket->read_index = 0;
 	init_waitqueue_head(&socket->buffer_available);
 	init_waitqueue_head(&socket->data_available);
+	init_completion(&socket->receiver_thread_completion);
 
 	socket->sk->sk_sndbuf = 4*1024*1024;
 	socket->sk->sk_rcvbuf = 4*1024*1024;
