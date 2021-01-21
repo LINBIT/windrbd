@@ -283,7 +283,6 @@ int _printk(const char *func, const char *fmt, ...)
 	static int buffer_overflows = 0;
 	KIRQL flags;
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "1\n");
 	buffer[0] = '\0';
 
 	if (KeGetCurrentIrql() < DISPATCH_LEVEL && in_printk == 0) {
@@ -297,14 +296,12 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "1\n");
 		}
 	}
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "2\n");
 	fmt_without_level = fmt;
 	if (fmt[0] == '<' && fmt[2] == '>') {
 		level = fmt[1];
 		fmt_without_level = fmt + 3;
 	}
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "3\n");
 	KeQuerySystemTime(&time);
 	sec_day = (time.QuadPart / (ULONG_PTR)1e7) % 86400;
 	sec = sec_day % 60;
@@ -312,14 +309,12 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "3\n");
 	hour = sec_day / 3600;
 	msec = (time.QuadPart / 10000) % (ULONG_PTR)1e3; // 100nsec to msec
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "4\n");
 	spin_lock_irqsave(&serial_number_lock, flags);
 	serial_number++;
 	spin_unlock_irqrestore(&serial_number_lock, flags);
 
 	hr_timer = KeQueryPerformanceCounter(&hr_frequency);
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "5\n");
 	pos = strlen(buffer);
 	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8x(%s) #%llu %s ",
 	    level, hour, min, sec, msec,
@@ -331,7 +326,6 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "5\n");
             serial_number,
 	    func
 	);
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "6\n");
 	if (! NT_SUCCESS(status)) {
 		if (!no_windows_printk)
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, RtlStringCbPrintfA returned error (status = %d).\n", status);
@@ -340,7 +334,6 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "6\n");
 		return -EINVAL;
 	}
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "7\n");
 	pos = strlen(buffer);
 	va_start(args, fmt);
 	status = RtlStringCbVPrintfA(buffer+pos, sizeof(buffer)-1-pos,
@@ -353,7 +346,6 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "7\n");
 		buffer_overflows++;
 		return -EINVAL;
 	}
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "8\n");
 	/* Print messages to debugging facility, use a tool like
 	 * DbgViewer to see them.
 	 */
@@ -366,7 +358,6 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "8\n");
 
 	len_ret = strlen(buffer);
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "9\n");
 	if (no_memory_printk)
 		return len_ret;
 
@@ -380,7 +371,6 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "9\n");
 		s = buffer;
 	}
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "a\n");
 	spin_lock_irqsave(&ring_buffer_lock, flags);
 	if (len + ring_buffer_head > RING_BUFFER_SIZE) {
 		memcpy(ring_buffer + ring_buffer_head, s, RING_BUFFER_SIZE-ring_buffer_head);
@@ -400,7 +390,6 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "a\n");
 	}
 	spin_unlock_irqrestore(&ring_buffer_lock, flags);
 
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "b\n");
 	if (no_net_printk)
 		return len_ret;
 
@@ -411,12 +400,9 @@ DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "b\n");
 		 */
 
 	if (KeGetCurrentIrql() < DISPATCH_LEVEL && !currently_in_printk()) {
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "c\n");
 		mutex_lock(&send_mutex);
 		if (printk_udp_socket == NULL) {
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "d\n");
 			open_syslog_socket();
-DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "e\n");
 		}
 
 		if (printk_udp_socket != NULL && when_to_start_sending != 0 && jiffies > when_to_start_sending) {
