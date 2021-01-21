@@ -85,9 +85,11 @@ static void sock_really_free(struct kref *kref)
 {
 	struct socket *socket = container_of(kref, struct socket, kref);
 
-	socket->receive_thread_should_run = false;
-	wake_up(&socket->buffer_available);
-	wait_for_completion(&socket->receiver_thread_completion);
+	if (socket->receive_thread_should_run) {
+		socket->receive_thread_should_run = false;
+		wake_up(&socket->buffer_available);
+		wait_for_completion(&socket->receiver_thread_completion);
+	}
 
 	kfree(socket->sk);
 	kfree(socket);
@@ -1616,16 +1618,19 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 {
 	struct socket *socket;
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "sock_create_linux_socket 1\n");
 	socket = kzalloc(sizeof(*socket), 0, '3WDW');
 	if (!socket)
 		return -ENOMEM;
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "sock_create_linux_socket 2\n");
 	socket->sk = kzalloc(sizeof(*socket->sk), 0, 'KARI');
 	if (!socket->sk) {
 		kfree(socket);
 		return -ENOMEM; 
 	}
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "sock_create_linux_socket 3\n");
 	socket->error_status = 0;
 
 	kref_init(&socket->kref);
@@ -1636,13 +1641,14 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	mutex_init(&socket->wsk_mutex);
 	socket->ops = &winsocket_ops;
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "sock_create_linux_socket 4\n");
 	socket->write_index = 0;
 	socket->read_index = 0;
 	init_waitqueue_head(&socket->buffer_available);
 	init_waitqueue_head(&socket->data_available);
 	init_completion(&socket->receiver_thread_completion);
-	socket->receive_thread_should_run = true;
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "sock_create_linux_socket 5\n");
 	socket->sk->sk_sndbuf = 4*1024*1024;
 	socket->sk->sk_rcvbuf = 4*1024*1024;
 	socket->sk->sk_wmem_queued = 0;
@@ -1652,12 +1658,16 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	socket->sk->sk_state_change = wsk_sock_statechange;
 	rwlock_init(&socket->sk->sk_callback_lock);
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "sock_create_linux_socket 6\n");
 /* TODO: also for SOCK_DGRAM but not for printk socket. printk at the
  * moment the only one using SOCK_DGRAM but this may change...
  */
-	if (type == SOCK_STREAM)
+	if (type == SOCK_STREAM) {
+		socket->receive_thread_should_run = true;
 		kthread_run(socket_receive_thread, socket, "receive_cache");
+	}
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "sock_create_linux_socket 7\n");
 	*out = socket;
 
 	return 0;
@@ -1716,13 +1726,18 @@ static int wsk_sock_create_kern(void *net_namespace,
 	int err;
 	NTSTATUS status;
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "wsk_sock_create_kern 1\n");
+
 	if (net_namespace != &init_net)
 		return -EINVAL;
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "wsk_sock_create_kern 2\n");
 	err = sock_create_linux_socket(&socket, type);
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "wsk_sock_create_kern 3\n");
 	if (err < 0)
 		return err;
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "wsk_sock_create_kern 3\n");
 	if (Flags == WSK_FLAG_LISTEN_SOCKET)
 		err = CreateSocket(family, type, protocol,
 				socket, &listen_dispatch, Flags, &wsk_socket);
@@ -1730,15 +1745,19 @@ static int wsk_sock_create_kern(void *net_namespace,
 		err = CreateSocket(family, type, protocol,
 				NULL, NULL, Flags, &wsk_socket);
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "wsk_sock_create_kern 3\n");
 	if (err < 0) {
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "wsk_sock_create_kern 3\n");
 		sock_free_linux_socket(socket);
 		return err;
 	}
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "wsk_sock_create_kern 4\n");
 	socket->wsk_socket = wsk_socket;
 	socket->wsk_flags = Flags;
 	*out = socket;
 
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "wsk_sock_create_kern 5\n");
 	return 0;
 }
 
@@ -1763,7 +1782,7 @@ int sock_create_kern(struct net *net, int family, int type, int proto, struct so
 	default:
 		return -EINVAL;
 	}
-
+DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "sock_create_kern 1\n");
 	return wsk_sock_create_kern(net, family, type, proto, Flags, res);
 }
 
