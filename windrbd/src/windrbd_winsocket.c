@@ -1468,12 +1468,13 @@ printk("2 read_index is %d write_index is %d\n", s->read_index, s->write_index);
 printk("3\n");
 		iov.iov_base = &s->receive_buffer[s->write_index];
 		if (s->read_index <= s->write_index)
-			iov.iov_len = RECEIVE_BUFFER_SIZE-s->write_index;
+			iov.iov_len = RECEIVE_BUFFER_SIZE-s->write_index-1;
 		else
 			iov.iov_len = s->read_index-s->write_index-1;
 
 		if (iov.iov_len == 0) {
 			printk("Warning: iov.iov_len is 0 in WinDRBD receiver thread .. should not happen.\n");
+printk("3a read_index is %d write_index is %d\n", s->read_index, s->write_index);
 			continue;	/* wait_event should block */
 		}
 printk("4 iov.iov_len is %d\n", iov.iov_len);
