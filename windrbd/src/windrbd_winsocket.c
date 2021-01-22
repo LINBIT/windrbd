@@ -1385,6 +1385,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 {
 	size_t bytes_to_copy;
 	size_t return_buffer_index;
+	KIRQL irq_flags;
 
 printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
@@ -1409,7 +1410,8 @@ printk("3 read_index is %d write_index is %d\n", socket->read_index, socket->wri
 			return 0;
 
 printk("4\n");
-/* TODO: spinlock? */
+
+		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 		if (socket->read_index <= socket->write_index)
 			bytes_to_copy = socket->write_index - socket->read_index;
 		else
@@ -1432,6 +1434,8 @@ printk("5a read_index is %d\n", socket->read_index);
 		if (socket->read_index == RECEIVE_BUFFER_SIZE)
 			socket->read_index = 0;
 
+		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
+
 printk("6 read_index is %d\n", socket->read_index);
 		wake_up(&socket->buffer_available);
 
@@ -1453,6 +1457,7 @@ static int socket_receive_thread(void *p)
         struct kvec iov = { 0 };
         struct msghdr msg = { 0 };
 	int err;
+	KIRQL flags;
 
 	while (1) {
 printk("1\n");
@@ -1467,10 +1472,17 @@ printk("2 read_index is %d write_index is %d\n", s->read_index, s->write_index);
 
 printk("3\n");
 		iov.iov_base = &s->receive_buffer[s->write_index];
-		if (s->read_index <= s->write_index)
-			iov.iov_len = RECEIVE_BUFFER_SIZE-s->write_index-1;
-		else
-			iov.iov_len = s->read_index-s->write_index-1;
+		spin_lock_irqsave(&s->receive_lock, flags);
+		if (s->read_index == s->write_index) {
+			s->read_index = s->write_index = 0;
+			iov.iov_len = RECEIVE_BUFFER_SIZE-1;
+		} else {
+			if (s->read_index < s->write_index)
+				iov.iov_len = RECEIVE_BUFFER_SIZE-s->write_index-1;
+			else
+				iov.iov_len = s->read_index-s->write_index-1;
+		}
+		spin_unlock_irqrestore(&s->receive_lock, flags);
 
 		if (iov.iov_len == 0) {
 			printk("Warning: iov.iov_len is 0 in WinDRBD receiver thread .. should not happen.\n");
@@ -1663,6 +1675,7 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	init_waitqueue_head(&socket->buffer_available);
 	init_waitqueue_head(&socket->data_available);
 	init_completion(&socket->receiver_thread_completion);
+	spin_lock_init(&socket->receive_lock);
 
 	socket->sk->sk_sndbuf = 4*1024*1024;
 	socket->sk->sk_rcvbuf = 4*1024*1024;
