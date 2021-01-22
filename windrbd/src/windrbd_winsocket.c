@@ -1386,6 +1386,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	size_t bytes_to_copy;
 	size_t return_buffer_index;
 
+printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
@@ -1397,14 +1398,17 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	return_buffer_index = 0;
 
+printk("2\n");
 	while (1) {
-		wait_event(socket->data_available, socket->write_index != socket->read_index);
+		wait_event(socket->data_available, socket->write_index != socket->read_index || socket->error_status != 0 || socket->sk->sk_state != TCP_ESTABLISHED);
 
+printk("3 read_index is %d write_index is %d\n", socket->read_index, socket->write_index);
 		if (socket->error_status != 0)
 			return socket->error_status;
 		if (socket->sk->sk_state != TCP_ESTABLISHED)
 			return 0;
 
+printk("4\n");
 /* TODO: spinlock? */
 		if (socket->read_index <= socket->write_index)
 			bytes_to_copy = socket->write_index - socket->read_index;
@@ -1416,6 +1420,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		if (bytes_to_copy == 0)
 			printk("Warning: nothing to copy?\n");
 
+printk("5 bytes to copy is %d\n", bytes_to_copy);
 		memcpy(&((char*)vec[0].iov_base)[return_buffer_index], 
 			&socket->receive_buffer[socket->read_index],
 			bytes_to_copy);
@@ -1423,9 +1428,11 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return_buffer_index += bytes_to_copy;
 		socket->read_index += bytes_to_copy;
 
+printk("5a read_index is %d\n", socket->read_index);
 		if (socket->read_index == RECEIVE_BUFFER_SIZE)
 			socket->read_index = 0;
 
+printk("6 read_index is %d\n", socket->read_index);
 		wake_up(&socket->buffer_available);
 
 		if (flags | MSG_WAITALL) {
@@ -1434,7 +1441,9 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		} else {
 			return return_buffer_index;
 		}
+printk("7\n");
 	}
+printk("8\n");
 	return -EINVAL;
 }
 
@@ -1446,14 +1455,17 @@ static int socket_receive_thread(void *p)
 	int err;
 
 	while (1) {
+printk("1\n");
 		wait_event(s->buffer_available, 
 			s->receive_thread_should_run &&
 			s->sk->sk_state == TCP_ESTABLISHED &&
 			(!(s->write_index+1 == s->read_index || (s->write_index == RECEIVE_BUFFER_SIZE-1 && s->read_index == 0))));
 
+printk("2 read_index is %d write_index is %d\n", s->read_index, s->write_index);
 		if (!s->receive_thread_should_run)
 			break;
 
+printk("3\n");
 		iov.iov_base = &s->receive_buffer[s->write_index];
 		if (s->read_index <= s->write_index)
 			iov.iov_len = RECEIVE_BUFFER_SIZE-s->write_index;
@@ -1464,19 +1476,26 @@ static int socket_receive_thread(void *p)
 			printk("Warning: iov.iov_len is 0 in WinDRBD receiver thread .. should not happen.\n");
 			continue;	/* wait_event should block */
 		}
+printk("4 iov.iov_len is %d\n", iov.iov_len);
 		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+printk("5\n");
 
 		if (err <= 0)
 			break;
 
+printk("6 read_index is %d write_index is %d err is %d\n", s->read_index, s->write_index, err);
 		s->write_index+=err;
 		if (s->write_index == RECEIVE_BUFFER_SIZE)
 			s->write_index = 0;
 
+printk("7 read_index is %d write_index is %d err is %d\n", s->read_index, s->write_index, err);
 		wake_up(&s->data_available);
+printk("8\n");
 	}
 
+printk("9\n");
 	complete(&s->receiver_thread_completion);
+printk("a\n");
 	return 0;
 }
 
