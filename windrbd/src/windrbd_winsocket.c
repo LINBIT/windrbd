@@ -1387,7 +1387,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	size_t return_buffer_index;
 	KIRQL irq_flags;
 
-printk("1\n");
+// printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
@@ -1399,7 +1399,7 @@ printk("1\n");
 
 	return_buffer_index = 0;
 
-printk("2\n");
+// printk("2\n");
 	while (1) {
 		wait_event(socket->data_available, 
 			socket->write_index != socket->read_index || 
@@ -1407,13 +1407,13 @@ printk("2\n");
 			socket->error_status != 0 || 
 			socket->sk->sk_state != TCP_ESTABLISHED);
 
-printk("3 read_index is %d write_index is %d\n", socket->read_index, socket->write_index);
+// printk("3 read_index is %d write_index is %d\n", socket->read_index, socket->write_index);
 		if (socket->error_status != 0)
 			return socket->error_status;
 		if (socket->sk->sk_state != TCP_ESTABLISHED)
 			return 0;
 
-printk("4\n");
+// printk("4\n");
 
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 		if (socket->read_index < socket->write_index)
@@ -1426,7 +1426,7 @@ printk("4\n");
 		if (bytes_to_copy == 0)
 			printk("Warning: nothing to copy?\n");
 
-printk("5 bytes to copy is %d\n", bytes_to_copy);
+// printk("5 bytes to copy is %d\n", bytes_to_copy);
 		memcpy(&((char*)vec[0].iov_base)[return_buffer_index], 
 			&socket->receive_buffer[socket->read_index],
 			bytes_to_copy);
@@ -1434,7 +1434,7 @@ printk("5 bytes to copy is %d\n", bytes_to_copy);
 		return_buffer_index += bytes_to_copy;
 		socket->read_index += bytes_to_copy;
 
-printk("5a read_index is %d\n", socket->read_index);
+// printk("5a read_index is %d\n", socket->read_index);
 		if (socket->read_index == RECEIVE_BUFFER_SIZE)
 			socket->read_index = 0;
 
@@ -1443,7 +1443,7 @@ printk("5a read_index is %d\n", socket->read_index);
 
 		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
 
-printk("6 read_index is %d receive_buffer full is %d\n", socket->read_index, socket->receive_buffer_full);
+// printk("6 read_index is %d receive_buffer full is %d\n", socket->read_index, socket->receive_buffer_full);
 		wake_up(&socket->buffer_available);
 
 		if (flags | MSG_WAITALL) {
@@ -1452,9 +1452,9 @@ printk("6 read_index is %d receive_buffer full is %d\n", socket->read_index, soc
 		} else {
 			return return_buffer_index;
 		}
-printk("7\n");
+// printk("7\n");
 	}
-printk("8\n");
+// printk("8\n");
 	return -EINVAL;
 }
 
@@ -1467,18 +1467,18 @@ static int socket_receive_thread(void *p)
 	KIRQL flags;
 
 	while (1) {
-printk("1\n");
+// printk("1\n");
 		wait_event(s->buffer_available, 
 			!s->receive_thread_should_run ||
 			(s->sk->sk_state == TCP_ESTABLISHED &&
 			(s->write_index != s->read_index ||
 			(s->write_index == s->read_index && !s->receive_buffer_full)))); 
 
-printk("2 read_index is %d write_index is %d\n", s->read_index, s->write_index);
+// printk("2 read_index is %d write_index is %d\n", s->read_index, s->write_index);
 		if (!s->receive_thread_should_run)
 			break;
 
-printk("3\n");
+// printk("3\n");
 		spin_lock_irqsave(&s->receive_lock, flags);
 		if (s->read_index == s->write_index && !s->receive_buffer_full) {
 			s->read_index = s->write_index = 0;
@@ -1494,17 +1494,17 @@ printk("3\n");
 
 		if (iov.iov_len == 0) {
 			printk("Warning: iov.iov_len is 0 in WinDRBD receiver thread .. should not happen.\n");
-printk("3a read_index is %d write_index is %d\n", s->read_index, s->write_index);
+// printk("3a read_index is %d write_index is %d\n", s->read_index, s->write_index);
 			continue;	/* wait_event should block */
 		}
-printk("4 iov.iov_len is %d\n", iov.iov_len);
+// printk("4 iov.iov_len is %d\n", iov.iov_len);
 		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
-printk("5\n");
+// printk("5\n");
 
 		if (err <= 0)
 			break;
 
-printk("6 read_index is %d write_index is %d err is %d\n", s->read_index, s->write_index, err);
+// printk("6 read_index is %d write_index is %d err is %d\n", s->read_index, s->write_index, err);
 		spin_lock_irqsave(&s->receive_lock, flags);
 
 		s->write_index+=err;
@@ -1516,17 +1516,17 @@ printk("6 read_index is %d write_index is %d err is %d\n", s->read_index, s->wri
 
 		spin_unlock_irqrestore(&s->receive_lock, flags);
 
-printk("7 read_index is %d write_index is %d err is %d receive_buffer_full is %d\n", s->read_index, s->write_index, err, s->receive_buffer_full);
+// printk("7 read_index is %d write_index is %d err is %d receive_buffer_full is %d\n", s->read_index, s->write_index, err, s->receive_buffer_full);
 		wake_up(&s->data_available);
-printk("8\n");
+// printk("8\n");
 	}
 
-printk("8a\n");
+// printk("8a\n");
 	s->sk->sk_state = TCP_NO_CONNECTION;
 	wake_up(&s->data_available);
-printk("9\n");
+// printk("9\n");
 	complete(&s->receiver_thread_completion);
-printk("a\n");
+// printk("a\n");
 	return 0;
 }
 
