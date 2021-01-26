@@ -2,6 +2,7 @@
 #define _LINUX_TCP_STATES_H
 
 enum {
+	TCP_NO_CONNECTION = 0,
 	TCP_ESTABLISHED = 1,
 #if 0
 	TCP_SYN_SENT,

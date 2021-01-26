@@ -1521,6 +1521,9 @@ printk("7 read_index is %d write_index is %d err is %d receive_buffer_full is %d
 printk("8\n");
 	}
 
+printk("8a\n");
+	s->sk->sk_state = TCP_NO_CONNECTION;
+	wake_up(&s->data_available);
 printk("9\n");
 	complete(&s->receiver_thread_completion);
 printk("a\n");
