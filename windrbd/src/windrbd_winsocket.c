@@ -1380,6 +1380,11 @@ tok(3);
 	return BytesReceived;
 }
 
+/* TODO for receiver cache:
+	.) Make it optional (via registry key, default on)
+	.) Make it work with DRBD (Wrong magic value)
+	.) Compare performance
+*/
 int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len, int flags)
 {
