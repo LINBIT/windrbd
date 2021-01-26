@@ -1857,6 +1857,8 @@ static NTSTATUS receive_a_lot(void *unused)
 	static char bigbuffer[1024*128];
 	size_t bytes_received;
 	int short_reads;
+	int n, n2;
+	int *ints = (int*)&bigbuffer;
 
         struct kvec iov = {
                 .iov_base = bigbuffer,
@@ -1905,6 +1907,7 @@ static NTSTATUS receive_a_lot(void *unused)
 		}
 		printk("connection accepted\n");
 
+		n = 0;
 		bytes_received = 0;
 		short_reads = 0;
 		while (1) {
@@ -1927,6 +1930,10 @@ static NTSTATUS receive_a_lot(void *unused)
 			bytes_received += err;
 			if ((bytes_received % (1024*1024)) == 0)
 				printk("%lld bytes received\n", bytes_received);
+
+			for (n2=0;n2<iov.iov_len/sizeof(int);n2++,n++)
+				if (ints[n] != n)
+					printk("Sequence number mismatch: expected %d got %d\n", n, ints[n]);
 		}
 		printk("%d short reads\n", short_reads);
 	}
