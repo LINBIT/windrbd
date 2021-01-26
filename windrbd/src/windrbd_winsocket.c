@@ -1479,7 +1479,6 @@ printk("2 read_index is %d write_index is %d\n", s->read_index, s->write_index);
 			break;
 
 printk("3\n");
-		iov.iov_base = &s->receive_buffer[s->write_index];
 		spin_lock_irqsave(&s->receive_lock, flags);
 		if (s->read_index == s->write_index && !s->receive_buffer_full) {
 			s->read_index = s->write_index = 0;
@@ -1490,6 +1489,7 @@ printk("3\n");
 			else
 				iov.iov_len = s->read_index-s->write_index;
 		}
+		iov.iov_base = &s->receive_buffer[s->write_index];
 		spin_unlock_irqrestore(&s->receive_lock, flags);
 
 		if (iov.iov_len == 0) {
