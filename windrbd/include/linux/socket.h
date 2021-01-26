@@ -115,6 +115,7 @@ struct socket {
 	char receive_buffer[RECEIVE_BUFFER_SIZE];
 	int write_index;
 	int read_index;
+	bool receive_buffer_full;
 	struct wait_queue_head buffer_available;
 	struct wait_queue_head data_available;
 	bool receive_thread_should_run;

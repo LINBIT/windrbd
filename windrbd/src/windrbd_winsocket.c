@@ -1401,7 +1401,11 @@ printk("1\n");
 
 printk("2\n");
 	while (1) {
-		wait_event(socket->data_available, socket->write_index != socket->read_index || socket->error_status != 0 || socket->sk->sk_state != TCP_ESTABLISHED);
+		wait_event(socket->data_available, 
+			socket->write_index != socket->read_index || 
+			(socket->write_index == socket->read_index && socket->receive_buffer_full) || 
+			socket->error_status != 0 || 
+			socket->sk->sk_state != TCP_ESTABLISHED);
 
 printk("3 read_index is %d write_index is %d\n", socket->read_index, socket->write_index);
 		if (socket->error_status != 0)
@@ -1434,9 +1438,12 @@ printk("5a read_index is %d\n", socket->read_index);
 		if (socket->read_index == RECEIVE_BUFFER_SIZE)
 			socket->read_index = 0;
 
+		if (socket->write_index == socket->read_index)
+			socket->receive_buffer_full = false;
+
 		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
 
-printk("6 read_index is %d\n", socket->read_index);
+printk("6 read_index is %d receive_buffer full is %d\n", socket->read_index, socket->receive_buffer_full);
 		wake_up(&socket->buffer_available);
 
 		if (flags | MSG_WAITALL) {
@@ -1462,9 +1469,10 @@ static int socket_receive_thread(void *p)
 	while (1) {
 printk("1\n");
 		wait_event(s->buffer_available, 
-			s->receive_thread_should_run &&
-			s->sk->sk_state == TCP_ESTABLISHED &&
-			(!(s->write_index+1 == s->read_index || (s->write_index == RECEIVE_BUFFER_SIZE-1 && s->read_index == 0))));
+			!s->receive_thread_should_run ||
+			(s->sk->sk_state == TCP_ESTABLISHED &&
+			(s->write_index != s->read_index ||
+			(s->write_index == s->read_index && !s->receive_buffer_full)))); 
 
 printk("2 read_index is %d write_index is %d\n", s->read_index, s->write_index);
 		if (!s->receive_thread_should_run)
@@ -1473,15 +1481,16 @@ printk("2 read_index is %d write_index is %d\n", s->read_index, s->write_index);
 printk("3\n");
 		iov.iov_base = &s->receive_buffer[s->write_index];
 		spin_lock_irqsave(&s->receive_lock, flags);
-		if (s->read_index == s->write_index) {
+/*		if (s->read_index == s->write_index &&) {
 			s->read_index = s->write_index = 0;
-			iov.iov_len = RECEIVE_BUFFER_SIZE-1;
+			iov.iov_len = RECEIVE_BUFFER_SIZE;
 		} else {
+*/
 			if (s->read_index < s->write_index)
-				iov.iov_len = RECEIVE_BUFFER_SIZE-s->write_index-1;
+				iov.iov_len = RECEIVE_BUFFER_SIZE-s->write_index;
 			else
-				iov.iov_len = s->read_index-s->write_index-1;
-		}
+				iov.iov_len = s->read_index-s->write_index;
+//		}
 		spin_unlock_irqrestore(&s->receive_lock, flags);
 
 		if (iov.iov_len == 0) {
@@ -1497,11 +1506,18 @@ printk("5\n");
 			break;
 
 printk("6 read_index is %d write_index is %d err is %d\n", s->read_index, s->write_index, err);
+		spin_lock_irqsave(&s->receive_lock, flags);
+
 		s->write_index+=err;
 		if (s->write_index == RECEIVE_BUFFER_SIZE)
 			s->write_index = 0;
 
-printk("7 read_index is %d write_index is %d err is %d\n", s->read_index, s->write_index, err);
+		if (s->write_index == s->read_index)
+			s->receive_buffer_full = true;
+
+		spin_unlock_irqrestore(&s->receive_lock, flags);
+
+printk("7 read_index is %d write_index is %d err is %d receive_buffer_full is %d\n", s->read_index, s->write_index, err, s->receive_buffer_full);
 		wake_up(&s->data_available);
 printk("8\n");
 	}
