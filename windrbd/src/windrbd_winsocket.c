@@ -1416,7 +1416,7 @@ printk("3 read_index is %d write_index is %d\n", socket->read_index, socket->wri
 printk("4\n");
 
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
-		if (socket->read_index <= socket->write_index)
+		if (socket->read_index < socket->write_index)
 			bytes_to_copy = socket->write_index - socket->read_index;
 		else
 			bytes_to_copy = RECEIVE_BUFFER_SIZE - socket->read_index;
@@ -1481,16 +1481,15 @@ printk("2 read_index is %d write_index is %d\n", s->read_index, s->write_index);
 printk("3\n");
 		iov.iov_base = &s->receive_buffer[s->write_index];
 		spin_lock_irqsave(&s->receive_lock, flags);
-/*		if (s->read_index == s->write_index &&) {
+		if (s->read_index == s->write_index && !s->receive_buffer_full) {
 			s->read_index = s->write_index = 0;
 			iov.iov_len = RECEIVE_BUFFER_SIZE;
 		} else {
-*/
 			if (s->read_index < s->write_index)
 				iov.iov_len = RECEIVE_BUFFER_SIZE-s->write_index;
 			else
 				iov.iov_len = s->read_index-s->write_index;
-//		}
+		}
 		spin_unlock_irqrestore(&s->receive_lock, flags);
 
 		if (iov.iov_len == 0) {
@@ -1858,9 +1857,9 @@ static NTSTATUS receive_a_lot(void *unused)
 
         struct kvec iov = {
                 .iov_base = bigbuffer,
-                .iov_len = sizeof(bigbuffer),
+               // .iov_len = sizeof(bigbuffer),
                // .iov_len = 16,
-	       // .iov_len = 4096,
+	        .iov_len = 4096,
         };
         struct msghdr msg = {
 //                .msg_flags = MSG_WAITALL
