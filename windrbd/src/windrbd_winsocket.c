@@ -1932,7 +1932,7 @@ static NTSTATUS receive_a_lot(void *unused)
 				printk("%lld bytes received\n", bytes_received);
 
 			for (n2=0;n2<iov.iov_len/sizeof(int);n2++,n++)
-				if (ints[n] != n)
+				if (ints[n2] != n)
 					printk("Sequence number mismatch: expected %d got %d\n", n, ints[n]);
 		}
 		printk("%d short reads\n", short_reads);
