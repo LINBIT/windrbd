@@ -1931,7 +1931,7 @@ static NTSTATUS receive_a_lot(void *unused)
 			if ((bytes_received % (1024*1024)) == 0)
 				printk("%lld bytes received\n", bytes_received);
 
-			for (n2=0;n2<iov.iov_len/sizeof(int);n2++,n++)
+			for (n2=0;n2<err/sizeof(int);n2++,n++)
 				if (ints[n2] != n)
 					printk("Sequence number mismatch: expected %d got %d\n", n, ints[n]);
 		}
