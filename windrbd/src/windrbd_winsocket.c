@@ -1389,13 +1389,18 @@ tok(3);
 void dump_packet(unsigned char *buf, size_t buflen)
 {
 	size_t i;
+	char s[80];
+	int pos;
 
+	pos=0;
 	for (i=0;i<buflen;i++) {
 		if (i%16 == 0)
-			printk("%08x: ", i);
-		printk("%02x ", buf[i]);
-		if (i%16==15)
-			printk("\n");
+			pos+=snprintf(s+pos, sizeof(s)-pos-1, "%08x: ", i);
+		pos+=snprintf(s+pos, sizeof(s)-pos-1, "%02x ", buf[i]);
+		if (i%16==15) {
+			printk("%s\n", s);
+			pos=0;
+		}
 	}
 }
 
