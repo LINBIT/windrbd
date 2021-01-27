@@ -697,6 +697,7 @@ dbg("WskConnect completed with status %x\n", Status);
 		if (Status == STATUS_SUCCESS) {
 			socket->sk->sk_state = TCP_ESTABLISHED;
 			wake_up(&socket->buffer_available);
+			wake_up(&socket->data_available);
 		}
 	}
 	if (Status != STATUS_SUCCESS)
@@ -744,6 +745,7 @@ retry:
 		accept_socket->sk->sk_user_data = socket->sk->sk_user_data;
 
 		wake_up(&accept_socket->buffer_available);
+		wake_up(&accept_socket->data_available);
 		*newsock = accept_socket;
 	}
 
@@ -1391,6 +1393,8 @@ void dump_packet(unsigned char *buf, size_t buflen)
 	size_t i;
 	char s[80];
 	int pos;
+
+return;
 
 	pos=0;
 	for (i=0;i<buflen;i++) {
