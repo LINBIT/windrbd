@@ -1412,6 +1412,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	KIRQL irq_flags;
 	int ret;
 
+printk("flags is %x len is %d\n", flags, len);
 	if (!socket->receiver_cache_enabled) {
 		ret = wsk_recvmsg(socket, msg, vec, num, len, flags);
 		if (ret > 0)
@@ -1419,7 +1420,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return ret;
 	}
 
-// printk("1\n");
+printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
@@ -1431,7 +1432,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	return_buffer_index = 0;
 
-// printk("2\n");
+printk("2\n");
 	while (1) {
 		wait_event(socket->data_available, 
 			socket->write_index != socket->read_index || 
@@ -1439,13 +1440,14 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			socket->error_status != 0 || 
 			socket->sk->sk_state != TCP_ESTABLISHED);
 
-// printk("3 read_index is %d write_index is %d\n", socket->read_index, socket->write_index);
+printk("3 read_index is %d write_index is %d\n", socket->read_index, socket->write_index);
+printk("socket->error_status is %d socket->sk->sk_state is %d\n", socket->error_status, socket->sk->sk_state);
 		if (socket->error_status != 0)
 			return socket->error_status;
 		if (socket->sk->sk_state != TCP_ESTABLISHED)
 			return 0;
 
-// printk("4\n");
+printk("4\n");
 
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 		if (socket->read_index < socket->write_index)
@@ -1458,7 +1460,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		if (bytes_to_copy == 0)
 			printk("Warning: nothing to copy?\n");
 
-// printk("5 bytes to copy is %d\n", bytes_to_copy);
+printk("5 bytes to copy is %d\n", bytes_to_copy);
 		memcpy(&((char*)vec[0].iov_base)[return_buffer_index], 
 			&socket->receive_buffer[socket->read_index],
 			bytes_to_copy);
@@ -1466,7 +1468,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return_buffer_index += bytes_to_copy;
 		socket->read_index += bytes_to_copy;
 
-// printk("5a read_index is %d\n", socket->read_index);
+printk("5a read_index is %d\n", socket->read_index);
 		if (socket->read_index == RECEIVE_BUFFER_SIZE)
 			socket->read_index = 0;
 
@@ -1475,21 +1477,23 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
 
-// printk("6 read_index is %d receive_buffer full is %d\n", socket->read_index, socket->receive_buffer_full);
+printk("6 read_index is %d receive_buffer full is %d\n", socket->read_index, socket->receive_buffer_full);
 		wake_up(&socket->buffer_available);
 
 		if (flags | MSG_WAITALL) {
+printk("MSG_WAITALL return_buffer_index is %d len is %d\n", return_buffer_index, len);
 			if (return_buffer_index == len) {
 				dump_packet(vec[0].iov_base, return_buffer_index);
 				return return_buffer_index;
 			}
 		} else {
+printk("No MSG_WAITALL return_buffer_index is %d len is %d\n", return_buffer_index, len);
 			dump_packet(vec[0].iov_base, return_buffer_index);
 			return return_buffer_index;
 		}
-// printk("7\n");
+printk("7\n");
 	}
-// printk("8\n");
+printk("8\n");
 	return -EINVAL;
 }
 
@@ -1912,8 +1916,8 @@ static NTSTATUS receive_a_lot(void *unused)
 	       // .iov_len = 4096,
         };
         struct msghdr msg = {
-//                .msg_flags = MSG_WAITALL
-		.msg_flags = 0
+		.msg_flags = MSG_WAITALL
+	//	.msg_flags = 0
         };
 
 	make_me_a_windrbd_thread("receive_a_lot");
