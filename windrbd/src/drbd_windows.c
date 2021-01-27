@@ -2019,8 +2019,6 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 static int enable_simple_write_cache = 0;
 static int simple_write_cache_collect_time_ms = 10;
 
-extern NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default);
-
 void read_simple_write_cache_config(void)
 {
 	get_registry_int(L"enable_simple_write_cache", &enable_simple_write_cache, 0);

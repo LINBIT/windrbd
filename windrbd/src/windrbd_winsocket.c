@@ -1392,6 +1392,9 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	size_t return_buffer_index;
 	KIRQL irq_flags;
 
+	if (!socket->receiver_cache_enabled)
+		return wsk_recvmsg(socket, msg, vec, num, len, flags);
+
 // printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
@@ -1693,12 +1696,20 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	mutex_init(&socket->wsk_mutex);
 	socket->ops = &winsocket_ops;
 
-	socket->write_index = 0;
-	socket->read_index = 0;
+	get_registry_int(L"enable_receiver_cache", &socket->receiver_cache_enabled, 1);
 	init_waitqueue_head(&socket->buffer_available);
 	init_waitqueue_head(&socket->data_available);
-	init_completion(&socket->receiver_thread_completion);
-	spin_lock_init(&socket->receive_lock);
+
+	if (socket->receiver_cache_enabled) {
+		socket->write_index = 0;
+		socket->read_index = 0;
+		init_completion(&socket->receiver_thread_completion);
+		spin_lock_init(&socket->receive_lock);
+
+		printk("Receiver cache enabled, buffer size is %d\n", RECEIVE_BUFFER_SIZE);
+	} else {
+		printk("Receiver cache disabled\n");
+	}
 
 	socket->sk->sk_sndbuf = 4*1024*1024;
 	socket->sk->sk_rcvbuf = 4*1024*1024;
@@ -1713,8 +1724,10 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
  * moment the only one using SOCK_DGRAM but this may change...
  */
 	if (type == SOCK_STREAM) {
-		socket->receive_thread_should_run = true;
-		kthread_run(socket_receive_thread, socket, "receive_cache");
+		if (socket->receiver_cache_enabled) {
+			socket->receive_thread_should_run = true;
+			kthread_run(socket_receive_thread, socket, "receive_cache");
+		}
 	}
 
 	*out = socket;

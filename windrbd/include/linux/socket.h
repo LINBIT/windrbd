@@ -112,6 +112,7 @@ struct socket {
 
 	int is_closed;
 
+	int receiver_cache_enabled;
 	char receive_buffer[RECEIVE_BUFFER_SIZE];
 	int write_index;
 	int read_index;

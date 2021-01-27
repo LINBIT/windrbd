@@ -1355,4 +1355,6 @@ void test_main(const char *arg);
 
 int my_atoi(const char *c);
 
+NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default);
+
 #endif // DRBD_WINDOWS_H
