@@ -1385,15 +1385,34 @@ tok(3);
 	.) Make it work with DRBD (Wrong magic value)
 	.) Compare performance
 */
+
+void dump_packet(unsigned char *buf, size_t buflen)
+{
+	size_t i;
+
+	for (i=0;i<buflen;i++) {
+		if (i%16 == 0)
+			printk("%08x: ", i);
+		printk("%02x ", buf[i]);
+		if (i%16==15)
+			printk("\n");
+	}
+}
+
 int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len, int flags)
 {
 	size_t bytes_to_copy;
 	size_t return_buffer_index;
 	KIRQL irq_flags;
+	int ret;
 
-	if (!socket->receiver_cache_enabled)
-		return wsk_recvmsg(socket, msg, vec, num, len, flags);
+	if (!socket->receiver_cache_enabled) {
+		ret = wsk_recvmsg(socket, msg, vec, num, len, flags);
+		if (ret > 0)
+			dump_packet(vec[0].iov_base, ret);
+		return ret;
+	}
 
 // printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
@@ -1455,9 +1474,12 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		wake_up(&socket->buffer_available);
 
 		if (flags | MSG_WAITALL) {
-			if (return_buffer_index == len)
+			if (return_buffer_index == len) {
+				dump_packet(vec[0].iov_base, return_buffer_index);
 				return return_buffer_index;
+			}
 		} else {
+			dump_packet(vec[0].iov_base, return_buffer_index);
 			return return_buffer_index;
 		}
 // printk("7\n");
@@ -1881,8 +1903,8 @@ static NTSTATUS receive_a_lot(void *unused)
         struct kvec iov = {
                 .iov_base = bigbuffer,
                // .iov_len = sizeof(bigbuffer),
-               // .iov_len = 16,
-	        .iov_len = 4096,
+		.iov_len = 16,
+	       // .iov_len = 4096,
         };
         struct msghdr msg = {
 //                .msg_flags = MSG_WAITALL
