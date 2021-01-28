@@ -1395,6 +1395,7 @@ void dump_packet(unsigned char *buf, size_t buflen)
 	char s[80];
 	int pos;
 
+printk("1\n");
 	pos=0;
 	for (i=0;i<buflen;i++) {
 		if (i%16 == 0)
@@ -1405,6 +1406,8 @@ void dump_packet(unsigned char *buf, size_t buflen)
 			pos=0;
 		}
 	}
+	if (i%16 != 0)
+		printk("%s\n", s);
 }
 
 int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
@@ -1460,8 +1463,10 @@ printk("4a read_index is %d write_index is %d socket->receive_buffer_full is %d\
 			if (socket->read_index == socket->write_index) {
 				if (socket->receive_buffer_full)
 					bytes_to_copy = RECEIVE_BUFFER_SIZE - socket->read_index;
-				else
+				else {
 					bytes_to_copy = 0;	/* invalid */
+					printk("Warning: buffer empty.\n");
+				}
 			} else { /* read_index > write_index */
 				bytes_to_copy = RECEIVE_BUFFER_SIZE - socket->read_index;
 			}
@@ -1552,7 +1557,7 @@ printk("3\n");
 		}
 printk("4 iov.iov_len is %d\n", iov.iov_len);
 		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
-printk("5\n");
+printk("5 err is %d\n", err);
 
 		if (err <= 0)
 			break;
