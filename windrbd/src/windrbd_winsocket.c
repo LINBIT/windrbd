@@ -1559,6 +1559,9 @@ printk("4 iov.iov_len is %d\n", iov.iov_len);
 		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
 printk("5 err is %d\n", err);
 
+		if (err == -EAGAIN || err == -EINTR)
+			continue;
+
 		if (err <= 0)
 			break;
 
