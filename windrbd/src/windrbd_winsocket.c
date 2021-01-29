@@ -1383,9 +1383,15 @@ tok(3);
 }
 
 /* TODO for receiver cache:
+	.) dynamically allocate receive buffer. And make its size
+	   configurable (via registry key).
+	.) Return partial data received on connection close / error?
+
+   Done:
 	.) Make it optional (via registry key, default on)
 	.) Make it work with DRBD (Wrong magic value)
 	.) Compare performance
+		It is about 2-4 times faster than before (!).
 */
 
 void dump_packet(unsigned char *buf, size_t buflen)
