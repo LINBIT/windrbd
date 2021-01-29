@@ -1240,8 +1240,11 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 	}
 
 	wsk_flags = 0;
-	if (flags | MSG_WAITALL)
+printk("1\n");
+	if (flags | MSG_WAITALL) {
+printk("MSG_WAITALL ...\n");
 		wsk_flags |= WSK_FLAG_WAITALL;
+	}
 
 	mutex_lock(&socket->wsk_mutex);
 
@@ -1253,12 +1256,16 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 
 tik(3, "WskReceive");
 // if (len >= 4096) tik(2);
+printk("2\n");
+
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
 				wsk_flags,
 				Irp);
+printk("3\n");
 	mutex_unlock(&socket->wsk_mutex);
+printk("4\n");
 
     if (Status == STATUS_PENDING)
     {
@@ -1273,7 +1280,7 @@ tik(3, "WskReceive");
         {
             nWaitTime.QuadPart = -1LL * socket->sk->sk_rcvtimeo * 1000 * 10 * 1000 / HZ;
             pTime = &nWaitTime;
-dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadPart, socket->sk->sk_rcvtimeo);
+printk("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadPart, socket->sk->sk_rcvtimeo);
         }
 
         waitObjects[0] = (PVOID) &CompletionEvent;
@@ -1283,9 +1290,11 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
             wObjCount = 2;
         } 
 
+printk("5\n");
 	enter_interruptible();
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
 	exit_interruptible();
+printk("6\n");
 tok(3);
 
         switch (Status)
@@ -1311,7 +1320,7 @@ tok(3);
             break;
 
         case STATUS_TIMEOUT:
-	    dbg("receive timed out\n");
+printk("receive timed out\n");
             BytesReceived = -EAGAIN;
             break;
 
@@ -1362,15 +1371,16 @@ tok(3);
 		/* Deliver what we have in case we timed out. */
 
 			if (BytesReceived == -EAGAIN) {
-				dbg("Timed out, but there is data (%d bytes) returning it.\n", Irp->IoStatus.Information);
+printk("Timed out, but there is data (%d bytes) returning it.\n", Irp->IoStatus.Information);
 				BytesReceived = Irp->IoStatus.Information;
 			} else {
-				dbg("Receiving cancelled (errno is %d) but data available (%d bytes, returning it).\n", BytesReceived, Irp->IoStatus.Information);
+printk("Receiving cancelled (errno is %d) but data available (%d bytes, returning it).\n", BytesReceived, Irp->IoStatus.Information);
 				BytesReceived = Irp->IoStatus.Information;
 			}
 		}
 	}
 
+printk("7\n");
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
@@ -1379,7 +1389,7 @@ tok(3);
 		dbg("setting error status to %d\n", socket->error_status);
 	}
 // if (len >= 4096) tok(1);
-// printk("Received %d bytes\n", BytesReceived);
+printk("Received %d bytes\n", BytesReceived);
 	return BytesReceived;
 }
 
@@ -1440,7 +1450,8 @@ printk("1\n");
 	return_buffer_index = 0;
 
 printk("2 len is %d\n", len);
-	timeout = socket->sk->sk_rcvtimeo; 
+//	timeout = socket->sk->sk_rcvtimeo; 
+	timeout = 10000;
 	while (1) {
 printk("timeout is %d (jiffies)\n", timeout);
 		wait_event_interruptible_timeout(
