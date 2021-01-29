@@ -1386,6 +1386,7 @@ tok(3);
 	.) dynamically allocate receive buffer. And make its size
 	   configurable (via registry key).
 	.) Return partial data received on connection close / error?
+	.) Test speed with -rc9
 
    Done:
 	.) Make it optional (via registry key, default on)
