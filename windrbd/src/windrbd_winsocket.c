@@ -1241,7 +1241,7 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 
 	wsk_flags = 0;
 printk("1\n");
-	if (flags | MSG_WAITALL) {
+	if (flags & MSG_WAITALL) {
 printk("MSG_WAITALL ...\n");
 		wsk_flags |= WSK_FLAG_WAITALL;
 	}
@@ -1450,8 +1450,7 @@ printk("1\n");
 	return_buffer_index = 0;
 
 printk("2 len is %d\n", len);
-//	timeout = socket->sk->sk_rcvtimeo; 
-	timeout = 10000;
+	timeout = socket->sk->sk_rcvtimeo; 
 	while (1) {
 printk("timeout is %d (jiffies)\n", timeout);
 		wait_event_interruptible_timeout(
@@ -1525,7 +1524,7 @@ printk("5a read_index is %d\n", socket->read_index);
 printk("6 read_index is %d receive_buffer full is %d\n", socket->read_index, socket->receive_buffer_full);
 		wake_up(&socket->buffer_available);
 
-		if (flags | MSG_WAITALL) {
+		if (flags & MSG_WAITALL) {
 printk("MSG_WAITALL return_buffer_index is %d len is %d\n", return_buffer_index, len);
 			if (return_buffer_index == len) {
 				dump_packet(vec[0].iov_base, return_buffer_index);
@@ -1546,7 +1545,7 @@ static int socket_receive_thread(void *p)
 {
 	struct socket *s = p;
         struct kvec iov = { 0 };
-        struct msghdr msg = { 0 };
+        struct msghdr msg = { .msg_flags = 0 };
 	int err;
 	KIRQL flags;
 
@@ -1581,7 +1580,7 @@ printk("3\n");
 // printk("3a read_index is %d write_index is %d\n", s->read_index, s->write_index);
 			continue;	/* wait_event should block */
 		}
-printk("4 iov.iov_len is %d\n", iov.iov_len);
+printk("4 iov.iov_len is %d msg.msg_flags is %x\n", iov.iov_len, msg.msg_flags);
 		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
 printk("5 err is %d\n", err);
 
