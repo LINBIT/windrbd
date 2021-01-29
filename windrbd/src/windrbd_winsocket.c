@@ -1417,6 +1417,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	size_t return_buffer_index;
 	KIRQL irq_flags;
 	int ret;
+	LONG_PTR timeout, remaining_time;
 
 printk("flags is %x len is %d\n", flags, len);
 	if (!socket->receiver_cache_enabled) {
@@ -1439,12 +1440,26 @@ printk("1\n");
 	return_buffer_index = 0;
 
 printk("2 len is %d\n", len);
+	timeout = socket->sk->sk_rcvtimeo; 
 	while (1) {
-		wait_event(socket->data_available, 
+printk("timeout is %d (jiffies)\n", timeout);
+		wait_event_interruptible_timeout(
+			remaining_time,
+			socket->data_available, 
 			socket->write_index != socket->read_index || 
 			(socket->write_index == socket->read_index && socket->receive_buffer_full) || 
 			socket->error_status != 0 || 
-			socket->sk->sk_state != TCP_ESTABLISHED);
+			socket->sk->sk_state != TCP_ESTABLISHED,
+			timeout);
+
+/*
+		if (remaining_time == -EINTR)
+			return -EINTR;
+*/
+printk("remaining_time is %d (jiffies)\n", remaining_time);
+		if (remaining_time <= 0)
+			return -EAGAIN;
+		timeout = remaining_time;
 
 printk("3 read_index is %d write_index is %d receive_buffer_full is %d\n", socket->read_index, socket->write_index, socket->receive_buffer_full);
 printk("socket->error_status is %d socket->sk->sk_state is %d\n", socket->error_status, socket->sk->sk_state);
