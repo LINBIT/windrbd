@@ -86,7 +86,6 @@ static void sock_really_free(struct kref *kref)
 	struct socket *socket = container_of(kref, struct socket, kref);
 
 	if (socket->receive_thread_should_run) {
-printk("Stopping receiver thread...\n");
 		socket->receive_thread_should_run = false;
 		wake_up(&socket->buffer_available);
 		wait_for_completion(&socket->receiver_thread_completion);
@@ -1240,11 +1239,8 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 	}
 
 	wsk_flags = 0;
-printk("1\n");
-	if (flags & MSG_WAITALL) {
-printk("MSG_WAITALL ...\n");
+	if (flags & MSG_WAITALL)
 		wsk_flags |= WSK_FLAG_WAITALL;
-	}
 
 	mutex_lock(&socket->wsk_mutex);
 
@@ -1256,16 +1252,13 @@ printk("MSG_WAITALL ...\n");
 
 tik(3, "WskReceive");
 // if (len >= 4096) tik(2);
-printk("2\n");
 
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
 				wsk_flags,
 				Irp);
-printk("3\n");
 	mutex_unlock(&socket->wsk_mutex);
-printk("4\n");
 
     if (Status == STATUS_PENDING)
     {
@@ -1280,7 +1273,7 @@ printk("4\n");
         {
             nWaitTime.QuadPart = -1LL * socket->sk->sk_rcvtimeo * 1000 * 10 * 1000 / HZ;
             pTime = &nWaitTime;
-printk("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadPart, socket->sk->sk_rcvtimeo);
+dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadPart, socket->sk->sk_rcvtimeo);
         }
 
         waitObjects[0] = (PVOID) &CompletionEvent;
@@ -1290,11 +1283,9 @@ printk("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.Qu
             wObjCount = 2;
         } 
 
-printk("5\n");
 	enter_interruptible();
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
 	exit_interruptible();
-printk("6\n");
 tok(3);
 
         switch (Status)
@@ -1320,7 +1311,7 @@ tok(3);
             break;
 
         case STATUS_TIMEOUT:
-printk("receive timed out\n");
+	    dbg("receive timed out\n");
             BytesReceived = -EAGAIN;
             break;
 
@@ -1371,16 +1362,15 @@ tok(3);
 		/* Deliver what we have in case we timed out. */
 
 			if (BytesReceived == -EAGAIN) {
-printk("Timed out, but there is data (%d bytes) returning it.\n", Irp->IoStatus.Information);
+				dbg("Timed out, but there is data (%d bytes) returning it.\n", Irp->IoStatus.Information);
 				BytesReceived = Irp->IoStatus.Information;
 			} else {
-printk("Receiving cancelled (errno is %d) but data available (%d bytes, returning it).\n", BytesReceived, Irp->IoStatus.Information);
+				dbg("Receiving cancelled (errno is %d) but data available (%d bytes, returning it).\n", BytesReceived, Irp->IoStatus.Information);
 				BytesReceived = Irp->IoStatus.Information;
 			}
 		}
 	}
 
-printk("7\n");
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
@@ -1389,7 +1379,6 @@ printk("7\n");
 		dbg("setting error status to %d\n", socket->error_status);
 	}
 // if (len >= 4096) tok(1);
-printk("Received %d bytes\n", BytesReceived);
 	return BytesReceived;
 }
 
@@ -1405,7 +1394,8 @@ void dump_packet(unsigned char *buf, size_t buflen)
 	char s[80];
 	int pos;
 
-printk("1\n");
+	return;
+
 	pos=0;
 	for (i=0;i<buflen;i++) {
 		if (i%16 == 0)
@@ -1437,7 +1427,6 @@ printk("flags is %x len is %d\n", flags, len);
 		return ret;
 	}
 
-printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
@@ -1449,10 +1438,8 @@ printk("1\n");
 
 	return_buffer_index = 0;
 
-printk("2 len is %d\n", len);
 	timeout = socket->sk->sk_rcvtimeo; 
 	while (1) {
-printk("timeout is %d (jiffies)\n", timeout);
 		wait_event_interruptible_timeout(
 			remaining_time,
 			socket->data_available, 
@@ -1466,22 +1453,16 @@ printk("timeout is %d (jiffies)\n", timeout);
 		if (remaining_time == -EINTR)
 			return -EINTR;
 */
-printk("remaining_time is %d (jiffies)\n", remaining_time);
 		if (remaining_time <= 0)
 			return -EAGAIN;
 		timeout = remaining_time;
 
-printk("3 read_index is %d write_index is %d receive_buffer_full is %d\n", socket->read_index, socket->write_index, socket->receive_buffer_full);
-printk("socket->error_status is %d socket->sk->sk_state is %d\n", socket->error_status, socket->sk->sk_state);
 		if (socket->error_status != 0)
 			return socket->error_status;
 		if (socket->sk->sk_state != TCP_ESTABLISHED)
 			return 0;
 
-printk("4\n");
-
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
-printk("4a read_index is %d write_index is %d socket->receive_buffer_full is %d\n", socket->read_index, socket->write_index, socket->receive_buffer_full);
 		if (socket->read_index < socket->write_index)
 			bytes_to_copy = socket->write_index - socket->read_index;
 		else {
@@ -1497,14 +1478,12 @@ printk("4a read_index is %d write_index is %d socket->receive_buffer_full is %d\
 			}
 		}
 		if (bytes_to_copy > len) {
-printk("bytes_to_copy is %d len is %d\n", bytes_to_copy, len);
 			bytes_to_copy = len;
 		}
 
 		if (bytes_to_copy == 0)
 			printk("Warning: nothing to copy?\n");
 
-printk("5 bytes to copy is %d\n", bytes_to_copy);
 		memcpy(&((char*)vec[0].iov_base)[return_buffer_index], 
 			&socket->receive_buffer[socket->read_index],
 			bytes_to_copy);
@@ -1512,7 +1491,6 @@ printk("5 bytes to copy is %d\n", bytes_to_copy);
 		return_buffer_index += bytes_to_copy;
 		socket->read_index += bytes_to_copy;
 
-printk("5a read_index is %d\n", socket->read_index);
 		if (socket->read_index == RECEIVE_BUFFER_SIZE)
 			socket->read_index = 0;
 
@@ -1521,23 +1499,18 @@ printk("5a read_index is %d\n", socket->read_index);
 
 		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
 
-printk("6 read_index is %d receive_buffer full is %d\n", socket->read_index, socket->receive_buffer_full);
 		wake_up(&socket->buffer_available);
 
 		if (flags & MSG_WAITALL) {
-printk("MSG_WAITALL return_buffer_index is %d len is %d\n", return_buffer_index, len);
 			if (return_buffer_index == len) {
 				dump_packet(vec[0].iov_base, return_buffer_index);
 				return return_buffer_index;
 			}
 		} else {
-printk("No MSG_WAITALL return_buffer_index is %d len is %d\n", return_buffer_index, len);
 			dump_packet(vec[0].iov_base, return_buffer_index);
 			return return_buffer_index;
 		}
-printk("7\n");
 	}
-printk("8\n");
 	return -EINVAL;
 }
 
@@ -1550,18 +1523,15 @@ static int socket_receive_thread(void *p)
 	KIRQL flags;
 
 	while (1) {
-printk("1\n");
 		wait_event(s->buffer_available, 
 			!s->receive_thread_should_run ||
 			(s->sk->sk_state == TCP_ESTABLISHED &&
 			(s->write_index != s->read_index ||
 			(s->write_index == s->read_index && !s->receive_buffer_full)))); 
 
-printk("2 read_index is %d write_index is %d\n", s->read_index, s->write_index);
 		if (!s->receive_thread_should_run)
 			break;
 
-printk("3\n");
 		spin_lock_irqsave(&s->receive_lock, flags);
 		if (s->read_index == s->write_index && !s->receive_buffer_full) {
 			s->read_index = s->write_index = 0;
@@ -1580,9 +1550,7 @@ printk("3\n");
 // printk("3a read_index is %d write_index is %d\n", s->read_index, s->write_index);
 			continue;	/* wait_event should block */
 		}
-printk("4 iov.iov_len is %d msg.msg_flags is %x\n", iov.iov_len, msg.msg_flags);
 		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
-printk("5 err is %d\n", err);
 
 		if (err == -EAGAIN || err == -EINTR)
 			continue;
@@ -1590,7 +1558,6 @@ printk("5 err is %d\n", err);
 		if (err <= 0)
 			break;
 
-printk("6 read_index is %d write_index is %d err is %d\n", s->read_index, s->write_index, err);
 		spin_lock_irqsave(&s->receive_lock, flags);
 
 		s->write_index+=err;
@@ -1602,17 +1569,12 @@ printk("6 read_index is %d write_index is %d err is %d\n", s->read_index, s->wri
 
 		spin_unlock_irqrestore(&s->receive_lock, flags);
 
-printk("7 read_index is %d write_index is %d err is %d receive_buffer_full is %d\n", s->read_index, s->write_index, err, s->receive_buffer_full);
 		wake_up(&s->data_available);
-printk("8\n");
 	}
 
-printk("8a\n");
 	s->sk->sk_state = TCP_NO_CONNECTION;
 	wake_up(&s->data_available);
-printk("9\n");
 	complete(&s->receiver_thread_completion);
-printk("a\n");
 	return 0;
 }
 
@@ -1803,7 +1765,6 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
  */
 	if (type == SOCK_STREAM) {
 		if (socket->receiver_cache_enabled) {
-printk("Starting receiver thread...\n");
 			socket->receive_thread_should_run = true;
 			kthread_run(socket_receive_thread, socket, "receive_cache");
 		}
