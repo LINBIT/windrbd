@@ -1419,7 +1419,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	int ret;
 	LONG_PTR timeout, remaining_time;
 
-printk("flags is %x len is %d\n", flags, len);
+// printk("flags is %x len is %d\n", flags, len);
 	if (!socket->receiver_cache_enabled) {
 		ret = wsk_recvmsg(socket, msg, vec, num, len, flags);
 		if (ret > 0)
@@ -1477,12 +1477,14 @@ printk("flags is %x len is %d\n", flags, len);
 				bytes_to_copy = RECEIVE_BUFFER_SIZE - socket->read_index;
 			}
 		}
-		if (bytes_to_copy > len) {
-			bytes_to_copy = len;
+		if (bytes_to_copy > len-return_buffer_index) {
+			bytes_to_copy = len-return_buffer_index;
 		}
 
-		if (bytes_to_copy == 0)
+		if (bytes_to_copy <= 0) {
 			printk("Warning: nothing to copy?\n");
+			continue;
+		}
 
 		memcpy(&((char*)vec[0].iov_base)[return_buffer_index], 
 			&socket->receive_buffer[socket->read_index],
