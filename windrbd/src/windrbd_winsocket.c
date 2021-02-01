@@ -1387,6 +1387,7 @@ tok(3);
 	   configurable (via registry key).
 	.) Return partial data received on connection close / error?
 	.) Test speed with -rc9
+	.) BSOD when writing on Primary
 
    Done:
 	.) Make it optional (via registry key, default on)

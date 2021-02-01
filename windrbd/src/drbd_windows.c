@@ -2027,6 +2027,7 @@ void read_simple_write_cache_config(void)
 
 /* TODO's for simple write cache:
 	*) Optimize ... right now there is no speedup (or maybe 20% or so ...)
+	*) There is data corruption (data-coherence test after 8 iterations)
 
 Done:
 	*) (from phil) allow for disable (bypass) write cache.
