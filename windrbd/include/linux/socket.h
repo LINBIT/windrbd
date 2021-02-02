@@ -122,6 +122,7 @@ struct socket {
 	bool receive_thread_should_run;
 	struct completion receiver_thread_completion;
 	spinlock_t receive_lock;
+	bool have_printed_status;
 };
 
 

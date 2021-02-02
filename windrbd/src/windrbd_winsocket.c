@@ -1427,6 +1427,15 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	int ret;
 	LONG_PTR timeout, remaining_time;
 
+	if (!socket->have_printed_status) {
+		if (!socket->receiver_cache_enabled)
+			printk("Receiver cache disabled\n");
+		else
+			printk("Receiver cache enabled, buffer size is %d\n", RECEIVE_BUFFER_SIZE);
+
+		socket->have_printed_status = true;
+	}
+
 // printk("flags is %x len is %d\n", flags, len);
 	if (!socket->receiver_cache_enabled) {
 		ret = wsk_recvmsg(socket, msg, vec, num, len, flags);
@@ -1750,15 +1759,12 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	init_waitqueue_head(&socket->buffer_available);
 	init_waitqueue_head(&socket->data_available);
 
+	socket->have_printed_status = false;
 	if (socket->receiver_cache_enabled) {
 		socket->write_index = 0;
 		socket->read_index = 0;
 		init_completion(&socket->receiver_thread_completion);
 		spin_lock_init(&socket->receive_lock);
-
-		printk("Receiver cache enabled, buffer size is %d\n", RECEIVE_BUFFER_SIZE);
-	} else {
-		printk("Receiver cache disabled\n");
 	}
 
 	socket->sk->sk_sndbuf = 4*1024*1024;
