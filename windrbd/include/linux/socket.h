@@ -84,8 +84,7 @@ struct msghdr {
 
 struct _WSK_SOCKET;
 
-/* TODO: make this configurable */
-#define RECEIVE_BUFFER_SIZE (128*1024)
+#define RECEIVE_BUFFER_DEFAULT_SIZE (128*1024)
 
 struct socket {
 	struct _WSK_SOCKET *wsk_socket;
@@ -113,7 +112,8 @@ struct socket {
 	int is_closed;
 
 	int receiver_cache_enabled;
-	char receive_buffer[RECEIVE_BUFFER_SIZE];
+	char *receive_buffer;
+	int receive_buffer_size;
 	int write_index;
 	int read_index;
 	bool receive_buffer_full;

@@ -91,6 +91,7 @@ static void sock_really_free(struct kref *kref)
 		wait_for_completion(&socket->receiver_thread_completion);
 	}
 
+	kfree(socket->receive_buffer);
 	kfree(socket->sk);
 	kfree(socket);
 }
@@ -1385,8 +1386,6 @@ tok(3);
 /* TODO for receiver cache:
 	.) dynamically allocate receive buffer. And make its size
 	   configurable (via registry key).
-	.) Return partial data received on connection close / error?
-	.) Test speed with -rc9
 	.) BSOD when writing on Primary
 
    Done:
@@ -1394,6 +1393,9 @@ tok(3);
 	.) Make it work with DRBD (Wrong magic value)
 	.) Compare performance
 		It is about 2-4 times faster than before (!).
+	.) Test speed with -rc9
+		Yes rc9 is really slow
+	.) Rejected: Return partial data received on connection close / error?
 */
 
 void dump_packet(unsigned char *buf, size_t buflen)
@@ -1431,7 +1433,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		if (!socket->receiver_cache_enabled)
 			printk("Receiver cache disabled\n");
 		else
-			printk("Receiver cache enabled, buffer size is %d\n", RECEIVE_BUFFER_SIZE);
+			printk("Receiver cache enabled, buffer size is %d\n", socket->receive_buffer_size);
 
 		socket->have_printed_status = true;
 	}
@@ -1485,13 +1487,13 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		else {
 			if (socket->read_index == socket->write_index) {
 				if (socket->receive_buffer_full)
-					bytes_to_copy = RECEIVE_BUFFER_SIZE - socket->read_index;
+					bytes_to_copy = socket->receive_buffer_size - socket->read_index;
 				else {
 					bytes_to_copy = 0;	/* invalid */
 					printk("Warning: buffer empty.\n");
 				}
 			} else { /* read_index > write_index */
-				bytes_to_copy = RECEIVE_BUFFER_SIZE - socket->read_index;
+				bytes_to_copy = socket->receive_buffer_size - socket->read_index;
 			}
 		}
 		if (bytes_to_copy > len-return_buffer_index) {
@@ -1510,7 +1512,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return_buffer_index += bytes_to_copy;
 		socket->read_index += bytes_to_copy;
 
-		if (socket->read_index == RECEIVE_BUFFER_SIZE)
+		if (socket->read_index == socket->receive_buffer_size)
 			socket->read_index = 0;
 
 		if (socket->write_index == socket->read_index)
@@ -1554,10 +1556,10 @@ static int socket_receive_thread(void *p)
 		spin_lock_irqsave(&s->receive_lock, flags);
 		if (s->read_index == s->write_index && !s->receive_buffer_full) {
 			s->read_index = s->write_index = 0;
-			iov.iov_len = RECEIVE_BUFFER_SIZE;
+			iov.iov_len = s->receive_buffer_size;
 		} else {
 			if (s->read_index < s->write_index)
-				iov.iov_len = RECEIVE_BUFFER_SIZE-s->write_index;
+				iov.iov_len = s->receive_buffer_size-s->write_index;
 			else
 				iov.iov_len = s->read_index-s->write_index;
 		}
@@ -1580,7 +1582,7 @@ static int socket_receive_thread(void *p)
 		spin_lock_irqsave(&s->receive_lock, flags);
 
 		s->write_index+=err;
-		if (s->write_index == RECEIVE_BUFFER_SIZE)
+		if (s->write_index == s->receive_buffer_size)
 			s->write_index = 0;
 
 		if (s->write_index == s->read_index)
@@ -1761,10 +1763,21 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 
 	socket->have_printed_status = false;
 	if (socket->receiver_cache_enabled) {
-		socket->write_index = 0;
-		socket->read_index = 0;
-		init_completion(&socket->receiver_thread_completion);
-		spin_lock_init(&socket->receive_lock);
+		get_registry_int(L"receive_buffer_size", &socket->receive_buffer_size, RECEIVE_BUFFER_DEFAULT_SIZE);
+		if (socket->receive_buffer_size < 4096)
+			socket->receive_buffer_size = 4096;
+		if (socket->receive_buffer_size > 4*1024*1024)
+			socket->receive_buffer_size = 4*1024*1024;
+		socket->receive_buffer = kmalloc(socket->receive_buffer_size, 0, 'XYZR');
+		if (socket->receive_buffer == NULL) {
+			printk("Warning: could not allocate memory for socket receive buffer (size is %d), receiver cache disabled\n", socket->receive_buffer_size);
+			socket->receiver_cache_enabled = false;
+		} else {
+			socket->write_index = 0;
+			socket->read_index = 0;
+			init_completion(&socket->receiver_thread_completion);
+			spin_lock_init(&socket->receive_lock);
+		}
 	}
 
 	socket->sk->sk_sndbuf = 4*1024*1024;
