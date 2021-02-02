@@ -1384,9 +1384,6 @@ tok(3);
 }
 
 /* TODO for receiver cache:
-	.) dynamically allocate receive buffer. And make its size
-	   configurable (via registry key).
-	.) BSOD when writing on Primary
 
    Done:
 	.) Make it optional (via registry key, default on)
@@ -1396,6 +1393,11 @@ tok(3);
 	.) Test speed with -rc9
 		Yes rc9 is really slow
 	.) Rejected: Return partial data received on connection close / error?
+	.) dynamically allocate receive buffer. And make its size
+	   configurable (via registry key).
+	.) Rejected: BSOD when writing on Primary
+		Couldn't reproduce, continue observing.
+
 */
 
 void dump_packet(unsigned char *buf, size_t buflen)
