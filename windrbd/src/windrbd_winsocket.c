@@ -1385,6 +1385,9 @@ tok(3);
 
 /* TODO for receiver cache:
 
+	.) Test: disconnect on secondary
+	.) Test: network outage (on linux using iptables)
+
    Done:
 	.) Make it optional (via registry key, default on)
 	.) Make it work with DRBD (Wrong magic value)
