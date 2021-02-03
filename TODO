@@ -36,6 +36,19 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: System freeze (BSOD?) on drbdadm down on Server 2016
+
+	Last log line is:
+
+Feb  3 16:34:05 10.43.10.11  U15:34:05.105 (58492374975/10000000)|7798f6d0(drbd_r_windows-windows) #247 wait_for_bios_to_complete 2 bios pending before wait_event
+
+	Version is windrbd-1.0.0-rc9-120-g761a3991-signed
+	(with receiver cache enabled but probably unrelated).
+	This seems to be Windows Server 2016 specific. Most likely
+	the same as reported by Patterson from Accenture.
+
+	Update: also with -rc9. Is a health check BSOD.
+
 TODO: Bug: BSOD in wsk_incoming_connection
 
 	When running disconnect_connect_wait_connected loop on Linux (secondary)

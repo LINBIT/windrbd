@@ -17,6 +17,7 @@ for i in 1 2 3 4
 do
 	ssh $LINUX sudo drbdadm primary $RES
 	ssh $LINUX sudo kpartx /dev/drbd26 -a
+	sleep 1
 	ssh $LINUX sudo mount /dev/dm-0 ~/Linbit/tmp/mnt
 
 	ssh $LINUX rm ~/Linbit/tmp/mnt/random-30megs*
