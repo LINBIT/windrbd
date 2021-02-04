@@ -523,7 +523,13 @@ printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
 			failed++;
 			continue;
 		}
-		MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
+		try {
+			MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
+		} except(EXCEPTION_EXECUTE_HANDLER) {
+printk("MmProbeAndLockPages failed with exception i is %x.\n", i);
+			IoFreeMdl(mdl);
+			continue;
+		}
 
 		p = MmMapIoSpace(addr, 0x1000, MmCached);
 		if (p == NULL) {
