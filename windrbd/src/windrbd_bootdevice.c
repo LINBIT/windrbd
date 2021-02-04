@@ -515,6 +515,7 @@ static char *copy_first_640k(void)
 		return NULL;
 
 	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
+printk("page %p ...\n", (void*) i);
 		addr.QuadPart = i;
 		mdl = IoAllocateMdl((void*) i, PAGE_SIZE, FALSE, FALSE, NULL);
 		if (mdl == NULL) {
@@ -528,10 +529,12 @@ printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
 		} except(EXCEPTION_EXECUTE_HANDLER) {
 printk("MmProbeAndLockPages failed with exception i is %x.\n", i);
 			IoFreeMdl(mdl);
+			memset(buf+i, 0, 0x1000);
+			failed++;
 			continue;
 		}
 
-		p = MmMapIoSpace(addr, 0x1000, MmCached);
+		p = MmMapIoSpace(addr, 0x1000, MmNonCached);
 		if (p == NULL) {
 				/* There are some pages which are
 				 * not mappable for whatever reason.
@@ -542,7 +545,7 @@ printk("mmap(%x, 0x1000, ..) failed\n", i);
 			memset(buf+i, 0, 0x1000);
 			failed++;
 		} else {
-			dbg("mmap(%x, 0x1000, ..) succeeded\n", i);
+printk("mmap(%x, 0x1000, ..) succeeded\n", i);
 			memcpy(buf+i, p, 0x1000);
 			MmUnmapIoSpace(p, 0x1000);
 		}
