@@ -508,6 +508,7 @@ static char *copy_first_640k(void)
 	int i;
 	char *buf;
 	int failed = 0;
+	struct _MDL *mdl;
 
 	buf = kmalloc(LOWER_MEM_LENGTH, GFP_KERNEL, 'DRBD');
 	if (buf == NULL)
@@ -515,6 +516,15 @@ static char *copy_first_640k(void)
 
 	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
 		addr.QuadPart = i;
+		mdl = IoAllocateMdl((void*) i, PAGE_SIZE, FALSE, FALSE, NULL);
+		if (mdl == NULL) {
+printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
+			memset(buf+i, 0, 0x1000);
+			failed++;
+			continue;
+		}
+		MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
+
 		p = MmMapIoSpace(addr, 0x1000, MmCached);
 		if (p == NULL) {
 				/* There are some pages which are
@@ -522,7 +532,7 @@ static char *copy_first_640k(void)
 				 * Our parameters are on mappable
 				 * pages, so ignore them.
 				 */
-			dbg("mmap(%x, 0x1000, ..) failed\n", i);
+printk("mmap(%x, 0x1000, ..) failed\n", i);
 			memset(buf+i, 0, 0x1000);
 			failed++;
 		} else {
@@ -530,6 +540,8 @@ static char *copy_first_640k(void)
 			memcpy(buf+i, p, 0x1000);
 			MmUnmapIoSpace(p, 0x1000);
 		}
+		MmUnlockPages(mdl);
+		IoFreeMdl(mdl);
 	}
 	dbg("%d mappings failed\n", failed);
 
