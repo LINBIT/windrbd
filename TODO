@@ -36,6 +36,11 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Test: Do secondary writes flush the disk
+
+	Peer does a sync() I would expect disk flush on all secondaries.
+	Check if this is done.
+
 TODO: Bug: System freeze (BSOD?) on drbdadm down on Server 2016
 
 	Last log line is:
