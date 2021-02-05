@@ -268,10 +268,12 @@ static int rcu_reader(void *arg)
 	while (!rcu_writers_finished) {
 		if (rcu_lock_method == RCU_READ_LOCK)
 			flags = rcu_read_lock();
+#if 0
 		if (rcu_lock_method == RCU_SPIN_LOCK)
 			spin_lock(&rcu_writer_lock);
 		if (rcu_lock_method == RCU_SPIN_LOCK_IRQ)
 			spin_lock_irq(&rcu_writer_lock);
+#endif
 		if (rcu_lock_method == RCU_CRITICAL_REGION)
 			KeEnterCriticalRegion();
 
@@ -286,10 +288,12 @@ static int rcu_reader(void *arg)
 
 		if (rcu_lock_method == RCU_READ_LOCK)
 			rcu_read_unlock(flags);
+#if 0
 		if (rcu_lock_method == RCU_SPIN_LOCK)
 			spin_unlock(&rcu_writer_lock);
 		if (rcu_lock_method == RCU_SPIN_LOCK_IRQ)
 			spin_unlock_irq(&rcu_writer_lock);
+#endif
 		if (rcu_lock_method == RCU_CRITICAL_REGION)
 			KeLeaveCriticalRegion();
 
@@ -313,23 +317,27 @@ static int rcu_writer(void *arg)
 	struct completion *c = arg;
 
 	for (i=0;i<rcu_n;i++) {
+#if 0
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK ||
 		    rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_LONG)
 			spin_lock(&rcu_writer_lock);
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ ||
 		    rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ_LONG)
 			spin_lock_irq(&rcu_writer_lock);
+#endif
 
 		old_rcu = non_atomic_rcu;
 		new_rcu = kmalloc(sizeof(*new_rcu), 0, '1234');
 		if (new_rcu == NULL) {
 			printk("no memory\n");
+#if 0
 			if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK ||
 		    	    rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_LONG)
 				spin_unlock(&rcu_writer_lock);
 			if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ ||
 		    	    rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ_LONG)
 				spin_unlock_irq(&rcu_writer_lock);
+#endif
 
 			complete(c);
 			return -1;
@@ -345,10 +353,12 @@ static int rcu_writer(void *arg)
 		new_rcu->b = val;
 
 		rcu_assign_pointer(non_atomic_rcu, new_rcu);
+#if 0
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK)
 			spin_unlock(&rcu_writer_lock);
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ)
 			spin_unlock_irq(&rcu_writer_lock);
+#endif
 
 		synchronize_rcu();
 
@@ -358,10 +368,12 @@ static int rcu_writer(void *arg)
 */
 		kfree(old_rcu);
 
+#if 0
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_LONG)
 			spin_unlock(&rcu_writer_lock);
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ_LONG)
 			spin_unlock_irq(&rcu_writer_lock);
+#endif
 	}
 	complete(c);
 
@@ -556,6 +568,7 @@ int concurrency_thread(void *p)
 			down(&test_semaphore);
 			break;
 
+#if 0
 		case LM_TWO_SPINLOCKS_PASSIVE_LEVEL:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
@@ -571,6 +584,7 @@ int concurrency_thread(void *p)
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
+#endif
 
 		case LM_CRITICAL_REGION:
 			KeEnterCriticalRegion();
@@ -580,6 +594,7 @@ int concurrency_thread(void *p)
 			mutex_lock(&test_mutex);
 			break;
 
+#if 0
 		case LM_SPIN_LOCK:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
@@ -595,6 +610,7 @@ int concurrency_thread(void *p)
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
+#endif
 
 		case LM_SPIN_LOCK_IRQSAVE:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
@@ -637,6 +653,7 @@ int concurrency_thread(void *p)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
 
+#if 0
 		case LM_TWO_SPINLOCKS:
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
@@ -644,6 +661,7 @@ int concurrency_thread(void *p)
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
+#endif
 
 		case LM_CRITICAL_REGION:
 			KeLeaveCriticalRegion();
@@ -653,6 +671,7 @@ int concurrency_thread(void *p)
 			mutex_unlock(&test_mutex);
 			break;
 
+#if 0
 		case LM_SPIN_LOCK:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_unlock\n", KeGetCurrentIrql());
@@ -667,6 +686,7 @@ int concurrency_thread(void *p)
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
+#endif
 		case LM_SPIN_LOCK_IRQSAVE:
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
