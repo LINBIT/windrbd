@@ -35,6 +35,8 @@ typedef struct _tagSPINLOCK
 */
 	char marker[16];
 	char locked_by[128];
+
+	LARGE_INTEGER timestamp_taken;
 #endif
 } spinlock_t;
 
