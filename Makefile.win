@@ -30,7 +30,7 @@ EWDK_BIN := $(EWDK_KIT)\\bin\\x86
 KEY = linbit-2019
 PASSWD = ""
 
-WINDRBD_SOURCE = Y:\\windrbd-backing-dev-cache\\windrbd
+WINDRBD_SOURCE = Y:\\windrbd-fix-secondary-write-bsod-on-server-2016\\windrbd
 DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
@@ -46,7 +46,7 @@ EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
 KEY = linbit-ha
 PASSWD = ""
 
-WINDRBD_SOURCE = Y:\\windrbd-backing-dev-cache\\windrbd
+WINDRBD_SOURCE = Y:\\windrbd-fix-secondary-write-bsod-on-server-2016\\windrbd
 DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
@@ -61,7 +61,7 @@ KEY = linbit-2019
 PASSWD = ""
 
 # WINDRBD_SOURCE = Y:\\windrbd
-WINDRBD_SOURCE = Y:\\windrbd-backing-dev-cache\\windrbd
+WINDRBD_SOURCE = Y:\\windrbd-fix-secondary-write-bsod-on-server-2016\\windrbd
 DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
@@ -76,7 +76,7 @@ KEY = linbit-ha
 PASSWD = ""
 
 # WINDRBD_SOURCE = Y:\\windrbd
-WINDRBD_SOURCE = Y:\\windrbd-backing-dev-cache\\windrbd
+WINDRBD_SOURCE = Y:\\windrbd-fix-secondary-write-bsod-on-server-2016\\windrbd
 DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
@@ -91,7 +91,7 @@ KEY = linbit-ha
 PASSWD = ""
 
 # WINDRBD_SOURCE = Y:\\windrbd
-WINDRBD_SOURCE = Y:\\windrbd-backing-dev-cache\\windrbd
+WINDRBD_SOURCE = Y:\\windrbd-fix-secondary-write-bsod-on-server-2016\\windrbd
 DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
@@ -106,7 +106,7 @@ KEY = linbit-2019
 PASSWD = ""
 
 # WINDRBD_SOURCE = Y:\\windrbd
-WINDRBD_SOURCE = Y:\\windrbd-backing-dev-cache\\windrbd
+WINDRBD_SOURCE = Y:\\windrbd-fix-secondary-write-bsod-on-server-2016\\windrbd
 DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
