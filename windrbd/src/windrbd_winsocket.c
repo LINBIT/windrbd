@@ -1501,6 +1501,8 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 				bytes_to_copy = socket->receive_buffer_size - socket->read_index;
 			}
 		}
+		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
+
 		if (bytes_to_copy > len-return_buffer_index) {
 			bytes_to_copy = len-return_buffer_index;
 		}
@@ -1513,6 +1515,8 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		memcpy(&((char*)vec[0].iov_base)[return_buffer_index], 
 			&socket->receive_buffer[socket->read_index],
 			bytes_to_copy);
+
+		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 
 		return_buffer_index += bytes_to_copy;
 		socket->read_index += bytes_to_copy;
