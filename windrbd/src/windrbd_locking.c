@@ -516,7 +516,6 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 	KIRQL oldIrql;
 
 #ifdef SPIN_LOCK_DEBUG2
-#if 0
 		/* this introduces about 1000 more races, but is here just
 		 * for debugging purposes.
 		 */
@@ -526,18 +525,16 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 			/* From here on, everything may happen */
 		return KeGetCurrentIrql();
 	}
+	lock->timestamp_taken = KeQueryPerformanceCounter(NULL);
 #endif
-//	lock->timestamp_taken = KeQueryPerformanceCounter(NULL);
-#endif
+
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
 #ifdef SPIN_LOCK_DEBUG2
-#if 0
 	lock->locked_by_thread = KeGetCurrentThread();
 	strncpy(lock->marker, "SPIN_LOCK456", ARRAY_SIZE(lock->marker)-1);
 	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 	lock->locked_by[ARRAY_SIZE(lock->locked_by)-1] = '\0';
-#endif
 #endif
 
 	return oldIrql;
@@ -547,24 +544,17 @@ void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags)
 {
 #ifdef SPIN_LOCK_DEBUG2
 	LARGE_INTEGER now;
-#endif
 
-	KeReleaseSpinLock(&lock->spinLock, flags);
-
-#ifdef SPIN_LOCK_DEBUG2
-
-#if 0
 	now = KeQueryPerformanceCounter(NULL);
 	if (!lock->printk_lock && lock->timestamp_taken.QuadPart != 0 && (now.QuadPart - lock->timestamp_taken.QuadPart) > 10*1000*1000/10000)
 		printk("Warning: %s held spinlock longer than 100usecs locked by %s locktime is %lld\n", current->comm, lock->locked_by, (now.QuadPart - lock->timestamp_taken.QuadPart));
-#endif
 
-#if 0
 	lock->locked_by_thread = NULL;
 	strncpy(lock->marker, "SPIN_LOCK123", ARRAY_SIZE(lock->marker)-1);
 	strncpy(lock->locked_by, "NONE", ARRAY_SIZE(lock->locked_by)-1);
 #endif
-#endif
+
+	KeReleaseSpinLock(&lock->spinLock, flags);
 }
 
 #if 0
