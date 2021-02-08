@@ -626,8 +626,8 @@ printk("Warning: deprecated function spin_lock_unirq_debug_new called\n");
 static void spin_lock(spinlock_t *lock)
 {
 #ifdef SPIN_LOCK_DEBUG2
-if (!lock->printk_lock)
-printk("Warning: deprecated function spin_lock called\n");
+// if (!lock->printk_lock)
+// printk("Warning: deprecated function spin_lock called\n");
 #endif
 
 	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
@@ -636,8 +636,8 @@ printk("Warning: deprecated function spin_lock called\n");
 void spin_unlock(spinlock_t *lock)
 {
 #ifdef SPIN_LOCK_DEBUG2
-if (!lock->printk_lock)
-printk("Warning: deprecated function spin_unlock called\n");
+// if (!lock->printk_lock)
+// printk("Warning: deprecated function spin_unlock called\n");
 #endif
 
 	KeReleaseSpinLockFromDpcLevel(&lock->spinLock);
@@ -646,8 +646,8 @@ printk("Warning: deprecated function spin_unlock called\n");
 void spin_lock_nested(spinlock_t *lock, int level)
 {
 #ifdef SPIN_LOCK_DEBUG2
-if (!lock->printk_lock)
-printk("Warning: deprecated function spin_lock_nested called\n");
+// if (!lock->printk_lock)
+// printk("Warning: deprecated function spin_lock_nested called\n");
 #endif
 
 	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
