@@ -1,7 +1,7 @@
 #ifndef _TIKTOK_H
 #define _TIKTOK_H
 
-#define TIKTOK
+/* #define TIKTOK */
 
 #ifdef RELEASE
 #ifdef TIKTOK
