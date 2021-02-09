@@ -7,6 +7,6 @@ do
 	echo Write File $i
 #	cp /dev/zero /home/johannes/Linbit/tmp/mnt/data
 	dd if=/dev/zero of=/dev/drbd26 bs=$[ 1024*1024 ] count=40
-#	sync
+	sync
 	date
 done
