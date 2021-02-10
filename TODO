@@ -36,11 +36,6 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Test: Do secondary writes flush the disk
-
-	Peer does a sync() I would expect disk flush on all secondaries.
-	Check if this is done.
-
 TODO: Bug: System freeze (BSOD?) on drbdadm down on Server 2016
 
 	Last log line is:
@@ -58,11 +53,6 @@ TODO: Bug: Data coherence error when simple write cache is enabled.
 
 	It probably is better not to support this because it doesn't
 	give much performance boost (or none at all)...
-
-TODO: Bug: BSOD in wsk_incoming_connection
-
-	When running disconnect_connect_wait_connected loop on Linux (secondary)
-	and Primary (Windows) doing I/O. After 50-100 iterations or so...
 
 TODO: Bug: BSOD when connecting with split brain.
 
@@ -7008,4 +6998,19 @@ Done: Performance: Sync is still somewhat slow when windrbd is SyncTarget
 
 	12/04/2020: Using big pages (up to 1Mb) for sync target
 	reading now, it is now 5 times faster than before.
+
+Done: Test: Do secondary writes flush the disk
+
+	Peer does a sync() I would expect disk flush on all secondaries.
+	Check if this is done.
+
+	Update: Yes flush is done (on Server 2016). Also iotop showed
+	I/O (around 20MB/sec) on the Server 2016 VM.
+
+Done: Bug: BSOD in wsk_incoming_connection
+
+	When running disconnect_connect_wait_connected loop on Linux (secondary)
+	and Primary (Windows) doing I/O. After 50-100 iterations or so...
+
+	Can't reproduce at the moment.
 
