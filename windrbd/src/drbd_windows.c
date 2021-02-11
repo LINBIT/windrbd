@@ -3187,7 +3187,7 @@ static int remove_dos_link(struct block_device *dev)
 		printk("windrbd_mount: couldn't remove symlink %S status: %x\n", dos_name.Buffer, status);
 		return -1;
 	}
-	printk("Created symlink from %S to %S\n", dos_name.Buffer, dev->path_to_device.Buffer);
+	printk("Removed symlink from %S to %S\n", dos_name.Buffer, dev->path_to_device.Buffer);
 
 	return 0;
 }
@@ -3280,20 +3280,20 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 		 */
 
 	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
-dbg("Requesting eject of Windows device\n");
+printk("Requesting eject of Windows device minor %d\n", bdev->drbd_device->minor);
 		IoRequestDeviceEject(bdev->windows_device);
-dbg("Eject returned\n");
+printk("Eject returned minor %d\n", bdev->drbd_device->minor);
 		KeWaitForSingleObject(&bdev->device_ejected_event, Executive, KernelMode, FALSE, NULL);
-dbg("Device ejected\n");
+printk("Device ejected minor %d\n", bdev->drbd_device->minor);
 		if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
 			printk("PnP did not work, removing device manually.\n");
 			IoDeleteDevice(bdev->windows_device);
 		} else {
-dbg("waiting for device being removed via IRP_MN_REMOVE_DEVICE\n");
+printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE minor %d\n", bdev->drbd_device->minor);
 			KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
-dbg("finished.\n");
+printk("finished. minor %d\n", bdev->drbd_device->minor);
 		}
 	} else {
 		printk("Not a PnP object, removing device manually.\n");
