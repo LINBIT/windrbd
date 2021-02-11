@@ -3280,10 +3280,17 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 		 */
 
 	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
+		LARGE_INTEGER eject_timeout;
+		NTSTATUS status;
 printk("Requesting eject of Windows device minor %d\n", bdev->drbd_device->minor);
 		IoRequestDeviceEject(bdev->windows_device);
 printk("Eject returned minor %d\n", bdev->drbd_device->minor);
-		KeWaitForSingleObject(&bdev->device_ejected_event, Executive, KernelMode, FALSE, NULL);
+
+		eject_timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
+		status = KeWaitForSingleObject(&bdev->device_ejected_event, Executive, KernelMode, FALSE, &eject_timeout);
+		if (status == STATUS_TIMEOUT)
+			printk("Warning: no eject event after 10 seconds, giving up.\n");
+
 printk("Device ejected minor %d\n", bdev->drbd_device->minor);
 		if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
@@ -3644,7 +3651,7 @@ int windrbd_mount(struct block_device *dev)
 	OBJECT_ATTRIBUTES attr;
 
 	if (dev->mount_point.Buffer == NULL) {
-		printk("No mount point set for minor %d, will not be mounted.\n");
+		printk("No mount point set for minor %d, will not be mounted.\n", dev->drbd_device->minor);
 		return 0;	/* this is legal */
 	}
 
