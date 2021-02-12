@@ -36,6 +36,13 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: Network loss on Server 2016 (Secondary)
+
+	Maybe the same that Yannis also observes? After 3-4 days
+	of I/O network interface is down (that is it is still up
+	but there is no data flow / ping does work, rebooting
+	solves the problem). Something with virtualization?
+
 TODO: Bug: System freeze (BSOD?) on drbdadm down on Server 2016
 
 	Last log line is:
@@ -48,6 +55,20 @@ Feb  3 16:34:05 10.43.10.11  U15:34:05.105 (58492374975/10000000)|7798f6d0(drbd_
 	the same as reported by Patterson from Accenture.
 
 	Update: also with -rc9. Is a health check BSOD.
+
+	Update: System hang with -rc9-146 last log line is the same
+	so probably the same error:
+
+Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284613741/10000000)|a58c56d0(drbd_r_windows-windows) #318 drbdd <3>drbd windows-windows pnode-id:2, cs(NetworkFailure), prole(Unknown), cflag(0x200e), scf(0x0): error receiving P_DATA, e: -5 l: 1048576!
+Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284621063/10000000)|a58c56d0(drbd_r_windows-windows) #319 wait_for_bios_to_complete 1 bios pending before wait_event
+Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284623119/10000000)|a58c56d0(drbd_r_windows-windows) #320 wait_for_bios_to_complete 2 IRPs pending before wait_event
+
+	Also, before:
+
+Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_a_windows-windows) #312 drbd_ack_receiver <3>drbd windows-windows pnode-id:2, cs(Connected), prole(Primary), cflag(0xe), scf(0x1): sock_recvmsg returned -103
+(ECONNABORTED 103 Software caused connection abort)
+
+	but this is probably unrelated (see Network loss bug?)
 
 TODO: Bug: Data coherence error when simple write cache is enabled.
 
