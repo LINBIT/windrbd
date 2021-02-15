@@ -174,9 +174,9 @@ void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e)
 void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {
 	KIRQL flags;
-	dbg("wake_up_all %p %s:%d (%s())\n", q, file, line, func);
 	struct wait_queue_entry *e, *e2;
 
+printk("wake_up_all %p %s:%d (%s())\n", q, file, line, func);
 	spin_lock_irqsave(&q->lock, flags);
 	if (list_empty(&q->head)) {
 		dbg("Warning: attempt to wake up all with no one waiting (%s:%d %s()) queue is %p.\n", file, line, func, q);
@@ -188,9 +188,13 @@ void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const c
 		 * woken up waiters.
 		 */
 
+printk("1\n");
 	list_for_each_entry_safe(struct wait_queue_entry, e, e2, &q->head, entry) {
+printk("2 entry is at %p\n", e);
 		KeSetEvent(&e->windows_event, 0, FALSE);
+printk("2a\n");
 	}
+printk("3\n");
 
 	spin_unlock_irqrestore(&q->lock, flags);
 }
