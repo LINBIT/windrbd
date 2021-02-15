@@ -124,6 +124,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	 */
 	init_windrbd();
 	init_locking();
+	init_waitqueue();
 
 	/* Next, the threads subsystem (so DRBD can create threads).
          * Also makes current valid (needed in spinlock debugging).

@@ -171,18 +171,19 @@ void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e)
 	spin_unlock_irqrestore(&w->lock, flags);
 }
 
+static spinlock_t big_wakeup_lock;
+
 void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {
-	KIRQL flags;
+	KIRQL flags, flags2;
 	struct wait_queue_entry *e, *e2;
 
 printk("wake_up_all %p %s:%d (%s())\n", q, file, line, func);
 	spin_lock_irqsave(&q->lock, flags);
+	spin_lock_irqsave(&big_wakeup_lock, flags2);
 	if (list_empty(&q->head)) {
-		dbg("Warning: attempt to wake up all with no one waiting (%s:%d %s()) queue is %p.\n", file, line, func, q);
-		spin_unlock_irqrestore(&q->lock, flags);
-
-		return;
+printk("Warning: attempt to wake up all with no one waiting (%s:%d %s()) queue is %p.\n", file, line, func, q);
+		goto unlock_and_out;
 	}
 		/* Use safe version: entries might get deleted soon by
 		 * woken up waiters.
@@ -196,7 +197,12 @@ printk("2a\n");
 	}
 printk("3\n");
 
+unlock_and_out:
+printk("4\n");
+	spin_unlock_irqrestore(&big_wakeup_lock, flags2);
+printk("5\n");
 	spin_unlock_irqrestore(&q->lock, flags);
+printk("6\n");
 }
 
 	/* This wakes up all non-exclusive tasks. Since we only have
@@ -208,3 +214,7 @@ void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char 
 	wake_up_all_debug(q, file, line, func);
 }
 
+void init_waitqueue(void)
+{
+	spin_lock_init(&big_wakeup_lock);
+}

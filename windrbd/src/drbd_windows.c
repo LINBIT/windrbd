@@ -2400,9 +2400,7 @@ void bio_endio(struct bio *bio)
 {
 	int error = blk_status_to_errno(bio->bi_status);
 
-	atomic_dec(&bio->bi_bdev->num_bios_pending);
-	if (atomic_read(&bio->bi_bdev->num_bios_pending) == 0)
-		wake_up(&bio->bi_bdev->bios_event);
+	bio_get(bio);
 
 	if (bio->bi_end_io != NULL) {
 		if (error != 0)
@@ -2411,6 +2409,12 @@ void bio_endio(struct bio *bio)
 		bio->bi_end_io(bio);
 	} else
 		printk("Warning: thread(%s) bio(%p) no bi_end_io function.\n", current->comm, bio);
+
+	atomic_dec(&bio->bi_bdev->num_bios_pending);
+	if (atomic_read(&bio->bi_bdev->num_bios_pending) == 0)
+		wake_up(&bio->bi_bdev->bios_event);
+
+	bio_put(bio);
 }
 
 void __list_del_entry(struct list_head *entry)

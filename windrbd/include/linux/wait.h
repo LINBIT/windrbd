@@ -112,4 +112,6 @@ void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const c
 #define wake_up(q) wake_up_debug(q, __FILE__, __LINE__, __func__)
 #define wake_up_all(q) wake_up_all_debug(q, __FILE__, __LINE__, __func__)
 
+void init_waitqueue(void);
+
 #endif
