@@ -1570,13 +1570,20 @@ int windrbd_inject_faults(int after, enum fault_injection_location where, struct
 
 int wait_for_bios_to_complete(struct block_device *bdev)
 {
+	int timeout;
+
 	if (atomic_read(&bdev->num_bios_pending) > 0) {
 /* TODO: dbg */
 		printk("%d bios pending before wait_event\n", atomic_read(&bdev->num_bios_pending));
 		printk("%d IRPs pending before wait_event\n", atomic_read(&bdev->num_irps_pending));
 	}
-	wait_event(bdev->bios_event, (atomic_read(&bdev->num_bios_pending) == 0));
+	wait_event_timeout(timeout, bdev->bios_event, (atomic_read(&bdev->num_bios_pending) == 0), HZ*10);
 
+	if (timeout == 0) {
+		printk("Warning: Still %d bios and %d IRPs pending after 10 seconds\n");
+		msleep(1000);
+			/* probably BSODs here ... */
+	}
 	return 0;
 }
 
