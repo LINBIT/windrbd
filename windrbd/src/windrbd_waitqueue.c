@@ -139,12 +139,15 @@ LONG_PTR schedule_timeout_uninterruptible_debug(LONG_PTR timeout, const char *fi
 	 * (2) unique.
 	 */
 
+static spinlock_t big_wakeup_lock;
+
 void prepare_to_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, int interruptible, const char *file, int line, const char *func)
 {
-	KIRQL flags;
+	KIRQL flags, flags2;
 	struct task_struct *thread = current;
 
 	spin_lock_irqsave(&w->lock, flags);
+	spin_lock_irqsave(&big_wakeup_lock, flags2);
 	thread->interruptible = interruptible;
 	thread->wait_queue = w;
 	thread->wait_queue_entry = e;
@@ -155,15 +158,17 @@ printk("2\n");
 		list_add(&e->entry, &w->head);
 	}
 printk("3\n");
+	spin_unlock_irqrestore(&big_wakeup_lock, flags2);
 	spin_unlock_irqrestore(&w->lock, flags);
 }
 
 void finish_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, const char *file, int line, const char *func)
 {
-	KIRQL flags;
+	KIRQL flags, flags2;
 	struct task_struct *thread = current;
 
 	spin_lock_irqsave(&w->lock, flags);
+	spin_lock_irqsave(&big_wakeup_lock, flags2);
 
 	thread->wait_queue = NULL;
 	thread->wait_queue_entry = NULL;
@@ -175,19 +180,18 @@ printk("2\n");
 		INIT_LIST_HEAD(&e->entry);
 	}
 printk("3\n");
+	spin_unlock_irqrestore(&big_wakeup_lock, flags2);
 	spin_unlock_irqrestore(&w->lock, flags);
 }
-
-static spinlock_t big_wakeup_lock;
 
 void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {
 	KIRQL flags, flags2;
 	struct wait_queue_entry *e, *e2;
 
-printk("wake_up_all %p %s:%d (%s())\n", q, file, line, func);
 	spin_lock_irqsave(&q->lock, flags);
 	spin_lock_irqsave(&big_wakeup_lock, flags2);
+printk("wake_up_all %p %s:%d (%s())\n", q, file, line, func);
 	if (list_empty(&q->head)) {
 printk("Warning: attempt to wake up all with no one waiting (%s:%d %s()) queue is %p.\n", file, line, func, q);
 		goto unlock_and_out;
