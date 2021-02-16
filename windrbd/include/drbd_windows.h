@@ -61,7 +61,7 @@ enum update_sync_bits_mode;
 #pragma warning (disable : 4100 4146 4221)
 
 	/* TODO: This appears very dangerous to me ... */
-#define drbd_conf drbd_device
+// #define drbd_conf drbd_device
 
 #define __GFP_HIGHMEM           (0x02u)
 #define __GFP_ZERO              (0x8000u) 
