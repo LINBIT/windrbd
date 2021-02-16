@@ -1579,9 +1579,15 @@ int wait_for_bios_to_complete(struct block_device *bdev)
 	}
 printk("1\n");
 printk("bdev->bios_event is %p\n", &bdev->bios_event);
-	wait_event_timeout(timeout, bdev->bios_event, (atomic_read(&bdev->num_bios_pending) == 0), HZ*10);
+//	wait_event_timeout(timeout, bdev->bios_event, (atomic_read(&bdev->num_bios_pending) == 0), HZ*10);
 
-printk("2\n");
+	for (timeout=1000;timeout>0;timeout--) {
+		if (atomic_read(&bdev->num_bios_pending) == 0)
+			break;
+		msleep(10);
+	}
+
+printk("2 timeout is %d\n", timeout);
 	if (timeout == 0) {
 		printk("Warning: Still %d bios and %d IRPs pending after 10 seconds\n");
 		msleep(1000);
