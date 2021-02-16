@@ -2296,6 +2296,9 @@ printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (
 #endif
 
 	atomic_inc(&bio->bi_bdev->num_bios_pending);
+
+printk("num_bios_pending now %d\n", atomic_read(&bio->bi_bdev->num_bios_pending));
+
 // printk("bio is %p\n", bio);
 	bio_get(bio);
 
