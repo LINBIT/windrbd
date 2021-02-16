@@ -29,8 +29,11 @@ static __inline void init_waitqueue_head(wait_queue_head_t *q)
 	};							\
 	KeInitializeEvent(&(name).windows_event, SynchronizationEvent, FALSE);
 
-void prepare_to_wait(struct wait_queue_head *w, struct wait_queue_entry *e, int interruptible);
-void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e);
+void prepare_to_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, int interruptible, const char *file, int line, const char *func);
+void finish_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, const char *file, int line, const char *func);
+
+#define prepare_to_wait(w, e, i) prepare_to_wait_debug(w, e, i, __FILE__, __LINE__, __func__)
+#define finish_wait(w, e) finish_wait_debug(w, e, __FILE__, __LINE__, __func__)
 
 void schedule_debug(const char *file, int line, const char *func);
 /* Returns -EINTR on signal else remaining time. */

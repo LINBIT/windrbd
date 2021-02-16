@@ -139,7 +139,7 @@ LONG_PTR schedule_timeout_uninterruptible_debug(LONG_PTR timeout, const char *fi
 	 * (2) unique.
 	 */
 
-void prepare_to_wait(struct wait_queue_head *w, struct wait_queue_entry *e, int interruptible)
+void prepare_to_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, int interruptible, const char *file, int line, const char *func)
 {
 	KIRQL flags;
 	struct task_struct *thread = current;
@@ -149,7 +149,7 @@ void prepare_to_wait(struct wait_queue_head *w, struct wait_queue_entry *e, int 
 	thread->wait_queue = w;
 	thread->wait_queue_entry = e;
 
-printk("1 w is %p entry is %p\n", w, e);
+printk("1 w is %p entry is %p called from %s:%d(%s)\n", w, e, file, line, func);
 	if (list_empty(&e->entry)) {
 printk("2\n");
 		list_add(&e->entry, &w->head);
@@ -158,7 +158,7 @@ printk("3\n");
 	spin_unlock_irqrestore(&w->lock, flags);
 }
 
-void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e)
+void finish_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, const char *file, int line, const char *func)
 {
 	KIRQL flags;
 	struct task_struct *thread = current;
@@ -168,7 +168,7 @@ void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e)
 	thread->wait_queue = NULL;
 	thread->wait_queue_entry = NULL;
 
-printk("1 w is %p entry is %p\n", w, e);
+printk("1 w is %p entry is %p called from %s:%d(%s)\n", w, e, file, line, func);
 	if (!list_empty(&e->entry)) {
 printk("2\n");
 		list_del(&e->entry);
