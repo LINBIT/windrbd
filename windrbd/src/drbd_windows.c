@@ -1578,6 +1578,7 @@ int wait_for_bios_to_complete(struct block_device *bdev)
 		printk("%d IRPs pending before wait_event\n", atomic_read(&bdev->num_irps_pending));
 	}
 printk("1\n");
+printk("bdev->bios_event is %p\n", &bdev->bios_event);
 	wait_event_timeout(timeout, bdev->bios_event, (atomic_read(&bdev->num_bios_pending) == 0), HZ*10);
 
 printk("2\n");
@@ -2405,6 +2406,8 @@ void bio_endio(struct bio *bio)
 
 	bio_get(bio);
 
+
+printk("1\n");
 	if (bio->bi_end_io != NULL) {
 		if (error != 0)
 			printk("Warning: thread(%s) bio_endio error with err=%d.\n", current->comm, error);
@@ -2413,9 +2416,13 @@ void bio_endio(struct bio *bio)
 	} else
 		printk("Warning: thread(%s) bio(%p) no bi_end_io function.\n", current->comm, bio);
 
+printk("2\n");
 	atomic_dec(&bio->bi_bdev->num_bios_pending);
-	if (atomic_read(&bio->bi_bdev->num_bios_pending) == 0)
+	if (atomic_read(&bio->bi_bdev->num_bios_pending) == 0) {
+printk("into wake_up %p\n", &bio->bi_bdev->bios_event);
 		wake_up(&bio->bi_bdev->bios_event);
+	}
+printk("3\n");
 
 	bio_put(bio);
 }
