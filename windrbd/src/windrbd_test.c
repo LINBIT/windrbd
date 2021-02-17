@@ -945,13 +945,16 @@ printk("threads completed now waiting for workqueue.\n");
 	kfree(params);
 }
 
-enum wq_test { WQ_NO_WAIT, WQ_SIMPLE, WQ_FAST, WQ_NO_SLEEP, WQ_LOOP, WQ_LAST };
+enum wq_test { WQ_NO_WAIT, WQ_SIMPLE, WQ_FAST, WQ_NO_SLEEP, WQ_LOOP, WQ_LOOP_NO_SLEEP, WQ_LAST };
 static char *wq_test_str[WQ_LAST] = {
-	"no-wait", "simple", "fast", "no-sleep", "loop"
+	"no-wait", "simple", "fast", "no-sleep", "loop", "loop-no-sleep"
 };
 
 static int cond = 0;
 static atomic_t num_wakers_running = { 0 };
+
+static enum wq_test wt;
+static wait_queue_head_t wq;
 
 struct wq_test_params {
 	wait_queue_head_t *wq;
@@ -968,11 +971,12 @@ static int waker_task(void *wqparam)
 
 	switch (wt) {
 	case WQ_SIMPLE: msec = 1000; break;
-	case WQ_FAST: msec = 10; break; 
-	case WQ_LOOP: 
+	case WQ_FAST: 
+	case WQ_LOOP: msec = 10; break; 
+	case WQ_LOOP_NO_SLEEP:
 	case WQ_NO_SLEEP: msec = 0; break;
 	}
-	if (wt == WQ_LOOP)
+	if (wt == WQ_LOOP || wt == WQ_LOOP_NO_SLEEP)
 		loop_cnt = 1000;
 
 printk("waker started\n");
@@ -993,15 +997,41 @@ printk("waker end\n");
 	return 0;
 }
 
+static int waiter_task(void *wqparam)
+{
+	struct wq_test_params *p = wqparam;
+	wait_queue_head_t *wq = p->wq;
+	enum wq_test wt = p->wt;
+	int msec = 0;
+	int loop_cnt = 1;
+
+	if (wt == WQ_LOOP || wt == WQ_LOOP_NO_SLEEP)
+		loop_cnt = 1000;
+
+	for (;loop_cnt>0;loop_cnt--) {
+		cond = 0;
+		if (wt == WQ_NO_WAIT)
+			cond = 1;
+
+printk("into wait_event ... loop_cnt is %d\n", loop_cnt);
+		wait_event(*wq, cond);
+		if (atomic_read(&num_wakers_running) == 0) {
+			printk("no more wakers, exiting waiter\n");
+			break;
+		}
+printk("out of wait_event cond is %d loop_cnt is %d\n", cond, loop_cnt);
+	}
+	return 0;
+}
+
 static void wait_event_test(int argc, const char ** argv)
 {
-	enum wq_test wt;
-	wait_queue_head_t wq;
 	struct wq_test_params p;
 	int i, t;
 	int len;
 	int loop_cnt = 1;
 	int num_wakers = 10;	 /* TODO: make this a param */
+	int num_waiters = 10;	 /* TODO: make this a param */
 
 	if (argc < 2)
 		goto usage;
@@ -1028,24 +1058,15 @@ static void wait_event_test(int argc, const char ** argv)
 printk("thread is %p t is %d\n", k, t);
 			wake_up_process(k);
 		}
-	}
+		for (t=0;t<num_waiters;t++) {
+			struct task_struct *k;
 
-	if (wt == WQ_LOOP)
-		loop_cnt = 1000;
-
-	for (;loop_cnt>0;loop_cnt--) {
-		cond = 0;
-		if (wt == WQ_NO_WAIT)
-			cond = 1;
-
-printk("into wait_event ... loop_cnt is %d\n", loop_cnt);
-		wait_event(wq, cond);
-		if (atomic_read(&num_wakers_running) == 0) {
-			printk("no more wakers, exiting waiter\n");
-			break;
+			k = kthread_create(waiter_task, &p, "waiter%d", t);
+printk("thread is %p t is %d\n", k, t);
+			wake_up_process(k);
 		}
-printk("out of wait_event cond is %d loop_cnt is %d\n", cond, loop_cnt);
 	}
+
 printk("exiting waiter\n");
 
 	return;
