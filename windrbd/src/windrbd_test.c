@@ -955,6 +955,8 @@ static atomic_t num_wakers_running = { 0 };
 
 static enum wq_test wt;
 static wait_queue_head_t wq;
+static int waker_loops = 1000;
+static int waiter_loops = 1000;
 
 static int waker_task(void *unused)
 {
@@ -969,7 +971,7 @@ static int waker_task(void *unused)
 	case WQ_NO_SLEEP: msec = 0; break;
 	}
 	if (wt == WQ_LOOP || wt == WQ_LOOP_NO_SLEEP)
-		loop_cnt = 1000;
+		loop_cnt = waker_loops;
 
 printk("waker started\n");
 	for (;loop_cnt>0;--loop_cnt) {
@@ -995,7 +997,7 @@ static int waiter_task(void *unused)
 	int loop_cnt = 1;
 
 	if (wt == WQ_LOOP || wt == WQ_LOOP_NO_SLEEP)
-		loop_cnt = 1000;
+		loop_cnt = waiter_loops;
 
 	for (;loop_cnt>0;loop_cnt--) {
 		cond = 0;
@@ -1017,11 +1019,10 @@ static void wait_event_test(int argc, const char ** argv)
 {
 	int i, t;
 	int len;
-	int loop_cnt = 1;
-	int num_wakers = 10;	 /* TODO: make this a param */
-	int num_waiters = 10;	 /* TODO: make this a param */
+	int num_wakers;
+	int num_waiters;
 
-	if (argc < 2)
+	if (argc != 6)
 		goto usage;
 
 	i=1;
@@ -1033,6 +1034,11 @@ static void wait_event_test(int argc, const char ** argv)
 	}
 	if (wt == WQ_LAST) 
 		goto usage;
+
+	num_wakers = my_atoi(argv[2]);
+	num_waiters = my_atoi(argv[3]);
+	waker_loops = my_atoi(argv[4]);
+	waiter_loops = my_atoi(argv[5]);
 
 	init_waitqueue_head(&wq);
 	if (wt != WQ_NO_WAIT) {
@@ -1057,7 +1063,7 @@ printk("exiting waiter\n");
 
 	return;
 usage:
-	printk("usage: wait_event_test <no-wait|simple|fast|no-sleep|loop>\n");
+	printk("usage: wait_event_test <no-wait|simple|fast|no-sleep|loop> <num-wakers> <num-waiters> <waker-loops> <waiter-loops>\n");
 }
 
 void argv_test(int argc, char ** argv)
