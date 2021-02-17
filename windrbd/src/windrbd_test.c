@@ -956,16 +956,8 @@ static atomic_t num_wakers_running = { 0 };
 static enum wq_test wt;
 static wait_queue_head_t wq;
 
-struct wq_test_params {
-	wait_queue_head_t *wq;
-	enum wq_test wt;
-};
-
-static int waker_task(void *wqparam)
+static int waker_task(void *unused)
 {
-	struct wq_test_params *p = wqparam;
-	wait_queue_head_t *wq = p->wq;
-	enum wq_test wt = p->wt;
 	int msec = 0;
 	int loop_cnt = 1;
 
@@ -985,23 +977,20 @@ printk("waker started\n");
 			msleep(msec);
 printk("waking up #1 (loop_cnt is %d)\n", loop_cnt);
 		cond = 0;
-		wake_up(wq);
+		wake_up(&wq);
 		if (msec > 0)
 			msleep(msec);
 printk("waking up #2 (with cond true) (loop_cnt is %d)\n", loop_cnt);
 		cond = 1;
-		wake_up(wq);
+		wake_up(&wq);
 	}
 printk("waker end\n");
 	atomic_dec(&num_wakers_running);
 	return 0;
 }
 
-static int waiter_task(void *wqparam)
+static int waiter_task(void *unused)
 {
-	struct wq_test_params *p = wqparam;
-	wait_queue_head_t *wq = p->wq;
-	enum wq_test wt = p->wt;
 	int msec = 0;
 	int loop_cnt = 1;
 
@@ -1014,7 +1003,7 @@ static int waiter_task(void *wqparam)
 			cond = 1;
 
 printk("into wait_event ... loop_cnt is %d\n", loop_cnt);
-		wait_event(*wq, cond);
+		wait_event(wq, cond);
 		if (atomic_read(&num_wakers_running) == 0) {
 			printk("no more wakers, exiting waiter\n");
 			break;
@@ -1026,7 +1015,6 @@ printk("out of wait_event cond is %d loop_cnt is %d\n", cond, loop_cnt);
 
 static void wait_event_test(int argc, const char ** argv)
 {
-	struct wq_test_params p;
 	int i, t;
 	int len;
 	int loop_cnt = 1;
@@ -1048,20 +1036,18 @@ static void wait_event_test(int argc, const char ** argv)
 
 	init_waitqueue_head(&wq);
 	if (wt != WQ_NO_WAIT) {
-		p.wt = wt;
-		p.wq = &wq;
 		for (t=0;t<num_wakers;t++) {
 			struct task_struct *k;
 
 			atomic_inc(&num_wakers_running);
-			k = kthread_create(waker_task, &p, "waker%d", t);
+			k = kthread_create(waker_task, NULL, "waker%d", t);
 printk("thread is %p t is %d\n", k, t);
 			wake_up_process(k);
 		}
 		for (t=0;t<num_waiters;t++) {
 			struct task_struct *k;
 
-			k = kthread_create(waiter_task, &p, "waiter%d", t);
+			k = kthread_create(waiter_task, NULL, "waiter%d", t);
 printk("thread is %p t is %d\n", k, t);
 			wake_up_process(k);
 		}
