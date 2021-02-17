@@ -945,9 +945,9 @@ printk("threads completed now waiting for workqueue.\n");
 	kfree(params);
 }
 
-enum wq_test { WQ_NO_WAIT, WQ_SIMPLE, WQ_FAST, WQ_NO_SLEEP, WQ_LAST };
+enum wq_test { WQ_NO_WAIT, WQ_SIMPLE, WQ_FAST, WQ_NO_SLEEP, WQ_LOOP, WQ_LAST };
 static char *wq_test_str[WQ_LAST] = {
-	"no-wait", "simple", "fast", "no-sleep"
+	"no-wait", "simple", "fast", "no-sleep", "loop"
 };
 
 static int cond = 0;
@@ -963,23 +963,30 @@ static int waker_task(void *wqparam)
 	wait_queue_head_t *wq = p->wq;
 	enum wq_test wt = p->wt;
 	int msec = 0;
+	int loop_cnt = 1;
 
 	switch (wt) {
 	case WQ_SIMPLE: msec = 1000; break;
-	case WQ_FAST: msec = 10; break;
+	case WQ_FAST: msec = 10; break; 
+	case WQ_LOOP: 
 	case WQ_NO_SLEEP: msec = 0; break;
 	}
+	if (wt == WQ_LOOP)
+		loop_cnt = 1000;
 
 printk("waker started\n");
-	if (msec > 0)
-		msleep(msec);
+	for (;loop_cnt>0;--loop_cnt) {
+		if (msec > 0)
+			msleep(msec);
 printk("waking up #1\n");
-	wake_up(wq);
-	if (msec > 0)
-		msleep(msec);
+		cond = 0;
+		wake_up(wq);
+		if (msec > 0)
+			msleep(msec);
 printk("waking up #2 (with cond true)\n");
-	cond = 1;
-	wake_up(wq);
+		cond = 1;
+		wake_up(wq);
+	}
 printk("waker end\n");
 	return 0;
 }
@@ -991,6 +998,7 @@ static void wait_event_test(int argc, const char ** argv)
 	struct wq_test_params p;
 	int i;
 	int len;
+	int loop_cnt = 1;
 
 	if (argc < 2)
 		goto usage;
@@ -1012,17 +1020,22 @@ static void wait_event_test(int argc, const char ** argv)
 		kthread_run(waker_task, &p, "waker");
 	}
 
-	cond = 0;
-	if (wt == WQ_NO_WAIT)
-		cond = 1;
+	if (wt == WQ_LOOP)
+		loop_cnt = 1000;
+
+	for (;loop_cnt>0;loop_cnt--) {
+		cond = 0;
+		if (wt == WQ_NO_WAIT)
+			cond = 1;
 
 printk("into wait_event ...\n");
-	wait_event(wq, cond);
+		wait_event(wq, cond);
 printk("out of wait_event cond is %d\n", cond);
+	}
 
 	return;
 usage:
-	printk("usage: wait_event_test <no-wait|simple|fast|no-sleep>\n");
+	printk("usage: wait_event_test <no-wait|simple|fast|no-sleep|loop>\n");
 }
 
 void argv_test(int argc, char ** argv)
