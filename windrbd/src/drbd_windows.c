@@ -1613,7 +1613,7 @@ NTSTATUS DrbdIoCompletion(
 	NTSTATUS status = Irp->IoStatus.Status;
 	KIRQL flags;
 
-// printk("completing bio %p\n", bio);
+printk("completing bio %p\n", bio);
 
 	if (bio->master_bio != NULL) {
 		if (atomic_dec_return(&bio->master_bio->num_slave_bios) <= 0) {
@@ -1680,7 +1680,7 @@ NTSTATUS DrbdIoCompletion(
 			int bi_status = win_status_to_blk_status(status);
 			if (master_bio || bi_status != 0) {
 				bio->master_bio->bi_status = bi_status;
-// printk("into bio_endio master_bio is %p\n", master_bio);
+printk("into bio_endio master_bio is %p bi_status is %d status is %d\n", master_bio, bi_status, status);
 				bio_endio(bio->master_bio);
 			}
 				/* Else there are more bios .. wait until
