@@ -95,7 +95,7 @@ void schedule_debug(const char *file, int line, const char *func)
 	ll_wait(current->wait_queue_entry, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
 }
 
-static LONG_PTR ll_schedule_debug(LONG_PTR timeout, int return_error, int interruptible, const char *file, int line, const char *func)
+LONG_PTR ll_schedule_debug(LONG_PTR timeout, int return_error, int interruptible, const char *file, int line, const char *func)
 {
 	LONG_PTR then = jiffies;
 	LONG_PTR elapsed;
