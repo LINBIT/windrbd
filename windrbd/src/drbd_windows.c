@@ -1687,10 +1687,10 @@ printk("into bio_endio master_bio is %p bi_status is %d status is %d\n", master_
 				 * they are processed. */
 		} else {
 			bio->bi_status = win_status_to_blk_status(status);
-// printk("into bio_endio bio is %p\n", bio);
+printk("into bio_endio bio is %p bi_status is %d status is %d\n", bio, bio->bi_status, status);
 			bio_endio(bio);
 		}
-// printk("out of bio_endio bio is %p\n", bio);
+printk("out of bio_endio bio is %p\n", bio);
 			/* TODO: to bio_free() */
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
