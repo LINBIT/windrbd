@@ -988,6 +988,8 @@ printk("waking up #2 (with cond true) (loop_cnt is %d)\n", loop_cnt);
 	}
 printk("waker end\n");
 	atomic_dec(&num_wakers_running);
+	wake_up(&wq);
+
 	return 0;
 }
 
@@ -1005,7 +1007,7 @@ static int waiter_task(void *unused)
 			cond = 1;
 
 printk("into wait_event ... loop_cnt is %d\n", loop_cnt);
-		wait_event(wq, cond);
+		wait_event(wq, cond || atomic_read(&num_wakers_running) == 0);
 		if (atomic_read(&num_wakers_running) == 0) {
 			printk("no more wakers, exiting waiter\n");
 			break;
