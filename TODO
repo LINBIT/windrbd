@@ -70,6 +70,11 @@ Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_
 
 	but this is probably unrelated (see Network loss bug?)
 
+	Update: we now fixed wait_event (was always interruptible
+	and sometimes got interrupted returning -EINTR. Original
+	Linux wait_event is not interuptible) Now it is better
+	but sometimes (after 50 iterations) it still hangs ...
+
 TODO: Bug: Data coherence error when simple write cache is enabled.
 
 	It probably is better not to support this because it doesn't
