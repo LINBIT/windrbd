@@ -977,11 +977,13 @@ printk("waker started\n");
 	for (;loop_cnt>0;--loop_cnt) {
 		if (msec > 0)
 			msleep(msec);
+#if 0
 printk("waking up #1 (loop_cnt is %d)\n", loop_cnt);
 		cond = 0;
 		wake_up(&wq);
 		if (msec > 0)
 			msleep(msec);
+#endif
 printk("waking up #2 (with cond true) (loop_cnt is %d)\n", loop_cnt);
 		cond = 1;
 		wake_up(&wq);
@@ -1012,6 +1014,7 @@ printk("into wait_event ... loop_cnt is %d\n", loop_cnt);
 			printk("no more wakers, exiting waiter\n");
 			break;
 		}
+		cond = 0;
 printk("out of wait_event cond is %d loop_cnt is %d\n", cond, loop_cnt);
 	}
 	return 0;
