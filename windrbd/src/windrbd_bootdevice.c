@@ -547,11 +547,11 @@ printk("MmProbeAndLockPages failed with exception i is %x.\n", i);
 				 * Our parameters are on mappable
 				 * pages, so ignore them.
 				 */
-printk("mmap(%x, 0x1000, ..) failed\n", i);
+// printk("mmap(%x, 0x1000, ..) failed\n", i);
 			memset(buf+i, 0, 0x1000);
 			failed++;
 		} else {
-printk("mmap(%x, 0x1000, ..) succeeded\n", i);
+// printk("mmap(%x, 0x1000, ..) succeeded\n", i);
 			memcpy(buf+i, p, 0x1000);
 			MmUnmapIoSpace(p, 0x1000);
 		}
