@@ -955,6 +955,7 @@ static atomic_t num_wakers_running = { 0 };
 
 static enum wq_test wt;
 static wait_queue_head_t wq;
+static wait_queue_head_t wq2;
 static int waker_loops = 1000;
 static int waiter_loops = 1000;
 
@@ -987,6 +988,8 @@ printk("waking up #1 (loop_cnt is %d)\n", loop_cnt);
 printk("waking up #2 (with cond true) (loop_cnt is %d)\n", loop_cnt);
 		cond = 1;
 		wake_up(&wq);
+printk("waiting for waiter ...\n");
+		wait_event(wq2, !cond);
 	}
 printk("waker end\n");
 	atomic_dec(&num_wakers_running);
@@ -1015,6 +1018,7 @@ printk("into wait_event ... loop_cnt is %d\n", loop_cnt);
 			break;
 		}
 		cond = 0;
+		wake_up(&wq2);
 printk("out of wait_event cond is %d loop_cnt is %d\n", cond, loop_cnt);
 	}
 	return 0;
@@ -1046,6 +1050,7 @@ static void wait_event_test(int argc, const char ** argv)
 	waiter_loops = my_atoi(argv[5]);
 
 	init_waitqueue_head(&wq);
+	init_waitqueue_head(&wq2);
 	if (wt != WQ_NO_WAIT) {
 		for (t=0;t<num_wakers;t++) {
 			struct task_struct *k;
