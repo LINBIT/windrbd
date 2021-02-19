@@ -981,8 +981,9 @@ ULONG_PTR wait_for_completion_timeout_debug(struct completion *completion, ULONG
 
 printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
 printk("into wait_event %p ...\n", completion);
-		/* TODO: interruptible? Really? */
-	wait_event_interruptible_timeout(ret, completion->wait, completion->completed, timeout);
+		/*  Not interruptible. When this is interruptible BSODs
+		 *  on disonnect may happen. */
+	wait_event_timeout(ret, completion->wait, completion->completed, timeout);
 printk("out of wait_event %p ret is %d...\n", completion, ret);
 
 	return ret;
