@@ -84,6 +84,8 @@ Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_
 		   handler) this hang is less common.
 		   Update: hangs in one_flush_endio
 
+TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
+
 TODO: Bug: Data coherence error when simple write cache is enabled.
 
 	It probably is better not to support this because it doesn't
