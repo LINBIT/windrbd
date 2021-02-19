@@ -167,6 +167,11 @@ static void windrbd_thread_setup(void *targ)
 		printk(KERN_WARNING "Thread %s returned non-zero exit status. Ignored, since Windows threads are void.\n", t->comm);
 
 printk("thread %p exiting\n", t);
+if (t->wait_queue != NULL)
+printk("Warning: thread exiting with still wait_queue on it (%p).\n", t->wait_queue);
+if (t->wait_queue_entry != NULL)
+printk("Warning: thread exiting with still wait_queue_entry on it (%p).\n", t->wait_queue_entry);
+
 	t->is_zombie = 1;
 }
 
