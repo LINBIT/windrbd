@@ -1570,32 +1570,24 @@ int windrbd_inject_faults(int after, enum fault_injection_location where, struct
 	return -1;
 }
 
+	/* TODO: is this still needed now that we fixed the interruptible
+	 * wait_event issues? That would save a patch in drbd_receiver.c
+	 */
+
 int wait_for_bios_to_complete(struct block_device *bdev)
 {
 	int timeout;
 
 	if (atomic_read(&bdev->num_bios_pending) > 0) {
-/* TODO: dbg */
-		printk("%d bios pending before wait_event\n", atomic_read(&bdev->num_bios_pending));
-		printk("%d IRPs pending before wait_event\n", atomic_read(&bdev->num_irps_pending));
+		dbg("%d bios pending before wait_event\n", atomic_read(&bdev->num_bios_pending));
+		dbg("%d IRPs pending before wait_event\n", atomic_read(&bdev->num_irps_pending));
 	}
-printk("1\n");
-printk("bdev->bios_event is %p\n", &bdev->bios_event);
-//	wait_event_timeout(timeout, bdev->bios_event, (atomic_read(&bdev->num_bios_pending) == 0), HZ*10);
-
-	for (timeout=1000;timeout>0;timeout--) {
-		if (atomic_read(&bdev->num_bios_pending) == 0)
-			break;
-		msleep(10);
-	}
-
-printk("2 timeout is %d\n", timeout);
+	wait_event_timeout(timeout, bdev->bios_event, (atomic_read(&bdev->num_bios_pending) == 0), HZ*10);
 	if (timeout == 0) {
 		printk("Warning: Still %d bios and %d IRPs pending after 10 seconds\n");
 		msleep(1000);
 			/* probably BSODs here ... */
 	}
-printk("3\n");
 	return 0;
 }
 
