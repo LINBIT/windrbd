@@ -979,10 +979,11 @@ ULONG_PTR wait_for_completion_timeout_debug(struct completion *completion, ULONG
 {
 	ULONG_PTR ret;
 
-// printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
-// printk("into wait_event %p ...\n", completion);
+printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
+printk("into wait_event %p ...\n", completion);
+		/* TODO: interruptible? Really? */
 	wait_event_interruptible_timeout(ret, completion->wait, completion->completed, timeout);
-// printk("out of wait_event %p ...\n", completion);
+printk("out of wait_event %p ret is %d...\n", completion, ret);
 
 	return ret;
 }
