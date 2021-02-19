@@ -979,12 +979,12 @@ ULONG_PTR wait_for_completion_timeout_debug(struct completion *completion, ULONG
 {
 	ULONG_PTR ret;
 
-printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
-printk("into wait_event %p ...\n", completion);
+// printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
+// printk("into wait_event %p ...\n", completion);
 		/*  Not interruptible. When this is interruptible BSODs
 		 *  on disonnect may happen. */
 	wait_event_timeout(ret, completion->wait, completion->completed, timeout);
-printk("out of wait_event %p ret is %d...\n", completion, ret);
+// printk("out of wait_event %p ret is %d...\n", completion, ret);
 
 	return ret;
 }
@@ -1607,7 +1607,7 @@ NTSTATUS DrbdIoCompletion(
 	NTSTATUS status = Irp->IoStatus.Status;
 	KIRQL flags;
 
-printk("completing bio %p\n", bio);
+// printk("completing bio %p\n", bio);
 
 	if (bio->master_bio != NULL) {
 		if (atomic_dec_return(&bio->master_bio->num_slave_bios) <= 0) {
@@ -1674,17 +1674,17 @@ printk("completing bio %p\n", bio);
 			int bi_status = win_status_to_blk_status(status);
 			if (master_bio || bi_status != 0) {
 				bio->master_bio->bi_status = bi_status;
-printk("into bio_endio master_bio is %p bi_status is %d status is %d\n", master_bio, bi_status, status);
+// printk("into bio_endio master_bio is %p bi_status is %d status is %d\n", master_bio, bi_status, status);
 				bio_endio(bio->master_bio);
 			}
 				/* Else there are more bios .. wait until
 				 * they are processed. */
 		} else {
 			bio->bi_status = win_status_to_blk_status(status);
-printk("into bio_endio bio is %p bi_status is %d status is %d\n", bio, bio->bi_status, status);
+// printk("into bio_endio bio is %p bi_status is %d status is %d\n", bio, bio->bi_status, status);
 			bio_endio(bio);
 		}
-printk("out of bio_endio bio is %p\n", bio);
+// printk("out of bio_endio bio is %p\n", bio);
 			/* TODO: to bio_free() */
 		if (bio->patched_bootsector_buffer)
 			kfree(bio->patched_bootsector_buffer);
@@ -2004,7 +2004,7 @@ skipped_bytes += total_size;
 skipped_bytes2 += total_size;
 if (skipped_bytes2 > 256*1024*1024) {
 skipped_bytes2 = 0;
-printk("%llu bytes (%llu MiB) skipped\n", skipped_bytes, skipped_bytes / (1024*1024));
+// printk("%llu bytes (%llu MiB) skipped\n", skipped_bytes, skipped_bytes / (1024*1024));
 }
 DrbdIoCompletion(NULL, bio->bi_irps[bio->bi_this_request], bio);
 return 0;
@@ -2290,7 +2290,7 @@ skipped_bytes += bio->bi_iter.bi_size;
 skipped_bytes2 += bio->bi_iter.bi_size;
 if (skipped_bytes2 > 256*1024*1024) {
 skipped_bytes2 = 0;
-printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (1024*1024));
+// printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (1024*1024));
 }
 		bio->bi_status = 0;
 		bio_endio(bio);
@@ -2301,7 +2301,7 @@ printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (
 
 	atomic_inc(&bio->bi_bdev->num_bios_pending);
 
-printk("num_bios_pending now %d\n", atomic_read(&bio->bi_bdev->num_bios_pending));
+// printk("num_bios_pending now %d\n", atomic_read(&bio->bi_bdev->num_bios_pending));
 
 // printk("bio is %p\n", bio);
 	bio_get(bio);
@@ -2410,7 +2410,7 @@ void bio_endio(struct bio *bio)
 	bio_get(bio);
 
 
-printk("1\n");
+// printk("1\n");
 	if (bio->bi_end_io != NULL) {
 		if (error != 0)
 			printk("Warning: thread(%s) bio_endio error with err=%d.\n", current->comm, error);
@@ -2419,13 +2419,13 @@ printk("1\n");
 	} else
 		printk("Warning: thread(%s) bio(%p) no bi_end_io function.\n", current->comm, bio);
 
-printk("2\n");
+// printk("2\n");
 	atomic_dec(&bio->bi_bdev->num_bios_pending);
 	if (atomic_read(&bio->bi_bdev->num_bios_pending) == 0) {
-printk("into wake_up %p\n", &bio->bi_bdev->bios_event);
+// printk("into wake_up %p\n", &bio->bi_bdev->bios_event);
 		wake_up(&bio->bi_bdev->bios_event);
 	}
-printk("3\n");
+// printk("3\n");
 
 	bio_put(bio);
 }
@@ -3309,25 +3309,25 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
 		LARGE_INTEGER eject_timeout;
 		NTSTATUS status;
-printk("Requesting eject of Windows device minor %d\n", bdev->drbd_device->minor);
+		dbg("Requesting eject of Windows device minor %d\n", bdev->drbd_device->minor);
 		IoRequestDeviceEject(bdev->windows_device);
-printk("Eject returned minor %d\n", bdev->drbd_device->minor);
+		dbg("Eject returned minor %d\n", bdev->drbd_device->minor);
 
 		eject_timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
 		status = KeWaitForSingleObject(&bdev->device_ejected_event, Executive, KernelMode, FALSE, &eject_timeout);
 		if (status == STATUS_TIMEOUT)
 			printk("Warning: no eject event after 10 seconds, giving up.\n");
 
-printk("Device ejected minor %d\n", bdev->drbd_device->minor);
+		dbg("Device ejected minor %d\n", bdev->drbd_device->minor);
 		if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
 			printk("PnP did not work, removing device manually.\n");
 			IoDeleteDevice(bdev->windows_device);
 		} else {
-printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE minor %d\n", bdev->drbd_device->minor);
+			dbg("waiting for device being removed via IRP_MN_REMOVE_DEVICE minor %d\n", bdev->drbd_device->minor);
 			KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
-printk("finished. minor %d\n", bdev->drbd_device->minor);
+			dbg("finished. minor %d\n", bdev->drbd_device->minor);
 		}
 	} else {
 		printk("Not a PnP object, removing device manually.\n");

@@ -566,7 +566,7 @@ void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const
 
 #ifdef SPIN_LOCK_DEBUG2
 
-printk("Warning: deprecated function spin_lock_irq_debug_new called by %s:%d %s()\n", file, line, func);
+//  printk("Warning: deprecated function spin_lock_irq_debug_new called by %s:%d %s()\n", file, line, func);
 
 		/* this introduces about 1000 more races, but is here just
 		 * for debugging purposes.
@@ -602,7 +602,7 @@ printk("Warning: deprecated function spin_lock_irq_debug_new called by %s:%d %s(
 void spin_unlock_irq(spinlock_t *lock)
 {
 #ifdef SPIN_LOCK_DEBUG2
-printk("Warning: deprecated function spin_lock_unirq_debug_new called\n");
+// printk("Warning: deprecated function spin_lock_unirq_debug_new called\n");
 
 	lock->locked_by_thread = NULL;
 	strncpy(lock->locked_by, "NONE", ARRAY_SIZE(lock->locked_by)-1);

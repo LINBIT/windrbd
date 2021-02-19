@@ -524,7 +524,7 @@ static char *copy_first_640k(void)
 #if 0
 		mdl = IoAllocateMdl((void*) i, PAGE_SIZE, FALSE, FALSE, NULL);
 		if (mdl == NULL) {
-printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
+// printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
 			memset(buf+i, 0, 0x1000);
 			failed++;
 			continue;
@@ -532,7 +532,7 @@ printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
 		try {
 			MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
 		} except(EXCEPTION_EXECUTE_HANDLER) {
-printk("MmProbeAndLockPages failed with exception i is %x.\n", i);
+// printk("MmProbeAndLockPages failed with exception i is %x.\n", i);
 			IoFreeMdl(mdl);
 			memset(buf+i, 0, 0x1000);
 			failed++;
