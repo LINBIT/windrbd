@@ -2040,6 +2040,9 @@ void read_simple_write_cache_config(void)
 	*) Optimize ... right now there is no speedup (or maybe 20% or so ...)
 	*) There is data corruption (data-coherence test after 8 iterations)
 
+	   Maybe abandon patch because of the above? Speed is now increased
+	   by a factor of 3 by the receiver cache (see windrbd_winsocket.c)
+
 Done:
 	*) (from phil) allow for disable (bypass) write cache.
 		Solved via registry which is the easiest way to do this.

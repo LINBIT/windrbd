@@ -207,7 +207,7 @@ void spin_lock_init(spinlock_t *lock)
 {
 	KeInitializeSpinLock(&lock->spinLock);
 	lock->printk_lock = 0;
-#if SPIN_LOCK_DEBUG2
+#ifdef SPIN_LOCK_DEBUG2
 	lock->locked_by_thread = NULL;
 	strncpy(lock->marker, "SPIN_LOCK123", ARRAY_SIZE(lock->marker)-1);
 	strncpy(lock->locked_by, "NONE", ARRAY_SIZE(lock->locked_by)-1);
