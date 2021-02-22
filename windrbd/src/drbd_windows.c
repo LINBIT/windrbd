@@ -2410,22 +2410,25 @@ void bio_endio(struct bio *bio)
 	bio_get(bio);
 
 
-// printk("1\n");
+printk("1\n");
 	if (bio->bi_end_io != NULL) {
 		if (error != 0)
 			printk("Warning: thread(%s) bio_endio error with err=%d.\n", current->comm, error);
 
+
+printk("into bi_end_io ...\n");
 		bio->bi_end_io(bio);
+printk("out of bi_end_io ...\n");
 	} else
 		printk("Warning: thread(%s) bio(%p) no bi_end_io function.\n", current->comm, bio);
 
-// printk("2\n");
+printk("2\n");
 	atomic_dec(&bio->bi_bdev->num_bios_pending);
 	if (atomic_read(&bio->bi_bdev->num_bios_pending) == 0) {
-// printk("into wake_up %p\n", &bio->bi_bdev->bios_event);
+printk("into wake_up %p\n", &bio->bi_bdev->bios_event);
 		wake_up(&bio->bi_bdev->bios_event);
 	}
-// printk("3\n");
+printk("3\n");
 
 	bio_put(bio);
 }
