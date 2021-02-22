@@ -105,7 +105,7 @@ void windrbd_reap_threads(void)
 	spin_lock_irqsave(&thread_list_lock, flags);
 	list_for_each_entry_safe(struct task_struct, t, tn, &thread_list, list) {
 		if (t->is_zombie) {
-printk("about to bury %p\n", t);
+// printk("about to bury %p\n", t);
 			list_del(&t->list);
 			list_add(&t->list, &dead_list);
 		}
@@ -114,7 +114,7 @@ printk("about to bury %p\n", t);
 
 	list_for_each_entry_safe(struct task_struct, t, tn, &dead_list, list) {
 		windrbd_cleanup_windows_thread(t->windows_thread);
-printk("Buried %s thread\n", t->comm);
+// printk("Buried %s thread\n", t->comm);
 
 		list_del(&t->list);
 		kfree(t);
