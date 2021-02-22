@@ -36,6 +36,11 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: Send buffer drains for about 30 seconds
+
+	Reported by Yannis. Connection should be closed even when
+	there is data in the send buffer.
+
 TODO: Bug: Network loss on Server 2016 (Secondary)
 
 	Maybe the same that Yannis also observes? After 3-4 days
