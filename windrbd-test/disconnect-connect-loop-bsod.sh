@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-RES=${RES:-windows-windows}
+RES=${RES:-w0}
 i=0
 while true
 do

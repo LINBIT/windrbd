@@ -93,7 +93,8 @@ Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_
 	bug. Fixes BSOD in conn_disconnect (most likely) but not the
 	system hang in one_flush_endio.
 
-TODO: Test: Network outage and remote disconnect (see comment in windrbd_winsocket.c)
+	Update: freezes after about 500 (sometimes 600) disconnect
+	cycles, last log line is terminating receiver thread ...
 
 TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
 
@@ -7061,4 +7062,10 @@ Done: Bug: BSOD in wsk_incoming_connection
 	and Primary (Windows) doing I/O. After 50-100 iterations or so...
 
 	Can't reproduce at the moment.
+
+Done: Test: Network outage and remote disconnect (see comment in windrbd_winsocket.c)
+
+	Network outage (via iptables) test succeeded (50 iterations), now
+	disconnect.
+	Disconnect also works (132 iterations).
 
