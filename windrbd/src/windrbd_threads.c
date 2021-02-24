@@ -175,7 +175,7 @@ static void windrbd_thread_setup(void *targ)
 	if (KeGetCurrentIrql() > PASSIVE_LEVEL)
 		printk("Warning: IRQL is %d when exiting thread. System will posibly lockup.\n", KeGetCurrentIrql());
 
-printk("exiting %p...\n", t);
+// printk("exiting %p...\n", t);
 	t->is_zombie = 1;
 }
 
