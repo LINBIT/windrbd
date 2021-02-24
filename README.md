@@ -376,3 +376,5 @@ Version history
  * 1.0.0-rc8 (Nov 6, 2020): Fixed many lockups, fixed 2TB limit
  * 1.0.0-rc9 (Dec 11, 2020): Optimized SyncTarget, many fixes when becoming
 			     secondary and fixed BSOD on disconnect while sync
+ * 1.0.0-rc10 (Feb 24, 2021): Optimized secondary writes, fixed wait_event and
+                              completions (they should be non-interruptible)
