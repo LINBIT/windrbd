@@ -30,6 +30,8 @@
 #include "drbd_wingenl.h"
 #include "drbd_int.h"
 
+static PUNICODE_STRING the_registry_path;
+
 static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG *pReturnLength, UCHAR *pucReturnBuffer, size_t buflen, PUNICODE_STRING pRegistryPath)
 {
     HANDLE hKey;
@@ -67,9 +69,10 @@ static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG *pReturnLength, UCH
     status = ZwQueryValueKey(hKey, &valueName, KeyValuePartialInformation, pstKeyInfo, ulLength, &ulLength);
     if (NT_SUCCESS(status))
     {
-        if (ulLength >= buflen)
+        if (pstKeyInfo->DataLength > buflen) {
+            printk("On getting %S: buffer to small need %d bytes got %d bytes\n", valueName.Buffer, pstKeyInfo->DataLength, buflen);
             status = STATUS_BUFFER_TOO_SMALL;
-        else
+	} else
             RtlCopyMemory(pucReturnBuffer, pstKeyInfo->Data, pstKeyInfo->DataLength);
 
         *pReturnLength = pstKeyInfo->DataLength;
@@ -87,6 +90,16 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	NTSTATUS status;
 	char syslog_ip[255];
 
+		/* TODO: dealloc this on driver unload ... */
+	the_registry_path = kmalloc(sizeof(*the_registry_path), 0, 'DRBD');
+	if (the_registry_path == NULL) {
+		printk("Warning: Cannot alloc the_registry_path\n");
+	} else {
+		the_registry_path->MaximumLength = RegPath_unicode->Length+2;
+		the_registry_path->Buffer = kmalloc(sizeof(WCHAR) * (the_registry_path->MaximumLength), 0, 'DRBD');
+		RtlCopyUnicodeString(the_registry_path, RegPath_unicode);
+	}
+
 	ip_length = 0;
 
 	status = GetRegistryValue(L"syslog_ip", &ulLength, (UCHAR*)&aucTemp, sizeof(aucTemp), RegPath_unicode);
@@ -102,6 +115,25 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	printk("syslog_ip from registry is %s", syslog_ip);
 
 	return 0;
+}
+
+NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default)
+{
+	unsigned long len;
+	NTSTATUS status;
+
+	if (the_registry_path != NULL && the_registry_path->Buffer != NULL && val_p != NULL) {
+		status = GetRegistryValue(key, &len, (UCHAR*) val_p, sizeof(*val_p), the_registry_path);
+		if (len != sizeof(*val_p))
+			status = STATUS_UNSUCCESSFUL;
+	}
+	else
+		status = STATUS_UNSUCCESSFUL;
+
+	if (status != STATUS_SUCCESS && val_p != NULL)
+		*val_p = the_default;
+
+	return status;
 }
 
 /* TODO: move somewhere else */

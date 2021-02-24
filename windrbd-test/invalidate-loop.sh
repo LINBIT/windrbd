@@ -1,17 +1,17 @@
 #!/bin/bash
 
+RES=w2
 i=0
 while true
 do
 	i=$[ $i+1 ]
 	echo Invalidate $i
-	drbdadm invalidate w0
-	drbdsetup --statistics status
-	sleep 3
-	drbdsetup --statistics status
-	sleep 10
-	drbdadm wait-sync w0
-	drbdsetup --statistics status
-	sleep 20
-	drbdsetup --statistics status
+	drbdadm invalidate $RES
+	drbdsetup --statistics status $RES
+	sleep 5
+	drbdsetup --statistics status $RES
+#	time drbdadm wait-sync $RES
+#	drbdsetup --statistics status $RES
+#	sleep 5
+#	drbdsetup --statistics status $RES
 done

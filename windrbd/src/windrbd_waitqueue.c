@@ -95,7 +95,7 @@ void schedule_debug(const char *file, int line, const char *func)
 	ll_wait(current->wait_queue_entry, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
 }
 
-static LONG_PTR ll_schedule_debug(LONG_PTR timeout, int return_error, int interruptible, const char *file, int line, const char *func)
+LONG_PTR ll_schedule_debug(LONG_PTR timeout, int return_error, int interruptible, const char *file, int line, const char *func)
 {
 	LONG_PTR then = jiffies;
 	LONG_PTR elapsed;
@@ -139,9 +139,9 @@ LONG_PTR schedule_timeout_uninterruptible_debug(LONG_PTR timeout, const char *fi
 	 * (2) unique.
 	 */
 
-void prepare_to_wait(struct wait_queue_head *w, struct wait_queue_entry *e, int interruptible)
+void prepare_to_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, int interruptible, const char *file, int line, const char *func)
 {
-	KIRQL flags;
+	KIRQL flags, flags2;
 	struct task_struct *thread = current;
 
 	spin_lock_irqsave(&w->lock, flags);
@@ -149,14 +149,18 @@ void prepare_to_wait(struct wait_queue_head *w, struct wait_queue_entry *e, int 
 	thread->wait_queue = w;
 	thread->wait_queue_entry = e;
 
-	if (list_empty(&e->entry))
+// printk("1 w is %p entry is %p called from %s:%d(%s)\n", w, e, file, line, func);
+	if (list_empty(&e->entry)) {
+// printk("2\n");
 		list_add(&e->entry, &w->head);
+	}
+// printk("3\n");
 	spin_unlock_irqrestore(&w->lock, flags);
 }
 
-void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e)
+void finish_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, const char *file, int line, const char *func)
 {
-	KIRQL flags;
+	KIRQL flags, flags2;
 	struct task_struct *thread = current;
 
 	spin_lock_irqsave(&w->lock, flags);
@@ -164,35 +168,44 @@ void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e)
 	thread->wait_queue = NULL;
 	thread->wait_queue_entry = NULL;
 
+// printk("1 w is %p entry is %p called from %s:%d(%s)\n", w, e, file, line, func);
 	if (!list_empty(&e->entry)) {
+// printk("2\n");
 		list_del(&e->entry);
 		INIT_LIST_HEAD(&e->entry);
 	}
+// printk("3\n");
 	spin_unlock_irqrestore(&w->lock, flags);
 }
 
 void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {
-	KIRQL flags;
-	dbg("wake_up_all %p %s:%d (%s())\n", q, file, line, func);
+	KIRQL flags, flags2;
 	struct wait_queue_entry *e, *e2;
 
 	spin_lock_irqsave(&q->lock, flags);
+// printk("wake_up_all %p %s:%d (%s())\n", q, file, line, func);
 	if (list_empty(&q->head)) {
-		dbg("Warning: attempt to wake up all with no one waiting (%s:%d %s()) queue is %p.\n", file, line, func, q);
-		spin_unlock_irqrestore(&q->lock, flags);
-
-		return;
+// printk("Warning: attempt to wake up all with no one waiting (%s:%d %s()) queue is %p.\n", file, line, func, q);
+		goto unlock_and_out;
 	}
 		/* Use safe version: entries might get deleted soon by
 		 * woken up waiters.
 		 */
 
+// printk("1\n");
 	list_for_each_entry_safe(struct wait_queue_entry, e, e2, &q->head, entry) {
+// printk("2 entry is at %p\n", e);
 		KeSetEvent(&e->windows_event, 0, FALSE);
+// printk("2a\n");
 	}
+// printk("3\n");
 
+unlock_and_out:
+// printk("4\n");
+// printk("5\n");
 	spin_unlock_irqrestore(&q->lock, flags);
+// printk("6\n");
 }
 
 	/* This wakes up all non-exclusive tasks. Since we only have
@@ -204,3 +217,6 @@ void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char 
 	wake_up_all_debug(q, file, line, func);
 }
 
+void init_waitqueue(void)
+{
+}

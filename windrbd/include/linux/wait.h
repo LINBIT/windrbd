@@ -29,8 +29,11 @@ static __inline void init_waitqueue_head(wait_queue_head_t *q)
 	};							\
 	KeInitializeEvent(&(name).windows_event, SynchronizationEvent, FALSE);
 
-void prepare_to_wait(struct wait_queue_head *w, struct wait_queue_entry *e, int interruptible);
-void finish_wait(struct wait_queue_head *w, struct wait_queue_entry *e);
+void prepare_to_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, int interruptible, const char *file, int line, const char *func);
+void finish_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, const char *file, int line, const char *func);
+
+#define prepare_to_wait(w, e, i) prepare_to_wait_debug(w, e, i, __FILE__, __LINE__, __func__)
+#define finish_wait(w, e) finish_wait_debug(w, e, __FILE__, __LINE__, __func__)
 
 void schedule_debug(const char *file, int line, const char *func);
 /* Returns -EINTR on signal else remaining time. */
@@ -39,6 +42,8 @@ LONG_PTR schedule_timeout_debug(LONG_PTR timeout, const char *file, int line, co
 /* TODO: better name for function */
 LONG_PTR schedule_timeout_maybe_interrupted_debug(LONG_PTR timeout, const char *file, int line, const char *func);
 LONG_PTR schedule_timeout_uninterruptible_debug(LONG_PTR timeout, const char *file, int line, const char *func);
+
+LONG_PTR ll_schedule_debug(LONG_PTR timeout, int return_error, int interruptible, const char *file, int line, const char *func);
 
 #define schedule() schedule_debug(__FILE__, __LINE__, __func__)
 #define schedule_timeout_interruptible(timeout) schedule_timeout_debug((timeout), __FILE__, __LINE__, __func__)
@@ -62,8 +67,9 @@ do {									\
 			break;						\
 		}							\
 									\
-		__timeout = schedule_timeout_maybe_interrupted_debug(	\
-			__timeout, __FILE__, __LINE__, __func__);	\
+		__timeout = ll_schedule_debug(				\
+			__timeout, 1, interruptible,			\
+			__FILE__, __LINE__, __func__);			\
 									\
 		if (__timeout <= 0) 					\
 			break;						\
@@ -78,14 +84,13 @@ do {									\
 do {									\
 	int unused;							\
 	ll_wait_event_macro(unused, wait_queue, condition,		\
-		MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE);		\
+		MAX_SCHEDULE_TIMEOUT, TASK_UNINTERRUPTIBLE);		\
 } while (0);
 
-	/* TODO: this might 'return' -EINTR */
 #define wait_event_timeout(ret, wait_queue, condition, timeout)		\
 do {									\
 	ll_wait_event_macro(ret, wait_queue, condition,			\
-		timeout, TASK_INTERRUPTIBLE);				\
+		timeout, TASK_UNINTERRUPTIBLE);				\
 	if (ret == -ETIMEDOUT) 						\
 		ret = 0;						\
 } while (0);
@@ -111,5 +116,7 @@ void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const c
 
 #define wake_up(q) wake_up_debug(q, __FILE__, __LINE__, __func__)
 #define wake_up_all(q) wake_up_all_debug(q, __FILE__, __LINE__, __func__)
+
+void init_waitqueue(void);
 
 #endif

@@ -1276,7 +1276,8 @@ static void windrbd_bio_finished(struct bio * bio)
 	NTSTATUS status;
 	int error = blk_status_to_errno(bio->bi_status);
 
-// printk("1 error is %d\n", error);
+// printk("1 error is %d bio is %p\n", error, bio);
+// printk("bio->bi_vcnt is %d\n", bio->bi_vcnt);
 	status = STATUS_SUCCESS;
 
 	if (error == 0) {
@@ -1309,9 +1310,14 @@ static void windrbd_bio_finished(struct bio * bio)
 
 		status = STATUS_DEVICE_DOES_NOT_EXIST;
 	}
-	if (bio_data_dir(bio) == READ)
-		for (i=0;i<bio->bi_vcnt;i++)
+// printk("2\n");
+	if (bio_data_dir(bio) == READ) {
+// printk("free page contents %p ...\n", bio);
+		for (i=0;i<bio->bi_vcnt;i++) {
+// printk("free page contents bio->bi_io_vec[i].bv_page->addr is %p i is %d ...\n", bio->bi_io_vec[i].bv_page->addr, i);
 			kfree(bio->bi_io_vec[i].bv_page->addr);
+		}
+	}
 
 	KIRQL flags;
 
@@ -1370,10 +1376,12 @@ static void windrbd_bio_finished(struct bio * bio)
 
 		kfree(bio->bi_common_data);
 	}
+// printk("free pages %p ...\n", bio);
 	for (i=0;i<bio->bi_vcnt;i++)
 		kfree(bio->bi_io_vec[i].bv_page);
 
 	IoReleaseRemoveLock(&bio->bi_bdev->remove_lock, NULL);
+// printk("into bio_put: atomic_read(&bio->bi_cnt) is %d\n", atomic_read(&bio->bi_cnt));
 	bio_put(bio);
 }
 

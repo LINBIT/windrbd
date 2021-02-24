@@ -672,4 +672,17 @@ Few things to note:
 6) Reinstall the latest Safenet drivers as administrator.
 7) Re plug in token.
 
+-------------------
+From: 
 
+https://www.tenforums.com/tutorials/69012-enable-disable-bsod-automatic-restart-windows-10-a.html
+
+Disable reboot after blue screen.
+
+Press the Win + R keys to open Run, type SystemPropertiesAdvanced.exe into Run, and click/tap on OK to open advanced System Properties.
+
+Click/tap on the Settings button under Startup and Recovery
+
+Check (enable - default) or uncheck (disable) the Automatically restart box under System failure for what you want, and click/tap on OK.
+
+-----------------------

@@ -268,10 +268,12 @@ static int rcu_reader(void *arg)
 	while (!rcu_writers_finished) {
 		if (rcu_lock_method == RCU_READ_LOCK)
 			flags = rcu_read_lock();
+#if 0
 		if (rcu_lock_method == RCU_SPIN_LOCK)
 			spin_lock(&rcu_writer_lock);
 		if (rcu_lock_method == RCU_SPIN_LOCK_IRQ)
 			spin_lock_irq(&rcu_writer_lock);
+#endif
 		if (rcu_lock_method == RCU_CRITICAL_REGION)
 			KeEnterCriticalRegion();
 
@@ -286,10 +288,12 @@ static int rcu_reader(void *arg)
 
 		if (rcu_lock_method == RCU_READ_LOCK)
 			rcu_read_unlock(flags);
+#if 0
 		if (rcu_lock_method == RCU_SPIN_LOCK)
 			spin_unlock(&rcu_writer_lock);
 		if (rcu_lock_method == RCU_SPIN_LOCK_IRQ)
 			spin_unlock_irq(&rcu_writer_lock);
+#endif
 		if (rcu_lock_method == RCU_CRITICAL_REGION)
 			KeLeaveCriticalRegion();
 
@@ -313,23 +317,27 @@ static int rcu_writer(void *arg)
 	struct completion *c = arg;
 
 	for (i=0;i<rcu_n;i++) {
+#if 0
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK ||
 		    rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_LONG)
 			spin_lock(&rcu_writer_lock);
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ ||
 		    rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ_LONG)
 			spin_lock_irq(&rcu_writer_lock);
+#endif
 
 		old_rcu = non_atomic_rcu;
 		new_rcu = kmalloc(sizeof(*new_rcu), 0, '1234');
 		if (new_rcu == NULL) {
 			printk("no memory\n");
+#if 0
 			if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK ||
 		    	    rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_LONG)
 				spin_unlock(&rcu_writer_lock);
 			if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ ||
 		    	    rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ_LONG)
 				spin_unlock_irq(&rcu_writer_lock);
+#endif
 
 			complete(c);
 			return -1;
@@ -345,10 +353,12 @@ static int rcu_writer(void *arg)
 		new_rcu->b = val;
 
 		rcu_assign_pointer(non_atomic_rcu, new_rcu);
+#if 0
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK)
 			spin_unlock(&rcu_writer_lock);
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ)
 			spin_unlock_irq(&rcu_writer_lock);
+#endif
 
 		synchronize_rcu();
 
@@ -358,10 +368,12 @@ static int rcu_writer(void *arg)
 */
 		kfree(old_rcu);
 
+#if 0
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_LONG)
 			spin_unlock(&rcu_writer_lock);
 		if (rcu_writer_lock_method == RCU_WRITER_SPIN_LOCK_IRQ_LONG)
 			spin_unlock_irq(&rcu_writer_lock);
+#endif
 	}
 	complete(c);
 
@@ -556,6 +568,7 @@ int concurrency_thread(void *p)
 			down(&test_semaphore);
 			break;
 
+#if 0
 		case LM_TWO_SPINLOCKS_PASSIVE_LEVEL:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
@@ -571,6 +584,7 @@ int concurrency_thread(void *p)
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
+#endif
 
 		case LM_CRITICAL_REGION:
 			KeEnterCriticalRegion();
@@ -580,6 +594,7 @@ int concurrency_thread(void *p)
 			mutex_lock(&test_mutex);
 			break;
 
+#if 0
 		case LM_SPIN_LOCK:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
@@ -595,6 +610,7 @@ int concurrency_thread(void *p)
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
+#endif
 
 		case LM_SPIN_LOCK_IRQSAVE:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
@@ -637,6 +653,7 @@ int concurrency_thread(void *p)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
 
+#if 0
 		case LM_TWO_SPINLOCKS:
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
@@ -644,6 +661,7 @@ int concurrency_thread(void *p)
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
+#endif
 
 		case LM_CRITICAL_REGION:
 			KeLeaveCriticalRegion();
@@ -653,6 +671,7 @@ int concurrency_thread(void *p)
 			mutex_unlock(&test_mutex);
 			break;
 
+#if 0
 		case LM_SPIN_LOCK:
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_unlock\n", KeGetCurrentIrql());
@@ -667,6 +686,7 @@ int concurrency_thread(void *p)
 			if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d after spin_lock\n", KeGetCurrentIrql());
 			break;
+#endif
 		case LM_SPIN_LOCK_IRQSAVE:
 			if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 				printk("Warning: KeGetCurrentIrql() is %d before spin_lock\n", KeGetCurrentIrql());
@@ -925,54 +945,93 @@ printk("threads completed now waiting for workqueue.\n");
 	kfree(params);
 }
 
-enum wq_test { WQ_NO_WAIT, WQ_SIMPLE, WQ_FAST, WQ_NO_SLEEP, WQ_LAST };
+enum wq_test { WQ_NO_WAIT, WQ_SIMPLE, WQ_FAST, WQ_NO_SLEEP, WQ_LOOP, WQ_LOOP_NO_SLEEP, WQ_LAST };
 static char *wq_test_str[WQ_LAST] = {
-	"no-wait", "simple", "fast", "no-sleep"
+	"no-wait", "simple", "fast", "no-sleep", "loop", "loop-no-sleep"
 };
 
 static int cond = 0;
+static atomic_t num_wakers_running = { 0 };
 
-struct wq_test_params {
-	wait_queue_head_t *wq;
-	enum wq_test wt;
-};
+static enum wq_test wt;
+static wait_queue_head_t wq;
+static wait_queue_head_t wq2;
+static int waker_loops = 1000;
+static int waiter_loops = 1000;
 
-static int waker_task(void *wqparam)
+static int waker_task(void *unused)
 {
-	struct wq_test_params *p = wqparam;
-	wait_queue_head_t *wq = p->wq;
-	enum wq_test wt = p->wt;
 	int msec = 0;
+	int loop_cnt = 1;
 
 	switch (wt) {
 	case WQ_SIMPLE: msec = 1000; break;
-	case WQ_FAST: msec = 10; break;
+	case WQ_FAST: 
+	case WQ_LOOP: msec = 10; break; 
+	case WQ_LOOP_NO_SLEEP:
 	case WQ_NO_SLEEP: msec = 0; break;
 	}
+	if (wt == WQ_LOOP || wt == WQ_LOOP_NO_SLEEP)
+		loop_cnt = waker_loops;
 
 printk("waker started\n");
-	if (msec > 0)
-		msleep(msec);
-printk("waking up #1\n");
-	wake_up(wq);
-	if (msec > 0)
-		msleep(msec);
-printk("waking up #2 (with cond true)\n");
-	cond = 1;
-	wake_up(wq);
+	for (;loop_cnt>0;--loop_cnt) {
+		if (msec > 0)
+			msleep(msec);
+#if 0
+printk("waking up #1 (loop_cnt is %d)\n", loop_cnt);
+		cond = 0;
+		wake_up(&wq);
+		if (msec > 0)
+			msleep(msec);
+#endif
+printk("waking up #2 (with cond true) (loop_cnt is %d)\n", loop_cnt);
+		cond = 1;
+		wake_up(&wq);
+printk("waiting for waiter ...\n");
+		wait_event(wq2, !cond);
+	}
 printk("waker end\n");
+	atomic_dec(&num_wakers_running);
+	wake_up(&wq);
+
+	return 0;
+}
+
+static int waiter_task(void *unused)
+{
+	int msec = 0;
+	int loop_cnt = 1;
+
+	if (wt == WQ_LOOP || wt == WQ_LOOP_NO_SLEEP)
+		loop_cnt = waiter_loops;
+
+	for (;loop_cnt>0;loop_cnt--) {
+		cond = 0;
+		if (wt == WQ_NO_WAIT)
+			cond = 1;
+
+printk("into wait_event ... loop_cnt is %d\n", loop_cnt);
+		wait_event(wq, cond || atomic_read(&num_wakers_running) == 0);
+		if (atomic_read(&num_wakers_running) == 0) {
+			printk("no more wakers, exiting waiter\n");
+			break;
+		}
+		cond = 0;
+		wake_up(&wq2);
+printk("out of wait_event cond is %d loop_cnt is %d\n", cond, loop_cnt);
+	}
 	return 0;
 }
 
 static void wait_event_test(int argc, const char ** argv)
 {
-	enum wq_test wt;
-	wait_queue_head_t wq;
-	struct wq_test_params p;
-	int i;
+	int i, t;
 	int len;
+	int num_wakers;
+	int num_waiters;
 
-	if (argc < 2)
+	if (argc != 6)
 		goto usage;
 
 	i=1;
@@ -985,24 +1044,36 @@ static void wait_event_test(int argc, const char ** argv)
 	if (wt == WQ_LAST) 
 		goto usage;
 
+	num_wakers = my_atoi(argv[2]);
+	num_waiters = my_atoi(argv[3]);
+	waker_loops = my_atoi(argv[4]);
+	waiter_loops = my_atoi(argv[5]);
+
 	init_waitqueue_head(&wq);
+	init_waitqueue_head(&wq2);
 	if (wt != WQ_NO_WAIT) {
-		p.wt = wt;
-		p.wq = &wq;
-		kthread_run(waker_task, &p, "waker");
+		for (t=0;t<num_wakers;t++) {
+			struct task_struct *k;
+
+			atomic_inc(&num_wakers_running);
+			k = kthread_create(waker_task, NULL, "waker%d", t);
+printk("thread is %p t is %d\n", k, t);
+			wake_up_process(k);
+		}
+		for (t=0;t<num_waiters;t++) {
+			struct task_struct *k;
+
+			k = kthread_create(waiter_task, NULL, "waiter%d", t);
+printk("thread is %p t is %d\n", k, t);
+			wake_up_process(k);
+		}
 	}
 
-	cond = 0;
-	if (wt == WQ_NO_WAIT)
-		cond = 1;
-
-printk("into wait_event ...\n");
-	wait_event(wq, cond);
-printk("out of wait_event cond is %d\n", cond);
+printk("exiting waiter\n");
 
 	return;
 usage:
-	printk("usage: wait_event_test <no-wait|simple|fast|no-sleep>\n");
+	printk("usage: wait_event_test <no-wait|simple|fast|no-sleep|loop> <num-wakers> <num-waiters> <waker-loops> <waiter-loops>\n");
 }
 
 void argv_test(int argc, char ** argv)
@@ -1012,6 +1083,8 @@ void argv_test(int argc, char ** argv)
 	for (i=0; i<argc; i++)
 		printk("argv[%d] is %s\n", i, argv[i]);
 }
+
+extern void start_tiktok(int argc, const char ** argv);
 
 void test_main(const char *arg)
 {
@@ -1076,6 +1149,8 @@ void test_main(const char *arg)
 		workqueue_test(argc, argv);
 	if (strcmp(argv[0], "wait_event_test") == 0)
 		wait_event_test(argc, argv);
+	if (strcmp(argv[0], "start_tiktok") == 0)
+		start_tiktok(argc, argv);
 
 kfree_argv:
 	kfree(argv);

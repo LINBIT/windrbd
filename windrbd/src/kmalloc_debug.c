@@ -82,6 +82,9 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	list_add(&mem->list, &memory_allocations);
 	spin_unlock_irqrestore(&memory_lock, flags);
 
+/* loops ... */
+// printk("kmalloc(%d) = %p from %s:%d %s()\n", size, &mem->data[0], file, line, func);
+
 	return &mem->data[0];
 }
 
@@ -101,6 +104,9 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	struct memory *mem;
 	struct poison_after *poison_after;
 	KIRQL flags;
+
+/* loops ... */
+// printk("kfree(%p) %s:%d (%s)\n", data, file, line, func);
 
 	if (data == NULL) {
 		dbg("kmalloc_debug: Warning: attempt to free the NULL pointer in function %s at %s:%d\n", func, file, line);
@@ -148,7 +154,7 @@ int dump_memory_allocations(int free_them)
 	list_for_each_entry_safe(struct memory, mem, memh, &memory_allocations, list) {
 			/* exclude memory needed by printk() */
 		if (strcmp(mem->func, "SendTo") != 0 && strcmp(mem->func, "sock_create_linux_socket") != 0) {
-			printk("kmalloc_debug: %s of size %d, allocated by function %s at %s.\n", free_them ? "Warning: memory leak" : "allocated memory", mem->size, mem->func, mem->desc);
+			printk("kmalloc_debug: %s of size %d, allocated by function %s at %s mem is %p.\n", free_them ? "Warning: memory leak" : "allocated memory", mem->size, mem->func, mem->desc, mem);
 			if (free_them)
 				kfree_debug(&mem->data[0], __FILE__, __LINE__, __func__);
 		}	/* else we are currently printing this, do not free,

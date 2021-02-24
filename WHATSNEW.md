@@ -1,3 +1,19 @@
+What's new in version 1.0.0-rc10
+--------------------------------
+
+Optimization on the network side ("receiver cache"): receive from socket
+in larger chunks (defaults to 128K), this speeds up secondary writes
+by a factor of 2 to 4.
+
+Fix in wait_event: wait_event should not be interruptible. Also
+wait_for_completion should not be interruptible. This fixes lots
+of BSODs at various places (process_sender_todo, ...) which mainly
+occured at disconnecting a resource.
+
+There is also an optimization at the backing device side (backing
+device cache) but this implementation is currently broken and probably
+will be abandoned (it does not give a speedup). It is disabled by default.
+
 What's new in version 1.0.0-rc9
 -------------------------------
 

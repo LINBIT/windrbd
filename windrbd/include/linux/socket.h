@@ -84,6 +84,8 @@ struct msghdr {
 
 struct _WSK_SOCKET;
 
+#define RECEIVE_BUFFER_DEFAULT_SIZE (128*1024)
+
 struct socket {
 	struct _WSK_SOCKET *wsk_socket;
 	ULONG wsk_flags;
@@ -108,7 +110,21 @@ struct socket {
 	struct sock *sk;
 
 	int is_closed;
+
+	int receiver_cache_enabled;
+	char *receive_buffer;
+	int receive_buffer_size;
+	int write_index;
+	int read_index;
+	bool receive_buffer_full;
+	struct wait_queue_head buffer_available;
+	struct wait_queue_head data_available;
+	bool receive_thread_should_run;
+	struct completion receiver_thread_completion;
+	spinlock_t receive_lock;
+	bool have_printed_status;
 };
+
 
 /* WinDRBD specific: Since Windows distinguishes between LISTEN and
  * CONNECTION sockets, we use this to signal that we want to LISTEN

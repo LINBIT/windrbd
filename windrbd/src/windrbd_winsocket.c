@@ -85,6 +85,13 @@ static void sock_really_free(struct kref *kref)
 {
 	struct socket *socket = container_of(kref, struct socket, kref);
 
+	if (socket->receive_thread_should_run) {
+		socket->receive_thread_should_run = false;
+		wake_up(&socket->buffer_available);
+		wait_for_completion(&socket->receiver_thread_completion);
+	}
+
+	kfree(socket->receive_buffer);
 	kfree(socket->sk);
 	kfree(socket);
 }
@@ -688,8 +695,11 @@ dbg("WskConnect completed KeWaitForSingleObject (status is %x)\n", Status);
 	{
 		Status = Irp->IoStatus.Status;
 dbg("WskConnect completed with status %x\n", Status);
-		if (Status == STATUS_SUCCESS)
+		if (Status == STATUS_SUCCESS) {
 			socket->sk->sk_state = TCP_ESTABLISHED;
+			wake_up(&socket->buffer_available);
+			wake_up(&socket->data_available);
+		}
 	}
 	if (Status != STATUS_SUCCESS)
 dbg("WskConnect failed with status = %x\n", Status);
@@ -699,7 +709,7 @@ dbg("WskConnect failed with status = %x\n", Status);
 	return winsock_to_linux_error(Status);
 }
 
-static int sock_create_linux_socket(struct socket **out);
+static int sock_create_linux_socket(struct socket **out, unsigned short type);
 
 int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 {
@@ -726,7 +736,7 @@ retry:
 	socket->accept_wsk_socket = NULL;
 	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 
-	err = sock_create_linux_socket(&accept_socket);
+	err = sock_create_linux_socket(&accept_socket, SOCK_STREAM);
 	if (err < 0)
 		close_wsk_socket(wsk_socket);
 	else {
@@ -734,6 +744,9 @@ retry:
 		accept_socket->sk->sk_state = TCP_ESTABLISHED;
 		accept_socket->sk->sk_state_change = socket->sk->sk_state_change;
 		accept_socket->sk->sk_user_data = socket->sk->sk_user_data;
+
+		wake_up(&accept_socket->buffer_available);
+		wake_up(&accept_socket->data_available);
 		*newsock = accept_socket;
 	}
 
@@ -1189,7 +1202,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	return status == STATUS_SUCCESS ? BufferSize : winsock_to_linux_error(status);
 }
 
-int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
+static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len, int flags)
 {
 	KEVENT		CompletionEvent = { 0 };
@@ -1204,7 +1217,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	int         wObjCount = 1;
 
 // printk("in recvmsg: size is %d\n", len);
-if (len >= 4096) tik(1);
+// if (len >= 4096) tik(1);
 // dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
@@ -1227,7 +1240,7 @@ if (len >= 4096) tik(1);
 	}
 
 	wsk_flags = 0;
-	if (flags | MSG_WAITALL)
+	if (flags & MSG_WAITALL)
 		wsk_flags |= WSK_FLAG_WAITALL;
 
 	mutex_lock(&socket->wsk_mutex);
@@ -1238,7 +1251,9 @@ if (len >= 4096) tik(1);
 		return -ENOTCONN;
 	}
 
-if (len >= 4096) tik(2);
+tik(3, "WskReceive");
+// if (len >= 4096) tik(2);
+
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
@@ -1272,6 +1287,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
 	enter_interruptible();
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
 	exit_interruptible();
+tok(3);
 
         switch (Status)
         {
@@ -1308,6 +1324,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
     }
 	else
 	{
+tok(3);
 		if (Status == STATUS_SUCCESS)
 		{
 			BytesReceived = (LONG) Irp->IoStatus.Information;
@@ -1319,7 +1336,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
 			BytesReceived = winsock_to_linux_error(Status);
 		}
 	}
-if (len >= 4096) tok(2);
+// if (len >= 4096) tok(2);
 
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
@@ -1362,9 +1379,233 @@ if (len >= 4096) tok(2);
 		socket->error_status = BytesReceived;
 		dbg("setting error status to %d\n", socket->error_status);
 	}
-if (len >= 4096) tok(1);
-// printk("Received %d bytes\n", BytesReceived);
+// if (len >= 4096) tok(1);
 	return BytesReceived;
+}
+
+/* TODO for receiver cache:
+
+	.) Test: disconnect on secondary
+	.) Test: network outage (on linux using iptables)
+
+   Done:
+	.) Make it optional (via registry key, default on)
+	.) Make it work with DRBD (Wrong magic value)
+	.) Compare performance
+		It is about 2-4 times faster than before (!).
+	.) Test speed with -rc9
+		Yes rc9 is really slow
+	.) Rejected: Return partial data received on connection close / error?
+	.) dynamically allocate receive buffer. And make its size
+	   configurable (via registry key).
+	.) Rejected: BSOD when writing on Primary
+		Couldn't reproduce, continue observing.
+
+*/
+
+void dump_packet(unsigned char *buf, size_t buflen)
+{
+	size_t i;
+	char s[80];
+	int pos;
+
+	return;
+
+	pos=0;
+	for (i=0;i<buflen;i++) {
+		if (i%16 == 0)
+			pos+=snprintf(s+pos, sizeof(s)-pos-1, "%08x: ", i);
+		pos+=snprintf(s+pos, sizeof(s)-pos-1, "%02x ", buf[i]);
+		if (i%16==15) {
+			printk("%s\n", s);
+			pos=0;
+		}
+	}
+	if (i%16 != 0)
+		printk("%s\n", s);
+}
+
+int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
+                   size_t num, size_t len, int flags)
+{
+	size_t bytes_to_copy;
+	size_t return_buffer_index;
+	KIRQL irq_flags;
+	int ret;
+	LONG_PTR timeout, remaining_time;
+
+	if (!socket->have_printed_status) {
+		if (!socket->receiver_cache_enabled)
+			printk("Receiver cache disabled\n");
+		else
+			printk("Receiver cache enabled, buffer size is %d\n", socket->receive_buffer_size);
+
+		socket->have_printed_status = true;
+	}
+
+// printk("flags is %x len is %d\n", flags, len);
+	if (!socket->receiver_cache_enabled) {
+		ret = wsk_recvmsg(socket, msg, vec, num, len, flags);
+		if (ret > 0)
+			dump_packet(vec[0].iov_base, ret);
+		return ret;
+	}
+
+	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
+		return -EINVAL;
+
+	if (num != 1)
+		return -EOPNOTSUPP;
+
+	if (socket->error_status != 0)
+		return socket->error_status;
+
+	return_buffer_index = 0;
+
+	timeout = socket->sk->sk_rcvtimeo; 
+	while (1) {
+		wait_event_interruptible_timeout(
+			remaining_time,
+			socket->data_available, 
+			socket->write_index != socket->read_index || 
+			(socket->write_index == socket->read_index && socket->receive_buffer_full) || 
+			socket->error_status != 0 || 
+			socket->sk->sk_state != TCP_ESTABLISHED,
+			timeout);
+
+/*
+		if (remaining_time == -EINTR)
+			return -EINTR;
+*/
+		if (remaining_time <= 0)
+			return -EAGAIN;
+		timeout = remaining_time;
+
+		if (socket->error_status != 0)
+			return socket->error_status;
+		if (socket->sk->sk_state != TCP_ESTABLISHED)
+			return 0;
+
+		spin_lock_irqsave(&socket->receive_lock, irq_flags);
+		if (socket->read_index < socket->write_index)
+			bytes_to_copy = socket->write_index - socket->read_index;
+		else {
+			if (socket->read_index == socket->write_index) {
+				if (socket->receive_buffer_full)
+					bytes_to_copy = socket->receive_buffer_size - socket->read_index;
+				else {
+					bytes_to_copy = 0;	/* invalid */
+					printk("Warning: buffer empty.\n");
+				}
+			} else { /* read_index > write_index */
+				bytes_to_copy = socket->receive_buffer_size - socket->read_index;
+			}
+		}
+		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
+
+		if (bytes_to_copy > len-return_buffer_index) {
+			bytes_to_copy = len-return_buffer_index;
+		}
+
+		if (bytes_to_copy <= 0) {
+			printk("Warning: nothing to copy?\n");
+			continue;
+		}
+
+		memcpy(&((char*)vec[0].iov_base)[return_buffer_index], 
+			&socket->receive_buffer[socket->read_index],
+			bytes_to_copy);
+
+		spin_lock_irqsave(&socket->receive_lock, irq_flags);
+
+		return_buffer_index += bytes_to_copy;
+		socket->read_index += bytes_to_copy;
+
+		if (socket->read_index == socket->receive_buffer_size)
+			socket->read_index = 0;
+
+		if (socket->write_index == socket->read_index)
+			socket->receive_buffer_full = false;
+
+		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
+
+		wake_up(&socket->buffer_available);
+
+		if (flags & MSG_WAITALL) {
+			if (return_buffer_index == len) {
+				dump_packet(vec[0].iov_base, return_buffer_index);
+				return return_buffer_index;
+			}
+		} else {
+			dump_packet(vec[0].iov_base, return_buffer_index);
+			return return_buffer_index;
+		}
+	}
+	return -EINVAL;
+}
+
+static int socket_receive_thread(void *p)
+{
+	struct socket *s = p;
+        struct kvec iov = { 0 };
+        struct msghdr msg = { .msg_flags = 0 };
+	int err;
+	KIRQL flags;
+
+	while (1) {
+		wait_event(s->buffer_available, 
+			!s->receive_thread_should_run ||
+			(s->sk->sk_state == TCP_ESTABLISHED &&
+			(s->write_index != s->read_index ||
+			(s->write_index == s->read_index && !s->receive_buffer_full)))); 
+
+		if (!s->receive_thread_should_run)
+			break;
+
+		spin_lock_irqsave(&s->receive_lock, flags);
+		if (s->read_index == s->write_index && !s->receive_buffer_full) {
+			s->read_index = s->write_index = 0;
+			iov.iov_len = s->receive_buffer_size;
+		} else {
+			if (s->read_index < s->write_index)
+				iov.iov_len = s->receive_buffer_size-s->write_index;
+			else
+				iov.iov_len = s->read_index-s->write_index;
+		}
+		iov.iov_base = &s->receive_buffer[s->write_index];
+		spin_unlock_irqrestore(&s->receive_lock, flags);
+
+		if (iov.iov_len == 0) {
+			printk("Warning: iov.iov_len is 0 in WinDRBD receiver thread .. should not happen.\n");
+// printk("3a read_index is %d write_index is %d\n", s->read_index, s->write_index);
+			continue;	/* wait_event should block */
+		}
+		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+
+		if (err == -EAGAIN || err == -EINTR)
+			continue;
+
+		if (err <= 0)
+			break;
+
+		spin_lock_irqsave(&s->receive_lock, flags);
+
+		s->write_index+=err;
+		if (s->write_index == s->receive_buffer_size)
+			s->write_index = 0;
+
+		if (s->write_index == s->read_index)
+			s->receive_buffer_full = true;
+
+		spin_unlock_irqrestore(&s->receive_lock, flags);
+
+		wake_up(&s->data_available);
+	}
+
+	s->sk->sk_state = TCP_NO_CONNECTION;
+	wake_up(&s->data_available);
+	complete(&s->receiver_thread_completion);
+	return 0;
 }
 
 /* Must not printk() from in here, might loop forever */
@@ -1501,7 +1742,7 @@ static void wsk_sock_statechange(struct sock *sk)
 {
 }
 
-static int sock_create_linux_socket(struct socket **out)
+static int sock_create_linux_socket(struct socket **out, unsigned short type)
 {
 	struct socket *socket;
 
@@ -1525,6 +1766,29 @@ static int sock_create_linux_socket(struct socket **out)
 	mutex_init(&socket->wsk_mutex);
 	socket->ops = &winsocket_ops;
 
+	get_registry_int(L"enable_receiver_cache", &socket->receiver_cache_enabled, 1);
+	init_waitqueue_head(&socket->buffer_available);
+	init_waitqueue_head(&socket->data_available);
+
+	socket->have_printed_status = false;
+	if (socket->receiver_cache_enabled) {
+		get_registry_int(L"receive_buffer_size", &socket->receive_buffer_size, RECEIVE_BUFFER_DEFAULT_SIZE);
+		if (socket->receive_buffer_size < 4096)
+			socket->receive_buffer_size = 4096;
+		if (socket->receive_buffer_size > 4*1024*1024)
+			socket->receive_buffer_size = 4*1024*1024;
+		socket->receive_buffer = kmalloc(socket->receive_buffer_size, 0, 'XYZR');
+		if (socket->receive_buffer == NULL) {
+			printk("Warning: could not allocate memory for socket receive buffer (size is %d), receiver cache disabled\n", socket->receive_buffer_size);
+			socket->receiver_cache_enabled = false;
+		} else {
+			socket->write_index = 0;
+			socket->read_index = 0;
+			init_completion(&socket->receiver_thread_completion);
+			spin_lock_init(&socket->receive_lock);
+		}
+	}
+
 	socket->sk->sk_sndbuf = 4*1024*1024;
 	socket->sk->sk_rcvbuf = 4*1024*1024;
 	socket->sk->sk_wmem_queued = 0;
@@ -1533,6 +1797,16 @@ static int sock_create_linux_socket(struct socket **out)
 	socket->sk->sk_rcvtimeo = 10*HZ;
 	socket->sk->sk_state_change = wsk_sock_statechange;
 	rwlock_init(&socket->sk->sk_callback_lock);
+
+/* TODO: also for SOCK_DGRAM but not for printk socket. printk at the
+ * moment the only one using SOCK_DGRAM but this may change...
+ */
+	if (type == SOCK_STREAM) {
+		if (socket->receiver_cache_enabled) {
+			socket->receive_thread_should_run = true;
+			kthread_run(socket_receive_thread, socket, "receive_cache");
+		}
+	}
 
 	*out = socket;
 
@@ -1595,7 +1869,7 @@ static int wsk_sock_create_kern(void *net_namespace,
 	if (net_namespace != &init_net)
 		return -EINVAL;
 
-	err = sock_create_linux_socket(&socket);
+	err = sock_create_linux_socket(&socket, type);
 	if (err < 0)
 		return err;
 
@@ -1639,7 +1913,6 @@ int sock_create_kern(struct net *net, int family, int type, int proto, struct so
 	default:
 		return -EINVAL;
 	}
-
 	return wsk_sock_create_kern(net, family, type, proto, Flags, res);
 }
 
@@ -1679,14 +1952,22 @@ static NTSTATUS receive_a_lot(void *unused)
 	struct sockaddr_in my_addr;
 	static char bigbuffer[1024*128];
 	size_t bytes_received;
+	int short_reads;
+	int n, n2;
+	int *ints = (int*)&bigbuffer;
 
         struct kvec iov = {
                 .iov_base = bigbuffer,
-                .iov_len = sizeof(bigbuffer),
+               // .iov_len = sizeof(bigbuffer),
+		.iov_len = 16,
+	       // .iov_len = 4096,
         };
         struct msghdr msg = {
-                .msg_flags = MSG_WAITALL
+		.msg_flags = MSG_WAITALL
+	//	.msg_flags = 0
         };
+
+	make_me_a_windrbd_thread("receive_a_lot");
 
 	err = sock_create_kern(&init_net, AF_INET, SOCK_LISTEN, IPPROTO_TCP, &s);
 
@@ -1713,31 +1994,49 @@ static NTSTATUS receive_a_lot(void *unused)
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-	err = kernel_accept(s, &s2, 0);
-	if (err < 0) {
-		printk("accept returned %d\n", err);
-		sock_release(s);
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-	printk("connection accepted\n");
-
-	bytes_received = 0;
 	while (1) {
-		err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+		err = kernel_accept(s, &s2, 0);
 		if (err < 0) {
-			printk("receive returned %d\n", err);
-			break;
+			printk("accept returned %d\n", err);
+			sock_release(s);
+			return STATUS_INSUFFICIENT_RESOURCES;
 		}
-		if (err != iov.iov_len) {
-			printk("short receive (%d, expected %d)\n", err, iov.iov_len);
-			break;
+		printk("connection accepted\n");
+
+		n = 0;
+		bytes_received = 0;
+		short_reads = 0;
+		while (1) {
+			err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+			if (err < 0) {
+				printk("receive returned %d\n", err);
+				break;
+			}
+			if (err == 0) {
+				printk("receive returned %d, connection closed\n", err);
+				break;
+			}
+			if (err != iov.iov_len) {
+/*
+				printk("short receive (%d, expected %d)\n", err, iov.iov_len);
+				break;
+*/
+				short_reads++;
+			}
+			bytes_received += err;
+			if ((bytes_received % (1024*1024)) == 0)
+				printk("%lld bytes received\n", bytes_received);
+
+			for (n2=0;n2<err/sizeof(int);n2++,n++)
+				if (ints[n2] != n)
+					printk("Sequence number mismatch: expected %d got %d\n", n, ints[n]);
 		}
-		bytes_received += err;
-		if ((bytes_received % (1024*1024)) == 0)
-			printk("%lld bytes received\n", bytes_received);
+		printk("%d short reads\n", short_reads);
 	}
 	sock_release(s);
 	sock_release(s2);
+
+	return_to_windows(current);
 
 	return STATUS_SUCCESS;
 }

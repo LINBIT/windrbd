@@ -23,6 +23,9 @@
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H
 
+/* Enable this (and recompile all) to enable bio allocation debugging */
+#define BIO_REF_DEBUG 1
+
 #define __func_	__FUNCTION__
 #define __bitwise__
 
@@ -58,7 +61,7 @@ enum update_sync_bits_mode;
 #pragma warning (disable : 4100 4146 4221)
 
 	/* TODO: This appears very dangerous to me ... */
-#define drbd_conf drbd_device
+// #define drbd_conf drbd_device
 
 #define __GFP_HIGHMEM           (0x02u)
 #define __GFP_ZERO              (0x8000u) 
@@ -465,6 +468,11 @@ struct fault_injection {
 	int nr_requests;
 };
 
+struct completion {
+	bool completed;
+	wait_queue_head_t wait;
+};
+
 /* TODO: this is used as device extension for the DRBD devices and
    also as block device for the backing devices. This is probably
    not a good idea.
@@ -561,6 +569,15 @@ struct block_device {
 
 	atomic_t num_bios_pending;
 	atomic_t num_irps_pending;
+
+	/* The simple write cache: list of pending bios */
+	struct list_head write_cache;
+	spinlock_t write_cache_lock;
+	struct task_struct *bdflush_thread;
+	int bdflush_should_run;
+
+	struct wait_queue_head bdflush_event;
+	struct completion bdflush_terminated;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
@@ -604,11 +621,6 @@ typedef u8 blk_status_t;
 
 typedef void(BIO_END_IO_CALLBACK)(struct bio *bio);
 
-
-struct completion {
-	bool completed;
-	wait_queue_head_t wait;
-};
 
 	/* When we create more bio's upon request for a single MDL,
 	 * this is common data shared between all that bios.
@@ -715,6 +727,13 @@ struct bio {
 	IO_STATUS_BLOCK io_stat;
 
 	blk_status_t bi_status;
+
+	struct bio *master_bio;
+	struct list_head cache_list;
+
+	atomic_t num_slave_bios;
+	int is_flush;
+	int has_big_buffer;
 
 	/* TODO: may be put members here again? Update: Not sure,
 	 * we've put a KEVENT here and it didn't work .. might also
@@ -1182,9 +1201,8 @@ static int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 	return 0;
 }
 
-/* TODO: bad idea ... */
-#define snprintf(a, b, c,...) memset(a, 0, b); sprintf(a, c, ##__VA_ARGS__)
 
+#define snprintf(a, b, c,...) scnprintf(a, b, c, ##__VA_ARGS__)
 
 extern int scnprintf(char * buf, size_t size, const char *fmt, ...);
 extern int vscnprintf(char * buf, size_t size, const char *fmt, va_list args);
@@ -1334,5 +1352,9 @@ void exit_interruptible_debug(const char *file, int line, const char *func);
 #define kunmap_atomic(addr)	do { } while (0)
 
 void test_main(const char *arg);
+
+int my_atoi(const char *c);
+
+NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default);
 
 #endif // DRBD_WINDOWS_H

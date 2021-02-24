@@ -508,28 +508,57 @@ static char *copy_first_640k(void)
 	int i;
 	char *buf;
 	int failed = 0;
+	struct _MDL *mdl;
 
 	buf = kmalloc(LOWER_MEM_LENGTH, GFP_KERNEL, 'DRBD');
 	if (buf == NULL)
 		return NULL;
 
+/* TODO: driver verifier complains about pages not locked on
+ * MmMapIoSpace().
+ */
+
 	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
+// printk("page %p ...\n", (void*) i);
 		addr.QuadPart = i;
-		p = MmMapIoSpace(addr, 0x1000, MmCached);
+#if 0
+		mdl = IoAllocateMdl((void*) i, PAGE_SIZE, FALSE, FALSE, NULL);
+		if (mdl == NULL) {
+// printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
+			memset(buf+i, 0, 0x1000);
+			failed++;
+			continue;
+		}
+		try {
+			MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
+		} except(EXCEPTION_EXECUTE_HANDLER) {
+// printk("MmProbeAndLockPages failed with exception i is %x.\n", i);
+			IoFreeMdl(mdl);
+			memset(buf+i, 0, 0x1000);
+			failed++;
+			continue;
+		}
+#endif
+
+		p = MmMapIoSpace(addr, 0x1000, MmNonCached);
 		if (p == NULL) {
 				/* There are some pages which are
 				 * not mappable for whatever reason.
 				 * Our parameters are on mappable
 				 * pages, so ignore them.
 				 */
-			dbg("mmap(%x, 0x1000, ..) failed\n", i);
+// printk("mmap(%x, 0x1000, ..) failed\n", i);
 			memset(buf+i, 0, 0x1000);
 			failed++;
 		} else {
-			dbg("mmap(%x, 0x1000, ..) succeeded\n", i);
+// printk("mmap(%x, 0x1000, ..) succeeded\n", i);
 			memcpy(buf+i, p, 0x1000);
 			MmUnmapIoSpace(p, 0x1000);
 		}
+#if 0
+		MmUnlockPages(mdl);
+		IoFreeMdl(mdl);
+#endif
 	}
 	dbg("%d mappings failed\n", failed);
 

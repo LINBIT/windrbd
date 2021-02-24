@@ -36,10 +36,17 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Test: Do secondary writes flush the disk
+TODO: Bug: Send buffer drains for about 30 seconds
 
-	Peer does a sync() I would expect disk flush on all secondaries.
-	Check if this is done.
+	Reported by Yannis. Connection should be closed even when
+	there is data in the send buffer.
+
+TODO: Bug: Network loss on Server 2016 (Secondary)
+
+	Maybe the same that Yannis also observes? After 3-4 days
+	of I/O network interface is down (that is it is still up
+	but there is no data flow / ping does work, rebooting
+	solves the problem). Something with virtualization?
 
 TODO: Bug: System freeze (BSOD?) on drbdadm down on Server 2016
 
@@ -54,15 +61,47 @@ Feb  3 16:34:05 10.43.10.11  U15:34:05.105 (58492374975/10000000)|7798f6d0(drbd_
 
 	Update: also with -rc9. Is a health check BSOD.
 
+	Update: System hang with -rc9-146 last log line is the same
+	so probably the same error:
+
+Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284613741/10000000)|a58c56d0(drbd_r_windows-windows) #318 drbdd <3>drbd windows-windows pnode-id:2, cs(NetworkFailure), prole(Unknown), cflag(0x200e), scf(0x0): error receiving P_DATA, e: -5 l: 1048576!
+Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284621063/10000000)|a58c56d0(drbd_r_windows-windows) #319 wait_for_bios_to_complete 1 bios pending before wait_event
+Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284623119/10000000)|a58c56d0(drbd_r_windows-windows) #320 wait_for_bios_to_complete 2 IRPs pending before wait_event
+
+	Also, before:
+
+Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_a_windows-windows) #312 drbd_ack_receiver <3>drbd windows-windows pnode-id:2, cs(Connected), prole(Primary), cflag(0xe), scf(0x1): sock_recvmsg returned -103
+(ECONNABORTED 103 Software caused connection abort)
+
+	but this is probably unrelated (see Network loss bug?)
+
+	Update: we now fixed wait_event (was always interruptible
+	and sometimes got interrupted returning -EINTR. Original
+	Linux wait_event is not interuptible) Now it is better
+	but sometimes (after 50 iterations) it still hangs ...
+
+	Update: It hangs somewhere in a DRBD endio routine. More
+	info to follow ...
+
+	2 (more) errors
+		.) BSOD in conn_disconnect 7 (7a)
+		.) System hang in bi_endio (not yet clear which DRBD endio
+		   handler) this hang is less common.
+		   Update: hangs in one_flush_endio
+
+	Update: wait_for_completion now sleeps uninteruptible fixing the
+	bug. Fixes BSOD in conn_disconnect (most likely) but not the
+	system hang in one_flush_endio.
+
+	Update: freezes after about 500 (sometimes 600) disconnect
+	cycles, last log line is terminating receiver thread ...
+
+TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
+
 TODO: Bug: Data coherence error when simple write cache is enabled.
 
 	It probably is better not to support this because it doesn't
 	give much performance boost (or none at all)...
-
-TODO: Bug: BSOD in wsk_incoming_connection
-
-	When running disconnect_connect_wait_connected loop on Linux (secondary)
-	and Primary (Windows) doing I/O. After 50-100 iterations or so...
 
 TODO: Bug: BSOD when connecting with split brain.
 
@@ -7008,4 +7047,25 @@ Done: Performance: Sync is still somewhat slow when windrbd is SyncTarget
 
 	12/04/2020: Using big pages (up to 1Mb) for sync target
 	reading now, it is now 5 times faster than before.
+
+Done: Test: Do secondary writes flush the disk
+
+	Peer does a sync() I would expect disk flush on all secondaries.
+	Check if this is done.
+
+	Update: Yes flush is done (on Server 2016). Also iotop showed
+	I/O (around 20MB/sec) on the Server 2016 VM.
+
+Done: Bug: BSOD in wsk_incoming_connection
+
+	When running disconnect_connect_wait_connected loop on Linux (secondary)
+	and Primary (Windows) doing I/O. After 50-100 iterations or so...
+
+	Can't reproduce at the moment.
+
+Done: Test: Network outage and remote disconnect (see comment in windrbd_winsocket.c)
+
+	Network outage (via iptables) test succeeded (50 iterations), now
+	disconnect.
+	Disconnect also works (132 iterations).
 

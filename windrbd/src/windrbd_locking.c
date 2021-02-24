@@ -210,6 +210,8 @@ void spin_lock_init(spinlock_t *lock)
 #ifdef SPIN_LOCK_DEBUG2
 	lock->locked_by_thread = NULL;
 	strncpy(lock->marker, "SPIN_LOCK123", ARRAY_SIZE(lock->marker)-1);
+	strncpy(lock->locked_by, "NONE", ARRAY_SIZE(lock->locked_by)-1);
+	lock->timestamp_taken.QuadPart = 0;
 #endif
 }
 
@@ -513,6 +515,7 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 {
 	KIRQL oldIrql;
 
+#ifdef SPIN_LOCK_DEBUG2
 		/* this introduces about 1000 more races, but is here just
 		 * for debugging purposes.
 		 */
@@ -522,15 +525,16 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 			/* From here on, everything may happen */
 		return KeGetCurrentIrql();
 	}
+	lock->timestamp_taken = KeQueryPerformanceCounter(NULL);
+#endif
+
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
-	lock->locked_by_thread = KeGetCurrentThread();
 #ifdef SPIN_LOCK_DEBUG2
+	lock->locked_by_thread = KeGetCurrentThread();
 	strncpy(lock->marker, "SPIN_LOCK456", ARRAY_SIZE(lock->marker)-1);
-	strncpy(lock->locked_by, func, 24);
-	strncpy(&lock->locked_by[24], file, 32);
+	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 	lock->locked_by[ARRAY_SIZE(lock->locked_by)-1] = '\0';
-//	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 #endif
 
 	return oldIrql;
@@ -538,18 +542,31 @@ KIRQL spin_lock_irqsave_debug_new(spinlock_t *lock, const char *file, int line, 
 
 void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags)
 {
-	lock->locked_by_thread = NULL;
 #ifdef SPIN_LOCK_DEBUG2
+	LARGE_INTEGER now;
+
+	now = KeQueryPerformanceCounter(NULL);
+	if (!lock->printk_lock && lock->timestamp_taken.QuadPart != 0 && (now.QuadPart - lock->timestamp_taken.QuadPart) > 10*1000*1000/10000)
+		printk("Warning: %s held spinlock longer than 100usecs locked by %s locktime is %lld\n", current->comm, lock->locked_by, (now.QuadPart - lock->timestamp_taken.QuadPart));
+
+	lock->locked_by_thread = NULL;
 	strncpy(lock->marker, "SPIN_LOCK123", ARRAY_SIZE(lock->marker)-1);
 	strncpy(lock->locked_by, "NONE", ARRAY_SIZE(lock->locked_by)-1);
 #endif
+
 	KeReleaseSpinLock(&lock->spinLock, flags);
 }
+
+#if 0
 
 // void spin_lock_irq(spinlock_t *lock)
 void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const char *func)
 {
 	KIRQL unused;
+
+#ifdef SPIN_LOCK_DEBUG2
+
+//  printk("Warning: deprecated function spin_lock_irq_debug_new called by %s:%d %s()\n", file, line, func);
 
 		/* this introduces about 1000 more races, but is here just
 		 * for debugging purposes.
@@ -560,15 +577,14 @@ void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const
 			/* From here on, everything may happen */
 		return;
 	}
+#endif
 	KeAcquireSpinLock(&lock->spinLock, &unused);
 
-	lock->locked_by_thread = KeGetCurrentThread();
 #ifdef SPIN_LOCK_DEBUG2
+	lock->locked_by_thread = KeGetCurrentThread();
 	strncpy(lock->marker, "SPIN_LOCK456", ARRAY_SIZE(lock->marker)-1);
-	strncpy(lock->locked_by, func, 24);
-	strncpy(&lock->locked_by[24], file, 32);
+	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 	lock->locked_by[ARRAY_SIZE(lock->locked_by)-1] = '\0';
-//	snprintf(lock->locked_by, ARRAY_SIZE(lock->locked_by)-1, "%s:%d (%s())", file, line, func);
 
 		/* TODO: remove this check again later */
 	if (unused != PASSIVE_LEVEL)
@@ -585,33 +601,54 @@ void spin_lock_irq_debug_new(spinlock_t *lock, const char *file, int line, const
 
 void spin_unlock_irq(spinlock_t *lock)
 {
-	lock->locked_by_thread = NULL;
 #ifdef SPIN_LOCK_DEBUG2
+// printk("Warning: deprecated function spin_lock_unirq_debug_new called\n");
+
+	lock->locked_by_thread = NULL;
 	strncpy(lock->locked_by, "NONE", ARRAY_SIZE(lock->locked_by)-1);
 	strncpy(lock->marker, "SPIN_LOCK123", ARRAY_SIZE(lock->marker)-1);
 #endif
 	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
 }
 
+#endif
+
 /* This does not change the IRQL. In particular if IRQL is
  * at PASSIVE_LEVEL it stays at PASSIVE_LEVEL which means
  * that the critical section may be preempted. Again,
  * use spin_lock_irqsave/spin_unlock_irqrestore whereever
  * possible.
+ *
+ * TODO: these functions are deprecated and should go away.
  */
 
-void spin_lock(spinlock_t *lock)
+static void spin_lock(spinlock_t *lock)
 {
+#ifdef SPIN_LOCK_DEBUG2
+// if (!lock->printk_lock)
+// printk("Warning: deprecated function spin_lock called\n");
+#endif
+
 	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
 }
 
 void spin_unlock(spinlock_t *lock)
 {
+#ifdef SPIN_LOCK_DEBUG2
+// if (!lock->printk_lock)
+// printk("Warning: deprecated function spin_unlock called\n");
+#endif
+
 	KeReleaseSpinLockFromDpcLevel(&lock->spinLock);
 }
 
 void spin_lock_nested(spinlock_t *lock, int level)
 {
+#ifdef SPIN_LOCK_DEBUG2
+// if (!lock->printk_lock)
+// printk("Warning: deprecated function spin_lock_nested called\n");
+#endif
+
 	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
 }
 
@@ -663,6 +700,8 @@ void local_irq_enable()
 {
 	KeReleaseSpinLock(&irq_lock.spinLock, PASSIVE_LEVEL);
 }
+
+/* see DRBD ratelimit implementation */
 
 int spin_trylock(spinlock_t *lock)
 {

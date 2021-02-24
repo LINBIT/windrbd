@@ -105,6 +105,7 @@ void windrbd_reap_threads(void)
 	spin_lock_irqsave(&thread_list_lock, flags);
 	list_for_each_entry_safe(struct task_struct, t, tn, &thread_list, list) {
 		if (t->is_zombie) {
+// printk("about to bury %p\n", t);
 			list_del(&t->list);
 			list_add(&t->list, &dead_list);
 		}
@@ -113,7 +114,7 @@ void windrbd_reap_threads(void)
 
 	list_for_each_entry_safe(struct task_struct, t, tn, &dead_list, list) {
 		windrbd_cleanup_windows_thread(t->windows_thread);
-		dbg("Buried %s thread\n", t->comm);
+// printk("Buried %s thread\n", t->comm);
 
 		list_del(&t->list);
 		kfree(t);
@@ -166,6 +167,15 @@ static void windrbd_thread_setup(void *targ)
 	if (ret != 0)
 		printk(KERN_WARNING "Thread %s returned non-zero exit status. Ignored, since Windows threads are void.\n", t->comm);
 
+	if (t->wait_queue != NULL)
+		printk("Warning: thread exiting with still wait_queue on it (%p).\n", t->wait_queue);
+	if (t->wait_queue_entry != NULL)
+		printk("Warning: thread exiting with still wait_queue_entry on it (%p).\n", t->wait_queue_entry);
+
+	if (KeGetCurrentIrql() > PASSIVE_LEVEL)
+		printk("Warning: IRQL is %d when exiting thread. System will posibly lockup.\n", KeGetCurrentIrql());
+
+// printk("exiting %p...\n", t);
 	t->is_zombie = 1;
 }
 

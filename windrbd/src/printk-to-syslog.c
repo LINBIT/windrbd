@@ -346,7 +346,6 @@ int _printk(const char *func, const char *fmt, ...)
 		buffer_overflows++;
 		return -EINVAL;
 	}
-
 	/* Print messages to debugging facility, use a tool like
 	 * DbgViewer to see them.
 	 */
