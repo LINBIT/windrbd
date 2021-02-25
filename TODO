@@ -48,6 +48,10 @@ TODO: Bug: Network loss on Server 2016 (Secondary)
 	but there is no data flow / ping does work, rebooting
 	solves the problem). Something with virtualization?
 
+	Update: happened again with e1000 NIC driver .. now switched
+	to rtl8139 and see what happens (this one is 'only' 100Mbit
+	so it is the bottleneck).
+
 TODO: Bug: System freeze (BSOD?) on drbdadm down on Server 2016
 
 	Last log line is:
@@ -95,6 +99,8 @@ Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_
 
 	Update: freezes after about 500 (sometimes 600) disconnect
 	cycles, last log line is terminating receiver thread ...
+
+TODO: Bug: IRQL BSOD when doing I/O with 1.0.0-rc10
 
 TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
 
