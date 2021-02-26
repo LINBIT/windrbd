@@ -686,3 +686,15 @@ Click/tap on the Settings button under Startup and Recovery
 Check (enable - default) or uncheck (disable) the Automatically restart box under System failure for what you want, and click/tap on OK.
 
 -----------------------
+
+Run a test from testsuite:
+
+./run.py wintestubuntu linbit-wdrbd-2020 -r resize
+
+right now fails because lvs does not exist on cygwin.
+
+-------------------------
+
+Control firewall: enable IPv4 pings:
+
+netsh advFirewall Firewall add rule name="OSRadar Rule PING IPv4" protocol=icmpv4:8,any dir=in action=allow
