@@ -41,17 +41,6 @@ TODO: Bug: Send buffer drains for about 30 seconds
 	Reported by Yannis. Connection should be closed even when
 	there is data in the send buffer.
 
-TODO: Bug: Network loss on Server 2016 (Secondary)
-
-	Maybe the same that Yannis also observes? After 3-4 days
-	of I/O network interface is down (that is it is still up
-	but there is no data flow / ping does work, rebooting
-	solves the problem). Something with virtualization?
-
-	Update: happened again with e1000 NIC driver .. now switched
-	to rtl8139 and see what happens (this one is 'only' 100Mbit
-	so it is the bottleneck).
-
 TODO: Bug: System freeze (BSOD?) on drbdadm down on Server 2016
 
 	Last log line is:
@@ -101,6 +90,8 @@ Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_
 	cycles, last log line is terminating receiver thread ...
 
 TODO: Bug: IRQL BSOD when doing I/O with 1.0.0-rc10
+
+	This happened when the peer crashed.
 
 TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
 
@@ -7074,4 +7065,18 @@ Done: Test: Network outage and remote disconnect (see comment in windrbd_winsock
 	Network outage (via iptables) test succeeded (50 iterations), now
 	disconnect.
 	Disconnect also works (132 iterations).
+
+Done: Bug: Network loss on Server 2016 (Secondary)
+
+	Maybe the same that Yannis also observes? After 3-4 days
+	of I/O network interface is down (that is it is still up
+	but there is no data flow / ping does work, rebooting
+	solves the problem). Something with virtualization?
+
+	Update: happened again with e1000 NIC driver .. now switched
+	to rtl8139 and see what happens (this one is 'only' 100Mbit
+	so it is the bottleneck).
+
+	Update: Ran for 4 days with rtl8139..so it is probably
+	a network driver bug. e1000 does not work.
 
