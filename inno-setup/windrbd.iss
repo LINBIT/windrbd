@@ -19,7 +19,7 @@
 #define MyAppName "WinDRBD"
 #define MyAppPublisher "Linbit"
 #define MyAppURL "http://www.linbit.com/"
-#define MyAppURLDocumentation "https://downloads.linbit.com/"
+#define MyAppURLDocumentation "https://www.linbit.com/user-guides/"
 #define SysRoot "C:\windrbd"
 
 [Setup]
