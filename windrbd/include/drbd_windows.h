@@ -838,7 +838,8 @@ extern void kref_init(struct kref *kref);
 
 extern struct request_queue *bdev_get_queue(struct block_device *bdev);
 extern void blk_cleanup_queue(struct request_queue *q);
-extern struct request_queue *blk_alloc_queue(gfp_t gfp_mask);
+#define NUMA_NO_NODE 0
+extern struct request_queue *blk_alloc_queue(int unused);
 typedef void (make_request_fn) (struct request_queue *q, struct bio *bio);
 extern void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn);
 extern void blk_queue_flush(struct request_queue *q, unsigned int flush);
@@ -1280,6 +1281,7 @@ int windrbd_become_secondary(struct drbd_device *device, const char **err_str);
 #define MINOR(dev)	((unsigned int) ((dev) & MINORMASK))
 #define MKDEV(ma,mi)	(((ma) << MINORBITS) | (mi))
 
+void register_blkdev(int major, const char *name);
 void unregister_blkdev(int major, const char *name);
 
 	/* These are WinDRBD specific ioctls. */

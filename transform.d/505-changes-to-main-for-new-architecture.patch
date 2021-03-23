@@ -2,21 +2,6 @@ diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
 index 8274e6a..52cf9fa 100644
 --- a/drbd/drbd_main.c
 +++ b/drbd/drbd_main.c
-@@ -3517,9 +3540,13 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
- 	sprintf(disk->disk_name, "drbd%d", minor);
- 	disk->private_data = device;
- 
--	device->this_bdev = bdget(MKDEV(DRBD_MAJOR, minor));
-+	device->this_bdev = block_device;
- 	/* we have no partitions. we contain only ourselves. */
- 	device->this_bdev->bd_contains = device->this_bdev;
-+	/* TODO: should go away, use bdev->bd_disk->private_data instead */
-+	device->this_bdev->drbd_device = device;
-+	/* TODO: leaks existing disk */
-+	device->this_bdev->bd_disk = disk;
- 
- 	init_bdev_info(q->backing_dev_info, drbd_congested, device);
- 
 @@ -3691,6 +3723,10 @@ void drbd_unregister_device(struct drbd_device *device)
  	destroy_workqueue(device->submit.wq);
  	device->submit.wq = NULL;
@@ -28,3 +13,14 @@ index 8274e6a..52cf9fa 100644
  }
  
  void drbd_reclaim_device(struct rcu_head *rp)
+
+@@ -3751,4 +3751,8 @@
+ 	disk->private_data = device;
+ 
++        device->this_bdev = block_device;
++        /* TODO: leaks existing disk */
++        device->this_bdev->bd_disk = disk;
++
+ 	blk_queue_flag_set(QUEUE_FLAG_STABLE_WRITES, q);
+ 	blk_queue_write_cache(q, true, true);
+

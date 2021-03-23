@@ -16,15 +16,6 @@ diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
 index 291d764..2648056 100644
 --- a/drbd/drbd_main.c
 +++ b/drbd/drbd_main.c
-@@ -3622,8 +3622,6 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
- 	device->this_bdev = block_device;
- 	/* we have no partitions. we contain only ourselves. */
- 	device->this_bdev->bd_contains = device->this_bdev;
--	/* TODO: should go away, use bdev->bd_disk->private_data instead */
--	device->this_bdev->drbd_device = device;
- 	/* TODO: leaks existing disk */
- 	device->this_bdev->bd_disk = disk;
- 
 @@ -3711,6 +3709,13 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
  		goto out_remove_peer_device;
  	}

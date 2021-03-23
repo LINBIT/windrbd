@@ -18,34 +18,34 @@ diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
 index a1731ce..f741240 100644
 --- a/drbd/drbd_receiver.c
 +++ b/drbd/drbd_receiver.c
-@@ -287,27 +287,39 @@ static void page_chain_add(struct page **head,
- 	*head = chain_first;
+@@ -288,5 +288,5 @@
  }
  
--static struct page *__drbd_alloc_pages(unsigned int number, gfp_t gfp_mask)
-+static struct page *__drbd_alloc_pages(unsigned int number, gfp_t gfp_mask, int use_big_pages)
+-static struct page *__drbd_alloc_pages(struct drbd_resource *resource, unsigned int number, gfp_t gfp_mask)
++static struct page *__drbd_alloc_pages(struct drbd_resource *resource, unsigned int number, gfp_t gfp_mask, int use_big_pages)
  {
  	KIRQL spin_lock_flags;
- 	struct page *page = NULL;
+@@ -294,19 +294,32 @@
  	struct page *tmp = NULL;
  	unsigned int i = 0;
 +	size_t len;
  
  	/* Yes, testing drbd_pp_vacant outside the lock is racy.
  	 * So what. It saves a spin_lock. */
--	if (drbd_pp_vacant >= number) {
-+	while (drbd_pp_vacant >= number && !use_big_pages) {
- 		spin_lock_irqsave(&drbd_pp_lock, spin_lock_flags);
- 		page = page_chain_del(&drbd_pp_pool, number);
+-	if (resource->pp_vacant >= number) {
++	while (resource->pp_vacant >= number && !use_big_pages) {
+ 		spin_lock_irqsave(&resource->pp_lock, spin_lock_flags);
+ 		page = page_chain_del(&resource->pp_pool, number);
 -		if (page)
+-			resource->pp_vacant -= number;
 +		if (page) {
- 			drbd_pp_vacant -= number;
++			drbd_pp_vacant -= number;
 +			if (page->size > PAGE_SIZE) {
 +				spin_unlock_irqrestore(&drbd_pp_lock, spin_lock_flags);
 +				continue;
 +			}
 +		}
- 		spin_unlock_irqrestore(&drbd_pp_lock, spin_lock_flags);
+ 		spin_unlock_irqrestore(&resource->pp_lock, spin_lock_flags);
  		if (page)
  			return page;
  	}
@@ -55,13 +55,13 @@ index a1731ce..f741240 100644
 +	} else {
 +		len = PAGE_SIZE;
 +	}
++
  
  	for (i = 0; i < number; i++) {
 -		tmp = alloc_page(gfp_mask);
 +		tmp = alloc_page_of_size(gfp_mask, len);
  		if (!tmp)
  			break;
- 		set_page_chain_next_offset_size(tmp, page, 0, 0);
 @@ -394,7 +406,7 @@ static void drbd_reclaim_net_peer_reqs(struct drbd_connection *connection)
   * Returns a page chain linked via (struct drbd_page_chain*)&page->lru.
   */
@@ -71,24 +71,20 @@ index a1731ce..f741240 100644
  {
  	KIRQL rcu_flags;
  	struct drbd_connection *connection =
-@@ -408,7 +420,7 @@ struct page *drbd_alloc_pages(struct drbd_transport *transport, unsigned int num
- 	rcu_read_unlock(rcu_flags);
+@@ -410,5 +423,5 @@
  
  	if (atomic_read(&connection->pp_in_use) < mxb)
--		page = __drbd_alloc_pages(number, gfp_mask & ~__GFP_RECLAIM);
-+		page = __drbd_alloc_pages(number, gfp_mask & ~__GFP_RECLAIM, use_big_pages);
+-		page = __drbd_alloc_pages(resource, number, gfp_mask & ~__GFP_RECLAIM);
++		page = __drbd_alloc_pages(resource, number, gfp_mask & ~__GFP_RECLAIM, use_big_pages);
  
  	/* Try to keep the fast path fast, but occasionally we need
- 	 * to reclaim the pages we lent to the network stack. */
-@@ -421,7 +433,7 @@ struct page *drbd_alloc_pages(struct drbd_transport *transport, unsigned int num
- 		drbd_reclaim_net_peer_reqs(connection);
+@@ -423,5 +436,5 @@
  
  		if (atomic_read(&connection->pp_in_use) < mxb) {
--			page = __drbd_alloc_pages(number, gfp_mask);
-+			page = __drbd_alloc_pages(number, gfp_mask, use_big_pages);
+-			page = __drbd_alloc_pages(resource, number, gfp_mask);
++			page = __drbd_alloc_pages(resource, number, gfp_mask, use_big_pages);
  			if (page)
  				break;
- 		}
 @@ -439,8 +451,12 @@ struct page *drbd_alloc_pages(struct drbd_transport *transport, unsigned int num
  	}
  	finish_wait(&drbd_pp_wait, &wait);

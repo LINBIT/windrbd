@@ -149,4 +149,6 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 
 int windrbd_wait_for_network(void);
 
+int sock_set_keepalive(struct sk *socket);
+
 #endif

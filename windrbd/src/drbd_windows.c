@@ -2583,7 +2583,7 @@ void list_add_tail_rcu(struct list_head *new, struct list_head *head)
 
 static spinlock_t global_queue_lock;
 
-struct request_queue *blk_alloc_queue(gfp_t gfp_mask)
+struct request_queue *blk_alloc_queue(int unused)
 {
 	struct request_queue *q;
 
@@ -3886,6 +3886,11 @@ void bdput(struct block_device *this_bdev)
 ktime_t ktime_get(void)
 {
 	return (ktime_t) { .tv64 = jiffies * (1000*1000*1000/HZ) };
+}
+
+void register_blkdev(int major, const char *name)
+{
+	/* does nothing */
 }
 
 void unregister_blkdev(int major, const char *name)

@@ -14,22 +14,3 @@ index f332da2..7ef6dc4 100644
  	} else {
  		additional_size_command(peer_device->connection, DATA_STREAM, req->i.size);
  		err = __send_command(peer_device->connection, device->vnr, P_DATA, DATA_STREAM);
-@@ -2963,7 +2942,7 @@ static int drbd_congested(void *congested_data, int bdi_bits)
- 	struct drbd_device *device = congested_data;
- 	struct request_queue *q;
- 	int r = 0;
--
-+#if 0
- 	if (!may_inc_ap_bio(device)) {
- 		/* DRBD has frozen IO */
- 		r = bdi_bits;
-@@ -3005,6 +2984,9 @@ static int drbd_congested(void *congested_data, int bdi_bits)
- 	}
- 
- out:
-+#else
-+	/* Currently not supported on windows */
-+#endif
- 	return r;
- }
- 

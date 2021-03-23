@@ -12,15 +12,6 @@ diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
 index 2b5c22a..0cbf9e2 100644
 --- a/drbd/drbd_main.c
 +++ b/drbd/drbd_main.c
-@@ -3766,7 +3766,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
- 
- 	init_rwsem(&device->uuid_sem);
- 
--	q = blk_alloc_queue(drbd_make_request, NUMA_NO_NODE);
-+	q = blk_alloc_queue(GFP_KERNEL);
- 	if (!q)
- 		goto out_no_q;
- 	device->rq_queue = q;
 -- 
 2.17.0
 

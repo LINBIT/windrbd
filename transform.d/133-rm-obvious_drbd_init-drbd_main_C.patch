@@ -11,26 +11,6 @@ index e207d80..56fcab0 100644
  {
  	int err;
  
-@@ -3842,19 +3842,11 @@ static int __init drbd_init(void)
- #endif
- 	}
- 
--	err = register_blkdev(DRBD_MAJOR, "drbd");
--	if (err) {
--		pr_err("unable to register block device major %d\n",
--		       DRBD_MAJOR);
--		return err;
--	}
--
- 	/*
- 	 * allocate all necessary structs
- 	 */
- 	init_waitqueue_head(&drbd_pp_wait);
- 
--	drbd_proc = NULL; /* play safe for drbd_cleanup */
- 	idr_init(&drbd_devices);
- 
- 	mutex_init(&resources_mutex);
 @@ -4086,7 +4086,9 @@ int __init drbd_init(void)
  	spin_lock_init(&retry.lock);
  	INIT_LIST_HEAD(&retry.writes);

@@ -14,14 +14,6 @@ diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
 index a5e7493..32ef098 100644
 --- a/drbd/drbd_receiver.c
 +++ b/drbd/drbd_receiver.c
-@@ -5519,6 +5519,7 @@ static int receive_uuids110(struct drbd_connection *connection, struct packet_in
- 	u64 bitmap_uuids_mask, node_mask;
- 	struct drbd_peer_md *peer_md = NULL;
- 	struct drbd_device *device;
-+	KIRQL flags = KeGetCurrentIrql();
- 
- 	peer_device = conn_peer_device(connection, pi->vnr);
- 	if (!peer_device)
 @@ -5551,7 +5552,7 @@ static int receive_uuids110(struct drbd_connection *connection, struct packet_in
  
  	if (get_ldev(device)) {
@@ -40,6 +32,12 @@ index a5e7493..32ef098 100644
  		put_ldev(device);
  	}
  
+@@ -5640,4 +5653,5 @@
+ 	struct drbd_device *device;
+ 	int not_allocated = -1;
++	KIRQL flags = KeGetCurrentIrql();
+ 
+ 	peer_device = conn_peer_device(connection, pi->vnr);
 -- 
 2.17.0
 

@@ -14,16 +14,14 @@ diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
 index 9628776..0a93843 100644
 --- a/drbd/drbd_nl.c
 +++ b/drbd/drbd_nl.c
-@@ -1425,8 +1425,7 @@ static bool effective_disk_size_determined(struct drbd_device *device)
- void drbd_set_my_capacity(struct drbd_device *device, sector_t size)
- {
+@@ -1573,6 +1573,5 @@
  	char ppb[10];
+ 
 -	set_capacity(device->vdisk, size);
--	device->this_bdev->bd_inode->i_size = (loff_t)size << 9;
+-	revalidate_disk_size(device->vdisk, false);
 +	device->this_bdev->d_size = size << 9;
+ 
  	drbd_info(device, "size = %s (%llu KB)\n",
- 		ppsize(ppb, size>>1), (unsigned long long)size>>1);
- }
 -- 
 2.7.4
 

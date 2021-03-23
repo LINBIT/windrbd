@@ -1945,6 +1945,13 @@ void windrbd_update_socket_buffer_sizes(struct socket *socket)
 	}
 }
 
+/* TODO: Currently does nothing */
+
+int sock_set_keepalive(struct sk *socket)
+{
+	return 0;
+}
+
 static NTSTATUS receive_a_lot(void *unused)
 {
 	struct socket *s, *s2;

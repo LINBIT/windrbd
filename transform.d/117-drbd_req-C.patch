@@ -29,19 +29,16 @@ index e1e9595b..100a6e49 100644
  	if (!drbd_ratelimit())
  		return;
  
-@@ -1155,8 +1147,12 @@ static bool remote_due_to_read_balancing(struct drbd_device *device,
- 
+@@ -1150,6 +1150,9 @@
  	switch (rbm) {
  	case RB_CONGESTED_REMOTE:
 +		return false;
 +#if 0
-+		// TODO reimplement statistics
-		bdi = bdi_from_device(device);
+ 		bdi = device->ldev->backing_bdev->bd_disk->queue->backing_dev_info;
  		return bdi_read_congested(bdi);
 +#endif
  	case RB_LEAST_PENDING:
  		return atomic_read(&device->local_cnt) >
- 			atomic_read(&peer_device->ap_pending_cnt) + atomic_read(&peer_device->rs_pending_cnt);
 @@ -1211,7 +1207,8 @@ static void complete_conflicting_writes(struct drbd_request *req)
  		prepare_to_wait(&device->misc_wait, &wait, TASK_UNINTERRUPTIBLE);
  		i->waiting = true;
