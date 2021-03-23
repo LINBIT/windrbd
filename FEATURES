@@ -30,11 +30,11 @@ Online verify
 ----- for 1.0.0
 
 2 node (Windows / Linux) setup production ready.
+3 (and more) node setups
 
 ----- for 1.1.0
 
-3 (and more) node setups
-	There are still connection problems.
+Base on DRBD 9.1.X branch
 
 ----- for 1.2.0
 

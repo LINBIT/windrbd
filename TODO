@@ -692,31 +692,6 @@ TODO: Test: IPv6
 
 	Doesn't work, but this might be an Ubuntu issue.
 
-TODO: Implement: We want to have some sort of a regression test suite.
-
-	Do not use agruen's it is too complicated. Maybe write a simple
-	new one from scratch (or reuse parts of the old DRBD 8 python
-	test suite with ssh support).
-
-	Update: maybe best is to write a simple new one in bash.
-	(see test-io-larger-than-1m.sh).
-
-	Update: Phil probably rejects a seperate testsuite for
-	WinDRBD (which makes sense to me). Since drbdsetup events2
-	is working now, it got easier to get agruen's testsuite
-	working. What is definately missing is a replacement for
-	lvm and (probably) netfilter (we also need lvm replacement
-	for porting LinStor to Windows later).
-
-	Update: Do that right after beta5
-
-	Update: Yes we will use the agruen test suite. Phil is doing
-	most of the tests so ask him for a primer.
-
-	Update: working on fake-lvm, which will be able to understand
-	lvcreate and lvremove (only the needed options, no thin
-	provisioning).
-
 TODO: Implement: drbd-proxy-ctl should ignore WinDRBD devices
 
 	From Devin.
@@ -7080,3 +7055,30 @@ Done: Bug: Network loss on Server 2016 (Secondary)
 	Update: Ran for 4 days with rtl8139..so it is probably
 	a network driver bug. e1000 does not work.
 
+Done: Implement: We want to have some sort of a regression test suite.
+
+	Do not use agruen's it is too complicated. Maybe write a simple
+	new one from scratch (or reuse parts of the old DRBD 8 python
+	test suite with ssh support).
+
+	Update: maybe best is to write a simple new one in bash.
+	(see test-io-larger-than-1m.sh).
+
+	Update: Phil probably rejects a seperate testsuite for
+	WinDRBD (which makes sense to me). Since drbdsetup events2
+	is working now, it got easier to get agruen's testsuite
+	working. What is definately missing is a replacement for
+	lvm and (probably) netfilter (we also need lvm replacement
+	for porting LinStor to Windows later).
+
+	Update: Do that right after beta5
+
+	Update: Yes we will use the agruen test suite. Phil is doing
+	most of the tests so ask him for a primer.
+
+	Update: working on fake-lvm, which will be able to understand
+	lvcreate and lvremove (only the needed options, no thin
+	provisioning).
+
+	Update: Porting agruen's testsuite now, for more TODO's see the
+	TODO.windrbd file there.
