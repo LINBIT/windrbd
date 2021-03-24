@@ -3149,7 +3149,7 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
 	return bdev->d_size >> 9;
 }
 
-sector_t get_capacity(struct gendisk *disk);
+sector_t get_capacity(struct gendisk *disk)
 {
 	if (gendisk->bdev != NULL)
 		return windrbd_get_capacity(bdev);
@@ -3898,9 +3898,10 @@ ktime_t ktime_get(void)
 	return (ktime_t) { .tv64 = jiffies * (1000*1000*1000/HZ) };
 }
 
-void register_blkdev(int major, const char *name)
+int register_blkdev(int major, const char *name)
 {
 	/* does nothing */
+	return 0;
 }
 
 void unregister_blkdev(int major, const char *name)

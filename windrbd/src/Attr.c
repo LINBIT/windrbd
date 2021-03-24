@@ -425,3 +425,54 @@ int nla_put_nohdr(struct sk_buff *skb, int attrlen, const void *data)
     __nla_put_nohdr(skb, attrlen, data);
     return 0;
 }
+
+/**
+ * nla_strscpy - Copy string attribute payload into a sized buffer
+ * @dst: Where to copy the string to.
+ * @nla: Attribute to copy the string from.
+ * @dstsize: Size of destination buffer.
+ *
+ * Copies at most dstsize - 1 bytes into the destination buffer.
+ * Unlike strlcpy the destination buffer is always padded out.
+ *
+ * Return:
+ * * srclen - Returns @nla length (not including the trailing %NUL).
+ * * -E2BIG - If @dstsize is 0 or greater than U16_MAX or @nla length greater
+ *            than @dstsize.
+ */
+
+/* warning C4310: cast truncates constant value */
+
+#pragma warning (disable : 4310)
+
+#define U16_MAX		((u16)~0U)
+
+ssize_t nla_strscpy(char *dst, const struct nlattr *nla, size_t dstsize)
+{
+	size_t srclen = nla_len(nla);
+	char *src = nla_data(nla);
+	ssize_t ret;
+	size_t len;
+
+	if (dstsize == 0 || dstsize > U16_MAX)
+		return -E2BIG;
+
+	if (srclen > 0 && src[srclen - 1] == '\0')
+		srclen--;
+
+	if (srclen >= dstsize) {
+		len = dstsize - 1;
+		ret = -E2BIG;
+	} else {
+		len = srclen;
+		ret = len;
+	}
+
+	memcpy(dst, src, len);
+	/* Zero pad end of dst. */
+	memset(dst + len, 0, dstsize - len);
+
+	return ret;
+}
+EXPORT_SYMBOL(nla_strscpy);
+

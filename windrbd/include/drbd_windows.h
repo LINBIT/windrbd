@@ -441,6 +441,7 @@ struct gendisk;
 
 struct block_device_operations {
 	struct module *owner;
+	void (*submit_bio) (struct bio*);
 	int (*open) (struct block_device *, fmode_t);
 	void (*release) (struct gendisk *, fmode_t);
 };
@@ -1290,7 +1291,7 @@ int windrbd_become_secondary(struct drbd_device *device, const char **err_str);
 #define MINOR(dev)	((unsigned int) ((dev) & MINORMASK))
 #define MKDEV(ma,mi)	(((ma) << MINORBITS) | (mi))
 
-void register_blkdev(int major, const char *name);
+int register_blkdev(int major, const char *name);
 void unregister_blkdev(int major, const char *name);
 
 	/* These are WinDRBD specific ioctls. */
@@ -1367,5 +1368,18 @@ void test_main(const char *arg);
 int my_atoi(const char *c);
 
 NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default);
+
+	/* can always send page */
+static inline bool sendpage_ok(struct page *p)
+{
+	return 1;
+}
+
+	/* There are no read only backing devices */
+
+static inline int bdev_read_only(struct block_device *bdev)
+{
+	return 0;
+}
 
 #endif // DRBD_WINDOWS_H

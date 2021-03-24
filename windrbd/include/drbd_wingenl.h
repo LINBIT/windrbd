@@ -810,4 +810,6 @@ extern int drbd_tla_parse(struct nlmsghdr *nlh, struct nlattr **attr);
 extern void drbd_adm_send_reply(struct sk_buff *skb, struct genl_info *info);
 extern const char *windrbd_genl_cmd_to_str(u8 cmd);
 
+ssize_t nla_strscpy(char *dst, const struct nlattr *nla, size_t dstsize);
+
 #endif __DRBD_WINGENL_H__

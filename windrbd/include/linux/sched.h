@@ -26,5 +26,13 @@ static inline int sched_setscheduler(struct task_struct *p, int policy,
     return 0;
 }
 
+static inline int sched_set_fifo_low(struct task_struct *p)
+{
+    KeSetPriorityThread(p->windows_thread, LOW_REALTIME_PRIORITY);
+
+    return 0;
+}
+
+
 
 #endif

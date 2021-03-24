@@ -119,7 +119,7 @@ static inline void blk_queue_logical_block_size(struct request_queue *q, unsigne
 	q->logical_block_size = size;
 }
 
-#define blk_queue_split(q,b) do { } while (0)
+#define blk_queue_split(bio) do { } while (0)
 
 #ifndef COMPAT_QUEUE_LIMITS_HAS_DISCARD_ZEROES_DATA
 static inline unsigned int queue_discard_zeroes_data(struct request_queue *q)
@@ -1057,6 +1057,8 @@ static inline void genl_unlock(void)  { }
 #  define blk_queue_secdiscard(q)   (0)
 #  define QUEUE_FLAG_SECDISCARD    (-1)
 # endif
+
+#define QUEUE_FLAG_STABLE_WRITES 15	/* don't modify blks until WB is done */
 
 #ifndef COMPAT_HAVE_BLK_SET_STACKING_LIMITS
 static inline void blk_set_stacking_limits(struct queue_limits *lim)
