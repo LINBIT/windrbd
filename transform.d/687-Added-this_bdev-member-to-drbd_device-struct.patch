@@ -1,0 +1,26 @@
+From 5504464412bb18b4bce7e1f77fa87bd8f030cfe6 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 24 Mar 2021 13:48:06 +0100
+Subject: [PATCH 2/4] Added this_bdev member to drbd_device struct.
+
+This is needed for many purposes.
+---
+ drbd/drbd_int.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index 933738f..f461086 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -1374,6 +1374,8 @@ struct drbd_device {
+ 
+ 	struct rcu_head rcu;
+ 	struct work_struct finalize_work;
++
++	struct block_device *this_bdev;
+ };
+ 
+ #include "drbd_polymorph_printk.h"
+-- 
+2.17.0
+

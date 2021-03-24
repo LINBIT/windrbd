@@ -1,0 +1,33 @@
+From c4cf350cf6fcc7417f1fea62b7be10eaf7299d8f Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 24 Mar 2021 14:05:18 +0100
+Subject: [PATCH 4/4] More drbd_receiver patches.
+
+---
+ drbd/drbd_receiver.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index 0cb1c74..6d7e9db 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -3264,7 +3264,7 @@ void drbd_cleanup_peer_requests_wfa(struct drbd_device *device, struct list_head
+ 		atomic_sub(interval_to_al_extents(&peer_req->i), &device->wait_for_actlog_ecnt);
+ 		atomic_dec(&device->wait_for_actlog);
+ 		if (peer_req->flags & EE_SEND_WRITE_ACK)
+-			dec_unacked(peer_req->peer_device);
++			__dec_unacked(peer_req->peer_device);
+ 		list_del_init(&peer_req->wait_for_actlog);
+ 		drbd_may_finish_epoch(peer_req->peer_device->connection, peer_req->epoch, EV_PUT | EV_CLEANUP);
+ 		drbd_free_peer_req(peer_req);
+@@ -5652,6 +5652,7 @@ static int receive_uuids110(struct drbd_connection *connection, struct packet_in
+ 	struct drbd_peer_md *peer_md = NULL;
+ 	struct drbd_device *device;
+ 	int not_allocated = -1;
++	KIRQL flags = KeGetCurrentIrql();
+ 
+ 	peer_device = conn_peer_device(connection, pi->vnr);
+ 	if (!peer_device)
+-- 
+2.17.0
+

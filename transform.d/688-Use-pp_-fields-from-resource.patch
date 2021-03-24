@@ -1,0 +1,30 @@
+From 16bee27a02fdc9e1a56d123e3d746aac4da0e283 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 24 Mar 2021 13:57:32 +0100
+Subject: [PATCH 3/4] Use pp_ fields from resource.
+
+This is inside an already patched source so maybe better if we
+fix the patch instead of creating a new one.
+---
+ drbd/drbd_receiver.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index b037196..0cb1c74 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -301,9 +301,9 @@ static struct page *__drbd_alloc_pages(struct drbd_resource *resource, unsigned
+ 		spin_lock_irqsave(&resource->pp_lock, spin_lock_flags);
+ 		page = page_chain_del(&resource->pp_pool, number);
+ 		if (page) {
+-			drbd_pp_vacant -= number;
++			resource->pp_vacant -= number;
+ 			if (page->size > PAGE_SIZE) {
+-				spin_unlock_irqrestore(&drbd_pp_lock, spin_lock_flags);
++				spin_unlock_irqrestore(&resource->pp_lock, spin_lock_flags);
+ 				continue;
+ 			}
+ 		}
+-- 
+2.17.0
+

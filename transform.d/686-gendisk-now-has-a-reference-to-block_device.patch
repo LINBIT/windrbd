@@ -1,0 +1,25 @@
+From 11f3a3e2b7a42630c96b7e7dbe92c0ae241e5304 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 24 Mar 2021 13:30:05 +0100
+Subject: [PATCH 1/4] gendisk now has a reference to block_device.
+
+So we can find the capacity of the gendisk.
+---
+ drbd/drbd_main.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index b71c1fb..7553ca7 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3749,6 +3749,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	disk->fops = &drbd_ops;
+ 	sprintf(disk->disk_name, "drbd%d", minor);
+ 	disk->private_data = device;
++	disk->bdev = block_device;
+ 
+         device->this_bdev = block_device;
+         /* TODO: leaks existing disk */
+-- 
+2.17.0
+
