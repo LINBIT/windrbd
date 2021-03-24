@@ -96,29 +96,3 @@ index 6aa1ee49..f241e94f 100644
  		put_ldev(device);
  	}
  	s->dev_size = drbd_get_capacity(device->this_bdev);
-@@ -4654,6 +4684,8 @@ int drbd_adm_dump_devices(struct sk_buff *skb, struct netlink_callback *cb)
- 	struct idr *idr_to_search;
- 
- 	resource = (struct drbd_resource *)cb->args[0];
-+	minor = -1;
-+	device = NULL;
- 
- 	rcu_read_lock();
- 	if (!cb->args[0] && !cb->args[1]) {
-@@ -5805,7 +5833,7 @@ void notify_helper(enum drbd_notification_type type,
- 	struct drbd_genlmsghdr *dh;
- 	int err;
- 
--	strlcpy(helper_info.helper_name, name, sizeof(helper_info.helper_name));
-+	RtlCopyMemory(helper_info.helper_name, name, sizeof(helper_info.helper_name));
- 	helper_info.helper_name_len = min(strlen(name), sizeof(helper_info.helper_name));
- 	helper_info.helper_status = status;
-
-@@ -5885,4 +5900,7 @@
-        struct idr *idr_to_search;
- 
-+       minor = -1;
-+       device = NULL;
-+
-        resource = (struct drbd_resource *)cb->args[0];
- 
