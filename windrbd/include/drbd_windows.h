@@ -60,6 +60,8 @@ enum update_sync_bits_mode;
 
 #pragma warning (disable : 4100 4146 4221)
 
+#define fallthrough do { } while (0)
+
 	/* TODO: This appears very dangerous to me ... */
 // #define drbd_conf drbd_device
 
@@ -461,6 +463,7 @@ struct gendisk
 	const struct block_device_operations *fops;
 	void *private_data;
 	void * part0; 
+	struct block_device *bdev;
 };
 
 struct fault_injection {
@@ -596,6 +599,7 @@ struct block_device_reference {
 };
 
 extern sector_t windrbd_get_capacity(struct block_device *bdev);
+extern sector_t get_capacity(struct gendisk *disk);
 
 struct bio_vec {
 	struct page *bv_page;
@@ -808,6 +812,11 @@ static inline void bio_end_io_acct(struct bio *bio, unsigned long start_time)
 
 int generic_make_request(struct bio *bio);
 static inline int submit_bio(struct bio *bio)
+{
+	return generic_make_request(bio);
+}
+
+static inline int submit_bio_noacct(struct bio *bio)
 {
 	return generic_make_request(bio);
 }

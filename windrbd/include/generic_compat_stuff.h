@@ -123,11 +123,14 @@ static inline void request_module(const char *fmt, ...)
     (void)fmt;
 }
 
-static inline void* __vmalloc(u64 bytes, int flags, int flags2)
+/* This is just a fallback version for kmalloc in case
+ * kmalloc fails.
+ */
+
+static inline void* __vmalloc(u64 bytes, int flags)
 {
     (void)bytes;
     (void)flags;
-    (void)flags2;
     /* NULL not defined yet */
     return (void*)0;
 }

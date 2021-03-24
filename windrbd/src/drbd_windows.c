@@ -3142,12 +3142,22 @@ struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data,
 sector_t windrbd_get_capacity(struct block_device *bdev)
 {
 	if (bdev == NULL) {
-		printk(KERN_WARNING "bdev is NULL\n");
+		printk(KERN_WARNING "Warning: bdev is NULL in windrbd_get_capacity\n");
 		return 0;
 	}
 
 	return bdev->d_size >> 9;
 }
+
+sector_t get_capacity(struct gendisk *disk);
+{
+	if (gendisk->bdev != NULL)
+		return windrbd_get_capacity(bdev);
+
+	printk("Warning: get_capacity without block device called.\n");
+	return 0;
+}
+
 /* Space is allocated by this function and must be freed by the
    caller.
  */
