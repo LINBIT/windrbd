@@ -859,6 +859,8 @@ extern void put_disk(struct gendisk *disk);
 extern void del_gendisk(struct gendisk *disk);
 extern void set_disk_ro(struct gendisk *disk, int flag);
 
+extern struct block_device *bdget_disk(struct gendisk *disk, int partno);
+
 extern int fsync_bdev(struct block_device *bdev);
 
 #define PREPARE_WORK(_work, _func)                                      \

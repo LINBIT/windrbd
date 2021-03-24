@@ -2615,6 +2615,18 @@ void put_disk(struct gendisk *disk)
 	kfree(disk);
 }
 
+struct block_device *bdget_disk(struct gendisk *disk, int partno)
+{
+	if (partno > 0)
+		printk("Warning: bdget_disk called with partno = %d, we do not support partitions\n", partno);
+
+	if (disk)
+		return disk->bdev;
+
+	printk("Warning: disk is NULL in bdget_disk\n");
+	return NULL;
+}
+
 void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
 {
 	// not support
@@ -3151,8 +3163,8 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
 
 sector_t get_capacity(struct gendisk *disk)
 {
-	if (gendisk->bdev != NULL)
-		return windrbd_get_capacity(bdev);
+	if (disk->bdev != NULL)
+		return windrbd_get_capacity(disk->bdev);
 
 	printk("Warning: get_capacity without block device called.\n");
 	return 0;
