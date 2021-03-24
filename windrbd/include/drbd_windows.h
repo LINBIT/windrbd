@@ -1409,4 +1409,7 @@ enum kobject_action {
 
 int kobject_uevent(struct kobject *kobj, enum kobject_action action);
 
+/* Implemented. Taken from Linux 5.11 */
+size_t strlcpy(char *dest, const char *src, size_t size);
+
 #endif // DRBD_WINDOWS_H
