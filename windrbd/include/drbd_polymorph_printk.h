@@ -1,6 +1,8 @@
 #ifndef DRBD_POLYMORPH_PRINTK_H
 #define DRBD_POLYMORPH_PRINTK_H
 
+#define __drbd_printk_drbd_device_fmt(fmt)	"drbd %s/%u drbd%u: " fmt
+
 #define __drbd_printk_device(level, device, fmt, ...)		\
     do {								\
         const struct drbd_device *__d = (device);		\
@@ -74,7 +76,8 @@ void drbd_printk_with_wrong_object_type(void);
         __drbd_printk_##obj(level, obj, fmt, __VA_ARGS__);  \
     } while(0)
 
-#if defined(disk_to_dev)
+// #if defined(disk_to_dev)
+#if 0
 #define drbd_dbg(device, fmt, args...) \
 	dev_dbg(disk_to_dev(device->vdisk), fmt, ## args)
 #elif defined(DBG)
@@ -85,7 +88,8 @@ void drbd_printk_with_wrong_object_type(void);
 	do { if (0) drbd_printk(KERN_DEBUG, device, fmt, __VA_ARGS__); } while (0)
 #endif
 
-#if defined(dynamic_dev_dbg) && defined(disk_to_dev)
+// #if defined(dynamic_dev_dbg) && defined(disk_to_dev)
+#if 0
 #define dynamic_drbd_dbg(device, fmt, args...) \
 	dynamic_dev_dbg(disk_to_dev(device->vdisk), fmt, ## args)
 #elif defined(_WIN32) && defined(DBG)

@@ -582,6 +582,8 @@ struct block_device {
 
 	struct wait_queue_head bdflush_event;
 	struct completion bdflush_terminated;
+
+	struct kobject kobj;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
@@ -854,12 +856,19 @@ typedef void (make_request_fn) (struct request_queue *q, struct bio *bio);
 extern void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn);
 extern void blk_queue_flush(struct request_queue *q, unsigned int flush);
 
+extern void blk_queue_segment_boundary(struct request_queue *, unsigned long);
+extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+			    sector_t offset);
+extern void blk_queue_update_readahead(struct request_queue *q);
+
 extern struct gendisk *alloc_disk(int minors);
 extern void put_disk(struct gendisk *disk);
 extern void del_gendisk(struct gendisk *disk);
 extern void set_disk_ro(struct gendisk *disk, int flag);
 
 extern struct block_device *bdget_disk(struct gendisk *disk, int partno);
+#define disk_to_dev(disk) \
+	(disk)->bdev
 
 extern int fsync_bdev(struct block_device *bdev);
 
@@ -895,6 +904,7 @@ struct queue_limits {
 	unsigned int		max_write_zeroes_sectors;
 	unsigned int            discard_granularity;    
 	unsigned int		discard_zeroes_data;
+	unsigned int		seg_boundary_mask;
 };
 
 struct request_queue {
@@ -1383,5 +1393,20 @@ static inline int bdev_read_only(struct block_device *bdev)
 {
 	return 0;
 }
+
+enum kobject_action {
+	KOBJ_ADD,
+	KOBJ_REMOVE,
+	KOBJ_CHANGE,
+	KOBJ_MOVE,
+	KOBJ_ONLINE,
+	KOBJ_OFFLINE,
+	KOBJ_BIND,
+	KOBJ_UNBIND,
+};
+
+/* Not implemented: */
+
+int kobject_uevent(struct kobject *kobj, enum kobject_action action);
 
 #endif // DRBD_WINDOWS_H

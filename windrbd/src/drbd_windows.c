@@ -2636,6 +2636,34 @@ void blk_queue_flush(struct request_queue *q, unsigned int flush)
 {
 }
 
+/**
+ * blk_queue_segment_boundary - set boundary rules for segment merging
+ * @q:  the request queue for the device
+ * @mask:  the memory boundary mask
+ **/
+void blk_queue_segment_boundary(struct request_queue *q, unsigned long mask)
+{
+	if (mask < PAGE_SIZE - 1) {
+		mask = PAGE_SIZE - 1;
+		printk(KERN_INFO "%s: set to minimum %lx\n",
+		       __func__, mask);
+	}
+
+	q->limits.seg_boundary_mask = mask;
+}
+
+/* Not implemented. */
+int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+                            sector_t offset)
+{
+	return 0;
+}
+
+/* Not implemented. */
+void blk_queue_update_readahead(struct request_queue *q)
+{
+}
+
 struct bio_set *bioset_create(unsigned int pool_size, unsigned int front_pad)
 {
 	// not support
@@ -3938,6 +3966,13 @@ int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
 {
 	printk("Warning: blkdev_issue_write_same not implemented.\n");
 	return -EIO;
+}
+
+int kobject_uevent(struct kobject *kobj, enum kobject_action action)
+{
+	printk("Warning: kobject_uevent not implemented\n");
+
+	return 0;
 }
 
 static spinlock_t cpu_cache_spinlock;

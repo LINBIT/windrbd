@@ -443,7 +443,6 @@ static inline void blk_queue_max_segments(struct request_queue *q, unsigned shor
 }
 #endif
 
-
 /* REQ_* and BIO_RW_* flags have been moved around in the tree,
  * and have finally been "merged" with
  * 7b6d91daee5cac6402186ff224c3af39d79f4a0e and
