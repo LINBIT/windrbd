@@ -2643,9 +2643,14 @@ struct block_device *bdget_disk(struct gendisk *disk, int partno)
 	if (partno > 0)
 		printk("Warning: bdget_disk called with partno = %d, we do not support partitions\n", partno);
 
-	if (disk)
-		return disk->bdev;
+	if (disk) {
+		if (disk->bdev)
+			kref_get(&disk->bdev->kref);
+		else
+			printk("Warning: disk->bdev is NULL in bdget_disk\n");
 
+		return disk->bdev;
+	}
 	printk("Warning: disk is NULL in bdget_disk\n");
 	return NULL;
 }
@@ -3943,8 +3948,10 @@ void windrbd_bdput(struct block_device *this_bdev)
 	kref_put(&this_bdev->kref, windrbd_destroy_block_device);
 }
 
-/* See the comment at bdget(). DRBD calls this (currently) only
- * once, we shouldn't use that internally.
+/* See the comment at bdget().
+ *
+ * DRBD now calls this at least at 2 places (starting from DRBD 9.0.28)
+ * so we must ensure that we get the kref thing right (see bdget_disk())
  */
 
 void bdput(struct block_device *this_bdev)
