@@ -1,0 +1,24 @@
+From 595c125365952c23f73f1b03c415037db0737858 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 25 Mar 2021 13:12:59 +0100
+Subject: [PATCH] drbd_transport_tcp: patched in "one" variable again.
+
+---
+ drbd/drbd_transport_tcp.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 4adeb91..9dd691d 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -925,6 +925,7 @@ static int dtt_connect(struct drbd_transport *transport)
+ 	struct socket *dsocket, *csocket;
+ 	struct net_conf *nc;
+ 	int timeout, err;
++	int one = 1;
+ 	bool ok;
+ 
+ 	dsocket = NULL;
+-- 
+2.17.0
+

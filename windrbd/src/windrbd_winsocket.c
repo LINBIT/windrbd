@@ -1947,9 +1947,21 @@ void windrbd_update_socket_buffer_sizes(struct socket *socket)
 
 /* TODO: Currently does nothing */
 
-int sock_set_keepalive(struct sk *socket)
+int sock_set_keepalive(struct sock *socket)
 {
 	return 0;
+}
+
+void tcp_sock_set_nodelay(struct sock *sk)
+{ 
+}
+
+void tcp_sock_set_cork(struct sock *sk, bool on)
+{
+}
+
+void tcp_sock_set_quickack(struct sock *sk, int val)
+{
 }
 
 static NTSTATUS receive_a_lot(void *unused)
