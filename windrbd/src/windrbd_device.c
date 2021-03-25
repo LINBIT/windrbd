@@ -1396,7 +1396,7 @@ static void drbd_make_request_work(struct work_struct *w)
 	struct io_request *ioreq = container_of(w, struct io_request, w);
 
 // printk("1\n");
-	drbd_make_request(ioreq->drbd_device->rq_queue, ioreq->bio);
+	drbd_submit_bio(ioreq->bio);
 // printk("2\n");
 	kfree(ioreq);
 }
@@ -1767,7 +1767,7 @@ static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	bio->bi_bdev = dev;
 
         IoMarkIrpPending(irp);
-	drbd_make_request(dev->drbd_device->rq_queue, bio);
+	drbd_submit_bio(bio);
 		/* The irp may be already invalid here. */
 	return STATUS_PENDING;
 
