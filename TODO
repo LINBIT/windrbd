@@ -93,6 +93,12 @@ TODO: Bug: IRQL BSOD when doing I/O with 1.0.0-rc10
 
 	This happened when the peer crashed.
 
+	Just happened again (apr 6 2021) this time without peer crashing.
+	After 5 days of I/O. WinDRBD is 1.0.0-rc10-17-g05f4133 (with
+	DRBD 9.0.28)
+	Also: network adapter broken (ping 10.43.10.14 prints General
+	failure), must poweroff machine (this might be a kvm bug).
+
 TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
 
 TODO: Bug: Data coherence error when simple write cache is enabled.
