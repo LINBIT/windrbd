@@ -24,6 +24,8 @@ struct memory {
 	size_t size;
 	char desc[DESC_SIZE];
 	char func[FUNC_SIZE];
+	char desc_freed[DESC_SIZE];
+	char func_freed[FUNC_SIZE];
 	int pad;
 	int poison;
 	char data[0];	/* this must be 16-byte aligned */
@@ -73,6 +75,8 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	mem->size = size;
 	snprintf(mem->desc, ARRAY_SIZE(mem->desc), "%s:%d", file, line);
 	snprintf(mem->func, ARRAY_SIZE(mem->func), "%s", func);
+	snprintf(mem->desc_freed, ARRAY_SIZE(mem->desc), "(not yet freed)");
+	snprintf(mem->func_freed, ARRAY_SIZE(mem->func), "(not yet freed)");
 	mem->poison = POISON_BEFORE;
 
 	poison_after = (struct poison_after*) (&mem->data[size]);
@@ -117,14 +121,18 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 
 	if (mem->poison != POISON_BEFORE) {
 		printk("kmalloc_debug: Warning: Poison before overwritten (is %x should be %x), allocated from %s %s(), freed from %s:%d %s()\n", mem->poison, POISON_BEFORE, mem->desc, mem->func, file, line, func);
-		if (mem->poison == 'EERF')
+		if (mem->poison == 'EERF') {
 			printk("This is most likely a double free.\n");
+			printk("Previously freed from %s %s()\n", mem->desc_freed, mem->func_freed);
+		}
 	}
 
 	if (poison_after->poison2 != POISON_AFTER) {
 		printk("kmalloc_debug: Warning: Poison after overwritten (is %x should be %x), allocated from %s %s(), freed from %s:%d %s()\n", poison_after->poison2, POISON_AFTER, mem->desc, mem->func, file, line, func);
-		if (mem->poison == 'EERF')
+		if (poison_after->poison2 == 'EERF') {
 			printk("This is most likely a double free.\n");
+			printk("Previously freed from %s %s()\n", mem->desc_freed, mem->func_freed);
+		}
 	}
 
 	spin_lock_irqsave(&memory_lock, flags);
@@ -133,6 +141,9 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 
 	mem->poison = 'EERF';
 	poison_after->poison2 = 'EERF';
+
+	snprintf(mem->desc_freed, ARRAY_SIZE(mem->desc), "%s:%d", file, line);
+	snprintf(mem->func_freed, ARRAY_SIZE(mem->func), "%s", func);
 
 	ExFreePool((void*)mem);
 }
