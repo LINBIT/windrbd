@@ -36,6 +36,11 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: NESSUS needs quotes around cygrunsrv registry key
+
+	Fix that with an extra windrbd command that adds the
+	quotes unless already there.
+
 TODO: Bug: Send buffer drains for about 30 seconds
 
 	Reported by Yannis. Connection should be closed even when
