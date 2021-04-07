@@ -99,6 +99,9 @@ TODO: Bug: IRQL BSOD when doing I/O with 1.0.0-rc10
 	Also: network adapter broken (ping 10.43.10.14 prints General
 	failure), must poweroff machine (this might be a kvm bug).
 
+	With powershell script (disable ethernet interface) reproducible
+	after max. 5 iterations.
+
 TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
 
 TODO: Bug: Data coherence error when simple write cache is enabled.
