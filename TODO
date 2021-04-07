@@ -104,6 +104,12 @@ TODO: Bug: IRQL BSOD when doing I/O with 1.0.0-rc10
 
 	Now trying without wait_for_bios_to_complete patch.
 
+	Kmalloc debugger found a double free:
+
+Apr  7 14:00:56 server-2016-a  U14:00:56.565 (10474919603/10000000)|d94745a0(drbd_w_windows-windows) #3749 kfree_debug kmalloc_debug: Warning: Poison after overwritten (is 45455246 should be fe4a5109), allocated from drbd_main.c:3478 drbd_create_connection(), freed from drbd_main.c:3581 drbd_destroy_connection()
+Apr  7 14:00:56 server-2016-a  U14:00:56.565 (10474922255/10000000)|d94745a0(drbd_w_windows-windows) #3750 kfree_debug This is most likely a double free.
+
+
 TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
 
 TODO: Bug: Data coherence error when simple write cache is enabled.
