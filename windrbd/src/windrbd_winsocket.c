@@ -1226,7 +1226,10 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		return -EOPNOTSUPP;
 
 	if (socket->error_status != 0)
+{
+printk("Socket in error state %d\n", socket->error_status);
 		return socket->error_status;
+}
 
 	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, TRUE, TRUE);
 	if (!NT_SUCCESS(Status)) {
@@ -1377,7 +1380,7 @@ tok(3);
 
 	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
 		socket->error_status = BytesReceived;
-		dbg("setting error status to %d\n", socket->error_status);
+printk("setting error status to %d\n", socket->error_status);
 	}
 // if (len >= 4096) tok(1);
 	return BytesReceived;
