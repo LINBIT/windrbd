@@ -102,6 +102,8 @@ TODO: Bug: IRQL BSOD when doing I/O with 1.0.0-rc10
 	With powershell script (disable ethernet interface) reproducible
 	after max. 5 iterations.
 
+	Now trying without wait_for_bios_to_complete patch.
+
 TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
 
 TODO: Bug: Data coherence error when simple write cache is enabled.
