@@ -30,7 +30,7 @@
 
 static int no_windows_printk = 0;
 static int no_memory_printk = 0;
-static int no_net_printk = 0;
+static int no_net_printk = 1;
 
 /* TODO: use (and test) O_NONBLOCK sending again, once weird printk
  * losses are fixed.
