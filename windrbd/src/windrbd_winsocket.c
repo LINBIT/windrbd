@@ -345,10 +345,14 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 
 	if (completion->page)
 		put_page(completion->page); /* Might free the page if connection is already down */
-	if (completion->data_buffer)
+	if (completion->data_buffer) {	/* Is from SendPage, do not printk */
 		kfree(completion->data_buffer);
-	if (completion->socket != NULL)
-	        kref_put(&completion->socket->kref, sock_really_free);
+		if (completion->socket != NULL)
+		        kref_put_no_printk(&completion->socket->kref, sock_really_free);
+	} else {
+		if (completion->socket != NULL)
+		        kref_put(&completion->socket->kref, sock_really_free);
+	}
 
 	kfree(completion);
 	
@@ -1168,7 +1172,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
 	completion->the_mdl = WskBuffer->Mdl;
-	kref_get(&socket->kref);
+	kref_get_no_printk(&socket->kref);
 
 	irp = IoAllocateIrp(1, FALSE);
 	if (irp == NULL) {

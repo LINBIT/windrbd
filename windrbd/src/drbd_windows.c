@@ -798,27 +798,32 @@ int dump_memory_allocations(int free_them)
 
 #ifdef KREF_DEBUG
 // from  linux 2.6.32
-int kref_put_debug(struct kref *kref, void (*release)(struct kref *kref), const char *release_name, const char *file, int line, const char *func)
+int kref_put_debug(struct kref *kref, void (*release)(struct kref *kref), const char *release_name, const char *file, int line, const char *func, int may_printk)
 {
 	WARN_ON(release == NULL);
 	WARN_ON(release == (void (*)(struct kref *))kfree);
 
-	printk("kref_put %p from %s:%d %s() release function is %s() refcnt is %d\n", kref, file, line, func, release_name, atomic_read(&kref->refcount.refs));
+	if (may_printk)
+		printk("kref_put %p from %s:%d %s() release function is %s() refcnt is %d\n", kref, file, line, func, release_name, atomic_read(&kref->refcount.refs));
 
 	if (atomic_dec_and_test(&kref->refcount.refs))
 	{
-		printk("About to release object %p via %s\n", kref, release_name);
+		if (may_printk)
+			printk("About to release object %p via %s\n", kref, release_name);
 		release(kref);
-		printk("Released object %p via %s\n", kref, release_name);
+		if (may_printk)
+			printk("Released object %p via %s\n", kref, release_name);
 		return 1;
 	}
 	return 0;
 }
 
-void kref_get_debug(struct kref *kref, const char *file, int line, const char *func)
+void kref_get_debug(struct kref *kref, const char *file, int line, const char *func, int may_printk)
 {
 	atomic_inc(&kref->refcount.refs);
-	printk("kref_get on object %p ref is now (after inc) %d, called from %s:%d (%s())\n", kref, atomic_read(&kref->refcount.refs), file, line, func);
+
+	if (may_printk)
+		printk("kref_get on object %p ref is now (after inc) %d, called from %s:%d (%s())\n", kref, atomic_read(&kref->refcount.refs), file, line, func);
 }
 
 void kref_init_debug(struct kref *kref, const char *file, int line, const char *func)

@@ -849,15 +849,21 @@ extern void sema_init(struct semaphore *s, int limit);
 
 #ifdef KREF_DEBUG
 
-int kref_put_debug(struct kref *kref, void (*release)(struct kref *kref), const char *release_name, const char *file, int line, const char *func);
-void kref_get_debug(struct kref *kref, const char *file, int line, const char *func);
+int kref_put_debug(struct kref *kref, void (*release)(struct kref *kref), const char *release_name, const char *file, int line, const char *func, int may_printk);
+void kref_get_debug(struct kref *kref, const char *file, int line, const char *func, int may_printk);
 void kref_init_debug(struct kref *kref, const char *file, int line, const char *func);
 
 #define kref_put(kref, release) \
-	kref_put_debug(kref, release, #release, __FILE__, __LINE__, __func__)
+	kref_put_debug(kref, release, #release, __FILE__, __LINE__, __func__, 1)
 
 #define kref_get(kref) \
-	kref_get_debug(kref, __FILE__, __LINE__, __func__)
+	kref_get_debug(kref, __FILE__, __LINE__, __func__, 1)
+
+#define kref_put_no_printk(kref, release) \
+	kref_put_debug(kref, release, #release, __FILE__, __LINE__, __func__, 0)
+
+#define kref_get_no_printk(kref) \
+	kref_get_debug(kref, __FILE__, __LINE__, __func__, 0)
 
 #define kref_init(kref) \
 	kref_init_debug(kref, __FILE__, __LINE__, __func__)
@@ -867,6 +873,10 @@ void kref_init_debug(struct kref *kref, const char *file, int line, const char *
 extern int kref_put(struct kref *kref, void (*release)(struct kref *kref));
 extern void kref_get(struct kref *kref);
 extern void kref_init(struct kref *kref);
+
+/* See windrbd_winsocket.c */
+#define kref_put_no_printk kref_put
+#define kref_get_no_printk kref_get
 
 #endif
 
