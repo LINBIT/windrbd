@@ -796,6 +796,38 @@ int dump_memory_allocations(int free_them)
 
 #endif
 
+#ifdef KREF_DEBUG
+// from  linux 2.6.32
+int kref_put_debug(struct kref *kref, void (*release)(struct kref *kref), const char *release_name, const char *file, int line, const char *func)
+{
+	WARN_ON(release == NULL);
+	WARN_ON(release == (void (*)(struct kref *))kfree);
+
+	printk("kref_put %p from %s:%d %s() release function is %s() refcnt is %d\n", kref, file, line, func, release_name, atomic_read(&kref->refcount.refs));
+
+	if (atomic_dec_and_test(&kref->refcount.refs))
+	{
+		printk("About to release object %p via %s\n", kref, release_name);
+		release(kref);
+		printk("Released object %p via %s\n", kref, release_name);
+		return 1;
+	}
+	return 0;
+}
+
+void kref_get(struct kref *kref)
+{
+	atomic_inc(&kref->refcount.refs);
+}
+
+void kref_init(struct kref *kref)
+{
+	atomic_set(&kref->refcount.refs, 1);
+}
+
+
+#else
+
 // from  linux 2.6.32
 int kref_put(struct kref *kref, void (*release)(struct kref *kref))
 {
@@ -819,6 +851,8 @@ void kref_init(struct kref *kref)
 {
 	atomic_set(&kref->refcount.refs, 1);
 }
+
+#endif
 
 struct request_queue *bdev_get_queue(struct block_device *bdev)
 {

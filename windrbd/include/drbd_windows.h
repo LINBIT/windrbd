@@ -26,6 +26,9 @@
 /* Enable this (and recompile all) to enable bio allocation debugging */
 #define BIO_REF_DEBUG 1
 
+/* Enable this (and recompile all) to enable kref debug tracing */
+#define KREF_DEBUG 1
+
 #define __func_	__FUNCTION__
 #define __bitwise__
 
@@ -844,7 +847,16 @@ static inline int submit_bio_noacct(struct bio *bio)
 
 extern void sema_init(struct semaphore *s, int limit);
 
+#ifdef KREF_DEBUG
+
+int kref_put_debug(struct kref *kref, void (*release)(struct kref *kref), const char *release_name, const char *file, int line, const char *func);
+
+#define kref_put(kref, release) \
+	kref_put_debug(kref, release, #release, __FILE__, __LINE__, __func__)
+
+#else
 extern int kref_put(struct kref *kref, void (*release)(struct kref *kref));
+#endif
 extern void kref_get(struct kref *kref);
 extern void kref_init(struct kref *kref);
 
