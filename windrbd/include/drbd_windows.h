@@ -850,15 +850,25 @@ extern void sema_init(struct semaphore *s, int limit);
 #ifdef KREF_DEBUG
 
 int kref_put_debug(struct kref *kref, void (*release)(struct kref *kref), const char *release_name, const char *file, int line, const char *func);
+void kref_get_debug(struct kref *kref, const char *file, int line, const char *func);
+void kref_init_debug(struct kref *kref, const char *file, int line, const char *func);
 
 #define kref_put(kref, release) \
 	kref_put_debug(kref, release, #release, __FILE__, __LINE__, __func__)
 
+#define kref_get(kref) \
+	kref_get_debug(kref, __FILE__, __LINE__, __func__)
+
+#define kref_init(kref) \
+	kref_init_debug(kref, __FILE__, __LINE__, __func__)
+
 #else
+
 extern int kref_put(struct kref *kref, void (*release)(struct kref *kref));
-#endif
 extern void kref_get(struct kref *kref);
 extern void kref_init(struct kref *kref);
+
+#endif
 
 extern struct request_queue *bdev_get_queue(struct block_device *bdev);
 extern void blk_cleanup_queue(struct request_queue *q);
