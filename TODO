@@ -115,6 +115,7 @@ Apr  7 14:00:56 server-2016-a  U14:00:56.565 (10474919603/10000000)|d94745a0(drb
 Apr  7 14:00:56 server-2016-a  U14:00:56.565 (10474922255/10000000)|d94745a0(drbd_w_windows-windows) #3750 kfree_debug This is most likely a double free.
 
 	Too many kref_put's in forget_state_change?
+	Is called several times. Maybe too often from worker?
 
 
 TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
