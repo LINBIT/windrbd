@@ -1395,7 +1395,7 @@ __mod_timer(struct timer_list *timer, ULONG_PTR expires, bool pending_only)
 */
 
     KeSetTimer(&timer->ktimer, nWaitTime, &timer->dpc);
-    return 1;
+    return 1; 	/* TODO: sure? */
 }
 
 /**
