@@ -1359,8 +1359,7 @@ int del_timer_sync(struct timer_list *t)
 }
 
 
-static int
-__mod_timer(struct timer_list *timer, ULONG_PTR expires, bool pending_only)
+static int __mod_timer(struct timer_list *timer, ULONG_PTR expires, bool pending_only)
 {
 	int pending = timer_pending(timer);
 
