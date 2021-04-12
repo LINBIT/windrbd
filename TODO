@@ -120,6 +120,9 @@ Apr  7 14:00:56 server-2016-a  U14:00:56.565 (10474922255/10000000)|d94745a0(drb
 
 	del_connect_timer()?
 
+	Fixed mod_timer return value. Now it is much better. However still
+	freezing after 20-30 minutes of disconnect/connect test.
+
 TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
 
 TODO: Bug: Data coherence error when simple write cache is enabled.
