@@ -1345,6 +1345,9 @@ static __inline int timer_pending(const struct timer_list * timer)
     return timer->ktimer.Header.Inserted;
 }
 
+
+	/* TODO: sync? */
+
 int del_timer_sync(struct timer_list *t)
 {
 	bool pending = 0;
@@ -1353,38 +1356,25 @@ int del_timer_sync(struct timer_list *t)
 	del_timer(t);
 
 	return pending;
-/* TODO: needed? */
-/*
-	// from linux kernel 2.6.24
-	for (;;) {
-		int ret = try_to_del_timer_sync(timer);
-		if (ret >= 0)
-			return ret;
-		cpu_relax();
-	}
-*/
 }
 
 
 static int
 __mod_timer(struct timer_list *timer, ULONG_PTR expires, bool pending_only)
 {
-    if (!timer_pending(timer) && pending_only)
-    {
+	int pending = timer_pending(timer);
+
+	if (!pending && pending_only)
 		return 0;
-    }
 
-    LARGE_INTEGER nWaitTime = { .QuadPart = 0 };
-    ULONG_PTR current_milisec = jiffies;
+	LARGE_INTEGER nWaitTime = { .QuadPart = 0 };
+	ULONG_PTR current_milisec = jiffies;
 
-    timer->expires = expires;
+	timer->expires = expires;
 
-    if (current_milisec >= expires)
-    {
+	if (current_milisec >= expires)
 		nWaitTime.QuadPart = -1;
-    }
-	else
-	{
+	else {
 		expires -= current_milisec;
 		nWaitTime = RtlConvertLongToLargeInteger(RELATIVE(MILLISECONDS(expires)));
 	}
@@ -1394,8 +1384,8 @@ __mod_timer(struct timer_list *timer, ULONG_PTR expires, bool pending_only)
         timer->name, timer, current_milisec, timer->expires, timer->expires - current_milisec, nWaitTime.QuadPart);
 */
 
-    KeSetTimer(&timer->ktimer, nWaitTime, &timer->dpc);
-    return 1; 	/* TODO: sure? */
+	KeSetTimer(&timer->ktimer, nWaitTime, &timer->dpc);
+	return pending;
 }
 
 /**
