@@ -9,6 +9,7 @@ connection object.
 
 TODO: Print deprecation warning when using block device interface.
 This is going to be removed with the next (1.0.0-rc12) release.
+TODO: Also WinDRBD users guide has been updated.
 
 TODO: Fix a NESSUS vulnerability warning: Executable path must
 be quoted (in windrbdumhelper and windrbdlogger services).
