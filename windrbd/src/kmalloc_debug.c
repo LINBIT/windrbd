@@ -125,7 +125,7 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 			printk("This is most likely a double free.\n");
 			printk("Previously freed from %s %s()\n", mem->desc_freed, mem->func_freed);
 /* Buffer is tmp_buffer of SendTo(), see windrbd_winsocket.c */
-printk("data is %.64s\n", mem->data);
+// printk("data is %.64s\n", mem->data);
 		}
 	}
 
@@ -134,7 +134,7 @@ printk("data is %.64s\n", mem->data);
 		if (poison_after->poison2 == 'EERF') {
 			printk("This is most likely a double free.\n");
 			printk("Previously freed from %s %s()\n", mem->desc_freed, mem->func_freed);
-printk("data is %.64s\n", mem->data);
+// printk("data is %.64s\n", mem->data);
 		}
 	}
 

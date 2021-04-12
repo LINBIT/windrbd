@@ -1231,7 +1231,7 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 
 	if (socket->error_status != 0)
 {
-printk("Socket in error state %d\n", socket->error_status);
+// printk("Socket in error state %d\n", socket->error_status);
 		return socket->error_status;
 }
 
@@ -1384,7 +1384,7 @@ tok(3);
 
 	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
 		socket->error_status = BytesReceived;
-printk("setting error status to %d\n", socket->error_status);
+// printk("setting error status to %d\n", socket->error_status);
 	}
 // if (len >= 4096) tok(1);
 	return BytesReceived;

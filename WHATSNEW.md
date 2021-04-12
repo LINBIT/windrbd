@@ -1,3 +1,18 @@
+What's new in version 1.0.0-rc11
+--------------------------------
+
+Updated DRBD from 9.0.25 to 9.0.28.
+
+Fixed a system hang on disconnect: Reason was mod_timer returning
+a wrong value which later caused a use-after-free of the DRBD
+connection object.
+
+TODO: Print deprecation warning when using block device interface.
+This is going to be removed with the next (1.0.0-rc12) release.
+
+TODO: Fix a NESSUS vulnerability warning: Executable path must
+be quoted (in windrbdumhelper and windrbdlogger services).
+
 What's new in version 1.0.0-rc10
 --------------------------------
 
