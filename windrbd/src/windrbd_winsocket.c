@@ -75,8 +75,10 @@ static int winsock_to_linux_error(NTSTATUS status)
 		return -EHOSTUNREACH;
 	case STATUS_CONNECTION_REFUSED:
 		return -ECONNREFUSED;
+	case STATUS_ACCESS_DENIED:  /* returned when port is blocked by firewall, retry again later */
+		return -EAGAIN;
 	default:
-/*		dbg("Unknown status %x, returning -EIO.\n", status); */
+		printk("Unknown status %x, returning -EIO.\n", status);
 		return -EIO;
 	}
 }
