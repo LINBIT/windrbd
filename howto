@@ -710,3 +710,9 @@ Run as Administrator
 
 Revert to snapshot if installation failed (else a follow up
 	installation will fail).
+
+-----------------------
+
+Allow a port from command line:
+
+netsh advfirewall firewall add rule name=test1 protocol=tcp dir=in localport=5000 action=allow
