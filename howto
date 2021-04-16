@@ -716,3 +716,10 @@ Revert to snapshot if installation failed (else a follow up
 Allow a port from command line:
 
 netsh advfirewall firewall add rule name=test1 protocol=tcp dir=in localport=5000 action=allow
+
+------------------------
+
+DigiCert change password:
+
+https://www.digicert.com/kb/code-signing/ev-code-signing-secure-token-set-up.htm
+
