@@ -220,11 +220,9 @@ begin
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
 		ModPath();
-	end;
-	if CurUninstallStep = usDone then begin
+
 		MsgBox('Uninstall does not remove the C:\Windrbd directory, since it may contain files modified by you. If you do not need them any more, please remove the C:\Windrbd directory manually.', mbInformation, MB_OK);
 	end;
-
 	// cmd script stops user mode helpers, no need to do that here
 end;
 
