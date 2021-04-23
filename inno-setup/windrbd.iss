@@ -169,6 +169,34 @@ Begin
 	End;
 End;
 
+Procedure QuoteImagePath(reg_path: string);
+var the_path: string;
+
+Begin
+	if RegQueryStringValue(HKEY_LOCAL_MACHINE, reg_path, 'ImagePath', the_path) then
+	Begin
+		if the_path[1] <> '"' then
+		Begin
+			the_path := '"' + the_path + '"';
+			if not RegWriteStringValue(HKEY_LOCAL_MACHINE, reg_path, 'ImagePath', the_path) then
+			Begin
+				MsgBox('Could not write ImagePath value back in registry path '+reg_path, mbInformation, MB_OK);
+			End;
+		End;
+	End
+	Else
+	Begin
+		MsgBox('Could not find ImagePath value in registry path '+reg_path, mbInformation, MB_OK);
+	End;
+End;
+
+Procedure PatchRegistry;
+
+Begin
+	QuoteImagePath('System\CurrentControlSet\Services\windrbdumhelper');
+	QuoteImagePath('System\CurrentControlSet\Services\windrbdlog');
+End;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
 	if CurStep = ssPostInstall then begin
@@ -179,6 +207,7 @@ begin
 		StopUserModeServices();
 	end;
 	if CurStep = ssPostInstall then begin
+		PatchRegistry();
 		StartUserModeServices();
 	end;
 end;
