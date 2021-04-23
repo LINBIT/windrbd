@@ -36,10 +36,39 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Bug: NESSUS needs quotes around cygrunsrv registry key
+TODO: ! Bug: Data loss when becoming Secondary
 
-	Fix that with an extra windrbd command that adds the
-	quotes unless already there.
+	existing data resource on Windows Server-2016-A
+	Do:
+		drbdadm primary existing_data
+		cat > /cygdrive/d/somedata
+		<some data>
+		^D
+		drbdadm secondary existing_data
+		drbdadm primary existing_data
+		cat /cygdrive/d/somedata
+		data is not there.
+
+	Has no partition table on it now try with partition table.
+
+	Must sync before switching to Secondary
+
+TODO: Feature: Make UM helper command configurable
+
+	Currently hard coded to cmd shell. Put this into a registry
+	key.
+
+TODO: Feature: Relocate WinDRBD root directory
+
+! TODO: Feature: use existing data
+
+	Problem is that SCSI disk requires (?) a partition table.
+
+	Right now only limitation is that Windows 7 complains with
+	a device in use panel. Windows server 2016 does not.
+	But we lose data here (!) see seperate bug.
+
+TODO: Documentaion: Remove reference to block devices from user's guide
 
 TODO: Bug: Send buffer drains for about 30 seconds
 
@@ -7112,3 +7141,9 @@ Done: Implement: We want to have some sort of a regression test suite.
 
 	Update: Porting agruen's testsuite now, for more TODO's see the
 	TODO.windrbd file there.
+
+Done: Bug: NESSUS needs quotes around cygrunsrv registry key
+
+	Fix that with an extra windrbd command that adds the
+	quotes unless already there.
+
