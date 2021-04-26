@@ -378,3 +378,5 @@ Version history
 			     secondary and fixed BSOD on disconnect while sync
  * 1.0.0-rc10 (Feb 24, 2021): Optimized secondary writes, fixed wait_event and
                               completions (they should be non-interruptible)
+ * 1.0.0-rc11 (Apr 26, 2021): Upgrade to DRBD 9.0.28, Fixed mod_timer causing
+                              system hang on disconnect
