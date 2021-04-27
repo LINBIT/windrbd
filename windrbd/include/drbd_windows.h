@@ -24,7 +24,7 @@
 #define DRBD_WINDOWS_H
 
 /* Enable this (and recompile all) to enable bio allocation debugging */
-#define BIO_REF_DEBUG 1
+// #define BIO_REF_DEBUG 1
 
 /* Enable this (and recompile all) to enable kref debug tracing */
 // #define KREF_DEBUG 1
