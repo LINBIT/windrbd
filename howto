@@ -723,3 +723,10 @@ DigiCert change password:
 
 https://www.digicert.com/kb/code-signing/ev-code-signing-secure-token-set-up.htm
 
+------------------------
+
+Make mouse work:
+
+Goto Windows Contol Panel / Mouse Properties / Pointer Options / Enhance Pointer Precision
+Or Settings / Mouse / Additional Mouse Options / Pointer Options / Enhance Pointer Precision
+Uncheck it and click Apply
