@@ -60,13 +60,16 @@ TODO: Feature: Make UM helper command configurable
 
 TODO: Feature: Relocate WinDRBD root directory
 
-! TODO: Feature: use existing data
+TODO: Feature: use existing data
 
 	Problem is that SCSI disk requires (?) a partition table.
 
 	Right now only limitation is that Windows 7 complains with
 	a device in use panel. Windows server 2016 does not.
 	But we lose data here (!) see seperate bug.
+
+	It seems to be possible to use pre-formatted backing devices
+	as DRBD data (without partition table).
 
 TODO: Documentaion: Remove reference to block devices from user's guide
 
