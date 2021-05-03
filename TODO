@@ -36,6 +36,13 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Use next generation crypto API for secure handshake.
+
+	And maybe also for verify-alg.
+	See:
+
+https://docs.microsoft.com/en-us/windows/win32/seccng/cng-features#kernel-mode-support
+
 TODO: ! Bug: Data loss when becoming Secondary
 
 	existing data resource on Windows Server-2016-A
