@@ -135,6 +135,19 @@ Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_
 
 	Update: running tests with -rc11 bug is still there.
 
+	Update: Fixed one BSOD (PFN_LIST_CORRUPT) (?) by using
+	an extra kref in receiver thread (and no wait_for_completion
+	in sock_really_free() which can be called in interrupt).
+
+	Also there is a freeze:
+
+<4> U18:10:31.058 (3957626660/10000000)|a1a3cb00(drbd_s_windows-windows) #935 dtt_send_page <4>drbd windows-windows tcp:server-2016-B: dtt_send_page: size=40 len=40 sent=-4
+ [last message was in IRQ context or recursive]
+	without following 
+<6> U18:10:09.887 (3746059590/10000000)|a1a3cb00(drbd_s_windows-windows) #834 drbd_thread_setup <6>drbd windows-windows pnode-id:2, cs(NetworkFailure), prole(Unknown), cflag(0x22240e), scf(0x0): Restarting sender thread
+	so probably sender hangs in there. Do printk's and the usual stuff
+	(triggers with firewall test after 5-10 minutes with I/O)
+
 TODO: Bug: IRQL BSOD when doing I/O with 1.0.0-rc10
 
 	This happened when the peer crashed.
