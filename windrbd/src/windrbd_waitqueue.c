@@ -90,7 +90,7 @@ exit_interruptible_debug(file, line, func);
 void schedule_debug(const char *file, int line, const char *func)
 {
 	if (!is_windrbd_thread(current))
-		printk("Warning: schedule called from a non WinDRBD thread\n");
+		printk("Warning: schedule called from a non WinDRBD thread (called from %s:%d %s())\n", file, line, func);
 
 	ll_wait(current->wait_queue_entry, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
 }
@@ -102,7 +102,7 @@ LONG_PTR ll_schedule_debug(LONG_PTR timeout, int return_error, int interruptible
 	int err;
 
 	if (!is_windrbd_thread(current)) {
-		printk("Warning: schedule called from a non WinDRBD thread, not waiting\n");
+		printk("Warning: schedule called from a non WinDRBD thread, not waiting (called from %s:%d %s())\n", file, line, func);
 		return -EINVAL;
 	}
 
