@@ -90,7 +90,7 @@ static void sock_really_free(struct kref *kref)
 	if (socket->receive_thread_should_run) {
 		socket->receive_thread_should_run = false;
 		wake_up(&socket->buffer_available);
-		wait_for_completion(&socket->receiver_thread_completion);
+//		wait_for_completion(&socket->receiver_thread_completion);
 	}
 
 	kfree(socket->receive_buffer);
@@ -1561,6 +1561,8 @@ static int socket_receive_thread(void *p)
 	int err;
 	KIRQL flags;
 
+	kref_get(&s->kref);
+
 	while (1) {
 		wait_event(s->buffer_available, 
 			!s->receive_thread_should_run ||
@@ -1613,7 +1615,8 @@ static int socket_receive_thread(void *p)
 
 	s->sk->sk_state = TCP_NO_CONNECTION;
 	wake_up(&s->data_available);
-	complete(&s->receiver_thread_completion);
+	kref_put(&s->kref, sock_really_free);
+//	complete(&s->receiver_thread_completion);
 	return 0;
 }
 
@@ -1793,7 +1796,7 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 		} else {
 			socket->write_index = 0;
 			socket->read_index = 0;
-			init_completion(&socket->receiver_thread_completion);
+//			init_completion(&socket->receiver_thread_completion);
 			spin_lock_init(&socket->receive_lock);
 		}
 	}
