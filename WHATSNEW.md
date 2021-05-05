@@ -1,3 +1,13 @@
+What's new in version 1.0.0-rc12
+--------------------------------
+
+Fixed a blue screen on disconnect: Reason was sock_really_free
+called wait_event while in APC (in interrupt) and wait_event
+tried to sleep.
+
+TODO: WinDRBD root directory is now relocatable (Installer prompts
+for path), defaults to C:\WinDRBD
+
 What's new in version 1.0.0-rc11
 --------------------------------
 
