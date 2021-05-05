@@ -107,7 +107,9 @@ static void sock_free_linux_socket(struct socket *socket)
 	if (socket == NULL)
 		return;
 
+printk("1\n");
 	kref_put(&socket->kref, sock_really_free);
+printk("2\n");
 }
 
 static NTSTATUS NTAPI completion_fire_event(
@@ -575,22 +577,22 @@ static void close_socket(struct socket *socket)
 {
 	struct _IRP *Irp;
 
-// printk("1\n");
+printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
-// printk("2\n");
+printk("2\n");
 	if (socket->is_closed) {
-		dbg("Socket already closed, refusing to close it again.\n");
+printk("Socket already closed, refusing to close it again.\n");
 		return;
 	}
-// printk("3\n");
+printk("3\n");
 
 	Irp = wsk_new_irp(NULL);
 	if (Irp == NULL)
 		return;
 
-// printk("4\n");
+printk("4\n");
 		/* TODO: Gracefully disconnect socket first? With what
 		 * timeout? Disconnect seems to work now (Linux detects
 		 * disconnect on Windows peer with about 200-300ms delay),
@@ -600,28 +602,28 @@ static void close_socket(struct socket *socket)
 		 */
 
 	if (socket->wsk_socket != NULL) {
-// printk("5\n");
+printk("5\n");
 		mutex_lock(&socket->wsk_mutex);
 
-// printk("6\n");
+printk("6\n");
 		(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
 		socket->wsk_socket = NULL;
 
-// printk("7\n");
+printk("7\n");
 		mutex_unlock(&socket->wsk_mutex);
-// printk("8\n");
+printk("8\n");
 	}
 
-// printk("9\n");
+printk("9\n");
 	if (socket->accept_wsk_socket != NULL) {
 		close_wsk_socket(socket->accept_wsk_socket);
-// printk("a\n");
+printk("a\n");
 		socket->accept_wsk_socket = NULL;
 	}
-// printk("b\n");
+printk("b\n");
 	socket->error_status = 0;
 	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
-// printk("c\n");
+printk("c\n");
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
@@ -822,15 +824,20 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 	NTSTATUS	Status;
 	LARGE_INTEGER	nWaitTime;
 
+printk("1\n");
 		/* TODO: one day ... */
 	(void) how;
 
+printk("2\n");
 	if (wsk_state != WSK_INITIALIZED || sock == NULL || sock->wsk_socket == NULL)
 		return -EINVAL;
 
+printk("3\n");
 	sock->sk->sk_state = 0;
+printk("4\n");
 	close_socket(sock);
 
+printk("5\n");
 	return 0;
 }
 
@@ -1930,12 +1937,16 @@ int sock_create_kern(struct net *net, int family, int type, int proto, struct so
 
 void sock_release(struct socket *sock)
 {
+printk("1\n");
 	if (sock == NULL)
 		return;
 
+printk("2\n");
 		/* In case it is not closed already ... */
 	close_socket(sock);
+printk("3\n");
 	sock_free_linux_socket(sock);
+printk("4\n");
 }
 
 void windrbd_update_socket_buffer_sizes(struct socket *socket)
