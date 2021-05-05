@@ -8,6 +8,9 @@ tried to sleep.
 TODO: WinDRBD root directory is now relocatable (Installer prompts
 for path), defaults to C:\WinDRBD
 
+TODO: Sync when becoming secondary (on secondary or down).
+	This has probably to be done from user space.
+
 What's new in version 1.0.0-rc11
 --------------------------------
 
