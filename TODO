@@ -148,6 +148,8 @@ Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_
 	so probably sender hangs in there. Do printk's and the usual stuff
 	(triggers with firewall test after 5-10 minutes with I/O)
 
+	Update: Heisenbug (adding printk's makes freeze diappear)
+
 TODO: Bug: IRQL BSOD when doing I/O with 1.0.0-rc10
 
 	This happened when the peer crashed.
