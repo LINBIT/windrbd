@@ -730,3 +730,13 @@ Make mouse work:
 Goto Windows Contol Panel / Mouse Properties / Pointer Options / Enhance Pointer Precision
 Or Settings / Mouse / Additional Mouse Options / Pointer Options / Enhance Pointer Precision
 Uncheck it and click Apply
+
+------------------------
+
+Howto disable automatic updates in Server 2016:
+
+open cmd
+sconfig
+press 5<enter>
+press m<enter>
+press 15<enter> to exit sconfig
