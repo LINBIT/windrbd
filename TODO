@@ -36,6 +36,11 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: Pending IRPs and bios reported
+
+	Maybe not initialized?
+May  6 14:23:06 server-2016-a  U14:23:06.827 (44265980490/10000000)|5a835300(drbd_r_windows-windows) #10813 wait_for_bios_to_complete Warning: Still 166 bios and 94945104 IRPs pending after 10 seconds
+
 TODO: Use next generation crypto API for secure handshake.
 
 	And maybe also for verify-alg.
