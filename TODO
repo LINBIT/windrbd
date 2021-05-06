@@ -159,6 +159,8 @@ Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_
 	does not appear). We now run printk's in memory only mode
 	to not disturb timing.
 
+	Update: hangs in synchronize_rcu() on disconnect.
+
 TODO: Bug: IRQL BSOD when doing I/O with 1.0.0-rc10
 
 	This happened when the peer crashed.
