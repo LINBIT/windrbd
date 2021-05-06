@@ -65,6 +65,12 @@ TODO: ! Bug: Data loss when becoming Secondary
 
 	Must sync before switching to Secondary
 
+	from https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-flushfilebuffers :
+
+To flush all open files on a volume, call FlushFileBuffers with a handle to the volume. The caller must have administrative privileges. For more information, see Running with Special Privileges.
+
+	But this is from user space ...
+
 TODO: Feature: Make UM helper command configurable
 
 	Currently hard coded to cmd shell. Put this into a registry
