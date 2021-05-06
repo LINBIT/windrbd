@@ -53,6 +53,32 @@ struct task_struct* windrbd_find_thread(PKTHREAD id)
 	return t;
 }
 
+void print_threads_in_rcu(void)
+{
+	static char buf[4096];
+	int remaining_bytes = sizeof(buf)-1;
+	int len;
+	char *pos;
+	struct task_struct *t;
+	KIRQL flags;
+
+	pos = buf;
+        spin_lock_irqsave(&thread_list_lock, flags);
+	list_for_each_entry(struct task_struct, t, &thread_list, list) {
+		if (t->in_rcu) {
+			len = snprintf(pos, remaining_bytes, "Thread %s holding rcu_read_lock\n", t->comm);
+			pos+=len;
+			remaining_bytes-=len;
+		}
+		if (remaining_bytes < 10)
+			break;
+	}
+	spin_unlock_irqrestore(&thread_list_lock, flags);
+
+	if (pos != buf)
+		printk("Threads in rcu_lock\n%s", buf);
+}
+
 	/* Helper function to create and start windows kernel threads.
 	 * If non-null, the kernel's PKTHREAD object is returned by
 	 * reference in thread_object_p.

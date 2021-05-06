@@ -679,10 +679,14 @@ void rcu_read_unlock_debug(KIRQL rcu_flags, const char *file, int line, const ch
 		current->in_rcu = 0;
 }
 
+extern void print_threads_in_rcu(void);
+
 void synchronize_rcu_debug(const char *file, int line, const char *func)
 {
 	KIRQL rcu_flags;
 	struct task_struct *c;
+
+	print_threads_in_rcu();
 
 	c = current;
 	if (is_windrbd_thread(c)) {
