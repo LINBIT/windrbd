@@ -11,8 +11,12 @@
  * releases.
  */
 
+/* TODO: SPIN_LOCK_DEBUG code is broken and not needed any more */
+
 /* #define SPIN_LOCK_DEBUG 1 */
 /* #define SPIN_LOCK_DEBUG2 1 */
+
+#define RCU_DEBUG 1
 
 #ifdef RELEASE
 #ifdef SPIN_LOCK_DEBUG
@@ -102,3 +106,27 @@ int spin_trylock(spinlock_t *lock);
 void init_locking(void);
 
 #endif
+
+#ifdef RCU_DEBUG
+
+extern KIRQL rcu_read_lock_debug(const char *file, int line, const char *func);
+extern void rcu_read_unlock_debug(KIRQL rcu_flags, const char *file, int line, const char *func);
+extern void synchronize_rcu_debug(const char *file, int line, const char *func);
+extern void call_rcu_debug(struct rcu_head *head, rcu_callback_t f, const char *file, int line, const char *func);
+
+#define rcu_read_lock() rcu_read_lock_debug(__FILE__, __LINE__, __func__)
+#define rcu_read_unlock(rcu_flags) rcu_read_unlock_debug(rcu_flags, __FILE__, __LINE__, __func__)
+#define synchronize_rcu() synchronize_rcu_debug(__FILE__, __LINE__, __func__)
+#define call_rcu(head, f) call_rcu_debug(head, f, __FILE__, __LINE__, __func__)
+
+#else
+
+extern KIRQL rcu_read_lock(void);
+extern void rcu_read_unlock(KIRQL rcu_flags);
+extern void synchronize_rcu(void);
+extern void call_rcu(struct rcu_head *head, rcu_callback_t func);
+
+#endif
+extern void local_irq_disable();
+extern void local_irq_enable();
+

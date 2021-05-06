@@ -224,7 +224,7 @@ static EX_SPIN_LOCK rcu_rw_lock;
 	 * fixing the wake_up call in windrbd_waitqueue.c helped a lot.
 	 */
 
-#ifdef SPIN_LOCK_DEBUG
+#if 0
 
 #define DESC_SIZE 256
 #define FUNC_SIZE 256
@@ -652,9 +652,83 @@ void spin_lock_nested(spinlock_t *lock, int level)
 	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
 }
 
+#ifdef RCU_DEBUG
+
+KIRQL rcu_read_lock_debug(const char *file, int line, const char *func)
+{
+	KIRQL flags;
+	struct task_struct *c;
+	
+	c = current;
+	if (is_windrbd_thread(c)) {
+		c->in_rcu = 1;
+		c->rcu_file = file;
+		c->rcu_line = line;
+		c->rcu_func = func;
+	}
+
+	flags = ExAcquireSpinLockShared(&rcu_rw_lock);
+	return flags;
+}
+
+void rcu_read_unlock_debug(KIRQL rcu_flags, const char *file, int line, const char *func)
+{
+	ExReleaseSpinLockShared(&rcu_rw_lock, rcu_flags);
+
+	if (is_windrbd_thread(current))
+		current->in_rcu = 0;
+}
+
+void synchronize_rcu_debug(const char *file, int line, const char *func)
+{
+	KIRQL rcu_flags;
+	struct task_struct *c;
+
+	c = current;
+	if (is_windrbd_thread(c)) {
+		if (c->in_rcu) {
+			printk("Warning: RCU syncronize called (from %s:%d %s()) while thread is holding rcu_readlock (called from %s:%d %s())\n", file, line, func, c->rcu_file, c->rcu_line, c->rcu_func);
+			return;	/* avoid deadlock */
+		}
+	}	
+	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
+	/* compiler barrier */
+	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
+}
+
+void call_rcu_debug(struct rcu_head *head, rcu_callback_t callback_func, const char *file, int line, const char *func)
+{
+	KIRQL rcu_flags = PASSIVE_LEVEL;
+	int can_lock = 1;
+	struct task_struct *c = current;
+
+	if (is_windrbd_thread(c)) {
+		if (c->in_rcu) {
+			printk("Warning: RCU call_rcu called (from %s:%d %s()) while thread is holding rcu_readlock (called from %s:%d %s())\n", file, line, func, c->rcu_file, c->rcu_line, c->rcu_func);
+			can_lock = 0;
+		}
+	}
+	if (can_lock)
+		rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
+
+	callback_func(head);
+
+	if (can_lock)
+		ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
+}
+
+#else
+
+	/* Still need deadlock detection, since rcu_read_lock maybe
+	 * held while calling synchronize_rcu
+	 */
+
 KIRQL rcu_read_lock(void)
 {
 	KIRQL flags;
+	
+	if (is_windrbd_thread(current))
+		current->in_rcu = 1;
 
 	flags = ExAcquireSpinLockShared(&rcu_rw_lock);
 	return flags;
@@ -663,12 +737,21 @@ KIRQL rcu_read_lock(void)
 void rcu_read_unlock(KIRQL rcu_flags)
 {
 	ExReleaseSpinLockShared(&rcu_rw_lock, rcu_flags);
+
+	if (is_windrbd_thread(current))
+		current->in_rcu = 0;
 }
 
 void synchronize_rcu(void)
 {
 	KIRQL rcu_flags;
 
+	if (is_windrbd_thread(current)) {
+		if (current->in_rcu) {
+			printk("Warning: RCU syncronize called while thread is holding rcu_readlock\n");
+			return;	/* avoid deadlock */
+		}
+	}	
 	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 	/* compiler barrier */
 	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
@@ -676,12 +759,25 @@ void synchronize_rcu(void)
 
 void call_rcu(struct rcu_head *head, rcu_callback_t func)
 {
-	KIRQL rcu_flags;
+	KIRQL rcu_flags = PASSIVE_LEVEL;
+	int can_lock = 1;
 
-	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
+	if (is_windrbd_thread(current)) {
+		if (current->in_rcu) {
+			printk("Warning: RCU call_rcu called while thread is holding rcu_readlock\n");
+			can_lock = 0;
+		}
+	}
+	if (can_lock)
+		rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
+
 	func(head);
-	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
+
+	if (can_lock)
+		ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
 }
+
+#endif	/* RCU_DEBUG */
 
 #endif
 

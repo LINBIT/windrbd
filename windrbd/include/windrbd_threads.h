@@ -54,10 +54,17 @@ struct task_struct {
 	int thread_started:1;
 	int is_zombie:1;
 	int is_root:1;
+	int in_rcu:1;
+
+	const char *rcu_file;
+	int rcu_line;
+	const char *rcu_func;
+
 	spinlock_t thread_started_lock;
 
 		/* TODO: needed? */
 	struct blk_plug *plug;
+
 	
 	char comm[TASK_COMM_LEN];
 };
