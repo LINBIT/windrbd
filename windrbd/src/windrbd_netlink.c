@@ -108,6 +108,7 @@ static void touch(struct genl_reply *r)
 		r->last_used = jiffies;
 }
 
+	/* Must hold genl_multicast_mutex */
 static void delete_multicast_elements_for_portid(u32 portid)
 {
 	struct list_head *lh, *lhn;
@@ -156,6 +157,9 @@ static void delete_multicast_elements_and_replies_for_file_object(struct _FILE_O
 	struct list_head *lh, *lhn;
 	struct genl_multicast_element *m;
 
+	mutex_lock(&genl_multicast_mutex);
+	mutex_lock(&genl_reply_mutex);
+
 	list_for_each_safe(lh, lhn, &multicast_elements) {
 		m = list_entry(lh, struct genl_multicast_element, list);
 		if (m->file_object == f) {
@@ -164,6 +168,9 @@ static void delete_multicast_elements_and_replies_for_file_object(struct _FILE_O
 			kfree(m);
 		}
 	}
+
+	mutex_unlock(&genl_reply_mutex);
+	mutex_unlock(&genl_multicast_mutex);
 }
 
 #define MAX_REPLY_AGE 10
