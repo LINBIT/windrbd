@@ -1450,13 +1450,17 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	int ret;
 	LONG_PTR timeout, remaining_time;
 
-	if (!socket->have_printed_status) {
-		if (!socket->receiver_cache_enabled)
-			printk("Receiver cache disabled\n");
-		else
-			printk("Receiver cache enabled, buffer size is %d\n", socket->receive_buffer_size);
+	if (KeGetCurrentIrql() == PASSIVE_LEVEL) {
+		if (!socket->have_printed_status) {
+			if (!socket->receiver_cache_enabled)
+				printk("Receiver cache disabled\n");
+			else
+				printk("Receiver cache enabled, buffer size is %d\n", socket->receive_buffer_size);
 
-		socket->have_printed_status = true;
+			socket->have_printed_status = true;
+		}
+	} else {
+		printk("KeGetCurrentIrql() in kernel_recvmsg() should not happen.\n");
 	}
 
 // printk("flags is %x len is %d\n", flags, len);
