@@ -113,7 +113,11 @@ void flush_all_cpu_caches(void);
 
 /* TODO: this should be a struct containing an int, so compiler
    can tell int's from atomic_t's */
+#ifndef ATOMIC_T_DEFINED
 typedef int atomic_t;
+#define ATOMIC_T_DEFINED
+#endif
+
 #define atomic_t64				LONGLONG
 
 #define	atomic_inc_return(_p)		InterlockedIncrement((LONG volatile*)(_p))

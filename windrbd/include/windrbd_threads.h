@@ -3,6 +3,11 @@
 
 #include <wdm.h>
 
+#ifndef ATOMIC_T_DEFINED
+typedef int atomic_t;
+#define ATOMIC_T_DEFINED
+#endif
+
 typedef int pid_t;
 
 /* Helper functions that might be useful for others. */
@@ -59,6 +64,8 @@ struct task_struct {
 	const char *rcu_file;
 	int rcu_line;
 	const char *rcu_func;
+
+	atomic_t rcu_recursion_depth;
 
 	spinlock_t thread_started_lock;
 
