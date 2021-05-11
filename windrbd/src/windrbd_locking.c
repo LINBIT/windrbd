@@ -667,6 +667,7 @@ KIRQL rcu_read_lock_debug(const char *file, int line, const char *func)
 		c->rcu_func = func;
 	}
 
+printk("called from %s:%d (%s())\n", file, line, func);
 	flags = ExAcquireSpinLockShared(&rcu_rw_lock);
 	return flags;
 }
@@ -675,6 +676,7 @@ void rcu_read_unlock_debug(KIRQL rcu_flags, const char *file, int line, const ch
 {
 	ExReleaseSpinLockShared(&rcu_rw_lock, rcu_flags);
 
+printk("called from %s:%d (%s())\n", file, line, func);
 	if (is_windrbd_thread(current))
 		current->in_rcu = 0;
 }
@@ -695,9 +697,11 @@ void synchronize_rcu_debug(const char *file, int line, const char *func)
 			return;	/* avoid deadlock */
 		}
 	}	
+printk("called from %s:%d (%s())\n", file, line, func);
 	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 	/* compiler barrier */
 	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
+printk("after locks from %s:%d (%s())\n", file, line, func);
 }
 
 void call_rcu_debug(struct rcu_head *head, rcu_callback_t callback_func, const char *file, int line, const char *func)
@@ -712,6 +716,7 @@ void call_rcu_debug(struct rcu_head *head, rcu_callback_t callback_func, const c
 			can_lock = 0;
 		}
 	}
+printk("called from %s:%d (%s())\n", file, line, func);
 	if (can_lock)
 		rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 
@@ -719,6 +724,7 @@ void call_rcu_debug(struct rcu_head *head, rcu_callback_t callback_func, const c
 
 	if (can_lock)
 		ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
+printk("after locks from %s:%d (%s())\n", file, line, func);
 }
 
 #else
