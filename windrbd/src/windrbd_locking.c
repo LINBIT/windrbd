@@ -750,14 +750,18 @@ printk("after locks from %s:%d (%s())\n", file, line, func);
 	 * held while calling synchronize_rcu
 	 */
 
-/* TODO: !! rcu_read_lock recursion preventer */
-
 KIRQL rcu_read_lock(void)
 {
 	KIRQL flags;
+	struct task_struct *c;
 	
-	if (is_windrbd_thread(current))
-		current->in_rcu = 1;
+	c = current;
+	if (is_windrbd_thread(c)) {
+		if (atomic_inc_return(&c->rcu_recursion_depth) > 1)
+			return KeGetCurrentIrql();
+
+		c->in_rcu = 1;
+	}
 
 	flags = ExAcquireSpinLockShared(&rcu_rw_lock);
 	return flags;
@@ -765,6 +769,14 @@ KIRQL rcu_read_lock(void)
 
 void rcu_read_unlock(KIRQL rcu_flags)
 {
+	struct task_struct *c;
+
+	c = current;
+	if (is_windrbd_thread(c)) {
+		if (atomic_dec_return(&c->rcu_recursion_depth) > 0)
+			return;
+	}
+
 	ExReleaseSpinLockShared(&rcu_rw_lock, rcu_flags);
 
 	if (is_windrbd_thread(current))

@@ -15,8 +15,7 @@
 
 /* #define SPIN_LOCK_DEBUG 1 */
 /* #define SPIN_LOCK_DEBUG2 1 */
-
-#define RCU_DEBUG 1
+/* #define RCU_DEBUG 1 */
 
 #ifdef RELEASE
 #ifdef SPIN_LOCK_DEBUG
@@ -24,6 +23,9 @@
 #endif
 #ifdef SPIN_LOCK_DEBUG2
 #undef SPIN_LOCK_DEBUG2
+#endif
+#ifdef RCU_DEBUG
+#undef RCU_DEBUG
 #endif
 #endif
 
