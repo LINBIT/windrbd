@@ -662,7 +662,7 @@ KIRQL rcu_read_lock_debug(const char *file, int line, const char *func)
 	c = current;
 	if (is_windrbd_thread(c)) {
 		if (atomic_inc_return(&c->rcu_recursion_depth) > 1) {
-printk("RCU read lock recursion detected (from %s:%d %s()), doing nothing.\n", file, line, func);
+			printk("RCU read lock recursion detected (from %s:%d %s()), doing nothing.\n", file, line, func);
 			return KeGetCurrentIrql();
 		}
 		c->in_rcu = 1;
@@ -670,10 +670,10 @@ printk("RCU read lock recursion detected (from %s:%d %s()), doing nothing.\n", f
 		c->rcu_line = line;
 		c->rcu_func = func;
 	} else {
-printk("RCU read lock called from non-WinDRBD thread (from %s:%d %s())\n", file, line, func);
+		printk("RCU read lock called from non-WinDRBD thread (from %s:%d %s())\n", file, line, func);
 	}
 
-printk("called from %s:%d (%s())\n", file, line, func);
+	printk("called from %s:%d (%s())\n", file, line, func);
 	flags = ExAcquireSpinLockShared(&rcu_rw_lock);
 	return flags;
 }
@@ -685,15 +685,15 @@ void rcu_read_unlock_debug(KIRQL rcu_flags, const char *file, int line, const ch
 	c = current;
 	if (is_windrbd_thread(c)) {
 		if (atomic_dec_return(&c->rcu_recursion_depth) > 0) {
-printk("RCU read lock recursion detected (from %s:%d %s()), doing nothing.\n", file, line, func);
+			printk("RCU read lock recursion detected (from %s:%d %s()), doing nothing.\n", file, line, func);
 			return;
 		}
 	} else {
-printk("RCU read lock called from non-WinDRBD thread (from %s:%d %s())\n", file, line, func);
+		printk("RCU read lock called from non-WinDRBD thread (from %s:%d %s())\n", file, line, func);
 	}
 	ExReleaseSpinLockShared(&rcu_rw_lock, rcu_flags);
 
-printk("called from %s:%d (%s())\n", file, line, func);
+	printk("called from %s:%d (%s())\n", file, line, func);
 	if (is_windrbd_thread(current))
 		current->in_rcu = 0;
 }
@@ -714,11 +714,11 @@ void synchronize_rcu_debug(const char *file, int line, const char *func)
 			return;	/* avoid deadlock */
 		}
 	}	
-printk("called from %s:%d (%s())\n", file, line, func);
+	printk("called from %s:%d (%s())\n", file, line, func);
 	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 	/* compiler barrier */
 	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
-printk("after locks from %s:%d (%s())\n", file, line, func);
+	printk("after locks from %s:%d (%s())\n", file, line, func);
 }
 
 void call_rcu_debug(struct rcu_head *head, rcu_callback_t callback_func, const char *file, int line, const char *func)
@@ -733,7 +733,7 @@ void call_rcu_debug(struct rcu_head *head, rcu_callback_t callback_func, const c
 			can_lock = 0;
 		}
 	}
-printk("called from %s:%d (%s())\n", file, line, func);
+	printk("called from %s:%d (%s())\n", file, line, func);
 	if (can_lock)
 		rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 
@@ -741,7 +741,8 @@ printk("called from %s:%d (%s())\n", file, line, func);
 
 	if (can_lock)
 		ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
-printk("after locks from %s:%d (%s())\n", file, line, func);
+
+	printk("after locks from %s:%d (%s())\n", file, line, func);
 }
 
 #else
@@ -788,10 +789,8 @@ void synchronize_rcu(void)
 	KIRQL rcu_flags;
 
 	if (is_windrbd_thread(current)) {
-		if (current->in_rcu) {
-			printk("Warning: RCU syncronize called while thread is holding rcu_readlock\n");
+		if (current->in_rcu)
 			return;	/* avoid deadlock */
-		}
 	}	
 	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 	/* compiler barrier */
@@ -804,10 +803,8 @@ void call_rcu(struct rcu_head *head, rcu_callback_t func)
 	int can_lock = 1;
 
 	if (is_windrbd_thread(current)) {
-		if (current->in_rcu) {
-			printk("Warning: RCU call_rcu called while thread is holding rcu_readlock\n");
+		if (current->in_rcu)
 			can_lock = 0;
-		}
 	}
 	if (can_lock)
 		rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
