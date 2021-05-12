@@ -5,6 +5,14 @@ Fixed a blue screen on disconnect: Reason was sock_really_free
 called wait_event while in APC (in interrupt) and wait_event
 tried to sleep.
 
+Fixed a missing mutex_lock in
+delete_multicast_elements_and_replies_for_file_object() which
+caused a BSOD from time to time.
+
+Fixed deadlock in recursive calls to rcu_read_lock (which are legal)
+(rcu_read_lock (A) / synchronize_rcu (B) / rcu_read_lock (A)
+where the inner rcu used to hang forever at DISPATCH_LEVEL.
+
 TODO: WinDRBD root directory is now relocatable (Installer prompts
 for path), defaults to C:\WinDRBD
 
