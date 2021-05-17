@@ -1,0 +1,35 @@
+From a559b55d36ee10d78ca2ca79617bab01059a1d20 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 17 May 2021 21:16:18 +0200
+Subject: [PATCH] Do not call sk_write_space().
+
+The function windrbd_update_socket_buffer_sizes() at the end does this.
+One day implement sk_write_space and remove this patch.
+---
+ drbd/drbd_transport_tcp.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 838052e..5befa56 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -398,8 +398,16 @@ static void dtt_setbufsize(struct socket *socket, unsigned int snd,
+ 	if (snd) {
+ 		sk->sk_sndbuf = snd;
+ 		sk->sk_userlocks |= SOCK_SNDBUF_LOCK;
++#if 0
+ 		/* Wake up sending tasks if we upped the value. */
++
++		/* TODO: WinDRBD: this is done by the
++		 * windrbd_update_socket_buffer_sizes() at the end of
++		 * the function.
++		 */
++
+ 		sk->sk_write_space(sk);
++#endif
+ 	} else {
+ 		sk->sk_userlocks &= ~SOCK_SNDBUF_LOCK;
+ 	}
+-- 
+2.17.0
+

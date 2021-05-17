@@ -1,0 +1,35 @@
+From eacaf906f4a93e07f29bd6f7779121f324d79df0 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 17 May 2021 20:54:54 +0200
+Subject: [PATCH] Commented out fsync_bdev code.
+
+We need to implement it soon .. there should be no data loss on
+drbdadm secondary.
+---
+ drbd/drbd_nl.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 81eeae5..85ea7f4 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -1110,6 +1110,8 @@ retry:
+ 		down(&resource->state_sem);
+ 	} else /* (role == R_SECONDARY) */ {
+ 		down(&resource->state_sem);
++	/* TODO: WinDRBD: implement fsync_bdev somehow. */
++#if 0
+ 		idr_for_each_entry(&resource->devices, device, vnr) {
+ 			bdev = bdgrab(device->vdisk->part0);
+ 			if (bdev)
+@@ -1117,6 +1119,7 @@ retry:
+ 			bdput(bdev);
+ 			flush_workqueue(device->submit.wq);
+ 		}
++#endif
+ 
+ 		if (start_new_tl_epoch(resource)) {
+ 			struct drbd_connection *connection;
+-- 
+2.17.0
+

@@ -1,0 +1,25 @@
+From 5bf57d760001899d33684b9acb4d5c10dc984462 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 17 May 2021 21:12:15 +0200
+Subject: [PATCH] Silence an unintialized variable warning.
+
+Maybe the compiler is right ...
+---
+ drbd/drbd_nl.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 85ea7f4..803e6a4 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -5764,6 +5764,7 @@ int drbd_adm_dump_devices(struct sk_buff *skb, struct netlink_callback *cb)
+ 	struct device_statistics device_statistics;
+ 	struct idr *idr_to_search;
+ 
++	minor = -1;	/* make MS VC compiler happy */
+ 	resource = (struct drbd_resource *)cb->args[0];
+ 
+ 	rcu_flags = rcu_read_lock();
+-- 
+2.17.0
+

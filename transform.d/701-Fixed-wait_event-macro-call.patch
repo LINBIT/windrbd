@@ -1,0 +1,27 @@
+From f31dc454ca059a81ddbf8ac1cf22abcdbd3dbe45 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 17 May 2021 20:43:01 +0200
+Subject: [PATCH] Fixed wait_event macro call.
+
+Cannot return a value from a macro containing a block statement.
+---
+ drbd/drbd_state.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_state.c b/drbd/drbd_state.c
+index e838b8b..300de35 100644
+--- a/drbd/drbd_state.c
++++ b/drbd/drbd_state.c
+@@ -4928,7 +4928,8 @@ enum drbd_state_rv change_role(struct drbd_resource *resource,
+ 			role_context.context.flags |= CS_ALREADY_SERIALIZED;
+ 		}
+ 		idr_for_each_entry(&resource->devices, device, vnr) {
+-			LONG_PTR t = wait_event_interruptible_timeout(device->misc_wait,
++			LONG_PTR t;
++			wait_event_interruptible_timeout(t, device->misc_wait,
+ 						!atomic_read(&device->ap_bio_cnt[WRITE]),
+ 						twopc_timeout(resource));
+ 			if (t <= 0) {
+-- 
+2.17.0
+

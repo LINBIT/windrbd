@@ -1,0 +1,25 @@
+From 5a6b527c746134aec1b24a8e932249193c10a95c Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 17 May 2021 20:33:25 +0200
+Subject: [PATCH] struct opener as list iterator type.
+
+---
+ drbd/drbd_main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index bb57ca5..5327d3a 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -2675,7 +2675,7 @@ static void add_opener(struct drbd_device *device)
+ 	opener->opened = ktime_get_real();
+ 
+ 	spin_lock_irqsave(&device->openers_lock, spin_lock_flags);
+-	list_for_each_entry(struct drbd_request, tmp, &device->openers, list)
++	list_for_each_entry(struct opener, tmp, &device->openers, list)
+ 		if (++len > 100) { /* 100 ought to be enough for everybody */
+ 			dynamic_drbd_dbg(device, "openers: list full, do not add new opener\n");
+ 			kfree(opener);
+-- 
+2.17.0
+
