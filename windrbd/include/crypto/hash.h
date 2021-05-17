@@ -9,6 +9,8 @@
 #define CRYPTO_ALG_ASYNC 4711
 #define CRYPTO_ALG_TYPE_HASH CRYPTO_ALG_TYPE_DIGEST
 
+#define CRYPTO_TFM_NEED_KEY		0x00000001
+
 struct crypto_shash {
 	const uint8_t *key;
 	int keylen;
@@ -76,5 +78,9 @@ static inline void shash_desc_zero(struct shash_desc *desc)
 	desc->crc = 0;
 }
 
+static inline int crypto_shash_get_flags(struct crypto_shash *h)
+{
+	return 0;
+}
 
 #endif
