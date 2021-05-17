@@ -11,6 +11,10 @@
  * elements.
  */
 
+/* Makes DRBD compute max bio size as 1 MB */
+
+#define BIO_MAX_VECS 256
+
 #if 0
 
 static inline bool bio_no_advance_iter(struct bio *bio)
