@@ -380,3 +380,6 @@ Version history
                               completions (they should be non-interruptible)
  * 1.0.0-rc11 (Apr 26, 2021): Upgrade to DRBD 9.0.28, Fixed mod_timer causing
                               system hang on disconnect
+ * 1.0.0-rc12 (May 17, 2021): Fixed 3 stability issues, drbd utils support
+			      relocation. Now ran 5 days in disconnect/connect
+			      loop without issues.
