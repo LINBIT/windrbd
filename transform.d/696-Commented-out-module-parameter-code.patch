@@ -1,0 +1,34 @@
+From bc90585d19969300ba99c67d76cd7b5499f45bd2 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 17 May 2021 19:38:14 +0200
+Subject: [PATCH 1/2] Commented out module parameter code
+
+Patch for DRBD 9.0.26
+---
+ drbd/drbd_main.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 17832d2..1046923 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -101,6 +101,7 @@ char drbd_usermode_helper[80] = "/cygdrive/c/windrbd/usr/sbin/drbdadm";
+ module_param_named(minor_count, drbd_minor_count, uint, 0444);
+ module_param_string(usermode_helper, drbd_usermode_helper, sizeof(drbd_usermode_helper), 0644);
+ 
++#if 0
+ static int param_set_drbd_protocol_version(const char *s, const struct kernel_param *kp)
+ {
+ 	unsigned long long tmp;
+@@ -124,6 +125,8 @@ const struct kernel_param_ops param_ops_drbd_protocol_version = {
+ 	.get = param_get_drbd_protocol_version,
+ };
+ 
++#endif
++
+ unsigned int drbd_protocol_version_min = PRO_VERSION_MIN;
+ module_param_named(protocol_version_min, drbd_protocol_version_min, drbd_protocol_version, 0644);
+ 
+-- 
+2.17.0
+

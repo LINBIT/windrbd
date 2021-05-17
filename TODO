@@ -36,6 +36,8 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Feature: Upgrade to DRBD 9.0.29
+
 TODO: Feature: Installer prompts for path, defaults to C:\WinDRBD
 
 TODO: Bug: Sync when becoming secondary (on secondary or down).

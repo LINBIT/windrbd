@@ -1,0 +1,25 @@
+From 2181e776e2d6d0145b53ec5e7b78b7927a128319 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 17 May 2021 19:56:19 +0200
+Subject: [PATCH] Added type to list iterator.
+
+---
+ drbd/drbd_main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 1046923..bb57ca5 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -2632,7 +2632,7 @@ static void __prune_or_free_openers(struct drbd_device *device, pid_t pid)
+ {
+ 	struct opener *pos, *tmp;
+ 
+-	list_for_each_entry_safe(pos, tmp, &device->openers, list) {
++	list_for_each_entry_safe(struct opener, pos, tmp, &device->openers, list) {
+ 		// if pid == 0, i.e., counts were 0, delete all entries, else the matching one
+ 		if (pid == 0 || pid == pos->pid) {
+ 			dynamic_drbd_dbg(device, "%sopeners del: %s(%d)\n", pid == 0 ? "" : "all ",
+-- 
+2.17.0
+

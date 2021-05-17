@@ -1,0 +1,37 @@
+From 83be44f2caf4fbfd63d778fddb2b3d0168878c80 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 17 May 2021 19:21:28 +0200
+Subject: [PATCH 2/2] commented out opener timestamp code.
+
+We don't need it at the moment and would have to implement
+the struct timeval and some timer function. We'll enable
+that later when there is more time to do it.
+
+Patch for DRBD 9.0.29
+---
+ drbd/drbd_nl.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index f13426f..81eeae5 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -1356,6 +1356,7 @@ static void opener_info(struct drbd_resource *resource,
+ 		return;
+ 	}
+ 
++#if 0
+ 	idr_for_each_entry(&resource->devices, device, i) {
+ 		struct timespec64 ts;
+ 		struct opener *o;
+@@ -1388,6 +1389,7 @@ static void opener_info(struct drbd_resource *resource,
+ 		spin_unlock_irqrestore(&device->openers_lock, spin_lock_flags);
+ 		break;
+ 	}
++#endif
+ }
+ 
+ static const char *from_attrs_err_to_txt(int err)
+-- 
+2.17.0
+
