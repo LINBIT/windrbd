@@ -3998,6 +3998,16 @@ ktime_t ktime_get(void)
 	return (ktime_t) { .tv64 = jiffies * (1000*1000*1000/HZ) };
 }
 
+ktime_t ktime_get_real(void)
+{
+	LARGE_INTEGER time;
+
+        KeQuerySystemTime(&time);
+		/* ktime is 1 ns, KeQuerySystemTime() is 100 ns */
+		/* TODO: but KeQuerySystemTime() is since January 1, 1601 ... */
+	return (ktime_t) { .tv64 = time.QuadPart * 100 };
+}
+
 int register_blkdev(int major, const char *name)
 {
 	/* does nothing */
