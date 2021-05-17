@@ -36,6 +36,12 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Feature: Installer prompts for path, defaults to C:\WinDRBD
+
+TODO: Bug: Sync when becoming secondary (on secondary or down).
+
+	This has probably to be done from user space.
+
 TODO: Bug: Pending IRPs and bios reported
 
 	Maybe not initialized?

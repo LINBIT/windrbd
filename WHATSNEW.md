@@ -13,11 +13,9 @@ Fixed deadlock in recursive calls to rcu_read_lock (which are legal)
 (rcu_read_lock (A) / synchronize_rcu (B) / rcu_read_lock (A)
 where the inner rcu used to hang forever at DISPATCH_LEVEL.
 
-TODO: WinDRBD root directory is now relocatable (Installer prompts
-for path), defaults to C:\WinDRBD
-
-TODO: Sync when becoming secondary (on secondary or down).
-	This has probably to be done from user space.
+WinDRBD root directory is now relocatable (currently registry key
+WinDRBDRoot in HKLM/system/CurrentControlSet/services/WinDRBD
+must be edited manually, no installer support yet)
 
 What's new in version 1.0.0-rc11
 --------------------------------
