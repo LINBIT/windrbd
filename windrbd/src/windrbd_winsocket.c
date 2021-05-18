@@ -87,6 +87,7 @@ static void sock_really_free(struct kref *kref)
 {
 	struct socket *socket = container_of(kref, struct socket, kref);
 
+printk("freeing socket at %p\n", socket);
 	if (socket->receive_thread_should_run) {
 		socket->receive_thread_should_run = false;
 		wake_up(&socket->buffer_available);
