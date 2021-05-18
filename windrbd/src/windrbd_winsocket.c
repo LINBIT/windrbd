@@ -1573,8 +1573,6 @@ static int socket_receive_thread(void *p)
 	int err;
 	KIRQL flags;
 
-	kref_get(&s->kref);
-
 	while (1) {
 		wait_event(s->buffer_available, 
 			!s->receive_thread_should_run ||
@@ -1828,6 +1826,14 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	if (type == SOCK_STREAM) {
 		if (socket->receiver_cache_enabled) {
 			socket->receive_thread_should_run = true;
+				/* This matches the kref_put at the end of
+				 * the receiver thread. We must have it here
+				 * before the thread is started because the
+				 * socket might be freed before the thread
+				 * actually starts.
+				 */
+			kref_get(&socket->kref);
+
 			kthread_run(socket_receive_thread, socket, "receive_cache");
 		}
 	}
