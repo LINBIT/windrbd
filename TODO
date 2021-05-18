@@ -36,9 +36,11 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Feature: Upgrade to DRBD 9.0.29
+TODO: Bug: BSOD on network interface down.
 
 TODO: Feature: Installer prompts for path, defaults to C:\WinDRBD
+
+TODO: Feature: Make resize work (again)
 
 TODO: Bug: Sync when becoming secondary (on secondary or down).
 
@@ -84,8 +86,6 @@ TODO: Feature: Make UM helper command configurable
 	Currently hard coded to cmd shell. Put this into a registry
 	key.
 
-TODO: Feature: Relocate WinDRBD root directory
-
 TODO: Feature: use existing data
 
 	Problem is that SCSI disk requires (?) a partition table.
@@ -103,79 +103,6 @@ TODO: Bug: Send buffer drains for about 30 seconds
 
 	Reported by Yannis. Connection should be closed even when
 	there is data in the send buffer.
-
-TODO: Bug: System freeze (BSOD?) on drbdadm down on Server 2016
-
-	Last log line is:
-
-Feb  3 16:34:05 10.43.10.11  U15:34:05.105 (58492374975/10000000)|7798f6d0(drbd_r_windows-windows) #247 wait_for_bios_to_complete 2 bios pending before wait_event
-
-	Version is windrbd-1.0.0-rc9-120-g761a3991-signed
-	(with receiver cache enabled but probably unrelated).
-	This seems to be Windows Server 2016 specific. Most likely
-	the same as reported by Patterson from Accenture.
-
-	Update: also with -rc9. Is a health check BSOD.
-
-	Update: System hang with -rc9-146 last log line is the same
-	so probably the same error:
-
-Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284613741/10000000)|a58c56d0(drbd_r_windows-windows) #318 drbdd <3>drbd windows-windows pnode-id:2, cs(NetworkFailure), prole(Unknown), cflag(0x200e), scf(0x0): error receiving P_DATA, e: -5 l: 1048576!
-Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284621063/10000000)|a58c56d0(drbd_r_windows-windows) #319 wait_for_bios_to_complete 1 bios pending before wait_event
-Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284623119/10000000)|a58c56d0(drbd_r_windows-windows) #320 wait_for_bios_to_complete 2 IRPs pending before wait_event
-
-	Also, before:
-
-Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_a_windows-windows) #312 drbd_ack_receiver <3>drbd windows-windows pnode-id:2, cs(Connected), prole(Primary), cflag(0xe), scf(0x1): sock_recvmsg returned -103
-(ECONNABORTED 103 Software caused connection abort)
-
-	but this is probably unrelated (see Network loss bug?)
-
-	Update: we now fixed wait_event (was always interruptible
-	and sometimes got interrupted returning -EINTR. Original
-	Linux wait_event is not interuptible) Now it is better
-	but sometimes (after 50 iterations) it still hangs ...
-
-	Update: It hangs somewhere in a DRBD endio routine. More
-	info to follow ...
-
-	2 (more) errors
-		.) BSOD in conn_disconnect 7 (7a)
-		.) System hang in bi_endio (not yet clear which DRBD endio
-		   handler) this hang is less common.
-		   Update: hangs in one_flush_endio
-
-	Update: wait_for_completion now sleeps uninteruptible fixing the
-	bug. Fixes BSOD in conn_disconnect (most likely) but not the
-	system hang in one_flush_endio.
-
-	Update: freezes after about 500 (sometimes 600) disconnect
-	cycles, last log line is terminating receiver thread ...
-
-	Update: running tests with -rc11 bug is still there.
-
-	Update: Fixed one BSOD (PFN_LIST_CORRUPT) (?) by using
-	an extra kref in receiver thread (and no wait_for_completion
-	in sock_really_free() which can be called in interrupt).
-
-	Also there is a freeze:
-
-<4> U18:10:31.058 (3957626660/10000000)|a1a3cb00(drbd_s_windows-windows) #935 dtt_send_page <4>drbd windows-windows tcp:server-2016-B: dtt_send_page: size=40 len=40 sent=-4
- [last message was in IRQ context or recursive]
-	without following 
-<6> U18:10:09.887 (3746059590/10000000)|a1a3cb00(drbd_s_windows-windows) #834 drbd_thread_setup <6>drbd windows-windows pnode-id:2, cs(NetworkFailure), prole(Unknown), cflag(0x22240e), scf(0x0): Restarting sender thread
-	so probably sender hangs in there. Do printk's and the usual stuff
-	(triggers with firewall test after 5-10 minutes with I/O)
-
-	Update: Heisenbug (adding printk's makes freeze diappear)
-
-	Update: hangs when exiting sender (restarting sender thread
-	does not appear). We now run printk's in memory only mode
-	to not disturb timing.
-
-	Update: hangs in synchronize_rcu() on disconnect.
-
-	Now trying without synchronize_rcu() ...
 
 TODO: Bug: IRQL BSOD when doing I/O with 1.0.0-rc10
 
@@ -7201,3 +7128,81 @@ Done: Bug: NESSUS needs quotes around cygrunsrv registry key
 	Fix that with an extra windrbd command that adds the
 	quotes unless already there.
 
+Done: Feature: Upgrade to DRBD 9.0.29
+
+Duplicate: Feature: Relocate WinDRBD root directory
+
+Done: Bug: System freeze (BSOD?) on drbdadm down on Server 2016
+
+	Last log line is:
+
+Feb  3 16:34:05 10.43.10.11  U15:34:05.105 (58492374975/10000000)|7798f6d0(drbd_r_windows-windows) #247 wait_for_bios_to_complete 2 bios pending before wait_event
+
+	Version is windrbd-1.0.0-rc9-120-g761a3991-signed
+	(with receiver cache enabled but probably unrelated).
+	This seems to be Windows Server 2016 specific. Most likely
+	the same as reported by Patterson from Accenture.
+
+	Update: also with -rc9. Is a health check BSOD.
+
+	Update: System hang with -rc9-146 last log line is the same
+	so probably the same error:
+
+Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284613741/10000000)|a58c56d0(drbd_r_windows-windows) #318 drbdd <3>drbd windows-windows pnode-id:2, cs(NetworkFailure), prole(Unknown), cflag(0x200e), scf(0x0): error receiving P_DATA, e: -5 l: 1048576!
+Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284621063/10000000)|a58c56d0(drbd_r_windows-windows) #319 wait_for_bios_to_complete 1 bios pending before wait_event
+Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284623119/10000000)|a58c56d0(drbd_r_windows-windows) #320 wait_for_bios_to_complete 2 IRPs pending before wait_event
+
+	Also, before:
+
+Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_a_windows-windows) #312 drbd_ack_receiver <3>drbd windows-windows pnode-id:2, cs(Connected), prole(Primary), cflag(0xe), scf(0x1): sock_recvmsg returned -103
+(ECONNABORTED 103 Software caused connection abort)
+
+	but this is probably unrelated (see Network loss bug?)
+
+	Update: we now fixed wait_event (was always interruptible
+	and sometimes got interrupted returning -EINTR. Original
+	Linux wait_event is not interuptible) Now it is better
+	but sometimes (after 50 iterations) it still hangs ...
+
+	Update: It hangs somewhere in a DRBD endio routine. More
+	info to follow ...
+
+	2 (more) errors
+		.) BSOD in conn_disconnect 7 (7a)
+		.) System hang in bi_endio (not yet clear which DRBD endio
+		   handler) this hang is less common.
+		   Update: hangs in one_flush_endio
+
+	Update: wait_for_completion now sleeps uninteruptible fixing the
+	bug. Fixes BSOD in conn_disconnect (most likely) but not the
+	system hang in one_flush_endio.
+
+	Update: freezes after about 500 (sometimes 600) disconnect
+	cycles, last log line is terminating receiver thread ...
+
+	Update: running tests with -rc11 bug is still there.
+
+	Update: Fixed one BSOD (PFN_LIST_CORRUPT) (?) by using
+	an extra kref in receiver thread (and no wait_for_completion
+	in sock_really_free() which can be called in interrupt).
+
+	Also there is a freeze:
+
+<4> U18:10:31.058 (3957626660/10000000)|a1a3cb00(drbd_s_windows-windows) #935 dtt_send_page <4>drbd windows-windows tcp:server-2016-B: dtt_send_page: size=40 len=40 sent=-4
+ [last message was in IRQ context or recursive]
+	without following 
+<6> U18:10:09.887 (3746059590/10000000)|a1a3cb00(drbd_s_windows-windows) #834 drbd_thread_setup <6>drbd windows-windows pnode-id:2, cs(NetworkFailure), prole(Unknown), cflag(0x22240e), scf(0x0): Restarting sender thread
+	so probably sender hangs in there. Do printk's and the usual stuff
+	(triggers with firewall test after 5-10 minutes with I/O)
+
+	Update: Heisenbug (adding printk's makes freeze diappear)
+
+	Update: hangs when exiting sender (restarting sender thread
+	does not appear). We now run printk's in memory only mode
+	to not disturb timing.
+
+	Update: hangs in synchronize_rcu() on disconnect.
+
+	Now trying without synchronize_rcu() ...
+
+	Was rcu_read_lock recursion. Finally solved.
