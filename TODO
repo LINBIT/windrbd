@@ -36,8 +36,6 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Bug: BSOD on network interface down.
-
 TODO: Feature: Installer prompts for path, defaults to C:\WinDRBD
 
 TODO: Feature: Make resize work (again)
@@ -104,58 +102,11 @@ TODO: Bug: Send buffer drains for about 30 seconds
 	Reported by Yannis. Connection should be closed even when
 	there is data in the send buffer.
 
-TODO: Bug: IRQL BSOD when doing I/O with 1.0.0-rc10
-
-	This happened when the peer crashed.
-
-	Just happened again (apr 6 2021) this time without peer crashing.
-	After 5 days of I/O. WinDRBD is 1.0.0-rc10-17-g05f4133 (with
-	DRBD 9.0.28)
-	Also: network adapter broken (ping 10.43.10.14 prints General
-	failure), must poweroff machine (this might be a kvm bug).
-
-	With powershell script (disable ethernet interface) reproducible
-	after max. 5 iterations.
-
-	Now trying without wait_for_bios_to_complete patch.
-
-	Kmalloc debugger found a double free:
-
-Apr  7 14:00:56 server-2016-a  U14:00:56.565 (10474919603/10000000)|d94745a0(drbd_w_windows-windows) #3749 kfree_debug kmalloc_debug: Warning: Poison after overwritten (is 45455246 should be fe4a5109), allocated from drbd_main.c:3478 drbd_create_connection(), freed from drbd_main.c:3581 drbd_destroy_connection()
-Apr  7 14:00:56 server-2016-a  U14:00:56.565 (10474922255/10000000)|d94745a0(drbd_w_windows-windows) #3750 kfree_debug This is most likely a double free.
-
-	Too many kref_put's in forget_state_change?
-	Is called several times. Maybe too often from worker?
-	No.
-
-	del_connect_timer()?
-
-	Fixed mod_timer return value. Now it is much better. However still
-	freezing after 20-30 minutes of disconnect/connect test.
-
 TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
 
-TODO: Bug: Data coherence error when simple write cache is enabled.
+TODO: Code quality: Remove simple write cache code
 
-	It probably is better not to support this because it doesn't
-	give much performance boost (or none at all)...
-
-TODO: Bug: BSOD when connecting with split brain.
-
-	When experimenting with MS cluster manager integration, we
-	ran into a split brain and later BSOD.
-
-Jun 29 15:45:15 10.43.10.11  U13:45:15.382|a297f1c0(drbd_r_windows-windows) #221 drbd_sync_handshake <1>drbd windows-windows/1 minor 29, ds(UpToDate), dvflag(0x0): Split-Brain detected but unresolved, dropping connection!
-Jun 29 15:45:15 10.43.10.11  U13:45:15.382|a297f1c0(drbd_r_windows-windows) #222 drbd_khelper <6>drbd windows-windows/1 minor 29 pnode-id:2, pdsk(DUnknown), prpl(Off), pdvflag(0x40000): helper command: /cygdrive/c/windrbd/usr/sbin/drbdadm split-brain
-Jun 29 15:45:16 10.43.10.11  U13:45:16.099|a2993a40(devicecontrol) #223 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_RESOURCES:30)
-Jun 29 15:45:16 10.43.10.11  U13:45:16.100|a2993a40(devicecontrol) #224 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_DEVICES:31)
-Jun 29 15:45:16 10.43.10.11  U13:45:16.100|a2993a40(devicecontrol) #225 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_CONNECTIONS:32)
-Jun 29 15:45:16 10.43.10.11  U13:45:16.101|a2993a40(devicecontrol) #226 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_PEER_DEVICES:33)
-Jun 29 15:45:16 10.43.10.11  U13:45:16.384|a297f1c0(drbd_r_windows-windows) #227 call_usermodehelper User mode helper request timed out after 1000 milliseconds, is the user mode helper daemon running?
-Jun 29 15:45:16 10.43.10.11  U13:45:16.384|a297f1c0(drbd_r_windows-windows) #228 drbd_khelper <4>drbd windows-windows/1 minor 29 pnode-id:2, pdsk(DUnknown), prpl(Off), pdvflag(0x40000): helper command: /cygdrive/c/windrbd/usr/sbin/drbdadm split-brain exit code 255 (0xffffff92)
-Jun 29 15:45:16 10.43.10.11  U13:45:16.384|a297f1c0(drbd_r_windows-windows) #229 print_state_change <6>drbd windows-windows pnode-id:2, cs(NetworkFailure), prole(Unknown), cflag(0x10c), scf(0x21): conn( NetworkFailure -> Disconnecting )
-Jun 29 15:45:16 10.43.10.11  [last message was in IRQ context or recursive]
-Jun 29 15:45:16 10.43.10.11  U13:45:16.384|a297f1c0(drbd_r_windows-windows) #230 drbdd <3>drbd windows-windows pnode-id:2, cs(Disconnecting), prole(Unknown), cflag(0x10c), scf(0x0): error receiving P_STATE, e: -5 l: 0!
+TODO: Code quality: Remove mount block device code
 
 TODO: Bug: Primary detaches when secondary hard fails.
 
@@ -178,50 +129,15 @@ TODO: Feature: Resource agent for Microsoft cluster manager
 
 TODO: Documentation: User's guide
 
-TODO: Bug: BSOD in drbd_sender:2898 calling callback
-
-	After 26 days of I/O this BSOD (ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY)
-	happened. Unfortunately (we has this BSOD before).
-
-	Code line is:
-
-                err = w->cb(w, connection->cstate[NOW] < C_CONNECTED);
-
-	The list is empty (was only list element). Value of cb is
-	unknown (but most likely garbage).
-
-	We've reworked locking, maybe the bug is gone now.
-
 TODO: Code quality: Do not patch boot sector when it is a disk device
 
-TODO: Bug: BSOD on Syncing (when running disconnect while sync)
-
-	This is a different bug (not on disconnect but while syncing)
-	and is probably new with the SyncTarget big pages patch.
-
 TODOs for after Release 1.0 ----------------------------------------
-
-TODO: Bug: BSOD when removing network interface
-
-	This is an uncommon cause but should be fixed. When
-	doing:
-
-	ipconfig /release <eth-interface>
-
-	it (WinDRBD?) sometimes BSODs.
-
-	Update: tried with deactivating network interface (via
-	Control Panel), no BSOD, just disconnect (and logging
-	stopped working but this might be unrelated). But this
-	was Windows7 not Windows Server 2016...
 
 TODO: Bug: Several issues with 3 nodes setups.
 
 	As reported by Henry Kellner, connection problems and
 	sync inconsitency (node disk shows up as UpToDate and
 	Inconsitent on different nodes)
-
-TODO: Code quality: windrbd install-bus-device takes long to complete
 
 TODO: Feature: On loading kernel module, umhelper and logger should also be started.
 
@@ -247,6 +163,9 @@ TODO: Bug: BSOD in copy_first_640k
 	without the duplicate completion detector.
 
 	Not sure if we want to fix this.
+
+	Update: need to fix this when one enables verify then
+	the machine won't boot any more.
 
 TODO: Code quality: Squash patches in transform.d
 
@@ -326,6 +245,10 @@ TODO: Bug: Reestablish connection of Diskless machine fails.
 	connection wasn't established again. Probably this
 	is also because of Windows needing disk when getting
 	an adrress via DHCP.
+
+	Update: Can reestablish connection however some
+	IRPs are completed with I/O error (once connection
+	is reestablished) causing critical process to die.
 
 TODO: Bug: On Windows 10 drbdadm up on diskless not connected hangs system
 
@@ -7206,3 +7129,105 @@ Feb 12 16:50:19 10.43.10.11  U15:50:19.994 (64284599929/10000000)|9f99f2b0(drbd_
 	Now trying without synchronize_rcu() ...
 
 	Was rcu_read_lock recursion. Finally solved.
+
+Done: Bug: BSOD on network interface down.
+
+	Was kref_get being called too late (inside thread,
+	where socket might already be freed).
+
+Done: Bug: IRQL BSOD when doing I/O with 1.0.0-rc10
+
+	This happened when the peer crashed.
+
+	Just happened again (apr 6 2021) this time without peer crashing.
+	After 5 days of I/O. WinDRBD is 1.0.0-rc10-17-g05f4133 (with
+	DRBD 9.0.28)
+	Also: network adapter broken (ping 10.43.10.14 prints General
+	failure), must poweroff machine (this might be a kvm bug).
+
+	With powershell script (disable ethernet interface) reproducible
+	after max. 5 iterations.
+
+	Now trying without wait_for_bios_to_complete patch.
+
+	Kmalloc debugger found a double free:
+
+Apr  7 14:00:56 server-2016-a  U14:00:56.565 (10474919603/10000000)|d94745a0(drbd_w_windows-windows) #3749 kfree_debug kmalloc_debug: Warning: Poison after overwritten (is 45455246 should be fe4a5109), allocated from drbd_main.c:3478 drbd_create_connection(), freed from drbd_main.c:3581 drbd_destroy_connection()
+Apr  7 14:00:56 server-2016-a  U14:00:56.565 (10474922255/10000000)|d94745a0(drbd_w_windows-windows) #3750 kfree_debug This is most likely a double free.
+
+	Too many kref_put's in forget_state_change?
+	Is called several times. Maybe too often from worker?
+	No.
+
+	del_connect_timer()?
+
+	Fixed mod_timer return value. Now it is much better. However still
+	freezing after 20-30 minutes of disconnect/connect test.
+
+Rejected: Bug: Data coherence error when simple write cache is enabled.
+
+	It probably is better not to support this because it doesn't
+	give much performance boost (or none at all)...
+
+Done: Bug: BSOD when connecting with split brain.
+
+	When experimenting with MS cluster manager integration, we
+	ran into a split brain and later BSOD.
+
+Jun 29 15:45:15 10.43.10.11  U13:45:15.382|a297f1c0(drbd_r_windows-windows) #221 drbd_sync_handshake <1>drbd windows-windows/1 minor 29, ds(UpToDate), dvflag(0x0): Split-Brain detected but unresolved, dropping connection!
+Jun 29 15:45:15 10.43.10.11  U13:45:15.382|a297f1c0(drbd_r_windows-windows) #222 drbd_khelper <6>drbd windows-windows/1 minor 29 pnode-id:2, pdsk(DUnknown), prpl(Off), pdvflag(0x40000): helper command: /cygdrive/c/windrbd/usr/sbin/drbdadm split-brain
+Jun 29 15:45:16 10.43.10.11  U13:45:16.099|a2993a40(devicecontrol) #223 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_RESOURCES:30)
+Jun 29 15:45:16 10.43.10.11  U13:45:16.100|a2993a40(devicecontrol) #224 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_DEVICES:31)
+Jun 29 15:45:16 10.43.10.11  U13:45:16.100|a2993a40(devicecontrol) #225 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_CONNECTIONS:32)
+Jun 29 15:45:16 10.43.10.11  U13:45:16.101|a2993a40(devicecontrol) #226 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_GET_PEER_DEVICES:33)
+Jun 29 15:45:16 10.43.10.11  U13:45:16.384|a297f1c0(drbd_r_windows-windows) #227 call_usermodehelper User mode helper request timed out after 1000 milliseconds, is the user mode helper daemon running?
+Jun 29 15:45:16 10.43.10.11  U13:45:16.384|a297f1c0(drbd_r_windows-windows) #228 drbd_khelper <4>drbd windows-windows/1 minor 29 pnode-id:2, pdsk(DUnknown), prpl(Off), pdvflag(0x40000): helper command: /cygdrive/c/windrbd/usr/sbin/drbdadm split-brain exit code 255 (0xffffff92)
+Jun 29 15:45:16 10.43.10.11  U13:45:16.384|a297f1c0(drbd_r_windows-windows) #229 print_state_change <6>drbd windows-windows pnode-id:2, cs(NetworkFailure), prole(Unknown), cflag(0x10c), scf(0x21): conn( NetworkFailure -> Disconnecting )
+Jun 29 15:45:16 10.43.10.11  [last message was in IRQ context or recursive]
+Jun 29 15:45:16 10.43.10.11  U13:45:16.384|a297f1c0(drbd_r_windows-windows) #230 drbdd <3>drbd windows-windows pnode-id:2, cs(Disconnecting), prole(Unknown), cflag(0x10c), scf(0x0): error receiving P_STATE, e: -5 l: 0!
+
+	This is most likely solved in rc12.
+
+Done: Bug: BSOD in drbd_sender:2898 calling callback
+
+	After 26 days of I/O this BSOD (ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY)
+	happened. Unfortunately (we has this BSOD before).
+
+	Code line is:
+
+                err = w->cb(w, connection->cstate[NOW] < C_CONNECTED);
+
+	The list is empty (was only list element). Value of cb is
+	unknown (but most likely garbage).
+
+	We've reworked locking, maybe the bug is gone now.
+
+	Most likely solved in rc12
+
+Done: Bug: BSOD on Syncing (when running disconnect while sync)
+
+	This is a different bug (not on disconnect but while syncing)
+	and is probably new with the SyncTarget big pages patch.
+
+	Most likely solved in rc12
+
+Done: Bug: BSOD when removing network interface
+
+	This is an uncommon cause but should be fixed. When
+	doing:
+
+	ipconfig /release <eth-interface>
+
+	it (WinDRBD?) sometimes BSODs.
+
+	Update: tried with deactivating network interface (via
+	Control Panel), no BSOD, just disconnect (and logging
+	stopped working but this might be unrelated). But this
+	was Windows7 not Windows Server 2016...
+
+	Update: Had a test running for 24 hours now (with
+	rc12-11) seems to be fixed.
+
+Done: Code quality: windrbd install-bus-device takes long to complete
+
+	Didn't observe that lately.
