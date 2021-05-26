@@ -36,6 +36,18 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: Secondary hangs in NetworkFailure / Disconnecting when peer crashes
+
+	Log line (very often) is:
+
+May 25 14:14:59 server-2016-b  U14:14:59.854 (5193697363511/10000000)|daf05570(drbd_s_windows-windows) #2824802 drbd_rs_del_all <6>drbd windows-windows/1 minor 29 pnode-id:1, pdsk(DUnknown), prpl(Off), pdvflag(0x801c00): Retrying drbd_rs_del_all() later. refcnt=2
+
+	Unclear where that comes from. Will try to reproduce.
+
+	Update: Reproduced with a firewall triggered disconnect.
+	Maybe this is a new bug in 9.0.29? I've never seen that
+	before ...
+
 TODO: Feature: Installer prompts for path, defaults to C:\WinDRBD
 
 TODO: Feature: Make resize work (again)
