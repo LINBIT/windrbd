@@ -27,7 +27,7 @@
 
 /* Uncomment this if you want more debug output (disable for releases) */
 
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -1828,7 +1828,7 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 		IoCopyCurrentIrpStackLocationToNext(irp);
 		IoSetCompletionRoutine(irp, (PIO_COMPLETION_ROUTINE)start_completed, (PVOID)&start_completed_event, TRUE, TRUE, TRUE);
 
-// printk("starting lower device object\n");
+printk("Not starting lower device object\n");
 #if 0
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status == STATUS_PENDING) {
@@ -1841,16 +1841,16 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 			printk("Warning: lower device start returned %x\n", status);
 #endif
 
-// printk("starting device object status is %x\n", status);
+printk("starting device object status is %x\n", status);
 
 		status = STATUS_SUCCESS;
 		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 
-// printk("completed IRP\n");
+printk("completed IRP\n");
 
 		windrbd_bus_is_ready();
-// printk("Set bus ready\n");
+printk("Set bus ready\n");
 
 		num_pnp_bus_requests--;
 		return status;
