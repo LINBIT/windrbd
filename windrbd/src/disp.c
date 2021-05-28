@@ -352,15 +352,15 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 			printk("IoRegisterDeviceInterface returned %x\n", status);
 			printk("bus_device_name is %S\n", bus_device_name.Buffer);
 
-#if 0
 			bus_extension->lower_device = IoAttachDeviceToDeviceStack(bus_device, PhysicalDeviceObject);
 			if (bus_extension->lower_device == NULL)
 				printk("IoAttachDeviceToDeviceStack failed.\n");
 			else
 				printk("IoAttachDeviceToDeviceStack returned object %p.\n", bus_extension->lower_device);
-#endif
+#if 0
 			bus_extension->lower_device = NULL;
 			printk("Set bus_extension->lower_device to NULL\n");
+#endif
 		} else {
 			printk("PhysicalDeviceObject is NULL\n");
 		}
