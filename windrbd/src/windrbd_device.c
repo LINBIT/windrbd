@@ -1943,6 +1943,7 @@ dbg("BusQueryCompatibleIDs\n");
 			if (status == STATUS_SUCCESS) {
 dbg("Returned string is %S\n", string);
 				irp->IoStatus.Information = (ULONG_PTR) string;
+				irp->IoStatus.Status = STATUS_SUCCESS;
 
 				IoCompleteRequest(irp, IO_NO_INCREMENT);
 				return STATUS_SUCCESS;
