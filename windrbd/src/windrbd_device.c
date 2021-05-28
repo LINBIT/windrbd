@@ -1828,8 +1828,7 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 		IoCopyCurrentIrpStackLocationToNext(irp);
 		IoSetCompletionRoutine(irp, (PIO_COMPLETION_ROUTINE)start_completed, (PVOID)&start_completed_event, TRUE, TRUE, TRUE);
 
-printk("Not starting lower device object\n");
-#if 0
+printk("Starting lower device object\n");
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status == STATUS_PENDING) {
 // printk("Pending ...\n");
@@ -1839,7 +1838,6 @@ printk("Not starting lower device object\n");
 		status = irp->IoStatus.Status;
 		if (status != STATUS_SUCCESS)
 			printk("Warning: lower device start returned %x\n", status);
-#endif
 
 printk("starting device object status is %x\n", status);
 
@@ -1883,7 +1881,6 @@ printk("Set bus ready\n");
 		irp->IoStatus.Status = STATUS_SUCCESS;
 		IoSkipCurrentIrpStackLocation(irp);
 
-#if 0
 dbg("removing lower device object\n");
 		status = IoCallDriver(bus_ext->lower_device, irp);
 
@@ -1894,7 +1891,6 @@ dbg("IoCallDriver returned %x\n", status);
 dbg("detaching device object\n");
 		IoDetachDevice(bus_ext->lower_device);
 dbg("deleting device object\n");
-#endif
 		IoDeleteDevice(device);
 dbg("device object deleted.\n");
 dbg("NOT completing IRP\n");
@@ -2039,13 +2035,11 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 	} else {
 		irp->IoStatus.Status = status;
-#if 0
 		IoSkipCurrentIrpStackLocation(irp);
 // printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
-#endif
 	}
 
 	num_pnp_bus_requests--;
@@ -2498,9 +2492,9 @@ static NTSTATUS windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
 //		IoSkipCurrentIrpStackLocation(irp);
 // printk("Calling PoCallDriver ...\n");
-//		status = PoCallDriver(bus_ext->lower_device, irp);
+		status = PoCallDriver(bus_ext->lower_device, irp);
 // printk("PoCallDriver returned %x\n", status);
-		status = STATUS_SUCCESS;
+//		status = STATUS_SUCCESS;
 	} else {
 			/* TODO: if powering up after sleep / hibernate
 			 * unset this flag again.
