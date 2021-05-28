@@ -215,7 +215,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	printk("Attempting to start boot device\n");
 int i;
-for (i=0;i<10;i++) {
+for (i=0;i<5;i++) {
 msleep(10*1000);
 printk("x %d\n", i);
 }
