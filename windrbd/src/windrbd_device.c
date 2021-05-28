@@ -1949,7 +1949,8 @@ dbg("Returned string is %S\n", string);
 				status = IoCallDriver(bus_ext->lower_device, irp);
 				if (status != STATUS_SUCCESS)
 					dbg("Warning: lower device returned status %x\n", status);
-				IoCompleteRequest(irp, IO_NO_INCREMENT);
+// lower device completes this?
+//				IoCompleteRequest(irp, IO_NO_INCREMENT);
 				return STATUS_SUCCESS;
 			} else {
 				ExFreePool(string);
