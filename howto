@@ -740,3 +740,10 @@ sconfig
 press 5<enter>
 press m<enter>
 press 15<enter> to exit sconfig
+
+---------------------------
+
+Howto disable Internet Explorer safety checks:
+
+Close all IE Windows.
+Open Server Manager / Local Machine / Internet explorer safety (or so) turn off.
