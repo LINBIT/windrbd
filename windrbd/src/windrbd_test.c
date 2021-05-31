@@ -1084,6 +1084,35 @@ void argv_test(int argc, char ** argv)
 		printk("argv[%d] is %s\n", i, argv[i]);
 }
 
+// #include <windows.h>
+#include <bcrypt.h>
+
+int crypto_test(int argc, char ** argv)
+{
+#if 0
+	HCRYPTPROV provider;
+	BOOL ret;
+
+	ret = CryptAcquireContext(&provider, (char*) 0, MS_ENH_RSA_AES_PROV, PROV_RSA_AES, CRYPT_VERIFYCONTEXT);
+	if (!ret)
+		printk("CryptAcquireContext failed\n");
+	else
+		printk("CryptAcquireContext succeeded\n");
+	
+	return 0;
+#endif
+	NTSTATUS status;
+	BCRYPT_ALG_HANDLE hAlg = NULL;
+
+	status = BCryptOpenAlgorithmProvider(&hAlg, BCRYPT_SHA256_ALGORITHM, NULL, 0);
+	if (!NT_SUCCESS(status)) {
+		printk("BCryptOpenAlgorithmProvider failed, status is %x\n", status);
+		return -1;
+	}
+	printk("BCryptOpenAlgorithmProvider succeeded\n");
+	return 0;
+}
+
 extern void start_tiktok(int argc, const char ** argv);
 
 void test_main(const char *arg)
@@ -1139,6 +1168,8 @@ void test_main(const char *arg)
 		concurrency_test(argc, argv);
 	if (strcmp(argv[0], "argv_test") == 0)
 		argv_test(argc, argv);
+	if (strcmp(argv[0], "crypto_test") == 0)
+		crypto_test(argc, argv);
 	if (strcmp(argv[0], "rcu_test") == 0)
 		rcu_test(argc, argv);
 	if (strcmp(argv[0], "enable_debug_printks") == 0)
