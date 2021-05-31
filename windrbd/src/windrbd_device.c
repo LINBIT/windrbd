@@ -1905,6 +1905,7 @@ dbg("NOT completing IRP\n");
 		num_pnp_bus_requests--;
 		return STATUS_SUCCESS; /* must not do IoCompleteRequest */
 
+#if 0
 	case IRP_MN_QUERY_ID:
 	{
 		wchar_t *string;
@@ -1945,7 +1946,9 @@ dbg("Returned string is %S\n", string);
 				irp->IoStatus.Information = (ULONG_PTR) string;
 				irp->IoStatus.Status = STATUS_SUCCESS;
 
-				IoSkipCurrentIrpStackLocation(irp);
+//				IoSkipCurrentIrpStackLocation(irp);
+				IoCopyCurrentIrpStackLocationToNext(irp);
+
 				status = IoCallDriver(bus_ext->lower_device, irp);
 				if (status != STATUS_SUCCESS)
 					dbg("Warning: lower device returned status %x\n", status);
@@ -1958,6 +1961,7 @@ dbg("Returned string is %S\n", string);
 		}
 		break;
 	}
+#endif
 /*	case IRP_MN_QUERY_INTERFACE:
 		
 	case IRP_MN_QUERY_CAPABILITIES:
@@ -2532,6 +2536,25 @@ static NTSTATUS windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	return status;
 }
 
+/* This is for Windows management interface which we do not support.
+ * Must forward requests to next lower driver.
+ */
+
+static NTSTATUS windrbd_sysctl(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	NTSTATUS status = STATUS_SUCCESS;
+
+	if (device == drbd_bus_device) {
+		struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
+
+		IoSkipCurrentIrpStackLocation(irp);
+		status = IoCallDriver(bus_ext->lower_device, irp);
+		dbg("sysctl lower object returned %x\n", status);
+	} else {
+		printk("got unexpected sysctl\n");
+	}
+	return status;
+}
 	/* When installing WinDRBD as PnP Disk driver, the disk.sys driver
 	 * is stacked over us and will send us SCSI requests. Some of them
 	 * are implemented here (like read/write), others like TRIM
@@ -2944,6 +2967,7 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	windrbd_dispatch_table[IRP_MJ_FLUSH_BUFFERS] = windrbd_flush;
 	windrbd_dispatch_table[IRP_MJ_SCSI] = windrbd_scsi;
 	windrbd_dispatch_table[IRP_MJ_POWER] = windrbd_power;
+	windrbd_dispatch_table[IRP_MJ_SYSTEM_CONTROL] = windrbd_sysctl;
 
 	status = IoRegisterShutdownNotification(mvolRootDeviceObject);
 	if (status != STATUS_SUCCESS) {
