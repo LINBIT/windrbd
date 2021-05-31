@@ -1104,7 +1104,8 @@ int crypto_test(int argc, char ** argv)
 	NTSTATUS status;
 	BCRYPT_ALG_HANDLE hAlg = NULL;
 
-	status = BCryptOpenAlgorithmProvider(&hAlg, BCRYPT_SHA256_ALGORITHM, NULL, 0);
+//	status = BCryptOpenAlgorithmProvider(&hAlg, BCRYPT_SHA256_ALGORITHM, NULL, 0);
+	status = BCryptOpenAlgorithmProvider(&hAlg, BCRYPT_RSA_ALGORITHM, NULL, 0);
 	if (!NT_SUCCESS(status)) {
 		printk("BCryptOpenAlgorithmProvider failed, status is %x\n", status);
 		return -1;
