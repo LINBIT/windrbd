@@ -2023,7 +2023,7 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 			return STATUS_SUCCESS;
 		}
 		default:
-			status = STATUS_NOT_IMPLEMENTED;
+			status = STATUS_NOT_SUPPORTED;
 		}
 		break;
 
@@ -2243,7 +2243,7 @@ dbg("Returned string is %S\n", string);
 
 			default:
 				dbg("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
-				status = STATUS_NOT_IMPLEMENTED;
+				status = STATUS_NOT_SUPPORTED;
 			}
 	/* forward to lower device: but what is the lower device (bus?) */
 #if 0
