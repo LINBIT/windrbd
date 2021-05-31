@@ -2016,6 +2016,7 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 			dbg("reporting device %p for type %d\n", device, s->Parameters.QueryDeviceRelations.Type);
 
 			irp->IoStatus.Information = (ULONG_PTR)device_relations;
+			irp->IoStatus.Status = STATUS_SUCCESS;
 			status = STATUS_SUCCESS;
 
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
