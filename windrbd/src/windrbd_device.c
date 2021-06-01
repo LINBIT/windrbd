@@ -2066,6 +2066,10 @@ printk("8\n");
 		pass_on = 1;
 		break;
 
+	case 0xb: /* ?? IRP_MN_QUERY_RESOURCE_REQUIREMENTS */
+		dbg("got unimplemented minor %x\n", s->MinorFunction);
+		break;	/* do not pass on */
+
 	default:
 		dbg("got unimplemented minor %x\n", s->MinorFunction);
 
