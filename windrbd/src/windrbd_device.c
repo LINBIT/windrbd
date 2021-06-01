@@ -1858,21 +1858,25 @@ printk("Set bus ready\n");
 		dbg("got IRP_MN_QUERY_PNP_DEVICE_STATE\n");
 		irp->IoStatus.Information = 0;
 		status = STATUS_SUCCESS;
+		pass_on = 1;
 		break;
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
 		dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
 		status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
+		pass_on = 1;
 		break;
 
 	case IRP_MN_CANCEL_REMOVE_DEVICE:
 		dbg("got IRP_MN_CANCEL_REMOVE_DEVICE\n");
 		status = STATUS_SUCCESS;
+		pass_on = 1;
 		break;
 
 	case IRP_MN_SURPRISE_REMOVAL:
 		dbg("got IRP_MN_SURPRISE_REMOVAL\n");
 		status = STATUS_SUCCESS;
+		pass_on = 1;
 		break;
 
 	case IRP_MN_REMOVE_DEVICE:
@@ -2052,12 +2056,14 @@ printk("8\n");
 #endif
 		default:
 			status = STATUS_NOT_SUPPORTED;
+			pass_on = 1;
 		}
 		break;
 
 	case IRP_MN_EJECT:
 		dbg("got IRP_MN_EJECT\n");
 		status = STATUS_SUCCESS;
+		pass_on = 1;
 		break;
 
 	default:
