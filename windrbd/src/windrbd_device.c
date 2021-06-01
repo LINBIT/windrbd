@@ -2062,7 +2062,8 @@ printk("8\n");
 	default:
 		dbg("got unimplemented minor %x\n", s->MinorFunction);
 
-		status = irp->IoStatus.Status;
+//		status = irp->IoStatus.Status;
+		status = STATUS_NOT_SUPPORTED;
 		dbg("status is %x\n", status);
 	}
 
@@ -2072,12 +2073,15 @@ printk("8\n");
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 	} else {
 		irp->IoStatus.Status = status;
+		IoCompleteRequest(irp, IO_NO_INCREMENT);
+#if 0
 		// IoSkipCurrentIrpStackLocation(irp);
 		IoCopyCurrentIrpStackLocationToNext(irp);
 // printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
+#endif
 	}
 
 	num_pnp_bus_requests--;
