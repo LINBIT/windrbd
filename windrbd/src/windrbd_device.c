@@ -1992,19 +1992,12 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 				printk("Warning: number of DRBD devices changed: old %d != new %d\n", num_devices, n);
 			device_relations->Count = num_devices;
 			irp->IoStatus.Information = (ULONG_PTR)device_relations;
+			irp->IoStatus.Status = STATUS_SUCCESS;
 
-			IoSkipCurrentIrpStackLocation(irp);
-			status = IoCallDriver(bus_ext->lower_device, irp);
-			if (status != STATUS_SUCCESS) {
-				printk("IoCallDriver returned %x\n", status);
-			}
-			irp->IoStatus.Status = status;
+			IoCompleteRequest(irp, IO_NO_INCREMENT);
 			num_pnp_bus_requests--;
-
-//			IoCompleteRequest(irp, IO_NO_INCREMENT);
-			return status;
+			return STATUS_SUCCESS;
 		}
-#if 0
 		case TargetDeviceRelation:
 		{
 			struct _DEVICE_RELATIONS *device_relations;
@@ -2030,7 +2023,6 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 			num_pnp_bus_requests--;
 			return STATUS_SUCCESS;
 		}
-#endif
 		default:
 			status = STATUS_NOT_SUPPORTED;
 		}
