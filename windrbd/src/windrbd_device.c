@@ -1978,26 +1978,35 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 			int num_devices = get_all_drbd_device_objects(NULL, 0);
 			struct _DEVICE_RELATIONS *device_relations;
 			int n;
+printk("1\n");
 
 			size_t siz = sizeof(*device_relations)+num_devices*sizeof(device_relations->Objects[0]);
 // printk("size of device relations is %d\n", siz);
 		/* must be PagedPool else PnP manager complains */
 			device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+printk("2\n");
 			if (device_relations == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
+printk("3\n");
 			n = get_all_drbd_device_objects(&device_relations->Objects[0], num_devices);
 			if (n != num_devices)
 				printk("Warning: number of DRBD devices changed: old %d != new %d\n", num_devices, n);
+printk("4\n");
 			device_relations->Count = num_devices;
+printk("5\n");
 			irp->IoStatus.Information = (ULONG_PTR)device_relations;
 			irp->IoStatus.Status = STATUS_SUCCESS;
 
+printk("6\n");
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
+printk("7\n");
 			num_pnp_bus_requests--;
+printk("8\n");
 			return STATUS_SUCCESS;
 		}
+#if 0
 		case TargetDeviceRelation:
 		{
 			struct _DEVICE_RELATIONS *device_relations;
@@ -2023,6 +2032,7 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 			num_pnp_bus_requests--;
 			return STATUS_SUCCESS;
 		}
+#endif
 		default:
 			status = STATUS_NOT_SUPPORTED;
 		}
