@@ -1978,6 +1978,14 @@ dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations
 			int num_devices = get_all_drbd_device_objects(NULL, 0);
 			struct _DEVICE_RELATIONS *device_relations;
 			int n;
+#if 0
+printk("0\n");
+			IoSkipCurrentIrpStackLocation(irp);
+// printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
+			status = IoCallDriver(bus_ext->lower_device, irp);
+			if (status != STATUS_SUCCESS)
+				dbg("Warning: lower device returned status %x\n", status);
+#endif
 printk("1\n");
 
 			size_t siz = sizeof(*device_relations)+num_devices*sizeof(device_relations->Objects[0]);
@@ -1999,12 +2007,19 @@ printk("5\n");
 			irp->IoStatus.Information = (ULONG_PTR)device_relations;
 			irp->IoStatus.Status = STATUS_SUCCESS;
 
+//		irp->IoStatus.Status = status;
 printk("6\n");
-			IoCompleteRequest(irp, IO_NO_INCREMENT);
+			IoSkipCurrentIrpStackLocation(irp);
+// printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
+			status = IoCallDriver(bus_ext->lower_device, irp);
+			if (status != STATUS_SUCCESS)
+				dbg("Warning: lower device returned status %x\n", status);
+//			IoCompleteRequest(irp, IO_NO_INCREMENT);
 printk("7\n");
 			num_pnp_bus_requests--;
 printk("8\n");
-			return STATUS_SUCCESS;
+			// return STATUS_SUCCESS;
+			return status;
 		}
 #if 0
 		case TargetDeviceRelation:
