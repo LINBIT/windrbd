@@ -1817,6 +1817,7 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 	struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
 	NTSTATUS status;
 	KEVENT start_completed_event;
+	int pass_on = 0;
 
 	num_pnp_bus_requests++;
 
@@ -2065,23 +2066,22 @@ printk("8\n");
 //		status = irp->IoStatus.Status;
 		status = STATUS_NOT_SUPPORTED;
 		dbg("status is %x\n", status);
+		pass_on = 1;
 	}
 
-	if (status != STATUS_SUCCESS && status != STATUS_NOT_SUPPORTED && status != STATUS_NOT_IMPLEMENTED) {
+	// if (status != STATUS_SUCCESS && status != STATUS_NOT_SUPPORTED && status != STATUS_NOT_IMPLEMENTED) {
+	if (!pass_on) {
 // printk("minor %x failed with status %x, not forwarding to lower driver...\n", s->MinorFunction, status);
 		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 	} else {
-		irp->IoStatus.Status = status;
-		IoCompleteRequest(irp, IO_NO_INCREMENT);
-#if 0
+	//	irp->IoStatus.Status = status;
 		// IoSkipCurrentIrpStackLocation(irp);
 		IoCopyCurrentIrpStackLocationToNext(irp);
 // printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
-#endif
 	}
 
 	num_pnp_bus_requests--;
