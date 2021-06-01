@@ -2004,9 +2004,6 @@ printk("3\n");
 printk("4\n");
 			device_relations->Count = num_devices;
 printk("5\n");
-			irp->IoStatus.Information = (ULONG_PTR)device_relations;
-			irp->IoStatus.Status = STATUS_SUCCESS;
-
 //		irp->IoStatus.Status = status;
 printk("6\n");
 			IoSkipCurrentIrpStackLocation(irp);
@@ -2016,6 +2013,11 @@ printk("6\n");
 				dbg("Warning: lower device returned status %x\n", status);
 //			IoCompleteRequest(irp, IO_NO_INCREMENT);
 printk("7\n");
+
+			irp->IoStatus.Information = (ULONG_PTR)device_relations;
+			// irp->IoStatus.Status = STATUS_SUCCESS;
+			irp->IoStatus.Status = status; 
+
 			num_pnp_bus_requests--;
 printk("8\n");
 			// return STATUS_SUCCESS;
