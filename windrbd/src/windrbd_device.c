@@ -2067,7 +2067,11 @@ printk("8\n");
 		break;
 
 	case 0xb: /* ?? IRP_MN_QUERY_RESOURCE_REQUIREMENTS */
-		dbg("got unimplemented minor %x\n", s->MinorFunction);
+	case 0xa: /* ?? IRP_MN_QUERY_RESOURCES */
+	case 0x18: /* ?? undocumented */
+		dbg("got unimplemented minor %x not passing on to lower device\n", s->MinorFunction);
+		status = STATUS_NOT_SUPPORTED;
+		pass_on = 0;
 		break;	/* do not pass on */
 
 	default:
