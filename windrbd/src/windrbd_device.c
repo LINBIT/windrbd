@@ -2068,10 +2068,16 @@ printk("8\n");
 
 	case 0xb: /* ?? IRP_MN_QUERY_RESOURCE_REQUIREMENTS */
 	case 0xa: /* ?? IRP_MN_QUERY_RESOURCES */
-	case 0x18: /* ?? undocumented */
 		dbg("got unimplemented minor %x not passing on to lower device\n", s->MinorFunction);
 		status = STATUS_NOT_SUPPORTED;
 		pass_on = 0;
+		break;	/* do not pass on */
+
+	case 0x18: /* ?? undocumented IRP_MN_QUERY_LEGACY_BUS_INFORMATION ?? */
+		dbg("got unimplemented minor %x passing on to lower device returning success\n", s->MinorFunction);
+dbg("Information is %x\n", irp->IoStatus.Information);
+		status = STATUS_SUCCESS;
+		pass_on = 1;
 		break;	/* do not pass on */
 
 	default:
