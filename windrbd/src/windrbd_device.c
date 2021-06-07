@@ -2073,6 +2073,11 @@ printk("8\n");
 		pass_on = 0;
 		break;	/* do not pass on */
 
+	case 0xd: /* ?? IRP_MN_FILTER_RESOURCE_REQUIREMENTS */
+		status = STATUS_SUCCESS;
+		pass_on = 0;
+		break;	/* do not pass on */
+
 	case 0x18: /* ?? undocumented IRP_MN_QUERY_LEGACY_BUS_INFORMATION ?? */
 		dbg("got unimplemented minor %x passing on to lower device returning success\n", s->MinorFunction);
 // dbg("Information is %x\n", irp->IoStatus.Information);
@@ -2081,6 +2086,7 @@ printk("8\n");
 
 		// IoCopyCurrentIrpStackLocationToNext(irp);
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
+		/* Must be skip else BSOD on verify */
 printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
