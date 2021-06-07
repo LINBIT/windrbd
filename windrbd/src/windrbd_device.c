@@ -2075,10 +2075,18 @@ printk("8\n");
 
 	case 0x18: /* ?? undocumented IRP_MN_QUERY_LEGACY_BUS_INFORMATION ?? */
 		dbg("got unimplemented minor %x passing on to lower device returning success\n", s->MinorFunction);
-dbg("Information is %x\n", irp->IoStatus.Information);
-		status = STATUS_SUCCESS;
-		pass_on = 1;
-		break;	/* do not pass on */
+// dbg("Information is %x\n", irp->IoStatus.Information);
+// 		status = STATUS_SUCCESS;
+// 		pass_on = 1;
+
+		// IoCopyCurrentIrpStackLocationToNext(irp);
+		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
+printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
+		status = IoCallDriver(bus_ext->lower_device, irp);
+		if (status != STATUS_SUCCESS)
+			dbg("Warning: lower device returned status %x\n", status);
+
+		return status;
 
 	default:
 		dbg("got unimplemented minor %x\n", s->MinorFunction);
