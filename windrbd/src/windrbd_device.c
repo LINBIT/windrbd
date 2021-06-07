@@ -1856,10 +1856,20 @@ printk("Set bus ready\n");
 
 	case IRP_MN_QUERY_PNP_DEVICE_STATE:
 		dbg("got IRP_MN_QUERY_PNP_DEVICE_STATE\n");
+		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
+		/* Must be skip else BSOD on verify */
+printk("forwarding minor %x to lower driver...12345\n", s->MinorFunction);
+		status = IoCallDriver(bus_ext->lower_device, irp);
+		if (status != STATUS_SUCCESS)
+			dbg("Warning: lower device returned status %x\n", status);
+
+		return status;
+/*
 		irp->IoStatus.Information = 0;
 		status = STATUS_SUCCESS;
 		pass_on = 1;
 		break;
+*/
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
 		dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
