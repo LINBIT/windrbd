@@ -2696,14 +2696,25 @@ static NTSTATUS windrbd_sysctl(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	NTSTATUS status = STATUS_SUCCESS;
 
+	if (device == mvolRootDeviceObject || device == user_device_object) {
+		dbg(KERN_WARNING "Sysctl requests on root device not supported.\n");
+
+		irp->IoStatus.Status = STATUS_SUCCESS;
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_SUCCESS;
+	}
+
 	if (device == drbd_bus_device) {
 		struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
 
 		IoSkipCurrentIrpStackLocation(irp);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		dbg("sysctl lower object returned %x\n", status);
-	} else {
-		printk("got unexpected sysctl\n");
+	} else  {
+			/* a disk */
+//		irp->IoStatus.Status = STATUS_SUCCESS;
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_SUCCESS;
 	}
 	return status;
 }
