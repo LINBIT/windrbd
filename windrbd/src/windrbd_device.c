@@ -2712,9 +2712,11 @@ static NTSTATUS windrbd_sysctl(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		dbg("sysctl lower object returned %x\n", status);
 	} else  {
 			/* a disk */
+	/* most likely we need to forward that to the lower (=bus) device */
 //		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
+		return irp->IoStatus.Status;
+//		return STATUS_SUCCESS;
 	}
 	return status;
 }
