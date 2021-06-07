@@ -1971,9 +1971,59 @@ dbg("Returned string is %S\n", string);
 		
 */
 	case IRP_MN_QUERY_CAPABILITIES:
+/*
+	{
+		struct _DEVICE_CAPABILITIES *DeviceCapabilities;
+		DeviceCapabilities = s->Parameters.DeviceCapabilities.Capabilities;
+// printk("got IRP_MN_QUERY_CAPABILITIES\n");
+		if (DeviceCapabilities->Version != 1 || DeviceCapabilities->Size < sizeof(DEVICE_CAPABILITIES)) {
+printk("wrong version of DeviceCapabilities\n");
+			status = STATUS_UNSUCCESSFUL;
+			break;
+		}
+		DeviceCapabilities->DeviceState[PowerSystemWorking] = PowerDeviceD0;
+		if (DeviceCapabilities->DeviceState[PowerSystemSleeping1] != PowerDeviceD0) DeviceCapabilities->DeviceState[PowerSystemSleeping1] = PowerDeviceD1;
+		if (DeviceCapabilities->DeviceState[PowerSystemSleeping2] != PowerDeviceD0) DeviceCapabilities->DeviceState[PowerSystemSleeping2] = PowerDeviceD3;
+//      if (DeviceCapabilities->DeviceState[PowerSystemSleeping3] != PowerDeviceD0) DeviceCapabilities->DeviceState[PowerSystemSleeping3] = PowerDeviceD3;
+		DeviceCapabilities->DeviceWake = PowerDeviceD1;
+		DeviceCapabilities->DeviceD1 = TRUE;
+		DeviceCapabilities->DeviceD2 = FALSE;
+		DeviceCapabilities->WakeFromD0 = FALSE;
+		DeviceCapabilities->WakeFromD1 = FALSE;
+		DeviceCapabilities->WakeFromD2 = FALSE;
+		DeviceCapabilities->WakeFromD3 = FALSE;
+		DeviceCapabilities->D1Latency = 0;
+		DeviceCapabilities->D2Latency = 0;
+		DeviceCapabilities->D3Latency = 0;
+		DeviceCapabilities->EjectSupported = FALSE;
+		DeviceCapabilities->HardwareDisabled = FALSE;
+		DeviceCapabilities->Removable = FALSE;
+		DeviceCapabilities->SurpriseRemovalOK = FALSE;
+		DeviceCapabilities->UniqueID = FALSE;
+		DeviceCapabilities->SilentInstall = FALSE;
+
+		status = STATUS_SUCCESS;
+		break;
+	}
+*/
+/*
 		pass_on = 0;
 		status = STATUS_NOT_SUPPORTED;
 		break;
+*/
+
+		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
+		/* Must be skip else BSOD on verify */
+printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
+		status = IoCallDriver(bus_ext->lower_device, irp);
+		if (status != STATUS_SUCCESS)
+			dbg("Warning: lower device returned status %x\n", status);
+
+		return status;
+/*
+		pass_on = 1;
+		break;
+*/
 
 	case IRP_MN_QUERY_ID: 	/* 0x13 */
 		// IoCopyCurrentIrpStackLocationToNext(irp);
