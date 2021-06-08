@@ -2179,6 +2179,11 @@ printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 
 		return status;
 
+	case 0xff:
+		dbg("got 0xff\n");
+		status = STATUS_NOT_IMPLEMENTED;
+		break;
+
 	default:
 		dbg("got unimplemented minor %x\n", s->MinorFunction);
 
