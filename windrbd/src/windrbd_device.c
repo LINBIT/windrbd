@@ -2601,8 +2601,13 @@ dbg("Returned string is %S\n", string);
 			dbg("got IRP_MN_EJECT\n");
 			break;
 
+		case 0xff:
+			dbg("got 0xff\n");
+			break;
+
 		default:
 			dbg("got unimplemented minor %x for disk object\n", s->MinorFunction);
+				/* probably not a good idea? */
 			if (drbd_bus_device != NULL) {
 // printk("irp status is %x\n", irp->IoStatus.Status);
 				IoSkipCurrentIrpStackLocation(irp);
@@ -2713,10 +2718,17 @@ static NTSTATUS windrbd_sysctl(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	} else  {
 			/* a disk */
 	/* most likely we need to forward that to the lower (=bus) device */
-//		irp->IoStatus.Status = STATUS_SUCCESS;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return irp->IoStatus.Status;
-//		return STATUS_SUCCESS;
+		if (drbd_bus_device != NULL) {
+			IoSkipCurrentIrpStackLocation(irp);
+			dbg("calling sysctl bus device\n", status);
+			status = IoCallDriver(drbd_bus_device, irp);
+			dbg("sysctl lower object returned %x\n", status);
+		} else {
+				/* verifier would complain about this */
+			irp->IoStatus.Status = STATUS_SUCCESS;
+		        IoCompleteRequest(irp, IO_NO_INCREMENT);
+			return irp->IoStatus.Status;
+		}
 	}
 	return status;
 }
