@@ -2181,8 +2181,16 @@ printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 
 	case 0xff:
 		dbg("got 0xff\n");
-		status = STATUS_NOT_IMPLEMENTED;
-		break;
+//		status = STATUS_NOT_IMPLEMENTED;
+
+		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
+		/* Must be skip else BSOD on verify */
+printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
+		status = IoCallDriver(bus_ext->lower_device, irp);
+		if (status != STATUS_SUCCESS)
+			dbg("Warning: lower device returned status %x\n", status);
+
+		return status;
 
 	default:
 		dbg("got unimplemented minor %x\n", s->MinorFunction);
