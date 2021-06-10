@@ -2616,6 +2616,21 @@ dbg("Returned string is %S\n", string);
 
 		case 0xff:
 			dbg("got 0xff\n");
+
+// TODO: ??
+// return STATUS_NOT_IMPLEMENTED;
+
+			if (drbd_bus_device != NULL) {
+// printk("irp status is %x\n", irp->IoStatus.Status);
+				IoSkipCurrentIrpStackLocation(irp);
+				dbg("calling bus object\n");
+				status = IoCallDriver(drbd_bus_device, irp);
+				dbg("bus object returned %x\n", status);
+				num_pnp_requests--;
+				return status;
+			}
+			else
+				dbg("no bus object, cannot forward irp\n");
 			break;
 
 		default:
