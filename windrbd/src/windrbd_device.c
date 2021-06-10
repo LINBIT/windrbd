@@ -2441,8 +2441,12 @@ dbg("Returned string is %S\n", string);
 			break;
 
 		case IRP_MN_QUERY_INTERFACE:
-			status = STATUS_NOT_SUPPORTED;
-			break;
+			status = irp->IoStatus.Status;
+dbg("status is %x\n", status);
+			IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+			num_pnp_requests--;
+			return status;
 
 		case IRP_MN_QUERY_DEVICE_TEXT:
 		{
