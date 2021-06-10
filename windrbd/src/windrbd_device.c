@@ -2331,8 +2331,9 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 //					len = swprintf(string, L"GenDisk");
 					status = STATUS_SUCCESS;
 					break;
-				default:
-					status = STATUS_NOT_IMPLEMENTED;
+				default:	/* -1 ... */
+					ExFreePool(string);
+					return STATUS_NOT_SUPPORTED;
 				}
 			}
 			if (status == STATUS_SUCCESS) {
