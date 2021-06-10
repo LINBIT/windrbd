@@ -2331,9 +2331,22 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 //					len = swprintf(string, L"GenDisk");
 					status = STATUS_SUCCESS;
 					break;
-				default:	/* -1 ... */
-					ExFreePool(string);
+				case BusQueryDeviceSerialNumber:
+					swprintf(string, L"%d", minor);
+					status = STATUS_SUCCESS;
+					break;
+				case 5:
+					swprintf(string, L"XX %d", minor);
+					status = STATUS_SUCCESS;
+					break;
+/*
+				case -1:
 					return STATUS_NOT_SUPPORTED;
+*/
+				default: /* -1, 5 ... */
+dbg("do not understand type %d\n", s->Parameters.QueryId.IdType);
+					ExFreePool(string);
+					goto forward_to_bus;
 				}
 			}
 			if (status == STATUS_SUCCESS) {
@@ -2427,10 +2440,9 @@ dbg("Returned string is %S\n", string);
 #endif
 			break;
 
-/*
 		case IRP_MN_QUERY_INTERFACE:
-			IoSkipCurrentStackLocation(irp);
-*/
+			status = STATUS_NOT_SUPPORTED;
+			break;
 
 		case IRP_MN_QUERY_DEVICE_TEXT:
 		{
@@ -2636,10 +2648,13 @@ dbg("Returned string is %S\n", string);
 
 		default:
 			dbg("got unimplemented minor %x for disk object\n", s->MinorFunction);
+
+forward_to_bus:
 				/* probably not a good idea? */
 			if (drbd_bus_device != NULL) {
 // printk("irp status is %x\n", irp->IoStatus.Status);
 				IoSkipCurrentIrpStackLocation(irp);
+				dbg("Calling bus object\n");
 				status = IoCallDriver(drbd_bus_device, irp);
 				dbg("bus object returned %x\n", status);
 				num_pnp_requests--;
