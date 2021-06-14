@@ -2422,7 +2422,12 @@ dbg("Returned string is %S\n", string);
 
 			default:
 				dbg("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
-				status = STATUS_NOT_SUPPORTED;
+				status = irp->IoStatus.Status;
+dbg("status is %x\n", status);
+				IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+				num_pnp_requests--;
+				return status;
 			}
 	/* forward to lower device: but what is the lower device (bus?) */
 #if 0
@@ -2624,8 +2629,12 @@ dbg("status is %x\n", status);
 				dbg("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
 			}
 
+			status = STATUS_SUCCESS;
+			irp->IoStatus.Status = status;
+		        IoCompleteRequest(irp, IO_NO_INCREMENT);
+
 			num_pnp_requests--;
-			return STATUS_SUCCESS;
+			return status;
 
 		case IRP_MN_EJECT:
 			dbg("got IRP_MN_EJECT\n");
