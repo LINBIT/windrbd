@@ -2885,6 +2885,18 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_NO_SUCH_DEVICE;
 	}
+// cond_printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
+	if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
+			/* do not touch any (pageable) memory */
+	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+		return STATUS_INVALID_DEVICE_REQUEST;
+/*		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
+		irp->IoStatus.Information = 0;
+		srb = s->Parameters.Scsi.Srb;
+		if (srb)
+			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+*/
+	}
 	bdev = ref->bdev;
 	IoAcquireRemoveLock(&bdev->remove_lock, NULL);
 	status = STATUS_INVALID_DEVICE_REQUEST;
