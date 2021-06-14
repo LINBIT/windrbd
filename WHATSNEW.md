@@ -1,3 +1,8 @@
+What's new in version 1.0.0-rc13
+--------------------------------
+
+TODO: bundle sed with WinDRBD
+
 What's new in version 1.0.0-rc12
 --------------------------------
 
