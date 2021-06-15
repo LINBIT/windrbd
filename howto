@@ -747,3 +747,14 @@ Howto disable Internet Explorer safety checks:
 
 Close all IE Windows.
 Open Server Manager / Local Machine / Internet explorer safety (or so) turn off.
+
+----------------------------
+
+socat via network:
+
+on one node (example vamp.linbit):
+socat /dev/pts/1,raw,echo=0,crnl TCP4-LISTEN:5567,crnl,forever
+
+on other node:
+socat /dev/pts/2,raw,echo=0,crnl TCP4:vamp.linbit:5567,crnl,forever
+
