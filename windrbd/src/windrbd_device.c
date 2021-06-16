@@ -2214,8 +2214,9 @@ printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 	} else {
 	//	irp->IoStatus.Status = status;
-		// IoSkipCurrentIrpStackLocation(irp);
-		IoCopyCurrentIrpStackLocationToNext(irp);
+		IoSkipCurrentIrpStackLocation(irp);
+printk("skipping ...\n");
+//		IoCopyCurrentIrpStackLocationToNext(irp);
 printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 printk("IoCallDriver for minor %s returned.\n", s->MinorFunction);
