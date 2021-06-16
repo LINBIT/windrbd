@@ -1880,7 +1880,7 @@ printk("forwarding minor %x to lower driver...12345\n", s->MinorFunction);
 	case IRP_MN_CANCEL_REMOVE_DEVICE:
 		dbg("got IRP_MN_CANCEL_REMOVE_DEVICE\n");
 		status = STATUS_SUCCESS;
-		pass_on = 1;
+		pass_on = 0;
 		break;
 
 	case IRP_MN_SURPRISE_REMOVAL:
