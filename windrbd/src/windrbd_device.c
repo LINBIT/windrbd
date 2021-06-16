@@ -1874,7 +1874,7 @@ printk("forwarding minor %x to lower driver...12345\n", s->MinorFunction);
 	case IRP_MN_QUERY_REMOVE_DEVICE:
 		dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
 		status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
-		pass_on = 1;
+		pass_on = 0;
 		break;
 
 	case IRP_MN_CANCEL_REMOVE_DEVICE:
@@ -2214,10 +2214,10 @@ printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 	} else {
 	//	irp->IoStatus.Status = status;
-		IoSkipCurrentIrpStackLocation(irp);
-printk("skipping ...\n");
-//		IoCopyCurrentIrpStackLocationToNext(irp);
-printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
+		// IoSkipCurrentIrpStackLocation(irp);
+printk("copy stack location\n");
+		IoCopyCurrentIrpStackLocationToNext(irp);
+printk("pass_on == 1: forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 printk("IoCallDriver for minor %s returned.\n", s->MinorFunction);
 		if (status != STATUS_SUCCESS)
