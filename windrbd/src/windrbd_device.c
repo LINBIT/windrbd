@@ -2128,9 +2128,15 @@ printk("8\n");
 			return STATUS_SUCCESS;
 		}
 #endif
-		default:
-			status = STATUS_NOT_SUPPORTED;
+		case -1:
+			status = STATUS_NOT_IMPLEMENTED;
 			pass_on = 1;
+			break;
+
+		default:
+			status = STATUS_NOT_IMPLEMENTED;
+			pass_on = 0;
+			break;
 		}
 		break;
 
