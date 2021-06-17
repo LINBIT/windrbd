@@ -1855,6 +1855,7 @@ printk("Set bus ready\n");
 		return status;
 
 	case IRP_MN_QUERY_PNP_DEVICE_STATE:
+			/* TODO: this code is duplicated at many places. */
 		dbg("got IRP_MN_QUERY_PNP_DEVICE_STATE\n");
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */

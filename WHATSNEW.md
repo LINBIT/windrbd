@@ -1,6 +1,10 @@
 What's new in version 1.0.0-rc13
 --------------------------------
 
+TODO: HLK tests should succeed (for Windows 2019)
+
+TODO: installer should prompt for WinDRBD path
+
 TODO: bundle sed with WinDRBD
 
 What's new in version 1.0.0-rc12
