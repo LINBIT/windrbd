@@ -1940,7 +1940,8 @@ dbg("NOT completing IRP\n");
 
 		drbd_bus_device = NULL;
 		num_pnp_bus_requests--;
-		return STATUS_SUCCESS; /* must not do IoCompleteRequest */
+		return status; /* must not do IoCompleteRequest */
+			/* This is done (?) in IoCallDriver */
 
 #if 0
 	case IRP_MN_QUERY_ID:
