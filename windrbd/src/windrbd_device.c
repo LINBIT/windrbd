@@ -1873,15 +1873,37 @@ printk("forwarding minor %x to lower driver...12345\n", s->MinorFunction);
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
 		dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
+
+		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
+		/* Must be skip else BSOD on verify */
+printk("forwarding minor %x to lower driver...XXX\n", s->MinorFunction);
+		status = IoCallDriver(bus_ext->lower_device, irp);
+		if (status != STATUS_SUCCESS)
+			dbg("Warning: lower device returned status %x\n", status);
+
+		return status;
+#if 0
 		status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
 		pass_on = 0;
+#endif
 		break;
 
 	case IRP_MN_CANCEL_REMOVE_DEVICE:
 		dbg("got IRP_MN_CANCEL_REMOVE_DEVICE\n");
+
+		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
+		/* Must be skip else BSOD on verify */
+printk("forwarding minor %x to lower driver...XXX\n", s->MinorFunction);
+		status = IoCallDriver(bus_ext->lower_device, irp);
+		if (status != STATUS_SUCCESS)
+			dbg("Warning: lower device returned status %x\n", status);
+
+		return status;
+#if 0
 		status = STATUS_NOT_IMPLEMENTED;
 		pass_on = 0;
 		break;
+#endif
 
 	case IRP_MN_SURPRISE_REMOVAL:
 		dbg("got IRP_MN_SURPRISE_REMOVAL\n");
