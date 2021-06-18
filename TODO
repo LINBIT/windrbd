@@ -36,6 +36,8 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: primary / secondary / primary / I/O BSOD
+
 TODO: Bug: Secondary hangs in NetworkFailure / Disconnecting when peer crashes
 
 	Log line (very often) is:
