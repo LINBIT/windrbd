@@ -1944,6 +1944,7 @@ dbg("NOT completing IRP\n");
 		return status; /* must not do IoCompleteRequest */
 			/* This is done (?) in IoCallDriver */
 
+#if 0 
 	case IRP_MN_QUERY_ID:
 	{
 		wchar_t *string;
@@ -1999,6 +2000,7 @@ dbg("Returned string is %S\n", string);
 		}
 		break;
 	}
+#endif
 /*	case IRP_MN_QUERY_INTERFACE:
 		
 */
@@ -2057,7 +2059,6 @@ printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		break;
 */
 
-#if 0
 	case IRP_MN_QUERY_ID: 	/* 0x13 */
 		// IoCopyCurrentIrpStackLocationToNext(irp);
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
@@ -2068,7 +2069,6 @@ printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 			dbg("Warning: lower device returned status %x\n", status);
 
 		return status;
-#endif
 
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
 		dbg("got IRP_MN_QUERY_DEVICE_RELATIONS\n");
