@@ -2905,6 +2905,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	LONGLONG d_size, LargeTemp;
 	struct block_device *bdev;
 
+printk("SCSI IRQL is %d on enter\n", KeGetCurrentIrql());
+
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
@@ -2955,7 +2957,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
-// cond_printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
+printk("SCSI IRQL is %d inbetween\n", KeGetCurrentIrql());
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
@@ -3180,6 +3182,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 
 out:
+printk("SCSI IRQL is %d on out\n", KeGetCurrentIrql());
 	IoReleaseRemoveLock(&bdev->remove_lock, NULL);
 
 	irp->IoStatus.Status = status;
