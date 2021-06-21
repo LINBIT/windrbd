@@ -7,6 +7,8 @@ TODO: installer should prompt for WinDRBD path
 
 TODO: bundle sed with WinDRBD
 
+Upgrade to DRBD 9.0.29
+
 What's new in version 1.0.0-rc12
 --------------------------------
 
