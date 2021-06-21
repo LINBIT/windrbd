@@ -3084,6 +3084,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		err = -ENOMEM;
 		goto out_no_queue;
 	}
+printk("Into IoInitializeRemoveLock() %p\n", &block_device->remove_lock);
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
@@ -3373,6 +3374,9 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	bdev->delete_pending = false;
 	bdev->about_to_delete = false;
 	KeClearEvent(&bdev->device_removed_event);
+		/* might need re-init */
+printk("IoInitializeRemoveLock %p \n", &bdev->remove_lock);
+	IoInitializeRemoveLock(&bdev->remove_lock, 'DRBD', 0, 0);
 
 	bdev_ref = new_device->DeviceExtension;
 	bdev_ref->bdev = bdev;
@@ -3469,6 +3473,7 @@ struct block_device *bdget(dev_t device_no)
 
 	kref_init(&block_device->kref);
 
+printk("Into IoInitializeRemoveLock() %p\n", &block_device->remove_lock);
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
