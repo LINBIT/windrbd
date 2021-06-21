@@ -1380,7 +1380,9 @@ static void windrbd_bio_finished(struct bio * bio)
 	for (i=0;i<bio->bi_vcnt;i++)
 		kfree(bio->bi_io_vec[i].bv_page);
 
+printk("Into IoReleaseRemoveLock ... %p windrbd_finished\n", &bio->bi_bdev->remove_lock);
 	IoReleaseRemoveLock(&bio->bi_bdev->remove_lock, NULL);
+printk("Out of IoReleaseRemoveLock windrbd_finished\n");
 // printk("into bio_put: atomic_read(&bio->bi_cnt) is %d\n", atomic_read(&bio->bi_cnt));
 	bio_put(bio);
 }
@@ -2637,9 +2639,14 @@ dbg("status is %x\n", status);
 			if (ref != NULL) {
 				if (bdev != NULL) {
 					bdev->about_to_delete = 1; /* meaning no more I/O on that device */
+
+printk("Into IoAcquireRemoveLock %p ...\n", &bdev->remove_lock);
 					IoAcquireRemoveLock(&bdev->remove_lock, NULL);
+printk("Out of IoAcquireRemoveLock %p ...\n", &bdev->remove_lock);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
+printk("Into IoReleaseRemoveLockAndWait %p ...\n", &bdev->remove_lock);
 					IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
+printk("Out of IoReleaseRemoveLockAndWait %p ...\n", &bdev->remove_lock);
 				} else {
 					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
 				}
@@ -2931,7 +2938,9 @@ printk("SCSI IRQL is %d on enter\n", KeGetCurrentIrql());
 */
 	}
 	bdev = ref->bdev;
+printk("Into IoAcquireRemoveLock ... %p\n", &bdev->remove_lock);
 	IoAcquireRemoveLock(&bdev->remove_lock, NULL);
+printk("Out of IoAcquireRemoveLock ...\n");
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
 	if (bdev->about_to_delete) {
@@ -3183,10 +3192,15 @@ printk("SCSI IRQL is %d inbetween\n", KeGetCurrentIrql());
 
 out:
 printk("SCSI IRQL is %d on out\n", KeGetCurrentIrql());
+printk("Into IoReleaseRemoveLock ... %p\n", &bdev->remove_lock);
 	IoReleaseRemoveLock(&bdev->remove_lock, NULL);
+printk("Out of IoReleaseRemoveLock ...\n");
 
+printk("SCSI IRQL is %d on out 2\n", KeGetCurrentIrql());
 	irp->IoStatus.Status = status;
+printk("SCSI IRQL is %d on out 3\n", KeGetCurrentIrql());
         IoCompleteRequest(irp, IO_NO_INCREMENT);
+printk("SCSI IRQL is %d on out 4\n", KeGetCurrentIrql());
 	return status;
 }
 
