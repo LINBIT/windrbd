@@ -2736,9 +2736,9 @@ static NTSTATUS windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
 		dbg(KERN_WARNING "Power requests on root device not supported.\n");
 
-		irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_NOT_SUPPORTED;
+		return STATUS_SUCCESS;
 	}
 	dbg("Power: device: %p irp: %p\n", device, irp);
 
