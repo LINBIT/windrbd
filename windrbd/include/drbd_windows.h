@@ -518,7 +518,13 @@ struct block_device {
 		/* TODO: test this should go away */
 	bool my_auto_promote;
 
+		/* Only for lower device. For upper device, see
+		 * w_remove_lock in block_device_reference (windows
+		 * device struct).
+		 */
+
 	IO_REMOVE_LOCK remove_lock;
+	struct block_device_reference *ref;
 
 	struct list_head backing_devices_list;
 	bool mechanically_locked; /* MEDIA_REMOVAL ioctl */
@@ -606,6 +612,11 @@ struct block_device {
 struct block_device_reference {
 	int magic;
 	struct block_device *bdev;
+		/* For upper device this must only live as long as
+		 * the windows device lives. Else driver verifier
+		 * will complain when doing primary / secondary /primary.
+		 */
+	IO_REMOVE_LOCK w_remove_lock;
 };
 
 extern sector_t windrbd_get_capacity(struct block_device *bdev);

@@ -3384,6 +3384,13 @@ printk("IoInitializeRemoveLock %p \n", &bdev->remove_lock);
 	bdev_ref = new_device->DeviceExtension;
 	bdev_ref->bdev = bdev;
 	bdev_ref->magic = BLOCK_DEVICE_UPPER_MAGIC;
+	IoInitializeRemoveLock(&bdev_ref->w_remove_lock, 'DRBD', 0, 0);
+	status = IoAcquireRemoveLock(&bdev_ref->w_remove_lock, NULL);
+	if (!NT_SUCCESS(status)) {
+		printk("Failed to acquire remove lock, status is %s\n", status);
+		return -1;
+	}
+	bdev->ref = bdev_ref;
 
 		/* TODO: makes a difference? */
 		/* TODO: also try DO_BUFFERED_IO */
@@ -3415,7 +3422,7 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 	bdev->delete_pending = true;
 
 		/* counterpart to acquiring in bdget() */
-	IoReleaseRemoveLock(&bdev->remove_lock, NULL);
+	IoReleaseRemoveLock(&bdev->ref->w_remove_lock, NULL);
 
 	remove_dos_link(bdev);
 
@@ -3476,14 +3483,6 @@ struct block_device *bdget(dev_t device_no)
 
 	kref_init(&block_device->kref);
 
-printk("Into IoInitializeRemoveLock() %p\n", &block_device->remove_lock);
-	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
-	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
-	if (!NT_SUCCESS(status)) {
-		printk("Failed to acquire remove lock, status is %s\n", status);
-		goto out_remove_lock_failed;
-	}
-
 	block_device->minor = minor;
 	block_device->bd_block_size = 512;
 	block_device->mount_point.Buffer = NULL;
@@ -3515,8 +3514,10 @@ block_device->my_auto_promote = 1;
 create_windows_device_failed:
 	IoReleaseRemoveLock(&block_device->remove_lock, NULL);
 */
+/*
 out_remove_lock_failed:
 	kfree(block_device->path_to_device.Buffer);
+*/
 out_path_to_device_failed:
 	kfree(block_device);
 

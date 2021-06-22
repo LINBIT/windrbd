@@ -1380,8 +1380,8 @@ static void windrbd_bio_finished(struct bio * bio)
 	for (i=0;i<bio->bi_vcnt;i++)
 		kfree(bio->bi_io_vec[i].bv_page);
 
-printk("Into IoReleaseRemoveLock ... %p windrbd_finished\n", &bio->bi_bdev->remove_lock);
-	IoReleaseRemoveLock(&bio->bi_bdev->remove_lock, NULL);
+printk("Into IoReleaseRemoveLock ... %p windrbd_finished\n", &bio->bi_bdev->ref->w_remove_lock);
+	IoReleaseRemoveLock(&bio->bi_bdev->ref->w_remove_lock, NULL);
 printk("Out of IoReleaseRemoveLock windrbd_finished\n");
 // printk("into bio_put: atomic_read(&bio->bi_cnt) is %d\n", atomic_read(&bio->bi_cnt));
 	bio_put(bio);
@@ -1641,7 +1641,7 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		goto exit;
 	}
 
-	IoAcquireRemoveLock(&dev->remove_lock, NULL);
+	IoAcquireRemoveLock(&dev->ref->w_remove_lock, NULL);
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
 	if (dev->about_to_delete) {
@@ -1670,7 +1670,7 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	return STATUS_PENDING;
 
 exit_remove_lock:
-	IoReleaseRemoveLock(&dev->remove_lock, NULL);
+	IoReleaseRemoveLock(&dev->ref->w_remove_lock, NULL);
 
 exit:
 	irp->IoStatus.Status = status;
@@ -2640,13 +2640,13 @@ dbg("status is %x\n", status);
 				if (bdev != NULL) {
 					bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
-printk("Into IoAcquireRemoveLock %p ...\n", &bdev->remove_lock);
-					IoAcquireRemoveLock(&bdev->remove_lock, NULL);
-printk("Out of IoAcquireRemoveLock %p ...\n", &bdev->remove_lock);
+printk("Into IoAcquireRemoveLock %p ...\n", &bdev->ref->w_remove_lock);
+					IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
+printk("Out of IoAcquireRemoveLock %p ...\n", &bdev->ref->w_remove_lock);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
-printk("Into IoReleaseRemoveLockAndWait %p ...\n", &bdev->remove_lock);
+printk("Into IoReleaseRemoveLockAndWait %p ...\n", &bdev->ref->w_remove_lock);
 					IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
-printk("Out of IoReleaseRemoveLockAndWait %p ...\n", &bdev->remove_lock);
+printk("Out of IoReleaseRemoveLockAndWait %p ...\n", &bdev->ref->w_remove_lock);
 				} else {
 					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
 				}
@@ -2656,6 +2656,7 @@ printk("Out of IoReleaseRemoveLockAndWait %p ...\n", &bdev->remove_lock);
 				 * count on the device, so it might still
 				 * exist for a short period.
 				 */
+				bdev->ref = NULL;
 				device->DeviceExtension = NULL;
 				IoDeleteDevice(device);
 				if (bdev != NULL) {
@@ -2937,8 +2938,8 @@ printk("SCSI IRQL is %d on enter\n", KeGetCurrentIrql());
 */
 	}
 	bdev = ref->bdev;
-printk("Into IoAcquireRemoveLock ... %p\n", &bdev->remove_lock);
-	IoAcquireRemoveLock(&bdev->remove_lock, NULL);
+printk("Into IoAcquireRemoveLock ... %p\n", &bdev->ref->w_remove_lock);
+	IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
 printk("Out of IoAcquireRemoveLock ...\n");
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
@@ -3191,8 +3192,8 @@ printk("SCSI IRQL is %d inbetween\n", KeGetCurrentIrql());
 
 out:
 printk("SCSI IRQL is %d on out\n", KeGetCurrentIrql());
-printk("Into IoReleaseRemoveLock ... %p\n", &bdev->remove_lock);
-	IoReleaseRemoveLock(&bdev->remove_lock, NULL);
+printk("Into IoReleaseRemoveLock ... %p\n", &bdev->ref->w_remove_lock);
+	IoReleaseRemoveLock(&bdev->ref->w_remove_lock, NULL);
 printk("Out of IoReleaseRemoveLock ...\n");
 
 printk("SCSI IRQL is %d on out 2\n", KeGetCurrentIrql());
