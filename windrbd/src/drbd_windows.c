@@ -3086,44 +3086,58 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	}
 printk("Into IoInitializeRemoveLock() %p\n", &block_device->remove_lock);
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
+printk("1\n");
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
+printk("2\n");
 	if (!NT_SUCCESS(status)) {
 		printk("Failed to acquire remove lock, status is %s\n", status);
 		err = -EBUSY;
 		goto out_remove_lock_error;
 	}
+printk("3\n");
 
         kref_init(&block_device->kref);
  
+printk("4\n");
 	block_device->bd_contains = block_device;
 	block_device->bd_parent = NULL;
+printk("5\n");
 
 		/* TODO: not always? */
 	block_device->bd_block_size = 512;
 	block_device->bd_disk->queue->logical_block_size = 512;
 	block_device->bd_disk->queue->max_hw_sectors = DRBD_MAX_BIO_SIZE >> 9;
+printk("6\n");
 
 	block_device->file_object = file_object;
+printk("7\n");
 
 	mutex_init(&block_device->vol_size_mutex);
+printk("8\n");
 	block_device->d_size = windrbd_get_volsize(block_device);
+printk("9\n");
 	if (block_device->d_size == -1) {
 		printk(KERN_ERR "Cannot get volsize.\n");
 		err = -EINVAL;
 		goto out_get_volsize_error;
 	}
+printk("a\n");
 	block_device->path_to_device = path_to_device;
 
+printk("b\n");
 	init_waitqueue_head(&block_device->bios_event);
 	atomic_set(&block_device->num_bios_pending, 0);
 	atomic_set(&block_device->num_irps_pending, 0);
 
+printk("c\n");
 	INIT_LIST_HEAD(&block_device->write_cache);
 	spin_lock_init(&block_device->write_cache_lock);
 
+printk("d\n");
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
 
+printk("e\n");
 	if (check_if_backingdev_contains_filesystem(block_device)) {
 		printk(KERN_ERR "Backing device contains filesystem, refusing to use it.\n");
 		printk(KERN_INFO "You may want to do something like windrbd hide-filesystem <drive-letter-of-backing-dev>\n");
@@ -3131,6 +3145,7 @@ printk("Into IoInitializeRemoveLock() %p\n", &block_device->remove_lock);
 		goto out_get_volsize_error;
 	}
 
+printk("f\n");
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
