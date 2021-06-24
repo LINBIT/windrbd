@@ -3025,7 +3025,7 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	init_completion(&c);
 	b->bi_private = &c;
 	bio_set_dev(b, dev);
-	// b->force_mdl_unlock = 1;
+	b->force_mdl_unlock = 1;
 	b->bi_paged_memory = 1;
 
 	submit_bio(b);
