@@ -760,6 +760,12 @@ struct bio {
 	int is_flush;
 	int has_big_buffer;
 
+		/* Set by check for file system. For some reason
+		 * the MDL's locked flag is not set while we still need
+		 * an unlock (for Server 2019 running with verifier)
+		 */
+	int force_mdl_unlock;
+
 	/* TODO: may be put members here again? Update: Not sure,
 	 * we've put a KEVENT here and it didn't work .. might also
 	 * have been something else.

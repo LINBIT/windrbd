@@ -928,7 +928,7 @@ printk("4\n");
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
 printk("5\n");
-			if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
+			if (mdl->MdlFlags & MDL_PAGES_LOCKED || bio->force_mdl_unlock) {
 printk("6\n");
 				/* TODO: with protocol C we never get here ... */
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
@@ -3025,6 +3025,7 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	init_completion(&c);
 	b->bi_private = &c;
 	bio_set_dev(b, dev);
+	b->force_mdl_unlock = 1;
 
 	submit_bio(b);
 	wait_for_completion(&c);
