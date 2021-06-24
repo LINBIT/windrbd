@@ -928,12 +928,12 @@ printk("4\n");
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
 printk("5\n");
-			if (mdl->MdlFlags & MDL_PAGES_LOCKED || bio->force_mdl_unlock) {
+//			if (mdl->MdlFlags & MDL_PAGES_LOCKED || bio->force_mdl_unlock) {
 printk("6\n");
 				/* TODO: with protocol C we never get here ... */
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 printk("7\n");
-			}
+//			}
 printk("8\n");
 			IoFreeMdl(mdl); // This function will also unmap pages.
 printk("9\n");
