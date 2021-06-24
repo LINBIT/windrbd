@@ -908,34 +908,47 @@ static void free_mdls_and_irp(struct bio *bio)
 	         * bio without ever calling generic_make_request on it.
 		 */
 
+printk("1\n");
 	if (bio->bi_irps == NULL)
 		return;
 
+printk("2\n");
 	for (r=0;r<bio->bi_num_requests;r++) {
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
 		 */
+printk("3\n");
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
+printk("4\n");
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
+printk("5\n");
 			if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
+printk("6\n");
 				/* TODO: with protocol C we never get here ... */
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
+printk("7\n");
 			}
+printk("8\n");
 			IoFreeMdl(mdl); // This function will also unmap pages.
+printk("9\n");
 		}
 		bio->bi_irps[r]->MdlAddress = NULL;
 //		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
+printk("a\n");
 
 		IoFreeIrp(bio->bi_irps[r]);
+printk("b\n");
 	}
 
+printk("c\n");
 	kfree(bio->bi_irps);
+printk("d\n");
 }
 
 void bio_get_debug(struct bio *bio, const char *file, int line, const char *func)
@@ -3019,6 +3032,7 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	ret = is_filesystem(p->addr);
 
 	bio_put(b);
+		/* TODO: unmap Mdl's pages */
 	kfree(p);
 
 	mutex_unlock(&read_bootsector_mutex);
