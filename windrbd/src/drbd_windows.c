@@ -935,9 +935,11 @@ printk("6\n");
 //			if (bio->bi_paged_memory) {
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 printk("7\n");
-			}
+			} else {
 printk("7a\n");
-			MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+				MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+printk("7b\n");
+			}
 printk("8\n");
 			IoFreeMdl(mdl); // This function will also unmap pages.
 printk("9\n");
