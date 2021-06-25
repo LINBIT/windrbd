@@ -937,7 +937,13 @@ printk("6\n");
 printk("7\n");
 			} else {
 printk("7a\n");
-				MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+				if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
+printk("7a1\n");
+					MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+printk("7a2\n");
+				} else {
+printk("Not unmapping because IRQL is %d.\n", KeGetCurrentIrql());
+				}
 printk("7b\n");
 			}
 printk("8\n");
