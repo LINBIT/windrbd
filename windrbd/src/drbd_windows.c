@@ -968,6 +968,7 @@ printk("7\n");
 printk("7a\n");
 //				if (KeGetCurrentIrql() < DISPATCH_LEVEL || bio_data_dir(bio) == READ) {
 printk("7a1\n");
+printk("mdl->MappedSystemVa is %p\n", mdl->MappedSystemVa);
 					MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
 printk("7a2\n");
 //				} else {
