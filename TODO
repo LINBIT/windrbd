@@ -39,6 +39,8 @@ Real:
 TODO: Bug: primary / secondary / primary / I/O BSOD
 
 	Several others with driver verifier on.
+	primary / secondary / primary already fixed: this was because
+	the IoRemoveLock() was reused from a previous primary.
 
 TODO: Bug: Secondary hangs in NetworkFailure / Disconnecting when peer crashes
 
