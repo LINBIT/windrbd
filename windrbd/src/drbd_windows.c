@@ -880,7 +880,7 @@ int fsync_bdev(struct block_device *bdev)
 	return 0;
 }
 
-struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
+static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 {
 	struct bio *bio;
 
@@ -899,11 +899,37 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	return bio;
 }
 
+#ifdef BIO_ALLOC_DEBUG
+
+struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, ULONG tag, char *file, int line, char *func)
+{
+	struct bio *bio = bio_alloc_ll(mask, nr_iovecs, tag);
+
+	if (bio) {
+		bio->file = file;
+		bio->line = line;
+		bio->func = func;
+	} 
+	return bio;
+}
+
+#else
+
+struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
+{
+	return bio_alloc_ll(gfp_mask, nr_iovecs, Tag);
+}
+
+#endif
+
 static void free_mdls_and_irp(struct bio *bio)
 {
 	struct _MDL *mdl, *next_mdl;
 	int r;
 
+#ifdef BIO_ALLOC_DEBUG
+printk("bio is allocated from %s:%d (%s())\n", bio->file, bio->line, bio->func);
+#endif
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */

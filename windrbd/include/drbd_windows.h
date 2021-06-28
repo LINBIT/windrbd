@@ -23,8 +23,11 @@
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H
 
-/* Enable this (and recompile all) to enable bio allocation debugging */
+/* Enable this (and recompile all) to enable bio reference debugging */
 // #define BIO_REF_DEBUG 1
+
+/* Enable this (and recompile all) to enable bio allocation debugging */
+#define BIO_ALLOC_DEBUG 1
 
 /* Enable this (and recompile all) to enable kref debug tracing */
 // #define KREF_DEBUG 1
@@ -766,6 +769,12 @@ struct bio {
 		 */
 	int force_mdl_unlock;
 
+#ifdef BIO_ALLOC_DEBUG
+	char *file;
+	int line;
+	char *func;
+#endif
+
 	/* TODO: may be put members here again? Update: Not sure,
 	 * we've put a KEVENT here and it didn't work .. might also
 	 * have been something else.
@@ -788,7 +797,13 @@ extern struct bio_pair *bio_split(struct bio *bi, int first_sectors);
 extern void bio_pair_release(struct bio_pair *dbio);
 extern struct bio_set *bioset_create(unsigned int, unsigned int);
 extern void bioset_free(struct bio_set *);
+#ifdef BIO_ALLOC_DEBUG
+extern struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, ULONG tag, char *file, int line, char *func);
+#define bio_alloc(a, b, c) bio_alloc_debug(a, b, c, __FILE__, __LINE__, __func__)
+#else
 extern struct bio *bio_alloc(gfp_t, int, ULONG);
+#endif
+
 extern struct bio *bio_alloc_bioset(gfp_t, int, struct bio_set *);
 
 	/* To be called at the beginning of conn_disconnect, else
