@@ -966,13 +966,13 @@ printk("6\n");
 printk("7\n");
 			} else {
 printk("7a\n");
-				if (KeGetCurrentIrql() < DISPATCH_LEVEL || bio_data_dir(bio) == READ) {
+//				if (KeGetCurrentIrql() < DISPATCH_LEVEL || bio_data_dir(bio) == READ) {
 printk("7a1\n");
 					MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
 printk("7a2\n");
-				} else {
-printk("Not unmapping because IRQL is %d.\n", KeGetCurrentIrql());
-				}
+//				} else {
+//printk("Not unmapping because IRQL is %d.\n", KeGetCurrentIrql());
+//				}
 printk("7b\n");
 			}
 printk("8\n");
@@ -1047,6 +1047,7 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->bi_this_request = bio_src->bi_this_request;
 	bio->bi_first_element = bio_src->bi_first_element;
 	bio->bi_last_element = bio_src->bi_last_element;
+	bio->force_mdl_unlock = bio_src->force_mdl_unlock;
 
 	return bio;
 }
