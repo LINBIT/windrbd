@@ -1468,6 +1468,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		bio->bi_max_vecs = 1;
 		bio->bi_vcnt = 1;
 		bio->bi_paged_memory = (bio_data_dir(bio) == WRITE);
+		bio->force_mdl_unlock = 1;	/* TODO: ?? */
 		bio->bi_iter.bi_size = this_bio_size;
 		bio->bi_iter.bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
 		bio->bi_upper_irp_buffer = buffer;

@@ -912,6 +912,9 @@ printk("1\n");
 	if (bio->bi_irps == NULL)
 		return;
 
+
+printk("Data dir is %d\n", bio_data_dir(bio));
+printk("force_mdl_unlock is %d\n", bio->force_mdl_unlock);
 printk("2\n");
 	for (r=0;r<bio->bi_num_requests;r++) {
 		/* This has to be done before freeing the buffers with
