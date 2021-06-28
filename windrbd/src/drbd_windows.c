@@ -969,7 +969,8 @@ printk("7a\n");
 //				if (KeGetCurrentIrql() < DISPATCH_LEVEL || bio_data_dir(bio) == READ) {
 printk("7a1\n");
 printk("mdl->MappedSystemVa is %p mdl->StartVa is %p\n", mdl->MappedSystemVa, mdl->StartVa);
-					MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+					// MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+					MmUnmapLockedPages(mdl->StartVa, mdl);
 printk("7a2\n");
 //				} else {
 //printk("Not unmapping because IRQL is %d.\n", KeGetCurrentIrql());
