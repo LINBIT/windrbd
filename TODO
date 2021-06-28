@@ -38,6 +38,8 @@ Real:
 
 TODO: Bug: primary / secondary / primary / I/O BSOD
 
+	Several others with driver verifier on.
+
 TODO: Bug: Secondary hangs in NetworkFailure / Disconnecting when peer crashes
 
 	Log line (very often) is:
