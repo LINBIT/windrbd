@@ -2931,8 +2931,9 @@ printk("SCSI IRQL is %d on enter\n", KeGetCurrentIrql());
 // cond_printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
 	if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
 			/* do not touch any (pageable) memory */
+		status = irp->IoStatus.Status;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_INVALID_DEVICE_REQUEST;
+		return status;
 /*		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		irp->IoStatus.Information = 0;
 		srb = s->Parameters.Scsi.Srb;
