@@ -145,6 +145,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 #endif
 
 	init_transport();
+	init_free_bios();
 
 	make_me_a_windrbd_thread("driver-init");
 	sudo();
@@ -291,6 +292,9 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 	spinlock_debug_shutdown();
 	printk("spinlock_debug shut down.\n");
 #endif
+
+	shutdown_free_bios();
+	printk("Free bios shut down.\n");
 
 	windrbd_shutdown_netlink();
 	printk("Netlink layer shut down.\n");

@@ -1022,10 +1022,78 @@ void bio_put(struct bio *bio)
 
 #endif
 
+static LIST_HEAD(bios_to_be_freed_list);
+static LIST_HEAD(bios_to_be_freed_list2);
+static spinlock_t bios_to_be_freed_lock;
+static struct wait_queue_head bios_to_be_freed_event;
+static bool free_bios_thread_should_run;
+static struct task_struct *free_bios_thread;
+
+	/* That just puts to bio on the to_be_freed list. Reason
+	 * is that free_mdl...() must not run at IRQL > PASSIVE_LEVEL
+	 */
+
 void bio_free(struct bio *bio)
 {
-	free_mdls_and_irp(bio);
-	kfree(bio);
+	KIRQL flags;
+
+	spin_lock_irqsave(&bios_to_be_freed_lock, flags);
+	list_add(&bio->to_be_freed_list, &bios_to_be_freed_list);
+	spin_unlock_irqrestore(&bios_to_be_freed_lock, flags);
+
+	wake_up(&bios_to_be_freed_event);
+}
+
+	/* Since freeing parts of MDLs must happen at IRQL = PASSIVE_LEVEL
+	 * (for user space allocated data) we use this thread to free
+	 * the IRPs.
+	 */
+
+static int free_bios_thread_fn(void *unused)
+{
+	KIRQL flags;
+	struct bio *bio, *bio2;
+
+	while (1) {
+		wait_event(bios_to_be_freed_event, !list_empty(&bios_to_be_freed_list) || !free_bios_thread_should_run);
+		if (!free_bios_thread_should_run)
+			break;
+
+		spin_lock_irqsave(&bios_to_be_freed_lock, flags);
+		list_for_each_entry_safe(struct bio, bio, bio2, &bios_to_be_freed_list, to_be_freed_list) {
+			list_del(&bio->to_be_freed_list);
+			list_add(&bio->to_be_freed_list2, &bios_to_be_freed_list2);
+		}
+		spin_unlock_irqrestore(&bios_to_be_freed_lock, flags);
+
+		list_for_each_entry_safe(struct bio, bio, bio2, &bios_to_be_freed_list2, to_be_freed_list2) {
+			list_del(&bio->to_be_freed_list2);
+			free_mdls_and_irp(bio);
+			kfree(bio);
+		}
+	}
+
+	return 0;
+}
+
+void init_free_bios(void)
+{
+	spin_lock_init(&bios_to_be_freed_lock);
+	init_waitqueue_head(&bios_to_be_freed_event);
+	free_bios_thread_should_run = true;
+	free_bios_thread = kthread_run(free_bios_thread_fn, NULL, "free_bios");
+	if (free_bios_thread == NULL)
+		printk("Warning: could not start free_bios thread, bios will not be freed.\n");
+}
+
+	/* Call this only when driver should be unloaded. */
+
+void shutdown_free_bios(void)
+{
+	free_bios_thread_should_run = false;
+	wake_up(&bios_to_be_freed_event);
+
+		/* Let thread reaper do the rest */
 }
 
 struct bio *bio_clone(struct bio * bio_src, int flag)

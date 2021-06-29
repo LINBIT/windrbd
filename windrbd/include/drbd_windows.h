@@ -769,6 +769,9 @@ struct bio {
 		 */
 	int force_mdl_unlock;
 
+	struct list_head to_be_freed_list;
+	struct list_head to_be_freed_list2;
+
 #ifdef BIO_ALLOC_DEBUG
 	char *file;
 	int line;
@@ -782,6 +785,9 @@ struct bio {
 
 	struct bio_vec bi_io_vec[0];
 };
+
+void init_free_bios(void);
+void shutdown_free_bios(void);
 
 struct bio_set {
 	mempool_t *bio_pool;
