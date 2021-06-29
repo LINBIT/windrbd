@@ -929,7 +929,7 @@ static void free_mdls_and_irp(struct bio *bio)
 
 #ifdef BIO_ALLOC_DEBUG
 printk("bio is allocated from %s:%d (%s())\n", bio->file, bio->line, bio->func);
-printk("is_cloned %d\n", bio->is_cloned);
+printk("%p is_cloned from %p\n", bio, bio->is_cloned_from);
 #endif
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
@@ -1128,7 +1128,7 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->line = bio_src->line;
 	bio->func = bio_src->func;
 
-	bio->is_cloned = 1;
+	bio->is_cloned_from = bio_src;
 #endif
 
 	return bio;
