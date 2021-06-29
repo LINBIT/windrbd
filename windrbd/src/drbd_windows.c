@@ -972,7 +972,8 @@ printk("6\n");
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 printk("7\n");
 			} 
-// #if 0
+#define ___WINDOWS_7 1
+#ifndef ___WINDOWS_7 
 else {
 printk("7a\n");
 //				if (KeGetCurrentIrql() < DISPATCH_LEVEL || bio_data_dir(bio) == READ) {
@@ -986,7 +987,7 @@ printk("7a2\n");
 //				}
 printk("7b\n");
 			}
-// #endif
+#endif
 printk("8\n");
 			IoFreeMdl(mdl); // This function will also unmap pages.
 printk("9\n");
