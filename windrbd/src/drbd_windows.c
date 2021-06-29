@@ -952,6 +952,12 @@ printk("3\n");
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
+printk("3a\n");
+			/* Only free mdls via an original bio ... else
+			 * "double free" and BSOD on verifier (0xC4/0xB6)
+			 */
+		if (bio->is_cloned_from != NULL)  // TODO: also if !BIO_ALLOC_DEBUG
+			continue;
 printk("4\n");
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
