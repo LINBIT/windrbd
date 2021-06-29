@@ -2929,6 +2929,7 @@ printk("SCSI IRQL is %d on enter\n", KeGetCurrentIrql());
 		return STATUS_NO_SUCH_DEVICE;
 	}
 // cond_printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
+#if 0
 	if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
 			/* do not touch any (pageable) memory */
 		status = irp->IoStatus.Status;
@@ -2941,6 +2942,7 @@ printk("SCSI IRQL is %d on enter\n", KeGetCurrentIrql());
 			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 */
 	}
+#endif
 	bdev = ref->bdev;
 printk("Into IoAcquireRemoveLock ... %p\n", &bdev->ref->w_remove_lock);
 	IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
