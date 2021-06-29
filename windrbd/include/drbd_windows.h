@@ -776,6 +776,8 @@ struct bio {
 	char *file;
 	int line;
 	char *func;
+
+	int is_cloned;
 #endif
 
 	/* TODO: may be put members here again? Update: Not sure,

@@ -929,6 +929,7 @@ static void free_mdls_and_irp(struct bio *bio)
 
 #ifdef BIO_ALLOC_DEBUG
 printk("bio is allocated from %s:%d (%s())\n", bio->file, bio->line, bio->func);
+printk("is_cloned %d\n", bio->is_cloned);
 #endif
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
@@ -1121,6 +1122,14 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->bi_first_element = bio_src->bi_first_element;
 	bio->bi_last_element = bio_src->bi_last_element;
 	bio->force_mdl_unlock = bio_src->force_mdl_unlock;
+
+#ifdef BIO_ALLOC_DEBUG
+	bio->file = bio_src->file;
+	bio->line = bio_src->line;
+	bio->func = bio_src->func;
+
+	bio->is_cloned = 1;
+#endif
 
 	return bio;
 }
