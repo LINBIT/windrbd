@@ -971,10 +971,10 @@ printk("6\n");
 //			if (bio->bi_paged_memory) {
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 printk("7\n");
-			} 
-#define ___WINDOWS_7 1
-#ifndef ___WINDOWS_7 
-else {
+			} else {
+printk("7x\n");
+				/* Server 2019 ... not Windows 7 */
+				if (RtlIsNtDdiVersionAvailable(NTDDI_WIN10)) {
 printk("7a\n");
 //				if (KeGetCurrentIrql() < DISPATCH_LEVEL || bio_data_dir(bio) == READ) {
 printk("7a1\n");
@@ -985,9 +985,9 @@ printk("7a2\n");
 //				} else {
 //printk("Not unmapping because IRQL is %d.\n", KeGetCurrentIrql());
 //				}
+				}
 printk("7b\n");
 			}
-#endif
 printk("8\n");
 			IoFreeMdl(mdl); // This function will also unmap pages.
 printk("9\n");
