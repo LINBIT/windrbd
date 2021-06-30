@@ -4131,6 +4131,7 @@ static void windrbd_destroy_block_device(struct kref *kref)
 	kfree(bdev->path_to_device.Buffer);
 	bdev->path_to_device.Buffer = NULL;
 
+printk("kfree(bdev = %p)\n", bdev);
 	kfree(bdev);
 		/* Do not set windows device object->DeviceExtension->ref
 		 * to NULL here. The object already has been deleted
