@@ -909,7 +909,8 @@ struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, ULONG tag, char *file, in
 		bio->file = file;
 		bio->line = line;
 		bio->func = func;
-	} 
+	}
+printk("bio alloc returning %p\n", bio);
 	return bio;
 }
 
@@ -1009,14 +1010,14 @@ void bio_get_debug(struct bio *bio, const char *file, int line, const char *func
 {
 	int cnt;
 	cnt = atomic_inc(&bio->bi_cnt);
-// printk("bio: %p refcount now: %d called from: %s:%d %s()\n", bio, cnt, file, line, func);
+printk("bio: %p refcount now: %d called from: %s:%d %s()\n", bio, cnt, file, line, func);
 }
 
 void bio_put_debug(struct bio *bio, const char *file, int line, const char *func)
 {
 	int cnt;
 	cnt = atomic_dec(&bio->bi_cnt);
-// printk("bio: %p refcount now: %d called from: %s:%d %s()\n", bio, cnt, file, line, func);
+printk("bio: %p refcount now: %d called from: %s:%d %s()\n", bio, cnt, file, line, func);
 	if (cnt == 0)
 		bio_free(bio);
 }
@@ -1051,6 +1052,8 @@ void bio_free(struct bio *bio)
 	spin_lock_irqsave(&bios_to_be_freed_lock, flags);
 	list_add(&bio->to_be_freed_list, &bios_to_be_freed_list);
 	spin_unlock_irqrestore(&bios_to_be_freed_lock, flags);
+
+printk("bio_free %p\n", bio);
 
 	wake_up(&bios_to_be_freed_event);
 }
