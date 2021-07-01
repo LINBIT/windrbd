@@ -943,6 +943,7 @@ printk("1\n");
 
 printk("Data dir is %d\n", bio_data_dir(bio));
 printk("force_mdl_unlock is %d\n", bio->force_mdl_unlock);
+printk("force_no_unmap is %d\n", bio->force_no_unmap);
 printk("2\n");
 	for (r=0;r<bio->bi_num_requests;r++) {
 		/* This has to be done before freeing the buffers with
@@ -975,7 +976,7 @@ printk("7\n");
 			} else {
 printk("7x\n");
 				/* Server 2019 ... not Windows 7 */
-				if (RtlIsNtDdiVersionAvailable(NTDDI_WIN10)) {
+				if (RtlIsNtDdiVersionAvailable(NTDDI_WIN10) && !bio->force_no_unmap) {
 printk("7a\n");
 //				if (KeGetCurrentIrql() < DISPATCH_LEVEL || bio_data_dir(bio) == READ) {
 printk("7a1\n");

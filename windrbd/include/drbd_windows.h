@@ -768,6 +768,7 @@ struct bio {
 		 * an unlock (for Server 2019 running with verifier)
 		 */
 	int force_mdl_unlock;
+	int force_no_unmap;
 
 	struct list_head to_be_freed_list;
 	struct list_head to_be_freed_list2;
