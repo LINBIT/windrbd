@@ -965,7 +965,7 @@ printk("4\n");
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
 printk("5\n");
-			if (mdl->MdlFlags & MDL_PAGES_LOCKED || bio->force_mdl_unlock) {
+			if ((mdl->MdlFlags & MDL_PAGES_LOCKED) || bio->force_mdl_unlock) {
 printk("6\n");
 				/* TODO: with protocol C we never get here ... */
 
