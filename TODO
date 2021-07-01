@@ -42,6 +42,9 @@ TODO: Bug: primary / secondary / primary / I/O BSOD
 	primary / secondary / primary already fixed: this was because
 	the IoRemoveLock() was reused from a previous primary.
 
+	BSODs on sync (Server 2019): page size is odd (and later
+	BSOD) use after free? Or never being used before?
+
 TODO: Bug: Secondary hangs in NetworkFailure / Disconnecting when peer crashes
 
 	Log line (very often) is:
