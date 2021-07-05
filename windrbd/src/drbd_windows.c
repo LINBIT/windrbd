@@ -929,14 +929,15 @@ static void free_mdls_and_irp(struct bio *bio)
 	int r;
 
 #ifdef BIO_ALLOC_DEBUG
-printk("bio is allocated from %s:%d (%s())\n", bio->file, bio->line, bio->func);
-printk("%p is_cloned from %p\n", bio, bio->is_cloned_from);
+printk("bio is %p bio is allocated from %s:%d (%s())\n", bio, bio->file, bio->line, bio->func);
+printk("bio is %p is_cloned from %p\n", bio, bio->is_cloned_from);
 #endif
 
 int i;
+printk("bio is %p bio->bi_vcnt is %d\n", bio, bio->bi_vcnt);
 for (i=0;i<bio->bi_vcnt;++i) {
 if (bio->bi_io_vec[i].bv_page != NULL) 
-printk("i: %d page->addr %p page->size %zd\n", i, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_page->size);
+printk("bio is %p i: %d page->addr %p page->size %zd\n", bio, i, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_page->size);
 }
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
