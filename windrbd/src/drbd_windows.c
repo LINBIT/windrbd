@@ -939,8 +939,8 @@ int i;
 printk("bio is %p bio->bi_vcnt is %d bio->bi_num_requests is %d\n", bio, bio->bi_vcnt, bio->bi_num_requests);
 for (i=0;i<bio->bi_vcnt;++i) {
 if (bio->bi_io_vec[i].bv_page != NULL) 
-// printk("bio is %p i: %d page->addr %p page->size %d\n", bio, i, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_page->size);
 printk("bio is %p i: %d page %p\n", bio, i, bio->bi_io_vec[i].bv_page);
+printk("bio is %p i: %d page->addr %p page->size %d\n", bio, i, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_page->size);
 }
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
