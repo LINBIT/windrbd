@@ -1107,15 +1107,15 @@ static int free_bios_thread_fn(void *unused)
 
 		list_for_each_entry_safe(struct bio, bio, bio2, &bios_to_be_freed_list2, to_be_freed_list2) {
 			list_del(&bio->to_be_freed_list2);
-printk("bio: %p into free_mdls_and_irps\n");
+printk("bio: %p into free_mdls_and_irps\n", bio);
 			free_mdls_and_irp(bio);
-printk("bio: %p into put pages\n");
+printk("bio: %p into put pages\n", bio);
 			for (i=0;i<bio->bi_vcnt;i++) {
 				put_page(bio->bi_io_vec[i].bv_page);
 			}
-printk("bio: %p into kfree\n");
+printk("bio: %p into kfree\n", bio);
 			kfree(bio);
-printk("bio: %p out of kfree\n");
+printk("bio: %p out of kfree\n", bio);
 		}
 	}
 
