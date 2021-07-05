@@ -1062,7 +1062,17 @@ static struct task_struct *free_bios_thread;
 void bio_free(struct bio *bio)
 {
 	KIRQL flags;
+	int i;
 
+		/* DRBD considers pages here as not in use any more.
+		 * however we still have MDLs referencing memory
+		 * of the page. So take a reference here and drop
+		 * it as soon as MDLs are freed.
+		 */
+
+	for (i=0;i<bio->bi_vcnt;i++) {
+		get_page(bio->bi_io_vec[i].bv_page);
+	}
 	spin_lock_irqsave(&bios_to_be_freed_lock, flags);
 	list_add(&bio->to_be_freed_list, &bios_to_be_freed_list);
 	spin_unlock_irqrestore(&bios_to_be_freed_lock, flags);
@@ -1081,6 +1091,7 @@ static int free_bios_thread_fn(void *unused)
 {
 	KIRQL flags;
 	struct bio *bio, *bio2;
+	int i;
 
 	while (1) {
 		wait_event(bios_to_be_freed_event, !list_empty(&bios_to_be_freed_list) || !free_bios_thread_should_run);
@@ -1098,6 +1109,10 @@ static int free_bios_thread_fn(void *unused)
 			list_del(&bio->to_be_freed_list2);
 printk("bio: %p into free_mdls_and_irps\n");
 			free_mdls_and_irp(bio);
+printk("bio: %p into put pages\n");
+			for (i=0;i<bio->bi_vcnt;i++) {
+				put_page(bio->bi_io_vec[i].bv_page);
+			}
 printk("bio: %p into kfree\n");
 			kfree(bio);
 printk("bio: %p out of kfree\n");
