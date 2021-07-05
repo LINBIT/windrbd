@@ -890,6 +890,7 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 		return 0;
 	}
 printk("bio is %p nr_iovecs is %d\n", bio, nr_iovecs);
+printk("bio is %p sizeof(struct bio) is %zd sizeof(struct bio_vec) is %zd bytes allocated is %zd\n", bio, sizeof(struct bio), sizeof(struct bio_vec), sizeof(struct bio) + nr_iovecs * sizeof(struct bio_vec));
 	bio->bi_max_vecs = nr_iovecs;
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
