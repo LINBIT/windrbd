@@ -148,7 +148,7 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	snprintf(mem->desc_freed, ARRAY_SIZE(mem->desc), "%s:%d", file, line);
 	snprintf(mem->func_freed, ARRAY_SIZE(mem->func), "%s", func);
 
-{ char *p; size_t i; for (i=0;i<mem->size;i++) {((char*)mem)[i]='x';} }
+{ char *p; size_t i; for (i=0;i<mem->size;i++) {mem->data[i]='x';} }
 
 	ExFreePool((void*)mem);
 }
