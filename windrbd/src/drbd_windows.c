@@ -889,6 +889,7 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	{
 		return 0;
 	}
+printk("bio is %p nr_iovecs is %d\n", bio, nr_iovecs);
 	bio->bi_max_vecs = nr_iovecs;
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
@@ -934,10 +935,10 @@ printk("bio is %p is_cloned from %p\n", bio, bio->is_cloned_from);
 #endif
 
 int i;
-printk("bio is %p bio->bi_vcnt is %d\n", bio, bio->bi_vcnt);
+printk("bio is %p bio->bi_vcnt is %d bio->bi_num_requests is %d\n", bio, bio->bi_vcnt, bio->bi_num_requests);
 for (i=0;i<bio->bi_vcnt;++i) {
 if (bio->bi_io_vec[i].bv_page != NULL) 
-printk("bio is %p i: %d page->addr %p page->size %zd\n", bio, i, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_page->size);
+printk("bio is %p i: %d page->addr %p page->size %d\n", bio, i, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_page->size);
 }
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
@@ -1010,9 +1011,9 @@ printk("a\n");
 printk("b\n");
 	}
 
-printk("c\n");
+printk("bio is %p c\n", bio);
 	kfree(bio->bi_irps);
-printk("d\n");
+printk("bio is %p d\n", bio);
 }
 
 void bio_get_debug(struct bio *bio, const char *file, int line, const char *func)
@@ -1091,8 +1092,11 @@ static int free_bios_thread_fn(void *unused)
 
 		list_for_each_entry_safe(struct bio, bio, bio2, &bios_to_be_freed_list2, to_be_freed_list2) {
 			list_del(&bio->to_be_freed_list2);
+printk("bio: %p into free_mdls_and_irps\n");
 			free_mdls_and_irp(bio);
+printk("bio: %p into kfree\n");
 			kfree(bio);
+printk("bio: %p out of kfree\n");
 		}
 	}
 
