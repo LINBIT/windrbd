@@ -786,7 +786,8 @@ struct bio {
 	 * have been something else.
 	 */
 
-	struct bio_vec bi_io_vec[0];
+	// struct bio_vec bi_io_vec[0];
+	struct bio_vec bi_io_vec[1];
 };
 
 void init_free_bios(void);

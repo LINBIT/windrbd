@@ -944,71 +944,71 @@ printk("bio is %p i: %d page->addr %p page->size %d\n", bio, i, bio->bi_io_vec[i
 	         * bio without ever calling generic_make_request on it.
 		 */
 
-printk("1\n");
+printk("bio is %p 1\n", bio);
 	if (bio->bi_irps == NULL)
 		return;
 
 
-printk("Data dir is %d\n", bio_data_dir(bio));
-printk("force_mdl_unlock is %d\n", bio->force_mdl_unlock);
+printk("bio is %p Data dir is %d\n", bio, bio_data_dir(bio));
+printk("bio is %p force_mdl_unlock is %d\n", bio, bio->force_mdl_unlock);
 // printk("force_no_unmap is %d\n", bio->force_no_unmap);
-printk("2\n");
+printk("bio is %p 2\n", bio);
 	for (r=0;r<bio->bi_num_requests;r++) {
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
 		 */
-printk("3\n");
+printk("bio is %p 3\n", bio);
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
-printk("3a\n");
+printk("bio is %p 3a\n", bio);
 			/* Only free mdls via an original bio ... else
 			 * "double free" and BSOD on verifier (0xC4/0xB6)
 			 */
 		if (bio->is_cloned_from != NULL)  // TODO: also if !BIO_ALLOC_DEBUG
 			continue;
-printk("4\n");
+printk("bio is %p 4\n", bio);
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
-printk("5\n");
+printk("bio is %p 5\n", bio);
 			if ((mdl->MdlFlags & MDL_PAGES_LOCKED) || bio->force_mdl_unlock) {
-printk("6\n");
+printk("bio is %p 6\n", bio);
 				/* TODO: with protocol C we never get here ... */
 
 //			if (bio->bi_paged_memory) {
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
-printk("7\n");
+printk("bio is %p 7\n", bio);
 			} else {
-printk("7x\n");
+printk("bio is %p 7x\n", bio);
 				/* Server 2019 ... not Windows 7 */
 				// if (RtlIsNtDdiVersionAvailable(NTDDI_WIN10) && !bio->force_no_unmap) {
 				if (RtlIsNtDdiVersionAvailable(NTDDI_WIN10)) {
-printk("7a\n");
+printk("bio is %p 7a\n", bio);
 //				if (KeGetCurrentIrql() < DISPATCH_LEVEL || bio_data_dir(bio) == READ) {
-printk("7a1\n");
-printk("mdl->MappedSystemVa is %p mdl->StartVa is %p\n", mdl->MappedSystemVa, mdl->StartVa);
+printk("bio is %p 7a1\n", bio);
+printk("bio is %p mdl->MappedSystemVa is %p mdl->StartVa is %p\n", bio, mdl->MappedSystemVa, mdl->StartVa);
 					// MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
 					MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
-printk("7a2\n");
+printk("bio is %p 7a2\n", bio);
 //				} else {
 //printk("Not unmapping because IRQL is %d.\n", KeGetCurrentIrql());
 //				}
 				}
-printk("7b\n");
+printk("bio is %p 7b\n", bio);
 			}
-printk("8\n");
+printk("bio is %p 8\n", bio);
 			IoFreeMdl(mdl); // This function will also unmap pages.
-printk("9\n");
+printk("bio is %p 9\n", bio);
 		}
 		bio->bi_irps[r]->MdlAddress = NULL;
 //		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
-printk("a\n");
+printk("bio is %p a\n", bio);
 
 		IoFreeIrp(bio->bi_irps[r]);
-printk("b\n");
+printk("bio is %p b\n", bio);
 	}
 
 printk("bio is %p c\n", bio);
