@@ -630,6 +630,7 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 	kref_init(&p->kref);
 	p->size = size;
 
+printk("allocating page %p page->addr is %d from %s:%d (%s)\n", p, p->addr, file, line, func);
 	return p;
 }
 
