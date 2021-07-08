@@ -36,6 +36,10 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: PNP BSOD on surprise removal test.
+
+	PNP_DETECTED_FATAL_ERROR
+
 TODO: Bug: primary / secondary / primary / I/O BSOD
 
 	Several others with driver verifier on.

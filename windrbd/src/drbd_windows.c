@@ -711,6 +711,7 @@ void __free_page(struct page *page)
 
 void free_page_kref(struct kref *kref)
 {
+zak
 	struct page *page = container_of(kref, struct page, kref);
 	__free_page(page);
 }
