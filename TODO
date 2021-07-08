@@ -38,7 +38,19 @@ Real:
 
 TODO: Bug: PNP BSOD on surprise removal test.
 
-	PNP_DETECTED_FATAL_ERROR
+	PNP_DETECTED_FATAL_ERROR (no logs)
+
+	Bug on CHAOS #1 test: PNP_DETECTED_FATAL_ERROR
+
+Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019742869/3579545)|7edfe6a0(pnp) #3634520 windrbd_pnp_bus_device 2
+Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019743419/3579545)|7edfe6a0(pnp) #3634521 windrbd_pnp_bus_device 3
+Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019744020/3579545)|7edfe6a0(pnp) #3634522 get_all_drbd_device_objects windows device at FFFFB50F7C9DDB50
+Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019744554/3579545)|7edfe6a0(pnp) #3634523 get_all_drbd_device_objects 1 drbd windows devices found
+Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019745074/3579545)|7edfe6a0(pnp) #3634524 windrbd_pnp_bus_device 4
+Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019745640/3579545)|7edfe6a0(pnp) #3634525 windrbd_pnp_bus_device 5
+Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019746774/3579545)|7edfe6a0(pnp) #3634526 windrbd_pnp_bus_device 6
+Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019747296/3579545)|7edfe6a0(pnp) #3634527 windrbd_pnp_bus_device 7
+Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019747804/3579545)|7edfe6a0(pnp) #3634528 windrbd_pnp_bus_device 8
 
 TODO: Bug: primary / secondary / primary / I/O BSOD
 
