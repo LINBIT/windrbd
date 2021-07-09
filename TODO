@@ -61,6 +61,9 @@ TODO: Bug: primary / secondary / primary / I/O BSOD
 	BSODs on sync (Server 2019): page size is odd (and later
 	BSOD) use after free? Or never being used before?
 
+	BSOD on invalidate (not on invalidate remote) on Window 7
+	test VM.
+
 TODO: Bug: Secondary hangs in NetworkFailure / Disconnecting when peer crashes
 
 	Log line (very often) is:
