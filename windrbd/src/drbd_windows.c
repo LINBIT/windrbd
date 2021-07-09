@@ -1185,8 +1185,8 @@ int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsi
 {
 	struct bio_vec *bvec = &bio->bi_io_vec[bio->bi_vcnt++];
 
-printk("called from %s:%d (%s())\n", file, line, func);
-printk("len is %d offset is %d\n", len, offset);
+printk("page is %p called from %s:%d (%s())\n", page, file, line, func);
+printk("page is %p len is %d offset is %d\n", page, len, offset);
 printk("page is %p page->size is %d page->addr is %p page->kref is %d\n", page, page->size, page->addr, atomic_read(&page->kref.refcount.refs));
 
 	bvec->bv_page = page;
