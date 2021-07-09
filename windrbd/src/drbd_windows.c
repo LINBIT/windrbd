@@ -3217,8 +3217,7 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	ret = is_filesystem(p->addr);
 
 	bio_put(b);
-		/* TODO: unmap Mdl's pages */
-	kfree(p);
+	put_page(p);
 
 	mutex_unlock(&read_bootsector_mutex);
 
