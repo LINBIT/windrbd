@@ -1073,6 +1073,7 @@ void bio_free(struct bio *bio)
 		 */
 
 	for (i=0;i<bio->bi_vcnt;i++) {
+printk("get_page(%p)\n", bio->bi_io_vec[i].bv_page);
 		get_page(bio->bi_io_vec[i].bv_page);
 	}
 	spin_lock_irqsave(&bios_to_be_freed_lock, flags);
@@ -1113,6 +1114,7 @@ printk("bio: %p into free_mdls_and_irps\n", bio);
 			free_mdls_and_irp(bio);
 printk("bio: %p into put pages\n", bio);
 			for (i=0;i<bio->bi_vcnt;i++) {
+printk("put_page(%p)\n", bio->bi_io_vec[i].bv_page);
 				put_page(bio->bi_io_vec[i].bv_page);
 			}
 printk("bio: %p into kfree\n", bio);
