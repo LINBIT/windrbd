@@ -837,7 +837,10 @@ extern void bio_put(struct bio *);
 #endif
 
 extern void bio_free(struct bio *bio); 
-extern int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset);
+// extern int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset);
+extern int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsigned int offset, char *file, int line, char *func);
+#define bio_add_page(bio, page, len, offset) \
+    bio_add_page_debug(bio, page, len, offset, __FILE__, __LINE__, __func__) 
 extern void bio_endio(struct bio *bio);
 
 /**

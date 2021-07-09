@@ -630,7 +630,7 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 	kref_init(&p->kref);
 	p->size = size;
 
-printk("allocating page %p page->addr is %p from %s:%d (%s)\n", p, p->addr, file, line, func);
+printk("allocating page %p page->addr is %p page->size is %d from %s:%d (%s)\n", p, p->addr, p->size, file, line, func);
 	return p;
 }
 
@@ -893,7 +893,7 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 		return 0;
 	}
 printk("bio is %p nr_iovecs is %d\n", bio, nr_iovecs);
-printk("bio is %p sizeof(struct bio) is %zd sizeof(struct bio_vec) is %zd bytes allocated is %zd\n", bio, sizeof(struct bio), sizeof(struct bio_vec), sizeof(struct bio) + nr_iovecs * sizeof(struct bio_vec));
+printk("bio is %p sizeof(struct bio) is %d sizeof(struct bio_vec) is %d bytes allocated is %d\n", bio, sizeof(struct bio), sizeof(struct bio_vec), sizeof(struct bio) + nr_iovecs * sizeof(struct bio_vec));
 	bio->bi_max_vecs = nr_iovecs;
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
@@ -1073,7 +1073,8 @@ void bio_free(struct bio *bio)
 		 */
 
 	for (i=0;i<bio->bi_vcnt;i++) {
-printk("get_page(%p)\n", bio->bi_io_vec[i].bv_page);
+printk("i: %d get_page(%p)\n", i, bio->bi_io_vec[i].bv_page);
+printk("i: %d page->size is %d page->addr is %p\n", i, bio->bi_io_vec[i].bv_page->size, bio->bi_io_vec[i].bv_page->addr);
 		get_page(bio->bi_io_vec[i].bv_page);
 	}
 	spin_lock_irqsave(&bios_to_be_freed_lock, flags);
@@ -1180,10 +1181,14 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	return bio;
 }
 
-int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset)
+int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsigned int offset, char *file, int line, char *func)
 {
 	struct bio_vec *bvec = &bio->bi_io_vec[bio->bi_vcnt++];
-		
+
+printk("called from %s:%d (%s())\n", file, line, func);
+printk("len is %d offset is %d\n", len, offset);
+printk("page is %p page->size is %d page->addr is %p page->kref is %d\n", page, page->size, page->addr, atomic_read(&page->kref.refcount.refs));
+
 	bvec->bv_page = page;
 	bvec->bv_len = len;
 	bvec->bv_offset = offset;
@@ -3177,6 +3182,7 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 
 	mutex_lock(&read_bootsector_mutex);
 
+/*
 	p = kzalloc(sizeof(struct page),0, 'D3DW'); 
 	if (!p)	{
 		printk(KERN_ERR "alloc_page struct page failed\n");
@@ -3184,6 +3190,13 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 		return 1;
 	}
 	p->addr = boot_sector+(4096-((ULONG_PTR)boot_sector & 4095));
+*/
+	p = alloc_page(sizeof(struct page)); 
+	if (!p)	{
+		printk(KERN_ERR "alloc_page struct page failed\n");
+		mutex_unlock(&read_bootsector_mutex);
+		return 1;
+	}
 
 	bio_add_page(b, p, 512, 0);
 	bio_set_op_attrs(b, REQ_OP_READ, 0);
