@@ -52,6 +52,17 @@ Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019746774/3579545)|7edfe6a0(pnp) #
 Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019747296/3579545)|7edfe6a0(pnp) #3634527 windrbd_pnp_bus_device 7
 Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019747804/3579545)|7edfe6a0(pnp) #3634528 windrbd_pnp_bus_device 8
 
+TODO: Bug: Fix memory leak of struct page allocation
+
+Jul 19 17:59:31 10.43.6.219  U17:59:31.504 (3938191421/3579545)|48e14f20(devicec
+ontrol) #417524 dump_memory_allocations kmalloc_debug: allocated memory of size 
+48, allocated by function windrbd_make_drbd_requests at ../../windrbd/src/windrb
+d_device.c:1493 mem is FFFFB204487ACEC0.
+Jul 19 17:59:31 10.43.6.219  U17:59:31.504 (3938192783/3579545)|48e14f20(devicec
+ontrol) #417525 dump_memory_allocations kmalloc_debug: allocated memory of size 
+48, allocated by function windrbd_make_drbd_requests at ../../windrbd/src/windrb
+d_device.c:1493 mem is FFFFB20448BBAEC0.
+
 TODO: Bug: primary / secondary / primary / I/O BSOD
 
 	Several others with driver verifier on.
