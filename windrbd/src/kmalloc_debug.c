@@ -153,7 +153,8 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 
 { char *p; size_t i; for (i=0;i<mem->size;i++) {mem->data[i]='x';} }
 
-	ExFreePool((void*)mem);
+/* TODO: re-enable */
+//	ExFreePool((void*)mem);
 }
 
 void init_kmalloc_debug(void)
