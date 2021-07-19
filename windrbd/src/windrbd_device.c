@@ -1319,6 +1319,15 @@ static void windrbd_bio_finished(struct bio * bio)
 		}
 	}
 
+		/* Set addr to NULL so that a free_page() later on
+		 * (on put_page() at the end of this function) will
+		 * not free the page again (or free an invalid address).
+		 */
+
+	for (i=0;i<bio->bi_vcnt;i++) {
+		bio->bi_io_vec[i].bv_page->addr = NULL;
+	}
+
 	KIRQL flags;
 
 		/* TODO: later when we patch out the extra copy
