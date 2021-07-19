@@ -12,6 +12,7 @@
 
 #define DESC_SIZE 64
 #define FUNC_SIZE 32
+#define ADDRESS_SIZE 32
 
 #define POISON_BEFORE 0x6ae48807
 #define POISON_AFTER 0xfe4a5109
@@ -22,6 +23,7 @@ static spinlock_t memory_lock;
 struct memory {
 	struct list_head list;
 	size_t size;
+	char address[ADDRESS_SIZE];
 	char desc[DESC_SIZE];
 	char func[FUNC_SIZE];
 	char desc_freed[DESC_SIZE];
@@ -77,6 +79,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	snprintf(mem->func, ARRAY_SIZE(mem->func), "%s", func);
 	snprintf(mem->desc_freed, ARRAY_SIZE(mem->desc), "(not yet freed)");
 	snprintf(mem->func_freed, ARRAY_SIZE(mem->func), "(not yet freed)");
+	snprintf(mem->address, ARRAY_SIZE(mem->address), "ADDR: %p", &mem->data[0]);
 	mem->poison = POISON_BEFORE;
 
 	poison_after = (struct poison_after*) (&mem->data[size]);
