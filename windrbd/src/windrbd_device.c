@@ -1385,17 +1385,19 @@ static void windrbd_bio_finished(struct bio * bio)
 
 		kfree(bio->bi_common_data);
 	}
-// printk("free pages %p ...\n", bio);
-/* Pages are freed in bio_free ... */
-
 printk("Into IoReleaseRemoveLock ... %p windrbd_finished\n", &bio->bi_bdev->ref->w_remove_lock);
 	IoReleaseRemoveLock(&bio->bi_bdev->ref->w_remove_lock, NULL);
 printk("Out of IoReleaseRemoveLock windrbd_finished\n");
 // printk("into bio_put: atomic_read(&bio->bi_cnt) is %d\n", atomic_read(&bio->bi_cnt));
 	bio_put(bio);
 
+
+// printk("free pages %p ...\n", bio);
+/* Pages are freed in bio_free ... */
+#if 0
 	for (i=0;i<bio->bi_vcnt;i++)
 		put_page(bio->bi_io_vec[i].bv_page);
+#endif
 }
 
 struct io_request {
