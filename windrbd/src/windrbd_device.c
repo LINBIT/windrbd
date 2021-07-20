@@ -1391,7 +1391,7 @@ printk("Out of IoReleaseRemoveLock windrbd_finished\n");
 printk("into bio_put: atomic_read(&bio->bi_cnt) is %d\n", atomic_read(&bio->bi_cnt));
 	bio_put(bio);
 
-printk("free pages %p ...\n", bio);
+printk("putting pages %p ...\n", bio);
 	for (i=0;i<bio->bi_vcnt;i++)
 		put_page(bio->bi_io_vec[i].bv_page);
 }
@@ -1495,6 +1495,11 @@ dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, to
 		bio->bi_io_vec[0].bv_len = this_bio_size;
 		bio->bi_io_vec[0].bv_page->size = this_bio_size;
 		kref_init(&bio->bi_io_vec[0].bv_page->kref);
+
+			/* Corresponding put_page in the free-mdl
+			 * thread (free_bios_thread_fn())
+			 */
+		get_page(bio->bi_io_vec[0].bv_page);
 
 
 /*
