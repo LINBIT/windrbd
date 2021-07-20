@@ -1391,13 +1391,9 @@ printk("Out of IoReleaseRemoveLock windrbd_finished\n");
 printk("into bio_put: atomic_read(&bio->bi_cnt) is %d\n", atomic_read(&bio->bi_cnt));
 	bio_put(bio);
 
-
-// printk("free pages %p ...\n", bio);
-/* Pages are freed in bio_free ... */
-#if 0
+printk("free pages %p ...\n", bio);
 	for (i=0;i<bio->bi_vcnt;i++)
 		put_page(bio->bi_io_vec[i].bv_page);
-#endif
 }
 
 struct io_request {

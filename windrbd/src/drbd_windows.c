@@ -1072,11 +1072,14 @@ void bio_free(struct bio *bio)
 		 * it as soon as MDLs are freed.
 		 */
 
+/* This get_page is in bio_add_page_debug() now */
+#if 0
 	for (i=0;i<bio->bi_vcnt;i++) {
 printk("i: %d get_page(%p)\n", i, bio->bi_io_vec[i].bv_page);
 printk("i: %d page->size is %d page->addr is %p\n", i, bio->bi_io_vec[i].bv_page->size, bio->bi_io_vec[i].bv_page->addr);
 		get_page(bio->bi_io_vec[i].bv_page);
 	}
+#endif
 	spin_lock_irqsave(&bios_to_be_freed_lock, flags);
 	list_add(&bio->to_be_freed_list, &bios_to_be_freed_list);
 	spin_unlock_irqrestore(&bios_to_be_freed_lock, flags);
@@ -1193,6 +1196,9 @@ printk("page is %p page->size is %d page->addr is %p page->kref is %d\n", page, 
 	bvec->bv_len = len;
 	bvec->bv_offset = offset;
 	bio->bi_iter.bi_size += len;
+
+		/* for put_page in free_bios_thread_fn() */
+	get_page(page);
 
 	return len;
 }
