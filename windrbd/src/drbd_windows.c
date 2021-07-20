@@ -1152,12 +1152,11 @@ void shutdown_free_bios(void)
 
 struct bio *bio_clone(struct bio * bio_src, int flag)
 {
-    struct bio *bio = bio_alloc(flag, bio_src->bi_max_vecs, '24DW');
+	struct bio *bio = bio_alloc(flag, bio_src->bi_max_vecs, '24DW');
+	int i;
 
-    if (!bio)
-    {
-        return NULL;
-    }
+	if (bio == NULL)
+		return NULL;
 
 printk("bio_clone from %p to %p\n", bio_src, bio);
 	memcpy(bio->bi_io_vec, bio_src->bi_io_vec, bio_src->bi_max_vecs * sizeof(struct bio_vec));
@@ -1174,10 +1173,10 @@ printk("bio_clone from %p to %p\n", bio_src, bio);
 	bio->bi_last_element = bio_src->bi_last_element;
 	bio->force_mdl_unlock = bio_src->force_mdl_unlock;
 
-int i;
-for (i=0;i<bio->bi_vcnt;i++) {
+	for (i=0;i<bio->bi_vcnt;i++) {
 printk("bio %p -> %p page is %p\n", bio_src, bio, bio->bi_io_vec[i].bv_page);
-}
+		get_page(bio->bi_io_vec[i].bv_page);
+	}
 
 #ifdef BIO_ALLOC_DEBUG
 	bio->file = bio_src->file;
