@@ -997,11 +997,10 @@ printk("bio is %p 7a\n", bio);
 printk("bio is %p 7a1\n", bio);
 printk("bio is %p mdl->MappedSystemVa is %p mdl->StartVa is %p\n", bio, mdl->MappedSystemVa, mdl->StartVa);
 					// MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
-/* crashes under windows 2019 server on resync? */
-#if 0
+/* crashes under windows 2019 server on resync! */
+/* But if not there verifier complains in IoFreeMdl() */
 					MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
-#endif
-printk("did not do MmUnmapLockedPages()\n");
+// printk("did not do MmUnmapLockedPages()\n");
 printk("bio is %p 7a2\n", bio);
 //				} else {
 //printk("Not unmapping because IRQL is %d.\n", KeGetCurrentIrql());
