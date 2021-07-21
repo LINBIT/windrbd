@@ -769,6 +769,7 @@ struct bio {
 		 */
 	int force_mdl_unlock;
 	int force_no_unmap;
+	int do_not_mm_unmap_locked_pages;	/* Server 2019 BSOD on sync */
 
 	struct list_head to_be_freed_list;
 	struct list_head to_be_freed_list2;

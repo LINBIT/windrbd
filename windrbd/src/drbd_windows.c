@@ -999,7 +999,8 @@ printk("bio is %p mdl->MappedSystemVa is %p mdl->StartVa is %p\n", bio, mdl->Map
 					// MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
 /* crashes under windows 2019 server on resync! */
 /* But if not there verifier complains in IoFreeMdl() */
-					MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+					if (!bio->do_not_mm_unmap_locked_pages)
+						MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
 // printk("did not do MmUnmapLockedPages()\n");
 printk("bio is %p 7a2\n", bio);
 //				} else {
