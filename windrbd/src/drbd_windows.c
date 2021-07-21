@@ -1121,7 +1121,6 @@ static int free_bios_thread_fn(void *unused)
 printk("bio: %p into free_mdls_and_irps\n", bio);
 	/* Reason for the BSOD on Server 2019 on resync? */
 			free_mdls_and_irp(bio);
-#if 0
 printk("bio: %p into put pages\n", bio);
 			for (i=0;i<bio->bi_vcnt;i++) {
 printk("put_page(%p)\n", bio->bi_io_vec[i].bv_page);
@@ -1130,7 +1129,6 @@ printk("put_page(%p)\n", bio->bi_io_vec[i].bv_page);
 printk("bio: %p into kfree\n", bio);
 			kfree(bio);
 printk("bio: %p out of kfree\n", bio);
-#endif
 		}
 	}
 
