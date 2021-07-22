@@ -1049,6 +1049,7 @@ struct page {
 	struct list_head lru;
 	struct kref kref;
 	size_t size;
+	int is_unmapped;
 };
 
 void free_page_kref(struct kref *kref);

@@ -344,6 +344,11 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	}
 		/* if (!bug) */
 	FreeWskBuffer(completion->wsk_buffer, may_printk);
+
+		/* To avoid unmapping the page again in free_bio(). */
+	if (completion->page)
+		completion->page->is_unmapped = 1;
+
 	kfree(completion->wsk_buffer);
 
 	have_sent(completion->socket, length);

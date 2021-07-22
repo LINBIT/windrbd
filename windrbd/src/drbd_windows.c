@@ -932,6 +932,7 @@ static void free_mdls_and_irp(struct bio *bio)
 {
 	struct _MDL *mdl, *next_mdl;
 	int r;
+	int may_unmap_pages = 1;
 
 #ifdef BIO_ALLOC_DEBUG
 printk("bio is %p bio is allocated from %s:%d (%s())\n", bio, bio->file, bio->line, bio->func);
@@ -944,6 +945,8 @@ printk("bio is %p bio->bi_vcnt is %d bio->bi_num_requests is %d\n", bio, bio->bi
 		if (bio->bi_io_vec[i].bv_page != NULL)  {
 printk("bio is %p i: %d page %p\n", bio, i, bio->bi_io_vec[i].bv_page);
 printk("bio is %p i: %d page->addr %p page->size %d\n", bio, i, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_page->size);
+			if (bio->bi_io_vec[i].bv_page->is_unmapped)
+				may_unmap_pages = 0;
 		}
 	}
 		/* This happens quite frequently when DRBD allocates a
@@ -999,8 +1002,11 @@ printk("bio is %p mdl->MappedSystemVa is %p mdl->StartVa is %p\n", bio, mdl->Map
 					// MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
 /* crashes under windows 2019 server on resync! */
 /* But if not there verifier complains in IoFreeMdl() */
-					if (!bio->do_not_mm_unmap_locked_pages)
+	//				if (!bio->do_not_mm_unmap_locked_pages)
+					if (may_unmap_pages)
 						MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+else
+printk("*** page already unmapped not unmapping it again ***\n");
 // printk("did not do MmUnmapLockedPages()\n");
 printk("bio is %p 7a2\n", bio);
 //				} else {
