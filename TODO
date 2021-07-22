@@ -36,6 +36,9 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Code quality: Remove printk's and ad-hoc flags introduced for fixing
+	bugs found by verifier
+
 TODO: Bug: PNP BSOD on surprise removal test.
 
 	PNP_DETECTED_FATAL_ERROR (no logs)
@@ -51,29 +54,6 @@ Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019745640/3579545)|7edfe6a0(pnp) #
 Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019746774/3579545)|7edfe6a0(pnp) #3634526 windrbd_pnp_bus_device 6
 Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019747296/3579545)|7edfe6a0(pnp) #3634527 windrbd_pnp_bus_device 7
 Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019747804/3579545)|7edfe6a0(pnp) #3634528 windrbd_pnp_bus_device 8
-
-TODO: Bug: Fix memory leak of struct page allocation
-
-Jul 19 17:59:31 10.43.6.219  U17:59:31.504 (3938191421/3579545)|48e14f20(devicec
-ontrol) #417524 dump_memory_allocations kmalloc_debug: allocated memory of size 
-48, allocated by function windrbd_make_drbd_requests at ../../windrbd/src/windrb
-d_device.c:1493 mem is FFFFB204487ACEC0.
-Jul 19 17:59:31 10.43.6.219  U17:59:31.504 (3938192783/3579545)|48e14f20(devicec
-ontrol) #417525 dump_memory_allocations kmalloc_debug: allocated memory of size 
-48, allocated by function windrbd_make_drbd_requests at ../../windrbd/src/windrb
-d_device.c:1493 mem is FFFFB20448BBAEC0.
-
-TODO: Bug: primary / secondary / primary / I/O BSOD
-
-	Several others with driver verifier on.
-	primary / secondary / primary already fixed: this was because
-	the IoRemoveLock() was reused from a previous primary.
-
-	BSODs on sync (Server 2019): page size is odd (and later
-	BSOD) use after free? Or never being used before?
-
-	BSOD on invalidate (not on invalidate remote) on Window 7
-	test VM.
 
 TODO: Bug: Secondary hangs in NetworkFailure / Disconnecting when peer crashes
 
@@ -7282,3 +7262,37 @@ Done: Bug: BSOD when removing network interface
 Done: Code quality: windrbd install-bus-device takes long to complete
 
 	Didn't observe that lately.
+
+Done: Bug: Fix memory leak of struct page allocation
+
+Jul 19 17:59:31 10.43.6.219  U17:59:31.504 (3938191421/3579545)|48e14f20(devicec
+ontrol) #417524 dump_memory_allocations kmalloc_debug: allocated memory of size 
+48, allocated by function windrbd_make_drbd_requests at ../../windrbd/src/windrb
+d_device.c:1493 mem is FFFFB204487ACEC0.
+Jul 19 17:59:31 10.43.6.219  U17:59:31.504 (3938192783/3579545)|48e14f20(devicec
+ontrol) #417525 dump_memory_allocations kmalloc_debug: allocated memory of size 
+48, allocated by function windrbd_make_drbd_requests at ../../windrbd/src/windrb
+d_device.c:1493 mem is FFFFB20448BBAEC0.
+
+	Fixed page refcount calls (do not call free_page directly).
+	Also get_page when adding the page to the bio *and* when the
+	bio is cloned. Works now.
+
+Done: Bug: primary / secondary / primary / I/O BSOD
+
+	Several others with driver verifier on.
+	primary / secondary / primary already fixed: this was because
+	the IoRemoveLock() was reused from a previous primary.
+
+	BSODs on sync (Server 2019): page size is odd (and later
+	BSOD) use after free? Or never being used before?
+
+	BSOD on invalidate (not on invalidate remote) on Window 7
+	test VM.
+
+	Serveral BSODs (invalidate / primary, ...) fixed now.
+	Also reworked free_mdls_and_irps (Always do MmUnlockPages()
+	do not MmUnlockPages in creating the requets (which
+	was broken anyway). Requries more testing but for now
+	it can be closed.
+
