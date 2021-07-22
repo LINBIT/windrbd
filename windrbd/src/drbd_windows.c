@@ -1004,9 +1004,14 @@ printk("bio is %p mdl->MappedSystemVa is %p mdl->StartVa is %p\n", bio, mdl->Map
 /* But if not there verifier complains in IoFreeMdl() */
 	//				if (!bio->do_not_mm_unmap_locked_pages)
 					if (may_unmap_pages && mdl->MappedSystemVa != NULL) {
-printk("into MmUnmapLockedPages (%p) MDL is %p ...\n", mdl->StartVa, mdl);
-//						MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
-						MmUnmapLockedPages(mdl->StartVa, mdl);
+						if ((((ULONG_PTR)mdl->MappedSystemVa) & 0xF000000000000000) != 0xF000000000000000) {
+printk("*** %p not a system address ***\n", mdl->MappedSystemVa);
+						} else  {
+printk("into MmUnmapLockedPages (%p) MDL is %p ...\n", mdl->MappedSystemVa, mdl);
+							MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+						}
+	/* BSODs with system_pte: */
+					//	MmUnmapLockedPages(mdl->StartVa, mdl);
 printk("out of MmUnmapLockedPages ...\n");
 					} else {
 printk("*** page already unmapped not unmapping it again ***\n");
