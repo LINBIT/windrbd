@@ -987,13 +987,14 @@ printk("Mdl is %p mdl->MappedSystemVa is %p mdl->StartVa is %p MmGetMdlVirtualAd
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
 printk("bio is %p 5\n", bio);
-			if ((mdl->MdlFlags & MDL_PAGES_LOCKED) || bio->force_mdl_unlock) {
+//			if ((mdl->MdlFlags & MDL_PAGES_LOCKED) || bio->force_mdl_unlock) {
 printk("bio is %p 6\n", bio);
 				/* TODO: with protocol C we never get here ... */
 
 //			if (bio->bi_paged_memory) {
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 printk("bio is %p 7\n", bio);
+#if 0
 			} else {
 printk("bio is %p 7x\n", bio);
 				/* Server 2019 ... not Windows 7 */
@@ -1033,6 +1034,7 @@ printk("bio is %p 8\n", bio);
 			IoFreeMdl(mdl); // This function will also unmap pages.
 printk("bio is %p 9\n", bio);
 		}
+#endif
 		bio->bi_irps[r]->MdlAddress = NULL;
 //		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 printk("bio is %p a\n", bio);
