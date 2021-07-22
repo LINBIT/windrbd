@@ -980,7 +980,7 @@ printk("bio is %p 3a\n", bio);
 printk("bio is %p 4\n", bio);
 
 if (bio->bi_irps[r]->MdlAddress != NULL)
-printk("Mdl is %p mdl->MappedSystemVa is %p mdl->StartVa is %p\n", bio->bi_irps[r]->MdlAddress, bio->bi_irps[r]->MdlAddress->MappedSystemVa, bio->bi_irps[r]->MdlAddress->StartVa);
+printk("Mdl is %p mdl->MappedSystemVa is %p mdl->StartVa is %p MmGetMdlVirtualAddress(mdl) is %p\n", bio->bi_irps[r]->MdlAddress, bio->bi_irps[r]->MdlAddress->MappedSystemVa, bio->bi_irps[r]->MdlAddress->StartVa, MmGetMdlVirtualAddress(bio->bi_irps[r]->MdlAddress));
 
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
@@ -1011,8 +1011,9 @@ printk("bio is %p mdl->MappedSystemVa is %p mdl->StartVa is %p\n", bio, mdl->Map
 						if ((((ULONG_PTR)mdl->MappedSystemVa) & 0xF000000000000000) != 0xF000000000000000) {
 printk("*** %p not a system address ***\n", mdl->MappedSystemVa);
 						} else  {
-printk("into MmUnmapLockedPages (%p) MDL is %p ...\n", mdl->MappedSystemVa, mdl);
-							MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+printk("into MmUnmapLockedPages (%p) MDL is %p ...\n", MmGetMdlVirtualAddress(mdl), mdl);
+//							MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+							MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);
 						}
 	/* BSODs with system_pte: */
 					//	MmUnmapLockedPages(mdl->StartVa, mdl);
@@ -2192,7 +2193,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 		/* Else leave it locked */
 
 if (bio->bi_irps[bio->bi_this_request]->MdlAddress != NULL)
-printk("Mdl is %p mdl->MappedSystemVa is %p mdl->StartVa is %p\n", bio->bi_irps[bio->bi_this_request]->MdlAddress, bio->bi_irps[bio->bi_this_request]->MdlAddress->MappedSystemVa, bio->bi_irps[bio->bi_this_request]->MdlAddress->StartVa);
+printk("Mdl is %p mdl->MappedSystemVa is %p mdl->StartVa is %p MmGetMdlVirtualAddress(mdl) is %p\n", bio->bi_irps[bio->bi_this_request]->MdlAddress, bio->bi_irps[bio->bi_this_request]->MdlAddress->MappedSystemVa, bio->bi_irps[bio->bi_this_request]->MdlAddress->StartVa, MmGetMdlVirtualAddress(bio->bi_irps[bio->bi_this_request]->MdlAddress));
 
 	int total_size = first_size;
 
