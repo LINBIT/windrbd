@@ -978,6 +978,10 @@ printk("bio is %p 3a\n", bio);
 		if (bio->is_cloned_from != NULL)  // TODO: also if !BIO_ALLOC_DEBUG
 			continue;
 printk("bio is %p 4\n", bio);
+
+if (bio->bi_irps[r]->MdlAddress != NULL)
+printk("Mdl is %p mdl->MappedSystemVa is %p mdl->StartVa is %p\n", bio->bi_irps[r]->MdlAddress, bio->bi_irps[r]->MdlAddress->MappedSystemVa, bio->bi_irps[r]->MdlAddress->StartVa);
+
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
 		     mdl = next_mdl) {
@@ -2186,6 +2190,9 @@ static int windrbd_generic_make_request(struct bio *bio)
 		}
 	}
 		/* Else leave it locked */
+
+if (bio->bi_irps[bio->bi_this_request]->MdlAddress != NULL)
+printk("Mdl is %p mdl->MappedSystemVa is %p mdl->StartVa is %p\n", bio->bi_irps[bio->bi_this_request]->MdlAddress, bio->bi_irps[bio->bi_this_request]->MdlAddress->MappedSystemVa, bio->bi_irps[bio->bi_this_request]->MdlAddress->StartVa);
 
 	int total_size = first_size;
 
