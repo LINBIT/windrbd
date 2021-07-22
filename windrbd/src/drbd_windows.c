@@ -1030,11 +1030,11 @@ printk("bio is %p 7a2\n", bio);
 				}
 printk("bio is %p 7b\n", bio);
 			}
+#endif
 printk("bio is %p 8\n", bio);
 			IoFreeMdl(mdl); // This function will also unmap pages.
 printk("bio is %p 9\n", bio);
 		}
-#endif
 		bio->bi_irps[r]->MdlAddress = NULL;
 //		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 printk("bio is %p a\n", bio);
@@ -2183,6 +2183,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 
 			/* However it currently BSODs when becoming primary ...  either on read or on write (they are different) */
 
+#if 0
 	if (!bio->bi_paged_memory) {
 		struct _MDL *first_mdl;
 		first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress;
@@ -2192,6 +2193,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 			}
 		}
 	}
+#endif
 		/* Else leave it locked */
 
 if (bio->bi_irps[bio->bi_this_request]->MdlAddress != NULL)
