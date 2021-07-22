@@ -202,12 +202,17 @@ __in PWSK_BUF WskBuffer,
 int may_printk
 )
 {
+if (may_printk)
+printk("Mdl is %p\n", WskBuffer->Mdl);
+
 	if (WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) {
 		MmUnlockPages(WskBuffer->Mdl);
 	} else {
 		if (may_printk)
 			printk("Page not locked in FreeWskBuffer\n");
 	}
+if (may_printk)
+printk("about to free Mdl %p\n", WskBuffer->Mdl);
 	IoFreeMdl(WskBuffer->Mdl);
 }
 
