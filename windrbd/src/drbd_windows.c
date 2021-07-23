@@ -995,6 +995,8 @@ printk("bio is %p 6\n", bio);
 //			if (bio->bi_paged_memory) {
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 printk("bio is %p 7\n", bio);
+			} else {
+printk("Page not locked in free_mdls_and_irps mdl is %p bio is %p\n", mdl, bio);
 			}
 #if 0
 			} else {
