@@ -1003,7 +1003,7 @@ printk("Page not locked in free_mdls_and_irps mdl is %p bio is %p\n", mdl, bio);
 			while ((mdl->MdlFlags & MDL_PAGES_LOCKED) && (unlock_max_loops > 0)) {
 printk("Page still locked (unlock_max_loops is %d)\n", unlock_max_loops);
 				unlock_max_loops--;
-				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
+				MmUnlockPages(mdl);
 			}
 #if 0
 			} else {

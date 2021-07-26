@@ -224,6 +224,8 @@ printk("Page still locked (unlock_max_loops is %d)\n", unlock_max_loops);
 if (may_printk)
 printk("about to free Mdl %p\n", WskBuffer->Mdl);
 	IoFreeMdl(WskBuffer->Mdl);
+if (may_printk)
+printk("Mdl %p freed\n", WskBuffer->Mdl);
 }
 
 struct send_page_completion_info {
