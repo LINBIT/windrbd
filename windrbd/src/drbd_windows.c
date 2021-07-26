@@ -932,6 +932,7 @@ static void free_mdls_and_irp(struct bio *bio)
 {
 	struct _MDL *mdl, *next_mdl;
 	int r;
+#if 0
 	int may_unmap_pages = 1; /* TODO: goes away */
 	int unlock_max_loops;
 
@@ -956,6 +957,7 @@ return;
 				may_unmap_pages = 0;
 		}
 	}
+#endif
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */
@@ -979,11 +981,13 @@ printk("bio is %p 3\n", bio);
 			continue;
 
 printk("bio is %p 3a\n", bio);
+#if 0
 			/* Only free mdls via an original bio ... else
 			 * "double free" and BSOD on verifier (0xC4/0xB6)
 			 */
 		if (bio->is_cloned_from != NULL)  // TODO: also if !BIO_ALLOC_DEBUG
 			continue;
+#endif
 printk("bio is %p 4\n", bio);
 
 if (bio->bi_irps[r]->MdlAddress != NULL)
@@ -1002,7 +1006,9 @@ printk("bio is %p 6\n", bio);
 //			if (bio->bi_paged_memory) {
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 printk("bio is %p 7\n", bio);
-			} else {
+			}
+#if 0
+else {
 printk("Page not locked in free_mdls_and_irps mdl is %p bio is %p\n", mdl, bio);
 			}
 			unlock_max_loops = 100;
@@ -1047,6 +1053,7 @@ printk("bio is %p 7a2\n", bio);
 				}
 printk("bio is %p 7b\n", bio);
 			}
+#endif
 #endif
 printk("bio is %p 8\n", bio);
 			IoFreeMdl(mdl); // This function will also unmap pages.
@@ -2200,7 +2207,6 @@ static int windrbd_generic_make_request(struct bio *bio)
 
 			/* However it currently BSODs when becoming primary ...  either on read or on write (they are different) */
 
-#if 0
 	if (!bio->bi_paged_memory) {
 		struct _MDL *first_mdl;
 		first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress;
@@ -2210,7 +2216,6 @@ static int windrbd_generic_make_request(struct bio *bio)
 			}
 		}
 	}
-#endif
 		/* Else leave it locked */
 
 if (bio->bi_irps[bio->bi_this_request]->MdlAddress != NULL)
