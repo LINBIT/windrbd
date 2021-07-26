@@ -932,7 +932,8 @@ static void free_mdls_and_irp(struct bio *bio)
 {
 	struct _MDL *mdl, *next_mdl;
 	int r;
-	int may_unmap_pages = 1;
+	int may_unmap_pages = 1; /* TODO: goes away */
+	int unlock_max_loops;
 
 #ifdef BIO_ALLOC_DEBUG
 printk("bio is %p bio is allocated from %s:%d (%s())\n", bio, bio->file, bio->line, bio->func);
@@ -997,6 +998,12 @@ printk("bio is %p 6\n", bio);
 printk("bio is %p 7\n", bio);
 			} else {
 printk("Page not locked in free_mdls_and_irps mdl is %p bio is %p\n", mdl, bio);
+			}
+			unlock_max_loops = 100;
+			while ((mdl->MdlFlags & MDL_PAGES_LOCKED) && (unlock_max_loops > 0)) {
+printk("Page still locked (unlock_max_loops is %d)\n", unlock_max_loops);
+				unlock_max_loops--;
+				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 			}
 #if 0
 			} else {
