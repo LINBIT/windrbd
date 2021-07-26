@@ -945,7 +945,13 @@ printk("bio is %p bio->bi_vcnt is %d bio->bi_num_requests is %d\n", bio, bio->bi
 	for (i=0;i<bio->bi_vcnt;++i) {
 		if (bio->bi_io_vec[i].bv_page != NULL)  {
 printk("bio is %p i: %d page %p\n", bio, i, bio->bi_io_vec[i].bv_page);
+printk("bio is %p i: %d atomic_read(&bio->bi_io_vec[i].bv_page->kref.refcount.refs) is %d\n", bio, i, atomic_read(&bio->bi_io_vec[i].bv_page->kref.refcount.refs));
 printk("bio is %p i: %d page->addr %p page->size %d\n", bio, i, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_page->size);
+
+if (atomic_read(&bio->bi_io_vec[i].bv_page->kref.refcount.refs) > 1) {
+printk("Page still in use not freeing MDLs and IRPs\n");
+return;
+}
 			if (bio->bi_io_vec[i].bv_page->is_unmapped)
 				may_unmap_pages = 0;
 		}
@@ -2725,7 +2731,9 @@ void bio_endio(struct bio *bio)
 	}
 // printk("3\n");
 
+printk("into bio_put\n");
 	bio_put(bio);
+printk("out of bio_put\n");
 }
 
 void __list_del_entry(struct list_head *entry)
