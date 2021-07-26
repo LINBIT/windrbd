@@ -758,3 +758,16 @@ socat /dev/pts/1,raw,echo=0,crnl TCP4-LISTEN:5567,crnl,forever
 on other node:
 socat /dev/pts/2,raw,echo=0,crnl TCP4:vamp.linbit:5567,crnl,forever
 
+----------------------------
+
+How to show parameters of BSOD crash (Windows 10 / Server 2016 and 2019)
+
+    Windows 10 disable bsod smiley
+
+    Open the Registry editor.
+    Navigate to the following registry key:
+
+    HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\CrashControl
+
+    Tip: See how to open the desired registry key with one click.
+    Create a new DWORD value named DisplayParameters and set to 1.
