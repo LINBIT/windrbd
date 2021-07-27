@@ -2087,6 +2087,17 @@ printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 
 		return status;
 
+	case IRP_MN_QUERY_INTERFACE: 	/* 0x8 */
+		// IoCopyCurrentIrpStackLocationToNext(irp);
+		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
+		/* Must be skip else BSOD on verify */
+printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
+		status = IoCallDriver(bus_ext->lower_device, irp);
+		if (status != STATUS_SUCCESS)
+			dbg("Warning: lower device returned status %x\n", status);
+
+		return status;
+
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
 		dbg("got IRP_MN_QUERY_DEVICE_RELATIONS\n");
 
