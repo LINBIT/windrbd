@@ -562,16 +562,17 @@ printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
 			continue;
 		}
 		MmBuildMdlForNonPagedPool(mdl);
-		MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
+//		MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
 
 printk("mmap(%x, 0x1000, ..) succeeded\n", i);
 		memcpy(buf+i, p, 0x1000);
-printk("into MmUnmapIoSpace %p ...\n", p);
-		MmUnmapIoSpace(p, 0x1000);
-printk("out of MmUnmapIoSpace %p ...\n", p);
 
 		MmUnlockPages(mdl);
 		IoFreeMdl(mdl);
+
+printk("into MmUnmapIoSpace %p ...\n", p);
+		MmUnmapIoSpace(p, 0x1000);
+printk("out of MmUnmapIoSpace %p ...\n", p);
 	}
 	dbg("%d mappings failed\n", failed);
 
