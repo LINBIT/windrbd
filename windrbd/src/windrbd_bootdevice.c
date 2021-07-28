@@ -518,8 +518,9 @@ static char *copy_first_640k(void)
  * MmMapIoSpace().
  */
 
-	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
-// printk("page %p ...\n", (void*) i);
+//	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
+	for (i=0;i<0xc000;i+=0x1000) {
+printk("page %p ...\n", (void*) i);
 		addr.QuadPart = i;
 #if 0
 		mdl = IoAllocateMdl((void*) i, PAGE_SIZE, FALSE, FALSE, NULL);
