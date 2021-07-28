@@ -549,9 +549,9 @@ printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
 			failed++;
 			continue;
 		}
-//		MmBuildMdlForNonPagedPool(mdl);
+		MmBuildMdlForNonPagedPool(mdl);
 printk("Into MmProbeAndLockPages ..\n");
-		MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
+//		MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
 printk("into MmMapIoSpace %x ...\n", i);
 		p = MmMapIoSpace(addr, 0x1000, MmNonCached);
 printk("out of MmMapIoSpace %p ...\n", p);
