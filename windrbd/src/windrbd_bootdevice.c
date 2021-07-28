@@ -567,7 +567,12 @@ printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
 printk("mmap(%x, 0x1000, ..) succeeded\n", i);
 		memcpy(buf+i, p, 0x1000);
 
-		MmUnlockPages(mdl);
+		if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
+printk("unlock pages ...\n");
+			MmUnlockPages(mdl);
+		}
+
+printk("into free mdl ...\n");
 		IoFreeMdl(mdl);
 
 printk("into MmUnmapIoSpace %p ...\n", p);
