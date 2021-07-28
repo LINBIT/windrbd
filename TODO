@@ -36,8 +36,46 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Feature: Do not attach to disk if there is a file system on it.
+
+	instead of hiding the file system. People should be prevented
+	from shooting themselves in the foot.
+
 TODO: Code quality: Remove printk's and ad-hoc flags introduced for fixing
 	bugs found by verifier
+
+TODO: Bug: Verifier BSOD on sync.
+
+	Bug check 0xC4: DRIVER_VERIFIER_DETECTED_VIOLATION
+	0xB8: The pages that are described by the MDL are still mapped.
+	The driver must unmap the pages before calling IoFreeMdl.
+
+	Usually not a problem since one should not run WinDRBD with
+	verifier on (at least for now).
+
+TODO: Bug: Verifier 0xC9 on Primary/Secondary Loop.
+
+	suberror is 0x221.
+
+	0x221 Fatal error
+
+	An IRP dispatch handler for a PDO has deleted its device object, but the hardware has not been reported as missing in a bus relations query.
+
+	Param 2 - The address in the driver's code where the error was detected.
+
+	Param 3 - IRP address.
+
+	Param 4 - Device object address.
+
+TODO: Bug: BSOD 0xD5 (?) on Primary/Secondary
+
+	On my Windows 7 test box. There were 2 resources involved.
+	Probably a new bug (not in 1.0.0-rc12)
+
+	Also when starting Partition Manager (and a resource is Primary)
+
+	Was QUERY_INTERFACE handled incorrectly. Should be solved
+	now (with 13986211).
 
 TODO: Bug: PNP BSOD on surprise removal test.
 
