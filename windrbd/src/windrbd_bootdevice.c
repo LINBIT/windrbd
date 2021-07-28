@@ -518,8 +518,7 @@ static char *copy_first_640k(void)
  * MmMapIoSpace().
  */
 
-//	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
-	for (i=0;i<0xc000;i+=0x1000) {
+	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
 printk("page %p ...\n", (void*) i);
 		addr.QuadPart = i;
 #if 0
@@ -541,20 +540,24 @@ printk("page %p ...\n", (void*) i);
 		}
 #endif
 
+printk("into MmMapIoSpace %x ...\n", i);
 		p = MmMapIoSpace(addr, 0x1000, MmNonCached);
+printk("out of MmMapIoSpace %p ...\n", p);
 		if (p == NULL) {
 				/* There are some pages which are
 				 * not mappable for whatever reason.
 				 * Our parameters are on mappable
 				 * pages, so ignore them.
 				 */
-// printk("mmap(%x, 0x1000, ..) failed\n", i);
+printk("mmap(%x, 0x1000, ..) failed\n", i);
 			memset(buf+i, 0, 0x1000);
 			failed++;
 		} else {
-// printk("mmap(%x, 0x1000, ..) succeeded\n", i);
+printk("mmap(%x, 0x1000, ..) succeeded\n", i);
 			memcpy(buf+i, p, 0x1000);
+printk("into MmUnmapIoSpace %p ...\n", p);
 			MmUnmapIoSpace(p, 0x1000);
+printk("out of MmUnmapIoSpace %p ...\n", p);
 		}
 #if 0
 		MmUnlockPages(mdl);
