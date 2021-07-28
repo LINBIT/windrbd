@@ -561,8 +561,8 @@ printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
 			failed++;
 			continue;
 		}
-		MmBuildMdlForNonPagedPool(mdl);
-//		MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
+//		MmBuildMdlForNonPagedPool(mdl);
+		MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
 
 printk("mmap(%x, 0x1000, ..) succeeded\n", i);
 		memcpy(buf+i, p, 0x1000);
@@ -677,10 +677,10 @@ void windrbd_init_boot_device(void)
 {
 	static char drbd_config[MAX_DRBD_CONFIG];
 
-/*
-printk("Searching for boot device disabled.\n");
-return;
-*/
+#ifdef VERIFIER_ON
+	printk("Searching for boot device disabled because it currently BSODs with verifier on.\n");
+	return;
+#endif
 
 	if (search_for_drbd_config(drbd_config, sizeof(drbd_config)) < 0) {
 		printk("No DRBD config found in first 1Meg, please use iPXE to boot via network.\n");
