@@ -658,8 +658,10 @@ void windrbd_init_boot_device(void)
 {
 	static char drbd_config[MAX_DRBD_CONFIG];
 
+/*
 printk("Searching for boot device disabled.\n");
 return;
+*/
 
 	if (search_for_drbd_config(drbd_config, sizeof(drbd_config)) < 0) {
 		printk("No DRBD config found in first 1Meg, please use iPXE to boot via network.\n");
