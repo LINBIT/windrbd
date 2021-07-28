@@ -552,17 +552,26 @@ printk("out of MmMapIoSpace %p ...\n", p);
 printk("mmap(%x, 0x1000, ..) failed\n", i);
 			memset(buf+i, 0, 0x1000);
 			failed++;
-		} else {
-printk("mmap(%x, 0x1000, ..) succeeded\n", i);
-			memcpy(buf+i, p, 0x1000);
-printk("into MmUnmapIoSpace %p ...\n", p);
-			MmUnmapIoSpace(p, 0x1000);
-printk("out of MmUnmapIoSpace %p ...\n", p);
+			continue;
 		}
-#if 0
+		mdl = IoAllocateMdl(p, PAGE_SIZE, FALSE, FALSE, NULL);
+		if (mdl == NULL) {
+printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
+			memset(buf+i, 0, 0x1000);
+			failed++;
+			continue;
+		}
+		MmBuildMdlForNonPagedPool(mdl);
+		MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
+
+printk("mmap(%x, 0x1000, ..) succeeded\n", i);
+		memcpy(buf+i, p, 0x1000);
+printk("into MmUnmapIoSpace %p ...\n", p);
+		MmUnmapIoSpace(p, 0x1000);
+printk("out of MmUnmapIoSpace %p ...\n", p);
+
 		MmUnlockPages(mdl);
 		IoFreeMdl(mdl);
-#endif
 	}
 	dbg("%d mappings failed\n", failed);
 
