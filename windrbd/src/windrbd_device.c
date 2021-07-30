@@ -27,7 +27,7 @@
 
 /* Uncomment this if you want more debug output (disable for releases) */
 
-#define DEBUG 1
+/* #define DEBUG 1 */
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -1385,13 +1385,9 @@ static void windrbd_bio_finished(struct bio * bio)
 
 		kfree(bio->bi_common_data);
 	}
-printk("Into IoReleaseRemoveLock ... %p windrbd_finished\n", &bio->bi_bdev->ref->w_remove_lock);
 	IoReleaseRemoveLock(&bio->bi_bdev->ref->w_remove_lock, NULL);
-printk("Out of IoReleaseRemoveLock windrbd_finished\n");
-printk("into bio_put: atomic_read(&bio->bi_cnt) is %d\n", atomic_read(&bio->bi_cnt));
 	bio_put(bio);
 
-printk("putting pages %p ...\n", bio);
 	for (i=0;i<bio->bi_vcnt;i++)
 		put_page(bio->bi_io_vec[i].bv_page);
 }
@@ -1846,7 +1842,6 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 		IoCopyCurrentIrpStackLocationToNext(irp);
 		IoSetCompletionRoutine(irp, (PIO_COMPLETION_ROUTINE)start_completed, (PVOID)&start_completed_event, TRUE, TRUE, TRUE);
 
-printk("Starting lower device object\n");
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status == STATUS_PENDING) {
 // printk("Pending ...\n");
@@ -1857,16 +1852,11 @@ printk("Starting lower device object\n");
 		if (status != STATUS_SUCCESS)
 			printk("Warning: lower device start returned %x\n", status);
 
-printk("starting device object status is %x\n", status);
-
 		status = STATUS_SUCCESS;
 		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 
-printk("completed IRP\n");
-
 		windrbd_bus_is_ready();
-printk("Set bus ready\n");
 
 		num_pnp_bus_requests--;
 		return status;
@@ -1876,7 +1866,6 @@ printk("Set bus ready\n");
 		dbg("got IRP_MN_QUERY_PNP_DEVICE_STATE\n");
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */
-printk("forwarding minor %x to lower driver...12345\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
@@ -1894,24 +1883,17 @@ printk("forwarding minor %x to lower driver...12345\n", s->MinorFunction);
 
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */
-printk("forwarding minor %x to lower driver...XXX\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
 
 		return status;
-#if 0
-		status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
-		pass_on = 0;
-#endif
-		break;
 
 	case IRP_MN_CANCEL_REMOVE_DEVICE:
 		dbg("got IRP_MN_CANCEL_REMOVE_DEVICE\n");
 
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */
-printk("forwarding minor %x to lower driver...XXX\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
@@ -2022,65 +2004,17 @@ dbg("Returned string is %S\n", string);
 		
 */
 	case IRP_MN_QUERY_CAPABILITIES:
-/*
-	{
-		struct _DEVICE_CAPABILITIES *DeviceCapabilities;
-		DeviceCapabilities = s->Parameters.DeviceCapabilities.Capabilities;
-// printk("got IRP_MN_QUERY_CAPABILITIES\n");
-		if (DeviceCapabilities->Version != 1 || DeviceCapabilities->Size < sizeof(DEVICE_CAPABILITIES)) {
-printk("wrong version of DeviceCapabilities\n");
-			status = STATUS_UNSUCCESSFUL;
-			break;
-		}
-		DeviceCapabilities->DeviceState[PowerSystemWorking] = PowerDeviceD0;
-		if (DeviceCapabilities->DeviceState[PowerSystemSleeping1] != PowerDeviceD0) DeviceCapabilities->DeviceState[PowerSystemSleeping1] = PowerDeviceD1;
-		if (DeviceCapabilities->DeviceState[PowerSystemSleeping2] != PowerDeviceD0) DeviceCapabilities->DeviceState[PowerSystemSleeping2] = PowerDeviceD3;
-//      if (DeviceCapabilities->DeviceState[PowerSystemSleeping3] != PowerDeviceD0) DeviceCapabilities->DeviceState[PowerSystemSleeping3] = PowerDeviceD3;
-		DeviceCapabilities->DeviceWake = PowerDeviceD1;
-		DeviceCapabilities->DeviceD1 = TRUE;
-		DeviceCapabilities->DeviceD2 = FALSE;
-		DeviceCapabilities->WakeFromD0 = FALSE;
-		DeviceCapabilities->WakeFromD1 = FALSE;
-		DeviceCapabilities->WakeFromD2 = FALSE;
-		DeviceCapabilities->WakeFromD3 = FALSE;
-		DeviceCapabilities->D1Latency = 0;
-		DeviceCapabilities->D2Latency = 0;
-		DeviceCapabilities->D3Latency = 0;
-		DeviceCapabilities->EjectSupported = FALSE;
-		DeviceCapabilities->HardwareDisabled = FALSE;
-		DeviceCapabilities->Removable = FALSE;
-		DeviceCapabilities->SurpriseRemovalOK = FALSE;
-		DeviceCapabilities->UniqueID = FALSE;
-		DeviceCapabilities->SilentInstall = FALSE;
-
-		status = STATUS_SUCCESS;
-		break;
-	}
-*/
-/*
-		pass_on = 0;
-		status = STATUS_NOT_SUPPORTED;
-		break;
-*/
-
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */
-printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
 
 		return status;
-/*
-		pass_on = 1;
-		break;
-*/
 
 	case IRP_MN_QUERY_ID: 	/* 0x13 */
-		// IoCopyCurrentIrpStackLocationToNext(irp);
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */
-printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
@@ -2088,10 +2022,8 @@ printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		return status;
 
 	case IRP_MN_QUERY_INTERFACE: 	/* 0x8 */
-		// IoCopyCurrentIrpStackLocationToNext(irp);
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */
-printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
@@ -2102,55 +2034,36 @@ printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		dbg("got IRP_MN_QUERY_DEVICE_RELATIONS\n");
 
 		int type = s->Parameters.QueryDeviceRelations.Type;
-dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
+
+		dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
+
 		switch (s->Parameters.QueryDeviceRelations.Type) {
 		case BusRelations: 
 		{
 			int num_devices = get_all_drbd_device_objects(NULL, 0);
 			struct _DEVICE_RELATIONS *device_relations;
 			int n;
-#if 0
-printk("0\n");
-			IoSkipCurrentIrpStackLocation(irp);
-// printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
-			status = IoCallDriver(bus_ext->lower_device, irp);
-			if (status != STATUS_SUCCESS)
-				dbg("Warning: lower device returned status %x\n", status);
-#endif
-printk("1\n");
 
 			size_t siz = sizeof(*device_relations)+num_devices*sizeof(device_relations->Objects[0]);
 // printk("size of device relations is %d\n", siz);
 		/* must be PagedPool else PnP manager complains */
 			device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
-printk("2\n");
 			if (device_relations == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
-printk("3\n");
 			n = get_all_drbd_device_objects(&device_relations->Objects[0], num_devices);
 			if (n != num_devices)
 				printk("Warning: number of DRBD devices changed: old %d != new %d\n", num_devices, n);
-printk("4\n");
 			device_relations->Count = num_devices;
-printk("5\n");
 			irp->IoStatus.Information = (ULONG_PTR)device_relations;
 			irp->IoStatus.Status = STATUS_SUCCESS;
 
-//		irp->IoStatus.Status = status;
-printk("6\n");
-			// IoSkipCurrentIrpStackLocation(irp);
 			IoCopyCurrentIrpStackLocationToNext(irp);
-// printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 			status = IoCallDriver(bus_ext->lower_device, irp);
 			if (status != STATUS_SUCCESS)
 				dbg("Warning: lower device returned status %x\n", status);
-//			IoCompleteRequest(irp, IO_NO_INCREMENT);
-printk("7\n");
 			num_pnp_bus_requests--;
-printk("8\n");
-			// return STATUS_SUCCESS;
 			return status;
 		}
 #if 0
@@ -2207,14 +2120,8 @@ printk("8\n");
 
 	case 0xd: /* ?? IRP_MN_FILTER_RESOURCE_REQUIREMENTS */
 		dbg("got unimplemented minor %x passing on to lower device returning success 123\n", s->MinorFunction);
-// dbg("Information is %x\n", irp->IoStatus.Information);
-// 		status = STATUS_SUCCESS;
-// 		pass_on = 1;
-
-		// IoCopyCurrentIrpStackLocationToNext(irp);
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */
-printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
@@ -2223,14 +2130,8 @@ printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 
 	case 0x18: /* ?? undocumented IRP_MN_QUERY_LEGACY_BUS_INFORMATION ?? */
 		dbg("got unimplemented minor %x passing on to lower device returning success\n", s->MinorFunction);
-// dbg("Information is %x\n", irp->IoStatus.Information);
-// 		status = STATUS_SUCCESS;
-// 		pass_on = 1;
-
-		// IoCopyCurrentIrpStackLocationToNext(irp);
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */
-printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
@@ -2239,11 +2140,9 @@ printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 
 	case 0xff:
 		dbg("got 0xff\n");
-//		status = STATUS_NOT_IMPLEMENTED;
 
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */
-printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
@@ -2253,25 +2152,17 @@ printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
 	default:
 		dbg("got unimplemented minor %x\n", s->MinorFunction);
 
-//		status = irp->IoStatus.Status;
 		status = STATUS_NOT_SUPPORTED;
 		dbg("status is %x\n", status);
 		pass_on = 1;
 	}
 
-	// if (status != STATUS_SUCCESS && status != STATUS_NOT_SUPPORTED && status != STATUS_NOT_IMPLEMENTED) {
 	if (!pass_on) {
-// printk("minor %x failed with status %x, not forwarding to lower driver...\n", s->MinorFunction, status);
 		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 	} else {
-	//	irp->IoStatus.Status = status;
-		// IoSkipCurrentIrpStackLocation(irp);
-printk("copy stack location\n");
 		IoCopyCurrentIrpStackLocationToNext(irp);
-printk("pass_on == 1: forwarding minor %x to lower driver...\n", s->MinorFunction);
 		status = IoCallDriver(bus_ext->lower_device, irp);
-printk("IoCallDriver for minor %s returned.\n", s->MinorFunction);
 		if (status != STATUS_SUCCESS)
 			dbg("Warning: lower device returned status %x\n", status);
 	}
@@ -2481,12 +2372,14 @@ dbg("Returned string is %S\n", string);
 
 			default:
 				dbg("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
-				status = irp->IoStatus.Status;
+/*				status = irp->IoStatus.Status;
 dbg("status is %x\n", status);
 				IoCompleteRequest(irp, IO_NO_INCREMENT);
 
 				num_pnp_requests--;
-				return status;
+*/
+				status = STATUS_NOT_IMPLEMENTED;
+//				return status;
 			}
 	/* forward to lower device: but what is the lower device (bus?) */
 #if 0
@@ -2666,13 +2559,9 @@ dbg("status is %x\n", status);
 				if (bdev != NULL) {
 					bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
-printk("Into IoAcquireRemoveLock %p ...\n", &bdev->ref->w_remove_lock);
 					IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
-printk("Out of IoAcquireRemoveLock %p ...\n", &bdev->ref->w_remove_lock);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
-printk("Into IoReleaseRemoveLockAndWait %p ...\n", &bdev->ref->w_remove_lock);
 					IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
-printk("Out of IoReleaseRemoveLockAndWait %p ...\n", &bdev->ref->w_remove_lock);
 				} else {
 					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
 				}
@@ -2940,8 +2829,6 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	LONGLONG d_size, LargeTemp;
 	struct block_device *bdev;
 
-printk("SCSI IRQL is %d on enter\n", KeGetCurrentIrql());
-
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
 		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
@@ -2969,9 +2856,7 @@ printk("SCSI IRQL is %d on enter\n", KeGetCurrentIrql());
 	}
 #endif
 	bdev = ref->bdev;
-printk("Into IoAcquireRemoveLock ... %p\n", &bdev->ref->w_remove_lock);
 	IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
-printk("Out of IoAcquireRemoveLock ...\n");
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
 	if (bdev->about_to_delete) {
@@ -2996,8 +2881,6 @@ printk("Out of IoAcquireRemoveLock ...\n");
 		goto out; // STATUS_SUCCESS?
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
-
-printk("SCSI IRQL is %d inbetween\n", KeGetCurrentIrql());
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
@@ -3222,16 +3105,10 @@ printk("SCSI IRQL is %d inbetween\n", KeGetCurrentIrql());
 	}
 
 out:
-printk("SCSI IRQL is %d on out\n", KeGetCurrentIrql());
-printk("Into IoReleaseRemoveLock ... %p\n", &bdev->ref->w_remove_lock);
 	IoReleaseRemoveLock(&bdev->ref->w_remove_lock, NULL);
-printk("Out of IoReleaseRemoveLock ...\n");
 
-printk("SCSI IRQL is %d on out 2\n", KeGetCurrentIrql());
 	irp->IoStatus.Status = status;
-printk("SCSI IRQL is %d on out 3\n", KeGetCurrentIrql());
         IoCompleteRequest(irp, IO_NO_INCREMENT);
-printk("SCSI IRQL is %d on out 4\n", KeGetCurrentIrql());
 	return status;
 }
 

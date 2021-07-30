@@ -202,18 +202,12 @@ __in PWSK_BUF WskBuffer,
 int may_printk
 )
 {
-if (may_printk)
-printk("Mdl is %p\n", WskBuffer->Mdl);
-
 	if (WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) {
 		int unlock_max_loops;
 		MmUnlockPages(WskBuffer->Mdl);
 
 		unlock_max_loops=100;
 		while ((WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) && (unlock_max_loops > 0)) {
-if (may_printk)
-printk("Page still locked (unlock_max_loops is %d)\n", unlock_max_loops);
-
 			unlock_max_loops--;
 			MmUnlockPages(WskBuffer->Mdl); 
 		}
@@ -221,11 +215,7 @@ printk("Page still locked (unlock_max_loops is %d)\n", unlock_max_loops);
 		if (may_printk)
 			printk("Page not locked in FreeWskBuffer\n");
 	}
-if (may_printk)
-printk("about to free Mdl %p\n", WskBuffer->Mdl);
 	IoFreeMdl(WskBuffer->Mdl);
-if (may_printk)
-printk("Mdl %p freed\n", WskBuffer->Mdl);
 }
 
 struct send_page_completion_info {

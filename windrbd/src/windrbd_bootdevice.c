@@ -519,73 +519,22 @@ static char *copy_first_640k(void)
  */
 
 	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
-// printk("page %p ...\n", (void*) i);
 		addr.QuadPart = i;
-#if 0
-		mdl = IoAllocateMdl((void*) i, PAGE_SIZE, FALSE, FALSE, NULL);
-		if (mdl == NULL) {
-// printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
-			memset(buf+i, 0, 0x1000);
-			failed++;
-			continue;
-		}
-		try {
-			MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
-		} except(EXCEPTION_EXECUTE_HANDLER) {
-// printk("MmProbeAndLockPages failed with exception i is %x.\n", i);
-			IoFreeMdl(mdl);
-			memset(buf+i, 0, 0x1000);
-			failed++;
-			continue;
-		}
-#endif
-
-#if 0
-printk("About to IoAllocateMdl()\n");
-		mdl = IoAllocateMdl((void*) i, PAGE_SIZE, FALSE, FALSE, NULL);
-printk("Out of IoAllocateMdl()\n");
-		if (mdl == NULL) {
-printk("IoAllocateMdl(%x, 0x1000, ..) failed\n", i);
-			memset(buf+i, 0, 0x1000);
-			failed++;
-			continue;
-		}
-		MmBuildMdlForNonPagedPool(mdl);
-printk("Into MmProbeAndLockPages ..\n");
-//		MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
-#endif
-// printk("into MmMapIoSpace %x ...\n", i);
 		p = MmMapIoSpace(addr, 0x1000, MmNonCached);
-// printk("out of MmMapIoSpace %p ...\n", p);
 		if (p == NULL) {
 				/* There are some pages which are
 				 * not mappable for whatever reason.
 				 * Our parameters are on mappable
 				 * pages, so ignore them.
 				 */
-// printk("mmap(%x, 0x1000, ..) failed\n", i);
 			memset(buf+i, 0, 0x1000);
 			failed++;
 			continue;
 		}
 
-// printk("mmap(%x, 0x1000, ..) succeeded\n", i);
 		memcpy(buf+i, p, 0x1000);
 
-// printk("into MmUnmapIoSpace %p ...\n", p);
 		MmUnmapIoSpace(p, 0x1000);
-// printk("out of MmUnmapIoSpace %p ...\n", p);
-
-#if 0
-		if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
-printk("unlock pages ...\n");
-			MmUnlockPages(mdl);
-		}
-
-printk("into free mdl ...\n");
-		IoFreeMdl(mdl);
-
-#endif
 	}
 	dbg("%d mappings failed\n", failed);
 

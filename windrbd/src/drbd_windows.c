@@ -20,7 +20,7 @@
 */
 
 /* Uncomment this if you want more debug output (disable for releases) */
-#define DEBUG 1
+/* #define DEBUG 1 */
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -630,7 +630,7 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 	kref_init(&p->kref);
 	p->size = size;
 
-printk("allocating page %p page->addr is %p page->size is %d from %s:%d (%s)\n", p, p->addr, p->size, file, line, func);
+// printk("allocating page %p page->addr is %p page->size is %d from %s:%d (%s)\n", p, p->addr, p->size, file, line, func);
 	return p;
 }
 
@@ -641,7 +641,7 @@ struct page *alloc_page_debug(int flag, const char *file, int line, const char *
 
 void __free_page_debug(struct page *page, const char *file, int line, const char *func)
 {
-printk("freeing page %p page->addr is %p from %s:%d (%s)\n", page, page->addr, file, line, func);
+// printk("freeing page %p page->addr is %p from %s:%d (%s)\n", page, page->addr, file, line, func);
 	kfree_debug(page->addr, file, line, func);
 	kfree_debug(page, file, line, func); 
 }
@@ -892,8 +892,6 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	{
 		return 0;
 	}
-printk("bio is %p nr_iovecs is %d\n", bio, nr_iovecs);
-printk("bio is %p sizeof(struct bio) is %d sizeof(struct bio_vec) is %d bytes allocated is %d\n", bio, sizeof(struct bio), sizeof(struct bio_vec), sizeof(struct bio) + nr_iovecs * sizeof(struct bio_vec));
 	bio->bi_max_vecs = nr_iovecs;
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
@@ -915,7 +913,6 @@ struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, ULONG tag, char *file, in
 		bio->line = line;
 		bio->func = func;
 	}
-printk("bio alloc returning %p\n", bio);
 	return bio;
 }
 
@@ -932,158 +929,53 @@ static void free_mdls_and_irp(struct bio *bio)
 {
 	struct _MDL *mdl, *next_mdl;
 	int r;
-#if 0
-	int may_unmap_pages = 1; /* TODO: goes away */
-	int unlock_max_loops;
 
-#ifdef BIO_ALLOC_DEBUG
-printk("bio is %p bio is allocated from %s:%d (%s())\n", bio, bio->file, bio->line, bio->func);
-printk("bio is %p is_cloned from %p\n", bio, bio->is_cloned_from);
-#endif
-
-	int i;
-printk("bio is %p bio->bi_vcnt is %d bio->bi_num_requests is %d\n", bio, bio->bi_vcnt, bio->bi_num_requests);
-	for (i=0;i<bio->bi_vcnt;++i) {
-		if (bio->bi_io_vec[i].bv_page != NULL)  {
-printk("bio is %p i: %d page %p\n", bio, i, bio->bi_io_vec[i].bv_page);
-printk("bio is %p i: %d atomic_read(&bio->bi_io_vec[i].bv_page->kref.refcount.refs) is %d\n", bio, i, atomic_read(&bio->bi_io_vec[i].bv_page->kref.refcount.refs));
-printk("bio is %p i: %d page->addr %p page->size %d\n", bio, i, bio->bi_io_vec[i].bv_page->addr, bio->bi_io_vec[i].bv_page->size);
-
-if (atomic_read(&bio->bi_io_vec[i].bv_page->kref.refcount.refs) > 1) {
-printk("Page still in use not freeing MDLs and IRPs\n");
-return;
-}
-			if (bio->bi_io_vec[i].bv_page->is_unmapped)
-				may_unmap_pages = 0;
-		}
-	}
-#endif
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */
 
-printk("bio is %p 1\n", bio);
 	if (bio->bi_irps == NULL)
 		return;
 
 
-printk("bio is %p Data dir is %d\n", bio, bio_data_dir(bio));
-printk("bio is %p force_mdl_unlock is %d\n", bio, bio->force_mdl_unlock);
-// printk("force_no_unmap is %d\n", bio->force_no_unmap);
-printk("bio is %p 2\n", bio);
 	for (r=0;r<bio->bi_num_requests;r++) {
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
 		 */
-printk("bio is %p 3\n", bio);
 		if (bio->bi_irps[r] == NULL)
 			continue;
-
-printk("bio is %p 3a\n", bio);
-#if 0
-			/* Only free mdls via an original bio ... else
-			 * "double free" and BSOD on verifier (0xC4/0xB6)
-			 */
-		if (bio->is_cloned_from != NULL)  // TODO: also if !BIO_ALLOC_DEBUG
-			continue;
-#endif
-printk("bio is %p 4\n", bio);
-
-if (bio->bi_irps[r]->MdlAddress != NULL)
-printk("Mdl is %p mdl->MappedSystemVa is %p mdl->StartVa is %p MmGetMdlVirtualAddress(mdl) is %p\n", bio->bi_irps[r]->MdlAddress, bio->bi_irps[r]->MdlAddress->MappedSystemVa, bio->bi_irps[r]->MdlAddress->StartVa, MmGetMdlVirtualAddress(bio->bi_irps[r]->MdlAddress));
 
 		for (mdl = bio->bi_irps[r]->MdlAddress;
 		     mdl != NULL;
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
-printk("bio is %p 5\n", bio);
-//			if ((mdl->MdlFlags & MDL_PAGES_LOCKED) || bio->force_mdl_unlock) {
 			if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
-printk("bio is %p 6\n", bio);
 				/* TODO: with protocol C we never get here ... */
 
-//			if (bio->bi_paged_memory) {
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
-printk("bio is %p 7\n", bio);
 			}
-#if 0
-else {
-printk("Page not locked in free_mdls_and_irps mdl is %p bio is %p\n", mdl, bio);
-			}
-			unlock_max_loops = 100;
-			while ((mdl->MdlFlags & MDL_PAGES_LOCKED) && (unlock_max_loops > 0)) {
-printk("Page still locked (unlock_max_loops is %d)\n", unlock_max_loops);
-				unlock_max_loops--;
-				MmUnlockPages(mdl);
-			}
-#if 0
-			} else {
-printk("bio is %p 7x\n", bio);
-				/* Server 2019 ... not Windows 7 */
-				// if (RtlIsNtDdiVersionAvailable(NTDDI_WIN10) && !bio->force_no_unmap) {
-				if (RtlIsNtDdiVersionAvailable(NTDDI_WIN10)) {
-printk("bio is %p 7a\n", bio);
-//				if (KeGetCurrentIrql() < DISPATCH_LEVEL || bio_data_dir(bio) == READ) {
-printk("bio is %p 7a1\n", bio);
-printk("bio is %p mdl->MappedSystemVa is %p mdl->StartVa is %p\n", bio, mdl->MappedSystemVa, mdl->StartVa);
-					// MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
-/* crashes under windows 2019 server on resync! */
-/* But if not there verifier complains in IoFreeMdl() */
-	//				if (!bio->do_not_mm_unmap_locked_pages)
-					if (may_unmap_pages && mdl->MappedSystemVa != NULL) {
-						if ((((ULONG_PTR)mdl->MappedSystemVa) & 0xF000000000000000) != 0xF000000000000000) {
-printk("*** %p not a system address ***\n", mdl->MappedSystemVa);
-						} else  {
-printk("into MmUnmapLockedPages (%p) MDL is %p ...\n", MmGetMdlVirtualAddress(mdl), mdl);
-//							MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
-							MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);
-						}
-	/* BSODs with system_pte: */
-					//	MmUnmapLockedPages(mdl->StartVa, mdl);
-printk("out of MmUnmapLockedPages ...\n");
-					} else {
-printk("*** page already unmapped not unmapping it again ***\n");
-					}
-// printk("did not do MmUnmapLockedPages()\n");
-printk("bio is %p 7a2\n", bio);
-//				} else {
-//printk("Not unmapping because IRQL is %d.\n", KeGetCurrentIrql());
-//				}
-				}
-printk("bio is %p 7b\n", bio);
-			}
-#endif
-#endif
-printk("bio is %p 8\n", bio);
 			IoFreeMdl(mdl); // This function will also unmap pages.
-printk("bio is %p 9\n", bio);
 		}
 		bio->bi_irps[r]->MdlAddress = NULL;
 //		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
-printk("bio is %p a\n", bio);
 
 		IoFreeIrp(bio->bi_irps[r]);
-printk("bio is %p b\n", bio);
 	}
 
-printk("bio is %p c\n", bio);
 	kfree(bio->bi_irps);
-printk("bio is %p d\n", bio);
 }
 
 void bio_get_debug(struct bio *bio, const char *file, int line, const char *func)
 {
 	int cnt;
 	cnt = atomic_inc(&bio->bi_cnt);
-printk("bio: %p refcount now: %d called from: %s:%d %s()\n", bio, cnt, file, line, func);
 }
 
 void bio_put_debug(struct bio *bio, const char *file, int line, const char *func)
 {
 	int cnt;
 	cnt = atomic_dec(&bio->bi_cnt);
-printk("bio: %p refcount now: %d called from: %s:%d %s()\n", bio, cnt, file, line, func);
 	if (cnt == 0)
 		bio_free(bio);
 }
@@ -1123,18 +1015,9 @@ void bio_free(struct bio *bio)
 		 */
 
 /* This get_page is in bio_add_page_debug() now */
-#if 0
-	for (i=0;i<bio->bi_vcnt;i++) {
-printk("i: %d get_page(%p)\n", i, bio->bi_io_vec[i].bv_page);
-printk("i: %d page->size is %d page->addr is %p\n", i, bio->bi_io_vec[i].bv_page->size, bio->bi_io_vec[i].bv_page->addr);
-		get_page(bio->bi_io_vec[i].bv_page);
-	}
-#endif
 	spin_lock_irqsave(&bios_to_be_freed_lock, flags);
 	list_add(&bio->to_be_freed_list, &bios_to_be_freed_list);
 	spin_unlock_irqrestore(&bios_to_be_freed_lock, flags);
-
-printk("bio_free %p\n", bio);
 
 	wake_up(&bios_to_be_freed_event);
 }
@@ -1164,17 +1047,12 @@ static int free_bios_thread_fn(void *unused)
 
 		list_for_each_entry_safe(struct bio, bio, bio2, &bios_to_be_freed_list2, to_be_freed_list2) {
 			list_del(&bio->to_be_freed_list2);
-printk("bio: %p into free_mdls_and_irps\n", bio);
 	/* Reason for the BSOD on Server 2019 on resync? */
 			free_mdls_and_irp(bio);
-printk("bio: %p into put pages\n", bio);
 			for (i=0;i<bio->bi_vcnt;i++) {
-printk("put_page(%p)\n", bio->bi_io_vec[i].bv_page);
 				put_page(bio->bi_io_vec[i].bv_page);
 			}
-printk("bio: %p into kfree\n", bio);
 			kfree(bio);
-printk("bio: %p out of kfree\n", bio);
 		}
 	}
 
@@ -1209,7 +1087,6 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	if (bio == NULL)
 		return NULL;
 
-printk("bio_clone from %p to %p\n", bio_src, bio);
 	memcpy(bio->bi_io_vec, bio_src->bi_io_vec, bio_src->bi_max_vecs * sizeof(struct bio_vec));
 	bio->bi_iter.bi_sector = bio_src->bi_iter.bi_sector;
 	bio->bi_bdev = bio_src->bi_bdev;
@@ -1225,7 +1102,6 @@ printk("bio_clone from %p to %p\n", bio_src, bio);
 	bio->force_mdl_unlock = bio_src->force_mdl_unlock;
 
 	for (i=0;i<bio->bi_vcnt;i++) {
-printk("bio %p -> %p page is %p\n", bio_src, bio, bio->bi_io_vec[i].bv_page);
 		get_page(bio->bi_io_vec[i].bv_page);
 	}
 
@@ -1243,10 +1119,6 @@ printk("bio %p -> %p page is %p\n", bio_src, bio, bio->bi_io_vec[i].bv_page);
 int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsigned int offset, char *file, int line, char *func)
 {
 	struct bio_vec *bvec = &bio->bi_io_vec[bio->bi_vcnt++];
-
-printk("page is %p called from %s:%d (%s())\n", page, file, line, func);
-printk("page is %p len is %d offset is %d\n", page, len, offset);
-printk("page is %p page->size is %d page->addr is %p page->kref is %d\n", page, page->size, page->addr, atomic_read(&page->kref.refcount.refs));
 
 	bvec->bv_page = page;
 	bvec->bv_len = len;
@@ -2218,9 +2090,6 @@ static int windrbd_generic_make_request(struct bio *bio)
 	}
 		/* Else leave it locked */
 
-if (bio->bi_irps[bio->bi_this_request]->MdlAddress != NULL)
-printk("Mdl is %p mdl->MappedSystemVa is %p mdl->StartVa is %p MmGetMdlVirtualAddress(mdl) is %p\n", bio->bi_irps[bio->bi_this_request]->MdlAddress, bio->bi_irps[bio->bi_this_request]->MdlAddress->MappedSystemVa, bio->bi_irps[bio->bi_this_request]->MdlAddress->StartVa, MmGetMdlVirtualAddress(bio->bi_irps[bio->bi_this_request]->MdlAddress));
-
 	int total_size = first_size;
 
 #if 0
@@ -2736,9 +2605,7 @@ void bio_endio(struct bio *bio)
 	}
 // printk("3\n");
 
-printk("into bio_put\n");
 	bio_put(bio);
-printk("out of bio_put\n");
 }
 
 void __list_del_entry(struct list_head *entry)
@@ -3349,60 +3216,45 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		err = -ENOMEM;
 		goto out_no_queue;
 	}
-printk("Into IoInitializeRemoveLock() %p\n", &block_device->remove_lock);
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
-printk("1\n");
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
-printk("2\n");
 	if (!NT_SUCCESS(status)) {
 		printk("Failed to acquire remove lock, status is %s\n", status);
 		err = -EBUSY;
 		goto out_remove_lock_error;
 	}
-printk("3\n");
 
         kref_init(&block_device->kref);
  
-printk("4\n");
 	block_device->bd_contains = block_device;
 	block_device->bd_parent = NULL;
-printk("5\n");
 
 		/* TODO: not always? */
 	block_device->bd_block_size = 512;
 	block_device->bd_disk->queue->logical_block_size = 512;
 	block_device->bd_disk->queue->max_hw_sectors = DRBD_MAX_BIO_SIZE >> 9;
-printk("6\n");
 
 	block_device->file_object = file_object;
-printk("7\n");
 
 	mutex_init(&block_device->vol_size_mutex);
-printk("8\n");
 	block_device->d_size = windrbd_get_volsize(block_device);
-printk("9\n");
 	if (block_device->d_size == -1) {
 		printk(KERN_ERR "Cannot get volsize.\n");
 		err = -EINVAL;
 		goto out_get_volsize_error;
 	}
-printk("a\n");
 	block_device->path_to_device = path_to_device;
 
-printk("b\n");
 	init_waitqueue_head(&block_device->bios_event);
 	atomic_set(&block_device->num_bios_pending, 0);
 	atomic_set(&block_device->num_irps_pending, 0);
 
-printk("c\n");
 	INIT_LIST_HEAD(&block_device->write_cache);
 	spin_lock_init(&block_device->write_cache_lock);
 
-printk("d\n");
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
 
-printk("e\n");
 	if (check_if_backingdev_contains_filesystem(block_device)) {
 		printk(KERN_ERR "Backing device contains filesystem, refusing to use it.\n");
 		printk(KERN_INFO "You may want to do something like windrbd hide-filesystem <drive-letter-of-backing-dev>\n");
@@ -3410,7 +3262,6 @@ printk("e\n");
 		goto out_get_volsize_error;
 	}
 
-printk("f\n");
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
@@ -3654,12 +3505,6 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	bdev->delete_pending = false;
 	bdev->about_to_delete = false;
 	KeClearEvent(&bdev->device_removed_event);
-#if 0
-		/* BSODs: Re-Init is not allowed */
-		/* might need re-init */
-printk("IoInitializeRemoveLock %p \n", &bdev->remove_lock);
-	IoInitializeRemoveLock(&bdev->remove_lock, 'DRBD', 0, 0);
-#endif
 
 	bdev_ref = new_device->DeviceExtension;
 	bdev_ref->bdev = bdev;
@@ -4252,7 +4097,6 @@ static void windrbd_destroy_block_device(struct kref *kref)
 	if (bdev->bd_disk != NULL)
 		bdev->bd_disk->bdev = NULL;
 
-printk("kfree(bdev = %p)\n", bdev);
 	kfree(bdev);
 		/* Do not set windows device object->DeviceExtension->ref
 		 * to NULL here. The object already has been deleted
