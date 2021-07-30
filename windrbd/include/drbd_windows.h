@@ -1048,13 +1048,11 @@ void free_page_kref(struct kref *kref);
 
 static inline void put_page(struct page *page)
 {
-printk("page is %p kref is %d\n", page, atomic_read(&page->kref.refcount.refs));
 	kref_put(&page->kref, free_page_kref);
 }
 
 static inline void get_page(struct page *page)
 {
-printk("page is %p kref is %d\n", page, atomic_read(&page->kref.refcount.refs));
 	kref_get(&page->kref);
 }
 
