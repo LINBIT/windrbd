@@ -1,0 +1,38 @@
+From 4dd0cd18008ddd051787a9c6475f70cc6e4a82d4 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 9 Jul 2021 17:52:18 +0200
+Subject: [PATCH 3/3] drbd_bitmap: free page (via put_page) instead of freeing
+ mempool
+
+This caused a verifier (0xc4/0x13) BSOD which should be fixed now.
+---
+ drbd/drbd_bitmap.c | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/drbd/drbd_bitmap.c b/drbd/drbd_bitmap.c
+index cbaf9f5..60b7ec5 100644
+--- a/drbd/drbd_bitmap.c
++++ b/drbd/drbd_bitmap.c
+@@ -1116,7 +1116,7 @@ static void drbd_bm_endio(struct bio *bio)
+ 	bio_put(bio);
+ 
+ 	if (page)
+-		mempool_free(page, &drbd_md_io_page_pool);
++		put_page(page);
+ 
+ 	if (atomic_dec_and_test(&ctx->in_flight)) {
+ 		ctx->done = 1;
+@@ -1151,10 +1151,6 @@ static void bm_page_io_async(struct drbd_bm_aio_ctx *ctx, int page_nr)
+ 	bm_set_page_unchanged(b->bm_pages[page_nr]);
+ 
+ 	if (ctx->flags & BM_AIO_COPY_PAGES) {
+-/*
+-		page = mempool_alloc(&drbd_md_io_page_pool,
+-				GFP_NOIO | __GFP_HIGHMEM);
+-*/
+ 		page = alloc_page(GFP_NOIO | __GFP_HIGHMEM);
+ 		expect(device, page);
+ 
+-- 
+2.17.0
+

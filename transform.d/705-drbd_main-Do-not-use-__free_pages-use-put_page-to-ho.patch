@@ -1,0 +1,44 @@
+From b5bd73369216e552c2c50a57779b6af34a333a71 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 9 Jul 2021 17:14:51 +0200
+Subject: [PATCH 1/3] drbd_main: Do not use __free_pages: use put_page() to
+ honor reference count.
+
+---
+ drbd/drbd_main.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 5327d3a..5af21c2 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3011,7 +3011,7 @@ void drbd_destroy_device(struct kref *kref)
+ 		free_peer_device(peer_device);
+ 	}
+ 
+-	__free_page(device->md_io.page);
++	put_page(device->md_io.page);
+ 	device->vdisk = NULL;
+ 	device->rq_queue = NULL;
+ 	kref_debug_destroy(&device->kref_debug);
+@@ -3027,7 +3027,7 @@ static void free_page_pool(struct drbd_resource *resource)
+ 	while (resource->pp_pool) {
+ 		page = resource->pp_pool;
+ 		resource->pp_pool = page_chain_next(page);
+-		__free_page(page);
++		put_page(page);
+ 		resource->pp_vacant--;
+ 	}
+ }
+@@ -3942,7 +3942,7 @@ out_no_peer_device:
+ 
+ 	drbd_bm_free(device->bitmap);
+ out_no_bitmap:
+-	__free_page(device->md_io.page);
++	put_page(device->md_io.page);
+ out_no_io_page:
+ 	put_disk(disk);
+ out_no_disk:
+-- 
+2.17.0
+
