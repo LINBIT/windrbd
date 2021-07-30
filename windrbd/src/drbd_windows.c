@@ -1099,7 +1099,6 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->bi_this_request = bio_src->bi_this_request;
 	bio->bi_first_element = bio_src->bi_first_element;
 	bio->bi_last_element = bio_src->bi_last_element;
-	bio->force_mdl_unlock = bio_src->force_mdl_unlock;
 
 	for (i=0;i<bio->bi_vcnt;i++) {
 		get_page(bio->bi_io_vec[i].bv_page);
@@ -3142,7 +3141,6 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 	init_completion(&c);
 	b->bi_private = &c;
 	bio_set_dev(b, dev);
-	b->force_mdl_unlock = 1;
 	b->bi_paged_memory = 1;
 
 	submit_bio(b);

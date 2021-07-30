@@ -763,14 +763,6 @@ struct bio {
 	int is_flush;
 	int has_big_buffer;
 
-		/* Set by check for file system. For some reason
-		 * the MDL's locked flag is not set while we still need
-		 * an unlock (for Server 2019 running with verifier)
-		 */
-	int force_mdl_unlock;
-	int force_no_unmap;
-	int do_not_mm_unmap_locked_pages;	/* Server 2019 BSOD on sync */
-
 	struct list_head to_be_freed_list;
 	struct list_head to_be_freed_list2;
 
@@ -778,9 +770,9 @@ struct bio {
 	char *file;
 	int line;
 	char *func;
-
-	struct bio *is_cloned_from; // TODO: also when no debug
 #endif
+
+	struct bio *is_cloned_from;
 
 	/* TODO: may be put members here again? Update: Not sure,
 	 * we've put a KEVENT here and it didn't work .. might also
