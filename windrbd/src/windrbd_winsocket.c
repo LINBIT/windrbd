@@ -356,7 +356,7 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 	if (completion->page) {
 		completion->page->is_unmapped = 1;
 		if (may_printk)
-			printk("Avoiding page %p to be unmapped twice.\n", completion->page);
+			dbg("Avoiding page %p to be unmapped twice.\n", completion->page);
 	}
 
 	kfree(completion->wsk_buffer);
