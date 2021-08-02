@@ -36,6 +36,12 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Feature: HLK tests should succeed (for Windows 2019)
+
+TODO: Feature: installer should prompt for WinDRBD path
+
+TODO: Feature: bundle sed with WinDRBD
+
 TODO: Feature: Do not attach to disk if there is a file system on it.
 
 	instead of hiding the file system. People should be prevented
