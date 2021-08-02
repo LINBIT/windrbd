@@ -383,3 +383,5 @@ Version history
  * 1.0.0-rc12 (May 17, 2021): Fixed 3 stability issues, drbd utils support
 			      relocation. Now ran 5 days in disconnect/connect
 			      loop without issues.
+ * 1.0.0-rc13 (Aug 2, 2021): Upgrade to DRBD 9.0.29, fixed most issues found
+			     by driver verifier.
