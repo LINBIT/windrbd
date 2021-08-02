@@ -3921,7 +3921,7 @@ int windrbd_mount(struct block_device *dev)
 	OBJECT_ATTRIBUTES attr;
 
 	if (dev->mount_point.Buffer == NULL) {
-		printk("No mount point set for minor %d, will not be mounted.\n", dev->drbd_device->minor);
+		dbg("No mount point set for minor %d, will not be mounted.\n", dev->drbd_device->minor);
 		return 0;	/* this is legal */
 	}
 
@@ -3962,7 +3962,7 @@ int windrbd_umount(struct block_device *bdev)
 	HANDLE event_handle;
 
 	if (bdev->mount_point.Buffer == NULL) {
-		printk("windrbd_umount() called without a known mount_point.\n");
+		dbg("windrbd_umount() called without a known mount_point.\n");
 		return 0;
 	}
 // printk("mount point is \"%S\"\n", bdev->mount_point.Buffer);
