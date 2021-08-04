@@ -1433,6 +1433,7 @@ void test_main(const char *arg);
 int my_atoi(const char *c);
 
 NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default);
+NTSTATUS get_registry_long_long(wchar_t *key, unsigned long long *val_p, unsigned long long the_default);
 
 	/* can always send page */
 static inline bool sendpage_ok(struct page *p)

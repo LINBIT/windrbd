@@ -495,6 +495,17 @@ static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 	if ((pops->flags & GENL_ADMIN_PERM) && (current->is_root == 0))
 		return -EPERM;
 
+	if ((pops->flags & GENL_ADMIN_PERM) && is_locked) {
+		unsigned long long reg_val;
+		NTSTATUS status;
+
+		status = get_registry_long_long(L"ConfigKey", &reg_val, -1);
+		if (status != STATUS_SUCCESS)
+			return -EPERM;
+		if (reg_val != config_key)
+			return -EPERM;
+	}
+
 	/* TODO: and if dump? According to net/netlink/genetlink.c:500
 	 * (function genl_family_rcv_msg) this has to be checked first.
 	 */
