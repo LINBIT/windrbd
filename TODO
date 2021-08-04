@@ -36,6 +36,10 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: Out of memory after 2 days of Primary/Secondary loop
+
+	There appears to be a memory leak.
+
 TODO: Feature: HLK tests should succeed (for Windows 2019)
 
 TODO: Feature: installer should prompt for WinDRBD path
