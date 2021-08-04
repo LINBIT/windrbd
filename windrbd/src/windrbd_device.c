@@ -430,6 +430,18 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 
 		break;
 
+	case IOCTL_WINDRBD_ROOT_SET_CONFIG_KEY:
+		const char *the_config_key = irp->AssociatedIrp.SystemBuffer;
+
+		if (the_config_key == NULL)
+			status = STATUS_INVALID_DEVICE_REQUEST;
+		else {
+			if (lock_interface(the_config_key) < 0)
+				status = STATUS_ACCESS_DENIED;
+		}
+
+		break;
+
 	default:
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;

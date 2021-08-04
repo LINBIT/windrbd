@@ -1469,4 +1469,6 @@ size_t strlcpy(char *dest, const char *src, size_t size);
 /* Implemented in windrbd_test: base works now from 2 to 36 */
 unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base);
 
+int lock_interface(const char *config_key_param);
+
 #endif // DRBD_WINDOWS_H
