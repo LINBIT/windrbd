@@ -1,6 +1,7 @@
 #include "drbd_windows.h"
 #include "windrbd_threads.h"
 #include "drbd_int.h"
+#include <ctype.h>
 
 int debug_printks_enabled = 0;
 
@@ -211,16 +212,28 @@ static struct mutex test_mutex;
 static struct semaphore test_semaphore;
 static struct rw_semaphore test_rw_semaphore;
 
-	/* TODO: base is always 10 */
+#define min(a,b) ((a)<(b)?(a):(b))
 
-static unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base)
+unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base)
 {
         unsigned long long val = 0;
+        char c;
 
-        while (isdigit(*nptr)) {
-                val *= 10;
-                val += (*nptr)-'0';
-                nptr++;
+        if (base <= 36 && base >= 2) {
+                while (1) {
+                        c = toupper(*nptr);
+                        if (c >= '0' && c<'0'+min(base, 10)) {
+				val *= base;
+                                val += c-'0';
+			} else {
+                                if (c>='A' && c<'A'+base-10) {
+					val *= base;
+                                        val += c-'A'+10;
+				} else
+					break;
+			}
+			nptr++;
+                }
         }
         if (endptr)
                 *endptr = nptr;

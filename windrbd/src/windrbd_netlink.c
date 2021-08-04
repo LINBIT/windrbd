@@ -473,18 +473,18 @@ static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netli
     return err;
 }
 
-unsinged long long config_key;
+unsigned long long config_key;
 int is_locked = 0;
 
-int lock_interface(const char *config_key)
+int lock_interface(const char *config_key_param)
 {
 	if (is_locked)
 		return -EPERM;
 
 	is_locked = 1;
-	config_key = my_strtoull(config_key, NULL, 16);
+	config_key = my_strtoull(config_key_param, NULL, 16);
+	return 0;
 }
-
 
 /* Sort of kernel function, but now (4.18) this is in
  * genl_family_rcv_msg()
