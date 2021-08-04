@@ -43,7 +43,7 @@
 #include "linux/types.h"
 #include "generic_compat_stuff.h"
 #include "wingenl.h"
-#include "windrbd_ioctl.h"
+#include "windrbd/windrbd_ioctl.h"
 
 #include "disp.h"
 #include <linux/mempool.h>
@@ -56,6 +56,7 @@
 #include <linux/rwlock.h>
 
 #include "tiktok.h"
+#include <ctype.h>
 
 void init_windrbd(void);
 void msleep(int ms);
@@ -1463,5 +1464,8 @@ int kobject_uevent(struct kobject *kobj, enum kobject_action action);
 
 /* Implemented. Taken from Linux 5.11 */
 size_t strlcpy(char *dest, const char *src, size_t size);
+
+/* Implemented in windrbd_test: base works now from 2 to 36 */
+unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base);
 
 #endif // DRBD_WINDOWS_H
