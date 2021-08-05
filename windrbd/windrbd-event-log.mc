@@ -22,7 +22,7 @@ LanguageNames =
 
 MessageId = 0x0001
 Facility = DriverEntryLogs
-Severity = Informational
+Severity = Error
 SymbolicName = EVT_HELLO_MESSAGE
 
 Language = Portuguese
