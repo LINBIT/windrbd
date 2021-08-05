@@ -4,6 +4,8 @@
 #include <linux/net.h>
 #include <linux/socket.h>
 
+#include "windrbd.h"
+
 /* We have three logging 'targets': One is the standard DbgPrint
    facility provided by Windows. Use a tool like DbgView to view
    them on the local host or use a remote kernel debugger (WinDbg)
@@ -276,7 +278,8 @@ void write_to_eventlog(const char *msg)
 	RtlZeroMemory(log_packet, sizeof(IO_ERROR_LOG_PACKET));
 
     //-f--> Puts up the desired message
-	log_packet->ErrorCode = 58;
+	/* see generated .h file */
+	log_packet->ErrorCode = EVT_HELLO_MESSAGE;
 
     //-f--> It fills up the binary dump and its size.
 	log_packet->DumpData[0] = 42;
