@@ -281,8 +281,10 @@ void write_to_eventlog(const char *msg)
 	/* see generated .h file */
 	log_packet->ErrorCode = EVT_HELLO_MESSAGE;
 
+printk("error code is %x\n", log_packet->ErrorCode);
+
     //-f--> It fills up the binary dump and its size.
-	log_packet->DumpData[0] = 42;
+	log_packet->DumpData[0] = 43;
 	log_packet->DumpDataSize = sizeof(unsigned long);
 
 	IoWriteErrorLogEntry(log_packet);
