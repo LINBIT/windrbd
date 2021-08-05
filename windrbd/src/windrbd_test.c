@@ -1129,6 +1129,18 @@ int crypto_test(int argc, char ** argv)
 
 extern void start_tiktok(int argc, const char ** argv);
 
+extern void write_to_eventlog(const char *msg);
+
+static void test_event_log(int argc, char ** argv)
+{
+	int i;
+
+	for (i=0; i<argc; i++) {
+		printk("argv[%d] is %s\n", i, argv[i]);
+		write_to_eventlog(argv[i]);
+	}
+}
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1196,6 +1208,8 @@ void test_main(const char *arg)
 		wait_event_test(argc, argv);
 	if (strcmp(argv[0], "start_tiktok") == 0)
 		start_tiktok(argc, argv);
+	if (strcmp(argv[0], "event_log") == 0)
+		test_event_log(argc, argv);
 
 kfree_argv:
 	kfree(argv);

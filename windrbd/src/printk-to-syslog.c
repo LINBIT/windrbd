@@ -258,6 +258,34 @@ int currently_in_printk(void)
 	return 0;
 }
 
+	/* see https://driverentry.com.br/en/blog/?p=348 */
+
+void write_to_eventlog(const char *msg)
+{
+	struct _IO_ERROR_LOG_PACKET *log_packet;
+
+    //-f--> It allocates the event entry. We should sum
+    //      the used bytes by the DumpData array. That
+    //      size should always be a multiple of sizeof(ULONG).
+
+	log_packet = IoAllocateErrorLogEntry(mvolDriverObject,
+                                         sizeof(IO_ERROR_LOG_PACKET) +
+                                         sizeof(unsigned long));
+
+    //-f--> It Initializes the whole structure.
+	RtlZeroMemory(log_packet, sizeof(IO_ERROR_LOG_PACKET));
+
+    //-f--> Puts up the desired message
+	log_packet->ErrorCode = 58;
+
+    //-f--> It fills up the binary dump and its size.
+	log_packet->DumpData[0] = 42;
+	log_packet->DumpDataSize = sizeof(unsigned long);
+
+	IoWriteErrorLogEntry(log_packet);
+
+}
+
 /* Prints the message via DbgPrintEx and sends it to logging host
  * via syslog UDP if we may sleep. Stores message in ring buffer
  * so we also see messages from raised IRQL once we are being 
