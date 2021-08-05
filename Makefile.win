@@ -234,7 +234,7 @@ all: versioninfo windrbd.sys
 versioninfo:
 	cd ../.. && ./versioninfo.sh converted-sources $(EXTRA_VERSION) || true
 
-windrbd.sys: $(patsubst %.c,%.obj,$(DRBD_FILES)) $(patsubst %.c,%.obj,$(WINDRBD_FILES)) resource.res
+windrbd.sys: $(patsubst %.c,%.obj,$(DRBD_FILES)) $(patsubst %.c,%.obj,$(WINDRBD_FILES)) resource.res windrbd.res
 	rm -f windrbd.pdb "_$@"
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"windrbd.pdb" /OUT:"_$@"
 	mv -f "_$@" "$@"
@@ -254,6 +254,12 @@ endif
 
 
 resource.res: resource.rc
+	"$(EWDK_BIN)/rc.exe" $<
+
+windrbd.rc: windrbd.mc
+	"$(EWDK_BIN)/mc.exe" $<
+
+windrbd.res: windrbd.rc
 	"$(EWDK_BIN)/rc.exe" $<
 
 ifeq ($(shell uname -o),Cygwin)
