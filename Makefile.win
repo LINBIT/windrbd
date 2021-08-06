@@ -259,6 +259,11 @@ resource.res: resource.rc
 windrbd-event-log.rc: ../../windrbd/windrbd-event-log.mc
 	"$(EWDK_BIN)/mc.exe" $<
 
+windrbd-event-log.h: ../../windrbd/windrbd-event-log.mc
+	"$(EWDK_BIN)/mc.exe" $<
+
+$(WINDRBD_SRCDIR)/printk-to-syslog.obj: windrbd-event-log.h
+
 windrbd-event-log.res: windrbd-event-log.rc
 	"$(EWDK_BIN)/rc.exe" $<
 
