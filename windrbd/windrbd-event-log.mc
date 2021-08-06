@@ -22,11 +22,11 @@ LanguageNames =
 
 MessageId = 0x0001
 Facility = DriverEntryLogs
-Severity = Error
+Severity = Informational
 SymbolicName = EVT_HELLO_MESSAGE
 
 Language = Portuguese
-"Ola mundo!"
+"Ola mundo! xxx 123"
 .
 
 Language = English
