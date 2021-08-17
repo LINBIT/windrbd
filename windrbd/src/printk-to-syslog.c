@@ -282,6 +282,8 @@ void write_to_eventlog(const char *msg)
 
 	total_size = sizeof(IO_ERROR_LOG_PACKET) + msg_u.Length + sizeof(wchar_t);
 
+printk("total_size is %zd\n", total_size);
+
     //-f--> It allocates the event entry. We should sum
     //      the used bytes by the DumpData array. That
     //      size should always be a multiple of sizeof(ULONG).
