@@ -1129,15 +1129,15 @@ int crypto_test(int argc, char ** argv)
 
 extern void start_tiktok(int argc, const char ** argv);
 
-extern void write_to_eventlog(const char *msg);
+extern void write_to_eventlog(int loglevel, const char *msg);
 
 static void test_event_log(int argc, char ** argv)
 {
 	int i;
 
-	for (i=0; i<argc; i++) {
+	for (i=1; i<argc; i++) {
 		printk("argv[%d] is %s\n", i, argv[i]);
-		write_to_eventlog(argv[i]);
+		write_to_eventlog(i, argv[i]);
 	}
 }
 

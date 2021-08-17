@@ -16,21 +16,24 @@ FacilityNames =
 
 LanguageNames =
 (
-    Portuguese  = 0x0416:msg00001
     English     = 0x0409:msg00002
 )
 
 MessageId = 0x0001
 Facility = DriverEntryLogs
 Severity = Informational
-SymbolicName = EVT_HELLO_MESSAGE
-
-Language = Portuguese
-"Ola mundo! xxx 123 123 zaklebt nicht %0"
-.
+SymbolicName = WINDRBD_INFO_MESSAGE
 
 Language = English
-Info: 2: %2 3: %3 4: %4
+Info: %2
 .
 
+MessageId = 0x0001
+Facility = DriverEntryLogs
+Severity = Error
+SymbolicName = WINDRBD_ERROR_MESSAGE
+
+Language = English
+Error: %2
+.
 

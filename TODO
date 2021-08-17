@@ -39,6 +39,8 @@ Real:
 TODO: Bug: Out of memory after 2 days of Primary/Secondary loop
 
 	There appears to be a memory leak.
+	Also out of memory after 7 days one side I/O other side
+	connect / disconnect (the I/O side runs out of memory)
 
 TODO: Feature: HLK tests should succeed (for Windows 2019)
 

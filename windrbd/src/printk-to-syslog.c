@@ -265,9 +265,29 @@ int currently_in_printk(void)
 	return 0;
 }
 
+
+int linux_loglevel_to_windows_severity(int log_level)
+{
+if (log_level & 1) return WINDRBD_ERROR_MESSAGE;
+return WINDRBD_INFO_MESSAGE;
+#if 0
+	switch (log_level) {
+		/* see definitions of string markers in drbd_windows.h */
+	case 0:
+	case 1:
+	case 2: return WINDRBD_CRITICAL_MESSAGE;
+	case 3: return WINDRBD_ERROR_MESSAGE;
+	case 4: return WINDRBD_WARNING_MESSAGE;
+	case 5:
+	case 6: return WINDRBD_INFO_MESSAGE;
+	default: return WINDRBD_SUCCESS_MESSAGE;	/* debug, ... */
+	}
+#endif
+}
+
 	/* see https://driverentry.com.br/en/blog/?p=348 */
 
-void write_to_eventlog(const char *msg)
+void write_to_eventlog(int log_level, const char *msg)
 {
 	struct _IO_ERROR_LOG_PACKET *log_packet;
 	ANSI_STRING msg_a;
@@ -282,7 +302,7 @@ void write_to_eventlog(const char *msg)
 
 	total_size = sizeof(IO_ERROR_LOG_PACKET) + msg_u.Length + sizeof(wchar_t);
 
-printk("total_size is %zd\n", total_size);
+printk("total_size is %d ERROR_LOG_MAXIMUM_SIZE is %d\n", total_size, ERROR_LOG_MAXIMUM_SIZE);
 
     //-f--> It allocates the event entry. We should sum
     //      the used bytes by the DumpData array. That
@@ -303,7 +323,7 @@ printk("total_size is %zd\n", total_size);
 
     //-f--> Puts up the desired message
 	/* see generated .h file */
-	log_packet->ErrorCode = EVT_HELLO_MESSAGE;
+	log_packet->ErrorCode = linux_loglevel_to_windows_severity(log_level);
 	log_packet->StringOffset = sizeof(IO_ERROR_LOG_PACKET);
 	log_packet->NumberOfStrings = 1;
 
