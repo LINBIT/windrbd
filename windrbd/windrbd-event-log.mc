@@ -43,7 +43,7 @@ Severity = Warning
 SymbolicName = WINDRBD_WARNING_MESSAGE
 
 Language = English
-Error: %2
+Warning: %2
 .
 
 MessageId = 0x0001

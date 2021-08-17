@@ -270,14 +270,12 @@ int linux_loglevel_to_windows_severity(int log_level)
 {
 	switch (log_level) {
 		/* see definitions of string markers in drbd_windows.h */
+		/* WARNING, SUCCESS and CRITICAL do not work .. */
 	case 0:
 	case 1:
 	case 2:
 	case 3: return WINDRBD_ERROR_MESSAGE;
-	case 4: return WINDRBD_WARNING_MESSAGE;
-	case 5:
-	case 6: return WINDRBD_INFO_MESSAGE;
-	default: return WINDRBD_SUCCESS_MESSAGE;	/* debug, ... */
+	default: return WINDRBD_INFO_MESSAGE;	/* warning notice info  debug, ... */
 	}
 }
 
