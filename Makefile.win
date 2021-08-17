@@ -291,6 +291,7 @@ clean:
 	rm -f *.obj *.pdb
 	rm -f $(WINDRBD_SRCDIR)/*.obj $(WINDRBD_SRCDIR)/*.pdb
 	rm -f windrbd.sys windrbd.cat
+	rm -f windrbd-event-log.*
 
 package: windrbd.sys
 	( cd ../../inno-setup && iscc windrbd.iss /DWindrbdSource=$(WINDRBD_SOURCE) /DWindrbdUtilsSource=$(DRBD_UTILS_SOURCE) )
