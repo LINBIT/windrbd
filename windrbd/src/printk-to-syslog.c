@@ -270,30 +270,52 @@ int currently_in_printk(void)
 void write_to_eventlog(const char *msg)
 {
 	struct _IO_ERROR_LOG_PACKET *log_packet;
+	ANSI_STRING msg_a;
+	UNICODE_STRING msg_u;
+	size_t total_size;
+	wchar_t *target;
+
+	RtlInitAnsiString(&msg_a, msg);
+	RtlAnsiStringToUnicodeString(&msg_u, &msg_a, TRUE);
+
+		/* msg_u.Length is size in bytes. We need a 0 terminator */
+
+	total_size = sizeof(IO_ERROR_LOG_PACKET) + msg_u.Length + sizeof(wchar_t);
 
     //-f--> It allocates the event entry. We should sum
     //      the used bytes by the DumpData array. That
     //      size should always be a multiple of sizeof(ULONG).
 
-	log_packet = IoAllocateErrorLogEntry(mvolDriverObject,
-                                         sizeof(IO_ERROR_LOG_PACKET) +
-                                         sizeof(unsigned long));
+	log_packet = IoAllocateErrorLogEntry(mvolDriverObject, total_size);
+
+		/* can't do anything .. */
+
+	if (log_packet == NULL) {
+		RtlFreeUnicodeString(&msg_u);
+		return;
+	}
+
 
     //-f--> It Initializes the whole structure.
-	RtlZeroMemory(log_packet, sizeof(IO_ERROR_LOG_PACKET));
+	RtlZeroMemory(log_packet, total_size);
 
     //-f--> Puts up the desired message
 	/* see generated .h file */
 	log_packet->ErrorCode = EVT_HELLO_MESSAGE;
+	log_packet->StringOffset = sizeof(IO_ERROR_LOG_PACKET);
+	log_packet->NumberOfStrings = 1;
+
+	target = (wchar_t*) (((char*) log_packet) + sizeof(IO_ERROR_LOG_PACKET));
+
+	wcsncpy(target, msg_u.Buffer, msg_u.Length / sizeof(wchar_t));
+	target[msg_u.Length / sizeof(wchar_t)] = 0;
 
 printk("error code is %x\n", log_packet->ErrorCode);
-
-    //-f--> It fills up the binary dump and its size.
-	log_packet->DumpData[0] = 43;
-	log_packet->DumpDataSize = sizeof(unsigned long);
+printk("msg is %S\n", target);
 
 	IoWriteErrorLogEntry(log_packet);
 
+	RtlFreeUnicodeString(&msg_u);
 }
 
 /* Prints the message via DbgPrintEx and sends it to logging host

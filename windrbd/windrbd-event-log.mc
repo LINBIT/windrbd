@@ -22,15 +22,15 @@ LanguageNames =
 
 MessageId = 0x0001
 Facility = DriverEntryLogs
-Severity = Error
+Severity = Informational
 SymbolicName = EVT_HELLO_MESSAGE
 
 Language = Portuguese
-"Ola mundo! xxx 123 %1 123 zaklebt nicht"
+"Ola mundo! xxx 123 123 zaklebt nicht %0"
 .
 
 Language = English
-"Hello world! test 123 zakschon %1 123 zaklebt nicht"
+Info: %0
 .
 
 
