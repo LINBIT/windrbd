@@ -30,7 +30,7 @@ Language = Portuguese
 .
 
 Language = English
-Info: %0
+Info: 2: %2 3: %3 4: %4
 .
 
 
