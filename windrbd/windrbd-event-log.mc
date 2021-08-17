@@ -30,7 +30,7 @@ Language = Portuguese
 .
 
 Language = English
-"Hello world! test 123 %1 123 zaklebt nicht"
+"Hello world! test 123 zakschon %1 123 zaklebt nicht"
 .
 
 
