@@ -268,21 +268,17 @@ int currently_in_printk(void)
 
 int linux_loglevel_to_windows_severity(int log_level)
 {
-if (log_level & 1) return WINDRBD_ERROR_MESSAGE;
-return WINDRBD_INFO_MESSAGE;
-#if 0
 	switch (log_level) {
 		/* see definitions of string markers in drbd_windows.h */
 	case 0:
 	case 1:
-	case 2: return WINDRBD_CRITICAL_MESSAGE;
+	case 2:
 	case 3: return WINDRBD_ERROR_MESSAGE;
 	case 4: return WINDRBD_WARNING_MESSAGE;
 	case 5:
 	case 6: return WINDRBD_INFO_MESSAGE;
 	default: return WINDRBD_SUCCESS_MESSAGE;	/* debug, ... */
 	}
-#endif
 }
 
 	/* see https://driverentry.com.br/en/blog/?p=348 */
@@ -292,7 +288,7 @@ void write_to_eventlog(int log_level, const char *msg)
 	struct _IO_ERROR_LOG_PACKET *log_packet;
 	ANSI_STRING msg_a;
 	UNICODE_STRING msg_u;
-	size_t total_size;
+	size_t total_size, msg_size;	/* all in bytes */
 	wchar_t *target;
 
 	RtlInitAnsiString(&msg_a, msg);
@@ -300,9 +296,14 @@ void write_to_eventlog(int log_level, const char *msg)
 
 		/* msg_u.Length is size in bytes. We need a 0 terminator */
 
-	total_size = sizeof(IO_ERROR_LOG_PACKET) + msg_u.Length + sizeof(wchar_t);
+	/* MUST NOT EXCEED ERROR_LOG_MAXIMUM_SIZE */
 
-printk("total_size is %d ERROR_LOG_MAXIMUM_SIZE is %d\n", total_size, ERROR_LOG_MAXIMUM_SIZE);
+	total_size = sizeof(IO_ERROR_LOG_PACKET) + msg_u.Length + sizeof(wchar_t);
+	msg_size = msg_u.Length;
+	if (total_size > ERROR_LOG_MAXIMUM_SIZE) {
+		msg_size -= total_size - ERROR_LOG_MAXIMUM_SIZE;
+		total_size = ERROR_LOG_MAXIMUM_SIZE;
+	}
 
     //-f--> It allocates the event entry. We should sum
     //      the used bytes by the DumpData array. That
@@ -329,11 +330,8 @@ printk("total_size is %d ERROR_LOG_MAXIMUM_SIZE is %d\n", total_size, ERROR_LOG_
 
 	target = (wchar_t*) (((char*) log_packet) + sizeof(IO_ERROR_LOG_PACKET));
 
-	wcsncpy(target, msg_u.Buffer, msg_u.Length / sizeof(wchar_t));
-	target[msg_u.Length / sizeof(wchar_t)] = 0;
-
-printk("error code is %x\n", log_packet->ErrorCode);
-printk("msg is %S\n", target);
+	wcsncpy(target, msg_u.Buffer, msg_size / sizeof(wchar_t));
+	target[msg_size / sizeof(wchar_t)] = 0;
 
 	IoWriteErrorLogEntry(log_packet);
 

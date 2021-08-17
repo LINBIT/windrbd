@@ -21,11 +21,29 @@ LanguageNames =
 
 MessageId = 0x0001
 Facility = DriverEntryLogs
+Severity = Success
+SymbolicName = WINDRBD_SUCCESS_MESSAGE
+
+Language = English
+Success: %2
+.
+
+MessageId = 0x0001
+Facility = DriverEntryLogs
 Severity = Informational
 SymbolicName = WINDRBD_INFO_MESSAGE
 
 Language = English
 Info: %2
+.
+
+MessageId = 0x0001
+Facility = DriverEntryLogs
+Severity = Warning
+SymbolicName = WINDRBD_WARNING_MESSAGE
+
+Language = English
+Error: %2
 .
 
 MessageId = 0x0001
