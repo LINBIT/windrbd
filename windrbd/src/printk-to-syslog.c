@@ -275,6 +275,7 @@ int linux_loglevel_to_windows_severity(int log_level)
 	case 1:
 	case 2:
 	case 3: return WINDRBD_ERROR_MESSAGE;
+	case 4: return WINDRBD_WARNING_MESSAGE;
 	default: return WINDRBD_INFO_MESSAGE;	/* warning notice info  debug, ... */
 	}
 }
@@ -325,6 +326,8 @@ void write_to_eventlog(int log_level, const char *msg)
 	log_packet->ErrorCode = linux_loglevel_to_windows_severity(log_level);
 	log_packet->StringOffset = sizeof(IO_ERROR_LOG_PACKET);
 	log_packet->NumberOfStrings = 1;
+
+printk("log level is %d error code is %x\n", log_level, log_packet->ErrorCode);
 
 	target = (wchar_t*) (((char*) log_packet) + sizeof(IO_ERROR_LOG_PACKET));
 
