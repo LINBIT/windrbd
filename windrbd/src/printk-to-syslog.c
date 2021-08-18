@@ -344,19 +344,34 @@ void split_message_and_write_to_eventlog(int log_level, const char *msg)
 #define MAX_CHARS ((ERROR_LOG_MAXIMUM_SIZE - sizeof(IO_ERROR_LOG_PACKET) - 1) / sizeof(wchar_t))
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 	char buf[MAX_CHARS];
-	size_t len, total_len;
+	size_t len, total_len, num_chars, offset;
 	const char *pos;
+	int chunk;
 
 	pos = msg;
+	num_chars = MAX_CHARS-5;
+	chunk = 0;
 	while (1) {
 		total_len = strlen(pos);
 		if (total_len == 0)
 			break;
-		len = min(total_len, MAX_CHARS-1);
-		strncpy(buf, pos, len);
-		buf[len] = '\0';
-		write_to_eventlog(log_level, buf);
+		offset = 0;
+		if (chunk > 0) {
+			strncpy(buf, "... ", strlen("... "));
+			offset = strlen("... ");
+		}
+		len = min(total_len, num_chars);
+		strncpy(&buf[offset], pos, len);
+		if (len == num_chars) {
+			strncpy(&buf[num_chars+offset], " ...", strlen(" ..."));
+			buf[num_chars+offset+4] = '\0';
+		} else {
+			buf[len] = '\0';
+		}
 		pos+=len;
+		write_to_eventlog(log_level, buf);
+		num_chars = MAX_CHARS-9;
+		chunk++;
 	}
 }
 
