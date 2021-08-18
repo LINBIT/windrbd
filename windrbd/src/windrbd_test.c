@@ -1130,6 +1130,7 @@ int crypto_test(int argc, char ** argv)
 extern void start_tiktok(int argc, const char ** argv);
 
 extern void write_to_eventlog(int loglevel, const char *msg);
+extern void split_message_and_write_to_eventlog(int loglevel, const char *msg);
 
 static void test_event_log(int argc, char ** argv)
 {
@@ -1138,6 +1139,17 @@ static void test_event_log(int argc, char ** argv)
 	for (i=1; i<argc; i++) {
 		printk("argv[%d] is %s\n", i, argv[i]);
 		write_to_eventlog(i, argv[i]);
+	}
+}
+
+
+static void test_event_log_split(int argc, char ** argv)
+{
+	int i;
+
+	for (i=1; i<argc; i++) {
+		printk("argv[%d] is %s\n", i, argv[i]);
+		split_message_and_write_to_eventlog(i, argv[i]);
 	}
 }
 
@@ -1229,6 +1241,8 @@ void test_main(const char *arg)
 		test_event_log(argc, argv);
 	if (strcmp(argv[0], "event_log_level_test") == 0)
 		test_event_log_level(argc, argv);
+	if (strcmp(argv[0], "event_log_split") == 0)
+		test_event_log_split(argc, argv);
 
 kfree_argv:
 	kfree(argv);

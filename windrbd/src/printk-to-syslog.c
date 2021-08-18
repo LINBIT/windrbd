@@ -295,7 +295,7 @@ void write_to_eventlog(int log_level, const char *msg)
 
 		/* msg_u.Length is size in bytes. We need a 0 terminator */
 
-	/* MUST NOT EXCEED ERROR_LOG_MAXIMUM_SIZE */
+	/* MUST NOT EXCEED ERROR_LOG_MAXIMUM_SIZE (=240) */
 
 	total_size = sizeof(IO_ERROR_LOG_PACKET) + msg_u.Length + sizeof(wchar_t);
 	msg_size = msg_u.Length;
@@ -337,6 +337,27 @@ void write_to_eventlog(int log_level, const char *msg)
 	IoWriteErrorLogEntry(log_packet);
 
 	RtlFreeUnicodeString(&msg_u);
+}
+
+void split_message_and_write_to_eventlog(int log_level, const char *msg)
+{
+#define MAX_CHARS ((ERROR_LOG_MAXIMUM_SIZE - sizeof(IO_ERROR_LOG_PACKET) - 1) / sizeof(wchar_t))
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+	char buf[MAX_CHARS];
+	size_t len, total_len;
+	const char *pos;
+
+	pos = msg;
+	while (1) {
+		total_len = strlen(pos);
+		if (total_len == 0)
+			break;
+		len = min(total_len, MAX_CHARS-1);
+		strncpy(buf, pos, len);
+		buf[len] = '\0';
+		write_to_eventlog(log_level, buf);
+		pos+=len;
+	}
 }
 
 /* Prints the message via DbgPrintEx and sends it to logging host
@@ -433,7 +454,7 @@ int _printk(const char *func, const char *fmt, ...)
 	}
 	/* Event log. TODO: if level < threshold */
 
-	write_to_eventlog(level-'0', buffer+pos);
+	split_message_and_write_to_eventlog(level-'0', buffer+pos);
 	
 	/* Print messages to debugging facility, use a tool like
 	 * DbgViewer to see them.
