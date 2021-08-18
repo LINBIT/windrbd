@@ -327,7 +327,7 @@ void write_to_eventlog(int log_level, const char *msg)
 	log_packet->StringOffset = sizeof(IO_ERROR_LOG_PACKET);
 	log_packet->NumberOfStrings = 1;
 
-printk("log level is %d error code is %x\n", log_level, log_packet->ErrorCode);
+// printk("log level is %d error code is %x\n", log_level, log_packet->ErrorCode);
 
 	target = (wchar_t*) (((char*) log_packet) + sizeof(IO_ERROR_LOG_PACKET));
 
@@ -352,7 +352,7 @@ int _printk(const char *func, const char *fmt, ...)
 	char line[512];	/* Must fit in one UDP packet */
 	size_t line_pos;
     
-	int level = '1';
+	int level;
 	const char *fmt_without_level;
 	size_t pos, len, len_ret;
 	LARGE_INTEGER time;
@@ -378,9 +378,12 @@ int _printk(const char *func, const char *fmt, ...)
 	}
 
 	fmt_without_level = fmt;
-	if (fmt[0] == '<' && fmt[2] == '>') {
-		level = fmt[1];
-		fmt_without_level = fmt + 3;
+	level = '6';	/* KERN_INFO */
+	if (strlen(fmt) > 2) {
+		if (fmt[0] == '<' && fmt[2] == '>') {
+			level = fmt[1];
+			fmt_without_level = fmt + 3;
+		}
 	}
 
 	KeQuerySystemTime(&time);
@@ -418,8 +421,9 @@ int _printk(const char *func, const char *fmt, ...)
 	pos = strlen(buffer);
 	va_start(args, fmt);
 	status = RtlStringCbVPrintfA(buffer+pos, sizeof(buffer)-1-pos,
-		    fmt, args);
-/* TODO: va_end ! */
+		    fmt_without_level, args);
+	va_end(args);
+
 	if (! NT_SUCCESS(status))
 	{
 		if (!no_windows_printk)
@@ -427,6 +431,10 @@ int _printk(const char *func, const char *fmt, ...)
 		buffer_overflows++;
 		return -EINVAL;
 	}
+	/* Event log. TODO: if level < threshold */
+
+	write_to_eventlog(level-'0', buffer+pos);
+	
 	/* Print messages to debugging facility, use a tool like
 	 * DbgViewer to see them.
 	 */
