@@ -342,8 +342,10 @@ void write_to_eventlog(int log_level, const char *msg)
 void split_message_and_write_to_eventlog(int log_level, const char *msg)
 {
 #define MAX_CHARS ((ERROR_LOG_MAXIMUM_SIZE - sizeof(IO_ERROR_LOG_PACKET) - 1) / sizeof(wchar_t))
+	/* so we get messages up to 4500 characters */
+#define MAX_CHUNKS 50
 #define min(a,b) (((a) < (b)) ? (a) : (b))
-	char buf[MAX_CHARS];
+	char buf[MAX_CHUNKS][MAX_CHARS];
 	size_t len, total_len, num_chars, offset;
 	const char *pos;
 	int chunk;
@@ -351,28 +353,29 @@ void split_message_and_write_to_eventlog(int log_level, const char *msg)
 	pos = msg;
 	num_chars = MAX_CHARS-5;
 	chunk = 0;
-	while (1) {
+	while (chunk < MAX_CHUNKS) {
 		total_len = strlen(pos);
 		if (total_len == 0)
 			break;
 		offset = 0;
 		if (chunk > 0) {
-			strncpy(buf, "... ", strlen("... "));
+			strncpy(buf[chunk], "... ", strlen("... "));
 			offset = strlen("... ");
 		}
 		len = min(total_len, num_chars);
-		strncpy(&buf[offset], pos, len);
+		strncpy(&buf[chunk][offset], pos, len);
 		if (len == num_chars) {
-			strncpy(&buf[num_chars+offset], " ...", strlen(" ..."));
-			buf[num_chars+offset+4] = '\0';
+			strncpy(&buf[chunk][num_chars+offset], " ...", strlen(" ..."));
+			buf[chunk][num_chars+offset+4] = '\0';
 		} else {
-			buf[len] = '\0';
+			buf[chunk][len+offset] = '\0';
 		}
 		pos+=len;
-		write_to_eventlog(log_level, buf);
 		num_chars = MAX_CHARS-9;
 		chunk++;
 	}
+	for (chunk--;chunk>=0;chunk--)
+		write_to_eventlog(log_level, buf[chunk]);
 }
 
 /* Prints the message via DbgPrintEx and sends it to logging host
