@@ -1141,6 +1141,23 @@ static void test_event_log(int argc, char ** argv)
 	}
 }
 
+static void test_event_log_level(int argc, char ** argv)
+{
+	printk("info default");
+
+/* those should go to error log: */
+	printk(KERN_EMERG "emerg");
+	printk(KERN_ALERT "alert");
+	printk(KERN_CRIT  "crit");
+	printk(KERN_ERR   "error");
+/* This to warnings: */
+	printk(KERN_WARNING "warning");
+/* these to Info: */
+	printk(KERN_NOTICE "notice");
+	printk(KERN_INFO "info");
+	printk(KERN_DEBUG "debug");
+}
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1210,6 +1227,8 @@ void test_main(const char *arg)
 		start_tiktok(argc, argv);
 	if (strcmp(argv[0], "event_log") == 0)
 		test_event_log(argc, argv);
+	if (strcmp(argv[0], "event_log_level_test") == 0)
+		test_event_log_level(argc, argv);
 
 kfree_argv:
 	kfree(argv);
