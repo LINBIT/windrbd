@@ -112,7 +112,7 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 		syslog_ip[ip_length] = '\0';
 	}
 	set_syslog_ip(syslog_ip);
-	printk("syslog_ip from registry is %s", syslog_ip);
+	printk(KERN_DEBUG "syslog_ip from registry is %s", syslog_ip);
 
 	return 0;
 }

@@ -44,7 +44,7 @@ static int no_net_printk = 0;
 
 	/* The first few messages on booting always go into event log */
 
-static int event_log_level_threshold = 6; /* KERN_INFO */
+static int event_log_level_threshold = 5; /* KERN_NOTICE */
 
 /* TODO: use (and test) O_NONBLOCK sending again, once weird printk
  * losses are fixed.

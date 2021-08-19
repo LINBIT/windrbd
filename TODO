@@ -36,6 +36,14 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Feature: event log
+
+	Documentation
+	Installer: set registry key in
+		HKLM\System\CurrentControlSet\services\eventlog\system\EventMessageFile
+	to Windows path of sys file on the target.
+	Implement windrbd set-event-log-level
+
 TODO: Bug: Out of memory after 2 days of Primary/Secondary loop
 
 	There appears to be a memory leak.
