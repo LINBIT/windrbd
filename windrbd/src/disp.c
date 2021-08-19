@@ -119,6 +119,9 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	NTSTATUS            		status;
 	int ret;
 
+		/* Needed for event log */
+	mvolDriverObject = DriverObject;
+
 	/* Init windrbd primitives (spinlocks, ...) before doing anything
 	 * else .. needed for printk.
 	 */
@@ -159,8 +162,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	initRegistry(RegistryPath);
 	init_event_log();
-
-	mvolDriverObject = DriverObject;
 
 	status = create_device(WINDRBD_ROOT_DEVICE_NAME, &SDDL_DEVOBJ_SYS_ALL_ADM_ALL, &mvolRootDeviceObject);
 	if (status != STATUS_SUCCESS)
