@@ -1471,4 +1471,7 @@ unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base)
 
 int lock_interface(const char *config_key_param);
 
+void init_event_log(void);
+void set_event_log_threshold(int level);
+
 #endif // DRBD_WINDOWS_H

@@ -158,6 +158,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 #endif
 
 	initRegistry(RegistryPath);
+	init_event_log();
 
 	mvolDriverObject = DriverObject;
 

@@ -42,7 +42,9 @@ static int no_net_printk = 0;
 
 	/* Write messages with this Linux loglevel or less */
 
-static int event_log_level_threshold = 6;	/* KERN_INFO */
+	/* The first few messages on booting always go into event log */
+
+static int event_log_level_threshold = 6; /* KERN_INFO */
 
 /* TODO: use (and test) O_NONBLOCK sending again, once weird printk
  * losses are fixed.
@@ -87,6 +89,18 @@ int initialize_syslog_printk(void)
 	in_printk = 0;
 
 	return 0;
+}
+
+void init_event_log(void)
+{
+	get_registry_int(L"event_log_level", &event_log_level_threshold, 6);
+	printk("Event log threshold is %d\n", event_log_level_threshold);
+}
+
+void set_event_log_threshold(int level)
+{
+	event_log_level_threshold = level;
+	printk("Event log threshold is %d\n", event_log_level_threshold);
 }
 
 static void stop_net_printk(void)
@@ -444,7 +458,7 @@ int _printk(const char *func, const char *fmt, ...)
 	hr_timer = KeQueryPerformanceCounter(&hr_frequency);
 
 	pos = strlen(buffer);
-	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "level is %c U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8x(%s) #%llu %s ",
+	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "loglevel <%c> U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8x(%s) #%llu %s ",
 	    level, hour, min, sec, msec,
 	    hr_timer.QuadPart, hr_frequency.QuadPart,
 	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */

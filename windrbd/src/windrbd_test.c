@@ -1170,6 +1170,18 @@ static void test_event_log_level(int argc, char ** argv)
 	printk(KERN_DEBUG "debug");
 }
 
+static void set_event_log_level_test(int argc, char ** argv)
+{
+	int level;
+
+	if (argc == 2) {
+		level = my_atoi(argv[1]);
+		set_event_log_threshold(level);
+	} else {
+		printk("Usage: set_event_log_level_test <loglevel>\n");
+	}
+}
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1243,6 +1255,8 @@ void test_main(const char *arg)
 		test_event_log_level(argc, argv);
 	if (strcmp(argv[0], "event_log_split") == 0)
 		test_event_log_split(argc, argv);
+	if (strcmp(argv[0], "set_event_log_level") == 0)
+		set_event_log_level_test(argc, argv);
 
 kfree_argv:
 	kfree(argv);
