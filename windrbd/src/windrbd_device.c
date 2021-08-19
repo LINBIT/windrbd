@@ -442,6 +442,16 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 
 		break;
 
+	case IOCTL_WINDRBD_ROOT_SET_EVENT_LOG_LEVEL:
+		int *the_level = irp->AssociatedIrp.SystemBuffer;
+
+		if (the_level == NULL)
+			status = STATUS_INVALID_DEVICE_REQUEST;
+		else
+			set_event_log_threshold(*the_level);
+
+		break;
+
 	default:
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;
