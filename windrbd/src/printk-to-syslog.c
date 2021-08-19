@@ -444,7 +444,7 @@ int _printk(const char *func, const char *fmt, ...)
 	hr_timer = KeQueryPerformanceCounter(&hr_frequency);
 
 	pos = strlen(buffer);
-	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8x(%s) #%llu %s ",
+	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "level is %c U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8x(%s) #%llu %s ",
 	    level, hour, min, sec, msec,
 	    hr_timer.QuadPart, hr_frequency.QuadPart,
 	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
@@ -475,8 +475,6 @@ int _printk(const char *func, const char *fmt, ...)
 		buffer_overflows++;
 		return -EINVAL;
 	}
-	/* Event log. TODO: if level < threshold */
-
 	if ((!no_event_log_printk) && ((level-'0') >= 0) && ((level-'0') <= event_log_level_threshold))
 		split_message_and_write_to_eventlog(level-'0', buffer+pos);
 	
