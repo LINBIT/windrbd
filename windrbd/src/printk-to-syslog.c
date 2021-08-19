@@ -35,9 +35,14 @@
  * syslog ip and maybe port and also the protocol (UDP or TCP).
  */
 
+static int no_event_log_printk = 0;
 static int no_windows_printk = 0;
 static int no_memory_printk = 0;
 static int no_net_printk = 0;
+
+	/* Write messages with this Linux loglevel or less */
+
+static int event_log_level_threshold = 6;	/* KERN_INFO */
 
 /* TODO: use (and test) O_NONBLOCK sending again, once weird printk
  * losses are fixed.
@@ -472,7 +477,8 @@ int _printk(const char *func, const char *fmt, ...)
 	}
 	/* Event log. TODO: if level < threshold */
 
-	split_message_and_write_to_eventlog(level-'0', buffer+pos);
+	if ((!no_event_log_printk) && ((level-'0') >= 0) && ((level-'0') <= event_log_level_threshold))
+		split_message_and_write_to_eventlog(level-'0', buffer+pos);
 	
 	/* Print messages to debugging facility, use a tool like
 	 * DbgViewer to see them.
