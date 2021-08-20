@@ -39,10 +39,6 @@ Real:
 TODO: Feature: event log
 
 	Documentation
-	Installer: set registry key in
-		HKLM\System\CurrentControlSet\services\eventlog\system\EventMessageFile
-	to Windows path of sys file on the target.
-	Implement windrbd set-event-log-level
 
 TODO: Bug: Out of memory after 2 days of Primary/Secondary loop
 
@@ -7353,4 +7349,11 @@ Done: Bug: primary / secondary / primary / I/O BSOD
 	do not MmUnlockPages in creating the requets (which
 	was broken anyway). Requries more testing but for now
 	it can be closed.
+
+Done: Feature: event log
+
+	Installer: set registry key in
+		HKLM\System\CurrentControlSet\services\eventlog\system\EventMessageFile
+	to Windows path of sys file on the target.
+	Implement windrbd set-event-log-level
 

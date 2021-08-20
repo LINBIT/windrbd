@@ -93,7 +93,7 @@ int initialize_syslog_printk(void)
 
 void init_event_log(void)
 {
-	get_registry_int(L"event_log_level", &event_log_level_threshold, 6);
+	get_registry_int(L"event_log_level", &event_log_level_threshold, 5);
 	printk("Event log threshold is %d\n", event_log_level_threshold);
 }
 
