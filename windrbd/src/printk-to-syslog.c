@@ -44,7 +44,8 @@ static int no_net_printk = 0;
 
 	/* The first few messages on booting always go into event log */
 
-static int event_log_level_threshold = 5; /* KERN_NOTICE */
+#define DEFAULT_EVENT_LOG_LEVEL 5
+static int event_log_level_threshold = DEFAULT_EVENT_LOG_LEVEL; /* KERN_NOTICE */
 
 /* TODO: use (and test) O_NONBLOCK sending again, once weird printk
  * losses are fixed.
@@ -93,7 +94,7 @@ int initialize_syslog_printk(void)
 
 void init_event_log(void)
 {
-	get_registry_int(L"event_log_level", &event_log_level_threshold, 5);
+	get_registry_int(L"event_log_level", &event_log_level_threshold, DEFAULT_EVENT_LOG_LEVEL);
 	printk("Event log threshold is %d\n", event_log_level_threshold);
 }
 
