@@ -36,14 +36,6 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Bug: JSON output escape backward slashes.
-
-	"\DosDevices\W:" instead of "\\DosDevices\\W:"
-
-TODO: Bug: lk_bdev_safe: /usr/local/var/lib/drbd/xxx.minor2.lkdb no such file or diretory
-
-	Seems to be new in rc13-38-xxx-signed
-
 TODO: Feature: event log
 
 	Documentation
@@ -7368,4 +7360,14 @@ Done: Feature: event log
 
 Done: Code quality: Remove printk's and ad-hoc flags introduced for fixing
 	bugs found by verifier
+
+Done: Bug: lk_bdev_safe: /usr/local/var/lib/drbd/xxx.minor2.lkdb no such file or diretory
+
+	Seems to be new in rc13-38-xxx-signed
+
+Done: Bug: JSON output escape backward slashes.
+
+	"\DosDevices\W:" instead of "\\DosDevices\\W:"
+
+	Was an upstream bug, TODO: create merge request.
 
