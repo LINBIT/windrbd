@@ -36,6 +36,14 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: JSON output escape backward slashes.
+
+	"\DosDevices\W:" instead of "\\DosDevices\\W:"
+
+TODO: Bug: lk_bdev_safe: /usr/local/var/lib/drbd/xxx.minor2.lkdb no such file or diretory
+
+	Seems to be new in rc13-38-xxx-signed
+
 TODO: Feature: event log
 
 	Documentation
@@ -45,6 +53,10 @@ TODO: Bug: Out of memory after 2 days of Primary/Secondary loop
 	There appears to be a memory leak.
 	Also out of memory after 7 days one side I/O other side
 	connect / disconnect (the I/O side runs out of memory)
+
+TODO: Bug: Secondary hangs in NetworkFailure
+
+	When peer runs out of memory (not responsive any more)
 
 TODO: Feature: HLK tests should succeed (for Windows 2019)
 
@@ -56,9 +68,6 @@ TODO: Feature: Do not attach to disk if there is a file system on it.
 
 	instead of hiding the file system. People should be prevented
 	from shooting themselves in the foot.
-
-TODO: Code quality: Remove printk's and ad-hoc flags introduced for fixing
-	bugs found by verifier
 
 TODO: Bug: Verifier BSOD on sync.
 
@@ -7356,4 +7365,7 @@ Done: Feature: event log
 		HKLM\System\CurrentControlSet\services\eventlog\system\EventMessageFile
 	to Windows path of sys file on the target.
 	Implement windrbd set-event-log-level
+
+Done: Code quality: Remove printk's and ad-hoc flags introduced for fixing
+	bugs found by verifier
 
