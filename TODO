@@ -56,11 +56,6 @@ TODO: Feature: installer should prompt for WinDRBD path
 
 TODO: Feature: bundle sed with WinDRBD
 
-TODO: Feature: Do not attach to disk if there is a file system on it.
-
-	instead of hiding the file system. People should be prevented
-	from shooting themselves in the foot.
-
 TODO: Bug: Verifier BSOD on sync.
 
 	Bug check 0xC4: DRIVER_VERIFIER_DETECTED_VIOLATION
@@ -169,17 +164,6 @@ TODO: Feature: Make UM helper command configurable
 
 	Currently hard coded to cmd shell. Put this into a registry
 	key.
-
-TODO: Feature: use existing data
-
-	Problem is that SCSI disk requires (?) a partition table.
-
-	Right now only limitation is that Windows 7 complains with
-	a device in use panel. Windows server 2016 does not.
-	But we lose data here (!) see seperate bug.
-
-	It seems to be possible to use pre-formatted backing devices
-	as DRBD data (without partition table).
 
 TODO: Documentaion: Remove reference to block devices from user's guide
 
@@ -7370,4 +7354,28 @@ Done: Bug: JSON output escape backward slashes.
 	"\DosDevices\W:" instead of "\\DosDevices\\W:"
 
 	Was an upstream bug, TODO: create merge request.
+
+Rejected: Feature: Do not attach to disk if there is a file system on it.
+
+	instead of hiding the file system. People should be prevented
+	from shooting themselves in the foot.
+
+	But then one cannot reuse existing data ... probably we will
+	leave it as it is.
+
+Done: Feature: use existing data
+
+	Problem is that SCSI disk requires (?) a partition table.
+
+	Right now only limitation is that Windows 7 complains with
+	a device in use panel. Windows server 2016 does not.
+	But we lose data here (!) see seperate bug.
+
+	It seems to be possible to use pre-formatted backing devices
+	as DRBD data (without partition table).
+
+	Update: Putting WinDRBD atop an existing (NTFS) partition should
+	work as expected. Keep in mind that on drbdadm up the partition
+	will be hidden, so you can only access your data via DRBD
+	(or do a windrbd show-filesystem ... )
 
