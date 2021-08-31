@@ -83,6 +83,7 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 ; Name: modifypath; Description: &Add application directory to your environmental path;
 
 [Dirs]
+Name: "{#SysRoot}\bin"
 Name: "{#SysRoot}\usr\sbin"
 Name: "{#SysRoot}\var\run\drbd"
 Name: "{#SysRoot}\var\lib\drbd"
@@ -100,8 +101,24 @@ Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\windrbd-sample.res"; Des
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygwin1.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygrunsrv.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygwin1.dll"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygrunsrv.exe"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygattr-1.dll"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygbz2-1.dll"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygiconv-2.dll"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygintl-8.dll"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygncursesw-10.dll"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygreadline7.dll"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\bash.exe"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cat.exe"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\chmod.exe"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cp.exe"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\ls.exe"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\mkdir.exe"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\mv.exe"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\sed.exe"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\sync.exe"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\unzip.exe"; DestDir: "{#SysRoot}\bin"; Flags: ignoreversion
 Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\msgbox.vbs"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 ; must be in same folder as the sysfile.
@@ -140,9 +157,10 @@ const
 
 	function ModPathDir(): TArrayOfString;
 	begin
-		setArrayLength(Result, 2);
+		setArrayLength(Result, 3);
 		Result[0] := ExpandConstant('{app}');
 		Result[1] := ExpandConstant('C:\windrbd\usr\sbin');
+		Result[2] := ExpandConstant('C:\windrbd\bin');
 	end;
 
 #include "modpath.iss"
