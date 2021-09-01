@@ -251,6 +251,7 @@ begin
 end;
 
 var InstallBusDeviceCheckBox: TNewCheckBox;  
+var WinDRBDRootDirPage: TInputDirWizardPage;
 
 procedure InitializeWizard;
 var  
@@ -263,6 +264,11 @@ var
 	MainPage: TWizardPage;  
 
 begin
+	WinDRBDRootDirPage := CreateInputDirPage(wpSelectDir, 'Select WinDRBD root directory', '',  '', True, 'WinDRBD');
+	WinDRBDRootDirPage.Add('WinDRBD root directory:');
+// TODO: Lookup value in registry
+	WinDRBDRootDirPage.Values[0] := 'C:\WinDRBD';
+
 	MainPage := CreateCustomPage(wpSelectTasks, 'Options', 'Please select installation options below.');
 	InstallBusDeviceLabel1 := TLabel.Create(MainPage);
 	InstallBusDeviceLabel1.Parent := MainPage.Surface;
@@ -301,6 +307,11 @@ begin
 	InstallBusDeviceCheckBox.Width := 100;
 	InstallBusDeviceCheckBox.Caption := 'Install bus device';
 	InstallBusDeviceCheckBox.Checked := true;
+end;
+
+function WinDRBDRootDir: String;
+begin
+	Result := WinDRBDRootDirPage.Values[0];
 end;
 
 function DoCreateBusDevice: Boolean;
