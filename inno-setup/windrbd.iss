@@ -328,8 +328,9 @@ begin
 	InstallBusDeviceCheckBox.Checked := true;
 end;
 
-function WinDRBDRootDir: String;
+function WinDRBDRootDir(params: String) : String;
 begin
+// MsgBox('Root dir is '+ WinDRBDRootDirPage.Values[0], mbInformation, MB_OK);
 	Result := WinDRBDRootDirPage.Values[0];
 end;
 
