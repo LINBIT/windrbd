@@ -459,7 +459,7 @@ int _printk(const char *func, const char *fmt, ...)
 	hr_timer = KeQueryPerformanceCounter(&hr_frequency);
 
 	pos = strlen(buffer);
-	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "loglevel <%c> U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8x(%s) #%llu %s ",
+	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8x(%s) #%llu %s ",
 	    level, hour, min, sec, msec,
 	    hr_timer.QuadPart, hr_frequency.QuadPart,
 	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
