@@ -270,6 +270,7 @@ begin
 end;
 
 var InstallBusDeviceCheckBox: TNewCheckBox;  
+var WinDRBDRootDirPage: TInputDirWizardPage;
 
 procedure InitializeWizard;
 var  
@@ -325,6 +326,11 @@ begin
 	InstallBusDeviceCheckBox.Width := 100;
 	InstallBusDeviceCheckBox.Caption := 'Install bus device';
 	InstallBusDeviceCheckBox.Checked := true;
+end;
+
+function WinDRBDRootDir: String;
+begin
+	Result := WinDRBDRootDirPage.Values[0];
 end;
 
 function DoCreateBusDevice: Boolean;
