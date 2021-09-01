@@ -83,21 +83,21 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 ; Name: modifypath; Description: &Add application directory to your environmental path;
 
 [Dirs]
-Name: "{#SysRoot}\bin"
-Name: "{#SysRoot}\usr\sbin"
-Name: "{#SysRoot}\var\run\drbd"
-Name: "{#SysRoot}\var\lib\drbd"
-Name: "{#SysRoot}\var\lock"
+Name: "{code:WinDRBDRootDir}\bin"
+Name: "{code:WinDRBDRootDir}\usr\sbin"
+Name: "{code:WinDRBDRootDir}\var\run\drbd"
+Name: "{code:WinDRBDRootDir}\var\lib\drbd"
+Name: "{code:WinDRBDRootDir}\var\lock"
 
 [Files]
-Source: "{#WindrbdUtilsSource}\user\v9\drbdadm.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion
-Source: "{#WindrbdUtilsSource}\user\v9\drbdmeta.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion
-Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion
-Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{#SysRoot}\usr\sbin"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\sysroot\README-windrbd.txt"; DestDir: "{#SysRoot}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.conf"; DestDir: "{#SysRoot}\etc"; Flags: ignoreversion onlyifdoesntexist
-Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\global_common.conf"; DestDir: "{#SysRoot}\etc\drbd.d"; Flags: ignoreversion onlyifdoesntexist
-Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\windrbd-sample.res"; DestDir: "{#SysRoot}\etc\drbd.d"; Flags: ignoreversion
+Source: "{#WindrbdUtilsSource}\user\v9\drbdadm.exe"; DestDir: "{code:WinDRBDRootDir}\usr\sbin"; Flags: ignoreversion
+Source: "{#WindrbdUtilsSource}\user\v9\drbdmeta.exe"; DestDir: "{code:WinDRBDRootDir}\usr\sbin"; Flags: ignoreversion
+Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{code:WinDRBDRootDir}\usr\sbin"; Flags: ignoreversion
+Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{code:WinDRBDRootDir}\usr\sbin"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\sysroot\README-windrbd.txt"; DestDir: "{code:WinDRBDRootDir}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.conf"; DestDir: "{code:WinDRBDRootDir}\etc"; Flags: ignoreversion onlyifdoesntexist
+Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\global_common.conf"; DestDir: "{code:WinDRBDRootDir}\etc\drbd.d"; Flags: ignoreversion onlyifdoesntexist
+Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\windrbd-sample.res"; DestDir: "{code:WinDRBDRootDir}\etc\drbd.d"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
@@ -266,7 +266,7 @@ var
 begin
 	WinDRBDRootDirPage := CreateInputDirPage(wpSelectDir, 'Select WinDRBD root directory', '',  '', True, 'WinDRBD');
 	WinDRBDRootDirPage.Add('WinDRBD root directory:');
-// TODO: Lookup value in registry
+// TODO: Lookup old value in registry
 	WinDRBDRootDirPage.Values[0] := 'C:\WinDRBD';
 
 	MainPage := CreateCustomPage(wpSelectTasks, 'Options', 'Please select installation options below.');
@@ -309,8 +309,9 @@ begin
 	InstallBusDeviceCheckBox.Checked := true;
 end;
 
-function WinDRBDRootDir: String;
+function WinDRBDRootDir(params: String) : String;
 begin
+// MsgBox('Root dir is '+ WinDRBDRootDirPage.Values[0], mbInformation, MB_OK);
 	Result := WinDRBDRootDirPage.Values[0];
 end;
 
