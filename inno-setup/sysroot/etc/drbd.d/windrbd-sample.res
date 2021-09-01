@@ -39,17 +39,21 @@ resource "windrbd-sample" {
 #
 			disk            "3e56b893-10bf-11e8-aedd-0800274289ab";
 #
-# Drive letter of the windrbd device as well as a unique minor (for this host)
-# The data is accessible under this drive letter (F: in that case) once
-# the windrbd resource is primary (do drbdadm up <res> / drbdadm primary <res>)
-#
-			device		"F:" minor 1;
-			meta-disk	internal;
-#
 # Meta disk can be internal or external
+			meta-disk	internal;
 #			meta-disk	"G:";
 # Again, we recommend not to use a drive letter:
 #			meta-disk       "3e56b893-10bf-11e8-aedd-080027421234";
+#
+# Device is Just an unique minor (for this host). Do not specify a
+# drive letter here any more since that interface (block device) is
+# deprecated # (MSSQL Server for example won't run). We now are accessing data
+# via a SCSI disk interface. Once the resource is Primary an additional
+# disk should appear in the Partition Manager (to be started from
+# Control Panel) where it can be partioned and the partitions can
+# be formatted and assigned a drive letter there.
+#
+			device		minor 1;
 #
 # Please note that Linux drbd-utils versions before 9.7.0 do not
 # understand the WinDRBD syntax of block devices, so you need to
