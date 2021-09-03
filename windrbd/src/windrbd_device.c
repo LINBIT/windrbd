@@ -442,6 +442,17 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 
 		break;
 
+	case IOCTL_WINDRBD_ROOT_GET_LOCK_DOWN_STATE:
+		int *is_locked_p = irp->AssociatedIrp.SystemBuffer;
+		if (s->Parameters.DeviceIoControl.InputBufferLength != sizeof(int)) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+		*is_locked_p = windrbd_is_locked();
+
+		irp->IoStatus.Information = 0;
+		break;
+
 	case IOCTL_WINDRBD_ROOT_SET_EVENT_LOG_LEVEL:
 		int *the_level = irp->AssociatedIrp.SystemBuffer;
 

@@ -486,6 +486,11 @@ int lock_interface(const char *config_key_param)
 	return 0;
 }
 
+int windrbd_is_locked(void)
+{
+	return is_locked;
+}
+
 /* Sort of kernel function, but now (4.18) this is in
  * genl_family_rcv_msg()
  */

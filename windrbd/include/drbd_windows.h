@@ -1470,6 +1470,7 @@ size_t strlcpy(char *dest, const char *src, size_t size);
 unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base);
 
 int lock_interface(const char *config_key_param);
+int windrbd_is_locked(void);
 
 void init_event_log(void);
 void set_event_log_threshold(int level);
