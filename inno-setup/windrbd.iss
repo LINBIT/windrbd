@@ -225,6 +225,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
 	if CurStep = ssInstall then begin
 		ModPath();
+// TODO: set WinDRBDRootPath registry key.
 	end;
 
 	if CurStep = ssInstall then begin
