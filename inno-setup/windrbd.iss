@@ -270,7 +270,6 @@ begin
 end;
 
 var InstallBusDeviceCheckBox: TNewCheckBox;  
-var WinDRBDRootDirPage: TInputDirWizardPage;
 
 procedure InitializeWizard;
 var  
@@ -328,15 +327,25 @@ begin
 	InstallBusDeviceCheckBox.Checked := true;
 end;
 
-function WinDRBDRootDir(params: String) : String;
-begin
-// MsgBox('Root dir is '+ WinDRBDRootDirPage.Values[0], mbInformation, MB_OK);
-	Result := WinDRBDRootDirPage.Values[0];
-end;
-
 function DoCreateBusDevice: Boolean;
 begin
 	Result := InstallBusDeviceCheckBox.Checked;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+	if CurStep = ssPostInstall then begin
+		ModPath();
+		cygpath(WinDRBDRootDir(''));
+	end;
+
+	if CurStep = ssInstall then begin
+		StopUserModeServices();
+	end;
+	if CurStep = ssPostInstall then begin
+		PatchRegistry();
+		StartUserModeServices();
+	end;
 end;
 
 procedure WriteWinDRBDRootPath;
