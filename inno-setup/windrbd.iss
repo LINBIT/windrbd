@@ -20,7 +20,6 @@
 #define MyAppPublisher "Linbit"
 #define MyAppURL "http://www.linbit.com/"
 #define MyAppURLDocumentation "https://www.linbit.com/user-guides/"
-#define SysRoot "C:\windrbd"
 #define DriverPath "C:\Windows\system32\drivers\windrbd.sys"
 
 [Setup]
@@ -133,18 +132,19 @@ Source: "{#WindrbdSource}\misc\ipxe-windrbd.pxe"; DestDir: "{app}"; Flags: ignor
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
 Name: "{group}\View {#MyAppName} Tech Guides"; Filename: "{#MyAppURLDocumentation}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{group}\Open {#MyAppName} configuration folder"; Filename: "C:\windrbd\etc\drbd.d"
+Name: "{group}\Open {#MyAppName} configuration folder"; Filename: "{code:WinDRBDRootDir}\etc\drbd.d"
 Name: "{group}\Open {#MyAppName} application folder"; Filename: "{app}"
                                                 
 [Run]
 Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
+; TODO: System directory. Do not hardcode C:\Windows.
 Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
-Filename: "C:\windrbd\usr\sbin\windrbd.exe"; Parameters: "install-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; Check: DoCreateBusDevice
+Filename: "{code:WinDRBDRootDir}\usr\sbin\windrbd.exe"; Parameters: "install-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; Check: DoCreateBusDevice
 Filename: "{#MyAppURLDocumentation}"; Description: "Download WinDRBD documentation"; Flags: postinstall shellexec
 
 [UninstallRun]
 Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c uninstall-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; RunOnceId: "UninstallWinDRBD"
-Filename: "C:\windrbd\usr\sbin\windrbd.exe"; Parameters: "remove-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; RunOnceId: "RemoveBusDeviceWinDRBD"
+Filename: "{code:WinDRBDRootDir}\usr\sbin\windrbd.exe"; Parameters: "remove-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; RunOnceId: "RemoveBusDeviceWinDRBD"
 
 [Registry]
 
@@ -155,6 +155,7 @@ Root: HKLM; Subkey: "System\CurrentControlSet\services\eventlog\system\WinDRBD";
 
 var WinDRBDRootDirPage: TInputDirWizardPage;
 
+// TODO: if uninstalling lookup value in the registry ...
 function WinDRBDRootDir(params: String) : String;
 begin
 // MsgBox('Root dir is '+ WinDRBDRootDirPage.Values[0], mbInformation, MB_OK);
@@ -173,6 +174,8 @@ begin
 	Result[1] := root_path + '\usr\sbin';
 	Result[2] := root_path + '\usr\bin';
 	Result[3] := root_path + '\bin';
+
+msgbox('modified path ' + root_path, mbInformation, MB_OK);
 end;
 
 #include "modpath.iss"
