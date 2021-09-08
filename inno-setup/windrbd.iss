@@ -164,16 +164,16 @@ end;
 const
 	ModPathType = 'system';
 
-	function ModPathDir(): TArrayOfString;
-	var root_path: String;
-	begin
-		root_path := WinDRBDRootDir('');
-		setArrayLength(Result, 4);
-		Result[0] := ExpandConstant('{app}');
-		Result[1] := root_path + '\usr\sbin';
-		Result[2] := root_path + '\usr\bin';
-		Result[3] := root_path + '\bin';
-	end;
+function ModPathDir(): TArrayOfString;
+var root_path: String;
+begin
+	root_path := WinDRBDRootDir('');
+	setArrayLength(Result, 4);
+	Result[0] := ExpandConstant('{app}');
+	Result[1] := root_path + '\usr\sbin';
+	Result[2] := root_path + '\usr\bin';
+	Result[3] := root_path + '\bin';
+end;
 
 #include "modpath.iss"
 
@@ -227,7 +227,6 @@ Begin
 End;
 
 Procedure PatchRegistry;
-
 Begin
 	QuoteImagePath('System\CurrentControlSet\Services\windrbdumhelper');
 	QuoteImagePath('System\CurrentControlSet\Services\windrbdlog');
@@ -243,9 +242,8 @@ begin
 begin
 	TmpFileName := ExpandConstant('{tmp}') + '\cygpath_results.txt';
 	Exec('cmd.exe', '/C cygpath "' + WindowsPath + '" > "' + TmpFileName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-	if LoadStringFromFile(TmpFileName, ExecStdout) then begin
-		MsgBox(ExecStdout, mbInformation, MB_OK);
-      { do something with contents of file... }
+	if not LoadStringFromFile(TmpFileName, ExecStdout) then begin
+		ExecStdout := '';
 	end;
 	DeleteFile(TmpFileName);
 	Result := ExecStdout;
@@ -328,11 +326,29 @@ begin
 	Result := InstallBusDeviceCheckBox.Checked;
 end;
 
+procedure WriteWinDRBDRootPath;
+var windrbd_root: String;
+
+begin
+	windrbd_root := cygpath(WinDRBDRootDir(''));
+	if windrbd_root = '' then
+	begin
+		MsgBox('Could not convert Windows path to cygwin path, Windows path is '+WinDRBDRootDir(''), mbInformation, MB_OK);
+	end
+	else
+	begin
+		if not RegWriteStringValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'WinDRBDRoot', windrbd_root) then
+		begin
+			MsgBox('Could not write cygwin path to registry, cygwin path is '+windrbd_root, mbInformation, MB_OK);
+		end;
+	end;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
 	if CurStep = ssPostInstall then begin
 		ModPath();
-		cygpath(WinDRBDRootDir(''));
+		WriteWinDRBDRootPath();
 	end;
 
 	if CurStep = ssInstall then begin
