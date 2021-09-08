@@ -152,15 +152,27 @@ Root: HKLM; Subkey: "System\CurrentControlSet\services\eventlog\system\WinDRBD";
 Root: HKLM; Subkey: "System\CurrentControlSet\services\eventlog\system\WinDRBD"; ValueType: string; ValueName: "EventMessageFile"; ValueData: "{#DriverPath}"
 
 [Code]
+
+var WinDRBDRootDirPage: TInputDirWizardPage;
+
+function WinDRBDRootDir(params: String) : String;
+begin
+// MsgBox('Root dir is '+ WinDRBDRootDirPage.Values[0], mbInformation, MB_OK);
+	Result := WinDRBDRootDirPage.Values[0];
+end;
+
 const
 	ModPathType = 'system';
 
 	function ModPathDir(): TArrayOfString;
+	var root_path: String;
 	begin
-		setArrayLength(Result, 3);
+		root_path := WinDRBDRootDir('');
+		setArrayLength(Result, 4);
 		Result[0] := ExpandConstant('{app}');
-		Result[1] := ExpandConstant('C:\windrbd\usr\sbin');
-		Result[2] := ExpandConstant('C:\windrbd\bin');
+		Result[1] := root_path + '\usr\sbin';
+		Result[2] := root_path + '\usr\bin';
+		Result[3] := root_path + '\bin';
 	end;
 
 #include "modpath.iss"
@@ -228,13 +240,15 @@ begin
 // TODO: set WinDRBDRootPath registry key.
 	end;
 
-	if CurStep = ssInstall then begin
-		StopUserModeServices();
+begin
+	TmpFileName := ExpandConstant('{tmp}') + '\cygpath_results.txt';
+	Exec('cmd.exe', '/C cygpath "' + WindowsPath + '" > "' + TmpFileName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+	if LoadStringFromFile(TmpFileName, ExecStdout) then begin
+		MsgBox(ExecStdout, mbInformation, MB_OK);
+      { do something with contents of file... }
 	end;
-	if CurStep = ssPostInstall then begin
-		PatchRegistry();
-		StartUserModeServices();
-	end;
+	DeleteFile(TmpFileName);
+	Result := ExecStdout;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
@@ -252,7 +266,6 @@ begin
 end;
 
 var InstallBusDeviceCheckBox: TNewCheckBox;  
-var WinDRBDRootDirPage: TInputDirWizardPage;
 
 procedure InitializeWizard;
 var  
@@ -310,13 +323,24 @@ begin
 	InstallBusDeviceCheckBox.Checked := true;
 end;
 
-function WinDRBDRootDir(params: String) : String;
-begin
-// MsgBox('Root dir is '+ WinDRBDRootDirPage.Values[0], mbInformation, MB_OK);
-	Result := WinDRBDRootDirPage.Values[0];
-end;
-
 function DoCreateBusDevice: Boolean;
 begin
 	Result := InstallBusDeviceCheckBox.Checked;
 end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+	if CurStep = ssPostInstall then begin
+		ModPath();
+		cygpath(WinDRBDRootDir(''));
+	end;
+
+	if CurStep = ssInstall then begin
+		StopUserModeServices();
+	end;
+	if CurStep = ssPostInstall then begin
+		PatchRegistry();
+		StartUserModeServices();
+	end;
+end;
+
