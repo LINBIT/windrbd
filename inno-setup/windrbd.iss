@@ -174,6 +174,8 @@ begin
 	Result[1] := root_path + '\usr\sbin';
 	Result[2] := root_path + '\usr\bin';
 	Result[3] := root_path + '\bin';
+
+msgbox('modified path ' + root_path, mbInformation, MB_OK);
 end;
 
 #include "modpath.iss"
