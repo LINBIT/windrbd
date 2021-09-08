@@ -174,8 +174,6 @@ begin
 	Result[1] := root_path + '\usr\sbin';
 	Result[2] := root_path + '\usr\bin';
 	Result[3] := root_path + '\bin';
-
-msgbox('modified path ' + root_path, mbInformation, MB_OK);
 end;
 
 #include "modpath.iss"
@@ -332,11 +330,29 @@ begin
 	Result := InstallBusDeviceCheckBox.Checked;
 end;
 
+procedure WriteWinDRBDRootPath;
+var windrbd_root: String;
+
+begin
+	windrbd_root := cygpath(WinDRBDRootDir(''));
+	if windrbd_root = '' then
+	begin
+		MsgBox('Could not convert Windows path to cygwin path, Windows path is '+WinDRBDRootDir(''), mbInformation, MB_OK);
+	end
+	else
+	begin
+		if not RegWriteStringValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'WinDRBDRoot', windrbd_root) then
+		begin
+			MsgBox('Could not write cygwin path to registry, cygwin path is '+windrbd_root, mbInformation, MB_OK);
+		end;
+	end;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
 	if CurStep = ssPostInstall then begin
 		ModPath();
-		cygpath(WinDRBDRootDir(''));
+		WriteWinDRBDRootPath();
 	end;
 
 	if CurStep = ssInstall then begin
