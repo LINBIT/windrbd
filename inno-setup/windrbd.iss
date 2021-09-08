@@ -243,7 +243,9 @@ begin
 	end;
 
 begin
+msgbox('Into cygpath '+WindowsPath, mbInformation, MB_OK);
 	TmpFileName := ExpandConstant('{tmp}') + '\cygpath_results.txt';
+msgbox('cygpath out dir is '+TmpFileName, mbInformation, MB_OK);
 	Exec('cmd.exe', '/C cygpath "' + WindowsPath + '" > "' + TmpFileName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 	if not LoadStringFromFile(TmpFileName, ExecStdout) then begin
 		ExecStdout := '';
