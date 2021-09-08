@@ -139,7 +139,7 @@ Name: "{group}\Open {#MyAppName} application folder"; Filename: "{app}"
 Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
 ; TODO: System directory. Do not hardcode C:\Windows.
 Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
-Filename: "{code:WinDRBDRootDir}\usr\sbin\windrbd.exe"; Parameters: "install-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; Check: DoCreateBusDevice
+Filename: "{code:WinDRBDRootDir}\usr\sbin\windrbd.exe"; Parameters: "install-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden postinstall; Check: DoCreateBusDevice
 Filename: "{#MyAppURLDocumentation}"; Description: "Download WinDRBD documentation"; Flags: postinstall shellexec
 
 [UninstallRun]
@@ -249,6 +249,7 @@ begin
 		ExecStdout := '';
 	end;
 	DeleteFile(TmpFileName);
+msgbox('cygpath returned '+ExecStdout, mbInformation, MB_OK);
 	Result := ExecStdout;
 end;
 
