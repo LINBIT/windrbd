@@ -223,7 +223,7 @@ End;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-	if CurStep = ssPostInstall then begin
+	if CurStep = ssInstall then begin
 		ModPath();
 	end;
 
