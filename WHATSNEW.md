@@ -1,11 +1,13 @@
 What's new in version 1.0.0-rc14
 --------------------------------
 
+# Upgrade to 9.0.30
+
 # installer supports selection of windrbd root
 
 # online resize works
 
-Bundle basic cygwin tool so that truck based replication works without
+Bundle basic cygwin tools so that truck based replication works without
 having to install cygwin
 
 Config key feature
