@@ -157,11 +157,18 @@ Root: HKLM; Subkey: "System\CurrentControlSet\services\eventlog\system\WinDRBD";
 
 var WinDRBDRootDirPage: TInputDirWizardPage;
 
-// TODO: if uninstalling lookup value in the registry ...
 function WinDRBDRootDir(params: String) : String;
 begin
-// MsgBox('Root dir is '+ WinDRBDRootDirPage.Values[0], mbInformation, MB_OK);
-	Result := WinDRBDRootDirPage.Values[0];
+MsgBox('karin 123', mbInformation, MB_OK);
+	if isUninstaller then begin
+// TODO: if uninstalling lookup value in the registry ...
+		Result := 'C:\WinDRBD';
+	end
+	else
+	begin
+MsgBox('Root dir is '+ WinDRBDRootDirPage.Values[0], mbInformation, MB_OK);
+		Result := WinDRBDRootDirPage.Values[0];
+	end;
 end;
 
 const
