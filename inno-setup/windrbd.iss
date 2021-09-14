@@ -158,15 +158,20 @@ Root: HKLM; Subkey: "System\CurrentControlSet\services\eventlog\system\WinDRBD";
 var WinDRBDRootDirPage: TInputDirWizardPage;
 
 function WinDRBDRootDir(params: String) : String;
+var root: string;
 begin
-MsgBox('karin 123', mbInformation, MB_OK);
 	if isUninstaller then begin
-// TODO: if uninstalling lookup value in the registry ...
-		Result := 'C:\WinDRBD';
+		if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'WinDRBDRoot', root) then
+		begin
+			Result := root;			
+		end
+		else
+		begin
+			Result := 'C:\WinDRBD'; // default setting. We should have the registry key here however ...
+		end;
 	end
 	else
 	begin
-MsgBox('Root dir is '+ WinDRBDRootDirPage.Values[0], mbInformation, MB_OK);
 		Result := WinDRBDRootDirPage.Values[0];
 	end;
 end;
@@ -183,8 +188,6 @@ begin
 	Result[1] := root_path + '\usr\sbin';
 	Result[2] := root_path + '\usr\bin';
 	Result[3] := root_path + '\bin';
-
-msgbox('modified path ' + root_path, mbInformation, MB_OK);
 end;
 
 #include "modpath.iss"
@@ -250,26 +253,23 @@ var
 	ResultCode: integer;
 
 begin
-msgbox('Into cygpath '+WindowsPath, mbInformation, MB_OK);
 	TmpFileName := ExpandConstant('{tmp}') + '\cygpath_results.txt';
-msgbox('cygpath out dir is '+TmpFileName, mbInformation, MB_OK);
 	Exec('cmd.exe', '/C cygpath "' + WindowsPath + '" > "' + TmpFileName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 	if not LoadStringFromFile(TmpFileName, ExecStdout) then begin
 		ExecStdout := '';
 	end;
 	DeleteFile(TmpFileName);
-msgbox('cygpath returned '+ExecStdout+'.', mbInformation, MB_OK);
 
 	// Remove trailing newline. Filenames with newlines in them
 	// are not supported.
 	StringChangeEx(ExecStdout, #10, '', True);
 
-msgbox('after stringchangeex '+ExecStdout+'.', mbInformation, MB_OK);
-
 	Result := ExecStdout;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var root: string;
+
 begin
 	if CurUninstallStep = usAppMutexCheck then begin
 		StopUserModeServices();
@@ -278,7 +278,8 @@ begin
 	if CurUninstallStep = usUninstall then begin
 		ModPath();
 
-		MsgBox('Uninstall does not remove the C:\Windrbd directory, since it may contain files modified by you. If you do not need them any more, please remove the C:\Windrbd directory manually.', mbInformation, MB_OK);
+		root:= WinDRBDRootDir('');
+		MsgBox('Uninstall does not remove the '+root+' directory, since it may contain files modified by you. If you do not need them any more, please remove the '+root+' directory manually.', mbInformation, MB_OK);
 	end;
 	// cmd script stops user mode helpers, no need to do that here
 end;
