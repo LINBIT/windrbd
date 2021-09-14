@@ -235,12 +235,10 @@ Begin
 	QuoteImagePath('System\CurrentControlSet\Services\windrbdlog');
 End;
 
-procedure CurStepChanged(CurStep: TSetupStep);
-begin
-	if CurStep = ssInstall then begin
-		ModPath();
-// TODO: set WinDRBDRootPath registry key.
-	end;
+function cygpath(WindowsPath: String): String;
+var
+	TmpFileName, ExecStdout: string;
+	ResultCode: integer;
 
 begin
 msgbox('Into cygpath '+WindowsPath, mbInformation, MB_OK);
