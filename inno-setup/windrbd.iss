@@ -279,6 +279,7 @@ begin
 		ModPath();
 
 		root:= WinDRBDRootDir('');
+// TODO: this outputs the cygwin path should be windows format
 		MsgBox('Uninstall does not remove the '+root+' directory, since it may contain files modified by you. If you do not need them any more, please remove the '+root+' directory manually.', mbInformation, MB_OK);
 	end;
 	// cmd script stops user mode helpers, no need to do that here
