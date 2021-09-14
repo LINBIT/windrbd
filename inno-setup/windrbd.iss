@@ -249,7 +249,14 @@ msgbox('cygpath out dir is '+TmpFileName, mbInformation, MB_OK);
 		ExecStdout := '';
 	end;
 	DeleteFile(TmpFileName);
-msgbox('cygpath returned '+ExecStdout, mbInformation, MB_OK);
+msgbox('cygpath returned '+ExecStdout+'.', mbInformation, MB_OK);
+
+	// Remove trailing newline. Filenames with newlines in them
+	// are not supported.
+	StringChangeEx(ExecStdout, #10, '', True);
+
+msgbox('after stringchangeex '+ExecStdout+'.', mbInformation, MB_OK);
+
 	Result := ExecStdout;
 end;
 
