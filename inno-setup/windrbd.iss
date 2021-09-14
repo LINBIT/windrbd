@@ -38,7 +38,8 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 ChangesEnvironment=yes
 DefaultDirName={pf}\{#MyAppName}
-DisableDirPage=yes
+; For testing. Later this should be auto
+DisableDirPage=no
 DefaultGroupName={#MyAppName}
 LicenseFile={#WindrbdSource}\LICENSE.txt
 InfoBeforeFile={#WindrbdSource}\inno-setup\about-windrbd.txt
