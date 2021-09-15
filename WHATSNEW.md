@@ -1,3 +1,21 @@
+# Upcoming features
+
+# Upgrade to 9.0.30
+
+# installer supports selection of windrbd root
+
+# online resize works
+
+What's new in version 1.0.0-rc14
+--------------------------------
+
+Bundle basic cygwin tools so that truck based replication works without
+having to install cygwin
+
+Config key feature
+
+Windows Event Log Support
+
 What's new in version 1.0.0-rc13
 --------------------------------
 
