@@ -1,0 +1,27 @@
+From 06c29b4604cbe110f39ffa5293462b534fd313c1 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 4 Aug 2021 17:00:09 +0200
+Subject: [PATCH] Use windrbd_ioctl from drbd-headers.
+
+windrbd_ioctl header finally moved to drbd-headers. There is
+no windrbd_ioctl.h in the windrbd repo any more.
+---
+ drbd/drbd_nl.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 803e6a4..0a032cd 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -103,7 +103,7 @@ inline static int genl_unregister_family(const struct genl_family *f)
+ #include "drbd_nla.h"
+ #include <linux/genl_magic_func.h>
+ 
+-#include "windrbd_ioctl.h"
++#include "windrbd/windrbd_ioctl.h"
+ 
+ /* Those two functions taken from netlink.c_inc, originally they
+  * are probably generated.
+-- 
+2.17.0
+

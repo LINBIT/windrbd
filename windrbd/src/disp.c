@@ -34,7 +34,7 @@
 #include "windrbd_device.h"
 #include "drbd_wingenl.h"	
 #include "disp.h"
-#include "windrbd_ioctl.h"
+#include "windrbd/windrbd_ioctl.h"
 #include <linux/module.h>
 /* #include "windrbd/windrbd_ioctl.h" */
 
@@ -119,6 +119,9 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	NTSTATUS            		status;
 	int ret;
 
+		/* Needed for event log */
+	mvolDriverObject = DriverObject;
+
 	/* Init windrbd primitives (spinlocks, ...) before doing anything
 	 * else .. needed for printk.
 	 */
@@ -141,7 +144,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 #ifdef KMALLOC_DEBUG
 		/* no printk's before this: */
 	init_kmalloc_debug();
-	printk("kmalloc_debug initialized.\n");
+	printk(KERN_DEBUG "kmalloc_debug initialized.\n");
 #endif
 
 	init_transport();
@@ -150,16 +153,15 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	make_me_a_windrbd_thread("driver-init");
 	sudo();
 
-	printk(KERN_INFO "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
+	printk(KERN_NOTICE "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
 
 #ifdef SPIN_LOCK_DEBUG
 	spinlock_debug_init();
-	printk("spinlock_debug initialized.\n");
+	printk(KERN_DEBUG "spinlock_debug initialized.\n");
 #endif
 
 	initRegistry(RegistryPath);
-
-	mvolDriverObject = DriverObject;
+	init_event_log();
 
 	status = create_device(WINDRBD_ROOT_DEVICE_NAME, &SDDL_DEVOBJ_SYS_ALL_ADM_ALL, &mvolRootDeviceObject);
 	if (status != STATUS_SUCCESS)

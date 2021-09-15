@@ -234,7 +234,7 @@ all: versioninfo windrbd.sys
 versioninfo:
 	cd ../.. && ./versioninfo.sh converted-sources $(EXTRA_VERSION) || true
 
-windrbd.sys: $(patsubst %.c,%.obj,$(DRBD_FILES)) $(patsubst %.c,%.obj,$(WINDRBD_FILES)) resource.res
+windrbd.sys: $(patsubst %.c,%.obj,$(DRBD_FILES)) $(patsubst %.c,%.obj,$(WINDRBD_FILES)) resource.res windrbd-event-log.res
 	rm -f windrbd.pdb "_$@"
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"windrbd.pdb" /OUT:"_$@"
 	mv -f "_$@" "$@"
@@ -254,6 +254,17 @@ endif
 
 
 resource.res: resource.rc
+	"$(EWDK_BIN)/rc.exe" $<
+
+windrbd-event-log.rc: ../../windrbd/windrbd-event-log.mc
+	"$(EWDK_BIN)/mc.exe" $<
+
+windrbd-event-log.h: ../../windrbd/windrbd-event-log.mc
+	"$(EWDK_BIN)/mc.exe" $<
+
+$(WINDRBD_SRCDIR)/printk-to-syslog.obj: windrbd-event-log.h
+
+windrbd-event-log.res: windrbd-event-log.rc
 	"$(EWDK_BIN)/rc.exe" $<
 
 ifeq ($(shell uname -o),Cygwin)
@@ -280,6 +291,7 @@ clean:
 	rm -f *.obj *.pdb
 	rm -f $(WINDRBD_SRCDIR)/*.obj $(WINDRBD_SRCDIR)/*.pdb
 	rm -f windrbd.sys windrbd.cat
+	rm -f windrbd-event-log.*
 
 package: windrbd.sys
 	( cd ../../inno-setup && iscc windrbd.iss /DWindrbdSource=$(WINDRBD_SOURCE) /DWindrbdUtilsSource=$(DRBD_UTILS_SOURCE) )

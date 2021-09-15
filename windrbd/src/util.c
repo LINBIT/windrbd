@@ -112,12 +112,31 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 		syslog_ip[ip_length] = '\0';
 	}
 	set_syslog_ip(syslog_ip);
-	printk("syslog_ip from registry is %s", syslog_ip);
+	printk(KERN_DEBUG "syslog_ip from registry is %s", syslog_ip);
 
 	return 0;
 }
 
 NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default)
+{
+	unsigned long len;
+	NTSTATUS status;
+
+	if (the_registry_path != NULL && the_registry_path->Buffer != NULL && val_p != NULL) {
+		status = GetRegistryValue(key, &len, (UCHAR*) val_p, sizeof(*val_p), the_registry_path);
+		if (len != sizeof(*val_p))
+			status = STATUS_UNSUCCESSFUL;
+	}
+	else
+		status = STATUS_UNSUCCESSFUL;
+
+	if (status != STATUS_SUCCESS && val_p != NULL)
+		*val_p = the_default;
+
+	return status;
+}
+
+NTSTATUS get_registry_long_long(wchar_t *key, unsigned long long *val_p, unsigned long long the_default)
 {
 	unsigned long len;
 	NTSTATUS status;

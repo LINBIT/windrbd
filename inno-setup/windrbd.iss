@@ -21,6 +21,7 @@
 #define MyAppURL "http://www.linbit.com/"
 #define MyAppURLDocumentation "https://www.linbit.com/user-guides/"
 #define SysRoot "C:\windrbd"
+#define DriverPath "C:\Windows\system32\drivers\windrbd.sys"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -82,6 +83,7 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 ; Name: modifypath; Description: &Add application directory to your environmental path;
 
 [Dirs]
+Name: "{#SysRoot}\bin"
 Name: "{#SysRoot}\usr\sbin"
 Name: "{#SysRoot}\var\run\drbd"
 Name: "{#SysRoot}\var\lib\drbd"
@@ -101,6 +103,22 @@ Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Fla
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygwin1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygrunsrv.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygattr-1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygbz2-1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygiconv-2.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygintl-8.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygncursesw-10.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygreadline7.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\bash.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cat.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\chmod.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cp.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\ls.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\mkdir.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\mv.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\sed.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\sync.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\unzip.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\msgbox.vbs"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 ; must be in same folder as the sysfile.
@@ -128,15 +146,21 @@ Filename: "{#MyAppURLDocumentation}"; Description: "Download WinDRBD documentati
 Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c uninstall-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; RunOnceId: "UninstallWinDRBD"
 Filename: "C:\windrbd\usr\sbin\windrbd.exe"; Parameters: "remove-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; RunOnceId: "RemoveBusDeviceWinDRBD"
 
+[Registry]
+
+Root: HKLM; Subkey: "System\CurrentControlSet\services\eventlog\system\WinDRBD"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "System\CurrentControlSet\services\eventlog\system\WinDRBD"; ValueType: string; ValueName: "EventMessageFile"; ValueData: "{#DriverPath}"
+
 [Code]
 const
 	ModPathType = 'system';
 
 	function ModPathDir(): TArrayOfString;
 	begin
-		setArrayLength(Result, 2);
+		setArrayLength(Result, 3);
 		Result[0] := ExpandConstant('{app}');
 		Result[1] := ExpandConstant('C:\windrbd\usr\sbin');
+		Result[2] := ExpandConstant('C:\windrbd\bin');
 	end;
 
 #include "modpath.iss"
@@ -199,7 +223,7 @@ End;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-	if CurStep = ssPostInstall then begin
+	if CurStep = ssInstall then begin
 		ModPath();
 	end;
 

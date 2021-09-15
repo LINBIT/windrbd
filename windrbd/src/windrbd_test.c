@@ -1,6 +1,7 @@
 #include "drbd_windows.h"
 #include "windrbd_threads.h"
 #include "drbd_int.h"
+#include <ctype.h>
 
 int debug_printks_enabled = 0;
 
@@ -211,16 +212,28 @@ static struct mutex test_mutex;
 static struct semaphore test_semaphore;
 static struct rw_semaphore test_rw_semaphore;
 
-	/* TODO: base is always 10 */
+#define min(a,b) ((a)<(b)?(a):(b))
 
-static unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base)
+unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base)
 {
         unsigned long long val = 0;
+        char c;
 
-        while (isdigit(*nptr)) {
-                val *= 10;
-                val += (*nptr)-'0';
-                nptr++;
+        if (base <= 36 && base >= 2) {
+                while (1) {
+                        c = toupper(*nptr);
+                        if (c >= '0' && c<'0'+min(base, 10)) {
+				val *= base;
+                                val += c-'0';
+			} else {
+                                if (c>='A' && c<'A'+base-10) {
+					val *= base;
+                                        val += c-'A'+10;
+				} else
+					break;
+			}
+			nptr++;
+                }
         }
         if (endptr)
                 *endptr = nptr;
@@ -1116,6 +1129,59 @@ int crypto_test(int argc, char ** argv)
 
 extern void start_tiktok(int argc, const char ** argv);
 
+extern void write_to_eventlog(int loglevel, const char *msg);
+extern void split_message_and_write_to_eventlog(int loglevel, const char *msg);
+
+static void test_event_log(int argc, char ** argv)
+{
+	int i;
+
+	for (i=1; i<argc; i++) {
+		printk("argv[%d] is %s\n", i, argv[i]);
+		write_to_eventlog(i, argv[i]);
+	}
+}
+
+
+static void test_event_log_split(int argc, char ** argv)
+{
+	int i;
+
+	for (i=1; i<argc; i++) {
+		printk("argv[%d] is %s\n", i, argv[i]);
+		split_message_and_write_to_eventlog(i, argv[i]);
+	}
+}
+
+static void test_event_log_level(int argc, char ** argv)
+{
+	printk("info default");
+
+/* those should go to error log: */
+	printk(KERN_EMERG "emerg");
+	printk(KERN_ALERT "alert");
+	printk(KERN_CRIT  "crit");
+	printk(KERN_ERR   "error");
+/* This to warnings: */
+	printk(KERN_WARNING "warning");
+/* these to Info: */
+	printk(KERN_NOTICE "notice");
+	printk(KERN_INFO "info");
+	printk(KERN_DEBUG "debug");
+}
+
+static void set_event_log_level_test(int argc, char ** argv)
+{
+	int level;
+
+	if (argc == 2) {
+		level = my_atoi(argv[1]);
+		set_event_log_threshold(level);
+	} else {
+		printk("Usage: set_event_log_level_test <loglevel>\n");
+	}
+}
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1183,6 +1249,14 @@ void test_main(const char *arg)
 		wait_event_test(argc, argv);
 	if (strcmp(argv[0], "start_tiktok") == 0)
 		start_tiktok(argc, argv);
+	if (strcmp(argv[0], "event_log") == 0)
+		test_event_log(argc, argv);
+	if (strcmp(argv[0], "event_log_level_test") == 0)
+		test_event_log_level(argc, argv);
+	if (strcmp(argv[0], "event_log_split") == 0)
+		test_event_log_split(argc, argv);
+	if (strcmp(argv[0], "set_event_log_level") == 0)
+		set_event_log_level_test(argc, argv);
 
 kfree_argv:
 	kfree(argv);

@@ -473,6 +473,24 @@ static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netli
     return err;
 }
 
+unsigned long long config_key;
+int is_locked = 0;
+
+int lock_interface(const char *config_key_param)
+{
+	if (is_locked)
+		return -EPERM;
+
+	is_locked = 1;
+	config_key = my_strtoull(config_key_param, NULL, 16);
+	return 0;
+}
+
+int windrbd_is_locked(void)
+{
+	return is_locked;
+}
+
 /* Sort of kernel function, but now (4.18) this is in
  * genl_family_rcv_msg()
  */
@@ -481,6 +499,17 @@ static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 {
 	if ((pops->flags & GENL_ADMIN_PERM) && (current->is_root == 0))
 		return -EPERM;
+
+	if ((pops->flags & GENL_ADMIN_PERM) && is_locked) {
+		unsigned long long reg_val;
+		NTSTATUS status;
+
+		status = get_registry_long_long(L"ConfigKey", &reg_val, -1);
+		if (status != STATUS_SUCCESS)
+			return -EPERM;
+		if (reg_val != config_key)
+			return -EPERM;
+	}
 
 	/* TODO: and if dump? According to net/netlink/genetlink.c:500
 	 * (function genl_family_rcv_msg) this has to be checked first.
@@ -577,7 +606,11 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 		ret = -EINVAL;
 		goto out_free_info;
 	}
-	printk("drbd cmd(%s:%u)\n", windrbd_genl_cmd_to_str(cmd), cmd);
+		/* modifies things. Currently used for event log threshold */
+	if (op->flags & GENL_ADMIN_PERM)
+		printk(KERN_NOTICE "drbd cmd(%s:%u)\n", windrbd_genl_cmd_to_str(cmd), cmd);
+	else
+		printk("drbd cmd(%s:%u)\n", windrbd_genl_cmd_to_str(cmd), cmd);
 
 	status = mutex_lock_timeout(&genl_drbd_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
 	if (status != STATUS_SUCCESS) {

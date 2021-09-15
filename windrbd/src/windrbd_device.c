@@ -47,8 +47,7 @@
 
 #include "drbd_windows.h"
 #include "windrbd_device.h"
-#include "windrbd_ioctl.h"
-/* #include "windrbd/windrbd_ioctl.h" */
+#include "windrbd/windrbd_ioctl.h"
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
 
@@ -428,6 +427,39 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 			status = STATUS_INVALID_DEVICE_REQUEST;
 		else
 			create_drbd_resource_from_url(drbd_url);
+
+		break;
+
+	case IOCTL_WINDRBD_ROOT_SET_CONFIG_KEY:
+		const char *the_config_key = irp->AssociatedIrp.SystemBuffer;
+
+		if (the_config_key == NULL)
+			status = STATUS_INVALID_DEVICE_REQUEST;
+		else {
+			if (lock_interface(the_config_key) < 0)
+				status = STATUS_ACCESS_DENIED;
+		}
+
+		break;
+
+	case IOCTL_WINDRBD_ROOT_GET_LOCK_DOWN_STATE:
+		int *is_locked_p = irp->AssociatedIrp.SystemBuffer;
+		if (s->Parameters.DeviceIoControl.OutputBufferLength != sizeof(int)) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+		*is_locked_p = windrbd_is_locked();
+
+		irp->IoStatus.Information = sizeof(int);
+		break;
+
+	case IOCTL_WINDRBD_ROOT_SET_EVENT_LOG_LEVEL:
+		int *the_level = irp->AssociatedIrp.SystemBuffer;
+
+		if (the_level == NULL)
+			status = STATUS_INVALID_DEVICE_REQUEST;
+		else
+			set_event_log_threshold(*the_level);
 
 		break;
 

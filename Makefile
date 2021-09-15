@@ -81,6 +81,7 @@ clean:
 		find $$d -name "windrbd.cat" -delete; \
 		find $$d -name "_windrbd.ilk" -delete; \
 	done
+	make -C converted-sources/drbd/ clean
 
 else
 

@@ -3,7 +3,8 @@
 #include "drbd-device.hpp"
 #include <string.h>
 #include <stdlib.h>
-#include "../windrbd/include/windrbd_ioctl.h"
+// #include "../windrbd/include/windrbd_ioctl.h"
+#include "../converted-sources/drbd/drbd-headers/windrbd/windrbd_ioctl.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

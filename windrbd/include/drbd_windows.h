@@ -43,7 +43,7 @@
 #include "linux/types.h"
 #include "generic_compat_stuff.h"
 #include "wingenl.h"
-#include "windrbd_ioctl.h"
+#include "windrbd/windrbd_ioctl.h"
 
 #include "disp.h"
 #include <linux/mempool.h>
@@ -56,6 +56,7 @@
 #include <linux/rwlock.h>
 
 #include "tiktok.h"
+#include <ctype.h>
 
 void init_windrbd(void);
 void msleep(int ms);
@@ -1432,6 +1433,7 @@ void test_main(const char *arg);
 int my_atoi(const char *c);
 
 NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default);
+NTSTATUS get_registry_long_long(wchar_t *key, unsigned long long *val_p, unsigned long long the_default);
 
 	/* can always send page */
 static inline bool sendpage_ok(struct page *p)
@@ -1463,5 +1465,14 @@ int kobject_uevent(struct kobject *kobj, enum kobject_action action);
 
 /* Implemented. Taken from Linux 5.11 */
 size_t strlcpy(char *dest, const char *src, size_t size);
+
+/* Implemented in windrbd_test: base works now from 2 to 36 */
+unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base);
+
+int lock_interface(const char *config_key_param);
+int windrbd_is_locked(void);
+
+void init_event_log(void);
+void set_event_log_threshold(int level);
 
 #endif // DRBD_WINDOWS_H
