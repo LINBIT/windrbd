@@ -385,3 +385,4 @@ Version history
 			      loop without issues.
  * 1.0.0-rc13 (Aug 2, 2021): Upgrade to DRBD 9.0.29, fixed most issues found
 			     by driver verifier.
+ * 1.0.0-rc14 (Sep 14, 2021): Event log, config key, bundle sed and bash
