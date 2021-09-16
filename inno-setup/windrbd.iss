@@ -38,8 +38,7 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 ChangesEnvironment=yes
 DefaultDirName={pf}\{#MyAppName}
-; For testing. Later this should be auto
-DisableDirPage=no
+DisableDirPage=auto
 DefaultGroupName={#MyAppName}
 LicenseFile={#WindrbdSource}\LICENSE.txt
 InfoBeforeFile={#WindrbdSource}\inno-setup\about-windrbd.txt
@@ -160,20 +159,16 @@ var WinDRBDRootDirPage: TInputDirWizardPage;
 function WinDRBDRootDir(params: String) : String;
 var root: string;
 begin
-	if isUninstaller then begin
-		if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'WinDRBDRoot', root) then
-		begin
-			Result := root;			
-		end
-		else
-		begin
-			Result := 'C:\WinDRBD'; // default setting. We should have the registry key here however ...
-		end;
-	end
-	else
+	root := '';
+	if not isUninstaller then
 	begin
-		Result := WinDRBDRootDirPage.Values[0];
+		root := WinDRBDRootDirPage.Values[0];
 	end;
+	if root = '' then begin
+		if not RegQueryStringValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'WinDRBDRootWinPath', root) then
+			root := 'C:\WinDRBD';
+	end;
+	Result := root;
 end;
 
 const
@@ -300,8 +295,7 @@ var
 begin
 	WinDRBDRootDirPage := CreateInputDirPage(wpSelectDir, 'Select WinDRBD root directory', '',  '', True, 'WinDRBD');
 	WinDRBDRootDirPage.Add('WinDRBD root directory:');
-// TODO: Lookup old value in registry
-	WinDRBDRootDirPage.Values[0] := 'C:\WinDRBD';
+	WinDRBDRootDirPage.Values[0] := WinDRBDRootDir(''); 
 
 	MainPage := CreateCustomPage(wpSelectTasks, 'Options', 'Please select installation options below.');
 	InstallBusDeviceLabel1 := TLabel.Create(MainPage);
@@ -362,6 +356,10 @@ begin
 		if not RegWriteStringValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'WinDRBDRoot', windrbd_root) then
 		begin
 			MsgBox('Could not write cygwin path to registry, cygwin path is '+windrbd_root, mbInformation, MB_OK);
+		end;
+		if not RegWriteStringValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'WinDRBDRootWinPath', WinDRBDRootDir('')) then
+		begin
+			MsgBox('Could not write windows path to registry, windows path is '+WinDRBDRootDir(''), mbInformation, MB_OK);
 		end;
 	end;
 end;
