@@ -293,8 +293,10 @@ var
 	MainPage: TWizardPage;  
 
 begin
+// TODO: If not defined already.
+// TODO: check for whitespace.
 	WinDRBDRootDirPage := CreateInputDirPage(wpSelectDir, 'Select WinDRBD root directory', '',  '', True, 'WinDRBD');
-	WinDRBDRootDirPage.Add('WinDRBD root directory:');
+	WinDRBDRootDirPage.Add(#13#10+'WinDRBD root directory:'+#13#10#13#10+'This is the system root for WinDRBD where the etc, bin, usr, ... directories'+#13#10+'for the userland utilities are located.'+#13#10);
 	WinDRBDRootDirPage.Values[0] := WinDRBDRootDir(''); 
 
 	MainPage := CreateCustomPage(wpSelectTasks, 'Options', 'Please select installation options below.');
@@ -336,6 +338,31 @@ begin
 	InstallBusDeviceCheckBox.Caption := 'Install bus device';
 	InstallBusDeviceCheckBox.Checked := true;
 end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+	if CurPageID = WinDRBDRootDirPage.ID then
+	begin
+		if Pos(' ', WinDRBDRootDirPage.Values[0]) <> 0 then
+		begin
+			MsgBox('No whitespace allowed in WinDRBD root path', mbInformation, MB_OK);
+			Result := false;
+		end
+		else
+		begin
+			Result := true;
+		end;
+	end
+	else
+	begin
+		Result := true;
+	end;
+end;
+
+{
+function ShouldSkipPage(PageID: Integer): Boolean;
+}
+
 
 function DoCreateBusDevice: Boolean;
 begin
