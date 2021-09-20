@@ -1797,7 +1797,13 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	init_waitqueue_head(&socket->data_available);
 
 	socket->have_printed_status = false;
-/* TODO:  only if SOCK_STREAM */
+
+/* TODO: also for SOCK_DGRAM but not for printk socket. printk at the
+ * moment the only one using SOCK_DGRAM but this may change...
+ */
+	if (type != SOCK_STREAM)
+		socket->receiver_cache_enabled = false;
+
 	if (socket->receiver_cache_enabled) {
 		get_registry_int(L"receive_buffer_size", &socket->receive_buffer_size, RECEIVE_BUFFER_DEFAULT_SIZE);
 		if (socket->receive_buffer_size < 4096)
@@ -1825,23 +1831,18 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	socket->sk->sk_state_change = wsk_sock_statechange;
 	rwlock_init(&socket->sk->sk_callback_lock);
 
-/* TODO: also for SOCK_DGRAM but not for printk socket. printk at the
- * moment the only one using SOCK_DGRAM but this may change...
- */
-	if (type == SOCK_STREAM) {
-		if (socket->receiver_cache_enabled) {
-			socket->receive_thread_should_run = true;
+	if (socket->receiver_cache_enabled) {
+		socket->receive_thread_should_run = true;
 				/* This matches the kref_put at the end of
 				 * the receiver thread. We must have it here
 				 * before the thread is started because the
 				 * socket might be freed before the thread
 				 * actually starts.
 				 */
-			kref_get(&socket->kref);
+		kref_get(&socket->kref);
 
 printk("About to start receive_cache for socket %p...\n", socket);
-			kthread_run(socket_receive_thread, socket, "receive_cache");
-		}
+		kthread_run(socket_receive_thread, socket, "receive_cache");
 	}
 
 	*out = socket;
