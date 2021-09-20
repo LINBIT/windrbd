@@ -523,6 +523,27 @@ srv*;Y:\windrbd-debug\win4lin\src;Y:\windrbd-debug\converted-sources\drbd
 
 srv*;Y:\windrbd-backing-dev-cache\windrbd\windrbd\src;Y:\windrbd-backing-dev-cache\windrbd\converted-sources\drbd
 
+srv*;Y:\windrbd-1.0.0-rc13-45\windrbd\src;Y:\windrbd-1.0.0-rc13-45\converted-sources\drbd
+
+Set the homedir:
+
+!homedir C:\Windows\Temp
+
+(and redo .reload to load symbols from server)
+
+Very useful:
+
+!stacks
+
+List all thread contexts.
+
+.thread fffxxxxxxx
+
+Switch context to thread (number displayed in !stacks)
+
+then 
+k
+will display the new thread's backtrace.
 -----
 
 netsh:
