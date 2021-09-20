@@ -760,6 +760,7 @@ retry:
 	socket->accept_wsk_socket = NULL;
 	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 
+printk("into sock_create_linux_socket ..\n");
 	err = sock_create_linux_socket(&accept_socket, SOCK_STREAM);
 	if (err < 0)
 		close_wsk_socket(wsk_socket);
@@ -1849,6 +1850,7 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 				 */
 			kref_get(&socket->kref);
 
+printk("About to start receive_cache for socket %p...\n", socket);
 			kthread_run(socket_receive_thread, socket, "receive_cache");
 		}
 	}
@@ -1914,6 +1916,7 @@ static int wsk_sock_create_kern(void *net_namespace,
 	if (net_namespace != &init_net)
 		return -EINVAL;
 
+printk("into sock_create_linux_socket ..\n");
 	err = sock_create_linux_socket(&socket, type);
 	if (err < 0)
 		return err;
