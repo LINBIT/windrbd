@@ -140,7 +140,7 @@ Name: "{group}\Open {#MyAppName} application folder"; Filename: "{app}"
 Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
 ; TODO: System directory. Do not hardcode C:\Windows.
 Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
-Filename: "{code:WinDRBDRootDir}\usr\sbin\windrbd.exe"; Parameters: "install-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec postinstall; Check: DoCreateBusDevice
+Filename: "{code:WinDRBDRootDir}\usr\sbin\windrbd.exe"; Parameters: "install-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; Check: DoCreateBusDevice
 Filename: "{#MyAppURLDocumentation}"; Description: "Download WinDRBD documentation"; Flags: postinstall shellexec
 
 [UninstallRun]
@@ -274,7 +274,6 @@ begin
 		ModPath();
 
 		root:= WinDRBDRootDir('');
-// TODO: this outputs the cygwin path should be windows format
 		MsgBox('Uninstall does not remove the '+root+' directory, since it may contain files modified by you. If you do not need them any more, please remove the '+root+' directory manually.', mbInformation, MB_OK);
 	end;
 	// cmd script stops user mode helpers, no need to do that here
@@ -293,10 +292,8 @@ var
 	MainPage: TWizardPage;  
 
 begin
-// TODO: If not defined already.
-// TODO: check for whitespace.
 	WinDRBDRootDirPage := CreateInputDirPage(wpSelectDir, 'Select WinDRBD root directory', '',  '', True, 'WinDRBD');
-	WinDRBDRootDirPage.Add(#13#10+'WinDRBD root directory:'+#13#10#13#10+'This is the system root for WinDRBD where the etc, bin, usr, ... directories'+#13#10+'for the userland utilities are located.'+#13#10);
+	WinDRBDRootDirPage.Add('WinDRBD root directory:'+#13#10#13#10+'This is the system root for WinDRBD where the etc, bin, usr, ... directories'+#13#10+'for the userland utilities are located.'+#13#10);
 	WinDRBDRootDirPage.Values[0] := WinDRBDRootDir(''); 
 
 	MainPage := CreateCustomPage(wpSelectTasks, 'Options', 'Please select installation options below.');
@@ -359,10 +356,14 @@ begin
 	end;
 end;
 
-{
 function ShouldSkipPage(PageID: Integer): Boolean;
-}
-
+var unused: String;
+begin
+	if PageID = WinDRBDRootDirPage.ID then
+		Result := RegQueryStringValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'WinDRBDRootWinPath', unused)
+	else
+		Result := false;
+end;
 
 function DoCreateBusDevice: Boolean;
 begin
