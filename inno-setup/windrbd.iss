@@ -2,6 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 ; Use iscc to compile this (in your innosetup program directory)
 
+; TODO: Uninstall should remove WinDRBDRootXXX registry keys (2).
 ; TODO: Uninstall did not remove registry entry?
 ; TODO: check why uninstall removes C:\WinDRBD
 ; TODO: Summary page should display WinDRBD System root and install bus device
@@ -145,8 +146,8 @@ Name: "{group}\Open {#MyAppName} application folder"; Filename: "{app}"
 Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
 ; TODO: System directory. Do not hardcode C:\Windows.
 Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
-Filename: "cygrunsrv"; Parameters: "-p {code:WinDRBDRootDirCygwin}\usr\sbin\windrbd.exe -a log-server -1 {code:WinDRBDRootDirCygwin}/windrbd-kernel.log -2 {code:WinDRBDRootDirCygwin}/windrbd-kernel.log -t manual"; Flags: runascurrentuser waituntilterminated shellexec runhidden
-Filename: "cygrunsrv"; Parameters: "-p {code:WinDRBDRootDirCygwin}\usr\sbin\windrbd.exe -a user-mode-helper-daemon -1 {code:WinDRBDRootDirCygwin}/windrbd-umhelper.log -2 {code:WinDRBDRootDirCygwin}/windrbd-umhelper.log -t manual"; Flags: runascurrentuser waituntilterminated shellexec runhidden
+Filename: "{app}\cygrunsrv"; Parameters: "-I windrbdlog -p {code:WinDRBDRootDirCygwin}/usr/sbin/windrbd.exe -a log-server -1 {code:WinDRBDRootDirCygwin}/windrbd-kernel.log -2 {code:WinDRBDRootDirCygwin}/windrbd-kernel.log -t manual"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec
+Filename: "{app}\cygrunsrv"; Parameters: "-I windrbdumhelper -p {code:WinDRBDRootDirCygwin}/usr/sbin/windrbd.exe -a user-mode-helper-daemon -1 {code:WinDRBDRootDirCygwin}/windrbd-umhelper.log -2 {code:WinDRBDRootDirCygwin}/windrbd-umhelper.log -t manual"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec
 Filename: "{code:WinDRBDRootDir}\usr\sbin\windrbd.exe"; Parameters: "install-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; Check: DoCreateBusDevice
 Filename: "{#MyAppURLDocumentation}"; Description: "Download WinDRBD documentation"; Flags: postinstall shellexec
 
