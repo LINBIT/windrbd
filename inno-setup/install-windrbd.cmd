@@ -19,5 +19,3 @@ rem This currently does not work. Fix it and reenable this:
 rem windrbd install-bus-device .\windrbd.inf
 
 start /wait InfDefaultInstall .\windrbd.inf 
-
-pause
