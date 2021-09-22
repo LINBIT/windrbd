@@ -272,6 +272,13 @@ Begin
 	QuoteImagePath('System\CurrentControlSet\Services\windrbdlog');
 End;
 
+procedure RemoveWinDRBDRootPath;
+begin
+	RegDeleteValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'WinDRBDRoot');
+	RegDeleteValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'WinDRBDRootWinPath');
+end;
+
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var root: string;
 
@@ -284,6 +291,8 @@ begin
 		ModPath();
 
 		root:= WinDRBDRootDir('');
+		RemoveWinDRBDRootPath();
+
 		MsgBox('Uninstall does not remove files in the '+root+' directory that are created by you (for example .res files in /etc/drbd.d). If you do not need them any more, please remove the '+root+' directory manually.', mbInformation, MB_OK);
 	end;
 	// cmd script stops user mode helpers, no need to do that here
