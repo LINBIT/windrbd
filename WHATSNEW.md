@@ -2,9 +2,15 @@
 
 # Upgrade to 9.0.30
 
-# installer supports selection of windrbd root
-
 # online resize works
+
+What's new in version 1.0.0-rc15
+--------------------------------
+
+installer supports selection of windrbd root
+
+fixed a bug that caused creation of lots of receiver threads when
+in state Connecting (and never terminate them).
 
 What's new in version 1.0.0-rc14
 --------------------------------
