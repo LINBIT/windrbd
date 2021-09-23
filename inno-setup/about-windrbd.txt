@@ -20,10 +20,7 @@ and download the WinDRBD tech guides.
 Since release 1.0.0, WinDRBD can be used in production environments
 for HA setups (as data disks). Support for system volume ("C:")
 replication and booting from a WinDRBD server is still experimental,
-this will change in the upcoming 1.1.0 release. We are also currently
-working on Microsoft cluster manager support, which allows one to build
-HA-clusters with automated failover (similar to what pacemaker does
-on Linux).
+this will change in the upcoming 1.1.0 release.
 
 WinDRBD is Open Source and licensed under the GNU general public
 license. To obtain the source code, please go to:
