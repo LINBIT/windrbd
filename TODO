@@ -52,10 +52,6 @@ TODO: Bug: Secondary hangs in NetworkFailure
 
 TODO: Feature: HLK tests should succeed (for Windows 2019)
 
-TODO: Feature: installer should prompt for WinDRBD path
-
-TODO: Feature: bundle sed with WinDRBD
-
 TODO: Bug: Verifier BSOD on sync.
 
 	Bug check 0xC4: DRIVER_VERIFIER_DETECTED_VIOLATION
@@ -78,16 +74,6 @@ TODO: Bug: Verifier 0xC9 on Primary/Secondary Loop.
 	Param 3 - IRP address.
 
 	Param 4 - Device object address.
-
-TODO: Bug: BSOD 0xD5 (?) on Primary/Secondary
-
-	On my Windows 7 test box. There were 2 resources involved.
-	Probably a new bug (not in 1.0.0-rc12)
-
-	Also when starting Partition Manager (and a resource is Primary)
-
-	Was QUERY_INTERFACE handled incorrectly. Should be solved
-	now (with 13986211).
 
 TODO: Bug: PNP BSOD on surprise removal test.
 
@@ -117,8 +103,6 @@ May 25 14:14:59 server-2016-b  U14:14:59.854 (5193697363511/10000000)|daf05570(d
 	Maybe this is a new bug in 9.0.29? I've never seen that
 	before ...
 
-TODO: Feature: Installer prompts for path, defaults to C:\WinDRBD
-
 TODO: Feature: Make resize work (again)
 
 TODO: Bug: Sync when becoming secondary (on secondary or down).
@@ -137,7 +121,7 @@ TODO: Use next generation crypto API for secure handshake.
 
 https://docs.microsoft.com/en-us/windows/win32/seccng/cng-features#kernel-mode-support
 
-TODO: ! Bug: Data loss when becoming Secondary
+TODO: Bug: Data loss when becoming Secondary
 
 	existing data resource on Windows Server-2016-A
 	Do:
@@ -160,12 +144,14 @@ To flush all open files on a volume, call FlushFileBuffers with a handle to the 
 
 	But this is from user space ...
 
+	Update: We documented this in the users guide. Users should
+	run sync (bundled with WinDRBD installer) manually before
+	secondary or down (for now).
+
 TODO: Feature: Make UM helper command configurable
 
 	Currently hard coded to cmd shell. Put this into a registry
 	key.
-
-TODO: Documentaion: Remove reference to block devices from user's guide
 
 TODO: Bug: Send buffer drains for about 30 seconds
 
@@ -184,22 +170,6 @@ TODO: Bug: Primary detaches when secondary hard fails.
 	when the secondary (blue screen) fails.
 
 	Reported by: Abhishek Jain <abhishek@maxisinfotech.com>
-
-TODO: Feature: Resource agent for Microsoft cluster manager
-
-	In progress: Install Server 2016 machines (again)
-
-	Done, when there is time, start working on that again.
-
-	From Phil: IBM uses MSCM: see
-
-	https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.con.doc/q017940_.htm
-
-	Quote: "Assign a storage device for exclusive use by the queue manager. This device needs to be created as a resource instance before it can be assigned."
-
-TODO: Documentation: User's guide
-
-TODO: Code quality: Do not patch boot sector when it is a disk device
 
 TODOs for after Release 1.0 ----------------------------------------
 
@@ -7378,4 +7348,38 @@ Done: Feature: use existing data
 	work as expected. Keep in mind that on drbdadm up the partition
 	will be hidden, so you can only access your data via DRBD
 	(or do a windrbd show-filesystem ... )
+
+Done: Feature: installer should prompt for WinDRBD path
+
+Done: Feature: bundle sed with WinDRBD
+
+Done: Bug: BSOD 0xD5 (?) on Primary/Secondary
+
+	On my Windows 7 test box. There were 2 resources involved.
+	Probably a new bug (not in 1.0.0-rc12)
+
+	Also when starting Partition Manager (and a resource is Primary)
+
+	Was QUERY_INTERFACE handled incorrectly. Should be solved
+	now (with 13986211).
+
+Duplicate: Feature: Installer prompts for path, defaults to C:\WinDRBD
+
+Done: Documentaion: Remove reference to block devices from user's guide
+
+Done: Documentation: User's guide
+
+Rejected: Code quality: Do not patch boot sector when it is a disk device
+
+Rejected: Feature: Resource agent for Microsoft cluster manager
+
+	In progress: Install Server 2016 machines (again)
+
+	Done, when there is time, start working on that again.
+
+	From Phil: IBM uses MSCM: see
+
+	https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.con.doc/q017940_.htm
+
+	Quote: "Assign a storage device for exclusive use by the queue manager. This device needs to be created as a resource instance before it can be assigned."
 

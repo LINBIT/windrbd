@@ -162,8 +162,8 @@ make clean && make package R=1
 # pass resulting install-windrbd-0.x.0-betay-signed.exe to clients
 upload to google drive windrbd-in folder
 
-git push --all gitlab
-git push --tags gitlab
+git push --all origin
+git push --tags origin
 
 phil:
 git push master github
