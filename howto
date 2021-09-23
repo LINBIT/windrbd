@@ -798,3 +798,27 @@ How to show parameters of BSOD crash (Windows 10 / Server 2016 and 2019)
 DRBD manpage
 
 man /home/johannes/Linbit/drbd-utils-build-manpages/drbd-utils/documentation/v9/drbd.conf.5
+
+-----------------------------
+
+Build drbd on Ubuntu Linux:
+
+Need cocci must build cocci from source (for most distros)
+
+# Ubuntu 16.04:
+sudo apt install pkg-config ocaml-native-compilers ocaml-findlib menhir libmenhir-ocaml-dev libpcre-ocaml-dev libparmap-ocaml-dev
+# Ubuntu 18.04:
+sudo apt-get install pkg-config ocaml-native-compilers ocaml-findlib menhir libmenhir-ocaml-dev libpcre-ocaml-dev libparmap-ocaml-dev libncurses5-dev ocaml-base-nox-4.05.0 ocaml-interp dpkg-dev libdpkg-perl libfindlib-ocaml ocaml-compiler-libs libparmap-ocaml-7sma4 libpcre-ocaml-2h5n2 linux-headers-4.15.0-141 linux-modules-4.15.0-141-generic libtinfo-dev
+
+git clone https://github.com/coccinelle/coccinelle.git
+cd coccinelle
+git checkout 1.0.8
+./autogen
+./configure
+make
+sudo make install
+cd ..
+git clone --recursive https://github.com/LINBIT/drbd.git
+cd drbd
+make
+sudo make install
