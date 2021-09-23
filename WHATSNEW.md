@@ -1,8 +1,9 @@
-# Upcoming features
+Upcoming features
+-----------------
 
-# Upgrade to 9.0.30
+Upgrade to 9.0.30
 
-# online resize works
+online resize works
 
 What's new in version 1.0.0-rc15
 --------------------------------
