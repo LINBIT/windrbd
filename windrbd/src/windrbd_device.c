@@ -1453,7 +1453,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		return STATUS_INVALID_PARAMETER;
 	}
 	if (sector * dev->bd_block_size >= dev->d_size) {
-		dbg("Attempt to read past the end of the device: dev->bd_block_size is %d sector is %lld byte offset is %lld dev->d_size is %lld rw is %s\n", dev->bd_block_size, sector, sector * dev->bd_block_size, dev->d_size, rw == WRITE ? "WRITE" : "READ");
+		dbg("Attempt to read past the end of the device: dev->bd_block_size is %d sector is %lld (%llu) byte offset is %lld (%llu) dev->d_size is %lld rw is %s\n", dev->bd_block_size, sector, sector, sector * dev->bd_block_size, sector * dev->bd_block_size, dev->d_size, rw == WRITE ? "WRITE" : "READ");
 		return STATUS_INVALID_PARAMETER;
 	}
 	if (sector * dev->bd_block_size + total_size > dev->d_size) {
@@ -2955,11 +2955,14 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				break;
 			}
 
+			dbg("cdb->AsByte[0] is %d", cdb->AsByte[0]);
 			if (cdb->AsByte[0] == SCSIOP_READ16 ||
 			    cdb->AsByte[0] == SCSIOP_WRITE16) {
+printk("1\n");
 				REVERSE_BYTES_QUAD(&start_sector, &(cdb16->LogicalBlock[0]));
 				REVERSE_BYTES(&sector_count, &(cdb16->TransferLength[0]));
 			} else {
+printk("2\n");
 				start_sector = (cdb->CDB10.LogicalBlockByte0 << 24) + (cdb->CDB10.LogicalBlockByte1 << 16) + (cdb->CDB10.LogicalBlockByte2 << 8) + cdb->CDB10.LogicalBlockByte3;
 				sector_count = (cdb->CDB10.TransferBlocksMsb << 8) + cdb->CDB10.TransferBlocksLsb;
 			}
@@ -2988,8 +2991,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				irp->IoStatus.Information = 0;
 				break;
 			}
-
-// printk("XXX Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
+			dbg("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
 
 			irp->IoStatus.Information = 0;
 			irp->IoStatus.Status = STATUS_PENDING;
