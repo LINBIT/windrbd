@@ -2931,7 +2931,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		case SCSIOP_WRITE:
 		case SCSIOP_WRITE16:
 		{
-			long long start_sector;
+			sector_t start_sector;
 			unsigned long long sector_count, total_size;
 			int rw;
 
