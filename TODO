@@ -36,6 +36,14 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: drbdadm create-md fails on Dynamic hard disk
+
+	In Windows 7 build VM (disk #3)
+
+TODO: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
+
+	Maybe a network card driver bug? Now trying with e1000 driver.
+
 TODO: Feature: event log
 
 	Documentation
