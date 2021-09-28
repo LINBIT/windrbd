@@ -27,7 +27,7 @@
 
 /* Uncomment this if you want more debug output (disable for releases) */
 
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -1453,7 +1453,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		return STATUS_INVALID_PARAMETER;
 	}
 	if (sector * dev->bd_block_size >= dev->d_size) {
-		dbg("Attempt to read past the end of the device\n");
+		dbg("Attempt to read past the end of the device: dev->bd_block_size is %d sector is %lld byte offset is %lld dev->d_size is %lld rw is %s\n", dev->bd_block_size, sector, sector * dev->bd_block_size, dev->d_size, rw == WRITE ? "WRITE" : "READ");
 		return STATUS_INVALID_PARAMETER;
 	}
 	if (sector * dev->bd_block_size + total_size > dev->d_size) {
