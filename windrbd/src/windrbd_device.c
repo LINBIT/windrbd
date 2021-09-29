@@ -2958,11 +2958,9 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			dbg("cdb->AsByte[0] is %d", cdb->AsByte[0]);
 			if (cdb->AsByte[0] == SCSIOP_READ16 ||
 			    cdb->AsByte[0] == SCSIOP_WRITE16) {
-printk("1\n");
 				REVERSE_BYTES_QUAD(&start_sector, &(cdb16->LogicalBlock[0]));
 				REVERSE_BYTES(&sector_count, &(cdb16->TransferLength[0]));
 			} else {
-printk("2\n");
 				start_sector = (unsigned long long) ((unsigned long long) cdb->CDB10.LogicalBlockByte0 << 24) + ((unsigned long long) cdb->CDB10.LogicalBlockByte1 << 16) + ((unsigned long long) cdb->CDB10.LogicalBlockByte2 << 8) + (unsigned long long) cdb->CDB10.LogicalBlockByte3;
 				sector_count = (unsigned long long) ((unsigned long long) cdb->CDB10.TransferBlocksMsb << 8) + (unsigned long long) cdb->CDB10.TransferBlocksLsb;
 			}
