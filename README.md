@@ -387,3 +387,4 @@ Version history
 			     by driver verifier.
  * 1.0.0-rc14 (Sep 14, 2021): Event log, config key, bundle sed and bash
  * 1.0.0-rc15 (Sep 23, 2021): Installer prompts for install paths.
+ * 1.0.0-rc16 (Sep 30, 2021): Fixed a bug that caused volumes with size 1-2 TB not to work properly.
