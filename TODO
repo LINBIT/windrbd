@@ -36,9 +36,7 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Bug: drbdadm create-md fails on Dynamic hard disk
-
-	In Windows 7 build VM (disk #3)
+TODO: Code quality: Fix drbd-utils compiler warnings
 
 TODO: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
 
@@ -7390,4 +7388,10 @@ Rejected: Feature: Resource agent for Microsoft cluster manager
 	https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.con.doc/q017940_.htm
 
 	Quote: "Assign a storage device for exclusive use by the queue manager. This device needs to be created as a resource instance before it can be assigned."
+
+Done: Bug: drbdadm create-md fails on Dynamic hard disk
+
+	In Windows 7 build VM (disk #3)
+
+	Fixed by using GET_LENGTH_INFO instead of GET_PARTITION_INFO_EX.
 
