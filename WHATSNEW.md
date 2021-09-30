@@ -5,6 +5,11 @@ Upgrade to 9.0.30
 
 online resize works
 
+What's new in version 1.0.0-rc16
+--------------------------------
+
+Fixed a bug that caused volumes with size 1-2 TB not to work properly.
+
 What's new in version 1.0.0-rc15
 --------------------------------
 
