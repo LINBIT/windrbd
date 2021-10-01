@@ -3374,6 +3374,7 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
 		return 0;
 	}
 
+	bdev->d_size = windrbd_get_volsize(bdev);
 	return bdev->d_size >> 9;
 }
 
