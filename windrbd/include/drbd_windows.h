@@ -601,6 +601,7 @@ struct block_device {
 	struct completion bdflush_terminated;
 
 	struct kobject kobj;
+	bool is_backing_device;
 };
 
 	/* Starting with version 0.7.1, this is the device extension

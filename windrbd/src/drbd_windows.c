@@ -3233,6 +3233,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	block_device->bd_disk->queue->max_hw_sectors = DRBD_MAX_BIO_SIZE >> 9;
 
 	block_device->file_object = file_object;
+	block_device->is_backing_device = true;
 
 	mutex_init(&block_device->vol_size_mutex);
 	block_device->d_size = windrbd_get_volsize(block_device);
@@ -3369,12 +3370,21 @@ struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data,
 
 sector_t windrbd_get_capacity(struct block_device *bdev)
 {
+	long long d_size;
+
 	if (bdev == NULL) {
 		printk(KERN_WARNING "Warning: bdev is NULL in windrbd_get_capacity\n");
 		return 0;
 	}
 
-	bdev->d_size = windrbd_get_volsize(bdev);
+	if (bdev->is_backing_device) {
+		d_size = windrbd_get_volsize(bdev);
+		if (d_size == -1)
+			printk(KERN_WARNING "Warning: could not get size of backing device\n");
+		else
+			bdev->d_size = d_size;
+	}
+
 	return bdev->d_size >> 9;
 }
 
