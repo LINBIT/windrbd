@@ -3381,8 +3381,14 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
 		d_size = windrbd_get_volsize(bdev);
 		if (d_size == -1)
 			printk(KERN_WARNING "Warning: could not get size of backing device\n");
-		else
-			bdev->d_size = d_size;
+		else {
+			if (bdev->d_size != d_size) {
+				if (windrbd_rescan_bus() < 0)
+					printk(KERN_WARNING "Warning: Size changed but couldn't rescan WinDRBD bus device\n");
+				printk(KERN_INFO "Block device size changed from %lld to %lld\n", bdev->d_size, d_size);
+				bdev->d_size = d_size;
+			}
+		}
 	}
 
 	return bdev->d_size >> 9;
