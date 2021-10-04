@@ -1,0 +1,42 @@
+From ed88ae3049776814554929ae48036253ad0810e7 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 4 Oct 2021 16:08:42 +0200
+Subject: [PATCH] drbd_main: req_lock spin_lock_irq to spin_lock_irqsave
+
+---
+ drbd/drbd_main.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 0d73fc3..8846532 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3722,6 +3722,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	bool locked = false;
+ 	struct block_device *block_device;
+ 	KIRQL spin_lock_irq_flags;
++	KIRQL req_lock_flags;
+ 
+ 	device = minor_to_device(minor);
+ 	if (device)
+@@ -3841,7 +3842,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	INIT_LIST_HEAD(&device->pending_bitmap_io);
+ 
+ 	locked = true;
+-	spin_lock_irq(&resource->req_lock);
++	spin_lock_irqsave(&resource->req_lock, req_lock_flags);
+ 	spin_lock_irqsave(&drbd_devices_lock, spin_lock_flags);
+ 	id = idr_alloc(&drbd_devices, device, minor, minor + 1, GFP_NOWAIT);
+ 	spin_unlock_irqrestore(&drbd_devices_lock, spin_lock_flags);
+@@ -3875,7 +3876,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 		kref_get(&device->kref);
+ 		kref_debug_get(&device->kref_debug, 1);
+ 	}
+-	spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags);
++	spin_unlock_irqrestore(&resource->req_lock, req_lock_flags);
+ 	locked = false;
+ 
+ 	if (init_submitter(device)) {
+-- 
+2.17.0
+

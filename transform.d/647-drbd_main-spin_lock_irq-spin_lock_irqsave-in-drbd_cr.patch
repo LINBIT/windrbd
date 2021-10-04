@@ -20,15 +20,6 @@ index 9b2201e..d41257d 100644
  
  	device = minor_to_device(minor);
  	if (device)
-@@ -3811,7 +3812,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
- 	INIT_LIST_HEAD(&device->pending_bitmap_io);
- 
- 	locked = true;
--	spin_lock_irq(&resource->req_lock);
-+	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags);
- 	id = idr_alloc(&drbd_devices, device, minor, minor + 1, GFP_NOWAIT);
- 	if (id < 0) {
- 		if (id == -ENOSPC)
 @@ -3843,7 +3844,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
  		kref_get(&device->kref);
  		kref_debug_get(&device->kref_debug, 1);

@@ -39,15 +39,6 @@ index 70530c6..8e7359a 100644
  	struct drbd_request *req = bio->bi_private;
  	struct drbd_device *device = req->device;
  	struct bio_and_error m;
-@@ -2004,7 +2004,7 @@ void drbd_start_resync(struct drbd_peer_device *peer_device, enum drbd_repl_stat
- 	enum drbd_disk_state finished_resync_pdsk = D_UNKNOWN;
- 	enum drbd_repl_state repl_state;
- 	int r;
--	int flags;
-+	KIRQL flags;
- 
- 	spin_lock_irqsave(&device->resource->req_lock, spin_lock_irq_flags);
- 	repl_state = peer_device->repl_state[NOW];
 @@ -2653,7 +2653,7 @@ static void maybe_send_state_afer_ahead(struct drbd_connection *connection)
   */
  static bool check_sender_todo(struct drbd_connection *connection)
