@@ -27,9 +27,12 @@ Windows applications that use undocumented ioctl system calls (like winsat).
 
 Online verify
 
+Relocate C:\windrbd directory
+
 ----- for 1.0.0
 
 2 node (Windows / Linux) setup production ready.
+
 3 (and more) node setups
 
 ----- for 1.1.0
@@ -44,41 +47,17 @@ Using System Volume (C:\) as DRBD device (diskless client with PXE boot)
 
 Using System Volume (C:\) as DRBD device (with local backing storage disk)
 
------ for 1.4.0
-
-Other filesystems (FAT family, ReFS)
-	Tested for data devices on Windows 10.
-
-No reboot on upgrade/uninstall (if at all possible)
-
-Relocate C:\windrbd directory
-
 ---- after 1.3.0
-
-32 bit version
-
-ReactOS support
-
-Mounting to NTFS directories (when they are empty)
 
 debugfs
 
 trim / discard
 
-biosets
-
-RB_CONGESTED_REMOTE
-
-disk stats
-
-write same
-
-network stats
-
 Driver Unloading
+	No reboot on upgrade/uninstall (if at all possible)
 
 Most likely never
 -----------------
 
-Auto-Promote (if possible at all)
+Auto-Promote
 

@@ -5,6 +5,8 @@ Upgrade to 9.0.30
 
 online resize works
 
+dynamic disks as backing devices work
+
 What's new in version 1.0.0-rc16
 --------------------------------
 
