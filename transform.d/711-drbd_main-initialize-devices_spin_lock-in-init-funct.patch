@@ -1,0 +1,35 @@
+From aced9213c2a17338cf0dfc13a05c6b24107730c0 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 4 Oct 2021 16:49:21 +0200
+Subject: [PATCH 1/2] drbd_main: initialize devices_spin_lock in init function.
+
+We don't know how KSPINLOCK_T looks inside so we cannot initialize
+it statically.
+---
+ drbd/drbd_main.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 8846532..b73d35d 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -135,7 +135,7 @@ module_param_named(protocol_version_min, drbd_protocol_version_min, drbd_protoco
+  */
+ struct idr drbd_devices;
+ struct list_head drbd_resources;
+-DEFINE_SPINLOCK(drbd_devices_lock);
++spinlock_t drbd_devices_lock;
+ DEFINE_MUTEX(resources_mutex);
+ 
+ struct kmem_cache *drbd_request_cache;
+@@ -4140,6 +4140,7 @@ int __init drbd_init(void)
+ 	spin_lock_init(&retry.lock);
+ 	INIT_LIST_HEAD(&retry.writes);
+ 
++	spin_lock_init(&drbd_devices_lock);
+ #if 0
+ 	drbd_debugfs_init();
+ #endif
+-- 
+2.17.0
+

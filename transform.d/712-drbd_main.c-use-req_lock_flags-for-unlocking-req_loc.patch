@@ -1,0 +1,25 @@
+From fd12378ef6925988548c315eba1cab96b6b89cab Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 4 Oct 2021 16:56:37 +0200
+Subject: [PATCH 2/2] drbd_main.c: use req_lock_flags for unlocking req_lock
+
+---
+ drbd/drbd_main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index b73d35d..7407825 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3936,7 +3936,7 @@ out_idr_remove_minor:
+ 	kref_debug_put(&device->kref_debug, 1);
+ out_no_minor_idr:
+ 	if (locked)
+-		spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags);
++		spin_unlock_irqrestore(&resource->req_lock, req_lock_flags);
+ 	synchronize_rcu();
+ 
+ out_no_peer_device:
+-- 
+2.17.0
+

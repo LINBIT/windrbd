@@ -1,0 +1,34 @@
+From c87e9359d058639f3fed82f755a90dbf4dc2b880 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 4 Oct 2021 17:04:43 +0200
+Subject: [PATCH] drbd_main.c: There is no DEFINE_MUTEX either.
+
+We cannot look inside KMUTEX so we cannot provide a static initializer.
+---
+ drbd/drbd_main.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 7407825..99e18ff 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -136,7 +136,7 @@ module_param_named(protocol_version_min, drbd_protocol_version_min, drbd_protoco
+ struct idr drbd_devices;
+ struct list_head drbd_resources;
+ spinlock_t drbd_devices_lock;
+-DEFINE_MUTEX(resources_mutex);
++struct mutex resources_mutex;
+ 
+ struct kmem_cache *drbd_request_cache;
+ struct kmem_cache *drbd_ee_cache;	/* peer requests */
+@@ -4141,6 +4141,7 @@ int __init drbd_init(void)
+ 	INIT_LIST_HEAD(&retry.writes);
+ 
+ 	spin_lock_init(&drbd_devices_lock);
++	mutex_init(&resources_mutex);
+ #if 0
+ 	drbd_debugfs_init();
+ #endif
+-- 
+2.17.0
+
