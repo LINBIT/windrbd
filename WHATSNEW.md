@@ -1,6 +1,11 @@
 Upcoming features
 -----------------
 
+What's new in version 1.0.0-rc17
+--------------------------------
+
+/VERYSILENT install
+
 Upgrade to 9.0.30
 
 online resize works
