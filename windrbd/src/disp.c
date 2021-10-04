@@ -60,8 +60,6 @@ int seq_file_idx = 0;
 
 struct ratelimit_state drbd_ratelimit_state;
 
-struct mutex notification_mutex;
-
 /* https://vxlab.info/wasm/print.php-article=npi_subvert.htm */
 const NPIID NPI_WSK_INTERFACE_ID = {
 	0x2227E803, 0x8D8B, 0x11D4,
@@ -183,8 +181,6 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 		 */
 
 	try_module_get(&windrbd_module);
-
-	mutex_init(&notification_mutex);
 
 	dtt_initialize();
 
