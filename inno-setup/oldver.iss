@@ -39,10 +39,13 @@ begin
 		else
 			str := ExpandConstant('Found WinDRBD version '+version+' installed. The version you are about to install is {#SetupSetting("AppVersion")}. You can safely install one over the other, however to restart the driver a reboot is required. Continue?');
 
-		if MsgBox(str, mbConfirmation, buttons) = IDNO then
+		if not WizardSilent then
 		begin
-			MsgBox('Installation aborted.', mbInformation, MB_OK);
-			Result := False;
+			if MsgBox(str, mbConfirmation, buttons) = IDNO then
+			begin
+				MsgBox('Installation aborted.', mbInformation, MB_OK);
+				Result := False;
+			end;
 		end;
 		myNeedRestart := True;
 	end;
