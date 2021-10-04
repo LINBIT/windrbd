@@ -925,6 +925,16 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 
 #endif
 
+	/* biosets are meant for being responsive under memory pressure.
+	 * we haven't implemented it yet because windows fails earlier
+	 * on low memory.
+	 */
+
+struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unused)
+{
+	return bio_alloc(gfp_mask, nr_iovecs, 'DRBD');
+}
+
 static void free_mdls_and_irp(struct bio *bio)
 {
 	struct _MDL *mdl, *next_mdl;

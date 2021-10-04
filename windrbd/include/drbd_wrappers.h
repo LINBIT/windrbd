@@ -1184,7 +1184,6 @@ static inline int nla_parse_nested_deprecated(struct nlattr *tb[], int maxtype,
 # define bio_clone_fast(BIO, GFP, P) bio_clone_fast(BIO, GFP, *P)
 #endif
 
-#define bio_alloc_bioset(GFP, n, P) bio_alloc_bioset(GFP, n, *P)
 #define DRBD_MEMPOOL_T mempool_t *
 #define DRBD_BIO_SET   bio_set *
 

@@ -809,7 +809,8 @@ extern struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, ULONG tag, char *f
 extern struct bio *bio_alloc(gfp_t, int, ULONG);
 #endif
 
-extern struct bio *bio_alloc_bioset(gfp_t, int, struct bio_set *);
+extern struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unused);
+
 
 	/* To be called at the beginning of conn_disconnect, else
 	 * BSOD.
