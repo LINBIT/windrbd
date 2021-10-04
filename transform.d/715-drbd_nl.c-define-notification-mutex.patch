@@ -1,0 +1,27 @@
+From 40b9b102dcc7e30a1d083fcd47fb47ad672ae964 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 4 Oct 2021 17:43:48 +0200
+Subject: [PATCH 2/2] drbd_nl.c: define notification mutex
+
+DEFINE_MUTEX does not exist and looks like a function prototype
+to Windows C compiler.
+---
+ drbd/drbd_nl.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 46a9c3b..46ab36c 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -144,7 +144,7 @@ const char *windrbd_genl_cmd_to_str(u8 cmd)
+ 
+ atomic_t drbd_genl_seq = ATOMIC_INIT(2); /* two. */
+ 
+-DEFINE_MUTEX(notification_mutex);
++struct mutex notification_mutex;
+ 
+ /* used blkdev_get_by_path, to claim our meta data device(s) */
+ static char *drbd_m_holder = "Hands off! this is DRBD's meta data device.";
+-- 
+2.17.0
+

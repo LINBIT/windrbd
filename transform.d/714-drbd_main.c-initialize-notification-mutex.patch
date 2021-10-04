@@ -1,0 +1,24 @@
+From f0b8b233dbc85bc498887a3c678f5807c1214cca Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 4 Oct 2021 17:43:28 +0200
+Subject: [PATCH 1/2] drbd_main.c: initialize notification mutex
+
+---
+ drbd/drbd_main.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 99e18ff..c1a126c 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -4142,6 +4142,7 @@ int __init drbd_init(void)
+ 
+ 	spin_lock_init(&drbd_devices_lock);
+ 	mutex_init(&resources_mutex);
++	mutex_init(&notification_mutex);	/* defined in drbd_nl.c */
+ #if 0
+ 	drbd_debugfs_init();
+ #endif
+-- 
+2.17.0
+
