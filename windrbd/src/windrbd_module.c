@@ -18,7 +18,7 @@ bool try_module_get(struct module *module)
 	}
 
 	if (atomic_inc_return(&module->refcnt) == 1) {
-#if 0
+#if 1
 		printk("Locking module by setting AddDevice to %p, sc stop windrbd should not work (do a drbdadm down all first)\n", mvolAddDevice);
 		mvolDriverObject->DriverExtension->AddDevice = mvolAddDevice;
 #else
@@ -37,7 +37,7 @@ void module_put(struct module *module)
 	}
 
 	if (atomic_dec_return(&module->refcnt) == 0) {
-#if 0
+#if 1
 		printk("Unlocking module by setting AddDevice to NULL, sc stop windrbd should work now.\n");
 		mvolDriverObject->DriverExtension->AddDevice = NULL;
 #else
