@@ -173,7 +173,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 /* Remove this line to make driver removable (driver removing currently
  * BSOD's sometimes):
  */
-//	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
+	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
 	DriverObject->DriverUnload = mvolUnload;
 
 		/* For bus object: TODO: don't do this if there
