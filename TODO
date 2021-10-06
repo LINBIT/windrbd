@@ -36,6 +36,10 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Feature: Driver Unloading
+
+	Experimental at the moment.
+
 TODO: Code quality: Fix drbd-utils compiler warnings
 
 TODO: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
