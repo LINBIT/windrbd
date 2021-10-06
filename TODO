@@ -40,6 +40,10 @@ TODO: Feature: Driver Unloading
 
 	Experimental at the moment.
 
+	It works (but BSODs) when WinDRBD is installed via installer
+	then windrbd remove-bus-device is called (and really removed,
+	check in device manager)
+
 TODO: Code quality: Fix drbd-utils compiler warnings
 
 TODO: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
