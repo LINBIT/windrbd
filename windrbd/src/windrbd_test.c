@@ -2,6 +2,7 @@
 #include "windrbd_threads.h"
 #include "drbd_int.h"
 #include <ctype.h>
+#include "disp.h"
 
 int debug_printks_enabled = 0;
 
@@ -1182,6 +1183,12 @@ static void set_event_log_level_test(int argc, char ** argv)
 	}
 }
 
+static void force_unlock(int argc, char ** argv)
+{
+	printk("Forcing driver unlock, sc stop windrbd should work now...\n");
+	mvolDriverObject->DriverExtension->AddDevice = NULL;
+}
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1257,6 +1264,8 @@ void test_main(const char *arg)
 		test_event_log_split(argc, argv);
 	if (strcmp(argv[0], "set_event_log_level") == 0)
 		set_event_log_level_test(argc, argv);
+	if (strcmp(argv[0], "force_unlock") == 0)
+		force_unlock(argc, argv);
 
 kfree_argv:
 	kfree(argv);
