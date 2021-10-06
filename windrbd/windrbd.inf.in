@@ -5,41 +5,14 @@
 [Version]
 signature   =   "$Windows NT$"
 ;; inf2cat complains if this is not specified:
-; Class       =   "Volume" ; Virtual storage driver (creates block devices)
-; Class       =   "DiskDrive" ; Disk Drive (needed for boot?)
-Class       =   "SCSIAdapter" ; Disk Drive (needed for boot?)
-ClassGUID   = {4D36E97B-E325-11CE-BFC1-08002BE10318}
-; Class       = "System"
-; ClassGUID   = {4D36E97D-E325-11CE-BFC1-08002BE10318}
+Class       =   "Volume" ; Virtual storage driver (creates block devices)
 Provider    =   "Linbit"
 DriverVer   =   12/01/2013,0.2.0.0 ;Will get replaced by build magic
 CatalogFile =   windrbd.cat
 
-[Manufacturer]
-Linbit = WinDRBDDriver, NTamd64
-
-[WinDRBDDriver]
-"WinDRBD Driver" = WinDRBD,WinDRBD
-; "WinDRBD Disk Device" = WinDRBD,WinDRBD\Disk5
-
-[WinDRBDDriver.NTamd64]
-"WinDRBD Virtual Bus Device" = WinDRBD,WinDRBD
-; "WinDRBD Disk Device" = WinDRBD,WinDRBD\Disk5
-
 [DestinationDirs]
 DefaultDestDir       = 12
 WinDRBD.DriverFiles     = 12           ;%windir%\system32\drivers
-
-;;
-;; WinDRBD device install section .. for the WinDRBD bus
-;;
-
-[WinDRBD.NT]
-OptionDesc          = "WinDRBD - storage replication over network for Microsoft Windows"
-CopyFiles           = WinDRBD.DriverFiles
-
-[WinDRBD.NT.Services]
-AddService          = "WinDRBD", 2, WinDRBD.Service ; 2 ... Assign the named service as the PnP function driver (or legacy driver) for the device being installed by this INF
 
 ;;
 ;; Default install sections
@@ -50,7 +23,7 @@ OptionDesc          = "WinDRBD - storage replication over network for Microsoft 
 CopyFiles           = WinDRBD.DriverFiles
 
 [DefaultInstall.Services]
-AddService          = "WinDRBD", 2, WinDRBD.Service ; 2 ... Assign the named service as the PnP function driver (or legacy driver) for the device being installed by this INF
+AddService          = "WinDRBD",,WinDRBD.Service
 
 ;;
 ;; Default uninstall sections
@@ -72,10 +45,8 @@ DisplayName      = "WinDRBD"
 Description      = "WinDRBD - storage replication over network for Microsoft Windows"
 ServiceBinary    = %12%\windrbd.sys     	;%windir%\system32\drivers\windrbd.sys
 ServiceType      = 1                    ;SERVICE_FILE_SYSTEM_DRIVER
-; BootFlags	 = 0x1			;boot critical when booting via network
-StartType        = 3			;start only manually (unless booting via network)
 ; StartType        = 0			;start at boot time
-; StartType        = 1			;start at system load
+StartType        = 3			;start only manually
 ErrorControl     = 0                    ;SERVICE_ERROR_NORMAL
 AddReg           = WinDRBD.AddRegistry
 ; See HKLM/System/CurrentControlSet/Control/GroupOrderList for a list of possible values
@@ -87,11 +58,9 @@ AddReg           = WinDRBD.AddRegistry
 
 [WinDRBD.AddRegistry]
 HKR,,"syslog_ip",0x00000002, "127.0.0.1"
-HKR,,"BootFlags", 0x00010001, 1		; DWORD: boot critical when booting via network
 
 [WinDRBD.DelRegistry]
 HKR,,"syslog_ip"
-HKR,,"BootFlags"
 
 ;
 ; Copy Files

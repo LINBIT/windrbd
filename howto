@@ -822,3 +822,9 @@ git clone --recursive https://github.com/LINBIT/drbd.git
 cd drbd
 make
 sudo make install
+
+-------------
+
+Howto tar without old installers (they take 2GB meanwhile):
+
+tar cfz windrbd-1.0.0.rc16.tar.gz windrbd --exclude=install*.exe 
