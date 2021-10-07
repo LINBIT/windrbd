@@ -163,11 +163,12 @@ void windrbd_reap_all_threads(void)
 	while (!list_empty(&thread_list)) {
 		printk("Still threads alive, waiting for them to terminate ...\n");
 
-		spin_lock_irqsave(&thread_list_lock, flags);
+	/* TODO: printk will call current which also takes the lock. */
+//		spin_lock_irqsave(&thread_list_lock, flags);
 		list_for_each_entry(struct task_struct, t, &thread_list, list) {
 			printk("    Thread %s still running ...\n", t->comm);
 		}
-		spin_unlock_irqrestore(&thread_list_lock, flags);
+//		spin_unlock_irqrestore(&thread_list_lock, flags);
 		msleep(1000);
 		windrbd_reap_threads();
 	}
