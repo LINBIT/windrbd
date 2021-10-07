@@ -155,20 +155,24 @@ void windrbd_reap_threads(void)
 
 void windrbd_reap_all_threads(void)
 {
-	int n = 0;
+	struct task_struct *t;
+	KIRQL flags;
 
 	windrbd_reap_threads();
 
 	while (!list_empty(&thread_list)) {
-		n++;
-		printk("Still threads alive (%d), waiting for them to terminate ...\n", n);
-			/* TODO: we might want to tell the user which threads they are ... */
+		printk("Still threads alive, waiting for them to terminate ...\n");
 
+		spin_lock_irqsave(&thread_list_lock, flags);
+		list_for_each_entry(struct task_struct, t, &thread_list, list) {
+			printk("    Thread %s still running ...\n", t->comm);
+		}
+		spin_unlock_irqrestore(&thread_list_lock, flags);
 		msleep(1000);
 		windrbd_reap_threads();
 	}
 }
-		
+
 	/* We need this so we clean up the task struct. Linux appears
 	 * to deref the task_struct on thread exit, we also should
 	 * do so.
