@@ -1189,6 +1189,11 @@ static void force_unlock(int argc, char ** argv)
 	mvolDriverObject->DriverExtension->AddDevice = NULL;
 }
 
+static void print_add_device(int argc, char ** argv)
+{
+	printk("AddDevice is %p\n", mvolDriverObject->DriverExtension->AddDevice);
+}
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1266,6 +1271,8 @@ void test_main(const char *arg)
 		set_event_log_level_test(argc, argv);
 	if (strcmp(argv[0], "force_unlock") == 0)
 		force_unlock(argc, argv);
+	if (strcmp(argv[0], "print_add_device") == 0)
+		print_add_device(argc, argv);
 
 kfree_argv:
 	kfree(argv);
