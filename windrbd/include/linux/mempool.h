@@ -5,6 +5,8 @@
 
 struct kmem_cache;
 
+#define MEMPOOL_KMALLOCED_MAGIC 0x59bd13f4
+
 typedef struct mempool_s {
 	enum {
 		MEMPOOL_PAGE,
@@ -17,6 +19,7 @@ typedef struct mempool_s {
 			NPAGED_LOOKASIDE_LIST page_addrLS;
 		};
 	};
+	int is_kmalloced;
 } mempool_t;
 
 extern mempool_t *mempool_create_page_pool(int min_nr, int order, ULONG tag);

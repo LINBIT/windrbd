@@ -18,6 +18,7 @@ mempool_t *mempool_create_page_pool(int min_nr, int order, ULONG tag)
 	pool = kmalloc(sizeof(*pool), GFP_KERNEL, tag);
 	if (!pool)
 		return NULL;
+	pool->is_kmalloced = MEMPOOL_KMALLOCED_MAGIC;
 
 	if (mempool_init_page_pool(pool, min_nr, order) != 0) {
 		kfree(pool);
@@ -41,6 +42,7 @@ mempool_t *mempool_create_slab_pool(int min_nr, struct kmem_cache *kc, ULONG tag
 	pool = kmalloc(sizeof(*pool), GFP_KERNEL, tag);
 	if (!pool)
 		return NULL;
+	pool->is_kmalloced = MEMPOOL_KMALLOCED_MAGIC;
 
 	if (mempool_init_slab_pool(pool, min_nr, kc) != 0) {
 		kfree(pool);
@@ -55,7 +57,8 @@ void mempool_destroy(mempool_t *pool)
 		ExDeleteNPagedLookasideList(&pool->pageLS);
 		ExDeleteNPagedLookasideList(&pool->page_addrLS);
 	}
-	kfree(pool);
+	if (pool->is_kmalloced == MEMPOOL_KMALLOCED_MAGIC)
+		kfree(pool);
 }
 
 void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
