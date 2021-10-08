@@ -44,6 +44,9 @@ TODO: Feature: Driver Unloading
 	then windrbd remove-bus-device is called (and really removed,
 	check in device manager)
 
+	Must link with /DRIVER /SUBSYSTEM:WINDOWS not with
+	/DRIVER:WDM
+
 TODO: Code quality: Fix drbd-utils compiler warnings
 
 TODO: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
