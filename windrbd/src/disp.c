@@ -252,7 +252,7 @@ int windrbd_rescan_bus(void)
 void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 {
 	UNREFERENCED_PARAMETER(DriverObject);
-	UNICODE_STRING linkUnicode;
+	UNICODE_STRING linkUnicode, userLinkUnicode;
 	NTSTATUS status;
 
 	printk("Unloading windrbd driver.\n");
@@ -273,6 +273,11 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 	status = IoDeleteSymbolicLink(&linkUnicode);
 	if (!NT_SUCCESS(status))
 		printk("Cannot delete root device link, status is %x.\n", status);
+
+	RtlInitUnicodeString(&userLinkUnicode, L"\\DosDevices\\" WINDRBD_USER_DEVICE_NAME);
+	status = IoDeleteSymbolicLink(&userLinkUnicode);
+	if (!NT_SUCCESS(status))
+		printk("Cannot delete user device link, status is %x.\n", status);
 
         IoDeleteDevice(mvolRootDeviceObject);
         IoDeleteDevice(user_device_object);
