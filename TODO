@@ -47,6 +47,12 @@ TODO: Feature: Driver Unloading
 	Must link with /DRIVER /SUBSYSTEM:WINDOWS not with
 	/DRIVER:WDM
 
+	Cannot unload driver when it was started with sc start windrbd
+	(or drbdadm status) but (fortunately) driver unload works when
+	driver is started via windrbd install-bus-device.
+
+	Now we can implement update without reboot in innosetup installer.
+
 TODO: Code quality: Fix drbd-utils compiler warnings
 
 TODO: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
