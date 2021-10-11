@@ -53,6 +53,9 @@ TODO: Feature: Driver Unloading
 
 	Now we can implement update without reboot in innosetup installer.
 
+	New BSOD on driver load (C4 on install-bus-device after reboot).
+	Also on booting Windows now (must research with kernel debugger).
+
 TODO: Code quality: Fix drbd-utils compiler warnings
 
 TODO: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
