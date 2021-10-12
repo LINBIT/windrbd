@@ -63,6 +63,8 @@ TODO: Feature: Driver Unloading
 	remove-bus-device / drbdadm down / sc stop there is a 0xC4 / 0x62
 	BSOD (verifier complaining about some memory not freed).
 
+	Installer: use dpinst instead of rundll32?
+
 TODO: Code quality: Fix drbd-utils compiler warnings
 
 TODO: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
