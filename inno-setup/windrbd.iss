@@ -288,6 +288,11 @@ begin
 	begin
 		MsgBox('Could not remove bus device', mbInformation, MB_OK);
 	end;
+
+	if not Exec(ExpandConstant('sc.exe'), 'stop windrbd', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+	begin
+		MsgBox('Could not stop driver', mbInformation, MB_OK);
+	end;
 end;
 
 
