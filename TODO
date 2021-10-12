@@ -56,6 +56,13 @@ TODO: Feature: Driver Unloading
 	New BSOD on driver load (C4 on install-bus-device after reboot).
 	Also on booting Windows now (must research with kernel debugger).
 
+	Update: was driver verifier complaining about MmMapIoSpace() in
+	searching for boot device. Known bug.
+
+	Now when doing windrbd install-bus-device / drbdadm up /
+	remove-bus-device / drbdadm down / sc stop there is a 0xC4 / 0x62
+	BSOD (verifier complaining about some memory not freed).
+
 TODO: Code quality: Fix drbd-utils compiler warnings
 
 TODO: Bug: BSOD (0xD1) on secondary when running WinDRBD write test

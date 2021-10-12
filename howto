@@ -544,6 +544,10 @@ Switch context to thread (number displayed in !stacks)
 then 
 k
 will display the new thread's backtrace.
+
+print C expression
+
+?? x
 -----
 
 netsh:
