@@ -275,6 +275,21 @@ begin
 	RegDeleteValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'WinDRBDRootWinPath');
 end;
 
+procedure stopDriver;
+var ResultCode: Integer;
+
+begin
+	if not Exec(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'down all', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+	begin
+		MsgBox('Could not bring DRBD resources down', mbInformation, MB_OK);
+	end;
+
+	if not Exec(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'remove-bus-device windrbd.inf', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+	begin
+		MsgBox('Could not remove bus device', mbInformation, MB_OK);
+	end;
+end;
+
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var root: string;
@@ -282,6 +297,7 @@ var root: string;
 begin
 	if CurUninstallStep = usAppMutexCheck then begin
 		StopUserModeServices();
+		StopDriver();
 	end;
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
@@ -412,11 +428,13 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
 	if CurStep = ssPostInstall then begin
 		ModPath();
-		WriteWinDRBDRootPath();
 	end;
 
 	if CurStep = ssInstall then begin
+		WriteWinDRBDRootPath();
+
 		StopUserModeServices();
+		StopDriver();
 	end;
 	if CurStep = ssPostInstall then begin
 		PatchRegistry();
