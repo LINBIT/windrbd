@@ -302,7 +302,9 @@ var root: string;
 begin
 	if CurUninstallStep = usAppMutexCheck then begin
 		StopUserModeServices();
-		StopDriver();
+		if GetOldVersion <> '' then begin
+			StopDriver();
+		end;
 	end;
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
