@@ -302,9 +302,7 @@ var root: string;
 begin
 	if CurUninstallStep = usAppMutexCheck then begin
 		StopUserModeServices();
-		if GetOldVersion <> '' then begin
-			StopDriver();
-		end;
+		StopDriver();
 	end;
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
@@ -441,7 +439,9 @@ begin
 		WriteWinDRBDRootPath();
 
 		StopUserModeServices();
-		StopDriver();
+		if GetOldVersion <> '' then begin
+			StopDriver();
+		end;
 	end;
 	if CurStep = ssPostInstall then begin
 		PatchRegistry();
