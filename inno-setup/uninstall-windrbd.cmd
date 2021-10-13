@@ -6,9 +6,11 @@ if %errorlevel% NEQ 0 (
 	exit
 )
 
-drbdadm down all
-rem Later: (this currently might BSOD if there are resources up.
-rem Right now need to reboot after uninstall.
+rem Don't do that .. it will start the kernel driver with sc start windrbd
+rem again which causes it not to unload later. It is done in windrbd.iss
+rem (procedure stopDriver)
+rem drbdadm down all
+rem This is done in the windrbd.iss stopDriver now:
 rem sc stop windrbd
 sc stop windrbdlog
 sc stop windrbdumhelper
@@ -16,8 +18,8 @@ sc stop windrbdumhelper
 cygrunsrv -R windrbdlog
 cygrunsrv -R windrbdumhelper
 
-rem This currently does not work: fix it and reenable this:
+rem This is done in stopDriver section of windrbd.iss
 rem windrbd remove-bus-device C:\windows\inf\windrbd.inf
 
-rem start /wait rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 C:\windows\inf\windrbd.inf
+start /wait rundll32.exe setupapi.dll,InstallHinfSection DefaultUninstall 132 C:\windows\inf\windrbd.inf
 
