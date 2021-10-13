@@ -1,6 +1,10 @@
 Upcoming features
 -----------------
 
+Upgrade to 9.0.31
+
+Driver unloading (no reboot on Upgrade/Uninstall)
+
 What's new in version 1.0.0-rc17
 --------------------------------
 

@@ -29,11 +29,13 @@ Online verify
 
 Relocate C:\windrbd directory
 
------ for 1.0.0
-
 2 node (Windows / Linux) setup production ready.
 
 3 (and more) node setups
+
+----- for 1.0.0
+
+Driver Unloading: No reboot on upgrade/uninstall
 
 ----- for 1.1.0
 
@@ -52,9 +54,6 @@ Using System Volume (C:\) as DRBD device (with local backing storage disk)
 debugfs
 
 trim / discard
-
-Driver Unloading
-	No reboot on upgrade/uninstall (if at all possible)
 
 Most likely never
 -----------------
