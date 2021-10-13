@@ -1,6 +1,8 @@
 Upcoming features
 -----------------
 
+Upgrade to latest cygwin distribution
+
 Upgrade to 9.0.31
 
 Driver unloading (no reboot on Upgrade/Uninstall)

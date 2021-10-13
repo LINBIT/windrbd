@@ -65,6 +65,12 @@ TODO: Feature: Driver Unloading
 
 	Installer: use dpinst instead of rundll32?
 
+	DefaultInstall should not display any panels.
+
+	Reboot neccessary := False when driver was successfully removed.
+
+	Remove references to reboot (MessageBox and Final page)
+
 TODO: Code quality: Fix drbd-utils compiler warnings
 
 TODO: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
