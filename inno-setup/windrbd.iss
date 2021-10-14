@@ -142,7 +142,7 @@ Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runas
 Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
 Filename: "{app}\cygrunsrv"; Parameters: "-I windrbdlog -p {code:WinDRBDRootDirCygwin}/usr/sbin/windrbd.exe -a log-server -1 {code:WinDRBDRootDirCygwin}/windrbd-kernel.log -2 {code:WinDRBDRootDirCygwin}/windrbd-kernel.log -t manual"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
 Filename: "{app}\cygrunsrv"; Parameters: "-I windrbdumhelper -p {code:WinDRBDRootDirCygwin}/usr/sbin/windrbd.exe -a user-mode-helper-daemon -1 {code:WinDRBDRootDirCygwin}/windrbd-umhelper.log -2 {code:WinDRBDRootDirCygwin}/windrbd-umhelper.log -t manual"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
-Filename: "{code:WinDRBDRootDir}\usr\sbin\windrbd.exe"; Parameters: "install-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; Check: DoCreateBusDevice
+; Filename: "{code:WinDRBDRootDir}\usr\sbin\windrbd.exe"; Parameters: "install-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; Check: DoCreateBusDevice
 Filename: "{#MyAppURLDocumentation}"; Description: "Download WinDRBD documentation"; Flags: postinstall shellexec
 
 [UninstallRun]
@@ -295,6 +295,15 @@ begin
 	end;
 end;
 
+procedure installBusDevice;
+var ResultCode: Integer;
+
+begin
+	if not Exec(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'install-bus-device windrbd.inf', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+	begin
+		MsgBox('Could not install bus device', mbInformation, MB_OK);
+	end;
+end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var root: string;
@@ -445,6 +454,9 @@ begin
 		StartUserModeServices();
 		if GetOldVersion <> '' then begin
 			StopDriver();
+		end;
+		if DoCreateBusDevice then begin
+			installBusDevice();
 		end;
 	end;
 end;
