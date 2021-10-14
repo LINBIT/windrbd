@@ -70,6 +70,9 @@ TODO: Feature: Driver Unloading
 		Changed to rundll32 now queries for windrbd.sys location
 		Fixed with rc16-49? Yes was wrong path given.
 
+		Changed call to UpdateDriverForPlugAndPlayDevices in windrbd.c
+		Works now?
+
 	Reboot neccessary := False when driver was successfully removed.
 
 	Remove references to reboot (MessageBox and Final page)
