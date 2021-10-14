@@ -66,6 +66,8 @@ TODO: Feature: Driver Unloading
 	Installer: use dpinst instead of rundll32?
 
 	DefaultInstall should not display any panels.
+		Changed to rundll32 now queries for windrbd.sys location
+		Fixed with rc16-49?
 
 	Reboot neccessary := False when driver was successfully removed.
 
