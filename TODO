@@ -72,6 +72,8 @@ TODO: Feature: Driver Unloading
 
 		Changed call to UpdateDriverForPlugAndPlayDevices in windrbd.c
 		Works now?
+		No still reverting to old version. Now trying with
+		INSTALLFLAG_READONLY.
 
 	Reboot neccessary := False when driver was successfully removed.
 
