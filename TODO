@@ -74,6 +74,7 @@ TODO: Feature: Driver Unloading
 		Works now?
 		No still reverting to old version. Now trying with
 		INSTALLFLAG_READONLY.
+		Also still does not work (older version gets installed)
 
 	Reboot neccessary := False when driver was successfully removed.
 
