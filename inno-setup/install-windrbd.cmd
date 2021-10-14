@@ -18,4 +18,5 @@ rem this installs the bus device (new in 0.10.0)
 rem This currently does not work. Fix it and reenable this:
 rem windrbd install-bus-device .\windrbd.inf
 
-start /wait InfDefaultInstall .\windrbd.inf 
+rem start /wait InfDefaultInstall .\windrbd.inf
+start /wait rundll32.exe setupapi.dll,InstallHinfSection DefaultInstall 132 C:\windows\inf\windrbd.inf
