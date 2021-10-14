@@ -64,10 +64,11 @@ TODO: Feature: Driver Unloading
 	BSOD (verifier complaining about some memory not freed).
 
 	Installer: use dpinst instead of rundll32?
+		We now use rundll32 no panels so far.
 
 	DefaultInstall should not display any panels.
 		Changed to rundll32 now queries for windrbd.sys location
-		Fixed with rc16-49?
+		Fixed with rc16-49? Yes was wrong path given.
 
 	Reboot neccessary := False when driver was successfully removed.
 
