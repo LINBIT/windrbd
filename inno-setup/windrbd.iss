@@ -439,13 +439,13 @@ begin
 		WriteWinDRBDRootPath();
 
 		StopUserModeServices();
-		if GetOldVersion <> '' then begin
-			StopDriver();
-		end;
 	end;
 	if CurStep = ssPostInstall then begin
 		PatchRegistry();
 		StartUserModeServices();
+		if GetOldVersion <> '' then begin
+			StopDriver();
+		end;
 	end;
 end;
 
