@@ -22,10 +22,11 @@ VERSION=$(date +%Y,%m,%d,%H)
 DATE=$(date)
 GITHASH=$(git describe --tags --always)$EXTRA_VERSION
 DRBD_GITHASH="$(cd drbd ; git describe --tags --always)"$EXTRA_VERSION
-WINDRBD_VERSION=$( echo $GITHASH | sed -e 's/^windrbd-\([0-9.]*\).*$/\1/g' ).0
+PATCHLEVEL=$( echo $GITHASH | sed -e 's/.*-\([0-9]*\)-g.*/\1/g' )
+WINDRBD_VERSION=$( echo $GITHASH | sed -e 's/^windrbd-\([0-9.]*\).*$/\1/g' ).$PATCHLEVEL
 RESOURCE_VERSION=$( echo $WINDRBD_VERSION | tr . , )
 
-echo WinDRBD version is $WINDRBD_VERSION, Resource version is $RESOURCE_VERSION
+echo Patchlevel is $PATCHLEVEL WinDRBD version is $WINDRBD_VERSION, Resource version is $RESOURCE_VERSION
 
 VER_INTERNALNAME_STR="WinDRBD"
 VER_FILEVERSION_STR="${GITHASH}\\0"
