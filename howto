@@ -832,3 +832,10 @@ sudo make install
 Howto tar without old installers (they take 2GB meanwhile):
 
 tar cfz windrbd-1.0.0.rc16.tar.gz windrbd --exclude=install*.exe 
+
+--------------
+
+Howto update cygwin binaries:
+
+cd inno-setup/cygwin-binaries
+for i in * ; do cp `which $i` . ; done
