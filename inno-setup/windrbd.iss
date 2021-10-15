@@ -295,6 +295,17 @@ begin
 	end;
 end;
 
+procedure AddDriverToDriverStore;
+var ResultCode: Integer;
+
+begin
+	if not Exec(ExpandConstant('pnputil.exe'), '/add-driver windrbd.inf', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+	begin
+		MsgBox('Could not run pnputil', mbInformation, MB_OK);
+	end;
+MsgBox('pnputil returned '+IntToStr(ResultCode), mbInformation, MB_OK);
+end;
+
 procedure installBusDevice;
 var ResultCode: Integer;
 
@@ -455,6 +466,7 @@ begin
 		if GetOldVersion <> '' then begin
 			StopDriver();
 		end;
+		AddDriverToDriverStore();
 		if DoCreateBusDevice then begin
 			installBusDevice();
 		end;

@@ -18,8 +18,10 @@ rem this installs the bus device (new in 0.10.0)
 rem This currently does not work. Fix it and reenable this:
 rem windrbd install-bus-device .\windrbd.inf
 
+rem This is now done via pnputil /adddriver and windrbd install-bus-device
+rem see windrbd.iss
 rem start /wait InfDefaultInstall .\windrbd.inf
 rem start /wait rundll32.exe setupapi.dll,InstallHinfSection DefaultInstall 132 .\windrbd.inf
-start /wait rundll32.exe advpack.dll,LaunchINFSectionEx .\windrbd.inf,,,4,N
+rem start /wait rundll32.exe advpack.dll,LaunchINFSectionEx .\windrbd.inf,,,4,N
 rem start /wait rundll32.exe advpack.dll,LaunchINFSectionEx .\<file>.inf,,,20
 rem start /wait rundll32.exe advpack.dll,LaunchINFSection .\<file>.inf,DefaultInstall,1
