@@ -20,6 +20,6 @@ rem windrbd install-bus-device .\windrbd.inf
 
 rem start /wait InfDefaultInstall .\windrbd.inf
 rem start /wait rundll32.exe setupapi.dll,InstallHinfSection DefaultInstall 132 .\windrbd.inf
-start /wait rundll32.exe advpack.dll,LaunchINFSectionEx .\windrbd.inf,,,4
+start /wait rundll32.exe advpack.dll,LaunchINFSectionEx .\windrbd.inf,,,20,N
 rem start /wait rundll32.exe advpack.dll,LaunchINFSectionEx .\<file>.inf,,,20
 rem start /wait rundll32.exe advpack.dll,LaunchINFSection .\<file>.inf,DefaultInstall,1
