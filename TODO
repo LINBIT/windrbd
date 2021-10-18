@@ -66,6 +66,10 @@ TODO: Feature: Driver Unloading
 	Installer: use dpinst instead of rundll32?
 		We now use rundll32 no panels so far.
 
+		Update: We now do not use any rundll command any more.
+		Instead we first stage the driver via pnputil and then
+		install the bus device via windrbd install-bus-device
+
 	DefaultInstall should not display any panels.
 		Changed to rundll32 now queries for windrbd.sys location
 		Fixed with rc16-49? Yes was wrong path given.
@@ -86,6 +90,7 @@ TODO: Feature: Driver Unloading
 		Ok
 
 	Remove references to reboot (MessageBox and Final page)
+		Ok
 
 	Remove install bus device checkbox.
 		We need to install the bus device always else driver won't
