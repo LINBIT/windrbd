@@ -279,17 +279,17 @@ procedure stopDriver;
 var ResultCode: Integer;
 
 begin
-	if not Exec(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'down all', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+	if not Exec(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'down all', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
 	begin
 		MsgBox('Could not bring DRBD resources down', mbInformation, MB_OK);
 	end;
 
-	if not Exec(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'remove-bus-device windrbd.inf', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+	if not Exec(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'remove-bus-device windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
 	begin
 		MsgBox('Could not remove bus device', mbInformation, MB_OK);
 	end;
 
-	if not Exec(ExpandConstant('sc.exe'), 'stop windrbd', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+	if not Exec(ExpandConstant('sc.exe'), 'stop windrbd', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
 	begin
 		MsgBox('Could not stop driver', mbInformation, MB_OK);
 	end;
@@ -299,7 +299,7 @@ procedure AddDriverToDriverStore;
 var ResultCode: Integer;
 
 begin
-	if not Exec(ExpandConstant('pnputil.exe'), '/add-driver windrbd.inf', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+	if not Exec(ExpandConstant('pnputil.exe'), '/add-driver windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
 	begin
 		MsgBox('Could not run pnputil', mbInformation, MB_OK);
 	end;
@@ -309,7 +309,7 @@ procedure installBusDevice;
 var ResultCode: Integer;
 
 begin
-	if not Exec(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'install-bus-device windrbd.inf', ExpandConstant('{app}'), SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+	if not Exec(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'install-bus-device windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
 	begin
 		MsgBox('Could not install bus device', mbInformation, MB_OK);
 	end;
