@@ -90,6 +90,8 @@ TODO: Feature: Driver Unloading
 		We need to install the bus device always else driver won't
 		get installed now.
 
+	Also test uninstall
+
 TODO: Code quality: Fix drbd-utils compiler warnings
 
 TODO: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
