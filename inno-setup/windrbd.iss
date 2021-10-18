@@ -303,7 +303,6 @@ begin
 	begin
 		MsgBox('Could not run pnputil', mbInformation, MB_OK);
 	end;
-MsgBox('pnputil returned '+IntToStr(ResultCode), mbInformation, MB_OK);
 end;
 
 procedure installBusDevice;
