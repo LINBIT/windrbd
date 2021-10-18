@@ -212,14 +212,7 @@ begin
 end;
 
 #include "modpath.iss"
-
-function UninstallNeedRestart(): Boolean;
-begin
-	Result := True;
-end;
-
 #include "oldver.iss"
-
 #include "services.iss"
 
 var LoggerWasStarted: boolean;
@@ -320,6 +313,17 @@ begin
 	begin
 		MsgBox('Could not install bus device', mbInformation, MB_OK);
 	end;
+end;
+
+function UninstallNeedRestart: Boolean;
+begin
+	Result:= not driverWasUnloaded;
+
+if not driverWasUnloaded then
+MsgBox('Need restart', mbInformation, MB_OK)
+else
+MsgBox('Do not need restart', mbInformation, MB_OK);
+
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
