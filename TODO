@@ -76,11 +76,19 @@ TODO: Feature: Driver Unloading
 		INSTALLFLAG_READONLY.
 		Also still does not work (older version gets installed)
 
+		Update: now using pnputil to install driver into driver
+		store and windrbd install-bus-device to install driver
+		from driver store to system. Works like a charm.
+
 	Have a run command that writes output to a setup.log file.
 
 	Reboot neccessary := False when driver was successfully removed.
 
 	Remove references to reboot (MessageBox and Final page)
+
+	Remove install bus device checkbox.
+		We need to install the bus device always else driver won't
+		get installed now.
 
 TODO: Code quality: Fix drbd-utils compiler warnings
 
