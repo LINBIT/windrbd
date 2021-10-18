@@ -15,10 +15,11 @@ begin
 end;
 
 var myNeedRestart: Boolean;
+    driverWasUnloaded: Boolean;
 
 function NeedRestart: Boolean;
 begin
-	Result:= myNeedRestart;
+	Result:= myNeedRestart and not driverWasUnloaded;
 end;
 
 function InitializeSetup: Boolean;
@@ -31,6 +32,7 @@ begin
 	Result := True;
 	version := GetOldVersion();
 	myNeedRestart := False;
+	driverWasUnloaded := False;
 	if version <> '' then
 	begin
 		buttons := MB_YESNO;

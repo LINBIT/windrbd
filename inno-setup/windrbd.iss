@@ -293,6 +293,8 @@ begin
 	begin
 		MsgBox('Could not stop driver', mbInformation, MB_OK);
 	end;
+
+	driverWasUnloaded := ResultCode = 0;
 end;
 
 procedure AddDriverToDriverStore;
