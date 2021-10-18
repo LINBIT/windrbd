@@ -20,6 +20,11 @@ var myNeedRestart: Boolean;
 function NeedRestart: Boolean;
 begin
 	Result:= myNeedRestart and not driverWasUnloaded;
+if myNeedRestart and not driverWasUnloaded then
+MsgBox('Need restart', mbInformation, MB_OK)
+else
+MsgBox('Do not need restart', mbInformation, MB_OK);
+
 end;
 
 function InitializeSetup: Boolean;

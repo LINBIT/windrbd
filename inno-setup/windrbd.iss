@@ -295,6 +295,12 @@ begin
 	end;
 
 	driverWasUnloaded := ResultCode = 0;
+
+if driverWasUnloaded then
+MsgBox('driver was successfully unloaded', mbInformation, MB_OK)
+else
+MsgBox('driver was NOT successfully unloaded', mbInformation, MB_OK);
+
 end;
 
 procedure AddDriverToDriverStore;
