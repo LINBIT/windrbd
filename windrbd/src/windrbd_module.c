@@ -37,6 +37,7 @@ void module_put(struct module *module)
 	}
 
 	if (atomic_dec_return(&module->refcnt) == 0) {
+		/* This is actually used now to unload the driver on update */
 #if 1
 		printk("Unlocking module by setting AddDevice to NULL, sc stop windrbd should work now.\n");
 		mvolDriverObject->DriverExtension->AddDevice = NULL;
