@@ -97,6 +97,12 @@ TODO: Feature: Driver Unloading
 		get installed now.
 
 	Also test uninstall
+		Do not display message box if silent.
+		There is a very quick progress bar (uninstall.cmd).
+		Remove debug message boxes again.
+		also TODO: remove drivers from the driver store.
+
+		Remove uninstall-windrbd-beta4 finally..
 
 TODO: Code quality: Fix drbd-utils compiler warnings
 
