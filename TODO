@@ -83,6 +83,7 @@ TODO: Feature: Driver Unloading
 	Have a run command that writes output to a setup.log file.
 
 	Reboot neccessary := False when driver was successfully removed.
+		Ok
 
 	Remove references to reboot (MessageBox and Final page)
 

@@ -39,7 +39,7 @@ begin
 		if version = '{#SetupSetting("AppVersion")}' then
 			str := 'WinDRBD version '+version+' is already installed. It is not neccessary to install it again, unless you manually destroyed the WinDRBD installation. Do you wish to continue?'
 		else
-			str := ExpandConstant('Found WinDRBD version '+version+' installed. The version you are about to install is {#SetupSetting("AppVersion")}. You can safely install one over the other, however to restart the driver a reboot is required. Continue?');
+			str := ExpandConstant('Found WinDRBD version '+version+' installed. The version you are about to install is {#SetupSetting("AppVersion")}. You can safely install one over the other, however to restart the driver all WinDRBD resources are taken down by the installer. Optionally a reboot is required if the installed version is 1.0.0-rc16 or older. Continue?');
 
 		if not WizardSilent then
 		begin
