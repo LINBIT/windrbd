@@ -76,6 +76,8 @@ TODO: Feature: Driver Unloading
 		INSTALLFLAG_READONLY.
 		Also still does not work (older version gets installed)
 
+	Have a run command that writes output to a setup.log file.
+
 	Reboot neccessary := False when driver was successfully removed.
 
 	Remove references to reboot (MessageBox and Final page)
