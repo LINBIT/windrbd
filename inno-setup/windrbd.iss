@@ -179,7 +179,8 @@ var TempFilename: String;
 
 begin
 	TempFilename := ExpandConstant('{tmp}\~execwithresult.txt');
-  { Exec via cmd and redirect output to file. Must use special string-behavior to work. }
+
+		{ Exec via cmd and redirect output to file. Must use special string-behavior to work. }
 	Command := Format('"%s" /S /C ""%s" %s > "%s""', [ ExpandConstant('{cmd}'), Filename, Params, TempFilename]);
 	Result := Exec(ExpandConstant('{cmd}'), Command, WorkingDir, ShowCmd, Wait, ResultCode);
 	if not Result then
@@ -187,10 +188,13 @@ begin
 
 	LoadStringFromFile(TempFilename, ResultString);  { Cannot fail }
 	DeleteFile(TempFilename);
-  { Remove new-line at the end }
-  { TODO: cygpath? }
+
+		{ Remove new-line at the end }
 	if (Length(ResultString) >= 2) and (ResultString[Length(ResultString) - 1] = #13) and (ResultString[Length(ResultString)] = #10) then
 		Delete(ResultString, Length(ResultString) - 1, 2);
+		{ Unix linefeeds }
+	if (Length(ResultString) >= 1) and (ResultString[Length(ResultString)] = #10) then
+		Delete(ResultString, Length(ResultString), 1);
 end;
 
 function cygpath(WindowsPath: String): String;
@@ -199,7 +203,7 @@ var
 	ResultCode: integer;
 
 begin
-	ExecWithResult('cmd.exe', '/C cygpath "' + WindowsPath + '" > "' + TmpFileName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode, ExecStdout);
+	ExecWithResult('cygpath', WindowsPath, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, ExecStdout);
 	Result := ExecStdout;
 
 msgbox('cygpath returned x'+Result+'x', mbInformation, MB_OK);
