@@ -138,8 +138,6 @@ Name: "{group}\Open {#MyAppName} application folder"; Filename: "{app}"
 [Run]
 ; TODO: System directory. Do not hardcode C:\Windows.
 Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
-Filename: "{app}\cygrunsrv"; Parameters: "-I windrbdlog -p {code:WinDRBDRootDirCygwin}/usr/sbin/windrbd.exe -a log-server -1 {code:WinDRBDRootDirCygwin}/windrbd-kernel.log -2 {code:WinDRBDRootDirCygwin}/windrbd-kernel.log -t manual"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
-Filename: "{app}\cygrunsrv"; Parameters: "-I windrbdumhelper -p {code:WinDRBDRootDirCygwin}/usr/sbin/windrbd.exe -a user-mode-helper-daemon -1 {code:WinDRBDRootDirCygwin}/windrbd-umhelper.log -2 {code:WinDRBDRootDirCygwin}/windrbd-umhelper.log -t manual"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
 Filename: "{#MyAppURLDocumentation}"; Description: "Download WinDRBD documentation"; Flags: postinstall shellexec skipifsilent
 
 [UninstallRun]
@@ -265,6 +263,17 @@ Begin
 		MyStartService('windrbdumhelper');
 	End;
 End;
+
+Procedure InstallUserModeServices;
+var ResultCode: Integer;
+
+Begin
+	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdlog -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a log-server -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -t manual', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+		MsgBox('Could not install WinDRBD log service', mbInformation, MB_OK);
+
+	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdumhelper -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a user-mode-helper-daemon -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -t manual', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+		MsgBox('Could not install WinDRBD user mode helper service', mbInformation, MB_OK);
+end;
 
 Procedure QuoteImagePath(reg_path: string);
 var the_path: string;
@@ -459,6 +468,7 @@ begin
 	end;
 	if CurStep = ssPostInstall then begin
 		PatchRegistry();
+		InstallUserModeServices();
 		StartUserModeServices();
 		AddDriverToDriverStore();
 		InstallBusDevice();
