@@ -204,7 +204,7 @@ begin
 	if Result then
 	begin
 		Log(Format('Command %s succeeded, exit value is %d', [ Filename, ResultCode ]));
-		Log(Format('Output of command is #13#10%s', [ CommandOutput ]));
+		Log(Format('Output of command is '+#13#10+'%s', [ CommandOutput ]));
 	end
 	else
 	begin
