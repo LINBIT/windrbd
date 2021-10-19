@@ -173,6 +173,15 @@ end;
 { Exec with output stored in result. }
 { ResultString will only be altered if True is returned. }
 
+var logfile: text;
+
+Procedure OpenLogFile;
+begin
+	assign(logfile, ExpandConstant('{app}')+'\\setup.log');
+	append(logfile);
+	writeln(logfile, 'test 123');
+end;
+
 function ExecWithResult(const Filename, Params, WorkingDir: String; const ShowCmd: Integer; const Wait: TExecWait; var ResultCode: Integer; var ResultString: String): Boolean;
 var TempFilename: String;
     Command: String;
@@ -433,6 +442,8 @@ begin
 	end;
 
 	if CurStep = ssInstall then begin
+		OpenLogFile();
+
 		WriteWinDRBDRootPath();
 
 		StopUserModeServices();
