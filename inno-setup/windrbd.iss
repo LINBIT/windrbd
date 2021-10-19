@@ -49,6 +49,7 @@ Compression=lzma
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
 SetupIconFile=windrbd.ico
+SetupLogging=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -172,15 +173,6 @@ end;
 { See https://stackoverflow.com/questions/1136770/how-to-get-an-output-of-an-execed-program-in-inno-setup }
 { Exec with output stored in result. }
 { ResultString will only be altered if True is returned. }
-
-var logfile: text;
-
-Procedure OpenLogFile;
-begin
-	assign(logfile, ExpandConstant('{app}')+'\\setup.log');
-	append(logfile);
-	writeln(logfile, 'test 123');
-end;
 
 function ExecWithResult(const Filename, Params, WorkingDir: String; const ShowCmd: Integer; const Wait: TExecWait; var ResultCode: Integer; var ResultString: String): Boolean;
 var TempFilename: String;
@@ -442,8 +434,6 @@ begin
 	end;
 
 	if CurStep = ssInstall then begin
-		OpenLogFile();
-
 		WriteWinDRBDRootPath();
 
 		StopUserModeServices();
