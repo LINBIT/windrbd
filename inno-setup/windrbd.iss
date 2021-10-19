@@ -97,7 +97,6 @@ Source: "{#WindrbdSource}\inno-setup\sysroot\README-windrbd.txt"; DestDir: "{cod
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.conf"; DestDir: "{code:WinDRBDRootDir}\etc"; Flags: ignoreversion onlyifdoesntexist
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\global_common.conf"; DestDir: "{code:WinDRBDRootDir}\etc\drbd.d"; Flags: ignoreversion onlyifdoesntexist
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\windrbd-sample.res"; DestDir: "{code:WinDRBDRootDir}\etc\drbd.d"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd-beta4.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\cygwin1.dll"; DestDir: "{app}"; Flags: ignoreversion
@@ -137,7 +136,6 @@ Name: "{group}\Open {#MyAppName} configuration folder"; Filename: "{code:WinDRBD
 Name: "{group}\Open {#MyAppName} application folder"; Filename: "{app}"
                                                 
 [Run]
-Filename: "{app}\uninstall-windrbd-beta4.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser shellexec waituntilterminated runhidden
 ; TODO: System directory. Do not hardcode C:\Windows.
 Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
 Filename: "{app}\cygrunsrv"; Parameters: "-I windrbdlog -p {code:WinDRBDRootDirCygwin}/usr/sbin/windrbd.exe -a log-server -1 {code:WinDRBDRootDirCygwin}/windrbd-kernel.log -2 {code:WinDRBDRootDirCygwin}/windrbd-kernel.log -t manual"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
