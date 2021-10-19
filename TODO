@@ -99,8 +99,11 @@ TODO: Feature: Driver Unloading
 
 	Also test uninstall
 		Do not display message box if silent.
+			Done
 		There is a very quick progress bar (uninstall.cmd).
+			Reject
 		Remove debug message boxes again.
+			Done
 		also TODO: remove drivers from the driver store.
 
 		Remove uninstall-windrbd-beta4 finally..
