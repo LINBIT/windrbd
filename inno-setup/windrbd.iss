@@ -321,10 +321,12 @@ function UninstallNeedRestart: Boolean;
 begin
 	Result:= not driverWasUnloaded;
 
+{
 if not driverWasUnloaded then
 MsgBox('Need restart', mbInformation, MB_OK)
 else
 MsgBox('Do not need restart', mbInformation, MB_OK);
+}
 
 end;
 
