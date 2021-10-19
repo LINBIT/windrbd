@@ -198,6 +198,22 @@ begin
 		Delete(ResultString, Length(ResultString), 1);
 end;
 
+function ExecWithLogging(const Filename, Params, WorkingDir: String; const ShowCmd: Integer; const Wait: TExecWait; var ResultCode: Integer): Boolean;
+var CommandOutput: string;
+begin
+	Log(Format('About to Run %s %s (wd is %s) ...', [ Filename, Params, WorkingDir ]));
+	Result := ExecWithResult(Filename, Params, WorkingDir, ShowCmd, Wait, ResultCode, CommandOutput);
+	if Result then
+	begin
+		Log(Format('Command %s succeeded, exit value is %d', [ Filename, ResultCode ]));
+		Log(Format('Output of command is #13#10%s', [ CommandOutput ]));
+	end
+	else
+	begin
+		Log(Format('Could not run command %s', [ Filename ]));
+	end;
+end;
+
 function cygpath(WindowsPath: String): String;
 var
 	ExecStdout: string;
@@ -287,17 +303,17 @@ procedure stopDriver;
 var ResultCode: Integer;
 
 begin
-	if not Exec(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'down all', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'down all', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
 	begin
 		MsgBox('Could not bring DRBD resources down', mbInformation, MB_OK);
 	end;
 
-	if not Exec(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'remove-bus-device windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'remove-bus-device windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
 	begin
 		MsgBox('Could not remove bus device', mbInformation, MB_OK);
 	end;
 
-	if not Exec(ExpandConstant('sc.exe'), 'stop windrbd', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('sc.exe'), 'stop windrbd', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
 	begin
 		MsgBox('Could not stop driver', mbInformation, MB_OK);
 	end;
@@ -317,7 +333,7 @@ procedure AddDriverToDriverStore;
 var ResultCode: Integer;
 
 begin
-	if not Exec(ExpandConstant('pnputil.exe'), '/add-driver windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('pnputil.exe'), '/add-driver windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
 	begin
 		MsgBox('Could not run pnputil', mbInformation, MB_OK);
 	end;
@@ -327,7 +343,7 @@ procedure InstallBusDevice;
 var ResultCode: Integer;
 
 begin
-	if not Exec(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'install-bus-device windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'install-bus-device windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
 	begin
 		MsgBox('Could not install bus device', mbInformation, MB_OK);
 	end;
