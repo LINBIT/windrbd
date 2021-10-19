@@ -169,24 +169,41 @@ begin
 	Result := root;
 end;
 
+{ See https://stackoverflow.com/questions/1136770/how-to-get-an-output-of-an-execed-program-in-inno-setup }
+{ Exec with output stored in result. }
+{ ResultString will only be altered if True is returned. }
+
+function ExecWithResult(const Filename, Params, WorkingDir: String; const ShowCmd: Integer; const Wait: TExecWait; var ResultCode: Integer; var ResultString: String): Boolean;
+var TempFilename: String;
+    Command: String;
+
+begin
+	TempFilename := ExpandConstant('{tmp}\~execwithresult.txt');
+  { Exec via cmd and redirect output to file. Must use special string-behavior to work. }
+	Command := Format('"%s" /S /C ""%s" %s > "%s""', [ ExpandConstant('{cmd}'), Filename, Params, TempFilename]);
+	Result := Exec(ExpandConstant('{cmd}'), Command, WorkingDir, ShowCmd, Wait, ResultCode);
+	if not Result then
+		Exit;
+
+	LoadStringFromFile(TempFilename, ResultString);  { Cannot fail }
+	DeleteFile(TempFilename);
+  { Remove new-line at the end }
+  { TODO: cygpath? }
+	if (Length(ResultString) >= 2) and (ResultString[Length(ResultString) - 1] = #13) and (ResultString[Length(ResultString)] = #10) then
+		Delete(ResultString, Length(ResultString) - 1, 2);
+end;
+
 function cygpath(WindowsPath: String): String;
 var
-	TmpFileName, ExecStdout: string;
+	ExecStdout: string;
 	ResultCode: integer;
 
 begin
-	TmpFileName := ExpandConstant('{tmp}') + '\cygpath_results.txt';
-	Exec('cmd.exe', '/C cygpath "' + WindowsPath + '" > "' + TmpFileName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-	if not LoadStringFromFile(TmpFileName, ExecStdout) then begin
-		ExecStdout := '';
-	end;
-	DeleteFile(TmpFileName);
-
-	// Remove trailing newline. Filenames with newlines in them
-	// are not supported.
-	StringChangeEx(ExecStdout, #10, '', True);
-
+	ExecWithResult('cmd.exe', '/C cygpath "' + WindowsPath + '" > "' + TmpFileName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode, ExecStdout);
 	Result := ExecStdout;
+
+msgbox('cygpath returned x'+Result+'x', mbInformation, MB_OK);
+
 end;
 
 function WinDRBDRootDirCygwin(params: String): String;
