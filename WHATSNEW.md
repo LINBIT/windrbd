@@ -1,14 +1,16 @@
 Upcoming features
 -----------------
 
-Upgrade to latest cygwin distribution
-
 Upgrade to 9.0.31
 
-Driver unloading (no reboot on Upgrade/Uninstall)
+Fix for install userland errors message box
 
 What's new in version 1.0.0-rc17
 --------------------------------
+
+Driver unloading (no reboot on Upgrade/Uninstall)
+
+Upgrade to latest cygwin distribution
 
 /VERYSILENT install
 

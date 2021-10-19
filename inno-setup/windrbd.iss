@@ -343,7 +343,7 @@ begin
 		root:= WinDRBDRootDir('');
 		RemoveWinDRBDRootPath();
 
-		if not WizardSilent then
+		if not UninstallSilent then
 		begin
 			MsgBox('Uninstall does not remove files in the '+root+' directory that are created by you (for example .res files in /etc/drbd.d). If you do not need them any more, please remove the '+root+' directory manually.', mbInformation, MB_OK);
 		end;

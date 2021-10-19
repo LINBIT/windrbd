@@ -95,6 +95,7 @@ TODO: Feature: Driver Unloading
 	Remove install bus device checkbox.
 		We need to install the bus device always else driver won't
 		get installed now.
+		Ok
 
 	Also test uninstall
 		Do not display message box if silent.
@@ -103,6 +104,8 @@ TODO: Feature: Driver Unloading
 		also TODO: remove drivers from the driver store.
 
 		Remove uninstall-windrbd-beta4 finally..
+
+	Remove cmd scripts (all of them)
 
 TODO: Code quality: Fix drbd-utils compiler warnings
 
