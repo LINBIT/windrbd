@@ -205,9 +205,6 @@ var
 begin
 	ExecWithResult('cygpath', WindowsPath, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, ExecStdout);
 	Result := ExecStdout;
-
-msgbox('cygpath returned x'+Result+'x', mbInformation, MB_OK);
-
 end;
 
 function WinDRBDRootDirCygwin(params: String): String;
