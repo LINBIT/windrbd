@@ -333,7 +333,7 @@ procedure AddDriverToDriverStore;
 var ResultCode: Integer;
 
 begin
-	if not ExecWithLogging(ExpandConstant('pnputil.exe'), '/add-driver windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('pnputil.exe'), '-a windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
 	begin
 		MsgBox('Could not run pnputil', mbInformation, MB_OK);
 	end;

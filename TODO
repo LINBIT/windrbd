@@ -105,8 +105,13 @@ TODO: Feature: Driver Unloading
 		Remove debug message boxes again.
 			Done
 		also TODO: remove drivers from the driver store.
+			Later
 
 		Remove uninstall-windrbd-beta4 finally..
+			Done
+
+	Use drbdadm disconnect --force all to bring DRBD resources
+	down.
 
 	Remove cmd scripts (all of them)
 
