@@ -288,10 +288,12 @@ begin
 
 	driverWasUnloaded := ResultCode = 0;
 
+{ 
 if driverWasUnloaded then
 MsgBox('driver was successfully unloaded', mbInformation, MB_OK)
 else
 MsgBox('driver was NOT successfully unloaded', mbInformation, MB_OK);
+}
 
 end;
 
@@ -341,7 +343,10 @@ begin
 		root:= WinDRBDRootDir('');
 		RemoveWinDRBDRootPath();
 
-		MsgBox('Uninstall does not remove files in the '+root+' directory that are created by you (for example .res files in /etc/drbd.d). If you do not need them any more, please remove the '+root+' directory manually.', mbInformation, MB_OK);
+		if not WizardSilent then
+		begin
+			MsgBox('Uninstall does not remove files in the '+root+' directory that are created by you (for example .res files in /etc/drbd.d). If you do not need them any more, please remove the '+root+' directory manually.', mbInformation, MB_OK);
+		end;
 	end;
 	// cmd script stops user mode helpers, no need to do that here
 end;
