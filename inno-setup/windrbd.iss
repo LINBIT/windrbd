@@ -218,7 +218,7 @@ var
 	ResultCode: integer;
 
 begin
-	ExecWithResult('cygpath', WindowsPath, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, ExecStdout);
+	ExecWithResult(ExpandConstant('{app}')+'\cygpath', WindowsPath, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, ExecStdout);
 	Result := ExecStdout;
 end;
 
@@ -464,8 +464,8 @@ begin
 		end;
 	end;
 	if CurStep = ssPostInstall then begin
-		PatchRegistry();
 		InstallUserModeServices();
+		PatchRegistry();
 		StartUserModeServices();
 		AddDriverToDriverStore();
 		InstallBusDevice();
