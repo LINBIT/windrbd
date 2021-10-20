@@ -196,8 +196,8 @@ begin
 		Delete(ResultString, Length(ResultString), 1);
 end;
 
-function ExecWithLogging(const Filename, Params, WorkingDir: String; const ShowCmd: Integer; const Wait: TExecWait; var ResultCode: Integer): Boolean;
-var CommandOutput: string;
+function ExecWithLogging(const Filename, Params, WorkingDir: String; const ShowCmd: Integer; const Wait: TExecWait; var ResultCode: Integer; var CommandOutput: String): Boolean;
+
 begin
 	Log(Format('About to Run %s %s (wd is %s) ...', [ Filename, Params, WorkingDir ]));
 	Result := ExecWithResult(Filename, Params, WorkingDir, ShowCmd, Wait, ResultCode, CommandOutput);
@@ -218,7 +218,11 @@ var
 	ResultCode: integer;
 
 begin
-	ExecWithResult(ExpandConstant('{app}')+'\cygpath', WindowsPath, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, ExecStdout);
+	if not ExecWithLogging(ExpandConstant('{app}')+'\cygpath', WindowsPath, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, ExecStdout) then
+	begin
+		MsgBox('Could not run cygpath', mbInformation, MB_OK);
+	end;
+MsgBox('cygpath returned x'+ExecStdout+'x', mbInformation, MB_OK);
 	Result := ExecStdout;
 end;
 
@@ -266,12 +270,12 @@ End;
 
 Procedure InstallUserModeServices;
 var ResultCode: Integer;
-
+    CommandOutput: String;
 Begin
-	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdlog -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a log-server -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -t manual', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdlog -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a log-server -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -t manual', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 		MsgBox('Could not install WinDRBD log service', mbInformation, MB_OK);
 
-	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdumhelper -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a user-mode-helper-daemon -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -t manual', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdumhelper -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a user-mode-helper-daemon -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -t manual', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 		MsgBox('Could not install WinDRBD user mode helper service', mbInformation, MB_OK);
 end;
 
@@ -310,19 +314,20 @@ end;
 
 procedure stopDriver;
 var ResultCode: Integer;
+    CommandOutput: String;
 
 begin
-	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'down all', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'down all', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not bring DRBD resources down', mbInformation, MB_OK);
 	end;
 
-	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'remove-bus-device windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'remove-bus-device windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not remove bus device', mbInformation, MB_OK);
 	end;
 
-	if not ExecWithLogging(ExpandConstant('sc.exe'), 'stop windrbd', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('sc.exe'), 'stop windrbd', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not stop driver', mbInformation, MB_OK);
 	end;
@@ -340,9 +345,10 @@ end;
 
 procedure AddDriverToDriverStore;
 var ResultCode: Integer;
+    CommandOutput: String;
 
 begin
-	if not ExecWithLogging(ExpandConstant('pnputil.exe'), '-a windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('pnputil.exe'), '-a windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not run pnputil', mbInformation, MB_OK);
 	end;
@@ -350,9 +356,10 @@ end;
 
 procedure InstallBusDevice;
 var ResultCode: Integer;
+    CommandOutput: String;
 
 begin
-	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'install-bus-device windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'install-bus-device windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not install bus device', mbInformation, MB_OK);
 	end;
