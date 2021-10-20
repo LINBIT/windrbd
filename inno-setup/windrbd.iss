@@ -441,6 +441,7 @@ procedure WriteWinDRBDRootPath;
 var windrbd_root: String;
 
 begin
+MsgBox('WinDRBDRootDir is x'+WinDRBDRootDir('')+'x', mbInformation, MB_OK);
 	windrbd_root := cygpath(WinDRBDRootDir(''));
 	if windrbd_root = '' then
 	begin
@@ -463,7 +464,6 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
 	if CurStep = ssInstall then begin
 		ModPath();
-		WriteWinDRBDRootPath();
 
 		StopUserModeServices();
 		if GetOldVersion <> '' then begin
@@ -471,6 +471,7 @@ begin
 		end;
 	end;
 	if CurStep = ssPostInstall then begin
+		WriteWinDRBDRootPath();
 		InstallUserModeServices();
 		PatchRegistry();
 		StartUserModeServices();
