@@ -454,11 +454,8 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-	if CurStep = ssPostInstall then begin
-		ModPath();
-	end;
-
 	if CurStep = ssInstall then begin
+		ModPath();
 		WriteWinDRBDRootPath();
 
 		StopUserModeServices();
