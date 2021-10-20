@@ -222,7 +222,6 @@ begin
 	begin
 		MsgBox('Could not run cygpath', mbInformation, MB_OK);
 	end;
-MsgBox('cygpath returned x'+ExecStdout+'x', mbInformation, MB_OK);
 	Result := ExecStdout;
 end;
 
@@ -333,14 +332,6 @@ begin
 	end;
 
 	driverWasUnloaded := ResultCode = 0;
-
-{ 
-if driverWasUnloaded then
-MsgBox('driver was successfully unloaded', mbInformation, MB_OK)
-else
-MsgBox('driver was NOT successfully unloaded', mbInformation, MB_OK);
-}
-
 end;
 
 procedure AddDriverToDriverStore;
@@ -368,14 +359,6 @@ end;
 function UninstallNeedRestart: Boolean;
 begin
 	Result:= not driverWasUnloaded;
-
-{
-if not driverWasUnloaded then
-MsgBox('Need restart', mbInformation, MB_OK)
-else
-MsgBox('Do not need restart', mbInformation, MB_OK);
-}
-
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
@@ -441,7 +424,6 @@ procedure WriteWinDRBDRootPath;
 var windrbd_root: String;
 
 begin
-MsgBox('WinDRBDRootDir is x'+WinDRBDRootDir('')+'x', mbInformation, MB_OK);
 	windrbd_root := cygpath(WinDRBDRootDir(''));
 	if windrbd_root = '' then
 	begin
