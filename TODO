@@ -85,6 +85,7 @@ TODO: Feature: Driver Unloading
 		from driver store to system. Works like a charm.
 
 	Have a run command that writes output to a setup.log file.
+		Ok
 
 	Reboot neccessary := False when driver was successfully removed.
 		Ok
@@ -114,6 +115,14 @@ TODO: Feature: Driver Unloading
 	down.
 
 	Remove cmd scripts (all of them)
+
+	Log WinDRBD version number to install log.
+
+	Set caption to command currently running
+		Rejected .. didn't find doku how to do that.
+
+	Test upgrade with drbd resource doing I/O
+		Done, works.
 
 TODO: Code quality: Fix drbd-utils compiler warnings
 
