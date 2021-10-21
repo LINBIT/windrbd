@@ -180,6 +180,10 @@ Upgrade DRBD
 cd drbd
 git checkout drbd-9.0
 git pull
+git checkout <hash of version msg is prepare ...>
+cd drbd/drbd-headers
+git checkout master
+git pull
 git submodule update
 cd ..
 git commit -a
