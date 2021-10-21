@@ -180,7 +180,7 @@ begin
 	TempFilename := ExpandConstant('{tmp}\~execwithresult.txt');
 
 		{ Exec via cmd and redirect output to file. Must use special string-behavior to work. }
-	Command := Format('"%s" /S /C ""%s" %s > "%s""', [ ExpandConstant('{cmd}'), Filename, Params, TempFilename]);
+	Command := Format('"%s" /S /C ""%s" %s 1> "%s" 2>&1"', [ ExpandConstant('{cmd}'), Filename, Params, TempFilename]);
 	Result := Exec(ExpandConstant('{cmd}'), Command, WorkingDir, ShowCmd, Wait, ResultCode);
 	if not Result then
 		Exit;
