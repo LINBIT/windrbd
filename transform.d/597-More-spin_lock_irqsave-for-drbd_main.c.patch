@@ -11,24 +11,6 @@ diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
 index 14bf423..f073d14 100644
 --- a/drbd/drbd_main.c
 +++ b/drbd/drbd_main.c
-@@ -3000,14 +3000,15 @@ void drbd_reclaim_resource(struct rcu_head *rp)
- 	struct drbd_resource *resource = container_of(rp, struct drbd_resource, rcu);
- 	struct queued_twopc *q, *q1;
- 	struct drbd_connection *connection, *tmp;
-+	int flags;
- 
--	spin_lock_irq(&resource->queued_twopc_lock);
-+	spin_lock_irqsave(&resource->queued_twopc_lock, flags);
- 	list_for_each_entry_safe(struct queued_twopc, q, q1, &resource->queued_twopc, w.list) {
- 		list_del(&q->w.list);
- 		kref_put(&q->connection->kref, drbd_destroy_connection);
- 		kfree(q);
- 	}
--	spin_unlock_irq(&resource->queued_twopc_lock);
-+	spin_unlock_irqrestore(&resource->queued_twopc_lock, flags);
- 
- 	drbd_thread_stop_nowait(&resource->worker);
- 
 @@ -5175,11 +5176,12 @@ static int w_bitmap_io(struct drbd_work *w, int unused)
  void drbd_queue_pending_bitmap_work(struct drbd_device *device)
  {

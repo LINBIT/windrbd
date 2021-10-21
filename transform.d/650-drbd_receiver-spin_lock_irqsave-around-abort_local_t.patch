@@ -108,15 +108,6 @@ index cb1e949..26f6675 100644
  			return 0;
  		}
  		resource->starting_queued_twopc = NULL;
-@@ -6494,7 +6494,7 @@ static int process_twopc(struct drbd_connection *connection,
- 		int err;
- 
- 		err = abort_starting_twopc(resource, reply);
--		spin_unlock_irq(&resource->req_lock);
-+		spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags2);
- 		if (err) {
- 			err = abort_queued_twopc(resource, reply);
- 			if (err)
 @@ -6506,7 +6506,7 @@ static int process_twopc(struct drbd_connection *connection,
  		nested_twopc_abort(resource, pi->vnr, pi->cmd, p);
  		return 0;

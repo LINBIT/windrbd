@@ -29,27 +29,6 @@ index d41257d..b848c44 100644
  	rcu_flags = rcu_read_lock();
  	name = name_of_node_id(device->resource, node_id);
  	drbd_info(device, "clearing bitmap UUID and content (%lu bits) for node %d (%s)(slot %d)\n",
-@@ -5166,17 +5166,17 @@ static void forget_bitmap(struct drbd_device *device, int node_id)
- 	drbd_bm_unlock(device);
- 	drbd_resume_io(device);
- 	drbd_md_mark_dirty(device);
--	spin_lock_irq(&device->ldev->md.uuid_lock);
-+	spin_lock_irqsave(&device->ldev->md.uuid_lock, *spin_lock_flags_p);
- }
- 
--static void copy_bitmap(struct drbd_device *device, int from_id, int to_id) 
-+static void copy_bitmap(struct drbd_device *device, int from_id, int to_id, KIRQL *spin_lock_irq_flags_p)
- {
- 	KIRQL rcu_flags;
- 	int from_index = device->ldev->md.peers[from_id].bitmap_index;
- 	int to_index = device->ldev->md.peers[to_id].bitmap_index;
- 	const char *from_name, *to_name;
- 
--	spin_unlock_irq(&device->ldev->md.uuid_lock);
-+	spin_unlock_irqrestore(&device->ldev->md.uuid_lock, *spin_lock_irq_flags_p);
- 	rcu_flags = rcu_read_lock();
- 	from_name = name_of_node_id(device->resource, from_id);
- 	to_name = name_of_node_id(device->resource, to_id);
 @@ -5189,7 +5189,7 @@ static void copy_bitmap(struct drbd_device *device, int from_id, int to_id)
  	drbd_bm_unlock(device);
  	drbd_resume_io(device);
@@ -68,32 +47,6 @@ index d41257d..b848c44 100644
  {
  	struct drbd_device *device = peer_device->device;
  	struct drbd_peer_md *peer_md = device->ldev->md.peers;
-@@ -5284,7 +5284,7 @@ found:
- 	    peer_md[node_id1].bitmap_uuid != peer_bm_uuid) {
- 		peer_md[node_id1].bitmap_uuid = peer_bm_uuid;
- 		peer_md[node_id1].bitmap_dagtag = peer_md[from_id].bitmap_dagtag;
--		copy_bitmap(device, from_id, node_id1);
-+		copy_bitmap(device, from_id, node_id1, spin_lock_irq_flags_p);
- 		modified = true;
- 
- 	}
-@@ -5292,14 +5292,14 @@ found:
- 	    peer_md[node_id2].bitmap_uuid != peer_bm_uuid) {
- 		peer_md[node_id2].bitmap_uuid = peer_bm_uuid;
- 		peer_md[node_id2].bitmap_dagtag = peer_md[from_id].bitmap_dagtag;
--		copy_bitmap(device, from_id, node_id2);
-+		copy_bitmap(device, from_id, node_id2, spin_lock_irq_flags_p);
- 		modified = true;
- 	}
- 
- 	return modified;
- }
- 
--void drbd_uuid_detect_finished_resyncs(struct drbd_peer_device *peer_device) 
-+void drbd_uuid_detect_finished_resyncs(struct drbd_peer_device *peer_device)
- {
- 	KIRQL spin_lock_irq_flags;
- 	struct drbd_device *device = peer_device->device;
 @@ -5326,7 +5326,7 @@ void drbd_uuid_detect_finished_resyncs(struct drbd_peer_device *peer_device)
  				if (node_id == peer_device->node_id)
  					drbd_print_uuids(peer_device, "updated UUIDs");

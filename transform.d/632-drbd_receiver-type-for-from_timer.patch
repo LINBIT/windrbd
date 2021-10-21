@@ -29,15 +29,6 @@ index f64739b..d714a07 100644
  	ULONG_PTR irq_flags;
  
  	spin_lock_irqsave(&resource->req_lock, irq_flags);
-@@ -6073,7 +6073,7 @@ static int queued_twopc_work(struct drbd_work *w, int cancel)
- 
- void queued_twopc_timer_fn(struct timer_list *t)
- {
--	struct drbd_resource *resource = from_timer(resource, t, queued_twopc_timer);
-+	struct drbd_resource *resource = from_timer(resource, t, queued_twopc_timer, struct drbd_resource);
- 	struct queued_twopc *q;
- 	ULONG_PTR irq_flags;
- 	ULONG_PTR time = twopc_timeout(resource) / 4;
 -- 
 2.17.0
 
