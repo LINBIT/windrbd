@@ -316,6 +316,11 @@ var ResultCode: Integer;
     CommandOutput: String;
 
 begin
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'disconnect all --force', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	begin
+		MsgBox('Could not disconnect DRBD resources', mbInformation, MB_OK);
+	end;
+
 	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'down all', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not bring DRBD resources down', mbInformation, MB_OK);
