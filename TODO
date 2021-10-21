@@ -113,16 +113,23 @@ TODO: Feature: Driver Unloading
 
 	Use drbdadm disconnect --force all to bring DRBD resources
 	down.
+		Done, works.
 
 	Remove cmd scripts (all of them)
+		Rejected for now.
 
 	Log WinDRBD version number to install log.
+		Done (via Filename)
 
 	Set caption to command currently running
 		Rejected .. didn't find doku how to do that.
 
 	Test upgrade with drbd resource doing I/O
 		Done, works.
+
+TODO: Code quality: Remove cmd scripts (all of them)
+
+TODO: Code quality: remove drivers from the driver store on uninstall
 
 TODO: Code quality: Fix drbd-utils compiler warnings
 
@@ -7482,4 +7489,95 @@ Done: Bug: drbdadm create-md fails on Dynamic hard disk
 	In Windows 7 build VM (disk #3)
 
 	Fixed by using GET_LENGTH_INFO instead of GET_PARTITION_INFO_EX.
+
+Done: Feature: Driver Unloading
+
+	Experimental at the moment.
+
+	It works (but BSODs) when WinDRBD is installed via installer
+	then windrbd remove-bus-device is called (and really removed,
+	check in device manager)
+
+	Must link with /DRIVER /SUBSYSTEM:WINDOWS not with
+	/DRIVER:WDM
+
+	Cannot unload driver when it was started with sc start windrbd
+	(or drbdadm status) but (fortunately) driver unload works when
+	driver is started via windrbd install-bus-device.
+
+	Now we can implement update without reboot in innosetup installer.
+
+	New BSOD on driver load (C4 on install-bus-device after reboot).
+	Also on booting Windows now (must research with kernel debugger).
+
+	Update: was driver verifier complaining about MmMapIoSpace() in
+	searching for boot device. Known bug.
+
+	Now when doing windrbd install-bus-device / drbdadm up /
+	remove-bus-device / drbdadm down / sc stop there is a 0xC4 / 0x62
+	BSOD (verifier complaining about some memory not freed).
+
+	Installer: use dpinst instead of rundll32?
+		We now use rundll32 no panels so far.
+
+		Update: We now do not use any rundll command any more.
+		Instead we first stage the driver via pnputil and then
+		install the bus device via windrbd install-bus-device
+
+	DefaultInstall should not display any panels.
+		Changed to rundll32 now queries for windrbd.sys location
+		Fixed with rc16-49? Yes was wrong path given.
+
+		Changed call to UpdateDriverForPlugAndPlayDevices in windrbd.c
+		Works now?
+		No still reverting to old version. Now trying with
+		INSTALLFLAG_READONLY.
+		Also still does not work (older version gets installed)
+
+		Update: now using pnputil to install driver into driver
+		store and windrbd install-bus-device to install driver
+		from driver store to system. Works like a charm.
+
+	Have a run command that writes output to a setup.log file.
+		Ok
+
+	Reboot neccessary := False when driver was successfully removed.
+		Ok
+
+	Remove references to reboot (MessageBox and Final page)
+		Ok
+
+	Remove install bus device checkbox.
+		We need to install the bus device always else driver won't
+		get installed now.
+		Ok
+
+	Also test uninstall
+		Do not display message box if silent.
+			Done
+		There is a very quick progress bar (uninstall.cmd).
+			Reject
+		Remove debug message boxes again.
+			Done
+		also TODO: remove drivers from the driver store.
+			Later
+
+		Remove uninstall-windrbd-beta4 finally..
+			Done
+
+	Use drbdadm disconnect --force all to bring DRBD resources
+	down.
+		Done, works.
+
+	Remove cmd scripts (all of them)
+		Rejected for now.
+
+	Log WinDRBD version number to install log.
+		Done (via Filename)
+
+	Set caption to command currently running
+		Rejected .. didn't find doku how to do that.
+
+	Test upgrade with drbd resource doing I/O
+		Done, works.
 
