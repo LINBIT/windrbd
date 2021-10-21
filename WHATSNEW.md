@@ -1,10 +1,12 @@
 Upcoming features
 -----------------
 
-Upgrade to 9.0.31
-
 What's new in version 1.0.0-rc17
 --------------------------------
+
+Userland services (umhelper, log) are started on boot
+
+Upgrade to 9.0.31
 
 Fix for install userland errors message box
 

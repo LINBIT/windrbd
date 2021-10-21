@@ -36,11 +36,6 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Feature: On loading kernel module, umhelper and logger should also be started.
-
-	When loading the kernel via bus object (pnp manager starts it).
-	I am sure there is such a thing as a dependecy between services.
-
 TODO: Code quality: Remove cmd scripts (all of them)
 
 TODO: Code quality: remove drivers from the driver store on uninstall
@@ -7490,3 +7485,10 @@ Done: Feature: Driver Unloading
 	Test upgrade with drbd resource doing I/O
 		Done, works.
 
+Done: Feature: On loading kernel module, umhelper and logger should also be started.
+
+	When loading the kernel via bus object (pnp manager starts it).
+	I am sure there is such a thing as a dependecy between services.
+
+	Yes there is. Installer now configures it correctly. However
+	must reboot once (or start services manually).
