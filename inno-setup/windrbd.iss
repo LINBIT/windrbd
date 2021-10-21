@@ -271,10 +271,10 @@ Procedure InstallUserModeServices;
 var ResultCode: Integer;
     CommandOutput: String;
 Begin
-	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdlog -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a log-server -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -t manual', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdlog -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a log-server -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -t auto -y windrbd', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 		MsgBox('Could not install WinDRBD log service', mbInformation, MB_OK);
 
-	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdumhelper -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a user-mode-helper-daemon -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -t manual', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdumhelper -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a user-mode-helper-daemon -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -t auto -y windrbd', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 		MsgBox('Could not install WinDRBD user mode helper service', mbInformation, MB_OK);
 end;
 
