@@ -23,6 +23,7 @@ DATE=$(date)
 GITHASH=$(git describe --tags --always)$EXTRA_VERSION
 DRBD_GITHASH="$(cd drbd ; git describe --tags --always)"$EXTRA_VERSION
 PATCHLEVEL=$( echo $GITHASH | sed -e 's/.*-\([0-9]*\)-g.*/\1/g' )
+if [ "${PATCHLEVEL:0:1}" == w ] ; then PATCHLEVEL=0 ; fi
 WINDRBD_VERSION=$( echo $GITHASH | sed -e 's/^windrbd-\([0-9.]*\).*$/\1/g' ).$PATCHLEVEL
 RESOURCE_VERSION=$( echo $WINDRBD_VERSION | tr . , )
 
