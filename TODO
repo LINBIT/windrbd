@@ -36,6 +36,8 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODOs for after Release 1.0 ----------------------------------------
+
 TODO: Code quality: Remove cmd scripts (all of them)
 
 TODO: Code quality: remove drivers from the driver store on uninstall
@@ -113,7 +115,7 @@ May 25 14:14:59 server-2016-b  U14:14:59.854 (5193697363511/10000000)|daf05570(d
 	Maybe this is a new bug in 9.0.29? I've never seen that
 	before ...
 
-TODO: Feature: Make resize work (again)
+Done: Feature: Make resize work (again)
 
 TODO: Bug: Sync when becoming secondary (on secondary or down).
 
@@ -168,7 +170,7 @@ TODO: Bug: Send buffer drains for about 30 seconds
 	Reported by Yannis. Connection should be closed even when
 	there is data in the send buffer.
 
-TODO: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
+Done: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
 
 TODO: Code quality: Remove simple write cache code
 
@@ -181,15 +183,15 @@ TODO: Bug: Primary detaches when secondary hard fails.
 
 	Reported by: Abhishek Jain <abhishek@maxisinfotech.com>
 
-TODOs for after Release 1.0 ----------------------------------------
-
 TODO: Bug: Several issues with 3 nodes setups.
 
 	As reported by Henry Kellner, connection problems and
 	sync inconsitency (node disk shows up as UpToDate and
 	Inconsitent on different nodes)
 
-TODO: Code quality: implement sched_setscheduler()
+	Fixed?
+
+Done: Code quality: implement sched_setscheduler()
 
 	And remove extra windrbd_set_priority or so patch.
 
@@ -653,7 +655,7 @@ Feb 14 14:58:01 10.43.10.10  U13:57:59.490|083959c0(drbd_a_vamp-4nodes) drbd_ack
 	Most likely an upstream bug (try Linux/Linux). Not severe,
 	connection is re-established rightafter.
 
-TODO: Code quality: restructure directory structure
+Done: Code quality: restructure directory structure
 
 	have include and src directories.
 
@@ -747,7 +749,7 @@ TODO: Upstream: Fix 2 cygrunsrv bugs
 	Handle whitespace in PATH components correctly.
 	Find local installation even if moved to another dir.
 
-TODO: Performance: Teach sync code to handle 1Meg pages.
+Done: Performance: Teach sync code to handle 1Meg pages.
 
         For performance reasons. Right now data is split into
         4K request (lots of them) which makes sync slow.
@@ -770,7 +772,7 @@ TODO: Implement: Have a ioctl to set user mode helper program
 	binary lives (without ioctl, it is sufficient for now to
 	do that in user space).
 
-TODO: Implement: Make drbd-utils relocateable
+Done: Implement: Make drbd-utils relocateable
 
 	Currently hardcoded to C:\windrbd (in kernel and install scripts)
 	and configure parameter in userland.
