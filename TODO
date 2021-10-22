@@ -38,6 +38,20 @@ Real:
 
 TODOs for after Release 1.0 ----------------------------------------
 
+TODO: Code quality: sc stop windrbd sometimes fails
+
+	From setup log:
+
+	2021-10-22 13:56:22.552   About to Run sc.exe stop windrbd (wd is C:\Program Files\WinDRBD) ...^M
+	2021-10-22 13:56:22.631   Command sc.exe succeeded, exit value is 1061^M
+	2021-10-22 13:56:22.631   Output of command is ^M
+				  [SC] ControlService FAILED 1061:^M
+                                  ^M
+                                  The service cannot accept control messages at this time.^M^M
+	2021-10-22 13:56:22.631   Starting the installation process.^M
+	2021-10-22 13:56:22.631   Directory for uninstall files: C:\Program Files\WinDRBD^M
+	2021-10-22 13:56:22.662   Will append to existing uninstall log: C:\Program Files\WinDRBD\unins000.dat^M
+
 TODO: Code quality: Remove cmd scripts (all of them)
 
 TODO: Code quality: remove drivers from the driver store on uninstall

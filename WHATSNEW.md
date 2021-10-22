@@ -16,6 +16,8 @@ Upgrade to latest cygwin distribution
 
 /VERYSILENT install
 
+Setup logging
+
 Upgrade to 9.0.30
 
 online resize works
