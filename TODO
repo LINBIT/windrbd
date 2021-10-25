@@ -38,6 +38,13 @@ Real:
 
 TODOs for after Release 1.0 ----------------------------------------
 
+TODO: Installer: Should not try to unload driver if remote booting
+
+	This actually would succeed (disconnect --force works but
+	WinDRBD boot drive resource is not in the config - it is
+	configured via iPXE URL, which causes disconnect all not
+	to include it).
+
 TODO: Code quality: sc stop windrbd sometimes fails
 
 	From setup log:
@@ -58,11 +65,13 @@ TODO: Code quality: remove drivers from the driver store on uninstall
 
 TODO: Code quality: Fix drbd-utils compiler warnings
 
-TODO: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
+Done: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
 
 	Maybe a network card driver bug? Now trying with e1000 driver.
 
-TODO: Feature: event log
+	Didn't reappear with recent WinDRBD (1.0.0-rc17)
+
+Rejected: Feature: event log
 
 	Documentation
 
@@ -131,16 +140,18 @@ May 25 14:14:59 server-2016-b  U14:14:59.854 (5193697363511/10000000)|daf05570(d
 
 Done: Feature: Make resize work (again)
 
-TODO: Bug: Sync when becoming secondary (on secondary or down).
+Duplicate: Bug: Sync when becoming secondary (on secondary or down).
 
 	This has probably to be done from user space.
 
-TODO: Bug: Pending IRPs and bios reported
+Done: Bug: Pending IRPs and bios reported
 
 	Maybe not initialized?
 May  6 14:23:06 server-2016-a  U14:23:06.827 (44265980490/10000000)|5a835300(drbd_r_windows-windows) #10813 wait_for_bios_to_complete Warning: Still 166 bios and 94945104 IRPs pending after 10 seconds
 
-TODO: Use next generation crypto API for secure handshake.
+	Still an issue?
+
+TODO: Feature: Use next generation crypto API for secure handshake.
 
 	And maybe also for verify-alg.
 	See:
@@ -472,7 +483,7 @@ TODO: Feature: Understand SCSI addressing
 	Right now we just have TargetId, which limits minors to
 	255. What's a Lun and how many can there be?
 
-TODO: Feature: kunit support
+Rejected: Feature: kunit support
 
 	Nice to have, do that when finished with 1.0
 
