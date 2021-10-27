@@ -36,6 +36,20 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
+
+	Linux Primary doing I/O and iptables-drop/don't drop
+	Windows 7 Secondary.
+
+	BSOD 50: 0xFFFFFA8002EC5958,0,0xFFFFF8800346A9FA, 0
+
+	Now reproduce with debugger on.
+
+	Tried to reproduce .. no BSOD after 99 iterations (and
+	5262 I/O loop iterations)
+
+TODO: Documentation: Rewrite README.md and restructure text docs
+
 TODOs for after Release 1.0 ----------------------------------------
 
 TODO: Installer: Should not try to unload driver if remote booting
@@ -65,25 +79,11 @@ TODO: Code quality: remove drivers from the driver store on uninstall
 
 TODO: Code quality: Fix drbd-utils compiler warnings
 
-Done: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
-
-	Maybe a network card driver bug? Now trying with e1000 driver.
-
-	Didn't reappear with recent WinDRBD (1.0.0-rc17)
-
-Rejected: Feature: event log
-
-	Documentation
-
 TODO: Bug: Out of memory after 2 days of Primary/Secondary loop
 
 	There appears to be a memory leak.
 	Also out of memory after 7 days one side I/O other side
 	connect / disconnect (the I/O side runs out of memory)
-
-TODO: Bug: Secondary hangs in NetworkFailure
-
-	When peer runs out of memory (not responsive any more)
 
 TODO: Feature: HLK tests should succeed (for Windows 2019)
 
@@ -126,64 +126,12 @@ Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019746774/3579545)|7edfe6a0(pnp) #
 Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019747296/3579545)|7edfe6a0(pnp) #3634527 windrbd_pnp_bus_device 7
 Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019747804/3579545)|7edfe6a0(pnp) #3634528 windrbd_pnp_bus_device 8
 
-TODO: Bug: Secondary hangs in NetworkFailure / Disconnecting when peer crashes
-
-	Log line (very often) is:
-
-May 25 14:14:59 server-2016-b  U14:14:59.854 (5193697363511/10000000)|daf05570(drbd_s_windows-windows) #2824802 drbd_rs_del_all <6>drbd windows-windows/1 minor 29 pnode-id:1, pdsk(DUnknown), prpl(Off), pdvflag(0x801c00): Retrying drbd_rs_del_all() later. refcnt=2
-
-	Unclear where that comes from. Will try to reproduce.
-
-	Update: Reproduced with a firewall triggered disconnect.
-	Maybe this is a new bug in 9.0.29? I've never seen that
-	before ...
-
-Done: Feature: Make resize work (again)
-
-Duplicate: Bug: Sync when becoming secondary (on secondary or down).
-
-	This has probably to be done from user space.
-
-Done: Bug: Pending IRPs and bios reported
-
-	Maybe not initialized?
-May  6 14:23:06 server-2016-a  U14:23:06.827 (44265980490/10000000)|5a835300(drbd_r_windows-windows) #10813 wait_for_bios_to_complete Warning: Still 166 bios and 94945104 IRPs pending after 10 seconds
-
-	Still an issue?
-
 TODO: Feature: Use next generation crypto API for secure handshake.
 
 	And maybe also for verify-alg.
 	See:
 
 https://docs.microsoft.com/en-us/windows/win32/seccng/cng-features#kernel-mode-support
-
-TODO: Bug: Data loss when becoming Secondary
-
-	existing data resource on Windows Server-2016-A
-	Do:
-		drbdadm primary existing_data
-		cat > /cygdrive/d/somedata
-		<some data>
-		^D
-		drbdadm secondary existing_data
-		drbdadm primary existing_data
-		cat /cygdrive/d/somedata
-		data is not there.
-
-	Has no partition table on it now try with partition table.
-
-	Must sync before switching to Secondary
-
-	from https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-flushfilebuffers :
-
-To flush all open files on a volume, call FlushFileBuffers with a handle to the volume. The caller must have administrative privileges. For more information, see Running with Special Privileges.
-
-	But this is from user space ...
-
-	Update: We documented this in the users guide. Users should
-	run sync (bundled with WinDRBD installer) manually before
-	secondary or down (for now).
 
 TODO: Feature: Make UM helper command configurable
 
@@ -194,8 +142,6 @@ TODO: Bug: Send buffer drains for about 30 seconds
 
 	Reported by Yannis. Connection should be closed even when
 	there is data in the send buffer.
-
-Done: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
 
 TODO: Code quality: Remove simple write cache code
 
@@ -216,10 +162,6 @@ TODO: Bug: Several issues with 3 nodes setups.
 
 	Fixed?
 
-Done: Code quality: implement sched_setscheduler()
-
-	And remove extra windrbd_set_priority or so patch.
-
 TODO: Code quality: Make boot device intentionally diskless
 
 	Diskless is red in drbdadm status
@@ -238,18 +180,6 @@ TODO: Bug: BSOD in copy_first_640k
 
 	Update: need to fix this when one enables verify then
 	the machine won't boot any more.
-
-TODO: Code quality: Squash patches in transform.d
-
-	Redo all changes (we now have patches that revert former
-	patches).
-
-TODO: Documentation: Draw diagram (from Joel)
-
-TODO: Bug: BSOD when accessing ReFS device
-
-	It just disappeared again (when debugging via WinDbg).
-	Unclear where this comes from (IRQL BSOD in ReFS).
 
 TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
@@ -483,13 +413,9 @@ TODO: Feature: Understand SCSI addressing
 	Right now we just have TargetId, which limits minors to
 	255. What's a Lun and how many can there be?
 
-Rejected: Feature: kunit support
+Rejected: Code quality: windrbd show-drive-in-explorer might take longer than 5 seconds
 
-	Nice to have, do that when finished with 1.0
-
-	We now have our own unit test which works very well.
-
-TODO: Code quality: windrbd show-drive-in-explorer might take longer than 5 seconds
+	Not used any more
 
 TODO: Code quality: drbdsetup disconnect might take longer than 5 seconds
 
@@ -503,156 +429,6 @@ TODO: Bug: kmalloc errors on Win7 VM (on my Macbook)
 
 	Didn't crash but detached. Probably this is what it is
 	supposed to do...
-
-TODO: Bug: BSOD on Secondary Windows 7 in 4 node setup
-
-	Primary (Windows 10) I/O, 4 nodes connected (mesh).
-	After about 4-5 hours BSOD, last log line is:
-
-Feb  8 23:28:02 10.43.10.10  U22:28:02.402|06ef9a60(drbd_a_vamp-4nodes) kernel_recvmsg Timed out, but there is data (16 bytes) returning it.
-
-	(appears every minute or so) but BSOD was later than that.
-
-	Now retrying with only 2 nodes.
-
-	Update: Also BSOD with 2 nodes.
-
-	Update: Also (?) on Windows 10 (Secondary) when Windows 7 VM
-	is Primary and does I/O (Happend during disconnect/connect
-	loop).
-
-Feb 14 15:25:41 10.43.10.13  U14:25:40.802|b80f3370(drbd_a_vamp-4nodes) kernel_recvmsg receive completed with error c000020d
-Feb 14 15:25:41 10.43.10.13  U14:25:40.802|b80f3370(drbd_a_vamp-4nodes) kernel_recvmsg setting error status to 0
-Feb 14 15:25:41 10.43.10.13  U14:25:40.802|b80f3370(drbd_a_vamp-4nodes) drbd_ack_receiver <3>drbd vamp-4nodes pnode-id:4, cs(Disconnecting), prole(Unknown), cflag(0x212e), scf(0x0): sock_recvmsg returned -104
-Feb 14 15:25:41 10.43.10.13  U14:25:40.802|b80f3370(drbd_a_vamp-4nodes) drbd_ack_receiver <6>drbd vamp-4nodes pnode-id:4, cs(Disconnecting), prole(Unknown), cflag(0x212e), scf(0x0): ack_receiver terminated
-Feb 14 15:25:41 10.43.10.13  U14:25:40.802|b80f3370(drbd_a_vamp-4nodes) drbd_thread_setup <6>drbd vamp-4nodes pnode-id:4, cs(Disconnecting), prole(Unknown), cflag(0x212e), scf(0x0): Terminating ack_recv thread
-Feb 14 15:25:41 10.43.10.13  [last message was in IRQ context]
-Feb 14 15:25:41 10.43.10.13  U14:25:40.818|b80f3b50(drbd_r_vamp-4nodes) kernel_recvmsg receive completed with error c000020d
-Feb 14 15:25:41 10.43.10.13  U14:25:40.818|b80f3b50(drbd_r_vamp-4nodes) kernel_recvmsg setting error status to 0
-Feb 14 15:25:41 10.43.10.13  U14:25:40.818|b80f3b50(drbd_r_vamp-4nodes) drbdd <3>drbd vamp-4nodes pnode-id:4, cs(Disconnecting), prole(Unknown), cflag(0x212e), scf(0x0): error receiving P_DATA, e: -5 l: 1048576!
-
-	But maybe this is the connect/disconnect loop.
-	(Update: it probably is, see seperate bug)
-
-	Update: Tested with 0.9.1 release. Also a BSOD on Secondary,
-	in that case also on Primary (but this is probably because
-	of the network timeout BSOD we've already fixed). We now
-	try to fix the spinlocks and then try again.
-
-	Update: It was probably the Intel network driver (or a
-	combination of network driver emulation in qemu and the
-	driver). We are now redoing the test with the Realtek
-	driver and NIC emulation, so far no BSOD (but let's wait
-	until tomorrow).
-
-	Update: When using the Realtek driver and NICs, it
-	stopped now working, no BSOD but we could not
-	start any more processes. Opening explorer for example
-	showed a panel saying out of system resources. May have
-	several reasons: most likely we cannot start kernel
-	threads or we are out of IRPs (but then printk wouldn't
-	work either, but it does ...). So it seems to be some
-	resource leak (which also makes sense because it always
-	takes around 1500 iterations of write-fs-loop.sh which
-	equals around 80GB of data). According to task manager
-	it is not the physical RAM.
-
-	Update: We now converted printk back to blocking operation.
-	It seems that printk's get lost when some resource isn't
-	available. We hope that this does not happen in blocking
-	mode.
-
-	Update: Now BSODs on network error (no more printk's after
-	receive returned error). We now try with ChargeQuota set
-	to TRUE on IoAllocateIrp. Another idea would also be
-	to associate the Mdl with the Irp (see InitWskData()).
-
-	Update: We definately lose (up to 20) printk's when
-	resource X (yet unknown) is short, as a test showed.
-	We need to see them (resend them when ack-receiver
-	thread is terminated).
-
-	Update: need to debug via serial console, since we
-	destroy something in the networking stack.
-
-	Update: Maybe grepping the memory dump (of a BSOD)
-	is sufficient.
-
-TODO: Bug: BSOD on Disconnect on Secondary (Windows 10)
-
-	Primary (Windows 7) doing I/O.
-
-Feb 14 15:47:55 10.43.10.13  U14:47:47.251|d012dee0(drbd_a_vamp-4nodes) kernel_recvmsg receive interrupted by signal
-Feb 14 15:47:55 10.43.10.13  U14:47:47.251|d012dee0(drbd_a_vamp-4nodes) drbd_ack_receiver <6>drbd vamp-4nodes pnode-id:4, cs(Disconnecting), prole(Unknown), cflag(0x12e), scf(0x0): ack_receiver terminated
-
-	Happens quite soon (1-10 attempts).
-
-	Update: Implemented -EINTR on signal for wait_for_sendbuf,
-	BSOD after ~25 disconnect / connects.
-
-	Found:
-
-Feb 15 16:39:23 10.43.10.13  U15:39:23.579|3e3eb560(not_drbd_thread) static_inline_expect_fn_peer_device <3>drbd vamp-4nodes/1 minor 1 pnode-id:4, pdsk(UpToDate), prpl(SyncTarget), pdvflag(0xc00): ASSERTION __dec_unacked(peer_device) >= 0 FAILED in e_end_block
-
-	(also in original log). Is this a new upstream bug?
-	(Test with Linux/Linux)
-
-	Update: Now testing with Linux/Windows (Linux doing up-down loop,
-	Windows being Primary and doing I/O). No BSOD so far.
-
-	Update: Maybe this is the same as storing function and line patch ...
-	(BSOD in wait_event_interruptible_timeout on Disconnet).
-
-TODO: Bug: System freeze on Windows 2016 Primary on SyncSource (with spinlock patches).
-
-	There's a (probably new) bug that freezes the System: Secondary
-	(Linux) doing Up/Down loop Primary (Server 2016) doing a
-	write-fs-loop.
-
-	Now redoing the test with 82df601 on Server 2016
-
-	Update: Test ran for 20 hours, no freeze. Also currently
-	testing with 5df572, so far no freeze (1 hour). Maybe
-	this was something else ... can't reproduce at the moment.
-
-	Update: Freeze after 6 hours of running the test. We now
-	fixed the (proably last) spin_lock bug (in lock_all_resources)
-	and hope that the hang does not happen again.
-
-	Update: Freeze with 70bdf4e (after 2-3 hours with sync
-	interrupted on peer).
-
-	Now trying with 0.9.1-1 ... no freeze so far. Also trying
-	with current (0a978d01) DRBD between Linux and Linux
-	(same test).
-
-	Update: system lockup also with 0.9.1-1, so this is definately
-	an 'old' bug. Also not in the DRBD part, since Linux/Linux
-	test is still running (after 3 days).
-
-	Update: we've implemented a spin lock monitor, however in
-	Windows kernel (at least Windows 7) the spinlocks are really
-	'big kernel locks' that lock the whole machine. Try this with
-	Windows 10 and see if it changed.
-
-	Update: We now analize the memory dump (Windows 10 has a
-	watchdog facility which BSODs instead of just locking
-	the machine) and found that rcu_read_lock is called
-	twice in a thread (sender thread), so recursively.
-
-	This might be valid with Linux implementation, however current
-	Shared/Exclusive spinlock WinDRBD implemenation doesn't allow
-	this.
-
-	Update: also happened with 4c8c46a4a (0.9.2-rc1). On disconnecting
-	after long running I/O test (24 hours).
-
-TODO: Bug: BSOD (0xFC) when adding node to a 4 node setup.
-
-	On drbdadm up of Windows 7 machine (connecting to 2
-	server 2016 and one Linux) there was a (temporary)
-	BSOD (ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY). After
-	rebooting the box, BSOD has gone.
 
 TODO: Code quality: review TODOs in source code.
 
@@ -7519,3 +7295,256 @@ Done: Feature: On loading kernel module, umhelper and logger should also be star
 
 	Yes there is. Installer now configures it correctly. However
 	must reboot once (or start services manually).
+
+Done: Bug: Secondary hangs in NetworkFailure
+
+	When peer runs out of memory (not responsive any more)
+
+Done: Bug: Secondary hangs in NetworkFailure / Disconnecting when peer crashes
+
+	Log line (very often) is:
+
+May 25 14:14:59 server-2016-b  U14:14:59.854 (5193697363511/10000000)|daf05570(drbd_s_windows-windows) #2824802 drbd_rs_del_all <6>drbd windows-windows/1 minor 29 pnode-id:1, pdsk(DUnknown), prpl(Off), pdvflag(0x801c00): Retrying drbd_rs_del_all() later. refcnt=2
+
+	Unclear where that comes from. Will try to reproduce.
+
+	Update: Reproduced with a firewall triggered disconnect.
+	Maybe this is a new bug in 9.0.29? I've never seen that
+	before ...
+
+	Update: Seems to be fixed with 1.0.0-rc17 (probably before that)
+
+Done: Feature: Make resize work (again)
+
+Duplicate: Bug: Sync when becoming secondary (on secondary or down).
+
+	This has probably to be done from user space.
+
+Done: Bug: Pending IRPs and bios reported
+
+	Maybe not initialized?
+May  6 14:23:06 server-2016-a  U14:23:06.827 (44265980490/10000000)|5a835300(drbd_r_windows-windows) #10813 wait_for_bios_to_complete Warning: Still 166 bios and 94945104 IRPs pending after 10 seconds
+
+	Still an issue?
+
+Done: Bug: BSOD (0xD1) on secondary when running WinDRBD write test
+
+	Maybe a network card driver bug? Now trying with e1000 driver.
+
+	Didn't reappear with recent WinDRBD (1.0.0-rc17)
+
+Rejected: Feature: event log
+
+	Documentation
+
+Rejected: Bug: Data loss when becoming Secondary
+
+	existing data resource on Windows Server-2016-A
+	Do:
+		drbdadm primary existing_data
+		cat > /cygdrive/d/somedata
+		<some data>
+		^D
+		drbdadm secondary existing_data
+		drbdadm primary existing_data
+		cat /cygdrive/d/somedata
+		data is not there.
+
+	Has no partition table on it now try with partition table.
+
+	Must sync before switching to Secondary
+
+	from https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-flushfilebuffers :
+
+To flush all open files on a volume, call FlushFileBuffers with a handle to the volume. The caller must have administrative privileges. For more information, see Running with Special Privileges.
+
+	But this is from user space ...
+
+	Update: We documented this in the users guide. Users should
+	run sync (bundled with WinDRBD installer) manually before
+	secondary or down (for now).
+
+Done: Code quality: Installer: Do not ask for upgrade ok when /silent or /verysilent is given.
+
+Done: Code quality: implement sched_setscheduler()
+
+	And remove extra windrbd_set_priority or so patch.
+
+Rejected: Code quality: Squash patches in transform.d
+
+	Redo all changes (we now have patches that revert former
+	patches).
+
+Rejected: Documentation: Draw diagram (from Joel)
+
+Rejected: Bug: BSOD when accessing ReFS device
+
+	It just disappeared again (when debugging via WinDbg).
+	Unclear where this comes from (IRQL BSOD in ReFS).
+
+Rejected: Feature: kunit support
+
+	Nice to have, do that when finished with 1.0
+
+	We now have our own unit test which works very well.
+
+Done: Bug: BSOD on Secondary Windows 7 in 4 node setup
+
+	Primary (Windows 10) I/O, 4 nodes connected (mesh).
+	After about 4-5 hours BSOD, last log line is:
+
+Feb  8 23:28:02 10.43.10.10  U22:28:02.402|06ef9a60(drbd_a_vamp-4nodes) kernel_recvmsg Timed out, but there is data (16 bytes) returning it.
+
+	(appears every minute or so) but BSOD was later than that.
+
+	Now retrying with only 2 nodes.
+
+	Update: Also BSOD with 2 nodes.
+
+	Update: Also (?) on Windows 10 (Secondary) when Windows 7 VM
+	is Primary and does I/O (Happend during disconnect/connect
+	loop).
+
+Feb 14 15:25:41 10.43.10.13  U14:25:40.802|b80f3370(drbd_a_vamp-4nodes) kernel_recvmsg receive completed with error c000020d
+Feb 14 15:25:41 10.43.10.13  U14:25:40.802|b80f3370(drbd_a_vamp-4nodes) kernel_recvmsg setting error status to 0
+Feb 14 15:25:41 10.43.10.13  U14:25:40.802|b80f3370(drbd_a_vamp-4nodes) drbd_ack_receiver <3>drbd vamp-4nodes pnode-id:4, cs(Disconnecting), prole(Unknown), cflag(0x212e), scf(0x0): sock_recvmsg returned -104
+Feb 14 15:25:41 10.43.10.13  U14:25:40.802|b80f3370(drbd_a_vamp-4nodes) drbd_ack_receiver <6>drbd vamp-4nodes pnode-id:4, cs(Disconnecting), prole(Unknown), cflag(0x212e), scf(0x0): ack_receiver terminated
+Feb 14 15:25:41 10.43.10.13  U14:25:40.802|b80f3370(drbd_a_vamp-4nodes) drbd_thread_setup <6>drbd vamp-4nodes pnode-id:4, cs(Disconnecting), prole(Unknown), cflag(0x212e), scf(0x0): Terminating ack_recv thread
+Feb 14 15:25:41 10.43.10.13  [last message was in IRQ context]
+Feb 14 15:25:41 10.43.10.13  U14:25:40.818|b80f3b50(drbd_r_vamp-4nodes) kernel_recvmsg receive completed with error c000020d
+Feb 14 15:25:41 10.43.10.13  U14:25:40.818|b80f3b50(drbd_r_vamp-4nodes) kernel_recvmsg setting error status to 0
+Feb 14 15:25:41 10.43.10.13  U14:25:40.818|b80f3b50(drbd_r_vamp-4nodes) drbdd <3>drbd vamp-4nodes pnode-id:4, cs(Disconnecting), prole(Unknown), cflag(0x212e), scf(0x0): error receiving P_DATA, e: -5 l: 1048576!
+
+	But maybe this is the connect/disconnect loop.
+	(Update: it probably is, see seperate bug)
+
+	Update: Tested with 0.9.1 release. Also a BSOD on Secondary,
+	in that case also on Primary (but this is probably because
+	of the network timeout BSOD we've already fixed). We now
+	try to fix the spinlocks and then try again.
+
+	Update: It was probably the Intel network driver (or a
+	combination of network driver emulation in qemu and the
+	driver). We are now redoing the test with the Realtek
+	driver and NIC emulation, so far no BSOD (but let's wait
+	until tomorrow).
+
+	Update: When using the Realtek driver and NICs, it
+	stopped now working, no BSOD but we could not
+	start any more processes. Opening explorer for example
+	showed a panel saying out of system resources. May have
+	several reasons: most likely we cannot start kernel
+	threads or we are out of IRPs (but then printk wouldn't
+	work either, but it does ...). So it seems to be some
+	resource leak (which also makes sense because it always
+	takes around 1500 iterations of write-fs-loop.sh which
+	equals around 80GB of data). According to task manager
+	it is not the physical RAM.
+
+	Update: We now converted printk back to blocking operation.
+	It seems that printk's get lost when some resource isn't
+	available. We hope that this does not happen in blocking
+	mode.
+
+	Update: Now BSODs on network error (no more printk's after
+	receive returned error). We now try with ChargeQuota set
+	to TRUE on IoAllocateIrp. Another idea would also be
+	to associate the Mdl with the Irp (see InitWskData()).
+
+	Update: We definately lose (up to 20) printk's when
+	resource X (yet unknown) is short, as a test showed.
+	We need to see them (resend them when ack-receiver
+	thread is terminated).
+
+	Update: need to debug via serial console, since we
+	destroy something in the networking stack.
+
+	Update: Maybe grepping the memory dump (of a BSOD)
+	is sufficient.
+
+	Update: I/O now runs for more than one month (with
+	1.0.0-rc13-47)
+
+Done: Bug: BSOD on Disconnect on Secondary (Windows 10)
+
+	Primary (Windows 7) doing I/O.
+
+Feb 14 15:47:55 10.43.10.13  U14:47:47.251|d012dee0(drbd_a_vamp-4nodes) kernel_recvmsg receive interrupted by signal
+Feb 14 15:47:55 10.43.10.13  U14:47:47.251|d012dee0(drbd_a_vamp-4nodes) drbd_ack_receiver <6>drbd vamp-4nodes pnode-id:4, cs(Disconnecting), prole(Unknown), cflag(0x12e), scf(0x0): ack_receiver terminated
+
+	Happens quite soon (1-10 attempts).
+
+	Update: Implemented -EINTR on signal for wait_for_sendbuf,
+	BSOD after ~25 disconnect / connects.
+
+	Found:
+
+Feb 15 16:39:23 10.43.10.13  U15:39:23.579|3e3eb560(not_drbd_thread) static_inline_expect_fn_peer_device <3>drbd vamp-4nodes/1 minor 1 pnode-id:4, pdsk(UpToDate), prpl(SyncTarget), pdvflag(0xc00): ASSERTION __dec_unacked(peer_device) >= 0 FAILED in e_end_block
+
+	(also in original log). Is this a new upstream bug?
+	(Test with Linux/Linux)
+
+	Update: Now testing with Linux/Windows (Linux doing up-down loop,
+	Windows being Primary and doing I/O). No BSOD so far.
+
+	Update: Maybe this is the same as storing function and line patch ...
+	(BSOD in wait_event_interruptible_timeout on Disconnet).
+
+	Update: Disconnect / Connect now ran for 2 days (with around
+	1.0.0-rc17).
+
+Done: Bug: System freeze on Windows 2016 Primary on SyncSource (with spinlock patches).
+
+	There's a (probably new) bug that freezes the System: Secondary
+	(Linux) doing Up/Down loop Primary (Server 2016) doing a
+	write-fs-loop.
+
+	Now redoing the test with 82df601 on Server 2016
+
+	Update: Test ran for 20 hours, no freeze. Also currently
+	testing with 5df572, so far no freeze (1 hour). Maybe
+	this was something else ... can't reproduce at the moment.
+
+	Update: Freeze after 6 hours of running the test. We now
+	fixed the (proably last) spin_lock bug (in lock_all_resources)
+	and hope that the hang does not happen again.
+
+	Update: Freeze with 70bdf4e (after 2-3 hours with sync
+	interrupted on peer).
+
+	Now trying with 0.9.1-1 ... no freeze so far. Also trying
+	with current (0a978d01) DRBD between Linux and Linux
+	(same test).
+
+	Update: system lockup also with 0.9.1-1, so this is definately
+	an 'old' bug. Also not in the DRBD part, since Linux/Linux
+	test is still running (after 3 days).
+
+	Update: we've implemented a spin lock monitor, however in
+	Windows kernel (at least Windows 7) the spinlocks are really
+	'big kernel locks' that lock the whole machine. Try this with
+	Windows 10 and see if it changed.
+
+	Update: We now analize the memory dump (Windows 10 has a
+	watchdog facility which BSODs instead of just locking
+	the machine) and found that rcu_read_lock is called
+	twice in a thread (sender thread), so recursively.
+
+	This might be valid with Linux implementation, however current
+	Shared/Exclusive spinlock WinDRBD implemenation doesn't allow
+	this.
+
+	Update: also happened with 4c8c46a4a (0.9.2-rc1). On disconnecting
+	after long running I/O test (24 hours).
+
+	Update: Fixed in 1.0.0-rc17
+
+Done: Bug: BSOD (0xFC) when adding node to a 4 node setup.
+
+	On drbdadm up of Windows 7 machine (connecting to 2
+	server 2016 and one Linux) there was a (temporary)
+	BSOD (ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY). After
+	rebooting the box, BSOD has gone.
+
+	Most likely fixed in 1.0.0-rc17
+
