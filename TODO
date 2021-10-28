@@ -52,6 +52,10 @@ TODO: Documentation: Rewrite README.md and restructure text docs
 
 TODOs for after Release 1.0 ----------------------------------------
 
+TODO: Code quality: Rewrite event log code
+
+	Do not split event messages.
+
 TODO: Installer: Should not try to unload driver if remote booting
 
 	This actually would succeed (disconnect --force works but
