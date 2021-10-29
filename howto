@@ -552,6 +552,10 @@ will display the new thread's backtrace.
 print C expression
 
 ?? x
+
+Force load of mismatched PDB:
+
+.reload /i /f /v windrbd.sys
 -----
 
 netsh:
