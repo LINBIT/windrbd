@@ -455,9 +455,9 @@ begin
 	if CurStep = ssInstall then begin
 		ModPath();
 
-		StopUserModeServices();
 		if GetOldVersion <> '' then begin
 			StopDriver();
+			StopUserModeServices();
 		end;
 	end;
 	if CurStep = ssPostInstall then begin
