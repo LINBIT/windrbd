@@ -48,6 +48,10 @@ TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 	Tried to reproduce .. no BSOD after 99 iterations (and
 	5262 I/O loop iterations)
 
+TODO: Bug: BSOD while sync and I/O
+
+	Reported by customer, currently trying to reproduce.
+
 TODO: Documentation: Rewrite README.md and restructure text docs
 
 TODOs for after Release 1.0 ----------------------------------------
