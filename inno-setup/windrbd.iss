@@ -334,6 +334,7 @@ begin
 
 	if not DriverIsRunning then begin
 		Log('Driver is not running not attempting to stop it.');
+		driverWasUnloaded := true;	{ TODO: better name }
 		exit;
 	end;
 
