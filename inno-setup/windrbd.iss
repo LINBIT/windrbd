@@ -253,12 +253,14 @@ var UmHelperWasStarted: boolean;
 
 Procedure StopUserModeServices;
 Begin
+	Log('about to stop user mode services');
 	LoggerWasStarted := MyStopService('windrbdlog');
 	UmHelperWasStarted := MyStopService('windrbdumhelper');
 End;
 
 Procedure StartUserModeServices;
 Begin
+	Log('about to start user mode services if they were running before installation');
 	if LoggerWasStarted then begin
 		MyStartService('windrbdlog');
 	End;
@@ -311,13 +313,29 @@ begin
 	RegDeleteValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'WinDRBDRootWinPath');
 end;
 
+function DriverIsRunning: Boolean;
+var S: Longword;
+
+Begin
+	Result := False;
+	if ServiceExists('windrbd') then begin
+		S:= SimpleQueryService('windrbd');
+		if S = SERVICE_RUNNING then begin
+			Result := True;
+		end;
+	end;
+end;
+
 procedure stopDriver;
 var ResultCode: Integer;
     CommandOutput: String;
 
 begin
-		{ TODO: Do not run drbdadm here, it would load the driver
-		  if is not loaded (and then it cannot be unloaded) }
+
+	if not DriverIsRunning then begin
+		Log('Driver is not running not attempting to stop it.');
+		exit;
+	end;
 
 	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'disconnect all --force', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
