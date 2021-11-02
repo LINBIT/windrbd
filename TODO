@@ -36,6 +36,53 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: BSOD Security check when writing 4GB file.
+
+	Is a double free in freeing page chain.
+
+1: kd> k
+ # Child-SP          RetAddr           Call Site
+00 ffffc501`31e2cbc8 fffff803`25667ab2 nt!DbgBreakPointWithStatus
+01 ffffc501`31e2cbd0 fffff803`2566783b nt!KeEnterKernelDebugger+0x216
+02 ffffc501`31e2cc30 fffff803`255f2684 nt!KeInitializeEnumerationContextFromAffinity+0xc5b
+03 ffffc501`31e2d340 fffff803`25602629 nt!KeBugCheckEx+0x104
+04 ffffc501`31e2d380 fffff803`256029d0 nt!setjmpex+0x6e59
+05 ffffc501`31e2d4c0 fffff803`25600fd8 nt!setjmpex+0x7200
+06 ffffc501`31e2d6a0 fffff803`2561707e nt!setjmpex+0x5808
+07 ffffc501`31e2d830 fffff803`256e6883 nt!memset+0x138fe
+08 ffffc501`31e2d900 fffff803`67294042 nt!ExFreePoolWithTag+0x503
+09 ffffc501`31e2d9e0 fffff803`6728ea27 windrbd!kfree_debug+0x1f2 [y:\windrbd\windrbd\src\kmalloc_debug.c @ 156]
+0a (Inline Function) --------`-------- windrbd!__free_page_debug+0x1d [y:\windrbd\windrbd\src\drbd_windows.c @ 645]
+0b ffffc501`31e2da50 fffff803`6728f952 windrbd!free_page_kref+0x27 [y:\windrbd\windrbd\src\drbd_windows.c @ 666]
+0c ffffc501`31e2da80 fffff803`6723476c windrbd!kref_put+0x12 [y:\windrbd\windrbd\src\drbd_windows.c @ 850]
+0d (Inline Function) --------`-------- windrbd!put_page+0x18 [y:\windrbd\windrbd\include\drbd_windows.h @ 1054]
+0e (Inline Function) --------`-------- windrbd!page_chain_free+0x20 [y:\windrbd\converted-sources\drbd\drbd_receiver.c @ 340]
+0f ffffc501`31e2dab0 fffff803`6722c3ba windrbd!drbd_free_pages+0x7c [y:\windrbd\converted-sources\drbd\drbd_receiver.c @ 552]
+10 (Inline Function) --------`-------- windrbd!drbd_free_page_chain+0x13 [y:\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h @ 259]
+11 ffffc501`31e2db30 fffff803`672356fd windrbd!__drbd_free_peer_req+0xba [y:\windrbd\converted-sources\drbd\drbd_receiver.c @ 621]
+12 ffffc501`31e2db60 fffff803`67230f2d windrbd!drbd_reclaim_net_peer_reqs+0xed [y:\windrbd\converted-sources\drbd\drbd_receiver.c @ 456]
+13 ffffc501`31e2dbb0 fffff803`67258037 windrbd!drbd_ack_receiver+0x8d [y:\windrbd\converted-sources\drbd\drbd_receiver.c @ 9678]
+14 ffffc501`31e2dca0 fffff803`672a2bca windrbd!drbd_thread_setup+0x47 [y:\windrbd\converted-sources\drbd\drbd_main.c @ 591]
+15 ffffc501`31e2dd10 fffff803`2559f21d windrbd!windrbd_thread_setup+0x4a [y:\windrbd\windrbd\src\windrbd_threads.c @ 198]
+16 ffffc501`31e2dd50 fffff803`255f9886 nt!KeQueryPriorityThread+0x156d
+17 ffffc501`31e2dda0 00000000`00000000 nt!KeSynchronizeExecution+0x62e6
+
+	kmalloc debugger says memory is already freed:
+
+1: kd> ?? mem
+struct memory * 0xffff9d89`abd59000
+   +0x000 list             : list_head
+   +0x010 size             : 0x1000
+   +0x018 address          : [32]  "ADDR: FFFF9D89ABD59100"
+   +0x038 desc             : [64]  "drbd_receiver.c:393"
+   +0x078 func             : [32]  "__drbd_alloc_pages"
+   +0x098 desc_freed       : [64]  "../../windrbd/src/drbd_windows.c:666"
+   +0x0d8 func_freed       : [32]  "free_page_kref"
+   +0x0f8 pad              : 0n0
+   +0x0fc poison           : 0n1162170950
+   +0x100 data             : [0]  ""
+
+
 TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
 	Linux Primary doing I/O and iptables-drop/don't drop
