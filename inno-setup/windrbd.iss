@@ -316,6 +316,9 @@ var ResultCode: Integer;
     CommandOutput: String;
 
 begin
+		{ TODO: Do not run drbdadm here, it would load the driver
+		  if is not loaded (and then it cannot be unloaded) }
+
 	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'disconnect all --force', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not disconnect DRBD resources', mbInformation, MB_OK);
@@ -371,8 +374,8 @@ var root: string;
 
 begin
 	if CurUninstallStep = usAppMutexCheck then begin
-		StopUserModeServices();
 		StopDriver();
+		StopUserModeServices();
 	end;
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
