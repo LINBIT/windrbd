@@ -99,6 +99,25 @@ TODO: Bug: BSOD while sync and I/O
 
 	Reported by customer, currently trying to reproduce.
 
+	Update: Managed to reproduce with disconnect / invalidate / connect /
+	sleep 20 loop on secondary. (after 10-20 iterations or so)
+	I/O on Primary was not necessary.
+
+	This is the storport!RaidpAdapterDpcRoutine BSOD
+	(try !dpcs in debugger)
+
+TODO: Installer: Still sometimes reboot is necessary
+
+	2021-11-03 18:34:53.386   About to Run sc.exe stop windrbd (wd is C:\Program Files\WinDRBD) ...^M
+	2021-11-03 18:34:53.605   Command sc.exe succeeded, exit value is 1051^M
+	2021-11-03 18:34:53.605   Output of command is ^M
+      	                    [SC] ControlService FAILED 1051:^M
+       	                   ^M
+       	                   A stop control has been sent to a service that other running services are dependent on.^M^M
+	2021-11-03 18:34:53.605   about to stop user mode services^M
+
+	maybe stop user mode services before driver again?
+
 TODO: Documentation: Rewrite README.md and restructure text docs
 
 TODOs for after Release 1.0 ----------------------------------------
