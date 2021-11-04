@@ -487,9 +487,9 @@ begin
 		WriteWinDRBDRootPath();
 		InstallUserModeServices();
 		PatchRegistry();
-		StartUserModeServices();
 		AddDriverToDriverStore();
 		InstallBusDevice();
+		StartUserModeServices();
 	end;
 end;
 
