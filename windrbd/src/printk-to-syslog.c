@@ -490,7 +490,12 @@ int _printk(const char *func, const char *fmt, ...)
 		buffer_overflows++;
 		return -EINVAL;
 	}
-	if ((!no_event_log_printk) && ((level-'0') >= 0) && ((level-'0') <= event_log_level_threshold))
+		/* We use Rtl string functions which are only available
+		 * at PASSIVE_LEVEL (on DISPATCH_LEVEL they may BSOD.
+		 */
+	if ((KeGetCurrentIrql() == PASSIVE_LEVEL) && 
+	    (!no_event_log_printk) && 
+	    ((level-'0') >= 0) && ((level-'0') <= event_log_level_threshold))
 		split_message_and_write_to_eventlog(level-'0', buffer+pos);
 	
 	/* Print messages to debugging facility, use a tool like
