@@ -164,7 +164,7 @@ TODO: Bug: Verifier BSOD on sync.
 	Usually not a problem since one should not run WinDRBD with
 	verifier on (at least for now).
 
-TODO: Bug: Verifier 0xC9 on Primary/Secondary Loop.
+TODO: Bug: Verifier BSOD 0xC9 on Primary/Secondary Loop.
 
 	suberror is 0x221.
 
