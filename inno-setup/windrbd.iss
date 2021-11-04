@@ -393,8 +393,8 @@ var root: string;
 
 begin
 	if CurUninstallStep = usAppMutexCheck then begin
-		StopDriver();
 		StopUserModeServices();
+		StopDriver();
 	end;
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
@@ -475,8 +475,12 @@ begin
 		ModPath();
 
 		if GetOldVersion <> '' then begin
-			StopDriver();
 			StopUserModeServices();
+			StopDriver();
+		end
+		else begin  { Also start user mode service if this is a fresh install }
+			LoggerWasStarted := true;
+			UmHelperWasStarted := true;
 		end;
 	end;
 	if CurStep = ssPostInstall then begin
