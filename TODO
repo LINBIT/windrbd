@@ -95,17 +95,6 @@ TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 	Tried to reproduce .. no BSOD after 99 iterations (and
 	5262 I/O loop iterations)
 
-TODO: Bug: BSOD while sync and I/O
-
-	Reported by customer, currently trying to reproduce.
-
-	Update: Managed to reproduce with disconnect / invalidate / connect /
-	sleep 20 loop on secondary. (after 10-20 iterations or so)
-	I/O on Primary was not necessary.
-
-	This is the storport!RaidpAdapterDpcRoutine BSOD
-	(try !dpcs in debugger)
-
 TODO: Installer: Still sometimes reboot is necessary
 
 	2021-11-03 18:34:53.386   About to Run sc.exe stop windrbd (wd is C:\Program Files\WinDRBD) ...^M
@@ -122,9 +111,14 @@ TODO: Documentation: Rewrite README.md and restructure text docs
 
 TODOs for after Release 1.0 ----------------------------------------
 
+TODO: Code quality: Disks should always be online on drbdadm primary
+
+	Sometimes they are offline, not clear why ...
+
 TODO: Code quality: Rewrite event log code
 
 	Do not split event messages.
+	Also log when in DISPATCH_LEVEL
 
 TODO: Installer: Should not try to unload driver if remote booting
 
@@ -7621,4 +7615,22 @@ Done: Bug: BSOD (0xFC) when adding node to a 4 node setup.
 	rebooting the box, BSOD has gone.
 
 	Most likely fixed in 1.0.0-rc17
+
+Done: Bug: BSOD while sync and I/O
+
+	Reported by customer, currently trying to reproduce.
+
+	Update: Managed to reproduce with disconnect / invalidate / connect /
+	sleep 20 loop on secondary. (after 10-20 iterations or so)
+	I/O on Primary was not necessary.
+
+	This is the storport!RaidpAdapterDpcRoutine BSOD
+	(try !dpcs in debugger)
+
+	Was calling RtlAnsiToUnicodeString() with IRQL at DISPATCH_LEVEL
+	which is illegal and may BSOD. Not logging to eventlog when
+	IRQL > PASSIVE_LEVEL now. By doing so some messages don't make
+	it into the event log but we need to repair this anyway.
+
+	Fixed with 834dac501
 
