@@ -1,6 +1,15 @@
 Upcoming features
 -----------------
 
+What's new in version 1.0.0-rc18
+--------------------------------
+
+Fixed a BSOD bug in writing to event log introduced in 1.0.0-rc14
+
+Installer: no reboot on upgrade should work now also in corner cases.
+
+Installer: Always start user mode services (windrbdlog, windrbdumhelper)
+
 What's new in version 1.0.0-rc17
 --------------------------------
 
