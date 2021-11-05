@@ -82,6 +82,7 @@ struct memory * 0xffff9d89`abd59000
    +0x0fc poison           : 0n1162170950
    +0x100 data             : [0]  ""
 
+	Update: Cannot reproduce this now.
 
 TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
@@ -94,18 +95,6 @@ TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
 	Tried to reproduce .. no BSOD after 99 iterations (and
 	5262 I/O loop iterations)
-
-TODO: Installer: Still sometimes reboot is necessary
-
-	2021-11-03 18:34:53.386   About to Run sc.exe stop windrbd (wd is C:\Program Files\WinDRBD) ...^M
-	2021-11-03 18:34:53.605   Command sc.exe succeeded, exit value is 1051^M
-	2021-11-03 18:34:53.605   Output of command is ^M
-      	                    [SC] ControlService FAILED 1051:^M
-       	                   ^M
-       	                   A stop control has been sent to a service that other running services are dependent on.^M^M
-	2021-11-03 18:34:53.605   about to stop user mode services^M
-
-	maybe stop user mode services before driver again?
 
 TODO: Documentation: Rewrite README.md and restructure text docs
 
@@ -7633,4 +7622,18 @@ Done: Bug: BSOD while sync and I/O
 	it into the event log but we need to repair this anyway.
 
 	Fixed with 834dac501
+
+Done: Installer: Still sometimes reboot is necessary
+
+	2021-11-03 18:34:53.386   About to Run sc.exe stop windrbd (wd is C:\Program Files\WinDRBD) ...^M
+	2021-11-03 18:34:53.605   Command sc.exe succeeded, exit value is 1051^M
+	2021-11-03 18:34:53.605   Output of command is ^M
+      	                    [SC] ControlService FAILED 1051:^M
+       	                   ^M
+       	                   A stop control has been sent to a service that other running services are dependent on.^M^M
+	2021-11-03 18:34:53.605   about to stop user mode services^M
+
+	maybe stop user mode services before driver again?
+
+	Yes. And also start user mode services on a fresh install.
 
