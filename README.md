@@ -390,3 +390,4 @@ Version history
  * 1.0.0-rc16 (Sep 30, 2021): Fixed a bug that caused volumes with size 1-2 TB not to work properly.
  * 1.0.0-rc17 (Oct 22, 2021): Online resize, no reboot on upgrade/uninstall and
                               many other improvements (see WHATSNEW.md)
+ * 1.0.0-rc18 (Nov 5, 2021): Installer and event log BSOD fixes
