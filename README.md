@@ -9,9 +9,7 @@ else you get an incomplete checkout.
 
 If you need installable binaries with a signed driver please go to
 
-https://www.linbit.com/en/drbd-community/drbd-download/
-
-(scroll down to DRBD 9 Windows Driver)
+https://linbit.com/linbit-software-download-page-for-linstor-and-drbd-linux-driver/#drbd-windows
 
 If you need support, please contact Linbit (www.linbit.com)
 at sales@linbit.com
@@ -21,21 +19,20 @@ What is WinDRBD?
 
 WinDRBD is a port of Linbit's Distributed Replicated Block Device
 Linux driver to Microsoft Windows. Technically it is a thin
-emulation layer that maps Linux specific kernel API calls to the
+compatibility layer that maps Linux specific kernel API calls to the
 Microsoft Windows NT Kernel API.
 
 DRBD itself is used to build High Availability clusters by replicating
 contents of one block device over a network to (up to 31) other nodes.
 
 WinDRBD is based on DRBD 9. It was originally started by Korean
-company Mantech and later redesigned by Johannes Thoma for Linbit
-to match more closely the Linux device model. In particular the
-DRBD devices are not stacked over existing Windows devices (like
-Mantech WDRBD does it) but creates DRBD devices upon creation with
-the drbdadm primary command.
+company Mantech and later rewritten by an Austrian programmer called
+Johannes Thoma for Linbit.
 
-To avoid confusion with ManTech's WDRBD we called our WDRBD-fork
-WinDRBD.
+DRBD devices are exported as SCSI disks as soon as the resource
+becomes primary and can be partitioned and formatted with the
+standard Windows tools (diskpart, partition editor in control
+panel).
 
 What else is needed?
 ====================
@@ -43,6 +40,11 @@ What else is needed?
 If you have a binary package, you don't need to install CygWin since
 the Cygwin DLL comes with the binary package. Commands like drbdadm and
 windrbd should work out-of-the-box with the Windows cmd shell.
+We strongly recommend to use the binary packages provided by
+Linbit since they are signed with a DigiCert key and therefore
+should load without putting Windows into test mode. Note that
+WinDRBD does not support SecureBoot currently but we are working
+on this.
 
 For detailed build instructions, please see the file INSTALL. Having
 said that you need a Windows 7 box with CygWin installed (Windows 10
@@ -59,34 +61,15 @@ git clone --recursive https://github.com/LINBIT/drbd-utils.git
 and follow the build instruction in README-windrbd.md file of the
 repo.
 
-To test it, we use the WIN32 API test suite in windrbd-test. This
-is based on Google Test: see README.md in windrbd-test directory.
-
-You don't need drbdcon: it does not exist in WinDRBD.
-
-We recommend to run Windows in a virtual machine and make
-snapshots everytime *before* a new WinDRBD version is installed.
-
-Please also note that once you have installed an officially
-verified version of WinDRBD (you can get one from Linbit),
-you cannot install self-signed versions of WinDRBD over them.
-In other words if you wish to compile WinDRBD by yourself,
-do not install official packages on your test machines.
-In addition if you use self signed (self compiled) packages,
-you have to put Windows into Test mode, else it will refuse
-to boot. To do so, execute
-
-bcdedit /set TESTSIGNING ON
-
-as Administrator and reboot the machine. It then should display
-Testmode in the lower right corner when it comes up again.
-
 Configuring DRBD
 ================
 
 The DRBD config files can be found in following folder:
 
 	C:\windrbd\etc
+
+This folder can be configured at installation time (use this for
+example if your C: drive is read only).
 
 Put your resources (extension .res) into the C:\windrbd\etc\drbd.d
 folder (from within a CygWin shell you can access this via
@@ -105,35 +88,6 @@ should work exactly like with the Linux version of DRBD.
 There is also a WinDRBD specific tech guide which explains how
 to prepare two Windows Server 2016 nodes for use with WinDRBD.
 Please see the Linbit website for that guide.
-
-Differences to WDRBD
-====================
-
-Note: If you don't know ManTech's WDRBD, you can skip reading
-this section.
-
-The main difference is that ManTech's WDRBD stacks the DRBD devices
-atop of all block devices reported by PnP manager and uses an Active
-flag to control whether I/O requests are routed through DRBD or not.
-
-In contrast Linbit's WinDRBD creates a separate Windows Device on
-request (on drbdadm primary) and uses the backing device like a
-normal Windows block device.
-
-This approach has several advantages:
-
- * Diskless operation is supported (network only).
- * Drbdmeta can access internal meta data without special casing offsets
-   larger that the DRBD device.
- * Later, the WinDRBD driver doesn't need a reboot if it is changed
-   (currently it does not need a reboot if installed freshly).
- * drbdcon is not needed, thereby lots of race conditions simply just
-   don't exist on WinDRBD.
-
-Another difference is that DRBD source code is derived directly from
-Linbit's sources (using spatch and patch to patch in WinDRBD specific
-changes). This makes it much more easy to maintain and keep up with
-DRBD 9 development (current WinDRBD releases are based on DRBD 9.0.16).
 
 Differences to Linux DRBD
 =========================
@@ -224,28 +178,14 @@ Our planned 1.0 release will have following restrictions:
 
   * Auto-promote is not supported.
 
-  * No 32-Bit version is supported, only 64 bit.
+  * No read access when there are only secondaries.
 
-  * Windows 7 is minimum (no Vista, no XP) (SP1 required (?))
+  * For booting via WinDRBD the installation onto a WinDRBD volume
+    is not possible yet with the Windows installer GUI.
 
-We might fix following current (0.7.4) restrictions for the
-1.0 release:
+  * Currently no 32-Bit version is supported, only 64 bit.
 
-  * Right now only NTFS is supported atop the windrbd device.
-    (or you can use the device as a RAW device).
-
-  * On installation (or upgrade) a system reboot is required.
-
-  * Of the DRBD features, the following are currently unsupported:
-    discard, biosets, debugfs, online verify, RB_CONGESTED_REMOTE,
-    write same, disk stats, trimming.
-
-Following works starting from 0.10.0):
-
-  * System Volume (C:) can be used for windrbd (however without 
-    local backing storage for now).
-
-Please also check the file FEATURES in the repository.
+  * No SecureBoot support yet (we are working on this one). 
 
 Logging
 =======
