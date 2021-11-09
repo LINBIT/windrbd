@@ -111,6 +111,7 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	struct memory *mem;
 	struct poison_after *poison_after;
 	KIRQL flags;
+	bool is_double_free = false;
 
 /* loops ... */
 // printk("kfree(%p) %s:%d (%s)\n", data, file, line, func);
@@ -136,7 +137,9 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 		printk("kmalloc_debug: Warning: Poison after overwritten (is %x should be %x), allocated from %s %s(), freed from %s:%d %s() pointer is %p\n", poison_after->poison2, POISON_AFTER, mem->desc, mem->func, file, line, func, data);
 		if (poison_after->poison2 == 'EERF') {
 			printk("This is most likely a double free.\n");
+			printk("(Not freeing that memory again)\n");
 			printk("Previously freed from %s %s()\n", mem->desc_freed, mem->func_freed);
+			is_double_free = true;
 // printk("data is %.64s\n", mem->data);
 		}
 	}
@@ -153,7 +156,8 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 
 // { char *p; size_t i; for (i=0;i<mem->size;i++) {mem->data[i]='x';} }
 
-	ExFreePool((void*)mem);
+	if (!is_double_free)
+		ExFreePool((void*)mem);
 }
 
 void init_kmalloc_debug(void)
