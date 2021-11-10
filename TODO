@@ -36,6 +36,10 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Code quality: Write to eventlog delayed.
+
+	Where we may sleep (see SendTo call in _printk).
+
 TODO: Bug: BSOD Security check when writing 4GB file.
 
 	Is a double free in freeing page chain.

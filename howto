@@ -142,6 +142,8 @@ git merge jt/latest-feature-branch
 
 Document changes in WHATSNEW.md
 
+(tmp) edit patchlevel offset in versioninfo.sh
+
 Add entry to README.md
 git add README.md
 git commit -m "Release 1.0.0-rcX"
