@@ -23,10 +23,10 @@ compatibility layer that maps Linux specific kernel API calls to the
 Microsoft Windows NT Kernel API.
 
 DRBD itself is used to build High Availability clusters by replicating
-contents of one block device over a network to (up to 31) other nodes.
+contents of block devices over a network to (up to 31) other nodes.
 
 WinDRBD is based on DRBD 9. It was originally started by Korean
-company Mantech and later rewritten by an Austrian programmer called
+company Mantech and was later rewritten by an Austrian programmer called
 Johannes Thoma for Linbit.
 
 DRBD devices are exported as SCSI disks as soon as the resource
@@ -54,7 +54,7 @@ from source.
 For building you need Ewdk from Microsoft and a separate Linux Box
 with spatch (concinelle) installed.
 
-You need at least version 9.7.0 of drbd-utils. To obtain it, do a:
+You need a recent version of drbd-utils. To obtain it, do a:
 
 git clone --recursive https://github.com/LINBIT/drbd-utils.git
 
@@ -92,9 +92,9 @@ Please see the Linbit website for that guide.
 Differences to Linux DRBD
 =========================
 
-Currently the only difference to Linux DRBD is that block devices 
-are specified as you would expect it under Microsoft Windows, that
-is drive letters or GUID's are used. Examples:
+In the configuration the only difference to Linux DRBD is that block
+devices are specified as you would expect it under Microsoft Windows,
+that is drive letters or GUID's are used. Examples:
 
 	disk "F:";
 	# or:
@@ -104,53 +104,14 @@ We recommend not to assign drive letters to backing devices, since
 that easily may confuse the user. You can use the mountvol utility
 to find the GUID of a device.
 
-Starting with 0.4.8 windrbd refuses to attach to a device containing
-a file system known to Windows. We do so because Windows accesses
-the file system independently of DRBD causing data corruption.
-
-Starting from 0.5.2 if drbdadm detects a file system (NTFS) on
-the backing device, it automatically hides it from Windows.
-
-To do that manually, use
-
-	windrbd hide-filesystem <drive-letter>
-
-to prepare the backing device for use with windrbd. You can undo
-that later with
-
-	windrbd show-filesystem <drive-letter>
-
-however only when the device is not attached.
-
-Starting from 0.5.3, the device entry has following format:
-
-	device <drive-letter> minor <unique-minor>;
-
-for example:
-
-	device "K:" minor 1;
-
-This makes the WinDRBD device appear as drive K: once the
-drbdadm primary <res> command is executed (before 0.7.2 it
-also existed on drbdadm up, but this couldn't be accessed,
-so we changed that to drbdadm primary). Starting from 0.7.1,
-your shell (Windows Explorer in most cases) gets notified
-about the new drive, so you probably will get a panel that
-asks you if the drive should be formatted.
-
-Starting with 0.10.1, we distinguish between data devices
-and disk devices. Data devices are regular block devices
-with a mount point. They can be formatted with NTFS, other
-file systems like FAT family and ReFS are not yet supported.
-
-Disk devices present themselves as a regular PnP disk
+Disk devices present themselves as a regular SCSI disk
 (like a physical hard disk) and appear as disk in the
 Windows partition manager (and also in device manager).
 With partition manager a partition table can be created
 and then paritions (with assigned drive letters) can
 be created on the disk. The partitions can be formatted
-with all supported file systems. The drawback however is
-that there must be a partition table on the disk (under
+with all supported file systems. This means that
+that normally there is be a partition table on the disk (under
 Linux, kpartx can be used to create device nodes for
 each partition).
 
@@ -202,20 +163,21 @@ To configure the log host set a Registry key (string value):
 
 	Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\drbd\syslog_ip
 
-and assign it the IP address (you have to reload the WinDRBD driver
-after setting this, currently you have to reboot the machine).
+and assign it the IP address.
 
-You can also log on the Windows machine directly by starting
+You can use 
 
-	windrbd log-server [-o logfile]
+	windrbd set-syslog-ip ipv4-address
 
-However the last log messages before a blue screen will be lost, then.
+to change the syslog IP for this session (the registry key is only
+evaluated at server start).
 
 If you are logging to the local Windows machine, use 127.0.0.1 as
-IP address (this is the default). Do not specify a network interface
-IP, this might cause the system to hang on boot.
+IP address (this is the default).
 
-See also file INSTALL for more instructions.
+There is also a logfile written by the installer located in the
+%TEMP% directory. It should be consulted when something with the
+installation goes wrong.
 
 Version history
 ===============
