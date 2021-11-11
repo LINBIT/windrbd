@@ -40,6 +40,7 @@ What else is needed?
 If you have a binary package, you don't need to install CygWin since
 the Cygwin DLL comes with the binary package. Commands like drbdadm and
 windrbd should work out-of-the-box with the Windows cmd shell.
+
 We strongly recommend to use the binary packages provided by
 Linbit since they are signed with a DigiCert key and therefore
 should load without putting Windows into test mode. Note that

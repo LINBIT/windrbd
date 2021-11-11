@@ -849,3 +849,27 @@ Howto update cygwin binaries:
 
 cd inno-setup/cygwin-binaries
 for i in * ; do cp `which $i` . ; done
+
+----------------
+
+Network debugging:
+
+On target computer:
+
+Administrator@win02 /cygdrive/f/Program Files/Windows Kits/10/Debuggers/x64
+$ kdnet 192.168.73.1 50000
+-bash: kdnet: command not found
+
+Administrator@win02 /cygdrive/f/Program Files/Windows Kits/10/Debuggers/x64
+$ ./kdnet 192.168.73.1 50000
+
+Enabling network debugging on Intel(R) PRO/1000 MT Network Connection.
+Manage-bde.exe not present.  Bitlocker presumed disabled.
+
+To debug this machine, run the following command on your debugger host machine.
+windbg -k net:port=50000,key=t4kmmq9hibab.dq0ex0dbg0d4.3czg54idmf6fr.31v3hnule3b
+3i
+
+Then reboot this machine by running shutdown -r -t 0 from this command prompt.
+
+
