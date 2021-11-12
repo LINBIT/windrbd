@@ -1,0 +1,27 @@
+From 97d7ff3b772c8e4d5acf06b42824cbdf1ca9a05c Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 12 Nov 2021 20:19:59 +0100
+Subject: [PATCH] drbd_state: %llu for displaying how much there is to sync.
+
+ULONG_PTR is 64 bit on 64 bit Windows. Output was wrong for
+18TiB device.
+---
+ drbd/drbd_state.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_state.c b/drbd/drbd_state.c
+index e1673bb..af02754 100644
+--- a/drbd/drbd_state.c
++++ b/drbd/drbd_state.c
+@@ -3350,7 +3350,7 @@ static void drbd_run_resync(struct drbd_peer_device *peer_device, enum drbd_repl
+ 	struct drbd_connection *connection = peer_device->connection;
+ 	enum drbd_repl_state side = repl_is_sync_target(repl_state) ? L_SYNC_TARGET : L_SYNC_SOURCE;
+ 
+-	drbd_info(peer_device, "Began resync as %s (will sync %lu KB [%lu bits set]).\n",
++	drbd_info(peer_device, "Began resync as %s (will sync %llu KB [%llu bits set]).\n",
+ 			drbd_repl_str(repl_state),
+ 			(ULONG_PTR) peer_device->rs_total << (BM_BLOCK_SHIFT-10),
+ 			(ULONG_PTR) peer_device->rs_total);
+-- 
+2.17.0
+
