@@ -1,0 +1,27 @@
+From d2122016887c0645cc84626f5d6a7d3607671604 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 12 Nov 2021 18:52:18 +0100
+Subject: [PATCH 1/6] drbd_actlog: unsigned long -> ULONG_PTR
+
+unsigned long is 32 bit on Windows (also on 64 bit systems)
+and should not be used at all.
+---
+ drbd/drbd_actlog.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_actlog.c b/drbd/drbd_actlog.c
+index f08cf42..7fb105a 100644
+--- a/drbd/drbd_actlog.c
++++ b/drbd/drbd_actlog.c
+@@ -338,7 +338,7 @@ bool drbd_al_begin_io_fastpath(struct drbd_device *device, struct drbd_interval
+ # error FIXME
+ #endif
+ 
+-static unsigned long al_extent_to_bm_bit(unsigned int al_enr)
++static ULONG_PTR al_extent_to_bm_bit(unsigned int al_enr)
+ {
+ 	return (ULONG_PTR)al_enr << (AL_EXTENT_SHIFT - BM_BLOCK_SHIFT);
+ }
+-- 
+2.17.0
+

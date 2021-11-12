@@ -1,0 +1,36 @@
+From 1bfca2757dba4c2805cacf846be71d2af4553bde Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 12 Nov 2021 18:53:56 +0100
+Subject: [PATCH 3/6] drbd_receiver: unsigned long -> ULONG_PTR
+
+unsigned long is 32 bit on Windows (also on 64 bit systems)
+and should not be used at all.
+---
+ drbd/drbd_receiver.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index fe69b30..6a23e0f 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -2792,7 +2792,7 @@ static int wait_for_and_update_peer_seq(struct drbd_peer_device *peer_device, co
+ 	return ret;
+ }
+ 
+-static unsigned long wire_flags_to_bio_op(u32 dpf)
++static ULONG_PTR wire_flags_to_bio_op(u32 dpf)
+ {
+ 	if (dpf & DP_ZEROES)
+ 		return REQ_OP_WRITE_ZEROES;
+@@ -2805,7 +2805,7 @@ static unsigned long wire_flags_to_bio_op(u32 dpf)
+ }
+ 
+ /* see also bio_flags_to_wire() */
+-static unsigned long wire_flags_to_bio(struct drbd_connection *connection, u32 dpf)
++static ULONG_PTR wire_flags_to_bio(struct drbd_connection *connection, u32 dpf)
+ {
+ 	ULONG_PTR opf = wire_flags_to_bio_op(dpf) |
+ 		(dpf & DP_RW_SYNC ? REQ_SYNC : 0);
+-- 
+2.17.0
+

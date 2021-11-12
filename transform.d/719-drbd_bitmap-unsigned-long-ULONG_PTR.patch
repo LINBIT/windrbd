@@ -1,0 +1,91 @@
+From e9fb57f66119c8ccd3e2c8154eb54ed1667530c5 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 12 Nov 2021 18:53:14 +0100
+Subject: [PATCH 2/6] drbd_bitmap: unsigned long -> ULONG_PTR
+
+unsigned long is 32 bit on Windows (also on 64 bit systems)
+and should not be used at all.
+
+This fixes the cannot attach to backing disks > 16TiB bug.
+---
+ drbd/drbd_bitmap.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/drbd/drbd_bitmap.c b/drbd/drbd_bitmap.c
+index d02380d..a5eda8d 100644
+--- a/drbd/drbd_bitmap.c
++++ b/drbd/drbd_bitmap.c
+@@ -243,7 +243,7 @@ static void bm_store_page_idx(struct page *page, ULONG_PTR idx)
+ 	set_page_private(page, idx);
+ }
+ 
+-static unsigned long bm_page_to_idx(struct page *page)
++static ULONG_PTR bm_page_to_idx(struct page *page)
+ {
+ 	return page_private(page) & BM_PAGE_IDX_MASK;
+ }
+@@ -429,14 +429,14 @@ void drbd_bm_free(struct drbd_bitmap *bitmap)
+ 	kfree(bitmap);
+ }
+ 
+-static inline unsigned long interleaved_word32(struct drbd_bitmap *bitmap,
++static inline ULONG_PTR interleaved_word32(struct drbd_bitmap *bitmap,
+ 					       unsigned int bitmap_index,
+ 					       ULONG_PTR bit)
+ {
+ 	return (bit >> 5) * bitmap->bm_max_peers + bitmap_index;
+ }
+ 
+-static inline unsigned long word32_to_page(ULONG_PTR word)
++static inline ULONG_PTR word32_to_page(ULONG_PTR word)
+ {
+ 	return word >> (PAGE_SHIFT - 2);
+ }
+@@ -446,7 +446,7 @@ static inline unsigned int word32_in_page(ULONG_PTR word)
+ 	return word & ((1 << (PAGE_SHIFT - 2)) - 1);
+ }
+ 
+-static inline unsigned long last_bit_on_page(struct drbd_bitmap *bitmap,
++static inline ULONG_PTR last_bit_on_page(struct drbd_bitmap *bitmap,
+ 					     unsigned int bitmap_index,
+ 					     ULONG_PTR bit)
+ {
+@@ -455,7 +455,7 @@ static inline unsigned long last_bit_on_page(struct drbd_bitmap *bitmap,
+ 	return (bit | 31) + ((word32_in_page(-(word + 1)) / bitmap->bm_max_peers) << 5);
+ }
+ 
+-static inline unsigned long bit_to_page_interleaved(struct drbd_bitmap *bitmap,
++static inline ULONG_PTR bit_to_page_interleaved(struct drbd_bitmap *bitmap,
+ 						    unsigned int bitmap_index,
+ 						    ULONG_PTR bit)
+ {
+@@ -762,7 +762,7 @@ bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start, UL
+ 
+ #ifdef BITMAP_DEBUG
+ #define bm_op(device, bitmap_index, start, end, op, buffer) \
+-	{ unsigned long ret; \
++	{ ULONG_PTR ret; \
+ 	   drbd_info(device, "%s: bm_op(..., %u, %lu, %lu, %u, %p)\n", \
+ 		     __func__, bitmap_index, start, end, op, buffer); \
+ 	   ret = bm_op(device, bitmap_index, start, end, op, buffer); \
+@@ -770,7 +770,7 @@ bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start, UL
+ 	   ret; }
+ 
+ #define __bm_op(device, bitmap_index, start, end, op, buffer) \
+-	{ unsigned long ret; \
++	{ ULONG_PTR ret; \
+ 	   drbd_info(device, "%s: __bm_op(..., %u, %lu, %lu, %u, %p)\n", \
+ 		     __func__, bitmap_index, start, end, op, buffer); \
+ 	   ret = __bm_op(device, bitmap_index, start, end, op, buffer); \
+@@ -780,7 +780,7 @@ bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start, UL
+ 
+ #ifdef BITMAP_DEBUG
+ #define ___bm_op(device, bitmap_index, start, end, op, buffer) \
+-	{ unsigned long ret; \
++	{ ULONG_PTR ret; \
+ 	   drbd_info(device, "%s: ___bm_op(..., %u, %lu, %lu, %u, %p)\n", \
+ 		     __func__, bitmap_index, start, end, op, buffer); \
+ 	   ret = ____bm_op(device, bitmap_index, start, end, op, buffer); \
+-- 
+2.17.0
+

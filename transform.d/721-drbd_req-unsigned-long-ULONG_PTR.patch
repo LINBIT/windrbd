@@ -1,0 +1,27 @@
+From 02891c66b644638f8a34f32fcfd2e95be69e884c Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 12 Nov 2021 18:54:11 +0100
+Subject: [PATCH 4/6] drbd_req: unsigned long -> ULONG_PTR
+
+unsigned long is 32 bit on Windows (also on 64 bit systems)
+and should not be used at all.
+---
+ drbd/drbd_req.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
+index 1df20c9..92c73eb 100644
+--- a/drbd/drbd_req.c
++++ b/drbd/drbd_req.c
+@@ -2247,7 +2247,7 @@ blk_qc_t drbd_submit_bio(struct bio *bio)
+ 	return BLK_QC_T_NONE;
+ }
+ 
+-static unsigned long time_min_in_future(ULONG_PTR now,
++static ULONG_PTR time_min_in_future(ULONG_PTR now,
+ 		ULONG_PTR t1, ULONG_PTR t2)
+ {
+ 	bool t1_in_future = time_after(t1, now);
+-- 
+2.17.0
+

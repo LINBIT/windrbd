@@ -1,0 +1,36 @@
+From 724a044b2da0ee23906f0a764cec9ef7ac766448 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 12 Nov 2021 18:54:25 +0100
+Subject: [PATCH 5/6] drbd_sender: unsigned long -> ULONG_PTR
+
+unsigned long is 32 bit on Windows (also on 64 bit systems)
+and should not be used at all.
+---
+ drbd/drbd_sender.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index 49f7fa6..bb90a21 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -34,7 +34,7 @@ static int make_ov_request(struct drbd_peer_device *, int);
+ static int make_resync_request(struct drbd_peer_device *, int);
+ static bool should_send_barrier(struct drbd_connection *, unsigned int epoch);
+ static void maybe_send_barrier(struct drbd_connection *, unsigned int);
+-static unsigned long get_work_bits(const ULONG_PTR mask, ULONG_PTR *flags);
++static ULONG_PTR get_work_bits(const ULONG_PTR mask, ULONG_PTR *flags);
+ 
+ /* endio handlers:
+  *   drbd_md_endio (defined here)
+@@ -2442,7 +2442,7 @@ static void do_peer_device_work(struct drbd_peer_device *peer_device, const ULON
+ 	|(((ULONG_PTR)1) << RS_DONE)		\
+ 	)
+ 
+-static unsigned long get_work_bits(const ULONG_PTR mask, ULONG_PTR *flags)
++static ULONG_PTR get_work_bits(const ULONG_PTR mask, ULONG_PTR *flags)
+ {
+ 	ULONG_PTR old, new;
+ 	do {
+-- 
+2.17.0
+
