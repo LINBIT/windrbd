@@ -1,0 +1,27 @@
+From e3eca815402d08a4f05c4d84bdfda6731069fa64 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 12 Nov 2021 19:33:30 +0100
+Subject: [PATCH] drbd_transport.h: unsigned long -> ULONG_PTR
+
+unsigned long is 32 bit on Windows (also on 64 bit systems)
+and should not be used at all.
+---
+ drbd/drbd-headers/drbd_transport.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd-headers/drbd_transport.h b/drbd/drbd-headers/drbd_transport.h
+index 8fd3aed..16889f1 100644
+--- a/drbd/drbd-headers/drbd_transport.h
++++ b/drbd/drbd-headers/drbd_transport.h
+@@ -187,7 +187,7 @@ struct drbd_transport_ops {
+ 	void (*stats)(struct drbd_transport *, struct drbd_transport_stats *stats);
+ 	void (*net_conf_change)(struct drbd_transport *, struct net_conf *new_net_conf);
+ 	void (*set_rcvtimeo)(struct drbd_transport *, enum drbd_stream, LONG_PTR timeout);
+-	long (*get_rcvtimeo)(struct drbd_transport *, enum drbd_stream);
++	LONG_PTR (*get_rcvtimeo)(struct drbd_transport *, enum drbd_stream);
+ 	int (*send_page)(struct drbd_transport *, enum drbd_stream, struct page *,
+ 			 int offset, size_t size, unsigned msg_flags);
+ 	int (*send_zc_bio)(struct drbd_transport *, struct bio *bio);
+-- 
+2.17.0
+
