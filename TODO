@@ -88,6 +88,10 @@ struct memory * 0xffff9d89`abd59000
 
 	Update: Cannot reproduce this now.
 
+	Update: Reproduced with OpenNebula VMs (Server 2019). It
+	seems that this BSOD is specific to Server 2019 (i.e. it
+	does not exist on Windows Server 2016).
+
 TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
 	Linux Primary doing I/O and iptables-drop/don't drop
@@ -99,6 +103,8 @@ TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
 	Tried to reproduce .. no BSOD after 99 iterations (and
 	5262 I/O loop iterations)
+
+	Currently testing with WinDRBD rc18-3.
 
 TODO: Documentation: Rewrite README.md and restructure text docs
 
