@@ -104,9 +104,10 @@ TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 	Tried to reproduce .. no BSOD after 99 iterations (and
 	5262 I/O loop iterations)
 
-	Currently testing with WinDRBD rc18-3.
+	Currently testing with WinDRBD rc18-3. No BSOD after around
+	150 iterations of drop/dont-drop loop.
 
-TODO: Documentation: Rewrite README.md and restructure text docs
+	Now trying with rc17 .. maybe this was fixed with 834dac50?
 
 TODOs for after Release 1.0 ----------------------------------------
 
@@ -7646,4 +7647,6 @@ Done: Installer: Still sometimes reboot is necessary
 	maybe stop user mode services before driver again?
 
 	Yes. And also start user mode services on a fresh install.
+
+Done: Documentation: Rewrite README.md and restructure text docs
 
