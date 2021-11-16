@@ -36,6 +36,11 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: BSOD in wake_up_all()
+
+	IRQL BSOD. Stack backtrace shows w_end_state_change. See
+	BSOD-Worker2021.TXT
+
 TODO: Code quality: Write to eventlog delayed.
 
 	Where we may sleep (see SendTo call in _printk).
