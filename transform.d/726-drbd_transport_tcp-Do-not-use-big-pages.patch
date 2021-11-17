@@ -1,0 +1,33 @@
+From 3f58a9b913ccaacac2c7bc1e26d0f36dab5375e7 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 17 Nov 2021 16:47:02 +0100
+Subject: [PATCH] drbd_transport_tcp: Do not use big pages.
+
+We face a very rare BSOD on syncing big disks (runs several days
+then BSODs somewhere inside page_chain_free()). We suspect that
+there is a subtile bug in the implementation of 'big' (that is
+more than PAGE_SIZE in size) pages (for example page_chain_del
+never gets called).
+
+Try this version - resync is somewhat slower but it should not
+BSOD.
+---
+ drbd/drbd_transport_tcp.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_transport_tcp.c b/drbd/drbd_transport_tcp.c
+index 76578ab..d7ea1d1 100644
+--- a/drbd/drbd_transport_tcp.c
++++ b/drbd/drbd_transport_tcp.c
+@@ -343,7 +343,7 @@ static int dtt_recv_pages(struct drbd_transport *transport, struct drbd_page_cha
+ 	if (!socket)
+ 		return -ENOTCONN;
+ 
+-	drbd_alloc_page_chain(transport, chain, DIV_ROUND_UP(size, PAGE_SIZE), GFP_TRY, 1);
++	drbd_alloc_page_chain(transport, chain, DIV_ROUND_UP(size, PAGE_SIZE), GFP_TRY, 0);
+ 
+ 	page = chain->head;
+ 	if (!page)
+-- 
+2.17.0
+
