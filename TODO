@@ -36,11 +36,6 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Bug: BSOD in wake_up_all()
-
-	IRQL BSOD. Stack backtrace shows w_end_state_change. See
-	BSOD-Worker2021.TXT
-
 TODO: Code quality: Write to eventlog delayed.
 
 	Where we may sleep (see SendTo call in _printk).
@@ -97,6 +92,11 @@ struct memory * 0xffff9d89`abd59000
 	seems that this BSOD is specific to Server 2019 (i.e. it
 	does not exist on Windows Server 2016).
 
+	Update: No BSOD in 2 days. However bug is still there.
+	Now trying to disable 'big' pages for receiving pages.
+	There might be a subtile bug inside the handling on the
+	receiver side. For example page_chain_del never gets called.
+
 TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
 	Linux Primary doing I/O and iptables-drop/don't drop
@@ -113,6 +113,15 @@ TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 	150 iterations of drop/dont-drop loop.
 
 	Now trying with rc17 .. maybe this was fixed with 834dac50?
+
+TODO: Bug: BSOD in wake_up_all()
+
+	IRQL BSOD. Stack backtrace shows w_end_state_change. See
+	BSOD-Worker2021.TXT
+
+	Same as observed earlier?
+
+	wait queue list corruption. 
 
 TODOs for after Release 1.0 ----------------------------------------
 
