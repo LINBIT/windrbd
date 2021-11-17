@@ -97,6 +97,8 @@ struct memory * 0xffff9d89`abd59000
 	There might be a subtile bug inside the handling on the
 	receiver side. For example page_chain_del never gets called.
 
+	Update: Right now getting reading into pages to work again.
+
 TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
 	Linux Primary doing I/O and iptables-drop/don't drop
