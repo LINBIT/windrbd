@@ -220,6 +220,10 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	printk("Start boot device stage1 returned\n");
 */
 
+{
+printk("sizeof(struct list_head) is %d sizeof(struct drbd_page_chain) is %d offsetof(x.size) is %d\n", sizeof(struct list_head), sizeof(struct drbd_page_chain), offsetof(struct drbd_page_chain, size));
+}
+
 	return_to_windows(current);
 
 	return STATUS_SUCCESS;
