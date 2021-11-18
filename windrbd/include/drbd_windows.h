@@ -1029,6 +1029,9 @@ struct lru_cache;
 extern struct lc_element *lc_element_by_index(struct lru_cache *lc, unsigned i);
 extern unsigned int lc_index_of(struct lru_cache *lc, struct lc_element *e);
 
+#include <wsk.h>	/* for struct sockaddr_storage */
+#include <drbd_transport.h>
+
 	/* A 'page' in WinDRBD may actually contain more pages (vmalloc'ed)
 	 * We need this to optimize I/O requests larger than 4K which
 	 * we used to send by seperate requests to the backing devices
@@ -1041,7 +1044,7 @@ extern unsigned int lc_index_of(struct lru_cache *lc, struct lc_element *e);
 struct page {
 	ULONG_PTR private;
 	void *addr;
-	struct list_head lru;
+	struct drbd_page_chain lru;
 	struct kref kref;
 	size_t size;
 	int is_unmapped;
