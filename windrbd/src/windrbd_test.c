@@ -1206,7 +1206,9 @@ static int malloc_free_task(void *unused)
 	int i, j;
 
 	for (j=0; j<NUM_ROUNDS; j++) {
-		printk("Round %d ...\n", j);
+		if (j % 100 == 0)
+			printk("Round %d ...\n", j);
+
 		for (i=0; i<NUM_POINTERS; i++) {
 			pointers[i] = kmalloc(4096, 0, 'DRBD');
 			if (pointers[i] == NULL) {
