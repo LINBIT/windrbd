@@ -1194,17 +1194,46 @@ static void print_add_device(int argc, char ** argv)
 	printk("AddDevice is %p\n", mvolDriverObject->DriverExtension->AddDevice);
 }
 
+enum free_test { UNDEFINED, KMALLOC, EXALLOCATEPOOL };
+
 static void double_free_test(int argc, char ** argv)
 {
 	void *p;
+	enum free_test free_test = UNDEFINED;
 
-	p=kmalloc(4096, 0, 'DRBD');
-	if (p==NULL) {
-		printk("Oops. Out of memory.\n");
-		return;
+	if (argc >= 2) {
+		if (strcmp(argv[1], "kmalloc") == 0)
+			free_test = KMALLOC;
+		if (strcmp(argv[1], "exallocatepool") == 0)
+			free_test = EXALLOCATEPOOL;
 	}
-	kfree(p);
-	kfree(p);	/* expecing this to be ignored. */
+
+	switch (free_test) {
+	case UNDEFINED:
+		printk("Usage: windrbd run-test double_free_test <test-method>\n");
+		printk("Currently implemented test methods are: kmalloc exallocatepool\n");
+		break;
+
+	case KMALLOC:
+		p=kmalloc(4096, 0, 'DRBD');
+		if (p==NULL) {
+			printk("Oops. Out of memory.\n");
+			return;
+		}
+		kfree(p);
+		kfree(p);	/* expecing this to be ignored. */
+		break;
+
+	case EXALLOCATEPOOL:
+		p=ExAllocatePoolWithTag(NonPagedPool, 4096, 'DRBD');
+		if (p==NULL) {
+			printk("Oops. Out of memory.\n");
+			return;
+		}
+		ExFreePool(p);
+		ExFreePool(p);	/* expecing this to crash somehow. */
+		break;
+	}
 }
 
 void test_main(const char *arg)
