@@ -143,6 +143,10 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 // printk("data is %.64s\n", mem->data);
 		}
 	}
+	if (is_double_free) {
+		printk("We think that this a double free, not touching memory again.\n");
+		return;
+	}
 
 	spin_lock_irqsave(&memory_lock, flags);
 	list_del(&mem->list);
@@ -156,8 +160,7 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 
 // { char *p; size_t i; for (i=0;i<mem->size;i++) {mem->data[i]='x';} }
 
-	if (!is_double_free)
-		ExFreePool((void*)mem);
+	ExFreePool((void*)mem);
 }
 
 void init_kmalloc_debug(void)
