@@ -1194,27 +1194,57 @@ static void print_add_device(int argc, char ** argv)
 	printk("AddDevice is %p\n", mvolDriverObject->DriverExtension->AddDevice);
 }
 
-enum free_test { UNDEFINED, KMALLOC, EXALLOCATEPOOL };
+enum free_test { UNDEFINED, KMALLOC, EXALLOCATEPOOL, CONCURRENT };
+
+#define NUM_POINTERS 256
+#define NUM_ROUNDS 1024*1024
+#define NUM_MEMALLOC_THREADS 2
+
+static int malloc_free_task(void *unused)
+{
+	void *pointers[NUM_POINTERS];
+	int i, j;
+
+	for (j=0; j<NUM_ROUNDS; j++) {
+		printk("Round %d ...\n", j);
+		for (i=0; i<NUM_POINTERS; i++) {
+			pointers[i] = kmalloc(4096, 0, 'DRBD');
+			if (pointers[i] == NULL) {
+				printk("Bad! Out of memory.\n");
+				return 1;
+			}
+		}
+		for (i=0; i<NUM_POINTERS; i++) {
+			kfree(pointers[i]);
+		}
+	}
+	return 0;
+}
+
 
 static void double_free_test(int argc, char ** argv)
 {
 	void *p;
 	enum free_test free_test = UNDEFINED;
+	int i;
+	struct task_struct *k;
 
 	if (argc >= 2) {
 		if (strcmp(argv[1], "kmalloc") == 0)
 			free_test = KMALLOC;
 		if (strcmp(argv[1], "exallocatepool") == 0)
 			free_test = EXALLOCATEPOOL;
+		if (strcmp(argv[1], "concurrent") == 0)
+			free_test = CONCURRENT;
 	}
 
 	switch (free_test) {
 	case UNDEFINED:
 		printk("Usage: windrbd run-test double_free_test <test-method>\n");
-		printk("Currently implemented test methods are: kmalloc exallocatepool\n");
+		printk("Currently implemented test methods are: kmalloc exallocatepool concurrent\n");
 		break;
 
-	case KMALLOC:
+	case KMALLOC:		/* might be IRQL BSOD */
 		p=kmalloc(4096, 0, 'DRBD');
 		if (p==NULL) {
 			printk("Oops. Out of memory.\n");
@@ -1224,7 +1254,7 @@ static void double_free_test(int argc, char ** argv)
 		kfree(p);	/* expecing this to be ignored. */
 		break;
 
-	case EXALLOCATEPOOL:
+	case EXALLOCATEPOOL:	/* BAD_POOL_HEADER */
 		p=ExAllocatePoolWithTag(NonPagedPool, 4096, 'DRBD');
 		if (p==NULL) {
 			printk("Oops. Out of memory.\n");
@@ -1232,6 +1262,12 @@ static void double_free_test(int argc, char ** argv)
 		}
 		ExFreePool(p);
 		ExFreePool(p);	/* expecing this to crash somehow. */
+		break;
+	case CONCURRENT:
+		for (i=0; i<NUM_MEMALLOC_THREADS; i++) {
+			k = kthread_create(malloc_free_task, NULL, "memory-%d", i);
+			wake_up_process(k);
+		}
 		break;
 	}
 }
