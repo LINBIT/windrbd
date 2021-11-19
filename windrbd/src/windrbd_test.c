@@ -1197,8 +1197,8 @@ static void print_add_device(int argc, char ** argv)
 enum free_test { UNDEFINED, KMALLOC, EXALLOCATEPOOL, CONCURRENT };
 
 #define NUM_POINTERS 256
-#define NUM_ROUNDS 1024*1024
-#define NUM_MEMALLOC_THREADS 2
+#define NUM_ROUNDS 10*1024
+#define NUM_MEMALLOC_THREADS 10
 
 static int malloc_free_task(void *unused)
 {
