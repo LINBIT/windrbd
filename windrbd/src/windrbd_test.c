@@ -1194,6 +1194,19 @@ static void print_add_device(int argc, char ** argv)
 	printk("AddDevice is %p\n", mvolDriverObject->DriverExtension->AddDevice);
 }
 
+static void double_free_test(int argc, char ** argv)
+{
+	void *p;
+
+	p=kmalloc(4096, 0, 'DRBD');
+	if (p==NULL) {
+		printk("Oops. Out of memory.\n");
+		return;
+	}
+	kfree(p);
+	kfree(p);	/* expecing this to be ignored. */
+}
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1273,6 +1286,8 @@ void test_main(const char *arg)
 		force_unlock(argc, argv);
 	if (strcmp(argv[0], "print_add_device") == 0)
 		print_add_device(argc, argv);
+	if (strcmp(argv[0], "double_free_test") == 0)
+		double_free_test(argc, argv);
 
 kfree_argv:
 	kfree(argv);
