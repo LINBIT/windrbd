@@ -105,6 +105,9 @@ struct memory * 0xffff9d89`abd59000
 	drbd_reclaim_net_peer_reqs() showing that there is something
 	wrong with IRQL.
 
+	Update: No this was a printk bug .. now trying with driver
+	verifier on.
+
 TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
 	Linux Primary doing I/O and iptables-drop/don't drop
