@@ -190,6 +190,49 @@ int dump_memory_allocations(int free_them)
 	return 0;
 }
 
+
+int check_memory_allocations(void)
+{
+	struct memory *mem, *memh;
+	struct poison_after *poison_after;
+	int num_corrupted = 0;
+	KIRQL flags;
+
+	spin_lock_irqsave(&memory_lock, flags);
+	list_for_each_entry_safe(struct memory, mem, memh, &memory_allocations, list) {
+			/* exclude memory needed by printk() */
+		if (strcmp(mem->func, "SendTo") != 0 && strcmp(mem->func, "sock_create_linux_socket") != 0) {
+			poison_after = (struct poison_after*) (&mem->data[mem->size]);
+
+			if (mem->poison != POISON_BEFORE) {
+				printk("kmalloc_debug: Warning: Poison before overwritten (is %x should be %x), allocated from %s %s()\n", mem->poison, POISON_BEFORE, mem->desc, mem->func);
+				if (mem->poison == 'EERF') {
+					printk("This is most likely a double free.\n");
+					printk("Previously freed from %s %s()\n", mem->desc_freed, mem->func_freed);
+/* Buffer is tmp_buffer of SendTo(), see windrbd_winsocket.c */
+// printk("data is %.64s\n", mem->data);
+				}
+				num_corrupted++;
+			}
+			if (poison_after->poison2 != POISON_AFTER) {
+				printk("kmalloc_debug: Warning: Poison after overwritten (is %x should be %x), allocated from %s %s()", poison_after->poison2, POISON_AFTER, mem->desc, mem->func);
+				if (poison_after->poison2 == 'EERF') {
+					printk("This is most likely a double free.\n");
+					printk("(Not freeing that memory again)\n");
+					printk("Previously freed from %s %s()\n", mem->desc_freed, mem->func_freed);
+				}
+				num_corrupted++;
+			}
+		}
+	}
+	spin_unlock_irqrestore(&memory_lock, flags);
+
+	if (num_corrupted > 0)
+		printk("%d memory corruptions detected.\n", num_corrupted);
+
+	return num_corrupted;
+}
+
 #endif
 
 void shutdown_kmalloc_debug(void)
