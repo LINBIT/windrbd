@@ -1194,7 +1194,7 @@ static void print_add_device(int argc, char ** argv)
 	printk("AddDevice is %p\n", mvolDriverObject->DriverExtension->AddDevice);
 }
 
-enum free_test { UNDEFINED, KMALLOC, EXALLOCATEPOOL, CONCURRENT };
+enum free_test { UNDEFINED, KMALLOC, EXALLOCATEPOOL, CONCURRENT, CORRUPTAFTER };
 
 #define NUM_POINTERS 256
 #define NUM_ROUNDS 10*1024
@@ -1238,6 +1238,8 @@ static void double_free_test(int argc, char ** argv)
 			free_test = EXALLOCATEPOOL;
 		if (strcmp(argv[1], "concurrent") == 0)
 			free_test = CONCURRENT;
+		if (strcmp(argv[1], "corruptafter") == 0)
+			free_test = CORRUPTAFTER;
 	}
 
 	switch (free_test) {
@@ -1270,6 +1272,14 @@ static void double_free_test(int argc, char ** argv)
 			k = kthread_create(malloc_free_task, NULL, "memory-%d", i);
 			wake_up_process(k);
 		}
+		break;
+	case CORRUPTAFTER:
+		p=kmalloc(4096, 0, 'DRBD');
+		if (p==NULL) {
+			printk("Oops. Out of memory.\n");
+			return;
+		}
+		((char*)p)[4096] = 0xaa;	/* memory check should find this */
 		break;
 	}
 }
