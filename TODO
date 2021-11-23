@@ -108,6 +108,9 @@ struct memory * 0xffff9d89`abd59000
 	Update: No this was a printk bug .. now trying with driver
 	verifier on.
 
+	Update: Someone writes lots of zeros on the heap (memory
+	corruption) let's see who it is (drbd_ack_receiver I hope).
+
 TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
 	Linux Primary doing I/O and iptables-drop/don't drop
