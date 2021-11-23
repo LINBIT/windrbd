@@ -191,7 +191,7 @@ int dump_memory_allocations(int free_them)
 }
 
 
-int check_memory_allocations(void)
+int check_memory_allocations(const char *msg)
 {
 	struct memory *mem, *memh;
 	struct poison_after *poison_after;
@@ -205,7 +205,7 @@ int check_memory_allocations(void)
 			poison_after = (struct poison_after*) (&mem->data[mem->size]);
 
 			if (mem->poison != POISON_BEFORE) {
-				printk("kmalloc_debug: Warning: Poison before overwritten (is %x should be %x), allocated from %s %s()\n", mem->poison, POISON_BEFORE, mem->desc, mem->func);
+				printk("kmalloc_debug: %s Warning: Poison before overwritten (is %x should be %x), allocated from %s %s() memory is %p data is %p\n", msg, mem->poison, POISON_BEFORE, mem->desc, mem->func, mem, &mem->data);
 				if (mem->poison == 'EERF') {
 					printk("This is most likely a double free.\n");
 					printk("Previously freed from %s %s()\n", mem->desc_freed, mem->func_freed);
@@ -215,7 +215,7 @@ int check_memory_allocations(void)
 				num_corrupted++;
 			}
 			if (poison_after->poison2 != POISON_AFTER) {
-				printk("kmalloc_debug: Warning: Poison after overwritten (is %x should be %x), allocated from %s %s()", poison_after->poison2, POISON_AFTER, mem->desc, mem->func);
+				printk("kmalloc_debug: %s Warning: Poison after overwritten (is %x should be %x), allocated from %s %s() memory is %p data is %p", msg, poison_after->poison2, POISON_AFTER, mem->desc, mem->func, mem, &mem->data);
 				if (poison_after->poison2 == 'EERF') {
 					printk("This is most likely a double free.\n");
 					printk("(Not freeing that memory again)\n");
