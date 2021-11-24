@@ -36,10 +36,6 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Code quality: Write to eventlog delayed.
-
-	Where we may sleep (see SendTo call in _printk).
-
 TODO: Bug: BSOD Security check when writing 4GB file.
 
 	Is a double free in freeing page chain.
@@ -111,7 +107,7 @@ struct memory * 0xffff9d89`abd59000
 	Update: Someone writes lots of zeros on the heap (memory
 	corruption) let's see who it is (drbd_ack_receiver I hope).
 
-	No BSOD after one day and more memory check.
+	No BSOD after one day and more memory checks.
 
 TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
@@ -140,6 +136,12 @@ TODO: Bug: BSOD in wake_up_all()
 	wait queue list corruption. 
 
 TODOs for after Release 1.0 ----------------------------------------
+
+TODO: Code quality: Write to eventlog delayed.
+
+	Where we may sleep (see SendTo call in _printk).
+
+	Do this for 1.0.1
 
 TODO: Code quality: Disks should always be online on drbdadm primary
 
