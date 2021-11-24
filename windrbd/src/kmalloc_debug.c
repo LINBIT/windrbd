@@ -198,7 +198,7 @@ int check_memory_allocations(const char *msg)
 	int num_corrupted = 0;
 	KIRQL flags;
 
-printk("checking memory %s ...\n", msg);
+// printk("checking memory %s ...\n", msg);
 
 	spin_lock_irqsave(&memory_lock, flags);
 	list_for_each_entry_safe(struct memory, mem, memh, &memory_allocations, list) {
