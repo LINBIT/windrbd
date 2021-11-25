@@ -31,5 +31,6 @@ void *kmem_cache_alloc(struct kmem_cache * cache, int flag)
 
 void kmem_cache_free(struct kmem_cache * cache, void *obj)
 {
+	memset(obj, 'y', cache->element_size);
 	ExFreeToNPagedLookasideList(&cache->l, obj);
 }
