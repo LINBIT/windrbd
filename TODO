@@ -36,6 +36,10 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Code quality: Check user mode helpers log into the correct directory
+
+	Must read dir from registry.
+
 TODO: Bug: BSOD Security check when writing 4GB file.
 
 	Is a double free in freeing page chain.
