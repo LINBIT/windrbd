@@ -113,6 +113,11 @@ struct memory * 0xffff9d89`abd59000
 
 	No BSOD after one day and more memory checks.
 
+	Update: just had a BSOD where an unrelated driver crashed
+	(memory corruption) unfortunately check_memory_allocations
+	couldn't finish. We now enabled all checks again and hope
+	for a crash...
+
 TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
 	Linux Primary doing I/O and iptables-drop/don't drop
