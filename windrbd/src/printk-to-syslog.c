@@ -75,11 +75,21 @@ static unsigned long long when_to_start_sending;
 static int initial_send_delay = 5;	/* in seconds */
 static int printk_thread_started;
 
+	/* Lightweight printk that only prints to memory. For
+	 * debugging purposes with windbg and a lot of output.
+	 */
+
+static char mem_printk_buffer[1024][256];
+static spinlock_t mem_printk_lock;
+static int mem_printk_slot;
+static int mem_printk_serial_number;
+
 int initialize_syslog_printk(void)
 {
 	spin_lock_init(&ring_buffer_lock);
 	spin_lock_init(&in_printk_lock);
 	spin_lock_init(&serial_number_lock);
+	spin_lock_init(&mem_printk_lock);
 
 		/* don't debug them ... to avoid endless loop */
 	ring_buffer_lock.printk_lock = true;
@@ -605,3 +615,24 @@ int _printk(const char *func, const char *fmt, ...)
 	return len_ret;
 }
 
+int _mem_printk(const char *func, const char *fmt, ...)
+{
+	va_list args;
+	size_t pos;
+	KIRQL flags;
+
+	pos = snprintf(mem_printk_buffer[mem_printk_slot], sizeof(mem_printk_buffer[mem_printk_slot]), "#%d %s(): ", mem_printk_serial_number, func);
+
+	va_start(args, fmt);
+	pos += _vsnprintf(&mem_printk_buffer[mem_printk_slot][pos], sizeof(mem_printk_buffer[mem_printk_slot])-pos, fmt, args);
+	va_end(args);
+
+	spin_lock_irqsave(&mem_printk_lock, flags);
+	mem_printk_serial_number++;
+	mem_printk_slot++;
+	if (mem_printk_slot >= ARRAY_SIZE(mem_printk_buffer))
+		mem_printk_slot = 0;
+	spin_unlock_irqrestore(&mem_printk_lock, flags);
+
+	return pos;
+}
