@@ -79,7 +79,7 @@ static int printk_thread_started;
 	 * debugging purposes with windbg and a lot of output.
 	 */
 
-static char mem_printk_buffer[1024][256];
+static char mem_printk_buffer[64*1024][256];
 static spinlock_t mem_printk_lock;
 static int mem_printk_slot;
 static int mem_printk_serial_number;
@@ -615,13 +615,13 @@ int _printk(const char *func, const char *fmt, ...)
 	return len_ret;
 }
 
-int _mem_printk(const char *func, const char *fmt, ...)
+int _mem_printk(const char *file, int line, const char *func, const char *fmt, ...)
 {
 	va_list args;
 	size_t pos;
 	KIRQL flags;
 
-	pos = snprintf(mem_printk_buffer[mem_printk_slot], sizeof(mem_printk_buffer[mem_printk_slot]), "#%d %s(): ", mem_printk_serial_number, func);
+	pos = snprintf(mem_printk_buffer[mem_printk_slot], sizeof(mem_printk_buffer[mem_printk_slot]), "#%d [%s] %s:%d %s(): ", mem_printk_serial_number, current->comm, file, line, func);
 
 	va_start(args, fmt);
 	pos += _vsnprintf(&mem_printk_buffer[mem_printk_slot][pos], sizeof(mem_printk_buffer[mem_printk_slot])-pos, fmt, args);

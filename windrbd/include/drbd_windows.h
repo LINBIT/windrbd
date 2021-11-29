@@ -340,8 +340,10 @@ void windrbd_device_error(struct drbd_device *device, const char ** err_str_out,
 #define dbg(format, ...)   __noop
 #endif
 
+extern int _mem_printk(const char *file, int line, const char *func, const char *fmt, ...);
+
 #define mem_printk(format, ...)   \
-    _mem_printk(__FUNCTION__, format, __VA_ARGS__)
+    _mem_printk(__FILE__, __LINE__, __FUNCTION__, format, __VA_ARGS__)
 
 extern int debug_printks_enabled;
 
