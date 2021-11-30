@@ -48,7 +48,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	size_t full_size;
 	KIRQL flags;
 
-// printk("kmalloc %zd bytes from %s:%d (%s())\n", size, file, line, func);
+mem_printk("kmalloc %zd bytes from %s:%d (%s())\n", size, file, line, func);
 
 #if 0
 	if (kmalloc_errors > 0) {
@@ -89,8 +89,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	list_add(&mem->list, &memory_allocations);
 	spin_unlock_irqrestore(&memory_lock, flags);
 
-/* loops ... */
-// printk("kmalloc(%d) = %p from %s:%d %s()\n", size, &mem->data[0], file, line, func);
+mem_printk("kmalloc(%d) = %p from %s:%d %s()\n", size, &mem->data[0], file, line, func);
 
 	return &mem->data[0];
 }
@@ -115,8 +114,7 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	KIRQL flags;
 	bool is_double_free = false;
 
-/* loops ... */
-// printk("kfree(%p) %s:%d (%s)\n", data, file, line, func);
+mem_printk("kfree(%p) %s:%d (%s)\n", data, file, line, func);
 
 	if (data == NULL) {
 		dbg("kmalloc_debug: Warning: attempt to free the NULL pointer in function %s at %s:%d\n", func, file, line);
@@ -163,6 +161,7 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	memset(mem->data, 'x', mem->size);
 // { char *p; size_t i; for (i=0;i<mem->size;i++) {mem->data[i]='x';} }
 
+mem_printk("ExFreePool(%p) %s:%d (%s)\n", mem, file, line, func);
 	ExFreePool((void*)mem);
 }
 
