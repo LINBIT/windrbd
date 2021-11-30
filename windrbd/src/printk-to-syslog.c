@@ -622,7 +622,8 @@ int _mem_printk(const char *file, int line, const char *func, const char *fmt, .
 	size_t pos;
 	KIRQL flags;
 
-	pos = snprintf(mem_printk_buffer[mem_printk_slot], sizeof(mem_printk_buffer[mem_printk_slot]), "#%d [%s] %s:%d %s(): ", mem_printk_serial_number, current->comm, file, line, func);
+		/* don't use current in here, might deadlock */
+	pos = snprintf(mem_printk_buffer[mem_printk_slot], sizeof(mem_printk_buffer[mem_printk_slot]), "#%d %s:%d %s(): ", mem_printk_serial_number, file, line, func);
 
 	va_start(args, fmt);
 	pos += _vsnprintf(&mem_printk_buffer[mem_printk_slot][pos], sizeof(mem_printk_buffer[mem_printk_slot])-pos, fmt, args);
