@@ -138,6 +138,7 @@ int nla_parse(struct nlattr *tb[], int maxtype, struct nlattr *head, int len,
     struct nlattr *nla;
     int rem, err;
 
+mem_printk("memset %p 0 %d\n", tb, sizeof(struct nlattr *) * (maxtype + 1));
     memset(tb, 0, sizeof(struct nlattr *) * (maxtype + 1));
 
     nla_for_each_attr(nla, head, len, rem)
@@ -210,6 +211,7 @@ size_t nla_strlcpy(char *dst, const struct nlattr *nla, size_t dstsize)
     {
         size_t len = (srclen >= dstsize) ? dstsize - 1 : srclen;
 
+mem_printk("memset %p 0 %d\n", dst, dstsize);
         memset(dst, 0, dstsize);
         memcpy(dst, src, len);
     }
@@ -290,6 +292,7 @@ struct nlattr *__nla_reserve(struct sk_buff *skb, int attrtype, int attrlen)
     nla->nla_type = attrtype;
     nla->nla_len = nla_attr_size(attrlen);
 
+mem_printk("memset %p 0 %d\n", (unsigned char *)nla + nla->nla_len, nla_padlen(attrlen));
     memset((unsigned char *)nla + nla->nla_len, 0, nla_padlen(attrlen));
 
     return nla;
@@ -310,6 +313,7 @@ void *__nla_reserve_nohdr(struct sk_buff *skb, int attrlen)
     void *start;
 
     start = skb_put(skb, NLA_ALIGN(attrlen));
+mem_printk("memset %p 0 %d\n", start, NLA_ALIGN(attrlen));
     memset(start, 0, NLA_ALIGN(attrlen));
 
     return start;
@@ -470,6 +474,7 @@ ssize_t nla_strscpy(char *dst, const struct nlattr *nla, size_t dstsize)
 
 	memcpy(dst, src, len);
 	/* Zero pad end of dst. */
+mem_printk("memset %p 0 %d\n", dst+len, dstsize - len);
 	memset(dst + len, 0, dstsize - len);
 
 	return ret;

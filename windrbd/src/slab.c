@@ -25,6 +25,7 @@ void kmem_cache_destroy(struct kmem_cache *cache)
 void *kmem_cache_alloc(struct kmem_cache * cache, int flag)
 {
 	void *p = ExAllocateFromNPagedLookasideList(&cache->l);
+mem_printk("RtlZeroMemory %p %d\n", p, cache->element_size);
 	RtlZeroMemory(p, cache->element_size);
 	return p;
 }

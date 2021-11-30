@@ -235,6 +235,7 @@ static int parse_ipv4_addr(struct sockaddr_in *addr, const char *a)
 {
 	const char *port;
 
+mem_printk("memset %p 0 %d\n", addr, sizeof(*addr));
 	memset(addr, 0, sizeof(*addr));
 	addr->sin_family = AF_INET;
 	if (my_inet_aton(a, &addr->sin_addr) < 0)

@@ -349,6 +349,7 @@ void write_to_eventlog(int log_level, const char *msg)
 
 
     //-f--> It Initializes the whole structure.
+mem_printk("RtlZeroMemory %p %d\n", log_packet, total_size);
 	RtlZeroMemory(log_packet, total_size);
 
     //-f--> Puts up the desired message

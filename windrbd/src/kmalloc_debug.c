@@ -100,8 +100,10 @@ void *kzalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	void *data;
 
 	data = kmalloc_debug(size, flag, file, line, func);
-	if (data != NULL)
+	if (data != NULL) {
+mem_printk("memset %p 0 %d\n", data, size);
 		memset(data, 0, size);
+	}
 
 	return data;
 }

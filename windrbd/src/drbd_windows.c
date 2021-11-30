@@ -1905,6 +1905,7 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 
 	mutex_lock(&dev->vol_size_mutex);
 
+mem_printk("memset %p 0 %d\n", &dev->vol_size_length_information, sizeof(dev->vol_size_length_information));
 	memset(&dev->vol_size_length_information, 0, sizeof(dev->vol_size_length_information));
 
 	if (KeGetCurrentIrql() > APC_LEVEL) {

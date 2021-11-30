@@ -501,6 +501,7 @@ void *idr_replace(struct idr *idp, void *ptr, int id)
 
 static void idr_cache_ctor(void * idr_layer, kmem_cache_t *idr_layer_cache, unsigned long flags)
 {
+mem_printk("RtlZeroMemory %p %d\n", idr_layer, sizeof(struct idr_layer));
 	RtlZeroMemory(idr_layer, sizeof(struct idr_layer));
 }
 
@@ -523,6 +524,7 @@ static  int init_id_cache(void)
 void idr_init(struct idr *idp)
 {
 	init_id_cache();
+mem_printk("memset %p 0 %d\n", idp, sizeof(struct idr));
 	memset(idp, 0, sizeof(struct idr));
 	KeInitializeSpinLock(&idp->lock);
 }
