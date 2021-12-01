@@ -374,8 +374,8 @@ void return_to_windows(struct task_struct *t)
 
 	spin_lock_irqsave(&thread_list_lock, flags);
 	list_del(&t->list);
-	kfree(t);
 	spin_unlock_irqrestore(&thread_list_lock, flags);
+	kfree(t);
 }
 
 bool is_windrbd_thread(struct task_struct *t)
