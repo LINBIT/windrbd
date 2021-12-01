@@ -553,6 +553,7 @@ int _printk(const char *func, const char *fmt, ...)
 	}
 	spin_unlock_irqrestore(&ring_buffer_lock, flags);
 
+mem_printk("printk: %s\n", buffer);
 		/* TODO: adjust buffer tail */
 	if (no_net_printk)
 		return len_ret;
