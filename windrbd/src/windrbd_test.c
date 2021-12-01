@@ -475,7 +475,7 @@ static void rcu_test(int argc, const char **argv)
 	atomic_set(&rcu_num_read_errors, 0);
 
 	if (test_debug)
-		printk("alloc %zd bytes for completion\n", sizeof(*completions)*(num_readers+num_writers));
+		printk("alloc %d bytes for completion\n", sizeof(*completions)*(num_readers+num_writers));
 
 	completions = kmalloc(sizeof(*completions)*(num_readers+num_writers), 0, '1234');
 	if (completions == NULL) {
