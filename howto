@@ -870,3 +870,7 @@ Then reboot this machine by running shutdown -r -t 0 from this command prompt.
 
 windbg -k net:port=50000,key=t4kmmq9hibab.dq0ex0dbg0d4.3czg54idmf6fr.31v3hnule3b3i
 windbg -k net:port=50000,key=t4kmmq9hibab.dq0ex0dbg0d4.3czg54idmf6fr.31v3hnule3b3i
+
+New key:
+./windbg -k net:port=50000,key=3lpt1rb2i2bk.st9arsvxn17s.4a1zuzyjj9ts.138h5jxsk3slg
+

@@ -36,10 +36,6 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Code quality: Check user mode helpers log into the correct directory
-
-	Must read dir from registry.
-
 TODO: Bug: BSOD Security check when writing 4GB file.
 
 	Is a double free in freeing page chain.
@@ -117,6 +113,8 @@ struct memory * 0xffff9d89`abd59000
 	(memory corruption) unfortunately check_memory_allocations
 	couldn't finish. We now enabled all checks again and hope
 	for a crash...
+
+	Update: The BSOD happens on the SyncSource side?
 
 TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
@@ -7690,4 +7688,10 @@ Done: Installer: Still sometimes reboot is necessary
 	Yes. And also start user mode services on a fresh install.
 
 Done: Documentation: Rewrite README.md and restructure text docs
+
+Done: Code quality: Check user mode helpers log into the correct directory
+
+	Must read dir from registry.
+
+	Installer does this correctly.
 
