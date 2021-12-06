@@ -558,6 +558,11 @@ print C expression
 Force load of mismatched PDB:
 
 .reload /i /f /v windrbd.sys
+
+search memory
+
+s -a 0xfffff804`11746100 0xfffff804`11846100 "RtlZ"
+
 -----
 
 netsh:
