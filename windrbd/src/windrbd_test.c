@@ -1284,6 +1284,14 @@ static void double_free_test(int argc, char ** argv)
 	}
 }
 
+static void rtl_zero_memory_test(int argc, char ** argv)
+{
+	printk("About to RtlZeroMemory(NULL, ...) ...\n");
+	msleep(1000);
+	RtlZeroMemory(NULL, 24);
+	printk("Still alive?\n");
+}
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1365,6 +1373,8 @@ void test_main(const char *arg)
 		print_add_device(argc, argv);
 	if (strcmp(argv[0], "double_free_test") == 0)
 		double_free_test(argc, argv);
+	if (strcmp(argv[0], "rtl_zero_memory_test") == 0)
+		rtl_zero_memory_test(argc, argv);
 
 kfree_argv:
 	kfree(argv);
