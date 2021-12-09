@@ -881,3 +881,7 @@ New key:
 
 Server 2016 VMs:
 ./windbg -k net:port=50000,key=340y3z0bxwz4a.1cu44q9m1w02m.jiwlyjmzhhzs.17py80bu9e99r
+./windbg -k net:port=50000,key=340y3z0bxwz4a.1cu44q9m1w02m.jiwlyjmzhhzs.17py80bu9e99r
+
+!! disable firewall or at least allow port (but most likely UDP it didn't work
+   with TCP !!
