@@ -935,11 +935,44 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unus
 	return bio_alloc(gfp_mask, nr_iovecs, 'DRBD');
 }
 
-static void free_mdls_and_irp(struct bio *bio)
+void free_mdl_chain_and_irp(struct _IRP *irp)
 {
 	struct _MDL *mdl, *next_mdl;
+
+	for (mdl = irp->MdlAddress;
+	     mdl != NULL;
+	     mdl = next_mdl) {
+		next_mdl = mdl->Next;
+
+	/* This seems to work: */
+		if (mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
+printk("about to unmap mdl %p va is %p (%p)\n", mdl, MmGetMdlVirtualAddress(mdl), mdl->MappedSystemVa);
+//			MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);	// BSOD 0xda (SYSTEM_PTE_MISUSE)
+	/* This seems to work: */
+			MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+		}
+		if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
+printk("about to unlock mdl %p\n", mdl);
+			/* TODO: with protocol C we never get here ... */
+
+			MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
+		}
+printk("about to free mdl %p\n", mdl);
+		IoFreeMdl(mdl);
+	}
+	irp->MdlAddress = NULL;
+
+	IoFreeIrp(irp);
+}
+
+static void free_mdls_and_irp(struct bio *bio)
+{
 	int r;
 
+	if (bio->bi_upper_irp != NULL) {
+		free_mdl_chain_and_irp(bio->bi_upper_irp);
+		bio->bi_upper_irp = NULL;
+	}
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */
@@ -956,34 +989,14 @@ static void free_mdls_and_irp(struct bio *bio)
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
-		for (mdl = bio->bi_irps[r]->MdlAddress;
-		     mdl != NULL;
-		     mdl = next_mdl) {
-			next_mdl = mdl->Next;
-
-		/* This seems to work: */
-			if (mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
-printk("about to unmap mdl %p va is %p (%p)\n", mdl, MmGetMdlVirtualAddress(mdl), mdl->MappedSystemVa);
-//				MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);	// BSOD 0xda (SYSTEM_PTE_MISUSE)
-		/* This seems to work: */
-				MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
-			}
-			if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
-printk("about to unlock mdl %p\n", mdl);
-				/* TODO: with protocol C we never get here ... */
-
-				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
-			}
-printk("about to free mdl %p\n", mdl);
-			IoFreeMdl(mdl);
-		}
-		bio->bi_irps[r]->MdlAddress = NULL;
+		free_mdl_chain_and_irp(bio->bi_irps[r]);
 //		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 
-		IoFreeIrp(bio->bi_irps[r]);
+//		IoFreeIrp(bio->bi_irps[r]);
 	}
 
 	kfree(bio->bi_irps);
+	bio->bi_irps = NULL;
 }
 
 void bio_get_debug(struct bio *bio, const char *file, int line, const char *func)
