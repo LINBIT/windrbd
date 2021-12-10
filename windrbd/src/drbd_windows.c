@@ -961,8 +961,12 @@ static void free_mdls_and_irp(struct bio *bio)
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
 
-			MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);
+			if (mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
+printk("about to unmap mdl %p\n", mdl);
+				MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);
+			}
 			if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
+printk("about to unlock mdl %p\n", mdl);
 				/* TODO: with protocol C we never get here ... */
 
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
