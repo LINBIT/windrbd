@@ -960,12 +960,14 @@ static void free_mdls_and_irp(struct bio *bio)
 		     mdl != NULL;
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
+
+			MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);
 			if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
 				/* TODO: with protocol C we never get here ... */
 
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 			}
-			IoFreeMdl(mdl); // This function will also unmap pages.
+			IoFreeMdl(mdl);
 		}
 		bio->bi_irps[r]->MdlAddress = NULL;
 //		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
@@ -2092,6 +2094,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	if (!bio->bi_paged_memory) {
 		struct _MDL *first_mdl;
 		first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress;
+			/* TODO: Really? */
 		if (first_mdl != NULL) {
 			if (first_mdl->MdlFlags & MDL_PAGES_LOCKED) {
 				MmUnlockPages(first_mdl);
