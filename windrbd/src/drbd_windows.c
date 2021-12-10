@@ -2096,6 +2096,8 @@ static int windrbd_generic_make_request(struct bio *bio)
 
 			/* However it currently BSODs when becoming primary ...  either on read or on write (they are different) */
 
+#if 0
+
 	if (!bio->bi_paged_memory) {
 		struct _MDL *first_mdl;
 		first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress;
@@ -2107,6 +2109,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 		}
 	}
 		/* Else leave it locked */
+#endif
 
 	int total_size = first_size;
 
