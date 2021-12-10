@@ -961,13 +961,15 @@ static void free_mdls_and_irp(struct bio *bio)
 		     mdl = next_mdl) {
 			next_mdl = mdl->Next;
 
+		/* This seems to work: */
 			if (mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
-printk("about to unmap mdl %p va is %p (%p)\n", mdl, MmGetMdlVirtualAddress(mdl), mdl->MappedSystemVa);
+// printk("about to unmap mdl %p va is %p (%p)\n", mdl, MmGetMdlVirtualAddress(mdl), mdl->MappedSystemVa);
 //				MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);	// BSOD 0xda (SYSTEM_PTE_MISUSE)
+		/* This seems to work: */
 				MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
 			}
 			if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
-printk("about to unlock mdl %p\n", mdl);
+// printk("about to unlock mdl %p\n", mdl);
 				/* TODO: with protocol C we never get here ... */
 
 				MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
