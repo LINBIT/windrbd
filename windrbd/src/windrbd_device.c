@@ -1349,7 +1349,8 @@ static void windrbd_bio_finished(struct bio * bio)
 // printk("free page contents %p ...\n", bio);
 		for (i=0;i<bio->bi_vcnt;i++) {
 // printk("free page contents bio->bi_io_vec[i].bv_page->addr is %p i is %d ...\n", bio->bi_io_vec[i].bv_page->addr, i);
-			kfree(bio->bi_io_vec[i].bv_page->addr);
+			put_page(bio->bi_io_vec[i].bv_page);
+//			kfree(bio->bi_io_vec[i].bv_page->addr);
 		}
 	}
 
