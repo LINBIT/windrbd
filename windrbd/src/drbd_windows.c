@@ -965,11 +965,14 @@ printk("about to free mdl %p\n", mdl);
 	IoFreeIrp(irp);
 }
 
+#include <intrin.h> 	/* For __debugbreak() */
+
 static void free_mdls_and_irp(struct bio *bio)
 {
 	int r;
 
 	if (bio->bi_upper_irp != NULL) {
+__debugbreak();
 		free_mdl_chain_and_irp(bio->bi_upper_irp);
 		bio->bi_upper_irp = NULL;
 	}
