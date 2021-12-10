@@ -962,8 +962,9 @@ static void free_mdls_and_irp(struct bio *bio)
 			next_mdl = mdl->Next;
 
 			if (mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
-printk("about to unmap mdl %p\n", mdl);
-				MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);
+printk("about to unmap mdl %p va is %p (%p)\n", mdl, MmGetMdlVirtualAddress(mdl), mdl->MappedSystemVa);
+//				MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);	// BSOD 0xda (SYSTEM_PTE_MISUSE)
+				MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
 			}
 			if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
 printk("about to unlock mdl %p\n", mdl);
