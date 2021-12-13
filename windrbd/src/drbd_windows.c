@@ -1090,6 +1090,9 @@ printk("out of free_mdls_and_irp(%p) page is %p\n", bio, bio->bi_io_vec[0].bv_pa
 			for (i=0;i<bio->bi_vcnt;i++) {
 				put_page(bio->bi_io_vec[i].bv_page);
 			}
+			if (bio->patched_bootsector_buffer != NULL)
+				kfree(bio->patched_bootsector_buffer);
+
 			kfree(bio);
 		}
 	}
@@ -1897,10 +1900,6 @@ NTSTATUS DrbdIoCompletion(
 			bio_endio(bio);
 		}
 // printk("out of bio_endio bio is %p\n", bio);
-			/* TODO: to bio_free() */
-		if (bio->patched_bootsector_buffer)
-			kfree(bio->patched_bootsector_buffer);
-
 		if (bio->has_big_buffer)
 			put_page(bio->bi_io_vec[0].bv_page);
 	}
