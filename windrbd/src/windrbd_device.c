@@ -1424,11 +1424,11 @@ static void windrbd_bio_finished(struct bio * bio)
 	}
 	IoReleaseRemoveLock(&bio->bi_bdev->ref->w_remove_lock, NULL);
 
-#if 0
 		/* Where is the get_page for this? */
-	for (i=0;i<bio->bi_vcnt;i++)
-		put_page(bio->bi_io_vec[i].bv_page);
-#endif
+	if (bio_data_dir(bio) == WRITE) {
+		for (i=0;i<bio->bi_vcnt;i++)
+			put_page(bio->bi_io_vec[i].bv_page);
+	}
 	bio_put(bio);
 }
 
