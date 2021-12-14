@@ -2300,7 +2300,7 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			} else {
 				size_t len;
 
-mem_printk("memset %p 0 %d\n", string, MAX_ID_LEN*sizeof(wchar_t));
+// mem_printk("memset %p 0 %d\n", string, MAX_ID_LEN*sizeof(wchar_t));
 				memset(string, 0, MAX_ID_LEN*sizeof(wchar_t));
 				switch (s->Parameters.QueryId.IdType) {
 				case BusQueryDeviceID:
@@ -2455,7 +2455,7 @@ dbg("status is %x\n", status);
 				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
-mem_printk("RtlZeroMemory %p %d\n", string, (512 * sizeof(WCHAR)));
+// mem_printk("RtlZeroMemory %p %d\n", string, (512 * sizeof(WCHAR)));
 			RtlZeroMemory(string, (512 * sizeof(WCHAR)));
 			switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
 			case DeviceTextDescription:
@@ -3092,7 +3092,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				break;
 			}
 			ModeParameterHeader = (PMODE_PARAMETER_HEADER)srb->DataBuffer;
-mem_printk("RtlZeroMemory %p %d\n", ModeParameterHeader, srb->DataTransferLength);
+// mem_printk("RtlZeroMemory %p %d\n", ModeParameterHeader, srb->DataTransferLength);
 			RtlZeroMemory(ModeParameterHeader, srb->DataTransferLength);
 			ModeParameterHeader->ModeDataLength = sizeof(MODE_PARAMETER_HEADER);
 			ModeParameterHeader->MediumType = FixedMedia;

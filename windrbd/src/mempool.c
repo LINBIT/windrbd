@@ -81,7 +81,7 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
 	}
 
 	p = kmem_cache_alloc(pool->cache, gfp_mask);
-mem_printk("mempool_alloc is %p\n", p);
+// mem_printk("mempool_alloc is %p\n", p);
 	return p;
 }
 
@@ -90,7 +90,7 @@ void mempool_free(void *element, mempool_t *pool)
 	if (element == NULL)
 		return;
 
-mem_printk("mempool_free %p\n", element);
+// mem_printk("mempool_free %p\n", element);
 
 	if (pool->type == MEMPOOL_PAGE) {
 		struct page* page = element;

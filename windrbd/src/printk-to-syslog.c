@@ -349,7 +349,7 @@ void write_to_eventlog(int log_level, const char *msg)
 
 
     //-f--> It Initializes the whole structure.
-mem_printk("RtlZeroMemory %p %d\n", log_packet, total_size);
+// mem_printk("RtlZeroMemory %p %d\n", log_packet, total_size);
 	RtlZeroMemory(log_packet, total_size);
 
     //-f--> Puts up the desired message
@@ -553,7 +553,7 @@ int _printk(const char *func, const char *fmt, ...)
 	}
 	spin_unlock_irqrestore(&ring_buffer_lock, flags);
 
-mem_printk("printk: %s\n", buffer);
+// mem_printk("printk: %s\n", buffer);
 		/* TODO: adjust buffer tail */
 	if (no_net_printk)
 		return len_ret;
