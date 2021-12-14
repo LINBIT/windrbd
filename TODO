@@ -116,6 +116,13 @@ struct memory * 0xffff9d89`abd59000
 
 	Update: The BSOD happens on the SyncSource side?
 
+	Update: Now we do not unlock the buffer pages on
+	generic_make_request which is probably (hopefully)
+	the reason for the memory corruption. Right now it
+	still BSODs on the first write when becoming Primary
+	but this can be fixed. It looks good and does not
+	introduce new memory leaks.
+
 TODO: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
 	Linux Primary doing I/O and iptables-drop/don't drop
