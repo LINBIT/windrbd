@@ -1407,7 +1407,13 @@ static void windrbd_bio_finished(struct bio * bio)
 #endif
 //		kthread_run(io_complete_thread, irp, "complete-irp");
 
-		IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+		if (bio_data_dir(bio) == WRITE)
+				/* Signal free_mdl thread that it should
+				 * complete the IRP.
+				 */
+			bio->delayed_io_completion = true;
+		else
+			IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 #if 0
 		if (!irp_already_completed(irp))
 			IoCompleteRequest(irp, IO_NO_INCREMENT);

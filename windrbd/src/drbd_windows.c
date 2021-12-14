@@ -1099,6 +1099,9 @@ static int free_bios_thread_fn(void *unused)
 			if (bio->patched_bootsector_buffer != NULL)
 				kfree(bio->patched_bootsector_buffer);
 
+			if (bio->delayed_io_completion && bio->bi_upper_irp != NULL)
+				IoCompleteRequest(bio->bi_upper_irp, bio->bi_upper_irp->IoStatus.Status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
+
 			kfree(bio);
 		}
 	}

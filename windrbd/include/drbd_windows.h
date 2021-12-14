@@ -773,6 +773,13 @@ struct bio {
 	struct list_head to_be_freed_list;
 	struct list_head to_be_freed_list2;
 
+		/* This indicates that the free_mdls_and_irp thread
+		 * should complete the upper IRP. It should do so
+		 * once the references to the buffers are cleaned
+		 * up (no mapping / no locking).
+		 */
+	bool delayed_io_completion;
+
 #ifdef BIO_ALLOC_DEBUG
 	char *file;
 	int line;
