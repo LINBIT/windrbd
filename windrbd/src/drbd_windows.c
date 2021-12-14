@@ -1909,15 +1909,17 @@ NTSTATUS DrbdIoCompletion(
 		if (bio->has_big_buffer)
 			put_page(bio->bi_io_vec[0].bv_page);
 	}
-	if (bio->master_bio) {
-		bio_put(bio->master_bio);
-	}
-#if 0
-	if (master_bio)	/* last time 2x bio_get () */
-		bio_put(master_bio);
-#endif
+	struct bio *the_master_bio = bio->master_bio;
 
 	bio_put(bio);
+
+		/* The master bio has to be freed after the last slave
+		 * bio, else we get a PFN_LIST_CORRUPT BSOD (put_page
+		 * on page which is still referenced by an MDL.
+		 */
+
+	if (the_master_bio != NULL)
+		bio_put(the_master_bio);
 
 		/* Tell IO manager that it should not touch the
 		 * irp. It has yet to be freed together with the

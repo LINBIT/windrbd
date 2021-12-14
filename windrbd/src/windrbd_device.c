@@ -1423,10 +1423,10 @@ static void windrbd_bio_finished(struct bio * bio)
 		kfree(bio->bi_common_data);
 	}
 	IoReleaseRemoveLock(&bio->bi_bdev->ref->w_remove_lock, NULL);
-	bio_put(bio);
 
 	for (i=0;i<bio->bi_vcnt;i++)
 		put_page(bio->bi_io_vec[i].bv_page);
+	bio_put(bio);
 }
 
 struct io_request {
