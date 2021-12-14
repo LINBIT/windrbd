@@ -971,11 +971,17 @@ static void free_mdls_and_irp(struct bio *bio)
 {
 	int r;
 
+#if 0
+		/* Not a good idea: the IRP has been created by the
+		 * WinDRBD user (e.g. NTFS or something above us.
+		 */
+
 	if (bio->bi_upper_irp != NULL) {
 __debugbreak();
 		free_mdl_chain_and_irp(bio->bi_upper_irp);
 		bio->bi_upper_irp = NULL;
 	}
+#endif
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */
