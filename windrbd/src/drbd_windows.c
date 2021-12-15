@@ -642,7 +642,9 @@ struct page *alloc_page_debug(int flag, const char *file, int line, const char *
 void __free_page_debug(struct page *page, const char *file, int line, const char *func)
 {
 // printk("freeing page %p page->addr is %p from %s:%d (%s)\n", page, page->addr, file, line, func);
-	kfree_debug(page->addr, file, line, func);
+	if (!page->is_system_buffer)
+		kfree_debug(page->addr, file, line, func);
+
 	kfree_debug(page, file, line, func); 
 }
 
@@ -705,7 +707,8 @@ struct page *alloc_page(int flag)
 
 void __free_page(struct page *page)
 {
-	kfree(page->addr);
+	if (!page->is_system_buffer)
+		kfree(page->addr);
 	kfree(page); 
 }
 

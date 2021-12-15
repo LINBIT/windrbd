@@ -1060,6 +1060,7 @@ struct page {
 	struct kref kref;
 	size_t size;
 	int is_unmapped;
+	int is_system_buffer;	/* do not kfree(page->addr) but kfree(page) */
 };
 
 void free_page_kref(struct kref *kref);

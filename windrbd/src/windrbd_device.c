@@ -1554,8 +1554,10 @@ dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, to
 
 		if (bio_data_dir(bio) == READ)
 			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, 0, 'DRBD');
-		else
+		else {
 			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
+			bio->bi_io_vec[0].bv_page->is_system_buffer = 1;
+		}
 
 				/* TODO: fault inject here. */
 		if (bio->bi_io_vec[0].bv_page->addr == NULL) {
