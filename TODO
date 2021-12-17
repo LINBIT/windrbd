@@ -151,6 +151,11 @@ TODO: Bug: BSOD in wake_up_all()
 
 TODOs for after Release 1.0 ----------------------------------------
 
+TODO: Code quality: Also log date
+	WinDRBD is running so long that this matters
+
+TODO: Code quality: Remove Warning: nothing to copy and buffer empty
+
 TODO: Code quality: Write to eventlog delayed.
 
 	Where we may sleep (see SendTo call in _printk).
