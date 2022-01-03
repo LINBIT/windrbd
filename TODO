@@ -149,7 +149,13 @@ TODO: Bug: BSOD in wake_up_all()
 
 	wait queue list corruption. 
 
+TODO: Code quality: Re-enable big pages patch.
+
+	Right now sync target is very slow.
+
 TODOs for after Release 1.0 ----------------------------------------
+
+TODO: Code quality: Remove bio->master_bio logic
 
 TODO: Code quality: Also log date
 	WinDRBD is running so long that this matters
