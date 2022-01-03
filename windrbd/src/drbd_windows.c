@@ -938,7 +938,7 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unus
 	return bio_alloc(gfp_mask, nr_iovecs, 'DRBD');
 }
 
-void free_mdl_chain_and_irp(struct _IRP *irp, bool skip_unmap)
+void free_mdl_chain_and_irp(struct _IRP *irp, bool skip_unmap, bool unmap_twice)
 {
 	struct _MDL *mdl, *next_mdl;
 
@@ -961,8 +961,11 @@ void free_mdl_chain_and_irp(struct _IRP *irp, bool skip_unmap)
 			/* TODO: with protocol C we never get here ... */
 
 			MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
+			if (unmap_twice)
+				MmUnlockPages(mdl);
 		}
 
+#if 0
 if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
 printk("Warning: Pages are still locked ...\n");
 }
@@ -971,6 +974,7 @@ if (skip_unmap && (mdl->MdlFlags & MDL_PAGES_LOCKED)) {	/* Upper writes are lock
 // printk("about to unlock mdl another time %p\n", mdl);
 MmUnlockPages(mdl);
 }
+#endif
 // printk("about to free mdl %p\n", mdl);
 		IoFreeMdl(mdl);
 	}
@@ -1020,7 +1024,8 @@ __debugbreak();
 			continue;
 
 // printk("4 bio is %p r is %d\n", bio, r);
-		free_mdl_chain_and_irp(bio->bi_irps[r], bio->delayed_io_completion);
+			/* unmap twice when this is a lower WRITE */
+		free_mdl_chain_and_irp(bio->bi_irps[r], bio->delayed_io_completion, (!bio->delayed_io_completion) && (bio_data_dir(bio) == WRITE));
 // printk("5 bio is %p r is %d\n", bio, r);
 //		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 
