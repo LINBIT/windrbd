@@ -957,13 +957,14 @@ void free_mdl_chain_and_irp(struct _IRP *irp, bool skip_unmap)
 			}
 //		}
 		if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
-// printk("about to unlock mdl %p\n", mdl);
+printk("about to unlock mdl %p\n", mdl);
 			/* TODO: with protocol C we never get here ... */
 
 			MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 		}
 /* TODO: ?? */
-if (skip_unmap && mdl->MdlFlags & MDL_PAGES_LOCKED) {	/* Upper writes are locked twice? */
+if (skip_unmap && (mdl->MdlFlags & MDL_PAGES_LOCKED)) {	/* Upper writes are locked twice? */
+printk("about to unlock mdl another time %p\n", mdl);
 MmUnlockPages(mdl);
 }
 // printk("about to free mdl %p\n", mdl);
