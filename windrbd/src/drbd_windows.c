@@ -992,6 +992,8 @@ __debugbreak();
 	if (bio->bi_irps == NULL)
 		return;
 
+	if (bio->delayed_io_completion)
+		return;
 
 	for (r=0;r<bio->bi_num_requests;r++) {
 		/* This has to be done before freeing the buffers with
