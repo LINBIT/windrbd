@@ -957,14 +957,18 @@ void free_mdl_chain_and_irp(struct _IRP *irp, bool skip_unmap)
 			}
 //		}
 		if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
-printk("about to unlock mdl %p\n", mdl);
+// printk("about to unlock mdl %p\n", mdl);
 			/* TODO: with protocol C we never get here ... */
 
 			MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 		}
+
+if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
+printk("Warning: Pages are still locked ...\n");
+}
 /* TODO: ?? */
 if (skip_unmap && (mdl->MdlFlags & MDL_PAGES_LOCKED)) {	/* Upper writes are locked twice? */
-printk("about to unlock mdl another time %p\n", mdl);
+// printk("about to unlock mdl another time %p\n", mdl);
 MmUnlockPages(mdl);
 }
 // printk("about to free mdl %p\n", mdl);
@@ -981,7 +985,7 @@ static void free_mdls_and_irp(struct bio *bio)
 {
 	int r;
 
-printk("1 bio is %p\n", bio);
+// printk("1 bio is %p\n", bio);
 #if 0
 		/* Not a good idea: the IRP has been created by the
 		 * WinDRBD user (e.g. NTFS or something above us.
@@ -1000,7 +1004,7 @@ __debugbreak();
 	if (bio->bi_irps == NULL)
 		return;
 
-printk("2 bio is %p\n", bio);
+// printk("2 bio is %p\n", bio);
 /*
 	if (bio->delayed_io_completion)
 		return;
@@ -1011,21 +1015,21 @@ printk("2 bio is %p\n", bio);
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
 		 */
-printk("3 bio is %p r is %d\n", bio, r);
+// printk("3 bio is %p r is %d\n", bio, r);
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
-printk("4 bio is %p r is %d\n", bio, r);
+// printk("4 bio is %p r is %d\n", bio, r);
 		free_mdl_chain_and_irp(bio->bi_irps[r], bio->delayed_io_completion);
-printk("5 bio is %p r is %d\n", bio, r);
+// printk("5 bio is %p r is %d\n", bio, r);
 //		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 
 //		IoFreeIrp(bio->bi_irps[r]);
 	}
 
-printk("6 bio is %p\n", bio);
+// printk("6 bio is %p\n", bio);
 	kfree(bio->bi_irps);
-printk("7 bio is %p\n", bio);
+// printk("7 bio is %p\n", bio);
 	bio->bi_irps = NULL;
 }
 
@@ -1111,9 +1115,9 @@ static int free_bios_thread_fn(void *unused)
 		list_for_each_entry_safe(struct bio, bio, bio2, &bios_to_be_freed_list2, to_be_freed_list2) {
 			list_del(&bio->to_be_freed_list2);
 	/* Reason for the BSOD on Server 2019 on resync? */
-printk("into free_mdls_and_irp(%p) dir is %s upper is %s\n", bio, bio_data_dir(bio) == WRITE ? "WRITE" : "READ", bio->delayed_io_completion ? "UPPER WRITE" : "LOWER WRITE OR READ");
+// printk("into free_mdls_and_irp(%p) dir is %s upper is %s\n", bio, bio_data_dir(bio) == WRITE ? "WRITE" : "READ", bio->delayed_io_completion ? "UPPER WRITE" : "LOWER WRITE OR READ");
 			free_mdls_and_irp(bio);
-printk("out of free_mdls_and_irp(%p) page is %p page refcount is %d\n", bio, bio->bi_io_vec[0].bv_page, refcount_read(&bio->bi_io_vec[0].bv_page->kref.refcount));
+// printk("out of free_mdls_and_irp(%p) page is %p page refcount is %d\n", bio, bio->bi_io_vec[0].bv_page, refcount_read(&bio->bi_io_vec[0].bv_page->kref.refcount));
 			for (i=0;i<bio->bi_vcnt;i++) {
 				put_page(bio->bi_io_vec[i].bv_page);
 			}
