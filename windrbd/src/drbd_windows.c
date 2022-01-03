@@ -947,15 +947,15 @@ void free_mdl_chain_and_irp(struct _IRP *irp, bool skip_unmap)
 	     mdl = next_mdl) {
 		next_mdl = mdl->Next;
 
+//		if (!skip_unmap) {
 	/* This seems to work: */
-		if (!skip_unmap) {
 			if (mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
 // printk("about to unmap mdl %p va is %p (%p)\n", mdl, MmGetMdlVirtualAddress(mdl), mdl->MappedSystemVa);
 //			MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);	// BSOD 0xda (SYSTEM_PTE_MISUSE)
 	/* This seems to work: */
 				MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
 			}
-		}
+//		}
 		if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
 // printk("about to unlock mdl %p\n", mdl);
 			/* TODO: with protocol C we never get here ... */
@@ -1099,9 +1099,9 @@ static int free_bios_thread_fn(void *unused)
 		list_for_each_entry_safe(struct bio, bio, bio2, &bios_to_be_freed_list2, to_be_freed_list2) {
 			list_del(&bio->to_be_freed_list2);
 	/* Reason for the BSOD on Server 2019 on resync? */
-// printk("into free_mdls_and_irp(%p)\n", bio);
+printk("into free_mdls_and_irp(%p) dir is %s\n", bio, bio_data_dir(bio) == WRITE ? "WRITE" : "READ");
 			free_mdls_and_irp(bio);
-// printk("out of free_mdls_and_irp(%p) page is %p\n", bio, bio->bi_io_vec[0].bv_page);
+printk("out of free_mdls_and_irp(%p) page is %p page refcount is %d\n", bio, bio->bi_io_vec[0].bv_page, refcount_read(&bio->bi_io_vec[0].bv_page->kref.refcount));
 			for (i=0;i<bio->bi_vcnt;i++) {
 				put_page(bio->bi_io_vec[i].bv_page);
 			}
