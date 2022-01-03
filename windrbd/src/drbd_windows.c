@@ -962,6 +962,10 @@ void free_mdl_chain_and_irp(struct _IRP *irp, bool skip_unmap)
 
 			MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
 		}
+/* TODO: ?? */
+if (skip_unmap && mdl->MdlFlags & MDL_PAGES_LOCKED) {	/* Upper writes are locked twice? */
+MmUnlockPages(mdl);
+}
 // printk("about to free mdl %p\n", mdl);
 		IoFreeMdl(mdl);
 	}
