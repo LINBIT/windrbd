@@ -961,8 +961,10 @@ void free_mdl_chain_and_irp(struct _IRP *irp, bool skip_unmap, bool unmap_twice)
 			/* TODO: with protocol C we never get here ... */
 
 			MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
+/*
 			if (unmap_twice)
 				MmUnlockPages(mdl);
+*/
 		}
 
 #if 0
@@ -2157,8 +2159,6 @@ static int windrbd_generic_make_request(struct bio *bio)
 
 			/* However it currently BSODs when becoming primary ...  either on read or on write (they are different) */
 
-#if 0
-
 	if (!bio->bi_paged_memory) {
 		struct _MDL *first_mdl;
 		first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress;
@@ -2170,7 +2170,6 @@ static int windrbd_generic_make_request(struct bio *bio)
 		}
 	}
 		/* Else leave it locked */
-#endif
 
 	int total_size = first_size;
 
