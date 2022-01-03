@@ -763,7 +763,7 @@ struct bio {
 
 	blk_status_t bi_status;
 
-	struct bio *master_bio;
+	struct bio *master_bio;	/* TODO: remove if not needed any more */
 	struct list_head cache_list;
 
 	atomic_t num_slave_bios;
