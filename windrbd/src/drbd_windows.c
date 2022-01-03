@@ -938,7 +938,7 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unus
 	return bio_alloc(gfp_mask, nr_iovecs, 'DRBD');
 }
 
-void free_mdl_chain_and_irp(struct _IRP *irp)
+void free_mdl_chain_and_irp(struct _IRP *irp, bool skip_unmap)
 {
 	struct _MDL *mdl, *next_mdl;
 
@@ -948,11 +948,13 @@ void free_mdl_chain_and_irp(struct _IRP *irp)
 		next_mdl = mdl->Next;
 
 	/* This seems to work: */
-		if (mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
+		if (!skip_unmap) {
+			if (mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
 // printk("about to unmap mdl %p va is %p (%p)\n", mdl, MmGetMdlVirtualAddress(mdl), mdl->MappedSystemVa);
 //			MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);	// BSOD 0xda (SYSTEM_PTE_MISUSE)
 	/* This seems to work: */
-			MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+				MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
+			}
 		}
 		if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
 // printk("about to unlock mdl %p\n", mdl);
@@ -992,8 +994,10 @@ __debugbreak();
 	if (bio->bi_irps == NULL)
 		return;
 
+/*
 	if (bio->delayed_io_completion)
 		return;
+*/
 
 	for (r=0;r<bio->bi_num_requests;r++) {
 		/* This has to be done before freeing the buffers with
@@ -1003,7 +1007,7 @@ __debugbreak();
 		if (bio->bi_irps[r] == NULL)
 			continue;
 
-		free_mdl_chain_and_irp(bio->bi_irps[r]);
+		free_mdl_chain_and_irp(bio->bi_irps[r], bio->delayed_io_completion);
 //		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
 
 //		IoFreeIrp(bio->bi_irps[r]);
