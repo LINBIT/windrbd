@@ -7704,6 +7704,73 @@ Done: Bug: BSOD after 66 iterations of drop/don't drop iptables loop
 
 	Now trying with rc17 .. maybe this was fixed with 834dac50?
 
+	No still an issue. Now we have a seperate working directory for
+	this bug.
+
+	Also: (maybe unrelated)
+
+1: kd> k
+ # Child-SP          RetAddr           Call Site
+00 ffffb101`cd1c7df8 fffff803`007e4ab2 nt!DbgBreakPointWithStatus
+01 ffffb101`cd1c7e00 fffff803`007e4495 nt!KiBugCheckDebugBreak+0x12
+02 ffffb101`cd1c7e60 fffff803`0076f684 nt!KeBugCheck2+0x8a5
+03 ffffb101`cd1c8570 fffff803`006274e4 nt!KeBugCheckEx+0x104
+04 ffffb101`cd1c85b0 fffff803`00662064 nt!MiSystemFault+0xfb4
+05 ffffb101`cd1c86a0 fffff803`0077c661 nt!MmAccessFault+0x254
+06 ffffb101`cd1c88a0 fffff805`b3ce680a nt!KiPageFault+0x321
+07 ffffb101`cd1c8a30 fffff805`b3cebadd windrbd!drbd_send_confirm_stable+0xea [y:\windrbd\converted-sources\drbd\drbd_receiver.c @ 1452]
+08 ffffb101`cd1c8a80 fffff805`b3cda4c2 windrbd!prepare_activity_log+0x11d [y:\windrbd\converted-sources\drbd\drbd_receiver.c @ 3044]
+09 ffffb101`cd1c8ae0 fffff805`b3ce953f windrbd!receive_Data+0x862 [y:\windrbd\converted-sources\drbd\drbd_receiver.c @ 3257]
+0a ffffb101`cd1c8bd0 fffff805`b3ce55ee windrbd!drbdd+0x15f [y:\windrbd\converted-sources\drbd\drbd_receiver.c @ 8285]
+0b ffffb101`cd1c8c70 fffff805`b3d08118 windrbd!drbd_receiver+0x1e [y:\windrbd\converted-sources\drbd\drbd_receiver.c @ 8928]
+0c ffffb101`cd1c8ca0 fffff805`b3d5331a windrbd!drbd_thread_setup+0x158 [y:\windrbd\converted-sources\drbd\drbd_main.c @ 610]
+0d ffffb101`cd1c8d10 fffff803`0071c21d windrbd!windrbd_thread_setup+0x4a [y:\windrbd\windrbd\src\windrbd_threads.c @ 198]
+0e ffffb101`cd1c8d50 fffff803`00776886 nt!PspSystemThreadStartup+0x41
+0f ffffb101`cd1c8da0 00000000`00000000 nt!KiStartSystemThread+0x16
+
+
+FAULTING_SOURCE_CODE:
+  1448:         count = atomic_read(&epoch->epoch_size) - atomic_read(&epoch->confirmed) - 1;
+  1449:         atomic_add(count, &epoch->confirmed);
+  1450:         epoch->oldest_unconfirmed_peer_req = peer_req;
+  1451:
+> 1452:         D_ASSERT(connection, oldest->epoch == youngest->epoch);
+  1453:         D_ASSERT(connection, count > 0);
+  1454:
+  1455:         p->oldest_block_id = oldest->block_id;
+  1456:         p->youngest_block_id = youngest->block_id;
+  1457:         p->set_size = cpu_to_be32(count);
+
+	oldest points to invalid memory. We also had several
+	ASSERTIONS FAILED:
+
+ASSERTION oldest->epoch == youngest->epoch FAILED in drbd_send_confirm_stable #########
+
+	Try checking memory before.
+
+	Update: memory check didn't find anything this is most likely a
+	weird logic bug (some buggy DRBD patches?)
+
+	Update: Now checking for use after free.
+
+	Update: epoch->oldest_unconfirmed_peer_req is freed and then
+	(new connection?) is dereferenced in drbd_send_confirm_stable.
+
+	Yes this was an upstream DRBD bug. Not yet clear why it didn't
+	trigger under Linux but probably because mempool allocations work
+	differently there. Now starting a new test with the upstream
+	patches (and an additional check for NULL in drbd_send_confirm_stable()
+	just to be sure ..)
+
+	Update: removed the check for NULL phil does not want it.
+
+	Update: Also removed debug break when freeing the
+	oldest_unconfirmed_peer_req.
+
+	Update: Removed check for peer_req->epoch->oldest_unconfirmed_peer_req
+	in __drbd_free_peer_req. Reason is a BSOD in this instrumentation
+	(peer_req->epoch might already be freed).
+
 	This seems to be fixed with phil's patch (see DRBD commit log).
 	This was actually the first real DRBD bug we encountered in
 	5 years. Good job upstream :).
