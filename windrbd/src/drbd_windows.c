@@ -991,6 +991,8 @@ static void free_mdls_and_irp(struct bio *bio)
 {
 	int r;
 
+printk("Freeing MDLs page is %p\n", bio->bi_io_vec[0].bv_page);
+
 // printk("1 bio is %p\n", bio);
 #if 0
 		/* Not a good idea: the IRP has been created by the
