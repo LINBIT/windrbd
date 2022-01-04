@@ -36,11 +36,7 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Code quality: Re-enable big pages patch.
-
-	Right now sync target is very slow.
-
-TODO: Code quality: Re-enable WinDRBD device on booting
+TODO: Feature: Merge windrbd-1.0.0-rc18-32 (jt/fix-worker-bsod branch)
 
 TODOs for after Release 1.0 ----------------------------------------
 
@@ -7731,3 +7727,10 @@ Done: Bug: PTE BSOD on upper writes to lower disk
 	upper disk to lower disk.
 
 	This is now also fixed.
+
+Done: Code quality: Re-enable big pages patch.
+
+	Right now sync target is very slow.
+
+Done: Code quality: Re-enable WinDRBD device on booting
+
