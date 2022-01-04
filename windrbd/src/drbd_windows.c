@@ -969,7 +969,7 @@ void free_mdl_chain_and_irp(struct _IRP *irp, bool skip_unmap, bool unmap_twice)
 
 #if 0
 if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
-printk("Warning: Pages are still locked ...\n");
+// printk("Warning: Pages are still locked ...\n");
 }
 /* TODO: ?? */
 if (skip_unmap && (mdl->MdlFlags & MDL_PAGES_LOCKED)) {	/* Upper writes are locked twice? */
@@ -991,7 +991,7 @@ static void free_mdls_and_irp(struct bio *bio)
 {
 	int r;
 
-printk("Freeing MDLs page is %p\n", bio->bi_io_vec[0].bv_page);
+// printk("Freeing MDLs page is %p\n", bio->bi_io_vec[0].bv_page);
 
 // printk("1 bio is %p\n", bio);
 #if 0
@@ -1123,8 +1123,7 @@ static int free_bios_thread_fn(void *unused)
 
 		list_for_each_entry_safe(struct bio, bio, bio2, &bios_to_be_freed_list2, to_be_freed_list2) {
 			list_del(&bio->to_be_freed_list2);
-	/* Reason for the BSOD on Server 2019 on resync? */
-// printk("into free_mdls_and_irp(%p) dir is %s upper is %s\n", bio, bio_data_dir(bio) == WRITE ? "WRITE" : "READ", bio->delayed_io_completion ? "UPPER WRITE" : "LOWER WRITE OR READ");
+printk("into free_mdls_and_irp(%p) dir is %s upper is %s page is %p\n", bio, bio_data_dir(bio) == WRITE ? "WRITE" : "READ", bio->delayed_io_completion ? "UPPER WRITE" : "LOWER WRITE OR READ", bio->bi_io_vec[0].bv_page);
 			free_mdls_and_irp(bio);
 // printk("out of free_mdls_and_irp(%p) page is %p page refcount is %d\n", bio, bio->bi_io_vec[0].bv_page, refcount_read(&bio->bi_io_vec[0].bv_page->kref.refcount));
 			for (i=0;i<bio->bi_vcnt;i++) {
