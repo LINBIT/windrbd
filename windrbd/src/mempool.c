@@ -63,8 +63,6 @@ void mempool_destroy(mempool_t *pool)
 
 void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
 {
-	void *p;
-
 	if (pool->type == MEMPOOL_PAGE) {
 		struct page* page;
 
@@ -72,6 +70,7 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
                 if (page) {
                         page->addr = ExAllocateFromNPagedLookasideList(&pool->page_addrLS);
                         if(page->addr) {
+				page->size = PAGE_SIZE;
                                 return page;
 			}
 
@@ -80,17 +79,13 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
 		return NULL;
 	}
 
-	p = kmem_cache_alloc(pool->cache, gfp_mask);
-// mem_printk("mempool_alloc is %p\n", p);
-	return p;
+	return kmem_cache_alloc(pool->cache, gfp_mask);
 }
 
 void mempool_free(void *element, mempool_t *pool)
 {
 	if (element == NULL)
 		return;
-
-// mem_printk("mempool_free %p\n", element);
 
 	if (pool->type == MEMPOOL_PAGE) {
 		struct page* page = element;
