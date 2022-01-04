@@ -1083,6 +1083,7 @@ void bio_free(struct bio *bio)
 {
 	KIRQL flags;
 	int i;
+	struct bio *upper_bio = bio->is_cloned_from;
 
 		/* DRBD considers pages here as not in use any more.
 		 * however we still have MDLs referencing memory
@@ -1094,6 +1095,9 @@ void bio_free(struct bio *bio)
 	spin_lock_irqsave(&bios_to_be_freed_lock, flags);
 	list_add(&bio->to_be_freed_list, &bios_to_be_freed_list);
 	spin_unlock_irqrestore(&bios_to_be_freed_lock, flags);
+
+	if (upper_bio != NULL)
+		bio_put(upper_bio);
 
 	wake_up(&bios_to_be_freed_event);
 }
@@ -1191,9 +1195,18 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->file = bio_src->file;
 	bio->line = bio_src->line;
 	bio->func = bio_src->func;
-
-	bio->is_cloned_from = bio_src;
 #endif
+
+	/* Take a reference to the original bio. This will be dropped
+	   when the cloned bio is freed. The reason for this is that
+	   we need to wait for all lower writes to complete and be
+	   fully freed (especially the MDLs unmapped) before we
+	   can complete the upper request, else PTE BSOD in NTFS (or
+	   whatever).
+	*/
+
+	bio_get(bio_src);
+	bio->is_cloned_from = bio_src;
 
 	return bio;
 }
