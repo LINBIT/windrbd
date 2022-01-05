@@ -885,3 +885,9 @@ Server 2016 VMs:
 
 !! disable firewall or at least allow port (but most likely UDP it didn't work
    with TCP !!
+
+windbg -k net:port=50001,key=2bk3901yipjbz.3qxt07itly92e.2uwuwqzmrvhkg.2v7kvjtmzce9d
+
+If there are more hosts to be debugged on the same network the port numbers
+must differ (for example 50000 for a and 50001 for b). Then two hosts can
+net debug each other ...
