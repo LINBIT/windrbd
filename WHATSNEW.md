@@ -1,6 +1,16 @@
 Upcoming features
 -----------------
 
+What's new in version 1.0.0-rc19
+--------------------------------
+
+Fixed a BSOD when syncing large volumes (This fix unveiled a PTE
+	BSOD when writing from upper device to lower disk which
+	was also fixed)
+
+Fixed a BSOD on hard network shutdown (unplug network cable, this
+	was actually an upstream DRBD bug)
+
 What's new in version 1.0.0-rc18
 --------------------------------
 
