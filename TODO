@@ -38,13 +38,31 @@ Real:
 
 TODO: Test: Test sync while I/O (primary) with large volumes
 
+	It seems to be a test bug: first time it syncs the
+	whole machine which causes degraded performance. After
+	everything is synced WinDRBD behaves normally.
+	We should use oflag=direct or something for our tests.
+
 TODO: Bug: WinDRBD hangs in NetworkFailure
 
 	Peer Primary and about to bring disk online. Network
 	interruption and resource hangs in NetworkFailure,
 	drbdadm down hangs and later drbdadm status also.
 
+	Not clear if this is really a WinDRBD bug.
+
+	Update: I think it is ... hangs in NetworkFailure
+	for 7:30 minutes when peer is about to become
+	Primary.
+
+	However also sync hangs on this machine (without any
+	Primary WinDRBD resources).
+
 TODOs for after Release 1.0 ----------------------------------------
+
+TODO: Code quality: Stop windrbdlog service after unloading driver
+
+	So we see the log messages from the unload.
 
 TODO: Nice to have: Also quit running drbdsetup events2 on update.
 
