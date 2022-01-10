@@ -938,7 +938,7 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unus
 	return bio_alloc(gfp_mask, nr_iovecs, 'DRBD');
 }
 
-void free_mdl_chain_and_irp(struct _IRP *irp, bool skip_unmap, bool unmap_twice)
+static void free_mdl_chain_and_irp(struct _IRP *irp)
 {
 	struct _MDL *mdl, *next_mdl;
 
@@ -946,38 +946,12 @@ void free_mdl_chain_and_irp(struct _IRP *irp, bool skip_unmap, bool unmap_twice)
 	     mdl != NULL;
 	     mdl = next_mdl) {
 		next_mdl = mdl->Next;
+		if (mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA)
+			MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
 
-//		if (!skip_unmap) {
-	/* This seems to work: */
-			if (mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
-// printk("about to unmap mdl %p va is %p (%p)\n", mdl, MmGetMdlVirtualAddress(mdl), mdl->MappedSystemVa);
-//			MmUnmapLockedPages(MmGetMdlVirtualAddress(mdl), mdl);	// BSOD 0xda (SYSTEM_PTE_MISUSE)
-	/* This seems to work: */
-				MmUnmapLockedPages(mdl->MappedSystemVa, mdl);
-			}
-//		}
-		if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
-// printk("about to unlock mdl %p\n", mdl);
-			/* TODO: with protocol C we never get here ... */
+		if (mdl->MdlFlags & MDL_PAGES_LOCKED)
+			MmUnlockPages(mdl);
 
-			MmUnlockPages(mdl); /* Must not do this when MmBuildMdlForNonPagedPool() is used */
-/*
-			if (unmap_twice)
-				MmUnlockPages(mdl);
-*/
-		}
-
-#if 0
-if (mdl->MdlFlags & MDL_PAGES_LOCKED) {
-// printk("Warning: Pages are still locked ...\n");
-}
-/* TODO: ?? */
-if (skip_unmap && (mdl->MdlFlags & MDL_PAGES_LOCKED)) {	/* Upper writes are locked twice? */
-// printk("about to unlock mdl another time %p\n", mdl);
-MmUnlockPages(mdl);
-}
-#endif
-// printk("about to free mdl %p\n", mdl);
 		IoFreeMdl(mdl);
 	}
 	irp->MdlAddress = NULL;
@@ -991,20 +965,6 @@ static void free_mdls_and_irp(struct bio *bio)
 {
 	int r;
 
-// printk("Freeing MDLs page is %p\n", bio->bi_io_vec[0].bv_page);
-
-// printk("1 bio is %p\n", bio);
-#if 0
-		/* Not a good idea: the IRP has been created by the
-		 * WinDRBD user (e.g. NTFS or something above us.
-		 */
-
-	if (bio->bi_upper_irp != NULL) {
-__debugbreak();
-		free_mdl_chain_and_irp(bio->bi_upper_irp);
-		bio->bi_upper_irp = NULL;
-	}
-#endif
 		/* This happens quite frequently when DRBD allocates a
 	         * bio without ever calling generic_make_request on it.
 		 */
@@ -1012,33 +972,19 @@ __debugbreak();
 	if (bio->bi_irps == NULL)
 		return;
 
-// printk("2 bio is %p\n", bio);
-/*
-	if (bio->delayed_io_completion)
-		return;
-*/
-
 	for (r=0;r<bio->bi_num_requests;r++) {
+		if (bio->bi_irps[r] == NULL)
+			continue;
+
 		/* This has to be done before freeing the buffers with
 		 * __free_page(). Else we get a PFN list corrupted (or
 		 * so) BSOD.
 		 */
-// printk("3 bio is %p r is %d\n", bio, r);
-		if (bio->bi_irps[r] == NULL)
-			continue;
 
-// printk("4 bio is %p r is %d\n", bio, r);
-			/* unmap twice when this is a lower WRITE */
-		free_mdl_chain_and_irp(bio->bi_irps[r], bio->delayed_io_completion, (!bio->delayed_io_completion) && (bio_data_dir(bio) == WRITE));
-// printk("5 bio is %p r is %d\n", bio, r);
-//		ObDereferenceObject(bio->bi_irps[r]->Tail.Overlay.Thread);
-
-//		IoFreeIrp(bio->bi_irps[r]);
+		free_mdl_chain_and_irp(bio->bi_irps[r]);
 	}
 
-// printk("6 bio is %p\n", bio);
 	kfree(bio->bi_irps);
-// printk("7 bio is %p\n", bio);
 	bio->bi_irps = NULL;
 }
 
