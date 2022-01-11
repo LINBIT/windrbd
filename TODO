@@ -58,6 +58,8 @@ TODO: Bug: WinDRBD hangs in NetworkFailure
 	However also sync hangs on this machine (without any
 	Primary WinDRBD resources).
 
+	Hangs in writing meta data (bitmap)?
+
 TODOs for after Release 1.0 ----------------------------------------
 
 TODO: Code quality: Stop windrbdlog service after unloading driver
