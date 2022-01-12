@@ -294,3 +294,4 @@ Version history
  * 1.0.0-rc17 (Oct 22, 2021): Online resize, no reboot on upgrade/uninstall and
                               many other improvements (see WHATSNEW.md)
  * 1.0.0-rc18 (Nov 5, 2021): Installer and event log BSOD fixes
+ * 1.0.0-rc19 (Jan 22, 2022): Fixed sync BSOD and hard network shutdown BSOD
