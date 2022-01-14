@@ -114,6 +114,10 @@ Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863094897/3579545)|82bf9ee0(drb
 
 	This has been reported by a user.
 
+	Update: Probably a page of size > PAGE_SIZE is reused in
+	drbd_alloc_pages() and this causes the error to trigger.
+	(len gets 0 before all pages are iterated).
+
 TODOs for after Release 1.0 ----------------------------------------
 
 TODO: Code quality: Stop windrbdlog service after unloading driver
