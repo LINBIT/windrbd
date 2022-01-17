@@ -1,0 +1,32 @@
+From b094662d68c04d54e0ffd2687d8d57b355015f4d Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 17 Jan 2022 17:40:57 +0100
+Subject: [PATCH] Never put big pages onto page pool.
+
+DRBD assumes in (at least) drbd_submit_peer_request that all pages
+on a page chain are of size PAGE_SIZE. This patch add a check in
+drbd_free_pages() which causes pages with size > PAGE_SIZE not
+to be recycled. This should fix our invalid page chain error message
+a WinDRBD user found. Note that this happens when one node promotes/
+demotes a resource repeatedly while a sync is in progress. This patch
+should also fix the primary / secondary hang while syncing we observed.
+---
+ drbd/drbd_receiver.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index f0ca06c..3c08808 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -548,7 +548,7 @@ void drbd_free_pages(struct drbd_transport *transport, struct page *page, int is
+ 	if (page == NULL)
+ 		return;
+ 
+-	if (resource->pp_vacant > DRBD_MAX_BIO_SIZE/PAGE_SIZE)
++	if (resource->pp_vacant > DRBD_MAX_BIO_SIZE/PAGE_SIZE || page->size > PAGE_SIZE)
+ 		i = page_chain_free(page);
+ 	else {
+ 		struct page *tmp;
+-- 
+2.17.0
+
