@@ -36,6 +36,13 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: various memory leaks
+
+Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 104, allocated by function fifo_alloc at drbd_sender.c:549.
+Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 56, allocated by function alloc_disk at ../../win4lin/src/drbd_windows.c:2425.
+Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 72, allocated by function blk_alloc_queue at ../../win4lin/src/drbd_windows.c:2415.
+n 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 104, allocated by function sock_create_linux_socket at ../../win4lin/src/windrbd_winsocket.c:1188.
+
 TODO: Test: Test sync while I/O (primary) with large volumes
 
 	It seems to be a test bug: first time it syncs the
@@ -531,13 +538,6 @@ TODO: Code quality: review TODOs in source code.
 	Currently 136 total.
 
 	For now (0.9.2), fix the TODOs in winsocket layer.
-
-TODO: Bug: various memory leaks
-
-Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 104, allocated by function fifo_alloc at drbd_sender.c:549.
-Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 56, allocated by function alloc_disk at ../../win4lin/src/drbd_windows.c:2425.
-Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 72, allocated by function blk_alloc_queue at ../../win4lin/src/drbd_windows.c:2415.
-n 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 104, allocated by function sock_create_linux_socket at ../../win4lin/src/windrbd_winsocket.c:1188.
 
 TODO: Code quality: eventually use drbd_rate_limit() on some printk's
 
