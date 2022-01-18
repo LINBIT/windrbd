@@ -1,0 +1,32 @@
+From f3422fdae68cb1ce2d407f288c8ca57d0f006c67 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 18 Jan 2022 18:54:53 +0100
+Subject: [PATCH] create_device: check if block device has already a disk.
+
+And free it if yes. This should nowmally not happen. Maybe
+remove that patch later.
+---
+ drbd/drbd_main.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index e99185d..6b81b53 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3791,7 +3791,12 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	disk->bdev = block_device;
+ 
+         device->this_bdev = block_device;
+-        /* TODO: leaks existing disk */
++	if (block_device->bd_disk != NULL) {
++		printk("Warning: block_device already has a disk, freeing it.\n");
++		if (block_device->bd_disk->queue)
++			blk_cleanup_queue(block_device->bd_disk->queue);
++		put_disk(block_device->bd_disk);
++	}
+         device->this_bdev->bd_disk = disk;
+ 
+ 	blk_queue_flag_set(QUEUE_FLAG_STABLE_WRITES, q);
+-- 
+2.17.0
+
