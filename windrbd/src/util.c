@@ -118,7 +118,11 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 
 void shutdown_registry(void)
 {
-	kfree(the_registry_path);
+	if (the_registry_path != NULL) {
+		kfree(the_registry_path->Buffer);
+		kfree(the_registry_path);
+		the_registry_path = NULL;
+	}
 }
 
 NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default)
