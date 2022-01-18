@@ -2468,7 +2468,7 @@ dbg("status is %x\n", status);
 			RtlZeroMemory(string, (512 * sizeof(WCHAR)));
 			switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
 			case DeviceTextDescription:
-				string_length = swprintf(string, L"DRBD Disk") + 1;
+				string_length = swprintf(string, L"WinDRBD Disk") + 1;
 				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePool(PagedPool, string_length * sizeof(WCHAR));
 				if (irp->IoStatus.Information == 0) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
@@ -2479,7 +2479,7 @@ dbg("status is %x\n", status);
 				break;
 
 			case DeviceTextLocationInformation:
-				string_length = swprintf(string, L"WinDRBD minor %d", minor) + 1;
+				string_length = swprintf(string, L"WinDRBD Minor %d", minor) + 1;
 
 				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePool(PagedPool, string_length * sizeof(WCHAR));
 				if (irp->IoStatus.Information == 0) {
