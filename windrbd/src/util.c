@@ -90,7 +90,6 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	NTSTATUS status;
 	char syslog_ip[255];
 
-		/* TODO: dealloc this on driver unload ... */
 	the_registry_path = kmalloc(sizeof(*the_registry_path), 0, 'DRBD');
 	if (the_registry_path == NULL) {
 		printk("Warning: Cannot alloc the_registry_path\n");
@@ -115,6 +114,11 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	printk(KERN_DEBUG "syslog_ip from registry is %s", syslog_ip);
 
 	return 0;
+}
+
+void shutdown_registry(void)
+{
+	kfree(the_registry_path);
 }
 
 NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default)

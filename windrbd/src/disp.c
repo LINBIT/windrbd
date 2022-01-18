@@ -43,6 +43,7 @@
 
 void drbd_cleanup(void);
 void idr_shutdown(void);
+void shutdown_registry(void);
 
 DRIVER_INITIALIZE DriverEntry;
 DRIVER_UNLOAD mvolUnload;
@@ -306,11 +307,14 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 	windrbd_reap_all_threads();
 	printk("Reaped remaining DRBD threads\n");
 
+	shutdown_registry();
+	printk("Registry layer shut down\n");
+
+	/* Here all memory should be freed. */
 #ifdef KMALLOC_DEBUG
 	shutdown_kmalloc_debug();
 	printk("kmalloc_debug shut down, there should be no memory leaks now.\n");
 #endif
-
 	shutdown_syslog_printk();
 	windrbd_shutdown_wsk();
 }
