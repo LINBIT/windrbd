@@ -3496,9 +3496,11 @@ static int create_dos_link(struct block_device *dev)
 	status = IoCreateSymbolicLink(&dos_name, &dev->path_to_device);
 	if (status != STATUS_SUCCESS) {
 		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, dos_name.Buffer, status);
+		kfree(dos_name.Buffer);
 		return -1;
 	}
 	printk("Created symlink from %S to %S\n", dos_name.Buffer, dev->path_to_device.Buffer);
+	kfree(dos_name.Buffer);
 
 	return 0;
 }
@@ -3516,9 +3518,11 @@ static int remove_dos_link(struct block_device *dev)
 	status = IoDeleteSymbolicLink(&dos_name);
 	if (status != STATUS_SUCCESS) {
 		printk("windrbd_mount: couldn't remove symlink %S status: %x\n", dos_name.Buffer, status);
+		kfree(dos_name.Buffer);
 		return -1;
 	}
 	printk("Removed symlink from %S to %S\n", dos_name.Buffer, dev->path_to_device.Buffer);
+	kfree(dos_name.Buffer);
 
 	return 0;
 }
