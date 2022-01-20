@@ -1,6 +1,18 @@
 Upcoming features
 -----------------
 
+Upgrade to DRBD 9.0.32
+
+What's new in version 1.0.0-rc20
+--------------------------------
+
+Fixed a bug that triggered invalid page chain assertion and lead to
+	connection abort at the beginning of sync. This also fixed
+	a hang when changing the role (primary / secondary) while
+	sync was going on.
+
+Fixed several memory leaks.
+
 What's new in version 1.0.0-rc19
 --------------------------------
 
