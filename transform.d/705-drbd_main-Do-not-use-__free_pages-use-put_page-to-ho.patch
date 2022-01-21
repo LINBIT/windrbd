@@ -12,15 +12,6 @@ diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
 index 5327d3a..5af21c2 100644
 --- a/drbd/drbd_main.c
 +++ b/drbd/drbd_main.c
-@@ -3011,7 +3011,7 @@ void drbd_destroy_device(struct kref *kref)
- 		free_peer_device(peer_device);
- 	}
- 
--	__free_page(device->md_io.page);
-+	put_page(device->md_io.page);
- 	device->vdisk = NULL;
- 	device->rq_queue = NULL;
- 	kref_debug_destroy(&device->kref_debug);
 @@ -3027,7 +3027,7 @@ static void free_page_pool(struct drbd_resource *resource)
  	while (resource->pp_pool) {
  		page = resource->pp_pool;

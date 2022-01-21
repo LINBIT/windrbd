@@ -1,0 +1,25 @@
+From 33e2c4e13ca952fdcd5c086566b7e6983b152b88 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 21 Jan 2022 17:50:58 +0100
+Subject: [PATCH] drbd_main: use put_page instead of __free_page
+
+---
+ drbd/drbd_main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index dd6256a..b30dc4e 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3005,7 +3005,7 @@ void drbd_destroy_device(struct kref *kref)
+ 		free_peer_device(peer_device);
+ 	}
+ 
+-	__free_page(device->md_io.page);
++	put_page(device->md_io.page);
+ 	kref_debug_destroy(&device->kref_debug);
+ 
+ 	INIT_WORK(&device->finalize_work, drbd_device_finalize_work_fn);
+-- 
+2.17.0
+
