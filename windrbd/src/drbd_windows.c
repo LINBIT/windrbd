@@ -1616,12 +1616,14 @@ void kobject_get(struct kobject *kobj)
 
 void del_gendisk(struct gendisk *disk)
 {
+#if 0
         if (disk != NULL) {
 		printk("freeing disk %p\n", disk);
                 if (disk->queue != NULL)
                         blk_cleanup_queue(disk->queue);
                 put_disk(disk);
         }
+#endif
 }
 
 //Linux/block/genhd.c
