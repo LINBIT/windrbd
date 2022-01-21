@@ -2830,9 +2830,33 @@ struct gendisk *alloc_disk(int minors)
 	return p;
 }
 
+
+struct gendisk *blk_alloc_disk(int unused)
+{
+	struct request_queue *q;
+	struct gendisk *disk;
+
+	q = blk_alloc_queue(unused);
+	if (!q)
+		return NULL;
+
+	disk = alloc_disk(0);
+	if (!disk) {
+		blk_cleanup_queue(q);
+		return NULL;
+	}
+	return disk;
+}
+
 void put_disk(struct gendisk *disk)
 {
 	kfree(disk);
+}
+
+void blk_cleanup_disk(struct gendisk *disk)
+{
+	blk_cleanup_queue(disk->queue);
+	put_disk(disk);
 }
 
 struct block_device *bdget_disk(struct gendisk *disk, int partno)
