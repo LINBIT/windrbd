@@ -2830,7 +2830,6 @@ struct gendisk *alloc_disk(int minors)
 	return p;
 }
 
-
 struct gendisk *blk_alloc_disk(int unused)
 {
 	struct request_queue *q;
@@ -2845,6 +2844,7 @@ struct gendisk *blk_alloc_disk(int unused)
 		blk_cleanup_queue(q);
 		return NULL;
 	}
+	disk->queue = q;
 	return disk;
 }
 
