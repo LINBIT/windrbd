@@ -1,0 +1,36 @@
+From ded4c2eb1f97f79e9fa6501b250fdab4790cad5f Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 21 Jan 2022 14:57:14 +0100
+Subject: [PATCH] drbd_transport.h: Reapply big pages interface to
+ drbd_alloc_pages and drbd_alloc_page_chain.
+
+---
+ drbd/drbd-headers/drbd_transport.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drbd/drbd-headers/drbd_transport.h b/drbd/drbd-headers/drbd_transport.h
+index 2ffdd45..9c850a5 100644
+--- a/drbd/drbd-headers/drbd_transport.h
++++ b/drbd/drbd-headers/drbd_transport.h
+@@ -253,15 +253,15 @@ extern bool drbd_should_abort_listening(struct drbd_transport *transport);
+ extern void drbd_path_event(struct drbd_transport *transport, struct drbd_path *path, bool destroyed);
+ 
+ /* drbd_receiver.c*/
+-extern struct page *drbd_alloc_pages(struct drbd_transport *, unsigned int, gfp_t);
++extern struct page *drbd_alloc_pages(struct drbd_transport *, unsigned int, gfp_t, int use_big_pages);
+ extern void drbd_free_pages(struct drbd_transport *transport, struct page *page, int is_net);
+ extern void drbd_control_data_ready(struct drbd_transport *transport, struct drbd_const_buffer *pool);
+ extern void drbd_control_event(struct drbd_transport *transport, enum drbd_tr_event);
+ 
+ static inline void drbd_alloc_page_chain(struct drbd_transport *t,
+-	struct drbd_page_chain_head *chain, unsigned int nr, gfp_t gfp_flags)
++	struct drbd_page_chain_head *chain, unsigned int nr, gfp_t gfp_flags, int use_big_pages)
+ {
+-	chain->head = drbd_alloc_pages(t, nr, gfp_flags);
++	chain->head = drbd_alloc_pages(t, nr, gfp_flags, use_big_pages);
+ 	chain->nr_pages = chain->head ? nr : 0;
+ }
+ 
+-- 
+2.17.0
+

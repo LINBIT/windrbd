@@ -18,24 +18,6 @@ diff --git a/drbd/drbd-headers/drbd_transport.h b/drbd/drbd-headers/drbd_transpo
 index 31f32b3..caca311 100644
 --- a/drbd/drbd-headers/drbd_transport.h
 +++ b/drbd/drbd-headers/drbd_transport.h
-@@ -240,13 +240,14 @@ extern bool drbd_should_abort_listening(struct drbd_transport *transport);
- extern void drbd_path_event(struct drbd_transport *transport, struct drbd_path *path);
- 
- /* drbd_receiver.c*/
--extern struct page *drbd_alloc_pages(struct drbd_transport *, unsigned int, gfp_t);
-+extern struct page *drbd_alloc_pages(struct drbd_transport *, unsigned int, gfp_t, int use_big_pages);
- extern void drbd_free_pages(struct drbd_transport *transport, struct page *page, int is_net);
- 
- static inline void drbd_alloc_page_chain(struct drbd_transport *t,
--	struct drbd_page_chain_head *chain, unsigned int nr, gfp_t gfp_flags)
-+	struct drbd_page_chain_head *chain, unsigned int nr, gfp_t gfp_flags,
-+        int use_big_pages)
- {
--	chain->head = drbd_alloc_pages(t, nr, gfp_flags);
-+	chain->head = drbd_alloc_pages(t, nr, gfp_flags, use_big_pages);
- 	chain->nr_pages = chain->head ? nr : 0;
- }
- 
 @@ -291,16 +292,8 @@ static inline void drbd_free_page_chain(struct drbd_transport *transport, struct
  /* grafted over struct page.lru */
  struct drbd_page_chain {
