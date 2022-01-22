@@ -36,95 +36,6 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
-TODO: Bug: various memory leaks
-
-Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 104, allocated by function fifo_alloc at drbd_sender.c:549.
-Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 56, allocated by function alloc_disk at ../../win4lin/src/drbd_windows.c:2425.
-Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 72, allocated by function blk_alloc_queue at ../../win4lin/src/drbd_windows.c:2415.
-n 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 104, allocated by function sock_create_linux_socket at ../../win4lin/src/windrbd_winsocket.c:1188.
-
-TODO: Test: Test sync while I/O (primary) with large volumes
-
-	It seems to be a test bug: first time it syncs the
-	whole machine which causes degraded performance. After
-	everything is synced WinDRBD behaves normally.
-	We should use oflag=direct or something for our tests.
-
-	File system reads (like ls /cygdrive/g) are blocked while
-	sync is in progress. But also for the c: drive (no WinDRBD)
-	Because this is an ATA disk? This disk is terribly slow
-	on the Server 2016 VMs.
-
-	drbdadm primary <res> hangs forever, see separate bug
-
-TODO: Bug: WinDRBD hangs in NetworkFailure
-
-	Peer Primary and about to bring disk online. Network
-	interruption and resource hangs in NetworkFailure,
-	drbdadm down hangs and later drbdadm status also.
-
-	Not clear if this is really a WinDRBD bug.
-
-	Update: I think it is ... hangs in NetworkFailure
-	for 7:30 minutes when peer is about to become
-	Primary.
-
-	However also sync hangs on this machine (without any
-	Primary WinDRBD resources).
-
-	Hangs in writing meta data (bitmap)?
-
-	Check if this is also an issue on 2019 machine (with
-	SCSI disks) - no
-
-TODO: Bug: drbdadm primary on SyncTarget hangs while syncing
-
-	Because backing disk is an ATA drive?
-
-	Hangs very long (about 30 minutes) but eventually I/O continues
-	(with an I/O error..) this is probably a lower level device
-	error / incompatibility (ATA driver/emulation?) 
-
-	TODO: check if it also an issue on that 2016 machine with
-	SCSI driver as backing disk.
-
-	TODO: test with disk-timeout set to 100 (10 seconds) see if
-	DRBD behaves correctly.
-
-TODO: Bug: invalid page chain and connection abort when starting sync
-
-	Reproduce: bring resources up invalidate one side so syncing starts
-	then on the SyncTarget side start primary / read fs / secondary 
-	loop then wait about 10-15 minutes.
-
-	Resources connect start sync but then abort:
-
-Jan 13 15:55:42 10.43.224.49  U15:55:42.610 (2738862898038/3579545)|82bf9720(drbd_r_fullsync-18tb) #4317 print_state_change drbd fullsync-18tb/1 minor 1 pnode-id:1, pdsk(Inconsistent), prpl(WFBitMapS), pdvflag(0xc00c00): repl( WFBitMapS -> SyncSource )
-Jan 13 15:55:42 10.43.224.49  [last message was in IRQ context or recursive]
-Jan 13 15:55:42 10.43.224.49  U15:55:42.610 (2738862898694/3579545)|82bfc5a0(drbd_w_fullsync-18tb) #4318 drbd_run_resync drbd fullsync-18tb/1 minor 1 pnode-id:1, pdsk(Inconsistent), prpl(SyncSource), pdvflag(0xc00c00): Began resync as SyncSource (will sync 19261048796 KB [4815262199 bits set]).
-Jan 13 15:55:42 10.43.224.50  U15:55:42.620 (2739147129950/3579545)|fe7ffb00(drbd_r_fullsync-18tb) #7066 call_usermodehelper User mode helper returned 0 (exit status is 0)
-Jan 13 15:55:42 10.43.224.50  U15:55:42.620 (2739147130390/3579545)|fe7ffb00(drbd_r_fullsync-18tb) #7067 drbd_khelper drbd fullsync-18tb/1 minor 1 pnode-id:0, pdsk(UpToDate), prpl(WFBitMapT), pdvflag(0xc00c00): helper command: /cygdrive/c/windrbd/usr/sbin/drbdadm before-resync-target exit code 0
-Jan 13 15:55:42 10.43.224.50  U15:55:42.620 (2739147130980/3579545)|fe7ffb00(drbd_r_fullsync-18tb) #7068 print_state_change drbd fullsync-18tb/1 minor 1 pnode-id:0, pdsk(UpToDate), prpl(WFBitMapT), pdvflag(0xc00c00): repl( WFBitMapT -> SyncTarget )
-Jan 13 15:55:42 10.43.224.50  [last message was in IRQ context or recursive]
-Jan 13 15:55:42 10.43.224.50  U15:55:42.620 (2739147131516/3579545)|dd6797a0(drbd_w_fullsync-18tb) #7069 drbd_run_resync drbd fullsync-18tb/1 minor 1 pnode-id:0, pdsk(UpToDate), prpl(SyncTarget), pdvflag(0xc00c00): Began resync as SyncTarget (will sync 19261048796 KB [4815262199 bits set]).
-Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863093106/3579545)|82bf9720(drbd_r_fullsync-18tb) #4319 drbd_submit_peer_request drbd fullsync-18tb/1 minor 1, ds(UpToDate), dvflag(0x0): invalid page chain: offset 0 size 0 remaining data_size 0
-n 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863093475/3579545)|82bf9720(drbd_r_fullsync-18tb) #4320 receive_DataRequest drbd fullsync-18tb/1 minor 1, ds(UpToDate), dvflag(0x0): submit failed, triggering re-connect
-Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863093656/3579545)|82bf9720(drbd_r_fullsync-18tb) #4321 drbdd drbd fullsync-18tb pnode-id:1, cs(Connected), prole(Secondary), cflag(0x20240e), scf(0x0): error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
-Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863093882/3579545)|82bf9720(drbd_r_fullsync-18tb) #4322 print_state_change drbd fullsync-18tb pnode-id:1, cs(Connected), prole(Secondary), cflag(0x20240e), scf(0x21): conn( Connected -> ProtocolError ) peer( Secondary -> Unknown )
-Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863093952/3579545)|82bf9720(drbd_r_fullsync-18tb) #4323 print_state_change drbd fullsync-18tb/1 minor 1 pnode-id:1, pdsk(Inconsistent), prpl(SyncSource), pdvflag(0xc00c00): repl( SyncSource -> Off )
-Jan 13 15:55:42 10.43.224.49  [last 2 messages were in IRQ context or recursive]
-Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863094210/3579545)|82bfac70(drbd_a_fullsync-18tb) #4324 drbd_ack_receiver drbd fullsync-18tb pnode-id:1, cs(ProtocolError), prole(Unknown), cflag(0x20200e), scf(0x0): ack_receiver terminated
-Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863094640/3579545)|82bfac70(drbd_a_fullsync-18tb) #4325 drbd_thread_setup drbd fullsync-18tb pnode-id:1, cs(ProtocolError), prole(Unknown), cflag(0x20200e), scf(0x1): Terminating ack_recv thread
-Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863094897/3579545)|82bf9ee0(drbd_s_fullsync-18tb) #4326 drbd_thread_setup drbd fullsync-18tb pnode-id:1, cs(ProtocolError), prole(Unknown), cflag(0x20240e), scf(0x1): Terminating sender thread
-
-	And loops forever.
-
-	This has been reported by a user.
-
-	Update: Probably a page of size > PAGE_SIZE is reused in
-	drbd_alloc_pages() and this causes the error to trigger.
-	(len gets 0 before all pages are iterated).
-
 TODOs for after Release 1.0 ----------------------------------------
 
 TODO: Code quality: Stop windrbdlog service after unloading driver
@@ -181,12 +92,6 @@ TODO: Code quality: Remove cmd scripts (all of them)
 TODO: Code quality: remove drivers from the driver store on uninstall
 
 TODO: Code quality: Fix drbd-utils compiler warnings
-
-TODO: Bug: Out of memory after 2 days of Primary/Secondary loop
-
-	There appears to be a memory leak.
-	Also out of memory after 7 days one side I/O other side
-	connect / disconnect (the I/O side runs out of memory)
 
 TODO: Feature: HLK tests should succeed (for Windows 2019)
 
@@ -7888,4 +7793,103 @@ Done: Code quality: Re-enable big pages patch.
 Done: Code quality: Re-enable WinDRBD device on booting
 
 Done: Feature: Merge windrbd-1.0.0-rc18-32 (jt/fix-worker-bsod branch)
+
+Done: Bug: various memory leaks
+
+Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 104, allocated by function fifo_alloc at drbd_sender.c:549.
+Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 56, allocated by function alloc_disk at ../../win4lin/src/drbd_windows.c:2425.
+Jan 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 72, allocated by function blk_alloc_queue at ../../win4lin/src/drbd_windows.c:2415.
+n 31 23:12:37 192.168.56.101  U22:12:36.089|05bea560(not_drbd_thread) dump_memory_allocations kmalloc_debug: Warning: memory leak of size 104, allocated by function sock_create_linux_socket at ../../win4lin/src/windrbd_winsocket.c:1188.
+
+Done: Test: Test sync while I/O (primary) with large volumes
+
+	It seems to be a test bug: first time it syncs the
+	whole machine which causes degraded performance. After
+	everything is synced WinDRBD behaves normally.
+	We should use oflag=direct or something for our tests.
+
+	File system reads (like ls /cygdrive/g) are blocked while
+	sync is in progress. But also for the c: drive (no WinDRBD)
+	Because this is an ATA disk? This disk is terribly slow
+	on the Server 2016 VMs.
+
+	drbdadm primary <res> hangs forever, see separate bug
+
+Done: Bug: WinDRBD hangs in NetworkFailure
+
+	Peer Primary and about to bring disk online. Network
+	interruption and resource hangs in NetworkFailure,
+	drbdadm down hangs and later drbdadm status also.
+
+	Not clear if this is really a WinDRBD bug.
+
+	Update: I think it is ... hangs in NetworkFailure
+	for 7:30 minutes when peer is about to become
+	Primary.
+
+	However also sync hangs on this machine (without any
+	Primary WinDRBD resources).
+
+	Hangs in writing meta data (bitmap)?
+
+	Check if this is also an issue on 2019 machine (with
+	SCSI disks) - no
+
+Done: Bug: drbdadm primary on SyncTarget hangs while syncing
+
+	Because backing disk is an ATA drive?
+
+	Hangs very long (about 30 minutes) but eventually I/O continues
+	(with an I/O error..) this is probably a lower level device
+	error / incompatibility (ATA driver/emulation?) 
+
+	TODO: check if it also an issue on that 2016 machine with
+	SCSI driver as backing disk.
+
+	Checked not an issue with SCSI backing disk.
+
+	TODO: test with disk-timeout set to 100 (10 seconds) see if
+	DRBD behaves correctly.
+
+Done: Bug: invalid page chain and connection abort when starting sync
+
+	Reproduce: bring resources up invalidate one side so syncing starts
+	then on the SyncTarget side start primary / read fs / secondary 
+	loop then wait about 10-15 minutes.
+
+	Resources connect start sync but then abort:
+
+Jan 13 15:55:42 10.43.224.49  U15:55:42.610 (2738862898038/3579545)|82bf9720(drbd_r_fullsync-18tb) #4317 print_state_change drbd fullsync-18tb/1 minor 1 pnode-id:1, pdsk(Inconsistent), prpl(WFBitMapS), pdvflag(0xc00c00): repl( WFBitMapS -> SyncSource )
+Jan 13 15:55:42 10.43.224.49  [last message was in IRQ context or recursive]
+Jan 13 15:55:42 10.43.224.49  U15:55:42.610 (2738862898694/3579545)|82bfc5a0(drbd_w_fullsync-18tb) #4318 drbd_run_resync drbd fullsync-18tb/1 minor 1 pnode-id:1, pdsk(Inconsistent), prpl(SyncSource), pdvflag(0xc00c00): Began resync as SyncSource (will sync 19261048796 KB [4815262199 bits set]).
+Jan 13 15:55:42 10.43.224.50  U15:55:42.620 (2739147129950/3579545)|fe7ffb00(drbd_r_fullsync-18tb) #7066 call_usermodehelper User mode helper returned 0 (exit status is 0)
+Jan 13 15:55:42 10.43.224.50  U15:55:42.620 (2739147130390/3579545)|fe7ffb00(drbd_r_fullsync-18tb) #7067 drbd_khelper drbd fullsync-18tb/1 minor 1 pnode-id:0, pdsk(UpToDate), prpl(WFBitMapT), pdvflag(0xc00c00): helper command: /cygdrive/c/windrbd/usr/sbin/drbdadm before-resync-target exit code 0
+Jan 13 15:55:42 10.43.224.50  U15:55:42.620 (2739147130980/3579545)|fe7ffb00(drbd_r_fullsync-18tb) #7068 print_state_change drbd fullsync-18tb/1 minor 1 pnode-id:0, pdsk(UpToDate), prpl(WFBitMapT), pdvflag(0xc00c00): repl( WFBitMapT -> SyncTarget )
+Jan 13 15:55:42 10.43.224.50  [last message was in IRQ context or recursive]
+Jan 13 15:55:42 10.43.224.50  U15:55:42.620 (2739147131516/3579545)|dd6797a0(drbd_w_fullsync-18tb) #7069 drbd_run_resync drbd fullsync-18tb/1 minor 1 pnode-id:0, pdsk(UpToDate), prpl(SyncTarget), pdvflag(0xc00c00): Began resync as SyncTarget (will sync 19261048796 KB [4815262199 bits set]).
+Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863093106/3579545)|82bf9720(drbd_r_fullsync-18tb) #4319 drbd_submit_peer_request drbd fullsync-18tb/1 minor 1, ds(UpToDate), dvflag(0x0): invalid page chain: offset 0 size 0 remaining data_size 0
+n 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863093475/3579545)|82bf9720(drbd_r_fullsync-18tb) #4320 receive_DataRequest drbd fullsync-18tb/1 minor 1, ds(UpToDate), dvflag(0x0): submit failed, triggering re-connect
+Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863093656/3579545)|82bf9720(drbd_r_fullsync-18tb) #4321 drbdd drbd fullsync-18tb pnode-id:1, cs(Connected), prole(Secondary), cflag(0x20240e), scf(0x0): error receiving P_RS_DATA_REQUEST, e: -5 l: 0!
+Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863093882/3579545)|82bf9720(drbd_r_fullsync-18tb) #4322 print_state_change drbd fullsync-18tb pnode-id:1, cs(Connected), prole(Secondary), cflag(0x20240e), scf(0x21): conn( Connected -> ProtocolError ) peer( Secondary -> Unknown )
+Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863093952/3579545)|82bf9720(drbd_r_fullsync-18tb) #4323 print_state_change drbd fullsync-18tb/1 minor 1 pnode-id:1, pdsk(Inconsistent), prpl(SyncSource), pdvflag(0xc00c00): repl( SyncSource -> Off )
+Jan 13 15:55:42 10.43.224.49  [last 2 messages were in IRQ context or recursive]
+Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863094210/3579545)|82bfac70(drbd_a_fullsync-18tb) #4324 drbd_ack_receiver drbd fullsync-18tb pnode-id:1, cs(ProtocolError), prole(Unknown), cflag(0x20200e), scf(0x0): ack_receiver terminated
+Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863094640/3579545)|82bfac70(drbd_a_fullsync-18tb) #4325 drbd_thread_setup drbd fullsync-18tb pnode-id:1, cs(ProtocolError), prole(Unknown), cflag(0x20200e), scf(0x1): Terminating ack_recv thread
+Jan 13 15:55:42 10.43.224.49  U15:55:42.657 (2738863094897/3579545)|82bf9ee0(drbd_s_fullsync-18tb) #4326 drbd_thread_setup drbd fullsync-18tb pnode-id:1, cs(ProtocolError), prole(Unknown), cflag(0x20240e), scf(0x1): Terminating sender thread
+
+	And loops forever.
+
+	This has been reported by a user.
+
+	Update: Probably a page of size > PAGE_SIZE is reused in
+	drbd_alloc_pages() and this causes the error to trigger.
+	(len gets 0 before all pages are iterated).
+
+	Update: Fixed with rc19-3
+
+Done: Bug: Out of memory after 2 days of Primary/Secondary loop
+
+	There appears to be a memory leak.
+	Also out of memory after 7 days one side I/O other side
+	connect / disconnect (the I/O side runs out of memory)
 

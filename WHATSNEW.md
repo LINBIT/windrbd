@@ -1,8 +1,6 @@
 Upcoming features
 -----------------
 
-Upgrade to DRBD 9.0.32
-
 What's new in version 1.0.0-rc20
 --------------------------------
 
@@ -12,6 +10,8 @@ Fixed a bug that triggered invalid page chain assertion and lead to
 	sync was going on.
 
 Fixed several memory leaks.
+
+Upgrade to DRBD 9.0.32
 
 What's new in version 1.0.0-rc19
 --------------------------------
