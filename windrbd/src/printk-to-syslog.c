@@ -429,10 +429,10 @@ int _printk(const char *func, const char *fmt, ...)
 	LARGE_INTEGER hr_timer, hr_frequency;
 	va_list args;
 	NTSTATUS status;
-	int hour, min, sec, msec, sec_day;
 	static int printks_in_irq_context = 0;
 	static int buffer_overflows = 0;
 	KIRQL flags;
+	struct _TIME_FIELDS time_fields;
 
 	buffer[0] = '\0';
 
@@ -457,11 +457,7 @@ int _printk(const char *func, const char *fmt, ...)
 	}
 
 	KeQuerySystemTime(&time);
-	sec_day = (time.QuadPart / (ULONG_PTR)1e7) % 86400;
-	sec = sec_day % 60;
-	min = (sec_day / 60) % 60;
-	hour = sec_day / 3600;
-	msec = (time.QuadPart / 10000) % (ULONG_PTR)1e3; // 100nsec to msec
+	RtlTimeToTimeFields(&time, &time_fields);
 
 	spin_lock_irqsave(&serial_number_lock, flags);
 	serial_number++;
@@ -470,8 +466,10 @@ int _printk(const char *func, const char *fmt, ...)
 	hr_timer = KeQueryPerformanceCounter(&hr_frequency);
 
 	pos = strlen(buffer);
-	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8x(%s) #%llu %s ",
-	    level, hour, min, sec, msec,
+	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8x(%s) #%llu %s ",
+	    level,
+	    time_fields.Day, time_fields.Month, time_fields.Year,
+	    time_fields.Hour, time_fields.Minute, time_fields.Second, time_fields.Milliseconds,
 	    hr_timer.QuadPart, hr_frequency.QuadPart,
 	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
 //	    ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
