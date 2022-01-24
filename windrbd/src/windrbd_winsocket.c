@@ -1517,10 +1517,8 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			if (socket->read_index == socket->write_index) {
 				if (socket->receive_buffer_full)
 					bytes_to_copy = socket->receive_buffer_size - socket->read_index;
-				else {
-					bytes_to_copy = 0;	/* invalid */
-					printk("Warning: buffer empty.\n");
-				}
+				else
+					bytes_to_copy = 0;
 			} else { /* read_index > write_index */
 				bytes_to_copy = socket->receive_buffer_size - socket->read_index;
 			}
@@ -1531,10 +1529,8 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			bytes_to_copy = len-return_buffer_index;
 		}
 
-		if (bytes_to_copy <= 0) {
-			printk("Warning: nothing to copy?\n");
+		if (bytes_to_copy <= 0)
 			continue;
-		}
 
 		memcpy(&((char*)vec[0].iov_base)[return_buffer_index], 
 			&socket->receive_buffer[socket->read_index],
