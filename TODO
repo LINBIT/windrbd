@@ -61,6 +61,13 @@ TODO: Code quality: Rewrite event log code
 	Do not split event messages.
 	Also log when in DISPATCH_LEVEL
 
+	Update: Difficult. struct _IO_ERROR_LOG_PACKET must not be
+	larger than 240 bytes (including the message in Unicode).
+	Is there a lesser broken interface?
+
+	Yes there is - ETW Event Tracing for Windows. But it is
+	complicated...
+
 TODO: Installer: Should not try to unload driver if remote booting
 
 	This actually would succeed (disconnect --force works but
