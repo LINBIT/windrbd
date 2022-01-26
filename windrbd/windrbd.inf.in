@@ -36,6 +36,17 @@ CopyFiles           = WinDRBD.DriverFiles
 [WinDRBD.NT.Services]
 AddService          = "WinDRBD", 2, WinDRBD.Service ; 2 ... Assign the named service as the PnP function driver (or legacy driver) for the device being installed by this INF
 
+;;
+;; Default uninstall sections
+;;
+
+[DefaultUninstall]
+DelFiles            = WinDRBD.DriverFiles
+DelReg              = WinDRBD.DelRegistry
+
+[DefaultUninstall.Services]
+DelService = WinDRBD
+
 ;
 ; Services Section
 ;
