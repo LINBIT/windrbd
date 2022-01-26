@@ -213,13 +213,14 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	KeInitializeEvent(&bus_ready_event, NotificationEvent, FALSE);
 
-/*
 	printk("NOT starting boot device\n");
-*/
+
+/*
 	printk("Attempting to start boot device\n");
 
 	windrbd_init_boot_device();
 	printk("Start boot device stage1 returned\n");
+*/
 
 	return_to_windows(current);
 
