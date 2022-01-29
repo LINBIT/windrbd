@@ -3,6 +3,9 @@
 #include <drbd_windows.h>	/* for printk */
 #include "windrbd_version.h"
 
+	/* undef this to disable driver unload */
+#define DRIVER_UNLOAD 1
+
 struct module windrbd_module = {
 	.version = WINDRBD_VERSION,
 	.refcnt = 0
