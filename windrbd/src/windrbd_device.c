@@ -2420,14 +2420,13 @@ dbg("Returned string is %S\n", string);
 
 			default:
 				dbg("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
-/*				status = irp->IoStatus.Status;
+				status = irp->IoStatus.Status;
 dbg("status is %x\n", status);
 				IoCompleteRequest(irp, IO_NO_INCREMENT);
 
 				num_pnp_requests--;
-*/
 				status = STATUS_NOT_IMPLEMENTED;
-//				return status;
+				return status;
 			}
 	/* forward to lower device: but what is the lower device (bus?) */
 #if 0
