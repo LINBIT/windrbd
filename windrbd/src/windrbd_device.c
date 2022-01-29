@@ -2425,7 +2425,6 @@ dbg("status is %x\n", status);
 				IoCompleteRequest(irp, IO_NO_INCREMENT);
 
 				num_pnp_requests--;
-				status = STATUS_NOT_IMPLEMENTED;
 				return status;
 			}
 	/* forward to lower device: but what is the lower device (bus?) */
