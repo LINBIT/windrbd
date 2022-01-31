@@ -36,7 +36,36 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real:
 
+TODO: Bug: System hang on unresponsive I/O
+
+	Happens on OpenNebula VM when RAID balancer is running (and
+	I/O is slow). Happens during 'normal' I/O (writing 40GB files)
+	on the Primary side.
+
+	Found 2 solution canidates:
+		.) wait_for_sendbuf should terminate when there is an
+		   socket error (like reset by peer in our case).
+		   wait_for_sendbuf (DRBD sender thread) hung forever.
+
+		.) Also signals received by receiver should be forwarded
+		   to the receiver thread. Right now it may hang forever.
+
+
+		.) Also: kernel_recv_msg should return -EINTR on signal
+		   receive? Else ack receiver does something else ...
+
+	Now try to increase bug event (right now only once a week).
+
+	Update: Found that same image is used for both VMs as backing
+	storage so maybe that is the cause? But WinDRBD even then shouldn't
+	hang the system ...
+
 TODOs for after Release 1.0 ----------------------------------------
+
+TODO: Code quality: WinDRBD umhelper shouldn't poll.
+
+	Instead ioctl should return only when there is a user mode
+	event.
 
 TODO: Code quality: Stop windrbdlog service after unloading driver
 

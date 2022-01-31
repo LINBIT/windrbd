@@ -531,6 +531,8 @@ srv*;Y:\windrbd-backing-dev-cache\windrbd\windrbd\src;Y:\windrbd-backing-dev-cac
 
 srv*;Y:\windrbd-1.0.0-rc13-45\windrbd\src;Y:\windrbd-1.0.0-rc13-45\converted-sources\drbd
 
+srv*;Y:\windrbd-1.1-branch\windrbd\windrbd\src;Y:\windrbd-1.1-branch\windrbd\converted-sources\drbd
+
 Set the homedir:
 
 !homedir C:\Windows\Temp
@@ -894,3 +896,15 @@ net debug each other ...
 
 windbg -k net:port=50001,key=1wjw9rosga3jy.p1udlipefkas.u2pwjrtgy1g4.rxx8mttfmsdk
 
+-----
+
+Install HLK Client
+
+net use w: '\\10.43.6.194\HLKInstall'
+w:
+cd Client
+set TEMP='C:\Windows\Temp'
+set TMP='C:\Windows\Temp'
+setup.cmd
+
+Open TCP/IP Port 1771 (or disable firewall)
