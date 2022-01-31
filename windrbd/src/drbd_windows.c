@@ -3647,6 +3647,10 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 		 * request.
 		 */
 
+	if (windrbd_rescan_bus() < 0) {
+		printk("Warning: couldn't rescan bus, is there a bus device object at all?\n");
+	}
+
 	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
 		LARGE_INTEGER eject_timeout;
 		NTSTATUS status;
