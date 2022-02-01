@@ -3566,6 +3566,7 @@ int windrbd_create_windows_device(struct block_device *bdev)
 
 	KeClearEvent(&bdev->device_started_event);
 	KeClearEvent(&bdev->device_ejected_event);
+	KeClearEvent(&bdev->bus_device_iterated);
 
 		/* By default, this creates an object accessible only
 		 * by the Administrator user from user space. If this
@@ -3716,6 +3717,7 @@ block_device->my_auto_promote = 1;
 	KeInitializeEvent(&block_device->device_removed_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->device_started_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->device_ejected_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&block_device->bus_device_iterated, NotificationEvent, FALSE);
 	spin_lock_init(&block_device->complete_request_spinlock);
 
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);

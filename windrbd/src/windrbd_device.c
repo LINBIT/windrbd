@@ -1860,6 +1860,10 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 				dbg("windows device at %p\n", drbd_device->this_bdev->windows_device);
 				count++;
 			}
+			if (drbd_device && drbd_device->this_bdev && drbd_device->this_bdev->delete_pending) {
+				dbg("Found blockdev about to be deleted ...\n");
+				KeSetEvent(&drbd_device->this_bdev->bus_device_iterated, 0, FALSE);
+			}
 		}
 	}
 	dbg("%d drbd windows devices found\n", count);
@@ -2572,8 +2576,11 @@ dbg("status is %x\n", status);
 
 				if (windrbd_rescan_bus() < 0) {
 					printk("Warning: couldn't rescan bus, is there a bus device object at all?\n");
+				} else {
+					dbg("Waiting for bus device reporting us as deleted ...\n");
+					KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, NULL);
+					dbg("Ok ...\n");
 				}
-
 				status = STATUS_SUCCESS;
 				dbg("Returning SUCCESS\n");
 

@@ -565,6 +565,7 @@ struct block_device {
 	struct _KEVENT device_removed_event;	/* Set by REMOVE_DEVICE to signal bdput we're gone */
 	struct _KEVENT device_started_event; /* Set on receving IRP_MN_START_DEVICE PnP request (drbdadm primary waits for this) */
 	struct _KEVENT device_ejected_event; /* Set on receving IRP_MN_EJECT_DEVICE PnP request (drbdadm secondary waits for this) */
+	struct _KEVENT bus_device_iterated; /* Set on bus device receving IRP_QUERY_DEVICE_RELATIONS PnP request for a to be deleted blockdev (drbdadm secondary waits for this) */
 
 	/* Used for debugging handle leaks */
 	int num_openers;
