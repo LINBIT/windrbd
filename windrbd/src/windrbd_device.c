@@ -2301,8 +2301,13 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			dbg("Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
 // printk("minor is %d\n", minor);
 			if (minor < 0) {
-				status = STATUS_INVALID_DEVICE_REQUEST;
-				break;
+				dbg("minor is %d, QUERY_ID not supported.\n", minor);
+				status = irp->IoStatus.Status;
+				dbg("status is %x\n", status);
+
+				IoCompleteRequest(irp, IO_NO_INCREMENT);
+				num_pnp_requests--;
+				return status;
 			}
 #define MAX_ID_LEN 512
 			string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), 'DRBD');
