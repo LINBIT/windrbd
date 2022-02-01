@@ -2345,10 +2345,14 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				case -1:
 					return STATUS_NOT_SUPPORTED;
 */
-				default: /* -1, 5 ... */
-dbg("do not understand type %d\n", s->Parameters.QueryId.IdType);
+				default: /* -1, ... */
 					ExFreePool(string);
-					goto forward_to_bus;
+
+					status = irp->IoStatus.Status;
+dbg("status is %x\n", status);
+					IoCompleteRequest(irp, IO_NO_INCREMENT);
+					num_pnp_requests--;
+					return status;
 				}
 			}
 			if (status == STATUS_SUCCESS) {
@@ -2682,7 +2686,6 @@ dbg("status is %x\n", status);
 		default:
 			dbg("got unimplemented minor %x for disk object\n", s->MinorFunction);
 
-forward_to_bus:
 				/* probably not a good idea? */
 			if (drbd_bus_device != NULL) {
 // printk("irp status is %x\n", irp->IoStatus.Status);
