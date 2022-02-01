@@ -2564,6 +2564,16 @@ dbg("status is %x\n", status);
 				 * seconary/down.
 				 */
 			if (bdev->delete_pending) {
+
+		/* Tell the PnP manager that we are about to disappear.
+		 * The device object will be deleted in a PnP REMOVE_DEVICE
+		 * request.
+		 */
+
+				if (windrbd_rescan_bus() < 0) {
+					printk("Warning: couldn't rescan bus, is there a bus device object at all?\n");
+				}
+
 				status = STATUS_SUCCESS;
 				dbg("Returning SUCCESS\n");
 

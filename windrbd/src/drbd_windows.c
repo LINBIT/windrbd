@@ -3642,15 +3642,6 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 
 	remove_dos_link(bdev);
 
-		/* Tell the PnP manager that we are about to disappear.
-		 * The device object will be deleted in a PnP REMOVE_DEVICE
-		 * request.
-		 */
-
-	if (windrbd_rescan_bus() < 0) {
-		printk("Warning: couldn't rescan bus, is there a bus device object at all?\n");
-	}
-
 	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
 		LARGE_INTEGER eject_timeout;
 		NTSTATUS status;
