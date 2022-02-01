@@ -2577,9 +2577,6 @@ dbg("status is %x\n", status);
 				if (windrbd_rescan_bus() < 0) {
 					printk("Warning: couldn't rescan bus, is there a bus device object at all?\n");
 				} else {
-					dbg("Waiting for bus device reporting us as deleted ...\n");
-					KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, NULL);
-					dbg("Ok ...\n");
 				}
 				status = STATUS_SUCCESS;
 				dbg("Returning SUCCESS\n");
@@ -2626,6 +2623,10 @@ dbg("status is %x\n", status);
 					IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
 					IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
+
+					dbg("Waiting for bus device reporting us as deleted ...\n");
+					KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, NULL);
+					dbg("Ok ...\n");
 				} else {
 					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
 				}
