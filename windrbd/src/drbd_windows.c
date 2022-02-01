@@ -3665,6 +3665,10 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 			dbg("waiting for device being removed via IRP_MN_REMOVE_DEVICE minor %d\n", bdev->drbd_device->minor);
 			KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
 			dbg("finished. minor %d\n", bdev->drbd_device->minor);
+/* TODO: also wait for bus_device_iterated? */
+			dbg("Now really deleting the device ...\n");
+			IoDeleteDevice(bdev->windows_device);
+			dbg("Done.\n");
 		}
 	} else {
 		printk("Not a PnP object, removing device manually.\n");

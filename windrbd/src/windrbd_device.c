@@ -2623,10 +2623,12 @@ dbg("status is %x\n", status);
 					IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
 					IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
+/*
 
 					dbg("Waiting for bus device reporting us as deleted ...\n");
 					KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, NULL);
 					dbg("Ok ...\n");
+*/
 				} else {
 					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
 				}
@@ -2638,12 +2640,11 @@ dbg("status is %x\n", status);
 				 */
 				bdev->ref = NULL;
 				device->DeviceExtension = NULL;
-				IoDeleteDevice(device);
 				if (bdev != NULL) {
 						/* To allow bdev being removed. */
 					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
 				}
-				dbg("device object deleted\n");
+				dbg("device object NOT deleted this should be done after bus rescan\n");
 			} else {
 				dbg("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
 			}
