@@ -1,6 +1,12 @@
 Upcoming features
 -----------------
 
+SecureBoot
+
+Base on DRBD 9.1
+
+LINSTOR support
+
 What's new in version 1.0.0-rc20
 --------------------------------
 
