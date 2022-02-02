@@ -34,7 +34,9 @@ TODOs for Release 1.0 ----------------------------------------------
 
 Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
-Real:
+Real: Februar 2 2022
+
+TODOs for after Release 1.0 ----------------------------------------
 
 TODO: Bug: System hang on unresponsive I/O
 
@@ -59,8 +61,6 @@ TODO: Bug: System hang on unresponsive I/O
 	Update: Found that same image is used for both VMs as backing
 	storage so maybe that is the cause? But WinDRBD even then shouldn't
 	hang the system ...
-
-TODOs for after Release 1.0 ----------------------------------------
 
 TODO: Code quality: WinDRBD umhelper shouldn't poll.
 
