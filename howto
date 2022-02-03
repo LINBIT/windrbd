@@ -908,3 +908,9 @@ set TMP='C:\Windows\Temp'
 setup.cmd
 
 Open TCP/IP Port 1771 (or disable firewall)
+
+------
+
+Device mapper delay target:
+
+echo "0 `blockdev --getsz /dev/mapper/slow_green-jt--delay--backingdev` delay /dev/mapper/slow_green-jt--delay--backingdev 0 500" | dmsetup create delayed
