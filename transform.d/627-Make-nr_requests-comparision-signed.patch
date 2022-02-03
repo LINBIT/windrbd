@@ -19,13 +19,12 @@ diff --git a/drbd/drbd_req.c b/drbd/drbd_req.c
 index 61c27f4..cc0d36a 100644
 --- a/drbd/drbd_req.c
 +++ b/drbd/drbd_req.c
-@@ -1910,7 +1910,7 @@ out:
+@@ -1910,6 +1910,6 @@ out:
  static bool inc_ap_bio_cond(struct drbd_device *device, int rw)
  {
  	bool rv = false;
 -	unsigned int nr_requests;
 +	int nr_requests;
- 	int flags;
  
  	if (test_bit(NEW_CUR_UUID, &device->flags)) {
 -- 

@@ -29,15 +29,6 @@ index 155ce86..3e984e9 100644
  
  	spin_lock_irqsave(&resource->req_lock, flags);
  	if (rw == WRITE) {
-@@ -1857,7 +1857,7 @@ static bool inc_ap_bio_cond(struct drbd_device *device, int rw)
- {
- 	bool rv = false;
- 	int nr_requests;
--	int flags;
-+	KIRQL flags;
- 
- 	if (test_bit(NEW_CUR_UUID, &device->flags)) {
- 		if (!test_and_set_bit(WRITING_NEW_CUR_UUID, &device->flags))
 -- 
 2.17.0
 
