@@ -7,6 +7,16 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.0.0
+---------------------------
+
+Production readiness
+
+What's new in version 1.0.0-rc21
+--------------------------------
+
+Do not generate a new current UUID wile IO is frozen
+
 What's new in version 1.0.0-rc20
 --------------------------------
 
