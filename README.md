@@ -298,3 +298,4 @@ Version history
  * 1.0.0-rc20 (Jan 25, 2022): Upgrade to DRBD 9.0.32, Fixed invalid page chain
 			      bug and some memory leaks.
  * 1.0.0-rc21 (Feb 3, 2022): Do not generate a new current UUID wile IO is frozen
+ * 1.0.0 (Feb 4, 2022): Production ready release.
