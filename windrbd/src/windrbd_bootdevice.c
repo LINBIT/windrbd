@@ -521,7 +521,8 @@ char *copy_first_640k(void)
 		printk("Couldn't allocate mdl for physical pages.\n");
 		return NULL;
 	}
-	MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
+/* mdl->MdlFlags says that the pages are already locked ... */
+//	MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
 
 /* MmMapLockedPagesSpecifyCache */
 
@@ -553,7 +554,7 @@ char *copy_first_640k(void)
 	}
 	dbg("%d mappings failed\n", failed);
 
-	MmUnlockPages(mdl);
+/*	MmUnlockPages(mdl); */
 	MmFreePagesFromMdl(mdl);
 	ExFreePool(mdl);
 
