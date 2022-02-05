@@ -1292,6 +1292,23 @@ static void rtl_zero_memory_test(int argc, char ** argv)
 	printk("Still alive?\n");
 }
 
+	/* With driver verifier on or debugging this currently BSODs ... */
+
+extern char *copy_first_640k(void);
+
+static void io_map_test(int argc, char ** argv)
+{
+	char *mem;
+
+	printk("About to read first 640K of memory ...\n");
+	msleep(1000);
+	mem = copy_first_640k();
+
+	printk("Still alive?\n");
+	printk("mem is %p\n", mem);
+	kfree(mem);
+}
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1375,6 +1392,8 @@ void test_main(const char *arg)
 		double_free_test(argc, argv);
 	if (strcmp(argv[0], "rtl_zero_memory_test") == 0)
 		rtl_zero_memory_test(argc, argv);
+	if (strcmp(argv[0], "io_map_test") == 0)
+		io_map_test(argc, argv);
 
 kfree_argv:
 	kfree(argv);

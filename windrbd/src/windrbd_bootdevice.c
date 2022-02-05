@@ -502,7 +502,7 @@ struct acpi_header {
 	 * caller needs a free the buffer.
 	 */
 
-static char *copy_first_640k(void)
+char *copy_first_640k(void)
 {
 	LARGE_INTEGER addr;
 	void *p;
