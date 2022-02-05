@@ -510,6 +510,20 @@ char *copy_first_640k(void)
 	char *buf;
 	int failed = 0;
 	struct _MDL *mdl;
+	PHYSICAL_ADDRESS phys_addr, page_size;	/* is a LARGE_INTEGER */
+
+	phys_addr.QuadPart = 0;
+	page_size.QuadPart = PAGE_SIZE;
+
+	mdl = MmAllocatePagesForMdl(phys_addr, phys_addr, page_size, LOWER_MEM_LENGTH);
+
+	if (mdl == NULL) {
+		printk("Couldn't allocate mdl for physical pages.\n");
+		return NULL;
+	}
+	MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
+
+/* MmMapLockedPagesSpecifyCache */
 
 	buf = kmalloc(LOWER_MEM_LENGTH, GFP_KERNEL, 'DRBD');
 	if (buf == NULL)
@@ -538,6 +552,10 @@ char *copy_first_640k(void)
 		MmUnmapIoSpace(p, 0x1000);
 	}
 	dbg("%d mappings failed\n", failed);
+
+	MmUnlockPages(mdl);
+	MmFreePagesFromMdl(mdl);
+	ExFreePool(mdl);
 
 	return buf;
 }
