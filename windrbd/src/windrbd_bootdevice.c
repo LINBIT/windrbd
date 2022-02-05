@@ -515,24 +515,17 @@ char *copy_first_640k(void)
 	phys_addr.QuadPart = 0;
 	page_size.QuadPart = PAGE_SIZE;
 
+		/* TODO: zeros it? */
 	mdl = MmAllocatePagesForMdl(phys_addr, phys_addr, page_size, LOWER_MEM_LENGTH);
 
 	if (mdl == NULL) {
 		printk("Couldn't allocate mdl for physical pages.\n");
 		return NULL;
 	}
-/* mdl->MdlFlags says that the pages are already locked ... */
-//	MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
-
-/* MmMapLockedPagesSpecifyCache */
 
 	buf = kmalloc(LOWER_MEM_LENGTH, GFP_KERNEL, 'DRBD');
 	if (buf == NULL)
 		return NULL;
-
-/* TODO: driver verifier complains about pages not locked on
- * MmMapIoSpace().
- */
 
 	for (i=0;i<LOWER_MEM_LENGTH;i+=0x1000) {
 		addr.QuadPart = i;
@@ -543,6 +536,7 @@ char *copy_first_640k(void)
 				 * Our parameters are on mappable
 				 * pages, so ignore them.
 				 */
+printk("mapping at %x failed\n", i);
 			memset(buf+i, 0, 0x1000);
 			failed++;
 			continue;
@@ -552,9 +546,8 @@ char *copy_first_640k(void)
 
 		MmUnmapIoSpace(p, 0x1000);
 	}
-	dbg("%d mappings failed\n", failed);
+printk("%d mappings failed\n", failed);
 
-/*	MmUnlockPages(mdl); */
 	MmFreePagesFromMdl(mdl);
 	ExFreePool(mdl);
 
