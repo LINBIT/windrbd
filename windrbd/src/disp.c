@@ -41,6 +41,11 @@
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
 
+	/* Verifier BSOD on boot should be fixed we can read ACPI tables again.
+	 */
+
+#define START_BOOT_DEVICE 1
+
 void drbd_cleanup(void);
 void idr_shutdown(void);
 void shutdown_registry(void);
