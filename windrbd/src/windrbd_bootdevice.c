@@ -536,7 +536,7 @@ char *copy_first_640k(void)
 				 * Our parameters are on mappable
 				 * pages, so ignore them.
 				 */
-printk("mapping at %x failed\n", i);
+			dbg("mapping at %x failed\n", i);
 			memset(buf+i, 0, 0x1000);
 			failed++;
 			continue;
@@ -546,7 +546,7 @@ printk("mapping at %x failed\n", i);
 
 		MmUnmapIoSpace(p, 0x1000);
 	}
-printk("%d mappings failed\n", failed);
+	dbg("%d mappings failed\n", failed);
 
 	MmFreePagesFromMdl(mdl);
 	ExFreePool(mdl);
