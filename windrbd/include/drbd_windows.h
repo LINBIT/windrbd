@@ -1131,6 +1131,15 @@ extern void kobject_del(struct kobject *kobj);
 
 #ifdef KMALLOC_DEBUG
 #include "kmalloc_debug.h"
+
+/* Comment that out for production releases */
+
+#define kmem_cache_alloc(cache, flag) \
+	kzalloc(cache->element_size, flag, 'X123');
+
+#define kmem_cache_free(cache, obj) \
+	kfree(obj);
+
 #else
 /* TODO: flag probably gfp_t */
 extern void * kcalloc(int e_count, int x, int flag, ULONG Tag);

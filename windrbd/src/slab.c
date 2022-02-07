@@ -1,6 +1,9 @@
 #include <linux/slab.h>
 #include "drbd_windows.h"
 
+#undef kmem_cache_alloc
+#undef kmem_cache_free
+
 struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align,
 				     unsigned long flags,
 				     void (*ctor)(void *), ULONG tag)

@@ -16,7 +16,9 @@ struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align
 void kmem_cache_destroy(struct kmem_cache *cache);
 
 
+#if 0
 void *kmem_cache_alloc(void *cache, int flag);
 void kmem_cache_free(void *cache, void *obj);
+#endif
 
 #endif
