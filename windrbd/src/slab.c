@@ -24,15 +24,22 @@ void kmem_cache_destroy(struct kmem_cache *cache)
 
 void *kmem_cache_alloc(struct kmem_cache * cache, int flag)
 {
+	void *p;
+
+	p = kzalloc(cache->element_size, flag, 'X123');
+	return p;
+/*
 	void *p = ExAllocateFromNPagedLookasideList(&cache->l);
 	if (p != NULL)
 		RtlZeroMemory(p, cache->element_size);
 
 	return p;
+*/
 }
 
 void kmem_cache_free(struct kmem_cache * cache, void *obj)
 {
 //	memset(obj, 'y', cache->element_size);
-	ExFreeToNPagedLookasideList(&cache->l, obj);
+//	ExFreeToNPagedLookasideList(&cache->l, obj);
+	kfree(obj);
 }
