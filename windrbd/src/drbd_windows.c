@@ -3129,13 +3129,20 @@ int resolve_ascii_path(const char *path, UNICODE_STRING *path_to_device)
 	ANSI_STRING apath;
 	UNICODE_STRING link_name;
 	NTSTATUS status;
+	int ret = 0;
 
 	RtlInitAnsiString(&apath, path);
 	status = RtlAnsiStringToUnicodeString(&link_name, &apath, TRUE);
+	if (status != STATUS_SUCCESS) {
+		printk(KERN_ERR "Cannot allocate unicode device name.\n");
+		return -ENOMEM;
+	}
 
 	path_to_device->Buffer = kmalloc(sizeof(WCHAR) * 1024, 0, 'BDRX');
 	if (path_to_device->Buffer == NULL) {
 		printk(KERN_ERR "Cannot allocate device name.\n");
+
+		RtlFreeUnicodeString(&link_name);
 		return -ENOMEM;
 	}
 
@@ -3145,9 +3152,11 @@ int resolve_ascii_path(const char *path, UNICODE_STRING *path_to_device)
 	printk("Link is %S\n", link_name.Buffer);
 	if (resolve_nt_kernel_link(&link_name, path_to_device) != STATUS_SUCCESS) {
 		printk("Could not resolve link.\n");
-		return -EINVAL;
+		ret = -EINVAL;
 	}
-	return 0;
+	RtlFreeUnicodeString(&link_name);
+
+	return ret;
 }
 
 static struct _DEVICE_OBJECT *find_windows_device(UNICODE_STRING *path, struct _FILE_OBJECT ** file_object)
