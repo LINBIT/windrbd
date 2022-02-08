@@ -34,9 +34,41 @@ TODOs for Release 1.0 ----------------------------------------------
 
 Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
-Real: Februar 2 2022
+Real: February 2 2022
 
 TODOs for after Release 1.0 ----------------------------------------
+
+TODO: Code quality: Do not have separate cmd scripts for each build environment
+
+TODO: Code quality: One should not need to create their own keys on building WinDRBD
+
+	Checkin self signed keys? But talk to Phil first.
+	Or: teach the Makefile how to generate those keys.
+
+TODO: Feature: HLK tests should succeed (for Windows 2019)
+
+TODO: Nice to have: Make it build under Windows only
+
+	Done: install ocaml for CygWin
+	In progress: Cross compile conccinelle for CygWin
+		If possible, do not try to fix too many things.
+		Update: compiles but does not link currently
+	TODO: make should build everything under Windows
+
+TODO: Code quality: Undef kmalloc debug.
+
+	Right now we allocate extra 256 bytes for each memory chunk.
+	Also undef BIO_REF_DEBUG / BIO_ALLOC_DEBUG
+	And of course SPIN_LOCK_DEBUG ... Remove this code completely.
+	It has done a good job but is now obsolete.
+	Also remove all spinlock functions except spin_lock_irqsave().
+
+TODO: Feature: Installer: do not attempt to reload driver if booting via WinDRBD
+
+	This does not work. Right now it is not possible to install newer
+	WinDRBD via installer (remove-bus-device will not work).
+
+TODO: Code quality: Review drbd_wrappers.h - still needed?
 
 TODO: Bug: System hang on unresponsive I/O
 
@@ -62,6 +94,13 @@ TODO: Bug: System hang on unresponsive I/O
 	storage so maybe that is the cause? But WinDRBD even then shouldn't
 	hang the system ...
 
+	Hangs (?) in wait_for_sendbuf (but this has a timeout, right?)
+	Instrument code with printk's and retest.
+
+TODO: Test: IPv6
+
+	Doesn't work, but this might be an Ubuntu issue.
+
 TODO: Code quality: WinDRBD umhelper shouldn't poll.
 
 	Instead ioctl should return only when there is a user mode
@@ -73,6 +112,9 @@ TODO: Code quality: Stop windrbdlog service after unloading driver
 
 TODO: Nice to have: Also quit running drbdsetup events2 on update.
 
+	This would break 'Linux compatibility' ... but I think we
+	shouldn't care.
+
 TODO: Code quality: Remove bio->master_bio logic
 
 TODO: Code quality: Write to eventlog delayed.
@@ -81,28 +123,17 @@ TODO: Code quality: Write to eventlog delayed.
 
 	Do this for 1.0.1
 
+	We should rewrite the event logging code for using
+	Event tracing for Windows (EWT), see
+
+	https://docs.microsoft.com/en-us/windows-hardware/drivers/devtest/adding-event-tracing-to-kernel-mode-drivers
+
 TODO: Code quality: Disks should always be online on drbdadm primary
 
 	Sometimes they are offline, not clear why ...
 
-TODO: Code quality: Rewrite event log code
-
-	Do not split event messages.
-	Also log when in DISPATCH_LEVEL
-
-	Update: Difficult. struct _IO_ERROR_LOG_PACKET must not be
-	larger than 240 bytes (including the message in Unicode).
-	Is there a lesser broken interface?
-
-	Yes there is - ETW Event Tracing for Windows. But it is
-	complicated...
-
-TODO: Installer: Should not try to unload driver if remote booting
-
-	This actually would succeed (disconnect --force works but
-	WinDRBD boot drive resource is not in the config - it is
-	configured via iPXE URL, which causes disconnect all not
-	to include it).
+	Not sure if we want this. They become offline when a new
+	driver version is installed.
 
 TODO: Code quality: sc stop windrbd sometimes fails
 
@@ -118,52 +149,15 @@ TODO: Code quality: sc stop windrbd sometimes fails
 	2021-10-22 13:56:22.631   Directory for uninstall files: C:\Program Files\WinDRBD^M
 	2021-10-22 13:56:22.662   Will append to existing uninstall log: C:\Program Files\WinDRBD\unins000.dat^M
 
+	Didn't observe this lately, still an issue?
+
 TODO: Code quality: Remove cmd scripts (all of them)
 
 TODO: Code quality: remove drivers from the driver store on uninstall
 
+	Not sure if we want this.
+
 TODO: Code quality: Fix drbd-utils compiler warnings
-
-TODO: Feature: HLK tests should succeed (for Windows 2019)
-
-TODO: Bug: Verifier BSOD on sync.
-
-	Bug check 0xC4: DRIVER_VERIFIER_DETECTED_VIOLATION
-	0xB8: The pages that are described by the MDL are still mapped.
-	The driver must unmap the pages before calling IoFreeMdl.
-
-	Usually not a problem since one should not run WinDRBD with
-	verifier on (at least for now).
-
-TODO: Bug: Verifier BSOD 0xC9 on Primary/Secondary Loop.
-
-	suberror is 0x221.
-
-	0x221 Fatal error
-
-	An IRP dispatch handler for a PDO has deleted its device object, but the hardware has not been reported as missing in a bus relations query.
-
-	Param 2 - The address in the driver's code where the error was detected.
-
-	Param 3 - IRP address.
-
-	Param 4 - Device object address.
-
-TODO: Bug: PNP BSOD on surprise removal test.
-
-	PNP_DETECTED_FATAL_ERROR (no logs)
-
-	Bug on CHAOS #1 test: PNP_DETECTED_FATAL_ERROR
-
-Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019742869/3579545)|7edfe6a0(pnp) #3634520 windrbd_pnp_bus_device 2
-Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019743419/3579545)|7edfe6a0(pnp) #3634521 windrbd_pnp_bus_device 3
-Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019744020/3579545)|7edfe6a0(pnp) #3634522 get_all_drbd_device_objects windows device at FFFFB50F7C9DDB50
-Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019744554/3579545)|7edfe6a0(pnp) #3634523 get_all_drbd_device_objects 1 drbd windows devices found
-Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019745074/3579545)|7edfe6a0(pnp) #3634524 windrbd_pnp_bus_device 4
-Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019745640/3579545)|7edfe6a0(pnp) #3634525 windrbd_pnp_bus_device 5
-Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019746774/3579545)|7edfe6a0(pnp) #3634526 windrbd_pnp_bus_device 6
-Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019747296/3579545)|7edfe6a0(pnp) #3634527 windrbd_pnp_bus_device 7
-Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019747804/3579545)|7edfe6a0(pnp) #3634528 windrbd_pnp_bus_device 8
 
 TODO: Feature: Use next generation crypto API for secure handshake.
 
@@ -193,6 +187,8 @@ TODO: Bug: Primary detaches when secondary hard fails.
 
 	Reported by: Abhishek Jain <abhishek@maxisinfotech.com>
 
+	Still an issue?
+
 TODO: Bug: Several issues with 3 nodes setups.
 
 	As reported by Henry Kellner, connection problems and
@@ -204,21 +200,6 @@ TODO: Bug: Several issues with 3 nodes setups.
 TODO: Code quality: Make boot device intentionally diskless
 
 	Diskless is red in drbdadm status
-
-TODO: Bug: BSOD in copy_first_640k
-
-	On Server 2016 this sometimes happens (when loading
-	the driver). Not sure yet why (because of the TCP/IP
-	duplicate completion bug workaround?)
-
-	It seems to happen only if the debugger is connected
-	(and on Windows Server 2016). Test if it also happens
-	without the duplicate completion detector.
-
-	Not sure if we want to fix this.
-
-	Update: need to fix this when one enables verify then
-	the machine won't boot any more.
 
 TODO: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
@@ -439,22 +420,10 @@ TODO: Feature: Set partition ID to 27 to hide partition
 
 TODOs for after Release 1.0 ----------------------------------------------
 
-TODO: Make it build under Windows only
-
-	Done: install ocaml for CygWin
-	In progress: Cross compile conccinelle for CygWin
-		If possible, do not try to fix too many things.
-		Update: compiles but does not link currently
-	TODO: make should build everything under Windows
-
 TODO: Feature: Understand SCSI addressing
 
 	Right now we just have TargetId, which limits minors to
 	255. What's a Lun and how many can there be?
-
-Rejected: Code quality: windrbd show-drive-in-explorer might take longer than 5 seconds
-
-	Not used any more
 
 TODO: Code quality: drbdsetup disconnect might take longer than 5 seconds
 
@@ -487,10 +456,6 @@ Feb 14 14:58:01 10.43.10.10  U13:57:59.490|083959c0(drbd_a_vamp-4nodes) drbd_ack
 
 	Most likely an upstream bug (try Linux/Linux). Not severe,
 	connection is re-established rightafter.
-
-Done: Code quality: restructure directory structure
-
-	have include and src directories.
 
 TODO: Bug: FIXME in bitmap code
 
@@ -531,10 +496,6 @@ TODO: Installation: Driver unload sometimes hangs when explorer window is open
 	Stops once explorer Window is closed (also was: Timeout on
 	windrbd remote-drive-in-explorer).
 
-TODO: Test: IPv6
-
-	Doesn't work, but this might be an Ubuntu issue.
-
 TODO: Implement: drbd-proxy-ctl should ignore WinDRBD devices
 
 	From Devin.
@@ -544,18 +505,6 @@ TODO: Upstream: NO_ERROR -> DRBD_NO_ERROR
 TODO: Upstream: Feature: show reason for going into StandAlone on status
 
 	So one knows if it is split brain or something else.
-
-TODO: Upstream: Feature: skip initial sync command.
-
-	something like drbdmeta option?
-
-TODO: Installation: Offer to remove C:\windrbd completely
-
-	Currently there is a panel, which is sometimes not seen
-	(when rebooting)
-
-TODO: Bug: Sometimes permissions of userland binaries are wrong
-	(causing service registration to fail)
 
 TODO: Feature: Does it work with Volumes spanning several HDDs?
 
@@ -582,11 +531,6 @@ TODO: Upstream: Fix 2 cygrunsrv bugs
 	Handle whitespace in PATH components correctly.
 	Find local installation even if moved to another dir.
 
-Done: Performance: Teach sync code to handle 1Meg pages.
-
-        For performance reasons. Right now data is split into
-        4K request (lots of them) which makes sync slow.
-
 TODO: Upstream: Quorum no on Linux with 2 node setup
 
 	Bug?
@@ -604,11 +548,6 @@ TODO: Implement: Have a ioctl to set user mode helper program
 	Update: We now can use the drbdadm from where the windrbd
 	binary lives (without ioctl, it is sufficient for now to
 	do that in user space).
-
-Done: Implement: Make drbd-utils relocateable
-
-	Currently hardcoded to C:\windrbd (in kernel and install scripts)
-	and configure parameter in userland.
 
 TODO: Upstream: drbdadm invalidate while primary and connected uptodate/uptodate does nothing.
 
@@ -6641,7 +6580,9 @@ Done: Bug: Random crashes (BSOD, ..) when running windrbd install-bus-device
 
 	Not observed lately, please re-open when it does happen again.
 
-Github: Bug: Sync hangs in WFBitMapT and protocol error receiving P_SIZES
+Done: Bug: Sync hangs in WFBitMapT and protocol error receiving P_SIZES
+
+	(also on github: https://github.com/LINBIT/windrbd/issues/7)
 
 	Primary (Windows 7) doing I/O Secondary (Linux) doing
 	disonnect-connect-wait-connected loop. After about 10
@@ -7928,4 +7869,114 @@ Done: Code quality: Also log date
 	WinDRBD is running so long that this matters
 
 Done: Code quality: Remove Warning: nothing to copy and buffer empty
+
+Duplicate: Code quality: Rewrite event log code
+
+	Do not split event messages.
+	Also log when in DISPATCH_LEVEL
+
+	Update: Difficult. struct _IO_ERROR_LOG_PACKET must not be
+	larger than 240 bytes (including the message in Unicode).
+	Is there a lesser broken interface?
+
+	Yes there is - ETW Event Tracing for Windows. But it is
+	complicated...
+
+Duplicate: Installer: Should not try to unload driver if remote booting
+
+	This actually would succeed (disconnect --force works but
+	WinDRBD boot drive resource is not in the config - it is
+	configured via iPXE URL, which causes disconnect all not
+	to include it).
+
+Done: Bug: Verifier BSOD on sync.
+
+	Bug check 0xC4: DRIVER_VERIFIER_DETECTED_VIOLATION
+	0xB8: The pages that are described by the MDL are still mapped.
+	The driver must unmap the pages before calling IoFreeMdl.
+
+	Usually not a problem since one should not run WinDRBD with
+	verifier on (at least for now).
+
+	Fixed in 1.1 branch (there everything works with driver verifier
+	on).
+
+Done: Bug: Verifier BSOD 0xC9 on Primary/Secondary Loop.
+
+	suberror is 0x221.
+
+	0x221 Fatal error
+
+	An IRP dispatch handler for a PDO has deleted its device object, but the hardware has not been reported as missing in a bus relations query.
+
+	Param 2 - The address in the driver's code where the error was detected.
+
+	Param 3 - IRP address.
+
+	Param 4 - Device object address.
+
+Done: Bug: PNP BSOD on surprise removal test.
+
+	PNP_DETECTED_FATAL_ERROR (no logs)
+
+	Bug on CHAOS #1 test: PNP_DETECTED_FATAL_ERROR
+
+Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019742869/3579545)|7edfe6a0(pnp) #3634520 windrbd_pnp_bus_device 2
+Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019743419/3579545)|7edfe6a0(pnp) #3634521 windrbd_pnp_bus_device 3
+Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019744020/3579545)|7edfe6a0(pnp) #3634522 get_all_drbd_device_objects windows device at FFFFB50F7C9DDB50
+Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019744554/3579545)|7edfe6a0(pnp) #3634523 get_all_drbd_device_objects 1 drbd windows devices found
+Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019745074/3579545)|7edfe6a0(pnp) #3634524 windrbd_pnp_bus_device 4
+Jul  8 17:15:13 10.43.6.235  U17:15:13.721 (11019745640/3579545)|7edfe6a0(pnp) #3634525 windrbd_pnp_bus_device 5
+Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019746774/3579545)|7edfe6a0(pnp) #3634526 windrbd_pnp_bus_device 6
+Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019747296/3579545)|7edfe6a0(pnp) #3634527 windrbd_pnp_bus_device 7
+Jul  8 17:15:13 10.43.6.235  U17:15:13.723 (11019747804/3579545)|7edfe6a0(pnp) #3634528 windrbd_pnp_bus_device 8
+
+Done: Bug: BSOD in copy_first_640k
+
+	On Server 2016 this sometimes happens (when loading
+	the driver). Not sure yet why (because of the TCP/IP
+	duplicate completion bug workaround?)
+
+	It seems to happen only if the debugger is connected
+	(and on Windows Server 2016). Test if it also happens
+	without the duplicate completion detector.
+
+	Not sure if we want to fix this.
+
+	Update: need to fix this when one enables verify then
+	the machine won't boot any more.
+
+Rejected: Code quality: windrbd show-drive-in-explorer might take longer than 5 seconds
+
+	Not used any more
+
+Done: Code quality: restructure directory structure
+
+	have include and src directories.
+
+Done: Upstream: Feature: skip initial sync command.
+
+	something like drbdmeta option?
+
+	This is now documented in user's guide (new-current-uuid --clear-bitmap)
+
+Rejected: Installation: Offer to remove C:\windrbd completely
+
+	Currently there is a panel, which is sometimes not seen
+	(when rebooting)
+
+Done: Performance: Teach sync code to handle 1Meg pages.
+
+        For performance reasons. Right now data is split into
+        4K request (lots of them) which makes sync slow.
+
+Done: Implement: Make drbd-utils relocateable
+
+	Currently hardcoded to C:\windrbd (in kernel and install scripts)
+	and configure parameter in userland.
+
+Done: Bug: Sometimes permissions of userland binaries are wrong
+	(causing service registration to fail)
+
+	Didn't observe this for a long time.
 
