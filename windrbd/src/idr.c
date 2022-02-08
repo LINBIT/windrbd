@@ -355,6 +355,7 @@ void idr_remove(struct idr *idp, int id)
 	}
 	while (idp->id_free_cnt >= IDR_FREE_MAX) {
 		p = alloc_layer(idp);
+printk("IDR about to free layer %p\n", p);
 		kmem_cache_free(idr_layer_cache, p);
 		return;
 	}
@@ -368,6 +369,7 @@ void idr_destroy(struct idr *idp)
 {
 	while (idp->id_free_cnt) {
 		struct idr_layer *p = alloc_layer(idp);
+printk("IDR about to free layer %p\n", p);
 		kmem_cache_free(idr_layer_cache, p);
 	}
 }
