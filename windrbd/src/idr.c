@@ -184,7 +184,9 @@ build_up:
 	p = idp->top;
 	layers = idp->layers;
 	if (!p) {
+printk("1\n");
 		p = alloc_layer(idp);
+printk("2 p is %p\n", p);
 		if (!p)
 			return -1;
 		layers = 1;
@@ -193,15 +195,18 @@ build_up:
 	* Add a new layer to the top of the tree if the requested
 	* id is larger than the currently allocated space.
 	*/
+printk("3\n");
 	while ((layers < (MAX_LEVEL - 1)) && (id >= (1 << (layers*IDR_BITS)))) {
 		layers++;
 		if (!p->count)
 			continue;
+printk("4\n");
 		if (!((new = alloc_layer(idp)) != 0)) {
 			/*
 			* The allocation failed.  If we built part of
 			* the structure tear it down.
 			*/
+printk("5\n");
 			KeAcquireSpinLock(&idp->lock, &oldIrql);
 			for (new = p; p && p != idp->top; new = p) {
 				p = p->ary[0];
@@ -213,17 +218,20 @@ build_up:
 			KeReleaseSpinLock(&idp->lock, oldIrql);
 			return -1;
 		}
+printk("6\n");
 		new->ary[0] = p;
 		new->count = 1;
 		if (p->bitmap == IDR_FULL)
 			__set_bit(0, &new->bitmap);
 		p = new;
 	}
+printk("7\n");
 	idp->top = p;
 	idp->layers = layers;
 	v = sub_alloc(idp, ptr, &id);
 	if (v == -2)
 		goto build_up;
+printk("8 v is %d\n", v);
 	return(v);
 }
 

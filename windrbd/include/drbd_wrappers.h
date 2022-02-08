@@ -1002,14 +1002,20 @@ static inline int idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_
 printk("IDR 1\n");
 	if (!idr_pre_get(idr, gfp_mask))
 		return -ENOMEM;
+printk("IDR 2\n");
 	rv = idr_get_new_above(idr, ptr, start, &got);
+printk("IDR 3 got is %d end is %d\n", got, end);
 	if (rv < 0)
 		return rv;
 
+printk("IDR 4\n");
 	if (got >= end) {
+printk("IDR 5a got is %d end is %d\n", got, end);
 		idr_remove(idr, got);
+printk("IDR 5\n");
 		return -ENOSPC;
 	}
+printk("IDR 6 got is %d end is %d\n", got, end);
 
 	return got;
 }
