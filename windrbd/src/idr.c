@@ -90,6 +90,7 @@ int idr_pre_get(struct idr *idp, gfp_t gfp_mask)
 		new = kmem_cache_alloc(idr_layer_cache, gfp_mask);
 		if (new == NULL)
 			return (0);
+printk("IDR new is %p\n", new);
 		free_layer(idp, new);
 	}
 	return (1);

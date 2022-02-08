@@ -999,6 +999,7 @@ static inline int idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_
 {
 	int rv, got;
 
+printk("IDR 1\n");
 	if (!idr_pre_get(idr, gfp_mask))
 		return -ENOMEM;
 	rv = idr_get_new_above(idr, ptr, start, &got);
