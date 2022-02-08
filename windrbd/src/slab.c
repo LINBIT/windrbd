@@ -1,9 +1,6 @@
 #include <linux/slab.h>
 #include "drbd_windows.h"
 
-#undef kmem_cache_alloc
-#undef kmem_cache_free
-
 struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align,
 				     unsigned long flags,
 				     void (*ctor)(void *), ULONG tag)
@@ -25,24 +22,20 @@ void kmem_cache_destroy(struct kmem_cache *cache)
 	kfree(cache);
 }
 
+#ifndef KMEM_CACHE_DEBUG
+
 void *kmem_cache_alloc(struct kmem_cache * cache, int flag)
 {
-	void *p;
-
-	p = kzalloc(cache->element_size, flag, 'X123');
-	return p;
-/*
 	void *p = ExAllocateFromNPagedLookasideList(&cache->l);
 	if (p != NULL)
 		RtlZeroMemory(p, cache->element_size);
 
 	return p;
-*/
 }
 
 void kmem_cache_free(struct kmem_cache * cache, void *obj)
 {
-//	memset(obj, 'y', cache->element_size);
-//	ExFreeToNPagedLookasideList(&cache->l, obj);
-	kfree(obj);
+	ExFreeToNPagedLookasideList(&cache->l, obj);
 }
+
+#endif
