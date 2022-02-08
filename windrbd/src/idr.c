@@ -31,6 +31,7 @@
 #include "linux/slab.h"
 #include "linux/bitops.h"
 
+/* TODO: no KeAcquireSpinLock -> spin_lock_irqsave() */
 
 static kmem_cache_t *idr_layer_cache = NULL;
 
@@ -39,12 +40,14 @@ static struct idr_layer *alloc_layer(struct idr *idp)
 	struct idr_layer *p;
 	KIRQL oldIrql;
 
+printk("before idp->id_free is %p idp->id_free_cnt is %d\n", idp->id_free, idp->id_free_cnt);
 	KeAcquireSpinLock(&idp->lock, &oldIrql);
 	if ((p = idp->id_free) != 0) {
 		idp->id_free = p->ary[0];
 		idp->id_free_cnt--;
 		p->ary[0] = NULL;
 	}
+printk("after idp->id_free is %p idp->id_free_cnt is %d\n", idp->id_free, idp->id_free_cnt);
 
 	KeReleaseSpinLock(&idp->lock, oldIrql);
 	return(p);
@@ -367,9 +370,10 @@ printk("IDR about to free layer %p\n", p);
 */
 void idr_destroy(struct idr *idp)
 {
+printk("idp->id_free_cnt is %d\n", idp->id_free_cnt);
 	while (idp->id_free_cnt) {
 		struct idr_layer *p = alloc_layer(idp);
-printk("IDR about to free layer %p\n", p);
+printk("IDR about to free layer %p idp->id_free_cnt is %d\n", p, idp->id_free_cnt);
 		kmem_cache_free(idr_layer_cache, p);
 	}
 }

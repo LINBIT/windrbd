@@ -23,6 +23,11 @@
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H
 
+/* Comment that out for production releases. It maps kmem caches to kmalloc
+   debug code so we can see who allocated memory.
+ */
+#define KMEM_CACHE_DEBUG 1
+
 /* Enable this (and recompile all) to enable bio reference debugging */
 #define BIO_REF_DEBUG 1
 
@@ -1134,11 +1139,15 @@ extern void kobject_del(struct kobject *kobj);
 
 /* Comment that out for production releases */
 
+#ifdef KMEM_CACHE_DEBUG
+
 #define kmem_cache_alloc(cache, flag) \
 	kzalloc(cache->element_size, flag, 'X123');
 
 #define kmem_cache_free(cache, obj) \
 	kfree(obj);
+
+#endif
 
 #else
 /* TODO: flag probably gfp_t */
