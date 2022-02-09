@@ -388,6 +388,7 @@ printk("IDR about to free layer %p idp->id_free_cnt is %d idp->num_allocated is 
 		idp->num_allocated--;
 		kmem_cache_free(idr_layer_cache, p);
 	}
+printk("IDR finished idp->id_free_cnt is %d idp->num_allocated is %d\n", idp->id_free_cnt, idp->num_allocated);
 }
 
 /**
