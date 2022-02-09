@@ -58,6 +58,7 @@ struct idr {
 	struct idr_layer *id_free;
 	int		  layers; /* only valid without concurrent changes */
 	int		  id_free_cnt;
+	int		  num_allocated;
 	KSPIN_LOCK	  lock;
 };
 

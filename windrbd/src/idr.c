@@ -94,6 +94,7 @@ int idr_pre_get(struct idr *idp, gfp_t gfp_mask)
 		if (new == NULL)
 			return (0);
 printk("IDR new is %p\n", new);
+		idp->num_allocated++;
 		free_layer(idp, new);
 	}
 	return (1);
@@ -368,6 +369,7 @@ printk("about to remove id %d\n", id);
 	while (idp->id_free_cnt >= IDR_FREE_MAX) {
 		p = alloc_layer(idp);
 printk("IDR about to free layer %p\n", p);
+		idp->num_allocated--;
 		kmem_cache_free(idr_layer_cache, p);
 		return;
 	}
@@ -380,9 +382,10 @@ printk("IDR about to free layer %p\n", p);
 void idr_destroy(struct idr *idp)
 {
 printk("idp->id_free_cnt is %d\n", idp->id_free_cnt);
-	while (idp->id_free_cnt) {
+	while (idp->num_allocated > 0) {
 		struct idr_layer *p = alloc_layer(idp);
-printk("IDR about to free layer %p idp->id_free_cnt is %d\n", p, idp->id_free_cnt);
+printk("IDR about to free layer %p idp->id_free_cnt is %d idp->num_allocated is %d\n", p, idp->id_free_cnt, idp->num_allocated);
+		idp->num_allocated--;
 		kmem_cache_free(idr_layer_cache, p);
 	}
 }
