@@ -351,6 +351,7 @@ void idr_remove(struct idr *idp, int id)
 {
 	struct idr_layer *p;
 
+printk("about to remove id %d\n", id);
 	/* Mask off upper bits we don't use for the search. */
 	id &= MAX_ID_MASK;
 
