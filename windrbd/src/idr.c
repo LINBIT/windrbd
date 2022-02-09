@@ -381,14 +381,16 @@ printk("IDR about to free layer %p\n", p);
 */
 void idr_destroy(struct idr *idp)
 {
+int num_frees = 0;
 printk("idp->id_free_cnt is %d\n", idp->id_free_cnt);
 	while (idp->num_allocated > 0) {
 		struct idr_layer *p = alloc_layer(idp);
 printk("IDR about to free layer %p idp->id_free_cnt is %d idp->num_allocated is %d\n", p, idp->id_free_cnt, idp->num_allocated);
 		idp->num_allocated--;
 		kmem_cache_free(idr_layer_cache, p);
+num_frees++;
 	}
-printk("IDR finished idp->id_free_cnt is %d idp->num_allocated is %d\n", idp->id_free_cnt, idp->num_allocated);
+printk("IDR finished idp->id_free_cnt is %d idp->num_allocated is %d num_freed is %d\n", idp->id_free_cnt, idp->num_allocated, num_frees);
 }
 
 /**
