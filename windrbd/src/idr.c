@@ -394,7 +394,8 @@ printk("IDR about to free layer %p idp->id_free_cnt is %d idp->num_allocated is 
 num_frees++;
 	}
 printk("idp->num_allocated %d elements still there\n", idp->num_allocated);
-	while (idp->num_allocated > 0) {
+	// while (idp->num_allocated > 0) {
+	while (1) {
 		id = 0;
 		p = idr_get_next(idp, &id);
 printk("before break: Found element %d pointer %p\n", id, p);
