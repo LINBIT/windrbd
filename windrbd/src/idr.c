@@ -40,14 +40,12 @@ static struct idr_layer *alloc_layer(struct idr *idp)
 	struct idr_layer *p;
 	KIRQL oldIrql;
 
-printk("before idp->id_free is %p idp->id_free_cnt is %d\n", idp->id_free, idp->id_free_cnt);
 	KeAcquireSpinLock(&idp->lock, &oldIrql);
 	if ((p = idp->id_free) != 0) {
 		idp->id_free = p->ary[0];
 		idp->id_free_cnt--;
 		p->ary[0] = NULL;
 	}
-printk("after idp->id_free is %p idp->id_free_cnt is %d\n", idp->id_free, idp->id_free_cnt);
 
 	KeReleaseSpinLock(&idp->lock, oldIrql);
 	return(p);
@@ -93,7 +91,6 @@ int idr_pre_get(struct idr *idp, gfp_t gfp_mask)
 		new = kmem_cache_alloc(idr_layer_cache, gfp_mask);
 		if (new == NULL)
 			return (0);
-printk("IDR new is %p\n", new);
 		idp->num_allocated++;
 		free_layer(idp, new);
 	}
@@ -185,9 +182,7 @@ build_up:
 	p = idp->top;
 	layers = idp->layers;
 	if (!p) {
-printk("1\n");
 		p = alloc_layer(idp);
-printk("2 p is %p\n", p);
 		if (!p)
 			return -1;
 		layers = 1;
@@ -196,18 +191,15 @@ printk("2 p is %p\n", p);
 	* Add a new layer to the top of the tree if the requested
 	* id is larger than the currently allocated space.
 	*/
-printk("3\n");
 	while ((layers < (MAX_LEVEL - 1)) && (id >= (1 << (layers*IDR_BITS)))) {
 		layers++;
 		if (!p->count)
 			continue;
-printk("4\n");
 		if (!((new = alloc_layer(idp)) != 0)) {
 			/*
 			* The allocation failed.  If we built part of
 			* the structure tear it down.
 			*/
-printk("5\n");
 			KeAcquireSpinLock(&idp->lock, &oldIrql);
 			for (new = p; p && p != idp->top; new = p) {
 				p = p->ary[0];
@@ -219,20 +211,17 @@ printk("5\n");
 			KeReleaseSpinLock(&idp->lock, oldIrql);
 			return -1;
 		}
-printk("6\n");
 		new->ary[0] = p;
 		new->count = 1;
 		if (p->bitmap == IDR_FULL)
 			__set_bit(0, &new->bitmap);
 		p = new;
 	}
-printk("7\n");
 	idp->top = p;
 	idp->layers = layers;
 	v = sub_alloc(idp, ptr, &id);
 	if (v == -2)
 		goto build_up;
-printk("8 v is %d\n", v);
 	return(v);
 }
 
@@ -352,7 +341,6 @@ void idr_remove(struct idr *idp, int id)
 {
 	struct idr_layer *p;
 
-printk("about to remove id %d\n", id);
 	/* Mask off upper bits we don't use for the search. */
 	id &= MAX_ID_MASK;
 
@@ -368,7 +356,6 @@ printk("about to remove id %d\n", id);
 	}
 	while (idp->id_free_cnt >= IDR_FREE_MAX) {
 		p = alloc_layer(idp);
-printk("IDR about to free layer %p\n", p);
 		idp->num_allocated--;
 		kmem_cache_free(idr_layer_cache, p);
 		return;
@@ -381,34 +368,26 @@ printk("IDR about to free layer %p\n", p);
 */
 void idr_destroy(struct idr *idp)
 {
-int num_frees = 0;
 	int id;
 	struct idr_layer *p;
 
-printk("idp is %p\n", idp);
-printk("idp->id_free_cnt is %d\n", idp->id_free_cnt);
+		/* Free all remaining layers not removed by caller.
+		 * This is how Linux behaves.
+		 */
+
 	while (1) {
 		id = 0;
 		p = idr_get_next(idp, &id);
-printk("before break: Found element %d pointer %p\n", id, p);
 		if (p == NULL)
 			break;
-printk("after break: Found element %d pointer %p into idr_remove now\n", id, p);
 		idr_remove(idp, id);
-num_frees++;
 	}
 
-printk("idp->id_free_cnt is %d\n", idp->id_free_cnt);
 	while (idp->id_free_cnt > 0) {
 		p = alloc_layer(idp);
-printk("IDR about to free layer %p idp->id_free_cnt is %d idp->num_allocated is %d\n", p, idp->id_free_cnt, idp->num_allocated);
 		idp->num_allocated--;
 		kmem_cache_free(idr_layer_cache, p);
-num_frees++;
 	}
-printk("idp->num_allocated %d elements still there\n", idp->num_allocated);
-	// while (idp->num_allocated > 0) {
-printk("IDR finished idp->id_free_cnt is %d idp->num_allocated is %d num_freed is %d\n", idp->id_free_cnt, idp->num_allocated, num_frees);
 }
 
 /**
@@ -541,7 +520,6 @@ void *idr_replace(struct idr *idp, void *ptr, int id)
 
 static void idr_cache_ctor(void * idr_layer, kmem_cache_t *idr_layer_cache, unsigned long flags)
 {
-// mem_printk("RtlZeroMemory %p %d\n", idr_layer, sizeof(struct idr_layer));
 	RtlZeroMemory(idr_layer, sizeof(struct idr_layer));
 }
 
@@ -564,7 +542,6 @@ static  int init_id_cache(void)
 void idr_init(struct idr *idp)
 {
 	init_id_cache();
-// mem_printk("memset %p 0 %d\n", idp, sizeof(struct idr));
 	memset(idp, 0, sizeof(struct idr));
 	KeInitializeSpinLock(&idp->lock);
 }
