@@ -397,9 +397,10 @@ printk("idp->num_allocated %d elements still there\n", idp->num_allocated);
 	while (idp->num_allocated > 0) {
 		id = 0;
 		p = idr_get_next(idp, &id);
+printk("before break: Found element %d pointer %p\n", id, p);
 		if (p == NULL)
 			break;
-printk("Found element %d pointer %p\n", id, p);
+printk("after break: Found element %d pointer %p\n", id, p);
 		idr_remove(idp, id);
 	}
 
