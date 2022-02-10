@@ -382,14 +382,27 @@ printk("IDR about to free layer %p\n", p);
 void idr_destroy(struct idr *idp)
 {
 int num_frees = 0;
+	int id;
+	struct idr_layer *p;
+
 printk("idp->id_free_cnt is %d\n", idp->id_free_cnt);
-	while (idp->num_allocated > 0) {
-		struct idr_layer *p = alloc_layer(idp);
+	while (idp->id_free_cnt > 0) {
+		p = alloc_layer(idp);
 printk("IDR about to free layer %p idp->id_free_cnt is %d idp->num_allocated is %d\n", p, idp->id_free_cnt, idp->num_allocated);
 		idp->num_allocated--;
 		kmem_cache_free(idr_layer_cache, p);
 num_frees++;
 	}
+printk("idp->num_allocated %d elements still there\n", idp->num_allocated);
+	while (idp->num_allocated > 0) {
+		id = 0;
+		p = idr_get_next(idp, &id);
+		if (p == NULL)
+			break;
+printk("Found element %d pointer %p\n", id, p);
+		idr_remove(idp, id);
+	}
+
 printk("IDR finished idp->id_free_cnt is %d idp->num_allocated is %d num_freed is %d\n", idp->id_free_cnt, idp->num_allocated, num_frees);
 }
 
