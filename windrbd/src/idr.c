@@ -385,6 +385,19 @@ int num_frees = 0;
 	int id;
 	struct idr_layer *p;
 
+printk("idp is %p\n", idp);
+printk("idp->id_free_cnt is %d\n", idp->id_free_cnt);
+	while (1) {
+		id = 0;
+		p = idr_get_next(idp, &id);
+printk("before break: Found element %d pointer %p\n", id, p);
+		if (p == NULL)
+			break;
+printk("after break: Found element %d pointer %p into idr_remove now\n", id, p);
+		idr_remove(idp, id);
+num_frees++;
+	}
+
 printk("idp->id_free_cnt is %d\n", idp->id_free_cnt);
 	while (idp->id_free_cnt > 0) {
 		p = alloc_layer(idp);
@@ -395,16 +408,6 @@ num_frees++;
 	}
 printk("idp->num_allocated %d elements still there\n", idp->num_allocated);
 	// while (idp->num_allocated > 0) {
-	while (1) {
-		id = 0;
-		p = idr_get_next(idp, &id);
-printk("before break: Found element %d pointer %p\n", id, p);
-		if (p == NULL)
-			break;
-printk("after break: Found element %d pointer %p\n", id, p);
-		idr_remove(idp, id);
-	}
-
 printk("IDR finished idp->id_free_cnt is %d idp->num_allocated is %d num_freed is %d\n", idp->id_free_cnt, idp->num_allocated, num_frees);
 }
 
