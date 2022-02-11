@@ -47,6 +47,9 @@ TODO: Code quality: One should not need to create their own keys on building Win
 
 TODO: Feature: HLK tests should succeed (for Windows 2019)
 
+	Right now there is a verifier BSOD on becoming secondary
+	on Server 2019 (but not on Windows 7).
+
 TODO: Nice to have: Make it build under Windows only
 
 	Done: install ocaml for CygWin

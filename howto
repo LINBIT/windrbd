@@ -914,3 +914,13 @@ Open TCP/IP Port 1771 (or disable firewall)
 Device mapper delay target:
 
 echo "0 `blockdev --getsz /dev/mapper/slow_green-jt--delay--backingdev` delay /dev/mapper/slow_green-jt--delay--backingdev 0 500" | dmsetup create delayed
+
+------
+
+Cygwin for ReactOS:
+
+https://morganwu277.github.io/2017/06/04/Setup-Cygwin-in-Windows-XP-2003/
+start setup with -X from command line (ignores signatures (*.sig) which do
+not exist in the archive. Then use 
+http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/circa/2016/08/30/104223
+as mirror (must have to add it manually)
