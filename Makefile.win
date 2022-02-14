@@ -49,6 +49,15 @@ EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
 
 # Name of the pfx file (without extension)
 KEY = linbit-2019
+
+ifeq ($(BUILD_ENV),jt-win7-32bit)
+export EWDK_BASE := c:\\Ewdk
+EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
+EWDK_VERSION := 10.0.15063.0
+EWDK_BIN := $(EWDK_KIT)\\bin\\x86
+
+# Name of the pfx file (without extension)
+KEY = linbit-ha
 PASSWD = ""
 
 WINDRBD_SOURCE = ..
@@ -213,8 +222,9 @@ WIN_CFLAGS += /Wv:18 # disable hides previous local declaration
 WIN_CFLAGS += /O2 # optimize for speed
 WIN_CFLAGS += /Oi # enable intrinsic functions
 WIN_CFLAGS += /Oy- # enable frame pointer omission
-# C_DEFINES += -D _X86_=1 -D i386=1 # 32bit
-C_DEFINES += -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64 # 64bit
+# TODO: move this to build env or some wordlength macro
+C_DEFINES += -D _X86_=1 -D i386=1 # 32bit
+# C_DEFINES += -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64 # 64bit
 C_DEFINES += -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15 
 # This makes Windows use NonPagedPoolNx instead of NonPagedPool for
 # memory allocations. This is needed to pass the code integrity tests
@@ -259,7 +269,8 @@ ifeq (V,1)
 WIN_CFLAGS += /showIncludes 
 endif
 
-C_DEFINES += -D _WIN64=1
+# TODO: remove this it is duplicate
+# C_DEFINES += -D _WIN64=1
 C_DEFINES += -D COMPAT_HAVE_BOOL_TYPE=1 # for "typedef bool" in drbd/linux/lru_cache.h
 # C_DEFINES += -D _AMD64_=1
 

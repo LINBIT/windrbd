@@ -162,6 +162,7 @@ static inline bool ktime_before(const ktime_t cmp1, const ktime_t cmp2)
 }
 
 #if BITS_PER_LONG < 64
+#if 0
 extern s64 __ktime_divns(const ktime_t kt, s64 div);
 static inline s64 ktime_divns(const ktime_t kt, s64 div)
 {
@@ -180,6 +181,7 @@ static inline s64 ktime_divns(const ktime_t kt, s64 div)
 		return __ktime_divns(kt, div);
 	}
 }
+#endif	/* 0 - it is not used in the DRBD source code. */
 #else /* BITS_PER_LONG < 64 */
 static inline s64 ktime_divns(const ktime_t kt, s64 div)
 {
@@ -192,6 +194,7 @@ static inline s64 ktime_divns(const ktime_t kt, s64 div)
 }
 #endif
 
+#if 0
 static inline s64 ktime_to_us(const ktime_t kt)
 {
 	return ktime_divns(kt, NSEC_PER_USEC);
@@ -211,6 +214,7 @@ static inline s64 ktime_ms_delta(const ktime_t later, const ktime_t earlier)
 {
 	return ktime_to_ms(ktime_sub(later, earlier));
 }
+#endif
 
 static inline ktime_t ktime_add_us(const ktime_t kt, const u64 usec)
 {
