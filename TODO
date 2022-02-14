@@ -48,7 +48,8 @@ TODO: Code quality: One should not need to create their own keys on building Win
 TODO: Feature: HLK tests should succeed (for Windows 2019)
 
 	Right now there is a verifier BSOD on becoming secondary
-	on Server 2019 (but not on Windows 7).
+	on Server 2019 (but not on Windows 7). Update: This has been fixed
+	meanwhile so currently no verifier BSODs known.
 
 TODO: Nice to have: Make it build under Windows only
 
