@@ -107,14 +107,38 @@ typedef int cpumask_var_t;
 
 #define BUILD_BUG_ON(expr)
 
+
 /* Undefined if input is zero.
  * http://lxr.free-electrons.com/source/include/linux/bitops.h#L215 */
-static inline int __ffs64(u64 i)
+static inline int __ffs(u64 i)
 {
 	ULONG index, found;
 
+#if BITS_PER_LONG == 32
+	found = _BitScanForward(&index, i);
+#else
 	found = _BitScanForward64(&index, i);
+#endif
 	return found ? index : 0;
+}
+
+/**
+ * __ffs64 - find first set bit in a 64 bit word
+ * @word: The 64 bit word
+ *
+ * On 64 bit arches this is a synonym for __ffs
+ * The result is not defined if no bits are set, so check that @word
+ * is non-zero before calling this.
+ */
+static inline ULONG_PTR __ffs64(u64 word)
+{
+#if BITS_PER_LONG == 32
+	if (((u32)word) == 0UL)
+		return __ffs((u32)(word >> 32)) + 32;
+#elif BITS_PER_LONG != 64
+#error BITS_PER_LONG not 32 or 64
+#endif
+	return __ffs((ULONG_PTR)word);
 }
 
 /* TODO: what does this? */
