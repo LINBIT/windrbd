@@ -66,6 +66,7 @@ int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait
 	size_t path_size, arg_size, env_size, total_size, total_size_of_helper;
 	char *buf;
 	NTSTATUS status;
+	int registry_timeout;
 	LARGE_INTEGER timeout;
 	int ret;
 	if (wait != UMH_WAIT_PROC) {
@@ -99,7 +100,8 @@ int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait
 	list_add(&new_request->list, &um_requests);
 	mutex_unlock(&request_mutex);
 
-	timeout.QuadPart = -10*1000*REQUEST_TIMEOUT_MS;
+	get_registry_int(L"user-mode-helper-timeout-ms", &registry_timeout, RETURN_TIMEOUT_MS);
+	timeout.QuadPart = -10*1000*registry_timeout;
 
 	status = KeWaitForSingleObject(&new_request->request_event, Executive, KernelMode, FALSE, &timeout);
 
