@@ -170,8 +170,8 @@ extern int atomic_xchg(atomic_t *v, int n);
 
 #define RELATIVE(wait) (-(wait))
 
-#define __init                  NTAPI
-#define __exit                  NTAPI
+#define __init
+#define __exit
 
 #define NANOSECONDS(nanos) \
 (((signed __int64)(nanos)) / 100L)

@@ -62,6 +62,25 @@ PASSWD = ""
 
 WINDRBD_SOURCE = ..
 DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
+
+CONFIG_32BIT = 1
+endif
+
+ifeq ($(BUILD_ENV),jt-win7-32bit-server2003)
+export EWDK_BASE := C:\\WinDDK
+EWDK_VERSION := 7600.16385.1
+EWDK_KIT := $(EWDK_BASE)\\$(EWDK_VERSION)
+EWDK_BIN := $(EWDK_KIT)\\bin\\x86
+
+# Name of the pfx file (without extension)
+KEY = linbit-ha
+PASSWD = ""
+
+WINDRBD_SOURCE = ..
+DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
+
+CONFIG_32BIT = 1
+DDK = 1
 endif
 
 # Linux build host running MSVC compiler using wine :)
@@ -133,6 +152,8 @@ PASSWD = ""
 
 WINDRBD_SOURCE = ..
 DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
+
+CONFIG_32BIT = 1
 endif
 
 ifeq ($(BUILD_ENV),jt-server2016)
@@ -198,10 +219,17 @@ endif
 # This is relative to the inno-setup directory
 DRIVER_DIR ?= converted-sources\\drbd
 
+ifdef DDK
+EWDK_INC := $(EWDK_KIT)\\inc\\ddk
+EWDK_LIB := $(EWDK_KIT)\\lib\\wnet\\i386
+else
 EWDK_INC := $(EWDK_KIT)\\Include
 EWDK_LIB := $(EWDK_KIT)\\Lib
+endif
+
 VC ?= /cygdrive/c/Windows/System32/cmd.exe /c ms-cl-$(BUILD_ENV).cmd
 MSBUILD ?= /cygdrive/c/Windows/System32/cmd.exe /c run-msbuild.cmd
+CERTMGR := "$(EWDK_BIN)/certmgr.exe"
 
 # /a      for debugging output
 
@@ -222,9 +250,13 @@ WIN_CFLAGS += /Wv:18 # disable hides previous local declaration
 WIN_CFLAGS += /O2 # optimize for speed
 WIN_CFLAGS += /Oi # enable intrinsic functions
 WIN_CFLAGS += /Oy- # enable frame pointer omission
-# TODO: move this to build env or some wordlength macro
+
+ifdef CONFIG_32BIT
 C_DEFINES += -D _X86_=1 -D i386=1 # 32bit
-# C_DEFINES += -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64 # 64bit
+else
+C_DEFINES += -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64 # 64bit
+endif
+
 C_DEFINES += -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15 
 # This makes Windows use NonPagedPoolNx instead of NonPagedPool for
 # memory allocations. This is needed to pass the code integrity tests
@@ -283,23 +315,44 @@ fPDB = $(patsubst %.c,%.pdb,$(1))
 
 WIN_LDFLAGS += /link # must be first!
 # Was:
-# WIN_LDFLAGS += /DRIVER:WDM /NODEFAULTLIB /ENTRY:DriverEntry
+# TODO: only 32 bit?
+WIN_LDFLAGS += /DRIVER:WDM /SUBSYSTEM:NATIVE /NODEFAULTLIB /ENTRY:DriverEntry
 # However this prevents the driver from being unloaded. We try
 # this now:
+<<<<<<< HEAD
 WIN_LDFLAGS += /DRIVER /SUBSYSTEM:WINDOWS /NODEFAULTLIB /ENTRY:DriverEntry
 # Commented out. Else cannot find __imp_KeGetCurrentIrql symbol on linking
 # WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x64/"
+=======
+# WIN_LDFLAGS += /DRIVER /SUBSYSTEM:WINDOWS /NODEFAULTLIB /ENTRY:DriverEntry
+
+ifdef CONFIG_32BIT
+WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x86/"
+WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/$(EWDK_VERSION)/km/x86/"
+else
+WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x64/"
+>>>>>>> About to prepare Makefile for DDK 7.1
 WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/$(EWDK_VERSION)/km/x64/"
+endif
+
 WIN_LDFLAGS += /DEBUG:FULL
+
 WIN_LINK_INPUT += wdm.lib
 WIN_LINK_INPUT += ntoskrnl.lib
 WIN_LINK_INPUT += bufferoverflowfastfailk.lib # for __security_check_cookie
 WIN_LINK_INPUT += netio.lib
-WIN_LINK_INPUT += wdmsec.lib
+# WIN_LINK_INPUT += wdmsec.lib
 WIN_LINK_INPUT += ksecdd.lib
+<<<<<<< HEAD
 # TODO: used?
 # WIN_LINK_INPUT += "$(EWDK_LIB)/win8/km/x64/aux_klib.lib"
 WIN_LINK_INPUT += hal.lib
+=======
+WIN_LINK_INPUT += aux_klib.lib
+# TODO: only for 32 bit?
+WIN_LINK_INPUT += iointex.lib
+WIN_LINK_INPUT += procgrp.lib
+>>>>>>> About to prepare Makefile for DDK 7.1
 # WIN_LINK_INPUT += setupapi.lib
 
 DRBD_FILES = drbd_buildtag.c drbd_bitmap.c drbd_proc.c
