@@ -2618,6 +2618,9 @@ dbg("status is %x\n", status);
 			break;
 
 		case IRP_MN_SURPRISE_REMOVAL:
+				/* TODO: Bus should now report the device
+				 * as missing ... ? Therefore HLK test fails?
+				 */
 			dbg("got IRP_MN_SURPRISE_REMOVAL\n");
 			status = STATUS_SUCCESS;
 			break;
