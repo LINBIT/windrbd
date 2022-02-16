@@ -220,7 +220,7 @@ endif
 DRIVER_DIR ?= converted-sources\\drbd
 
 ifdef DDK
-EWDK_INC := $(EWDK_KIT)\\inc\\ddk
+EWDK_INC := $(EWDK_KIT)\\inc
 EWDK_LIB := $(EWDK_KIT)\\lib\\wnet\\i386
 else
 EWDK_INC := $(EWDK_KIT)\\Include
@@ -235,18 +235,28 @@ CERTMGR := "$(EWDK_BIN)/certmgr.exe"
 
 
 # CL.exe takes (AND RETURNS) forward slashes; that makes navigating an error output easy.
+ifdef DDK
+C_DEFINES += -D inline=__inline
+WIN_INCLUDE_DIRS += "-I$(EWDK_INC)"\\ddk
+WIN_INCLUDE_DIRS += "-I$(EWDK_INC)"\\crt
+else
 WIN_INCLUDE_DIRS += "-I$(EWDK_INC)\\$(EWDK_VERSION)\\shared"
 WIN_INCLUDE_DIRS += "-I$(EWDK_INC)\\$(EWDK_VERSION)\\km"
 WIN_INCLUDE_DIRS += "-I$(EWDK_INC)\\$(EWDK_VERSION)\\km\\crt"
 WIN_INCLUDE_DIRS += "-I$(EWDK_INC)\\$(EWDK_VERSION)\\um"
 
 WIN_DEF_INCLUDES += /FI"$(EWDK_INC)/$(EWDK_VERSION)\\shared\\warning.h"
+endif
 # include that file
 
-WIN_CFLAGS += /c /W4 
+WIN_CFLAGS += /c /nologo /W4 
+ifndef DDK
 WIN_CFLAGS += /Zi # /Zi gives us a PDB file; without that we'd get debug information in the .obj file instead
+endif
 WIN_CFLAGS += /WX # warnings == errors
+ifndef DDK
 WIN_CFLAGS += /Wv:18 # disable hides previous local declaration
+endif
 WIN_CFLAGS += /O2 # optimize for speed
 WIN_CFLAGS += /Oi # enable intrinsic functions
 WIN_CFLAGS += /Oy- # enable frame pointer omission
@@ -280,7 +290,9 @@ WIN_CFLAGS += /Zc:wchar_t- /Zc:forScope /Zc:inline /GR-
 # WIN_CFLAGS += /Gz # __stdcall calling convention  -- is default
 # WIN_CFLAGS += /Gr # __fastcall calling convention -- is what we want for linux compat
 WIN_CFLAGS += /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996 
+ifndef DDK
 WIN_CFLAGS += /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+ 
+endif
 C_DEFINES += -D __KERNEL__=1
 C_DEFINES += -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD
 
@@ -419,7 +431,12 @@ windrbd-event-log.res: windrbd-event-log.rc
 
 %.obj: %.c
 	rm -f "$(call fPDB,$<)"
+ifdef DDK
+	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /c /Fo"$@" /Fd"$(call fPDB,$<)"
+else
 	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /c /Fo:"$@" /Fd:"$(call fPDB,$<)"
+endif
+
 # /Fi:"$(patsubst %.c,%.E,$<)" ...  cl : Command line warning D9007 : '/Fi:' requires '/P'; option ignored
 	echo "-- $@ done --"
 

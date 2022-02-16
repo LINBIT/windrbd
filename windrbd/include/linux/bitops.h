@@ -5,7 +5,7 @@
 #include <linux/bitsperlong.h>
 #include <linux/types.h>
 
-static void inline barrier(void)
+static void __inline barrier(void)
 {
 	KeMemoryBarrier();
 }
