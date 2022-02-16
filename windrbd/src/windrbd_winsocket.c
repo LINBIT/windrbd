@@ -116,7 +116,7 @@ static void sock_free_linux_socket(struct socket *socket)
 // printk("2\n");
 }
 
-static NTSTATUS NTAPI completion_fire_event(
+static NTSTATUS completion_fire_event(
 	__in PDEVICE_OBJECT	DeviceObject,
 	__in PIRP			Irp,
 	__in PKEVENT		CompletionEvent
@@ -131,7 +131,7 @@ static NTSTATUS NTAPI completion_fire_event(
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-static NTSTATUS NTAPI completion_free_irp(
+static NTSTATUS completion_free_irp(
 	__in PDEVICE_OBJECT	DeviceObject,
 	__in PIRP			Irp,
 	__in PKEVENT		CompletionEvent
@@ -313,7 +313,7 @@ static void have_sent(struct socket *socket, size_t length)
 	KeSetEvent(&socket->data_sent, IO_NO_INCREMENT, FALSE);
 }
 
-static NTSTATUS NTAPI SendPageCompletionRoutine(
+static NTSTATUS SendPageCompletionRoutine(
 	__in PDEVICE_OBJECT	DeviceObject,
 	__in PIRP		Irp,
 	__in struct send_page_completion_info *completion
@@ -386,7 +386,7 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 
 int duplicate_completions;
 
-static NTSTATUS NTAPI send_page_completion_onlyonce(
+static NTSTATUS send_page_completion_onlyonce(
 	__in PDEVICE_OBJECT	DeviceObject,
 	__in PIRP		Irp,
 	__in struct send_page_completion_info *completion)

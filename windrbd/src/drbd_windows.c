@@ -151,6 +151,8 @@ uint64_t roundup(uint64_t x, uint64_t y)
 	return (((x) + (y - 1)) / y) * y;
 }
 
+#if 0
+
 //__ffs - find first bit in word.
 ULONG_PTR __ffs(ULONG_PTR word) 
 {
@@ -182,6 +184,8 @@ ULONG_PTR __ffs(ULONG_PTR word)
 		num += 1;
 	return num;
 }
+
+#endif
 
 #define ffz(x)  __ffs(~(x))
 
