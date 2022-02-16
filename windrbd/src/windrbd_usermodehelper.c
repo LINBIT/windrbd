@@ -14,13 +14,6 @@
  */
 #define REQUEST_TIMEOUT_MS 1000
 
-/* This timeout is between some daemon to fetch the request and the
- * daemon returning the requests response (in practice this defines
- * how long a script may run). Since we are now using PowerShell which
- * is just too damn slow we put this to 10 seconds for now.
- */
-#define RETURN_TIMEOUT_MS 10000
-
 struct um_request {
 	struct list_head list;
 	KEVENT request_event;
@@ -66,7 +59,6 @@ int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait
 	size_t path_size, arg_size, env_size, total_size, total_size_of_helper;
 	char *buf;
 	NTSTATUS status;
-	int registry_timeout;
 	LARGE_INTEGER timeout;
 	int ret;
 	if (wait != UMH_WAIT_PROC) {
@@ -100,8 +92,7 @@ int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait
 	list_add(&new_request->list, &um_requests);
 	mutex_unlock(&request_mutex);
 
-	get_registry_int(L"user-mode-helper-timeout-ms", &registry_timeout, RETURN_TIMEOUT_MS);
-	timeout.QuadPart = -10*1000*registry_timeout;
+	timeout.QuadPart = -10*1000*REQUEST_TIMEOUT_MS;
 
 	status = KeWaitForSingleObject(&new_request->request_event, Executive, KernelMode, FALSE, &timeout);
 
@@ -109,16 +100,12 @@ int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait
 		printk("User mode helper request timed out after %d milliseconds, is the user mode helper daemon running?\n", REQUEST_TIMEOUT_MS);
 		ret = -ETIMEDOUT;
 	} else {
-		timeout.QuadPart = -10*1000*RETURN_TIMEOUT_MS;
-		status = KeWaitForSingleObject(&new_request->return_event, Executive, KernelMode, FALSE, &timeout);
+			/* Wait forever. Some scripts can take several minutes
+			 * to complete. Linux also does it this way. */
+		status = KeWaitForSingleObject(&new_request->return_event, Executive, KernelMode, FALSE, NULL);
 
-		if (status == STATUS_TIMEOUT) {
-			printk("User mode helper return request timed out after %d milliseconds, is the script running too slow?\n", RETURN_TIMEOUT_MS);
-			ret = -ETIMEDOUT;
-		} else {
-			ret = new_request->retval;
-			printk("User mode helper returned %d (exit status is %d)\n", ret, (ret >> 8) & 0xff);
-		}
+		ret = new_request->retval;
+		printk("User mode helper returned %d (exit status is %d)\n", ret, (ret >> 8) & 0xff);
 	}
 
 	mutex_lock(&request_mutex);
