@@ -47,6 +47,7 @@
 // #define KREF_DEBUG 1
 
 #define __func_	__FUNCTION__
+#define __func__ __FUNCTION__
 #define __bitwise__
 
 #include <wdm.h>
