@@ -924,3 +924,11 @@ start setup with -X from command line (ignores signatures (*.sig) which do
 not exist in the archive. Then use 
 http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/circa/2016/08/30/104223
 as mirror (must have to add it manually)
+
+------
+
+Start Windows 2003 32 bit build env (must install WinDDK 7.1 from Microsoft
+homepage):
+
+cmd /k 'C:\WinDDK\7600.16385.1\bin\setenv.bat C:\WinDDK\7600.16385.1\ fre x86 WNET'
+
