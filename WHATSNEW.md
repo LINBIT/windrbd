@@ -7,6 +7,13 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.0.1
+---------------------------
+
+Wait forever for user mode helper scripts to complete.
+
+Minor JSON output fix in drbd-utils.
+
 What's new in version 1.0.0
 ---------------------------
 
