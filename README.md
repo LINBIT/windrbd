@@ -299,3 +299,4 @@ Version history
 			      bug and some memory leaks.
  * 1.0.0-rc21 (Feb 3, 2022): Do not generate a new current UUID wile IO is frozen
  * 1.0.0 (Feb 4, 2022): Production ready release.
+ * 1.0.1 (Feb 17, 2022): No timeout for user mode helpers, minor JSON fix
