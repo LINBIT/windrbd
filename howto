@@ -140,30 +140,26 @@ Update cygwin1.dll to newest version (in inno-setup/cygwin-binaries)
 git checkout master
 git merge jt/latest-feature-branch
 
-Document changes in WHATSNEW.md
+On Linux:
+make clean && make V=1
+	And check in converted-sources if source changed (git diff)
 
-(tmp) edit patchlevel offset in versioninfo.sh
+Document changes in WHATSNEW.md
 
 Add entry to README.md
 git add README.md
-git commit -m "Release 1.0.0-rcX"
-git tag windrbd-1.0.0-rcX
-git describe --tags --always --dirty
-	(should not display version as -dirty)
+git commit -m "Release 1.0.X"
+git tag windrbd-1.0.X
+git describe --tags
+	(should display the version number)
+
+build drbd-utils-windows (make package takes drbdadm, ... from build dir)
 
 On Windows 10 physical machine (with USB dongle attached):
-# Make sure latest drbd-utils are installed (these are used for packaging)
-build drbd-utils-windows (make package take drbdadm, ... from build dir)
 mount ewdk (double click EWDK_rs5_... ISO on Desktop)
-# make BUILD_ENV=jt-win10 R=1 package
-# make clean: rebuild so that DEBUG is always unset (disables debug output).
-# also that version number gets right
 make clean && make package R=1
 
-# test install on Windows VM which has no test mode set (must come up after reboot)
-# pass resulting install-windrbd-0.x.0-betay-signed.exe to clients
-upload to google drive windrbd-in folder
-
+upload install-windrbd-1.0.X-signed.exe to google drive windrbd-in folder
 git push --all origin
 git push --tags origin
 
