@@ -2320,7 +2320,8 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				memset(string, 0, MAX_ID_LEN*sizeof(wchar_t));
 				switch (s->Parameters.QueryId.IdType) {
 				case BusQueryDeviceID:
-					swprintf(string, L"WinDRBD\\Disk%d", minor);
+			/* SCSI\\t\*v(8)p(16)r(4) */
+					swprintf(string, L"SCSI\\WinDRBDDisk&VENLINBIT&WINDRBDDISK_____&PROD_WINDRBD_VIRTUALDISK&0000", minor);
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryInstanceID:
