@@ -2328,6 +2328,14 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 					swprintf(string, L"WinDRBD%d", minor);
 					status = STATUS_SUCCESS;
 					break;
+/* TODO:
+SCSI\DiskRed_Hat___________VirtIO0001
+SCSI\DiskRed_Hat___________VirtIO
+SCSI\DiskRed_Hat_
+SCSI\Red_Hat___________VirtIO0
+Red_Hat___________VirtIO0
+GenDisk
+*/
 				case BusQueryHardwareIDs:
 					len = swprintf(string, L"WinDRBDDisk");
 					swprintf(&string[len+1], L"GenDisk");
