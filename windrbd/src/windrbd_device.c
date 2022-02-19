@@ -2337,7 +2337,7 @@ Red_Hat___________VirtIO0
 GenDisk
 */
 				case BusQueryHardwareIDs:
-					len = swprintf(&string[len+1], L"SCSI\\DiskLinbit____________WinDRBD0001");
+					len = swprintf(string, L"SCSI\\DiskLinbit____________WinDRBD0001");
 					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit____________WinDRBD")+1;
 					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit__")+1;
 					len += swprintf(&string[len+1], L"SCSI\\Linbit____________WinDRBD0")+1;
@@ -2724,6 +2724,10 @@ dbg("status is %x\n", status);
 //			status = STATUS_NOT_IMPLEMENTED;
 		}
 	}
+
+if (status == STATUS_NOT_SUPPORTED) {
+dbg("STATUS_NOT_SUPPORTED\n");
+}
 
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
