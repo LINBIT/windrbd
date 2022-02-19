@@ -2300,7 +2300,7 @@ printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %
 		case IRP_MN_QUERY_ID:
 		{
 			wchar_t *string;
-			dbg("Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
+printk("Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
 // printk("minor is %d\n", minor);
 			if (minor < 0) {
 				dbg("minor is %d, QUERY_ID not supported.\n", minor);
@@ -2309,6 +2309,9 @@ printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %
 
 				IoCompleteRequest(irp, IO_NO_INCREMENT);
 				num_pnp_requests--;
+if (status == STATUS_NOT_SUPPORTED) {
+printk("6 STATUS_NOT_SUPPORTED\n");
+}
 				return status;
 			}
 #define MAX_ID_LEN 512
@@ -2372,6 +2375,9 @@ GenDisk
 dbg("status is %x\n", status);
 					IoCompleteRequest(irp, IO_NO_INCREMENT);
 					num_pnp_requests--;
+if (status == STATUS_NOT_SUPPORTED) {
+printk("5 STATUS_NOT_SUPPORTED\n");
+}
 					return status;
 				}
 			}
@@ -2447,12 +2453,15 @@ dbg("Returned string is %S\n", string);
 			}
 
 			default:
-				dbg("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
+printk("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
 				status = irp->IoStatus.Status;
 dbg("status is %x\n", status);
 				IoCompleteRequest(irp, IO_NO_INCREMENT);
 
 				num_pnp_requests--;
+if (status == STATUS_NOT_SUPPORTED) {
+printk("5 STATUS_NOT_SUPPORTED\n");
+}
 				return status;
 			}
 	/* forward to lower device: but what is the lower device (bus?) */
@@ -2477,6 +2486,9 @@ dbg("status is %x\n", status);
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
 
 			num_pnp_requests--;
+if (status == STATUS_NOT_SUPPORTED) {
+printk("4 STATUS_NOT_SUPPORTED\n");
+}
 			return status;
 
 		case IRP_MN_QUERY_DEVICE_TEXT:
@@ -2680,6 +2692,9 @@ dbg("status is %x\n", status);
 			irp->IoStatus.Status = status;
 		        IoCompleteRequest(irp, IO_NO_INCREMENT);
 
+if (status == STATUS_NOT_SUPPORTED) {
+printk("3 STATUS_NOT_SUPPORTED\n");
+}
 			num_pnp_requests--;
 			return status;
 
@@ -2700,6 +2715,9 @@ dbg("status is %x\n", status);
 				status = IoCallDriver(drbd_bus_device, irp);
 				dbg("bus object returned %x\n", status);
 				num_pnp_requests--;
+if (status == STATUS_NOT_SUPPORTED) {
+printk("2 STATUS_NOT_SUPPORTED\n");
+}
 				return status;
 			}
 			else
@@ -2707,7 +2725,7 @@ dbg("status is %x\n", status);
 			break;
 
 		default:
-			dbg("got unimplemented minor %x for disk object\n", s->MinorFunction);
+printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
 
 				/* probably not a good idea? */
 			if (drbd_bus_device != NULL) {
@@ -2717,6 +2735,9 @@ dbg("status is %x\n", status);
 				status = IoCallDriver(drbd_bus_device, irp);
 				dbg("bus object returned %x\n", status);
 				num_pnp_requests--;
+if (status == STATUS_NOT_SUPPORTED) {
+printk("1 STATUS_NOT_SUPPORTED\n");
+}
 				return status;
 			}
 			else
