@@ -2303,6 +2303,11 @@ printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %
 printk("Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
 // printk("minor is %d\n", minor);
 			if (minor < 0) {
+	/* TODO: there are HLK tests (testing PNP surprise removal) where
+	 * we land here..it is strange but Windows tries to rebuild the
+	 * Windows device without calling drbdadm primary ... so probably
+	 * other things also don't work here ...
+	 */
 				dbg("minor is %d, QUERY_ID not supported.\n", minor);
 				status = irp->IoStatus.Status;
 				dbg("status is %x\n", status);
