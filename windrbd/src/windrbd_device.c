@@ -2338,6 +2338,11 @@ GenDisk
 */
 				case BusQueryHardwareIDs:
 					len = swprintf(string, L"WinDRBDDisk");
+					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit____________WinDRBD0001")+1;
+					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit____________WinDRBD")+1;
+					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit__")+1;
+					len += swprintf(&string[len+1], L"SCSI\\Linbit____________WinDRBD0")+1;
+					len += swprintf(&string[len+1], L"Linbit____________WinDRBD0")+1;
 					swprintf(&string[len+1], L"GenDisk");
 					status = STATUS_SUCCESS;
 					break;
