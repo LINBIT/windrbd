@@ -27,7 +27,9 @@
 
 /* Uncomment this if you want more debug output (disable for releases) */
 
+/*
 #define DEBUG 1
+*/
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -2238,7 +2240,7 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	dbg("Pnp: device: %p irp: %p\n", device, irp);
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 
-	dbg(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
+printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
 	if (device == drbd_bus_device) {
 			/* Some minors (REMOVE_DEVICE) might delete the
 			 * device object in which case we must not
@@ -2726,7 +2728,7 @@ dbg("status is %x\n", status);
 	}
 
 if (status == STATUS_NOT_SUPPORTED) {
-dbg("STATUS_NOT_SUPPORTED\n");
+printk("STATUS_NOT_SUPPORTED\n");
 }
 
 	irp->IoStatus.Status = status;
