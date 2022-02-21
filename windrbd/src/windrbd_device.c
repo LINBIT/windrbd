@@ -2408,11 +2408,17 @@ printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelati
 
 //			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev) || !bdev->is_bootdevice) {
 
+		/* TODO: we commented this out for HLK test see if it is
+		 * needed (we don't support block device interface any more).
+		 */
+#if 0
+
 			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev)) {
 printk("1 bdev is NULL not doing anything.\n");
 				status = STATUS_NOT_IMPLEMENTED;
 				break;
 			} 
+#endif
 
 		/* TODO: There is a race .. bdev->windows_device might get deleted
 		 * here.
@@ -2433,10 +2439,10 @@ printk("1 bdev is NULL not doing anything.\n");
 					break;
 				}
 				device_relations->Count = 1;
-				device_relations->Objects[0] = bdev->windows_device;
-				ObReferenceObject(bdev->windows_device);
+				device_relations->Objects[0] = device;
+				ObReferenceObject(device);
 
-				dbg("reporting device %p for type %d\n", bdev->windows_device, s->Parameters.QueryDeviceRelations.Type);
+				dbg("reporting device %p for type %d\n", device, s->Parameters.QueryDeviceRelations.Type);
 
 				irp->IoStatus.Information = (ULONG_PTR)device_relations;
 				status = STATUS_SUCCESS;
