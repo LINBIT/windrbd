@@ -2253,13 +2253,12 @@ printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %
 		num_pnp_requests++;
 
 			/* TODO: Ugly hack for HLK ... */
-//		static struct block_device_reference *saved_ref;
+static struct block_device_reference *saved_ref;
 		struct block_device_reference *ref = device->DeviceExtension;
 		struct block_device *bdev = NULL;
 		struct drbd_device *drbd_device = NULL;
 		int minor = 1;	/* for HLK test ... */
 		if (ref != NULL) {
-//			saved_ref = ref;
 			bdev = ref->bdev;
 			if (bdev && !bdev->delete_pending) {
 				drbd_device = bdev->drbd_device;
@@ -2269,11 +2268,11 @@ printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %
 			} else printk("no block device\n");
 		} else {
 			printk("no block device reference\n");
-#if 0
 			if (saved_ref != NULL) {
 printk("Restoring from %p\n", saved_ref);
 				device->DeviceExtension = saved_ref;
 				ref = saved_ref;
+				saved_ref = NULL;
 
 				bdev = ref->bdev;
 				if (bdev && !bdev->delete_pending) {
@@ -2283,7 +2282,6 @@ printk("Restoring from %p\n", saved_ref);
 					} else printk("no DRBD device\n");
 				} else printk("no block device\n");
 			} else printk("No previous block device ref.\n");
-#endif
 		}
 
 		switch (s->MinorFunction) {
@@ -2680,7 +2678,8 @@ printk("4 STATUS_NOT_SUPPORTED\n");
 				/* TODO: Bus should now report the device
 				 * as missing ... ? Therefore HLK test fails?
 				 */
-			dbg("got IRP_MN_SURPRISE_REMOVAL\n");
+printk("got IRP_MN_SURPRISE_REMOVAL\n");
+saved_ref = ref;	/* For windows to restore device later ... */
 			status = STATUS_SUCCESS;
 			break;
 
