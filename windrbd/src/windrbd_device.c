@@ -2276,6 +2276,8 @@ printk("Restoring from %p\n", saved_ref);
 
 				bdev = ref->bdev;
 				if (bdev && !bdev->delete_pending) {
+printk("Hacking windows device from %p to %p ...\n", bdev->windows_device, device);
+					bdev->windows_device = device;
 					drbd_device = bdev->drbd_device;
 					if (drbd_device) {
 						minor = drbd_device->minor;
