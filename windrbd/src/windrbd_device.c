@@ -2399,7 +2399,7 @@ dbg("Returned string is %S\n", string);
 		}
 
 		case IRP_MN_QUERY_DEVICE_RELATIONS:
-			dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
+printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
 
 		/* Devices that have a WinDRBD assigned mount point
 		 * (via device "X:" minor y;) are non-PnP devices,
@@ -2409,6 +2409,7 @@ dbg("Returned string is %S\n", string);
 //			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev) || !bdev->is_bootdevice) {
 
 			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev)) {
+printk("1 bdev is NULL not doing anything.\n");
 				status = STATUS_NOT_IMPLEMENTED;
 				break;
 			} 
