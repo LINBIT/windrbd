@@ -2428,15 +2428,14 @@ printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelati
 
 		/* TODO: we commented this out for HLK test see if it is
 		 * needed (we don't support block device interface any more).
+		 * Update: we get a PNP BSOD on drbdadm down ...
 		 */
-#if 0
 
 			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev)) {
 printk("1 bdev is NULL not doing anything.\n");
 				status = STATUS_NOT_IMPLEMENTED;
 				break;
 			} 
-#endif
 
 		/* TODO: There is a race .. bdev->windows_device might get deleted
 		 * here.
