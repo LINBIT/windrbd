@@ -2249,7 +2249,7 @@ printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %
 			 * is done in this function:
 			 */
 		return windrbd_pnp_bus_device(device, irp);
-	} else {
+	} else {	/* TODO: this else is unnecessary ... */
 		num_pnp_requests++;
 
 		struct block_device_reference *ref = device->DeviceExtension;
@@ -2262,9 +2262,9 @@ printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %
 				drbd_device = bdev->drbd_device;
 				if (drbd_device) {
 					minor = drbd_device->minor;
-				}
-			}
-		}
+				} else printk("no DRBD device\n");
+			} else printk("no block device\n");
+		} else printk("no block device reference\n");
 
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
@@ -2303,6 +2303,7 @@ printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %
 printk("Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
 // printk("minor is %d\n", minor);
 			if (minor < 0) {
+#if 0
 	/* TODO: there are HLK tests (testing PNP surprise removal) where
 	 * we land here..it is strange but Windows tries to rebuild the
 	 * Windows device without calling drbdadm primary ... so probably
@@ -2318,6 +2319,8 @@ if (status == STATUS_NOT_SUPPORTED) {
 printk("6 STATUS_NOT_SUPPORTED\n");
 }
 				return status;
+#endif
+				minor = 42;
 			}
 #define MAX_ID_LEN 512
 			string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), 'DRBD');
