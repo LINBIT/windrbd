@@ -2255,7 +2255,7 @@ printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %
 		struct block_device_reference *ref = device->DeviceExtension;
 		struct block_device *bdev = NULL;
 		struct drbd_device *drbd_device = NULL;
-		int minor = -1;
+		int minor = 1;	/* for HLK test ... */
 		if (ref != NULL) {
 			bdev = ref->bdev;
 			if (bdev && !bdev->delete_pending) {
