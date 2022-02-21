@@ -2320,7 +2320,7 @@ printk("6 STATUS_NOT_SUPPORTED\n");
 }
 				return status;
 #endif
-				minor = 42;
+				minor = 1;	/* must match the minor of the test resource */
 			}
 #define MAX_ID_LEN 512
 			string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), 'DRBD');
