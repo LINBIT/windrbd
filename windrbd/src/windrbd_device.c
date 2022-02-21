@@ -2252,11 +2252,14 @@ printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %
 	} else {	/* TODO: this else is unnecessary ... */
 		num_pnp_requests++;
 
+			/* TODO: Ugly hack for HLK ... */
+		static struct block_device_reference *saved_ref;
 		struct block_device_reference *ref = device->DeviceExtension;
 		struct block_device *bdev = NULL;
 		struct drbd_device *drbd_device = NULL;
 		int minor = 1;	/* for HLK test ... */
 		if (ref != NULL) {
+			saved_ref = ref;
 			bdev = ref->bdev;
 			if (bdev && !bdev->delete_pending) {
 				drbd_device = bdev->drbd_device;
@@ -2264,7 +2267,22 @@ printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %
 					minor = drbd_device->minor;
 				} else printk("no DRBD device\n");
 			} else printk("no block device\n");
-		} else printk("no block device reference\n");
+		} else {
+			printk("no block device reference\n");
+			if (saved_ref != NULL) {
+printk("Restoring from %p\n", saved_ref);
+				device->DeviceExtension = saved_ref;
+				ref = saved_ref;
+
+				bdev = ref->bdev;
+				if (bdev && !bdev->delete_pending) {
+					drbd_device = bdev->drbd_device;
+					if (drbd_device) {
+						minor = drbd_device->minor;
+					} else printk("no DRBD device\n");
+				} else printk("no block device\n");
+			} else printk("No previous block device ref.\n");
+		}
 
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
