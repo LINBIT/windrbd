@@ -533,7 +533,6 @@ struct block_device {
 	bool is_bootdevice;
 		/* TODO: test this should go away */
 	bool my_auto_promote;
-
 		/* Only for lower device. For upper device, see
 		 * w_remove_lock in block_device_reference (windows
 		 * device struct).
@@ -578,6 +577,9 @@ struct block_device {
 
 	/* Nonzero when this is a DISK device (with partitions on it) */
 	bool is_disk_device;
+
+	/* For HLK test. */
+	bool suprise_removal;
 
 	/* This spinlock ensures that IoCompleteRequest (see bio_finished)
 	 * is called sequentially.

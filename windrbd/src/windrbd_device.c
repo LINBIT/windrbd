@@ -2682,12 +2682,17 @@ printk("4 STATUS_NOT_SUPPORTED\n");
 				 */
 printk("got IRP_MN_SURPRISE_REMOVAL\n");
 saved_ref = ref;	/* For windows to restore device later ... */
+bdev->suprise_removal = true;
 			status = STATUS_SUCCESS;
 			break;
 
 		case IRP_MN_REMOVE_DEVICE:
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
 
+if (bdev != NULL && bdev->suprise_removal) {
+printk("got IRP_MN_REMOVE_DEVICE after IRP_MN_SURPRISE_REMOVAL ...\n");
+bdev->suprise_removal = false;
+} else {
 			/* If it is NULL then we already deleted the device */
 
 			if (ref != NULL) {
@@ -2722,6 +2727,7 @@ saved_ref = ref;	/* For windows to restore device later ... */
 			} else {
 				dbg("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
 			}
+}
 
 			status = STATUS_SUCCESS;
 			irp->IoStatus.Status = status;
