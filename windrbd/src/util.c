@@ -107,7 +107,8 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 
 	status = GetRegistryValue(L"syslog_ip", &ulLength, (UCHAR*)&aucTemp, sizeof(aucTemp), RegPath_unicode);
 	if (status == STATUS_SUCCESS) {
-		status = RtlUnicodeToUTF8N(syslog_ip, ARRAY_SIZE(syslog_ip)-1, &ip_length, (WCHAR*) aucTemp, ulLength);
+status = STATUS_NOT_SUPPORTED;
+//		status = RtlUnicodeToUTF8N(syslog_ip, ARRAY_SIZE(syslog_ip)-1, &ip_length, (WCHAR*) aucTemp, ulLength);
 	}
 	if (status != STATUS_SUCCESS) {
 		strcpy(syslog_ip, "127.0.0.1");
