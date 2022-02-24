@@ -282,7 +282,7 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 
 		/* ignore if string is too long */
 	va_start(args, name);
-	(void)  _vsnprintf_s(t->comm, sizeof(t->comm)-1, _TRUNCATE, name, args);
+	(void)  _vsnprintf(t->comm, sizeof(t->comm)-1, name, args);
 	va_end(args);
 	t->comm[sizeof(t->comm)-1] = '\0';
 
@@ -345,7 +345,7 @@ struct task_struct *make_me_a_windrbd_thread(const char *name, ...)
 	t->is_root = 0;
 
 	va_start(args, name);
-	i = _vsnprintf_s(t->comm, sizeof(t->comm)-1, _TRUNCATE, name, args);
+	i = _vsnprintf(t->comm, sizeof(t->comm)-1, name, args);
 	va_end(args);
 	if (i == -1) {
 		kfree(t);

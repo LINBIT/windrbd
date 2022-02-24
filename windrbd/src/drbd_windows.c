@@ -2989,17 +2989,22 @@ int scnprintf(char * buf, size_t size, const char *fmt, ...)
 	int i = 0;
 
 	va_start(args, fmt);
-	i = _vsnprintf_s(buf, size, _TRUNCATE, fmt, args);
+	/* i = _vsnprintf_s(buf, size, _TRUNCATE, fmt, args); */
+	i = _vsnprintf(buf, size,  fmt, args);
 	va_end(args);
-	return (-1 == i) ? (size - 1) : i;
+	/* return (-1 == i) ? (size - 1) : i; */
+	return i;
 }
 
 int vscnprintf(char * buf, size_t size, const char *fmt, va_list args)
 {
 	int i = 0;
 
+/*
 	i = _vsnprintf_s(buf, size, _TRUNCATE, fmt, args);
 	return (-1 == i) ? (size - 1) : i;
+*/
+	return _vsnprintf(buf, size,  fmt, args);
 }
 
 int list_is_singular(const struct list_head *head)
