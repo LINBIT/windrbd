@@ -262,16 +262,18 @@ WIN_CFLAGS += /Oi # enable intrinsic functions
 WIN_CFLAGS += /Oy- # enable frame pointer omission
 
 ifdef CONFIG_32BIT
-C_DEFINES += -D _X86_=1 -D i386=1 # 32bit
+C_DEFINES += -D _X86_=1 -D i386=1 -D _M_IX86=1 # 32bit
+# C_DEFINES += -D DECLSPEC_IMPORT="__declspec(dllimport)" -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15 
+C_DEFINES += -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000
 else
 C_DEFINES += -D _WIN64 -D _AMD64_ -D AMD64 -D _M_AMD64 # 64bit
-endif
-
 C_DEFINES += -D STD_CALL -D DEPRECATE_DDK_FUNCTIONS=1 -D MSC_NOOPT -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D WINNT=1 -D NTDDI_VERSION=0x06010000 -D KMDF_VERSION_MAJOR=1 -D KMDF_VERSION_MINOR=15 
 # This makes Windows use NonPagedPoolNx instead of NonPagedPool for
 # memory allocations. This is needed to pass the code integrity tests
 # for hardware lab kit (HLK) needed for SecureBoot.
 C_DEFINES += -DPOOL_NX_OPTIN=1
+endif
+
 # C_DEFINES += -D DBG=1
 ifdef R
 C_DEFINES += -D RELEASE=1
@@ -295,6 +297,10 @@ WIN_CFLAGS += /analyze- /errorReport:queue /kernel -cbstring /d1import_no_regist
 endif
 C_DEFINES += -D __KERNEL__=1
 C_DEFINES += -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD
+
+# see ./shared/sdkddkver.h for a list.
+# this is Windows XP
+# C_DEFINES += -D NTDDI_VERSION=0x05010000
 
 # WIN_CFLAGS += /Ze # Microsoft extensions - eg. nameless struct/union. Not enabled because
 #   The /Ze option is deprecated because its behavior is on by default. We recommend you use the /Zc (Conformance) compiler options to control specific language extension features.
@@ -327,15 +333,11 @@ fPDB = $(patsubst %.c,%.pdb,$(1))
 
 WIN_LDFLAGS += /link # must be first!
 # Was:
-# TODO: only 32 bit?
 WIN_LDFLAGS += /DRIVER:WDM /SUBSYSTEM:NATIVE /NODEFAULTLIB /ENTRY:DriverEntry
 # However this prevents the driver from being unloaded. We try
 # this now:
-<<<<<<< HEAD
-WIN_LDFLAGS += /DRIVER /SUBSYSTEM:WINDOWS /NODEFAULTLIB /ENTRY:DriverEntry
 # Commented out. Else cannot find __imp_KeGetCurrentIrql symbol on linking
 # WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x64/"
-=======
 # WIN_LDFLAGS += /DRIVER /SUBSYSTEM:WINDOWS /NODEFAULTLIB /ENTRY:DriverEntry
 
 ifdef CONFIG_32BIT
@@ -343,7 +345,6 @@ WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x86/"
 WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/$(EWDK_VERSION)/km/x86/"
 else
 WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x64/"
->>>>>>> About to prepare Makefile for DDK 7.1
 WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/$(EWDK_VERSION)/km/x64/"
 endif
 
@@ -355,16 +356,13 @@ WIN_LINK_INPUT += bufferoverflowfastfailk.lib # for __security_check_cookie
 WIN_LINK_INPUT += netio.lib
 # WIN_LINK_INPUT += wdmsec.lib
 WIN_LINK_INPUT += ksecdd.lib
-<<<<<<< HEAD
 # TODO: used?
 # WIN_LINK_INPUT += "$(EWDK_LIB)/win8/km/x64/aux_klib.lib"
 WIN_LINK_INPUT += hal.lib
-=======
 WIN_LINK_INPUT += aux_klib.lib
 # TODO: only for 32 bit?
 WIN_LINK_INPUT += iointex.lib
 WIN_LINK_INPUT += procgrp.lib
->>>>>>> About to prepare Makefile for DDK 7.1
 # WIN_LINK_INPUT += setupapi.lib
 
 DRBD_FILES = drbd_buildtag.c drbd_bitmap.c drbd_proc.c

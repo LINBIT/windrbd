@@ -51,7 +51,8 @@
 #define __bitwise__
 
 #include <wdm.h>
-// #include <ntddk.h>
+#include <ntddk.h>
+/* #include <ntifs.h> does not work */
 #include <ntstrsafe.h>
 #include <linux/list.h>
 #include <linux/wait.h>
