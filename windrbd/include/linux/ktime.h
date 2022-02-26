@@ -48,7 +48,6 @@ typedef union ktime ktime_t;		/* Kill this */
 #pragma warning(push)
 #pragma warning(disable: 4204)
 
-#if 0
 /**
  * ktime_set - Set a ktime_t variable from a seconds/nanoseconds value
  * @secs:	seconds to set
@@ -266,7 +265,5 @@ static inline ktime_t ms_to_ktime(u64 ms)
 
 extern ktime_t ktime_get(void);
 extern ktime_t ktime_get_real(void);
-
-#endif
 
 #endif
