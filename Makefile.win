@@ -287,8 +287,9 @@ endif
 
 ifdef CONFIG_32BIT
 # /Gy makes declspec(dllimport) work incorrectly (need _foo@4 decoration for
-# 32 bit linking)
-WIN_CFLAGS += /GF /Gm- /Zp8 /GS /Gz
+# 32 bit linking) need to specify /Gz (default to stdcall) for making linking
+# working. /Gs1048576 disables calls to chkstk()
+WIN_CFLAGS += /GF /Gm- /Zp8 /Gz /Gs1048576
 else
 WIN_CFLAGS += /GF /Gm- /Zp8 /GS /Gy 
 endif
