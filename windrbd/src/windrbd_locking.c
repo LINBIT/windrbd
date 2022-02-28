@@ -215,7 +215,11 @@ void spin_lock_init(spinlock_t *lock)
 #endif
 }
 
+#if (NTDDI_VERSION < NTDDI_VISTASP1)
+static spinlock_t rcu_spin_lock;
+#else
 static EX_SPIN_LOCK rcu_rw_lock;
+#endif
 
 	/* TODO: this whole spin_lock_debug thing is broken, remove that
 	 * code. We haven't had any system lockup ever since we fixed
@@ -747,6 +751,79 @@ void call_rcu_debug(struct rcu_head *head, rcu_callback_t callback_func, const c
 
 #else
 
+#if (NTDDI_VERSION < NTDDI_VISTASP1)
+
+	/* Still need deadlock detection, since rcu_read_lock maybe
+	 * held while calling synchronize_rcu. Windows before Vista
+	 * Service pack 1 didn't have read/write locks, use plain old
+	 * spinlocks instead ... only difference is that rcu_read_locks()
+	 * are slower.
+	 */
+
+KIRQL rcu_read_lock(void)
+{
+	KIRQL flags;
+	struct task_struct *c;
+
+	c = current;
+	if (is_windrbd_thread(c)) {
+		if (atomic_inc_return(&c->rcu_recursion_depth) > 1)
+			return KeGetCurrentIrql();
+
+		c->in_rcu = 1;
+	}
+
+	spin_lock_irqsave(&rcu_spin_lock, flags);
+	return flags;
+}
+
+void rcu_read_unlock(KIRQL rcu_flags)
+{
+	struct task_struct *c;
+
+	c = current;
+	if (is_windrbd_thread(c)) {
+		if (atomic_dec_return(&c->rcu_recursion_depth) > 0)
+			return;
+	}
+	spin_unlock_irqrestore(&rcu_spin_lock, rcu_flags);
+
+	if (is_windrbd_thread(current))
+		current->in_rcu = 0;
+}
+
+void synchronize_rcu(void)
+{
+	KIRQL rcu_flags;
+
+	if (is_windrbd_thread(current)) {
+		if (current->in_rcu)
+			return;	/* avoid deadlock */
+	}
+	spin_lock_irqsave(&rcu_spin_lock, rcu_flags);
+	spin_unlock_irqrestore(&rcu_spin_lock, rcu_flags);
+}
+
+void call_rcu(struct rcu_head *head, rcu_callback_t func)
+{
+	KIRQL rcu_flags = PASSIVE_LEVEL;
+	int can_lock = 1;
+
+	if (is_windrbd_thread(current)) {
+		if (current->in_rcu)
+			can_lock = 0;
+	}
+	if (can_lock)
+		spin_lock_irqsave(&rcu_spin_lock, rcu_flags);
+
+	func(head);
+
+	if (can_lock)
+		spin_unlock_irqrestore(&rcu_spin_lock, rcu_flags);
+}
+
+#else
+
 	/* Still need deadlock detection, since rcu_read_lock maybe
 	 * held while calling synchronize_rcu
 	 */
@@ -815,6 +892,8 @@ void call_rcu(struct rcu_head *head, rcu_callback_t func)
 		ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
 }
 
+#endif  /* < NTDDI_VISTASP1 */
+
 #endif	/* RCU_DEBUG */
 
 #endif
@@ -848,6 +927,10 @@ int spin_trylock(spinlock_t *lock)
 
 void init_locking(void)
 {
+#if (NTDDI_VERSION < NTDDI_VISTASP1)
+	spin_lock_init(&rcu_spin_lock);
+#else
         rcu_rw_lock = 0;
+#endif
 	spin_lock_init(&irq_lock);
 }

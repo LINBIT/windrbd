@@ -2854,9 +2854,11 @@ if (status == STATUS_NOT_SUPPORTED) {
 			break;
 		}
 
+#if (NTDDI_VERSION >= NTDDI_WIN7)
 		case IRP_MN_DEVICE_ENUMERATED:
 			status = STATUS_SUCCESS;
 			break;
+#endif
 
 /* TODO: set PNP_DEVICE_NOT_DISABLEABLE on IRP_MN_QUERY_PNP_DEVICE_STATE */
 

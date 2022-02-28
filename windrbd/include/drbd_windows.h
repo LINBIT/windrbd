@@ -50,6 +50,8 @@
 #define __func__ __FUNCTION__
 #define __bitwise__
 
+#include "win2003compat.h"
+
 #include <wdm.h>
 #include <ntddk.h>
 /* #include <ntifs.h> does not work */
