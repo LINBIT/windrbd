@@ -285,9 +285,17 @@ ifdef BIO_REF_DEBUG
 C_DEFINES += -D BIO_REF_DEBUG=1
 endif
 
+ifdef CONFIG_32BIT
+# /Gy makes declspec(dllimport) work incorrectly (need _foo@4 decoration for
+# 32 bit linking)
+WIN_CFLAGS += /GF /Gm- /Zp8 /GS /Gz
+else
 WIN_CFLAGS += /GF /Gm- /Zp8 /GS /Gy 
+endif
 # /fp:precise  # precise - "precise" floating-point model; results are predictable
 WIN_CFLAGS += /Zc:wchar_t- /Zc:forScope /Zc:inline /GR- 
+# Output preprocessor output. Disable this to compile 'normally'
+# WIN_CFLAGS += /P
 # On x64, there's only one calling convention. https://msdn.microsoft.com/en-us/library/zthk2dkh.aspx
 # WIN_CFLAGS += /Gz # __stdcall calling convention  -- is default
 # WIN_CFLAGS += /Gr # __fastcall calling convention -- is what we want for linux compat
@@ -354,7 +362,9 @@ WIN_LINK_INPUT += wdm.lib
 WIN_LINK_INPUT += ntoskrnl.lib
 WIN_LINK_INPUT += bufferoverflowfastfailk.lib # for __security_check_cookie
 WIN_LINK_INPUT += netio.lib
-# WIN_LINK_INPUT += wdmsec.lib
+ifdef CONFIG_32BIT
+WIN_LINK_INPUT += wdmsec.lib
+endif
 WIN_LINK_INPUT += ksecdd.lib
 # TODO: used?
 # WIN_LINK_INPUT += "$(EWDK_LIB)/win8/km/x64/aux_klib.lib"
@@ -395,6 +405,8 @@ windrbd.sys: $(patsubst %.c,%.obj,$(DRBD_FILES)) $(patsubst %.c,%.obj,$(WINDRBD_
 	mv -f "_$@" "$@"
 # currently does not work with wine:
 	$(WINE) "$(EWDK_BIN)/inf2cat.exe" /driver:. /os:XP_X86,Vista_X86,Vista_X64,7_X86,7_X64,8_X86,8_X64,6_3_X86,6_3_X64,10_X86,10_X64
+# No driver signing on 32 bit platforms ...
+ifndef CONFIG_32BIT
 ifdef R
 # Linbit DigiCert certificate (trusted by Microsoft)
 # For Windows Server 2008 use SHA1 as secure hash
@@ -411,7 +423,7 @@ else
 	$(WINE) "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v "$@"
 	$(WINE) "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v windrbd.cat
 endif
-
+endif
 
 resource.res: resource.rc
 	$(WINE) "$(EWDK_BIN)/rc.exe" $<
