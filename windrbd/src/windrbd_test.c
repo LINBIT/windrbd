@@ -1098,6 +1098,8 @@ void argv_test(int argc, char ** argv)
 		printk("argv[%d] is %s\n", i, argv[i]);
 }
 
+#if (NTDDI_VERSION >= NTDDI_VISTA)
+
 // #include <windows.h>
 #include <bcrypt.h>
 
@@ -1127,6 +1129,8 @@ int crypto_test(int argc, char ** argv)
 	printk("BCryptOpenAlgorithmProvider succeeded\n");
 	return 0;
 }
+
+#endif
 
 extern void start_tiktok(int argc, const char ** argv);
 
@@ -1381,8 +1385,10 @@ void test_main(const char *arg)
 		concurrency_test(argc, argv);
 	if (strcmp(argv[0], "argv_test") == 0)
 		argv_test(argc, argv);
+#if (NTDDI_VERSION >= NTDDI_VISTA)
 	if (strcmp(argv[0], "crypto_test") == 0)
 		crypto_test(argc, argv);
+#endif
 	if (strcmp(argv[0], "rcu_test") == 0)
 		rcu_test(argc, argv);
 	if (strcmp(argv[0], "enable_debug_printks") == 0)
