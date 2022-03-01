@@ -2684,7 +2684,7 @@ printk("4 STATUS_NOT_SUPPORTED\n");
 printk("got IRP_MN_SURPRISE_REMOVAL\n");
 saved_ref = ref;	/* For windows to restore device later ... */
 bdev->suprise_removal = true;
-bdev->about_to_delete = 1; /* meaning no more I/O on that device */
+// bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 			status = STATUS_SUCCESS;
 			break;
 
