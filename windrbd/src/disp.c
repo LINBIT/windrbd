@@ -26,10 +26,6 @@
 #include <wdm.h>
 #include <wdmsec.h>
 #include <ntstrsafe.h>
-#ifdef NTDDI_VERSION
-#undef NTDDI_VERSION
-#endif
-#define NTDDI_VERSION 0x06010000
 
 #include <ntddk.h>
 #include <initguid.h>
