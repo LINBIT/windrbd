@@ -564,6 +564,7 @@ struct block_device {
 	bool powering_down;	/* Regular windows shutdown, cancel all waiters */
 	bool delete_pending;	/* bdput called. waiting for REMOVE_DEVICE PnP IRP */
 	bool about_to_delete;	/* REMOVE_DEVICE, no more I/O */
+	bool ejected;		/* EJECTED event, no more I/O TODO: ?? */
 
 	struct _KEVENT primary_event;	/* Set whenever Primary */
 	struct _KEVENT capacity_event;	/* Set whenever size > 0 */

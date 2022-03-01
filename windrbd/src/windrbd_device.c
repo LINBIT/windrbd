@@ -2434,7 +2434,7 @@ printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelati
 		 * Update: we get a PNP BSOD on drbdadm down ...
 		 */
 
-			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev) || bdev->about_to_delete) {
+			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev) || bdev->about_to_delete || bdev->ejected) {
 printk("1 bdev is NULL not doing anything.\n");
 				status = STATUS_NOT_IMPLEMENTED;
 				break;
@@ -2743,6 +2743,10 @@ printk("3 STATUS_NOT_SUPPORTED\n");
 
 		case IRP_MN_EJECT:
 			dbg("got IRP_MN_EJECT\n");
+			if (bdev) {
+dbg("Setting ejected flag ...\n");
+				bdev->ejected = true;
+			}
 			break;
 
 		case 0xff:
