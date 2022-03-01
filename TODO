@@ -691,6 +691,16 @@ TODO: Research: See if it works under ReactOS
 	that make sense at all. Then (try to) compile windrbd with
 	the ReactOS compiler (can do that under Linux...)
 
+	Update (2022): Userland utilties work (must install CygWin
+	on reactos with development tools and compile / install
+	from there) What does not work is install-bus-device /
+	remove-bus-device.
+
+	WinDRBD driver loads with the big restriction that there
+	is no networking (must port from winsocket to older
+	TDI interface). Also Primary won't work since we cannot
+	install the bus device.
+
 TODO: Upstream: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
 
