@@ -2273,6 +2273,9 @@ printk("Restoring from %p\n", saved_ref);
 				saved_ref = NULL;
 
 				bdev = ref->bdev;
+				bdev->delete_pending = 0;
+				bdev->about_to_delete = 0;
+
 				if (bdev && !bdev->delete_pending) {
 printk("Hacking windows device from %p to %p ...\n", bdev->windows_device, device);
 					bdev->windows_device = device;
@@ -2431,7 +2434,7 @@ printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelati
 		 * Update: we get a PNP BSOD on drbdadm down ...
 		 */
 
-			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev)) {
+			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev) || bdev->about_to_delete) {
 printk("1 bdev is NULL not doing anything.\n");
 				status = STATUS_NOT_IMPLEMENTED;
 				break;
@@ -2681,6 +2684,7 @@ printk("4 STATUS_NOT_SUPPORTED\n");
 printk("got IRP_MN_SURPRISE_REMOVAL\n");
 saved_ref = ref;	/* For windows to restore device later ... */
 bdev->suprise_removal = true;
+bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 			status = STATUS_SUCCESS;
 			break;
 
