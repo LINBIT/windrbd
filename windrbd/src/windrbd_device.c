@@ -2435,8 +2435,15 @@ printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelati
 		 */
 
 			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev) || bdev->about_to_delete || bdev->ejected) {
-printk("1 bdev is NULL not doing anything.\n");
-				status = STATUS_NOT_IMPLEMENTED;
+				if (bdev == NULL) {
+					dbg("1 bdev is NULL not doing anything.\n");
+				} else {
+					dbg("Reasons: !bdev->is_disk_device %d windrbd_has_mount_point(bdev) %d bdev->about_to_delete %d bdev->ejected %d\n", !bdev->is_disk_device, windrbd_has_mount_point(bdev), bdev->about_to_delete, bdev->ejected);
+				} 
+
+/* Do not change the status field. Driver verifier complains */
+//				status = STATUS_NOT_IMPLEMENTED;
+				status = irp->IoStatus.Status;
 				break;
 			} 
 
