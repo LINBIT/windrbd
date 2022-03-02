@@ -892,6 +892,10 @@ net debug each other ...
 
 windbg -k net:port=50001,key=1wjw9rosga3jy.p1udlipefkas.u2pwjrtgy1g4.rxx8mttfmsdk
 
+HLK client (from server 2019 datacenter jaenner 3)
+
+windbg -k net:port=50000,key=2z1io9ycxxh2v.emxijaabaq01.spzt9bxb3lyc.3smqj0injt3d6
+
 -----
 
 Install HLK Client

@@ -51,6 +51,11 @@ TODO: Feature: HLK tests should succeed (for Windows 2019)
 	on Server 2019 (but not on Windows 7). Update: This has been fixed
 	meanwhile so currently no verifier BSODs known.
 
+	Update: Lots of progress: currently working on surprise removal
+	test for the disk device. After the test a drbdadm down BSODs
+	(in bm_test_page_unchanged) most likely some memory corruption
+	(page is NULL).
+
 TODO: Nice to have: Make it build under Windows only
 
 	Done: install ocaml for CygWin
