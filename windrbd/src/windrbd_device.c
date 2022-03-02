@@ -2701,9 +2701,12 @@ bdev->suprise_removal = false;
 				if (bdev != NULL) {
 					bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
-					IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
+					if (bdev->ref != NULL) {
+						IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
-					IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
+		/* TODO: ?? not &bdev->ref->w_remove_lock ?? */
+						IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
+					}
 /*
 
 					dbg("Waiting for bus device reporting us as deleted ...\n");
