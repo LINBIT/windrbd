@@ -2685,9 +2685,6 @@ printk("4 STATUS_NOT_SUPPORTED\n");
 			break;
 
 		case IRP_MN_SURPRISE_REMOVAL:
-				/* TODO: Bus should now report the device
-				 * as missing ... ? Therefore HLK test fails?
-				 */
 printk("got IRP_MN_SURPRISE_REMOVAL\n");
 saved_ref = ref;	/* For windows to restore device later ... */
 bdev->suprise_removal = true;
