@@ -3576,6 +3576,7 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	KeClearEvent(&bdev->device_started_event);
 	KeClearEvent(&bdev->device_ejected_event);
 	KeClearEvent(&bdev->bus_device_iterated);
+	bdev->ejected = false;
 
 		/* By default, this creates an object accessible only
 		 * by the Administrator user from user space. If this
