@@ -2255,7 +2255,8 @@ static struct block_device_reference *saved_ref;
 		struct block_device_reference *ref = device->DeviceExtension;
 		struct block_device *bdev = NULL;
 		struct drbd_device *drbd_device = NULL;
-		int minor = 1;	/* for HLK test ... */
+		int minor = 1;	/* for HLK test ... TODO: not a good idea ... */
+printk("device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
 		if (ref != NULL) {
 			bdev = ref->bdev;
 			if (bdev && !bdev->delete_pending) {
@@ -2266,8 +2267,10 @@ static struct block_device_reference *saved_ref;
 			} else printk("no block device\n");
 		} else {
 			printk("no block device reference\n");
+#if 0
 			if (saved_ref != NULL) {
 printk("Restoring from %p\n", saved_ref);
+printk("Device extension is %p\n", );
 				device->DeviceExtension = saved_ref;
 				ref = saved_ref;
 				saved_ref = NULL;
@@ -2285,6 +2288,7 @@ printk("Hacking windows device from %p to %p ...\n", bdev->windows_device, devic
 					} else printk("no DRBD device\n");
 				} else printk("no block device\n");
 			} else printk("No previous block device ref.\n");
+#endif
 		}
 
 		switch (s->MinorFunction) {
@@ -2727,7 +2731,10 @@ bdev->suprise_removal = false;
 				 * exist for a short period.
 				 */
 				bdev->ref = NULL;
-				device->DeviceExtension = NULL;
+					/* When zombie device is reenabled we
+					 * need the pointer to the block_device_ref ... so do not NULLify this here.. */
+//				device->DeviceExtension = NULL;
+printk("REMOVE: device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
 				if (bdev != NULL) {
 						/* To allow bdev being removed. */
 					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
