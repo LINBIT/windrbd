@@ -56,6 +56,14 @@ TODO: Feature: HLK tests should succeed (for Windows 2019)
 	(in bm_test_page_unchanged) most likely some memory corruption
 	(page is NULL).
 
+	Update: Memory corrpution was Windows calling close 3 times
+	more often that create. DRBD corrupted memory. Also the
+	saved_ref logic is gone again (fortunately) it seems that
+	just returning SUCCESS in both SURPRISE_REMOVAL and
+	REMOVE_DEVICE does the trick. Right now we don't know if
+	driver can be unloaded but the surprise removal tests should
+	work now.
+
 TODO: Nice to have: Make it build under Windows only
 
 	Done: install ocaml for CygWin
