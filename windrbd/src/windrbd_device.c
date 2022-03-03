@@ -1024,7 +1024,9 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 
 	if (status == STATUS_SUCCESS && dev != NULL) {
-		dev->num_openers--;
+		if (dev->num_openers > 0)
+			dev->num_openers--;
+
 		dbg("num_openers of device %p is now %d\n", dev, dev->num_openers);
 	}
 	irp->IoStatus.Status = status;
