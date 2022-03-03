@@ -1011,7 +1011,11 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			mode == 0 ? "read-only" : "read-write");
 */
 
-		dev->bd_disk->fops->release(dev->bd_disk, mode);
+		if (dev->num_openers > 0)
+			dev->bd_disk->fops->release(dev->bd_disk, mode);
+		else
+			printk("Warning: close called when there are no disk devices open.\n");
+
 		status = STATUS_SUCCESS;
 	} else {
 		dbg("Close request while device isn't set up yet.\n");
@@ -2733,6 +2737,7 @@ bdev->suprise_removal = false;
 				bdev->ref = NULL;
 					/* When zombie device is reenabled we
 					 * need the pointer to the block_device_ref ... so do not NULLify this here.. */
+/* TODO: this code is never executed in the test, reenable NULLify? */
 //				device->DeviceExtension = NULL;
 printk("REMOVE: device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
 				if (bdev != NULL) {
