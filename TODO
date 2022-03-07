@@ -64,6 +64,48 @@ TODO: Feature: HLK tests should succeed (for Windows 2019)
 	driver can be unloaded but the surprise removal tests should
 	work now.
 
+TODO: Research: See if it works under ReactOS
+
+	Bonus would be that we could create legally 26 more
+	VMs to test 32 node setup..also ReactOS can be patched
+	to show printk's (via our printk-to-syslog utility)
+	right before BSOD's (maybe it can also Stack dump in
+	a sane way ...).
+
+	Oops, ReactOS is 32-bit only .. this would require some
+	adaption. First, compile ReactOS from scratch to see if
+	that make sense at all. Then (try to) compile windrbd with
+	the ReactOS compiler (can do that under Linux...)
+
+	Update (2022): Userland utilties work (must install CygWin
+	on reactos with development tools and compile / install
+	from there) What does not work is install-bus-device /
+	remove-bus-device.
+
+	WinDRBD driver loads with the big restriction that there
+	is no networking (must port from winsocket to older
+	TDI interface). Also Primary won't work since we cannot
+	install the bus device.
+
+	Update: Under Windows Server 2003 Primary works but there
+	are issues with partitioning (probably partmgr.sys does not
+	exist). Under ReactOS the setupapi DLL can be loaded but
+	then fails with error 2.
+
+	Done's:
+		Make Server 2003 kernel debugger work.
+			Was easy: add a line to BOOT.INI and reboot.
+
+	Next TODOs:
+		Check if Server 2003 has netio / winsocket interface
+			(probably not but this needs to be checked).
+		Make a inno-setup installer EXE for server 2003
+			(and later ReactOS)
+		See why partitioning is not working under server
+			2003 (probably there are some ioctl's missing).
+		Make install-bus-device worr on ReactOS
+		Implement NETIO -> TDI interface.
+
 TODO: Nice to have: Make it build under Windows only
 
 	Done: install ocaml for CygWin
@@ -690,29 +732,6 @@ TODO: Bug: On re-attach USB stick after failure, WinDRBD hangs.
 	force disconnect on the peer side, DRBD continues.
 
 	Update: It now syncs but is quite unresponsive.
-
-TODO: Research: See if it works under ReactOS
-
-	Bonus would be that we could create legally 26 more
-	VMs to test 32 node setup..also ReactOS can be patched
-	to show printk's (via our printk-to-syslog utility)
-	right before BSOD's (maybe it can also Stack dump in
-	a sane way ...).
-
-	Oops, ReactOS is 32-bit only .. this would require some
-	adaption. First, compile ReactOS from scratch to see if
-	that make sense at all. Then (try to) compile windrbd with
-	the ReactOS compiler (can do that under Linux...)
-
-	Update (2022): Userland utilties work (must install CygWin
-	on reactos with development tools and compile / install
-	from there) What does not work is install-bus-device /
-	remove-bus-device.
-
-	WinDRBD driver loads with the big restriction that there
-	is no networking (must port from winsocket to older
-	TDI interface). Also Primary won't work since we cannot
-	install the bus device.
 
 TODO: Upstream: blue screen on drbdadm detach --force (when needing uptodate
 	data) and then drbdadm status.
