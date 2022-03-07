@@ -61,7 +61,7 @@ KEY = linbit-ha
 PASSWD = ""
 
 WINDRBD_SOURCE = ..
-DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
+DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows-server-2008
 
 CONFIG_32BIT = 1
 endif
