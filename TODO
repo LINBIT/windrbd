@@ -95,14 +95,16 @@ TODO: Research: See if it works under ReactOS
 	Done's:
 		Make Server 2003 kernel debugger work.
 			Was easy: add a line to BOOT.INI and reboot.
-
-	Next TODOs:
 		Check if Server 2003 has netio / winsocket interface
 			(probably not but this needs to be checked).
+			-> No.
+
+	Next TODOs:
 		Make a inno-setup installer EXE for server 2003
 			(and later ReactOS)
 		See why partitioning is not working under server
 			2003 (probably there are some ioctl's missing).
+		Fix BSOD on shutdown (power IRP timeout).
 		Make install-bus-device worr on ReactOS
 		Implement NETIO -> TDI interface.
 
