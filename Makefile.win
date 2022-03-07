@@ -219,6 +219,12 @@ endif
 # This is relative to the inno-setup directory
 DRIVER_DIR ?= converted-sources\\drbd
 
+ifdef CONFIG_32BIT
+CYGWIN_BINARIES = cygwin-binaries-x86
+else
+CYGWIN_BINARIES = cygwin-binaries
+endif
+
 ifdef DDK
 EWDK_INC := $(EWDK_KIT)\\inc
 EWDK_LIB := $(EWDK_KIT)\\lib\\wnet\\i386
