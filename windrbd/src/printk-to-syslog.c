@@ -229,7 +229,7 @@ static int open_syslog_socket(void)
 		printk_udp_target.sin_port = htons(514);
 
 		if (my_inet_aton(syslog_ip, &printk_udp_target.sin_addr) < 0) {
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Invalid syslog IP address: %s\nYou will NOT see any output produced by printk (and pr_err, ...)\n", syslog_ip);
+//			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Invalid syslog IP address: %s\nYou will NOT see any output produced by printk (and pr_err, ...)\n", syslog_ip);
 			return -1;
 		}
 
@@ -267,7 +267,7 @@ static int open_syslog_socket(void)
 				}
 			}
 		} else {
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility (error is %d). You will NOT see any output produced by printk (and pr_err, ...)\n", err);
+//			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility (error is %d). You will NOT see any output produced by printk (and pr_err, ...)\n", err);
 			return -1;
 		}
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "socket opened, ring_buffer_head: %lld ring_buffer_tail: %lld\n", ring_buffer_head, ring_buffer_tail);
