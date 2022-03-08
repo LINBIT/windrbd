@@ -124,13 +124,13 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	int ret;
 
 		/* Use non executable pool for memory allocations.
-		 * see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/single-binary-opt-in-pool-nx-optin 
+		 * see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/single-binary-opt-in-pool-nx-optin
 		 */
 
 	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
 
 		/* Needed for event log */
-	mvolDriverObject = DriverObject
+	mvolDriverObject = DriverObject;
 
 	/* Init windrbd primitives (spinlocks, ...) before doing anything
 	 * else .. needed for printk.
