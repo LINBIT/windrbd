@@ -762,7 +762,7 @@ printk("StorageDeviceAttributesProperty ...\n");
       }
 #if 0
 		/* TODO: 6 7 8 e */
-    StorageAccessAlignmentProperty,
+    StorageAccessAlignmentProperty,	also type 1
     StorageDeviceSeekPenaltyProperty,
 StorageDeviceTrimProperty
 StorageDeviceResiliencyProperty
@@ -770,6 +770,11 @@ StorageDeviceResiliencyProperty
 
       if (StoragePropertyQuery->PropertyId == StorageAccessAlignmentProperty && StoragePropertyQuery->QueryType == PropertyStandardQuery) {
 printk("StorageAccessAlignmentProperty ...\n");
+        irp->IoStatus.Information = 0;
+        status = STATUS_SUCCESS;
+      }
+      if (StoragePropertyQuery->PropertyId == StorageAccessAlignmentProperty && StoragePropertyQuery->QueryType == PropertyExistsQuery) {
+printk("StorageAccessAlignmentProperty PropertyExistsQuery ...\n");
         irp->IoStatus.Information = 0;
         status = STATUS_SUCCESS;
       }
@@ -788,6 +793,11 @@ printk("StorageDeviceResiliencyProperty ...\n");
         irp->IoStatus.Information = 0;
         status = STATUS_SUCCESS;
       }
+/* TODO: Answer NO for all exists queries by default.
+	if (StoragePropertyQuery->QueryType == PropertyExistsQuery &&
+	    status != STATUS_SUCCESS)
+		status = -ENOENT; ...
+*/
       if (status == STATUS_INVALID_PARAMETER) {
 printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
       }
