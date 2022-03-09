@@ -756,7 +756,7 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
         status = STATUS_SUCCESS;
       }
       if (status == STATUS_INVALID_PARAMETER) {
-// printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
       }
       break;
    }
