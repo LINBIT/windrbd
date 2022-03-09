@@ -755,6 +755,9 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
         irp->IoStatus.Information = (ULONG_PTR)CopySize;
         status = STATUS_SUCCESS;
       }
+      if (StoragePropertyQuery->PropertyId == StorageDeviceAttributesProperty && StoragePropertyQuery->QueryType == PropertyStandardQuery) {
+printk("StorageDeviceAttributesProperty ...\n");
+      }
       if (status == STATUS_INVALID_PARAMETER) {
 printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
       }
