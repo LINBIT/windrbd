@@ -712,116 +712,133 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_SUCCESS;
 		break;
 
-    case IOCTL_STORAGE_QUERY_PROPERTY:
-    {
-      PSTORAGE_PROPERTY_QUERY StoragePropertyQuery = irp->AssociatedIrp.SystemBuffer;
-      // status = STATUS_INVALID_PARAMETER;
-      // status = irp->IoStatus.Status;
+	case IOCTL_STORAGE_QUERY_PROPERTY:
+	{
+		PSTORAGE_PROPERTY_QUERY StoragePropertyQuery = irp->AssociatedIrp.SystemBuffer;
+		// status = STATUS_INVALID_PARAMETER;
+		// status = irp->IoStatus.Status;
 printk("irp->IoStatus.Status is %x (STATUS_NOT_SUPPORTED is %x)\n", irp->IoStatus.Status, STATUS_NOT_SUPPORTED);
-      status = STATUS_NOT_SUPPORTED;
+		status = STATUS_NOT_SUPPORTED;
 
-      size_t CopySize;
-      STORAGE_ADAPTER_DESCRIPTOR StorageAdapterDescriptor;
-      STORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor;
+		size_t CopySize;
+		STORAGE_ADAPTER_DESCRIPTOR StorageAdapterDescriptor;
+		STORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor;
 
-      if (StoragePropertyQuery->PropertyId == StorageAdapterProperty && StoragePropertyQuery->QueryType == PropertyStandardQuery) {
-        CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_ADAPTER_DESCRIPTOR)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(STORAGE_ADAPTER_DESCRIPTOR));
-        StorageAdapterDescriptor.Version = sizeof(STORAGE_ADAPTER_DESCRIPTOR);
-        StorageAdapterDescriptor.Size = sizeof(STORAGE_ADAPTER_DESCRIPTOR);
-        StorageAdapterDescriptor.MaximumTransferLength = 1024*1024; // SECTORSIZE * DeviceExtension->Disk.MaxSectorsPerPacket;
+		switch (StoragePropertyQuery->QueryType) {
+		case PropertyExistsQuery:
+			switch (StoragePropertyQuery->PropertyId) {
+			case StorageAdapterProperty:
+			case StorageDeviceProperty:
+				status = STATUS_SUCCESS;
+				break;
+			default:
+				status = STATUS_INVALID_PARAMETER;
+			}
+			break;
+
+		case PropertyStandardQuery:
+			switch (StoragePropertyQuery->PropertyId) {
+			case StorageAdapterProperty:
+				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_ADAPTER_DESCRIPTOR)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(STORAGE_ADAPTER_DESCRIPTOR));
+				StorageAdapterDescriptor.Version = sizeof(STORAGE_ADAPTER_DESCRIPTOR);
+				StorageAdapterDescriptor.Size = sizeof(STORAGE_ADAPTER_DESCRIPTOR);
+				StorageAdapterDescriptor.MaximumTransferLength = 1024*1024; // SECTORSIZE * DeviceExtension->Disk.MaxSectorsPerPacket;
 //        StorageAdapterDescriptor.MaximumTransferLength = SECTORSIZE * POOLSIZE;
-        StorageAdapterDescriptor.MaximumPhysicalPages = (ULONG)-1;
-        StorageAdapterDescriptor.AlignmentMask = 0;
-        StorageAdapterDescriptor.AdapterUsesPio = TRUE;
-        StorageAdapterDescriptor.AdapterScansDown = FALSE;
-        StorageAdapterDescriptor.CommandQueueing = FALSE;
-        StorageAdapterDescriptor.AcceleratedTransfer = FALSE;
-        StorageAdapterDescriptor.BusType = BusTypeScsi;
-        RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &StorageAdapterDescriptor, CopySize);
-        irp->IoStatus.Information = (ULONG_PTR)CopySize;
-        status = STATUS_SUCCESS;
-      }
-      if (StoragePropertyQuery->PropertyId == StorageDeviceProperty && StoragePropertyQuery->QueryType == PropertyStandardQuery) {
-        CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_DEVICE_DESCRIPTOR)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(STORAGE_DEVICE_DESCRIPTOR));
-        StorageDeviceDescriptor.Version = sizeof(STORAGE_DEVICE_DESCRIPTOR);
-        StorageDeviceDescriptor.Size = sizeof(STORAGE_DEVICE_DESCRIPTOR);
-        StorageDeviceDescriptor.DeviceType = DIRECT_ACCESS_DEVICE;
-        StorageDeviceDescriptor.DeviceTypeModifier = 0;
-        StorageDeviceDescriptor.RemovableMedia = FALSE;
-        StorageDeviceDescriptor.CommandQueueing = FALSE;
-        StorageDeviceDescriptor.VendorIdOffset = 0;
-        StorageDeviceDescriptor.ProductIdOffset = 0;
-        StorageDeviceDescriptor.ProductRevisionOffset = 0;
-        StorageDeviceDescriptor.SerialNumberOffset = 0;
-        StorageDeviceDescriptor.BusType = BusTypeScsi;
-        StorageDeviceDescriptor.RawPropertiesLength = 0;
-        RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &StorageDeviceDescriptor, CopySize);
-        irp->IoStatus.Information = (ULONG_PTR)CopySize;
-        status = STATUS_SUCCESS;
-      }
-      if (StoragePropertyQuery->PropertyId == StorageDeviceAttributesProperty && StoragePropertyQuery->QueryType == PropertyStandardQuery) {
+				StorageAdapterDescriptor.MaximumPhysicalPages = (ULONG)-1;
+				StorageAdapterDescriptor.AlignmentMask = 0;
+				StorageAdapterDescriptor.AdapterUsesPio = TRUE;
+				StorageAdapterDescriptor.AdapterScansDown = FALSE;
+				StorageAdapterDescriptor.CommandQueueing = FALSE;
+				StorageAdapterDescriptor.AcceleratedTransfer = FALSE;
+				/* This is important. SCSI interface does not
+				 * work without this.
+				 */
+				StorageAdapterDescriptor.BusType = BusTypeScsi;
+				RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &StorageAdapterDescriptor, CopySize);
+				irp->IoStatus.Information = (ULONG_PTR)CopySize;
+				status = STATUS_SUCCESS;
+
+				break;
+			case StorageDeviceProperty:
+				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_DEVICE_DESCRIPTOR)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(STORAGE_DEVICE_DESCRIPTOR));
+				StorageDeviceDescriptor.Version = sizeof(STORAGE_DEVICE_DESCRIPTOR);
+				StorageDeviceDescriptor.Size = sizeof(STORAGE_DEVICE_DESCRIPTOR);
+				StorageDeviceDescriptor.DeviceType = DIRECT_ACCESS_DEVICE;
+				StorageDeviceDescriptor.DeviceTypeModifier = 0;
+				StorageDeviceDescriptor.RemovableMedia = FALSE;	/* TODO: TRUE? */
+				StorageDeviceDescriptor.CommandQueueing = FALSE;
+				StorageDeviceDescriptor.VendorIdOffset = 0;
+				StorageDeviceDescriptor.ProductIdOffset = 0;
+				StorageDeviceDescriptor.ProductRevisionOffset = 0;
+				StorageDeviceDescriptor.SerialNumberOffset = 0;
+				StorageDeviceDescriptor.BusType = BusTypeScsi;
+				StorageDeviceDescriptor.RawPropertiesLength = 0;
+
+				RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &StorageDeviceDescriptor, CopySize);
+				irp->IoStatus.Information = (ULONG_PTR)CopySize;
+				status = STATUS_SUCCESS;
+
+				break;
+			case StorageDeviceAttributesProperty:
+					/* seems to be undocumented ... */
 printk("StorageDeviceAttributesProperty ...\n");
-        irp->IoStatus.Information = 0;
-        status = STATUS_SUCCESS;
-      }
-#if 0
-		/* TODO: 6 7 8 e */
-    StorageAccessAlignmentProperty,	also type 1
-    StorageDeviceSeekPenaltyProperty,
-StorageDeviceTrimProperty
-StorageDeviceResiliencyProperty
-#endif
+				irp->IoStatus.Information = 0;
+				status = STATUS_SUCCESS;
+				break;
 
-      if (StoragePropertyQuery->PropertyId == StorageAccessAlignmentProperty && StoragePropertyQuery->QueryType == PropertyStandardQuery) {
+			case StorageAccessAlignmentProperty:
 printk("StorageAccessAlignmentProperty ...\n");
-        irp->IoStatus.Information = 0;
-        status = STATUS_SUCCESS;
-      }
-      if (StoragePropertyQuery->PropertyId == StorageAccessAlignmentProperty && StoragePropertyQuery->QueryType == PropertyExistsQuery) {
-printk("StorageAccessAlignmentProperty PropertyExistsQuery ...\n");
-        irp->IoStatus.Information = 0;
-        status = STATUS_SUCCESS;
-      }
-      if (StoragePropertyQuery->PropertyId == StorageDeviceSeekPenaltyProperty && StoragePropertyQuery->QueryType == PropertyStandardQuery) {
-printk("StorageDeviceSeekPenaltyProperty ...\n");
-        irp->IoStatus.Information = 0;
-        status = STATUS_SUCCESS;
-      }
-      if (StoragePropertyQuery->PropertyId == StorageDeviceTrimProperty && StoragePropertyQuery->QueryType == PropertyStandardQuery) {
-printk("StorageDeviceTrimProperty ...\n");
-        irp->IoStatus.Information = 0;
-        status = STATUS_SUCCESS;
-      }
-      if (StoragePropertyQuery->PropertyId == StorageDeviceResiliencyProperty && StoragePropertyQuery->QueryType == PropertyStandardQuery) {
-printk("StorageDeviceResiliencyProperty ...\n");
-        irp->IoStatus.Information = 0;
-        status = STATUS_SUCCESS;
-      }
-/* TODO: Answer NO for all exists queries by default.
-	if (StoragePropertyQuery->QueryType == PropertyExistsQuery &&
-	    status != STATUS_SUCCESS)
-		status = -ENOENT; ...
-*/
-      if (status == STATUS_INVALID_PARAMETER) {
-printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
-      }
-      break;
-   }
-   case IOCTL_SCSI_GET_ADDRESS:
-   {
-      size_t CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(SCSI_ADDRESS)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(SCSI_ADDRESS));
-      SCSI_ADDRESS ScsiAdress;
+				irp->IoStatus.Information = 0;
+				status = STATUS_SUCCESS;
+				break;
 
-      ScsiAdress.Length = sizeof(SCSI_ADDRESS);
-      ScsiAdress.PortNumber = 0;
-      ScsiAdress.PathId = 0;
-      ScsiAdress.TargetId = dev->minor;	/* TODO: only lowest 8 bit */
-      ScsiAdress.Lun = 0;
-      RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &ScsiAdress, CopySize);
-      irp->IoStatus.Information = (ULONG_PTR)CopySize;
-      status = STATUS_SUCCESS;
-      break;
-   }
+			case StorageDeviceSeekPenaltyProperty:
+printk("StorageDeviceSeekPenaltyProperty ...\n");
+				irp->IoStatus.Information = 0;
+				status = STATUS_SUCCESS;
+				break;
+
+			case StorageDeviceTrimProperty:
+printk("StorageDeviceTrimProperty ...\n");
+				irp->IoStatus.Information = 0;
+				status = STATUS_SUCCESS;
+				break;
+
+			case StorageDeviceResiliencyProperty:
+printk("StorageDeviceResiliencyProperty ...\n");
+				irp->IoStatus.Information = 0;
+				status = STATUS_SUCCESS;
+				break;
+
+			default:
+				status = STATUS_INVALID_PARAMETER;
+			}	/* switch PropertyId */
+			break;
+
+		default:
+			status = STATUS_INVALID_PARAMETER;
+		}
+		if (status != STATUS_SUCCESS) {
+printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+		}
+		break;
+   	}
+
+	case IOCTL_SCSI_GET_ADDRESS:
+	{
+		size_t CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(SCSI_ADDRESS)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(SCSI_ADDRESS));
+		SCSI_ADDRESS ScsiAdress;
+
+		ScsiAdress.Length = sizeof(SCSI_ADDRESS);
+		ScsiAdress.PortNumber = 0;
+		ScsiAdress.PathId = 0;
+		ScsiAdress.TargetId = dev->minor;	/* TODO: only lowest 8 bit */
+		ScsiAdress.Lun = 0;
+		RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &ScsiAdress, CopySize);
+		irp->IoStatus.Information = (ULONG_PTR)CopySize;
+		status = STATUS_SUCCESS;
+		break;
+	}
 
 /*
 	case IOCTL_STORAGE_QUERY_PROPERTY:
