@@ -27,7 +27,9 @@
 
 /* Uncomment this if you want more debug output (disable for releases) */
 
+/*
 #define DEBUG 1
+*/
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -717,14 +719,14 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		PSTORAGE_PROPERTY_QUERY StoragePropertyQuery = irp->AssociatedIrp.SystemBuffer;
 		// status = STATUS_INVALID_PARAMETER;
 		// status = irp->IoStatus.Status;
-printk("irp->IoStatus.Status is %x (STATUS_NOT_SUPPORTED is %x)\n", irp->IoStatus.Status, STATUS_NOT_SUPPORTED);
+// printk("irp->IoStatus.Status is %x (STATUS_NOT_SUPPORTED is %x)\n", irp->IoStatus.Status, STATUS_NOT_SUPPORTED);
 		status = STATUS_NOT_SUPPORTED;
 
 		size_t CopySize;
 		STORAGE_ADAPTER_DESCRIPTOR StorageAdapterDescriptor;
 		STORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor;
 
-printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+// printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
 
 		switch (StoragePropertyQuery->QueryType) {
 		case PropertyExistsQuery:
@@ -781,7 +783,7 @@ printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n",
 				break;
 			case StorageDeviceAttributesProperty:
 					/* seems to be undocumented ... */
-printk("StorageDeviceAttributesProperty ...\n");
+// printk("StorageDeviceAttributesProperty ...\n");
 				irp->IoStatus.Information = 0;
 				status = STATUS_SUCCESS;
 				break;
@@ -791,7 +793,7 @@ printk("StorageDeviceAttributesProperty ...\n");
 				struct _STORAGE_ACCESS_ALIGNMENT_DESCRIPTOR a;
 
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(a)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(a));
-printk("StorageAccessAlignmentProperty ...\n");
+// printk("StorageAccessAlignmentProperty ...\n");
 				a.Version = sizeof(a);
 				a.Size = sizeof(a);
 				a.BytesPerCacheLine = 16;
@@ -810,7 +812,7 @@ printk("StorageAccessAlignmentProperty ...\n");
 				struct _DEVICE_SEEK_PENALTY_DESCRIPTOR sp;
 
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(sp)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(sp));
-printk("StorageDeviceSeekPenaltyProperty ...\n");
+// printk("StorageDeviceSeekPenaltyProperty ...\n");
 				sp.Version = sizeof(sp);
 				sp.Size = sizeof(sp);
 					/* actually this depends on underlying
@@ -829,7 +831,7 @@ printk("StorageDeviceSeekPenaltyProperty ...\n");
 				struct _DEVICE_TRIM_DESCRIPTOR trim;
 
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(trim)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(trim));
-printk("StorageDeviceTrimProperty ...\n");
+// printk("StorageDeviceTrimProperty ...\n");
 				trim.Version = sizeof(trim);
 				trim.Size = sizeof(trim);
 					/* TRIM not implemented till now. TODO: 
@@ -845,7 +847,7 @@ printk("StorageDeviceTrimProperty ...\n");
 			}
 
 			case StorageDeviceResiliencyProperty:
-printk("StorageDeviceResiliencyProperty ...\n");
+// printk("StorageDeviceResiliencyProperty ...\n");
 				irp->IoStatus.Information = 0;
 				status = STATUS_SUCCESS;
 				break;
@@ -855,7 +857,7 @@ printk("StorageDeviceResiliencyProperty ...\n");
 
 		}
 		if (status != STATUS_SUCCESS) {
-printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+// printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
 		}
 		break;
    	}
@@ -2344,7 +2346,7 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	dbg("Pnp: device: %p irp: %p\n", device, irp);
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 
-printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
+// printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
 	if (device == drbd_bus_device) {
 			/* Some minors (REMOVE_DEVICE) might delete the
 			 * device object in which case we must not
@@ -2362,7 +2364,7 @@ static struct block_device_reference *saved_ref;
 		struct block_device *bdev = NULL;
 		struct drbd_device *drbd_device = NULL;
 		int minor = 1;	/* for HLK test ... TODO: not a good idea ... */
-printk("device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
+// printk("device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
 		if (ref != NULL) {
 			bdev = ref->bdev;
 			if (bdev && !bdev->delete_pending) {
@@ -2431,7 +2433,7 @@ printk("Hacking windows device from %p to %p ...\n", bdev->windows_device, devic
 		case IRP_MN_QUERY_ID:
 		{
 			wchar_t *string;
-printk("Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
+// printk("Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
 // printk("minor is %d\n", minor);
 			if (minor < 0) {
 #if 0
@@ -2515,7 +2517,7 @@ dbg("status is %x\n", status);
 					IoCompleteRequest(irp, IO_NO_INCREMENT);
 					num_pnp_requests--;
 if (status == STATUS_NOT_SUPPORTED) {
-printk("5 STATUS_NOT_SUPPORTED\n");
+// printk("5 STATUS_NOT_SUPPORTED\n");
 }
 					return status;
 				}
@@ -2530,7 +2532,7 @@ dbg("Returned string is %S\n", string);
 		}
 
 		case IRP_MN_QUERY_DEVICE_RELATIONS:
-printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
+// printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
 
 		/* Devices that have a WinDRBD assigned mount point
 		 * (via device "X:" minor y;) are non-PnP devices,
@@ -2605,14 +2607,14 @@ printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelati
 			}
 
 			default:
-printk("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
+// printk("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
 				status = irp->IoStatus.Status;
 dbg("status is %x\n", status);
 				IoCompleteRequest(irp, IO_NO_INCREMENT);
 
 				num_pnp_requests--;
 if (status == STATUS_NOT_SUPPORTED) {
-printk("5 STATUS_NOT_SUPPORTED\n");
+// printk("5 STATUS_NOT_SUPPORTED\n");
 }
 				return status;
 			}
@@ -2639,7 +2641,7 @@ dbg("status is %x\n", status);
 
 			num_pnp_requests--;
 if (status == STATUS_NOT_SUPPORTED) {
-printk("4 STATUS_NOT_SUPPORTED\n");
+// printk("4 STATUS_NOT_SUPPORTED\n");
 }
 			return status;
 
@@ -2796,7 +2798,7 @@ printk("4 STATUS_NOT_SUPPORTED\n");
 			break;
 
 		case IRP_MN_SURPRISE_REMOVAL:
-printk("got IRP_MN_SURPRISE_REMOVAL\n");
+// printk("got IRP_MN_SURPRISE_REMOVAL\n");
 saved_ref = ref;	/* For windows to restore device later ... */
 bdev->suprise_removal = true;
 // bdev->about_to_delete = 1; /* meaning no more I/O on that device */
@@ -2807,7 +2809,7 @@ bdev->suprise_removal = true;
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
 
 if (bdev != NULL && bdev->suprise_removal) {
-printk("got IRP_MN_REMOVE_DEVICE after IRP_MN_SURPRISE_REMOVAL ...\n");
+// printk("got IRP_MN_REMOVE_DEVICE after IRP_MN_SURPRISE_REMOVAL ...\n");
 bdev->suprise_removal = false;
 } else {
 			/* If it is NULL then we already deleted the device */
@@ -2842,7 +2844,7 @@ bdev->suprise_removal = false;
 					 * need the pointer to the block_device_ref ... so do not NULLify this here.. */
 /* TODO: this code is never executed in the test, reenable NULLify? */
 //				device->DeviceExtension = NULL;
-printk("REMOVE: device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
+// printk("REMOVE: device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
 				if (bdev != NULL) {
 						/* To allow bdev being removed. */
 					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
@@ -2858,7 +2860,7 @@ printk("REMOVE: device->DeviceExtension is %p, device is %p\n", device->DeviceEx
 		        IoCompleteRequest(irp, IO_NO_INCREMENT);
 
 if (status == STATUS_NOT_SUPPORTED) {
-printk("3 STATUS_NOT_SUPPORTED\n");
+// printk("3 STATUS_NOT_SUPPORTED\n");
 }
 			num_pnp_requests--;
 			return status;
@@ -2885,7 +2887,7 @@ dbg("Setting ejected flag ...\n");
 				dbg("bus object returned %x\n", status);
 				num_pnp_requests--;
 if (status == STATUS_NOT_SUPPORTED) {
-printk("2 STATUS_NOT_SUPPORTED\n");
+// printk("2 STATUS_NOT_SUPPORTED\n");
 }
 				return status;
 			}
@@ -2894,7 +2896,7 @@ printk("2 STATUS_NOT_SUPPORTED\n");
 			break;
 
 		default:
-printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
+// printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
 
 				/* probably not a good idea? */
 			if (drbd_bus_device != NULL) {
@@ -2905,7 +2907,7 @@ printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
 				dbg("bus object returned %x\n", status);
 				num_pnp_requests--;
 if (status == STATUS_NOT_SUPPORTED) {
-printk("1 STATUS_NOT_SUPPORTED\n");
+// printk("1 STATUS_NOT_SUPPORTED\n");
 }
 				return status;
 			}
@@ -2918,7 +2920,7 @@ printk("1 STATUS_NOT_SUPPORTED\n");
 	}
 
 if (status == STATUS_NOT_SUPPORTED) {
-printk("STATUS_NOT_SUPPORTED\n");
+// printk("STATUS_NOT_SUPPORTED\n");
 }
 
 	irp->IoStatus.Status = status;
