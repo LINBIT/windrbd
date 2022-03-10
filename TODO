@@ -64,6 +64,11 @@ TODO: Feature: HLK tests should succeed (for Windows 2019)
 	driver can be unloaded but the surprise removal tests should
 	work now.
 
+	Update: changed Device instance path by setting UniqueID to
+	TRUE. PnP manager now does not alter the instance path in any
+	way. This used to cause disk stress (and probably others) test
+	to fail at startup.
+
 TODO: Research: See if it works under ReactOS
 
 	Bonus would be that we could create legally 26 more
