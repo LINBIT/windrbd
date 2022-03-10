@@ -715,7 +715,11 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
     case IOCTL_STORAGE_QUERY_PROPERTY:
     {
       PSTORAGE_PROPERTY_QUERY StoragePropertyQuery = irp->AssociatedIrp.SystemBuffer;
-      status = STATUS_INVALID_PARAMETER;
+      // status = STATUS_INVALID_PARAMETER;
+      // status = irp->IoStatus.Status;
+printk("irp->IoStatus.Status is %x (STATUS_NOT_SUPPORTED is %x)\n", irp->IoStatus.Status, STATUS_NOT_SUPPORTED);
+      status = STATUS_NOT_SUPPORTED;
+
       size_t CopySize;
       STORAGE_ADAPTER_DESCRIPTOR StorageAdapterDescriptor;
       STORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor;
