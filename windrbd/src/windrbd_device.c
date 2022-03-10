@@ -787,22 +787,62 @@ printk("StorageDeviceAttributesProperty ...\n");
 				break;
 
 			case StorageAccessAlignmentProperty:
+			{
+				struct _STORAGE_ACCESS_ALIGNMENT_DESCRIPTOR a;
+
+				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(a)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(a));
 printk("StorageAccessAlignmentProperty ...\n");
-				irp->IoStatus.Information = 0;
+				a.Version = sizeof(a);
+				a.Size = sizeof(a);
+				a.BytesPerCacheLine = 16;
+				a.BytesOffsetForCacheAlignment = 0;
+				a.BytesPerLogicalSector = 512;
+				a.BytesPerPhysicalSector = 512;
+				a.BytesOffsetForSectorAlignment = 0;
+				RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &a, CopySize);
+				irp->IoStatus.Information = (ULONG_PTR)CopySize;
 				status = STATUS_SUCCESS;
 				break;
+			}
 
 			case StorageDeviceSeekPenaltyProperty:
+			{
+				struct _DEVICE_SEEK_PENALTY_DESCRIPTOR sp;
+
+				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(sp)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(sp));
 printk("StorageDeviceSeekPenaltyProperty ...\n");
-				irp->IoStatus.Information = 0;
+				sp.Version = sizeof(sp);
+				sp.Size = sizeof(sp);
+					/* actually this depends on underlying
+					 * storage.
+					 */
+				sp.IncursSeekPenalty = TRUE;
+
+				RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &sp, CopySize);
+				irp->IoStatus.Information = (ULONG_PTR)CopySize;
 				status = STATUS_SUCCESS;
 				break;
+			}
 
 			case StorageDeviceTrimProperty:
+			{
+				struct _DEVICE_TRIM_DESCRIPTOR trim;
+
+				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(trim)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(trim));
 printk("StorageDeviceTrimProperty ...\n");
-				irp->IoStatus.Information = 0;
+				trim.Version = sizeof(trim);
+				trim.Size = sizeof(trim);
+					/* TRIM not implemented till now. TODO: 
+					 * Change this value once TRIM is
+					 * supported.
+					 */
+				trim.TrimEnabled = FALSE;
+
+				RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &trim, CopySize);
+				irp->IoStatus.Information = (ULONG_PTR)CopySize;
 				status = STATUS_SUCCESS;
 				break;
+			}
 
 			case StorageDeviceResiliencyProperty:
 printk("StorageDeviceResiliencyProperty ...\n");
