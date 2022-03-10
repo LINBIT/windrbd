@@ -724,6 +724,8 @@ printk("irp->IoStatus.Status is %x (STATUS_NOT_SUPPORTED is %x)\n", irp->IoStatu
 		STORAGE_ADAPTER_DESCRIPTOR StorageAdapterDescriptor;
 		STORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor;
 
+printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+
 		switch (StoragePropertyQuery->QueryType) {
 		case PropertyExistsQuery:
 			switch (StoragePropertyQuery->PropertyId) {
@@ -731,8 +733,6 @@ printk("irp->IoStatus.Status is %x (STATUS_NOT_SUPPORTED is %x)\n", irp->IoStatu
 			case StorageDeviceProperty:
 				status = STATUS_SUCCESS;
 				break;
-			default:
-				status = STATUS_INVALID_PARAMETER;
 			}
 			break;
 
@@ -810,13 +810,9 @@ printk("StorageDeviceResiliencyProperty ...\n");
 				status = STATUS_SUCCESS;
 				break;
 
-			default:
-				status = STATUS_INVALID_PARAMETER;
 			}	/* switch PropertyId */
 			break;
 
-		default:
-			status = STATUS_INVALID_PARAMETER;
 		}
 		if (status != STATUS_SUCCESS) {
 printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
