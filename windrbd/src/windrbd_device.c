@@ -2500,7 +2500,7 @@ GenDisk
 					status = STATUS_SUCCESS;
 					break;
 				case 5:
-					swprintf(string, L"XX %d", minor);
+					swprintf(string, L"%d", minor);
 					status = STATUS_SUCCESS;
 					break;
 /*
@@ -2737,7 +2737,8 @@ printk("4 STATUS_NOT_SUPPORTED\n");
 			DeviceCapabilities->HardwareDisabled = FALSE;
 			DeviceCapabilities->Removable = TRUE;
 			DeviceCapabilities->SurpriseRemovalOK = TRUE;
-			DeviceCapabilities->UniqueID = FALSE;
+				/* WinDRBD minors are unique on the system */
+			DeviceCapabilities->UniqueID = TRUE;
 			DeviceCapabilities->SilentInstall = FALSE;
 
 			status = STATUS_SUCCESS;
