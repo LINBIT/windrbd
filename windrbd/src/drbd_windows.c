@@ -3164,12 +3164,19 @@ static struct _DEVICE_OBJECT *find_windows_device(UNICODE_STRING *path, struct _
 	struct _DEVICE_OBJECT *windows_device;
 	struct _FILE_OBJECT *FileObject;
 	NTSTATUS status;
+	int tries = 10;
 
-	status = IoGetDeviceObjectPointer(path, STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS, &FileObject, &windows_device);
+	do {
+		status = IoGetDeviceObjectPointer(path, STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS, &FileObject, &windows_device);
+		if (status != STATUS_SHARING_VIOLATION)
+			break;
+		printk(KERN_WARNING, "Sharing violation on %S somebody is using it right now (tries = %d)?\n", path->Buffer, tries);
+		msleep(1000);
+	} while (--tries > 0);
 
 	if (!NT_SUCCESS(status))
 	{
-		printk(KERN_ERR "Cannot get device object for %s status: %x, does it exist?\n", path, status);
+		printk(KERN_ERR "Cannot get device object for %S status: %x, does it exist?\n", path->Buffer, status);
 		return NULL;
 	}
 	printk("IoGetDeviceObjectPointer %S succeeded, targetdev is %p\n", path->Buffer, windows_device);
