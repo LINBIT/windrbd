@@ -106,6 +106,20 @@ WINDRBD_SOURCE = ..
 DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
+ifeq ($(BUILD_ENV),jt-opennebula-vm)
+export EWDK_BASE := e:
+EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
+EWDK_VERSION := 10.0.22000.0
+EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
+
+# Name of the pfx file (without extension)
+KEY = linbit-2019
+PASSWD = ""
+
+WINDRBD_SOURCE = ..
+DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
+endif
+
 ifndef EWDK_VERSION
 $(error EWDK_BASE not set. Please edit Makefile to make it know about your ewdk installation.)
 endif
