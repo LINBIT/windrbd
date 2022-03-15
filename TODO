@@ -38,6 +38,11 @@ Real: February 2 2022
 
 TODOs for after Release 1.0 ----------------------------------------
 
+TODO: Build: Have a output dir for driver (windrbd.sys) and inf (windrbd.inf)
+
+	inf2cat (and generating hlkx package) takes all files in 
+	the specified directory (including source files).
+
 TODO: Code quality: Do not have separate cmd scripts for each build environment
 
 TODO: Code quality: One should not need to create their own keys on building WinDRBD
