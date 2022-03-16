@@ -1535,7 +1535,7 @@ static int __mod_timer(struct timer_list *timer, ULONG_PTR expires, bool pending
 		nWaitTime.QuadPart = -1;
 	else {
 		expires -= current_milisec;
-		nWaitTime = RtlConvertLongToLargeInteger(RELATIVE(MILLISECONDS(expires)));
+		nWaitTime.QuadPart = RELATIVE(MILLISECONDS(expires));
 	}
 
 /*

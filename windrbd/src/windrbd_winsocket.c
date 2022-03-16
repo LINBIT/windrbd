@@ -184,11 +184,12 @@ static NTSTATUS InitWskBuffer(
 	return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    try {
+//    try {
 	// DW-1223: Locking with 'IoWriteAccess' affects buffer, which causes infinite I/O from ntfs when the buffer is from mdl of write IRP.
 	// we need write access for receiver, since buffer will be filled.
 	MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+#if 0 
+} except(EXCEPTION_EXECUTE_HANDLER) {
 	if (WskBuffer->Mdl != NULL) {
 	    IoFreeMdl(WskBuffer->Mdl);
 	}
@@ -196,6 +197,7 @@ static NTSTATUS InitWskBuffer(
 		printk(KERN_ERR "MmProbeAndLockPages failed. exception code=0x%x\n", GetExceptionCode());
 	return STATUS_INSUFFICIENT_RESOURCES;
     }
+#endif
     return Status;
 }
 

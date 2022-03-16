@@ -288,6 +288,7 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		break;
 
 	case IOCTL_WINDRBD_ROOT_SEND_NL_PACKET:
+	{
 		size_t in_bytes = s->Parameters.DeviceIoControl.InputBufferLength;
 
 		if (in_bytes > NLMSG_GOODSIZE) {
@@ -302,12 +303,14 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 				status = STATUS_ACCESS_DENIED;
 			else
 				status = STATUS_INVALID_DEVICE_REQUEST;
-		} else
+		}
+		else
 			status = STATUS_SUCCESS;
 
 		break;
-
+	}
 	case IOCTL_WINDRBD_ROOT_RECEIVE_NL_PACKET:
+	{
 		size_t out_max_bytes = s->Parameters.DeviceIoControl.OutputBufferLength;
 		size_t bytes_returned;
 		u32 portid;
@@ -316,14 +319,15 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 		}
-		portid = ((struct windrbd_ioctl_genl_portid*) irp->AssociatedIrp.SystemBuffer)->portid;
+		portid = ((struct windrbd_ioctl_genl_portid*)irp->AssociatedIrp.SystemBuffer)->portid;
 
 		bytes_returned = windrbd_receive_netlink_packets(irp->AssociatedIrp.SystemBuffer, out_max_bytes, portid);
 
-			/* may be 0, if there is no data */
+		/* may be 0, if there is no data */
 		irp->IoStatus.Information = bytes_returned;
 		status = STATUS_SUCCESS;
 		break;
+	}
 
 	case IOCTL_WINDRBD_ROOT_JOIN_MC_GROUP:
 		if (s->Parameters.DeviceIoControl.InputBufferLength != sizeof(struct windrbd_ioctl_genl_portid_and_multicast_group)) {
@@ -340,6 +344,7 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		break;
 
 	case IOCTL_WINDRBD_ROOT_RECEIVE_USERMODE_HELPER:
+	{
 		size_t bytes_returned2;
 		size_t out_max_bytes2 = s->Parameters.DeviceIoControl.OutputBufferLength;
 		int ret;
@@ -351,6 +356,7 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 
 		irp->IoStatus.Information = bytes_returned2;
 		break;
+	}
 
 	case IOCTL_WINDRBD_ROOT_SEND_USERMODE_HELPER_RETURN_VALUE:
 		if (s->Parameters.DeviceIoControl.InputBufferLength != sizeof(struct windrbd_usermode_helper_return_value)) {
@@ -404,16 +410,19 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		break;
 
 	case IOCTL_WINDRBD_ROOT_RUN_TEST:
-		const char *test_args = irp->AssociatedIrp.SystemBuffer;
+	{
+		const char* test_args = irp->AssociatedIrp.SystemBuffer;
 		if (test_args == NULL)
 			status = STATUS_INVALID_DEVICE_REQUEST;
 		else
 			test_main(test_args);
 
 		break;
+	}
 
 	case IOCTL_WINDRBD_ROOT_SET_SYSLOG_IP:
-		const char *syslog_ip = irp->AssociatedIrp.SystemBuffer;
+	{
+		const char* syslog_ip = irp->AssociatedIrp.SystemBuffer;
 
 		if (syslog_ip == NULL)
 			status = STATUS_INVALID_DEVICE_REQUEST;
@@ -421,9 +430,11 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 			set_syslog_ip(syslog_ip);
 
 		break;
+	}
 
 	case IOCTL_WINDRBD_ROOT_CREATE_RESOURCE_FROM_URL:
-		const char *drbd_url = irp->AssociatedIrp.SystemBuffer;
+	{
+		const char* drbd_url = irp->AssociatedIrp.SystemBuffer;
 
 		if (drbd_url == NULL)
 			status = STATUS_INVALID_DEVICE_REQUEST;
@@ -431,9 +442,11 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 			create_drbd_resource_from_url(drbd_url);
 
 		break;
+	}
 
 	case IOCTL_WINDRBD_ROOT_SET_CONFIG_KEY:
-		const char *the_config_key = irp->AssociatedIrp.SystemBuffer;
+	{
+		const char* the_config_key = irp->AssociatedIrp.SystemBuffer;
 
 		if (the_config_key == NULL)
 			status = STATUS_INVALID_DEVICE_REQUEST;
@@ -443,9 +456,11 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		}
 
 		break;
+	}
 
 	case IOCTL_WINDRBD_ROOT_GET_LOCK_DOWN_STATE:
-		int *is_locked_p = irp->AssociatedIrp.SystemBuffer;
+	{
+		int* is_locked_p = irp->AssociatedIrp.SystemBuffer;
 		if (s->Parameters.DeviceIoControl.OutputBufferLength != sizeof(int)) {
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
@@ -454,9 +469,11 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 
 		irp->IoStatus.Information = sizeof(int);
 		break;
+	}
 
 	case IOCTL_WINDRBD_ROOT_SET_EVENT_LOG_LEVEL:
-		int *the_level = irp->AssociatedIrp.SystemBuffer;
+	{
+		int* the_level = irp->AssociatedIrp.SystemBuffer;
 
 		if (the_level == NULL)
 			status = STATUS_INVALID_DEVICE_REQUEST;
@@ -464,6 +481,7 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 			set_event_log_threshold(*the_level);
 
 		break;
+	}
 
 	default:
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
@@ -693,7 +711,8 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	}
 
 	case IOCTL_STORAGE_GET_HOTPLUG_INFO:
-		struct _STORAGE_HOTPLUG_INFO *hotplug_info = 
+	{
+		struct _STORAGE_HOTPLUG_INFO* hotplug_info =
 			irp->AssociatedIrp.SystemBuffer;
 
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _STORAGE_HOTPLUG_INFO)) {
@@ -701,18 +720,19 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 			break;
 		}
 		hotplug_info->Size = sizeof(struct _STORAGE_HOTPLUG_INFO);
-			/* TODO: makes no difference for FAT, ... */
+		/* TODO: makes no difference for FAT, ... */
 		hotplug_info->MediaRemovable = TRUE;
 		hotplug_info->MediaHotplug = TRUE;
 		hotplug_info->DeviceHotplug = TRUE;
-/*		hotplug_info->MediaRemovable = FALSE;
-		hotplug_info->MediaHotplug = FALSE;
-		hotplug_info->DeviceHotplug = FALSE; */
+		/*		hotplug_info->MediaRemovable = FALSE;
+				hotplug_info->MediaHotplug = FALSE;
+				hotplug_info->DeviceHotplug = FALSE; */
 		hotplug_info->WriteCacheEnableOverride = FALSE;
-		
+
 		irp->IoStatus.Information = sizeof(struct _STORAGE_HOTPLUG_INFO);
 		status = STATUS_SUCCESS;
 		break;
+	}
 
 	case IOCTL_STORAGE_QUERY_PROPERTY:
 	{
@@ -907,12 +927,13 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		break;
 
 	case IOCTL_STORAGE_GET_DEVICE_NUMBER:
-		struct _STORAGE_DEVICE_NUMBER *dn;
+	{
+		struct _STORAGE_DEVICE_NUMBER* dn;
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _STORAGE_DEVICE_NUMBER)) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
-		dn = (struct _STORAGE_DEVICE_NUMBER*) irp->AssociatedIrp.SystemBuffer;
+		dn = (struct _STORAGE_DEVICE_NUMBER*)irp->AssociatedIrp.SystemBuffer;
 
 		dn->DeviceType = FILE_DEVICE_DISK; /* TODO: device->DeviceType? */
 		dn->DeviceNumber = dev->minor;
@@ -921,15 +942,17 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		irp->IoStatus.Information = sizeof(struct _STORAGE_DEVICE_NUMBER);
 		status = STATUS_SUCCESS;
 		break;
+	}
 
 	case IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES:
-		struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES *attrs =
-	            (struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES*) irp->AssociatedIrp.SystemBuffer;
+	{
+		struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES* attrs =
+			(struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES*)irp->AssociatedIrp.SystemBuffer;
 
 		if ((s->Parameters.DeviceIoControl.InputBufferLength <
-	            sizeof(struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES)) ||
-                   (s->Parameters.DeviceIoControl.InputBufferLength <
-                   (attrs->DataSetRangesOffset + attrs->DataSetRangesLength))) {
+			sizeof(struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES)) ||
+			(s->Parameters.DeviceIoControl.InputBufferLength <
+				(attrs->DataSetRangesOffset + attrs->DataSetRangesLength))) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
@@ -944,9 +967,10 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 
 		status = STATUS_SUCCESS;
 		irp->IoStatus.Information = 0;
-			/* TODO: trim */
+		/* TODO: trim */
 
 		break;
+	}
 
 	/* from reactos */
 
@@ -961,7 +985,8 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		break;
 
 	case IOCTL_DISK_GET_DRIVE_LAYOUT_EX:
-		struct _DRIVE_LAYOUT_INFORMATION_EX *dli;
+	{
+		struct _DRIVE_LAYOUT_INFORMATION_EX* dli;
 
 		dbg(KERN_DEBUG "IOCTL_DISK_GET_DRIVE_LAYOUT_EX: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
 
@@ -969,18 +994,20 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
-		dli = (struct _DRIVE_LAYOUT_INFORMATION_EX*) irp->AssociatedIrp.SystemBuffer;
+		dli = (struct _DRIVE_LAYOUT_INFORMATION_EX*)irp->AssociatedIrp.SystemBuffer;
 
 		dli->PartitionStyle = 0;	/* MBR */
 		dli->PartitionCount = 1;
 		dli->Mbr.Signature = 0x12345678;
-//		dli->Mbr.Checksum = 0;
+		//		dli->Mbr.Checksum = 0;
 
 		fill_partition_info_ex(&dli->PartitionEntry[0], dev);
 		irp->IoStatus.Information = sizeof(struct _DRIVE_LAYOUT_INFORMATION_EX);
 
 		status = STATUS_SUCCESS;
 		break;
+	}
+
 	default: 
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 
@@ -2650,7 +2677,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			wchar_t *string = NULL;
 			size_t string_length;
 
-			if ((string = (PWCHAR)ExAllocatePool(NonPagedPool, (512 * sizeof(WCHAR)))) == NULL) {
+			if ((string = (PWCHAR)ExAllocatePoolUninitialized(NonPagedPool, (512 * sizeof(WCHAR)), 'DRBD')) == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
@@ -2659,7 +2686,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
 			case DeviceTextDescription:
 				string_length = swprintf(string, L"WinDRBD Disk") + 1;
-				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePool(PagedPool, string_length * sizeof(WCHAR));
+				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolUninitializedExAllocatePool(PagedPool, string_length * sizeof(WCHAR));
 				if (irp->IoStatus.Information == 0) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
@@ -2671,7 +2698,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			case DeviceTextLocationInformation:
 				string_length = swprintf(string, L"WinDRBD Minor %d", minor) + 1;
 
-				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePool(PagedPool, string_length * sizeof(WCHAR));
+				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolUninitialized(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
 				if (irp->IoStatus.Information == 0) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
@@ -2697,7 +2724,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 		{
 			struct _PNP_BUS_INFORMATION *bus_info;
 
-			bus_info = ExAllocatePool(PagedPool, sizeof(*bus_info));
+			bus_info = ExAllocatePoolUninitialized(PagedPool, sizeof(*bus_info), 'DRBD');
 			if (bus_info  == NULL) {
 			        printk("DiskDispatchPnP ExAllocatePool IRP_MN_QUERY_BUS_INFORMATION failed\n");
 			        status = STATUS_INSUFFICIENT_RESOURCES;
