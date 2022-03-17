@@ -78,7 +78,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\shared;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\um;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\km\crt;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\km;..\converted-sources\drbd;..\converted-sources\drbd\drbd-headers;..\windrbd\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\shared;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\um;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\km\crt;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\km;..\..\converted-sources\drbd;..\..\converted-sources\drbd\drbd-headers;..\..\windrbd\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files %28x86%29\Windows Kits\10\Lib\win7\km\x64;C:\Program Files %28x86%29\Windows Kits\10\Lib\10.0.22000.0\km\x64</LibraryPath>
     <GenerateManifest>false</GenerateManifest>
     <TargetExt>.sys</TargetExt>
