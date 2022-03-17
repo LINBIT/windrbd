@@ -42,6 +42,7 @@
 #define __bitwise__
 
 #include <wdm.h>
+// #include <ntddk.h>
 #include <ntstrsafe.h>
 #include <linux/list.h>
 #include <linux/wait.h>

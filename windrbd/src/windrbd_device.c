@@ -2686,7 +2686,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
 			case DeviceTextDescription:
 				string_length = swprintf(string, L"WinDRBD Disk") + 1;
-				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolUninitializedExAllocatePool(PagedPool, string_length * sizeof(WCHAR));
+				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolUninitialized(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
 				if (irp->IoStatus.Information == 0) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;

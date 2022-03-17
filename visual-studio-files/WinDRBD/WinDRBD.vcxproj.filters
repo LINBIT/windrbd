@@ -145,4 +145,105 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\windrbd_version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\windrbd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\kref_debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_vli.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_state_change.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_state.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_req.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_nla.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_kref_debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_interval.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_int.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_debugfs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_dax_pmem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\compat.4.15.18.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd-headers\drbd_meta_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd-headers\drbd_strings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\compat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\disp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\drbd_polymorph_printk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\drbd_url.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\drbd_windows.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\drbd_wingenl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\drbd_wrappers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\generic_compat_stuff.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\kmalloc_debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\stdint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\tiktok.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\windrbd_device.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\windrbd_threads.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\windrbd-event-log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\wingenl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

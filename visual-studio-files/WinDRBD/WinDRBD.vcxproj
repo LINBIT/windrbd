@@ -77,10 +77,11 @@
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
     <IncludePath>C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\shared;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\um;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\km\crt;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\km;C:\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd;C:\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd-headers;C:\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files %28x86%29\Windows Kits\10\Lib\10.0.22000.0\km\x64</LibraryPath>
+    <LibraryPath>C:\Program Files %28x86%29\Windows Kits\10\Lib\win7\km\x64;C:\Program Files %28x86%29\Windows Kits\10\Lib\10.0.22000.0\km\x64</LibraryPath>
     <GenerateManifest>false</GenerateManifest>
+    <TargetExt>.sys</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -117,15 +118,18 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_WIN64;_AMD64_;AMD64;_M_AMD64;STD_CALL;DEPRECATE_DDK_FUNCTIONS;MSC_NOOPT;_WIN32_WINNT=0x0601;WINVER=0x0601;WINNT=1;NTDDI_VERSION=0x06010000;KMDF_VERSION_MAJOR=1;KMDF_VERSION_MINOR=15;POOL_NX_OPTIN=1;KMALLOC_DEBUG=1;__KERNEL__=1;__BYTE_ORDER=1;__LITTLE_ENDIAN=1;__LITTLE_ENDIAN_BITFIELD;COMPAT_HAVE_BOOL_TYPE=1;CONFIG_KREF_DEBUG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN64;_AMD64_;AMD64;_M_AMD64;_NTDDK_;_NTDRIVER_;DEPRECATE_DDK_FUNCTIONS;MSC_NOOPT;_WIN32_WINNT=0x0601;WINVER=0x0601;WINNT=1;NTDDI_VERSION=0x06010000;KMDF_VERSION_MAJOR=1;KMDF_VERSION_MINOR=15;POOL_NX_OPTIN=1;KMALLOC_DEBUG=1;__KERNEL__=1;__BYTE_ORDER=1;__LITTLE_ENDIAN=1;__LITTLE_ENDIAN_BITFIELD;COMPAT_HAVE_BOOL_TYPE=1;CONFIG_KREF_DEBUG=1;_KERNEL_MODE;NT_INLINE_GET_CURRENT_IRQL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>wdm.lib;ntoskrnl.lib;;netio.lib;wdmsec.lib;ksecdd.lib</AdditionalDependencies>
+      <AdditionalDependencies>wdm.lib;ntoskrnl.lib;netio.lib;ksecdd.lib;hal.lib;wdmsec.lib;bufferoverflowfastfailk.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <Driver>Driver</Driver>
+      <EntryPointSymbol>DriverEntry</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -188,6 +192,41 @@
     <ClCompile Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\src\windrbd_usermodehelper.c" />
     <ClCompile Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\src\windrbd_waitqueue.c" />
     <ClCompile Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\src\windrbd_winsocket.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\compat.4.15.18.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd-headers\drbd_meta_data.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd-headers\drbd_strings.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd-headers\drbd_transport.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_dax_pmem.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_debugfs.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_int.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_interval.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_kref_debug.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_nla.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_req.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_state.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_state_change.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\drbd_vli.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\kref_debug.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\windrbd.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\converted-sources\drbd\windrbd_version.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\compat.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\disp.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\drbd_polymorph_printk.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\drbd_url.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\drbd_windows.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\drbd_wingenl.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\drbd_wrappers.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\generic_compat_stuff.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\kmalloc_debug.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\stdint.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\tiktok.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\windrbd-event-log.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\windrbd_device.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\windrbd_threads.h" />
+    <ClInclude Include="..\..\..\..\..\..\cygwin64\home\Administrator\windrbd-static-tools-test\windrbd\windrbd\include\wingenl.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
