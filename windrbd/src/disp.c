@@ -163,7 +163,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	make_me_a_windrbd_thread("driver-init");
 	sudo();
 
-	printk(KERN_NOTICE "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
+// 	printk(KERN_NOTICE "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
 
 #ifdef SPIN_LOCK_DEBUG
 	spinlock_debug_init();

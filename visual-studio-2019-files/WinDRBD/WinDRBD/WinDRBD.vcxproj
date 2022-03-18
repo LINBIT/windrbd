@@ -118,9 +118,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <IncludePath>$(CRT_IncludePath);$(KM_IncludePath);$(KIT_SHARED_IncludePath);C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers;C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd;C:\cygwin64\home\Administrator\windrbd\windrbd\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <IncludePath>$(CRT_IncludePath);$(KM_IncludePath);$(KIT_SHARED_IncludePath);C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers;C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd;C:\cygwin64\home\Administrator\windrbd\windrbd\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
@@ -151,6 +153,7 @@
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\converted-sources\drbd;..\..\converted-sources\drbd\drbd-headers;..\..\windrbd\include;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WIN64;_AMD64_;AMD64;_M_AMD64;_NTDDK_;_NTDRIVER_;DEPRECATE_DDK_FUNCTIONS;MSC_NOOPT;_WIN32_WINNT=0x0601;WINVER=0x0601;WINNT=1;NTDDI_VERSION=0x06010000;KMDF_VERSION_MAJOR=1;KMDF_VERSION_MINOR=15;POOL_NX_OPTIN=1;KMALLOC_DEBUG=1;__KERNEL__=1;__BYTE_ORDER=1;__LITTLE_ENDIAN=1;__LITTLE_ENDIAN_BITFIELD;COMPAT_HAVE_BOOL_TYPE=1;CONFIG_KREF_DEBUG=1;_KERNEL_MODE;NT_INLINE_GET_CURRENT_IRQL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)wdm.lib;$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)netio.lib;$(DDK_LIB_PATH)ksecdd.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wdmsec.lib;$(DDK_LIB_PATH)bufferoverflowfastfailk.lib</AdditionalDependencies>
@@ -163,6 +166,7 @@
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\converted-sources\drbd;..\..\converted-sources\drbd\drbd-headers;..\..\windrbd\include;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WIN64;_AMD64_;AMD64;_M_AMD64;_NTDDK_;_NTDRIVER_;DEPRECATE_DDK_FUNCTIONS;MSC_NOOPT;_WIN32_WINNT=0x0601;WINVER=0x0601;WINNT=1;NTDDI_VERSION=0x06010000;KMDF_VERSION_MAJOR=1;KMDF_VERSION_MINOR=15;POOL_NX_OPTIN=1;KMALLOC_DEBUG=1;__KERNEL__=1;__BYTE_ORDER=1;__LITTLE_ENDIAN=1;__LITTLE_ENDIAN_BITFIELD;COMPAT_HAVE_BOOL_TYPE=1;CONFIG_KREF_DEBUG=1;_KERNEL_MODE;NT_INLINE_GET_CURRENT_IRQL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)wdm.lib;$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)netio.lib;$(DDK_LIB_PATH)ksecdd.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wdmsec.lib;$(DDK_LIB_PATH)bufferoverflowfastfailk.lib</AdditionalDependencies>

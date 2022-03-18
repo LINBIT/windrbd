@@ -1,34 +1,94 @@
-;
-; WinDRBD.inf
-;
+;;;
+;;; install/uninstall drbd engine driver
+;;;
 
 [Version]
-Signature="$WINDOWS NT$"
-Class=System
-ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318}
-Provider=%ManufacturerName%
-DriverVer=
-CatalogFile=WinDRBD.cat
-PnpLockdown=1
-
-;This template is supported for OS version 17763 (Windows 10 version 1809) and after.
-;For Windows OS prior to Windows 10 1809 set DefaultDestDir = 12
-[DestinationDirs]
-DefaultDestDir = 13
-
-
-[SourceDisksNames]
-1 = %DiskName%,,,""
-
-[SourceDisksFiles]
-
+signature   =   "$Windows NT$"
+;; inf2cat complains if this is not specified:
+; Class       =   "Volume" ; Virtual storage driver (creates block devices)
+; Class       =   "DiskDrive" ; Disk Drive (needed for boot?)
+Class       =   "SCSIAdapter" ; Disk Drive (needed for boot?)
+ClassGUID   = {4D36E97B-E325-11CE-BFC1-08002BE10318}
+; Class       = "System"
+; ClassGUID   = {4D36E97D-E325-11CE-BFC1-08002BE10318}
+Provider    =   "Linbit"
+DriverVer = 03/15/2022,1.0.0.416  ;Replaced by build magic
+CatalogFile =   windrbd.cat
 
 [Manufacturer]
-%ManufacturerName%=Standard,NT$ARCH$
+Linbit = WinDRBDDriver, NTamd64
 
-[Standard.NT$ARCH$]
+[WinDRBDDriver.NTamd64]
+"WinDRBD Virtual Bus Device" = WinDRBD,WinDRBD
 
+[DestinationDirs]
+DefaultDestDir       = 12
+WinDRBD.DriverFiles     = 12           ;%windir%\system32\drivers
+
+;;
+;; WinDRBD device install section .. for the WinDRBD bus
+;;
+
+[WinDRBD.NT]
+OptionDesc          = "WinDRBD - storage replication over network for Microsoft Windows"
+CopyFiles           = WinDRBD.DriverFiles
+
+[WinDRBD.NT.Services]
+AddService          = "WinDRBD", 2, WinDRBD.Service ; 2 ... Assign the named service as the PnP function driver (or legacy driver) for the device being installed by this INF
+
+;;
+;; Default uninstall sections
+;;
+
+[DefaultUninstall]
+DelFiles            = WinDRBD.DriverFiles
+DelReg              = WinDRBD.DelRegistry
+
+[DefaultUninstall.Services]
+DelService = WinDRBD
+
+;
+; Services Section
+;
+
+[WinDRBD.Service]
+DisplayName      = "WinDRBD"
+Description      = "WinDRBD - storage replication over network for Microsoft Windows"
+ServiceBinary    = %12%\windrbd.sys     	;%windir%\system32\drivers\windrbd.sys
+ServiceType      = 1                    ;SERVICE_FILE_SYSTEM_DRIVER
+StartType        = 3			;start only manually (unless booting via network)
+ErrorControl     = 0                    ;SERVICE_ERROR_NORMAL
+AddReg           = WinDRBD.AddRegistry
+
+;
+; Registry Modifications (will soon go away)
+;
+
+[WinDRBD.AddRegistry]
+HKR,,"syslog_ip",0x00000002, "127.0.0.1"
+HKR,,"BootFlags", 0x00010001, 1		; DWORD: boot critical when booting via network
+
+[WinDRBD.DelRegistry]
+HKR,,"syslog_ip"
+HKR,,"BootFlags"
+
+;
+; Copy Files
+;
+
+[WinDRBD.DriverFiles]
+windrbd.sys
+
+[SourceDisksFiles]
+windrbd.sys = 1,,
+
+[SourceDisksNames]
+1 = %DiskId1%,,,
+
+;;
+;; String Section
+;;
 
 [Strings]
-ManufacturerName="<Your manufacturer name>" ;TODO: Replace with your manufacturer name
-DiskName="WinDRBD Source Disk"
+DiskId1             = "WinDRBD Installation Disk"
+

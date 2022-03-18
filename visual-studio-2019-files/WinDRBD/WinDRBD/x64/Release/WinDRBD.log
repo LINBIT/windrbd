@@ -1,4 +1,29 @@
 ﻿  Building 'WinDRBD' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
   Stamping x64\Release\WinDRBD.inf
-  Stamping [Version] section with DriverVer=03/18/2022,10.47.53.768
-C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\WinDRBD\WinDRBD.inf : error 1297: Device driver does not install on any devices, use primitive driver if this is intended.
+  Stamping [Version] section with DriverVer=03/18/2022,11.25.41.113
+C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\WinDRBD\WinDRBD.inf(5-5): warning 1324: [Version] section should specify PnpLockdown=1.
+C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\WinDRBD\WinDRBD.inf(43-43): warning 2083: Section [defaultuninstall] not referenced or used.
+C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\WinDRBD\WinDRBD.inf(47-47): warning 2083: Section [defaultuninstall.services] not referenced or used.
+C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\WinDRBD\WinDRBD.inf(71-71): warning 2083: Section [windrbd.delregistry] not referenced or used.
+  drbd_debugfs.c
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_debugfs.c : warning C4117: macro name '_KERNEL_MODE' is reserved, '#define' ignored
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22000.0\km\wdm.h(33,1): warning C4005: '_NTDDK_': macro redefinition
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_debugfs.c : message : see previous definition of '_NTDDK_'
+  WinDRBD.vcxproj -> C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\x64\Release\WinDRBD.sys
+  Done Adding Additional Store
+  Successfully signed: C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\x64\Release\WinDRBD.sys
+  
+  ........................
+  Signability test complete.
+  
+  Errors:
+  None
+  
+  Warnings:
+  None
+  
+  Catalog generation complete.
+  C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\x64\Release\WinDRBD\windrbd.cat
+  Done Adding Additional Store
+  Successfully signed: C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\x64\Release\WinDRBD\windrbd.cat
+  
