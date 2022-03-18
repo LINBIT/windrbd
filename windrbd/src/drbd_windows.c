@@ -1414,7 +1414,7 @@ void get_random_bytes(char *buf, int nbytes)
     static ULONG_PTR mmix_knuth = 0;
     LARGE_INTEGER li;
     ULONG_PTR rnt;
-    ULONG rn;
+    ULONG rn=0;
     int length;
 
     if (mmix_knuth == 0) {
@@ -1942,7 +1942,7 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 // mem_printk("memset %p 0 %d\n", &dev->vol_size_length_information, sizeof(dev->vol_size_length_information));
 	memset(&dev->vol_size_length_information, 0, sizeof(dev->vol_size_length_information));
 
-	if (KeGetCurrentIrql() > APC_LEVEL) {
+	if (KeGetCurrentIrql() >= APC_LEVEL) {
 		printk("cannot run IoBuildDeviceIoControlRequest becauseof IRP(%d)\n", KeGetCurrentIrql());
 		mutex_unlock(&dev->vol_size_mutex);
 
