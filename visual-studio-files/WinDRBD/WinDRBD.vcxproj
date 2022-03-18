@@ -77,14 +77,18 @@
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
     <IncludePath>C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\shared;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\um;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\km\crt;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\km;..\..\converted-sources\drbd;..\..\converted-sources\drbd\drbd-headers;..\..\windrbd\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files %28x86%29\Windows Kits\10\Lib\win7\km\x64;C:\Program Files %28x86%29\Windows Kits\10\Lib\10.0.22000.0\km\x64</LibraryPath>
     <GenerateManifest>false</GenerateManifest>
-    <TargetExt>.sys</TargetExt>
+    <TargetExt>sys</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\shared;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\um;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\km\crt;C:\Program Files %28x86%29\Windows Kits\10\Include\10.0.22000.0\km;..\..\converted-sources\drbd;..\..\converted-sources\drbd\drbd-headers;..\..\windrbd\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files %28x86%29\Windows Kits\10\Lib\win7\km\x64;C:\Program Files %28x86%29\Windows Kits\10\Lib\10.0.22000.0\km\x64</LibraryPath>
+    <TargetExt>sys</TargetExt>
+    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -118,7 +122,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_WIN64;_AMD64_;AMD64;_M_AMD64;_NTDDK_;_NTDRIVER_;DEPRECATE_DDK_FUNCTIONS;MSC_NOOPT;_WIN32_WINNT=0x0601;WINVER=0x0601;WINNT=1;NTDDI_VERSION=0x06010000;KMDF_VERSION_MAJOR=1;KMDF_VERSION_MINOR=15;POOL_NX_OPTIN=1;KMALLOC_DEBUG=1;__KERNEL__=1;__BYTE_ORDER=1;__LITTLE_ENDIAN=1;__LITTLE_ENDIAN_BITFIELD;COMPAT_HAVE_BOOL_TYPE=1;CONFIG_KREF_DEBUG=1;_KERNEL_MODE;NT_INLINE_GET_CURRENT_IRQL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>&lt;d_WIN64;_AMD64_;AMD64;_M_AMD64;_NTDDK_;_NTDRIVER_;DEPRECATE_DDK_FUNCTIONS;MSC_NOOPT;_WIN32_WINNT=0x0601;WINVER=0x0601;WINNT=1;NTDDI_VERSION=0x06010000;KMDF_VERSION_MAJOR=1;KMDF_VERSION_MINOR=15;POOL_NX_OPTIN=1;KMALLOC_DEBUG=1;__KERNEL__=1;__BYTE_ORDER=1;__LITTLE_ENDIAN=1;__LITTLE_ENDIAN_BITFIELD;COMPAT_HAVE_BOOL_TYPE=1;CONFIG_KREF_DEBUG=1;_KERNEL_MODE;NT_INLINE_GET_CURRENT_IRQL;%(PreprocessorDefinitions)ifferent options&gt;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -138,14 +142,18 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>&lt;d_WIN64;_AMD64_;AMD64;_M_AMD64;_NTDDK_;_NTDRIVER_;DEPRECATE_DDK_FUNCTIONS;MSC_NOOPT;_WIN32_WINNT=0x0601;WINVER=0x0601;WINNT=1;NTDDI_VERSION=0x06010000;KMDF_VERSION_MAJOR=1;KMDF_VERSION_MINOR=15;POOL_NX_OPTIN=1;KMALLOC_DEBUG=1;__KERNEL__=1;__BYTE_ORDER=1;__LITTLE_ENDIAN=1;__LITTLE_ENDIAN_BITFIELD;COMPAT_HAVE_BOOL_TYPE=1;CONFIG_KREF_DEBUG=1;_KERNEL_MODE;NT_INLINE_GET_CURRENT_IRQL;%(PreprocessorDefinitions)ifferent options&gt;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>wdm.lib;ntoskrnl.lib;netio.lib;ksecdd.lib;hal.lib;wdmsec.lib;bufferoverflowfastfailk.lib</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <Driver>Driver</Driver>
+      <EntryPointSymbol>DriverEntry</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
