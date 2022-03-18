@@ -1,0 +1,4 @@
+﻿  Building 'WinDRBD' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
+  Stamping x64\Release\WinDRBD.inf
+  Stamping [Version] section with DriverVer=03/18/2022,10.47.53.768
+C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\WinDRBD\WinDRBD.inf : error 1297: Device driver does not install on any devices, use primitive driver if this is intended.
