@@ -1,21 +1,82 @@
 ﻿  Building 'WinDRBD' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
   Stamping x64\Release\WinDRBD.inf
-  Stamping [Version] section with DriverVer=03/22/2022,5.36.51.361
+  Stamping [Version] section with DriverVer=03/22/2022,5.46.50.610
   drbd_actlog.c
   drbd_bitmap.c
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\linux\drbd.h(318,3): warning C4201: nonstandard extension used: nameless struct/union
   drbd_buildtag.c
   drbd_debugfs.c
   drbd_interval.c
   drbd_kref_debug.c
   drbd_main.c
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_main.c(3082,29): warning C4459: declaration of 'retry' hides global declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_main.c(3066,3): message : see declaration of 'retry'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_main.c(3902,38): warning C4456: declaration of 'connection' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_main.c(3695,26): message : see declaration of 'connection'
   drbd_nl.c
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(688,39): warning C4456: declaration of 'peer_device' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(649,27): message : see declaration of 'peer_device'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(692,31): warning C4457: declaration of 'device' hides function parameter
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(644,45): message : see declaration of 'device'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(709,39): warning C4456: declaration of 'peer_device' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(649,27): message : see declaration of 'peer_device'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(714,31): warning C4457: declaration of 'device' hides function parameter
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(644,45): message : see declaration of 'device'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(1204,12): warning C4456: declaration of 'vnr' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(1089,6): message : see declaration of 'vnr'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(1210,33): warning C4456: declaration of 'device' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(1088,22): message : see declaration of 'device'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(3277,1): warning C4456: declaration of 'err' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(3127,6): message : see declaration of 'err'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(3532,1): warning C4456: declaration of 'err' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(3127,6): message : see declaration of 'err'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(4350,30): warning C4456: declaration of 'device' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(4237,22): message : see declaration of 'device'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(5562,39): warning C4456: declaration of 'connection' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(5530,26): message : see declaration of 'connection'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(6522,26): warning C4457: declaration of 'info' hides function parameter
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(6475,63): message : see declaration of 'info'
   drbd_nla.c
   drbd_proc.c
   drbd_receiver.c
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_receiver.c(1027,22): warning C4456: declaration of 'nc' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_receiver.c(999,19): message : see declaration of 'nc'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_receiver.c(5994,31): warning C4456: declaration of 'device' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_receiver.c(5912,22): message : see declaration of 'device'
   drbd_req.c
   drbd_sender.c
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_sender.c(1369,40): warning C4457: declaration of 'peer_device' hides function parameter
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_sender.c(1146,51): message : see declaration of 'peer_device'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_sender.c(1372,32): warning C4456: declaration of 'device' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_sender.c(1151,22): message : see declaration of 'device'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_sender.c(3080,10): warning C4456: declaration of 'w' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_sender.c(3074,20): message : see declaration of 'w'
   drbd_state.c
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_state.c(1977,39): warning C4456: declaration of 'connection' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_state.c(1878,26): message : see declaration of 'connection'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_state.c(2030,39): warning C4456: declaration of 'connection' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_state.c(1878,26): message : see declaration of 'connection'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_state.c(2481,39): warning C4456: declaration of 'connection' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_state.c(2406,26): message : see declaration of 'connection'
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_state.c(4489,37): warning C4456: declaration of 'connection' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_state.c(4418,26): message : see declaration of 'connection'
   drbd_strings.c
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\linux\drbd.h(318,3): warning C4201: nonstandard extension used: nameless struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(242,13): warning C4201: nonstandard extension used: nameless struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(244,3): warning C4201: nonstandard extension used: nameless struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(357,7): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(391,7): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(435,11): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(492,16): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(518,4): warning C4201: nonstandard extension used: nameless struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(523,5): warning C4201: nonstandard extension used: nameless struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(527,5): warning C4201: nonstandard extension used: nameless struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(528,4): warning C4201: nonstandard extension used: nameless struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(529,3): warning C4201: nonstandard extension used: nameless struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(541,4): warning C4201: nonstandard extension used: nameless struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(545,4): warning C4201: nonstandard extension used: nameless struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(546,3): warning C4201: nonstandard extension used: nameless struct/union
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers\drbd_protocol.h(582,10): warning C4200: nonstandard extension used: zero-sized array in struct/union
   drbd_transport.c
   drbd_transport_tcp.c
   kref_debug.c
@@ -25,10 +86,16 @@
   Compiling...
   disp.c
   drbd_windows.c
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\drbd_windows.c(1061,3): warning C4457: declaration of 'unused' hides function parameter
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\drbd_windows.c(1054,38): message : see declaration of 'unused'
   hweight.c
   idr.c
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\idr.c(521,60): warning C4459: declaration of 'idr_layer_cache' hides global declaration
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\idr.c(36,22): message : see declaration of 'idr_layer_cache'
   kmalloc_debug.c
   mempool.c
+C:\cygwin64\home\Administrator\windrbd\windrbd\include\linux\mempool.h(20,4): warning C4201: nonstandard extension used: nameless struct/union
+C:\cygwin64\home\Administrator\windrbd\windrbd\include\linux\mempool.h(21,3): warning C4201: nonstandard extension used: nameless struct/union
   printk-to-syslog.c
   rbtree.c
   seq_file.c
@@ -37,11 +104,33 @@
   util.c
   windrbd_bootdevice.c
   windrbd_device.c
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2286,3): warning C4063: case '-1' is not a valid value for switch of enum '_DEVICE_RELATION_TYPE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22000.0\km\wdm.h(31487): message : see declaration of '_DEVICE_RELATION_TYPE'
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3248,5): warning C4456: declaration of 's' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3145,29): message : see declaration of 's'
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3249,5): warning C4456: declaration of 's' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3145,29): message : see declaration of 's'
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3311,4): warning C4456: declaration of 's' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3145,29): message : see declaration of 's'
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3322,6): warning C4456: declaration of 's' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3145,29): message : see declaration of 's'
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3347,4): warning C4456: declaration of 's' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3145,29): message : see declaration of 's'
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3352,5): warning C4456: declaration of 's' hides previous local declaration
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3145,29): message : see declaration of 's'
   windrbd_drbd_url_parser.c
   windrbd_locking.c
   windrbd_module.c
   windrbd_netlink.c
   windrbd_test.c
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_test.c(909,16): warning C4459: declaration of 'n' hides global declaration
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_test.c(548,27): message : see declaration of 'n'
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_test.c(910,20): warning C4459: declaration of 'num_threads' hides global declaration
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_test.c(549,27): message : see declaration of 'num_threads'
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_test.c(1006,3): warning C4457: declaration of 'unused' hides function parameter
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_test.c(976,29): message : see declaration of 'unused'
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_test.c(1029,3): warning C4457: declaration of 'unused' hides function parameter
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_test.c(1015,30): message : see declaration of 'unused'
   windrbd_threads.c
   Generating Code...
   Compiling...
