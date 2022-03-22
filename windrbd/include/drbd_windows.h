@@ -1198,10 +1198,10 @@ extern int generic_make_request(struct bio *bio); // return value is changed for
 enum umh_wait;
 extern int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait);
 
-extern void * ERR_PTR(long error);
-extern long PTR_ERR(const void *ptr);
-extern long IS_ERR_OR_NULL(const void *ptr);
-extern int IS_ERR(void *err);
+extern void * ERR_PTR(LONG_PTR error);
+extern LONG_PTR PTR_ERR(const void *ptr);
+extern LONG_PTR IS_ERR_OR_NULL(const void *ptr);
+extern LONG_PTR IS_ERR(void *err);
 
 static inline unsigned short queue_physical_block_size(struct request_queue *q)
 {

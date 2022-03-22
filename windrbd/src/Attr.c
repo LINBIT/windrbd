@@ -70,7 +70,7 @@ static int validate_nla(struct nlattr *nla, int maxtype,
                 break;
             if (attrlen < NLA_ALIGN(pt->len) + NLA_HDRLEN)
                 return -ERANGE;
-			nla = (struct nlattr*)((int)nla_data(nla) + NLA_ALIGN(pt->len));
+			nla = (struct nlattr*)((char *)nla_data(nla) + NLA_ALIGN(pt->len));
             if (attrlen < NLA_ALIGN(pt->len) + NLA_HDRLEN + nla_len(nla))
                 return -ERANGE;
             break;

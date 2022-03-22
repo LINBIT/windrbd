@@ -1171,25 +1171,24 @@ int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsi
 
 #include "drbd_int.h"
 
-long IS_ERR_OR_NULL(const void *ptr)
+LONG_PTR IS_ERR_OR_NULL(const void *ptr)
 {
-	return !ptr || IS_ERR_VALUE((unsigned long) ptr); 
+	return !ptr || IS_ERR_VALUE((LONG_PTR) ptr); 
 }
 
-/* TODO: LONG_PTR */
-void *ERR_PTR(long error)
+void *ERR_PTR(LONG_PTR error)
 {
 	return (void *) error;
 }
 
-long PTR_ERR(const void *ptr)
+LONG_PTR PTR_ERR(const void *ptr)
 {
-	return (long)ptr;
+	return (LONG_PTR)ptr;
 }
 
-int IS_ERR(void *ptr)
+LONG_PTR IS_ERR(void *ptr)
 {
-	return IS_ERR_VALUE((unsigned long) ptr);
+	return IS_ERR_VALUE((LONG_PTR) ptr);
 }
 
 void init_completion_debug(struct completion *completion, const char *file, int line, const char *func)
@@ -1414,7 +1413,7 @@ void get_random_bytes(char *buf, int nbytes)
     static ULONG_PTR mmix_knuth = 0;
     LARGE_INTEGER li;
     ULONG_PTR rnt;
-    ULONG rn=0;
+    ULONG rn=0;	// TODO: KeQueryPerformanceCounter
     int length;
 
     if (mmix_knuth == 0) {
@@ -1671,10 +1670,6 @@ void flush_signals(struct task_struct *task)
 		task->sig = 0;
 	}
 }
-
-/* https://msdn.microsoft.com/de-de/library/ff548354(v=vs.85).aspx */
-/* TODO: needed here? */
-IO_COMPLETION_ROUTINE DrbdIoCompletion;
 
 static inline blk_status_t win_status_to_blk_status(NTSTATUS status)
 {

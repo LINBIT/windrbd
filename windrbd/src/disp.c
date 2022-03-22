@@ -81,14 +81,15 @@ extern void init_transport(void);
 
 KEVENT bus_ready_event;
 
-static NTSTATUS create_device(const char *name, const UNICODE_STRING *sddl_perms, struct _DEVICE_OBJECT **d)
+static NTSTATUS create_device(const wchar_t *name, const UNICODE_STRING *sddl_perms, struct _DEVICE_OBJECT **d)
 {
 	NTSTATUS status;
 	PDEVICE_OBJECT deviceObject;
 	UNICODE_STRING nameUnicode, linkUnicode;
 	wchar_t tmp[100], tmp2[100];
 
-	_snwprintf(tmp, ARRAY_SIZE(tmp), L"\\Device\\%S", name);
+	_snwprintf_s(tmp, ARRAY_SIZE(tmp), _TRUNCATE, L"\\Device\\%s", name);
+	tmp[99] = 0;
 	RtlInitUnicodeString(&nameUnicode, tmp);
 	printk("About to create device %S with permissions %S\n", nameUnicode.Buffer, sddl_perms->Buffer);
 	status = IoCreateDeviceSecure(mvolDriverObject, sizeof(ROOT_EXTENSION),
@@ -101,7 +102,7 @@ static NTSTATUS create_device(const char *name, const UNICODE_STRING *sddl_perms
 		return status;
 	}
 
-	_snwprintf(tmp2, ARRAY_SIZE(tmp2), L"\\DosDevices\\%S", name);
+	_snwprintf_s(tmp2, ARRAY_SIZE(tmp2), _TRUNCATE, L"\\DosDevices\\%s", name);
 	RtlInitUnicodeString(&linkUnicode, tmp2);
 	printk("About to create symbolic link from %S to %S\n", linkUnicode.Buffer, nameUnicode.Buffer);
 	status = IoCreateSymbolicLink(&linkUnicode, &nameUnicode);
@@ -356,6 +357,10 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 		else
 			printk("Bus device object created bus_device is %p\n", bus_device);
 
+		if (bus_device == NULL) {
+			printk("Could not create bus device - bus_device is NULL");
+			return STATUS_INTERNAL_ERROR;
+		}
 		status = IoCreateSymbolicLink(&drbd_bus_dos, &drbd_bus);
 
 		if (status != STATUS_SUCCESS)

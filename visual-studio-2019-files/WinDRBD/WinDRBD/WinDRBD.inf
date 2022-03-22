@@ -14,6 +14,7 @@ ClassGUID   = {4D36E97B-E325-11CE-BFC1-08002BE10318}
 Provider    =   "Linbit"
 DriverVer = 03/15/2022,1.0.0.416  ;Replaced by build magic
 CatalogFile =   windrbd.cat
+PnpLockdown = 1   ; Silence a build warning
 
 [Manufacturer]
 Linbit = WinDRBDDriver, NTamd64
@@ -36,16 +37,6 @@ CopyFiles           = WinDRBD.DriverFiles
 [WinDRBD.NT.Services]
 AddService          = "WinDRBD", 2, WinDRBD.Service ; 2 ... Assign the named service as the PnP function driver (or legacy driver) for the device being installed by this INF
 
-;;
-;; Default uninstall sections
-;;
-
-[DefaultUninstall]
-DelFiles            = WinDRBD.DriverFiles
-DelReg              = WinDRBD.DelRegistry
-
-[DefaultUninstall.Services]
-DelService = WinDRBD
 
 ;
 ; Services Section
@@ -67,10 +58,6 @@ AddReg           = WinDRBD.AddRegistry
 [WinDRBD.AddRegistry]
 HKR,,"syslog_ip",0x00000002, "127.0.0.1"
 HKR,,"BootFlags", 0x00010001, 1		; DWORD: boot critical when booting via network
-
-[WinDRBD.DelRegistry]
-HKR,,"syslog_ip"
-HKR,,"BootFlags"
 
 ;
 ; Copy Files
