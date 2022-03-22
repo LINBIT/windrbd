@@ -1,8 +1,8 @@
 #ifndef _CRYPTO_HASH_H
 #define _CRYPTO_HASH_H
 
-#include <wdm.h>
 #include <drbd_windows.h>
+#include <wdm.h>
 
 /* We only support crc32c */
 
