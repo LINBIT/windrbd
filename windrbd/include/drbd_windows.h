@@ -19,6 +19,8 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+#pragma warning (disable : 4100 4146 4221 4457 4456 4459)
+#pragma warning (disable : 4005 4018 4101 4115 4121 4127 4131 4152 4189 4200 4201 4204 4212 4218 4242 4244 4245 4267 4307 4389 4702 4706)
 
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H
@@ -71,8 +73,6 @@ void msleep(int ms);
 struct drbd_transport;
 enum drbd_stream;
 enum update_sync_bits_mode;
-
-#pragma warning (disable : 4100 4146 4221)
 
 #define fallthrough do { } while (0)
 

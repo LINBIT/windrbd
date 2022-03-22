@@ -1661,7 +1661,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		bio->bi_iter.bi_size = this_bio_size;
 		bio->bi_iter.bi_sector = sector + b*MAX_BIO_SIZE/dev->bd_block_size;
 		bio->bi_upper_irp_buffer = buffer;
-		bio->bi_mdl_offset = b*MAX_BIO_SIZE;
+		bio->bi_mdl_offset = (unsigned long long)b*MAX_BIO_SIZE;
 		bio->bi_common_data = common_data;
 
 dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
@@ -2283,10 +2283,12 @@ dbg("Returned string is %S\n", string);
 			return STATUS_SUCCESS;
 		}
 #endif
-		case -1:
+#if 0
+		case (enum _DEVICE_RELATION_TYPE)-1:
 			status = STATUS_NOT_IMPLEMENTED;
 			pass_on = 1;
 			break;
+#endif
 
 		default:
 			status = STATUS_NOT_IMPLEMENTED;
@@ -2389,8 +2391,6 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	} else {	/* TODO: this else is unnecessary ... */
 		num_pnp_requests++;
 
-			/* TODO: Ugly hack for HLK ... */
-static struct block_device_reference *saved_ref;
 		struct block_device_reference *ref = device->DeviceExtension;
 		struct block_device *bdev = NULL;
 		struct drbd_device *drbd_device = NULL;
@@ -2406,28 +2406,6 @@ static struct block_device_reference *saved_ref;
 			} else printk("no block device\n");
 		} else {
 			printk("no block device reference\n");
-#if 0
-			if (saved_ref != NULL) {
-printk("Restoring from %p\n", saved_ref);
-printk("Device extension is %p\n", );
-				device->DeviceExtension = saved_ref;
-				ref = saved_ref;
-				saved_ref = NULL;
-
-				bdev = ref->bdev;
-				bdev->delete_pending = 0;
-				bdev->about_to_delete = 0;
-
-				if (bdev && !bdev->delete_pending) {
-printk("Hacking windows device from %p to %p ...\n", bdev->windows_device, device);
-					bdev->windows_device = device;
-					drbd_device = bdev->drbd_device;
-					if (drbd_device) {
-						minor = drbd_device->minor;
-					} else printk("no DRBD device\n");
-				} else printk("no block device\n");
-			} else printk("No previous block device ref.\n");
-#endif
 		}
 
 		switch (s->MinorFunction) {
@@ -2557,7 +2535,8 @@ if (status == STATUS_NOT_SUPPORTED) {
 dbg("Returned string is %S\n", string);
 				irp->IoStatus.Information = (ULONG_PTR) string;
 			} else {
-				ExFreePool(string);
+				if (string)
+					ExFreePool(string);
 			}
 			break;
 		}
@@ -2679,7 +2658,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 		case IRP_MN_QUERY_DEVICE_TEXT:
 		{
 			wchar_t *string = NULL;
-			size_t string_length;
+			int string_length;
 
 			if ((string = (PWCHAR)ExAllocatePoolUninitialized(NonPagedPool, (512 * sizeof(WCHAR)), 'DRBD')) == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
@@ -2789,7 +2768,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 				 * removing us. Removal always via drbdadm
 				 * seconary/down.
 				 */
-			if (bdev->delete_pending) {
+			if (bdev && bdev->delete_pending) {
 
 		/* Tell the PnP manager that we are about to disappear.
 		 * The device object will be deleted in a PnP REMOVE_DEVICE
@@ -2823,76 +2802,80 @@ if (status == STATUS_NOT_SUPPORTED) {
 				 * SURPRISE_REMOVAL but what can you do ...
 				 */
 			dbg("set ejected event\n");
-			KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
+			if (bdev)
+				KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
 
 			status = STATUS_SUCCESS;
 			break;
 
 		case IRP_MN_SURPRISE_REMOVAL:
 // printk("got IRP_MN_SURPRISE_REMOVAL\n");
-saved_ref = ref;	/* For windows to restore device later ... */
-bdev->suprise_removal = true;
-// bdev->about_to_delete = 1; /* meaning no more I/O on that device */
+				/* Tell REMOVE request not to remove the device ...
+				 * this is required to make surprise removal HLK test
+				 * working. Since we don't have hardware to unplug,
+				 * SURPRISE_REMOVAL "should" never occur.
+				 */
+			if (bdev)
+				bdev->suprise_removal = true;
+
 			status = STATUS_SUCCESS;
 			break;
 
 		case IRP_MN_REMOVE_DEVICE:
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
 
-if (bdev != NULL && bdev->suprise_removal) {
-// printk("got IRP_MN_REMOVE_DEVICE after IRP_MN_SURPRISE_REMOVAL ...\n");
-bdev->suprise_removal = false;
-} else {
+			if (bdev != NULL && bdev->suprise_removal) {
+				dbg("got IRP_MN_REMOVE_DEVICE after IRP_MN_SURPRISE_REMOVAL ...\n");
+				bdev->suprise_removal = false;
+			} else {
 			/* If it is NULL then we already deleted the device */
 
-			if (ref != NULL) {
-				if (bdev != NULL) {
-					bdev->about_to_delete = 1; /* meaning no more I/O on that device */
+				if (ref != NULL) {
+					if (bdev != NULL) {
+						bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
-					if (bdev->ref != NULL) {
-						IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
+						if (bdev->ref != NULL) {
+							IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
 		/* TODO: ?? not &bdev->ref->w_remove_lock ?? */
-						IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
-					}
+							IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
+						}
 /*
 
 					dbg("Waiting for bus device reporting us as deleted ...\n");
 					KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, NULL);
 					dbg("Ok ...\n");
 */
-				} else {
-					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
-				}
-				dbg("about to delete device object %p\n", device);
+					} else {
+						printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
+					}
+					dbg("about to delete device object %p\n", device);
 				/* Avoid anything more happending to that
 				 * device. Reason is that there is a reference
 				 * count on the device, so it might still
 				 * exist for a short period.
 				 */
-				bdev->ref = NULL;
+					if (bdev)
+						bdev->ref = NULL;
 					/* When zombie device is reenabled we
 					 * need the pointer to the block_device_ref ... so do not NULLify this here.. */
 /* TODO: this code is never executed in the test, reenable NULLify? */
 //				device->DeviceExtension = NULL;
 // printk("REMOVE: device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
-				if (bdev != NULL) {
+					if (bdev != NULL) {
 						/* To allow bdev being removed. */
-					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
+						KeSetEvent(&bdev->device_removed_event, 0, FALSE);
+					}
+					dbg("device object NOT deleted this should be done after bus rescan\n");
+				} else {
+					dbg("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
 				}
-				dbg("device object NOT deleted this should be done after bus rescan\n");
-			} else {
-				dbg("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
 			}
-}
 
 			status = STATUS_SUCCESS;
 			irp->IoStatus.Status = status;
 		        IoCompleteRequest(irp, IO_NO_INCREMENT);
 
-if (status == STATUS_NOT_SUPPORTED) {
-// printk("3 STATUS_NOT_SUPPORTED\n");
-}
 			num_pnp_requests--;
 			return status;
 
@@ -3453,10 +3436,10 @@ static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp
 	t = make_me_a_windrbd_thread(thread_names[major]);
 	if (t == NULL) {
 		printk("Warning: cannot create a thread object for request.\n");
+	} else {
+		if (device == mvolRootDeviceObject)
+			t->is_root = 1;
 	}
-	if (device == mvolRootDeviceObject)
-		t->is_root = 1;
-
 	dbg("got request major is %x device object is %p (is %s device)\n", major, device, device == mvolRootDeviceObject ? "root" : (device == drbd_bus_device ? "bus" : (device == user_device_object ? " user" : "disk")));
 
 	ret = windrbd_dispatch_table[major](device, irp);

@@ -228,6 +228,23 @@
     <ClCompile Include="..\..\..\windrbd\src\windrbd_waitqueue.c" />
     <ClCompile Include="..\..\..\windrbd\src\windrbd_winsocket.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\windrbd\include\compat.h" />
+    <ClInclude Include="..\..\..\windrbd\include\disp.h" />
+    <ClInclude Include="..\..\..\windrbd\include\drbd_polymorph_printk.h" />
+    <ClInclude Include="..\..\..\windrbd\include\drbd_url.h" />
+    <ClInclude Include="..\..\..\windrbd\include\drbd_windows.h" />
+    <ClInclude Include="..\..\..\windrbd\include\drbd_wingenl.h" />
+    <ClInclude Include="..\..\..\windrbd\include\drbd_wrappers.h" />
+    <ClInclude Include="..\..\..\windrbd\include\generic_compat_stuff.h" />
+    <ClInclude Include="..\..\..\windrbd\include\kmalloc_debug.h" />
+    <ClInclude Include="..\..\..\windrbd\include\stdint.h" />
+    <ClInclude Include="..\..\..\windrbd\include\tiktok.h" />
+    <ClInclude Include="..\..\..\windrbd\include\windrbd-event-log.h" />
+    <ClInclude Include="..\..\..\windrbd\include\windrbd_device.h" />
+    <ClInclude Include="..\..\..\windrbd\include\windrbd_threads.h" />
+    <ClInclude Include="..\..\..\windrbd\include\wingenl.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
