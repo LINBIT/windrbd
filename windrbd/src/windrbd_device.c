@@ -1443,6 +1443,10 @@ static void windrbd_bio_finished(struct bio * bio)
 	NTSTATUS status;
 	int error = blk_status_to_errno(bio->bi_status);
 
+	if (irp == NULL) {
+		printk("Internal error: irp is NULL in bio_finished, this should not happen.");
+		return;
+	}
 // printk("1 error is %d bio is %p\n", error, bio);
 // printk("bio->bi_vcnt is %d\n", bio->bi_vcnt);
 	status = STATUS_SUCCESS;
@@ -2487,14 +2491,14 @@ printk("6 STATUS_NOT_SUPPORTED\n");
 			if (string == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 			} else {
-				size_t len;
+				int len;
 
 // mem_printk("memset %p 0 %d\n", string, MAX_ID_LEN*sizeof(wchar_t));
 				memset(string, 0, MAX_ID_LEN*sizeof(wchar_t));
 				switch (s->Parameters.QueryId.IdType) {
 				case BusQueryDeviceID:
 			/* SCSI\\t\*v(8)p(16)r(4) */
-					swprintf(string, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000", minor);
+					swprintf(string, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryInstanceID:

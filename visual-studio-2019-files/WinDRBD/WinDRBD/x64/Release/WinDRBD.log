@@ -1,9 +1,10 @@
 ﻿  Building 'WinDRBD' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
   Stamping x64\Release\WinDRBD.inf
-  Stamping [Version] section with DriverVer=03/22/2022,5.26.31.488
+  Stamping [Version] section with DriverVer=03/22/2022,5.36.51.361
   drbd_actlog.c
   drbd_bitmap.c
   drbd_buildtag.c
+  drbd_debugfs.c
   drbd_interval.c
   drbd_kref_debug.c
   drbd_main.c
@@ -20,9 +21,9 @@
   kref_debug.c
   lru_cache.c
   Attr.c
-  disp.c
   Generating Code...
   Compiling...
+  disp.c
   drbd_windows.c
   hweight.c
   idr.c
@@ -36,24 +37,18 @@
   util.c
   windrbd_bootdevice.c
   windrbd_device.c
-C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2497,67): warning C4474: 'swprintf' : too many arguments passed for format string
-C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2497,67): message : placeholders and their parameters expect 0 variadic arguments, but 1 were provided
   windrbd_drbd_url_parser.c
   windrbd_locking.c
   windrbd_module.c
   windrbd_netlink.c
   windrbd_test.c
   windrbd_threads.c
-  windrbd_usermodehelper.c
   Generating Code...
   Compiling...
+  windrbd_usermodehelper.c
   windrbd_waitqueue.c
   windrbd_winsocket.c
   Generating Code...
-  drbd_debugfs.c
-C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_debugfs.c : warning C4117: macro name '_KERNEL_MODE' is reserved, '#define' ignored
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.22000.0\km\wdm.h(33,1): warning C4005: '_NTDDK_': macro redefinition
-C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_debugfs.c : message : see previous definition of '_NTDDK_'
   WinDRBD.vcxproj -> C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\x64\Release\WinDRBD.sys
   Done Adding Additional Store
   Successfully signed: C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\x64\Release\WinDRBD.sys
