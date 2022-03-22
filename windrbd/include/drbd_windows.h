@@ -21,6 +21,8 @@
 
 #pragma warning (disable : 4100 4146 4221 4457 4456 4459)
 #pragma warning (disable : 4005 4018 4101 4115 4121 4127 4131 4152 4189 4200 4201 4204 4212 4218 4242 4244 4245 4267 4307 4389 4702 4706)
+/* Code analysis throws this warning: */
+#pragma warning (disable : 26451)
 
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H

@@ -1,6 +1,6 @@
 ﻿  Building 'WinDRBD' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
   Stamping x64\Release\WinDRBD.inf
-  Stamping [Version] section with DriverVer=03/22/2022,6.31.22.241
+  Stamping [Version] section with DriverVer=03/22/2022,6.44.46.816
   drbd_actlog.c
   drbd_bitmap.c
   drbd_buildtag.c
@@ -21,6 +21,7 @@
   kref_debug.c
   lru_cache.c
   Attr.c
+  Running Code Analysis for C/C++...
   Generating Code...
   Compiling...
   disp.c
@@ -43,11 +44,13 @@
   windrbd_netlink.c
   windrbd_test.c
   windrbd_threads.c
+  Running Code Analysis for C/C++...
   Generating Code...
   Compiling...
   windrbd_usermodehelper.c
   windrbd_waitqueue.c
   windrbd_winsocket.c
+  Running Code Analysis for C/C++...
   Generating Code...
   WinDRBD.vcxproj -> C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\x64\Release\WinDRBD.sys
   Done Adding Additional Store
@@ -67,3 +70,101 @@
   Done Adding Additional Store
   Successfully signed: C:\cygwin64\home\Administrator\windrbd\visual-studio-2019-files\WinDRBD\x64\Release\WinDRBD\windrbd.cat
   
+C:\cygwin64\home\Administrator\windrbd\windrbd\include\windrbd_threads.h(103): warning C28719: Banned API Usage:  strncpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_bitmap.c(172): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_bitmap.c(419): warning C6011: Dereferencing NULL pointer 'device->bitmap'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_bitmap.c(719): warning C6011: Dereferencing NULL pointer 'bitmap'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_bitmap.c(861): warning C6011: Dereferencing NULL pointer 'b'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_bitmap.c(994): warning C6011: Dereferencing NULL pointer 'b'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_bitmap.c(1026): warning C6011: Dereferencing NULL pointer 'b'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_bitmap.c(1038): warning C6011: Dereferencing NULL pointer 'b'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_bitmap.c(1381): warning C6386: Buffer overrun while writing to 'b->al_bitmap_hints':  the writable size is '512' bytes, but 'b->n_bitmap_hints++' bytes might be written.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_kref_debug.c(8): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_kref_debug.c(10): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_kref_debug.c(23): warning C28719: Banned API Usage:  sprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_kref_debug.c(33): warning C28719: Banned API Usage:  sprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_main.c(1208): warning C6386: Buffer overrun while writing to 'p->verify_alg':  the writable size is '64' bytes, but '128' bytes might be written.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_main.c(1230): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_main.c(1232): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_main.c(1278): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_main.c(1830): warning C26453: Arithmetic overflow: Left shift of a negative signed number is undefined behavior (io.4).
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_main.c(3782): warning C28719: Banned API Usage:  sprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_main.c(5522): warning C33010: Unchecked lower bound for enum which used as index..
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_nl.c(1548): warning C28719: Banned API Usage:  sprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_receiver.c(293): warning C6011: Dereferencing NULL pointer 'head'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_receiver.c(4974): warning C6001: Using uninitialized memory 'integrity_alg'.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_receiver.c(5174): warning C6386: Buffer overrun while writing to 'p->verify_alg':  the writable size is '64' bytes, but '65' bytes might be written.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_receiver.c(5241): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_receiver.c(5248): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_receiver.c(7031): warning C28182: Dereferencing NULL pointer. 'connection' contains the same NULL value as 'affected_connection' did. See line 6814 for an earlier location where this can occur
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_receiver.c(9780): warning C6011: Dereferencing NULL pointer 'cmd'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_req.c(168): warning C6011: Dereferencing NULL pointer 'device'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_req.c(809): warning C6385: Reading invalid data from 'req->net_rq_state':  the readable size is '64' bytes, but '-2' bytes may be read.
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_req.c(811): warning C6011: Dereferencing NULL pointer 'peer_device'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd_state.c(3694): warning C33010: Unchecked lower bound for enum (*disk_state) used as index..
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\lru_cache.c(228): warning C6011: Dereferencing NULL pointer 'lc'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\lru_cache.c(285): warning C28182: Dereferencing NULL pointer. 'lc_' contains the same NULL value as 'lc' did. See line 284 for an earlier location where this can occur
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\lru_cache.c(284): warning C6011: Dereferencing NULL pointer 'lc'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\lru_cache.c(406): warning C6011: Dereferencing NULL pointer 'e'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\lru_cache.c(338): warning C6011: Dereferencing NULL pointer 'lc'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\lru_cache.c(511): warning C6011: Dereferencing NULL pointer 'lc'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\lru_cache.c(533): warning C6011: Dereferencing NULL pointer 'lc'. 
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\lru_cache.c(534): warning C28182: Dereferencing NULL pointer. 'lc_' contains the same NULL value as 'lc' did. See line 533 for an earlier location where this can occur
+C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\lru_cache.c(555): warning C6011: Dereferencing NULL pointer 'lc->lc_element[i]'. 
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\Attr.c(81): warning C6385: Reading invalid data from 'nla_attr_minlen':  the readable size is '24' bytes, but 'pt->type' bytes may be read.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\drbd_windows.c(3902): warning C28719: Banned API Usage:  wcscpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\drbd_windows.c(3903): warning C28719: Banned API Usage:  wcscpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\drbd_windows.c(4081): warning C6387: '_Param_(1)' could be '0':  this does not adhere to the specification for the function 'IoCreateNotificationEvent'. 
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\idr.c(324): warning C6011: Dereferencing NULL pointer '**paa'. 
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\printk-to-syslog.c(131): warning C28719: Banned API Usage:  strncpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\printk-to-syslog.c(270): warning C6328: Size mismatch: 'unsigned __int64' passed as _Param_(4) when 'int' is required in call to 'DbgPrintEx'. 
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\printk-to-syslog.c(330): warning C6001: Using uninitialized memory 'msg_u'.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\printk-to-syslog.c(365): warning C28719: Banned API Usage:  wcsncpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\printk-to-syslog.c(393): warning C28719: Banned API Usage:  strncpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\printk-to-syslog.c(397): warning C28719: Banned API Usage:  strncpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\printk-to-syslog.c(399): warning C28719: Banned API Usage:  strncpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\printk-to-syslog.c(469): warning C6273: Non-integer passed as _Param_(14) when an integer is required in call to 'RtlStringCbPrintfA' Actual type: 'struct task_struct *':  if a pointer value is being passed, %p should be used.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\printk-to-syslog.c(627): warning C28719: Banned API Usage:  _vsnprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\rbtree.c(128): warning C28182: Dereferencing NULL pointer. 'parent' contains the same NULL value as 'node' did. See line 76 for an earlier location where this can occur
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\rbtree.c(207): warning C6011: Dereferencing NULL pointer 'other->rb_left'. 
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\rbtree.c(173): warning C6011: Dereferencing NULL pointer 'other->rb_right'. 
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\rbtree.c(182): warning C28182: Dereferencing NULL pointer. 'other' contains the same NULL value as 'parent->rb_left' did. 
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\rbtree.c(258): warning C6011: Dereferencing NULL pointer 'old'. See line 223 for an earlier location where this can occur
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\seq_file.c(21): warning C28719: Banned API Usage:  vsprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\util.c(109): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(237): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2479): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2483): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2495): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2496): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2497): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2498): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2499): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2500): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2504): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2505): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2510): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2514): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2671): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(2682): warning C28719: Banned API Usage:  swprintf is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3459): warning C28169: The dispatch function 'windrbd_dispatch' does not have any _Dispatch_type_ annotations:  This can be corrected by adding appropriate _Dispatch_type_ annotations to the function. Unnecessary casts can cause this warning.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_device.c(3459): warning C28175: The 'MajorFunction' member of _DRIVER_OBJECT should not be accessed by a driver:  Access to this member may be permitted for certain classes of drivers. See the documentation for this warning for more information.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_drbd_url_parser.c(141): warning C28719: Banned API Usage:  strncpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_locking.c(514): warning C28167: The function 'spin_lock_irqsave_debug_new' changes the IRQL and does not restore the IRQL before it exits. It should be annotated to reflect the change or the IRQL should be restored. IRQL was last set to 2 at line 531.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_locking.c(543): warning C28167: The function 'spin_unlock_irqrestore' changes the IRQL and does not restore the IRQL before it exits. It should be annotated to reflect the change or the IRQL should be restored. IRQL was last set at line 557.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_locking.c(754): warning C28167: The function 'rcu_read_lock' changes the IRQL and does not restore the IRQL before it exits. It should be annotated to reflect the change or the IRQL should be restored. IRQL was last set to 2 at line 767.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_locking.c(771): warning C28167: The function 'rcu_read_unlock' changes the IRQL and does not restore the IRQL before it exits. It should be annotated to reflect the change or the IRQL should be restored. IRQL was last set at line 781.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_locking.c(824): warning C28167: The function 'local_irq_disable' changes the IRQL and does not restore the IRQL before it exits. It should be annotated to reflect the change or the IRQL should be restored. IRQL was last set to 2 at line 828.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_locking.c(833): warning C28167: The function 'local_irq_enable' changes the IRQL and does not restore the IRQL before it exits. It should be annotated to reflect the change or the IRQL should be restored. IRQL was last set to 0 at line 835.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_module.c(26): warning C28175: The 'DriverExtension' member of _DRIVER_OBJECT should not be accessed by a driver:  Access to this member may be permitted for certain classes of drivers. See the documentation for this warning for more information.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_module.c(46): warning C28175: The 'DriverExtension' member of _DRIVER_OBJECT should not be accessed by a driver:  Access to this member may be permitted for certain classes of drivers. See the documentation for this warning for more information.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_netlink.c(340): warning C28719: Banned API Usage:  strncpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_test.c(1189): warning C28175: The 'DriverExtension' member of _DRIVER_OBJECT should not be accessed by a driver:  Access to this member may be permitted for certain classes of drivers. See the documentation for this warning for more information.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_test.c(1194): warning C28175: The 'DriverExtension' member of _DRIVER_OBJECT should not be accessed by a driver:  Access to this member may be permitted for certain classes of drivers. See the documentation for this warning for more information.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_test.c(1268): warning C6001: Using uninitialized memory 'p'.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_test.c(1291): warning C6387: '_Param_(1)' could be '0':  this does not adhere to the specification for the function 'memset'. 
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_threads.c(49): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_usermodehelper.c(50): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_usermodehelper.c(92): warning C28719: Banned API Usage:  strcpy is a Banned API as listed in dontuse.h for security purposes.
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_winsocket.c(1851): warning C6101: Returning uninitialized memory '*AcceptSocketContext'.  A successful path through the function does not set the named _Out_ parameter. 
+C:\cygwin64\home\Administrator\windrbd\windrbd\src\windrbd_winsocket.c(1916): warning C6387: '_Param_(4)' could be '0':  this does not adhere to the specification for the function 'CreateSocket'. 
