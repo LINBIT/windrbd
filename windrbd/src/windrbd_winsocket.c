@@ -523,12 +523,12 @@ void SocketsDeinit(void)
 }
 
 static int CreateSocket(
-	__in ADDRESS_FAMILY		AddressFamily,
-	__in USHORT			SocketType,
-	__in ULONG			Protocol,
-	__in PVOID			SocketContext,
-	__in struct _WSK_CLIENT_LISTEN_DISPATCH *Dispatch,
-	__in ULONG			Flags,
+	ADDRESS_FAMILY		AddressFamily,
+	USHORT			SocketType,
+	ULONG			Protocol,
+	PVOID			SocketContext,
+	struct _WSK_CLIENT_LISTEN_DISPATCH *Dispatch,
+	ULONG			Flags,
 	struct _WSK_SOCKET		**out
 )
 {
@@ -1880,6 +1880,11 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	if (socket->sk->sk_state_change)
 		socket->sk->sk_state_change(socket->sk);
 
+	if (AcceptSocketContext)
+		*AcceptSocketContext = NULL;
+	if (AcceptSocketDispatch)
+		*AcceptSocketDispatch = NULL;
+	
 	return STATUS_SUCCESS;
 }
 

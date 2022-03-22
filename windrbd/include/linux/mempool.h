@@ -3,7 +3,7 @@
 
 #include <linux/types.h>
 
-#pragma warning (disable: 4201)
+#pragma warning (disable: 4201 4820)
 struct kmem_cache;
 
 #define MEMPOOL_KMALLOCED_MAGIC 0x59bd13f4

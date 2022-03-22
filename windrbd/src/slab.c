@@ -1,3 +1,6 @@
+/* Enable all warnings throws lots of those warnings: */
+#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
+
 #include <linux/slab.h>
 #include "drbd_windows.h"
 

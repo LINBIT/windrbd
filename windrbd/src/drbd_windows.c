@@ -4066,6 +4066,7 @@ int windrbd_umount(struct block_device *bdev)
 	NTSTATUS status;
 	PKEVENT event;
 	HANDLE event_handle;
+	UNICODE_STRING notification_event_name;
 
 	if (bdev->mount_point.Buffer == NULL) {
 		dbg("windrbd_umount() called without a known mount_point.\n");
@@ -4078,7 +4079,8 @@ int windrbd_umount(struct block_device *bdev)
 	}
 	InitializeObjectAttributes(&attr, &bdev->mount_point, OBJ_KERNEL_HANDLE, NULL, NULL);
 
-	event = IoCreateNotificationEvent(NULL, &event_handle);
+	RtlInitUnicodeString(&notification_event_name, L"noname");
+	event = IoCreateNotificationEvent(&notification_event_name, &event_handle);
 	if (event == NULL) {
 		printk("IoCreateNotificationEvent failed.\n");
 		return -1;

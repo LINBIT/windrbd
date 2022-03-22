@@ -21,8 +21,12 @@
 
 #pragma warning (disable : 4100 4146 4221 4457 4456 4459)
 #pragma warning (disable : 4005 4018 4101 4115 4121 4127 4131 4152 4189 4200 4201 4204 4212 4218 4242 4244 4245 4267 4307 4389 4702 4706)
-/* Code analysis throws this warning: */
-#pragma warning (disable : 26451)
+/* Code analysis throws this warnings: */
+#pragma warning (disable : 26451 28719 6011 6385 6386 26453 33010 6001 28182)
+/* Additional warnings in Linux compat layer to silence: */
+#pragma warning (disable : 28169 28175 28167)
+/* Enable all warnings throws lots of those warnings: */
+#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032  4711 5045)
 
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H

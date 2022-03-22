@@ -1,3 +1,6 @@
+/* Enable all warnings throws lots of those warnings: */
+#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
+
 #include <wdm.h>
 #include "drbd_windows.h"
 #include <Ntstrsafe.h>
@@ -267,7 +270,7 @@ static int open_syslog_socket(void)
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Could not create syslog socket for sending log messages to\nsyslog facility (error is %d). You will NOT see any output produced by printk (and pr_err, ...)\n", err);
 			return -1;
 		}
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "socket opened, ring_buffer_head: %d ring_buffer_tail: %d\n", ring_buffer_head, ring_buffer_tail);
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "socket opened, ring_buffer_head: %lld ring_buffer_tail: %lld\n", ring_buffer_head, ring_buffer_tail);
 
 		when_to_start_sending = jiffies + initial_send_delay * HZ;
 
@@ -466,7 +469,7 @@ int _printk(const char *func, const char *fmt, ...)
 	hr_timer = KeQueryPerformanceCounter(&hr_frequency);
 
 	pos = strlen(buffer);
-	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8x(%s) #%llu %s ",
+	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8p(%s) #%llu %s ",
 	    level,
 	    time_fields.Day, time_fields.Month, time_fields.Year,
 	    time_fields.Hour, time_fields.Minute, time_fields.Second, time_fields.Milliseconds,

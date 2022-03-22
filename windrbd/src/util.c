@@ -19,6 +19,10 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+/* Enable all warnings throws lots of those warnings: */
+#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
+
+
 // #include <Ntifs.h>
 #include <ntddk.h>
 #include <stdlib.h>

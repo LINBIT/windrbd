@@ -1288,6 +1288,8 @@ static void rtl_zero_memory_test(int argc, char ** argv)
 {
 	printk("About to RtlZeroMemory(NULL, ...) ...\n");
 	msleep(1000);
+#pragma warning (disable: 6387)
+	/* This is intentional: should BSOD */
 	RtlZeroMemory(NULL, 24);
 	printk("Still alive?\n");
 }
