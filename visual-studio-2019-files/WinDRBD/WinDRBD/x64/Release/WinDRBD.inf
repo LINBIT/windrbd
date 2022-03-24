@@ -12,7 +12,7 @@ ClassGUID   = {4D36E97B-E325-11CE-BFC1-08002BE10318}
 ; Class       = "System"
 ; ClassGUID   = {4D36E97D-E325-11CE-BFC1-08002BE10318}
 Provider    =   "Linbit"
-DriverVer = 03/24/2022,9.0.46.802
+DriverVer = 03/24/2022,11.22.29.390
 CatalogFile =   windrbd.cat
 PnpLockdown = 1   ; Silence a build warning
 

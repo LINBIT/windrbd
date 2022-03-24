@@ -5,3 +5,4 @@ windrbd/src/*.obj
 windrbd/src/*.pdb
 
 .*.sw?
+codeql-database

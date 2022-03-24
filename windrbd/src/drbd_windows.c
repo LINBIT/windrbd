@@ -532,7 +532,7 @@ LONGLONG atomic_read64(const atomic_t64 *v)
 
 void *kmalloc(int size, int flag, ULONG Tag)
 {
-	return ExAllocatePoolWithTag(NonPagedPool, size, Tag);
+	return ExAllocatePoolUninitialized(NonPagedPool, size, Tag);
 }
 
 void *kcalloc(int size, int count, int flag, ULONG Tag)

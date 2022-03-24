@@ -2141,7 +2141,7 @@ dbg("NOT completing IRP\n");
 	{
 		wchar_t *string;
 		dbg("bus Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
-		string = ExAllocatePoolWithTag(PagedPool, 512*sizeof(wchar_t), 'DRBD');
+		string = ExAllocatePoolUninitialized(PagedPool, 512*sizeof(wchar_t), 'DRBD');
 		if (string == NULL) {
 			status = STATUS_INSUFFICIENT_RESOURCES;
 		} else {
@@ -2240,7 +2240,7 @@ dbg("Returned string is %S\n", string);
 			size_t siz = sizeof(*device_relations)+num_devices*sizeof(device_relations->Objects[0]);
 // printk("size of device relations is %d\n", siz);
 		/* must be PagedPool else PnP manager complains */
-			device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+			device_relations = ExAllocatePoolUninitialized(PagedPool, siz, 'DRBD');
 			if (device_relations == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
@@ -2266,7 +2266,7 @@ dbg("Returned string is %S\n", string);
 			size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
 			dbg("size of device relations is %d\n", siz);
 	/* must be PagedPool else PnP manager complains */
-			device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+			device_relations = ExAllocatePoolUninitialized(PagedPool, siz, 'DRBD');
 			if (device_relations == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
@@ -2468,7 +2468,7 @@ printk("6 STATUS_NOT_SUPPORTED\n");
 				minor = 1;	/* must match the minor of the test resource */
 			}
 #define MAX_ID_LEN 512
-			string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), 'DRBD');
+			string = ExAllocatePoolUninitialized(PagedPool, MAX_ID_LEN*sizeof(wchar_t), 'DRBD');
 			if (string == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 			} else {
@@ -2585,7 +2585,7 @@ dbg("Returned string is %S\n", string);
 				size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
 				dbg("size of device relations is %d\n", siz);
 		/* must be PagedPool else PnP manager complains */
-				device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+				device_relations = ExAllocatePoolUninitialized(PagedPool, siz, 'DRBD');
 				if (device_relations == NULL) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
@@ -2608,7 +2608,7 @@ dbg("Returned string is %S\n", string);
 
 				dbg("disk BusRelations (Type %d)\n", s->Parameters.QueryDeviceRelations.Type);
 		/* must be PagedPool else PnP manager complains */
-				device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+				device_relations = ExAllocatePoolUninitialized(PagedPool, siz, 'DRBD');
 				if (device_relations == NULL) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;

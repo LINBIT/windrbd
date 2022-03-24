@@ -63,7 +63,7 @@ static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG *pReturnLength, UCH
         return status;
     }
 
-    pstKeyInfo = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(NonPagedPool, ulLength, '36DW');
+    pstKeyInfo = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolUninitialized(NonPagedPool, ulLength, '36DW');
     if (pstKeyInfo == NULL)
     {
         ZwClose(hKey);
