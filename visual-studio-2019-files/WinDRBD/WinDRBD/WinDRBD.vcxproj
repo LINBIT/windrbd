@@ -166,7 +166,7 @@
     </DriverSign>
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\converted-sources\drbd;..\..\converted-sources\drbd\drbd-headers;..\..\windrbd\include;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_WIN64;_AMD64_;AMD64;_M_AMD64;_NTDRIVER_;DEPRECATE_DDK_FUNCTIONS;MSC_NOOPT;_WIN32_WINNT=0x0601;WINVER=0x0601;WINNT=1;NTDDI_VERSION=0x06010000;KMDF_VERSION_MAJOR=1;KMDF_VERSION_MINOR=15;POOL_NX_OPTIN=1;KMALLOC_DEBUG=1;__KERNEL__=1;__BYTE_ORDER=1;__LITTLE_ENDIAN=1;__LITTLE_ENDIAN_BITFIELD;COMPAT_HAVE_BOOL_TYPE=1;CONFIG_KREF_DEBUG=1;NT_INLINE_GET_CURRENT_IRQL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN64;_AMD64_;AMD64;_M_AMD64;_NTDRIVER_;DEPRECATE_DDK_FUNCTIONS;MSC_NOOPT;_WIN32_WINNT=0x0601;WINVER=0x0601;WINNT=1;NTDDI_VERSION=0x06010000;KMDF_VERSION_MAJOR=1;KMDF_VERSION_MINOR=15;POOL_NX_OPTIN=1;KMALLOC_DEBUG=1;__KERNEL__=1;__BYTE_ORDER=1;__LITTLE_ENDIAN=1;__LITTLE_ENDIAN_BITFIELD;COMPAT_HAVE_BOOL_TYPE=1;CONFIG_KREF_DEBUG=1;NT_INLINE_GET_CURRENT_IRQL;NT_PROCESSOR_GROUPS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <WarningLevel>EnableAllWarnings</WarningLevel>
     </ClCompile>
@@ -238,6 +238,7 @@
     <ClInclude Include="..\..\..\windrbd\include\drbd_wrappers.h" />
     <ClInclude Include="..\..\..\windrbd\include\generic_compat_stuff.h" />
     <ClInclude Include="..\..\..\windrbd\include\kmalloc_debug.h" />
+    <ClInclude Include="..\..\..\windrbd\include\linux\mempool.h" />
     <ClInclude Include="..\..\..\windrbd\include\linux\socket.h" />
     <ClInclude Include="..\..\..\windrbd\include\stdint.h" />
     <ClInclude Include="..\..\..\windrbd\include\tiktok.h" />

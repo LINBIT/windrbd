@@ -203,5 +203,8 @@
     <ClInclude Include="..\..\..\windrbd\include\linux\socket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\windrbd\include\linux\mempool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
