@@ -334,3 +334,6 @@ dvl:
 # TODO: Must run in WDK build env.
 # and from the project dir (where the vcxproj is)
 #	msbuild /t:dvl WinDRBD.vcxproj /p:Configuration=Release /p:Platform=x64
+
+code-analysis:
+# msbuild WinDRBD.vcxproj /p:Configuration=Release /p:Platform=x64 /p:RunCodeAnalysis=True
