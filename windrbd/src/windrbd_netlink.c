@@ -609,9 +609,12 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 		/* modifies things. Currently used for event log threshold */
 	if (op->flags & GENL_ADMIN_PERM)
 		printk(KERN_NOTICE "drbd cmd(%s:%u)\n", windrbd_genl_cmd_to_str(cmd), cmd);
-	else
-		printk("drbd cmd(%s:%u)\n", windrbd_genl_cmd_to_str(cmd), cmd);
 
+		/* else nothing. Users commonly have a drbdadm status every
+		 * second or so if we log here, logfiles will be cluttered.
+		 */
+
+		/* TODO: is this mutex needed at all? */
 	status = mutex_lock_timeout(&genl_drbd_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
 	if (status != STATUS_SUCCESS) {
 		printk("failed to acquire the mutex, probably a previous drbd command is stuck.\n");
