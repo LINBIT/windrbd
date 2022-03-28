@@ -321,9 +321,15 @@ endif
 	chmod a+x ../../inno-setup/install*.exe
 
 codeql:
+#	cd ../..
+#	rm -rf codeql-database
+
 # TODO: generate rebuild-windrbd.cmd must run in Windows dev environment.
 #	codeql database create codeql-database --language="cpp" --command=rebuild-windrbd.cmd --source-root=.
 #	codeql database analyze .\codeql-database ..\codeql\Windows-Driver-Developer-Supplemental-Tools\codeql\windows-drivers\queries\suites\windows_driver_mustfix.qls --format=sarif-latest --output=.\visual-studio-2019-files\WinDRBD\WinDRBD\must-fix.sarif
+# or:
+#	codeql database analyze .\codeql-database ..\codeql\Windows-Driver-Developer-Supplemental-Tools\codeql\windows-drivers\queries\suites\windows_driver_recommended.qls --format=sarif-latest --output=.\visual-studio-2019-files\WinDRBD\WinDRBD\recommended.sarif
+
 
 sdv:
 # TODO: Must run in WDK build env.
