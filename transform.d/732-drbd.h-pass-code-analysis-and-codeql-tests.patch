@@ -1,0 +1,30 @@
+From 23329f4e0ed3b014c3c10d71790062cc37d5e251 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 28 Mar 2022 11:58:04 -0700
+Subject: [PATCH 02/12] drbd.h: pass code analysis and codeql tests.
+
+---
+ drbd/drbd-headers/linux/drbd.h | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drbd/drbd-headers/linux/drbd.h b/drbd/drbd-headers/linux/drbd.h
+index 19a106a..60c01de 100644
+--- a/drbd/drbd-headers/linux/drbd.h
++++ b/drbd/drbd-headers/linux/drbd.h
+@@ -26,6 +26,13 @@
+ #ifndef DRBD_H
+ #define DRBD_H
+ 
++#pragma warning (disable : 4100 4146 4221 4457 4456 4459)
++#pragma warning (disable : 4005 4018 4101 4115 4121 4127 4131 4152 4189 4200 4201 4204 4212 4218 4242 4244 4245 4267 4307 4389 4702 4706)
++/* Code analysis throws this warnings: */
++#pragma warning (disable : 26451 28719 6011 6385 6386 26453 33010 6001 28182)
++/* Enable all warnings throws lots of those warnings: */
++#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
++
+ #include <asm/types.h>
+ 
+ #ifdef __KERNEL__
+-- 
+2.35.1
+

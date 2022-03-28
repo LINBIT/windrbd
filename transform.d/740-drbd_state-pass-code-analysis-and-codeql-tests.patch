@@ -1,0 +1,36 @@
+From 6697071682d173c6d52109a2e15adece53a574c8 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 28 Mar 2022 12:01:21 -0700
+Subject: [PATCH 10/12] drbd_state: pass code analysis and codeql tests.
+
+---
+ drbd/drbd_state.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drbd/drbd_state.c b/drbd/drbd_state.c
+index 7b46135..7352b4e 100644
+--- a/drbd/drbd_state.c
++++ b/drbd/drbd_state.c
+@@ -284,7 +284,7 @@ static struct drbd_state_change *alloc_state_change(struct drbd_state_change_obj
+ 	size = sizeof(struct drbd_state_change) +
+ 	       ocnt->n_devices * sizeof(struct drbd_device_state_change) +
+ 	       ocnt->n_connections * sizeof(struct drbd_connection_state_change) +
+-	       ocnt->n_devices * ocnt->n_connections * sizeof(struct drbd_peer_device_state_change) +
++	       ((ULONG_PTR)ocnt->n_devices) * ocnt->n_connections * sizeof(struct drbd_peer_device_state_change) +
+ 	       ocnt->n_paths * sizeof(struct drbd_path_state);
+ 	state_change = kzalloc(size, flags, '00WD');
+ 	if (!state_change)
+@@ -4326,8 +4326,8 @@ LONG_PTR twopc_retry_timeout(struct drbd_resource *resource, int retries)
+ 	if (connections > 0) {
+ 		if (retries > 5)
+ 			retries = 5;
+-		timeout = resource->res_opts.twopc_retry_timeout *
+-			  HZ / 10 * connections * (1 << retries);
++		timeout = ((ULONG_PTR)resource->res_opts.twopc_retry_timeout) *
++			  HZ / 10 * connections * (1ULL << retries);
+ 		timeout = prandom_u32() % timeout;
+ 	}
+ 	return timeout;
+-- 
+2.35.1
+

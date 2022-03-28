@@ -1,0 +1,26 @@
+From 00fa12a10baef96c10b13248a61090dfea28430c Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 28 Mar 2022 12:01:59 -0700
+Subject: [PATCH 12/12] lru_cache: pass code analysis and codeql tests.
+
+---
+ drbd/lru_cache.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drbd/lru_cache.c b/drbd/lru_cache.c
+index b7a1069..c5bef14 100644
+--- a/drbd/lru_cache.c
++++ b/drbd/lru_cache.c
+@@ -6,6 +6,9 @@
+ 
+  */
+ 
++ /* Enable all warnings throws lots of those warnings: */
++#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 5045 4711)
++
+ #include <linux/module.h>
+ #include <linux/bitops.h>
+ #include <linux/slab.h>
+-- 
+2.35.1
+

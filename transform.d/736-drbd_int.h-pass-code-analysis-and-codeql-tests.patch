@@ -1,0 +1,35 @@
+From cdff07ce138896708e7c2cf842279dee75755447 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 28 Mar 2022 11:59:40 -0700
+Subject: [PATCH 06/12] drbd_int.h: pass code analysis and codeql tests.
+
+---
+ drbd/drbd_int.h | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index 2b00127..fd1546e 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -10,6 +10,9 @@
+ 
+ */
+ 
++/* Enable all warnings throws lots of those warnings: */
++#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
++
+ #ifndef _DRBD_INT_H
+ #define _DRBD_INT_H
+ 
+@@ -2304,7 +2307,7 @@ static inline sector_t drbd_md_ss(struct drbd_backing_dev *bdev)
+ 		return (drbd_get_capacity(bdev->backing_bdev) & ~7ULL) - 8;
+ 
+ 	/* external, some index; this is the old fixed size layout */
+-	return (128 << 20 >> 9) * bdev->md.meta_dev_idx;
++	return (128ULL << 20 >> 9) * bdev->md.meta_dev_idx;
+ }
+ 
+ void drbd_queue_work(struct drbd_work_queue *, struct drbd_work *);
+-- 
+2.35.1
+

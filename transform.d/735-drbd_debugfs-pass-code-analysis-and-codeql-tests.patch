@@ -1,0 +1,37 @@
+From 65504e674f4b3be24692e6e43965008b1f31a68d Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 28 Mar 2022 11:59:21 -0700
+Subject: [PATCH 05/12] drbd_debugfs: pass code analysis and codeql tests.
+
+---
+ drbd/drbd_debugfs.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drbd/drbd_debugfs.c b/drbd/drbd_debugfs.c
+index 6516c76..8f09064 100644
+--- a/drbd/drbd_debugfs.c
++++ b/drbd/drbd_debugfs.c
+@@ -206,7 +206,7 @@ static void seq_print_waiting_for_AL(struct seq_file *m, struct drbd_resource *r
+ 	seq_puts(m, "minor\tvnr\tage\t#waiting\n");
+ 	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&resource->devices, device, i) {
+-		struct drbd_request *req;
++		struct drbd_request *req = NULL;
+ 		int n = atomic_read(&device->ap_actlog_cnt);
+ 		if (n) {
+ 			spin_lock_irqsave(&device->resource->req_lock,
+@@ -240,9 +240,9 @@ static void seq_print_device_bitmap_io(struct seq_file *m, struct drbd_device *d
+ {
+ 	KIRQL spin_lock_irq_flags;
+ 	struct drbd_bm_aio_ctx *ctx;
+-	ULONG_PTR start_jif;
++	ULONG_PTR start_jif = 0;
+ 	unsigned int in_flight;
+-	unsigned int flags;
++	unsigned int flags = 0;
+ 	spin_lock_irqsave(&device->resource->req_lock, spin_lock_irq_flags);
+ 	ctx = list_first_entry_or_null(&device->pending_bitmap_io, struct drbd_bm_aio_ctx, list);
+ 	if (ctx && ctx->done)
+-- 
+2.35.1
+

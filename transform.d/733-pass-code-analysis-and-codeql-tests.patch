@@ -1,0 +1,28 @@
+From d2bd8042ea229a1fc16a76a16ba5600521f17fa3 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 28 Mar 2022 11:58:21 -0700
+Subject: [PATCH 03/12] pass code analysis and codeql tests.
+
+Check if drbd-utils compile.
+---
+ drbd/drbd-headers/windrbd/windrbd_ioctl.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd-headers/windrbd/windrbd_ioctl.h b/drbd/drbd-headers/windrbd/windrbd_ioctl.h
+index 916df0b..9165afc 100644
+--- a/drbd/drbd-headers/windrbd/windrbd_ioctl.h
++++ b/drbd/drbd-headers/windrbd/windrbd_ioctl.h
+@@ -34,8 +34,8 @@
+  * a non-Administrator user.
+  */
+ 
+-#define WINDRBD_ROOT_DEVICE_NAME "windrbd_control"
+-#define WINDRBD_USER_DEVICE_NAME "windrbd_control_user"
++#define WINDRBD_ROOT_DEVICE_NAME L"windrbd_control"
++#define WINDRBD_USER_DEVICE_NAME L"windrbd_control_user"
+ 
+ /* TODO: are these used by someone else? Doc states that <= 0x8000
+  * is reserved by Microsoft, but it does not state how to obtain
+-- 
+2.35.1
+

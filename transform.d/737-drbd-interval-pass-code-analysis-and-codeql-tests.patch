@@ -1,0 +1,26 @@
+From 02ea24f3aa82ba12bcdc7d4ab605f2c727e81f42 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 28 Mar 2022 12:00:12 -0700
+Subject: [PATCH 07/12] drbd-interval: pass code analysis and codeql tests.
+
+---
+ drbd/drbd_interval.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drbd/drbd_interval.h b/drbd/drbd_interval.h
+index 23c5a94..1c0048b 100644
+--- a/drbd/drbd_interval.h
++++ b/drbd/drbd_interval.h
+@@ -1,6 +1,9 @@
+ #ifndef __DRBD_INTERVAL_H
+ #define __DRBD_INTERVAL_H
+ 
++/* Enable all warnings throws lots of those warnings: */
++#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
++
+ #include <linux/types.h>
+ #include <linux/rbtree.h>
+ 
+-- 
+2.35.1
+

@@ -1,0 +1,25 @@
+From cb4b0c8e74ab560e0651882a22f1e364cb2afbd6 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 28 Mar 2022 12:00:34 -0700
+Subject: [PATCH 08/12] drbd_nl: pass code analysis and codeql tests.
+
+---
+ drbd/drbd_nl.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index 395b347..d453e14 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -6098,7 +6098,7 @@ int drbd_adm_dump_peer_devices(struct sk_buff *skb, struct netlink_callback *cb)
+ 	struct drbd_resource *resource;
+ 	struct drbd_device *device = NULL;
+ 	struct drbd_peer_device *peer_device = NULL;
+-	int minor, err, retcode;
++	int minor = -1, err, retcode;
+ 	struct drbd_genlmsghdr *dh;
+ 	struct idr *idr_to_search;
+ 
+-- 
+2.35.1
+
