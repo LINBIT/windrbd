@@ -2141,7 +2141,7 @@ dbg("NOT completing IRP\n");
 	{
 		wchar_t *string;
 		dbg("bus Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
-		string = ExAllocatePoolUninitialized(PagedPool, 512*sizeof(wchar_t), 'DRBD');
+		string = ExAllocatePoolZero(PagedPool, 512*sizeof(wchar_t), 'DRBD');
 		if (string == NULL) {
 			status = STATUS_INSUFFICIENT_RESOURCES;
 		} else {
@@ -2240,11 +2240,12 @@ dbg("Returned string is %S\n", string);
 			size_t siz = sizeof(*device_relations)+num_devices*sizeof(device_relations->Objects[0]);
 // printk("size of device relations is %d\n", siz);
 		/* must be PagedPool else PnP manager complains */
-			device_relations = ExAllocatePoolUninitialized(PagedPool, siz, 'DRBD');
+			device_relations = ExAllocatePoolZero(PagedPool, siz, 'DRBD');
 			if (device_relations == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
+			RtlZeroMemory(device_relations, siz);
 			n = get_all_drbd_device_objects(&device_relations->Objects[0], num_devices);
 			if (n != num_devices)
 				printk("Warning: number of DRBD devices changed: old %d != new %d\n", num_devices, n);
@@ -2266,7 +2267,7 @@ dbg("Returned string is %S\n", string);
 			size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
 			dbg("size of device relations is %d\n", siz);
 	/* must be PagedPool else PnP manager complains */
-			device_relations = ExAllocatePoolUninitialized(PagedPool, siz, 'DRBD');
+			device_relations = ExAllocatePoolZero(PagedPool, siz, 'DRBD');
 			if (device_relations == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
@@ -2468,7 +2469,7 @@ printk("6 STATUS_NOT_SUPPORTED\n");
 				minor = 1;	/* must match the minor of the test resource */
 			}
 #define MAX_ID_LEN 512
-			string = ExAllocatePoolUninitialized(PagedPool, MAX_ID_LEN*sizeof(wchar_t), 'DRBD');
+			string = ExAllocatePoolZero(PagedPool, MAX_ID_LEN*sizeof(wchar_t), 'DRBD');
 			if (string == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 			} else {
@@ -2585,11 +2586,12 @@ dbg("Returned string is %S\n", string);
 				size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
 				dbg("size of device relations is %d\n", siz);
 		/* must be PagedPool else PnP manager complains */
-				device_relations = ExAllocatePoolUninitialized(PagedPool, siz, 'DRBD');
+				device_relations = ExAllocatePoolZero(PagedPool, siz, 'DRBD');
 				if (device_relations == NULL) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
 				}
+				RtlZeroMemory(device_relations, siz);
 				device_relations->Count = 1;
 				device_relations->Objects[0] = device;
 				ObReferenceObject(device);
@@ -2608,11 +2610,12 @@ dbg("Returned string is %S\n", string);
 
 				dbg("disk BusRelations (Type %d)\n", s->Parameters.QueryDeviceRelations.Type);
 		/* must be PagedPool else PnP manager complains */
-				device_relations = ExAllocatePoolUninitialized(PagedPool, siz, 'DRBD');
+				device_relations = ExAllocatePoolZero(PagedPool, siz, 'DRBD');
 				if (device_relations == NULL) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
 				}
+				RtlZeroMemory(device_relations, siz);
 				device_relations->Count = 0;
 				irp->IoStatus.Information = (ULONG_PTR)device_relations;
 				status = STATUS_SUCCESS;
@@ -2663,7 +2666,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			wchar_t *string = NULL;
 			int string_length;
 
-			if ((string = (PWCHAR)ExAllocatePoolUninitialized(NonPagedPool, (512 * sizeof(WCHAR)), 'DRBD')) == NULL) {
+			if ((string = (PWCHAR)ExAllocatePoolZero(NonPagedPool, (512 * sizeof(WCHAR)), 'DRBD')) == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
@@ -2672,7 +2675,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
 			case DeviceTextDescription:
 				string_length = swprintf(string, L"WinDRBD Disk") + 1;
-				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolUninitialized(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
+				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolZero(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
 				if (irp->IoStatus.Information == 0) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
@@ -2684,7 +2687,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			case DeviceTextLocationInformation:
 				string_length = swprintf(string, L"WinDRBD Minor %d", minor) + 1;
 
-				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolUninitialized(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
+				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolZero(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
 				if (irp->IoStatus.Information == 0) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
@@ -2710,12 +2713,13 @@ if (status == STATUS_NOT_SUPPORTED) {
 		{
 			struct _PNP_BUS_INFORMATION *bus_info;
 
-			bus_info = ExAllocatePoolUninitialized(PagedPool, sizeof(*bus_info), 'DRBD');
+			bus_info = ExAllocatePoolZero(PagedPool, sizeof(*bus_info), 'DRBD');
 			if (bus_info  == NULL) {
 			        printk("DiskDispatchPnP ExAllocatePool IRP_MN_QUERY_BUS_INFORMATION failed\n");
 			        status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
+			RtlZeroMemory(bus_info, sizeof(*bus_info));
 			bus_info->BusTypeGuid = GUID_BUS_TYPE_INTERNAL;
 			bus_info->LegacyBusType = PNPBus;
 			bus_info->BusNumber = 0;

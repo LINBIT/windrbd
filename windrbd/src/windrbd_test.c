@@ -727,7 +727,7 @@ int concurrency_thread(void *p)
 
 void concurrency_test(int argc, const char **argv)
 {
-	int i;
+	unsigned long long i;
 	const char *s;
 	size_t len;
 	struct completion **completions;
@@ -1265,7 +1265,10 @@ static void double_free_test(int argc, char ** argv)
 			return;
 		}
 		ExFreePool(p);
+/* This is intentional but codeql static verifier complains, so commented out */
+#if 0
 		ExFreePool(p);	/* expecing this to crash somehow. */
+#endif
 		break;
 	case CONCURRENT:
 		for (i=0; i<NUM_MEMALLOC_THREADS; i++) {

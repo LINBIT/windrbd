@@ -131,7 +131,7 @@ void shutdown_registry(void)
 
 NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default)
 {
-	unsigned long len;
+	unsigned long len = 0;
 	NTSTATUS status;
 
 	if (the_registry_path != NULL && the_registry_path->Buffer != NULL && val_p != NULL) {
@@ -150,7 +150,7 @@ NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default)
 
 NTSTATUS get_registry_long_long(wchar_t *key, unsigned long long *val_p, unsigned long long the_default)
 {
-	unsigned long len;
+	unsigned long len = 0;
 	NTSTATUS status;
 
 	if (the_registry_path != NULL && the_registry_path->Buffer != NULL && val_p != NULL) {
