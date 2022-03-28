@@ -7,6 +7,13 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.0.2
+---------------------------
+
+Do not fill log file when drbdadm status is run periodically.
+
+Updated config sample.
+
 What's new in version 1.0.1
 ---------------------------
 

@@ -297,6 +297,7 @@ Version history
  * 1.0.0-rc19 (Jan 12, 2022): Fixed sync BSOD and hard network shutdown BSOD
  * 1.0.0-rc20 (Jan 25, 2022): Upgrade to DRBD 9.0.32, Fixed invalid page chain
 			      bug and some memory leaks.
- * 1.0.0-rc21 (Feb 3, 2022): Do not generate a new current UUID wile IO is frozen
+ * 1.0.0-rc21 (Feb 3, 2022): Do not generate a new current UUID while IO is frozen
  * 1.0.0 (Feb 4, 2022): Production ready release.
  * 1.0.1 (Feb 17, 2022): No timeout for user mode helpers, minor JSON fix
+ * 1.0.2 (Mar 28, 2022): Do not fill log file when drbdadm status is run periodically.
