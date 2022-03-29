@@ -118,11 +118,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <IncludePath>$(CRT_IncludePath);$(KM_IncludePath);$(KIT_SHARED_IncludePath);C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers;C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd;C:\cygwin64\home\Administrator\windrbd\windrbd\include</IncludePath>
+    <IncludePath>$(CRT_IncludePath);$(KM_IncludePath);$(KIT_SHARED_IncludePath);..\..\..\converted-sources\drbd\drbd-headers;..\..\..\converted-sources\drbd;..\..\..\windrbd\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <IncludePath>$(CRT_IncludePath);$(KM_IncludePath);$(KIT_SHARED_IncludePath);C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd\drbd-headers;C:\cygwin64\home\Administrator\windrbd\converted-sources\drbd;C:\cygwin64\home\Administrator\windrbd\windrbd\include</IncludePath>
+    <IncludePath>$(CRT_IncludePath);$(KM_IncludePath);$(KIT_SHARED_IncludePath);..\..\..\converted-sources\drbd\drbd-headers;..\..\..\converted-sources\drbd;..\..\..\windrbd\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
