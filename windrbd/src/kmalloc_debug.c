@@ -64,7 +64,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 #endif
 
 	full_size = sizeof(struct memory) + size + sizeof(struct poison_after);
-	mem = ExAllocatePoolUninitialized(NonPagedPool, full_size, 'DRBD');
+	mem = ExAllocatePoolWithTag(NonPagedPool, full_size, 'DRBD');
 
 	if (mem == NULL) {
 		if (strcmp(func, "SendTo") != 0)

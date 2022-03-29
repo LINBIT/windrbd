@@ -1259,7 +1259,7 @@ static void double_free_test(int argc, char ** argv)
 		break;
 
 	case EXALLOCATEPOOL:	/* BAD_POOL_HEADER */
-		p=ExAllocatePoolUninitialized(NonPagedPool, 4096, 'DRBD');
+		p=ExAllocatePoolWithTag(NonPagedPool, 4096, 'DRBD');
 		if (p==NULL) {
 			printk("Oops. Out of memory.\n");
 			return;
