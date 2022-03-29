@@ -14,7 +14,11 @@
 # Don't change default here, put it into your .bashrc instead:
 # (like export BUILD_ENV=blub)
 #
-BUILD_ENV ?= jt-server2016
+# BUILD_ENV ?= jt-server2016
+
+ifndef BUILD_ENV
+$(error BUILD_ENV not set. Please set the BUILD_ENV environment variables (export BUILD_ENV=blub in bash) and add settings to Makefile.win (don't forget make copy) )
+endif
 
 # TODO: unset this for production releases.
 KMALLOC_DEBUG = 1
@@ -107,9 +111,9 @@ DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
 ifeq ($(BUILD_ENV),jt-opennebula-vm)
-export EWDK_BASE := e:
+export EWDK_BASE := g:
 EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
-EWDK_VERSION := 10.0.22000.0
+EWDK_VERSION := 10.0.20348.0
 EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
 
 # Name of the pfx file (without extension)
@@ -217,7 +221,8 @@ WIN_LDFLAGS += /link # must be first!
 # However this prevents the driver from being unloaded. We try
 # this now:
 WIN_LDFLAGS += /DRIVER /SUBSYSTEM:WINDOWS /NODEFAULTLIB /ENTRY:DriverEntry
-WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x64/"
+# Commented out. Else cannot find __imp_KeGetCurrentIrql symbol on linking
+# WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x64/"
 WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/$(EWDK_VERSION)/km/x64/"
 WIN_LDFLAGS += /DEBUG:FULL
 WIN_LINK_INPUT += wdm.lib
@@ -227,6 +232,7 @@ WIN_LINK_INPUT += netio.lib
 WIN_LINK_INPUT += wdmsec.lib
 WIN_LINK_INPUT += ksecdd.lib
 WIN_LINK_INPUT += "$(EWDK_LIB)/win8/km/x64/aux_klib.lib"
+WIN_LINK_INPUT += hal.lib
 # WIN_LINK_INPUT += setupapi.lib
 
 DRBD_FILES = drbd_buildtag.c drbd_bitmap.c drbd_proc.c
@@ -269,7 +275,7 @@ else
 # Windows certificate store in order to load the driver. See
 # readme.txt file in the crypto directory to learn how to create it.
 
-	"$(EWDK_BIN)/signtool.exe" sign /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v "$@"
+	"$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v "$@"
 endif
 
 
