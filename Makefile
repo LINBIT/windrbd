@@ -83,6 +83,26 @@ clean:
 	done
 	make -C converted-sources/drbd/ clean
 
+# Those 4 targets are for running static code verifiers
+.PHONY: sdv dvl code-analysis codeql
+
+sdv:
+	cd $(TRANS_DEST)/drbd/ && $(MAKE) sdv
+
+dvl:
+	cd $(TRANS_DEST)/drbd/ && $(MAKE) dvl
+
+code-analysis:
+	cd $(TRANS_DEST)/drbd/ && $(MAKE) code-analysis
+
+codeql:
+	cd $(TRANS_DEST)/drbd/ && $(MAKE) codeql
+
+# This is the target to procude a .DVL.XML suitable for Static
+# tools logo test for Windows Server 2019 (and older systems)
+server2019-dvl-rebuild:
+	cd $(TRANS_DEST)/drbd/ && $(MAKE) server2019-dvl-rebuild
+
 else
 
 build: patch

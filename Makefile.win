@@ -327,6 +327,7 @@ ifdef R
 endif
 	chmod a+x ../../inno-setup/install*.exe
 
+# TODO: this is required for Windows Server 2022 and Windows 11
 codeql:
 #	cd ../..
 #	rm -rf codeql-database
@@ -341,8 +342,13 @@ code-analysis:
 	cd ../../visual-studio-2019-files/WinDRBD/WinDRBD && $(MSBUILD) WinDRBD.vcxproj /p:Configuration=Release /p:Platform=x64 /p:RunCodeAnalysis=True
 
 sdv:
-	cd ../../visual-studio-2019-files/WinDRBD/WinDRBD && $(MSBUILD) /t:sdv /p:Inputs="/check:* /debug" WinDRBD.vcxproj /p:Configuration=Release /p:Platform=x64 /maxCpuCount:8
+	cd ../../visual-studio-2019-files/WinDRBD/WinDRBD && $(MSBUILD) /t:sdv /p:Inputs="/check:default.sdv /debug" WinDRBD.vcxproj /p:Configuration=Release /p:Platform=x64 /maxCpuCount:8
+
+# No codeql for now, Windows Server 2019 (and before) cannot read it.
 
 dvl:
 	cd ../../visual-studio-2019-files/WinDRBD/WinDRBD && $(MSBUILD) /t:dvl WinDRBD.vcxproj /p:Configuration=Release /p:Platform=x64
+	bash -c 'sed -e '/Semmle/d' ../../visual-studio-2019-files/WinDRBD/WinDRBD/WinDRBD.DVL.XML > ../../WinDRBDServer2019.DVL.XML'
+	@echo 'Now copy the WinDRBDServer2019.DVL.XML file into the C:\DVL directory (create it if it does not exist) on the HLK test client and rerun Static Tools Logo test'
 
+server2019-dvl-rebuild: sdv code-analysis dvl
