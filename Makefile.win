@@ -137,6 +137,7 @@ endif
 EWDK_INC := $(EWDK_KIT)\\Include
 EWDK_LIB := $(EWDK_KIT)\\Lib
 VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl-$(BUILD_ENV).cmd
+MSBUILD := /cygdrive/c/Windows/System32/cmd.exe /c run-msbuild.cmd
 CERTMGR := "$(EWDK_BIN)/certmgr.exe"
 
 # /a      for debugging output
@@ -336,16 +337,12 @@ codeql:
 # or:
 #	codeql database analyze .\codeql-database ..\codeql\Windows-Driver-Developer-Supplemental-Tools\codeql\windows-drivers\queries\suites\windows_driver_recommended.qls --format=sarif-latest --output=.\visual-studio-2019-files\WinDRBD\WinDRBD\recommended.sarif
 
+code-analysis:
+	cd ../../visual-studio-2019-files/WinDRBD/WinDRBD && $(MSBUILD) WinDRBD.vcxproj /p:Configuration=Release /p:Platform=x64 /p:RunCodeAnalysis=True
 
 sdv:
-# TODO: Must run in WDK build env.
-# and from the project dir (where the vcxproj is)
-# msbuild /t:sdv /p:Inputs="/check:* /debug" WinDRBD.vcxproj /p:Configuration=Release /p:Platform=x64 /maxCpuCount:8
+	cd ../../visual-studio-2019-files/WinDRBD/WinDRBD && $(MSBUILD) /t:sdv /p:Inputs="/check:* /debug" WinDRBD.vcxproj /p:Configuration=Release /p:Platform=x64 /maxCpuCount:8
 
 dvl:
-# TODO: Must run in WDK build env.
-# and from the project dir (where the vcxproj is)
-#	msbuild /t:dvl WinDRBD.vcxproj /p:Configuration=Release /p:Platform=x64
+	cd ../../visual-studio-2019-files/WinDRBD/WinDRBD && $(MSBUILD) /t:dvl WinDRBD.vcxproj /p:Configuration=Release /p:Platform=x64
 
-code-analysis:
-# msbuild WinDRBD.vcxproj /p:Configuration=Release /p:Platform=x64 /p:RunCodeAnalysis=True
