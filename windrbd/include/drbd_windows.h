@@ -269,7 +269,7 @@ TODO: should be:
 */
 
 #define MAX_ERRNO				4095
-#define IS_ERR_VALUE(_x)		((_x) >= (unsigned long) -MAX_ERRNO)
+#define IS_ERR_VALUE(_x)		((_x) >= (ULONG_PTR) -MAX_ERRNO)
 
 /* See kernel.h */
 #define READ					0
