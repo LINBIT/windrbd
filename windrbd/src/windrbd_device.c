@@ -2019,7 +2019,7 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
-	NTSTATUS status;
+	NTSTATUS status = STATUS_SUCCESS;
 	KEVENT start_completed_event;
 	int pass_on = 0;
 
@@ -2192,7 +2192,7 @@ dbg("Returned string is %S\n", string);
 	}
 #endif
 /*	case IRP_MN_QUERY_INTERFACE:
-		
+
 */
 	case IRP_MN_QUERY_CAPABILITIES:
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
@@ -2285,12 +2285,9 @@ dbg("Returned string is %S\n", string);
 			return STATUS_SUCCESS;
 		}
 #endif
-#if 0
 		case (enum _DEVICE_RELATION_TYPE)-1:
-			status = STATUS_NOT_IMPLEMENTED;
-			pass_on = 1;
+			pass_on = 1;    /* Must not change status field */
 			break;
-#endif
 
 		default:
 			status = STATUS_NOT_IMPLEMENTED;
