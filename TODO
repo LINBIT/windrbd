@@ -108,14 +108,14 @@ TODO: Research: See if it works under ReactOS
 		Check if Server 2003 has netio / winsocket interface
 			(probably not but this needs to be checked).
 			-> No.
-
-	Next TODOs:
 		Make a inno-setup installer EXE for server 2003
 			(and later ReactOS)
+
+	Next TODOs:
 		See why partitioning is not working under server
 			2003 (probably there are some ioctl's missing).
 		Fix BSOD on shutdown (power IRP timeout).
-		Make install-bus-device worr on ReactOS
+		Make install-bus-device work on ReactOS
 		Implement NETIO -> TDI interface.
 
 TODO: Nice to have: Make it build under Windows only
@@ -8038,3 +8038,10 @@ Done: Bug: Sometimes permissions of userland binaries are wrong
 
 	Didn't observe this for a long time.
 
+Done: Bug: BSOD on drbdadm down with LINSTOR test disk
+
+    Diskless Standalone: BSOD on down with version 133 of the
+    1.1 branch. With satellite/build/libs/satellite-1.18.0-21-28d82983c.jar
+
+    Was IS_ERR() reporting false on error. Fixed long->LONG_PTR also
+    in header.
