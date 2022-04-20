@@ -934,3 +934,16 @@ homepage):
 
 cmd /k 'C:\WinDDK\7600.16385.1\bin\setenv.bat C:\WinDDK\7600.16385.1\ fre x86 WNET'
 
+--------
+
+Disable Screen blanking:
+
+powercfg.cpl
+then Change Plan settings / Turn off the display to Never and Save changes
+
+--------
+
+Disable prompt for trusting Linbit:
+
+certutil -addstore "TrustedPublisher" linbit-trusted-cert.cer
+
