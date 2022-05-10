@@ -242,9 +242,10 @@ windrbd.sys: $(patsubst %.c,%.obj,$(DRBD_FILES)) $(patsubst %.c,%.obj,$(WINDRBD_
 ifdef R
 # Linbit DigiCert certificate (trusted by Microsoft)
 # For Windows Server 2008 use SHA1 as secure hash
-	"$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com "$@"
+#	"$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com "$@"
+	"$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCertTrustedRootG4.crt" /a /t http://timestamp.digicert.com "$@"
 # Thanks to David Grayson (http://www.davidegrayson.com/signing/#howto)
-	"$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com windrbd.cat
+	"$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCertTrustedRootG4.crt" /a /t http://timestamp.digicert.com windrbd.cat
 else
 # We need a self signed certificate which has to be added to the
 # Windows certificate store in order to load the driver. See
@@ -297,7 +298,7 @@ clean:
 package: windrbd.sys
 	( cd ../../inno-setup && iscc windrbd.iss /DWindrbdSource=$(WINDRBD_SOURCE) /DWindrbdUtilsSource=$(DRBD_UTILS_SOURCE) )
 ifdef R
-	( cd ../../inno-setup &&  "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com install-`sed -e 's/[^"]*"\([^"]*\).*/\1/g' version.iss`.exe )
+	( cd ../../inno-setup &&  "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCertTrustedRootG4.crt" /a /t http://timestamp.digicert.com install-`sed -e 's/[^"]*"\([^"]*\).*/\1/g' version.iss`.exe )
 endif
 	chmod a+x ../../inno-setup/install*.exe
 
