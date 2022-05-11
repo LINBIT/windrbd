@@ -947,3 +947,10 @@ Disable prompt for trusting Linbit:
 
 certutil -addstore "TrustedPublisher" linbit-trusted-cert.cer
 
+-------
+
+Run task on system startup:
+
+schtasks /create /sc ONSTART /tn WinDRBD\StartHLKTest /tr C:\WinDRBD\starthlk.ba
+t /ru system
+
