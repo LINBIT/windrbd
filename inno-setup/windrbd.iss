@@ -119,10 +119,13 @@ Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\mv.exe"; DestDir: "{app}"; 
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\sed.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\sync.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\unzip.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion
+; Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\ms-cert-result\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion
 ; must be in same folder as the sysfile.
-Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.cat"; DestDir: "{app}"; Flags: ignoreversion
+; Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\ms-cert-result\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
+; Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.cat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\ms-cert-result\windrbd.cat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\misc\drbd.cgi"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\misc\ipxe-windrbd.pxe"; DestDir: "{app}"; Flags: ignoreversion
 
