@@ -369,7 +369,7 @@ var ResultCode: Integer;
     CommandOutput: String;
 
 begin
-	if not ExecWithLogging(ExpandConstant('pnputil.exe'), '-a windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('pnputil.exe'), '/add-driver windrbd.inf /install', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not run pnputil', mbInformation, MB_OK);
 	end;
