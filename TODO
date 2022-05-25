@@ -38,6 +38,8 @@ Real: February 2 2022
 
 TODOs for after Release 1.0 ----------------------------------------
 
+TODO: Research: See if Autopromote can be implemented (with disk devices)
+
 TODO: Code quality: One should not need to create their own keys on building WinDRBD
 
 	Checkin self signed keys? But talk to Phil first.
