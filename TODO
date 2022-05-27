@@ -38,6 +38,23 @@ Real: February 2 2022
 
 TODOs for after Release 1.0 ----------------------------------------
 
+TODO: Bug: WinDRBD hangs when 20 volume resource is demoted.
+
+    Possibly wrong logs are:
+
+<6> 26.05.2022 U16:24:37.115 (826524911941/10000000)|FFFFC88510AF5E60(drbd_r_LinstorDemoResource) #617 drbd_handshake drbd LinstorDemoResource/20 minor 1022 pnode-id:1, pdsk(Outdated), prpl(Off), pdvflag(0xc40400): uuid_compare()=no-sync by rule=just-created-both
+<6> 26.05.2022 U16:24:37.131 (826524915015/10000000)|FFFFC88510AF5C70(drbd_s_LinstorDemoResource) #618 change_cluster_wide_state drbd LinstorDemoResource, r(Secondary), f(0x0), scf(0x83a): State change 1457024989: primary_nodes=0, weak_nodes=0
+<6> 26.05.2022 U16:24:37.131 (826524915955/10000000)|FFFFC88510AF5C70(drbd_s_LinstorDemoResource) #619 change_cluster_wide_state drbd LinstorDemoResource, r(Secondary), f(0x0), scf(0x83a): Committing cluster-wide state change 1457024989 (15ms)
+<7> 26.05.2022 U16:24:37.131 (826524916466/10000000)|FFFFC88510AF5C70(drbd_s_LinstorDemoResource) #620 conn_send_twopc_request drbd LinstorDemoResource pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x20000c), scf(0x83a): Sending P_TWOPC_COMMIT request for state change 1457024989
+
+    (but the date is wrong so not sure if this is it)
+
+TODO: Installer: drbdadm down all -> drbdsetup down all
+
+    LINSTOR deletes those resource files so drbdadm down all will
+    do nothing...
+    Also try to stop satellite (will be running as a service anyway ...)
+
 TODO: Research: See if Autopromote can be implemented (with disk devices)
 
 TODO: Code quality: One should not need to create their own keys on building WinDRBD
