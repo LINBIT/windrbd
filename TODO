@@ -38,6 +38,11 @@ Real: February 2 2022
 
 TODOs for after Release 1.0 ----------------------------------------
 
+TODO: Bug: Timeout on Secondary
+
+    Warning: no eject event after 10 seconds, giving up.
+    Should not time out (should wait forever)
+
 TODO: Bug: System freeze when creating resource (adding another node)
 
     On Windows 2016 VM: while LINSTOR created a Tie breaker resource
