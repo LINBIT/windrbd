@@ -43,6 +43,29 @@ TODO: Bug: Timeout on Secondary
     Warning: no eject event after 10 seconds, giving up.
     Should not time out (should wait forever)
 
+    Update: no eject probably comes but there is no block device (tested
+    with 2 volumes and LINSTOR)
+
+<5> 08.06.2022 U16:08:13.529 (148195346000/10000000)|FFFF928D4E9FDB00(devicecontrol) #5403 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_SECONDARY:15)
+<6> 08.06.2022 U16:08:13.529 (148195348470/10000000)|FFFF928D4DFFE530(netlink) #5404 remove_dos_link Removed symlink from \DosDevices\Drbd1025 to \Device\Drbd1025
+<6> 08.06.2022 U16:08:13.529 (148195351478/10000000)|FFFF928D4E9FD910(pnp) #5405 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195352306/10000000)|FFFF928D4E9FD530(pnp) #5406 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195356198/10000000)|FFFF928D4E9FE6A0(pnp) #5407 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195365027/10000000)|FFFF928D4E9FD530(pnp) #5408 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195370933/10000000)|FFFF928D4E9FE2C0(pnp) #5409 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195372276/10000000)|FFFF928D4E9FD530(pnp) #5410 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195373002/10000000)|FFFF928D4E9FE890(pnp) #5411 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195384506/10000000)|FFFF928D4DFFE530(netlink) #5412 remove_dos_link Removed symlink from \DosDevices\Drbd1026 to \Device\Drbd1026
+<6> 08.06.2022 U16:08:13.529 (148195387252/10000000)|FFFF928D4E9FE6A0(pnp) #5413 windrbd_pnp no block device
+ [last message was in IRQ context or recursive]
+<6> 08.06.2022 U16:08:13.529 (148195390244/10000000)|FFFF928D4E9FD530(pnp) #5414 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195390896/10000000)|FFFF928D4E9FE6A0(pnp) #5415 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195392462/10000000)|FFFF928D4E9FE2C0(pnp) #5416 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195409280/10000000)|FFFF928D4E9FD720(pnp) #5417 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:23.529 (148295347064/10000000)|FFFF928D4DFFE530(netlink) #5418 windrbd_remove_windows_device Warning: no eject event after 10 seconds, giving up.
+<6> 08.06.2022 U16:09:59.935 (149259410177/10000000)|FFFF928D4E9FD530(devicecontrol) #5419 windrbd_process_netlink_packet failed to acquire the mutex, probably a previous drbd command is stuck.
+
+
 TODO: Bug: System freeze when creating resource (adding another node)
 
     On Windows 2016 VM: while LINSTOR created a Tie breaker resource
