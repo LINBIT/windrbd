@@ -954,3 +954,32 @@ Run task on system startup:
 schtasks /create /sc ONSTART /tn WinDRBD\StartHLKTest /tr C:\WinDRBD\starthlk.ba
 t /ru system
 
+schtasks /create /sc ONSTART /tn WinDRBD\CloudInitFake /tr C:\WinDRBD\cloudinitfake.bat /ru system
+
+# or from bash:
+schtasks /create /sc ONSTART /tn WinDRBD\\CloudInitFake /tr C:\\WinDRBD\\cloudinitfake.bat /ru system
+
+be sure to set the path in the cmd file first:
+
+set PATH=C:\cygwin64\usr\local\bin;C:\cygwin64\bin;C:\cygwin64\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0;C:\Windows\System32\OpenSSH;C:\Program Files\WinDRBD;C:\WinDRBD\usr\sbin;C:\WinDRBD\usr\bin;C:\WinDRBD\bin;C:\Windows\system32\config\systemprofile\AppData\Local\Microsoft\WindowsApps
+
+or so ...
+
+---------------
+
+Add swapspace to a Linux machine:
+
+johannes@jt-ubuntu2021C:~$ sudo fallocate -l 16G /swapfile
+johannes@jt-ubuntu2021C:~$ sudo chmod 600 /swapfile
+johannes@jt-ubuntu2021C:~$ sudo mkswap /swapfile
+Setting up swapspace version 1, size = 16 GiB (17179865088 bytes)
+no label, UUID=fd5e0600-3335-47e7-b51f-4de2c227fc5d
+johannes@jt-ubuntu2021C:~$ sudo swapon /swapfile
+johannes@jt-ubuntu2021C:~$ htop
+johannes@jt-ubuntu2021C:~$ vi /etc/fstab
+johannes@jt-ubuntu2021C:~$ sudo vi /etc/fstab
+(add line:
+/swapfile               none    swap    sw              0 0
+johannes@jt-ubuntu2021C:~$ htop
+johannes@jt-ubuntu2021C:~$ sudo reboot
+
