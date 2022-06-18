@@ -83,11 +83,34 @@ TODO: Bug: WinDRBD hangs when 20 volume resource is demoted.
 
     (but the date is wrong so not sure if this is it)
 
+	Most likely a duplicate of Timeout on Secondary
+
+TODO: Installer: Also quit running drbdsetup events2 on update.
+
+	This would break 'Linux compatibility' ... but I think we
+	shouldn't care.
+
+	No Linux also terminates the drbdsetup events2
+
 TODO: Installer: drbdadm down all -> drbdsetup down all
 
     LINSTOR deletes those resource files so drbdadm down all will
     do nothing...
     Also try to stop satellite (will be running as a service anyway ...)
+
+TODO: Installer: remove all windrbd drivers from driver store.
+
+	At least installing a self-signed driver over a Microsoft
+	signed driver (such as 1.1.0-rc1-11 over 1.1.0-rc1) does
+	not work.
+
+	Update: This is probably because of a MS certificate quick
+	hack.
+
+TODO: Build System: Have a way to automatically sign drivers.
+
+	And NOT just copy the driver manually in some directory and
+	then get confused when a different version is being installed.
 
 TODO: Research: See if Autopromote can be implemented (with disk devices)
 
@@ -214,13 +237,6 @@ TODO: Test: IPv6
 TODO: Code quality: Stop windrbdlog service after unloading driver
 
 	So we see the log messages from the unload.
-
-TODO: Nice to have: Also quit running drbdsetup events2 on update.
-
-	This would break 'Linux compatibility' ... but I think we
-	shouldn't care.
-
-    No Linux also terminates the drbdsetup events2
 
 TODO: Code quality: Remove bio->master_bio logic
 

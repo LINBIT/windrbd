@@ -3656,14 +3656,14 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 	remove_dos_link(bdev);
 
 	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
-		LARGE_INTEGER eject_timeout;
+		LARGE_INTEGER timeout;
 		NTSTATUS status;
 		dbg("Requesting eject of Windows device minor %d\n", bdev->drbd_device->minor);
 		IoRequestDeviceEject(bdev->windows_device);
 		dbg("Eject returned minor %d\n", bdev->drbd_device->minor);
 
-		eject_timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
-		status = KeWaitForSingleObject(&bdev->device_ejected_event, Executive, KernelMode, FALSE, &eject_timeout);
+		timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
+		status = KeWaitForSingleObject(&bdev->device_ejected_event, Executive, KernelMode, FALSE, &timeout);
 		if (status == STATUS_TIMEOUT)
 			printk("Warning: no eject event after 10 seconds, giving up.\n");
 
@@ -3675,9 +3675,17 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 			IoDeleteDevice(bdev->windows_device);
 		} else {
 			dbg("waiting for device being removed via IRP_MN_REMOVE_DEVICE minor %d\n", bdev->drbd_device->minor);
-			KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
+			timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
+			KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, &timeout);
+			if (status == STATUS_TIMEOUT)
+				printk("Warning: no IRP_MN_REMOVE_DEVICE received after 10 seconds, giving up.\n");
+
 			dbg("finished. minor %d now waiting for bus device to report device as missing\n", bdev->drbd_device->minor);
-			KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, NULL);
+
+			timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
+			KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, &timeout);
+			if (status == STATUS_TIMEOUT)
+				printk("Warning: no reiteration of bus device after 10 seconds, giving up.\n");
 			dbg("Excellent we are almost gone .. now really deleting the device ...\n");
 			IoDeleteDevice(bdev->windows_device);
 			dbg("Done.\n");
