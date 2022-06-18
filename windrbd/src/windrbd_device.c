@@ -2395,11 +2395,11 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		struct block_device_reference *ref = device->DeviceExtension;
 		struct block_device *bdev = NULL;
 		struct drbd_device *drbd_device = NULL;
-		int minor = 1;	/* for HLK test ... TODO: not a good idea ... */
+		int minor = -1;
 // printk("device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
 		if (ref != NULL) {
 			bdev = ref->bdev;
-			if (bdev && !bdev->delete_pending) {
+			if (bdev) {
 				drbd_device = bdev->drbd_device;
 				if (drbd_device) {
 					minor = drbd_device->minor;
@@ -2445,8 +2445,8 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			wchar_t *string;
 // printk("Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
 // printk("minor is %d\n", minor);
-			if (minor < 0) {
 #if 0
+			if (minor < 0) {
 	/* TODO: there are HLK tests (testing PNP surprise removal) where
 	 * we land here..it is strange but Windows tries to rebuild the
 	 * Windows device without calling drbdadm primary ... so probably
@@ -2462,9 +2462,9 @@ if (status == STATUS_NOT_SUPPORTED) {
 printk("6 STATUS_NOT_SUPPORTED\n");
 }
 				return status;
-#endif
 				minor = 1;	/* must match the minor of the test resource */
 			}
+#endif
 #define MAX_ID_LEN 512
 			string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), 'DRBD');
 			if (string == NULL) {
