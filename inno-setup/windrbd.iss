@@ -119,13 +119,13 @@ Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\mv.exe"; DestDir: "{app}"; 
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\sed.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\sync.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries\unzip.exe"; DestDir: "{app}"; Flags: ignoreversion
-; Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\ms-cert-result\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion
+; Source: "{#WindrbdSource}\ms-cert-result\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion
 ; must be in same folder as the sysfile.
-; Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\ms-cert-result\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
-; Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.cat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\ms-cert-result\windrbd.cat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
+; Source: "{#WindrbdSource}\ms-cert-result\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\converted-sources\drbd\windrbd.cat"; DestDir: "{app}"; Flags: ignoreversion
+; Source: "{#WindrbdSource}\ms-cert-result\windrbd.cat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\misc\drbd.cgi"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\misc\ipxe-windrbd.pxe"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -480,6 +480,10 @@ begin
 		if GetOldVersion <> '' then begin
 			StopUserModeServices();
 			StopDriver();
+			{ TODO: Also remove all windrbd drivers from driver store,
+			  pnputil -d (pnputil /delete-driver) will do that but
+			  need to parse pnputil -e (pnputil /enum-drivers) output
+			}
 		end
 		else begin  { Also start user mode service if this is a fresh install }
 			LoggerWasStarted := true;
