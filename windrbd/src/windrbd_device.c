@@ -2787,6 +2787,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 				/* On becoming secondary wait for EJECT to
 				 * be sent before rescanning devices. This
 				 * should avoid SURPRISE_REMOVAL.
+				 * Update: no it doesn't. For example when there are two volumes.
 				 */
 				dbg("set ejected event\n");
 				KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
@@ -2811,11 +2812,14 @@ if (status == STATUS_NOT_SUPPORTED) {
 			break;
 
 		case IRP_MN_SURPRISE_REMOVAL:
-// printk("got IRP_MN_SURPRISE_REMOVAL\n");
+			dbg("got IRP_MN_SURPRISE_REMOVAL\n");
 				/* Tell REMOVE request not to remove the device ...
 				 * this is required to make surprise removal HLK test
 				 * working. Since we don't have hardware to unplug,
 				 * SURPRISE_REMOVAL "should" never occur.
+				 * Update: it sometimes happens and should not block
+				 * drbdadm secondary.
+				 * We probably should delete the device here ...
 				 */
 			if (bdev)
 				bdev->suprise_removal = true;
@@ -2826,52 +2830,56 @@ if (status == STATUS_NOT_SUPPORTED) {
 		case IRP_MN_REMOVE_DEVICE:
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
 
+				/* IRP_MN_REMOVE_DEVICE after IRP_MN_SURPRISE_REMOVAL is sometimes
+				 * sent also in production setting ... remove the device else
+				 * drbdadm secondary hangs. If needed change that again for the
+				 * HLK tests.
+				 */
+
 			if (bdev != NULL && bdev->suprise_removal) {
-				dbg("got IRP_MN_REMOVE_DEVICE after IRP_MN_SURPRISE_REMOVAL ...\n");
+				printk("got IRP_MN_REMOVE_DEVICE after IRP_MN_SURPRISE_REMOVAL ...\n");
 				bdev->suprise_removal = false;
-			} else {
+			}
 			/* If it is NULL then we already deleted the device */
+			if (ref != NULL) {
+				if (bdev != NULL) {
+					bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
-				if (ref != NULL) {
-					if (bdev != NULL) {
-						bdev->about_to_delete = 1; /* meaning no more I/O on that device */
-
-						if (bdev->ref != NULL) {
-							IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
+					if (bdev->ref != NULL) {
+						IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
 		/* TODO: ?? not &bdev->ref->w_remove_lock ?? */
-							IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
-						}
+						IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
+					}
 /*
 
 					dbg("Waiting for bus device reporting us as deleted ...\n");
 					KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, NULL);
 					dbg("Ok ...\n");
 */
-					} else {
-						printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
-					}
-					dbg("about to delete device object %p\n", device);
+				} else {
+					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
+				}
+				dbg("about to delete device object %p\n", device);
 				/* Avoid anything more happending to that
 				 * device. Reason is that there is a reference
 				 * count on the device, so it might still
 				 * exist for a short period.
 				 */
-					if (bdev)
-						bdev->ref = NULL;
+				if (bdev)
+					bdev->ref = NULL;
 					/* When zombie device is reenabled we
 					 * need the pointer to the block_device_ref ... so do not NULLify this here.. */
 /* TODO: this code is never executed in the test, reenable NULLify? */
 //				device->DeviceExtension = NULL;
 // printk("REMOVE: device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
-					if (bdev != NULL) {
+				if (bdev != NULL) {
 						/* To allow bdev being removed. */
-						KeSetEvent(&bdev->device_removed_event, 0, FALSE);
-					}
-					dbg("device object NOT deleted this should be done after bus rescan\n");
-				} else {
-					dbg("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
+					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
 				}
+				dbg("device object NOT deleted this should be done after bus rescan\n");
+			} else {
+				printk("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
 			}
 
 			status = STATUS_SUCCESS;
