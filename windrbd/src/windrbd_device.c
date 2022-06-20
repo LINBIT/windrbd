@@ -2821,9 +2821,12 @@ if (status == STATUS_NOT_SUPPORTED) {
 				 * drbdadm secondary.
 				 * We probably should delete the device here ...
 				 */
-			if (bdev)
+			if (bdev) {
 				bdev->suprise_removal = true;
 
+				dbg("set ejected event in IRP_MN_SURPRISE_REMOVAL\n");
+				KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
+			}
 			status = STATUS_SUCCESS;
 			break;
 
