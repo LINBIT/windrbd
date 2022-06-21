@@ -37,53 +37,13 @@ Planned: July 2 2020
 Real: February 2 2022
 
 TODOs for after Release 1.0 ----------------------------------------
-
-TODO: Bug: Timeout on Secondary
-
-    Warning: no eject event after 10 seconds, giving up.
-    Should not time out (should wait forever)
-
-    Update: no eject probably comes but there is no block device (tested
-    with 2 volumes and LINSTOR)
-
-<5> 08.06.2022 U16:08:13.529 (148195346000/10000000)|FFFF928D4E9FDB00(devicecontrol) #5403 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_SECONDARY:15)
-<6> 08.06.2022 U16:08:13.529 (148195348470/10000000)|FFFF928D4DFFE530(netlink) #5404 remove_dos_link Removed symlink from \DosDevices\Drbd1025 to \Device\Drbd1025
-<6> 08.06.2022 U16:08:13.529 (148195351478/10000000)|FFFF928D4E9FD910(pnp) #5405 windrbd_pnp no block device
-<6> 08.06.2022 U16:08:13.529 (148195352306/10000000)|FFFF928D4E9FD530(pnp) #5406 windrbd_pnp no block device
-<6> 08.06.2022 U16:08:13.529 (148195356198/10000000)|FFFF928D4E9FE6A0(pnp) #5407 windrbd_pnp no block device
-<6> 08.06.2022 U16:08:13.529 (148195365027/10000000)|FFFF928D4E9FD530(pnp) #5408 windrbd_pnp no block device
-<6> 08.06.2022 U16:08:13.529 (148195370933/10000000)|FFFF928D4E9FE2C0(pnp) #5409 windrbd_pnp no block device
-<6> 08.06.2022 U16:08:13.529 (148195372276/10000000)|FFFF928D4E9FD530(pnp) #5410 windrbd_pnp no block device
-<6> 08.06.2022 U16:08:13.529 (148195373002/10000000)|FFFF928D4E9FE890(pnp) #5411 windrbd_pnp no block device
-<6> 08.06.2022 U16:08:13.529 (148195384506/10000000)|FFFF928D4DFFE530(netlink) #5412 remove_dos_link Removed symlink from \DosDevices\Drbd1026 to \Device\Drbd1026
-<6> 08.06.2022 U16:08:13.529 (148195387252/10000000)|FFFF928D4E9FE6A0(pnp) #5413 windrbd_pnp no block device
- [last message was in IRQ context or recursive]
-<6> 08.06.2022 U16:08:13.529 (148195390244/10000000)|FFFF928D4E9FD530(pnp) #5414 windrbd_pnp no block device
-<6> 08.06.2022 U16:08:13.529 (148195390896/10000000)|FFFF928D4E9FE6A0(pnp) #5415 windrbd_pnp no block device
-<6> 08.06.2022 U16:08:13.529 (148195392462/10000000)|FFFF928D4E9FE2C0(pnp) #5416 windrbd_pnp no block device
-<6> 08.06.2022 U16:08:13.529 (148195409280/10000000)|FFFF928D4E9FD720(pnp) #5417 windrbd_pnp no block device
-<6> 08.06.2022 U16:08:23.529 (148295347064/10000000)|FFFF928D4DFFE530(netlink) #5418 windrbd_remove_windows_device Warning: no eject event after 10 seconds, giving up.
-<6> 08.06.2022 U16:09:59.935 (149259410177/10000000)|FFFF928D4E9FD530(devicecontrol) #5419 windrbd_process_netlink_packet failed to acquire the mutex, probably a previous drbd command is stuck.
-
+TODOs for after Release 1.1 ----------------------------------------
 
 TODO: Bug: System freeze when creating resource (adding another node)
 
     On Windows 2016 VM: while LINSTOR created a Tie breaker resource
     on Windows 2022 VM it seems that WinDRBD on 2016 freezed the system
     (new spinlock bug?)
-
-TODO: Bug: WinDRBD hangs when 20 volume resource is demoted.
-
-    Possibly wrong logs are:
-
-<6> 26.05.2022 U16:24:37.115 (826524911941/10000000)|FFFFC88510AF5E60(drbd_r_LinstorDemoResource) #617 drbd_handshake drbd LinstorDemoResource/20 minor 1022 pnode-id:1, pdsk(Outdated), prpl(Off), pdvflag(0xc40400): uuid_compare()=no-sync by rule=just-created-both
-<6> 26.05.2022 U16:24:37.131 (826524915015/10000000)|FFFFC88510AF5C70(drbd_s_LinstorDemoResource) #618 change_cluster_wide_state drbd LinstorDemoResource, r(Secondary), f(0x0), scf(0x83a): State change 1457024989: primary_nodes=0, weak_nodes=0
-<6> 26.05.2022 U16:24:37.131 (826524915955/10000000)|FFFFC88510AF5C70(drbd_s_LinstorDemoResource) #619 change_cluster_wide_state drbd LinstorDemoResource, r(Secondary), f(0x0), scf(0x83a): Committing cluster-wide state change 1457024989 (15ms)
-<7> 26.05.2022 U16:24:37.131 (826524916466/10000000)|FFFFC88510AF5C70(drbd_s_LinstorDemoResource) #620 conn_send_twopc_request drbd LinstorDemoResource pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x20000c), scf(0x83a): Sending P_TWOPC_COMMIT request for state change 1457024989
-
-    (but the date is wrong so not sure if this is it)
-
-	Most likely a duplicate of Timeout on Secondary
 
 TODO: Installer: Also quit running drbdsetup events2 on update.
 
@@ -98,7 +58,7 @@ TODO: Installer: drbdadm down all -> drbdsetup down all
     do nothing...
     Also try to stop satellite (will be running as a service anyway ...)
 
-TODO: Installer: remove all windrbd drivers from driver store.
+Rejected: Installer: remove all windrbd drivers from driver store.
 
 	At least installing a self-signed driver over a Microsoft
 	signed driver (such as 1.1.0-rc1-11 over 1.1.0-rc1) does
@@ -106,6 +66,9 @@ TODO: Installer: remove all windrbd drivers from driver store.
 
 	Update: This is probably because of a MS certificate quick
 	hack.
+
+	Update: No upgrading from 1.1.0-rc1 to 1.1.0-rc1-20 works.
+	No need to do that.
 
 TODO: Build System: Have a way to automatically sign drivers.
 
@@ -8128,4 +8091,44 @@ Rejected: Implement: remaining patched out features of TCP transport
 	sk_allocation
 	sk_priority
 	debugfs
+
+Done: Bug: Timeout on Secondary
+
+    Warning: no eject event after 10 seconds, giving up.
+    Should not time out (should wait forever)
+
+    Update: no eject probably comes but there is no block device (tested
+    with 2 volumes and LINSTOR)
+
+<5> 08.06.2022 U16:08:13.529 (148195346000/10000000)|FFFF928D4E9FDB00(devicecontrol) #5403 windrbd_process_netlink_packet drbd cmd(DRBD_ADM_SECONDARY:15)
+<6> 08.06.2022 U16:08:13.529 (148195348470/10000000)|FFFF928D4DFFE530(netlink) #5404 remove_dos_link Removed symlink from \DosDevices\Drbd1025 to \Device\Drbd1025
+<6> 08.06.2022 U16:08:13.529 (148195351478/10000000)|FFFF928D4E9FD910(pnp) #5405 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195352306/10000000)|FFFF928D4E9FD530(pnp) #5406 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195356198/10000000)|FFFF928D4E9FE6A0(pnp) #5407 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195365027/10000000)|FFFF928D4E9FD530(pnp) #5408 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195370933/10000000)|FFFF928D4E9FE2C0(pnp) #5409 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195372276/10000000)|FFFF928D4E9FD530(pnp) #5410 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195373002/10000000)|FFFF928D4E9FE890(pnp) #5411 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195384506/10000000)|FFFF928D4DFFE530(netlink) #5412 remove_dos_link Removed symlink from \DosDevices\Drbd1026 to \Device\Drbd1026
+<6> 08.06.2022 U16:08:13.529 (148195387252/10000000)|FFFF928D4E9FE6A0(pnp) #5413 windrbd_pnp no block device
+ [last message was in IRQ context or recursive]
+<6> 08.06.2022 U16:08:13.529 (148195390244/10000000)|FFFF928D4E9FD530(pnp) #5414 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195390896/10000000)|FFFF928D4E9FE6A0(pnp) #5415 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195392462/10000000)|FFFF928D4E9FE2C0(pnp) #5416 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:13.529 (148195409280/10000000)|FFFF928D4E9FD720(pnp) #5417 windrbd_pnp no block device
+<6> 08.06.2022 U16:08:23.529 (148295347064/10000000)|FFFF928D4DFFE530(netlink) #5418 windrbd_remove_windows_device Warning: no eject event after 10 seconds, giving up.
+<6> 08.06.2022 U16:09:59.935 (149259410177/10000000)|FFFF928D4E9FD530(devicecontrol) #5419 windrbd_process_netlink_packet failed to acquire the mutex, probably a previous drbd command is stuck.
+
+Done: Bug: WinDRBD hangs when 20 volume resource is demoted.
+
+    Possibly wrong logs are:
+
+<6> 26.05.2022 U16:24:37.115 (826524911941/10000000)|FFFFC88510AF5E60(drbd_r_LinstorDemoResource) #617 drbd_handshake drbd LinstorDemoResource/20 minor 1022 pnode-id:1, pdsk(Outdated), prpl(Off), pdvflag(0xc40400): uuid_compare()=no-sync by rule=just-created-both
+<6> 26.05.2022 U16:24:37.131 (826524915015/10000000)|FFFFC88510AF5C70(drbd_s_LinstorDemoResource) #618 change_cluster_wide_state drbd LinstorDemoResource, r(Secondary), f(0x0), scf(0x83a): State change 1457024989: primary_nodes=0, weak_nodes=0
+<6> 26.05.2022 U16:24:37.131 (826524915955/10000000)|FFFFC88510AF5C70(drbd_s_LinstorDemoResource) #619 change_cluster_wide_state drbd LinstorDemoResource, r(Secondary), f(0x0), scf(0x83a): Committing cluster-wide state change 1457024989 (15ms)
+<7> 26.05.2022 U16:24:37.131 (826524916466/10000000)|FFFFC88510AF5C70(drbd_s_LinstorDemoResource) #620 conn_send_twopc_request drbd LinstorDemoResource pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x20000c), scf(0x83a): Sending P_TWOPC_COMMIT request for state change 1457024989
+
+    (but the date is wrong so not sure if this is it)
+
+	Most likely a duplicate of Timeout on Secondary
 
