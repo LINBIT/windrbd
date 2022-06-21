@@ -2231,22 +2231,34 @@ dbg("Returned string is %S\n", string);
 		switch (s->Parameters.QueryDeviceRelations.Type) {
 		case BusRelations: 
 		{
-			int num_devices = get_all_drbd_device_objects(NULL, 0);
+			int num_devices;
 			struct _DEVICE_RELATIONS *device_relations;
 			int n;
+			size_t siz;
 
-			size_t siz = sizeof(*device_relations)+num_devices*sizeof(device_relations->Objects[0]);
-// printk("size of device relations is %d\n", siz);
+				/* In rare cases, when devices are being removed
+				 * number of devices may differ between the
+				 * first call and the second call. In that
+				 * case do it all over again. This should fix
+				 * a BSOD on secondary we observed.
+				 */
+			do {
+				num_devices = get_all_drbd_device_objects(NULL, 0);
+				siz = sizeof(*device_relations)+num_devices*sizeof(device_relations->Objects[0]);
 		/* must be PagedPool else PnP manager complains */
-			device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
-			if (device_relations == NULL) {
-				status = STATUS_INSUFFICIENT_RESOURCES;
-				break;
-			}
-			RtlZeroMemory(device_relations, siz);
-			n = get_all_drbd_device_objects(&device_relations->Objects[0], num_devices);
-			if (n != num_devices)
-				printk("Warning: number of DRBD devices changed: old %d != new %d\n", num_devices, n);
+				device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+				if (device_relations == NULL) {
+					status = STATUS_INSUFFICIENT_RESOURCES;
+					goto exit;
+				}
+				RtlZeroMemory(device_relations, siz);
+				n = get_all_drbd_device_objects(&device_relations->Objects[0], num_devices);
+				if (n != num_devices) {
+					printk("Warning: number of DRBD devices changed: old %d != new %d\n", num_devices, n);
+					ExFreePool(device_relations);
+				}
+			} while (n != num_devices);
+
 			device_relations->Count = num_devices;
 			irp->IoStatus.Information = (ULONG_PTR)device_relations;
 			irp->IoStatus.Status = STATUS_SUCCESS;
@@ -2347,6 +2359,7 @@ dbg("Returned string is %S\n", string);
 		dbg("status is %x\n", status);
 		pass_on = 1;
 	}
+exit:
 
 	if (!pass_on) {
 		irp->IoStatus.Status = status;
