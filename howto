@@ -898,6 +898,15 @@ HLK client (from server 2019 datacenter jaenner 3)
 
 windbg -k net:port=50000,key=2z1io9ycxxh2v.emxijaabaq01.spzt9bxb3lyc.3smqj0injt3d6
 
+
+# New in June 2022:
+'/cygdrive/e/Program Files/Windows Kits/10/Debuggers/x64/kdnet.exe' 192.168.77.2 50000
+
+netsh advfirewall firewall add rule name=test1 protocol=udp dir=in localport=50000 action=allow
+netsh advfirewall firewall add rule name=test1 protocol=tcp dir=in localport=50000 action=allow
+
+windbg -k net:port=50000,key=2d7c6ijqer5sh.2i4twokqtuaj2.175m5lbeohllp.2gmbkv8c8
+8r1o
 -----
 
 Install HLK Client
