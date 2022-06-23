@@ -1,0 +1,46 @@
+From 3e8d67beb6377ebce9f39e385a5f6d23d0988a6a Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 23 Jun 2022 16:43:29 +0200
+Subject: [PATCH] Fixed online resize while connected.
+
+When receiving a resize request from a peer, the get_capacity()
+function was called inside a spinlock. Since under Windows this
+is not possible, we query the size before taking the spinlock
+and use that cached value later.
+---
+ drbd/drbd_receiver.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index 917dbfe..53eef53 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -6819,6 +6819,25 @@ static int process_twopc(struct drbd_connection *connection,
+ 	enum drbd_state_rv rv = SS_SUCCESS;
+ 	enum csc_rv csc_rv;
+ 
++		/* Under Windows, queriing a block device's size must
++		 * happen at IRQL < DISPATCH_LEVEL. Since holding a
++		 * spinlock raises the IRQL to DISPATCH_LEVEL we have
++		 * to query the backing device size before we take
++		 * the spinlock. A later query of the get_capacity()
++		 * function inside the spinlock will then return the
++		 * value we cached here.
++		 */
++
++	if (pi->cmd == P_TWOPC_PREP_RSZ) {
++		struct drbd_device *device;
++
++		device = conn_peer_device(connection, pi->vnr)->device;
++		if (get_ldev(device)) {
++			(void) drbd_get_capacity(device->ldev->backing_bdev);
++			put_ldev(device);
++		}
++	}
++
+ 	/* Check for concurrent transactions and duplicate packets. */
+ 	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags2);
+ 
+-- 
+2.17.0
+
