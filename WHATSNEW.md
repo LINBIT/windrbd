@@ -5,6 +5,14 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.1.0-rc2
+---------------------------
+
+Fixed a WinDRBD stuckness on drbdadm secondary when there was more
+than one Volume.
+
+Fixed online resize while connected.
+
 What's new in version 1.1.0-rc1
 ---------------------------
 

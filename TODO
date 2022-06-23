@@ -42,6 +42,21 @@ TODOs for after Release 1.1 ----------------------------------------
 TODO: Bug: DRBD hang on starting linstor
 
 	Something with resize?
+	Observe.
+
+TODO: Bug: Resource stuck in Negotiating on attach
+
+bash# drbdadm status demores
+demores role:Secondary
+  disk:Negotiating blocked:upper
+  Server2016-1 role:Secondary
+    peer-disk:UpToDate
+  server2022-1 role:Secondary
+    peer-disk:Consistent
+
+TDOO: Research: Do we need the netlink mutex at all?
+
+	Mantech introduced this is it still needed?
 
 TODO: Bug: System freeze when creating resource (adding another node)
 
