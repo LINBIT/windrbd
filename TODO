@@ -39,6 +39,10 @@ Real: February 2 2022
 TODOs for after Release 1.0 ----------------------------------------
 TODOs for after Release 1.1 ----------------------------------------
 
+TODO: Bug: DRBD hang on starting linstor
+
+	Something with resize?
+
 TODO: Bug: System freeze when creating resource (adding another node)
 
     On Windows 2016 VM: while LINSTOR created a Tie breaker resource
