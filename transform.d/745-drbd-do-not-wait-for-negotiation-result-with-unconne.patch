@@ -1,0 +1,40 @@
+From aea83b266ba9a3c46ea773a12f57b2fb6dff15a4 Mon Sep 17 00:00:00 2001
+From: Rui Xu <rui.xu@easystack.cn>
+Date: Wed, 2 Mar 2022 20:35:23 +0800
+Subject: [PATCH] drbd: do not wait for negotiation result with unconnected
+ peer
+
+The commit 8a962a6a from Dec 2014
+"drbd: fix leaving of D_NEGOTIATING if some peer do not have the minor yet"
+introduced a bug that disk state will always stay in negotiating since there
+will never be negotiation result with unconnected peer.
+
+The bug was that an unconnected peer's disk might be D_UNKNOWN or D_OUTDATED.
+Fix that by checking the connection state instead of D_UNKNOWN.
+
+Signed-off-by: Rui Xu <rui.xu@easystack.cn>
+Signed-off-by: Joel Colledge <joel.colledge@linbit.com>
+---
+ drbd/drbd_state.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_state.c b/drbd/drbd_state.c
+index 1f0a977e..bee32d54 100644
+--- a/drbd/drbd_state.c
++++ b/drbd/drbd_state.c
+@@ -1898,10 +1898,11 @@ static void sanitize_state(struct drbd_resource *resource)
+ 			bool up_to_date_neighbor = false;
+ 
+ 			for_each_peer_device_rcu(peer_device, device) {
++				enum drbd_conn_state cstate = peer_device->connection->cstate[NEW];
+ 				enum drbd_repl_state nr = peer_device->negotiation_result;
+ 				enum drbd_disk_state pdsk = peer_device->disk_state[NEW];
+ 
+-				if (pdsk == D_UNKNOWN || pdsk < D_NEGOTIATING)
++				if (pdsk < D_NEGOTIATING || cstate < C_CONNECTED)
+ 					continue;
+ 
+ 				if (pdsk == D_UP_TO_DATE)
+-- 
+2.17.1
+
