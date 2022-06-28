@@ -8,6 +8,9 @@ LINSTOR support
 What's new in version 1.1.0-rc2
 ---------------------------
 
+Fixed a DRBD issue that causes a resource to be stucked in Negoiating
+on attach when there were 3 nodes.
+
 Fixed a WinDRBD stuckness on drbdadm secondary when there was more
 than one Volume.
 

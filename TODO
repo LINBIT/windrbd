@@ -44,19 +44,9 @@ TODO: Bug: DRBD hang on starting linstor
 	Something with resize?
 	Observe.
 
-TODO: Bug: Resource stuck in Negotiating on attach
+TODO: Feature: Remove netlink mutex
 
-bash# drbdadm status demores
-demores role:Secondary
-  disk:Negotiating blocked:upper
-  Server2016-1 role:Secondary
-    peer-disk:UpToDate
-  server2022-1 role:Secondary
-    peer-disk:Consistent
-
-TDOO: Research: Do we need the netlink mutex at all?
-
-	Mantech introduced this is it still needed?
+    DRBD does internal locking.
 
 TODO: Bug: System freeze when creating resource (adding another node)
 
@@ -8151,3 +8141,21 @@ Done: Bug: WinDRBD hangs when 20 volume resource is demoted.
 
 	Most likely a duplicate of Timeout on Secondary
 
+Done: Bug: Resource stuck in Negotiating on attach
+
+bash# drbdadm status demores
+demores role:Secondary
+  disk:Negotiating blocked:upper
+  Server2016-1 role:Secondary
+    peer-disk:UpToDate
+  server2022-1 role:Secondary
+    peer-disk:Consistent
+
+    Fixed. This was actually an upstream bug fixed in 9.1 branch but
+    not in 1.0 branch. We should upgrade our DRBD upstream branch.
+
+Done: Research: Do we need the netlink mutex at all?
+
+	Mantech introduced this is it still needed?
+
+    Phil said it is not necessary.
