@@ -992,3 +992,11 @@ johannes@jt-ubuntu2021C:~$ sudo vi /etc/fstab
 johannes@jt-ubuntu2021C:~$ htop
 johannes@jt-ubuntu2021C:~$ sudo reboot
 
+---------
+
+pull and check out submodules:
+
+edit github URLS in .git/config (change git: to https:)
+
+git submodule update --checkout --init --recursive
+

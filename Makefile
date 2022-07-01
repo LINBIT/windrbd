@@ -1,6 +1,8 @@
 VERSION=$(shell git describe --tags --always --dirty)
 export TMPDIR = /tmp
 
+COMPILE_USING_WINE=1
+
 TRANS_SRC := drbd/
 TRANS_DEST := converted-sources/
 WIN4LIN := windrbd/
@@ -106,7 +108,14 @@ server2019-dvl-rebuild:
 else
 
 build: patch
+ifdef COMPILE_USING_WINE
+	cd $(TRANS_DEST)/drbd/ && $(MAKE) BUILD_ENV=jt-wine
+else
 	@echo "Now please run 'make' in the Windows VM."
+endif
+
+compile:
+	cd $(TRANS_DEST)/drbd/ && $(MAKE) BUILD_ENV=jt-wine
 
 install:
 	@echo "This is not a Windows machine. Since we are building a Windows"

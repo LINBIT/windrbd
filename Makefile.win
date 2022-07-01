@@ -38,6 +38,26 @@ WINDRBD_SOURCE = ..
 DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
+# Linux build host running MSVC compiler using wine :)
+
+ifeq ($(BUILD_ENV),jt-wine)
+export EWDK_BASE := E:
+EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
+EWDK_VERSION := 10.0.22621.0
+EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
+
+WINE=wine
+
+VC := $(WINE) cmd /c ms-cl-$(BUILD_ENV).cmd
+
+# Name of the pfx file (without extension)
+KEY = linbit-2019
+PASSWD = ""
+
+WINDRBD_SOURCE = ..
+DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
+endif
+
 # My diskless WinDRBD sysroot machine :)
 
 ifeq ($(BUILD_ENV),jt-diskless-windrbd-sysroot)
@@ -136,9 +156,8 @@ endif
 
 EWDK_INC := $(EWDK_KIT)\\Include
 EWDK_LIB := $(EWDK_KIT)\\Lib
-VC := /cygdrive/c/Windows/System32/cmd.exe /c ms-cl-$(BUILD_ENV).cmd
-MSBUILD := /cygdrive/c/Windows/System32/cmd.exe /c run-msbuild.cmd
-CERTMGR := "$(EWDK_BIN)/certmgr.exe"
+VC ?= /cygdrive/c/Windows/System32/cmd.exe /c ms-cl-$(BUILD_ENV).cmd
+MSBUILD ?= /cygdrive/c/Windows/System32/cmd.exe /c run-msbuild.cmd
 
 # /a      for debugging output
 
@@ -152,7 +171,7 @@ WIN_INCLUDE_DIRS += "-I$(EWDK_INC)\\$(EWDK_VERSION)\\um"
 WIN_DEF_INCLUDES += /FI"$(EWDK_INC)/$(EWDK_VERSION)\\shared\\warning.h"
 # include that file
 
-WIN_CFLAGS += /c /nologo /W4 
+WIN_CFLAGS += /c /W4 
 WIN_CFLAGS += /Zi # /Zi gives us a PDB file; without that we'd get debug information in the .obj file instead
 WIN_CFLAGS += /WX # warnings == errors
 WIN_CFLAGS += /Wv:18 # disable hides previous local declaration
@@ -232,7 +251,8 @@ WIN_LINK_INPUT += bufferoverflowfastfailk.lib # for __security_check_cookie
 WIN_LINK_INPUT += netio.lib
 WIN_LINK_INPUT += wdmsec.lib
 WIN_LINK_INPUT += ksecdd.lib
-WIN_LINK_INPUT += "$(EWDK_LIB)/win8/km/x64/aux_klib.lib"
+# TODO: used?
+# WIN_LINK_INPUT += "$(EWDK_LIB)/win8/km/x64/aux_klib.lib"
 WIN_LINK_INPUT += hal.lib
 # WIN_LINK_INPUT += setupapi.lib
 
@@ -263,48 +283,45 @@ windrbd.sys: $(patsubst %.c,%.obj,$(DRBD_FILES)) $(patsubst %.c,%.obj,$(WINDRBD_
 	rm -f windrbd.pdb "_$@"
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"windrbd.pdb" /OUT:"_$@"
 	mv -f "_$@" "$@"
-	"$(EWDK_BIN)/inf2cat.exe" /driver:. /os:XP_X86,Vista_X86,Vista_X64,7_X86,7_X64,8_X86,8_X64,6_3_X86,6_3_X64,10_X86,10_X64
+	$(WINE) "$(EWDK_BIN)/inf2cat.exe" /driver:. /os:XP_X86,Vista_X86,Vista_X64,7_X86,7_X64,8_X86,8_X64,6_3_X86,6_3_X64,10_X86,10_X64
 ifdef R
 # Linbit DigiCert certificate (trusted by Microsoft)
 # For Windows Server 2008 use SHA1 as secure hash
 #	"$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCert High Assurance EV Root CA.crt" /a /t http://timestamp.digicert.com "$@"
-	"$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCertTrustedRootG4.crt" /a /t http://timestamp.digicert.com "$@"
+	$(WINE) "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCertTrustedRootG4.crt" /a /t http://timestamp.digicert.com "$@"
 # Thanks to David Grayson (http://www.davidegrayson.com/signing/#howto)
-	"$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCertTrustedRootG4.crt" /a /t http://timestamp.digicert.com windrbd.cat
+	$(WINE) "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCertTrustedRootG4.crt" /a /t http://timestamp.digicert.com windrbd.cat
 else
 # We need a self signed certificate which has to be added to the
 # Windows certificate store in order to load the driver. See
 # readme.txt file in the crypto directory to learn how to create it.
 
-	"$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v "$@"
+	$(WINE) "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v "$@"
 endif
 
 
 resource.res: resource.rc
-	"$(EWDK_BIN)/rc.exe" $<
+	$(WINE) "$(EWDK_BIN)/rc.exe" $<
 
 windrbd-event-log.rc: ../../windrbd/windrbd-event-log.mc
-	"$(EWDK_BIN)/mc.exe" $<
+	$(WINE) "$(EWDK_BIN)/mc.exe" $<
 
 windrbd-event-log.h: ../../windrbd/windrbd-event-log.mc
-	"$(EWDK_BIN)/mc.exe" $<
+	$(WINE) "$(EWDK_BIN)/mc.exe" $<
 
 $(WINDRBD_SRCDIR)/printk-to-syslog.obj: windrbd-event-log.h
 
 windrbd-event-log.res: windrbd-event-log.rc
-	"$(EWDK_BIN)/rc.exe" $<
+	$(WINE) "$(EWDK_BIN)/rc.exe" $<
 
-ifeq ($(shell uname -o),Cygwin)
-    %.obj: %.c
+%.obj: %.c
 	rm -f "$(call fPDB,$<)"
 	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /c /Fo:"$@" /Fd:"$(call fPDB,$<)"
 # /Fi:"$(patsubst %.c,%.E,$<)" ...  cl : Command line warning D9007 : '/Fi:' requires '/P'; option ignored
 	echo "-- $@ done --"
 
-    %.E: %.c
+%.E: %.c
 	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /E > "$@"
-
-endif
 
 deps:
 	gcc -D BITS_PER_LONG=64 -D _MSC_VER=1300 -D _WIN32=1 $(C_DEFINES) $(WIN_INCLUDE_DIRS) $(subst /FI,-include ,$(WIN_DEF_INCLUDES)) -M *.c ../../windrbd/src/*.c | perl -pe 's/^(\S+)\.o:/\1.obj \1.E:/' > Makefile.deps 
@@ -321,9 +338,9 @@ clean:
 	rm -f windrbd-event-log.*
 
 package: windrbd.sys
-	( cd ../../inno-setup && iscc windrbd.iss /DWindrbdSource=$(WINDRBD_SOURCE) /DWindrbdUtilsSource=$(DRBD_UTILS_SOURCE) )
+	( cd ../../inno-setup && $(WINE) iscc windrbd.iss /DWindrbdSource=$(WINDRBD_SOURCE) /DWindrbdUtilsSource=$(DRBD_UTILS_SOURCE) )
 ifdef R
-	( cd ../../inno-setup &&  "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCertTrustedRootG4.crt" /a /t http://timestamp.digicert.com install-`sed -e 's/[^"]*"\([^"]*\).*/\1/g' version.iss`.exe )
+	( cd ../../inno-setup &&  $(WINE) "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCertTrustedRootG4.crt" /a /t http://timestamp.digicert.com install-`sed -e 's/[^"]*"\([^"]*\).*/\1/g' version.iss`.exe )
 endif
 	chmod a+x ../../inno-setup/install*.exe
 
