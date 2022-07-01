@@ -283,7 +283,8 @@ windrbd.sys: $(patsubst %.c,%.obj,$(DRBD_FILES)) $(patsubst %.c,%.obj,$(WINDRBD_
 	rm -f windrbd.pdb "_$@"
 	$(VC) $(WIN_LINK_INPUT) $^ $(WIN_LDFLAGS) /PDB:"windrbd.pdb" /OUT:"_$@"
 	mv -f "_$@" "$@"
-	$(WINE) "$(EWDK_BIN)/inf2cat.exe" /driver:. /os:XP_X86,Vista_X86,Vista_X64,7_X86,7_X64,8_X86,8_X64,6_3_X86,6_3_X64,10_X86,10_X64
+# currently does not work with wine:
+#	$(WINE) "$(EWDK_BIN)/inf2cat.exe" /driver:. /os:XP_X86,Vista_X86,Vista_X64,7_X86,7_X64,8_X86,8_X64,6_3_X86,6_3_X64,10_X86,10_X64
 ifdef R
 # Linbit DigiCert certificate (trusted by Microsoft)
 # For Windows Server 2008 use SHA1 as secure hash
@@ -296,7 +297,8 @@ else
 # Windows certificate store in order to load the driver. See
 # readme.txt file in the crypto directory to learn how to create it.
 
-	$(WINE) "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v "$@"
+# does not work under wine ... MFC42.dll missing.
+#	$(WINE) "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v "$@"
 endif
 
 

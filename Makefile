@@ -119,6 +119,10 @@ endif
 compile:
 	cd $(TRANS_DEST)/drbd/ && $(MAKE)
 
+# TODO: also regenerate sources?
+package: compile
+	cd $(TRANS_DEST)/drbd/ && $(MAKE) package; \
+
 install:
 	@echo "This is not a Windows machine. Since we are building a Windows"
 	@echo "kernel driver, execute make install on your Windows box (as"
