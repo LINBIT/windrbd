@@ -1,7 +1,9 @@
 VERSION=$(shell git describe --tags --always --dirty)
 export TMPDIR = /tmp
 
+ifeq ($(BUILD_ENV),jt-wine)
 COMPILE_USING_WINE=1
+endif
 
 TRANS_SRC := drbd/
 TRANS_DEST := converted-sources/
@@ -109,13 +111,13 @@ else
 
 build: patch
 ifdef COMPILE_USING_WINE
-	cd $(TRANS_DEST)/drbd/ && $(MAKE) BUILD_ENV=jt-wine
+	cd $(TRANS_DEST)/drbd/ && $(MAKE)
 else
 	@echo "Now please run 'make' in the Windows VM."
 endif
 
 compile:
-	cd $(TRANS_DEST)/drbd/ && $(MAKE) BUILD_ENV=jt-wine
+	cd $(TRANS_DEST)/drbd/ && $(MAKE)
 
 install:
 	@echo "This is not a Windows machine. Since we are building a Windows"
