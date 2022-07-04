@@ -1000,3 +1000,4 @@ edit github URLS in .git/config (change git: to https:)
 
 git submodule update --checkout --init --recursive
 
+(probably better to edit .gitmodules ...)
