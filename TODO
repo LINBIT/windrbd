@@ -37,22 +37,14 @@ Planned: July 2 2020
 Real: February 2 2022
 
 TODOs for after Release 1.0 ----------------------------------------
+
+TODO: Bug: On three diskful nodes hangs in Negotiating
+
 TODOs for after Release 1.1 ----------------------------------------
-
-TODO: Bug: DRBD hang on starting linstor
-
-	Something with resize?
-	Observe.
 
 TODO: Feature: Remove netlink mutex
 
     DRBD does internal locking.
-
-TODO: Bug: System freeze when creating resource (adding another node)
-
-    On Windows 2016 VM: while LINSTOR created a Tie breaker resource
-    on Windows 2022 VM it seems that WinDRBD on 2016 freezed the system
-    (new spinlock bug?)
 
 TODO: Installer: Also quit running drbdsetup events2 on update.
 
@@ -66,18 +58,6 @@ TODO: Installer: drbdadm down all -> drbdsetup down all
     LINSTOR deletes those resource files so drbdadm down all will
     do nothing...
     Also try to stop satellite (will be running as a service anyway ...)
-
-Rejected: Installer: remove all windrbd drivers from driver store.
-
-	At least installing a self-signed driver over a Microsoft
-	signed driver (such as 1.1.0-rc1-11 over 1.1.0-rc1) does
-	not work.
-
-	Update: This is probably because of a MS certificate quick
-	hack.
-
-	Update: No upgrading from 1.1.0-rc1 to 1.1.0-rc1-20 works.
-	No need to do that.
 
 TODO: Build System: Have a way to automatically sign drivers.
 
@@ -8159,3 +8139,30 @@ Done: Research: Do we need the netlink mutex at all?
 	Mantech introduced this is it still needed?
 
     Phil said it is not necessary.
+
+Done: Bug: System freeze when creating resource (adding another node)
+
+    On Windows 2016 VM: while LINSTOR created a Tie breaker resource
+    on Windows 2022 VM it seems that WinDRBD on 2016 freezed the system
+    (new spinlock bug?)
+
+    Fixed (didn't happen recently).
+
+Done: Bug: DRBD hang on starting linstor
+
+	Something with resize?
+	Observe.
+    Seems to be fixed.
+
+Rejected: Installer: remove all windrbd drivers from driver store.
+
+	At least installing a self-signed driver over a Microsoft
+	signed driver (such as 1.1.0-rc1-11 over 1.1.0-rc1) does
+	not work.
+
+	Update: This is probably because of a MS certificate quick
+	hack.
+
+	Update: No upgrading from 1.1.0-rc1 to 1.1.0-rc1-20 works.
+	No need to do that.
+
