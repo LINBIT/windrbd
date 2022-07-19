@@ -40,7 +40,11 @@ TODOs for after Release 1.0 ----------------------------------------
 
 TODO: Bug: On three diskful nodes hangs in Negotiating
 
+	Trying with consistent now...
+
 TODOs for after Release 1.1 ----------------------------------------
+
+TODO: Code quality: drbdadm down is slow when there are unconnected peers
 
 TODO: Feature: Remove netlink mutex
 
