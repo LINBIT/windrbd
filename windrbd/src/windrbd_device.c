@@ -193,9 +193,9 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *dev)
 {
 	g->BytesPerSector = dev->bd_block_size;
-	g->Cylinders.QuadPart = dev->d_size / dev->bd_block_size;
-	g->TracksPerCylinder = 1;
-	g->SectorsPerTrack = 1;
+	g->Cylinders.QuadPart = dev->d_size / dev->bd_block_size / 255 / 63;
+	g->TracksPerCylinder = 255;
+	g->SectorsPerTrack = 63;
 	g->MediaType = FixedMedia;
 }
 
