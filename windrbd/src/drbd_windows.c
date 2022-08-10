@@ -2470,7 +2470,13 @@ static int bdflush_thread_fn(void *bdev_p)
 	return err;
 }
 
-static void coalesce_bio_vecs(struct bio *bio)
+	/* detects multiple vector elements that are adjacent
+	 * in memory and replaces them by one large elements.
+	 * That way we save lots of IoCallDriver() to the
+	 * lower disk device.
+	 */
+
+static void coalesce_bio_vecs(struct bio *bio, int flush)
 {
 	int i, j;
 	char *buffer_i, *buffer_j;
@@ -2478,10 +2484,10 @@ static void coalesce_bio_vecs(struct bio *bio)
 	int num_disabled;
 
 	num_disabled = 0;
-	for (i=0;i<bio->bi_num_requests;) {
+	for (i=0;i<bio->bi_num_requests - flush;) {
 	        buffer_i = ((char*) bio->bi_io_vec[i].bv_page->addr) + bio->bi_io_vec[i].bv_offset;
 		expected_offset = 0;
-		for (j=i+1;j<bio->bi_num_requests;j++) {
+		for (j=i+1;j<bio->bi_num_requests - flush;j++) {
 			expected_offset += bio->bi_io_vec[j-1].bv_len;
 		        buffer_j = ((char*) bio->bi_io_vec[j].bv_page->addr) + bio->bi_io_vec[j].bv_offset;
 
@@ -2495,7 +2501,32 @@ static void coalesce_bio_vecs(struct bio *bio)
 		}
 		i=j;
 	}
+
+if (num_disabled > 0) {
+printk("%d requests coalesced.\n");
+}
+
 	bio->bi_num_disabled = num_disabled;
+}
+
+	/* Undoes the work done by coalesce_bio_vecs() */
+
+static void uncoalesce_bio_vecs(struct bio *bio, int flush)
+{
+	int i, j;
+
+	for (i=0;i<bio->bi_num_requests - flush;) {
+		for (j=i+1;j<bio->bi_num_requests - flush;j++) {
+			if (bio->bi_io_vec[j].disabled) {
+				bio->bi_io_vec[i].bv_len -= bio->bi_io_vec[j].bv_len;
+				bio->bi_io_vec[j].disabled = false;
+			} else {
+				break;
+			}
+		}
+		i=j;
+	}
+	bio->bi_num_disabled = 0;
 }
 
 	/* This just ensures that DRBD gets I/O errors in case something
@@ -2579,7 +2610,7 @@ skipped_bytes2 = 0;
 	}
 	atomic_set(&bio->bi_requests_completed, 0);
 
-	coalesce_bio_vecs(bio);
+	coalesce_bio_vecs(bio, flush_request);
 
 	orig_sector = sector = bio->bi_iter.bi_sector;
 	orig_size = bio->bi_iter.bi_size;
@@ -2596,6 +2627,7 @@ skipped_bytes2 = 0;
 		bio_get(bio);
 #endif
 
+			/* TODO: do not use 0/1 bool logic here ... */
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<(bio->bi_num_requests - flush_request); 
              bio->bi_this_request++) {
@@ -2647,6 +2679,8 @@ skipped_bytes2 = 0;
 out:
 	bio->bi_iter.bi_sector = orig_sector;
 	bio->bi_iter.bi_size = orig_size;
+
+	uncoalesce_bio_vecs(bio, flush_request);
 
 	bio_put(bio);
 
