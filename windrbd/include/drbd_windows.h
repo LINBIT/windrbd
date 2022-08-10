@@ -660,6 +660,8 @@ struct bio_vec {
 	unsigned int bv_len;
 	unsigned int bv_offset;
 
+	bool disabled;
+
 		/* Those are used by win_generic_make_request internally.
 		 * We have them here, since we build a request for each
 		 * biovec element seperately (see MAX_MDL_ELEMENTS
@@ -738,6 +740,7 @@ struct bio {
 	int bi_last_element;	/* actually last element + 1 so it matches bi_vcnt */
 
 	int bi_num_requests;
+	int bi_num_disabled;
 	int bi_this_request;
 	atomic_t bi_requests_completed;
 	struct bio_collection *bi_common_data;

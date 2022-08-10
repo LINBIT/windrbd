@@ -1126,6 +1126,7 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->bi_iter.bi_size = bio_src->bi_iter.bi_size;
 	bio->bi_iter.bi_idx = bio_src->bi_iter.bi_idx;
 	bio->bi_num_requests = bio_src->bi_num_requests;
+	bio->bi_num_disabled = bio_src->bi_num_disabled;
 	bio->bi_this_request = bio_src->bi_this_request;
 	bio->bi_first_element = bio_src->bi_first_element;
 	bio->bi_last_element = bio_src->bi_last_element;
@@ -1884,7 +1885,7 @@ NTSTATUS DrbdIoCompletion(
 	}
 
 // printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
-	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS)) {
+	if (!device_failed && (num_completed == (bio->bi_num_requests - bio->bi_num_disabled) || status != STATUS_SUCCESS)) {
 		if (bio->master_bio != NULL) {
 			int bi_status = win_status_to_blk_status(status);
 			if (master_bio || bi_status != 0) {
@@ -2051,7 +2052,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 	int i;
 	int err = -EIO;
 	unsigned int first_size;
-	
+
 	if (bio->bi_vcnt == 0) {
 		printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
 		return -EIO;
@@ -2064,7 +2065,7 @@ static int windrbd_generic_make_request(struct bio *bio)
 
 // printk("bio->bi_iter.bi_sector is %llu << 9 is %llu\n", bio->bi_iter.bi_sector, bio->bi_iter.bi_sector << 9);
 	bio->bi_io_vec[bio->bi_first_element].offset.QuadPart = bio->bi_iter.bi_sector << 9;
-	buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_first_element].bv_page->addr) + bio->bi_io_vec[bio->bi_first_element].bv_offset); 
+	buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_first_element].bv_page->addr) + bio->bi_io_vec[bio->bi_first_element].bv_offset);
 	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
@@ -2469,6 +2470,34 @@ static int bdflush_thread_fn(void *bdev_p)
 	return err;
 }
 
+static void coalesce_bio_vecs(struct bio *bio)
+{
+	int i, j;
+	char *buffer_i, *buffer_j;
+	size_t expected_offset;
+	int num_disabled;
+
+	num_disabled = 0;
+	for (i=0;i<bio->bi_num_requests;) {
+	        buffer_i = ((char*) bio->bi_io_vec[i].bv_page->addr) + bio->bi_io_vec[i].bv_offset;
+		expected_offset = 0;
+		for (j=i+1;j<bio->bi_num_requests;j++) {
+			expected_offset += bio->bi_io_vec[j-1].bv_len;
+		        buffer_j = ((char*) bio->bi_io_vec[j].bv_page->addr) + bio->bi_io_vec[j].bv_offset;
+
+			if (buffer_j == buffer_i + expected_offset) {
+				bio->bi_io_vec[i].bv_len += bio->bi_io_vec[j].bv_len;
+				bio->bi_io_vec[j].disabled = true;
+				num_disabled++;
+			} else {
+				break;
+			}
+		}
+		i=j;
+	}
+	bio->bi_num_disabled = num_disabled;
+}
+
 	/* This just ensures that DRBD gets I/O errors in case something
 	 * in processing the request before submitting it to the lower
 	 * level driver goes wrong. It also splits the I/O requests
@@ -2485,6 +2514,7 @@ int generic_make_request(struct bio *bio)
 	int orig_size;
 	int e;
 	int flush_request;
+#if 0
 #if MAX_MDL_ELEMENTS == -1
 	static int max_mdl_elements = 1;
 	static int num_tries = 100;
@@ -2496,6 +2526,7 @@ int generic_make_request(struct bio *bio)
 	}
 #else
 	static int max_mdl_elements = MAX_MDL_ELEMENTS;
+#endif
 #endif
 
 #if 0
@@ -2527,10 +2558,7 @@ skipped_bytes2 = 0;
 
 // printk("flush_request is %d\n", flush_request);
 
-	if (bio->bi_vcnt == 0)
-		bio->bi_num_requests = flush_request;
-	else
-		bio->bi_num_requests = (bio->bi_vcnt-1)/max_mdl_elements + 1 + flush_request;
+	bio->bi_num_requests = bio->bi_vcnt + flush_request;
 
 	if (bio->bi_num_requests == 0) {
 		bio->bi_status = 0;
@@ -2551,6 +2579,8 @@ skipped_bytes2 = 0;
 	}
 	atomic_set(&bio->bi_requests_completed, 0);
 
+	coalesce_bio_vecs(bio);
+
 	orig_sector = sector = bio->bi_iter.bi_sector;
 	orig_size = bio->bi_iter.bi_size;
 
@@ -2569,8 +2599,11 @@ skipped_bytes2 = 0;
 	for (bio->bi_this_request=0; 
              bio->bi_this_request<(bio->bi_num_requests - flush_request); 
              bio->bi_this_request++) {
-		bio->bi_first_element = bio->bi_this_request*max_mdl_elements;
-		bio->bi_last_element = (bio->bi_this_request+1)*max_mdl_elements;
+		if (bio->bi_io_vec[bio->bi_this_request].disabled)
+			continue;
+
+		bio->bi_first_element = bio->bi_this_request;
+		bio->bi_last_element = bio->bi_this_request+1;
 		if (bio->bi_vcnt < bio->bi_last_element)
 			bio->bi_last_element = bio->bi_vcnt;
 
