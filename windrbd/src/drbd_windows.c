@@ -2476,6 +2476,10 @@ static int bdflush_thread_fn(void *bdev_p)
 	 * lower disk device.
 	 */
 
+/* TODO: remove again. The memory was actually the disk offset,
+ * pages are not adjacent in memory. No coalescing possible.
+ */
+
 static void coalesce_bio_vecs(struct bio *bio, int flush)
 {
 	int i, j;
@@ -2610,7 +2614,7 @@ skipped_bytes2 = 0;
 	}
 	atomic_set(&bio->bi_requests_completed, 0);
 
-	coalesce_bio_vecs(bio, flush_request);
+//	coalesce_bio_vecs(bio, flush_request);
 
 	orig_sector = sector = bio->bi_iter.bi_sector;
 	orig_size = bio->bi_iter.bi_size;
@@ -2680,7 +2684,7 @@ out:
 	bio->bi_iter.bi_sector = orig_sector;
 	bio->bi_iter.bi_size = orig_size;
 
-	uncoalesce_bio_vecs(bio, flush_request);
+//	uncoalesce_bio_vecs(bio, flush_request);
 
 	bio_put(bio);
 
