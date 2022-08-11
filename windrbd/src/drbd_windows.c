@@ -2651,7 +2651,7 @@ skipped_bytes2 = 0;
 	orig_size = bio->bi_iter.bi_size;
 
 	bio->bi_using_big_buffer = false;
-	if (bio_data_dir(bio) == READ) {
+	if (bio_data_dir(bio) == READ && bio->bi_vcnt > 1) {
 		total_size = 0;
 		for (e = 0; e < bio->bi_vcnt; e++)
 			total_size += bio->bi_io_vec[e].bv_len;
