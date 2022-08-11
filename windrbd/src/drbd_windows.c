@@ -1822,6 +1822,7 @@ NTSTATUS DrbdIoCompletion(
 	int i;
 	NTSTATUS status = Irp->IoStatus.Status;
 	KIRQL flags;
+	bool one_big_request;
 
 // printk("completing bio %p\n", bio);
 
@@ -1851,6 +1852,8 @@ NTSTATUS DrbdIoCompletion(
 
 	if (test_inject_faults(&inject_on_completion, "assuming completion routine was send an error (enabled for all devices)"))
 		status = STATUS_IO_DEVICE_ERROR;
+
+	one_big_request = bio->bi_using_big_buffer;
 
 	if (bio->bi_using_big_buffer) {
 		if (stack_location->MajorFunction == IRP_MJ_READ) {
@@ -1908,7 +1911,7 @@ NTSTATUS DrbdIoCompletion(
 	}
 
 // printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
-	if (!device_failed && (num_completed == (bio->bi_num_requests - bio->bi_num_disabled) || status != STATUS_SUCCESS)) {
+	if (!device_failed && (num_completed == (bio->bi_num_requests - bio->bi_num_disabled) || status != STATUS_SUCCESS || one_big_request)) {
 		if (bio->master_bio != NULL) {
 			int bi_status = win_status_to_blk_status(status);
 			if (master_bio || bi_status != 0) {
