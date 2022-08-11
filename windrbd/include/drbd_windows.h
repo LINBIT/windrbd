@@ -752,6 +752,17 @@ struct bio {
 
 	void *patched_bootsector_buffer;
 
+	/* Squash multiple requests described by the bio vec
+	 * into one call to the underlying disk driver.
+	 * Unfortunately memory has to be copiied but
+	 * I assume it is still faster than calling the
+	 * disk driver for every 4K chunk.
+	 */
+
+	void *bi_big_buffer;
+	unsigned int bi_big_buffer_size;
+	bool bi_using_big_buffer;
+
 	/* If set, indicates that the memory is paged, in which case
 	 * we must lock it to memory. If not set, must unlock memory
 	 * locked by IoBuildAsynchronousFsdRequest().

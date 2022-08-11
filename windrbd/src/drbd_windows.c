@@ -1852,6 +1852,29 @@ NTSTATUS DrbdIoCompletion(
 	if (test_inject_faults(&inject_on_completion, "assuming completion routine was send an error (enabled for all devices)"))
 		status = STATUS_IO_DEVICE_ERROR;
 
+	if (bio->bi_using_big_buffer) {
+		if (stack_location->MajorFunction == IRP_MJ_READ) {
+			/* copy data to io_vecs */
+			int i;
+			int offset;
+
+			offset = 0;
+			for (i=0;i<bio->bi_vcnt;i++) {
+				RtlCopyMemory(((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset, ((char*)bio->bi_big_buffer)+offset, bio->bi_io_vec[i].bv_len);
+				offset += bio->bi_io_vec[i].bv_len;
+			}
+			if (offset != bio->bi_big_buffer_size) {
+				printk("Warning: size mismatch in DrbdIoCompletin(): offset is %d bio->bi_big_buffer_size is %d\n", offset, bio->bi_big_buffer_size);
+			}
+		}
+
+			/* also free when WRITE */
+		kfree(bio->bi_big_buffer);
+		bio->bi_big_buffer = NULL;
+		bio->bi_using_big_buffer = false;
+		bio->bi_big_buffer_size = 0;
+	}
+
 	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_iter.bi_sector == 0 && bio->bi_iter.bi_size >= 512 && !bio->dont_patch_boot_sector) {
 		if (test_and_set_bit(BI_WINDRBD_FLAG_BOOTSECTOR_PATCHED, &bio->bi_windrbd_flags) == 0) {
 			void *buffer = bio->bi_io_vec[0].bv_page->addr;
@@ -2041,7 +2064,7 @@ static int make_flush_request(struct bio *bio)
 	return 0;
 }
 
-static int windrbd_generic_make_request(struct bio *bio)
+static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 {
 	NTSTATUS status;
 
@@ -2065,8 +2088,13 @@ static int windrbd_generic_make_request(struct bio *bio)
 
 // printk("bio->bi_iter.bi_sector is %llu << 9 is %llu\n", bio->bi_iter.bi_sector, bio->bi_iter.bi_sector << 9);
 	bio->bi_io_vec[bio->bi_first_element].offset.QuadPart = bio->bi_iter.bi_sector << 9;
-	buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_first_element].bv_page->addr) + bio->bi_io_vec[bio->bi_first_element].bv_offset);
-	first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
+	if (single_request) {
+		buffer = bio->bi_big_buffer;
+		first_size = bio->bi_big_buffer_size;
+	} else {
+		buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_first_element].bv_page->addr) + bio->bi_io_vec[bio->bi_first_element].bv_offset);
+		first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
+	}
 
 // if (bio->bi_io_vec[0].bv_offset != 0) {
 printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element, bio);
@@ -2079,6 +2107,7 @@ printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x
  */
 
 
+		/* TODO: do not make another copy if single request */
 	if (io == IRP_MJ_WRITE && bio->bi_iter.bi_sector == 0 && bio->bi_iter.bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
 		bio->patched_bootsector_buffer = kmalloc(first_size, 0, 'DRBD');
 		if (bio->patched_bootsector_buffer == NULL)
@@ -2091,6 +2120,7 @@ printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x
 	}
 
 // printk("offset is %llu\n", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart);
+		/* TODO: io_stat not used at all? */
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
@@ -2306,7 +2336,7 @@ static int flush_bios(struct block_device *bdev)
 		if (bio->is_flush)
 			ret = make_flush_request(bio);
 		else
-			ret = windrbd_generic_make_request(bio);
+			ret = windrbd_generic_make_request(bio, false);
 
 		if (ret < 0) {
 			if (bio->master_bio) {
@@ -2614,10 +2644,41 @@ skipped_bytes2 = 0;
 	}
 	atomic_set(&bio->bi_requests_completed, 0);
 
-//	coalesce_bio_vecs(bio, flush_request);
-
 	orig_sector = sector = bio->bi_iter.bi_sector;
 	orig_size = bio->bi_iter.bi_size;
+
+	bio->bi_using_big_buffer = false;
+	if (bio_data_dir(bio) == READ) {
+		total_size = 0;
+		for (e = 0; e < bio->bi_vcnt; e++)
+			total_size += bio->bi_io_vec[e].bv_len;
+
+		if (total_size != bio->bi_iter.bi_size) {
+			printk("Warning: size mismatch in generic_make_request(): total_size is %d bi_size is %d\n", total_size, bio->bi_iter.bi_size);
+		}
+		bio->bi_big_buffer_size = total_size;
+		bio->bi_big_buffer = kmalloc(total_size, 0, 'XXXX');
+
+		if (bio->bi_big_buffer != NULL) {
+			bio->bi_this_request = 0;
+			bio->bi_first_element = 0;
+			bio->bi_last_element = 1;
+			bio->bi_using_big_buffer = true;
+
+			ret = windrbd_generic_make_request(bio, true);
+		/* ARGH..get rid of those goto's ... */
+			if (ret < 0) {
+				bio->bi_status = BLK_STS_IOERR;
+				bio_endio(bio);
+				goto out;
+			}
+			if (ret > 0)
+				goto out;
+			goto io_requests_already_submitted;
+		}
+			/* else: fall through to old behaviour */
+	}
+//	coalesce_bio_vecs(bio, flush_request);
 
 	ret = 0;
 
@@ -2653,7 +2714,7 @@ skipped_bytes2 = 0;
 		if (enable_simple_write_cache && bio_data_dir(bio) == WRITE)
 			ret = queue_bio(bio, 0);
 		else
-			ret = windrbd_generic_make_request(bio);
+			ret = windrbd_generic_make_request(bio, false);
 
 		if (ret < 0) {
 			bio->bi_status = BLK_STS_IOERR;
@@ -2664,6 +2725,8 @@ skipped_bytes2 = 0;
 			goto out;
 		sector += total_size >> 9;
 	}
+
+io_requests_already_submitted:
 	if (flush_request) {
 		if (enable_simple_write_cache && bio_data_dir(bio) == WRITE)
 			ret = queue_bio(bio, 1);
