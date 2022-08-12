@@ -1079,6 +1079,9 @@ static int free_bios_thread_fn(void *unused)
 			if (bio->patched_bootsector_buffer != NULL)
 				kfree(bio->patched_bootsector_buffer);
 
+			if (bio->bi_big_buffer != NULL)
+				kfree(bio->bi_big_buffer);
+
 			if (bio->delayed_io_completion && bio->bi_upper_irp != NULL)
 				IoCompleteRequest(bio->bi_upper_irp, bio->bi_upper_irp->IoStatus.Status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
 
@@ -1870,12 +1873,9 @@ NTSTATUS DrbdIoCompletion(
 				printk("Warning: size mismatch in DrbdIoCompletin(): offset is %d bio->bi_big_buffer_size is %d\n", offset, bio->bi_big_buffer_size);
 			}
 		}
-
-			/* also free when WRITE */
-		kfree(bio->bi_big_buffer);
-		bio->bi_big_buffer = NULL;
-		bio->bi_using_big_buffer = false;
-		bio->bi_big_buffer_size = 0;
+			/* Do not kfree() the big buffer here, since
+			 * there is still an IRP referencing it.
+			 */
 	}
 
 	if (stack_location->MajorFunction == IRP_MJ_READ && bio->bi_iter.bi_sector == 0 && bio->bi_iter.bi_size >= 512 && !bio->dont_patch_boot_sector) {
