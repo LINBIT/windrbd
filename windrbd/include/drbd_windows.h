@@ -660,8 +660,6 @@ struct bio_vec {
 	unsigned int bv_len;
 	unsigned int bv_offset;
 
-	bool disabled;
-
 		/* Those are used by win_generic_make_request internally.
 		 * We have them here, since we build a request for each
 		 * biovec element seperately (see MAX_MDL_ELEMENTS
@@ -726,21 +724,17 @@ struct bio {
 	Drbd_receiver.c (drbd):	bio->bi_end_io = drbd_peer_request_endio;
 	Drbd_req.h (drbd):	bio->bi_end_io   = drbd_request_endio;
 	*/
-	BIO_END_IO_CALLBACK*	bi_end_io; 
-	void*			bi_private; 
+	BIO_END_IO_CALLBACK*	bi_end_io;
+	void*			bi_private;
 	unsigned int		bi_max_vecs;    /* max bvl_vecs we can hold */
 	struct bvec_iter	bi_iter;
 
 		/* Windows backing device driver cannot handle more than
-		 * 32 vector elements. Split the IoCalldriver calls into
+		 * 1 (!) vector element. Split the IoCalldriver calls into
 		 * subrequests.
 		 */
 
-	int bi_first_element;
-	int bi_last_element;	/* actually last element + 1 so it matches bi_vcnt */
-
-	int bi_num_requests;
-	int bi_num_disabled;
+	int bi_num_requests;	/* Includes maybe a flush request */
 	int bi_this_request;
 	atomic_t bi_requests_completed;
 	struct bio_collection *bi_common_data;
@@ -795,13 +789,10 @@ struct bio {
 
 	blk_status_t bi_status;
 
-	struct bio *master_bio;	/* TODO: remove if not needed any more */
-	struct list_head cache_list;
-
-	atomic_t num_slave_bios;
-	int is_flush;
-	int has_big_buffer;
-
+	/* We have to free the bio when IRQL is PASSIVE, so we
+	 * put them on this list in the IRQ and free it later
+	 * from a thread.
+	 */
 	struct list_head to_be_freed_list;
 	struct list_head to_be_freed_list2;
 
@@ -825,7 +816,6 @@ struct bio {
 	 * have been something else.
 	 */
 
-	// struct bio_vec bi_io_vec[0];
 	struct bio_vec bi_io_vec[1];
 };
 

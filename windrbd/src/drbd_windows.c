@@ -49,26 +49,6 @@
 	 * Also split up the drbd_windows.h header file.
 	 */
 
-	/* Maximal number of MDL elements that the backing device can
-	 * handle. If requests contain more than this number of elements
-	 * Windows simply blue screens. The value is 32 for Windows 7
-	 * but might be lower on other Windows versions.
-	 * Update: for Windows 10 and Windows Server this is 16.
-	 * Update: for USB sticks under Windows 10 this is 1 (!).
-	 *
-	 * Set this to -1 to enable max mdl elements experiment.
-	 */
-
-#define MAX_MDL_ELEMENTS 1
-
-	/* Define this if you want a built in test for backing device
-	   I/O. Attention this destroys data on the back device.
-	   Note that submit_bio may fail on some systems, therefore
-	   leave this commented out for now.
-	 */
-// #define _HACK
-// #define _HACK_WRITE
-
 #undef _NTDDK_
 /* Can't include that without getting redefinition errors.
  *   10.0.14393.0\km\ntddk.h(69): error C2371: 'PEPROCESS': redefinition; different basic types
@@ -610,12 +590,12 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 	BUG_ON(size==0);
 	size = (((size-1) / PAGE_SIZE)+1)*PAGE_SIZE;
 
-	struct page *p = kzalloc_debug(sizeof(struct page), 0, file, line, func); 
+	struct page *p = kzalloc_debug(sizeof(struct page), 0, file, line, func);
 	if (!p)	{
 		printk("alloc_page struct page failed\n");
 		return NULL;
 	}
-	
+
 		/* Under Windows this is defined to align to a page
 		 * of PAGE_SIZE bytes if size is >= PAGE_SIZE.
 		 * PAGE_SIZE itself is always 4096 under Windows.
@@ -677,12 +657,12 @@ struct page *alloc_page_of_size(int flag, size_t size)
 	BUG_ON(size==0);
 	size = (((size-1) / PAGE_SIZE)+1)*PAGE_SIZE;
 
-	struct page *p = kzalloc(sizeof(struct page),0, 'D3DW'); 
+	struct page *p = kzalloc(sizeof(struct page),0, 'D3DW');
 	if (!p)	{
 		printk("alloc_page struct page failed\n");
 		return NULL;
 	}
-	
+
 		/* Under Windows this is defined to align to a page
 		 * of PAGE_SIZE bytes if size is >= PAGE_SIZE.
 		 * PAGE_SIZE itself is always 4096 under Windows.
@@ -719,65 +699,6 @@ zak
 	__free_page(page);
 }
 
-#endif
-
-#ifdef _HACK
-
-static void hack_endio BIO_ENDIO_ARGS(struct bio *bio)
-{
-	printk("1\n");
-	struct completion *c = (struct completion*) bio->bi_private;
-	printk("2\n");
-	complete(c);
-	printk("3\n");
-}
-
-void hack_alloc_page(struct block_device *dev)
-{
-	printk("1\n");
-	struct page *p = alloc_page(0);
-	struct page *p2 = alloc_page(0);
-	printk("2\n");
-	struct bio *b = bio_alloc(0, 2, 'XXXX');
-	int i;
-	struct completion c;
-	printk("3\n");
-	bio_add_page(b, p, 4096, 0);
-	bio_add_page(b, p2, 4096, 0);
-	printk("4\n");
-#ifdef _HACK_WRITE
-	bio_set_op_attrs(b, REQ_OP_WRITE, 0);
-#else
-	bio_set_op_attrs(b, REQ_OP_READ, 0);
-#endif
-	printk("5\n");
-	for (i=0;i<4096;i++) {
-		((char*)p->addr)[i] = i;
-		((char*)p2->addr)[i] = i;
-	}
-	printk("5a\n");
-	b->bi_end_io = hack_endio;
-	b->bi_iter.sector = 1;
-	printk("6\n");
-	init_completion(&c);
-	printk("7\n");
-	b->bi_private = &c;
-	printk("7a\n");
-	bio_set_dev(b, dev);
-	printk("7b\n");
-	submit_bio(b);
-	//     hack_endio(b, 0);
-	printk("8\n");
-	wait_for_completion(&c);
-	printk("9\n");
-	bio_put(b);
-	printk("9a\n");
-	__free_page(p);
-	printk("9b\n");
-	__free_page(p2);
-	printk("a\n");
-	printk("karin 2\n");
-}
 #endif
 
 #ifndef KMALLOC_DEBUG
@@ -899,8 +820,6 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
 	spin_lock_init(&bio->device_failed_lock);
-
-	INIT_LIST_HEAD(&bio->cache_list);
 
 	return bio;
 }
@@ -1035,7 +954,6 @@ void bio_free(struct bio *bio)
 		 * it as soon as MDLs are freed.
 		 */
 
-/* This get_page is in bio_add_page_debug() now */
 	spin_lock_irqsave(&bios_to_be_freed_lock, flags);
 	list_add(&bio->to_be_freed_list, &bios_to_be_freed_list);
 	spin_unlock_irqrestore(&bios_to_be_freed_lock, flags);
@@ -1129,10 +1047,7 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	bio->bi_iter.bi_size = bio_src->bi_iter.bi_size;
 	bio->bi_iter.bi_idx = bio_src->bi_iter.bi_idx;
 	bio->bi_num_requests = bio_src->bi_num_requests;
-	bio->bi_num_disabled = bio_src->bi_num_disabled;
 	bio->bi_this_request = bio_src->bi_this_request;
-	bio->bi_first_element = bio_src->bi_first_element;
-	bio->bi_last_element = bio_src->bi_last_element;
 
 	for (i=0;i<bio->bi_vcnt;i++) {
 		get_page(bio->bi_io_vec[i].bv_page);
@@ -1819,25 +1734,11 @@ NTSTATUS DrbdIoCompletion(
 /* TODO: Device object is NULL here. Fix that in case we need it one day. */
 
 	struct bio *bio = Context;
-	struct bio *master_bio = NULL; /* only non-zero when bio is the last remaining slave bio */
-	PMDL mdl, nextMdl;
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
 	int i;
 	NTSTATUS status = Irp->IoStatus.Status;
 	KIRQL flags;
 	bool one_big_request;
-
-// printk("completing bio %p\n", bio);
-
-	if (bio->master_bio != NULL) {
-		if (atomic_dec_return(&bio->master_bio->num_slave_bios) <= 0) {
-			master_bio = bio->master_bio;
-// printk("is last bio of master bio %p\n", master_bio);
-		}
-		if (atomic_read(&bio->master_bio->num_slave_bios) < 0) {
-			printk("Warning: num_slave_bios got negative (%d) in WinDRBD completion routine\n", atomic_read(&bio->master_bio->num_slave_bios));
-		}
-	}
 
 	atomic_dec(&bio->bi_bdev->num_irps_pending);
 
@@ -1884,70 +1785,27 @@ NTSTATUS DrbdIoCompletion(
 			patch_boot_sector(buffer, 1, 0);
 		}
 	}
-/*
-	if (stack_location->MajorFunction == IRP_MJ_READ) {
-		for (i=0;i<bio->bi_vcnt;i++) {
-			printk("i: %d bv_len: %d data: %x\n", i, bio->bi_io_vec[i].bv_len, *((int*)bio->bi_io_vec[i].bv_page->addr));
-		}
-	}
-*/
-
 	int num_completed, device_failed;
 
-	if (bio->master_bio != NULL) {
-		spin_lock_irqsave(&bio->master_bio->device_failed_lock, flags);
-		num_completed = atomic_inc_return(&bio->master_bio->bi_requests_completed);
-		device_failed = bio->master_bio->device_failed;
-		if (status != STATUS_SUCCESS)
-			bio->master_bio->device_failed = 1;
-		spin_unlock_irqrestore(&bio->master_bio->device_failed_lock, flags);
-	} else {
-		spin_lock_irqsave(&bio->device_failed_lock, flags);
-		num_completed = atomic_inc_return(&bio->bi_requests_completed);
-		device_failed = bio->device_failed;
-		if (status != STATUS_SUCCESS)
-			bio->device_failed = 1;
-		spin_unlock_irqrestore(&bio->device_failed_lock, flags);
-	}
+	spin_lock_irqsave(&bio->device_failed_lock, flags);
+	num_completed = atomic_inc_return(&bio->bi_requests_completed);
+	device_failed = bio->device_failed;
+	if (status != STATUS_SUCCESS)
+		bio->device_failed = 1;
+	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
 
-// printk("device_failed is %d status is %x num_completed is %d bio->bi_num_requests is %d bio is %p\n", device_failed, status, num_completed, atomic_read(&bio->bi_num_requests), bio);
-	if (!device_failed && (num_completed == (bio->bi_num_requests - bio->bi_num_disabled) || status != STATUS_SUCCESS || one_big_request)) {
-		if (bio->master_bio != NULL) {
-			int bi_status = win_status_to_blk_status(status);
-			if (master_bio || bi_status != 0) {
-				bio->master_bio->bi_status = bi_status;
-// printk("into bio_endio master_bio is %p bi_status is %d status is %d\n", master_bio, bi_status, status);
-				bio_endio(bio->master_bio);
-			}
-				/* Else there are more bios .. wait until
-				 * they are processed. */
-		} else {
-			bio->bi_status = win_status_to_blk_status(status);
-// printk("into bio_endio bio is %p bi_status is %d status is %d\n", bio, bio->bi_status, status);
-			bio_endio(bio);
-		}
-// printk("out of bio_endio bio is %p\n", bio);
-		if (bio->has_big_buffer)
-			put_page(bio->bi_io_vec[0].bv_page);
+	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS || one_big_request)) {
+		bio->bi_status = win_status_to_blk_status(status);
+		bio_endio(bio);
 	}
-	struct bio *the_master_bio = bio->master_bio;
 
 	bio_put(bio);
-
-		/* The master bio has to be freed after the last slave
-		 * bio, else we get a PFN_LIST_CORRUPT BSOD (put_page
-		 * on page which is still referenced by an MDL.
-		 */
-
-	if (the_master_bio != NULL)
-		bio_put(the_master_bio);
 
 		/* Tell IO manager that it should not touch the
 		 * irp. It has yet to be freed together with the
 		 * bio.
 		 */
 
-// printk("completing bio returning bio is %p master bio is %p\n", bio, master_bio);
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
@@ -2027,25 +1885,13 @@ static int make_flush_request(struct bio *bio)
 
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
-/*
-	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
-	if (!NT_SUCCESS(status)) {
-		printk("ObReferenceObjectByPointer failed with status %x\n", status);
-		return -EIO;
-	}
-*/
-
 	next_stack_location = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
 
 	next_stack_location->DeviceObject = bio->bi_bdev->windows_device;
 	next_stack_location->FileObject = bio->bi_bdev->file_object;
 
-	if (bio->master_bio)
-		bio_get(bio->master_bio);
-	else
-		bio_get(bio);	/* To be put in completion routine (bi_endio) */
+	bio_get(bio);	/* To be put in completion routine (bi_endio) */
 
-// printk("flush %p\n", bio);
 
 	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
@@ -2074,10 +1920,9 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	void *buffer;
 	ULONG io = 0;
 	PIO_STACK_LOCATION next_stack_location;
-	struct _MDL *mdl, *nextMdl;
 	int i;
 	int err = -EIO;
-	unsigned int first_size;
+	unsigned int the_size;
 
 	if (bio->bi_vcnt == 0) {
 		printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
@@ -2089,19 +1934,17 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 		io = IRP_MJ_READ;
 	}
 
-// printk("bio->bi_iter.bi_sector is %llu << 9 is %llu\n", bio->bi_iter.bi_sector, bio->bi_iter.bi_sector << 9);
-	bio->bi_io_vec[bio->bi_first_element].offset.QuadPart = bio->bi_iter.bi_sector << 9;
+	bio->bi_io_vec[bio->bi_this_request].offset.QuadPart = bio->bi_iter.bi_sector << 9;
 	if (single_request) {
 		buffer = bio->bi_big_buffer;
-		first_size = bio->bi_big_buffer_size;
+		the_size = bio->bi_big_buffer_size;
 	} else {
-		buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_first_element].bv_page->addr) + bio->bi_io_vec[bio->bi_first_element].bv_offset);
-		first_size = bio->bi_io_vec[bio->bi_first_element].bv_len;
+		buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_this_request].bv_page->addr) + bio->bi_io_vec[bio->bi_this_request].bv_offset);
+		the_size = bio->bi_io_vec[bio->bi_this_request].bv_len;
 	}
 
-// if (bio->bi_io_vec[0].bv_offset != 0) {
-// printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d first_size=%d first_element=%d last_element=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, first_size, bio->bi_first_element, bio->bi_last_element, bio);
-// }
+	/* Leave that here for now it is sometimes useful: */
+// printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d the_size=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_this_request].offset.QuadPart, bio->bi_io_vec[bio->bi_this_request].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, the_size, bio);
 
 /* Make a copy of the (page cache) buffer and write the copy to the
    backing device. Reason is that on write (for example formatting the
@@ -2110,93 +1953,31 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
  */
 
 
-		/* TODO: do not make another copy if single request */
-	if (io == IRP_MJ_WRITE && bio->bi_iter.bi_sector == 0 && bio->bi_iter.bi_size >= 512 && bio->bi_first_element == 0 && !bio->dont_patch_boot_sector) {
-		bio->patched_bootsector_buffer = kmalloc(first_size, 0, 'DRBD');
+	if (io == IRP_MJ_WRITE && bio->bi_iter.bi_sector == 0 && bio->bi_iter.bi_size >= 512 && bio->bi_this_request == 0 && !bio->dont_patch_boot_sector) {
+		bio->patched_bootsector_buffer = kmalloc(the_size, 0, 'DRBD');
 		if (bio->patched_bootsector_buffer == NULL)
 			return -ENOMEM;
 
-		memcpy(bio->patched_bootsector_buffer, buffer, first_size);
+		memcpy(bio->patched_bootsector_buffer, buffer, the_size);
 		buffer = bio->patched_bootsector_buffer;
 
 		patch_boot_sector(buffer, 0, 0);
 	}
 
-// printk("offset is %llu\n", bio->bi_io_vec[bio->bi_first_element].offset.QuadPart);
 		/* TODO: io_stat not used at all? */
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
 				buffer,
-				first_size,
-				&bio->bi_io_vec[bio->bi_first_element].offset,
-				&bio->bi_io_vec[bio->bi_first_element].io_stat
+				the_size,
+				&bio->bi_io_vec[bio->bi_this_request].offset,
+				&bio->bi_io_vec[bio->bi_this_request].io_stat
 				);
 
 	if (!bio->bi_irps[bio->bi_this_request]) {
-		printk(KERN_ERR "IoBuildAsynchronousFsdRequest: cannot alloc new IRP for io %d, device %p, buffer %p, first_size %d, offset %lld%\n", io, bio->bi_bdev->windows_device, buffer, first_size, bio->bi_io_vec[bio->bi_first_element].offset.QuadPart);
+		printk(KERN_ERR "IoBuildAsynchronousFsdRequest: cannot alloc new IRP for io %d, device %p, buffer %p, the_size %d, offset %lld%\n", io, bio->bi_bdev->windows_device, buffer, the_size, bio->bi_io_vec[bio->bi_this_request].offset.QuadPart);
 		return -ENOMEM;
 	}
-
-		/* Unlock the MDLs pages locked by
-		 * IoBuildAsynchronousFsdRequest, we must not have
-		 * pages locked while using MmBuildMdlForNonPagedPool()
-		 * (which is used for pages from NONPAGED pool (which
-		 * is what we have)).
-		 * Update: if there is an NTFS on the backing device,
-		 * MmBuildMdlForNonPagedPool() blue screens.
-		 */
-			/* TODO: this is probably not a good idea (to
-			 * unlock the pages here ...)
-			 */
-
-			/* However it currently BSODs when becoming primary ...  either on read or on write (they are different) */
-
-#if 0
-	if (!bio->bi_paged_memory) {
-		struct _MDL *first_mdl;
-		first_mdl = bio->bi_irps[bio->bi_this_request]->MdlAddress;
-			/* TODO: Really? */
-		if (first_mdl != NULL) {
-			if (first_mdl->MdlFlags & MDL_PAGES_LOCKED) {
-				MmUnlockPages(first_mdl);
-			}
-		}
-	}
-		/* Else leave it locked */
-#endif
-
-	int total_size = first_size;
-
-#if 0
-	/* Windows tries to split up MDLs and crashes when
-	 * there are more than 32*4K MDLs. Other drivers
-	 * (Windows 10 USB storage) blue screen already
-	 * when there is an additional mdl element (mdl->Next
-	 * being non-NULL). We therefore do not use the
-	 * linked list in MDLs to optimize performace.
-	 */
-
-		/* TODO: use bio->bi_iter.bi_size it should be correct now. */
-
-		/* TODO: this loop does nothing any more (max_mdls is 1) */
-	for (i=bio->bi_first_element+1;i<bio->bi_last_element;i++) {
-		struct bio_vec *entry = &bio->bi_io_vec[i];
-		struct _MDL *mdl = IoAllocateMdl(((char*)entry->bv_page->addr)+entry->bv_offset, entry->bv_len, TRUE, FALSE, bio->bi_irps[bio->bi_this_request]);
-
-		if (mdl == NULL) {
-			printk("Could not allocate mdl, giving up.\n");
-			err = -ENOMEM;
-				/* TODO: will also dereference thread */
-			goto out_free_irp;
-		}
-		total_size += entry->bv_len;
-
-		if (bio->bi_paged_memory)
-			MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
-	}
-#endif
-
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
 	next_stack_location = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
@@ -2205,33 +1986,14 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	next_stack_location->FileObject = bio->bi_bdev->file_object;
 
 	if (io == IRP_MJ_WRITE) {
-		next_stack_location->Parameters.Write.Length = total_size;
+		next_stack_location->Parameters.Write.Length = the_size;
 	}
 	if (io == IRP_MJ_READ) {
-		next_stack_location->Parameters.Read.Length = total_size;
+		next_stack_location->Parameters.Read.Length = the_size;
 	}
+	bio_get(bio);	/* To be put in completion routine (bi_endio) */
 
-		/* Take a reference to this thread, it is referenced
-		 * in the IRP.
-		 */
-
-	/* TODO: ManTech also removed this. When this is done there is
-	 * a BSOD on installing MSSQL server onto a WinDRBD disk device.
-	 */
-
-/*
-	status = ObReferenceObjectByPointer(bio->bi_irps[bio->bi_this_request]->Tail.Overlay.Thread, THREAD_ALL_ACCESS, NULL, KernelMode);
-	if (!NT_SUCCESS(status)) {
-		printk("ObReferenceObjectByPointer failed with status %x\n", status);
-		goto out_free_irp;
-	}
-*/
-	if (bio->master_bio)
-		bio_get(bio->master_bio);
-	else
-		bio_get(bio);	/* To be put in completion routine (bi_endio) */
-
-	int device_failed = bio->master_bio ? bio->master_bio->device_failed : bio->device_failed;
+	int device_failed = bio->device_failed;
 
 	if (device_failed ||
 	    (bio->bi_bdev && bio->bi_bdev->drbd_device &&
@@ -2247,22 +2009,7 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	if (test_inject_faults(&inject_on_request, "assuming request failed (enabled for all devices)"))
 		return -EIO;
 
-#if 0
-if (io == IRP_MJ_WRITE) {
-static unsigned long long skipped_bytes = 0;
-static unsigned long long skipped_bytes2 = 0;
-skipped_bytes += total_size;
-skipped_bytes2 += total_size;
-if (skipped_bytes2 > 256*1024*1024) {
-skipped_bytes2 = 0;
-// printk("%llu bytes (%llu MiB) skipped\n", skipped_bytes, skipped_bytes / (1024*1024));
-}
-DrbdIoCompletion(NULL, bio->bi_irps[bio->bi_this_request], bio);
-return 0;
-}
-#endif
-
-atomic_inc(&bio->bi_bdev->num_irps_pending);
+	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
@@ -2278,301 +2025,6 @@ atomic_inc(&bio->bi_bdev->num_irps_pending);
 	return 0;
 }
 
-static int enable_simple_write_cache = 0;
-static int simple_write_cache_collect_time_ms = 10;
-
-void read_simple_write_cache_config(void)
-{
-	get_registry_int(L"enable_simple_write_cache", &enable_simple_write_cache, 0);
-	get_registry_int(L"simple_write_cache_collect_time_ms", &simple_write_cache_collect_time_ms, 10);
-}
-
-/* TODO's for simple write cache:
-	*) Optimize ... right now there is no speedup (or maybe 20% or so ...)
-	*) There is data corruption (data-coherence test after 8 iterations)
-
-	   Maybe abandon patch because of the above? Speed is now increased
-	   by a factor of 3 by the receiver cache (see windrbd_winsocket.c)
-
-Done:
-	*) (from phil) allow for disable (bypass) write cache.
-		Solved via registry which is the easiest way to do this.
-		One day maybe via drbd.conf ...
-	*) Terminate bdflush thread properly.
-	*) fix bio handle leak
-	*) fix bio_put(master_bio) (DrbdIoCompletion) BSOD
-	*) Close windows on becoming secondary (probably unrelated).
-	   (device is in use): This appears when using SCSI interface
-	   on a partitionless disk (when migrating from block device
-	   interface to SCSI interface this might happen): don't do
-	   that.
-	*) fix boot sector bug (something with patching broken).
-	   Also this was with a non-partitioned SCSI disk.
-	*) Test with fault injection
-	*) implement join_bios
-
-*/
-
-	/* Submit bios to lower device */
-
-static int flush_bios(struct block_device *bdev)
-{
-	KIRQL flags;
-	struct bio *bio, *bio2;
-	int ret;
-	int num_bios;
-
-	num_bios = 0;
-
-	spin_lock_irqsave(&bdev->write_cache_lock, flags);
-	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->write_cache, cache_list) {
-		list_del(&bio->cache_list);
-		spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
-
-		num_bios++;
-
-		bio->bi_irps = kzalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, 0, 'DRBD');
-		if (bio->bi_irps == NULL) {
-			return -ENOMEM;
-		}
-
-		if (bio->is_flush)
-			ret = make_flush_request(bio);
-		else
-			ret = windrbd_generic_make_request(bio, false);
-
-		if (ret < 0) {
-			if (bio->master_bio) {
-				bio->master_bio->bi_status = BLK_STS_IOERR;
-				bio_endio(bio->master_bio);
-			} else {
-				bio->bi_status = BLK_STS_IOERR;
-				bio_endio(bio);
-			}
-			return ret;
-		}
-		if (ret > 0)
-			return -ret;
-
-		spin_lock_irqsave(&bdev->write_cache_lock, flags);
-	}
-
-	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
-	return 0;
-}
-
-	/* See if we can replace many bios by one */
-
-static int join_bios(struct block_device *bdev)
-{
-	struct bio *bio, *bio3, *bio4;
-	int num_bios_to_join, n;
-	size_t num_bytes_to_join;
-	KIRQL flags;
-	struct page *big_buffer;
-	size_t big_buffer_index;
-
-// printk("join_bios start\n");
-	spin_lock_irqsave(&bdev->write_cache_lock, flags);
-	list_for_each_entry(struct bio, bio, &bdev->write_cache, cache_list) {
-		if (bio->bi_last_element - bio->bi_first_element != 1) {
-			printk("Warning: more than one element in bio bio->bi_first_element is %d bio->bi_last_element is %d\n", bio->bi_first_element, bio->bi_last_element);
-			continue;
-		}
-		num_bios_to_join = 0;
-		num_bytes_to_join = bio->bi_io_vec[bio->bi_first_element].bv_len;
-
-		bio3 = bio;
-		list_for_each_entry_continue(struct bio, bio3, &bdev->write_cache, cache_list) {
-				/* TODO: with bi_first_element ... */
-			if (bio3->bi_iter.bi_sector - (num_bytes_to_join / 512) != bio->bi_iter.bi_sector)
-				break;
-			num_bios_to_join++;
-			num_bytes_to_join += bio3->bi_io_vec[bio3->bi_first_element].bv_len;
-
-		}
-		if (num_bios_to_join > 0)
-		{
-			big_buffer = alloc_page_of_size(0, num_bytes_to_join);
-			if (big_buffer == NULL)
-				continue;
-
-// printk("joining %d bios (%d bytes)\n", num_bios_to_join, num_bytes_to_join);
-
-			big_buffer_index = 0;
-
-			bio4 = bio;
-			for (bio3=bio4,n=0;n<num_bios_to_join;n++,bio3=bio4) {
-				memcpy(&((unsigned char*) big_buffer->addr)[big_buffer_index], &((unsigned char*) bio3->bi_io_vec[bio3->bi_first_element].bv_page->addr)[bio3->bi_io_vec[bio3->bi_first_element].bv_offset], bio3->bi_io_vec[bio3->bi_first_element].bv_len);
-				big_buffer_index += bio3->bi_io_vec[bio3->bi_first_element].bv_len;
-
-				bio4 = list_entry(bio3->cache_list.next, struct bio, cache_list);
-				if (n > 0) {
-					if (atomic_dec_return(&bio3->master_bio->num_slave_bios) <= 0) {
-						bio_endio(bio3->master_bio);
-					} else {
-/* TODO: get_page() somewhere else? */
-						put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
-					}
-					list_del(&bio3->cache_list);
-/*
-					if (bio3->master_bio)
-						bio_put(bio3);
-*/
-// printk("bio3->bi_cnt is %d\n", bio3->bi_cnt);
-					bio_put(bio3);
-				} /* else {
-					put_page(bio3->bi_io_vec[bio3->bi_first_element].bv_page);
-				} */
-			}
-			bio->bi_first_element = 0;
-			bio->bi_last_element = 1;
-			bio->bi_io_vec[0].bv_page = big_buffer;
-			bio->bi_io_vec[0].bv_len = num_bytes_to_join;
-			bio->bi_io_vec[0].bv_offset = 0;
-			bio->has_big_buffer = 1;
-// printk("bio->bi_cnt is %d\n", bio->bi_cnt);
-		}
-	}
-	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
-// printk("join_bios end\n");
-
-	return 0;
-}
-
-	/* copy bio and queue into list */
-
-static int queue_bio(struct bio *bio, int is_flush)
-{
-	struct bio *new_bio;
-	struct block_device *bdev = bio->bi_bdev;
-	KIRQL flags;
-
-	if (bdev == NULL)
-		return -ENODEV;
-
-	new_bio = bio_clone(bio, 0);
-	if (new_bio == NULL)
-		return -ENOMEM;
-
-	new_bio->master_bio = bio;
-	new_bio->is_flush = is_flush;
-	atomic_inc(&bio->num_slave_bios);
-
-	spin_lock_irqsave(&bdev->write_cache_lock, flags);
-	list_add_tail(&new_bio->cache_list, &bdev->write_cache);
-	spin_unlock_irqrestore(&bdev->write_cache_lock, flags);
-
-	wake_up(&bdev->bdflush_event);
-
-	return 0;
-}
-
-static int bdflush_thread_fn(void *bdev_p)
-{
-	struct block_device *bdev = bdev_p;
-	int err;
-
-	err = 0;
-	while (bdev->bdflush_should_run) {
-		wait_event(bdev->bdflush_event, (!bdev->bdflush_should_run) || !list_empty(&bdev->write_cache));
-
-			/* Wait for more bios to arrive ... this way we can
-			 * join them into larger bios if they are adjacent.
-			 */
-		if (bdev->bdflush_should_run)
-			msleep(simple_write_cache_collect_time_ms);
-
-				/* else we are about to terminate, flush
-				 * everything remaining here.
-				 */
-		err = join_bios(bdev);
-		if (err < 0) {
-			printk("join bios failed, not terminating bdflush thread for now.\n");
-			continue;
-		}
-
-		err = flush_bios(bdev);
-		if (err < 0) {
-			printk("flush bios failed, not terminating bdflush thread for now.\n");
-			continue;
-		}
-	}
-	complete(&bdev->bdflush_terminated);
-
-	return err;
-}
-
-	/* detects multiple vector elements that are adjacent
-	 * in memory and replaces them by one large elements.
-	 * That way we save lots of IoCallDriver() to the
-	 * lower disk device.
-	 */
-
-/* TODO: remove again. The memory was actually the disk offset,
- * pages are not adjacent in memory. No coalescing possible.
- */
-
-static void coalesce_bio_vecs(struct bio *bio, int flush)
-{
-	int i, j;
-	char *buffer_i, *buffer_j;
-	size_t expected_offset;
-	int num_disabled;
-
-	num_disabled = 0;
-	for (i=0;i<bio->bi_num_requests - flush;) {
-	        buffer_i = ((char*) bio->bi_io_vec[i].bv_page->addr) + bio->bi_io_vec[i].bv_offset;
-		expected_offset = 0;
-		for (j=i+1;j<bio->bi_num_requests - flush;j++) {
-			expected_offset += bio->bi_io_vec[j-1].bv_len;
-		        buffer_j = ((char*) bio->bi_io_vec[j].bv_page->addr) + bio->bi_io_vec[j].bv_offset;
-
-			if (buffer_j == buffer_i + expected_offset) {
-				bio->bi_io_vec[i].bv_len += bio->bi_io_vec[j].bv_len;
-				bio->bi_io_vec[j].disabled = true;
-				num_disabled++;
-			} else {
-				break;
-			}
-		}
-		i=j;
-	}
-
-if (num_disabled > 0) {
-printk("%d requests coalesced.\n");
-}
-
-	bio->bi_num_disabled = num_disabled;
-}
-
-	/* Undoes the work done by coalesce_bio_vecs() */
-
-static void uncoalesce_bio_vecs(struct bio *bio, int flush)
-{
-	int i, j;
-
-	for (i=0;i<bio->bi_num_requests - flush;) {
-		for (j=i+1;j<bio->bi_num_requests - flush;j++) {
-			if (bio->bi_io_vec[j].disabled) {
-				bio->bi_io_vec[i].bv_len -= bio->bi_io_vec[j].bv_len;
-				bio->bi_io_vec[j].disabled = false;
-			} else {
-				break;
-			}
-		}
-		i=j;
-	}
-	bio->bi_num_disabled = 0;
-}
-
-	/* This just ensures that DRBD gets I/O errors in case something
-	 * in processing the request before submitting it to the lower
-	 * level driver goes wrong. It also splits the I/O requests
-	 * into smaller pieces of maximum 32 vector elements. Windows
-	 * block drivers cannot handle more than that.
-	 */
-
 int generic_make_request(struct bio *bio)
 {
 	int ret;
@@ -2582,50 +2034,11 @@ int generic_make_request(struct bio *bio)
 	int orig_size;
 	int e;
 	int flush_request;
-#if 0
-#if MAX_MDL_ELEMENTS == -1
-	static int max_mdl_elements = 1;
-	static int num_tries = 100;
-
-	if (--num_tries == 0) {
-		num_tries = 100;
-		max_mdl_elements++;
-		printk("max_mdl_elements is now %d\n", max_mdl_elements);
-	}
-#else
-	static int max_mdl_elements = MAX_MDL_ELEMENTS;
-#endif
-#endif
-
-#if 0
-if (bio_data_dir(bio) == WRITE) {
-
-static unsigned long long skipped_bytes = 0;
-static unsigned long long skipped_bytes2 = 0;
-skipped_bytes += bio->bi_iter.bi_size;
-skipped_bytes2 += bio->bi_iter.bi_size;
-if (skipped_bytes2 > 256*1024*1024) {
-skipped_bytes2 = 0;
-// printk("%llu bytes (%llu MiB) skipped early\n", skipped_bytes, skipped_bytes / (1024*1024));
-}
-		bio->bi_status = 0;
-		bio_endio(bio);
-
-		return 0;
-	}
-#endif
-
 	atomic_inc(&bio->bi_bdev->num_bios_pending);
 
-// printk("num_bios_pending now %d\n", atomic_read(&bio->bi_bdev->num_bios_pending));
-
-// printk("bio is %p\n", bio);
 	bio_get(bio);
 
 	flush_request = ((bio->bi_opf & REQ_PREFLUSH) != 0);
-
-// printk("flush_request is %d\n", flush_request);
-
 	bio->bi_num_requests = bio->bi_vcnt + flush_request;
 
 	if (bio->bi_num_requests == 0) {
@@ -2664,12 +2077,10 @@ skipped_bytes2 = 0;
 
 		if (bio->bi_big_buffer != NULL) {
 			bio->bi_this_request = 0;
-			bio->bi_first_element = 0;
-			bio->bi_last_element = 1;
 			bio->bi_using_big_buffer = true;
 
 			ret = windrbd_generic_make_request(bio, true);
-		/* ARGH..get rid of those goto's ... */
+
 			if (ret < 0) {
 				bio->bi_status = BLK_STS_IOERR;
 				bio_endio(bio);
@@ -2677,80 +2088,46 @@ skipped_bytes2 = 0;
 			}
 			if (ret > 0)
 				goto out;
-			goto io_requests_already_submitted;
 		}
-			/* else: fall through to old behaviour */
 	}
-//	coalesce_bio_vecs(bio, flush_request);
-
 	ret = 0;
 
-#if 0
-/* Reason for memory leak? */
-		/* Additional bio_get: bio_put is called once all
-		 * slave bios are completed.
-		 */
+	if (!bio->bi_using_big_buffer) {
+		for (bio->bi_this_request=0;
+		     bio->bi_this_request<(bio->bi_num_requests - flush_request);
+		     bio->bi_this_request++) {
+			total_size = bio->bi_io_vec[bio->bi_this_request].bv_len;
+			bio->bi_iter.bi_sector = sector;
+			bio->bi_iter.bi_size = total_size;
 
-	if (bio_data_dir(bio) == WRITE)
-		bio_get(bio);
-#endif
-
-			/* TODO: do not use 0/1 bool logic here ... */
-	for (bio->bi_this_request=0; 
-             bio->bi_this_request<(bio->bi_num_requests - flush_request); 
-             bio->bi_this_request++) {
-		if (bio->bi_io_vec[bio->bi_this_request].disabled)
-			continue;
-
-		bio->bi_first_element = bio->bi_this_request;
-		bio->bi_last_element = bio->bi_this_request+1;
-		if (bio->bi_vcnt < bio->bi_last_element)
-			bio->bi_last_element = bio->bi_vcnt;
-
-		total_size = 0;
-		for (e = bio->bi_first_element; e < bio->bi_last_element; e++)
-			total_size += bio->bi_io_vec[e].bv_len;
-
-		bio->bi_iter.bi_sector = sector;
-		bio->bi_iter.bi_size = total_size;
-
-		if (enable_simple_write_cache && bio_data_dir(bio) == WRITE)
-			ret = queue_bio(bio, 0);
-		else
 			ret = windrbd_generic_make_request(bio, false);
 
-		if (ret < 0) {
-			bio->bi_status = BLK_STS_IOERR;
-			bio_endio(bio);
-			goto out;
+			if (ret < 0) {
+				bio->bi_status = BLK_STS_IOERR;
+				bio_endio(bio);
+				goto out;
+			}
+			if (ret > 0)
+				goto out;
+			sector += total_size >> 9;
 		}
-		if (ret > 0)
-			goto out;
-		sector += total_size >> 9;
 	}
 
-io_requests_already_submitted:
 	if (flush_request) {
-		if (enable_simple_write_cache && bio_data_dir(bio) == WRITE)
-			ret = queue_bio(bio, 1);
-		else
-			ret = make_flush_request(bio);
+		ret = make_flush_request(bio);
 
-/* TODO: wake up bdflush */
 		if (ret < 0) {
 			bio->bi_status = BLK_STS_IOERR;
 			bio_endio(bio);
 		}
 	}
 
+out:
 	if (ret > 0)
 		ret = -ret;
 
-out:
 	bio->bi_iter.bi_sector = orig_sector;
 	bio->bi_iter.bi_size = orig_size;
-
-//	uncoalesce_bio_vecs(bio, flush_request);
 
 	bio_put(bio);
 
@@ -3484,26 +2861,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
-
-	read_simple_write_cache_config();
-
-	if (enable_simple_write_cache) {
-		printk("Simple write cache is enabled, simple_write_cache_collect_time_ms is %d.\n", simple_write_cache_collect_time_ms);
-		init_waitqueue_head(&block_device->bdflush_event);
-		init_completion(&block_device->bdflush_terminated);
-		block_device->bdflush_should_run = 1;
-		block_device->bdflush_thread = kthread_run(bdflush_thread_fn, block_device, "backingdev_flush");
-
-		if (block_device->bdflush_thread == NULL) {
-			printk("Warning: Couldn't start bdflush thread\n");
-		}
-	} else {
-		printk("Simple write cache is disabled.\n");
-	}
-
-#ifdef _HACK
-hack_alloc_page(block_device);
-#endif
 
 	return block_device;
 
