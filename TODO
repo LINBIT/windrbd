@@ -44,6 +44,8 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 
 TODOs for after Release 1.1 ----------------------------------------
 
+TODO: Installer: Disable Windows can't verify the publisher of this driver software panel
+
 TODO: Code quality: drbdadm down is slow when there are unconnected peers
 
 TODO: Feature: Remove netlink mutex
