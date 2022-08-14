@@ -299,6 +299,7 @@ else
 
 # does not work under wine ... MFC42.dll missing.
 	$(WINE) "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v "$@"
+	$(WINE) "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /f ../../crypto/$(KEY).pfx /p $(PASSWD) /v windrbd.cat
 endif
 
 
