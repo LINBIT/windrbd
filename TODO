@@ -45,6 +45,11 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 TODOs for after Release 1.1 ----------------------------------------
 
 TODO: Installer: Disable Windows can't verify the publisher of this driver software panel
+	Probably solved by also self-signing the windrbd.cat file.
+	And installing the cert from the cat file to LocalMachine/
+	TrustedPublisher.
+
+	We now do some more testing now.
 
 TODO: Code quality: drbdadm down is slow when there are unconnected peers
 
