@@ -50,6 +50,7 @@ TODO: Installer: Disable Windows can't verify the publisher of this driver softw
 	TrustedPublisher.
 
 	We now do some more testing now.
+	Installing remotely seems to work now.
 
 TODO: Code quality: drbdadm down is slow when there are unconnected peers
 
