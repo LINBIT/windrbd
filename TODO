@@ -44,22 +44,6 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 
 TODOs for after Release 1.1 ----------------------------------------
 
-TODO: Installer: Disable Windows can't verify the publisher of this driver software panel
-	Probably solved by also self-signing the windrbd.cat file.
-	And installing the cert from the cat file to LocalMachine/
-	TrustedPublisher.
-
-	We now do some more testing now.
-	Installing remotely seems to work now.
-
-	Installing works on Server 2019 not on Server 2016.
-
-	One has to install the certificate from the .cat file to
-	Trusted Publishers and Trusted Root Certification Authorities.
-
-	Checking if updating WinDRBD works on Server 2019 machine
-	(Virtual Bus Device was installed twice).
-
 TODO: Code quality: drbdadm down is slow when there are unconnected peers
 
 TODO: Feature: Remove netlink mutex
@@ -8185,4 +8169,20 @@ Rejected: Installer: remove all windrbd drivers from driver store.
 
 	Update: No upgrading from 1.1.0-rc1 to 1.1.0-rc1-20 works.
 	No need to do that.
+
+Done: Installer: Disable Windows can't verify the publisher of this driver software panel
+	Probably solved by also self-signing the windrbd.cat file.
+	And installing the cert from the cat file to LocalMachine/
+	TrustedPublisher.
+
+	We now do some more testing now.
+	Installing remotely seems to work now.
+
+	Installing works on Server 2019 not on Server 2016.
+
+	One has to install the certificate from the .cat file to
+	Trusted Publishers and Trusted Root Certification Authorities.
+
+	Checking if updating WinDRBD works on Server 2019 machine
+	(Virtual Bus Device was installed twice).
 
