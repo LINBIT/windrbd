@@ -54,6 +54,9 @@ TODO: Installer: Disable Windows can't verify the publisher of this driver softw
 
 	Installing works on Server 2019 not on Server 2016.
 
+	One has to install the certificate from the .cat file to
+	Trusted Publishers and Trusted Root Certification Authorities.
+
 TODO: Code quality: drbdadm down is slow when there are unconnected peers
 
 TODO: Feature: Remove netlink mutex
