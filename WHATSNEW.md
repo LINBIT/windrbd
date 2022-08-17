@@ -5,11 +5,15 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+Fix a DRBD issue that causes a resource to be stucked in Negoiating
+on attach when there were 3 nodes.
+
 What's new in version 1.1.0-rc2
 ---------------------------
 
-Fixed a DRBD issue that causes a resource to be stucked in Negoiating
-on attach when there were 3 nodes.
+Can install self-signed WinDRBD driver via ssh
+
+Improve sync speed when sync source
 
 Fixed a WinDRBD stuckness on drbdadm secondary when there was more
 than one Volume.
