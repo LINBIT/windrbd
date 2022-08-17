@@ -302,3 +302,4 @@ Version history
  * 1.0.1 (Feb 17, 2022): No timeout for user mode helpers, minor JSON fix
  * 1.0.2 (Mar 28, 2022): Do not fill log file when drbdadm status is run periodically.
  * 1.1.0-rc1 (May 20, 2022): Secure boot, fix most HLK test failures, updated cygwin binaries
+ * 1.1.0-rc2 (Aug 17, 2022): Some fixes, improve sync source speed
