@@ -131,6 +131,11 @@ Use windrbd-install-signed.SED.in to build package (will take drbd.sys and
 
 Make releases
 -------------
+Update: Driver signing has changed. We use Microsoft partner
+center and HLK Studio to obtain a Microsoft signature, this
+makes WinDRBD also load on SecureBoot systems. So most of
+the following can be ignored.
+
 Update: can now be built with Windows 10 physical machine, which
 makes everything much more easy.
 
