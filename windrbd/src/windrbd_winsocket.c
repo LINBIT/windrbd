@@ -1457,6 +1457,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	int ret;
 	LONG_PTR timeout, remaining_time;
 
+printk("about to receive %d bytes on socket %p\n", len, socket);
 	if (KeGetCurrentIrql() == PASSIVE_LEVEL) {
 		if (!socket->have_printed_status) {
 			if (!socket->receiver_cache_enabled)
