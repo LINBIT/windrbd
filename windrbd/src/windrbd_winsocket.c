@@ -85,6 +85,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 
 static void terminate_receive_thread(struct socket *socket)
 {
+printk("About to terminate receive thread for socket %p\n", socket);
 	if (socket->receive_thread_should_run) {
 		socket->receive_thread_should_run = false;
 		wake_up(&socket->buffer_available);
@@ -1574,6 +1575,7 @@ static int socket_receive_thread(void *p)
 	int err;
 	KIRQL flags;
 
+printk("Receiver thread started for socket %p.\n", s);
 	while (1) {
 		wait_event(s->buffer_available, 
 			!s->receive_thread_should_run ||
@@ -1628,7 +1630,7 @@ static int socket_receive_thread(void *p)
 	wake_up(&s->data_available);
 	kref_put(&s->kref, sock_really_free);
 //	complete(&s->receiver_thread_completion);
-// printk("terminating socket_receive_thread %p\n", current);
+printk("terminating socket_receive_thread %p (socket is %p)\n", current, s);
 	return 0;
 }
 
@@ -1839,7 +1841,7 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 				 */
 		kref_get(&socket->kref);
 
-// printk("About to start receive_cache for socket %p...\n", socket);
+printk("About to start receive_cache for socket %p...\n", socket);
 		kthread_run(socket_receive_thread, socket, "receive_cache");
 	}
 
