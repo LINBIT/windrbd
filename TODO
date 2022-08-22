@@ -56,6 +56,11 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 		down does not work.
 	Fixed drbdadm down, hopefully also negotiation hang ..
 		(at least when there are 2 nodes in negotiating ...)
+	Didn't work out, try something else.
+
+TODO: Bug: drbdadm adjust should not detach / attach unless necessary
+
+TODO: Bug: drbdadm down takes 10 seconds break when it is the last node
 
 TODOs for after Release 1.1 ----------------------------------------
 
