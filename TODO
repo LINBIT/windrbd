@@ -50,6 +50,8 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 	Fixed silly printk bug
 	Probably found the bug: real disk state is Consistent but this
 		is not used when testing for Negotiating ...
+	Sanitize state is setting peer disk state back to D_UNKNOWN.
+		Should be fixed (also for DISKLESS).
 
 TODOs for after Release 1.1 ----------------------------------------
 
