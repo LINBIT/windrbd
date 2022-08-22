@@ -44,6 +44,7 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 		did not work.
 	Researching ...
 	Found a spin_lock bug (sometimes using invalid IRQL on restore)
+	Spinlock bug fixed.
 
 TODOs for after Release 1.1 ----------------------------------------
 
