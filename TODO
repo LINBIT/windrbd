@@ -48,6 +48,8 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 	Looks like peer disk state remains in DUnknown (drbdadm status
 	shows nothing).
 	Fixed silly printk bug
+	Probably found the bug: real disk state is Consistent but this
+		is not used when testing for Negotiating ...
 
 TODOs for after Release 1.1 ----------------------------------------
 
