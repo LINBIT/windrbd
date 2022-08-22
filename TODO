@@ -47,6 +47,7 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 	Spinlock bug fixed.
 	Looks like peer disk state remains in DUnknown (drbdadm status
 	shows nothing).
+	Fixed silly printk bug
 
 TODOs for after Release 1.1 ----------------------------------------
 
