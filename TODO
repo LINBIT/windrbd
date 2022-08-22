@@ -54,6 +54,8 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 		Should be fixed (also for DISKLESS).
 	looks good so far, no Negotiating hangs, however drbdadm
 		down does not work.
+	Fixed drbdadm down, hopefully also negotiation hang ..
+		(at least when there are 2 nodes in negotiating ...)
 
 TODOs for after Release 1.1 ----------------------------------------
 
