@@ -45,6 +45,8 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 	Researching ...
 	Found a spin_lock bug (sometimes using invalid IRQL on restore)
 	Spinlock bug fixed.
+	Looks like peer disk state remains in DUnknown (drbdadm status
+	shows nothing).
 
 TODOs for after Release 1.1 ----------------------------------------
 
