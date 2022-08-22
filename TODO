@@ -52,6 +52,8 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 		is not used when testing for Negotiating ...
 	Sanitize state is setting peer disk state back to D_UNKNOWN.
 		Should be fixed (also for DISKLESS).
+	looks good so far, no Negotiating hangs, however drbdadm
+		down does not work.
 
 TODOs for after Release 1.1 ----------------------------------------
 
