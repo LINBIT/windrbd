@@ -58,6 +58,7 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 		(at least when there are 2 nodes in negotiating ...)
 	Didn't work out, try something else.
 	continuing in loop when connected and d_unknown.
+	Didn't help more research now.
 
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
