@@ -62,6 +62,7 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 	more research
 	fixed a bug
 	trying something else
+	still trying
 
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 

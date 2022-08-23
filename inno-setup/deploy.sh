@@ -11,3 +11,4 @@ shift
 
 parallel scp ./$FILE Administrator@{}: ::: $*
 parallel ssh Administrator@{} "./$FILE /verysilent /norestart" ::: $*
+parallel ssh Administrator@{} "drbdadm --version" ::: $*
