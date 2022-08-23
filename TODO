@@ -61,6 +61,7 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 	Didn't help more research now.
 	more research
 	fixed a bug
+	trying something else
 
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
