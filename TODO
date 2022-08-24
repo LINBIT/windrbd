@@ -64,6 +64,7 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 	trying something else
 	still trying
 	xxx
+	looks like state is not always sent. Debugging w_after_state_change now ...
 
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
