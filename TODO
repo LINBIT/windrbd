@@ -65,6 +65,8 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 	still trying
 	xxx
 	looks like state is not always sent. Debugging w_after_state_change now ...
+	state sent but pdisk (on node 3) does not transist from Diskless to Negotiating.
+		(race?)
 
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
