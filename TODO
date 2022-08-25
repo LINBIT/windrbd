@@ -70,6 +70,8 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 	peer disk state of node 1 on node 3 is Diskless .. should be Negotiating.
 	researching why change_cluster_wide_state() isn't run on drbdadm attach
 	do_change_disk() (or so) returns false ...
+	looks like a bug (agreed_protocol_version probably not decided yet
+		for first connection).
 
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
