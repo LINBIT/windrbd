@@ -1,0 +1,74 @@
+From fac8b22687457700b36b9c02189b068546a3c257 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 25 Aug 2022 16:36:01 +0200
+Subject: [PATCH 1/2] Use only one spin lock flag in receive_state.
+
+begin/end state change lock the req_lock, this is in one code
+path unlocked by a spin_unlock_irqrestore(), which used to
+have a different flag parameter (with probably wrong content).
+As a result IRQL may stay high (DISPATCH_LEVEL == 2) at the
+exit of receive_state leading to a (very rare) blue screen.
+
+This should be fixed now.
+---
+ drbd/drbd_receiver.c | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/drbd/drbd_receiver.c b/drbd/drbd_receiver.c
+index 53eef53..d1eb5ae 100644
+--- a/drbd/drbd_receiver.c
++++ b/drbd/drbd_receiver.c
+@@ -7221,7 +7221,6 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
+ 	enum drbd_repl_state new_repl_state;
+ 	bool peer_was_resync_target;
+ 	enum chg_state_flags begin_state_chg_flags = CS_VERBOSE | CS_WAIT_COMPLETE;
+-	KIRQL irq_flags;
+ 	int rv;
+ 
+ 	if (pi->vnr != -1) {
+@@ -7243,9 +7242,9 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
+ 
+ 	if (pi->vnr == -1) {
+ 		if (peer_state.role == R_SECONDARY) {
+-			begin_state_change(resource, &irq_flags, CS_HARD | CS_VERBOSE);
++			begin_state_change(resource, &spin_lock_irq_flags, CS_HARD | CS_VERBOSE);
+ 			__change_peer_role(connection, R_SECONDARY);
+-			rv = end_state_change(resource, &irq_flags);
++			rv = end_state_change(resource, &spin_lock_irq_flags);
+ 			if (rv < SS_SUCCESS)
+ 				goto fail;
+ 		}
+@@ -7450,10 +7449,10 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
+ 		drbd_err(peer_device, "Aborting Connect, can not thaw IO with an only Consistent peer\n");
+ 		tl_walk(connection, CONNECTION_LOST_WHILE_PENDING);
+ 		drbd_uuid_new_current(device, false);
+-		begin_state_change(resource, &irq_flags, CS_HARD);
++		begin_state_change(resource, &spin_lock_irq_flags, CS_HARD);
+ 		__change_cstate(connection, C_PROTOCOL_ERROR);
+ 		__change_io_susp_user(resource, false);
+-		end_state_change(resource, &irq_flags);
++		end_state_change(resource, &spin_lock_irq_flags);
+ 		return -EIO;
+ 	}
+ 
+@@ -7480,7 +7479,7 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
+ 		}
+ 	}
+ 
+-	begin_state_change(resource, &irq_flags, begin_state_chg_flags);
++	begin_state_change(resource, &spin_lock_irq_flags, begin_state_chg_flags);
+ 	if (old_peer_state.i != drbd_get_peer_device_state(peer_device, NOW).i) {
+ 		old_peer_state = drbd_get_peer_device_state(peer_device, NOW);
+ 		abort_state_change_locked(resource);
+@@ -7501,7 +7500,7 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
+ 	if (repl_state[OLD] < L_ESTABLISHED && repl_state[NEW] >= L_ESTABLISHED)
+ 		resource->state_change_flags |= CS_HARD;
+ 
+-	rv = end_state_change(resource, &irq_flags);
++	rv = end_state_change(resource, &spin_lock_irq_flags);
+ 	new_repl_state = peer_device->repl_state[NOW];
+ 
+ 	if (rv < SS_SUCCESS)
+-- 
+2.17.0
+
