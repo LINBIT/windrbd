@@ -72,6 +72,8 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 	do_change_disk() (or so) returns false ...
 	looks like a bug (agreed_protocol_version probably not decided yet
 		for first connection).
+	Yes, fixed it. Double check if the fix works and submit upstream
+	to DRBD (9.0 / 9.1 / 9.2).
 
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
