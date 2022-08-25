@@ -5,6 +5,9 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.1.0-rc3
+---------------------------
+
 Fix a DRBD issue that causes a resource to be stucked in Negoiating
 on attach when there were 3 nodes.
 

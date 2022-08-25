@@ -38,43 +38,6 @@ Real: February 2 2022
 
 TODOs for after Release 1.0 ----------------------------------------
 
-TODO: Bug: On three diskful nodes hangs in Negotiating
-
-	Trying with consistent now...
-		did not work.
-	Researching ...
-	Found a spin_lock bug (sometimes using invalid IRQL on restore)
-	Spinlock bug fixed.
-	Looks like peer disk state remains in DUnknown (drbdadm status
-	shows nothing).
-	Fixed silly printk bug
-	Probably found the bug: real disk state is Consistent but this
-		is not used when testing for Negotiating ...
-	Sanitize state is setting peer disk state back to D_UNKNOWN.
-		Should be fixed (also for DISKLESS).
-	looks good so far, no Negotiating hangs, however drbdadm
-		down does not work.
-	Fixed drbdadm down, hopefully also negotiation hang ..
-		(at least when there are 2 nodes in negotiating ...)
-	Didn't work out, try something else.
-	continuing in loop when connected and d_unknown.
-	Didn't help more research now.
-	more research
-	fixed a bug
-	trying something else
-	still trying
-	xxx
-	looks like state is not always sent. Debugging w_after_state_change now ...
-	state sent but pdisk (on node 3) does not transist from Diskless to Negotiating.
-		(race?)
-	peer disk state of node 1 on node 3 is Diskless .. should be Negotiating.
-	researching why change_cluster_wide_state() isn't run on drbdadm attach
-	do_change_disk() (or so) returns false ...
-	looks like a bug (agreed_protocol_version probably not decided yet
-		for first connection).
-	Yes, fixed it. Double check if the fix works and submit upstream
-	to DRBD (9.0 / 9.1 / 9.2).
-
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
 TODO: Bug: drbdadm down takes 10 seconds break when it is the last node
@@ -8245,4 +8208,42 @@ Done: Installer: Disable Windows can't verify the publisher of this driver softw
 
 	Checking if updating WinDRBD works on Server 2019 machine
 	(Virtual Bus Device was installed twice).
+
+TODO: Bug: On three diskful nodes hangs in Negotiating
+
+	Trying with consistent now...
+		did not work.
+	Researching ...
+	Found a spin_lock bug (sometimes using invalid IRQL on restore)
+	Spinlock bug fixed.
+	Looks like peer disk state remains in DUnknown (drbdadm status
+	shows nothing).
+	Fixed silly printk bug
+	Probably found the bug: real disk state is Consistent but this
+		is not used when testing for Negotiating ...
+	Sanitize state is setting peer disk state back to D_UNKNOWN.
+		Should be fixed (also for DISKLESS).
+	looks good so far, no Negotiating hangs, however drbdadm
+		down does not work.
+	Fixed drbdadm down, hopefully also negotiation hang ..
+		(at least when there are 2 nodes in negotiating ...)
+	Didn't work out, try something else.
+	continuing in loop when connected and d_unknown.
+	Didn't help more research now.
+	more research
+	fixed a bug
+	trying something else
+	still trying
+	xxx
+	looks like state is not always sent. Debugging w_after_state_change now ...
+	state sent but pdisk (on node 3) does not transist from Diskless to Negotiating.
+		(race?)
+	peer disk state of node 1 on node 3 is Diskless .. should be Negotiating.
+	researching why change_cluster_wide_state() isn't run on drbdadm attach
+	do_change_disk() (or so) returns false ...
+	looks like a bug (agreed_protocol_version probably not decided yet
+		for first connection).
+	Yes, fixed it. Double check if the fix works and submit upstream
+	to DRBD (9.0 / 9.1 / 9.2).
+	Fixed in upcoming 1.1.0-rc3
 
