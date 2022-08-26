@@ -7605,6 +7605,29 @@ Duplicate: Performance: Retry disable NDIS lightweight filter
 
 	We still have the 90 seconds boot delay.
 
+	Three solutions for 90 seconds delay:
+
+	1) Registry "hack": 
+	    set Psched, ndiscap and wfplwfs to boot start(start=0),  or add BootFlags=1 to all these three services key.
+	    then reboot , the 90 seconds delay will disappear;
+
+	2) Compile bindview( it's somewhere under the wdk 7600.16385.1 source sample directory ),
+	    run it, and select "All Services" in the combox which at the top-middle of the bind view window,
+	    then we will see "QOS packet schduler","ndis light cap...","wfp light cap..." in the listbox,  right click on these
+	    list items, then unbind  them from all ethernet NICs;
+
+	3) use bindview to uninstall "QOS packet schduler","ndis light cap..." and "wfp light cap..." (by click uninstall button).
+
+
+	1) is best, because 2) and 3) is more "hack" than 1);
+
+	If all of these not working, we can figure it out by windbg:
+	setup windows kernel debugger properly, then boot windows using windrdb, 
+	when windows first break to windbg, exec "bp ndis!NdisFRegisterFilterDriver"
+	in windbg command inputbox, then use "g" command let Windows continue bootup, 
+	every time the breakpoint hits, use "k" to see callstack, and remember the driver name of caller, 
+	then exec "g" command again......
+	after windows boot done,  set all these drivers to boot start(start=0), or add BootFlags=1.
 
 Rejected: Bug: Partition manager hangs when there is a resource without size.
 
