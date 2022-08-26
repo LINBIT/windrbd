@@ -1,7 +1,7 @@
-From 412d3643ad6325a49dfda5ac6f959d3a45d29d29 Mon Sep 17 00:00:00 2001
+From c9f1c04d9d6d4b9b893e49ddb409ba8954f83bf8 Mon Sep 17 00:00:00 2001
 From: Johannes Thoma <johannes@johannesthoma.com>
 Date: Thu, 25 Aug 2022 16:47:14 +0200
-Subject: [PATCH 2/2] Check all connections for two phase commit support in
+Subject: [PATCH] drbd: Check all connections for two phase commit support in
  do_change_disk_state()
 
 Before this commit only the first connection was checked for supporting
@@ -27,67 +27,38 @@ the node's disk state was stuck in Negotiating forever.
 Note that this issue only arised when there were more than
 two diskful nodes.
 
-This commit searches all connection for (at least) one
-connection that supports two phase commit. It fixes the
-Negotiating stuckness we observed when experimenting with
-WinDRBD and LINSTOR for Windows (which - wrongly - does
-detach / attach on every drbdadm adjust, this will be fixed
-in an extra commit).
+This commit uses the existing supports_two_phase_commit()
+function to check if two phase commit is supported on the
+resource. This function checks first if a connection is
+fully established and the looks on the agreed protocol
+version.
+
+This commit fixes the Negotiating stuckness we observed
+when experimenting with WinDRBD and LINSTOR for Windows
+(which - wrongly - does detach / attach on every drbdadm
+adjust, this will be fixed in an extra commit).
 
 Signed-off-by: Johannes Thoma <johannes@johannesthoma.com>
 ---
- drbd/drbd_state.c | 17 +++++++++++------
- 1 file changed, 11 insertions(+), 6 deletions(-)
+ drbd/drbd_state.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
 diff --git a/drbd/drbd_state.c b/drbd/drbd_state.c
-index 205a562..4683f82 100644
+index e5b48572f..c75ae5597 100644
 --- a/drbd/drbd_state.c
 +++ b/drbd/drbd_state.c
-@@ -5117,11 +5117,14 @@ static bool device_has_connected_peer_devices(struct drbd_device *device)
- 	return false;
- }
- 
--static bool device_has_peer_devices_with_disk(struct drbd_device *device)
-+static bool device_has_peer_devices_with_disk(struct drbd_device *device, bool *supports_twopc)
- {
- 	struct drbd_peer_device *peer_device;
- 	bool rv = false;
- 
-+	if (supports_twopc)
-+		*supports_twopc = false;
-+
- 	for_each_peer_device(peer_device, device) {
- 		if (peer_device->connection->cstate[NOW] == C_CONNECTED) {
- 			/* We expect to receive up-to-date UUIDs soon.
-@@ -5132,6 +5135,10 @@ static bool device_has_peer_devices_with_disk(struct drbd_device *device)
- 			    peer_device->disk_state[NOW] != D_UNKNOWN)
- 				rv = true;
- 		}
-+
-+		if (supports_twopc &&
-+                    peer_device->connection->agreed_pro_version >= 110)
-+			*supports_twopc = true;
- 	}
- 
- 	return rv;
-@@ -5203,14 +5210,12 @@ static bool do_change_disk_state(struct change_context *context, enum change_pha
- 	struct drbd_device *device =
- 		container_of(context, struct change_disk_state_context, context)->device;
- 	bool cluster_wide_state_change = false;
-+	bool supports_twopc;
- 
+@@ -5240,10 +5240,8 @@ static bool do_change_disk_state(struct change_context *context, enum change_pha
  	if (device->disk_state[NOW] == D_ATTACHING &&
  	    context->val.disk == D_NEGOTIATING) {
--		if (device_has_peer_devices_with_disk(device)) {
+ 		if (device_has_peer_devices_with_disk(device)) {
 -			struct drbd_connection *connection =
 -				first_connection(device->resource);
--			cluster_wide_state_change =
+ 			cluster_wide_state_change =
 -				connection && connection->agreed_pro_version >= 110;
-+		if (device_has_peer_devices_with_disk(device, &supports_twopc)) {
-+			cluster_wide_state_change = supports_twopc;
++				supports_two_phase_commit(device->resource);
  		} else {
  			/* very last part of attach */
  			context->val.disk = disk_state_from_md(device);
 -- 
-2.17.0
+2.17.1
 
