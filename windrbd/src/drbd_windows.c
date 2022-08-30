@@ -1749,6 +1749,8 @@ NTSTATUS DrbdIoCompletion(
 
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
+printk("*** Forcing I/O to succeed ***\n");
+status = STATUS_SUCCESS;
 	}
 
 	if (test_inject_faults(&bio->bi_bdev->inject_on_completion, "assuming completion routine was send an error (enabled for this device)"))
