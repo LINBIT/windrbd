@@ -2851,12 +2851,14 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
 
+#if 0
 	if (check_if_backingdev_contains_filesystem(block_device)) {
 		printk(KERN_ERR "Backing device contains filesystem, refusing to use it.\n");
 		printk(KERN_INFO "You may want to do something like windrbd hide-filesystem <drive-letter-of-backing-dev>\n");
 		err = -EINVAL;
 		goto out_get_volsize_error;
 	}
+#endif
 
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
