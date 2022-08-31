@@ -3281,13 +3281,14 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 dbg("srb->DataBuffer is %p MmGetMdlVirtualAddress(irp->MdlAddress)) is %p MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority) is %p\n", srb->DataBuffer, MmGetMdlVirtualAddress(irp->MdlAddress), MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority));
 
+/*
 if (srb->DataBuffer == NULL) {
 printk("Warning: srb->DataBuffer is NULL we now abort this request.\n");
 status = STATUS_INSUFFICIENT_RESOURCES;
 irp->IoStatus.Information = 0;
 break;
 }
-
+*/
 
 			if ((((PUCHAR)srb->DataBuffer - (PUCHAR)MmGetMdlVirtualAddress(irp->MdlAddress)) + (PUCHAR)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority)) == NULL) {
 				printk("cannot map transfer buffer\n");
