@@ -634,6 +634,8 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		struct _MOUNTDEV_NAME *name = irp->AssociatedIrp.SystemBuffer;
 		int total_length = sizeof(struct _MOUNTDEV_NAME) - sizeof(name->Name) + length + sizeof(name->Name[0]);
 
+dbg("IOCTL_MOUNTDEV_QUERY_DEVICE_NAME path_to_device is %S\n", dev->path_to_device.Buffer);
+
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _MOUNTDEV_NAME) - sizeof(name->Name)) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
@@ -658,6 +660,8 @@ dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		int length = dev->mount_point.Length;
 		struct _MOUNTDEV_SUGGESTED_LINK_NAME *mount_point = irp->AssociatedIrp.SystemBuffer;
 		int total_length = sizeof(struct _MOUNTDEV_SUGGESTED_LINK_NAME) - sizeof(mount_point->Name) + length + sizeof(mount_point->Name[0]);
+
+dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_point.Buffer);
 
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _MOUNTDEV_SUGGESTED_LINK_NAME) - sizeof(mount_point->Name)) {
 			status = STATUS_BUFFER_TOO_SMALL;
