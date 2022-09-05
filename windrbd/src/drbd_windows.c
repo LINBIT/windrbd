@@ -1787,6 +1787,21 @@ status = STATUS_SUCCESS;
 			patch_boot_sector(buffer, 1, 0);
 		}
 	}
+
+if (stack_location->MajorFunction == IRP_MJ_READ) {
+	int i;
+	int page_offset;
+
+	for (i=0;i<bio->bi_vcnt;i++) {
+		for (page_offset=bio->bi_io_vec[i].bv_offset;page_offset < bio->bi_io_vec[i].bv_len;page_offset+=512) {
+			if (is_filesystem(((char*)bio->bi_io_vec[i].bv_page->addr)+page_offset)) {
+printk("*** NTFS signature found ***\n");
+printk("i is %d page_offset is %d bio->bi_iter.bi_sector is %lld\n", i, page_offset, bio->bi_iter.bi_sector);
+			}
+		}
+	}
+}
+
 	int num_completed, device_failed;
 
 	spin_lock_irqsave(&bio->device_failed_lock, flags);
