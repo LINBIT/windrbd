@@ -3170,44 +3170,39 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 
 	remove_dos_link(bdev);
 
-	if (bdev->is_disk_device && !windrbd_has_mount_point(bdev)) {
-		LARGE_INTEGER timeout;
-		NTSTATUS status;
-		dbg("Requesting eject of Windows device minor %d\n", bdev->drbd_device->minor);
-		IoRequestDeviceEject(bdev->windows_device);
-		dbg("Eject returned minor %d\n", bdev->drbd_device->minor);
+	LARGE_INTEGER timeout;
+	NTSTATUS status;
+	dbg("Requesting eject of Windows device minor %d\n", bdev->drbd_device->minor);
+	IoRequestDeviceEject(bdev->windows_device);
+	dbg("Eject returned minor %d\n", bdev->drbd_device->minor);
 
-		timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
-		status = KeWaitForSingleObject(&bdev->device_ejected_event, Executive, KernelMode, FALSE, &timeout);
-		if (status == STATUS_TIMEOUT)
-			printk("Warning: no eject event after 10 seconds, giving up.\n");
+	timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
+	status = KeWaitForSingleObject(&bdev->device_ejected_event, Executive, KernelMode, FALSE, &timeout);
+	if (status == STATUS_TIMEOUT)
+		printk("Warning: no eject event after 10 seconds, giving up.\n");
 
-		dbg("Device ejected minor %d\n", bdev->drbd_device->minor);
-		if (windrbd_rescan_bus() < 0) {
+	dbg("Device ejected minor %d\n", bdev->drbd_device->minor);
+	if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
-			printk("PnP did not work, removing device manually.\n");
-			IoDeleteDevice(bdev->windows_device);
-		} else {
-			dbg("waiting for device being removed via IRP_MN_REMOVE_DEVICE minor %d\n", bdev->drbd_device->minor);
-			timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
-			KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, &timeout);
-			if (status == STATUS_TIMEOUT)
-				printk("Warning: no IRP_MN_REMOVE_DEVICE received after 10 seconds, giving up.\n");
-
-			dbg("finished. minor %d now waiting for bus device to report device as missing\n", bdev->drbd_device->minor);
-
-			timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
-			KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, &timeout);
-			if (status == STATUS_TIMEOUT)
-				printk("Warning: no reiteration of bus device after 10 seconds, giving up.\n");
-			dbg("Excellent we are almost gone .. now really deleting the device ...\n");
-			IoDeleteDevice(bdev->windows_device);
-			dbg("Done.\n");
-		}
-	} else {
-		printk("Not a PnP object, removing device manually.\n");
+		printk("PnP did not work, removing device manually.\n");
 		IoDeleteDevice(bdev->windows_device);
+	} else {
+		dbg("waiting for device being removed via IRP_MN_REMOVE_DEVICE minor %d\n", bdev->drbd_device->minor);
+		timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
+		KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, &timeout);
+		if (status == STATUS_TIMEOUT)
+			printk("Warning: no IRP_MN_REMOVE_DEVICE received after 10 seconds, giving up.\n");
+
+		dbg("finished. minor %d now waiting for bus device to report device as missing\n", bdev->drbd_device->minor);
+
+		timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
+		KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, &timeout);
+		if (status == STATUS_TIMEOUT)
+			printk("Warning: no reiteration of bus device after 10 seconds, giving up.\n");
+		dbg("Excellent we are almost gone .. now really deleting the device ...\n");
+		IoDeleteDevice(bdev->windows_device);
+		dbg("Done.\n");
 	}
 	bdev->windows_device = NULL;
 }
@@ -3554,13 +3549,6 @@ int windrbd_mount(struct block_device *dev)
 		return 0;	/* this is legal */
 	}
 
-#if 0
-	if (dev->is_disk_device) {
-		printk("This is a DISK device, mounting will be done for partitions via partition manager.\n");
-		return 0;	/* this is also legal */
-	}
-#endif
-
 /*
 	status = IoCreateSymbolicLink(&dev->mount_point, &dev->path_to_device);
 	if (status != STATUS_SUCCESS) {
@@ -3660,9 +3648,7 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 			 * properly start the device else races may happen
 			 * (drbdadm secondary might BSOD).
 			 */
-		if (device->this_bdev->mount_point.Buffer == NULL) {
-			KeWaitForSingleObject(&device->this_bdev->device_started_event, Executive, KernelMode, FALSE, NULL);
-		}
+		KeWaitForSingleObject(&device->this_bdev->device_started_event, Executive, KernelMode, FALSE, NULL);
 	}
 	KeSetEvent(&device->this_bdev->primary_event, 0, FALSE);
 

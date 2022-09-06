@@ -1996,7 +1996,7 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 
 	for_each_resource(resource, &drbd_resources) {
 		idr_for_each_entry(&resource->devices, drbd_device, vnr) {
-			if (drbd_device && drbd_device->this_bdev && !drbd_device->this_bdev->delete_pending && drbd_device->this_bdev->windows_device != NULL && drbd_device->this_bdev->is_disk_device && !windrbd_has_mount_point(drbd_device->this_bdev) && !drbd_device->this_bdev->ejected) {
+			if (drbd_device && drbd_device->this_bdev && !drbd_device->this_bdev->delete_pending && drbd_device->this_bdev->windows_device != NULL && drbd_device->this_bdev->is_disk_device && !drbd_device->this_bdev->ejected) {
 				if (count < max && array != NULL) {
 					array[count] = drbd_device->this_bdev->windows_device;
 					ObReferenceObject(drbd_device->this_bdev->windows_device);
@@ -2572,7 +2572,7 @@ dbg("Returned string is %S\n", string);
 		 * Update: we get a PNP BSOD on drbdadm down ...
 		 */
 
-			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev) || bdev->about_to_delete || bdev->ejected) {
+			if (bdev == NULL || !bdev->is_disk_device || bdev->about_to_delete || bdev->ejected) {
 				if (bdev == NULL) {
 					dbg("1 bdev is NULL not doing anything.\n");
 				} else {
