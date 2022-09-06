@@ -1749,8 +1749,10 @@ NTSTATUS DrbdIoCompletion(
 
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
+#if 0
 printk("*** Forcing I/O to succeed ***\n");
 status = STATUS_SUCCESS;
+#endif
 	}
 
 	if (test_inject_faults(&bio->bi_bdev->inject_on_completion, "assuming completion routine was send an error (enabled for this device)"))
@@ -1788,6 +1790,7 @@ status = STATUS_SUCCESS;
 		}
 	}
 
+#if 0
 if (stack_location->MajorFunction == IRP_MJ_READ) {
 	int i;
 	int page_offset;
@@ -1801,6 +1804,7 @@ printk("i is %d page_offset is %d bio->bi_iter.bi_sector is %lld\n", i, page_off
 		}
 	}
 }
+#endif
 
 	int num_completed, device_failed;
 
@@ -2868,14 +2872,12 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
 
-#if 0
 	if (check_if_backingdev_contains_filesystem(block_device)) {
 		printk(KERN_ERR "Backing device contains filesystem, refusing to use it.\n");
 		printk(KERN_INFO "You may want to do something like windrbd hide-filesystem <drive-letter-of-backing-dev>\n");
 		err = -EINVAL;
 		goto out_get_volsize_error;
 	}
-#endif
 
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
