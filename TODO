@@ -8209,7 +8209,7 @@ Done: Installer: Disable Windows can't verify the publisher of this driver softw
 	Checking if updating WinDRBD works on Server 2019 machine
 	(Virtual Bus Device was installed twice).
 
-TODO: Bug: On three diskful nodes hangs in Negotiating
+Done: Bug: On three diskful nodes hangs in Negotiating
 
 	Trying with consistent now...
 		did not work.
@@ -8246,4 +8246,31 @@ TODO: Bug: On three diskful nodes hangs in Negotiating
 	Yes, fixed it. Double check if the fix works and submit upstream
 	to DRBD (9.0 / 9.1 / 9.2).
 	Fixed in upcoming 1.1.0-rc3
+
+Done: Bug: Fix data corruption for existing disks > 1200GB
+        Reported by chitvan
+
+        When disabling NTFS <-> DRBD patch mechanism:
+                1200GB: can see partition on disk (/cygdrive/i exists)
+                1400GB: can NOT see partition on disk, unclear why
+                        (there are some locking errors reported ...?)
+        Try with new images if this behaviour persists.
+
+        Idea: copy image to Linux and try if corruption still happens
+        with 1400GB. Idea is that some NTFS sectors cannot be properly
+        accessed on Windows NTFS and therefore NTFS is not recognized.
+
+        Also try to: reload / set offline / set offline and reboot
+        after backing device has been patched.
+
+        Also need to patch boot sector copy?
+
+        ReFS?
+
+        Tried block device interface and it seems to cache the
+        drive letter (when switching back suddenly NTFS gets
+        mounted ...)
+
+	Assigning a drive letter to DRBD (disk) device works.
+	Need to have that documented (blog?)
 
