@@ -3575,10 +3575,6 @@ int windrbd_umount(struct block_device *bdev)
 	HANDLE f;
 	IO_STATUS_BLOCK iostat;
 	NTSTATUS status;
-/*	PKEVENT event;
-	HANDLE event_handle;
-	UNICODE_STRING notification_event_name;
-*/
 
 	if (bdev->mount_point.Buffer == NULL) {
 		dbg("windrbd_umount() called without a known mount_point.\n");
@@ -3591,19 +3587,11 @@ int windrbd_umount(struct block_device *bdev)
 	}
 	InitializeObjectAttributes(&attr, &bdev->mount_point, OBJ_KERNEL_HANDLE, NULL, NULL);
 
-/*
-	RtlInitUnicodeString(&notification_event_name, L"noname");
-	event = IoCreateNotificationEvent(&notification_event_name, &event_handle);
-	if (event == NULL) {
-		printk("IoCreateNotificationEvent failed.\n");
-		return -1;
-	}
-*/
 		/* If we are in drbd_create_device() failure path, do
 		 * not open the DRBD device, it is already freed.
 		 */
 
-	status = ZwOpenFile(&f, GENERIC_READ, &attr, &iostat, FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
+	status = ZwOpenFile(&f, GENERIC_READ, &attr, &iostat, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
 	if (status != STATUS_SUCCESS) {
 		printk("ZwOpenFile failed, status is %x\n", status);
 		return -1;
@@ -3616,11 +3604,7 @@ int windrbd_umount(struct block_device *bdev)
 	}
 
 	status = ZwFsControlFile(f, NULL, NULL, NULL, &iostat, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0);
-	if (status == STATUS_PENDING) {
-		KeWaitForSingleObject(f, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
-		status = iostat.Status;
-	}
-//	ZwClose(event_handle);
+
 	if (status != STATUS_SUCCESS) {
 		printk("ZwFsControlFile failed, status is %x\n", status);
 		ZwClose(f);
