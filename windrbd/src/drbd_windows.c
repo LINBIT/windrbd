@@ -2011,6 +2011,8 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 		return -EIO;
 
 	atomic_inc(&bio->bi_bdev->num_irps_pending);
+	part_stat_add(bio->bi_bdev, sectors[io == IRP_MJ_READ ? STAT_READ : STAT_WRITE], the_size / 512);
+
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */

@@ -73,6 +73,8 @@
 #include "tiktok.h"
 #include <ctype.h>
 
+#include <linux/part_stat.h>
+
 void init_windrbd(void);
 void msleep(int ms);
 
@@ -493,8 +495,8 @@ struct gendisk
 	int minors;
 	const struct block_device_operations *fops;
 	void *private_data;
-	void * part0; 
-	struct block_device *bdev;
+	struct block_device *part0;
+	struct block_device *bdev;	/* deprecated, use part0 instead. */
 };
 
 struct fault_injection {
@@ -525,6 +527,8 @@ struct block_device {
 	unsigned int bd_block_size;	/* Size of one sector (?) */
 	unsigned long long d_size;
 	struct kref kref;
+
+	struct disk_stats bd_stats;
 
 	int minor;	/* in case drbd_device is still NULL we need to shadow it here */
 	struct drbd_device *drbd_device;
