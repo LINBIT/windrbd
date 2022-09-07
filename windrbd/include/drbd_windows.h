@@ -1438,6 +1438,7 @@ struct in_addr;
 
 int my_inet_aton(const char *cp, struct in_addr *inp);
 char *my_inet_ntoa(struct in_addr *addr);
+/* TODO: this doesn't work on ARM (and other big endian architectures) */
 /* ugh ... */
 #define htons(x) ((((x) & 0xff) << 8) | (((x) & 0xff00) >> 8))
 

@@ -2565,8 +2565,6 @@ dbg("Returned string is %S\n", string);
 		 * else there are driver verifier blue screens.
 		 */
 
-//			if (bdev == NULL || !bdev->is_disk_device || windrbd_has_mount_point(bdev) || !bdev->is_bootdevice) {
-
 		/* TODO: we commented this out for HLK test see if it is
 		 * needed (we don't support block device interface any more).
 		 * Update: we get a PNP BSOD on drbdadm down ...
@@ -2576,14 +2574,14 @@ dbg("Returned string is %S\n", string);
 				if (bdev == NULL) {
 					dbg("1 bdev is NULL not doing anything.\n");
 				} else {
-					dbg("Reasons: !bdev->is_disk_device %d windrbd_has_mount_point(bdev) %d bdev->about_to_delete %d bdev->ejected %d\n", !bdev->is_disk_device, windrbd_has_mount_point(bdev), bdev->about_to_delete, bdev->ejected);
-				} 
+					dbg("Reasons: !bdev->is_disk_device %d bdev->about_to_delete %d bdev->ejected %d\n", !bdev->is_disk_device, bdev->about_to_delete, bdev->ejected);
+				}
 
 /* Do not change the status field. Driver verifier complains */
 //				status = STATUS_NOT_IMPLEMENTED;
 				status = irp->IoStatus.Status;
 				break;
-			} 
+			}
 
 		/* TODO: There is a race .. bdev->windows_device might get deleted
 		 * here.
@@ -3282,17 +3280,6 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				irp->IoStatus.Information = 0;
 				break;
 			}
-
-dbg("srb->DataBuffer is %p MmGetMdlVirtualAddress(irp->MdlAddress)) is %p MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority) is %p\n", srb->DataBuffer, MmGetMdlVirtualAddress(irp->MdlAddress), MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority));
-
-/*
-if (srb->DataBuffer == NULL) {
-printk("Warning: srb->DataBuffer is NULL we now abort this request.\n");
-status = STATUS_INSUFFICIENT_RESOURCES;
-irp->IoStatus.Information = 0;
-break;
-}
-*/
 
 			if ((((PUCHAR)srb->DataBuffer - (PUCHAR)MmGetMdlVirtualAddress(irp->MdlAddress)) + (PUCHAR)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority)) == NULL) {
 				printk("cannot map transfer buffer\n");

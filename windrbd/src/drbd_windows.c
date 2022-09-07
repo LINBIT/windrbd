@@ -1749,10 +1749,6 @@ NTSTATUS DrbdIoCompletion(
 
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
-#if 0
-printk("*** Forcing I/O to succeed ***\n");
-status = STATUS_SUCCESS;
-#endif
 	}
 
 	if (test_inject_faults(&bio->bi_bdev->inject_on_completion, "assuming completion routine was send an error (enabled for this device)"))
@@ -1789,22 +1785,6 @@ status = STATUS_SUCCESS;
 			patch_boot_sector(buffer, 1, 0);
 		}
 	}
-
-#if 0
-if (stack_location->MajorFunction == IRP_MJ_READ) {
-	int i;
-	int page_offset;
-
-	for (i=0;i<bio->bi_vcnt;i++) {
-		for (page_offset=bio->bi_io_vec[i].bv_offset;page_offset < bio->bi_io_vec[i].bv_len;page_offset+=512) {
-			if (is_filesystem(((char*)bio->bi_io_vec[i].bv_page->addr)+page_offset)) {
-printk("*** NTFS signature found ***\n");
-printk("i is %d page_offset is %d bio->bi_iter.bi_sector is %lld\n", i, page_offset, bio->bi_iter.bi_sector);
-			}
-		}
-	}
-}
-#endif
 
 	int num_completed, device_failed;
 
