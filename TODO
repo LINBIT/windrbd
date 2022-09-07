@@ -42,6 +42,8 @@ TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
 TODO: Bug: drbdadm down takes 10 seconds break when it is the last node
 
+TODO: Bug: cannot control resync rate
+
 TODOs for after Release 1.1 ----------------------------------------
 
 TODO: Code quality: drbdadm down is slow when there are unconnected peers
