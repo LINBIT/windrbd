@@ -1725,6 +1725,7 @@ dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\
 			printk("Warning: dev->io_workqueue is NULL on I/O handler.\n");
 			return -EINVAL;	/* TODO: cleanup */
 		}
+		part_stat_add(dev, sectors[bio_data_dir(bio) == READ ? STAT_READ : STAT_WRITE], this_bio_size / 512);
 		/* drbd_make_request(dev->drbd_device->rq_queue, bio); */
 		struct io_request *ioreq;
 
