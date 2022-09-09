@@ -1,0 +1,25 @@
+From 9e0077fc4c876164ef35cf53816e2fc8db80808d Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 7 Sep 2022 19:40:52 +0200
+Subject: [PATCH] drbd_main: fill out part0 field of struct gendisk.
+
+We need it for device statistics.
+---
+ drbd/drbd_main.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 6b26ae5..24265e9 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3804,6 +3804,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	disk->fops = &drbd_ops;
+ 	sprintf(disk->disk_name, "drbd%d", minor);
+ 	disk->private_data = device;
++	disk->part0 = block_device;
+ 	disk->bdev = block_device;
+ 
+ 	blk_queue_flag_set(QUEUE_FLAG_STABLE_WRITES, disk->queue);
+-- 
+2.17.0
+
