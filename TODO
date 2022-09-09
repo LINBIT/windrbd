@@ -42,11 +42,7 @@ TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
 TODO: Bug: drbdadm down takes 10 seconds break when it is the last node
 
-TODO: Bug: cannot control resync rate
-
 TODOs for after Release 1.1 ----------------------------------------
-
-TODO: Code quality: drbdadm down is slow when there are unconnected peers
 
 TODO: Feature: Remove netlink mutex
 
@@ -71,6 +67,10 @@ TODO: Build System: Have a way to automatically sign drivers.
 	then get confused when a different version is being installed.
 
 TODO: Research: See if Autopromote can be implemented (with disk devices)
+
+	Windows accesses Offline disk devices read-only. So in theory
+	we could allow that (when there are just secondaries) and wait
+	until online and write requests (promote on write requests).
 
 TODO: Code quality: One should not need to create their own keys on building WinDRBD
 
@@ -153,6 +153,11 @@ TODO: Nice to have: Make it build under Windows only
 		Update: compiles but does not link currently
 	TODO: make should build everything under Windows
 
+	Update: we are now trying to make it build under
+	Linux only (with MS build tools under wine). Need
+	to make a wine patch though ... But this saves us
+	from special casing the CI environment.
+
 TODO: Code quality: Undef kmalloc debug.
 
 	Right now we allocate extra 256 bytes for each memory chunk.
@@ -196,8 +201,6 @@ TODO: Code quality: Stop windrbdlog service after unloading driver
 
 	So we see the log messages from the unload.
 
-TODO: Code quality: Remove bio->master_bio logic
-
 TODO: Code quality: Use Event Tracing for event log
 
 	Where we may sleep (see SendTo call in _printk).
@@ -224,10 +227,6 @@ TODO: Bug: Send buffer drains for about 30 seconds
 
 	Reported by Yannis. Connection should be closed even when
 	there is data in the send buffer.
-
-TODO: Code quality: Remove simple write cache code
-
-TODO: Code quality: Remove mount block device code
 
 TODO: Remote boot: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
@@ -397,8 +396,12 @@ TODO: Bug: Out of memory handling in windrbd device is broken (BSOD).
 TODO: Code quality: maybe revert the mountmanager code.
 
 	I am not sure if this is a benefit.
+	Update: it is currently not used and probably should be
+	deleted soon.
 
 TODO: Feature: make debugfs work
+
+TODO: Feature: make TRIM/DISCARD work
 
 TODO: Code quality: Minimize / Sqash patches to DRBD
 
@@ -8275,4 +8278,19 @@ Done: Bug: Fix data corruption for existing disks > 1200GB
 
 	Assigning a drive letter to DRBD (disk) device works.
 	Need to have that documented (blog?)
+
+Done: Bug: cannot control resync rate
+	Should be fixed now by implementing disk stats.
+
+Duplicate: Code quality: drbdadm down is slow when there are unconnected peers
+
+Done: Code quality: Remove bio->master_bio logic
+
+Done: Code quality: Remove simple write cache code
+
+Rejected: Code quality: Remove mount block device code
+
+	We need it for existing NTFS partitions > 1.4TB
+	Maybe remove the mount manager function (we are
+	creating the symlink manually).
 

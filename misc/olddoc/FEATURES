@@ -55,6 +55,8 @@ debugfs
 
 trim / discard
 
+use Windows crypto libs for verify-alg / cram-hmac-alg / ...
+
 Most likely never
 -----------------
 
