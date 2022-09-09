@@ -11,6 +11,18 @@ What's new in version 1.1.0-rc3
 Fix a DRBD issue that causes a resource to be stucked in Negoiating
 on attach when there were 3 nodes.
 
+Workaround for a (possible) Windows bug when reusing data of
+NTFS partitions larger than 1.3TB. (You will have to specify
+a drive letter where to mount the WinDRBD device)
+
+Short timeout of drbdadm defaults to 30 seconds for Windows
+systems.
+
+Implemented disk statistics thereby fixing the resync rate
+controller (setting c-max-rate had no effect before).
+
+Installer: stop and restart LINSTOR satellite if present
+
 What's new in version 1.1.0-rc2
 ---------------------------
 
