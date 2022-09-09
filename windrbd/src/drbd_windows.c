@@ -2814,6 +2814,9 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		err = -ENOMEM;
 		goto out_no_queue;
 	}
+	block_device->bd_disk->part0 = block_device;
+	block_device->bd_disk->bdev = block_device;
+
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
