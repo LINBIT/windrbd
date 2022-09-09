@@ -303,3 +303,4 @@ Version history
  * 1.0.2 (Mar 28, 2022): Do not fill log file when drbdadm status is run periodically.
  * 1.1.0-rc1 (May 20, 2022): Secure boot, fix most HLK test failures, updated cygwin binaries
  * 1.1.0-rc2 (Aug 17, 2022): Some fixes, improve sync source speed
+ * 1.1.0-rc3 (Sep 9, 2022): Fixed c-max-rate, negotiating stuckness, existing NTFS data
