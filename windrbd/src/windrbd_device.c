@@ -2233,8 +2233,8 @@ dbg("Returned string is %S\n", string);
 
 		dbg("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
 
-		switch (s->Parameters.QueryDeviceRelations.Type) {
-		case BusRelations: 
+		switch ((int)s->Parameters.QueryDeviceRelations.Type) {
+		case (int)BusRelations: 
 		{
 			int num_devices;
 			struct _DEVICE_RELATIONS *device_relations;
@@ -2302,7 +2302,7 @@ dbg("Returned string is %S\n", string);
 			return STATUS_SUCCESS;
 		}
 #endif
-		case (enum _DEVICE_RELATION_TYPE)-1:
+		case -1:
 			pass_on = 1;    /* Must not change status field */
 			break;
 
