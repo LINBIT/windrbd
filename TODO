@@ -38,6 +38,21 @@ Real: February 2 2022
 
 TODOs for Release 1.1 ----------------------------------------
 
+TODO: Installer: Fix upgrade.
+
+TODO: Installer: Also quit running drbdsetup events2 on update.
+
+	This would break 'Linux compatibility' ... but I think we
+	shouldn't care.
+
+	No Linux also terminates the drbdsetup events2
+
+TODO: Installer: drbdadm down all -> drbdsetup down all
+
+    LINSTOR deletes those resource files so drbdadm down all will
+    do nothing...
+    Also try to stop satellite (will be running as a service anyway ...)
+
 TODOs for after Release 1.1 ----------------------------------------
 
 TODO: Bug: Negotiating stuckness still there...
@@ -52,19 +67,6 @@ TODO: Bug: drbdadm down takes 10 seconds break when it is the last node
 TODO: Feature: Remove netlink mutex
 
     DRBD does internal locking.
-
-TODO: Installer: Also quit running drbdsetup events2 on update.
-
-	This would break 'Linux compatibility' ... but I think we
-	shouldn't care.
-
-	No Linux also terminates the drbdsetup events2
-
-TODO: Installer: drbdadm down all -> drbdsetup down all
-
-    LINSTOR deletes those resource files so drbdadm down all will
-    do nothing...
-    Also try to stop satellite (will be running as a service anyway ...)
 
 TODO: Code quality: One should not need to create their own keys on building WinDRBD
 
