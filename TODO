@@ -36,13 +36,18 @@ Milestone: Release 1.0 (stable version)
 Planned: July 2 2020
 Real: February 2 2022
 
-TODOs for after Release 1.0 ----------------------------------------
+TODOs for Release 1.1 ----------------------------------------
+
+TODOs for after Release 1.1 ----------------------------------------
+
+TODO: Bug: Negotiating stuckness still there...
+
+	When using LINSTOR. But only a few resources affected.
+	Also workaround is drbdadm detach / attach on that node.
 
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
 TODO: Bug: drbdadm down takes 10 seconds break when it is the last node
-
-TODOs for after Release 1.1 ----------------------------------------
 
 TODO: Feature: Remove netlink mutex
 
@@ -61,91 +66,12 @@ TODO: Installer: drbdadm down all -> drbdsetup down all
     do nothing...
     Also try to stop satellite (will be running as a service anyway ...)
 
-TODO: Build System: Have a way to automatically sign drivers.
-
-	And NOT just copy the driver manually in some directory and
-	then get confused when a different version is being installed.
-
-TODO: Research: See if Autopromote can be implemented (with disk devices)
-
-	Windows accesses Offline disk devices read-only. So in theory
-	we could allow that (when there are just secondaries) and wait
-	until online and write requests (promote on write requests).
-
 TODO: Code quality: One should not need to create their own keys on building WinDRBD
 
 	Checkin self signed keys? But talk to Phil first.
 	Or: teach the Makefile how to generate those keys.
 
-TODO: Feature: HLK tests should succeed (for Windows 2019)
-
-	Right now there is a verifier BSOD on becoming secondary
-	on Server 2019 (but not on Windows 7). Update: This has been fixed
-	meanwhile so currently no verifier BSODs known.
-
-	Update: Lots of progress: currently working on surprise removal
-	test for the disk device. After the test a drbdadm down BSODs
-	(in bm_test_page_unchanged) most likely some memory corruption
-	(page is NULL).
-
-	Update: Memory corrpution was Windows calling close 3 times
-	more often that create. DRBD corrupted memory. Also the
-	saved_ref logic is gone again (fortunately) it seems that
-	just returning SUCCESS in both SURPRISE_REMOVAL and
-	REMOVE_DEVICE does the trick. Right now we don't know if
-	driver can be unloaded but the surprise removal tests should
-	work now.
-
-	Update: changed Device instance path by setting UniqueID to
-	TRUE. PnP manager now does not alter the instance path in any
-	way. This used to cause disk stress (and probably others) test
-	to fail at startup.
-
-TODO: Research: See if it works under ReactOS
-
-	Bonus would be that we could create legally 26 more
-	VMs to test 32 node setup..also ReactOS can be patched
-	to show printk's (via our printk-to-syslog utility)
-	right before BSOD's (maybe it can also Stack dump in
-	a sane way ...).
-
-	Oops, ReactOS is 32-bit only .. this would require some
-	adaption. First, compile ReactOS from scratch to see if
-	that make sense at all. Then (try to) compile windrbd with
-	the ReactOS compiler (can do that under Linux...)
-
-	Update (2022): Userland utilties work (must install CygWin
-	on reactos with development tools and compile / install
-	from there) What does not work is install-bus-device /
-	remove-bus-device.
-
-	WinDRBD driver loads with the big restriction that there
-	is no networking (must port from winsocket to older
-	TDI interface). Also Primary won't work since we cannot
-	install the bus device.
-
-	Update: Under Windows Server 2003 Primary works but there
-	are issues with partitioning (probably partmgr.sys does not
-	exist). Under ReactOS the setupapi DLL can be loaded but
-	then fails with error 2.
-
-	Done's:
-		Make Server 2003 kernel debugger work.
-			Was easy: add a line to BOOT.INI and reboot.
-		Check if Server 2003 has netio / winsocket interface
-			(probably not but this needs to be checked).
-			-> No.
-		Make a inno-setup installer EXE for server 2003
-			(and later ReactOS)
-
-	Next TODOs:
-		See why partitioning is not working under server
-			2003 (probably there are some ioctl's missing).
-		Fix BSOD on shutdown (power IRP timeout).
-		Make install-bus-device work on ReactOS
-		Implement NETIO -> TDI interface.
-
-TODO: Nice to have: Make it build under Windows only
+TODO: Build System: Make it build under Linux (was: Windows) only
 
 	Done: install ocaml for CygWin
 	In progress: Cross compile conccinelle for CygWin
@@ -165,33 +91,6 @@ TODO: Code quality: Undef kmalloc debug.
 	And of course SPIN_LOCK_DEBUG ... Remove this code completely.
 	It has done a good job but is now obsolete.
 	Also remove all spinlock functions except spin_lock_irqsave().
-
-TODO: Bug: System hang on unresponsive I/O
-
-	Happens on OpenNebula VM when RAID balancer is running (and
-	I/O is slow). Happens during 'normal' I/O (writing 40GB files)
-	on the Primary side.
-
-	Found 2 solution canidates:
-		.) wait_for_sendbuf should terminate when there is an
-		   socket error (like reset by peer in our case).
-		   wait_for_sendbuf (DRBD sender thread) hung forever.
-
-		.) Also signals received by receiver should be forwarded
-		   to the receiver thread. Right now it may hang forever.
-
-
-		.) Also: kernel_recv_msg should return -EINTR on signal
-		   receive? Else ack receiver does something else ...
-
-	Now try to increase bug event (right now only once a week).
-
-	Update: Found that same image is used for both VMs as backing
-	storage so maybe that is the cause? But WinDRBD even then shouldn't
-	hang the system ...
-
-	Hangs (?) in wait_for_sendbuf (but this has a timeout, right?)
-	Instrument code with printk's and retest.
 
 TODO: Test: IPv6
 
@@ -222,11 +121,6 @@ TODO: Feature: Use next generation crypto API for secure handshake.
 	See:
 
 https://docs.microsoft.com/en-us/windows/win32/seccng/cng-features#kernel-mode-support
-
-TODO: Bug: Send buffer drains for about 30 seconds
-
-	Reported by Yannis. Connection should be closed even when
-	there is data in the send buffer.
 
 TODO: Remote boot: Test: Test boot feature with 2 secondaries (in 3 node setup). 
 
@@ -351,16 +245,6 @@ TODO: Upstream: Feature: show reason for going into StandAlone on status
 
 	So one knows if it is split brain or something else.
 
-TODO: Implement: get drbdmon (and drbdsetup events2) working.
-
-	Probably this works only with WSL .. CygWin does not have
-	epoll as well as some other required syscalls (kill,
-	sigaddset, sigemptyset, pipe2).
-
-	Maybe Robert does this.
-
-	Update: Prepared a Windows VM for him to develop on.
-
 TODO: Build system: have a make depend target
 	Or at least header file dependencies.
 
@@ -392,12 +276,6 @@ TODO: Test: Test under memory pressure.
 	called 10 times.
 
 TODO: Bug: Out of memory handling in windrbd device is broken (BSOD).
-
-TODO: Code quality: maybe revert the mountmanager code.
-
-	I am not sure if this is a benefit.
-	Update: it is currently not used and probably should be
-	deleted soon.
 
 TODO: Feature: make debugfs work
 
@@ -8293,4 +8171,143 @@ Rejected: Code quality: Remove mount block device code
 	We need it for existing NTFS partitions > 1.4TB
 	Maybe remove the mount manager function (we are
 	creating the symlink manually).
+
+Reject: Build System: Have a way to automatically sign drivers.
+
+	And NOT just copy the driver manually in some directory and
+	then get confused when a different version is being installed.
+
+Done: Research: See if Autopromote can be implemented (with disk devices)
+
+	Windows accesses Offline disk devices read-only. So in theory
+	we could allow that (when there are just secondaries) and wait
+	until online and write requests (promote on write requests).
+
+Done: Feature: HLK tests should succeed (for Windows 2019)
+
+	Right now there is a verifier BSOD on becoming secondary
+	on Server 2019 (but not on Windows 7). Update: This has been fixed
+	meanwhile so currently no verifier BSODs known.
+
+	Update: Lots of progress: currently working on surprise removal
+	test for the disk device. After the test a drbdadm down BSODs
+	(in bm_test_page_unchanged) most likely some memory corruption
+	(page is NULL).
+
+	Update: Memory corrpution was Windows calling close 3 times
+	more often that create. DRBD corrupted memory. Also the
+	saved_ref logic is gone again (fortunately) it seems that
+	just returning SUCCESS in both SURPRISE_REMOVAL and
+	REMOVE_DEVICE does the trick. Right now we don't know if
+	driver can be unloaded but the surprise removal tests should
+	work now.
+
+	Update: changed Device instance path by setting UniqueID to
+	TRUE. PnP manager now does not alter the instance path in any
+	way. This used to cause disk stress (and probably others) test
+	to fail at startup.
+
+	But only for Virtual Bus Device - for MicroSoft signatures
+	this is enough.
+
+Done: Research: See if it works under ReactOS
+
+	Bonus would be that we could create legally 26 more
+	VMs to test 32 node setup..also ReactOS can be patched
+	to show printk's (via our printk-to-syslog utility)
+	right before BSOD's (maybe it can also Stack dump in
+	a sane way ...).
+
+	Oops, ReactOS is 32-bit only .. this would require some
+	adaption. First, compile ReactOS from scratch to see if
+	that make sense at all. Then (try to) compile windrbd with
+	the ReactOS compiler (can do that under Linux...)
+
+	Update (2022): Userland utilties work (must install CygWin
+	on reactos with development tools and compile / install
+	from there) What does not work is install-bus-device /
+	remove-bus-device.
+
+	WinDRBD driver loads with the big restriction that there
+	is no networking (must port from winsocket to older
+	TDI interface). Also Primary won't work since we cannot
+	install the bus device.
+
+	Update: Under Windows Server 2003 Primary works but there
+	are issues with partitioning (probably partmgr.sys does not
+	exist). Under ReactOS the setupapi DLL can be loaded but
+	then fails with error 2.
+
+	Done's:
+		Make Server 2003 kernel debugger work.
+			Was easy: add a line to BOOT.INI and reboot.
+		Check if Server 2003 has netio / winsocket interface
+			(probably not but this needs to be checked).
+			-> No.
+		Make a inno-setup installer EXE for server 2003
+			(and later ReactOS)
+
+	Next TODOs:
+		See why partitioning is not working under server
+			2003 (probably there are some ioctl's missing).
+		Fix BSOD on shutdown (power IRP timeout).
+		Make install-bus-device work on ReactOS
+		Implement NETIO -> TDI interface.
+
+Done: Bug: System hang on unresponsive I/O
+
+	Happens on OpenNebula VM when RAID balancer is running (and
+	I/O is slow). Happens during 'normal' I/O (writing 40GB files)
+	on the Primary side.
+
+	Found 2 solution canidates:
+		.) wait_for_sendbuf should terminate when there is an
+		   socket error (like reset by peer in our case).
+		   wait_for_sendbuf (DRBD sender thread) hung forever.
+
+		.) Also signals received by receiver should be forwarded
+		   to the receiver thread. Right now it may hang forever.
+
+
+		.) Also: kernel_recv_msg should return -EINTR on signal
+		   receive? Else ack receiver does something else ...
+
+	Now try to increase bug event (right now only once a week).
+
+	Update: Found that same image is used for both VMs as backing
+	storage so maybe that is the cause? But WinDRBD even then shouldn't
+	hang the system ...
+
+	Hangs (?) in wait_for_sendbuf (but this has a timeout, right?)
+	Instrument code with printk's and retest.
+
+	Not observed lately.
+
+Done: Bug: Send buffer drains for about 30 seconds
+
+	Reported by Yannis. Connection should be closed even when
+	there is data in the send buffer.
+
+	Not observed lately.
+
+Rejected: Implement: get drbdmon (and drbdsetup events2) working.
+
+	Probably this works only with WSL .. CygWin does not have
+	epoll as well as some other required syscalls (kill,
+	sigaddset, sigemptyset, pipe2).
+
+	Maybe Robert does this.
+
+	Update: Prepared a Windows VM for him to develop on.
+
+	Didn't happen the last 5 years ...
+
+Done: Code quality: maybe revert the mountmanager code.
+
+	I am not sure if this is a benefit.
+	Update: it is currently not used and probably should be
+	deleted soon.
+	Update: it is used, but not the complicated mountmanager
+	function. We create the symbolic link from within the
+	driver.
 
