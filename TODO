@@ -53,6 +53,8 @@ TODO: Installer: Also quit running drbdsetup events2 on update.
 
 	No Linux also terminates the drbdsetup events2
 
+	Update: implemented works very well.
+
 TODO: Installer: drbdadm down all -> drbdsetup down all
 
     LINSTOR deletes those resource files so drbdadm down all will
