@@ -39,6 +39,12 @@ Real: February 2 2022
 TODOs for Release 1.1 ----------------------------------------
 
 TODO: Installer: Fix upgrade.
+	Maybe because drbdsetup hangs in events2 and the
+	WinDRBD driver hangs in STOP_PENDING. Killing
+	drbdsetup via task manager makes WinDRBD stop
+	(and drbdsetup be possible to upgrade) so this
+	is probably fixed once quit running drbdsetup
+	events2 is implemented.
 
 TODO: Installer: Also quit running drbdsetup events2 on update.
 
