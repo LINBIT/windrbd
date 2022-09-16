@@ -86,7 +86,10 @@ static char *thread_names[IRP_MJ_MAXIMUM_FUNCTION + 1] = {
 "pnp",			/* IRP_MJ_PNP                        0x1b */
 };
 
-static int shutting_down;
+static int shutting_down;	/* Windows machine is about to shut down */
+static int about_to_unload_driver;	/* Driver will soon unload so
+					 * we can upgrade it
+					 */
 
 /* TODO: return STATUS_NO_MEMORY instead of STATUS_INSUFFICIENT_RESOURCES
  * whereever a kmalloc() fails.
@@ -265,6 +268,21 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 
 		default:
 			status = STATUS_ACCESS_DENIED;
+
+			irp->IoStatus.Status = status;
+		        IoCompleteRequest(irp, IO_NO_INCREMENT);
+			return status;
+		}
+	}
+
+	if (about_to_unload_driver) {
+		switch (s->Parameters.DeviceIoControl.IoControlCode) {
+
+			/* Terminate all running drbdsetup commands */
+		case IOCTL_WINDRBD_ROOT_SEND_NL_PACKET:
+		case IOCTL_WINDRBD_ROOT_RECEIVE_NL_PACKET:
+		case IOCTL_WINDRBD_ROOT_JOIN_MC_GROUP:
+			status = STATUS_NO_MORE_ENTRIES;
 
 			irp->IoStatus.Status = status;
 		        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -474,12 +492,24 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 
 	case IOCTL_WINDRBD_ROOT_SET_EVENT_LOG_LEVEL:
 	{
-		int* the_level = irp->AssociatedIrp.SystemBuffer;
+		int *the_level = irp->AssociatedIrp.SystemBuffer;
 
 		if (the_level == NULL)
 			status = STATUS_INVALID_DEVICE_REQUEST;
 		else
 			set_event_log_threshold(*the_level);
+
+		break;
+	}
+
+	case IOCTL_WINDRBD_ROOT_SET_SHUTDOWN_FLAG:
+	{
+		int *the_flag = irp->AssociatedIrp.SystemBuffer;
+
+		if (the_flag == NULL)
+			status = STATUS_INVALID_DEVICE_REQUEST;
+		else
+			about_to_unload_driver = (*the_flag);
 
 		break;
 	}
