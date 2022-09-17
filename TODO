@@ -38,29 +38,6 @@ Real: February 2 2022
 
 TODOs for Release 1.1 ----------------------------------------
 
-TODO: Installer: Fix upgrade.
-	Maybe because drbdsetup hangs in events2 and the
-	WinDRBD driver hangs in STOP_PENDING. Killing
-	drbdsetup via task manager makes WinDRBD stop
-	(and drbdsetup be possible to upgrade) so this
-	is probably fixed once quit running drbdsetup
-	events2 is implemented.
-
-TODO: Installer: Also quit running drbdsetup events2 on update.
-
-	This would break 'Linux compatibility' ... but I think we
-	shouldn't care.
-
-	No Linux also terminates the drbdsetup events2
-
-	Update: implemented works very well.
-
-TODO: Installer: drbdadm down all -> drbdsetup down all
-
-    LINSTOR deletes those resource files so drbdadm down all will
-    do nothing...
-    Also try to stop satellite (will be running as a service anyway ...)
-
 TODOs for after Release 1.1 ----------------------------------------
 
 TODO: Bug: Negotiating stuckness still there...
@@ -8320,4 +8297,30 @@ Done: Code quality: maybe revert the mountmanager code.
 	Update: it is used, but not the complicated mountmanager
 	function. We create the symbolic link from within the
 	driver.
+
+Done: Installer: Fix upgrade.
+	Maybe because drbdsetup hangs in events2 and the
+	WinDRBD driver hangs in STOP_PENDING. Killing
+	drbdsetup via task manager makes WinDRBD stop
+	(and drbdsetup be possible to upgrade) so this
+	is probably fixed once quit running drbdsetup
+	events2 is implemented.
+
+Done: Installer: Also quit running drbdsetup events2 on update.
+
+	This would break 'Linux compatibility' ... but I think we
+	shouldn't care.
+
+	No Linux also terminates the drbdsetup events2
+
+	Update: implemented works very well.
+
+Rejected: Installer: drbdadm down all -> drbdsetup down all
+
+    LINSTOR deletes those resource files so drbdadm down all will
+    do nothing...
+    Also try to stop satellite (will be running as a service anyway ...)
+
+    Rejecting ... drbdsetup down all does not exist as documented in
+    the drbdsetup man page.
 
