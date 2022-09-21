@@ -5,6 +5,11 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.1.0
+---------------------------
+
+Quit drbdsetup events2 processes on upgrading.
+
 What's new in version 1.1.0-rc3
 ---------------------------
 
