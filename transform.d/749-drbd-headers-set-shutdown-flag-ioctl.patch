@@ -1,0 +1,21 @@
+Submodule drbd/drbd-headers contains modified content
+diff --git a/drbd/drbd-headers/windrbd/windrbd_ioctl.h b/drbd/drbd-headers/windrbd/windrbd_ioctl.h
+index 916df0b..9ea9be9 100644
+--- a/drbd/drbd-headers/windrbd/windrbd_ioctl.h
++++ b/drbd/drbd-headers/windrbd/windrbd_ioctl.h
+@@ -307,4 +307,15 @@ struct windrbd_minor_mount_point {
+ 
+ #define IOCTL_WINDRBD_ROOT_GET_LOCK_DOWN_STATE CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 17, METHOD_BUFFERED, FILE_ANY_ACCESS)
+ 
++/* Set WinDRBD shutdown flag.
++ * Input: 1 - signal WinDRBD that it will be unloaded soon
++ *        0 - cancel the above
++ * Output: none
++ *
++ * Set WinDRBD shutdown flag. Will cause drbdsetup events2 to terminate.
++ * Also all further drbdadm commands will fail.
++ */
++
++#define IOCTL_WINDRBD_ROOT_SET_SHUTDOWN_FLAG CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 18, METHOD_BUFFERED, FILE_ANY_ACCESS)
++
+ #endif
