@@ -38,6 +38,11 @@ Real: February 2 2022
 
 TODOs for Release 1.1 ----------------------------------------
 
+TODO: Bug: BSOD on running MSSQL upon symlinked drive.
+
+	A user from India reported this, right not we are
+	trying to reproduce that issue.
+
 TODOs for Release 1.2 ----------------------------------------
 
 TODOs for after Release 1.2 ----------------------------------------
@@ -8325,4 +8330,14 @@ Rejected: Installer: drbdadm down all -> drbdsetup down all
 
     Rejecting ... drbdsetup down all does not exist as documented in
     the drbdsetup man page.
+
+Rejected: Upstream: Upgrade to latest DRBD 9.0
+	Before that submit a patch that makes drbd-headers point
+	to latest commit.
+	Cannot submit because DRBD 9.0 does not compile under
+	Linux with latest DRBD headers.
+
+Done: Installer: reset shutdown flag
+	In case driver is not replaced or cannot be unloaded
+	drbdsetup should work again.
 
