@@ -397,6 +397,16 @@ begin
 	begin
 		MsgBox('Could not install bus device', mbInformation, MB_OK);
 	end;
+
+	{ This may be still set if for whatever reason the driver was not
+          unloaded. drbdsetup (and drbdadm) will not work as long as this
+          flag is set, so unset it here. }
+
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'set-shutdown-flag 0', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	begin
+		Log('Failed to unset the shutdown flag. Lets see what happens next');
+	end;
+
 end;
 
 function UninstallNeedRestart: Boolean;
