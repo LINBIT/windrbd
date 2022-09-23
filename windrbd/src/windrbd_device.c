@@ -549,7 +549,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-dbg("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
+printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	if (dev->is_bootdevice) {
 		status = wait_for_becoming_primary(dev);
 		if (status != STATUS_SUCCESS)
@@ -781,7 +781,7 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 		STORAGE_ADAPTER_DESCRIPTOR StorageAdapterDescriptor;
 		STORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor;
 
-// printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
 
 		switch (StoragePropertyQuery->QueryType) {
 		case PropertyExistsQuery:
@@ -838,7 +838,7 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 				break;
 			case StorageDeviceAttributesProperty:
 					/* seems to be undocumented ... */
-// printk("StorageDeviceAttributesProperty ...\n");
+printk("StorageDeviceAttributesProperty ...\n");
 				irp->IoStatus.Information = 0;
 				status = STATUS_SUCCESS;
 				break;
@@ -848,7 +848,7 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 				struct _STORAGE_ACCESS_ALIGNMENT_DESCRIPTOR a;
 
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(a)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(a));
-// printk("StorageAccessAlignmentProperty ...\n");
+printk("StorageAccessAlignmentProperty ...\n");
 				a.Version = sizeof(a);
 				a.Size = sizeof(a);
 				a.BytesPerCacheLine = 16;
@@ -886,7 +886,7 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 				struct _DEVICE_TRIM_DESCRIPTOR trim;
 
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(trim)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(trim));
-// printk("StorageDeviceTrimProperty ...\n");
+printk("StorageDeviceTrimProperty ...\n");
 				trim.Version = sizeof(trim);
 				trim.Size = sizeof(trim);
 					/* TRIM not implemented till now. TODO: 
@@ -902,7 +902,7 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 			}
 
 			case StorageDeviceResiliencyProperty:
-// printk("StorageDeviceResiliencyProperty ...\n");
+printk("StorageDeviceResiliencyProperty ...\n");
 				irp->IoStatus.Information = 0;
 				status = STATUS_SUCCESS;
 				break;
@@ -912,7 +912,7 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 
 		}
 		if (status != STATUS_SUCCESS) {
-// printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
 		}
 		break;
    	}
