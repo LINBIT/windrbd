@@ -788,6 +788,11 @@ printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n",
 			switch (StoragePropertyQuery->PropertyId) {
 			case StorageAdapterProperty:
 			case StorageDeviceProperty:
+			case StorageDeviceAttributesProperty:
+			case StorageAccessAlignmentProperty:
+			case StorageDeviceSeekPenaltyProperty:
+			case StorageDeviceTrimProperty:
+			case StorageDeviceResiliencyProperty:
 				status = STATUS_SUCCESS;
 				break;
 			}
@@ -909,7 +914,6 @@ printk("StorageDeviceResiliencyProperty ...\n");
 
 			}	/* switch PropertyId */
 			break;
-
 		}
 		if (status != STATUS_SUCCESS) {
 printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
@@ -981,6 +985,7 @@ printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x
 
 	case IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES:
 	{
+printk("IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES\n");
 		struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES* attrs =
 			(struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES*)irp->AssociatedIrp.SystemBuffer;
 
@@ -991,14 +996,14 @@ printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
-		dbg("attrs->Action is %d\n", attrs->Action);
+printk("attrs->Action is %d flag is %d\n", attrs->Action, attrs->Flags);
 		if (attrs->Action != DeviceDsmAction_Trim) {
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 		}
 		int items = attrs->DataSetRangesLength / sizeof(DEVICE_DATA_SET_RANGE);
 
-		dbg("%d items\n", items);
+printk("%d items\n", items);
 
 		status = STATUS_SUCCESS;
 		irp->IoStatus.Information = 0;
@@ -1044,7 +1049,7 @@ printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x
 	}
 
 	default: 
-		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
+printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 
 		status = STATUS_INVALID_PARAMETER;
 	}
