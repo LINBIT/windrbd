@@ -912,6 +912,9 @@ netsh advfirewall firewall add rule name=test1 protocol=tcp dir=in localport=500
 
 windbg -k net:port=50000,key=2d7c6ijqer5sh.2i4twokqtuaj2.175m5lbeohllp.2gmbkv8c8
 8r1o
+
+10.43.224.48 (from 10.43.224.32):
+windbg -k net:port=50001,key=1x44vmzro2dc4.1idcsmmecsg50.34pdqj7eo7pj9.22ocd7148g8qw
 -----
 
 Install HLK Client
