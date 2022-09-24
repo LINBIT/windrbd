@@ -1861,8 +1861,8 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 
 	struct block_device_reference *ref = device->DeviceExtension;
-	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
-		dbg(KERN_WARNING "I/O request: Device %p accessed after it was deleted.\n", device);
+	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete || ref->bdev->ref == NULL) {
+		printk(KERN_WARNING "I/O request: Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -1882,11 +1882,6 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 	IoAcquireRemoveLock(&dev->ref->w_remove_lock, NULL);
 	status = STATUS_INVALID_DEVICE_REQUEST;
-
-	if (dev->about_to_delete) {
-		printk("I/O while device about to be deleted\n");
-		goto exit_remove_lock;
-	}
 
 	if (dev->is_bootdevice && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		dbg("I/O request while not primary, waiting for primary.\n");
@@ -2915,8 +2910,8 @@ if (status == STATUS_NOT_SUPPORTED) {
 				} else {
 					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
 				}
-				dbg("about to delete device object %p\n", device);
-				/* Avoid anything more happending to that
+				printk("About to delete device object %p\n", device);
+				/* Avoid anything more happening to that
 				 * device. Reason is that there is a reference
 				 * count on the device, so it might still
 				 * exist for a short period.
@@ -3197,8 +3192,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct block_device *bdev;
 
 	struct block_device_reference *ref = device->DeviceExtension;
-	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
-		dbg(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
+	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete || ref->bdev->ref == NULL) {
+		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
 		srb = s->Parameters.Scsi.Srb;
@@ -3225,11 +3220,6 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	bdev = ref->bdev;
 	IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
 	status = STATUS_INVALID_DEVICE_REQUEST;
-
-	if (bdev->about_to_delete) {
-		printk("I/O while device about to be deleted\n");
-		goto out;
-	}
 
 // printk("SCSI request for device %p\n", device);
 
