@@ -549,7 +549,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
+// printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	if (dev->is_bootdevice) {
 		status = wait_for_becoming_primary(dev);
 		if (status != STATUS_SUCCESS)
@@ -781,7 +781,7 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 		STORAGE_ADAPTER_DESCRIPTOR StorageAdapterDescriptor;
 		STORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor;
 
-printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+// printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
 
 		switch (StoragePropertyQuery->QueryType) {
 		case PropertyExistsQuery:
@@ -843,7 +843,7 @@ printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n",
 				break;
 			case StorageDeviceAttributesProperty:
 					/* seems to be undocumented ... */
-printk("StorageDeviceAttributesProperty ...\n");
+// printk("StorageDeviceAttributesProperty ...\n");
 				irp->IoStatus.Information = 0;
 				status = STATUS_SUCCESS;
 				break;
@@ -853,7 +853,7 @@ printk("StorageDeviceAttributesProperty ...\n");
 				struct _STORAGE_ACCESS_ALIGNMENT_DESCRIPTOR a;
 
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(a)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(a));
-printk("StorageAccessAlignmentProperty ...\n");
+// printk("StorageAccessAlignmentProperty ...\n");
 				a.Version = sizeof(a);
 				a.Size = sizeof(a);
 				a.BytesPerCacheLine = 16;
@@ -891,7 +891,7 @@ printk("StorageAccessAlignmentProperty ...\n");
 				struct _DEVICE_TRIM_DESCRIPTOR trim;
 
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(trim)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(trim));
-printk("StorageDeviceTrimProperty ...\n");
+// printk("StorageDeviceTrimProperty ...\n");
 				trim.Version = sizeof(trim);
 				trim.Size = sizeof(trim);
 					/* TRIM not implemented till now. TODO: 
@@ -907,7 +907,7 @@ printk("StorageDeviceTrimProperty ...\n");
 			}
 
 			case StorageDeviceResiliencyProperty:
-printk("StorageDeviceResiliencyProperty ...\n");
+// printk("StorageDeviceResiliencyProperty ...\n");
 				irp->IoStatus.Information = 0;
 				status = STATUS_SUCCESS;
 				break;
@@ -916,7 +916,7 @@ printk("StorageDeviceResiliencyProperty ...\n");
 			break;
 		}
 		if (status != STATUS_SUCCESS) {
-printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+// printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
 		}
 		break;
    	}
@@ -985,7 +985,7 @@ printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x
 
 	case IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES:
 	{
-printk("IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES\n");
+// printk("IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES\n");
 		struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES* attrs =
 			(struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES*)irp->AssociatedIrp.SystemBuffer;
 
@@ -996,14 +996,14 @@ printk("IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES\n");
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
-printk("attrs->Action is %d flag is %d\n", attrs->Action, attrs->Flags);
+// printk("attrs->Action is %d flag is %d\n", attrs->Action, attrs->Flags);
 		if (attrs->Action != DeviceDsmAction_Trim) {
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 		}
 		int items = attrs->DataSetRangesLength / sizeof(DEVICE_DATA_SET_RANGE);
 
-printk("%d items\n", items);
+// printk("%d items\n", items);
 
 		// status = STATUS_SUCCESS;
 		status = STATUS_NOT_SUPPORTED;
@@ -1050,7 +1050,7 @@ printk("%d items\n", items);
 	}
 
 	default: 
-printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
+// printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 
 		status = STATUS_INVALID_PARAMETER;
 	}
@@ -2508,7 +2508,7 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				IoCompleteRequest(irp, IO_NO_INCREMENT);
 				num_pnp_requests--;
 if (status == STATUS_NOT_SUPPORTED) {
-printk("6 STATUS_NOT_SUPPORTED\n");
+// printk("6 STATUS_NOT_SUPPORTED\n");
 }
 				return status;
 				minor = 1;	/* must match the minor of the test resource */
