@@ -10,6 +10,9 @@ What's new in version 1.1.0-rc4
 
 Quit drbdsetup events2 processes on upgrading.
 
+Fixed a BSOD on I/O while removing the Windows Disk device.
+(there was an issue with remove locks).
+
 What's new in version 1.1.0-rc3
 ---------------------------
 
