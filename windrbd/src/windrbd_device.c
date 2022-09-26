@@ -1879,9 +1879,11 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		dbg("I/O request while device isn't set up yet.\n");
 		goto exit;
 	}
-
-	IoAcquireRemoveLock(&dev->ref->w_remove_lock, NULL);
 	status = STATUS_INVALID_DEVICE_REQUEST;
+
+	IoAcquireRemoveLock(&ref->w_remove_lock, NULL);
+	if (dev->about_to_delete)
+		goto exit_remove_lock;
 
 	if (dev->is_bootdevice && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		dbg("I/O request while not primary, waiting for primary.\n");
@@ -1904,7 +1906,7 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	return STATUS_PENDING;
 
 exit_remove_lock:
-	IoReleaseRemoveLock(&dev->ref->w_remove_lock, NULL);
+	IoReleaseRemoveLock(&ref->w_remove_lock, NULL);
 
 exit:
 	irp->IoStatus.Status = status;
@@ -2898,8 +2900,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 					if (bdev->ref != NULL) {
 						IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
-		/* TODO: ?? not &bdev->ref->w_remove_lock ?? */
-						IoReleaseRemoveLockAndWait(&bdev->remove_lock, NULL);
+						IoReleaseRemoveLockAndWait(&bdev->ref->w_remove_lock, NULL);
 					}
 /*
 
@@ -2911,13 +2912,19 @@ if (status == STATUS_NOT_SUPPORTED) {
 					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
 				}
 				printk("About to delete device object %p\n", device);
+
+#if 0
 				/* Avoid anything more happening to that
 				 * device. Reason is that there is a reference
 				 * count on the device, so it might still
 				 * exist for a short period.
 				 */
+
+				/* Commented out. ref may be used by bio_finished() ??
+				 * but we shouldn't get here if I/O is in flight ... */
 				if (bdev)
 					bdev->ref = NULL;
+#endif
 					/* When zombie device is reenabled we
 					 * need the pointer to the block_device_ref ... so do not NULLify this here.. */
 /* TODO: this code is never executed in the test, reenable NULLify? */
@@ -3218,8 +3225,11 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 #endif
 	bdev = ref->bdev;
-	IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
+	IoAcquireRemoveLock(&ref->w_remove_lock, NULL);
 	status = STATUS_INVALID_DEVICE_REQUEST;
+
+	if (bdev->about_to_delete)
+		goto out;
 
 // printk("SCSI request for device %p\n", device);
 
@@ -3463,7 +3473,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 
 out:
-	IoReleaseRemoveLock(&bdev->ref->w_remove_lock, NULL);
+	IoReleaseRemoveLock(&ref->w_remove_lock, NULL);
 
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
