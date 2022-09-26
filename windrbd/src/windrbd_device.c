@@ -2913,7 +2913,6 @@ if (status == STATUS_NOT_SUPPORTED) {
 				}
 				printk("About to delete device object %p\n", device);
 
-#if 0
 				/* Avoid anything more happening to that
 				 * device. Reason is that there is a reference
 				 * count on the device, so it might still
@@ -2922,9 +2921,11 @@ if (status == STATUS_NOT_SUPPORTED) {
 
 				/* Commented out. ref may be used by bio_finished() ??
 				 * but we shouldn't get here if I/O is in flight ... */
+				/* Hmm ... there is a new BSOD probably because of this being commented out?
+				 */
 				if (bdev)
 					bdev->ref = NULL;
-#endif
+
 					/* When zombie device is reenabled we
 					 * need the pointer to the block_device_ref ... so do not NULLify this here.. */
 /* TODO: this code is never executed in the test, reenable NULLify? */
