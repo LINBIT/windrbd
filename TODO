@@ -43,6 +43,9 @@ TODO: Bug: BSOD on running MSSQL upon symlinked drive.
 	A user from India reported this, right not we are
 	trying to reproduce that issue.
 
+	Reproduced it was some issue with remove locks.
+	Fixed (but there is another bug now).
+
 TODOs for Release 1.2 ----------------------------------------
 
 TODOs for after Release 1.2 ----------------------------------------
