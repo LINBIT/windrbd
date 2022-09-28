@@ -1,72 +1,17 @@
-Milestone: windrbd merged into drbd-utils and drbd-headers
-Planned: Oct 1 2018
-Postponed to: Oct 20 2018
-Real: Nov 13 2018
------------------------------------------------------------------------
+TODOs for Release 1.1.0 ----------------------------------------
 
-Milestone: Beta 5
-Planned: Nov 1 2018
-Real: Dec 3 2018
------------------------------------------------------------------------
-
-Milestone: Release 0.9.2
-Planned: Feb 28 2019
-Real: Apr 10 2019
-TODOs for Release 0.10.0 ----------------------------------------------
-
-Milestone: Release 0.10.0
-Planned: Oct 31 2019
-Real: Oct 16 2019
-
-TODOs for Release 0.10.1 -------------------------------------------
-
-Milestone: Release 0.10.1
-Planned: Nov 8 2019
-Real: Nov 6 2019
-
-TODOs for Release 0.10.2 -------------------------------------------
-
-Milestone: Release 0.10.2 (netboot flag and configure IP address)
-Planned: Nov 15 2019
-Real: Nov 15 2019
-
-TODOs for Release 1.0 ----------------------------------------------
-
-Milestone: Release 1.0 (stable version)
-Planned: July 2 2020
-Real: February 2 2022
-
-TODOs for Release 1.1 ----------------------------------------
-
-TODO: Bug: BSOD on running MSSQL upon symlinked drive.
-
-	A user from India reported this, right not we are
-	trying to reproduce that issue.
-
-	Reproduced it was some issue with remove locks.
-	Fixed (but there is another bug now).
-
-TODOs for Release 1.2 ----------------------------------------
-
-TODOs for after Release 1.2 ----------------------------------------
-
-TODO: Bug: Negotiating stuckness still there...
-
-	When using LINSTOR. But only a few resources affected.
-	Also workaround is drbdadm detach / attach on that node.
+TODOs for 1.1 branch  ----------------------------------------
 
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
-TODO: Bug: drbdadm down takes 10 seconds break when it is the last node
+TODO: Feature: Change resync speed during resync (by drbdadm adjust)
 
-TODO: Feature: Remove netlink mutex
+TODO: Feature: Optimize network send speed (but it is ok as it is)
 
-    DRBD does internal locking.
+TODO: Test: Reproduce drbdadm / drbdsetup hang
+        Windows kill task: kills drbdsetup in netlink mutex?
 
-TODO: Code quality: One should not need to create their own keys on building WinDRBD
-
-	Checkin self signed keys? But talk to Phil first.
-	Or: teach the Makefile how to generate those keys.
+TODOs for Release 1.2 ----------------------------------------
 
 TODO: Build System: Make it build under Linux (was: Windows) only
 
@@ -81,17 +26,41 @@ TODO: Build System: Make it build under Linux (was: Windows) only
 	to make a wine patch though ... But this saves us
 	from special casing the CI environment.
 
-TODO: Code quality: Undef kmalloc debug.
+TODO: Code quality: review TODOs in source code.
 
-	Right now we allocate extra 256 bytes for each memory chunk.
-	Also undef BIO_REF_DEBUG / BIO_ALLOC_DEBUG
-	And of course SPIN_LOCK_DEBUG ... Remove this code completely.
-	It has done a good job but is now obsolete.
-	Also remove all spinlock functions except spin_lock_irqsave().
+	Currently 136 total.
 
-TODO: Test: IPv6
+	For now (0.9.2), fix the TODOs in winsocket layer.
 
-	Doesn't work, but this might be an Ubuntu issue.
+TODO: Code quality: reorganzie drbd_windows.c, general code cleanups
+
+TODO: Code quality: Minimize / Sqash patches to DRBD
+
+TODO: Feature: Base on DRBD 9.1 branch
+
+TODO: Code quality: remove unneeded CygWin deliverables
+
+	And restructure installer package: use inno-setup compression
+	instead of manually running unzip. Also upgrade to latest
+	CygWin
+
+TODO: Remote boot: Try the suggestions from 0xhelllord
+
+TODO: Feature: Remove netlink mutex
+
+	DRBD does internal locking.
+
+TODO: Bug: Negotiating stuckness still there...
+
+	When using LINSTOR. But only a few resources affected.
+	Also workaround is drbdadm detach / attach on that node.
+
+TODO: Code quality: One should not need to create their own keys on building WinDRBD
+
+	Checkin self signed keys? But talk to Phil first.
+	Or: teach the Makefile how to generate those keys.
+
+TODO: Bug: drbdadm down takes 10 seconds break when it is the last node
 
 TODO: Code quality: Stop windrbdlog service after unloading driver
 
@@ -108,9 +77,62 @@ TODO: Code quality: Use Event Tracing for event log
 
 	https://docs.microsoft.com/en-us/windows-hardware/drivers/devtest/adding-event-tracing-to-kernel-mode-drivers
 
+	But keep the old implementation (for ReactOS and older Windows OSes)
+
 TODO: Code quality: Remove cmd scripts (all of them)
 
 TODO: Code quality: Fix drbd-utils compiler warnings
+
+TODO: Feature: Understand SCSI addressing
+
+	Right now we just have TargetId, which limits minors to
+	255. What's a Lun and how many can there be?
+
+TODO: Code quality: Undef kmalloc debug.
+
+	Right now we allocate extra 256 bytes for each memory chunk.
+	Also undef BIO_REF_DEBUG / BIO_ALLOC_DEBUG
+	And of course SPIN_LOCK_DEBUG ... Remove this code completely.
+	It has done a good job but is now obsolete.
+	Also remove all spinlock functions except spin_lock_irqsave().
+
+TODO: Test: IPv6
+
+	Doesn't work, but this might be an Ubuntu issue.
+
+TODO: Build system: have a make depend target
+	Or at least header file dependencies.
+
+	Working on it .. make deps creates the Makefile.deps
+	Generate it if it does not exists and include it.
+
+	Update: we just found that it works. Be nice and warn user
+	if Makefile.deps does not exist (or make deps if it does not
+	exist).
+
+	Update: Now generate dependencies and use them rightaway
+	if they don't exist (need gcc on Windows build host for that,
+	however).
+
+	Update: Currently always exectutes make deps, not what we
+	want. Ask Robert or Lars.
+
+TODO: Test: Test under memory pressure.
+
+	We had a leak that caused all non-paged memory to be consumed,
+	followed by a CC BSOD.
+
+	Update: with the kmalloc debugger it will be possible to do
+	something like:
+
+	windrbd inject-oom drbd_windows.c:1234 10
+
+	to make kmalloc at drbd_windows.c line 1234 fail after being
+	called 10 times.
+
+TODO: Bug: Out of memory handling in windrbd device is broken (BSOD).
+
+TODOs for after Release 1.2 ----------------------------------------
 
 TODO: Feature: Use next generation crypto API for secure handshake.
 
@@ -227,59 +249,33 @@ TODO: Remote boot: Performance: Improve boot speed.
 	We should work on drivers loading and first UDP log (the
 	latter is probably the wfplwf issue).
 
-TODO: Feature: Understand SCSI addressing
+TODO: Feature: make debugfs work
 
-	Right now we just have TargetId, which limits minors to
-	255. What's a Lun and how many can there be?
+TODO: Feature: make TRIM/DISCARD work
 
-TODO: Code quality: review TODOs in source code.
-
-	Currently 136 total.
-
-	For now (0.9.2), fix the TODOs in winsocket layer.
+TODOs Nice to have
+-------------------------------------------------------------------------
 
 TODO: Upstream: Feature: show reason for going into StandAlone on status
 
 	So one knows if it is split brain or something else.
 
-TODO: Build system: have a make depend target
-	Or at least header file dependencies.
+TODO: Upstream: get drbdmon working.
 
-	Working on it .. make deps creates the Makefile.deps
-	Generate it if it does not exists and include it.
+	Probably this works only with WSL .. CygWin does not have
+	epoll as well as some other required syscalls (kill,
+	sigaddset, sigemptyset, pipe2).
 
-	Update: we just found that it works. Be nice and warn user
-	if Makefile.deps does not exist (or make deps if it does not
-	exist).
+	Maybe Robert does this.
 
-	Update: Now generate dependencies and use them rightaway
-	if they don't exist (need gcc on Windows build host for that,
-	however).
+	Update: Prepared a Windows VM for him to develop on.
 
-	Update: Currently always exectutes make deps, not what we
-	want. Ask Robert or Lars.
+	Didn't happen the last 5 years ...
 
-TODO: Test: Test under memory pressure.
+	Ok, we need to implement a communication layer that uses
+	select(2) instead of epoll check kill and signal handling.
 
-	We had a leak that caused all non-paged memory to be consumed,
-	followed by a CC BSOD.
-
-	Update: with the kmalloc debugger it will be possible to do
-	something like:
-
-	windrbd inject-oom drbd_windows.c:1234 10
-
-	to make kmalloc at drbd_windows.c line 1234 fail after being
-	called 10 times.
-
-TODO: Bug: Out of memory handling in windrbd device is broken (BSOD).
-
-TODO: Feature: make debugfs work
-
-TODO: Feature: make TRIM/DISCARD work
-
-TODO: Code quality: Minimize / Sqash patches to DRBD
-
+Closed TODO's follow:
 -------------------------------------------------------------------------
 
 Done: fix patch errors on Linux side build (conversion)
@@ -8287,18 +8283,6 @@ Done: Bug: Send buffer drains for about 30 seconds
 
 	Not observed lately.
 
-Rejected: Implement: get drbdmon (and drbdsetup events2) working.
-
-	Probably this works only with WSL .. CygWin does not have
-	epoll as well as some other required syscalls (kill,
-	sigaddset, sigemptyset, pipe2).
-
-	Maybe Robert does this.
-
-	Update: Prepared a Windows VM for him to develop on.
-
-	Didn't happen the last 5 years ...
-
 Done: Code quality: maybe revert the mountmanager code.
 
 	I am not sure if this is a benefit.
@@ -8344,3 +8328,11 @@ Done: Installer: reset shutdown flag
 	In case driver is not replaced or cannot be unloaded
 	drbdsetup should work again.
 
+Done: Bug: BSOD on running MSSQL upon symlinked drive.
+
+	A user from India reported this, right not we are
+	trying to reproduce that issue.
+
+	Reproduced it was some issue with remove locks.
+	Fixed (but there is another bug now).
+	Also fixed
