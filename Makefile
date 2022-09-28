@@ -70,6 +70,13 @@ package: build
 		echo "Please run 'make' first on a Linux system with spatch installed"; \
 	fi
 
+upload:
+	@if test -d $(TRANS_DEST); then \
+		cd $(TRANS_DEST)/drbd/ && $(MAKE) upload; \
+	else \
+		echo "Please run 'make' first on a Linux system with spatch installed"; \
+	fi
+
 signed-package:
 	@if test -d $(TRANS_DEST); then \
 		cd $(TRANS_DEST)/drbd/ && $(MAKE) signed-package; \
