@@ -366,6 +366,7 @@ endif
 
 upload: package
 	( cd ../../inno-setup && curl -f -u jthoma --upload-file install-`sed -e 's/[^"]*"\([^"]*\).*/\1/g' version.iss`.exe https://nexus.at.linbit.com/repository/windows/WinDRBD/install-`sed -e 's/[^"]*"\([^"]*\).*/\1/g' version.iss`.exe )
+	( cd ../../inno-setup && curl -f -u jthoma --upload-file install-`sed -e 's/[^"]*"\([^"]*\).*/\1/g' version.iss`.exe https://nexus.at.linbit.com/repository/windows/WinDRBD/install-windrbd-latest.exe )
 
 # TODO: this is required for Windows Server 2022 and Windows 11
 codeql:
