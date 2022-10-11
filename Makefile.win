@@ -165,12 +165,6 @@ ifndef EWDK_VERSION
 $(error EWDK_BASE not set. Please edit Makefile to make it know about your ewdk installation.)
 endif
 
-ifdef R
-EXTRA_VERSION ?= -signed
-else
-EXTRA_VERSION ?=
-endif
-
 EWDK_INC := $(EWDK_KIT)\\Include
 EWDK_LIB := $(EWDK_KIT)\\Lib
 VC ?= /cygdrive/c/Windows/System32/cmd.exe /c ms-cl-$(BUILD_ENV).cmd
@@ -294,7 +288,8 @@ all: versioninfo windrbd.sys
 
 .PHONY: versioninfo
 versioninfo:
-	cd ../.. && ./versioninfo.sh converted-sources $(EXTRA_VERSION) || true
+# you can do make VERSION=test to have test as version
+	cd ../.. && ./versioninfo.sh converted-sources $(VERSION) || true
 
 windrbd.sys: $(patsubst %.c,%.obj,$(DRBD_FILES)) $(patsubst %.c,%.obj,$(WINDRBD_FILES)) resource.res windrbd-event-log.res
 	rm -f windrbd.pdb "_$@"

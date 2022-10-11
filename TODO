@@ -8344,3 +8344,8 @@ Done: Bug: BSOD on running MSSQL upon symlinked drive.
 	Reproduced it was some issue with remove locks.
 	Fixed (but there is another bug now).
 	Also fixed
+
+Done: Build system: Have version override for version-info.sh
+	So we can do a make VERSION=test123 and have WinDRBD use it.
+	No need for dummy commits any more.
+

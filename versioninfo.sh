@@ -8,25 +8,30 @@ fi
 EXTRA_VERSION=""
 
 if [ "$#" -ne 1 -a "$#" -ne 2 ]; then
-	echo "Usage: $0 TRANS_DEST [extra-version]"
+	echo "Usage: $0 TRANS_DEST [version-override]"
 	exit 1
 else
 	OUTPATH=$1/drbd
 	if [ "$#" -eq 2 ]; then
-		EXTRA_VERSION=$2
-		echo "Adding $EXTRA_VERSION to git hashes"
+		VERSION_FORCE=$2
+		echo "Forcing Version to be $VERSION_FORCE"
 	fi
 fi
 
-VERSION=$(date +%Y,%m,%d,%H)
-DATE=$(date)
-GITHASH=$(git describe --tags --always)$EXTRA_VERSION
-DRBD_GITHASH="$(cd drbd ; git describe --tags --always)"$EXTRA_VERSION
-PATCHLEVEL=$( echo $GITHASH | sed -e 's/.*-\([0-9]*\)-g.*/\1/g' )
-if [ "${PATCHLEVEL:0:1}" == w ] ; then PATCHLEVEL=0 ; fi
+if [ "$VERSION_FORCE" ] ; then
+	WINDRBD_VERSION=1.99.0.0
+	GITHASH=$VERSION_FORCE
+	GITHASH_WITHOUT_WINDRBD_PREFIX=$GITHASH
+else
+	GITHASH=$(git describe --tags --always)$EXTRA_VERSION
+	GITHASH_WITHOUT_WINDRBD_PREFIX=${GITHASH#windrbd-}
+	PATCHLEVEL=$( echo $GITHASH | sed -e 's/.*-\([0-9]*\)-g.*/\1/g' )
+	if [ "${PATCHLEVEL:0:1}" == w ] ; then PATCHLEVEL=0 ; fi
 # TODO: re-enable this for all 1.X.0-rc series and adjust offset
-PATCHLEVEL=$[ $PATCHLEVEL+250 ]
-WINDRBD_VERSION=$( echo $GITHASH | sed -e 's/^windrbd-\([0-9.]*\).*$/\1/g' ).$PATCHLEVEL
+	PATCHLEVEL=$[ $PATCHLEVEL+250 ]
+	WINDRBD_VERSION=$( echo $GITHASH | sed -e 's/^windrbd-\([0-9.]*\).*$/\1/g' ).$PATCHLEVEL
+# windrbd- is now hardcoded in inno setup script
+fi
 RESOURCE_VERSION=$( echo $WINDRBD_VERSION | tr . , )
 
 echo Patchlevel is $PATCHLEVEL WinDRBD version is $WINDRBD_VERSION, Resource version is $RESOURCE_VERSION
@@ -92,5 +97,5 @@ echo "#endif" >> ${OUTPATH}/windrbd_version.h
 sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y),${WINDRBD_VERSION}  ;Replaced by build magic#" ./windrbd/windrbd.inf.in > ${OUTPATH}/windrbd.inf
 
 ## inno-setup version include file
-echo \#define MyAppVersion \"${GITHASH}\" > inno-setup/version.iss
+echo \#define MyAppVersion \"${GITHASH_WITHOUT_WINDRBD_PREFIX}\" > inno-setup/version.iss
 echo \#define MyResourceVersion \"${WINDRBD_VERSION}\" > inno-setup/resource-version.iss
