@@ -585,6 +585,7 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 	NTSTATUS status;
 	struct genl_thread_args args;
 	struct task_struct *t;
+	bool have_mutex = true;
 
 	if (msg == NULL)
 		return -EINVAL;
@@ -618,8 +619,13 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 	status = mutex_lock_timeout(&genl_drbd_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
 	if (status != STATUS_SUCCESS) {
 		printk("failed to acquire the mutex, probably a previous drbd command is stuck.\n");
+
+		printk("Warning: mutex overwritten, trying anyway ...\n");
+		have_mutex = false;
+/*
 		ret = -EAGAIN;
 		goto out_free_info;
+*/
 	}
 
 	args.op = op;
@@ -642,7 +648,8 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 	ret = args.ret;
 
 out_unlock_mutex:
-	mutex_unlock(&genl_drbd_mutex);
+	if (have_mutex)
+		mutex_unlock(&genl_drbd_mutex);
 
 out_free_info:
 	kfree(info->attrs);
