@@ -9,7 +9,7 @@ TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
 TODO: Feature: Change resync speed during resync (by drbdadm adjust)
 	Tested yes this does currently not work, researching why
-	fifo_alloc not called?
+	fifo_alloc not called? Makes no difference ...
 
 TODO: Feature: Optimize network send speed (but it is ok as it is)
 
