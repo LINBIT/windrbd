@@ -8,6 +8,7 @@ TODO: Bug: BSOD on 10.43.224.32 (Server 2022) while researching
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
 TODO: Feature: Change resync speed during resync (by drbdadm adjust)
+	Tested yes this does currently not work, researching why
 
 TODO: Feature: Optimize network send speed (but it is ok as it is)
 
