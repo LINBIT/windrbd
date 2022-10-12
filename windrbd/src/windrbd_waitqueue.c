@@ -27,9 +27,10 @@ static int ll_wait(struct wait_queue_entry *e, LONG_PTR timeout, int interruptib
 	PVOID wait_objects[2] = {0};
 	struct task_struct *thread = current;
 
-#if 0
+#if 1
+	bool forced_timeout = false;
 	/* Busy looping .. to see where it hangs */
-if (timeout > 30000) timeout = 30000;
+if (timeout > 30000) { forced_timeout = true; timeout = 30000; }
 #endif
 
 	if(timeout != MAX_SCHEDULE_TIMEOUT) {
@@ -81,7 +82,9 @@ exit_interruptible_debug(file, line, func);
 	case STATUS_WAIT_1:
 		return -EINTR;		/* TODO: -ERESTARTSYS */
 	case STATUS_TIMEOUT:
-// printk("TIMED OUT after %d milliseconds (%s:%d %s()) wait queue entry is %p\n", timeout, file, line, func, e);
+#if 1
+if (forced_timeout) printk("TIMED OUT after %d milliseconds (%s:%d %s()) wait queue entry is %p\n", timeout, file, line, func, e);
+#endif
 		return -ETIMEDOUT;
 	}
 	return 0;	/* TODO: -EINVAL or some other error */
