@@ -7,6 +7,9 @@
 #include "drbd_windows.h"
 #include "windrbd_threads.h"
 
+/* This currently makes (at least) wsk receive thread BSOD... */
+// #define FORCE_TIMEOUT 1
+
 /* TODO: for debugging purposes, record which processes currently
  * are waiting and have ioctl for printing those .. much like
  * spinlock_debug()
@@ -27,7 +30,7 @@ static int ll_wait(struct wait_queue_entry *e, LONG_PTR timeout, int interruptib
 	PVOID wait_objects[2] = {0};
 	struct task_struct *thread = current;
 
-#if 1
+#ifdef FORCE_TIMEOUT
 	bool forced_timeout = false;
 	/* Busy looping .. to see where it hangs */
 if (timeout > 30000) { forced_timeout = true; timeout = 30000; }
@@ -82,9 +85,7 @@ exit_interruptible_debug(file, line, func);
 	case STATUS_WAIT_1:
 		return -EINTR;		/* TODO: -ERESTARTSYS */
 	case STATUS_TIMEOUT:
-#if 1
-if (forced_timeout) printk("TIMED OUT after %d milliseconds (%s:%d %s()) wait queue entry is %p\n", timeout, file, line, func, e);
-#endif
+printk("TIMED OUT after %d milliseconds (%s:%d %s()) wait queue entry is %p\n", timeout, file, line, func, e);
 		return -ETIMEDOUT;
 	}
 	return 0;	/* TODO: -EINVAL or some other error */
