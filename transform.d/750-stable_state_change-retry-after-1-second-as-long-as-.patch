@@ -1,20 +1,20 @@
-From d7f1a0ed2deeede0f89f85ffb1f664aa386c4572 Mon Sep 17 00:00:00 2001
+From 0f7a831c7a792311bf043b26415de4b851f39ffe Mon Sep 17 00:00:00 2001
 From: Johannes Thoma <johannes@johannesthoma.com>
-Date: Fri, 14 Oct 2022 13:18:43 +0200
+Date: Fri, 14 Oct 2022 19:11:36 +0200
 Subject: [PATCH] stable_state_change: retry after 1 second as long as
  transient.
 
 This should fix our drbdsetup hang we observed when detaching
 while still in connection handshake phase.
 ---
- drbd/drbd_state.h | 24 ++++++++++++++----------
- 1 file changed, 14 insertions(+), 10 deletions(-)
+ drbd/drbd_state.h | 27 ++++++++++++++-------------
+ 1 file changed, 14 insertions(+), 13 deletions(-)
 
 diff --git a/drbd/drbd_state.h b/drbd/drbd_state.h
-index 66999dc..521a461 100644
+index 1cea30c..521a461 100644
 --- a/drbd/drbd_state.h
 +++ b/drbd/drbd_state.h
-@@ -67,16 +67,20 @@ extern union drbd_state drbd_get_device_state(struct drbd_device *, enum which_s
+@@ -67,19 +67,20 @@ extern union drbd_state drbd_get_device_state(struct drbd_device *, enum which_s
  extern union drbd_state drbd_get_peer_device_state(struct drbd_peer_device *, enum which_state);
  extern union drbd_state drbd_get_connection_state(struct drbd_connection *, enum which_state);
  
@@ -23,10 +23,13 @@ index 66999dc..521a461 100644
 -	do {									\
 -                enum drbd_state_rv __rv;                                        \
 -                int err;                                                        \
--                wait_event_interruptible_timeout(err, (resource)->state_wait,           \
--                        (__rv = (change_state)) != SS_IN_TRANSIENT_STATE, 30000);      \
--		if (__rv == SS_IN_TRANSIENT_STATE) printk("ALERT: Transient state %s:%d\n", __FILE__, __LINE__); \
--                __ret = __rv;                                                    \
+-                wait_event_interruptible(err, (resource)->state_wait,           \
+-                        (__rv = (change_state)) != SS_IN_TRANSIENT_STATE);      \
+-                if (err)                                                        \
+-                        err = -SS_UNKNOWN_ERROR;                                \
+-                else                                                            \
+-                        err = __rv;                                             \
+-                __ret = err;                                                    \
 -        } while (0);
 +#define stable_state_change(__ret, resource, change_state)				\
 +	{										\
