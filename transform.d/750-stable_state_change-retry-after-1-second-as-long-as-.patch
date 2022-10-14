@@ -1,0 +1,50 @@
+From d7f1a0ed2deeede0f89f85ffb1f664aa386c4572 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Fri, 14 Oct 2022 13:18:43 +0200
+Subject: [PATCH] stable_state_change: retry after 1 second as long as
+ transient.
+
+This should fix our drbdsetup hang we observed when detaching
+while still in connection handshake phase.
+---
+ drbd/drbd_state.h | 24 ++++++++++++++----------
+ 1 file changed, 14 insertions(+), 10 deletions(-)
+
+diff --git a/drbd/drbd_state.h b/drbd/drbd_state.h
+index 66999dc..521a461 100644
+--- a/drbd/drbd_state.h
++++ b/drbd/drbd_state.h
+@@ -67,16 +67,20 @@ extern union drbd_state drbd_get_device_state(struct drbd_device *, enum which_s
+ extern union drbd_state drbd_get_peer_device_state(struct drbd_peer_device *, enum which_state);
+ extern union drbd_state drbd_get_connection_state(struct drbd_connection *, enum which_state);
+ 
+-		/* TODO: doesn't work that way ... */
+-#define stable_state_change(__ret, resource, change_state)                      \
+-	do {									\
+-                enum drbd_state_rv __rv;                                        \
+-                int err;                                                        \
+-                wait_event_interruptible_timeout(err, (resource)->state_wait,           \
+-                        (__rv = (change_state)) != SS_IN_TRANSIENT_STATE, 30000);      \
+-		if (__rv == SS_IN_TRANSIENT_STATE) printk("ALERT: Transient state %s:%d\n", __FILE__, __LINE__); \
+-                __ret = __rv;                                                    \
+-        } while (0);
++#define stable_state_change(__ret, resource, change_state)				\
++	{										\
++		enum drbd_state_rv __rv;						\
++		do {									\
++			int err;                                                        \
++			wait_event_interruptible_timeout(err, (resource)->state_wait,   \
++				(__rv = (change_state)) != SS_IN_TRANSIENT_STATE, 1000);\
++			if (__rv == SS_IN_TRANSIENT_STATE)				\
++				printk("Warning: resource %s stable_state_change:"	\
++				       "In transient state %s:%d, retrying ...\n",	\
++				       (resource)->name, __FILE__, __LINE__);		\
++		} while (__rv == SS_IN_TRANSIENT_STATE);				\
++		__ret = __rv;								\
++	};
+ 
+ extern int nested_twopc_work(struct drbd_work *work, int cancel);
+ extern enum drbd_state_rv nested_twopc_request(struct drbd_resource *, int, enum drbd_packet, struct p_twopc_request *);
+-- 
+2.17.0
+
