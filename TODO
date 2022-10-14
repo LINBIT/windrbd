@@ -7,9 +7,13 @@ TODO: Bug: BSOD on 10.43.224.35 (Server 2022) while researching
 	Quite often: attach debugger and see what happens there,
 	it might be Windows Server 2022 specific...
 
+	Oh that's probably an instrumentation bug (an if was
+	removed in the DRBD source code).
+
 TODO: Bug: System freeze on primary-start-mssql-io-secondary loop
 	on 10.43.224.48
 	Was a debugger attached?
+	Not sure..but most likely yes.
 
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 
