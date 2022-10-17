@@ -1,0 +1,25 @@
+From dba3641b3824b85141347d1e98d10a36a190d9f6 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 17 Oct 2022 13:53:21 +0200
+Subject: [PATCH 3/3] drbd_state: use wake_up_all for state_wait
+
+---
+ drbd/drbd_state.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_state.c b/drbd/drbd_state.c
+index cfb5de3..8148c24 100644
+--- a/drbd/drbd_state.c
++++ b/drbd/drbd_state.c
+@@ -803,7 +803,7 @@ static enum drbd_state_rv ___end_state_change(struct drbd_resource *resource, st
+ 		wake_up(&device->misc_wait);
+ 	}
+ 
+-	wake_up(&resource->state_wait);
++	wake_up_all(&resource->state_wait);
+ out:
+ 	rcu_read_unlock(resource->wrcu_flags);
+ 
+-- 
+2.17.0
+

@@ -1,0 +1,25 @@
+From 45ea479c38d461bb8e83fad9e4da2330ce368abf Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 17 Oct 2022 13:51:50 +0200
+Subject: [PATCH 2/3] drbd_sender: use wake_up_all for state_wait
+
+---
+ drbd/drbd_sender.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index 014755e..fb2802c 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -2374,7 +2374,7 @@ void drbd_check_peers(struct drbd_resource *resource)
+ 	wait_event(resource->state_wait, all_peers_responded(resource));
+ 
+ 	clear_bit(CHECKING_PEERS, &resource->flags);
+-	wake_up(&resource->state_wait);
++	wake_up_all(&resource->state_wait);
+ }
+ 
+ void drbd_check_peers_new_current_uuid(struct drbd_device *device)
+-- 
+2.17.0
+
