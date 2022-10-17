@@ -20,10 +20,10 @@ fi
 
 if [ "$VERSION_FORCE" ] ; then
 	WINDRBD_VERSION=1.99.0.$RANDOM
-	GITHASH=$VERSION_FORCE
+	GITHASH=$(git describe --tags --always)-$VERSION_FORCE
 	GITHASH_WITHOUT_WINDRBD_PREFIX=$GITHASH
 else
-	GITHASH=$(git describe --tags --always)$EXTRA_VERSION
+	GITHASH=$(git describe --tags --always)
 	GITHASH_WITHOUT_WINDRBD_PREFIX=${GITHASH#windrbd-}
 	PATCHLEVEL=$( echo $GITHASH | sed -e 's/.*-\([0-9]*\)-g.*/\1/g' )
 	if [ "${PATCHLEVEL:0:1}" == w ] ; then PATCHLEVEL=0 ; fi
