@@ -620,12 +620,12 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 	if (status != STATUS_SUCCESS) {
 		printk("failed to acquire the mutex, probably a previous drbd command is stuck.\n");
 
+/*
 		printk("Warning: mutex overwritten, trying anyway ...\n");
 		have_mutex = false;
-/*
+*/
 		ret = -EAGAIN;
 		goto out_free_info;
-*/
 	}
 
 	args.op = op;
