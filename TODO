@@ -20,6 +20,9 @@ TODO: Bug: drbdadm adjust should not detach / attach unless necessary
 TODO: Feature: Change resync speed during resync (by drbdadm adjust)
 	Tested yes this does currently not work, researching why
 	fifo_alloc not called? Makes no difference ...
+	resync reply packet bi_size member wrong? There was an
+	optimization somewhere in the resync code (long ago)
+	Next step instrument resync reply sending code.
 
 TODO: Feature: Optimize network send speed (but it is ok as it is)
 
