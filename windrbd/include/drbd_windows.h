@@ -1055,6 +1055,7 @@ static __inline unsigned long long JIFFIES()
 	KeQueryTickCount(&Tick);
 	Elapse.QuadPart = Tick.QuadPart * KeQueryTimeIncrement();
 	Elapse.QuadPart /= (10000);
+// printk("KeQueryTimeIncrement is %lld tick count is %lld jiffies is %lld\n", KeQueryTimeIncrement(), Tick.QuadPart, Elapse.QuadPart);
 	return Elapse.QuadPart;
 }
 
