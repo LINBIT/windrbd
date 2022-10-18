@@ -2,37 +2,7 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
-TODO: Bug: BSOD on 10.43.224.35 (Server 2022) while researching
-	drbdsetup hang
-	Quite often: attach debugger and see what happens there,
-	it might be Windows Server 2022 specific...
-
-	Oh that's probably an instrumentation bug (an if was
-	removed in the DRBD source code).
-
-TODO: Bug: System freeze on primary-start-mssql-io-secondary loop
-	on 10.43.224.48
-	Was a debugger attached?
-	Not sure..but most likely yes.
-
 TODO: Bug: drbdadm adjust should not detach / attach unless necessary
-
-TODO: Feature: Change resync speed during resync (by drbdadm adjust)
-	Tested yes this does currently not work, researching why
-	fifo_alloc not called? Makes no difference ...
-	resync reply packet bi_size member wrong? There was an
-	optimization somewhere in the resync code (long ago)
-	Next step instrument resync reply sending code.
-
-TODO: Feature: Optimize network send speed (but it is ok as it is)
-
-TODO: Test: Reproduce drbdadm / drbdsetup hang
-        Windows kill task: kills drbdsetup in netlink mutex?
-	No. Client problem must be something different.
-
-TODO: Bug: Sometimes there are 3 drbdsetup commands that must be killed
-	in order to proceed.
-	Reported by a client.
 
 TODOs for Release 1.2 ----------------------------------------
 
@@ -8363,4 +8333,45 @@ Done: Bug: BSOD on running MSSQL upon symlinked drive.
 Done: Build system: Have version override for version-info.sh
 	So we can do a make VERSION=test123 and have WinDRBD use it.
 	No need for dummy commits any more.
+
+Done: Bug: BSOD on 10.43.224.35 (Server 2022) while researching
+	drbdsetup hang
+	Quite often: attach debugger and see what happens there,
+	it might be Windows Server 2022 specific...
+
+	Oh that's probably an instrumentation bug (an if was
+	removed in the DRBD source code).
+
+	Seems to be fixed.
+
+Done: Bug: System freeze on primary-start-mssql-io-secondary loop
+	on 10.43.224.48
+	Was a debugger attached?
+	Not sure..but most likely yes.
+
+Done: Feature: Change resync speed during resync (by drbdadm adjust)
+	Tested yes this does currently not work, researching why
+	fifo_alloc not called? Makes no difference ...
+	resync reply packet bi_size member wrong? There was an
+	optimization somewhere in the resync code (long ago)
+	Next step instrument resync reply sending code.
+
+	Update: should work when setting c-max-rate, resync-rate
+	and c-min-rate to a specific value and adjust.
+
+Rejected: Feature: Optimize network send speed (but it is ok as it is)
+	We have 250MBytes / Second resync speed with OpenNebula VMs...
+	should be enough.
+
+Done: Test: Reproduce drbdadm / drbdsetup hang
+        Windows kill task: kills drbdsetup in netlink mutex?
+	No. Client problem must be something different.
+	Should be fixed for now (with drbd_stable_state_change
+	patch).
+
+Done: Bug: Sometimes there are 3 drbdsetup commands that must be killed
+	in order to proceed.
+	Reported by a client.
+	Should be fixed for now (with drbd_stable_state_change
+	patch).
 
