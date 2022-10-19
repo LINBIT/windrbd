@@ -2,8 +2,6 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
-TODO: Bug: drbdadm adjust should not detach / attach unless necessary
-
 TODOs for Release 1.2 ----------------------------------------
 
 TODO: Build System: Make it build under Linux (was: Windows) only
@@ -8374,4 +8372,6 @@ Done: Bug: Sometimes there are 3 drbdsetup commands that must be killed
 	Reported by a client.
 	Should be fixed for now (with drbd_stable_state_change
 	patch).
+
+Done: Bug: drbdadm adjust should not detach / attach unless necessary
 

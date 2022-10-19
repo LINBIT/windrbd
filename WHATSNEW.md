@@ -5,6 +5,13 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.1.0-rc5
+---------------------------
+
+Fixed drbdadm adjust: Don't always detach / attach
+
+Fixed drbdsetup hang: there is a timeout in stable_state_change now
+
 What's new in version 1.1.0-rc4
 ---------------------------
 
