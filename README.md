@@ -306,3 +306,4 @@ Version history
  * 1.1.0-rc3 (Sep 9, 2022): Fixed c-max-rate, negotiating stuckness, existing NTFS data
  * 1.1.0-rc4 (Sep 27, 2022): Quit drbdsetup events2 on driver unload, fixed remove lock BSOD
  * 1.1.0-rc5 (Oct 19, 2022): drbdadm adjust does not detach, drbdsetup hang fix
+ * 1.1.0 (Oct 25, 2022): SecureBoot support, many smaller fixes
