@@ -165,6 +165,9 @@ ifndef EWDK_VERSION
 $(error EWDK_BASE not set. Please edit Makefile to make it know about your ewdk installation.)
 endif
 
+# This is relative to the inno-setup directory
+DRIVER_DIR ?= converted-sources\\drbd
+
 EWDK_INC := $(EWDK_KIT)\\Include
 EWDK_LIB := $(EWDK_KIT)\\Lib
 VC ?= /cygdrive/c/Windows/System32/cmd.exe /c ms-cl-$(BUILD_ENV).cmd
@@ -353,7 +356,7 @@ clean:
 	rm -f windrbd-event-log.*
 
 package: windrbd.sys
-	( cd ../../inno-setup && $(WINE) iscc windrbd.iss /DWindrbdSource=$(WINDRBD_SOURCE) /DWindrbdUtilsSource=$(DRBD_UTILS_SOURCE) )
+	( cd ../../inno-setup && $(WINE) iscc windrbd.iss /DWindrbdSource=$(WINDRBD_SOURCE) /DWindrbdUtilsSource=$(DRBD_UTILS_SOURCE) /DWindrbdDriverDirectory=$(DRIVER_DIR) )
 ifdef R
 	( cd ../../inno-setup &&  $(WINE) "$(EWDK_BIN)/signtool.exe" sign /fd SHA256 /v /ac "C:\cert\DigiCertTrustedRootG4.crt" /a /t http://timestamp.digicert.com install-`sed -e 's/[^"]*"\([^"]*\).*/\1/g' version.iss`.exe )
 endif
