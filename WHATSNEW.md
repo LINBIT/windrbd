@@ -5,6 +5,13 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.1.0
+---------------------------
+
+Secureboot support
+
+Many smaller fixes (see previous entries below)
+
 What's new in version 1.1.0-rc5
 ---------------------------
 
