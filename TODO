@@ -2,6 +2,12 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
+TODO: Bug: Does not load on Windows Server 2012
+
+	Error message is:
+		Adding the driver package failed : The software was tested for compliance with Windows Logo requirements on a different version of Windows, and may not be compatible with this version
+	Probably one has to click something different on the MS partner site...
+
 TODOs for Release 1.2 ----------------------------------------
 
 TODO: Build System: Make it build under Linux (was: Windows) only
