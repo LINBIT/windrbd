@@ -8,6 +8,10 @@ TODO: Bug: Does not load on Windows Server 2012
 		Adding the driver package failed : The software was tested for compliance with Windows Logo requirements on a different version of Windows, and may not be compatible with this version
 	Probably one has to click something different on the MS partner site...
 
+	When signing on partner site, check perform test signing and also
+	check all older windows versions. Then it should load under
+	Windows Server 2012. But try it with the final binary.
+
 TODOs for Release 1.2 ----------------------------------------
 
 TODO: Build System: Make it build under Linux (was: Windows) only
