@@ -307,3 +307,4 @@ Version history
  * 1.1.0-rc4 (Sep 27, 2022): Quit drbdsetup events2 on driver unload, fixed remove lock BSOD
  * 1.1.0-rc5 (Oct 19, 2022): drbdadm adjust does not detach, drbdsetup hang fix
  * 1.1.0 (Oct 25, 2022): SecureBoot support, many smaller fixes
+ * 1.1.1 (Oct 28, 2022): Release for upgrading from 1.1.0 without official signature
