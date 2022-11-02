@@ -2862,6 +2862,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 
 		case IRP_MN_SURPRISE_REMOVAL:
 			dbg("got IRP_MN_SURPRISE_REMOVAL\n");
+printk("IRP_MN_SURPRISE_REMOVAL 1 bdev is %p\n", bdev);
 				/* Tell REMOVE request not to remove the device ...
 				 * this is required to make surprise removal HLK test
 				 * working. Since we don't have hardware to unplug,
@@ -2871,16 +2872,20 @@ if (status == STATUS_NOT_SUPPORTED) {
 				 * We probably should delete the device here ...
 				 */
 			if (bdev) {
+printk("IRP_MN_SURPRISE_REMOVAL 2 bdev is %p\n", bdev);
 				bdev->suprise_removal = true;
 
 				dbg("set ejected event in IRP_MN_SURPRISE_REMOVAL\n");
 				KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
+printk("IRP_MN_SURPRISE_REMOVAL 3 bdev is %p\n", bdev);
 			}
+printk("IRP_MN_SURPRISE_REMOVAL 4 bdev is %p\n", bdev);
 			status = STATUS_SUCCESS;
 			break;
 
 		case IRP_MN_REMOVE_DEVICE:
 			dbg("got IRP_MN_REMOVE_DEVICE\n");
+printk("IRP_MN_REMOVE_DEVICE 1 bdev is %p\n", bdev);
 
 				/* IRP_MN_REMOVE_DEVICE after IRP_MN_SURPRISE_REMOVAL is sometimes
 				 * sent also in production setting ... remove the device else
@@ -2892,15 +2897,21 @@ if (status == STATUS_NOT_SUPPORTED) {
 				printk("got IRP_MN_REMOVE_DEVICE after IRP_MN_SURPRISE_REMOVAL ...\n");
 				bdev->suprise_removal = false;
 			}
+printk("IRP_MN_REMOVE_DEVICE 2 bdev is %p\n", bdev);
 			/* If it is NULL then we already deleted the device */
 			if (ref != NULL) {
+printk("IRP_MN_REMOVE_DEVICE 3 bdev is %p\n", bdev);
 				if (bdev != NULL) {
+printk("IRP_MN_REMOVE_DEVICE 4 bdev is %p\n", bdev);
 					bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
 					if (bdev->ref != NULL) {
+printk("IRP_MN_REMOVE_DEVICE 5 bdev is %p\n", bdev);
 						IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
+printk("IRP_MN_REMOVE_DEVICE 6 bdev is %p\n", bdev);
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
 						IoReleaseRemoveLockAndWait(&bdev->ref->w_remove_lock, NULL);
+printk("IRP_MN_REMOVE_DEVICE 7 bdev is %p\n", bdev);
 					}
 /*
 
@@ -2908,6 +2919,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 					KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, NULL);
 					dbg("Ok ...\n");
 */
+printk("IRP_MN_REMOVE_DEVICE 8 bdev is %p\n", bdev);
 				} else {
 					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
 				}
@@ -2931,20 +2943,27 @@ if (status == STATUS_NOT_SUPPORTED) {
 /* TODO: this code is never executed in the test, reenable NULLify? */
 //				device->DeviceExtension = NULL;
 // printk("REMOVE: device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
+printk("IRP_MN_REMOVE_DEVICE 9 bdev is %p\n", bdev);
 				if (bdev != NULL) {
+printk("IRP_MN_REMOVE_DEVICE a bdev is %p\n", bdev);
 						/* To allow bdev being removed. */
 					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
+printk("IRP_MN_REMOVE_DEVICE b bdev is %p\n", bdev);
 				}
 				dbg("device object NOT deleted this should be done after bus rescan\n");
+printk("IRP_MN_REMOVE_DEVICE c bdev is %p\n", bdev);
 			} else {
 				printk("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
 			}
+printk("IRP_MN_REMOVE_DEVICE d bdev is %p\n", bdev);
 
 			status = STATUS_SUCCESS;
 			irp->IoStatus.Status = status;
 		        IoCompleteRequest(irp, IO_NO_INCREMENT);
 
+printk("IRP_MN_REMOVE_DEVICE e bdev is %p\n", bdev);
 			num_pnp_requests--;
+printk("IRP_MN_REMOVE_DEVICE f bdev is %p\n", bdev);
 			return status;
 
 		case IRP_MN_EJECT:
