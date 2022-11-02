@@ -2,6 +2,11 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
+TODO: Bug: BSOD on secondary after removing drive letter.
+
+	Somewhere in the REMOVE after SUPRISE_REMOVAL path.
+	(in IoAcquireRemoveLock()).
+
 TODO: Bug: Does not load on Windows Server 2012
 
 	Error message is:
@@ -11,6 +16,12 @@ TODO: Bug: Does not load on Windows Server 2012
 	When signing on partner site, check perform test signing and also
 	check all older windows versions. Then it should load under
 	Windows Server 2012. But try it with the final binary.
+
+	Ouch not good: It won't load without testsigning set on all
+	server windows machines ... never check test signing.
+	It seems that Server 2012 is out of support (cannot create
+	signed packages for it in May this still worked...) so
+	maybe we just reject this.
 
 TODOs for Release 1.2 ----------------------------------------
 
