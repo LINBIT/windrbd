@@ -7,6 +7,14 @@ TODO: Bug: BSOD on secondary after removing drive letter.
 	Somewhere in the REMOVE after SUPRISE_REMOVAL path.
 	(in IoAcquireRemoveLock()).
 
+	Might also be when doing a down / up / primary / secondary
+	and wait a bit. The thing is that Windows sends REMOVE_DEVICE
+	long (10+ seconds) after SURPRISE_REMOVAL .. meanwhile another
+	WinDRBD device can be brought up and down. We should
+	think about removing the device in SURPRISE_REMOVAL or
+	wait longer for REMOVE_DEVICE? It is maybe not related to
+	the change of drive letter but related to up / down ...
+
 TODO: Bug: Does not load on Windows Server 2012
 
 	Error message is:

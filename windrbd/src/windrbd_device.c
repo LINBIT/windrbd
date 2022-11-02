@@ -2909,6 +2909,7 @@ printk("IRP_MN_REMOVE_DEVICE 4 bdev is %p\n", bdev);
 printk("IRP_MN_REMOVE_DEVICE 5 bdev is %p\n", bdev);
 						IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
 printk("IRP_MN_REMOVE_DEVICE 6 bdev is %p\n", bdev);
+printk("IRP_MN_REMOVE_DEVICE 6a irql is %p\n", KeGetCurrentIrql());
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
 						IoReleaseRemoveLockAndWait(&bdev->ref->w_remove_lock, NULL);
 printk("IRP_MN_REMOVE_DEVICE 7 bdev is %p\n", bdev);
