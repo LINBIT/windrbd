@@ -5,6 +5,12 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.1.2
+---------------------------
+
+Fixed a BSOD when REMOVE_DEVICE timed out: we now always wait
+for REMOVE_DEVICE being sent, drbdadm secondary may take 40 seconds.
+
 What's new in version 1.1.1
 ---------------------------
 
