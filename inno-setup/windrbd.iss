@@ -255,9 +255,14 @@ var LinstorSatelliteWasStarted: boolean;
 Procedure StopUserModeServices;
 Begin
 	Log('about to stop user mode services');
-	LoggerWasStarted := MyStopService('windrbdlog');
 	UmHelperWasStarted := MyStopService('windrbdumhelper');
 	LinstorSatelliteWasStarted := MyStopService('linstor-satellite');
+End;
+
+Procedure StopLogger;
+Begin
+	Log('about to stop windrbdlog service');
+	LoggerWasStarted := MyStopService('windrbdlog');
 End;
 
 Procedure StartUserModeServices;
@@ -415,6 +420,7 @@ begin
 	if CurUninstallStep = usAppMutexCheck then begin
 		StopUserModeServices();
 		StopDriver();
+		StopLogger();
 	end;
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
@@ -497,6 +503,7 @@ begin
 		if GetOldVersion <> '' then begin
 			StopUserModeServices();
 			StopDriver();
+			StopLogger();
 			{ TODO: Also remove all windrbd drivers from driver store,
 			  pnputil -d (pnputil /delete-driver) will do that but
 			  need to parse pnputil -e (pnputil /enum-drivers) output
