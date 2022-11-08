@@ -2,35 +2,6 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
-TODO: Bug: BSOD on secondary after removing drive letter.
-
-	Somewhere in the REMOVE after SUPRISE_REMOVAL path.
-	(in IoAcquireRemoveLock()).
-
-	Might also be when doing a down / up / primary / secondary
-	and wait a bit. The thing is that Windows sends REMOVE_DEVICE
-	long (10+ seconds) after SURPRISE_REMOVAL .. meanwhile another
-	WinDRBD device can be brought up and down. We should
-	think about removing the device in SURPRISE_REMOVAL or
-	wait longer for REMOVE_DEVICE? It is maybe not related to
-	the change of drive letter but related to up / down ...
-
-TODO: Bug: Does not load on Windows Server 2012
-
-	Error message is:
-		Adding the driver package failed : The software was tested for compliance with Windows Logo requirements on a different version of Windows, and may not be compatible with this version
-	Probably one has to click something different on the MS partner site...
-
-	When signing on partner site, check perform test signing and also
-	check all older windows versions. Then it should load under
-	Windows Server 2012. But try it with the final binary.
-
-	Ouch not good: It won't load without testsigning set on all
-	server windows machines ... never check test signing.
-	It seems that Server 2012 is out of support (cannot create
-	signed packages for it in May this still worked...) so
-	maybe we just reject this.
-
 TODOs for Release 1.2 ----------------------------------------
 
 TODO: Build System: Make it build under Linux (was: Windows) only
@@ -8404,3 +8375,42 @@ Done: Bug: Sometimes there are 3 drbdsetup commands that must be killed
 
 Done: Bug: drbdadm adjust should not detach / attach unless necessary
 
+Done: Bug: BSOD on secondary after removing drive letter.
+
+	Somewhere in the REMOVE after SUPRISE_REMOVAL path.
+	(in IoAcquireRemoveLock()).
+
+	Might also be when doing a down / up / primary / secondary
+	and wait a bit. The thing is that Windows sends REMOVE_DEVICE
+	long (10+ seconds) after SURPRISE_REMOVAL .. meanwhile another
+	WinDRBD device can be brought up and down. We should
+	think about removing the device in SURPRISE_REMOVAL or
+	wait longer for REMOVE_DEVICE? It is maybe not related to
+	the change of drive letter but related to up / down ...
+
+	Should be fixed with 1.1.2
+
+Rejected: Bug: Does not load on Windows Server 2012
+
+	Error message is:
+		Adding the driver package failed : The software was tested for compliance with Windows Logo requirements on a different version of Windows, and may not be compatible with this version
+	Probably one has to click something different on the MS partner site...
+
+	When signing on partner site, check perform test signing and also
+	check all older windows versions. Then it should load under
+	Windows Server 2012. But try it with the final binary.
+
+	Ouch not good: It won't load without testsigning set on all
+	server windows machines ... never check test signing.
+	It seems that Server 2012 is out of support (cannot create
+	signed packages for it in May this still worked...) so
+	maybe we just reject this.
+
+	It seems that Microsoft just stopped supporting signing new drivers
+	for Server 2012.
+
+Done: Strange behaviour when reusing existing data
+
+	Less than 1243GB: assign a drive letter via diskpart / partition manager.
+	Do not assign a drive letter via WinDRBD
+	Greater than 1243GB: assign a drive letter via WinDRBD
