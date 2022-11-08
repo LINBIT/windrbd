@@ -419,8 +419,8 @@ var root: string;
 begin
 	if CurUninstallStep = usAppMutexCheck then begin
 		StopUserModeServices();
-		StopDriver();
 		StopLogger();
+		StopDriver();
 	end;
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
@@ -502,8 +502,8 @@ begin
 
 		if GetOldVersion <> '' then begin
 			StopUserModeServices();
-			StopDriver();
 			StopLogger();
+			StopDriver();
 			{ TODO: Also remove all windrbd drivers from driver store,
 			  pnputil -d (pnputil /delete-driver) will do that but
 			  need to parse pnputil -e (pnputil /enum-drivers) output

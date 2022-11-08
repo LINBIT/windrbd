@@ -56,6 +56,9 @@ TODO: Bug: drbdadm down takes 10 seconds break when it is the last node
 TODO: Code quality: Stop windrbdlog service after unloading driver
 
 	So we see the log messages from the unload.
+	Working ... can't stop driver since Windows thinks it
+	is required to run windrbdlog .. TODO is to remove
+	this dependency (and to test if this breaks something else).
 
 TODO: Code quality: Use Event Tracing for event log
 
@@ -8414,3 +8417,4 @@ Done: Strange behaviour when reusing existing data
 	Less than 1243GB: assign a drive letter via diskpart / partition manager.
 	Do not assign a drive letter via WinDRBD
 	Greater than 1243GB: assign a drive letter via WinDRBD
+
