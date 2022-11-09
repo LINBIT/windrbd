@@ -2,6 +2,8 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
+TODO: Merge windrbd-1.1 into master and delete windrbd-1.1 branch
+
 TODOs for Release 1.2 ----------------------------------------
 
 TODO: Build System: Make it build under Linux (was: Windows) only
