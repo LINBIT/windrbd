@@ -56,8 +56,8 @@ DisplayName      = "WinDRBD"
 Description      = "WinDRBD - storage replication over network for Microsoft Windows"
 ServiceBinary    = %12%\windrbd.sys     	;%windir%\system32\drivers\windrbd.sys
 ServiceType      = 1                    ;SERVICE_FILE_SYSTEM_DRIVER
-; TODO: 1 - start on booting. Reason is that we drop the service dependency to windrbdlog and windrbd won't be started any more
-StartType        = 3			;start only manually (unless booting via network)
+; 1 - start on booting. Reason is that we drop the service dependency to windrbdlog and windrbd won't be started any more
+StartType        = 1
 ErrorControl     = 0                    ;SERVICE_ERROR_NORMAL
 AddReg           = WinDRBD.AddRegistry
 
