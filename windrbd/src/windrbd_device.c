@@ -2171,9 +2171,10 @@ dbg("NOT completing IRP\n");
 		module_put(&windrbd_module);
 
 		drbd_bus_device = NULL;
-		/* TODO: also nullify drbd_physical_bus_device else
+		/* Also nullify drbd_physical_bus_device else
 		 * BSOD on windrbd_rescan_bus later.
 		 */
+		drbd_physical_bus_device = NULL;
 
 		num_pnp_bus_requests--;
 		return status; /* must not do IoCompleteRequest */

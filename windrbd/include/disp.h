@@ -40,6 +40,7 @@ extern PDEVICE_OBJECT		mvolRootDeviceObject;
 extern PDEVICE_OBJECT		user_device_object;
 extern PDRIVER_OBJECT		mvolDriverObject;
 extern PDEVICE_OBJECT		drbd_bus_device;
+extern PDEVICE_OBJECT		drbd_physical_bus_device;
 
 extern int drbd_init(void);
 
