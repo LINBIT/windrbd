@@ -182,6 +182,31 @@ begin
 	Result := Res;
 end;
 
+{ older WinDRBD (<=1.1.2) have dependency from windrbd to windrbdlog
+  and were started only when windrbdlog was started. This dependency
+  does not exist now. If left untouched WinDRBD won't start on boot.
+  So if StartType is still 3 (DEMAND_START) set it to 1 (AUTO_START)
+}
+
+{ TODO: we can remove this ... inf file installation always overwrites
+  this setting so we need to set it in the INF file
+}
+
+Procedure SetWinDRBDStartTypeTo1;
+var res: Boolean;
+    val: Cardinal;
+
+begin
+	Res := RegQueryDWordValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'Start', val);
+	if res and (val = 3) then
+	begin
+		Log('Upgrading WinDRBD from 1.1.2 or before, setting StartType tto 1 (AUTO_START)');
+		Res := RegWriteDWordValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'Start', 3);
+		if not res then
+			Log('Failed. Strange.');
+	end;
+end;
+
 { See https://stackoverflow.com/questions/1136770/how-to-get-an-output-of-an-execed-program-in-inno-setup }
 { Exec with output stored in result. }
 { ResultString will only be altered if True is returned. }
@@ -280,7 +305,10 @@ Begin
                   will lead to a BSOD. }
 	HasServiceDependency := DeleteServiceDependency('windrbdlog');
 	if HasServiceDependency then
+	begin
 		LoggerWasStarted := MyStopService('windrbdlog');
+		SetWinDRBDStartTypeTo1;
+	end;
 
 	UmHelperWasStarted := MyStopService('windrbdumhelper');
 	LinstorSatelliteWasStarted := MyStopService('linstor-satellite');
