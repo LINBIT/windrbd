@@ -290,7 +290,6 @@ end;
 var LoggerWasStarted: boolean;
 var UmHelperWasStarted: boolean;
 var LinstorSatelliteWasStarted: boolean;
-var HasServiceDependency: boolean;
 
 Procedure StopUserModeServices;
 Begin
@@ -303,8 +302,8 @@ Begin
 		{ If there is a dependecy we have to stop logger here.
 		  Else WinDRBD driver cannot be stopped which eventually
                   will lead to a BSOD. }
-	HasServiceDependency := DeleteServiceDependency('windrbdlog');
-	if HasServiceDependency then
+	DeleteServiceDependency('windrbdlog');
+	if GetVersionCode <= $10102 then
 	begin
 		LoggerWasStarted := MyStopService('windrbdlog');
 		SetWinDRBDStartTypeTo1;
@@ -317,7 +316,7 @@ End;
 Procedure StopLogger;
 Begin
 	Log('about to stop windrbdlog service');
-	if not HasServiceDependency then
+	if GetVersionCode > $10102 then
 		LoggerWasStarted := MyStopService('windrbdlog');
 
 		{ else logger already stopped in function above }

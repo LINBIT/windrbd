@@ -1,0 +1,28 @@
+From 31cef62961946ab47973742d88554463ae172975 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 23 May 2022 15:12:32 +0200
+Subject: [PATCH] Added /install flag to pnputil call (in inno-setup)
+
+This appears to be necessary for Microsoft signed packages.
+Else a followup install-bus-device will select a 1.0.X driver
+instead of the new 1.1.X driver.
+---
+ inno-setup/windrbd.iss | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/inno-setup/windrbd.iss b/inno-setup/windrbd.iss
+index 44255fde..4c2eea2e 100644
+--- a/inno-setup/windrbd.iss
++++ b/inno-setup/windrbd.iss
+@@ -369,7 +369,7 @@ var ResultCode: Integer;
+     CommandOutput: String;
+ 
+ begin
+-	if not ExecWithLogging(ExpandConstant('pnputil.exe'), '-a windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
++	if not ExecWithLogging(ExpandConstant('pnputil.exe'), '/add-driver windrbd.inf /install', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+ 	begin
+ 		MsgBox('Could not run pnputil', mbInformation, MB_OK);
+ 	end;
+-- 
+2.17.0
+
