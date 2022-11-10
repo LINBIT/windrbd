@@ -398,7 +398,10 @@ begin
 		Log('Failed to set shutdown flag. The old WinDRBD version is probably less than 1.1.0, please make sure that drbdsetup events2 processes are stopped by yourself');
 	end;
 
-Log('NOT STOPPING DRIVER');
+	if not ExecWithLogging(ExpandConstant('sc.exe'), 'stop windrbd', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	begin
+		MsgBox('Could not stop driver', mbInformation, MB_OK);
+	end;
 
 	driverWasUnloaded := ResultCode = 0;
 end;
