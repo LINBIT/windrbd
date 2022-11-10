@@ -168,6 +168,20 @@ begin
 	Result := root;
 end;
 
+Function DeleteServiceDependency(serviceName: String): Boolean;
+var res: Boolean;
+begin
+	Log('About to delete System\CurrentControlSet\Services\'+serviceName+'\DependOnService registry key ...');
+
+	Res := RegDeleteValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\'+serviceName, 'DependOnService');
+        if not Res then
+		Log('Could not delete it maybe it was not there ...')
+	else
+		Log('Deleted. This is a version <= 1.1.2 so stopping logger before driver');
+
+	Result := Res;
+end;
+
 { See https://stackoverflow.com/questions/1136770/how-to-get-an-output-of-an-execed-program-in-inno-setup }
 { Exec with output stored in result. }
 { ResultString will only be altered if True is returned. }
@@ -251,10 +265,23 @@ end;
 var LoggerWasStarted: boolean;
 var UmHelperWasStarted: boolean;
 var LinstorSatelliteWasStarted: boolean;
+var HasServiceDependency: boolean;
 
 Procedure StopUserModeServices;
 Begin
 	Log('about to stop user mode services');
+
+		{ WinDRBD 1.1.2 and before have this unneccessary
+		  dependency from windrbd to umhelper/logger. }
+
+	DeleteServiceDependency('windrbdumhelper');
+		{ If there is a dependecy we have to stop logger here.
+		  Else WinDRBD driver cannot be stopped which eventually
+                  will lead to a BSOD. }
+	HasServiceDependency := DeleteServiceDependency('windrbdlog');
+	if HasServiceDependency then
+		LoggerWasStarted := MyStopService('windrbdlog');
+
 	UmHelperWasStarted := MyStopService('windrbdumhelper');
 	LinstorSatelliteWasStarted := MyStopService('linstor-satellite');
 End;
@@ -262,7 +289,10 @@ End;
 Procedure StopLogger;
 Begin
 	Log('about to stop windrbdlog service');
-	LoggerWasStarted := MyStopService('windrbdlog');
+	if not HasServiceDependency then
+		LoggerWasStarted := MyStopService('windrbdlog');
+
+		{ else logger already stopped in function above }
 End;
 
 Procedure StartUserModeServices;
@@ -283,10 +313,10 @@ Procedure InstallUserModeServices;
 var ResultCode: Integer;
     CommandOutput: String;
 Begin
-	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdlog -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a log-server -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -t auto -y windrbd', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdlog -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a log-server -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -t auto', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 		MsgBox('Could not install WinDRBD log service', mbInformation, MB_OK);
 
-	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdumhelper -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a user-mode-helper-daemon -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -t auto -y windrbd', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdumhelper -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a user-mode-helper-daemon -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -t auto', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 		MsgBox('Could not install WinDRBD user mode helper service', mbInformation, MB_OK);
 end;
 
@@ -419,8 +449,8 @@ var root: string;
 begin
 	if CurUninstallStep = usAppMutexCheck then begin
 		StopUserModeServices();
-		StopLogger();
 		StopDriver();
+		StopLogger();
 	end;
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
@@ -502,8 +532,9 @@ begin
 
 		if GetOldVersion <> '' then begin
 			StopUserModeServices();
-			StopLogger();
 			StopDriver();
+			StopLogger();
+
 			{ TODO: Also remove all windrbd drivers from driver store,
 			  pnputil -d (pnputil /delete-driver) will do that but
 			  need to parse pnputil -e (pnputil /enum-drivers) output
