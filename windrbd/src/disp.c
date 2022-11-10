@@ -79,7 +79,7 @@ const NPIID NPI_WSK_INTERFACE_ID = {
 PDEVICE_OBJECT drbd_bus_device;
 static PDEVICE_OBJECT drbd_bus_device2;
 static PDEVICE_OBJECT drbd_legacy_bus_object;
-static PDEVICE_OBJECT drbd_physical_bus_device;
+PDEVICE_OBJECT drbd_physical_bus_device;
 
 extern void init_transport(void);
 
@@ -263,6 +263,7 @@ void windrbd_bus_is_ready(void)
 int windrbd_rescan_bus(void)
 {
 	if (drbd_physical_bus_device != NULL) {
+		/* TODO: check if bus device was removed/added again */
 		IoInvalidateDeviceRelations(drbd_physical_bus_device, BusRelations);
 		return 0;
 	}

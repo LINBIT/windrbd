@@ -511,6 +511,9 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		else
 			about_to_unload_driver = (*the_flag);
 
+/* TODO: if flag is cleared, assign AddDevice so we get the correct
+         bus device in case driver wasn't unloaded... */
+
 		break;
 	}
 
@@ -2168,6 +2171,10 @@ dbg("NOT completing IRP\n");
 		module_put(&windrbd_module);
 
 		drbd_bus_device = NULL;
+		/* TODO: also nullify drbd_physical_bus_device else
+		 * BSOD on windrbd_rescan_bus later.
+		 */
+
 		num_pnp_bus_requests--;
 		return status; /* must not do IoCompleteRequest */
 			/* This is done (?) in IoCallDriver */
