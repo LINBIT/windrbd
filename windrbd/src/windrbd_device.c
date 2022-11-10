@@ -508,11 +508,18 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 
 		if (the_flag == NULL)
 			status = STATUS_INVALID_DEVICE_REQUEST;
-		else
-			about_to_unload_driver = (*the_flag);
+		else {
 
-/* TODO: if flag is cleared, assign AddDevice so we get the correct
-         bus device in case driver wasn't unloaded... */
+/* If flag is cleared, assign AddDevice so we get the correct
+   bus device in case driver wasn't unloaded and the installer
+   was run. This should make drbdadm primary work again. */
+
+			if (about_to_unload_driver && !*the_flag) {
+				printk("Assuming we were upgraded and unloading failed, enabling AddDevice again ...\n");
+				mvolDriverObject->DriverExtension->AddDevice = mvolAddDevice;
+			}
+			about_to_unload_driver = (*the_flag);
+		}
 
 		break;
 	}
