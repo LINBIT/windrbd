@@ -8442,10 +8442,14 @@ Done: Bug: BSOD on restarting driver
 	be replaced then there is probably something serious
 	not working and one should reboot anyway.
 
-Rejected: Code quality: make primary work after a failed driver unload.
+Done: Code quality: make primary work after a failed driver unload.
 
 	Somewhere deep in the Microsoft PnP code there is a
 	code that make that impossible. Need to reboot if driver
 	upgrade fails to make drbdadm primary work again.
 	Usually an upgrade should not fail.
+
+	Just found that if one installs a WinDRBD successfully
+	later one can make primary with the new driver. So
+	there is no need to fix that.
 
