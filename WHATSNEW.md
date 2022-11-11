@@ -5,6 +5,13 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.1.3
+---------------------------
+
+Fixed a BSOD on upgrade if stopping the old driver fails
+
+stop logger after driver (if possible) so we see driver unload messages.
+
 What's new in version 1.1.2
 ---------------------------
 
