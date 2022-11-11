@@ -309,3 +309,4 @@ Version history
  * 1.1.0 (Oct 25, 2022): SecureBoot support, many smaller fixes
  * 1.1.1 (Oct 28, 2022): Release for upgrading from 1.1.0 without official signature
  * 1.1.2 (Nov 3, 2022): Fixed a BSOD when REMOVE_DEVICE timed out
+ * 1.1.3 (Nov 11, 2022): Show driver unload messages, fix BSOD on unsuccessful driver update
