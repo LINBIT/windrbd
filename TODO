@@ -2,11 +2,6 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
-TODO: Code quality: Merge windrbd-1.1 into master and delete windrbd-1.1 branch
-	Delete windrbd-1.1 branch?
-
-	Working ...
-
 TODO: Test: Upgrade (logger stop after driver) as soon as 1.1.3 is out
 
 TODOs for Release 1.2 ----------------------------------------
@@ -8454,4 +8449,20 @@ Done: Code quality: make primary work after a failed driver unload.
 	Just found that if one installs a WinDRBD successfully
 	later one can make primary with the new driver. So
 	there is no need to fix that.
+
+Done: Code quality: Merge windrbd-1.1 into master and delete windrbd-1.1 branch
+	Delete windrbd-1.1 branch?
+
+	Working ...
+
+	Done: merge windrbd-1.1 into master
+
+	Done: rename master to stable
+
+	We don't have a windrbd-1.0 branch any more it is end of life.
+
+	Features (for now) should be developed on windrbd-1.1 branch.
+
+	Later windrbd-1.2 will be created which should be rebased onto
+	a (not very often changed) windrbd-1.1 from time to time.
 
