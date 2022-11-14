@@ -2597,7 +2597,7 @@ void delete_block_device(struct kref *kref)
 			blk_cleanup_queue(bdev->bd_disk->queue);
 		put_disk(bdev->bd_disk);
 	}
-	ObDereferenceObject(bdev->file_object);
+//	ObDereferenceObject(bdev->file_object);
 	kfree(bdev->path_to_device.Buffer);
 
 	list_del(&bdev->backing_devices_list);
@@ -2867,6 +2867,12 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
+
+/*
+printk("freeing file object ...\n");
+ObDereferenceObject(file_object);
+printk("done\n");
+*/
 
 	return block_device;
 
@@ -3277,6 +3283,10 @@ out_path_to_device_failed:
  * maybe we switch back to just creating the symbolic link.
  */
 
+/* TODO: oops fsutil reports and error when just creating the
+ * symlink, good that we still have this code:
+ */
+
 static int mountmgr_create_point(struct block_device *dev)
 {
 	struct _MOUNTMGR_CREATE_POINT_INPUT *create_point;
@@ -3544,17 +3554,17 @@ int windrbd_mount(struct block_device *dev)
 		return 0;	/* this is legal */
 	}
 
+/*
 	status = IoCreateSymbolicLink(&dev->mount_point, &dev->path_to_device);
 	if (status != STATUS_SUCCESS) {
 		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, dev->mount_point.Buffer, status);
 		return -1;
 
 	}
+*/
 
-/*
 	if (mountmgr_create_point(dev) < 0)
 		return -1;
-*/
 
 	dev->is_mounted = true;
 
