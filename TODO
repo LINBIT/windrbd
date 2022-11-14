@@ -5,6 +5,8 @@ TODOs for 1.1 branch  ----------------------------------------
 TODO: Code quality: Merge windrbd-1.1 into master and delete windrbd-1.1 branch
 	Delete windrbd-1.1 branch?
 
+	Working ...
+
 TODO: Test: Upgrade (logger stop after driver) as soon as 1.1.3 is out
 
 TODOs for Release 1.2 ----------------------------------------
