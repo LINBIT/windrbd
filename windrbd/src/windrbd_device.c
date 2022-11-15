@@ -2841,6 +2841,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			DeviceCapabilities->EjectSupported = TRUE;
 			DeviceCapabilities->HardwareDisabled = FALSE;
 			DeviceCapabilities->Removable = TRUE;
+				/* TODO: it is not ok ... */
 			DeviceCapabilities->SurpriseRemovalOK = TRUE;
 				/* WinDRBD minors are unique on the system */
 			DeviceCapabilities->UniqueID = TRUE;

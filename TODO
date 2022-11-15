@@ -6,6 +6,8 @@ TODO: Bug: fsutil displays error for manually mounted NTFS volumes
 
 	And MSSql Server (which version?) does not work.
 
+TODO: Test: How does it behave with supports surprisal remove off?
+
 TODOs for Release 1.2 ----------------------------------------
 
 TODO: Build System: Make it build under Linux (was: Windows) only
@@ -56,13 +58,6 @@ TODO: Code quality: One should not need to create their own keys on building Win
 	Or: teach the Makefile how to generate those keys.
 
 TODO: Bug: drbdadm down takes 10 seconds break when it is the last node
-
-TODO: Code quality: Stop windrbdlog service after unloading driver
-
-	So we see the log messages from the unload.
-	Working ... can't stop driver since Windows thinks it
-	is required to run windrbdlog .. TODO is to remove
-	this dependency (and to test if this breaks something else).
 
 TODO: Code quality: Use Event Tracing for event log
 
@@ -8471,4 +8466,11 @@ Done: Code quality: Merge windrbd-1.1 into master and delete windrbd-1.1 branch
 Done: Test: Upgrade (logger stop after driver) as soon as 1.1.3 is out
 
 	Done, works.
+
+Done: Code quality: Stop windrbdlog service after unloading driver
+
+	So we see the log messages from the unload.
+	Working ... can't stop driver since Windows thinks it
+	is required to run windrbdlog .. TODO is to remove
+	this dependency (and to test if this breaks something else).
 
