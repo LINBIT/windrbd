@@ -27,7 +27,9 @@
 
 /* Uncomment this if you want more debug output (disable for releases) */
 
+/*
 #define DEBUG 1
+*/
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -562,7 +564,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-// printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
+printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	if (dev->is_bootdevice) {
 		status = wait_for_becoming_primary(dev);
 		if (status != STATUS_SUCCESS)
@@ -637,6 +639,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		break;
 
 	case IOCTL_DISK_GET_PARTITION_INFO:
+printk("got IOCTL_DISK_GET_PARTITION_INFO\n");
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _PARTITION_INFORMATION)) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
@@ -648,6 +651,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		break;
 
 	case IOCTL_DISK_GET_PARTITION_INFO_EX:
+printk("got IOCTL_DISK_GET_PARTITION_INFO_EX\n");
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _PARTITION_INFORMATION_EX)) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
@@ -1042,7 +1046,7 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 	{
 		struct _DRIVE_LAYOUT_INFORMATION_EX* dli;
 
-		dbg(KERN_DEBUG "IOCTL_DISK_GET_DRIVE_LAYOUT_EX: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
+printk(KERN_DEBUG "IOCTL_DISK_GET_DRIVE_LAYOUT_EX: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
 
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _DRIVE_LAYOUT_INFORMATION_EX)) {
 			status = STATUS_BUFFER_TOO_SMALL;
@@ -1062,8 +1066,28 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 		break;
 	}
 
-	default: 
-// printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
+/*
+	case IOCTL_VOLUME_GET_GPT_ATTRIBUTES:
+	{
+		struct _VOLUME_GET_GPT_ATTRIBUTES_INFORMATION *gpt_attrs;
+
+
+		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(*gpt_attrs)) {
+			status = STATUS_BUFFER_TOO_SMALL;
+			break;
+		}
+		gpt_attrs = (struct _VOLUME_GET_GPT_ATTRIBUTES_INFORMATION*) irp->AssociatedIrp.SystemBuffer;
+
+		gpt_attrs->GptAttributes = GPT_BASIC_DATA_ATTRIBUTE_NO_DRIVE_LETTER;
+		irp->IoStatus.Information = sizeof(*gpt_attrs);
+
+		status = STATUS_SUCCESS;
+		break;
+	}
+*/
+
+	default:
+printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 
 		status = STATUS_INVALID_PARAMETER;
 	}
