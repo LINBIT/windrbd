@@ -6,6 +6,19 @@ TODO: Bug: fsutil displays error for manually mounted NTFS volumes
 
 	And MSSql Server (which version?) does not work.
 
+	Update: We really consider faking a parition table
+	(and shift I/O by parititon table length). It should
+	be easy to build: only parameter would be the block
+	dev size.
+
+	See: https://en.wikipedia.org/wiki/GUID_Partition_Table
+	for a description of the header.
+
+	TODO: find a disk with only one partition for the template.
+	TODO: implement shift and injection (in windrbd_scsi()).
+	TODO: when to use it (right now when there is a mount point
+	      set). Try to detect NTFS on backing device?
+
 TODO: Test: How does it behave with supports surprisal remove off?
 
 TODOs for Release 1.2 ----------------------------------------
