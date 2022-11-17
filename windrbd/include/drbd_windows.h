@@ -629,6 +629,14 @@ struct block_device {
 
 	struct kobject kobj;
 	bool is_backing_device;
+
+		/* These are parameters for faking a GPT table at
+		 * the beginning and the end. Usually these should
+		 * be zero but will be 34 for GPT fake. The pointers
+		 * contain GPT data for before and after.
+		 */
+	sector_t data_shift, appended_sectors;
+	void *disk_prolog, *disk_epilog;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
