@@ -55,6 +55,7 @@
 #include "windrbd/windrbd_ioctl.h"
 #include "drbd_int.h"
 #include "drbd_wrappers.h"
+#include "partition_table_template.h"
 
 static PDRIVER_DISPATCH windrbd_dispatch_table[IRP_MJ_MAXIMUM_FUNCTION + 1];
 static char *thread_names[IRP_MJ_MAXIMUM_FUNCTION + 1] = {
@@ -3400,20 +3401,33 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 					bdev->data_shift-start_sector;
 
 				if (rw == READ) {
-					/* TODO: inject partition table */
-					memset(buffer, 0xaa, num_injected_sectors*512);
+					if (start_sector < partition_table_template_size/512) {
+						size_t n = partition_table_template_size - start_sector*512;
+						if (n>=sector_count*512) {
+							n = sector_count*512;
+						}
+						memcpy(buffer, partition_table_template+start_sector*512, n);
+						start_sector += n/512;
+						sector_count -= n/512;
+						buffer += n;
+
+					}
+					if (start_sector < bdev->data_shift && sector_count > 0) {
+						size_t n = (bdev->data_shift - start_sector)*512;
+						if (n>=sector_count*512) {
+							n = sector_count*512;
+						}
+						memset(buffer, 0x00, n);
+
+						start_sector += n/512;
+						sector_count -= n/512;
+						buffer += n;
+
+					}
 					status = STATUS_SUCCESS;
 				} else {
 				/* Should writes fail silently? */
 					status = STATUS_INVALID_PARAMETER;
-				}
-				buffer += num_injected_sectors*512;
-
-				if (start_sector+sector_count > bdev->data_shift) {
-					sector_count -= num_injected_sectors;
-					start_sector = 0;
-				} else {
-					sector_count = 0;
 				}
 			} else {
 				start_sector -= bdev->data_shift;
