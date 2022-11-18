@@ -3261,6 +3261,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	ULONG SectorCount, Temp;
 	LONGLONG d_size, LargeTemp;
 	struct block_device *bdev;
+	char *buffer;
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete || ref->bdev->ref == NULL) {
@@ -3393,16 +3394,44 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			irp->IoStatus.Information = 0;
 			irp->IoStatus.Status = STATUS_PENDING;
 
-			status = windrbd_make_drbd_requests(irp, bdev, ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority), sector_count*512, start_sector, rw);
+			buffer = ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
+			if (start_sector < bdev->data_shift) {
+				sector_t num_injected_sectors =
+					bdev->data_shift-start_sector;
 
-			/* irp may already be freed here, don't access it. */
+				if (rw == READ) {
+					/* TODO: inject partition table */
+					memset(buffer, 0xaa, num_injected_sectors*512);
+					status = STATUS_SUCCESS;
+				} else {
+				/* Should writes fail silently? */
+					status = STATUS_INVALID_PARAMETER;
+				}
+				buffer += num_injected_sectors*512;
+
+				if (start_sector+sector_count > bdev->data_shift) {
+					sector_count -= num_injected_sectors;
+					start_sector = 0;
+				} else {
+					sector_count = 0;
+				}
+			} else {
+				start_sector -= bdev->data_shift;
+			}
+			if (sector_count > 0) {
+				status = windrbd_make_drbd_requests(irp, bdev, buffer, sector_count*512, start_sector, rw);
+					/* irp may already be freed here, don't access it. */
+
+				if (status == STATUS_SUCCESS)
+					return STATUS_PENDING;
+			}
 
 // printk("XXX Debug: windrbd_make_drbd_requests returned, status is %x sector is %lld irp is %p\n", status, start_sector, irp);
-			if (status == STATUS_SUCCESS)
-				return STATUS_PENDING;
 
 // printk("error initiating request status is %x\n", status);
-			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+			if (status != STATUS_SUCCESS) {
+				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+			}
 			break;
 		}
 

@@ -3237,6 +3237,9 @@ struct block_device *bdget(dev_t device_no)
 /* TODO: to test 'auto-promote' */
 // block_device->is_bootdevice = 1;
 block_device->my_auto_promote = 1;
+/* TODO: test shifting .. */
+block_device->data_shift = 1;
+printk("Test: testing partition table injection (%lld sectors shift).\n", block_device->data_shift);
 		/* Currently all devices are disk devices, that
 		 * is they are managed by plug and play manager.
 		 * Set this flag early, else Windows will not
