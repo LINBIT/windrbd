@@ -3269,7 +3269,7 @@ static void fake_partition_table(struct block_device *bdev)
 		0x28 Last LBA (inclusive, usually odd)
 	*/
 		/* TODO: free this when bdev is freed. */
-	partition_table = kmalloc(partition_table_template_size, 0, 'DRBD');
+	partition_table = kzalloc(bdev->data_shift*512, 0, 'DRBD');
 	if (partition_table == NULL) {
 		printk("Warning: Not enough memory for partition table.\n");
 		return;
@@ -3296,9 +3296,9 @@ static void fake_partition_table(struct block_device *bdev)
 	}
 }
 
-void windrbd_device_size_change(struct block_device *bdev, uint64_t new_size)
+void windrbd_device_size_change(struct block_device *bdev)
 {
-        if (new_size > 0) {
+        if (bdev->d_size > 0) {
                 printk("got a valid size, unblocking SCSI capacity requests.\n");
                 KeSetEvent(&bdev->capacity_event, 0, FALSE);
 		if (bdev->data_shift > 0) {
@@ -3460,8 +3460,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 					bdev->data_shift-start_sector;
 
 				if (rw == READ) {
-					if (start_sector < partition_table_template_size/512) {
-						size_t n = partition_table_template_size - start_sector*512;
+					if (start_sector < bdev->data_shift && sector_count > 0) {
+						size_t n = (bdev->data_shift - start_sector)*512;
 						if (n>=sector_count*512) {
 							n = sector_count*512;
 						}
@@ -3470,18 +3470,6 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 						} else {
 							memset(buffer, 0, n);
 						}
-						start_sector += n/512;
-						sector_count -= n/512;
-						buffer += n;
-
-					}
-					if (start_sector < bdev->data_shift && sector_count > 0) {
-						size_t n = (bdev->data_shift - start_sector)*512;
-						if (n>=sector_count*512) {
-							n = sector_count*512;
-						}
-						memset(buffer, 0x00, n);
-
 						start_sector += n/512;
 						sector_count -= n/512;
 						buffer += n;
@@ -3524,6 +3512,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			} else {
 				d_size = bdev->d_size;
 			}
+			d_size += bdev->data_shift + bdev->appended_sectors;
 
 			Temp = 512;   /* TODO: later from struct */
 			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->BytesPerBlock), &Temp);
@@ -3560,6 +3549,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			} else {
 				d_size = bdev->d_size;
 			}
+			d_size += bdev->data_shift + bdev->appended_sectors;
 
 			Temp = 512;
 			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->BytesPerBlock), &Temp);

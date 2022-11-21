@@ -1546,4 +1546,6 @@ int windrbd_is_locked(void);
 void init_event_log(void);
 void set_event_log_threshold(int level);
 
+void windrbd_device_size_change(struct block_device *bdev);
+
 #endif // DRBD_WINDOWS_H
