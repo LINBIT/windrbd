@@ -3465,7 +3465,11 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 						if (n>=sector_count*512) {
 							n = sector_count*512;
 						}
-						memcpy(buffer, bdev->disk_prolog+start_sector*512, n);
+						if (bdev->disk_prolog != NULL) {
+							memcpy(buffer, bdev->disk_prolog+start_sector*512, n);
+						} else {
+							memset(buffer, 0, n);
+						}
 						start_sector += n/512;
 						sector_count -= n/512;
 						buffer += n;
