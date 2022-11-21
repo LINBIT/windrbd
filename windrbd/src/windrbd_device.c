@@ -3465,12 +3465,13 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				irp->IoStatus.Information = 0;
 				break;
 			}
-			dbg("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
+printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
 
 			irp->IoStatus.Information = 0;
 			irp->IoStatus.Status = STATUS_PENDING;
 
 			buffer = ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
+printk("before prolog: start sector is %d sector_count is %d\n", start_sector, sector_count);
 			if (start_sector < bdev->data_shift) {
 				if (rw == READ) {
 					if (start_sector < bdev->data_shift && sector_count > 0) {
@@ -3493,9 +3494,9 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				/* Should writes fail silently? */
 					status = STATUS_INVALID_PARAMETER;
 				}
-			} else {
-				start_sector -= bdev->data_shift;
 			}
+
+printk("after prolog: start sector is %d sector_count is %d\n", start_sector, sector_count);
 			if (sector_count > 0) {
 				sector_t num_sectors = sector_count;
 				int64_t excess_sectors = (start_sector + num_sectors) - ((bdev->d_size*512) + bdev->data_shift);
@@ -3503,7 +3504,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 					num_sectors -= excess_sectors;
 				}
 				if (num_sectors > 0) {
-					status = windrbd_make_drbd_requests(irp, bdev, buffer, num_sectors*512, start_sector, rw);
+					status = windrbd_make_drbd_requests(irp, bdev, buffer, num_sectors*512, start_sector-bdev->data_shift, rw);
 
 					buffer += num_sectors*512;
 					sector_count -= num_sectors;
@@ -3514,12 +3515,13 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 						io_inflight = 1;
 				}
 			}
+printk("after data: start sector is %d sector_count is %d\n", start_sector, sector_count);
 			if (sector_count > 0) {
 				if (rw == READ) {
 					sector_t first_backup_sector = bdev->data_shift+bdev->d_size/512;
 					sector_t last_sector = bdev->data_shift+bdev->d_size/512 + bdev->appended_sectors;
 					if (start_sector >= first_backup_sector) {
-						if (start_sector + sector_count >= last_sector) {
+						if (start_sector + sector_count > last_sector) {
 							printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
 							sector_count = last_sector - start_sector;
 						}
