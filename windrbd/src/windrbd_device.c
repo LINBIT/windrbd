@@ -3255,7 +3255,7 @@ static void fake_partition_table(struct block_device *bdev)
 {
 	char *partition_table, *backup_partition_table;
 	void *old_partition_table, *old_backup_partition_table;
-	static char my_guid[16] = { 0x1, 0x2, 0x3, 0x4, };
+	static char my_guid[16] = { 0x1, 0x2, 0x3, 0x5, };
 
 	/* GPT header (at 0x200):
 		0x10 CRC32 of header (offset +0 to +0x5b) in little endian, with this field zeroed during calculation
