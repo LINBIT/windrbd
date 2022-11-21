@@ -3276,9 +3276,9 @@ static void fake_partition_table(struct block_device *bdev)
 	}
 	memcpy(partition_table, partition_table_template, partition_table_template_size);
 		/* TODO: we assume that CPU is little endian here ... */
-	*(uint64_t*)(partition_table+0x220) = bdev->d_size+bdev->data_shift+bdev->appended_sectors-1;
-	*(uint64_t*)(partition_table+0x230) = bdev->d_size+bdev->data_shift-1;
-	*(uint64_t*)(partition_table+0x428) = bdev->d_size+bdev->data_shift-1;
+	*(uint64_t*)(partition_table+0x220) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
+	*(uint64_t*)(partition_table+0x230) = (bdev->d_size/512)+bdev->data_shift-1;
+	*(uint64_t*)(partition_table+0x428) = (bdev->d_size/512)+bdev->data_shift-1;
 
 		/* TODO: store it somewhere ... */
 	memcpy(partition_table+0x238, my_guid, 16);
@@ -3512,7 +3512,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			} else {
 				d_size = bdev->d_size;
 			}
-			d_size += bdev->data_shift + bdev->appended_sectors;
+			d_size += (bdev->data_shift + bdev->appended_sectors) * 512;
 
 			Temp = 512;   /* TODO: later from struct */
 			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->BytesPerBlock), &Temp);
@@ -3549,7 +3549,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			} else {
 				d_size = bdev->d_size;
 			}
-			d_size += bdev->data_shift + bdev->appended_sectors;
+			d_size += (bdev->data_shift + bdev->appended_sectors) * 512;
 
 			Temp = 512;
 			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->BytesPerBlock), &Temp);
