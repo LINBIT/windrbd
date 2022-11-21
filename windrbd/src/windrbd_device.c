@@ -3251,6 +3251,65 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 	return d_size;
 }
 
+static void fake_partition_table(struct block_device *bdev)
+{
+	char *partition_table;
+	void *old_partition_table;
+	static char my_guid[16] = { 0x1, 0x2, 0x3, 0x4, };
+
+	/* GPT header (at 0x200):
+		0x10 CRC32 of header (offset +0 to +0x5b) in little endian, with this field zeroed during calculation
+		0x20 Backup LBA (location of the other header copy)
+		0x30 Last usable LBA (secondary partition table first LBA − 1)
+		0x38 Disk GUID in mixed endian (random for now?)
+		0x58 CRC32 of partition entries array in little endian
+
+	   partition table entry (at 0x400):
+		0x10 Unique partition GUID (mixed endian)
+		0x28 Last LBA (inclusive, usually odd)
+	*/
+		/* TODO: free this when bdev is freed. */
+	partition_table = kmalloc(partition_table_template_size, 0, 'DRBD');
+	if (partition_table == NULL) {
+		printk("Warning: Not enough memory for partition table.\n");
+		return;
+	}
+	memcpy(partition_table, partition_table_template, partition_table_template_size);
+		/* TODO: we assume that CPU is little endian here ... */
+	*(uint64_t*)(partition_table+0x220) = bdev->d_size+bdev->data_shift+bdev->appended_sectors-1;
+	*(uint64_t*)(partition_table+0x230) = bdev->d_size+bdev->data_shift-1;
+	*(uint64_t*)(partition_table+0x428) = bdev->d_size+bdev->data_shift-1;
+
+		/* TODO: store it somewhere ... */
+	memcpy(partition_table+0x238, my_guid, 16);
+	memcpy(partition_table+0x410, my_guid, 16);
+
+	*(uint32_t*)(partition_table+0x258) = crc32(partition_table+0x400, 0x200);
+	*(uint32_t*)(partition_table+0x210) = 0;
+	*(uint32_t*)(partition_table+0x210) = crc32(partition_table+0x200, 0x5c);
+
+	old_partition_table = bdev->disk_prolog;
+
+	bdev->disk_prolog = partition_table;
+	if (old_partition_table != NULL) {
+		kfree(old_partition_table);
+	}
+}
+
+void windrbd_device_size_change(struct block_device *bdev, uint64_t new_size)
+{
+        if (new_size > 0) {
+                printk("got a valid size, unblocking SCSI capacity requests.\n");
+                KeSetEvent(&bdev->capacity_event, 0, FALSE);
+		if (bdev->data_shift > 0) {
+			fake_partition_table(bdev);
+		}
+        } else {
+                printk("Size set to 0, am I Diskless/Unconnected?\n");
+                KeClearEvent(&bdev->capacity_event);
+        }
+}
+
 static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) 
 {
 	NTSTATUS status;
@@ -3406,7 +3465,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 						if (n>=sector_count*512) {
 							n = sector_count*512;
 						}
-						memcpy(buffer, partition_table_template+start_sector*512, n);
+						memcpy(buffer, bdev->disk_prolog+start_sector*512, n);
 						start_sector += n/512;
 						sector_count -= n/512;
 						buffer += n;

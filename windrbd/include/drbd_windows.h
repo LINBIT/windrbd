@@ -636,7 +636,7 @@ struct block_device {
 		 * contain GPT data for before and after.
 		 */
 	sector_t data_shift, appended_sectors;
-	void *disk_prolog, *disk_epilog;
+	char *disk_prolog, *disk_epilog;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
@@ -1249,6 +1249,7 @@ extern int hlist_unhashed(const struct hlist_node *h);
 extern void __hlist_del(struct hlist_node *n);
 
 extern uint32_t crc32c(uint32_t crc, const uint8_t *data, unsigned int length);
+extern unsigned long crc32(const char *s, size_t len);
 extern bool lc_is_used(struct lru_cache *lc, unsigned int enr);
 extern void get_random_bytes(void *buf, int nbytes);
 extern int fls(int x);
