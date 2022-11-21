@@ -3253,8 +3253,8 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 
 static void fake_partition_table(struct block_device *bdev)
 {
-	char *partition_table;
-	void *old_partition_table;
+	char *partition_table, *backup_partition_table;
+	void *old_partition_table, *old_backup_partition_table;
 	static char my_guid[16] = { 0x1, 0x2, 0x3, 0x4, };
 
 	/* GPT header (at 0x200):
@@ -3274,6 +3274,12 @@ static void fake_partition_table(struct block_device *bdev)
 		printk("Warning: Not enough memory for partition table.\n");
 		return;
 	}
+	backup_partition_table = kzalloc(bdev->appended_sectors*512, 0, 'DRBD');
+	if (backup_partition_table == NULL) {
+		kfree(partition_table);
+		printk("Warning: Not enough memory for partition table.\n");
+		return;
+	}
 	memcpy(partition_table, partition_table_template, partition_table_template_size);
 		/* TODO: we assume that CPU is little endian here ... */
 	*(uint64_t*)(partition_table+0x220) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
@@ -3288,9 +3294,18 @@ static void fake_partition_table(struct block_device *bdev)
 	*(uint32_t*)(partition_table+0x210) = 0;
 	*(uint32_t*)(partition_table+0x210) = crc32(partition_table+0x200, 0x5c);
 
+	memcpy(backup_partition_table+((bdev->appended_sectors-1)*512), partition_table, 512);
+	memcpy(backup_partition_table, partition_table+(512*2), 512);
+
 	old_partition_table = bdev->disk_prolog;
+	old_backup_partition_table = bdev->disk_epilog;
 
 	bdev->disk_prolog = partition_table;
+	bdev->disk_epilog = backup_partition_table;
+
+	if (old_backup_partition_table != NULL) {
+		kfree(old_backup_partition_table);
+	}
 	if (old_partition_table != NULL) {
 		kfree(old_partition_table);
 	}
@@ -3394,6 +3409,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			sector_t start_sector;
 			unsigned long long sector_count, total_size;
 			int rw;
+			int io_inflight = 0;
 
 			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
 
@@ -3456,9 +3472,6 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 			buffer = ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
 			if (start_sector < bdev->data_shift) {
-				sector_t num_injected_sectors =
-					bdev->data_shift-start_sector;
-
 				if (rw == READ) {
 					if (start_sector < bdev->data_shift && sector_count > 0) {
 						size_t n = (bdev->data_shift - start_sector)*512;
@@ -3484,12 +3497,47 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				start_sector -= bdev->data_shift;
 			}
 			if (sector_count > 0) {
-				status = windrbd_make_drbd_requests(irp, bdev, buffer, sector_count*512, start_sector, rw);
+				sector_t num_sectors = sector_count;
+				int64_t excess_sectors = (start_sector + num_sectors) - ((bdev->d_size*512) + bdev->data_shift);
+				if (excess_sectors > 0) {
+					num_sectors -= excess_sectors;
+				}
+				if (num_sectors > 0) {
+					status = windrbd_make_drbd_requests(irp, bdev, buffer, num_sectors*512, start_sector, rw);
+
+					buffer += num_sectors*512;
+					sector_count -= num_sectors;
+					start_sector += num_sectors;
 					/* irp may already be freed here, don't access it. */
 
-				if (status == STATUS_SUCCESS)
-					return STATUS_PENDING;
+					if (status == STATUS_SUCCESS)
+						io_inflight = 1;
+				}
 			}
+			if (sector_count > 0) {
+				if (rw == READ) {
+					sector_t first_backup_sector = bdev->data_shift+bdev->d_size/512;
+					sector_t last_sector = bdev->data_shift+bdev->d_size/512 + bdev->appended_sectors;
+					if (start_sector >= first_backup_sector) {
+						if (start_sector + sector_count >= last_sector) {
+							printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
+							sector_count = last_sector - start_sector;
+						}
+						if (bdev->disk_epilog != NULL) {
+							memcpy(buffer, bdev->disk_epilog+start_sector*512, sector_count*512);
+						} else {
+							memset(buffer, 0, sector_count*512);
+						}
+					}
+					status = STATUS_SUCCESS;
+				} else {
+				/* Should writes fail silently? */
+					status = STATUS_INVALID_PARAMETER;
+				}
+			}
+
+			if (io_inflight)
+				return STATUS_PENDING;
 
 // printk("XXX Debug: windrbd_make_drbd_requests returned, status is %x sector is %lld irp is %p\n", status, start_sector, irp);
 
