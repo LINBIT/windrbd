@@ -1522,6 +1522,7 @@ static void windrbd_bio_finished(struct bio * bio)
 	NTSTATUS status;
 	int error = blk_status_to_errno(bio->bi_status);
 
+printk("bio finished\n");
 	if (irp == NULL) {
 		printk("Internal error: irp is NULL in bio_finished, this should not happen.");
 		return;
@@ -1623,6 +1624,7 @@ static void windrbd_bio_finished(struct bio * bio)
 #endif
 //		kthread_run(io_complete_thread, irp, "complete-irp");
 
+printk("about to complete request\n");
 		if (bio_data_dir(bio) == WRITE)
 				/* Signal free_mdl thread that it should
 				 * complete the IRP.
@@ -3336,7 +3338,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	ULONG SectorCount, Temp;
 	LONGLONG d_size, LargeTemp;
 	struct block_device *bdev;
-	char *buffer;
+	char *buffer, *io_buffer = NULL;
+	int64_t io_start_sector = 0, io_sector_count = 0;
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete || ref->bdev->ref == NULL) {
@@ -3409,7 +3412,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			sector_t start_sector;
 			int64_t sector_count;
 			int rw;
-			int io_inflight = 0;
+			int call_drbd = 0;
 
 			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
 
@@ -3472,6 +3475,7 @@ printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == RE
 
 			buffer = ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
 printk("before prolog: start sector is %d sector_count is %d\n", start_sector, sector_count);
+printk("initial buffer is %p\n", buffer);
 			if (start_sector < bdev->data_shift) {
 				if (rw == READ) {
 					if (start_sector < bdev->data_shift && sector_count > 0) {
@@ -3507,16 +3511,23 @@ printk("excess sectors is %lld\n", excess_sectors);
 printk("num_sectors is %lld\n", num_sectors);
 				if (num_sectors > 0) {
 printk("before buffer is %p\n", buffer);
-					status = windrbd_make_drbd_requests(irp, bdev, buffer, num_sectors*512, start_sector-bdev->data_shift, rw);
+						/* Normally we would call windrbd_make_drbd_requests()
+						 * here but if the I/O is completed very fast then
+						 * the buffer is already invalid / freed or whatever.
+						 * So we cannot add epilog data after calling
+						 * windrbd_make_drbd_requests(). Save parameters here
+						 * and call windrbd_make_drbd_requests() after filling
+						 * epilog data.
+						 */
+					io_buffer = buffer;
+					io_start_sector = start_sector-bdev->data_shift;
+					io_sector_count = num_sectors;
+					call_drbd = 1;
 
 					buffer += num_sectors*512;
 printk("after buffer is %p\n", buffer);
 					sector_count -= num_sectors;
 					start_sector += num_sectors;
-					/* irp may already be freed here, don't access it. */
-
-					if (status == STATUS_SUCCESS)
-						io_inflight = 1;
 				}
 			}
 printk("after data: start sector is %d sector_count is %d\n", start_sector, sector_count);
@@ -3544,8 +3555,14 @@ printk("buffer is %p\n", buffer);
 				}
 			}
 
-			if (io_inflight)
-				return STATUS_PENDING;
+			if (call_drbd) {
+				status = windrbd_make_drbd_requests(irp, bdev, io_buffer, io_sector_count*512, io_start_sector, rw);
+					/* irp may already be freed here, don't access it.
+					 * buffer also might already be freed here.
+					 */
+				if (status == STATUS_SUCCESS)
+					return STATUS_PENDING;
+			}
 
 // printk("XXX Debug: windrbd_make_drbd_requests returned, status is %x sector is %lld irp is %p\n", status, start_sector, irp);
 
