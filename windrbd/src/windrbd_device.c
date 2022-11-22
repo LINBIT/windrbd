@@ -3257,7 +3257,9 @@ static void fake_partition_table(struct block_device *bdev)
 {
 	char *partition_table, *backup_partition_table;
 	void *old_partition_table, *old_backup_partition_table;
-	static char my_guid[16] = { 0x1, 0x2, 0x3, 0x6, };
+//	static char my_guid[16] = { 0x1, 0x2, 0x3, 0x6, };
+	static char my_guid[16] = { 0x4e, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
+
 
 	/* GPT header (at 0x200):
 		0x10 CRC32 of header (offset +0 to +0x5b) in little endian, with this field zeroed during calculation
@@ -3292,7 +3294,8 @@ static void fake_partition_table(struct block_device *bdev)
 	*(uint32_t*)(partition_table+0x1ca) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
 		/* TODO: we assume that CPU is little endian here ... */
 	*(uint64_t*)(partition_table+0x220) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
-	*(uint64_t*)(partition_table+0x230) = (bdev->d_size/512)+bdev->data_shift-1;
+	// *(uint64_t*)(partition_table+0x230) = (bdev->d_size/512)+bdev->data_shift-1;
+	*(uint64_t*)(partition_table+0x230) = 0x2000de;
 	*(uint64_t*)(partition_table+0x428) = (bdev->d_size/512)+bdev->data_shift-1;
 
 		/* TODO: store it somewhere ... */
@@ -3300,6 +3303,10 @@ static void fake_partition_table(struct block_device *bdev)
 	memcpy(partition_table+0x410, my_guid, 16);
 
 	*(uint32_t*)(partition_table+0x258) = crc32(partition_table+0x400, 0x200);
+printk("crc32 0x200 bytes is %x\n", *(uint32_t*)(partition_table+0x258));
+	*(uint32_t*)(partition_table+0x258) = crc32(partition_table+0x400, 0x80 * 0x80);
+printk("crc32 0x200 bytes is %x\n", *(uint32_t*)(partition_table+0x258));
+//	*(uint32_t*)(partition_table+0x258) = 0xab54d286; /* see if CRC calculation works ... yes it does .. */
 	*(uint32_t*)(partition_table+0x210) = 0;
 	*(uint32_t*)(partition_table+0x210) = crc32(partition_table+0x200, 0x5c);
 
