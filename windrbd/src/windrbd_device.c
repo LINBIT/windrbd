@@ -3283,6 +3283,13 @@ static void fake_partition_table(struct block_device *bdev)
 		return;
 	}
 	memcpy(partition_table, partition_table_template, partition_table_template_size);
+#if 0
+		/* TODO: clearing MBR helps? - no */
+	memset(partition_table, 0, 0x200);
+#endif
+
+		/* Boot sector. MBR style - present disk as one big partition */
+	*(uint32_t*)(partition_table+0x1ca) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
 		/* TODO: we assume that CPU is little endian here ... */
 	*(uint64_t*)(partition_table+0x220) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
 	*(uint64_t*)(partition_table+0x230) = (bdev->d_size/512)+bdev->data_shift-1;
