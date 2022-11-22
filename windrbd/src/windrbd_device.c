@@ -3257,7 +3257,7 @@ static void fake_partition_table(struct block_device *bdev)
 {
 	char *partition_table, *backup_partition_table;
 	void *old_partition_table, *old_backup_partition_table;
-	static char my_guid[16] = { 0x1, 0x2, 0x3, 0x5, };
+	static char my_guid[16] = { 0x1, 0x2, 0x3, 0x6, };
 
 	/* GPT header (at 0x200):
 		0x10 CRC32 of header (offset +0 to +0x5b) in little endian, with this field zeroed during calculation
@@ -3296,7 +3296,7 @@ static void fake_partition_table(struct block_device *bdev)
 	*(uint32_t*)(partition_table+0x210) = 0;
 	*(uint32_t*)(partition_table+0x210) = crc32(partition_table+0x200, 0x5c);
 
-	memcpy(backup_partition_table+((bdev->appended_sectors-1)*512), partition_table, 512);
+	memcpy(backup_partition_table+((bdev->appended_sectors-1)*512), partition_table+0x200, 512);
 	memcpy(backup_partition_table, partition_table+(512*2), 512);
 
 	old_partition_table = bdev->disk_prolog;
@@ -3542,11 +3542,15 @@ printk("after data: start sector is %d sector_count is %d\n", start_sector, sect
 						}
 printk("first_backup_sector is %lld last_sector is %lld start_sector is %lld sector_count is %lld\n", first_backup_sector, last_sector, start_sector, sector_count);
 printk("buffer is %p\n", buffer);
+/*
 						if (bdev->disk_epilog != NULL) {
 							memcpy(buffer, bdev->disk_epilog+(start_sector-first_backup_sector)*512, sector_count*512);
 						} else {
+*/
 							memset(buffer, 0, sector_count*512);
+/*
 						}
+*/
 					}
 					status = STATUS_SUCCESS;
 				} else {
