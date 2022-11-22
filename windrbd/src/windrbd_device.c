@@ -565,7 +565,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
+// printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	if (dev->is_bootdevice) {
 		status = wait_for_becoming_primary(dev);
 		if (status != STATUS_SUCCESS)
@@ -640,7 +640,7 @@ printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		break;
 
 	case IOCTL_DISK_GET_PARTITION_INFO:
-printk("got IOCTL_DISK_GET_PARTITION_INFO\n");
+// printk("got IOCTL_DISK_GET_PARTITION_INFO\n");
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _PARTITION_INFORMATION)) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
@@ -652,7 +652,7 @@ printk("got IOCTL_DISK_GET_PARTITION_INFO\n");
 		break;
 
 	case IOCTL_DISK_GET_PARTITION_INFO_EX:
-printk("got IOCTL_DISK_GET_PARTITION_INFO_EX\n");
+// printk("got IOCTL_DISK_GET_PARTITION_INFO_EX\n");
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _PARTITION_INFORMATION_EX)) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
@@ -1047,7 +1047,7 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 	{
 		struct _DRIVE_LAYOUT_INFORMATION_EX* dli;
 
-printk(KERN_DEBUG "IOCTL_DISK_GET_DRIVE_LAYOUT_EX: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
+// printk(KERN_DEBUG "IOCTL_DISK_GET_DRIVE_LAYOUT_EX: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
 
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _DRIVE_LAYOUT_INFORMATION_EX)) {
 			status = STATUS_BUFFER_TOO_SMALL;
@@ -1088,7 +1088,7 @@ printk(KERN_DEBUG "IOCTL_DISK_GET_DRIVE_LAYOUT_EX: s->Parameters.DeviceIoControl
 */
 
 	default:
-printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
+// printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 
 		status = STATUS_INVALID_PARAMETER;
 	}
@@ -3407,7 +3407,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		case SCSIOP_WRITE16:
 		{
 			sector_t start_sector;
-			unsigned long long sector_count, total_size;
+			int64_t sector_count;
 			int rw;
 			int io_inflight = 0;
 
@@ -3498,15 +3498,19 @@ printk("before prolog: start sector is %d sector_count is %d\n", start_sector, s
 
 printk("after prolog: start sector is %d sector_count is %d\n", start_sector, sector_count);
 			if (sector_count > 0) {
-				sector_t num_sectors = sector_count;
-				int64_t excess_sectors = (start_sector + num_sectors) - ((bdev->d_size*512) + bdev->data_shift);
+				int64_t num_sectors = sector_count;
+				int64_t excess_sectors = (start_sector + num_sectors) - ((bdev->d_size/512) + bdev->data_shift);
+printk("excess sectors is %lld\n", excess_sectors);
 				if (excess_sectors > 0) {
 					num_sectors -= excess_sectors;
 				}
+printk("num_sectors is %lld\n", num_sectors);
 				if (num_sectors > 0) {
+printk("before buffer is %p\n", buffer);
 					status = windrbd_make_drbd_requests(irp, bdev, buffer, num_sectors*512, start_sector-bdev->data_shift, rw);
 
 					buffer += num_sectors*512;
+printk("after buffer is %p\n", buffer);
 					sector_count -= num_sectors;
 					start_sector += num_sectors;
 					/* irp may already be freed here, don't access it. */
@@ -3525,8 +3529,10 @@ printk("after data: start sector is %d sector_count is %d\n", start_sector, sect
 							printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
 							sector_count = last_sector - start_sector;
 						}
+printk("first_backup_sector is %lld last_sector is %lld start_sector is %lld sector_count is %lld\n", first_backup_sector, last_sector, start_sector, sector_count);
+printk("buffer is %p\n", buffer);
 						if (bdev->disk_epilog != NULL) {
-							memcpy(buffer, bdev->disk_epilog+start_sector*512, sector_count*512);
+							memcpy(buffer, bdev->disk_epilog+(start_sector-first_backup_sector)*512, sector_count*512);
 						} else {
 							memset(buffer, 0, sector_count*512);
 						}
