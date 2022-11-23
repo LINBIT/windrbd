@@ -3493,26 +3493,29 @@ printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == RE
 printk("before prolog: start sector is %d sector_count is %d\n", start_sector, sector_count);
 printk("initial buffer is %p\n", buffer);
 			if (start_sector < bdev->data_shift) {
-				if (rw == READ) {
-					if (start_sector < bdev->data_shift && sector_count > 0) {
-						size_t n = (bdev->data_shift - start_sector)*512;
-						if (n>=sector_count*512) {
-							n = sector_count*512;
-						}
-						if (bdev->disk_prolog != NULL) {
-							memcpy(buffer, bdev->disk_prolog+start_sector*512, n);
-						} else {
-							memset(buffer, 0, n);
-						}
-						start_sector += n/512;
-						sector_count -= n/512;
-						buffer += n;
-
+				if (start_sector < bdev->data_shift && sector_count > 0) {
+					size_t n = (bdev->data_shift - start_sector)*512;
+					if (n>=sector_count*512) {
+						n = sector_count*512;
 					}
 					status = STATUS_SUCCESS;
-				} else {
-				/* Should writes fail silently? */
-					status = STATUS_INVALID_PARAMETER;
+					if (bdev->disk_prolog != NULL) {
+						if (rw == READ) {
+							memcpy(buffer, bdev->disk_prolog+start_sector*512, n);
+						} else {
+printk("WRITE to partition table !!\n");
+							memcpy(bdev->disk_prolog+start_sector*512, buffer, n);
+						}
+					} else {
+						if (rw == READ) {
+							memset(buffer, 0, n);
+						} else {
+							status = STATUS_INVALID_PARAMETER;
+						}
+					}
+					start_sector += n/512;
+					sector_count -= n/512;
+					buffer += n;
 				}
 			}
 
@@ -3548,26 +3551,30 @@ printk("after buffer is %p\n", buffer);
 			}
 printk("after data: start sector is %d sector_count is %d\n", start_sector, sector_count);
 			if (sector_count > 0) {
-				if (rw == READ) {
-					sector_t first_backup_sector = bdev->data_shift+bdev->d_size/512;
-					sector_t last_sector = bdev->data_shift+bdev->d_size/512 + bdev->appended_sectors;
-					if (start_sector >= first_backup_sector) {
-						if (start_sector + sector_count > last_sector) {
-							printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
-							sector_count = last_sector - start_sector;
-						}
+				sector_t first_backup_sector = bdev->data_shift+bdev->d_size/512;
+				sector_t last_sector = bdev->data_shift+bdev->d_size/512 + bdev->appended_sectors;
+				if (start_sector >= first_backup_sector) {
+					if (start_sector + sector_count > last_sector) {
+						printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
+						sector_count = last_sector - start_sector;
+					}
 printk("first_backup_sector is %lld last_sector is %lld start_sector is %lld sector_count is %lld\n", first_backup_sector, last_sector, start_sector, sector_count);
 printk("buffer is %p\n", buffer);
+					status = STATUS_SUCCESS;
+					if (rw == READ) {
 						if (bdev->disk_epilog != NULL) {
 							memcpy(buffer, bdev->disk_epilog+(start_sector-first_backup_sector)*512, sector_count*512);
 						} else {
 							memset(buffer, 0, sector_count*512);
 						}
+					} else {
+						if (bdev->disk_epilog != NULL) {
+printk("WRITE to backup partition table !!\n");
+							memcpy(bdev->disk_epilog+(start_sector-first_backup_sector)*512, buffer, sector_count*512);
+						} else {
+							status = STATUS_INVALID_PARAMETER;
+						}
 					}
-					status = STATUS_SUCCESS;
-				} else {
-				/* Should writes fail silently? */
-					status = STATUS_INVALID_PARAMETER;
 				}
 			}
 
