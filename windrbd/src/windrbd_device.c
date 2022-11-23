@@ -3558,15 +3558,11 @@ printk("after data: start sector is %d sector_count is %d\n", start_sector, sect
 						}
 printk("first_backup_sector is %lld last_sector is %lld start_sector is %lld sector_count is %lld\n", first_backup_sector, last_sector, start_sector, sector_count);
 printk("buffer is %p\n", buffer);
-/*
 						if (bdev->disk_epilog != NULL) {
 							memcpy(buffer, bdev->disk_epilog+(start_sector-first_backup_sector)*512, sector_count*512);
 						} else {
-*/
 							memset(buffer, 0, sector_count*512);
-/*
 						}
-*/
 					}
 					status = STATUS_SUCCESS;
 				} else {
