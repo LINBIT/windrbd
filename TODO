@@ -14,10 +14,20 @@ TODO: Bug: fsutil displays error for manually mounted NTFS volumes
 	See: https://en.wikipedia.org/wiki/GUID_Partition_Table
 	for a description of the header.
 
-	TODO: find a disk with only one partition for the template.
-	TODO: implement shift and injection (in windrbd_scsi()).
+	Done: find a disk with only one partition for the template.
+	Done: implement shift and injection (in windrbd_scsi()).
 	TODO: when to use it (right now when there is a mount point
 	      set). Try to detect NTFS on backing device?
+
+	Works quite well, fsutil succeeds need to test with
+	MS SQL.
+
+	TODO: Check resizing (should work)
+	TODO: GUID of disk: store it in NTFS boot sector?
+
+	Minor issues like drive letter mapping gets lost remain.
+
+	Should this be in 1.2 or 1.1.4?
 
 TODO: Test: How does it behave with supports surprisal remove off?
 
