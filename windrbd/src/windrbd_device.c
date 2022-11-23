@@ -3285,28 +3285,19 @@ static void fake_partition_table(struct block_device *bdev)
 		return;
 	}
 	memcpy(partition_table, partition_table_template, partition_table_template_size);
-#if 0
-		/* TODO: clearing MBR helps? - no */
-	memset(partition_table, 0, 0x200);
-#endif
 
 		/* Boot sector. MBR style - present disk as one big partition */
 	*(uint32_t*)(partition_table+0x1ca) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
 		/* TODO: we assume that CPU is little endian here ... */
 	*(uint64_t*)(partition_table+0x220) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
-	// *(uint64_t*)(partition_table+0x230) = (bdev->d_size/512)+bdev->data_shift-1;
-	*(uint64_t*)(partition_table+0x230) = 0x2000de;
+	*(uint64_t*)(partition_table+0x230) = (bdev->d_size/512)+bdev->data_shift-1;
 	*(uint64_t*)(partition_table+0x428) = (bdev->d_size/512)+bdev->data_shift-1;
 
 		/* TODO: store it somewhere ... */
 	memcpy(partition_table+0x238, my_guid, 16);
 	memcpy(partition_table+0x410, my_guid, 16);
 
-	*(uint32_t*)(partition_table+0x258) = crc32(partition_table+0x400, 0x200);
-printk("crc32 0x200 bytes is %x\n", *(uint32_t*)(partition_table+0x258));
 	*(uint32_t*)(partition_table+0x258) = crc32(partition_table+0x400, 0x80 * 0x80);
-printk("crc32 0x200 bytes is %x\n", *(uint32_t*)(partition_table+0x258));
-//	*(uint32_t*)(partition_table+0x258) = 0xab54d286; /* see if CRC calculation works ... yes it does .. */
 	*(uint32_t*)(partition_table+0x210) = 0;
 	*(uint32_t*)(partition_table+0x210) = crc32(partition_table+0x200, 0x5c);
 
