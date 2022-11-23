@@ -3304,6 +3304,17 @@ static void fake_partition_table(struct block_device *bdev)
 	memcpy(backup_partition_table+((bdev->appended_sectors-1)*512), partition_table+0x200, 512);
 	memcpy(backup_partition_table, partition_table+(512*2), 512);
 
+	uint64_t swap;
+	swap = *(uint64_t*)(backup_partition_table+((bdev->appended_sectors-1)*512)+0x20);
+	*(uint64_t*)(backup_partition_table+((bdev->appended_sectors-1)*512)+0x20) =
+		*(uint64_t*)(backup_partition_table+((bdev->appended_sectors-1)*512)+0x18);
+	*(uint64_t*)(backup_partition_table+((bdev->appended_sectors-1)*512)+0x18) = swap;
+
+//	*(uint32_t*)(backup_partition_table+((bdev->appended_sectors-1)*512)+0x58) = crc32(partition_table+0x400, 0x80 * 0x80);
+	*(uint32_t*)(backup_partition_table+((bdev->appended_sectors-1)*512)+0x10) = 0;
+	*(uint32_t*)(backup_partition_table+((bdev->appended_sectors-1)*512)+0x10) =
+		crc32(backup_partition_table+((bdev->appended_sectors-1)*512), 0x5c);
+
 	old_partition_table = bdev->disk_prolog;
 	old_backup_partition_table = bdev->disk_epilog;
 
