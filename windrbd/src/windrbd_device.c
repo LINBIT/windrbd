@@ -1678,7 +1678,11 @@ static void drbd_make_request_work(struct work_struct *w)
 	kfree(ioreq);
 }
 
-	/* Either irp or event must be non-zero (but not both) */
+	/* Create a bio from the parameters and submit I/O request to
+	 * DRBD engine. If irp is NULL, wait for completion else use
+         * windrbd_bio_finished to complete the IRP.
+	 */
+
 static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device *dev, char *buffer, unsigned int total_size, sector_t sector, unsigned long rw)
 {
 	struct bio *bio;
@@ -1687,12 +1691,6 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	struct bio_collection *common_data;
 	struct _KEVENT event;
 
-	if ((irp != NULL && event != NULL) || (irp == NULL && event == NULL)) {
-		printk("Either irp or event must be given (but not both)\n");
-		return STATUS_INVALID_PARAMETER;
-	}
-
-// printk("1\n");
 	if (rw == WRITE && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		printk("Attempt to write when not Primary\n");
 		return STATUS_INVALID_PARAMETER;
@@ -1800,9 +1798,11 @@ dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, to
 		if (irp != NULL) {
 			bio->bi_end_io = windrbd_bio_finished;
 			bio->bi_upper_irp = irp;
-		} else if (event != NULL) {
+		} else {
 			bio->bi_end_io = windrbd_internal_io_finished;
-			bio->bi_io_finished_event = event;
+
+			KeInitializeEvent(&event, NotificationEvent, FALSE);
+			bio->bi_io_finished_event = &event;
 		}
 
 // dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
@@ -1837,9 +1837,16 @@ dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\
 		ioreq->drbd_device = dev->drbd_device;
 		ioreq->bio = bio;
 
-// printk("2\n");
 		queue_work(dev->io_workqueue, &ioreq->w);
-// printk("3\n");
+
+		if (irp == NULL) {
+			NTSTATUS status;
+
+	                status = KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
+			if (status != STATUS_SUCCESS) {
+				return status;
+			}
+		}
 	}
 
 	return STATUS_SUCCESS;
@@ -1906,7 +1913,7 @@ static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_devic
 	}
 	rw = s->MajorFunction == IRP_MJ_WRITE ? WRITE : READ;
 
-	return windrbd_make_drbd_requests(irp, NULL, dev, buffer, total_size, sector, rw);
+	return windrbd_make_drbd_requests(irp, dev, buffer, total_size, sector, rw);
 }
 
 static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
@@ -3350,45 +3357,45 @@ static void fake_partition_table(struct block_device *bdev)
 
 static int read_boot_sector_from_drbd(struct block_device *bdev, char *bootsect)
 {
-	NTSTATUS status;
-
-	status = windrbd_make_drbd_requests(NULL, &event, bdev, bootsect, 512, 0, READ);
-	if (status == STATUS_SUCCESS) {
-		status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
-		if (status == STATUS_SUCCESS) {
-			return 0;
-		}
-	}
-	return -EIO;
+	return windrbd_make_drbd_requests(NULL, bdev, bootsect, 512, 0, READ);
 }
 
-void windrbd_device_size_change(struct block_device *bdev)
+extern int is_filesystem(char *buf);
+
+int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct block_device *bdev)
 {
 	char boot_sector[512];
 	int err;
 
+	bdev->data_shift = 0;
+	bdev->appended_sectors = 0;
+
         if (bdev->d_size > 0) {
-		if ((err = read_boot_sector_from_drbd(boot_sector)) != 0) {
+		if ((err = read_boot_sector_from_drbd(bdev, boot_sector)) != 0) {
 			printk("Warning: could not read boot sector from DRBD, errno is %d.\n", err);
+			return err;
 		} else {
 			if (is_filesystem(boot_sector)) {
+				printk("Found a file system on DRBD device, faking partition table around it.\n");
 				bdev->data_shift = 128;
 				bdev->appended_sectors = 128;
 			} else {
-				bdev->data_shift = 0;
-				bdev->appended_sectors = 0;
+				printk("Did not find a file system on DRBD device, it should contain a partition table already\n");
 			}
 		}
 		if (bdev->data_shift > 0) {
 			fake_partition_table(bdev);
 		}
+        }
+	return 0;
+}
+
+void windrbd_device_size_change(struct block_device *bdev)
+{
+        if (bdev->d_size > 0) {
                 printk("got a valid size, unblocking SCSI capacity requests.\n");
                 KeSetEvent(&bdev->capacity_event, 0, FALSE);
         } else {
-			/* no storage - stop faking partition table */
-		bdev->data_shift = 0;
-		bdev->appended_sectors = 0;
-
                 printk("Size set to 0, am I Diskless/Unconnected?\n");
                 KeClearEvent(&bdev->capacity_event);
         }
@@ -3630,7 +3637,7 @@ printk("WRITE to backup partition table !!\n");
 			}
 
 			if (call_drbd) {
-				status = windrbd_make_drbd_requests(irp, NULL, bdev, io_buffer, io_sector_count*512, io_start_sector, rw);
+				status = windrbd_make_drbd_requests(irp, bdev, io_buffer, io_sector_count*512, io_start_sector, rw);
 					/* irp may already be freed here, don't access it.
 					 * buffer also might already be freed here.
 					 */

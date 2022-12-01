@@ -3705,11 +3705,16 @@ int windrbd_umount(struct block_device *bdev)
 	return 0;
 }
 
+extern int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct block_device *bdev);
+
 int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 {
 	if (!device->this_bdev->is_bootdevice) {
 		if (windrbd_allocate_io_workqueue(device->this_bdev) < 0) {
 			printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");
+		}
+		if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(device->this_bdev) < 0) {
+			printk("Warning: could not determine if there is a file system on the DRBD device.\n");
 		}
 		if (windrbd_create_windows_device(device->this_bdev) != 0)
 			windrbd_device_error(device, err_str, "Warning: Couldn't create windows device for volume %d\n", device->vnr);
