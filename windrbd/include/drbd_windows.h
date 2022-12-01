@@ -722,6 +722,7 @@ struct bio {
 	struct _IRP **bi_irps;	   /* Used for accessing the backing device */
 	struct _IRP *bi_upper_irp; /* Used for the DRBD device */
 
+	struct _KEVENT bi_io_finished_event;	/* For loopback I/O (WinDRBD calling itself via DRBD engine) */
 	struct bio*				bi_next;	/* request queue link */
 	struct block_device*	bi_bdev;
 	unsigned long			bi_flags;	/* status, command, etc */

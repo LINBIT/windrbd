@@ -1637,7 +1637,7 @@ static int patch_boot_sector(char *buffer, int to_fs, int test_mode)
 	return 0;
 }
 
-static int is_filesystem(char *buf)
+int is_filesystem(char *buf)
 {
 	return patch_boot_sector(buf, 0, 1);
 }
@@ -3315,8 +3315,9 @@ struct block_device *bdget(dev_t device_no)
 // block_device->is_bootdevice = 1;
 block_device->my_auto_promote = 1;
 /* TODO: test shifting .. and appending sectors */
-block_device->data_shift = 128;
-block_device->appended_sectors = 128;
+/* Now read the boot sector from DRBD and decide about partition table then */
+// block_device->data_shift = 128;
+// block_device->appended_sectors = 128;
 // block_device->data_shift = 0x22;
 // block_device->appended_sectors = 0x22;
 printk("Test: testing partition table injection (%lld sectors shift).\n", block_device->data_shift);
