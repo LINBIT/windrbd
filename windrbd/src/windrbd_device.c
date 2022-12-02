@@ -1841,8 +1841,13 @@ dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\
 
 		if (irp == NULL) {
 			NTSTATUS status;
+			LARGE_INTEGER timeout;
 
-	                status = KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
+		        timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
+	                status = KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, &timeout);
+		        if (status == STATUS_TIMEOUT) {
+				printk("Warning: timeout on reading boot sector  via DRBD\n");
+			}
 			if (status != STATUS_SUCCESS) {
 				return status;
 			}
