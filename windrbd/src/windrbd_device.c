@@ -1522,7 +1522,6 @@ static void windrbd_bio_finished(struct bio * bio)
 	NTSTATUS status;
 	int error = blk_status_to_errno(bio->bi_status);
 
-printk("bio finished\n");
 	if (irp == NULL) {
 		printk("Internal error: irp is NULL in bio_finished, this should not happen.");
 		return;
@@ -1624,7 +1623,6 @@ printk("bio finished\n");
 #endif
 //		kthread_run(io_complete_thread, irp, "complete-irp");
 
-printk("about to complete request\n");
 		if (bio_data_dir(bio) == WRITE)
 				/* Signal free_mdl thread that it should
 				 * complete the IRP.
@@ -3289,8 +3287,12 @@ static void fake_partition_table(struct block_device *bdev)
 	char *partition_table, *backup_partition_table;
 	void *old_partition_table, *old_backup_partition_table;
 //	static char my_guid[16] = { 0x1, 0x2, 0x3, 0x6, };
-	static char my_guid[16] = { 0x4e, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
+	char my_guid[16] = { 0x4e, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
 
+	if (bdev->has_guid)
+		memcpy(my_guid, bdev->guid, 16);
+	else
+		get_random_bytes(my_guid, sizeof(my_guid));
 
 	/* GPT header (at 0x200):
 		0x10 CRC32 of header (offset +0 to +0x5b) in little endian, with this field zeroed during calculation
@@ -3404,6 +3406,21 @@ void windrbd_device_size_change(struct block_device *bdev)
                 printk("Size set to 0, am I Diskless/Unconnected?\n");
                 KeClearEvent(&bdev->capacity_event);
         }
+}
+
+static void set_partition_guid(struct block_device *bdev, const char *guid)
+{
+	int i;
+
+	bdev->has_guid = true;
+	memcpy(bdev->guid, guid, 16);
+
+		/* TODO: store it somewhere (bootsector of partition?) */
+
+	printk("Got GUID assigned: ");
+	for (i=0;i<16;i++)
+		printk("%02x ", guid[i]);
+	printk("\n");
 }
 
 static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) 
@@ -3560,6 +3577,10 @@ printk("initial buffer is %p\n", buffer);
 					size_t n = (bdev->data_shift - start_sector)*512;
 					if (n>=sector_count*512) {
 						n = sector_count*512;
+					}
+					if (rw == WRITE && start_sector <= 2 && start_sector+sector_count > 2) {
+						char *guid = buffer + (2 - start_sector) * 512 + 0x10;
+						set_partition_guid(bdev, guid);
 					}
 					status = STATUS_SUCCESS;
 					if (bdev->disk_prolog != NULL) {

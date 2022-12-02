@@ -637,6 +637,9 @@ struct block_device {
 		 */
 	sector_t data_shift, appended_sectors;
 	char *disk_prolog, *disk_epilog;
+
+	bool has_guid;
+	char guid[16];
 };
 
 	/* Starting with version 0.7.1, this is the device extension
