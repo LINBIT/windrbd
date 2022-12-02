@@ -3410,17 +3410,23 @@ void windrbd_device_size_change(struct block_device *bdev)
 
 static void set_partition_guid(struct block_device *bdev, const char *guid)
 {
-	int i;
+	int i, n;
+	char buf[256];
 
 	bdev->has_guid = true;
 	memcpy(bdev->guid, guid, 16);
 
 		/* TODO: store it somewhere (bootsector of partition?) */
 
-	printk("Got GUID assigned: ");
+		/* Ugh - remove this again ... */
+	n = 0;
+	n += snprintf(buf+n, sizeof(buf)-n, "Got GUID assigned: ");
 	for (i=0;i<16;i++)
-		printk("%02x ", guid[i]);
-	printk("\n");
+		n += snprintf(buf+n, sizeof(buf)-n, "%02x ", (unsigned char) guid[i]);
+	n += snprintf(buf+n, sizeof(buf)-n, "\n");
+	buf[n] = '\0';
+
+	printk("%s", buf);
 }
 
 static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) 
