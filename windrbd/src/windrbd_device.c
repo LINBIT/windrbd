@@ -3287,12 +3287,15 @@ static void fake_partition_table(struct block_device *bdev)
 	char *partition_table, *backup_partition_table;
 	void *old_partition_table, *old_backup_partition_table;
 //	static char my_guid[16] = { 0x1, 0x2, 0x3, 0x6, };
-	char my_guid[16] = { 0x4e, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
+	char my_disk_guid[16] = { 0x4e, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
+	char my_partition_guid[16] = { 0x4a, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
 
+/*
 	if (bdev->has_guid)
 		memcpy(my_guid, bdev->guid, 16);
 	else
 		get_random_bytes(my_guid, sizeof(my_guid));
+*/
 
 	/* GPT header (at 0x200):
 		0x10 CRC32 of header (offset +0 to +0x5b) in little endian, with this field zeroed during calculation
@@ -3327,8 +3330,8 @@ static void fake_partition_table(struct block_device *bdev)
 	*(uint64_t*)(partition_table+0x428) = (bdev->d_size/512)+bdev->data_shift-1;
 
 		/* TODO: store it somewhere ... */
-	memcpy(partition_table+0x238, my_guid, 16);
-	memcpy(partition_table+0x410, my_guid, 16);
+	memcpy(partition_table+0x238, my_disk_guid, 16);
+	memcpy(partition_table+0x410, my_partition_guid, 16);
 
 	*(uint32_t*)(partition_table+0x258) = crc32(partition_table+0x400, 0x80 * 0x80);
 	*(uint32_t*)(partition_table+0x210) = 0;
