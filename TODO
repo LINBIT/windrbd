@@ -2,42 +2,6 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
-TODO: Bug: fsutil displays error for manually mounted NTFS volumes
-
-	And MSSql Server (which version?) does not work.
-
-	Update: We really consider faking a parition table
-	(and shift I/O by parititon table length). It should
-	be easy to build: only parameter would be the block
-	dev size.
-
-	See: https://en.wikipedia.org/wiki/GUID_Partition_Table
-	for a description of the header.
-
-	Done: find a disk with only one partition for the template.
-	Done: implement shift and injection (in windrbd_scsi()).
-	Done: when to use it (right now when there is a mount point
-	      set). Try to detect NTFS on backing device?
-		We check the boot sector at the beginning of
-		becoming Primary for a file system signature.
-
-	Works quite well, fsutil succeeds need to test with
-	MS SQL.
-
-	TODO: Check resizing (should work)
-	Rejected: GUID of disk: store it in NTFS boot sector?
-	TODO: Create GUIDs (they must be different) from NTFS
-		volume serial number.
-
-	Minor issues like drive letter mapping gets lost remain.
-	Update: using different GUIDs for disk and partition solved
-	this.
-
-	Should this be in 1.2 or 1.1.4?
-		1.1.4 - it is not a 'new' feature just a fix
-		to something that is supposed to work since
-		1.0.0 ...
-
 TODO: Test: How does it behave with supports surprisal remove off?
 
 TODOs for Release 1.2 ----------------------------------------
@@ -8505,4 +8469,43 @@ Done: Code quality: Stop windrbdlog service after unloading driver
 	Working ... can't stop driver since Windows thinks it
 	is required to run windrbdlog .. TODO is to remove
 	this dependency (and to test if this breaks something else).
+
+Done: Bug: fsutil displays error for manually mounted NTFS volumes
+
+	And MSSql Server (which version?) does not work.
+
+	Update: We really consider faking a parition table
+	(and shift I/O by parititon table length). It should
+	be easy to build: only parameter would be the block
+	dev size.
+
+	See: https://en.wikipedia.org/wiki/GUID_Partition_Table
+	for a description of the header.
+
+	Done: find a disk with only one partition for the template.
+	Done: implement shift and injection (in windrbd_scsi()).
+	Done: when to use it (right now when there is a mount point
+	      set). Try to detect NTFS on backing device?
+		We check the boot sector at the beginning of
+		becoming Primary for a file system signature.
+
+	Works quite well, fsutil succeeds need to test with
+	MS SQL.
+
+	Rejected: Check resizing (should work)
+		One has to secondary / primary the resource.
+		Online resize would have some races ...
+
+	Rejected: GUID of disk: store it in NTFS boot sector?
+	Done: Create GUIDs (they must be different) from NTFS
+		volume serial number.
+
+	Minor issues like drive letter mapping gets lost remain.
+	Update: using different GUIDs for disk and partition solved
+	this.
+
+	Should this be in 1.2 or 1.1.4?
+		1.1.4 - it is not a 'new' feature just a fix
+		to something that is supposed to work since
+		1.0.0 ...
 
