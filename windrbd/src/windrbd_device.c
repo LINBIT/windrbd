@@ -3286,16 +3286,17 @@ static void fake_partition_table(struct block_device *bdev)
 {
 	char *partition_table, *backup_partition_table;
 	void *old_partition_table, *old_backup_partition_table;
-//	static char my_guid[16] = { 0x1, 0x2, 0x3, 0x6, };
-	char my_disk_guid[16] = { 0x81, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
-	char my_partition_guid[16] = { 0x82, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
+	char my_disk_guid[16];
+	char my_partition_guid[16];
 
-/*
-	if (bdev->has_guid)
-		memcpy(my_guid, bdev->guid, 16);
-	else
-		get_random_bytes(my_guid, sizeof(my_guid));
-*/
+	if (bdev->has_guids) {
+		memcpy(my_disk_guid, bdev->disk_guid, 16);
+		memcpy(my_partition_guid, bdev->partition_guid, 16);
+	} else {
+			/* Non - NTFS file systems. They also have a VSN somewhere ... */
+		get_random_bytes(my_disk_guid, sizeof(my_disk_guid));
+		get_random_bytes(my_partition_guid, sizeof(my_partition_guid));
+	}
 
 	/* GPT header (at 0x200):
 		0x10 CRC32 of header (offset +0 to +0x5b) in little endian, with this field zeroed during calculation
@@ -3329,7 +3330,6 @@ static void fake_partition_table(struct block_device *bdev)
 	*(uint64_t*)(partition_table+0x230) = (bdev->d_size/512)+bdev->data_shift-1;
 	*(uint64_t*)(partition_table+0x428) = (bdev->d_size/512)+bdev->data_shift-1;
 
-		/* TODO: store it somewhere ... */
 	memcpy(partition_table+0x238, my_disk_guid, 16);
 	memcpy(partition_table+0x410, my_partition_guid, 16);
 
@@ -3387,7 +3387,17 @@ int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct b
 		} else {
 			if (is_filesystem(boot_sector)) {
 				printk("Found a file system on DRBD device, faking partition table around it.\n");
-/* TODO: store 32-bit little endian volume serial number at offset 0x48 */
+/* Store 32-bit little endian volume serial number at offset 0x48 */
+				if (strncmp(boot_sector+3, "NTFS", 4) == 0) {
+					char my_disk_guid[16] = { 0x81, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
+					char my_partition_guid[16] = { 0xab, 0x68, 0x13, 0xa8, 0x7f, 0x9b, 0xcc, 0x12, 0x38, 0x0d, 0x87, 0xfe, 0x28, 0x09, 0x7b, 0xa7 };
+					printk("NTFS detected, generating GUIDs from Volume Serial Number (VSN)\n");
+					bdev->has_guids = true;
+					memcpy(bdev->disk_guid, boot_sector+0x48, 8);
+					memcpy(bdev->disk_guid+8, my_disk_guid+8, 8);
+					memcpy(bdev->partition_guid, boot_sector+0x48, 8);
+					memcpy(bdev->partition_guid+8, my_partition_guid+8, 8);
+				}
 				bdev->data_shift = 128;
 				bdev->appended_sectors = 128;
 			} else {
@@ -3412,6 +3422,7 @@ void windrbd_device_size_change(struct block_device *bdev)
         }
 }
 
+#if 0
 static void set_partition_guid(struct block_device *bdev, const char *guid)
 {
 	int i, n;
@@ -3432,6 +3443,7 @@ static void set_partition_guid(struct block_device *bdev, const char *guid)
 
 	printk("%s", buf);
 }
+#endif
 
 static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) 
 {
@@ -3588,10 +3600,12 @@ printk("initial buffer is %p\n", buffer);
 					if (n>=sector_count*512) {
 						n = sector_count*512;
 					}
+#if 0
 					if (rw == WRITE && start_sector <= 2 && start_sector+sector_count > 2) {
 						char *guid = buffer + (2 - start_sector) * 512 + 0x10;
 						set_partition_guid(bdev, guid);
 					}
+#endif
 					status = STATUS_SUCCESS;
 					if (bdev->disk_prolog != NULL) {
 						if (rw == READ) {
