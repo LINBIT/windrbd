@@ -3586,14 +3586,12 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				irp->IoStatus.Information = 0;
 				break;
 			}
-printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
+// printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
 
 			irp->IoStatus.Information = 0;
 			irp->IoStatus.Status = STATUS_PENDING;
 
 			buffer = ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
-printk("before prolog: start sector is %d sector_count is %d\n", start_sector, sector_count);
-printk("initial buffer is %p\n", buffer);
 			if (start_sector < bdev->data_shift) {
 				if (start_sector < bdev->data_shift && sector_count > 0) {
 					size_t n = (bdev->data_shift - start_sector)*512;
@@ -3611,7 +3609,7 @@ printk("initial buffer is %p\n", buffer);
 						if (rw == READ) {
 							memcpy(buffer, bdev->disk_prolog+start_sector*512, n);
 						} else {
-printk("WRITE to partition table !!\n");
+							printk("WRITE to partition table !!\n");
 							memcpy(bdev->disk_prolog+start_sector*512, buffer, n);
 						}
 					} else {
@@ -3627,17 +3625,13 @@ printk("WRITE to partition table !!\n");
 				}
 			}
 
-printk("after prolog: start sector is %d sector_count is %d\n", start_sector, sector_count);
 			if (sector_count > 0) {
 				int64_t num_sectors = sector_count;
 				int64_t excess_sectors = (start_sector + num_sectors) - ((bdev->d_size/512) + bdev->data_shift);
-printk("excess sectors is %lld\n", excess_sectors);
 				if (excess_sectors > 0) {
 					num_sectors -= excess_sectors;
 				}
-printk("num_sectors is %lld\n", num_sectors);
 				if (num_sectors > 0) {
-printk("before buffer is %p\n", buffer);
 						/* Normally we would call windrbd_make_drbd_requests()
 						 * here but if the I/O is completed very fast then
 						 * the buffer is already invalid / freed or whatever.
@@ -3652,12 +3646,10 @@ printk("before buffer is %p\n", buffer);
 					call_drbd = 1;
 
 					buffer += num_sectors*512;
-printk("after buffer is %p\n", buffer);
 					sector_count -= num_sectors;
 					start_sector += num_sectors;
 				}
 			}
-printk("after data: start sector is %d sector_count is %d\n", start_sector, sector_count);
 			if (sector_count > 0) {
 				sector_t first_backup_sector = bdev->data_shift+bdev->d_size/512;
 				sector_t last_sector = bdev->data_shift+bdev->d_size/512 + bdev->appended_sectors;
@@ -3666,8 +3658,6 @@ printk("after data: start sector is %d sector_count is %d\n", start_sector, sect
 						printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
 						sector_count = last_sector - start_sector;
 					}
-printk("first_backup_sector is %lld last_sector is %lld start_sector is %lld sector_count is %lld\n", first_backup_sector, last_sector, start_sector, sector_count);
-printk("buffer is %p\n", buffer);
 					status = STATUS_SUCCESS;
 					if (rw == READ) {
 						if (bdev->disk_epilog != NULL) {
@@ -3677,7 +3667,7 @@ printk("buffer is %p\n", buffer);
 						}
 					} else {
 						if (bdev->disk_epilog != NULL) {
-printk("WRITE to backup partition table !!\n");
+							printk("WRITE to backup partition table !!\n");
 							memcpy(bdev->disk_epilog+(start_sector-first_backup_sector)*512, buffer, sector_count*512);
 						} else {
 							status = STATUS_INVALID_PARAMETER;
