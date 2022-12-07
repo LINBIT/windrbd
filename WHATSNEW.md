@@ -5,6 +5,11 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.1.4
+---------------------------
+
+Virtual partition table for existing NTFS data partitions.
+
 What's new in version 1.1.3
 ---------------------------
 
