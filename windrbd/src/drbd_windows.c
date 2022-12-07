@@ -2698,7 +2698,7 @@ void delete_block_device(struct kref *kref)
 			blk_cleanup_queue(bdev->bd_disk->queue);
 		put_disk(bdev->bd_disk);
 	}
-//	ObDereferenceObject(bdev->file_object);
+	ObDereferenceObject(bdev->file_object);
 	kfree(bdev->path_to_device.Buffer);
 
 	list_del(&bdev->backing_devices_list);
