@@ -8551,3 +8551,8 @@ Done: Bug: bitmap consumes 7GB instead of 0.5GB
 	Tested, it was kmalloc_debug (without that it is
         4GB for 16TB disks.
 
+Rejected: something with removable media
+	Done, we do not want this. One could 'eject' a WinDRBD
+	device which 1) does not work 2) would leave the resource
+	in a strange state.
+
