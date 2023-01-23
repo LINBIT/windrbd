@@ -3309,7 +3309,6 @@ static void fake_partition_table(struct block_device *bdev)
 		0x10 Unique partition GUID (mixed endian)
 		0x28 Last LBA (inclusive, usually odd)
 	*/
-		/* TODO: free this when bdev is freed. */
 	partition_table = kzalloc(bdev->data_shift*512, 0, 'DRBD');
 	if (partition_table == NULL) {
 		printk("Warning: Not enough memory for partition table.\n");
