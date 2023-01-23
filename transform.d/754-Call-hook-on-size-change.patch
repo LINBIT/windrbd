@@ -1,0 +1,31 @@
+From 0ef80c91ecc7b80a92e85d24aad768d1ce1eb7d4 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 21 Nov 2022 19:58:31 +0100
+Subject: [PATCH] Call hook on size change.
+
+---
+ drbd/drbd_nl.c | 8 +-------
+ 1 file changed, 1 insertion(+), 7 deletions(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index d453e14..387d23b 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -1625,13 +1625,7 @@ void drbd_set_my_capacity(struct drbd_device *device, sector_t size)
+ 	drbd_info(device, "size = %s (%llu KB)\n",
+ 		ppsize(ppb, size>>1), (unsigned long long)size>>1);
+ 
+-	if (size > 0) {
+-		printk("got a valid size, unblocking SCSI capacity requests.\n");
+-	        KeSetEvent(&device->this_bdev->capacity_event, 0, FALSE);
+-	} else {
+-		printk("Size set to 0, am I Diskless/Unconnected?\n");
+-	        KeClearEvent(&device->this_bdev->capacity_event);
+-	}
++	windrbd_device_size_change(device->this_bdev);
+ }
+ 
+ /*
+-- 
+2.17.0
+
