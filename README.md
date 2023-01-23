@@ -311,3 +311,4 @@ Version history
  * 1.1.2 (Nov 3, 2022): Fixed a BSOD when REMOVE_DEVICE timed out
  * 1.1.3 (Nov 11, 2022): Show driver unload messages, fix BSOD on unsuccessful driver update
  * 1.1.4-rc1 (Dec 7, 2022): Virtual partition table for existing NTFS data partitions
+ * 1.1.4 (Jan 23, 2023): Drive letter in config ignored, fixed a memory leak, virtual partition tables
