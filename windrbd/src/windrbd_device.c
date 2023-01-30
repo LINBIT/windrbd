@@ -3554,11 +3554,9 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			dbg("cdb->AsByte[0] is %d", cdb->AsByte[0]);
 			if (cdb->AsByte[0] == SCSIOP_READ16 ||
 			    cdb->AsByte[0] == SCSIOP_WRITE16) {
-printk("SCSIOP_READ16 ...\n");
-// printk("sector_count is %lld (%d)\n", sector_count, sector_count);
 				REVERSE_BYTES_QUAD(&start_sector, &(cdb16->LogicalBlock[0]));
+				sector_count = 0;	/* initialize all 8 bytes */
 				REVERSE_BYTES(&sector_count, &(cdb16->TransferLength[0]));
-printk("sector_count is %lld (%d)\n", sector_count, sector_count);
 			} else {
 				start_sector = (unsigned long long) ((unsigned long long) cdb->CDB10.LogicalBlockByte0 << 24) + ((unsigned long long) cdb->CDB10.LogicalBlockByte1 << 16) + ((unsigned long long) cdb->CDB10.LogicalBlockByte2 << 8) + (unsigned long long) cdb->CDB10.LogicalBlockByte3;
 				sector_count = (unsigned long long) ((unsigned long long) cdb->CDB10.TransferBlocksMsb << 8) + (unsigned long long) cdb->CDB10.TransferBlocksLsb;
@@ -3588,17 +3586,14 @@ printk("sector_count is %lld (%d)\n", sector_count, sector_count);
 				irp->IoStatus.Information = 0;
 				break;
 			}
-printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
+// printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
 
 			irp->IoStatus.Information = 0;
 			irp->IoStatus.Status = STATUS_PENDING;
 
 			buffer = ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
-printk("1: start_sector is %lld sector_count is %d\n", start_sector, sector_count);
 			if (start_sector < bdev->data_shift) {
-printk("2: start_sector is %lld sector_count is %d\n", start_sector, sector_count);
 				if (start_sector < bdev->data_shift && sector_count > 0) {
-printk("3: start_sector is %lld sector_count is %d\n", start_sector, sector_count);
 					size_t n = (bdev->data_shift - start_sector)*512;
 					if (n>=sector_count*512) {
 						n = sector_count*512;
@@ -3609,7 +3604,6 @@ printk("3: start_sector is %lld sector_count is %d\n", start_sector, sector_coun
 						set_partition_guid(bdev, guid);
 					}
 #endif
-printk("serving from disk_prolog: start_sector is %lld n is %zd bdev->disk_prolog is %p\n", start_sector, n, bdev->disk_prolog);
 					status = STATUS_SUCCESS;
 					if (bdev->disk_prolog != NULL) {
 						if (rw == READ) {
@@ -3630,7 +3624,6 @@ printk("serving from disk_prolog: start_sector is %lld n is %zd bdev->disk_prolo
 					buffer += n;
 				}
 			}
-printk("after disk_prolog: start_sector is %lld sector_count is %d\n", start_sector, sector_count);
 
 			if (sector_count > 0) {
 				int64_t num_sectors = sector_count;
@@ -3647,7 +3640,6 @@ printk("after disk_prolog: start_sector is %lld sector_count is %d\n", start_sec
 						 * and call windrbd_make_drbd_requests() after filling
 						 * epilog data.
 						 */
-printk("serving from backing disk: start_sector is %lld sector_count is %lld\n", start_sector, sector_count);
 					io_buffer = buffer;
 					io_start_sector = start_sector-bdev->data_shift;
 					io_sector_count = num_sectors;
@@ -3658,7 +3650,6 @@ printk("serving from backing disk: start_sector is %lld sector_count is %lld\n",
 					start_sector += num_sectors;
 				}
 			}
-printk("after serving from backing disk: start_sector is %lld sector_count is %lld\n", start_sector, sector_count);
 			if (sector_count > 0) {
 				sector_t first_backup_sector = bdev->data_shift+bdev->d_size/512;
 				sector_t last_sector = bdev->data_shift+bdev->d_size/512 + bdev->appended_sectors;
@@ -3667,7 +3658,6 @@ printk("after serving from backing disk: start_sector is %lld sector_count is %l
 						printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
 						sector_count = last_sector - start_sector;
 					}
-printk("serving from epilog: start_sector is %lld sector_count is %lld\n", start_sector, sector_count);
 					status = STATUS_SUCCESS;
 					if (rw == READ) {
 						if (bdev->disk_epilog != NULL) {
