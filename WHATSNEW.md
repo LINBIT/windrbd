@@ -5,6 +5,11 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.1.5
+---------------------------
+
+Fixed bug with large disks (>2TB) introduced with 1.1.4
+
 What's new in version 1.1.4
 ---------------------------
 
