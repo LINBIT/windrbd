@@ -1009,3 +1009,9 @@ edit github URLS in .git/config (change git: to https:)
 git submodule update --checkout --init --recursive
 
 (probably better to edit .gitmodules ...)
+----------
+
+Run a shell script as a Windows Service:
+
+cygrunsrv -I demoservice -t manual -p /bin/bash -a '-c /home/Administrator/myservice.sh'
+
