@@ -2,9 +2,11 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
-TODO: Test: How does it behave with supports surprisal remove off?
-
 TODOs for Release 1.2 ----------------------------------------
+
+TODO: Feature: sync filesystem(s) on drbdadm secondary
+
+	Linux DRBD also does this.
 
 TODO: Build System: Make it build under Linux (was: Windows) only
 
@@ -8508,4 +8510,10 @@ Done: Bug: fsutil displays error for manually mounted NTFS volumes
 		1.1.4 - it is not a 'new' feature just a fix
 		to something that is supposed to work since
 		1.0.0 ...
+
+Done: Test: How does it behave with supports surprisal remove off?
+
+	Strange. We don't want this. Users then would be able
+	to eject the device via task bar (which fails) and causes
+	many strange behaviours.
 
