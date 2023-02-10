@@ -563,8 +563,6 @@ var ResultCode: Integer;
 
 begin
 	if CurStep = ssInstall then begin
-		ExecWithLogging(ExpandConstant('myprog.cmd'), '', 'C:\', 'C:\mydir',  SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
-
 		ModPath();
 
 		if GetOldVersion <> '' then begin
