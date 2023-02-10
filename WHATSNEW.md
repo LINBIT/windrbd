@@ -5,6 +5,14 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+What's new in version 1.1.6
+---------------------------
+
+Updated cygwin DLL (Feb 3 2023)
+
+Add PATH component to programs run by installer. This should
+enable running the installer from a background service.
+
 What's new in version 1.1.5
 ---------------------------
 

@@ -558,9 +558,6 @@ begin
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
-var ResultCode: Integer;
-    CommandOutput: String;
-
 begin
 	if CurStep = ssInstall then begin
 		ModPath();
