@@ -211,7 +211,7 @@ end;
 { Exec with output stored in result. }
 { ResultString will only be altered if True is returned. }
 
-function ExecWithResult(const Filename, Params, WorkingDir: String; const ShowCmd: Integer; const Wait: TExecWait; var ResultCode: Integer; var ResultString: String): Boolean;
+function ExecWithResult(const Filename, Params, WorkingDir, Path: String; const ShowCmd: Integer; const Wait: TExecWait; var ResultCode: Integer; var ResultString: String): Boolean;
 var TempFilename: String;
     Command: String;
 
@@ -219,7 +219,12 @@ begin
 	TempFilename := ExpandConstant('{tmp}\~execwithresult.txt');
 
 		{ Exec via cmd and redirect output to file. Must use special string-behavior to work. }
-	Command := Format('"%s" /S /C ""%s" %s 1> "%s" 2>&1"', [ ExpandConstant('{cmd}'), Filename, Params, TempFilename]);
+                { Also, if given, add Path to the PATH environment variable }
+	if Path <> '' then
+		Command := Format('"%s" /S /C "SET PATH=%%PATH%%;%s& "%s" %s 1> "%s" 2>&1"', [ ExpandConstant('{cmd}'), Path, Filename, Params, TempFilename])
+	else
+		Command := Format('"%s" /S /C ""%s" %s 1> "%s" 2>&1"', [ ExpandConstant('{cmd}'), Filename, Params, TempFilename]);
+
 	Result := Exec(ExpandConstant('{cmd}'), Command, WorkingDir, ShowCmd, Wait, ResultCode);
 	if not Result then
 		Exit;
@@ -235,19 +240,19 @@ begin
 		Delete(ResultString, Length(ResultString), 1);
 end;
 
-function ExecWithLogging(const Filename, Params, WorkingDir: String; const ShowCmd: Integer; const Wait: TExecWait; var ResultCode: Integer; var CommandOutput: String): Boolean;
+function ExecWithLogging(const Filename, Params, WorkingDir, Path: String; const ShowCmd: Integer; const Wait: TExecWait; var ResultCode: Integer; var CommandOutput: String): Boolean;
 
 begin
-	Log(Format('About to Run %s %s (wd is %s) ...', [ Filename, Params, WorkingDir ]));
-	Result := ExecWithResult(Filename, Params, WorkingDir, ShowCmd, Wait, ResultCode, CommandOutput);
+	Log(Format('About to Run %s %s (wd is %s, path is %s) ...', [ Filename, Params, WorkingDir, Path ]));
+	Result := ExecWithResult(Filename, Params, WorkingDir, Path, ShowCmd, Wait, ResultCode, CommandOutput);
 	if Result then
 	begin
-		Log(Format('Command %s succeeded, exit value is %d', [ Filename, ResultCode ]));
+		Log(Format('The command %s was run, exit value is %d', [ Filename, ResultCode ]));
 		Log(Format('Output of command is '+#13#10+'%s', [ CommandOutput ]));
 	end
 	else
 	begin
-		Log(Format('Could not run command %s', [ Filename ]));
+		Log(Format('Could not run command %s does it exist?', [ Filename ]));
 	end;
 end;
 
@@ -257,7 +262,7 @@ var
 	ResultCode: integer;
 
 begin
-	if not ExecWithLogging(ExpandConstant('{app}')+'\cygpath', WindowsPath, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, ExecStdout) then
+	if not ExecWithLogging(ExpandConstant('{app}')+'\cygpath', WindowsPath, ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, ExecStdout) then
 	begin
 		MsgBox('Could not run cygpath', mbInformation, MB_OK);
 	end;
@@ -340,10 +345,10 @@ Procedure InstallUserModeServices;
 var ResultCode: Integer;
     CommandOutput: String;
 Begin
-	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdlog -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a log-server -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -t auto', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdlog -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a log-server -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-kernel.log -t auto', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 		MsgBox('Could not install WinDRBD log service', mbInformation, MB_OK);
 
-	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdumhelper -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a user-mode-helper-daemon -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -t auto', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-I windrbdumhelper -p '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/usr/sbin/windrbd.exe -a user-mode-helper-daemon -1 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -2 '+ExpandConstant('{code:WinDRBDRootDirCygwin}')+'/windrbd-umhelper.log -t auto', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 		MsgBox('Could not install WinDRBD user mode helper service', mbInformation, MB_OK);
 end;
 
@@ -405,27 +410,27 @@ begin
 		exit;
 	end;
 
-	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'disconnect all --force', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'disconnect all --force', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not disconnect DRBD resources', mbInformation, MB_OK);
 	end;
 
-	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'down all', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\drbdadm.exe'), 'down all', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not bring DRBD resources down', mbInformation, MB_OK);
 	end;
 
-	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'remove-bus-device windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'remove-bus-device windrbd.inf', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not remove bus device', mbInformation, MB_OK);
 	end;
 
-	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'set-shutdown-flag 1', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'set-shutdown-flag 1', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		Log('Failed to set shutdown flag. The old WinDRBD version is probably less than 1.1.0, please make sure that drbdsetup events2 processes are stopped by yourself');
 	end;
 
-	if not ExecWithLogging(ExpandConstant('sc.exe'), 'stop windrbd', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('sc.exe'), 'stop windrbd', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not stop driver', mbInformation, MB_OK);
 	end;
@@ -438,7 +443,7 @@ var ResultCode: Integer;
     CommandOutput: String;
 
 begin
-	if not ExecWithLogging(ExpandConstant('pnputil.exe'), '-i -a windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('pnputil.exe'), '-i -a windrbd.inf', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not run pnputil', mbInformation, MB_OK);
 	end;
@@ -449,7 +454,7 @@ var ResultCode: Integer;
     CommandOutput: String;
 
 begin
-	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'install-bus-device windrbd.inf', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'install-bus-device windrbd.inf', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not install bus device', mbInformation, MB_OK);
 	end;
@@ -458,7 +463,7 @@ begin
           unloaded. drbdsetup (and drbdadm) will not work as long as this
           flag is set, so unset it here. }
 
-	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'set-shutdown-flag 0', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'set-shutdown-flag 0', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		Log('Failed to unset the shutdown flag. Lets see what happens next');
 	end;
@@ -553,8 +558,13 @@ begin
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
+var ResultCode: Integer;
+    CommandOutput: String;
+
 begin
 	if CurStep = ssInstall then begin
+		ExecWithLogging(ExpandConstant('myprog.cmd'), '', 'C:\', 'C:\mydir',  SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
+
 		ModPath();
 
 		if GetOldVersion <> '' then begin
