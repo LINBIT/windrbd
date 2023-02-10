@@ -3397,6 +3397,17 @@ int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct b
 					memcpy(bdev->partition_guid, boot_sector+0x48, 8);
 					memcpy(bdev->partition_guid+8, my_partition_guid+8, 8);
 				}
+/* Store 8 bytes ReFS serial number at offset 0x38 */
+				if (strncmp(boot_sector+3, "ReFS", 4) == 0) {
+					char my_disk_guid[16] = { 0x81, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
+					char my_partition_guid[16] = { 0xab, 0x68, 0x13, 0xa8, 0x7f, 0x9b, 0xcc, 0x12, 0x38, 0x0d, 0x87, 0xfe, 0x28, 0x09, 0x7b, 0xa7 };
+					printk("ReFS detected, generating GUIDs from ReFS Serial Number\n");
+					bdev->has_guids = true;
+					memcpy(bdev->disk_guid, boot_sector+0x38, 8);
+					memcpy(bdev->disk_guid+8, my_disk_guid+8, 8);
+					memcpy(bdev->partition_guid, boot_sector+0x38, 8);
+					memcpy(bdev->partition_guid+8, my_partition_guid+8, 8);
+				}
 				bdev->data_shift = 128;
 				bdev->appended_sectors = 128;
 			} else {

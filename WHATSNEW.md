@@ -13,6 +13,9 @@ Updated cygwin DLL (Feb 3 2023)
 Add PATH component to programs run by installer. This should
 enable running the installer from a background service.
 
+Add ReFS support for existing data partitions (virtual
+partition table).
+
 What's new in version 1.1.5
 ---------------------------
 
