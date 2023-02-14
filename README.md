@@ -313,3 +313,4 @@ Version history
  * 1.1.4-rc1 (Dec 7, 2022): Virtual partition table for existing NTFS data partitions
  * 1.1.4 (Jan 23, 2023): Drive letter in config ignored, fixed a memory leak, virtual partition tables
  * 1.1.5 (Jan 31, 2023): Fixed bug with large disks (>2TB) introduced with 1.1.4
+ * 1.1.6 (Feb 14, 2023): Fixed ReFS support, install from Windows Service, updated cygwin binaries
