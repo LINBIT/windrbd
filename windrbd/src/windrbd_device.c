@@ -807,10 +807,11 @@ printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n",
 			case StorageAdapterProperty:
 			case StorageDeviceProperty:
 			case StorageDeviceAttributesProperty:
-			case StorageAccessAlignmentProperty:
+/*			case StorageAccessAlignmentProperty:
 			case StorageDeviceSeekPenaltyProperty:
 			case StorageDeviceTrimProperty:
 			case StorageDeviceResiliencyProperty:
+*/
 				status = STATUS_SUCCESS;
 				break;
 			}
@@ -866,6 +867,7 @@ printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n",
 				status = STATUS_SUCCESS;
 				break;
 
+#if 0
 			case StorageAccessAlignmentProperty:
 			{
 				struct _STORAGE_ACCESS_ALIGNMENT_DESCRIPTOR a;
@@ -929,12 +931,12 @@ printk("StorageDeviceTrimProperty ...\n");
 				irp->IoStatus.Information = 0;
 				status = STATUS_SUCCESS;
 				break;
-
+#endif
 			}	/* switch PropertyId */
 			break;
 		}
 		if (status != STATUS_SUCCESS) {
-// printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
 		}
 		break;
    	}
@@ -2599,8 +2601,10 @@ if (status == STATUS_NOT_SUPPORTED) {
 				memset(string, 0, MAX_ID_LEN*sizeof(wchar_t));
 				switch (s->Parameters.QueryId.IdType) {
 				case BusQueryDeviceID:
+					swprintf(string, L"WinDRBD\\Disk%d", minor);
+
 			/* SCSI\\t\*v(8)p(16)r(4) */
-					swprintf(string, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
+				//	swprintf(string, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryInstanceID:
@@ -2616,12 +2620,17 @@ Red_Hat___________VirtIO0
 GenDisk
 */
 				case BusQueryHardwareIDs:
+/*
 					len = swprintf(string, L"SCSI\\DiskLinbit____________WinDRBD0001");
 					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit____________WinDRBD")+1;
 					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit__")+1;
 					len += swprintf(&string[len+1], L"SCSI\\Linbit____________WinDRBD0")+1;
 					len += swprintf(&string[len+1], L"Linbit____________WinDRBD0")+1;
+*/
+					len = swprintf(string, L"WinDRBDDisk");
+
 					swprintf(&string[len+1], L"GenDisk");
+
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryCompatibleIDs:
