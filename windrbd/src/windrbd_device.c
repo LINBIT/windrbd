@@ -565,7 +565,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
+// printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	if (dev->is_bootdevice) {
 		status = wait_for_becoming_primary(dev);
 		if (status != STATUS_SUCCESS)
@@ -799,7 +799,7 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 		STORAGE_ADAPTER_DESCRIPTOR StorageAdapterDescriptor;
 		STORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor;
 
-printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+// printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
 
 		switch (StoragePropertyQuery->QueryType) {
 		case PropertyExistsQuery:
@@ -909,7 +909,7 @@ printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n",
 				struct _DEVICE_TRIM_DESCRIPTOR trim;
 
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(trim)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(trim));
-printk("StorageDeviceTrimProperty ...\n");
+// printk("StorageDeviceTrimProperty ...\n");
 				trim.Version = sizeof(trim);
 				trim.Size = sizeof(trim);
 					/* TRIM not implemented till now. TODO: 
@@ -946,7 +946,7 @@ printk("StorageDeviceTrimProperty ...\n");
 			break;
 		}
 		if (status != STATUS_SUCCESS) {
-printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
+// printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
 		}
 		break;
    	}
@@ -1015,7 +1015,7 @@ printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x
 
 	case IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES:
 	{
-printk("IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES\n");
+// printk("IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES\n");
 		struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES* attrs =
 			(struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES*)irp->AssociatedIrp.SystemBuffer;
 
@@ -1026,17 +1026,17 @@ printk("IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES\n");
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
-printk("attrs->Action is %d flag is %d\n", attrs->Action, attrs->Flags);
+// printk("attrs->Action is %d flag is %d\n", attrs->Action, attrs->Flags);
 		if (attrs->Action != DeviceDsmAction_Trim) {
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 		}
 		int items = attrs->DataSetRangesLength / sizeof(DEVICE_DATA_SET_RANGE);
 
-printk("%d items\n", items);
+// printk("%d items\n", items);
 
-		status = STATUS_SUCCESS;
-		// status = STATUS_NOT_SUPPORTED;
+		// status = STATUS_SUCCESS;
+		status = STATUS_NOT_SUPPORTED;
 		irp->IoStatus.Information = 0;
 		/* TODO: trim */
 
@@ -2611,10 +2611,8 @@ if (status == STATUS_NOT_SUPPORTED) {
 				memset(string, 0, MAX_ID_LEN*sizeof(wchar_t));
 				switch (s->Parameters.QueryId.IdType) {
 				case BusQueryDeviceID:
-					swprintf(string, L"WinDRBD\\Disk%d", minor);
-
 			/* SCSI\\t\*v(8)p(16)r(4) */
-				//	swprintf(string, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
+					swprintf(string, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryInstanceID:
@@ -2630,17 +2628,12 @@ Red_Hat___________VirtIO0
 GenDisk
 */
 				case BusQueryHardwareIDs:
-/*
 					len = swprintf(string, L"SCSI\\DiskLinbit____________WinDRBD0001");
 					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit____________WinDRBD")+1;
 					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit__")+1;
 					len += swprintf(&string[len+1], L"SCSI\\Linbit____________WinDRBD0")+1;
 					len += swprintf(&string[len+1], L"Linbit____________WinDRBD0")+1;
-*/
-					len = swprintf(string, L"WinDRBDDisk");
-
 					swprintf(&string[len+1], L"GenDisk");
-
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryCompatibleIDs:
@@ -3852,7 +3845,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		break;
 
 	default:
-printk("got unimplemented SCSI function %x\n", srb->Function);
+		dbg("got unimplemented SCSI function %x\n", srb->Function);
 		status = STATUS_NOT_IMPLEMENTED;
 	}
 
