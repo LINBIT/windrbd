@@ -925,6 +925,17 @@ printk("StorageDeviceTrimProperty ...\n");
 			}
 
 #if 0
+	/* This is "reserved for system use". ReFS calls this
+         * to check if there is redundancy at device level.
+	 * Well ... there is ..  but correctly filling out the
+         * struct (https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ne-winioctl-storage_property_id).
+         * depends on if we are currently connected to a
+         * remote with up to date data and many other things.
+         * I think best for now is just to say we do not support
+         * it (if we return an invalid struct the device cannot be
+         * formatted with ReFS).
+	 */
+
 			case StorageDeviceResiliencyProperty:
 // printk("StorageDeviceResiliencyProperty ...\n");
 				irp->IoStatus.Information = 0;
