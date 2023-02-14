@@ -1023,8 +1023,8 @@ printk("attrs->Action is %d flag is %d\n", attrs->Action, attrs->Flags);
 
 printk("%d items\n", items);
 
-		// status = STATUS_SUCCESS;
-		status = STATUS_NOT_SUPPORTED;
+		status = STATUS_SUCCESS;
+		// status = STATUS_NOT_SUPPORTED;
 		irp->IoStatus.Information = 0;
 		/* TODO: trim */
 
