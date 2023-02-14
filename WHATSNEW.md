@@ -8,10 +8,12 @@ LINSTOR support
 What's new in version 1.1.6
 ---------------------------
 
-Updated cygwin DLL (Feb 3 2023)
+Updated cygwin DLL and binaries (Feb 3 2023)
 
-Add PATH component to programs run by installer. This should
-enable running the installer from a background service.
+Add PATH component to programs run by installer. This
+enables running the installer from a background service.
+
+Fixed ReFS support (was broken since 1.1.0, works in 1.0.2)
 
 Add ReFS support for existing data partitions (virtual
 partition table).
