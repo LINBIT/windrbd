@@ -807,11 +807,10 @@ printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n",
 			case StorageAdapterProperty:
 			case StorageDeviceProperty:
 			case StorageDeviceAttributesProperty:
-/*			case StorageAccessAlignmentProperty:
+			case StorageAccessAlignmentProperty:
 			case StorageDeviceSeekPenaltyProperty:
 			case StorageDeviceTrimProperty:
-			case StorageDeviceResiliencyProperty:
-*/
+//			case StorageDeviceResiliencyProperty:
 				status = STATUS_SUCCESS;
 				break;
 			}
@@ -867,7 +866,6 @@ printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n",
 				status = STATUS_SUCCESS;
 				break;
 
-#if 0
 			case StorageAccessAlignmentProperty:
 			{
 				struct _STORAGE_ACCESS_ALIGNMENT_DESCRIPTOR a;
@@ -926,6 +924,7 @@ printk("StorageDeviceTrimProperty ...\n");
 				break;
 			}
 
+#if 0
 			case StorageDeviceResiliencyProperty:
 // printk("StorageDeviceResiliencyProperty ...\n");
 				irp->IoStatus.Information = 0;
