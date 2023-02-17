@@ -1,0 +1,14 @@
+diff each C file:
+diff -u drbd/drbd/drbd_main.c converted_sources/drbd/drbd_main.c
+
+Add categories:
+
+@@ cocci: have generic cocci script to apply this patch (like most spin locks, rcu, unsigned long, ...)
+@@ header: add something to a WinDRBD header included here, for example define must_hold to nothing
+@@ remove: patch not needed any more
+@@ upstream: this might be interesting for upstream DRBD maybe submit this
+@@ compat: implement something in the compat layer to resolve this patch
+@@ manual: manual patch needed - only if all of the above fail
+
+johannes@jt-ubuntu2021B:~/sambashare2/windrbd-squeeze-patches/windrbd/diffs$ grep @@ drbd_main.c.diff | grep -v -- -[0-9] | grep -v cocci | grep -v header | grep -v remove | grep -v page | grep -v upstream | grep -v compat
+
