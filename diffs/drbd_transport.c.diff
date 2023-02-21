@@ -1,0 +1,177 @@
+--- drbd/drbd/drbd_transport.c	2023-02-17 14:26:26.766469006 +0000
++++ converted-sources/drbd/drbd_transport.c	2023-02-17 14:26:29.298421422 +0000
+@@ -1,4 +1,4 @@
+! header
+-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
++#define pr_fmt(fmt) ":" fmt
+ 
+ #include <linux/spinlock.h>
+ #include <linux/module.h>
+@@ -13,7 +13,7 @@
+ {
+ 	struct drbd_transport_class *transport_class;
+ 
+! cocci
+-	list_for_each_entry(transport_class, &transport_classes, list)
++	list_for_each_entry(struct drbd_transport_class, transport_class, &transport_classes, list)
+ 		if (!strcmp(transport_class->name, transport_name))
+ 			return transport_class;
+ 
+@@ -97,7 +97,7 @@
+ 	down_read(&transport_classes_lock);
+ 
+ 	seq_puts(seq, "Transports (api:" __stringify(DRBD_TRANSPORT_API_VERSION) "):");
+! cocci
+-	list_for_each_entry(tc, &transport_classes, list) {
++	list_for_each_entry(struct drbd_transport_class, tc, &transport_classes, list) {
+ 		seq_printf(seq, " %s (%s)", tc->name,
+ 				tc->module->version ? tc->module->version : "NONE");
+ 	}
+@@ -106,6 +106,20 @@
+ 	up_read(&transport_classes_lock);
+ }
+ 
+! compat: move this to some header ideally net/ipv6.h
++/* Taken from include/net/ipv6.h */
++static inline bool ipv6_addr_equal(const struct in6_addr *a1,
++                                   const struct in6_addr *a2)
++{
++        const ULONG_PTR *ul1 = (const ULONG_PTR *)a1;
++        const ULONG_PTR *ul2 = (const ULONG_PTR *)a2;
++
++        return ((ul1[0] ^ ul2[0]) | (ul1[1] ^ ul2[1])) == ((ULONG_PTR)0);
++}
++static inline int ipv6_addr_is_link_local(const struct in6_addr *addr)
++{
++    return (addr->u.Byte[0] == 0xff) && ((addr->u.Byte[1] & 0xc0) == 0x80);
++}
++
+ static bool addr_equal(const struct sockaddr_storage *addr1, const struct sockaddr_storage *addr2)
+ {
+ 	if (addr1->ss_family != addr2->ss_family)
+@@ -117,7 +131,7 @@
+ 
+ 		if (!ipv6_addr_equal(&v6a1->sin6_addr, &v6a2->sin6_addr))
+ 			return false;
+! compat: also make IPV6_ADDR_LINKLOCAL work
+-		else if (ipv6_addr_type(&v6a1->sin6_addr) & IPV6_ADDR_LINKLOCAL)
++		else if (ipv6_addr_is_link_local(&v6a1->sin6_addr))
+ 			return v6a1->sin6_scope_id == v6a2->sin6_scope_id;
+ 		return true;
+ 	} else /* AF_INET, AF_SSOCKS, AF_SDP */ {
+@@ -154,7 +168,7 @@
+ 	struct drbd_resource *resource = connection->resource;
+ 	struct drbd_listener *listener;
+ 
+! cocci
+-	list_for_each_entry(listener, &resource->listeners, list) {
++	list_for_each_entry(struct drbd_listener, listener, &resource->listeners, list) {
+ 		if (addr_and_port_equal(&listener->listen_addr, addr)) {
+ 			kref_get(&listener->kref);
+ 			return listener;
+@@ -166,6 +180,7 @@
+ int drbd_get_listener(struct drbd_transport *transport, struct drbd_path *path,
+ 		      int (*init_listener)(struct drbd_transport *, const struct sockaddr *addr, struct drbd_listener *))
+ {
+! cocci: also patch spin_lock_bh -> spin_lock_irqsave
++	KIRQL spin_lock_bh_flags;
+ 	struct drbd_connection *connection =
+ 		container_of(transport, struct drbd_connection, transport);
+ 	struct sockaddr *addr = (struct sockaddr *)&path->my_addr;
+@@ -174,7 +189,7 @@
+ 	int err, tries = 0;
+ 
+ 	while (1) {
+! cocci
+-		spin_lock_bh(&resource->listeners_lock);
++		spin_lock_irqsave(&resource->listeners_lock, spin_lock_bh_flags);
+ 		listener = find_listener(connection, (struct sockaddr_storage *)addr);
+ 		if (!listener && new_listener) {
+ 			list_add(&new_listener->list, &resource->listeners);
+@@ -185,7 +200,7 @@
+ 			list_add(&path->listener_link, &listener->waiters);
+ 			path->listener = listener;
+ 		}
+! cocci
+-		spin_unlock_bh(&resource->listeners_lock);
++		spin_unlock_irqrestore(&resource->listeners_lock, spin_lock_bh_flags);
+ 
+ 		if (new_listener)
+ 			new_listener->destroy(new_listener);
+@@ -193,7 +208,7 @@
+ 		if (listener)
+ 			return 0;
+ 
+! cocci (kmalloc)
+-		new_listener = kmalloc(transport->class->listener_instance_size, GFP_KERNEL);
++		new_listener = kmalloc(transport->class->listener_instance_size, GFP_KERNEL, '00WD');
+ 		if (!new_listener)
+ 			return -ENOMEM;
+ 
+@@ -218,29 +233,31 @@
+ 
+ static void drbd_listener_destroy(struct kref *kref)
+ {
+! cocci
++	KIRQL spin_lock_bh_flags;
+ 	struct drbd_listener *listener = container_of(kref, struct drbd_listener, kref);
+ 	struct drbd_resource *resource = listener->resource;
+ 
+! cocci
+-	spin_lock_bh(&resource->listeners_lock);
++	spin_lock_irqsave(&resource->listeners_lock, spin_lock_bh_flags);
+ 	list_del(&listener->list);
+! cocci
+-	spin_unlock_bh(&resource->listeners_lock);
++	spin_unlock_irqrestore(&resource->listeners_lock, spin_lock_bh_flags);
+ 
+ 	listener->destroy(listener);
+ }
+ 
+ void drbd_put_listener(struct drbd_path *path)
+ {
+! cocci
++	KIRQL spin_lock_bh_flags;
+ 	struct drbd_resource *resource;
+ 	struct drbd_listener *listener;
+ 
+! compat: why is this xchg_ptr in compat?
+-	listener = xchg(&path->listener, NULL);
++	listener = xchg_ptr(&path->listener, NULL);
+ 	if (!listener)
+ 		return;
+ 
+ 	resource = listener->resource;
+! cocci
+-	spin_lock_bh(&resource->listeners_lock);
++	spin_lock_irqsave(&resource->listeners_lock, spin_lock_bh_flags);
+ 	list_del(&path->listener_link);
+! cocci
+-	spin_unlock_bh(&resource->listeners_lock);
++	spin_unlock_irqrestore(&resource->listeners_lock, spin_lock_bh_flags);
+ 	kref_put(&listener->kref, drbd_listener_destroy);
+ }
+ 
+@@ -248,7 +265,7 @@
+ {
+ 	struct drbd_path *path;
+ 
+! cocci
+-	list_for_each_entry(path, &listener->waiters, listener_link) {
++	list_for_each_entry(struct drbd_path, path, &listener->waiters, listener_link) {
+ 		if (addr_equal(&path->peer_addr, addr))
+ 			return path;
+ 	}
+@@ -317,6 +334,11 @@
+ 	notify_path(connection, path, destroyed ? NOTIFY_DESTROY : NOTIFY_CHANGE);
+ }
+ 
+! review: compat: init synchronization primitives in DriverEntry or manual: leave that here (since transport_classes_lock is static)
++void init_transport(void)
++{
++	init_rwsem(&transport_classes_lock);
++}
++
+ /* Network transport abstractions */
+ EXPORT_SYMBOL_GPL(drbd_register_transport_class);
+ EXPORT_SYMBOL_GPL(drbd_unregister_transport_class);
