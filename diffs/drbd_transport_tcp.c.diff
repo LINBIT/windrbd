@@ -1,0 +1,880 @@
+--- drbd/drbd/drbd_transport_tcp.c	2023-02-17 14:26:26.766469006 +0000
++++ converted-sources/drbd/drbd_transport_tcp.c	2023-02-17 14:26:29.254422249 +0000
+! remove
+@@ -6,7 +6,6 @@
+ 
+    Copyright (C) 2014-2017, LINBIT HA-Solutions GmbH.
+ 
+-
+ */
+ 
+ #include <linux/module.h>
+@@ -22,7 +21,7 @@
+ #include <drbd_protocol.h>
+ #include <drbd_transport.h>
+ #include "drbd_wrappers.h"
+-
+! review: this should not be needed here
++#include <drbd_int.h>
+ 
+ MODULE_AUTHOR("Philipp Reisner <philipp.reisner@linbit.com>");
+ MODULE_AUTHOR("Lars Ellenberg <lars.ellenberg@linbit.com>");
+@@ -41,7 +40,7 @@
+ struct drbd_tcp_transport {
+ 	struct drbd_transport transport; /* Must be first! */
+ 	spinlock_t paths_lock;
+! cocci
+-	unsigned long flags;
++	ULONG_PTR flags;
+ 	struct socket *stream[2];
+ 	struct buffer rbuf[2];
+ };
+@@ -76,8 +75,8 @@
+ static int dtt_recv_pages(struct drbd_transport *transport, struct drbd_page_chain_head *chain, size_t size);
+ static void dtt_stats(struct drbd_transport *transport, struct drbd_transport_stats *stats);
+ static void dtt_net_conf_change(struct drbd_transport *transport, struct net_conf *new_net_conf);
+! cocci
+-static void dtt_set_rcvtimeo(struct drbd_transport *transport, enum drbd_stream stream, long timeout);
+-static long dtt_get_rcvtimeo(struct drbd_transport *transport, enum drbd_stream stream);
++static void dtt_set_rcvtimeo(struct drbd_transport *transport, enum drbd_stream stream, LONG_PTR timeout);
++static LONG_PTR dtt_get_rcvtimeo(struct drbd_transport *transport, enum drbd_stream stream);
+ static int dtt_send_page(struct drbd_transport *transport, enum drbd_stream, struct page *page,
+ 		int offset, size_t size, unsigned msg_flags);
+ static int dtt_send_zc_bio(struct drbd_transport *, struct bio *bio);
+@@ -127,10 +126,11 @@
+ static struct drbd_path *__drbd_next_path_ref(struct drbd_path *drbd_path,
+ 					      struct drbd_transport *transport)
+ {
+! cocci
++	KIRQL spin_lock_flags;
+ 	struct drbd_tcp_transport *tcp_transport =
+ 		container_of(transport, struct drbd_tcp_transport, transport);
+ 
+-	spin_lock(&tcp_transport->paths_lock);
++	spin_lock_irqsave(&tcp_transport->paths_lock, spin_lock_flags);
+ 	if (!drbd_path) {
+ 		drbd_path = list_first_entry_or_null(&transport->paths, struct drbd_path, list);
+ 	} else {
+@@ -141,7 +141,7 @@
+ 			if (list_is_last(&drbd_path->list, &transport->paths))
+ 				drbd_path = NULL;
+ 			else
+! cocci
+-				drbd_path = list_next_entry(drbd_path, list);
++				drbd_path = list_next_entry(struct drbd_path, drbd_path, list);
+ 		} else {
+ 			/* No longer on the list, element might be freed already, restart from the start */
+ 			drbd_path = list_first_entry_or_null(&transport->paths, struct drbd_path, list);
+@@ -149,7 +149,7 @@
+ 	}
+ 	if (drbd_path)
+ 		kref_get(&drbd_path->kref);
+! cocci
+-	spin_unlock(&tcp_transport->paths_lock);
++	spin_unlock_irqrestore(&tcp_transport->paths_lock, spin_lock_flags);
+ 
+ 	return drbd_path;
+ }
+@@ -173,7 +173,7 @@
+ 
+ 	return 0;
+ fail:
+! review: free_page takes pointer, not long - maybe upstream? - else cocci (ULONG_PTR)
+-	free_page((unsigned long)tcp_transport->rbuf[0].base);
++	free_page(tcp_transport->rbuf[0].base);
+ 	return -ENOMEM;
+ }
+ 
+@@ -188,6 +188,7 @@
+ 
+ static void dtt_free(struct drbd_transport *transport, enum drbd_tr_free_op free_op)
+ {
+! cocci
++	KIRQL spin_lock_flags;
+ 	struct drbd_tcp_transport *tcp_transport =
+ 		container_of(transport, struct drbd_tcp_transport, transport);
+ 	enum drbd_stream i;
+@@ -215,15 +216,16 @@
+ 		struct drbd_path *tmp;
+ 
+ 		for (i = DATA_STREAM; i <= CONTROL_STREAM; i++) {
+! review
+-			free_page((unsigned long)tcp_transport->rbuf[i].base);
++			free_page(tcp_transport->rbuf[i].base);
+ 			tcp_transport->rbuf[i].base = NULL;
+ 		}
+! cocci
+-		spin_lock(&tcp_transport->paths_lock);
+! cocci
+-		list_for_each_entry_safe(drbd_path, tmp, &transport->paths, list) {
++		spin_lock_irqsave(&tcp_transport->paths_lock, spin_lock_flags);
++		list_for_each_entry_safe(struct drbd_path, drbd_path, tmp, &transport->paths, list) {
+ 			list_del_init(&drbd_path->list);
+ 			kref_put(&drbd_path->kref, drbd_destroy_path);
+ 		}
+! cocci
+-		spin_unlock(&tcp_transport->paths_lock);
++		spin_unlock_irqrestore(&tcp_transport->paths_lock,
++				       spin_lock_flags);
+ 	}
+ }
+ 
+@@ -232,7 +234,8 @@
+ {
+ 	struct kvec iov;
+ 	struct msghdr msg;
+! review, probably upstream
+-	int rv, sent = 0;
++	int rv;
++	size_t sent = 0;
+ 
+ 	/* THINK  if (signal_pending) return ... ? */
+ 
+@@ -265,7 +268,7 @@
+ 		if (rv < 0)
+ 			break;
+ 		sent += rv;
+! review, this is a GNU extension. Maybe cocci?
+-		iov.iov_base += rv;
++		iov.iov_base = ((char*) iov.iov_base) + rv;
+ 		iov.iov_len  -= rv;
+ 	} while (sent < size);
+ 
+@@ -299,13 +302,21 @@
+ 	if (!socket)
+ 		return -ENOTCONN;
+ 
+! compat: I think this is needed but can be handled in the compat layer
++		/* If this should be non-blocking, pretend that we
++		 * haven't received anything. DRBD then will redo
++		 * the call without this flag set.
++		 */
++
++	if (flags & MSG_DONTWAIT)
++		return 0;
++
+ 	if (flags & CALLER_BUFFER) {
+ 		buffer = *buf;
+ 		rv = dtt_recv_short(socket, buffer, size, flags & ~CALLER_BUFFER);
+ 	} else if (flags & GROW_BUFFER) {
+ 		TR_ASSERT(transport, *buf == tcp_transport->rbuf[stream].base);
+ 		buffer = tcp_transport->rbuf[stream].pos;
+-		TR_ASSERT(transport, (buffer - *buf) + size <= PAGE_SIZE);
++		TR_ASSERT(transport, ((char*) buffer - (char*) *buf) + size <= PAGE_SIZE);
+ 
+ 		rv = dtt_recv_short(socket, buffer, size, flags & ~GROW_BUFFER);
+ 	} else {
+@@ -317,7 +328,7 @@
+ 	}
+ 
+ 	if (rv > 0)
+! review, this is a GNU extension. Maybe cocci?
+-		tcp_transport->rbuf[stream].pos = buffer + rv;
++		tcp_transport->rbuf[stream].pos = ((char*) buffer) + rv;
+ 
+ 	return rv;
+ }
+@@ -333,13 +344,14 @@
+ 	if (!socket)
+ 		return -ENOTCONN;
+ 
+! compat,manual: here we allocate big pages, have a seperate function for that (so we don't need to patch drbd_sender and drbd_reveicer)
+-	drbd_alloc_page_chain(transport, chain, DIV_ROUND_UP(size, PAGE_SIZE), GFP_TRY);
++	drbd_alloc_page_chain(transport, chain, DIV_ROUND_UP(size, PAGE_SIZE), GFP_TRY, 1);
++
+ 	page = chain->head;
+ 	if (!page)
+ 		return -ENOMEM;
+ 
+ 	page_chain_for_each(page) {
+! manual: needed for big pages
+-		size_t len = min_t(int, size, PAGE_SIZE);
++		size_t len = size;
+ 		void *data = kmap(page);
+ 		err = dtt_recv_short(socket, data, len, 0);
+ 		kunmap(page);
+@@ -364,10 +376,15 @@
+ 
+ 	if (socket) {
+ 		struct sock *sk = socket->sk;
+! compat: define these fields, fill out with data from receiver thread.
++/*
+ 		struct tcp_sock *tp = tcp_sk(sk);
+ 
+ 		stats->unread_received = tp->rcv_nxt - tp->copied_seq;
+ 		stats->unacked_send = tp->write_seq - tp->snd_una;
++*/
++		stats->unread_received = 0;
++		stats->unacked_send = 0;
++
+ 		stats->send_buffer_size = sk->sk_sndbuf;
+ 		stats->send_buffer_used = sk->sk_wmem_queued;
+ 	}
+@@ -382,8 +399,16 @@
+ 	if (snd) {
+ 		sk->sk_sndbuf = snd;
+ 		sk->sk_userlocks |= SOCK_SNDBUF_LOCK;
+! remove: this should call windrbd_update_socket_buffer_sizes()
++#if 0
+ 		/* Wake up sending tasks if we upped the value. */
++
++		/* TODO: WinDRBD: this is done by the
++		 * windrbd_update_socket_buffer_sizes() at the end of
++		 * the function.
++		 */
++
+ 		sk->sk_write_space(sk);
++#endif
+ 	} else {
+ 		sk->sk_userlocks &= ~SOCK_SNDBUF_LOCK;
+ 	}
+@@ -394,6 +419,7 @@
+ 	} else {
+ 		sk->sk_userlocks &= ~SOCK_RCVBUF_LOCK;
+ 	}
+! manual: this is probably needed. For enlarging recv buffer?
++	windrbd_update_socket_buffer_sizes(socket);
+ }
+ 
+ static bool dtt_path_cmp_addr(struct dtt_path *path)
+@@ -407,6 +433,7 @@
+ 
+ static int dtt_try_connect(struct drbd_transport *transport, struct dtt_path *path, struct socket **ret_socket)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	const char *what;
+ 	struct socket *socket;
+ 	struct sockaddr_storage my_addr, peer_addr;
+@@ -414,16 +441,16 @@
+ 	int err;
+ 	int sndbuf_size, rcvbuf_size, connect_int;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	nc = rcu_dereference(transport->net_conf);
+ 	if (!nc) {
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 		return -EIO;
+ 	}
+ 	sndbuf_size = nc->sndbuf_size;
+ 	rcvbuf_size = nc->rcvbuf_size;
+ 	connect_int = nc->connect_int;
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	my_addr = path->path.my_addr;
+ 	if (my_addr.ss_family == AF_INET6)
+@@ -549,16 +576,17 @@
+ 				       struct socket **socket2,
+ 				       struct dtt_path **first_path)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct net_conf *nc;
+ 	int timeout, good = 0;
+ 
+ 	if (!*socket1 || !*socket2)
+ 		return false;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	nc = rcu_dereference(transport->net_conf);
+! cocci
+-	timeout = (nc->sock_check_timeo ?: nc->ping_timeo) * HZ / 10;
+! cocci
+-	rcu_read_unlock();
++	timeout = (nc->sock_check_timeo ? nc->sock_check_timeo :  nc->ping_timeo) * HZ / 10;
++	rcu_read_unlock(rcu_flags);
+ 	schedule_timeout_interruptible(timeout);
+ 
+ 	good += dtt_socket_ok_or_free(socket1);
+@@ -572,72 +600,81 @@
+ 
+ static struct dtt_path *dtt_wait_connect_cond(struct drbd_transport *transport)
+ {
+! cocci
++	KIRQL spin_lock_flags;
+ 	struct drbd_tcp_transport *tcp_transport =
+ 		container_of(transport, struct drbd_tcp_transport, transport);
+ 	struct drbd_listener *listener;
+ 	struct drbd_path *drbd_path;
+ 	struct dtt_path *path = NULL;
+ 	bool rv = false;
+! cocci (but be careful, there are 2 different spin locks)
++	KIRQL flags;
+! cocci
+ 
+-	spin_lock(&tcp_transport->paths_lock);
+! cocci
+-	list_for_each_entry(drbd_path, &transport->paths, list) {
++	spin_lock_irqsave(&tcp_transport->paths_lock, spin_lock_flags);
++	list_for_each_entry(struct drbd_path, drbd_path, &transport->paths, list) {
+ 		path = container_of(drbd_path, struct dtt_path, path);
+ 		listener = drbd_path->listener;
+ 
+! cocci
+-		spin_lock_bh(&listener->waiters_lock);
++		spin_lock_irqsave(&listener->waiters_lock, flags);
+ 		rv = listener->pending_accepts > 0 || !list_empty(&path->sockets);
+! cocci
+-		spin_unlock_bh(&listener->waiters_lock);
++		spin_unlock_irqrestore(&listener->waiters_lock, flags);
+ 
+ 		if (rv)
+ 			break;
+ 	}
+! cocci
+-	spin_unlock(&tcp_transport->paths_lock);
++	spin_unlock_irqrestore(&tcp_transport->paths_lock, spin_lock_flags);
+ 
+ 	return rv ? path : NULL;
+ }
+ 
+ static void unregister_state_change(struct sock *sock, struct dtt_listener *listener)
+ {
+! cocci
+-	write_lock_bh(&sock->sk_callback_lock);
++	KIRQL flags;
++
++	spin_lock_irqsave(&sock->sk_callback_lock, flags);
+ 	sock->sk_state_change = listener->original_sk_state_change;
+ 	sock->sk_user_data = NULL;
+! cocci
+-	write_unlock_bh(&sock->sk_callback_lock);
++	spin_unlock_irqrestore(&sock->sk_callback_lock, flags);
+ }
+ 
+ static int dtt_wait_for_connect(struct drbd_transport *transport,
+ 				struct drbd_listener *drbd_listener, struct socket **socket,
+ 				struct dtt_path **ret_path)
+ {
+! cocci
++	KIRQL rcu_flags;
++	KIRQL spin_lock_bh_flags;
+ 	struct dtt_socket_container *socket_c;
+ 	struct sockaddr_storage peer_addr;
+ 	int connect_int, err = 0;
+! cocci
+-	long timeo;
++	LONG_PTR timeo, timeo_ret;
+ 	struct socket *s_estab = NULL;
+ 	struct net_conf *nc;
+ 	struct drbd_path *drbd_path2;
+ 	struct dtt_listener *listener = container_of(drbd_listener, struct dtt_listener, listener);
+ 	struct dtt_path *path = NULL;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	nc = rcu_dereference(transport->net_conf);
+ 	if (!nc) {
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 		return -EINVAL;
+ 	}
+ 	connect_int = nc->connect_int;
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	timeo = connect_int * HZ;
+ 	timeo += (prandom_u32() & 1) ? timeo / 7 : -timeo / 7; /* 28.5% random jitter */
+ 
+! remove
++		/* TODO: fix the wait_event_interruptible_timeout interface
++		 * and use original source code */
++
+ retry:
+! cocci (but the variable name is changed ... probably for a reason)
+-	timeo = wait_event_interruptible_timeout(listener->wait,
+-			(path = dtt_wait_connect_cond(transport)),
+-			timeo);
+-	if (timeo <= 0)
++	wait_event_interruptible_timeout(timeo_ret, listener->wait,
++					 (path = dtt_wait_connect_cond(transport)),
++					 timeo);
++	if (timeo_ret <= 0)
+ 		return -EAGAIN;
+ 
+! cocci
+-	spin_lock_bh(&listener->listener.waiters_lock);
++	spin_lock_irqsave(&listener->listener.waiters_lock, spin_lock_bh_flags);
+ 	socket_c = list_first_entry_or_null(&path->sockets, struct dtt_socket_container, list);
+ 	if (socket_c) {
+ 		s_estab = socket_c->socket;
+@@ -645,7 +682,7 @@
+ 		kfree(socket_c);
+ 	} else if (listener->listener.pending_accepts > 0) {
+ 		listener->listener.pending_accepts--;
+! cocci
+-		spin_unlock_bh(&listener->listener.waiters_lock);
++		spin_unlock_irqrestore(&listener->listener.waiters_lock, spin_lock_bh_flags);
+ 
+ 		s_estab = NULL;
+ 		err = kernel_accept(listener->s_listen, &s_estab, O_NONBLOCK);
+@@ -658,7 +695,7 @@
+ 
+ 		s_estab->ops->getname(s_estab, (struct sockaddr *)&peer_addr, 2);
+ 
+! cocci
+-		spin_lock_bh(&listener->listener.waiters_lock);
++		spin_lock_irqsave(&listener->listener.waiters_lock, spin_lock_bh_flags);
+ 		drbd_path2 = drbd_find_path_by_addr(&listener->listener, &peer_addr);
+ 		if (!drbd_path2) {
+ 			struct sockaddr_in6 *from_sin6;
+@@ -683,7 +720,7 @@
+ 			struct dtt_path *path2 =
+ 				container_of(drbd_path2, struct dtt_path, path);
+ 
+! cocci
+-			socket_c = kmalloc(sizeof(*socket_c), GFP_ATOMIC);
++			socket_c = kmalloc(sizeof(*socket_c), GFP_ATOMIC, '00WD');
+ 			if (!socket_c) {
+ 				tr_info(transport, /* path2->transport, */
+ 					"No mem, dropped an incoming connection\n");
+@@ -699,13 +736,13 @@
+ 		if (s_estab->sk->sk_state != TCP_ESTABLISHED)
+ 			goto retry_locked;
+ 	}
+! cocci
+-	spin_unlock_bh(&listener->listener.waiters_lock);
++	spin_unlock_irqrestore(&listener->listener.waiters_lock, spin_lock_bh_flags);
+ 	*socket = s_estab;
+ 	*ret_path = path;
+ 	return 0;
+ 
+ retry_locked:
+! cocci
+-	spin_unlock_bh(&listener->listener.waiters_lock);
++	spin_unlock_irqrestore(&listener->listener.waiters_lock, spin_lock_bh_flags);
+ 	if (s_estab) {
+ 		kernel_sock_shutdown(s_estab, SHUT_RDWR);
+ 		sock_release(s_estab);
+@@ -716,20 +753,21 @@
+ 
+ static int dtt_receive_first_packet(struct drbd_tcp_transport *tcp_transport, struct socket *socket)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_transport *transport = &tcp_transport->transport;
+ 	struct p_header80 *h = tcp_transport->rbuf[DATA_STREAM].base;
+ 	const unsigned int header_size = sizeof(*h);
+ 	struct net_conf *nc;
+ 	int err;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	nc = rcu_dereference(transport->net_conf);
+ 	if (!nc) {
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 		return -EIO;
+ 	}
+ 	socket->sk->sk_rcvtimeo = nc->ping_timeo * 4 * HZ / 10;
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	err = dtt_recv_short(socket, h, header_size, 0);
+ 	if (err != header_size) {
+@@ -749,13 +787,14 @@
+ {
+ 	struct dtt_listener *listener = sock->sk_user_data;
+ 	void (*state_change)(struct sock *sock);
+! cocci
++	KIRQL flags;
+ 
+ 	state_change = listener->original_sk_state_change;
+ 	state_change(sock);
+ 
+! cocci
+-	spin_lock(&listener->listener.waiters_lock);
++	spin_lock_irqsave(&listener->listener.waiters_lock, flags);
+ 	listener->listener.pending_accepts++;
+! cocci
+-	spin_unlock(&listener->listener.waiters_lock);
++	spin_unlock_irqrestore(&listener->listener.waiters_lock, flags);
+ 	wake_up(&listener->wait);
+ }
+ 
+@@ -773,33 +812,41 @@
+ 			     const struct sockaddr *addr,
+ 			     struct drbd_listener *drbd_listener)
+ {
+! cocci (again, 2 spinlocks (or one spinlock on bottom half lock)
++	KIRQL rcu_flags;
++	KIRQL write_lock_bh_flags;
+ 	int err, sndbuf_size, rcvbuf_size, addr_len;
+ 	struct sockaddr_storage my_addr;
+ 	struct dtt_listener *listener = container_of(drbd_listener, struct dtt_listener, listener);
+ 	struct socket *s_listen;
+ 	struct net_conf *nc;
+ 	const char *what = "";
+! review: needed?
++	int val;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	nc = rcu_dereference(transport->net_conf);
+ 	if (!nc) {
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 		return -EINVAL;
+ 	}
+ 	sndbuf_size = nc->sndbuf_size;
+ 	rcvbuf_size = nc->rcvbuf_size;
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	my_addr = *(struct sockaddr_storage *)addr;
+ 
+! manual: windows does not support SOCK_STREAM before Windows Server 2019 ...
+-	err = sock_create_kern(&init_net, my_addr.ss_family, SOCK_STREAM, IPPROTO_TCP, &s_listen);
++	err = sock_create_kern(&init_net, my_addr.ss_family, SOCK_LISTEN, IPPROTO_TCP, &s_listen);
+ 	if (err) {
+ 		s_listen = NULL;
+ 		what = "sock_create_kern";
+ 		goto out;
+ 	}
+ 
+! manual or even upstream: not sure if we should leave that as it is upstream
+-	s_listen->sk->sk_reuse = SK_CAN_REUSE; /* SO_REUSEADDR */
++	val = 1;
++	err = kernel_setsockopt(s_listen, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(val));
++	if (err < 0) {
++		what = "kernel_setsockopt SO_REUSEADDR";
++		goto out;
++	}
+ 	dtt_setbufsize(s_listen, sndbuf_size, rcvbuf_size);
+ 
+ 	addr_len = addr->sa_family == AF_INET6 ? sizeof(struct sockaddr_in6)
+@@ -812,11 +859,11 @@
+ 	}
+ 
+ 	listener->s_listen = s_listen;
+! cocci
+-	write_lock_bh(&s_listen->sk->sk_callback_lock);
++	spin_lock_irqsave(&s_listen->sk->sk_callback_lock, write_lock_bh_flags);
+ 	listener->original_sk_state_change = s_listen->sk->sk_state_change;
+ 	s_listen->sk->sk_state_change = dtt_incoming_connection;
+ 	s_listen->sk->sk_user_data = listener;
+! cocci
+-	write_unlock_bh(&s_listen->sk->sk_callback_lock);
++	spin_unlock_irqrestore(&s_listen->sk->sk_callback_lock, write_lock_bh_flags);
+ 
+ 	err = s_listen->ops->listen(s_listen, DRBD_PEERS_MAX * 2);
+ 	if (err < 0) {
+@@ -856,13 +903,14 @@
+ 
+ static void dtt_put_listeners(struct drbd_transport *transport)
+ {
+! cocci
++	KIRQL spin_lock_flags;
+ 	struct drbd_tcp_transport *tcp_transport =
+ 		container_of(transport, struct drbd_tcp_transport, transport);
+ 	struct drbd_path *drbd_path;
+ 
+! cocci
+-	spin_lock(&tcp_transport->paths_lock);
++	spin_lock_irqsave(&tcp_transport->paths_lock, spin_lock_flags);
+ 	clear_bit(DTT_CONNECTING, &tcp_transport->flags);
+! cocci
+-	spin_unlock(&tcp_transport->paths_lock);
++	spin_unlock_irqrestore(&tcp_transport->paths_lock, spin_lock_flags);
+ 
+ 	for_each_path_ref(drbd_path, transport) {
+ 		struct dtt_path *path = container_of(drbd_path, struct dtt_path, path);
+@@ -874,21 +922,24 @@
+ 
+ static struct dtt_path *dtt_next_path(struct drbd_tcp_transport *tcp_transport, struct dtt_path *path)
+ {
+! cocci
++	KIRQL spin_lock_flags;
+ 	struct drbd_transport *transport = &tcp_transport->transport;
+ 	struct drbd_path *drbd_path;
+ 
+! cocci
+-	spin_lock(&tcp_transport->paths_lock);
++	spin_lock_irqsave(&tcp_transport->paths_lock, spin_lock_flags);
+ 	if (list_is_last(&path->path.list, &transport->paths))
+ 		drbd_path = list_first_entry(&transport->paths, struct drbd_path, list);
+ 	else
+! cocci
+-		drbd_path = list_next_entry(&path->path, list);
+! cocci
+-	spin_unlock(&tcp_transport->paths_lock);
++		drbd_path = list_next_entry(struct drbd_path, &path->path, list);
++	spin_unlock_irqrestore(&tcp_transport->paths_lock, spin_lock_flags);
+ 
+ 	return container_of(drbd_path, struct dtt_path, path);
+ }
+ 
+ static int dtt_connect(struct drbd_transport *transport)
+ {
+! cocci
++	KIRQL spin_lock_flags;
++	KIRQL rcu_flags;
+ 	struct drbd_tcp_transport *tcp_transport =
+ 		container_of(transport, struct drbd_tcp_transport, transport);
+ 	struct drbd_path *drbd_path;
+@@ -896,36 +947,39 @@
+ 	struct socket *dsocket, *csocket;
+ 	struct net_conf *nc;
+ 	int timeout, err;
+! manual (or upstream)
++	int one = 1;
+ 	bool ok;
+ 
+ 	dsocket = NULL;
+ 	csocket = NULL;
+ 
+-
+ 	for_each_path_ref(drbd_path, transport) {
+ 		struct dtt_path *path = container_of(drbd_path, struct dtt_path, path);
+ 
+ 		dtt_cleanup_accepted_sockets(path);
+ 	}
+ 
+! cocci
+-	spin_lock(&tcp_transport->paths_lock);
++	spin_lock_irqsave(&tcp_transport->paths_lock, spin_lock_flags);
+ 	set_bit(DTT_CONNECTING, &tcp_transport->flags);
+ 
+ 	err = -EDESTADDRREQ;
+ 	if (list_empty(&transport->paths)) {
+! cocci
+-		spin_unlock(&tcp_transport->paths_lock);
++		spin_unlock_irqrestore(&tcp_transport->paths_lock,
++				       spin_lock_flags);
+ 		goto out;
+ 	}
+ 
+! cocci
+-	list_for_each_entry(drbd_path, &transport->paths, list) {
++	list_for_each_entry(struct drbd_path, drbd_path, &transport->paths, list) {
+ 		if (!drbd_path->listener) {
+ 			kref_get(&drbd_path->kref);
+! cocci
+-			spin_unlock(&tcp_transport->paths_lock);
++			spin_unlock_irqrestore(&tcp_transport->paths_lock,
++					       spin_lock_flags);
+ 			err = drbd_get_listener(transport, drbd_path, dtt_init_listener);
+ 			kref_put(&drbd_path->kref, drbd_destroy_path);
+ 			if (err)
+ 				goto out;
+! cocci
+-			spin_lock(&tcp_transport->paths_lock);
++			spin_lock_irqsave(&tcp_transport->paths_lock,
++					  spin_lock_flags);
+ 			drbd_path = list_first_entry_or_null(&transport->paths, struct drbd_path, list);
+ 			if (drbd_path)
+ 				continue;
+@@ -936,7 +990,7 @@
+ 
+ 	drbd_path = list_first_entry(&transport->paths, struct drbd_path, list);
+ 	connect_to_path = container_of(drbd_path, struct dtt_path, path);
+! cocci
+-	spin_unlock(&tcp_transport->paths_lock);
++	spin_unlock_irqrestore(&tcp_transport->paths_lock, spin_lock_flags);
+ 
+ 	do {
+ 		struct socket *s = NULL;
+@@ -1044,14 +1098,28 @@
+ 	drbd_path_event(transport, &connect_to_path->path, false);
+ 	dtt_put_listeners(transport);
+ 
+! review: in general accessing Linux structs is probably not a good idea...
++#if 0
+ 	dsocket->sk->sk_reuse = SK_CAN_REUSE; /* SO_REUSEADDR */
+ 	csocket->sk->sk_reuse = SK_CAN_REUSE; /* SO_REUSEADDR */
+ 
++	/* TODO: implement those two? */
+ 	dsocket->sk->sk_allocation = GFP_NOIO;
+ 	csocket->sk->sk_allocation = GFP_NOIO;
+ 
+ 	dsocket->sk->sk_priority = TC_PRIO_INTERACTIVE_BULK;
+ 	csocket->sk->sk_priority = TC_PRIO_INTERACTIVE;
+! manual or upstream: I think this is cleaner ...
++#endif
++
++	err = kernel_setsockopt(dsocket, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof(one));
++	if (err < 0) {
++		printk("kernel_setsockopt SO_REUSEADDR failed\n");
++		goto out;
++	}
++	err = kernel_setsockopt(csocket, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof(one));
++	if (err < 0) {
++		printk("kernel_setsockopt SO_REUSEADDR failed\n");
++		goto out;
++	}
+ 
+ 	/* NOT YET ...
+ 	 * sock.socket->sk->sk_sndtimeo = transport->net_conf->timeout*HZ/10;
+@@ -1067,11 +1135,11 @@
+ 	tcp_transport->stream[DATA_STREAM] = dsocket;
+ 	tcp_transport->stream[CONTROL_STREAM] = csocket;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	nc = rcu_dereference(transport->net_conf);
+ 
+ 	timeout = nc->timeout * HZ / 10;
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	dsocket->sk->sk_sndtimeo = timeout;
+ 	csocket->sk->sk_sndtimeo = timeout;
+@@ -1114,7 +1182,7 @@
+ 	}
+ }
+ 
+! cocci
+-static void dtt_set_rcvtimeo(struct drbd_transport *transport, enum drbd_stream stream, long timeout)
++static void dtt_set_rcvtimeo(struct drbd_transport *transport, enum drbd_stream stream, LONG_PTR timeout)
+ {
+ 	struct drbd_tcp_transport *tcp_transport =
+ 		container_of(transport, struct drbd_tcp_transport, transport);
+@@ -1126,7 +1194,7 @@
+ 	socket->sk->sk_rcvtimeo = timeout;
+ }
+ 
+! cocci
+-static long dtt_get_rcvtimeo(struct drbd_transport *transport, enum drbd_stream stream)
++static LONG_PTR dtt_get_rcvtimeo(struct drbd_transport *transport, enum drbd_stream stream)
+ {
+ 	struct drbd_tcp_transport *tcp_transport =
+ 		container_of(transport, struct drbd_tcp_transport, transport);
+@@ -1209,14 +1277,15 @@
+ 
+ static int dtt_send_zc_bio(struct drbd_transport *transport, struct bio *bio)
+ {
+! compat: make bio_vec compatible
+-	struct bio_vec bvec;
+-	struct bvec_iter iter;
++	struct bio_vec *bvec;
++	int iter;
+ 
+! compat: Also this bio_for_each_segment macro needs to be changed
++	iter = 0;
+ 	bio_for_each_segment(bvec, bio, iter) {
+ 		int err;
+ 
+! compat: make bio_vec compatible
+-		err = dtt_send_page(transport, DATA_STREAM, bvec.bv_page,
+-				      bvec.bv_offset, bvec.bv_len,
++		err = dtt_send_page(transport, DATA_STREAM, bvec->bv_page,
++				      bvec->bv_offset, bvec->bv_len,
+ 				      bio_iter_last(bvec, iter) ? 0 : MSG_MORE);
+ 		if (err)
+ 			return err;
+@@ -1249,8 +1318,10 @@
+ 		tcp_sock_set_nodelay(socket->sk);
+ 		break;
+ 	case NOSPACE:
+! compat: have a dummy flag? What is NOSPACE supposed to do (something with memory management?)
++#if 0
+ 		if (socket->sk->sk_socket)
+ 			set_bit(SOCK_NOSPACE, &socket->sk->sk_socket->flags);
++#endif
+ 		break;
+ 	case QUICKACK:
+ 		tcp_sock_set_quickack(socket->sk, 2);
+@@ -1265,12 +1336,14 @@
+ static void dtt_debugfs_show_stream(struct seq_file *m, struct socket *socket)
+ {
+ 	struct sock *sk = socket->sk;
+! compat: implement debug fs (via ioctl)
++#if 0
+ 	struct tcp_sock *tp = tcp_sk(sk);
+ 
+ 	seq_printf(m, "unread receive buffer: %u Byte\n",
+ 		   tp->rcv_nxt - tp->copied_seq);
+ 	seq_printf(m, "unacked send buffer: %u Byte\n",
+ 		   tp->write_seq - tp->snd_una);
++#endif
+ 	seq_printf(m, "send buffer size: %u Byte\n", sk->sk_sndbuf);
+ 	seq_printf(m, "send buffer used: %u Byte\n", sk->sk_wmem_queued);
+ }
+@@ -1297,6 +1370,7 @@
+ 
+ static int dtt_add_path(struct drbd_transport *transport, struct drbd_path *drbd_path)
+ {
+! cocci
++	KIRQL spin_lock_flags;
+ 	struct drbd_tcp_transport *tcp_transport =
+ 		container_of(transport, struct drbd_tcp_transport, transport);
+ 	struct dtt_path *path = container_of(drbd_path, struct dtt_path, path);
+@@ -1315,19 +1389,21 @@
+ 			return err;
+ 	}
+ 
+! cocci
+-	spin_lock(&tcp_transport->paths_lock);
++	spin_lock_irqsave(&tcp_transport->paths_lock, spin_lock_flags);
+ 	if (active != test_bit(DTT_CONNECTING, &tcp_transport->flags)) {
+! cocci
+-		spin_unlock(&tcp_transport->paths_lock);
++		spin_unlock_irqrestore(&tcp_transport->paths_lock,
++				       spin_lock_flags);
+ 		goto retry;
+ 	}
+ 	list_add_tail(&drbd_path->list, &transport->paths);
+! cocci
+-	spin_unlock(&tcp_transport->paths_lock);
++	spin_unlock_irqrestore(&tcp_transport->paths_lock, spin_lock_flags);
+ 
+ 	return 0;
+ }
+ 
+ static int dtt_remove_path(struct drbd_transport *transport, struct drbd_path *drbd_path)
+ {
+! cocci
++	KIRQL spin_lock_flags;
+ 	struct drbd_tcp_transport *tcp_transport =
+ 		container_of(transport, struct drbd_tcp_transport, transport);
+ 	struct dtt_path *path = container_of(drbd_path, struct dtt_path, path);
+@@ -1335,22 +1411,22 @@
+ 	if (drbd_path->established)
+ 		return -EBUSY;
+ 
+! cocci
+-	spin_lock(&tcp_transport->paths_lock);
++	spin_lock_irqsave(&tcp_transport->paths_lock, spin_lock_flags);
+ 	list_del_init(&drbd_path->list);
+! cocci
+-	spin_unlock(&tcp_transport->paths_lock);
++	spin_unlock_irqrestore(&tcp_transport->paths_lock, spin_lock_flags);
+ 	drbd_put_listener(&path->path);
+ 
+ 	return 0;
+ }
+ 
+! compat: this should be done via module_init / module_exit
+-static int __init dtt_initialize(void)
++int __init dtt_initialize(void)
+ {
+ 	return drbd_register_transport_class(&tcp_transport_class,
+ 					     DRBD_TRANSPORT_API_VERSION,
+ 					     sizeof(struct drbd_transport));
+ }
+ 
+! compat: this should be done via module_init / module_exit
+-static void __exit dtt_cleanup(void)
++void __exit dtt_cleanup(void)
+ {
+ 	drbd_unregister_transport_class(&tcp_transport_class);
+ }
