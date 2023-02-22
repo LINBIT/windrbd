@@ -1,0 +1,932 @@
+--- drbd/drbd/drbd_bitmap.c	2023-02-17 14:26:26.746469382 +0000
++++ converted-sources/drbd/drbd_bitmap.c	2023-02-17 14:26:29.086425405 +0000
+@@ -10,7 +10,10 @@
+ 
+  */
+ 
+! header
+-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
++#define pr_fmt(fmt) ":" fmt
++
+! header
++ /* Enable all warnings throws lots of those warnings: */
++#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
+ 
+ #include <linux/bitops.h>
+ #include <linux/vmalloc.h>
+@@ -22,11 +25,13 @@
+ 
+ #include "drbd_int.h"
+ #include "drbd_dax_pmem.h"
+! review: this should not be necessary any more
++#include "drbd_windows.h"
++#include <linux/jiffies.h>
+ 
+ #ifndef BITS_PER_PAGE
+! cocci
+-#define BITS_PER_PAGE		(1UL << (PAGE_SHIFT + 3))
++#define BITS_PER_PAGE		(((ULONG_PTR)1) << (PAGE_SHIFT + 3))
+ #else
+! cocci
+-# if BITS_PER_PAGE != (1UL << (PAGE_SHIFT + 3))
++# if BITS_PER_PAGE != (((ULONG_PTR)1) << (PAGE_SHIFT + 3))
+ #  error "ambiguous BITS_PER_PAGE"
+ # endif
+ #endif
+@@ -39,7 +44,6 @@
+  * function name      bm_... => internal to implementation, "private".
+  */
+ 
+! remove
+-
+ /*
+  * LIMITATIONS:
+  * We want to support >= peta byte of backend storage, while for now still using
+@@ -120,7 +124,7 @@
+ 		return;
+ 	drbd_err(device, "FIXME %s[%d] op %s, bitmap locked for '%s' by %s[%d]\n",
+ 		 current->comm, task_pid_nr(current),
+! cocci
+-		 op_names[op], b->bm_why ?: "?",
++		 op_names[op], b->bm_why ? b->bm_why :  "?",
+ 		 b->bm_task_comm, b->bm_task_pid);
+ }
+ 
+@@ -159,7 +163,7 @@
+ 	if (trylock_failed) {
+ 		drbd_warn(device, "%s[%d] going to '%s' but bitmap already locked for '%s' by %s[%d]\n",
+ 			  current->comm, task_pid_nr(current),
+! cocci
+-			  why, b->bm_why ?: "?",
++			  why, b->bm_why ? b->bm_why :  "?",
+ 			  b->bm_task_comm, b->bm_task_pid);
+ 		mutex_lock(&b->bm_change);
+ 	}
+@@ -216,7 +220,7 @@
+  * at a granularity of 4k per bit.
+  * Used to report the failed page idx on io error from the endio handlers.
+  */
+! cocci
+-#define BM_PAGE_IDX_MASK	((1UL<<24)-1)
++#define BM_PAGE_IDX_MASK	((((ULONG_PTR)1)<<24)-1)
+ /* this page is currently read in, or written back */
+ #define BM_PAGE_IO_LOCK		31
+ /* if there has been an IO error for this page */
+@@ -236,13 +240,13 @@
+  * use atomic bit manipulation, as set_out_of_sync (and therefore bitmap
+  * changes) may happen from various contexts, and wait_on_bit/wake_up_bit
+  * requires it all to be atomic as well. */
+! cocci
+-static void bm_store_page_idx(struct page *page, unsigned long idx)
++static void bm_store_page_idx(struct page *page, ULONG_PTR idx)
+ {
+ 	BUG_ON(0 != (idx & ~BM_PAGE_IDX_MASK));
+ 	set_page_private(page, idx);
+ }
+ 
+! cocci
+-static unsigned long bm_page_to_idx(struct page *page)
++static ULONG_PTR bm_page_to_idx(struct page *page)
+ {
+ 	return page_private(page) & BM_PAGE_IDX_MASK;
+ }
+@@ -289,8 +293,8 @@
+ 
+ static int bm_test_page_unchanged(struct page *page)
+ {
+! cocci
+-	volatile const unsigned long *addr = &page_private(page);
+-	return (*addr & ((1UL<<BM_PAGE_NEED_WRITEOUT)|(1UL<<BM_PAGE_LAZY_WRITEOUT))) == 0;
++	volatile const ULONG_PTR *addr = &page_private(page);
++	return (*addr & ((((ULONG_PTR)1)<<BM_PAGE_NEED_WRITEOUT)|(((ULONG_PTR)1)<<BM_PAGE_LAZY_WRITEOUT))) == 0;
+ }
+ 
+ static void bm_set_page_io_err(struct page *page)
+@@ -322,10 +326,9 @@
+  * to be able to report device specific.
+  */
+ 
+-
+! cocci
+-static void bm_free_pages(struct page **pages, unsigned long number)
++static void bm_free_pages(struct page **pages, ULONG_PTR number)
+ {
+! cocci
+-	unsigned long i;
++	ULONG_PTR i;
+ 	if (!pages)
+ 		return;
+ 
+@@ -335,7 +338,7 @@
+ 				 i, number);
+ 			continue;
+ 		}
+! review: is this needed (does it solve a problem?)
+-		__free_page(pages[i]);
++		put_page(pages[i]);
+ 		pages[i] = NULL;
+ 	}
+ }
+@@ -343,12 +346,12 @@
+ /*
+  * "have" and "want" are NUMBER OF PAGES.
+  */
+! cocci
+-static struct page **bm_realloc_pages(struct drbd_bitmap *b, unsigned long want)
++static struct page **bm_realloc_pages(struct drbd_bitmap *b, ULONG_PTR want)
+ {
+ 	struct page **old_pages = b->bm_pages;
+ 	struct page **new_pages, *page;
+! remove (int is 32 bit already)
+-	unsigned int i, bytes;
+! cocci;
+-	unsigned long have = b->bm_number_of_pages;
++	ULONG_PTR i, bytes;
++	ULONG_PTR have = b->bm_number_of_pages;
+ 
+ 	BUG_ON(have == 0 && old_pages != NULL);
+ 	BUG_ON(have != 0 && old_pages == NULL);
+@@ -362,7 +365,7 @@
+ 	 * we must not block on IO to ourselves.
+ 	 * Context is receiver thread or dmsetup. */
+ 	bytes = sizeof(struct page *)*want;
+! remove kmalloc
+-	new_pages = kzalloc(bytes, GFP_NOIO | __GFP_NOWARN);
++	new_pages = kzalloc(bytes, GFP_NOIO | __GFP_NOWARN, '00WD');
+ 	if (!new_pages) {
+ 		new_pages = __vmalloc(bytes,
+ 				GFP_NOIO | __GFP_HIGHMEM | __GFP_ZERO);
+@@ -399,7 +402,7 @@
+ {
+ 	struct drbd_bitmap *b;
+ 
+! remove kmalloc
+-	b = kzalloc(sizeof(struct drbd_bitmap), GFP_KERNEL);
++	b = kzalloc(sizeof(struct drbd_bitmap), GFP_KERNEL, '01WD');
+ 	if (!b)
+ 		return NULL;
+ 
+@@ -429,35 +432,35 @@
+ 	kfree(bitmap);
+ }
+ 
+! cocci
+-static inline unsigned long interleaved_word32(struct drbd_bitmap *bitmap,
++static inline ULONG_PTR interleaved_word32(struct drbd_bitmap *bitmap,
+ 					       unsigned int bitmap_index,
+-					       unsigned long bit)
++					       ULONG_PTR bit)
+ {
+ 	return (bit >> 5) * bitmap->bm_max_peers + bitmap_index;
+ }
+ 
+! cocci
+-static inline unsigned long word32_to_page(unsigned long word)
++static inline ULONG_PTR word32_to_page(ULONG_PTR word)
+ {
+ 	return word >> (PAGE_SHIFT - 2);
+ }
+ 
+! cocci
+-static inline unsigned int word32_in_page(unsigned long word)
++static inline unsigned int word32_in_page(ULONG_PTR word)
+ {
+ 	return word & ((1 << (PAGE_SHIFT - 2)) - 1);
+ }
+ 
+! cocci
+-static inline unsigned long last_bit_on_page(struct drbd_bitmap *bitmap,
++static inline ULONG_PTR last_bit_on_page(struct drbd_bitmap *bitmap,
+ 					     unsigned int bitmap_index,
+! cocci
+-					     unsigned long bit)
++					     ULONG_PTR bit)
+ {
+! cocci
+-	unsigned long word = interleaved_word32(bitmap, bitmap_index, bit);
++	ULONG_PTR word = interleaved_word32(bitmap, bitmap_index, bit);
+ 
+ 	return (bit | 31) + ((word32_in_page(-(word + 1)) / bitmap->bm_max_peers) << 5);
+ }
+ 
+! cocci
+-static inline unsigned long bit_to_page_interleaved(struct drbd_bitmap *bitmap,
++static inline ULONG_PTR bit_to_page_interleaved(struct drbd_bitmap *bitmap,
+ 						    unsigned int bitmap_index,
+! cocci
+-						    unsigned long bit)
++						    ULONG_PTR bit)
+ {
+ 	return word32_to_page(interleaved_word32(bitmap, bitmap_index, bit));
+ }
+@@ -467,7 +470,7 @@
+ 	if (!(bitmap->bm_flags & BM_ON_DAX_PMEM))
+ 		return kmap_atomic(bitmap->bm_pages[page]);
+ 
+! cocci
+-	return ((unsigned char *)bitmap->bm_on_pmem) + (unsigned long)page * PAGE_SIZE;
++	return ((unsigned char *)bitmap->bm_on_pmem) + (ULONG_PTR)page * PAGE_SIZE;
+ }
+ 
+ static void bm_unmap(struct drbd_bitmap *bitmap, void *addr)
+@@ -476,14 +479,14 @@
+ 		kunmap_atomic(addr);
+ }
+ 
+! cocci
+-static __always_inline unsigned long
+-____bm_op(struct drbd_device *device, unsigned int bitmap_index, unsigned long start, unsigned long end,
++static __always_inline ULONG_PTR
++____bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start, ULONG_PTR end,
+ 	 enum bitmap_operations op, __le32 *buffer)
+ {
+ 	struct drbd_bitmap *bitmap = device->bitmap;
+ 	unsigned int word32_skip = 32 * bitmap->bm_max_peers;
+! cocci
+-	unsigned long total = 0;
+-	unsigned long word;
++	ULONG_PTR total = 0;
++	ULONG_PTR word;
+ 	unsigned int page, bit_in_page;
+ 
+ 	if (end >= bitmap->bm_bits)
+@@ -707,8 +710,8 @@
+ }
+ 
+ /* Returns the number of bits changed.  */
+! cocci
+-static __always_inline unsigned long
+-__bm_op(struct drbd_device *device, unsigned int bitmap_index, unsigned long start, unsigned long end,
++static __always_inline ULONG_PTR
++__bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start, ULONG_PTR end,
+ 	enum bitmap_operations op, __le32 *buffer)
+ /* kmap compat: KM_IRQ1 */
+ {
+@@ -746,13 +749,13 @@
+ 	return ____bm_op(device, bitmap_index, start, end, op, buffer);
+ }
+ 
+! cocci
+-static __always_inline unsigned long
+-bm_op(struct drbd_device *device, unsigned int bitmap_index, unsigned long start, unsigned long end,
++static __always_inline ULONG_PTR
++bm_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start, ULONG_PTR end,
+       enum bitmap_operations op, __le32 *buffer)
+ {
+ 	struct drbd_bitmap *bitmap = device->bitmap;
+! cocci
+-	unsigned long irq_flags;
+-	unsigned long count;
++	KIRQL irq_flags;
++	ULONG_PTR count;
+ 
+ 	spin_lock_irqsave(&bitmap->bm_lock, irq_flags);
+ 	count = __bm_op(device, bitmap_index, start, end, op, buffer);
+@@ -762,30 +765,30 @@
+ 
+ #ifdef BITMAP_DEBUG
+ #define bm_op(device, bitmap_index, start, end, op, buffer) \
+! cocci (I think ({ ... }) macros can be patched also with cocci)
+-	({ unsigned long ret; \
++	{ ULONG_PTR ret; \
+ 	   drbd_info(device, "%s: bm_op(..., %u, %lu, %lu, %u, %p)\n", \
+ 		     __func__, bitmap_index, start, end, op, buffer); \
+ 	   ret = bm_op(device, bitmap_index, start, end, op, buffer); \
+ 	   drbd_info(device, "= %lu\n", ret); \
+-	   ret; })
++	   ret; }
+ 
+! cocci (I think ({ ... }) macros can be patched also with cocci)
+ #define __bm_op(device, bitmap_index, start, end, op, buffer) \
+-	({ unsigned long ret; \
++	{ ULONG_PTR ret; \
+ 	   drbd_info(device, "%s: __bm_op(..., %u, %lu, %lu, %u, %p)\n", \
+ 		     __func__, bitmap_index, start, end, op, buffer); \
+ 	   ret = __bm_op(device, bitmap_index, start, end, op, buffer); \
+ 	   drbd_info(device, "= %lu\n", ret); \
+-	   ret; })
++	   ret; }
+ #endif
+ 
+! cocci (I think ({ ... }) macros can be patched also with cocci)
+ #ifdef BITMAP_DEBUG
+ #define ___bm_op(device, bitmap_index, start, end, op, buffer) \
+-	({ unsigned long ret; \
++	{ ULONG_PTR ret; \
+ 	   drbd_info(device, "%s: ___bm_op(..., %u, %lu, %lu, %u, %p)\n", \
+ 		     __func__, bitmap_index, start, end, op, buffer); \
+ 	   ret = ____bm_op(device, bitmap_index, start, end, op, buffer); \
+ 	   drbd_info(device, "= %lu\n", ret); \
+-	   ret; })
++	   ret; }
+ #else
+ #define ___bm_op(device, bitmap_index, start, end, op, buffer) \
+ 	____bm_op(device, bitmap_index, start, end, op, buffer)
+@@ -800,10 +803,10 @@
+ 	unsigned int bitmap_index;
+ 
+ 	for (bitmap_index = 0; bitmap_index < bitmap->bm_max_peers; bitmap_index++) {
+! cocci
+-		unsigned long bit = 0, bits_set = 0;
++		ULONG_PTR bit = 0, bits_set = 0;
+ 
+ 		while (bit < bitmap->bm_bits) {
+! cocci
+-			unsigned long last_bit = last_bit_on_page(bitmap, bitmap_index, bit);
++			ULONG_PTR last_bit = last_bit_on_page(bitmap, bitmap_index, bit);
+ 
+ 			bits_set += ___bm_op(device, bitmap_index, bit, last_bit, BM_OP_COUNT, NULL);
+ 			bit = last_bit + 1;
+@@ -841,9 +844,10 @@
+ int drbd_bm_resize(struct drbd_device *device, sector_t capacity, bool set_new_bits)
+ /* kmap compat: KM_IRQ1 */
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_bitmap *b = device->bitmap;
+-	unsigned long bits, words, obits;
+-	unsigned long want, have, onpages; /* number of pages */
+! cocci
++	ULONG_PTR bits, words, obits;
++	ULONG_PTR want, have, onpages; /* number of pages */
+ 	struct page **npages = NULL, **opages = NULL;
+ 	void *bm_on_pmem = NULL;
+ 	int err = 0;
+@@ -863,7 +867,7 @@
+ 	if (capacity == 0) {
+ 		unsigned int bitmap_index;
+ 
+! cocci
+-		spin_lock_irq(&b->bm_lock);
++		spin_lock_irqsave(&b->bm_lock, spin_lock_irq_flags);
+ 		opages = b->bm_pages;
+ 		onpages = b->bm_number_of_pages;
+ 		b->bm_pages = NULL;
+@@ -873,7 +877,7 @@
+ 		b->bm_bits = 0;
+ 		b->bm_words = 0;
+ 		b->bm_dev_capacity = 0;
+! cocci
+-		spin_unlock_irq(&b->bm_lock);
++		spin_unlock_irqrestore(&b->bm_lock, spin_lock_irq_flags);
+ 		if (!(b->bm_flags & BM_ON_DAX_PMEM)) {
+ 			bm_free_pages(opages, onpages);
+ 			kvfree(opages);
+@@ -888,13 +892,13 @@
+ 		put_ldev(device);
+ 		if (bits > bits_on_disk) {
+ 			drbd_err(device, "Not enough space for bitmap: %lu > %lu\n",
+! cocci
+-				(unsigned long)bits, (unsigned long)bits_on_disk);
++				(ULONG_PTR)bits, (ULONG_PTR)bits_on_disk);
+ 			err = -ENOSPC;
+ 			goto out;
+ 		}
+ 	}
+ 
+! cocci (also patch sizeof(long))
+-	want = ALIGN(words*sizeof(long), PAGE_SIZE) >> PAGE_SHIFT;
++	want = ALIGN(words*sizeof(LONG_PTR), PAGE_SIZE) >> PAGE_SHIFT;
+ 	have = b->bm_number_of_pages;
+ 	if (drbd_md_dax_active(device->ldev)) {
+ 		bm_on_pmem = drbd_dax_bitmap(device, want);
+@@ -915,7 +919,7 @@
+ 		}
+ 	}
+ 
+! cocci
+-	spin_lock_irq(&b->bm_lock);
++	spin_lock_irqsave(&b->bm_lock, spin_lock_irq_flags);
+ 	obits  = b->bm_bits;
+ 
+ 	growing = bits > obits;
+@@ -923,8 +927,8 @@
+ 	if (bm_on_pmem) {
+ 		if (b->bm_on_pmem) {
+ 			void *src = b->bm_on_pmem;
+! cocci
+-			memmove(bm_on_pmem, src, b->bm_words * sizeof(long));
+-			arch_wb_cache_pmem(bm_on_pmem, b->bm_words * sizeof(long));
++			memmove(bm_on_pmem, src, b->bm_words * sizeof(LONG_PTR));
++			arch_wb_cache_pmem(bm_on_pmem, b->bm_words * sizeof(LONG_PTR));
+ 		} else {
+ 			/* We are attaching a bitmap on PMEM. Since the memory
+ 			 * is persistent, the bitmap is still valid. Do not
+@@ -946,14 +950,14 @@
+ 		unsigned int bitmap_index;
+ 
+ 		for (bitmap_index = 0; bitmap_index < b->bm_max_peers; bitmap_index++) {
+! cocci
+-			unsigned long bm_set = b->bm_set[bitmap_index];
++			ULONG_PTR bm_set = b->bm_set[bitmap_index];
+ 
+ 			if (set_new_bits) {
+! cocci
+-				___bm_op(device, bitmap_index, obits, -1UL, BM_OP_SET, NULL);
++				___bm_op(device, bitmap_index, obits, ((ULONG_PTR)-1), BM_OP_SET, NULL);
+ 				bm_set += bits - obits;
+ 			}
+ 			else
+! cocci
+-				___bm_op(device, bitmap_index, obits, -1UL, BM_OP_CLEAR, NULL);
++				___bm_op(device, bitmap_index, obits, ((ULONG_PTR)-1), BM_OP_CLEAR, NULL);
+ 
+ 			b->bm_set[bitmap_index] = bm_set;
+ 		}
+@@ -964,7 +968,7 @@
+ 		bm_free_pages(opages + want, have - want);
+ 	}
+ 
+! cocci
+-	spin_unlock_irq(&b->bm_lock);
++	spin_unlock_irqrestore(&b->bm_lock, spin_lock_irq_flags);
+ 	if (opages != npages)
+ 		kvfree(opages);
+ 	if (!growing)
+@@ -982,11 +986,11 @@
+  * we still need to lock it, since it is important that this returns
+  * bm_set == 0 precisely.
+  */
+! cocci
+-unsigned long _drbd_bm_total_weight(struct drbd_device *device, int bitmap_index)
++ULONG_PTR _drbd_bm_total_weight(struct drbd_device *device, int bitmap_index)
+ {
+ 	struct drbd_bitmap *b = device->bitmap;
+! cocci
+-	unsigned long s;
+-	unsigned long flags;
++	ULONG_PTR s;
++	KIRQL flags;
+ 
+ 	if (!expect(device, b))
+ 		return 0;
+@@ -1000,10 +1004,10 @@
+ 	return s;
+ }
+ 
+! cocci
+-unsigned long drbd_bm_total_weight(struct drbd_peer_device *peer_device)
++ULONG_PTR drbd_bm_total_weight(struct drbd_peer_device *peer_device)
+ {
+ 	struct drbd_device *device = peer_device->device;
+! cocci
+-	unsigned long s;
++	ULONG_PTR s;
+ 
+ 	if (peer_device->bitmap_index == -1)
+ 		return 0;
+@@ -1028,7 +1032,7 @@
+ 	return b->bm_words / b->bm_max_peers;
+ }
+ 
+! cocci
+-unsigned long drbd_bm_bits(struct drbd_device *device)
++ULONG_PTR drbd_bm_bits(struct drbd_device *device)
+ {
+ 	struct drbd_bitmap *b = device->bitmap;
+ 	if (!expect(device, b))
+@@ -1043,9 +1047,9 @@
+  * currently only used from receive_bitmap.
+  */
+ void drbd_bm_merge_lel(struct drbd_peer_device *peer_device, size_t offset, size_t number,
+! cocci
+-			unsigned long *buffer)
++			ULONG_PTR *buffer)
+ {
+! cocci
+-	unsigned long start, end;
++	ULONG_PTR start, end;
+ 
+ 	start = offset * BITS_PER_LONG;
+ 	end = start + number * BITS_PER_LONG - 1;
+@@ -1056,20 +1060,19 @@
+  * buffer[i] will be little endian unsigned long.
+  */
+ void drbd_bm_get_lel(struct drbd_peer_device *peer_device, size_t offset, size_t number,
+! cocci
+-		     unsigned long *buffer)
++		     ULONG_PTR *buffer)
+ {
+! cocci
+-	unsigned long start, end;
++	ULONG_PTR start, end;
+ 
+ 	start = offset * BITS_PER_LONG;
+ 	end = start + number * BITS_PER_LONG - 1;
+ 	bm_op(peer_device->device, peer_device->bitmap_index, start, end, BM_OP_EXTRACT, (__le32 *)buffer);
+ }
+ 
+-
+ static void drbd_bm_aio_ctx_destroy(struct kref *kref)
+ {
+ 	struct drbd_bm_aio_ctx *ctx = container_of(kref, struct drbd_bm_aio_ctx, kref);
+! cocci
+-	unsigned long flags;
++	KIRQL flags;
+ 
+ 	spin_lock_irqsave(&ctx->device->resource->req_lock, flags);
+ 	list_del(&ctx->list);
+@@ -1085,6 +1088,7 @@
+ 	struct drbd_device *device = ctx->device;
+ 	struct drbd_bitmap *b = device->bitmap;
+ 	unsigned int idx = bm_page_to_idx(bio->bi_io_vec[0].bv_page);
+! compat: this should be reverted (use mempool for page)
++	struct page *page = NULL;
+ 
+ 	blk_status_t status = bio->bi_status;
+ 
+@@ -1110,10 +1114,13 @@
+ 	bm_page_unlock_io(device, idx);
+ 
+ 	if (ctx->flags & BM_AIO_COPY_PAGES)
+! compat: this should be reverted (use mempool for page)
+-		mempool_free(bio->bi_io_vec[0].bv_page, &drbd_md_io_page_pool);
++		page = bio->bi_io_vec[0].bv_page;
+ 
+ 	bio_put(bio);
+ 
+! compat: this should be reverted (use mempool for page)
++	if (page)
++		put_page(page);
++
+ 	if (atomic_dec_and_test(&ctx->in_flight)) {
+ 		ctx->done = 1;
+ 		wake_up(&device->misc_wait);
+@@ -1134,7 +1141,7 @@
+ 	}
+ }
+ 
+! header
+-static void bm_page_io_async(struct drbd_bm_aio_ctx *ctx, int page_nr) __must_hold(local)
++static void bm_page_io_async(struct drbd_bm_aio_ctx *ctx, int page_nr) 
+ {
+ 	struct bio *bio;
+ 	struct drbd_device *device = ctx->device;
+@@ -1181,9 +1188,12 @@
+ 	bm_set_page_unchanged(b->bm_pages[page_nr]);
+ 
+ 	if (ctx->flags & BM_AIO_COPY_PAGES) {
+! compat: this should be reverted (use mempool for page)
+-		page = mempool_alloc(&drbd_md_io_page_pool,
+-				GFP_NOIO | __GFP_HIGHMEM);
+! compat: implement copy_highpage
+-		copy_highpage(page, b->bm_pages[page_nr]);
++		page = alloc_page(GFP_NOIO | __GFP_HIGHMEM);
++		expect(device, page);
++
++		page->private = b->bm_pages[page_nr]->private;
++		memcpy(page->addr, b->bm_pages[page_nr]->addr, PAGE_SIZE);
++
+ 		bm_store_page_idx(page, page_nr);
+ 	} else
+ 		page = b->bm_pages[page_nr];
+@@ -1229,17 +1239,18 @@
+  */
+ static int bm_rw_range(struct drbd_device *device,
+ 	unsigned int start_page, unsigned int end_page,
+! header
+-	unsigned flags) __must_hold(local)
++	unsigned flags) 
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_bm_aio_ctx *ctx;
+ 	struct drbd_bitmap *b = device->bitmap;
+ 	unsigned int i, count = 0;
+! cocci
+-	unsigned long now;
++	ULONG_PTR now;
+ 	int err = 0;
+ 
+ 	if (b->bm_flags & BM_ON_DAX_PMEM) {
+ 		if (flags & (BM_AIO_WRITE_HINTED | BM_AIO_WRITE_ALL_PAGES | BM_AIO_WRITE_LAZY))
+! cocci
+-			arch_wb_cache_pmem(b->bm_on_pmem, b->bm_words * sizeof(long));
++			arch_wb_cache_pmem(b->bm_on_pmem, b->bm_words * sizeof(LONG_PTR));
+ 		return 0;
+ 	}
+ 	/*
+@@ -1255,7 +1266,7 @@
+ 	if (!expect(device, b->bm_number_of_pages))
+ 		return -ENODEV;
+ 
+! remove
+-	ctx = kmalloc(sizeof(struct drbd_bm_aio_ctx), GFP_NOIO);
++	ctx = kmalloc(sizeof(struct drbd_bm_aio_ctx), GFP_NOIO, '02WD');
+ 	if (!ctx)
+ 		return -ENOMEM;
+ 
+@@ -1285,13 +1296,14 @@
+ 	if (end_page >= b->bm_number_of_pages)
+ 		end_page = b->bm_number_of_pages -1;
+ 
+! cocci
+-	spin_lock_irq(&device->resource->req_lock);
++	spin_lock_irqsave(&device->resource->req_lock, spin_lock_irq_flags);
+ 	list_add_tail(&ctx->list, &device->pending_bitmap_io);
+! cocci
+-	spin_unlock_irq(&device->resource->req_lock);
++	spin_unlock_irqrestore(&device->resource->req_lock,
++			       spin_lock_irq_flags);
+ 
+ 	now = jiffies;
+ 
+! cocci
+-	/* let the layers below us try to merge these bios... */
++	/* let the layers below us try_ to merge these bios... */
+ 
+ 	if (flags & BM_AIO_READ) {
+ 		for (i = start_page; i <= end_page; i++) {
+@@ -1394,7 +1406,7 @@
+  * @device:	DRBD device.
+  */
+ int drbd_bm_read(struct drbd_device *device,
+! header
+-		 struct drbd_peer_device *peer_device) __must_hold(local)
++		 struct drbd_peer_device *peer_device) 
+ {
+ 	return bm_rw(device, BM_AIO_READ);
+ }
+@@ -1416,7 +1428,7 @@
+  * hints, then call drbd_bm_write_hinted(), which will only write out changed
+  * pages which are flagged with this mark.
+  */
+! cocci
+-void drbd_bm_mark_range_for_writeout(struct drbd_device *device, unsigned long start, unsigned long end)
++void drbd_bm_mark_range_for_writeout(struct drbd_device *device, ULONG_PTR start, ULONG_PTR end)
+ {
+ 	struct drbd_bitmap *bitmap = device->bitmap;
+ 	unsigned int page_nr, last_page;
+@@ -1433,7 +1445,6 @@
+ 		push_al_bitmap_hint(device, page_nr);
+ }
+ 
+-
+ /**
+  * drbd_bm_write() - Write the whole bitmap to its on disk location.
+  * @device:	DRBD device.
+@@ -1441,7 +1452,7 @@
+  * Will only write pages that have changed since last IO.
+  */
+ int drbd_bm_write(struct drbd_device *device,
+! header
+-		  struct drbd_peer_device *peer_device) __must_hold(local)
++		  struct drbd_peer_device *peer_device) 
+ {
+ 	return bm_rw(device, 0);
+ }
+@@ -1455,7 +1466,7 @@
+  * whole bitmap should be written into its new position.
+  */
+ int drbd_bm_write_all(struct drbd_device *device,
+! header
+-		      struct drbd_peer_device *peer_device) __must_hold(local)
++		      struct drbd_peer_device *peer_device) 
+ {
+ 	return bm_rw(device, BM_AIO_WRITE_ALL_PAGES);
+ }
+@@ -1465,7 +1476,7 @@
+  * @device:	DRBD device.
+  * @upper_idx:	0: write all changed pages; +ve: page index to stop scanning for changed pages
+  */
+! header
+-int drbd_bm_write_lazy(struct drbd_device *device, unsigned upper_idx) __must_hold(local)
++int drbd_bm_write_lazy(struct drbd_device *device, unsigned upper_idx) 
+ {
+ 	return bm_rw_range(device, 0, upper_idx - 1, BM_AIO_COPY_PAGES | BM_AIO_WRITE_LAZY);
+ }
+@@ -1482,7 +1493,7 @@
+  * pending resync acks are still being processed.
+  */
+ int drbd_bm_write_copy_pages(struct drbd_device *device,
+! header
+-			     struct drbd_peer_device *peer_device) __must_hold(local)
++			     struct drbd_peer_device *peer_device) 
+ {
+ 	return bm_rw(device, BM_AIO_COPY_PAGES);
+ }
+@@ -1491,55 +1502,56 @@
+  * drbd_bm_write_hinted() - Write bitmap pages with "hint" marks, if they have changed.
+  * @device:	DRBD device.
+  */
+! header
+-int drbd_bm_write_hinted(struct drbd_device *device) __must_hold(local)
++int drbd_bm_write_hinted(struct drbd_device *device) 
+ {
+ 	return bm_rw(device, BM_AIO_WRITE_HINTED | BM_AIO_COPY_PAGES);
+ }
+ 
+! cocci
+-unsigned long drbd_bm_find_next(struct drbd_peer_device *peer_device, unsigned long start)
++ULONG_PTR drbd_bm_find_next(struct drbd_peer_device *peer_device, ULONG_PTR start)
+ {
+! cocci
+-	return bm_op(peer_device->device, peer_device->bitmap_index, start, -1UL,
++	return bm_op(peer_device->device, peer_device->bitmap_index, start, ((ULONG_PTR)-1),
+ 		     BM_OP_FIND_BIT, NULL);
+ }
+ 
+ /* does not spin_lock_irqsave.
+  * you must take drbd_bm_lock() first */
+! cocci
+-unsigned long _drbd_bm_find_next(struct drbd_peer_device *peer_device, unsigned long start)
++ULONG_PTR _drbd_bm_find_next(struct drbd_peer_device *peer_device, ULONG_PTR start)
+ /* kmap compat: KM_USER0 */
+ {
+ 	/* WARN_ON(!(device->b->bm_flags & BM_LOCK_SET)); */
+! cocci
+-	return ____bm_op(peer_device->device, peer_device->bitmap_index, start, -1UL,
++	return ____bm_op(peer_device->device, peer_device->bitmap_index, start, ((ULONG_PTR)-1),
+ 		    BM_OP_FIND_BIT, NULL);
+ }
+ 
+! cocci
+-unsigned long _drbd_bm_find_next_zero(struct drbd_peer_device *peer_device, unsigned long start)
++ULONG_PTR _drbd_bm_find_next_zero(struct drbd_peer_device *peer_device, ULONG_PTR start)
+ /* kmap compat: KM_USER0 */
+ {
+ 	/* WARN_ON(!(device->b->bm_flags & BM_LOCK_SET)); */
+! cocci
+-	return ____bm_op(peer_device->device, peer_device->bitmap_index, start, -1UL,
++	return ____bm_op(peer_device->device, peer_device->bitmap_index, start, ((ULONG_PTR)-1),
+ 		    BM_OP_FIND_ZERO_BIT, NULL);
+ }
+ 
+ unsigned int drbd_bm_set_bits(struct drbd_device *device, unsigned int bitmap_index,
+! cocci
+-			      unsigned long start, unsigned long end)
++			      ULONG_PTR start, ULONG_PTR end)
+ {
+ 	return bm_op(device, bitmap_index, start, end, BM_OP_SET, NULL);
+ }
+ 
+ static __always_inline void
+! cocci
+-__bm_many_bits_op(struct drbd_device *device, unsigned int bitmap_index, unsigned long start, unsigned long end,
++__bm_many_bits_op(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR start, ULONG_PTR end,
+ 		  enum bitmap_operations op)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_bitmap *bitmap = device->bitmap;
+! cocci
+-	unsigned long bit = start;
++	ULONG_PTR bit = start;
+ 
+! cocci
+-	spin_lock_irq(&bitmap->bm_lock);
++	spin_lock_irqsave(&bitmap->bm_lock, spin_lock_irq_flags);
+ 
+ 	if (end >= bitmap->bm_bits)
+ 		end = bitmap->bm_bits - 1;
+ 
+ 	while (bit <= end) {
+! cocci
+-		unsigned long last_bit = last_bit_on_page(bitmap, bitmap_index, bit);
++		ULONG_PTR last_bit = last_bit_on_page(bitmap, bitmap_index, bit);
+ 
+ 		if (end < last_bit)
+ 			last_bit = end;
+@@ -1547,22 +1559,24 @@
+ 		__bm_op(device, bitmap_index, bit, last_bit, op, NULL);
+ 		bit = last_bit + 1;
+ 		if (need_resched()) {
+! cocci
+-			spin_unlock_irq(&bitmap->bm_lock);
++			spin_unlock_irqrestore(&bitmap->bm_lock,
++					       spin_lock_irq_flags);
+ 			cond_resched();
+! cocci
+-			spin_lock_irq(&bitmap->bm_lock);
++			spin_lock_irqsave(&bitmap->bm_lock,
++					  spin_lock_irq_flags);
+ 		}
+ 	}
+! cocci
+-	spin_unlock_irq(&bitmap->bm_lock);
++	spin_unlock_irqrestore(&bitmap->bm_lock, spin_lock_irq_flags);
+ }
+ 
+! cocci
+-void drbd_bm_set_many_bits(struct drbd_peer_device *peer_device, unsigned long start, unsigned long end)
++void drbd_bm_set_many_bits(struct drbd_peer_device *peer_device, ULONG_PTR start, ULONG_PTR end)
+ {
+ 	if (peer_device->bitmap_index == -1)
+ 		return;
+ 	__bm_many_bits_op(peer_device->device, peer_device->bitmap_index, start, end, BM_OP_SET);
+ }
+ 
+! cocci
+-void drbd_bm_clear_many_bits(struct drbd_peer_device *peer_device, unsigned long start, unsigned long end)
++void drbd_bm_clear_many_bits(struct drbd_peer_device *peer_device, ULONG_PTR start, ULONG_PTR end)
+ {
+ 	if (peer_device->bitmap_index == -1)
+ 		return;
+@@ -1570,13 +1584,13 @@
+ }
+ 
+ void
+! cocci
+-_drbd_bm_clear_many_bits(struct drbd_device *device, int bitmap_index, unsigned long start, unsigned long end)
++_drbd_bm_clear_many_bits(struct drbd_device *device, int bitmap_index, ULONG_PTR start, ULONG_PTR end)
+ {
+ 	__bm_many_bits_op(device, bitmap_index, start, end, BM_OP_CLEAR);
+ }
+ 
+ void
+! cocci
+-_drbd_bm_set_many_bits(struct drbd_device *device, int bitmap_index, unsigned long start, unsigned long end)
++_drbd_bm_set_many_bits(struct drbd_device *device, int bitmap_index, ULONG_PTR start, ULONG_PTR end)
+ {
+ 	__bm_many_bits_op(device, bitmap_index, start, end, BM_OP_SET);
+ }
+@@ -1602,7 +1616,7 @@
+ }
+ 
+ unsigned int drbd_bm_clear_bits(struct drbd_device *device, unsigned int bitmap_index,
+! cocci
+-				unsigned long start, unsigned long end)
++				ULONG_PTR start, ULONG_PTR end)
+ {
+ 	return bm_op(device, bitmap_index, start, end, BM_OP_CLEAR, NULL);
+ }
+@@ -1614,10 +1628,10 @@
+  *  0 ... bit not set
+  * -1 ... first out of bounds access, stop testing for bits!
+  */
+! cocci
+-int drbd_bm_test_bit(struct drbd_peer_device *peer_device, const unsigned long bitnr)
++int drbd_bm_test_bit(struct drbd_peer_device *peer_device, ULONG_PTR bitnr)
+ {
+ 	struct drbd_bitmap *bitmap = peer_device->device->bitmap;
+! cocci
+-	unsigned long irq_flags;
++	KIRQL irq_flags;
+ 	int ret;
+ 
+ 	spin_lock_irqsave(&bitmap->bm_lock, irq_flags);
+@@ -1631,7 +1645,7 @@
+ }
+ 
+ /* returns number of bits set in the range [s, e] */
+! cocci
+-int drbd_bm_count_bits(struct drbd_device *device, unsigned int bitmap_index, unsigned long s, unsigned long e)
++int drbd_bm_count_bits(struct drbd_device *device, unsigned int bitmap_index, ULONG_PTR s, ULONG_PTR e)
+ {
+ 	return bm_op(device, bitmap_index, s, e, BM_OP_COUNT, NULL);
+ }
+@@ -1639,13 +1653,14 @@
+ void drbd_bm_copy_slot(struct drbd_device *device, unsigned int from_index, unsigned int to_index)
+ /* kmap compat: KM_IRQ1 */
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_bitmap *bitmap = device->bitmap;
+! cocci
+-	unsigned long word_nr, from_word_nr, to_word_nr, words32_total;
++	ULONG_PTR word_nr, from_word_nr, to_word_nr, words32_total;
+ 	unsigned int from_page_nr, to_page_nr, current_page_nr;
+ 	u32 data_word, *addr;
+ 
+! cocci
+-	words32_total = bitmap->bm_words * sizeof(unsigned long) / sizeof(u32);
+-	spin_lock_irq(&bitmap->bm_lock);
++	words32_total = bitmap->bm_words * sizeof(ULONG_PTR) / sizeof(u32);
++	spin_lock_irqsave(&bitmap->bm_lock, spin_lock_irq_flags);
+ 
+ 	bitmap->bm_set[to_index] = 0;
+ 	current_page_nr = 0;
+@@ -1659,9 +1674,11 @@
+ 		if (current_page_nr != from_page_nr) {
+ 			bm_unmap(bitmap, addr);
+ 			if (need_resched()) {
+! cocci
+-				spin_unlock_irq(&bitmap->bm_lock);
++				spin_unlock_irqrestore(&bitmap->bm_lock,
++						       spin_lock_irq_flags);
+ 				cond_resched();
+! cocci
+-				spin_lock_irq(&bitmap->bm_lock);
++				spin_lock_irqsave(&bitmap->bm_lock,
++						  spin_lock_irq_flags);
+ 			}
+ 			current_page_nr = from_page_nr;
+ 			addr = bm_map(bitmap, current_page_nr);
+@@ -1669,7 +1686,7 @@
+ 		data_word = addr[word32_in_page(from_word_nr)];
+ 
+ 		if (word_nr == words32_total - bitmap->bm_max_peers) {
+! cocci
+-			unsigned long lw = word_nr / bitmap->bm_max_peers;
++			ULONG_PTR lw = word_nr / bitmap->bm_max_peers;
+ 			if (bitmap->bm_bits < (lw + 1) * 32)
+ 			    data_word &= cpu_to_le32((1 << (bitmap->bm_bits - lw * 32)) - 1);
+ 		}
+@@ -1687,5 +1704,5 @@
+ 	}
+ 	bm_unmap(bitmap, addr);
+ 
+! cocci
+-	spin_unlock_irq(&bitmap->bm_lock);
++	spin_unlock_irqrestore(&bitmap->bm_lock, spin_lock_irq_flags);
+ }
