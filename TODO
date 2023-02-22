@@ -60,8 +60,12 @@ TODO: Code quality: Minimize / Sqash patches to DRBD
 
 	TODO: drbd-header/*.h patches. ./drbd-headers/linux/*.h
 		and linux/*.h
+	Done
+
 	Then make a list of TODOs in compat, cocci, manual and
 	upstream
+	Done, need to sort out duplicates. This requires some
+	thinking and time.
 
 TODO: Feature: Base on DRBD 9.1 branch
 
