@@ -1,0 +1,841 @@
+--- drbd/drbd/drbd_actlog.c	2023-02-17 14:26:26.762469081 +0000
++++ converted-sources/drbd/drbd_actlog.c	2023-02-17 14:26:29.170423827 +0000
+@@ -8,9 +8,11 @@
+    Copyright (C) 2003-2008, Philipp Reisner <philipp.reisner@linbit.com>.
+    Copyright (C) 2003-2008, Lars Ellenberg <lars.ellenberg@linbit.com>.
+ 
+-
+  */
+ 
+! header
++ /* Enable all warnings throws lots of those warnings: */
++#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
++
+ #include <linux/slab.h>
+ #include <linux/crc32c.h>
+ #include <linux/drbd.h>
+@@ -30,12 +32,11 @@
+ void *drbd_md_get_buffer(struct drbd_device *device, const char *intent)
+ {
+ 	int r;
+! cocci
+-	long t;
++	LONG_PTR t;
+ 
+! cocci
+-	t = wait_event_timeout(device->misc_wait,
+-			(r = atomic_cmpxchg(&device->md_io.in_use, 0, 1)) == 0 ||
+-			device->disk_state[NOW] <= D_FAILED,
+-			HZ * 10);
++	wait_event_timeout(t, device->misc_wait,
++			   (r = atomic_cmpxchg(&device->md_io.in_use, 0, 1)) == 0 || device->disk_state[NOW] <= D_FAILED,
++			   HZ * 10);
+ 
+ 	if (t == 0)
+ 		drbd_err(device, "Waited 10 Seconds for md_buffer! BUG?\n");
+@@ -61,17 +62,19 @@
+ void wait_until_done_or_force_detached(struct drbd_device *device, struct drbd_backing_dev *bdev,
+ 				       unsigned int *done)
+ {
+! cocci
+-	long dt;
++	KIRQL rcu_flags;
++	LONG_PTR dt;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	dt = rcu_dereference(bdev->disk_conf)->disk_timeout;
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	dt = dt * HZ / 10;
+ 	if (dt == 0)
+ 		dt = MAX_SCHEDULE_TIMEOUT;
+ 
+! cocci
+-	dt = wait_event_timeout(device->misc_wait,
+-			*done || test_bit(FORCE_DETACH, &device->flags), dt);
++	wait_event_timeout(dt, device->misc_wait,
++			   *done || test_bit(FORCE_DETACH, &device->flags),
++			   dt);
+ 	if (dt == 0) {
+ 		drbd_err(device, "meta-data IO operation timed out\n");
+ 		drbd_chk_io_error(device, 1, DRBD_FORCE_DETACH);
+@@ -177,10 +180,11 @@
+ static struct bm_extent*
+ find_active_resync_extent(struct get_activity_log_ref_ctx *al_ctx)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_peer_device *peer_device;
+ 	struct lc_element *tmp;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	for_each_peer_device_rcu(peer_device, al_ctx->device) {
+ 		tmp = lc_find(peer_device->resync_lru, al_ctx->enr/AL_EXT_PER_BM_SECT);
+ 		if (unlikely(tmp != NULL)) {
+@@ -195,22 +199,23 @@
+ 						continue;
+ 					}
+ 				}
+! cocci
+-				rcu_read_unlock();
++				rcu_read_unlock(rcu_flags);
+ 				return bm_ext;
+ 			}
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	return NULL;
+ }
+ 
+ void
+ set_bme_priority(struct get_activity_log_ref_ctx *al_ctx)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_peer_device *peer_device;
+ 	struct lc_element *tmp;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	for_each_peer_device_rcu(peer_device, al_ctx->device) {
+ 		tmp = lc_find(peer_device->resync_lru, al_ctx->enr/AL_EXT_PER_BM_SECT);
+ 		if (tmp) {
+@@ -220,17 +225,18 @@
+ 				al_ctx->wake_up = true;
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ }
+ 
+ static
+ struct lc_element *__al_get(struct get_activity_log_ref_ctx *al_ctx)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device = al_ctx->device;
+ 	struct lc_element *al_ext = NULL;
+ 	struct bm_extent *bm_ext;
+ 
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 	bm_ext = find_active_resync_extent(al_ctx);
+ 	if (bm_ext) {
+ 		set_bme_priority(al_ctx);
+@@ -241,7 +247,7 @@
+ 	else
+ 		al_ext = lc_get(device->act_log, al_ctx->enr);
+  out:
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 	if (al_ctx->wake_up)
+ 		wake_up(&device->al_wait);
+ 	return al_ext;
+@@ -268,7 +274,7 @@
+ drbd_dax_begin_io_fp(struct drbd_device *device, unsigned int first, unsigned int last)
+ {
+ 	struct lc_element *al_ext;
+! cocci
+-	unsigned long flags;
++	KIRQL flags;
+ 	unsigned int enr;
+ 	unsigned int abort_enr;
+ 	bool wake = 0;
+@@ -335,9 +341,9 @@
+ # error FIXME
+ #endif
+ 
+! cocci
+-static unsigned long al_extent_to_bm_bit(unsigned int al_enr)
++static ULONG_PTR al_extent_to_bm_bit(unsigned int al_enr)
+ {
+! cocci
+-	return (unsigned long)al_enr << (AL_EXTENT_SHIFT - BM_BLOCK_SHIFT);
++	return (ULONG_PTR)al_enr << (AL_EXTENT_SHIFT - BM_BLOCK_SHIFT);
+ }
+ 
+ static sector_t al_tr_number_to_on_disk_sector(struct drbd_device *device)
+@@ -360,6 +366,8 @@
+ 
+ static int __al_write_transaction(struct drbd_device *device, struct al_transaction_on_disk *buffer)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
++	KIRQL rcu_flags;
+ 	struct lc_element *e;
+ 	sector_t sector;
+ 	int i, mx;
+@@ -380,8 +388,8 @@
+ 	 * once we set the LC_LOCKED -- from drbd_al_begin_io(),
+ 	 * lc_try_lock_for_transaction() --, someone may still
+ 	 * be in the process of changing it. */
+! cocci
+-	spin_lock_irq(&device->al_lock);
+! cocci
+-	list_for_each_entry(e, &device->act_log->to_be_changed, list) {
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
++	list_for_each_entry(struct lc_element, e, &device->act_log->to_be_changed, list) {
+ 		if (i == AL_UPDATES_PER_TRANSACTION) {
+ 			i++;
+ 			break;
+@@ -389,7 +397,7 @@
+ 		buffer->update_slot_nr[i] = cpu_to_be16(e->lc_index);
+ 		buffer->update_extent_nr[i] = cpu_to_be32(e->lc_new_number);
+ 		if (e->lc_number != LC_FREE) {
+! cocci
+-			unsigned long start, end;
++			ULONG_PTR start, end;
+ 
+ 			start = al_extent_to_bm_bit(e->lc_number);
+ 			end = al_extent_to_bm_bit(e->lc_number + 1) - 1;
+@@ -397,7 +405,7 @@
+ 		}
+ 		i++;
+ 	}
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 	BUG_ON(i > AL_UPDATES_PER_TRANSACTION);
+ 
+ 	buffer->n_updates = cpu_to_be16(i);
+@@ -425,7 +433,7 @@
+ 
+ 	sector = al_tr_number_to_on_disk_sector(device);
+ 
+! cocci (sizeof void*)
+-	crc = crc32c(0, buffer, 4096);
++	crc = crc32c(0, (uint8_t*)buffer, 4096);
+ 	buffer->crc32c = cpu_to_be32(crc);
+ 
+ 	ktime_aggregate_delta(device, start_kt, al_before_bm_write_hinted_kt);
+@@ -433,9 +441,9 @@
+ 		err = -EIO;
+ 	else {
+ 		bool write_al_updates;
+! cocci
+-		rcu_read_lock();
++		rcu_flags = rcu_read_lock();
+ 		write_al_updates = rcu_dereference(device->ldev->disk_conf)->al_updates;
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 		if (write_al_updates) {
+ 			ktime_aggregate_delta(device, start_kt, al_mid_kt);
+ 			if (drbd_md_sync_page_io(device, device->ldev, sector, REQ_OP_WRITE)) {
+@@ -491,35 +499,38 @@
+ 	return err;
+ }
+ 
+! cocci
+-static int bm_e_weight(struct drbd_peer_device *peer_device, unsigned long enr);
++static int bm_e_weight(struct drbd_peer_device *peer_device, ULONG_PTR enr);
+ 
+ bool drbd_al_try_lock(struct drbd_device *device)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	bool locked;
+ 
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 	locked = lc_try_lock(device->act_log);
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 
+ 	return locked;
+ }
+ 
+ bool drbd_al_try_lock_for_transaction(struct drbd_device *device)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	bool locked;
+ 
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 	locked = lc_try_lock_for_transaction(device->act_log);
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 
+ 	return locked;
+ }
+ 
+ void drbd_al_begin_io_commit(struct drbd_device *device)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
++	KIRQL rcu_flags;
+ 	bool locked = false;
+ 
+-
+ 	if (drbd_md_dax_active(device->ldev)) {
+ 		drbd_dax_al_begin_io_commit(device);
+ 		return;
+@@ -535,19 +546,21 @@
+ 		if (device->act_log->pending_changes) {
+ 			bool write_al_updates;
+ 
+! cocci
+-			rcu_read_lock();
++			rcu_flags = rcu_read_lock();
+ 			write_al_updates = rcu_dereference(device->ldev->disk_conf)->al_updates;
+! cocci
+-			rcu_read_unlock();
++			rcu_read_unlock(rcu_flags);
+ 
+ 			if (write_al_updates)
+ 				al_write_transaction(device);
+! cocci
+-			spin_lock_irq(&device->al_lock);
++			spin_lock_irqsave(&device->al_lock,
++					  spin_lock_irq_flags);
+ 			/* FIXME
+ 			if (err)
+ 				we need an "lc_cancel" here;
+ 			*/
+ 			lc_committed(device->act_log);
+! cocci
+-			spin_unlock_irq(&device->al_lock);
++			spin_unlock_irqrestore(&device->al_lock,
++					       spin_lock_irq_flags);
+ 		}
+ 		lc_unlock(device->act_log);
+ 		wake_up(&device->al_wait);
+@@ -557,7 +570,7 @@
+ static bool put_actlog(struct drbd_device *device, unsigned int first, unsigned int last)
+ {
+ 	struct lc_element *extent;
+! cocci
+-	unsigned long flags;
++	KIRQL flags;
+ 	unsigned int enr;
+ 	bool wake = false;
+ 
+@@ -589,21 +602,22 @@
+  */
+ int drbd_al_begin_io_for_peer(struct drbd_peer_device *peer_device, struct drbd_interval *i)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_device *device = peer_device->device;
+ 	struct drbd_connection *connection = peer_device->connection;
+ 	unsigned first = i->sector >> (AL_EXTENT_SHIFT-9);
+ 	unsigned last = i->size == 0 ? first : (i->sector + (i->size >> 9) - 1) >> (AL_EXTENT_SHIFT-9);
+ 	unsigned enr;
+ 	bool need_transaction = false;
+! cocci
+-	long timeout = MAX_SCHEDULE_TIMEOUT;
++	LONG_PTR timeout = MAX_SCHEDULE_TIMEOUT;
+ 
+ 	if (connection->agreed_pro_version < 114) {
+ 		struct net_conf *nc;
+! cocci
+-		rcu_read_lock();
++		rcu_flags = rcu_read_lock();
+ 		nc = rcu_dereference(connection->transport.net_conf);
+ 		if (nc && nc->ko_count)
+ 			timeout = nc->ko_count * nc->timeout * HZ/10;
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 	}
+ 
+ 	D_ASSERT(peer_device, first <= last);
+@@ -611,14 +625,13 @@
+ 
+ 	for (enr = first; enr <= last; enr++) {
+ 		struct lc_element *al_ext;
+! cocci
+-		timeout = wait_event_timeout(device->al_wait,
+-				(al_ext = _al_get(device, enr)) != NULL ||
+-				connection->cstate[NOW] < C_CONNECTED,
+-				timeout);
++		wait_event_timeout(timeout, device->al_wait,
++				   (al_ext = _al_get(device, enr)) != NULL || connection->cstate[NOW] < C_CONNECTED,
++				   timeout);
+ 		/* If we ran into the timeout, we have been unresponsive to the
+ 		 * peer for so long. So in theory, it should already have
+ 		 * kicked us out.  But in case it did not, rather disconnect hard,
+! cocci
+-		 * and try to re-establish the connection than block "forever",
++		 * and try_ to re-establish the connection than block "forever",
+ 		 * in what is likely to be a distributed deadlock */
+ 		if (timeout == 0) {
+ 			drbd_err(connection, "Upgrade your peer(s) or increase al-extents or reduce max-epoch-size\n");
+@@ -714,13 +727,14 @@
+ 
+ static int _try_lc_del(struct drbd_device *device, struct lc_element *al_ext)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	int rv;
+ 
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 	rv = (al_ext->refcnt == 0);
+ 	if (likely(rv))
+ 		lc_del(device->act_log, al_ext);
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 
+ 	return rv;
+ }
+@@ -821,6 +835,7 @@
+ 
+ int drbd_al_initialize(struct drbd_device *device, void *buffer)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct al_transaction_on_disk *al = buffer;
+ 	struct drbd_md *md = &device->ldev->md;
+ 	int al_size_4k = md->al_stripes * md->al_stripe_size_4k;
+@@ -831,9 +846,9 @@
+ 
+ 	__al_write_transaction(device, al);
+ 	/* There may or may not have been a pending transaction. */
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 	lc_committed(device->act_log);
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 
+ 	/* The rest of the transactions will have an empty "updates" list, and
+ 	 * are written out only to provide the context, and to initialize the
+@@ -880,9 +895,9 @@
+  * reference count of some bitmap extent element from some lru instead...
+  *
+  */
+! cocci
+-static int bm_e_weight(struct drbd_peer_device *peer_device, unsigned long enr)
++static int bm_e_weight(struct drbd_peer_device *peer_device, ULONG_PTR enr)
+ {
+! cocci
+-	unsigned long start, end, count;
++	ULONG_PTR start, end, count;
+ 
+ 	start = enr << (BM_EXT_SHIFT - BM_BLOCK_SHIFT);
+ 	end = ((enr + 1) << (BM_EXT_SHIFT - BM_BLOCK_SHIFT)) - 1;
+@@ -899,7 +914,6 @@
+ 	[SET_OUT_OF_SYNC] = "drbd_set_out_of_sync"
+ };
+! remove
+ 
+-
+ /* ATTENTION. The AL's extents are 4MB each, while the extents in the
+  * resync LRU-cache are 128MB each.
+  * The caller of this function has to hold an get_ldev() reference.
+@@ -956,7 +970,7 @@
+ 				 * the set bits to cache that value in ext->rs_left.
+ 				 * Whatever the reason (disconnect during resync,
+ 				 * delayed local completion of an application write),
+! remove
+-				 * try to fix it up by recounting here. */
++				 * try_ to fix it up by recounting here. */
+ 				ext->rs_left = bm_e_weight(peer_device, enr);
+ 			}
+ 		} else {
+@@ -992,7 +1006,7 @@
+ 		if (ext->rs_left <= ext->rs_failed) {
+ 			struct update_peers_work *upw;
+! remove
+ 
+-			upw = kmalloc(sizeof(*upw), GFP_ATOMIC | __GFP_NOWARN);
++			upw = kmalloc(sizeof(*upw), GFP_ATOMIC | __GFP_NOWARN, '00WD');
+ 			if (upw) {
+ 				upw->enr = ext->lce.lc_number;
+ 				upw->w.cb = w_update_peers;
+@@ -1023,10 +1037,10 @@
+ 	return false;
+ }
+ 
+! cocci
+-void drbd_advance_rs_marks(struct drbd_peer_device *peer_device, unsigned long still_to_go)
++void drbd_advance_rs_marks(struct drbd_peer_device *peer_device, ULONG_PTR still_to_go)
+ {
+! cocci
+-	unsigned long now = jiffies;
+-	unsigned long last = peer_device->rs_mark_time[peer_device->rs_last_mark];
++	ULONG_PTR now = jiffies;
++	ULONG_PTR last = peer_device->rs_mark_time[peer_device->rs_last_mark];
+ 	int next = (peer_device->rs_last_mark + 1) % DRBD_SYNC_MARKS;
+ 	if (time_after_eq(now, last + DRBD_SYNC_MARK_STEP)) {
+ 		if (peer_device->rs_mark_left[peer_device->rs_last_mark] != still_to_go &&
+@@ -1064,9 +1078,8 @@
+ 		drbd_peer_device_post_work(peer_device, RS_LAZY_BM_WRITE);
+ }
+ 
+-
+ static int update_sync_bits(struct drbd_peer_device *peer_device,
+! cocci
+-		unsigned long sbnr, unsigned long ebnr,
++		ULONG_PTR sbnr, ULONG_PTR ebnr,
+ 		enum update_sync_bits_mode mode)
+ {
+ 	/*
+@@ -1075,15 +1088,15 @@
+ 	 * alignment. Typically this loop will execute exactly once.
+ 	 */
+ 	struct drbd_device *device = peer_device->device;
+! cocci
+-	unsigned long flags;
+-	unsigned long count = 0;
++	KIRQL flags;
++	ULONG_PTR count = 0;
+ 	unsigned int cleared = 0;
+ 	while (sbnr <= ebnr) {
+ 		/* set temporary boundary bit number to last bit number within
+ 		 * the resync extent of the current start bit number,
+ 		 * but cap at provided end bit number */
+! cocci
+-		unsigned long tbnr = min(ebnr, sbnr | BM_BLOCKS_PER_BM_EXT_MASK);
+-		unsigned long c;
++		ULONG_PTR tbnr = min(ebnr, sbnr | BM_BLOCKS_PER_BM_EXT_MASK);
++		ULONG_PTR c;
+ 		int bmi = peer_device->bitmap_index;
+ 
+ 		if (mode == RECORD_RS_FAILED)
+@@ -1109,7 +1122,7 @@
+ 	if (count) {
+ 		if (mode == SET_IN_SYNC) {
+ 			bool is_sync_target, rs_is_done;
+! cocci
+-			unsigned long still_to_go;
++			ULONG_PTR still_to_go;
+ 
+ 			is_sync_target = is_sync_target_state(peer_device, NOW);
+ 			/* Evaluate is_sync_target_state before getting the bm
+@@ -1159,8 +1172,8 @@
+ {
+ 	/* Is called from worker and receiver context _only_ */
+ 	struct drbd_device *device = peer_device->device;
+! cocci
+-	unsigned long sbnr, ebnr, lbnr;
+-	unsigned long count = 0;
++	ULONG_PTR sbnr, ebnr, lbnr;
++	ULONG_PTR count = 0;
+ 	sector_t esector, nr_sectors;
+ 
+ 	/* This would be an empty REQ_OP_FLUSH, be silent. */
+@@ -1227,9 +1240,10 @@
+  * @mask:	bitmap indexes to modify (mask set)
+  */
+ bool drbd_set_sync(struct drbd_device *device, sector_t sector, int size,
+! cocci
+-		   unsigned long bits, unsigned long mask)
++		   ULONG_PTR bits, ULONG_PTR mask)
+ {
+! cocci
+-	long set_start, set_end, clear_start, clear_end;
++	KIRQL rcu_flags;
++	LONG_PTR set_start, set_end, clear_start, clear_end;
+ 	sector_t esector, nr_sectors;
+ 	bool set = false;
+ 	struct drbd_peer_device *peer_device;
+@@ -1267,7 +1281,7 @@
+ 	else
+ 		clear_end = BM_SECT_TO_BIT(esector + 1) - 1;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	for_each_peer_device_rcu(peer_device, device) {
+ 		int bitmap_index = peer_device->bitmap_index;
+ 
+@@ -1283,7 +1297,7 @@
+ 		else if (clear_start <= clear_end)
+ 			update_sync_bits(peer_device, clear_start, clear_end, SET_IN_SYNC);
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	if (mask) {
+ 		int bitmap_index;
+ 
+@@ -1306,15 +1320,16 @@
+ static
+ struct bm_extent *_bme_get(struct drbd_peer_device *peer_device, unsigned int enr)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device = peer_device->device;
+ 	struct lc_element *e;
+ 	struct bm_extent *bm_ext;
+ 	int wakeup = 0;
+! cocci
+-	unsigned long rs_flags;
++	ULONG_PTR rs_flags;
+ 
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 	if (peer_device->resync_locked > peer_device->resync_lru->nr_elements/2) {
+! cocci
+-		spin_unlock_irq(&device->al_lock);
++		spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 		return NULL;
+ 	}
+ 	e = lc_get(peer_device->resync_lru, enr);
+@@ -1331,7 +1346,7 @@
+ 		set_bit(BME_NO_WRITES, &bm_ext->flags);
+ 	}
+ 	rs_flags = peer_device->resync_lru->flags;
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 	if (wakeup)
+ 		wake_up(&device->al_wait);
+ 
+@@ -1347,11 +1362,12 @@
+ 
+ static int _is_in_al(struct drbd_device *device, unsigned int enr)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	int rv;
+ 
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 	rv = lc_is_used(device->act_log, enr);
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 
+ 	return rv;
+ }
+@@ -1363,6 +1379,7 @@
+  */
+ int drbd_rs_begin_io(struct drbd_peer_device *peer_device, sector_t sector)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device = peer_device->device;
+ 	unsigned int enr = BM_SECT_TO_EXT(sector);
+ 	struct bm_extent *bm_ext;
+@@ -1370,8 +1387,8 @@
+ 	bool sa;
+ 
+ retry:
+! cocci
+-	sig = wait_event_interruptible(device->al_wait,
+-			(bm_ext = _bme_get(peer_device, enr)));
++	wait_event_interruptible(sig, device->al_wait,
++				 (bm_ext = _bme_get(peer_device, enr)));
+ 	if (sig)
+ 		return -EINTR;
+ 
+@@ -1382,18 +1399,19 @@
+ 	sa = drbd_rs_c_min_rate_throttle(peer_device);
+ 
+ 	for (i = 0; i < AL_EXT_PER_BM_SECT; i++) {
+! cocci
+-		sig = wait_event_interruptible(device->al_wait,
+-					       !_is_in_al(device, enr * AL_EXT_PER_BM_SECT + i) ||
+-					       (sa && test_bit(BME_PRIORITY, &bm_ext->flags)));
++		wait_event_interruptible(sig, device->al_wait,
++					 !_is_in_al(device, enr * AL_EXT_PER_BM_SECT + i) || (sa && test_bit(BME_PRIORITY, &bm_ext->flags)));
+ 
+ 		if (sig || (sa && test_bit(BME_PRIORITY, &bm_ext->flags))) {
+! cocci
+-			spin_lock_irq(&device->al_lock);
++			spin_lock_irqsave(&device->al_lock,
++					  spin_lock_irq_flags);
+ 			if (lc_put(peer_device->resync_lru, &bm_ext->lce) == 0) {
+ 				bm_ext->flags = 0; /* clears BME_NO_WRITES and eventually BME_PRIORITY */
+ 				peer_device->resync_locked--;
+ 				wake_up(&device->al_wait);
+ 			}
+! cocci
+-			spin_unlock_irq(&device->al_lock);
++			spin_unlock_irqrestore(&device->al_lock,
++					       spin_lock_irq_flags);
+ 			if (sig)
+ 				return -EINTR;
+ 			if (schedule_timeout_interruptible(HZ/10))
+@@ -1414,6 +1432,7 @@
+  */
+ int drbd_try_rs_begin_io(struct drbd_peer_device *peer_device, sector_t sector, bool throttle)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device = peer_device->device;
+ 	unsigned int enr = BM_SECT_TO_EXT(sector);
+ 	const unsigned int al_enr = enr*AL_EXT_PER_BM_SECT;
+@@ -1432,17 +1451,17 @@
+ 	if (throttle && peer_device->resync_wenr != enr)
+ 		return -EAGAIN;
+ 
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 	if (peer_device->resync_wenr != LC_FREE && peer_device->resync_wenr != enr) {
+ 		/* in case you have very heavy scattered io, it may
+ 		 * stall the syncer undefined if we give up the ref count
+! cocci
+-		 * when we try again and requeue.
++		 * when we try_ again and requeue.
+ 		 *
+ 		 * if we don't give up the refcount, but the next time
+ 		 * we are scheduled this extent has been "synced" by new
+ 		 * application writes, we'd miss the lc_put on the
+ 		 * extent we keep the refcount on.
+! cocci
+-		 * so we remembered which extent we had to try again, and
++		 * so we remembered which extent we had to try_ again, and
+ 		 * if the next requested one is something else, we do
+ 		 * the lc_put here...
+ 		 * we also have to wake_up
+@@ -1482,14 +1501,14 @@
+ 		}
+ 		goto check_al;
+ 	} else {
+! cocci
+-		/* do we rather want to try later? */
++		/* do we rather want to try_ later? */
+ 		if (peer_device->resync_locked > peer_device->resync_lru->nr_elements-3)
+ 			goto try_again;
+! cocci
+-		/* Do or do not. There is no try. -- Yoda */
++		/* Do or do not. There is no try_. -- Yoda */
+ 		e = lc_get(peer_device->resync_lru, enr);
+ 		bm_ext = e ? lc_entry(e, struct bm_extent, lce) : NULL;
+ 		if (!bm_ext) {
+! cocci
+-			const unsigned long rs_flags = peer_device->resync_lru->flags;
++			const ULONG_PTR rs_flags = peer_device->resync_lru->flags;
+ 			if (rs_flags & LC_STARVING)
+ 				drbd_warn(device, "Have to wait for element"
+ 				     " (resync LRU too small?)\n");
+@@ -1516,7 +1535,7 @@
+ 	set_bit(BME_LOCKED, &bm_ext->flags);
+ proceed:
+ 	peer_device->resync_wenr = LC_FREE;
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 	return 0;
+ 
+ try_again:
+@@ -1536,7 +1555,7 @@
+ 		} else
+ 			peer_device->resync_wenr = enr;
+ 	}
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 	return -EAGAIN;
+ }
+ 
+@@ -1546,7 +1565,7 @@
+ 	unsigned int enr = BM_SECT_TO_EXT(sector);
+ 	struct lc_element *e;
+ 	struct bm_extent *bm_ext;
+! cocci
+-	unsigned long flags;
++	KIRQL flags;
+ 
+ 	spin_lock_irqsave(&device->al_lock, flags);
+ 	e = lc_find(peer_device->resync_lru, enr);
+@@ -1580,8 +1599,9 @@
+  */
+ void drbd_rs_cancel_all(struct drbd_peer_device *peer_device)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device = peer_device->device;
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 
+ 	if (get_ldev_if_state(device, D_DETACHING)) { /* Makes sure ->resync is there. */
+ 		lc_reset(peer_device->resync_lru);
+@@ -1589,7 +1609,7 @@
+ 	}
+ 	peer_device->resync_locked = 0;
+ 	peer_device->resync_wenr = LC_FREE;
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 	wake_up(&device->al_wait);
+ }
+ 
+@@ -1601,12 +1621,13 @@
+  */
+ int drbd_rs_del_all(struct drbd_peer_device *peer_device)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device = peer_device->device;
+ 	struct lc_element *e;
+ 	struct bm_extent *bm_ext;
+ 	int i;
+ 
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 
+ 	if (get_ldev_if_state(device, D_DETACHING)) {
+ 		/* ok, ->resync is there. */
+@@ -1629,7 +1650,8 @@
+ 				drbd_info(peer_device, "Retrying drbd_rs_del_all() later. "
+ 				     "refcnt=%d\n", bm_ext->lce.refcnt);
+ 				put_ldev(device);
+! cocci
+-				spin_unlock_irq(&device->al_lock);
++				spin_unlock_irqrestore(&device->al_lock,
++						       spin_lock_irq_flags);
+ 				return -EAGAIN;
+ 			}
+ 			D_ASSERT(peer_device, !test_bit(BME_LOCKED, &bm_ext->flags));
+@@ -1639,7 +1661,7 @@
+ 		D_ASSERT(peer_device, peer_device->resync_lru->used == 0);
+ 		put_ldev(device);
+ 	}
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 	wake_up(&device->al_wait);
+ 
+ 	return 0;
+@@ -1647,16 +1669,17 @@
+ 
+ bool drbd_sector_has_priority(struct drbd_peer_device *peer_device, sector_t sector)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device = peer_device->device;
+ 	struct lc_element *tmp;
+ 	bool has_priority = false;
+ 
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 	tmp = lc_find(peer_device->resync_lru, BM_SECT_TO_EXT(sector));
+ 	if (tmp) {
+ 		struct bm_extent *bm_ext = lc_entry(tmp, struct bm_extent, lce);
+ 		has_priority = test_bit(BME_PRIORITY, &bm_ext->flags);
+ 	}
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 	return has_priority;
+ }
