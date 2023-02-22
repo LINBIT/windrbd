@@ -1,0 +1,13 @@
+--- drbd/drbd/drbd_strings.c	2023-02-17 14:26:26.854467352 +0000
++++ converted-sources/drbd/drbd_strings.c	2023-02-17 14:26:29.122424730 +0000
+@@ -209,6 +209,9 @@
+         .size = sizeof __packet_names / sizeof __packet_names[0],
+ };
+ 
+! remove
++/* Do not warn about signed/unsigned mismatch */
++#pragma warning (disable : 4018)
++
+ const char *drbd_repl_str(enum drbd_repl_state s)
+ {
+ 	return (s < 0 || s >= drbd_repl_state_names.size ||

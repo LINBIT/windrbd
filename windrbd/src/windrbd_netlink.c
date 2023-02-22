@@ -497,6 +497,7 @@ static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netli
 		}
 	}
 
+	/* TODO: use something else .. */
     drbd_adm_send_reply(skb, info);
 
     return err;

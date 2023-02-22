@@ -1,0 +1,87 @@
+--- drbd/drbd/kref_debug.c	2023-02-17 14:26:26.742469457 +0000
++++ converted-sources/drbd/kref_debug.c	2023-02-17 14:26:29.078425556 +0000
+@@ -1,5 +1,4 @@
+-
+! header
+-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
++#define pr_fmt(fmt) ":" fmt
+ 
+ #include <linux/spinlock.h>
+ #include <linux/seq_file.h>
+@@ -20,7 +19,7 @@
+ 		     struct kref *kref,
+ 		     const struct kref_debug_class *class)
+ {
+! cocci
+-	unsigned long irq_flags;
++	KIRQL irq_flags;
+ 	int i;
+ 
+ 	debug_info->class = class;
+@@ -49,7 +48,7 @@
+ 
+ void kref_debug_destroy(struct kref_debug_info *debug_info)
+ {
+! cocci
+-	unsigned long irq_flags;
++	KIRQL irq_flags;
+ 	int i;
+ 
+ 	spin_lock_irqsave(&kref_debug_lock, irq_flags);
+@@ -60,7 +59,7 @@
+ 			if (debug_info->holders[i] == 0)
+ 				continue;
+ 			pr_err("  [%d] = %d (%s)\n", i, debug_info->holders[i],
+! cocci
+-			       debug_info->class->holder_name[i] ?: "");
++			       debug_info->class->holder_name[i] ? debug_info->class->holder_name[i] :  "");
+ 		}
+ 		pr_err("\n");
+ 	}
+@@ -71,7 +70,7 @@
+ 
+ void kref_debug_get(struct kref_debug_info *debug_info, int holder_nr)
+ {
+! cocci
+-	unsigned long irq_flags;
++	KIRQL irq_flags;
+ 
+ 	if (holder_nr >= KREF_DEBUG_HOLDER_MAX) {
+ 		pr_err("Increase KREF_DEBUG_HOLDER_MAX\n");
+@@ -85,7 +84,7 @@
+ 
+ void kref_debug_sub(struct kref_debug_info *debug_info, int refs, int holder_nr)
+ {
+! cocci
+-	unsigned long irq_flags;
++	KIRQL irq_flags;
+ 
+ 	if (holder_nr >= KREF_DEBUG_HOLDER_MAX) {
+ 		pr_err("Increase KREF_DEBUG_HOLDER_MAX\n");
+@@ -99,11 +98,12 @@
+ 
+ void print_kref_debug_info(struct seq_file *seq)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct kref_debug_info *debug_info;
+ 	int i;
+ 
+! cocci
+-	spin_lock_irq(&kref_debug_lock);
+! cocci
+-	list_for_each_entry(debug_info, &kref_debug_objects, objects) {
++	spin_lock_irqsave(&kref_debug_lock, spin_lock_irq_flags);
++	list_for_each_entry(struct kref_debug_info, debug_info, &kref_debug_objects, objects) {
+ 		int debug_refs, refs;
+ 		char obj_name[80];
+ 
+@@ -123,6 +123,6 @@
+ 		}
+ 		seq_putc(seq, '\n');
+ 	}
+! cocci
+-	spin_unlock_irq(&kref_debug_lock);
++	spin_unlock_irqrestore(&kref_debug_lock, spin_lock_irq_flags);
+ }
+ 
