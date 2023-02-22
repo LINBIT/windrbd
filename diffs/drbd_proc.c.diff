@@ -1,0 +1,13 @@
+--- drbd/drbd/drbd_proc.c	2023-02-17 14:26:26.766469006 +0000
++++ converted-sources/drbd/drbd_proc.c	2023-02-17 14:26:29.266422023 +0000
+@@ -8,7 +8,6 @@
+    Copyright (C) 1999-2008, Philipp Reisner <philipp.reisner@linbit.com>.
+    Copyright (C) 2002-2008, Lars Ellenberg <lars.ellenberg@linbit.com>.
+ 
+! remove
+-
+  */
+ 
+! compat: implement ioctl for accessing /proc/drbd
+! compat: also fix seq_printf.c
+ #include <linux/module.h>

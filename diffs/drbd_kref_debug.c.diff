@@ -1,0 +1,49 @@
+--- drbd/drbd/drbd_kref_debug.c	2023-02-17 14:26:26.746469382 +0000
++++ converted-sources/drbd/drbd_kref_debug.c	2023-02-17 14:26:29.086425405 +0000
+@@ -1,7 +1,6 @@
+ #include <drbd_kref_debug.h>
+ #include "drbd_int.h"
+! remove
+ 
+-
+ static void get_resource_name(const struct kref_debug_info *debug_info, char *name)
+ {
+ 	struct drbd_resource *resource = container_of(debug_info, struct drbd_resource, kref_debug);
+@@ -13,15 +12,16 @@
+ 
+ static void get_connection_name(const struct kref_debug_info *debug_info, char *name)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_connection *connection = container_of(debug_info, struct drbd_connection, kref_debug);
+ 	struct net_conf *nc;
+ 	const char *resource_n =
+ 		connection->resource && connection->resource->name ? connection->resource->name : "unknown";
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	nc = rcu_dereference(connection->transport.net_conf);
+ 	sprintf(name, "%s:%s", resource_n , nc ? nc->name : "unnamed");
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ }
+ 
+ static void get_device_name(const struct kref_debug_info *debug_info, char *name)
+@@ -72,8 +72,6 @@
+ 	}
+ };
+ 
+! remove
+-
+-
+ struct kref_debug_class kref_class_device = {
+ 	"device",
+ 	get_device_name,
+@@ -89,4 +87,3 @@
+ 	}
+ };
+ 
+! remove
+-
