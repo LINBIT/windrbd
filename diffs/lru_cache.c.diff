@@ -1,0 +1,139 @@
+--- drbd/drbd/lru_cache.c	2023-02-17 14:26:26.750469307 +0000
++++ converted-sources/drbd/lru_cache.c	2023-02-17 14:26:29.122424730 +0000
+@@ -4,9 +4,11 @@
+ 
+    This file is part of DRBD by Philipp Reisner and Lars Ellenberg.
+ 
+-
+  */
+
+! remove 
++ /* Enable all warnings throws lots of those warnings: */
++#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 5045 4711)
++
+ #include <linux/module.h>
+ #include <linux/bitops.h>
+ #include <linux/slab.h>
+@@ -23,9 +25,9 @@
+ 	BUG_ON(test_and_set_bit(__LC_PARANOIA, &lc->flags)); \
+ } while (0)
+ 
+! cocci (macro va args) maybe manual
+-#define RETURN(x...)     do { \
++#define RETURN(...)     do { \
+ 	clear_bit_unlock(__LC_PARANOIA, &lc->flags); \
+-	return x ; } while (0)
++	return __VA_ARGS__ ; } while (0)
+ 
+ /* BUG() if e is not one of the elements tracked by lc */
+ #define PARANOIA_LC_ELEMENT(lc, e) do {	\
+@@ -35,20 +37,19 @@
+ 	BUG_ON(i >= lc_->nr_elements);	\
+ 	BUG_ON(lc_->lc_element[i] != e_); } while (0)
+ 
+-
+ /* We need to atomically
+! cocci
+- *  - try to grab the lock (set LC_LOCKED)
++ *  - try_ to grab the lock (set LC_LOCKED)
+  *  - only if there is no pending transaction
+  *    (neither LC_DIRTY nor LC_STARVING is set)
+  * Because of PARANOIA_ENTRY() above abusing lc->flags as well,
+  * it is not sufficient to just say
+! remove
+- *	return 0 == cmpxchg(&lc->flags, 0, LC_LOCKED);
++ *	return 0 == atomic_cmpxchg((atomic_t*)(&lc->flags), 0, LC_LOCKED);
+  */
+ int lc_try_lock(struct lru_cache *lc)
+ {
+! cocci
+-	unsigned long val;
++	ULONG_PTR val;
+ 	do {
+! remove
+-		val = cmpxchg(&lc->flags, 0, LC_LOCKED);
++		val = atomic_cmpxchg((atomic_t*)(&lc->flags), 0, LC_LOCKED);
+ 	} while (unlikely (val == LC_PARANOIA));
+ 	/* Spin until no-one is inside a PARANOIA_ENTRY()/RETURN() section. */
+ 	return 0 == val;
+@@ -73,26 +74,21 @@
+ 	struct lc_element **element = NULL;
+ 	struct lru_cache *lc;
+ 	struct lc_element *e;
+! compat make this work (kmem_cache_size and the like)
+-	unsigned cache_obj_size = kmem_cache_size(cache);
+ 	unsigned i;
+ 
+! compat make this work (kmem_cache_size and the like)
+-	WARN_ON(cache_obj_size < e_size);
+-	if (cache_obj_size < e_size)
+-		return NULL;
+-
+ 	/* e_count too big; would probably fail the allocation below anyways.
+ 	 * for typical use cases, e_count should be few thousand at most. */
+ 	if (e_count > LC_MAX_ACTIVE)
+ 		return NULL;
+ 
+! cocci (also remove tag from kcalloc)
+-	slot = kcalloc(e_count, sizeof(struct hlist_head), GFP_KERNEL);
++	slot = kcalloc(e_count, sizeof(struct hlist_head), GFP_KERNEL, '00WD');
+ 	if (!slot)
+ 		goto out_fail;
+! cocci (also remove tag from kcalloc)
+-	element = kzalloc(e_count * sizeof(struct lc_element *), GFP_KERNEL);
++	element = kzalloc(e_count * sizeof(struct lc_element *), GFP_KERNEL, '01WD');
+ 	if (!element)
+ 		goto out_fail;
+ 
+! cocci (also remove tag from kcalloc)
+-	lc = kzalloc(sizeof(*lc), GFP_KERNEL);
++	lc = kzalloc(sizeof(*lc), GFP_KERNEL, '02WD');
+ 	if (!lc)
+ 		goto out_fail;
+ 
+@@ -226,7 +222,6 @@
+ 	return  lc->lc_slot + (enr % lc->nr_elements);
+ }
+ 
+-
+ static struct lc_element *__lc_find(struct lru_cache *lc, unsigned int enr,
+ 		bool include_changing)
+ {
+@@ -234,7 +229,7 @@
+ 
+ 	BUG_ON(!lc);
+ 	BUG_ON(!lc->nr_elements);
+! cocci (type for hlist_for_each_entry)
+-	hlist_for_each_entry(e, lc_hash_slot(lc, enr), colision) {
++	hlist_for_each_entry(struct lc_element, e, lc_hash_slot(lc, enr), colision) {
+ 		/* "about to be changed" elements, pending transaction commit,
+ 		 * are hashed by their "new number". "Normal" elements have
+ 		 * lc_number == lc_new_number. */
+@@ -358,7 +353,7 @@
+ 		if (e->lc_new_number != e->lc_number) {
+ 			/* It has been found above, but on the "to_be_changed"
+ 			 * list, not yet committed.  Don't pull it in twice,
+! remove
+-			 * wait for the transaction, then try again...
++			 * wait for the transaction, then try_ again...
+ 			 */
+ 			if (!(flags & LC_GET_MAY_USE_UNCOMMITTED))
+ 				RETURN(NULL);
+@@ -517,7 +512,7 @@
+ 	struct lc_element *e, *tmp;
+ 
+ 	PARANOIA_ENTRY();
+! cocci
+-	list_for_each_entry_safe(e, tmp, &lc->to_be_changed, list) {
++	list_for_each_entry_safe(struct lc_element, e, tmp, &lc->to_be_changed, list) {
+ 		/* count number of changes, not number of transactions */
+ 		++lc->changed;
+ 		e->lc_number = e->lc_new_number;
+@@ -527,7 +522,6 @@
+ 	RETURN();
+ }
+ 
+-
+ /**
+  * lc_put - give up refcnt of @e
+  * @lc: the lru cache to operate on
