@@ -1,0 +1,767 @@
+--- drbd/drbd/drbd_debugfs.c	2023-02-17 14:26:26.766469006 +0000
++++ converted-sources/drbd/drbd_debugfs.c	2023-02-17 14:26:29.254422249 +0000
+@@ -1,4 +1,4 @@
+! header
+-#define pr_fmt(fmt)	KBUILD_MODNAME " debugfs: " fmt
++#define pr_fmt(fmt) ":" fmt
+ #include <linux/kernel.h>
+ #include <linux/module.h>
+ #include <linux/debugfs.h>
+@@ -128,7 +128,7 @@
+ }
+ #endif
+ 
+! cocci
+-static void seq_print_one_request(struct seq_file *m, struct drbd_request *req, ktime_t now, unsigned long jif)
++static void seq_print_one_request(struct seq_file *m, struct drbd_request *req, ktime_t now, ULONG_PTR jif)
+ {
+ 	/* change anything here, fixup header below! */
+ 	unsigned int s = req->local_rq_state;
+@@ -146,9 +146,11 @@
+ 	seq_print_age_or_dash(m, s & RQ_LOCAL_PENDING, ktime_sub(now, req->pre_submit_kt));
+ 
+ #define RQ_HDR_3 "\tsent\tacked\tdone"
+! compat: implement debugfs (via ioctl)
++#if 0
+ 	print_one_age_or_dash(m, req, RQ_NET_SENT, 0, now, offsetof(typeof(*req), pre_send_kt));
+ 	print_one_age_or_dash(m, req, RQ_NET_SENT, RQ_NET_PENDING, now, offsetof(typeof(*req), acked_kt));
+ 	print_one_age_or_dash(m, req, RQ_NET_DONE, 0, now, offsetof(typeof(*req), net_done_kt));
+! compat: implement debugfs (via ioctl)
++#endif
+ #else
+ #define RQ_HDR_2 "\tstart"
+ #define RQ_HDR_3 ""
+@@ -159,19 +161,20 @@
+ }
+ #define RQ_HDR RQ_HDR_1 RQ_HDR_2 RQ_HDR_3 RQ_HDR_4
+ 
+! cocci
+-static void seq_print_minor_vnr_req(struct seq_file *m, struct drbd_request *req, ktime_t now, unsigned long jif)
++static void seq_print_minor_vnr_req(struct seq_file *m, struct drbd_request *req, ktime_t now, ULONG_PTR jif)
+ {
+ 	seq_printf(m, "%u\t%u\t", req->device->minor, req->device->vnr);
+ 	seq_print_one_request(m, req, now, jif);
+ }
+ 
+! cocci
+-static void seq_print_resource_pending_meta_io(struct seq_file *m, struct drbd_resource *resource, unsigned long jif)
++static void seq_print_resource_pending_meta_io(struct seq_file *m, struct drbd_resource *resource, ULONG_PTR jif)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_device *device;
+ 	int i;
+ 
+ 	seq_puts(m, "minor\tvnr\tstart\tsubmit\tintent\n");
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&resource->devices, device, i) {
+ 		struct drbd_md_io tmp;
+ 		/* In theory this is racy,
+@@ -190,28 +193,32 @@
+ 			seq_printf(m, "%s\n", tmp.current_use);
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ }
+ 
+! cocci
+-static void seq_print_waiting_for_AL(struct seq_file *m, struct drbd_resource *resource, ktime_t now, unsigned long jif)
++static void seq_print_waiting_for_AL(struct seq_file *m, struct drbd_resource *resource, ktime_t now, ULONG_PTR jif)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
++	KIRQL rcu_flags;
+ 	struct drbd_device *device;
+ 	int i;
+ 
+ 	seq_puts(m, "minor\tvnr\tage\t#waiting\n");
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&resource->devices, device, i) {
+! remove: uninitialized?
+-		struct drbd_request *req;
++		struct drbd_request *req = NULL;
+ 		int n = atomic_read(&device->ap_actlog_cnt);
+ 		if (n) {
+! cocci
+-			spin_lock_irq(&device->resource->req_lock);
++			spin_lock_irqsave(&device->resource->req_lock,
++					  spin_lock_irq_flags);
+ 			req = list_first_entry_or_null(&device->pending_master_completion[1],
+ 				struct drbd_request, req_pending_master_completion);
+ 			/* if the oldest request does not wait for the activity log
+ 			 * it is not interesting for us here */
+ 			if (req && (req->local_rq_state & RQ_IN_ACT_LOG))
+ 				req = NULL;
+! cocci
+-			spin_unlock_irq(&device->resource->req_lock);
++			spin_unlock_irqrestore(&device->resource->req_lock,
++					       spin_lock_irq_flags);
+ 		}
+ 		if (n) {
+ 			seq_printf(m, "%u\t%u\t", device->minor, device->vnr);
+@@ -226,16 +233,17 @@
+ 			seq_printf(m, "%u\n", n);
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ }
+ 
+! cocci
+-static void seq_print_device_bitmap_io(struct seq_file *m, struct drbd_device *device, unsigned long jif)
++static void seq_print_device_bitmap_io(struct seq_file *m, struct drbd_device *device, ULONG_PTR jif)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_bm_aio_ctx *ctx;
+! cocci
+-	unsigned long start_jif;
++	ULONG_PTR start_jif = 0;
+ 	unsigned int in_flight;
+! cocci (should be KIRQL)
+-	unsigned int flags;
+! cocci
+-	spin_lock_irq(&device->resource->req_lock);
++	unsigned int flags = 0;
++	spin_lock_irqsave(&device->resource->req_lock, spin_lock_irq_flags);
+ 	ctx = list_first_entry_or_null(&device->pending_bitmap_io, struct drbd_bm_aio_ctx, list);
+ 	if (ctx && ctx->done)
+ 		ctx = NULL;
+@@ -244,7 +252,8 @@
+ 		in_flight = atomic_read(&ctx->in_flight);
+ 		flags = ctx->flags;
+ 	}
+! cocci
+-	spin_unlock_irq(&device->resource->req_lock);
++	spin_unlock_irqrestore(&device->resource->req_lock,
++			       spin_lock_irq_flags);
+ 	if (ctx) {
+ 		seq_printf(m, "%u\t%u\t%c\t%u\t%u\n",
+ 			device->minor, device->vnr,
+@@ -254,23 +263,24 @@
+ 	}
+ }
+ 
+! cocci
+-static void seq_print_resource_pending_bitmap_io(struct seq_file *m, struct drbd_resource *resource, unsigned long jif)
++static void seq_print_resource_pending_bitmap_io(struct seq_file *m, struct drbd_resource *resource, ULONG_PTR jif)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_device *device;
+ 	int i;
+ 
+ 	seq_puts(m, "minor\tvnr\trw\tage\t#in-flight\n");
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&resource->devices, device, i) {
+ 		seq_print_device_bitmap_io(m, device, jif);
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ }
+ 
+ /* pretty print enum peer_req->flags */
+ static void seq_print_peer_request_flags(struct seq_file *m, struct drbd_peer_request *peer_req)
+ {
+! cocci
+-	unsigned long f = peer_req->flags;
++	ULONG_PTR f = peer_req->flags;
+ 	char sep = ' ';
+ 
+ 	__seq_print_rq_state_bit(m, f & EE_SUBMITTED, &sep, "submitted", "preparing");
+@@ -288,11 +298,11 @@
+ 
+ static void seq_print_peer_request(struct seq_file *m,
+ 	struct drbd_connection *connection, struct list_head *lh,
+! cocci
+-	unsigned long jif)
++	ULONG_PTR jif)
+ {
+ 	bool reported_preparing = false;
+ 	struct drbd_peer_request *peer_req;
+! cocci
+-	list_for_each_entry(peer_req, lh, w.list) {
++	list_for_each_entry(struct drbd_peer_request, peer_req, lh, w.list) {
+ 		struct drbd_peer_device *peer_device = peer_req->peer_device;
+ 		struct drbd_device *device = peer_device ? peer_device->device : NULL;
+ 
+@@ -315,18 +325,21 @@
+ }
+ 
+ static void seq_print_connection_peer_requests(struct seq_file *m,
+! cocci
+-	struct drbd_connection *connection, unsigned long jif)
++	struct drbd_connection *connection, ULONG_PTR jif)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	seq_puts(m, "minor\tvnr\tsector\tsize\trw\tage\tflags\n");
+! cocci
+-	spin_lock_irq(&connection->resource->req_lock);
++	spin_lock_irqsave(&connection->resource->req_lock,
++			  spin_lock_irq_flags);
+ 	seq_print_peer_request(m, connection, &connection->active_ee, jif);
+ 	seq_print_peer_request(m, connection, &connection->read_ee, jif);
+ 	seq_print_peer_request(m, connection, &connection->sync_ee, jif);
+! cocci
+-	spin_unlock_irq(&connection->resource->req_lock);
++	spin_unlock_irqrestore(&connection->resource->req_lock,
++			       spin_lock_irq_flags);
+ }
+ 
+ static void seq_print_device_peer_flushes(struct seq_file *m,
+! cocci
+-	struct drbd_device *device, unsigned long jif)
++	struct drbd_device *device, ULONG_PTR jif)
+ {
+ 	if (test_bit(FLUSH_PENDING, &device->flags)) {
+ 		seq_printf(m, "%u\t%u\t-\t-\tF\t%u\tflush\n",
+@@ -336,34 +349,36 @@
+ }
+ 
+ static void seq_print_resource_pending_peer_requests(struct seq_file *m,
+! cocci
+-	struct drbd_resource *resource, unsigned long jif)
++	struct drbd_resource *resource, ULONG_PTR jif)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_connection *connection;
+ 	struct drbd_device *device;
+ 	int i;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	for_each_connection_rcu(connection, resource) {
+ 		seq_print_connection_peer_requests(m, connection, jif);
+ 	}
+ 	idr_for_each_entry(&resource->devices, device, i) {
+ 		seq_print_device_peer_flushes(m, device, jif);
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ }
+ 
+ static void seq_print_resource_transfer_log_summary(struct seq_file *m,
+ 	struct drbd_resource *resource,
+ 	struct drbd_connection *connection,
+! cocci
+-	ktime_t now, unsigned long jif)
++	ktime_t now, ULONG_PTR jif)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_request *req;
+ 	unsigned int count = 0;
+ 	unsigned int show_state = 0;
+ 
+ 	seq_puts(m, "n\tdevice\tvnr\t" RQ_HDR);
+! cocci
+-	spin_lock_irq(&resource->req_lock);
+-	list_for_each_entry(req, &resource->transfer_log, tl_requests) {
++	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags);
++	list_for_each_entry(struct drbd_request, req, &resource->transfer_log, tl_requests) {
+ 		struct drbd_device *device = req->device;
+ 		struct drbd_peer_device *peer_device;
+ 		unsigned int tmp = 0;
+@@ -374,10 +389,12 @@
+ 		if (!(count & 0x1ff)) {
+ 			struct drbd_request *req_next;
+ 			kref_get(&req->kref);
+! cocci
+-			spin_unlock_irq(&resource->req_lock);
++			spin_unlock_irqrestore(&resource->req_lock,
++					       spin_lock_irq_flags);
+ 			cond_resched();
+! cocci
+-			spin_lock_irq(&resource->req_lock);
+! cocci
+-			req_next = list_next_entry(req, tl_requests);
++			spin_lock_irqsave(&resource->req_lock,
++					  spin_lock_irq_flags);
++			req_next = list_next_entry(struct drbd_request, req, tl_requests);
+ 			if (kref_put(&req->kref, drbd_req_destroy))
+ 				req = req_next;
+ 			if (&req->tl_requests == &resource->transfer_log)
+@@ -414,18 +431,19 @@
+ 		if (show_state == 0x1f)
+ 			break;
+ 	}
+! cocci
+-	spin_unlock_irq(&resource->req_lock);
++	spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags);
+ }
+ 
+ /* TODO: transfer_log and friends should be moved to resource */
+ static int resource_in_flight_summary_show(struct seq_file *m, void *pos)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_resource *resource = m->private;
+ 	struct drbd_connection *connection;
+ 	struct drbd_transport *transport;
+ 	struct drbd_transport_stats transport_stats;
+ 	ktime_t now = ktime_get();
+! cocci
+-	unsigned long jif = jiffies;
++	ULONG_PTR jif = jiffies;
+ 
+ 	connection = first_connection(resource);
+ 	transport = &connection->transport;
+@@ -447,7 +465,7 @@
+ 
+ 	seq_puts(m, "transport buffer stats\n");
+ 	/* for each connection ... once we have more than one */
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	if (transport->ops->stream_ok(transport, DATA_STREAM)) {
+ 		transport->ops->stats(transport, &transport_stats);
+ 		seq_printf(m, "unread receive buffer: %u Byte\n",
+@@ -455,7 +473,7 @@
+ 		seq_printf(m, "unacked send buffer: %u Byte\n",
+ 				transport_stats.unacked_send);
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	seq_putc(m, '\n');
+ 
+ 	seq_puts(m, "oldest peer requests\n");
+@@ -479,17 +497,19 @@
+ 
+ static int resource_state_twopc_show(struct seq_file *m, void *pos)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
++	KIRQL rcu_flags;
+ 	struct drbd_resource *resource = m->private;
+ 	struct twopc_reply twopc;
+ 	bool active = false;
+! cocci
+-	unsigned long jif;
++	ULONG_PTR jif;
+ 
+! cocci
+-	spin_lock_irq(&resource->req_lock);
++	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags);
+ 	if (resource->remote_state_change) {
+ 		twopc = resource->twopc_reply;
+ 		active = true;
+ 	}
+! cocci
+-	spin_unlock_irq(&resource->req_lock);
++	spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags);
+ 
+ 	seq_printf(m, "v: %u\n\n", 1);
+ 	if (active) {
+@@ -506,14 +526,16 @@
+ 			u64 parents = 0;
+ 
+ 			seq_puts(m, "  parent list: ");
+! cocci
+-			rcu_read_lock();
+-			spin_lock_irq(&resource->req_lock);
+-			list_for_each_entry(connection, &resource->twopc_parents, twopc_parent_list) {
++			rcu_flags = rcu_read_lock();
++			spin_lock_irqsave(&resource->req_lock,
++					  spin_lock_irq_flags);
++			list_for_each_entry(struct drbd_connection, connection, &resource->twopc_parents, twopc_parent_list) {
+ 				char *name = rcu_dereference((connection)->transport.net_conf)->name;
+ 				seq_printf(m, "%s, ", name);
+ 				parents |= NODE_MASK(connection->peer_node_id);
+ 			}
+! cocci
+-			spin_unlock_irq(&resource->req_lock);
++			spin_unlock_irqrestore(&resource->req_lock,
++					       spin_lock_irq_flags);
+ 			seq_puts(m, "\n");
+ 			seq_puts(m, "  parent node mask: ");
+ 			for_each_connection_rcu(connection, resource) {
+@@ -522,7 +544,7 @@
+ 					seq_printf(m, "%s, ", name);
+ 				}
+ 			}
+! cocci
+-			rcu_read_unlock();
++			rcu_read_unlock(rcu_flags);
+ 			seq_puts(m, "\n");
+ 
+ 			if (parents != resource->twopc_parent_nodes)
+@@ -540,7 +562,7 @@
+ 		}
+ 
+ 		seq_puts(m, "  received replies: ");
+! cocci
+-		rcu_read_lock();
++		rcu_flags = rcu_read_lock();
+ 		for_each_connection_rcu(connection, resource) {
+ 			char *name = rcu_dereference((connection)->transport.net_conf)->name;
+ 
+@@ -554,7 +576,7 @@
+ 				seq_printf(m, "%s yes, ", name);
+ 			else seq_printf(m, "%s ___, ", name);
+ 		}
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 		seq_puts(m, "\n");
+ 		if (twopc.initiator_node_id != resource->res_opts.node_id) {
+ 			/* The timer is only relevant for twopcs initiated by other nodes */
+@@ -568,6 +590,7 @@
+ 	return 0;
+ }
+ 
+! compat: implement debugfs (via ioctl)
++#if 0
+ /* make sure at *open* time that the respective object won't go away. */
+ static int drbd_single_open(struct file *file, int (*show)(struct seq_file *, void *),
+ 		                void *data, struct kref *kref,
+@@ -697,7 +720,7 @@
+ 
+ static void seq_print_one_timing_detail(struct seq_file *m,
+ 	const struct drbd_thread_timing_details *tdp,
+! cocci
+-	unsigned long jif)
++	ULONG_PTR jif)
+ {
+ 	struct drbd_thread_timing_details td;
+ 	/* No locking...
+@@ -716,7 +739,7 @@
+ 
+ static void seq_print_timing_details(struct seq_file *m,
+! cocci
+ 		const char *title,
+-		unsigned int cb_nr, struct drbd_thread_timing_details *tdp, unsigned long jif)
++		unsigned int cb_nr, struct drbd_thread_timing_details *tdp, ULONG_PTR jif)
+ {
+ 	unsigned int start_idx;
+ 	unsigned int i;
+@@ -737,7 +760,7 @@
+ {
+ 	struct drbd_connection *connection = m->private;
+ 	struct drbd_resource *resource = connection->resource;
+! cocci
+-	unsigned long jif = jiffies;
++	ULONG_PTR jif = jiffies;
+ 
+ 	/* BUMP me if you change the file format/content/presentation */
+ 	seq_printf(m, "v: %u\n\n", 0);
+@@ -751,15 +774,16 @@
+ 
+ static int connection_oldest_requests_show(struct seq_file *m, void *ignored)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_connection *connection = m->private;
+ 	ktime_t now = ktime_get();
+! cocci
+-	unsigned long jif = jiffies;
++	ULONG_PTR jif = jiffies;
+ 	struct drbd_request *r1, *r2;
+ 
+ 	/* BUMP me if you change the file format/content/presentation */
+ 	seq_printf(m, "v: %u\n\n", 0);
+ 
+! cocci
+-	spin_lock_irq(&connection->resource->req_lock);
++	spin_lock_irqsave(&connection->resource->req_lock, spin_lock_irq_flags);
+ 	r1 = connection->todo.req_next;
+ 	if (r1)
+ 		seq_print_minor_vnr_req(m, r1, now, jif);
+@@ -771,7 +795,7 @@
+ 	r2 = connection->req_not_net_done;
+ 	if (r2 && r2 != r1)
+ 		seq_print_minor_vnr_req(m, r2, now, jif);
+! cocci
+-	spin_unlock_irq(&connection->resource->req_lock);
++	spin_unlock_irqrestore(&connection->resource->req_lock, spin_lock_irq_flags);
+ 	return 0;
+ }
+ 
+@@ -788,7 +812,7 @@
+ 		struct drbd_send_buffer *sbuf = &connection->send_buffer[i];
+ 		seq_printf(m, "%s stream\n", i == DATA_STREAM ? "data" : "control");
+ 		seq_printf(m, "  corked: %d\n", test_bit(CORKED + i, &connection->flags));
+! cocci
+-		seq_printf(m, "  unsent: %ld bytes\n", (long)(sbuf->pos - sbuf->unsent));
++		seq_printf(m, "  unsent: %ld bytes\n", (LONG_PTR)(sbuf->pos - sbuf->unsent));
+ 		seq_printf(m, "  allocated: %d bytes\n", sbuf->allocated_size);
+ 	}
+ 
+@@ -803,7 +827,7 @@
+ {
+ 	struct drbd_connection *connection = m->private;
+ 	struct drbd_resource *resource = connection->resource;
+! cocci
+-	unsigned long flags = connection->flags;
++	ULONG_PTR flags = connection->flags;
+ 	unsigned int u1, u2;
+ 	unsigned long long ull1, ull2;
+ 	int in_flight;
+@@ -892,15 +916,16 @@
+ 
+ void drbd_debugfs_connection_add(struct drbd_connection *connection)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct dentry *conns_dir = connection->resource->debugfs_res_connections;
+ 	struct drbd_peer_device *peer_device;
+ 	char conn_name[SHARED_SECRET_MAX];
+ 	struct dentry *dentry;
+ 	int vnr;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	strcpy(conn_name, rcu_dereference(connection->transport.net_conf)->name);
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	dentry = debugfs_create_dir(conn_name, conns_dir);
+ 	connection->debugfs_conn = dentry;
+@@ -931,7 +956,7 @@
+ 	unsigned i;
+ 	unsigned max = 0;
+ 	unsigned n_transactions = 0;
+! cocci
+-	unsigned long n_updates = 0;
++	ULONG_PTR n_updates = 0;
+ 
+ 	for (i = 1; i <= n; i++) {
+ 		if (hist[i] > max)
+@@ -947,13 +972,12 @@
+ 		return;
+ 
+ 	for (i = 0; i <= n; i++) {
+! cocci
+-		unsigned v = (hist[i] * 60UL + max-1) / max;
++		unsigned v = (hist[i] * ((ULONG_PTR)60) + max-1) / max;
+ 		seq_printf(m, "%2u : %10u : %-60.*s\n", i, hist[i], v,
+ 			"############################################################");
+ 	}
+ }
+ 
+-
+ static int device_act_log_histogram_show(struct seq_file *m, void *ignored)
+ {
+ 	struct drbd_device *device = m->private;
+@@ -985,10 +1009,11 @@
+ 
+ static int device_oldest_requests_show(struct seq_file *m, void *ignored)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device = m->private;
+ 	struct drbd_resource *resource = device->resource;
+ 	ktime_t now = ktime_get();
+! cocci
+-	unsigned long jif = jiffies;
++	ULONG_PTR jif = jiffies;
+ 	struct drbd_request *r1, *r2;
+ 	int i;
+ 
+@@ -996,7 +1021,7 @@
+ 	seq_printf(m, "v: %u\n\n", 0);
+ 
+ 	seq_puts(m, RQ_HDR);
+! cocci
+-	spin_lock_irq(&resource->req_lock);
++	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags);
+ 	/* WRITE, then READ */
+ 	for (i = 1; i >= 0; --i) {
+ 		r1 = list_first_entry_or_null(&device->pending_master_completion[i],
+@@ -1008,7 +1033,7 @@
+ 		if (r2 && r2 != r1)
+ 			seq_print_one_request(m, r2, now, jif);
+ 	}
+! cocci
+-	spin_unlock_irq(&resource->req_lock);
++	spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags);
+ 	return 0;
+ }
+ 
+@@ -1019,7 +1044,7 @@
+ 	struct opener *tmp;
+ 
+ 	spin_lock(&device->openers_lock);
+! cocci
+-	list_for_each_entry(tmp, &device->openers, list)
++	list_for_each_entry(struct drbd_request, tmp, &device->openers, list)
+ 		seq_printf(m, "%s\t%d\t%lld\n", tmp->comm, tmp->pid,
+ 			ktime_to_ms(ktime_sub(now, tmp->opened)));
+ 	spin_unlock(&device->openers_lock);
+@@ -1041,6 +1066,7 @@
+ 
+ static int device_data_gen_id_show(struct seq_file *m, void *ignored)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device = m->private;
+ 	struct drbd_md *md;
+ 	int node_id, i = 0;
+@@ -1050,7 +1076,7 @@
+ 
+ 	md = &device->ldev->md;
+ 
+! cocci
+-	spin_lock_irq(&md->uuid_lock);
++	spin_lock_irqsave(&md->uuid_lock, spin_lock_irq_flags);
+ 	seq_printf(m, "0x%016llX\n", drbd_current_uuid(device));
+ 
+ 	for (node_id = 0; node_id < DRBD_NODE_ID_MAX; node_id++) {
+@@ -1063,7 +1089,7 @@
+ 
+ 	for (i = 0; i < HISTORY_UUIDS; i++)
+ 		seq_printf(m, "0x%016llX\n", drbd_history_uuid(device, i));
+! cocci
+-	spin_unlock_irq(&md->uuid_lock);
++	spin_unlock_irqrestore(&md->uuid_lock, spin_lock_irq_flags);
+ 	put_ldev(device);
+ 	return 0;
+ }
+@@ -1156,7 +1182,7 @@
+ 
+ 	if (buffer == 'r' || buffer == 'R') {
+ 		struct drbd_peer_device *peer_device;
+! cocci
+-		unsigned long flags;
++		ULONG_PTR flags;
+ 
+ 		spin_lock_irqsave(&device->timing_lock, flags);
+ 		device->reqs = 0;
+@@ -1355,7 +1381,7 @@
+ 	return 0;
+ }
+ 
+! cocci
+-static void seq_printf_with_thousands_grouping(struct seq_file *seq, long v)
++static void seq_printf_with_thousands_grouping(struct seq_file *seq, LONG_PTR v)
+ {
+ 	/* v is in kB/sec. We don't expect TiByte/sec yet. */
+ 	if (unlikely(v >= 1000000)) {
+@@ -1370,12 +1396,12 @@
+ }
+ 
+ static void drbd_get_syncer_progress(struct drbd_peer_device *pd,
+! cocci
+-		enum drbd_repl_state repl_state, unsigned long *rs_total,
+-		unsigned long *bits_left, unsigned int *per_mil_done)
++		enum drbd_repl_state repl_state, ULONG_PTR *rs_total,
++		ULONG_PTR *bits_left, unsigned int *per_mil_done)
+ {
+ 	/* this is to break it at compile time when we change that, in case we
+ 	 * want to support more than (1<<32) bits on a 32bit arch. */
+! compat: typecheck: patch this out (no typeof)
+-	typecheck(unsigned long, pd->rs_total);
++	typecheck(ULONG_PTR, pd->rs_total);
+ 	*rs_total = pd->rs_total;
+ 
+ 	/* note: both rs_total and rs_left are in bits, i.e. in
+@@ -1405,9 +1431,9 @@
+ 		 * arch anyways, but no harm done to be prepared for it here.
+ 		 */
+ 		unsigned int shift = *rs_total > UINT_MAX ? 16 : 10;
+! cocci
+-		unsigned long left = *bits_left >> shift;
+-		unsigned long total = 1UL + (*rs_total >> shift);
+-		unsigned long tmp = 1000UL - left * 1000UL/total;
++		ULONG_PTR left = *bits_left >> shift;
++		ULONG_PTR total = ((ULONG_PTR)1) + (*rs_total >> shift);
++		ULONG_PTR tmp = ((ULONG_PTR)1000) - left * ((ULONG_PTR)1000)/total;
+ 		*per_mil_done = tmp;
+ 	}
+ }
+@@ -1415,7 +1441,7 @@
+ static void drbd_syncer_progress(struct drbd_peer_device *pd, struct seq_file *seq,
+ 		enum drbd_repl_state repl_state)
+ {
+! cocci
+-	unsigned long db, dt, dbdt, rt, rs_total, rs_left;
++	ULONG_PTR db, dt, dbdt, rt, rs_total, rs_left;
+ 	unsigned int res;
+ 	int i, x, y;
+ 	int stalled = 0;
+@@ -1439,14 +1465,14 @@
+ 	seq_printf(seq, "%3u.%u%% ", res / 10, res % 10);
+ 
+ 	/* if more than a few GB, display in MB */
+! cocci
+-	if (rs_total > (4UL << (30 - BM_BLOCK_SHIFT)))
++	if (rs_total > (((ULONG_PTR)4) << (30 - BM_BLOCK_SHIFT)))
+ 		seq_printf(seq, "(%lu/%lu)M",
+-			    (unsigned long) Bit2KB(rs_left >> 10),
+-			    (unsigned long) Bit2KB(rs_total >> 10));
+! cocci
++			    (ULONG_PTR) Bit2KB(rs_left >> 10),
++			    (ULONG_PTR) Bit2KB(rs_total >> 10));
+ 	else
+ 		seq_printf(seq, "(%lu/%lu)K",
+! cocci
+-			    (unsigned long) Bit2KB(rs_left),
+-			    (unsigned long) Bit2KB(rs_total));
++			    (ULONG_PTR) Bit2KB(rs_left),
++			    (ULONG_PTR) Bit2KB(rs_total));
+ 
+ 	seq_puts(seq, "\n\t");
+ 
+@@ -1514,8 +1540,8 @@
+ 	{
+ 		/* 64 bit:
+ 		 * we convert to sectors in the display below. */
+! cocci
+-		unsigned long bm_bits = drbd_bm_bits(pd->device);
+-		unsigned long bit_pos;
++		ULONG_PTR bm_bits = drbd_bm_bits(pd->device);
++		ULONG_PTR bit_pos;
+ 		unsigned long long stop_sector = 0;
+ 		if (repl_state == L_VERIFY_S ||
+ 		    repl_state == L_VERIFY_T) {
+@@ -1539,6 +1565,7 @@
+ 
+ static int peer_device_proc_drbd_show(struct seq_file *m, void *ignored)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_peer_device *peer_device = m->private;
+ 	struct drbd_device *device = peer_device->device;
+ 	union drbd_state state;
+@@ -1558,7 +1585,7 @@
+ 
+ 	sn = drbd_repl_str(state.conn);
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	{
+ 		/* reset device->congestion_reason */
+ 
+@@ -1617,7 +1644,7 @@
+ 		/* nr extents needed to satisfy the above in the worst case */
+ 		atomic_read(&device->wait_for_actlog_ecnt));
+ 
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	return 0;
+ }
+@@ -1771,3 +1798,4 @@
+ 	dentry = debugfs_create_file("compat", 0444, drbd_debugfs_root, NULL, &drbd_compat_fops);
+ 	drbd_debugfs_compat = dentry;
+ }
+! compat: implement debugfs (via ioctl)
++#endif
