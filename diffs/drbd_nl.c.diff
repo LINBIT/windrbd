@@ -1,0 +1,2217 @@
+--- drbd/drbd/drbd_nl.c	2023-02-17 14:26:26.746469382 +0000
++++ converted-sources/drbd/drbd_nl.c	2023-02-17 14:26:29.110424954 +0000
+@@ -8,10 +8,9 @@
+    Copyright (C) 1999-2008, Philipp Reisner <philipp.reisner@linbit.com>.
+    Copyright (C) 2002-2008, Lars Ellenberg <lars.ellenberg@linbit.com>.
+ 
+-
+  */
+ 
+! header
+-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
++#define pr_fmt(fmt) ":" fmt
+ 
+ #include <linux/module.h>
+ #include <linux/drbd.h>
+@@ -86,18 +85,71 @@
+ int drbd_adm_get_initial_state(struct sk_buff *skb, struct netlink_callback *cb);
+ int drbd_adm_get_initial_state_done(struct netlink_callback *cb);
+ 
+! compat: move this somewhere into compat: net/genetlink.h
++inline static int genl_register_family_with_ops(const struct genl_family *f, const struct genl_ops *o, int count)
++{
++	(void)f;
++	(void)o;
++	(void)count;
++	return 0;
++}
++
++inline static int genl_unregister_family(const struct genl_family *f)
++{
++	(void)f;
++	return 0;
++}
++
+ #include <linux/drbd_genl_api.h>
+ #include "drbd_nla.h"
+ #include <linux/genl_magic_func.h>
+ 
+! compat: move this somewhere into compat: net/genetlink.h
++#include "windrbd/windrbd_ioctl.h"
++
++/* Those two functions taken from netlink.c_inc, originally they
++ * are probably generated.
++ */
++
++int drbd_tla_parse(struct nlmsghdr *nlh, struct nlattr **attr)
++{
++		/* Since drbd_nl.c does not have an initialization
++		 * function and drbd_genl_family is static (we don't
++		 * want to change the header), we initialize that here.
++		 * This is 'our' function.
++		 */
++	drbd_genl_family.id = WINDRBD_NETLINK_FAMILY_ID;
++
++       return nla_parse(attr, ARRAY_SIZE(drbd_tla_nl_policy) - 1,
++               nlmsg_attrdata(nlh, GENL_HDRLEN + drbd_genl_family.hdrsize),
++               nlmsg_attrlen(nlh, GENL_HDRLEN + drbd_genl_family.hdrsize),
++               drbd_tla_nl_policy);
++}
++
++struct genl_ops *get_drbd_genl_ops(u8 cmd)
++{
++       int i;
++
++       for (i=0; i<sizeof(drbd_genl_ops)/sizeof((drbd_genl_ops)[0]); i++) {
++               if (drbd_genl_ops[i].cmd == cmd)
++                       return &drbd_genl_ops[i];
++       }
++       return NULL;
++}
++
++/* Don't want to touch magic func header, which declares this static */
++
++const char *windrbd_genl_cmd_to_str(u8 cmd)
++{
++       return drbd_genl_cmd_to_str(cmd);
++}
++
+ atomic_t drbd_genl_seq = ATOMIC_INIT(2); /* two. */
+ 
+! compat: define this and initialize later (how?)
+-DEFINE_MUTEX(notification_mutex);
++struct mutex notification_mutex;
+ 
+ /* used blkdev_get_by_path, to claim our meta data device(s) */
+ static char *drbd_m_holder = "Hands off! this is DRBD's meta data device.";
+ 
+! compat: use something else
+-static void drbd_adm_send_reply(struct sk_buff *skb, struct genl_info *info)
++void drbd_adm_send_reply(struct sk_buff *skb, struct genl_info *info)
+ {
+ 	genlmsg_end(skb, genlmsg_data(nlmsg_data(nlmsg_hdr(skb))));
+ 	if (genlmsg_reply(skb, info))
+@@ -203,6 +255,7 @@
+ static int drbd_adm_prepare(struct drbd_config_context *adm_ctx,
+ 	struct sk_buff *skb, struct genl_info *info, unsigned flags)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_genlmsghdr *d_in = info->userhdr;
+ 	const u8 cmd = info->genlhdr->cmd;
+ 	int err;
+@@ -286,13 +339,13 @@
+ 	}
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	adm_ctx->device = minor_to_device(d_in->minor);
+ 	if (adm_ctx->device) {
+ 		kref_get(&adm_ctx->device->kref);
+ 		kref_debug_get(&adm_ctx->device->kref_debug, 4);
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	if (!adm_ctx->device && (flags & DRBD_ADM_NEED_MINOR)) {
+ 		drbd_msg_put_info(adm_ctx->reply_skb, "unknown minor");
+@@ -334,7 +387,7 @@
+ 		}
+ 	}
+ 	if (flags & DRBD_ADM_NEED_PEER_DEVICE) {
+! cocci
+-		rcu_read_lock();
++		rcu_flags = rcu_read_lock();
+ 		if (adm_ctx->volume != VOLUME_UNSPECIFIED)
+ 			adm_ctx->peer_device =
+ 				idr_find(&adm_ctx->connection->peer_devices,
+@@ -342,7 +395,7 @@
+ 		if (!adm_ctx->peer_device) {
+ 			drbd_msg_put_info(adm_ctx->reply_skb, "unknown volume");
+ 			err = ERR_INVALID_REQUEST;
+! cocci
+-			rcu_read_unlock();
++			rcu_read_unlock(rcu_flags);
+ 			goto finish;
+ 		}
+ 		if (!adm_ctx->device) {
+@@ -350,7 +403,7 @@
+ 			kref_get(&adm_ctx->device->kref);
+ 			kref_debug_get(&adm_ctx->device->kref_debug, 4);
+ 		}
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 	}
+ 
+ 	/* some more paranoia, if the request was over-determined */
+@@ -434,19 +487,20 @@
+ 
+ static void conn_md_sync(struct drbd_connection *connection)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_peer_device *peer_device;
+ 	int vnr;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+ 		struct drbd_device *device = peer_device->device;
+ 		kref_get(&device->kref);
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 		drbd_md_sync_if_dirty(device);
+ 		kref_put(&device->kref, drbd_destroy_device);
+! cocci
+-		rcu_read_lock();
++		rcu_flags = rcu_read_lock();
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ }
+ 
+ /* Try to figure out where we are happy to become primary.
+@@ -454,6 +508,7 @@
+ */
+ static u64 up_to_date_nodes(struct drbd_device *device, bool op_is_fence)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_resource *resource = device->resource;
+ 	const int my_node_id = resource->res_opts.node_id;
+ 	u64 mask = NODE_MASK(my_node_id);
+@@ -461,13 +516,13 @@
+ 	if (resource->role[NOW] == R_PRIMARY || op_is_fence) {
+ 		struct drbd_peer_device *peer_device;
+ 
+! cocci
+-		rcu_read_lock();
++		rcu_flags = rcu_read_lock();
+ 		for_each_peer_device_rcu(peer_device, device) {
+ 			enum drbd_disk_state pdsk = peer_device->disk_state[NOW];
+ 			if (pdsk == D_UP_TO_DATE)
+ 				mask |= NODE_MASK(peer_device->node_id);
+ 		}
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 	} else if (device->disk_state[NOW] == D_UP_TO_DATE) {
+ 		struct drbd_peer_md *peer_md = device->ldev->md.peers;
+ 		int node_id;
+@@ -497,7 +552,7 @@
+ };
+ 
+ /* Print into an env buffer. */
+! header
+-static __printf(2, 3) int env_print(struct env *env, const char *fmt, ...)
++static int env_print(struct env *env, const char *fmt, ...)
+ {
+ 	va_list args;
+ 	int pos, ret;
+@@ -506,7 +561,7 @@
+ 	if (pos < 0)
+ 		return pos;
+ 	va_start(args, fmt);
+! compat: rename vsnprintf (is a Windows function?)
+-	ret = vsnprintf(env->buffer + pos, env->size - pos, fmt, args);
++	ret = windrbd_vsnprintf(env->buffer + pos, env->size - pos, fmt, args);
+ 	va_end(args);
+ 	if (ret < 0) {
+ 		env->pos = ret;
+@@ -576,18 +631,19 @@
+ }
+ 
+ /* Macro refers to local variables peer_device, device and connection! */
+! manual: seems like variable macro args is a GNU extension
+-#define magic_printk(level, fmt, args...)				\
++#define magic_printk(level, fmt, ...)				\
+ 	do {								\
+ 		if (peer_device)					\
+-			drbd_printk(level, peer_device, fmt, args);	\
++			drbd_printk(level, peer_device, fmt, __VA_ARGS__);	\
+ 		else if (device)					\
+-			drbd_printk(level, device, fmt, args);		\
++			drbd_printk(level, device, fmt, __VA_ARGS__);		\
+ 		else							\
+-			drbd_printk(level, connection, fmt, args);	\
++			drbd_printk(level, connection, fmt, __VA_ARGS__);	\
+ 	} while (0)
+ 
+ static int drbd_khelper(struct drbd_device *device, struct drbd_connection *connection, char *cmd)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_resource *resource = device ? device->resource : connection->resource;
+ 	char *argv[] = { drbd_usermode_helper, cmd, resource->name, NULL };
+ 	struct drbd_peer_device *peer_device = NULL;
+@@ -596,14 +652,14 @@
+ 	int ret;
+ 
+     enlarge_buffer:
+! compat: implement __get_free_pages (by calling kmalloc)
+-	env.buffer = (char *)__get_free_pages(GFP_NOIO, get_order(env.size));
++	env.buffer = (char *)kzalloc(env.size, GFP_NOIO, '00WD');
+ 	if (!env.buffer) {
+ 		ret = -ENOMEM;
+ 		goto out_err;
+ 	}
+ 	env.pos = 0;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	env_print(&env, "HOME=/");
+ 	env_print(&env, "TERM=linux");
+ 	env_print(&env, "PATH=/sbin:/usr/sbin:/bin:/usr/bin");
+@@ -646,7 +702,7 @@
+ 			}
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	if (strstr(cmd, "fence")) {
+ 		bool op_is_fence = strcmp(cmd, "fence-peer") == 0;
+@@ -672,7 +728,7 @@
+ 	envp = make_envp(&env);
+ 	if (!envp) {
+ 		if (env.pos == -ENOMEM) {
+! compat: implement free_pages
+-			free_pages((unsigned long)env.buffer, get_order(env.size));
++			kfree(env.buffer);
+ 			env.size += PAGE_SIZE;
+ 			goto enlarge_buffer;
+ 		}
+@@ -713,7 +769,7 @@
+ 	if (ret < 0) /* Ignore any ERRNOs we got. */
+ 		ret = 0;
+ 
+! compat: implement free_pages
+-	free_pages((unsigned long)env.buffer, get_order(env.size));
++	kfree(env.buffer);
+ 	return ret;
+ 
+     out_err:
+@@ -734,11 +790,12 @@
+ 
+ static bool initial_states_pending(struct drbd_connection *connection)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_peer_device *peer_device;
+ 	int vnr;
+ 	bool pending = false;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+ 		if (test_bit(INITIAL_STATE_SENT, &peer_device->flags) &&
+ 		    peer_device->repl_state[NOW] == L_OFF) {
+@@ -746,42 +803,45 @@
+ 			break;
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	return pending;
+ }
+ 
+ static bool intentional_diskless(struct drbd_resource *resource)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	bool intentional_diskless = true;
+ 	struct drbd_device *device;
+ 	int vnr;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&resource->devices, device, vnr) {
+ 		if (!device->device_conf.intentional_diskless) {
+ 			intentional_diskless = false;
+ 			break;
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	return intentional_diskless;
+ }
+ 
+ bool conn_try_outdate_peer(struct drbd_connection *connection)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_resource *resource = connection->resource;
+! cocci
+-	unsigned long last_reconnect_jif;
++	ULONG_PTR last_reconnect_jif;
+ 	enum drbd_fencing_policy fencing_policy;
+ 	enum drbd_disk_state disk_state;
+ 	char *ex_to_string;
+ 	int r;
+! cocci
+-	unsigned long irq_flags;
++	KIRQL irq_flags;
+ 
+! cocci
+-	spin_lock_irq(&resource->req_lock);
++	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags);
+ 	if (connection->cstate[NOW] >= C_CONNECTED) {
+ 		drbd_err(connection, "Expected cstate < C_CONNECTED\n");
+! cocci
+-		spin_unlock_irq(&resource->req_lock);
++		spin_unlock_irqrestore(&resource->req_lock,
++				       spin_lock_irq_flags);
+ 		return false;
+ 	}
+ 
+@@ -798,10 +858,11 @@
+ 		if (!resource_is_suspended(resource, NOW))
+ 			_tl_walk(connection, CONNECTION_LOST_WHILE_PENDING);
+ 		end_state_change_locked(resource);
+! cocci
+-		spin_unlock_irq(&resource->req_lock);
++		spin_unlock_irqrestore(&resource->req_lock,
++				       spin_lock_irq_flags);
+ 		return false;
+ 	}
+! cocci
+-	spin_unlock_irq(&resource->req_lock);
++	spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags);
+ 
+ 	fencing_policy = connection->fencing_policy;
+ 	if (fencing_policy == FP_DONT_CARE)
+@@ -909,54 +970,57 @@
+ 
+ static bool barrier_pending(struct drbd_resource *resource)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_connection *connection;
+ 	bool rv = false;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	for_each_connection_rcu(connection, resource) {
+ 		if (test_bit(BARRIER_ACK_PENDING, &connection->flags)) {
+ 			rv = true;
+ 			break;
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	return rv;
+ }
+ 
+ static void wait_for_peer_disk_updates(struct drbd_resource *resource)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_peer_device *peer_device;
+ 	struct drbd_device *device;
+ 	int vnr;
+ 
+ restart:
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&resource->devices, device, vnr) {
+ 		for_each_peer_device_rcu(peer_device, device) {
+ 			if (test_bit(GOT_NEG_ACK, &peer_device->flags)) {
+ 				clear_bit(GOT_NEG_ACK, &peer_device->flags);
+! cocci
+-				rcu_read_unlock();
++				rcu_read_unlock(rcu_flags);
+ 				wait_event(resource->state_wait, peer_device->disk_state[NOW] < D_UP_TO_DATE);
+ 				goto restart;
+ 			}
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ }
+ 
+ static int count_up_to_date(struct drbd_resource *resource)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_device *device;
+ 	int vnr, nr_up_to_date = 0;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&resource->devices, device, vnr) {
+ 		enum drbd_disk_state disk_state = device->disk_state[NOW];
+ 		if (disk_state == D_UP_TO_DATE)
+ 			nr_up_to_date++;
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	return nr_up_to_date;
+ }
+ 
+@@ -984,43 +1048,45 @@
+ /* reconciliation resyncs finished and I know if I am D_UP_TO_DATE or D_OUTDATED */
+ static bool after_primary_lost_events_settled(struct drbd_resource *resource)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_device *device;
+ 	int vnr;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&resource->devices, device, vnr) {
+ 		enum drbd_disk_state disk_state = device->disk_state[NOW];
+ 		if (disk_state == D_CONSISTENT ||
+ 		    any_peer_is_consistent(device) ||
+ 		    (reconciliation_ongoing(device) &&
+ 		     (disk_state == D_OUTDATED || disk_state == D_INCONSISTENT))) {
+! cocci
+-			rcu_read_unlock();
++			rcu_read_unlock(rcu_flags);
+ 			return false;
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	return true;
+ }
+ 
+ static bool wait_up_to_date(struct drbd_resource *resource)
+ {
+! cocci
+-	long timeout = resource->res_opts.auto_promote_timeout * HZ / 10;
+! cocci (unused wait_xxx retval)
++	long remaining_time;
++	LONG_PTR timeout = resource->res_opts.auto_promote_timeout * HZ / 10;
+ 	int initial_up_to_date, up_to_date;
+ 
+ 	initial_up_to_date = count_up_to_date(resource);
+! cocci
+-	wait_event_interruptible_timeout(resource->state_wait,
++	wait_event_interruptible_timeout(remaining_time, resource->state_wait,
+ 					 after_primary_lost_events_settled(resource),
+ 					 timeout);
+ 	up_to_date = count_up_to_date(resource);
+ 	return up_to_date > initial_up_to_date;
+ }
+ 
+-
+ enum drbd_state_rv
+ drbd_set_role(struct drbd_resource *resource, enum drbd_role role, bool force, struct sk_buff *reply_skb)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_device *device;
+! cocci: try identifier (is reserved in VC)
+-	int vnr, try = 0, forced = 0;
++	int vnr, try_ = 0, forced = 0;
+ 	const int max_tries = 4;
+ 	enum drbd_state_rv rv = SS_UNKNOWN_ERROR;
+ 	bool retried_ss_two_primaries = false;
+@@ -1028,6 +1094,13 @@
+ 	const char *err_str = NULL;
+ 	enum chg_state_flags flags = CS_ALREADY_SERIALIZED | CS_DONT_RETRY | CS_WAIT_COMPLETE;
+ 	struct block_device *bdev = NULL;
+! upstream: secondary event
++	enum drbd_role old_role = resource->role[NOW];
++
++	if (old_role == R_PRIMARY && role == R_SECONDARY) {
++		idr_for_each_entry(&resource->devices, device, vnr) {
++			windrbd_become_secondary(device, &err_str);
++		}
++	}
+ 
+ retry:
+ 
+@@ -1037,6 +1110,8 @@
+ 		down(&resource->state_sem);
+ 	} else /* (role == R_SECONDARY) */ {
+ 		down(&resource->state_sem);
+! compat: implement fsync_bdev somehow (ideally in 1.1 branch)
++	/* TODO: WinDRBD: implement fsync_bdev somehow. */
++#if 0
+ 		idr_for_each_entry(&resource->devices, device, vnr) {
+ 			bdev = bdgrab(device->vdisk->part0);
+ 			if (bdev)
+@@ -1044,6 +1119,7 @@
+ 			bdput(bdev);
+ 			flush_workqueue(device->submit.wq);
+ 		}
+! compat: implement fsync_bdev somehow (ideally in 1.1 branch)
++#endif
+ 
+ 		if (start_new_tl_epoch(resource)) {
+ 			struct drbd_connection *connection;
+@@ -1069,22 +1145,22 @@
+ 		drbd_flush_peer_acks(resource);
+ 	}
+ 
+! cocci: try identifier
+-	while (try++ < max_tries) {
+-		if (try == max_tries - 1)
++	while (try_++ < max_tries) {
++		if (try_ == max_tries - 1)
+ 			flags |= CS_VERBOSE;
+ 
+ 		if (err_str) {
+ 			kfree(err_str);
+ 			err_str = NULL;
+ 		}
+! cocci: retval from macro
+-		rv = stable_state_change(resource,
+-			change_role(resource, role, flags, with_force, &err_str));
++		stable_state_change(rv, resource,
++				    change_role(resource, role, flags, with_force, &err_str));
+ 
+ 		if (rv == SS_CONCURRENT_ST_CHG)
+ 			continue;
+ 
+ 		if (rv == SS_TIMEOUT) {
+! cocci
+-			long timeout = twopc_retry_timeout(resource, try);
++			LONG_PTR timeout = twopc_retry_timeout(resource, try_);
+ 			/* It might be that the receiver tries to start resync, and
+ 			   sleeps on state_sem. Give it up, and retry in a short
+ 			   while */
+@@ -1168,7 +1244,7 @@
+ 			struct net_conf *nc;
+ 			int timeout = 0;
+ 
+! cocci
+-			if (try >= max_tries || retried_ss_two_primaries)
++			if (try_ >= max_tries || retried_ss_two_primaries)
+ 				break;
+ 			retried_ss_two_primaries = true;
+ 
+@@ -1178,13 +1254,13 @@
+ 			 * failure: retry once after a short timeout.
+ 			 */
+ 
+! cocci
+-			rcu_read_lock();
++			rcu_flags = rcu_read_lock();
+ 			for_each_connection_rcu(connection, resource) {
+ 				nc = rcu_dereference(connection->transport.net_conf);
+ 				if (nc && nc->ping_timeo > timeout)
+ 					timeout = nc->ping_timeo;
+ 			}
+! cocci
+-			rcu_read_unlock();
++			rcu_read_unlock(rcu_flags);
+ 			timeout = timeout * HZ / 10;
+ 			if (timeout == 0)
+ 				timeout = 1;
+@@ -1216,10 +1292,10 @@
+ 	} else {
+ 		struct drbd_connection *connection;
+ 
+! cocci
+-		rcu_read_lock();
++		rcu_flags = rcu_read_lock();
+ 		for_each_connection_rcu(connection, resource)
+ 			clear_bit(CONN_DISCARD_MY_DATA, &connection->flags);
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 
+ 		idr_for_each_entry(&resource->devices, device, vnr) {
+ 			if (forced) {
+@@ -1254,6 +1330,12 @@
+ 			kobject_uevent(&disk_to_dev(device->vdisk)->kobj, KOBJ_CHANGE);
+ 	}
+ 
+! upstream: primary event
++	if (old_role == R_SECONDARY && role == R_PRIMARY) {
++		idr_for_each_entry(&resource->devices, device, vnr) {
++			windrbd_become_primary(device, &err_str);
++		}
++	}
++
+ out:
+ 	up(&resource->state_sem);
+ 	if (err_str) {
+@@ -1268,6 +1350,7 @@
+ 			struct sk_buff *reply_skb,
+ 			enum drbd_state_rv rv)
+ {
+! cocci
++	KIRQL spin_lock_flags;
+ 	struct drbd_device *device;
+ 	int i;
+ 
+@@ -1276,15 +1359,17 @@
+ 		return;
+ 	}
+ 
+! compat: implement opener_info somehow
++#if 0
+ 	idr_for_each_entry(&resource->devices, device, i) {
+ 		struct timespec64 ts;
+ 		struct opener *o;
+ 		struct tm tm;
+ 
+! cocci
+-		spin_lock(&device->openers_lock);
++		spin_lock_irqsave(&device->openers_lock, spin_lock_flags);
+ 		o = list_first_entry_or_null(&device->openers, struct opener, list);
+ 		if (!o) {
+! cocci
+-			spin_unlock(&device->openers_lock);
++			spin_unlock_irqrestore(&device->openers_lock,
++					       spin_lock_flags);
+ 			continue;
+ 		}
+ 
+@@ -1304,9 +1389,10 @@
+ 				      tm.tm_sec,
+ 				      ts.tv_nsec / NSEC_PER_MSEC);
+ 
+! cocci
+-		spin_unlock(&device->openers_lock);
++		spin_unlock_irqrestore(&device->openers_lock, spin_lock_flags);
+ 		break;
+ 	}
+! compat
++#endif
+ }
+ 
+ static const char *from_attrs_err_to_txt(int err)
+@@ -1507,6 +1593,7 @@
+  */
+ static bool effective_disk_size_determined(struct drbd_device *device)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_peer_device *peer_device;
+ 	bool rv = false;
+ 
+@@ -1515,14 +1602,14 @@
+ 	if (device->disk_state[NOW] == D_UP_TO_DATE)
+ 		return true;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	for_each_peer_device_rcu(peer_device, device) {
+ 		if (peer_device->disk_state[NOW] == D_UP_TO_DATE) {
+ 			rv = true;
+ 			break;
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	return rv;
+ }
+@@ -1531,10 +1618,14 @@
+ {
+ 	char ppb[10];
+ 
+! compat: implement set_capacity_and_notify (and delete windrbd_device_size_change)
+-	set_capacity_and_notify(device->vdisk, size);
++/*	set_capacity_and_notify(device->vdisk, size); */
++
++	device->this_bdev->d_size = size << 9;
+ 
+ 	drbd_info(device, "size = %s (%llu KB)\n",
+ 		ppsize(ppb, size>>1), (unsigned long long)size>>1);
+! compat: implement set_capacity_and_notify (and delete windrbd_device_size_change)
++
++	windrbd_device_size_change(device->this_bdev);
+ }
+ 
+ /*
+@@ -1545,8 +1636,9 @@
+  */
+ enum determine_dev_size
+ drbd_determine_dev_size(struct drbd_device *device, sector_t peer_current_size,
+! header
+-			enum dds_flags flags, struct resize_parms *rs) __must_hold(local)
++			enum dds_flags flags, struct resize_parms *rs) 
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct md_offsets_and_sizes {
+ 		u64 effective_size;
+ 		u64 md_offset;
+@@ -1598,9 +1690,9 @@
+ 
+ 	drbd_md_set_sector_offsets(device, device->ldev);
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	u_size = rcu_dereference(device->ldev->disk_conf)->disk_size;
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	size = drbd_new_dev_size(device, peer_current_size, u_size, flags);
+ 
+ 	if (size < prev.effective_size) {
+@@ -1741,13 +1833,14 @@
+  * Check if all peer devices that have bitmap slots assigned in the metadata
+  * are connected.
+  */
+! header
+-static bool get_max_agreeable_size(struct drbd_device *device, uint64_t *max) __must_hold(local)
++static bool get_max_agreeable_size(struct drbd_device *device, uint64_t *max) 
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	int node_id;
+ 	bool all_known;
+ 
+ 	all_known = true;
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	for (node_id = 0; node_id < DRBD_NODE_ID_MAX; node_id++) {
+ 		struct drbd_peer_md *peer_md = &device->ldev->md.peers[node_id];
+ 		struct drbd_peer_device *peer_device;
+@@ -1799,7 +1892,7 @@
+ 		all_known = false;
+ 		/* don't break yet, min aggregation may still find a peer */
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	return all_known;
+ }
+ 
+@@ -1810,7 +1903,7 @@
+ drbd_new_dev_size(struct drbd_device *device,
+ 		sector_t current_size, /* need at least this much */
+ 		sector_t user_capped_size, /* want (at most) this much */
+! header
+-		enum dds_flags flags) __must_hold(local)
++		enum dds_flags flags) 
+ {
+ 	struct drbd_resource *resource = device->resource;
+ 	uint64_t p_size = 0;
+@@ -1882,6 +1975,7 @@
+  */
+ static int drbd_check_al_size(struct drbd_device *device, struct disk_conf *dc)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct lru_cache *n, *t;
+ 	struct lc_element *e;
+ 	unsigned int in_use;
+@@ -1900,7 +1994,7 @@
+ 		drbd_err(device, "Cannot allocate act_log lru!\n");
+ 		return -ENOMEM;
+ 	}
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 	if (t) {
+ 		for (i = 0; i < t->nr_elements; i++) {
+ 			e = lc_element_by_index(t, i);
+@@ -1912,7 +2006,7 @@
+ 	}
+ 	if (!in_use)
+ 		device->act_log = n;
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ 	if (in_use) {
+ 		drbd_err(device, "Activity log still in use!\n");
+ 		lc_destroy(n);
+@@ -1928,16 +2022,17 @@
+ 
+ static u32 common_connection_features(struct drbd_resource *resource)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_connection *connection;
+ 	u32 features = -1;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	for_each_connection_rcu(connection, resource) {
+ 		if (connection->cstate[NOW] < C_CONNECTED)
+ 			continue;
+ 		features &= connection->agreed_features;
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	return features;
+ }
+@@ -1949,12 +2044,13 @@
+ 
+ static unsigned int drbd_max_discard_sectors(struct drbd_resource *resource)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_connection *connection;
+ 	unsigned int s = DRBD_MAX_BBIO_SECTORS;
+ 
+ 	/* when we introduced WRITE_SAME support, we also bumped
+ 	 * our maximum supported batch bio size used for discards. */
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	for_each_connection_rcu(connection, resource) {
+ 		if (!(connection->agreed_features & DRBD_FF_WSAME)) {
+ 			/* before, with DRBD <= 8.4.6, we only allowed up to one AL_EXTENT_SIZE. */
+@@ -1962,7 +2058,7 @@
+ 			break;
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	return s;
+ }
+@@ -2010,7 +2106,6 @@
+ 	 * Older kernels got this wrong in "stack limits".
+ 	 * */
+ 	if (!blk_queue_discard(q)) {
+! compat: implement blk_queue_max_discard_sectors (possibly doing nothing)
+-		blk_queue_max_discard_sectors(q, 0);
+ 		blk_queue_discard_granularity(q, 0);
+ 	}
+ }
+@@ -2096,6 +2191,7 @@
+ static void drbd_setup_queue_param(struct drbd_device *device, struct drbd_backing_dev *bdev,
+ 				   unsigned int max_bio_size, struct o_qlim *o)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct request_queue * const q = device->rq_queue;
+ 	unsigned int max_hw_sectors = max_bio_size >> 9;
+ 	struct request_queue *b = NULL;
+@@ -2107,11 +2203,11 @@
+ 		b = bdev->backing_bdev->bd_disk->queue;
+ 
+ 		max_hw_sectors = min(queue_max_hw_sectors(b), max_bio_size >> 9);
+! cocci
+-		rcu_read_lock();
++		rcu_flags = rcu_read_lock();
+ 		dc = rcu_dereference(device->ldev->disk_conf);
+ 		discard_zeroes_if_aligned = dc->discard_zeroes_if_aligned;
+ 		disable_write_same = dc->disable_write_same;
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 
+ 		blk_set_stacking_limits(&q->limits);
+ 	}
+@@ -2132,6 +2228,7 @@
+ 
+ void drbd_reconsider_queue_parameters(struct drbd_device *device, struct drbd_backing_dev *bdev, struct o_qlim *o)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	unsigned int max_bio_size = device->device_conf.max_bio_size;
+ 	struct drbd_peer_device *peer_device;
+ 
+@@ -2140,12 +2237,13 @@
+ 			queue_max_hw_sectors(bdev->backing_bdev->bd_disk->queue) << 9);
+ 	}
+ 
+! cocci
+-	spin_lock_irq(&device->resource->req_lock);
++	spin_lock_irqsave(&device->resource->req_lock, spin_lock_irq_flags);
+ 	for_each_peer_device(peer_device, device) {
+ 		if (peer_device->repl_state[NOW] >= L_ESTABLISHED)
+ 			max_bio_size = min(max_bio_size, peer_device->max_bio_size);
+ 	}
+! cocci
+-	spin_unlock_irq(&device->resource->req_lock);
++	spin_unlock_irqrestore(&device->resource->req_lock,
++			       spin_lock_irq_flags);
+ 
+ 	drbd_setup_queue_param(device, bdev, max_bio_size, o);
+ }
+@@ -2153,6 +2251,7 @@
+ /* Make sure IO is suspended before calling this function(). */
+ static void drbd_try_suspend_al(struct drbd_device *device)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_peer_device *peer_device;
+ 	bool suspend = true;
+ 	int max_peers = device->bitmap->bm_max_peers, bitmap_index;
+@@ -2169,7 +2268,7 @@
+ 	}
+ 
+ 	drbd_al_shrink(device);
+! cocci
+-	spin_lock_irq(&device->resource->req_lock);
++	spin_lock_irqsave(&device->resource->req_lock, spin_lock_irq_flags);
+ 	for_each_peer_device(peer_device, device) {
+ 		if (peer_device->repl_state[NOW] >= L_ESTABLISHED) {
+ 			suspend = false;
+@@ -2178,7 +2277,8 @@
+ 	}
+ 	if (suspend)
+ 		suspend = !test_and_set_bit(AL_SUSPENDED, &device->flags);
+! cocci
+-	spin_unlock_irq(&device->resource->req_lock);
++	spin_unlock_irqrestore(&device->resource->req_lock,
++		               spin_lock_irq_flags);
+ 	lc_unlock(device->act_log);
+ 	wake_up(&device->al_wait);
+ 
+@@ -2186,7 +2286,6 @@
+ 		drbd_info(device, "Suspended AL updates\n");
+ }
+ 
+! remove
+-
+ static bool should_set_defaults(struct genl_info *info)
+ {
+ 	unsigned flags = ((struct drbd_genlmsghdr*)info->userhdr)->flags;
+@@ -2262,7 +2361,7 @@
+ 		 * current kernel has 0 granularity means "discard not supported".
+ 		 * Not supported is checked above already with !blk_queue_discard(q).
+ 		 */
+! cocci (?: operator)
+-		unsigned int ql_dg = q->limits.discard_granularity ?: 512;
++		unsigned int ql_dg = q->limits.discard_granularity ? q->limits.discard_granularity :  512;
+ 
+ 		/* should be at least the discard_granularity of the q limit,
+ 		 * and preferably a multiple (or the backend won't be able to
+@@ -2335,7 +2434,7 @@
+ 		goto out;
+ 	}
+ 
+! remove (kmalloc tag)
+-	new_disk_conf = kmalloc(sizeof(struct disk_conf), GFP_KERNEL);
++	new_disk_conf = kmalloc(sizeof(struct disk_conf), GFP_KERNEL, '01WD');
+ 	if (!new_disk_conf) {
+ 		retcode = ERR_NOMEM;
+ 		goto fail;
+@@ -2555,7 +2654,7 @@
+ 	if (from_index != -1)
+ 		drbd_bm_copy_slot(device, from_index, freed_index);
+ 	else
+! cocci (UL postfix)
+-		_drbd_bm_set_many_bits(device, freed_index, 0, -1UL);
++		_drbd_bm_set_many_bits(device, freed_index, 0, ((ULONG_PTR)-1));
+ 
+ 	drbd_bm_write(device, NULL);
+ 	drbd_bm_unlock(device);
+@@ -2580,14 +2679,15 @@
+ 
+ bool want_bitmap(struct drbd_peer_device *peer_device)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct peer_device_conf *pdc;
+ 	bool want_bitmap = false;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	pdc = rcu_dereference(peer_device->conf);
+ 	if (pdc)
+ 		want_bitmap |= pdc->bitmap;
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	return want_bitmap;
+ }
+@@ -2652,7 +2752,7 @@
+ 
+ 	err = link_backing_dev(device, new_disk_conf->backing_dev, bdev);
+ 	if (err) {
+! cocci
+-		/* close without unlinking; otherwise error path will try to unlink */
++		/* close without unlinking; otherwise error path will try_ to unlink */
+ 		close_backing_dev(device, bdev, false);
+ 		return ERR_OPEN_DISK;
+ 	}
+@@ -2679,7 +2779,7 @@
+ 	if (bdev != nbc->backing_bdev) {
+ 		err = link_backing_dev(device, new_disk_conf->meta_dev, bdev);
+ 		if (err) {
+! cocci
+-			/* close without unlinking; otherwise error path will try to unlink */
++			/* close without unlinking; otherwise error path will try_ to unlink */
+ 			close_backing_dev(device, bdev, false);
+ 			return ERR_OPEN_MD_DISK;
+ 		}
+@@ -3014,6 +3114,7 @@
+ 
+ int drbd_adm_attach(struct sk_buff *skb, struct genl_info *info)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_config_context adm_ctx;
+ 	struct drbd_device *device;
+ 	struct drbd_resource *resource;
+@@ -3037,14 +3138,14 @@
+ 	mutex_lock(&resource->adm_mutex);
+ 
+ 	/* allocation not in the IO path, drbdsetup context */
+! cocci
+-	nbc = kzalloc(sizeof(struct drbd_backing_dev), GFP_KERNEL);
++	nbc = kzalloc(sizeof(struct drbd_backing_dev), GFP_KERNEL, '02WD');
+ 	if (!nbc) {
+ 		retcode = ERR_NOMEM;
+ 		goto fail;
+ 	}
+ 	spin_lock_init(&nbc->md.uuid_lock);
+ 
+! cocci
+-	new_disk_conf = kzalloc(sizeof(struct disk_conf), GFP_KERNEL);
++	new_disk_conf = kzalloc(sizeof(struct disk_conf), GFP_KERNEL, '03WD');
+ 	if (!new_disk_conf) {
+ 		retcode = ERR_NOMEM;
+ 		goto fail;
+@@ -3167,8 +3268,8 @@
+ 	/* and for other previously queued resource work */
+ 	drbd_flush_workqueue(&resource->work);
+ 
+! cocci (stable state change)
+-	rv = stable_state_change(resource,
+-		change_disk_state(device, D_ATTACHING, CS_VERBOSE | CS_SERIALIZE, NULL));
++	stable_state_change(rv, resource,
++			    change_disk_state(device, D_ATTACHING, CS_VERBOSE | CS_SERIALIZE, NULL));
+ 	retcode = (enum drbd_ret_code)rv;
+ 	if (rv >= SS_SUCCESS)
+ 		update_resource_dagtag(resource, nbc);
+@@ -3413,17 +3514,17 @@
+ 
+ 	drbd_try_suspend_al(device); /* IO is still suspended here... */
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	if (rcu_dereference(device->ldev->disk_conf)->al_updates)
+ 		device->ldev->md.flags &= ~MDF_AL_DISABLED;
+ 	else
+ 		device->ldev->md.flags |= MDF_AL_DISABLED;
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	/* change_disk_state uses disk_state_from_md(device); in case D_NEGOTIATING not
+ 	   necessary, and falls back to a local state change */
+! cocci
+-	rv = stable_state_change(resource,
+-		change_disk_state(device, D_NEGOTIATING, CS_VERBOSE | CS_SERIALIZE, NULL));
++	stable_state_change(rv, resource,
++			    change_disk_state(device, D_NEGOTIATING, CS_VERBOSE | CS_SERIALIZE, NULL));
+ 
+ 	if (rv < SS_SUCCESS) {
+ 		if (rv == SS_CW_FAILED_BY_PEER)
+@@ -3465,17 +3566,19 @@
+ 
+ static enum drbd_disk_state get_disk_state(struct drbd_device *device)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_resource *resource = device->resource;
+ 	enum drbd_disk_state disk_state;
+ 
+! cocci
+-	spin_lock_irq(&resource->req_lock);
++	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags);
+ 	disk_state = device->disk_state[NOW];
+! cocci
+-	spin_unlock_irq(&resource->req_lock);
++	spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags);
+ 	return disk_state;
+ }
+ 
+ static enum drbd_state_rv adm_detach(struct drbd_device *device, bool force, bool intentional_diskless, struct sk_buff *reply_skb)
+ {
++	int err_ignored;
+ 	enum drbd_state_rv retcode;
+ 	const char *err_str = NULL;
+ 	int ret;
+@@ -3489,16 +3592,16 @@
+ 	}
+ 
+ 	drbd_suspend_io(device, READ_AND_WRITE); /* so no-one is stuck in drbd_al_begin_io */
+! cocci
+-	retcode = stable_state_change(device->resource,
+-		change_disk_state(device, D_DETACHING,
+-			CS_VERBOSE | CS_WAIT_COMPLETE | CS_SERIALIZE, &err_str));
++	stable_state_change(retcode, device->resource,
++			    change_disk_state(device, D_DETACHING, CS_VERBOSE | CS_WAIT_COMPLETE | CS_SERIALIZE, &err_str));
+ 	/* D_DETACHING will transition to DISKLESS. */
+ 	drbd_resume_io(device);
+! cocci
+-	ret = wait_event_interruptible(device->misc_wait,
+-			get_disk_state(device) != D_DETACHING);
++	wait_event_interruptible(ret, device->misc_wait,
++				 get_disk_state(device) != D_DETACHING);
+ 	if (retcode >= SS_SUCCESS) {
+ 		/* wait for completion of drbd_ldev_destroy() */
+! cocci
+-		wait_event_interruptible(device->misc_wait, !test_bit(GOING_DISKLESS, &device->flags));
++		wait_event_interruptible(err_ignored, device->misc_wait,
++					 !test_bit(GOING_DISKLESS, &device->flags));
+ 		drbd_cleanup_device(device);
+ 	}
+ 	else
+@@ -3524,7 +3627,7 @@
+ {
+ 	struct drbd_config_context adm_ctx;
+ 	enum drbd_ret_code retcode;
+! review: uninitialized? if not then remove
+-	struct detach_parms parms = { };
++	struct detach_parms parms = { 0 };
+ 	int err;
+ 
+ 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
+@@ -3552,11 +3655,12 @@
+ 
+ static bool conn_resync_running(struct drbd_connection *connection)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_peer_device *peer_device;
+ 	bool rv = false;
+ 	int vnr;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+ 		if (peer_device->repl_state[NOW] == L_SYNC_SOURCE ||
+ 		    peer_device->repl_state[NOW] == L_SYNC_TARGET ||
+@@ -3566,18 +3670,19 @@
+ 			break;
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	return rv;
+ }
+ 
+ static bool conn_ov_running(struct drbd_connection *connection)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_peer_device *peer_device;
+ 	bool rv = false;
+ 	int vnr;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+ 		if (peer_device->repl_state[NOW] == L_VERIFY_S ||
+ 		    peer_device->repl_state[NOW] == L_VERIFY_T) {
+@@ -3585,7 +3690,7 @@
+ 			break;
+ 		}
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	return rv;
+ }
+@@ -3630,13 +3735,14 @@
+ static enum drbd_ret_code
+ check_net_options(struct drbd_connection *connection, struct net_conf *new_net_conf)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	enum drbd_ret_code rv;
+ 	struct drbd_peer_device *peer_device;
+ 	int i;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	rv = _check_net_options(connection, rcu_dereference(connection->transport.net_conf), new_net_conf);
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	/* connection->peer_devices protected by resource->conf_update here */
+ 	idr_for_each_entry(&connection->peer_devices, peer_device, i) {
+@@ -3760,7 +3866,7 @@
+ 	int err;
+ 	int ovr; /* online verify running */
+ 	int rsr; /* re-sync running */
+! review: uninitialized? (GNU extension?)
+-	struct crypto crypto = { };
++	struct crypto crypto = { 0 };
+ 
+ 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_CONNECTION);
+ 	if (!adm_ctx.reply_skb)
+@@ -3769,7 +3875,7 @@
+ 	connection = adm_ctx.connection;
+ 	mutex_lock(&adm_ctx.resource->adm_mutex);
+ 
+! remove (kmalloc tag)
+-	new_net_conf = kzalloc(sizeof(struct net_conf), GFP_KERNEL);
++	new_net_conf = kzalloc(sizeof(struct net_conf), GFP_KERNEL, '04WD');
+ 	if (!new_net_conf) {
+ 		retcode = ERR_NOMEM;
+ 		goto out;
+@@ -3783,7 +3889,7 @@
+ 	old_net_conf = transport->net_conf;
+ 
+ 	if (!old_net_conf) {
+! remove (try identifier)
+-		drbd_msg_put_info(adm_ctx.reply_skb, "net conf missing, try connect");
++		drbd_msg_put_info(adm_ctx.reply_skb, "net conf missing, try_ connect");
+ 		retcode = ERR_INVALID_REQUEST;
+ 		goto fail;
+ 	}
+@@ -3920,7 +4026,7 @@
+ 	mutex_lock(&adm_ctx.resource->adm_mutex);
+ 	mutex_lock(&adm_ctx.resource->conf_update);
+! remove
+ 
+-	new_peer_device_conf = kzalloc(sizeof(struct peer_device_conf), GFP_KERNEL);
++	new_peer_device_conf = kzalloc(sizeof(struct peer_device_conf), GFP_KERNEL, '05WD');
+ 	if (!new_peer_device_conf)
+ 		goto fail;
+ 
+@@ -4008,7 +4114,7 @@
+ 	struct peer_device_conf *conf;
+ 	int err;
+ 
+! remove
+-	conf = kzalloc(sizeof(*conf), GFP_KERNEL);
++	conf = kzalloc(sizeof(*conf), GFP_KERNEL, '06WD');
+ 	if (!conf)
+ 		return -ENOMEM;
+ 
+@@ -4029,10 +4135,10 @@
+ 	info->conn_role = connection->peer_role[NOW];
+ }
+ 
+! manual (gcc extension)
+-#define str_to_info(info, field, str) ({ \
++#define str_to_info(info, field, str) { \
+ 	strlcpy(info->field, str, sizeof(info->field)); \
+ 	info->field ## _len = min(strlen(str), sizeof(info->field)); \
+-})
++}
+ 
+ /* shared logic between peer_device_to_info and peer_device_state_change_to_info */
+ static void __peer_device_to_info(struct peer_device_info *info,
+@@ -4067,9 +4173,10 @@
+ static void __device_to_info(struct device_info *info,
+ 			     struct drbd_device *device)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	info->is_intentional_diskless = device->device_conf.intentional_diskless;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	if (get_ldev(device)) {
+ 		struct disk_conf *disk_conf =
+ 			rcu_dereference(device->ldev->disk_conf);
+@@ -4079,7 +4186,7 @@
+ 		info->backing_dev_path[0] = '\0';
+ 		info->backing_dev_path_len = 0;
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ }
+ 
+ static void device_to_info(struct device_info *info,
+@@ -4117,6 +4224,7 @@
+ static int adm_new_connection(struct drbd_connection **ret_conn,
+ 		struct drbd_config_context *adm_ctx, struct genl_info *info)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct connection_info connection_info;
+ 	enum drbd_notification_type flags;
+ 	unsigned int peer_devices = 0;
+@@ -4132,13 +4240,14 @@
+ 
+ 	*ret_conn = NULL;
+ 	if (adm_ctx->connection) {
+! remove (marek patch)
+-		drbd_err(adm_ctx->resource, "Connection for peer node id %d already exists\n",
++	    struct drbd_resource *resource = adm_ctx->resource;
++		drbd_err(resource, "Connection for peer node id %d already exists\n",
+ 			 adm_ctx->peer_node_id);
+ 		return ERR_INVALID_REQUEST;
+ 	}
+ 
+ 	/* allocation not in the IO path, drbdsetup / netlink process context */
+! remove
+-	new_net_conf = kzalloc(sizeof(*new_net_conf), GFP_KERNEL);
++	new_net_conf = kzalloc(sizeof(*new_net_conf), GFP_KERNEL, '07WD');
+ 	if (!new_net_conf)
+ 		return ERR_NOMEM;
+ 
+@@ -4244,9 +4353,10 @@
+ 		peer_devices++;
+ 		peer_device->node_id = connection->peer_node_id;
+ 	}
+! cocci
+-	spin_lock_irq(&adm_ctx->resource->req_lock);
++	spin_lock_irqsave(&adm_ctx->resource->req_lock, spin_lock_irq_flags);
+ 	list_add_tail_rcu(&connection->connections, &adm_ctx->resource->connections);
+! cocci
+-	spin_unlock_irq(&adm_ctx->resource->req_lock);
++	spin_unlock_irqrestore(&adm_ctx->resource->req_lock,
++			       spin_lock_irq_flags);
+ 
+ 	old_net_conf = connection->transport.net_conf;
+ 	if (old_net_conf) {
+@@ -4337,7 +4447,7 @@
+ 	for_each_resource_rcu(resource, &drbd_resources) {
+ 		for_each_connection_rcu(connection, resource) {
+ 			struct drbd_path *path;
+! cocci
+-			list_for_each_entry_rcu(path, &connection->transport.paths, list) {
++			list_for_each_entry_rcu(struct drbd_path, path, &connection->transport.paths, list) {
+ 				retcode = check_path_against_nla(path, my_addr, peer_addr);
+ 				if (retcode == NO_ERROR)
+ 					continue;
+@@ -4356,6 +4466,7 @@
+ static enum drbd_ret_code
+ adm_add_path(struct drbd_config_context *adm_ctx,  struct genl_info *info)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_transport *transport = &adm_ctx->connection->transport;
+ 	struct nlattr **nested_attr_tb;
+ 	struct nlattr *my_addr, *peer_addr;
+@@ -4374,13 +4485,13 @@
+ 	kfree(nested_attr_tb);
+ 	nested_attr_tb = NULL;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	retcode = check_path_usable(adm_ctx, my_addr, peer_addr);
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	if (retcode != NO_ERROR)
+ 		return retcode;
+ 
+! cocci
+-	path = kzalloc(transport->class->path_instance_size, GFP_KERNEL);
++	path = kzalloc(transport->class->path_instance_size, GFP_KERNEL, '08WD');
+ 	if (!path)
+ 		return ERR_NOMEM;
+ 
+@@ -4394,7 +4505,8 @@
+ 	err = transport->ops->add_path(transport, path);
+ 	if (err) {
+ 		kref_put(&path->kref, drbd_destroy_path);
+! remove
+-		drbd_err(adm_ctx->connection, "add_path() failed with %d\n", err);
++		struct drbd_connection *connection = adm_ctx->connection;
++		drbd_err(connection, "add_path() failed with %d\n", err);
+ 		drbd_msg_put_info(adm_ctx->reply_skb, "add_path on transport failed");
+ 		return ERR_INVALID_REQUEST;
+ 	}
+@@ -4476,10 +4588,11 @@
+ 
+ static bool legacy_peer_present(struct drbd_resource *resource)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_connection *connection;
+ 	bool legacy_peer_present = false;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	for_each_connection_rcu(connection, resource) {
+ 		if (connection->cstate[NOW] < C_CONNECTED ||
+ 		    connection->agreed_pro_version >= 110)
+@@ -4487,7 +4600,7 @@
+ 		legacy_peer_present = true;
+ 		break;
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	return legacy_peer_present;
+ }
+ 
+@@ -4567,7 +4680,7 @@
+ 	kfree(nested_attr_tb);
+ 	nested_attr_tb = NULL;
+ 
+! cocci
+-	list_for_each_entry(path, &transport->paths, list)
++	list_for_each_entry(struct drbd_path, path, &transport->paths, list)
+ 		nr_paths++;
+ 
+ 	if (nr_paths == 1 && connection->cstate[NOW] >= C_CONNECTING) {
+@@ -4577,7 +4690,7 @@
+ 	}
+ 
+ 	err = -ENOENT;
+! cocci
+-	list_for_each_entry(path, &transport->paths, list) {
++	list_for_each_entry(struct drbd_path, path, &transport->paths, list) {
+ 		if (!addr_eq_nla(&path->my_addr, path->my_addr_len, my_addr))
+ 			continue;
+ 		if (!addr_eq_nla(&path->peer_addr, path->peer_addr_len, peer_addr))
+@@ -4620,13 +4733,14 @@
+ 
+ int drbd_open_ro_count(struct drbd_resource *resource)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device;
+ 	int vnr, open_ro_cnt = 0;
+ 
+! cocci
+-	spin_lock_irq(&resource->req_lock);
++	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags);
+ 	idr_for_each_entry(&resource->devices, device, vnr)
+ 		open_ro_cnt += device->open_ro_cnt;
+! cocci
+-	spin_unlock_irq(&resource->req_lock);
++	spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags);
+ 
+ 	return open_ro_cnt;
+ }
+@@ -4634,20 +4748,23 @@
+ static enum drbd_state_rv conn_try_disconnect(struct drbd_connection *connection, bool force,
+ 					      struct sk_buff *reply_skb)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+! cocci
++	long remaining_time;
+ 	struct drbd_resource *resource = connection->resource;
+ 	enum drbd_conn_state cstate;
+ 	enum drbd_state_rv rv;
+ 	enum chg_state_flags flags = (force ? CS_HARD : 0) | CS_VERBOSE;
+ 	const char *err_str = NULL;
+! cocci
+-	long t;
++	LONG_PTR t;
+ 
+     repeat:
+ 	rv = change_cstate_es(connection, C_DISCONNECTING, flags, &err_str);
+ 	switch (rv) {
+ 	case SS_CW_FAILED_BY_PEER:
+! cocci
+-		spin_lock_irq(&resource->req_lock);
++		spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags);
+ 		cstate = connection->cstate[NOW];
+! cocci
+-		spin_unlock_irq(&resource->req_lock);
++		spin_unlock_irqrestore(&resource->req_lock,
++				       spin_lock_irq_flags);
+ 		if (cstate < C_CONNECTED)
+ 			goto repeat;
+ 		break;
+@@ -4656,9 +4773,9 @@
+ 			break;
+ 		/* Most probably udev opened it read-only. That might happen
+ 		   if it was demoted very recently. Wait up to one second. */
+! cocci
+-		t = wait_event_interruptible_timeout(resource->state_wait,
+-						     drbd_open_ro_count(resource) == 0,
+-						     HZ);
++		wait_event_interruptible_timeout(t, resource->state_wait,
++						 drbd_open_ro_count(resource) == 0,
++						 HZ);
+ 		if (t <= 0)
+ 			break;
+ 		goto repeat;
+@@ -4680,7 +4797,8 @@
+ 	}
+ 
+ 	if (rv >= SS_SUCCESS)
+! cocci
+-		wait_event_interruptible_timeout(resource->state_wait,
++		wait_event_interruptible_timeout(remaining_time,
++						 resource->state_wait,
+ 						 connection->cstate[NOW] == C_STANDALONE,
+ 						 HZ);
+ 	if (err_str) {
+@@ -4823,12 +4941,12 @@
+ 	drbd_start_resync(peer_device, sync_source ? L_SYNC_SOURCE : L_SYNC_TARGET);
+ }
+ 
+! header
+-sector_t drbd_local_max_size(struct drbd_device *device) __must_hold(local)
++sector_t drbd_local_max_size(struct drbd_device *device) 
+ {
+ 	struct drbd_backing_dev *tmp_bdev;
+ 	sector_t s;
+ 
+! remove
+-	tmp_bdev = kmalloc(sizeof(struct drbd_backing_dev), GFP_ATOMIC);
++	tmp_bdev = kmalloc(sizeof(struct drbd_backing_dev), GFP_ATOMIC, '09WD');
+ 	if (!tmp_bdev)
+ 		return 0;
+ 
+@@ -4842,6 +4960,7 @@
+ 
+ int drbd_adm_resize(struct sk_buff *skb, struct genl_info *info)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_config_context adm_ctx;
+ 	struct disk_conf *old_disk_conf, *new_disk_conf = NULL;
+ 	struct resize_parms rs;
+@@ -4889,7 +5008,6 @@
+ 		}
+ 	}
+ 
+! remove
+-
+ 	local_max_size = drbd_local_max_size(device);
+ 	if (rs.resize_size && local_max_size < (sector_t)rs.resize_size) {
+ 		drbd_err(device, "requested %llu sectors, backend seems only able to support %llu\n",
+@@ -4935,11 +5053,11 @@
+ 		}
+ 	}
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	u_size = rcu_dereference(device->ldev->disk_conf)->disk_size;
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	if (u_size != (sector_t)rs.resize_size) {
+! remove
+-		new_disk_conf = kmalloc(sizeof(struct disk_conf), GFP_KERNEL);
++		new_disk_conf = kmalloc(sizeof(struct disk_conf), GFP_KERNEL, '0AWD');
+ 		if (!new_disk_conf) {
+ 			retcode = ERR_NOMEM;
+ 			goto fail_ldev;
+@@ -5069,6 +5187,7 @@
+ 
+ static enum drbd_state_rv invalidate_resync(struct drbd_peer_device *peer_device)
+ {
+! cocci
++	int err_ignored;
+ 	struct drbd_resource *resource = peer_device->connection->resource;
+ 	enum drbd_state_rv rv;
+ 
+@@ -5080,18 +5199,18 @@
+ 		rv = stable_change_repl_state(peer_device, L_STARTING_SYNC_T,
+ 			CS_VERBOSE | CS_SERIALIZE);
+ 
+! cocci
+-	wait_event_interruptible(resource->state_wait,
++	wait_event_interruptible(err_ignored, resource->state_wait,
+ 				 peer_device->repl_state[NOW] != L_STARTING_SYNC_T);
+ 
+ 	return rv;
+ }
+ 
+! header
+-static enum drbd_state_rv invalidate_no_resync(struct drbd_device *device) __must_hold(local)
++static enum drbd_state_rv invalidate_no_resync(struct drbd_device *device) 
+ {
+ 	struct drbd_resource *resource = device->resource;
+ 	struct drbd_peer_device *peer_device;
+ 	struct drbd_connection *connection;
+! cocci
+-	unsigned long irq_flags;
++	KIRQL irq_flags;
+ 	enum drbd_state_rv rv;
+ 
+ 	begin_state_change(resource, &irq_flags, CS_VERBOSE);
+@@ -5223,7 +5342,7 @@
+ 	return 0;
+ }
+ 
+! header
+-static int drbd_bmio_set_susp_al(struct drbd_device *device, struct drbd_peer_device *peer_device) __must_hold(local)
++static int drbd_bmio_set_susp_al(struct drbd_device *device, struct drbd_peer_device *peer_device) 
+ {
+ 	int rv;
+ 
+@@ -5260,7 +5379,6 @@
+ 	return retcode;
+ }
+ 
+-
+ int drbd_adm_invalidate_peer(struct sk_buff *skb, struct genl_info *info)
+ {
+ 	struct drbd_config_context adm_ctx;
+@@ -5392,9 +5510,8 @@
+ 	resource = adm_ctx.device->resource;
+ 	mutex_lock(&resource->adm_mutex);
+ 
+! cocci
+-	retcode = stable_state_change(resource,
+-		change_io_susp_user(resource, true,
+-			      CS_VERBOSE | CS_WAIT_COMPLETE | CS_SERIALIZE));
++	stable_state_change(retcode, resource,
++			    change_io_susp_user(resource, true, CS_VERBOSE | CS_WAIT_COMPLETE | CS_SERIALIZE));
+ 
+ 	mutex_unlock(&resource->adm_mutex);
+ 	drbd_adm_finish(&adm_ctx, info, retcode);
+@@ -5407,7 +5524,7 @@
+ 	struct drbd_connection *connection;
+ 	struct drbd_resource *resource;
+ 	struct drbd_device *device;
+! cocci
+-	unsigned long irq_flags;
++	KIRQL irq_flags;
+ 	int retcode; /* enum drbd_ret_code rsp. enum drbd_state_rv */
+ 
+ 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
+@@ -5462,9 +5579,8 @@
+ 		return retcode;
+ 	mutex_lock(&adm_ctx.resource->adm_mutex);
+ 
+! cocci
+-	retcode = stable_state_change(adm_ctx.device->resource,
+-		change_disk_state(adm_ctx.device, D_OUTDATED,
+-				  CS_VERBOSE | CS_WAIT_COMPLETE | CS_SERIALIZE, NULL));
++	stable_state_change(retcode, adm_ctx.device->resource,
++			    change_disk_state(adm_ctx.device, D_OUTDATED, CS_VERBOSE | CS_WAIT_COMPLETE | CS_SERIALIZE, NULL));
+ 
+ 	mutex_unlock(&adm_ctx.resource->adm_mutex);
+ 	drbd_adm_finish(&adm_ctx, info, retcode);
+@@ -5477,6 +5593,7 @@
+ 				    struct drbd_device *device,
+ 				    struct drbd_path *path)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct nlattr *nla;
+ 	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_CONTEXT);
+ 	if (!nla)
+@@ -5487,10 +5604,10 @@
+ 		nla_put_string(skb, T_ctx_resource_name, resource->name);
+ 	if (connection) {
+ 		nla_put_u32(skb, T_ctx_peer_node_id, connection->peer_node_id);
+! cocci
+-		rcu_read_lock();
++		rcu_flags = rcu_read_lock();
+ 		if (connection->transport.net_conf && connection->transport.net_conf->name)
+ 			nla_put_string(skb, T_ctx_conn_name, connection->transport.net_conf->name);
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 	}
+ 	if (path) {
+ 		nla_put(skb, T_ctx_my_addr, path->my_addr_len, &path->my_addr);
+@@ -5527,13 +5644,14 @@
+ 
+ int drbd_adm_dump_resources(struct sk_buff *skb, struct netlink_callback *cb)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_genlmsghdr *dh;
+ 	struct drbd_resource *resource;
+ 	struct resource_info resource_info;
+ 	struct resource_statistics resource_statistics;
+ 	int err;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	if (cb->args[0]) {
+ 		for_each_resource_rcu(resource, &drbd_resources)
+ 			if (resource == (struct drbd_resource *)cb->args[0])
+@@ -5545,7 +5663,7 @@
+ 			      struct drbd_resource, resources);
+ 
+ found_resource:
+! cocci
+-	list_for_each_entry_continue_rcu(resource, &drbd_resources, resources) {
++	list_for_each_entry_continue_rcu(struct drbd_resource, resource, &drbd_resources, resources) {
+ 		goto put_result;
+ 	}
+ 	err = 0;
+@@ -5574,12 +5692,12 @@
+ 	err = resource_statistics_to_skb(skb, &resource_statistics, !capable(CAP_SYS_ADMIN));
+ 	if (err)
+ 		goto out;
+! cocci
+-	cb->args[0] = (long)resource;
++	cb->args[0] = (LONG_PTR)resource;
+ 	genlmsg_end(skb, dh);
+ 	err = 0;
+ 
+ out:
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	if (err)
+ 		return err;
+ 	return skb->len;
+@@ -5588,6 +5706,8 @@
+ static void device_to_statistics(struct device_statistics *s,
+ 				 struct drbd_device *device)
+ {
+! cocci
++	KIRQL flags;
++
+ 	memset(s, 0, sizeof(*s));
+ 	s->dev_upper_blocked = !may_inc_ap_bio(device);
+ 	if (get_ldev(device)) {
+@@ -5596,20 +5716,17 @@
+ 		struct request_queue *q;
+ 		int n;
+ 
+! cocci
+-		spin_lock_irq(&md->uuid_lock);
++		spin_lock_irqsave(&md->uuid_lock, flags);
+ 		s->dev_current_uuid = md->current_uuid;
+ 		BUILD_BUG_ON(sizeof(s->history_uuids) != sizeof(md->history_uuids));
+ 		for (n = 0; n < ARRAY_SIZE(md->history_uuids); n++)
+ 			history_uuids[n] = md->history_uuids[n];
+ 		s->history_uuids_len = sizeof(s->history_uuids);
+! cocci
+-		spin_unlock_irq(&md->uuid_lock);
++		spin_unlock_irqrestore(&md->uuid_lock, flags);
+ 
+ 		s->dev_disk_flags = md->flags;
+ 		q = bdev_get_queue(device->ldev->backing_bdev);
+! compat: implement bdi_congested
+-		s->dev_lower_blocked =
+-			bdi_congested(q->backing_dev_info,
+-				      (1 << WB_async_congested) |
+-				      (1 << WB_sync_congested));
++		s->dev_lower_blocked = 0;
+ 		put_ldev(device);
+ 	}
+ 	s->dev_size = get_capacity(device->vdisk);
+@@ -5642,18 +5759,20 @@
+ 
+ int drbd_adm_dump_devices(struct sk_buff *skb, struct netlink_callback *cb)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct nlattr *resource_filter;
+ 	struct drbd_resource *resource;
+! remove (uninitialized: static code verifier bug)
+-	struct drbd_device *device;
++	struct drbd_device *device = NULL;
+ 	int minor, err, retcode;
+ 	struct drbd_genlmsghdr *dh;
+ 	struct device_info device_info;
+ 	struct device_statistics device_statistics;
+ 	struct idr *idr_to_search;
+ 
+! manual (or disable warning) was this compiler or code analyzer? or even upstream?
++	minor = -1;	/* make MS VC compiler happy */
+ 	resource = (struct drbd_resource *)cb->args[0];
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	if (!cb->args[0] && !cb->args[1]) {
+ 		resource_filter = find_cfg_context_attr(cb->nlh, T_ctx_resource_name);
+ 		if (resource_filter) {
+@@ -5662,7 +5781,7 @@
+ 			if (!resource)
+ 				goto put_result;
+ 			kref_debug_get(&resource->kref_debug, 7);
+! cocci
+-			cb->args[0] = (long)resource;
++			cb->args[0] = (LONG_PTR)resource;
+ 		}
+ 	}
+ 
+@@ -5721,7 +5840,7 @@
+ 	err = 0;
+ 
+ out:
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	if (err)
+ 		return err;
+ 	return skb->len;
+@@ -5740,7 +5859,7 @@
+ 		goto nla_put_failure;
+ 
+ 	/* array of such paths. */
+! cocci
+-	list_for_each_entry(path, &connection->transport.paths, list) {
++	list_for_each_entry(struct drbd_path, path, &connection->transport.paths, list) {
+ 		if (nla_put(skb, T_my_addr, path->my_addr_len, &path->my_addr))
+ 			goto nla_put_failure;
+ 		if (nla_put(skb, T_peer_addr, path->peer_addr_len, &path->peer_addr))
+@@ -5764,17 +5883,21 @@
+ 
+ enum { SINGLE_RESOURCE, ITERATE_RESOURCES };
+ 
+! manual (or disable warning) was this compiler or code analyzer?
++/* warning C4701: potentially uninitialized local variable 'minor' used */
++#pragma warning (disable: 4701)
++
+ int drbd_adm_dump_connections(struct sk_buff *skb, struct netlink_callback *cb)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct nlattr *resource_filter;
+ 	struct drbd_resource *resource = NULL, *next_resource;
+! remove
+-	struct drbd_connection *connection;
++	struct drbd_connection *connection = NULL;
+ 	int err = 0, retcode;
+ 	struct drbd_genlmsghdr *dh;
+ 	struct connection_info connection_info;
+ 	struct connection_statistics connection_statistics;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	resource = (struct drbd_resource *)cb->args[0];
+ 	if (!cb->args[0]) {
+ 		resource_filter = find_cfg_context_attr(cb->nlh, T_ctx_resource_name);
+@@ -5784,7 +5907,7 @@
+ 			if (!resource)
+ 				goto put_result;
+ 			kref_debug_get(&resource->kref_debug, 6);
+! cocci
+-			cb->args[0] = (long)resource;
++			cb->args[0] = (LONG_PTR)resource;
+ 			cb->args[1] = SINGLE_RESOURCE;
+ 		}
+ 	}
+@@ -5794,14 +5917,14 @@
+ 		resource = list_first_entry(&drbd_resources, struct drbd_resource, resources);
+ 		kref_get(&resource->kref);
+ 		kref_debug_get(&resource->kref_debug, 6);
+! cocci
+-		cb->args[0] = (long)resource;
++		cb->args[0] = (LONG_PTR)resource;
+ 		cb->args[1] = ITERATE_RESOURCES;
+ 	}
+ 
+     next_resource:
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	mutex_lock(&resource->conf_update);
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	if (cb->args[2]) {
+ 		for_each_connection_rcu(connection, resource)
+ 			if (connection == (struct drbd_connection *)cb->args[2])
+@@ -5812,7 +5935,7 @@
+ 	connection = list_entry(&resource->connections, struct drbd_connection, connections);
+ 
+ found_connection:
+! cocci
+-	list_for_each_entry_continue_rcu(connection, &resource->connections, connections) {
++	list_for_each_entry_continue_rcu(struct drbd_connection, connection, &resource->connections, connections) {
+ 		retcode = NO_ERROR;
+ 		goto put_result;  /* only one iteration */
+ 	}
+@@ -5828,14 +5951,14 @@
+ 	goto out;
+ 
+ found_resource:
+! cocci
+-	list_for_each_entry_continue_rcu(next_resource, &drbd_resources, resources) {
++	list_for_each_entry_continue_rcu(struct drbd_resource, next_resource, &drbd_resources, resources) {
+ 		mutex_unlock(&resource->conf_update);
+ 		kref_debug_put(&resource->kref_debug, 6);
+ 		kref_put(&resource->kref, drbd_destroy_resource);
+ 		resource = next_resource;
+ 		kref_get(&resource->kref);
+ 		kref_debug_get(&resource->kref_debug, 6);
+! cocci
+-		cb->args[0] = (long)resource;
++		cb->args[0] = (LONG_PTR)resource;
+ 		cb->args[2] = 0;
+ 		goto next_resource;
+ 	}
+@@ -5871,13 +5994,13 @@
+ 		err = connection_statistics_to_skb(skb, &connection_statistics, !capable(CAP_SYS_ADMIN));
+ 		if (err)
+ 			goto out;
+! cocci
+-		cb->args[2] = (long)connection;
++		cb->args[2] = (LONG_PTR)connection;
+ 	}
+ 	genlmsg_end(skb, dh);
+ 	err = 0;
+ 
+ out:
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	if (resource)
+ 		mutex_unlock(&resource->conf_update);
+ 	if (err)
+@@ -5889,9 +6012,10 @@
+ 				      struct drbd_peer_device *pd)
+ {
+ 	struct drbd_device *device = pd->device;
+! cocci
+-	unsigned long now = jiffies;
+-	unsigned long rs_left = 0;
++	ULONG_PTR now = jiffies;
++	ULONG_PTR rs_left = 0;
+ 	int i;
+! cocci
++	KIRQL flags;
+ 
+ 	/* userspace should get "future proof" units,
+ 	 * convert to sectors or milli seconds as appropriate */
+@@ -5946,9 +6070,9 @@
+ 		struct drbd_md *md = &device->ldev->md;
+ 		struct drbd_peer_md *peer_md = &md->peers[pd->node_id];
+ 
+! cocci
+-		spin_lock_irq(&md->uuid_lock);
++		spin_lock_irqsave(&md->uuid_lock, flags);
+ 		s->peer_dev_bitmap_uuid = peer_md->bitmap_uuid;
+! cocci
+-		spin_unlock_irq(&md->uuid_lock);
++		spin_unlock_irqrestore(&md->uuid_lock, flags);
+ 		s->peer_dev_flags = peer_md->flags;
+ 		put_ldev(device);
+ 	}
+@@ -5963,17 +6087,18 @@
+ 
+ int drbd_adm_dump_peer_devices(struct sk_buff *skb, struct netlink_callback *cb)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct nlattr *resource_filter;
+ 	struct drbd_resource *resource;
+! cocci
+-	struct drbd_device *device;
++	struct drbd_device *device = NULL;
+ 	struct drbd_peer_device *peer_device = NULL;
+! remove (uninitialized?)
+-	int minor, err, retcode;
++	int minor = -1, err, retcode;
+ 	struct drbd_genlmsghdr *dh;
+ 	struct idr *idr_to_search;
+ 
+ 	resource = (struct drbd_resource *)cb->args[0];
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	if (!cb->args[0] && !cb->args[1]) {
+ 		resource_filter = find_cfg_context_attr(cb->nlh, T_ctx_resource_name);
+ 		if (resource_filter) {
+@@ -5983,7 +6108,7 @@
+ 				goto put_result;
+ 			kref_debug_get(&resource->kref_debug, 9);
+ 		}
+! cocci
+-		cb->args[0] = (long)resource;
++		cb->args[0] = (LONG_PTR)resource;
+ 	}
+ 
+ 	minor = cb->args[1];
+@@ -6010,7 +6135,7 @@
+ 	peer_device = list_entry(&device->peer_devices, struct drbd_peer_device, peer_devices);
+ 
+ found_peer_device:
+! cocci
+-	list_for_each_entry_continue_rcu(peer_device, &device->peer_devices, peer_devices) {
++	list_for_each_entry_continue_rcu(struct drbd_peer_device, peer_device, &device->peer_devices, peer_devices) {
+ 		retcode = NO_ERROR;
+ 		goto put_result;  /* only one iteration */
+ 	}
+@@ -6050,13 +6175,13 @@
+ 		}
+ 
+ 		cb->args[1] = minor;
+! cocci
+-		cb->args[2] = (long)peer_device;
++		cb->args[2] = (LONG_PTR)peer_device;
+ 	}
+ 	genlmsg_end(skb, dh);
+ 	err = 0;
+ 
+ out:
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	if (err)
+ 		return err;
+ 	return skb->len;
+@@ -6194,7 +6319,7 @@
+ 	drbd_uuid_new_current_by_user(device); /* New current, previous to UI_BITMAP */
+ 
+ 	if (args.force_resync) {
+! cocci
+-		unsigned long irq_flags;
++		KIRQL irq_flags;
+ 		begin_state_change(device->resource, &irq_flags, CS_VERBOSE);
+ 		__change_disk_state(device, D_UP_TO_DATE);
+ 		end_state_change(device->resource, &irq_flags);
+@@ -6214,7 +6339,7 @@
+ 	}
+ 
+ 	if (args.clear_bm) {
+! cocci
+-		unsigned long irq_flags;
++		KIRQL irq_flags;
+ 
+ 		err = drbd_bitmap_io(device, &drbd_bmio_clear_all_n_write,
+ 			"clear_n_write from new_c_uuid", BM_LOCK_ALL, NULL);
+@@ -6417,6 +6542,7 @@
+ 
+ static enum drbd_ret_code adm_del_minor(struct drbd_device *device)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_resource *resource = device->resource;
+ 	struct drbd_peer_device *peer_device;
+ 	enum drbd_ret_code ret;
+@@ -6425,14 +6551,14 @@
+ 	if (test_bit(UNREGISTERED, &device->flags))
+ 		return ERR_MINOR_INVALID;
+ 
+! cocci
+-	spin_lock_irq(&resource->req_lock);
++	spin_lock_irqsave(&resource->req_lock, spin_lock_irq_flags);
+ 	if (device->disk_state[NOW] == D_DISKLESS) {
+ 		set_bit(UNREGISTERED, &device->flags);
+ 		ret = NO_ERROR;
+ 	} else {
+ 		ret = ERR_MINOR_CONFIGURED;
+ 	}
+! cocci
+-	spin_unlock_irq(&resource->req_lock);
++	spin_unlock_irqrestore(&resource->req_lock, spin_lock_irq_flags);
+ 
+ 	if (ret != NO_ERROR)
+ 		return ret;
+@@ -6533,6 +6659,7 @@
+ 
+ int drbd_adm_down(struct sk_buff *skb, struct genl_info *info)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_config_context adm_ctx;
+ 	struct drbd_resource *resource;
+ 	struct drbd_connection *connection;
+@@ -6573,10 +6700,10 @@
+ 	}
+ 
+ 	/* detach and delete minor */
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	idr_for_each_entry(&resource->devices, device, i) {
+ 		kref_get(&device->kref);
+! cocci
+-		rcu_read_unlock();
++		rcu_read_unlock(rcu_flags);
+ 		retcode = adm_detach(device, 0, 0, adm_ctx.reply_skb);
+ 		mutex_lock(&resource->conf_update);
+ 		ret = adm_del_minor(device);
+@@ -6591,9 +6718,9 @@
+ 			drbd_msg_put_info(adm_ctx.reply_skb, "failed to delete volume");
+ 			goto out;
+ 		}
+! cocci
+-		rcu_read_lock();
++		rcu_flags = rcu_read_lock();
+ 	}
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 
+ 	mutex_lock(&resource->conf_update);
+ 	retcode = adm_del_resource(resource);
+@@ -7064,7 +7191,7 @@
+ 		struct drbd_state_change *next_state_change =
+ 			list_entry(state_change->list.next,
+ 				   struct drbd_state_change, list);
+! cocci
+-		cb->args[0] = (long)next_state_change;
++		cb->args[0] = (LONG_PTR)next_state_change;
+ 		cb->args[3] = notifications_for_state_change(next_state_change);
+ 		cb->args[4] = 0;
+ 	}
+@@ -7119,7 +7246,7 @@
+ 	if (!list_empty(&head)) {
+ 		struct drbd_state_change *state_change =
+ 			list_entry(head.next, struct drbd_state_change, list);
+! cocci
+-		cb->args[0] = (long)state_change;
++		cb->args[0] = (LONG_PTR)state_change;
+ 		cb->args[3] = notifications_for_state_change(state_change);
+ 		list_del(&head);  /* detach list from head */
+ 	}
+@@ -7133,7 +7260,7 @@
+ 	struct drbd_config_context adm_ctx;
+ 	struct drbd_resource *resource;
+ 	struct drbd_device *device;
+! cocci ( empty struct initializer )
+-	struct forget_peer_parms parms = { };
++	struct forget_peer_parms parms = { 0 };
+ 	enum drbd_state_rv retcode;
+ 	int vnr, peer_node_id, err;
+ 
+@@ -7182,10 +7309,11 @@
+ 
+ enum drbd_ret_code validate_new_resource_name(const struct drbd_resource *resource, const char *new_name)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	struct drbd_resource *next_resource;
+ 	enum drbd_ret_code retcode = NO_ERROR;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	for_each_resource_rcu(next_resource, &drbd_resources) {
+ 		if (strcmp(next_resource->name, new_name) == 0) {
+ 			retcode = ERR_ALREADY_EXISTS;
+@@ -7196,7 +7324,7 @@
+ 	}
+ 
+ out:
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	return retcode;
+ }
+ 
+@@ -7206,7 +7334,7 @@
+ 	struct drbd_resource *resource;
+ 	struct drbd_device *device;
+ 	struct rename_resource_info rename_resource_info;
+! cocci ( empty struct initializer )
+-	struct rename_resource_parms parms = { };
++	struct rename_resource_parms parms = { 0 };
+ 	char *old_res_name, *new_res_name;
+ 	enum drbd_state_rv retcode;
+ 	enum drbd_ret_code validate_err;
