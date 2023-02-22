@@ -1,0 +1,21 @@
+--- drbd/drbd/drbd_vli.h	2023-02-17 14:26:26.762469081 +0000
++++ converted-sources/drbd/drbd_vli.h	2023-02-17 14:26:29.186423526 +0000
+@@ -20,7 +20,7 @@
+  * the bitmap transfer time can take much too long,
+  * if transmitted in plain text.
+  *
+! remove
+- * We try to reduce the transferred bitmap information
++ * We try_ to reduce the transferred bitmap information
+  * by encoding runlengths of bit polarity.
+  *
+  * We never actually need to encode a "zero" (runlengths are positive).
+@@ -149,6 +149,7 @@
+ 	/* NOT REACHED, if VLI_LEVELS code table is defined properly */
+ 	BUG();
+ #undef LEVEL
+! review: this should silence warnings ...
++	return 0;
+ }
+ 
+ /* return number of code bits needed,

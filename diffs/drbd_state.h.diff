@@ -1,0 +1,61 @@
+--- drbd/drbd/drbd_state.h	2023-02-17 14:26:26.742469457 +0000
++++ converted-sources/drbd/drbd_state.h	2023-02-17 14:26:29.066425781 +0000
+@@ -47,12 +47,12 @@
+ enum drbd_disk_state conn_highest_disk(struct drbd_connection *connection);
+ enum drbd_disk_state conn_highest_pdsk(struct drbd_connection *connection);
+ 
+! review: possible with cocci? probably not so most likely manual (or ULONG_PTR) or maybe this is manual (inter-function IRQ flags)
+-extern void state_change_lock(struct drbd_resource *, unsigned long *, enum chg_state_flags);
+-extern void state_change_unlock(struct drbd_resource *, unsigned long *);
++extern void state_change_lock(struct drbd_resource *, KIRQL *, enum chg_state_flags);
++extern void state_change_unlock(struct drbd_resource *, KIRQL *);
+ 
+! review: possible with cocci? probably not so most likely manual (or ULONG_PTR) or maybe this is manual (inter-function IRQ flags)
+-extern void begin_state_change(struct drbd_resource *, unsigned long *, enum chg_state_flags);
+-extern enum drbd_state_rv end_state_change(struct drbd_resource *, unsigned long *);
+-extern void abort_state_change(struct drbd_resource *, unsigned long *);
++extern void begin_state_change(struct drbd_resource *, KIRQL *, enum chg_state_flags);
++extern enum drbd_state_rv end_state_change(struct drbd_resource *, KIRQL *);
++extern void abort_state_change(struct drbd_resource *, KIRQL *);
+ extern void abort_state_change_locked(struct drbd_resource *resource);
+ 
+ extern void begin_state_change_locked(struct drbd_resource *, enum chg_state_flags);
+@@ -62,23 +62,25 @@
+ extern void clear_remote_state_change(struct drbd_resource *resource);
+ extern void __clear_remote_state_change(struct drbd_resource *resource);
+ 
+-
+ enum which_state;
+ extern union drbd_state drbd_get_device_state(struct drbd_device *, enum which_state);
+ extern union drbd_state drbd_get_peer_device_state(struct drbd_peer_device *, enum which_state);
+ extern union drbd_state drbd_get_connection_state(struct drbd_connection *, enum which_state);
+ 
+! manual : this is too hairy (stable_state_change macro)
+-#define stable_state_change(resource, change_state) ({				\
+-		enum drbd_state_rv rv;						\
+-		int err;							\
+-		err = wait_event_interruptible((resource)->state_wait,		\
+-			(rv = (change_state)) != SS_IN_TRANSIENT_STATE);	\
+-		if (err)							\
+-			err = -SS_UNKNOWN_ERROR;				\
+-		else								\
+-			err = rv;						\
+-		err;								\
+-	})
++#define stable_state_change(__ret, resource, change_state)				\
++	{										\
++		enum drbd_state_rv __rv;						\
++		do {									\
++			int err;                                                        \
++			wait_event_interruptible_timeout(err, (resource)->state_wait,   \
++				(__rv = (change_state)) != SS_IN_TRANSIENT_STATE, 1000);\
++			if (__rv == SS_IN_TRANSIENT_STATE)				\
++				printk("Warning: resource %s stable_state_change:"	\
++				       "In transient state %s:%d, retrying ...\n",	\
++				       (resource)->name, __FILE__, __LINE__);		\
++		} while (__rv == SS_IN_TRANSIENT_STATE);				\
++		__ret = __rv;								\
++	};
+ 
+ extern int nested_twopc_work(struct drbd_work *work, int cancel);
+ extern enum drbd_state_rv nested_twopc_request(struct drbd_resource *, int, enum drbd_packet, struct p_twopc_request *);

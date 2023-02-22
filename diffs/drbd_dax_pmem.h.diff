@@ -1,0 +1,12 @@
+--- drbd/drbd/drbd_dax_pmem.h	2023-02-17 14:26:26.746469382 +0000
++++ converted-sources/drbd/drbd_dax_pmem.h	2023-02-17 14:26:29.106425030 +0000
+@@ -11,7 +11,7 @@
+ void drbd_dax_al_update(struct drbd_device *device, struct lc_element *al_ext);
+ void drbd_dax_al_begin_io_commit(struct drbd_device *);
+ int drbd_dax_al_initialize(struct drbd_device *device);
+! cocci
+-void *drbd_dax_bitmap(struct drbd_device *, unsigned long);
++void *drbd_dax_bitmap(struct drbd_device *, ULONG_PTR);
+ 
+ static inline bool drbd_md_dax_active(struct drbd_backing_dev *bdev)
+ {
