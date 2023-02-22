@@ -5,7 +5,7 @@ Add categories:
 
 @@ remove: patch not needed any more
 @@ cocci: have generic cocci script to apply this patch (like most spin locks, rcu, unsigned long, ...)
-@@ header: add something to a WinDRBD header included here, for example define must_hold to nothing
+@@ header: add something to a WinDRBD header included here, for example define must_hold to nothing (obsolete, just remove 000_xx perl script)
 @@ compat: implement something in the compat layer to resolve this patch
 @@ manual: manual patch needed - only if all of the above fail
 @@ upstream: this might be interesting for upstream DRBD maybe submit this
