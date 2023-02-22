@@ -1,0 +1,12 @@
+--- ../../drbd/drbd/drbd-headers/linux/drbd_limits.h	2023-02-17 14:26:26.854467352 +0000
++++ drbd-headers/linux/drbd_limits.h	2023-02-17 14:26:29.374419994 +0000
+@@ -223,7 +223,7 @@
+ 
+ /* Some backends pretend to support WRITE SAME,
+  * but fail such requests when they are actually submitted.
+! remove
+- * This is to tell DRBD to not even try. */
++ * This is to tell DRBD to not even try_. */
+ #define DRBD_DISABLE_WRITE_SAME_DEF 0
+ 
+ #define DRBD_ALLOW_TWO_PRIMARIES_DEF	0

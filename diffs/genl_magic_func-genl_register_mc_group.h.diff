@@ -1,0 +1,12 @@
+--- ../../drbd/drbd/drbd-headers/linux/genl_magic_func-genl_register_mc_group.h	2023-02-17 14:26:26.854467352 +0000
++++ drbd-headers/linux/genl_magic_func-genl_register_mc_group.h	2023-02-17 14:26:29.374419994 +0000
+@@ -4,7 +4,7 @@
+ CONCAT_(GENL_MAGIC_FAMILY, _mcg_ ## group) __read_mostly = {		\
+ 	.name = #group,							\
+ };									\
+! review CONCAT_ _UNUSED still needed?
+-static int CONCAT_(GENL_MAGIC_FAMILY, _genl_multicast_ ## group)(	\
++static int CONCAT_(GENL_MAGIC_FAMILY, _genl_multicast_ ## group ## _UNUSED)(	\
+ 	struct sk_buff *skb, gfp_t flags)				\
+ {									\
+ 	unsigned int group_id =						\

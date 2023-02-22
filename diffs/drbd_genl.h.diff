@@ -1,0 +1,23 @@
+--- ../../drbd/drbd/drbd-headers/linux/drbd_genl.h	2023-02-17 14:26:26.858467277 +0000
++++ drbd-headers/linux/drbd_genl.h	2023-02-17 14:26:29.374419994 +0000
+@@ -86,8 +86,7 @@
+  */
+ GENL_struct(DRBD_NLA_CFG_REPLY, 1, drbd_cfg_reply,
+ 		/* "arbitrary" size strings, nla_policy.len = 0 */
+! review: why DRBD_GENLA_F_MANDATORY is 1?
+-	__str_field(1, DRBD_GENLA_F_MANDATORY,	info_text, 0)
+-)
++	__str_field(1, DRBD_GENLA_F_MANDATORY,	info_text, 1))
+ 
+ /* Configuration requests typically need a context to operate on.
+  * Possible keys are device minor (fits in the drbd_genlmsghdr),
+@@ -108,7 +107,7 @@
+ 	__str_field(2, DRBD_F_REQUIRED | DRBD_F_INVARIANT,	meta_dev,	128)
+ 	__s32_field(3, DRBD_F_REQUIRED | DRBD_F_INVARIANT,	meta_dev_idx)
+ 
+! remove
+-	/* use the resize command to try and change the disk_size */
++	/* use the resize command to try_ and change the disk_size */
+ 	__u64_field(4, DRBD_GENLA_F_MANDATORY | DRBD_F_INVARIANT,	disk_size)
+ 	/*__u32_field(5, DRBD_GENLA_F_MANDATORY | DRBD_F_INVARIANT,	max_bio_bvecs)*/
+ 
