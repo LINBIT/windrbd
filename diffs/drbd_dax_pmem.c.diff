@@ -1,0 +1,89 @@
+--- drbd/drbd/drbd_dax_pmem.c	2023-02-17 14:26:26.742469457 +0000
++++ converted-sources/drbd/drbd_dax_pmem.c	2023-02-17 14:26:29.086425405 +0000
+@@ -6,7 +6,6 @@
+ 
+    Copyright (C) 2017, LINBIT HA-Solutions GmbH.
+ 
+-
+  */
+ 
+! compat: implement the dax API calls
+ /*
+@@ -31,10 +30,10 @@
+ 
+ static int map_superblock_for_dax(struct drbd_backing_dev *bdev, struct dax_device *dax_dev)
+ {
+! cocci
+-	long want = 1;
++	LONG_PTR want = 1;
+ 	pgoff_t pgoff = bdev->md.md_offset >> (PAGE_SHIFT - SECTOR_SHIFT);
+! cocci
+ 	void *kaddr;
+-	long len;
++	LONG_PTR len;
+ 	pfn_t pfn_unused; /* before 4.18 it is required to pass in non-NULL */
+ 	int id;
+ 
+@@ -90,12 +89,12 @@
+ 	struct dax_device *dax_dev = bdev->dax_dev;
+ 	sector_t first_sector = drbd_md_first_sector(bdev);
+ 	sector_t al_sector = bdev->md.md_offset + bdev->md.al_offset;
+! cocci
+-	long want = (drbd_md_last_sector(bdev) + 1 - first_sector) >> (PAGE_SHIFT - SECTOR_SHIFT);
++	LONG_PTR want = (drbd_md_last_sector(bdev) + 1 - first_sector) >> (PAGE_SHIFT - SECTOR_SHIFT);
+ 	pgoff_t pgoff = first_sector >> (PAGE_SHIFT - SECTOR_SHIFT);
+! cocci
+-	long md_offset_byte = (bdev->md.md_offset - first_sector) << SECTOR_SHIFT;
+-	long al_offset_byte = (al_sector - first_sector) << SECTOR_SHIFT;
++	LONG_PTR md_offset_byte = (bdev->md.md_offset - first_sector) << SECTOR_SHIFT;
++	LONG_PTR al_offset_byte = (al_sector - first_sector) << SECTOR_SHIFT;
+ 	void *kaddr;
+! cocci
+-	long len;
++	LONG_PTR len;
+ 	pfn_t pfn_unused; /* before 4.18 it is required to pass in non-NULL */
+ 	int id;
+ 
+@@ -121,19 +120,19 @@
+ 	arch_wb_cache_pmem(slot, sizeof(*slot));
+ }
+ 
+-
+ void drbd_dax_al_begin_io_commit(struct drbd_device *device)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct lc_element *e;
+ 
+! cocci
+-	spin_lock_irq(&device->al_lock);
++	spin_lock_irqsave(&device->al_lock, spin_lock_irq_flags);
+ 
+! cocci
+-	list_for_each_entry(e, &device->act_log->to_be_changed, list)
++	list_for_each_entry(struct lc_element, e, &device->act_log->to_be_changed, list)
+ 		drbd_dax_al_update(device, e);
+ 
+ 	lc_committed(device->act_log);
+ 
+! cocci
+-	spin_unlock_irq(&device->al_lock);
++	spin_unlock_irqrestore(&device->al_lock, spin_lock_irq_flags);
+ }
+ 
+ int drbd_dax_al_initialize(struct drbd_device *device)
+@@ -155,10 +154,10 @@
+ 	return 0;
+ }
+ 
+! cocci
+-void *drbd_dax_bitmap(struct drbd_device *device, unsigned long want)
++void *drbd_dax_bitmap(struct drbd_device *device, ULONG_PTR want)
+ {
+ 	struct drbd_backing_dev *bdev = device->ldev;
+ 	unsigned char *md_on_pmem = (unsigned char *)bdev->md_on_pmem;
+ 
+! cocci
+-	return md_on_pmem + (long)bdev->md.bm_offset * SECTOR_SIZE;
++	return md_on_pmem + (LONG_PTR)bdev->md.bm_offset * SECTOR_SIZE;
+ }
