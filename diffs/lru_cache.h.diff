@@ -1,0 +1,35 @@
+--- ../../drbd/drbd/linux/lru_cache.h	2023-02-17 14:26:26.858467277 +0000
++++ linux/lru_cache.h	2023-02-17 14:26:29.378419919 +0000
+@@ -8,7 +8,6 @@
+    Copyright (C) 2003-2008, Philipp Reisner <philipp.reisner@linbit.com>.
+    Copyright (C) 2003-2008, Lars Ellenberg <lars.ellenberg@linbit.com>.
+ 
+-
+  */
+ 
+ #ifndef LRU_CACHE_H
+@@ -193,11 +192,10 @@
+ 
+ 	/* statistics */
+ 	unsigned used; /* number of elements currently on in_use list */
+! cocci
+-	unsigned long hits, misses, starving, locked, changed;
++	ULONG_PTR hits, misses, starving, locked, changed;
+ 
+ 	/* see below: flag-bits for lru_cache */
+! cocci
+-	unsigned long flags;
+-
++	ULONG_PTR flags;
+ 
+ 	void  *lc_private;
+ 	const char *name;
+@@ -207,7 +205,6 @@
+ 	struct lc_element **lc_element;
+ };
+ 
+! remove
+-
+ /* flag-bits for lru_cache */
+ enum {
+ 	/* debugging aid, to catch concurrent access early.

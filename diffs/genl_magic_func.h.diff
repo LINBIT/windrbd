@@ -1,0 +1,88 @@
+--- ../../drbd/drbd/drbd-headers/linux/genl_magic_func.h	2023-02-17 14:26:26.858467277 +0000
++++ drbd-headers/linux/genl_magic_func.h	2023-02-17 14:26:29.378419919 +0000
+@@ -46,12 +46,12 @@
+ 
+ #ifndef __KERNEL__
+ #ifndef pr_info
+! manual (or cocci): __VA_ARGS__ in macro (GNU extension)
+-#define pr_info(args...)	fprintf(stderr, args);
++#define pr_info(...)	fprintf(stderr, __VA_ARGS__);
+ #endif
+ /* genl_magic_func.h generates *_from_attrs() helper functions
+  * that now allocate/free the nested attribute tables.
+  * Map the kernel API to what we use in userland. */
+! remove
+-#define kcalloc(nmem, size, gfp) calloc((nmem), (size))
++#define kcalloc(nmem, size, gfp, '00WD') calloc((nmem), (size))
+ #define kfree(p) free(p)
+ #endif
+ 
+@@ -148,7 +148,7 @@
+ 		*ret_nested_attribute_table = NULL;			\
+ 	if (!tla)							\
+ 		return -ENOMSG;						\
+! remove
+-	ntb = kcalloc(ARRAY_SIZE(s_name ## _nl_policy), sizeof(*ntb), GFP_KERNEL); \
++	ntb = kcalloc(ARRAY_SIZE(s_name ## _nl_policy), sizeof(*ntb), GFP_KERNEL, '01WD'); \
+ 	if (!ntb)							\
+ 		return -ENOMEM;						\
+ 	DPRINT_TLA(#s_name, "<=-", #tag_name);				\
+@@ -182,7 +182,7 @@
+ 	return __ ## s_name ## _from_attrs(s, NULL, info, true);	\
+ }					__attribute__((unused))		\
+ 
+
+! manual (or cocci): __VA_ARGS__ in macro (GNU extension)
+-#define __assign(attr_nr, attr_flag, name, nla_type, type, assignment...)	\
++#define __assign(attr_nr, attr_flag, name, nla_type, type, ...)	\
+ 		nla = ntb[attr_nr];						\
+ 		if (nla) {						\
+ 			if (exclude_invariants && !!((attr_flag) & DRBD_F_INVARIANT)) {		\
+@@ -190,7 +190,7 @@
+ 				err = -EEXIST;				\
+ 				goto out;				\
+ 			}						\
+! manual (or cocci): __VA_ARGS__ in macro (GNU extension)
+-			assignment;					\
++			__VA_ARGS__;					\
+ 		} else if (exclude_invariants && !!((attr_flag) & DRBD_F_INVARIANT)) {		\
+ 			/* attribute missing from payload, */		\
+ 			/* which was expected */			\
+@@ -269,7 +269,7 @@
+  *									{{{2
+  */
+ #define ZZZ_genl_family		CONCAT_(GENL_MAGIC_FAMILY, _genl_family)
+! review: those still needed ZZZ_genl_family static removed?
+-static struct genl_family ZZZ_genl_family;
++struct genl_family ZZZ_genl_family;
+ 
+ /*
+  * Magic: define multicast groups
+@@ -292,7 +292,7 @@
+ #include <linux/genl_magic_func-genl_register_mc_group.h>
+ #endif
+ 
+! review: those still needed ZZZ_genl_family static removed?
+-static struct genl_family ZZZ_genl_family __read_mostly = {
++struct genl_family ZZZ_genl_family __read_mostly = {
+ 	/* .id = GENL_ID_GENERATE, which exists no longer, and was 0 anyways */
+ 	.name = __stringify(GENL_MAGIC_FAMILY),
+ 	.version = GENL_MAGIC_VERSION,
+@@ -352,7 +352,6 @@
+ 	return s_name ## _to_skb(skb, s, 1);				\
+ }
+ 
+! remove
+-
+ #undef __field
+ #define __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
+ 		__is_signed)						\
+@@ -375,7 +374,6 @@
+ 
+ #include GENL_MAGIC_INCLUDE_FILE
+ 
+! remove
+-
+ /* Functions for initializing structs to default values.  */
+ 
+ #undef __field

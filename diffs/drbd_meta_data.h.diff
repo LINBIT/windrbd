@@ -1,0 +1,22 @@
+--- ../../drbd/drbd/drbd-headers/drbd_meta_data.h	2023-02-17 14:26:26.854467352 +0000
++++ drbd-headers/drbd_meta_data.h	2023-02-17 14:26:29.362420219 +0000
+@@ -50,7 +50,7 @@
+ 	struct peer_dev_md_on_disk_9 peers[DRBD_PEERS_MAX];
+ 	be_u64 history_uuids[HISTORY_UUIDS];
+ 
+! review we need to probably manually patch the __declspec(align(4096)) ...
+-	char padding[0] __attribute__((aligned(4096)));
++	__declspec(align(4096)) char padding[0] __attribute__((aligned(4096)));
+ } __packed;
+ 
+ /* Attention, these two are defined in drbd_int.h as well! */
+@@ -95,7 +95,7 @@
+ 	/* Some reserved bytes.  Expected usage is a 64bit counter of
+ 	 * sectors-written since device creation, and other data generation tag
+ 	 * supporting usage */
+! review why was this changed?
+-	be_u32	__reserved[4];
++	be_u32	__reserved_win[4];
+ 
+ 	/* --- 36 byte used --- */
+ 

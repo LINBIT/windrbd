@@ -1,0 +1,35 @@
+--- ../../drbd/drbd/drbd-headers/drbd_protocol.h	2023-02-17 14:26:26.854467352 +0000
++++ drbd-headers/drbd_protocol.h	2023-02-17 14:26:29.370420069 +0000
+@@ -1,3 +1,4 @@
+! manual probably this is needed pragma pack(push, 1) but at least check for MS C compiler
++#pragma pack(push, 1)
+ #ifndef __DRBD_PROTOCOL_H
+ #define __DRBD_PROTOCOL_H
+ 
+@@ -128,7 +129,7 @@
+ 
+ /* This is the layout for a packet on the wire.
+  * The byteorder is the network byte order.
+! remove
+- *     (except block_id and barrier fields.
++ *     (except_ block_id and barrier fields.
+  *	these are pointers to local structs
+  *	and have no relevance for the partner,
+  *	which just echoes them as received.)
+@@ -305,7 +306,7 @@
+  * zeroes (and thus use zero-out, potentially doing the mentioned full-alloc),
+  * or if we want to put the emphasis on discard, and only do a "best effort
+  * zeroing" (by "discarding" blocks aligned to discard-granularity, and zeroing
+! remove
+- * only potential unaligned head and tail clippings), to at least *try* to
++ * only potential unaligned head and tail clippings), to at least *try_* to
+  * avoid "false positives" in an online-verify later, hoping that someone
+  * set skip_block_zeroing=false.
+  */
+@@ -614,3 +615,5 @@
+ #define DRBD_SOCKET_BUFFER_SIZE 4096
+ 
+ #endif  /* __DRBD_PROTOCOL_H */
++
+! manual probably this is needed pragma pack(push, 1) but at least check for MS C compiler
++#pragma pack(pop)
