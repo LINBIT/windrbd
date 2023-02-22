@@ -52,6 +52,17 @@ TODO: Code quality: reorganzie drbd_windows.c, general code cleanups
 
 TODO: Code quality: Minimize / Sqash patches to DRBD
 
+	We now create cocci scripts and manual patches from
+	scratch by diffing every file between drbd and
+	converted sources and manually review each patch.
+	Done for drbd/drbd/*.[hc] for now, see the diffs
+	subdir for the results.
+
+	TODO: drbd-header/*.h patches. ./drbd-headers/linux/*.h
+		and linux/*.h
+	Then make a list of TODOs in compat, cocci, manual and
+	upstream
+
 TODO: Feature: Base on DRBD 9.1 branch
 
 TODO: Code quality: remove unneeded CygWin deliverables
