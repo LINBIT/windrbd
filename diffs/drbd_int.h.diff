@@ -1,0 +1,919 @@
+--- drbd/drbd/drbd_int.h	2023-02-17 14:26:26.750469307 +0000
++++ converted-sources/drbd/drbd_int.h	2023-02-17 14:26:29.150424203 +0000
+@@ -8,9 +8,11 @@
+   Copyright (C) 1999-2008, Philipp Reisner <philipp.reisner@linbit.com>.
+   Copyright (C) 2002-2008, Lars Ellenberg <lars.ellenberg@linbit.com>.
+ 
+-
+ */
+ 
+! remove
++/* Enable all warnings throws lots of those warnings: */
++#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
++
+ #ifndef _DRBD_INT_H
+ #define _DRBD_INT_H
+ 
+@@ -35,6 +37,8 @@
+ #include <linux/drbd_genl_api.h>
+ #include <linux/drbd.h>
+ #include <linux/drbd_config.h>
+! remove
++#include <linux/ktime.h>
++#include <linux/kconfig.h>
+ 
+ #include "drbd_wrappers.h"
+ #include "drbd_strings.h"
+@@ -43,18 +47,17 @@
+ #include "drbd_protocol.h"
+ #include "drbd_kref_debug.h"
+ #include "drbd_transport.h"
+! remove
+-#include "drbd_polymorph_printk.h"
+ 
+ #ifdef __CHECKER__
+ # define __protected_by(x)       __attribute__((require_context(x,1,999,"rdwr")))
+ # define __protected_read_by(x)  __attribute__((require_context(x,1,999,"read")))
+ # define __protected_write_by(x) __attribute__((require_context(x,1,999,"write")))
+! remove
+-# define __must_hold(x)       __attribute__((context(x,1,1), require_context(x,1,999,"call")))
++
+ #else
+ # define __protected_by(x)
+ # define __protected_read_by(x)
+ # define __protected_write_by(x)
+! remove
+-# define __must_hold(x)
++
+ #endif
+ 
+ /* module parameter, defined in drbd_main.c */
+@@ -132,11 +135,11 @@
+  *************************/
+ 
+ #define SET_MDEV_MAGIC(x) \
+! cocci
+-	({ typecheck(struct drbd_device*, x); \
+-	  (x)->magic = (long)(x) ^ DRBD_MAGIC; })
++	{ typecheck(struct drbd_device*, x); \
++	  (x)->magic = (LONG_PTR)(x) ^ DRBD_MAGIC; }
+! cocci
+ #define IS_VALID_MDEV(x)  \
+ 	(typecheck(struct drbd_device*, x) && \
+-	  ((x) ? (((x)->magic ^ DRBD_MAGIC) == (long)(x)) : 0))
++	  ((x) ? (((x)->magic ^ DRBD_MAGIC) == (LONG_PTR)(x)) : 0))
+ 
+ extern struct idr drbd_devices; /* RCU, updates: drbd_devices_lock */
+ extern struct list_head drbd_resources; /* RCU, updates: resources_mutex */
+@@ -149,11 +152,11 @@
+ 	 * stores total bits and long words
+ 	 * of the bitmap, so we don't need to
+ 	 * call the accessor functions over and again. */
+! cocci
+-	unsigned long bm_bits;
+-	unsigned long bm_words;
++	ULONG_PTR bm_bits;
++	ULONG_PTR bm_words;
+ 	/* during xfer, current position within the bitmap */
+! cocci
+-	unsigned long bit_offset;
+-	unsigned long word_offset;
++	ULONG_PTR bit_offset;
++	ULONG_PTR word_offset;
+ 
+ 	/* statistics; index: (h->command == P_BITMAP) */
+ 	unsigned packets[2];
+@@ -175,7 +178,7 @@
+ 	c->word_offset = c->bit_offset >> 6;
+ #elif BITS_PER_LONG == 32
+ 	c->word_offset = c->bit_offset >> 5;
+! cocci
+-	c->word_offset &= ~(1UL);
++	c->word_offset &= ~(((ULONG_PTR)1));
+ #else
+ # error "unsupported BITS_PER_LONG"
+ #endif
+@@ -206,7 +209,7 @@
+ static inline enum drbd_thread_state get_t_state(struct drbd_thread *thi)
+ {
+ 	/* THINK testing the t_state seems to be uncritical in all cases
+! remove
+-	 * (but thread_{start,stop}), so we can read it *without* the lock.
++	 * (but thread_{start,stop}, so we can read it *without* the lock.
+ 	 *	--lge */
+ 
+ 	smp_rmb();
+@@ -227,29 +230,25 @@
+ 
+ #include "drbd_interval.h"
+ 
+! manual (inter-function IRQ flags)
+-extern int drbd_wait_misc(struct drbd_device *, struct drbd_peer_device *, struct drbd_interval *);
++extern int drbd_wait_misc(struct drbd_device *, struct drbd_peer_device *, struct drbd_interval *, KIRQL *);
+ 
+ extern void lock_all_resources(void);
+ extern void unlock_all_resources(void);
+ 
+ extern enum drbd_disk_state disk_state_from_md(struct drbd_device *);
+ extern bool want_bitmap(struct drbd_peer_device *peer_device);
+! cocci
+-extern long twopc_timeout(struct drbd_resource *);
+-extern long twopc_retry_timeout(struct drbd_resource *, int);
++extern LONG_PTR twopc_timeout(struct drbd_resource *);
++extern LONG_PTR twopc_retry_timeout(struct drbd_resource *, int);
+ extern void twopc_connection_down(struct drbd_connection *);
+ extern u64 directly_connected_nodes(struct drbd_resource *, enum which_state);
+ 
+ /* sequence arithmetic for dagtag (data generation tag) sector numbers.
+  * dagtag_newer_eq: true, if a is newer than b */
+ #define dagtag_newer_eq(a,b)      \
+! remove
+-	(typecheck(u64, a) && \
+-	 typecheck(u64, b) && \
+-	((s64)(a) - (s64)(b) >= 0))
++	((s64)(a) - (s64)(b) >= 0)
+ 
+ #define dagtag_newer(a,b)      \
+! remove
+-	(typecheck(u64, a) && \
+-	 typecheck(u64, b) && \
+-	((s64)(a) - (s64)(b) > 0))
++	((s64)(a) - (s64)(b) > 0)
+ 
+ struct drbd_request {
+ 	struct drbd_device *device;
+@@ -289,11 +288,11 @@
+ 	struct list_head req_pending_local;
+ 
+ 	/* for generic IO accounting */
+! cocci
+-	unsigned long start_jif;
++	ULONG_PTR start_jif;
+ 
+ 	/* for request_timer_fn() */
+! cocci
+-	unsigned long pre_submit_jif;
+-	unsigned long pre_send_jif[DRBD_PEERS_MAX];
++	ULONG_PTR pre_submit_jif;
++	ULONG_PTR pre_send_jif[DRBD_PEERS_MAX];
+ 
+ #ifdef CONFIG_DRBD_TIMING_STATS
+ 	/* for DRBD internal statistics */
+@@ -341,7 +340,6 @@
+ 	 *      how long did it take the lower level device to complete this request
+ 	 */
+ 
+-
+ 	/* once it hits 0, we may complete the master_bio */
+ 	atomic_t completion_ref;
+ 	/* once it hits 0, we may destroy this drbd_request object */
+@@ -363,7 +361,7 @@
+ 	atomic_t epoch_size; /* increased on every request added. */
+ 	atomic_t active;     /* increased on every req. added, and dec on every finished. */
+ 	atomic_t confirmed;  /* adjusted for every P_CONFIRM_STABLE */
+! cocci
+-	unsigned long flags;
++	ULONG_PTR flags;
+ };
+ 
+ /* drbd_epoch flag bits */
+@@ -392,11 +390,11 @@
+ 	unsigned int opf; /* to be used as bi_opf */
+ 	atomic_t pending_bios;
+ 	struct drbd_interval i;
+! cocci
+-	unsigned long flags;	/* see comments on ee flag bits below */
++	ULONG_PTR flags;	/* see comments on ee flag bits below */
+ 	union {
+ 		struct { /* regular peer_request */
+ 			struct drbd_epoch *epoch; /* for writes */
+! cocci
+-			unsigned long submit_jif;
++			ULONG_PTR submit_jif;
+ 			union {
+ 				u64 block_id;
+ 				struct digest_info *digest;
+@@ -511,7 +509,7 @@
+ 				 * Gets cleared when the state.conn
+ 				 * goes into L_ESTABLISHED state. */
+ 	MD_NO_FUA,		/* meta data device does not support barriers,
+! remove
+-				   so don't even try */
++				   so don't even try_ */
+ 	WAS_READ_ERROR,		/* Local disk READ failed, returned IO error */
+ 	FORCE_DETACH,		/* Force-detach from local disk, aborting any pending local IO */
+ 	NEW_CUR_UUID,		/* Create new current UUID when thawing IO or issuing local IO */
+@@ -618,8 +616,8 @@
+ 	};
+ 	spinlock_t bm_lock;
+ 
+! cocci
+-	unsigned long bm_set[DRBD_PEERS_MAX]; /* number of bits set */
+-	unsigned long bm_bits;  /* bits per peer */
++	ULONG_PTR bm_set[DRBD_PEERS_MAX]; /* number of bits set */
++	ULONG_PTR bm_bits;  /* bits per peer */
+ 	size_t   bm_words; /* platform specitif word size; not 32bit!! */
+ 	size_t   bm_number_of_pages;
+ 	sector_t bm_dev_capacity;
+@@ -702,8 +700,8 @@
+ 
+ struct drbd_md_io {
+ 	struct page *page;
+! cocci
+-	unsigned long start_jif;	/* last call to drbd_md_get_buffer */
+-	unsigned long submit_jif;	/* last _drbd_md_sync_page_io() submit */
++	ULONG_PTR start_jif;	/* last call to drbd_md_get_buffer */
++	ULONG_PTR submit_jif;	/* last _drbd_md_sync_page_io() submit */
+ 	const char *current_use;
+ 	atomic_t in_use;
+ 	unsigned int done;
+@@ -776,7 +774,7 @@
+ 	RESOURCE_WORK_PENDING,  /* tell worker that some peer_device has pending work */
+ 
+         /* to be used in drbd_post_work() */
+! remove
+-	TRY_BECOME_UP_TO_DATE,  /* try to become D_UP_TO_DATE */
++	TRY_BECOME_UP_TO_DATE,  /* try_ to become D_UP_TO_DATE */
+ 	R_UNREGISTERED,
+ 	DOWN_IN_PROGRESS,
+ 	CHECKING_PEERS,
+@@ -818,7 +816,7 @@
+ 
+ struct drbd_thread_timing_details
+ {
+! cocci
+-	unsigned long start_jif;
++	ULONG_PTR start_jif;
+ 	void *cb_addr;
+ 	const char *caller_fn;
+ 	unsigned int line;
+@@ -834,8 +832,8 @@
+ 	int additional_size;  /* additional space to be added to next packet's size */
+ };
+ 
+-
+ struct drbd_resource {
+! manual (wrcu_flags patch) but rethink this ...
++	KIRQL wrcu_flags;
+ 	char *name;
+ #ifdef CONFIG_DEBUG_FS
+ 	struct dentry *debugfs_res;
+@@ -859,7 +857,7 @@
+ 	u64 dagtag_sector;		/* Protected by req_lock.
+ 					 * See also dagtag_sector in
+ 					 * &drbd_request */
+! cocci
+-	unsigned long flags;
++	ULONG_PTR flags;
+ 
+ 	struct list_head transfer_log;	/* all requests not yet fully processed */
+ 
+@@ -923,7 +921,7 @@
+ 	 * This does not have an emergency reserve.
+ 	 *
+ 	 * When allocating from this pool, it first takes pages from the pool.
+! remove
+-	 * Only if the pool is depleted will try to allocate from the system.
++	 * Only if the pool is depleted will try_ to allocate from the system.
+ 	 *
+ 	 * The assumption is that pages taken from this pool will be processed,
+ 	 * and given back, "quickly", and then can be recycled, so we can avoid
+@@ -958,7 +956,7 @@
+ 	enum drbd_role peer_role[2];
+ 	bool susp_fen[2];		/* IO suspended because fence peer handler runs */
+ 
+! cocci
+-	unsigned long flags;
++	ULONG_PTR flags;
+ 	enum drbd_fencing_policy fencing_policy;
+ 
+ 	struct drbd_send_buffer send_buffer[2];
+@@ -976,7 +974,7 @@
+ 
+ 	int agreed_pro_version;		/* actually used protocol version */
+ 	u32 agreed_features;
+! cocci
+-	unsigned long last_received;	/* in jiffies, either socket */
++	ULONG_PTR last_received;	/* in jiffies, either socket */
+ 	atomic_t ap_in_flight; /* App sectors in flight (waiting for ack) */
+ 	atomic_t rs_in_flight; /* Resync sectors in flight */
+ 
+@@ -997,7 +995,7 @@
+ 	spinlock_t epoch_lock;
+ 	unsigned int epochs;
+ 
+! cocci
+-	unsigned long last_reconnect_jif;
++	ULONG_PTR last_reconnect_jif;
+ 	/* empty member on older kernels without blk_start_plug() */
+ 	struct blk_plug receiver_plug;
+ 	struct drbd_thread receiver;
+@@ -1078,7 +1076,7 @@
+ 	struct drbd_thread_timing_details r_timing_details[DRBD_THREAD_DETAILS_HIST];
+ 
+ 	struct {
+! cocci
+-		unsigned long last_sent_barrier_jif;
++		ULONG_PTR last_sent_barrier_jif;
+ 		int last_sent_epoch_nr;
+ 
+ 		/* whether this sender thread
+@@ -1143,7 +1141,7 @@
+ 	int bitmap_index;
+ 	int node_id;
+ 
+! cocci
+-	unsigned long flags;
++	ULONG_PTR flags;
+ 
+ 	enum drbd_repl_state start_resync_side;
+ 	enum drbd_repl_state last_repl_state; /* What we received from the peer */
+@@ -1160,8 +1158,8 @@
+ 	unsigned int resync_wenr;
+ 	enum drbd_disk_state resync_finished_pdsk; /* Finished while starting resync */
+ 	int resync_again; /* decided to resync again while resync running */
+! cocci
+-	unsigned long resync_next_bit; /* bitmap bit to search from for next resync request */
+-	unsigned long last_resync_next_bit; /* value of resync_next_bit before last set of resync requests */
++	ULONG_PTR resync_next_bit; /* bitmap bit to search from for next resync request */
++	ULONG_PTR last_resync_next_bit; /* value of resync_next_bit before last set of resync requests */
+ 	struct mutex resync_next_bit_mutex;
+ 
+ 	atomic_t ap_pending_cnt; /* AP data packets on the wire, ack expected */
+@@ -1171,24 +1169,24 @@
+ 	/* use checksums for *this* resync */
+ 	bool use_csums;
+ 	/* blocks to resync in this run [unit BM_BLOCK_SIZE] */
+! cocci
+-	unsigned long rs_total;
++	ULONG_PTR rs_total;
+ 	/* number of resync blocks that failed in this run */
+! cocci
+-	unsigned long rs_failed;
++	ULONG_PTR rs_failed;
+ 	/* Syncer's start time [unit jiffies] */
+! cocci
+-	unsigned long rs_start;
++	ULONG_PTR rs_start;
+ 	/* cumulated time in PausedSyncX state [unit jiffies] */
+! cocci
+-	unsigned long rs_paused;
++	ULONG_PTR rs_paused;
+ 	/* skipped because csum was equal [unit BM_BLOCK_SIZE] */
+! cocci
+-	unsigned long rs_same_csum;
++	ULONG_PTR rs_same_csum;
+ #define DRBD_SYNC_MARKS 8
+ #define DRBD_SYNC_MARK_STEP (3*HZ)
+ 	/* block not up-to-date at mark [unit BM_BLOCK_SIZE] */
+! cocci
+-	unsigned long rs_mark_left[DRBD_SYNC_MARKS];
++	ULONG_PTR rs_mark_left[DRBD_SYNC_MARKS];
+ 	/* marks's time [unit jiffies] */
+! cocci
+-	unsigned long rs_mark_time[DRBD_SYNC_MARKS];
++	ULONG_PTR rs_mark_time[DRBD_SYNC_MARKS];
+ 	/* current index into rs_mark_{left,time} */
+ 	int rs_last_mark;
+! cocci
+-	unsigned long rs_last_writeout;
++	ULONG_PTR rs_last_writeout;
+ 
+ 	/* where does the admin want us to start? (sector) */
+ 	sector_t ov_start_sector;
+@@ -1211,8 +1209,8 @@
+ 			      * on the lower level device when we last looked. */
+ 	int rs_in_flight; /* resync sectors in flight (to proxy, in proxy and from proxy) */
+ 	ktime_t rs_last_mk_req_kt;
+! cocci
+-	unsigned long ov_left; /* in bits */
+-	unsigned long ov_skipped; /* in bits */
++	ULONG_PTR ov_left; /* in bits */
++	ULONG_PTR ov_skipped; /* in bits */
+ 	u64 rs_start_uuid;
+ 
+ 	u64 current_uuid;
+@@ -1222,7 +1220,7 @@
+ 	u64 uuid_flags;
+ 	u64 uuid_node_mask; /* might be authoritative_nodes or weak_nodes */
+ 
+! cocci
+-	unsigned long comm_bm_set; /* communicated number of set bits. */
++	ULONG_PTR comm_bm_set; /* communicated number of set bits. */
+ 	u64 comm_current_uuid; /* communicated current UUID */
+ 	u64 comm_uuid_flags; /* communicated UUID flags */
+ 	u64 comm_bitmap_uuid;
+@@ -1261,13 +1259,13 @@
+ 
+ struct drbd_device {
+ #ifdef PARANOIA
+! cocci
+-	long magic;
++	LONG_PTR magic;
+ #endif
+ 	struct drbd_resource *resource;
+ 	struct list_head peer_devices;
+ 	struct list_head pending_bitmap_io;
+ 
+! cocci
+-	unsigned long flush_jif;
++	ULONG_PTR flush_jif;
+ #ifdef CONFIG_DEBUG_FS
+ 	struct dentry *debugfs_minor;
+ 	struct dentry *debugfs_vol;
+@@ -1291,7 +1289,7 @@
+ 	struct kref_debug_info kref_debug;
+ 
+ 	/* things that are stored as / read from meta data on disk */
+! cocci
+-	unsigned long flags;
++	ULONG_PTR flags;
+ 
+ 	/* configured by drbdsetup */
+ 	struct drbd_backing_dev *ldev __protected_by(local);
+@@ -1299,7 +1297,7 @@
+ 	struct request_queue *rq_queue;
+ 	struct gendisk	    *vdisk;
+ 
+! cocci
+-	unsigned long last_reattach_jif;
++	ULONG_PTR last_reattach_jif;
+ 	struct timer_list md_sync_timer;
+ 	struct timer_list request_timer;
+ 
+@@ -1364,7 +1362,7 @@
+ 
+ #ifdef CONFIG_DRBD_TIMING_STATS
+ 	spinlock_t timing_lock;
+! cocci
+-	unsigned long reqs;
++	ULONG_PTR reqs;
+ 	ktime_t in_actlog_kt;
+ 	ktime_t pre_submit_kt; /* sum over over all reqs */
+ 
+@@ -1380,12 +1378,16 @@
+ 
+ 	struct rcu_head rcu;
+ 	struct work_struct finalize_work;
+! review: still needed? drbd_device->this_bdev
++
++	struct block_device *this_bdev;
+ };
+ 
+! review: why this include drbd_polymorph_printk.h here?
++#include "drbd_polymorph_printk.h"
++
+ struct drbd_bm_aio_ctx {
+ 	struct drbd_device *device;
+ 	struct list_head list; /* on device->pending_bitmap_io */
+! cocci
+-	unsigned long start_jif;
++	ULONG_PTR start_jif;
+ 	atomic_t in_flight;
+ 	unsigned int done;
+ 	unsigned flags;
+@@ -1428,7 +1430,6 @@
+ 	return (struct drbd_device *)idr_find(&drbd_devices, minor);
+ }
+ 
+! remove
+-
+ static inline struct drbd_peer_device *
+ conn_peer_device(struct drbd_connection *connection, int volume_number)
+ {
+@@ -1448,24 +1449,24 @@
+ }
+ 
+! manual (cocci cannot find type - maybe by _resource macro name?)
+ #define for_each_resource(resource, _resources) \
+-	list_for_each_entry(resource, _resources, resources)
++	list_for_each_entry(struct drbd_resource, resource, _resources, resources)
+ 
+! manual (cocci cannot find type - maybe by _resource macro name?)
+ #define for_each_resource_rcu(resource, _resources) \
+-	list_for_each_entry_rcu(resource, _resources, resources)
++	list_for_each_entry_rcu(struct drbd_resource, resource, _resources, resources)
+ 
+! manual (cocci cannot find type - maybe by _resource macro name?)
+ #define for_each_resource_safe(resource, tmp, _resources) \
+-	list_for_each_entry_safe(resource, tmp, _resources, resources)
++	list_for_each_entry_safe(struct drbd_resource, resource, tmp, _resources, resources)
+ 
+ /* Each caller of for_each_connect() must hold req_lock or adm_mutex or conf_update.
+    The update locations hold all three! */
+! manual (cocci cannot find type - maybe by _resource macro name?)
+ #define for_each_connection(connection, resource) \
+-	list_for_each_entry(connection, &resource->connections, connections)
++	list_for_each_entry(struct drbd_connection, connection, &resource->connections, connections)
+ 
+! manual (cocci cannot find type - maybe by _resource macro name?)
+ #define for_each_connection_rcu(connection, resource) \
+-	list_for_each_entry_rcu(connection, &resource->connections, connections)
++	list_for_each_entry_rcu(struct drbd_connection, connection, &resource->connections, connections)
+ 
+! manual (cocci cannot find type - maybe by _resource macro name?)
+ #define for_each_connection_safe(connection, tmp, resource) \
+-	list_for_each_entry_safe(connection, tmp, &resource->connections, connections)
++	list_for_each_entry_safe(struct drbd_connection, connection, tmp, &resource->connections, connections)
+ 
+ #define for_each_connection_ref(connection, m, resource)		\
+ 	for (connection = __drbd_next_connection_ref(&m, NULL, resource); \
+@@ -1475,13 +1476,13 @@
+ /* Each caller of for_each_peer_device() must hold req_lock or adm_mutex or conf_update.
+    The update locations hold all three! */
+! manual (cocci cannot find type - maybe by _resource macro name?)
+ #define for_each_peer_device(peer_device, device) \
+-	list_for_each_entry(peer_device, &device->peer_devices, peer_devices)
++	list_for_each_entry(struct drbd_peer_device, peer_device, &device->peer_devices, peer_devices)
+ 
+! manual (cocci cannot find type - maybe by _resource macro name?)
+ #define for_each_peer_device_rcu(peer_device, device) \
+-	list_for_each_entry_rcu(peer_device, &device->peer_devices, peer_devices)
++	list_for_each_entry_rcu(struct drbd_peer_device, peer_device, &device->peer_devices, peer_devices)
+ 
+! manual (cocci cannot find type - maybe by _resource macro name?)
+ #define for_each_peer_device_safe(peer_device, tmp, device) \
+-	list_for_each_entry_safe(peer_device, tmp, &device->peer_devices, peer_devices)
++	list_for_each_entry_safe(struct drbd_peer_device, peer_device, tmp, &device->peer_devices, peer_devices)
+ 
+ #define for_each_peer_device_ref(peer_device, m, device)		\
+ 	for (peer_device = __drbd_next_peer_device_ref(&m, NULL, device); \
+@@ -1509,7 +1510,7 @@
+ #ifdef CONFIG_SMP
+ extern void drbd_thread_current_set_cpu(struct drbd_thread *thi);
+ #else
+! review: needed?
+-#define drbd_thread_current_set_cpu(A) ({})
++#define drbd_thread_current_set_cpu(A) {}
+ #endif
+ extern void tl_release(struct drbd_connection *,
+ 			uint64_t o_block_id,
+@@ -1560,20 +1561,20 @@
+ extern int drbd_md_write(struct drbd_device *device, struct meta_data_on_disk_9 *buffer);
+ extern int drbd_md_sync(struct drbd_device *device);
+ extern int drbd_md_sync_if_dirty(struct drbd_device *device);
+! header
+-extern void drbd_uuid_received_new_current(struct drbd_peer_device *, u64 , u64) __must_hold(local);
+-extern void drbd_uuid_set_bitmap(struct drbd_peer_device *peer_device, u64 val) __must_hold(local);
+-extern void _drbd_uuid_set_bitmap(struct drbd_peer_device *peer_device, u64 val) __must_hold(local);
+-extern void _drbd_uuid_set_current(struct drbd_device *device, u64 val) __must_hold(local);
++extern void drbd_uuid_received_new_current(struct drbd_peer_device *, u64 , u64) ;
++extern void drbd_uuid_set_bitmap(struct drbd_peer_device *peer_device, u64 val) ;
++extern void _drbd_uuid_set_bitmap(struct drbd_peer_device *peer_device, u64 val) ;
++extern void _drbd_uuid_set_current(struct drbd_device *device, u64 val) ;
+ extern void drbd_uuid_new_current(struct drbd_device *device, bool forced);
+ extern void drbd_uuid_new_current_by_user(struct drbd_device *device);
+! header
+-extern void _drbd_uuid_push_history(struct drbd_device *device, u64 val) __must_hold(local);
+-extern u64 _drbd_uuid_pull_history(struct drbd_peer_device *peer_device) __must_hold(local);
+-extern void drbd_uuid_resync_starting(struct drbd_peer_device *peer_device); __must_hold(local);
+-extern u64 drbd_uuid_resync_finished(struct drbd_peer_device *peer_device) __must_hold(local);
+-extern void drbd_uuid_detect_finished_resyncs(struct drbd_peer_device *peer_device) __must_hold(local);
++extern void _drbd_uuid_push_history(struct drbd_device *device, u64 val) ;
++extern u64 _drbd_uuid_pull_history(struct drbd_peer_device *peer_device) ;
++extern void drbd_uuid_resync_starting(struct drbd_peer_device *peer_device); ;
++extern u64 drbd_uuid_resync_finished(struct drbd_peer_device *peer_device) ;
++extern void drbd_uuid_detect_finished_resyncs(struct drbd_peer_device *peer_device) ;
+ extern u64 drbd_weak_nodes_device(struct drbd_device *device);
+! header
+-extern void drbd_md_set_flag(struct drbd_device *device, enum mdf_flag) __must_hold(local);
+-extern void drbd_md_clear_flag(struct drbd_device *device, enum mdf_flag)__must_hold(local);
++extern void drbd_md_set_flag(struct drbd_device *device, enum mdf_flag) ;
++extern void drbd_md_clear_flag(struct drbd_device *device, enum mdf_flag);
+ extern int drbd_md_test_flag(struct drbd_backing_dev *, enum mdf_flag);
+ extern void drbd_md_set_peer_flag(struct drbd_peer_device *, enum mdf_peer_flag);
+ extern void drbd_md_clear_peer_flag(struct drbd_peer_device *, enum mdf_peer_flag);
+@@ -1592,10 +1593,10 @@
+ 		int (*io_fn)(struct drbd_device *, struct drbd_peer_device *),
+ 		char *why, enum bm_flag flags,
+ 		struct drbd_peer_device *);
+! header
+-extern int drbd_bmio_set_n_write(struct drbd_device *device, struct drbd_peer_device *) __must_hold(local);
+-extern int drbd_bmio_clear_all_n_write(struct drbd_device *device, struct drbd_peer_device *) __must_hold(local);
+-extern int drbd_bmio_set_all_n_write(struct drbd_device *device, struct drbd_peer_device *) __must_hold(local);
+-extern int drbd_bmio_set_allocated_n_write(struct drbd_device *,struct drbd_peer_device *) __must_hold(local);
++extern int drbd_bmio_set_n_write(struct drbd_device *device, struct drbd_peer_device *) ;
++extern int drbd_bmio_clear_all_n_write(struct drbd_device *device, struct drbd_peer_device *) ;
++extern int drbd_bmio_set_all_n_write(struct drbd_device *device, struct drbd_peer_device *) ;
++extern int drbd_bmio_set_allocated_n_write(struct drbd_device *,struct drbd_peer_device *) ;
+ extern bool drbd_device_stable(struct drbd_device *device, u64 *authoritative);
+ extern void drbd_flush_peer_acks(struct drbd_resource *resource);
+ extern void drbd_cork(struct drbd_connection *connection, enum drbd_stream stream);
+@@ -1690,11 +1691,10 @@
+ /* how much _storage_ sectors we have per bitmap extent */
+ #define BM_SECT_PER_EXT     BM_EXT_TO_SECT(1)
+ /* how many bits are covered by one bitmap extent (resync extent) */
+! cocci
+-#define BM_BITS_PER_EXT     (1UL << (BM_EXT_SHIFT - BM_BLOCK_SHIFT))
++#define BM_BITS_PER_EXT     (((ULONG_PTR)1) << (BM_EXT_SHIFT - BM_BLOCK_SHIFT))
+ 
+ #define BM_BLOCKS_PER_BM_EXT_MASK  (BM_BITS_PER_EXT - 1)
+ 
+-
+ /* in one sector of the bitmap, we have this many activity_log extents. */
+ #define AL_EXT_PER_BM_SECT  (1 << (BM_EXT_SHIFT - AL_EXTENT_SHIFT))
+ 
+@@ -1717,7 +1717,7 @@
+ #else
+ /* We allow up to 1 PiB on 64 bit architectures as long as our meta data
+  * is large enough. */
+! cocci
+-#define DRBD_MAX_SECTORS (1UL << (50 - SECTOR_SHIFT))
++#define DRBD_MAX_SECTORS (((ULONG_PTR)1) << (50 - SECTOR_SHIFT))
+ #endif
+ 
+ /* BIO_MAX_SIZE is 256 * PAGE_SIZE,
+@@ -1754,41 +1754,41 @@
+ extern void drbd_bm_set_all(struct drbd_device *device);
+ extern void drbd_bm_clear_all(struct drbd_device *device);
+ /* set/clear/test only a few bits at a time */
+! cocci
+-extern unsigned int drbd_bm_set_bits(struct drbd_device *, unsigned int, unsigned long, unsigned long);
+-extern unsigned int drbd_bm_clear_bits(struct drbd_device *, unsigned int, unsigned long, unsigned long);
+-extern int drbd_bm_count_bits(struct drbd_device *, unsigned int, unsigned long, unsigned long);
++extern unsigned int drbd_bm_set_bits(struct drbd_device *, unsigned int, ULONG_PTR, ULONG_PTR);
++extern unsigned int drbd_bm_clear_bits(struct drbd_device *, unsigned int, ULONG_PTR, ULONG_PTR);
++extern int drbd_bm_count_bits(struct drbd_device *, unsigned int, ULONG_PTR, ULONG_PTR);
+ /* bm_set_bits variant for use while holding drbd_bm_lock,
+  * may process the whole bitmap in one go */
+! cocci
+-extern void drbd_bm_set_many_bits(struct drbd_peer_device *, unsigned long, unsigned long);
+-extern void drbd_bm_clear_many_bits(struct drbd_peer_device *, unsigned long, unsigned long);
+-extern void _drbd_bm_clear_many_bits(struct drbd_device *, int, unsigned long, unsigned long);
+-extern void _drbd_bm_set_many_bits(struct drbd_device *, int, unsigned long, unsigned long);
+-extern int drbd_bm_test_bit(struct drbd_peer_device *, unsigned long);
+-extern int  drbd_bm_read(struct drbd_device *, struct drbd_peer_device *) __must_hold(local);
+-extern void drbd_bm_reset_al_hints(struct drbd_device *device) __must_hold(local);
+-extern void drbd_bm_mark_range_for_writeout(struct drbd_device *, unsigned long, unsigned long);
+-extern int  drbd_bm_write(struct drbd_device *, struct drbd_peer_device *) __must_hold(local);
+-extern int  drbd_bm_write_hinted(struct drbd_device *device) __must_hold(local);
+-extern int  drbd_bm_write_lazy(struct drbd_device *device, unsigned upper_idx) __must_hold(local);
+-extern int drbd_bm_write_all(struct drbd_device *, struct drbd_peer_device *) __must_hold(local);
+-extern int drbd_bm_write_copy_pages(struct drbd_device *, struct drbd_peer_device *) __must_hold(local);
++extern void drbd_bm_set_many_bits(struct drbd_peer_device *, ULONG_PTR, ULONG_PTR);
++extern void drbd_bm_clear_many_bits(struct drbd_peer_device *, ULONG_PTR, ULONG_PTR);
++extern void _drbd_bm_clear_many_bits(struct drbd_device *, int, ULONG_PTR, ULONG_PTR);
++extern void _drbd_bm_set_many_bits(struct drbd_device *, int, ULONG_PTR, ULONG_PTR);
++extern int drbd_bm_test_bit(struct drbd_peer_device *, ULONG_PTR);
++extern int  drbd_bm_read(struct drbd_device *, struct drbd_peer_device *) ;
++extern void drbd_bm_reset_al_hints(struct drbd_device *device) ;
++extern void drbd_bm_mark_range_for_writeout(struct drbd_device *, ULONG_PTR, ULONG_PTR);
++extern int  drbd_bm_write(struct drbd_device *, struct drbd_peer_device *) ;
++extern int  drbd_bm_write_hinted(struct drbd_device *device) ;
++extern int  drbd_bm_write_lazy(struct drbd_device *device, unsigned upper_idx) ;
++extern int drbd_bm_write_all(struct drbd_device *, struct drbd_peer_device *) ;
++extern int drbd_bm_write_copy_pages(struct drbd_device *, struct drbd_peer_device *) ;
+ extern size_t	     drbd_bm_words(struct drbd_device *device);
+! cocci
+-extern unsigned long drbd_bm_bits(struct drbd_device *device);
++extern ULONG_PTR drbd_bm_bits(struct drbd_device *device);
+ extern sector_t      drbd_bm_capacity(struct drbd_device *device);
+! cocci
+-#define DRBD_END_OF_BITMAP	(~(unsigned long)0)
+! cocci 
+-extern unsigned long drbd_bm_find_next(struct drbd_peer_device *, unsigned long);
++#define DRBD_END_OF_BITMAP	(~(ULONG_PTR)0)
++extern ULONG_PTR drbd_bm_find_next(struct drbd_peer_device *, ULONG_PTR);
+ /* bm_find_next variants for use while you hold drbd_bm_lock() */
+! cocci
+-extern unsigned long _drbd_bm_find_next(struct drbd_peer_device *, unsigned long);
+-extern unsigned long _drbd_bm_find_next_zero(struct drbd_peer_device *, unsigned long);
+-extern unsigned long _drbd_bm_total_weight(struct drbd_device *, int);
+-extern unsigned long drbd_bm_total_weight(struct drbd_peer_device *);
++extern ULONG_PTR _drbd_bm_find_next(struct drbd_peer_device *, ULONG_PTR);
++extern ULONG_PTR _drbd_bm_find_next_zero(struct drbd_peer_device *, ULONG_PTR);
++extern ULONG_PTR _drbd_bm_total_weight(struct drbd_device *, int);
++extern ULONG_PTR drbd_bm_total_weight(struct drbd_peer_device *);
+ /* for receive_bitmap */
+ extern void drbd_bm_merge_lel(struct drbd_peer_device *peer_device, size_t offset,
+! cocci
+-		size_t number, unsigned long *buffer);
++		size_t number, ULONG_PTR *buffer);
+ /* for _drbd_send_bitmap */
+ extern void drbd_bm_get_lel(struct drbd_peer_device *peer_device, size_t offset,
+! cocci
+-		size_t number, unsigned long *buffer);
++		size_t number, ULONG_PTR *buffer);
+ 
+ extern void drbd_bm_lock(struct drbd_device *device, char *why, enum bm_flag flags);
+ extern void drbd_bm_unlock(struct drbd_device *device);
+@@ -1847,7 +1847,7 @@
+ #ifndef CONFIG_DRBD_TIMING_STATS
+ #define __drbd_make_request(d,b,k,j) __drbd_make_request(d,b,j)
+ #endif
+! cocci
+-extern void __drbd_make_request(struct drbd_device *, struct bio *, ktime_t, unsigned long);
++extern void __drbd_make_request(struct drbd_device *, struct bio *, ktime_t, ULONG_PTR);
+ extern blk_qc_t drbd_submit_bio(struct bio *bio);
+ 
+ /* drbd_nl.c */
+@@ -1861,7 +1861,7 @@
+ extern sector_t drbd_new_dev_size(struct drbd_device *,
+ 		sector_t current_size, /* need at least this much */
+ 		sector_t user_capped_size, /* want (at most) this much */
+! header
+-		enum dds_flags flags) __must_hold(local);
++		enum dds_flags flags) ;
+ enum determine_dev_size {
+ 	DS_2PC_ERR = -5,
+ 	DS_2PC_NOT_SUPPORTED = -4,
+@@ -1875,7 +1875,7 @@
+ };
+ extern enum determine_dev_size
+ drbd_determine_dev_size(struct drbd_device *, sector_t peer_current_size,
+! header
+-			enum dds_flags, struct resize_parms *) __must_hold(local);
++			enum dds_flags, struct resize_parms *) ;
+ extern void resync_after_online_grow(struct drbd_peer_device *);
+ extern void drbd_reconsider_queue_parameters(struct drbd_device *device,
+ 			struct drbd_backing_dev *bdev, struct o_qlim *o);
+@@ -1918,7 +1918,7 @@
+ 	if (peer_device->ov_last_oos_size) {
+ 		drbd_err(peer_device, "Out of sync: start=%llu, size=%lu (sectors)\n",
+ 		     (unsigned long long)peer_device->ov_last_oos_start,
+! cocci
+-		     (unsigned long)peer_device->ov_last_oos_size);
++		     (ULONG_PTR)peer_device->ov_last_oos_size);
+ 	}
+ 	peer_device->ov_last_oos_size = 0;
+ }
+@@ -1928,7 +1928,7 @@
+ 	if (peer_device->ov_last_skipped_size) {
+ 		drbd_info(peer_device, "Skipped verify, too busy: start=%llu, size=%lu (sectors)\n",
+ 		     (unsigned long long)peer_device->ov_last_skipped_start,
+! cocci
+-		     (unsigned long)peer_device->ov_last_skipped_size);
++		     (ULONG_PTR)peer_device->ov_last_skipped_size);
+ 	}
+ 	peer_device->ov_last_skipped_size = 0;
+ }
+@@ -2016,7 +2016,7 @@
+ extern void drbd_cleanup_after_failed_submit_peer_request(struct drbd_peer_request *peer_req);
+ extern void drbd_cleanup_peer_requests_wfa(struct drbd_device *device, struct list_head *cleanup);
+ extern int drbd_free_peer_reqs(struct drbd_resource *, struct list_head *, bool is_net_ee);
+! header
+-extern struct drbd_peer_request *drbd_alloc_peer_req(struct drbd_peer_device *, gfp_t) __must_hold(local);
++extern struct drbd_peer_request *drbd_alloc_peer_req(struct drbd_peer_device *, gfp_t) ;
+ extern void __drbd_free_peer_req(struct drbd_peer_request *, int);
+ #define drbd_free_peer_req(pr) __drbd_free_peer_req(pr, 0)
+ #define drbd_free_net_peer_req(pr) __drbd_free_peer_req(pr, 1)
+@@ -2036,8 +2036,7 @@
+ 
+ static inline sector_t drbd_get_capacity(struct block_device *bdev)
+ {
+! compat: implement i_size_read, remove windrbd_get_capacity
+-	/* return bdev ? get_capacity(bdev->bd_disk) : 0; */
+-	return bdev ? i_size_read(bdev->bd_inode) >> 9 : 0;
++	return bdev ? (windrbd_get_capacity(bdev) << 9) >> 9 : 0;
+ }
+ 
+ /* sets the number of 512 byte sectors of our virtual device */
+@@ -2083,9 +2082,9 @@
+ extern void drbd_rs_cancel_all(struct drbd_peer_device *);
+ extern int drbd_rs_del_all(struct drbd_peer_device *);
+ extern void drbd_rs_failed_io(struct drbd_peer_device *, sector_t, int);
+! cocci
+-extern void drbd_advance_rs_marks(struct drbd_peer_device *, unsigned long);
++extern void drbd_advance_rs_marks(struct drbd_peer_device *, ULONG_PTR);
+ extern bool drbd_set_all_out_of_sync(struct drbd_device *, sector_t, int);
+! cocci
+-extern bool drbd_set_sync(struct drbd_device *, sector_t, int, unsigned long, unsigned long);
++extern bool drbd_set_sync(struct drbd_device *, sector_t, int, ULONG_PTR, ULONG_PTR);
+ enum update_sync_bits_mode { RECORD_RS_FAILED, SET_OUT_OF_SYNC, SET_IN_SYNC };
+ extern int __drbd_change_sync(struct drbd_peer_device *peer_device, sector_t sector, int size,
+ 		enum update_sync_bits_mode mode);
+@@ -2131,7 +2130,7 @@
+ 			enum drbd_notification_type);
+ extern void drbd_broadcast_peer_device_state(struct drbd_peer_device *);
+ 
+! header
+-extern sector_t drbd_local_max_size(struct drbd_device *device) __must_hold(local);
++extern sector_t drbd_local_max_size(struct drbd_device *device) ;
+ extern int drbd_open_ro_count(struct drbd_resource *resource);
+ 
+ extern void device_state_change_to_info(struct device_info *,
+@@ -2179,11 +2178,12 @@
+ 					enum drbd_force_detach_flags df,
+ 					const char *where)
+ {
+! cocci
++	KIRQL rcu_flags;
+ 	enum drbd_io_error_p ep;
+ 
+! cocci
+-	rcu_read_lock();
++	rcu_flags = rcu_read_lock();
+ 	ep = rcu_dereference(device->ldev->disk_conf)->on_io_error;
+! cocci
+-	rcu_read_unlock();
++	rcu_read_unlock(rcu_flags);
+ 	switch (ep) {
+ 	case EP_PASS_ON: /* FIXME would this be better named "Ignore"? */
+ 		if (df == DRBD_READ_ERROR ||  df == DRBD_WRITE_ERROR) {
+@@ -2211,7 +2211,7 @@
+ 		 * we may need to trigger a full sync (see w_go_diskless()).
+ 		 *
+ 		 * Force-detach is not really an IO error, but rather a
+! remove
+-		 * desperate measure to try to deal with a completely
++		 * desperate measure to try_ to deal with a completely
+ 		 * unresponsive lower level IO stack.
+ 		 * Still it should be treated as a WRITE error.
+ 		 *
+@@ -2247,7 +2247,7 @@
+ 	int error, enum drbd_force_detach_flags forcedetach, const char *where)
+ {
+ 	if (error) {
+! cocci
+-		unsigned long flags;
++		KIRQL flags;
+ 		spin_lock_irqsave(&device->resource->req_lock, flags);
+ 		__drbd_chk_io_error_(device, forcedetach, where);
+ 		spin_unlock_irqrestore(&device->resource->req_lock, flags);
+@@ -2307,7 +2307,7 @@
+ 		return (drbd_get_capacity(bdev->backing_bdev) & ~7ULL) - 8;
+ 
+ 	/* external, some index; this is the old fixed size layout */
+! cocci
+-	return (128 << 20 >> 9) * bdev->md.meta_dev_idx;
++	return (128ULL << 20 >> 9) * bdev->md.meta_dev_idx;
+ }
+ 
+ void drbd_queue_work(struct drbd_work_queue *, struct drbd_work *);
+@@ -2315,7 +2315,7 @@
+ static inline void
+ drbd_queue_work_if_unqueued(struct drbd_work_queue *q, struct drbd_work *w)
+ {
+! cocci
+-	unsigned long flags;
++	KIRQL flags;
+ 	spin_lock_irqsave(&q->q_lock, flags);
+ 	if (list_empty_careful(&w->list))
+ 		list_add_tail(&w->list, &q->q);
+@@ -2386,6 +2386,7 @@
+ extern int conn_send_state_req(struct drbd_connection *, int vnr, enum drbd_packet, union drbd_state, union drbd_state);
+ extern int conn_send_twopc_request(struct drbd_connection *, int vnr, enum drbd_packet, struct p_twopc_request *);
+ extern int drbd_send_peer_ack(struct drbd_connection *, struct drbd_request *);
+! compat: move this to drbd_windows.h
++extern int drbd_thread_setup(void *arg);
+ 
+ static inline void drbd_thread_stop(struct drbd_thread *thi)
+ {
+@@ -2420,7 +2421,7 @@
+  *     FIXME
+  *     for some reason it is NOT decreased in got_NegAck,
+  *     but in the resulting cleanup code from report_params.
+! remove
+- *     we should try to remember the reason for that...
++ *     we should try_ to remember the reason for that...
+  *  _req_mod(req, SEND_FAILED or SEND_CANCELED)
+  *  _req_mod(req, CONNECTION_LOST_WHILE_PENDING)
+  *     [from tl_clear_barrier]
+@@ -2431,7 +2432,7 @@
+ }
+ 
+ #define dec_ap_pending(peer_device) \
+! remove
+-	((void)expect((peer_device), __dec_ap_pending(peer_device) >= 0))
++	((void)expect(peer_device, __dec_ap_pending(peer_device) >= 0))
+ static inline int __dec_ap_pending(struct drbd_peer_device *peer_device)
+ {
+ 	int ap_pending_cnt = atomic_dec_return(&peer_device->ap_pending_cnt);
+@@ -2452,7 +2453,7 @@
+ }
+ 
+ #define dec_rs_pending(peer_device) \
+! remove
+-	((void)expect((peer_device), __dec_rs_pending(peer_device) >= 0))
++	((void)expect(peer_device, __dec_rs_pending(peer_device) >= 0))
+ static inline int __dec_rs_pending(struct drbd_peer_device *peer_device)
+ {
+ 	return atomic_dec_return(&peer_device->rs_pending_cnt);
+@@ -2544,7 +2545,7 @@
+  */
+ #define get_ldev_if_state(_device, _min_state)				\
+ 	(_get_ldev_if_state((_device), (_min_state)) ?			\
+! compat: make this work somehow ... __acquire but probably manual
+-	 ({ __acquire(x); true; }) : false)
++	true : false)
+ #define get_ldev(_device) get_ldev_if_state(_device, D_INCONSISTENT)
+ 
+ static inline void put_ldev(struct drbd_device *device)
+@@ -2695,7 +2696,7 @@
+ struct bm_extent {
+ 	int rs_left; /* number of bits set (out of sync) in this extent. */
+ 	int rs_failed; /* number of failed resync requests in this extent. */
+! cocci
+-	unsigned long flags;
++	ULONG_PTR flags;
+ 	struct lc_element lce;
+ };
+ 
+@@ -2727,4 +2728,6 @@
+ #define ktime_var_for_accounting(V)
+ #endif
+ 
+! compat: move this prototype somewhere else (drbd_open)
++int drbd_open(struct block_device *bdev, fmode_t mode);
++
+ #endif

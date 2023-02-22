@@ -1,0 +1,102 @@
+--- drbd/drbd/drbd_req.h	2023-02-17 14:26:26.742469457 +0000
++++ converted-sources/drbd/drbd_req.h	2023-02-17 14:26:29.066425781 +0000
+@@ -63,6 +63,10 @@
+  *      with or without "success".
+  */
+ 
+! remove
++#ifdef NOTHING
++#undef NOTHING
++#endif
++
+ enum drbd_req_event {
+ 	CREATED,
+ 	TO_BE_SENT,
+@@ -226,38 +230,37 @@
+ 	__RQ_COMPLETION_SUSP,
+ 
+ };
+! cocci
+-#define RQ_NET_PENDING     (1UL << __RQ_NET_PENDING)
+-#define RQ_NET_QUEUED      (1UL << __RQ_NET_QUEUED)
+-#define RQ_NET_SENT        (1UL << __RQ_NET_SENT)
+-#define RQ_NET_DONE        (1UL << __RQ_NET_DONE)
+-#define RQ_NET_OK          (1UL << __RQ_NET_OK)
+-#define RQ_NET_SIS         (1UL << __RQ_NET_SIS)
+-
+-#define RQ_NET_MASK        (((1UL << __RQ_NET_MAX)-1) & ~RQ_LOCAL_MASK)
+-
+-#define RQ_EXP_RECEIVE_ACK (1UL << __RQ_EXP_RECEIVE_ACK)
+-#define RQ_EXP_WRITE_ACK   (1UL << __RQ_EXP_WRITE_ACK)
+-#define RQ_EXP_BARR_ACK    (1UL << __RQ_EXP_BARR_ACK)
+-
+-#define RQ_PEER_ACK	   (1UL << __RQ_PEER_ACK)
+-
+-#define RQ_LOCAL_PENDING   (1UL << __RQ_LOCAL_PENDING)
+-#define RQ_LOCAL_COMPLETED (1UL << __RQ_LOCAL_COMPLETED)
+-#define RQ_LOCAL_OK        (1UL << __RQ_LOCAL_OK)
+-#define RQ_LOCAL_ABORTED   (1UL << __RQ_LOCAL_ABORTED)
++#define RQ_NET_PENDING     (((ULONG_PTR)1) << __RQ_NET_PENDING)
++#define RQ_NET_QUEUED      (((ULONG_PTR)1) << __RQ_NET_QUEUED)
++#define RQ_NET_SENT        (((ULONG_PTR)1) << __RQ_NET_SENT)
++#define RQ_NET_DONE        (((ULONG_PTR)1) << __RQ_NET_DONE)
++#define RQ_NET_OK          (((ULONG_PTR)1) << __RQ_NET_OK)
++#define RQ_NET_SIS         (((ULONG_PTR)1) << __RQ_NET_SIS)
++
++#define RQ_NET_MASK        (((((ULONG_PTR)1) << __RQ_NET_MAX)-1) & ~RQ_LOCAL_MASK)
++
++#define RQ_EXP_RECEIVE_ACK (((ULONG_PTR)1) << __RQ_EXP_RECEIVE_ACK)
++#define RQ_EXP_WRITE_ACK   (((ULONG_PTR)1) << __RQ_EXP_WRITE_ACK)
++#define RQ_EXP_BARR_ACK    (((ULONG_PTR)1) << __RQ_EXP_BARR_ACK)
++
++#define RQ_PEER_ACK	   (((ULONG_PTR)1) << __RQ_PEER_ACK)
++
++#define RQ_LOCAL_PENDING   (((ULONG_PTR)1) << __RQ_LOCAL_PENDING)
++#define RQ_LOCAL_COMPLETED (((ULONG_PTR)1) << __RQ_LOCAL_COMPLETED)
++#define RQ_LOCAL_OK        (((ULONG_PTR)1) << __RQ_LOCAL_OK)
++#define RQ_LOCAL_ABORTED   (((ULONG_PTR)1) << __RQ_LOCAL_ABORTED)
+ 
+ #define RQ_LOCAL_MASK      \
+ 	(RQ_LOCAL_ABORTED | RQ_LOCAL_OK | RQ_LOCAL_COMPLETED | RQ_LOCAL_PENDING)
+ 
+! cocci
+-#define RQ_WRITE           (1UL << __RQ_WRITE)
+-#define RQ_WSAME           (1UL << __RQ_WSAME)
+-#define RQ_UNMAP           (1UL << __RQ_UNMAP)
+-#define RQ_ZEROES          (1UL << __RQ_ZEROES)
+-#define RQ_IN_ACT_LOG      (1UL << __RQ_IN_ACT_LOG)
+-#define RQ_UNPLUG          (1UL << __RQ_UNPLUG)
+-#define RQ_POSTPONED	   (1UL << __RQ_POSTPONED)
+-#define RQ_COMPLETION_SUSP (1UL << __RQ_COMPLETION_SUSP)
+-
++#define RQ_WRITE           (((ULONG_PTR)1) << __RQ_WRITE)
++#define RQ_WSAME           (((ULONG_PTR)1) << __RQ_WSAME)
++#define RQ_UNMAP           (((ULONG_PTR)1) << __RQ_UNMAP)
++#define RQ_ZEROES          (((ULONG_PTR)1) << __RQ_ZEROES)
++#define RQ_IN_ACT_LOG      (((ULONG_PTR)1) << __RQ_IN_ACT_LOG)
++#define RQ_UNPLUG          (((ULONG_PTR)1) << __RQ_UNPLUG)
++#define RQ_POSTPONED	   (((ULONG_PTR)1) << __RQ_POSTPONED)
++#define RQ_COMPLETION_SUSP (((ULONG_PTR)1) << __RQ_COMPLETION_SUSP)
+ 
+ /* these flags go into local_rq_state,
+  * orhter flags go into their respective net_rq_state[idx] */
+@@ -328,12 +331,14 @@
+ 		enum drbd_req_event what,
+ 		struct drbd_peer_device *peer_device)
+ {
+! cocci
++	KIRQL spin_lock_irq_flags;
+ 	struct drbd_device *device = req->device;
+ 	struct bio_and_error m;
+ 
+! cocci
+-	spin_lock_irq(&device->resource->req_lock);
++	spin_lock_irqsave(&device->resource->req_lock, spin_lock_irq_flags);
+ 	__req_mod(req, what, peer_device, &m);
+! cocci
+-	spin_unlock_irq(&device->resource->req_lock);
++	spin_unlock_irqrestore(&device->resource->req_lock,
++		               spin_lock_irq_flags);
+ 
+ 	if (m.bio)
+ 		complete_master_bio(device, &m);

@@ -1,0 +1,12 @@
+--- drbd/drbd/drbd_interval.h	2023-02-17 14:26:26.762469081 +0000
++++ converted-sources/drbd/drbd_interval.h	2023-02-17 14:26:29.170423827 +0000
+@@ -1,6 +1,9 @@
+ #ifndef __DRBD_INTERVAL_H
+ #define __DRBD_INTERVAL_H
+ 
++/* Enable all warnings throws lots of those warnings: */
++#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
++
+ #include <linux/types.h>
+ #include <linux/rbtree.h>
+ 
