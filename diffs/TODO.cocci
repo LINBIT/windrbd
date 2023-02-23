@@ -1,6 +1,6 @@
-TODO: identifiers created by cocci should have __cocci_ prefix.
+identifiers created by cocci should have __cocci_ prefix.
 
-TODO: Cocci patches (generic unless noted otherwise):
+Cocci patches (generic unless noted otherwise):
 
 TODO: RCUs need a flag since they change the IRQ level in WinDRBD.
 
@@ -58,6 +58,8 @@ Rejected: GNU extension: In macro definitions replace
 	({ ... })
 
 TODO: MS VC: try and expect are reserved words.
+	Check if this is true ...
+	It looks like some header defines try as __try or so ...
 
 TODO: GNU extension: if (wait_ ...) (one occurence in drbd_state.c)
 			x;

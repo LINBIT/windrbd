@@ -1,0 +1,59 @@
+Manual patches: best is to create them with git format-patch
+All patches in here are DRBD specific, some might be gcc specific
+
+TODO: drbd_main.c and others: locking primitives must be initialized by calling a function.
+	Therefore change DEFINE_SPINLOCK to spinlock_t, write an initializer and call it in drbd_init. This already has been done. Review it.
+
+TODO: drbd_main.c: have a drbd_alloc_big_page_chain function
+	And call it from drbd_transport_tcp.c. Do not change the
+	signature of drbd_alloc_page_chain()
+
+TODO: GNU extension: drbd_int.h: Patch out __acquire in ({ ... }) macro
+
+TODO: GNU extension: drbd_receiver.c: initializer for union drbd_state cm and lo
+
+TODO: GNU extension: drbd_int.h: add type (struct resource, ...) to for_each_resource(...) macro definitions
+
+TODO: GNU extension: drbd_nl.c: str_to_info macro: replace ({ .. }) by ( .. )
+
+TODO: Various files: inter-function IRQ flags
+	This is very hairy ...
+
+TODO: drbd_transport_tcp.c: setting SO_REUSEADDR by calling kernel_setsockopt
+	This is a upstream canidate.
+	In general accessing tcp internal data structures directly is
+	probably not a good idea.
+	There are 3 places in the source code.
+
+TODO: drbd_state.c (and drbd_int.h): wrcu_flags patch - replace by RCU flags passed between functions
+
+TODO: drbd_state.h: stable_state_change macro definition
+
+TODO: drbd_main.c: Have 'pages' of any size. ("big pages patch")
+
+TODO: drbd_receiver.c: Under Windows, queriing a block device's size must happen at IRQL < DISPATCH_LEVEL
+
+TODO: MSVC specific: drbd-headers/drbd_protocol.h: pragma pack(push, 1) (and pop)
+
+TODO: drbd_transport.h: tr_printk macros
+
+TODO: GNU extension: drbd_state.c: FINAL_STATE_CHANGE and REMEMBER_STATE_CHANGE macros.
+
+TODO: drbd_receiver.c: For each backing device wait for requests to complete
+	in conn_disconnect()
+	This solved a BSOD that was hard to track.
+
+TODO: GNU extension: drbd_transport.h: set_page_chain_next_offset_size uses gcc struct initializer
+
+TODO: GNU extension: page_chain_for_each macro uses ({ ... }).
+	To optimize CPU cache ...
+
+TODO: Windows does not support SOCK_STREAM before Windows Server 2019 ...
+
+TODO: MSVC extension: drbd_meta_data.h: __declspec(align(4096))
+
+TODO: drbd_state.h: state_change_lock prototypes: change flag parameter to KIRQL
+
+TODO: drbd_state.c: the change here is a %lu to a %llu it matters for volumes > 4TB
+
+
