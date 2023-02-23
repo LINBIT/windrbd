@@ -1,0 +1,12 @@
+Patches to submit upstream:
+
+TODO: sent in drbd_tcp_transport.c really should be size_t (_dtt_send function)
+
+TODO: in drbd_sender.c: tl_mark_for_resend_by_connection() check for device invalid (might happen if something in receiver lags)
+	This was an issue that caused a BSOD when there were lots of printk's
+
+TODO: drbd_nl.c: send a Linux event on becoming secondary / primary
+	This is a nice to have patch
+
+Done: In 3 node setups sometimes resources are stuck in Negotiating
+
