@@ -1,0 +1,14 @@
+upstream: ! manual (or disable warning) was this compiler or code analyzer? or even upstream?
+! manual (or upstream)
+! manual or even upstream: not sure if we should leave that as it is upstream
+! manual or upstream: I think this is cleaner ...
+! manual uhhh ... again a GNU extension we probably have to manual (or even upstream) that
+! review, probably upstream
+! review: free_page takes pointer, not long - maybe upstream? - else cocci (ULONG_PTR)
+! review: was this quorum_detail used uninitialized? then upstream else remove
+! review? is this still needed? or maybe upstream? I think this solved a WinDRBD (and probably also a DRBD) bug.
+! upstream: primary event
+! upstream: secondary event
+! upstream: this should be fixed already (in DRBD 9.1 and DRBD 9.2)
+! upstream: this was a DRBD bug which should be fixed upstream ...
+! upstream? or cocci (unsigned -> unsigned int)
