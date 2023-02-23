@@ -1,64 +1,8 @@
-cocci: ! C compiler: block return value gcc, can automate with cocci
-! cocci
-! cocci 
-! cocci ( empty struct initializer )
-! cocci (?: GNU extension)
-! cocci (?: operator)
-! cocci (I think ({ ... }) macros can be patched also with cocci)
-! cocci (UL also in macros)
-! cocci (UL postfix is 32 bit in MS VC)
-! cocci (UL postfix)
-! cocci (again an unused wait_xxx return value)
-! cocci (again, 2 spinlocks (or one spinlock on bottom half lock)
-! cocci (also handle case where wait_event_interruptible result is ignored)
-! cocci (also patch sizeof(long))
-! cocci (also remove tag from kcalloc)
-! cocci (but a little bit more complex ...)
-! cocci (but be careful, there are 2 different spin locks)
-! cocci (but only one spinlock ... fix that first)
-! cocci (but the variable name is changed ... probably for a reason)
-! cocci (kmalloc)
-! cocci (macro va args) maybe manual
-! cocci (must not use 'flags' as generated identifier)
-! cocci (should be KIRQL)
-! cocci (sizeof void*)
-! cocci (stable state change)
-! cocci (type for hlist_for_each_entry)
-! cocci (typeof also for list_prepare_entry and list_for_each_entry_continue)
-! cocci (typeof)
-! cocci (unused retval)
-! cocci (unused wait return code)
-! cocci (unused wait_xxx retval)
-! cocci (wait_event_timeout return value inside a if (wait...) { } ) if too hard then manual
-! cocci (yes there are 2 different spin locks)
-! cocci typeof
-! cocci unused retval
-! cocci: RCU lock
-! cocci: ULONG_PTR
-! cocci: also patch spin_lock_bh -> spin_lock_irqsave
-! cocci: block return value
-! cocci: kmalloc but also bio_alloc ...
-! cocci: long -> ULONG_PTR
-! cocci: no returnvalue from block
-! cocci: rcu
-! cocci: rcu flags
-! cocci: rcu flags script (already exists)
-! cocci: rcu lock
-! cocci: retval from macro
-! cocci: spin lock
-! cocci: spin lock flags
-! cocci: spinlock
-! cocci: try identifier
-! cocci: try identifier (is reserved in VC)
-! cocci: typeof
-! cocci: ulong
-! cocci: ulong const
-! cocci: unsigned long
-! cocci;
-! manual (cocci cannot find type - maybe by _resource macro name?)
-! manual (or cocci): __VA_ARGS__ in macro (GNU extension)
-! manual: uhh ... best is probably manual but also cocci is possible ...
-! review, this is a GNU extension. Maybe cocci?
-! review: free_page takes pointer, not long - maybe upstream? - else cocci (ULONG_PTR)
-! review: possible with cocci? probably not so most likely manual (or ULONG_PTR) or maybe this is manual (inter-function IRQ flags)
-! upstream? or cocci (unsigned -> unsigned int)
+! manual: maybe cocci (I think ({ ... }) macros can be patched also with cocci)
+! manual: maybe cocci (but only one spinlock ... fix that first)
+	Also used in abort_local_transaction()
+	Can inter-function flag passing patched by cocci?
+! manual: ! (cocci cannot find type - maybe by _resource macro name?)
+! manual: ! uhh ... best is probably manual but also cocci is possible ...
+! manual: ! review: possible with cocci? probably not so most likely manual (or ULONG_PTR) or maybe this is manual (inter-function IRQ flags)
+! remove: upstream? or cocci (unsigned -> unsigned int)
