@@ -1,0 +1,40 @@
+manual: ! cocci (macro va args) maybe manual
+! cocci (wait_event_timeout return value inside a if (wait...) { } ) if too hard then manual
+! compat,manual: here we allocate big pages, have a seperate function for that (so we don't need to patch drbd_sender and drbd_reveicer)
+! compat: fix DEFINE_SPINLOCK - or maybe manual - or compat (do this once drbd_init returns)
+! compat: make this work somehow ... __acquire but probably manual
+! manual
+! manual (again a GNU extension)
+! manual (cocci cannot find type - maybe by _resource macro name?)
+! manual (gcc extension)
+! manual (inter-function IRQ flags)
+! manual (or cocci): __VA_ARGS__ in macro (GNU extension)
+! manual (or disable warning) was this compiler or code analyzer?
+! manual (or disable warning) was this compiler or code analyzer? or even upstream?
+! manual (or upstream)
+! manual (spinlock flags passed between functions)
+! manual (wrcu_flags patch) but rethink this ...
+! manual : this is too hairy (stable_state_change macro)
+! manual Oh wow this is part of the variable page size patch ... hmmm. 
+! manual Under Windows, queriing a block device's size must happen at IRQL < DISPATCH_LEVEL
+! manual or even upstream: not sure if we should leave that as it is upstream
+! manual or upstream: I think this is cleaner ...
+! manual probably this is needed pragma pack(push, 1) but at least check for MS C compiler
+! manual those tr_printk macros are too gcc specific ...
+! manual uhhh ... again a GNU extension we probably have to manual (or even upstream) that
+! manual: I think this is needed: For each backing device flush pedning write requests
+! manual: __VA_ARGS__ in macro
+! manual: again no GCC type initalizer in set_page_chain_next_offset_size
+! manual: big pages patch
+! manual: needed for big pages
+! manual: no ({ support outside gcc
+! manual: seems like variable macro args is a GNU extension
+! manual: this is a RCU flag to be passed between functions
+! manual: this is probably needed. For enlarging recv buffer?
+! manual: uhh ... best is probably manual but also cocci is possible ...
+! manual: windows does not support SOCK_STREAM before Windows Server 2019 ...
+! review we need to probably manually patch the __declspec(align(4096)) ...
+! review: I think this (asender) thread does not exist in DRBD 9.2 (9.1 also?) any more .. else probably manual maybe compat (implement sched_set_fifo_low)
+! review: compat: init synchronization primitives in DriverEntry or manual: leave that here (since transport_classes_lock is static)
+! review: possible with cocci? probably not so most likely manual (or ULONG_PTR) or maybe this is manual (inter-function IRQ flags)
+! review: the change here is a %lu to a %llu it matters for volumes > 4TB, so probably manual
