@@ -4,8 +4,7 @@ Cocci patches (generic unless noted otherwise):
 
 TODO: RCUs need a flag since they change the IRQ level in WinDRBD.
 
-TODO: Spinlocks that are locked and unlocked within the same function
-must be spin_lock_irqsave / spin_unlock_irqrestore.
+TODO: Spinlocks that are locked and unlocked within the same function must be spin_lock_irqsave / spin_unlock_irqrestore.
 	Must be able to handle multiple spinlocks in function
 	(with 2 different flags). Also must be aware that
 	the flags parameter might already be defined.
@@ -25,19 +24,17 @@ TODO: GNU extension: Change sizeof(*p) to sizeof(*(char*)p) for void* p
 	also for iov.iov_base += rv -> iov.iov_base = ((char*) iov.iov_base) + rv;
 	(maybe (char*) iov.iov_base += rv also works ...)
 
-TODO: GNU extension: Change
-	rv = wait_event_xxx(a, b, ...) to wait_event_xxx(rv, a, b)
+TODO: GNU extension: Change rv = wait_event_xxx(a, b, ...) to wait_event_xxx(rv, a, b)
 	reason is: We don't have ({ ... }) in MS VC
 	return value is ignored create a tmp variable (of which type?)
 
-TODO: DRBD specific (and GNU extension): do the above also for stable_state_change
+TODO: DRBD specific (and GNU extension): Change rv = stable_state_change(a, b, ...) to stable_state_change(rv, a, b, ...)
 
-TODO: GNU extension: no typeof so change
-	hlist_for_each_entry(a, b, ..) to hlist_for_each_entry(struct x, a, b, ..) 
+TODO: GNU extension: no typeof so change hlist_for_each_entry(a, b, ..) to hlist_for_each_entry(struct x, a, b, ..) 
 	where x is the type of a
 	for all list_xxx macro calls
 
-TODO: GNU extension: In macro definitions replace 
+TODO: GNU extension: In macro definitions use __VA_ARGS_
 	#define A(x, args...)
 		## args ##
 	#define A(x)
@@ -75,7 +72,4 @@ Rejected: Maybe cocci (but only one spinlock ... fix that first)
 
 Rejected: manual (cocci cannot find type - maybe by _resource macro name?)
 	in drbd_int.h - we should not derive types from variable names ...
-
-
-
 
