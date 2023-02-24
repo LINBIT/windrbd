@@ -60,3 +60,7 @@ TODO: drbd_main.c and others: use put_page() instead of free_page
 	WinDRBD might hold the pages a little bit longer
 
 TODO: drbd_transport.h: make sure indices of pages are (at least) int, not short
+
+TODO: GNU extension: drbd_state.c: Change rv = stable_state_change(a, b, ...) to stable_state_change(rv, a, b, ...)
+	Also return stable_state_change() - need an int tmp variable
+
