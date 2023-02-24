@@ -35,7 +35,7 @@ TODO: drbd_receiver.c: Under Windows, queriing a block device's size must happen
 
 TODO: MSVC specific: drbd-headers/drbd_protocol.h: pragma pack(push, 1) (and pop)
 
-TODO: drbd_transport.h: tr_printk macros
+TODO: GNU extension: drbd_transport.h: tr_printk macros
 
 TODO: GNU extension: drbd_state.c: FINAL_STATE_CHANGE and REMEMBER_STATE_CHANGE macros.
 
@@ -48,7 +48,7 @@ TODO: GNU extension: drbd_transport.h: set_page_chain_next_offset_size uses gcc 
 TODO: GNU extension: page_chain_for_each macro uses ({ ... }).
 	To optimize CPU cache ...
 
-TODO: Windows does not support SOCK_STREAM before Windows Server 2019 ...
+TODO: drbd_transport_tcp.c: Windows does not support SOCK_STREAM before Windows Server 2019 ...
 
 TODO: MSVC extension: drbd_meta_data.h: __declspec(align(4096))
 
