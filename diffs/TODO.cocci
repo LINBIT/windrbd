@@ -29,6 +29,7 @@ TODO: GNU extension: Change rv = wait_event_xxx(a, b, ...) to wait_event_xxx(rv,
 	return value is ignored create a tmp variable (of which type?)
 
 TODO: DRBD specific (and GNU extension): Change rv = stable_state_change(a, b, ...) to stable_state_change(rv, a, b, ...)
+	Also return stable_state_change() - need an int tmp variable
 
 TODO: GNU extension: no typeof so change hlist_for_each_entry(a, b, ..) to hlist_for_each_entry(struct x, a, b, ..) 
 	where x is the type of a

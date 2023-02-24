@@ -1,6 +1,0 @@
-remove: drbd_nl.c: (or disable warning) was this compiler or code analyzer?
-remove: (or disable warning) was this compiler or code analyzer? or even upstream?
-cocci: seems like variable macro args is a GNU extension
-compat: this is probably needed. For enlarging recv buffer? implement sk->sk_write_space ...
-cocci: uhh ... best is probably manual but also cocci is possible ... (calling stable_state_change returning its return value
-compat: I think this (asender) thread does not exist in DRBD 9.2 (9.1 also?) any more .. else probably manual maybe compat (implement sched_set_fifo_low)

@@ -1,1 +1,0 @@
-cocci: was this quorum_detail used uninitialized? then upstream else remove
