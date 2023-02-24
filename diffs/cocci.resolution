@@ -1,8 +1,0 @@
-! manual: maybe cocci (I think ({ ... }) macros can be patched also with cocci)
-! manual: maybe cocci (but only one spinlock ... fix that first)
-	Also used in abort_local_transaction()
-	Can inter-function flag passing patched by cocci?
-! manual: ! (cocci cannot find type - maybe by _resource macro name?)
-! manual: ! uhh ... best is probably manual but also cocci is possible ...
-! manual: ! review: possible with cocci? probably not so most likely manual (or ULONG_PTR) or maybe this is manual (inter-function IRQ flags)
-! remove: upstream? or cocci (unsigned -> unsigned int)

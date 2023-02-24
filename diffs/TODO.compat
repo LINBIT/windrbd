@@ -103,6 +103,8 @@ TODO: drbd_transport_tcp.c: define unread_received and unacked_send fields, fill
 
 TODO: drbd_transport_tcp.c: have a dummy flag? What is NOSPACE supposed to do (something with memory management?)
 
+TODO: drbd_transport_tcp.c: implement sk_write_space
+
 TODO: genl_magic_struct.h: do not include drbd_wingenl.h (move it to net/genetlink.h or somewhere there)
 
 TODO: lru_cache.c: make kmem_cache_size and the like work
