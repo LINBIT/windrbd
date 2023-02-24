@@ -108,3 +108,7 @@ TODO: genl_magic_struct.h: do not include drbd_wingenl.h (move it to net/genetli
 TODO: lru_cache.c: make kmem_cache_size and the like work
 
 TODO: asender: implement sched_set_fifo_low
+
+TODO: GNU extension: header: define __printf as empty
+
+TODO: header: define KBUILD_MODNAME ""

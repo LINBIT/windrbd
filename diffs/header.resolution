@@ -1,8 +1,0 @@
-header: ! compat: move this to some header ideally net/ipv6.h
-! compat: needed? I think this header should move to linux subdir in the compat layer
-! header
-! header (define __printf as empty)
-! header: #define KBUILD_MODNAME ""
-! header: define __must_hold
-! header: define __must_hold 
-! header: should already be there ... or compat (need to call a windows function to initialize it)
