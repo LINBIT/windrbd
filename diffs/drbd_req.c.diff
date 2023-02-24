@@ -497,7 +497,7 @@
 ! cocci
 +	KIRQL spin_lock_irq_flags;
  	bool rv = false;
-! review: why?
+! review: why? (compiler warning?)
 -	unsigned int nr_requests;
 +	int nr_requests;
  

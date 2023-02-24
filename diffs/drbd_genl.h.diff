@@ -4,7 +4,7 @@
   */
  GENL_struct(DRBD_NLA_CFG_REPLY, 1, drbd_cfg_reply,
  		/* "arbitrary" size strings, nla_policy.len = 0 */
-! review: why DRBD_GENLA_F_MANDATORY is 1?
+! review: why DRBD_GENLA_F_MANDATORY is 1? - was a perl script (zero sized arrays)
 -	__str_field(1, DRBD_GENLA_F_MANDATORY,	info_text, 0)
 -)
 +	__str_field(1, DRBD_GENLA_F_MANDATORY,	info_text, 1))
