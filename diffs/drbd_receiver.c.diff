@@ -1496,7 +1496,7 @@
  		atomic_sub(interval_to_al_extents(&peer_req->i), &device->wait_for_actlog_ecnt);
  		atomic_dec(&device->wait_for_actlog);
  		if (peer_req->flags & EE_SEND_WRITE_ACK)
-! review: why dec_unacked->__dec_unacked ?
+! review: why dec_unacked->__dec_unacked ? -- don't know difference is an expect()
 -			dec_unacked(peer_req->peer_device);
 +			__dec_unacked(peer_req->peer_device);
  		list_del_init(&peer_req->wait_for_actlog);

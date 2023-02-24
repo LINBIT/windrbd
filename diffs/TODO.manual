@@ -56,4 +56,7 @@ TODO: drbd_state.h: state_change_lock prototypes: change flag parameter to KIRQL
 
 TODO: drbd_state.c: the change here is a %lu to a %llu it matters for volumes > 4TB
 
+TODO: drbd_main.c and others: use put_page() instead of free_page
+	WinDRBD might hold the pages a little bit longer
 
+TODO: drbd_transport.h: make sure indices of pages are (at least) int, not short

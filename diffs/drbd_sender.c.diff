@@ -958,7 +958,7 @@
 +	list_for_each_entry_continue(struct drbd_request, req, &connection->resource->transfer_log, tl_requests) {
  		/* potentially needed in complete_master_bio below */
  		device = req->device;
-! review? is this still needed? or maybe upstream? I think this solved a WinDRBD (and probably also a DRBD) bug.
+! review? is this still needed? or maybe upstream? I think this solved a WinDRBD (and probably also a DRBD) bug. - yes we need this and probably want to upstream it.
 +		if (device == NULL)
 +			continue;
 +

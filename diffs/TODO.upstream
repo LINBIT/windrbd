@@ -6,5 +6,7 @@ TODO: in drbd_sender.c: tl_mark_for_resend_by_connection() check for device inva
 TODO: drbd_nl.c: send a Linux event on becoming secondary / primary
 	This is a nice to have patch
 
+TODO: drbd_transport_tcp.c: discuss about accessing sk fields directly
+
 Done: In 3 node setups sometimes resources are stuck in Negotiating
 
