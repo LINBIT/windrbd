@@ -1,0 +1,110 @@
+These are features to be implemented in the compat layer. Once
+this is done the patches can be removed.
+
+TODO: drbd_main.c: Call drbd_open via drbd_ops.drbd_open
+
+TODO: drbd_main.c: Call drbd_init and drbd_cleanup via module_init/module_exit
+	But drbd_transport_tcp.c has also module_init/module_exit...
+
+TODO: drbd_main.c: Support module parameters via ioctl
+	define the module_param_named, module_param_string, ... macros
+	implement root ioctl (driver and windrbd userland utility)
+
+TODO: drbd_main.c: Support param_set_drbd_protocol_version via ioctl
+
+TODO: drbd_main.c: struct bio_vec: use more modern kernel API
+	with struct bvec_iter
+	Also bio_for_each_segment macro needs to be changed
+
+TODO: drbd_main.c: implement write same
+
+TODO: drbd_main.c: implement zero copy
+	_drbd_send_zc_bio()..this used to BSOD, but is probably fixed now
+
+TODO: drbd_main.c: do not call try_to_promote() directly
+	via drbd_open?
+	But if not possible then manual, it is just removal of one static ...
+
+TODO: drbd_main.c: implement biosets
+
+TODO: drbd_main.c: implement API calls required by set_resource_options()
+	and enable it again
+
+TODO: drbd_main.c: make creating a block device more Linux compatible
+	Need to implement add_disk and the like ...
+	This is a patch from the early days of WinDRBD
+	In particular the struct gendisk plays a more important role
+
+TODO: drbd_main.c: call windrbd_rescan_bus when drbd_create_device returned with NO_ERROR
+	not in drbd_create_device()
+
+TODO: drbd_main.c: drbd_device->this_bdev probably should go away
+	and no bdput()?
+	How do we get a struct block_device from a struct drbd_device then?
+	del_gendisk should cleanup the block device?
+
+TODO: drbd_main.c: Implement /proc via ioctl
+
+TODO: drbd_main.c: Implement debugfs
+
+TODO: move all #pragma warning to WinDRBD headers
+	with #ifdef MSVC
+
+TODO: drbd_bitmap.c: drbd_bm_endio(): use mempools for bio->bi_io_vec[0].bv_page
+
+TODO: drbd_bitmap.c: implement copy_highpage
+	I think this is just a memcpy()
+
+TODO: drbd_dax_pmem.c: implement the dax API calls
+
+TODO: GNU extension: define typecheck() as doing nothing
+
+TODO: drbd_int.h: implement i_size_read, remove windrbd_get_capacity
+	We have to introduce inodes for that...
+
+TODO: drbd_nl.c: move genl_register_family_with_ops to net/genetlink.h
+
+TODO: drbd_nl.c: do not call drbd_adm_send_reply() directly
+
+TODO: drbd_nl.c: rename vsnprintf (is a Windows function?)
+	windrbd_vsnprintf -> vsnprintf()
+
+TODO: drbd_nl.c: implement __get_free_pages (by calling kmalloc) 
+	and free_pages()
+
+TODO: drbd_nl.c: implement fsync_bdev somehow (ideally in 1.1 branch)
+	This is important
+
+TODO: drbd_nl.c: implement opener_info somehow
+
+TODO: drbd_nl.c:  implement set_capacity_and_notify (and delete windrbd_device_size_change)
+
+TODO: drbd_nl.c: implement blk_queue_max_discard_sectors (possibly doing nothing)
+
+TODO: drbd_nl.c: implement bdi_congested
+
+TODO: drbd_proc.c: fix seq_printf.c
+
+TODO: drbd_req.c: implement bdi_read_congested()
+
+TODO: drbd_sender.c: implement struct_size (if possible)
+
+TODO: drbd_sender.c: rename atomic_cmpxchg to cmpxchg
+
+TODO: drbd_transport.c: move ipv6_addr_equal to some header ideally net/ipv6.h
+
+TODO: drbd_transport.c: also make IPV6_ADDR_LINKLOCAL work
+
+TODO: drbd_transport_tcp.c: handle MSG_DONTWAIT in compat layer
+	by returning 0? But this means connection closed?
+
+TODO: drbd_transport_tcp.c: define unread_received and unacked_send fields, fill out with data from receiver thread
+	in stats
+
+TODO: drbd_transport_tcp.c: have a dummy flag? What is NOSPACE supposed to do (something with memory management?)
+
+TODO: genl_magic_struct.h: do not include drbd_wingenl.h (move it to net/genetlink.h or somewhere there)
+
+TODO: lru_cache.c: make kmem_cache_size and the like work
+
+TODO: asender: implement sched_set_fifo_low
