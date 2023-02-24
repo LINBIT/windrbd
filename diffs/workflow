@@ -15,12 +15,10 @@ johannes@jt-ubuntu2021B:~/sambashare2/windrbd-squeeze-patches/windrbd/diffs$ gre
 
 ----
 
-TODO.cocci:	14
-TODO.compat:	47
-TODO.manual:	24
-TODO.upstream:	3
-------------------
-total		88
+TODO.cocci:	13	6
+TODO.compat:	47	45
+TODO.manual:	25	16
+TODO.upstream:	3	3
 
 ----
 Patch files must contain tags, as in:
