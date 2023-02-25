@@ -26,9 +26,36 @@ Patch files must contain tags, as in:
 000-rcu-flag.generic.cocci
 001-if-then-else-operator.gnuextension.cocci
 002-initialize-locking-primitives.drbd.patch
+003-two-flags.drbd-gnuextension.cocci
 
 If we are on MSVC enable generic and gnuextension
 If we are on gcc just enable generic
 Always enable DRBD (except for non-DRBD drivers of course ...)
+use - to delimit flags (so that *.gnuextension.patch does not match
+but *.drbd-gnuextension.cocci does)
 
 Also 64bit tag (for the ULL tag)
+
+----
+
+Workflow for upgrading DRBD
+
+Have converted sources under git control.
+
+Initially:
+
+Clone drbd repo into converted sources
+#git checkout -b drbd-9.0.upstream
+Apply cocci patches. (onto cocci branch)
+Apply manual patches. (onto manual branch)
+
+Upgrade:
+
+checkout drbd-9.X (upstream)
+git pull
+apply cocci patches
+rebase manual patches
+	resolve conflicts manually
+rm ../patch-drbd/manual-patches/*
+git format-patch cocci .. manual  --suffix .drbd.patch -s -o ../patch-drbd/manual-patches
+
