@@ -1020,3 +1020,12 @@ Grep resolved TODOs:
 
 grep ^[A-SW-Z][a-z]*: TODO
 
+---------
+Enable/Disable an existing firewall rule:
+
+netsh advfirewall firewall set rule name="LINSTOR Port 7003" new enable=yes
+netsh advfirewall firewall set rule name="LINSTOR Port 7003" new enable=no
+
+Dump firewall rule:
+
+netsh advfirewall firewall show rule name="LINSTOR Port 7003"
