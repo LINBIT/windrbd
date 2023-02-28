@@ -2,11 +2,20 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
-TODOs for Release 1.2 ----------------------------------------
+TODO: Bug: System freeze when experimenting with DRBD reactor
+
+	DRBD reactor was running on 3 nodes. One was seperated
+	from the others (via Windows firewall). When it came
+	back it connected started syncing but then another
+	node was Outdated which changed to UpToDate later
+	Then the node was promoted and was not responsive
+	any more. Debugger could not connect.
 
 TODO: Feature: sync filesystem(s) on drbdadm secondary
 
 	Linux DRBD also does this.
+
+TODOs for Release 1.2 ----------------------------------------
 
 TODO: Build System: Make it build under Linux (was: Windows) only
 
