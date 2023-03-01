@@ -58,12 +58,19 @@ endif
 # Linux build host running MSVC compiler using wine :)
 
 ifeq ($(BUILD_ENV),jt-wine)
+
+# mounting of the ewdk can be done with Linux mount command:
+# cd ~/.wine/dosdevices
+# sudo mount -o loop ~/EWDK_ni_release_22621_220506-1250.iso e:
+
 export EWDK_BASE := E:
 EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
 EWDK_VERSION := 10.0.22621.0
 EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
 
-WINE=wine
+# WINE=wine
+# We have a 32 bit and a 64 bit installation this one is the right one:
+WINE=/usr/bin/wine
 
 VC := $(WINE) cmd /c ms-cl-$(BUILD_ENV).cmd
 
