@@ -14,6 +14,9 @@ https://linbit.com/linbit-software-download-page-for-linstor-and-drbd-linux-driv
 If you need support, please contact Linbit (www.linbit.com)
 at sales@linbit.com
 
+This branch (windrbd-1.2) is under development. Certain commits
+might work or not even compile at all.
+
 What is WinDRBD?
 ================
 
