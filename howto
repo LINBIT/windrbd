@@ -1029,3 +1029,10 @@ netsh advfirewall firewall set rule name="LINSTOR Port 7003" new enable=no
 Dump firewall rule:
 
 netsh advfirewall firewall show rule name="LINSTOR Port 7003"
+-----
+add/delete/show an extra IP address ('cluster IP')
+
+netsh interface ipv4 add address "Ethernet 4" 10.43.224.99
+netsh interface ipv4 delete address "Ethernet 4" 10.43.224.99
+netsh interface ipv4 show address
+
