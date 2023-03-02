@@ -179,7 +179,7 @@ KEY = linbit-2019
 PASSWD = ""
 
 WINDRBD_SOURCE = ..
-DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
+DRBD_UTILS_SOURCE = ..\\..\\..\\drbd-utils-windows
 endif
 
 ifndef EWDK_VERSION
