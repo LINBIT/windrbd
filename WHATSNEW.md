@@ -5,6 +5,8 @@ Base on DRBD 9.1
 
 LINSTOR support
 
+DRBD reactor support
+
 What's new in version 1.1.6
 ---------------------------
 
