@@ -26,13 +26,12 @@ DRBD itself is used to build High Availability clusters by replicating
 contents of block devices over a network to (up to 31) other nodes.
 
 WinDRBD is based on DRBD 9. It was originally started by Korean
-company Mantech and was later rewritten by an Austrian programmer called
-Johannes Thoma for Linbit.
+company Mantech and was later rewritten by Johannes Thoma for Linbit.
 
 DRBD devices are exported as SCSI disks as soon as the resource
 becomes primary and can be partitioned and formatted with the
 standard Windows tools (diskpart, partition editor in control
-panel).
+panel, powershell).
 
 What else is needed?
 ====================
@@ -42,15 +41,12 @@ the Cygwin DLL comes with the binary package. Commands like drbdadm and
 windrbd should work out-of-the-box with the Windows cmd shell.
 
 We strongly recommend to use the binary packages provided by
-Linbit since they are signed with a DigiCert key and therefore
-should load without putting Windows into test mode. Note that
-WinDRBD does not support SecureBoot currently but we are working
-on this.
+Linbit since they are signed with a Microsoft key and therefore
+should load without putting Windows into test mode.
 
 For detailed build instructions, please see the file INSTALL. Having
-said that you need a Windows 7 box with CygWin installed (Windows 10
-and Windows Server 2016 also work) and a Linux box to build WinDRBD
-from source.
+said that you need a Windows box with CygWin installed and a Linux
+box to build WinDRBD from source.
 
 For building you need Ewdk from Microsoft and a separate Linux Box
 with spatch (concinelle) installed.
@@ -67,9 +63,9 @@ Configuring DRBD
 
 The DRBD config files can be found in following folder:
 
-	C:\windrbd\etc
+	C:\windrbd\etc\drbd.d
 
-This folder can be configured at installation time (use this for
+The C:\windrbd folder can be configured at installation time (use this for
 example if your C: drive is read only).
 
 Put your resources (extension .res) into the C:\windrbd\etc\drbd.d
@@ -86,12 +82,22 @@ Users guide (be sure to pick the 9.0 version) for more information
 of how to configure and administrate DRBD. Most drbdadm commands
 should work exactly like with the Linux version of DRBD.
 
+Note that since WinDRBD and DRBD are very similar many procedures
+from the DRBD user's guide should also work with WinDRBD. Currently
+there is no separate WinDRBD user's guide.
+
 There is also a WinDRBD specific tech guide which explains how
 to prepare two Windows Server 2016 nodes for use with WinDRBD.
 Please see the Linbit website for that guide.
 
+Also there are some newer (beginning 2023) articles on
+https://kb.linbit.com
+
 Differences to Linux DRBD
 =========================
+
+Note that there is a more detailed documentation of the differences
+on http://kb.linbit.com
 
 In the configuration the only difference to Linux DRBD is that block
 devices are specified as you would expect it under Microsoft Windows,
@@ -101,7 +107,7 @@ that is drive letters or GUID's are used. Examples:
 	# or:
 	disk "0b098289-8295-11e7-bddb-0800274272c4";
 
-We recommend not to assign drive letters to backing devices, since 
+We recommend not to assign drive letters to backing devices, since
 that easily may confuse the user. You can use the mountvol utility
 to find the GUID of a device.
 
@@ -109,7 +115,7 @@ Disk devices present themselves as a regular SCSI disk
 (like a physical hard disk) and appear as disk in the
 Windows partition manager (and also in device manager).
 With partition manager a partition table can be created
-and then paritions (with assigned drive letters) can
+and then partitions (with assigned drive letters) can
 be created on the disk. The partitions can be formatted
 with all supported file systems. This means that
 that normally there is be a partition table on the disk (under
@@ -136,7 +142,7 @@ process (which is subject to change).
 Current limitations
 ===================
 
-Our planned 1.0 release will have following restrictions:
+The current 1.1 branch has following restrictions:
 
   * Auto-promote is not supported.
 
@@ -146,8 +152,6 @@ Our planned 1.0 release will have following restrictions:
     is not possible yet with the Windows installer GUI.
 
   * Currently no 32-Bit version is supported, only 64 bit.
-
-  * No SecureBoot support yet (we are working on this one). 
 
 Logging
 =======
