@@ -212,6 +212,17 @@ static NTSTATUS reply_reaper(void *unused)
 	return STATUS_SUCCESS;
 }
 
+bool windrbd_are_there_netlink_packets(u32 portid)
+{
+	bool ret;
+
+	mutex_lock(&genl_reply_mutex);
+	ret = find_reply(portid) != NULL;
+	mutex_unlock(&genl_reply_mutex);
+
+	return ret;
+}
+
 size_t windrbd_receive_netlink_packets(void *vbuf, size_t remaining_size, u32 portid)
 {
 	struct genl_reply *r;

@@ -264,6 +264,7 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		case IOCTL_WINDRBD_ROOT_IS_WINDRBD_ROOT_DEVICE:
 		case IOCTL_WINDRBD_ROOT_SEND_NL_PACKET:
 		case IOCTL_WINDRBD_ROOT_RECEIVE_NL_PACKET:
+		case IOCTL_WINDRBD_ROOT_ARE_THERE_NL_PACKETS:
 		case IOCTL_WINDRBD_ROOT_JOIN_MC_GROUP:
 		case IOCTL_WINDRBD_ROOT_GET_DRBD_VERSION:
 		case IOCTL_WINDRBD_ROOT_GET_WINDRBD_VERSION:
@@ -284,6 +285,7 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 			/* Terminate all running drbdsetup commands */
 		case IOCTL_WINDRBD_ROOT_SEND_NL_PACKET:
 		case IOCTL_WINDRBD_ROOT_RECEIVE_NL_PACKET:
+		case IOCTL_WINDRBD_ROOT_ARE_THERE_NL_PACKETS:
 		case IOCTL_WINDRBD_ROOT_JOIN_MC_GROUP:
 			status = STATUS_NO_MORE_ENTRIES;
 
@@ -348,6 +350,25 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		/* may be 0, if there is no data */
 		irp->IoStatus.Information = bytes_returned;
 		status = STATUS_SUCCESS;
+		break;
+	}
+	case IOCTL_WINDRBD_ROOT_ARE_THERE_NL_PACKETS:
+	{
+		int *there_are_nl_packets = irp->AssociatedIrp.SystemBuffer;
+		u32 portid;
+
+		if (s->Parameters.DeviceIoControl.OutputBufferLength != sizeof(int)) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+		if (s->Parameters.DeviceIoControl.InputBufferLength != sizeof(struct windrbd_ioctl_genl_portid)) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+		portid = ((struct windrbd_ioctl_genl_portid*)irp->AssociatedIrp.SystemBuffer)->portid;
+		*there_are_nl_packets = (int)windrbd_are_there_netlink_packets(portid);
+
+		irp->IoStatus.Information = sizeof(int);
 		break;
 	}
 

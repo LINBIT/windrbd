@@ -1,0 +1,42 @@
+From 83af319b85472736907a02fdbfd45ebc43ed126c Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 9 Mar 2023 15:28:28 +0000
+Subject: [PATCH] drbd-headers: IOCTL_WINDRBD_ROOT_ARE_THERE_NL_PACKETS ioctl
+
+This allows us to check non-blocking if there is a netlink
+packet (or more) and not consume it (which RECEIVE_NL_PACKET
+would do).
+---
+ drbd/drbd-headers/windrbd/windrbd_ioctl.h | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/drbd/drbd-headers/windrbd/windrbd_ioctl.h b/drbd/drbd-headers/windrbd/windrbd_ioctl.h
+index 8078ca5..12bd748 100644
+--- a/drbd/drbd-headers/windrbd/windrbd_ioctl.h
++++ b/drbd/drbd-headers/windrbd/windrbd_ioctl.h
+@@ -103,8 +103,6 @@ struct windrbd_ioctl_genl_portid_and_multicast_group {
+  * the actual size is returned by the lpBytesReturned parameter to
+  * DeviceIoControl().
+  *
+- * Does not wait for packets to arrive, use POLL ioctl for waiting for
+- * packets.
+  */
+ 
+ #define IOCTL_WINDRBD_ROOT_RECEIVE_NL_PACKET CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 4, METHOD_BUFFERED, FILE_ANY_ACCESS)
+@@ -318,4 +316,13 @@ struct windrbd_minor_mount_point {
+ 
+ #define IOCTL_WINDRBD_ROOT_SET_SHUTDOWN_FLAG CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 18, METHOD_BUFFERED, FILE_ANY_ACCESS)
+ 
++/* Check if there is a netlink packet without consuming it.
++ *
++ * Input buffer: the port id (getpid()) in a struct windrbd_ioctl_genl_portid
++ * Output buffer: a 32 bit flag: 0 - no netlink packets 1 - there are netlink
++ *                packets.
++ */
++
++#define IOCTL_WINDRBD_ROOT_ARE_THERE_NL_PACKETS CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 19, METHOD_BUFFERED, FILE_ANY_ACCESS)
++
+ #endif
+-- 
+2.17.1
+
