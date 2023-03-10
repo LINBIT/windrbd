@@ -295,6 +295,7 @@ end;
 var LoggerWasStarted: boolean;
 var UmHelperWasStarted: boolean;
 var LinstorSatelliteWasStarted: boolean;
+var DrbdReactorWasStarted: boolean;
 
 Procedure StopUserModeServices;
 Begin
@@ -316,6 +317,7 @@ Begin
 
 	UmHelperWasStarted := MyStopService('windrbdumhelper');
 	LinstorSatelliteWasStarted := MyStopService('linstor-satellite');
+	DrbdReactorWasStarted := MyStopService('drbd-reactor');
 End;
 
 Procedure StopLogger;
@@ -338,6 +340,9 @@ Begin
 	End;
 	if LinstorSatelliteWasStarted then begin
 		MyStartService('linstor-satellite');
+	End;
+	if DrbdReactorWasStarted then begin
+		MyStartService('drbd-reactor');
 	End;
 End;
 
