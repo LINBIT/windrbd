@@ -1314,6 +1314,20 @@ static void io_map_test(int argc, char ** argv)
 	kfree(mem);
 }
 
+static void leak_test(int argc, char ** argv)
+{
+	char *mem;
+	size_t bytes;
+
+	if (argc >= 2) {
+		bytes = my_atoi(argv[1]);
+		mem = kmalloc(bytes, 0, 'DRBD');
+		printk("Leaked %d bytes ...\n", bytes);
+	} else {
+		printk("Usage: windrbd run-test leak_test <size-in-bytes>\n");
+	}
+}
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1399,6 +1413,8 @@ void test_main(const char *arg)
 		rtl_zero_memory_test(argc, argv);
 	if (strcmp(argv[0], "io_map_test") == 0)
 		io_map_test(argc, argv);
+	if (strcmp(argv[0], "leak_test") == 0)
+		leak_test(argc, argv);
 
 kfree_argv:
 	kfree(argv);
