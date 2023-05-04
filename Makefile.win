@@ -155,9 +155,9 @@ DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows
 endif
 
 ifeq ($(BUILD_ENV),jt-opennebula-vm)
-export EWDK_BASE := g:
+export EWDK_BASE := h:
 EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
-EWDK_VERSION := 10.0.20348.0
+EWDK_VERSION := 10.0.22621.0
 EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
 
 # Name of the pfx file (without extension)

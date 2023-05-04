@@ -536,6 +536,8 @@ srv*;Y:\windrbd-1.1-branch\windrbd\windrbd\src;Y:\windrbd-1.1-branch\windrbd\con
 
 srv*;Y:\windrbd-32bit-server2003\windrbd\windrbd\src;Y:\windrbd-32bit-server2003\windrbd\converted-sources\drbd
 
+srv*;Y:\windrbd-1.1.6\windrbd\windrbd\src;Y:\windrbd-1.1.6\windrbd\converted-sources\drbd
+
 Set the homedir:
 
 !homedir C:\Windows\Temp
