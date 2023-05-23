@@ -30,6 +30,13 @@ TODO: Build System: Make it build under Linux (was: Windows) only
 	to make a wine patch though ... But this saves us
 	from special casing the CI environment.
 
+TODO: Check out osslsigncode
+        signtool replacement using openssl library.
+
+TODO: Wine support for catgen
+        Next steps: implement PutMemberInfo, PutAttrInfo(member),
+                PersistStore.
+
 TODO: Code quality: review TODOs in source code.
 
 	Currently 136 total.
