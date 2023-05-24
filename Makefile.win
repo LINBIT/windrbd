@@ -21,7 +21,7 @@ $(error BUILD_ENV not set. Please set the BUILD_ENV environment variables (expor
 endif
 
 # TODO: unset this for production releases.
-# KMALLOC_DEBUG = 1
+KMALLOC_DEBUG = 1
 # BIO_REF_DEBUG = 1
 
 ifeq ($(BUILD_ENV),jt-win7)
