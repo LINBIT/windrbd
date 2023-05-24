@@ -2,16 +2,6 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
-TODO: Bug: bitmap consumes 7GB instead of 0.5GB
-
-	kmalloc_debug? Or does Windows alloc 4K also for
-	small memory chunks?
-	Maybe allocate bitmap as PagedPool?
-
-	No LINSTOR allocates max-peers = 7 so we would
-	expect 4GB. The rest is probably due to kmalloc_debug().
-	(Windows rounding 4K+128 bytes to 8K).
-
 TODO: Bug: System freeze when experimenting with DRBD reactor
 
 	DRBD reactor was running on 3 nodes. One was seperated
@@ -8542,4 +8532,17 @@ Done: Test: How does it behave with supports surprisal remove off?
 	Strange. We don't want this. Users then would be able
 	to eject the device via task bar (which fails) and causes
 	many strange behaviours.
+
+Done: Bug: bitmap consumes 7GB instead of 0.5GB
+
+	kmalloc_debug? Or does Windows alloc 4K also for
+	small memory chunks?
+	Maybe allocate bitmap as PagedPool?
+
+	No LINSTOR allocates max-peers = 7 so we would
+	expect 4GB. The rest is probably due to kmalloc_debug().
+	(Windows rounding 4K+128 bytes to 8K).
+
+	Tested, it was kmalloc_debug (without that it is
+        4GB for 16TB disks.
 
