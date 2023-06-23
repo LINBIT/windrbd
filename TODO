@@ -2,6 +2,11 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
+TODO: Bug: drbdadm up slow
+
+	16TB: Windows 1:20 Linux 0:10
+	Locking problem?
+
 TODO: Bug: System freeze when experimenting with DRBD reactor
 
 	DRBD reactor was running on 3 nodes. One was seperated
