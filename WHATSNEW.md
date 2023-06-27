@@ -7,6 +7,17 @@ LINSTOR support
 
 DRBD reactor support
 
+What's new in version 1.1.7
+---------------------------
+
+Fixed a BSOD in the network driver when memory allocation failed.
+
+Fixed a performance bug (TCP/IP nodelay option was not set) that increased latency with protocol C (20ms instead of 0.5ms)
+
+Implemented ioctl for polling for netlink packets (without consuming them). This makes poll_hup in drbd utils work (which is used by drbd reactor).
+
+Also stop and start drbd reactor service on install / upgrade.
+
 What's new in version 1.1.6
 ---------------------------
 
