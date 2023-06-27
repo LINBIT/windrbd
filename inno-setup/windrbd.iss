@@ -123,6 +123,7 @@ Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.sys"; DestDir: "{app
 ; must be in same folder as the sysfile.
 Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.cat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.pdb"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\misc\drbd.cgi"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\misc\ipxe-windrbd.pxe"; DestDir: "{app}"; Flags: ignoreversion
 
