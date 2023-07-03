@@ -1235,7 +1235,6 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 	int         wObjCount = 1;
 
 // printk("in recvmsg: size is %d\n", len);
-// if (len >= 4096) tik(1);
 // dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
@@ -1272,9 +1271,6 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		return -ENOTCONN;
 	}
 
-tik(3, "WskReceive");
-// if (len >= 4096) tik(2);
-
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
@@ -1308,7 +1304,6 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
 	enter_interruptible();
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
 	exit_interruptible();
-tok(3);
 
         switch (Status)
         {
@@ -1345,7 +1340,6 @@ tok(3);
     }
 	else
 	{
-tok(3);
 		if (Status == STATUS_SUCCESS)
 		{
 			BytesReceived = (LONG) Irp->IoStatus.Information;
@@ -1357,7 +1351,6 @@ tok(3);
 			BytesReceived = winsock_to_linux_error(Status);
 		}
 	}
-// if (len >= 4096) tok(2);
 
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
@@ -1400,7 +1393,6 @@ tok(3);
 		socket->error_status = BytesReceived;
 // printk("setting error status to %d\n", socket->error_status);
 	}
-// if (len >= 4096) tok(1);
 	return BytesReceived;
 }
 
