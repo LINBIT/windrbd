@@ -51,7 +51,7 @@ EWDK_BIN := $(EWDK_KIT)\\bin\\$(EWDK_VERSION)\\x86
 KEY = linbit-2019
 
 ifeq ($(BUILD_ENV),jt-win7-32bit)
-export EWDK_BASE := c:\\Ewdk
+export EWDK_BASE := c:\\Ewdk1703
 EWDK_KIT := $(EWDK_BASE)\\Program Files\\Windows Kits\\10
 EWDK_VERSION := 10.0.15063.0
 EWDK_BIN := $(EWDK_KIT)\\bin\\x86
@@ -74,6 +74,9 @@ endif
 # cd /cygdrive/c/WinDDK
 # find . -iname \*.exe | xargs chmod a+x
 # find . -iname \*.dll | xargs chmod a+x
+
+# But does not work at all .. C compiler does not understand
+# gcc extension at all use jt-win7-32bit environment instead
 ifeq ($(BUILD_ENV),jt-win7-32bit-server2003)
 export EWDK_BASE := C:\\WinDDK
 EWDK_VERSION := 7600.16385.1
