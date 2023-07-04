@@ -66,6 +66,14 @@ DRBD_UTILS_SOURCE = Y:\\drbd-utils-windows-32bit
 CONFIG_32BIT = 1
 endif
 
+# (does not work)
+# https://www.microsoft.com/en-us/download/details.aspx?id=11800
+# also does not work (can't start cl):
+# git clone https://github.com/9176324/WinDDK.git
+# But it works after doing:
+# cd /cygdrive/c/WinDDK
+# find . -iname \*.exe | xargs chmod a+x
+# find . -iname \*.dll | xargs chmod a+x
 ifeq ($(BUILD_ENV),jt-win7-32bit-server2003)
 export EWDK_BASE := C:\\WinDDK
 EWDK_VERSION := 7600.16385.1
@@ -300,7 +308,7 @@ else
 WIN_CFLAGS += /GF /Gm- /Zp8 /GS /Gy 
 endif
 # /fp:precise  # precise - "precise" floating-point model; results are predictable
-WIN_CFLAGS += /Zc:wchar_t- /Zc:forScope /Zc:inline /GR- 
+WIN_CFLAGS += /Zc:wchar_t- /Zc:forScope /GR- 
 # Output preprocessor output. Disable this to compile 'normally'
 # WIN_CFLAGS += /P
 # On x64, there's only one calling convention. https://msdn.microsoft.com/en-us/library/zthk2dkh.aspx
@@ -355,6 +363,9 @@ WIN_LDFLAGS += /DRIVER:WDM /SUBSYSTEM:NATIVE /NODEFAULTLIB /ENTRY:DriverEntry
 # WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x64/"
 # WIN_LDFLAGS += /DRIVER /SUBSYSTEM:WINDOWS /NODEFAULTLIB /ENTRY:DriverEntry
 
+ifdef DDK
+WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)"
+else
 ifdef CONFIG_32BIT
 WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x86/"
 WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/$(EWDK_VERSION)/km/x86/"
@@ -362,14 +373,18 @@ else
 WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/win7/km/x64/"
 WIN_LDFLAGS += "/LIBPATH:$(EWDK_LIB)/$(EWDK_VERSION)/km/x64/"
 endif
+endif
 
 WIN_LDFLAGS += /DEBUG:FULL
 
 WIN_LINK_INPUT += wdm.lib
 WIN_LINK_INPUT += ntoskrnl.lib
-WIN_LINK_INPUT += bufferoverflowfastfailk.lib # for __security_check_cookie
 ifndef CONFIG_32BIT
+WIN_LINK_INPUT += bufferoverflowfastfailk.lib # for __security_check_cookie
 WIN_LINK_INPUT += netio.lib
+WIN_LINK_INPUT += aux_klib.lib
+else
+WIN_LINK_INPUT += bufferoverflowk.lib # for __security_check_cookie
 endif
 ifdef CONFIG_32BIT
 WIN_LINK_INPUT += wdmsec.lib
@@ -379,6 +394,7 @@ WIN_LINK_INPUT += ksecdd.lib
 # WIN_LINK_INPUT += "$(EWDK_LIB)/win8/km/x64/aux_klib.lib"
 WIN_LINK_INPUT += hal.lib
 WIN_LINK_INPUT += aux_klib.lib
+
 # TODO: only for 32 bit?
 WIN_LINK_INPUT += iointex.lib
 WIN_LINK_INPUT += procgrp.lib
@@ -451,7 +467,7 @@ windrbd-event-log.res: windrbd-event-log.rc
 %.obj: %.c
 	rm -f "$(call fPDB,$<)"
 ifdef DDK
-	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /c /Fo"$@" /Fd"$(call fPDB,$<)"
+	$(VC) $(WIN_CFLAGS) $< /c /Fo"$@" /Fd"$(call fPDB,$<)"
 else
 	$(VC) $(WIN_CFLAGS) $(WIN_DEF_INCLUDES) "$<" /c /Fo:"$@" /Fd:"$(call fPDB,$<)"
 endif
