@@ -2172,6 +2172,17 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 // printk("expected_sector is %lld bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %lld\n", expected_sector, bio->bi_iter.bi_sector, bio->bi_iter.bi_size);
 		if (expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) {
 			printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
+//			if (num_joinable_bios == 1) generic_make_request2() ...
+			/* create a buffer and copy over the data (if writing).
+			 * create a 'master' bio here.
+			 * move bios from first bio to this bio to the master bio's list.
+			 * submit the master bio
+			 * in master bio completion:
+			 *    copy over data when reading.
+                         *    bio_endfn() for all child functions
+			 *
+			 * Error handling?
+			 */
 			num_joinable_bios = 0;
 			joinable_size = 0;
 			expected_sector = -1;
