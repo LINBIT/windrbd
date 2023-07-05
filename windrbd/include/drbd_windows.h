@@ -650,6 +650,18 @@ struct block_device {
 	char boot_sector[512];
 
 	spinlock_t virtual_partition_table_lock;
+
+		/* This members allow I/O to be "corked": collect
+		 * I/O requests (=bios) and submit them as a single
+		 * driver call to the backing device. This should
+		 * perform better (1 4Meg request vs. 1000 4K requests)
+		 * Right now one needs to call bdev_cork_io() and
+		 * bdev_uncork_io() manually.
+		 */
+
+	bool corked;
+	spinlock_t cork_spinlock;
+	struct list_head corked_list;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
@@ -836,6 +848,8 @@ struct bio {
 #endif
 
 	struct bio *is_cloned_from;
+
+	struct list_head corked_bios;
 
 	/* TODO: may be put members here again? Update: Not sure,
 	 * we've put a KEVENT here and it didn't work .. might also

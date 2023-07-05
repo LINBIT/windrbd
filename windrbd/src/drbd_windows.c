@@ -2027,7 +2027,7 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	return 0;
 }
 
-int generic_make_request(struct bio *bio)
+static int generic_make_request2(struct bio *bio)
 {
 	int ret;
 	sector_t sector;
@@ -2134,6 +2134,60 @@ out:
 	bio_put(bio);
 
 	return ret;
+}
+
+void windrbd_bdev_cork(struct block_device *bdev)
+{
+	bdev->corked = true;
+}
+
+int windrbd_bdev_uncork(struct block_device *bdev)
+{
+	struct bio *bio, *bio2;
+	struct list_head tmp_list;
+	KIRQL flags;
+	int ret;
+
+	INIT_LIST_HEAD(&tmp_list);
+	bdev->corked = false;
+
+		/* This is so we don't have to keep the spin lock
+		 * longer than needed.
+		 */
+	spin_lock_irqsave(&bdev->cork_spinlock, flags);
+	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->corked_list, corked_bios) {
+		list_del(&bio->corked_bios);
+		list_add(&bio->corked_bios, &tmp_list);
+	}
+	spin_unlock_irqrestore(&bdev->cork_spinlock, flags);
+
+	list_for_each_entry_safe(struct bio, bio, bio2, &tmp_list, corked_bios) {
+		ret = generic_make_request2(bio);
+		if (ret < 0)
+			return ret;
+	}
+	return 0;
+}
+
+	/* Corking. Keep bios on a list and submit them
+	 * at once as a single request (if possible).
+	 */
+
+int generic_make_request(struct bio *bio)
+{
+	struct block_device *bdev = bio->bi_bdev;
+	KIRQL flags;
+
+	if (bdev->corked) {
+		bio_get(bio);
+		spin_lock_irqsave(&bdev->cork_spinlock, flags);
+	        list_add_tail(&bio->corked_bios, &bdev->corked_list);
+		spin_unlock_irqrestore(&bdev->cork_spinlock, flags);
+
+		return 0;
+	} else {
+		return generic_make_request2(bio);
+	}
 }
 
 void bio_endio(struct bio *bio)
@@ -3319,6 +3373,11 @@ block_device->my_auto_promote = 1;
 		 * find the disk device.
 		 */
 	block_device->is_disk_device = true;
+
+		/* Corking ... new with 1.1.8 */
+	block_device->corked = false;
+	spin_lock_init(&block_device->cork_spinlock);
+	INIT_LIST_HEAD(&block_device->corked_list);
 
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
