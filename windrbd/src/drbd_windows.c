@@ -819,6 +819,7 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_cnt = 1;
 	bio->bi_vcnt = 0;
 	spin_lock_init(&bio->device_failed_lock);
+	INIT_LIST_HEAD(&bio->corked_bios);
 
 	return bio;
 }
@@ -2163,6 +2164,8 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 
 	list_for_each_entry_safe(struct bio, bio, bio2, &tmp_list, corked_bios) {
 		ret = generic_make_request2(bio);
+		bio_put(bio);
+
 		if (ret < 0)
 			return ret;
 	}
@@ -2983,6 +2986,11 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	INIT_LIST_HEAD(&block_device->write_cache);
 	spin_lock_init(&block_device->write_cache_lock);
+
+		/* Corking ... new with 1.1.8 */
+	block_device->corked = false;
+	spin_lock_init(&block_device->cork_spinlock);
+	INIT_LIST_HEAD(&block_device->corked_list);
 
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
