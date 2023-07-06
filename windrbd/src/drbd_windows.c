@@ -1802,10 +1802,13 @@ NTSTATUS DrbdIoCompletion(
 
 		struct bio *child_bio, *child_bio2;
 		list_for_each_entry_safe(struct bio, child_bio, child_bio2, &bio->joined_bios, corked_bios) {
-printk("1 %p\n", child_bio);
 			child_bio->bi_status = win_status_to_blk_status(status);
 			bio_endio(child_bio);
-//			bio_put(child_bio);  /* get was where we have put it on the list */
+
+				/* No bio_put here - this bio was never sent
+				 * to generic_make_request2. bio_endio does
+				 * a bio_put the corresponding get was where
+				 * we have put the bio on the list */
 		}
 	}
 
@@ -2112,7 +2115,7 @@ static int generic_make_request2(struct bio *bio)
 			bio->bi_iter.bi_sector = sector;
 			bio->bi_iter.bi_size = total_size;
 
-printk("1 size is %d\n", total_size);
+// printk("1 size is %d\n", total_size);
 			ret = windrbd_generic_make_request(bio, false);
 
 			if (ret < 0) {
@@ -2162,7 +2165,7 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	struct bio *joined_bios_bio, *bio3, *bio4, *first_bio;
 	int i;
 
-printk("in create_and_submit_joined_bio ...\n");
+// printk("in create_and_submit_joined_bio ...\n");
 	if (list_empty(list)) {
 		return 0;
 	}
@@ -2179,21 +2182,21 @@ printk("in create_and_submit_joined_bio ...\n");
 	joined_bios_bio->bi_vcnt = 0;
 
 	list_for_each_entry_safe(struct bio, bio3, bio4, list, corked_bios) {
-printk("1 %p\n", bio3);
+// printk("1 %p\n", bio3);
 		if (last_bio != NULL && bio3 == last_bio) {
 			break;
 		}
-printk("2 %p\n", bio3);
+// printk("2 %p\n", bio3);
 
 		for (i=0; i<bio3->bi_vcnt; i++) {
-printk("3 %p\n", bio3);
+// printk("3 %p\n", bio3);
 			joined_bios_bio->bi_io_vec[joined_bios_bio->bi_vcnt] = bio3->bi_io_vec[i];
 			joined_bios_bio->bi_vcnt++;
 		}
-printk("4 %p\n", bio3);
+// printk("4 %p\n", bio3);
 		list_del(&bio3->corked_bios);
 		list_add(&bio3->corked_bios, &joined_bios_bio->joined_bios);
-printk("5 %p\n", bio3);
+// printk("5 %p\n", bio3);
 	}
 	if (joined_bios_bio->bi_vcnt != num_vector_elements) {
 		printk("Warning: joined_bios_bio->bi_vcnt(%d) != num_vector_elements(%d)\n", joined_bios_bio->bi_vcnt, num_vector_elements);
@@ -2235,7 +2238,7 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 
 	list_for_each_entry_safe(struct bio, bio, bio2, &tmp_list, corked_bios) {
 // printk("expected_sector is %lld bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %lld\n", expected_sector, bio->bi_iter.bi_sector, bio->bi_iter.bi_size);
-		if (expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) {
+		if ((expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) || num_vector_elements >= 1024 || joinable_size >= 4*1024*1024) {
 			printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 			if (num_joinable_bios == 1) {
 				ret = generic_make_request2(bio);
@@ -3119,9 +3122,9 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	list_add(&block_device->backing_devices_list, &backing_devices);
 
 /*
-printk("freeing file object ...\n");
+ printk("freeing file object ...\n");
 ObDereferenceObject(file_object);
-printk("done\n");
+ printk("done\n");
 */
 
 	return block_device;
