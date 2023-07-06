@@ -820,6 +820,7 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	bio->bi_vcnt = 0;
 	spin_lock_init(&bio->device_failed_lock);
 	INIT_LIST_HEAD(&bio->corked_bios);
+	INIT_LIST_HEAD(&bio->joined_bios);
 
 	return bio;
 }
@@ -1798,6 +1799,13 @@ NTSTATUS DrbdIoCompletion(
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS || one_big_request)) {
 		bio->bi_status = win_status_to_blk_status(status);
 		bio_endio(bio);
+
+		struct bio *child_bio, *child_bio2;
+		list_for_each_entry_safe(struct bio, child_bio, child_bio2, &bio->joined_bios, corked_bios) {
+			child_bio->bi_status = win_status_to_blk_status(status);
+			bio_endio(child_bio);
+			bio_put(child_bio);
+		}
 	}
 
 	bio_put(bio);
@@ -2142,13 +2150,18 @@ void windrbd_bdev_cork(struct block_device *bdev)
 	bdev->corked = true;
 }
 
+static void do_nothing(struct bio *bio)
+{
+	bio_put(bio);
+}
+
 int windrbd_bdev_uncork(struct block_device *bdev)
 {
-	struct bio *bio, *bio2;
+	struct bio *bio, *bio2, *bio3, *bio4;
 	struct list_head tmp_list;
 	KIRQL flags;
 	int ret;
-	int num_joinable_bios;
+	int num_joinable_bios, num_vector_elements;
 	sector_t expected_sector;
 	unsigned long long joinable_size;
 
@@ -2165,37 +2178,80 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 	}
 	spin_unlock_irqrestore(&bdev->cork_spinlock, flags);
 
+	if (list_empty(&tmp_list)) {
+		return 0;
+	}
+
 	num_joinable_bios = 0;
+	num_vector_elements = 0;
 	joinable_size = 0;
 	expected_sector = -1;
+
 	list_for_each_entry_safe(struct bio, bio, bio2, &tmp_list, corked_bios) {
 // printk("expected_sector is %lld bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %lld\n", expected_sector, bio->bi_iter.bi_sector, bio->bi_iter.bi_size);
 		if (expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) {
 			printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
-//			if (num_joinable_bios == 1) generic_make_request2() ...
-			/* create a buffer and copy over the data (if writing).
-			 * create a 'master' bio here.
-			 * move bios from first bio to this bio to the master bio's list.
-			 * submit the master bio
+			if (num_joinable_bios == 1) {
+				ret = generic_make_request2(bio);
+				if (ret < 0)
+					return ret;
+			} else {	/* TODO: to extra function */
+				struct bio *joined_bios_bio;
+				int vec, i;
+
+				joined_bios_bio = bio_alloc(0, num_vector_elements, 'ZAKL');
+				if (joined_bios_bio == NULL)
+					return -ENOMEM;
+
+				joined_bios_bio->bi_end_io = do_nothing;
+
+				vec = 0;
+			        list_for_each_entry_safe(struct bio, bio3, bio4, &tmp_list, corked_bios) {
+					if (bio3 == bio) {
+						break;
+					}
+
+					for (i=0; i<bio3->bi_vcnt; i++) {
+						joined_bios_bio->bi_io_vec[vec] = bio3->bi_io_vec[i];
+					}
+					list_del(&bio3->corked_bios);
+					list_add(&bio3->corked_bios, &joined_bios_bio->joined_bios);
+				}
+				ret = generic_make_request2(joined_bios_bio);
+				if (ret < 0) {
+					return ret;
+				}
+			}
+
+			/* Rejected: create a buffer and copy over the data (if writing).
+			 * instead create a bi_io_vec pointing to the data and
+			 * use big_buffer mechanism.
+			 *
+			 * Done: create a 'master' bio here.
+			 * Done: move bios from first bio to this bio to the master bio's list.
+			 * Done: submit the master bio
 			 * in master bio completion:
-			 *    copy over data when reading.
+			 *    rejected: copy over data when reading. already done
                          *    bio_endfn() for all child functions
 			 *
 			 * Error handling?
 			 */
 			num_joinable_bios = 0;
+			num_vector_elements = 0;
 			joinable_size = 0;
 			expected_sector = -1;
 		}
 		num_joinable_bios++;
+		num_vector_elements += bio->bi_vcnt;
 		joinable_size += bio->bi_iter.bi_size;
 		expected_sector = bio->bi_iter.bi_sector + bio->bi_iter.bi_size/512;
 
-		ret = generic_make_request2(bio);
+/*		ret = generic_make_request2(bio);
 		bio_put(bio);
 
 		if (ret < 0)
 			return ret;
+*/
 	}
 	printk("At end of loop: Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 	return 0;
