@@ -1802,9 +1802,10 @@ NTSTATUS DrbdIoCompletion(
 
 		struct bio *child_bio, *child_bio2;
 		list_for_each_entry_safe(struct bio, child_bio, child_bio2, &bio->joined_bios, corked_bios) {
+printk("1 %p\n", child_bio);
 			child_bio->bi_status = win_status_to_blk_status(status);
 			bio_endio(child_bio);
-			bio_put(child_bio);
+//			bio_put(child_bio);  /* get was where we have put it on the list */
 		}
 	}
 
@@ -2111,6 +2112,7 @@ static int generic_make_request2(struct bio *bio)
 			bio->bi_iter.bi_sector = sector;
 			bio->bi_iter.bi_size = total_size;
 
+printk("1 size is %d\n", total_size);
 			ret = windrbd_generic_make_request(bio, false);
 
 			if (ret < 0) {
@@ -2155,9 +2157,53 @@ static void do_nothing(struct bio *bio)
 	bio_put(bio);
 }
 
+static int create_and_submit_joined_bio(int num_vector_elements, int total_size, struct list_head *list, struct bio *last_bio)
+{
+	struct bio *joined_bios_bio, *bio3, *bio4, *first_bio;
+	int i;
+
+printk("in create_and_submit_joined_bio ...\n");
+	if (list_empty(list)) {
+		return 0;
+	}
+	joined_bios_bio = bio_alloc(0, num_vector_elements, 'ZAKL');
+	if (joined_bios_bio == NULL)
+		return -ENOMEM;
+
+	joined_bios_bio->bi_end_io = do_nothing;
+	first_bio = list_first_entry(list, struct bio, corked_bios);
+	joined_bios_bio->bi_bdev = first_bio->bi_bdev;
+	joined_bios_bio->bi_opf = first_bio->bi_opf;
+	joined_bios_bio->bi_iter.bi_sector = first_bio->bi_iter.bi_sector;
+	joined_bios_bio->bi_iter.bi_size = total_size;
+	joined_bios_bio->bi_vcnt = 0;
+
+	list_for_each_entry_safe(struct bio, bio3, bio4, list, corked_bios) {
+printk("1 %p\n", bio3);
+		if (last_bio != NULL && bio3 == last_bio) {
+			break;
+		}
+printk("2 %p\n", bio3);
+
+		for (i=0; i<bio3->bi_vcnt; i++) {
+printk("3 %p\n", bio3);
+			joined_bios_bio->bi_io_vec[joined_bios_bio->bi_vcnt] = bio3->bi_io_vec[i];
+			joined_bios_bio->bi_vcnt++;
+		}
+printk("4 %p\n", bio3);
+		list_del(&bio3->corked_bios);
+		list_add(&bio3->corked_bios, &joined_bios_bio->joined_bios);
+printk("5 %p\n", bio3);
+	}
+	if (joined_bios_bio->bi_vcnt != num_vector_elements) {
+		printk("Warning: joined_bios_bio->bi_vcnt(%d) != num_vector_elements(%d)\n", joined_bios_bio->bi_vcnt, num_vector_elements);
+	}
+	return generic_make_request2(joined_bios_bio);
+}
+
 int windrbd_bdev_uncork(struct block_device *bdev)
 {
-	struct bio *bio, *bio2, *bio3, *bio4;
+	struct bio *bio, *bio2;
 	struct list_head tmp_list;
 	KIRQL flags;
 	int ret;
@@ -2193,35 +2239,11 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 			printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 			if (num_joinable_bios == 1) {
 				ret = generic_make_request2(bio);
-				if (ret < 0)
-					return ret;
-			} else {	/* TODO: to extra function */
-				struct bio *joined_bios_bio;
-				int vec, i;
-
-				joined_bios_bio = bio_alloc(0, num_vector_elements, 'ZAKL');
-				if (joined_bios_bio == NULL)
-					return -ENOMEM;
-
-				joined_bios_bio->bi_end_io = do_nothing;
-
-				vec = 0;
-			        list_for_each_entry_safe(struct bio, bio3, bio4, &tmp_list, corked_bios) {
-					if (bio3 == bio) {
-						break;
-					}
-
-					for (i=0; i<bio3->bi_vcnt; i++) {
-						joined_bios_bio->bi_io_vec[vec] = bio3->bi_io_vec[i];
-					}
-					list_del(&bio3->corked_bios);
-					list_add(&bio3->corked_bios, &joined_bios_bio->joined_bios);
-				}
-				ret = generic_make_request2(joined_bios_bio);
-				if (ret < 0) {
-					return ret;
-				}
+			} else {
+				ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, bio);
 			}
+			if (ret < 0)
+				return ret;
 
 			/* Rejected: create a buffer and copy over the data (if writing).
 			 * instead create a bi_io_vec pointing to the data and
@@ -2254,7 +2276,12 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 */
 	}
 	printk("At end of loop: Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
-	return 0;
+	if (num_joinable_bios == 1) {
+		ret = generic_make_request2(bio);
+	} else {
+		ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, NULL);
+	}
+	return ret;
 }
 
 	/* Corking. Keep bios on a list and submit them
