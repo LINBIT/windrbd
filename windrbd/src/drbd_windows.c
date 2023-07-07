@@ -1726,6 +1726,8 @@ int wait_for_bios_to_complete(struct block_device *bdev)
 	return 0;
 }
 
+static void bio_endio_impl(struct bio *bio, bool was_accounted);
+
 NTSTATUS DrbdIoCompletion(
   _In_     PDEVICE_OBJECT DeviceObject,
   _In_     PIRP           Irp,
@@ -1803,7 +1805,11 @@ NTSTATUS DrbdIoCompletion(
 		struct bio *child_bio, *child_bio2;
 		list_for_each_entry_safe(struct bio, child_bio, child_bio2, &bio->joined_bios, corked_bios) {
 			child_bio->bi_status = win_status_to_blk_status(status);
-			bio_endio(child_bio);
+
+				/* bio was never submitted, so bdev's pending
+				 * bios counter should not be decremented.
+				 */
+			bio_endio_impl(child_bio, false);
 
 				/* No bio_put here - this bio was never sent
 				 * to generic_make_request2. bio_endio does
@@ -2079,7 +2085,7 @@ static int generic_make_request2(struct bio *bio)
 	orig_size = bio->bi_iter.bi_size;
 
 	bio->bi_using_big_buffer = false;
-	if (bio_data_dir(bio) == READ && bio->bi_vcnt > 1) {
+	if (bio->bi_vcnt > 1) {
 		total_size = 0;
 		for (e = 0; e < bio->bi_vcnt; e++)
 			total_size += bio->bi_io_vec[e].bv_len;
@@ -2094,6 +2100,20 @@ static int generic_make_request2(struct bio *bio)
 			bio->bi_this_request = 0;
 			bio->bi_using_big_buffer = true;
 
+			if (bio_data_dir(bio) == WRITE) {
+				/* copy data from io_vecs */
+				int i;
+				int offset;
+
+				offset = 0;
+				for (i=0;i<bio->bi_vcnt;i++) {
+					RtlCopyMemory(((char*)bio->bi_big_buffer)+offset, ((char*)bio->bi_io_vec[i].bv_page->addr)+bio->bi_io_vec[i].bv_offset,  bio->bi_io_vec[i].bv_len);
+					offset += bio->bi_io_vec[i].bv_len;
+				}
+				if (offset != bio->bi_big_buffer_size) {
+					printk("Warning: size mismatch when copiing data to write to linear buffer: offset is %d bio->bi_big_buffer_size is %d\n", offset, bio->bi_big_buffer_size);
+				}
+			}
 			ret = windrbd_generic_make_request(bio, true);
 
 			if (ret < 0) {
@@ -2196,11 +2216,11 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 // printk("4 %p\n", bio3);
 		list_del(&bio3->corked_bios);
 		list_add(&bio3->corked_bios, &joined_bios_bio->joined_bios);
-// printk("5 %p\n", bio3);
 	}
 	if (joined_bios_bio->bi_vcnt != num_vector_elements) {
 		printk("Warning: joined_bios_bio->bi_vcnt(%d) != num_vector_elements(%d)\n", joined_bios_bio->bi_vcnt, num_vector_elements);
 	}
+printk("1 %p\n", joined_bios_bio);
 	return generic_make_request2(joined_bios_bio);
 }
 
@@ -2273,13 +2293,6 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 		num_vector_elements += bio->bi_vcnt;
 		joinable_size += bio->bi_iter.bi_size;
 		expected_sector = bio->bi_iter.bi_sector + bio->bi_iter.bi_size/512;
-
-/*		ret = generic_make_request2(bio);
-		bio_put(bio);
-
-		if (ret < 0)
-			return ret;
-*/
 	}
 	printk("At end of loop: Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 	if (num_joinable_bios == 1) {
@@ -2311,34 +2324,35 @@ int generic_make_request(struct bio *bio)
 	}
 }
 
-void bio_endio(struct bio *bio)
+static void bio_endio_impl(struct bio *bio, bool was_accounted)
 {
 	int error = blk_status_to_errno(bio->bi_status);
 
 	bio_get(bio);
 
 
-// printk("1\n");
 	if (bio->bi_end_io != NULL) {
 		if (error != 0)
 			printk("Warning: thread(%s) bio_endio error with err=%d.\n", current->comm, error);
 
 
-// printk("into bi_end_io ...\n");
 		bio->bi_end_io(bio);
-// printk("out of bi_end_io ...\n");
 	} else
 		printk("Warning: thread(%s) bio(%p) no bi_end_io function.\n", current->comm, bio);
 
-// printk("2\n");
-	atomic_dec(&bio->bi_bdev->num_bios_pending);
-	if (atomic_read(&bio->bi_bdev->num_bios_pending) == 0) {
-// printk("into wake_up %p\n", &bio->bi_bdev->bios_event);
-		wake_up(&bio->bi_bdev->bios_event);
+	if (was_accounted) {
+		atomic_dec(&bio->bi_bdev->num_bios_pending);
+		if (atomic_read(&bio->bi_bdev->num_bios_pending) == 0) {
+			wake_up(&bio->bi_bdev->bios_event);
+		}
 	}
-// printk("3\n");
 
 	bio_put(bio);
+}
+
+void bio_endio(struct bio *bio)
+{
+	bio_endio_impl(bio, true);
 }
 
 void __list_del_entry(struct list_head *entry)
