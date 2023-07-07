@@ -2213,6 +2213,7 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 	int num_joinable_bios, num_vector_elements;
 	sector_t expected_sector;
 	unsigned long long joinable_size;
+	unsigned int opf;
 
 	INIT_LIST_HEAD(&tmp_list);
 	bdev->corked = false;
@@ -2235,10 +2236,11 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 	num_vector_elements = 0;
 	joinable_size = 0;
 	expected_sector = -1;
+	opf = -1;
 
 	list_for_each_entry_safe(struct bio, bio, bio2, &tmp_list, corked_bios) {
 // printk("expected_sector is %lld bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %lld\n", expected_sector, bio->bi_iter.bi_sector, bio->bi_iter.bi_size);
-		if ((expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) || num_vector_elements >= 1024 || joinable_size >= 4*1024*1024) {
+		if ((expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) || num_vector_elements >= 1024 || joinable_size >= 4*1024*1024 || (opf != (unsigned int)-1 && bio->bi_opf != opf)) {
 			printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 			if (num_joinable_bios == 1) {
 				ret = generic_make_request2(bio);
@@ -2265,6 +2267,7 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 			num_vector_elements = 0;
 			joinable_size = 0;
 			expected_sector = -1;
+			opf = bio->bi_opf;
 		}
 		num_joinable_bios++;
 		num_vector_elements += bio->bi_vcnt;
