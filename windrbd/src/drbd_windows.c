@@ -2185,7 +2185,6 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	struct bio *joined_bios_bio, *bio3, *bio4, *first_bio;
 	int i;
 
-// printk("in create_and_submit_joined_bio ...\n");
 	if (list_empty(list)) {
 		return 0;
 	}
@@ -2202,25 +2201,20 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	joined_bios_bio->bi_vcnt = 0;
 
 	list_for_each_entry_safe(struct bio, bio3, bio4, list, corked_bios) {
-// printk("1 %p\n", bio3);
 		if (last_bio != NULL && bio3 == last_bio) {
 			break;
 		}
-// printk("2 %p\n", bio3);
 
 		for (i=0; i<bio3->bi_vcnt; i++) {
-// printk("3 %p\n", bio3);
 			joined_bios_bio->bi_io_vec[joined_bios_bio->bi_vcnt] = bio3->bi_io_vec[i];
 			joined_bios_bio->bi_vcnt++;
 		}
-// printk("4 %p\n", bio3);
 		list_del(&bio3->corked_bios);
 		list_add(&bio3->corked_bios, &joined_bios_bio->joined_bios);
 	}
 	if (joined_bios_bio->bi_vcnt != num_vector_elements) {
 		printk("Warning: joined_bios_bio->bi_vcnt(%d) != num_vector_elements(%d)\n", joined_bios_bio->bi_vcnt, num_vector_elements);
 	}
-printk("1 %p\n", joined_bios_bio);
 	return generic_make_request2(joined_bios_bio);
 }
 
@@ -2294,7 +2288,7 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 		joinable_size += bio->bi_iter.bi_size;
 		expected_sector = bio->bi_iter.bi_sector + bio->bi_iter.bi_size/512;
 	}
-	printk("At end of loop: Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
+//	printk("At end of loop: Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 	if (num_joinable_bios == 1) {
 		ret = generic_make_request2(bio);
 	} else {
