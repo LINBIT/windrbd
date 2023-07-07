@@ -8615,3 +8615,9 @@ Done: Bug: bitmap consumes 7GB instead of 0.5GB
 	Tested, it was kmalloc_debug (without that it is
         4GB for 16TB disks.
 
+Done: Bug: drbdadm up slow
+
+	16TB: Windows 1:20 Linux 0:10
+	Locking problem?
+	I/O problem, have cork/uncork now, it is much faster now.
+
