@@ -2188,12 +2188,15 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	if (list_empty(list)) {
 		return 0;
 	}
+	first_bio = list_first_entry(list, struct bio, corked_bios);
+	if (list_is_last(&first_bio->corked_bios, list)) {
+		return generic_make_request2(first_bio);
+	}
 	joined_bios_bio = bio_alloc(0, num_vector_elements, 'ZAKL');
 	if (joined_bios_bio == NULL)
 		return -ENOMEM;
 
 	joined_bios_bio->bi_end_io = do_nothing;
-	first_bio = list_first_entry(list, struct bio, corked_bios);
 	joined_bios_bio->bi_bdev = first_bio->bi_bdev;
 	joined_bios_bio->bi_opf = first_bio->bi_opf;
 	joined_bios_bio->bi_iter.bi_sector = first_bio->bi_iter.bi_sector;
@@ -2289,11 +2292,9 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 		expected_sector = bio->bi_iter.bi_sector + bio->bi_iter.bi_size/512;
 	}
 //	printk("At end of loop: Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
-	if (num_joinable_bios == 1) {
-		ret = generic_make_request2(bio);
-	} else {
-		ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, NULL);
-	}
+		/* bio variable is invalid here ... */
+	ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, NULL);
+
 	return ret;
 }
 
