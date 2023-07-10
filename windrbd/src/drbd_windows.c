@@ -992,11 +992,9 @@ static int free_bios_thread_fn(void *unused)
 			list_del(&bio->to_be_freed_list2);
 			free_mdls_and_irp(bio);
 printk("out of free_mdls_and_irp(%p) page is %p page refcount is %d\n", bio, bio->bi_io_vec[0].bv_page, refcount_read(&bio->bi_io_vec[0].bv_page->kref.refcount));
-/*
 			for (i=0;i<bio->bi_vcnt;i++) {
 				put_page(bio->bi_io_vec[i].bv_page);
 			}
-*/
 			if (bio->patched_bootsector_buffer != NULL)
 				kfree(bio->patched_bootsector_buffer);
 
@@ -2311,9 +2309,20 @@ int generic_make_request(struct bio *bio)
 {
 	struct block_device *bdev = bio->bi_bdev;
 	KIRQL flags;
+	int i;
 
 	if (bdev->corked) {
-		bio_get(bio);	/* TODO: also get pages? */
+		bio_get(bio);
+
+			/* TODO: also get pages? It works with this ...
+			   But why? Is there some get_page inside the
+			   generic_make_request2 / windrbd_make_request?
+			 */
+
+		for (i=0;i<bio->bi_vcnt;i++) {
+			get_page(bio->bi_io_vec[i].bv_page);
+		}
+
 		spin_lock_irqsave(&bdev->cork_spinlock, flags);
 	        list_add(&bio->corked_bios, &bdev->corked_list);
 		spin_unlock_irqrestore(&bdev->cork_spinlock, flags);
