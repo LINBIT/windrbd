@@ -1815,6 +1815,9 @@ NTSTATUS DrbdIoCompletion(
 				 * to generic_make_request2. bio_endio does
 				 * a bio_put the corresponding get was where
 				 * we have put the bio on the list */
+
+				/* Hmmm .. not sure: */
+//			bio_put(child_bio);
 		}
 	}
 
@@ -2308,7 +2311,7 @@ int generic_make_request(struct bio *bio)
 	KIRQL flags;
 
 	if (bdev->corked) {
-		bio_get(bio);
+//		bio_get(bio);
 		spin_lock_irqsave(&bdev->cork_spinlock, flags);
 	        list_add(&bio->corked_bios, &bdev->corked_list);
 		spin_unlock_irqrestore(&bdev->cork_spinlock, flags);
