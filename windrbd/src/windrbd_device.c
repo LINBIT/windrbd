@@ -928,6 +928,9 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 
 				break;
 			case StorageDeviceProperty:
+				char serial_number[100] = "fdfe98eb-9901-472f-a9bf-f3a6562c578a";
+				int serial_number_length;
+
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_DEVICE_DESCRIPTOR)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(STORAGE_DEVICE_DESCRIPTOR));
 				StorageDeviceDescriptor.Version = sizeof(STORAGE_DEVICE_DESCRIPTOR);
 				StorageDeviceDescriptor.Size = sizeof(STORAGE_DEVICE_DESCRIPTOR);
@@ -942,8 +945,15 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 				StorageDeviceDescriptor.BusType = BusTypeScsi;
 				StorageDeviceDescriptor.RawPropertiesLength = 0;
 
+				if (s->Parameters.DeviceIoControl.OutputBufferLength >= sizeof(STORAGE_ADAPTER_DESCRIPTOR) + sizeof(serial_number)) {
+					RtlCopyMemory(((char*) irp->AssociatedIrp.SystemBuffer)+sizeof(STORAGE_ADAPTER_DESCRIPTOR), serial_number, sizeof(serial_number));
+					StorageDeviceDescriptor.SerialNumberOffset = sizeof(STORAGE_ADAPTER_DESCRIPTOR);
+					serial_number_length = sizeof(serial_number);
+				} else {
+					serial_number_length = 0;
+				}
 				RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &StorageDeviceDescriptor, CopySize);
-				irp->IoStatus.Information = (ULONG_PTR)CopySize;
+				irp->IoStatus.Information = (ULONG_PTR)CopySize+serial_number_length;
 				status = STATUS_SUCCESS;
 
 				break;
