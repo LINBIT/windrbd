@@ -991,10 +991,12 @@ static int free_bios_thread_fn(void *unused)
 		list_for_each_entry_safe(struct bio, bio, bio2, &bios_to_be_freed_list2, to_be_freed_list2) {
 			list_del(&bio->to_be_freed_list2);
 			free_mdls_and_irp(bio);
-// printk("out of free_mdls_and_irp(%p) page is %p page refcount is %d\n", bio, bio->bi_io_vec[0].bv_page, refcount_read(&bio->bi_io_vec[0].bv_page->kref.refcount));
+printk("out of free_mdls_and_irp(%p) page is %p page refcount is %d\n", bio, bio->bi_io_vec[0].bv_page, refcount_read(&bio->bi_io_vec[0].bv_page->kref.refcount));
+/*
 			for (i=0;i<bio->bi_vcnt;i++) {
 				put_page(bio->bi_io_vec[i].bv_page);
 			}
+*/
 			if (bio->patched_bootsector_buffer != NULL)
 				kfree(bio->patched_bootsector_buffer);
 
@@ -1817,7 +1819,7 @@ NTSTATUS DrbdIoCompletion(
 				 * we have put the bio on the list */
 
 				/* Hmmm .. not sure: */
-//			bio_put(child_bio);
+			bio_put(child_bio);
 		}
 	}
 
@@ -2311,7 +2313,7 @@ int generic_make_request(struct bio *bio)
 	KIRQL flags;
 
 	if (bdev->corked) {
-//		bio_get(bio);
+		bio_get(bio);	/* TODO: also get pages? */
 		spin_lock_irqsave(&bdev->cork_spinlock, flags);
 	        list_add(&bio->corked_bios, &bdev->corked_list);
 		spin_unlock_irqrestore(&bdev->cork_spinlock, flags);
