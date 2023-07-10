@@ -1048,6 +1048,12 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 		}
 		break;
    	}
+	case IOCTL_STORAGE_GET_MEDIA_SERIAL_NUMBER:
+	{
+		printk("IOCTL_STORAGE_GET_MEDIA_SERIAL_NUMBER");
+		status = STATUS_NO_SUCH_DEVICE;
+		break;
+	}
 
 	case IOCTL_SCSI_GET_ADDRESS:
 	{
