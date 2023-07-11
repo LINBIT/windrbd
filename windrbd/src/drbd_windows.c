@@ -2215,6 +2215,9 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 			joined_bios_bio->bi_io_vec[joined_bios_bio->bi_vcnt] = bio3->bi_io_vec[i];
 				/* TODO: get_page here? */
 			joined_bios_bio->bi_vcnt++;
+if (bio_data_dir(bio3) == WRITE) {
+printk("bio3 is %p bio3->bi_vcnt is %d joined_bios_bio->bi_vcnt is %d\n", bio3, bio3->bi_vcnt, joined_bios_bio->bi_vcnt);
+}
 		}
 		list_del(&bio3->corked_bios);
 		list_add(&bio3->corked_bios, &joined_bios_bio->joined_bios);
@@ -2266,6 +2269,9 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 			if (num_joinable_bios == 1) {
 				ret = generic_make_request2(bio);
 			} else {
+if (bio_data_dir(bio) == WRITE) {
+printk("1 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
+}
 				ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, bio);
 			}
 			if (ret < 0)
@@ -2294,6 +2300,11 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 		num_vector_elements += bio->bi_vcnt;
 		joinable_size += bio->bi_iter.bi_size;
 		expected_sector = bio->bi_iter.bi_sector + bio->bi_iter.bi_size/512;
+
+if (bio_data_dir(bio) == WRITE) {
+printk("2 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
+}
+
 	}
 //	printk("At end of loop: Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 		/* bio variable is invalid here ... */
