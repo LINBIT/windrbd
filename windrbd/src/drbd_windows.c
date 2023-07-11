@@ -1751,7 +1751,7 @@ NTSTATUS DrbdIoCompletion(
 	}
 
 	if (status != STATUS_SUCCESS) {
-		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x\n", Irp->IoStatus.Status);
+		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x IRP is %p bio is %p\n", Irp->IoStatus.Status, Irp, bio);
 	}
 
 	if (test_inject_faults(&bio->bi_bdev->inject_on_completion, "assuming completion routine was send an error (enabled for this device)"))
@@ -1966,7 +1966,7 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	}
 
 	/* Leave that here for now it is sometimes useful: */
-// printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d the_size=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_this_request].offset.QuadPart, bio->bi_io_vec[bio->bi_this_request].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, the_size, bio);
+printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d the_size=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_this_request].offset.QuadPart, bio->bi_io_vec[bio->bi_this_request].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, the_size, bio);
 
 /* Make a copy of the (page cache) buffer and write the copy to the
    backing device. Reason is that on write (for example formatting the
@@ -2193,6 +2193,7 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	}
 	first_bio = list_first_entry(list, struct bio, corked_bios);
 	if (list_is_last(&first_bio->corked_bios, list)) {
+		list_del(&first_bio->corked_bios);
 		return generic_make_request2(first_bio);
 	}
 	joined_bios_bio = bio_alloc(0, num_vector_elements, 'ZAKL');
@@ -2267,6 +2268,7 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 		if ((expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) || num_vector_elements >= 1024 || joinable_size >= 4*1024*1024 || (opf != (unsigned int)-1 && bio->bi_opf != opf)) {
 //			printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 			if (num_joinable_bios == 1) {
+				list_del(&bio->corked_bios);
 				ret = generic_make_request2(bio);
 			} else {
 if (bio_data_dir(bio) == WRITE) {
