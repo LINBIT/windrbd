@@ -2213,6 +2213,7 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 
 		for (i=0; i<bio3->bi_vcnt; i++) {
 			joined_bios_bio->bi_io_vec[joined_bios_bio->bi_vcnt] = bio3->bi_io_vec[i];
+				/* TODO: get_page here? */
 			joined_bios_bio->bi_vcnt++;
 		}
 		list_del(&bio3->corked_bios);
@@ -2317,6 +2318,8 @@ int generic_make_request(struct bio *bio)
 			/* TODO: also get pages? It works with this ...
 			   But why? Is there some get_page inside the
 			   generic_make_request2 / windrbd_make_request?
+			   I think this is because we copy the bi_vec
+			   elements to a new structure...
 			 */
 
 		for (i=0;i<bio->bi_vcnt;i++) {
