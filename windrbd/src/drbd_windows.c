@@ -1966,7 +1966,7 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	}
 
 	/* Leave that here for now it is sometimes useful: */
-printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d the_size=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_this_request].offset.QuadPart, bio->bi_io_vec[bio->bi_this_request].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, the_size, bio);
+// printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d the_size=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_this_request].offset.QuadPart, bio->bi_io_vec[bio->bi_this_request].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, the_size, bio);
 
 /* Make a copy of the (page cache) buffer and write the copy to the
    backing device. Reason is that on write (for example formatting the
