@@ -2205,7 +2205,7 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	joined_bios_bio->bi_bdev = first_bio->bi_bdev;
 	joined_bios_bio->bi_opf = first_bio->bi_opf;
 	joined_bios_bio->bi_iter.bi_sector = first_bio->bi_iter.bi_sector;
-printk("first_bio is %p first_bio->bi_iter.bi_sector is %lld joined_bios_bio->bi_iter.bi_sector is %lld\n", first_bio, first_bio->bi_iter.bi_sector, joined_bios_bio->bi_iter.bi_sector);
+// printk("first_bio is %p first_bio->bi_iter.bi_sector is %lld joined_bios_bio->bi_iter.bi_sector is %lld\n", first_bio, first_bio->bi_iter.bi_sector, joined_bios_bio->bi_iter.bi_sector);
 
 	joined_bios_bio->bi_iter.bi_size = total_size;
 	joined_bios_bio->bi_vcnt = 0;
@@ -2220,7 +2220,7 @@ printk("first_bio is %p first_bio->bi_iter.bi_sector is %lld joined_bios_bio->bi
 				/* TODO: get_page here? */
 			joined_bios_bio->bi_vcnt++;
 if (bio_data_dir(bio3) == WRITE) {
-printk("joined_bios_bio is %p bio3 is %p bio3->bi_vcnt is %d joined_bios_bio->bi_vcnt is %d\n", joined_bios_bio, bio3, bio3->bi_vcnt, joined_bios_bio->bi_vcnt);
+// printk("joined_bios_bio is %p bio3 is %p bio3->bi_vcnt is %d joined_bios_bio->bi_vcnt is %d\n", joined_bios_bio, bio3, bio3->bi_vcnt, joined_bios_bio->bi_vcnt);
 }
 		}
 		list_del(&bio3->corked_bios);
@@ -2229,7 +2229,7 @@ printk("joined_bios_bio is %p bio3 is %p bio3->bi_vcnt is %d joined_bios_bio->bi
 	if (joined_bios_bio->bi_vcnt != num_vector_elements) {
 		printk("Warning: joined_bios_bio->bi_vcnt(%d) != num_vector_elements(%d)\n", joined_bios_bio->bi_vcnt, num_vector_elements);
 	}
-printk("first_bio is %p first_bio->bi_iter.bi_sector is %lld joined_bios_bio->bi_iter.bi_sector is %lld\n", first_bio, first_bio->bi_iter.bi_sector, joined_bios_bio->bi_iter.bi_sector);
+// printk("first_bio is %p first_bio->bi_iter.bi_sector is %lld joined_bios_bio->bi_iter.bi_sector is %lld\n", first_bio, first_bio->bi_iter.bi_sector, joined_bios_bio->bi_iter.bi_sector);
 	return generic_make_request2(joined_bios_bio);
 }
 
@@ -2268,15 +2268,15 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 	opf = -1;
 
 	list_for_each_entry_safe(struct bio, bio, bio2, &tmp_list, corked_bios) {
-printk("bio is %p expected_sector is %lld bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %lld num_vector_elements is %d joinable_size is %d opf is %d bio->bi_opf is %d\n", bio, expected_sector, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, num_vector_elements, joinable_size, opf, bio->bi_opf);
+//  printk("bio is %p expected_sector is %lld bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %lld num_vector_elements is %d joinable_size is %d opf is %d bio->bi_opf is %d\n", bio, expected_sector, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, num_vector_elements, joinable_size, opf, bio->bi_opf);
 		if ((expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) || num_vector_elements >= 1024 || joinable_size >= 4*1024*1024 || (opf != (unsigned int)-1 && bio->bi_opf != opf)) {
-printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
+// printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 			if (num_joinable_bios == 1) {
 				list_del(&bio->corked_bios);
 				ret = generic_make_request2(bio);
 			} else {
 if (bio_data_dir(bio) == WRITE) {
-printk("1 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
+// printk("1 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
 }
 				ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, bio);
 			}
@@ -2308,11 +2308,11 @@ printk("1 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bi
 		expected_sector = bio->bi_iter.bi_sector + bio->bi_iter.bi_size/512;
 
 if (bio_data_dir(bio) == WRITE) {
-printk("2 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
+// printk("2 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
 }
 
 	}
-printk("At end of loop: Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
+// printk("At end of loop: Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 		/* bio variable is invalid here ... */
 	ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, NULL);
 
