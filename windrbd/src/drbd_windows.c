@@ -1752,6 +1752,7 @@ NTSTATUS DrbdIoCompletion(
 
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x IRP is %p bio is %p\n", Irp->IoStatus.Status, Irp, bio);
+		printk("bio->bi_vcnt is %d bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %d bio->bi_io_vec[0].bv_page is %p bio->bi_big_buffer is %p", bio->bi_vcnt, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, bio->bi_io_vec[0].bv_page, bio->bi_big_buffer);
 	}
 
 	if (test_inject_faults(&bio->bi_bdev->inject_on_completion, "assuming completion routine was send an error (enabled for this device)"))
