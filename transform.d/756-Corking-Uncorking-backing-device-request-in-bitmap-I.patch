@@ -1,0 +1,41 @@
+From 0b2a73fc523978e26eea3cd31e371ca71485b78d Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 13 Jul 2023 09:53:19 +0000
+Subject: [PATCH] Corking - Uncorking backing device request in bitmap I/O
+
+This should fix a performance bug in drbdadm up: it is
+speed up by a factor of 10 now (3 seconds instead of
+30 seconds for a 16TB volume).
+---
+ drbd/drbd_bitmap.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drbd/drbd_bitmap.c b/drbd/drbd_bitmap.c
+index 811fb41..554618b 100644
+--- a/drbd/drbd_bitmap.c
++++ b/drbd/drbd_bitmap.c
+@@ -1305,6 +1305,13 @@ static int bm_rw_range(struct drbd_device *device,
+ 
+ 	/* let the layers below us try_ to merge these bios... */
+ 
++	/* This will cause WinDRBD to wait until windrbd_bdev_uncork()
++	 * is called which then will try to merge all I/O requests
++	 * into larger ones.
++	 */
++
++	windrbd_bdev_cork(device->ldev->md_bdev);
++
+ 	if (flags & BM_AIO_READ) {
+ 		for (i = start_page; i <= end_page; i++) {
+ 			atomic_inc(&ctx->in_flight);
+@@ -1352,6 +1359,7 @@ static int bm_rw_range(struct drbd_device *device,
+ 			cond_resched();
+ 		}
+ 	}
++	windrbd_bdev_uncork(device->ldev->md_bdev);
+ 
+ 	/*
+ 	 * We initialize ctx->in_flight to one to make sure drbd_bm_endio
+-- 
+2.17.1
+
