@@ -13,6 +13,55 @@ TODO: Check behavior of remove-bus - install-bus - primary
         right before running sc stop.
         Also have a lock-driver
 
+TODO: Bug: BSOD on failing I/O with disk-timeout-loop.sh
+
+	Not sure if it is new (fails in bio_put)
+	put a check for NULL in drbd_sender:302
+	req->private_bio is NULL here.
+
+TODO: Feature: Make disk-timeout work without BSOD.
+
+	We are running it in a loop right now, no BSODs so
+	far (disk gets detached on disk timeout).
+
+	BSOD. But not sure if it wasn't something else
+	(somewhere down in the new joined_bios code).
+
+TODO: Bug: Memory leak in disk cork/uncork
+
+	Looks like we do need the bio_put() in DrbdCompleteIo().
+	Update: seems to be fixed now.
+	But also test with sync (need to fix invalidate first).
+	Ok, invalidate magically works again, now there is (was?)
+	a I/O failure on SyncSource side which might be fixed
+	with the list_del() patch.
+
+	Memory leak still there when bio is not joined? (and
+	generic_make_request2 is called?)
+
+	Memory leak fixed (on drbdadm up).
+
+	Now we observe a I/O error (writing past the end of
+	the backing device) ... is this a logic bug? But it
+	looks like it is gone ...
+
+	Update: I/O error fixed but memory leak there.
+	Memory leak in invalidate loop (full sync).
+
+TODO: Bug: drbdadm down takes 30 seconds to complete:
+
+	<7> 08.07.2023 U16:53:06.880 (312313416400/3579545)|FFFF838F6CF9AC10(drbd_s_test1) #261310 conn_send_twopc_request drbd test1 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x404), scf(0x83a): Sending P_TWOPC_PREPARE request for state change 298629752
+
+	<7> 08.07.2023 U16:53:06.880 (312313423335/3579545)|FFFF838F6CF994D0(drbd_a_test1) #261311 got_twopc_reply drbd test1 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x4), scf(0x83a): Got a P_TWOPC_YES reply for state change 298629752
+	 [last message was in IRQ context or recursive]
+	<6> 08.07.2023 U16:53:38.895 (312428017216/3579545)|FFFF838F6CF9AC10(drbd_s_test1) #261312 change_cluster_wide_state drbd test1, r(Secondary), f(0x400), scf(0x83a): Aborting cluster-wide state change 298629752 (32015ms) rv = -23
+
+TODO: Bug: drbdadm invalidate does not work
+	Also tested with 1.0.0
+
+	Sometimes it works. Joel told me that it is probably
+	a DRBD (not WinDRBD) problem.
+
 TODO: Bug: Hang in NetworkFailure on no memory.
 
 TODO: Bug: drbdadm up slow

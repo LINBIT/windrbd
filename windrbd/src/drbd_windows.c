@@ -2970,13 +2970,11 @@ out_no_windows_device:
 
 void panic(const char *fmt, ...)
 {
-	va_list args;
+		/* No vprintk(), sorry. There is only one panic() in DRBD
+		 * anyway which also will go away soon.
+		 */
 
-	va_start(args, fmt);
-	printk(fmt, args);
-	va_end(args);
-		/* TODO: no */
-//	KeBugCheckEx(0xddbd, (ULONG_PTR)__FILE__, (ULONG_PTR)__func__, 0x12345678, 0xd8bdd8bd);
+	printk("Someone wants us to panic, this is probably a bad idea ...\n");
 }
 
 int scnprintf(char * buf, size_t size, const char *fmt, ...)
