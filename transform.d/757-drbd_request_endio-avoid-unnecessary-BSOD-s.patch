@@ -1,0 +1,48 @@
+From 22022cc9644554a73625076605b5b9f1cd037f5e Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 17 Jul 2023 12:56:20 +0000
+Subject: [PATCH] drbd_request_endio: avoid unnecessary BSOD's.
+
+In WinDRBD a read completion after disk timeout has
+been elapsed is valid and should not crash the machine.
+We have a separate read buffer which we don't free
+on an I/O error (such as disk timeout) so it is save
+to just report an error to the application and have
+the volume become locally Diskless.
+
+If this happens it is advised that a failover is
+performed and/or the disk-timeout parameter is
+reviewed.
+---
+ drbd/drbd_sender.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/drbd/drbd_sender.c b/drbd/drbd_sender.c
+index fb2802c..2a8a502 100644
+--- a/drbd/drbd_sender.c
++++ b/drbd/drbd_sender.c
+@@ -225,8 +225,7 @@ void drbd_peer_request_endio(struct bio *bio)
+ /* Not static to increase the likelyhood that it will show up in a stack trace */
+ void drbd_panic_after_delayed_completion_of_aborted_request(struct drbd_device *device)
+ {
+-	panic("drbd%u %s/%u potential random memory corruption caused by delayed completion of aborted local request\n",
+-		device->minor, device->resource->name, device->vnr);
++		/* Do not panic. */
+ }
+ 
+ /* read, readA or write requests on R_PRIMARY coming from drbd_submit_bio
+@@ -297,7 +296,10 @@ void drbd_request_endio(struct bio *bio)
+ 		what = COMPLETED_OK;
+ 	}
+ 
+-	bio_put(req->private_bio);
++		/* Disk timeout..this should not OOPS */
++	if (req->private_bio != NULL) {
++		bio_put(req->private_bio);
++	}
+ 	req->private_bio = ERR_PTR(blk_status_to_errno(status));
+ 
+ 	/* not req_mod(), we need irqsave here! */
+-- 
+2.17.1
+
