@@ -75,9 +75,9 @@
 #define add_disk(...)
 
 #define uninitialized_var(x) x = x
-#define WARN(condition, ...) do {if(!!(condition)) printk(__VA_ARGS__);} while(0)
+#define WARN(condition, ...) do {if(!!(condition)) printk(## condition);} while(0)
 /* As good as it gets for now, don't know how to implement a true windows *ONCE* */
-#define WARN_ONCE(condition, ...) WARN(condition, __VA_ARGS__)
+#define WARN_ONCE(condition, ...) WARN( ## condition)
 
 /* not capable of anything... */
 #define capable(x) (1)
