@@ -351,26 +351,26 @@ extern void printk_reprint(size_t bytes);
 struct drbd_device;
 void windrbd_device_error(struct drbd_device *device, const char ** err_str_out, const char *fmt, ...);
 
-#define printk(format, ...)   \
-    _printk(__FUNCTION__, format, __VA_ARGS__)
+#define printk(format, args...)   \
+    _printk(__FUNCTION__, format, ## args)
 
 #ifdef DEBUG
 #define dbg(format, ...)   \
-    _printk(__FUNCTION__, format, __VA_ARGS__)
+    _printk(__FUNCTION__, format, ## args)
 #else
 #define dbg(format, ...)   __noop
 #endif
 
 extern int _mem_printk(const char *file, int line, const char *func, const char *fmt, ...);
 
-#define mem_printk(format, ...)   \
-    _mem_printk(__FILE__, __LINE__, __FUNCTION__, format, __VA_ARGS__)
+#define mem_printk(format, args...)   \
+    _mem_printk(__FILE__, __LINE__, __FUNCTION__, format, ##args)
 
 extern int debug_printks_enabled;
 
-#define cond_printk(format, ...) \
+#define cond_printk(format, args...) \
 	if (debug_printks_enabled) \
-		_printk(__FUNCTION__, format, __VA_ARGS__)
+		_printk(__FUNCTION__, format, ## args)
 
 #define ARRAY_SIZE(_x)				(sizeof(_x) / sizeof((_x)[0]))
 
@@ -1359,7 +1359,7 @@ static int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 }
 
 
-#define snprintf(a, b, c,...) scnprintf(a, b, c, ##__VA_ARGS__)
+#define snprintf(a, b, c, args...) scnprintf(a, b, c, ## args)
 
 extern int scnprintf(char * buf, size_t size, const char *fmt, ...);
 extern int vscnprintf(char * buf, size_t size, const char *fmt, va_list args);
