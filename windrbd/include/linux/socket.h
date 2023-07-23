@@ -7,7 +7,7 @@
 #include "drbd_windows.h"
 #include <linux/uio.h>	/* for struct kvec */
 #include <linux/net/sock.h>
-#include <wsk.h>	/* for struct sockaddr_storage */
+// #include <wsk.h>	/* for struct sockaddr_storage */
 
 /* Originally somewhere in arch, we put it here, since it is only
  * used for kernel_accept() for now.
@@ -144,7 +144,8 @@ void windrbd_update_socket_buffer_sizes(struct socket *socket);
 
 /* used by printk(): will go away soon (use kernel_sendmsg() instead) */
 
-int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress);
+// int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress);
+int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, void *RemoteAddress);
 
 /* WinDRBD specific: wait until network is initialized (used for boot
  * device).
