@@ -7,6 +7,7 @@ DEFINES=-D WINNT=1 -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LIT
 
 WINDRBD_INCLUDES=-I"windrbd/include" -I"converted-sources/drbd" -I"converted-sources/drbd/drbd-headers"
 
-MINGW_INCLUDES=-I /usr/i686-w64-mingw32/sys-root/mingw/include/ddk
+# MINGW_INCLUDES=-I /usr/i686-w64-mingw32/sys-root/mingw/include/ddk
+MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/output-july-2023/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk
 
 CFLAGS=-w $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
