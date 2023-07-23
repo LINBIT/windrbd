@@ -50,6 +50,8 @@
 #define __func__ __FUNCTION__
 #define __bitwise__
 
+#define __noop do { }  while (0)
+
 #include "win2003compat.h"
 
 #include <wdm.h>
@@ -1088,8 +1090,7 @@ struct lru_cache;
 extern struct lc_element *lc_element_by_index(struct lru_cache *lc, unsigned i);
 extern unsigned int lc_index_of(struct lru_cache *lc, struct lc_element *e);
 
-// #include <wsk.h>	/* for struct sockaddr_storage */
-// #include <ntifs.h>	/* for struct sockaddr_storage */
+#include <wsk.h>	/* for struct sockaddr_storage */
 #include <drbd_transport.h>
 
 	/* A 'page' in WinDRBD may actually contain more pages (vmalloc'ed)
