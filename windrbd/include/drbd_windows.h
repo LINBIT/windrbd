@@ -1229,8 +1229,7 @@ extern void *crypto_alloc_tfm(char *name, u32 mask);
 extern unsigned int crypto_tfm_alg_digestsize(struct crypto_tfm *tfm);
 extern int generic_make_request(struct bio *bio); // return value is changed for error handling 2015.12.08(DW-649)
 
-enum umh_wait;
-extern int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait);
+extern int call_usermodehelper(char *path, char **argv, char **envp, int wait);
 
 extern void * ERR_PTR(LONG_PTR error);
 extern LONG_PTR PTR_ERR(const void *ptr);

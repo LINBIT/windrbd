@@ -103,6 +103,6 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how);
 int kernel_accept(struct socket *sock, struct socket **newsock, int flags);
 
 int sock_create_kern(struct net *net, int family, int type, int proto, struct socket **res);
-void sock_release(void  *sock);
+void sock_release(struct socket *sock);
 
 #endif
