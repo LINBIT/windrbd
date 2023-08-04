@@ -1,6 +1,8 @@
 #ifndef DRBD_POLYMORPH_PRINTK_H
 #define DRBD_POLYMORPH_PRINTK_H
 
+#include <linux/ratelimit.h>
+
 #if !defined(CONFIG_DYNAMIC_DEBUG)
 #define DEFINE_DYNAMIC_DEBUG_METADATA(D, F) const char *D = F
 #define __dynamic_pr_debug(D, F, args...) do { (void)(D); if (0) printk(F, ## args); } while(0)
