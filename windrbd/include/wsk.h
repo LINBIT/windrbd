@@ -18,6 +18,10 @@
     "This project requires a little endian system. Does Windows support any other?"
 #endif
 
+typedef struct sockaddr_storage {
+	char storage[256];	/* hope this is enough */
+};
+
 // ---------------------------------------------------------------
 // defines
 // ---------------------------------------------------------------
