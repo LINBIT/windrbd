@@ -351,26 +351,26 @@ extern void printk_reprint(size_t bytes);
 struct drbd_device;
 void windrbd_device_error(struct drbd_device *device, const char ** err_str_out, const char *fmt, ...);
 
-#define printk(format, args...)   \
-    _printk(__FUNCTION__, format, ## args)
+#define printk(args...)   \
+    _printk(__FUNCTION__, args)
 
 #ifdef DEBUG
-#define dbg(format, ...)   \
-    _printk(__FUNCTION__, format, ## args)
+#define dbg(args...)   \
+    _printk(__FUNCTION__, args)
 #else
-#define dbg(format, ...)   __noop
+#define dbg(args...)   __noop
 #endif
 
 extern int _mem_printk(const char *file, int line, const char *func, const char *fmt, ...);
 
-#define mem_printk(format, args...)   \
-    _mem_printk(__FILE__, __LINE__, __FUNCTION__, format, ##args)
+#define mem_printk(args...)   \
+    _mem_printk(__FILE__, __LINE__, __FUNCTION__, args)
 
 extern int debug_printks_enabled;
 
-#define cond_printk(format, args...) \
+#define cond_printk(args...) \
 	if (debug_printks_enabled) \
-		_printk(__FUNCTION__, format, ## args)
+		_printk(__FUNCTION__, args)
 
 #define ARRAY_SIZE(_x)				(sizeof(_x) / sizeof((_x)[0]))
 
@@ -990,6 +990,8 @@ typedef void (make_request_fn) (struct request_queue *q, struct bio *bio);
 extern void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn);
 extern void blk_queue_flush(struct request_queue *q, unsigned int flush);
 
+struct queue_limits;
+
 extern void blk_queue_segment_boundary(struct request_queue *, unsigned long);
 extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
 			    sector_t offset);
@@ -1261,7 +1263,7 @@ extern void __hlist_del(struct hlist_node *n);
 extern uint32_t crc32c(uint32_t crc, const uint8_t *data, unsigned int length);
 extern unsigned long crc32(const char *s, size_t len);
 extern bool lc_is_used(struct lru_cache *lc, unsigned int enr);
-extern void get_random_bytes(void *buf, int nbytes);
+extern void get_random_bytes(char *buf, int nbytes);
 extern int fls(int x);
 struct sk_buff;
 extern unsigned char *skb_put(struct sk_buff *skb, unsigned int len);
