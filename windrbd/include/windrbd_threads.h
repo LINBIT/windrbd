@@ -11,7 +11,8 @@ typedef int atomic_t;
 #define ATOMIC_T_DEFINED
 #endif
 
-typedef int pid_t;
+/* defined in sys/types.h */
+// typedef int pid_t;
 
 /* Helper functions that might be useful for others. */
 
