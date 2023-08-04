@@ -29,6 +29,12 @@
 #include "windrbd_threads.h"
 #include <wdm.h>
 
+/* Define this if RCU implementation can use read/write locks
+ * (ExAcquireSpinLockShared, ...).
+ */
+
+/* #define CONFIG_HAVE_RW_LOCKS 1 */
+
 void mutex_init(struct mutex *m)
 {
 	KeInitializeMutex(&m->mtx, 0);
@@ -215,7 +221,8 @@ void spin_lock_init(spinlock_t *lock)
 #endif
 }
 
-#if (NTDDI_VERSION < NTDDI_VISTASP1)
+// #if (NTDDI_VERSION < NTDDI_VISTASP1)
+#ifndef CONFIG_HAVE_RW_LOCKS
 static spinlock_t rcu_spin_lock;
 #else
 static EX_SPIN_LOCK rcu_rw_lock;
@@ -751,7 +758,8 @@ void call_rcu_debug(struct rcu_head *head, rcu_callback_t callback_func, const c
 
 #else
 
-#if (NTDDI_VERSION < NTDDI_VISTASP1)
+#ifndef CONFIG_HAVE_RW_LOCKS
+// #if (NTDDI_VERSION < NTDDI_VISTASP1)
 
 	/* Still need deadlock detection, since rcu_read_lock maybe
 	 * held while calling synchronize_rcu. Windows before Vista
@@ -927,7 +935,7 @@ int spin_trylock(spinlock_t *lock)
 
 void init_locking(void)
 {
-#if (NTDDI_VERSION < NTDDI_VISTASP1)
+#ifndef CONFIG_HAVE_RW_LOCKS
 	spin_lock_init(&rcu_spin_lock);
 #else
         rcu_rw_lock = 0;

@@ -19,49 +19,49 @@
 /* {{{ pr_* macros */
 /* some very old kernels don't have them, or at least not all of them */
 #ifndef pr_emerg
-#define pr_emerg(fmt, ...) \
-		printk(KERN_EMERG pr_fmt(fmt), __VA_ARGS__)
+#define pr_emerg(fmt, args...) \
+		printk(KERN_EMERG pr_fmt(fmt), ## args)
 #endif
 #ifndef pr_alert
-#define pr_alert(fmt, ...) \
-		printk(KERN_ALERT pr_fmt(fmt), __VA_ARGS__)
+#define pr_alert(fmt, args...) \
+		printk(KERN_ALERT pr_fmt(fmt), ## args)
 #endif
 #ifndef pr_crit
-#define pr_crit(fmt, ...) \
-		printk(KERN_CRIT pr_fmt(fmt), __VA_ARGS__)
+#define pr_crit(fmt, args...) \
+		printk(KERN_CRIT pr_fmt(fmt), ## args)
 #endif
 #ifndef pr_err
-#define pr_err(fmt, ...) \
-		printk(KERN_ERR pr_fmt(fmt), __VA_ARGS__)
+#define pr_err(fmt, args...) \
+		printk(KERN_ERR pr_fmt(fmt), ## args)
 #endif
 #ifndef pr_warning
-#define pr_warning(fmt, ...) \
-		printk(KERN_WARNING pr_fmt(fmt), __VA_ARGS__)
+#define pr_warning(fmt, args...) \
+		printk(KERN_WARNING pr_fmt(fmt), ## args)
 #endif
 #ifndef pr_warn
 #define pr_warn pr_warning
 #endif
 #ifndef pr_notice
-#define pr_notice(fmt, ...) \
-		printk(KERN_NOTICE pr_fmt(fmt), __VA_ARGS__)
+#define pr_notice(fmt, args...) \
+		printk(KERN_NOTICE pr_fmt(fmt), ## args)
 #endif
 #ifndef pr_info
-#define pr_info(fmt, ...) \
-		printk(KERN_INFO pr_fmt(fmt), __VA_ARGS__)
+#define pr_info(fmt, args...) \
+		printk(KERN_INFO pr_fmt(fmt), ## args)
 #endif
 #ifndef pr_cont
-#define pr_cont(fmt, ...) \
-		printk(KERN_CONT fmt, __VA_ARGS__)
+#define pr_cont(fmt, args...) \
+		printk(KERN_CONT fmt, ## args)
 #endif
 
 /* pr_devel() should produce zero code unless DEBUG is defined */
 #ifndef pr_devel
 #ifdef DEBUG
-#define pr_devel(fmt, ...) \
-		printk(KERN_DEBUG pr_fmt(fmt), ##__VA_ARGS__)
+#define pr_devel(fmt, args...) \
+		printk(KERN_DEBUG pr_fmt(fmt), ## args)
 #else
-#define pr_devel(fmt, ...) \
-		no_printk(KERN_DEBUG pr_fmt(fmt), ##__VA_ARGS__)
+#define pr_devel(fmt, args...) \
+		no_printk(KERN_DEBUG pr_fmt(fmt), ## args)
 #endif
 #endif
 /* }}} pr_* macros */
