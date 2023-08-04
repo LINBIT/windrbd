@@ -30,6 +30,11 @@ WINDRBD_FILES = $(WINDRBD_SRCDIR)/Attr.c $(WINDRBD_SRCDIR)/disp.c $(WINDRBD_SRCD
                 $(WINDRBD_SRCDIR)/windrbd_winsocket.c $(WINDRBD_SRCDIR)/windrbd_locking.c \
                 $(WINDRBD_SRCDIR)/tiktok.c
 
-CFLAGS=-w $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
+OBJS=$(patsubst %.c,%.o,$(DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES))
 
-windrbd.sys: $(patsubst %.c,%.o,$(DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) 
+CFLAGS=-g -w $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
+
+windrbd.sys: $(OBJS)
+
+clean:
+	rm -f $(OBJS)
