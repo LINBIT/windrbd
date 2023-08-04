@@ -21,8 +21,8 @@ void kmem_cache_destroy(struct kmem_cache *cache);
 
 
 #ifndef KMEM_CACHE_DEBUG
-void *kmem_cache_alloc(void *cache, int flag);
-void kmem_cache_free(void *cache, void *obj);
+void *kmem_cache_alloc(struct kmem_cache *cache, int flag);
+void kmem_cache_free(struct kmem_cache **cache, void *obj);
 #endif
 
 #endif

@@ -38,7 +38,7 @@
 #include <wdm.h>
 #include <wdmguid.h>
 // #include <ntddstor.h>
-#include <IoEvent.h>
+// #include <IoEvent.h>
 
 #include <mountmgr.h>
 #include "drbd_int.h"

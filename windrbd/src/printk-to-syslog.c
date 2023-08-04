@@ -3,7 +3,6 @@
 
 #include <wdm.h>
 #include "drbd_windows.h"
-#include <Ntstrsafe.h>
 #include <linux/net.h>
 #include <linux/socket.h>
 
