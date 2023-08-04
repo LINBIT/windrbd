@@ -25,11 +25,14 @@
 
 #include <wdm.h>
 #include <ctype.h>
-//#include <stdbool.h>
+#include <stdbool.h>
+
+#if 0
 typedef enum __Bool__ {
 	false = 0,
 	true = 1
 } bool;
+#endif
 
 typedef signed char		    __s8;
 typedef unsigned char		__u8;
