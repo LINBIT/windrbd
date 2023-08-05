@@ -12,13 +12,14 @@
 #include <linux/net.h>
 #include <linux/tcp.h>
 #include "windrbd_threads.h"
+#include <wsk.h>
 
 struct net init_net;
 
-	/* Else: sorry to Winsocket API (Window Server 2003, ReactOS) */
-// #if 1
+	/* Else: sorry no Winsocket API (Window Server 2003, ReactOS) */
+#if 1
 // #if (NTDDI_VERSION >= NTDDI_VISTA)
-#if 0
+// #if 0
 
 
 /* Protects from API functions being called before the WSK provider is

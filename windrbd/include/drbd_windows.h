@@ -54,6 +54,8 @@
 
 #include "win2003compat.h"
 
+// #include <winnt.h>
+#include <ntdef.h>
 #include <wdm.h>
 #include <ntddk.h>
 /* #include <ntifs.h> does not work */

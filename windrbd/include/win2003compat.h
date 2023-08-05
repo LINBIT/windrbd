@@ -11,5 +11,7 @@ struct _WSACMSGHDR;
 typedef struct _WSACMSGHDR CMSGHDR, *PCMSGHDR;
 #endif
 
+typedef unsigned short *PZZWSTR;
+
 #endif
 
