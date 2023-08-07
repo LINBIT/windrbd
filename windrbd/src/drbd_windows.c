@@ -33,7 +33,7 @@
 #include "drbd_windows.h"
 #include "windrbd_device.h"
 #include "windrbd_threads.h"
-#include <wdmsec.h>
+// #include <wdmsec.h>
 #include <ntdddisk.h>
 #include <wdm.h>
 #include <wdmguid.h>
