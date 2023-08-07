@@ -23,7 +23,7 @@ $(TRANSFORMATIONS): ;
 # can not regenerate the originals
 $(ORIG): ;
 
-$(TRANSFORMED): $(TRANSFORMATIONS) Makefile transform
+$(TRANSFORMED): $(TRANSFORMATIONS) transform
 
 $(TRANS_DEST)% : $(TRANS_SRC)%
 	@./transform $< $@
