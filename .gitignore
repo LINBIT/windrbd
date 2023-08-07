@@ -6,3 +6,5 @@ windrbd/src/*.pdb
 
 .*.sw?
 codeql-database
+*.o
+makelog*
