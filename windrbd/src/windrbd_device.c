@@ -1942,7 +1942,12 @@ static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_devic
 		 * is already offset, not using MmGetMdlByteOffset.
 		 */
 
+#ifdef CONFIG_HAVE_NO_EXECUTE
 	buffer = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
+#else
+	buffer = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority);
+#endif
+
 	if (buffer == NULL) {
 		printk("I/O buffer from MmGetSystemAddressForMdlSafe() is NULL\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
@@ -2294,22 +2299,22 @@ dbg("NOT completing IRP\n");
 			switch (s->Parameters.QueryId.IdType) {
 			case BusQueryDeviceID:
 dbg("BusQueryDeviceID\n");
-				swprintf(string, L"WinDRBD");
+				_swprintf(string, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			case BusQueryInstanceID:
 dbg("BusQueryInstanceID\n");
-				swprintf(string, L"WinDRBD");
+				_swprintf(string, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			case BusQueryHardwareIDs:
 dbg("BusQueryHardwareIDs\n");
-				len = swprintf(string, L"WinDRBD");
+				len = _swprintf(string, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			case BusQueryCompatibleIDs:
 dbg("BusQueryCompatibleIDs\n");
-				len = swprintf(string, L"WinDRBD");
+				len = _swprintf(string, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			default:
@@ -2633,11 +2638,11 @@ if (status == STATUS_NOT_SUPPORTED) {
 				switch (s->Parameters.QueryId.IdType) {
 				case BusQueryDeviceID:
 			/* SCSI\\t\*v(8)p(16)r(4) */
-					swprintf(string, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
+					_swprintf(string, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryInstanceID:
-					swprintf(string, L"WinDRBD%d", minor);
+					_swprintf(string, L"WinDRBD%d", minor);
 					status = STATUS_SUCCESS;
 					break;
 /* TODO:
@@ -2649,26 +2654,26 @@ Red_Hat___________VirtIO0
 GenDisk
 */
 				case BusQueryHardwareIDs:
-					len = swprintf(string, L"SCSI\\DiskLinbit____________WinDRBD0001");
-					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit____________WinDRBD")+1;
-					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit__")+1;
-					len += swprintf(&string[len+1], L"SCSI\\Linbit____________WinDRBD0")+1;
-					len += swprintf(&string[len+1], L"Linbit____________WinDRBD0")+1;
-					swprintf(&string[len+1], L"GenDisk");
+					len = _swprintf(string, L"SCSI\\DiskLinbit____________WinDRBD0001");
+					len += _swprintf(&string[len+1], L"SCSI\\DiskLinbit____________WinDRBD")+1;
+					len += _swprintf(&string[len+1], L"SCSI\\DiskLinbit__")+1;
+					len += _swprintf(&string[len+1], L"SCSI\\Linbit____________WinDRBD0")+1;
+					len += _swprintf(&string[len+1], L"Linbit____________WinDRBD0")+1;
+					_swprintf(&string[len+1], L"GenDisk");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryCompatibleIDs:
-					len = swprintf(string, L"WinDRBDDisk");
-					swprintf(&string[len+1], L"GenDisk");
-//					len = swprintf(string, L"GenDisk");
+					len = _swprintf(string, L"WinDRBDDisk");
+					_swprintf(&string[len+1], L"GenDisk");
+//					len = _swprintf(string, L"GenDisk");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryDeviceSerialNumber:
-					swprintf(string, L"%d", minor);
+					_swprintf(string, L"%d", minor);
 					status = STATUS_SUCCESS;
 					break;
 				case 5:
-					swprintf(string, L"%d", minor);
+					_swprintf(string, L"%d", minor);
 					status = STATUS_SUCCESS;
 					break;
 /*
@@ -2825,7 +2830,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			RtlZeroMemory(string, (512 * sizeof(WCHAR)));
 			switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
 			case DeviceTextDescription:
-				string_length = swprintf(string, L"WinDRBD Disk") + 1;
+				string_length = _swprintf(string, L"WinDRBD Disk") + 1;
 				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
 				if (irp->IoStatus.Information == 0) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
@@ -2836,7 +2841,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 				break;
 
 			case DeviceTextLocationInformation:
-				string_length = swprintf(string, L"WinDRBD Minor %d", minor) + 1;
+				string_length = _swprintf(string, L"WinDRBD Minor %d", minor) + 1;
 
 				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
 				if (irp->IoStatus.Information == 0) {
