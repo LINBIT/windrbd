@@ -24,7 +24,6 @@
 
 #include "drbd_windows.h"
 #include <wdm.h>
-#include <wdmsec.h>
 #include <ntstrsafe.h>
 
 #include <ntddk.h>
@@ -45,13 +44,20 @@
 
 #define START_BOOT_DEVICE 1
 
+/* From: wdmsec.h: */
+extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL;
+extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL_ADM_ALL;
+extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL_ADM_RX;
+extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_R;
+extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_R_RES_R;
+extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RW_RES_R;
+extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RWX_RES_RWX;
+
+void mvolUnload(IN PDRIVER_OBJECT DriverObject);
+
 void drbd_cleanup(void);
 void idr_shutdown(void);
 void shutdown_registry(void);
-
-DRIVER_INITIALIZE DriverEntry;
-DRIVER_UNLOAD mvolUnload;
-DRIVER_ADD_DEVICE mvolAddDevice;
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, DriverEntry)
