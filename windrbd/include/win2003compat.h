@@ -6,12 +6,12 @@
 	 */
 
 #if (NTDDI_VERSION < 0x06000000)
-typedef unsigned short u_short;
-struct _WSACMSGHDR;
-typedef struct _WSACMSGHDR CMSGHDR, *PCMSGHDR;
+// typedef unsigned short u_short;
+// struct _WSACMSGHDR;
+// typedef struct _WSACMSGHDR CMSGHDR, *PCMSGHDR;
 #endif
 
-typedef unsigned short *PZZWSTR;
+// typedef unsigned short *PZZWSTR;
 
 #endif
 
