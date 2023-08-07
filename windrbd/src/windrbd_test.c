@@ -1117,6 +1117,8 @@ int crypto_test(int argc, char ** argv)
 	
 	return 0;
 #endif
+
+#if 0
 	NTSTATUS status;
 	BCRYPT_ALG_HANDLE hAlg = NULL;
 
@@ -1128,6 +1130,7 @@ int crypto_test(int argc, char ** argv)
 	}
 	printk("BCryptOpenAlgorithmProvider succeeded\n");
 	return 0;
+#endif
 }
 
 #endif
