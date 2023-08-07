@@ -1,6 +1,10 @@
 ﻿#ifndef __SEQ_FILE_H__
 #define __SEQ_FILE_H__
+
 #include "drbd_windows.h"
+
+#define MAX_PROC_BUF 2048
+
 struct seq_file
 {
     char buf[MAX_PROC_BUF];
