@@ -1226,8 +1226,6 @@ extern void complete_all_debug(struct completion *c, const char *file, int line,
 #define complete(c) complete_debug(c, __FILE__, __LINE__, __func__)
 #define complete_all(c) complete_all_debug(c, __FILE__, __LINE__, __func__)
 
-#define MAX_PROC_BUF	2048
-
 struct crypto_tfm;
 extern void *crypto_alloc_tfm(char *name, u32 mask);
 extern unsigned int crypto_tfm_alg_digestsize(struct crypto_tfm *tfm);
