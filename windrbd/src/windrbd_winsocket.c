@@ -7,17 +7,30 @@
 #endif
 #endif
 
+#if 0
 #include "drbd_windows.h"
 #include <linux/socket.h>
 #include <linux/net.h>
 #include <linux/tcp.h>
 #include "windrbd_threads.h"
 #include <wsk.h>
+#endif
+
+__stdcall void WskDeregister(PWSK_REGISTRATION WskRegistration);
+
+int __stdcall foo(void);
+// __declspec(dllimport) int foo(void);
+
+int yxmain(int argc, char ** argv)
+{
+        foo();
+}
+
 
 struct net init_net;
 
 	/* Else: sorry no Winsocket API (Window Server 2003, ReactOS) */
-#if 1
+#if 0
 // #if (NTDDI_VERSION >= NTDDI_VISTA)
 // #if 0
 
