@@ -14,10 +14,19 @@
 #include "windrbd_threads.h"
 #include <wsk.h>
 
+#ifdef __stdcall
+__stdcall
+// #error "__stdcall defined"
+#undef __stdcall
+#endif
+
+/* REMOVE THIS */
+#undef WSKAPI
+#define WSKAPI
 // __stdcall void WskDeregister(PWSK_REGISTRATION WskRegistration);
 
-int __stdcall foo(void);
-int __attribute__((__stdcall)) bar(void);
+// int __stdcall foo(void);
+__attribute__((stdcall)) int bar(void);
 // __declspec(dllimport) int foo(void);
 
 int yxmain(int argc, char ** argv)
