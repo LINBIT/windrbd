@@ -16,7 +16,11 @@ WINDRBD_INCLUDES=-I"windrbd/include" -I"converted-sources/drbd" -I"converted-sou
 # MINGW_INCLUDES=-I /usr/i686-w64-mingw32/sys-root/mingw/include/ddk
 # MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/output-july-2023/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk 
 MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/output-july-2023/sdk/include/xdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk 
+# MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk 
+# MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk 
 # MINGW_INCLUDES=-I $(MINGW_SYSROOT)/$(ARCH)-w64-mingw32/include/ddk/
+# Does not work: mixing headers:
+# MINGW_INCLUDES=-I $(MINGW_SYSROOT)/$(ARCH)-w64-mingw32/include/ddk/ -I/home/johannes/reactos-2023/reactos-master/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos
 # MINGW_INCLUDES=/home/johannes/reactos-2023/reactos-master/sdk/include/ddk
 
 PATCHED_DRBD_SRCDIR = ./converted-sources/drbd
