@@ -7,30 +7,30 @@
 #endif
 #endif
 
-#if 0
 #include "drbd_windows.h"
 #include <linux/socket.h>
 #include <linux/net.h>
 #include <linux/tcp.h>
 #include "windrbd_threads.h"
 #include <wsk.h>
-#endif
 
-__stdcall void WskDeregister(PWSK_REGISTRATION WskRegistration);
+// __stdcall void WskDeregister(PWSK_REGISTRATION WskRegistration);
 
 int __stdcall foo(void);
+int __attribute__((__stdcall)) bar(void);
 // __declspec(dllimport) int foo(void);
 
 int yxmain(int argc, char ** argv)
 {
         foo();
+	bar();
 }
 
 
-struct net init_net;
+// struct net init_net;
 
 	/* Else: sorry no Winsocket API (Window Server 2003, ReactOS) */
-#if 0
+#if 1
 // #if (NTDDI_VERSION >= NTDDI_VISTA)
 // #if 0
 
@@ -2202,6 +2202,7 @@ void windrbd_shutdown_wsk(void)
 }
 
 #else
+#if 0
 
 int windrbd_wait_for_network(void)
 {
@@ -2285,5 +2286,6 @@ void windrbd_shutdown_wsk(void)
 {
 }
 
+#endif
 #endif
 
