@@ -291,8 +291,8 @@ TODO: should be:
 #define WRITE					1
 
 // for drbd_actlog.c
-#define __attribute__(packed)
-#define __attribute(packed)
+// #define __attribute__(packed)
+// #define __attribute(packed)
 #ifdef LONG_MAX
 #undef LONG_MAX
 #endif

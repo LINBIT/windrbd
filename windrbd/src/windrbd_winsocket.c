@@ -26,7 +26,8 @@ __stdcall
 // __stdcall void WskDeregister(PWSK_REGISTRATION WskRegistration);
 
 // int __stdcall foo(void);
-__attribute__((stdcall)) int bar(void);
+// __attribute__((stdcall)) int bar(void);
+__attribute__((__stdcall__)) int bar(void);
 // __declspec(dllimport) int foo(void);
 
 int yxmain(int argc, char ** argv)
