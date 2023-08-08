@@ -35,7 +35,7 @@
 #include "windrbd_threads.h"
 // #include <wdmsec.h>
 #include <ntdddisk.h>
-#include <wdm.h>
+#include <ntddk.h>
 #include <wdmguid.h>
 // #include <ntddstor.h>
 // #include <IoEvent.h>

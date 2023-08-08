@@ -23,7 +23,6 @@
 #pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 5045 4711)
 
 #include "drbd_windows.h"
-#include <wdm.h>
 #include <ntstrsafe.h>
 
 #include <ntddk.h>

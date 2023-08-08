@@ -9,7 +9,7 @@
 
 #include "drbd_windows.h"
 #include "windrbd_threads.h"
-#include <wdm.h>
+#include <ntddk.h>
 
 static LIST_HEAD(thread_list);
 static spinlock_t thread_list_lock;

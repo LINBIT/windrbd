@@ -27,7 +27,7 @@
 #include "drbd_windows.h"
 #include "windrbd_device.h"
 #include "windrbd_threads.h"
-#include <wdm.h>
+#include <ntddk.h>
 
 /* Define this if RCU implementation can use read/write locks
  * (ExAcquireSpinLockShared, ...).
