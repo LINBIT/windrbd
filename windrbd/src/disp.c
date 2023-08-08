@@ -133,7 +133,9 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 		 * see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/single-binary-opt-in-pool-nx-optin
 		 */
 
+#ifdef CONFIG_HAVE_NO_EXECUTE
 	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
+#endif
 
 		/* Needed for event log */
 	mvolDriverObject = DriverObject;
