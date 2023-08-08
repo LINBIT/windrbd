@@ -94,7 +94,7 @@ return ret;
 #ifndef __RBTREE_H__
 #define __RBTREE_H__
 //#include <BaseTsd.h>
-#include <wdm.h>
+#include <ntddk.h>
 
 #ifdef _WIN64
 __declspec(align(8)) struct rb_node

@@ -2,7 +2,7 @@
 #define _CRYPTO_HASH_H
 
 #include <drbd_windows.h>
-#include <wdm.h>
+#include <ntddk.h>
 
 /* We only support crc32c */
 

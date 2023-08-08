@@ -1,7 +1,7 @@
 ﻿#ifndef __SPINLOCK_H__
 #define __SPINLOCK_H__
 
-#include <wdm.h>
+#include <ntddk.h>
 #include <linux/types.h>
 
 /* Define this to check IRQL at entry of spin_lock_irq() and the like. */
