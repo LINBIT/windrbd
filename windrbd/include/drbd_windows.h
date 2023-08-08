@@ -235,7 +235,6 @@ extern int atomic_xchg(atomic_t *v, int n);
 #define ENOTSUPP				95
 #define ENOMEM					12
 #define ENOENT					2
-#define EMEDIUMTYPE				124
 #define EROFS					30
 #define	E2BIG					7
 #define ETIMEDOUT				110
@@ -247,7 +246,6 @@ extern int atomic_xchg(atomic_t *v, int n);
 #define EINTR					4
 #define ENOSPC					28
 #define ECONNRESET				104
-#define ERESTARTSYS				512
 #define EIO					5
 #define ENOMSG					42
 #define EEXIST					17
@@ -258,7 +256,6 @@ extern int atomic_xchg(atomic_t *v, int n);
 #define EINPROGRESS				115
 #define ECONNREFUSED				111
 #define ENETUNREACH				101
-#define EHOSTDOWN				112
 #define EHOSTUNREACH				113
 #define EBADR					53
 #define EADDRINUSE             			98
@@ -271,6 +268,11 @@ extern int atomic_xchg(atomic_t *v, int n);
 #define ENOTSUP					95
 #define EACCES					13
 #endif
+
+#define ERESTARTSYS				512
+#define EMEDIUMTYPE				513	
+#define ENOTSUPP				514
+#define EHOSTDOWN				515
 
 #define SIGCHLD					17
 #define SIGXCPU					100
