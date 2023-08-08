@@ -14,30 +14,7 @@
 #include "windrbd_threads.h"
 #include <wsk.h>
 
-#ifdef __stdcall
-__stdcall
-// #error "__stdcall defined"
-#undef __stdcall
-#endif
-
-/* REMOVE THIS */
-#undef WSKAPI
-#define WSKAPI
-// __stdcall void WskDeregister(PWSK_REGISTRATION WskRegistration);
-
-// int __stdcall foo(void);
-// __attribute__((stdcall)) int bar(void);
-__attribute__((__stdcall__)) int bar(void);
-// __declspec(dllimport) int foo(void);
-
-int yxmain(int argc, char ** argv)
-{
-        foo();
-	bar();
-}
-
-
-// struct net init_net;
+struct net init_net;
 
 	/* Else: sorry no Winsocket API (Window Server 2003, ReactOS) */
 #if 1
@@ -2212,7 +2189,6 @@ void windrbd_shutdown_wsk(void)
 }
 
 #else
-#if 0
 
 int windrbd_wait_for_network(void)
 {
@@ -2296,6 +2272,5 @@ void windrbd_shutdown_wsk(void)
 {
 }
 
-#endif
 #endif
 
