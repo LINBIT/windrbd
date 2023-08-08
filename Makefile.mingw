@@ -42,7 +42,7 @@ WINDRBD_FILES = $(WINDRBD_SRCDIR)/Attr.c $(WINDRBD_SRCDIR)/disp.c $(WINDRBD_SRCD
 
 OBJS=$(patsubst %.c,%.o,$(DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES))
 
-LIBS=-lntoskrnl -lhal -lgcc
+LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
 
 # CFLAGS_FOR_DRIVERS=-fPIC -fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -mno-stack-arg-probe
 # CFLAGS_FOR_DRIVERS=-fPIC -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -mno-stack-arg-probe
