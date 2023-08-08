@@ -227,6 +227,9 @@ extern int atomic_xchg(atomic_t *v, int n);
  * to symbol (or symbol to number).
  */
 
+#include <errno.h>
+
+#if 0
 #define EINVAL					22
 #define EOPNOTSUPP				95
 #define ENOTSUPP				95
@@ -267,6 +270,7 @@ extern int atomic_xchg(atomic_t *v, int n);
 #define EADDRNOTAVAIL				99
 #define ENOTSUP					95
 #define EACCES					13
+#endif
 
 #define SIGCHLD					17
 #define SIGXCPU					100
@@ -476,6 +480,7 @@ struct work_struct {
 
 struct block_device;
 struct gendisk;
+struct bio;
 
 struct block_device_operations {
 	struct module *owner;
@@ -1070,7 +1075,7 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
 }
 
 /* TODO: compute with HZ */
-static __inline unsigned long long JIFFIES()
+static inline unsigned long long JIFFIES()
 {
 	LARGE_INTEGER Tick;
 	LARGE_INTEGER Elapse;
@@ -1309,9 +1314,11 @@ typedef struct _PTR_ENTRY
 
 // linux-2.6.24 define 
 // kernel.h 
+#if 0
 #define INT_MAX		((int)(~0U>>1))
 #define INT_MIN		(-INT_MAX - 1)
 #define UINT_MAX	(~0U)
+#endif
 
 //pagemap.h
 #define PAGE_CACHE_SHIFT	PAGE_SHIFT
@@ -1320,8 +1327,10 @@ typedef struct _PTR_ENTRY
 #define BIO_MAX_PAGES		256
 #define BIO_MAX_SIZE		(BIO_MAX_PAGES << PAGE_CACHE_SHIFT)
 
+#if 0
 //asm-x86 , asm-generic 
 #define	EDESTADDRREQ	89	/* Destination address required */
+#endif
 
 // Bitops.h
 #define BITS_PER_BYTE		8

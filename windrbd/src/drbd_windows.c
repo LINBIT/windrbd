@@ -1421,7 +1421,7 @@ void del_timer(struct timer_list *t)
  *
  * return value: 1 if the timer is pending, 0 if not.
  */
-static __inline int timer_pending(const struct timer_list * timer)
+static inline int timer_pending(const struct timer_list * timer)
 {
     return timer->ktimer.Header.Inserted;
 }
@@ -2569,6 +2569,12 @@ void genlmsg_cancel(struct sk_buff *skb, void *hdr)
 
 }
 
+int ___ratelimit(struct ratelimit_state *rs, const char *func);
+{
+	return 1;
+}
+
+#if 0
 int _DRBD_ratelimit(struct ratelimit_state *rs, const char * func, const char * __FILE, const int __LINE)
 {
 	int ret;
@@ -2613,6 +2619,7 @@ int _DRBD_ratelimit(struct ratelimit_state *rs, const char * func, const char * 
 
 	return ret;
 }
+#endif
 
 static int idr_max(int layers)
 {

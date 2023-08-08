@@ -4,7 +4,7 @@
 #include <linux/types.h>
 #include "drbd_windows.h"
 
-static __inline bool need_resched(void)
+static inline bool need_resched(void)
 {
     return false;
 }
