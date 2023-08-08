@@ -2371,7 +2371,7 @@ uint32_t crc32c(uint32_t crc, const uint8_t *data, unsigned int length)
 	return crc;
 }
 
-inline void __list_add_rcu(struct list_head *new, struct list_head *prev, struct list_head *next)
+void __list_add_rcu(struct list_head *new, struct list_head *prev, struct list_head *next)
 {
 	new->next = next;
 	new->prev = prev;
@@ -2569,7 +2569,7 @@ void genlmsg_cancel(struct sk_buff *skb, void *hdr)
 
 }
 
-int ___ratelimit(struct ratelimit_state *rs, const char *func);
+int __ratelimit(struct ratelimit_state *rs, const char *func)
 {
 	return 1;
 }
