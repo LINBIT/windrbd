@@ -11,7 +11,6 @@
 * and the cpu_to_le etc. endianness convert functions.
 */
 
-#define inline  __inline
 #include <basetsd.h>
 #include <linux/bitsperlong.h>
 #include <linux/types.h>

@@ -29,4 +29,6 @@ struct ratelimit_state {
 	struct ratelimit_state name =					\
 		RATELIMIT_STATE_INIT(name, interval_init, burst_init)	\
 
+extern int ___ratelimit(struct ratelimit_state *rs, const char *func);
+
 #endif /* _LINUX_RATELIMIT_H */

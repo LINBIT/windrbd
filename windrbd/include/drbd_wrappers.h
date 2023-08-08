@@ -947,7 +947,7 @@ static inline void kref_sub(struct kref *kref, unsigned int count,
 #endif
 
 #ifndef COMPAT_HAVE_KREF_GET_UNLESS_ZERO
-static __inline int kref_get_unless_zero(struct kref *kref)
+static inline int kref_get_unless_zero(struct kref *kref)
 {
     return 0;
 }
@@ -965,7 +965,7 @@ static __inline int kref_get_unless_zero(struct kref *kref)
 static int random32_win()
 {
     int buf;
-    get_random_bytes(&buf, 4);
+    get_random_bytes((char*) &buf, 4);
     return buf;
 }
 static inline u32 prandom_u32(void)

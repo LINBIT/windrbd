@@ -24,7 +24,7 @@ extern void list_del_init(struct list_head *entry);
 #define LIST_HEAD_INIT(name)			{ &(name), &(name) }
 #define LIST_HEAD(name)				struct list_head name = LIST_HEAD_INIT(name)
 
-static __inline void INIT_LIST_HEAD(struct list_head *list)
+static inline void INIT_LIST_HEAD(struct list_head *list)
 {
 	list->next = list;
 	list->prev = list;

@@ -124,12 +124,12 @@ struct rb_root
 #define rb_set_red(r)  ((r)->rb_parent_color &= ~1)
 #define rb_set_black(r)  ((r)->rb_parent_color |= 1)
 
-static __inline void rb_set_parent(struct rb_node *rb, struct rb_node *p)
+static inline void rb_set_parent(struct rb_node *rb, struct rb_node *p)
 {
 	rb->rb_parent_color = (rb->rb_parent_color & 3) | (ULONG_PTR) p;
 }
 
-static __inline void rb_set_color(struct rb_node *rb, int color)
+static inline void rb_set_color(struct rb_node *rb, int color)
 {
 	rb->rb_parent_color = (rb->rb_parent_color & ~1) | color;
 }
@@ -141,7 +141,7 @@ static __inline void rb_set_color(struct rb_node *rb, int color)
 #define RB_EMPTY_NODE(node) (rb_parent(node) == node)
 #define RB_CLEAR_NODE(node) (rb_set_parent(node, node))
 
-static __inline void rb_init_node(struct rb_node *rb)
+static inline void rb_init_node(struct rb_node *rb)
 {
 	rb->rb_parent_color = 0;
 	rb->rb_right = NULL;
@@ -170,7 +170,7 @@ extern struct rb_node *rb_last(const struct rb_root *);
 extern void rb_replace_node(struct rb_node *victim, struct rb_node *new,
 struct rb_root *root);
 
-static __inline void rb_link_node(struct rb_node * node, struct rb_node * parent,
+static inline void rb_link_node(struct rb_node * node, struct rb_node * parent,
 struct rb_node ** rb_link)
 {
 	node->rb_parent_color = (ULONG_PTR) parent;

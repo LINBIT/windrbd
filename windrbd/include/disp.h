@@ -44,4 +44,4 @@ extern PDEVICE_OBJECT		drbd_physical_bus_device;
 
 extern int drbd_init(void);
 
-#endif MVF_DISP_H
+#endif

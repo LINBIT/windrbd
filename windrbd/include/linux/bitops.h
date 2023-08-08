@@ -5,7 +5,7 @@
 #include <linux/bitsperlong.h>
 #include <linux/types.h>
 
-static void __inline barrier(void)
+static inline void barrier(void)
 {
 	KeMemoryBarrier();
 }
@@ -18,8 +18,7 @@ extern ULONG_PTR find_first_bit(const ULONG_PTR* addr, ULONG_PTR size); //refere
 extern ULONG_PTR find_next_bit(const ULONG_PTR *addr, ULONG_PTR size, ULONG_PTR offset);
 extern int find_next_zero_bit(const ULONG_PTR * addr, ULONG_PTR size, ULONG_PTR offset);
 
-__inline
-int test_and_set_bit(int bit, volatile ULONG_PTR * base)
+static inline int test_and_set_bit(int bit, volatile ULONG_PTR * base)
 {
 #ifdef _WIN64
     return (InterlockedBitTestAndSet64((volatile __int64 *)base, bit));
@@ -28,8 +27,7 @@ int test_and_set_bit(int bit, volatile ULONG_PTR * base)
 #endif
 }
 
-__inline
-int test_and_clear_bit(int bit, volatile ULONG_PTR * base)
+static inline int test_and_clear_bit(int bit, volatile ULONG_PTR * base)
 {
 #ifdef _WIN64
     return (InterlockedBitTestAndReset64((volatile __int64 *)base, bit));
@@ -38,20 +36,17 @@ int test_and_clear_bit(int bit, volatile ULONG_PTR * base)
 #endif
 }
 
-__inline
-void set_bit(int bit, volatile ULONG_PTR * base)
+static inline void set_bit(int bit, volatile ULONG_PTR * base)
 {
     test_and_set_bit(bit, base);
 }
 
-__inline
-void clear_bit(int bit, volatile ULONG_PTR * base)
+static inline void clear_bit(int bit, volatile ULONG_PTR * base)
 {
     test_and_clear_bit(bit, base);
 }
 
-__inline
-void clear_bit_unlock(int bit, volatile ULONG_PTR * base)
+static inline void clear_bit_unlock(int bit, volatile ULONG_PTR * base)
 {
     barrier();
     test_and_clear_bit(bit, base);
@@ -59,7 +54,7 @@ void clear_bit_unlock(int bit, volatile ULONG_PTR * base)
 
 #define __clear_bit(__n, __p) clear_bit(__n, __p)
 
-static __inline void __set_bit(int nr, volatile ULONG_PTR *addr)
+static inline void __set_bit(int nr, volatile ULONG_PTR *addr)
 {
 	ULONG_PTR mask = BIT_MASK(nr);
 	ULONG_PTR *p = ((ULONG_PTR *) addr) + BIT_WORD(nr);
@@ -67,7 +62,7 @@ static __inline void __set_bit(int nr, volatile ULONG_PTR *addr)
 	*p |= mask;
 }
 
-static __inline int __test_and_set_bit(int nr, volatile ULONG_PTR *addr)
+static inline int __test_and_set_bit(int nr, volatile ULONG_PTR *addr)
 {
 	ULONG_PTR mask = BIT_MASK(nr);
 	ULONG_PTR *p = ((ULONG_PTR *) addr) + BIT_WORD(nr);
@@ -77,7 +72,7 @@ static __inline int __test_and_set_bit(int nr, volatile ULONG_PTR *addr)
 	return (old & mask) != 0;
 }
 
-static __inline int __test_and_clear_bit(int nr, volatile ULONG_PTR *addr)
+static inline int __test_and_clear_bit(int nr, volatile ULONG_PTR *addr)
 {
 	ULONG_PTR mask = BIT_MASK(nr);
 	ULONG_PTR *p = ((ULONG_PTR *) addr) + BIT_WORD(nr);
@@ -87,7 +82,7 @@ static __inline int __test_and_clear_bit(int nr, volatile ULONG_PTR *addr)
 	return (old & mask) != 0;
 }
 
-static __inline int test_bit(int nr, const ULONG_PTR *addr)
+static inline int test_bit(int nr, const ULONG_PTR *addr)
 {
 #ifdef _WIN64
 	return _bittest64((LONG64 *)addr, nr);

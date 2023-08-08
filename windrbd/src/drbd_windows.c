@@ -2814,6 +2814,12 @@ void genlmsg_cancel(struct sk_buff *skb, void *hdr)
 
 }
 
+int ___ratelimit(struct ratelimit_state *rs, const char *func);
+{
+	return 1;
+}
+
+#if 0
 int _DRBD_ratelimit(struct ratelimit_state *rs, const char * func, const char * __FILE, const int __LINE)
 {
 	int ret;
@@ -2858,6 +2864,7 @@ int _DRBD_ratelimit(struct ratelimit_state *rs, const char * func, const char * 
 
 	return ret;
 }
+#endif
 
 static int idr_max(int layers)
 {
