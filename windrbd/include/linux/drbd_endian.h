@@ -26,9 +26,13 @@
 * oh, well...
 */
 
-#define __swab16(x)     _byteswap_ushort(x)
+/* #define __swab16(x)     _byteswap_ushort(x)
 #define __swab32(x)     _byteswap_ulong(x)
-#define __swab64(x)     _byteswap_uint64(x)
+#define __swab64(x)     _byteswap_uint64(x) */
+
+#define __swab16(x) (__u16)__builtin_bswap16((__u16)(x))
+#define __swab32(x) (__u32)__builtin_bswap32((__u32)(x))
+#define __swab64(x) (__u64)__builtin_bswap64((__u64)(x))
 
 /*
 * linux/byteorder/little_endian.h
