@@ -33,6 +33,9 @@
 #include "disp.h"
 #include "windrbd/windrbd_ioctl.h"
 #include <linux/module.h>
+#ifdef CONFIG_HAVE_IO_CREATE_DEVICE_SECURE
+#include <wdmsec.h>
+#endif
 /* #include "windrbd/windrbd_ioctl.h" */
 
 #include "drbd_int.h"
@@ -42,15 +45,6 @@
 	 */
 
 #define START_BOOT_DEVICE 1
-
-/* From: wdmsec.h: */
-extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL;
-extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL_ADM_ALL;
-extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL_ADM_RX;
-extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_R;
-extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_R_RES_R;
-extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RW_RES_R;
-extern const UNICODE_STRING SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RWX_RES_RWX;
 
 void mvolUnload(IN PDRIVER_OBJECT DriverObject);
 
@@ -96,10 +90,17 @@ static NTSTATUS create_device(const wchar_t *name, const UNICODE_STRING *sddl_pe
 	tmp[99] = 0;
 	RtlInitUnicodeString(&nameUnicode, tmp);
 	printk("About to create device %S with permissions %S\n", nameUnicode.Buffer, sddl_perms->Buffer);
+#ifdef CONFIG_HAVE_IO_CREATE_DEVICE_SECURE
 	status = IoCreateDeviceSecure(mvolDriverObject, sizeof(ROOT_EXTENSION),
 			 &nameUnicode, FILE_DEVICE_UNKNOWN,
 			FILE_DEVICE_SECURE_OPEN, FALSE,
 			sddl_perms, NULL, &deviceObject);
+#else
+	status = IoCreateDevice(mvolDriverObject, sizeof(ROOT_EXTENSION),
+			 &nameUnicode, FILE_DEVICE_UNKNOWN,
+			FILE_DEVICE_SECURE_OPEN, FALSE, &deviceObject);
+#endif
+
 	if (!NT_SUCCESS(status))
 	{
 		printk("Can't create root, err=%x\n", status);
@@ -179,7 +180,9 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 	initRegistry(RegistryPath);
 	init_event_log();
-
+ 
+		/* TODO: there is a better solution ... */
+#ifdef CONFIG_HAVE_IO_CREATE_DEVICE_SECURE
 	status = create_device(WINDRBD_ROOT_DEVICE_NAME, &SDDL_DEVOBJ_SYS_ALL_ADM_ALL, &mvolRootDeviceObject);
 	if (status != STATUS_SUCCESS)
 		return status;
@@ -187,6 +190,15 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	status = create_device(WINDRBD_USER_DEVICE_NAME, &SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_R, &user_device_object);
 	if (status != STATUS_SUCCESS)
 		return status;
+#else
+	status = create_device(WINDRBD_ROOT_DEVICE_NAME, NULL, &mvolRootDeviceObject);
+	if (status != STATUS_SUCCESS)
+		return status;
+
+	status = create_device(WINDRBD_USER_DEVICE_NAME, NULL, &user_device_object);
+	if (status != STATUS_SUCCESS)
+		return status;
+#endif
 
 	windrbd_set_major_functions(DriverObject);
 /* Remove this line to make driver removable (driver removing currently

@@ -74,7 +74,9 @@ ZwWaitForSingleObject(
 
 #define FSCTL_DISMOUNT_VOLUME           CTL_CODE(FILE_DEVICE_FILE_SYSTEM,  8, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
-NTSTATUS ZwFsControlFile(
+NTSTATUS
+NTAPI
+ZwFsControlFile(
   HANDLE           FileHandle,
   HANDLE           Event,
   PIO_APC_ROUTINE  ApcRoutine,
@@ -88,7 +90,8 @@ NTSTATUS ZwFsControlFile(
 );
 
 
-ULONG RtlRandomEx(
+ULONG
+NTAPI RtlRandomEx(
   _Inout_ PULONG Seed
 );
 

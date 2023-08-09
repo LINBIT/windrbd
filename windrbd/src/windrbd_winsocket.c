@@ -17,9 +17,8 @@
 struct net init_net;
 
 	/* Else: sorry no Winsocket API (Window Server 2003, ReactOS) */
-#if 1
+#ifdef HAVE_NETIO_DRIVER
 // #if (NTDDI_VERSION >= NTDDI_VISTA)
-// #if 0
 
 
 /* Protects from API functions being called before the WSK provider is
