@@ -86,7 +86,7 @@ static NTSTATUS create_device(const wchar_t *name, const UNICODE_STRING *sddl_pe
 	UNICODE_STRING nameUnicode, linkUnicode;
 	wchar_t tmp[100], tmp2[100];
 
-	_snwprintf_s(tmp, ARRAY_SIZE(tmp), _TRUNCATE, L"\\Device\\%s", name);
+	_snwprintf(tmp, ARRAY_SIZE(tmp), L"\\Device\\%s", name);
 	tmp[99] = 0;
 	RtlInitUnicodeString(&nameUnicode, tmp);
 	printk("About to create device %S with permissions %S\n", nameUnicode.Buffer, sddl_perms->Buffer);
@@ -107,7 +107,7 @@ static NTSTATUS create_device(const wchar_t *name, const UNICODE_STRING *sddl_pe
 		return status;
 	}
 
-	_snwprintf_s(tmp2, ARRAY_SIZE(tmp2), _TRUNCATE, L"\\DosDevices\\%s", name);
+	_snwprintf(tmp2, ARRAY_SIZE(tmp2), L"\\DosDevices\\%s", name);
 	RtlInitUnicodeString(&linkUnicode, tmp2);
 	printk("About to create symbolic link from %S to %S\n", linkUnicode.Buffer, nameUnicode.Buffer);
 	status = IoCreateSymbolicLink(&linkUnicode, &nameUnicode);
