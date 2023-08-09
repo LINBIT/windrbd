@@ -43,7 +43,7 @@ WINDRBD_FILES = $(WINDRBD_SRCDIR)/Attr.c $(WINDRBD_SRCDIR)/disp.c $(WINDRBD_SRCD
 
 OBJS=$(patsubst %.c,%.o,$(DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES))
 
-LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
+LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio -lmingwex
 
 # CFLAGS_FOR_DRIVERS=-fPIC -fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -mno-stack-arg-probe
 # CFLAGS_FOR_DRIVERS=-fPIC -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -mno-stack-arg-probe
@@ -54,8 +54,8 @@ CFLAGS_FOR_DRIVERS=
 # CFLAGS_FOR_DRIVERS=-fPIC
 
 
-# LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--file-alignment,0x200 -Wl,--section-alignment,0x1000 -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--exclude-all-symbols -Wl,--entry,_CRT_DriverEntry -nostartfiles -nodefaultlibs -nostdlib -Wl,-Map='windrbd.sys.map'
-LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native
+LDFLAGS_FOR_DRIVERS=-Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--file-alignment,0x200 -Wl,--section-alignment,0x1000 -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--exclude-all-symbols -Wl,--entry,_DriverEntry -nostartfiles -nodefaultlibs -nostdlib -Wl,-Map='windrbd.sys.map'
+# LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native
 # LDFLAGS_FOR_DRIVERS=
 
 CFLAGS=-g -w $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
