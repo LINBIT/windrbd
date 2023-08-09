@@ -118,6 +118,17 @@ NTAPI RtlRandomEx(
 static LIST_HEAD(backing_devices);
 static struct mutex read_bootsector_mutex;
 
+/* Just to see if it links ... */
+__MINGW_NOTHROW int __cdecl __mingw_vsprintf (char * __restrict__ , const char * __restrict__ , va_list)
+{
+	return 0;
+}
+
+int __cdecl __mingw_vsnwprintf (wchar_t * __restrict__ , size_t, const wchar_t * __restrict__ , va_list)
+{
+	return 0;
+}
+
 void windrbd_device_error(struct drbd_device *device, const char ** err_str_out, const char *fmt, ...)
 {
 	char *err_str;
