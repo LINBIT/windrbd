@@ -89,13 +89,14 @@ static NTSTATUS create_device(const wchar_t *name, const UNICODE_STRING *sddl_pe
 	_snwprintf(tmp, ARRAY_SIZE(tmp), L"\\Device\\%s", name);
 	tmp[99] = 0;
 	RtlInitUnicodeString(&nameUnicode, tmp);
-	printk("About to create device %S with permissions %S\n", nameUnicode.Buffer, sddl_perms->Buffer);
 #ifdef CONFIG_HAVE_IO_CREATE_DEVICE_SECURE
+	printk("About to create device %S with permissions %S\n", nameUnicode.Buffer, sddl_perms->Buffer);
 	status = IoCreateDeviceSecure(mvolDriverObject, sizeof(ROOT_EXTENSION),
 			 &nameUnicode, FILE_DEVICE_UNKNOWN,
 			FILE_DEVICE_SECURE_OPEN, FALSE,
 			sddl_perms, NULL, &deviceObject);
 #else
+	printk("About to create device %S with default permissions\n", nameUnicode.Buffer);
 	status = IoCreateDevice(mvolDriverObject, sizeof(ROOT_EXTENSION),
 			 &nameUnicode, FILE_DEVICE_UNKNOWN,
 			FILE_DEVICE_SECURE_OPEN, FALSE, &deviceObject);
