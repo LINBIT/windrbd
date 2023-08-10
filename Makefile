@@ -1,10 +1,20 @@
-# ARCH=x86_64
-ARCH=i686
+ARCH=x86_64
+# ARCH=i686
 # MINGW_SYSROOT=/home/johannes/.zeranoe/mingw-w64/i686
 MINGW_SYSROOT=/home/johannes/.zeranoe/mingw-w64/$(ARCH)
 # CC=i686-w64-mingw32-gcc
 # CC=$(MINGW_SYSROOT)/bin/i686-w64-mingw32-gcc
 CC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-gcc
+
+ifeq ($(ARCH), i686)
+REACTOS_ROOT=/home/johannes/reactos-2023/reactos-master
+REACTOS_BUILD=/home/johannes/reactos-2023/reactos-master/output-july-2023
+endif
+
+ifeq ($(ARCH), x86_64)
+REACTOS_ROOT=/home/johannes/reactos-2023/reactos-master
+REACTOS_BUILD=/home/johannes/reactos-2023/reactos-master/output-64bit
+endif
 
 # /cygdrive/c/Windows/System32/cmd.exe /c ms-cl-jt-win7-32bit.cmd /c /nologo /W4  /Zi  /WX  /Wv:18  /O2  /Oi  /Oy-  /GF /Gm- /Zp8 /Gz /Gs1048576 /Zc:wchar_t- /Zc:forScope /GR-  /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /wd4996  /analyze- /errorReport:queue /kernel -cbstring /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+  /wd4201 /wd4200 "-Ic:\\Ewdk1703\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\shared" "-Ic:\\Ewdk1703\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km" "-Ic:\\Ewdk1703\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\km\\crt" "-Ic:\\Ewdk1703\\Program Files\\Windows Kits\\10\\Include\\10.0.15063.0\\um" -I"..\\..\\windrbd\\include" -I"." -I".\\drbd-headers" -D _X86_=1 -D i386=1 -D _M_IX86=1  -D _WIN32_WINNT=0x0502 -D WINVER=0x0502 -D WINNT=1 -D NTDDI_VERSION=0x05020000 -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 /FI"c:\\Ewdk1703\\Program Files\\Windows Kits\\10\\Include/10.0.15063.0\\shared\\warning.h" "drbd_buildtag.c" /c /Fo:"drbd_buildtag.obj" /Fd:"drbd_buildtag.pdb"
 
@@ -16,7 +26,7 @@ WINDRBD_INCLUDES=-I"windrbd/include" -I"converted-sources/drbd" -I"converted-sou
 # MINGW_INCLUDES=-I /usr/i686-w64-mingw32/sys-root/mingw/include/ddk
 # MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/output-july-2023/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk 
 # MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/output-july-2023/sdk/include/xdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk -I $(MINGW_SYSROOT)/$(ARCH)-w64-mingw32/include/ddk/
-MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/output-july-2023/sdk/include/xdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk 
+MINGW_INCLUDES=-I$(REACTOS_BUILD)/sdk/include/xdk -I$(REACTOS_ROOT)/sdk/include/ddk -I$(REACTOS_ROOT)/sdk/include/psdk -I$(REACTOS_ROOT)/sdk/include/reactos -I$(REACTOS_ROOT)/sdk/include/ndk -I$(REACTOS_ROOT)/sdk/include/xdk 
 # MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk 
 # MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk 
 # MINGW_INCLUDES=-I $(MINGW_SYSROOT)/$(ARCH)-w64-mingw32/include/ddk/
