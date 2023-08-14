@@ -77,6 +77,8 @@ versioninfo:
 
 windrbd.sys: $(OBJS)
 	$(CC) -o windrbd.sys $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS)
+	osslsigncode -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys windrbd.sys-signed
+	mv windrbd.sys-signed windrbd.sys
 
 clean:
 	rm -f $(OBJS)
