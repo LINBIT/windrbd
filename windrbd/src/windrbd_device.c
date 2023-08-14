@@ -49,6 +49,7 @@
 #include <ntddstor.h>
 #include <linux/module.h>
 
+#include "windrbd_config.h"
 #include "drbd_windows.h"
 #include "windrbd_device.h"
 #include "windrbd/windrbd_ioctl.h"
@@ -2526,8 +2527,6 @@ exit:
 
 static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-	return STATUS_NOT_IMPLEMENTED;
-#if 0
 	NTSTATUS status;
 
 	if (device == mvolRootDeviceObject || device == user_device_object) {
@@ -3146,7 +3145,6 @@ if (status == STATUS_NOT_SUPPORTED) {
 
 	num_pnp_requests--;
 	return status;
-#endif
 }
 
 static NTSTATUS windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)

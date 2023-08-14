@@ -7,6 +7,7 @@
 #endif
 #endif
 
+#include "windrbd_config.h"
 #include "drbd_windows.h"
 #include <linux/socket.h>
 #include <linux/net.h>
@@ -17,7 +18,7 @@
 struct net init_net;
 
 	/* Else: sorry no Winsocket API (Window Server 2003, ReactOS) */
-#ifdef HAVE_NETIO_DRIVER
+#ifdef CONFIG_HAVE_NETIO_DRIVER
 // #if (NTDDI_VERSION >= NTDDI_VISTA)
 
 
@@ -192,7 +193,7 @@ static NTSTATUS InitWskBuffer(
     }
 
     /* TODO: we need this! else there might be BSOD's inside this
-     * MmProbeAndLockPages call
+     * MmProbeAndLockPages call when there is no memory.
      */
 
 #ifdef CONFIG_HAVE_TRY
@@ -201,7 +202,7 @@ static NTSTATUS InitWskBuffer(
 	// DW-1223: Locking with 'IoWriteAccess' affects buffer, which causes infinite I/O from ntfs when the buffer is from mdl of write IRP.
 	// we need write access for receiver, since buffer will be filled.
 	MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
-#if CONFIG_HAVE_TRY
+#ifdef CONFIG_HAVE_TRY
     } except(EXCEPTION_EXECUTE_HANDLER) {
 	if (WskBuffer->Mdl != NULL) {
 	    IoFreeMdl(WskBuffer->Mdl);
@@ -2188,6 +2189,8 @@ void windrbd_shutdown_wsk(void)
 }
 
 #else
+
+/* This currently hangs on booting (at least on Windows) */
 
 int windrbd_wait_for_network(void)
 {

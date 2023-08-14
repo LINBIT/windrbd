@@ -24,6 +24,7 @@
  * handling routines and routines to control IRQL directly.
  */
 
+#include "windrbd_config.h"
 #include "drbd_windows.h"
 #include "windrbd_device.h"
 #include "windrbd_threads.h"
