@@ -1,7 +1,7 @@
 ARCH ?= x86_64
 # ARCH=i686
 # MINGW_SYSROOT=/home/johannes/.zeranoe/mingw-w64/i686
-MINGW_SYSROOT=/home/johannes/.zeranoe/mingw-w64/$(ARCH)
+MINGW_SYSROOT=/home/$(USER)/.zeranoe/mingw-w64/$(ARCH)
 # CC=i686-w64-mingw32-gcc
 # CC=$(MINGW_SYSROOT)/bin/i686-w64-mingw32-gcc
 CC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-gcc
