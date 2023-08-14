@@ -80,6 +80,11 @@ LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 
 
 CFLAGS=-g -w $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
 
+all: versioninfo windrbd.sys
+
+versioninfo:
+	./versioninfo.sh converted-sources $(VERSION)
+
 windrbd.sys: $(OBJS)
 	$(CC) -o windrbd.sys $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS)
 
