@@ -8,3 +8,4 @@ windrbd/src/*.pdb
 codeql-database
 *.o
 makelog*
+windrbd.sys*
