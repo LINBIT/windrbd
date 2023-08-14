@@ -322,3 +322,4 @@ Version history
  * 1.1.5 (Jan 31, 2023): Fixed bug with large disks (>2TB) introduced with 1.1.4
  * 1.1.6 (Feb 14, 2023): Fixed ReFS support, install from Windows Service, updated cygwin binaries
  * 1.1.7 (Jun 27, 2023): Fixed BSOD on low memory, fixed performance bug, poll_hup support for utils
+ * 1.2.0-rc1 (Aug 14, 2023): Compile with gcc. Don't use 1.2.0-rc's in production.
