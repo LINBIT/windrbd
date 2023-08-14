@@ -1,4 +1,4 @@
-ARCH=x86_64
+ARCH ?= x86_64
 # ARCH=i686
 # MINGW_SYSROOT=/home/johannes/.zeranoe/mingw-w64/i686
 MINGW_SYSROOT=/home/johannes/.zeranoe/mingw-w64/$(ARCH)
@@ -6,15 +6,14 @@ MINGW_SYSROOT=/home/johannes/.zeranoe/mingw-w64/$(ARCH)
 # CC=$(MINGW_SYSROOT)/bin/i686-w64-mingw32-gcc
 CC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-gcc
 
+REACTOS_ROOT=windrbd/include/from-reactos
+REACTOS_BUILD=windrbd/include/from-reactos/output-$(ARCH)
+
 ifeq ($(ARCH), i686)
-REACTOS_ROOT=/home/johannes/reactos-2023/reactos-master
-REACTOS_BUILD=/home/johannes/reactos-2023/reactos-master/output-july-2023
 DRIVER_ENTRY=_DriverEntry
 endif
 
 ifeq ($(ARCH), x86_64)
-REACTOS_ROOT=/home/johannes/reactos-2023/reactos-master
-REACTOS_BUILD=/home/johannes/reactos-2023/reactos-master/output-64bit
 DRIVER_ENTRY=DriverEntry
 endif
 
@@ -30,16 +29,7 @@ endif
 
 WINDRBD_INCLUDES=-I"windrbd/include" -I"converted-sources/drbd" -I"converted-sources/drbd/drbd-headers"
 
-# MINGW_INCLUDES=-I /usr/i686-w64-mingw32/sys-root/mingw/include/ddk
-# MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/output-july-2023/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk 
-# MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/output-july-2023/sdk/include/xdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk -I $(MINGW_SYSROOT)/$(ARCH)-w64-mingw32/include/ddk/
-MINGW_INCLUDES=-I$(REACTOS_BUILD)/sdk/include/xdk -I$(REACTOS_ROOT)/sdk/include/ddk -I$(REACTOS_ROOT)/sdk/include/psdk -I$(REACTOS_ROOT)/sdk/include/reactos -I$(REACTOS_ROOT)/sdk/include/ndk -I$(REACTOS_ROOT)/sdk/include/xdk 
-# MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk 
-# MINGW_INCLUDES=-I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos -I/home/johannes/reactos-2023/reactos-master/sdk/include/ndk -I/home/johannes/reactos-2023/reactos-master/sdk/include/xdk 
-# MINGW_INCLUDES=-I $(MINGW_SYSROOT)/$(ARCH)-w64-mingw32/include/ddk/
-# Does not work: mixing headers:
-# MINGW_INCLUDES=-I $(MINGW_SYSROOT)/$(ARCH)-w64-mingw32/include/ddk/ -I/home/johannes/reactos-2023/reactos-master/sdk/include/ddk -I/home/johannes/reactos-2023/reactos-master/sdk/include/psdk -I/home/johannes/reactos-2023/reactos-master/sdk/include/reactos
-# MINGW_INCLUDES=/home/johannes/reactos-2023/reactos-master/sdk/include/ddk
+MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk
 
 PATCHED_DRBD_SRCDIR = ./converted-sources/drbd
 WINDRBD_SRCDIR = ./windrbd/src
