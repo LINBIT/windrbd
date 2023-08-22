@@ -71,12 +71,10 @@ Name: "norwegian"; MessagesFile: "compiler:Languages\Norwegian.isl"
 Name: "polish"; MessagesFile: "compiler:Languages\Polish.isl"
 Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
-Name: "scottishgaelic"; MessagesFile: "compiler:Languages\ScottishGaelic.isl"
 Name: "serbiancyrillic"; MessagesFile: "compiler:Languages\SerbianCyrillic.isl"
 Name: "serbianlatin"; MessagesFile: "compiler:Languages\SerbianLatin.isl"
 Name: "slovenian"; MessagesFile: "compiler:Languages\Slovenian.isl"
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
-Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 
 [Tasks]
@@ -123,7 +121,6 @@ Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.sys"; DestDir: "{app
 ; must be in same folder as the sysfile.
 Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.cat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.pdb"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\misc\drbd.cgi"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\misc\ipxe-windrbd.pxe"; DestDir: "{app}"; Flags: ignoreversion
 
