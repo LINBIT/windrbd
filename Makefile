@@ -9,6 +9,8 @@ CC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-gcc
 REACTOS_ROOT=windrbd/include/from-reactos
 REACTOS_BUILD=windrbd/include/from-reactos/output-$(ARCH)
 
+WINE=/usr/bin/wine
+
 ifeq ($(ARCH), i686)
 DRIVER_ENTRY=_DriverEntry
 endif
@@ -83,3 +85,8 @@ windrbd.sys: $(OBJS)
 clean:
 	rm -f $(OBJS)
 	rm -f windrbd.sys
+
+package: windrbd.sys
+	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=Z:\\home\\johannes\\sambashare2\\drbd-utils-windows /DWindrbdDriverDirectory=$(DRIVER_DIR) )
+
+#	$(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" linstor-server.iss -DMyAppVersion=$(VERSION) -DOpenJDKDir=$(OPENJDKDIR)
