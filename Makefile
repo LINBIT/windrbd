@@ -72,21 +72,29 @@ LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 
 
 CFLAGS=-g -w $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
 
-all: versioninfo windrbd.sys
+all: versioninfo windrbd.sys windrbd.cat
 
 versioninfo:
 	./versioninfo.sh converted-sources $(VERSION)
 
 windrbd.sys: $(OBJS)
-	$(CC) -o windrbd.sys $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS)
-	osslsigncode -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys windrbd.sys-signed
+	$(CC) -o windrbd.sys-unsigned $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS)
+	osslsigncode -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed
 	mv windrbd.sys-signed windrbd.sys
+
+# TODO: also INF file
+# TODO: needs a 'modern' osslsigncode (that from Ubuntu 18.04 is too old)
+windrbd.cat: windrbd.sys
+# TODO: once we can compute the windrbd.sys SHA1 hash
+# TODO: and make this project a subproject.
+#	generate-cat-file > windrbd.cat-unsigned
+	osslsigncode -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.cat-unsigned windrbd.cat
 
 clean:
 	rm -f $(OBJS)
-	rm -f windrbd.sys
+	rm -f windrbd.sys windrbd.cat
 
-package: windrbd.sys
+package: windrbd.sys windrbd.cat
 	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=Z:\\home\\johannes\\sambashare2\\drbd-utils-windows /DWindrbdDriverDirectory=$(DRIVER_DIR) )
 
 #	$(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" linstor-server.iss -DMyAppVersion=$(VERSION) -DOpenJDKDir=$(OPENJDKDIR)
