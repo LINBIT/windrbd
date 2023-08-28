@@ -1,3 +1,6 @@
+default: all
+# default: package
+
 ARCH ?= x86_64
 # ARCH=i686
 # MINGW_SYSROOT=/home/johannes/.zeranoe/mingw-w64/i686
@@ -79,6 +82,14 @@ CFLAGS=-g -w $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUD
 
 all: versioninfo windrbd.sys windrbd.cat
 
+windrbd/windrbd-event-log.rc: windrbd/windrbd-event-log.mc
+	$(MC) $< -r windrbd -h windrbd/include
+
+windrbd/include/windrbd-event-log.h: windrbd/windrbd-event-log.mc
+	$(MC) $< -r windrbd -h windrbd/include
+
+windrbd/src/printk-to-syslog.o: windrbd/include/windrbd-event-log.h
+
 versioninfo:
 	./versioninfo.sh converted-sources $(VERSION)
 
@@ -91,13 +102,14 @@ windrbd.cat: windrbd.sys
 # TODO: and make this project a subproject.
 	gencat.sh -o windrbd.cat-unsigned -h windrbd windrbd.inf windrbd.sys
 
-	rm windrbd.cat
+	rm -f windrbd.cat
 # This needs a 'modern' osslsigncode (that from Ubuntu 18.04 is too old)
 	osslsigncode -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.cat-unsigned windrbd.cat
 
 clean:
 	rm -f $(OBJS)
 	rm -f windrbd.sys windrbd.cat
+	rm -f windrbd/msg00002.bin windrbd/include/windrbd-event-log.h
 
 package: all
 	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=Z:\\home\\johannes\\sambashare2\\drbd-utils-windows /DWindrbdDriverDirectory=$(DRIVER_DIR) )
