@@ -84,7 +84,7 @@ windrbd.sys: $(OBJS)
 
 windrbd.cat: windrbd.sys
 # TODO: and make this project a subproject.
-	gencat.sh -o windrbd.cat-unsigned -h windrbd windrbd.sys windrbd.inf
+	gencat.sh -o windrbd.cat-unsigned -h windrbd windrbd.inf windrbd.sys
 
 	rm windrbd.cat
 # This needs a 'modern' osslsigncode (that from Ubuntu 18.04 is too old)
