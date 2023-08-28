@@ -94,7 +94,7 @@ echo "#define WINDRBD_VERSION \"${GITHASH}\"" >> ${OUTPATH}/windrbd_version.h
 echo "#endif" >> ${OUTPATH}/windrbd_version.h
 
 ## windrbd.inf
-sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y),${WINDRBD_VERSION}  ;Replaced by build magic#" ./windrbd/windrbd.inf.in > ${OUTPATH}/windrbd.inf
+sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y),${WINDRBD_VERSION}  ;Replaced by build magic#" ./windrbd/windrbd.inf.in > ./windrbd.inf
 
 ## inno-setup version include file
 echo \#define MyAppVersion \"${GITHASH_WITHOUT_WINDRBD_PREFIX}\" > inno-setup/version.iss
