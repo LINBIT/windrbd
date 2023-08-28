@@ -22,26 +22,6 @@ TODO: Feature: sync filesystem(s) on drbdadm secondary
 
 TODOs for Release 1.2 ----------------------------------------
 
-TODO: Build System: Make it build under Linux (was: Windows) only
-
-	Done: install ocaml for CygWin
-	In progress: Cross compile conccinelle for CygWin
-		If possible, do not try to fix too many things.
-		Update: compiles but does not link currently
-	TODO: make should build everything under Windows
-
-	Update: we are now trying to make it build under
-	Linux only (with MS build tools under wine). Need
-	to make a wine patch though ... But this saves us
-	from special casing the CI environment.
-
-TODO: Check out osslsigncode
-        signtool replacement using openssl library.
-
-TODO: Wine support for catgen
-        Next steps: implement PutMemberInfo, PutAttrInfo(member),
-                PersistStore.
-
 TODO: Code quality: review TODOs in source code.
 
 	Currently 136 total.
@@ -8570,4 +8550,33 @@ Rejected: something with removable media
 	Done, we do not want this. One could 'eject' a WinDRBD
 	device which 1) does not work 2) would leave the resource
 	in a strange state.
+
+Done: Build System: Make it build under Linux (was: Windows) only
+
+	Done: install ocaml for CygWin
+	In progress: Cross compile conccinelle for CygWin
+		If possible, do not try to fix too many things.
+		Update: compiles but does not link currently
+	TODO: make should build everything under Windows
+
+	Update: we are now trying to make it build under
+	Linux only (with MS build tools under wine). Need
+	to make a wine patch though ... But this saves us
+	from special casing the CI environment.
+
+	Update: we now wrote generate-cat-file which generates
+	a cat file that can be signed with osslsigncode (if
+	it is new enough). Mission accomplished.
+
+Done: Check out osslsigncode
+        signtool replacement using openssl library.
+
+	Yes it works. And more recent versions sign cat files too.
+
+Rejected: Wine support for catgen
+        Next steps: implement PutMemberInfo, PutAttrInfo(member),
+                PersistStore.
+	No need for that any more - there is a standalone C program
+	(without lib dependencies) that does the generating of the
+	cat files.
 
