@@ -5,6 +5,8 @@ MINGW_SYSROOT=/home/$(USER)/.zeranoe/mingw-w64/$(ARCH)
 # CC=i686-w64-mingw32-gcc
 # CC=$(MINGW_SYSROOT)/bin/i686-w64-mingw32-gcc
 CC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-gcc
+RC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windres
+MC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windmc
 
 REACTOS_ROOT=windrbd/include/from-reactos
 REACTOS_BUILD=windrbd/include/from-reactos/output-$(ARCH)
@@ -50,7 +52,7 @@ WINDRBD_FILES = $(WINDRBD_SRCDIR)/Attr.c $(WINDRBD_SRCDIR)/disp.c $(WINDRBD_SRCD
                 $(WINDRBD_SRCDIR)/windrbd_winsocket.c $(WINDRBD_SRCDIR)/windrbd_locking.c \
                 $(WINDRBD_SRCDIR)/tiktok.c $(WINDRBD_SRCDIR)/partition_table_template.c
 
-OBJS=$(patsubst %.c,%.o,$(DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES))
+OBJS=$(patsubst %.c,%.o,$(DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) ./windrbd/windrbd-event-log.coffres ./converted-sources/drbd/resource.coffres
 
 LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
 
@@ -69,6 +71,9 @@ LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 
 # LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--file-alignment,0x200 -Wl,--section-alignment,0x1000 -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--exclude-all-symbols -Wl,--entry,_DriverEntry -nostartfiles -nodefaultlibs -nostdlib -Wl,-Map='windrbd.sys.map'
 # LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native
 # LDFLAGS_FOR_DRIVERS=
+
+%.coffres: %.rc
+	$(RC) -i $< -o $@ -O coff
 
 CFLAGS=-g -w $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
 
