@@ -8,7 +8,8 @@ fi
 
 FILE=$1
 shift
+PROG=$( basename $FILE )
 
 parallel scp ./$FILE Administrator@{}: ::: $*
-parallel ssh Administrator@{} "./$FILE /verysilent /norestart" ::: $*
+parallel ssh Administrator@{} "./$PROG /verysilent /norestart" ::: $*
 parallel ssh Administrator@{} "drbdadm --version" ::: $*
