@@ -83,6 +83,8 @@ windrbd.sys: $(OBJS)
 
 windrbd.cat: windrbd.sys
 # build the cat file generator. It is not yet in any Linux distros ...
+# if this fails then you probably forgot to clone with --recursive.
+# You may want to do something like git submodule update or so..
 	make -C generate-cat-file CC=$(HOSTCC)
 	generate-cat-file/gencat.sh -o windrbd.cat-unsigned -h windrbd windrbd.inf windrbd.sys
 
