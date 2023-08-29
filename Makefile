@@ -100,3 +100,6 @@ clean:
 
 package: all
 	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=Z:\\home\\johannes\\sambashare2\\drbd-utils-windows /DWindrbdDriverDirectory=$(DRIVER_DIR) )
+
+docker:
+	docker build --pull=true --no-cache=true -t windrbd-devenv docker-root
