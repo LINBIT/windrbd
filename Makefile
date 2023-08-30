@@ -112,4 +112,34 @@ package: all drbd-utils
 	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=..\\drbd-utils /DWindrbdDriverDirectory=$(DRIVER_DIR) )
 
 docker:
-	docker build --pull=true --no-cache=true -t windrbd-devenv-with-cygwin docker-root
+	docker build --pull=true --no-cache=true -t windrbd-devenv-can-build-drbd-utils docker-root
+
+# From original Linux Makefile: this will go away (hopefully
+# soon) when we switch to a git branch on DRBD upstream +
+# some cocci's.
+
+TRANS_SRC := drbd/
+TRANS_DEST := converted-sources/
+WIN4LIN := windrbd/
+
+TRANSFORMATIONS := $(sort $(wildcard transform.d/*))
+ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c|drbd_buildtag.c|compat.h|drbd_polymorph_printk.h')
+TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG))
+
+export SHELL=bash
+
+# can not regenerate those scripts
+$(TRANSFORMATIONS): ;
+
+# can not regenerate the originals
+$(ORIG): ;
+
+$(TRANSFORMED): $(TRANSFORMATIONS) transform
+
+$(TRANS_DEST)% : $(TRANS_SRC)%
+	@./transform $< $@
+
+$(TRANS_DEST).generated: $(ORIG)
+	echo $(TRANSFORMED) > $(TRANS_DEST).generated
+
+trans: $(TRANSFORMED) $(TRANS_DEST).generated

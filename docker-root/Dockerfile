@@ -29,6 +29,7 @@ RUN cd mingw-w64-build && ./mingw-w64-build x86_64
 # We expect a bind mount to the WinDRBD project root in /windrbd
 # Use -v /path/to/windrbd:/windrbd parameter to docker run
 RUN git config --global --add safe.directory /windrbd
+RUN git config --global --add safe.directory /windrbd/drbd-utils
 
 # Now .. the cygwin cross compiler. There is a more or less
 # maintained fedora binary (rpm's) which we convert with
@@ -45,3 +46,6 @@ RUN wget https://download.copr.fedorainfracloud.org/results/yselkowitz/cygwin/fe
 
 RUN alien -d *.rpm
 RUN dpkg -i *.deb
+
+RUN cp /usr/lib64/libisl.so.15.3.0 /usr/lib/x86_64-linux-gnu
+RUN cp /usr/lib64/libisl.so.15 /usr/lib/x86_64-linux-gnu
