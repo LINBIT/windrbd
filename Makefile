@@ -78,7 +78,7 @@ versioninfo:
 
 windrbd.sys: $(OBJS)
 	$(CC) -o windrbd.sys-unsigned $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS)
-	osslsigncode -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed
+	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed
 	mv windrbd.sys-signed windrbd.sys
 
 windrbd.cat: windrbd.sys
@@ -91,15 +91,25 @@ windrbd.cat: windrbd.sys
 	rm -f windrbd.cat
 # TODO: This needs a 'modern' osslsigncode (that from Ubuntu 18.04 and also
 # from Ubuntu 20.04 is too old - you probably have to build it yourself)
-	osslsigncode -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.cat-unsigned windrbd.cat
+	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.cat-unsigned windrbd.cat
+
+.PHONY: drbd-utils
+
+drbd-utils:
+	cd drbd-utils && ./autogen.sh
+	cd drbd-utils && ./configure --without-83support --without-84support --without-drbdmon --with-windrbd --without-manual --prefix=/cygdrive/c/windrbd/usr --localstatedir=/cygdrive/c/windrbd/var --sysconfdir=/cygdrive/c/windrbd/etc --host=x86_64-pc-cygwin
+	make -C drbd-utils
 
 clean:
 	rm -f $(OBJS)
 	rm -f windrbd.sys windrbd.cat
 	rm -f windrbd/msg00002.bin windrbd/include/windrbd-event-log.h
+	rm -f windrbd.cat-unsigned windrbd.sys-unsigned windrbd.sys-signed
+	make -C generate-cat-file clean
+	make -C drbd-utils clean
 
-package: all
-	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=Z:\\home\\johannes\\sambashare2\\drbd-utils-windows /DWindrbdDriverDirectory=$(DRIVER_DIR) )
+package: all drbd-utils
+	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=..\\drbd-utils /DWindrbdDriverDirectory=$(DRIVER_DIR) )
 
 docker:
-	docker build --pull=true --no-cache=true -t windrbd-devenv docker-root
+	docker build --pull=true --no-cache=true -t windrbd-devenv-with-cygwin docker-root

@@ -6,3 +6,6 @@
 [submodule "generate-cat-file"]
 	path = generate-cat-file
 	url = jtsoft.at:generate-cat-file
+[submodule "drbd-utils"]
+	path = drbd-utils
+	url = git@gitlab.linbit:/drbd/drbd-utils
