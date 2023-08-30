@@ -6,7 +6,12 @@ C does not work any more.
 
 This guide assumes you want to build for a modern
 Windows Server (2016 or later) and the x86_64 
-(64 bit) architecture.
+(64 bit) architecture. It further assumes that
+you are running Ubuntu 22.04 Jammy as the build
+machine (not strictly required but that is what
+we have in our build environment). Since we are
+importing Fedora packages, Fedora itself also
+might be a good choice.
 
 == Installing build dependencies
 
@@ -31,4 +36,11 @@ Depending on the speed of your machine the process takes
 You might have to install additional packages like texinfo
 (for makeinfo) but the script will tell you what to do.
 
+To sign the windrbd.sys and the security catalog (windrbd.cat)
+file you need osslsigncode. Install it with
 
+	apt install osslsigncode
+
+Note that the osslsigncode before Ubuntu 22.04 cannot sign
+catfiles, so you either have to compile osslsigncode on your
+own or use a more modern Linux distro.
