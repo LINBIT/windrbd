@@ -5,7 +5,7 @@
         fetchRecurseSubmodules = true
 [submodule "generate-cat-file"]
 	path = generate-cat-file
-	url = jtsoft.at:generate-cat-file
+	url = https://gitlab.at.linbit.com/drbd/generate-cat-file
 [submodule "drbd-utils"]
 	path = drbd-utils
-	url = git@gitlab.linbit:/drbd/drbd-utils
+	url = https://gitlab.at.linbit.com/drbd/drbd-utils.git
