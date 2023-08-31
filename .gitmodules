@@ -3,6 +3,7 @@
         url = https://github.com/LINBIT/drbd-9.0.git
         update = rebase
         fetchRecurseSubmodules = true
+	branch = jt/drbd-for-windrbd-1.1.0-rc3
 [submodule "generate-cat-file"]
 	path = generate-cat-file
 	url = ../generate-cat-file
