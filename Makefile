@@ -76,7 +76,10 @@ windrbd/src/printk-to-syslog.o: windrbd/include/windrbd-event-log.h
 versioninfo:
 	./versioninfo.sh converted-sources $(VERSION)
 
-windrbd.sys: $(OBJS)
+# this (converted-sources) should not be .PHONY
+# generate it on the first build then leave it
+# alone (until either renamed or removed)
+windrbd.sys: converted-sources $(OBJS)
 	$(CC) -o windrbd.sys-unsigned $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS)
 	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed
 	mv windrbd.sys-signed windrbd.sys
@@ -143,3 +146,5 @@ $(TRANS_DEST).generated: $(ORIG)
 	echo $(TRANSFORMED) > $(TRANS_DEST).generated
 
 trans: $(TRANSFORMED) $(TRANS_DEST).generated
+
+converted-sources: trans
