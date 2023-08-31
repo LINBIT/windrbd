@@ -1,0 +1,27 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+# so we get a version number with git describe
+  GIT_DEPTH: 0
+  LINBIT_DOCKER_REGISTRY: nexus.at.linbit.com:5000
+  LINBIT_REGISTRY_URL: nexus.at.linbit.com:5000
+  VIRTER_VERSION: v0.24.0
+  VMSHED_VERSION: v0.19.0
+
+stages:
+  - build
+#  - test
+
+build:
+  stage: build
+  image: nexus.at.linbit.com:5000/windrbd-devenv
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'windrbd-1.2'
+  script:
+    - make package VERSION=from-gitlab
+  artifacts:
+    paths:
+      - inno-setup/install*.exe
+    when: always
+
+# test:
+# TODO: run drbd test suite with the image
