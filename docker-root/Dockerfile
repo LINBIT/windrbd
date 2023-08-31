@@ -6,7 +6,7 @@ ENV WINEDEBUG=-all
 ENV WINEPREFIX=/wine
 
 RUN apt-get update
-RUN apt-get install --no-install-recommends -y ca-certificates wget apt-utils make git iputils-ping python3 rsync vim xz-utils unzip ssh curl osslsigncode g++ flex bison texinfo m4 bzip2 alien
+RUN apt-get install --no-install-recommends -y ca-certificates wget apt-utils make git iputils-ping python3 rsync vim xz-utils unzip ssh curl osslsigncode g++ flex bison texinfo m4 bzip2 alien coccinelle
 
 RUN dpkg --add-architecture i386
 RUN mkdir -pm755 /etc/apt/keyrings
