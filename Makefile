@@ -115,7 +115,7 @@ package: all drbd-utils
 	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=..\\drbd-utils /DWindrbdDriverDirectory=$(DRIVER_DIR) )
 
 docker:
-	docker build --pull=true --no-cache=true -t windrbd-devenv-can-build-drbd-utils docker-root
+	docker build --pull=true --no-cache=true -t windrbd-devenv docker-root
 
 # From original Linux Makefile: this will go away (hopefully
 # soon) when we switch to a git branch on DRBD upstream +
@@ -130,6 +130,7 @@ ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-co
 TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG))
 
 export SHELL=bash
+export V=1
 
 # can not regenerate those scripts
 $(TRANSFORMATIONS): ;
