@@ -5,7 +5,7 @@
         fetchRecurseSubmodules = true
 [submodule "generate-cat-file"]
 	path = generate-cat-file
-	url = ../generate-cat-file.git
+	url = ../generate-cat-file
 [submodule "drbd-utils"]
 	path = drbd-utils
 	url = ../drbd-utils.git
