@@ -17,15 +17,17 @@ WINE=/usr/bin/wine
 DOCKER_IMAGE ?= windrbd-devenv
 DOCKER_RUN=docker run --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 
+NUM_JOBS ?= $(shell nproc)
+
 # so one can type make with-docker :)
 with-docker:
-	$(DOCKER_RUN) make -C windrbd $(WHAT) VERSION=$(VERSION)
+	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION)
 
 all-in-docker:
-	$(DOCKER_RUN) make -C windrbd all VERSION=$(VERSION)
+	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION)
 
 package-in-docker:
-	$(DOCKER_RUN) make -C windrbd package VERSION=$(VERSION)
+	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION)
 
 ifeq ($(ARCH), i686)
 DRIVER_ENTRY=_DriverEntry
