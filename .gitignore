@@ -9,3 +9,7 @@ codeql-database
 *.o
 makelog*
 windrbd.sys*
+
+windrbd/include/windrbd-event-log.h
+windrbd/windrbd-event-log.coffres
+windrbd/windrbd-event-log.rc
