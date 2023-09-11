@@ -1,4 +1,12 @@
-default: all
+default: package-in-docker
+# If you have your dev env set up on the host you can try
+# to build without docker container: to set it up the
+# contents of the docker-root/Dockerfile might be useful.
+# Keep in mind that this requires a modern (2022 or later)
+# Linux distribution (with a recent GLIBC) for building
+# drbd-utils.
+
+# default: all
 # default: package
 
 ARCH ?= x86_64
@@ -115,7 +123,7 @@ windrbd.cat: windrbd.sys
 drbd-utils:
 	cd drbd-utils && ./autogen.sh
 	cd drbd-utils && ./configure --without-83support --without-84support --without-drbdmon --with-windrbd --without-manual --prefix=/cygdrive/c/windrbd/usr --localstatedir=/cygdrive/c/windrbd/var --sysconfdir=/cygdrive/c/windrbd/etc --host=x86_64-pc-cygwin
-	make -C drbd-utils
+	make -C drbd-utils -j $(NUM_JOBS)
 
 clean:
 	rm -f $(OBJS)
