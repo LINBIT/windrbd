@@ -117,8 +117,8 @@ drbd-utils:
 
 clean:
 	rm -f $(OBJS)
-	rm -f windrbd.sys windrbd.cat
-	rm -f windrbd/msg00002.bin windrbd/include/windrbd-event-log.h
+	rm -f windrbd.sys windrbd.sys.map windrbd.cat windrbd.inf
+	rm -f windrbd/msg00002.bin windrbd/include/windrbd-event-log.h windrbd/windrbd-event-log.rc
 	rm -f windrbd.cat-unsigned windrbd.sys-unsigned windrbd.sys-signed
 	make -C generate-cat-file clean
 	make -C drbd-utils clean
