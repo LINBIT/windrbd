@@ -1,4 +1,4 @@
-= Building WinDRBD with mingw-w64 toolchain
+# Building WinDRBD with mingw-w64 toolchain
 
 Starting from the 1.2 branch WinDRBD is built with
 gcc (mingw-w64). Building with Microsoft Visual
@@ -13,7 +13,7 @@ In this file we will show the quick way first
 because this is probably what you want to go
 for.
 
-== Building WinDRBD using a docker container
+## Building WinDRBD using a docker container
 
 First if you haven't done so, install docker:
 
@@ -40,7 +40,7 @@ It should take a few minutes to build WinDRBD
 (including drbd-utils and the generate-cat-file
 build tool).
 
-== Prepare a Linux host for building WinDRBD
+## Prepare a Linux host for building WinDRBD
 
 This guide assumes you want to build for a modern
 Windows Server (2016 or later) and the x86_64 
@@ -82,3 +82,5 @@ file you need osslsigncode. Install it with
 Note that the osslsigncode before Ubuntu 22.04 cannot sign
 catfiles, so you either have to compile osslsigncode on your
 own or use a more modern Linux distro.
+
+unfinished ...
