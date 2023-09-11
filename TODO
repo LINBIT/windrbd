@@ -13,6 +13,10 @@ TODO: Check behavior of remove-bus - install-bus - primary
         right before running sc stop.
         Also have a lock-driver
 
+TODO: Bug: umhelper cannot find /var/lib/drbd-test
+
+	Probably because it is running as a service.
+
 TODO: Bug: BSOD on failing I/O with disk-timeout-loop.sh
 
 	Not sure if it is new (fails in bio_put)
