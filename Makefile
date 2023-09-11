@@ -1,7 +1,5 @@
 default: all
 # default: package
-# edit 123
-# edit 456
 
 ARCH ?= x86_64
 # ARCH=i686
