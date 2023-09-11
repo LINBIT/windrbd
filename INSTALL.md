@@ -51,7 +51,7 @@ we have in our build environment). Since we are
 importing Fedora packages, Fedora itself also
 might be a good choice.
 
-== Installing build dependencies
+### Installing build dependencies
 
 To install mingw-w64 use the mingw-w64-build script
 as shown below:
