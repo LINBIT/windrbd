@@ -14,6 +14,18 @@ REACTOS_ROOT=windrbd/include/from-reactos
 REACTOS_BUILD=windrbd/include/from-reactos/output-$(ARCH)
 
 WINE=/usr/bin/wine
+DOCKER_IMAGE ?= windrbd-devenv
+DOCKER_RUN=docker run --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
+
+# so one can type make with-docker :)
+with-docker:
+	$(DOCKER_RUN) make -C windrbd $(WHAT) VERSION=$(VERSION)
+
+all-in-docker:
+	$(DOCKER_RUN) make -C windrbd all VERSION=$(VERSION)
+
+package-in-docker:
+	$(DOCKER_RUN) make -C windrbd package VERSION=$(VERSION)
 
 ifeq ($(ARCH), i686)
 DRIVER_ENTRY=_DriverEntry
@@ -115,7 +127,7 @@ package: all drbd-utils
 	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=..\\drbd-utils /DWindrbdDriverDirectory=$(DRIVER_DIR) )
 
 docker:
-	docker build --pull=true --no-cache=true -t windrbd-devenv docker-root
+	docker build --pull=true --no-cache=true -t $(DOCKER_IMAGE) docker-root
 
 # From original Linux Makefile: this will go away (hopefully
 # soon) when we switch to a git branch on DRBD upstream +
