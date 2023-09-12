@@ -5,6 +5,10 @@ TODOs for 1.1 branch  ----------------------------------------
 TODO: Build self signed installer package with VERSION=self-signed or VERSION=unsupported
 	And put that version on the website.
 
+TODO: Bug: Hang in NetworkFailure on no memory.
+
+TODO: Bug: drbdadm up slow
+
 TODO: Bug: On no memory, genl_replymsg() -ENOMEM is not checked.
 	by DRBD: may it fail in the Linux kernel?
 
