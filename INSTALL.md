@@ -13,14 +13,15 @@ In this file we will show the quick way first
 because this is probably what you want to go
 for.
 
-TODO: docker pull?
+## TODO: xxx
+
+    docker pull quay.io/johannesthoma/windrbd-devenv
 
 ## Building WinDRBD using a docker container
 
 First if you haven't done so, install docker:
 
-    # or yum, ...
-    sudo apt install docker
+    sudo apt install docker.io
 
 Then build the build environment (this requires
 an internet connection as well as many CPU cores
