@@ -5,6 +5,31 @@ Base on DRBD 9.1
 
 DRBD reactor support
 
+What's new in version 1.2.0-rc2
+-------------------------------
+
+generate-cat-file project: inf2cat replacement for Linux (no
+	external libraries required).
+
+Sign driver and cat file with osslsigncode
+
+make docker image for building WinDRBD
+
+alternativlely make pull-docker
+
+drbd-utils as submodule
+
+make builds everything (inside a container)
+
+updated documentation (INSTALL.md)
+
+Removed lots of unused files / directories
+
+What's new in version 1.2.0-rc1
+-------------------------------
+
+Can compile WinDRBD driver with gcc (mingw-w64).
+
 What's new in version 1.1.8
 ---------------------------
 
