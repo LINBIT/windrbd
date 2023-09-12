@@ -606,8 +606,7 @@ WskQueryProviderCharacteristics(
     _In_ PWSK_REGISTRATION WskRegistration,
     _Out_ PWSK_PROVIDER_CHARACTERISTICS WskProviderCharacteristics);
 
-__attribute__((stdcall))
-VOID
+VOID WSKAPI
 WskDeregister(
     _In_ PWSK_REGISTRATION WskRegistration);
 
