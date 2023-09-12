@@ -28,6 +28,10 @@ DOCKER_RUN=docker run --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 
 NUM_JOBS ?= $(shell nproc)
 
+pull-docker:
+	docker pull quay.io/johannesthoma/windrbd-devenv
+	docker tag quay.io/johannesthoma/windrbd-devenv windrbd-devenv
+
 # so one can type make with-docker :)
 with-docker:
 	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION) ARCH=$(ARCH)

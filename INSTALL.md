@@ -13,25 +13,41 @@ In this file we will show the quick way first
 because this is probably what you want to go
 for.
 
-## TODO: xxx
-
-    docker pull quay.io/johannesthoma/windrbd-devenv
-
 ## Building WinDRBD using a docker container
+
+### Installing docker
 
 First if you haven't done so, install docker:
 
     sudo apt install docker.io
 
-Then build the build environment (this requires
-an internet connection as well as many CPU cores
-since we're building one of the C compilers
+And add the user to the docker group (you have
+to log out and log in again).
+
+You have 2 choices now: either use the pre-built
+docker image from LINBIT or build the docker
+image on your own.
+
+### Pulling the docker image
+
+There is a Makefile target that pulls the pre-built
+windrbd-devenv docker image: do
+
+    make pull-docker
+
+### Or build the docker image on your own
+
+You also can build the build environment yourself
+This requires an internet connection as well as
+many CPU cores since we're building one of the C compilers
 therein):
 
     make docker
 
 This process takes about 10-30 minutes depending
 on your hardware.
+
+### Building WinDRBD inside the docker image
 
 Finally use the newly created docker image (Ubuntu
 22.04 based) to build WinDRBD (working directory
