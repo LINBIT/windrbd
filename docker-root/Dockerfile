@@ -24,7 +24,7 @@ COPY ["Inno Setup 5", "/wine/drive_c/Program Files (x86)/Inno Setup 5/"]
 RUN git clone https://github.com/Zeranoe/mingw-w64-build.git
 RUN cd mingw-w64-build && ./mingw-w64-build x86_64
 # Also for i686: uncomment this:
-# RUN cd mingw-w64-build && ./mingw-w64-build i686
+RUN cd mingw-w64-build && ./mingw-w64-build i686
 
 # We expect a bind mount to the WinDRBD project root in /windrbd
 # Use -v /path/to/windrbd:/windrbd parameter to docker run
