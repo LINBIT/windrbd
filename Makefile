@@ -10,6 +10,7 @@ default: package-in-docker
 # default: package
 
 ARCH ?= x86_64
+
 # ARCH=i686
 MINGW_SYSROOT=$(HOME)/.zeranoe/mingw-w64/$(ARCH)
 CC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-gcc
@@ -29,13 +30,13 @@ NUM_JOBS ?= $(shell nproc)
 
 # so one can type make with-docker :)
 with-docker:
-	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION)
+	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION) ARCH=$(ARCH)
 
 all-in-docker:
-	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION)
+	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION) ARCH=$(ARCH)
 
 package-in-docker:
-	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION)
+	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION) ARCH=$(ARCH)
 
 ifeq ($(ARCH), i686)
 DRIVER_ENTRY=_DriverEntry
