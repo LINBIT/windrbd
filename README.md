@@ -324,3 +324,4 @@ Version history
  * 1.1.7 (Jun 27, 2023): Fixed BSOD on low memory, fixed performance bug, poll_hup support for utils
  * 1.1.8 (Nov 21, 2023): backing dev I/O cork/uncork, resize fix, sync stall fix and many others
  * 1.2.0-rc1 (Aug 14, 2023): Compile with gcc. Don't use 1.2.0-rc's in production.
+ * 1.2.0-rc2 (Sep 12, 2023): Build everything within a docker container (WinDRBD, drbd-utils, ...)
