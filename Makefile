@@ -12,7 +12,8 @@ default: package-in-docker
 ARCH ?= x86_64
 
 # ARCH=i686
-MINGW_SYSROOT=$(HOME)/.zeranoe/mingw-w64/$(ARCH)
+# MINGW_SYSROOT=$(HOME)/.zeranoe/mingw-w64/$(ARCH)
+MINGW_SYSROOT=/root/.zeranoe/mingw-w64/$(ARCH)
 CC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-gcc
 RC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windres
 MC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windmc
@@ -23,10 +24,12 @@ REACTOS_ROOT=windrbd/include/from-reactos
 REACTOS_BUILD=windrbd/include/from-reactos/output-$(ARCH)
 
 WINE=/usr/bin/wine
-DOCKER_IMAGE ?= windrbd-devenv
-DOCKER_RUN=docker run --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 
 NUM_JOBS ?= $(shell nproc)
+MY_UID ?= $(shell id -u)
+
+DOCKER_IMAGE ?= windrbd-devenv
+DOCKER_RUN=HOME=/root docker run -u $(MY_UID) --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 
 pull-docker:
 	docker pull quay.io/johannesthoma/windrbd-devenv
@@ -110,6 +113,7 @@ windrbd.sys: converted-sources $(OBJS)
 	$(CC) -o windrbd.sys-unsigned $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS)
 	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed
 	mv windrbd.sys-signed windrbd.sys
+	rm -f windrbd.sys-unsigned
 
 windrbd.cat: windrbd.sys
 # build the cat file generator. It is not yet in any Linux distros ...
@@ -122,6 +126,7 @@ windrbd.cat: windrbd.sys
 # TODO: This needs a 'modern' osslsigncode (that from Ubuntu 18.04 and also
 # from Ubuntu 20.04 is too old - you probably have to build it yourself)
 	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.cat-unsigned windrbd.cat
+	rm -f windrbd.cat-unsigned
 
 .PHONY: drbd-utils
 
