@@ -10,6 +10,18 @@ Clone this repository with
 
 else you get an incomplete checkout.
 
+To build (within a docker container containing build dependecies), do:
+
+	make pull-docker && make package-in-docker
+
+To put your Windows box into test mode, do
+
+	bcdedit /set TESTSIGNING ON
+
+and reboot. You now can load the driver you just built.
+
+To install on Windows run the generated install-windrbd-<version>.exe.
+
 If you need installable binaries with a signed driver or
 need assistance using WinDRBD please talk to the project's
 sponsor [LINBIT](https://www.linbit.com).
