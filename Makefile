@@ -27,9 +27,19 @@ WINE=/usr/bin/wine
 
 NUM_JOBS ?= $(shell nproc)
 MY_UID ?= $(shell id -u)
+MY_GID ?= $(shell id -g)
 
 DOCKER_IMAGE ?= windrbd-devenv
-DOCKER_RUN=HOME=/root docker run -u $(MY_UID) --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
+# Does not work. /wine is owned by root and we can't
+# chown it since we don't know the UID when the docker
+# image is built.
+# DOCKER_RUN=docker run -u $(MY_UID):$(MY_GID) --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
+# so run docker as root ...
+DOCKER_RUN=docker run --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
+
+# Change ownership of all files created by make process to
+# the host's UID/GID.
+FIXUP_OWNERSHIP=bash -c 'f=`find /windrbd -user root` ; if [ x"$$f" != x ] ; then chown $(MY_UID):$(MY_GID) $$f ; fi'
 
 pull-docker:
 	docker pull quay.io/johannesthoma/windrbd-devenv
@@ -38,12 +48,15 @@ pull-docker:
 # so one can type make with-docker :)
 with-docker:
 	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION) ARCH=$(ARCH)
+	$(DOCKER_RUN) $(FIXUP_OWNERSHIP)
 
 all-in-docker:
 	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION) ARCH=$(ARCH)
+	$(DOCKER_RUN) $(FIXUP_OWNERSHIP)
 
 package-in-docker:
 	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION) ARCH=$(ARCH)
+	$(DOCKER_RUN) $(FIXUP_OWNERSHIP)
 
 ifeq ($(ARCH), i686)
 DRIVER_ENTRY=_DriverEntry
