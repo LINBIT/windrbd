@@ -28,16 +28,20 @@ contents of block devices over a network to (up to 31) other nodes.
 WinDRBD is based on DRBD 9. It was originally started by Korean
 company Mantech and was later rewritten by Johannes Thoma for Linbit.
 
-DRBD devices are exported as SCSI disks as soon as the resource
-becomes primary and can be partitioned and formatted with the
+DRBD devices are exported as SCSI disks. As soon as the resource
+becomes primary such a disk can be partitioned and formatted with the
 standard Windows tools (diskpart, partition editor in control
 panel, powershell).
+
+WinDRBD also supports reusing existing data partitions. It does so
+by faking a partition table around the data partition and presents
+it as a SCSI disk.
 
 What else is needed?
 ====================
 
 If you want to build WinDRBD by yourself please read through
-the file ``INSTALL.md`` however keep in mind that for 64-bit
+the file ``INSTALL.md``. However keep in mind that for 64-bit
 platforms a digital signature issued by Microsoft  is required.
 
 Therefore we strongly recommend to use the binary packages provided by
