@@ -1,27 +1,24 @@
 First things first
 ==================
 
-Clone this repository with 
+This branch (windrbd-1.2) is under development. Certain commits
+might work or not even compile at all.
 
-	git clone --recursive <url>
+Clone this repository with
+
+	git clone --branch windrbd-1.2 --recursive <url>
 
 else you get an incomplete checkout.
 
-If you need installable binaries with a signed driver please go to
-
-https://linbit.com/linbit-software-download-page-for-linstor-and-drbd-linux-driver/#drbd-windows
-
-If you need support, please contact Linbit (www.linbit.com)
-at sales@linbit.com
-
-This branch (windrbd-1.2) is under development. Certain commits
-might work or not even compile at all.
+If you need installable binaries with a signed driver or
+need assistance using WinDRBD please talk to the project's
+sponsor [LINBIT](https://www.linbit.com).
 
 What is WinDRBD?
 ================
 
 WinDRBD is a port of Linbit's Distributed Replicated Block Device
-Linux driver to Microsoft Windows. Technically it is a thin
+Linux driver to Microsoft Windows. Technically it is a
 compatibility layer that maps Linux specific kernel API calls to the
 Microsoft Windows NT Kernel API.
 
@@ -39,27 +36,13 @@ panel, powershell).
 What else is needed?
 ====================
 
-If you have a binary package, you don't need to install CygWin since
-the Cygwin DLL comes with the binary package. Commands like drbdadm and
-windrbd should work out-of-the-box with the Windows cmd shell.
+If you want to build WinDRBD by yourself please read through
+the file ``INSTALL.md`` however keep in mind that for 64-bit
+platforms a digital signature issued by Microsoft  is required.
 
-We strongly recommend to use the binary packages provided by
+Therefore we strongly recommend to use the binary packages provided by
 Linbit since they are signed with a Microsoft key and therefore
 should load without putting Windows into test mode.
-
-For detailed build instructions, please see the file INSTALL. Having
-said that you need a Windows box with CygWin installed and a Linux
-box to build WinDRBD from source.
-
-For building you need Ewdk from Microsoft and a separate Linux Box
-with spatch (concinelle) installed.
-
-You need a recent version of drbd-utils. To obtain it, do a:
-
-git clone --recursive https://github.com/LINBIT/drbd-utils.git
-
-and follow the build instruction in README-windrbd.md file of the
-repo.
 
 Configuring DRBD
 ================
@@ -72,7 +55,7 @@ The C:\windrbd folder can be configured at installation time (use this for
 example if your C: drive is read only).
 
 Put your resources (extension .res) into the C:\windrbd\etc\drbd.d
-folder (from within a CygWin shell you can access this via
+folder. From within a CygWin shell you can access this via
 
 	/cygdrive/c/windrbd/etc/drbd.d/<name>.res
 
@@ -96,56 +79,10 @@ Please see the Linbit website for that guide.
 Also there are some newer (beginning 2023) articles on
 https://kb.linbit.com
 
-Differences to Linux DRBD
-=========================
-
-Note that there is a more detailed documentation of the differences
-on http://kb.linbit.com
-
-In the configuration the only difference to Linux DRBD is that block
-devices are specified as you would expect it under Microsoft Windows,
-that is drive letters or GUID's are used. Examples:
-
-	disk "F:";
-	# or:
-	disk "0b098289-8295-11e7-bddb-0800274272c4";
-
-We recommend not to assign drive letters to backing devices, since
-that easily may confuse the user. You can use the mountvol utility
-to find the GUID of a device.
-
-Disk devices present themselves as a regular SCSI disk
-(like a physical hard disk) and appear as disk in the
-Windows partition manager (and also in device manager).
-With partition manager a partition table can be created
-and then partitions (with assigned drive letters) can
-be created on the disk. The partitions can be formatted
-with all supported file systems. This means that
-that normally there is be a partition table on the disk (under
-Linux, kpartx can be used to create device nodes for
-each partition).
-
-Example for a disk device would be:
-
-	device minor 42;
-
-(with no mount point). Mount points can be assigned with
-partition manager.
-
-A special case of the disk device is the boot device. Booting
-from a remote (Linux) server is possible now (however 
-without local backing storage and installation is quite
-difficult now). There is a document on 
-
-	https://downloads.linbit.com/
-
-("Setting up WinDRBD diskless boot") that describes the
-process (which is subject to change).
-
 Current limitations
 ===================
 
-The current 1.1 branch has following restrictions:
+The current 1.2 branch has following restrictions:
 
   * Auto-promote is not supported.
 
@@ -154,8 +91,6 @@ The current 1.1 branch has following restrictions:
   * For booting via WinDRBD the installation onto a WinDRBD volume
     is not possible yet with the Windows installer GUI.
 
-  * Currently no 32-Bit version is supported, only 64 bit.
-
 Logging
 =======
 
@@ -163,7 +98,8 @@ To view the log file go to
 
 	C:\windrbd\windrbd-kernel.log
 
-If you need remote logging, please read on.
+If you need remote logging, please read on (you don't usually
+need it any more since WinDRBD is quite stable now).
 
 We use syslog UDP packets and a Linux host to debug WinDRBD.
 
