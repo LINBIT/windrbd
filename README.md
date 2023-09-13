@@ -2,7 +2,7 @@ First things first
 ==================
 
 This branch (windrbd-1.2) is under development. Certain commits
-might work or not even compile at all.
+might not work or not even compile at all.
 
 Clone this repository with
 
@@ -10,7 +10,8 @@ Clone this repository with
 
 else you get an incomplete checkout.
 
-To build (within a docker container containing build dependecies), do:
+To build (within a docker container containing build dependecies), do
+(on a Linux box):
 
 	make pull-docker && make package-in-docker
 
