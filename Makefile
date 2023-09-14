@@ -124,7 +124,7 @@ versioninfo:
 # this (converted-sources) should not be .PHONY
 # generate it on the first build then leave it
 # alone (until either renamed or removed)
-windrbd.sys: converted-sources $(OBJS)
+windrbd.sys: converted-sources $(OBJS) converted-sources/drbd/drbd_buildtag.c
 	$(CC) -o windrbd.sys-unsigned $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS)
 	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed
 	mv windrbd.sys-signed windrbd.sys
@@ -141,7 +141,7 @@ windrbd.cat: windrbd.sys
 # TODO: This needs a 'modern' osslsigncode (that from Ubuntu 18.04 and also
 # from Ubuntu 20.04 is too old - you probably have to build it yourself)
 	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.cat-unsigned windrbd.cat
-	rm -f windrbd.cat-unsigned
+#	rm -f windrbd.cat-unsigned
 
 .PHONY: drbd-utils
 
