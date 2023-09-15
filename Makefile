@@ -6,12 +6,18 @@ default: package-in-docker
 # Linux distribution (with a recent GLIBC) for building
 # drbd-utils.
 
-# test1
-
 # default: all
 # default: package
 
 ARCH ?= x86_64
+TARGET_IPS ?= 10.43.224.4 10.43.224.25
+
+GIT_VERSION=$(shell git describe --tags)
+ifdef VERSION
+FULL_VERSION=$(GIT_VERSION)-$(VERSION)
+else
+FULL_VERSION=$(GIT_VERSION)
+endif
 
 # ARCH=i686
 # MINGW_SYSROOT=$(HOME)/.zeranoe/mingw-w64/$(ARCH)
@@ -176,6 +182,9 @@ docker:
 
 docker-fc37:
 	docker build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-fc37 -f docker-root/Dockerfile-fc37 docker-root
+
+install:
+	inno-setup/deploy.sh inno-setup/install-$(FULL_VERSION).exe $(TARGET_IPS)
 
 # From original Linux Makefile: this will go away (hopefully
 # soon) when we switch to a git branch on DRBD upstream +
