@@ -157,7 +157,7 @@ windrbd.cat: windrbd.sys
 
 drbd-utils:
 	cd drbd-utils && ./autogen.sh
-	cd drbd-utils && ./configure --without-83support --without-84support --without-drbdmon --with-windrbd --without-manual --prefix=/cygdrive/c/windrbd/usr --localstatedir=/cygdrive/c/windrbd/var --sysconfdir=/cygdrive/c/windrbd/etc --host=x86_64-pc-cygwin
+	cd drbd-utils && ./configure --without-83support --without-84support --without-drbdmon --with-windrbd --without-manual --prefix=/cygdrive/c/windrbd/usr --localstatedir=/cygdrive/c/windrbd/var --sysconfdir=/cygdrive/c/windrbd/etc --host=$(ARCH)-pc-cygwin
 	make -C drbd-utils -j $(NUM_JOBS)
 
 clean:
@@ -173,6 +173,9 @@ package: all drbd-utils
 
 docker:
 	docker build --pull=true --no-cache=true -t $(DOCKER_IMAGE) docker-root
+
+docker-fc37:
+	docker build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-fc37 -f docker-root/Dockerfile-fc37 docker-root
 
 # From original Linux Makefile: this will go away (hopefully
 # soon) when we switch to a git branch on DRBD upstream +
