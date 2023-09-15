@@ -1,0 +1,44 @@
+FROM ubuntu:jammy
+
+# prevent tzdata from stalling the installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV WINEDEBUG=-all
+ENV WINEPREFIX=/wine
+
+RUN apt-get update
+RUN apt-get install --no-install-recommends -y ca-certificates wget apt-utils make git iputils-ping python3 rsync vim xz-utils unzip ssh curl osslsigncode g++ flex bison texinfo m4 bzip2 alien coccinelle
+
+RUN dpkg --add-architecture i386
+RUN mkdir -pm755 /etc/apt/keyrings
+RUN wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+RUN wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/bionic/winehq-bionic.sources
+
+RUN apt-get update
+RUN apt-get install --no-install-recommends -y winehq-stable
+
+# build default wine dir
+RUN wineboot -i
+
+COPY ["Inno Setup 5", "/wine/drive_c/Program Files (x86)/Inno Setup 5/"]
+
+RUN git clone https://github.com/Zeranoe/mingw-w64-build.git
+RUN cd mingw-w64-build && ./mingw-w64-build x86_64
+# Also for i686: uncomment this:
+RUN cd mingw-w64-build && ./mingw-w64-build i686
+
+# We expect a bind mount to the WinDRBD project root in /windrbd
+# Use -v /path/to/windrbd:/windrbd parameter to docker run
+RUN git config --global --add safe.directory /windrbd
+RUN git config --global --add safe.directory /windrbd/drbd-utils
+
+# Now .. the cygwin cross compiler. There is a more or less
+# maintained fedora binary (rpm's) which we convert with
+# alien and hope that it installs
+COPY ["fc37", "cygwin-fedora-packages"]
+# RUN cd cygwin-fedora-packages && wget https://rpmfind.net/linux/opensuse/distribution/leap/15.2/repo/oss/x86_64/libisl15-0.18-lp152.3.114.x86_64.rpm
+
+RUN cd cygwin-fedora-packages && alien -d *.rpm
+RUN cd cygwin-fedora-packages && dpkg -i *.deb
+
+RUN cp /usr/lib64/libisl.so.15.3.0 /usr/lib/x86_64-linux-gnu
+RUN cp /usr/lib64/libisl.so.15 /usr/lib/x86_64-linux-gnu
