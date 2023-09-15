@@ -124,6 +124,10 @@ versioninfo:
 # this (converted-sources) should not be .PHONY
 # generate it on the first build then leave it
 # alone (until either renamed or removed)
+
+.PHONY: windrbd.sys
+.PHONY: windrbd.cat
+
 windrbd.sys: converted-sources $(OBJS) converted-sources/drbd/drbd_buildtag.c
 	$(CC) -o windrbd.sys-unsigned $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS)
 	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed
