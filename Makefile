@@ -108,7 +108,7 @@ LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 
 
 CFLAGS=-g -w $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
 
-all: versioninfo windrbd.sys windrbd.cat
+all: windrbd.sys windrbd.cat
 
 windrbd/windrbd-event-log.rc: windrbd/windrbd-event-log.mc
 	$(MC) $< -r windrbd -h windrbd/include
@@ -121,14 +121,20 @@ windrbd/src/printk-to-syslog.o: windrbd/include/windrbd-event-log.h
 versioninfo:
 	./versioninfo.sh converted-sources $(VERSION)
 
-# this (converted-sources) should not be .PHONY
+# converted-sources should not be .PHONY
 # generate it on the first build then leave it
 # alone (until either renamed or removed)
 
+# TODO: still fails to depend on drbd_buildtag when
+# -j is larger than 1...
 .PHONY: windrbd.sys
 .PHONY: windrbd.cat
+.PHONY: converted-sources/drbd/drbd_buildtag.c
+.PHONY: converted-sources/drbd/drbd_buildtag.obj
 
-windrbd.sys: converted-sources $(OBJS) converted-sources/drbd/drbd_buildtag.c
+converted-sources/drbd/drbd_buildtag.c: versioninfo
+
+windrbd.sys: versioninfo converted-sources $(OBJS) converted-sources/drbd/drbd_buildtag.c
 	$(CC) -o windrbd.sys-unsigned $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS)
 	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed
 	mv windrbd.sys-signed windrbd.sys
