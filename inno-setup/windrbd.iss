@@ -20,7 +20,12 @@
 #define MyAppPublisher "Linbit"
 #define MyAppURL "http://www.linbit.com/"
 #define MyAppURLDocumentation "https://www.linbit.com/user-guides/"
+; TODO: we should use {sysroot} ...
+#ifdef Reactos
+#define DriverPath "C:\Reactos\system32\drivers\windrbd.sys"
+#else
 #define DriverPath "C:\Windows\system32\drivers\windrbd.sys"
+#endif
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -454,6 +459,22 @@ begin
 	driverWasUnloaded := ResultCode = 0;
 end;
 
+procedure CopyDriver;
+var ResultCode: Integer;
+    CommandOutput: String;
+
+begin
+	ExecWithLogging(ExpandConstant('cmd'), ExpandConstant('/c "copy /y windrbd.sys {#DriverPath}"'), ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
+end;
+
+procedure CreateWindrbdService;
+var ResultCode: Integer;
+    CommandOutput: String;
+
+begin
+	ExecWithLogging(ExpandConstant('sc.exe'), 'create windrbd type= kernel binpath= {#DriverPath}', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
+end;
+
 procedure AddDriverToDriverStore;
 var ResultCode: Integer;
     CommandOutput: String;
@@ -597,8 +618,13 @@ begin
 		WriteWinDRBDRootPath();
 		InstallUserModeServices();
 		PatchRegistry();
+#ifdef Reactos
+		CopyDriver();
+		CreateWindrbdService();
+#else
 		AddDriverToDriverStore();
 		InstallBusDevice();
+#endif
 		StartUserModeServices();
 	end;
 end;
