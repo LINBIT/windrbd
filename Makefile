@@ -77,6 +77,10 @@ endif
 # TODO: __MINGW64__ also for 32 bit?
 DEFINES=-D WINNT=1 -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 -D __MINGW64__=1
 
+ifdef REACTOS
+DEFINES+=-DREACTOS
+endif
+
 ifeq ($(ARCH), x86_64)
 DEFINES+=-D_WIN64
 endif
@@ -174,8 +178,12 @@ clean:
 	make -C generate-cat-file clean
 	make -C drbd-utils clean
 
+ifdef REACTOS
+EXTRA_ISCC_DEFINES=/DReactos=1
+endif
+
 package: all drbd-utils
-	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=..\\drbd-utils /DWindrbdDriverDirectory=$(DRIVER_DIR) )
+	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=..\\drbd-utils /DWindrbdDriverDirectory=$(DRIVER_DIR) /DArch=$(ARCH) $(EXTRA_ISCC_DEFINES))
 
 docker:
 	docker build --pull=true --no-cache=true -t $(DOCKER_IMAGE) docker-root
