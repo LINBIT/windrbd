@@ -10,6 +10,8 @@ default: package-in-docker
 # default: package
 
 ARCH ?= x86_64
+# ARCH=i686
+
 TARGET_IPS ?= 10.43.224.4 10.43.224.25
 
 GIT_VERSION=$(shell git describe --tags)
@@ -19,9 +21,7 @@ else
 FULL_VERSION=$(GIT_VERSION)
 endif
 
-# ARCH=i686
-# MINGW_SYSROOT=$(HOME)/.zeranoe/mingw-w64/$(ARCH)
-MINGW_SYSROOT=/root/.zeranoe/mingw-w64/$(ARCH)
+MINGW_SYSROOT=$(HOME)/.zeranoe/mingw-w64/$(ARCH)
 CC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-gcc
 RC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windres
 MC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windmc
