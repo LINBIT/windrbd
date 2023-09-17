@@ -55,15 +55,15 @@ pull-docker:
 
 # so one can type make with-docker :)
 with-docker:
-	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION) ARCH=$(ARCH)
+	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS)
 	$(DOCKER_RUN) $(FIXUP_OWNERSHIP)
 
 all-in-docker:
-	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION) ARCH=$(ARCH)
+	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS)
 	$(DOCKER_RUN) $(FIXUP_OWNERSHIP)
 
 package-in-docker:
-	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION) ARCH=$(ARCH)
+	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS)
 	$(DOCKER_RUN) $(FIXUP_OWNERSHIP)
 
 ifeq ($(ARCH), i686)
