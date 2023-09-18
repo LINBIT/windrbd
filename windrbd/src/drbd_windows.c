@@ -3599,6 +3599,8 @@ block_device->my_auto_promote = 1;
 		 * find the disk device.
 		 */
 	block_device->is_disk_device = true;
+/* TODO: needed here? Solves BSOD? */
+	block_device->bd_disk = alloc_disk(0);
 
 		/* Corking ... new with 1.1.8 */
 	block_device->corked = false;
