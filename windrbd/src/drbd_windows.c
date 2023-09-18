@@ -3356,6 +3356,8 @@ printk("Test: testing partition table injection (%lld sectors shift).\n", block_
 		 * find the disk device.
 		 */
 	block_device->is_disk_device = true;
+/* TODO: needed here? Solves BSOD? */
+	block_device->bd_disk = alloc_disk(0);
 
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
