@@ -3,6 +3,7 @@
 
 #ifndef REACTOS
 #define CONFIG_HAVE_NETIO_DRIVER 1
+#define CONFIG_DONT_HAVE_BUS_DEVICE 1
 #endif
 /* Else Windows (not ReactOS) target, with mingw */
 
