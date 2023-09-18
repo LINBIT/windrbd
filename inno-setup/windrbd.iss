@@ -362,6 +362,13 @@ Begin
 	End;
 End;
 
+{ On ReactOS be nice and start the driver }
+
+Procedure StartWindrbdService;
+Begin
+	MyStartService('windrbd');
+End;
+
 Procedure InstallUserModeServices;
 var ResultCode: Integer;
     CommandOutput: String;
@@ -631,6 +638,7 @@ begin
 #ifdef Reactos
 		CopyDriver();
 		CreateWindrbdService();
+		StartWindrbdService();
 #else
 		AddDriverToDriverStore();
 		InstallBusDevice();
