@@ -145,7 +145,7 @@ versioninfo:
 converted-sources/drbd/drbd_buildtag.c: versioninfo
 
 windrbd.sys: versioninfo converted-sources $(OBJS) converted-sources/drbd/drbd_buildtag.c
-	$(CC) -o windrbd.sys-unsigned $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS)
+	$(CC) -o windrbd.sys-unsigned $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
 	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed
 	mv windrbd.sys-signed windrbd.sys
 	rm -f windrbd.sys-unsigned
