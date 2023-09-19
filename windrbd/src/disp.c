@@ -206,18 +206,18 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 /* Remove this line to make driver removable (driver removing currently
  * BSOD's sometimes):
  */
-#ifndef CONFIG_DONT_HAVE_BUS_DEVICE
+// #ifndef CONFIG_DONT_HAVE_BUS_DEVICE
 	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
-#endif
+// #endif
 	DriverObject->DriverUnload = mvolUnload;
 
 		/* For bus object: TODO: don't do this if there
 		 * is no bus object. (Maybe move to AddDevice)
 		 */
 
-#ifndef CONFIG_DONT_HAVE_BUS_DEVICE
+// #ifndef CONFIG_DONT_HAVE_BUS_DEVICE
 	try_module_get(&windrbd_module);
-#endif
+// #endif
 
 	dtt_initialize();
 
