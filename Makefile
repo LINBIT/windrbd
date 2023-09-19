@@ -160,7 +160,7 @@ LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 
 %.coffres: %.rc
 	$(RC) -i $< -o $@ -O coff
 
-CFLAGS=-g -w $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
+CFLAGS=-g -O2 -w $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
 
 all: windrbd.sys windrbd.cat
 
