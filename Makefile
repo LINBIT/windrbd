@@ -9,6 +9,50 @@ default: package-in-docker
 # default: all
 # default: package
 
+help:
+	@echo "                        WinDRBD 1.2 build help"
+	@echo "                        ----------------------"
+	@echo
+	@echo "Available targets:"
+	@echo
+	@echo "    pull-docker:        Pull a docker container with all needed"
+	@echo "                        build dependencies"
+	@echo "    all-in-docker:      build WinDRBD driver and utils in a"
+	@echo "                        docker container"
+	@echo "    package-in-docker:  build all and create an installable"
+	@echo "                        package (self extracting EXE file)"
+	@echo "    all:                build WinDRBD driver and utils on the host machine"
+	@echo "    windrbd.sys:        build WinDRBD driver"
+	@echo "    windrbd.cat:        build WinDRBD security catalog"
+	@echo "    drbd-utils:         build usermode utilities for WinDRBD"
+	@echo "    clean:              remove all generated files (except converted-sources)"
+	@echo "    package:            build all and create installable package (EXE)"
+	@echo "    docker:             build docker image with build dependencies"
+	@echo "    converted-sources:  apply WinDRBD patches to DRBD"
+	@echo "    install:            copy package to Windows hosts and run the installer"
+	@echo "                        there (requires CygWin with sshd on target machine)"
+	@echo
+	@echo "Variables that control things:"
+	@echo
+	@echo "    ARCH=[i686|x86_64]  Architecture to build for"
+	@echo "    VERSION=myversion   Version string to add to WinDRBD version"
+	@echo "    REACTOS=1           Build and package for ReactOS"
+	@echo "    NUM_JOBS=j          Use j build jobs in paralell (in-docker targets"
+	@echo "    DOCKER_IMAGE=img    Use this docker image for building or generating"
+	@echo "    TARGET_IPS=<ips>    Install onto those Windows machines (install target)"
+	@echo
+	@echo "Examples:"
+	@echo
+	@echo "        make package-in-docker VERSION=my-windrbd-build"
+	@echo "        make package-in-docker VERSION=my-i686-build ARCH=i686"
+	@echo "        make package-in-docker VERSION=my-reactos-build ARCH=i686 REACTOS=1"
+	@echo
+	@echo "If you just want to build WinDRBD with all dependencies in"
+	@echo "a docker container, do"
+	@echo
+	@echo "    make pull-docker && make package-in-docker"
+	@echo
+
 ARCH ?= x86_64
 # ARCH=i686
 
@@ -190,6 +234,9 @@ docker:
 
 docker-fc37:
 	docker build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-fc37 -f docker-root/Dockerfile-fc37 docker-root
+
+docker-wine64:
+	docker build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-wine64 -f docker-root/Dockerfile-wine64 docker-root
 
 install:
 	inno-setup/deploy.sh inno-setup/install-$(FULL_VERSION).exe $(TARGET_IPS)
