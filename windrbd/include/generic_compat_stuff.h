@@ -72,7 +72,6 @@
 #define zalloc_cpumask_var(...) (true)
 #define blk_queue_bounce_limit(...)
 #define blk_queue_write_cache(...)
-#define add_disk(...)
 
 #define uninitialized_var(x) x = x
 #define WARN(condition, args...) do {if(!!(condition)) printk(args);} while(0)

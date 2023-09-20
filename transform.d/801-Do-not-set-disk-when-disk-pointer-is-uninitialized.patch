@@ -1,0 +1,30 @@
+From 25581a7f1a513d124f3bdeb83af77e423b20b4be Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Wed, 20 Sep 2023 13:52:45 +0000
+Subject: [PATCH] Do not set disk when disk pointer is uninitialized.
+
+---
+ drbd/drbd_main.c | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/drbd/drbd_main.c b/drbd/drbd_main.c
+index 416c42b..27f3300 100644
+--- a/drbd/drbd_main.c
++++ b/drbd/drbd_main.c
+@@ -3787,13 +3787,6 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 
+ 	init_waitqueue_head(&device->misc_wait);
+         device->this_bdev = block_device;
+-	if (block_device->bd_disk != NULL) {
+-		printk("Warning: block_device already has a disk, freeing it.\n");
+-		if (block_device->bd_disk->queue)
+-			blk_cleanup_queue(block_device->bd_disk->queue);
+-		put_disk(block_device->bd_disk);
+-	}
+-        device->this_bdev->bd_disk = disk;
+ 
+ 	init_waitqueue_head(&device->al_wait);
+ 	init_waitqueue_head(&device->seq_wait);
+-- 
+2.17.1
+

@@ -2433,9 +2433,15 @@ void blk_cleanup_queue(struct request_queue *q)
 }
 
 struct gendisk *alloc_disk(int minors)
-{	
+{
 	struct gendisk *p = kzalloc(sizeof(struct gendisk), 0, '44DW');
 	return p;
+}
+
+int add_disk(struct gendisk *disk)
+{
+	disk->part0->bd_disk = disk;
+	return 0;
 }
 
 struct gendisk *blk_alloc_disk(int unused)
