@@ -5,6 +5,13 @@ Base on DRBD 9.1
 
 DRBD reactor support
 
+What's new in version 1.2.0-rc3
+-------------------------------
+
+ReactOS support
+
+Fix for BSOD on Primary
+
 What's new in version 1.2.0-rc2
 -------------------------------
 
