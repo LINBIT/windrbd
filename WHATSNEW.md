@@ -5,7 +5,14 @@ Base on DRBD 9.1
 
 DRBD reactor support
 
-What's new in version 1.0.2-rc2
+What's new in version 1.2.0-rc3
+-------------------------------
+
+ReactOS support
+
+Fix for BSOD on Primary
+
+What's new in version 1.2.0-rc2
 -------------------------------
 
 generate-cat-file project: inf2cat replacement for Linux (no
@@ -25,7 +32,7 @@ updated documentation (INSTALL.md)
 
 Removed lots of unused files / directories
 
-What's new in version 1.0.2-rc1
+What's new in version 1.2.0-rc1
 -------------------------------
 
 Can compile WinDRBD driver with gcc (mingw-w64).
