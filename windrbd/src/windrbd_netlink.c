@@ -619,7 +619,7 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 		goto out_free_info;
 	}
 		/* modifies things. Currently used for event log threshold */
-	if (op->flags & GENL_ADMIN_PERM)
+	if (op->flags & GENL_ADMIN_PERM || debug_printks_enabled)
 		printk(KERN_NOTICE "drbd cmd(%s:%u)\n", windrbd_genl_cmd_to_str(cmd), cmd);
 
 		/* else nothing. Users commonly have a drbdadm status every
