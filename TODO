@@ -2,12 +2,25 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
+TODO: Check behavior of remove-bus - install-bus - primary
+        Is buggy:
+                remove-bus - install-bus primary
+                primary stalls waiting for bus device
+                bus device doesn't get added because
+                AddDevice is NULL.
+        Solution: have explicit setting AddDevice to NULL
+        via windrbd unlock-driver or so ... and call that
+        right before running sc stop.
+        Also have a lock-driver
+
 TODO: Bug: Hang in NetworkFailure on no memory.
 
 TODO: Bug: drbdadm up slow
 
 	16TB: Windows 1:20 Linux 0:10
 	Locking problem?
+	No it was metadata IO (reading bitmap) ...
+		to be fixed in 1.1.8 or 1.1.9
 
 TODO: Bug: System freeze when experimenting with DRBD reactor
 
