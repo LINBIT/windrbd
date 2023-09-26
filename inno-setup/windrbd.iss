@@ -436,6 +436,11 @@ begin
 		Log('Failed to set shutdown flag. The old WinDRBD version is probably less than 1.1.0, please make sure that drbdsetup events2 processes are stopped by yourself');
 	end;
 
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'unlock-driver', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	begin
+		Log('Failed to unlock the driver. The old WinDRBD version is probably less than 1.1.8, in most cases you can ignore this.');
+	end;
+
 	if not ExecWithLogging(ExpandConstant('sc.exe'), 'stop windrbd', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not stop driver', mbInformation, MB_OK);
@@ -460,6 +465,11 @@ var ResultCode: Integer;
     CommandOutput: String;
 
 begin
+	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'lock-driver', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	begin
+		Log('Failed to lock the driver. It is probably less than 1.1.8 and does this by itself. Or this is an upgrade and it is not running yet. The latter is the usual case, so please ignore this message.');
+	end;
+
 	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'install-bus-device windrbd.inf', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		MsgBox('Could not install bus device', mbInformation, MB_OK);
