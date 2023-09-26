@@ -21,14 +21,8 @@ bool try_module_get(struct module *module)
 	}
 
 	if (atomic_inc_return(&module->refcnt) == 1) {
-#ifdef DRIVER_UNLOAD
-		printk("Locking module by setting AddDevice to %p, sc stop windrbd should not work (do a drbdadm down all first)\n", mvolAddDevice);
-		mvolDriverObject->DriverExtension->AddDevice = mvolAddDevice;
-#else
-		printk("Would lock driver now.\n");
-#endif
+		printk("Driver in use, cannot unlock it now.\n");
 	}
-// printk("module->refcnt is %d\n", atomic_read(&module->refcnt));
 	return true;
 }
 
@@ -40,15 +34,23 @@ void module_put(struct module *module)
 	}
 
 	if (atomic_dec_return(&module->refcnt) == 0) {
-		/* This is actually used now to unload the driver on update */
-#ifdef DRIVER_UNLOAD
-		printk("Unlocking module by setting AddDevice to NULL, sc stop windrbd should work now.\n");
-		mvolDriverObject->DriverExtension->AddDevice = NULL;
-#else
-		printk("Would unlock driver now.\n");
-#endif
+		printk("Unlocking module by setting AddDevice to NULL should work now (use windrbd unlock-driver to unlock)\n");
 	}
-// printk("module->refcnt is %d\n", atomic_read(&module->refcnt));
 }
 
-
+int set_driver_locked_state(int state)
+{
+	if (state == 0) {
+		if (atomic_read(&windrbd_module.refcnt) > 0) {
+			printk("Request for unlocking driver but module is in use (%d).\n", atomic_read(&windrbd_module.refcnt));
+			return -EBUSY;
+		} else {
+			printk("Unlocking module by setting AddDevice to NULL, sc stop windrbd should work now.\n");
+			mvolDriverObject->DriverExtension->AddDevice = NULL;
+		}
+	} else {
+		printk("Locking module by setting AddDevice to %p, sc stop windrbd should not work (do a drbdadm down all first)\n", mvolAddDevice);
+		mvolDriverObject->DriverExtension->AddDevice = mvolAddDevice;
+	}
+	return 0;
+}

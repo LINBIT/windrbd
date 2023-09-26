@@ -1,0 +1,41 @@
+From 68635a6b3ba7032acedfbd5ff2e2a35695ca1273 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Tue, 26 Sep 2023 11:25:44 +0000
+Subject: [PATCH] WinDRBD: New ioctl code for allowing unloading the driver
+
+Before that the driver automatically transistioned into a
+state where it can be unloaded once usage count (bus devices
+plus drbd devices) reaches 0. This prevented a followup
+creation of the bus device to fail and later drbdadm primary
+to stall (even tough there was a bus device, but the driver
+didn't know). Now setting AddDevice to NULL is an explicit
+step (unlock-driver) it should be called by the installer
+just before the sc stop windrbd command.
+---
+ windrbd/windrbd_ioctl.h | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/windrbd/windrbd_ioctl.h b/windrbd/windrbd_ioctl.h
+index c6af5be9..c7889a82 100644
+--- a/windrbd/windrbd_ioctl.h
++++ b/windrbd/windrbd_ioctl.h
+@@ -325,4 +325,16 @@ struct windrbd_minor_mount_point {
+ 
+ #define IOCTL_WINDRBD_ROOT_ARE_THERE_NL_PACKETS CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 19, METHOD_BUFFERED, FILE_ANY_ACCESS)
+ 
++/* Lock or unlock driver in memory
++ * Input: 0 - Set AddDevice to NULL (if otherwise unused) driver can be unloaded
++ *        1 - Set AddDevice to valid AddDevice function, driver cannot be unloaded
++ * Output: none
++ *
++ * Controls whether WinDRBD is reacting to new devices (such as the bus device)
++ * This allows to remove the bus driver and install it again without having
++ * to unload the driver or reboot the system.
++ */
++
++#define IOCTL_WINDRBD_ROOT_SET_DRIVER_LOCKED CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 20, METHOD_BUFFERED, FILE_ANY_ACCESS)
++
+ #endif
+-- 
+2.17.1
+

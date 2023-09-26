@@ -1553,5 +1553,6 @@ void init_event_log(void);
 void set_event_log_threshold(int level);
 
 void windrbd_device_size_change(struct block_device *bdev);
+int set_driver_locked_state(int state);
 
 #endif // DRBD_WINDOWS_H
