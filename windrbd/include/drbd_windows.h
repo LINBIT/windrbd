@@ -583,6 +583,7 @@ struct block_device {
 	struct _KEVENT device_started_event; /* Set on receving IRP_MN_START_DEVICE PnP request (drbdadm primary waits for this) */
 	struct _KEVENT device_ejected_event; /* Set on receving IRP_MN_EJECT_DEVICE PnP request (drbdadm secondary waits for this) */
 	struct _KEVENT bus_device_iterated; /* Set on bus device receving IRP_QUERY_DEVICE_RELATIONS PnP request for a to be deleted blockdev (drbdadm secondary waits for this) */
+	struct _KEVENT io_not_suspended; /* Cleared by windrbd suspend_io (so that I/O is suspended). Needed to suspend I/O from outside DRBD in order to fix the busy resync bug (sync does not finished on ongoing application I/O) */
 
 	/* Used for debugging handle leaks */
 	int num_openers;

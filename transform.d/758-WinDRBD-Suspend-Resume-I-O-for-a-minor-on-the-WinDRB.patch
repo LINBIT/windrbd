@@ -1,0 +1,44 @@
+From 219a74d71b8f9eb1b9eef7a7e5dcd85b17385dc6 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Thu, 5 Oct 2023 14:16:36 +0000
+Subject: [PATCH] WinDRBD: Suspend/Resume I/O for a minor on the WinDRBD level
+ (outside DRBD)
+
+This adds two new ioctl() codes to the WinDRBD kernel interface.
+
+When an application busy writes a block it may happen that
+syncing never finished. In that case, set this suspend-io
+flag, wait for sync to finish and then clear the suspend-io
+flag again. Note that this is different from DRBD's suspend-io
+command.
+---
+ windrbd/windrbd_ioctl.h | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/windrbd/windrbd_ioctl.h b/windrbd/windrbd_ioctl.h
+index c7889a82..2577ff2a 100644
+--- a/windrbd/windrbd_ioctl.h
++++ b/windrbd/windrbd_ioctl.h
+@@ -337,4 +337,19 @@ struct windrbd_minor_mount_point {
+ 
+ #define IOCTL_WINDRBD_ROOT_SET_DRIVER_LOCKED CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 20, METHOD_BUFFERED, FILE_ANY_ACCESS)
+ 
++/* Suspend/Resume I/O for a minor on the WinDRBD level (outside DRBD)
++ *
++ * Input: minor - the DRBD minor for which to suspend I/O for
++ * Output: none
++ *
++ * When an application busy writes a block it may happen that
++ * syncing never finished. In that case, set this suspend-io
++ * flag, wait for sync to finish and then clear the suspend-io
++ * flag again. Note that this is different from DRBD's suspend-io
++ * command.
++ */
++
++#define IOCTL_WINDRBD_ROOT_SET_IO_SUSPENDED_FOR_MINOR CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 21, METHOD_BUFFERED, FILE_ANY_ACCESS)
++#define IOCTL_WINDRBD_ROOT_CLEAR_IO_SUSPENDED_FOR_MINOR CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 22, METHOD_BUFFERED, FILE_ANY_ACCESS)
++
+ #endif
+-- 
+2.17.1
+

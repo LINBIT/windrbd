@@ -578,6 +578,46 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		break;
 	}
 
+	case IOCTL_WINDRBD_ROOT_SET_IO_SUSPENDED_FOR_MINOR:
+	{
+		int *the_minor = irp->AssociatedIrp.SystemBuffer;
+
+		if (the_minor == NULL) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+		} else {
+			struct drbd_device *drbd_dev;
+			drbd_dev = minor_to_device(*the_minor);
+			if (drbd_dev == NULL || drbd_dev->this_bdev == NULL) {
+				printk("No such DRBD minor: %d\n", *the_minor);
+				return STATUS_INVALID_PARAMETER;
+			}
+				/* reverse logic ... */
+			KeClearEvent(&drbd_dev->this_bdev->io_not_suspended);
+		}
+
+		break;
+	}
+
+	case IOCTL_WINDRBD_ROOT_CLEAR_IO_SUSPENDED_FOR_MINOR:
+	{
+		int *the_minor = irp->AssociatedIrp.SystemBuffer;
+
+		if (the_minor == NULL) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+		} else {
+			struct drbd_device *drbd_dev;
+			drbd_dev = minor_to_device(*the_minor);
+			if (drbd_dev == NULL || drbd_dev->this_bdev == NULL) {
+				printk("No such DRBD minor: %d\n", *the_minor);
+				return STATUS_INVALID_PARAMETER;
+			}
+				/* reverse logic ... */
+			KeSetEvent(&drbd_dev->this_bdev->io_not_suspended, 0, FALSE);
+		}
+
+		break;
+	}
+
 	default:
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;
@@ -1748,6 +1788,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	int b;
 	struct bio_collection *common_data;
 	struct _KEVENT event;
+	NTSTATUS status;
 
 	if (rw == WRITE && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		printk("Attempt to write when not Primary\n");
@@ -1768,6 +1809,13 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	if (buffer == NULL) {
 		printk("I/O buffer (from MmGetSystemAddressForMdlSafe()) is NULL\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+		/* If suspended wait until not suspended. */
+	status = KeWaitForSingleObject(&dev->io_not_suspended, Executive, KernelMode, FALSE, NULL);
+	if (status != STATUS_SUCCESS) {
+		printk("Error waiting for io_not_suspended event (%08x)\n", status);
+		return status;
 	}
 
 	int bio_count = (total_size-1) / MAX_BIO_SIZE + 1;

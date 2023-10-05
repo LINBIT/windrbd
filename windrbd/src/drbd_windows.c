@@ -3158,6 +3158,7 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	KeClearEvent(&bdev->device_started_event);
 	KeClearEvent(&bdev->device_ejected_event);
 	KeClearEvent(&bdev->bus_device_iterated);
+	KeSetEvent(&bdev->io_not_suspended, 0, FALSE);	/* be nice and resume I/O on becoming Primary */
 	bdev->ejected = false;
 
 		/* By default, this creates an object accessible only
@@ -3334,6 +3335,7 @@ printk("Test: testing partition table injection (%lld sectors shift).\n", block_
 	KeInitializeEvent(&block_device->device_started_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->device_ejected_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->bus_device_iterated, NotificationEvent, FALSE);
+	KeInitializeEvent(&block_device->io_not_suspended, NotificationEvent, TRUE);
 	spin_lock_init(&block_device->complete_request_spinlock);
 
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);
