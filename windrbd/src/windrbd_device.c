@@ -589,12 +589,12 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 			drbd_dev = minor_to_device(*the_minor);
 			if (drbd_dev == NULL || drbd_dev->this_bdev == NULL) {
 				printk("No such DRBD minor: %d\n", *the_minor);
-				return STATUS_INVALID_PARAMETER;
-			}
+				status = STATUS_INVALID_PARAMETER;
+			} else {
 				/* reverse logic ... */
-			KeClearEvent(&drbd_dev->this_bdev->io_not_suspended);
+				KeClearEvent(&drbd_dev->this_bdev->io_not_suspended);
+			}
 		}
-
 		break;
 	}
 
@@ -609,12 +609,12 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 			drbd_dev = minor_to_device(*the_minor);
 			if (drbd_dev == NULL || drbd_dev->this_bdev == NULL) {
 				printk("No such DRBD minor: %d\n", *the_minor);
-				return STATUS_INVALID_PARAMETER;
+				status = STATUS_INVALID_PARAMETER;
+			} else {
+					/* reverse logic ... */
+				KeSetEvent(&drbd_dev->this_bdev->io_not_suspended, 0, FALSE);
 			}
-				/* reverse logic ... */
-			KeSetEvent(&drbd_dev->this_bdev->io_not_suspended, 0, FALSE);
 		}
-
 		break;
 	}
 
