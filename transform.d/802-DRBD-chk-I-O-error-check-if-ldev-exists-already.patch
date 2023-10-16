@@ -1,0 +1,33 @@
+From 8ccacb295308d636665db4ec8d7a923a2c5cc9b4 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 16 Oct 2023 13:15:32 +0000
+Subject: [PATCH] DRBD chk I/O error: check if ldev exists (already)
+
+---
+ drbd/drbd_int.h | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/drbd/drbd_int.h b/drbd/drbd_int.h
+index ee28059..8fdec8b 100644
+--- a/drbd/drbd_int.h
++++ b/drbd/drbd_int.h
+@@ -2186,9 +2186,13 @@ static inline void __drbd_chk_io_error_(struct drbd_device *device,
+ 	KIRQL rcu_flags;
+ 	enum drbd_io_error_p ep;
+ 
+-	rcu_flags = rcu_read_lock();
+-	ep = rcu_dereference(device->ldev->disk_conf)->on_io_error;
+-	rcu_read_unlock(rcu_flags);
++	if (device->ldev != NULL && device->ldev->disk_conf != NULL) {
++		rcu_flags = rcu_read_lock();
++		ep = rcu_dereference(device->ldev->disk_conf)->on_io_error;
++		rcu_read_unlock(rcu_flags);
++	} else {
++		ep = EP_DETACH;
++	}
+ 	switch (ep) {
+ 	case EP_PASS_ON: /* FIXME would this be better named "Ignore"? */
+ 		if (df == DRBD_READ_ERROR ||  df == DRBD_WRITE_ERROR) {
+-- 
+2.17.1
+
