@@ -1863,7 +1863,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		bio->bi_mdl_offset = (unsigned long long)b*MAX_BIO_SIZE;
 		bio->bi_common_data = common_data;
 
-dbg("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
+cond_printk("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
 
 		bio->bi_io_vec[0].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
 		if (bio->bi_io_vec[0].bv_page == NULL) {
