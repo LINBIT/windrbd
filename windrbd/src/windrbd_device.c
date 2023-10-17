@@ -2162,20 +2162,7 @@ dbg("Returned string is %S\n", string);
 		break;
 	}
 #else
-	case IRP_MN_QUERY_CAPABILITIES:
-		dbg_bus("got IRP_MN_QUERY_CAPABILITIES\n");
-
-		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
-		/* Must be skip else BSOD on verify */
-		status = IoCallDriver(bus_ext->lower_device, irp);
-		if (status != STATUS_SUCCESS)
-			dbg_bus("Warning: lower device returned status %x\n", status);
-
-		return status;
-
 	case IRP_MN_QUERY_ID: 	/* 0x13 */
-		dbg_bus("got IRP_MN_QUERY_ID\n");
-
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */
 		status = IoCallDriver(bus_ext->lower_device, irp);
@@ -2184,6 +2171,14 @@ dbg("Returned string is %S\n", string);
 
 		return status;
 #endif
+	case IRP_MN_QUERY_CAPABILITIES:
+		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
+		/* Must be skip else BSOD on verify */
+		status = IoCallDriver(bus_ext->lower_device, irp);
+		if (status != STATUS_SUCCESS)
+			dbg_bus("Warning: lower device returned status %x\n", status);
+
+		return status;
 
 	case IRP_MN_QUERY_INTERFACE: 	/* 0x8 */
 		dbg_bus("got IRP_MN_QUERY_INTERFACE\n");
@@ -2665,7 +2660,11 @@ if (status == STATUS_NOT_SUPPORTED) {
 			switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
 			case DeviceTextDescription:
 				string_length = _snwprintf(string, 512, L"WinDRBD Disk") + 1;
+<<<<<<< HEAD
 				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), DRBD_TAG);
+=======
+				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
+>>>>>>> 288bf807... swprintf -> _swnprintf
 				if (irp->IoStatus.Information == 0) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
