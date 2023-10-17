@@ -48,6 +48,7 @@
 #include <ntddscsi.h>
 #include <ntddstor.h>
 #include <linux/module.h>
+// #include <strsafe.h>	/* for StringCbPrintfW() - but it does not return length */
 
 #include "windrbd_config.h"
 #include "drbd_windows.h"
@@ -2284,7 +2285,7 @@ dbg("NOT completing IRP\n");
 		return status; /* must not do IoCompleteRequest */
 			/* This is done (?) in IoCallDriver */
 
-#if 0 
+#ifdef REACTOS
 	case IRP_MN_QUERY_ID:
 	{
 		wchar_t *string;
@@ -2299,22 +2300,22 @@ dbg("NOT completing IRP\n");
 			switch (s->Parameters.QueryId.IdType) {
 			case BusQueryDeviceID:
 dbg("BusQueryDeviceID\n");
-				swprintf(string, L"WinDRBD");
+				_snwprintf(string, 512, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			case BusQueryInstanceID:
 dbg("BusQueryInstanceID\n");
-				swprintf(string, L"WinDRBD");
+				_snwprintf(string, 512, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			case BusQueryHardwareIDs:
 dbg("BusQueryHardwareIDs\n");
-				len = swprintf(string, L"WinDRBD");
+				len = _snwprintf(string, 512, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			case BusQueryCompatibleIDs:
 dbg("BusQueryCompatibleIDs\n");
-				len = swprintf(string, L"WinDRBD");
+				len = _snwprintf(string, 512, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			default:
@@ -2340,11 +2341,9 @@ dbg("Returned string is %S\n", string);
 		}
 		break;
 	}
-#endif
-/*	case IRP_MN_QUERY_INTERFACE:
+#else
+	case IRP_MN_QUERY_ID: 	/* 0x13 */
 
-*/
-	case IRP_MN_QUERY_CAPABILITIES:
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */
 		status = IoCallDriver(bus_ext->lower_device, irp);
@@ -2352,8 +2351,11 @@ dbg("Returned string is %S\n", string);
 			dbg("Warning: lower device returned status %x\n", status);
 
 		return status;
+#endif
+/*	case IRP_MN_QUERY_INTERFACE:
 
-	case IRP_MN_QUERY_ID: 	/* 0x13 */
+*/
+	case IRP_MN_QUERY_CAPABILITIES:
 		IoSkipCurrentIrpStackLocation(irp); /* SKIP !! */
 		/* Must be skip else BSOD on verify */
 		status = IoCallDriver(bus_ext->lower_device, irp);
@@ -2638,11 +2640,11 @@ if (status == STATUS_NOT_SUPPORTED) {
 				switch (s->Parameters.QueryId.IdType) {
 				case BusQueryDeviceID:
 			/* SCSI\\t\*v(8)p(16)r(4) */
-					swprintf(string, MAX_ID_LEN, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
+					_snwprintf(string, MAX_ID_LEN, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryInstanceID:
-					swprintf(string, MAX_ID_LEN, L"WinDRBD%d", minor);
+					_snwprintf(string, MAX_ID_LEN, L"WinDRBD%d", minor);
 					status = STATUS_SUCCESS;
 					break;
 /* TODO:
@@ -2654,26 +2656,26 @@ Red_Hat___________VirtIO0
 GenDisk
 */
 				case BusQueryHardwareIDs:
-					len = swprintf(string, MAX_ID_LEN, L"SCSI\\DiskLinbit____________WinDRBD0001");
-					len += swprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\DiskLinbit____________WinDRBD")+1;
-					len += swprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\DiskLinbit__")+1;
-					len += swprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\Linbit____________WinDRBD0")+1;
-					len += swprintf(&string[len+1], MAX_ID_LEN-len-1, L"Linbit____________WinDRBD0")+1;
-					swprintf(&string[len+1], MAX_ID_LEN-len-1, L"GenDisk");
+					len = _snwprintf(string, MAX_ID_LEN, L"SCSI\\DiskLinbit____________WinDRBD0001");
+					len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\DiskLinbit____________WinDRBD")+1;
+					len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\DiskLinbit__")+1;
+					len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\Linbit____________WinDRBD0")+1;
+					len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"Linbit____________WinDRBD0")+1;
+					_snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"GenDisk");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryCompatibleIDs:
-					len = swprintf(string, MAX_ID_LEN, L"WinDRBDDisk");
-					swprintf(&string[len+1], MAX_ID_LEN-len-1, L"GenDisk");
-//					len = swprintf(string, L"GenDisk");
+					len = _snwprintf(string, MAX_ID_LEN, L"WinDRBDDisk");
+					_snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"GenDisk");
+//					len = _snwprintf(string, L"GenDisk");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryDeviceSerialNumber:
-					swprintf(string, MAX_ID_LEN, L"%d", minor);
+					_snwprintf(string, MAX_ID_LEN, L"%d", minor);
 					status = STATUS_SUCCESS;
 					break;
 				case 5:
-					swprintf(string, MAX_ID_LEN, L"%d", minor);
+					_snwprintf(string, MAX_ID_LEN, L"%d", minor);
 					status = STATUS_SUCCESS;
 					break;
 /*
@@ -2830,7 +2832,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			RtlZeroMemory(string, (512 * sizeof(WCHAR)));
 			switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
 			case DeviceTextDescription:
-				string_length = swprintf(string, 512, L"WinDRBD Disk") + 1;
+				string_length = _snwprintf(string, 512, L"WinDRBD Disk") + 1;
 				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
 				if (irp->IoStatus.Information == 0) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
@@ -2841,7 +2843,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 				break;
 
 			case DeviceTextLocationInformation:
-				string_length = swprintf(string, 512, L"WinDRBD Minor %d", minor) + 1;
+				string_length = _snwprintf(string, 512, L"WinDRBD Minor %d", minor) + 1;
 
 				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
 				if (irp->IoStatus.Information == 0) {
