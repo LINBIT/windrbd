@@ -264,6 +264,7 @@ clean:
 	rm -f windrbd/msg00002.bin windrbd/include/windrbd-event-log.h windrbd/windrbd-event-log.rc
 	rm -f windrbd.cat-unsigned windrbd.sys-unsigned windrbd.sys-signed
 	rm -rf $(DRBDTMP)
+	rm -rf drbd*-tmp
 	make -C generate-cat-file clean
 	make -C drbd-utils clean
 
