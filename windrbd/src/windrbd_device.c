@@ -2169,6 +2169,15 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 	KEVENT start_completed_event;
 	int pass_on = 0;
 
+	if (s == NULL) {
+		printk("Warning: IoGetCurrentIrpStackLocation(%x) is NULL\n");
+		status = STATUS_INVALID_DEVICE_REQUEST;
+	        irp->IoStatus.Status = status;
+		IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+	        return status;
+	}
+
 	num_pnp_bus_requests++;
 
 	switch (s->MinorFunction) {
@@ -2542,6 +2551,15 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 	dbg("Pnp: device: %p irp: %p\n", device, irp);
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+
+	if (s == NULL) {
+		printk("Warning: IoGetCurrentIrpStackLocation(%x) is NULL\n");
+		status = STATUS_INVALID_DEVICE_REQUEST;
+	        irp->IoStatus.Status = status;
+		IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+	        return status;
+	}
 
 // printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
 	if (device == drbd_bus_device) {
