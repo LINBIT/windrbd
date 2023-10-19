@@ -642,6 +642,12 @@ struct block_device {
 	bool has_guids;
 	char disk_guid[16];
 	char partition_guid[16];
+
+		/* Cache the boot sector. If size changed we cannot
+		 * re read the boot sector from DRBD since it suspends
+		 * I/O during size change. So cache it here. */
+	bool have_read_bootsector;
+	char boot_sector[512];
 };
 
 	/* Starting with version 0.7.1, this is the device extension

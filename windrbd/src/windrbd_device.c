@@ -3487,49 +3487,49 @@ extern int is_filesystem(char *buf);
 
 int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct block_device *bdev)
 {
-	char boot_sector[512];
 	int err;
 
 	bdev->data_shift = 0;
 	bdev->appended_sectors = 0;
 
         if (bdev->d_size > 0) {
-		if ((err = read_boot_sector_from_drbd(bdev, boot_sector)) != 0) {
-			printk("Warning: could not read boot sector from DRBD, errno is %d.\n", err);
-			return err;
-		} else {
-			if (is_filesystem(boot_sector)) {
-				printk("Found a file system on DRBD device, faking partition table around it.\n");
-/* Store 32-bit little endian volume serial number at offset 0x48 */
-				if (strncmp(boot_sector+3, "NTFS", 4) == 0) {
-					char my_disk_guid[16] = { 0x81, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
-					char my_partition_guid[16] = { 0xab, 0x68, 0x13, 0xa8, 0x7f, 0x9b, 0xcc, 0x12, 0x38, 0x0d, 0x87, 0xfe, 0x28, 0x09, 0x7b, 0xa7 };
-					printk("NTFS detected, generating GUIDs from Volume Serial Number (VSN)\n");
-					bdev->has_guids = true;
-					memcpy(bdev->disk_guid, boot_sector+0x48, 8);
-					memcpy(bdev->disk_guid+8, my_disk_guid+8, 8);
-					memcpy(bdev->partition_guid, boot_sector+0x48, 8);
-					memcpy(bdev->partition_guid+8, my_partition_guid+8, 8);
-				}
-/* Store 8 bytes ReFS serial number at offset 0x38 */
-				if (strncmp(boot_sector+3, "ReFS", 4) == 0) {
-					char my_disk_guid[16] = { 0x81, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
-					char my_partition_guid[16] = { 0xab, 0x68, 0x13, 0xa8, 0x7f, 0x9b, 0xcc, 0x12, 0x38, 0x0d, 0x87, 0xfe, 0x28, 0x09, 0x7b, 0xa7 };
-					printk("ReFS detected, generating GUIDs from ReFS Serial Number\n");
-					bdev->has_guids = true;
-					memcpy(bdev->disk_guid, boot_sector+0x38, 8);
-					memcpy(bdev->disk_guid+8, my_disk_guid+8, 8);
-					memcpy(bdev->partition_guid, boot_sector+0x38, 8);
-					memcpy(bdev->partition_guid+8, my_partition_guid+8, 8);
-				}
-				bdev->data_shift = 128;
-				bdev->appended_sectors = 128;
-			} else {
-				printk("Did not find a file system on DRBD device, it should contain a partition table already\n");
+		if (!bdev->have_read_bootsector) {
+			if ((err = read_boot_sector_from_drbd(bdev, bdev->boot_sector)) != 0) {
+				printk("Warning: could not read boot sector from DRBD, errno is %d.\n", err);
+				return err;
 			}
+			bdev->have_read_bootsector = true;
 		}
-		if (bdev->data_shift > 0) {
+		if (is_filesystem(bdev->boot_sector)) {
+			printk("Found a file system on DRBD device, faking partition table around it.\n");
+/* Store 32-bit little endian volume serial number at offset 0x48 */
+			if (strncmp(bdev->boot_sector+3, "NTFS", 4) == 0) {
+				char my_disk_guid[16] = { 0x81, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
+				char my_partition_guid[16] = { 0xab, 0x68, 0x13, 0xa8, 0x7f, 0x9b, 0xcc, 0x12, 0x38, 0x0d, 0x87, 0xfe, 0x28, 0x09, 0x7b, 0xa7 };
+				printk("NTFS detected, generating GUIDs from Volume Serial Number (VSN)\n");
+				bdev->has_guids = true;
+				memcpy(bdev->disk_guid, bdev->boot_sector+0x48, 8);
+				memcpy(bdev->disk_guid+8, my_disk_guid+8, 8);
+				memcpy(bdev->partition_guid, bdev->boot_sector+0x48, 8);
+				memcpy(bdev->partition_guid+8, my_partition_guid+8, 8);
+			}
+/* Store 8 bytes ReFS serial number at offset 0x38 */
+			if (strncmp(bdev->boot_sector+3, "ReFS", 4) == 0) {
+				char my_disk_guid[16] = { 0x81, 0x60, 0x9e, 0x40, 0x4e, 0x01, 0x08, 0x45, 0xac, 0x5c, 0x0f, 0xb5, 0x55, 0x05, 0x7c, 0xe6 };
+				char my_partition_guid[16] = { 0xab, 0x68, 0x13, 0xa8, 0x7f, 0x9b, 0xcc, 0x12, 0x38, 0x0d, 0x87, 0xfe, 0x28, 0x09, 0x7b, 0xa7 };
+				printk("ReFS detected, generating GUIDs from ReFS Serial Number\n");
+				bdev->has_guids = true;
+				memcpy(bdev->disk_guid, bdev->boot_sector+0x38, 8);
+				memcpy(bdev->disk_guid+8, my_disk_guid+8, 8);
+				memcpy(bdev->partition_guid, bdev->boot_sector+0x38, 8);
+				memcpy(bdev->partition_guid+8, my_partition_guid+8, 8);
+			}
+			bdev->data_shift = 128;
+			bdev->appended_sectors = 128;
+
 			fake_partition_table(bdev);
+		} else {
+			printk("Did not find a file system on DRBD device, it should contain a partition table already\n");
 		}
         }
 	return 0;
@@ -3540,6 +3540,11 @@ void windrbd_device_size_change(struct block_device *bdev)
         if (bdev->d_size > 0) {
                 printk("got a valid size, unblocking SCSI capacity requests.\n");
                 KeSetEvent(&bdev->capacity_event, 0, FALSE);
+
+/* TODO: probably lots of races here: */
+		if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(bdev) < 0) {
+			printk("Warning: could not read boot sector on device size change.\n");
+		}
         } else {
                 printk("Size set to 0, am I Diskless/Unconnected?\n");
                 KeClearEvent(&bdev->capacity_event);
