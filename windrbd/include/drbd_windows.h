@@ -648,6 +648,8 @@ struct block_device {
 		 * I/O during size change. So cache it here. */
 	bool have_read_bootsector;
 	char boot_sector[512];
+
+	spinlock_t virtual_partition_table_lock;
 };
 
 	/* Starting with version 0.7.1, this is the device extension

@@ -3312,13 +3312,7 @@ struct block_device *bdget(dev_t device_no)
 /* TODO: to test 'auto-promote' */
 // block_device->is_bootdevice = 1;
 block_device->my_auto_promote = 1;
-/* TODO: test shifting .. and appending sectors */
-/* Now read the boot sector from DRBD and decide about partition table then */
-// block_device->data_shift = 128;
-// block_device->appended_sectors = 128;
-// block_device->data_shift = 0x22;
-// block_device->appended_sectors = 0x22;
-printk("Test: testing partition table injection (%lld sectors shift).\n", block_device->data_shift);
+
 		/* Currently all devices are disk devices, that
 		 * is they are managed by plug and play manager.
 		 * Set this flag early, else Windows will not
@@ -3337,9 +3331,10 @@ printk("Test: testing partition table injection (%lld sectors shift).\n", block_
 	KeInitializeEvent(&block_device->bus_device_iterated, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->io_not_suspended, NotificationEvent, TRUE);
 	spin_lock_init(&block_device->complete_request_spinlock);
+	spin_lock_init(&block_device->virtual_partition_table_lock);
 
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);
-	
+
 	return block_device;
 /*
 create_windows_device_failed:
