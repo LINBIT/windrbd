@@ -1,0 +1,3 @@
+rescan
+select volume 9
+extend filesystem
