@@ -3490,6 +3490,13 @@ int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct b
 	int err;
 	KIRQL flags;
 
+		/* Are we primary? If not, do nothing. */
+	if (bdev->drbd_device == NULL ||
+            bdev->drbd_device->resource == NULL ||
+            bdev->drbd_device->resource->role[NOW] != R_PRIMARY)
+		return 0;
+
+		/* Also if we don't exist yet, do nothing */
 	if (bdev->d_size <= 0)
 		return 0;
 
@@ -3547,7 +3554,6 @@ void windrbd_device_size_change(struct block_device *bdev)
                 printk("got a valid size, unblocking SCSI capacity requests.\n");
                 KeSetEvent(&bdev->capacity_event, 0, FALSE);
 
-/* TODO: probably lots of races here: */
 		if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(bdev) < 0) {
 			printk("Warning: could not read boot sector on device size change.\n");
 		}
