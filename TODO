@@ -13,6 +13,9 @@ TODO: Check behavior of remove-bus - install-bus - primary
         right before running sc stop.
         Also have a lock-driver
 
+TODO: Bug: On no memory, genl_replymsg() -ENOMEM is not checked.
+	by DRBD: may it fail in the Linux kernel?
+
 TODO: Bug: umhelper cannot find /var/lib/drbd-test
 
 	Probably because it is running as a service.
