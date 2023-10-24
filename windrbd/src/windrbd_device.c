@@ -1974,6 +1974,10 @@ dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\
 			if (status != STATUS_SUCCESS) {
 				return status;
 			}
+				/* And clean up */
+			put_page(bio->bi_io_vec[0].bv_page);
+			kfree(bio->bi_common_data);
+			bio_put(bio);
 		}
 	}
 
