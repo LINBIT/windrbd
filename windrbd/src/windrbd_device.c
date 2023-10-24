@@ -1878,6 +1878,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		bio->bi_upper_irp_buffer = buffer;
 		bio->bi_mdl_offset = (unsigned long long)b*MAX_BIO_SIZE;
 		bio->bi_common_data = common_data;
+		bio->is_user_request = true;
 
 cond_printk("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
 

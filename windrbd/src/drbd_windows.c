@@ -2269,14 +2269,14 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 
 	list_for_each_entry_safe(struct bio, bio, bio2, &tmp_list, corked_bios) {
 //  printk("bio is %p expected_sector is %lld bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %lld num_vector_elements is %d joinable_size is %d opf is %d bio->bi_opf is %d\n", bio, expected_sector, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, num_vector_elements, joinable_size, opf, bio->bi_opf);
-		if ((expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) || num_vector_elements >= 1024 || joinable_size >= 4*1024*1024 || (opf != (unsigned int)-1 && bio->bi_opf != opf)) {
+		if ((expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) || num_vector_elements >= 1024 || joinable_size >= 4*1024*1024 || (opf != (unsigned int)-1 && bio->bi_opf != opf) || bio->is_user_request) {
 // printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 			if (num_joinable_bios == 1) {
 				list_del(&bio->corked_bios);
 				ret = generic_make_request2(bio);
 			} else {
 if (bio_data_dir(bio) == WRITE) {
-// printk("1 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
+printk("1 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
 }
 				ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, bio);
 			}
