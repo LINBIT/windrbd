@@ -2202,6 +2202,10 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 		list_del(&first_bio->corked_bios);
 printk("bio %p is alone: submitting (1)\n", first_bio);
 		ret = generic_make_request2(first_bio);
+		for (i=0; i<first_bio->bi_vcnt; i++) {
+			/* corresponding get_page in generic_make_request() */
+			put_page(first_bio->bi_io_vec[i].bv_page);
+		}
 		bio_put(first_bio);	/* corresponding get in generic_request() */
 		return ret;
 	}
@@ -2249,7 +2253,7 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 	struct bio *bio, *bio2;
 	struct list_head tmp_list;
 	KIRQL flags;
-	int ret;
+	int i, ret;
 	int num_joinable_bios, num_vector_elements;
 	sector_t expected_sector;
 	unsigned long long joinable_size;
@@ -2286,6 +2290,10 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 				list_del(&bio->corked_bios);
 printk("bio %p is alone: submitting (2)\n", bio);
 				ret = generic_make_request2(bio);
+				for (i=0; i<bio->bi_vcnt; i++) {
+					/* corresponding get_page in generic_make_request() */
+					put_page(bio->bi_io_vec[i].bv_page);
+				}
 				bio_put(bio);	/* corresponding get in generic_request() */
 			} else {
 if (bio_data_dir(bio) == WRITE) {
