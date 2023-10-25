@@ -831,7 +831,7 @@ struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, ULONG tag, char *file, in
 {
 	struct bio *bio = bio_alloc_ll(mask, nr_iovecs, tag);
 
-printk("allocating bio at %p from %s:%d(%s)\n", bio, file, line, func);
+// printk("allocating bio at %p from %s:%d(%s)\n", bio, file, line, func);
 	if (bio) {
 		bio->file = file;
 		bio->line = line;
@@ -910,7 +910,7 @@ static void free_mdls_and_irp(struct bio *bio)
 void bio_get_debug(struct bio *bio, const char *file, int line, const char *func)
 {
 	int cnt;
-printk("getting bio at %p from %s:%d(%s) allocated from %s:%d(%s) refcnt before is %d direction is %s\n", bio, file, line, func, bio->file, bio->line, bio->func, atomic_read(&bio->bi_cnt), bio_data_dir(bio) == WRITE ? "WRITE" : "READ");
+// printk("getting bio at %p from %s:%d(%s) allocated from %s:%d(%s) refcnt before is %d direction is %s\n", bio, file, line, func, bio->file, bio->line, bio->func, atomic_read(&bio->bi_cnt), bio_data_dir(bio) == WRITE ? "WRITE" : "READ");
 	cnt = atomic_inc(&bio->bi_cnt);
 }
 
@@ -918,7 +918,7 @@ void bio_put_debug(struct bio *bio, const char *file, int line, const char *func
 {
 	int cnt;
 
-printk("putting bio at %p from %s:%d(%s) allocated from %s:%d(%s) refcnt before is %d direction is %s\n", bio, file, line, func, bio->file, bio->line, bio->func, atomic_read(&bio->bi_cnt), bio_data_dir(bio) == WRITE ? "WRITE" : "READ");
+// printk("putting bio at %p from %s:%d(%s) allocated from %s:%d(%s) refcnt before is %d direction is %s\n", bio, file, line, func, bio->file, bio->line, bio->func, atomic_read(&bio->bi_cnt), bio_data_dir(bio) == WRITE ? "WRITE" : "READ");
 
 	cnt = atomic_dec(&bio->bi_cnt);
 	if (cnt == 0)
@@ -2200,7 +2200,7 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	first_bio = list_first_entry(list, struct bio, corked_bios);
 	if (list_is_last(&first_bio->corked_bios, list)) {
 		list_del(&first_bio->corked_bios);
-printk("bio %p is alone: submitting (1)\n", first_bio);
+// printk("bio %p is alone: submitting (1)\n", first_bio);
 		ret = generic_make_request2(first_bio);
 		for (i=0; i<first_bio->bi_vcnt; i++) {
 			/* corresponding get_page in generic_make_request() */
@@ -2235,7 +2235,7 @@ if (bio_data_dir(bio3) == WRITE) {
 // printk("joined_bios_bio is %p bio3 is %p bio3->bi_vcnt is %d joined_bios_bio->bi_vcnt is %d\n", joined_bios_bio, bio3, bio3->bi_vcnt, joined_bios_bio->bi_vcnt);
 }
 		}
-printk("bio %p is being joined: NOT submitting (5)\n", bio3);
+// printk("bio %p is being joined: NOT submitting (5)\n", bio3);
 		list_del(&bio3->corked_bios);
 		list_add(&bio3->corked_bios, &joined_bios_bio->joined_bios);
 	}
@@ -2243,7 +2243,7 @@ printk("bio %p is being joined: NOT submitting (5)\n", bio3);
 		printk("Warning: joined_bios_bio->bi_vcnt(%d) != num_vector_elements(%d)\n", joined_bios_bio->bi_vcnt, num_vector_elements);
 	}
 // printk("first_bio is %p first_bio->bi_iter.bi_sector is %lld joined_bios_bio->bi_iter.bi_sector is %lld\n", first_bio, first_bio->bi_iter.bi_sector, joined_bios_bio->bi_iter.bi_sector);
-printk("bio %p is joined bios: submitting (2)\n", joined_bios_bio);
+// printk("bio %p is joined bios: submitting (2)\n", joined_bios_bio);
 		/* child bios will be put is I/O request routine */
 	return generic_make_request2(joined_bios_bio);
 }
@@ -2288,7 +2288,7 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 // printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 			if (num_joinable_bios == 1) {
 				list_del(&bio->corked_bios);
-printk("bio %p is alone: submitting (2)\n", bio);
+// printk("bio %p is alone: submitting (2)\n", bio);
 				ret = generic_make_request2(bio);
 				for (i=0; i<bio->bi_vcnt; i++) {
 					/* corresponding get_page in generic_make_request() */
@@ -2297,7 +2297,7 @@ printk("bio %p is alone: submitting (2)\n", bio);
 				bio_put(bio);	/* corresponding get in generic_request() */
 			} else {
 if (bio_data_dir(bio) == WRITE) {
-printk("1 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
+// printk("1 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
 }
 				ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, bio);
 			}
@@ -2370,7 +2370,7 @@ int generic_make_request(struct bio *bio)
 
 		return 0;
 	} else {
-printk("bio %p corking is off: submitting (4)\n", bio);
+// printk("bio %p corking is off: submitting (4)\n", bio);
 		return generic_make_request2(bio);
 	}
 }
