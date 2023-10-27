@@ -3578,6 +3578,7 @@ void windrbd_device_size_change(struct block_device *bdev)
 		if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(bdev) < 0) {
 			printk("Warning: could not read boot sector on device size change.\n");
 		}
+/* TODO: IoUpdateDiskGeometry(device_object, &old_geometry, &new_geometry); */
         } else {
                 printk("Size set to 0, am I Diskless/Unconnected?\n");
                 KeClearEvent(&bdev->capacity_event);
