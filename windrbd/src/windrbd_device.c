@@ -3423,7 +3423,17 @@ static void fake_partition_table(struct block_device *bdev)
 	void *old_partition_table, *old_backup_partition_table;
 	char my_disk_guid[16];
 	char my_partition_guid[16];
+	uint64_t old_partition_size = 0;
 
+		/* Do not change size of a partition here. Windows
+		 * would then reenumerate the mount points causing
+		 * running services to crash.
+		 */
+
+	if (bdev->disk_prolog != NULL) {
+		old_partition_size = *(uint64_t*)(bdev->disk_prolog+0x428);
+		printk("Found old partition size to be %llu bytes, not going to change it.\n", old_partition_size);
+	}
 	if (bdev->has_guids) {
 		memcpy(my_disk_guid, bdev->disk_guid, 16);
 		memcpy(my_partition_guid, bdev->partition_guid, 16);
@@ -3462,7 +3472,11 @@ static void fake_partition_table(struct block_device *bdev)
 		/* TODO: we assume that CPU is little endian here ... */
 	*(uint64_t*)(partition_table+0x220) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
 	*(uint64_t*)(partition_table+0x230) = (bdev->d_size/512)+bdev->data_shift-1;
-	*(uint64_t*)(partition_table+0x428) = (bdev->d_size/512)+bdev->data_shift-1;
+	if (old_partition_size != 0) {
+		*(uint64_t*)(partition_table+0x428) = old_partition_size;
+	} else {
+		*(uint64_t*)(partition_table+0x428) = (bdev->d_size/512)+bdev->data_shift-1;
+	}
 
 	memcpy(partition_table+0x238, my_disk_guid, 16);
 	memcpy(partition_table+0x410, my_partition_guid, 16);
