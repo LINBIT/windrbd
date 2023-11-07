@@ -2,16 +2,8 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
-TODO: Check behavior of remove-bus - install-bus - primary
-        Is buggy:
-                remove-bus - install-bus primary
-                primary stalls waiting for bus device
-                bus device doesn't get added because
-                AddDevice is NULL.
-        Solution: have explicit setting AddDevice to NULL
-        via windrbd unlock-driver or so ... and call that
-        right before running sc stop.
-        Also have a lock-driver
+TODO: Build self signed installer package with VERSION=self-signed or VERSION=unsupported
+	And put that version on the website.
 
 TODO: Bug: On no memory, genl_replymsg() -ENOMEM is not checked.
 	by DRBD: may it fail in the Linux kernel?
@@ -19,41 +11,6 @@ TODO: Bug: On no memory, genl_replymsg() -ENOMEM is not checked.
 TODO: Bug: umhelper cannot find /var/lib/drbd-test
 
 	Probably because it is running as a service.
-
-TODO: Bug: BSOD on failing I/O with disk-timeout-loop.sh
-
-	Not sure if it is new (fails in bio_put)
-	put a check for NULL in drbd_sender:302
-	req->private_bio is NULL here.
-
-TODO: Feature: Make disk-timeout work without BSOD.
-
-	We are running it in a loop right now, no BSODs so
-	far (disk gets detached on disk timeout).
-
-	BSOD. But not sure if it wasn't something else
-	(somewhere down in the new joined_bios code).
-
-TODO: Bug: Memory leak in disk cork/uncork
-
-	Looks like we do need the bio_put() in DrbdCompleteIo().
-	Update: seems to be fixed now.
-	But also test with sync (need to fix invalidate first).
-	Ok, invalidate magically works again, now there is (was?)
-	a I/O failure on SyncSource side which might be fixed
-	with the list_del() patch.
-
-	Memory leak still there when bio is not joined? (and
-	generic_make_request2 is called?)
-
-	Memory leak fixed (on drbdadm up).
-
-	Now we observe a I/O error (writing past the end of
-	the backing device) ... is this a logic bug? But it
-	looks like it is gone ...
-
-	Update: I/O error fixed but memory leak there.
-	Memory leak in invalidate loop (full sync).
 
 TODO: Bug: drbdadm down takes 30 seconds to complete:
 
@@ -70,14 +27,6 @@ TODO: Bug: drbdadm invalidate does not work
 	a DRBD (not WinDRBD) problem.
 
 TODO: Bug: Hang in NetworkFailure on no memory.
-
-TODO: Bug: drbdadm up slow
-
-	16TB: Windows 1:20 Linux 0:10
-	Locking problem?
-	No it was metadata IO (reading bitmap) ...
-		to be fixed in 1.1.8 or 1.1.9
-	Also observed hang in attach.
 
 TODO: Bug: System freeze when experimenting with DRBD reactor
 
@@ -8628,4 +8577,67 @@ Done: Bug: drbdadm up slow
 	16TB: Windows 1:20 Linux 0:10
 	Locking problem?
 	I/O problem, have cork/uncork now, it is much faster now.
+
+Done: Check behavior of remove-bus - install-bus - primary
+        Is buggy:
+                remove-bus - install-bus primary
+                primary stalls waiting for bus device
+                bus device doesn't get added because
+                AddDevice is NULL.
+        Solution: have explicit setting AddDevice to NULL
+        via windrbd unlock-driver or so ... and call that
+        right before running sc stop.
+        Also have a lock-driver
+	Now installer implements it. Side effect is
+	that downgrading from 1.1.8 to 1.1.7 requires
+	a reboot (upgrading works).
+
+Done: Bug: BSOD on failing I/O with disk-timeout-loop.sh
+
+	Not sure if it is new (fails in bio_put)
+	put a check for NULL in drbd_sender:302
+	req->private_bio is NULL here.
+
+Done: Feature: Make disk-timeout work without BSOD.
+
+	We are running it in a loop right now, no BSODs so
+	far (disk gets detached on disk timeout).
+
+	BSOD. But not sure if it wasn't something else
+	(somewhere down in the new joined_bios code).
+
+	Should work now.
+
+Done: Bug: Memory leak in disk cork/uncork
+
+	Looks like we do need the bio_put() in DrbdCompleteIo().
+	Update: seems to be fixed now.
+	But also test with sync (need to fix invalidate first).
+	Ok, invalidate magically works again, now there is (was?)
+	a I/O failure on SyncSource side which might be fixed
+	with the list_del() patch.
+
+	Memory leak still there when bio is not joined? (and
+	generic_make_request2 is called?)
+
+	Memory leak fixed (on drbdadm up).
+
+	Now we observe a I/O error (writing past the end of
+	the backing device) ... is this a logic bug? But it
+	looks like it is gone ...
+
+	Update: I/O error fixed but memory leak there.
+	Memory leak in invalidate loop (full sync).
+
+	Fixed.
+
+Done: Bug: drbdadm up slow
+
+	16TB: Windows 1:20 Linux 0:10
+	Locking problem?
+	No it was metadata IO (reading bitmap) ...
+		to be fixed in 1.1.8 or 1.1.9
+	Also observed hang in attach.
+
+	Fixed with cork/uncork backing dev I/O
 
