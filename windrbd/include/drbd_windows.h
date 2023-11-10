@@ -450,6 +450,7 @@ extern void add_timer(struct timer_list *t);
 extern int del_timer_sync(struct timer_list *t);
 extern void del_timer(struct timer_list *t);
 extern int mod_timer(struct timer_list *t, ULONG_PTR expires);
+extern int timer_pending(const struct timer_list * timer);
 
 extern int mod_timer_pending(struct timer_list *timer, ULONG_PTR expires);
 void timer_setup(struct timer_list *timer, void(*callback)(struct timer_list *timer), ULONG_PTR flags_unused);
@@ -1585,5 +1586,9 @@ int set_driver_locked_state(int state);
 
 void windrbd_bdev_cork(struct block_device *bdev);
 int windrbd_bdev_uncork(struct block_device *bdev);
+
+int windrbd_application_io_suspended(struct block_device *bdev);
+void windrbd_suspend_application_io(struct block_device *bdev);
+void windrbd_resume_application_io(struct block_device *bdev);
 
 #endif // DRBD_WINDOWS_H

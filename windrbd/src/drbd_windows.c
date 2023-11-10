@@ -1424,7 +1424,7 @@ void del_timer(struct timer_list *t)
  *
  * return value: 1 if the timer is pending, 0 if not.
  */
-static __inline int timer_pending(const struct timer_list * timer)
+int timer_pending(const struct timer_list * timer)
 {
     return timer->ktimer.Header.Inserted;
 }

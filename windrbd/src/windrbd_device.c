@@ -259,6 +259,21 @@ static NTSTATUS put_string(const char *s, struct _IO_STACK_LOCATION *sl, struct 
 	return STATUS_SUCCESS;
 }
 
+int windrbd_application_io_suspended(struct block_device *bdev)
+{
+	return !KeReadStateEvent(&bdev->io_not_suspended);
+}
+
+void windrbd_suspend_application_io(struct block_device *bdev)
+{
+	KeClearEvent(&bdev->io_not_suspended);
+}
+
+void windrbd_resume_application_io(struct block_device *bdev)
+{
+	KeSetEvent(&bdev->io_not_suspended, 0, FALSE);
+}
+
 static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
