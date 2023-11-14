@@ -2189,7 +2189,7 @@ static void do_nothing(struct bio *bio)
 	bio_put(bio);
 }
 
-static int create_and_submit_joined_bio(int num_vector_elements, int total_size, struct list_head *list, struct bio *last_bio)
+static int create_and_submit_joined_bio(int num_vector_elements, int total_size, struct list_head *list, struct bio *first_bio_not_on_list)
 {
 	struct bio *joined_bios_bio, *bio3, *bio4, *first_bio;
 	int i, ret;
@@ -2223,7 +2223,7 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	joined_bios_bio->bi_vcnt = 0;
 
 	list_for_each_entry_safe(struct bio, bio3, bio4, list, corked_bios) {
-		if (last_bio != NULL && bio3 == last_bio) {
+		if (first_bio_not_on_list != NULL && bio3 == first_bio_not_on_list) {
 			break;
 		}
 
@@ -2250,7 +2250,7 @@ if (bio_data_dir(bio3) == WRITE) {
 
 int windrbd_bdev_uncork(struct block_device *bdev)
 {
-	struct bio *bio, *bio2;
+	struct bio *bio, *bio2, *last_bio;
 	struct list_head tmp_list;
 	KIRQL flags;
 	int i, ret;
@@ -2281,28 +2281,32 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 	joinable_size = 0;
 	expected_sector = -1;
 	opf = -1;
+	last_bio = NULL;
 
 	list_for_each_entry_safe(struct bio, bio, bio2, &tmp_list, corked_bios) {
 //  printk("bio is %p expected_sector is %lld bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %lld num_vector_elements is %d joinable_size is %d opf is %d bio->bi_opf is %d\n", bio, expected_sector, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, num_vector_elements, joinable_size, opf, bio->bi_opf);
 		if ((expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) || num_vector_elements >= 1024 || joinable_size >= 4*1024*1024 || (opf != (unsigned int)-1 && bio->bi_opf != opf) || bio->is_user_request) {
 // printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
-			if (num_joinable_bios == 1) {
-				list_del(&bio->corked_bios);
-// printk("bio %p is alone: submitting (2)\n", bio);
-				ret = generic_make_request2(bio);
-				for (i=0; i<bio->bi_vcnt; i++) {
-					/* corresponding get_page in generic_make_request() */
-					put_page(bio->bi_io_vec[i].bv_page);
-				}
-				bio_put(bio);	/* corresponding get in generic_request() */
+			if (last_bio == NULL) {
+				printk("Warning: logic bug, last_bio should not be NULL here.\n");
 			} else {
-if (bio_data_dir(bio) == WRITE) {
+				if (num_joinable_bios == 1) {
+					list_del(&last_bio->corked_bios);
+					ret = generic_make_request2(last_bio);
+					for (i=0; i<last_bio->bi_vcnt; i++) {
+					/* corresponding get_page in generic_make_request() */
+						put_page(last_bio->bi_io_vec[i].bv_page);
+					}
+					bio_put(last_bio);	/* corresponding get in generic_request() */
+				} else {
+// if (bio_data_dir(bio) == WRITE) {
 // printk("1 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
-}
-				ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, bio);
+// }
+					ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, bio);
+				}
+				if (ret < 0)
+					return ret;
 			}
-			if (ret < 0)
-				return ret;
 
 			/* Rejected: create a buffer and copy over the data (if writing).
 			 * instead create a bi_io_vec pointing to the data and
@@ -2327,6 +2331,7 @@ if (bio_data_dir(bio) == WRITE) {
 		num_vector_elements += bio->bi_vcnt;
 		joinable_size += bio->bi_iter.bi_size;
 		expected_sector = bio->bi_iter.bi_sector + bio->bi_iter.bi_size/512;
+		last_bio = bio;
 
 if (bio_data_dir(bio) == WRITE) {
 // printk("2 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
