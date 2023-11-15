@@ -3587,6 +3587,7 @@ block_device->my_auto_promote = 1;
 	KeInitializeEvent(&block_device->io_not_suspended, NotificationEvent, TRUE);
 	spin_lock_init(&block_device->complete_request_spinlock);
 	spin_lock_init(&block_device->virtual_partition_table_lock);
+	spin_lock_init(&block_device->suspend_lock);
 
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);
 

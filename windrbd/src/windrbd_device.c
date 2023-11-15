@@ -264,14 +264,32 @@ int windrbd_application_io_suspended(struct block_device *bdev)
 	return !KeReadStateEvent(&bdev->io_not_suspended);
 }
 
-void windrbd_suspend_application_io(struct block_device *bdev)
+void windrbd_suspend_application_io(struct block_device *bdev, const char *message)
 {
-	KeClearEvent(&bdev->io_not_suspended);
+	KIRQL flags;
+
+	spin_lock_irqsave(&bdev->suspend_lock, flags);
+	if (!windrbd_application_io_suspended(bdev)) {
+		if (message != NULL)
+			printk("%s", message);
+
+		KeClearEvent(&bdev->io_not_suspended);
+	}
+	spin_unlock_irqrestore(&bdev->suspend_lock, flags);
 }
 
-void windrbd_resume_application_io(struct block_device *bdev)
+void windrbd_resume_application_io(struct block_device *bdev, const char *message)
 {
-	KeSetEvent(&bdev->io_not_suspended, 0, FALSE);
+	KIRQL flags;
+
+	spin_lock_irqsave(&bdev->suspend_lock, flags);
+	if (windrbd_application_io_suspended(bdev)) {
+		if (message != NULL)
+			printk("%s", message);
+
+		KeSetEvent(&bdev->io_not_suspended, 0, FALSE);
+	}
+	spin_unlock_irqrestore(&bdev->suspend_lock, flags);
 }
 
 static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
