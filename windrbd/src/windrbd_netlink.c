@@ -454,6 +454,15 @@ void windrbd_shutdown_netlink(void)
 		printk("Could not clean up reply reaper, status is %x\n", status);
 }
 
+static void dump_skb(struct sk_buff *skb)
+{
+	int i;
+	printk("Dumping skb %p ...\n", skb);
+	// for (i=skb->tail;i<skb->end;i++)
+	for (i=0;i<skb->tail;i++)
+		printk("skb %p [%d] = %02X (%u)\n", skb, i, skb->data[i], skb->data[i]);
+}
+
 static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netlink_callback * cb, struct genl_info * info)
 {
     struct nlmsghdr * nlh = NULL;
@@ -478,6 +487,15 @@ static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netli
         hdr->version = 0;
         hdr->reserved = 0;
     }
+
+	if (err > 0) {
+		struct drbd_genlmsghdr *dh =
+			(struct drbd_genlmsghdr*) (((char*)&skb->data[0])+NLMSG_HDRLEN+GENL_HDRLEN);
+		if (dh->ret_code != NO_ERROR) {
+			printk("DRBD Error %d in dumping, returning error to drbdsetup\n", dh->ret_code);
+			err = -1;	/* or so ... */
+		}
+	}
 
     drbd_adm_send_reply(skb, info);
 
