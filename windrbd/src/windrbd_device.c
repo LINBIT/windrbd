@@ -43,10 +43,10 @@
 #endif
 
 #ifdef DEBUG_BUS
-#define dbg_bus(format, ...)   \
-    _printk(__FUNCTION__, format, __VA_ARGS__)
+#define dbg_bus(args...)   \
+    _printk(__FUNCTION__, args)
 #else
-#define dbg_bus(format, ...)   __noop
+#define dbg_bus(args...)   __noop
 #endif
 
 /* Enable all warnings throws lots of those warnings: */
