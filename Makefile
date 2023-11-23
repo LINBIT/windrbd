@@ -226,6 +226,18 @@ clean:
 	make -C generate-cat-file clean
 	make -C drbd-utils clean
 
+clean-converted-sources:
+	if test -f $(TRANS_DEST)/.generated; then \
+		rm -f $(shell cat $(TRANS_DEST).generated) $(TRANS_DEST).generated; \
+		for d in $(TRANS_DEST) $(WIN4LIN); do \
+			find $$d -name "*.tmp.bak" -delete; \
+			find $$d -name "*.pdb" -delete; \
+			find $$d -name "*.obj" -delete; \
+			find $$d -name "*.orig" -delete; \
+			find $$d -name "*.tmpe" -delete; \
+		done; \
+	fi
+
 ifdef REACTOS
 EXTRA_ISCC_DEFINES=/DReactos=1
 endif
