@@ -2,9 +2,9 @@
 #define _WINDRBD_CONFIG_H
 
 /* Windows (not ReactOS) target, with mingw */
-#ifndef REACTOS
+// #ifndef REACTOS
 #define CONFIG_HAVE_NETIO_DRIVER 1
-#endif
+// #endif
 
 /* Those need to be implemented: */
 // #define CONFIG_HAVE_IO_CREATE_DEVICE_SECURE 1
