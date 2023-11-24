@@ -1,9 +1,9 @@
 [submodule "drbd"]
         path = drbd
-        url = https://github.com/LINBIT/drbd-9.0.git
-        update = rebase
+        url = ../drbd.git
+        update = checkout
         fetchRecurseSubmodules = true
-	branch = jt/drbd-for-windrbd-1.1.0-rc3
+	branch = jt/windrbd-1.1-drbd-9.0
 [submodule "generate-cat-file"]
 	path = generate-cat-file
 	url = ../generate-cat-file
