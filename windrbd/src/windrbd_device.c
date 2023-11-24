@@ -2490,7 +2490,6 @@ dbg("Returned string is %S\n", string);
 			dbg_bus("Warning: lower device returned status %x\n", status);
 
 		return status;
-#endif
 
 	case IRP_MN_QUERY_ID: 	/* 0x13 */
 		dbg_bus("got IRP_MN_QUERY_ID\n");
@@ -2502,6 +2501,7 @@ dbg("Returned string is %S\n", string);
 			dbg_bus("Warning: lower device returned status %x\n", status);
 
 		return status;
+#endif
 
 	case IRP_MN_QUERY_INTERFACE: 	/* 0x8 */
 		dbg_bus("got IRP_MN_QUERY_INTERFACE\n");
