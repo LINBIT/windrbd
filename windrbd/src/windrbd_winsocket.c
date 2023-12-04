@@ -22,7 +22,7 @@
  * the Dispatcher cast is dangerous.
  */
 
-/* TODO: have refcnt on struct socket. Reason is that there might
+/* TODO: !! have refcnt on struct socket. Reason is that there might
  * be use-after-free (in the completion handler) when the socket
  * is shut down.
  */
@@ -332,6 +332,7 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 			    completion->socket->error_status != new_status)
 				dbg(KERN_WARNING "Last error status of socket was %d, now got %d (ntstatus %x)\n", completion->socket->error_status, new_status, Irp->IoStatus.Status);
 
+/* TODO: completion->socket may be NULL here? */
 			completion->socket->error_status = new_status;
 		}
 	} else {

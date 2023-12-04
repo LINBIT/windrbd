@@ -247,6 +247,7 @@ size_t windrbd_receive_netlink_packets(void *vbuf, size_t remaining_size, u32 po
 
 		b = next_buffer(r);
 		RtlCopyMemory(buf, b->buf, nbs);
+			/* b maybe NULL here? There is a BSOD sometimes ... */
 		kfree(b->buf);
 		kfree(b);
 
