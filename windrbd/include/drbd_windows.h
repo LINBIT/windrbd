@@ -1612,4 +1612,6 @@ int windrbd_application_io_suspended(struct block_device *bdev);
 void windrbd_suspend_application_io(struct block_device *bdev, const char *msg);
 void windrbd_resume_application_io(struct block_device *bdev, const char *msg);
 
+void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status);
+
 #endif // DRBD_WINDOWS_H

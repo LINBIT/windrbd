@@ -2447,7 +2447,7 @@ static void bio_endio_impl(struct bio *bio, bool was_accounted)
 
 	if (bio->bi_end_io != NULL) {
 		if (error != 0)
-			printk("Warning: thread(%s) bio_endio error with err=%d.\n", current->comm, error);
+			printk("Warning: thread(%s) bio(%p) bio_endio error with err=%d\n", current->comm, bio, error);
 
 
 		bio->bi_end_io(bio);
