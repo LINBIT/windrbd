@@ -1745,19 +1745,27 @@ void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status)
 	struct list_head tmp_list;
 	struct bio *bio, *bio2;
 
+		/* Valid. backing dev might be detached. */
+	if (bdev == NULL)
+		return;
+
 	INIT_LIST_HEAD(&tmp_list);
 
+printk("1\n");
 	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
 	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->in_flight_bios, locally_submitted_bios) {
+printk("2 bio is %p\n", bio);
 		list_del(&bio->locally_submitted_bios);
 		list_add(&bio->locally_submitted_bios2, &tmp_list);
 	}
 	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
 
 	list_for_each_entry(struct bio, bio, &tmp_list, locally_submitted_bios2) {
+printk("3 bio is %p\n", bio);
 		bio->bi_status = bi_status;
 		bio_endio(bio);
 	}
+printk("4 bio is %p\n");
 }
 
 NTSTATUS DrbdIoCompletion(
