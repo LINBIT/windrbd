@@ -1755,7 +1755,7 @@ printk("1\n");
 	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
 	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->in_flight_bios, locally_submitted_bios) {
 printk("2 bio is %p\n", bio);
-		list_del(&bio->locally_submitted_bios);
+		list_del_init(&bio->locally_submitted_bios);
 		list_add(&bio->locally_submitted_bios2, &tmp_list);
 	}
 	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
@@ -1841,9 +1841,11 @@ NTSTATUS DrbdIoCompletion(
 
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS || one_big_request)) {
 			/* Last call to DrbdIoComplete() for this bio */
-		spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
-		list_del(&bio->locally_submitted_bios);
-		spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
+		if (!bio->already_failed) {
+			spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
+			list_del_init(&bio->locally_submitted_bios);
+			spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
+		}	/* Else already deleted from the list */
 
 		bio->bi_status = win_status_to_blk_status(status);
 		bio_endio(bio);
