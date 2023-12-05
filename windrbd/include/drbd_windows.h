@@ -664,6 +664,9 @@ struct block_device {
 	bool corked;
 	spinlock_t cork_spinlock;
 	struct list_head corked_list;
+
+	spinlock_t in_flight_bios_lock;
+	struct list_head in_flight_bios;
 };
 
 	/* Starting with version 0.7.1, this is the device extension
@@ -857,6 +860,23 @@ struct bio {
 	/* Set when a bio is created in windrbd_make_drbd_requests.
 	   Do not try to join them */
 	bool is_user_request;
+
+	/* bios are put on this list once submitted to the underlying
+	 * disk driver and removed when bi_endio is called. This allows
+	 * us to avoid calling bi_endio twice. It is useful for failing
+	 * in-flight bios when a disk timeout happens (the disk still
+	 * may call the WinDRBD completion handler after that timeout
+	 * which should not call bi_endio again).
+	 */
+	struct list_head locally_submitted_bios;
+	struct list_head locally_submitted_bios2;
+
+	/* Set when there is a disk timeout. We fail the bio in the
+	 * disk timeout handler and must not fail it again (bi_endio
+	 * should be called only once.
+	 */
+	spinlock_t already_failed_lock;
+	bool already_failed;
 
 	/* TODO: may be put members here again? Update: Not sure,
 	 * we've put a KEVENT here and it didn't work .. might also

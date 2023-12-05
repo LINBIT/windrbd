@@ -822,6 +822,12 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 	INIT_LIST_HEAD(&bio->corked_bios);
 	INIT_LIST_HEAD(&bio->joined_bios);
 
+	INIT_LIST_HEAD(&bio->locally_submitted_bios);
+	INIT_LIST_HEAD(&bio->locally_submitted_bios2);
+
+	spin_lock_init(&bio->already_failed_lock);
+	bio->already_failed = false;
+
 	return bio;
 }
 
@@ -1733,6 +1739,27 @@ int wait_for_bios_to_complete(struct block_device *bdev)
 
 static void bio_endio_impl(struct bio *bio, bool was_accounted);
 
+void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status)
+{
+	KIRQL flags;
+	struct list_head tmp_list;
+	struct bio *bio, *bio2;
+
+	INIT_LIST_HEAD(&tmp_list);
+
+	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
+	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->in_flight_bios, locally_submitted_bios) {
+		list_del(&bio->locally_submitted_bios);
+		list_add(&bio->locally_submitted_bios2, &tmp_list);
+	}
+	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
+
+	list_for_each_entry(struct bio, bio, &tmp_list, locally_submitted_bios2) {
+		bio->bi_status = bi_status;
+		bio_endio(bio);
+	}
+}
+
 NTSTATUS DrbdIoCompletion(
   _In_     PDEVICE_OBJECT DeviceObject,
   _In_     PIRP           Irp,
@@ -1805,6 +1832,11 @@ NTSTATUS DrbdIoCompletion(
 	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
 
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS || one_big_request)) {
+			/* Last call to DrbdIoComplete() for this bio */
+		spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
+		list_del(&bio->locally_submitted_bios);
+		spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
+
 		bio->bi_status = win_status_to_blk_status(status);
 		bio_endio(bio);
 
@@ -1896,6 +1928,7 @@ static int make_flush_request(struct bio *bio)
 {
 	NTSTATUS status;
 	PIO_STACK_LOCATION next_stack_location;
+	KIRQL flags;
 
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				IRP_MJ_FLUSH_BUFFERS,
@@ -1920,6 +1953,9 @@ static int make_flush_request(struct bio *bio)
 
 	bio_get(bio);	/* To be put in completion routine (bi_endio) */
 
+	spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
+	list_add(&bio->locally_submitted_bios, &bio->bi_bdev->in_flight_bios);
+	spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
 
 	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
@@ -2039,6 +2075,14 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 
 	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	part_stat_add(bio->bi_bdev, sectors[io == IRP_MJ_READ ? STAT_READ : STAT_WRITE], the_size / 512);
+
+	if (bio->bi_this_request == 0) {
+		KIRQL flags;
+
+		spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
+		list_add(&bio->locally_submitted_bios, &bio->bi_bdev->in_flight_bios);
+		spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
+	}
 
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
@@ -2382,7 +2426,21 @@ int generic_make_request(struct bio *bio)
 
 static void bio_endio_impl(struct bio *bio, bool was_accounted)
 {
+	KIRQL flags;
+
 	int error = blk_status_to_errno(bio->bi_status);
+
+		/* This allows us being called multiple times with
+		 * the same bio without crashing.
+		 */
+
+	spin_lock_irqsave(&bio->already_failed_lock, flags);
+	if (bio->already_failed) {
+		spin_unlock_irqrestore(&bio->already_failed_lock, flags);
+		return;
+	}
+	bio->already_failed = true;
+	spin_unlock_irqrestore(&bio->already_failed_lock, flags);
 
 	bio_get(bio);
 
@@ -3180,6 +3238,10 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	spin_lock_init(&block_device->cork_spinlock);
 	INIT_LIST_HEAD(&block_device->corked_list);
 
+		/* fail I/O on disk timeout, new in 1.1.9 */
+	spin_lock_init(&block_device->in_flight_bios_lock);
+	INIT_LIST_HEAD(&block_device->in_flight_bios);
+
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
 
@@ -3574,6 +3636,9 @@ block_device->my_auto_promote = 1;
 	block_device->corked = false;
 	spin_lock_init(&block_device->cork_spinlock);
 	INIT_LIST_HEAD(&block_device->corked_list);
+		/* fail I/O on disk timeout, new in 1.1.9 */
+	spin_lock_init(&block_device->in_flight_bios_lock);
+	INIT_LIST_HEAD(&block_device->in_flight_bios);
 
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
