@@ -206,6 +206,7 @@ static int blk_status_to_errno(blk_status_t status)
 {
         return  status == BLK_STS_OK ? 0 :
                 status == BLK_STS_RESOURCE ? -ENOMEM :
+                status == BLK_STS_TIMEOUT ? -ETIMEDOUT :
                 status == BLK_STS_NOTSUPP ? -EOPNOTSUPP :
                 -EIO;
 }
