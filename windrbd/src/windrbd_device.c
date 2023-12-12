@@ -1671,8 +1671,6 @@ static void windrbd_bio_finished(struct bio * bio)
 	NTSTATUS status;
 	int error = blk_status_to_errno(bio->bi_status);
 
-printk("master bio %p finished\n", bio);
-
 	if (irp == NULL) {
 		printk("Internal error: irp is NULL in bio_finished, this should not happen.");
 		return;
@@ -1808,8 +1806,6 @@ printk("master bio %p finished\n", bio);
 
 static void windrbd_internal_io_finished(struct bio * bio)
 {
-printk("master bio %p finished\n", bio);
-
 	KeSetEvent(bio->bi_io_finished_event, 0, FALSE);
 }
 
@@ -1824,7 +1820,6 @@ static void drbd_make_request_work(struct work_struct *w)
 	struct io_request *ioreq = container_of(w, struct io_request, w);
 
 // printk("1\n");
-printk("submitting upper bio %p\n", ioreq->bio);
 	drbd_submit_bio(ioreq->bio);
 // printk("2\n");
 	kfree(ioreq);
@@ -1905,7 +1900,6 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 			printk("Couldn't allocate bio.\n");
 			return STATUS_INSUFFICIENT_RESOURCES;
 		}
-printk("created upper bio %p\n", bio);
 		bio->bi_opf = (rw == WRITE ? REQ_OP_WRITE : REQ_OP_READ);
 		bio->bi_bdev = dev;
 		bio->bi_max_vecs = 1;
