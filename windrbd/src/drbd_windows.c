@@ -1753,7 +1753,6 @@ void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status)
 
 	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
 	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->in_flight_bios, locally_submitted_bios) {
-printk("failing bio %p bdev is %p\n", bio, bdev);
 		list_del_init(&bio->locally_submitted_bios);
 		list_add(&bio->locally_submitted_bios2, &tmp_list);
 	}
@@ -1839,7 +1838,6 @@ NTSTATUS DrbdIoCompletion(
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS || one_big_request)) {
 			/* Last call to DrbdIoComplete() for this bio */
 		if (!bio->already_failed) {
-printk("removing bio %p from submission list bdev is %p\n", bio, bio->bi_bdev);
 			spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
 			list_del_init(&bio->locally_submitted_bios);
 			spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
@@ -2087,7 +2085,6 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	if (bio->bi_this_request == 0) {
 		KIRQL flags;
 
-printk("adding bio %p to submission list bdev is %p\n", bio, bio->bi_bdev);
 		spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
 		list_add(&bio->locally_submitted_bios, &bio->bi_bdev->in_flight_bios);
 		spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
