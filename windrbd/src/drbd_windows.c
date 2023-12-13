@@ -1837,11 +1837,13 @@ NTSTATUS DrbdIoCompletion(
 
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS || one_big_request)) {
 			/* Last call to DrbdIoComplete() for this bio */
+#if 0
 		if (!bio->already_failed) {
 			spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
 			list_del_init(&bio->locally_submitted_bios);
 			spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
 		}	/* Else already deleted from the list */
+#endif
 
 		bio->bi_status = win_status_to_blk_status(status);
 		bio_endio(bio);
@@ -1959,9 +1961,11 @@ static int make_flush_request(struct bio *bio)
 
 	bio_get(bio);	/* To be put in completion routine (bi_endio) */
 
+#if 0
 	spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
 	list_add(&bio->locally_submitted_bios, &bio->bi_bdev->in_flight_bios);
 	spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
+#endif
 
 	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
@@ -2083,11 +2087,13 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	part_stat_add(bio->bi_bdev, sectors[io == IRP_MJ_READ ? STAT_READ : STAT_WRITE], the_size / 512);
 
 	if (bio->bi_this_request == 0) {
+/*
 		KIRQL flags;
 
 		spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
 		list_add(&bio->locally_submitted_bios, &bio->bi_bdev->in_flight_bios);
 		spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
+*/
 	}
 
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
