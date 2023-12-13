@@ -970,6 +970,9 @@ void bio_free(struct bio *bio)
 	list_add(&bio->to_be_freed_list, &bios_to_be_freed_list);
 	spin_unlock_irqrestore(&bios_to_be_freed_lock, flags);
 
+	if (!list_empty(&bio->locally_submitted_bios)) {
+		printk("Warning: bio->locally_submitted_bios not empty.\n");
+	}
 	if (upper_bio != NULL)
 		bio_put(upper_bio);
 
@@ -1753,7 +1756,7 @@ void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status)
 
 	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
 	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->in_flight_bios, locally_submitted_bios) {
-		list_del_init(&bio->locally_submitted_bios);
+//		list_del_init(&bio->locally_submitted_bios);
 		list_add(&bio->locally_submitted_bios2, &tmp_list);
 	}
 	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
@@ -1837,14 +1840,6 @@ NTSTATUS DrbdIoCompletion(
 
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS || one_big_request)) {
 			/* Last call to DrbdIoComplete() for this bio */
-#if 0
-		if (!bio->already_failed) {
-			spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
-			list_del_init(&bio->locally_submitted_bios);
-			spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
-		}	/* Else already deleted from the list */
-#endif
-
 		bio->bi_status = win_status_to_blk_status(status);
 		bio_endio(bio);
 
@@ -1961,11 +1956,9 @@ static int make_flush_request(struct bio *bio)
 
 	bio_get(bio);	/* To be put in completion routine (bi_endio) */
 
-#if 0
 	spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
 	list_add(&bio->locally_submitted_bios, &bio->bi_bdev->in_flight_bios);
 	spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
-#endif
 
 	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
@@ -2087,13 +2080,11 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	part_stat_add(bio->bi_bdev, sectors[io == IRP_MJ_READ ? STAT_READ : STAT_WRITE], the_size / 512);
 
 	if (bio->bi_this_request == 0) {
-/*
 		KIRQL flags;
 
 		spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
 		list_add(&bio->locally_submitted_bios, &bio->bi_bdev->in_flight_bios);
 		spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
-*/
 	}
 
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
@@ -2438,7 +2429,7 @@ int generic_make_request(struct bio *bio)
 
 static void bio_endio_impl(struct bio *bio, bool was_accounted)
 {
-	KIRQL flags;
+	KIRQL flags, flags2;
 
 	int error = blk_status_to_errno(bio->bi_status);
 
@@ -2451,6 +2442,10 @@ static void bio_endio_impl(struct bio *bio, bool was_accounted)
 		spin_unlock_irqrestore(&bio->already_failed_lock, flags);
 		return;
 	}
+	spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags2);
+	list_del_init(&bio->locally_submitted_bios);
+	spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags2);
+
 	bio->already_failed = true;
 	spin_unlock_irqrestore(&bio->already_failed_lock, flags);
 
