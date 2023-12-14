@@ -1747,21 +1747,26 @@ static void bio_endio_impl(struct bio *bio, bool was_accounted);
 void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status)
 {
 	KIRQL flags;
-//	struct list_head tmp_list;
+	struct list_head tmp_list;
 	struct bio *bio, *bio2;
 
 		/* Valid. backing dev might be detached. */
 	if (bdev == NULL)
 		return;
 
-//	INIT_LIST_HEAD(&tmp_list);
+	INIT_LIST_HEAD(&tmp_list);
 
 	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
 	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->in_flight_bios, locally_submitted_bios) {
+//		list_del_init(&bio->locally_submitted_bios);
+		list_add(&bio->locally_submitted_bios2, &tmp_list);
+	}
+	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
+
+	list_for_each_entry(struct bio, bio, &tmp_list, locally_submitted_bios2) {
 		bio->bi_status = bi_status;
 		bio_endio(bio); /* will remove this bio from the list */
 	}
-	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
 }
 
 NTSTATUS DrbdIoCompletion(
