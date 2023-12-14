@@ -1067,7 +1067,9 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	for (i=0;i<bio->bi_vcnt;i++) {
 		get_page(bio->bi_io_vec[i].bv_page);
 	}
-
+	if (!list_empty(&bio->locally_submitted_bios)) {
+		printk("Warning: bio->locally_submitted_bios not empty, is this bio already submitted?\n");
+	}
 #ifdef BIO_ALLOC_DEBUG
 	bio->file = bio_src->file;
 	bio->line = bio_src->line;
@@ -1745,26 +1747,21 @@ static void bio_endio_impl(struct bio *bio, bool was_accounted);
 void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status)
 {
 	KIRQL flags;
-	struct list_head tmp_list;
+//	struct list_head tmp_list;
 	struct bio *bio, *bio2;
 
 		/* Valid. backing dev might be detached. */
 	if (bdev == NULL)
 		return;
 
-	INIT_LIST_HEAD(&tmp_list);
+//	INIT_LIST_HEAD(&tmp_list);
 
 	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
 	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->in_flight_bios, locally_submitted_bios) {
-//		list_del_init(&bio->locally_submitted_bios);
-		list_add(&bio->locally_submitted_bios2, &tmp_list);
+		bio->bi_status = bi_status;
+		bio_endio(bio); /* will remove this bio from the list */
 	}
 	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
-
-	list_for_each_entry(struct bio, bio, &tmp_list, locally_submitted_bios2) {
-		bio->bi_status = bi_status;
-		bio_endio(bio);
-	}
 }
 
 NTSTATUS DrbdIoCompletion(
@@ -1956,10 +1953,6 @@ static int make_flush_request(struct bio *bio)
 
 	bio_get(bio);	/* To be put in completion routine (bi_endio) */
 
-	spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
-	list_add(&bio->locally_submitted_bios, &bio->bi_bdev->in_flight_bios);
-	spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
-
 	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
@@ -2078,14 +2071,6 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 
 	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	part_stat_add(bio->bi_bdev, sectors[io == IRP_MJ_READ ? STAT_READ : STAT_WRITE], the_size / 512);
-
-	if (bio->bi_this_request == 0) {
-		KIRQL flags;
-
-		spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags);
-		list_add(&bio->locally_submitted_bios, &bio->bi_bdev->in_flight_bios);
-		spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags);
-	}
 
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
@@ -2402,6 +2387,15 @@ int generic_make_request(struct bio *bio)
 	KIRQL flags;
 	int i;
 
+		/* First thing: put bio on pending list before
+		 * we get confused facing joined, corked, child, ...
+		 * bios.
+		 */
+
+	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
+	list_add(&bio->locally_submitted_bios, &bdev->in_flight_bios);
+	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
+
 	if (bdev->corked) {
 		bio_get(bio);	/* we want to put it on a list. */
 
@@ -2450,7 +2444,6 @@ static void bio_endio_impl(struct bio *bio, bool was_accounted)
 	spin_unlock_irqrestore(&bio->already_failed_lock, flags);
 
 	bio_get(bio);
-
 
 	if (bio->bi_end_io != NULL) {
 		if (error != 0)
