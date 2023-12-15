@@ -133,8 +133,14 @@ WINDRBD_INCLUDES=-I"windrbd/include" -I"converted-sources/drbd" -I"converted-sou
 
 MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk
 
+DRBD_SRCDIR=./drbd-tmp/drbd
 PATCHED_DRBD_SRCDIR = ./converted-sources/drbd
 WINDRBD_SRCDIR = ./windrbd/src
+
+ORIG_DRBD_FILES += $(DRBD_SRCDIR)/drbd_sender.c $(DRBD_SRCDIR)/drbd_receiver.c $(DRBD_SRCDIR)/drbd_req.c $(DRBD_SRCDIR)/drbd_actlog.c
+ORIG_DRBD_FILES += $(DRBD_SRCDIR)/lru_cache.c $(DRBD_SRCDIR)/drbd_main.c $(DRBD_SRCDIR)/drbd_strings.c $(DRBD_SRCDIR)/drbd_nl.c
+ORIG_DRBD_FILES += $(DRBD_SRCDIR)/drbd_interval.c $(DRBD_SRCDIR)/drbd_state.c $(DRBD_SRCDIR)/drbd_kref_debug.c
+ORIG_DRBD_FILES += $(DRBD_SRCDIR)/drbd_nla.c $(DRBD_SRCDIR)/drbd_transport.c $(DRBD_SRCDIR)/drbd_transport_tcp.c $(DRBD_SRCDIR)/kref_debug.c $(DRBD_SRCDIR)/drbd_buildtag.c $(DRBD_SRCDIR)/drbd_bitmap.c $(DRBD_SRCDIR)/drbd_proc.c
 
 DRBD_FILES += $(PATCHED_DRBD_SRCDIR)/drbd_sender.c $(PATCHED_DRBD_SRCDIR)/drbd_receiver.c $(PATCHED_DRBD_SRCDIR)/drbd_req.c $(PATCHED_DRBD_SRCDIR)/drbd_actlog.c
 DRBD_FILES += $(PATCHED_DRBD_SRCDIR)/lru_cache.c $(PATCHED_DRBD_SRCDIR)/drbd_main.c $(PATCHED_DRBD_SRCDIR)/drbd_strings.c $(PATCHED_DRBD_SRCDIR)/drbd_nl.c
@@ -149,6 +155,8 @@ WINDRBD_FILES = $(WINDRBD_SRCDIR)/Attr.c $(WINDRBD_SRCDIR)/disp.c $(WINDRBD_SRCD
                 $(WINDRBD_SRCDIR)/windrbd_usermodehelper.c $(WINDRBD_SRCDIR)/windrbd_waitqueue.c \
                 $(WINDRBD_SRCDIR)/windrbd_winsocket.c $(WINDRBD_SRCDIR)/windrbd_locking.c \
                 $(WINDRBD_SRCDIR)/tiktok.c $(WINDRBD_SRCDIR)/partition_table_template.c
+
+ORIG_OBJS=$(patsubst %.c,%.o,$(ORIG_DRBD_FILES))
 
 OBJS=$(patsubst %.c,%.o,$(DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) ./windrbd/windrbd-event-log.coffres ./converted-sources/drbd/resource.coffres
 
@@ -192,6 +200,10 @@ versioninfo:
 
 converted-sources/drbd/drbd_buildtag.c: versioninfo
 
+orig-drbd: drbd-tmp $(ORIG_OBJS)
+
+$(ORIG_DRBD_FILES): drbd-tmp
+
 windrbd.sys: versioninfo converted-sources $(OBJS) converted-sources/drbd/drbd_buildtag.c
 	$(CC) -o windrbd.sys-unsigned $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
 	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed
@@ -223,6 +235,7 @@ clean:
 	rm -f windrbd.sys windrbd.sys.map windrbd.cat windrbd.inf
 	rm -f windrbd/msg00002.bin windrbd/include/windrbd-event-log.h windrbd/windrbd-event-log.rc
 	rm -f windrbd.cat-unsigned windrbd.sys-unsigned windrbd.sys-signed
+	rm -rf drbd-tmp
 	make -C generate-cat-file clean
 	make -C drbd-utils clean
 
@@ -292,3 +305,11 @@ $(TRANS_DEST).generated: $(ORIG)
 trans: $(TRANSFORMED) $(TRANS_DEST).generated
 
 converted-sources: trans
+
+NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*))
+NEW_ORIG := $(shell find drbd -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c|drbd_buildtag.c|compat.h|drbd_polymorph_printk.h')
+NEW_TRANSFORMED := $(patsubst drbd%,drbd-tmp%,$(NEW_ORIG))
+
+drbd-tmp:
+	cp -R drbd drbd-tmp
+	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $(NEW_TRANSFORMED) --in-place ; done
