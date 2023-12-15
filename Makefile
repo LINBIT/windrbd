@@ -307,7 +307,8 @@ trans: $(TRANSFORMED) $(TRANS_DEST).generated
 converted-sources: trans
 
 NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*))
-NEW_ORIG := $(shell find drbd -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c|drbd_buildtag.c|compat.h|drbd_polymorph_printk.h')
+# NEW_ORIG := $(shell find drbd -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c|drbd_buildtag.c|compat.h|drbd_polymorph_printk.h')
+NEW_ORIG := $(shell find drbd -name "*.[ch]")
 NEW_TRANSFORMED := $(patsubst drbd%,drbd-tmp%,$(NEW_ORIG))
 
 drbd-tmp:
