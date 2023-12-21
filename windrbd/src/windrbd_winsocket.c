@@ -1,5 +1,5 @@
 ﻿/* Uncomment this if you want more debug output (disable for releases) */
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -736,29 +736,38 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	struct socket *accept_socket;
 	KIRQL flags;
 
+printk("1 io_flags is %d\n", io_flags);
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
 retry:
+printk("2\n");
 	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket == NULL) {
+printk("3\n");
 		spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 		if ((io_flags & O_NONBLOCK) != 0)
 			return -EWOULDBLOCK;
 
+printk("3x\n");
 			/* TODO: handle signals */
 		KeWaitForSingleObject(&socket->accept_event, Executive, KernelMode, FALSE, NULL);
+printk("3y\n");
 		goto retry;
 	}
+printk("4\n");
 	wsk_socket = socket->accept_wsk_socket;
 	socket->accept_wsk_socket = NULL;
 	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 
+printk("5\n");
 // printk("into sock_create_linux_socket ..\n");
 	err = sock_create_linux_socket(&accept_socket, SOCK_STREAM);
+printk("err is %d\n", err);
 	if (err < 0)
 		close_wsk_socket(wsk_socket);
 	else {
+printk("6\n");
 		accept_socket->wsk_socket = wsk_socket;
 		accept_socket->sk->sk_state = TCP_ESTABLISHED;
 		accept_socket->sk->sk_state_change = socket->sk->sk_state_change;
@@ -769,6 +778,7 @@ retry:
 		*newsock = accept_socket;
 	}
 
+printk("err is %d\n", err);
 	return err;
 }
 
@@ -873,57 +883,70 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	NTSTATUS	Status;
 	ULONG Flags = 0;
 
+dbg("1\n");
 // dbg("socket is %p\n", socket);
 
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
+dbg("2\n");
 	if (num != 1)
 		return -EOPNOTSUPP;
 
+dbg("3\n");
 	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, FALSE, TRUE);
 	if (!NT_SUCCESS(Status)) {
 		return winsock_to_linux_error(Status);
 	}
 
+dbg("4\n");
 	Irp = wsk_new_irp(&CompletionEvent);
 	if (Irp == NULL) {
 		FreeWskBuffer(&WskBuffer, 1);
 		return -ENOMEM;
 	}
 
+dbg("5\n");
 	if (socket->no_delay)
 		Flags |= WSK_FLAG_NODELAY;
 	else
 		Flags &= ~WSK_FLAG_NODELAY;
 
+dbg("6\n");
 	mutex_lock(&socket->wsk_mutex);
 
+dbg("7\n");
 	if (socket->wsk_socket == NULL) {
 		mutex_unlock(&socket->wsk_mutex);
 		FreeWskBuffer(&WskBuffer, 1);
 		return winsock_to_linux_error(Status);
 	}
 
+dbg("8\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
 		socket->wsk_socket,
 		&WskBuffer,
 		Flags,
 		Irp);
 
+dbg("Status is %x\n", Status);
 	mutex_unlock(&socket->wsk_mutex);
 
+dbg("9\n");
 	if (Status == STATUS_PENDING)
 	{
 		LARGE_INTEGER	nWaitTime;
 		LARGE_INTEGER	*pTime;
 
+dbg("a\n");
 		if (socket->sk->sk_sndtimeo <= 0 || socket->sk->sk_sndtimeo == MAX_SCHEDULE_TIMEOUT)
 		{
+dbg("b\n");
 			pTime = NULL;
 		}
 		else
 		{
+dbg("c\n");
 			nWaitTime.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
 			pTime = &nWaitTime;
 		}
@@ -934,18 +957,24 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 			waitObjects[0] = (PVOID) &CompletionEvent;
 
+dbg("d\n");
 			Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
+dbg("Status is %x\n", Status);
 			switch (Status)
 			{
 			case STATUS_TIMEOUT:
+dbg("e\n");
 				IoCancelIrp(Irp);
 				KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
+dbg("f\n");
 				BytesSent = -EAGAIN;
 				break;
 
 			case STATUS_WAIT_0:
+dbg("g\n");
 				if (NT_SUCCESS(Irp->IoStatus.Status))
 				{
+dbg("h\n");
 					BytesSent = (LONG)Irp->IoStatus.Information;
 				}
 				else
@@ -993,6 +1022,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	}
 
 
+dbg("i\n");
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
@@ -1856,6 +1886,7 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	KIRQL flags;
 	struct _WSK_SOCKET *socket_to_close = NULL;
 
+dbg("incoming connection\n");
 	spin_lock_irqsave(&socket->accept_socket_lock, flags);
 	if (socket->accept_wsk_socket != NULL) {
 		dbg("dropped incoming connection wsk_socket is old: %p new: %p socket is %p.\n", socket->accept_wsk_socket, AcceptSocket, socket);
@@ -1863,22 +1894,28 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 		socket_to_close = socket->accept_wsk_socket;
 		socket->dropped_accept_sockets++;
 	}
+dbg("incoming connection 2\n");
 	socket->accept_wsk_socket = AcceptSocket;
 	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 
+dbg("incoming connection 3\n");
 	if (socket_to_close != NULL)
 		close_wsk_socket(socket_to_close);
 
+dbg("incoming connection 4\n");
 	KeSetEvent(&socket->accept_event, IO_NO_INCREMENT, FALSE);
 
+dbg("incoming connection 5\n");
 	if (socket->sk->sk_state_change)
 		socket->sk->sk_state_change(socket->sk);
 
+dbg("incoming connection 6\n");
 	if (AcceptSocketContext)
 		*AcceptSocketContext = NULL;
 	if (AcceptSocketDispatch)
 		*AcceptSocketDispatch = NULL;
 	
+dbg("incoming connection 7\n");
 	return STATUS_SUCCESS;
 }
 
