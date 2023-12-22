@@ -75,8 +75,8 @@ static int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_CONNECTION_REFUSED:
 		return -ECONNREFUSED;
 	case STATUS_ACCESS_DENIED:  /* returned when port is blocked by firewall, retry again later */
-printk("Argh ... STATUS_ACCESS_DENIED ...\n");
-		return -EAGAIN;
+		printk("Got STATUS_ACCESS_DENIED, please check your firewall settings\n");
+		return -EPERM;
 	default:
 		printk("Unknown status %x, returning -EIO.\n", status);
 		return -EIO;
