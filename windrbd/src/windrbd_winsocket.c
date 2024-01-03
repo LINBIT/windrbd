@@ -51,8 +51,9 @@ static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 
 static int winsock_to_linux_error(NTSTATUS status)
 {
-	if (status != STATUS_SUCCESS)
+/*	if (status != STATUS_SUCCESS)
 		printk("got status %x\n", status);
+*/
 
 	switch (status) {
 	case STATUS_SUCCESS:
@@ -76,7 +77,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 		return -ECONNREFUSED;
 	case STATUS_ACCESS_DENIED:  /* returned when port is blocked by firewall, retry again later */
 		printk("Got STATUS_ACCESS_DENIED, please check your firewall settings\n");
-		return -EPERM;
+		return -EAGAIN;
 	default:
 		printk("Unknown status %x, returning -EIO.\n", status);
 		return -EIO;
