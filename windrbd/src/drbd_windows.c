@@ -1729,16 +1729,20 @@ int wait_for_bios_to_complete(struct block_device *bdev)
 {
 	int timeout;
 
+printk("1\n");
 	if (atomic_read(&bdev->num_bios_pending) > 0) {
-		dbg("%d bios pending before wait_event\n", atomic_read(&bdev->num_bios_pending));
-		dbg("%d IRPs pending before wait_event\n", atomic_read(&bdev->num_irps_pending));
+printk("%d bios pending before wait_event\n", atomic_read(&bdev->num_bios_pending));
+printk("%d IRPs pending before wait_event\n", atomic_read(&bdev->num_irps_pending));
 	}
+printk("2\n");
 	wait_event_timeout(timeout, bdev->bios_event, (atomic_read(&bdev->num_bios_pending) == 0), HZ*10);
+printk("3\n");
 	if (timeout == 0) {
 		printk("Warning: Still %d bios and %d IRPs pending after 10 seconds\n", atomic_read(&bdev->num_bios_pending), atomic_read(&bdev->num_irps_pending));
 		msleep(1000);
 			/* probably BSODs here ... */
 	}
+printk("4\n");
 	return 0;
 }
 
