@@ -692,7 +692,7 @@ static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
 static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockaddr_len, int flags)
 {
 	PIRP		Irp = NULL;
-	NTSTATUS	Status;
+	NTSTATUS	Status = STATUS_SUCCESS;
 
 		/* TODO: check/implement those: */
 	(void) sockaddr_len;
@@ -737,6 +737,7 @@ printk("Got EINTR ...\n");
 
 			return ret;
 		}
+		Status = STATUS_SUCCESS;
 
 /*
 dbg("Waiting for WskConnect to complete\n");
