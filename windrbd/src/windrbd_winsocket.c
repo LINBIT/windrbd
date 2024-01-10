@@ -731,7 +731,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 			socket->is_connected);
 
 		if (ret == -EINTR) {	/* Signal was sent */
-printk("Got EINTR ...\n");
+dbg("Got EINTR ...\n");
 			IoCancelIrp(Irp);
 			IoFreeIrp(Irp);
 
