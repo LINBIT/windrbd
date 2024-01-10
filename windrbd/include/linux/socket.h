@@ -126,6 +126,9 @@ struct socket {
 	struct completion receiver_thread_completion;
 	spinlock_t receive_lock;
 	bool have_printed_status;
+
+	struct wait_queue_head connected_waitqueue;
+	bool is_connected;
 };
 
 

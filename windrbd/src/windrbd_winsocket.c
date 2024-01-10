@@ -132,6 +132,22 @@ static NTSTATUS NTAPI completion_fire_event(
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
+static NTSTATUS NTAPI completion_fire_linux_event(
+	__in PDEVICE_OBJECT	DeviceObject,
+	__in PIRP			Irp,
+	__in struct socket      *s
+)
+{
+	/* Must not printk in here, will loop forever. Hence also no
+	 * ASSERT.
+	 */
+
+	s->is_connected = true;
+	wake_up(&s->connected_waitqueue);
+
+	return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
 static NTSTATUS NTAPI completion_free_irp(
 	__in PDEVICE_OBJECT	DeviceObject,
 	__in PIRP			Irp,
@@ -149,7 +165,7 @@ static NTSTATUS NTAPI completion_free_irp(
 	 * completion_free_irp is used (which just frees the irp).
 	 */
 
-static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent)
+static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *s)
 {
 	struct _IRP *irp;
 
@@ -162,6 +178,8 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent)
 	if (CompletionEvent) {
 		KeInitializeEvent(CompletionEvent, NotificationEvent, FALSE);
 		IoSetCompletionRoutine(irp, completion_fire_event, CompletionEvent, TRUE, TRUE, TRUE);
+	} else if (s) {
+		IoSetCompletionRoutine(irp, completion_fire_linux_event, s, TRUE, TRUE, TRUE);
 	} else {
 		IoSetCompletionRoutine(irp, completion_free_irp, NULL, TRUE, TRUE, TRUE);
 	}
@@ -542,7 +560,7 @@ static int CreateSocket(
 	if (wsk_state != WSK_INITIALIZED || out == NULL)
 		return -EINVAL;
 
-	Irp = wsk_new_irp(&CompletionEvent);
+	Irp = wsk_new_irp(&CompletionEvent, NULL);
 	if (Irp == NULL)
 		return -ENOMEM;
 
@@ -583,7 +601,7 @@ static void close_wsk_socket(struct _WSK_SOCKET *wsk_socket)
 	if (wsk_state != WSK_INITIALIZED || wsk_socket == NULL)
 		return;
 
-	Irp = wsk_new_irp(NULL);
+	Irp = wsk_new_irp(NULL, NULL);
 	if (Irp == NULL)
 		return;
 
@@ -608,7 +626,7 @@ static void close_socket(struct socket *socket)
 
 	terminate_receive_thread(socket);
 
-	Irp = wsk_new_irp(NULL);
+	Irp = wsk_new_irp(NULL, NULL);
 	if (Irp == NULL)
 		return;
 
@@ -649,7 +667,7 @@ static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
-	Irp = wsk_new_irp(&CompletionEvent);
+	Irp = wsk_new_irp(&CompletionEvent, NULL);
 	if (Irp == NULL)
 		return -ENOMEM;
 
@@ -673,7 +691,6 @@ static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
 
 static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockaddr_len, int flags)
 {
-	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
 	NTSTATUS	Status;
 
@@ -684,10 +701,11 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || vaddr == NULL)
 		return -EINVAL;
 
-	Irp = wsk_new_irp(&CompletionEvent);
+	Irp = wsk_new_irp(NULL, socket);
 	if (Irp == NULL)
 		return -ENOMEM;
 
+	socket->is_connected = false;
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskConnect(
 		socket->wsk_socket,
 		vaddr,
@@ -705,9 +723,26 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		}
 */
+		int ret;
+
+		wait_event_interruptible(
+			ret,
+			socket->connected_waitqueue,
+			socket->is_connected);
+
+		if (ret == -EINTR) {	/* Signal was sent */
+printk("Got EINTR ...\n");
+			IoCancelIrp(Irp);
+			IoFreeIrp(Irp);
+
+			return ret;
+		}
+
+/*
 dbg("Waiting for WskConnect to complete\n");
 		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 dbg("WskConnect completed KeWaitForSingleObject (status is %x)\n", Status);
+*/
 	}
 
 	if (Status == STATUS_SUCCESS)
@@ -785,7 +820,7 @@ static int wsk_set_event_callbacks(struct socket *socket, int mask)
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
-	Irp = wsk_new_irp(&CompletionEvent);
+	Irp = wsk_new_irp(&CompletionEvent, NULL);
 	if (Irp == NULL)
 		return -ENOMEM;
 
@@ -887,7 +922,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		return winsock_to_linux_error(Status);
 	}
 
-	Irp = wsk_new_irp(&CompletionEvent);
+	Irp = wsk_new_irp(&CompletionEvent, NULL);
 	if (Irp == NULL) {
 		FreeWskBuffer(&WskBuffer, 1);
 		return -ENOMEM;
@@ -1255,7 +1290,7 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		return winsock_to_linux_error(Status);
 	}
 
-	Irp = wsk_new_irp(&CompletionEvent);
+	Irp = wsk_new_irp(&CompletionEvent, NULL);
 	if (Irp == NULL) {
 		FreeWskBuffer(&WskBuffer, 1);
 		return -ENOMEM;
@@ -1642,7 +1677,7 @@ static int wsk_bind(
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || myaddr == NULL)
 		return -EINVAL;
 
-	Irp = wsk_new_irp(&CompletionEvent);
+	Irp = wsk_new_irp(&CompletionEvent, NULL);
 	if (Irp == NULL)
 		return -ENOMEM;
 
@@ -1679,7 +1714,7 @@ static NTSTATUS ControlSocket(
 	if (wsk_state != WSK_INITIALIZED || !WskSocket)
 		return -EINVAL;
 
-	Irp = wsk_new_irp(&CompletionEvent);
+	Irp = wsk_new_irp(&CompletionEvent, NULL);
 	if (Irp == NULL)
 		return -ENOMEM;
 
@@ -1788,6 +1823,7 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	get_registry_int(L"enable_receiver_cache", &socket->receiver_cache_enabled, 1);
 	init_waitqueue_head(&socket->buffer_available);
 	init_waitqueue_head(&socket->data_available);
+	init_waitqueue_head(&socket->connected_waitqueue);
 
 	socket->have_printed_status = false;
 
