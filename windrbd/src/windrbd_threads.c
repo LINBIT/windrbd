@@ -274,6 +274,10 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	t->is_root = current->is_root;	/* inherit user ID */
 	spin_lock_init(&t->thread_started_lock);
 
+	/* TODO: this should be a NotificationEvent. UNIX Signals
+	 * should remain signalled until explicitly removed
+	 * by flush_signals(). Change it in the 1.2 branch.
+	 */
 	// KeInitializeEvent(&t->sig_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
 	KeInitializeEvent(&t->start_event, SynchronizationEvent, FALSE);
