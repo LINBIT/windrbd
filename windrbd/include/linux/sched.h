@@ -2,7 +2,7 @@
 #define __SCHED_H__
 
 #include <linux/types.h>
-#include "drbd_windows.h"
+// #include "drbd_windows.h"
 
 static inline bool need_resched(void)
 {

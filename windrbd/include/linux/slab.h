@@ -4,8 +4,37 @@
 /* Enable all warnings throws lots of those warnings: */
 #pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032  4711 5045)
 
+#include <linux/types.h>	/* for size_t, ... */
+/*
 #include <ntddk.h>
 #include "drbd_windows.h"
+*/
+
+#ifdef KMALLOC_DEBUG
+#include "kmalloc_debug.h"
+
+/* Comment that out for production releases */
+
+#ifdef KMEM_CACHE_DEBUG
+
+#define kmem_cache_alloc(cache, flag) \
+	kzalloc(cache->element_size, flag, 'X123');
+
+#define kmem_cache_free(cache, obj) \
+	kfree(obj);
+
+#endif
+
+#else
+/* TODO: flag probably gfp_t */
+/* TODO: int? really? */
+extern void * kcalloc(int e_count, int x, int flag, ULONG Tag);
+extern void * kzalloc(int x, int flag, ULONG Tag);
+extern void * kmalloc(int size, int flag, ULONG Tag);
+extern void kfree(const void * x);
+extern void kvfree(const void * x);
+extern int dump_memory_allocations(int free_them);
+#endif
 
 struct kmem_cache {
 	NPAGED_LOOKASIDE_LIST l;
@@ -16,7 +45,7 @@ typedef struct kmem_cache kmem_cache_t;
 
 struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align,
 				     unsigned long flags,
-				     void (*ctor)(void *), ULONG tag);
+				     void (*ctor)(void *));
 void kmem_cache_destroy(struct kmem_cache *cache);
 
 

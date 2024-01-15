@@ -6,8 +6,8 @@
 #include <linux/net.h>
 #include "linux/rbtree.h"
 #include "linux/idr.h"
-#include "drbd_wingenl.h"
-#include "drbd_windows.h"
+// #include "drbd_wingenl.h"
+// #include "drbd_windows.h"
 
 #include "linux/backing-dev.h"
 #include <linux/blkdev.h>

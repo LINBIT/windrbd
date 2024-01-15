@@ -1,8 +1,10 @@
 #ifndef _CRYPTO_HASH_H
 #define _CRYPTO_HASH_H
 
-#include <drbd_windows.h>
-#include <ntddk.h>
+// #include <drbd_windows.h>
+// #include <ntddk.h>
+
+#include <linux/slab.h>
 
 /* We only support crc32c */
 
@@ -33,7 +35,7 @@ crypto_alloc_shash(const char *alg_name, u32 type, u32 mask)
 	if (strcmp(alg_name, "crc32c") != 0)
 		return ERR_PTR(-EOPNOTSUPP);
 
-	ch = kmalloc(sizeof(*ch), GFP_KERNEL, 'HSWD');
+	ch = kmalloc(sizeof(*ch), GFP_KERNEL);
 	if (!ch)
 		return ERR_PTR(-ENOMEM);
 

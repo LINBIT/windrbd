@@ -63,7 +63,7 @@
 #include <linux/wait.h>
 #include <linux/drbd_endian.h>
 #include "linux/types.h"
-#include "generic_compat_stuff.h"
+// #include "generic_compat_stuff.h"
 #include "wingenl.h"
 #include "windrbd/windrbd_ioctl.h"
 
@@ -1212,32 +1212,6 @@ static inline void schedule_work(struct work_struct *work)
 extern void kobject_put(struct kobject *kobj);
 extern void kobject_get(struct kobject *kobj);
 extern void kobject_del(struct kobject *kobj);
-
-#ifdef KMALLOC_DEBUG
-#include "kmalloc_debug.h"
-
-/* Comment that out for production releases */
-
-#ifdef KMEM_CACHE_DEBUG
-
-#define kmem_cache_alloc(cache, flag) \
-	kzalloc(cache->element_size, flag, 'X123');
-
-#define kmem_cache_free(cache, obj) \
-	kfree(obj);
-
-#endif
-
-#else
-/* TODO: flag probably gfp_t */
-extern void * kcalloc(int e_count, int x, int flag, ULONG Tag);
-extern void * kzalloc(int x, int flag, ULONG Tag);
-extern void * kmalloc(int size, int flag, ULONG Tag);
-extern void kfree(const void * x);
-extern void kvfree(const void * x);
-extern int dump_memory_allocations(int free_them);
-#endif
-
 static inline void * __get_free_page(int flags)
 {
     return kzalloc(4096, flags, 'FPWD');
