@@ -320,3 +320,4 @@ Version history
  * 1.1.6 (Feb 14, 2023): Fixed ReFS support, install from Windows Service, updated cygwin binaries
  * 1.1.7 (Jun 27, 2023): Fixed BSOD on low memory, fixed performance bug, poll_hup support for utils
  * 1.1.8 (Nov 21, 2023): backing dev I/O cork/uncork, resize fix, sync stall fix and many others
+ * 1.1.9 (Jan 15, 2024): Disk timeout, fix for drbdadm adjust network config BSOD
