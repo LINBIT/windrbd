@@ -128,19 +128,6 @@ static inline int list_is_last(const struct list_head *list, const struct list_h
 
 #define prefetch(_addr)		(_addr)
 
-/**
-* list_for_each_entry_rcu	-	iterate over rcu list of given type
-* @pos:	the type * to use as a loop cursor.
-* @head:	the head for your list.
-* @member:	the name of the list_struct within the struct.
-*
-* This list-traversal primitive may safely run concurrently with
-* the _rcu list-mutation primitives such as list_add_rcu()
-* as long as the traversal is guarded by rcu_read_lock().
-*/
-#define list_for_each_entry_rcu(type, pos, head, member) \
-    list_for_each_entry(type, pos, head, member)
-
 #define list_for_each_safe(pos, n, head) \
 	for (pos = (head)->next, n = pos->next; pos != (head); \
 		pos = n, n = pos->next)
@@ -151,10 +138,10 @@ static inline int list_is_last(const struct list_head *list, const struct list_h
  * @head:	the head for your list.
  * @member:	the name of the list_struct within the struct.
  */
-#define list_for_each_entry(type, pos, head, member) \
-		for (pos = list_entry((head)->next, type, member);	\
+#define list_for_each_entry(pos, head, member) \
+		for (pos = list_entry((head)->next, typeof(*pos), member);	\
 				&pos->member != (head); 	\
-				pos = list_entry(pos->member.next, type, member))
+				pos = list_entry(pos->member.next, typeof(*pos), member))
 
 /**
  * list_for_each_entry_reverse - iterate backwards over list of given type.
@@ -162,13 +149,26 @@ static inline int list_is_last(const struct list_head *list, const struct list_h
  * @head:	the head for your list.
  * @member:	the name of the list_struct within the struct.
  */
-#define list_for_each_entry_reverse(type, pos, head, member)			\
-		for (pos = list_entry((head)->prev, type, member);	\
+#define list_for_each_entry_reverse(pos, head, member)			\
+		for (pos = list_entry((head)->prev, typeof(*pos), member);	\
 		     prefetch(pos->member.prev), &pos->member != (head); 	\
-		     pos = list_entry(pos->member.prev, type, member))
+		     pos = list_entry(pos->member.prev, typeof(*pos), member))
 
-#define list_prepare_entry(type, pos, head, member) \
-         ((pos) ? pos : list_entry(head, type, member))
+/**
+* list_for_each_entry_rcu	-	iterate over rcu list of given type
+* @pos:	the type * to use as a loop cursor.
+* @head:	the head for your list.
+* @member:	the name of the list_struct within the struct.
+*
+* This list-traversal primitive may safely run concurrently with
+* the _rcu list-mutation primitives such as list_add_rcu()
+* as long as the traversal is guarded by rcu_read_lock().
+*/
+#define list_for_each_entry_rcu(pos, head, member) \
+    list_for_each_entry(pos, head, member)
+
+#define list_prepare_entry(pos, head, member) \
+         ((pos) ? pos : list_entry(head, typeof(*pos), member))
 
 /**
  * list_for_each_entry_continue - continue iteration over list of given type
@@ -179,10 +179,10 @@ static inline int list_is_last(const struct list_head *list, const struct list_h
  * Continue to iterate over list of given type, continuing after
  * the current position.
  */
-#define list_for_each_entry_continue(type, pos, head, member) 		\
-		for (pos = list_entry(pos->member.next, type, member);	\
+#define list_for_each_entry_continue(pos, head, member) 		\
+		for (pos = list_entry(pos->member.next, typeof(*pos), member);	\
 		     prefetch(pos->member.next), &pos->member != (head);	\
-		     pos = list_entry(pos->member.next, type, member))
+		     pos = list_entry(pos->member.next, typeof(*pos), member))
 
 /**
  * list_for_each_entry_safe - iterate over list of given type safe against removal of list entry
@@ -191,11 +191,11 @@ static inline int list_is_last(const struct list_head *list, const struct list_h
  * @head:	the head for your list.
  * @member:	the name of the list_struct within the struct.
  */
-#define list_for_each_entry_safe(type, pos, n, head, member)                  \
-			for (pos = list_entry((head)->next, type, member),      \
-						n = list_entry(pos->member.next, type, member); \
+#define list_for_each_entry_safe(pos, n, head, member)                  \
+			for (pos = list_entry((head)->next, typeof(*pos), member),      \
+						n = list_entry(pos->member.next, typeof(*pos), member); \
 					&pos->member != (head);                                    \
-					pos = n, n = list_entry(n->member.next, type, member))
+					pos = n, n = list_entry(n->member.next, typeof(*pos), member))
 /**
  * list_for_each_entry_safe_from
  * @pos:	the type * to use as a loop cursor.
@@ -206,10 +206,10 @@ static inline int list_is_last(const struct list_head *list, const struct list_h
  * Iterate over list of given type from current point, safe against
  * removal of list entry.
  */
-#define list_for_each_entry_safe_from(type, pos, n, head, member) 			\
-		for (n = list_entry(pos->member.next, type, member);		\
+#define list_for_each_entry_safe_from(pos, n, head, member) 			\
+		for (n = list_entry(pos->member.next, typeof(*pos), member);		\
 				&pos->member != (head);						\
-				pos = n, n = list_entry(n->member.next, type, member))
+				pos = n, n = list_entry(n->member.next, typeof(*pos), member))
 
-#define hlist_entry(ptr, type, member) container_of(ptr,type,member)
+#define hlist_entry(ptr, member) container_of(ptr, member)
 #endif
