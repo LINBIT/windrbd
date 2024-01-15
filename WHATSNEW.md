@@ -5,6 +5,16 @@ Base on DRBD 9.1
 
 DRBD reactor support
 
+What's new in version 1.1.9
+---------------------------
+
+Handles disk timeout on Primary's data backing device gracefully. WinDRBD
+will fail I/O to DRBD so DRBD thinks that the disk failed.
+
+Fixed BSOD on drbdadm adjust network config. Reason was that DRBD_ADM_DISCONNECT
+returned before drbd-receiver was restarted (and a followup DRBD_ADM_DELPATH
+freed the drbd_path still in use by this receiver.
+
 What's new in version 1.1.8
 ---------------------------
 
