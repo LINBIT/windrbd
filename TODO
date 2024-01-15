@@ -41,25 +41,6 @@ TODO: Feature: sync filesystem(s) on drbdadm secondary
 
 	Linux DRBD also does this.
 
-TODO: Bug: BSOD in reply reaper
-
-3: kd> k
- # Child-SP          RetAddr               Call Site
-00 fffffc08`871e7298 fffff807`4a49add2     nt!DbgBreakPointWithStatus
-01 fffffc08`871e72a0 fffff807`4a49a557     nt!KiBugCheckDebugBreak+0x12
-02 fffffc08`871e7300 fffff807`4a3be147     nt!KeBugCheck2+0x957
-03 fffffc08`871e7a20 fffff807`4a9c1f55     nt!KeBugCheckEx+0x107
-04 fffffc08`871e7a60 fffff807`4a809520     nt!PspThreadDelete+0x179ed5
-05 fffffc08`871e7ad0 fffff807`4a2db634     nt!ObpRemoveObjectRoutine+0x80
-06 fffffc08`871e7b30 fffff807`4e9bbdaf     nt!ObfDereferenceObject+0xa4
-07 (Inline Function) --------`--------     windrbd!windrbd_cleanup_windows_thread+0x3b [Y:\windrbd-1.1-branch\windrbd\windrbd\src\windrbd_threads.c @ 113] 
-08 fffffc08`871e7b70 fffff807`4e9b75e9     windrbd!windrbd_reap_threads+0x10f [Y:\windrbd-1.1-branch\windrbd\windrbd\src\windrbd_threads.c @ 145] 
-09 fffffc08`871e7bc0 fffff807`4a247bf5     windrbd!reply_reaper+0x159 [Y:\windrbd-1.1-branch\windrbd\windrbd\src\windrbd_netlink.c @ 210] 
-0a fffffc08`871e7c10 fffff807`4a3c54bc     nt!PspSystemThreadStartup+0x55
-0b fffffc08`871e7c60 00000000`00000000     nt!KiStartSystemThread+0x1c
-
-	Other than that no running WinDRBD stacks
-
 TODOs for Release 1.2 ----------------------------------------
 
 TODO: Build System: Make it build under Linux (was: Windows) only
@@ -8659,4 +8640,25 @@ Done: Bug: drbdadm up slow
 	Also observed hang in attach.
 
 	Fixed with cork/uncork backing dev I/O
+
+Done: Bug: BSOD in reply reaper
+
+Probably a followup bug of the disconnect timeout bug
+
+3: kd> k
+ # Child-SP          RetAddr               Call Site
+00 fffffc08`871e7298 fffff807`4a49add2     nt!DbgBreakPointWithStatus
+01 fffffc08`871e72a0 fffff807`4a49a557     nt!KiBugCheckDebugBreak+0x12
+02 fffffc08`871e7300 fffff807`4a3be147     nt!KeBugCheck2+0x957
+03 fffffc08`871e7a20 fffff807`4a9c1f55     nt!KeBugCheckEx+0x107
+04 fffffc08`871e7a60 fffff807`4a809520     nt!PspThreadDelete+0x179ed5
+05 fffffc08`871e7ad0 fffff807`4a2db634     nt!ObpRemoveObjectRoutine+0x80
+06 fffffc08`871e7b30 fffff807`4e9bbdaf     nt!ObfDereferenceObject+0xa4
+07 (Inline Function) --------`--------     windrbd!windrbd_cleanup_windows_thread+0x3b [Y:\windrbd-1.1-branch\windrbd\windrbd\src\windrbd_threads.c @ 113] 
+08 fffffc08`871e7b70 fffff807`4e9b75e9     windrbd!windrbd_reap_threads+0x10f [Y:\windrbd-1.1-branch\windrbd\windrbd\src\windrbd_threads.c @ 145] 
+09 fffffc08`871e7bc0 fffff807`4a247bf5     windrbd!reply_reaper+0x159 [Y:\windrbd-1.1-branch\windrbd\windrbd\src\windrbd_netlink.c @ 210] 
+0a fffffc08`871e7c10 fffff807`4a3c54bc     nt!PspSystemThreadStartup+0x55
+0b fffffc08`871e7c60 00000000`00000000     nt!KiStartSystemThread+0x1c
+
+	Other than that no running WinDRBD stacks
 
