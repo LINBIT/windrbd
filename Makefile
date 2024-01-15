@@ -31,6 +31,8 @@ help:
 	@echo "    converted-sources:  apply WinDRBD patches to DRBD"
 	@echo "    install:            copy package to Windows hosts and run the installer"
 	@echo "                        there (requires CygWin with sshd on target machine)"
+	@echo "    drbd-tmp:           Apply new cocci targets (experimental)"
+	@echo "    orig-drbd:          Compile DRBD from original source (experimental)"
 	@echo
 	@echo "Variables that control things:"
 	@echo
