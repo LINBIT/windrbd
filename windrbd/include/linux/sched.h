@@ -2,7 +2,70 @@
 #define __SCHED_H__
 
 #include <linux/types.h>
-// #include "drbd_windows.h"
+#include <linux/list.h>
+#include <linux/spinlock.h>
+// #include <windrbd.h>
+
+#define TASK_COMM_LEN 32
+
+struct task_struct {
+	struct list_head list;
+
+	pid_t pid;
+	PKTHREAD windows_thread;
+
+	int (*threadfn)(void*);
+	void *data;
+
+		/* Signal handling. TODO: the has_sig_event should
+		 * go away one day.
+		 */
+	KEVENT sig_event;
+	BOOLEAN has_sig_event;
+	int sig; 
+	KEVENT start_event;
+
+		/* Set by prepare_to_wait: a followup call to
+		 * schedule() will wait on that wait queue entry.
+		 */
+	struct wait_queue_head *wait_queue;
+	struct wait_queue_entry *wait_queue_entry;
+
+		/* Set to TASK_INTERRUPTIBLE if schedule should also
+		 * wait for signals.
+		 */
+	int interruptible;
+
+	int thread_started:1;
+	int is_zombie:1;
+	int is_root:1;
+	int in_rcu:1;
+
+	const char *rcu_file;
+	int rcu_line;
+	const char *rcu_func;
+
+	atomic_t rcu_recursion_depth;
+
+	spinlock_t thread_started_lock;
+
+		/* TODO: needed? */
+	struct blk_plug *plug;
+
+	char comm[TASK_COMM_LEN];
+};
+
+static inline pid_t task_pid_nr(struct task_struct *tsk)
+{
+	return tsk->pid;
+}
+
+static inline char *get_task_comm(char *buf, struct task_struct *task)
+{
+	/* Linux has here a build bug on sizeof(buf) != TASK_COMM_LEN .. */
+	strncpy(buf, task->comm, TASK_COMM_LEN);
+	return buf;
+}
 
 static inline bool need_resched(void)
 {

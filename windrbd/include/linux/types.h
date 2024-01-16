@@ -20,9 +20,6 @@
 #ifndef _WINDOWS_TYPES_H
 #define _WINDOWS_TYPES_H
 
-/* Enable all warnings throws lots of those warnings: */
-#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032  4711 5045)
-
 #include <ntddk.h>
 #include <ctype.h>
 #include <stdbool.h>
@@ -33,6 +30,12 @@ typedef enum __Bool__ {
 	true = 1
 } bool;
 #endif
+
+typedef struct {
+	int counter;
+} atomic_t;
+
+typedef int pid_t;
 
 typedef signed char		    __s8;
 typedef unsigned char		__u8;
