@@ -4,6 +4,7 @@
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
+#include <asm/current.h>
 // #include <windrbd.h>
 
 #define TASK_COMM_LEN 32
