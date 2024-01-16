@@ -132,6 +132,8 @@ DEFINES+=-D_WIN64
 endif
 
 WINDRBD_INCLUDES=-I"windrbd/include" -I"converted-sources/drbd" -I"converted-sources/drbd/drbd-headers"
+# no converted sources instead drbd-tmp
+WINDRBD_NEW_INCLUDES=-I"windrbd/include" -I"drbd-tmp/drbd" -I"drbd-tmp/drbd/drbd-headers" -I"drbd-tmp/drbd/drbd-kernel-compat"
 
 MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk
 
@@ -203,6 +205,8 @@ versioninfo:
 converted-sources/drbd/drbd_buildtag.c: versioninfo
 
 orig-drbd: drbd-tmp $(ORIG_OBJS)
+
+CFLAGS=-g $(OPTIMIZE) -w $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_NEW_INCLUDES) $(MINGW_INCLUDES)
 
 $(ORIG_DRBD_FILES): drbd-tmp
 
