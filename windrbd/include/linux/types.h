@@ -23,6 +23,7 @@
 #include <ntddk.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <linux/compiler.h>
 
 #if 0
 typedef enum __Bool__ {

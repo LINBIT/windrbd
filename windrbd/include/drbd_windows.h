@@ -1507,11 +1507,6 @@ void exit_interruptible_debug(const char *file, int line, const char *func);
 #define enter_interruptible() enter_interruptible_debug(__FILE__, __LINE__, __func__)
 #define exit_interruptible() exit_interruptible_debug(__FILE__, __LINE__, __func__)
 
-#define __releases(unused)
-#define __acquire(x) (void)0
-#define __release(x) (void)0
-#define __maybe_unused
-
 /* TODO: to another header: */
 
 #define kmap(_page)		(_page->addr)
