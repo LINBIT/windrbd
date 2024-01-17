@@ -1060,17 +1060,6 @@ extern void list_add_rcu(struct list_head *new, struct list_head *head);
 extern void list_add_tail_rcu(struct list_head *new,   struct list_head *head);
 extern void list_del_rcu(struct list_head *entry);
 
-/* TODO: volatile? */
-#define rcu_dereference(_PTR)		(_PTR)
-#define __rcu_assign_pointer(_p, _v) \
-	do { \
-		smp_mb();    \
-		(_p) = (_v); \
-	} while (0)
-
-#define rcu_assign_pointer(p, v) 	__rcu_assign_pointer((p), (v))
-#define list_next_rcu(list)		(*((struct list_head **)(&(list)->next)))
-
 #define bdevname(dev, buf)   dev->bd_disk->disk_name
 
 //

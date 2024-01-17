@@ -4,6 +4,7 @@
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
+#include <linux/rcupdate.h>
 #include <asm/current.h>
 // #include <windrbd.h>
 

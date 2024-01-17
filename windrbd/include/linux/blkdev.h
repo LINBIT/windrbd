@@ -4,6 +4,7 @@
 #include <linux/types.h>
 #include <linux/spinlock.h>
 #include <linux/blk_types.h>
+#include <linux/rcupdate.h>
 
 #ifndef SECTOR_SHIFT
 #define SECTOR_SHIFT 9
