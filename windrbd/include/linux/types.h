@@ -96,6 +96,14 @@ typedef void (*call_rcu_func_t)(struct rcu_head *head, rcu_callback_t func);
 #define __packed
 #endif
 
+struct hlist_node {
+	struct hlist_node *next, **pprev;
+};
+
+struct hlist_head {
+	struct hlist_node *first;
+};
+ 
 // typedef LONG_PTR ssize_t;
 
 #endif

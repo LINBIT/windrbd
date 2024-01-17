@@ -383,10 +383,6 @@ struct semaphore {
     KSEMAPHORE sem;
 };
 
-typedef struct refcount_struct {
-	atomic_t refs;
-} refcount_t;
-
 static inline unsigned int refcount_read(const refcount_t *r)
 {
 	return atomic_read(&r->refs);
@@ -402,18 +398,6 @@ static inline bool refcount_dec_and_test(refcount_t *r)
         return atomic_dec_and_test(&r->refs);
 }
 
-
-struct kref {
-	refcount_t refcount;
-};
-
-struct hlist_head {
-	struct hlist_node *first;
-};
- 
-struct hlist_node {
-	struct hlist_node *next, **pprev;
-};
 
 struct kobject { 
     const char          *name;
@@ -505,11 +489,6 @@ struct gendisk
 struct fault_injection {
 	int nr_requests_to_failure;
 	int nr_requests;
-};
-
-struct completion {
-	bool completed;
-	wait_queue_head_t wait;
 };
 
 /* TODO: this is used as device extension for the DRBD devices and

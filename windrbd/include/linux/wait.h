@@ -5,8 +5,8 @@
 #pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032  4711 5045)
 
 #include <ntddk.h>
-#include "linux/list.h"
-#include "linux/spinlock.h"
+#include <linux/list.h>
+#include <linux/spinlock.h>
 
 struct wait_queue_entry
 {

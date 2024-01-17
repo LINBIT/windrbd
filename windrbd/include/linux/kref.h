@@ -1,5 +1,10 @@
-/* TODO: this is here to avoid patching a DRBD header.
- * We should check where Linux includes this.
- */
-	/* For struct seq_file */
-#include <linux/seq_file.h>
+#ifndef KREF_H
+#define KREF_H
+
+#include <linux/refcount.h>
+
+struct kref {
+	refcount_t refcount;
+};
+
+#endif

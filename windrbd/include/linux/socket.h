@@ -4,7 +4,8 @@
 /* Enable all warnings throws lots of those warnings: */
 #pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 5045 4711)
 
-// #include "drbd_windows.h"
+#include <linux/completion.h>
+#include <linux/kref.h>
 #include <linux/uio.h>	/* for struct kvec */
 #include <linux/net/sock.h>
 #include <wsk.h>	/* for struct sockaddr_storage */
