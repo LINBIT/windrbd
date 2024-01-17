@@ -212,5 +212,8 @@ static inline int list_is_last(const struct list_head *list, const struct list_h
 				&pos->member != (head);						\
 				pos = n, n = list_entry(n->member.next, typeof(*pos), member))
 
+#define list_first_entry_or_null(ptr, type, member) \
+	(list_empty(ptr) ? NULL : list_first_entry(ptr, type, member))
+
 #define hlist_entry(ptr, member) container_of(ptr, member)
 #endif

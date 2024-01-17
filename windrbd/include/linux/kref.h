@@ -9,6 +9,7 @@
 #include <linux/workqueue.h>
 #include <linux/typecheck.h>
 #include <linux/minmax.h>
+#include <linux/overflow.h>
 
 struct kref {
 	refcount_t refcount;
