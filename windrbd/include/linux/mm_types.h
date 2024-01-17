@@ -4,6 +4,7 @@
 #include <linux/list.h>
 #include <linux/kref.h>
 #include <linux/types.h>
+#include <linux/cpumask.h>
 
 	/* A 'page' in WinDRBD may actually contain more pages (vmalloc'ed)
 	 * We need this to optimize I/O requests larger than 4K which

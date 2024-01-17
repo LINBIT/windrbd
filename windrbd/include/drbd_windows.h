@@ -365,9 +365,6 @@ extern int debug_printks_enabled;
 
 #define ALIGN(_x,_a)				(((_x) + (_a)-1) & ~((_a)-1))
 
-struct semaphore {
-    KSEMAPHORE sem;
-};
 
 static inline unsigned int refcount_read(const refcount_t *r)
 {
@@ -392,52 +389,6 @@ struct kobject {
     struct kref         kref;
 };
 
-#define WQ_MEM_RECLAIM 0
-#define WQNAME_LEN	32
-struct workqueue_struct {
-	struct list_head work_list;
-	spinlock_t work_list_lock;
-
-	int run;
-	int about_to_destroy;
-	KEVENT	wakeupEvent;
-	KEVENT	killEvent;
-	KEVENT	workFinishedEvent;
-	KEVENT	readyToFreeEvent;
-
-	void (*func)();
-	char name[WQNAME_LEN];
-	struct task_struct *thread;
-};
-
-struct timer_list {
-    KTIMER ktimer;
-    KDPC dpc;
-    void (*function)(struct timer_list *data);
-    ULONG_PTR expires; 
-};
-
-extern void add_timer(struct timer_list *t);
-extern int del_timer_sync(struct timer_list *t);
-extern void del_timer(struct timer_list *t);
-extern int mod_timer(struct timer_list *t, ULONG_PTR expires);
-extern int timer_pending(const struct timer_list * timer);
-
-extern int mod_timer_pending(struct timer_list *timer, ULONG_PTR expires);
-void timer_setup(struct timer_list *timer, void(*callback)(struct timer_list *timer), ULONG_PTR flags_unused);
-
-
-struct work_struct {
-	int pending;
-	spinlock_t pending_lock;
-	struct list_head work_list;
-
-	void (*func)(struct work_struct *work);
-
-		/* For checking if they change */
-	struct workqueue_struct *orig_queue;
-	void (*orig_func)(struct work_struct *work);
-};
 
 struct block_device;
 struct gendisk;

@@ -5,6 +5,8 @@
 
 /* TODO: somewhere else */
 #include <linux/mm.h>
+#include <linux/semaphore.h>
+#include <linux/workqueue.h>
 
 struct kref {
 	refcount_t refcount;
