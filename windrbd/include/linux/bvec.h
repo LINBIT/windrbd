@@ -1,7 +1,42 @@
 #ifndef _BVEC_H
 #define _BVEC_H
 
+#include <linux/types.h>
 #include <linux/blkdev.h>
+
+/* from: linux/bvec.h */
+
+struct bvec_iter {
+	sector_t		bi_sector;	/* device address in 512 byte
+						   sectors */
+	unsigned int		bi_size;	/* residual I/O count */
+
+	unsigned int		bi_idx;		/* current index into bvl_vec */
+
+	unsigned int            bi_bvec_done;	/* number of bytes completed in
+						   current bvec */
+};
+
+/* from: linux/blk_types.h */
+
+struct bio_vec {
+	struct page *bv_page;
+
+		/* A restriction by DRBD is that this (bv_len) must not be
+		 * larger than PAGE_SIZE, else sending a bio will
+		 * crash.
+		 */
+	unsigned int bv_len;
+	unsigned int bv_offset;
+
+		/* Those are used by win_generic_make_request internally.
+		 * We have them here, since we build a request for each
+		 * biovec element seperately (see MAX_MDL_ELEMENTS
+		 * #define in drbd_windows.c).
+		 */
+	LARGE_INTEGER offset;
+	IO_STATUS_BLOCK io_stat;
+};
 
 #define __bvec_iter_bvec(bvec, iter)	(&(bvec)[(iter).bi_idx])
 

@@ -691,30 +691,7 @@ struct block_device_reference {
 extern sector_t windrbd_get_capacity(struct block_device *bdev);
 extern sector_t get_capacity(struct gendisk *disk);
 
-struct bio_vec {
-	struct page *bv_page;
-
-		/* A restriction by DRBD is that this (bv_len) must not be
-		 * larger than PAGE_SIZE, else sending a bio will
-		 * crash.
-		 */
-	unsigned int bv_len;
-	unsigned int bv_offset;
-
-		/* Those are used by win_generic_make_request internally.
-		 * We have them here, since we build a request for each
-		 * biovec element seperately (see MAX_MDL_ELEMENTS
-		 * #define in drbd_windows.c).
-		 */
-	LARGE_INTEGER offset;
-	IO_STATUS_BLOCK io_stat;
-};
-
 struct bio;
-typedef u8 blk_status_t;
-
-typedef void(BIO_END_IO_CALLBACK)(struct bio *bio);
-
 
 	/* When we create more bio's upon request for a single MDL,
 	 * this is common data shared between all that bios.
@@ -731,142 +708,6 @@ struct bio_collection {
 };
 
 #define BI_WINDRBD_FLAG_BOOTSECTOR_PATCHED 0
-
-/* from: linux/bvec.h */
-
-struct bvec_iter {
-	sector_t		bi_sector;	/* device address in 512 byte
-						   sectors */
-	unsigned int		bi_size;	/* residual I/O count */
-
-	unsigned int		bi_idx;		/* current index into bvl_vec */
-
-	unsigned int            bi_bvec_done;	/* number of bytes completed in
-						   current bvec */
-};
-
-/* from: linux/blk_types.h */
-
-struct bio {
-	struct _IRP **bi_irps;	   /* Used for accessing the backing device */
-	struct _IRP *bi_upper_irp; /* Used for the DRBD device */
-
-	struct _KEVENT *bi_io_finished_event;	/* For loopback I/O (WinDRBD calling itself via DRBD engine) */
-	struct bio*				bi_next;	/* request queue link */
-	struct block_device*	bi_bdev;
-	unsigned long			bi_flags;	/* status, command, etc */
-	unsigned int			bi_opf;		/* bottom bits req flags, top bits REQ_OP. Use accessors. */
-	unsigned short			bi_vcnt;	/* how many bio_vec's */
-	atomic_t				bi_cnt;		/* pin count */
-	/* bi_end_io is assigned in next comment places.
-	Blkdev_issue_zeroout.c (drbd\drbd-kernel-compat):		bio->bi_end_io = bio_batch_end_io;
-	Drbd_actlog.c (drbd):	bio->bi_end_io = drbd_md_endio;
-	Drbd_bitmap.c (drbd):	bio->bi_end_io = drbd_bm_endio;
-	Drbd_receiver.c (drbd):	bio->bi_end_io = one_flush_endio;
-	Drbd_receiver.c (drbd):	bio->bi_end_io = drbd_peer_request_endio;
-	Drbd_req.h (drbd):	bio->bi_end_io   = drbd_request_endio;
-	*/
-	BIO_END_IO_CALLBACK*	bi_end_io;
-	void*			bi_private;
-	unsigned int		bi_max_vecs;    /* max bvl_vecs we can hold */
-	struct bvec_iter	bi_iter;
-
-		/* Windows backing device driver cannot handle more than
-		 * 1 (!) vector element. Split the IoCalldriver calls into
-		 * subrequests.
-		 */
-
-	int bi_num_requests;	/* Includes maybe a flush request */
-	int bi_this_request;
-	atomic_t bi_requests_completed;
-	struct bio_collection *bi_common_data;
-
-	int device_failed;
-	spinlock_t device_failed_lock;
-
-	void *bi_upper_irp_buffer;
-
-	void *patched_bootsector_buffer;
-
-	/* Squash multiple requests described by the bio vec
-	 * into one call to the underlying disk driver.
-	 * Unfortunately memory has to be copiied but
-	 * I assume it is still faster than calling the
-	 * disk driver for every 4K chunk.
-	 */
-
-	void *bi_big_buffer;
-	unsigned int bi_big_buffer_size;
-	bool bi_using_big_buffer;
-
-	/* If set, indicates that the memory is paged, in which case
-	 * we must lock it to memory. If not set, must unlock memory
-	 * locked by IoBuildAsynchronousFsdRequest().
-	 */
-	bool bi_paged_memory;
-
-	/* If set do not modify boot sector file system signature
-	 * on I/O. Currently only used by check for file system
-	 * on backing device on attach.
-	 */
-	bool dont_patch_boot_sector;
-
-	/* Bit 0: Set by read completion routine to avoid calling
-	 * patch_boot_sector multiple times.
-	 */
-	ULONG_PTR bi_windrbd_flags;
-
-	/* For bio's created by windrbd device ("upper") layer, this
-	 * indicates where in the user space MDL the bio starts.
-	 * We need it because Linux bios must not be larger than
-	 * 1 megabyte, while MDLs may be larger than that. If they
-	 * are we split the request in separate calls to
-	 * drbd_make_request() (with separate bio's each).
-	 */
-	size_t bi_mdl_offset;
-
-	/* Used by flush_request (which is currently not enabled).
-	 */
-	IO_STATUS_BLOCK io_stat;
-
-	blk_status_t bi_status;
-
-	/* We have to free the bio when IRQL is PASSIVE, so we
-	 * put them on this list in the IRQ and free it later
-	 * from a thread.
-	 */
-	struct list_head to_be_freed_list;
-	struct list_head to_be_freed_list2;
-
-		/* This indicates that the free_mdls_and_irp thread
-		 * should complete the upper IRP. It should do so
-		 * once the references to the buffers are cleaned
-		 * up (no mapping / no locking).
-		 */
-	bool delayed_io_completion;
-
-#ifdef BIO_ALLOC_DEBUG
-	char *file;
-	int line;
-	char *func;
-#endif
-
-	struct bio *is_cloned_from;
-
-	struct list_head corked_bios;  /* used to link the bios */
-	struct list_head joined_bios;  /* a list containg bios which we do the big buffer for. Must end_io them once this joined bio is finished */
-
-	/* Set when a bio is created in windrbd_make_drbd_requests.
-	   Do not try to join them */
-	bool is_user_request;
-
-	/* TODO: may be put members here again? Update: Not sure,
-	 * we've put a KEVENT here and it didn't work .. might also
-	 * have been something else.
-	 */
-
-	struct bio_vec bi_io_vec[1];
-};
 
 void init_free_bios(void);
 void shutdown_free_bios(void);
@@ -1054,33 +895,6 @@ extern int fsync_bdev(struct block_device *bdev);
 
 #define INIT_WORK(_work, _func)                                         \
 	 __INIT_WORK((_work), (_func), 0);  
-
-typedef int (congested_fn)(void *, int);
-
-struct backing_dev_info {
-	unsigned long ra_pages; /* max readahead in PAGE_CACHE_SIZE units */ 
-	congested_fn *congested_fn; /* Function pointer if device is md/dm */
-	void *congested_data;   /* Pointer to aux data for congested func */
-};
-
-struct queue_limits {
-	unsigned int            max_discard_sectors;
-	unsigned int            max_write_same_sectors;
-	unsigned int		max_write_zeroes_sectors;
-	unsigned int            discard_granularity;    
-	unsigned int		discard_zeroes_data;
-	unsigned int		seg_boundary_mask;
-};
-
-struct request_queue {
-	void * queuedata;
-	struct backing_dev_info backing_dev_info;
-	spinlock_t *queue_lock;
-	unsigned short logical_block_size;
-	ULONG_PTR queue_flags;
-	long max_hw_sectors;
-	struct queue_limits limits; 
-};
 
 static inline void queue_flag_set(unsigned int flag, struct request_queue *q)
 {

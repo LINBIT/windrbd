@@ -1,6 +1,10 @@
 #ifndef BLKDEV_H
 #define BLKDEV_H
 
+#include <linux/types.h>
+#include <linux/spinlock.h>
+#include <linux/blk_types.h>
+
 #ifndef SECTOR_SHIFT
 #define SECTOR_SHIFT 9
 #endif
@@ -10,6 +14,33 @@
 
 #define bio_op(bio) \
 	((bio)->bi_opf & REQ_OP_MASK)
+
+typedef int (congested_fn)(void *, int);
+
+struct backing_dev_info {
+	unsigned long ra_pages; /* max readahead in PAGE_CACHE_SIZE units */ 
+	congested_fn *congested_fn; /* Function pointer if device is md/dm */
+	void *congested_data;   /* Pointer to aux data for congested func */
+};
+
+struct queue_limits {
+	unsigned int            max_discard_sectors;
+	unsigned int            max_write_same_sectors;
+	unsigned int		max_write_zeroes_sectors;
+	unsigned int            discard_granularity;    
+	unsigned int		discard_zeroes_data;
+	unsigned int		seg_boundary_mask;
+};
+
+struct request_queue {
+	void * queuedata;
+	struct backing_dev_info backing_dev_info;
+	spinlock_t *queue_lock;
+	unsigned short logical_block_size;
+	ULONG_PTR queue_flags;
+	long max_hw_sectors;
+	struct queue_limits limits; 
+};
 
 /* obsolete, don't use in new code */
 static inline void bio_set_op_attrs(struct bio *bio, unsigned op,
