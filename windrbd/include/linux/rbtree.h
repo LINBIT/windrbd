@@ -93,14 +93,10 @@ return ret;
 
 #ifndef __RBTREE_H__
 #define __RBTREE_H__
-//#include <BaseTsd.h>
-#include <ntddk.h>
 
-#ifdef _WIN64
-__declspec(align(8)) struct rb_node
-#else
-__declspec(align(4)) struct rb_node
-#endif
+#include <linux/types.h>
+
+struct rb_node
 {
 	ULONG_PTR rb_parent_color;
 
