@@ -261,6 +261,8 @@ struct fault_injection {
 	int nr_requests;
 };
 
+struct inode;
+
 /* TODO: this is used as device extension for the DRBD devices and
    also as block device for the backing devices. This is probably
    not a good idea.
@@ -279,6 +281,8 @@ struct block_device {
 	unsigned int bd_block_size;	/* Size of one sector (?) */
 	unsigned long long d_size;
 	struct kref kref;
+
+	struct inode *bd_inode;	/* will die */
 
 	struct disk_stats bd_stats;
 
