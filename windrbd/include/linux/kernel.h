@@ -3,6 +3,7 @@
 
 #include <linux/types.h>	/* for uint64_t */
 #include <linux/printk.h>
+#include <linux/container_of.h>
 
 #ifndef BUILD_BUG_ON
 #define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))

@@ -365,11 +365,6 @@ extern int debug_printks_enabled;
 
 #define ALIGN(_x,_a)				(((_x) + (_a)-1) & ~((_a)-1))
 
-#define container_of(ptr, type, member) \
-	((type *)( \
-	(PCHAR)(ptr) - \
-	(ULONG_PTR)(&((type *)0)->member)))
-
 struct semaphore {
     KSEMAPHORE sem;
 };

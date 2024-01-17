@@ -2,6 +2,7 @@
 #define __LIST_H__
 
 #include <linux/stddef.h>
+#include <linux/container_of.h>
 
 #ifdef CONFIG_ILLEGAL_POINTER_VALUE
 #define POISON_POINTER_DELTA _AC(CONFIG_ILLEGAL_POINTER_VALUE, UL)
