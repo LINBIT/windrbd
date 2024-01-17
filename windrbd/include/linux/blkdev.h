@@ -5,6 +5,9 @@
 #include <linux/spinlock.h>
 #include <linux/blk_types.h>
 #include <linux/rcupdate.h>
+#include <linux/completion.h>
+#include <linux/rwsem.h>
+#include <linux/kobject.h>
 
 #ifndef SECTOR_SHIFT
 #define SECTOR_SHIFT 9
@@ -205,6 +208,233 @@ enum req_opf {
 	REQ_OP_LAST,
 };
 
+/*
+ * blk_plug permits building a queue of related requests by holding the I/O
+ * fragments for a short period. This allows merging of sequential requests
+ * into single larger request. As the requests are moved from a per-task list to
+ * the device's request_queue in a batch, this results in improved scalability
+ * as the lock contention for request_queue lock is reduced.
+ *
+ * It is ok not to disable preemption when adding the request to the plug list
+ * or when attempting a merge, because blk_schedule_flush_list() will only flush
+ * the plug list when the task sleeps by itself. For details, please see
+ * schedule() where blk_schedule_flush_plug() is called.
+ */
+struct blk_plug {
+	ULONG_PTR magic; /* detect uninitialized use-cases */
+	struct list_head list; /* requests */
+	struct list_head mq_list; /* blk-mq requests */
+	struct list_head cb_list; /* md requires an unplug callback */
+};
+
+struct blk_plug_cb;
+typedef void (*blk_plug_cb_fn)(struct blk_plug_cb *, bool);
+struct blk_plug_cb {
+	struct list_head list;
+	blk_plug_cb_fn callback;
+	void *data;
+};
+
+extern struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data, int size);
+
 #include <linux/bio.h>
+
+struct windows_block_device {
+	struct _DEVICE_OBJECT DeviceObject;
+};
+
+#define DISK_NAME_LEN		16
+struct gendisk 
+{
+	char disk_name[DISK_NAME_LEN];  /* name of major driver */
+	struct request_queue *queue;
+	int major, first_minor;
+	int minors;
+	const struct block_device_operations *fops;
+	void *private_data;
+	struct block_device *part0;
+	struct block_device *bdev;	/* deprecated, use part0 instead. */
+};
+
+struct fault_injection {
+	int nr_requests_to_failure;
+	int nr_requests;
+};
+
+/* TODO: this is used as device extension for the DRBD devices and
+   also as block device for the backing devices. This is probably
+   not a good idea.
+ */
+
+struct block_device {
+	// If the block device descriptor refers to a disk partition,
+	// the bd_contains field points to the descriptor of the
+	// block device associated with the whole disk
+	// Otherwise, if the block device descriptor refers to a whole disk
+	// the bd_contains field points to the block device descriptor itself ...
+	// FROM Understanding the Linux Kernel, 3rd Edition
+	struct block_device *	bd_parent;			// DW-1109: it points the block device whose bd_contains points me.
+	struct block_device *	bd_contains;
+	struct gendisk * bd_disk;
+	unsigned int bd_block_size;	/* Size of one sector (?) */
+	unsigned long long d_size;
+	struct kref kref;
+
+	struct disk_stats bd_stats;
+
+	int minor;	/* in case drbd_device is still NULL we need to shadow it here */
+	struct drbd_device *drbd_device;
+	struct _DEVICE_OBJECT *windows_device;	/* If that is a backing dev, the target device to send the I/O IRPs to. If this is a DRBD device, the device created by bdget()) */
+
+		/* TODO: those two will go away again */
+	struct _DEVICE_OBJECT *upper_windows_device; /* If upper device, this is the device created in AddDevice of the PnP request. */
+	struct _DEVICE_OBJECT *attached_windows_device; /* If upper device, this is the device returned by IoAttachDeviceToDeviceStack in AddDevice of the PnP request. */
+	struct _FILE_OBJECT *file_object; /* As returned by IoGetDeviceObjectPointer() */
+	UNICODE_STRING path_to_device;
+	UNICODE_STRING mount_point;
+	bool is_mounted;
+	bool is_bootdevice;
+		/* TODO: test this should go away */
+	bool my_auto_promote;
+		/* Only for lower device. For upper device, see
+		 * w_remove_lock in block_device_reference (windows
+		 * device struct).
+		 */
+
+	IO_REMOVE_LOCK remove_lock;
+	struct block_device_reference *ref;
+
+	struct list_head backing_devices_list;
+	bool mechanically_locked; /* MEDIA_REMOVAL ioctl */
+	void *pnp_notification_entry;
+
+		/* Those are used by windrbd_get_volsize() internally */
+	struct _IO_STATUS_BLOCK vol_size_io_status;
+	struct _GET_LENGTH_INFORMATION vol_size_length_information;
+	struct mutex vol_size_mutex;
+
+	/* Fault injection
+	 *
+         * Set this to approx. 1000 to fail on meta data. Set this to
+         * 10000 to fail on Sync. Set this to 100000 (and do I/O) to
+         * fail on user space I/O request.
+         */
+
+	struct fault_injection inject_on_completion;
+	struct fault_injection inject_on_request;
+
+	/* Flags controlling end of this bdev: */
+	bool powering_down;	/* Regular windows shutdown, cancel all waiters */
+	bool delete_pending;	/* bdput called. waiting for REMOVE_DEVICE PnP IRP */
+	bool about_to_delete;	/* REMOVE_DEVICE, no more I/O */
+	bool ejected;		/* EJECTED event, no more I/O TODO: ?? */
+
+	struct _KEVENT primary_event;	/* Set whenever Primary */
+	struct _KEVENT capacity_event;	/* Set whenever size > 0 */
+	struct _KEVENT device_removed_event;	/* Set by REMOVE_DEVICE to signal bdput we're gone */
+	struct _KEVENT device_started_event; /* Set on receving IRP_MN_START_DEVICE PnP request (drbdadm primary waits for this) */
+	struct _KEVENT device_ejected_event; /* Set on receving IRP_MN_EJECT_DEVICE PnP request (drbdadm secondary waits for this) */
+	struct _KEVENT bus_device_iterated; /* Set on bus device receving IRP_QUERY_DEVICE_RELATIONS PnP request for a to be deleted blockdev (drbdadm secondary waits for this) */
+	struct _KEVENT io_not_suspended; /* Cleared by windrbd suspend_io (so that I/O is suspended). Needed to suspend I/O from outside DRBD in order to fix the busy resync bug (sync does not finished on ongoing application I/O) */
+	spinlock_t suspend_lock; /* Protecting toggeling of io_not_suspended */
+
+	/* Used for debugging handle leaks */
+	int num_openers;
+
+	/* Nonzero when this is a DISK device (with partitions on it) */
+	bool is_disk_device;
+
+	/* For HLK test. */
+	bool suprise_removal;
+
+	/* This spinlock ensures that IoCompleteRequest (see bio_finished)
+	 * is called sequentially.
+	 */
+	spinlock_t complete_request_spinlock;
+
+	/* Workqueues for I/O. I/O sometimes happens in DPC (something
+	 * like a bottom half) and must not sleep (else BSOD). Call
+	 * drbd_make_request in this workqueue instead.
+	 */
+
+	struct workqueue_struct *io_workqueue;
+
+	/* Wait queue for waiting for all bios completed. This solves
+	 * a BSOD on disconnect while sync. To be called at the 
+	 * beginning of conn_disconnect() (see drbd_receiver.c).
+	 */
+
+	struct wait_queue_head bios_event;
+
+	/* Num pending counts. Must be 0 when disconnecting.
+	 */
+
+	atomic_t num_bios_pending;
+	atomic_t num_irps_pending;
+
+	/* The simple write cache: list of pending bios */
+	struct list_head write_cache;
+	spinlock_t write_cache_lock;
+	struct task_struct *bdflush_thread;
+	int bdflush_should_run;
+
+	struct wait_queue_head bdflush_event;
+	struct completion bdflush_terminated;
+
+	struct kobject kobj;
+	bool is_backing_device;
+
+		/* These are parameters for faking a GPT table at
+		 * the beginning and the end. Usually these should
+		 * be zero but will be 34 for GPT fake. The pointers
+		 * contain GPT data for before and after.
+		 */
+	sector_t data_shift, appended_sectors;
+	char *disk_prolog, *disk_epilog;
+
+	bool has_guids;
+	char disk_guid[16];
+	char partition_guid[16];
+
+		/* Cache the boot sector. If size changed we cannot
+		 * re read the boot sector from DRBD since it suspends
+		 * I/O during size change. So cache it here. */
+	bool have_read_bootsector;
+	char boot_sector[512];
+
+	spinlock_t virtual_partition_table_lock;
+
+		/* This members allow I/O to be "corked": collect
+		 * I/O requests (=bios) and submit them as a single
+		 * driver call to the backing device. This should
+		 * perform better (1 4Meg request vs. 1000 4K requests)
+		 * Right now one needs to call bdev_cork_io() and
+		 * bdev_uncork_io() manually.
+		 */
+
+	bool corked;
+	spinlock_t cork_spinlock;
+	struct list_head corked_list;
+};
+
+	/* Starting with version 0.7.1, this is the device extension
+	 * of the windows device object (for the upper device). This
+	 * is because the struct block_device lives longer than the
+	 * windows device now (windows device only exists as long
+	 * as we are primary, to avoid caching side effects).
+	 */
+
+#define BLOCK_DEVICE_UPPER_MAGIC 0xa56e3bd1
+#define BLOCK_DEVICE_ATTACHED_MAGIC 0x706fde13
+
+struct block_device_reference {
+	int magic;
+	struct block_device *bdev;
+		/* For upper device this must only live as long as
+		 * the windows device lives. Else driver verifier
+		 * will complain when doing primary / secondary /primary.
+		 */
+	IO_REMOVE_LOCK w_remove_lock;
+};
 
 #endif

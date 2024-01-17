@@ -7,6 +7,8 @@
 #include <linux/mm.h>
 #include <linux/semaphore.h>
 #include <linux/workqueue.h>
+#include <linux/typecheck.h>
+#include <linux/minmax.h>
 
 struct kref {
 	refcount_t refcount;

@@ -20,7 +20,16 @@
 #ifndef _WINDOWS_TYPES_H
 #define _WINDOWS_TYPES_H
 
+/* Windows headers should be included *only* here: */
+
+#include <ntdef.h>
 #include <ntddk.h>
+#include <ntdddisk.h>
+
+#ifdef NOTHING
+#undef NOTHING
+#endif
+
 #include <ctype.h>
 #include <stdbool.h>
 #include <linux/compiler.h>

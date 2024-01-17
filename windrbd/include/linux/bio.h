@@ -15,8 +15,6 @@
 
 #define BIO_MAX_VECS 256
 
-#if 0
-
 static inline bool bio_no_advance_iter(struct bio *bio)
 {
 	return bio_op(bio) == REQ_OP_DISCARD ||
@@ -50,8 +48,6 @@ static inline void bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
 	__bio_for_each_segment(bvl, bio, iter, (bio)->bi_iter)
 
 #define bio_iter_last(bvec, iter) ((iter).bi_size == (bvec).bv_len)
-
-#endif
 
 static inline void bioset_exit(struct bio_set *b)
 {

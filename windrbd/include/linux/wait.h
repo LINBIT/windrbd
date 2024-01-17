@@ -85,35 +85,41 @@ do {									\
 
 /* TODO: those two should honor current->state */
 #define wait_event(wait_queue, condition)				\
-do {									\
+({									\
 	int unused;							\
 	ll_wait_event_macro(unused, wait_queue, condition,		\
 		MAX_SCHEDULE_TIMEOUT, TASK_UNINTERRUPTIBLE);		\
-} while (0);
+	(void) unused;							\
+})
 
-#define wait_event_timeout(ret, wait_queue, condition, timeout)		\
-do {									\
+#define wait_event_timeout(wait_queue, condition, timeout)		\
+({									\
+	int ret;							\
 	ll_wait_event_macro(ret, wait_queue, condition,			\
 		timeout, TASK_UNINTERRUPTIBLE);				\
 	if (ret == -ETIMEDOUT) 						\
 		ret = 0;						\
-} while (0);
+	ret;								\
+})
 
-#define wait_event_interruptible(ret, wait_queue, condition)		\
-do {									\
+#define wait_event_interruptible(wait_queue, condition)		\
+({									\
+	int ret;							\
 	ll_wait_event_macro(ret, wait_queue, condition,			\
 		MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE);		\
 	if (ret > 0)							\
 		ret = 0;						\
-} while (0);
+	ret;								\
+})
 
-#define wait_event_interruptible_timeout(ret, wait_queue, condition, timeout) \
-do {									\
+#define wait_event_interruptible_timeout(wait_queue, condition, timeout) ({ \
+	int ret;							\
 	ll_wait_event_macro(ret, wait_queue, condition,			\
 		timeout, TASK_INTERRUPTIBLE);				\
-	if (ret == -ETIMEDOUT) 						\
+	if (ret == -ETIMEDOUT)						\
 		ret = 0;						\
-} while (0);
+	ret;								\
+})
 
 void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char *func);
 void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const char *func);

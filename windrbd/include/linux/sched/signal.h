@@ -1,6 +1,8 @@
 #ifndef _SIGNAL_H
 #define _SIGNAL_H
 
+#include <asm/signal.h>
+
 struct task_struct;
 
 extern int signal_pending(struct task_struct *p);
