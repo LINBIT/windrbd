@@ -278,7 +278,7 @@ TODO: should be:
 #define LONG_MAX				((long)(~0UL>>1)) 
 #define MAX_SCHEDULE_TIMEOUT	LONG_MAX	
 #define SENDER_SCHEDULE_TIMEOUT	5 * HZ
-#define HZ					    1000
+#define HZ 1000
 
 /* https://msdn.microsoft.com/en-us/library/64ez38eh.aspx */
 #pragma intrinsic(_ReturnAddress)
@@ -873,20 +873,6 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
 		__clear_bit(flag, &q->queue_flags);
 }
 
-/* TODO: compute with HZ */
-static inline unsigned long long JIFFIES()
-{
-	LARGE_INTEGER Tick;
-	LARGE_INTEGER Elapse;
-	KeQueryTickCount(&Tick);
-	Elapse.QuadPart = Tick.QuadPart * KeQueryTimeIncrement();
-	Elapse.QuadPart /= (10000);
-// printk("KeQueryTimeIncrement is %lld tick count is %lld jiffies is %lld\n", KeQueryTimeIncrement(), Tick.QuadPart, Elapse.QuadPart);
-	return Elapse.QuadPart;
-}
-
-#define jiffies				JIFFIES()
-
 #define time_after(_a,_b)		((LONG_PTR)((LONG_PTR)(_b) - (LONG_PTR)(_a)) < 0)
 #define time_after_eq(_a,_b)		((LONG_PTR)((LONG_PTR)(_a) - (LONG_PTR)(_b)) >= 0)
 
@@ -899,25 +885,6 @@ extern unsigned int lc_index_of(struct lru_cache *lc, struct lc_element *e);
 
 #include <wsk.h>	/* for struct sockaddr_storage */
 #include <drbd_transport.h>
-
-	/* A 'page' in WinDRBD may actually contain more pages (vmalloc'ed)
-	 * We need this to optimize I/O requests larger than 4K which
-	 * we used to send by seperate requests to the backing devices
-	 * (which is just too slow). A struct page may now contain
-	 * memory of any length, therefore we don't need the splitting
-	 * mechanism any more for userspace I/O requests (we still need
-	 * it, however for the metadata).
-	 */
-
-struct page {
-	ULONG_PTR private;
-	void *addr;
-	struct drbd_page_chain lru;
-	struct kref kref;
-	size_t size;
-	int is_unmapped;
-	int is_system_buffer;	/* do not kfree(page->addr) but kfree(page) */
-};
 
 void free_page_kref(struct kref *kref);
 

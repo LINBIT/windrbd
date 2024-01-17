@@ -8,6 +8,20 @@
 
 #define HZ 1000
 
+/* TODO: compute with HZ */
+static inline unsigned long long JIFFIES()
+{
+	LARGE_INTEGER Tick;
+	LARGE_INTEGER Elapse;
+	KeQueryTickCount(&Tick);
+	Elapse.QuadPart = Tick.QuadPart * KeQueryTimeIncrement();
+	Elapse.QuadPart /= (10000);
+// printk("KeQueryTimeIncrement is %lld tick count is %lld jiffies is %lld\n", KeQueryTimeIncrement(), Tick.QuadPart, Elapse.QuadPart);
+	return Elapse.QuadPart;
+}
+
+#define jiffies	JIFFIES()
+
 static inline unsigned int jiffies_to_msecs(const UINT64 j)
 {
 	return (unsigned int)j;
