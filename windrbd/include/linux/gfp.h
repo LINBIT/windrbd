@@ -3,6 +3,7 @@
 #define __GFP_H
 
 #include <linux/types.h>
+#include <linux/gfp_types.h>
 
 struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, int line, const char *func);
 struct page *alloc_page_debug(int flag, const char *file, int line, const char *func);

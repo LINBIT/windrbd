@@ -132,11 +132,6 @@ void flush_all_cpu_caches(void);
 #define smp_wmb() flush_all_cpu_caches()
 
 
-#define GFP_KERNEL              1
-#define GFP_ATOMIC              2
-#define GFP_NOIO				(__GFP_WAIT)
-#define GFP_NOWAIT	            0
-
 #define atomic_t64				LONGLONG
 
 #define	atomic_inc_return(_p)		InterlockedIncrement((LONG volatile*)(_p))
