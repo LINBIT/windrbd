@@ -206,7 +206,7 @@ converted-sources/drbd/drbd_buildtag.c: versioninfo
 
 orig-drbd: drbd-tmp $(ORIG_OBJS)
 
-CFLAGS=-g $(OPTIMIZE) -w $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_NEW_INCLUDES) $(MINGW_INCLUDES)
+CFLAGS=-g $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_NEW_INCLUDES) $(MINGW_INCLUDES)
 
 $(ORIG_DRBD_FILES): drbd-tmp
 
@@ -318,5 +318,6 @@ NEW_ORIG := $(shell find drbd -name "*.[ch]")
 NEW_TRANSFORMED := $(patsubst drbd%,drbd-tmp%,$(NEW_ORIG))
 
 drbd-tmp:
+	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi
 	cp -R drbd drbd-tmp
 	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $(NEW_TRANSFORMED) --in-place ; done
