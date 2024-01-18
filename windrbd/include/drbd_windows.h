@@ -719,14 +719,6 @@ extern void down(struct semaphore *s);
 extern int down_trylock(struct semaphore *s);
 extern void up(struct semaphore *s);
 
-/* This does not initialize the rw_semaphore (we would need to call
-   a Windows API function in the initializer). Initialize it from
-   the DriverEntry function.
- */
-
-#define DECLARE_RWSEM(sem) \
-	struct rw_semaphore sem;
-
 static int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 	sector_t nr_sects, gfp_t gfp_mask, bool discard)
 {

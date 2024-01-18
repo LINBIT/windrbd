@@ -1,7 +1,7 @@
 ﻿#ifndef __SEQ_FILE_H__
 #define __SEQ_FILE_H__
 
-// #include "drbd_windows.h"
+#include <linux/list.h>
 
 #define MAX_PROC_BUF 2048
 

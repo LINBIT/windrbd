@@ -16,5 +16,6 @@ struct kref {
 #include <linux/overflow.h>
 #include <linux/errno.h>
 #include <linux/instruction_pointer.h>
+#include <linux/seq_file.h>
 
 #endif

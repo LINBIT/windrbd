@@ -53,13 +53,6 @@
 #endif
 
 
-#define MODULE_AUTHOR(egal, ...)
-#define MODULE_DESCRIPTION(egal, ...)
-#define MODULE_VERSION(egal)
-#define MODULE_LICENSE(egal)
-#define MODULE_PARM_DESC(egal, ...)
-#define MODULE_ALIAS_BLOCKDEV_MAJOR(egal)
-#define MODULE_PARM_DESC(egal, ...)
 #define EXPORT_SYMBOL(...)
 
 #define module_init(...)
