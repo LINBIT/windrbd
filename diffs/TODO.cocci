@@ -2,9 +2,9 @@ identifiers created by cocci should have __cocci_ prefix.
 
 Cocci patches (generic unless noted otherwise):
 
-TODO: RCUs need a flag since they change the IRQ level in WinDRBD.
+Done: RCUs need a flag since they change the IRQ level in WinDRBD.
 
-TODO: Spinlocks that are locked and unlocked within the same function must be spin_lock_irqsave / spin_unlock_irqrestore.
+In progress: Spinlocks that are locked and unlocked within the same function must be spin_lock_irqsave / spin_unlock_irqrestore.
 	Must be able to handle multiple spinlocks in function
 	(with 2 different flags). Also must be aware that
 	the flags parameter might already be defined.

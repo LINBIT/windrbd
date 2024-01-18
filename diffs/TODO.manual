@@ -25,7 +25,7 @@ TODO: drbd_transport_tcp.c: setting SO_REUSEADDR by calling kernel_setsockopt
 	probably not a good idea.
 	There are 3 places in the source code.
 
-TODO: drbd_state.c (and drbd_int.h): wrcu_flags patch - replace by RCU flags passed between functions
+Done: drbd_state.c (and drbd_int.h): wrcu_flags patch - replace by RCU flags passed between functions
 
 TODO: drbd_state.h: stable_state_change macro definition
 
