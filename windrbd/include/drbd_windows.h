@@ -188,56 +188,6 @@ extern int atomic_xchg(atomic_t *v, int n);
 #define NOTIFY_STOP_MASK			0x8000          /* Don't call further */
 #define NOTIFY_BAD				    (NOTIFY_STOP_MASK|0x0002)
 
-/* Those match now the Linux values. Use errno utility to convert number
- * to symbol (or symbol to number).
- */
-
-#include <errno.h>
-
-#if 0
-#define EINVAL					22
-#define EOPNOTSUPP				95
-#define ENOTSUPP				95
-#define ENOMEM					12
-#define ENOENT					2
-#define EROFS					30
-#define	E2BIG					7
-#define ETIMEDOUT				110
-#define EBUSY					16
-#define	EAGAIN					11
-#define ENOBUFS					105
-#define ENODEV					19
-#define EWOULDBLOCK				11
-#define EINTR					4
-#define ENOSPC					28
-#define ECONNRESET				104
-#define EIO					5
-#define ENOMSG					42
-#define EEXIST					17
-#define EPERM					1
-#define EMSGSIZE				90
-#define ESRCH					3
-#define ERANGE					34
-#define EINPROGRESS				115
-#define ECONNREFUSED				111
-#define ENETUNREACH				101
-#define EHOSTUNREACH				113
-#define EBADR					53
-#define EADDRINUSE             			98
-#define	EOVERFLOW				75
-#define	ESTALE					11
-#define ECONNABORTED				103
-#define ENODATA					61
-#define ENOTCONN				107
-#define EADDRNOTAVAIL				99
-#define ENOTSUP					95
-#define EACCES					13
-#endif
-
-#define ERESTARTSYS				512
-#define EMEDIUMTYPE				513	
-#define ENOTSUPP				514
-#define EHOSTDOWN				515
 
 #define MAX_ERRNO				4095
 #define IS_ERR_VALUE(_x)		((_x) >= (ULONG_PTR) -MAX_ERRNO)
@@ -602,9 +552,6 @@ static inline void get_page(struct page *page)
 	kref_get(&page->kref);
 }
 
-#define page_private(_page)		((_page)->private)
-#define set_page_private(_page, _v)	((_page)->private = (_v))
-
 extern void *page_address(const struct page *page);
 extern int page_count(struct page *page);
 extern void __free_page(struct page *page);
@@ -800,12 +747,6 @@ void list_cut_position(struct list_head *list, struct list_head *head, struct li
 
 ULONG_PTR find_first_zero_bit(const ULONG_PTR *addr, ULONG_PTR size);
 int find_next_zero_bit(const ULONG_PTR * addr, ULONG_PTR size, ULONG_PTR offset);
-
-// for_each_set_bit = find_first_bit + find_next_bit => reference linux 3.x kernel. 
-#define for_each_set_bit(bit, addr, size) \
-	for ((bit) = find_first_bit((addr), (size));		\
-	     (bit) < (size);					\
-	     (bit) = find_next_bit((addr), (size), (bit) + 1))
 
 static inline unsigned int queue_io_min(struct request_queue *q)
 {

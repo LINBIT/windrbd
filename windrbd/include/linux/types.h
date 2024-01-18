@@ -30,6 +30,10 @@
 #undef NOTHING
 #endif
 
+#ifdef __reserved
+#undef __reserved
+#endif
+
 #include <ctype.h>
 #include <stdbool.h>
 #include <linux/compiler.h>

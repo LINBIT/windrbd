@@ -25,4 +25,7 @@ struct page {
 	int is_system_buffer;	/* do not kfree(page->addr) but kfree(page) */
 };
 
+#define page_private(_page)		((_page)->private)
+#define set_page_private(_page, _v)	((_page)->private = (_v))
+
 #endif

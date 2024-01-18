@@ -3,16 +3,18 @@
 
 #include <linux/refcount.h>
 
-/* TODO: somewhere else */
+struct kref {
+	refcount_t refcount;
+};
+
+/* TODO: to somewhere else */
 #include <linux/mm.h>
 #include <linux/semaphore.h>
 #include <linux/workqueue.h>
 #include <linux/typecheck.h>
 #include <linux/minmax.h>
 #include <linux/overflow.h>
-
-struct kref {
-	refcount_t refcount;
-};
+#include <linux/errno.h>
+#include <linux/instruction_pointer.h>
 
 #endif

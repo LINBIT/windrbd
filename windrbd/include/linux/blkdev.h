@@ -8,6 +8,7 @@
 #include <linux/completion.h>
 #include <linux/rwsem.h>
 #include <linux/kobject.h>
+#include <linux/part_stat.h>
 
 #ifndef SECTOR_SHIFT
 #define SECTOR_SHIFT 9

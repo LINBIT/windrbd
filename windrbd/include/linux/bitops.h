@@ -4,6 +4,7 @@
 #include "linux/hweight.h"
 #include <linux/bitsperlong.h>
 #include <linux/types.h>
+#include <linux/find.h>
 
 static inline void barrier(void)
 {
