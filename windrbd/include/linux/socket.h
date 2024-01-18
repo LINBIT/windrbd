@@ -1,13 +1,11 @@
 #ifndef _LINUX_SOCKET_H
 #define _LINUX_SOCKET_H
 
-/* Enable all warnings throws lots of those warnings: */
-#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 5045 4711)
-
 #include <linux/completion.h>
 #include <linux/kref.h>
 #include <linux/uio.h>	/* for struct kvec */
 #include <linux/net/sock.h>
+#include <linux/mutex.h>
 #include <wsk.h>	/* for struct sockaddr_storage */
 
 /* Originally somewhere in arch, we put it here, since it is only

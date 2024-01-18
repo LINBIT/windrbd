@@ -17,6 +17,8 @@
 #define SECTOR_SIZE (1 << SECTOR_SHIFT)
 #endif
 
+#define BDEVNAME_SIZE	32	/* Largest string for a blockdev identifier */
+
 #define bio_op(bio) \
 	((bio)->bi_opf & REQ_OP_MASK)
 
@@ -39,7 +41,7 @@ struct queue_limits {
 
 struct request_queue {
 	void * queuedata;
-	struct backing_dev_info backing_dev_info;
+	struct backing_dev_info *backing_dev_info;
 	spinlock_t *queue_lock;
 	unsigned short logical_block_size;
 	ULONG_PTR queue_flags;

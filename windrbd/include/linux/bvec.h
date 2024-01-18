@@ -2,7 +2,6 @@
 #define _BVEC_H
 
 #include <linux/types.h>
-#include <linux/blkdev.h>
 
 /* from: linux/bvec.h */
 
