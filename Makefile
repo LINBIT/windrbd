@@ -137,28 +137,29 @@ WINDRBD_NEW_INCLUDES=-I"windrbd/include" -I"drbd-tmp/drbd" -I"drbd-tmp/drbd/drbd
 
 MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk
 
-DRBD_SRCDIR=./drbd-tmp/drbd
-PATCHED_DRBD_SRCDIR = ./converted-sources/drbd
-WINDRBD_SRCDIR = ./windrbd/src
+DRBD_SRCDIR=./drbd-tmp/drbd/
+PATCHED_DRBD_SRCDIR = ./converted-sources/drbd/
 
-ORIG_DRBD_FILES += $(DRBD_SRCDIR)/drbd_sender.c $(DRBD_SRCDIR)/drbd_receiver.c $(DRBD_SRCDIR)/drbd_req.c $(DRBD_SRCDIR)/drbd_actlog.c
-ORIG_DRBD_FILES += $(DRBD_SRCDIR)/lru_cache.c $(DRBD_SRCDIR)/drbd_main.c $(DRBD_SRCDIR)/drbd_strings.c $(DRBD_SRCDIR)/drbd_nl.c
-ORIG_DRBD_FILES += $(DRBD_SRCDIR)/drbd_interval.c $(DRBD_SRCDIR)/drbd_state.c $(DRBD_SRCDIR)/drbd_kref_debug.c
-ORIG_DRBD_FILES += $(DRBD_SRCDIR)/drbd_nla.c $(DRBD_SRCDIR)/drbd_transport.c $(DRBD_SRCDIR)/drbd_transport_tcp.c $(DRBD_SRCDIR)/kref_debug.c $(DRBD_SRCDIR)/drbd_buildtag.c $(DRBD_SRCDIR)/drbd_bitmap.c $(DRBD_SRCDIR)/drbd_proc.c
+DRBD_SOURCES += drbd_sender.c drbd_receiver.c drbd_req.c drbd_actlog.c
+DRBD_SOURCES += lru_cache.c drbd_main.c drbd_strings.c drbd_nl.c
+DRBD_SOURCES += drbd_interval.c drbd_state.c drbd_kref_debug.c
+DRBD_SOURCES += drbd_nla.c drbd_transport.c drbd_transport_tcp.c kref_debug.c drbd_buildtag.c drbd_bitmap.c drbd_proc.c
 
-DRBD_FILES += $(PATCHED_DRBD_SRCDIR)/drbd_sender.c $(PATCHED_DRBD_SRCDIR)/drbd_receiver.c $(PATCHED_DRBD_SRCDIR)/drbd_req.c $(PATCHED_DRBD_SRCDIR)/drbd_actlog.c
-DRBD_FILES += $(PATCHED_DRBD_SRCDIR)/lru_cache.c $(PATCHED_DRBD_SRCDIR)/drbd_main.c $(PATCHED_DRBD_SRCDIR)/drbd_strings.c $(PATCHED_DRBD_SRCDIR)/drbd_nl.c
-DRBD_FILES += $(PATCHED_DRBD_SRCDIR)/drbd_interval.c $(PATCHED_DRBD_SRCDIR)/drbd_state.c $(PATCHED_DRBD_SRCDIR)/drbd_kref_debug.c
-DRBD_FILES += $(PATCHED_DRBD_SRCDIR)/drbd_nla.c $(PATCHED_DRBD_SRCDIR)/drbd_transport.c $(PATCHED_DRBD_SRCDIR)/drbd_transport_tcp.c $(PATCHED_DRBD_SRCDIR)/kref_debug.c $(PATCHED_DRBD_SRCDIR)/drbd_buildtag.c $(PATCHED_DRBD_SRCDIR)/drbd_bitmap.c $(PATCHED_DRBD_SRCDIR)/drbd_proc.c
+ORIG_DRBD_FILES = $(addprefix $(DRBD_SRCDIR), $(DRBD_SOURCES))
+# will go away:
+DRBD_FILES = $(addprefix $(PATCHED_DRBD_SRCDIR), $(DRBD_SOURCES))
 
-WINDRBD_FILES = $(WINDRBD_SRCDIR)/Attr.c $(WINDRBD_SRCDIR)/disp.c $(WINDRBD_SRCDIR)/drbd_windows.c $(WINDRBD_SRCDIR)/hweight.c \
-                $(WINDRBD_SRCDIR)/idr.c $(WINDRBD_SRCDIR)/kmalloc_debug.c $(WINDRBD_SRCDIR)/mempool.c $(WINDRBD_SRCDIR)/printk-to-syslog.c \
-                $(WINDRBD_SRCDIR)/rbtree.c $(WINDRBD_SRCDIR)/seq_file.c $(WINDRBD_SRCDIR)/slab.c $(WINDRBD_SRCDIR)/util.c $(WINDRBD_SRCDIR)/windrbd_bootdevice.c \
-                $(WINDRBD_SRCDIR)/windrbd_device.c $(WINDRBD_SRCDIR)/windrbd_drbd_url_parser.c $(WINDRBD_SRCDIR)/windrbd_module.c \
-                $(WINDRBD_SRCDIR)/windrbd_netlink.c $(WINDRBD_SRCDIR)/windrbd_test.c $(WINDRBD_SRCDIR)/windrbd_threads.c \
-                $(WINDRBD_SRCDIR)/windrbd_usermodehelper.c $(WINDRBD_SRCDIR)/windrbd_waitqueue.c \
-                $(WINDRBD_SRCDIR)/windrbd_winsocket.c $(WINDRBD_SRCDIR)/windrbd_locking.c \
-                $(WINDRBD_SRCDIR)/tiktok.c $(WINDRBD_SRCDIR)/partition_table_template.c
+WINDRBD_SRCDIR = ./windrbd/src/
+WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
+                idr.c kmalloc_debug.c mempool.c printk-to-syslog.c \
+                rbtree.c seq_file.c slab.c util.c windrbd_bootdevice.c \
+                windrbd_device.c windrbd_drbd_url_parser.c windrbd_module.c \
+                windrbd_netlink.c windrbd_test.c windrbd_threads.c \
+                windrbd_usermodehelper.c windrbd_waitqueue.c \
+                windrbd_winsocket.c windrbd_locking.c \
+                tiktok.c partition_table_template.c
+
+WINDRBD_FILES = $(addprefix $(WINDRBD_SRCDIR), $(WINDRBD_SOURCES))
 
 ORIG_OBJS=$(patsubst %.c,%.o,$(ORIG_DRBD_FILES))
 
