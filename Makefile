@@ -1,4 +1,5 @@
-default: package-in-docker
+# default: package-in-docker
+default: orig-drbd
 # If you have your dev env set up on the host you can try
 # to build without docker container: to set it up the
 # contents of the docker-root/Dockerfile might be useful.
@@ -31,7 +32,6 @@ help:
 	@echo "    converted-sources:  apply WinDRBD patches to DRBD"
 	@echo "    install:            copy package to Windows hosts and run the installer"
 	@echo "                        there (requires CygWin with sshd on target machine)"
-	@echo "    drbd-tmp:           Apply new cocci targets (experimental)"
 	@echo "    orig-drbd:          Compile DRBD from original source (experimental)"
 	@echo
 	@echo "Variables that control things:"
@@ -132,7 +132,7 @@ DEFINES+=-D_WIN64
 endif
 
 WINDRBD_INCLUDES=-I"windrbd/include" -I"converted-sources/drbd" -I"converted-sources/drbd/drbd-headers"
-# no converted sources instead drbd-tmp
+# no converted-sources instead drbd-tmp
 WINDRBD_NEW_INCLUDES=-I"windrbd/include" -I"drbd-tmp/drbd" -I"drbd-tmp/drbd/drbd-headers" -I"drbd-tmp/drbd/drbd-kernel-compat"
 
 MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk
@@ -161,8 +161,7 @@ WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
 
 WINDRBD_FILES = $(addprefix $(WINDRBD_SRCDIR), $(WINDRBD_SOURCES))
 
-ORIG_OBJS=$(patsubst %.c,%.o,$(ORIG_DRBD_FILES))
-
+ORIG_OBJS=$(patsubst %.c,%.o,$(ORIG_DRBD_FILES)) 
 OBJS=$(patsubst %.c,%.o,$(DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) ./windrbd/windrbd-event-log.coffres ./converted-sources/drbd/resource.coffres
 
 LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
@@ -205,11 +204,9 @@ versioninfo:
 
 converted-sources/drbd/drbd_buildtag.c: versioninfo
 
-orig-drbd: drbd-tmp $(ORIG_OBJS)
+orig-drbd: $(ORIG_DRBD_FILES) $(ORIG_OBJS)
 
 CFLAGS=-g $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_NEW_INCLUDES) $(MINGW_INCLUDES)
-
-$(ORIG_DRBD_FILES): drbd-tmp
 
 windrbd.sys: versioninfo converted-sources $(OBJS) converted-sources/drbd/drbd_buildtag.c
 	$(CC) -o windrbd.sys-unsigned $(OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
@@ -314,11 +311,18 @@ trans: $(TRANSFORMED) $(TRANS_DEST).generated
 converted-sources: trans
 
 NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*))
-# NEW_ORIG := $(shell find drbd -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c|drbd_buildtag.c|compat.h|drbd_polymorph_printk.h')
-NEW_ORIG := $(shell find drbd -name "*.[ch]")
-NEW_TRANSFORMED := $(patsubst drbd%,drbd-tmp%,$(NEW_ORIG))
 
-drbd-tmp:
+DRBD_HEADERS := $(shell find drbd -name "*.h")
+DRBD_TMP_HEADERS := $(patsubst drbd%,drbd-tmp%,$(DRBD_HEADERS))
+
+drbd-tmp/%.h: drbd/%.h
 	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi
-	cp -R drbd drbd-tmp
-	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $(NEW_TRANSFORMED) --in-place ; done
+	mkdir -p $(shell dirname $@) && cp $< $@
+	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
+
+$(ORIG_OBJS): $(DRBD_TMP_HEADERS)
+
+drbd-tmp/%.c: drbd/%.c
+	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi
+	mkdir -p drbd-tmp/drbd &&  cp $< $@
+	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
