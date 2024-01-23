@@ -134,6 +134,7 @@ endif
 WINDRBD_INCLUDES=-I"windrbd/include" -I"converted-sources/drbd" -I"converted-sources/drbd/drbd-headers"
 # no converted-sources instead drbd-tmp
 WINDRBD_NEW_INCLUDES=-I"windrbd/include" -I"drbd-tmp/drbd" -I"drbd-tmp/drbd/drbd-headers" -I"drbd-tmp/drbd/drbd-kernel-compat"
+DEVICE_MAPPER_INCLUDES=-I"windrbd/include" -I"linux/drivers/md"
 
 MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk
 
@@ -149,6 +150,9 @@ ORIG_DRBD_FILES = $(addprefix $(DRBD_SRCDIR), $(DRBD_SOURCES))
 # will go away:
 DRBD_FILES = $(addprefix $(PATCHED_DRBD_SRCDIR), $(DRBD_SOURCES))
 
+DEVICE_MAPPER_SOURCES=dm.c
+DEVICE_MAPPER_FILES = $(addprefix linux/drivers/md/, $(DEVICE_MAPPER_SOURCES))
+
 WINDRBD_SRCDIR = ./windrbd/src/
 WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
                 idr.c kmalloc_debug.c mempool.c printk-to-syslog.c \
@@ -163,6 +167,7 @@ WINDRBD_FILES = $(addprefix $(WINDRBD_SRCDIR), $(WINDRBD_SOURCES))
 
 ORIG_OBJS=$(patsubst %.c,%.o,$(ORIG_DRBD_FILES)) 
 OBJS=$(patsubst %.c,%.o,$(DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) ./windrbd/windrbd-event-log.coffres ./converted-sources/drbd/resource.coffres
+DEVICE_MAPPER_OBJS=$(patsubst %.c,%.o,$(DEVICE_MAPPER_FILES)) 
 
 LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
 
@@ -205,6 +210,8 @@ versioninfo:
 converted-sources/drbd/drbd_buildtag.c: versioninfo
 
 orig-drbd: $(ORIG_DRBD_FILES) $(ORIG_OBJS)
+
+device-mapper: $(DEVICE_MAPPER_OBJS)
 
 CFLAGS=-g $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_NEW_INCLUDES) $(MINGW_INCLUDES)
 
