@@ -327,7 +327,21 @@ drbd-tmp/%.h: drbd/%.h
 	mkdir -p $(shell dirname $@) && cp $< $@
 	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
 
-$(ORIG_OBJS): $(DRBD_TMP_HEADERS)
+# TODO: should we depend on DRBD_TMP_HEADERS here? This makes
+# make copy all the headers over to drbd-tmp and patch them..
+# Alternative is to use -MG (and not explicitly depend).
+# from make documentation, automatic prerequisites
+%.d: %.c $(DRBD_TMP_HEADERS)
+	set -e; rm -f $@; \
+	$(CC) -MM -MT $(patsubst %.c,%.o,$<)  $(CFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+all-dep := $(filter-out drbd_buildtag.d,$(ORIG_OBJS:%.o=%.d))
+
+ifeq ($(MAKECMDGOALS),$(filter-out clean,$(MAKECMDGOALS)))
+-include $(all-dep)
+endif
 
 drbd-tmp/%.c: drbd/%.c
 	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi
