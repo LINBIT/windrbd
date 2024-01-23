@@ -28,4 +28,7 @@ extern struct module windrbd_module;
 extern bool try_module_get(struct module *module);
 extern void module_put(struct module *module);
 
+#define module_init(...)
+#define module_exit(...)
+
 #endif

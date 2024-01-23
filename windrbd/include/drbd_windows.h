@@ -142,9 +142,6 @@ extern int atomic_xchg(atomic_t *v, int n);
 
 #define RELATIVE(wait) (-(wait))
 
-#define __init
-#define __exit
-
 #define NANOSECONDS(nanos) \
 (((signed __int64)(nanos)) / 100L)
 
@@ -173,14 +170,6 @@ extern int atomic_xchg(atomic_t *v, int n);
 #define BIO_RW_NOIDLE				10
 
 #define KBUILD_MODNAME      __FILE__
-
-// from fs.h
-/* file is open for reading */
-#define FMODE_READ				    0x1
-/* file is open for writing */
-#define FMODE_WRITE				    0x2
-/* File is opened with O_NDELAY (only set for block devices) */
-#define FMODE_NDELAY            		    0x40
 
 // from notify.h
 #define NOTIFY_DONE				    0x0000          /* Don't care */
@@ -237,8 +226,6 @@ enum km_type {
 	KM_KDB,
 	KM_TYPE_NR
 };
-
-typedef unsigned int                fmode_t;
 
 #define MAX_TEXT_BUF                256
 
@@ -305,13 +292,6 @@ struct block_device;
 struct gendisk;
 struct bio;
 
-struct block_device_operations {
-	struct module *owner;
-	void (*submit_bio) (struct bio*);
-	int (*open) (struct block_device *, fmode_t);
-	void (*release) (struct gendisk *, fmode_t);
-};
-
 struct kobj_type {
 	void(*release)(struct kobject *);
 };
@@ -339,10 +319,6 @@ struct bio_collection {
 
 void init_free_bios(void);
 void shutdown_free_bios(void);
-
-struct bio_set {
-	mempool_t *bio_pool;
-};
 
 extern struct bio *bio_clone(struct bio *, int x);
 /* This is patched out of DRBD, patch it in again when implemented.
@@ -712,8 +688,6 @@ typedef struct _PTR_ENTRY
 #define	EDESTADDRREQ	89	/* Destination address required */
 #endif
 
-// Bitops.h
-#define BITS_PER_BYTE		8
 
 extern void down(struct semaphore *s);
 extern int down_trylock(struct semaphore *s);

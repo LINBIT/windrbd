@@ -54,4 +54,18 @@ static inline void bioset_exit(struct bio_set *b)
 	bioset_free(b);
 }
 
+#define bio_iovec(bio)		bio_iter_iovec((bio), (bio)->bi_iter)
+
+#define BIO_POOL_SIZE 2
+
+enum {
+	BIOSET_NEED_BVECS = 1,
+	BIOSET_NEED_RESCUER = 2,
+	BIOSET_PERCPU_CACHE = 4,
+};
+
+struct bio_set {
+	mempool_t *bio_pool;
+};
+
 #endif

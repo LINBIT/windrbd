@@ -51,6 +51,9 @@ typedef struct _tagSPINLOCK
 
 extern void spin_lock_init(spinlock_t *lock);
 
+#define DECLARE_SPINLOCK(unused) \
+Error Cannot implement DECLARE_SPINLOCK since we need to call KeInitializeSemaphore at runtime. Please manually patch your driver.
+
 #ifdef SPIN_LOCK_DEBUG
 
 extern int spinlock_debug_init(void);

@@ -222,4 +222,6 @@ static inline int list_is_last(const struct list_head *list, const struct list_h
 	     pos;							\
 	     pos = hlist_entry((pos)->member.next, typeof(*pos), member))
 
+#include <linux/rculist.h>
+
 #endif

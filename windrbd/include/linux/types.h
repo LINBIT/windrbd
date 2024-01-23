@@ -118,5 +118,6 @@ struct hlist_head {
 };
  
 // typedef LONG_PTR ssize_t;
+typedef unsigned int                fmode_t;
 
 #endif

@@ -9,6 +9,7 @@
 #include <linux/rwsem.h>
 #include <linux/kobject.h>
 #include <linux/part_stat.h>
+#include <linux/module.h>
 
 #ifndef SECTOR_SHIFT
 #define SECTOR_SHIFT 9
@@ -443,5 +444,14 @@ struct block_device_reference {
 		 */
 	IO_REMOVE_LOCK w_remove_lock;
 };
+
+struct block_device_operations {
+	struct module *owner;
+	void (*submit_bio) (struct bio*);
+	int (*open) (struct block_device *, fmode_t);
+	void (*release) (struct gendisk *, fmode_t);
+};
+
+#define QUEUE_FLAG_STABLE_WRITES 15	/* don't modify blks until WB is done */
 
 #endif

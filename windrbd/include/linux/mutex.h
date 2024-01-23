@@ -17,4 +17,7 @@ extern int mutex_is_locked(struct mutex *m);
 extern void mutex_unlock(struct mutex *m);
 extern int mutex_trylock(struct mutex *m);
 
+#define DEFINE_MUTEX(unused) \
+Error Cannot implement DEFINE_MUTEX since we need to call KeInitializeMutex at runtime. Please manually patch your driver.
+
 #endif
