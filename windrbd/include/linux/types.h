@@ -49,6 +49,8 @@ typedef struct {
 	int counter;
 } atomic_t;
 
+#define ATOMIC_INIT(i) { (i) }
+
 typedef int pid_t;
 
 typedef signed char		    __s8;

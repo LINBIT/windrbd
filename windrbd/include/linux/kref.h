@@ -21,5 +21,7 @@ struct kref {
 #include <linux/export.h>
 #include <linux/numa.h>
 #include <linux/stat.h>
+#include <linux/init.h>
+#include <linux/tm.h>
 
 #endif

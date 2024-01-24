@@ -138,7 +138,6 @@ extern LONGLONG atomic_read64(const atomic_t64 *v);
 extern int atomic_xchg(atomic_t *v, int n);
 
 #define WARN_ON(x)				__noop
-#define ATOMIC_INIT(i)			(i)
 
 #define RELATIVE(wait) (-(wait))
 
@@ -468,9 +467,6 @@ extern struct gendisk *blk_alloc_disk(int unused);
 extern void blk_cleanup_disk(struct gendisk *disk);
 
 extern struct block_device *bdget_disk(struct gendisk *disk, int partno);
-#define disk_to_dev(disk) \
-	(disk)->bdev
-
 extern int fsync_bdev(struct block_device *bdev);
 
 #define PREPARE_WORK(_work, _func)                                      \

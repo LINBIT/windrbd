@@ -142,6 +142,16 @@ enum
     NLA_NESTED_COMPAT,
     NLA_NUL_STRING,
     NLA_BINARY,
+    NLA_S8,
+    NLA_S16,
+    NLA_S32,
+    NLA_S64,
+    NLA_BITFIELD32,
+    NLA_REJECT,
+    NLA_BE16,
+    NLA_BE32,
+    NLA_SINT,
+    NLA_UINT,
     __NLA_TYPE_MAX,
 };
 

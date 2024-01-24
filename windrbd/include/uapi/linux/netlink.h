@@ -200,7 +200,7 @@ enum
 
 #define CTRL_ATTR_MCAST_GRP_MAX (__CTRL_ATTR_MCAST_GRP_MAX - 1)
 
-#define nla_nest_cancel(_X,_Y)	__noop
+#define nla_nest_cancel(_X,_Y)
 
 
 

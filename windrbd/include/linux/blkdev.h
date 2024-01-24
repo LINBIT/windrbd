@@ -453,5 +453,10 @@ struct block_device_operations {
 };
 
 #define QUEUE_FLAG_STABLE_WRITES 15	/* don't modify blks until WB is done */
+/* TODO: value? */
+#define QUEUE_FLAG_DISCARD (-1)
+
+#define disk_to_dev(disk) \
+	(disk)->bdev
 
 #endif
