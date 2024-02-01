@@ -2,9 +2,6 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
-TODO: Build self signed installer package with VERSION=self-signed or VERSION=unsupported
-	And put that version on the website.
-
 TODO: Bug: On no memory, genl_replymsg() -ENOMEM is not checked.
 	by DRBD: may it fail in the Linux kernel?
 
@@ -18,7 +15,11 @@ TODO: Bug: drbdadm down takes 30 seconds to complete:
 
 	<7> 08.07.2023 U16:53:06.880 (312313423335/3579545)|FFFF838F6CF994D0(drbd_a_test1) #261311 got_twopc_reply drbd test1 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x4), scf(0x83a): Got a P_TWOPC_YES reply for state change 298629752
 	 [last message was in IRQ context or recursive]
+
 	<6> 08.07.2023 U16:53:38.895 (312428017216/3579545)|FFFF838F6CF9AC10(drbd_s_test1) #261312 change_cluster_wide_state drbd test1, r(Secondary), f(0x400), scf(0x83a): Aborting cluster-wide state change 298629752 (32015ms) rv = -23
+
+	Probably fixed with 1.1.9 (using wait_event_interruptible
+	in wsk_connect())
 
 TODO: Bug: drbdadm invalidate does not work
 	Also tested with 1.0.0
@@ -27,6 +28,7 @@ TODO: Bug: drbdadm invalidate does not work
 	a DRBD (not WinDRBD) problem.
 
 TODO: Bug: Hang in NetworkFailure on no memory.
+	In progress. We have to fix that
 
 TODO: Bug: System freeze when experimenting with DRBD reactor
 
@@ -8661,4 +8663,7 @@ Probably a followup bug of the disconnect timeout bug
 0b fffffc08`871e7c60 00000000`00000000     nt!KiStartSystemThread+0x1c
 
 	Other than that no running WinDRBD stacks
+
+Done: Build self signed installer package with VERSION=self-signed or VERSION=unsupported
+	And put that version on the website.
 
