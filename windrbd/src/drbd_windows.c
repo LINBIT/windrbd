@@ -1786,6 +1786,10 @@ NTSTATUS DrbdIoCompletion(
 
 	atomic_dec(&bio->bi_bdev->num_irps_pending);
 
+		/* Will retry soon .. */
+	if (status == STATUS_VOLUME_DISMOUNTED)
+	        return STATUS_MORE_PROCESSING_REQUIRED;
+
 	if (status != STATUS_SUCCESS) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)
 			status = STATUS_SUCCESS;
