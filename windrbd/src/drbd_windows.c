@@ -2029,8 +2029,11 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 		patch_boot_sector(buffer, 0, 0);
 	}
 
+	int retries = 0;
+	while (1) {
+
 		/* TODO: io_stat not used at all? */
-	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
+		bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
 				buffer,
@@ -2039,9 +2042,22 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 				&bio->bi_io_vec[bio->bi_this_request].io_stat
 				);
 
-	if (!bio->bi_irps[bio->bi_this_request]) {
-		printk(KERN_ERR "IoBuildAsynchronousFsdRequest: cannot alloc new IRP for io %d, device %p, buffer %p, the_size %d, offset %lld%\n", io, bio->bi_bdev->windows_device, buffer, the_size, bio->bi_io_vec[bio->bi_this_request].offset.QuadPart);
-		return -ENOMEM;
+		if (bio->bi_irps[bio->bi_this_request] != NULL) {
+			if (retries > 0)
+				printk("succeeded after %d retries\n", retries);
+			break;
+		}
+
+		if (retries % 10 == 0) {
+			printk(KERN_ERR "IoBuildAsynchronousFsdRequest: cannot alloc new IRP for io %d, device %p, buffer %p, the_size %d, offset %lld, retrying ...\n", io, bio->bi_bdev->windows_device, buffer, the_size, bio->bi_io_vec[bio->bi_this_request].offset.QuadPart);
+		}
+		if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
+			if (retries == 0)
+				printk("cannot sleep now, busy looping\n");
+		} else {
+			msleep(100);
+		}
+		retries++;
 	}
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 

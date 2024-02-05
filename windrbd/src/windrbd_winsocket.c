@@ -194,29 +194,48 @@ static NTSTATUS InitWskBuffer(
 	__in  BOOLEAN	may_printk
 )
 {
-    NTSTATUS Status = STATUS_SUCCESS;
+	int probe_and_lock_failed;
+	int the_exception_code;
+	int retries;
+	NTSTATUS Status = STATUS_SUCCESS;
 
-    WskBuffer->Offset = 0;
-    WskBuffer->Length = BufferSize;
+	WskBuffer->Offset = 0;
+	WskBuffer->Length = BufferSize;
 
-    WskBuffer->Mdl = IoAllocateMdl(Buffer, BufferSize, FALSE, FALSE, NULL);
-    if (!WskBuffer->Mdl) {
-	return STATUS_INSUFFICIENT_RESOURCES;
-    }
+	WskBuffer->Mdl = IoAllocateMdl(Buffer, BufferSize, FALSE, FALSE, NULL);
+	if (!WskBuffer->Mdl) {
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
 
-    try {
+	retries = 0;
+	the_exception_code = 0;
+	while (1) {
+		probe_and_lock_failed = 0;
+		try {
 	// DW-1223: Locking with 'IoWriteAccess' affects buffer, which causes infinite I/O from ntfs when the buffer is from mdl of write IRP.
 	// we need write access for receiver, since buffer will be filled.
-	MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
-    } except(EXCEPTION_EXECUTE_HANDLER) {
-	if (WskBuffer->Mdl != NULL) {
-	    IoFreeMdl(WskBuffer->Mdl);
+			MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
+		} except(EXCEPTION_EXECUTE_HANDLER) {
+			probe_and_lock_failed = 1;
+			the_exception_code = GetExceptionCode();
+		}
+		if (probe_and_lock_failed == 0) {
+                        if (may_printk && retries > 0)
+                                printk("succeeded after %d retries\n", retries);
+			break;
+		}
+		if (may_printk && retries % 10 == 0)
+			printk(KERN_ERR "MmProbeAndLockPages failed. exception code=0x%x, retrying ...\n", the_exception_code);
+
+                if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
+                        if (may_printk && retries == 0)
+                                printk("cannot sleep now, busy looping\n");
+                } else {
+                        msleep(100);
+                }
+                retries++;
 	}
-	if (may_printk)
-		printk(KERN_ERR "MmProbeAndLockPages failed. exception code=0x%x\n", GetExceptionCode());
-	return STATUS_INSUFFICIENT_RESOURCES;
-    }
-    return Status;
+	return Status;
 }
 
 static VOID FreeWskBuffer(

@@ -3669,6 +3669,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	char *buffer, *io_buffer = NULL;
 	int64_t io_start_sector = 0, io_sector_count = 0;
 	KIRQL flags;
+	int retries;
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete || ref->bdev->ref == NULL) {
@@ -3792,18 +3793,30 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				break;
 			}
 
-			if ((((PUCHAR)srb->DataBuffer - (PUCHAR)MmGetMdlVirtualAddress(irp->MdlAddress)) + (PUCHAR)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority)) == NULL) {
-				printk("cannot map transfer buffer\n");
-				status = STATUS_INSUFFICIENT_RESOURCES;
-				irp->IoStatus.Information = 0;
-				break;
+			retries = 0;
+			while (1) {
+				buffer = ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
+
+				if (buffer != NULL) {
+		                        if (retries > 0)
+						printk("succeeded after %d retries\n", retries);
+		                        break;
+				}
+
+				if (retries % 10 == 0) {
+					printk("cannot map transfer buffer, retrying\n");
+				}
+				if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
+					if (retries == 0)
+						printk("cannot sleep now, busy looping\n");
+				} else {
+					msleep(100);
+				}
 			}
 // printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
 
 			irp->IoStatus.Information = 0;
 			irp->IoStatus.Status = STATUS_PENDING;
-
-			buffer = ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
 
 			spin_lock_irqsave(&bdev->virtual_partition_table_lock, flags);
 			if (start_sector < bdev->data_shift) {
