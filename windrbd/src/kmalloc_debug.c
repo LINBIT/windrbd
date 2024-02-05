@@ -47,6 +47,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	struct poison_after *poison_after;
 	size_t full_size;
 	KIRQL flags;
+	int retries;
 
 // mem_printk("kmalloc %d bytes from %s:%d (%s())\n", size, file, line, func);
 
@@ -64,14 +65,32 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 #endif
 
 	full_size = sizeof(struct memory) + size + sizeof(struct poison_after);
-	mem = ExAllocatePoolWithTag(NonPagedPool, full_size, 'DRBD');
+	retries = 0;
+	while (1) {
+		mem = ExAllocatePoolWithTag(NonPagedPool, full_size, 'DRBD');
 
-	if (mem == NULL) {
-		if (strcmp(func, "SendTo") != 0)
-			printk("kmalloc_debug: Warning: cannot allocate memory of size %d, %d bytes requested by function %s at %s:%d.\n", full_size, size, func, file, line);
+		if (mem != NULL) {
+			if (strcmp(func, "SendTo") != 0 && retries > 0 )
+				printk("succeeded after %d retries\n", retries);
+			break;
+		}
+		if (flag != GFP_KERNEL) {
+			if (strcmp(func, "SendTo") != 0)
+				printk("kmalloc_debug: Warning: cannot allocate memory of size %d, %d bytes requested by function %s at %s:%d, NOT retrying ...\n", full_size, size, func, file, line);
+			kmalloc_errors++;
+			return NULL;
+		}
 
-		kmalloc_errors++;
-		return NULL;
+		if (strcmp(func, "SendTo") != 0 && retries % 10 == 0) {
+			printk("kmalloc_debug: Warning: cannot allocate memory of size %d, %d bytes requested by function %s at %s:%d, retrying ...\n", full_size, size, func, file, line);
+		}
+                if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
+                        if (retries == 0)
+                                printk("cannot sleep now, busy looping\n");
+                } else {
+                        msleep(100);
+                }
+                retries++;
 	}
 
 	mem->size = size;

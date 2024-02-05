@@ -94,12 +94,12 @@ int initRegistry(__in PUNICODE_STRING RegPath_unicode)
 	NTSTATUS status;
 	char syslog_ip[255];
 
-	the_registry_path = kmalloc(sizeof(*the_registry_path), 0, 'DRBD');
+	the_registry_path = kmalloc(sizeof(*the_registry_path), GFP_KERNEL, 'DRBD');
 	if (the_registry_path == NULL) {
 		printk("Warning: Cannot alloc the_registry_path\n");
 	} else {
 		the_registry_path->MaximumLength = RegPath_unicode->Length+2;
-		the_registry_path->Buffer = kmalloc(sizeof(WCHAR) * (the_registry_path->MaximumLength), 0, 'DRBD');
+		the_registry_path->Buffer = kmalloc(sizeof(WCHAR) * (the_registry_path->MaximumLength), GFP_KERNEL, 'DRBD');
 		RtlCopyUnicodeString(the_registry_path, RegPath_unicode);
 	}
 

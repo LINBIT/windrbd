@@ -321,7 +321,7 @@ static int add_completion(struct send_page_completion_info *c)
 	KIRQL flags;
 	struct allocated_completions *new_completion;
 
-	new_completion = kmalloc(sizeof(*new_completion), 0, 'DRBD');
+	new_completion = kmalloc(sizeof(*new_completion), GFP_KERNEL, 'DRBD');
 	if (new_completion == NULL)
 		return -ENOMEM;
 
@@ -1076,13 +1076,13 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	if (err < 0)
 		goto out_put_page;
 
-	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
+	WskBuffer = kzalloc(sizeof(*WskBuffer), GFP_KERNEL, 'DRBD');
 	if (WskBuffer == NULL) {
 		err = -ENOMEM;
 		goto out_have_sent;
 	}
 
-	completion = kzalloc(sizeof(*completion), 0, 'DRBD');
+	completion = kzalloc(sizeof(*completion), GFP_KERNEL, 'DRBD');
 	if (completion == NULL) {
 		err = -ENOMEM;
 		goto out_free_wsk_buffer;
@@ -1208,20 +1208,20 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	if (err < 0)
 		return err;
 
-	WskBuffer = kzalloc(sizeof(*WskBuffer), 0, 'DRBD');
+	WskBuffer = kzalloc(sizeof(*WskBuffer), GFP_KERNEL, 'DRBD');
 	if (WskBuffer == NULL) {
 		have_sent(socket, BufferSize);
 		return -ENOMEM;
 	}
 
-	completion = kzalloc(sizeof(*completion), 0, 'DRBD');
+	completion = kzalloc(sizeof(*completion), GFP_KERNEL, 'DRBD');
 	if (completion == NULL) {
 		have_sent(socket, BufferSize);
 		kfree(WskBuffer);
 		return -ENOMEM;
 	}
 
-	tmp_buffer = kmalloc(BufferSize, 0, 'TMPB');
+	tmp_buffer = kmalloc(BufferSize, GFP_KERNEL, 'TMPB');
 	if (tmp_buffer == NULL) {
 		have_sent(socket, BufferSize);
 		kfree(completion);
@@ -1820,11 +1820,11 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 {
 	struct socket *socket;
 
-	socket = kzalloc(sizeof(*socket), 0, '3WDW');
+	socket = kzalloc(sizeof(*socket), GFP_KERNEL, '3WDW');
 	if (!socket)
 		return -ENOMEM;
 
-	socket->sk = kzalloc(sizeof(*socket->sk), 0, 'KARI');
+	socket->sk = kzalloc(sizeof(*socket->sk), GFP_KERNEL, 'KARI');
 	if (!socket->sk) {
 		kfree(socket);
 		return -ENOMEM; 
@@ -1859,7 +1859,7 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 			socket->receive_buffer_size = 4096;
 		if (socket->receive_buffer_size > 4*1024*1024)
 			socket->receive_buffer_size = 4*1024*1024;
-		socket->receive_buffer = kmalloc(socket->receive_buffer_size, 0, 'XYZR');
+		socket->receive_buffer = kmalloc(socket->receive_buffer_size, GFP_KERNEL, 'XYZR');
 		if (socket->receive_buffer == NULL) {
 			printk("Warning: could not allocate memory for socket receive buffer (size is %d), receiver cache disabled\n", socket->receive_buffer_size);
 			socket->receiver_cache_enabled = false;

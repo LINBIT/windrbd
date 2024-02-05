@@ -1873,7 +1873,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	if (last_bio_size == 0)
 		last_bio_size = MAX_BIO_SIZE;
 
-	common_data = kzalloc(sizeof(*common_data), 0, 'DRBD');
+	common_data = kzalloc(sizeof(*common_data), GFP_KERNEL, 'DRBD');
 	if (common_data == NULL) {
 		printk("Cannot allocate common data.\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
@@ -1915,7 +1915,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 
 cond_printk("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
 
-		bio->bi_io_vec[0].bv_page = kzalloc(sizeof(struct page), 0, 'DRBD');
+		bio->bi_io_vec[0].bv_page = kzalloc(sizeof(struct page), GFP_KERNEL, 'DRBD');
 		if (bio->bi_io_vec[0].bv_page == NULL) {
 			printk("Couldn't allocate page.\n");
 			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
@@ -1938,7 +1938,7 @@ cond_printk("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", se
 
 
 		if (irp != NULL && bio_data_dir(bio) == READ) {
-			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, 0, 'DRBD');
+			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, GFP_KERNEL, 'DRBD');
 		} else {
 			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
 			bio->bi_io_vec[0].bv_page->is_system_buffer = 1;
@@ -1980,7 +1980,7 @@ dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\
 		/* drbd_make_request(dev->drbd_device->rq_queue, bio); */
 		struct io_request *ioreq;
 
-		ioreq = kzalloc(sizeof(*ioreq), 0, 'DRBD');
+		ioreq = kzalloc(sizeof(*ioreq), GFP_KERNEL, 'DRBD');
 		if (ioreq == NULL) {
 			return -ENOMEM;	/* TODO: cleanup */
 		}
@@ -3487,12 +3487,12 @@ static void fake_partition_table(struct block_device *bdev)
 		0x10 Unique partition GUID (mixed endian)
 		0x28 Last LBA (inclusive, usually odd)
 	*/
-	partition_table = kzalloc(bdev->data_shift*512, 0, 'DRBD');
+	partition_table = kzalloc(bdev->data_shift*512, GFP_KERNEL, 'DRBD');
 	if (partition_table == NULL) {
 		printk("Warning: Not enough memory for partition table.\n");
 		return;
 	}
-	backup_partition_table = kzalloc(bdev->appended_sectors*512, 0, 'DRBD');
+	backup_partition_table = kzalloc(bdev->appended_sectors*512, GFP_KERNEL, 'DRBD');
 	if (backup_partition_table == NULL) {
 		kfree(partition_table);
 		printk("Warning: Not enough memory for partition table.\n");

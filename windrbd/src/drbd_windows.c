@@ -509,6 +509,7 @@ LONGLONG atomic_read64(const atomic_t64 *v)
 	   here .. aren't using Windows Degugger anyway at the moment..
 	 */
 	/* TODO: honor the flag: alloc from PagedPool if flag is GFP_USER */
+	/* TODO: this should also implement the retries ... */
 
 void *kmalloc(int size, int flag, ULONG Tag)
 {
@@ -517,8 +518,7 @@ void *kmalloc(int size, int flag, ULONG Tag)
 
 void *kcalloc(int size, int count, int flag, ULONG Tag)
 {
-	/* TODO: flag is 0? */
-	return kzalloc(size*count, 0, Tag);
+	return kzalloc(size*count, flag, Tag);
 }
 
 void *kzalloc(int size, int flag, ULONG Tag)
@@ -590,7 +590,7 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 	BUG_ON(size==0);
 	size = (((size-1) / PAGE_SIZE)+1)*PAGE_SIZE;
 
-	struct page *p = kzalloc_debug(sizeof(struct page), 0, file, line, func);
+	struct page *p = kzalloc_debug(sizeof(struct page), flag, file, line, func);
 	if (!p)	{
 		printk("alloc_page struct page failed\n");
 		return NULL;
@@ -601,7 +601,7 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 		 * PAGE_SIZE itself is always 4096 under Windows.
 		 */
 
-	p->addr = kmalloc_debug(size, 0, file, line, func);
+	p->addr = kmalloc_debug(size, flag, file, line, func);
 	if (!p->addr)	{
 		kfree_debug(p, file, line, func); 
 		printk("alloc_page failed (size is %d)\n", size);
@@ -657,7 +657,7 @@ struct page *alloc_page_of_size(int flag, size_t size)
 	BUG_ON(size==0);
 	size = (((size-1) / PAGE_SIZE)+1)*PAGE_SIZE;
 
-	struct page *p = kzalloc(sizeof(struct page),0, 'D3DW');
+	struct page *p = kzalloc(sizeof(struct page), flag, 'D3DW');
 	if (!p)	{
 		printk("alloc_page struct page failed\n");
 		return NULL;
@@ -668,7 +668,7 @@ struct page *alloc_page_of_size(int flag, size_t size)
 		 * PAGE_SIZE itself is always 4096 under Windows.
 		 */
 
-	p->addr = kmalloc(size, 0, 'E3DW');
+	p->addr = kmalloc(size, flag, 'E3DW');
 	if (!p->addr)	{
 		kfree(p); 
 		printk("alloc_page failed (size is %d)\n", size);
@@ -1262,7 +1262,7 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
 	struct workqueue_struct *wq;
 	va_list args;
 
-	wq = kzalloc(sizeof(*wq), 0, '31DW');
+	wq = kzalloc(sizeof(*wq), GFP_KERNEL, '31DW');
 	if (wq == NULL) {
 		printk("Warning: not enough memory for workqueue\n");
 		return NULL;
@@ -2019,7 +2019,7 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 
 
 	if (io == IRP_MJ_WRITE && bio->bi_iter.bi_sector == 0 && bio->bi_iter.bi_size >= 512 && bio->bi_this_request == 0 && !bio->dont_patch_boot_sector) {
-		bio->patched_bootsector_buffer = kmalloc(the_size, 0, 'DRBD');
+		bio->patched_bootsector_buffer = kmalloc(the_size, GFP_KERNEL, 'DRBD');
 		if (bio->patched_bootsector_buffer == NULL)
 			return -ENOMEM;
 
@@ -2134,7 +2134,7 @@ static int generic_make_request2(struct bio *bio)
 		/* In case we fail early, bi_irps[n].MdlAddress must be
 		 * NULL.
 		 */
-	bio->bi_irps = kzalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, 0, 'XXXX');
+	bio->bi_irps = kzalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, GFP_KERNEL, 'XXXX');
 	if (bio->bi_irps == NULL) {
 		bio->bi_status = BLK_STS_IOERR;
 		bio_endio(bio);
@@ -2156,7 +2156,7 @@ static int generic_make_request2(struct bio *bio)
 			printk("Warning: size mismatch in generic_make_request(): total_size is %d bi_size is %d\n", total_size, bio->bi_iter.bi_size);
 		}
 		bio->bi_big_buffer_size = total_size;
-		bio->bi_big_buffer = kmalloc(total_size, 0, 'XXXX');
+		bio->bi_big_buffer = kmalloc(total_size, GFP_KERNEL, 'XXXX');
 
 		if (bio->bi_big_buffer != NULL) {
 			bio->bi_this_request = 0;
@@ -2721,7 +2721,7 @@ struct request_queue *blk_alloc_queue(int unused)
 {
 	struct request_queue *q;
 
-	q = kzalloc(sizeof(struct request_queue), 0, 'E5DW');
+	q = kzalloc(sizeof(struct request_queue), GFP_KERNEL, 'E5DW');
 	if (q == NULL)
 		return NULL;
 
@@ -2740,7 +2740,7 @@ void blk_cleanup_queue(struct request_queue *q)
 
 struct gendisk *alloc_disk(int minors)
 {	
-	struct gendisk *p = kzalloc(sizeof(struct gendisk), 0, '44DW');
+	struct gendisk *p = kzalloc(sizeof(struct gendisk), GFP_KERNEL, '44DW');
 	return p;
 }
 
@@ -3050,7 +3050,7 @@ int resolve_ascii_path(const char *path, UNICODE_STRING *path_to_device)
 		return -ENOMEM;
 	}
 
-	path_to_device->Buffer = kmalloc(sizeof(WCHAR) * 1024, 0, 'BDRX');
+	path_to_device->Buffer = kmalloc(sizeof(WCHAR) * 1024, GFP_KERNEL, 'BDRX');
 	if (path_to_device->Buffer == NULL) {
 		printk(KERN_ERR "Cannot allocate device name.\n");
 
@@ -3192,7 +3192,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_no_windows_device;
 	}
 
-	block_device = kzalloc(sizeof(struct block_device), 0, 'DBRD');
+	block_device = kzalloc(sizeof(struct block_device), GFP_KERNEL, 'DBRD');
 	if (block_device == NULL) {
 		printk("could not allocate block_device.\n");
 		err = -ENOMEM;
@@ -3629,7 +3629,7 @@ struct block_device *bdget(dev_t device_no)
 	struct block_device *block_device;
 	int ret;
 
-	block_device = kzalloc(sizeof(struct block_device), 0, 'DRBD');
+	block_device = kzalloc(sizeof(struct block_device), GFP_KERNEL, 'DRBD');
 	if (block_device == NULL)
 		return NULL;
 
@@ -3721,11 +3721,11 @@ static int mountmgr_create_point(struct block_device *dev)
 	struct _IRP *irp;
 	struct _IO_STACK_LOCATION *s;
 
-	create_point = kzalloc(create_point_size, 0, 'DRBD');
+	create_point = kzalloc(create_point_size, GFP_KERNEL, 'DRBD');
 	if (create_point == NULL)
 		return -1;
 
-	io_status = kzalloc(sizeof(*io_status), 0, 'DRBD');
+	io_status = kzalloc(sizeof(*io_status), GFP_KERNEL, 'DRBD');
 	if (io_status == NULL) {
 		kfree(create_point);
 		return -1;

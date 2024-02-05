@@ -47,7 +47,7 @@ static struct genl_reply *find_or_create_reply(u32 portid)
 	struct genl_reply *g;
 	g = find_reply(portid);
 	if (g == NULL) {
-		g = kmalloc(sizeof(*g), 0, 'DRBD');
+		g = kmalloc(sizeof(*g), GFP_KERNEL, 'DRBD');
 		if (g == NULL)
 			return NULL;
 		g->portid = portid;
@@ -61,7 +61,7 @@ static struct genl_reply_buffer *new_buffer(struct genl_reply *r)
 {
 	struct genl_reply_buffer *b;
 
-	b = kmalloc(sizeof(*b), 0, 'DRBD');
+	b = kmalloc(sizeof(*b), GFP_KERNEL, 'DRBD');
 	if (b == NULL)
 		return NULL;
 
@@ -285,7 +285,7 @@ static int do_genlmsg_unicast(struct sk_buff *skb, u32 portid)
 	if (buffer == NULL)
 		goto out_mutex;
 
-	buffer->buf = kmalloc(skb->len, 0, 'DRBD');
+	buffer->buf = kmalloc(skb->len, GFP_KERNEL, 'DRBD');
 	if (buffer->buf == NULL)
 		goto out_mutex;
 		/* TODO: clean up. */
@@ -345,7 +345,7 @@ int windrbd_join_multicast_group(u32 portid, const char *name, struct _FILE_OBJE
 {
 	struct genl_multicast_element *m;
 
-	m = kmalloc(sizeof(*m), 0, 'DRBD');
+	m = kmalloc(sizeof(*m), GFP_KERNEL, 'DRBD');
 	if (m == NULL)
 		return -ENOMEM;
 
@@ -378,11 +378,11 @@ int windrbd_delete_multicast_groups_for_file(struct _FILE_OBJECT *f)
 
 static struct genl_info *genl_info_new(struct nlmsghdr * nlh)
 {
-	struct genl_info *info = kzalloc(sizeof(*info), 0, 'DRBD');
+	struct genl_info *info = kzalloc(sizeof(*info), GFP_KERNEL, 'DRBD');
 	if (!info)
 		return NULL;
 
-	info->attrs = kmalloc(sizeof(*info->attrs)*DRBD_MAX_ATTRS, 0, 'DRBD');
+	info->attrs = kmalloc(sizeof(*info->attrs)*DRBD_MAX_ATTRS, GFP_KERNEL, 'DRBD');
 	if (!info->attrs) {
 		kfree(info);
 		return NULL;

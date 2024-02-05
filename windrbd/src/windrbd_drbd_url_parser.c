@@ -134,7 +134,7 @@ static char *my_strndup(const char *s, size_t n)
 {
 	char *new_string;
 
-	new_string = kmalloc(n+1, 0, 'DRBD');
+	new_string = kmalloc(n+1, GFP_KERNEL, 'DRBD');
 	if (new_string == NULL)
 		return NULL;
 
@@ -249,7 +249,7 @@ static struct node *lookup_or_create_node(struct drbd_params *p, int node_id)
 	if (n != NULL)
 		return n;
 
-	n = kmalloc(sizeof(*n), 0, 'DRBD');
+	n = kmalloc(sizeof(*n), GFP_KERNEL, 'DRBD');
 	if (n == NULL)
 		return NULL;
 

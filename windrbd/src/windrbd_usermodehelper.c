@@ -72,7 +72,7 @@ int call_usermodehelper(char *path, char **argv, char **envp, enum umh_wait wait
 	total_size = sizeof(struct um_request)+path_size+arg_size+env_size;
 	total_size_of_helper = sizeof(struct windrbd_usermode_helper)+path_size+arg_size+env_size;
 
-	new_request = kmalloc(total_size, 0, 'DRBD');
+	new_request = kmalloc(total_size, GFP_KERNEL, 'DRBD');
 	if (new_request == NULL)
 		return -ENOMEM;
 
