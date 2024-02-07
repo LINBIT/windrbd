@@ -2286,8 +2286,14 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 		return ret;
 	}
 	joined_bios_bio = bio_alloc(0, num_vector_elements, 'ZAKL');
-	if (joined_bios_bio == NULL)
+	if (joined_bios_bio == NULL) {
+		printk("Could not allocate joined_bios_bio, failing outstanding bios\n");
+		list_for_each_entry_safe(struct bio, bio3, bio4, list, corked_bios) {
+			bio3->bi_status = BLK_STS_IOERR;
+			bio_endio(bio3);
+		}
 		return -ENOMEM;
+	}
 
 	joined_bios_bio->bi_end_io = do_nothing;
 	joined_bios_bio->bi_bdev = first_bio->bi_bdev;
@@ -2396,6 +2402,8 @@ int windrbd_bdev_uncork(struct block_device *bdev)
                          *    bio_endfn() for all child functions
 			 *
 			 * Error handling?
+			 * must bio_endio bios on memory allocation error this
+			 * is done now in create_and_submit_joined_bio()
 			 */
 			num_joinable_bios = 0;
 			num_vector_elements = 0;
