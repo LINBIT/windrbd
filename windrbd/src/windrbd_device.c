@@ -1860,12 +1860,14 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-		/* If suspended wait until not suspended. */
-	status = KeWaitForSingleObject(&dev->io_not_suspended, Executive, KernelMode, FALSE, NULL);
-	if (status != STATUS_SUCCESS) {
-		printk("Error waiting for io_not_suspended event (%08x)\n", status);
-		return status;
-	}
+	if (KeGetCurrentIrql() == PASSIVE_LEVEL) {
+			/* If suspended wait until not suspended. */
+		status = KeWaitForSingleObject(&dev->io_not_suspended, Executive, KernelMode, FALSE, NULL);
+		if (status != STATUS_SUCCESS) {
+			printk("Error waiting for io_not_suspended event (%08x)\n", status);
+			return status;
+		}
+	}	/* else we may not sleep - process the request */
 
 	int bio_count = (total_size-1) / MAX_BIO_SIZE + 1;
 	int this_bio_size;
