@@ -84,18 +84,6 @@ enum update_sync_bits_mode;
 
 #define fallthrough do { } while (0)
 
-	/* TODO: This appears very dangerous to me ... */
-// #define drbd_conf drbd_device
-
-#define __GFP_HIGHMEM           (0x02u)
-#define __GFP_ZERO              (0x8000u) 
-#define __GFP_WAIT              (0x10u) 
-#define __GFP_NOWARN            (0x200u)
-#define __GFP_RECLAIM           (0x400u)
-#define __GFP_NORETRY		(0x10000u)
-
-#define GFP_HIGHUSER            (7)
-
 #define	KERN_EMERG				"<0>"	/* system is unusable			*/
 #define	KERN_ALERT				"<1>"	/* action must be taken immediately	*/
 #define	KERN_CRIT				"<2>"	/* critical conditions			*/
@@ -125,10 +113,6 @@ void flush_all_cpu_caches(void);
 #define smp_wmb() flush_all_cpu_caches()
 
 
-#define GFP_KERNEL              1
-#define GFP_ATOMIC              2
-#define GFP_NOIO				(__GFP_WAIT)
-#define GFP_NOWAIT	            0
 
 /* TODO: this should be a struct containing an int, so compiler
    can tell int's from atomic_t's */

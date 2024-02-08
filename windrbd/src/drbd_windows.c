@@ -2285,7 +2285,7 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 		bio_put(first_bio);	/* corresponding get in generic_request() */
 		return ret;
 	}
-	joined_bios_bio = bio_alloc(0, num_vector_elements, 'ZAKL');
+	joined_bios_bio = bio_alloc(GFP_KERNEL, num_vector_elements, 'ZAKL');
 	if (joined_bios_bio == NULL) {
 		printk("Could not allocate joined_bios_bio, failing outstanding bios\n");
 		list_for_each_entry_safe(struct bio, bio3, bio4, list, corked_bios) {
@@ -3136,7 +3136,7 @@ static void backingdev_check_endio(struct bio *bio)
 
 static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 {
-	struct bio *b = bio_alloc(0, 1, 'DRBD');
+	struct bio *b = bio_alloc(GFP_KERNEL, 1, 'DRBD');
 	int i;
 	struct completion c;
 	int ret;

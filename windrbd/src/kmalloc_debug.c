@@ -74,7 +74,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 				printk("succeeded after %d retries\n", retries);
 			break;
 		}
-		if (flag != GFP_KERNEL) {
+		if (!(flag & __GFP_DIRECT_RECLAIM)) {
 			if (strcmp(func, "SendTo") != 0)
 				printk("kmalloc_debug: Warning: cannot allocate memory of size %d, %d bytes requested by function %s at %s:%d, NOT retrying ...\n", full_size, size, func, file, line);
 			kmalloc_errors++;

@@ -25,6 +25,11 @@
 
 #include <wdm.h>
 #include <ctype.h>
+
+	/* nothing */
+#define __force
+
+#include <linux/gfp_types.h>
 //#include <stdbool.h>
 typedef enum __Bool__ {
 	false = 0,
