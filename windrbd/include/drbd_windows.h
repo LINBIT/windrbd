@@ -862,6 +862,8 @@ struct bio {
 	spinlock_t already_failed_lock;
 	bool already_failed;
 
+	char *where_i_am;	/* checkpoints for debugging backing dev timeout. */
+
 	/* TODO: may be put members here again? Update: Not sure,
 	 * we've put a KEVENT here and it didn't work .. might also
 	 * have been something else.
