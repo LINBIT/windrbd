@@ -1765,7 +1765,7 @@ void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status)
 	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
 
 	list_for_each_entry(struct bio, bio, &tmp_list, locally_submitted_bios2) {
-printk("disk timeout, failing bio %p (was last at %s)\n", bio, bio->where_i_am);
+// printk("disk timeout, failing bio %p (was last at %s)\n", bio, bio->where_i_am);
 		bio->bi_status = bi_status;
 		bio_endio(bio); /* will remove this bio from the list */
 	}
