@@ -12,7 +12,7 @@
 /* This timeout is between call_usermodehelper and some daemon to
  * fetch the request.
  */
-#define REQUEST_TIMEOUT_MS 1000
+#define REQUEST_TIMEOUT_MS 10000
 
 struct um_request {
 	struct list_head list;
