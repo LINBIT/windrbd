@@ -31,10 +31,10 @@
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H
 
-/* Comment that out for production releases. It maps kmem caches to kmalloc
+/* This maps kmem caches to kmalloc
    debug code so we can see who allocated memory.
  */
-/* #define KMEM_CACHE_DEBUG 1 */
+#define KMEM_CACHE_DEBUG 1
 
 	/* TODO: we probably want to turn those off: */
 /* Enable this (and recompile all) to enable bio reference debugging */
