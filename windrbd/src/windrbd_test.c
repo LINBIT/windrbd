@@ -1297,6 +1297,15 @@ static void rtl_zero_memory_test(int argc, char ** argv)
 	printk("Still alive?\n");
 }
 
+static void intentionally_bsod(int argc, char ** argv)
+{
+	printk("About to intentionally BSOD (you should see 0xdeaddead as error code) ...\n");
+		/* code is 0xdeaddead */
+	KeBugCheckEx(MANUALLY_INITIATED_CRASH1, 42, 67, 28, 7);
+	msleep(1000);
+	printk("Still alive?\n");
+}
+
 	/* With driver verifier on or debugging this currently BSODs ... */
 
 extern char *copy_first_640k(void);
@@ -1415,6 +1424,8 @@ void test_main(const char *arg)
 		io_map_test(argc, argv);
 	if (strcmp(argv[0], "leak_test") == 0)
 		leak_test(argc, argv);
+	if (strcmp(argv[0], "intentionally_bsod") == 0)
+		intentionally_bsod(argc, argv);
 
 kfree_argv:
 	kfree(argv);
