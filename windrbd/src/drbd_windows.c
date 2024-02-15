@@ -1789,9 +1789,6 @@ NTSTATUS DrbdIoCompletion(
 	atomic_dec(&bio->bi_bdev->num_irps_pending);
 
 bio->where_i_am = "in io completion";
-		/* Will retry soon .. */
-	if (status == STATUS_VOLUME_DISMOUNTED)
-	        return STATUS_MORE_PROCESSING_REQUIRED;
 
 	if (status != STATUS_SUCCESS) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)
@@ -2103,30 +2100,11 @@ bio->where_i_am = "in windrbd_generic_make_request big buffer";
 	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	part_stat_add(bio->bi_bdev, sectors[io == IRP_MJ_READ ? STAT_READ : STAT_WRITE], the_size / 512);
 
-	retries = 0;
-	while (1) {
-bio->where_i_am = "calling backing dev driver";
-		status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
+	bio->where_i_am = "calling backing dev driver";
+	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
 		/* Update: may also return STATUS_ACCESS_DENIED or STATUS_VOLUME_DISMOUNTED */
-		if (status != STATUS_VOLUME_DISMOUNTED) {
-			if (retries > 0) {
-				printk("succeeded after %d retries\n", retries);
-			}
-			break;
-		}
-		if (retries % 10 == 0) {
-			printk(KERN_ERR "backing device returned STATUS_VOLUME_DISMOUNTED, retrying ...\n");
-		}
-		if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
-			if (retries == 0)
-				printk("cannot sleep now, busy looping\n");
-		} else {
-			msleep(100);
-		}
-		retries++;
-	}
 
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
 		printk("IoCallDriver status %x, I/O on backing device failed, bio: %p\n", status, bio);
