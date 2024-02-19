@@ -4071,7 +4071,17 @@ extern int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(s
 
 int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 {
+	struct drbd_peer_device *peer_device;
+
 	if (!device->this_bdev->is_bootdevice) {
+		printk("Becoming primary, resuming application I/O and deleting sync stall timers.\n");
+		for_each_peer_device(peer_device, device) {
+			del_timer(&peer_device->resync_stalled_timer);
+			peer_device->rs_last_bm_extent = NULL;
+		}
+		windrbd_resume_application_io(device->this_bdev,
+			"Resuming application I/O on becoming Primary.\n");
+
 		if (windrbd_allocate_io_workqueue(device->this_bdev) < 0) {
 			printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");
 		}
