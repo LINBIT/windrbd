@@ -5,6 +5,14 @@ Base on DRBD 9.1
 
 DRBD reactor support
 
+What's new in version 1.1.10
+----------------------------
+
+Memory pressure fixes
+
+Fixed a drbdadm primary hang when I/O is still suspended by the
+resync stalled logic introduced in 1.1.8.
+
 What's new in version 1.1.9
 ---------------------------
 
