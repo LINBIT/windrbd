@@ -1,6 +1,8 @@
 #ifndef _LINUX_NET_SOCK_H
 #define _LINUX_NET_SOCK_H
 
+/* TODO: move this header to net/sock.h */
+
 #define SOCK_SNDBUF_LOCK	1
 #define SOCK_RCVBUF_LOCK	2
 
@@ -23,6 +25,15 @@ struct sock {
 	spinlock_t sk_callback_lock;
 
 	struct socket *sk_socket;
+
+	/* TODO: those are used by drbd_transport_tcp but not implemented
+	 * in WinDRBD.
+	 */
+
+	void (*sk_write_space)(struct sock *sk);
+	unsigned char sk_reuse:4;
+	gfp_t sk_allocation;
+	__u32 sk_priority;
 };
 
 #endif

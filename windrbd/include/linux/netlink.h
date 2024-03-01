@@ -103,6 +103,7 @@ struct genl_family
     struct list_head	family_list;	/* private */
     struct list_head	mcast_groups;	/* private */
     const struct nla_policy *policy;
+	u8			parallel_ops:1;
 };
 
 /**
@@ -804,6 +805,11 @@ static inline ssize_t genlmsg_end(struct sk_buff *skb, void *hdr)
     return nlmsg_end(skb, (void*)((ULONG_PTR)hdr - GENL_HDRLEN - NLMSG_HDRLEN) );
 }
 
+static inline int genlmsg_reply(struct sk_buff *skb, struct genl_info *info)
+{
+	return genlmsg_unicast(skb, info);
+}
+
 /**
 * gennlmsg_data - head of message payload
 * @gnlh: genetlink messsage header
@@ -814,12 +820,13 @@ static inline void *genlmsg_data(const struct genlmsghdr *gnlh)
 }
 
 extern int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info);
-extern int drbd_genl_multicast_events(struct sk_buff * skb, gfp_t flags);
+extern int genlmsg_multicast(struct sk_buff *skb, u32 portid,
+			    unsigned int group, gfp_t flags);
 
 /* Those two now patched into drbd_nl.c */
 extern struct genl_ops * get_drbd_genl_ops(u8 cmd);
 extern int drbd_tla_parse(struct nlmsghdr *nlh, struct nlattr **attr);
-extern void drbd_adm_send_reply(struct sk_buff *skb, struct genl_info *info);
+// extern void drbd_adm_send_reply(struct sk_buff *skb, struct genl_info *info);
 extern const char *windrbd_genl_cmd_to_str(u8 cmd);
 
 ssize_t nla_strscpy(char *dst, const struct nlattr *nla, size_t dstsize);

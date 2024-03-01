@@ -1,6 +1,12 @@
 #ifndef __TIME64_H__
 #define __TIME64_H__
 
+#include <linux/types.h>
+#include <uapi/linux/time.h>
+
+typedef __s64 time64_t;
+typedef __u64 timeu64_t;
+
 /* Parameters used to convert the timespec values: */
 #define MSEC_PER_SEC    1000L
 #define USEC_PER_MSEC   1000L
@@ -19,5 +25,13 @@ struct timespec64 {
 	time64_t	tv_sec;			/* seconds */
 	long		tv_nsec;		/* nanoseconds */
 };
+
+/**
+ * ns_to_timespec64 - Convert nanoseconds to timespec64
+ * @nsec:	the nanoseconds value to be converted
+ *
+ * Returns the timespec64 representation of the nsec parameter.
+ */
+extern struct timespec64 ns_to_timespec64(s64 nsec);
 
 #endif

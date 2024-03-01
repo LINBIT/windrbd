@@ -335,7 +335,16 @@ static int do_genl_multicast(struct sk_buff *skb, const char *group_name)
  * instead.
  */
 
+/*
 int drbd_genl_multicast_events(struct sk_buff * skb, gfp_t flags)
+{
+	return do_genl_multicast(skb, "events");
+}
+*/
+
+int genlmsg_multicast(const struct genl_family *family,
+			    struct sk_buff *skb, u32 portid,
+			    unsigned int group, gfp_t flags)
 {
 	return do_genl_multicast(skb, "events");
 }
@@ -497,10 +506,11 @@ static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netli
 		}
 	}
 
-	/* TODO: use something else .. */
-    drbd_adm_send_reply(skb, info);
+	genlmsg_end(skb, genlmsg_data(nlmsg_data(nlmsg_hdr(skb))));
+	if (genlmsg_reply(skb, info))
+		printk(KERN_ERR "error sending genl reply\n");
 
-    return err;
+	return err;
 }
 
 unsigned long long config_key;

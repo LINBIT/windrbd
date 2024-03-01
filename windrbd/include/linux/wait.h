@@ -7,6 +7,7 @@
 #include <ntddk.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
+#include <linux/sched.h>
 
 struct wait_queue_entry
 {

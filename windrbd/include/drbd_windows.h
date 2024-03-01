@@ -732,14 +732,6 @@ int windrbd_umount(struct block_device *dev);
 int windrbd_become_primary(struct drbd_device *device, const char **err_str);
 int windrbd_become_secondary(struct drbd_device *device, const char **err_str);
 
-/* From: include/linux/kdev_t.h : */
-#define MINORBITS	20
-#define MINORMASK	((1U << MINORBITS) - 1)
-
-#define MAJOR(dev)	((unsigned int) ((dev) >> MINORBITS))
-#define MINOR(dev)	((unsigned int) ((dev) & MINORMASK))
-#define MKDEV(ma,mi)	(((ma) << MINORBITS) | (mi))
-
 int register_blkdev(int major, const char *name);
 void unregister_blkdev(int major, const char *name);
 

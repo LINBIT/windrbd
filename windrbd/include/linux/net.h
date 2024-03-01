@@ -5,6 +5,15 @@
 #include <linux/types.h>	/* for ssize_t */
 #include <linux/net_namespace.h>
 
+#define SOCKWQ_ASYNC_NOSPACE	0
+#define SOCKWQ_ASYNC_WAITDATA	1
+#define SOCK_NOSPACE		2
+#define SOCK_PASSCRED		3
+#define SOCK_PASSSEC		4
+#define SOCK_SUPPORT_ZC		5
+#define SOCK_CUSTOM_SOCKOPT	6
+#define SOCK_PASSPIDFD		7
+
 struct proto_ops {
 	int		family;
 #if 0
