@@ -5,10 +5,7 @@
 #endif
 
 #include "drbd_windows.h"
-#include "drbd_wingenl.h"
-#include "wingenl.h"
 #include "drbd_int.h"
-#include "windrbd_threads.h"
 #include "drbd_url.h"
 
 #include <stdlib.h>

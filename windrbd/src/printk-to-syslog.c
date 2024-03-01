@@ -11,7 +11,7 @@
  * messages.
  */
 
-#include "windrbd-event-log.h"
+// #include "windrbd-event-log.h"
 
 /* We have three logging 'targets': One is the standard DbgPrint
    facility provided by Windows. Use a tool like DbgView to view

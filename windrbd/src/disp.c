@@ -30,7 +30,6 @@
 #include <initguid.h>
 #include <devguid.h>
 #include "windrbd_device.h"
-#include "drbd_wingenl.h"	
 #include "disp.h"
 #include "windrbd/windrbd_ioctl.h"
 #include <linux/module.h>

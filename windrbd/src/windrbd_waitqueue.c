@@ -5,7 +5,6 @@
 #endif
 
 #include "drbd_windows.h"
-#include "windrbd_threads.h"
 
 /* This currently makes (at least) wsk receive thread BSOD... */
 // #define FORCE_TIMEOUT 1

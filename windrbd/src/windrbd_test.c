@@ -1,5 +1,4 @@
 #include "drbd_windows.h"
-#include "windrbd_threads.h"
 #include "drbd_int.h"
 #include <ctype.h>
 #include "disp.h"

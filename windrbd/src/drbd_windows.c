@@ -32,7 +32,6 @@
 
 #include "drbd_windows.h"
 #include "windrbd_device.h"
-#include "windrbd_threads.h"
 // #include <wdmsec.h>
 #include <ntdddisk.h>
 #include <ntddk.h>
@@ -100,7 +99,6 @@ NTAPI RtlRandomEx(
 #include <stdint.h>
 #include <stdarg.h>
 #include <intrin.h>
-#include "drbd_wingenl.h"
 #include "linux/idr.h"
 #include "drbd_wrappers.h"
 #include "disp.h"

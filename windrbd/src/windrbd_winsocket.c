@@ -12,7 +12,6 @@
 #include <linux/socket.h>
 #include <linux/net.h>
 #include <linux/tcp.h>
-#include "windrbd_threads.h"
 #include <wsk.h>
 
 struct net init_net;

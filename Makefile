@@ -1,5 +1,5 @@
 # default: package-in-docker
-default: orig-drbd
+default: windrbd.sys
 # If you have your dev env set up on the host you can try
 # to build without docker container: to set it up the
 # contents of the docker-root/Dockerfile might be useful.
@@ -26,13 +26,11 @@ help:
 	@echo "    windrbd.sys:        build WinDRBD driver"
 	@echo "    windrbd.cat:        build WinDRBD security catalog"
 	@echo "    drbd-utils:         build usermode utilities for WinDRBD"
-	@echo "    clean:              remove all generated files (except converted-sources)"
+	@echo "    clean:              remove all generated files"
 	@echo "    package:            build all and create installable package (EXE)"
 	@echo "    docker:             build docker image with build dependencies"
-	@echo "    converted-sources:  apply WinDRBD patches to DRBD"
 	@echo "    install:            copy package to Windows hosts and run the installer"
 	@echo "                        there (requires CygWin with sshd on target machine)"
-	@echo "    orig-drbd:          Compile DRBD from original source (experimental)"
 	@echo
 	@echo "Variables that control things:"
 	@echo
@@ -131,24 +129,19 @@ ifeq ($(ARCH), x86_64)
 DEFINES+=-D_WIN64
 endif
 
-WINDRBD_INCLUDES=-I"windrbd/include" -I"converted-sources/drbd" -I"converted-sources/drbd/drbd-headers"
-# no converted-sources instead drbd-tmp
-WINDRBD_NEW_INCLUDES=-I"windrbd/include" -I"drbd-tmp/drbd" -I"drbd-tmp/drbd/drbd-headers" -I"drbd-tmp/drbd/drbd-kernel-compat"
+WINDRBD_INCLUDES=-I"windrbd/include" -I"drbd-tmp/drbd" -I"drbd-tmp/drbd/drbd-headers" -I"drbd-tmp/drbd/drbd-kernel-compat"
 DEVICE_MAPPER_INCLUDES=-I"windrbd/include" -I"linux/drivers/md"
 
 MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk
 
-DRBD_SRCDIR=./drbd-tmp/drbd/
-PATCHED_DRBD_SRCDIR = ./converted-sources/drbd/
+DRBD_TMPDIR=./drbd-tmp/drbd/
 
 DRBD_SOURCES += drbd_sender.c drbd_receiver.c drbd_req.c drbd_actlog.c
 DRBD_SOURCES += lru_cache.c drbd_main.c drbd_strings.c drbd_nl.c
 DRBD_SOURCES += drbd_interval.c drbd_state.c drbd_kref_debug.c
 DRBD_SOURCES += drbd_nla.c drbd_transport.c drbd_transport_tcp.c kref_debug.c drbd_buildtag.c drbd_bitmap.c drbd_proc.c
 
-ORIG_DRBD_FILES = $(addprefix $(DRBD_SRCDIR), $(DRBD_SOURCES))
-# will go away:
-DRBD_FILES = $(addprefix $(PATCHED_DRBD_SRCDIR), $(DRBD_SOURCES))
+TMP_DRBD_FILES = $(addprefix $(DRBD_TMPDIR), $(DRBD_SOURCES))
 
 DEVICE_MAPPER_SOURCES=dm.c
 DEVICE_MAPPER_FILES = $(addprefix linux/drivers/md/, $(DEVICE_MAPPER_SOURCES))
@@ -165,9 +158,11 @@ WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
 
 WINDRBD_FILES = $(addprefix $(WINDRBD_SRCDIR), $(WINDRBD_SOURCES))
 
-ORIG_OBJS=$(patsubst %.c,%.o,$(ORIG_DRBD_FILES)) 
-OBJS=$(patsubst %.c,%.o,$(DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) ./windrbd/windrbd-event-log.coffres ./converted-sources/drbd/resource.coffres
-DEVICE_MAPPER_OBJS=$(patsubst %.c,%.o,$(DEVICE_MAPPER_FILES)) 
+OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES))
+COFFRES=./windrbd/windrbd-event-log.coffres ./drbd-tmp/drbd/resource.coffres
+# This was just an attempt to compile one device mapper file.
+# It completed with about 200 compile errors which is not that bad.
+DEVICE_MAPPER_OBJS=$(patsubst %.c,%.o,$(DEVICE_MAPPER_FILES))
 
 LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
 
@@ -181,7 +176,7 @@ ifndef REACTOS
 OPTIMIZE=-O2
 endif
 
-CFLAGS=-g $(OPTIMIZE) -w $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
+CFLAGS=-g $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
 
 all: windrbd.sys windrbd.cat
 
@@ -194,29 +189,17 @@ windrbd/include/windrbd-event-log.h: windrbd/windrbd-event-log.mc
 windrbd/src/printk-to-syslog.o: windrbd/include/windrbd-event-log.h
 
 versioninfo:
-	./versioninfo.sh converted-sources $(VERSION)
+	./versioninfo.sh drbd-tmp $(VERSION)
 
-# converted-sources should not be .PHONY
-# generate it on the first build then leave it
-# alone (until either renamed or removed)
-
-# TODO: still fails to depend on drbd_buildtag when
-# -j is larger than 1...
 .PHONY: windrbd.sys
 .PHONY: windrbd.cat
-.PHONY: converted-sources/drbd/drbd_buildtag.c
-.PHONY: converted-sources/drbd/drbd_buildtag.obj
 
-converted-sources/drbd/drbd_buildtag.c: versioninfo
-
-orig-drbd: $(ORIG_DRBD_FILES) $(ORIG_OBJS)
+# drbd-tmp/drbd/drbd_buildtag.c: versioninfo
 
 device-mapper: $(DEVICE_MAPPER_OBJS)
 
-CFLAGS=-g $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_NEW_INCLUDES) $(MINGW_INCLUDES)
-
-windrbd.sys: versioninfo $(ORIG_DRBD_FILES) $(ORIG_OBJS)
-	$(CC) -o windrbd.sys-unsigned $(ORIG_OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
+windrbd.sys: versioninfo $(TMP_DRBD_FILES) $(OBJS) $(COFFRES)
+	$(CC) -o windrbd.sys-unsigned $(OBJS) $(COFFRES) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
 	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed
 	mv windrbd.sys-signed windrbd.sys
 	rm -f windrbd.sys-unsigned
@@ -242,25 +225,13 @@ drbd-utils:
 	make -C drbd-utils -j $(NUM_JOBS)
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJS) $(COFFRES) 
 	rm -f windrbd.sys windrbd.sys.map windrbd.cat windrbd.inf
 	rm -f windrbd/msg00002.bin windrbd/include/windrbd-event-log.h windrbd/windrbd-event-log.rc
 	rm -f windrbd.cat-unsigned windrbd.sys-unsigned windrbd.sys-signed
 	rm -rf drbd-tmp
 	make -C generate-cat-file clean
 	make -C drbd-utils clean
-
-clean-converted-sources:
-	if test -f $(TRANS_DEST)/.generated; then \
-		rm -f $(shell cat $(TRANS_DEST).generated) $(TRANS_DEST).generated; \
-		for d in $(TRANS_DEST) $(WIN4LIN); do \
-			find $$d -name "*.tmp.bak" -delete; \
-			find $$d -name "*.pdb" -delete; \
-			find $$d -name "*.obj" -delete; \
-			find $$d -name "*.orig" -delete; \
-			find $$d -name "*.tmpe" -delete; \
-		done; \
-	fi
 
 ifdef REACTOS
 EXTRA_ISCC_DEFINES=/DReactos=1
@@ -284,38 +255,9 @@ docker-cygwin:
 install:
 	inno-setup/deploy.sh inno-setup/install-$(FULL_VERSION).exe $(TARGET_IPS)
 
-# From original Linux Makefile: this will go away (hopefully
-# soon) when we switch to a git branch on DRBD upstream +
-# some cocci's.
-
-TRANS_SRC := drbd/
-TRANS_DEST := converted-sources/
-WIN4LIN := windrbd/
-
-TRANSFORMATIONS := $(sort $(wildcard transform.d/*))
-ORIG := $(shell find $(TRANS_SRC) -name "*.[ch]" | egrep -v 'drbd/drbd-kernel-compat|drbd_transport_template.c|drbd_buildtag.c|compat.h|drbd_polymorph_printk.h')
-TRANSFORMED := $(patsubst $(TRANS_SRC)%,$(TRANS_DEST)%,$(ORIG))
-
-export SHELL=bash
-export V=1
-
-# can not regenerate those scripts
-$(TRANSFORMATIONS): ;
-
-# can not regenerate the originals
-$(ORIG): ;
-
-$(TRANSFORMED): $(TRANSFORMATIONS) transform
-
-$(TRANS_DEST)% : $(TRANS_SRC)%
-	@./transform $< $@
-
-$(TRANS_DEST).generated: $(ORIG)
-	echo $(TRANSFORMED) > $(TRANS_DEST).generated
-
-trans: $(TRANSFORMED) $(TRANS_DEST).generated
-
-converted-sources: trans
+# This now generates the cocci patched DRBD sources in drbd-tmp
+# subdirectory and also generates dependency files (*.d) for the
+# Makefile.
 
 NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*))
 
@@ -337,7 +279,8 @@ drbd-tmp/%.h: drbd/%.h
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
-all-dep := $(filter-out drbd_buildtag.d,$(ORIG_OBJS:%.o=%.d))
+#	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+all-dep := $(filter-out drbd_buildtag.d,$(OBJS:%.o=%.d))
 
 ifeq ($(MAKECMDGOALS),$(filter-out clean,$(MAKECMDGOALS)))
 -include $(all-dep)

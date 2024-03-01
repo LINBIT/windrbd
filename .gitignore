@@ -8,6 +8,8 @@ windrbd/src/*.pdb
 .*.sw?
 codeql-database
 *.o
+*.d
+*.d.*
 *makelog*
 windrbd.sys*
 windrbd.cat*
@@ -18,3 +20,4 @@ windrbd/windrbd-event-log.coffres
 windrbd/windrbd-event-log.rc
 windrbd/msg00002.bin
 
+*.log

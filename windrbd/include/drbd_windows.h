@@ -52,7 +52,7 @@
 
 #define __noop do { }  while (0)
 
-#include "win2003compat.h"
+// #include "win2003compat.h"
 
 // #include <winnt.h>
 #include <ntdef.h>
@@ -64,14 +64,12 @@
 #include <linux/drbd_endian.h>
 #include "linux/types.h"
 // #include "generic_compat_stuff.h"
-#include "wingenl.h"
 #include "windrbd/windrbd_ioctl.h"
 
 #include "disp.h"
 #include <linux/mempool.h>
 #include <ntdddisk.h>
 #include <linux/bitops.h>
-#include "windrbd_threads.h"
 
 #include <linux/mutex.h>	/* for struct mutex */
 #include <linux/spinlock.h>

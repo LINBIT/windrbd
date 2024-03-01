@@ -8,7 +8,6 @@
 #endif
 
 #include "drbd_windows.h"
-#include "windrbd_threads.h"
 #include <ntddk.h>
 
 static LIST_HEAD(thread_list);
