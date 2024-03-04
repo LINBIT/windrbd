@@ -279,6 +279,8 @@ drbd-tmp/%.h: drbd/%.h
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
+$(DRBD_TMP_HEADERS):
+
 all-dep := $(filter-out drbd_buildtag.d,$(OBJS:%.o=%.d))
 
 ifeq ($(MAKECMDGOALS),$(filter-out clean,$(MAKECMDGOALS)))
