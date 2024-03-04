@@ -1,6 +1,8 @@
 #include <linux/mempool.h>
 #include <linux/slab.h>
 
+/* TODO:  Not sure if I want to remove this completely. */
+
 int mempool_init_page_pool(mempool_t *pool, int min_nr, int order)
 {
 	pool->type = MEMPOOL_PAGE;
@@ -10,11 +12,11 @@ int mempool_init_page_pool(mempool_t *pool, int min_nr, int order)
 	return 0;
 }
 
-mempool_t *mempool_create_page_pool(int min_nr, int order, ULONG tag)
+mempool_t *mempool_create_page_pool(int min_nr, int order)
 {
 	mempool_t *pool;
 
-	pool = kmalloc(sizeof(*pool), GFP_KERNEL, tag);
+	pool = kmalloc(sizeof(*pool), GFP_KERNEL);
 	if (!pool)
 		return NULL;
 	pool->is_kmalloced = MEMPOOL_KMALLOCED_MAGIC;
@@ -34,11 +36,11 @@ int mempool_init_slab_pool(mempool_t *pool, int min_nr, struct kmem_cache *kc)
 	return 0;
 }
 
-mempool_t *mempool_create_slab_pool(int min_nr, struct kmem_cache *kc, ULONG tag)
+mempool_t *mempool_create_slab_pool(int min_nr, struct kmem_cache *kc)
 {
 	mempool_t *pool;
 
-	pool = kmalloc(sizeof(*pool), GFP_KERNEL, tag);
+	pool = kmalloc(sizeof(*pool), GFP_KERNEL);
 	if (!pool)
 		return NULL;
 	pool->is_kmalloced = MEMPOOL_KMALLOCED_MAGIC;

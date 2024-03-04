@@ -23,8 +23,8 @@ typedef struct mempool_s {
 	int is_kmalloced;
 } mempool_t;
 
-extern mempool_t *mempool_create_page_pool(int min_nr, int order, ULONG tag);
-extern mempool_t *mempool_create_slab_pool(int min_nr, struct kmem_cache *kc, ULONG tag);
+extern mempool_t *mempool_create_page_pool(int min_nr, int order);
+extern mempool_t *mempool_create_slab_pool(int min_nr, struct kmem_cache *kc);
 extern void mempool_destroy(mempool_t *pool);
 extern void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask);
 extern void mempool_free(void *element, mempool_t *pool);

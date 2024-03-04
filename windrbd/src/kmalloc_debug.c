@@ -8,6 +8,7 @@
 #endif
 
 #include <linux/list.h>
+#include <linux/spinlock.h>
 
 #define DESC_SIZE 64
 #define FUNC_SIZE 32
@@ -63,7 +64,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 #endif
 
 	full_size = sizeof(struct memory) + size + sizeof(struct poison_after);
-	mem = ExAllocatePoolWithTag(NonPagedPool, full_size, 'DRBD');
+	mem = ExAllocatePoolWithTag(NonPagedPool, full_size, /* DBRD */ 0x44425244);
 
 	if (mem == NULL) {
 		if (strcmp(func, "SendTo") != 0)
@@ -178,7 +179,7 @@ int dump_memory_allocations(int free_them)
 
 /* TODO: spin_lock(&memory_lock)? but then we maybe don't see the printk's ... */
 
-	list_for_each_entry_safe(struct memory, mem, memh, &memory_allocations, list) {
+	list_for_each_entry_safe(mem, memh, &memory_allocations, list) {
 			/* exclude memory needed by printk() */
 		if (strcmp(mem->func, "SendTo") != 0 && strcmp(mem->func, "sock_create_linux_socket") != 0) {
 			printk("kmalloc_debug: %s of size %d, allocated by function %s at %s mem is %p data is %p.\n", free_them ? "Warning: memory leak" : "allocated memory", mem->size, mem->func, mem->desc, mem, &mem->data[0]);
@@ -202,7 +203,7 @@ int check_memory_allocations(const char *msg)
 // printk("checking memory %s ...\n", msg);
 
 	spin_lock_irqsave(&memory_lock, flags);
-	list_for_each_entry_safe(struct memory, mem, memh, &memory_allocations, list) {
+	list_for_each_entry_safe(mem, memh, &memory_allocations, list) {
 			/* exclude memory needed by printk() */
 		if (strcmp(mem->func, "SendTo") != 0 && strcmp(mem->func, "sock_create_linux_socket") != 0) {
 			poison_after = (struct poison_after*) (&mem->data[mem->size]);

@@ -3,16 +3,18 @@
 
 #include <linux/slab.h>
 
+/* TODO: we probably want to remove this. */
+
 struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align,
 				     unsigned long flags,
-				     void (*ctor)(void *), ULONG tag)
+				     void (*ctor)(void *))
 {
 	struct kmem_cache *cache;
 
-	cache = kmalloc(sizeof(*cache), GFP_KERNEL, tag);
+	cache = kmalloc(sizeof(*cache), GFP_KERNEL);
 	if (!cache)
 		return NULL;
-	ExInitializeNPagedLookasideList(&cache->l, NULL, NULL, 0, size, tag, 0);
+	ExInitializeNPagedLookasideList(&cache->l, NULL, NULL, 0, size, 'DBRD', 0);
 	cache->element_size = size;
 
 	return cache;

@@ -456,6 +456,6 @@ struct block_device_operations {
 #define QUEUE_FLAG_DISCARD (-1)
 
 #define disk_to_dev(disk) \
-	(disk)->bdev
+	(disk)->part0
 
 #endif
