@@ -1,8 +1,10 @@
 /* Enable all warnings throws lots of those warnings: */
 #pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
 
-#include "linux/types.h"
-#include "drbd_windows.h"
+#include <linux/types.h>
+#include <linux/netlink.h>
+#include <linux/minmax.h>
+#include <linux/kern_levels.h>
 
 /* TODO: from which Linux source file was this taken? Which version? */
 

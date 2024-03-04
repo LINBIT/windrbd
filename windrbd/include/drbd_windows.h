@@ -107,13 +107,6 @@ void flush_all_cpu_caches(void);
 #define smp_wmb() flush_all_cpu_caches()
 
 
-#define atomic_t64				LONGLONG
-
-#define	atomic_inc_return(_p)		InterlockedIncrement((LONG volatile*)(_p))
-#define	atomic_dec_return(_p)		InterlockedDecrement((LONG volatile*)(_p))
-#define atomic_inc(_v)			atomic_inc_return(_v)
-#define atomic_dec(_v)			atomic_dec_return(_v)
-
 #define	atomic_inc_return64(_p)		InterlockedIncrement64((unsigned long long volatile*)(_p))
 #define	atomic_dec_return64(_p)		InterlockedDecrement64((unsigned long long volatile*)(_p))
 #define atomic_inc64(_v)		atomic_inc_return64(_v)
@@ -289,10 +282,6 @@ struct block_device;
 struct gendisk;
 struct bio;
 
-struct kobj_type {
-	void(*release)(struct kobject *);
-};
-
 extern sector_t windrbd_get_capacity(struct block_device *bdev);
 extern sector_t get_capacity(struct gendisk *disk);
 
@@ -311,8 +300,6 @@ struct bio_collection {
 	spinlock_t bc_device_failed_lock;
 
 };
-
-#define BI_WINDRBD_FLAG_BOOTSECTOR_PATCHED 0
 
 void init_free_bios(void);
 void shutdown_free_bios(void);
@@ -551,18 +538,6 @@ static inline void assert_spin_locked(spinlock_t *lock)
 }
 
 
-struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ...);
-extern void queue_work(struct workqueue_struct* queue, struct work_struct* work);
-extern void flush_workqueue(struct workqueue_struct *wq);
-extern void destroy_workqueue(struct workqueue_struct *wq);
-
-extern struct workqueue_struct *system_wq;
-
-static inline void schedule_work(struct work_struct *work)
-{
-	queue_work(system_wq, work);
-}
-
 
 extern void kobject_put(struct kobject *kobj);
 extern void kobject_get(struct kobject *kobj);
@@ -625,13 +600,10 @@ extern void hlist_del_init(struct hlist_node *entry);
 extern int hlist_unhashed(const struct hlist_node *h);
 extern void __hlist_del(struct hlist_node *n);
 
-extern uint32_t crc32c(uint32_t crc, const uint8_t *data, unsigned int length);
 extern unsigned long crc32(const char *s, size_t len);
 extern bool lc_is_used(struct lru_cache *lc, unsigned int enr);
 extern void get_random_bytes(char *buf, int nbytes);
 extern int fls(int x);
-struct sk_buff;
-extern unsigned char *skb_put(struct sk_buff *skb, unsigned int len);
 extern char *kstrdup(const char *s, int gfp);
 extern void panic(const char *fmt, ...);
 

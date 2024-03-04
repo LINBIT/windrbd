@@ -24,6 +24,10 @@ enum kobject_action {
 	KOBJ_UNBIND,
 };
 
+struct kobj_type {
+	void(*release)(struct kobject *);
+};
+
 struct kobject {
     const char          *name;
     struct kobject      *parent;

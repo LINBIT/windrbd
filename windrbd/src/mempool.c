@@ -1,6 +1,5 @@
 #include <linux/mempool.h>
 #include <linux/slab.h>
-#include "drbd_windows.h"
 
 int mempool_init_page_pool(mempool_t *pool, int min_nr, int order)
 {

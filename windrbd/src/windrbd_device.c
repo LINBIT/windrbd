@@ -63,8 +63,6 @@
 // #include <strsafe.h>	/* for StringCbPrintfW() - but it does not return length */
 
 #include "windrbd_config.h"
-#include "drbd_windows.h"
-#include "windrbd_device.h"
 #include "windrbd/windrbd_ioctl.h"
 #include "drbd_int.h"
 #include "drbd_wrappers.h"

@@ -8,7 +8,6 @@
 #endif
 
 #include <linux/list.h>
-#include "drbd_windows.h"
 
 #define DESC_SIZE 64
 #define FUNC_SIZE 32

@@ -6,6 +6,8 @@
 
 typedef u8 blk_status_t;
 
+#define BI_WINDRBD_FLAG_BOOTSECTOR_PATCHED 0
+
 struct bio {
 	struct _IRP **bi_irps;	   /* Used for accessing the backing device */
 	struct _IRP *bi_upper_irp; /* Used for the DRBD device */

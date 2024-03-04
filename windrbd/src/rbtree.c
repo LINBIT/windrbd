@@ -20,7 +20,6 @@
   linux/lib/rbtree.c
 */
  
-#include "drbd_windows.h"
 #include "linux/rbtree.h"
 
 static void __rb_rotate_left(struct rb_node *node, struct rb_root *root)

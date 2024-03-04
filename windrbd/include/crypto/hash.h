@@ -1,10 +1,8 @@
 #ifndef _CRYPTO_HASH_H
 #define _CRYPTO_HASH_H
 
-// #include <drbd_windows.h>
-// #include <ntddk.h>
-
 #include <linux/slab.h>
+#include <linux/crc32c.h>
 
 /* We only support crc32c */
 

@@ -4,7 +4,6 @@
 #endif
 #endif
 
-#include "drbd_windows.h"
 #include "drbd_int.h"
 #include "drbd_url.h"
 

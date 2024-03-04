@@ -36,4 +36,16 @@ struct work_struct {
 	void (*orig_func)(struct work_struct *work);
 };
 
+extern struct workqueue_struct *system_wq;
+
+struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ...);
+extern void queue_work(struct workqueue_struct* queue, struct work_struct* work);
+extern void flush_workqueue(struct workqueue_struct *wq);
+extern void destroy_workqueue(struct workqueue_struct *wq);
+
+static inline void schedule_work(struct work_struct *work)
+{
+	queue_work(system_wq, work);
+}
+
 #endif

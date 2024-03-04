@@ -51,6 +51,12 @@ typedef struct {
 
 #define ATOMIC_INIT(i) { (i) }
 
+#ifdef CONFIG_64BIT
+typedef struct {
+	s64 counter;
+} atomic64_t;
+#endif
+
 typedef int pid_t;
 
 typedef signed char		    __s8;

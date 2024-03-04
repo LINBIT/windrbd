@@ -25,7 +25,6 @@
 * with the slab allocator.
 */
 
-#include "drbd_windows.h"
 #include "linux/idr.h"
 #include "linux/slab.h"
 #include "linux/bitops.h"

@@ -27,7 +27,6 @@
 #include <ntddk.h>
 #include <stdlib.h>
 
-#include "drbd_windows.h"
 #include "drbd_int.h"
 
 static PUNICODE_STRING the_registry_path;

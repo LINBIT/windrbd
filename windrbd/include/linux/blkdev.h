@@ -248,8 +248,8 @@ struct windows_block_device {
 };
 
 #define DISK_NAME_LEN		16
-struct gendisk 
-{
+
+struct gendisk {
 	char disk_name[DISK_NAME_LEN];  /* name of major driver */
 	struct request_queue *queue;
 	int major, first_minor;
@@ -257,7 +257,6 @@ struct gendisk
 	const struct block_device_operations *fops;
 	void *private_data;
 	struct block_device *part0;
-	struct block_device *bdev;	/* deprecated, use part0 instead. */
 };
 
 struct fault_injection {

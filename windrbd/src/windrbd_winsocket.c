@@ -8,7 +8,6 @@
 #endif
 
 #include "windrbd_config.h"
-#include "drbd_windows.h"
 #include <linux/socket.h>
 #include <linux/net.h>
 #include <linux/tcp.h>

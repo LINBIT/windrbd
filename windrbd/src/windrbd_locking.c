@@ -25,7 +25,6 @@
  */
 
 #include "windrbd_config.h"
-#include "drbd_windows.h"
 #include "windrbd_device.h"
 #include <ntddk.h>
 

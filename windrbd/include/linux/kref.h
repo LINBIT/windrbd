@@ -28,5 +28,7 @@ struct kref {
 #include <linux/backing-dev-defs.h>
 #include <linux/kdev_t.h>
 #include <asm/current.h>
+#include <linux/err.h>
+#include <linux/atomic.h>
 
 #endif

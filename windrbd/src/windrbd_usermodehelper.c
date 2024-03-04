@@ -1,4 +1,3 @@
-#include "drbd_windows.h"
 #include "drbd_wrappers.h"
 #include "windrbd/windrbd_ioctl.h"
 /* #include "windrbd/windrbd_ioctl.h" */

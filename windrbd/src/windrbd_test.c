@@ -1,4 +1,3 @@
-#include "drbd_windows.h"
 #include "drbd_int.h"
 #include <ctype.h>
 #include "disp.h"

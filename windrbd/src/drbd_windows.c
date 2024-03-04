@@ -30,10 +30,8 @@
 
 #include <initguid.h>
 
-#include "drbd_windows.h"
-#include "windrbd_device.h"
 // #include <wdmsec.h>
-#include <ntdddisk.h>
+// #include <ntdddisk.h>
 #include <ntddk.h>
 #include <wdmguid.h>
 // #include <ntddstor.h>
@@ -41,6 +39,9 @@
 
 #include <mountmgr.h>
 #include "drbd_int.h"
+#include <windrbd/windrbd_ioctl.h>
+
+#include <linux/kref.h>
 
 	/* TODO: split this up into several files. Already done for
 	 * threads, but there's much more ...
@@ -439,11 +440,6 @@ void atomic_add(int i, atomic_t *v)
 	InterlockedExchangeAdd((long *)v, i);
 }
 
-void atomic_add64(LONGLONG a, atomic_t64 *v)
-{
-	InterlockedExchangeAdd64((LONGLONG*)v, a);
-}
-
 	/* TODO: atomic? Results may be non-monotonic decreasing, not
 	 * sure if double values can occur.
 	 */
@@ -460,11 +456,6 @@ void atomic_sub(int i, atomic_t *v)
 	atomic_sub_return(i, v);
 }
 
-void atomic_sub64(LONGLONG a, atomic_t64 *v)
-{
-	atomic_sub_return64(a, v);
-}
-
 	/* TODO: atomic? Results may be non-monotonic decreasing, not
 	 * sure if double values can occur.
 	 */
@@ -473,14 +464,6 @@ int atomic_sub_return(int i, atomic_t *v)
 	int retval;
 	retval = InterlockedExchangeAdd((LONG*)v, -i);
 	retval -= i;
-	return retval;
-}
-
-LONGLONG atomic_sub_return64(LONGLONG a, atomic_t64 *v)
-{
-	LONGLONG retval;
-	retval = InterlockedExchangeAdd64((LONGLONG*)v, -a);
-	retval -= a;
 	return retval;
 }
 
@@ -514,34 +497,26 @@ int atomic_read(const atomic_t *v)
 	return InterlockedAnd((LONG*)v, 0xffffffff);
 }
 
-LONGLONG atomic_read64(const atomic_t64 *v)
-{
-	return InterlockedAnd64((LONGLONG*)v, 0xffffffffffffffff);
-}
-
 #ifndef KMALLOC_DEBUG
 
-	/* TODO: we would save patches to DRBD if we skip the tag
-	   here .. aren't using Windows Degugger anyway at the moment..
-	 */
 	/* TODO: honor the flag: alloc from PagedPool if flag is GFP_USER */
 
-void *kmalloc(int size, int flag, ULONG Tag)
+void *kmalloc(int size, int flag)
 {
-	return ExAllocatePoolUninitialized(NonPagedPool, size, Tag);
+		/* and yes it is DBRD .. is little endian. */
+	return ExAllocatePoolUninitialized(NonPagedPool, size, 'DBRD');
 }
 
-void *kcalloc(int size, int count, int flag, ULONG Tag)
+void *kcalloc(int size, int count, int flag)
 {
-	/* TODO: flag is 0? */
-	return kzalloc(size*count, 0, Tag);
+	return kzalloc(size*count, flag);
 }
 
-void *kzalloc(int size, int flag, ULONG Tag)
+void *kzalloc(int size, int flag)
 {
 	void *mem;
 
-	mem = kmalloc(size, flag, Tag);
+	mem = kmalloc(size, flag);
 	if (mem != NULL)
 		RtlZeroMemory(mem, size);
 
@@ -559,7 +534,7 @@ char *kstrdup(const char *s, int gfp)
 		return NULL;
 
 	len = strlen(s) + 1;
-	buf = kmalloc(len, gfp, 'C3DW');
+	buf = kmalloc(len, gfp);
 	if (buf)
 		memcpy(buf, s, len);
 	return buf;
@@ -606,7 +581,7 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 	BUG_ON(size==0);
 	size = (((size-1) / PAGE_SIZE)+1)*PAGE_SIZE;
 
-	struct page *p = kzalloc_debug(sizeof(struct page), 0, file, line, func);
+	struct page *p = kzalloc_debug(sizeof(struct page), flag, file, line, func);
 	if (!p)	{
 		printk("alloc_page struct page failed\n");
 		return NULL;
@@ -617,7 +592,7 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 		 * PAGE_SIZE itself is always 4096 under Windows.
 		 */
 
-	p->addr = kmalloc_debug(size, 0, file, line, func);
+	p->addr = kmalloc_debug(size, flag, file, line, func);
 	if (!p->addr)	{
 		kfree_debug(p, file, line, func); 
 		printk("alloc_page failed (size is %d)\n", size);
@@ -668,12 +643,13 @@ void free_page_kref(struct kref *kref)
 
 struct page *alloc_page_of_size(int flag, size_t size)
 {
-		/* Round up to the next PAGE_SIZE */
+	if (size == 0)
+		return NULL;
 
-	BUG_ON(size==0);
+		/* Round up to the next PAGE_SIZE */
 	size = (((size-1) / PAGE_SIZE)+1)*PAGE_SIZE;
 
-	struct page *p = kzalloc(sizeof(struct page),0, 'D3DW');
+	struct page *p = kzalloc(sizeof(struct page), flag);
 	if (!p)	{
 		printk("alloc_page struct page failed\n");
 		return NULL;
@@ -684,7 +660,7 @@ struct page *alloc_page_of_size(int flag, size_t size)
 		 * PAGE_SIZE itself is always 4096 under Windows.
 		 */
 
-	p->addr = kmalloc(size, 0, 'E3DW');
+	p->addr = kmalloc(size, flag);
 	if (!p->addr)	{
 		kfree(p); 
 		printk("alloc_page failed (size is %d)\n", size);
@@ -739,12 +715,9 @@ int dump_memory_allocations(int free_them)
 #endif
 
 #ifdef KREF_DEBUG
-// from  linux 2.6.32
+
 int kref_put_debug(struct kref *kref, void (*release)(struct kref *kref), const char *release_name, const char *file, int line, const char *func, int may_printk)
 {
-	WARN_ON(release == NULL);
-	WARN_ON(release == (void (*)(struct kref *))kfree);
-
 	if (may_printk)
 		printk("kref_put %p from %s:%d %s() release function is %s() refcnt is %d\n", kref, file, line, func, release_name, atomic_read(&kref->refcount.refs));
 
@@ -777,12 +750,8 @@ void kref_init_debug(struct kref *kref, const char *file, int line, const char *
 
 #else
 
-// from  linux 2.6.32
 int kref_put(struct kref *kref, void (*release)(struct kref *kref))
 {
-	WARN_ON(release == NULL);
-	WARN_ON(release == (void (*)(struct kref *))kfree);
-
 	if (atomic_dec_and_test(&kref->refcount.refs))
 	{
 		release(kref);
@@ -822,17 +791,17 @@ int fsync_bdev(struct block_device *bdev)
 	return 0;
 }
 
-static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
+static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs)
 {
 	struct bio *bio;
 
-	bio = kzalloc(sizeof(struct bio) + nr_iovecs * sizeof(struct bio_vec), gfp_mask, Tag);
+	bio = kzalloc(sizeof(struct bio) + nr_iovecs * sizeof(struct bio_vec), gfp_mask);
 	if (!bio)
 	{
 		return 0;
 	}
 	bio->bi_max_vecs = nr_iovecs;
-	bio->bi_cnt = 1;
+	atomic_set(&bio->bi_cnt, 1);
 	bio->bi_vcnt = 0;
 	spin_lock_init(&bio->device_failed_lock);
 	INIT_LIST_HEAD(&bio->corked_bios);
@@ -858,9 +827,9 @@ struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, ULONG tag, char *file, in
 
 #else
 
-struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
+struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs)
 {
-	return bio_alloc_ll(gfp_mask, nr_iovecs, Tag);
+	return bio_alloc_ll(gfp_mask, nr_iovecs);
 }
 
 #endif
@@ -872,7 +841,7 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs, ULONG Tag)
 
 struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unused)
 {
-	return bio_alloc(gfp_mask, nr_iovecs, 'DRBD');
+	return bio_alloc(gfp_mask, nr_iovecs);
 }
 
 static void free_mdl_chain_and_irp(struct _IRP *irp)
@@ -1003,13 +972,13 @@ static int free_bios_thread_fn(void *unused)
 			break;
 
 		spin_lock_irqsave(&bios_to_be_freed_lock, flags);
-		list_for_each_entry_safe(struct bio, bio, bio2, &bios_to_be_freed_list, to_be_freed_list) {
+		list_for_each_entry_safe(bio, bio2, &bios_to_be_freed_list, to_be_freed_list) {
 			list_del(&bio->to_be_freed_list);
 			list_add(&bio->to_be_freed_list2, &bios_to_be_freed_list2);
 		}
 		spin_unlock_irqrestore(&bios_to_be_freed_lock, flags);
 
-		list_for_each_entry_safe(struct bio, bio, bio2, &bios_to_be_freed_list2, to_be_freed_list2) {
+		list_for_each_entry_safe(bio, bio2, &bios_to_be_freed_list2, to_be_freed_list2) {
 			list_del(&bio->to_be_freed_list2);
 			free_mdls_and_irp(bio);
 // printk("out of free_mdls_and_irp(%p) page is %p page refcount is %d\n", bio, bio->bi_io_vec[0].bv_page, refcount_read(&bio->bi_io_vec[0].bv_page->kref.refcount));
@@ -1054,7 +1023,7 @@ void shutdown_free_bios(void)
 
 struct bio *bio_clone(struct bio * bio_src, int flag)
 {
-	struct bio *bio = bio_alloc(flag, bio_src->bi_max_vecs, '24DW');
+	struct bio *bio = bio_alloc(flag, bio_src->bi_max_vecs);
 	int i;
 
 	if (bio == NULL)
@@ -1112,26 +1081,6 @@ int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsi
 
 #include "drbd_int.h"
 
-LONG_PTR IS_ERR_OR_NULL(const void *ptr)
-{
-	return !ptr || IS_ERR_VALUE((LONG_PTR) ptr); 
-}
-
-void *ERR_PTR(LONG_PTR error)
-{
-	return (void *) error;
-}
-
-LONG_PTR PTR_ERR(const void *ptr)
-{
-	return (LONG_PTR)ptr;
-}
-
-LONG_PTR IS_ERR(void *ptr)
-{
-	return IS_ERR_VALUE((LONG_PTR) ptr);
-}
-
 void init_completion_debug(struct completion *completion, const char *file, int line, const char *func)
 {
 // printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
@@ -1143,12 +1092,9 @@ ULONG_PTR wait_for_completion_timeout_debug(struct completion *completion, ULONG
 {
 	ULONG_PTR ret;
 
-// printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
-// printk("into wait_event %p ...\n", completion);
 		/*  Not interruptible. When this is interruptible BSODs
 		 *  on disonnect may happen. */
-	wait_event_timeout(ret, completion->wait, completion->completed, timeout);
-// printk("out of wait_event %p ret is %d...\n", completion, ret);
+	ret = wait_event_timeout(completion->wait, completion->completed, timeout);
 
 	return ret;
 }
@@ -1267,7 +1213,7 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
 	struct workqueue_struct *wq;
 	va_list args;
 
-	wq = kzalloc(sizeof(*wq), 0, '31DW');
+	wq = kzalloc(sizeof(*wq), flags);
 	if (wq == NULL) {
 		printk("Warning: not enough memory for workqueue\n");
 		return NULL;
@@ -1738,7 +1684,7 @@ int wait_for_bios_to_complete(struct block_device *bdev)
 		dbg("%d bios pending before wait_event\n", atomic_read(&bdev->num_bios_pending));
 		dbg("%d IRPs pending before wait_event\n", atomic_read(&bdev->num_irps_pending));
 	}
-	wait_event_timeout(timeout, bdev->bios_event, (atomic_read(&bdev->num_bios_pending) == 0), HZ*10);
+	timeout = wait_event_timeout(bdev->bios_event, (atomic_read(&bdev->num_bios_pending) == 0), HZ*10);
 	if (timeout == 0) {
 		printk("Warning: Still %d bios and %d IRPs pending after 10 seconds\n", atomic_read(&bdev->num_bios_pending), atomic_read(&bdev->num_irps_pending));
 		msleep(1000);
@@ -1825,7 +1771,7 @@ NTSTATUS DrbdIoCompletion(
 		bio_endio(bio);
 
 		struct bio *child_bio, *child_bio2;
-		list_for_each_entry_safe(struct bio, child_bio, child_bio2, &bio->joined_bios, corked_bios) {
+		list_for_each_entry_safe(child_bio, child_bio2, &bio->joined_bios, corked_bios) {
 			child_bio->bi_status = win_status_to_blk_status(status);
 
 				/* bio was never submitted, so bdev's pending
@@ -1998,7 +1944,7 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 
 
 	if (io == IRP_MJ_WRITE && bio->bi_iter.bi_sector == 0 && bio->bi_iter.bi_size >= 512 && bio->bi_this_request == 0 && !bio->dont_patch_boot_sector) {
-		bio->patched_bootsector_buffer = kmalloc(the_size, 0, 'DRBD');
+		bio->patched_bootsector_buffer = kmalloc(the_size, GFP_KERNEL);
 		if (bio->patched_bootsector_buffer == NULL)
 			return -ENOMEM;
 
@@ -2097,7 +2043,7 @@ static int generic_make_request2(struct bio *bio)
 		/* In case we fail early, bi_irps[n].MdlAddress must be
 		 * NULL.
 		 */
-	bio->bi_irps = kzalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, 0, 'XXXX');
+	bio->bi_irps = kzalloc(sizeof(*bio->bi_irps)*bio->bi_num_requests, GFP_KERNEL);
 	if (bio->bi_irps == NULL) {
 		bio->bi_status = BLK_STS_IOERR;
 		bio_endio(bio);
@@ -2119,7 +2065,7 @@ static int generic_make_request2(struct bio *bio)
 			printk("Warning: size mismatch in generic_make_request(): total_size is %d bi_size is %d\n", total_size, bio->bi_iter.bi_size);
 		}
 		bio->bi_big_buffer_size = total_size;
-		bio->bi_big_buffer = kmalloc(total_size, 0, 'XXXX');
+		bio->bi_big_buffer = kmalloc(total_size, GFP_KERNEL);
 
 		if (bio->bi_big_buffer != NULL) {
 			bio->bi_this_request = 0;
@@ -2225,7 +2171,7 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 		bio_put(first_bio);	/* corresponding get in generic_request() */
 		return ret;
 	}
-	joined_bios_bio = bio_alloc(0, num_vector_elements, 'ZAKL');
+	joined_bios_bio = bio_alloc(0, num_vector_elements);
 	if (joined_bios_bio == NULL)
 		return -ENOMEM;
 
@@ -2238,7 +2184,7 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	joined_bios_bio->bi_iter.bi_size = total_size;
 	joined_bios_bio->bi_vcnt = 0;
 
-	list_for_each_entry_safe(struct bio, bio3, bio4, list, corked_bios) {
+	list_for_each_entry_safe(bio3, bio4, list, corked_bios) {
 		if (first_bio_not_on_list != NULL && bio3 == first_bio_not_on_list) {
 			break;
 		}
@@ -2282,7 +2228,7 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 		 * longer than needed.
 		 */
 	spin_lock_irqsave(&bdev->cork_spinlock, flags);
-	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->corked_list, corked_bios) {
+	list_for_each_entry_safe(bio, bio2, &bdev->corked_list, corked_bios) {
 		list_del(&bio->corked_bios);
 		list_add(&bio->corked_bios, &tmp_list);
 	}
@@ -2299,7 +2245,7 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 	opf = -1;
 	last_bio = NULL;
 
-	list_for_each_entry_safe(struct bio, bio, bio2, &tmp_list, corked_bios) {
+	list_for_each_entry_safe(bio, bio2, &tmp_list, corked_bios) {
 //  printk("bio is %p expected_sector is %lld bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %lld num_vector_elements is %d joinable_size is %d opf is %d bio->bi_opf is %d\n", bio, expected_sector, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, num_vector_elements, joinable_size, opf, bio->bi_opf);
 		if ((expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) || num_vector_elements >= 1024 || joinable_size >= 4*1024*1024 || (opf != (unsigned int)-1 && bio->bi_opf != opf) || bio->is_user_request) {
 // printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
@@ -2477,6 +2423,8 @@ void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
 }
 
 
+#include <linux/crc32c.h>
+
 /*----------------------------------------------------------------------*/
 /* This was shamelessly stolen from the Linux kernel.			*/
 /*----------------------------------------------------------------------*/
@@ -2620,8 +2568,10 @@ static const u32 crc32c_table[256] = {
 	0xBE2DA0A5L, 0x4C4623A6L, 0x5F16D052L, 0xAD7D5351L
 };
 
-uint32_t crc32c(uint32_t crc, const uint8_t *data, unsigned int length)
+u32 crc32c(u32 crc, const void *p, unsigned int length)
 {
+	const uint8_t *data = p;
+
 	while (length--)
 		crc = crc32c_table[(crc ^ *data++) & 0xFFL] ^ (crc >> 8);
 
@@ -2658,7 +2608,7 @@ struct request_queue *blk_alloc_queue(int unused)
 {
 	struct request_queue *q;
 
-	q = kzalloc(sizeof(struct request_queue), 0, 'E5DW');
+	q = kzalloc(sizeof(struct request_queue), GFP_KERNEL);
 	if (q == NULL)
 		return NULL;
 
@@ -2677,7 +2627,7 @@ void blk_cleanup_queue(struct request_queue *q)
 
 struct gendisk *alloc_disk(int minors)
 {
-	struct gendisk *p = kzalloc(sizeof(struct gendisk), 0, '44DW');
+	struct gendisk *p = kzalloc(sizeof(struct gendisk), GFP_KERNEL);
 	return p;
 }
 
@@ -2722,17 +2672,18 @@ struct block_device *bdget_disk(struct gendisk *disk, int partno)
 		printk("Warning: bdget_disk called with partno = %d, we do not support partitions\n", partno);
 
 	if (disk) {
-		if (disk->bdev)
-			kref_get(&disk->bdev->kref);
+		if (disk->part0)
+			kref_get(&disk->part0->kref);
 		else
 			printk("Warning: disk->bdev is NULL in bdget_disk\n");
 
-		return disk->bdev;
+		return disk->part0;
 	}
 	printk("Warning: disk is NULL in bdget_disk\n");
 	return NULL;
 }
 
+/*
 void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
 {
 	// not support
@@ -2741,6 +2692,7 @@ void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
 void blk_queue_flush(struct request_queue *q, unsigned int flush)
 {
 }
+*/
 
 /**
  * blk_queue_segment_boundary - set boundary rules for segment merging
@@ -3000,7 +2952,7 @@ int resolve_ascii_path(const char *path, UNICODE_STRING *path_to_device)
 		return -ENOMEM;
 	}
 
-	path_to_device->Buffer = kmalloc(sizeof(WCHAR) * 1024, 0, 'BDRX');
+	path_to_device->Buffer = kmalloc(sizeof(WCHAR) * 1024, GFP_KERNEL);
 	if (path_to_device->Buffer == NULL) {
 		printk(KERN_ERR "Cannot allocate device name.\n");
 
@@ -3055,7 +3007,7 @@ static void backingdev_check_endio(struct bio *bio)
 
 static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 {
-	struct bio *b = bio_alloc(0, 1, 'DRBD');
+	struct bio *b = bio_alloc(0, 1);
 	int i;
 	struct completion c;
 	int ret;
@@ -3065,15 +3017,6 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 
 	mutex_lock(&read_bootsector_mutex);
 
-/*
-	p = kzalloc(sizeof(struct page),0, 'D3DW'); 
-	if (!p)	{
-		printk(KERN_ERR "alloc_page struct page failed\n");
-		mutex_unlock(&read_bootsector_mutex);
-		return 1;
-	}
-	p->addr = boot_sector+(4096-((ULONG_PTR)boot_sector & 4095));
-*/
 	p = alloc_page(sizeof(struct page)); 
 	if (!p)	{
 		printk(KERN_ERR "alloc_page struct page failed\n");
@@ -3123,7 +3066,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	if (err < 0)
 		return ERR_PTR(err);
 
-	list_for_each_entry(struct block_device, block_device, &backing_devices, backing_devices_list) {
+	list_for_each_entry(block_device, &backing_devices, backing_devices_list) {
 		if (RtlEqualUnicodeString(&block_device->path_to_device, &path_to_device, TRUE)) {
 			printk(KERN_DEBUG "Block device for windows device %S already open, reusing it (block_device %p)\n", path_to_device.Buffer, block_device);
 
@@ -3142,7 +3085,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_no_windows_device;
 	}
 
-	block_device = kzalloc(sizeof(struct block_device), 0, 'DBRD');
+	block_device = kzalloc(sizeof(struct block_device), GFP_KERNEL);
 	if (block_device == NULL) {
 		printk("could not allocate block_device.\n");
 		err = -ENOMEM;
@@ -3165,7 +3108,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_no_queue;
 	}
 	block_device->bd_disk->part0 = block_device;
-	block_device->bd_disk->bdev = block_device;
 
 	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
@@ -3343,8 +3285,8 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
 
 sector_t get_capacity(struct gendisk *disk)
 {
-	if (disk->bdev != NULL)
-		return windrbd_get_capacity(disk->bdev);
+	if (disk->part0 != NULL)
+		return windrbd_get_capacity(disk->part0);
 
 	printk("Warning: get_capacity without block device called.\n");
 	return 0;
@@ -3359,7 +3301,7 @@ static int minor_to_windows_device_name(UNICODE_STRING *name, int minor, int dos
 	NTSTATUS status;
 	size_t len = 32;
 
-	name->Buffer = kmalloc(len * sizeof(name->Buffer[0]), GFP_KERNEL, 'DRBD');
+	name->Buffer = kmalloc(len * sizeof(name->Buffer[0]), GFP_KERNEL);
 
 	if (name->Buffer == NULL) {
 		printk("couldn't allocate memory for name buffer\n");
@@ -3580,7 +3522,7 @@ struct block_device *bdget(dev_t device_no)
 	struct block_device *block_device;
 	int ret;
 
-	block_device = kzalloc(sizeof(struct block_device), 0, 'DRBD');
+	block_device = kzalloc(sizeof(struct block_device), GFP_KERNEL);
 	if (block_device == NULL)
 		return NULL;
 
@@ -3671,11 +3613,11 @@ static int mountmgr_create_point(struct block_device *dev)
 	struct _IRP *irp;
 	struct _IO_STACK_LOCATION *s;
 
-	create_point = kzalloc(create_point_size, 0, 'DRBD');
+	create_point = kzalloc(create_point_size, GFP_KERNEL);
 	if (create_point == NULL)
 		return -1;
 
-	io_status = kzalloc(sizeof(*io_status), 0, 'DRBD');
+	io_status = kzalloc(sizeof(*io_status), GFP_KERNEL);
 	if (io_status == NULL) {
 		kfree(create_point);
 		return -1;
@@ -3786,7 +3728,7 @@ int windrbd_set_mount_point_utf16(struct block_device *dev, const wchar_t *mount
 	size_t size_in_bytes = len * sizeof(wchar_t);
 	int dos_devices_len = wcslen(DOS_DEVICES);
 
-	dev->mount_point.Buffer = kmalloc(size_in_bytes, GFP_KERNEL, 'DRBD');
+	dev->mount_point.Buffer = kmalloc(size_in_bytes, GFP_KERNEL);
 	if (dev->mount_point.Buffer == NULL)
 		return -ENOMEM;
 	dev->mount_point.Length = size_in_bytes-sizeof(wchar_t);
@@ -3836,7 +3778,7 @@ int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_poin
 	if (drbd_device == NULL)
 		return -ENOENT;		/* no such minor */
 
-	block_device = drbd_device->this_bdev;
+	block_device = drbd_device->vdisk->part0;
 	if (block_device == NULL)
 		return -ENOENT;
 
@@ -3896,7 +3838,7 @@ int windrbd_create_windows_device_for_minor(int minor)
 	if (drbd_device == NULL)
 		return -ENOENT;		/* no such minor */
 
-	block_device = drbd_device->this_bdev;
+	block_device = drbd_device->vdisk->part0;
 	if (block_device == NULL)
 		return -ENOENT;
 
@@ -3995,18 +3937,18 @@ extern int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(s
 
 int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 {
-	if (!device->this_bdev->is_bootdevice) {
-		if (windrbd_allocate_io_workqueue(device->this_bdev) < 0) {
+	if (!device->vdisk->part0->is_bootdevice) {
+		if (windrbd_allocate_io_workqueue(device->vdisk->part0) < 0) {
 			printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");
 		}
-		if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(device->this_bdev) < 0) {
+		if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(device->vdisk->part0) < 0) {
 			printk("Warning: could not determine if there is a file system on the DRBD device.\n");
 		}
-		if (windrbd_create_windows_device(device->this_bdev) != 0)
+		if (windrbd_create_windows_device(device->vdisk->part0) != 0)
 			windrbd_device_error(device, err_str, "Warning: Couldn't create windows device for volume %d\n", device->vnr);
 
-		if (windrbd_mount(device->this_bdev) != 0)
-			windrbd_device_error(device, err_str, "Warning: Couldn't mount volume %d, perhaps the drive letter (%S) is in use?\n", device->vnr, device->this_bdev->mount_point.Buffer);
+		if (windrbd_mount(device->vdisk->part0) != 0)
+			windrbd_device_error(device, err_str, "Warning: Couldn't mount volume %d, perhaps the drive letter (%S) is in use?\n", device->vnr, device->vdisk->part0->mount_point.Buffer);
 
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
@@ -4015,27 +3957,27 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 			 * properly start the device else races may happen
 			 * (drbdadm secondary might BSOD).
 			 */
-		KeWaitForSingleObject(&device->this_bdev->device_started_event, Executive, KernelMode, FALSE, NULL);
+		KeWaitForSingleObject(&device->vdisk->part0->device_started_event, Executive, KernelMode, FALSE, NULL);
 	}
-	KeSetEvent(&device->this_bdev->primary_event, 0, FALSE);
+	KeSetEvent(&device->vdisk->part0->primary_event, 0, FALSE);
 
 	return 0;
 }
 
 int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 {
-	if (!device->this_bdev->is_bootdevice) {
-		if (windrbd_umount(device->this_bdev) != 0)
+	if (!device->vdisk->part0->is_bootdevice) {
+		if (windrbd_umount(device->vdisk->part0) != 0)
 			windrbd_device_error(device, err_str, "Warning: couldn't umount volume %d\n", device->vnr);
-		windrbd_remove_windows_device(device->this_bdev);
+		windrbd_remove_windows_device(device->vdisk->part0);
 
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
 		}
-		windrbd_destroy_io_workqueue(device->this_bdev);
+		windrbd_destroy_io_workqueue(device->vdisk->part0);
 	}
 
-	KeClearEvent(&device->this_bdev->primary_event);
+	KeClearEvent(&device->vdisk->part0->primary_event);
 
 	if (device->open_rw_cnt > 0 || device->open_ro_cnt > 0)
 		printk("Forcing close of DRBD device: device->open_rw_cnt is %d, device->open_ro_cnt is %d\n", device->open_rw_cnt, device->open_ro_cnt);
@@ -4077,7 +4019,7 @@ static void windrbd_destroy_block_device(struct kref *kref)
 	bdev->path_to_device.Buffer = NULL;
 
 	if (bdev->bd_disk != NULL)
-		bdev->bd_disk->bdev = NULL;
+		bdev->bd_disk->part0 = NULL;
 
 	if (bdev->disk_prolog != NULL) {
 		kfree(bdev->disk_prolog);
@@ -4096,6 +4038,7 @@ static void windrbd_destroy_block_device(struct kref *kref)
 }
 
 /* TODO: those 2 function go away */
+#if 0
 void windrbd_bdget(struct block_device *this_bdev)
 {
 	kref_get(&this_bdev->kref);
@@ -4105,6 +4048,7 @@ void windrbd_bdput(struct block_device *this_bdev)
 {
 	kref_put(&this_bdev->kref, windrbd_destroy_block_device);
 }
+#endif
 
 /* See the comment at bdget().
  *
@@ -4123,7 +4067,7 @@ void bdput(struct block_device *this_bdev)
 
 ktime_t ktime_get(void)
 {
-	return (ktime_t) { .tv64 = jiffies * (1000*1000*1000/HZ) };
+	return (ktime_t) (jiffies * (1000*1000*1000/HZ));
 }
 
 ktime_t ktime_get_real(void)
@@ -4133,7 +4077,7 @@ ktime_t ktime_get_real(void)
         KeQuerySystemTime(&time);
 		/* ktime is 1 ns, KeQuerySystemTime() is 100 ns */
 		/* TODO: but KeQuerySystemTime() is since January 1, 1601 ... */
-	return (ktime_t) { .tv64 = time.QuadPart * 100 };
+	return (ktime_t) (time.QuadPart * 100);
 }
 
 int register_blkdev(int major, const char *name)

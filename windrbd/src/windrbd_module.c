@@ -1,6 +1,5 @@
 #include <linux/module.h>
 #include <disp.h>	/* for root device object */
-#include <drbd_windows.h>	/* for printk */
 #include "windrbd_version.h"
 
 	/* undef this to disable driver unload */

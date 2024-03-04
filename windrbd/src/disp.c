@@ -20,26 +20,22 @@
 */
 
 /* Enable all warnings throws lots of those warnings: */
-#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 5045 4711)
 
 #include "windrbd_config.h"
-#include "drbd_windows.h"
-#include <ntstrsafe.h>
 
 #include <ntddk.h>
 #include <initguid.h>
 #include <devguid.h>
-#include "windrbd_device.h"
 #include "disp.h"
 #include "windrbd/windrbd_ioctl.h"
 #include <linux/module.h>
 #ifdef CONFIG_HAVE_IO_CREATE_DEVICE_SECURE
 #include <wdmsec.h>
 #endif
-/* #include "windrbd/windrbd_ioctl.h" */
-
-#include "drbd_int.h"
-#include "drbd_wrappers.h"
+#include <linux/kern_levels.h>
+#include <linux/sched.h>
+#include <linux/workqueue.h>
+#include <linux/ratelimit_types.h>
 
 	/* Verifier BSOD on boot should be fixed we can read ACPI tables again.
 	 */

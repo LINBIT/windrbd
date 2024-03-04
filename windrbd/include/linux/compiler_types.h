@@ -5,4 +5,6 @@
 #define __acquire(x) (void)0
 #define __release(x) (void)0
 
+#define __force	__attribute__((force))
+
 #endif

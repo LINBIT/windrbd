@@ -22,7 +22,6 @@
 
 #else		/* windows kernel */
 
-#include <drbd_windows.h>
 #include <linux/list.h>
 #include <linux/drbd_limits.h>
 #include "drbd_url.h"
