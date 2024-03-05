@@ -7,7 +7,6 @@
 
 #define EINVAL					22
 #define EOPNOTSUPP				95
-#define ENOTSUPP				95
 #define ENOMEM					12
 #define ENOENT					2
 #define EROFS					30

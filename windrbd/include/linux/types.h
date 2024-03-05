@@ -20,6 +20,11 @@
 #ifndef _WINDOWS_TYPES_H
 #define _WINDOWS_TYPES_H
 
+/* Include this before Windows headers, else duplicate
+ * Exxxx macro definitions.
+ */
+#include <linux/errno.h>
+
 /* Windows headers should be included *only* here: */
 
 #include <ntdef.h>
