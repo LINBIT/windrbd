@@ -1,7 +1,7 @@
-#include "drbd_wrappers.h"
-#include "windrbd/windrbd_ioctl.h"
-/* #include "windrbd/windrbd_ioctl.h" */
+#include <windrbd/windrbd_ioctl.h>
 #include <linux/list.h>
+#include <linux/gfp.h>
+#include <linux/mutex.h>
 
 /* In case daemon is not running or a process takes longer than that
  * to terminate, timeout after 1 second. This should not be too long
@@ -71,7 +71,7 @@ int call_usermodehelper(char *path, char **argv, char **envp, int wait)
 	total_size = sizeof(struct um_request)+path_size+arg_size+env_size;
 	total_size_of_helper = sizeof(struct windrbd_usermode_helper)+path_size+arg_size+env_size;
 
-	new_request = kmalloc(total_size, 0, 'DRBD');
+	new_request = kmalloc(total_size, GFP_KERNEL);
 	if (new_request == NULL)
 		return -ENOMEM;
 
@@ -169,7 +169,7 @@ int windrbd_um_return_return_value(void *rv_buf)
 	int ret = -1;
 
 	mutex_lock(&request_mutex);
-	list_for_each_entry(struct um_request, r, &um_requests_running, list) {
+	list_for_each_entry(r, &um_requests_running, list) {
 		if (rv->id == r->helper.id) {
 			r->retval = rv->retval;
 			KeSetEvent(&r->return_event, 0, FALSE);

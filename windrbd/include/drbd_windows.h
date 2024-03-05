@@ -144,8 +144,6 @@ extern int atomic_xchg(atomic_t *v, int n);
 #define SECONDS(seconds) \
 (((signed __int64)(seconds)) * MILLISECONDS(1000L))
 
-#define CMD_TIMEOUT_SHORT_DEF		5		/* should be synchronized with defined value in shared_main.h */
-
 // from bio.h
 #define BIO_RW					    0       /* Must match RW in req flags (blkdev.h) */
 #define BIO_RW_AHEAD				1       /* Must match FAILFAST in req flags */
@@ -177,7 +175,6 @@ extern int atomic_xchg(atomic_t *v, int n);
 #ifdef LONG_MAX
 #undef LONG_MAX
 #endif
-#define MAX_SCHEDULE_TIMEOUT ((long)(~0UL>>1)) 
 #define SENDER_SCHEDULE_TIMEOUT	5 * HZ
 #define HZ 1000
 
@@ -224,36 +221,8 @@ enum km_type {
 #define FLTR_COMPONENT              DPFLTR_DEFAULT_ID
 //#define FLTR_COMPONENT              DPFLTR_IHVDRIVER_ID
 
-extern int initialize_syslog_printk(void);
-extern void shutdown_syslog_printk(void);
-extern void set_syslog_ip(const char *ip);
-
-extern int _printk(const char * func, const char * format, ...);
-extern void printk_reprint(size_t bytes);
-
 struct drbd_device;
 void windrbd_device_error(struct drbd_device *device, const char ** err_str_out, const char *fmt, ...);
-
-#define printk(args...)   \
-    _printk(__FUNCTION__, args)
-
-#ifdef DEBUG
-#define dbg(args...)   \
-    _printk(__FUNCTION__, args)
-#else
-#define dbg(args...)   __noop
-#endif
-
-extern int _mem_printk(const char *file, int line, const char *func, const char *fmt, ...);
-
-#define mem_printk(args...)   \
-    _mem_printk(__FILE__, __LINE__, __FUNCTION__, args)
-
-extern int debug_printks_enabled;
-
-#define cond_printk(args...) \
-	if (debug_printks_enabled) \
-		_printk(__FUNCTION__, args)
 
 #define ARRAY_SIZE(_x)				(sizeof(_x) / sizeof((_x)[0]))
 
@@ -286,20 +255,6 @@ extern sector_t windrbd_get_capacity(struct block_device *bdev);
 extern sector_t get_capacity(struct gendisk *disk);
 
 struct bio;
-
-	/* When we create more bio's upon request for a single MDL,
-	 * this is common data shared between all that bios.
-	 */
-
-struct bio_collection {
-	atomic_t bc_num_completed;
-	size_t bc_total_size;
-	int bc_num_requests;
-
-	int bc_device_failed;
-	spinlock_t bc_device_failed_lock;
-
-};
 
 void init_free_bios(void);
 void shutdown_free_bios(void);
@@ -392,8 +347,6 @@ static inline int submit_bio_noacct(struct bio *bio)
 /* TODO: Sure? */
 #define bio_flagged(bio, flag)  (1) 
 // #define bio_flagged(bio, flag)  ((bio)->bi_flags & (1 << (flag))) 
-
-extern void sema_init(struct semaphore *s, int limit);
 
 #ifdef KREF_DEBUG
 
@@ -654,10 +607,6 @@ typedef struct _PTR_ENTRY
 #define	EDESTADDRREQ	89	/* Destination address required */
 #endif
 
-
-extern void down(struct semaphore *s);
-extern int down_trylock(struct semaphore *s);
-extern void up(struct semaphore *s);
 
 static int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 	sector_t nr_sects, gfp_t gfp_mask, bool discard)

@@ -11,6 +11,10 @@
 #include <linux/socket.h>
 #include <linux/net.h>
 #include <linux/tcp.h>
+#include <linux/gfp.h>
+#include <linux/printk.h>
+#include <linux/jiffies.h>
+
 #include <wsk.h>
 
 struct net init_net;
@@ -1495,8 +1499,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	timeout = socket->sk->sk_rcvtimeo; 
 	while (1) {
-		wait_event_interruptible_timeout(
-			remaining_time,
+		remaining_time = wait_event_interruptible_timeout(
 			socket->data_available, 
 			socket->write_index != socket->read_index || 
 			(socket->write_index == socket->read_index && socket->receive_buffer_full) || 

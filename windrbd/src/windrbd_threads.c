@@ -8,6 +8,13 @@
 #endif
 
 #include <ntddk.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
+#include <linux/sched.h>
+#include <linux/list.h>
+#include <linux/err.h>
+#include <linux/printk.h>
+#include <linux/gfp.h>
 
 static LIST_HEAD(thread_list);
 static spinlock_t thread_list_lock;
@@ -22,7 +29,7 @@ static struct task_struct *__find_thread(PKTHREAD id)
 {
 	struct task_struct *t;
 
-	list_for_each_entry(struct task_struct, t, &thread_list, list) {
+	list_for_each_entry(t, &thread_list, list) {
 		if (t->windows_thread == id)
 			return t;
 	}
@@ -62,7 +69,7 @@ void print_threads_in_rcu(void)
 
 	pos = buf;
         spin_lock_irqsave(&thread_list_lock, flags);
-	list_for_each_entry(struct task_struct, t, &thread_list, list) {
+	list_for_each_entry(t, &thread_list, list) {
 		if (t->in_rcu) {
 			len = snprintf(pos, remaining_bytes, "Thread %s holding rcu_read_lock\n", t->comm);
 			pos+=len;
@@ -127,7 +134,7 @@ void windrbd_reap_threads(void)
 	INIT_LIST_HEAD(&dead_list);
 
 	spin_lock_irqsave(&thread_list_lock, flags);
-	list_for_each_entry_safe(struct task_struct, t, tn, &thread_list, list) {
+	list_for_each_entry_safe(t, tn, &thread_list, list) {
 		if (t->is_zombie) {
 // printk("about to bury %p\n", t);
 			list_del(&t->list);
@@ -136,7 +143,7 @@ void windrbd_reap_threads(void)
 	}
 	spin_unlock_irqrestore(&thread_list_lock, flags);
 
-	list_for_each_entry_safe(struct task_struct, t, tn, &dead_list, list) {
+	list_for_each_entry_safe(t, tn, &dead_list, list) {
 		windrbd_cleanup_windows_thread(t->windows_thread);
 // printk("Buried %s thread\n", t->comm);
 
@@ -163,7 +170,7 @@ void windrbd_reap_all_threads(void)
 
 	/* TODO: printk will call current which also takes the lock. */
 //		spin_lock_irqsave(&thread_list_lock, flags);
-		list_for_each_entry(struct task_struct, t, &thread_list, list) {
+		list_for_each_entry(t, &thread_list, list) {
 			printk("    Thread %s still running ...\n", t->comm);
 		}
 //		spin_unlock_irqrestore(&thread_list_lock, flags);
@@ -256,7 +263,7 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	va_list args;
 	NTSTATUS status;
 
-	if ((t = kzalloc(sizeof(*t), GFP_KERNEL, 'DRBD')) == NULL)
+	if ((t = kzalloc(sizeof(*t), GFP_KERNEL)) == NULL)
 		return ERR_PTR(-ENOMEM);
 
 		/* The thread will be created later in wake_up_process(),
@@ -324,7 +331,7 @@ struct task_struct *make_me_a_windrbd_thread(const char *name, ...)
 	int i;
 	NTSTATUS status;
 
-	if ((t = kzalloc(sizeof(*t), GFP_KERNEL, 'DRBD')) == NULL)
+	if ((t = kzalloc(sizeof(*t), GFP_KERNEL)) == NULL)
 		return ERR_PTR(-ENOMEM);
 
 		/* The thread will be created later in wake_up_process(),

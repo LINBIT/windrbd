@@ -6,6 +6,20 @@
 
 typedef u8 blk_status_t;
 
+	/* When we create more bio's upon request for a single MDL,
+	 * this is common data shared between all that bios.
+	 */
+
+struct windrbd_bio_collection {
+	atomic_t bc_num_completed;
+	size_t bc_total_size;
+	int bc_num_requests;
+
+	int bc_device_failed;
+	spinlock_t bc_device_failed_lock;
+
+};
+
 #define BI_WINDRBD_FLAG_BOOTSECTOR_PATCHED 0
 
 struct bio {
@@ -40,7 +54,7 @@ struct bio {
 	int bi_num_requests;	/* Includes maybe a flush request */
 	int bi_this_request;
 	atomic_t bi_requests_completed;
-	struct bio_collection *bi_common_data;
+	struct windrbd_bio_collection *bi_common_data;
 
 	int device_failed;
 	spinlock_t device_failed_lock;

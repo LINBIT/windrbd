@@ -8,6 +8,7 @@
         (unsigned long)(&((type *)0)->member)))
 
 #include <linux/list.h>
+#include <linux/gfp.h>
 #include <stdio.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -17,13 +18,14 @@
 #include "drbd_url.h"
 
 #define printk printf
-#define kmalloc(size, unused, unused2) malloc(size)
+#define kmalloc(size, unused) malloc(size)
 #define kfree(p) free(p)
 
 #else		/* windows kernel */
 
 #include <linux/list.h>
 #include <linux/drbd_limits.h>
+#include <linux/slab.h>
 #include "drbd_url.h"
 
 #endif
@@ -133,7 +135,7 @@ static char *my_strndup(const char *s, size_t n)
 {
 	char *new_string;
 
-	new_string = kmalloc(n+1, 0, 'DRBD');
+	new_string = kmalloc(n+1, GFP_KERNEL);
 	if (new_string == NULL)
 		return NULL;
 
@@ -233,7 +235,7 @@ static struct node *lookup_node(struct drbd_params *p, int node_id)
 {
 	struct node *n;
 
-	list_for_each_entry(struct node, n, &p->node_list, list) {
+	list_for_each_entry(n, &p->node_list, list) {
 		if (n->node_id == node_id)
 			return n;
 	}
@@ -248,7 +250,7 @@ static struct node *lookup_or_create_node(struct drbd_params *p, int node_id)
 	if (n != NULL)
 		return n;
 
-	n = kmalloc(sizeof(*n), 0, 'DRBD');
+	n = kmalloc(sizeof(*n), GFP_KERNEL);
 	if (n == NULL)
 		return NULL;
 
@@ -301,7 +303,7 @@ static int check_values(struct drbd_params *params)
 	if (this_node == NULL)
 		parse_error("this node does not exist (need to specify some parameters with nodeN)\n");
 
-	list_for_each_entry(struct node, n, &params->node_list, list) {
+	list_for_each_entry(n, &params->node_list, list) {
 		if (n->node_id > 32)
 			parse_error("node-id out of range\n");
 		if (n->hostname == NULL)
@@ -562,7 +564,7 @@ void free_drbd_params_contents(struct drbd_params *p)
 {
 	struct node *n, *n2;
 
-	list_for_each_entry_safe(struct node, n, n2, &p->node_list, list) {
+	list_for_each_entry_safe(n, n2, &p->node_list, list) {
 		kfree(n->hostname);
 		kfree(n->address);
 		kfree(n->volume.disk);
@@ -590,7 +592,7 @@ int main(int argc, const char **argv)
 	
 	printf("resource is %s\n", p.resource);
 	printf("protocol is %d\n", p.protocol);
-	list_for_each_entry(struct node, n, &p.node_list, list) {
+	list_for_each_entry(n, &p.node_list, list) {
 		printf("node %d\n", n->node_id);
 	}
 	free_drbd_params_contents(&p);

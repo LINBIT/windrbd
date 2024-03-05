@@ -25,8 +25,12 @@
  */
 
 #include "windrbd_config.h"
-#include "windrbd_device.h"
 #include <ntddk.h>
+#include <linux/mutex.h>
+#include <linux/sched.h>
+#include <linux/semaphore.h>
+#include <linux/rwsem.h>
+#include <linux/spinlock.h>
 
 /* Define this if RCU implementation can use read/write locks
  * (ExAcquireSpinLockShared, ...).
@@ -75,9 +79,7 @@ int mutex_lock_interruptible(struct mutex *m)
 		waitObjects[1] = (PVOID)&thread->sig_event;
 		wObjCount++;
 	}
-enter_interruptible();	
 	status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
-exit_interruptible();	
 
 	switch (status)
 	{

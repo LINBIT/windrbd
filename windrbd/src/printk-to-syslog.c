@@ -1,6 +1,3 @@
-/* Enable all warnings throws lots of those warnings: */
-#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
-
 #include <ntddk.h>
 #include <linux/net.h>
 #include <linux/socket.h>
@@ -10,7 +7,11 @@
  * messages.
  */
 
-// #include "windrbd-event-log.h"
+#include "windrbd_internal.h"
+#include "windrbd-event-log.h"
+
+#include <linux/jiffies.h>
+#include <linux/kern_levels.h>
 
 /* We have three logging 'targets': One is the standard DbgPrint
    facility provided by Windows. Use a tool like DbgView to view

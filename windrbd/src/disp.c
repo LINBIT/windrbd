@@ -26,7 +26,7 @@
 #include <ntddk.h>
 #include <initguid.h>
 #include <devguid.h>
-#include "disp.h"
+#include "windrbd_internal.h"
 #include "windrbd/windrbd_ioctl.h"
 #include <linux/module.h>
 #ifdef CONFIG_HAVE_IO_CREATE_DEVICE_SECURE

@@ -1,6 +1,6 @@
 #include "drbd_int.h"
 #include <ctype.h>
-#include "disp.h"
+#include "windrbd_internal.h"
 
 int debug_printks_enabled = 0;
 
@@ -339,7 +339,7 @@ static int rcu_writer(void *arg)
 #endif
 
 		old_rcu = non_atomic_rcu;
-		new_rcu = kmalloc(sizeof(*new_rcu), 0, '1234');
+		new_rcu = kmalloc(sizeof(*new_rcu), GFP_KERNEL);
 		if (new_rcu == NULL) {
 			printk("no memory\n");
 #if 0
@@ -462,7 +462,7 @@ static void rcu_test(int argc, const char **argv)
 
 	printk("rcu_lock_method is %d (%s) rcu_writer_lock_method is %d (%s)\n", rcu_lock_method, rcu_lock_methods[rcu_lock_method], rcu_writer_lock_method, rcu_writer_lock_methods[rcu_writer_lock_method]);
 
-	non_atomic_rcu = kmalloc(sizeof(*non_atomic_rcu), 0, '1234');
+	non_atomic_rcu = kmalloc(sizeof(*non_atomic_rcu), GFP_KERNEL);
 	if (non_atomic_rcu == NULL) {
 		printk("No memory\n");
 		return;
@@ -475,7 +475,7 @@ static void rcu_test(int argc, const char **argv)
 	if (test_debug)
 		printk("alloc %d bytes for completion\n", sizeof(*completions)*(num_readers+num_writers));
 
-	completions = kmalloc(sizeof(*completions)*(num_readers+num_writers), 0, '1234');
+	completions = kmalloc(sizeof(*completions)*(num_readers+num_writers), GFP_KERNEL);
 	if (completions == NULL) {
 		printk("No memory\n");
 		return;
@@ -486,7 +486,7 @@ static void rcu_test(int argc, const char **argv)
 		if (test_debug)
 			printk("alloc writer %d\n", i);
 
-		completions[i] = kmalloc(sizeof(struct completion), 0, '1234');
+		completions[i] = kmalloc(sizeof(struct completion), GFP_KERNEL);
 		if (completions[i] == NULL) {
 			printk("Not enough memory\n");
 			return;
@@ -499,7 +499,7 @@ static void rcu_test(int argc, const char **argv)
 		if (test_debug)
 			printk("alloc reader %d\n", i);
 
-		completions[i] = kmalloc(sizeof(struct completion), 0, '1234');
+		completions[i] = kmalloc(sizeof(struct completion), GFP_KERNEL);
 		if (completions[i] == NULL) {
 			printk("Not enough memory\n");
 			return;
@@ -780,26 +780,26 @@ void concurrency_test(int argc, const char **argv)
 	sema_init(&test_semaphore, 1);
 	init_rwsem(&test_rw_semaphore);
 
-	completions = kmalloc(sizeof(*completions)*num_threads, 0, '1234');
+	completions = kmalloc(sizeof(*completions)*num_threads, GFP_KERNEL);
 	if (completions == NULL) {
 		printk("Not enough memory\n");
 		return;
 	}
-	params = kmalloc(sizeof(*params)*num_threads, 0, '1234');
+	params = kmalloc(sizeof(*params)*num_threads, GFP_KERNEL);
 	if (params == NULL) {
 		printk("Not enough memory\n");
 		return;
 	}
 
 	for (i=0;i<num_threads;i++) {
-		completions[i] = kmalloc(sizeof(struct completion), 0, '1234');
+		completions[i] = kmalloc(sizeof(struct completion), GFP_KERNEL);
 		if (completions[i] == NULL) {
 			printk("Not enough memory\n");
 			return;
 		}
 
 		init_completion(completions[i]);
-		params[i] = kmalloc(sizeof(struct params), 0, '1234');
+		params[i] = kmalloc(sizeof(struct params), GFP_KERNEL);
 		if (params[i] == NULL) {
 			printk("Not enough memory\n");
 			return;
@@ -922,7 +922,7 @@ static void workqueue_test(int argc, const char ** argv)
 		printk("could not allocate workqueue\n");
 		return;
 	}
-	obj = kmalloc(sizeof(*obj), 0, 'DRBD');
+	obj = kmalloc(sizeof(*obj), GFP_KERNEL);
 	if (obj == NULL) {
 		printk("could not allocate object\n");
 		return;
@@ -930,7 +930,7 @@ static void workqueue_test(int argc, const char ** argv)
 	obj->counter = 0;
 	INIT_WORK(&obj->work, workqueue_worker);
 
-	params = kmalloc(sizeof(*params)*num_threads, 0, 'DRBD');
+	params = kmalloc(sizeof(*params)*num_threads, GFP_KERNEL);
 	if (params == NULL) {
 		printk("Could not allocate params\n");
 		return;
@@ -1215,7 +1215,7 @@ static int malloc_free_task(void *unused)
 			printk("Round %d ...\n", j);
 
 		for (i=0; i<NUM_POINTERS; i++) {
-			pointers[i] = kmalloc(4096, 0, 'DRBD');
+			pointers[i] = kmalloc(4096, GFP_KERNEL);
 			if (pointers[i] == NULL) {
 				printk("Bad! Out of memory.\n");
 				return 1;
@@ -1254,7 +1254,7 @@ static void double_free_test(int argc, char ** argv)
 		break;
 
 	case KMALLOC:		/* might be IRQL BSOD */
-		p=kmalloc(4096, 0, 'DRBD');
+		p=kmalloc(4096, GFP_KERNEL);
 		if (p==NULL) {
 			printk("Oops. Out of memory.\n");
 			return;
@@ -1282,7 +1282,7 @@ static void double_free_test(int argc, char ** argv)
 		}
 		break;
 	case CORRUPTAFTER:
-		p=kmalloc(4096, 0, 'DRBD');
+		p=kmalloc(4096, GFP_KERNEL);
 		if (p==NULL) {
 			printk("Oops. Out of memory.\n");
 			return;
@@ -1326,7 +1326,7 @@ static void leak_test(int argc, char ** argv)
 
 	if (argc >= 2) {
 		bytes = my_atoi(argv[1]);
-		mem = kmalloc(bytes, 0, 'DRBD');
+		mem = kmalloc(bytes, GFP_KERNEL);
 		printk("Leaked %d bytes ...\n", bytes);
 	} else {
 		printk("Usage: windrbd run-test leak_test <size-in-bytes>\n");
@@ -1355,7 +1355,7 @@ void test_main(const char *arg)
 		argc++;
 		while (*s != ' ' && *s != '\0') s++;
 	}
-	argv = kmalloc(sizeof(*argv)*(argc+1), 0, 'DRBD');
+	argv = kmalloc(sizeof(*argv)*(argc+1), GFP_KERNEL);
 	if (argv == NULL) {
 		printk("Sorry no memory.\n");
 		goto kfree_arg_mutable;

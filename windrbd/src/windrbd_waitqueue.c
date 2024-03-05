@@ -4,6 +4,14 @@
 #endif
 #endif
 
+#include <linux/list.h>
+#include <linux/types.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <linux/jiffies.h>
+#include <linux/printk.h>
+
 /* This currently makes (at least) wsk receive thread BSOD... */
 // #define FORCE_TIMEOUT 1
 
@@ -64,12 +72,10 @@ if (timeout > 30000) { forced_timeout = true; timeout = 30000; }
 		 * So do a simple msleep() like wait.
 		 */
 
-enter_interruptible_debug(file, line, func);
 	if (num_wait_objects == 0)
 		status = KeDelayExecutionThread(KernelMode, FALSE, wait_time_p);
 	else
 		status = KeWaitForMultipleObjects(num_wait_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, wait_time_p, NULL);
-exit_interruptible_debug(file, line, func);
 
 	if (!NT_SUCCESS(status)) {
 		printk("Warning: KeWaitForMultipleObjects returned with status %x\n", status);
@@ -82,7 +88,6 @@ exit_interruptible_debug(file, line, func);
 	case STATUS_WAIT_1:
 		return -EINTR;		/* TODO: -ERESTARTSYS */
 	case STATUS_TIMEOUT:
-// printk("TIMED OUT after %d milliseconds (%s:%d %s()) wait queue entry is %p\n", timeout, file, line, func, e);
 		return -ETIMEDOUT;
 	}
 	return 0;	/* TODO: -EINVAL or some other error */
@@ -150,12 +155,9 @@ void prepare_to_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e
 	thread->wait_queue = w;
 	thread->wait_queue_entry = e;
 
-// printk("1 w is %p entry is %p called from %s:%d(%s)\n", w, e, file, line, func);
 	if (list_empty(&e->entry)) {
-// printk("2\n");
 		list_add(&e->entry, &w->head);
 	}
-// printk("3\n");
 	spin_unlock_irqrestore(&w->lock, flags);
 }
 
@@ -169,13 +171,10 @@ void finish_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, co
 	thread->wait_queue = NULL;
 	thread->wait_queue_entry = NULL;
 
-// printk("1 w is %p entry is %p called from %s:%d(%s)\n", w, e, file, line, func);
 	if (!list_empty(&e->entry)) {
-// printk("2\n");
 		list_del(&e->entry);
 		INIT_LIST_HEAD(&e->entry);
 	}
-// printk("3\n");
 	spin_unlock_irqrestore(&w->lock, flags);
 }
 
@@ -185,28 +184,19 @@ void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const c
 	struct wait_queue_entry *e, *e2;
 
 	spin_lock_irqsave(&q->lock, flags);
-// printk("wake_up_all %p %s:%d (%s())\n", q, file, line, func);
 	if (list_empty(&q->head)) {
-// printk("Warning: attempt to wake up all with no one waiting (%s:%d %s()) queue is %p.\n", file, line, func, q);
 		goto unlock_and_out;
 	}
 		/* Use safe version: entries might get deleted soon by
 		 * woken up waiters.
 		 */
 
-// printk("1\n");
-	list_for_each_entry_safe(struct wait_queue_entry, e, e2, &q->head, entry) {
-// printk("2 entry is at %p\n", e);
+	list_for_each_entry_safe(e, e2, &q->head, entry) {
 		KeSetEvent(&e->windows_event, 0, FALSE);
-// printk("2a\n");
 	}
-// printk("3\n");
 
 unlock_and_out:
-// printk("4\n");
-// printk("5\n");
 	spin_unlock_irqrestore(&q->lock, flags);
-// printk("6\n");
 }
 
 	/* This wakes up all non-exclusive tasks. Since we only have

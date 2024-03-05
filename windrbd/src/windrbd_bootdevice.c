@@ -8,6 +8,7 @@
 #include "drbd_url.h"
 
 #include <stdlib.h>
+#include <windrbd/windrbd_ioctl.h>
 
 /* TODO: test 3+ nodes setup: right now it fails booting (connection
    loss on boot) */
@@ -335,7 +336,7 @@ static struct node *get_this_node(struct drbd_params *p)
 {
 	struct node *n;
 
-        list_for_each_entry(struct node, n, &p->node_list, list) {
+        list_for_each_entry(n, &p->node_list, list) {
 		if (n->node_id == p->this_node_id)
 			return n;
 	}
@@ -366,8 +367,8 @@ static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 		return ret;
 
 	drbd_device = minor_to_device(this_node->volume.minor);
-	if (drbd_device != NULL && drbd_device->this_bdev != NULL)
-		drbd_device->this_bdev->is_bootdevice = 1;
+	if (drbd_device != NULL && drbd_device->vdisk->part0 != NULL)
+		drbd_device->vdisk->part0->is_bootdevice = 1;
 	else {
 		printk("internal error: cannot find drbd device for minor %d\n", this_node->volume.minor);
 		return -EINVAL;
@@ -426,7 +427,7 @@ static int windrbd_create_boot_device_stage2(void *pp)
    is wrong.
 */
 
-        list_for_each_entry(struct node, n, &p->node_list, list) {
+        list_for_each_entry(n, &p->node_list, list) {
 		if (n->node_id != p->this_node_id) {
 			if ((ret = new_peer(p->resource, n->hostname, n->node_id, p->protocol, &p->net)) != 0)
 				return ret;
@@ -440,7 +441,7 @@ static int windrbd_create_boot_device_stage2(void *pp)
 		}
 	}
 
-        list_for_each_entry(struct node, n, &p->node_list, list) {
+        list_for_each_entry(n, &p->node_list, list) {
 		if (n->node_id != p->this_node_id)
 			if ((ret = connect(p->resource, n->node_id)) != 0)
 				return ret;
@@ -519,7 +520,7 @@ char *copy_first_640k(void)
 		return NULL;
 	}
 
-	buf = kmalloc(LOWER_MEM_LENGTH, GFP_KERNEL, 'DRBD');
+	buf = kmalloc(LOWER_MEM_LENGTH, GFP_KERNEL);
 	if (buf == NULL)
 		return NULL;
 
@@ -607,7 +608,7 @@ int create_drbd_resource_from_url(const char *url)
 	int ret;
 	struct drbd_params *boot_device_params;
 
-	boot_device_params = kmalloc(sizeof(*boot_device_params), GFP_KERNEL, 'DRBD');
+	boot_device_params = kmalloc(sizeof(*boot_device_params), GFP_KERNEL);
 	if (boot_device_params == NULL) {
 		printk("Failed to allocate boot device params\n");
 		return -ENOMEM;

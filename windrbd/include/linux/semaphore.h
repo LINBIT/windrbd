@@ -7,4 +7,9 @@ struct semaphore {
     KSEMAPHORE sem;
 };
 
+extern void sema_init(struct semaphore *s, int limit);
+extern void down(struct semaphore *s);
+extern int down_trylock(struct semaphore *s);
+extern void up(struct semaphore *s);
+
 #endif

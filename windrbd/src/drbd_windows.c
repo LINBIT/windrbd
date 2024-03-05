@@ -101,8 +101,7 @@ NTAPI RtlRandomEx(
 #include <stdarg.h>
 #include <intrin.h>
 #include "linux/idr.h"
-#include "drbd_wrappers.h"
-#include "disp.h"
+#include "windrbd_internal.h"
 
 #define MAX_IDR_SHIFT		(sizeof(int) * 8 - 1)
 #define MAX_IDR_BIT		(1U << MAX_IDR_SHIFT)

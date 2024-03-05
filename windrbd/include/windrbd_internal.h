@@ -19,10 +19,10 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#ifndef MVF_DISP_H
-#define MVF_DISP_H
+#ifndef _WINDRBD_INT_H
+#define _WINDRBD_INT_H
 
-#include <mountdev.h>
+#include <ntddk.h>
 
 extern NTSTATUS mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject);
 

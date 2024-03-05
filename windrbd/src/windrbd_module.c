@@ -1,5 +1,5 @@
 #include <linux/module.h>
-#include <disp.h>	/* for root device object */
+#include <windrbd_internal.h>	/* for root device object */
 #include "windrbd_version.h"
 
 	/* undef this to disable driver unload */

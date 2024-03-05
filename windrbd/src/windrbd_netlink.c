@@ -31,7 +31,7 @@ static struct mutex genl_drbd_mutex;
 static struct genl_reply *find_reply(u32 portid)
 {
 	struct genl_reply *g;
-	list_for_each_entry(struct genl_reply, g, &reply_buffers, list) {
+	list_for_each_entry(g, &reply_buffers, list) {
 		if (g->portid == portid)
 			return g;
 	}
@@ -43,7 +43,7 @@ static struct genl_reply *find_or_create_reply(u32 portid)
 	struct genl_reply *g;
 	g = find_reply(portid);
 	if (g == NULL) {
-		g = kmalloc(sizeof(*g), 0, 'DRBD');
+		g = kmalloc(sizeof(*g), GFP_KERNEL);
 		if (g == NULL)
 			return NULL;
 		g->portid = portid;
@@ -57,7 +57,7 @@ static struct genl_reply_buffer *new_buffer(struct genl_reply *r)
 {
 	struct genl_reply_buffer *b;
 
-	b = kmalloc(sizeof(*b), 0, 'DRBD');
+	b = kmalloc(sizeof(*b), GFP_KERNEL);
 	if (b == NULL)
 		return NULL;
 
@@ -280,7 +280,7 @@ static int do_genlmsg_unicast(struct sk_buff *skb, u32 portid)
 	if (buffer == NULL)
 		goto out_mutex;
 
-	buffer->buf = kmalloc(skb->len, 0, 'DRBD');
+	buffer->buf = kmalloc(skb->len, GFP_KERNEL);
 	if (buffer->buf == NULL)
 		goto out_mutex;
 		/* TODO: clean up. */
@@ -312,7 +312,7 @@ static int do_genl_multicast(struct sk_buff *skb, const char *group_name)
 
 	ret = 0;
 	mutex_lock(&genl_multicast_mutex);
-	list_for_each_entry(struct genl_multicast_element, m, &multicast_elements, list) {
+	list_for_each_entry(m, &multicast_elements, list) {
 		if (strncmp(m->name, group_name, sizeof(m->name)) == 0) {
 			ret = do_genlmsg_unicast(skb, m->portid);
 			if (ret != 0)
@@ -338,9 +338,8 @@ int drbd_genl_multicast_events(struct sk_buff * skb, gfp_t flags)
 }
 */
 
-int genlmsg_multicast(const struct genl_family *family,
-			    struct sk_buff *skb, u32 portid,
-			    unsigned int group, gfp_t flags)
+int genlmsg_multicast(struct sk_buff *skb, u32 portid,
+		      unsigned int group, gfp_t flags)
 {
 	return do_genl_multicast(skb, "events");
 }
@@ -349,7 +348,7 @@ int windrbd_join_multicast_group(u32 portid, const char *name, struct _FILE_OBJE
 {
 	struct genl_multicast_element *m;
 
-	m = kmalloc(sizeof(*m), 0, 'DRBD');
+	m = kmalloc(sizeof(*m), GFP_KERNEL);
 	if (m == NULL)
 		return -ENOMEM;
 
@@ -382,11 +381,11 @@ int windrbd_delete_multicast_groups_for_file(struct _FILE_OBJECT *f)
 
 static struct genl_info *genl_info_new(struct nlmsghdr * nlh)
 {
-	struct genl_info *info = kzalloc(sizeof(*info), 0, 'DRBD');
+	struct genl_info *info = kzalloc(sizeof(*info), GFP_KERNEL);
 	if (!info)
 		return NULL;
 
-	info->attrs = kmalloc(sizeof(*info->attrs)*DRBD_MAX_ATTRS, 0, 'DRBD');
+	info->attrs = kmalloc(sizeof(*info->attrs)*DRBD_MAX_ATTRS, GFP_KERNEL);
 	if (!info->attrs) {
 		kfree(info);
 		return NULL;
@@ -405,7 +404,7 @@ struct sk_buff *genlmsg_new(size_t payload, gfp_t flags)
 {
 	struct sk_buff *skb;
 
-	skb = kzalloc(sizeof(*skb) + payload, GFP_KERNEL, '67DW');
+	skb = kzalloc(sizeof(*skb) + payload, GFP_KERNEL);
 	if (skb == NULL)
 		return NULL;
 
@@ -650,6 +649,8 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 		/* else nothing. Users commonly have a drbdadm status every
 		 * second or so if we log here, logfiles will be cluttered.
 		 */
+
+#define CMD_TIMEOUT_SHORT_DEF 5 /* will go away soon */
 
 		/* TODO: is this mutex needed at all? */
 	status = mutex_lock_timeout(&genl_drbd_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
