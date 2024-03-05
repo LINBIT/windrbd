@@ -10,6 +10,8 @@ default: windrbd.sys
 # default: all
 # default: package
 
+# TODO: compile with -Wall
+
 help:
 	@echo "                        WinDRBD 1.2 build help"
 	@echo "                        ----------------------"
@@ -176,7 +178,7 @@ ifndef REACTOS
 OPTIMIZE=-O2
 endif
 
-CFLAGS=-g $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
+CFLAGS=-g -Wall $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
 
 all: windrbd.sys windrbd.cat
 
@@ -264,7 +266,7 @@ NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*))
 DRBD_HEADERS := $(shell find drbd -name "*.h")
 DRBD_TMP_HEADERS := $(patsubst drbd%,drbd-tmp%,$(DRBD_HEADERS))
 
-drbd-tmp/%.h: drbd/%.h
+drbd-tmp/%.h: drbd/%.h $(NEW_TRANSFORMATIONS)
 	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi
 	mkdir -p $(shell dirname $@) && cp $< $@
 	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
@@ -287,7 +289,7 @@ ifeq ($(MAKECMDGOALS),$(filter-out clean,$(MAKECMDGOALS)))
 -include $(all-dep)
 endif
 
-drbd-tmp/%.c: drbd/%.c
+drbd-tmp/%.c: drbd/%.c $(NEW_TRANSFORMATIONS)
 	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi
 	mkdir -p drbd-tmp/drbd &&  cp $< $@
 	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
