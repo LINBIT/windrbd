@@ -5,7 +5,7 @@ int foo(long bar)
 	return bar;
 }
 
-int lebt(int zak, long bar)
+int lebt(int zak, unsigned long bar)
 {
 	return bar;
 }
