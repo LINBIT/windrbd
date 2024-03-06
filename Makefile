@@ -261,7 +261,7 @@ install:
 # subdirectory and also generates dependency files (*.d) for the
 # Makefile.
 
-NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*))
+NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*.cocci))
 
 DRBD_HEADERS := $(shell find drbd -name "*.h")
 DRBD_TMP_HEADERS := $(patsubst drbd%,drbd-tmp%,$(DRBD_HEADERS))
