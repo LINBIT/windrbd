@@ -5,5 +5,6 @@ identifier F;
   F(
   ...,
 - long P
-+ int P
++ ULONG_PTR P
+  ,...
   ) { ... }
