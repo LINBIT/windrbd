@@ -10,7 +10,7 @@ int lebt(int zak, unsigned long bar)
 	return bar;
 }
 
-long nicht(int oder, long was, int schon)
+long nicht(int oder, unsigned long was, int schon)
 {
-	return was;
+	return (unsigned long) was;
 }
