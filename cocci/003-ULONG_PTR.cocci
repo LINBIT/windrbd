@@ -1,35 +1,12 @@
 @@
-identifier I;
+typedef ULONG_PTR;
 @@
-<...
--  unsigned long I;
-+  ULONG_PTR I;
-...>
+-  unsigned long
++  ULONG_PTR
 
 @@
-identifier I;
-expression E;
+typedef LONG_PTR;
 @@
-<...
--  unsigned long I = E;
-+  ULONG_PTR I = E;
-...>
+-  long
++  LONG_PTR
 
-/*
-@ funcret @
-identifier F;
-@@
-- unsigned long F(...) { ... }
-+ ULONG_PTR F(...) { ... }
-*/
-
-@ funcparams @
-identifier P;
-identifier F;
-@@
-  F(
-  ...,
-- unsigned long P
-+ ULONG_PTR P
-  ,...
-  ) { ... }
