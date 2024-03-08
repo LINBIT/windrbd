@@ -10,8 +10,6 @@ default: windrbd.sys
 # default: all
 # default: package
 
-# TODO: compile with -Wall
-
 help:
 	@echo "                        WinDRBD 1.2 build help"
 	@echo "                        ----------------------"
@@ -196,7 +194,7 @@ versioninfo:
 .PHONY: windrbd.sys
 .PHONY: windrbd.cat
 
-# drbd-tmp/drbd/drbd_buildtag.c: versioninfo
+drbd-tmp/drbd/drbd_buildtag.c drbd-tmp/drbd/windrbd_version.h &: versioninfo
 
 device-mapper: $(DEVICE_MAPPER_OBJS)
 
@@ -271,19 +269,31 @@ drbd-tmp/%.h: drbd/%.h $(NEW_TRANSFORMATIONS)
 	mkdir -p $(shell dirname $@) && cp $< $@
 	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
 
+all-dep := $(filter-out drbd-tmp/drbd/drbd_buildtag.d,$(OBJS:%.o=%.d))
+# all-dep := $(OBJS:%.o=%.d)
+
+# Do not delete this intermediate files:
+$(all-dep) :
+
 # TODO: should we depend on DRBD_TMP_HEADERS here? This makes
 # make copy all the headers over to drbd-tmp and patch them..
 # Alternative is to use -MG (and not explicitly depend).
 # from make documentation, automatic prerequisites
+#
+# Also do not regenerate drbd-tmp/drbd/drbd_buildtag.d this would
+# trigger drbd_buildtag.c being rebuilt which also depends on
+# version info and then we loop...
+#
 %.d: %.c $(DRBD_TMP_HEADERS)
-	set -e; rm -f $@; \
-	$(CC) -MM -MT $(patsubst %.c,%.o,$<)  $(CFLAGS) $< > $@.$$$$; \
-	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
+	if [ $@ != drbd-tmp/drbd/drbd_buildtag.d ] ; then \
+		set -e; rm -f $@; \
+		$(CC) -MM -MT $(patsubst %.c,%.o,$<)  $(CFLAGS) $< > $@.$$$$; \
+		sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+		rm -f $@.$$$$ ; \
+	fi
 
+# Do not delete the temporary headers when restarting make:
 $(DRBD_TMP_HEADERS):
-
-all-dep := $(filter-out drbd_buildtag.d,$(OBJS:%.o=%.d))
 
 ifeq ($(MAKECMDGOALS),$(filter-out clean,$(MAKECMDGOALS)))
 -include $(all-dep)
