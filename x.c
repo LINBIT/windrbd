@@ -2,6 +2,7 @@
 
 int foo(long bar)
 {
+	int i = 1UL;
 	return bar;
 }
 
