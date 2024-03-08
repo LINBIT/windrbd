@@ -11,7 +11,7 @@ In progress: Spinlocks that are locked and unlocked within the same function mus
 
 TODO: The flag for the IRQ level should be of type KIRQL
 
-TODO: replace all unsigned long -> ULONG_PTR and long -> LONG_PTR
+Done: replace all unsigned long -> ULONG_PTR and long -> LONG_PTR
 also in macros
 
 TODO: Change UL postfix to ULL (64 bit only)
