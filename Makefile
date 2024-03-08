@@ -130,8 +130,6 @@ DEFINES+=-D_WIN64
 endif
 
 WINDRBD_INCLUDES=-I"windrbd/include" -I"drbd-tmp/drbd" -I"drbd-tmp/drbd/drbd-headers" -I"drbd-tmp/drbd/drbd-kernel-compat"
-DEVICE_MAPPER_INCLUDES=-I"windrbd/include" -I"linux/drivers/md"
-
 MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk
 
 DRBD_TMPDIR=./drbd-tmp/drbd/
@@ -142,9 +140,6 @@ DRBD_SOURCES += drbd_interval.c drbd_state.c drbd_kref_debug.c
 DRBD_SOURCES += drbd_nla.c drbd_transport.c drbd_transport_tcp.c kref_debug.c drbd_buildtag.c drbd_bitmap.c drbd_proc.c
 
 TMP_DRBD_FILES = $(addprefix $(DRBD_TMPDIR), $(DRBD_SOURCES))
-
-DEVICE_MAPPER_SOURCES=dm.c
-DEVICE_MAPPER_FILES = $(addprefix linux/drivers/md/, $(DEVICE_MAPPER_SOURCES))
 
 WINDRBD_SRCDIR = ./windrbd/src/
 WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
@@ -162,8 +157,6 @@ OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES))
 COFFRES=./windrbd/windrbd-event-log.coffres ./drbd-tmp/drbd/resource.coffres
 # This was just an attempt to compile one device mapper file.
 # It completed with about 200 compile errors which is not that bad.
-DEVICE_MAPPER_OBJS=$(patsubst %.c,%.o,$(DEVICE_MAPPER_FILES))
-
 LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
 
 CFLAGS_FOR_DRIVERS=-fPIC -fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -mno-stack-arg-probe
@@ -195,8 +188,6 @@ versioninfo:
 .PHONY: windrbd.cat
 
 drbd-tmp/drbd/drbd_buildtag.c drbd-tmp/drbd/windrbd_version.h &: versioninfo
-
-device-mapper: $(DEVICE_MAPPER_OBJS)
 
 windrbd.sys: versioninfo $(TMP_DRBD_FILES) $(OBJS) $(COFFRES)
 	$(CC) -o windrbd.sys-unsigned $(OBJS) $(COFFRES) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
@@ -303,3 +294,17 @@ drbd-tmp/%.c: drbd/%.c $(NEW_TRANSFORMATIONS)
 	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi
 	mkdir -p drbd-tmp/drbd &&  cp $< $@
 	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
+
+# experimental device mapper build
+DEVICE_MAPPER_SOURCES=dm.c
+DEVICE_MAPPER_FILES = $(addprefix linux/drivers/md/, $(DEVICE_MAPPER_SOURCES))
+DEVICE_MAPPER_OBJS=$(patsubst %.c,%.o,$(DEVICE_MAPPER_FILES))
+
+# DEVICE_MAPPER_INCLUDES=-I"linux/arch/x86/include" -I"linux/include" -I"linux/drivers/md"
+DEVICE_MAPPER_INCLUDES=-nostdinc -I./linux/arch/x86/include -I./linux/arch/x86/include/generated  -I./linux/include -I./linux/arch/x86/include/uapi -I./linux/arch/x86/include/generated/uapi -I./linux/include/uapi -I./linux/include/generated/uapi -include ./linux/include/linux/compiler-version.h -include ./linux/include/linux/kconfig.h -include ./linux/include/linux/compiler_types.h
+DEFINES=-D__KERNEL__ -DKBUILD_MODFILE='"drivers/md/dm-mod"' -DKBUILD_BASENAME='"dm"' -DKBUILD_MODNAME='"dm_mod"' -D__KBUILD_MODNAME=kmod_dm_mod
+# CFLAGS=-g -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(DEVICE_MAPPER_INCLUDES) $(MINGW_INCLUDES)
+CFLAGS=-g -Wall $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(DEVICE_MAPPER_INCLUDES) $(MINGW_INCLUDES)
+
+device-mapper: $(DEVICE_MAPPER_OBJS)
+
