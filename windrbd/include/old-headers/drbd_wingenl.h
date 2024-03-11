@@ -1,17 +1,9 @@
 ﻿#ifndef __DRBD_WINGENL_H__
 #define __DRBD_WINGENL_H__
 
-/* TODO: move this into include/linux */
-/* Enable all warnings throws lots of those warnings: */
-#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032  4711 5045)
-
 #include <ntddk.h>
 #include <wsk.h>
 #include <linux/list.h>
-#if 0
-#include "windows/wingenl.h"
-#endif
-// #include "drbd_windows.h"
 
 struct sk_buff
 {
