@@ -19,8 +19,7 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-// #include <Ntifs.h>
-#include <ntddk.h>
+#include <linux/types.h>
 #include <stdlib.h>
 
 #include "drbd_int.h"

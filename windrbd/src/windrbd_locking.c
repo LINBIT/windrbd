@@ -24,8 +24,8 @@
  * handling routines and routines to control IRQL directly.
  */
 
+#include <linux/types.h>
 #include "windrbd_config.h"
-#include <ntddk.h>
 #include <linux/mutex.h>
 #include <linux/sched.h>
 #include <linux/semaphore.h>

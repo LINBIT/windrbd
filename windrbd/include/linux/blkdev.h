@@ -285,7 +285,7 @@ struct block_device {
 	unsigned long long d_size;
 	struct kref kref;
 
-	struct inode *bd_inode;	/* will die */
+	struct inode *bd_inode;
 
 	struct disk_stats bd_stats;
 
@@ -457,5 +457,40 @@ struct block_device_operations {
 
 #define disk_to_dev(disk) \
 	(disk)->part0
+
+/**
+ * bio_start_io_acct - start I/O accounting for bio based drivers
+ * @bio:	bio to start account for
+ *
+ * Returns the start time that should be passed back to bio_end_io_acct().
+ * TODO: not implemented.
+ */
+static inline unsigned long bio_start_io_acct(struct bio *bio)
+{
+	return 0;
+}
+
+/**
+ * bio_end_io_acct - end I/O accounting for bio based drivers
+ * @bio:	bio to end account for
+ * @start:	start time returned by bio_start_io_acct()
+ * TODO: not implemented.
+ */
+static inline void bio_end_io_acct(struct bio *bio, unsigned long start_time)
+{
+}
+
+/* TODO: this function does not exist any more (kernel 6.8) */
+extern int generic_make_request(struct bio *bio);
+
+static inline int submit_bio(struct bio *bio)
+{
+	return generic_make_request(bio);
+}
+
+static inline int submit_bio_noacct(struct bio *bio)
+{
+	return generic_make_request(bio);
+}
 
 #endif

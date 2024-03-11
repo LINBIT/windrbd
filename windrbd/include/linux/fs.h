@@ -1,6 +1,8 @@
 #ifndef _FS_H
 #define _FS_H
 
+#include <linux/blkdev.h>
+
 /* file is open for reading */
 #define FMODE_READ				    0x1
 /* file is open for writing */
@@ -16,6 +18,15 @@ static inline int bd_link_disk_holder(struct block_device *bdev,
 static inline void bd_unlink_disk_holder(struct block_device *bdev,
 					 struct gendisk *disk)
 {
+}
+
+struct inode {
+	loff_t i_size;
+};
+
+static inline loff_t i_size_read(const struct inode *inode)
+{
+	return inode->i_size;
 }
 
 #endif

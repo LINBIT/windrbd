@@ -99,37 +99,6 @@ enum
 	KERN_DEBUG_NUM
 };
 
-
-void flush_all_cpu_caches(void);
-
-#define smp_mb() flush_all_cpu_caches()
-#define smp_rmb() flush_all_cpu_caches()
-#define smp_wmb() flush_all_cpu_caches()
-
-
-#define	atomic_inc_return64(_p)		InterlockedIncrement64((unsigned long long volatile*)(_p))
-#define	atomic_dec_return64(_p)		InterlockedDecrement64((unsigned long long volatile*)(_p))
-#define atomic_inc64(_v)		atomic_inc_return64(_v)
-#define atomic_dec64(_v)		atomic_dec_return64(_v)
-
-extern LONG_PTR xchg(LONG_PTR *target, LONG_PTR value);
-extern void atomic_set(atomic_t *v, int i);
-extern void atomic_add(int i, atomic_t *v);
-extern void atomic_add64(LONGLONG a, atomic_t64 *v);
-extern int atomic_add_return(int i, atomic_t *v);
-extern void atomic_sub(int i, atomic_t *v);
-extern void atomic_sub64(LONGLONG a, atomic_t64 *v);
-extern int atomic_sub_return(int i, atomic_t *v);
-extern LONGLONG atomic_sub_return64(LONGLONG a, atomic_t64 *v);
-extern int atomic_dec_and_test(atomic_t *v);
-extern int atomic_sub_and_test(int i, atomic_t *v);
-extern int atomic_cmpxchg(atomic_t *v, int old, int new);
-extern int atomic_read(const atomic_t *v);
-extern LONGLONG atomic_read64(const atomic_t64 *v);
-extern int atomic_xchg(atomic_t *v, int n);
-
-#define WARN_ON(x)				__noop
-
 #define RELATIVE(wait) (-(wait))
 
 #define NANOSECONDS(nanos) \
@@ -259,85 +228,10 @@ struct bio;
 void init_free_bios(void);
 void shutdown_free_bios(void);
 
-extern struct bio *bio_clone(struct bio *, int x);
-/* This is patched out of DRBD, patch it in again when implemented.
- * Careful: this is also a #define in drbd_wrappers expect funny things
- * to happen.
-extern struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs);
- */
-extern struct bio_pair *bio_split(struct bio *bi, int first_sectors);
-extern void bio_pair_release(struct bio_pair *dbio);
-extern struct bio_set *bioset_create(unsigned int, unsigned int);
-extern void bioset_free(struct bio_set *);
-#ifdef BIO_ALLOC_DEBUG
-extern struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, ULONG tag, char *file, int line, char *func);
-#define bio_alloc(a, b, c) bio_alloc_debug(a, b, c, __FILE__, __LINE__, __func__)
-#else
-extern struct bio *bio_alloc(gfp_t, int, ULONG);
-#endif
-
-extern struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unused);
-
-
 	/* To be called at the beginning of conn_disconnect, else
 	 * BSOD.
 	 */
 extern int wait_for_bios_to_complete(struct block_device *bdev);
-
-#ifdef BIO_REF_DEBUG
-
-extern void bio_get_debug(struct bio *bio, const char *file, int line, const char *func);
-extern void bio_put_debug(struct bio *bio, const char *file, int line, const char *func);
-
-#define bio_get(bio) bio_get_debug(bio, __FILE__, __LINE__, __func__)
-#define bio_put(bio) bio_put_debug(bio, __FILE__, __LINE__, __func__)
-#else
-static inline void bio_get(struct bio *bio)
-{
-	atomic_inc(&bio->bi_cnt);
-}
-extern void bio_put(struct bio *);
-#endif
-
-extern void bio_free(struct bio *bio); 
-// extern int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset);
-extern int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsigned int offset, char *file, int line, char *func);
-#define bio_add_page(bio, page, len, offset) \
-    bio_add_page_debug(bio, page, len, offset, __FILE__, __LINE__, __func__) 
-extern void bio_endio(struct bio *bio);
-
-/**
- * bio_start_io_acct - start I/O accounting for bio based drivers
- * @bio:	bio to start account for
- *
- * Returns the start time that should be passed back to bio_end_io_acct().
- * TODO: not implemented.
- */
-static inline unsigned long bio_start_io_acct(struct bio *bio)
-{
-	return 0;
-}
-
-/**
- * bio_end_io_acct - end I/O accounting for bio based drivers
- * @bio:	bio to end account for
- * @start:	start time returned by bio_start_io_acct()
- * TODO: not implemented.
- */
-static inline void bio_end_io_acct(struct bio *bio, unsigned long start_time)
-{
-}
-
-int generic_make_request(struct bio *bio);
-static inline int submit_bio(struct bio *bio)
-{
-	return generic_make_request(bio);
-}
-
-static inline int submit_bio_noacct(struct bio *bio)
-{
-	return generic_make_request(bio);
-}
 
 /* Attention: The backward comp version of this macro accesses bio from
    calling namespace */

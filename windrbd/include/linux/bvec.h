@@ -2,6 +2,7 @@
 #define _BVEC_H
 
 #include <linux/types.h>
+#include <linux/printk.h>
 
 /* from: linux/bvec.h */
 

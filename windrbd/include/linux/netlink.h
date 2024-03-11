@@ -784,6 +784,8 @@ static inline ssize_t genlmsg_end(struct sk_buff *skb, void *hdr)
     return nlmsg_end(skb, (void*)((ULONG_PTR)hdr - GENL_HDRLEN - NLMSG_HDRLEN) );
 }
 
+extern int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info);
+
 static inline int genlmsg_reply(struct sk_buff *skb, struct genl_info *info)
 {
 	return genlmsg_unicast(skb, info);
@@ -798,7 +800,6 @@ static inline void *genlmsg_data(const struct genlmsghdr *gnlh)
     return ((unsigned char *)gnlh + GENL_HDRLEN);
 }
 
-extern int genlmsg_unicast(struct sk_buff *skb, struct genl_info *info);
 extern int genlmsg_multicast(struct sk_buff *skb, u32 portid,
 			    unsigned int group, gfp_t flags);
 

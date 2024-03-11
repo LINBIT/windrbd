@@ -49,6 +49,24 @@ static inline void bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
 
 #define bio_iter_last(bvec, iter) ((iter).bi_size == (bvec).bv_len)
 
+/* TODO: this is mainly unimplemented: */
+
+struct bio_set {
+	mempool_t *bio_pool;
+};
+
+extern struct bio *bio_clone(struct bio *, int x);
+extern struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unused);
+extern struct bio_set *bioset_create(unsigned int, unsigned int);
+extern void bioset_free(struct bio_set *);
+
+#ifdef BIO_ALLOC_DEBUG
+extern struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, char *file, int line, char *func);
+#define bio_alloc(a, b) bio_alloc_debug(a, b, __FILE__, __LINE__, __func__)
+#else
+extern struct bio *bio_alloc(gfp_t, int);
+#endif
+
 static inline void bioset_exit(struct bio_set *b)
 {
 	bioset_free(b);
@@ -64,8 +82,26 @@ enum {
 	BIOSET_PERCPU_CACHE = 4,
 };
 
-struct bio_set {
-	mempool_t *bio_pool;
-};
+#ifdef BIO_REF_DEBUG
+
+extern void bio_get_debug(struct bio *bio, const char *file, int line, const char *func);
+extern void bio_put_debug(struct bio *bio, const char *file, int line, const char *func);
+
+#define bio_get(bio) bio_get_debug(bio, __FILE__, __LINE__, __func__)
+#define bio_put(bio) bio_put_debug(bio, __FILE__, __LINE__, __func__)
+#else
+static inline void bio_get(struct bio *bio)
+{
+	atomic_inc(&bio->bi_cnt);
+}
+extern void bio_put(struct bio *);
+#endif
+
+extern void bio_free(struct bio *bio); 
+// extern int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset);
+extern int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsigned int offset, char *file, int line, char *func);
+#define bio_add_page(bio, page, len, offset) \
+    bio_add_page_debug(bio, page, len, offset, __FILE__, __LINE__, __func__) 
+extern void bio_endio(struct bio *bio);
 
 #endif

@@ -1,4 +1,3 @@
-#include <ntddk.h>
 #include <linux/types.h>	/* for bool */
 
 #define MAX_TIKTOKS 50

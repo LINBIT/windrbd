@@ -23,6 +23,11 @@ void kmem_cache_destroy(struct kmem_cache *cache)
 	kfree(cache);
 }
 
+unsigned int kmem_cache_size(struct kmem_cache *s)
+{
+	return s->element_size;
+}
+
 #ifndef KMEM_CACHE_DEBUG
 
 void *kmem_cache_alloc(struct kmem_cache * cache, int flag)

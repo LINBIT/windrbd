@@ -2,7 +2,10 @@
 #define BLK_TYPES_H
 
 #include <linux/types.h>
+#include <linux/list.h>
 #include <linux/bvec.h>
+#include <linux/mutex.h>
+#include <linux/bitops.h>
 
 typedef u8 blk_status_t;
 

@@ -30,5 +30,8 @@ struct kref {
 #include <asm/current.h>
 #include <linux/err.h>
 #include <linux/atomic.h>
+#include <asm-generic/bug.h>
+#include <asm-generic/barrier.h>
+#include <linux/prefetch.h>
 
 #endif

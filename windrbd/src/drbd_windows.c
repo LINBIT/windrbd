@@ -28,14 +28,11 @@
 #endif
 #endif
 
+#include <linux/types.h>
+
 #include <initguid.h>
 
-// #include <wdmsec.h>
-// #include <ntdddisk.h>
-#include <ntddk.h>
 #include <wdmguid.h>
-// #include <ntddstor.h>
-// #include <IoEvent.h>
 
 #include <mountmgr.h>
 #include "drbd_int.h"
@@ -486,6 +483,11 @@ int atomic_cmpxchg(atomic_t *v, int old, int new)
 	return InterlockedCompareExchange((LONG_PTR *)v, new, old);
 }
 
+int cmpxchg(ULONG_PTR *v, int old, int new)
+{
+	return InterlockedCompareExchange(v, new, old);
+}
+
 int atomic_xchg(atomic_t *v, int n)
 {
 	return InterlockedExchange((LONG*)v, n);
@@ -811,9 +813,9 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs)
 
 #ifdef BIO_ALLOC_DEBUG
 
-struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, ULONG tag, char *file, int line, char *func)
+struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, char *file, int line, char *func)
 {
-	struct bio *bio = bio_alloc_ll(mask, nr_iovecs, tag);
+	struct bio *bio = bio_alloc_ll(mask, nr_iovecs);
 
 // printk("allocating bio at %p from %s:%d(%s)\n", bio, file, line, func);
 	if (bio) {
@@ -2382,45 +2384,6 @@ void list_del_init(struct list_head *entry)
 	__list_del_entry(entry);
 	INIT_LIST_HEAD(entry);
 }
-
-int hlist_unhashed(const struct hlist_node *h)
-{
-	return !h->pprev;
-}
-
-void __hlist_del(struct hlist_node *n)
-{
-	struct hlist_node *next = n->next;
-	struct hlist_node **pprev = n->pprev;
-	*pprev = next;
-	if (next)
-		next->pprev = pprev;
-}
-
-void INIT_HLIST_NODE(struct hlist_node *h)
-{
-    h->next = NULL;
-    h->pprev = NULL;
-}
-
-void hlist_del_init(struct hlist_node *n)
-{
-	if (!hlist_unhashed(n)) {
-		__hlist_del(n);
-		INIT_HLIST_NODE(n);
-	}
-}
-
-void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
-{
-	struct hlist_node *first = h->first;
-	n->next = first;
-	if (first)
-		first->pprev = &n->next;
-	h->first = n;
-	n->pprev = &h->first;
-}
-
 
 #include <linux/crc32c.h>
 

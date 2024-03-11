@@ -19,11 +19,10 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-/* Enable all warnings throws lots of those warnings: */
+#include <linux/types.h>
 
 #include "windrbd_config.h"
 
-#include <ntddk.h>
 #include <initguid.h>
 #include <devguid.h>
 #include "windrbd_internal.h"

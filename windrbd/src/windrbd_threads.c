@@ -7,7 +7,6 @@
 #endif
 #endif
 
-#include <ntddk.h>
 #include <linux/spinlock.h>
 #include <linux/types.h>
 #include <linux/sched.h>

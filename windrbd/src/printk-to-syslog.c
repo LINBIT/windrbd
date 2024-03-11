@@ -1,4 +1,4 @@
-#include <ntddk.h>
+#include <linux/types.h>
 #include <linux/net.h>
 #include <linux/socket.h>
 

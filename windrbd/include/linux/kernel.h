@@ -9,7 +9,10 @@
 #define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 #endif
 
-#define ULLONG_MAX	(~0ULL)
+/* defined in stdlib.h which is included by some reactos header.
+ * which is TODO: probably not a good idea.
+ */
+// #define ULLONG_MAX	(~0ULL)
 
 /* We have neither typeof() nor blocks in macros. So we define
  * this as a function. If you need signed values, you need to

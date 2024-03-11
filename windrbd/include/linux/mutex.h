@@ -1,7 +1,7 @@
 #ifndef __LINUX_MUTEX_H
 #define __LINUX_MUTEX_H
 
-#include <ntddk.h>
+#include <linux/types.h>
 
 struct mutex {
 	KMUTEX mtx;

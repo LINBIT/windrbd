@@ -1,6 +1,21 @@
 #ifndef ATOMIC_H
 #define ATOMIC_H
 
+#include <linux/types.h>
+
+extern LONG_PTR xchg(LONG_PTR *target, LONG_PTR value);
+extern void atomic_set(atomic_t *v, int i);
+extern void atomic_add(int i, atomic_t *v);
+extern int atomic_add_return(int i, atomic_t *v);
+extern void atomic_sub(int i, atomic_t *v);
+extern int atomic_sub_return(int i, atomic_t *v);
+extern int atomic_dec_and_test(atomic_t *v);
+extern int atomic_sub_and_test(int i, atomic_t *v);
+extern int atomic_cmpxchg(atomic_t *v, int old, int new);
+extern int cmpxchg(ULONG_PTR *v, int old, int new);
+extern int atomic_read(const atomic_t *v);
+extern int atomic_xchg(atomic_t *v, int n);
+
 #define	atomic_inc_return(_p)		InterlockedIncrement((LONG volatile*)(_p))
 #define	atomic_dec_return(_p)		InterlockedDecrement((LONG volatile*)(_p))
 #define atomic_inc(_v)			atomic_inc_return(_v)

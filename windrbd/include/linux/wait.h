@@ -1,7 +1,7 @@
 ﻿#ifndef __WAIT_H__
 #define __WAIT_H__
 
-#include <ntddk.h>
+#include <linux/types.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
 #include <linux/sched.h>

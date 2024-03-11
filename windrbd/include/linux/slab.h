@@ -3,10 +3,6 @@
 
 #include <linux/types.h>	/* for size_t, ... */
 #include <linux/gfp.h>		/* for GFP_xxx macros, ... */
-/*
-#include <ntddk.h>
-#include "drbd_windows.h"
-*/
 
 #ifdef KMALLOC_DEBUG
 #include "kmalloc_debug.h"
@@ -45,6 +41,8 @@ struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align
 				     ULONG_PTR flags,
 				     void (*ctor)(void *));
 void kmem_cache_destroy(struct kmem_cache *cache);
+
+unsigned int kmem_cache_size(struct kmem_cache *s);
 
 
 #ifndef KMEM_CACHE_DEBUG
