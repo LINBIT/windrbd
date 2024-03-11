@@ -301,10 +301,11 @@ DEVICE_MAPPER_FILES = $(addprefix linux/drivers/md/, $(DEVICE_MAPPER_SOURCES))
 DEVICE_MAPPER_OBJS=$(patsubst %.c,%.o,$(DEVICE_MAPPER_FILES))
 
 # DEVICE_MAPPER_INCLUDES=-I"linux/arch/x86/include" -I"linux/include" -I"linux/drivers/md"
-DEVICE_MAPPER_INCLUDES=-nostdinc -I./linux/arch/x86/include -I./linux/arch/x86/include/generated  -I./linux/include -I./linux/arch/x86/include/uapi -I./linux/arch/x86/include/generated/uapi -I./linux/include/uapi -I./linux/include/generated/uapi -include ./linux/include/linux/compiler-version.h -include ./linux/include/linux/kconfig.h -include ./linux/include/linux/compiler_types.h
-DEFINES=-D__KERNEL__ -DKBUILD_MODFILE='"drivers/md/dm-mod"' -DKBUILD_BASENAME='"dm"' -DKBUILD_MODNAME='"dm_mod"' -D__KBUILD_MODNAME=kmod_dm_mod
+# DEVICE_MAPPER_INCLUDES=-nostdinc -I./linux/arch/x86/include -I./linux/arch/x86/include/generated  -I./linux/include -I./linux/arch/x86/include/uapi -I./linux/arch/x86/include/generated/uapi -I./linux/include/uapi -I./linux/include/generated/uapi -include ./linux/include/linux/compiler-version.h -include ./linux/include/linux/kconfig.h -include ./linux/include/linux/compiler_types.h
+# DEFINES=-D__KERNEL__ -DKBUILD_MODFILE='"drivers/md/dm-mod"' -DKBUILD_BASENAME='"dm"' -DKBUILD_MODNAME='"dm_mod"' -D__KBUILD_MODNAME=kmod_dm_mod
 # CFLAGS=-g -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(DEVICE_MAPPER_INCLUDES) $(MINGW_INCLUDES)
-CFLAGS=-g -Wall $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(DEVICE_MAPPER_INCLUDES) $(MINGW_INCLUDES)
+# To compile device-mapper uncomment this:
+# CFLAGS=-g -Wall $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(DEVICE_MAPPER_INCLUDES) $(MINGW_INCLUDES)
 
 device-mapper: $(DEVICE_MAPPER_OBJS)
 
