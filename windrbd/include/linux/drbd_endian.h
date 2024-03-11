@@ -99,7 +99,7 @@ static inline ULONG_PTR generic_hweight64(uint64_t w)
     return (res & 0x00000000FFFFFFFF) + ((res >> 32) & 0x00000000FFFFFFFF);
 #endif
 }
-static inline ULONG_PTR hweight_long(unsigned long w)
+static inline ULONG_PTR hweight_long(ULONG_PTR w)
 {
     return sizeof(w) == 4 ? generic_hweight32(w) : generic_hweight64(w);
 }

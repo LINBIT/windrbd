@@ -98,7 +98,7 @@ static inline int sched_set_fifo_low(struct task_struct *p)
     return 0;
 }
 
-#define MAX_SCHEDULE_TIMEOUT ((long)(~0UL>>1))
+#define MAX_SCHEDULE_TIMEOUT ((LONG_PTR)(~0UL>>1))
 
 #define TASK_INTERRUPTIBLE	1
 #define TASK_UNINTERRUPTIBLE	2

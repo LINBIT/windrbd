@@ -29,7 +29,7 @@ struct bio {
 	struct _KEVENT *bi_io_finished_event;	/* For loopback I/O (WinDRBD calling itself via DRBD engine) */
 	struct bio*				bi_next;	/* request queue link */
 	struct block_device*	bi_bdev;
-	unsigned long			bi_flags;	/* status, command, etc */
+	ULONG_PTR			bi_flags;	/* status, command, etc */
 	unsigned int			bi_opf;		/* bottom bits req flags, top bits REQ_OP. Use accessors. */
 	unsigned short			bi_vcnt;	/* how many bio_vec's */
 	atomic_t				bi_cnt;		/* pin count */

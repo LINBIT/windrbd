@@ -26,7 +26,7 @@
 typedef int (congested_fn)(void *, int);
 
 struct backing_dev_info {
-	unsigned long ra_pages; /* max readahead in PAGE_CACHE_SIZE units */ 
+	ULONG_PTR ra_pages; /* max readahead in PAGE_CACHE_SIZE units */ 
 	congested_fn *congested_fn; /* Function pointer if device is md/dm */
 	void *congested_data;   /* Pointer to aux data for congested func */
 };
@@ -46,7 +46,7 @@ struct request_queue {
 	spinlock_t *queue_lock;
 	unsigned short logical_block_size;
 	ULONG_PTR queue_flags;
-	long max_hw_sectors;
+	LONG_PTR max_hw_sectors;
 	struct queue_limits limits; 
 };
 

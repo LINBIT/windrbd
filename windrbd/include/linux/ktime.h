@@ -36,7 +36,7 @@ typedef s64	ktime_t;
  *
  * Return: The ktime_t representation of the value.
  */
-static inline ktime_t ktime_set(const s64 secs, const unsigned long nsecs)
+static inline ktime_t ktime_set(const s64 secs, const ULONG_PTR nsecs)
 {
 	if (unlikely(secs >= KTIME_SEC_MAX))
 		return KTIME_MAX;

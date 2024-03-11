@@ -126,7 +126,7 @@ struct socket {
 	spinlock_t receive_lock;
 	bool have_printed_status;
 
-	unsigned long flags;
+	ULONG_PTR flags;
 };
 
 

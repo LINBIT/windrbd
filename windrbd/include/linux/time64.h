@@ -23,7 +23,7 @@ typedef __u64 timeu64_t;
 
 struct timespec64 {
 	time64_t	tv_sec;			/* seconds */
-	long		tv_nsec;		/* nanoseconds */
+	LONG_PTR		tv_nsec;		/* nanoseconds */
 };
 
 /**

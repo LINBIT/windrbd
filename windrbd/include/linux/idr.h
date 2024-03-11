@@ -106,8 +106,8 @@ extern void idr_init(struct idr *idp);
 
 
 struct ida_bitmap {
-	long			nr_busy;
-	unsigned long		bitmap[IDA_BITMAP_LONGS];
+	LONG_PTR			nr_busy;
+	ULONG_PTR		bitmap[IDA_BITMAP_LONGS];
 };
 
 struct ida {

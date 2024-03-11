@@ -42,7 +42,7 @@ struct kmem_cache {
 typedef struct kmem_cache kmem_cache_t;
 
 struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align,
-				     unsigned long flags,
+				     ULONG_PTR flags,
 				     void (*ctor)(void *));
 void kmem_cache_destroy(struct kmem_cache *cache);
 

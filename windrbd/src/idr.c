@@ -516,7 +516,8 @@ void *idr_replace(struct idr *idp, void *ptr, int id)
 	return old_p;
 }
 
-static void idr_cache_ctor(void * idr_layer, kmem_cache_t *idr_layer_cache, unsigned long flags)
+static void idr_cache_ctor(void * idr_layer, kmem_cache_t *idr_layer_cache,
+			   ULONG_PTR flags)
 {
 	RtlZeroMemory(idr_layer, sizeof(struct idr_layer));
 }

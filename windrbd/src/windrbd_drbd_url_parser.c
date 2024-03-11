@@ -5,7 +5,7 @@
 #define container_of(ptr, type, member) \
         ((type *)( \
         (char*)(ptr) - \
-        (unsigned long)(&((type *)0)->member)))
+        (ULONG_PTR)(&((type *)0)->member)))
 
 #include <linux/list.h>
 #include <linux/gfp.h>
@@ -116,9 +116,9 @@ bool token_has_index(enum token t)
 
 /* This function intentionally does not allow for leading spaces. */
 
-static unsigned long my_strtoul(const char *nptr, const char ** endptr, int base)
+static ULONG_PTR my_strtoul(const char *nptr, const char ** endptr, int base)
 {
-	unsigned long val = 0;
+	ULONG_PTR val = 0;
 
 	while (isdigit(*nptr)) {
 		val *= 10;

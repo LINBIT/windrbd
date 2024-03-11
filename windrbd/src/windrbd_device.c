@@ -1497,7 +1497,8 @@ static void drbd_make_request_work(struct work_struct *w)
          * windrbd_bio_finished to complete the IRP.
 	 */
 
-static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device *dev, char *buffer, unsigned int total_size, sector_t sector, unsigned long rw)
+static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device *dev, char *buffer, unsigned int total_size, sector_t sector,
+					   ULONG_PTR rw)
 {
 	struct bio *bio;
 
@@ -1692,7 +1693,7 @@ static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_devic
 	unsigned int total_size;
 	sector_t sector;
 	char *buffer;
-	unsigned long rw;
+	ULONG_PTR rw;
 
 	if (s == NULL) {
 		printk("Stacklocation is NULL.\n");

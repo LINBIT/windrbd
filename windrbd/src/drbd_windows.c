@@ -431,12 +431,12 @@ LONG_PTR xchg(LONG_PTR *target, LONG_PTR value)
 
 void atomic_set(atomic_t *v, int i)
 {
-	InterlockedExchange((long *)v, i);
+	InterlockedExchange((LONG_PTR *)v, i);
 }
 
 void atomic_add(int i, atomic_t *v)
 {
-	InterlockedExchangeAdd((long *)v, i);
+	InterlockedExchangeAdd((LONG_PTR *)v, i);
 }
 
 	/* TODO: atomic? Results may be non-monotonic decreasing, not
@@ -483,7 +483,7 @@ int atomic_sub_and_test(int i, atomic_t *v)
 
 int atomic_cmpxchg(atomic_t *v, int old, int new)
 {
-	return InterlockedCompareExchange((long *)v, new, old);
+	return InterlockedCompareExchange((LONG_PTR *)v, new, old);
 }
 
 int atomic_xchg(atomic_t *v, int n)
@@ -2483,19 +2483,19 @@ static const unsigned int crctab32[] = {
 	0x2d02ef8dU
 };
 
-static unsigned long partial_crc32_one(unsigned char c, unsigned long crc)
+static ULONG_PTR partial_crc32_one(unsigned char c, ULONG_PTR crc)
 {
 	return crctab32[(crc ^ c) & 0xff] ^ (crc >> 8);
 }
 
-static unsigned long partial_crc32(const char *s, size_t len, unsigned long crc)
+static ULONG_PTR partial_crc32(const char *s, size_t len, ULONG_PTR crc)
 {
 	while (len--)
 		crc = partial_crc32_one(*s++, crc);
 	return crc;
 }
 
-unsigned long crc32(const char *s, size_t len)
+ULONG_PTR crc32(const char *s, size_t len)
 {
 	return partial_crc32(s, len, 0xffffffff) ^ 0xffffffff;
 }
@@ -2698,7 +2698,7 @@ void blk_queue_flush(struct request_queue *q, unsigned int flush)
  * @q:  the request queue for the device
  * @mask:  the memory boundary mask
  **/
-void blk_queue_segment_boundary(struct request_queue *q, unsigned long mask)
+void blk_queue_segment_boundary(struct request_queue *q, ULONG_PTR mask)
 {
 	if (mask < PAGE_SIZE - 1) {
 		mask = PAGE_SIZE - 1;

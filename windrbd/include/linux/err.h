@@ -25,7 +25,7 @@
  *
  * Like IS_ERR(), but does not generate a compiler warning if result is unused.
  */
-#define IS_ERR_VALUE(x) unlikely((unsigned long)(void *)(x) >= (unsigned long)-MAX_ERRNO)
+#define IS_ERR_VALUE(x) unlikely((ULONG_PTR)(void *)(x) >= (ULONG_PTR)-MAX_ERRNO)
 
 /**
  * ERR_PTR - Create an error pointer.
@@ -36,7 +36,7 @@
  *
  * Return: A pointer with @error encoded within its value.
  */
-static inline void * __must_check ERR_PTR(long error)
+static inline void * __must_check ERR_PTR(LONG_PTR error)
 {
 	return (void *) error;
 }
@@ -46,9 +46,9 @@ static inline void * __must_check ERR_PTR(long error)
  * @ptr: An error pointer.
  * Return: The error code within @ptr.
  */
-static inline long __must_check PTR_ERR(__force const void *ptr)
+static inline LONG_PTR __must_check PTR_ERR(__force const void *ptr)
 {
-	return (long) ptr;
+	return (LONG_PTR) ptr;
 }
 
 /**
@@ -58,7 +58,7 @@ static inline long __must_check PTR_ERR(__force const void *ptr)
  */
 static inline bool __must_check IS_ERR(__force const void *ptr)
 {
-	return IS_ERR_VALUE((unsigned long)ptr);
+	return IS_ERR_VALUE((ULONG_PTR)ptr);
 }
 
 /**
@@ -69,7 +69,7 @@ static inline bool __must_check IS_ERR(__force const void *ptr)
  */
 static inline bool __must_check IS_ERR_OR_NULL(__force const void *ptr)
 {
-	return unlikely(!ptr) || IS_ERR_VALUE((unsigned long)ptr);
+	return unlikely(!ptr) || IS_ERR_VALUE((ULONG_PTR)ptr);
 }
 
 /**

@@ -26,7 +26,7 @@ static inline int test_and_set_bit(int bit, volatile ULONG_PTR * base)
 #ifdef _WIN64
     return (InterlockedBitTestAndSet64((volatile __int64 *)base, bit));
 #else
-    return (InterlockedBitTestAndSet((volatile long *)base, bit));
+    return (InterlockedBitTestAndSet((volatile LONG_PTR *)base, bit));
 #endif
 }
 
@@ -35,7 +35,7 @@ static inline int test_and_clear_bit(int bit, volatile ULONG_PTR * base)
 #ifdef _WIN64
     return (InterlockedBitTestAndReset64((volatile __int64 *)base, bit));
 #else
-    return (InterlockedBitTestAndReset((volatile long *)base, bit));
+    return (InterlockedBitTestAndReset((volatile LONG_PTR *)base, bit));
 #endif
 }
 

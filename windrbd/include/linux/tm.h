@@ -20,7 +20,7 @@ struct tm {
 	/* the number of months since January, in the range 0 to 11 */
 	int tm_mon;
 	/* the number of years since 1900 */
-	long tm_year;
+	LONG_PTR tm_year;
 	/* the number of days since Sunday, in the range 0 to 6 */
 	int tm_wday;
 	/* the number of days since January 1, in the range 0 to 365 */
