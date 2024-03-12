@@ -67,15 +67,14 @@ extern struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, char *file, int li
 extern struct bio *bio_alloc(gfp_t, int);
 #endif
 
-static inline int bioset_init(struct bio_set **bs, unsigned int size, unsigned int front_pad, int flags)
+static inline int bioset_init(struct bio_set *bs, unsigned int size, unsigned int front_pad, int flags)
 {
-	*bs = bioset_create(size, front_pad);
-	return *bs == NULL ? -ENOMEM : 0;
+	bs->bio_pool = NULL;
+	return 0;
 }
 
 static inline void bioset_exit(struct bio_set *b)
 {
-	bioset_free(b);
 }
 
 #define bio_iovec(bio)		bio_iter_iovec((bio), (bio)->bi_iter)

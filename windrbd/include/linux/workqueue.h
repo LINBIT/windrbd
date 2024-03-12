@@ -48,4 +48,22 @@ static inline void schedule_work(struct work_struct *work)
 	queue_work(system_wq, work);
 }
 
+#define PREPARE_WORK(_work, _func)                                      \
+	do {                                                            \
+		(_work)->func = (_func);                                \
+	} while (0)
+
+#define __INIT_WORK(_work, _func, _onstack)                             \
+	 do {                                                           \
+	       /* __init_work((_work), _onstack);        */  \
+	       /*  (_work)->data = (atomic_long_t) WORK_DATA_INIT(); */ \
+		INIT_LIST_HEAD(&(_work)->work_list);			\
+		spin_lock_init(&(_work)->pending_lock);			\
+		PREPARE_WORK((_work), (_func));                         \
+		(_work)->pending = 0;					\
+	} while (0)
+
+#define INIT_WORK(_work, _func)                                         \
+	 __INIT_WORK((_work), (_func), 0);
+
 #endif

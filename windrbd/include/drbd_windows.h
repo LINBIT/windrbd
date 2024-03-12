@@ -249,24 +249,6 @@ extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
 			    sector_t offset);
 extern void blk_queue_update_readahead(struct request_queue *q);
 
-#define PREPARE_WORK(_work, _func)                                      \
-	do {                                                            \
-		(_work)->func = (_func);                                \
-	} while (0)
-
-#define __INIT_WORK(_work, _func, _onstack)                             \
-	 do {                                                           \
-	       /* __init_work((_work), _onstack);        */  \
-	       /*  (_work)->data = (atomic_long_t) WORK_DATA_INIT(); */ \
-		INIT_LIST_HEAD(&(_work)->work_list);			\
-		spin_lock_init(&(_work)->pending_lock);			\
-		PREPARE_WORK((_work), (_func));                         \
-		(_work)->pending = 0;					\
-	} while (0)
-
-#define INIT_WORK(_work, _func)                                         \
-	 __INIT_WORK((_work), (_func), 0);  
-
 static inline void queue_flag_set(unsigned int flag, struct request_queue *q)
 {
 	if (((int) flag) >= 0)
