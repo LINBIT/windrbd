@@ -221,7 +221,6 @@ struct gendisk;
 struct bio;
 
 extern sector_t windrbd_get_capacity(struct block_device *bdev);
-extern sector_t get_capacity(struct gendisk *disk);
 
 struct bio;
 
@@ -241,40 +240,6 @@ extern int wait_for_bios_to_complete(struct block_device *bdev);
 /* TODO: Sure? */
 #define bio_flagged(bio, flag)  (1) 
 // #define bio_flagged(bio, flag)  ((bio)->bi_flags & (1 << (flag))) 
-
-#ifdef KREF_DEBUG
-
-int kref_put_debug(struct kref *kref, void (*release)(struct kref *kref), const char *release_name, const char *file, int line, const char *func, int may_printk);
-void kref_get_debug(struct kref *kref, const char *file, int line, const char *func, int may_printk);
-void kref_init_debug(struct kref *kref, const char *file, int line, const char *func);
-
-#define kref_put(kref, release) \
-	kref_put_debug(kref, release, #release, __FILE__, __LINE__, __func__, 1)
-
-#define kref_get(kref) \
-	kref_get_debug(kref, __FILE__, __LINE__, __func__, 1)
-
-#define kref_put_no_printk(kref, release) \
-	kref_put_debug(kref, release, #release, __FILE__, __LINE__, __func__, 0)
-
-#define kref_get_no_printk(kref) \
-	kref_get_debug(kref, __FILE__, __LINE__, __func__, 0)
-
-#define kref_init(kref) \
-	kref_init_debug(kref, __FILE__, __LINE__, __func__)
-
-#else
-
-extern int kref_put(struct kref *kref, void (*release)(struct kref *kref));
-extern void kref_get(struct kref *kref);
-extern void kref_init(struct kref *kref);
-
-/* See windrbd_winsocket.c */
-#define kref_put_no_printk kref_put
-#define kref_get_no_printk kref_get
-
-#endif
-
 extern struct request_queue *bdev_get_queue(struct block_device *bdev);
 extern void blk_cleanup_queue(struct request_queue *q);
 #define NUMA_NO_NODE 0
@@ -344,20 +309,6 @@ extern unsigned int lc_index_of(struct lru_cache *lc, struct lc_element *e);
 #include <wsk.h>	/* for struct sockaddr_storage */
 #include <drbd_transport.h>
 
-void free_page_kref(struct kref *kref);
-
-static inline void put_page(struct page *page)
-{
-	kref_put(&page->kref, free_page_kref);
-}
-
-static inline void get_page(struct page *page)
-{
-	kref_get(&page->kref);
-}
-
-extern void *page_address(const struct page *page);
-extern int page_count(struct page *page);
 extern void __free_page(struct page *page);
 extern struct page *alloc_page(int flag);
 struct page *alloc_page_of_size(int flag, size_t size);

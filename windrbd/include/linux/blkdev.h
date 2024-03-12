@@ -493,4 +493,6 @@ static inline int submit_bio_noacct(struct bio *bio)
 	return generic_make_request(bio);
 }
 
+extern sector_t get_capacity(struct gendisk *disk);
+
 #endif

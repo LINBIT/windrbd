@@ -568,6 +568,15 @@ static inline int nla_put_flag(struct sk_buff *msg, int attrtype)
 	NLA_PUT(msg, attrtype, 0, NULL)
 
 /**
+ * nla_get_s32 - return payload of s32 attribute
+ * @nla: s32 netlink attribute
+ */
+static inline s32 nla_get_s32(const struct nlattr *nla)
+{
+	return *(s32 *) nla_data(nla);
+}
+
+/**
  * nla_get_u32 - return payload of u32 attribute
  * @nla: u32 netlink attribute
  */

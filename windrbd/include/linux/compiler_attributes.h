@@ -33,4 +33,11 @@
  */
 #define __must_check                    __attribute__((__warn_unused_result__))
 
+/*
+ * Note the long name.
+ *
+ *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-const-function-attribute
+ */
+#define __attribute_const__             __attribute__((__const__))
+
 #endif

@@ -31,4 +31,41 @@ extern void set_syslog_ip(const char *ip);
 extern int _printk(const char * func, const char * format, ...);
 extern void printk_reprint(size_t bytes);
 
+#ifndef pr_fmt
+#define pr_fmt(fmt) fmt
+#endif
+
+/**
+ * pr_err - Print an error-level message
+ * @fmt: format string
+ * @...: arguments for the format string
+ *
+ * This macro expands to a printk with KERN_ERR loglevel. It uses pr_fmt() to
+ * generate the format string.
+ */
+#define pr_err(fmt, ...) \
+	printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
+
+/**
+ * pr_warn - Print a warning-level message
+ * @fmt: format string
+ * @...: arguments for the format string
+ *
+ * This macro expands to a printk with KERN_WARNING loglevel. It uses pr_fmt()
+ * to generate the format string.
+ */
+#define pr_warn(fmt, ...) \
+	printk(KERN_WARNING pr_fmt(fmt), ##__VA_ARGS__)
+
+/**
+ * pr_info - Print an info-level message
+ * @fmt: format string
+ * @...: arguments for the format string
+ *
+ * This macro expands to a printk with KERN_INFO loglevel. It uses pr_fmt() to
+ * generate the format string.
+ */
+#define pr_info(fmt, ...) \
+	printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+
 #endif

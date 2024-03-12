@@ -24,4 +24,6 @@ uint64_t roundup(uint64_t x, uint64_t y);
 #define READ					0
 #define WRITE					1
 
+static inline void might_sleep() { }
+
 #endif

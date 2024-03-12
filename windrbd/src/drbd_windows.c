@@ -1065,7 +1065,7 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	return bio;
 }
 
-int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsigned int offset, char *file, int line, char *func)
+int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsigned int offset, const char *file, int line, const char *func)
 {
 	struct bio_vec *bvec = &bio->bi_io_vec[bio->bi_vcnt++];
 
@@ -2746,7 +2746,7 @@ void genlmsg_cancel(struct sk_buff *skb, void *hdr)
 
 }
 
-int __ratelimit(struct ratelimit_state *rs, const char *func)
+int ___ratelimit(struct ratelimit_state *rs, const char *func)
 {
 	return 1;
 }
