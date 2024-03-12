@@ -114,4 +114,8 @@ int kernel_accept(struct socket *sock, struct socket **newsock, int flags);
 int sock_create_kern(struct net *net, int family, int type, int proto, struct socket **res);
 void sock_release(struct socket *sock);
 
+static inline bool sendpage_ok(struct page *page)
+{
+	return true;	/* Always ok */
+}
 #endif

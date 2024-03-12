@@ -6,6 +6,8 @@
 
 #define MODULE_PARM_DESC(x, ...)
 
+struct kernel_param;
+
 struct kernel_param_ops {
 	/* How the ops should behave */
 	unsigned int flags;
@@ -15,6 +17,20 @@ struct kernel_param_ops {
 	int (*get)(char *buffer, const struct kernel_param *kp);
 	/* Optional function to free kp->arg when module unloaded. */
 	void (*free)(void *arg);
+};
+
+struct kernel_param {
+	const char *name;
+	struct module *mod;
+	const struct kernel_param_ops *ops;
+	const u16 perm;
+	s8 level;
+	u8 flags;
+	union {
+		void *arg;
+		const struct kparam_string *str;
+		const struct kparam_array *arr;
+	};
 };
 
 /* Special one for strings we want to copy into */
@@ -31,20 +47,6 @@ struct kparam_array
 	unsigned int *num;
 	const struct kernel_param_ops *ops;
 	void *elem;
-};
-
-struct kernel_param {
-	const char *name;
-	struct module *mod;
-	const struct kernel_param_ops *ops;
-	const u16 perm;
-	s8 level;
-	u8 flags;
-	union {
-		void *arg;
-		const struct kparam_string *str;
-		const struct kparam_array *arr;
-	};
 };
 
 extern int param_get_uint(char *buffer, const struct kernel_param *kp);

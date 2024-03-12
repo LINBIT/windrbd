@@ -10,6 +10,7 @@
 #include <linux/kobject.h>
 #include <linux/part_stat.h>
 #include <linux/module.h>
+#include <linux/genhd.h>
 
 #ifndef SECTOR_SHIFT
 #define SECTOR_SHIFT 9
@@ -32,12 +33,18 @@ struct backing_dev_info {
 };
 
 struct queue_limits {
+	unsigned int		max_hw_sectors;
 	unsigned int            max_discard_sectors;
 	unsigned int            max_write_same_sectors;
 	unsigned int		max_write_zeroes_sectors;
-	unsigned int            discard_granularity;    
+	unsigned int            discard_granularity;
 	unsigned int		discard_zeroes_data;
 	unsigned int		seg_boundary_mask;
+	unsigned int		physical_block_size;
+	unsigned int		logical_block_size;
+	unsigned int		alignment_offset;
+	unsigned int		io_min;
+	unsigned int		io_opt;
 };
 
 struct request_queue {
@@ -46,7 +53,6 @@ struct request_queue {
 	spinlock_t *queue_lock;
 	unsigned short logical_block_size;
 	ULONG_PTR queue_flags;
-	LONG_PTR max_hw_sectors;
 	struct queue_limits limits; 
 };
 
@@ -247,18 +253,6 @@ struct windows_block_device {
 	struct _DEVICE_OBJECT DeviceObject;
 };
 
-#define DISK_NAME_LEN		16
-
-struct gendisk {
-	char disk_name[DISK_NAME_LEN];  /* name of major driver */
-	struct request_queue *queue;
-	int major, first_minor;
-	int minors;
-	const struct block_device_operations *fops;
-	void *private_data;
-	struct block_device *part0;
-};
-
 struct fault_injection {
 	int nr_requests_to_failure;
 	int nr_requests;
@@ -281,6 +275,7 @@ struct block_device {
 	struct block_device *	bd_parent;			// DW-1109: it points the block device whose bd_contains points me.
 	struct block_device *	bd_contains;
 	struct gendisk * bd_disk;
+	struct request_queue *	bd_queue;	/* TODO: initialize that !! */
 	unsigned int bd_block_size;	/* Size of one sector (?) */
 	unsigned long long d_size;
 	struct kref kref;
@@ -446,14 +441,21 @@ struct block_device_reference {
 
 struct block_device_operations {
 	struct module *owner;
-	void (*submit_bio) (struct bio*);
+	blk_qc_t (*submit_bio) (struct bio*);
 	int (*open) (struct block_device *, fmode_t);
 	void (*release) (struct gendisk *, fmode_t);
 };
 
 #define QUEUE_FLAG_STABLE_WRITES 15	/* don't modify blks until WB is done */
-/* TODO: value? */
-#define QUEUE_FLAG_DISCARD (-1)
+#define QUEUE_FLAG_DISCARD	8	/* supports DISCARD */
+
+#define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
+
+/* TODO: hardcoding this here .. we do not have sysfs (yet) */
+static inline int queue_discard_zeroes_data(const struct request_queue *unused)
+{
+	return 1;
+}
 
 #define disk_to_dev(disk) \
 	(disk)->part0
@@ -493,6 +495,60 @@ static inline int submit_bio_noacct(struct bio *bio)
 	return generic_make_request(bio);
 }
 
+static inline unsigned int queue_physical_block_size(const struct request_queue *q)
+{
+	/* TODO: initialize that: */
+	return q->limits.physical_block_size;
+}
+
+static inline unsigned queue_logical_block_size(const struct request_queue *q)
+{
+	int retval = 512;
+
+	if (q && q->limits.logical_block_size)
+		retval = q->limits.logical_block_size;
+
+	return retval;
+}
+
+static inline int queue_alignment_offset(const struct request_queue *q)
+{
+	return q->limits.alignment_offset;
+}
+
+static inline unsigned int queue_io_min(const struct request_queue *q)
+{
+	return q->limits.io_min;
+}
+
+static inline unsigned int queue_io_opt(const struct request_queue *q)
+{
+	return q->limits.io_opt;
+}
+
 extern sector_t get_capacity(struct gendisk *disk);
+
+static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
+{
+	return bdev->bd_queue;	/* this is never NULL */
+}
+
+static inline unsigned int queue_max_hw_sectors(const struct request_queue *q)
+{
+	return q->limits.max_hw_sectors;
+}
+
+	/* There are no read only backing devices */
+static inline int bdev_read_only(struct block_device *bdev)
+{
+	return 0;
+}
+
+extern struct request_queue *bdev_get_queue(struct block_device *bdev);
+extern void blk_cleanup_queue(struct request_queue *q);
+extern struct request_queue *blk_alloc_queue(int unused);
+typedef void (make_request_fn) (struct request_queue *q, struct bio *bio);
+extern void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn);
+extern void blk_queue_flush(struct request_queue *q, unsigned int flush);
 
 #endif

@@ -66,5 +66,9 @@ extern void kref_init(struct kref *kref);
 #include <asm-generic/bug.h>
 #include <asm-generic/barrier.h>
 #include <linux/prefetch.h>
+#include <linux/stringify.h>
+#include <linux/align.h>
+#include <linux/random.h>
+#include <linux/highmem.h>
 
 #endif

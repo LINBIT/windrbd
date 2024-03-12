@@ -230,6 +230,8 @@ static inline ktime_t ms_to_ktime(u64 ms)
 	return ms * NSEC_PER_MSEC;
 }
 
-// # include <linux/timekeeping.h>
+// #include <linux/timekeeping.h>
+
+extern ktime_t ktime_get_real(void);
 
 #endif

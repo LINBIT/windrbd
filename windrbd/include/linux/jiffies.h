@@ -32,4 +32,10 @@ static inline u64 nsecs_to_jiffies(u64 n)
 	return n / (NSEC_PER_SEC / HZ);
 }
 
+#define time_after(_a,_b)		((LONG_PTR)((LONG_PTR)(_b) - (LONG_PTR)(_a)) < 0)
+#define time_after_eq(_a,_b)		((LONG_PTR)((LONG_PTR)(_a) - (LONG_PTR)(_b)) >= 0)
+
+#define time_before(_a,_b)		time_after(_b, _a)
+#define time_before_eq(_a,_b)		time_after_eq(_b, _a)
+
 #endif

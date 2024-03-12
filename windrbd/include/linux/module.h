@@ -2,14 +2,13 @@
 #define LINUX_MODULE_H
 
 #include <linux/types.h>	/* for bool */
+#include <linux/moduleparam.h>
 
 #define MODULE_AUTHOR(unused, ...)
 #define MODULE_DESCRIPTION(unused, ...)
 #define MODULE_VERSION(unused)
 #define MODULE_LICENSE(unused)
-#define MODULE_PARM_DESC(unused, ...)
 #define MODULE_ALIAS_BLOCKDEV_MAJOR(unused)
-#define MODULE_PARM_DESC(unused, ...)
 
 struct module {
 	const char *version;

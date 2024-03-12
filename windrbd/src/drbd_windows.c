@@ -1295,7 +1295,7 @@ void exit_interruptible_debug(const char *file, int line, const char *func)
 	threads_sleeping--;
 }
 
-void get_random_bytes(char *buf, int nbytes)
+void get_random_bytes(void *buf, int nbytes)
 {
     static ULONG_PTR lcg_2_64_div_pi = 0;
     static ULONG_PTR mmix_knuth = 0;

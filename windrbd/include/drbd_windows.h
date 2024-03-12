@@ -240,31 +240,14 @@ extern int wait_for_bios_to_complete(struct block_device *bdev);
 /* TODO: Sure? */
 #define bio_flagged(bio, flag)  (1) 
 // #define bio_flagged(bio, flag)  ((bio)->bi_flags & (1 << (flag))) 
-extern struct request_queue *bdev_get_queue(struct block_device *bdev);
-extern void blk_cleanup_queue(struct request_queue *q);
-#define NUMA_NO_NODE 0
-extern struct request_queue *blk_alloc_queue(int unused);
-typedef void (make_request_fn) (struct request_queue *q, struct bio *bio);
-extern void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn);
-extern void blk_queue_flush(struct request_queue *q, unsigned int flush);
 
+#define NUMA_NO_NODE 0
 struct queue_limits;
 
 extern void blk_queue_segment_boundary(struct request_queue *, unsigned long);
 extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
 			    sector_t offset);
 extern void blk_queue_update_readahead(struct request_queue *q);
-
-extern struct gendisk *alloc_disk(int minors);
-extern void put_disk(struct gendisk *disk);
-extern void del_gendisk(struct gendisk *disk);
-extern void set_disk_ro(struct gendisk *disk, int flag);
-
-extern struct gendisk *blk_alloc_disk(int unused);
-extern void blk_cleanup_disk(struct gendisk *disk);
-
-extern struct block_device *bdget_disk(struct gendisk *disk, int partno);
-extern int fsync_bdev(struct block_device *bdev);
 
 #define PREPARE_WORK(_work, _func)                                      \
 	do {                                                            \
@@ -295,12 +278,6 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
 	if (((int) flag) >= 0)
 		__clear_bit(flag, &q->queue_flags);
 }
-
-#define time_after(_a,_b)		((LONG_PTR)((LONG_PTR)(_b) - (LONG_PTR)(_a)) < 0)
-#define time_after_eq(_a,_b)		((LONG_PTR)((LONG_PTR)(_a) - (LONG_PTR)(_b)) >= 0)
-
-#define time_before(_a,_b)		time_after(_b, _a)
-#define time_before_eq(_a,_b)		time_after_eq(_b, _a)
 
 struct lru_cache;
 extern struct lc_element *lc_element_by_index(struct lru_cache *lc, unsigned i);
@@ -351,19 +328,6 @@ static inline void free_page(void *addr)
 	kfree(addr);
 }
 
-
-extern void init_completion_debug(struct completion *c, const char *file, int line, const char *func);
-extern void wait_for_completion_debug(struct completion *c, const char *file, int line, const char *func);
-extern ULONG_PTR wait_for_completion_timeout_debug(struct completion *c, ULONG_PTR timeout, const char *file, int line, const char *func);
-extern void complete_debug(struct completion *c, const char *file, int line, const char *func);
-extern void complete_all_debug(struct completion *c, const char *file, int line, const char *func);
-
-#define init_completion(c) init_completion_debug(c, __FILE__, __LINE__, __func__)
-#define wait_for_completion(c) wait_for_completion_debug(c, __FILE__, __LINE__, __func__)
-#define wait_for_completion_timeout(c, t) wait_for_completion_timeout_debug(c, t, __FILE__, __LINE__, __func__)
-#define complete(c) complete_debug(c, __FILE__, __LINE__, __func__)
-#define complete_all(c) complete_all_debug(c, __FILE__, __LINE__, __func__)
-
 struct crypto_tfm;
 extern void *crypto_alloc_tfm(char *name, u32 mask);
 extern unsigned int crypto_tfm_alg_digestsize(struct crypto_tfm *tfm);
@@ -400,7 +364,6 @@ extern void __hlist_del(struct hlist_node *n);
 
 extern unsigned long crc32(const char *s, size_t len);
 extern bool lc_is_used(struct lru_cache *lc, unsigned int enr);
-extern void get_random_bytes(char *buf, int nbytes);
 extern int fls(int x);
 extern char *kstrdup(const char *s, int gfp);
 extern void panic(const char *fmt, ...);
@@ -558,32 +521,12 @@ void exit_interruptible_debug(const char *file, int line, const char *func);
 #define enter_interruptible() enter_interruptible_debug(__FILE__, __LINE__, __func__)
 #define exit_interruptible() exit_interruptible_debug(__FILE__, __LINE__, __func__)
 
-/* TODO: to another header: */
-
-#define kmap(_page)		(_page->addr)
-#define kmap_atomic(_page)	(_page->addr)
-#define kunmap(addr)		do { } while (0)
-#define kunmap_atomic(addr)	do { } while (0)
-
 void test_main(const char *arg);
 
 int my_atoi(const char *c);
 
 NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default);
 NTSTATUS get_registry_long_long(wchar_t *key, unsigned long long *val_p, unsigned long long the_default);
-
-	/* can always send page */
-static inline bool sendpage_ok(struct page *p)
-{
-	return 1;
-}
-
-	/* There are no read only backing devices */
-
-static inline int bdev_read_only(struct block_device *bdev)
-{
-	return 0;
-}
 
 enum kobject_action {
 	KOBJ_ADD,
