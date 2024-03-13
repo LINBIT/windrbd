@@ -158,6 +158,7 @@ NTSTATUS get_registry_long_long(wchar_t *key, unsigned long long *val_p, unsigne
 	return status;
 }
 
+#if 0
 /* TODO: move somewhere else */
 
 /* TODO: argh... */
@@ -192,3 +193,4 @@ size_t windrbd_vsnprintf(char *buf, size_t bufsize, const char *fmt, va_list arg
 }
 
 
+#endif
