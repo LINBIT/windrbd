@@ -128,6 +128,8 @@ struct hlist_head {
 typedef unsigned int                fmode_t;
 typedef long long loff_t;
 
+typedef unsigned short		umode_t;
+
 #ifdef CONFIG_64BIT
 typedef struct {
 	s64 counter;

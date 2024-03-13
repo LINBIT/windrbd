@@ -995,23 +995,6 @@ static inline u32 prandom_u32(void)
 #endif
 
 #ifndef COMPAT_HAVE_IDR_ALLOC
-static inline int idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp_mask)
-{
-	int rv, got;
-
-	if (!idr_pre_get(idr, gfp_mask))
-		return -ENOMEM;
-	rv = idr_get_new_above(idr, ptr, start, &got);
-	if (rv < 0)
-		return rv;
-
-	if (got >= end) {
-		idr_remove(idr, got);
-		return -ENOSPC;
-	}
-
-	return got;
-}
 #endif
 
 #ifndef BLKDEV_ISSUE_ZEROOUT_EXPORTED

@@ -114,6 +114,7 @@ static LIST_HEAD(backing_devices);
 static struct mutex read_bootsector_mutex;
 
 /* Just to see if it links ... */
+/* TODO: remove this ASAP ! */
 __MINGW_NOTHROW int __cdecl __mingw_vsprintf (char * __restrict__ , const char * __restrict__ , va_list)
 {
 	return 0;
@@ -526,21 +527,6 @@ void *kzalloc(int size, int flag)
 
 #endif
 
-char *kstrdup(const char *s, int gfp)
-{
-	size_t len;
-	char *buf;
-
-	if (!s)
-		return NULL;
-
-	len = strlen(s) + 1;
-	buf = kmalloc(len, gfp);
-	if (buf)
-		memcpy(buf, s, len);
-	return buf;
-}
-
 /**
  * strlcpy - Copy a C-string into a sized buffer
  * @dest: Where to copy the string to
@@ -627,14 +613,12 @@ void free_page_kref_debug(struct kref *kref, const char *file, int line, const c
 	__free_page_debug(page, file, line, func);
 }
 
-#undef free_page_kref
-
 	/* This is used as a function pointer parameter to put_page,
 	 * its signature cannot be changed since the number of
 	 * parameters is fixed.
 	 */
 
-void free_page_kref(struct kref *kref)
+void _free_page_kref(struct kref *kref)
 {
 	struct page *page = container_of(kref, struct page, kref);
 	__free_page_debug(page, __FILE__, __LINE__, __func__);
@@ -2366,16 +2350,13 @@ void bio_endio(struct bio *bio)
 	bio_endio_impl(bio, true);
 }
 
-void __list_del_entry(struct list_head *entry)
-{
-	__list_del(entry->prev, entry->next);
-}
-
+/*
 void list_del_init(struct list_head *entry)
 {
 	__list_del_entry(entry);
 	INIT_LIST_HEAD(entry);
 }
+*/
 
 #include <linux/crc32c.h>
 
@@ -4037,13 +4018,13 @@ ktime_t ktime_get_real(void)
 	return (ktime_t) (time.QuadPart * 100);
 }
 
-int register_blkdev(int major, const char *name)
+int register_blkdev(unsigned int major, const char *name)
 {
 	/* does nothing */
 	return 0;
 }
 
-void unregister_blkdev(int major, const char *name)
+void unregister_blkdev(unsigned int major, const char *name)
 {
 	/* does nothing */
 }

@@ -2,5 +2,6 @@
 #define __LINUX_EXPORT_H
 
 #define EXPORT_SYMBOL(...)
+#define EXPORT_SYMBOL_GPL(...)
 
 #endif

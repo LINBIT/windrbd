@@ -21,7 +21,8 @@
 
 #else
 /* TODO: flag probably gfp_t */
-/* TODO: int? really? */
+/* TODO: int? really? should be size_t */
+/* TODO: remove Tag. */
 extern void * kcalloc(int e_count, int x, int flag, ULONG Tag);
 extern void * kzalloc(int x, int flag, ULONG Tag);
 extern void * kmalloc(int size, int flag, ULONG Tag);

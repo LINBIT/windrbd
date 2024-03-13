@@ -1,6 +1,8 @@
 #ifndef CPUMASK_H
 #define CPUMASK_H
 
+#include <linux/slab.h>
+
 typedef struct cpumask { int mask; } cpumask_t;
 typedef cpumask_t *cpumask_var_t;
 
@@ -47,7 +49,12 @@ static inline void free_cpumask_var(cpumask_var_t mask)
 
 static inline bool zalloc_cpumask_var(cpumask_var_t *mask, gfp_t flags)
 {
-	return true;
+	cpumask_var_t new_mask = kzalloc(sizeof(*new_mask), flags);
+	if (new_mask != NULL) {
+		*mask = new_mask;
+		return true;
+	}
+	return false;
 }
 
 #endif

@@ -72,5 +72,11 @@ extern void kref_init(struct kref *kref);
 #include <linux/highmem.h>
 #include <linux/kstrtox.h>
 #include <linux/string.h>
+#include <linux/sprintf.h>
+
+/* TODO somewhere else: */
+#define noinline_for_stack
+#define __ro_after_init
+#define __aligned(x)
 
 #endif

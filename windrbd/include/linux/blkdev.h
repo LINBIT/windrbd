@@ -547,6 +547,11 @@ static inline int bdev_read_only(struct block_device *bdev)
 	return 0;
 }
 
+	/* TODO: stub, implement me? */
+static inline void blk_queue_write_cache(struct request_queue *q, bool enabled, bool fua)
+{
+}
+
 extern struct request_queue *bdev_get_queue(struct block_device *bdev);
 extern void blk_cleanup_queue(struct request_queue *q);
 extern struct request_queue *blk_alloc_queue(int unused);
@@ -554,8 +559,9 @@ typedef void (make_request_fn) (struct request_queue *q, struct bio *bio);
 extern void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn);
 extern void blk_queue_flush(struct request_queue *q, unsigned int flush);
 
-extern int register_blkdev(int major, const char *name);
+extern int register_blkdev(unsigned int major, const char *name);
 extern void unregister_blkdev(unsigned int major, const char *name);
 
+extern int add_disk(struct gendisk *disk);
 
 #endif

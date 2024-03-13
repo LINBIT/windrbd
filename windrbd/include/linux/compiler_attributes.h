@@ -9,6 +9,7 @@
  */
 
 #define __printf(a, b)                  __attribute__((__format__(printf, a, b)))
+#define __scanf(a, b)                   __attribute__((__format__(scanf, a, b)))
 
 /*
  * Note: users of __always_inline currently do not write "inline" themselves,
