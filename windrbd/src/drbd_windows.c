@@ -2532,6 +2532,8 @@ u32 crc32c(u32 crc, const void *p, unsigned int length)
 	return crc;
 }
 
+/* TODO: those should go to rculist.h */
+/*
 void __list_add_rcu(struct list_head *new, struct list_head *prev, struct list_head *next)
 {
 	new->next = next;
@@ -2555,6 +2557,7 @@ void list_add_tail_rcu(struct list_head *new, struct list_head *head)
 {
      __list_add_rcu(new, head->prev, head);
 }
+*/
 
 static spinlock_t global_queue_lock;
 

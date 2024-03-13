@@ -5,7 +5,7 @@
 #include <linux/list.h>
 #include <linux/spinlock.h>
 
-#define WQ_MEM_RECLAIM 0
+#define WQ_MEM_RECLAIM  (1 << 3)
 #define WQNAME_LEN	32
 
 struct workqueue_struct {
@@ -65,5 +65,9 @@ static inline void schedule_work(struct work_struct *work)
 
 #define INIT_WORK(_work, _func)                                         \
 	 __INIT_WORK((_work), (_func), 0);
+
+
+#define create_singlethread_workqueue(name)				\
+	alloc_ordered_workqueue("%s", WQ_MEM_RECLAIM, name)
 
 #endif

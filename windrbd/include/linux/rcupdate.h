@@ -1,6 +1,7 @@
-
 #ifndef RCUPDATE_H
 #define RCUPDATE_H
+
+#include <asm-generic/barrier.h>
 
 #define rcu_dereference(_PTR)		(_PTR)
 #define __rcu_assign_pointer(_p, _v) \

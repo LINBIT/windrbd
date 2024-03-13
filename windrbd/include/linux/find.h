@@ -7,4 +7,7 @@
 	     (bit) < (size);					\
 	     (bit) = find_next_bit((addr), (size), (bit) + 1))
 
+ULONG_PTR find_first_zero_bit(const ULONG_PTR *addr, ULONG_PTR size);
+int find_next_zero_bit(const ULONG_PTR * addr, ULONG_PTR size, ULONG_PTR offset);
+
 #endif

@@ -157,8 +157,6 @@ LINUX_SRCDIR = ./windrbd/src/from-linux/
 LINUX_SOURCES = lib/kstrtox.c mm/util.c
 LINUX_FILES = $(addprefix $(LINUX_SRCDIR), $(LINUX_SOURCES))
 
-WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
-                idr.c kmalloc_debug.c mempool.c printk-to-syslog.c \
 OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) $(patsubst %.c,%.o,$(LINUX_FILES))
 
 COFFRES=./windrbd/windrbd-event-log.coffres ./drbd-tmp/drbd/resource.coffres
@@ -166,7 +164,7 @@ COFFRES=./windrbd/windrbd-event-log.coffres ./drbd-tmp/drbd/resource.coffres
 # It completed with about 200 compile errors which is not that bad.
 LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
 
-SUPPRESSED_WARNINGS=-Wno-array-bounds
+SUPPRESSED_WARNINGS=-Wno-array-bounds -Wno-address-of-packed-member
 CFLAGS_FOR_DRIVERS=-fPIC -fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -mno-stack-arg-probe -fno-strict-aliasing
 LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--file-alignment,0x200 -Wl,--section-alignment,0x1000 -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--exclude-all-symbols -Wl,--entry,$(DRIVER_ENTRY) -nostartfiles -nodefaultlibs -nostdlib -Wl,-Map='windrbd.sys.map'
 

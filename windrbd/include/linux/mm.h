@@ -3,8 +3,7 @@
 
 #include <linux/mm_types.h>
 #include <linux/page_ref.h>
-
-extern void free_page_kref(struct kref *kref);
+#include <linux/gfp.h>
 
 static inline void put_page(struct page *page)
 {

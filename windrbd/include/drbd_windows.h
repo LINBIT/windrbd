@@ -359,10 +359,6 @@ void windrbd_shutdown_wsk(void);
 extern int initRegistry(__in PUNICODE_STRING RegistryPath);
 extern void delete_block_device(struct kref *kref);
 
-extern void list_add_rcu(struct list_head *new, struct list_head *head);
-extern void list_add_tail_rcu(struct list_head *new,   struct list_head *head);
-extern void list_del_rcu(struct list_head *entry);
-
 #define bdevname(dev, buf)   dev->bd_disk->disk_name
 
 //
@@ -415,9 +411,6 @@ extern int vscnprintf(char * buf, size_t size, const char *fmt, va_list args);
 size_t windrbd_vsnprintf(char *buf, size_t bufsize, const char *fmt, va_list args);
 
 void list_cut_position(struct list_head *list, struct list_head *head, struct list_head *entry);
-
-ULONG_PTR find_first_zero_bit(const ULONG_PTR *addr, ULONG_PTR size);
-int find_next_zero_bit(const ULONG_PTR * addr, ULONG_PTR size, ULONG_PTR offset);
 
 static inline unsigned int queue_io_min(struct request_queue *q)
 {
