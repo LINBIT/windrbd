@@ -40,4 +40,18 @@
  */
 #define __attribute_const__             __attribute__((__const__))
 
+/*
+ * Note the missing underscores.
+ *
+ *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-noinline-function-attribute
+ * clang: mentioned
+ */
+#define   noinline                      __attribute__((__noinline__))
+
+/*
+ *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-malloc-function-attribute
+ * clang: https://clang.llvm.org/docs/AttributeReference.html#malloc
+ */
+#define __malloc                        __attribute__((__malloc__))
+
 #endif

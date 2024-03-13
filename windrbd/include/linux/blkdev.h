@@ -530,7 +530,10 @@ extern sector_t get_capacity(struct gendisk *disk);
 
 static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
 {
-	return bdev->bd_queue;	/* this is never NULL */
+	if (bdev && bdev->bd_disk)
+		return bdev->bd_disk->queue;
+
+	return NULL;
 }
 
 static inline unsigned int queue_max_hw_sectors(const struct request_queue *q)
@@ -550,5 +553,9 @@ extern struct request_queue *blk_alloc_queue(int unused);
 typedef void (make_request_fn) (struct request_queue *q, struct bio *bio);
 extern void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn);
 extern void blk_queue_flush(struct request_queue *q, unsigned int flush);
+
+extern int register_blkdev(int major, const char *name);
+extern void unregister_blkdev(unsigned int major, const char *name);
+
 
 #endif

@@ -6,5 +6,6 @@
 #define __release(x) (void)0
 
 #define __force
+#define __user
 
 #endif

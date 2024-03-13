@@ -70,5 +70,7 @@ extern void kref_init(struct kref *kref);
 #include <linux/align.h>
 #include <linux/random.h>
 #include <linux/highmem.h>
+#include <linux/kstrtox.h>
+#include <linux/string.h>
 
 #endif

@@ -773,14 +773,6 @@ void kref_init(struct kref *kref)
 
 #endif
 
-struct request_queue *bdev_get_queue(struct block_device *bdev)
-{
-	if (bdev && bdev->bd_disk)
-		return bdev->bd_disk->queue;
-
-	return NULL;
-}
-
 	/* This probably never gets implemented since we do
 	 * not have auto promote and Windows caches at file
 	 * system level, not at block device level.
@@ -3087,7 +3079,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		/* TODO: not always? */
 	block_device->bd_block_size = 512;
 	block_device->bd_disk->queue->logical_block_size = 512;
-	block_device->bd_disk->queue->max_hw_sectors = DRBD_MAX_BIO_SIZE >> 9;
+	block_device->bd_disk->queue->limits.max_hw_sectors = DRBD_MAX_BIO_SIZE >> 9;
 
 	block_device->file_object = file_object;
 	block_device->is_backing_device = true;

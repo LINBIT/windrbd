@@ -441,9 +441,6 @@ int windrbd_umount(struct block_device *dev);
 int windrbd_become_primary(struct drbd_device *device, const char **err_str);
 int windrbd_become_secondary(struct drbd_device *device, const char **err_str);
 
-int register_blkdev(int major, const char *name);
-void unregister_blkdev(int major, const char *name);
-
 	/* These are WinDRBD specific ioctls. */
 
 int windrbd_inject_faults(int after, enum fault_injection_location where, struct block_device *windrbd_bdev);
