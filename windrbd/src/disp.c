@@ -213,7 +213,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	try_module_get(&windrbd_module);
 // #endif
 
-	dtt_initialize();
+	dtt_initialize_fn();
 
 	system_wq = alloc_ordered_workqueue("system workqueue", 0);
 	if (system_wq == NULL) {
@@ -224,7 +224,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 		return STATUS_NO_MEMORY;
 	}
 
-	ret = drbd_init();
+	ret = drbd_init_fn();
 	if (ret != 0) {
 		printk(KERN_ERR "cannot init drbd, error is %d", ret);
 		IoDeleteDevice(mvolRootDeviceObject);

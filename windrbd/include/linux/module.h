@@ -27,7 +27,15 @@ extern struct module windrbd_module;
 extern bool try_module_get(struct module *module);
 extern void module_put(struct module *module);
 
-#define module_init(...)
+	/* DRBD and DRBD transport TCP are currently the only modules,
+	 * so call them manually from DriverInit().
+	 */
+
+extern int (* drbd_init_fn)(void);
+extern int (* dtt_initialize_fn)(void);
+
+#define module_init(fn)	\
+	int (* fn ## _fn)(void) = fn;
 #define module_exit(...)
 
 #endif
