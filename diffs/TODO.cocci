@@ -1,10 +1,10 @@
-identifiers created by cocci should have __cocci_ prefix.
+TODO: identifiers created by cocci should have __cocci_ prefix.
 
 Cocci patches (generic unless noted otherwise):
 
 Done: RCUs need a flag since they change the IRQ level in WinDRBD.
 
-In progress: Spinlocks that are locked and unlocked within the same function must be spin_lock_irqsave / spin_unlock_irqrestore.
+Done: Spinlocks that are locked and unlocked within the same function must be spin_lock_irqsave / spin_unlock_irqrestore.
 	Must be able to handle multiple spinlocks in function
 	(with 2 different flags). Also must be aware that
 	the flags parameter might already be defined.
@@ -14,7 +14,7 @@ TODO: The flag for the IRQ level should be of type KIRQL
 Done: replace all unsigned long -> ULONG_PTR and long -> LONG_PTR
 also in macros
 
-TODO: Change UL postfix to ULL (64 bit only)
+Rejected: Change UL postfix to ULL (64 bit only)
 
 TODO: GNU extension: Change a?:b to a?a:b
 
