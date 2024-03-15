@@ -43,7 +43,6 @@
 
 void mvolUnload(IN PDRIVER_OBJECT DriverObject);
 
-void drbd_cleanup(void);
 void idr_shutdown(void);
 void shutdown_registry(void);
 
@@ -296,10 +295,10 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 	windrbd_shutdown_tests();
 	printk("Terminated tests\n");
 
-	drbd_cleanup();
+	drbd_cleanup_fn();
 	printk("DRBD cleaned up.\n");
 
-	dtt_cleanup();
+	dtt_cleanup_fn();
 	printk("TCP transport layer cleaned up.\n");
 
 	destroy_workqueue(system_wq);

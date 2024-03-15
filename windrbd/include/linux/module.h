@@ -34,8 +34,12 @@ extern void module_put(struct module *module);
 extern int (* drbd_init_fn)(void);
 extern int (* dtt_initialize_fn)(void);
 
+extern void (* drbd_cleanup_fn)(void);
+extern void (* dtt_cleanup_fn)(void);
+
 #define module_init(fn)	\
 	int (* fn ## _fn)(void) = fn;
-#define module_exit(...)
+#define module_exit(fn)	\
+	void (* fn ## _fn)(void) = fn;
 
 #endif
