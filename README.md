@@ -322,3 +322,4 @@ Version history
  * 1.1.8 (Nov 21, 2023): backing dev I/O cork/uncork, resize fix, sync stall fix and many others
  * 1.1.9 (Jan 15, 2024): Disk timeout, fix for drbdadm adjust network config BSOD
  * 1.1.10 (Feb 21, 2024): Memory pressure fixes, drbdadm primary hang fix
+ * 1.1.11 (Mar 26, 2024): update cygwin DLL 3.4.5 -> 3.4.10
