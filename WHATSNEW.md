@@ -5,6 +5,11 @@ Base on DRBD 9.1
 
 DRBD reactor support
 
+What's new in version 1.1.11
+----------------------------
+
+update cygwin DLL 3.4.5 -> 3.4.10
+
 What's new in version 1.1.10
 ----------------------------
 
