@@ -1,6 +1,9 @@
 #ifndef __ASM_GENERIC_BUG_H
 #define __ASM_GENERIC_BUG_H
 
+/* TODO: those should be noreturn somehow ... getting complaints from
+ * the compiler about that ... */
+
 #define BUG() do { \
 	printk("BUG: failure at %s:%d/%s()!\n", __FILE__, __LINE__, __func__); \
 } while (0)

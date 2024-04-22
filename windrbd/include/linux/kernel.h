@@ -5,10 +5,6 @@
 #include <linux/printk.h>
 #include <linux/container_of.h>
 
-#ifndef BUILD_BUG_ON
-#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
-#endif
-
 /* defined in stdlib.h which is included by some reactos header.
  * which is TODO: probably not a good idea.
  */

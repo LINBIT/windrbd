@@ -589,4 +589,17 @@ static inline blk_status_t errno_to_blk_status(int errno)
         return status;
 }
 
+/* TODO: one day we might implement those: (actually it is already
+ * implemented but with a different interface).
+ */
+
+#define blk_start_plug(egal)
+#define blk_finish_plug(egal)
+
+/* TODO: 0? really? */
+static inline int bdev_discard_alignment(struct block_device *bdev)
+{
+        return 0;
+}
+
 #endif

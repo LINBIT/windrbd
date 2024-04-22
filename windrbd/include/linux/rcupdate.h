@@ -10,6 +10,8 @@
 		(_p) = (_v); \
 	} while (0)
 
+#define rcu_dereference_protected(p, c) (p)
+
 #define rcu_assign_pointer(p, v)	__rcu_assign_pointer((p), (v))
 #define list_next_rcu(list)		(*((struct list_head **)(&(list)->next)))
 
