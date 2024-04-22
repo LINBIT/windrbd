@@ -73,6 +73,10 @@ extern void kref_init(struct kref *kref);
 #include <linux/kstrtox.h>
 #include <linux/string.h>
 #include <linux/sprintf.h>
+#include <linux/panic.h>
+#include <linux/math.h>
+#include <linux/build_bug.h>
+#include <linux/div64.h>
 
 /* TODO somewhere else: */
 #define noinline_for_stack

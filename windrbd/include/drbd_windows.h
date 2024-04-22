@@ -158,8 +158,6 @@ enum
 #define PAGE_KERNEL				1
 #define	BIO_UPTODATE			1
 
-#define cond_resched()		    __noop
-
 #define U32_MAX		((u32)~0U)
 #define S32_MAX		((s32)(U32_MAX>>1))
 
@@ -348,7 +346,6 @@ extern unsigned long crc32(const char *s, size_t len);
 extern bool lc_is_used(struct lru_cache *lc, unsigned int enr);
 extern int fls(int x);
 extern char *kstrdup(const char *s, int gfp);
-extern void panic(const char *fmt, ...);
 
 void windrbd_init_netlink(void);
 void windrbd_shutdown_netlink(void);

@@ -103,4 +103,6 @@ static inline int sched_set_fifo_low(struct task_struct *p)
 #define TASK_INTERRUPTIBLE	1
 #define TASK_UNINTERRUPTIBLE	2
 
+#define cond_resched() do { } while (0);
+
 #endif

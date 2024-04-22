@@ -195,31 +195,6 @@ static inline int blkdev_put(struct block_device *bdev, fmode_t mode)
 
 #define drbd_bio_uptodate(bio) bio_flagged(bio, BIO_UPTODATE)
 
-typedef u8 blk_status_t;
-#define BLK_STS_OK 0
-#define BLK_STS_NOTSUPP         ((blk_status_t)1)
-#define BLK_STS_MEDIUM          ((blk_status_t)7)
-#define BLK_STS_RESOURCE        ((blk_status_t)9)
-#define BLK_STS_IOERR           ((blk_status_t)10)
-
-static int blk_status_to_errno(blk_status_t status)
-{
-        return  status == BLK_STS_OK ? 0 :
-                status == BLK_STS_RESOURCE ? -ENOMEM :
-                status == BLK_STS_NOTSUPP ? -EOPNOTSUPP :
-                -EIO;
-}
-static inline blk_status_t errno_to_blk_status(int errno)
-{
-        blk_status_t status =
-                errno == 0 ? BLK_STS_OK :
-                errno == -ENOMEM ? BLK_STS_RESOURCE :
-                errno == -EOPNOTSUPP ? BLK_STS_NOTSUPP :
-                BLK_STS_IOERR;
-
-        return status;
-}
-
 #define FAULT_TEST_FLAG     ((ULONG_PTR)0x11223344)
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)

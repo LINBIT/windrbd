@@ -136,4 +136,7 @@ typedef struct {
 } atomic64_t;
 #endif
 
+/* Nanosecond scalar representation for kernel time values */
+typedef s64	ktime_t;
+
 #endif
