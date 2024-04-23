@@ -35,4 +35,6 @@ struct kobj_type {
 	void(*release)(struct kobject *);
 };
 
+int kobject_uevent(struct kobject *kobj, enum kobject_action action);
+
 #endif

@@ -11,6 +11,11 @@
 #include <uapi/linux/netlink.h>
 #include <linux/skbuff.h>
 
+static inline struct nlmsghdr *nlmsg_hdr(const struct sk_buff *skb)
+{
+	return (struct nlmsghdr *)skb->data;
+}
+
 static inline size_t skb_is_nonlinear(const struct sk_buff *skb)
 {
 	return skb->len;
@@ -463,6 +468,46 @@ static inline int nla_put_u64(struct sk_buff *msg, int attrtype, __u64 value)
     return nla_put(msg, attrtype, sizeof(__u64), &value);
 }
 
+
+/**
+ * nla_put_s8 - Add a s8 netlink attribute to a socket buffer
+ * @skb: socket buffer to add attribute to
+ * @attrtype: attribute type
+ * @value: numeric value
+ */
+static inline int nla_put_s8(struct sk_buff *skb, int attrtype, s8 value)
+{
+	s8 tmp = value;
+
+	return nla_put(skb, attrtype, sizeof(s8), &tmp);
+}
+
+/**
+ * nla_put_s16 - Add a s16 netlink attribute to a socket buffer
+ * @skb: socket buffer to add attribute to
+ * @attrtype: attribute type
+ * @value: numeric value
+ */
+static inline int nla_put_s16(struct sk_buff *skb, int attrtype, s16 value)
+{
+	s16 tmp = value;
+
+	return nla_put(skb, attrtype, sizeof(s16), &tmp);
+}
+
+/**
+ * nla_put_s32 - Add a s32 netlink attribute to a socket buffer
+ * @skb: socket buffer to add attribute to
+ * @attrtype: attribute type
+ * @value: numeric value
+ */
+static inline int nla_put_s32(struct sk_buff *skb, int attrtype, s32 value)
+{
+	s32 tmp = value;
+
+	return nla_put(skb, attrtype, sizeof(s32), &tmp);
+}
+
 static inline bool nla_need_padding_for_64bit(struct sk_buff *skb)
 {
 	return false;
@@ -503,6 +548,22 @@ static inline int nla_put_64bit(struct sk_buff *skb, int attrtype, int attrlen,
 	__nla_put_64bit(skb, attrtype, attrlen, data, padattr);
 	return 0;
 }
+
+/**
+ * nla_put_s64 - Add a s64 netlink attribute to a socket buffer and align it
+ * @skb: socket buffer to add attribute to
+ * @attrtype: attribute type
+ * @value: numeric value
+ * @padattr: attribute type for the padding
+ */
+static inline int nla_put_s64(struct sk_buff *skb, int attrtype, s64 value,
+			      int padattr)
+{
+	s64 tmp = value;
+
+	return nla_put_64bit(skb, attrtype, sizeof(s64), &tmp, padattr);
+}
+
 /**
 * nla_put_string - Add a string netlink attribute to a message buffer
 * @msg: message buffer to add attribute to

@@ -29,5 +29,10 @@ static inline loff_t i_size_read(const struct inode *inode)
 	return inode->i_size;
 }
 
+/* TODO: implement those: */
+extern struct block_device *bdgrab(struct block_device *bdev);
+extern void bdput(struct block_device *);
+extern int fsync_bdev(struct block_device *);
+
 #endif
 

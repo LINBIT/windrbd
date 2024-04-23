@@ -23,9 +23,9 @@
 /* TODO: flag probably gfp_t */
 /* TODO: int? really? should be size_t */
 /* TODO: remove Tag. */
-extern void * kcalloc(int e_count, int x, int flag, ULONG Tag);
-extern void * kzalloc(int x, int flag, ULONG Tag);
-extern void * kmalloc(int size, int flag, ULONG Tag);
+extern void * kcalloc(int e_count, int x, int flag);
+extern void * kzalloc(int x, int flag);
+extern void * kmalloc(int size, int flag);
 extern void kfree(const void * x);
 extern void kvfree(const void * x);
 extern int dump_memory_allocations(int free_them);

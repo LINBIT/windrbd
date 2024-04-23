@@ -3160,35 +3160,6 @@ int vscnprintf(char * buf, size_t size, const char *fmt, va_list args)
 	return _vsnprintf(buf, size,  fmt, args);
 }
 
-int list_is_singular(const struct list_head *head)
-{
-	return !list_empty(head) && (head->next == head->prev);
-}
-
-void __list_cut_position(struct list_head *list, struct list_head *head, struct list_head *entry)
-{
-	struct list_head *new_first = entry->next;
-	list->next = head->next;
-	list->next->prev = list;
-	list->prev = entry;
-	entry->next = list;
-	head->next = new_first;
-	new_first->prev = head;
-}
-// from linux kernel 3.14 
-void list_cut_position(struct list_head *list, struct list_head *head, struct list_head *entry)
-{
-	if (list_empty(head))
-		return;
-	if (list_is_singular(head) &&
-		(head->next != entry && head != entry))
-		return;
-	if (entry == head)
-		INIT_LIST_HEAD(list);
-	else
-		__list_cut_position(list, head, entry);
-}
-
 struct blk_plug_cb *blk_check_plugged(blk_plug_cb_fn unplug, void *data,
 				      int size)
 {
