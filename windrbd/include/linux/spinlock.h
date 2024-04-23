@@ -136,3 +136,5 @@ extern void call_rcu(struct rcu_head *head, rcu_callback_t func);
 extern void local_irq_disable();
 extern void local_irq_enable();
 
+/* Nothing for now ... */
+#define assert_spin_locked(lock)	do { } while (0);

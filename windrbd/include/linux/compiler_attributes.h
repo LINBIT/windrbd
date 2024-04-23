@@ -55,4 +55,22 @@
  */
 #define __malloc                        __attribute__((__malloc__))
 
+/*
+ *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-noreturn-function-attribute
+ * clang: https://clang.llvm.org/docs/AttributeReference.html#noreturn
+ * clang: https://clang.llvm.org/docs/AttributeReference.html#id1
+ */
+#define __noreturn                      __attribute__((__noreturn__))
+
+/*
+ * Optional: only supported since clang >= 14.0
+ *
+ *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-error-function-attribute
+ */
+#if __has_attribute(__error__)
+# define __compiletime_error(msg)       __attribute__((__error__(msg)))
+#else
+# define __compiletime_error(msg)
+#endif
+
 #endif
