@@ -38,4 +38,17 @@ static inline u64 nsecs_to_jiffies(u64 n)
 #define time_before(_a,_b)		time_after(_b, _a)
 #define time_before_eq(_a,_b)		time_after_eq(_b, _a)
 
+
+/**
+ * time_in_range - Calculate whether a is in the range of [b, c].
+ * @a: time to test
+ * @b: beginning of the range
+ * @c: end of the range
+ *
+ * Return: %true is time a is in the range [b, c], otherwise %false.
+ */
+#define time_in_range(a,b,c) \
+	(time_after_eq(a,b) && \
+	 time_before_eq(a,c))
+
 #endif

@@ -27,7 +27,8 @@
 typedef int (congested_fn)(void *, int);
 
 struct backing_dev_info {
-	ULONG_PTR ra_pages; /* max readahead in PAGE_CACHE_SIZE units */ 
+	ULONG_PTR ra_pages; /* max readahead in PAGE_CACHE_SIZE units */
+	unsigned long state;	/* Always use atomic bitops on this */
 	congested_fn *congested_fn; /* Function pointer if device is md/dm */
 	void *congested_data;   /* Pointer to aux data for congested func */
 };
@@ -571,19 +572,20 @@ typedef u8 blk_status_t;
 #define BLK_STS_RESOURCE        ((blk_status_t)9)
 #define BLK_STS_IOERR           ((blk_status_t)10)
 
-static int blk_status_to_errno(blk_status_t status)
+static inline int blk_status_to_errno(blk_status_t status)
 {
         return  status == BLK_STS_OK ? 0 :
                 status == BLK_STS_RESOURCE ? -ENOMEM :
                 status == BLK_STS_NOTSUPP ? -EOPNOTSUPP :
                 -EIO;
 }
-static inline blk_status_t errno_to_blk_status(int errno)
+
+static inline blk_status_t errno_to_blk_status(int err)
 {
         blk_status_t status =
-                errno == 0 ? BLK_STS_OK :
-                errno == -ENOMEM ? BLK_STS_RESOURCE :
-                errno == -EOPNOTSUPP ? BLK_STS_NOTSUPP :
+                err == 0 ? BLK_STS_OK :
+                err == -ENOMEM ? BLK_STS_RESOURCE :
+                err == -EOPNOTSUPP ? BLK_STS_NOTSUPP :
                 BLK_STS_IOERR;
 
         return status;
@@ -593,13 +595,17 @@ static inline blk_status_t errno_to_blk_status(int errno)
  * implemented but with a different interface).
  */
 
-#define blk_start_plug(egal)
-#define blk_finish_plug(egal)
+#define blk_start_plug(plug)	(void)(plug)
+#define blk_finish_plug(plug)   (void)(plug)
 
 /* TODO: 0? really? */
 static inline int bdev_discard_alignment(struct block_device *bdev)
 {
         return 0;
 }
+
+extern const char *bdevname(struct block_device *bdev, char *buffer);
+
+#define blk_queue_split(bio) do { } while (0)
 
 #endif

@@ -159,7 +159,8 @@ LINUX_SRCDIR = ./windrbd/src/from-linux/
 LINUX_SOURCES = lib/kstrtox.c mm/util.c
 LINUX_FILES = $(addprefix $(LINUX_SRCDIR), $(LINUX_SOURCES))
 
-OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) $(patsubst %.c,%.o,$(LINUX_FILES))
+# OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) $(patsubst %.c,%.o,$(LINUX_FILES))
+OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES))
 
 COFFRES=./windrbd/windrbd-event-log.coffres ./drbd-tmp/drbd/resource.coffres
 # This was just an attempt to compile one device mapper file.

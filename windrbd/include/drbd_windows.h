@@ -354,8 +354,6 @@ void windrbd_shutdown_wsk(void);
 extern int initRegistry(__in PUNICODE_STRING RegistryPath);
 extern void delete_block_device(struct kref *kref);
 
-#define bdevname(dev, buf)   dev->bd_disk->disk_name
-
 //
 //  Lock primitives
 //

@@ -60,6 +60,8 @@ extern struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_se
 extern struct bio_set *bioset_create(unsigned int, unsigned int);
 extern void bioset_free(struct bio_set *);
 
+#define bio_clone_fast(bio, gfp, bio_set) bio_clone(bio, gfp)
+
 #ifdef BIO_ALLOC_DEBUG
 extern struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, char *file, int line, char *func);
 #define bio_alloc(a, b) bio_alloc_debug(a, b, __FILE__, __LINE__, __func__)
