@@ -11,4 +11,8 @@
 #define __is_constexpr(x) \
 	(sizeof(int) == sizeof(*(8 ? ((void *)((LONG_PTR)(x) * 0l)) : (int *)8)))
 
+#define __ALIGN_KERNEL(x, a)		__ALIGN_KERNEL_MASK(x, (__typeof__(x))(a) - 1)
+#define __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask))
+
+
 #endif /* _LINUX_CONST_H */

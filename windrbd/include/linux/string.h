@@ -4,6 +4,9 @@
 #include <linux/gfp.h>
 #include <linux/compiler.h>
 
+/* Implemented. Taken from Linux 5.11 */
+size_t strlcpy(char *dest, const char *src, size_t size);
+
 extern char *kstrdup(const char *s, gfp_t gfp) __malloc;
 
 #endif

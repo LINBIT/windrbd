@@ -79,6 +79,7 @@ extern void kref_init(struct kref *kref);
 #include <linux/div64.h>
 #include <linux/capability.h>
 #include <linux/cpumask.h>
+#include <linux/bitmap-str.h>
 
 /* TODO somewhere else: */
 #define noinline_for_stack

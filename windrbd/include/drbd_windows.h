@@ -333,8 +333,6 @@ static inline int queue_io_opt(struct request_queue *q)
 	return 0;
 }
 
-extern struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder);
-
 extern void hlist_add_head(struct hlist_node *n, struct hlist_head *h);
 extern void hlist_del_init(struct hlist_node *entry);
 extern int hlist_unhashed(const struct hlist_node *h);
@@ -507,9 +505,6 @@ enum kobject_action {
 /* Not implemented: */
 
 int kobject_uevent(struct kobject *kobj, enum kobject_action action);
-
-/* Implemented. Taken from Linux 5.11 */
-size_t strlcpy(char *dest, const char *src, size_t size);
 
 /* Implemented in windrbd_test: base works now from 2 to 36 */
 unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base);

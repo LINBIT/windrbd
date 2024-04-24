@@ -150,4 +150,14 @@ static inline int idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_
 	return got;
 }
 
+static int idr_has_entry(int id, void *p, void *data)
+{
+	return 1;
+}
+
+static inline bool idr_is_empty(struct idr *idr)
+{
+	return !idr_for_each(idr, idr_has_entry, NULL);
+}
+
 #endif /* __IDR_H__ */

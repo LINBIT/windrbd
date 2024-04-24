@@ -608,4 +608,21 @@ extern const char *bdevname(struct block_device *bdev, char *buffer);
 
 #define blk_queue_split(bio) do { } while (0)
 
+bool set_capacity_and_notify(struct gendisk *disk, sector_t size);
+
+	/* TODO: implement those: */
+extern void blk_queue_max_discard_sectors(struct request_queue *q,
+		unsigned int max_discard_sectors);
+extern void blk_queue_logical_block_size(struct request_queue *, unsigned int);
+extern void blk_set_stacking_limits(struct queue_limits *lim);
+extern void blk_queue_max_hw_sectors(struct request_queue *, unsigned int);
+extern void blk_queue_segment_boundary(struct request_queue *, unsigned long);
+extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+			    sector_t offset);
+void blk_queue_update_readahead(struct request_queue *q);
+void blkdev_put(struct block_device *bdev, fmode_t mode);
+
+	/* This opens a backing device: */
+extern struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder);
+
 #endif
