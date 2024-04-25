@@ -81,7 +81,6 @@ extern void kref_init(struct kref *kref);
 #include <linux/cpumask.h>
 #include <linux/bitmap-str.h>
 #include <asm-generic/getorder.h>
-#include <linux/bio.h>
 #include <linux/kmod.h>
 
 /* TODO somewhere else: */
