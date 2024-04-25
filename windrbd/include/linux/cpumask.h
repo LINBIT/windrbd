@@ -3,16 +3,16 @@
 
 #include <linux/slab.h>
 
-typedef struct cpumask { int mask; } cpumask_t;
+typedef struct cpumask { ULONG_PTR mask; } cpumask_t;
 typedef cpumask_t *cpumask_var_t;
-
 
 /* TODO: this should disable cpu_mask which we do not have on
  * Windows ...
  */
 #define nr_cpu_ids 1
 
-#define cpumask_bits(maskp) (maskp)->mask
+#define cpumask_bits(maskp) (unsigned long*)((maskp)->mask)
+
 static inline void cpumask_setall(struct cpumask *m)
 {
 	m->mask = ~0;

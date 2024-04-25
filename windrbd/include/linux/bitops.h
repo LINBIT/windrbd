@@ -6,6 +6,10 @@
 #include <linux/types.h>
 #include <linux/find.h>
 
+#include <asm-generic/bitops/builtin-__fls.h>
+#include <asm-generic/bitops/fls.h>
+#include <asm-generic/bitops/fls64.h>
+
 static inline void barrier(void)
 {
 	KeMemoryBarrier();
@@ -133,6 +137,13 @@ static inline ULONG_PTR __ffs64(u64 word)
 #error BITS_PER_LONG not 32 or 64
 #endif
 	return __ffs((ULONG_PTR)word);
+}
+
+static inline unsigned fls_long(ULONG_PTR l)
+{
+	if (sizeof(l) == 4)
+		return fls(l);
+	return fls64(l);
 }
 
 #endif

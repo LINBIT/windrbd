@@ -425,6 +425,27 @@ static inline int nla_parse_nested(struct nlattr *tb[], int maxtype,
 }
 
 /**
+ * nla_parse_nested_deprecated - parse nested attributes
+ * @tb: destination array with maxtype+1 elements
+ * @maxtype: maximum attribute type to be expected
+ * @nla: attribute containing the nested attributes
+ * @policy: validation policy
+ * @extack: extended ACK report struct
+ *
+ * See nla_parse_deprecated()
+ */
+
+struct netlink_ext_ack; /* Not used. */
+
+static inline int nla_parse_nested_deprecated(struct nlattr *tb[], int maxtype,
+					      const struct nlattr *nla,
+					      const struct nla_policy *policy,
+					      struct netlink_ext_ack *extack)
+{
+	return nla_parse_nested(tb, maxtype, nla, policy);
+}
+
+/**
 * nla_put_u8 - Add a u8 netlink attribute to a message buffer
 * @msg: message buffer to add attribute to
 * @attrtype: attribute type

@@ -51,7 +51,7 @@ static int string_table_to_buffer(char *buf, const char **argv, size_t max_size,
 	return argc;
 }
 
-int call_usermodehelper(char *path, char **argv, char **envp, int wait)
+int call_usermodehelper(const char *path, char **argv, char **envp, int wait)
 {
 	static int unique_id;
 	struct um_request *new_request;

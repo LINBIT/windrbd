@@ -51,7 +51,6 @@ typedef int cpumask_var_t;
 
 #define BUILD_BUG_ON(expr)
 
-/* TODO: what does this? */
 static inline void request_module(const char *fmt, ...)
 {
     (void)fmt;

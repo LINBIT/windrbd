@@ -417,16 +417,6 @@ int test_and_change_bit(int nr, const ULONG_PTR *addr)
 	return (old & mask) != 0;
 }
 
-LONG_PTR xchg(LONG_PTR *target, LONG_PTR value)
-{
-#ifdef _WIN64
-	return (InterlockedExchange64(target, value));
-#else
-	return (InterlockedExchange(target, value));
-#endif
-}
-
-
 void atomic_set(atomic_t *v, int i)
 {
 	InterlockedExchange((LONG_PTR *)v, i);
@@ -2691,13 +2681,13 @@ unsigned char *skb_put(struct sk_buff *skb, unsigned int len)
 	return tmp;
 }
 
-void *genlmsg_put(struct sk_buff *skb, u32 pid, u32 seq,
-				       struct genl_family *family, int flags, u8 cmd)
+void *genlmsg_put(struct sk_buff *skb, u32 portid, u32 seq,
+		  const struct genl_family *family, int flags, u8 cmd)
 {
 	struct nlmsghdr *nlh;
 	struct genlmsghdr *hdr;
 
-	nlh = nlmsg_put(skb, pid, seq, family->id, GENL_HDRLEN + family->hdrsize, flags);
+	nlh = nlmsg_put(skb, portid, seq, family->id, GENL_HDRLEN + family->hdrsize, flags);
 	if (nlh == NULL)
 		return NULL;
 
@@ -2707,14 +2697,6 @@ void *genlmsg_put(struct sk_buff *skb, u32 pid, u32 seq,
 	hdr->reserved = 0;
 
 	return (char *) hdr + GENL_HDRLEN;
-}
-
-void *genlmsg_put_reply(struct sk_buff *skb,
-                         struct genl_info *info,
-                         struct genl_family *family,
-                         int flags, u8 cmd)
-{
-	return genlmsg_put(skb, info->snd_portid, info->snd_seq, family, flags, cmd);
 }
 
 void genlmsg_cancel(struct sk_buff *skb, void *hdr)

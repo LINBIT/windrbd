@@ -3,7 +3,14 @@
 
 #include <linux/types.h>
 
-extern LONG_PTR xchg(LONG_PTR *target, LONG_PTR value);
+#ifdef _WIN64
+#define xchg(target, value) \
+	(void*) InterlockedExchange64((LONG_PTR*) target, (LONG_PTR) value)
+#else
+#define xchg(target, value) \
+	(void*) InterlockedExchange((LONG_PTR*) target, (LONG_PTR) value)
+#endif
+
 extern void atomic_set(atomic_t *v, int i);
 extern void atomic_add(int i, atomic_t *v);
 extern int atomic_add_return(int i, atomic_t *v);

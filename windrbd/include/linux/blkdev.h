@@ -28,7 +28,7 @@ typedef int (congested_fn)(void *, int);
 
 struct backing_dev_info {
 	ULONG_PTR ra_pages; /* max readahead in PAGE_CACHE_SIZE units */
-	unsigned long state;	/* Always use atomic bitops on this */
+	ULONG_PTR state;	/* Always use atomic bitops on this */
 	congested_fn *congested_fn; /* Function pointer if device is md/dm */
 	void *congested_data;   /* Pointer to aux data for congested func */
 };
@@ -468,7 +468,7 @@ static inline int queue_discard_zeroes_data(const struct request_queue *unused)
  * Returns the start time that should be passed back to bio_end_io_acct().
  * TODO: not implemented.
  */
-static inline unsigned long bio_start_io_acct(struct bio *bio)
+static inline ULONG_PTR bio_start_io_acct(struct bio *bio)
 {
 	return 0;
 }
@@ -479,7 +479,7 @@ static inline unsigned long bio_start_io_acct(struct bio *bio)
  * @start:	start time returned by bio_start_io_acct()
  * TODO: not implemented.
  */
-static inline void bio_end_io_acct(struct bio *bio, unsigned long start_time)
+static inline void bio_end_io_acct(struct bio *bio, ULONG_PTR start_time)
 {
 }
 
@@ -616,7 +616,7 @@ extern void blk_queue_max_discard_sectors(struct request_queue *q,
 extern void blk_queue_logical_block_size(struct request_queue *, unsigned int);
 extern void blk_set_stacking_limits(struct queue_limits *lim);
 extern void blk_queue_max_hw_sectors(struct request_queue *, unsigned int);
-extern void blk_queue_segment_boundary(struct request_queue *, unsigned long);
+extern void blk_queue_segment_boundary(struct request_queue *, ULONG_PTR);
 extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
 			    sector_t offset);
 void blk_queue_update_readahead(struct request_queue *q);

@@ -15,4 +15,8 @@ void free_page_kref_debug(struct kref *kref, const char *file, int line, const c
 #define __free_page(page) __free_page_debug(page, __FILE__, __LINE__, __func__)
 #define free_page_kref(kref) free_page_kref_debug(kref, __FILE__, __LINE__, __func__)
 
+/* TODO: implement */
+extern ULONG_PTR __get_free_pages(gfp_t gfp_mask, unsigned int order);
+extern void free_pages(ULONG_PTR addr, unsigned int order);
+
 #endif
