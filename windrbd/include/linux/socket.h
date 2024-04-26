@@ -8,6 +8,9 @@
 #include <linux/mutex.h>
 #include <wsk.h>	/* for struct sockaddr_storage */
 
+/* drbd_headers.h includes this and uses a struct bio * later ... */
+struct bio;
+
 /* Originally somewhere in arch, we put it here, since it is only
  * used for kernel_accept() for now.
  */
