@@ -297,16 +297,6 @@ static inline void assert_spin_locked(spinlock_t *lock)
 extern void kobject_put(struct kobject *kobj);
 extern void kobject_get(struct kobject *kobj);
 extern void kobject_del(struct kobject *kobj);
-static inline void * __get_free_page(int flags)
-{
-    return kzalloc(4096, flags, 'FPWD');
-}
-
-	/* TODO: this is a bad name */
-static inline void free_page(void *addr)
-{
-	kfree(addr);
-}
 
 struct crypto_tfm;
 extern void *crypto_alloc_tfm(char *name, u32 mask);

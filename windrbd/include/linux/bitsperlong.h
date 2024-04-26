@@ -1,3 +1,6 @@
+#ifndef __LINUX_BITS_PER_LONG_H
+#define __LINUX_BITS_PER_LONG_H
+
 /* THIS IS A BAD NAME.
  * A "long" on windows is 32bit, even on 64bit architectures;
  * but WDRBD is really using a "ULONG_PTR" in most places,
@@ -14,7 +17,9 @@
 #elif defined(_WIN32)
 # define BITS_PER_LONG 32
 #else
+/* TODO: __WORDSIZE = ?? (not defined in ReactOS headers) */
 # define BITS_PER_LONG __WORDSIZE
 #endif
 #endif
 
+#endif

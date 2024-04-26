@@ -36,6 +36,17 @@ extern void printk_reprint(size_t bytes);
 #endif
 
 /**
+ * pr_alert - Print an alert-level message
+ * @fmt: format string
+ * @...: arguments for the format string
+ *
+ * This macro expands to a printk with KERN_ALERT loglevel. It uses pr_fmt() to
+ * generate the format string.
+ */
+#define pr_alert(fmt, ...) \
+	printk(KERN_ALERT pr_fmt(fmt), ##__VA_ARGS__)
+
+/**
  * pr_crit - Print a critical-level message
  * @fmt: format string
  * @...: arguments for the format string

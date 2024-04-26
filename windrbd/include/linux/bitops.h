@@ -21,9 +21,6 @@ static inline void barrier(void)
 #define BITS_PER_BYTE           8
 
 extern int test_and_change_bit(int nr, const ULONG_PTR *vaddr);
-extern ULONG_PTR find_first_bit(const ULONG_PTR* addr, ULONG_PTR size); //reference linux 3.x kernel. 64bit compatible
-extern ULONG_PTR find_next_bit(const ULONG_PTR *addr, ULONG_PTR size, ULONG_PTR offset);
-extern int find_next_zero_bit(const ULONG_PTR * addr, ULONG_PTR size, ULONG_PTR offset);
 
 static inline int test_and_set_bit(int bit, volatile ULONG_PTR * base)
 {
@@ -145,5 +142,7 @@ static inline unsigned fls_long(ULONG_PTR l)
 		return fls(l);
 	return fls64(l);
 }
+
+#include <asm-generic/bitops/le.h>
 
 #endif

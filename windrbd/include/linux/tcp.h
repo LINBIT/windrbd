@@ -4,7 +4,8 @@
 #include <linux/tcp_states.h>
 #include <uapi/linux/pkt_sched.h>
 
-#define TCP_NODELAY		1	/* Turn off Nagle's algorithm. */
+/* Defined in ReactOS: */
+// #define TCP_NODELAY		1	/* Turn off Nagle's algorithm. */
 #define TCP_CORK		3	/* Never send partially complete segments */
 #define TCP_QUICKACK		12	/* Block/reenable quick acks */
 
@@ -25,5 +26,8 @@ struct tcp_sock {
 void tcp_sock_set_nodelay(struct sock *sk);
 void tcp_sock_set_cork(struct sock *sk, bool on);
 void tcp_sock_set_quickack(struct sock *sk, int val);
+
+/* See net/sock.h */
+#define tcp_sk(sk) &((sk)->t)
 
 #endif

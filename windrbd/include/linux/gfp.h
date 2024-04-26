@@ -18,5 +18,14 @@ void free_page_kref_debug(struct kref *kref, const char *file, int line, const c
 /* TODO: implement */
 extern ULONG_PTR __get_free_pages(gfp_t gfp_mask, unsigned int order);
 extern void free_pages(ULONG_PTR addr, unsigned int order);
+extern ULONG_PTR __get_free_page(gfp_t flags);
+/* {
+    return kmalloc(PAGE_SIZE, flags);
+} */
+
+extern void free_page(ULONG_PTR addr);
+/* {
+	kfree(addr);
+} */
 
 #endif

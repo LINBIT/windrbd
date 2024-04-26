@@ -36,4 +36,15 @@ static inline __must_check bool refcount_dec_and_test(refcount_t *r)
 	return atomic_dec_and_test(&r->refs);
 }
 
+/**
+ * refcount_read - get a refcount's value
+ * @r: the refcount
+ *
+ * Return: the refcount's value
+ */
+static inline unsigned int refcount_read(const refcount_t *r)
+{
+	return atomic_read(&r->refs);
+}
+
 #endif

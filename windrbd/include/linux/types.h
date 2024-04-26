@@ -54,7 +54,7 @@ typedef struct {
 	int counter;
 } atomic_t;
 
-#define ATOMIC_INIT(i) { (i) }
+#define ATOMIC_INIT(i) { .counter = (i) }
 
 typedef int pid_t;
 

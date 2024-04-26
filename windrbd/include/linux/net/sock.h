@@ -1,7 +1,9 @@
 #ifndef _LINUX_NET_SOCK_H
 #define _LINUX_NET_SOCK_H
 
-/* TODO: move this header to net/sock.h */
+struct sock;
+
+#include <linux/tcp.h>
 
 #define SOCK_SNDBUF_LOCK	1
 #define SOCK_RCVBUF_LOCK	2
@@ -34,6 +36,8 @@ struct sock {
 	unsigned char sk_reuse:4;
 	gfp_t sk_allocation;
 	__u32 sk_priority;
+
+	struct tcp_sock t;
 };
 
 #endif

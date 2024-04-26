@@ -40,6 +40,10 @@ extern void kref_init(struct kref *kref);
 
 #endif
 
+#ifndef KREF_INIT
+#define KREF_INIT(N) { .refcount = { .refs = ATOMIC_INIT(N) } }
+#endif
+
 /* TODO: to somewhere else */
 #include <linux/mm.h>
 #include <linux/semaphore.h>
