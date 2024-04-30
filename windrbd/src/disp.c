@@ -19,12 +19,13 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include <linux/types.h>
-
+/* TODO: this will go away ... */
 #include "windrbd_config.h"
 
-#include <initguid.h>
-#include <devguid.h>
+#include <linux/types.h>
+
+/* #include <initguid.h>
+#include <devguid.h> */
 #include "windrbd_internal.h"
 #include "windrbd/windrbd_ioctl.h"
 #include <linux/module.h>
@@ -35,6 +36,11 @@
 #include <linux/sched.h>
 #include <linux/workqueue.h>
 #include <linux/ratelimit_types.h>
+#include <linux/printk.h>
+#include <linux/wait.h>
+#include <linux/slab.h>
+/* For GUID_DEVCLASS_SCSIADAPTER: */
+#include <devguid.h>
 
 	/* Verifier BSOD on boot should be fixed we can read ACPI tables again.
 	 */
@@ -72,6 +78,9 @@ PDEVICE_OBJECT drbd_physical_bus_device;
 extern void init_transport(void);
 
 KEVENT bus_ready_event;
+
+#define TO_UNICODE(s) WIDEN2(s)
+#define WIDEN2(s) L##s
 
 static NTSTATUS create_device(const wchar_t *name, const UNICODE_STRING *sddl_perms, struct _DEVICE_OBJECT **d)
 {
@@ -119,9 +128,9 @@ static NTSTATUS create_device(const wchar_t *name, const UNICODE_STRING *sddl_pe
 }
 
 NTSTATUS
-DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
+DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING registry_path)
 {
-	NTSTATUS            		status;
+	NTSTATUS status;
 	int ret;
 
 		/* Use non executable pool for memory allocations.
@@ -173,24 +182,24 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 	printk(KERN_DEBUG "spinlock_debug initialized.\n");
 #endif
 
-	initRegistry(RegistryPath);
+	init_registry(registry_path);
 	init_event_log();
  
 		/* TODO: there is a better solution ... */
 #ifdef CONFIG_HAVE_IO_CREATE_DEVICE_SECURE
-	status = create_device(WINDRBD_ROOT_DEVICE_NAME, &SDDL_DEVOBJ_SYS_ALL_ADM_ALL, &mvolRootDeviceObject);
+	status = create_device(TO_UNICODE(WINDRBD_ROOT_DEVICE_NAME), &SDDL_DEVOBJ_SYS_ALL_ADM_ALL, &mvolRootDeviceObject);
 	if (status != STATUS_SUCCESS)
 		return status;
 
-	status = create_device(WINDRBD_USER_DEVICE_NAME, &SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_R, &user_device_object);
+	status = create_device(TO_UNICODE(WINDRBD_USER_DEVICE_NAME), &SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_R, &user_device_object);
 	if (status != STATUS_SUCCESS)
 		return status;
 #else
-	status = create_device(WINDRBD_ROOT_DEVICE_NAME, NULL, &mvolRootDeviceObject);
+	status = create_device(TO_UNICODE(WINDRBD_ROOT_DEVICE_NAME), NULL, &mvolRootDeviceObject);
 	if (status != STATUS_SUCCESS)
 		return status;
 
-	status = create_device(WINDRBD_USER_DEVICE_NAME, NULL, &user_device_object);
+	status = create_device(TO_UNICODE(WINDRBD_USER_DEVICE_NAME), NULL, &user_device_object);
 	if (status != STATUS_SUCCESS)
 		return status;
 #endif

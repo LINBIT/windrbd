@@ -2,8 +2,12 @@
 #include <linux/netlink.h>
 #include <linux/minmax.h>
 #include <linux/kern_levels.h>
+#include <linux/printk.h>
+#include <linux/export.h>
+#include <asm-generic/bug.h>
 
 /* TODO: from which Linux source file was this taken? Which version? */
+/* TODO: take the original (6.6 or so) file */
 
 static u16 nla_attr_minlen[NLA_TYPE_MAX + 1] __read_mostly = {
     [NLA_U8] = sizeof(u8),
@@ -445,10 +449,6 @@ int nla_put_nohdr(struct sk_buff *skb, int attrlen, const void *data)
  * * -E2BIG - If @dstsize is 0 or greater than U16_MAX or @nla length greater
  *            than @dstsize.
  */
-
-/* warning C4310: cast truncates constant value */
-
-#pragma warning (disable : 4310)
 
 #define U16_MAX		((u16)~0U)
 

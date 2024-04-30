@@ -1,6 +1,10 @@
 #ifndef __ASM_GENERIC_BUG_H
 #define __ASM_GENERIC_BUG_H
 
+#include <linux/panic.h>
+
+/* TODO: don't panic? */
+
 #define BUG() do { \
 	printk("BUG: failure at %s:%d/%s()!\n", __FILE__, __LINE__, __func__); \
 	panic("BUG!"); \

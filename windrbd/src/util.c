@@ -76,7 +76,7 @@ static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG *pReturnLength, UCH
     return status;
 }
 
-int initRegistry(__in PUNICODE_STRING RegPath_unicode)
+int init_registry(PUNICODE_STRING RegPath_unicode)
 {
 	ULONG ulLength;
 	ULONG ip_length;
@@ -157,40 +157,3 @@ NTSTATUS get_registry_long_long(wchar_t *key, unsigned long long *val_p, unsigne
 
 	return status;
 }
-
-#if 0
-/* TODO: move somewhere else */
-
-/* TODO: argh... */
-char *kvasprintf(int flags, const char *fmt, va_list args)
-{
-	char *buffer;
-	const int size = 4096; /* TODO: no. */
-	NTSTATUS status;
-
-	buffer = kzalloc(size, flags);
-	if (buffer) {
-			/* TODO: RtlStringCbVPrintfA */
-		status = RtlStringCchVPrintfA(buffer, size, fmt, args);
-		if (status == STATUS_SUCCESS)
-			return buffer;
-
-		kfree(buffer);
-	}
-
-	return NULL;
-}
-
-size_t windrbd_vsnprintf(char *buf, size_t bufsize, const char *fmt, va_list args)
-{
-	NTSTATUS status;
-
-	status = RtlStringCbVPrintfA(buf, bufsize, fmt, args);
-	if (status == STATUS_SUCCESS)
-		return strlen(buf);
-
-	return 0;
-}
-
-
-#endif

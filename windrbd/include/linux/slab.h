@@ -3,6 +3,7 @@
 
 #include <linux/types.h>	/* for size_t, ... */
 
+/* TODO: Linux header should not depend on WinDRBD header ... */
 #ifdef KMALLOC_DEBUG
 #include "kmalloc_debug.h"
 

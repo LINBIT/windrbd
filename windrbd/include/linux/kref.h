@@ -86,6 +86,7 @@ extern void kref_init(struct kref *kref);
 #include <linux/bitmap-str.h>
 #include <asm-generic/getorder.h>
 #include <linux/kmod.h>
+#include <linux/array_size.h>
 
 /* TODO somewhere else: */
 #define noinline_for_stack

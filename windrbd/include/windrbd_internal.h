@@ -44,4 +44,45 @@ extern PDEVICE_OBJECT		drbd_physical_bus_device;
 
 extern int drbd_init(void);
 
+extern void init_windrbd(void);
+
+/* see printk-to-syslog.c */
+extern int debug_printks_enabled;
+extern int initialize_syslog_printk(void);
+extern void shutdown_syslog_printk(void);
+extern void set_syslog_ip(const char *ip);
+
+#define cond_printk(args...) \
+	if (debug_printks_enabled) \
+		_printk(__FUNCTION__, args)
+
+/* Windows event log. printk's at level <= level set by set_event_log_threshold
+ * will appear in Windows event log.
+ */
+void init_event_log(void);
+void set_event_log_threshold(int level);
+
+extern void init_free_bios(void);
+extern void shutdown_free_bios(void);
+
+extern int init_registry(PUNICODE_STRING registry_path);
+
+/* See windrbd_device */
+extern void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj);
+
+/* See windrbd_netlink */
+void windrbd_init_netlink(void);
+void windrbd_shutdown_netlink(void);
+
+/* See windrbd_winsocket */
+NTSTATUS windrbd_init_wsk(void);
+void windrbd_shutdown_wsk(void);
+
+/* See windrbd_usermode_helper */
+int windrbd_init_usermode_helper(void);
+
+/* Run internal unit tests. */
+void windrbd_run_tests(void);
+void windrbd_shutdown_tests(void);
+
 #endif

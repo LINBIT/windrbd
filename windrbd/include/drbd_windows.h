@@ -19,15 +19,6 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#pragma warning (disable : 4100 4146 4221 4457 4456 4459)
-#pragma warning (disable : 4005 4018 4101 4115 4121 4127 4131 4152 4189 4200 4201 4204 4212 4218 4242 4244 4245 4267 4307 4389 4702 4706)
-/* Code analysis throws this warnings: */
-#pragma warning (disable : 26451 28719 6011 6385 6386 26453 33010 6001 28182)
-/* Additional warnings in Linux compat layer to silence: */
-#pragma warning (disable : 28169 28175 28167)
-/* Enable all warnings throws lots of those warnings: */
-#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032  4711 5045)
-
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H
 
@@ -80,7 +71,6 @@
 
 #include <linux/part_stat.h>
 
-void init_windrbd(void);
 void msleep(int ms);
 
 struct drbd_transport;
@@ -191,11 +181,6 @@ enum km_type {
 struct drbd_device;
 void windrbd_device_error(struct drbd_device *device, const char ** err_str_out, const char *fmt, ...);
 
-#define ARRAY_SIZE(_x)				(sizeof(_x) / sizeof((_x)[0]))
-
-
-#define ALIGN(_x,_a)				(((_x) + (_a)-1) & ~((_a)-1))
-
 
 static inline unsigned int refcount_read(const refcount_t *r)
 {
@@ -219,9 +204,6 @@ struct bio;
 extern sector_t windrbd_get_capacity(struct block_device *bdev);
 
 struct bio;
-
-void init_free_bios(void);
-void shutdown_free_bios(void);
 
 	/* To be called at the beginning of conn_disconnect, else
 	 * BSOD.
@@ -331,13 +313,6 @@ extern bool lc_is_used(struct lru_cache *lc, unsigned int enr);
 extern int fls(int x);
 extern char *kstrdup(const char *s, int gfp);
 
-void windrbd_init_netlink(void);
-void windrbd_shutdown_netlink(void);
-
-NTSTATUS windrbd_init_wsk(void);
-void windrbd_shutdown_wsk(void);
-
-extern int initRegistry(__in PUNICODE_STRING RegistryPath);
 extern void delete_block_device(struct kref *kref);
 
 //
@@ -424,7 +399,6 @@ int windrbd_delete_multicast_groups_for_file(struct _FILE_OBJECT *f);
 
 int windrbd_um_get_next_request(void *buf, size_t max_data_size, size_t *actual_data_size);
 int windrbd_um_return_return_value(void *rv_buf);
-int windrbd_init_usermode_helper(void);
 int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_point);
 bool windrbd_has_mount_point(struct block_device *dev);
 
@@ -440,10 +414,6 @@ char *my_inet_ntoa(struct in_addr *addr);
 /* TODO: this doesn't work on ARM (and other big endian architectures) */
 /* ugh ... */
 #define htons(x) ((((x) & 0xff) << 8) | (((x) & 0xff00) >> 8))
-
-/* Run internal unit tests. */
-void windrbd_run_tests(void);
-void windrbd_shutdown_tests(void);
 
 int windrbd_rescan_bus(void);
 void windrbd_bus_is_ready(void);
@@ -465,7 +435,7 @@ int try_to_promote(struct drbd_device *device, LONG_PTR timeout, bool ndelay);
 /* See windrbd_bootdevice.c */
 void parser_test(void);
 
-/* Debug. Might go away again. */
+/* Debug. TODO: goes away again. */
 void enter_interruptible_debug(const char *file, int line, const char *func);
 void exit_interruptible_debug(const char *file, int line, const char *func);
 
@@ -499,9 +469,6 @@ unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base)
 
 int lock_interface(const char *config_key_param);
 int windrbd_is_locked(void);
-
-void init_event_log(void);
-void set_event_log_threshold(int level);
 
 void windrbd_device_size_change(struct block_device *bdev);
 int set_driver_locked_state(int state);
