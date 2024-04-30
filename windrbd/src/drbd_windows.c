@@ -1663,13 +1663,13 @@ void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status)
 	INIT_LIST_HEAD(&tmp_list);
 
 	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
-	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->in_flight_bios, locally_submitted_bios) {
+	list_for_each_entry_safe(bio, bio2, &bdev->in_flight_bios, locally_submitted_bios) {
 //		list_del_init(&bio->locally_submitted_bios);
 		list_add(&bio->locally_submitted_bios2, &tmp_list);
 	}
 	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
 
-	list_for_each_entry(struct bio, bio, &tmp_list, locally_submitted_bios2) {
+	list_for_each_entry(bio, &tmp_list, locally_submitted_bios2) {
 // printk("disk timeout, failing bio %p (was last at %s)\n", bio, bio->where_i_am);
 		bio->bi_status = bi_status;
 		bio_endio(bio); /* will remove this bio from the list */
@@ -2182,7 +2182,7 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	joined_bios_bio = bio_alloc(0, num_vector_elements);
 	if (joined_bios_bio == NULL) {
 		printk("Could not allocate joined_bios_bio, failing outstanding bios\n");
-		list_for_each_entry_safe(struct bio, bio3, bio4, list, corked_bios) {
+		list_for_each_entry_safe(bio3, bio4, list, corked_bios) {
 			bio3->bi_status = BLK_STS_IOERR;
 			bio_endio(bio3);
 		}
@@ -3921,6 +3921,10 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 	struct drbd_peer_device *peer_device;
 
 	if (!device->vdisk->part0->is_bootdevice) {
+	/* TODO: this requires some DRBD patches. For 9.1 however this
+	 * is implemented somehow else so we can skip this patch.
+	 */
+#if 0
 		printk("Becoming primary, resuming application I/O and deleting sync stall timers.\n");
 		for_each_peer_device(peer_device, device) {
 			del_timer(&peer_device->resync_stalled_timer);
@@ -3928,6 +3932,7 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 		}
 		windrbd_resume_application_io(device->vdisk->part0,
 			"Resuming application I/O on becoming Primary.\n");
+#endif
 
 		if (windrbd_allocate_io_workqueue(device->vdisk->part0) < 0) {
 			printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");

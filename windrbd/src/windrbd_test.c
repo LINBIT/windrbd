@@ -1305,7 +1305,7 @@ static void intentionally_bsod(int argc, char ** argv)
 {
 	printk("About to intentionally BSOD (you should see 0xdeaddead as error code) ...\n");
 		/* code is 0xdeaddead */
-	KeBugCheckEx(MANUALLY_INITIATED_CRASH1, 42, 67, 28, 7);
+	KeBugCheckEx(0xdeaddead /* MANUALLY_INITIATED_CRASH */, 42, 67, 28, 7);
 	msleep(1000);
 	printk("Still alive?\n");
 }

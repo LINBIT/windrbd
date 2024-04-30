@@ -46,7 +46,7 @@
 #define dbg_bus(args...)   \
     _printk(__FUNCTION__, args)
 #else
-#define dbg_bus(args...)   __noop
+#define dbg_bus(args...) do { } while (0); 
 #endif
 
 #include <linux/types.h>

@@ -758,8 +758,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 */
 		int ret;
 
-		wait_event_interruptible(
-			ret,
+		ret = wait_event_interruptible(
 			socket->connected_waitqueue,
 			socket->is_connected);
 

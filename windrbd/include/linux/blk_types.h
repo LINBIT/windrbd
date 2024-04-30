@@ -138,6 +138,25 @@ struct bio {
 	   Do not try to join them */
 	bool is_user_request;
 
+	/* bios are put on this list once submitted to the underlying
+	 * disk driver and removed when bi_endio is called. This allows
+	 * us to avoid calling bi_endio twice. It is useful for failing
+	 * in-flight bios when a disk timeout happens (the disk still
+	 * may call the WinDRBD completion handler after that timeout
+	 * which should not call bi_endio again).
+	 */
+	struct list_head locally_submitted_bios;
+	struct list_head locally_submitted_bios2;
+
+	/* Set when there is a disk timeout. We fail the bio in the
+	 * disk timeout handler and must not fail it again (bi_endio
+	 * should be called only once.
+	 */
+	spinlock_t already_failed_lock;
+	bool already_failed;
+
+	char *where_i_am;	/* checkpoints for debugging backing dev timeout. */
+
 	/* TODO: may be put members here again? Update: Not sure,
 	 * we've put a KEVENT here and it didn't work .. might also
 	 * have been something else.
