@@ -130,6 +130,8 @@ struct socket {
 	bool have_printed_status;
 
 	ULONG_PTR flags;
+	struct wait_queue_head connected_waitqueue;
+	bool is_connected;
 };
 
 

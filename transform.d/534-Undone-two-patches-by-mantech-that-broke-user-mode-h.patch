@@ -27,15 +27,6 @@ index d761ee1..0b01db0 100644
  	va_end(args);
  	if (ret < 0) {
  		env->pos = ret;
-@@ -853,7 +853,7 @@ bool conn_try_outdate_peer(struct drbd_connection *connection)
- 	r = drbd_khelper(NULL, connection, "fence-peer");
- 
- 	begin_state_change(resource, &irq_flags, CS_VERBOSE);
--	switch (r & 0xff) {
-+	switch ((r>>8) & 0xff) {
- 	case P_INCONSISTENT: /* peer is inconsistent */
- 		ex_to_string = "peer is inconsistent or worse";
- 		__change_peer_disk_states(connection, D_INCONSISTENT);
 -- 
 2.17.0
 

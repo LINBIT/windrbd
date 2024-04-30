@@ -31,10 +31,10 @@
 #ifndef DRBD_WINDOWS_H
 #define DRBD_WINDOWS_H
 
-/* Comment that out for production releases. It maps kmem caches to kmalloc
+/* This maps kmem caches to kmalloc
    debug code so we can see who allocated memory.
  */
-/* #define KMEM_CACHE_DEBUG 1 */
+#define KMEM_CACHE_DEBUG 1
 
 	/* TODO: we probably want to turn those off: */
 /* Enable this (and recompile all) to enable bio reference debugging */
@@ -211,8 +211,6 @@ static inline bool refcount_dec_and_test(refcount_t *r)
 {
         return atomic_dec_and_test(&r->refs);
 }
-
-
 
 struct block_device;
 struct gendisk;
@@ -514,5 +512,7 @@ int windrbd_bdev_uncork(struct block_device *bdev);
 int windrbd_application_io_suspended(struct block_device *bdev);
 void windrbd_suspend_application_io(struct block_device *bdev, const char *msg);
 void windrbd_resume_application_io(struct block_device *bdev, const char *msg);
+
+void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status);
 
 #endif // DRBD_WINDOWS_H

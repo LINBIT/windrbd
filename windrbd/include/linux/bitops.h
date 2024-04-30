@@ -20,7 +20,7 @@ static inline void barrier(void)
 
 #define BITS_PER_BYTE           8
 
-extern int test_and_change_bit(int nr, const ULONG_PTR *vaddr);
+extern int test_and_change_bit(int nr, volatile ULONG_PTR *vaddr);
 
 static inline int test_and_set_bit(int bit, volatile ULONG_PTR * base)
 {

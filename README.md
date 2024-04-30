@@ -276,6 +276,11 @@ Version history
  * 1.1.6 (Feb 14, 2023): Fixed ReFS support, install from Windows Service, updated cygwin binaries
  * 1.1.7 (Jun 27, 2023): Fixed BSOD on low memory, fixed performance bug, poll_hup support for utils
  * 1.1.8 (Nov 21, 2023): backing dev I/O cork/uncork, resize fix, sync stall fix and many others
+ * 1.1.9 (Jan 15, 2024): Disk timeout, fix for drbdadm adjust network config BSOD
+ * 1.1.10 (Feb 21, 2024): Memory pressure fixes, drbdadm primary hang fix
+ * 1.1.11 (Mar 26, 2024): update cygwin DLL 3.4.5 -> 3.4.10
+ * 1.1.12 (Apr 15, 2024): several fixes (in DRBD) related to fencing
+ * 1.1.13 (Apr 30, 2024): update cygwin DLL 3.4.10 -> 3.5.3
  * 1.2.0-rc1 (Aug 14, 2023): Compile with gcc. Don't use 1.2.0-rc's in production.
  * 1.2.0-rc2 (Sep 12, 2023): Build everything within a docker container (WinDRBD, drbd-utils, ...)
  * 1.2.0-rc3 (Sep 20, 2023): Fix for BSOD on Primary, ReactOS support

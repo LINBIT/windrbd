@@ -11,7 +11,7 @@
 /* This timeout is between call_usermodehelper and some daemon to
  * fetch the request.
  */
-#define REQUEST_TIMEOUT_MS 1000
+#define REQUEST_TIMEOUT_MS 10000
 
 struct um_request {
 	struct list_head list;
@@ -104,7 +104,7 @@ int call_usermodehelper(const char *path, char **argv, char **envp, int wait)
 		status = KeWaitForSingleObject(&new_request->return_event, Executive, KernelMode, FALSE, NULL);
 
 		ret = new_request->retval;
-		printk("User mode helper returned %d (exit status is %d)\n", ret, (ret >> 8) & 0xff);
+		printk("User mode helper \"%s\" returned %d (exit status is %d)\n", (argv[0] != NULL && argv[1] != NULL) ? argv[1] : "unknown", ret, (ret >> 8) & 0xff);
 	}
 
 	mutex_lock(&request_mutex);

@@ -17,7 +17,7 @@ index 70530c6..8e7359a 100644
  static void drbd_endio_read_sec_final(struct drbd_peer_request *peer_req) __releases(local)
  {
 -	ULONG_PTR flags = 0;
-+	KIRQL flags;
++	KIRQL flags = 0;
  	struct drbd_peer_device *peer_device = peer_req->peer_device;
  	struct drbd_device *device = peer_device->device;
  	struct drbd_connection *connection = peer_device->connection;
@@ -26,7 +26,7 @@ index 70530c6..8e7359a 100644
  void drbd_endio_write_sec_final(struct drbd_peer_request *peer_req) __releases(local)
  {
 -	ULONG_PTR flags = 0;
-+	KIRQL flags;
++	KIRQL flags = 0;
  	struct drbd_peer_device *peer_device = peer_req->peer_device;
  	struct drbd_device *device = peer_device->device;
  	struct drbd_connection *connection = peer_device->connection;

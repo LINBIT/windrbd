@@ -373,7 +373,7 @@ int find_next_zero_bit(const ULONG_PTR * addr, ULONG_PTR size, ULONG_PTR offset)
 
 static spinlock_t g_test_and_change_bit_lock;
 
-int test_and_change_bit(int nr, const ULONG_PTR *addr)
+int test_and_change_bit(int nr, volatile ULONG_PTR *addr)
 {
 	ULONG_PTR mask = BIT_MASK(nr);
 	ULONG_PTR *p = ((ULONG_PTR *) addr);
@@ -463,6 +463,7 @@ int atomic_read(const atomic_t *v)
 #ifndef KMALLOC_DEBUG
 
 	/* TODO: honor the flag: alloc from PagedPool if flag is GFP_USER */
+	/* TODO: this should also implement the retries ... */
 
 void *kmalloc(int size, int flag)
 {
@@ -745,6 +746,13 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs)
 	INIT_LIST_HEAD(&bio->corked_bios);
 	INIT_LIST_HEAD(&bio->joined_bios);
 
+	INIT_LIST_HEAD(&bio->locally_submitted_bios);
+	INIT_LIST_HEAD(&bio->locally_submitted_bios2);
+
+	spin_lock_init(&bio->already_failed_lock);
+	bio->already_failed = false;
+	bio->where_i_am = "just allocated";
+
 	return bio;
 }
 
@@ -877,6 +885,10 @@ void bio_free(struct bio *bio)
 	int i;
 	struct bio *upper_bio = bio->is_cloned_from;
 
+	if (!list_empty(&bio->locally_submitted_bios)) {
+		printk("Warning: bio->locally_submitted_bios not empty.\n");
+	}
+
 		/* DRBD considers pages here as not in use any more.
 		 * however we still have MDLs referencing memory
 		 * of the page. So take a reference here and drop
@@ -886,6 +898,8 @@ void bio_free(struct bio *bio)
 	spin_lock_irqsave(&bios_to_be_freed_lock, flags);
 	list_add(&bio->to_be_freed_list, &bios_to_be_freed_list);
 	spin_unlock_irqrestore(&bios_to_be_freed_lock, flags);
+
+		/* starting here bio might be invalid */
 
 	if (upper_bio != NULL)
 		bio_put(upper_bio);
@@ -981,7 +995,9 @@ struct bio *bio_clone(struct bio * bio_src, int flag)
 	for (i=0;i<bio->bi_vcnt;i++) {
 		get_page(bio->bi_io_vec[i].bv_page);
 	}
-
+	if (!list_empty(&bio->locally_submitted_bios)) {
+		printk("Warning: bio->locally_submitted_bios not empty, is this bio already submitted?\n");
+	}
 #ifdef BIO_ALLOC_DEBUG
 	bio->file = bio_src->file;
 	bio->line = bio_src->line;
@@ -1152,6 +1168,7 @@ struct workqueue_struct *alloc_ordered_workqueue(const char * fmt, int flags, ..
 	va_list args;
 
 	wq = kzalloc(sizeof(*wq), flags);
+
 	if (wq == NULL) {
 		printk("Warning: not enough memory for workqueue\n");
 		return NULL;
@@ -1633,6 +1650,32 @@ int wait_for_bios_to_complete(struct block_device *bdev)
 
 static void bio_endio_impl(struct bio *bio, bool was_accounted);
 
+void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status)
+{
+	KIRQL flags;
+	struct list_head tmp_list;
+	struct bio *bio, *bio2;
+
+		/* Valid. backing dev might be detached. */
+	if (bdev == NULL)
+		return;
+
+	INIT_LIST_HEAD(&tmp_list);
+
+	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
+	list_for_each_entry_safe(struct bio, bio, bio2, &bdev->in_flight_bios, locally_submitted_bios) {
+//		list_del_init(&bio->locally_submitted_bios);
+		list_add(&bio->locally_submitted_bios2, &tmp_list);
+	}
+	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
+
+	list_for_each_entry(struct bio, bio, &tmp_list, locally_submitted_bios2) {
+// printk("disk timeout, failing bio %p (was last at %s)\n", bio, bio->where_i_am);
+		bio->bi_status = bi_status;
+		bio_endio(bio); /* will remove this bio from the list */
+	}
+}
+
 NTSTATUS DrbdIoCompletion(
   _In_     PDEVICE_OBJECT DeviceObject,
   _In_     PIRP           Irp,
@@ -1649,6 +1692,8 @@ NTSTATUS DrbdIoCompletion(
 	bool one_big_request;
 
 	atomic_dec(&bio->bi_bdev->num_irps_pending);
+
+bio->where_i_am = "in io completion";
 
 	if (status != STATUS_SUCCESS) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)
@@ -1705,11 +1750,14 @@ NTSTATUS DrbdIoCompletion(
 	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
 
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS || one_big_request)) {
+bio->where_i_am = "into bio_endio";
+			/* Last call to DrbdIoComplete() for this bio */
 		bio->bi_status = win_status_to_blk_status(status);
 		bio_endio(bio);
 
 		struct bio *child_bio, *child_bio2;
 		list_for_each_entry_safe(child_bio, child_bio2, &bio->joined_bios, corked_bios) {
+child_bio->where_i_am = "child bio in io completion";
 			child_bio->bi_status = win_status_to_blk_status(status);
 
 				/* bio was never submitted, so bdev's pending
@@ -1796,6 +1844,7 @@ static int make_flush_request(struct bio *bio)
 {
 	NTSTATUS status;
 	PIO_STACK_LOCATION next_stack_location;
+	KIRQL flags;
 
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				IRP_MJ_FLUSH_BUFFERS,
@@ -1819,7 +1868,6 @@ static int make_flush_request(struct bio *bio)
 	next_stack_location->FileObject = bio->bi_bdev->file_object;
 
 	bio_get(bio);	/* To be put in completion routine (bi_endio) */
-
 
 	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
@@ -1852,6 +1900,7 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	int err = -EIO;
 	unsigned int the_size;
 
+bio->where_i_am = "in windrbd_generic_make_request big buffer";
 	if (bio->bi_vcnt == 0) {
 		printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
 		return -EIO;
@@ -1892,8 +1941,11 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 		patch_boot_sector(buffer, 0, 0);
 	}
 
+	int retries = 0;
+	while (1) {
+
 		/* TODO: io_stat not used at all? */
-	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
+		bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				io,
 				bio->bi_bdev->windows_device,
 				buffer,
@@ -1902,9 +1954,22 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 				&bio->bi_io_vec[bio->bi_this_request].io_stat
 				);
 
-	if (!bio->bi_irps[bio->bi_this_request]) {
-		printk(KERN_ERR "IoBuildAsynchronousFsdRequest: cannot alloc new IRP for io %d, device %p, buffer %p, the_size %d, offset %lld%\n", io, bio->bi_bdev->windows_device, buffer, the_size, bio->bi_io_vec[bio->bi_this_request].offset.QuadPart);
-		return -ENOMEM;
+		if (bio->bi_irps[bio->bi_this_request] != NULL) {
+			if (retries > 0)
+				printk("succeeded after %d retries\n", retries);
+			break;
+		}
+
+		if (retries % 10 == 0) {
+			printk(KERN_ERR "IoBuildAsynchronousFsdRequest: cannot alloc new IRP for io %d, device %p, buffer %p, the_size %d, offset %lld, retrying ...\n", io, bio->bi_bdev->windows_device, buffer, the_size, bio->bi_io_vec[bio->bi_this_request].offset.QuadPart);
+		}
+		if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
+			if (retries == 0)
+				printk("cannot sleep now, busy looping\n");
+		} else {
+			msleep(100);
+		}
+		retries++;
 	}
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
@@ -1940,10 +2005,11 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	part_stat_add(bio->bi_bdev, sectors[io == IRP_MJ_READ ? STAT_READ : STAT_WRITE], the_size / 512);
 
+	bio->where_i_am = "calling backing dev driver";
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
 		/* either STATUS_SUCCESS or STATUS_PENDING */
-		/* Update: may also return STATUS_ACCESS_DENIED */
+		/* Update: may also return STATUS_ACCESS_DENIED or STATUS_VOLUME_DISMOUNTED */
 
 	if (status != STATUS_SUCCESS && status != STATUS_PENDING) {
 		printk("IoCallDriver status %x, I/O on backing device failed, bio: %p\n", status, bio);
@@ -1966,6 +2032,7 @@ static int generic_make_request2(struct bio *bio)
 	int flush_request;
 	atomic_inc(&bio->bi_bdev->num_bios_pending);
 
+	bio->where_i_am = "in generic_make_request2";
 	bio_get(bio);
 
 	flush_request = ((bio->bi_opf & REQ_PREFLUSH) != 0);
@@ -1993,6 +2060,7 @@ static int generic_make_request2(struct bio *bio)
 	orig_sector = sector = bio->bi_iter.bi_sector;
 	orig_size = bio->bi_iter.bi_size;
 
+	bio->where_i_am = "in generic_make_request2 2";
 	bio->bi_using_big_buffer = false;
 	if (bio->bi_vcnt > 1) {
 		total_size = 0;
@@ -2009,6 +2077,7 @@ static int generic_make_request2(struct bio *bio)
 			bio->bi_this_request = 0;
 			bio->bi_using_big_buffer = true;
 
+bio->where_i_am = "in generic_make_request2 big buffer";
 			if (bio_data_dir(bio) == WRITE) {
 				/* copy data from io_vecs */
 				int i;
@@ -2086,6 +2155,7 @@ void windrbd_bdev_cork(struct block_device *bdev)
 
 static void do_nothing(struct bio *bio)
 {
+	bio->where_i_am = "in do_nothing";
 	bio_put(bio);
 }
 
@@ -2110,8 +2180,14 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 		return ret;
 	}
 	joined_bios_bio = bio_alloc(0, num_vector_elements);
-	if (joined_bios_bio == NULL)
+	if (joined_bios_bio == NULL) {
+		printk("Could not allocate joined_bios_bio, failing outstanding bios\n");
+		list_for_each_entry_safe(struct bio, bio3, bio4, list, corked_bios) {
+			bio3->bi_status = BLK_STS_IOERR;
+			bio_endio(bio3);
+		}
 		return -ENOMEM;
+	}
 
 	joined_bios_bio->bi_end_io = do_nothing;
 	joined_bios_bio->bi_bdev = first_bio->bi_bdev;
@@ -2123,6 +2199,7 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	joined_bios_bio->bi_vcnt = 0;
 
 	list_for_each_entry_safe(bio3, bio4, list, corked_bios) {
+		bio3->where_i_am = "in join bios loop";
 		if (first_bio_not_on_list != NULL && bio3 == first_bio_not_on_list) {
 			break;
 		}
@@ -2185,6 +2262,7 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 
 	list_for_each_entry_safe(bio, bio2, &tmp_list, corked_bios) {
 //  printk("bio is %p expected_sector is %lld bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %lld num_vector_elements is %d joinable_size is %d opf is %d bio->bi_opf is %d\n", bio, expected_sector, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, num_vector_elements, joinable_size, opf, bio->bi_opf);
+		bio->where_i_am = "in uncorking loop";
 		if ((expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) || num_vector_elements >= 1024 || joinable_size >= 4*1024*1024 || (opf != (unsigned int)-1 && bio->bi_opf != opf) || bio->is_user_request) {
 // printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 			if (last_bio == NULL) {
@@ -2220,6 +2298,8 @@ int windrbd_bdev_uncork(struct block_device *bdev)
                          *    bio_endfn() for all child functions
 			 *
 			 * Error handling?
+			 * must bio_endio bios on memory allocation error this
+			 * is done now in create_and_submit_joined_bio()
 			 */
 			num_joinable_bios = 0;
 			num_vector_elements = 0;
@@ -2255,7 +2335,19 @@ int generic_make_request(struct bio *bio)
 	KIRQL flags;
 	int i;
 
+	bio->where_i_am = "in generic_make_request 1";
+
+		/* First thing: put bio on pending list before
+		 * we get confused facing joined, corked, child, ...
+		 * bios.
+		 */
+
+	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
+	list_add(&bio->locally_submitted_bios, &bdev->in_flight_bios);
+	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
+
 	if (bdev->corked) {
+		bio->where_i_am = "in generic_make_request bdev corked";
 		bio_get(bio);	/* we want to put it on a list. */
 
 			/* TODO: also get pages? It works with this ...
@@ -2276,20 +2368,38 @@ int generic_make_request(struct bio *bio)
 		return 0;
 	} else {
 // printk("bio %p corking is off: submitting (4)\n", bio);
+		bio->where_i_am = "in generic_make_request no corking";
 		return generic_make_request2(bio);
 	}
 }
 
 static void bio_endio_impl(struct bio *bio, bool was_accounted)
 {
+	KIRQL flags, flags2;
+
 	int error = blk_status_to_errno(bio->bi_status);
+
+		/* This allows us being called multiple times with
+		 * the same bio without crashing.
+		 */
+
+	spin_lock_irqsave(&bio->already_failed_lock, flags);
+	if (bio->already_failed) {
+		spin_unlock_irqrestore(&bio->already_failed_lock, flags);
+		return;
+	}
+	spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags2);
+	list_del_init(&bio->locally_submitted_bios);
+	spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags2);
+
+	bio->already_failed = true;
+	spin_unlock_irqrestore(&bio->already_failed_lock, flags);
 
 	bio_get(bio);
 
-
 	if (bio->bi_end_io != NULL) {
 		if (error != 0)
-			printk("Warning: thread(%s) bio_endio error with err=%d.\n", current->comm, error);
+			printk("Warning: thread(%s) bio(%p) bio_endio error with err=%d\n", current->comm, bio, error);
 
 
 		bio->bi_end_io(bio);
@@ -2527,6 +2637,7 @@ void blk_cleanup_queue(struct request_queue *q)
 struct gendisk *alloc_disk(int minors)
 {
 	struct gendisk *p = kzalloc(sizeof(struct gendisk), GFP_KERNEL);
+
 	return p;
 }
 
@@ -2899,6 +3010,7 @@ static void backingdev_check_endio(struct bio *bio)
 static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 {
 	struct bio *b = bio_alloc(0, 1);
+
 	int i;
 	struct completion c;
 	int ret;
@@ -3041,6 +3153,10 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	block_device->corked = false;
 	spin_lock_init(&block_device->cork_spinlock);
 	INIT_LIST_HEAD(&block_device->corked_list);
+
+		/* fail I/O on disk timeout, new in 1.1.9 */
+	spin_lock_init(&block_device->in_flight_bios_lock);
+	INIT_LIST_HEAD(&block_device->in_flight_bios);
 
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
@@ -3414,6 +3530,9 @@ block_device->my_auto_promote = 1;
 	block_device->corked = false;
 	spin_lock_init(&block_device->cork_spinlock);
 	INIT_LIST_HEAD(&block_device->corked_list);
+		/* fail I/O on disk timeout, new in 1.1.9 */
+	spin_lock_init(&block_device->in_flight_bios_lock);
+	INIT_LIST_HEAD(&block_device->in_flight_bios);
 
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
@@ -3799,7 +3918,17 @@ extern int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(s
 
 int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 {
+	struct drbd_peer_device *peer_device;
+
 	if (!device->vdisk->part0->is_bootdevice) {
+		printk("Becoming primary, resuming application I/O and deleting sync stall timers.\n");
+		for_each_peer_device(peer_device, device) {
+			del_timer(&peer_device->resync_stalled_timer);
+			peer_device->rs_last_bm_extent = NULL;
+		}
+		windrbd_resume_application_io(device->vdisk->part0,
+			"Resuming application I/O on becoming Primary.\n");
+
 		if (windrbd_allocate_io_workqueue(device->vdisk->part0) < 0) {
 			printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");
 		}

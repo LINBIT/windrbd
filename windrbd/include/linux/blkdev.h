@@ -417,7 +417,9 @@ struct block_device {
 
 	bool corked;
 	spinlock_t cork_spinlock;
-	struct list_head corked_list;
+
+	spinlock_t in_flight_bios_lock;
+	struct list_head in_flight_bios;
 };
 
 	/* Starting with version 0.7.1, this is the device extension

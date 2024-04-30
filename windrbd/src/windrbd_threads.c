@@ -90,12 +90,32 @@ void print_threads_in_rcu(void)
 
 NTSTATUS windrbd_create_windows_thread(void (*threadfn)(void*), void *data, void **thread_object_p)
 {
-        HANDLE h;
-        NTSTATUS status;
+	HANDLE h;
+	NTSTATUS status;
+	int retries;
 
-        status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, threadfn, data);
-        if (!NT_SUCCESS(status))
-                return status;
+	retries = 0;
+	while (1) {
+	        status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, threadfn, data);
+		if (NT_SUCCESS(status)) {
+			if (retries > 0)
+				printk("succeeded after %d retries\n", retries);
+			break;
+		}
+		if (status != STATUS_INSUFFICIENT_RESOURCES)
+			return status;
+
+                if (retries % 10 == 0)
+			printk(KERN_ERR "Could not start thread, status = %x, retrying ...\n", status);
+
+                if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
+			if (retries == 0)
+				printk("cannot sleep now, busy looping\n");
+		} else {
+			msleep(100);
+		}
+		retries++;
+	}
 
 	if (thread_object_p)
 	        status = ObReferenceObjectByHandle(h, THREAD_ALL_ACCESS, NULL, KernelMode, thread_object_p, NULL);
@@ -278,6 +298,10 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	t->is_root = current->is_root;	/* inherit user ID */
 	spin_lock_init(&t->thread_started_lock);
 
+	/* TODO: this should be a NotificationEvent. UNIX Signals
+	 * should remain signalled until explicitly removed
+	 * by flush_signals(). Change it in the 1.2 branch.
+	 */
 	// KeInitializeEvent(&t->sig_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
 	KeInitializeEvent(&t->start_event, SynchronizationEvent, FALSE);

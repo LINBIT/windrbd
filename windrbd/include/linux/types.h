@@ -42,13 +42,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <linux/compiler.h>
-
-#if 0
-typedef enum __Bool__ {
-	false = 0,
-	true = 1
-} bool;
-#endif
+#include <linux/gfp_types.h>
 
 typedef struct {
 	int counter;

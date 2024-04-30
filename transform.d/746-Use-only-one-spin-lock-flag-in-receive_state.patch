@@ -38,19 +38,6 @@ index 53eef53..d1eb5ae 100644
  			if (rv < SS_SUCCESS)
  				goto fail;
  		}
-@@ -7450,10 +7449,10 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
- 		drbd_err(peer_device, "Aborting Connect, can not thaw IO with an only Consistent peer\n");
- 		tl_walk(connection, CONNECTION_LOST_WHILE_PENDING);
- 		drbd_uuid_new_current(device, false);
--		begin_state_change(resource, &irq_flags, CS_HARD);
-+		begin_state_change(resource, &spin_lock_irq_flags, CS_HARD);
- 		__change_cstate(connection, C_PROTOCOL_ERROR);
- 		__change_io_susp_user(resource, false);
--		end_state_change(resource, &irq_flags);
-+		end_state_change(resource, &spin_lock_irq_flags);
- 		return -EIO;
- 	}
- 
 @@ -7480,7 +7479,7 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
  		}
  	}
