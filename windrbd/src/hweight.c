@@ -1,6 +1,5 @@
-﻿#include "linux/bitops.h"
-#include "linux/types.h"
-#include "linux/drbd_endian.h"
+﻿#include <linux/bitops.h>
+#include <linux/types.h>
 
 /**
 * hweightN - returns the hamming weight of a N-bit word

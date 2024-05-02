@@ -551,6 +551,15 @@ void idr_shutdown(void)
 		kmem_cache_destroy(idr_layer_cache);
 }
 
+#define MAX_IDR_SHIFT		(sizeof(int) * 8 - 1)
+#define MAX_IDR_BIT		(1U << MAX_IDR_SHIFT)
+
+/* Leave the possibility of an incomplete final layer */
+#define MAX_IDR_LEVEL ((MAX_IDR_SHIFT + IDR_BITS - 1) / IDR_BITS)
+
+/* Number of id_layer structs to leave in free list */
+#define MAX_IDR_FREE (MAX_IDR_LEVEL * 2)
+
 static int idr_max(int layers)
 {
 	int bits = min_t(int, layers * IDR_BITS, MAX_IDR_SHIFT);

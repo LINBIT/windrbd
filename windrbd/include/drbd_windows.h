@@ -52,7 +52,6 @@
 #include <ntstrsafe.h>
 #include <linux/list.h>
 #include <linux/wait.h>
-#include <linux/drbd_endian.h>
 #include "linux/types.h"
 // #include "generic_compat_stuff.h"
 #include "windrbd/windrbd_ioctl.h"

@@ -101,30 +101,9 @@ NTAPI RtlRandomEx(
 #include "linux/idr.h"
 #include "windrbd_internal.h"
 
-#define MAX_IDR_SHIFT		(sizeof(int) * 8 - 1)
-#define MAX_IDR_BIT		(1U << MAX_IDR_SHIFT)
-
-/* Leave the possibility of an incomplete final layer */
-#define MAX_IDR_LEVEL ((MAX_IDR_SHIFT + IDR_BITS - 1) / IDR_BITS)
-
-/* Number of id_layer structs to leave in free list */
-#define MAX_IDR_FREE (MAX_IDR_LEVEL * 2)
-
 /* TODO: lock this list */
 static LIST_HEAD(backing_devices);
 static struct mutex read_bootsector_mutex;
-
-/* Just to see if it links ... */
-/* TODO: remove this ASAP ! */
-__MINGW_NOTHROW int __cdecl __mingw_vsprintf (char * __restrict__ , const char * __restrict__ , va_list)
-{
-	return 0;
-}
-
-int __cdecl __mingw_vsnwprintf (wchar_t * __restrict__ , size_t, const wchar_t * __restrict__ , va_list)
-{
-	return 0;
-}
 
 void windrbd_device_error(struct drbd_device *device, const char ** err_str_out, const char *fmt, ...)
 {
