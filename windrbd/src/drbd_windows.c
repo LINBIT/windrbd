@@ -38,6 +38,7 @@
 #include "drbd_int.h"
 #include <windrbd/windrbd_ioctl.h>
 
+#include <linux/kthread.h>
 #include <linux/kref.h>
 
 	/* TODO: split this up into several files. Already done for
@@ -388,14 +389,16 @@ int test_and_change_bit(int nr, volatile ULONG_PTR *addr)
 	return (old & mask) != 0;
 }
 
+/* TODO: those into windows_atomic.c (or reactos_atomic.c) */
+
 void atomic_set(atomic_t *v, int i)
 {
-	InterlockedExchange((LONG_PTR *)v, i);
+	InterlockedExchange((volatile __LONG32*) &v->counter, i);
 }
 
 void atomic_add(int i, atomic_t *v)
 {
-	InterlockedExchangeAdd((LONG_PTR *)v, i);
+	InterlockedExchangeAdd((volatile __LONG32*)&v->counter, i);
 }
 
 	/* TODO: atomic? Results may be non-monotonic decreasing, not
@@ -404,7 +407,7 @@ void atomic_add(int i, atomic_t *v)
 int atomic_add_return(int i, atomic_t *v)
 {
 	int retval;
-	retval = InterlockedExchangeAdd((LONG*)v, i);
+	retval = InterlockedExchangeAdd((volatile __LONG32*)&v->counter, i);
 	retval += i;
 	return retval;
 }
@@ -420,7 +423,7 @@ void atomic_sub(int i, atomic_t *v)
 int atomic_sub_return(int i, atomic_t *v)
 {
 	int retval;
-	retval = InterlockedExchangeAdd((LONG*)v, -i);
+	retval = InterlockedExchangeAdd((volatile __LONG32*)&v->counter, -i);
 	retval -= i;
 	return retval;
 }
@@ -429,35 +432,36 @@ int atomic_sub_return(int i, atomic_t *v)
 
 int atomic_dec_and_test(atomic_t *v)
 {
-	return (0 == InterlockedDecrement((LONG*)v));
+	return (InterlockedDecrement((volatile __LONG32*)&v->counter) == 0);
 }
 
 int atomic_sub_and_test(int i, atomic_t *v)
 {
 	LONG_PTR retval;
-	retval = InterlockedExchangeAdd((LONG*)v, -i);
+	retval = InterlockedExchangeAdd((volatile __LONG32*)&v->counter, -i);
 	retval -= i;
 	return (retval == 0);
 }
 
 int atomic_cmpxchg(atomic_t *v, int old, int new)
 {
-	return InterlockedCompareExchange((LONG_PTR *)v, new, old);
+	return InterlockedCompareExchange((volatile __LONG32*)&v->counter, new, old);
 }
 
+	/* TODO: this is atomic? */
 int cmpxchg(ULONG_PTR *v, int old, int new)
 {
-	return InterlockedCompareExchange(v, new, old);
+	return InterlockedCompareExchange((volatile __LONG32*)v, new, old);
 }
 
 int atomic_xchg(atomic_t *v, int n)
 {
-	return InterlockedExchange((LONG*)v, n);
+	return InterlockedExchange((volatile __LONG32*)&v->counter, n);
 }
 
 int atomic_read(const atomic_t *v)
 {
-	return InterlockedAnd((LONG*)v, 0xffffffff);
+	return InterlockedAnd((volatile __LONG32*)&v->counter, 0xffffffff);
 }
 
 #ifndef KMALLOC_DEBUG
@@ -838,10 +842,12 @@ static void free_mdls_and_irp(struct bio *bio)
 	bio->bi_irps = NULL;
 }
 
+#ifdef BIO_REF_DEBUG
+
 void bio_get_debug(struct bio *bio, const char *file, int line, const char *func)
 {
 	int cnt;
-// printk("getting bio at %p from %s:%d(%s) allocated from %s:%d(%s) refcnt before is %d direction is %s\n", bio, file, line, func, bio->file, bio->line, bio->func, atomic_read(&bio->bi_cnt), bio_data_dir(bio) == WRITE ? "WRITE" : "READ");
+	printk("getting bio at %p from %s:%d(%s) allocated from %s:%d(%s) refcnt before is %d direction is %s\n", bio, file, line, func, bio->file, bio->line, bio->func, atomic_read(&bio->bi_cnt), bio_data_dir(bio) == WRITE ? "WRITE" : "READ");
 	cnt = atomic_inc(&bio->bi_cnt);
 }
 
@@ -849,14 +855,14 @@ void bio_put_debug(struct bio *bio, const char *file, int line, const char *func
 {
 	int cnt;
 
-// printk("putting bio at %p from %s:%d(%s) allocated from %s:%d(%s) refcnt before is %d direction is %s\n", bio, file, line, func, bio->file, bio->line, bio->func, atomic_read(&bio->bi_cnt), bio_data_dir(bio) == WRITE ? "WRITE" : "READ");
+	printk("putting bio at %p from %s:%d(%s) allocated from %s:%d(%s) refcnt before is %d direction is %s\n", bio, file, line, func, bio->file, bio->line, bio->func, atomic_read(&bio->bi_cnt), bio_data_dir(bio) == WRITE ? "WRITE" : "READ");
 
 	cnt = atomic_dec(&bio->bi_cnt);
 	if (cnt == 0)
 		bio_free(bio);
 }
 
-#ifndef BIO_REF_DEBUG
+#else
 
 void bio_put(struct bio *bio)
 {
@@ -882,7 +888,6 @@ static struct task_struct *free_bios_thread;
 void bio_free(struct bio *bio)
 {
 	KIRQL flags;
-	int i;
 	struct bio *upper_bio = bio->is_cloned_from;
 
 	if (!list_empty(&bio->locally_submitted_bios)) {
@@ -1111,8 +1116,9 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 	KeSetEvent(&queue->wakeupEvent, 0, FALSE);
 }
 
-static int run_singlethread_workqueue(struct workqueue_struct* wq)
+static int run_singlethread_workqueue(void *param)
 {
+	struct workqueue_struct *wq = param;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	PVOID waitObjects[2] = { &wq->wakeupEvent, &wq->killEvent };
 	int maxObj = 2;
@@ -1214,6 +1220,9 @@ void flush_workqueue(struct workqueue_struct *wq)
 	KeResetEvent(&wq->workFinishedEvent);
 	KeSetEvent(&wq->wakeupEvent, 0, FALSE);
 	status = KeWaitForMultipleObjects(2, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
+	if (!NT_SUCCESS(status)) {
+		printk("Warning: KeWaitForMultipleObjects in flush_workqueue() returned status %08x\n", status);
+	}
 	if (!list_empty(&wq->work_list)) {
 		printk("Warning: wq->work_list not empty at exiting flush_workqueue\n");
 	}
@@ -1254,7 +1263,6 @@ void get_random_bytes(void *buf, int nbytes)
     static ULONG_PTR lcg_2_64_div_pi = 0;
     static ULONG_PTR mmix_knuth = 0;
     LARGE_INTEGER li;
-    ULONG_PTR rnt;
     ULONG rn=0;	// TODO: KeQueryPerformanceCounter
     int length;
 
@@ -1376,7 +1384,7 @@ static int __mod_timer(struct timer_list *timer, ULONG_PTR expires, bool pending
 		nWaitTime.QuadPart = -1;
 	else {
 		expires -= current_milisec;
-		nWaitTime.QuadPart = RELATIVE(MILLISECONDS(expires));
+		nWaitTime.QuadPart = -(((int64_t) expires) * 10 * 1000);
 	}
 
 /*
@@ -1623,6 +1631,7 @@ int windrbd_inject_faults(int after, enum fault_injection_location where, struct
         case ON_BACKING_DEVICE_ON_COMPLETION:
 		if (bdev == NULL) return -1;
 		return inject_faults(after, &bdev->inject_on_completion);
+	default:	/* nothing */
 	}
 	return -1;
 }
@@ -1686,7 +1695,6 @@ NTSTATUS DrbdIoCompletion(
 
 	struct bio *bio = Context;
 	struct _IO_STACK_LOCATION *stack_location = IoGetNextIrpStackLocation (Irp);
-	int i;
 	NTSTATUS status = Irp->IoStatus.Status;
 	KIRQL flags;
 	bool one_big_request;
@@ -1844,7 +1852,6 @@ static int make_flush_request(struct bio *bio)
 {
 	NTSTATUS status;
 	PIO_STACK_LOCATION next_stack_location;
-	KIRQL flags;
 
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				IRP_MJ_FLUSH_BUFFERS,
@@ -1896,8 +1903,6 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	void *buffer;
 	ULONG io = 0;
 	PIO_STACK_LOCATION next_stack_location;
-	int i;
-	int err = -EIO;
 	unsigned int the_size;
 
 bio->where_i_am = "in windrbd_generic_make_request big buffer";
@@ -2838,53 +2843,6 @@ int _DRBD_ratelimit(struct ratelimit_state *rs, const char * func, const char * 
 }
 #endif
 
-static int idr_max(int layers)
-{
-	int bits = min_t(int, layers * IDR_BITS, MAX_IDR_SHIFT);
-	return (1 << bits) - 1;
-}
-
-#define __round_mask(x, y) ((y) - 1)
-#define round_up(x, y) ((((x) - 1) | __round_mask(x, y)) + 1)
-
-void *idr_get_next(struct idr *idp, int *nextidp)
-{
-	struct idr_layer *p, *pa[MAX_IDR_LEVEL + 1];
-	struct idr_layer **paa = &pa[0];
-	int id = *nextidp;
-	int n, max;
-
-	/* find first ent */
-	if (!idp)
-		return NULL;
-
-	n = idp->layers * IDR_BITS;
-	max = 1 << n;
-	p = rcu_dereference_raw(idp->top);
-	if (!p)
-		return NULL;
-
-	while (id < max) {
-		while (n > 0 && p) {
-			n -= IDR_BITS;
-			*paa++ = p;
-			p = rcu_dereference_raw(p->ary[(id >> n) & IDR_MASK]);
-		}
-
-		if (p) {
-			*nextidp = id;
-			return p;
-		}
-
-		id += 1 << n;
-		while (n < fls(id)) {
-			n += IDR_BITS;
-			p = *--paa;
-		}
-	}
-	return NULL;
-}
-
 // DW-1109: delete drbd bdev when ref cnt gets 0, clean up all resources that has been created in create_drbd_block_device.
 void delete_block_device(struct kref *kref)
 {
@@ -3011,11 +2969,8 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 {
 	struct bio *b = bio_alloc(0, 1);
 
-	int i;
 	struct completion c;
 	int ret;
-
-	static char boot_sector[8192];
 	struct page *p;
 
 	mutex_lock(&read_bootsector_mutex);
@@ -3112,7 +3067,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	}
 	block_device->bd_disk->part0 = block_device;
 
-	IoInitializeRemoveLock(&block_device->remove_lock, 'DRBD', 0, 0);
+	IoInitializeRemoveLock(&block_device->remove_lock, DRBD_TAG, 0, 0);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
 		printk("Failed to acquire remove lock, status is %s\n", status);
@@ -3203,6 +3158,11 @@ void panic(const char *fmt, ...)
 		 */
 
 	printk("Someone wants us to panic, this is probably a bad idea ...\n");
+
+	while (1) {
+		msleep(10*1000);
+		printk("In panic, you probably want to reboot your computer.\n");
+	}
 }
 
 int scnprintf(char * buf, size_t size, const char *fmt, ...)
@@ -3218,11 +3178,12 @@ int scnprintf(char * buf, size_t size, const char *fmt, ...)
 	return i;
 }
 
+	/* TODO: use a macro ... */
 int vscnprintf(char * buf, size_t size, const char *fmt, va_list args)
 {
+/*
 	int i = 0;
 
-/*
 	i = _vsnprintf_s(buf, size, _TRUNCATE, fmt, args);
 	return (-1 == i) ? (size - 1) : i;
 */
@@ -3398,7 +3359,7 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	bdev_ref = new_device->DeviceExtension;
 	bdev_ref->bdev = bdev;
 	bdev_ref->magic = BLOCK_DEVICE_UPPER_MAGIC;
-	IoInitializeRemoveLock(&bdev_ref->w_remove_lock, 'DRBD', 0, 0);
+	IoInitializeRemoveLock(&bdev_ref->w_remove_lock, DRBD_TAG, 0, 0);
 	status = IoAcquireRemoveLock(&bdev_ref->w_remove_lock, NULL);
 	if (!NT_SUCCESS(status)) {
 		printk("Failed to acquire remove lock, status is %s\n", status);
@@ -3418,9 +3379,6 @@ int windrbd_create_windows_device(struct block_device *bdev)
 
 static void windrbd_remove_windows_device(struct block_device *bdev)
 {
-	struct _DEVICE_OBJECT *windows_device;
-	struct block_device_reference *ref;
-
 // printk("Start removing device %S\n", bdev->path_to_device.Buffer);
 
 	if (bdev->windows_device == NULL) {
@@ -3496,9 +3454,7 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 struct block_device *bdget(dev_t device_no)
 {
 	dev_t minor = MINOR(device_no);
-	NTSTATUS status;
 	struct block_device *block_device;
-	int ret;
 
 	block_device = kzalloc(sizeof(struct block_device), GFP_KERNEL);
 	if (block_device == NULL)
@@ -3837,11 +3793,6 @@ int windrbd_create_windows_device_for_minor(int minor)
 
 int windrbd_mount(struct block_device *dev)
 {
-	NTSTATUS status;
-	UNICODE_STRING vol, partition, hddir, arcname;
-	HANDLE h;
-	OBJECT_ATTRIBUTES attr;
-
 	if (dev->mount_point.Buffer == NULL) {
 		dbg("No mount point set for minor %d, will not be mounted.\n", dev->drbd_device->minor);
 		return 0;	/* this is legal */
@@ -3868,7 +3819,6 @@ int windrbd_mount(struct block_device *dev)
 
 int windrbd_umount(struct block_device *bdev)
 {
-	UNICODE_STRING drive;
 	OBJECT_ATTRIBUTES attr;
 	HANDLE f;
 	IO_STATUS_BLOCK iostat;
@@ -3918,7 +3868,9 @@ extern int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(s
 
 int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 {
+/*
 	struct drbd_peer_device *peer_device;
+*/
 
 	if (!device->vdisk->part0->is_bootdevice) {
 	/* TODO: this requires some DRBD patches. For 9.1 however this
@@ -4033,19 +3985,6 @@ static void windrbd_destroy_block_device(struct kref *kref)
 		 */
 }
 
-/* TODO: those 2 function go away */
-#if 0
-void windrbd_bdget(struct block_device *this_bdev)
-{
-	kref_get(&this_bdev->kref);
-}
-
-void windrbd_bdput(struct block_device *this_bdev)
-{
-	kref_put(&this_bdev->kref, windrbd_destroy_block_device);
-}
-#endif
-
 /* See the comment at bdget().
  *
  * DRBD now calls this at least at 2 places (starting from DRBD 9.0.28)
@@ -4057,7 +3996,7 @@ void bdput(struct block_device *this_bdev)
 	KeSetEvent(&this_bdev->capacity_event, 0, FALSE);
 	KeSetEvent(&this_bdev->primary_event, 0, FALSE);
 
-	windrbd_bdput(this_bdev);
+	kref_put(&this_bdev->kref, windrbd_destroy_block_device);
 }
 
 

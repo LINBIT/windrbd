@@ -1,4 +1,5 @@
 ﻿#include "drbd_int.h"
+#include <windrbd_internal.h>
 
 struct genl_reply_buffer {
 	struct list_head list;

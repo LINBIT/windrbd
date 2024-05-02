@@ -24,8 +24,6 @@
 
 #include <linux/types.h>
 
-/* #include <initguid.h>
-#include <devguid.h> */
 #include "windrbd_internal.h"
 #include "windrbd/windrbd_ioctl.h"
 #include <linux/module.h>
@@ -39,6 +37,8 @@
 #include <linux/printk.h>
 #include <linux/wait.h>
 #include <linux/slab.h>
+#include <linux/sprintf.h>
+
 /* For GUID_DEVCLASS_SCSIADAPTER: */
 #include <devguid.h>
 
@@ -71,8 +71,6 @@ const NPIID NPI_WSK_INTERFACE_ID = {
 };
 
 PDEVICE_OBJECT drbd_bus_device;
-static PDEVICE_OBJECT drbd_bus_device2;
-static PDEVICE_OBJECT drbd_legacy_bus_object;
 PDEVICE_OBJECT drbd_physical_bus_device;
 
 extern void init_transport(void);

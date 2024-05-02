@@ -5,6 +5,13 @@
 #include <linux/compiler_attributes.h>
 #include <linux/types.h>
 
+	/* For now use the Windows _snwprintf and the like functions. */
+#include <ntstrsafe.h>
+
+__printf(2, 3) __malloc char *kasprintf(gfp_t gfp, const char *fmt, ...);
+__printf(2, 0) __malloc char *kvasprintf(gfp_t gfp, const char *fmt, va_list args);
+
+#if 0
 int num_to_str(char *buf, int size, unsigned long long num, unsigned int width);
 
 __printf(2, 3) int sprintf(char *buf, const char * fmt, ...);
@@ -23,5 +30,7 @@ __scanf(2, 0) int vsscanf(const char *, const char *, va_list);
 /* These are for specific cases, do not use without real need */
 extern bool no_hash_pointers;
 int no_hash_pointers_enable(char *str);
+
+#endif
 
 #endif	/* _LINUX_KERNEL_SPRINTF_H */

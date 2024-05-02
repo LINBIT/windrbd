@@ -278,9 +278,6 @@ extern void kobject_put(struct kobject *kobj);
 extern void kobject_get(struct kobject *kobj);
 extern void kobject_del(struct kobject *kobj);
 
-struct crypto_tfm;
-extern void *crypto_alloc_tfm(char *name, u32 mask);
-extern unsigned int crypto_tfm_alg_digestsize(struct crypto_tfm *tfm);
 extern int generic_make_request(struct bio *bio); // return value is changed for error handling 2015.12.08(DW-649)
 
 extern void * ERR_PTR(LONG_PTR error);
@@ -402,10 +399,6 @@ int windrbd_um_return_return_value(void *rv_buf);
 int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_point);
 bool windrbd_has_mount_point(struct block_device *dev);
 
-	/* see windrbd_bootdevice.c */
-int create_drbd_resource_from_url(const char *url);
-void windrbd_init_boot_device(void);
-
 /* see printk_to_syslog.c */
 struct in_addr;
 
@@ -414,10 +407,6 @@ char *my_inet_ntoa(struct in_addr *addr);
 /* TODO: this doesn't work on ARM (and other big endian architectures) */
 /* ugh ... */
 #define htons(x) ((((x) & 0xff) << 8) | (((x) & 0xff00) >> 8))
-
-int windrbd_rescan_bus(void);
-void windrbd_bus_is_ready(void);
-int windrbd_wait_for_bus_object(void);
 
 	/* Use those internally. bdget will always create a new
 	 * block device. bdput will signal events (primary, capacity)

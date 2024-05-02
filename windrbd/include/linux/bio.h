@@ -101,6 +101,7 @@ static inline void bio_get(struct bio *bio)
 {
 	atomic_inc(&bio->bi_cnt);
 }
+
 extern void bio_put(struct bio *);
 #endif
 

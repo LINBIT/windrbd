@@ -550,3 +550,51 @@ void idr_shutdown(void)
 	if (idr_layer_cache)
 		kmem_cache_destroy(idr_layer_cache);
 }
+
+static int idr_max(int layers)
+{
+	int bits = min_t(int, layers * IDR_BITS, MAX_IDR_SHIFT);
+	return (1 << bits) - 1;
+}
+
+#define __round_mask(x, y) ((y) - 1)
+#define round_up(x, y) ((((x) - 1) | __round_mask(x, y)) + 1)
+
+void *idr_get_next(struct idr *idp, int *nextidp)
+{
+	struct idr_layer *p, *pa[MAX_IDR_LEVEL + 1];
+	struct idr_layer **paa = &pa[0];
+	int id = *nextidp;
+	int n, max;
+
+	/* find first ent */
+	if (!idp)
+		return NULL;
+
+	n = idp->layers * IDR_BITS;
+	max = 1 << n;
+	p = rcu_dereference(idp->top);
+	if (!p)
+		return NULL;
+
+	while (id < max) {
+		while (n > 0 && p) {
+			n -= IDR_BITS;
+			*paa++ = p;
+			p = rcu_dereference(p->ary[(id >> n) & IDR_MASK]);
+		}
+
+		if (p) {
+			*nextidp = id;
+			return p;
+		}
+
+		id += 1 << n;
+		while (n < fls(id)) {
+			n += IDR_BITS;
+			p = *--paa;
+		}
+	}
+	return NULL;
+}
+
