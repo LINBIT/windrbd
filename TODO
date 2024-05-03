@@ -70,6 +70,37 @@ TODO: Code quality: Minimize / Sqash patches to DRBD
 	Done, need to sort out duplicates. This requires some
 	thinking and time.
 
+	Update April 2024: we started patching DRBD from scratch
+	This works suprisingly well. DRBD compiles without warnings
+	after fixing our Pseudo Linux headers (mostly from kernel 6.6)
+
+	What is not patched in are the various performance patches
+	as well as (for example) the primary / secondary notification.
+
+TODO: Code quality: decide on which implementation of snprintf to use
+
+	I would use mingw's implementation as of now. Alternatives:
+	The built in _snprintf of Windows (deprecated but why?) or
+	the linux/lib/snprintf.c (but this has a lot of dependencies).
+
+	Hmm..we now include stdio.h which is probably not a good idea..
+	maybe copy the relevant inline functions (mapping to __mingw_vsnprintf)
+	out of the header.
+
+	Ok, can compile (but not link - 30 undefined symbols)
+	linux/lib/vsprintf.c I think we take this implementation.
+	TODO: fix the remaining undefined symbols (either comment out
+	or import from somewhere). All xxxprintf function used by
+	DRBD / WinDRBD seem to be implemented therein.
+
+TODO: Code quality: Update rbtree.c, attr.c, idr.c, hweight.c from Linux kernel sources
+	and have them living in
+		./windrbd/src/from-linux
+	(and a script for updating it: something like:
+		for i in $( find ./windrbd/src/from-linux -type f ) ; do cp linux/$i-without'./windrbd/src/from-linux' $i ; done
+	or so ...)
+	better not .. we need to patch :)
+
 TODO: Feature: Base on DRBD 9.1 branch
 
 TODO: Code quality: remove unneeded CygWin deliverables
@@ -88,6 +119,8 @@ TODO: Bug: Negotiating stuckness still there...
 
 	When using LINSTOR. But only a few resources affected.
 	Also workaround is drbdadm detach / attach on that node.
+
+	Update: really? didn't see it in the last 12-18 months or so.
 
 TODO: Code quality: One should not need to create their own keys on building WinDRBD
 
