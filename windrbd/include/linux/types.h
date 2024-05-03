@@ -31,6 +31,9 @@
 #include <ntddk.h>
 #include <ntdddisk.h>
 
+#define DECLARE_BITMAP(name,bits) \
+	ULONG_PTR name[BITS_TO_LONGS(bits)]
+
 #ifdef NOTHING
 #undef NOTHING
 #endif

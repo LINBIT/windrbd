@@ -155,7 +155,7 @@ WINDRBD_FILES = $(addprefix $(WINDRBD_SRCDIR), $(WINDRBD_SOURCES))
 
 LINUX_SRCDIR = ./windrbd/src/from-linux/
 # TODO: lib/vsprintf.c does not compile, use the Windows counterpart ...
-LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/vsprintf.c lib/kasprintf.c
+LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/vsprintf.c lib/kasprintf.c lib/hexdump.c
 # LINUX_SOURCES = lib/kstrtox.c mm/util.c
 LINUX_FILES = $(addprefix $(LINUX_SRCDIR), $(LINUX_SOURCES))
 
@@ -164,7 +164,7 @@ OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) 
 
 COFFRES=./windrbd/windrbd-event-log.coffres ./drbd-tmp/drbd/resource.coffres
 
-LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio -lmingwex -lmincore
+LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
 
 SUPPRESSED_WARNINGS=-Wno-array-bounds -Wno-address-of-packed-member
 CFLAGS_FOR_DRIVERS=-fPIC -fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -mno-stack-arg-probe -fno-strict-aliasing
