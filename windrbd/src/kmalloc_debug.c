@@ -9,6 +9,7 @@
 
 #include <linux/list.h>
 #include <linux/spinlock.h>
+#include <linux/sprintf.h>
 
 #define DESC_SIZE 64
 #define FUNC_SIZE 32

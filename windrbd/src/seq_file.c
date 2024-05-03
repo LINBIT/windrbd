@@ -1,4 +1,5 @@
 ﻿#include "linux/seq_file.h"
+#include <linux/sprintf.h>
 
 int seq_putc(struct seq_file *m, char c)
 {
