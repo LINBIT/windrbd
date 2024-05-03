@@ -93,6 +93,13 @@ TODO: Code quality: decide on which implementation of snprintf to use
 	or import from somewhere). All xxxprintf function used by
 	DRBD / WinDRBD seem to be implemented therein.
 
+	Update: No use the Windows / ReactOS _snprintf implementations:
+	these are in -lntoskrnl (which are stubs to be linked
+	at driver load time).
+
+	Need to implement scnprintf / vscnprintf with the Windows
+	functions. Everything else should work ...
+
 TODO: Code quality: Update rbtree.c, attr.c, idr.c, hweight.c from Linux kernel sources
 	and have them living in
 		./windrbd/src/from-linux
