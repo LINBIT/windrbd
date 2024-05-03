@@ -44,6 +44,7 @@
 // #include <linux/property.h>
 // #include <linux/notifier.h>
 #include <linux/blkdev.h>
+#include <linux/hex.h>
 
 // #include "../mm/internal.h"	/* For the trace_print_flags arrays */
 
@@ -741,6 +742,7 @@ static char *pointer_string(char *buf, char *end,
 	return number(buf, end, (unsigned long int)ptr, spec);
 }
 
+#if 0
 /* Make pointers available for printing early in the boot sequence. */
 static int debug_boot_weak_hash __ro_after_init;
 
@@ -894,6 +896,7 @@ char *restricted_pointer(char *buf, char *end, const void *ptr,
 
 	return pointer_string(buf, end, ptr, spec);
 }
+
 
 static noinline_for_stack
 char *dentry_name(char *buf, char *end, const struct dentry *d, struct printf_spec spec,
@@ -2269,6 +2272,8 @@ int __init no_hash_pointers_enable(char *str)
 }
 early_param("no_hash_pointers", no_hash_pointers_enable);
 
+#endif
+
 /* Used for Rust formatting ('%pA'). */
 char *rust_fmt_argument(char *buf, char *end, void *ptr);
 
@@ -2474,12 +2479,14 @@ char *pointer(const char *fmt, char *buf, char *end, void *ptr,
 		return device_node_string(buf, end, ptr, spec, fmt + 1);
 	case 'f':
 		return fwnode_string(buf, end, ptr, spec, fmt + 1);
+#if 0
 	case 'A':
 		if (!IS_ENABLED(CONFIG_RUST)) {
 			WARN_ONCE(1, "Please remove %%pA from non-Rust code\n");
 			return error_string(buf, end, "(%pA?)", spec);
 		}
 		return rust_fmt_argument(buf, end, ptr);
+#endif
 	case 'x':
 		return pointer_string(buf, end, ptr, spec);
 	case 'e':
