@@ -1,6 +1,9 @@
 #ifndef _ASM_ERRNO_H
 #define _ASM_ERRNO_H
 
+/* TODO: this should avoid inclusion of the ReactOS crt errno.h */
+#define _INC_ERRNO 1
+
 /* Those match now the Linux values. Use errno utility to convert number
  * to symbol (or symbol to number).
  */
@@ -32,7 +35,7 @@
 #define ENETUNREACH				101
 #define EHOSTUNREACH				113
 #define EBADR					53
-#define EADDRINUSE             			98
+#define EADDRINUSE				98
 #define	EOVERFLOW				75
 #define	ESTALE					11
 #define ECONNABORTED				103
@@ -43,8 +46,11 @@
 #define EACCES					13
 
 #define ERESTARTSYS				512
-#define EMEDIUMTYPE				513	
+#define EMEDIUMTYPE				513
 #define ENOTSUPP				514
 #define EHOSTDOWN				515
+
+#define  EDESTADDRREQ    89      /* Destination address required */
+#define  EFAULT 14		 /* Bad address */
 
 #endif

@@ -372,12 +372,12 @@ int test_and_change_bit(int nr, volatile ULONG_PTR *addr)
 
 void atomic_set(atomic_t *v, int i)
 {
-	InterlockedExchange((volatile __LONG32*) &v->counter, i);
+	InterlockedExchange((volatile long*) &v->counter, i);
 }
 
 void atomic_add(int i, atomic_t *v)
 {
-	InterlockedExchangeAdd((volatile __LONG32*)&v->counter, i);
+	InterlockedExchangeAdd((volatile long*)&v->counter, i);
 }
 
 	/* TODO: atomic? Results may be non-monotonic decreasing, not
@@ -386,7 +386,7 @@ void atomic_add(int i, atomic_t *v)
 int atomic_add_return(int i, atomic_t *v)
 {
 	int retval;
-	retval = InterlockedExchangeAdd((volatile __LONG32*)&v->counter, i);
+	retval = InterlockedExchangeAdd((volatile long*)&v->counter, i);
 	retval += i;
 	return retval;
 }
@@ -402,7 +402,7 @@ void atomic_sub(int i, atomic_t *v)
 int atomic_sub_return(int i, atomic_t *v)
 {
 	int retval;
-	retval = InterlockedExchangeAdd((volatile __LONG32*)&v->counter, -i);
+	retval = InterlockedExchangeAdd((volatile long*)&v->counter, -i);
 	retval -= i;
 	return retval;
 }
@@ -411,36 +411,36 @@ int atomic_sub_return(int i, atomic_t *v)
 
 int atomic_dec_and_test(atomic_t *v)
 {
-	return (InterlockedDecrement((volatile __LONG32*)&v->counter) == 0);
+	return (InterlockedDecrement((volatile long*)&v->counter) == 0);
 }
 
 int atomic_sub_and_test(int i, atomic_t *v)
 {
 	LONG_PTR retval;
-	retval = InterlockedExchangeAdd((volatile __LONG32*)&v->counter, -i);
+	retval = InterlockedExchangeAdd((volatile long*)&v->counter, -i);
 	retval -= i;
 	return (retval == 0);
 }
 
 int atomic_cmpxchg(atomic_t *v, int old, int new)
 {
-	return InterlockedCompareExchange((volatile __LONG32*)&v->counter, new, old);
+	return InterlockedCompareExchange((volatile long*)&v->counter, new, old);
 }
 
 	/* TODO: this is atomic? */
 int cmpxchg(ULONG_PTR *v, int old, int new)
 {
-	return InterlockedCompareExchange((volatile __LONG32*)v, new, old);
+	return InterlockedCompareExchange((volatile long*)v, new, old);
 }
 
 int atomic_xchg(atomic_t *v, int n)
 {
-	return InterlockedExchange((volatile __LONG32*)&v->counter, n);
+	return InterlockedExchange((volatile long*)&v->counter, n);
 }
 
 int atomic_read(const atomic_t *v)
 {
-	return InterlockedAnd((volatile __LONG32*)&v->counter, 0xffffffff);
+	return InterlockedAnd((volatile long*)&v->counter, 0xffffffff);
 }
 
 #ifndef KMALLOC_DEBUG

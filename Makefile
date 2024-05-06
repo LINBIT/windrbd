@@ -130,7 +130,7 @@ DEFINES+=-D_WIN64 -DCONFIG_64BIT
 endif
 
 WINDRBD_INCLUDES=-I"windrbd/include" -I"drbd-tmp/drbd" -I"drbd-tmp/drbd/drbd-headers" -I"drbd-tmp/drbd/drbd-kernel-compat"
-MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk
+MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk -I$(REACTOS_ROOT)/crt -nostdinc
 
 DRBD_TMPDIR=./drbd-tmp/drbd/
 
@@ -155,7 +155,7 @@ WINDRBD_FILES = $(addprefix $(WINDRBD_SRCDIR), $(WINDRBD_SOURCES))
 
 LINUX_SRCDIR = ./windrbd/src/from-linux/
 # TODO: lib/vsprintf.c does not compile, use the Windows counterpart ...
-LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/vsprintf.c lib/kasprintf.c lib/hexdump.c
+LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/kasprintf.c
 # LINUX_SOURCES = lib/kstrtox.c mm/util.c
 LINUX_FILES = $(addprefix $(LINUX_SRCDIR), $(LINUX_SOURCES))
 

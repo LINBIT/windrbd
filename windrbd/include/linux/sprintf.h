@@ -5,6 +5,13 @@
 #include <linux/compiler_attributes.h>
 #include <linux/types.h>
 
+// #define _STDIO_DEFINED
+#include <ntstrsafe.h>
+// #include <strsafe.h>
+
+#define snprintf _snprintf
+#define vsnprintf _vsnprintf
+
 int num_to_str(char *buf, int size, unsigned long long num, unsigned int width);
 
 __printf(2, 3) int sprintf(char *buf, const char * fmt, ...);

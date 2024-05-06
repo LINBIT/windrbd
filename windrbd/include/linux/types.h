@@ -20,10 +20,20 @@
 #ifndef _WINDOWS_TYPES_H
 #define _WINDOWS_TYPES_H
 
+/* TODO: */
+typedef signed long long ssize_t;
+
 /* Include this before Windows headers, else duplicate
  * Exxxx macro definitions.
  */
 #include <linux/errno.h>
+#include <asm/errno.h>
+/* Note: these 'standard C' headers come from ReactOS now: */
+#include <stdint.h>
+// #include <ntstrsafe.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 /* Windows headers should be included *only* here: */
 
