@@ -9,8 +9,10 @@
 #include <ntstrsafe.h>
 // #include <strsafe.h>
 
+/*
 #define snprintf _snprintf
 #define vsnprintf _vsnprintf
+*/
 
 int num_to_str(char *buf, int size, unsigned long long num, unsigned int width);
 
