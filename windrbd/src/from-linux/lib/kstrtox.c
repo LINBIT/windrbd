@@ -388,6 +388,8 @@ int kstrtobool(const char *s, bool *res)
 }
 EXPORT_SYMBOL(kstrtobool);
 
+#ifndef CONFIG_WINDOWS
+
 /*
  * Since "base" would be a nonsense argument, this open-codes the
  * _from_user helper instead of using the helper macro below.
@@ -404,6 +406,10 @@ int kstrtobool_from_user(const char __user *s, size_t count, bool *res)
 	return kstrtobool(buf, res);
 }
 EXPORT_SYMBOL(kstrtobool_from_user);
+
+#endif
+
+#ifndef CONFIG_WINDOWS
 
 #define kstrto_from_user(f, g, type)					\
 int f(const char __user *s, size_t count, unsigned int base, type *res)	\
@@ -429,3 +435,5 @@ kstrto_from_user(kstrtou16_from_user,	kstrtou16,	u16);
 kstrto_from_user(kstrtos16_from_user,	kstrtos16,	s16);
 kstrto_from_user(kstrtou8_from_user,	kstrtou8,	u8);
 kstrto_from_user(kstrtos8_from_user,	kstrtos8,	s8);
+
+#endif

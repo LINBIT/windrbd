@@ -22,7 +22,7 @@ char *kvasprintf(gfp_t gfp, const char *fmt, va_list ap)
 	first = vsnprintf(NULL, 0, fmt, aq);
 	va_end(aq);
 
-	p = kmalloc_track_caller(first+1, gfp);
+	p = kmalloc(first+1, gfp);
 	if (!p)
 		return NULL;
 
@@ -34,6 +34,7 @@ char *kvasprintf(gfp_t gfp, const char *fmt, va_list ap)
 }
 EXPORT_SYMBOL(kvasprintf);
 
+#ifndef CONFIG_WINDOWS
 /*
  * If fmt contains no % (or is exactly %s), use kstrdup_const. If fmt
  * (or the sole vararg) points to rodata, we will then save a memory
@@ -49,6 +50,8 @@ const char *kvasprintf_const(gfp_t gfp, const char *fmt, va_list ap)
 	return kvasprintf(gfp, fmt, ap);
 }
 EXPORT_SYMBOL(kvasprintf_const);
+
+#endif
 
 char *kasprintf(gfp_t gfp, const char *fmt, ...)
 {

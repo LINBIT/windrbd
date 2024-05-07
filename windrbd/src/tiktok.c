@@ -1,4 +1,6 @@
 #include <linux/types.h>	/* for bool */
+#include <linux/printk.h>
+#include <windrbd_internal.h>
 
 #define MAX_TIKTOKS 50
 
