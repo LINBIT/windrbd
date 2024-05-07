@@ -14,8 +14,13 @@
 #include <linux/gfp.h>
 #include <linux/printk.h>
 #include <linux/jiffies.h>
+#include <linux/delay.h>
+#include <linux/rwlock.h>
+#include <linux/kthread.h>
 
 #include <wsk.h>
+
+#include <windrbd_internal.h>
 
 struct net init_net;
 
@@ -126,27 +131,21 @@ static void sock_free_linux_socket(struct socket *socket)
 // printk("2\n");
 }
 
-static NTSTATUS completion_fire_event(
-	__in PDEVICE_OBJECT	DeviceObject,
-	__in PIRP			Irp,
-	__in PKEVENT		CompletionEvent
-)
+static NTSTATUS completion_fire_event(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *irp, void *event_p)
 {
+	struct _KEVENT *event = event_p;
 	/* Must not printk in here, will loop forever. Hence also no
 	 * ASSERT.
 	 */
 
-	KeSetEvent(CompletionEvent, IO_NO_INCREMENT, FALSE);
-	
+	KeSetEvent(event, IO_NO_INCREMENT, FALSE);
+
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-static NTSTATUS completion_fire_linux_event(
-	__in PDEVICE_OBJECT	DeviceObject,
-	__in PIRP			Irp,
-	__in struct socket      *s
-)
+static NTSTATUS completion_fire_linux_event(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *irp, void *sock_p)
 {
+	struct socket *s = sock_p;
 	/* Must not printk in here, will loop forever. Hence also no
 	 * ASSERT.
 	 */
@@ -157,11 +156,7 @@ static NTSTATUS completion_fire_linux_event(
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-static NTSTATUS completion_free_irp(
-	__in PDEVICE_OBJECT	DeviceObject,
-	__in PIRP			Irp,
-	__in PKEVENT		CompletionEvent
-)
+static NTSTATUS completion_free_irp(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *Irp, void *event)
 {
 	IoFreeIrp(Irp);
 
@@ -365,16 +360,11 @@ static void have_sent(struct socket *socket, size_t length)
 	KeSetEvent(&socket->data_sent, IO_NO_INCREMENT, FALSE);
 }
 
-static NTSTATUS SendPageCompletionRoutine(
-	__in PDEVICE_OBJECT	DeviceObject,
-	__in PIRP		Irp,
-	__in struct send_page_completion_info *completion
-
-)
-{ 
+static NTSTATUS SendPageCompletionRoutine(struct _DEVICE_OBJECT	*DeviceObject, struct _IRP *Irp,void *completion_p)
+{
+	struct send_page_completion_info *completion = completion_p;
 	int may_printk = completion->page != NULL; /* called from SendPage */
 	size_t length;
-	int bug = 0;
 
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
@@ -403,9 +393,7 @@ static NTSTATUS SendPageCompletionRoutine(
 		if (may_printk)
 			printk("Warning: Mdl field changed from %p to %p\n", completion->the_mdl, completion->wsk_buffer->Mdl);
 		/* completion->wsk_buffer->Mdl = completion->the_mdl */
-		bug = 1;
 	}
-		/* if (!bug) */
 	FreeWskBuffer(completion->wsk_buffer, may_printk);
 
 		/* To avoid unmapping the page again in free_bio(). */
@@ -439,11 +427,9 @@ static NTSTATUS SendPageCompletionRoutine(
 
 int duplicate_completions;
 
-static NTSTATUS send_page_completion_onlyonce(
-	__in PDEVICE_OBJECT	DeviceObject,
-	__in PIRP		Irp,
-	__in struct send_page_completion_info *completion)
+static NTSTATUS send_page_completion_onlyonce(struct _DEVICE_OBJECT *DeviceObject, struct _IRP	*Irp, void *completion_p)
 {
+	struct send_page_completion_info *completion = completion_p;
 	int err;
 
 	err = remove_completion(completion);
@@ -480,9 +466,7 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 				wait_objects[1] = &current->sig_event;
 				num_objects = 2;
 			}
-enter_interruptible();
 			status = KeWaitForMultipleObjects(num_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, &timeout, NULL);
-exit_interruptible();
 
 			switch (status) {
 			case STATUS_WAIT_0:
@@ -586,7 +570,6 @@ static int CreateSocket(
 {
 	KEVENT			CompletionEvent = { 0 };
 	PIRP			Irp = NULL;
-	PWSK_SOCKET		WskSocket = NULL;
 	NTSTATUS		Status;
 
 	/* NO _printk HERE, WOULD LOOP */
@@ -887,8 +870,6 @@ static int wsk_set_event_callbacks(struct socket *socket, int mask)
 
 static int wsk_listen(struct socket *socket, int len)
 {
-	NTSTATUS status;
-
 	(void) len;
 
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
@@ -899,11 +880,6 @@ static int wsk_listen(struct socket *socket, int len)
 
 int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 {
-	KEVENT		CompletionEvent = { 0 };
-	PIRP		Irp = NULL;
-	NTSTATUS	Status;
-	LARGE_INTEGER	nWaitTime;
-
 		/* TODO: one day ... */
 	(void) how;
 
@@ -997,7 +973,6 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			pTime = &nWaitTime;
 		}
 		{
-			struct      task_struct *thread = current;
 			PVOID       waitObjects[2];
 			int         wObjCount = 1;
 
@@ -1371,9 +1346,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
             wObjCount = 2;
         } 
 
-	enter_interruptible();
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-	exit_interruptible();
 
         switch (Status)
         {
@@ -1486,13 +1459,15 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
 
 */
 
+/* Do nothing..just for debugging ... */
 static void dump_packet(unsigned char *buf, size_t buflen)
 {
+	return;
+
+#if 0
 	size_t i;
 	char s[80];
 	int pos;
-
-	return;
 
 	pos=0;
 	for (i=0;i<buflen;i++) {
@@ -1506,6 +1481,7 @@ static void dump_packet(unsigned char *buf, size_t buflen)
 	}
 	if (i%16 != 0)
 		printk("%s\n", s);
+#endif
 }
 
 int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
@@ -1967,7 +1943,6 @@ static int wsk_sock_create_kern(void *net_namespace,
 	struct _WSK_SOCKET *wsk_socket;
 	struct socket *socket;
 	int err;
-	NTSTATUS status;
 
 	if (net_namespace != &init_net)
 		return -EINVAL;
@@ -2070,6 +2045,7 @@ void tcp_sock_set_quickack(struct sock *sk, int val)
 {
 }
 
+#if 0
 static NTSTATUS receive_a_lot(void *unused)
 {
 	struct socket *s, *s2;
@@ -2165,20 +2141,20 @@ static NTSTATUS receive_a_lot(void *unused)
 
 	return STATUS_SUCCESS;
 }
+#endif
 
 static void *init_wsk_thread;
 
-static void *r_thread;
+// static void *r_thread;
 
 /* This is a separate thread, since it blocks until Windows has finished
  * booting. It initializes everything we need and then exits. You can
  * ignore the return value.
  */
 
-static NTSTATUS windrbd_init_wsk_thread(void *unused)
+static void windrbd_init_wsk_thread(void *unused)
 {
 	NTSTATUS status;
-	int err;
 
         /* We have to do that here in a separate thread, else Windows
 	 * will deadlock on booting.
@@ -2195,13 +2171,10 @@ static NTSTATUS windrbd_init_wsk_thread(void *unused)
 #if 0
 	status = windrbd_create_windows_thread(receive_a_lot, NULL, &r_thread);
 #endif
-
-	return status;
 }
 
 NTSTATUS windrbd_init_wsk(void)
 {
-	HANDLE h;
 	NTSTATUS status;
 
 	spin_lock_init(&completions_lock);

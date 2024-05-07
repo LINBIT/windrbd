@@ -147,7 +147,7 @@ LONG_PTR schedule_timeout_uninterruptible_debug(LONG_PTR timeout, const char *fi
 
 void prepare_to_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, int interruptible, const char *file, int line, const char *func)
 {
-	KIRQL flags, flags2;
+	KIRQL flags;
 	struct task_struct *thread = current;
 
 	spin_lock_irqsave(&w->lock, flags);
@@ -163,7 +163,7 @@ void prepare_to_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e
 
 void finish_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, const char *file, int line, const char *func)
 {
-	KIRQL flags, flags2;
+	KIRQL flags;
 	struct task_struct *thread = current;
 
 	spin_lock_irqsave(&w->lock, flags);
@@ -180,7 +180,7 @@ void finish_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, co
 
 void wake_up_all_debug(wait_queue_head_t *q, const char *file, int line, const char *func)
 {
-	KIRQL flags, flags2;
+	KIRQL flags;
 	struct wait_queue_entry *e, *e2;
 
 	spin_lock_irqsave(&q->lock, flags);

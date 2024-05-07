@@ -2,6 +2,7 @@
 #include <linux/list.h>
 #include <linux/gfp.h>
 #include <linux/mutex.h>
+#include <linux/printk.h>
 
 /* In case daemon is not running or a process takes longer than that
  * to terminate, timeout after 1 second. This should not be too long
@@ -27,7 +28,7 @@ static struct mutex request_mutex;
 static LIST_HEAD(um_requests);
 static LIST_HEAD(um_requests_running);
 
-static int string_table_to_buffer(char *buf, const char **argv, size_t max_size, size_t *actual_size)
+static int string_table_to_buffer(char *buf, char **argv, size_t max_size, size_t *actual_size)
 {
 	int argc;
 	size_t pos;
