@@ -26,6 +26,7 @@
 #include <linux/list.h>
 #include <linux/drbd_limits.h>
 #include <linux/slab.h>
+#include <linux/printk.h>
 #include "drbd_url.h"
 
 #endif

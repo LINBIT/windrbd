@@ -40,6 +40,7 @@
 
 #include <linux/kthread.h>
 #include <linux/kref.h>
+#include <linux/atomic.h>
 
 	/* TODO: split this up into several files. Already done for
 	 * threads, but there's much more ...

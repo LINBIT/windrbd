@@ -1,6 +1,9 @@
 #include "drbd_int.h"
 #include <ctype.h>
-#include "windrbd_internal.h"
+#include <windrbd_internal.h>
+#include <linux/kthread.h>
+#include <linux/delay.h>
+#include <linux/compiler_attributes.h>
 
 int debug_printks_enabled = 0;
 
@@ -211,8 +214,6 @@ static struct mutex test_mutex;
 static struct semaphore test_semaphore;
 static struct rw_semaphore test_rw_semaphore;
 
-#define min(a,b) ((a)<(b)?(a):(b))
-
 unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base)
 {
         unsigned long long val = 0;
@@ -270,7 +271,6 @@ static atomic_t rcu_num_read_errors;
 
 static int rcu_reader(void *arg)
 {
-	long long i;
 	volatile long long val1, val2;
 	KIRQL flags;
 	struct rcu_struct volatile *the_rcu;
@@ -904,7 +904,7 @@ static void workqueue_test(int argc, const char ** argv)
 	struct workqueue_struct *w;
 	struct object *obj;
 
-	long long i, n;
+	long long n;
 	int j, num_threads;
 
 	struct workqueue_params *params;
@@ -982,6 +982,7 @@ static int waker_task(void *unused)
 	case WQ_LOOP: msec = 10; break; 
 	case WQ_LOOP_NO_SLEEP:
 	case WQ_NO_SLEEP: msec = 0; break;
+	default:
 	}
 	if (wt == WQ_LOOP || wt == WQ_LOOP_NO_SLEEP)
 		loop_cnt = waker_loops;
@@ -1012,7 +1013,6 @@ printk("waker end\n");
 
 static int waiter_task(void *unused)
 {
-	int msec = 0;
 	int loop_cnt = 1;
 
 	if (wt == WQ_LOOP || wt == WQ_LOOP_NO_SLEEP)
@@ -1088,7 +1088,7 @@ usage:
 	printk("usage: wait_event_test <no-wait|simple|fast|no-sleep|loop> <num-wakers> <num-waiters> <waker-loops> <waiter-loops>\n");
 }
 
-void argv_test(int argc, char ** argv)
+void argv_test(int argc, const char ** argv)
 {
 	int i;
 
@@ -1101,7 +1101,7 @@ void argv_test(int argc, char ** argv)
 // #include <windows.h>
 #include <bcrypt.h>
 
-int crypto_test(int argc, char ** argv)
+int crypto_test(int argc, const char ** argv)
 {
 #if 0
 	HCRYPTPROV provider;
@@ -1129,6 +1129,7 @@ int crypto_test(int argc, char ** argv)
 	printk("BCryptOpenAlgorithmProvider succeeded\n");
 	return 0;
 #endif
+	return 0;
 }
 
 #endif
@@ -1138,7 +1139,7 @@ extern void start_tiktok(int argc, const char ** argv);
 extern void write_to_eventlog(int loglevel, const char *msg);
 extern void split_message_and_write_to_eventlog(int loglevel, const char *msg);
 
-static void test_event_log(int argc, char ** argv)
+static void test_event_log(int argc, const char ** argv)
 {
 	int i;
 
@@ -1149,7 +1150,7 @@ static void test_event_log(int argc, char ** argv)
 }
 
 
-static void test_event_log_split(int argc, char ** argv)
+static void test_event_log_split(int argc, const char ** argv)
 {
 	int i;
 
@@ -1159,7 +1160,7 @@ static void test_event_log_split(int argc, char ** argv)
 	}
 }
 
-static void test_event_log_level(int argc, char ** argv)
+static void test_event_log_level(int argc, const char ** argv)
 {
 	printk("info default");
 
@@ -1176,7 +1177,7 @@ static void test_event_log_level(int argc, char ** argv)
 	printk(KERN_DEBUG "debug");
 }
 
-static void set_event_log_level_test(int argc, char ** argv)
+static void set_event_log_level_test(int argc, const char ** argv)
 {
 	int level;
 
@@ -1188,13 +1189,13 @@ static void set_event_log_level_test(int argc, char ** argv)
 	}
 }
 
-static void force_unlock(int argc, char ** argv)
+static void force_unlock(int argc, const char ** argv)
 {
 	printk("Forcing driver unlock, sc stop windrbd should work now...\n");
 	mvolDriverObject->DriverExtension->AddDevice = NULL;
 }
 
-static void print_add_device(int argc, char ** argv)
+static void print_add_device(int argc, const char ** argv)
 {
 	printk("AddDevice is %p\n", mvolDriverObject->DriverExtension->AddDevice);
 }
@@ -1229,7 +1230,7 @@ static int malloc_free_task(void *unused)
 }
 
 
-static void double_free_test(int argc, char ** argv)
+static void double_free_test(int argc, const char ** argv)
 {
 	void *p;
 	enum free_test free_test = UNDEFINED;
@@ -1264,7 +1265,7 @@ static void double_free_test(int argc, char ** argv)
 		break;
 
 	case EXALLOCATEPOOL:	/* BAD_POOL_HEADER */
-		p=ExAllocatePoolWithTag(NonPagedPool, 4096, 'DRBD');
+		p=ExAllocatePoolWithTag(NonPagedPool, 4096, DRBD_TAG);
 		if (p==NULL) {
 			printk("Oops. Out of memory.\n");
 			return;
@@ -1292,7 +1293,7 @@ static void double_free_test(int argc, char ** argv)
 	}
 }
 
-static void rtl_zero_memory_test(int argc, char ** argv)
+static void rtl_zero_memory_test(int argc, const char ** argv)
 {
 	printk("About to RtlZeroMemory(NULL, ...) ...\n");
 	msleep(1000);
@@ -1301,7 +1302,7 @@ static void rtl_zero_memory_test(int argc, char ** argv)
 	printk("Still alive?\n");
 }
 
-static void intentionally_bsod(int argc, char ** argv)
+static void intentionally_bsod(int argc, const char ** argv)
 {
 	printk("About to intentionally BSOD (you should see 0xdeaddead as error code) ...\n");
 		/* code is 0xdeaddead */
@@ -1314,7 +1315,7 @@ static void intentionally_bsod(int argc, char ** argv)
 
 extern char *copy_first_640k(void);
 
-static void io_map_test(int argc, char ** argv)
+static void io_map_test(int argc, const char ** argv)
 {
 	char *mem;
 
@@ -1327,9 +1328,9 @@ static void io_map_test(int argc, char ** argv)
 	kfree(mem);
 }
 
-static void leak_test(int argc, char ** argv)
+static void leak_test(int argc, const char ** argv)
 {
-	char *mem;
+	char __always_unused *mem;
 	size_t bytes;
 
 	if (argc >= 2) {
@@ -1344,7 +1345,7 @@ static void leak_test(int argc, char ** argv)
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
-	char **argv;
+	const char **argv;
 	int argc;
 	int i;
 

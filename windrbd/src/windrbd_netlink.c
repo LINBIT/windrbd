@@ -1,5 +1,6 @@
 ﻿#include "drbd_int.h"
 #include <windrbd_internal.h>
+#include <linux/kthread.h>
 
 struct genl_reply_buffer {
 	struct list_head list;
@@ -180,7 +181,7 @@ static void *reaper_thread_object;
 	 * and should free the memory there instead.
 	 */
 
-static NTSTATUS reply_reaper(void *unused)
+static void reply_reaper(void *unused)
 {
 	LARGE_INTEGER interval;
 	struct list_head *rh, *rhn;
@@ -206,7 +207,6 @@ static NTSTATUS reply_reaper(void *unused)
 
 		windrbd_reap_threads();
 	}
-	return STATUS_SUCCESS;
 }
 
 bool windrbd_are_there_netlink_packets(u32 portid)
@@ -435,7 +435,6 @@ void nlmsg_free(struct sk_buff *skb)
 void windrbd_init_netlink(void)
 {
 	NTSTATUS    status;
-	HANDLE h;
 
         mutex_init(&genl_drbd_mutex);
         mutex_init(&genl_reply_mutex);
@@ -460,6 +459,7 @@ void windrbd_shutdown_netlink(void)
 		printk("Could not clean up reply reaper, status is %x\n", status);
 }
 
+/*
 static void dump_skb(struct sk_buff *skb)
 {
 	int i;
@@ -468,6 +468,7 @@ static void dump_skb(struct sk_buff *skb)
 	for (i=0;i<skb->tail;i++)
 		printk("skb %p [%d] = %02X (%u)\n", skb, i, skb->data[i], skb->data[i]);
 }
+*/
 
 static int _genl_dump(struct genl_ops * pops, struct sk_buff * skb, struct netlink_callback * cb, struct genl_info * info)
 {

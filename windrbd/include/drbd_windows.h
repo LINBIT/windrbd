@@ -406,8 +406,6 @@ void exit_interruptible_debug(const char *file, int line, const char *func);
 #define enter_interruptible() enter_interruptible_debug(__FILE__, __LINE__, __func__)
 #define exit_interruptible() exit_interruptible_debug(__FILE__, __LINE__, __func__)
 
-int my_atoi(const char *c);
-
 enum kobject_action {
 	KOBJ_ADD,
 	KOBJ_REMOVE,
@@ -422,9 +420,6 @@ enum kobject_action {
 /* Not implemented: */
 
 int kobject_uevent(struct kobject *kobj, enum kobject_action action);
-
-/* Implemented in windrbd_test: base works now from 2 to 36 */
-unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base);
 
 void windrbd_device_size_change(struct block_device *bdev);
 

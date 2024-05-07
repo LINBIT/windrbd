@@ -1,5 +1,7 @@
 #include <linux/module.h>
 #include <windrbd_internal.h>	/* for root device object */
+#include <linux/atomic.h>
+#include <linux/printk.h>
 #include "windrbd_version.h"
 
 	/* undef this to disable driver unload */
@@ -7,13 +9,11 @@
 
 struct module windrbd_module = {
 	.version = WINDRBD_VERSION,
-	.refcnt = 0
+	.refcnt = { 0 },
 };
 
 bool try_module_get(struct module *module)
 {
-	NTSTATUS status;
-
 	if (module != &windrbd_module) {
 		printk("try_module_get for something besides the windrbd_module.\n");
 		return true;

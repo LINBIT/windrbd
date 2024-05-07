@@ -14,6 +14,7 @@
 #include <linux/err.h>
 #include <linux/printk.h>
 #include <linux/gfp.h>
+#include <linux/delay.h>
 
 static LIST_HEAD(thread_list);
 static spinlock_t thread_list_lock;
@@ -180,7 +181,6 @@ void windrbd_reap_threads(void)
 void windrbd_reap_all_threads(void)
 {
 	struct task_struct *t;
-	KIRQL flags;
 
 	windrbd_reap_threads();
 
@@ -248,7 +248,6 @@ static void windrbd_thread_setup(void *targ)
 int wake_up_process(struct task_struct *t)
 {
 	KIRQL flags;
-	NTSTATUS status;
 
 	spin_lock_irqsave(&t->thread_started_lock, flags);
 	if (t->thread_started) {
@@ -319,7 +318,7 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	t->pid = next_pid;
 	spin_unlock_irqrestore(&next_pid_lock, flags);
 
-	status = windrbd_create_windows_thread(windrbd_thread_setup, t, &t->windows_thread);
+	status = windrbd_create_windows_thread(windrbd_thread_setup, t, (void **) &t->windows_thread);
 	if (status != STATUS_SUCCESS) {
 		printk("Could not start thread %s, status is %x.\n", t->comm, status);
 		kfree(t);
@@ -352,7 +351,6 @@ struct task_struct *make_me_a_windrbd_thread(const char *name, ...)
 	KIRQL flags;
 	va_list args;
 	int i;
-	NTSTATUS status;
 
 	if ((t = kzalloc(sizeof(*t), GFP_KERNEL)) == NULL)
 		return ERR_PTR(-ENOMEM);
@@ -416,16 +414,10 @@ bool is_windrbd_thread(struct task_struct *t)
 
 void windrbd_set_realtime_priority(struct task_struct *t)
 {
-	KPRIORITY old_priority;
-
 	if (t == NULL)
 		return;
 
-	// old_priority = KeSetPriorityThread(t->windows_thread, HIGH_PRIORITY);
-// printk("setting %s thread to LOW_REALTIME_PRIORITY\n", current->comm);
-	old_priority = KeSetPriorityThread(t->windows_thread, LOW_REALTIME_PRIORITY);
-
-// printk("old priority is %d\n", old_priority);
+	KeSetPriorityThread(t->windows_thread, LOW_REALTIME_PRIORITY);
 }
 
 void sudo(void)

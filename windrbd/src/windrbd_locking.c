@@ -31,6 +31,7 @@
 #include <linux/semaphore.h>
 #include <linux/rwsem.h>
 #include <linux/spinlock.h>
+#include <linux/atomic.h>
 
 /* Define this if RCU implementation can use read/write locks
  * (ExAcquireSpinLockShared, ...).
