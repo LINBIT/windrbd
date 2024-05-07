@@ -1,4 +1,5 @@
 #include <linux/slab.h>
+#include <windrbd_internal.h>
 
 /* TODO: we probably want to remove this. */
 
@@ -11,7 +12,7 @@ struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align
 	cache = kmalloc(sizeof(*cache), GFP_KERNEL);
 	if (!cache)
 		return NULL;
-	ExInitializeNPagedLookasideList(&cache->l, NULL, NULL, 0, size, 'DBRD', 0);
+	ExInitializeNPagedLookasideList(&cache->l, NULL, NULL, 0, size, DRBD_TAG, 0);
 	cache->element_size = size;
 
 	return cache;

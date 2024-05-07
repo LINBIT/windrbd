@@ -21,12 +21,13 @@
 
 #include <linux/types.h>
 #include <stdlib.h>
-
-#include "drbd_int.h"
+#include <linux/printk.h>
+#include <linux/slab.h>
+#include <windrbd_internal.h>
 
 static PUNICODE_STRING the_registry_path;
 
-static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG *pReturnLength, UCHAR *pucReturnBuffer, size_t buflen, PUNICODE_STRING pRegistryPath)
+static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG_PTR *pReturnLength, UCHAR *pucReturnBuffer, size_t buflen, PUNICODE_STRING pRegistryPath)
 {
     HANDLE hKey;
     ULONG ulLength;
@@ -53,7 +54,7 @@ static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG *pReturnLength, UCH
         return status;
     }
 
-    pstKeyInfo = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(NonPagedPool, ulLength, '36DW');
+    pstKeyInfo = (PKEY_VALUE_PARTIAL_INFORMATION)kmalloc(ulLength, GFP_KERNEL);
     if (pstKeyInfo == NULL)
     {
         ZwClose(hKey);
@@ -78,7 +79,7 @@ static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG *pReturnLength, UCH
 
 int init_registry(PUNICODE_STRING RegPath_unicode)
 {
-	ULONG ulLength;
+	ULONG_PTR ulLength;
 	ULONG ip_length;
 	UCHAR aucTemp[255] = { 0 };
 	NTSTATUS status;

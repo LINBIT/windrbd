@@ -6,12 +6,15 @@
  * process. It contains message IDs for use with event log
  * messages.
  */
+#include <windrbd-event-log.h>
 
-#include "windrbd_internal.h"
-#include "windrbd-event-log.h"
+#include <windrbd_internal.h>
 
 #include <linux/jiffies.h>
 #include <linux/kern_levels.h>
+#include <linux/delay.h>
+#include <linux/printk.h>
+#include <linux/kthread.h>
 
 /* We have three logging 'targets': One is the standard DbgPrint
    facility provided by Windows. Use a tool like DbgView to view
@@ -189,7 +192,7 @@ char *my_inet_ntoa(struct in_addr *addr)
 {
         static char s[30];
 
-        snprintf(s, sizeof(s)-1, "%d.%d.%d.%d", addr->s_addr & 0xff, addr->s_addr >> 8 & 0xff, addr->s_addr >> 16 & 0xff, addr->s_addr >> 24);
+        snprintf(s, sizeof(s)-1, "%ld.%ld.%ld.%ld", addr->s_addr & 0xff, addr->s_addr >> 8 & 0xff, addr->s_addr >> 16 & 0xff, addr->s_addr >> 24);
         return s;
 }
 
@@ -321,9 +324,15 @@ void write_to_eventlog(int log_level, const char *msg)
 	UNICODE_STRING msg_u;
 	size_t total_size, msg_size;	/* all in bytes */
 	wchar_t *target;
+	NTSTATUS status;
 
 	RtlInitAnsiString(&msg_a, msg);
-	RtlAnsiStringToUnicodeString(&msg_u, &msg_a, TRUE);
+	status = RtlAnsiStringToUnicodeString(&msg_u, &msg_a, TRUE);
+
+	if (!NT_SUCCESS(status)) {
+		/* must not printk here, else loop. */
+		return;
+	}
 
 		/* msg_u.Length is size in bytes. We need a 0 terminator */
 

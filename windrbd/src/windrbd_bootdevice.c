@@ -9,6 +9,9 @@
 
 #include <stdlib.h>
 #include <windrbd/windrbd_ioctl.h>
+#include <linux/delay.h>
+#include <windrbd_internal.h>
+#include <linux/kthread.h>
 
 /* TODO: test 3+ nodes setup: right now it fails booting (connection
    loss on boot) */
@@ -292,6 +295,10 @@ static int connect(const char *resource_name, int peer_node_id)
 	return finish_netlink_packet(skb, DRBD_ADM_CONNECT);
 }
 
+#if 0
+
+/* Those will be used soon ... */
+
 static int primary(const char *resource_name)
 {
 	struct sk_buff *skb;
@@ -332,6 +339,8 @@ static int attach(int minor, const char *backing_dev, const char *meta_dev, int 
 	return finish_netlink_packet(skb, DRBD_ADM_ATTACH);
 }
 
+#endif
+
 static struct node *get_this_node(struct drbd_params *p)
 {
 	struct node *n;
@@ -348,7 +357,6 @@ static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 	int ret;
 	struct drbd_device *drbd_device;
 	struct node *this_node = get_this_node(p);
-	struct node *n;
 
 	if (this_node == NULL) {
 		printk("this_node is NULL, this shouldn't happen\n");
@@ -554,14 +562,12 @@ char *copy_first_640k(void)
 static int search_for_drbd_config(char *drbd_config, size_t buflen)
 {
 	char *first_1m;
-	LARGE_INTEGER zero;
 	int i, j;
 	struct acpi_header *header;
 	uint32_t len;
 	uint8_t sum;
 	int ret;
 
-	zero.QuadPart = 0;
 	first_1m = copy_first_640k();
 	if (first_1m == NULL) {
 		printk("Couldn't map lower physical memory\n");

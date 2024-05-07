@@ -4,6 +4,8 @@ All patches in here are DRBD specific, some might be gcc specific
 Done: drbd_main.c and others: locking primitives must be initialized by calling a function.
 	Therefore change DEFINE_SPINLOCK to spinlock_t, write an initializer and call it in drbd_init. This already has been done. Review it.
 
+! TODO: drbd_main.c: export drbd_open (and try_to_promote also maybe)
+
 TODO: drbd_main.c: have a drbd_alloc_big_page_chain function
 	And call it from drbd_transport_tcp.c. Do not change the
 	signature of drbd_alloc_page_chain()

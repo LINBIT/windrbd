@@ -10,6 +10,10 @@
 #include <linux/list.h>
 #include <linux/spinlock.h>
 #include <linux/sprintf.h>
+#include <linux/printk.h>
+#include <linux/array_size.h>
+#include <linux/delay.h>
+#include <windrbd_internal.h>
 
 #define DESC_SIZE 64
 #define FUNC_SIZE 32
@@ -40,7 +44,6 @@ struct poison_after {
 };
 
 static int kmalloc_errors = 0;
-static int print_kmalloc_error = 0;
 
 void *kmalloc_debug(size_t size, int flag, const char *file, int line, const char *func)
 {
@@ -50,26 +53,11 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	KIRQL flags;
 	int retries;
 
-// mem_printk("kmalloc %d bytes from %s:%d (%s())\n", size, file, line, func);
-
-#if 0
-	if (kmalloc_errors > 0) {
-
-			/* Don't print all the time, since printk itself
-			 * also kmalloc's.
-			 */
-
-		if (print_kmalloc_error % 10 == 0)
-			printk("%d kmalloc errors so far (%d)\n", kmalloc_errors, print_kmalloc_error);
-		print_kmalloc_error++;
-	}
-#endif
-
 	full_size = sizeof(struct memory) + size + sizeof(struct poison_after);
 
 	retries = 0;
 	while (1) {
-		mem = ExAllocatePoolWithTag(NonPagedPool, full_size, 'DRBD');
+		mem = ExAllocatePoolWithTag(NonPagedPool, full_size, DRBD_TAG);
 
 		if (mem != NULL) {
 			if (strcmp(func, "SendTo") != 0 && retries > 0 )
@@ -146,7 +134,7 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 
 	if (mem->poison != POISON_BEFORE) {
 		printk("kmalloc_debug: Warning: Poison before overwritten (is %x should be %x), allocated from %s %s(), freed from %s:%d %s() pointer is %p\n", mem->poison, POISON_BEFORE, mem->desc, mem->func, file, line, func, data);
-		if (mem->poison == 'EERF') {
+		if (mem->poison == FREE_TAG) {
 			printk("This is most likely a double free.\n");
 			printk("Previously freed from %s %s()\n", mem->desc_freed, mem->func_freed);
 /* Buffer is tmp_buffer of SendTo(), see windrbd_winsocket.c */
@@ -156,7 +144,7 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 
 	if (poison_after->poison2 != POISON_AFTER) {
 		printk("kmalloc_debug: Warning: Poison after overwritten (is %x should be %x), allocated from %s %s(), freed from %s:%d %s() pointer is %p\n", poison_after->poison2, POISON_AFTER, mem->desc, mem->func, file, line, func, data);
-		if (poison_after->poison2 == 'EERF') {
+		if (poison_after->poison2 == FREE_TAG) {
 			printk("This is most likely a double free.\n");
 			printk("(Not freeing that memory again)\n");
 			printk("Previously freed from %s %s()\n", mem->desc_freed, mem->func_freed);
@@ -173,8 +161,8 @@ void kfree_debug(const void *data, const char *file, int line, const char *func)
 	list_del(&mem->list);
 	spin_unlock_irqrestore(&memory_lock, flags);
 
-	mem->poison = 'EERF';
-	poison_after->poison2 = 'EERF';
+	mem->poison = FREE_TAG;
+	poison_after->poison2 = FREE_TAG;
 
 	snprintf(mem->desc_freed, ARRAY_SIZE(mem->desc), "%s:%d", file, line);
 	snprintf(mem->func_freed, ARRAY_SIZE(mem->func), "%s", func);
@@ -231,7 +219,7 @@ int check_memory_allocations(const char *msg)
 
 			if (mem->poison != POISON_BEFORE) {
 				printk("kmalloc_debug: %s Warning: Poison before overwritten (is %x should be %x), allocated from %s %s() memory is %p data is %p\n", msg, mem->poison, POISON_BEFORE, mem->desc, mem->func, mem, &mem->data);
-				if (mem->poison == 'EERF') {
+				if (mem->poison == FREE_TAG) {
 					printk("This is most likely a double free.\n");
 					printk("Previously freed from %s %s()\n", mem->desc_freed, mem->func_freed);
 /* Buffer is tmp_buffer of SendTo(), see windrbd_winsocket.c */
@@ -241,7 +229,7 @@ int check_memory_allocations(const char *msg)
 			}
 			if (poison_after->poison2 != POISON_AFTER) {
 				printk("kmalloc_debug: %s Warning: Poison after overwritten (is %x should be %x), allocated from %s %s() memory is %p data is %p", msg, poison_after->poison2, POISON_AFTER, mem->desc, mem->func, mem, &mem->data);
-				if (poison_after->poison2 == 'EERF') {
+				if (poison_after->poison2 == FREE_TAG) {
 					printk("This is most likely a double free.\n");
 					printk("(Not freeing that memory again)\n");
 					printk("Previously freed from %s %s()\n", mem->desc_freed, mem->func_freed);

@@ -70,8 +70,6 @@
 
 #include <linux/part_stat.h>
 
-void msleep(int ms);
-
 struct drbd_transport;
 enum drbd_stream;
 enum update_sync_bits_mode;
@@ -304,7 +302,6 @@ extern void hlist_del_init(struct hlist_node *entry);
 extern int hlist_unhashed(const struct hlist_node *h);
 extern void __hlist_del(struct hlist_node *n);
 
-extern unsigned long crc32(const char *s, size_t len);
 extern bool lc_is_used(struct lru_cache *lc, unsigned int enr);
 extern int fls(int x);
 extern char *kstrdup(const char *s, int gfp);
@@ -384,28 +381,9 @@ int windrbd_umount(struct block_device *dev);
 int windrbd_become_primary(struct drbd_device *device, const char **err_str);
 int windrbd_become_secondary(struct drbd_device *device, const char **err_str);
 
-	/* These are WinDRBD specific ioctls. */
-
-int windrbd_inject_faults(int after, enum fault_injection_location where, struct block_device *windrbd_bdev);
-int windrbd_process_netlink_packet(void *msg, size_t msg_size);
-size_t windrbd_receive_netlink_packets(void *vbuf, size_t remaining_size, u32 portid);
-bool windrbd_are_there_netlink_packets(u32 portid);	/* non-blocking peek at netlink packets. Does not consume them. */
-int windrbd_join_multicast_group(u32 portid, const char *name, struct _FILE_OBJECT *f);
-int windrbd_delete_multicast_groups_for_file(struct _FILE_OBJECT *f);
-
-int windrbd_um_get_next_request(void *buf, size_t max_data_size, size_t *actual_data_size);
-int windrbd_um_return_return_value(void *rv_buf);
 int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_point);
 bool windrbd_has_mount_point(struct block_device *dev);
 
-/* see printk_to_syslog.c */
-struct in_addr;
-
-int my_inet_aton(const char *cp, struct in_addr *inp);
-char *my_inet_ntoa(struct in_addr *addr);
-/* TODO: this doesn't work on ARM (and other big endian architectures) */
-/* ugh ... */
-#define htons(x) ((((x) & 0xff) << 8) | (((x) & 0xff00) >> 8))
 
 	/* Use those internally. bdget will always create a new
 	 * block device. bdput will signal events (primary, capacity)
@@ -414,8 +392,6 @@ char *my_inet_ntoa(struct in_addr *addr);
 
 void windrbd_bdget(struct block_device *this_bdev);
 void windrbd_bdput(struct block_device *this_bdev);
-
-int windrbd_create_windows_device_for_minor(int minor);
 
 /* See drbd_main.c */
 int try_to_promote(struct drbd_device *device, LONG_PTR timeout, bool ndelay);
@@ -430,12 +406,7 @@ void exit_interruptible_debug(const char *file, int line, const char *func);
 #define enter_interruptible() enter_interruptible_debug(__FILE__, __LINE__, __func__)
 #define exit_interruptible() exit_interruptible_debug(__FILE__, __LINE__, __func__)
 
-void test_main(const char *arg);
-
 int my_atoi(const char *c);
-
-NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default);
-NTSTATUS get_registry_long_long(wchar_t *key, unsigned long long *val_p, unsigned long long the_default);
 
 enum kobject_action {
 	KOBJ_ADD,
@@ -455,11 +426,7 @@ int kobject_uevent(struct kobject *kobj, enum kobject_action action);
 /* Implemented in windrbd_test: base works now from 2 to 36 */
 unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base);
 
-int lock_interface(const char *config_key_param);
-int windrbd_is_locked(void);
-
 void windrbd_device_size_change(struct block_device *bdev);
-int set_driver_locked_state(int state);
 
 void windrbd_bdev_cork(struct block_device *bdev);
 int windrbd_bdev_uncork(struct block_device *bdev);

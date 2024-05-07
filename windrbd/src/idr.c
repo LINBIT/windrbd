@@ -516,12 +516,6 @@ void *idr_replace(struct idr *idp, void *ptr, int id)
 	return old_p;
 }
 
-static void idr_cache_ctor(void * idr_layer, kmem_cache_t *idr_layer_cache,
-			   ULONG_PTR flags)
-{
-	RtlZeroMemory(idr_layer, sizeof(struct idr_layer));
-}
-
 static  int init_id_cache(void)
 {
 	if (!idr_layer_cache)
@@ -559,12 +553,6 @@ void idr_shutdown(void)
 
 /* Number of id_layer structs to leave in free list */
 #define MAX_IDR_FREE (MAX_IDR_LEVEL * 2)
-
-static int idr_max(int layers)
-{
-	int bits = min_t(int, layers * IDR_BITS, MAX_IDR_SHIFT);
-	return (1 << bits) - 1;
-}
 
 #define __round_mask(x, y) ((y) - 1)
 #define round_up(x, y) ((((x) - 1) | __round_mask(x, y)) + 1)

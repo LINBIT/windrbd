@@ -40,7 +40,7 @@
 #include <ntdef.h>
 #include <ntstatus.h>
 #include <mce.h>
-#include <bugcodes.h>
+// #include <bugcodes.h>
 #include <ntiologc.h>
 
 #include <stdarg.h> // FIXME

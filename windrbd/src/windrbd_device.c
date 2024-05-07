@@ -66,6 +66,8 @@
 #include "drbd_wrappers.h"
 #include "partition_table_template.h"
 
+#include <linux/delay.h>
+
 static PDRIVER_DISPATCH windrbd_dispatch_table[IRP_MJ_MAXIMUM_FUNCTION + 1];
 static char *thread_names[IRP_MJ_MAXIMUM_FUNCTION + 1] = {
 "create",		/* IRP_MJ_CREATE                     0x00 */
@@ -109,8 +111,6 @@ static int about_to_unload_driver;	/* Driver will soon unload so
 
 static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
-
 	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
 		dbg(KERN_DEBUG "DRBD root device request not implemented: MajorFunction: 0x%x\n", s->MajorFunction);
 
@@ -151,6 +151,10 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 	} else
 		return STATUS_INVALID_PARAMETER;
 
+	/* TODO: should we keep the auto-promote support code here.
+	   It works pretty well, just need to export try_to_promote in
+	   DRBD ...
+	 */
 	if ((bdev->is_bootdevice || bdev->my_auto_promote) && !bdev->powering_down && !shutting_down) {
 		drbd_device = bdev->drbd_device;
 		if (drbd_device != NULL) {
@@ -762,7 +766,8 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
-		struct _SET_PARTITION_INFORMATION *pi = irp->AssociatedIrp.SystemBuffer;
+	/* TODO: this ioctl still needed? */
+//		struct _SET_PARTITION_INFORMATION *pi = irp->AssociatedIrp.SystemBuffer;
 		dbg(KERN_INFO "Request to set partition type to %x\n", pi->PartitionType);
 		irp->IoStatus.Information = 0;
 		break;
@@ -820,6 +825,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 //			case StorageDeviceResiliencyProperty:
 				status = STATUS_SUCCESS;
 				break;
+			default:
 			}
 			break;
 
@@ -939,6 +945,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 				irp->IoStatus.Information = (ULONG_PTR)CopySize;
 				status = STATUS_SUCCESS;
 				break;
+			default:
 			}
 
 #if 0
@@ -961,6 +968,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 #endif
 			}	/* switch PropertyId */
 			break;
+		default:
 		}
 		if (status != STATUS_SUCCESS) {
 // printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
@@ -1054,7 +1062,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 		}
-		int items = attrs->DataSetRangesLength / sizeof(DEVICE_DATA_SET_RANGE);
+//		int items = attrs->DataSetRangesLength / sizeof(DEVICE_DATA_SET_RANGE);
 
 // printk("%d items\n", items);
 
@@ -1186,7 +1194,7 @@ dbg("out of wait_for_becoming_primary, status is %x\n", status);
 		dbg(KERN_INFO "DRBD device  request: opening DRBD device %s\n",
 			mode == 0 ? "read-only" : "read-write");
 
-		err = drbd_open(dev, mode);
+		err = dev->bd_disk->fops->open(dev, mode);
 		dbg(KERN_DEBUG "drbd_open returned %d\n", err);
 		status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
 	} else {
@@ -1240,9 +1248,7 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		return status;
 	}
 	struct block_device *dev = ref->bdev;
-	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	int mode;
-	int err;
 
 	if (dev->drbd_device != NULL) {
 		mode = 0;	/* TODO: remember mode from open () */
@@ -1293,7 +1299,6 @@ static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_NO_SUCH_DEVICE;
 	}
-	struct block_device *dev = ref->bdev;
 	NTSTATUS status = STATUS_SUCCESS;
 
 	dbg(KERN_INFO "Pretending that cleanup does something.\n");
@@ -1302,6 +1307,8 @@ static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	return status;
 }
 
+/* TODO: this was for some testing? */
+#if 0
 static void dump_data(const char *tag, char *data, size_t len, size_t offset_on_disk)
 {
 	size_t i;
@@ -1324,6 +1331,7 @@ static int io_complete_thread(void *irp_p)
 
 	return 0;
 }
+#endif
 
 /* Limit imposed by DRBD over the wire protocol. This will not change
  * in the next 5+ years, most likely never.
@@ -1408,7 +1416,6 @@ static void windrbd_bio_finished(struct bio * bio)
 
         spin_lock_irqsave(&bio->bi_common_data->bc_device_failed_lock, flags);
         int num_completed = atomic_inc_return(&bio->bi_common_data->bc_num_completed);
-        int device_failed = bio->bi_common_data->bc_device_failed;
         if (status != STATUS_SUCCESS)
                 bio->bi_common_data->bc_device_failed = 1;
         spin_unlock_irqrestore(&bio->bi_common_data->bc_device_failed_lock, flags);
@@ -1487,7 +1494,7 @@ static void drbd_make_request_work(struct work_struct *w)
 	struct io_request *ioreq = container_of(w, struct io_request, w);
 
 // printk("1\n");
-	drbd_submit_bio(ioreq->bio);
+	ioreq->bio->bi_bdev->bd_disk->fops->submit_bio(ioreq->bio);
 // printk("2\n");
 	kfree(ioreq);
 }
@@ -2185,7 +2192,7 @@ dbg("Returned string is %S\n", string);
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
 		dbg_bus("got IRP_MN_QUERY_DEVICE_RELATIONS\n");
 
-		int type = s->Parameters.QueryDeviceRelations.Type;
+//		int type = s->Parameters.QueryDeviceRelations.Type;
 
 		dbg_bus("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
 
@@ -2207,7 +2214,7 @@ dbg("Returned string is %S\n", string);
 				num_devices = get_all_drbd_device_objects(NULL, 0);
 				siz = sizeof(*device_relations)+num_devices*sizeof(device_relations->Objects[0]);
 		/* must be PagedPool else PnP manager complains */
-				device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+				device_relations = ExAllocatePoolWithTag(PagedPool, siz, DRBD_TAG);
 				if (device_relations == NULL) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					goto exit;
@@ -2238,7 +2245,7 @@ dbg("Returned string is %S\n", string);
 			size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
 			dbg("size of device relations is %d\n", siz);
 	/* must be PagedPool else PnP manager complains */
-			device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+			device_relations = ExAllocatePoolWithTag(PagedPool, siz, DRBD_TAG);
 			if (device_relations == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
@@ -2447,7 +2454,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			}
 #endif
 #define MAX_ID_LEN 512
-			string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), 'DRBD');
+			string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), DRBD_TAG);
 			if (string == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 			} else {
@@ -2562,7 +2569,7 @@ dbg("Returned string is %S\n", string);
 				size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
 				dbg("size of device relations is %d\n", siz);
 		/* must be PagedPool else PnP manager complains */
-				device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+				device_relations = ExAllocatePoolWithTag(PagedPool, siz, DRBD_TAG);
 				if (device_relations == NULL) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
@@ -2586,7 +2593,7 @@ dbg("Returned string is %S\n", string);
 
 				dbg("disk BusRelations (Type %d)\n", s->Parameters.QueryDeviceRelations.Type);
 		/* must be PagedPool else PnP manager complains */
-				device_relations = ExAllocatePoolWithTag(PagedPool, siz, 'DRBD');
+				device_relations = ExAllocatePoolWithTag(PagedPool, siz, DRBD_TAG);
 				if (device_relations == NULL) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
@@ -2642,7 +2649,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			wchar_t *string = NULL;
 			int string_length;
 
-			if ((string = (PWCHAR)ExAllocatePoolWithTag(NonPagedPool, (512 * sizeof(WCHAR)), 'DRBD')) == NULL) {
+			if ((string = (PWCHAR)ExAllocatePoolWithTag(NonPagedPool, (512 * sizeof(WCHAR)), DRBD_TAG)) == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
@@ -2651,7 +2658,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
 			case DeviceTextDescription:
 				string_length = _snwprintf(string, 512, L"WinDRBD Disk") + 1;
-				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
+				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), DRBD_TAG);
 				if (irp->IoStatus.Information == 0) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
@@ -2663,7 +2670,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			case DeviceTextLocationInformation:
 				string_length = _snwprintf(string, 512, L"WinDRBD Minor %d", minor) + 1;
 
-				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
+				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), DRBD_TAG);
 				if (irp->IoStatus.Information == 0) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
@@ -2691,7 +2698,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 		{
 			struct _PNP_BUS_INFORMATION *bus_info;
 
-			bus_info = ExAllocatePoolWithTag(PagedPool, sizeof(*bus_info), 'DRBD');
+			bus_info = ExAllocatePoolWithTag(PagedPool, sizeof(*bus_info), DRBD_TAG);
 			if (bus_info  == NULL) {
 			        printk("DiskDispatchPnP ExAllocatePool IRP_MN_QUERY_BUS_INFORMATION failed\n");
 			        status = STATUS_INSUFFICIENT_RESOURCES;
@@ -3075,19 +3082,6 @@ static NTSTATUS windrbd_sysctl(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	 * or WRITESAME are not supported yet.
 	 */
 
-#define REVERSE_BYTES_QUAD(Destination, Source) { \
-  PEIGHT_BYTE d = (PEIGHT_BYTE)(Destination);     \
-  PEIGHT_BYTE s = (PEIGHT_BYTE)(Source);          \
-  d->Byte7 = s->Byte0;                            \
-  d->Byte6 = s->Byte1;                            \
-  d->Byte5 = s->Byte2;                            \
-  d->Byte4 = s->Byte3;                            \
-  d->Byte3 = s->Byte4;                            \
-  d->Byte2 = s->Byte5;                            \
-  d->Byte1 = s->Byte6;                            \
-  d->Byte0 = s->Byte7;                            \
-}
-
 static long long wait_for_size(struct _DEVICE_OBJECT *device)
 {
 	struct block_device_reference *ref;
@@ -3354,8 +3348,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct _CDB16 *cdb16;
 	union _CDB *cdb;
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
-	LONGLONG StartSector;
-	ULONG SectorCount, Temp;
+	ULONG Temp;
 	LONGLONG d_size, LargeTemp;
 	struct block_device *bdev;
 	char *buffer, *io_buffer = NULL;

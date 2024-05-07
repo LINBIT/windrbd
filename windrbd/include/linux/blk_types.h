@@ -6,6 +6,7 @@
 #include <linux/bvec.h>
 #include <linux/mutex.h>
 #include <linux/bitops.h>
+#include <linux/spinlock.h>
 
 typedef u8 blk_status_t;
 

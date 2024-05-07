@@ -3,6 +3,7 @@
 
 #include <linux/compiler_types.h>
 #include <linux/compiler_attributes.h>
+#include <linux/build_bug.h>
 
 #define WRITE_ONCE(var, val) \
 	(*((volatile typeof(val) *)(&(var))) = (val))

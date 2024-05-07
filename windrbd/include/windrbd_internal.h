@@ -22,7 +22,9 @@
 #ifndef _WINDRBD_INT_H
 #define _WINDRBD_INT_H
 
-#include <ntddk.h>
+#include <linux/types.h>
+#include <linux/blk_types.h>
+#include <windrbd/windrbd_ioctl.h>
 
 extern NTSTATUS mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject);
 
@@ -100,5 +102,45 @@ int windrbd_wait_for_bus_object(void);
 
 /* In some Windows functions this is still used ... */
 #define DRBD_TAG 0x44425144
+#define FREE_TAG 0x45455146
+
+/* util.c: */
+NTSTATUS get_registry_int(wchar_t *key, int *val_p, int the_default);
+NTSTATUS get_registry_long_long(wchar_t *key, unsigned long long *val_p, unsigned long long the_default);
+
+/* windrbd_netlink.c: */
+int windrbd_process_netlink_packet(void *msg, size_t msg_size);
+size_t windrbd_receive_netlink_packets(void *vbuf, size_t remaining_size, u32 portid);
+bool windrbd_are_there_netlink_packets(u32 portid);	/* non-blocking peek at netlink packets. Does not consume them. */
+int windrbd_join_multicast_group(u32 portid, const char *name, struct _FILE_OBJECT *f);
+int windrbd_delete_multicast_groups_for_file(struct _FILE_OBJECT *f);
+
+/* printk_to_syslog.c: */
+
+struct in_addr;
+int my_inet_aton(const char *cp, struct in_addr *inp);
+char *my_inet_ntoa(struct in_addr *addr);
+
+int windrbd_create_windows_device_for_minor(int minor);
+
+/* These are needed by windrbd_device.c: */
+int windrbd_inject_faults(int after, enum fault_injection_location where, struct block_device *windrbd_bdev);
+int windrbd_um_get_next_request(void *buf, size_t max_data_size, size_t *actual_data_size);
+int windrbd_um_return_return_value(void *rv_buf);
+
+/* windrbd_test.c: */
+void test_main(const char *arg);
+
+int lock_interface(const char *config_key_param);
+int windrbd_is_locked(void);
+int set_driver_locked_state(int state);
+
+
+/* drbd_main.c: TODO: into some another header */
+struct drbd_device;
+extern int try_to_promote(struct drbd_device *device, long timeout, bool ndelay);
+
+/* TODO: return value 32 bit? */
+extern unsigned long crc32(const char *s, size_t len);
 
 #endif
