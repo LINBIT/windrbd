@@ -1100,9 +1100,9 @@ __INTRIN_INLINE unsigned char _bittest64(const long long * a, long long b)
 	unsigned char retval;
 
 	if(__builtin_constant_p(b))
-		__asm__("bt %[b], %[a]; setb %b[retval]" : [retval] "=q" (retval) : [a] "mr" (*(a + (b / 64))), [b] "Ir" (b % 64));
+		__asm__("btq %[b], %[a]; setb %b[retval]" : [retval] "=q" (retval) : [a] "mr" (*(a + (b / 64))), [b] "Ir" (b % 64));
 	else
-		__asm__("bt %[b], %[a]; setb %b[retval]" : [retval] "=q" (retval) : [a] "m" (*a), [b] "r" (b));
+		__asm__("btq %[b], %[a]; setb %b[retval]" : [retval] "=q" (retval) : [a] "m" (*a), [b] "r" (b));
 
 	return retval;
 }
