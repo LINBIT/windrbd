@@ -261,10 +261,10 @@ install:
 
 NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*.cocci))
 
-DRBD_HEADERS := $(shell find drbd -name "*.h")
-DRBD_TMP_HEADERS := $(patsubst drbd%,drbd-tmp%,$(DRBD_HEADERS))
+LINUX_HEADERS := $(shell find linux/drivers/md -name "*.h") $(shell find linux/include -name "*.h") $(shell find linux/arch/x86 -name "*.h")
+LINUX_TMP_HEADERS := $(patsubst linux%,linux-tmp%,$(LINUX_HEADERS))
 
-drbd-tmp/%.h: drbd/%.h $(NEW_TRANSFORMATIONS)
+linux-tmp/%.h: linux/%.h $(NEW_TRANSFORMATIONS)
 	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi
 	mkdir -p $(shell dirname $@) && cp $< $@
 	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
@@ -284,7 +284,7 @@ $(all-dep) :
 # trigger drbd_buildtag.c being rebuilt which also depends on
 # version info and then we loop...
 #
-%.d: %.c $(DRBD_TMP_HEADERS)
+%.d: %.c $(LINUX_TMP_HEADERS)
 	if [ $@ != drbd-tmp/drbd/drbd_buildtag.d ] ; then \
 		set -e; rm -f $@; \
 		$(CC) -MM -MT $(patsubst %.c,%.o,$<)  $(CFLAGS) $< > $@.$$$$; \
@@ -293,15 +293,15 @@ $(all-dep) :
 	fi
 
 # Do not delete the temporary headers when restarting make:
-$(DRBD_TMP_HEADERS):
+$(LINUX_TMP_HEADERS):
 
 # ifeq ($(MAKECMDGOALS),$(filter-out clean,$(MAKECMDGOALS)))
 # -include $(all-dep)
 # endif
 
-drbd-tmp/%.c: drbd/%.c $(NEW_TRANSFORMATIONS)
+linux-tmp/%.c: linux/%.c $(NEW_TRANSFORMATIONS)
 	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi
-	mkdir -p drbd-tmp/drbd &&  cp $< $@
+	mkdir -p linux-tmp/drivers/md &&  cp $< $@
 	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
 
 # experimental device mapper build
@@ -309,11 +309,11 @@ drbd-tmp/%.c: drbd/%.c $(NEW_TRANSFORMATIONS)
 DEVICE_MAPPER_SOURCES=dm.c dm-table.c dm-target.c dm-linear.c dm-stripe.c \
                    dm-ioctl.c dm-io.c dm-kcopyd.c dm-sysfs.c dm-stats.c \
                    dm-rq.c dm-io-rewind.c
-DEVICE_MAPPER_FILES = $(addprefix linux/drivers/md/, $(DEVICE_MAPPER_SOURCES))
+DEVICE_MAPPER_FILES = $(addprefix linux-tmp/drivers/md/, $(DEVICE_MAPPER_SOURCES))
 DEVICE_MAPPER_OBJS=$(patsubst %.c,%.o,$(DEVICE_MAPPER_FILES))
 
-DEVICE_MAPPER_INCLUDES=-I"linux/arch/x86/include" -I"linux/include" -I"linux/drivers/md"
-DEVICE_MAPPER_INCLUDES=-nostdinc -I./linux/arch/x86/include -I./linux/arch/x86/include/generated  -I./linux/include -I./linux/arch/x86/include/uapi -I./linux/arch/x86/include/generated/uapi -I./linux/include/uapi -I./linux/include/generated/uapi -include ./linux/include/linux/compiler-version.h -include ./linux/include/linux/kconfig.h -include ./linux/include/linux/compiler_types.h
+# DEVICE_MAPPER_INCLUDES=-I"linux-tmp/arch/x86/include" -I"linux-tmp/include" -I"linux-tmp/drivers/md"
+DEVICE_MAPPER_INCLUDES=-nostdinc -I./linux-tmp/arch/x86/include -I./linux-tmp/arch/x86/include/generated  -I./linux-tmp/include -I./linux-tmp/arch/x86/include/uapi -I./linux-tmp/arch/x86/include/generated/uapi -I./linux-tmp/include/uapi -I./linux-tmp/include/generated/uapi -include ./linux-tmp/include/linux/compiler-version.h -include ./linux-tmp/include/linux/kconfig.h -include ./linux-tmp/include/linux/compiler_types.h
 DEFINES_FOR_DEVICE_MAPPER=-D__KERNEL__ -DKBUILD_MODFILE='"drivers/md/dm-mod"' -DKBUILD_BASENAME='"dm"' -DKBUILD_MODNAME='"dm_mod"' -D__KBUILD_MODNAME=kmod_dm_mod
 # CFLAGS=-g -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(DEVICE_MAPPER_INCLUDES) $(MINGW_INCLUDES)
 # To compile device-mapper uncomment this:
@@ -321,11 +321,17 @@ CFLAGS_FOR_DEVICE_MAPPER=-g -Wall $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES_FO
 
 WINDRBD_OBJS=$(patsubst %.c,%.o,$(WINDRBD_FILES)) $(patsubst %.c,%.o,$(LINUX_FILES))
 
-linux/%.o: linux/%.c
+linux-tmp/%.o: linux-tmp/%.c $(LINUX_TMP_HEADERS)
 	$(CC) $(CFLAGS_FOR_DEVICE_MAPPER) -c -o $@ $<
+
+# do not delete intermediate C files:
+$(DEVICE_MAPPER_FILES):
 
 windrbd/%.o: windrbd/%.c
 	$(CC) $(CFLAGS_FOR_WINDRBD) -c -o $@ $<
 
-device-mapper: $(DEVICE_MAPPER_OBJS) $(WINDRBD_OBJS)
-	$(CC) -o device-mapper.sys $(DEVICE_MAPPER_OBJS) $(WINDRBD_OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
+# device-mapper: $(DEVICE_MAPPER_OBJS) $(WINDRBD_OBJS)
+# 	$(CC) -o device-mapper.sys $(DEVICE_MAPPER_OBJS) $(WINDRBD_OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
+
+device-mapper: $(DEVICE_MAPPER_OBJS)
+	$(CC) -o device-mapper.sys $(DEVICE_MAPPER_OBJS) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
