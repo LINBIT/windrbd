@@ -10,9 +10,11 @@ struct genl_multicast_group {
 	u32			id;
 };
 
+extern const struct genl_family *the_windrbd_netlink_family;
+
 static inline int genl_register_family_with_ops(const struct genl_family *f, const struct genl_ops *o, int count)
 {
-	(void)f;
+	the_windrbd_netlink_family = f;
 	(void)o;
 	(void)count;
 	return 0;
@@ -20,7 +22,7 @@ static inline int genl_register_family_with_ops(const struct genl_family *f, con
 
 static inline int genl_unregister_family(const struct genl_family *f)
 {
-	(void)f;
+	the_windrbd_netlink_family = NULL;
 	return 0;
 }
 

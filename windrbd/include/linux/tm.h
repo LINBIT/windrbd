@@ -1,6 +1,8 @@
 #ifndef _LINUX_TM_H
 #define _LINUX_TM_H
 
+#include <linux/types.h>
+
 /*
  * Similar to the struct tm in userspace <time.h>, but it needs to be here so
  * that the kernel source is self contained.

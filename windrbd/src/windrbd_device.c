@@ -3318,6 +3318,19 @@ void windrbd_device_size_change(struct block_device *bdev)
         }
 }
 
+bool set_capacity_and_notify(struct gendisk *disk, sector_t size)
+{
+	struct block_device *bdev = disk->part0;
+
+	bdev->d_size = size << 9;
+	windrbd_device_size_change(bdev);
+
+	if (size <= 0)
+		return false;
+
+	return true;
+}
+
 #if 0
 static void set_partition_guid(struct block_device *bdev, const char *guid)
 {

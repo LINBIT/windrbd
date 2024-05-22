@@ -33,7 +33,13 @@ static void fill_in_header(struct sk_buff *skb)
         n->nlmsg_pid = KERNEL_PORT_ID;	/* we are kernel */
 }
 
-extern struct genl_family drbd_genl_family;
+	/* See include/net/netlink.h: the register function sets
+	 * this variable to the static drbd_genl_family defined
+	 * somewhere magically in drbd-headers/linux/genl_magic
+	 * something.
+	 */
+
+const struct genl_family *the_windrbd_netlink_family;
 
 #define SEQ_START 1000
 
@@ -89,8 +95,8 @@ static int reply_code(int cmd)
 	}
 	expected_seq++;
 
-	first_attr = nlmsg_attrdata(header, GENL_HDRLEN + drbd_genl_family.hdrsize);
-	attr_len = nlmsg_attrlen(header, GENL_HDRLEN + drbd_genl_family.hdrsize);
+	first_attr = nlmsg_attrdata(header, GENL_HDRLEN + the_windrbd_netlink_family->hdrsize);
+	attr_len = nlmsg_attrlen(header, GENL_HDRLEN + the_windrbd_netlink_family->hdrsize);
 	nla_for_each_attr(nla, first_attr, attr_len, rem) {
 		if (nla_type(nla) == 1) {
 			nla_for_each_nested(nla2, nla, rem2) {
@@ -112,7 +118,7 @@ static struct sk_buff *prepare_netlink_packet(int cmd, int minor)
 	if (skb == NULL)
 		return NULL;
 
-        dhdr = genlmsg_put(skb, 0, seq, &drbd_genl_family, 0, cmd);
+        dhdr = genlmsg_put(skb, 0, seq, the_windrbd_netlink_family, 0, cmd);
 	seq++;
 
 	dhdr->minor = minor;
@@ -363,7 +369,8 @@ static int windrbd_create_boot_device_stage1(struct drbd_params *p)
 		return -EINVAL;
 	}
 
-        drbd_genl_family.id = WINDRBD_NETLINK_FAMILY_ID;
+		/* discard the const ... */
+        ((struct genl_family*) the_windrbd_netlink_family)->id = WINDRBD_NETLINK_FAMILY_ID;
 
 	if ((ret = new_resource(p->resource, p->this_node_id)) != 0)
 		return ret;

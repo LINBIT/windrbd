@@ -18,8 +18,6 @@ struct list_head {
 	struct list_head *next, *prev;
 };
 
-extern void list_del_init(struct list_head *entry);
-
 #define list_entry(ptr, type, member)		container_of(ptr, type, member)
 #define list_first_entry(ptr, type, member)	list_entry((ptr)->next, type, member)
 
@@ -112,6 +110,16 @@ static inline void list_splice_init(struct list_head *list, struct list_head *he
 		__list_splice(list, head, head->next);
 		INIT_LIST_HEAD(list);
 	}
+}
+
+/**
+ * list_del_init - deletes entry from list and reinitialize it.
+ * @entry: the element to delete from the list.
+ */
+static inline void list_del_init(struct list_head *entry)
+{
+	__list_del_entry(entry);
+	INIT_LIST_HEAD(entry);
 }
 
 /**

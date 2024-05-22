@@ -2,6 +2,7 @@
 #define __LINUX_MATH_H
 
 #include <linux/div64.h>
+#include <linux/math64.h>
 
 /*
  * This looks more complex than it should be. But we need to

@@ -506,6 +506,21 @@ void *page_address(const struct page *page)
 	return page->addr;
 }
 
+void clear_page(void *page)
+{
+	memset(page, 0, PAGE_SIZE);
+}
+
+void copy_highpage(struct page *to, struct page *from)
+{
+	memcpy(page_address(to), page_address(from), PAGE_SIZE);
+}
+
+void copy_page(void *to, void *from)
+{
+	memcpy(to, from, PAGE_SIZE);
+}
+
 static LIST_HEAD(all_pages);
 static spinlock_t all_pages_lock;
 
@@ -4092,6 +4107,9 @@ void unregister_blkdev(unsigned int major, const char *name)
  *   https://msdn.microsoft.com/de-de/library/ff552562(v=vs.85).aspx
  *   https://msdn.microsoft.com/de-de/library/hh439649(v=vs.85).aspx
 */
+
+/* TODO: we need those for supporting TRIM ... */
+
 int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
         sector_t nr_sects, gfp_t gfp_mask, ULONG_PTR flags)
 {
@@ -4105,6 +4123,20 @@ int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
 {
 	printk("Warning: blkdev_issue_write_same not implemented.\n");
 	return -EIO;
+}
+
+int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
+				sector_t nr_sects, gfp_t gfp_mask,
+				unsigned flags)
+{
+	printk("Warning: blkdev_issue_zeroout not implemented.\n");
+	return -EIO;
+}
+
+void blkdev_put(struct block_device *bdev, fmode_t mode)
+{
+        struct block_device *b = bdev->bd_parent ? bdev->bd_parent : bdev;
+        kref_put(&b->kref, delete_block_device);
 }
 
 int kobject_uevent(struct kobject *kobj, enum kobject_action action)
