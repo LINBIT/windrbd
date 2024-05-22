@@ -1,5 +1,5 @@
-# default: package-in-docker
-default: windrbd.sys
+default: package-in-docker
+# default: windrbd.sys
 # If you have your dev env set up on the host you can try
 # to build without docker container: to set it up the
 # contents of the docker-root/Dockerfile might be useful.
@@ -195,7 +195,8 @@ versioninfo:
 .PHONY: windrbd.sys
 .PHONY: windrbd.cat
 
-drbd-tmp/drbd/drbd_buildtag.c drbd-tmp/drbd/windrbd_version.h &: versioninfo
+drbd-tmp/drbd/drbd_buildtag.c drbd-tmp/drbd/windrbd_version.h &:
+	./versioninfo.sh drbd-tmp $(VERSION)
 
 windrbd.sys: versioninfo $(TMP_DRBD_FILES) $(OBJS) $(COFFRES)
 	$(CC) -o windrbd.sys-unsigned $(OBJS) $(COFFRES) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
