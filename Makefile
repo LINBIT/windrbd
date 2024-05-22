@@ -155,7 +155,7 @@ WINDRBD_FILES = $(addprefix $(WINDRBD_SRCDIR), $(WINDRBD_SOURCES))
 
 LINUX_SRCDIR = ./windrbd/src/from-linux/
 # TODO: lib/vsprintf.c does not compile, use the Windows counterpart ...
-LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/kasprintf.c
+LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/kasprintf.c block/genhd.c
 # LINUX_SOURCES = lib/kstrtox.c mm/util.c
 LINUX_FILES = $(addprefix $(LINUX_SRCDIR), $(LINUX_SOURCES))
 

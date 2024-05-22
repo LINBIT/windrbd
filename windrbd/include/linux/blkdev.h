@@ -280,6 +280,7 @@ struct block_device {
 	unsigned int bd_block_size;	/* Size of one sector (?) */
 	unsigned long long d_size;
 	struct kref kref;
+	int bd_partno;
 
 	struct inode *bd_inode;
 
