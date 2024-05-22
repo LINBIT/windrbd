@@ -262,6 +262,7 @@ install:
 NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*.cocci))
 
 LINUX_HEADERS := $(shell find linux/drivers/md -name "*.h") $(shell find linux/include -name "*.h") $(shell find linux/arch/x86 -name "*.h")
+# LINUX_HEADERS = 
 LINUX_TMP_HEADERS := $(patsubst linux%,linux-tmp%,$(LINUX_HEADERS))
 
 linux-tmp/%.h: linux/%.h $(NEW_TRANSFORMATIONS)

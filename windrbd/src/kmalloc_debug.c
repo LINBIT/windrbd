@@ -116,6 +116,11 @@ void *kzalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	return data;
 }
 
+void *__vmalloc_debug(size_t size, int flag, const char *file, int line, const char *func)
+{
+	return kmalloc_debug(size, flag, file, line, func);
+}
+
 void kfree_debug(const void *data, const char *file, int line, const char *func)
 {
 	struct memory *mem;

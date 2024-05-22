@@ -19,6 +19,7 @@
 
 void *kmalloc_debug(size_t size, int flag, const char *file, int line, const char *func);
 void *kzalloc_debug(size_t size, int flag, const char *file, int line, const char *func);
+void *__vmalloc_debug(size_t size, int flag, const char *file, int line, const char *func);
 void kfree_debug(const void *data, const char *file, int line, const char *func);
 
 int dump_memory_allocations(int free_them);
@@ -32,4 +33,5 @@ void shutdown_kmalloc_debug(void);
 #define kfree(data) kfree_debug(data, __FILE__, __LINE__, __func__)
 	/* under Windows kfree and kvfree is the same */
 #define kvfree(data) kfree_debug(data, __FILE__, __LINE__, __func__)
+#define __vmalloc(size, flags) kmalloc_debug(size, flags, __FILE__, __LINE__, __func__)
 

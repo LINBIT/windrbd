@@ -40,6 +40,8 @@
 #include <linux/sprintf.h>
 
 /* For GUID_DEVCLASS_SCSIADAPTER: */
+#define INITGUID
+#include <initguid.h>
 #include <devguid.h>
 
 	/* Verifier BSOD on boot should be fixed we can read ACPI tables again.

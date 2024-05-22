@@ -9,12 +9,22 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 struct page *alloc_page_debug(int flag, const char *file, int line, const char *func);
 void __free_page_debug(struct page *page, const char *file, int line, const char *func);
 void free_page_kref_debug(struct kref *kref, const char *file, int line, const char *func);
+void free_pages_debug(ULONG_PTR addr, int order, const char *file, int line, const char *func);
+void free_page_debug(ULONG_PTR addr, const char *file, int line, const char *func);
+ULONG_PTR __get_free_pages_debug(gfp_t flag, int order, const char *file, int line, const char *func);
+ULONG_PTR __get_free_page_debug(gfp_t flag, const char *file, int line, const char *func);
 
 #define alloc_page_of_size(flag, size) alloc_page_of_size_debug(flag, size, __FILE__, __LINE__, __func__)
 #define alloc_page(flag) alloc_page_debug(flag,  __FILE__, __LINE__, __func__)
 #define __free_page(page) __free_page_debug(page, __FILE__, __LINE__, __func__)
+#define free_page(addr) free_page_debug(addr, __FILE__, __LINE__, __func__)
+#define free_pages(addr, order) free_pages_debug(addr, order, __FILE__, __LINE__, __func__)
+#define __get_free_pages(addr, order) __get_free_pages_debug(addr, order, __FILE__, __LINE__, __func__)
+#define __get_free_page(addr) __get_free_page_debug(addr, __FILE__, __LINE__, __func__)
+
 #define free_page_kref(kref) free_page_kref_debug(kref, __FILE__, __LINE__, __func__)
 
+#if 0
 /* TODO: implement */
 extern ULONG_PTR __get_free_pages(gfp_t gfp_mask, unsigned int order);
 extern void free_pages(ULONG_PTR addr, unsigned int order);
@@ -27,5 +37,6 @@ extern void free_page(ULONG_PTR addr);
 /* {
 	kfree(addr);
 } */
+#endif
 
 #endif
