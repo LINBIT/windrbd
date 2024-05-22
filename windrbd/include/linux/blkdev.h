@@ -33,6 +33,84 @@ struct backing_dev_info {
 	void *congested_data;   /* Pointer to aux data for congested func */
 };
 
+enum blk_default_limits {
+	BLK_MAX_SEGMENTS	= 128,
+	BLK_SAFE_MAX_SECTORS	= 255,
+	BLK_MAX_SEGMENT_SIZE	= 65536,
+	BLK_SEG_BOUNDARY_MASK	= 0xFFFFFFFFUL,
+};
+
+#define BLK_DEF_MAX_SECTORS 2560u
+
+/*
+ * Zoned block device models (zoned limit).
+ *
+ * Note: This needs to be ordered from the least to the most severe
+ * restrictions for the inheritance in blk_stack_limits() to work.
+ */
+enum blk_zoned_model {
+	BLK_ZONED_NONE = 0,	/* Regular block device */
+	BLK_ZONED_HA,		/* Host-aware zoned block device */
+	BLK_ZONED_HM,		/* Host-managed zoned block device */
+};
+
+/*
+ * BLK_BOUNCE_NONE:	never bounce (default)
+ * BLK_BOUNCE_HIGH:	bounce all highmem pages
+ */
+enum blk_bounce {
+	BLK_BOUNCE_NONE,
+	BLK_BOUNCE_HIGH,
+};
+
+struct queue_limits {
+	enum blk_bounce		bounce;
+	unsigned long		seg_boundary_mask;
+	unsigned long		virt_boundary_mask;
+
+	unsigned int		max_hw_sectors;
+	unsigned int		max_dev_sectors;
+	unsigned int		chunk_sectors;
+	unsigned int		max_sectors;
+	unsigned int		max_user_sectors;
+	unsigned int		max_segment_size;
+	unsigned int		physical_block_size;
+	unsigned int		logical_block_size;
+	unsigned int		alignment_offset;
+	unsigned int		io_min;
+	unsigned int		io_opt;
+	unsigned int		max_discard_sectors;
+	unsigned int		max_hw_discard_sectors;
+	unsigned int		max_user_discard_sectors;
+	unsigned int		max_secure_erase_sectors;
+	unsigned int		max_write_zeroes_sectors;
+	unsigned int		max_zone_append_sectors;
+	unsigned int		discard_granularity;
+	unsigned int		discard_alignment;
+	unsigned int		zone_write_granularity;
+
+	unsigned short		max_segments;
+	unsigned short		max_integrity_segments;
+	unsigned short		max_discard_segments;
+
+	unsigned char		misaligned;
+	unsigned char		discard_misaligned;
+	unsigned char		raid_partial_stripes_expensive;
+	bool			zoned;
+	unsigned int		max_open_zones;
+	unsigned int		max_active_zones;
+
+	/*
+	 * Drivers that set dma_alignment to less than 511 must be prepared to
+	 * handle individual bvec's that are not a multiple of a SECTOR_SIZE
+	 * due to possible offsets.
+	 */
+	unsigned int		dma_alignment;
+
+	unsigned int            max_write_same_sectors;
+};
+
+#if 0
 struct queue_limits {
 	unsigned int		max_hw_sectors;
 	unsigned int            max_discard_sectors;
@@ -47,6 +125,7 @@ struct queue_limits {
 	unsigned int		io_min;
 	unsigned int		io_opt;
 };
+#endif
 
 struct request_queue {
 	void * queuedata;
@@ -55,6 +134,7 @@ struct request_queue {
 	unsigned short logical_block_size;
 	ULONG_PTR queue_flags;
 	struct queue_limits limits; 
+	struct gendisk *disk;	/* TODO: set this on creation ! */
 };
 
 /* obsolete, don't use in new code */

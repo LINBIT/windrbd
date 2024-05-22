@@ -554,9 +554,6 @@ void idr_shutdown(void)
 /* Number of id_layer structs to leave in free list */
 #define MAX_IDR_FREE (MAX_IDR_LEVEL * 2)
 
-#define __round_mask(x, y) ((y) - 1)
-#define round_up(x, y) ((((x) - 1) | __round_mask(x, y)) + 1)
-
 void *idr_get_next(struct idr *idp, int *nextidp)
 {
 	struct idr_layer *p, *pa[MAX_IDR_LEVEL + 1];

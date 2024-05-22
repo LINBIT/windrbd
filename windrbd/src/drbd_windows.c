@@ -2716,6 +2716,8 @@ struct gendisk *blk_alloc_disk(int unused)
 		return NULL;
 	}
 	disk->queue = q;
+	q->disk = disk;
+
 	return disk;
 }
 
@@ -2745,6 +2747,16 @@ struct block_device *bdget_disk(struct gendisk *disk, int partno)
 	}
 	printk("Warning: disk is NULL in bdget_disk\n");
 	return NULL;
+}
+
+/**
+ * bdgrab -- Grab a reference to an already referenced block device
+ * @bdev:	Block device to grab a reference to.
+ */
+struct block_device *bdgrab(struct block_device *bdev)
+{
+	kref_get(&bdev->kref);
+	return bdev;
 }
 
 /*
@@ -3114,6 +3126,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		err = -ENOMEM;
 		goto out_no_queue;
 	}
+	block_device->bd_disk->queue->disk = block_device->bd_disk;
 	block_device->bd_disk->part0 = block_device;
 
 	IoInitializeRemoveLock(&block_device->remove_lock, DRBD_TAG, 0, 0);
