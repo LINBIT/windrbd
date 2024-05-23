@@ -41,6 +41,7 @@
 #include <linux/kthread.h>
 #include <linux/kref.h>
 #include <linux/atomic.h>
+#include <linux/proc_fs.h>
 
 	/* TODO: split this up into several files. Already done for
 	 * threads, but there's much more ...
@@ -101,6 +102,8 @@ NTAPI RtlRandomEx(
 #include <intrin.h>
 #include "linux/idr.h"
 #include "windrbd_internal.h"
+
+struct proc_dir_entry the_proc;
 
 /* TODO: lock this list */
 static LIST_HEAD(backing_devices);
@@ -2733,6 +2736,10 @@ struct gendisk *blk_alloc_disk(int unused)
 	disk->queue = q;
 	q->disk = disk;
 
+/* TODO: alloc a new block_device and assign to disk->part0 */
+
+/*	disk->part0 = bdev_alloc(disk, 0); */
+/*	and existing bdget -> bdev_alloc and bdget just takes the kref */
 	return disk;
 }
 

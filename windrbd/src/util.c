@@ -72,7 +72,7 @@ static NTSTATUS GetRegistryValue(PCWSTR pwcsValueName, ULONG_PTR *pReturnLength,
 
         *pReturnLength = pstKeyInfo->DataLength;
     }
-    ExFreePool(pstKeyInfo);
+    kfree(pstKeyInfo);
     ZwClose(hKey);
     return status;
 }
