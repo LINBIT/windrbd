@@ -2707,43 +2707,93 @@ void blk_cleanup_queue(struct request_queue *q)
 	kfree(q);
 }
 
-struct gendisk *alloc_disk(int minors)
-{
-	struct gendisk *p = kzalloc(sizeof(struct gendisk), GFP_KERNEL);
-
-	return p;
-}
-
 int add_disk(struct gendisk *disk)
 {
-	disk->part0->bd_disk = disk;
+		/* disk->first_minor is the minor ... */
+		/* TODO: add the disk to some registry ... */
 	return 0;
+}
+
+struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
+{
+	struct block_device *block_device;
+
+	if (partno > 0) {
+		printk("bdev_alloc: we do not support partitions (partno must be 0)\n");
+		return NULL;
+	}
+	block_device = kzalloc(sizeof(struct block_device), GFP_KERNEL);
+	if (block_device == NULL)
+		return NULL;
+
+	kref_init(&block_device->kref);
+
+	block_device->bd_block_size = 512;
+
+	/* TODO: obsolete: */
+	block_device->is_disk_device = true;
+
+	init_waitqueue_head(&block_device->bios_event);
+	atomic_set(&block_device->num_bios_pending, 0);
+	atomic_set(&block_device->num_irps_pending, 0);
+
+		/* Most of this probably goes away soon */
+		/* Corking ... new with 1.1.8 */
+	block_device->corked = false;
+	spin_lock_init(&block_device->cork_spinlock);
+	INIT_LIST_HEAD(&block_device->corked_list);
+
+		/* fail I/O on disk timeout, new in 1.1.9 */
+	spin_lock_init(&block_device->in_flight_bios_lock);
+	INIT_LIST_HEAD(&block_device->in_flight_bios);
+
+	inject_faults(-1, &block_device->inject_on_completion);
+	inject_faults(-1, &block_device->inject_on_request);
+
+	KeInitializeEvent(&block_device->primary_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&block_device->capacity_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&block_device->device_removed_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&block_device->device_started_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&block_device->device_ejected_event, NotificationEvent, FALSE);
+	KeInitializeEvent(&block_device->bus_device_iterated, NotificationEvent, FALSE);
+	KeInitializeEvent(&block_device->io_not_suspended, NotificationEvent, TRUE);
+	spin_lock_init(&block_device->complete_request_spinlock);
+	spin_lock_init(&block_device->virtual_partition_table_lock);
+	spin_lock_init(&block_device->suspend_lock);
+
+	return block_device;
 }
 
 struct gendisk *blk_alloc_disk(int unused)
 {
 	struct request_queue *q;
 	struct gendisk *disk;
+	struct block_device *bdev;
 
 	q = blk_alloc_queue(unused);
 	if (!q)
 		return NULL;
 
-	disk = alloc_disk(0);
-	if (!disk) {
+	disk = kzalloc(sizeof(struct gendisk), GFP_KERNEL);
+	if (disk == NULL) {
 		blk_cleanup_queue(q);
 		return NULL;
 	}
 	disk->queue = q;
 	q->disk = disk;
 
-/* TODO: alloc a new block_device and assign to disk->part0 */
+	bdev = bdev_alloc(disk, 0);
+	if (bdev == NULL) {
+		blk_cleanup_disk(disk);
+		return NULL;
+	}
+	disk->part0 = bdev;
+	disk->part0->bd_disk = disk;
 
-/*	disk->part0 = bdev_alloc(disk, 0); */
-/*	and existing bdget -> bdev_alloc and bdget just takes the kref */
 	return disk;
 }
 
+/* we should have a refcount here ... */
 void put_disk(struct gendisk *disk)
 {
 	kfree(disk);
@@ -2752,9 +2802,11 @@ void put_disk(struct gendisk *disk)
 void blk_cleanup_disk(struct gendisk *disk)
 {
 	blk_cleanup_queue(disk->queue);
+	/* TODO: and also disk->part0 ?? */
 	put_disk(disk);
 }
 
+#if 0
 struct block_device *bdget_disk(struct gendisk *disk, int partno)
 {
 	if (partno > 0)
@@ -2771,6 +2823,8 @@ struct block_device *bdget_disk(struct gendisk *disk, int partno)
 	printk("Warning: disk is NULL in bdget_disk\n");
 	return NULL;
 }
+
+#endif
 
 /**
  * bdgrab -- Grab a reference to an already referenced block device
@@ -3134,7 +3188,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_no_block_device;
 	}
 	block_device->windows_device = windows_device;
-	block_device->bd_disk = alloc_disk(0);
+//	block_device->bd_disk = alloc_disk(0);
 	if (!block_device->bd_disk)
 	{
 		printk("Failed to allocate gendisk NonPagedMemory\n");
@@ -3537,83 +3591,28 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
  * behaviour.
  */
 
+#if 0
+
 struct block_device *bdget(dev_t device_no)
 {
 	dev_t minor = MINOR(device_no);
 	struct block_device *block_device;
 
-	block_device = kzalloc(sizeof(struct block_device), GFP_KERNEL);
-	if (block_device == NULL)
-		return NULL;
+	/* TODO: lookup block device by device_no, kref_get() it and
+	 * return it.
+	 */
 
 	if (minor_to_windows_device_name(&block_device->path_to_device, minor, 0) < 0)
-		goto out_path_to_device_failed;
-
-	kref_init(&block_device->kref);
+		return NULL;
 
 	block_device->minor = minor;
-	block_device->bd_block_size = 512;
-	block_device->mount_point.Buffer = NULL;
-
-/* TODO: to test 'auto-promote' */
-// block_device->is_bootdevice = 1;
-block_device->my_auto_promote = 1;
-
-		/* Currently all devices are disk devices, that
-		 * is they are managed by plug and play manager.
-		 * Set this flag early, else Windows will not
-		 * find the disk device.
-		 */
-	block_device->is_disk_device = true;
-/* TODO: needed here? Solves BSOD? */
-	block_device->bd_disk = alloc_disk(0);
-
-	init_waitqueue_head(&block_device->bios_event);
-	atomic_set(&block_device->num_bios_pending, 0);
-	atomic_set(&block_device->num_irps_pending, 0);
-
-		/* TODO: these are not used any more? */
-	INIT_LIST_HEAD(&block_device->write_cache);
-	spin_lock_init(&block_device->write_cache_lock);
-
-		/* Corking ... new with 1.1.8 */
-	block_device->corked = false;
-	spin_lock_init(&block_device->cork_spinlock);
-	INIT_LIST_HEAD(&block_device->corked_list);
-		/* fail I/O on disk timeout, new in 1.1.9 */
-	spin_lock_init(&block_device->in_flight_bios_lock);
-	INIT_LIST_HEAD(&block_device->in_flight_bios);
-
-	inject_faults(-1, &block_device->inject_on_completion);
-	inject_faults(-1, &block_device->inject_on_request);
-
-	KeInitializeEvent(&block_device->primary_event, NotificationEvent, FALSE);
-	KeInitializeEvent(&block_device->capacity_event, NotificationEvent, FALSE);
-	KeInitializeEvent(&block_device->device_removed_event, NotificationEvent, FALSE);
-	KeInitializeEvent(&block_device->device_started_event, NotificationEvent, FALSE);
-	KeInitializeEvent(&block_device->device_ejected_event, NotificationEvent, FALSE);
-	KeInitializeEvent(&block_device->bus_device_iterated, NotificationEvent, FALSE);
-	KeInitializeEvent(&block_device->io_not_suspended, NotificationEvent, TRUE);
-	spin_lock_init(&block_device->complete_request_spinlock);
-	spin_lock_init(&block_device->virtual_partition_table_lock);
-	spin_lock_init(&block_device->suspend_lock);
 
 	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);
 
 	return block_device;
-/*
-create_windows_device_failed:
-	IoReleaseRemoveLock(&block_device->remove_lock, NULL);
-*/
-/*
-out_remove_lock_failed:
-	kfree(block_device->path_to_device.Buffer);
-*/
-out_path_to_device_failed:
-	kfree(block_device);
-
-	return NULL;
 }
+
+#endif
 
 	/* This function is roughly taken from:
 	 * https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/content/mountmgr/ni-mountmgr-ioctl_mountmgr_create_point
