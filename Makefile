@@ -199,6 +199,7 @@ versioninfo:
 
 drbd-tmp/drbd/drbd_buildtag.c drbd-tmp/drbd/windrbd_version.h &:
 	./versioninfo.sh drbd-tmp $(VERSION)
+	rm drbd-tmp/drbd/drbd_buildtag.o
 
 windrbd.sys: versioninfo $(TMP_DRBD_FILES) $(OBJS) $(COFFRES)
 	$(CC) -o windrbd.sys-unsigned $(OBJS) $(COFFRES) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
@@ -271,8 +272,9 @@ drbd-tmp/%.h: drbd/%.h $(NEW_TRANSFORMATIONS)
 	mkdir -p $(shell dirname $@) && cp $< $@
 	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
 
-all-dep := $(filter-out drbd-tmp/drbd/drbd_buildtag.d,$(OBJS:%.o=%.d))
-# all-dep := $(OBJS:%.o=%.d)
+# TODO: why not drbd_buildtag? */
+# all-dep := $(filter-out drbd-tmp/drbd/drbd_buildtag.d,$(OBJS:%.o=%.d))
+all-dep := $(OBJS:%.o=%.d)
 
 # Do not delete this intermediate files:
 $(all-dep) :
