@@ -43,11 +43,14 @@ struct net init_net;
  * is shut down.
  */
 
-/* TODO: In theory, stack can be swapped out while waiting for
+/* Done: In theory, stack can be swapped out while waiting for
  * the EVENTs (they are on the stack). See KeSetKernelStackSwapEnable()
  * To fix use:
  *	completion_event = kmalloc(sizeof(*completion_event));
  * instead of events on the stack.
+ *
+ * Update: yes this really happens!
+ * Update: Now we disabled stack swapping in the WinDRBD thread library.
  */
 
 #define WSK_DEINITIALIZED	0

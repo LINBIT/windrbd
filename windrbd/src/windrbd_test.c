@@ -962,7 +962,7 @@ static char *wq_test_str[WQ_LAST] = {
 	"no-wait", "simple", "fast", "no-sleep", "loop", "loop-no-sleep"
 };
 
-static int cond = 0;
+static volatile int cond = 0;
 static atomic_t num_wakers_running = { 0 };
 
 static enum wq_test wt;
@@ -987,8 +987,11 @@ static int waker_task(void *unused)
 	if (wt == WQ_LOOP || wt == WQ_LOOP_NO_SLEEP)
 		loop_cnt = waker_loops;
 
-printk("waker started\n");
+// printk("waker started\n");
 	for (;loop_cnt>0;--loop_cnt) {
+		if (!(loop_cnt % 1000))
+			printk("%d loops remaining.\n", loop_cnt);
+
 		if (msec > 0)
 			msleep(msec);
 #if 0
@@ -998,13 +1001,13 @@ printk("waking up #1 (loop_cnt is %d)\n", loop_cnt);
 		if (msec > 0)
 			msleep(msec);
 #endif
-printk("waking up #2 (with cond true) (loop_cnt is %d)\n", loop_cnt);
+// printk("waking up #2 (with cond true) (loop_cnt is %d)\n", loop_cnt);
 		cond = 1;
 		wake_up(&wq);
-printk("waiting for waiter ...\n");
-		wait_event(wq2, !cond);
+// printk("waiting for waiter ...\n");
+//		wait_event(wq2, !cond);
 	}
-printk("waker end\n");
+// printk("waker end\n");
 	atomic_dec(&num_wakers_running);
 	wake_up(&wq);
 
@@ -1019,11 +1022,14 @@ static int waiter_task(void *unused)
 		loop_cnt = waiter_loops;
 
 	for (;loop_cnt>0;loop_cnt--) {
+		if (!(loop_cnt % 1000))
+			printk("%d loops remaining.\n", loop_cnt);
+
 		cond = 0;
 		if (wt == WQ_NO_WAIT)
 			cond = 1;
 
-printk("into wait_event ... loop_cnt is %d\n", loop_cnt);
+// printk("into wait_event ... loop_cnt is %d\n", loop_cnt);
 		wait_event(wq, cond || atomic_read(&num_wakers_running) == 0);
 		if (atomic_read(&num_wakers_running) == 0) {
 			printk("no more wakers, exiting waiter\n");
@@ -1031,7 +1037,7 @@ printk("into wait_event ... loop_cnt is %d\n", loop_cnt);
 		}
 		cond = 0;
 		wake_up(&wq2);
-printk("out of wait_event cond is %d loop_cnt is %d\n", cond, loop_cnt);
+// printk("out of wait_event cond is %d loop_cnt is %d\n", cond, loop_cnt);
 	}
 	return 0;
 }
@@ -1069,19 +1075,19 @@ static void wait_event_test(int argc, const char ** argv)
 
 			atomic_inc(&num_wakers_running);
 			k = kthread_create(waker_task, NULL, "waker%d", t);
-printk("thread is %p t is %d\n", k, t);
+// printk("thread is %p t is %d\n", k, t);
 			wake_up_process(k);
 		}
 		for (t=0;t<num_waiters;t++) {
 			struct task_struct *k;
 
 			k = kthread_create(waiter_task, NULL, "waiter%d", t);
-printk("thread is %p t is %d\n", k, t);
+// printk("thread is %p t is %d\n", k, t);
 			wake_up_process(k);
 		}
 	}
 
-printk("exiting waiter\n");
+// printk("exiting waiter\n");
 
 	return;
 usage:

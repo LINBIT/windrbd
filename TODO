@@ -2,48 +2,31 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
-TODO: Bug: On no memory, genl_replymsg() -ENOMEM is not checked.
-	by DRBD: may it fail in the Linux kernel?
+TODO: Bug: list corruption in connection->todo.work_list
 
-TODO: Bug: umhelper cannot find /var/lib/drbd-test
+	When resetting peer every 5 minutes.
 
-	Probably because it is running as a service.
+	This appears to be a DRBD bug:
 
-TODO: Bug: drbdadm down takes 30 seconds to complete:
+<6> 06.05.2024 U02:06:49.663 (819044118722/3579545)|FFFFC183AF6C9550(drbd_s_test1) #70058 change_cluster_wide_state drbd test1, r(Secondary), f(0x0), scf(0x83a): State change 3537994042: primary_nodes=0, weak_nodes=0
+<6> 06.05.2024 U02:06:49.663 (819044130365/3579545)|FFFFC183AF6C9550(drbd_s_test1) #70059 change_cluster_wide_state drbd test1, r(Secondary), f(0x0), scf(0x83a): Committing cluster-wide state change 3537994042 (31ms)
+<7> 06.05.2024 U02:06:49.663 (819044148533/3579545)|FFFFC183AF6C9550(drbd_s_test1) #70060 conn_send_twopc_request drbd test1 pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x20200e), scf(0x83a): Sending P_TWOPC_COMMIT request for state change 3537994042
 
-	<7> 08.07.2023 U16:53:06.880 (312313416400/3579545)|FFFF838F6CF9AC10(drbd_s_test1) #261310 conn_send_twopc_request drbd test1 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x404), scf(0x83a): Sending P_TWOPC_PREPARE request for state change 298629752
+	Update: Stack paged out?
 
-	<7> 08.07.2023 U16:53:06.880 (312313423335/3579545)|FFFF838F6CF994D0(drbd_a_test1) #261311 got_twopc_reply drbd test1 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x4), scf(0x83a): Got a P_TWOPC_YES reply for state change 298629752
-	 [last message was in IRQ context or recursive]
+TODO: Bug: list corruption in wake_up / complete_master_bio
 
-	<6> 08.07.2023 U16:53:38.895 (312428017216/3579545)|FFFF838F6CF9AC10(drbd_s_test1) #261312 change_cluster_wide_state drbd test1, r(Secondary), f(0x400), scf(0x83a): Aborting cluster-wide state change 298629752 (32015ms) rv = -23
+	We have a MEMORY.DMP from the field, analyze shows a
+	NULL pointer in wake_up_all_debug.
 
-	Probably fixed with 1.1.9 (using wait_event_interruptible
-	in wsk_connect())
+	Update: Stack paged out?
 
-TODO: Bug: drbdadm invalidate does not work
-	Also tested with 1.0.0
-
-	Sometimes it works. Joel told me that it is probably
-	a DRBD (not WinDRBD) problem.
-
-TODO: Bug: Hang in NetworkFailure on no memory.
-	In progress. We have to fix that
-
-TODO: Bug: System freeze when experimenting with DRBD reactor
-
-	DRBD reactor was running on 3 nodes. One was seperated
-	from the others (via Windows firewall). When it came
-	back it connected started syncing but then another
-	node was Outdated which changed to UpToDate later
-	Then the node was promoted and was not responsive
-	any more. Debugger could not connect.
+TODOs for Release 1.2 ----------------------------------------
 
 TODO: Feature: sync filesystem(s) on drbdadm secondary
 
 	Linux DRBD also does this.
-
-TODOs for Release 1.2 ----------------------------------------
+	Implement that but please lets do it for the 1.2 branch
 
 TODO: Code quality: review TODOs in source code.
 
@@ -8735,4 +8718,50 @@ Probably a followup bug of the disconnect timeout bug
 
 Done: Build self signed installer package with VERSION=self-signed or VERSION=unsupported
 	And put that version on the website.
+
+Done: Bug: On no memory, genl_replymsg() -ENOMEM is not checked.
+	by DRBD: may it fail in the Linux kernel?
+
+	Fixed and submitted upstream
+
+Done: Bug: drbdadm down takes 30 seconds to complete:
+
+	<7> 08.07.2023 U16:53:06.880 (312313416400/3579545)|FFFF838F6CF9AC10(drbd_s_test1) #261310 conn_send_twopc_request drbd test1 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x404), scf(0x83a): Sending P_TWOPC_PREPARE request for state change 298629752
+
+	<7> 08.07.2023 U16:53:06.880 (312313423335/3579545)|FFFF838F6CF994D0(drbd_a_test1) #261311 got_twopc_reply drbd test1 pnode-id:2, cs(Connecting), prole(Unknown), cflag(0x4), scf(0x83a): Got a P_TWOPC_YES reply for state change 298629752
+	 [last message was in IRQ context or recursive]
+
+	<6> 08.07.2023 U16:53:38.895 (312428017216/3579545)|FFFF838F6CF9AC10(drbd_s_test1) #261312 change_cluster_wide_state drbd test1, r(Secondary), f(0x400), scf(0x83a): Aborting cluster-wide state change 298629752 (32015ms) rv = -23
+
+	Probably fixed with 1.1.9 (using wait_event_interruptible
+	in wsk_connect())
+
+	Fixed
+
+Rejected: Bug: drbdadm invalidate does not work
+	Also tested with 1.0.0
+
+	Sometimes it works. Joel told me that it is probably
+	a DRBD (not WinDRBD) problem.
+
+Done: Bug: Hang in NetworkFailure on no memory.
+	In progress. We have to fix that
+
+	memory fixes seem to have fixed that
+
+Rejected: Bug: System freeze when experimenting with DRBD reactor
+
+	DRBD reactor was running on 3 nodes. One was seperated
+	from the others (via Windows firewall). When it came
+	back it connected started syncing but then another
+	node was Outdated which changed to UpToDate later
+	Then the node was promoted and was not responsive
+	any more. Debugger could not connect.
+
+	Not observed again
+
+Rejected: Bug: umhelper cannot find /var/lib/drbd-test
+
+	Probably because it is running as a service.
+	Still an issue? -> reopen.
 

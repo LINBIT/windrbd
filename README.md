@@ -281,6 +281,9 @@ Version history
  * 1.1.11 (Mar 26, 2024): update cygwin DLL 3.4.5 -> 3.4.10
  * 1.1.12 (Apr 15, 2024): several fixes (in DRBD) related to fencing
  * 1.1.13 (Apr 30, 2024): update cygwin DLL 3.4.10 -> 3.5.3
+ * 1.1.14 (May 14, 2024): Fix for drbdadm create-md, downgrade cygwin DLL 3.5.3 -> 3.4.10
+ * 1.1.15 (May 27, 2024): Kernel stacks locked in memory fixing a rare BSOD
+ * 1.1.16 (June 26, 2024): Initialize bios_event also for upper block devices
  * 1.2.0-rc1 (Aug 14, 2023): Compile with gcc. Don't use 1.2.0-rc's in production.
  * 1.2.0-rc2 (Sep 12, 2023): Build everything within a docker container (WinDRBD, drbd-utils, ...)
  * 1.2.0-rc3 (Sep 20, 2023): Fix for BSOD on Primary, ReactOS support

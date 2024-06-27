@@ -5,6 +5,11 @@ Base on DRBD 9.1
 
 DRBD reactor support
 
+What's new in version 1.2.0-rc4
+-------------------------------
+
+Reworked DRBD patching system
+
 What's new in version 1.2.0-rc3
 -------------------------------
 
@@ -36,6 +41,28 @@ What's new in version 1.2.0-rc1
 -------------------------------
 
 Can compile WinDRBD driver with gcc (mingw-w64).
+
+What's new in version 1.1.16
+----------------------------
+
+Initialize bios_event also for upper block devices. This should
+fix a BSOD that might trigger after 4 billion I/O requests on the
+upper device.
+
+What's new in version 1.1.15
+----------------------------
+
+Kernel threads are now running with stack swapping disabled. This
+should fix some very rare BSODs when another thread accesses the
+stack (for example an event structure) of a thread whichs stack
+is swapped out.
+
+What's new in version 1.1.14
+----------------------------
+
+downgrade cygwin DLL 3.5.3 -> 3.4.10
+
+Fix for drbdadm create-md: clear whole device for external metadata
 
 What's new in version 1.1.13
 ----------------------------
