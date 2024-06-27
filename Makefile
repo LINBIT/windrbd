@@ -38,6 +38,7 @@ help:
 	@echo "    VERSION=myversion   Version string to add to WinDRBD version"
 	@echo "    REACTOS=1           Build and package for ReactOS"
 	@echo "    NUM_JOBS=j          Use j build jobs in paralell (in-docker targets"
+	@echo "    DOCKER=docker-cmd   Use this docker command (example: make DOCKER=podman)"
 	@echo "    DOCKER_IMAGE=img    Use this docker image for building or generating"
 	@echo "    TARGET_IPS=<ips>    Install onto those Windows machines (install target)"
 	@echo
@@ -81,21 +82,22 @@ NUM_JOBS ?= $(shell nproc)
 MY_UID ?= $(shell id -u)
 MY_GID ?= $(shell id -g)
 
+DOCKER ?= docker
 DOCKER_IMAGE ?= windrbd-devenv
 # Does not work. /wine is owned by root and we can't
 # chown it since we don't know the UID when the docker
 # image is built.
 # DOCKER_RUN=docker run -u $(MY_UID):$(MY_GID) --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 # so run docker as root ...
-DOCKER_RUN=docker run --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
+DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 
 # Change ownership of all files created by make process to
 # the host's UID/GID.
 FIXUP_OWNERSHIP=bash -c 'f=`find /windrbd -user root` ; if [ x"$$f" != x ] ; then chown $(MY_UID):$(MY_GID) $$f ; fi'
 
 pull-docker:
-	docker pull quay.io/johannesthoma/windrbd-devenv
-	docker tag quay.io/johannesthoma/windrbd-devenv windrbd-devenv
+	$(DOCKER) pull quay.io/johannesthoma/windrbd-devenv
+	$(DOCKER) tag quay.io/johannesthoma/windrbd-devenv windrbd-devenv
 
 # so one can type make with-docker :)
 with-docker:
@@ -241,16 +243,16 @@ package: all drbd-utils
 	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=..\\drbd-utils /DWindrbdDriverDirectory=$(DRIVER_DIR) /DArch=$(ARCH) $(EXTRA_ISCC_DEFINES))
 
 docker:
-	docker build --pull=true --no-cache=true -t $(DOCKER_IMAGE) docker-root
+	$(DOCKER) build --pull=true --no-cache=true -t $(DOCKER_IMAGE) docker-root
 
 docker-fc37:
-	docker build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-fc37 -f docker-root/Dockerfile-fc37 docker-root
+	$(DOCKER) build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-fc37 -f docker-root/Dockerfile-fc37 docker-root
 
 docker-wine64:
-	docker build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-wine64 -f docker-root/Dockerfile-wine64 docker-root
+	$(DOCKER) build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-wine64 -f docker-root/Dockerfile-wine64 docker-root
 
 docker-cygwin:
-	docker build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-cygwin -f docker-root/Dockerfile-cygwin docker-root
+	$(DOCKER) build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-cygwin -f docker-root/Dockerfile-cygwin docker-root
 
 install:
 	inno-setup/deploy.sh inno-setup/install-$(FULL_VERSION).exe $(TARGET_IPS)
