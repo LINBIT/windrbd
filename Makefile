@@ -319,5 +319,5 @@ endif
 drbd-tmp/%.c: drbd/%.c $(NEW_TRANSFORMATIONS)
 	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi
 	mkdir -p drbd-tmp/drbd &&  cp $< $@
-	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
+	for c in $(NEW_TRANSFORMATIONS) ; do spatch --very-quiet --no-show-diff --sp-file $$c $@ --in-place ; done
 
