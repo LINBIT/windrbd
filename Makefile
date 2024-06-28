@@ -269,7 +269,7 @@ docker-cygwin:
 	$(DOCKER) build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-cygwin -f docker-root/Dockerfile-cygwin docker-root
 
 install: package-in-docker
-	inno-setup/deploy.sh inno-setup/install-$(FULL_VERSION).exe $(TARGET_IPS)
+	$(call run,inno-setup/deploy.sh inno-setup/install-$(FULL_VERSION).exe $(TARGET_IPS),INSTALL,$(FULL_VERSION) $(TARGET_IPS))
 
 # This now generates the cocci patched DRBD sources in drbd-tmp
 # subdirectory and also generates dependency files (*.d) for the
