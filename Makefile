@@ -312,7 +312,7 @@ DEPEND_SCRIPT=\
 # Do not delete the temporary headers when restarting make:
 $(DRBD_TMP_HEADERS):
 
-ifeq ($(MAKECMDGOALS),$(filter-out clean,$(MAKECMDGOALS)))
+ifeq ($(MAKECMDGOALS),$(filter-out clean help,$(MAKECMDGOALS)))
 -include $(all-dep)
 endif
 
