@@ -34,7 +34,7 @@ else
 fi
 RESOURCE_VERSION=$( echo $WINDRBD_VERSION | tr . , )
 
-echo Patchlevel is $PATCHLEVEL WinDRBD version is $WINDRBD_VERSION, Resource version is $RESOURCE_VERSION
+# echo Patchlevel is $PATCHLEVEL WinDRBD version is $WINDRBD_VERSION, Resource version is $RESOURCE_VERSION
 
 VER_INTERNALNAME_STR="WinDRBD"
 VER_FILEVERSION_STR="${GITHASH}\\0"

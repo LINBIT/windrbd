@@ -207,9 +207,11 @@ versioninfo:
 .PHONY: windrbd.sys
 .PHONY: windrbd.cat
 
-drbd-tmp/drbd/drbd_buildtag.c drbd-tmp/drbd/windrbd_version.h &:
-	./versioninfo.sh drbd-tmp $(VERSION)
-	rm drbd-tmp/drbd/drbd_buildtag.o
+#drbd-tmp/drbd/drbd_buildtag.c drbd-tmp/drbd/windrbd_version.h &:
+#	./versioninfo.sh drbd-tmp $(VERSION)
+#	rm drbd-tmp/drbd/drbd_buildtag.o
+
+drbd-tmp/drbd/drbd_buildtag.o: versioninfo
 
 windrbd.sys: versioninfo $(TMP_DRBD_FILES) $(OBJS) $(COFFRES)
 	$(CC) -o windrbd.sys-unsigned $(OBJS) $(COFFRES) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
