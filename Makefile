@@ -181,7 +181,7 @@ CFLAGS_FOR_DRIVERS=-fPIC -fvisibility=hidden -ffunction-sections -fdata-sections
 LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--file-alignment,0x200 -Wl,--section-alignment,0x1000 -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--exclude-all-symbols -Wl,--entry,$(DRIVER_ENTRY) -nostartfiles -nodefaultlibs -nostdlib -Wl,-Map='windrbd.sys.map'
 
 %.coffres: %.rc
-	$(RC) -i $< -o $@ -O coff
+	$(call run,$(RC) -i $< -o $@ -O coff,RC,$@)
 
 ifndef REACTOS
 OPTIMIZE=-O2
@@ -215,22 +215,19 @@ drbd-tmp/drbd/drbd_buildtag.c drbd-tmp/drbd/windrbd_version.h &:
 drbd-tmp/drbd/drbd_buildtag.o: versioninfo
 
 windrbd.sys: versioninfo $(TMP_DRBD_FILES) $(OBJS) $(COFFRES)
-	$(CC) -o windrbd.sys-unsigned $(OBJS) $(COFFRES) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g
-	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed
-	mv windrbd.sys-signed windrbd.sys
-	rm -f windrbd.sys-unsigned
+	$(call run,$(CC) -o windrbd.sys-unsigned $(OBJS) $(COFFRES) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g,LD,windrbd.sys-unsigned)
+	$(call run,osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed ; mv windrbd.sys-signed windrbd.sys ; rm -f windrbd.sys-unsigned,SIGN,windrbd.sys)
 
 windrbd.cat: windrbd.sys
 # build the cat file generator. It is not yet in any Linux distros ...
 # if this fails then you probably forgot to clone with --recursive.
 # You may want to do something like git submodule update or so..
-	make -C generate-cat-file CC=$(HOSTCC)
-	generate-cat-file/gencat.sh -o windrbd.cat-unsigned -h windrbd windrbd.inf windrbd.sys
+	$(call run,make -C generate-cat-file CC=$(HOSTCC),MAKE,generate-cat-file)
+	$(call run,generate-cat-file/gencat.sh -o windrbd.cat-unsigned -h windrbd windrbd.inf windrbd.sys,GENCAT,windrbd.cat-unsigned)
 
-	rm -f windrbd.cat
 # TODO: This needs a 'modern' osslsigncode (that from Ubuntu 18.04 and also
 # from Ubuntu 20.04 is too old - you probably have to build it yourself)
-	osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.cat-unsigned windrbd.cat
+	$(call run,rm -f windrbd.cat ;  osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.cat-unsigned windrbd.cat ; rm -f windrbd.cat-unsigned,SIGN,windrbd.cat)
 #	rm -f windrbd.cat-unsigned
 
 .PHONY: drbd-utils
