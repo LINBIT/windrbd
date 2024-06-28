@@ -41,6 +41,7 @@ help:
 	@echo "    DOCKER=docker-cmd   Use this docker command (example: make DOCKER=podman)"
 	@echo "    DOCKER_IMAGE=img    Use this docker image for building or generating"
 	@echo "    TARGET_IPS=<ips>    Install onto those Windows machines (install target)"
+	@echo "    V=1                 If set display command line, else pretty print (default)"
 	@echo
 	@echo "Examples:"
 	@echo
@@ -108,16 +109,16 @@ pull-docker:
 
 # so one can type make with-docker :)
 with-docker:
-	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS)
-	$(DOCKER_RUN) $(FIXUP_OWNERSHIP)
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) V=$(V),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 all-in-docker:
-	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS)
-	$(DOCKER_RUN) $(FIXUP_OWNERSHIP)
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) V=$(V),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 package-in-docker:
-	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS)
-	$(DOCKER_RUN) $(FIXUP_OWNERSHIP)
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) V=$(V),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 ifeq ($(ARCH), i686)
 DRIVER_ENTRY=_DriverEntry
@@ -207,8 +208,8 @@ versioninfo:
 .PHONY: windrbd.sys
 .PHONY: windrbd.cat
 
-#drbd-tmp/drbd/drbd_buildtag.c drbd-tmp/drbd/windrbd_version.h &:
-#	./versioninfo.sh drbd-tmp $(VERSION)
+drbd-tmp/drbd/drbd_buildtag.c drbd-tmp/drbd/windrbd_version.h &:
+	./versioninfo.sh drbd-tmp $(VERSION)
 #	rm drbd-tmp/drbd/drbd_buildtag.o
 
 drbd-tmp/drbd/drbd_buildtag.o: versioninfo
