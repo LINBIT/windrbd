@@ -283,8 +283,8 @@ drbd-tmp/%.h: drbd/%.h $(NEW_TRANSFORMATIONS)
 	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
 
 # TODO: why not drbd_buildtag? */
-# all-dep := $(filter-out drbd-tmp/drbd/drbd_buildtag.d,$(OBJS:%.o=%.d))
-all-dep := $(OBJS:%.o=%.d)
+all-dep := $(filter-out drbd-tmp/drbd/drbd_buildtag.d,$(OBJS:%.o=%.d))
+# all-dep := $(OBJS:%.o=%.d)
 
 # Do not delete this intermediate files:
 $(all-dep) :
@@ -298,13 +298,16 @@ $(all-dep) :
 # trigger drbd_buildtag.c being rebuilt which also depends on
 # version info and then we loop...
 #
-%.d: %.c $(DRBD_TMP_HEADERS)
+DEPEND_SCRIPT=\
 	if [ $@ != drbd-tmp/drbd/drbd_buildtag.d ] ; then \
 		set -e; rm -f $@; \
 		$(CC) -MM -MT $(patsubst %.c,%.o,$<)  $(CFLAGS) $< > $@.$$$$; \
 		sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 		rm -f $@.$$$$ ; \
 	fi
+
+%.d: %.c $(DRBD_TMP_HEADERS)
+	$(call run,$(DEPEND_SCRIPT),DEPEND,$@)
 
 # Do not delete the temporary headers when restarting make:
 $(DRBD_TMP_HEADERS):
