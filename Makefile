@@ -268,7 +268,7 @@ docker-wine64:
 docker-cygwin:
 	$(DOCKER) build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-cygwin -f docker-root/Dockerfile-cygwin docker-root
 
-install:
+install: package-in-docker
 	inno-setup/deploy.sh inno-setup/install-$(FULL_VERSION).exe $(TARGET_IPS)
 
 # This now generates the cocci patched DRBD sources in drbd-tmp
@@ -311,7 +311,7 @@ DEPEND_SCRIPT=\
 # Do not delete the temporary headers when restarting make:
 $(DRBD_TMP_HEADERS):
 
-ifeq ($(MAKECMDGOALS),$(filter-out clean help default package-in-docker pull-docker all-in-docker,$(MAKECMDGOALS)))
+ifeq ($(MAKECMDGOALS),$(filter-out clean help default install package-in-docker pull-docker all-in-docker,$(MAKECMDGOALS)))
 ifneq ($(MAKECMDGOALS),)
 -include $(all-dep)
 endif
