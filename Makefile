@@ -277,10 +277,6 @@ NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*.cocci))
 DRBD_HEADERS := $(shell find drbd -name "*.h")
 DRBD_TMP_HEADERS := $(patsubst drbd%,drbd-tmp%,$(DRBD_HEADERS))
 
-drbd-tmp/%.h: drbd/%.h $(NEW_TRANSFORMATIONS)
-	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi
-	mkdir -p $(shell dirname $@) && cp $< $@
-	for c in $(NEW_TRANSFORMATIONS) ; do spatch --sp-file $$c $@ --in-place ; done
 
 # TODO: why not drbd_buildtag? */
 all-dep := $(filter-out drbd-tmp/drbd/drbd_buildtag.d,$(OBJS:%.o=%.d))
@@ -312,12 +308,19 @@ DEPEND_SCRIPT=\
 # Do not delete the temporary headers when restarting make:
 $(DRBD_TMP_HEADERS):
 
-ifeq ($(MAKECMDGOALS),$(filter-out clean help,$(MAKECMDGOALS)))
+ifeq ($(MAKECMDGOALS),$(filter-out clean help default package-in-docker pull-docker all-in-docker,$(MAKECMDGOALS)))
+ifneq ($(MAKECMDGOALS),)
 -include $(all-dep)
 endif
+endif
 
-drbd-tmp/%.c: drbd/%.c $(NEW_TRANSFORMATIONS)
-	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi
-	mkdir -p drbd-tmp/drbd &&  cp $< $@
+COCCI_SCRIPT=\
+	if [ -e drbd/drbd/compat.h ] ; then echo "Stale compat.h in DRBD sources. Do not run make in the drbd directory." ; exit 1 ; fi ; \
+	mkdir -p $(shell dirname $@) && cp $< $@ ; \
 	for c in $(NEW_TRANSFORMATIONS) ; do spatch --very-quiet --no-show-diff --sp-file $$c $@ --in-place ; done
 
+drbd-tmp/%.h: drbd/%.h $(NEW_TRANSFORMATIONS)
+	$(call run,$(COCCI_SCRIPT),COCCI,$@)
+
+drbd-tmp/%.c: drbd/%.c $(NEW_TRANSFORMATIONS)
+	$(call run,$(COCCI_SCRIPT),COCCI,$@)
