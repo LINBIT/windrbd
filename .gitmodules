@@ -11,3 +11,6 @@
 	path = drbd-utils
 	url = ../drbd-utils.git
         fetchRecurseSubmodules = true
+[submodule "drbd-9.1"]
+	path = drbd-9.1
+	url = git@gitlab.at.linbit.com:drbd/drbd.git

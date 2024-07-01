@@ -87,6 +87,7 @@ extern void kref_init(struct kref *kref);
 #include <asm-generic/getorder.h>
 #include <linux/kmod.h>
 #include <linux/array_size.h>
+#include <linux/kconfig.h>
 
 /* TODO somewhere else: */
 #define noinline_for_stack

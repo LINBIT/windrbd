@@ -60,6 +60,9 @@ ARCH ?= x86_64
 
 TARGET_IPS ?= 10.43.224.4 10.43.224.25
 
+DRBD ?= drbd
+DRBDTMP ?= $(DRBD)-tmp
+
 GIT_VERSION=$(shell git describe --tags)
 ifdef VERSION
 FULL_VERSION=$(GIT_VERSION)-$(VERSION)
@@ -109,15 +112,15 @@ pull-docker:
 
 # so one can type make with-docker :)
 with-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) V=$(V),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 all-in-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) V=$(V),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 package-in-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) V=$(V),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 ifeq ($(ARCH), i686)
@@ -139,17 +142,22 @@ ifeq ($(ARCH), x86_64)
 DEFINES+=-D_WIN64 -DCONFIG_64BIT
 endif
 
-WINDRBD_INCLUDES=-I"windrbd/include" -I"drbd-tmp/drbd" -I"drbd-tmp/drbd/drbd-headers" -I"drbd-tmp/drbd/drbd-kernel-compat"
+WINDRBD_INCLUDES=-I"windrbd/include" -I"$(DRBDTMP)/drbd" -I"$(DRBDTMP)/drbd/drbd-headers" -I"$(DRBDTMP)/drbd/drbd-kernel-compat"
 MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk -I$(REACTOS_ROOT)/crt -nostdinc
 
-DRBD_TMPDIR=./drbd-tmp/drbd/
+DRBD_TMPSRCDIR=$(DRBDTMP)/drbd/
 
 DRBD_SOURCES += drbd_sender.c drbd_receiver.c drbd_req.c drbd_actlog.c
-DRBD_SOURCES += lru_cache.c drbd_main.c drbd_strings.c drbd_nl.c
+DRBD_SOURCES += drbd_main.c drbd-headers/drbd_strings.c drbd_nl.c
 DRBD_SOURCES += drbd_interval.c drbd_state.c drbd_kref_debug.c
 DRBD_SOURCES += drbd_nla.c drbd_transport.c drbd_transport_tcp.c kref_debug.c drbd_buildtag.c drbd_bitmap.c drbd_proc.c
 
-TMP_DRBD_FILES = $(addprefix $(DRBD_TMPDIR), $(DRBD_SOURCES))
+# TODO: check for DRBD 9.0 somehow ...
+ifeq ($(DRBD),drbd)
+DRBD_SOURCES += lru_cache.c
+endif
+
+TMP_DRBD_FILES = $(addprefix $(DRBD_TMPSRCDIR), $(DRBD_SOURCES))
 
 WINDRBD_SRCDIR = ./windrbd/src/
 WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
@@ -172,7 +180,7 @@ LINUX_FILES = $(addprefix $(LINUX_SRCDIR), $(LINUX_SOURCES))
 OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) $(patsubst %.c,%.o,$(LINUX_FILES))
 # OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES))
 
-COFFRES=./windrbd/windrbd-event-log.coffres ./drbd-tmp/drbd/resource.coffres
+COFFRES=./windrbd/windrbd-event-log.coffres $(DRBDTMP)/drbd/resource.coffres
 
 LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
 
@@ -203,16 +211,16 @@ windrbd/include/windrbd-event-log.h: windrbd/windrbd-event-log.mc
 windrbd/src/printk-to-syslog.o: windrbd/include/windrbd-event-log.h
 
 versioninfo:
-	./versioninfo.sh drbd-tmp $(VERSION)
+	./versioninfo.sh $(DRBDTMP) $(VERSION)
 
 .PHONY: windrbd.sys
 .PHONY: windrbd.cat
 
-drbd-tmp/drbd/drbd_buildtag.c drbd-tmp/drbd/windrbd_version.h &:
-	./versioninfo.sh drbd-tmp $(VERSION)
+$(DRBDTMP)/drbd/drbd_buildtag.c $(DRBDTMP)/drbd/windrbd_version.h &:
+	./versioninfo.sh $(DRBDTMP) $(VERSION)
 #	rm drbd-tmp/drbd/drbd_buildtag.o
 
-drbd-tmp/drbd/drbd_buildtag.o: versioninfo
+$(DRBDTMP)/drbd/drbd_buildtag.o: versioninfo
 
 windrbd.sys: versioninfo $(TMP_DRBD_FILES) $(OBJS) $(COFFRES)
 	$(call run,$(CC) -o windrbd.sys-unsigned $(OBJS) $(COFFRES) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g,LD,windrbd.sys-unsigned)
@@ -242,7 +250,7 @@ clean:
 	rm -f windrbd.sys windrbd.sys.map windrbd.cat windrbd.inf
 	rm -f windrbd/msg00002.bin windrbd/include/windrbd-event-log.h windrbd/windrbd-event-log.rc
 	rm -f windrbd.cat-unsigned windrbd.sys-unsigned windrbd.sys-signed
-	rm -rf drbd-tmp
+	rm -rf $(DRBDTMP)
 	make -C generate-cat-file clean
 	make -C drbd-utils clean
 
@@ -274,12 +282,12 @@ install: package-in-docker
 
 NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*.cocci))
 
-DRBD_HEADERS := $(shell find drbd -name "*.h")
-DRBD_TMP_HEADERS := $(patsubst drbd%,drbd-tmp%,$(DRBD_HEADERS))
+DRBD_HEADERS := $(shell find $(DRBD) -name "*.h")
+DRBD_TMP_HEADERS := $(patsubst $(DRBD)%,$(DRBDTMP)%,$(DRBD_HEADERS))
 
 
 # TODO: why not drbd_buildtag? */
-all-dep := $(filter-out drbd-tmp/drbd/drbd_buildtag.d,$(OBJS:%.o=%.d))
+all-dep := $(filter-out $(DRBDTMP)/drbd/drbd_buildtag.d,$(OBJS:%.o=%.d))
 # all-dep := $(OBJS:%.o=%.d)
 
 # Do not delete this intermediate files:
@@ -295,7 +303,7 @@ $(all-dep) :
 # version info and then we loop...
 #
 DEPEND_SCRIPT=\
-	if [ $@ != drbd-tmp/drbd/drbd_buildtag.d ] ; then \
+	if [ $@ != $(DRBDTMP)/drbd/drbd_buildtag.d ] ; then \
 		set -e; rm -f $@; \
 		$(CC) -MM -MT $(patsubst %.c,%.o,$<)  $(CFLAGS) $< > $@.$$$$; \
 		sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
@@ -319,8 +327,8 @@ COCCI_SCRIPT=\
 	mkdir -p $(shell dirname $@) && cp $< $@ ; \
 	for c in $(NEW_TRANSFORMATIONS) ; do spatch --very-quiet --no-show-diff --sp-file $$c $@ --in-place ; done
 
-drbd-tmp/%.h: drbd/%.h $(NEW_TRANSFORMATIONS)
+$(DRBDTMP)/%.h: $(DRBD)/%.h $(NEW_TRANSFORMATIONS)
 	$(call run,$(COCCI_SCRIPT),COCCI,$@)
 
-drbd-tmp/%.c: drbd/%.c $(NEW_TRANSFORMATIONS)
+$(DRBDTMP)/%.c: $(DRBD)/%.c $(NEW_TRANSFORMATIONS)
 	$(call run,$(COCCI_SCRIPT),COCCI,$@)
