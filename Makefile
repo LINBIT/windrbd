@@ -211,7 +211,7 @@ windrbd/include/windrbd-event-log.h: windrbd/windrbd-event-log.mc
 windrbd/src/printk-to-syslog.o: windrbd/include/windrbd-event-log.h
 
 versioninfo:
-	./versioninfo.sh $(DRBDTMP) $(VERSION)
+	$(call run,./versioninfo.sh $(DRBDTMP) $(VERSION),VERSION,$(DRBDTMP))
 
 .PHONY: windrbd.sys
 .PHONY: windrbd.cat
@@ -221,6 +221,11 @@ $(DRBDTMP)/drbd/drbd_buildtag.c $(DRBDTMP)/drbd/windrbd_version.h &:
 #	rm drbd-tmp/drbd/drbd_buildtag.o
 
 $(DRBDTMP)/drbd/drbd_buildtag.o: versioninfo
+
+# Extraeinladung :)
+# Reason is that depend on windrbd_module.c will fail as long as there
+# is not windrbd_version.
+windrbd/src/windrbd_module.d: $(DRBDTMP)/drbd/windrbd_version.h
 
 windrbd.sys: versioninfo $(TMP_DRBD_FILES) $(OBJS) $(COFFRES)
 	$(call run,$(CC) -o windrbd.sys-unsigned $(OBJS) $(COFFRES) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g,LD,windrbd.sys-unsigned)
@@ -247,6 +252,7 @@ drbd-utils:
 
 clean:
 	rm -f $(OBJS) $(COFFRES) 
+	rm -f $(patsubst %.o,%.d,$(OBJS))
 	rm -f windrbd.sys windrbd.sys.map windrbd.cat windrbd.inf
 	rm -f windrbd/msg00002.bin windrbd/include/windrbd-event-log.h windrbd/windrbd-event-log.rc
 	rm -f windrbd.cat-unsigned windrbd.sys-unsigned windrbd.sys-signed
