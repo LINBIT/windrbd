@@ -1,5 +1,5 @@
-default: package-in-docker
-# default: windrbd.sys
+# default: package-in-docker
+default: windrbd.sys
 # If you have your dev env set up on the host you can try
 # to build without docker container: to set it up the
 # contents of the docker-root/Dockerfile might be useful.
@@ -321,6 +321,10 @@ DEPEND_SCRIPT=\
 
 # Do not delete the temporary headers when restarting make:
 $(DRBD_TMP_HEADERS):
+
+$(patsubst %.c,%.o,$(TMP_DRBD_FILES)): $(DRBD_TMP_HEADERS)
+
+#	echo $@ -> $<
 
 ifeq ($(MAKECMDGOALS),$(filter-out clean help default install package-in-docker pull-docker all-in-docker,$(MAKECMDGOALS)))
 ifneq ($(MAKECMDGOALS),)
