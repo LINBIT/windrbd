@@ -526,7 +526,7 @@ EXPORT_SYMBOL(set_normalized_timespec64);
 struct timespec64 ns_to_timespec64(s64 nsec)
 {
 	struct timespec64 ts = { 0, 0 };
-	s32 rem;
+	u32 rem;
 
 	if (likely(nsec > 0)) {
 		ts.tv_sec = div_u64_rem(nsec, NSEC_PER_SEC, &rem);
