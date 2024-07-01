@@ -6,6 +6,9 @@
 #define __releases(unused)
 #define __acquire(x) (void)0
 #define __release(x) (void)0
+	/* Nothing: */
+#define __rcu
+#define __must_hold(x)
 
 #define __force
 #define __user
@@ -14,7 +17,8 @@
 #define __same_type(a, b) __builtin_types_compatible_p(typeof(a), typeof(b))
 
 	/* TODO: Somehow this does not work with our gcc ... ignoring for now */
-#if 0
+	/* Has something to do with DRBD: in DRBD 9.1 this works: */
+#if 1
 # define __compiletime_assert(condition, msg, prefix, suffix)		\
 	do {								\
 		/*							\
