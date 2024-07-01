@@ -195,10 +195,10 @@ CFLAGS=-g -Wall $(SUPPRESSED_WARNINGS) $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFIN
 all: windrbd.sys windrbd.cat
 
 windrbd/windrbd-event-log.rc: windrbd/windrbd-event-log.mc
-	$(MC) $< -r windrbd -h windrbd/include
+	$(call run,$(MC) $< -r windrbd -h windrbd/include,MC,$@)
 
 windrbd/include/windrbd-event-log.h: windrbd/windrbd-event-log.mc
-	$(MC) $< -r windrbd -h windrbd/include
+	$(call run,$(MC) $< -r windrbd -h windrbd/include,MC,$@)
 
 windrbd/src/printk-to-syslog.o: windrbd/include/windrbd-event-log.h
 
