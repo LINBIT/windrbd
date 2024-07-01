@@ -88,6 +88,7 @@ extern void kref_init(struct kref *kref);
 #include <linux/kmod.h>
 #include <linux/array_size.h>
 #include <linux/kconfig.h>
+#include <linux/rwlock_types.h>
 
 /* TODO somewhere else: */
 #define noinline_for_stack

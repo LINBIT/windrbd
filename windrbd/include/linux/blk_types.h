@@ -24,6 +24,8 @@ struct windrbd_bio_collection {
 
 };
 
+typedef __u32 blk_opf_t;
+
 #define BI_WINDRBD_FLAG_BOOTSECTOR_PATCHED 0
 
 struct bio {

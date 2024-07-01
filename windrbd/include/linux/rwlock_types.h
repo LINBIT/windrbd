@@ -3,6 +3,9 @@
 
 #include <linux/spinlock.h>
 
+	/* TODO: we have shared/exclusive locks in Windows (but
+	 * not (yet) in ReactOS).
+	 */
 typedef spinlock_t rwlock_t;
 
 #endif
