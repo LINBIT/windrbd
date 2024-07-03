@@ -97,6 +97,7 @@ extern void spin_unlock_irq(spinlock_t *lock);
 #endif
 /* still used by drbd_main lock all resources but with IRQL = DISPATCH level */
 extern void spin_lock_nested(spinlock_t *lock, int level);
+extern void spin_lock(spinlock_t *lock);
 extern void spin_unlock(spinlock_t *lock);
 
 extern void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags);

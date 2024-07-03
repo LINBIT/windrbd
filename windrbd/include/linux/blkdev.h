@@ -263,6 +263,8 @@ enum req_flag_bits {
 #define REQ_DRV			(1ULL << __REQ_DRV)
 #define REQ_SWAP		(1ULL << __REQ_SWAP)
 
+#if 0
+	/* TODO: there is also enum req_op in blk_types.h now ... */
 enum req_opf {
 	/* read sectors from the device */
 	REQ_OP_READ		= 0,
@@ -298,6 +300,8 @@ enum req_opf {
 
 	REQ_OP_LAST,
 };
+
+#endif
 
 /*
  * blk_plug permits building a queue of related requests by holding the I/O

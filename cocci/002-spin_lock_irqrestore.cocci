@@ -76,3 +76,31 @@ func(...) {
 +     spin_unlock_irqrestore(lock, __cocci_spin_lock_flags3);
       ...+>
  }
+@@
+identifier func;
+expression lock;
+@@
+func(...) {
++     KIRQL __cocci_read_lock_flags;
+      <+...
+-     read_lock_irq(lock);
++     read_lock_irqsave(lock, __cocci_read_lock_flags);
+      ...
+-     read_unlock_irq(lock);
++     read_unlock_irqrestore(lock, __cocci_read_lock_flags);
+      ...+>
+ }
+@@
+identifier func;
+expression lock;
+@@
+func(...) {
++     KIRQL __cocci_write_lock_flags;
+      <+...
+-     write_lock_irq(lock);
++     write_lock_irqsave(lock, __cocci_write_lock_flags);
+      ...
+-     write_unlock_irq(lock);
++     write_unlock_irqrestore(lock, __cocci_write_lock_flags);
+      ...+>
+ }

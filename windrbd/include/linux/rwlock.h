@@ -3,18 +3,55 @@
 
 #include <linux/rwlock_types.h>
 
-#if 0
+/* TODO: have flags parameter */
+/* TODO: to windrbd_locking.c */
 
+	/* Those must not change IRQL */
 static inline void read_lock(rwlock_t *lock)
 {
 	spin_lock((spinlock_t*) lock);
 }
+
+#if 0
+static inline void read_lock_irq(rwlock_t *lock)
+{
+	spin_lock((spinlock_t*) lock);
+}
+#endif
 
 static inline void read_unlock(rwlock_t *lock)
 {
 	spin_unlock((spinlock_t*) lock);
 }
 
+#if 0
+static inline void read_unlock_irq(rwlock_t *lock)
+{
+	spin_unlock((spinlock_t*) lock);
+}
+#endif
+
+static inline void read_lock_irqsave(rwlock_t *lock, KIRQL flags)
+{
+	spin_lock_irqsave(&lock->lock, flags);
+}
+
+static inline void read_unlock_irqrestore(rwlock_t *lock, KIRQL flags)
+{
+	spin_unlock_irqrestore(&lock->lock, flags);
+}
+
+static inline void write_lock_irqsave(rwlock_t *lock, KIRQL flags)
+{
+	spin_lock_irqsave(&lock->lock, flags);
+}
+
+static inline void write_unlock_irqrestore(rwlock_t *lock, KIRQL flags)
+{
+	spin_unlock_irqrestore(&lock->lock, flags);
+}
+
+#if 0
 static inline void write_unlock(rwlock_t *lock)
 {
 	spin_unlock((spinlock_t*) lock);
@@ -24,8 +61,6 @@ static inline void write_lock_irq(rwlock_t *lock)
 {
 	spin_lock((spinlock_t*) lock);
 }
-
-#endif
 
 static inline void write_lock_bh(rwlock_t *lock, KIRQL flags)
 {
@@ -37,18 +72,15 @@ static inline void write_unlock_bh(rwlock_t *lock, KIRQL flags)
 	spin_unlock_irqrestore((spinlock_t*) lock, flags);
 }
 
-#if 0
-
 static inline void write_unlock_irq(rwlock_t *lock)
 {
 	spin_unlock((spinlock_t*) lock);
 }
-
 #endif
 
 static inline void rwlock_init(rwlock_t *lock)
 {
-	spin_lock_init((spinlock_t*) lock);
+	spin_lock_init(&lock->lock);
 }
 
 #endif

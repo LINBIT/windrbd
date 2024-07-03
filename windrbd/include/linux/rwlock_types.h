@@ -6,6 +6,8 @@
 	/* TODO: we have shared/exclusive locks in Windows (but
 	 * not (yet) in ReactOS).
 	 */
-typedef spinlock_t rwlock_t;
+typedef struct rwlock {
+	spinlock_t lock;
+} rwlock_t;
 
 #endif

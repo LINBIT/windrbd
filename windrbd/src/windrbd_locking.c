@@ -635,7 +635,7 @@ void spin_unlock_irq(spinlock_t *lock)
  * TODO: these functions are deprecated and should go away.
  */
 
-static void spin_lock(spinlock_t *lock)
+void spin_lock(spinlock_t *lock)
 {
 #ifdef SPIN_LOCK_DEBUG2
 // if (!lock->printk_lock)
