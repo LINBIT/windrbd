@@ -31,20 +31,33 @@ static inline void read_unlock_irq(rwlock_t *lock)
 }
 #endif
 
-static inline void read_lock_irqsave(rwlock_t *lock, KIRQL flags)
+static inline KIRQL read_lock_irqsave_ret(rwlock_t *lock)
 {
+	KIRQL flags;
+
+	/* expands to flags = ... */
 	spin_lock_irqsave(&lock->lock, flags);
+	return flags;
 }
+
+#define read_lock_irqsave(lock, flags) \
+	flags = read_lock_irqsave_ret(lock);
 
 static inline void read_unlock_irqrestore(rwlock_t *lock, KIRQL flags)
 {
 	spin_unlock_irqrestore(&lock->lock, flags);
 }
 
-static inline void write_lock_irqsave(rwlock_t *lock, KIRQL flags)
+static inline KIRQL write_lock_irqsave_ret(rwlock_t *lock)
 {
+	KIRQL flags;
+
 	spin_lock_irqsave(&lock->lock, flags);
+	return flags;
 }
+
+#define write_lock_irqsave(lock, flags) \
+	flags = write_lock_irqsave_ret(lock);
 
 static inline void write_unlock_irqrestore(rwlock_t *lock, KIRQL flags)
 {
