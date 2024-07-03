@@ -1869,7 +1869,7 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	socket->sk->sk_sndtimeo = 10*HZ;
 	socket->sk->sk_rcvtimeo = 10*HZ;
 	socket->sk->sk_state_change = wsk_sock_statechange;
-	rwlock_init(&socket->sk->sk_callback_lock);
+	spin_lock_init(&socket->sk->sk_callback_lock);
 
 	if (socket->receiver_cache_enabled) {
 		socket->receive_thread_should_run = true;

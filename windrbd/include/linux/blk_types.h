@@ -194,6 +194,9 @@ enum req_op {
 	/* reset all the zone present on the device */
 	REQ_OP_ZONE_RESET_ALL	= (__force blk_opf_t)15,
 
+	/* TODO: this exists in DRBD 9.0 but not in DRBD 9.1: */
+	REQ_OP_WRITE_SAME	= 7,
+
 	/* Driver private requests */
 	REQ_OP_DRV_IN		= (__force blk_opf_t)34,
 	REQ_OP_DRV_OUT		= (__force blk_opf_t)35,
