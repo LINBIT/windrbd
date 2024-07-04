@@ -60,8 +60,7 @@ struct bio_set {
 	mempool_t *bio_pool;
 };
 
-extern struct bio *bio_clone(struct bio *, int x);
-extern struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unused);
+extern struct bio *bio_clone(struct bio *, gfp_t x);
 extern struct bio_set *bioset_create(unsigned int, unsigned int);
 extern void bioset_free(struct bio_set *);
 
@@ -71,7 +70,24 @@ extern void bioset_free(struct bio_set *);
 extern struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, char *file, int line, char *func);
 #define bio_alloc(a, b) bio_alloc_debug(a, b, __FILE__, __LINE__, __func__)
 #else
+
+#ifdef DRBD_9_1
+extern struct bio *bio_alloc(struct block_device *bdev,
+		unsigned short nr_vecs, blk_opf_t opf, gfp_t gfp_mask);
+extern struct bio *bio_alloc_bioset(struct block_device *bdev, unsigned short nr_vecs,
+			     blk_opf_t opf, gfp_t gfp_mask,
+			     struct bio_set *bs);
+extern struct bio *bio_alloc_clone(struct block_device *bdev, struct bio *bio_src,
+		gfp_t gfp, struct bio_set *bs);
+
+#else
 extern struct bio *bio_alloc(gfp_t, int);
+extern struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unused);
+#endif
+
+	/* Old interface for use in WinDRBD only */
+extern struct bio *bio_alloc_old(gfp_t, int);
+
 #endif
 
 static inline int bioset_init(struct bio_set *bs, unsigned int size, unsigned int front_pad, int flags)

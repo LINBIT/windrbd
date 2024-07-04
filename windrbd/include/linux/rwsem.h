@@ -10,6 +10,7 @@ struct rw_semaphore {
 
 extern void init_rwsem(struct rw_semaphore *sem);
 extern void down_write(struct rw_semaphore *sem);
+extern int down_write_trylock(struct rw_semaphore *sem);
 extern void down_read(struct rw_semaphore *sem);
 extern void down_read_non_owner(struct rw_semaphore *sem);
 extern void up_write(struct rw_semaphore *sem);

@@ -138,6 +138,10 @@ ifdef REACTOS
 DEFINES+=-DREACTOS
 endif
 
+ifeq ($(DRBD),drbd-9.1)
+DEFINES+=-DDRBD_9_1
+endif
+
 ifeq ($(ARCH), x86_64)
 DEFINES+=-D_WIN64 -DCONFIG_64BIT
 endif

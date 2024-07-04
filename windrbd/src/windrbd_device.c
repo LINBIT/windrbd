@@ -1573,7 +1573,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	for (b=0; b<bio_count; b++) {
 		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
 
-		bio = bio_alloc(GFP_NOIO, 1);
+		bio = bio_alloc_old(GFP_NOIO, 1);
 		if (bio == NULL) {
 			printk("Couldn't allocate bio.\n");
 			return STATUS_INSUFFICIENT_RESOURCES;
@@ -1906,7 +1906,7 @@ static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct bio *bio;
 	NTSTATUS status;
 
-	bio = bio_alloc(GFP_NOIO, 0);
+	bio = bio_alloc_old(GFP_NOIO, 0);
 	if (bio == NULL) {
 		status = STATUS_INSUFFICIENT_RESOURCES;
 		goto exit;

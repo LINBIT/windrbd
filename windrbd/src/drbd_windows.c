@@ -849,10 +849,68 @@ struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, char *file, int line, cha
 
 #else
 
+struct bio *bio_alloc_old(gfp_t gfp_mask, int nr_iovecs)
+{
+	return bio_alloc_ll(gfp_mask, nr_iovecs);
+}
+
+#ifdef DRBD_9_1
+
+struct bio *bio_alloc(struct block_device *bdev,
+                unsigned short nr_vecs, blk_opf_t opf, gfp_t gfp_mask)
+{
+	struct bio *new_bio;
+
+	new_bio = bio_alloc_ll(gfp_mask, nr_vecs);
+	if (new_bio == NULL)
+		return NULL;
+
+	new_bio->bi_bdev = bdev;
+	new_bio->bi_opf = opf;
+	return new_bio;
+}
+
+struct bio *bio_alloc_bioset(struct block_device *bdev, unsigned short nr_vecs,
+                             blk_opf_t opf, gfp_t gfp_mask,
+                             struct bio_set *bs)
+{
+	struct bio *new_bio;
+
+	new_bio = bio_alloc_ll(gfp_mask, nr_vecs);
+	if (new_bio == NULL)
+		return NULL;
+
+	new_bio->bi_bdev = bdev;
+	new_bio->bi_opf = opf;
+	return new_bio;
+}
+
+struct bio *bio_alloc_clone(struct block_device *bdev, struct bio *bio_src,
+                gfp_t gfp, struct bio_set *bs)
+{
+	struct bio *new_bio;
+
+	new_bio = bio_clone(bio_src, gfp);
+	if (new_bio == NULL)
+		return NULL;
+
+	new_bio->bi_bdev = bdev;
+	return new_bio;
+}
+
+#else
+
 struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs)
 {
 	return bio_alloc_ll(gfp_mask, nr_iovecs);
 }
+
+struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unused)
+{
+	return bio_alloc_old(gfp_mask, nr_iovecs);
+}
+
+#endif	/* DRBD 9.1 */
 
 #endif
 
@@ -860,11 +918,6 @@ struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs)
 	 * we haven't implemented it yet because windows fails earlier
 	 * on low memory.
 	 */
-
-struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unused)
-{
-	return bio_alloc(gfp_mask, nr_iovecs);
-}
 
 static void free_mdl_chain_and_irp(struct _IRP *irp)
 {
@@ -1050,9 +1103,9 @@ void shutdown_free_bios(void)
 		/* Let thread reaper do the rest */
 }
 
-struct bio *bio_clone(struct bio * bio_src, int flag)
+struct bio *bio_clone(struct bio * bio_src, gfp_t flag)
 {
-	struct bio *bio = bio_alloc(flag, bio_src->bi_max_vecs);
+	struct bio *bio = bio_alloc_old(flag, bio_src->bi_max_vecs);
 	int i;
 
 	if (bio == NULL)
@@ -2256,7 +2309,7 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 		bio_put(first_bio);	/* corresponding get in generic_request() */
 		return ret;
 	}
-	joined_bios_bio = bio_alloc(0, num_vector_elements);
+	joined_bios_bio = bio_alloc_old(0, num_vector_elements);
 	if (joined_bios_bio == NULL) {
 		printk("Could not allocate joined_bios_bio, failing outstanding bios\n");
 		list_for_each_entry_safe(bio3, bio4, list, corked_bios) {
@@ -3110,7 +3163,7 @@ static void backingdev_check_endio(struct bio *bio)
 
 static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 {
-	struct bio *b = bio_alloc(0, 1);
+	struct bio *b = bio_alloc_old(0, 1);
 
 	struct completion c;
 	int ret;
@@ -4132,7 +4185,12 @@ void unregister_blkdev(unsigned int major, const char *name)
 /* TODO: we need those for supporting TRIM ... */
 
 int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+        sector_t nr_sects, gfp_t gfp_mask)
+/* ifdef DRBD-9.0 */
+#if 0
+int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
         sector_t nr_sects, gfp_t gfp_mask, ULONG_PTR flags)
+#endif
 {
 	printk("Warning: blkdev_issue_discard not implemented.\n");
 	return -EIO;
