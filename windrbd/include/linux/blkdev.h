@@ -197,11 +197,6 @@ static inline void blk_queue_max_write_same_sectors(struct request_queue *q,
 
 extern int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
 		sector_t nr_sects, gfp_t gfp_mask, struct page *page);
-/* if DRBD 9.0: */
-#if 0
-extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
-        sector_t nr_sects, gfp_t gfp_mask, ULONG_PTR flags);
-#endif
 
 #define REQ_OP_BITS	8
 #define REQ_OP_MASK	((1 << REQ_OP_BITS) - 1)
@@ -729,10 +724,21 @@ static inline unsigned int bdev_max_discard_sectors(struct block_device *bdev)
 #define BLKDEV_ZERO_NOUNMAP	(1 << 0)  /* do not free blocks */
 
 	/* TODO: implement these: */
+#ifdef DRBD_9_1
+
 extern int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 		sector_t nr_sects, gfp_t gfp_mask, unsigned flags);
-int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
 		sector_t nr_sects, gfp_t gfp_mask);
+
+#else
+
+extern int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
+                                sector_t nr_sects, gfp_t gfp_mask, unsigned flags);
+extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+		sector_t nr_sects, gfp_t gfp_mask, unsigned flags);
+
+#endif
 
 	/* This opens a backing device: */
 extern struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder);

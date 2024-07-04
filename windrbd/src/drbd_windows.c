@@ -4184,12 +4184,16 @@ void unregister_blkdev(unsigned int major, const char *name)
 
 /* TODO: we need those for supporting TRIM ... */
 
+#ifdef DRBD_9_1
+
 int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
         sector_t nr_sects, gfp_t gfp_mask)
-/* ifdef DRBD-9.0 */
-#if 0
+
+#else
+
 int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
-        sector_t nr_sects, gfp_t gfp_mask, ULONG_PTR flags)
+        sector_t nr_sects, gfp_t gfp_mask, unsigned flags)
+
 #endif
 {
 	printk("Warning: blkdev_issue_discard not implemented.\n");
