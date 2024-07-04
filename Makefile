@@ -168,7 +168,7 @@ TMP_DRBD_FILES = $(addprefix $(DRBD_TMPSRCDIR), $(DRBD_SOURCES))
 WINDRBD_SRCDIR = ./windrbd/src/
 WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
                 idr.c kmalloc_debug.c mempool.c printk-to-syslog.c \
-                rbtree.c seq_file.c slab.c util.c windrbd_bootdevice.c \
+                seq_file.c slab.c util.c windrbd_bootdevice.c \
                 windrbd_device.c windrbd_drbd_url_parser.c windrbd_module.c \
                 windrbd_netlink.c windrbd_test.c windrbd_threads.c \
                 windrbd_usermodehelper.c windrbd_waitqueue.c \
@@ -179,7 +179,7 @@ WINDRBD_FILES = $(addprefix $(WINDRBD_SRCDIR), $(WINDRBD_SOURCES))
 
 LINUX_SRCDIR = ./windrbd/src/from-linux/
 # TODO: lib/vsprintf.c does not compile, use the Windows counterpart ...
-LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/kasprintf.c block/genhd.c block/blk-settings.c kernel/time/timeconv.c kernel/time/time.c
+LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/kasprintf.c block/genhd.c block/blk-settings.c kernel/time/timeconv.c kernel/time/time.c lib/rbtree.c
 # LINUX_SOURCES = lib/kstrtox.c mm/util.c
 LINUX_FILES = $(addprefix $(LINUX_SRCDIR), $(LINUX_SOURCES))
 
