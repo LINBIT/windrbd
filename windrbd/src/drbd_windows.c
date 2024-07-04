@@ -519,6 +519,11 @@ void copy_highpage(struct page *to, struct page *from)
 	memcpy(page_address(to), page_address(from), PAGE_SIZE);
 }
 
+void *kmap_local_page(struct page *page)
+{
+	return page_address(page);
+}
+
 void copy_page(void *to, void *from)
 {
 	memcpy(to, from, PAGE_SIZE);

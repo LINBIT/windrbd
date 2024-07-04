@@ -3,6 +3,7 @@
 
 #include <linux/types.h>
 #include <linux/printk.h>
+#include <linux/highmem.h>
 
 /* from: linux/bvec.h */
 
@@ -76,6 +77,11 @@ static inline bool bvec_iter_advance(const struct bio_vec *bv,
 	iter->bi_idx = idx;
 	iter->bi_bvec_done = bytes;
 	return true;
+}
+
+static inline void *bvec_kmap_local(struct bio_vec *bvec)
+{
+	return kmap_local_page(bvec->bv_page) + bvec->bv_offset;
 }
 
 #define __bvec_iter_bvec(bvec, iter)	(&(bvec)[(iter).bi_idx])

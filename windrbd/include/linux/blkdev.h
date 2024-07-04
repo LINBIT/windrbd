@@ -362,6 +362,8 @@ struct block_device {
 	struct gendisk * bd_disk;
 	struct request_queue *	bd_queue;	/* TODO: initialize that !! */
 	unsigned int bd_block_size;	/* Size of one sector (?) */
+	sector_t bd_nr_sectors;
+		/* TODO: this does not exist any more: */
 	unsigned long long d_size;
 	struct kref kref;
 	int bd_partno;
@@ -615,7 +617,13 @@ static inline unsigned int queue_io_opt(const struct request_queue *q)
 	return q->limits.io_opt;
 }
 
+	/* TODO: this should set bd_nr_sectors */
 extern sector_t get_capacity(struct gendisk *disk);
+
+static inline sector_t bdev_nr_sectors(struct block_device *bdev)
+{
+	return bdev->bd_nr_sectors;
+}
 
 static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
 {

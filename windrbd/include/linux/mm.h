@@ -5,6 +5,8 @@
 #include <linux/page_ref.h>
 #include <linux/gfp.h>
 
+struct kref;
+
 	/* In WinDRBD free_page_kref might be a macro that
 	 * calls free_page_kref_debug. Therefore a _ here.
 	 */

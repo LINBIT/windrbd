@@ -28,4 +28,20 @@ extern int atomic_xchg(atomic_t *v, int n);
 #define atomic_inc(_v)			atomic_inc_return(_v)
 #define atomic_dec(_v)			atomic_dec_return(_v)
 
+/* TODO: Atomic64 .. they should go somewhere else (atomic64.h)? */
+
+        /* TODO: are these really atomic? */
+static inline s64 atomic64_read(const atomic64_t *v)
+{
+        return v->counter;
+}
+
+static inline void atomic64_set(atomic64_t *v, s64 val)
+{
+	v->counter = val;
+}
+
+#define	atomic64_inc_return(_p)		InterlockedIncrement64((long long volatile*)(&(_p)->counter))
+#define	atomic64_dec_return(_p)		InterlockedDecrement64((long long volatile*)(&(_p)->counter))
+
 #endif
