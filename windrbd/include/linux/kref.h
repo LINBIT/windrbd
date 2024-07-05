@@ -2,9 +2,11 @@
 #define KREF_H
 
 #include <linux/refcount.h>
+#include <linux/spinlock.h>
 
 struct kref {
 	refcount_t refcount;
+	spinlock_t spinlock;
 };
 
 #ifdef KREF_DEBUG
@@ -34,14 +36,32 @@ extern int kref_put(struct kref *kref, void (*release)(struct kref *kref));
 extern void kref_get(struct kref *kref);
 extern void kref_init(struct kref *kref);
 
+static inline bool kref_get_unless_zero(struct kref *kref)
+{
+	KIRQL flags;
+
+	spin_lock_irqsave(&kref->spinlock, flags);
+	if (atomic_read(&kref->refcount.refs) == 0) {
+		spin_unlock_irqrestore(&kref->spinlock, flags);
+		return 0;
+	}
+	kref_get(kref);
+
+	spin_unlock_irqrestore(&kref->spinlock, flags);
+	return 1;
+}
+
 /* See windrbd_winsocket.c */
+/* TODO: these should go away */
 #define kref_put_no_printk kref_put
 #define kref_get_no_printk kref_get
 
 #endif
 
 #ifndef KREF_INIT
-#define KREF_INIT(N) { .refcount = { .refs = ATOMIC_INIT(N) } }
+#define KREF_INIT(N) { .refcount = { .refs = ATOMIC_INIT(N) }, \
+		       .spinlock = { 0 }, \
+		     }
 #endif
 
 /* TODO: to somewhere else */
@@ -92,6 +112,8 @@ extern void kref_init(struct kref *kref);
 #include <linux/rwlock_types.h>
 #include <linux/rwlock.h>
 #include <linux/limits.h>
+#include <linux/lockdep.h>
+#include <linux/net.h>
 
 /* TODO somewhere else: */
 #define noinline_for_stack

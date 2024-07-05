@@ -790,6 +790,7 @@ void kref_get(struct kref *kref)
 
 void kref_init(struct kref *kref)
 {
+	spinlock_init(&kref->spinlock);
 	atomic_set(&kref->refcount.refs, 1);
 }
 

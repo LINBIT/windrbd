@@ -15,4 +15,7 @@
 #define rcu_assign_pointer(p, v)	__rcu_assign_pointer((p), (v))
 #define list_next_rcu(list)		(*((struct list_head **)(&(list)->next)))
 
+#define kfree_rcu_mightsleep(ptr) kfree(ptr)
+#define kvfree_rcu_mightsleep(ptr) kfree(ptr)
+
 #endif

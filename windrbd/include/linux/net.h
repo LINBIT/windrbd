@@ -118,4 +118,5 @@ static inline bool sendpage_ok(struct page *page)
 {
 	return true;	/* Always ok */
 }
+
 #endif

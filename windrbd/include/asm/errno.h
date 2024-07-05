@@ -50,7 +50,9 @@
 #define ENOTSUPP				514
 #define EHOSTDOWN				515
 
-#define  EDESTADDRREQ    89      /* Destination address required */
-#define  EFAULT 14		 /* Bad address */
+#define EDESTADDRREQ	89      /* Destination address required */
+#define EFAULT		14	/* Bad address */
+#define EPROTO		85	/* Protocol error */
+#define ENOTRECOVERABLE	131	/* State not recoverable */
 
 #endif

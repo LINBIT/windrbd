@@ -21,6 +21,23 @@
 
 #define BDEVNAME_SIZE	32	/* Largest string for a blockdev identifier */
 
+typedef unsigned int blk_mode_t;
+
+/* open for reading */
+#define BLK_OPEN_READ		((__force blk_mode_t)(1 << 0))
+/* open for writing */
+#define BLK_OPEN_WRITE		((__force blk_mode_t)(1 << 1))
+/* open exclusively (vs other exclusive openers */
+#define BLK_OPEN_EXCL		((__force blk_mode_t)(1 << 2))
+/* opened with O_NDELAY */
+#define BLK_OPEN_NDELAY		((__force blk_mode_t)(1 << 3))
+/* open for "writes" only for ioctls (specialy hack for floppy.c) */
+#define BLK_OPEN_WRITE_IOCTL	((__force blk_mode_t)(1 << 4))
+/* open is exclusive wrt all other BLK_OPEN_WRITE opens to the device */
+#define BLK_OPEN_RESTRICT_WRITES	((__force blk_mode_t)(1 << 5))
+/* return partition scanning errors */
+#define BLK_OPEN_STRICT_SCAN	((__force blk_mode_t)(1 << 6))
+
 #define bio_op(bio) \
 	((bio)->bi_opf & REQ_OP_MASK)
 
@@ -528,12 +545,25 @@ struct block_device_reference {
 	IO_REMOVE_LOCK w_remove_lock;
 };
 
+#ifdef DRBD_9_1
+
+struct block_device_operations {
+	struct module *owner;
+	void (*submit_bio)(struct bio *bio);
+	int (*open)(struct gendisk *disk, blk_mode_t mode);
+	void (*release)(struct gendisk *disk);
+};
+
+#else
+
 struct block_device_operations {
 	struct module *owner;
 	blk_qc_t (*submit_bio) (struct bio*);
 	int (*open) (struct block_device *, fmode_t);
 	void (*release) (struct gendisk *, fmode_t);
 };
+
+#endif
 
 #define QUEUE_FLAG_STABLE_WRITES 15	/* don't modify blks until WB is done */
 #define QUEUE_FLAG_DISCARD	8	/* supports DISCARD */
@@ -574,6 +604,14 @@ static inline void bio_end_io_acct(struct bio *bio, ULONG_PTR start_time)
 /* TODO: this function does not exist any more (kernel 6.8) */
 extern int generic_make_request(struct bio *bio);
 
+/* TODO: we are never splitting bios .. there is no limit (?)
+ * in what we can submit to a Windows driver */
+
+static inline struct bio *bio_split_to_limits(struct bio *bio)
+{
+	return bio;
+}
+
 static inline int submit_bio(struct bio *bio)
 {
 	return generic_make_request(bio);
@@ -582,12 +620,6 @@ static inline int submit_bio(struct bio *bio)
 static inline int submit_bio_noacct(struct bio *bio)
 {
 	return generic_make_request(bio);
-}
-
-static inline unsigned int queue_physical_block_size(const struct request_queue *q)
-{
-	/* TODO: initialize that: */
-	return q->limits.physical_block_size;
 }
 
 static inline unsigned queue_logical_block_size(const struct request_queue *q)
@@ -629,6 +661,17 @@ static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
 		return bdev->bd_disk->queue;
 
 	return NULL;
+}
+
+static inline unsigned int queue_physical_block_size(const struct request_queue *q)
+{
+	/* TODO: initialize that: */
+	return q->limits.physical_block_size;
+}
+
+static inline unsigned int bdev_physical_block_size(struct block_device *bdev)
+{
+	return queue_physical_block_size(bdev_get_queue(bdev));
 }
 
 static inline unsigned int queue_max_hw_sectors(const struct request_queue *q)
@@ -698,6 +741,11 @@ static inline int bdev_discard_alignment(struct block_device *bdev)
         return 0;
 }
 
+/* TODO: implement this: */
+extern int bdev_alignment_offset(struct block_device *bdev);
+/* TODO: and this: */
+extern int sync_blockdev(struct block_device *bdev);
+
 extern const char *bdevname(struct block_device *bdev, char *buffer);
 
 #define blk_queue_split(bio) do { } while (0)
@@ -715,6 +763,21 @@ extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
 			    sector_t offset);
 void blk_queue_update_readahead(struct request_queue *q);
 void blkdev_put(struct block_device *bdev, fmode_t mode);
+
+static inline int bdev_io_min(struct block_device *bdev)
+{
+	return queue_io_min(bdev_get_queue(bdev));
+}
+
+static inline int bdev_io_opt(struct block_device *bdev)
+{
+	return queue_io_opt(bdev_get_queue(bdev));
+}
+
+static inline unsigned int bdev_logical_block_size(struct block_device *bdev)
+{
+	return queue_logical_block_size(bdev_get_queue(bdev));
+}
 
 static inline unsigned int bdev_max_discard_sectors(struct block_device *bdev)
 {
