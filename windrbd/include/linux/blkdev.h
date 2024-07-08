@@ -821,6 +821,25 @@ extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
 
 #endif
 
+struct blk_holder_ops {
+	void (*mark_dead)(struct block_device *bdev, bool surprise);
+
+	/*
+	 * Sync the file system mounted on the block device.
+	 */
+	void (*sync)(struct block_device *bdev);
+
+	/*
+	 * Freeze the file system mounted on the block device.
+	 */
+	int (*freeze)(struct block_device *bdev);
+
+	/*
+	 * Thaw the file system mounted on the block device.
+	 */
+	int (*thaw)(struct block_device *bdev);
+};
+
 	/* This opens a backing device: */
 extern struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder);
 	/* In DRBD 9.1 this opens a backing device:  */

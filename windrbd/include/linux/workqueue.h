@@ -70,4 +70,6 @@ static inline void schedule_work(struct work_struct *work)
 #define create_singlethread_workqueue(name)				\
 	alloc_ordered_workqueue("%s", WQ_MEM_RECLAIM, name)
 
+extern bool cancel_work_sync(struct work_struct *work);
+
 #endif
