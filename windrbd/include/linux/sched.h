@@ -6,6 +6,7 @@
 #include <linux/spinlock.h>
 #include <linux/rcupdate.h>
 #include <asm/current.h>
+#include <asm/signal.h>
 // #include <windrbd.h>
 
 #define TASK_COMM_LEN 32
@@ -53,6 +54,7 @@ struct task_struct {
 
 		/* TODO: needed? */
 	struct blk_plug *plug;
+	sigset_t blocked;
 
 	char comm[TASK_COMM_LEN];
 };

@@ -20,6 +20,8 @@ extern int timer_pending(const struct timer_list * timer);
 extern int mod_timer_pending(struct timer_list *timer, ULONG_PTR expires);
 void timer_setup(struct timer_list *timer, void(*callback)(struct timer_list *timer), ULONG_PTR flags_unused);
 
+extern int timer_shutdown_sync(struct timer_list *timer);
+
 #define from_timer(var, callback_timer, timer_fieldname) \
 	container_of(callback_timer, typeof(*var), timer_fieldname)
 

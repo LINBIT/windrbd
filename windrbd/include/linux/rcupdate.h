@@ -18,4 +18,6 @@
 #define kfree_rcu_mightsleep(ptr) kfree(ptr)
 #define kvfree_rcu_mightsleep(ptr) kfree(ptr)
 
+#define rcu_barrier() barrier()
+
 #endif

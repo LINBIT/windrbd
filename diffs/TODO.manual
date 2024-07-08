@@ -45,6 +45,7 @@ TODO: GNU extension: drbd_state.c: FINAL_STATE_CHANGE and REMEMBER_STATE_CHANGE 
 ! TODO: drbd_receiver.c: For each backing device wait for requests to complete
 	in conn_disconnect()
 	This solved a BSOD that was hard to track.
+	But isn't that fixed with a wait_event() bugfix?
 
 TODO: GNU extension: drbd_transport.h: set_page_chain_next_offset_size uses gcc struct initializer
 

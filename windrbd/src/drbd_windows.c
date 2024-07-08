@@ -1444,7 +1444,9 @@ static void timer_callback(PKDPC dpc, struct timer_list* timer, PVOID arg1, PVOI
 	(void)arg1;
 	(void)arg2;
 	(void)dpc;
-	timer->function(timer);
+	if (timer->function != NULL) {
+		timer->function(timer);
+	}
 }
 
 void timer_setup(struct timer_list *timer, void(*callback)(struct timer_list *timer), ULONG_PTR flags_unused)
@@ -1462,7 +1464,7 @@ void add_timer(struct timer_list *t)
 void del_timer(struct timer_list *t)
 {
 	KeCancelTimer(&t->ktimer);
-    t->expires = 0;
+	t->expires = 0;
 }
 
 /**
@@ -1480,14 +1482,21 @@ int timer_pending(const struct timer_list * timer)
     return timer->ktimer.Header.Inserted;
 }
 
-
 	/* TODO: sync? */
 
 int del_timer_sync(struct timer_list *t)
 {
 	bool pending = 0;
 	pending = timer_pending(t);
-	
+
+	del_timer(t);
+
+	return pending;
+}
+
+int timer_shutdown_sync(struct timer_list *t)
+{
+	t->function = NULL;
 	del_timer(t);
 
 	return pending;
@@ -1607,6 +1616,8 @@ void set_disk_ro(struct gendisk *disk, int flag)
 
 }
 
+#include <asm/signal.h>
+
 int signal_pending(struct task_struct *task)
 {
 	if (task->has_sig_event)
@@ -1645,6 +1656,38 @@ void flush_signals(struct task_struct *task)
 		KeClearEvent(&task->sig_event); 
 		task->sig = 0;
 	}
+}
+
+int sigprocmask(int how, sigset_t *set, sigset_t *oldset)
+{
+	struct task_struct *tsk = current;
+	sigset_t newset;
+
+	if (tsk && tsk->has_sig_event)
+	{
+	/* Lockless, only current can change ->blocked, never from irq */
+		if (oldset)
+			*oldset = tsk->blocked;
+
+		switch (how) {
+		case SIG_BLOCK:
+			sigorsets(&newset, &tsk->blocked, set);
+			break;
+		case SIG_UNBLOCK:
+			sigandnsets(&newset, &tsk->blocked, set);
+			break;
+		case SIG_SETMASK:
+			newset = *set;
+			break;
+		default:
+			return -EINVAL;
+		}
+
+		tsk->blocked = newset;
+	} else {
+		return -EINVAL;
+	}
+	return 0;
 }
 
 static inline blk_status_t win_status_to_blk_status(NTSTATUS status)
@@ -2823,7 +2866,11 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 	return block_device;
 }
 
+#ifdef DRBD_9_1
+struct gendisk *blk_alloc_disk(struct queue_limits *limits_unused, int unused)
+#else
 struct gendisk *blk_alloc_disk(int unused)
+#endif
 {
 	struct request_queue *q;
 	struct gendisk *disk;

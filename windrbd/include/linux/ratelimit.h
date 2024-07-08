@@ -32,4 +32,14 @@ struct ratelimit_state {
 extern int ___ratelimit(struct ratelimit_state *rs, const char *func);
 #define __ratelimit(state) ___ratelimit(state, __func__)
 
+static inline void ratelimit_state_init(struct ratelimit_state *rs,
+					int interval, int burst)
+{
+	memset(rs, 0, sizeof(*rs));
+
+	spin_lock_init(&rs->lock);
+	rs->interval	= interval;
+	rs->burst	= burst;
+}
+
 #endif /* _LINUX_RATELIMIT_H */
