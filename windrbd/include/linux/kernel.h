@@ -5,6 +5,7 @@
 #include <linux/printk.h>
 #include <linux/container_of.h>
 #include <linux/export.h>
+#include <linux/err.h>
 
 /* defined in stdlib.h which is included by some reactos header.
  * which is TODO: probably not a good idea.
