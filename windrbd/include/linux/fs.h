@@ -41,7 +41,7 @@ extern struct block_device *bdgrab(struct block_device *bdev);
 extern void bdput(struct block_device *);
 extern int fsync_bdev(struct block_device *);
 
-struct block_device *file_bdev(struct file *bdev_file)
+static inline struct block_device *file_bdev(struct file *bdev_file)
 {
 	if (bdev_file == NULL)
 		return NULL;

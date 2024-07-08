@@ -477,6 +477,8 @@ void *kzalloc(int size, int flag)
 
 #endif
 
+#if 0
+/* see string.c */
 /**
  * strlcpy - Copy a C-string into a sized buffer
  * @dest: Where to copy the string to
@@ -499,6 +501,8 @@ size_t strlcpy(char *dest, const char *src, size_t size)
 	}
 	return ret;
 }
+
+#endif
 
 void *page_address(const struct page *page)
 {
@@ -790,7 +794,7 @@ void kref_get(struct kref *kref)
 
 void kref_init(struct kref *kref)
 {
-	spinlock_init(&kref->spinlock);
+	spin_lock_init(&kref->spinlock);
 	atomic_set(&kref->refcount.refs, 1);
 }
 
@@ -1496,6 +1500,9 @@ int del_timer_sync(struct timer_list *t)
 
 int timer_shutdown_sync(struct timer_list *t)
 {
+	bool pending = 0;
+	pending = timer_pending(t);
+
 	t->function = NULL;
 	del_timer(t);
 

@@ -13,9 +13,9 @@
 #define BUG_ON(condition) do { if (unlikely(condition)) BUG(); } while (0)
 
 #define WARN(condition, format...) \
-	({ int b = (condition); \
-	   if (b) printk("Warning: failure at %s:%d/%s()!\n", __FILE__, __LINE__, __func__); \
-	   b; \
+	({ int __res = (condition); \
+	   if (__res) printk("Warning: failure at %s:%d/%s()!\n", __FILE__, __LINE__, __func__); \
+	   __res; \
 	})
 
 #define WARN_ON(condition) WARN(condition)

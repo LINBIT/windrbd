@@ -24,6 +24,7 @@
 #include <linux/rcupdate.h>
 
 #include <linux/align.h>
+// #include <linux/rbtree_augmented.h>
 
 #define rb_parent(r)   ((struct rb_node *)((r)->__rb_parent_color & ~3))
 
@@ -332,5 +333,12 @@ rb_next_match(const void *key, struct rb_node *node,
 #define rb_for_each(node, key, tree, cmp) \
 	for ((node) = rb_find_first((key), (tree), (cmp)); \
 	     (node); (node) = rb_next_match((key), (node), (cmp)))
+
+typedef void (*rb_augment_f)(struct rb_node *node, void *data);
+
+extern void rb_augment_insert(struct rb_node *node, rb_augment_f func, void *data);
+
+extern struct rb_node *rb_augment_erase_begin(struct rb_node *node);
+extern void rb_augment_erase_end(struct rb_node *node, rb_augment_f func, void *data);
 
 #endif	/* _LINUX_RBTREE_H */
