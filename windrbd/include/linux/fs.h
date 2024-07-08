@@ -3,6 +3,12 @@
 
 #include <linux/blkdev.h>
 
+	/* TODO: Very basic for now: */
+
+struct file {
+	struct block_device *bdev;
+};
+
 /* file is open for reading */
 #define FMODE_READ				    0x1
 /* file is open for writing */
@@ -10,6 +16,7 @@
 /* File is opened with O_NDELAY (only set for block devices) */
 #define FMODE_NDELAY				    0x40
 
+	/* TODO: implement */
 static inline int bd_link_disk_holder(struct block_device *bdev,
 				      struct gendisk *disk)
 {
@@ -33,6 +40,14 @@ static inline loff_t i_size_read(const struct inode *inode)
 extern struct block_device *bdgrab(struct block_device *bdev);
 extern void bdput(struct block_device *);
 extern int fsync_bdev(struct block_device *);
+
+struct block_device *file_bdev(struct file *bdev_file)
+{
+	if (bdev_file == NULL)
+		return NULL;
+
+	return bdev_file->bdev;
+}
 
 #endif
 

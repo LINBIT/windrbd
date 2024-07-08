@@ -202,14 +202,25 @@ static inline void blk_queue_flag_clear(unsigned int flag, struct request_queue 
 	clear_bit(flag, &q->queue_flags);
 }
 
+	/* TODO: implement WRITE_SAME and WRITE_ZEROES */
 static inline void blk_queue_max_write_same_sectors(struct request_queue *q,
 				      unsigned int max_write_same_sectors)
 {
 	if (max_write_same_sectors > 0)
 		printk("Warning: attempt to set max_write_same_sectors > 0 (%d)\n", max_write_same_sectors);
-	
+
 		/* We force it to 0, since write same is not supported. */
 	q->limits.max_write_same_sectors = 0;
+}
+
+static inline void blk_queue_max_write_zeroes_sectors(struct request_queue *q,
+				      unsigned int max_write_zeroes_sectors)
+{
+	if (max_write_zeroes_sectors > 0)
+		printk("Warning: attempt to set max_write_same_sectors > 0 (%d)\n", max_write_zeroes_sectors);
+
+		/* We force it to 0, since write same is not supported. */
+	q->limits.max_write_zeroes_sectors = 0;
 }
 
 extern int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
@@ -570,10 +581,23 @@ struct block_device_operations {
 
 #define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
 
+static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
+{
+	if (bdev && bdev->bd_disk)
+		return bdev->bd_disk->queue;
+
+	return NULL;
+}
+
 /* TODO: hardcoding this here .. we do not have sysfs (yet) */
 static inline int queue_discard_zeroes_data(const struct request_queue *unused)
 {
 	return 1;
+}
+
+static inline unsigned int bdev_discard_granularity(struct block_device *bdev)
+{
+	return bdev_get_queue(bdev)->limits.discard_granularity;
 }
 
 #define disk_to_dev(disk) \
@@ -653,14 +677,6 @@ extern sector_t get_capacity(struct gendisk *disk);
 static inline sector_t bdev_nr_sectors(struct block_device *bdev)
 {
 	return bdev->bd_nr_sectors;
-}
-
-static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
-{
-	if (bdev && bdev->bd_disk)
-		return bdev->bd_disk->queue;
-
-	return NULL;
 }
 
 static inline unsigned int queue_physical_block_size(const struct request_queue *q)
@@ -762,6 +778,8 @@ extern void blk_queue_segment_boundary(struct request_queue *, ULONG_PTR);
 extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
 			    sector_t offset);
 void blk_queue_update_readahead(struct request_queue *q);
+	/* TODO: implement: */
+void disk_update_readahead(struct gendisk *disk);
 void blkdev_put(struct block_device *bdev, fmode_t mode);
 
 static inline int bdev_io_min(struct block_device *bdev)
@@ -805,5 +823,8 @@ extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
 
 	/* This opens a backing device: */
 extern struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder);
+	/* In DRBD 9.1 this opens a backing device:  */
+struct file *bdev_file_open_by_path(const char *path, blk_mode_t mode,
+		void *holder, const struct blk_holder_ops *hops);
 
 #endif

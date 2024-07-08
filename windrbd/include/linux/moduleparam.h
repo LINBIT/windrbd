@@ -70,7 +70,6 @@ extern int param_get_uint(char *buffer, const struct kernel_param *kp);
  * same, but that's harder if the variable must be non-static or is inside a
  * structure.  This allows exposure under a different name.
  */
-#define module_param_named(name, value, type, perm)			   \
-	const void *f_##type(void) { static const void *x = &param_ops_##type; return x; }
+#define module_param_named(name, value, type, perm)
 
 #endif

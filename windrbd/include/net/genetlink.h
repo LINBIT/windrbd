@@ -64,4 +64,9 @@ static inline void *genlmsg_put_reply(struct sk_buff *skb,
 			   flags, cmd);
 }
 
+static inline void *genl_info_userhdr(const struct genl_info *info)
+{
+	return (u8 *)info->genlhdr + GENL_HDRLEN;
+}
+
 #endif

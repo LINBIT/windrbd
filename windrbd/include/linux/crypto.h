@@ -1,7 +1,7 @@
 #ifndef _LINUX_CRYPTO_H
 #define _LINUX_CRYPTO_H
 
-#define CRYPTO_MAX_ALG_NAME (64)
+#define CRYPTO_MAX_ALG_NAME 128
 
 struct crypto_tfm {
 	int nothing;

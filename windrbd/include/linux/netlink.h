@@ -88,6 +88,8 @@ struct genl_family
     struct list_head	mcast_groups;	/* private */
     const struct nla_policy *policy;
 	u8			parallel_ops:1;
+	/* New with DRBD 9.1: TODO: what does this? */
+	bool	netnsok;
 };
 
 /**

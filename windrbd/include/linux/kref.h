@@ -114,6 +114,7 @@ static inline bool kref_get_unless_zero(struct kref *kref)
 #include <linux/limits.h>
 #include <linux/lockdep.h>
 #include <linux/net.h>
+#include <linux/crypto.h>
 
 /* TODO somewhere else: */
 #define noinline_for_stack
