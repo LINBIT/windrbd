@@ -4,6 +4,7 @@
 #include <linux/socket.h>
 #include <linux/types.h>	/* for ssize_t */
 #include <linux/net_namespace.h>
+#include <wsk.h>	/* for struct sockaddr */
 
 #define SOCKWQ_ASYNC_NOSPACE	0
 #define SOCKWQ_ASYNC_WAITDATA	1
@@ -13,6 +14,10 @@
 #define SOCK_SUPPORT_ZC		5
 #define SOCK_CUSTOM_SOCKOPT	6
 #define SOCK_PASSPIDFD		7
+
+struct socket;
+struct kvec;
+struct msghdr;
 
 struct proto_ops {
 	int		family;
@@ -99,8 +104,6 @@ enum sock_shutdown_cmd {
 	SHUT_WR = 1,
 	SHUT_RDWR = 2,
 };
-
-struct socket;
 
 int kernel_sendmsg(struct socket *sock, struct msghdr *msg, struct kvec *vec,
 		   size_t num, size_t len);
