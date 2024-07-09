@@ -60,7 +60,7 @@ ARCH ?= x86_64
 
 TARGET_IPS ?= 10.43.224.4 10.43.224.25
 
-DRBD ?= drbd
+DRBD ?= drbd-9.0
 DRBDTMP ?= $(DRBD)-tmp
 
 GIT_VERSION=$(shell git describe --tags)
