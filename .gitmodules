@@ -14,3 +14,7 @@
 [submodule "drbd-9.1"]
 	path = drbd-9.1
 	url = git@gitlab.at.linbit.com:drbd/drbd.git
+[submodule "drbd-9.2"]
+	path = drbd-9.2
+	url = git@gitlab.at.linbit.com:drbd/drbd.git
+	branch = master
