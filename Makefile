@@ -161,6 +161,8 @@ DRBD_SOURCES += drbd_nla.c drbd_transport.c drbd_transport_tcp.c kref_debug.c dr
 # TODO: check for DRBD 9.0 somehow ...
 ifeq ($(DRBD),drbd)
 DRBD_SOURCES += lru_cache.c
+else
+DRBD_SOURCES += drbd-kernel-compat/lru_cache.c
 endif
 
 TMP_DRBD_FILES = $(addprefix $(DRBD_TMPSRCDIR), $(DRBD_SOURCES))
