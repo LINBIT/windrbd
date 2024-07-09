@@ -8,6 +8,7 @@
 
 #include <asm-generic/bitops/builtin-__fls.h>
 #include <asm-generic/bitops/fls.h>
+#include <asm-generic/bitops/ffz.h>
 #include <asm-generic/bitops/fls64.h>
 
 static inline void barrier(void)

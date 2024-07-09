@@ -38,6 +38,8 @@ struct sock {
 	__u32 sk_priority;
 
 	struct tcp_sock t;
+	/* TODO: what is this? */
+	bool sk_use_task_frag;
 };
 
 #endif

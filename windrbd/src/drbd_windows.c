@@ -4133,11 +4133,18 @@ int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 
 	KeClearEvent(&device->vdisk->part0->primary_event);
 
+#ifdef DRBD_9_1
+	if (device->open_cnt > 0)
+		printk("Forcing close of DRBD device: device->open_cnt is %d\n", device->open_cnt);
+
+	device->open_cnt = 0;
+#else
 	if (device->open_rw_cnt > 0 || device->open_ro_cnt > 0)
 		printk("Forcing close of DRBD device: device->open_rw_cnt is %d, device->open_ro_cnt is %d\n", device->open_rw_cnt, device->open_ro_cnt);
 
 	device->open_rw_cnt = 0;
 	device->open_ro_cnt = 0;
+#endif
 
 	return 0;
 }

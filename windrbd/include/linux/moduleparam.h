@@ -59,6 +59,18 @@ extern int param_get_uint(char *buffer, const struct kernel_param *kp);
 #define param_check_uint(name, p) __param_check(name, p, unsigned int)
 #endif
 
+extern const struct kernel_param_ops param_ops_bool;
+extern int param_set_bool(const char *val, const struct kernel_param *kp);
+extern int param_get_bool(char *buffer, const struct kernel_param *kp);
+
+extern const struct kernel_param_ops param_ops_uint;
+extern int param_set_uint(const char *val, const struct kernel_param *kp);
+extern int param_get_uint(char *buffer, const struct kernel_param *kp);
+
+extern const struct kernel_param_ops param_ops_int;
+extern int param_set_int(const char *val, const struct kernel_param *kp);
+extern int param_get_int(char *buffer, const struct kernel_param *kp);
+
 /**
  * module_param_named - typesafe helper for a renamed module/cmdline parameter
  * @name: a valid C identifier which is the parameter name.
@@ -70,6 +82,13 @@ extern int param_get_uint(char *buffer, const struct kernel_param *kp);
  * same, but that's harder if the variable must be non-static or is inside a
  * structure.  This allows exposure under a different name.
  */
-#define module_param_named(name, value, type, perm)
+
+/* TODO: note that this is just to silence a warning in drbd_main.c
+ * since we do not have sections on Windows (at least not supported
+ * by the MinGW gcc we cannot use the Linux macros ...
+ */
+
+#define module_param_named(name, value, type, perm) \
+	const struct kernel_param_ops *dummy ## value = &param_ops_ ## type;
 
 #endif

@@ -1194,7 +1194,7 @@ dbg("out of wait_for_becoming_primary, status is %x\n", status);
 		dbg(KERN_INFO "DRBD device  request: opening DRBD device %s\n",
 			mode == 0 ? "read-only" : "read-write");
 
-		err = dev->bd_disk->fops->open(dev, mode);
+		err = dev->bd_disk->fops->open(dev->bd_disk, mode);
 		dbg(KERN_DEBUG "drbd_open returned %d\n", err);
 		status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
 	} else {
@@ -1248,10 +1248,8 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		return status;
 	}
 	struct block_device *dev = ref->bdev;
-	int mode;
 
 	if (dev->drbd_device != NULL) {
-		mode = 0;	/* TODO: remember mode from open () */
 /*	mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
                 (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0; */
 
@@ -1261,7 +1259,7 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 */
 
 		if (dev->num_openers > 0)
-			dev->bd_disk->fops->release(dev->bd_disk, mode);
+			dev->bd_disk->fops->release(dev->bd_disk);
 		else
 			printk("Warning: close called when there are no disk devices open.\n");
 

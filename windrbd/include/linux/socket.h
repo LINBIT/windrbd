@@ -55,6 +55,7 @@ struct bio;
 #define MSG_EOF         MSG_FIN
 #define MSG_NO_SHARED_FRAGS 0x80000 /* sendpage() internal : page frags are not shared */
 #endif
+#define MSG_SPLICE_PAGES 0x8000000	/* Splice the pages from the iterator in sendmsg() */
 
 /* This is defined by Windows already, don't change them here. */
 #if 0
@@ -72,13 +73,11 @@ struct bio;
 typedef size_t __kernel_size_t;
 
 /* most of these are unused in DRBD, except msg_flags */
-
+/* DRBD 9.1 uses msg_iter */
 struct msghdr {
 	void		*msg_name;	/* ptr to socket address structure */
 	int		msg_namelen;	/* size of socket address structure */
-#if 0
 	struct iov_iter	msg_iter;	/* data */
-#endif
 	void		*msg_control;	/* ancillary data */
 	__kernel_size_t	msg_controllen;	/* ancillary data buffer length */
 	unsigned int	msg_flags;	/* flags on received message */
@@ -134,6 +133,8 @@ struct socket {
 	bool is_connected;
 };
 
+/* TODO: implement this: */
+int sock_sendmsg(struct socket *sock, struct msghdr *msg);
 
 /* WinDRBD specific: Since Windows distinguishes between LISTEN and
  * CONNECTION sockets, we use this to signal that we want to LISTEN

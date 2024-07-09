@@ -26,6 +26,10 @@ struct tcp_sock {
 void tcp_sock_set_nodelay(struct sock *sk);
 void tcp_sock_set_cork(struct sock *sk, bool on);
 void tcp_sock_set_quickack(struct sock *sk, int val);
+/* TODO: implement these: */
+int tcp_sock_set_keepidle(struct sock *sk, int val);
+int tcp_sock_set_keepcnt(struct sock *sk, int val);
+int tcp_sock_set_keepintvl(struct sock *sk, int val);
 
 /* See net/sock.h */
 #define tcp_sk(sk) &((sk)->t)
