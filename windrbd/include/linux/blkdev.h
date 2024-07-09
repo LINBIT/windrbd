@@ -80,6 +80,7 @@ enum blk_bounce {
 	BLK_BOUNCE_HIGH,
 };
 
+/* TODO: these should be initialized to sane default values: */
 struct queue_limits {
 	enum blk_bounce		bounce;
 	unsigned long		seg_boundary_mask;
@@ -661,6 +662,11 @@ static inline int queue_alignment_offset(const struct request_queue *q)
 	return q->limits.alignment_offset;
 }
 
+static inline int queue_discard_alignment(const struct request_queue *q)
+{
+	return q->limits.discard_alignment;
+}
+
 static inline unsigned int queue_io_min(const struct request_queue *q)
 {
 	return q->limits.io_min;
@@ -669,6 +675,16 @@ static inline unsigned int queue_io_min(const struct request_queue *q)
 static inline unsigned int queue_io_opt(const struct request_queue *q)
 {
 	return q->limits.io_opt;
+}
+
+static inline int bdev_discard_alignment(struct block_device *bdev)
+{
+	return queue_discard_alignment(bdev_get_queue(bdev));
+}
+
+static inline int bdev_alignment_offset(struct block_device *bdev)
+{
+	return queue_alignment_offset(bdev_get_queue(bdev));
 }
 
 	/* TODO: this should set bd_nr_sectors */
@@ -681,7 +697,6 @@ static inline sector_t bdev_nr_sectors(struct block_device *bdev)
 
 static inline unsigned int queue_physical_block_size(const struct request_queue *q)
 {
-	/* TODO: initialize that: */
 	return q->limits.physical_block_size;
 }
 
@@ -706,7 +721,6 @@ static inline void blk_queue_write_cache(struct request_queue *q, bool enabled, 
 {
 }
 
-extern struct request_queue *bdev_get_queue(struct block_device *bdev);
 extern void blk_cleanup_queue(struct request_queue *q);
 extern struct request_queue *blk_alloc_queue(int unused);
 typedef void (make_request_fn) (struct request_queue *q, struct bio *bio);
@@ -751,14 +765,6 @@ static inline blk_status_t errno_to_blk_status(int err)
 #define blk_start_plug(plug)	(void)(plug)
 #define blk_finish_plug(plug)   (void)(plug)
 
-/* TODO: 0? really? */
-static inline int bdev_discard_alignment(struct block_device *bdev)
-{
-        return 0;
-}
-
-/* TODO: implement this: */
-extern int bdev_alignment_offset(struct block_device *bdev);
 /* TODO: and this: */
 extern int sync_blockdev(struct block_device *bdev);
 
@@ -778,8 +784,12 @@ extern void blk_queue_segment_boundary(struct request_queue *, ULONG_PTR);
 extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
 			    sector_t offset);
 void blk_queue_update_readahead(struct request_queue *q);
-	/* TODO: implement: */
-void disk_update_readahead(struct gendisk *disk);
+
+	/* Some Linux specific optimization ... */
+static inline void disk_update_readahead(struct gendisk *disk)
+{
+}
+
 void blkdev_put(struct block_device *bdev, fmode_t mode);
 
 static inline int bdev_io_min(struct block_device *bdev)

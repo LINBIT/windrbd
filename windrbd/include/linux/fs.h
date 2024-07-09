@@ -6,6 +6,7 @@
 	/* TODO: Very basic for now: */
 
 struct file {
+	struct kref kref;
 	struct block_device *bdev;
 };
 

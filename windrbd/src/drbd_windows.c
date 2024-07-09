@@ -42,6 +42,8 @@
 #include <linux/kref.h>
 #include <linux/atomic.h>
 #include <linux/proc_fs.h>
+#include <linux/fs.h>
+
 
 	/* TODO: split this up into several files. Already done for
 	 * threads, but there's much more ...
@@ -800,14 +802,16 @@ void kref_init(struct kref *kref)
 
 #endif
 
-	/* This probably never gets implemented since we do
-	 * not have auto promote and Windows caches at file
-	 * system level, not at block device level.
-	 */
-
+/* TODO: implement those: */
 int fsync_bdev(struct block_device *bdev)
 {
 	printk("function fsync_bdev not implemented\n");
+	return 0;
+}
+
+int sync_blockdev(struct block_device *bdev)
+{
+	printk("function sync_blockdev not implemented\n");
 	return 0;
 }
 
@@ -1358,20 +1362,27 @@ void flush_workqueue(struct workqueue_struct *wq)
 	}
 }
 
+bool cancel_work_sync(struct work_struct *work)
+{
+	KIRQL flags;
+	bool ret = work->pending;
+
+		/* TODO: wait for work to finish? */
+	spin_lock_irqsave(&work->pending_lock, flags);
+	list_del_init(&work->work_list);
+	spin_unlock_irqrestore(&work->pending_lock, flags);
+
+	return ret;	/* TODO: or so ... */
+}
+
 void destroy_workqueue(struct workqueue_struct *wq)
 {
-// printk("1 wq is %s\n", wq->name);
 	wq->about_to_destroy = 1;
-// printk("2 wq is %s\n", wq->name);
 	flush_workqueue(wq);
-// printk("3 wq is %s\n", wq->name);
 	KeSetEvent(&wq->killEvent, 0, FALSE);
-// printk("4 wq is %s\n", wq->name);
 	KeWaitForSingleObject(&wq->readyToFreeEvent, Executive, KernelMode, FALSE, NULL);
-// printk("5 wq is %s\n", wq->name);
 
 	kfree(wq);
-// printk("6 wq is %s\n", wq->name);
 }
 
 int threads_sleeping;
@@ -3402,6 +3413,38 @@ out_no_windows_device:
 	kfree(path_to_device.Buffer);
 
 	return ERR_PTR(err);
+}
+
+struct file *bdev_file_open_by_path(const char *path, blk_mode_t mode,
+                void *holder, const struct blk_holder_ops *hops)
+{
+	struct file *f;
+	struct block_device *bdev;
+
+	f = kzalloc(sizeof(*f), GFP_KERNEL);
+	if (f == NULL)
+		return NULL;
+
+	bdev = blkdev_get_by_path(path, mode, holder);
+	if (bdev == NULL)
+		return NULL;
+
+	f->bdev = bdev;
+	kref_init(&f->kref);
+
+	return f;
+}
+
+void destroy_file(struct kref *f_kref)
+{
+	struct file *f = container_of(f_kref, struct file, kref);
+
+	kfree(f);
+}
+
+extern void fput(struct file *f)
+{
+	kref_put(&f->kref, destroy_file);
 }
 
 void panic(const char *fmt, ...)

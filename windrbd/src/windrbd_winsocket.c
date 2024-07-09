@@ -1047,6 +1047,12 @@ dbg("returning %d\n", BytesSent);
 	return BytesSent;
 }
 
+int sock_sendmsg(struct socket *sock, struct msghdr *msg)
+{
+		/* will fail ... TODO: implement */
+	return kernel_sendmsg(sock, msg, NULL, 1, 0);
+}
+
 ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_t len, int flags)
 {
 	struct _IRP *Irp;

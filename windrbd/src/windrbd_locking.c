@@ -156,6 +156,40 @@ int down_trylock(struct semaphore *s)
 	return 1;
 }
 
+	/* TODO: or so ... */
+int down_interruptible(struct semaphore *sem)
+{
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	int err = -EIO;
+	struct task_struct *thread = current;
+	PVOID waitObjects[2];
+	int wObjCount = 1;
+
+	waitObjects[0] = (PVOID)&sem->sem;
+	if (thread->has_sig_event)
+	{
+		waitObjects[1] = (PVOID)&thread->sig_event;
+		wObjCount++;
+	}
+	status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
+
+	switch (status)
+	{
+	case STATUS_WAIT_0:		// semaphore acquired.
+		err = 0;
+		break;
+	case STATUS_WAIT_1:		// thread got signal by the func 'force_sig'
+		err = thread->sig != 0 ? -thread->sig : -EIO;
+		break;
+	default:
+		err = -EIO;
+		printk("KeWaitForMultipleObjects returned unexpected status(0x%x)", status);
+		break;
+	}
+
+	return err;
+}
+
 void up(struct semaphore *s)
 {
 	if (KeReadStateSemaphore(&s->sem) < s->sem.Limit)
@@ -176,6 +210,11 @@ void init_rwsem(struct rw_semaphore *sem)
 void down_write(struct rw_semaphore *sem)
 {
 	down(&sem->the_semaphore);
+}
+
+int down_write_trylock(struct rw_semaphore *sem)
+{
+	return down_trylock(&sem->the_semaphore);
 }
 
 void up_write(struct rw_semaphore *sem)

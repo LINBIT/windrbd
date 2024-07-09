@@ -3,6 +3,6 @@
 
 #include <linux/fs.h>
 
-extern void fput(struct file *);
+extern void fput(struct file *f);
 
 #endif
