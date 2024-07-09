@@ -288,3 +288,4 @@ Version history
  * 1.2.0-rc2 (Sep 12, 2023): Build everything within a docker container (WinDRBD, drbd-utils, ...)
  * 1.2.0-rc3 (Sep 20, 2023): Fix for BSOD on Primary, ReactOS support
  * 1.2.0-rc4 (May 22, 2024): DRBD with minimal patches compiles
+ * 1.2.0-rc5 (Jul 09, 2024): DRBD 9.1 (with minimal patches) compiles
