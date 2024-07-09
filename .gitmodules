@@ -1,9 +1,3 @@
-[submodule "drbd"]
-        path = drbd
-        url = ../drbd.git
-        update = checkout
-        fetchRecurseSubmodules = true
-	branch = jt/windrbd-1.1-drbd-9.0
 [submodule "generate-cat-file"]
 	path = generate-cat-file
 	url = ../generate-cat-file
@@ -18,3 +12,7 @@
 	path = drbd-9.2
 	url = git@gitlab.at.linbit.com:drbd/drbd.git
 	branch = master
+[submodule "drbd-9.0"]
+	path = drbd-9.0
+	url = git@gitlab.at.linbit.com:drbd/drbd.git
+	branch = drbd-9.0

@@ -158,8 +158,7 @@ DRBD_SOURCES += drbd_main.c drbd-headers/drbd_strings.c drbd_nl.c
 DRBD_SOURCES += drbd_interval.c drbd_state.c drbd_kref_debug.c
 DRBD_SOURCES += drbd_nla.c drbd_transport.c drbd_transport_tcp.c kref_debug.c drbd_buildtag.c drbd_bitmap.c drbd_proc.c
 
-# TODO: check for DRBD 9.0 somehow ...
-ifeq ($(DRBD),drbd)
+ifeq ($(DRBD),drbd-9.0)
 DRBD_SOURCES += lru_cache.c
 else
 DRBD_SOURCES += drbd-kernel-compat/lru_cache.c
