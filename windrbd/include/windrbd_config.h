@@ -6,6 +6,10 @@
 #define CONFIG_HAVE_NETIO_DRIVER 1
 // #endif
 
+#ifndef REACTOS
+#define CONFIG_HAVE_KERNEL_STACKSWAP_ENABLE 1
+#endif
+
 /* Those need to be implemented: */
 // #define CONFIG_HAVE_IO_CREATE_DEVICE_SECURE 1
 // #define CONFIG_HAVE_RW_LOCKS 1

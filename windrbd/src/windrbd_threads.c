@@ -17,8 +17,9 @@
 #include <linux/delay.h>
 
 /* Can not include both wdm.h and ntifs.h hence the prototype here: */
-
+#ifdef CONFIG_HAVE_KERNEL_STACKSWAP_ENABLE
 extern BOOLEAN KeSetKernelStackSwapEnable(BOOLEAN Enable);
+#endif
 
 static LIST_HEAD(thread_list);
 static spinlock_t thread_list_lock;
@@ -220,7 +221,9 @@ static void windrbd_thread_setup(void *targ)
 		 * list corruption).
 		 */
 
+#ifdef CONFIG_HAVE_KERNEL_STACKSWAP_ENABLE
 	KeSetKernelStackSwapEnable(FALSE);
+#endif
 
 		/* t->windows_thread may be still invalid here, do not
 		 * printk().
@@ -230,7 +233,9 @@ static void windrbd_thread_setup(void *targ)
         if (!NT_SUCCESS(status)) {
 		printk("On waiting for start event: KeWaitForSingleObject failed with status %x\n", status);
 
+#ifdef CONFIG_HAVE_KERNEL_STACKSWAP_ENABLE
 		KeSetKernelStackSwapEnable(TRUE);
+#endif
 		return;
 	}
 	ret = t->threadfn(t->data);
@@ -248,7 +253,9 @@ static void windrbd_thread_setup(void *targ)
 		/* According to Microsoft docs we must not exit a thread
 		 * with stack swapping disabled, so enable it here again.
 		 */
+#ifdef CONFIG_HAVE_KERNEL_STACKSWAP_ENABLE
 	KeSetKernelStackSwapEnable(TRUE);
+#endif
 // printk("exiting %p...\n", t);
 	t->is_zombie = 1;
 }
@@ -402,7 +409,9 @@ struct task_struct *make_me_a_windrbd_thread(const char *name, ...)
 	t->pid = next_pid;
 	spin_unlock_irqrestore(&next_pid_lock, flags);
 
+#ifdef CONFIG_HAVE_KERNEL_STACKSWAP_ENABLE
 	KeSetKernelStackSwapEnable(FALSE);
+#endif
 
 	spin_lock_irqsave(&thread_list_lock, flags);
 	list_add(&t->list, &thread_list);
@@ -420,7 +429,10 @@ void return_to_windows(struct task_struct *t)
 {
 	KIRQL flags;
 
+#ifdef CONFIG_HAVE_KERNEL_STACKSWAP_ENABLE
 	KeSetKernelStackSwapEnable(TRUE);
+#endif
+
 
 	spin_lock_irqsave(&thread_list_lock, flags);
 	list_del(&t->list);
