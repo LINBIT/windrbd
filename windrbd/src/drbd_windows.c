@@ -3423,12 +3423,13 @@ struct file *bdev_file_open_by_path(const char *path, blk_mode_t mode,
 
 	f = kzalloc(sizeof(*f), GFP_KERNEL);
 	if (f == NULL)
-		return NULL;
+		return ERR_PTR(-ENOMEM);
 
 	bdev = blkdev_get_by_path(path, mode, holder);
-	if (bdev == NULL)
-		return NULL;
-
+	if (IS_ERR(bdev)) {
+		kfree(f);
+		return ERR_PTR(PTR_ERR(bdev));
+	}
 	f->bdev = bdev;
 	kref_init(&f->kref);
 
