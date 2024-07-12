@@ -2809,10 +2809,18 @@ static spinlock_t global_queue_lock;
 struct request_queue *blk_alloc_queue(int unused)
 {
 	struct request_queue *q;
+	struct backing_dev_info *bdi;
 
-	q = kzalloc(sizeof(struct request_queue), GFP_KERNEL);
+	q = kzalloc(sizeof(*q), GFP_KERNEL);
 	if (q == NULL)
 		return NULL;
+
+	bdi = kzalloc(sizeof(*bdi), GFP_KERNEL);
+	if (bdi == NULL) {
+		kfree(q);
+		return NULL;
+	}
+	q->backing_dev_info = bdi;
 
 		/* might be overridden later, see drbd_main.c
 		 * It is used only once to set the bit flags.
@@ -2824,6 +2832,7 @@ struct request_queue *blk_alloc_queue(int unused)
 
 void blk_cleanup_queue(struct request_queue *q)
 {
+	kfree(q->backing_dev_info);
 	kfree(q);
 }
 
