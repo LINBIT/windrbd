@@ -4191,7 +4191,7 @@ static void windrbd_destroy_block_device(struct kref *kref)
 		kfree(bdev->disk_epilog);
 		bdev->disk_epilog = NULL;
 	}
-
+	kfree(bdev->bd_inode);
 	kfree(bdev);
 		/* Do not set windows device object->DeviceExtension->ref
 		 * to NULL here. The object already has been deleted
