@@ -18,9 +18,9 @@
 
 	/* TODO: Somehow this does not work with our gcc ... ignoring for now */
 	/* Has something to do with DRBD: in DRBD 9.1 this works: */
-// #if 1
 
-#if 0
+#ifndef REACTOS
+
 # define __compiletime_assert(condition, msg, prefix, suffix)		\
 	do {								\
 		/*							\
@@ -35,20 +35,13 @@
 	} while (0)
 #else
 
-#if 0
-/* From the GNU manual: */
-#define __compiletime_assert(condition, msg, prefix, suffix)		\
-	char xxx_ ## __LINE__[(condition) ? 1 : -1]; (void)xxx_ ## __LINE__[0];
-
-#else
-
+/* REACTOS */
 	/* Nothing. at least with MinGW i686 and drbd-9.1 the
 	 * above definitions do not work.
 	 */
 
 #define __compiletime_assert(condition, msg, prefix, suffix)
 
-#endif
 #endif
 
 #define _compiletime_assert(condition, msg, prefix, suffix) \
