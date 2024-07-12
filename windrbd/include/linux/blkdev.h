@@ -458,9 +458,6 @@ struct block_device {
 	/* Used for debugging handle leaks */
 	int num_openers;
 
-	/* Nonzero when this is a DISK device (with partitions on it) */
-	bool is_disk_device;
-
 	/* For HLK test. */
 	bool suprise_removal;
 
@@ -488,15 +485,6 @@ struct block_device {
 
 	atomic_t num_bios_pending;
 	atomic_t num_irps_pending;
-
-	/* The simple write cache: list of pending bios */
-	struct list_head write_cache;
-	spinlock_t write_cache_lock;
-	struct task_struct *bdflush_thread;
-	int bdflush_should_run;
-
-	struct wait_queue_head bdflush_event;
-	struct completion bdflush_terminated;
 
 	struct kobject kobj;
 	bool is_backing_device;

@@ -2848,10 +2848,11 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 
 	kref_init(&block_device->kref);
 
-	block_device->bd_block_size = 512;
+	/* TODO: not used? */
+	block_device->bd_contains = block_device;
+	block_device->bd_parent = NULL;
 
-	/* TODO: obsolete: */
-	block_device->is_disk_device = true;
+	block_device->bd_block_size = 512;
 
 	init_waitqueue_head(&block_device->bios_event);
 	atomic_set(&block_device->num_bios_pending, 0);
@@ -2913,6 +2914,9 @@ struct gendisk *blk_alloc_disk(int unused)
 	}
 	disk->part0 = bdev;
 	disk->part0->bd_disk = disk;
+
+	q->logical_block_size = 512;
+	q->limits.max_hw_sectors = DRBD_MAX_BIO_SIZE >> 9;
 
 	return disk;
 }
@@ -3110,12 +3114,6 @@ void delete_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
 
-	if (bdev->bdflush_thread != NULL) {
-		bdev->bdflush_should_run = 0;
-		wake_up(&bdev->bdflush_event);
-		wait_for_completion(&bdev->bdflush_terminated);
-		bdev->bdflush_thread = NULL;
-	}
 	if (bdev->bd_disk) {
 		if (bdev->bd_disk->queue)
 			blk_cleanup_queue(bdev->bd_disk->queue);
@@ -3276,6 +3274,7 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *holder)
 {
 	struct block_device *block_device;
+	struct gendisk *disk;
 	NTSTATUS status;
 	struct _DEVICE_OBJECT *windows_device;
 	struct _FILE_OBJECT *file_object;
@@ -3305,30 +3304,20 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_no_windows_device;
 	}
 
-	block_device = kzalloc(sizeof(struct block_device), GFP_KERNEL);
-	if (block_device == NULL) {
-		printk("could not allocate block_device.\n");
-		err = -ENOMEM;
-		goto out_no_block_device;
-	}
-	block_device->windows_device = windows_device;
-//	block_device->bd_disk = alloc_disk(0);
-	if (!block_device->bd_disk)
+#ifdef DRBD_9_1
+	disk = blk_alloc_disk(NULL, 0);
+#else
+	disk = blk_alloc_disk(0);
+#endif
+	if (disk == NULL)
 	{
-		printk("Failed to allocate gendisk NonPagedMemory\n");
+		printk("Failed to allocate gendisk\n");
 		err = -ENOMEM;
 		goto out_no_disk;
 	}
+	block_device = disk->part0;
 
-	block_device->bd_disk->queue = blk_alloc_queue(0);
-	if (!block_device->bd_disk->queue)
-	{
-		printk("Failed to allocate request_queue NonPagedMemory\n");
-		err = -ENOMEM;
-		goto out_no_queue;
-	}
-	block_device->bd_disk->queue->disk = block_device->bd_disk;
-	block_device->bd_disk->part0 = block_device;
+	block_device->windows_device = windows_device;
 
 	IoInitializeRemoveLock(&block_device->remove_lock, DRBD_TAG, 0, 0);
 	status = IoAcquireRemoveLock(&block_device->remove_lock, NULL);
@@ -3337,16 +3326,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		err = -EBUSY;
 		goto out_remove_lock_error;
 	}
-
-        kref_init(&block_device->kref);
- 
-	block_device->bd_contains = block_device;
-	block_device->bd_parent = NULL;
-
-		/* TODO: not always? */
-	block_device->bd_block_size = 512;
-	block_device->bd_disk->queue->logical_block_size = 512;
-	block_device->bd_disk->queue->limits.max_hw_sectors = DRBD_MAX_BIO_SIZE >> 9;
 
 	block_device->file_object = file_object;
 	block_device->is_backing_device = true;
@@ -3360,26 +3339,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	}
 	block_device->path_to_device = path_to_device;
 
-	init_waitqueue_head(&block_device->bios_event);
-	atomic_set(&block_device->num_bios_pending, 0);
-	atomic_set(&block_device->num_irps_pending, 0);
-
-		/* TODO: these are not used any more? */
-	INIT_LIST_HEAD(&block_device->write_cache);
-	spin_lock_init(&block_device->write_cache_lock);
-
-		/* Corking ... new with 1.1.8 */
-	block_device->corked = false;
-	spin_lock_init(&block_device->cork_spinlock);
-	INIT_LIST_HEAD(&block_device->corked_list);
-
-		/* fail I/O on disk timeout, new in 1.1.9 */
-	spin_lock_init(&block_device->in_flight_bios_lock);
-	INIT_LIST_HEAD(&block_device->in_flight_bios);
-
-	inject_faults(-1, &block_device->inject_on_completion);
-	inject_faults(-1, &block_device->inject_on_request);
-
 	if (check_if_backingdev_contains_filesystem(block_device)) {
 		printk(KERN_ERR "Backing device contains filesystem, refusing to use it.\n");
 		printk(KERN_INFO "You may want to do something like windrbd hide-filesystem <drive-letter-of-backing-dev>\n");
@@ -3391,23 +3350,13 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
 
-/*
- printk("freeing file object ...\n");
-ObDereferenceObject(file_object);
- printk("done\n");
-*/
-
 	return block_device;
 
 out_get_volsize_error:
 	IoReleaseRemoveLock(&block_device->remove_lock, NULL);
 out_remove_lock_error:
-	blk_cleanup_queue(block_device->bd_disk->queue);
-out_no_queue:
-	put_disk(block_device->bd_disk);
+	put_disk(disk);
 out_no_disk:
-	kfree(block_device);
-out_no_block_device:
 	ObDereferenceObject(file_object);
 out_no_windows_device:
 	kfree(path_to_device.Buffer);
@@ -3629,7 +3578,6 @@ int windrbd_create_windows_device(struct block_device *bdev)
 		 * SDDL_DEVOBJ_SYS_ALL_ADM_ALL as the sddl parameter.
 		 */
 
-	// device_type = (bdev->is_disk_device ? FILE_DEVICE_DISK : FILE_DEVICE_UNKNOWN);
 	device_type = FILE_DEVICE_DISK;
 
 	status = IoCreateDevice(mvolDriverObject, 

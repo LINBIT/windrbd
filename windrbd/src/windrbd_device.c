@@ -1949,7 +1949,7 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 
 	for_each_resource(resource, &drbd_resources) {
 		idr_for_each_entry(&resource->devices, drbd_device, vnr) {
-			if (drbd_device && drbd_device->vdisk && drbd_device->vdisk->part0 && !drbd_device->vdisk->part0->delete_pending && drbd_device->vdisk->part0->windows_device != NULL && drbd_device->vdisk->part0->is_disk_device && !drbd_device->vdisk->part0->ejected) {
+			if (drbd_device && drbd_device->vdisk && drbd_device->vdisk->part0 && !drbd_device->vdisk->part0->delete_pending && drbd_device->vdisk->part0->windows_device != NULL && !drbd_device->vdisk->part0->ejected) {
 				if (count < max && array != NULL) {
 					array[count] = drbd_device->vdisk->part0->windows_device;
 					ObReferenceObject(drbd_device->vdisk->part0->windows_device);
@@ -2545,11 +2545,11 @@ dbg("Returned string is %S\n", string);
 		 * Update: we get a PNP BSOD on drbdadm down ...
 		 */
 
-			if (bdev == NULL || !bdev->is_disk_device || bdev->about_to_delete || bdev->ejected) {
+			if (bdev == NULL || bdev->about_to_delete || bdev->ejected) {
 				if (bdev == NULL) {
 					dbg("1 bdev is NULL not doing anything.\n");
 				} else {
-					dbg("Reasons: !bdev->is_disk_device %d bdev->about_to_delete %d bdev->ejected %d\n", !bdev->is_disk_device, bdev->about_to_delete, bdev->ejected);
+					dbg("Reasons: bdev->about_to_delete %d bdev->ejected %d\n", bdev->about_to_delete, bdev->ejected);
 				}
 
 /* Do not change the status field. Driver verifier complains */
