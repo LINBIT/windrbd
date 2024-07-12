@@ -212,7 +212,7 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *dev)
 {
 	g->BytesPerSector = dev->bd_block_size;
-	g->Cylinders.QuadPart = dev->d_size / dev->bd_block_size / 255 / 63;
+	g->Cylinders.QuadPart = dev->bd_inode->i_size / dev->bd_block_size / 255 / 63;
 	g->TracksPerCylinder = 255;
 	g->SectorsPerTrack = 63;
 	g->MediaType = FixedMedia;
@@ -221,7 +221,7 @@ static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *d
 static void fill_partition_info(struct _PARTITION_INFORMATION *p, struct block_device *dev)
 {
 	p->StartingOffset.QuadPart = 0;
-	p->PartitionLength.QuadPart = dev->d_size;
+	p->PartitionLength.QuadPart = dev->bd_inode->i_size;
 	p->HiddenSectors = 0;
 	p->PartitionNumber = 1;
 	p->PartitionType = PARTITION_ENTRY_UNUSED;
@@ -234,7 +234,7 @@ static void fill_partition_info_ex(struct _PARTITION_INFORMATION_EX *p, struct b
 {
 	p->PartitionStyle = PARTITION_STYLE_MBR;
 	p->StartingOffset.QuadPart = 0;
-	p->PartitionLength.QuadPart = dev->d_size;
+	p->PartitionLength.QuadPart = dev->bd_inode->i_size;
 	p->PartitionNumber = 1;
 	p->RewritePartition = FALSE;
 	p->Mbr.PartitionType = PARTITION_EXTENDED;
@@ -706,7 +706,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 
 		struct _DISK_GEOMETRY_EX *g = irp->AssociatedIrp.SystemBuffer;
 		fill_drive_geometry(&g->Geometry, dev);
-		g->DiskSize.QuadPart = dev->d_size;
+		g->DiskSize.QuadPart = dev->bd_inode->i_size;
 		g->Data[0] = 0;
 
 		irp->IoStatus.Information = sizeof(struct _DISK_GEOMETRY_EX);
@@ -719,7 +719,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		}
 
 		struct _GET_LENGTH_INFORMATION *l = irp->AssociatedIrp.SystemBuffer;
-		l->Length.QuadPart = dev->d_size;
+		l->Length.QuadPart = dev->bd_inode->i_size;
 		irp->IoStatus.Information = sizeof(struct _GET_LENGTH_INFORMATION);
 		break;
 
@@ -1525,13 +1525,13 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		printk("Attempt to write when not Primary\n");
 		return STATUS_INVALID_PARAMETER;
 	}
-	if (sector * dev->bd_block_size >= dev->d_size) {
-		dbg("Attempt to read past the end of the device: dev->bd_block_size is %d sector is %lld (%llu) byte offset is %lld (%llu) dev->d_size is %lld rw is %s\n", dev->bd_block_size, sector, sector, sector * dev->bd_block_size, sector * dev->bd_block_size, dev->d_size, rw == WRITE ? "WRITE" : "READ");
+	if (sector * dev->bd_block_size >= dev->bd_inode->i_size) {
+		dbg("Attempt to read past the end of the device: dev->bd_block_size is %d sector is %lld (%llu) byte offset is %lld (%llu) dev->bd_inode->i_size is %lld rw is %s\n", dev->bd_block_size, sector, sector, sector * dev->bd_block_size, sector * dev->bd_block_size, dev->bd_inode->i_size, rw == WRITE ? "WRITE" : "READ");
 		return STATUS_INVALID_PARAMETER;
 	}
-	if (sector * dev->bd_block_size + total_size > dev->d_size) {
+	if (sector * dev->bd_block_size + total_size > dev->bd_inode->i_size) {
 		dbg("Attempt to read past the end of the device, request shortened\n");
-		total_size = dev->d_size - sector * dev->bd_block_size; 
+		total_size = dev->bd_inode->i_size - sector * dev->bd_block_size; 
 	}
 	if (total_size == 0) {
 		printk("I/O request of size 0.\n");
@@ -3117,9 +3117,9 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 				dbg("Got size now, proceeding with I/O request\n");
 
 				if (!bdev->powering_down && !bdev->delete_pending && !shutting_down)  {
-					if (bdev->d_size > 0) {
-						dbg("block device size is %lld\n", bdev->d_size);
-						d_size = bdev->d_size;
+					if (bdev->bd_inode->i_size > 0) {
+						dbg("block device size is %lld\n", bdev->bd_inode->i_size);
+						d_size = bdev->bd_inode->i_size;
 					} else {
 						dbg("Warning: block device size still not known yet.\n");
 					}
@@ -3189,14 +3189,14 @@ static void fake_partition_table(struct block_device *bdev)
 	memcpy(partition_table, partition_table_template, partition_table_template_size);
 
 		/* Boot sector. MBR style - present disk as one big partition */
-	*(uint32_t*)(partition_table+0x1ca) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
+	*(uint32_t*)(partition_table+0x1ca) = (bdev->bd_inode->i_size/512)+bdev->data_shift+bdev->appended_sectors-1;
 		/* TODO: we assume that CPU is little endian here ... */
-	*(uint64_t*)(partition_table+0x220) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
-	*(uint64_t*)(partition_table+0x230) = (bdev->d_size/512)+bdev->data_shift-1;
+	*(uint64_t*)(partition_table+0x220) = (bdev->bd_inode->i_size/512)+bdev->data_shift+bdev->appended_sectors-1;
+	*(uint64_t*)(partition_table+0x230) = (bdev->bd_inode->i_size/512)+bdev->data_shift-1;
 	if (old_partition_size != 0) {
 		*(uint64_t*)(partition_table+0x428) = old_partition_size;
 	} else {
-		*(uint64_t*)(partition_table+0x428) = (bdev->d_size/512)+bdev->data_shift-1;
+		*(uint64_t*)(partition_table+0x428) = (bdev->bd_inode->i_size/512)+bdev->data_shift-1;
 	}
 
 	memcpy(partition_table+0x238, my_disk_guid, 16);
@@ -3253,7 +3253,7 @@ int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct b
 		return 0;
 
 		/* Also if we don't exist yet, do nothing */
-	if (bdev->d_size <= 0)
+	if (bdev->bd_inode->i_size <= 0)
 		return 0;
 
 	if (!bdev->have_read_bootsector) {
@@ -3306,7 +3306,7 @@ int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct b
 
 void windrbd_device_size_change(struct block_device *bdev)
 {
-        if (bdev->d_size > 0) {
+        if (bdev->bd_inode->i_size > 0) {
                 printk("got a valid size, unblocking SCSI capacity requests.\n");
                 KeSetEvent(&bdev->capacity_event, 0, FALSE);
 
@@ -3324,7 +3324,7 @@ bool set_capacity_and_notify(struct gendisk *disk, sector_t size)
 {
 	struct block_device *bdev = disk->part0;
 
-	bdev->d_size = size << 9;
+	bdev->bd_inode->i_size = size << 9;
 	windrbd_device_size_change(bdev);
 
 	if (size <= 0)
@@ -3554,7 +3554,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 			if (sector_count > 0) {
 				int64_t num_sectors = sector_count;
-				int64_t excess_sectors = (start_sector + num_sectors) - ((bdev->d_size/512) + bdev->data_shift);
+				int64_t excess_sectors = (start_sector + num_sectors) - ((bdev->bd_inode->i_size/512) + bdev->data_shift);
 				if (excess_sectors > 0) {
 					num_sectors -= excess_sectors;
 				}
@@ -3578,8 +3578,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				}
 			}
 			if (sector_count > 0) {
-				sector_t first_backup_sector = bdev->data_shift+bdev->d_size/512;
-				sector_t last_sector = bdev->data_shift+bdev->d_size/512 + bdev->appended_sectors;
+				sector_t first_backup_sector = bdev->data_shift+bdev->bd_inode->i_size/512;
+				sector_t last_sector = bdev->data_shift+bdev->bd_inode->i_size/512 + bdev->appended_sectors;
 				if (start_sector >= first_backup_sector) {
 					if (start_sector + sector_count > last_sector) {
 						printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
@@ -3632,7 +3632,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			if (bdev->is_bootdevice) {
 				d_size = wait_for_size(device);
 			} else {
-				d_size = bdev->d_size;
+				d_size = bdev->bd_inode->i_size;
 			}
 			d_size += (bdev->data_shift + bdev->appended_sectors) * 512;
 
@@ -3669,7 +3669,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			if (bdev->is_bootdevice) {
 				d_size = wait_for_size(device);
 			} else {
-				d_size = bdev->d_size;
+				d_size = bdev->bd_inode->i_size;
 			}
 			d_size += (bdev->data_shift + bdev->appended_sectors) * 512;
 

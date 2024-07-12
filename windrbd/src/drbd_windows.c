@@ -2837,16 +2837,25 @@ int add_disk(struct gendisk *disk)
 struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 {
 	struct block_device *block_device;
+	struct inode *inode;
 
 	if (partno > 0) {
 		printk("bdev_alloc: we do not support partitions (partno must be 0)\n");
 		return NULL;
 	}
-	block_device = kzalloc(sizeof(struct block_device), GFP_KERNEL);
+	block_device = kzalloc(sizeof(*block_device), GFP_KERNEL);
 	if (block_device == NULL)
 		return NULL;
 
+	inode = kzalloc(sizeof(*inode), GFP_KERNEL);
+	if (inode == NULL) {
+		kfree(block_device);
+		return NULL;
+	}
+	inode->i_size = 0;
+
 	kref_init(&block_device->kref);
+	block_device->bd_inode = inode;
 
 	/* TODO: not used? */
 	block_device->bd_contains = block_device;
@@ -3331,8 +3340,8 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 	block_device->is_backing_device = true;
 
 	mutex_init(&block_device->vol_size_mutex);
-	block_device->d_size = windrbd_get_volsize(block_device);
-	if (block_device->d_size == -1) {
+	block_device->bd_inode->i_size = windrbd_get_volsize(block_device);
+	if (block_device->bd_inode->i_size == (loff_t)-1) {
 		printk(KERN_ERR "Cannot get volsize.\n");
 		err = -EINVAL;
 		goto out_get_volsize_error;
@@ -3456,16 +3465,16 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
 		if (d_size == -1)
 			printk(KERN_WARNING "Warning: could not get size of backing device\n");
 		else {
-			if (bdev->d_size != d_size) {
+			if (bdev->bd_inode->i_size != d_size) {
 				if (windrbd_rescan_bus() < 0)
 					printk(KERN_WARNING "Warning: Size changed but couldn't rescan WinDRBD bus device\n");
-				printk(KERN_INFO "Block device size changed from %lld to %lld\n", bdev->d_size, d_size);
-				bdev->d_size = d_size;
+				printk(KERN_INFO "Block device size changed from %lld to %lld\n", bdev->bd_inode->i_size, d_size);
+				bdev->bd_inode->i_size = d_size;
 			}
 		}
 	}
 
-	return bdev->d_size >> 9;
+	return bdev->bd_inode->i_size >> 9;
 }
 
 sector_t get_capacity(struct gendisk *disk)
