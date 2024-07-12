@@ -3318,6 +3318,7 @@ void windrbd_device_size_change(struct block_device *bdev)
                 printk("Size set to 0, am I Diskless/Unconnected?\n");
                 KeClearEvent(&bdev->capacity_event);
         }
+	bdev->bd_nr_sectors = bdev->bd_inode->i_size / bdev->bd_block_size;
 }
 
 bool set_capacity_and_notify(struct gendisk *disk, sector_t size)
