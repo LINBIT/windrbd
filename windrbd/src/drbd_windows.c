@@ -3355,6 +3355,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		err = -EINVAL;
 		goto out_get_volsize_error;
 	}
+	block_device->bd_nr_sectors = block_device->bd_inode->i_size / block_device->bd_block_size;
 	block_device->path_to_device = path_to_device;
 
 	if (check_if_backingdev_contains_filesystem(block_device)) {
@@ -3364,7 +3365,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_get_volsize_error;
 	}
 
-	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p.\n", block_device, block_device->windows_device);
+	printk(KERN_DEBUG "blkdev_get_by_path succeeded %p windows_device %p size is %lld sectors\n", block_device, block_device->windows_device, block_device->bd_nr_sectors);
 
 	list_add(&block_device->backing_devices_list, &backing_devices);
 
