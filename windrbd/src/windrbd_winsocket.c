@@ -400,11 +400,8 @@ static NTSTATUS SendPageCompletionRoutine(struct _DEVICE_OBJECT	*DeviceObject, s
 	FreeWskBuffer(completion->wsk_buffer, may_printk);
 
 		/* To avoid unmapping the page again in free_bio(). */
-	if (completion->page) {
+	if (completion->page)
 		completion->page->is_unmapped = 1;
-		if (may_printk)
-			dbg("Avoiding page %p to be unmapped twice.\n", completion->page);
-	}
 
 	kfree(completion->wsk_buffer);
 
