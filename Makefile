@@ -1,5 +1,8 @@
-# default: package-in-docker
-default: windrbd.sys
+DEFAULT ?= package-in-docker
+
+default: $(DEFAULT)
+
+# default: windrbd.sys
 # If you have your dev env set up on the host you can try
 # to build without docker container: to set it up the
 # contents of the docker-root/Dockerfile might be useful.
