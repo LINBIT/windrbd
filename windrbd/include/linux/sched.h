@@ -7,7 +7,6 @@
 #include <linux/rcupdate.h>
 #include <asm/current.h>
 #include <asm/signal.h>
-// #include <windrbd.h>
 
 #define TASK_COMM_LEN 32
 

@@ -44,7 +44,7 @@ extern PDRIVER_OBJECT		mvolDriverObject;
 extern PDEVICE_OBJECT		drbd_bus_device;
 extern PDEVICE_OBJECT		drbd_physical_bus_device;
 
-extern int drbd_init(void);
+// extern int drbd_init(void);
 
 extern void init_windrbd(void);
 
@@ -138,7 +138,7 @@ int set_driver_locked_state(int state);
 
 /* drbd_main.c: TODO: into some another header */
 struct drbd_device;
-extern int try_to_promote(struct drbd_device *device, long timeout, bool ndelay);
+// extern int try_to_promote(struct drbd_device *device, long timeout, bool ndelay);
 
 extern ULONG_PTR crc32(const char *s, size_t len);
 
@@ -147,5 +147,45 @@ extern ULONG_PTR crc32(const char *s, size_t len);
 unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base);
 int my_atoi(const char *c);
 
+/* Thread functions */
+
+NTSTATUS windrbd_create_windows_thread(void (*threadfn)(void*), void *data, void **thread_object_p);
+NTSTATUS windrbd_cleanup_windows_thread(void *thread_object);
+
+void init_windrbd_threads(void);
+
+	/* Currently called by reply_reaper, see netlink code */
+void windrbd_reap_threads(void);
+
+	/* This waits forever, only use this on driver unload */
+void windrbd_reap_all_threads(void);
+
+struct task_struct* windrbd_find_thread(PKTHREAD id);
+
+        /* Use this to create a task_struct for a Windows thread
+         * This is needed so we can call wait_event_XXX functions
+         * within those threads.
+         */
+
+struct task_struct *make_me_a_windrbd_thread(const char *name, ...);
+
+        /* Call this when a thread returns to the calling Windows
+         * kernel function.
+         */
+
+void return_to_windows(struct task_struct *t);
+
+/* Non-zero if thread is created via the Linux emulation layer (this
+ * file).
+ */
+
+bool is_windrbd_thread(struct task_struct *t);
+
+/* Set realtime priority. Used for asender */
+
+void windrbd_set_realtime_priority(struct task_struct *t);
+
+/* Become super user */
+void sudo(void);
 
 #endif

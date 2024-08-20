@@ -378,9 +378,6 @@ int windrbd_create_windows_device(struct block_device *bdev);
 int windrbd_mount(struct block_device *dev);
 int windrbd_umount(struct block_device *dev);
 
-int windrbd_become_primary(struct drbd_device *device, const char **err_str);
-int windrbd_become_secondary(struct drbd_device *device, const char **err_str);
-
 int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_point);
 bool windrbd_has_mount_point(struct block_device *dev);
 
