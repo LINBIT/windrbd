@@ -135,6 +135,9 @@ static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _I
 
 #define wait_for_becoming_primary(bdev) wait_for_becoming_primary_debug(bdev, __FILE__, __LINE__, __func__)
 
+	/* See drbd_main.c: must patch this to non-static */
+extern int try_to_promote(struct drbd_device *device, long timeout, bool ndelay);
+
 static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const char *file, int line, const char *func)
 {
 	NTSTATUS status;
