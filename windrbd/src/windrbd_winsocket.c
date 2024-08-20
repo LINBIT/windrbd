@@ -1,5 +1,5 @@
 ﻿/* Uncomment this if you want more debug output (disable for releases) */
-#define DEBUG 1
+// #define DEBUG 1
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -94,6 +94,9 @@ static int winsock_to_linux_error(NTSTATUS status)
 		return -ECONNREFUSED;
 	case STATUS_ACCESS_DENIED:  /* returned when port is blocked by firewall, retry again later */
 		printk("Got STATUS_ACCESS_DENIED, please check your firewall settings\n");
+		return -EAGAIN;
+	case STATUS_LOCAL_DISCONNECT: /* Sent by ReactOS on connection timeout */
+		printk("Got STATUS_LOCAL_DISCONNECT, retrying ...\n");
 		return -EAGAIN;
 	default:
 		printk("Unknown status %x, returning -EIO.\n", status);
