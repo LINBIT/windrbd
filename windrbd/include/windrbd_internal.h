@@ -25,6 +25,7 @@
 #include <linux/types.h>
 #include <linux/blk_types.h>
 #include <windrbd/windrbd_ioctl.h>
+#include <windrbd.h>
 
 extern NTSTATUS mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject);
 
@@ -96,7 +97,6 @@ void windrbd_init_boot_device(void);
  */
 // int __cdecl _snwprintf(wchar_t *_Dest,size_t _Count,const wchar_t *_Format,...);
 
-int windrbd_rescan_bus(void);
 void windrbd_bus_is_ready(void);
 int windrbd_wait_for_bus_object(void);
 
