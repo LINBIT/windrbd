@@ -2109,7 +2109,8 @@ dbg_bus("NOT completing IRP\n");
 		return status; /* must not do IoCompleteRequest */
 			/* This is done (?) in IoCallDriver */
 
-#ifdef REACTOS
+// #ifdef REACTOS
+#if 1
 	case IRP_MN_QUERY_ID:
 	{
 		wchar_t *string;
@@ -2339,10 +2340,15 @@ exit:
 		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 	} else {
+/*
 		IoCopyCurrentIrpStackLocationToNext(irp);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status != STATUS_SUCCESS)
 			dbg_bus("Warning: lower device returned status %x\n", status);
+*/
+		irp->IoStatus.Status = STATUS_NOT_IMPLEMENTED;
+		IoCompleteRequest(irp, IO_NO_INCREMENT);
+		status = STATUS_NOT_IMPLEMENTED;
 	}
 
 	num_pnp_bus_requests--;
