@@ -2922,9 +2922,11 @@ int add_disk(struct gendisk *disk)
 		/* disk->first_minor is the minor ... */
 	dev_t minor = disk->first_minor;
 	struct block_device *bdev = disk->part0;
+	int err;
 
-	if (minor_to_windows_device_name(&bdev->path_to_device, minor, 0) < 0)
-		return -ENOMEM;
+	err = minor_to_windows_device_name(&bdev->path_to_device, minor, 0);
+	if (err < 0)
+		return err;
 
 	bdev->minor = minor;
 
