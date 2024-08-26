@@ -560,8 +560,6 @@ void remove_page_from_all_pages(struct page *p)
 
 struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, int line, const char *func)
 {
-	KIRQL irql;
-
 		/* Round up to the next PAGE_SIZE */
 
 	BUG_ON(size==0);
@@ -2840,10 +2838,98 @@ void blk_cleanup_queue(struct request_queue *q)
 	kfree(q);
 }
 
+/* Space is allocated by this function and must be freed by the
+   caller.
+ */
+
+static int minor_to_windows_device_name(UNICODE_STRING *name, int minor, int dos_device)
+{
+	NTSTATUS status;
+	size_t len = 32;
+
+	name->Buffer = kmalloc(len * sizeof(name->Buffer[0]), GFP_KERNEL);
+
+	if (name->Buffer == NULL) {
+		printk("couldn't allocate memory for name buffer\n");
+		return -ENOMEM;
+	}
+	name->Length = 0;
+	name->MaximumLength = (len - 1) * sizeof(name->Buffer[0]);
+
+	if (dos_device)
+		status = RtlUnicodeStringPrintf(name, L"\\DosDevices\\Drbd%d", minor);
+	else
+		status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
+
+	if (status != STATUS_SUCCESS) {
+		printk("minor_to_dos_name: couldn't printf device name for minor %d status: %x\n", minor, status);
+
+		kfree(name->Buffer);
+		return -EINVAL;
+	}
+	name->Buffer[name->Length / sizeof(name->Buffer[0])] = 0;
+
+	return 0;
+}
+
+static int create_dos_link(struct block_device *dev)
+{
+	NTSTATUS status;
+	UNICODE_STRING dos_name;
+
+	if (minor_to_windows_device_name(&dos_name, dev->drbd_device->minor, 1) < 0) {
+		printk("Warning: could not create DOS filename\n");
+		return -1;
+	}
+
+	status = IoCreateSymbolicLink(&dos_name, &dev->path_to_device);
+	if (status != STATUS_SUCCESS) {
+		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, dos_name.Buffer, status);
+		kfree(dos_name.Buffer);
+		return -1;
+	}
+	printk("Created symlink from %S to %S\n", dos_name.Buffer, dev->path_to_device.Buffer);
+	kfree(dos_name.Buffer);
+
+	return 0;
+}
+
+static int remove_dos_link(struct block_device *dev)
+{
+	NTSTATUS status;
+	UNICODE_STRING dos_name;
+
+	if (minor_to_windows_device_name(&dos_name, dev->drbd_device->minor, 1) < 0) {
+		printk("Warning: could not create DOS filename\n");
+		return -1;
+	}
+
+	status = IoDeleteSymbolicLink(&dos_name);
+	if (status != STATUS_SUCCESS) {
+		printk("windrbd_mount: couldn't remove symlink %S status: %x\n", dos_name.Buffer, status);
+		kfree(dos_name.Buffer);
+		return -1;
+	}
+	printk("Removed symlink from %S to %S\n", dos_name.Buffer, dev->path_to_device.Buffer);
+	kfree(dos_name.Buffer);
+
+	return 0;
+}
+
 int add_disk(struct gendisk *disk)
 {
-		/* disk->first_minor is the minor ... */
 		/* TODO: add the disk to some registry ... */
+		/* disk->first_minor is the minor ... */
+	dev_t minor = disk->first_minor;
+	struct block_device *bdev = disk->part0;
+
+	if (minor_to_windows_device_name(&bdev->path_to_device, minor, 0) < 0)
+		return -ENOMEM;
+
+	bdev->minor = minor;
+
+	printk(KERN_INFO "Assigned name to block device %S (minor %d).\n", bdev->path_to_device.Buffer, minor);
+
 	return 0;
 }
 
@@ -3500,91 +3586,14 @@ sector_t get_capacity(struct gendisk *disk)
 	return 0;
 }
 
-/* Space is allocated by this function and must be freed by the
-   caller.
- */
-
-static int minor_to_windows_device_name(UNICODE_STRING *name, int minor, int dos_device)
-{
-	NTSTATUS status;
-	size_t len = 32;
-
-	name->Buffer = kmalloc(len * sizeof(name->Buffer[0]), GFP_KERNEL);
-
-	if (name->Buffer == NULL) {
-		printk("couldn't allocate memory for name buffer\n");
-		return -ENOMEM;
-	}
-	name->Length = 0;
-	name->MaximumLength = (len - 1) * sizeof(name->Buffer[0]);
-
-	if (dos_device)
-		status = RtlUnicodeStringPrintf(name, L"\\DosDevices\\Drbd%d", minor);
-	else
-		status = RtlUnicodeStringPrintf(name, L"\\Device\\Drbd%d", minor);
-
-	if (status != STATUS_SUCCESS) {
-		printk("minor_to_dos_name: couldn't printf device name for minor %d status: %x\n", minor, status);
-
-		kfree(name->Buffer);
-		return -EINVAL;
-	}
-	name->Buffer[name->Length / sizeof(name->Buffer[0])] = 0;
-
-	return 0;
-}
-
-static int create_dos_link(struct block_device *dev)
-{
-	NTSTATUS status;
-	UNICODE_STRING dos_name;
-
-	if (minor_to_windows_device_name(&dos_name, dev->drbd_device->minor, 1) < 0) {
-		printk("Warning: could not create DOS filename\n");
-		return -1;
-	}
-
-	status = IoCreateSymbolicLink(&dos_name, &dev->path_to_device);
-	if (status != STATUS_SUCCESS) {
-		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, dos_name.Buffer, status);
-		kfree(dos_name.Buffer);
-		return -1;
-	}
-	printk("Created symlink from %S to %S\n", dos_name.Buffer, dev->path_to_device.Buffer);
-	kfree(dos_name.Buffer);
-
-	return 0;
-}
-
-static int remove_dos_link(struct block_device *dev)
-{
-	NTSTATUS status;
-	UNICODE_STRING dos_name;
-
-	if (minor_to_windows_device_name(&dos_name, dev->drbd_device->minor, 1) < 0) {
-		printk("Warning: could not create DOS filename\n");
-		return -1;
-	}
-
-	status = IoDeleteSymbolicLink(&dos_name);
-	if (status != STATUS_SUCCESS) {
-		printk("windrbd_mount: couldn't remove symlink %S status: %x\n", dos_name.Buffer, status);
-		kfree(dos_name.Buffer);
-		return -1;
-	}
-	printk("Removed symlink from %S to %S\n", dos_name.Buffer, dev->path_to_device.Buffer);
-	kfree(dos_name.Buffer);
-
-	return 0;
-}
-
-
 int windrbd_create_windows_device(struct block_device *bdev)
 {
         PDEVICE_OBJECT new_device;
 	struct block_device_reference *bdev_ref;
 	NTSTATUS status;
 	DEVICE_TYPE device_type;
+        /* struct drbd_device *device = bdev->bd_disk->private_data; */
+	/* dev_t minor = bdev->bd_disk->first_minor; */
 
 	if (bdev->windows_device != NULL)
 		printk(KERN_WARNING "Warning: block device %p already has a windows device (%p)\n", bdev, bdev->windows_device);
