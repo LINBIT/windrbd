@@ -34,7 +34,8 @@
 /* less verbose, used to debug bus device being deleted
  * right after creation.
  */
-// #define DEBUG_BUS 1
+#define DEBUG_BUS 1
+#define DEBUG 1
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -111,6 +112,8 @@ static int about_to_unload_driver;	/* Driver will soon unload so
 
 static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+
 	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
 		dbg(KERN_DEBUG "DRBD root device request not implemented: MajorFunction: 0x%x\n", s->MajorFunction);
 
@@ -771,7 +774,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 		}
 	/* TODO: this ioctl still needed? */
 //		struct _SET_PARTITION_INFORMATION *pi = irp->AssociatedIrp.SystemBuffer;
-		dbg(KERN_INFO "Request to set partition type to %x\n", pi->PartitionType);
+//		dbg(KERN_INFO "Request to set partition type to %x\n", pi->PartitionType);
 		irp->IoStatus.Information = 0;
 		break;
 
