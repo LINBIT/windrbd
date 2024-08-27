@@ -14,6 +14,7 @@
 #include <linux/array_size.h>
 #include <linux/delay.h>
 #include <windrbd_internal.h>
+#include <kmalloc_debug.h>
 
 #define DESC_SIZE 64
 #define FUNC_SIZE 32
@@ -257,3 +258,16 @@ void shutdown_kmalloc_debug(void)
 {
 	dump_memory_allocations(1);
 }
+
+/* These are intended to enable calling functions from within gdb */
+
+void *malloc(size_t size)
+{
+	return kmalloc(size, GFP_KERNEL);
+}
+
+void free(void *p)
+{
+	return kfree(p);
+}
+
