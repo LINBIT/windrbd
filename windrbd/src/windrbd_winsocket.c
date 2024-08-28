@@ -199,8 +199,10 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *
 
 	/* See https://stackoverflow.com/questions/7244645/porting-vcs-try-except-exception-stack-overflow-to-mingw: */
 
+/* TODO: this should be some special calling convention ... ? */
 long ehandler(EXCEPTION_POINTERS *pointers)
 {
+DbgPrint("In ehandler pointers are %p...\n", pointers);
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -229,23 +231,29 @@ static NTSTATUS InitWskBuffer(
 		probe_and_lock_failed = 0;
 		__try1(ehandler) {
 			MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
+			__asm__ goto ( "jmp %l[ok]\n" :::: ok);
 		}
 		__except1 {
+DbgPrint("in exception\n");
 			probe_and_lock_failed = 1;
 		}
 
 		if (probe_and_lock_failed == 0) {
+ok:
                         if (may_printk && retries > 0)
                                 printk("succeeded after %d retries\n", retries);
 			break;
 		}
+DbgPrint("no success\n");
 		if (may_printk && retries % 10 == 0)
 			printk(KERN_ERR "MmProbeAndLockPages failed, retrying ...\n");
 
                 if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
+DbgPrint("can't sleep\n");
                         if (may_printk && retries == 0)
                                 printk("cannot sleep now, busy looping\n");
                 } else {
+DbgPrint("sleeping\n");
                         msleep(100);
                 }
                 retries++;
