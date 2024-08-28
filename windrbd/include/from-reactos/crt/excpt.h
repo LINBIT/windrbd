@@ -125,6 +125,8 @@ typedef enum _EXCEPTION_DISPOSITION
   typedef PEXCEPTION_REGISTRATION PEXCEPTION_REGISTRATION_RECORD;
 #endif
 
+#endif // 0
+
 #if (defined(_X86_) && !defined(__x86_64))
 #define __try1(pHandler) \
   __asm__ ("pushl %0;pushl %%fs:0;movl %%esp,%%fs:0;" : : "g" (pHandler));
@@ -143,8 +145,6 @@ typedef enum _EXCEPTION_DISPOSITION
 #define __try1(pHandler)
 #define __except1
 #endif
-
-#endif // 0
 
 #ifdef __cplusplus
 }

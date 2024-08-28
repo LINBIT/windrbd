@@ -17,6 +17,7 @@
 #include <linux/delay.h>
 #include <linux/rwlock.h>
 #include <linux/kthread.h>
+#include <excpt.h>
 
 #include <wsk.h>
 
@@ -196,6 +197,13 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *
 	return irp;
 }
 
+	/* See https://stackoverflow.com/questions/7244645/porting-vcs-try-except-exception-stack-overflow-to-mingw: */
+
+long ehandler(EXCEPTION_POINTERS *pointers)
+{
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
 static NTSTATUS InitWskBuffer(
 	__in  PVOID		Buffer,
 	__in  ULONG		BufferSize,
@@ -205,7 +213,6 @@ static NTSTATUS InitWskBuffer(
 )
 {
 	int probe_and_lock_failed;
-	int the_exception_code;
 	int retries;
 	NTSTATUS Status = STATUS_SUCCESS;
 
@@ -218,29 +225,22 @@ static NTSTATUS InitWskBuffer(
 	}
 
 	retries = 0;
-	the_exception_code = 0;
 	while (1) {
 		probe_and_lock_failed = 0;
-/* TODO: this will be __seh_something soon ... */
-#ifdef CONFIG_HAVE_TRY
-		try {
-#endif
-	// DW-1223: Locking with 'IoWriteAccess' affects buffer, which causes infinite I/O from ntfs when the buffer is from mdl of write IRP.
-	// we need write access for receiver, since buffer will be filled.
+		__try1(ehandler) {
 			MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
-#ifdef CONFIG_HAVE_TRY
-		} except(EXCEPTION_EXECUTE_HANDLER) {
-			probe_and_lock_failed = 1;
-			the_exception_code = GetExceptionCode();
 		}
-#endif
+		__except1 {
+			probe_and_lock_failed = 1;
+		}
+
 		if (probe_and_lock_failed == 0) {
                         if (may_printk && retries > 0)
                                 printk("succeeded after %d retries\n", retries);
 			break;
 		}
 		if (may_printk && retries % 10 == 0)
-			printk(KERN_ERR "MmProbeAndLockPages failed. exception code=0x%x, retrying ...\n", the_exception_code);
+			printk(KERN_ERR "MmProbeAndLockPages failed, retrying ...\n");
 
                 if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
                         if (may_printk && retries == 0)
