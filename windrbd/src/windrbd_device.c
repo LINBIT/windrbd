@@ -34,8 +34,9 @@
 /* less verbose, used to debug bus device being deleted
  * right after creation.
  */
+/*
 #define DEBUG_BUS 1
-#define DEBUG 1
+*/
 
 #ifdef RELEASE
 #ifdef DEBUG
@@ -3726,7 +3727,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		}
 
 		default:
-			dbg("SCSI OP %x not supported\n", cdb->AsByte[0]);
+			printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
 			status = STATUS_NOT_IMPLEMENTED;
 		}
 		break;
