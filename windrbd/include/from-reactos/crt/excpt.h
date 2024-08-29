@@ -125,10 +125,7 @@ typedef enum _EXCEPTION_DISPOSITION
   typedef PEXCEPTION_REGISTRATION PEXCEPTION_REGISTRATION_RECORD;
 #endif
 
-#endif // 0
-
 #if (defined(_X86_) && !defined(__x86_64))
-karin lebt schon
 #define __try1(pHandler) \
   __asm__ ("pushl %0;pushl %%fs:0;movl %%esp,%%fs:0;" : : "g" (pHandler));
 
@@ -136,32 +133,18 @@ karin lebt schon
   __asm__ ("movl (%%esp),%%eax;movl %%eax,%%fs:0;addl $8,%%esp;" \
   : : : "%eax");
 #elif defined(__x86_64)
-#if 0
-zak lebt nicht
 #define __try1(pHandler) \
   __asm__ ("pushq %0;pushq %%gs:0;movq %%rsp,%%gs:0;" : : "g" (pHandler));
 
 #define	__except1	\
   __asm__ ("movq (%%rsp),%%rax;movq %%rax,%%gs:0;addq $16,%%rsp;" \
   : : : "%rax");
-#endif
-
-#define __try1(pHandler) \
-    __asm__ __volatile__ ("\t.l_startw:\n" \
-    "\t.seh_handler __C_specific_handler, @except\n" \
-    "\t.seh_handlerdata\n" \
-    "\t.long 1\n" \
-    "\t.rva .l_startw, .l_endw, " __MINGW64_STRINGIFY(__MINGW_USYMBOL(pHandler)) " ,.l_endw\n" \
-    "\t.text" \
-    );
-#define __except1 \
-    asm ("\tnop\n" \
-    "\t.l_endw: nop\n");
-
 #else
 #define __try1(pHandler)
 #define __except1
 #endif
+
+#endif // 0
 
 #ifdef __cplusplus
 }
