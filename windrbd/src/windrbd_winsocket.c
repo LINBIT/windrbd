@@ -17,7 +17,7 @@
 #include <linux/delay.h>
 #include <linux/rwlock.h>
 #include <linux/kthread.h>
-#include <excpt.h>
+#include <pseh/pseh2.h>
 
 #include <wsk.h>
 #include <windef.h>
@@ -200,12 +200,14 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *
 
 	/* See https://stackoverflow.com/questions/7244645/porting-vcs-try-except-exception-stack-overflow-to-mingw: */
 
+#if 0
 /* TODO: this should be some special calling convention ... ? */
 long CALLBACK ehandler(EXCEPTION_POINTERS *pointers)
 {
 DbgPrint("In ehandler pointers are %p...\n", pointers);
     return EXCEPTION_EXECUTE_HANDLER;
 }
+#endif
 
 static NTSTATUS InitWskBuffer(
 	__in  PVOID		Buffer,
@@ -230,17 +232,19 @@ static NTSTATUS InitWskBuffer(
 	retries = 0;
 	while (1) {
 		probe_and_lock_failed = 0;
-		__try1(ehandler) {
+		_SEH2_TRY {
+DbgPrint("into MmProbeAndLockPages\n");
 			MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
-			__asm__ goto ( "jmp %l[ok]\n" :::: ok);
+DbgPrint("out of MmProbeAndLockPages\n");
 		}
-		__except1 {
+		_SEH2_EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
 DbgPrint("in exception\n");
 			probe_and_lock_failed = 1;
 		}
+		_SEH2_END;
 
 		if (probe_and_lock_failed == 0) {
-ok:
+DbgPrint("success\n");
                         if (may_printk && retries > 0)
                                 printk("succeeded after %d retries\n", retries);
 			break;

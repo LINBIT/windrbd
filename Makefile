@@ -152,7 +152,7 @@ DEFINES+=-D_WIN64 -DCONFIG_64BIT -D__x86_64
 endif
 
 WINDRBD_INCLUDES=-I"windrbd/include" -I"$(DRBDTMP)/drbd" -I"$(DRBDTMP)/drbd/drbd-headers" -I"$(DRBDTMP)/drbd/drbd-kernel-compat"
-MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk -I$(REACTOS_ROOT)/crt -nostdinc
+MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/lib/pseh/include -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk -I$(REACTOS_ROOT)/crt -nostdinc
 
 DRBD_TMPSRCDIR=$(DRBDTMP)/drbd/
 
