@@ -20,6 +20,7 @@
 #include <excpt.h>
 
 #include <wsk.h>
+#include <windef.h>
 
 #include <windrbd_internal.h>
 
@@ -200,7 +201,7 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *
 	/* See https://stackoverflow.com/questions/7244645/porting-vcs-try-except-exception-stack-overflow-to-mingw: */
 
 /* TODO: this should be some special calling convention ... ? */
-long ehandler(EXCEPTION_POINTERS *pointers)
+long CALLBACK ehandler(EXCEPTION_POINTERS *pointers)
 {
 DbgPrint("In ehandler pointers are %p...\n", pointers);
     return EXCEPTION_EXECUTE_HANDLER;
