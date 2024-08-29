@@ -148,7 +148,7 @@ endif
 DEFINES+=-DBLKDEV_ISSUE_ZEROOUT_EXPORTED=1
 
 ifeq ($(ARCH), x86_64)
-DEFINES+=-D_WIN64 -DCONFIG_64BIT
+DEFINES+=-D_WIN64 -DCONFIG_64BIT -D__x86_64
 endif
 
 WINDRBD_INCLUDES=-I"windrbd/include" -I"$(DRBDTMP)/drbd" -I"$(DRBDTMP)/drbd/drbd-headers" -I"$(DRBDTMP)/drbd/drbd-kernel-compat"
