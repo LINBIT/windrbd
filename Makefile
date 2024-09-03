@@ -187,7 +187,14 @@ LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/kasprintf.c block/genhd.c block/blk-
 # LINUX_SOURCES = lib/kstrtox.c mm/util.c
 LINUX_FILES = $(addprefix $(LINUX_SRCDIR), $(LINUX_SOURCES))
 
-OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) $(patsubst %.c,%.o,$(LINUX_FILES))
+ifeq ($(ARCH), i686)
+SEH_OBJS1 = i386/pseh3_i386.o i386/seh_prolog.o i386/seh.o i386/pseh3.o i386/framebased-gcchack-asm.o i386/framebased-gcchack.o
+endif
+
+SEH_SRCDIR = windrbd/include/from-reactos/lib/pseh/
+SEH_OBJS = $(addprefix $(SEH_SRCDIR), $(SEH_OBJS1))
+
+OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) $(patsubst %.c,%.o,$(LINUX_FILES)) $(SEH_OBJS)
 # OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES))
 
 COFFRES=./windrbd/windrbd-event-log.coffres $(DRBDTMP)/drbd/resource.coffres
@@ -198,6 +205,12 @@ SUPPRESSED_WARNINGS=-Wno-array-bounds -Wno-address-of-packed-member
 CFLAGS_FOR_DRIVERS=-fPIC -fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -mno-stack-arg-probe -fno-strict-aliasing
 LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--file-alignment,0x200 -Wl,--section-alignment,0x1000 -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--exclude-all-symbols -Wl,--entry,$(DRIVER_ENTRY) -nostartfiles -nodefaultlibs -nostdlib -Wl,-Map='windrbd.sys.map'
 
+SEH_INCLUDES=-I$(REACTOS_ROOT)/crt -I$(REACTOS_ROOT)/lib/pseh/include/pseh -I$(REACTOS_ROOT)/asm
+
+CFLAGS_FOR_SEH=-DDBG=1 -DDLL_EXPORT_VERSION=0x502 -DMINGW_HAS_SECURE_API=1 -DUSE_COMPILER_EXCEPTIONS -DWINVER=0x502 -D_CRT_NON_CONFORMING_SWPRINTFS -D_GLIBCXX_HAVE_BROKEN_VSWPRINTF -D_M_IX86 -D_NEW_DELETE_OPERATORS_ -D_SEH_ENABLE_TRACE -D_SETUPAPI_VER=0x502 -D_USE_32BIT_TIME_T -D_USE_PSEH3=1 -D_WIN32_IE=0x600 -D_WIN32_WINDOWS=0x502 -D_WIN32_WINNT=0x502 -D_X86_ -D__REACTOS__ -D__RELFILE__="&__FILE__[__FILE__[0] == '.' ? 3 : 31]" -D__i386__ -Di386  -pipe -fms-extensions -fno-strict-aliasing -fno-common -mlong-double-64 -nostdinc -fno-aggressive-loop-optimizations -Wold-style-declaration -gdwarf-2 -ggdb -march=pentium -mtune=generic -Werror -Wall -Wpointer-arith -Wno-char-subscripts -Wno-multichar -Wno-unused-value -Wno-unused-const-variable -Wno-unused-local-typedefs -Wno-deprecated -Wno-unused-result -Wno-maybe-uninitialized -O1 -fno-optimize-sibling-calls -fno-omit-frame-pointer -mstackrealign -mpreferred-stack-boundary=3 -fno-set-stack-executable -std=gnu99 $(MINGW_INCLUDES) $(SEH_INCLUDES)
+
+ASM_CFLAGS_FOR_SEH=-x assembler-with-cpp -pipe -fms-extensions -fno-strict-aliasing -fno-common -mlong-double-64 -nostdinc -fno-aggressive-loop-optimizations -gdwarf-2 -ggdb -march=pentium -mtune=generic -Werror -Wall -Wpointer-arith -Wno-char-subscripts -Wno-multichar -Wno-unused-value -Wno-unused-const-variable -Wno-unused-local-typedefs -Wno-deprecated -Wno-unused-result -Wno-maybe-uninitialized -O1 -fno-optimize-sibling-calls -fno-omit-frame-pointer -mstackrealign -mpreferred-stack-boundary=3 -fno-set-stack-executable -DDBG=1 -DDLL_EXPORT_VERSION=0x502 -DMINGW_HAS_SECURE_API=1 -DUSE_COMPILER_EXCEPTIONS -DWINVER=0x502 -D_CRT_NON_CONFORMING_SWPRINTFS -D_GLIBCXX_HAVE_BROKEN_VSWPRINTF -D_M_IX86 -D_NEW_DELETE_OPERATORS_ -D_SEH_ENABLE_TRACE -D_SETUPAPI_VER=0x502 -D_USE_32BIT_TIME_T -D_USE_PSEH3=1 -D_WIN32_IE=0x600 -D_WIN32_WINDOWS=0x502 -D_WIN32_WINNT=0x502 -D_X86_ -D__REACTOS__ -D__i386__ -Di386 -D__ASM__ $(MINGW_INCLUDES) $(SEH_INCLUDES)
+
 %.coffres: %.rc
 	$(call run,$(RC) -i $< -o $@ -O coff,RC,$@)
 
@@ -206,6 +219,15 @@ OPTIMIZE=-O2
 endif
 
 CFLAGS=-g -Wall $(SUPPRESSED_WARNINGS) $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
+
+$(SEH_SRCDIR)%.o: $(SEH_SRCDIR)%.c
+	$(CC) $(CFLAGS_FOR_SEH) -c -o $@ $<
+
+$(SEH_SRCDIR)%.o: $(SEH_SRCDIR)%.s
+	$(CC) $(ASM_CFLAGS_FOR_SEH) -c -o $@ $<
+
+$(SEH_SRCDIR)%.o: $(SEH_SRCDIR)%.S
+	$(CC) $(ASM_CFLAGS_FOR_SEH) -c -o $@ $<
 
 %.o: %.c
 	$(call run,$(CC) $(CFLAGS) -c -o $@ $<,CC,$@)
@@ -304,7 +326,7 @@ DRBD_TMP_HEADERS := $(patsubst $(DRBD)%,$(DRBDTMP)%,$(DRBD_HEADERS))
 
 
 # TODO: why not drbd_buildtag? */
-all-dep := $(filter-out $(DRBDTMP)/drbd/drbd_buildtag.d,$(OBJS:%.o=%.d))
+all-dep := $(filter-out $(SEH_SRCDIR)%.d,$(filter-out $(DRBDTMP)/drbd/drbd_buildtag.d,$(OBJS:%.o=%.d)))
 # all-dep := $(OBJS:%.o=%.d)
 
 # Do not delete this intermediate files:
@@ -326,6 +348,8 @@ DEPEND_SCRIPT=\
 		sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 		rm -f $@.$$$$ ; \
 	fi
+
+# $(SEH_SRCDIR)%.d: %(SEH_SRCDIR)%.c
 
 %.d: %.c $(DRBD_TMP_HEADERS)
 	$(call run,$(DEPEND_SCRIPT),DEPEND,$@)
