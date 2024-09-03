@@ -1,6 +1,8 @@
 REACTOS_BUILD=../../output-i686
 REACTOS_ROOT=../..
 
+# TODO: remove this again. SEH library now built by toplevel makefile
+
 MINGW_INCLUDES=-I$(REACTOS_ROOT)/crt -I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/lib/pseh/include -I$(REACTOS_ROOT)/lib/pseh/include/pseh -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk -I$(REACTOS_ROOT)/crt -nostdinc
 
 CFLAGS=-DDBG=1 -DDLL_EXPORT_VERSION=0x502 -DMINGW_HAS_SECURE_API=1 -DUSE_COMPILER_EXCEPTIONS -DWINVER=0x502 -D_CRT_NON_CONFORMING_SWPRINTFS -D_GLIBCXX_HAVE_BROKEN_VSWPRINTF -D_M_IX86 -D_NEW_DELETE_OPERATORS_ -D_SEH_ENABLE_TRACE -D_SETUPAPI_VER=0x502 -D_USE_32BIT_TIME_T -D_USE_PSEH3=1 -D_WIN32_IE=0x600 -D_WIN32_WINDOWS=0x502 -D_WIN32_WINNT=0x502 -D_X86_ -D__REACTOS__ -D__RELFILE__="&__FILE__[__FILE__[0] == '.' ? 3 : 31]" -D__i386__ -Di386  -pipe -fms-extensions -fno-strict-aliasing -fno-common -mlong-double-64 -nostdinc -fno-aggressive-loop-optimizations -Wold-style-declaration -gdwarf-2 -ggdb -march=pentium -mtune=generic -Werror -Wall -Wpointer-arith -Wno-char-subscripts -Wno-multichar -Wno-unused-value -Wno-unused-const-variable -Wno-unused-local-typedefs -Wno-deprecated -Wno-unused-result -Wno-maybe-uninitialized -O1 -fno-optimize-sibling-calls -fno-omit-frame-pointer -mstackrealign -mpreferred-stack-boundary=3 -fno-set-stack-executable -std=gnu99 $(MINGW_INCLUDES)
