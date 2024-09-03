@@ -1,22 +1,28 @@
 Manual patches: best is to create them with git format-patch
 All patches in here are DRBD specific, some might be gcc specific
 
-Done: drbd_main.c and others: locking primitives must be initialized by calling a function.
+TODO: transport_tcp: call windrbd_update_sizes()
+
+Done (but maybe revert): drbd_main.c and others: locking primitives must be initialized by calling a function.
 	Therefore change DEFINE_SPINLOCK to spinlock_t, write an initializer and call it in drbd_init. This already has been done. Review it.
+	Update: if initializing to all zeros we can have the macro
+	and save lots of DRBD patches. Check ReactOS source code
+	for initialation code.
 
-! TODO: drbd_main.c: export drbd_open (and try_to_promote also maybe)
+Done: drbd_main.c: export drbd_open (and try_to_promote also maybe)
+	DRBD open is called via ops. try_to_promote is made non-static
 
-TODO: drbd_main.c: have a drbd_alloc_big_page_chain function
+Rejected: drbd_main.c: have a drbd_alloc_big_page_chain function
 	And call it from drbd_transport_tcp.c. Do not change the
 	signature of drbd_alloc_page_chain()
 
-TODO: GNU extension: drbd_int.h: Patch out __acquire in ({ ... }) macro
+Rejected: GNU extension: drbd_int.h: Patch out __acquire in ({ ... }) macro
 
-TODO: GNU extension: drbd_receiver.c: initializer for union drbd_state cm and lo
+Rejected: GNU extension: drbd_receiver.c: initializer for union drbd_state cm and lo
 
-TODO: GNU extension: drbd_int.h: add type (struct resource, ...) to for_each_resource(...) macro definitions
+Rejected: GNU extension: drbd_int.h: add type (struct resource, ...) to for_each_resource(...) macro definitions
 
-TODO: GNU extension: drbd_nl.c: str_to_info macro: replace ({ .. }) by ( .. )
+Rejected: GNU extension: drbd_nl.c: str_to_info macro: replace ({ .. }) by ( .. )
 
 Done: Various files: inter-function IRQ flags
 	This is very hairy ...
@@ -29,32 +35,34 @@ Done: Various files: inter-function IRQ flags
 
 Done: drbd_state.c (and drbd_int.h): wrcu_flags patch - replace by RCU flags passed between functions
 
-TODO: drbd_state.h: stable_state_change macro definition
+Rejected: drbd_state.h: stable_state_change macro definition
 	Needed?
+	I don't think so.
 
-TODO: drbd_main.c: Have 'pages' of any size. ("big pages patch")
+Rejected: drbd_main.c: Have 'pages' of any size. ("big pages patch")
 
 ! TODO: drbd_receiver.c: Under Windows, queriing a block device's size must happen at IRQL < DISPATCH_LEVEL
 
-TODO: MSVC specific: drbd-headers/drbd_protocol.h: pragma pack(push, 1) (and pop)
+Rejected: MSVC specific: drbd-headers/drbd_protocol.h: pragma pack(push, 1) (and pop)
 
-TODO: GNU extension: drbd_transport.h: tr_printk macros
+Rejected: GNU extension: drbd_transport.h: tr_printk macros
 
-TODO: GNU extension: drbd_state.c: FINAL_STATE_CHANGE and REMEMBER_STATE_CHANGE macros.
+Rejected: GNU extension: drbd_state.c: FINAL_STATE_CHANGE and REMEMBER_STATE_CHANGE macros.
 
-! TODO: drbd_receiver.c: For each backing device wait for requests to complete
+TODO, maybe Reject: drbd_receiver.c: For each backing device wait for requests to complete
 	in conn_disconnect()
 	This solved a BSOD that was hard to track.
 	But isn't that fixed with a wait_event() bugfix?
+	Hmm .. I would prefer if we don't have this.
 
-TODO: GNU extension: drbd_transport.h: set_page_chain_next_offset_size uses gcc struct initializer
+Rejected: GNU extension: drbd_transport.h: set_page_chain_next_offset_size uses gcc struct initializer
 
-TODO: GNU extension: page_chain_for_each macro uses ({ ... }).
+Rejected: GNU extension: page_chain_for_each macro uses ({ ... }).
 	To optimize CPU cache ...
 
-! TODO: drbd_transport_tcp.c: Windows does not support SOCK_STREAM before Windows Server 2019 ...
+Done: drbd_transport_tcp.c: Windows does not support SOCK_STREAM before Windows Server 2019 ...
 
-TODO: MSVC extension: drbd_meta_data.h: __declspec(align(4096))
+Rejected: MSVC extension: drbd_meta_data.h: __declspec(align(4096))
 
 Done: drbd_state.h: state_change_lock prototypes: change flag parameter to KIRQL
 
@@ -62,14 +70,20 @@ Done: drbd_state.c: the change here is a %lu to a %llu it matters for volumes > 
 
 ! TODO: drbd_main.c and others: use put_page() instead of free_page
 	WinDRBD might hold the pages a little bit longer
+	Hmm .. do we need that?
 
-! TODO: drbd_transport.h: make sure indices of pages are (at least) int, not short
+Rejected: drbd_transport.h: make sure indices of pages are (at least) int, not short
+	Hmm .. do we need that?
+	No now that pages are PAGE_SIZE again.
 
-TODO: GNU extension: drbd_state.c: Change rv = stable_state_change(a, b, ...) to stable_state_change(rv, a, b, ...)
+Rejected: GNU extension: drbd_state.c: Change rv = stable_state_change(a, b, ...) to stable_state_change(rv, a, b, ...)
 	Also return stable_state_change() - need an int tmp variable
 
-TODO: corking / uncorking of meta data I/O
+Rejected: corking / uncorking of meta data I/O
 	This maybe also makes the big pages patch unnecessary.
+	Have a daemon that corks/uncorks instead. We shouldn't
+	modify the backing device I/O code of DRBD for this
+	(as it caused troubles in the field already).
 
 Done: UL -> ULL at certain places
 	We don't use cocci for that most of them are inside a
@@ -77,3 +91,4 @@ Done: UL -> ULL at certain places
 	is 64)
 
 ! TODO: patches since February 2023 (see transform.d)
+	see newdiffs.september-2024
