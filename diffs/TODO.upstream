@@ -3,8 +3,9 @@ Patches to submit upstream:
 TODO: in drbd_sender.c: tl_mark_for_resend_by_connection() check for device invalid (might happen if something in receiver lags)
 	This was an issue that caused a BSOD when there were lots of printk's
 
-TODO: drbd_nl.c: send a Linux event on becoming secondary / primary
+Done: drbd_nl.c: send a Linux event on becoming secondary / primary
 	This is a nice to have patch
+	TODO: send upstream?
 
 TODO: drbd_transport_tcp.c: discuss about accessing sk fields directly
 
