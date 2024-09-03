@@ -1,4 +1,5 @@
 TODO: identifiers created by cocci should have __cocci_ prefix.
+	Check
 
 Cocci patches (generic unless noted otherwise):
 
@@ -10,29 +11,30 @@ Done: Spinlocks that are locked and unlocked within the same function must be sp
 	the flags parameter might already be defined.
 
 TODO: The flag for the IRQ level should be of type KIRQL
+	Hmm ... don't want this really
 
 Done: replace all unsigned long -> ULONG_PTR and long -> LONG_PTR
 also in macros
 
 Rejected: Change UL postfix to ULL (64 bit only)
 
-TODO: GNU extension: Change a?:b to a?a:b
+Rejected: GNU extension: Change a?:b to a?a:b
 
-TODO: GNU extension: Change struct x y = { }; initializer to { 0 }
+Rejected: GNU extension: Change struct x y = { }; initializer to { 0 }
 
-TODO: GNU extension: Change sizeof(*p) to sizeof(*(char*)p) for void* p
+Rejected: GNU extension: Change sizeof(*p) to sizeof(*(char*)p) for void* p
 	also for iov.iov_base += rv -> iov.iov_base = ((char*) iov.iov_base) + rv;
 	(maybe (char*) iov.iov_base += rv also works ...)
 
-TODO: GNU extension: Change rv = wait_event_xxx(a, b, ...) to wait_event_xxx(rv, a, b)
+Rejected: GNU extension: Change rv = wait_event_xxx(a, b, ...) to wait_event_xxx(rv, a, b)
 	reason is: We don't have ({ ... }) in MS VC
 	return value is ignored create a tmp variable (of which type?)
 
-TODO: GNU extension: no typeof so change hlist_for_each_entry(a, b, ..) to hlist_for_each_entry(struct x, a, b, ..) 
+Rejected: GNU extension: no typeof so change hlist_for_each_entry(a, b, ..) to hlist_for_each_entry(struct x, a, b, ..) 
 	where x is the type of a
 	for all list_xxx macro calls
 
-TODO: GNU extension: In macro definitions use __VA_ARGS_
+Rejected: GNU extension: In macro definitions use __VA_ARGS_
 	#define A(x, args...)
 		## args ##
 	#define A(x)
@@ -52,11 +54,12 @@ Rejected: GNU extension: In macro definitions replace
 	Rejected becaue there are many different uses of
 	({ ... })
 
-TODO: MS VC: try and expect are reserved words.
+Rejected: MS VC: try and expect are reserved words.
 	Check if this is true ...
 	It looks like some header defines try as __try or so ...
+	Now using SEH2_xx macros from ReactOS
 
-TODO: GNU extension: if (wait_ ...) (one occurence in drbd_state.c)
+Rejected: GNU extension: if (wait_ ...) (one occurence in drbd_state.c)
 			x;
 		by
 		LONG_PTR __cocci_t;
