@@ -1,5 +1,5 @@
 converted-sources*/
-drbd-tmp
+drbd*-tmp
 *.bak
 *~
 windrbd/src/*.obj
