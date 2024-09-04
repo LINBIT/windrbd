@@ -606,6 +606,10 @@ void __free_page_debug(struct page *page, const char *file, int line, const char
 	kfree_debug(page, file, line, func);
 }
 
+/* TODO: rewrite get_free_pages, free_pages (those return/take
+   an ULONG_PTR memory address and don't really need a struct
+   page associated). */
+
 void free_pages_debug(ULONG_PTR addr, int order, const char *file, int line, const char *func)
 {
 	KIRQL irql;

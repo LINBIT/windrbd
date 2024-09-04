@@ -98,8 +98,8 @@ static int winsock_to_linux_error(NTSTATUS status)
 		printk("Got STATUS_ACCESS_DENIED, please check your firewall settings\n");
 		return -EAGAIN;
 	case STATUS_LOCAL_DISCONNECT: /* Sent by ReactOS on connection timeout */
-		printk("Got STATUS_LOCAL_DISCONNECT, retrying ...\n");
-		return -EAGAIN;
+		printk("Got STATUS_LOCAL_DISCONNECT returning -ENOTCONN ...\n");
+		return -ENOTCONN;
 	default:
 		printk("Unknown status %x, returning -EIO.\n", status);
 		return -EIO;
@@ -198,17 +198,6 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *
 	return irp;
 }
 
-	/* See https://stackoverflow.com/questions/7244645/porting-vcs-try-except-exception-stack-overflow-to-mingw: */
-
-#if 0
-/* TODO: this should be some special calling convention ... ? */
-long CALLBACK ehandler(EXCEPTION_POINTERS *pointers)
-{
-DbgPrint("In ehandler pointers are %p...\n", pointers);
-    return EXCEPTION_EXECUTE_HANDLER;
-}
-#endif
-
 static NTSTATUS InitWskBuffer(
 	__in  PVOID		Buffer,
 	__in  ULONG		BufferSize,
@@ -233,32 +222,25 @@ static NTSTATUS InitWskBuffer(
 	while (1) {
 		probe_and_lock_failed = 0;
 		_SEH2_TRY {
-DbgPrint("into MmProbeAndLockPages\n");
 			MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
-DbgPrint("out of MmProbeAndLockPages\n");
 		}
 		_SEH2_EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
-DbgPrint("in exception\n");
 			probe_and_lock_failed = 1;
 		}
 		_SEH2_END;
 
 		if (probe_and_lock_failed == 0) {
-DbgPrint("success\n");
                         if (may_printk && retries > 0)
                                 printk("succeeded after %d retries\n", retries);
 			break;
 		}
-DbgPrint("no success\n");
 		if (may_printk && retries % 10 == 0)
 			printk(KERN_ERR "MmProbeAndLockPages failed, retrying ...\n");
 
                 if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
-DbgPrint("can't sleep\n");
                         if (may_printk && retries == 0)
                                 printk("cannot sleep now, busy looping\n");
                 } else {
-DbgPrint("sleeping\n");
                         msleep(100);
                 }
                 retries++;
