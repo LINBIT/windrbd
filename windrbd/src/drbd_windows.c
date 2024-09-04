@@ -584,7 +584,7 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 	}
 	add_page_to_all_pages(p);
 	kref_init(&p->kref);
-	p->size = size;
+//	p->size = size;
 
 // printk("allocating page %p page->addr is %p page->size is %d from %s:%d (%s)\n", p, p->addr, p->size, file, line, func);
 	return p;

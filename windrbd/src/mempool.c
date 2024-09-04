@@ -71,10 +71,8 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
                 page = ExAllocateFromNPagedLookasideList(&pool->pageLS);
                 if (page) {
                         page->addr = ExAllocateFromNPagedLookasideList(&pool->page_addrLS);
-                        if(page->addr) {
-				page->size = PAGE_SIZE;
+                        if(page->addr)
                                 return page;
-			}
 
 			ExFreeToNPagedLookasideList(&pool->pageLS, page);
 		}
