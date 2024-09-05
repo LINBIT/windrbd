@@ -221,13 +221,17 @@ static NTSTATUS InitWskBuffer(
 	retries = 0;
 	while (1) {
 		probe_and_lock_failed = 0;
+#ifdef CONFIG_HAVE_SEH2
 		_SEH2_TRY {
+#endif
 			MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
+#ifdef CONFIG_HAVE_SEH2
 		}
 		_SEH2_EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
 			probe_and_lock_failed = 1;
 		}
 		_SEH2_END;
+#endif
 
 		if (probe_and_lock_failed == 0) {
                         if (may_printk && retries > 0)

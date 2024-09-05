@@ -14,6 +14,10 @@
 // #define CONFIG_HAVE_IO_CREATE_DEVICE_SECURE 1
 // #define CONFIG_HAVE_RW_LOCKS 1
 // #define CONFIG_HAVE_NO_EXECUTE 1
-// #define CONFIG_HAVE_TRY 1
+
+/* Currently only works on 32 bit platforms, working on 64 bit: */
+#ifdef CONFIG_32BIT
+#define CONFIG_HAVE_SEH2 1
+#endif
 
 #endif
