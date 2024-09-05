@@ -245,7 +245,6 @@ extern unsigned int lc_index_of(struct lru_cache *lc, struct lc_element *e);
 
 extern void __free_page(struct page *page);
 extern struct page *alloc_page(int flag);
-struct page *alloc_page_of_size(int flag, size_t size);
 
 struct scatterlist {
 	struct page *page;

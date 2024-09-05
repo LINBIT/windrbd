@@ -537,13 +537,8 @@ void copy_page(void *to, void *from)
 
 #ifdef KMALLOC_DEBUG
 
-struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, int line, const char *func)
+struct page *alloc_page_debug(int flag, const char *file, int line, const char *func)
 {
-		/* Round up to the next PAGE_SIZE */
-
-	BUG_ON(size==0);
-	size = (((size-1) / PAGE_SIZE)+1)*PAGE_SIZE;
-
 	struct page *p = kzalloc_debug(sizeof(struct page), flag, file, line, func);
 	if (!p)	{
 		printk("alloc_page struct page failed\n");
@@ -555,22 +550,15 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 		 * PAGE_SIZE itself is always 4096 under Windows.
 		 */
 
-	p->addr = kmalloc_debug(size, flag, file, line, func);
+	p->addr = kmalloc_debug(PAGE_SIZE, flag, file, line, func);
 	if (!p->addr)	{
 		kfree_debug(p, file, line, func);
-		printk("alloc_page failed (size is %d)\n", size);
+		printk("Warning: alloc_page failed.\n");
 		return NULL;
 	}
 	kref_init(&p->kref);
-//	p->size = size;
 
-// printk("allocating page %p page->addr is %p page->size is %d from %s:%d (%s)\n", p, p->addr, p->size, file, line, func);
 	return p;
-}
-
-struct page *alloc_page_debug(int flag, const char *file, int line, const char *func)
-{
-	return alloc_page_of_size_debug(flag, PAGE_SIZE, file, line, func);
 }
 
 void __free_page_debug(struct page *page, const char *file, int line, const char *func)
@@ -624,14 +612,8 @@ ULONG_PTR __get_free_page_debug(gfp_t flag, const char *file, int line, const ch
 
 #else
 
-struct page *alloc_page_of_size(int flag, size_t size)
+struct page *alloc_page(int flag)
 {
-	if (size == 0)
-		return NULL;
-
-		/* Round up to the next PAGE_SIZE */
-	size = (((size-1) / PAGE_SIZE)+1)*PAGE_SIZE;
-
 	struct page *p = kzalloc(sizeof(struct page), flag);
 	if (!p)	{
 		printk("alloc_page struct page failed\n");
@@ -643,28 +625,22 @@ struct page *alloc_page_of_size(int flag, size_t size)
 		 * PAGE_SIZE itself is always 4096 under Windows.
 		 */
 
-	p->addr = kmalloc(size, flag);
+	p->addr = kmalloc(PAGE_SIZE, flag);
 	if (!p->addr)	{
-		kfree(p); 
-		printk("alloc_page failed (size is %d)\n", size);
+		kfree(p);
+		printk("alloc_page failed\n");
 		return NULL;
 	}
 	kref_init(&p->kref);
-	p->size = size;
 
 	return p;
-}
-
-struct page *alloc_page(int flag)
-{
-	return alloc_page_of_size(flag, PAGE_SIZE);
 }
 
 void __free_page(struct page *page)
 {
 	if (!page->is_system_buffer)
 		kfree(page->addr);
-	kfree(page); 
+	kfree(page);
 }
 
 void free_page_kref(struct kref *kref)
