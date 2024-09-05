@@ -188,7 +188,4 @@ void windrbd_set_realtime_priority(struct task_struct *t);
 /* Become super user */
 void sudo(void);
 
-void add_page_to_all_pages(struct page *p);
-void remove_page_from_all_pages(struct page *p);
-
 #endif

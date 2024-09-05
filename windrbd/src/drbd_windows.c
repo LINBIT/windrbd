@@ -535,27 +535,6 @@ void copy_page(void *to, void *from)
 	memcpy(to, from, PAGE_SIZE);
 }
 
-LIST_HEAD(all_pages);
-spinlock_t all_pages_lock;
-
-void add_page_to_all_pages(struct page *p)
-{
-	KIRQL irql;
-
-	spin_lock_irqsave(&all_pages_lock, irql);
-	list_add(&p->all_pages_list, &all_pages);
-	spin_unlock_irqrestore(&all_pages_lock, irql);
-}
-
-void remove_page_from_all_pages(struct page *p)
-{
-	KIRQL irql;
-
-	spin_lock_irqsave(&all_pages_lock, irql);
-	list_del(&p->all_pages_list);
-	spin_unlock_irqrestore(&all_pages_lock, irql);
-}
-
 #ifdef KMALLOC_DEBUG
 
 struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, int line, const char *func)
@@ -582,7 +561,6 @@ struct page *alloc_page_of_size_debug(int flag, size_t size, const char *file, i
 		printk("alloc_page failed (size is %d)\n", size);
 		return NULL;
 	}
-	add_page_to_all_pages(p);
 	kref_init(&p->kref);
 //	p->size = size;
 
@@ -597,37 +575,15 @@ struct page *alloc_page_debug(int flag, const char *file, int line, const char *
 
 void __free_page_debug(struct page *page, const char *file, int line, const char *func)
 {
-// printk("freeing page %p page->addr is %p from %s:%d (%s)\n", page, page->addr, file, line, func);
 	if (!page->is_system_buffer)
 		kfree_debug(page->addr, file, line, func);
-
-	remove_page_from_all_pages(page);
 
 	kfree_debug(page, file, line, func);
 }
 
-/* TODO: rewrite get_free_pages, free_pages (those return/take
-   an ULONG_PTR memory address and don't really need a struct
-   page associated). */
-
 void free_pages_debug(ULONG_PTR addr, int order, const char *file, int line, const char *func)
 {
-	KIRQL irql;
-	struct page *page, *page2;
-
-	spin_lock_irqsave(&all_pages_lock, irql);
-	list_for_each_entry_safe(page, page2, &all_pages, all_pages_list) {
-		if ((ULONG_PTR)(page->addr) == addr) {
-			if (!page->is_system_buffer)
-				kfree_debug(page->addr, file, line, func);
-
-			list_del(&page->all_pages_list);
-			kfree_debug(page, file, line, func);
-
-			break;
-		}
-	}
-	spin_unlock_irqrestore(&all_pages_lock, irql);
+	kfree_debug((void*) addr, file, line, func);
 }
 
 void free_page_debug(ULONG_PTR addr, const char *file, int line, const char *func)
@@ -643,7 +599,7 @@ void free_page_kref_debug(struct kref *kref, const char *file, int line, const c
 
 	/* This is used as a function pointer parameter to put_page,
 	 * its signature cannot be changed since the number of
-	 * parameters is fixed.
+	 * parameters is fixed. Therefore no file, line, func.
 	 */
 
 void _free_page_kref(struct kref *kref)
@@ -654,17 +610,11 @@ void _free_page_kref(struct kref *kref)
 
 ULONG_PTR __get_free_pages_debug(gfp_t flag, int order, const char *file, int line, const char *func)
 {
-	struct page *new_page;
-
-	if (order > 32) {
+	if (order > 10) {
 		printk("Warning: attempt to allocate 4096 * (2 ** %d) bytes\n", order);
 		return 0;
 	}
-	new_page = alloc_page_of_size_debug(flag, PAGE_SIZE * (1 << order), file, line, func);
-	if (new_page == NULL)
-		return 0;
-
-	return (ULONG_PTR) new_page->addr;
+	return (ULONG_PTR) kmalloc_debug(PAGE_SIZE * (1 << order), flag, file, line, func);
 }
 
 ULONG_PTR __get_free_page_debug(gfp_t flag, const char *file, int line, const char *func)
@@ -673,8 +623,6 @@ ULONG_PTR __get_free_page_debug(gfp_t flag, const char *file, int line, const ch
 }
 
 #else
-
-/* TODO: add_page_to_all_pages() */
 
 struct page *alloc_page_of_size(int flag, size_t size)
 {
@@ -4342,7 +4290,6 @@ void init_windrbd(void)
 	spin_lock_init(&g_test_and_change_bit_lock);
 	spin_lock_init(&cpu_cache_spinlock);
 	spin_lock_init(&global_queue_lock);
-	spin_lock_init(&all_pages_lock);
 
 #ifdef SPIN_LOCK_DEBUG
 	KeInitializeSpinLock(&spinlock_lock);

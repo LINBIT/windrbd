@@ -1646,7 +1646,6 @@ cond_printk("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", se
 				bio->bi_io_vec[i].bv_page->addr = buffer+bio->bi_mdl_offset;
 				bio->bi_io_vec[i].bv_page->is_system_buffer = 1;
 			}
-			add_page_to_all_pages(bio->bi_io_vec[i].bv_page);
 
 				/* TODO: fault inject here. */
 			if (bio->bi_io_vec[i].bv_page->addr == NULL) {
