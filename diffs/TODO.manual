@@ -71,6 +71,7 @@ Done: drbd_state.c: the change here is a %lu to a %llu it matters for volumes > 
 ! TODO: drbd_main.c and others: use put_page() instead of free_page
 	WinDRBD might hold the pages a little bit longer
 	Hmm .. do we need that?
+	I think yes!
 
 Rejected: drbd_transport.h: make sure indices of pages are (at least) int, not short
 	Hmm .. do we need that?
