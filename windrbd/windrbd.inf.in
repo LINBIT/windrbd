@@ -21,6 +21,10 @@ Linbit = WinDRBDDriver, NTamd64
 [WinDRBDDriver.NTamd64]
 "WinDRBD Virtual Bus Device" = WinDRBD,WinDRBD
 
+; This is for 32-bit systems:
+[WinDRBDDriver]
+"WinDRBD Virtual Bus Device" = WinDRBD,WinDRBD
+
 [DestinationDirs]
 DefaultDestDir       = 12
 WinDRBD.DriverFiles     = 12           ;%windir%\system32\drivers
