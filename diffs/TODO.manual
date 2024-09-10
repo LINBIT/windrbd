@@ -41,7 +41,8 @@ Rejected: drbd_state.h: stable_state_change macro definition
 
 Rejected: drbd_main.c: Have 'pages' of any size. ("big pages patch")
 
-! TODO: drbd_receiver.c: Under Windows, queriing a block device's size must happen at IRQL < DISPATCH_LEVEL
+! Done: drbd_receiver.c: Under Windows, queriing a block device's size must happen at IRQL < DISPATCH_LEVEL
+	Is it really needed?
 
 Rejected: MSVC specific: drbd-headers/drbd_protocol.h: pragma pack(push, 1) (and pop)
 
