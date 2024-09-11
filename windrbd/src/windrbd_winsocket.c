@@ -186,6 +186,7 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *
 		dbg("IoAllocateIrp returned NULL, out of IRPs?\n");
 		return NULL;
 	}
+	irp->Tail.Overlay.Thread = PsGetCurrentThread();
 
 	if (CompletionEvent) {
 		KeInitializeEvent(CompletionEvent, NotificationEvent, FALSE);
@@ -1109,6 +1110,7 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		err = -ENOMEM;
 		goto out_remove_completion;
 	}
+	Irp->Tail.Overlay.Thread = PsGetCurrentThread();
 	IoSetCompletionRoutine(Irp, send_page_completion_onlyonce, completion, TRUE, TRUE, TRUE);
 
 	if (socket->no_delay)
@@ -1251,6 +1253,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 		FreeWskBuffer(WskBuffer, 0);
 		return -ENOMEM;
 	}
+	irp->Tail.Overlay.Thread = PsGetCurrentThread();
 	IoSetCompletionRoutine(irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
 
 	status = ((PWSK_PROVIDER_DATAGRAM_DISPATCH) socket->wsk_socket->Dispatch)->WskSendTo(
