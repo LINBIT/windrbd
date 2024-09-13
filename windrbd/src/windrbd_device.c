@@ -2418,6 +2418,7 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			printk("no block device reference\n");
 		}
 
+printk("windrbd_pnp_device device is %p s->MinorFunction is %d\n", device, s->MinorFunction);
 		switch (s->MinorFunction) {
 		case IRP_MN_START_DEVICE:
 		{
@@ -2552,7 +2553,7 @@ dbg("Returned string is %S\n", string);
 		}
 
 		case IRP_MN_QUERY_DEVICE_RELATIONS:
-// printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
+printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
 
 		/* Devices that have a WinDRBD assigned mount point
 		 * (via device "X:" minor y;) are non-PnP devices,
@@ -2584,10 +2585,12 @@ dbg("Returned string is %S\n", string);
 			switch (s->Parameters.QueryDeviceRelations.Type) {
 			case TargetDeviceRelation:
 			case EjectionRelations:
-			case RemovalRelations:
+/* TODO: ReactOS loops here ... are we supposed to return outselves? */
+/*			case RemovalRelations: */
 			{
 				struct _DEVICE_RELATIONS *device_relations;
 				size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
+printk("Returning the disk device object in the relation array\n");
 				dbg("size of device relations is %d\n", siz);
 		/* must be PagedPool else PnP manager complains */
 				device_relations = ExAllocatePoolWithTag(PagedPool, siz, DRBD_TAG);
@@ -2608,10 +2611,12 @@ dbg("Returned string is %S\n", string);
 			}
 
 			case BusRelations:
+			case RemovalRelations:
 			{
 				struct _DEVICE_RELATIONS *device_relations;
 				size_t siz = sizeof(*device_relations);
 
+printk("Returning empty relation array\n");
 				dbg("disk BusRelations (Type %d)\n", s->Parameters.QueryDeviceRelations.Type);
 		/* must be PagedPool else PnP manager complains */
 				device_relations = ExAllocatePoolWithTag(PagedPool, siz, DRBD_TAG);
