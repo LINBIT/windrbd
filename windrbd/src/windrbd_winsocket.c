@@ -80,14 +80,14 @@ static int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_CONNECTION_RESET:
 		return -ECONNRESET;
 	case STATUS_CONNECTION_DISCONNECTED:
-		return -ENOTCONN;
+		return -ECONNRESET;
 	case STATUS_CONNECTION_ABORTED:
 		return -ECONNABORTED;
 	case STATUS_IO_TIMEOUT:
 	case STATUS_TIMEOUT:
 		return -EAGAIN;
 	case STATUS_INVALID_DEVICE_STATE:
-		return -EINVAL;	/* -ENOTCONN? */
+		return -EINVAL;
 	case STATUS_NETWORK_UNREACHABLE:
 		return -ENETUNREACH;
 	case STATUS_HOST_UNREACHABLE:
@@ -98,8 +98,8 @@ static int winsock_to_linux_error(NTSTATUS status)
 		printk("Got STATUS_ACCESS_DENIED, please check your firewall settings\n");
 		return -EAGAIN;
 	case STATUS_LOCAL_DISCONNECT: /* Sent by ReactOS on connection timeout */
-		printk("Got STATUS_LOCAL_DISCONNECT returning -ENOTCONN ...\n");
-		return -ENOTCONN;
+		printk("Got STATUS_LOCAL_DISCONNECT returning -ECONNRESET ...\n");
+		return -ECONNRESET;
 	default:
 		printk("Unknown status %x, returning -EIO.\n", status);
 		return -EIO;
