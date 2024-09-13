@@ -2000,6 +2000,8 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 	        return status;
 	}
 
+printk("windrbd_pnp_bus_device device is %p s->MinorFunction is %d\n", device, s->MinorFunction);
+
 	num_pnp_bus_requests++;
 
 	switch (s->MinorFunction) {
