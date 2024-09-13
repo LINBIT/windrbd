@@ -2938,11 +2938,12 @@ if (status == STATUS_NOT_SUPPORTED) {
 			return status;
 
 		case IRP_MN_EJECT:
-			dbg("got IRP_MN_EJECT\n");
+printk("got IRP_MN_EJECT status is \n", status);
 			if (bdev) {
 dbg("Setting ejected flag ...\n");
 				bdev->ejected = true;
 			}
+			status = STATUS_SUCCESS;
 			break;
 
 		case 0xff:
@@ -3764,7 +3765,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		break;
 
 	case SRB_FUNCTION_RELEASE_DEVICE:
-//		ObDereferenceObject(device);
+//             ObDereferenceObject(device);
+// printk("got SRB_FUNCTION_RELEASE_DEVICE, referencing device object\n");
 		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
 
