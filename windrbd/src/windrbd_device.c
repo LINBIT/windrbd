@@ -2584,7 +2584,8 @@ printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelati
 
 			switch (s->Parameters.QueryDeviceRelations.Type) {
 			case TargetDeviceRelation:
-			case EjectionRelations:
+/* TODO: drbdadm secondary does not terminate on ReactOS: */
+/*			case EjectionRelations: */
 /* TODO: ReactOS loops here ... are we supposed to return outselves? */
 /*			case RemovalRelations: */
 			{
@@ -2612,6 +2613,7 @@ printk("Returning the disk device object in the relation array\n");
 
 			case BusRelations:
 			case RemovalRelations:
+			case EjectionRelations:
 			{
 				struct _DEVICE_RELATIONS *device_relations;
 				size_t siz = sizeof(*device_relations);
