@@ -3623,7 +3623,7 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 		printk("PnP did not work, removing device manually.\n");
 		IoDeleteDevice(bdev->windows_device);
 	} else {
-// printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE minor %d bdev is %p windows device is %p\n", bdev->drbd_device->minor, bdev, bdev->windows_device);
+printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE minor %d bdev is %p windows device is %p\n", bdev->drbd_device->minor, bdev, bdev->windows_device);
 		timeout.QuadPart = -100*1000*1000*10; /* 100 seconds, sometimes it really takes very long, no idea why */
 //		status = KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, &timeout);
 
@@ -3639,15 +3639,15 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 			printk("Warning: no IRP_MN_REMOVE_DEVICE received after 100 seconds, giving up.\n");
 */
 
-// printk("finished. minor %d now waiting for bus device to report device as missing bdev is %p windows device is %p\n", bdev->drbd_device->minor, bdev, bdev->windows_device);
+printk("finished. minor %d now waiting for bus device to report device as missing bdev is %p windows device is %p\n", bdev->drbd_device->minor, bdev, bdev->windows_device);
 
 		timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
 		status = KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, &timeout);
 		if (status == STATUS_TIMEOUT)
 			printk("Warning: no reiteration of bus device after 10 seconds, giving up.\n");
-// printk("Excellent we are almost gone .. now really deleting the device ... bdev is %p windows device is %p\n", bdev, bdev->windows_device);
+printk("Excellent we are almost gone .. now really deleting the device ... bdev is %p windows device is %p\n", bdev, bdev->windows_device);
 		IoDeleteDevice(bdev->windows_device);
-		dbg("Done.\n");
+printk("Done.\n");
 	}
 	bdev->windows_device = NULL;
 }
