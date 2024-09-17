@@ -2810,6 +2810,7 @@ printk("got IRP_MN_QUERY_REMOVE_DEVICE\n");
 				 * should avoid SURPRISE_REMOVAL.
 				 * Update: no it doesn't. For example when there are two volumes.
 				 */
+
 				dbg("set ejected event\n");
 				KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
 			} else {
@@ -2880,7 +2881,12 @@ printk("IRP_MN_REMOVE_DEVICE 4 bdev is %p\n", bdev);
 
 					if (bdev->ref != NULL) {
 printk("IRP_MN_REMOVE_DEVICE 5 bdev is %p\n", bdev);
+	/* Workaround for IoInitializeRemoveLock setting Count
+	 * to 1 in ReactOS.
+	 */
+#ifndef REACTOS
 						IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
+#endif
 printk("IRP_MN_REMOVE_DEVICE 6 bdev is %p\n", bdev);
 printk("IRP_MN_REMOVE_DEVICE 6a irql is %p\n", KeGetCurrentIrql());
 		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
