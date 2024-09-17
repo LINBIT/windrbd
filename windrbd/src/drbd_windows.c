@@ -3646,7 +3646,8 @@ printk("finished. minor %d now waiting for bus device to report device as missin
 		if (status == STATUS_TIMEOUT)
 			printk("Warning: no reiteration of bus device after 10 seconds, giving up.\n");
 printk("Excellent we are almost gone .. now really deleting the device ... bdev is %p windows device is %p\n", bdev, bdev->windows_device);
-		IoDeleteDevice(bdev->windows_device);
+printk("NOT deleting here, since that is done in REMOVE_DEVICE.\n");
+//		IoDeleteDevice(bdev->windows_device);
 printk("Done.\n");
 	}
 	bdev->windows_device = NULL;

@@ -1493,6 +1493,7 @@ static void windrbd_bio_finished(struct bio * bio)
 
 static void windrbd_internal_io_finished(struct bio * bio)
 {
+/*	IoReleaseRemoveLock(&bio->bi_bdev->ref->w_remove_lock, NULL); */
 	KeSetEvent(bio->bi_io_finished_event, 0, FALSE);
 }
 
@@ -2784,12 +2785,13 @@ if (status == STATUS_NOT_SUPPORTED) {
 			break;
 
 		case IRP_MN_QUERY_REMOVE_DEVICE:
-			dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
+printk("got IRP_MN_QUERY_REMOVE_DEVICE\n");
 				/* Prevent user space eject programs from
 				 * removing us. Removal always via drbdadm
 				 * seconary/down.
 				 */
-			if (bdev && bdev->delete_pending) {
+			// if (bdev && bdev->delete_pending) {
+			if (bdev) {
 
 		/* Tell the PnP manager that we are about to disappear.
 		 * The device object will be deleted in a PnP REMOVE_DEVICE
@@ -2813,6 +2815,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			} else {
 				status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
 			}
+printk("Returning status %08x\n", status);
 			break;
 
 		case IRP_MN_CANCEL_REMOVE_DEVICE:
@@ -2918,6 +2921,9 @@ printk("IRP_MN_REMOVE_DEVICE 9 bdev is %p\n", bdev);
 				if (bdev != NULL) {
 printk("IRP_MN_REMOVE_DEVICE a bdev is %p\n", bdev);
 						/* To allow bdev being removed. */
+
+printk("Really deleting device now (in REMOVE_LOCK)\n");
+IoDeleteDevice(device);
 					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
 printk("IRP_MN_REMOVE_DEVICE b bdev is %p\n", bdev);
 				}
