@@ -3607,6 +3607,7 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 
 	LARGE_INTEGER timeout;
 	NTSTATUS status;
+#if 0
 	dbg("Requesting eject of Windows device minor %d\n", bdev->drbd_device->minor);
 	IoRequestDeviceEject(bdev->windows_device);
 	dbg("Eject returned minor %d\n", bdev->drbd_device->minor);
@@ -3617,6 +3618,7 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 		printk("Warning: no eject event after 10 seconds, giving up.\n");
 
 	dbg("Device ejected minor %d\n", bdev->drbd_device->minor);
+#endif
 	if (windrbd_rescan_bus() < 0) {
 		/* TODO: check if there are still references (PENDING_DELETE) */
 
