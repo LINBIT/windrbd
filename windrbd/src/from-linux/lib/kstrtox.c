@@ -178,7 +178,7 @@ int kstrtoll(const char *s, unsigned int base, long long *res)
 EXPORT_SYMBOL(kstrtoll);
 
 /* Internal, do not use. */
-int _kstrtoul(const char *s, unsigned int base, unsigned long *res)
+int _kstrtoul(const char *s, unsigned int base, ULONG_PTR *res)
 {
 	unsigned long long tmp;
 	int rv;
@@ -186,7 +186,7 @@ int _kstrtoul(const char *s, unsigned int base, unsigned long *res)
 	rv = kstrtoull(s, base, &tmp);
 	if (rv < 0)
 		return rv;
-	if (tmp != (unsigned long)tmp)
+	if (tmp != (ULONG_PTR)tmp)
 		return -ERANGE;
 	*res = tmp;
 	return 0;
@@ -194,7 +194,7 @@ int _kstrtoul(const char *s, unsigned int base, unsigned long *res)
 EXPORT_SYMBOL(_kstrtoul);
 
 /* Internal, do not use. */
-int _kstrtol(const char *s, unsigned int base, long *res)
+int _kstrtol(const char *s, unsigned int base, LONG_PTR *res)
 {
 	long long tmp;
 	int rv;
@@ -202,7 +202,7 @@ int _kstrtol(const char *s, unsigned int base, long *res)
 	rv = kstrtoll(s, base, &tmp);
 	if (rv < 0)
 		return rv;
-	if (tmp != (long)tmp)
+	if (tmp != (LONG_PTR)tmp)
 		return -ERANGE;
 	*res = tmp;
 	return 0;
@@ -427,8 +427,8 @@ EXPORT_SYMBOL(f)
 
 kstrto_from_user(kstrtoull_from_user,	kstrtoull,	unsigned long long);
 kstrto_from_user(kstrtoll_from_user,	kstrtoll,	long long);
-kstrto_from_user(kstrtoul_from_user,	kstrtoul,	unsigned long);
-kstrto_from_user(kstrtol_from_user,	kstrtol,	long);
+kstrto_from_user(kstrtoul_from_user,	kstrtoul,	ULONG_PTR);
+kstrto_from_user(kstrtol_from_user,	kstrtol,	LONG_PTR);
 kstrto_from_user(kstrtouint_from_user,	kstrtouint,	unsigned int);
 kstrto_from_user(kstrtoint_from_user,	kstrtoint,	int);
 kstrto_from_user(kstrtou16_from_user,	kstrtou16,	u16);

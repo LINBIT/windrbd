@@ -15,14 +15,14 @@ struct kvec {
 #define ITER_SOURCE	1	// == WRITE
 #define ITER_DEST	0	// == READ
 
-static inline void iov_iter_bvec(struct iov_iter *i, unsigned int direction, const struct bio_vec *bvec, unsigned long nr_segs, size_t count)
+static inline void iov_iter_bvec(struct iov_iter *i, unsigned int direction, const struct bio_vec *bvec, ULONG_PTR nr_segs, size_t count)
 {
 }
 
 /* something like: */
 #if 0
 void iov_iter_bvec(struct iov_iter *i, unsigned int direction,
-			const struct bio_vec *bvec, unsigned long nr_segs,
+			const struct bio_vec *bvec, ULONG_PTR nr_segs,
 			size_t count)
 {
 	WARN_ON(direction & ~(READ | WRITE));

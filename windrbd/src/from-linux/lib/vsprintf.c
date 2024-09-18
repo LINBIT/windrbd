@@ -108,7 +108,7 @@ EXPORT_SYMBOL(simple_strtoull);
  *
  * This function has caveats. Please use kstrtoul instead.
  */
-unsigned long simple_strtoul(const char *cp, char **endp, unsigned int base)
+ULONG_PTR simple_strtoul(const char *cp, char **endp, unsigned int base)
 {
 	return simple_strtoull(cp, endp, base);
 }
@@ -122,7 +122,7 @@ EXPORT_SYMBOL(simple_strtoul);
  *
  * This function has caveats. Please use kstrtol instead.
  */
-long simple_strtol(const char *cp, char **endp, unsigned int base)
+LONG_PTR simple_strtol(const char *cp, char **endp, unsigned int base)
 {
 	if (*cp == '-')
 		return -simple_strtoul(cp + 1, endp, base);
@@ -698,7 +698,7 @@ static const char *check_pointer_msg(const void *ptr)
 	if (!ptr)
 		return "(null)";
 
-	if ((unsigned long)ptr < PAGE_SIZE || IS_ERR_VALUE(ptr))
+	if ((ULONG_PTR)ptr < PAGE_SIZE || IS_ERR_VALUE(ptr))
 		return "(efault)";
 
 	return NULL;
@@ -739,7 +739,7 @@ static char *pointer_string(char *buf, char *end,
 		spec.flags |= ZEROPAD;
 	}
 
-	return number(buf, end, (unsigned long int)ptr, spec);
+	return number(buf, end, (ULONG_PTR)ptr, spec);
 }
 
 #if 0
@@ -757,7 +757,7 @@ early_param("debug_boot_weak_hash", debug_boot_weak_hash_enable);
 static bool filled_random_ptr_key __read_mostly;
 static siphash_key_t ptr_key __read_mostly;
 
-static int fill_ptr_key(struct notifier_block *nb, unsigned long action, void *data)
+static int fill_ptr_key(struct notifier_block *nb, ULONG_PTR action, void *data)
 {
 	get_random_bytes(&ptr_key, sizeof(ptr_key));
 
@@ -776,9 +776,9 @@ static int __init vsprintf_init_hashval(void)
 subsys_initcall(vsprintf_init_hashval)
 
 /* Maps a pointer to a 32 bit unique identifier. */
-static inline int __ptr_to_hashval(const void *ptr, unsigned long *hashval_out)
+static inline int __ptr_to_hashval(const void *ptr, ULONG_PTR *hashval_out)
 {
-	unsigned long hashval;
+	ULONG_PTR hashval;
 
 	if (!READ_ONCE(filled_random_ptr_key))
 		return -EBUSY;
@@ -787,20 +787,20 @@ static inline int __ptr_to_hashval(const void *ptr, unsigned long *hashval_out)
 	smp_rmb();
 
 #ifdef CONFIG_64BIT
-	hashval = (unsigned long)siphash_1u64((u64)ptr, &ptr_key);
+	hashval = (ULONG_PTR)siphash_1u64((u64)ptr, &ptr_key);
 	/*
 	 * Mask off the first 32 bits, this makes explicit that we have
 	 * modified the address (and 32 bits is plenty for a unique ID).
 	 */
 	hashval = hashval & 0xffffffff;
 #else
-	hashval = (unsigned long)siphash_1u32((u32)ptr, &ptr_key);
+	hashval = (ULONG_PTR)siphash_1u32((u32)ptr, &ptr_key);
 #endif
 	*hashval_out = hashval;
 	return 0;
 }
 
-int ptr_to_hashval(const void *ptr, unsigned long *hashval_out)
+int ptr_to_hashval(const void *ptr, ULONG_PTR *hashval_out)
 {
 	return __ptr_to_hashval(ptr, hashval_out);
 }
@@ -809,7 +809,7 @@ static char *ptr_to_id(char *buf, char *end, const void *ptr,
 		       struct printf_spec spec)
 {
 	const char *str = sizeof(ptr) == 8 ? "(____ptrval____)" : "(ptrval)";
-	unsigned long hashval;
+	ULONG_PTR hashval;
 	int ret;
 
 	/*
@@ -821,7 +821,7 @@ static char *ptr_to_id(char *buf, char *end, const void *ptr,
 
 	/* When debugging early boot use non-cryptographically secure hash. */
 	if (unlikely(debug_boot_weak_hash)) {
-		hashval = hash_long((unsigned long)ptr, 32);
+		hashval = hash_long((ULONG_PTR)ptr, 32);
 		return pointer_string(buf, end, (const void *)hashval, spec);
 	}
 
@@ -984,14 +984,14 @@ static noinline_for_stack
 char *symbol_string(char *buf, char *end, void *ptr,
 		    struct printf_spec spec, const char *fmt)
 {
-	unsigned long value;
+	ULONG_PTR value;
 #ifdef CONFIG_KALLSYMS
 	char sym[KSYM_SYMBOL_LEN];
 #endif
 
 	if (fmt[1] == 'R')
 		ptr = __builtin_extract_return_addr(ptr);
-	value = (unsigned long)ptr;
+	value = (ULONG_PTR)ptr;
 
 #ifdef CONFIG_KALLSYMS
 	if (*fmt == 'B' && fmt[1] == 'b')
@@ -1194,7 +1194,7 @@ char *hex_string(char *buf, char *end, u8 *addr, struct printf_spec spec,
 }
 
 static noinline_for_stack
-char *bitmap_string(char *buf, char *end, const unsigned long *bitmap,
+char *bitmap_string(char *buf, char *end, const ULONG_PTR *bitmap,
 		    struct printf_spec spec, const char *fmt)
 {
 	const int CHUNKSZ = 32;
@@ -1238,7 +1238,7 @@ char *bitmap_string(char *buf, char *end, const unsigned long *bitmap,
 }
 
 static noinline_for_stack
-char *bitmap_list_string(char *buf, char *end, const unsigned long *bitmap,
+char *bitmap_list_string(char *buf, char *end, const ULONG_PTR *bitmap,
 			 struct printf_spec spec, const char *fmt)
 {
 	int nr_bits = max_t(int, spec.field_width, 0);
@@ -1962,10 +1962,10 @@ char *clock(char *buf, char *end, struct clk *clk, struct printf_spec spec,
 }
 
 static
-char *format_flags(char *buf, char *end, unsigned long flags,
+char *format_flags(char *buf, char *end, ULONG_PTR flags,
 					const struct trace_print_flags *names)
 {
-	unsigned long mask;
+	ULONG_PTR mask;
 
 	for ( ; flags && names->name; names++) {
 		mask = names->mask;
@@ -2010,9 +2010,9 @@ static const struct page_flags_fields pff[] = {
 };
 
 static
-char *format_page_flags(char *buf, char *end, unsigned long flags)
+char *format_page_flags(char *buf, char *end, ULONG_PTR flags)
 {
-	unsigned long main_flags = flags & PAGEFLAGS_MASK;
+	ULONG_PTR main_flags = flags & PAGEFLAGS_MASK;
 	bool append = false;
 	int i;
 
@@ -2079,7 +2079,7 @@ static noinline_for_stack
 char *flags_string(char *buf, char *end, void *flags_ptr,
 		   struct printf_spec spec, const char *fmt)
 {
-	unsigned long flags;
+	ULONG_PTR flags;
 	const struct trace_print_flags *names;
 
 	if (check_pointer(&buf, end, flags_ptr, spec))
@@ -2087,15 +2087,15 @@ char *flags_string(char *buf, char *end, void *flags_ptr,
 
 	switch (fmt[1]) {
 	case 'p':
-		return format_page_flags(buf, end, *(unsigned long *)flags_ptr);
+		return format_page_flags(buf, end, *(ULONG_PTR *)flags_ptr);
 	case 't':
 		return format_page_type(buf, end, *(unsigned int *)flags_ptr);
 	case 'v':
-		flags = *(unsigned long *)flags_ptr;
+		flags = *(ULONG_PTR *)flags_ptr;
 		names = vmaflag_names;
 		break;
 	case 'g':
-		flags = (__force unsigned long)(*(gfp_t *)flags_ptr);
+		flags = (__force ULONG_PTR)(*(gfp_t *)flags_ptr);
 		names = gfpflag_names;
 		break;
 	default:
@@ -2855,10 +2855,10 @@ int vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 				num = va_arg(args, long long);
 				break;
 			case FORMAT_TYPE_ULONG:
-				num = va_arg(args, unsigned long);
+				num = va_arg(args, ULONG_PTR);
 				break;
 			case FORMAT_TYPE_LONG:
-				num = va_arg(args, long);
+				num = va_arg(args, LONG_PTR);
 				break;
 			case FORMAT_TYPE_SIZE_T:
 				if (spec.flags & SIGN)
@@ -3166,7 +3166,7 @@ int vbin_printf(u32 *bin_buf, size_t size, const char *fmt, va_list args)
 				break;
 			case FORMAT_TYPE_ULONG:
 			case FORMAT_TYPE_LONG:
-				save_arg(unsigned long);
+				save_arg(ULONG_PTR);
 				break;
 			case FORMAT_TYPE_SIZE_T:
 				save_arg(size_t);
@@ -3358,7 +3358,7 @@ int bstr_printf(char *buf, size_t size, const char *fmt, const u32 *bin_buf)
 				break;
 			case FORMAT_TYPE_ULONG:
 			case FORMAT_TYPE_LONG:
-				num = get_arg(unsigned long);
+				num = get_arg(ULONG_PTR);
 				break;
 			case FORMAT_TYPE_SIZE_T:
 				num = get_arg(size_t);
@@ -3676,9 +3676,9 @@ int vsscanf(const char *buf, const char *fmt, va_list args)
 			break;
 		case 'l':
 			if (is_sign)
-				*va_arg(args, long *) = val.s;
+				*va_arg(args, LONG_PTR *) = val.s;
 			else
-				*va_arg(args, unsigned long *) = val.u;
+				*va_arg(args, ULONG_PTR *) = val.u;
 			break;
 		case 'L':
 			if (is_sign)

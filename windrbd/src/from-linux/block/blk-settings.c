@@ -754,7 +754,7 @@ EXPORT_SYMBOL(blk_queue_update_dma_pad);
  * @q:  the request queue for the device
  * @mask:  the memory boundary mask
  **/
-void blk_queue_segment_boundary(struct request_queue *q, unsigned long mask)
+void blk_queue_segment_boundary(struct request_queue *q, ULONG_PTR mask)
 {
 	if (mask < PAGE_SIZE - 1) {
 		mask = PAGE_SIZE - 1;
@@ -771,7 +771,7 @@ EXPORT_SYMBOL(blk_queue_segment_boundary);
  * @q:  the request queue for the device
  * @mask:  the memory boundary mask
  **/
-void blk_queue_virt_boundary(struct request_queue *q, unsigned long mask)
+void blk_queue_virt_boundary(struct request_queue *q, ULONG_PTR mask)
 {
 	q->limits.virt_boundary_mask = mask;
 
@@ -890,7 +890,7 @@ EXPORT_SYMBOL_GPL(blk_queue_required_elevator_features);
 bool blk_queue_can_use_dma_map_merging(struct request_queue *q,
 				       struct device *dev)
 {
-	unsigned long boundary = dma_get_merge_boundary(dev);
+	ULONG_PTR boundary = dma_get_merge_boundary(dev);
 
 	if (!boundary)
 		return false;
@@ -904,7 +904,7 @@ EXPORT_SYMBOL_GPL(blk_queue_can_use_dma_map_merging);
 
 static bool disk_has_partitions(struct gendisk *disk)
 {
-	unsigned long idx;
+	ULONG_PTR idx;
 	struct block_device *part;
 	bool ret = false;
 

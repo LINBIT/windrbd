@@ -11,10 +11,10 @@
 
 #define _NSIG_WORDS	(_NSIG / _NSIG_BPW)
 
-typedef unsigned long old_sigset_t;		/* at least 32 bits */
+typedef ULONG_PTR old_sigset_t;		/* at least 32 bits */
 
 typedef struct {
-	unsigned long sig[_NSIG_WORDS];
+	ULONG_PTR sig[_NSIG_WORDS];
 } sigset_t;
 
 

@@ -375,7 +375,7 @@ SYSCALL_DEFINE1(adjtimex_time32, struct old_timex32 __user *, utp)
  *
  * Return: milliseconds value
  */
-unsigned int jiffies_to_msecs(const unsigned long j)
+unsigned int jiffies_to_msecs(const ULONG_PTR j)
 {
 #if HZ <= MSEC_PER_SEC && !(MSEC_PER_SEC % HZ)
 	return (MSEC_PER_SEC / HZ) * j;
@@ -398,7 +398,7 @@ EXPORT_SYMBOL(jiffies_to_msecs);
  *
  * Return: microseconds value
  */
-unsigned int jiffies_to_usecs(const unsigned long j)
+unsigned int jiffies_to_usecs(const ULONG_PTR j)
 {
 	/*
 	 * Hz usually doesn't go much further MSEC_PER_SEC.
@@ -572,7 +572,7 @@ EXPORT_SYMBOL(ns_to_timespec64);
  *
  * Return: jiffies value
  */
-unsigned long __msecs_to_jiffies(const unsigned int m)
+ULONG_PTR __msecs_to_jiffies(const unsigned int m)
 {
 	/*
 	 * Negative value, means infinite timeout:
@@ -589,7 +589,7 @@ EXPORT_SYMBOL(__msecs_to_jiffies);
  *
  * Return: jiffies value
  */
-unsigned long __usecs_to_jiffies(const unsigned int u)
+ULONG_PTR __usecs_to_jiffies(const unsigned int u)
 {
 	if (u > jiffies_to_usecs(MAX_JIFFY_OFFSET))
 		return MAX_JIFFY_OFFSET;
@@ -617,11 +617,11 @@ EXPORT_SYMBOL(__usecs_to_jiffies);
  *
  * Return: jiffies value
  */
-unsigned long
+ULONG_PTR
 timespec64_to_jiffies(const struct timespec64 *value)
 {
 	u64 sec = value->tv_sec;
-	long nsec = value->tv_nsec + TICK_NSEC - 1;
+	LONG_PTR nsec = value->tv_nsec + TICK_NSEC - 1;
 
 	if (sec >= MAX_SEC_IN_JIFFIES){
 		sec = MAX_SEC_IN_JIFFIES;
@@ -640,7 +640,7 @@ EXPORT_SYMBOL(timespec64_to_jiffies);
  * @value: pointer to &struct timespec64
  */
 void
-jiffies_to_timespec64(const unsigned long jiffies, struct timespec64 *value)
+jiffies_to_timespec64(const ULONG_PTR jiffies, struct timespec64 *value)
 {
 	/*
 	 * Convert jiffies to nanoseconds and separate with
@@ -663,7 +663,7 @@ EXPORT_SYMBOL(jiffies_to_timespec64);
  *
  * Return: jiffies converted to clock_t (CLOCKS_PER_SEC)
  */
-clock_t jiffies_to_clock_t(unsigned long x)
+clock_t jiffies_to_clock_t(ULONG_PTR x)
 {
 #if (TICK_NSEC % (NSEC_PER_SEC / USER_HZ)) == 0
 # if HZ < USER_HZ
@@ -683,7 +683,7 @@ EXPORT_SYMBOL(jiffies_to_clock_t);
  *
  * Return: clock_t value converted to jiffies
  */
-unsigned long clock_t_to_jiffies(unsigned long x)
+ULONG_PTR clock_t_to_jiffies(ULONG_PTR x)
 {
 #if (HZ % USER_HZ)==0
 	if (x >= ~0UL / (HZ / USER_HZ))
@@ -830,9 +830,9 @@ EXPORT_SYMBOL(nsecs_to_jiffies64);
  *
  * Return: nsecs converted to jiffies value
  */
-unsigned long nsecs_to_jiffies(u64 n)
+ULONG_PTR nsecs_to_jiffies(u64 n)
 {
-	return (unsigned long)nsecs_to_jiffies64(n);
+	return (ULONG_PTR)nsecs_to_jiffies64(n);
 }
 EXPORT_SYMBOL_GPL(nsecs_to_jiffies);
 

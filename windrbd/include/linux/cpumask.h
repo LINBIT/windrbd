@@ -11,7 +11,7 @@ typedef cpumask_t *cpumask_var_t;
  */
 #define nr_cpu_ids 1
 
-#define cpumask_bits(maskp) (unsigned long*)((maskp)->mask)
+#define cpumask_bits(maskp) (ULONG_PTR*)((maskp)->mask)
 
 static inline void cpumask_setall(struct cpumask *m)
 {

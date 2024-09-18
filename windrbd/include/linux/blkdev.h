@@ -83,8 +83,8 @@ enum blk_bounce {
 /* TODO: these should be initialized to sane default values: */
 struct queue_limits {
 	enum blk_bounce		bounce;
-	unsigned long		seg_boundary_mask;
-	unsigned long		virt_boundary_mask;
+	ULONG_PTR		seg_boundary_mask;
+	ULONG_PTR		virt_boundary_mask;
 
 	unsigned int		max_hw_sectors;
 	unsigned int		max_dev_sectors;

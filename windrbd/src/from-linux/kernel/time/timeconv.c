@@ -49,7 +49,7 @@ void time64_to_tm(time64_t totalsecs, int offset, struct tm *result)
 	u32 u32tmp, day_of_century, year_of_century, day_of_year, month, day;
 	u64 u64tmp, udays, century, year;
 	bool is_Jan_or_Feb, is_leap_year;
-	long days, rem;
+	LONG_PTR days, rem;
 	int remainder;
 
 	days = div_s64_rem(totalsecs, SECS_PER_DAY, &remainder);
@@ -133,7 +133,7 @@ void time64_to_tm(time64_t totalsecs, int offset, struct tm *result)
 	day_of_year	+= is_Jan_or_Feb ? -306 : 31 + 28 + is_leap_year;
 
 	/* Convert to tm's format. */
-	result->tm_year = (long) (year - 1900);
+	result->tm_year = (LONG_PTR) (year - 1900);
 	result->tm_mon  = (int) month;
 	result->tm_mday = (int) day;
 	result->tm_yday = (int) day_of_year;

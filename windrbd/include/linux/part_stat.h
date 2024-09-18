@@ -15,9 +15,9 @@ struct disk_stats {
 //	u64 nsecs[NR_STAT_GROUPS];
 	ULONG_PTR sectors[NR_STAT_GROUPS];
 /*
-	unsigned long ios[NR_STAT_GROUPS];
-	unsigned long merges[NR_STAT_GROUPS];
-	unsigned long io_ticks;
+	ULONG_PTR ios[NR_STAT_GROUPS];
+	ULONG_PTR merges[NR_STAT_GROUPS];
+	ULONG_PTR io_ticks;
 	local_t in_flight[2];
 */
 };

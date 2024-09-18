@@ -6,8 +6,8 @@
 #include <linux/types.h>
 
 /* Internal, do not use. */
-int __must_check _kstrtoul(const char *s, unsigned int base, unsigned long *res);
-int __must_check _kstrtol(const char *s, unsigned int base, long *res);
+int __must_check _kstrtoul(const char *s, unsigned int base, ULONG_PTR *res);
+int __must_check _kstrtol(const char *s, unsigned int base, LONG_PTR *res);
 
 int __must_check kstrtoull(const char *s, unsigned int base, unsigned long long *res);
 int __must_check kstrtoll(const char *s, unsigned int base, long long *res);
@@ -27,14 +27,14 @@ int __must_check kstrtoll(const char *s, unsigned int base, long long *res);
  * Returns 0 on success, -ERANGE on overflow and -EINVAL on parsing error.
  * Preferred over simple_strtoul(). Return code must be checked.
 */
-static inline int __must_check kstrtoul(const char *s, unsigned int base, unsigned long *res)
+static inline int __must_check kstrtoul(const char *s, unsigned int base, ULONG_PTR *res)
 {
 	/*
 	 * We want to shortcut function call, but
 	 * __builtin_types_compatible_p(unsigned long, unsigned long long) = 0.
 	 */
-	if (sizeof(unsigned long) == sizeof(unsigned long long) &&
-	    __alignof__(unsigned long) == __alignof__(unsigned long long))
+	if (sizeof(ULONG_PTR) == sizeof(unsigned long long) &&
+	    __alignof__(ULONG_PTR) == __alignof__(unsigned long long))
 		return kstrtoull(s, base, (unsigned long long *)res);
 	else
 		return _kstrtoul(s, base, res);
@@ -55,14 +55,14 @@ static inline int __must_check kstrtoul(const char *s, unsigned int base, unsign
  * Returns 0 on success, -ERANGE on overflow and -EINVAL on parsing error.
  * Preferred over simple_strtol(). Return code must be checked.
  */
-static inline int __must_check kstrtol(const char *s, unsigned int base, long *res)
+static inline int __must_check kstrtol(const char *s, unsigned int base, LONG_PTR *res)
 {
 	/*
 	 * We want to shortcut function call, but
 	 * __builtin_types_compatible_p(long, long long) = 0.
 	 */
-	if (sizeof(long) == sizeof(long long) &&
-	    __alignof__(long) == __alignof__(long long))
+	if (sizeof(LONG_PTR) == sizeof(long long) &&
+	    __alignof__(LONG_PTR) == __alignof__(long long))
 		return kstrtoll(s, base, (long long *)res);
 	else
 		return _kstrtol(s, base, res);
@@ -99,8 +99,8 @@ int __must_check kstrtobool(const char *s, bool *res);
 
 int __must_check kstrtoull_from_user(const char __user *s, size_t count, unsigned int base, unsigned long long *res);
 int __must_check kstrtoll_from_user(const char __user *s, size_t count, unsigned int base, long long *res);
-int __must_check kstrtoul_from_user(const char __user *s, size_t count, unsigned int base, unsigned long *res);
-int __must_check kstrtol_from_user(const char __user *s, size_t count, unsigned int base, long *res);
+int __must_check kstrtoul_from_user(const char __user *s, size_t count, unsigned int base, ULONG_PTR *res);
+int __must_check kstrtol_from_user(const char __user *s, size_t count, unsigned int base, LONG_PTR *res);
 int __must_check kstrtouint_from_user(const char __user *s, size_t count, unsigned int base, unsigned int *res);
 int __must_check kstrtoint_from_user(const char __user *s, size_t count, unsigned int base, int *res);
 int __must_check kstrtou16_from_user(const char __user *s, size_t count, unsigned int base, u16 *res);
@@ -142,8 +142,8 @@ static inline int __must_check kstrtos32_from_user(const char __user *s, size_t 
  * Keep in mind above caveat.
  */
 
-extern unsigned long simple_strtoul(const char *,char **,unsigned int);
-extern long simple_strtol(const char *,char **,unsigned int);
+extern ULONG_PTR simple_strtoul(const char *,char **,unsigned int);
+extern LONG_PTR simple_strtol(const char *,char **,unsigned int);
 extern unsigned long long simple_strtoull(const char *,char **,unsigned int);
 extern long long simple_strtoll(const char *,char **,unsigned int);
 
