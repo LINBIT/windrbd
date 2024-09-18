@@ -115,15 +115,15 @@ pull-docker:
 
 # so one can type make with-docker :)
 with-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) KREF_DEBUG=$(KREF_DEBUG) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 all-in-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) KREF_DEBUG=$(KREF_DEBUG) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 package-in-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) KREF_DEBUG=$(KREF_DEBUG) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 ifeq ($(ARCH), i686)
@@ -135,6 +135,14 @@ DRIVER_ENTRY=DriverEntry
 endif
 
 DEFINES=-D WINNT=1 -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 -DKBUILD_MODNAME='"drbd"' -D CONFIG_WINDOWS=1
+
+# there are 2 different kref debugs: on from DRBD (CONFIG_KREF_DEBUG)
+# and one that printk's every kref change (KREF_DEBUG)
+# the latter can be enabled with make KREF_DEBUG=1
+#
+ifdef KREF_DEBUG
+DEFINES+=-DKREF_DEBUG=1
+endif
 
 ifdef REACTOS
 DEFINES+=-DREACTOS

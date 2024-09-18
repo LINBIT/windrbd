@@ -702,6 +702,7 @@ void kref_get_debug(struct kref *kref, const char *file, int line, const char *f
 
 void kref_init_debug(struct kref *kref, const char *file, int line, const char *func)
 {
+	spin_lock_init(&kref->spinlock);
 	atomic_set(&kref->refcount.refs, 1);
 	printk("kref_init on object %p ref is now %d, called from %s:%d (%s())\n", kref, atomic_read(&kref->refcount.refs), file, line, func);
 }
