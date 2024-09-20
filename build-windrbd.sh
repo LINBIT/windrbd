@@ -32,8 +32,20 @@ export BUILD_ENV=jt-gitlab
 export PATH=\$PATH:'/cygdrive/c/Program Files (x86)/Inno Setup 5/'
 make clean
 make package VERSION=gitlab
-make upload VERSION=gitlab
+for i in inno-setup/install-windrbd-\*.exe
+do
+	echo copiing \$i to linux host ...
+	scp \$i johannes@10.43.224.39:/tmp/build-windrbd/\$i
+done
 echo Done
+"
+
+ssh johannes@10.43.224.39 "cd /tmp/build-windrbd
+for i in inno-setup/install-windrbd-\*.exe
+do
+	echo copiing \$i to nexus ...
+	curl -f --netrc-file /etc/nexus-password --upload-file \$i https://nexus.at.linbit.com/repository/windows/WinDRBD/$i 
+done
 "
 
 echo "Should be finished, resulting installer should be on nexus"
