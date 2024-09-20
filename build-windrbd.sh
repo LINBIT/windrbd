@@ -44,7 +44,7 @@ ssh johannes@10.43.224.39 "cd /tmp/build-windrbd
 for i in inno-setup/install-windrbd-*.exe
 do
 	echo copiing \$i to nexus ...
-	curl -f --netrc-file /etc/nexus-password --upload-file \$i https://nexus.at.linbit.com/repository/windows/WinDRBD/\$i
+	curl -f --netrc-file /etc/nexus-password --upload-file \$i https://nexus.at.linbit.com/repository/windows/WinDRBD/install-windrbd-latest-from-gitlab.exe
 done
 "
 
