@@ -7,7 +7,7 @@
 
 set -e
 echo "Creating tarball this may take a while ..."
-tar zcf windrbd-initial.tarball.tar.gz --exclude=\*.tarball.tar.gz --exclude=inno-setup/install-windrbd\*.exe --exclude=converted-sources .
+tar zcf windrbd-initial.tarball.tar.gz --exclude=\*.tarball.tar.gz --exclude=inno-setup/install-windrbd\*.exe --exclude=converted-sources . || :
 scp windrbd-initial.tarball.tar.gz johannes@10.43.224.39:/tmp
 echo "Ok, now running Linux build steps (cocci, ...)"
 ssh johannes@10.43.224.39 "rm -rf /tmp/build-windrbd
@@ -17,7 +17,7 @@ tar zxf ../windrbd-initial.tarball.tar.gz
 make clean
 make V=1
 echo 'Creating tarball with Linux build artifacts ...'
-tar zcf windrbd-built-converted-sources.tarball.tar.gz --exclude=\*.tarball.tar.gz --exclude=inno-setup/install-windrbd\*.exe .
+tar zcf windrbd-built-converted-sources.tarball.tar.gz --exclude=\*.tarball.tar.gz --exclude=inno-setup/install-windrbd\*.exe . || :
 echo Done
 "
 echo "Copying the result to Windows VM"
