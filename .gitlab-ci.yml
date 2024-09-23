@@ -4,4 +4,4 @@ stages:
 build:
    stage: build
    script:
-     - build-windrbd.sh
+     - ./build-windrbd.sh
