@@ -1,0 +1,7 @@
+stages:
+  - build
+
+build:
+   stage: build
+   script:
+     - build-windrbd.sh
