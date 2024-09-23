@@ -19,8 +19,6 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-zak lebt
-
 /* Uncomment this if you want more debug output (disable for releases) */
 /* #define DEBUG 1 */
 
