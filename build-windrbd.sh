@@ -5,6 +5,7 @@
 # build process, take a look at WinDRBD 1.2.
 #
 
+set -e
 echo "Creating tarball this may take a while ..."
 tar zcf windrbd-initial.tarball.tar.gz --exclude=\*.tarball.tar.gz --exclude=inno-setup/install-windrbd\*.exe --exclude=converted-sources .
 scp windrbd-initial.tarball.tar.gz johannes@10.43.224.39:/tmp
