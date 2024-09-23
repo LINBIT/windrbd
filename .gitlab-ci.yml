@@ -1,5 +1,5 @@
 default:
-  image: build-windrbd-1.1
+  image: $LINBIT_DOCKER_REGISTRY/build-windrbd-1.1
 
 stages:
   - build
