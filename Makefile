@@ -162,4 +162,9 @@ tarball:
 	tar --owner=0 --group=0 -czf - -T .filelist > wdrbd-$(VERSION).tar.gz
 	rm wdrbd-$(VERSION)
 
+DOCKER ?= docker
+DOCKER_IMAGE ?= build-windrbd-1.1
+
+docker:
+	$(DOCKER) build --pull=true --no-cache=true -t $(DOCKER_IMAGE) docker-root-1.1
 # vim: set ts=8 sw=8 noet : 
