@@ -16,5 +16,5 @@ build:
 test:
     stage: test
     script:
-      - git clone git@gitlab.at.linbit.com:drbd/drbd9-tests.git
+      - git clone git@gitlab.at.linbit.com:drbd/drbd9-tests.git --branch jt/windrbd-support
       - cd drbd9-tests && ./run-windrbd-tests.sh
