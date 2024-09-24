@@ -6,8 +6,15 @@ default:
 
 stages:
   - build
+  - test
 
 build:
    stage: build
    script:
      - ./build-windrbd.sh
+
+test:
+    stage: test
+    script:
+      - git clone git@gitlab.at.linbit.com:drbd/drbd9-tests.git
+      - cd drbd9-tests && ./run-windrbd-tests.sh
