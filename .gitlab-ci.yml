@@ -17,6 +17,9 @@ test:
   stage: test
   script:
     - echo "hallo"
+    - curl -sSfL -u gitlab-ci-token:$CI_JOB_TOKEN $CI_SERVER_URL/linbit/build-helpers/-/archive/$BUILD_HELPERS_VERSION/ignored.tar.gz | tar -xvzf -
+    - mv build-helpers-* build-helpers
+    - . build-helpers/gitlab-utils.sh
     - ci_prepare_tools
     - ci_fetch_rq
     - ci_fetch_binary virter virter-$VIRTER_VERSION https://github.com/LINBIT/virter/releases/download/$VIRTER_VERSION/virter-linux-amd64
