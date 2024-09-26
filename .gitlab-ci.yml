@@ -8,7 +8,7 @@ build:
   stage: build
   image: $LINBIT_DOCKER_REGISTRY/build-windrbd-1.1
   script:
-     - ./build-windrbd.sh
+    - ./build-windrbd.sh
 
 test:
   tags:
