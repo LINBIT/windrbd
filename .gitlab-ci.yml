@@ -16,6 +16,9 @@ test:
     - libvirt
   stage: test
   script: |
+    mkdir -p drbd-test-bundle
+    curl -sSL $LINBIT_REGISTRY_URL/repository/test-suite/drbd-test-bundle.tgz | tar -C drbd-test-bundle -xzf -
+    . drbd-test-bundle/virter/version.env
     echo "hallo"
     curl -sSfL -u gitlab-ci-token:$CI_JOB_TOKEN $CI_SERVER_URL/linbit/build-helpers/-/archive/$BUILD_HELPERS_VERSION/ignored.tar.gz | tar -xvzf -
     mv build-helpers-* build-helpers
