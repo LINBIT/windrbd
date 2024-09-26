@@ -2,7 +2,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
 stages:
-  - build
+#  - build
   - test
 
 build:
