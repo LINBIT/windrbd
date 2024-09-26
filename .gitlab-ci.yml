@@ -2,13 +2,14 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
 stages:
+#  - build
   - test
 
-build:
-  stage: build
-  image: $LINBIT_DOCKER_REGISTRY/build-windrbd-1.1
-  script:
-    - ./build-windrbd.sh
+# build:
+#   stage: build
+#   image: $LINBIT_DOCKER_REGISTRY/build-windrbd-1.1
+#   script:
+#     - ./build-windrbd.sh
 
 test:
   tags:
