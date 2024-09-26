@@ -1,5 +1,8 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  BUILD_HELPERS_VERSION: c0d39c0e5a2235262f21d072c4bf3b2dd62b2040
+  VMSHED_VERSION: v0.20.1
+  VIRTER_VERSION: v0.25.0
 
 stages:
 #  - build
@@ -16,9 +19,6 @@ test:
     - libvirt
   stage: test
   script: |
-    mkdir -p drbd-test-bundle
-    curl -sSL $LINBIT_REGISTRY_URL/repository/test-suite/drbd-test-bundle.tgz | tar -C drbd-test-bundle -xzf -
-    . drbd-test-bundle/virter/version.env
     echo "hallo"
     curl -sSfL -u gitlab-ci-token:$CI_JOB_TOKEN $CI_SERVER_URL/linbit/build-helpers/-/archive/$BUILD_HELPERS_VERSION/ignored.tar.gz | tar -xvzf -
     mv build-helpers-* build-helpers
