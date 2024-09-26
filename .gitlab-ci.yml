@@ -14,8 +14,7 @@ build:
 test:
   tags:
     - libvirt
-  image: $LINBIT_DOCKER_REGISTRY/drbd9-tests:windrbd
   stage: test
   script:
-    - git clone https://gitlab.at.linbit.com:drbd/drbd9-tests.git --branch jt/windrbd-support
+    - git clone https://gitlab.at.linbit.com/drbd/drbd9-tests.git --branch jt/windrbd-support
     - cd drbd9-tests && ./run-windrbd-tests.sh
