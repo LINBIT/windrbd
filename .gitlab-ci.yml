@@ -16,5 +16,6 @@ test:
     - libvirt
   stage: test
   script:
+    - echo "hallo"
     - git clone https://gitlab.at.linbit.com/drbd/drbd9-tests.git --branch jt/windrbd-support
     - cd drbd9-tests && ./run-windrbd-tests.sh
