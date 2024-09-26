@@ -1,22 +1,21 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
-default:
-  image: $LINBIT_DOCKER_REGISTRY/build-windrbd-1.1
-
 stages:
   - build
   - test
 
 build:
    stage: build
+  image: $LINBIT_DOCKER_REGISTRY/build-windrbd-1.1
    script:
      - ./build-windrbd.sh
 
 test:
   tags:
     - libvirt
+  image: $LINBIT_DOCKER_REGISTRY/drbd9-tests:windrbd
   stage: test
   script:
-    - git clone git@gitlab.at.linbit.com:drbd/drbd9-tests.git --branch jt/windrbd-support
+    - git clone https://gitlab.at.linbit.com:drbd/drbd9-tests.git --branch jt/windrbd-support
     - cd drbd9-tests && ./run-windrbd-tests.sh
