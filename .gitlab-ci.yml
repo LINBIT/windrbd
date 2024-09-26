@@ -17,5 +17,6 @@ test:
   stage: test
   script:
     - echo "hallo"
-    - git clone https://gitlab.at.linbit.com/drbd/drbd9-tests.git --branch jt/windrbd-support
+#    - git clone https://gitlab.at.linbit.com/drbd/drbd9-tests.git --branch jt/windrbd-support
+    - git clone --branch jt/windrbd-support https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/drbd/drbd9-tests.git
     - cd drbd9-tests && ./run-windrbd-tests.sh
