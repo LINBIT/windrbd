@@ -29,3 +29,12 @@ test:
     ci_fetch_binary vmshed vmshed-$VMSHED_VERSION https://github.com/LINBIT/vmshed/releases/download/$VMSHED_VERSION/vmshed-linux-amd64
     git clone --branch jt/windrbd-support https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/drbd/drbd9-tests.git
     cd drbd9-tests && ./run-windrbd-tests.sh
+  artifacts:
+    # provide a convenient name so that the downloaded artifacts can be identified
+    name: $CI_PROJECT_NAME-$CI_JOB_ID
+    paths:
+      - drbd9-tests/tests-out/
+    when: always
+    reports:
+      junit: tests-out/test-results/*.xml
+
