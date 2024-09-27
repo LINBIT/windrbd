@@ -5,14 +5,14 @@ variables:
   VIRTER_VERSION: v0.27.0
 
 stages:
-#  - build
+  - build
   - test
 
-# build:
-#   stage: build
-#   image: $LINBIT_DOCKER_REGISTRY/build-windrbd-1.1
-#   script:
-#     - ./build-windrbd.sh
+build:
+   stage: build
+   image: $LINBIT_DOCKER_REGISTRY/build-windrbd-1.1
+   script:
+     - ./build-windrbd.sh
 
 test:
   tags:
