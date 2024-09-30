@@ -558,19 +558,30 @@ struct page *alloc_page_debug(int flag, const char *file, int line, const char *
 	}
 	kref_init(&p->kref);
 
+printk("alloc_page called from %s:%d %s(). Refcount is %d, page is %p, page->addr is %p\n", file, line, func, atomic_read(&p->kref.refcount.refs), p, p->addr);
+
 	return p;
 }
 
 void __free_page_debug(struct page *page, const char *file, int line, const char *func)
 {
+printk("__free_page_debug called from %s:%d %s(). Refcount is %d, page is %p, page->addr is %p\n", file, line, func, atomic_read(&page->kref.refcount.refs), page, page->addr);
+
 	if (!page->is_system_buffer)
 		kfree_debug(page->addr, file, line, func);
+
+/* This sets the page's ref count to 1. Doing so before freeing
+ * the memory might hopefully trigger a double free.
+ */
+printk("setting kref to 1 before freeing page %p page->addr is %p ...\n", page, page->addr);
+kref_init(&page->kref);
 
 	kfree_debug(page, file, line, func);
 }
 
 void free_pages_debug(ULONG_PTR addr, int order, const char *file, int line, const char *func)
 {
+printk("free_pages_debug: addr is %p\n", (void*)addr);
 	kfree_debug((void*) addr, file, line, func);
 }
 
@@ -611,6 +622,8 @@ ULONG_PTR __get_free_page_debug(gfp_t flag, const char *file, int line, const ch
 }
 
 #else
+
+zak lebt nicht
 
 struct page *alloc_page(int flag)
 {
