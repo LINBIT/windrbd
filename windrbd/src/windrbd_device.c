@@ -113,7 +113,9 @@ static int about_to_unload_driver;	/* Driver will soon unload so
 
 static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+#ifdef DEBUG
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+#endif
 
 	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
 		dbg(KERN_DEBUG "DRBD root device request not implemented: MajorFunction: 0x%x\n", s->MajorFunction);
@@ -2125,12 +2127,10 @@ dbg_bus("NOT completing IRP\n");
 	{
 		wchar_t *string;
 		dbg("bus Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
-		string = ExAllocatePoolWithTag(PagedPool, 512*sizeof(wchar_t), 'DRBD');
+		string = ExAllocatePoolWithTag(PagedPool, 512*sizeof(wchar_t), DRBD_TAG);
 		if (string == NULL) {
 			status = STATUS_INSUFFICIENT_RESOURCES;
 		} else {
-			size_t len;
-
 			memset(string, 0, 512*sizeof(wchar_t));
 			switch (s->Parameters.QueryId.IdType) {
 			case BusQueryDeviceID:
@@ -2145,12 +2145,12 @@ dbg("BusQueryInstanceID\n");
 				break;
 			case BusQueryHardwareIDs:
 dbg("BusQueryHardwareIDs\n");
-				len = _snwprintf(string, 512, L"WinDRBD");
+				_snwprintf(string, 512, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			case BusQueryCompatibleIDs:
 dbg("BusQueryCompatibleIDs\n");
-				len = _snwprintf(string, 512, L"WinDRBD");
+				_snwprintf(string, 512, L"WinDRBD");
 				status = STATUS_SUCCESS;
 				break;
 			default:

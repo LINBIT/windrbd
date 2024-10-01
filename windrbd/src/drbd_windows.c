@@ -3013,6 +3013,10 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 	spin_lock_init(&block_device->in_flight_bios_lock);
 	INIT_LIST_HEAD(&block_device->in_flight_bios);
 
+                /* we have our own timer now, new in 1.1.17 */
+        block_device->disk_timeout = 0;
+        timer_setup(&block_device->disk_timeout_timer, disk_timeout_timer_fn, 0);
+
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
 
