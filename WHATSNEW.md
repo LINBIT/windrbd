@@ -6,6 +6,20 @@ Base on DRBD 9.1
 
 DRBD reactor support
 
+What's new in version 1.2.0-rc6
+-------------------------------
+
+Lots of stability fixes, with DRBD 9.0 as HA backend
+it works pretty stable already. Also merged 1.1.19 in.
+Also this version runs fine on ReactOS, too (ReactOS
+is the default debugging platform due to WinDBG
+limitations).
+
+What's new in version 1.2.0-rc5
+-------------------------------
+
+Compiles with DRBD 9.1
+
 What's new in version 1.2.0-rc4
 -------------------------------
 
