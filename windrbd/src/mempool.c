@@ -65,22 +65,8 @@ void mempool_destroy(mempool_t *pool)
 
 void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
 {
-	if (pool->type == MEMPOOL_PAGE) {
-		struct page* page;
-
-                page = ExAllocateFromNPagedLookasideList(&pool->pageLS);
-                if (page) {
-                        page->addr = ExAllocateFromNPagedLookasideList(&pool->page_addrLS);
-                        if(page->addr)
-{
-printk("mempool_alloc page pool page is %p page->addr is %p kref is %d\n", page, page->addr, atomic_read(&page->kref.refcount.refs));
-                                return page;
-}
-
-			ExFreeToNPagedLookasideList(&pool->pageLS, page);
-		}
-		return NULL;
-	}
+	if (pool->type == MEMPOOL_PAGE)
+		return alloc_page(gfp_mask);
 
 	return kmem_cache_alloc(pool->cache, gfp_mask);
 }
@@ -91,14 +77,8 @@ void mempool_free(void *element, mempool_t *pool)
 		return;
 
 	if (pool->type == MEMPOOL_PAGE) {
-		struct page* page = element;
-
-printk("mempool_free page pool page is %p page->addr is %p kref is %d\n", page, page->addr, atomic_read(&page->kref.refcount.refs));
-atomic_set(&page->kref.refcount.refs, 1);
-printk("Forced refs to be %d expecting a BSOD soon...\n", atomic_read(&page->kref.refcount.refs));
-
-                ExFreeToNPagedLookasideList (&pool->page_addrLS, page->addr);
-                ExFreeToNPagedLookasideList (&pool->pageLS, page);
+		struct page *page = element;
+		put_page(page);
 	} else {
 		kmem_cache_free(pool->cache, element);
 	}
