@@ -522,6 +522,9 @@ struct block_device {
 
 	spinlock_t in_flight_bios_lock;
 	struct list_head in_flight_bios;
+
+	unsigned long long disk_timeout;
+	struct timer_list disk_timeout_timer;
 };
 
 	/* Starting with version 0.7.1, this is the device extension

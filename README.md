@@ -6,7 +6,7 @@ might not work or not even compile at all.
 
 Clone this repository with
 
-	git clone --branch windrbd-1.2 --recursive <url>
+	git clone --branch windrbd-1.2 --recursive https://github.com/LINBIT/windrbd.git
 
 else you get an incomplete checkout.
 
@@ -15,13 +15,13 @@ To build (within a docker container containing build dependecies), do
 
 	make pull-docker && make package-in-docker
 
-To put your Windows box into test mode, do
+To install on Windows run the generated install-windrbd-<version>.exe (yes on a Windows box, tough ReactOS should also work, see make help).
+
+To put your Windows box into test mode (required on 64-bit Microsoft Windows for loading the driver), do
 
 	bcdedit /set TESTSIGNING ON
 
 and reboot. You now can load the driver you just built.
-
-To install on Windows run the generated install-windrbd-<version>.exe.
 
 If you need installable binaries with a signed driver or
 need assistance using WinDRBD please talk to the project's
@@ -284,6 +284,9 @@ Version history
  * 1.1.14 (May 14, 2024): Fix for drbdadm create-md, downgrade cygwin DLL 3.5.3 -> 3.4.10
  * 1.1.15 (May 27, 2024): Kernel stacks locked in memory fixing a rare BSOD
  * 1.1.16 (June 26, 2024): Initialize bios_event also for upper block devices
+ * 1.1.17 (July 24, 2024): Disk timeout now handled by WinDRBD (not DRBD)
+ * 1.1.18 (July 25, 2024): Cygwin console close patch: drbdadm shouldn't hang on exiting
+ * 1.1.19 (August 5, 2024): Disabled backing device I/O corking again
  * 1.2.0-rc1 (Aug 14, 2023): Compile with gcc. Don't use 1.2.0-rc's in production.
  * 1.2.0-rc2 (Sep 12, 2023): Build everything within a docker container (WinDRBD, drbd-utils, ...)
  * 1.2.0-rc3 (Sep 20, 2023): Fix for BSOD on Primary, ReactOS support

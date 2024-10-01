@@ -2,6 +2,7 @@ Upcoming features
 -----------------
 
 Base on DRBD 9.1
+	See WinDRBD 1.2 branch (windrbd-1.2)
 
 DRBD reactor support
 
@@ -41,6 +42,30 @@ What's new in version 1.2.0-rc1
 -------------------------------
 
 Can compile WinDRBD driver with gcc (mingw-w64).
+
+What's new in version 1.1.19
+----------------------------
+
+Disabled backing device I/O corking which was introduced in
+WinDRBD 1.1.8. This caused I/O to hang longer than expected
+(several minutes). Expect bitmap I/O (initial read of bitmap)
+being slower now (as in pre-1.1.8 releases).
+
+What's new in version 1.1.18
+----------------------------
+
+Cygwin update: fix for console close. Before that sometimes
+processes (like drbdadm, ...) took several seconds to exit
+and sometimes they never exited at all. This should be fixed
+with this version.
+
+What's new in version 1.1.17
+----------------------------
+
+WinDRBD now has its own timer to detect disk timeouts. This
+fixes disk timeout on secondaries, during resync and also
+for meta data. The DRBD disk timeout timers have been removed.
+This solves many issues we had in conjunction with disk timeouts.
 
 What's new in version 1.1.16
 ----------------------------

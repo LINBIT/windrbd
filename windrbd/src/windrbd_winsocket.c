@@ -95,7 +95,8 @@ static int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_CONNECTION_REFUSED:
 		return -ECONNREFUSED;
 	case STATUS_ACCESS_DENIED:  /* returned when port is blocked by firewall, retry again later */
-		printk("Got STATUS_ACCESS_DENIED, please check your firewall settings\n");
+		/* Do not log this: logfile may get 150GB ... */
+//		printk("Got STATUS_ACCESS_DENIED, please check your firewall settings\n");
 		return -EAGAIN;
 	case STATUS_LOCAL_DISCONNECT: /* Sent by ReactOS on connection timeout */
 		printk("Got STATUS_LOCAL_DISCONNECT returning -ECONNRESET ...\n");

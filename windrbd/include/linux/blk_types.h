@@ -160,10 +160,8 @@ struct bio {
 
 	char *where_i_am;	/* checkpoints for debugging backing dev timeout. */
 
-	/* TODO: may be put members here again? Update: Not sure,
-	 * we've put a KEVENT here and it didn't work .. might also
-	 * have been something else.
-	 */
+	unsigned long long submission_timestamp;
+	bool disk_has_timed_out;
 
 	struct bio_vec bi_io_vec[1];
 };

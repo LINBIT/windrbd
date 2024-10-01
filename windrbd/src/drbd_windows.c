@@ -775,6 +775,8 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs)
 	spin_lock_init(&bio->already_failed_lock);
 	bio->already_failed = false;
 	bio->where_i_am = "just allocated";
+	bio->submission_timestamp = 0;
+	bio->disk_has_timed_out = false;
 
 	return bio;
 }
@@ -1782,13 +1784,14 @@ int wait_for_bios_to_complete(struct block_device *bdev)
 	return 0;
 }
 
-static void bio_endio_impl(struct bio *bio, bool was_accounted);
-
-void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status)
+static void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status)
 {
 	KIRQL flags;
 	struct list_head tmp_list;
 	struct bio *bio, *bio2;
+
+	printk("Failing all in-flight bios, disk should detach.\n");
+	printk("Please repair the disk and run drbdadm attach.\n");
 
 		/* Valid. backing dev might be detached. */
 	if (bdev == NULL)
@@ -1806,9 +1809,86 @@ void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_status)
 	list_for_each_entry(bio, &tmp_list, locally_submitted_bios2) {
 // printk("disk timeout, failing bio %p (was last at %s)\n", bio, bio->where_i_am);
 		bio->bi_status = bi_status;
+		bio->disk_has_timed_out = true;
 		bio_endio(bio); /* will remove this bio from the list */
 	}
 }
+
+static void disk_timeout_timer_fn(struct timer_list *t)
+{
+	struct block_device *bdev = from_timer(bdev, t, disk_timeout_timer);
+
+	printk("Disk timeout timer expired, failing all I/O requests for block device %p...\n", bdev);
+	windrbd_fail_all_in_flight_bios(bdev, BLK_STS_TIMEOUT);
+}
+
+/* Done: For the 'new' (1.1.17) disk timeout implementation:
+	1.) Done: cancel timer when there are no bios in flight.
+	2.) Done: remove DRBD instrumented code related to 1.1.9 disk timeout implementation
+	3.) Done: Why are there more timer triggers even when the disk failed?
+		One for data one for metadata
+		but sometimes there are even more (see 7. maybe this solves it)
+		Ok works now
+	4.) Done: Test for data metadata and also primary secondary -> Devin
+	5.) Done: also test with external meta data -> Devin
+	6.) Done: Cancel timer on bdev destroy
+	7.) Done: Fail bios in generic_make_request rightaway
+		hope this fixes the random BSOD on sync target disk timeout
+		yes it does
+	8.) Done: Patch out the DRBD timeout handler (disk timeout)
+	9.) Done: DRBD should tell WinDRBD about the disk timeout setting
+ */
+
+static unsigned long long oldest_bio_timestamp(struct block_device *bdev)
+{
+	struct bio *bio;
+	unsigned long long oldest = jiffies;
+	KIRQL flags;
+
+	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
+
+	if (list_empty(&bdev->in_flight_bios)) {
+		oldest = 0;
+	} else {
+		list_for_each_entry(bio, &bdev->in_flight_bios, locally_submitted_bios) {
+			if (bio->submission_timestamp != 0 && bio->submission_timestamp < oldest)
+				oldest = bio->submission_timestamp;
+		}
+	}
+
+	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
+
+	return oldest;
+}
+
+static void rearm_disk_timeout_timer(struct block_device *bdev)
+{
+	unsigned long long now = jiffies;
+	unsigned long long oldest = oldest_bio_timestamp(bdev);
+
+	if (bdev->disk_timeout == 0 || oldest == 0)
+		del_timer(&bdev->disk_timeout_timer);
+	else if (oldest + bdev->disk_timeout <= now)
+		windrbd_fail_all_in_flight_bios(bdev, BLK_STS_TIMEOUT);
+	else
+		mod_timer(&bdev->disk_timeout_timer, oldest + bdev->disk_timeout);
+}
+
+void windrbd_set_disk_timeout(struct block_device *bdev, unsigned long long timeout)
+{
+	if (bdev == NULL)
+		return;
+
+	if (bdev->disk_timeout != timeout) {
+		printk("WinDRBD: setting disk timeout from %llu milliseconds to %llu milliseconds.\n", bdev->disk_timeout, timeout);
+		printk("(0 means disk timeout disabled)\n");
+	}
+
+	bdev->disk_timeout = timeout;
+	rearm_disk_timeout_timer(bdev);
+}
+
+static void bio_endio_impl(struct bio *bio, bool was_accounted);
 
 NTSTATUS DrbdIoCompletion(
   _In_     PDEVICE_OBJECT DeviceObject,
@@ -2474,7 +2554,10 @@ int generic_make_request(struct bio *bio)
 
 	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
 	list_add(&bio->locally_submitted_bios, &bdev->in_flight_bios);
+	bio->submission_timestamp = jiffies;
 	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
+
+	rearm_disk_timeout_timer(bdev);
 
 	if (bdev->corked) {
 		bio->where_i_am = "in generic_make_request bdev corked";
@@ -2516,14 +2599,30 @@ static void bio_endio_impl(struct bio *bio, bool was_accounted)
 	spin_lock_irqsave(&bio->already_failed_lock, flags);
 	if (bio->already_failed) {
 		spin_unlock_irqrestore(&bio->already_failed_lock, flags);
+		bio_put(bio);
 		return;
 	}
-	spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags2);
-	list_del_init(&bio->locally_submitted_bios);
-	spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags2);
-
 	bio->already_failed = true;
+
+/* bio_get: we are still using the bio if the disk should
+ * answer at a later point in time (bio_endio will be called again)
+ * Also this should protect against a bio_free in IoCallDriver of
+ * the windrbd_generic_make_request function ... (when WinDRBD
+ * fails the pending bios and a bio is used by the disk driver)
+ * This must be inside the spinlock else the second bio_endio
+ * (from the disk) might run before the bio_get() ...
+ */
+	if (bio->disk_has_timed_out)
+		bio_get(bio);
 	spin_unlock_irqrestore(&bio->already_failed_lock, flags);
+
+	if (!bio->disk_has_timed_out) {
+		spin_lock_irqsave(&bio->bi_bdev->in_flight_bios_lock, flags2);
+		list_del_init(&bio->locally_submitted_bios);
+		spin_unlock_irqrestore(&bio->bi_bdev->in_flight_bios_lock, flags2);
+
+		rearm_disk_timeout_timer(bio->bi_bdev);
+	}	/* Else we got called by fail_all_in_flight_bios */
 
 	bio_get(bio);
 
@@ -3663,35 +3762,6 @@ printk("Done.\n");
 	bdev->windows_device = NULL;
 }
 
-/* This is DRBD specific: DRBD calls this only once (same for
- * bdput(). Really we should have a list of known upper block_devices
- * and return an existing for the minor to properly mimic Linux'
- * behaviour.
- */
-
-#if 0
-
-struct block_device *bdget(dev_t device_no)
-{
-	dev_t minor = MINOR(device_no);
-	struct block_device *block_device;
-
-	/* TODO: lookup block device by device_no, kref_get() it and
-	 * return it.
-	 */
-
-	if (minor_to_windows_device_name(&block_device->path_to_device, minor, 0) < 0)
-		return NULL;
-
-	block_device->minor = minor;
-
-	printk(KERN_INFO "Created new block device %S (minor %d).\n", block_device->path_to_device.Buffer, minor);
-
-	return block_device;
-}
-
-#endif
-
 	/* This function is roughly taken from:
 	 * https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/content/mountmgr/ni-mountmgr-ioctl_mountmgr_create_point
 	 */
@@ -4127,6 +4197,8 @@ printk("8\n");
 static void windrbd_destroy_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
+
+	del_timer(&bdev->disk_timeout_timer);
 
 		/* This is legal. Users may create DRBD devices without
 		 * mount point.
