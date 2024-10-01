@@ -94,6 +94,8 @@ void mempool_free(void *element, mempool_t *pool)
 		struct page* page = element;
 
 printk("mempool_free page pool page is %p page->addr is %p kref is %d\n", page, page->addr, atomic_read(&page->kref.refcount.refs));
+atomic_set(&page->kref.refcount.refs, 1);
+printk("Forced refs to be %d expecting a BSOD soon...\n", atomic_read(&page->kref.refcount.refs));
 
                 ExFreeToNPagedLookasideList (&pool->page_addrLS, page->addr);
                 ExFreeToNPagedLookasideList (&pool->pageLS, page);
