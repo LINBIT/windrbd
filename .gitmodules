@@ -7,12 +7,15 @@
         fetchRecurseSubmodules = true
 [submodule "drbd-9.1"]
 	path = drbd-9.1
-	url = git@gitlab.at.linbit.com:drbd/drbd.git
+	url = ../drbd.git
+        fetchRecurseSubmodules = true
 [submodule "drbd-9.2"]
 	path = drbd-9.2
-	url = git@gitlab.at.linbit.com:drbd/drbd.git
+	url = ../drbd.git
 	branch = master
+        fetchRecurseSubmodules = true
 [submodule "drbd-9.0"]
 	path = drbd-9.0
-	url = git@gitlab.at.linbit.com:drbd/drbd.git
+	url = ../drbd.git
 	branch = drbd-9.0
+        fetchRecurseSubmodules = true
