@@ -33,7 +33,12 @@ fi
 
 if [ "$DRBD" -a "$ARCH" ]
 then
-    FULL_VERSION=$GITHASH-$DRBD-$ARCH
+    if [ "$REACTOS" ]
+    then
+        FULL_VERSION=$GITHASH-$DRBD-$ARCH-reactos
+    else
+        FULL_VERSION=$GITHASH-$DRBD-$ARCH
+    fi
 else
     FULL_VERSION=$GITHASH
 fi

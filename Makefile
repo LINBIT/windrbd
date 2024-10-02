@@ -68,6 +68,8 @@ TARGET_IPS ?= 10.43.224.4 10.43.224.25
 export DRBD ?= drbd-9.0
 DRBDTMP ?= $(DRBD)-tmp
 
+export REACTOS
+
 GIT_VERSION=$(shell git describe --tags)
 ifdef VERSION
 FULL_VERSION=$(GIT_VERSION)-$(VERSION)
