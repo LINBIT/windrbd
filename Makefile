@@ -1,4 +1,4 @@
-export DEFAULT ?= package-in-docker
+DEFAULT ?= package-in-docker
 
 default: $(DEFAULT)
 
@@ -98,11 +98,13 @@ DOCKER_IMAGE ?= windrbd-devenv
 # image is built.
 # DOCKER_RUN=docker run -u $(MY_UID):$(MY_GID) --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 # so run docker as root ...
-DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
+DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) $(DOCKER_IMAGE)
 
 # Change ownership of all files created by make process to
 # the host's UID/GID.
 FIXUP_OWNERSHIP=bash -c 'f=`find /windrbd -user root` ; if [ x"$$f" != x ] ; then chown $(MY_UID):$(MY_GID) $$f ; fi'
+
+export VERSION:=$(VERSION)
 
 # Very simple pretty printer:
 ifeq ($(V),1)
@@ -120,7 +122,7 @@ pull-docker:
 	$(DOCKER) tag quay.io/johannesthoma/windrbd-devenv windrbd-devenv
 
 foo:
-	$(call run,bash -c "echo ${BAR} ${DEFAULT}",ECHO)
+	$(call run,bash -c "echo $${BAR} $${DEFAULT}",ECHO)
 
 bar:
 	$(call run,$(DOCKER_RUN) bash -c "echo $${BAR} $${DEFAULT}",DOCKER-BAR)
@@ -144,7 +146,7 @@ all-in-docker:
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 package-in-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) PAGE_KREF_DEBUG=$(PAGE_KREF_DEBUG) KREF_DEBUG=$(KREF_DEBUG) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
+	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package ARCH=$(ARCH) REACTOS=$(REACTOS) PAGE_KREF_DEBUG=$(PAGE_KREF_DEBUG) KREF_DEBUG=$(KREF_DEBUG) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP)
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 ifeq ($(ARCH), i686)
