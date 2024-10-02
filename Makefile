@@ -1,4 +1,4 @@
-DEFAULT ?= package-in-docker
+export DEFAULT ?= package-in-docker
 
 default: $(DEFAULT)
 
@@ -12,6 +12,8 @@ default: $(DEFAULT)
 
 # default: all
 # default: package
+
+export BAR=123
 
 help:
 	@echo "                        WinDRBD 1.2 build help"
@@ -116,6 +118,21 @@ endif
 pull-docker:
 	$(DOCKER) pull quay.io/johannesthoma/windrbd-devenv
 	$(DOCKER) tag quay.io/johannesthoma/windrbd-devenv windrbd-devenv
+
+foo:
+	$(call run,bash -c "echo ${BAR} ${DEFAULT}",ECHO)
+
+bar:
+	$(call run,$(DOCKER_RUN) bash -c "echo $${BAR} $${DEFAULT}",DOCKER-BAR)
+
+baz:
+	$(call run,make -C x zak,MAKE)
+
+env:
+	$(call run,$(DOCKER_RUN) bash -c "echo $${BAR} $${DEFAULT} ; env",DOCKER-ENV)
+
+env-norun:
+	$(DOCKER_RUN) bash -c "echo $${BAR} $${DEFAULT} ; env"
 
 # so one can type make with-docker :)
 with-docker:
