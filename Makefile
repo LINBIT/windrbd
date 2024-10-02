@@ -60,12 +60,12 @@ help:
 	@echo "    make pull-docker && make package-in-docker"
 	@echo
 
-ARCH ?= x86_64
+export ARCH ?= x86_64
 # ARCH=i686
 
 TARGET_IPS ?= 10.43.224.4 10.43.224.25
 
-DRBD ?= drbd-9.0
+export DRBD ?= drbd-9.0
 DRBDTMP ?= $(DRBD)-tmp
 
 GIT_VERSION=$(shell git describe --tags)

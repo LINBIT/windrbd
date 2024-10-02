@@ -8,7 +8,7 @@ fi
 EXTRA_VERSION=""
 
 if [ "$#" -ne 1 -a "$#" -ne 2 ]; then
-	echo "Usage: $0 TRANS_DEST [version-override]"
+	echo "Usage: $0 drbd-tmp-directory [version-override]"
 	exit 1
 else
 	OUTPATH=$1/drbd
@@ -21,10 +21,8 @@ fi
 if [ "$VERSION_FORCE" ] ; then
 	WINDRBD_VERSION=1.99.0.$RANDOM
 	GITHASH=$(git describe --tags --always)-$VERSION_FORCE
-	GITHASH_WITHOUT_WINDRBD_PREFIX=${GITHASH#windrbd-}
 else
 	GITHASH=$(git describe --tags --always)
-	GITHASH_WITHOUT_WINDRBD_PREFIX=${GITHASH#windrbd-}
 	PATCHLEVEL=$( echo $GITHASH | sed -e 's/.*-\([0-9]*\)-g.*/\1/g' )
 	if [ "${PATCHLEVEL:0:1}" == w ] ; then PATCHLEVEL=0 ; fi
 # TODO: re-enable this for all 1.X.0-rc series and adjust offset
@@ -32,6 +30,14 @@ else
 	WINDRBD_VERSION=$( echo $GITHASH | sed -e 's/^windrbd-\([0-9.]*\).*$/\1/g' ).$PATCHLEVEL
 # windrbd- is now hardcoded in inno setup script
 fi
+
+if [ "$DRBD" -a "$ARCH" ]
+then
+    FULL_VERSION=$GITHASH-$DRBD-$ARCH
+else
+    FULL_VERSION=$GITHASH
+fi
+
 RESOURCE_VERSION=$( echo $WINDRBD_VERSION | tr . , )
 
 # echo Patchlevel is $PATCHLEVEL WinDRBD version is $WINDRBD_VERSION, Resource version is $RESOURCE_VERSION
@@ -85,17 +91,17 @@ END
 EOF
 
 ## drbd_buildtag.c
-echo "const char *drbd_buildtag(void){return \"${GITHASH}\";}" > ${OUTPATH}/drbd_buildtag.c
+echo "const char *drbd_buildtag(void){return \"${FULL_VERSION}\";}" > ${OUTPATH}/drbd_buildtag.c
 
 ## windrbd_version.h
 echo "#ifndef __WINDRBD_VERSION_H" > ${OUTPATH}/windrbd_version.h
 echo "#define __WINDRBD_VERSION_H" >> ${OUTPATH}/windrbd_version.h
-echo "#define WINDRBD_VERSION \"${GITHASH}\"" >> ${OUTPATH}/windrbd_version.h
+echo "#define WINDRBD_VERSION \"${FULL_VERSION}\"" >> ${OUTPATH}/windrbd_version.h
 echo "#endif" >> ${OUTPATH}/windrbd_version.h
 
 ## windrbd.inf
 sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y),${WINDRBD_VERSION}  ;Replaced by build magic#" ./windrbd/windrbd.inf.in > ./windrbd.inf
 
 ## inno-setup version include file
-echo \#define MyAppVersion \"${GITHASH_WITHOUT_WINDRBD_PREFIX}\" > inno-setup/version.iss
+echo \#define MyAppVersion \"${FULL_VERSION#windrbd-}\" > inno-setup/version.iss
 echo \#define MyResourceVersion \"${WINDRBD_VERSION}\" > inno-setup/resource-version.iss

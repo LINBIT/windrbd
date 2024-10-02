@@ -17,3 +17,8 @@ Windows: 23749 iterations
 ### Disconnect / Connect / Wait-Connect / Sleep 30
 
 When invalidated so it syncs a bit goal is to trigger free_page BSOD
+
+### invalidate / wait-sync
+
+On Windows (with 27GB disk): 59 iterations (about 20 hours)
+	with windrbd-1.2.0-rc6
