@@ -1050,8 +1050,13 @@ dbg("returning %d\n", BytesSent);
 
 int sock_sendmsg(struct socket *sock, struct msghdr *msg)
 {
-		/* will fail ... TODO: implement */
-	return kernel_sendmsg(sock, msg, NULL, 1, 0);
+	struct bio_vec *bio_vec = msg->msg_iter.bvec;
+	struct kvec vec = {
+		.iov_base = bio_vec->bv_page->addr+bio_vec->bv_offset,
+		.iov_len = bio_vec->bv_len,
+	};
+
+	return kernel_sendmsg(sock, msg, &vec, 1, vec.iov_len);
 }
 
 ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_t len, int flags)

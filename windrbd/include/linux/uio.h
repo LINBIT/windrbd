@@ -3,8 +3,48 @@
 
 #include <linux/bvec.h>
 
+enum iter_type {
+	/* iter types */
+	ITER_UBUF,
+	ITER_IOVEC,
+	ITER_BVEC,
+	ITER_KVEC,
+	ITER_XARRAY,
+	ITER_DISCARD,
+};
+
 struct iov_iter {
-	/* TODO: implement */
+	u8 iter_type;
+	bool nofault;
+	bool data_source;
+	size_t iov_offset;
+	/*
+	 * Hack alert: overlay ubuf_iovec with iovec + count, so
+	 * that the members resolve correctly regardless of the type
+	 * of iterator used. This means that you can use:
+	 *
+	 * &iter->__ubuf_iovec or iter->__iov
+	 *
+	 * interchangably for the user_backed cases, hence simplifying
+	 * some of the cases that need to deal with both.
+	 */
+	union {
+		struct {
+			union {
+				/* use iter_iov() to get the current vec */
+				const struct iovec *__iov;
+				const struct kvec *kvec;
+				const struct bio_vec *bvec;
+				struct xarray *xarray;
+				void __user *ubuf;
+			};
+			size_t count;
+		};
+	};
+	union {
+		ULONG_PTR nr_segs;
+		loff_t xarray_start;
+	};
 };
 
 struct kvec {
@@ -17,15 +57,6 @@ struct kvec {
 
 static inline void iov_iter_bvec(struct iov_iter *i, unsigned int direction, const struct bio_vec *bvec, ULONG_PTR nr_segs, size_t count)
 {
-}
-
-/* something like: */
-#if 0
-void iov_iter_bvec(struct iov_iter *i, unsigned int direction,
-			const struct bio_vec *bvec, ULONG_PTR nr_segs,
-			size_t count)
-{
-	WARN_ON(direction & ~(READ | WRITE));
 	*i = (struct iov_iter){
 		.iter_type = ITER_BVEC,
 		.data_source = direction,
@@ -35,7 +66,5 @@ void iov_iter_bvec(struct iov_iter *i, unsigned int direction,
 		.count = count
 	};
 }
-#endif
-
 
 #endif
