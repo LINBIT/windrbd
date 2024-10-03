@@ -20,7 +20,14 @@ build1.2:
   rules:
     - if: $CI_COMMIT_BRANCH == 'windrbd-1.2'
   script:
-    - make package VERSION=from-gitlab
+    - make package VERSION=windrbd-1.2-from-gitlab
+    - |
+for i in inno-setup/install-windrbd-*.exe
+do
+    echo copiing \$i to nexus ...
+    curl -f --netrc-file /etc/nexus-password --upload-file \$i https://nexus.at.linbit.com/repository/windows/WinDRBD/install-windrbd-windrbd-1.2-from-gitlab.exe
+done
+
   artifacts:
     paths:
       - inno-setup/install*.exe
@@ -51,6 +58,7 @@ test:
     ci_fetch_binary vmshed vmshed-$VMSHED_VERSION https://github.com/LINBIT/vmshed/releases/download/$VMSHED_VERSION/vmshed-linux-amd64
     vmshed --version
     git clone --branch jt/windrbd-support https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/drbd/drbd9-tests.git
+    export WINDRBD_VERSION=$CI_COMMIT_BRANCH-from-gitlab
     cd drbd9-tests && ./run-windrbd-tests.sh
   artifacts:
     # provide a convenient name so that the downloaded artifacts can be identified
