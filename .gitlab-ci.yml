@@ -14,7 +14,7 @@ stages:
   - build
   - test
 
-build:
+build1.2:
   stage: build
   image: nexus.at.linbit.com:5000/windrbd-devenv
   rules:
@@ -26,7 +26,7 @@ build:
       - inno-setup/install*.exe
     when: always
 
-build:
+build1.1:
    stage: build
    image: $LINBIT_DOCKER_REGISTRY/build-windrbd-1.1
    rules:
