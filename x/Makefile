@@ -1,2 +1,0 @@
-zak:
-	echo $${BAR} $${DEFAULT}
