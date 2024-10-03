@@ -4,8 +4,11 @@ variables:
   GIT_DEPTH: 0
   LINBIT_DOCKER_REGISTRY: nexus.at.linbit.com:5000
   LINBIT_REGISTRY_URL: nexus.at.linbit.com:5000
-  VIRTER_VERSION: v0.24.0
-  VMSHED_VERSION: v0.19.0
+#  VIRTER_VERSION: v0.24.0
+#  VMSHED_VERSION: v0.19.0
+  BUILD_HELPERS_VERSION: c0d39c0e5a2235262f21d072c4bf3b2dd62b2040
+  VIRTER_VERSION: v0.27.0
+  VMSHED_VERSION: v0.20.1
 
 stages:
   - build
@@ -22,10 +25,6 @@ build:
     paths:
       - inno-setup/install*.exe
     when: always
-
-  BUILD_HELPERS_VERSION: c0d39c0e5a2235262f21d072c4bf3b2dd62b2040
-  VMSHED_VERSION: v0.20.1
-  VIRTER_VERSION: v0.27.0
 
 build:
    stage: build
