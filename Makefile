@@ -100,7 +100,8 @@ DOCKER_IMAGE ?= windrbd-devenv
 # image is built.
 # DOCKER_RUN=docker run -u $(MY_UID):$(MY_GID) --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 # so run docker as root ...
-DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) $(DOCKER_IMAGE)
+# Add environment variables to pass to docker here:
+DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e REACTOS=$(REACTOS) -e PAGE_KREF_DEBUG=$(PAGE_KREF_DEBUG) -e KREF_DEBUG=$(KREF_DEBUG) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) $(DOCKER_IMAGE)
 
 # Change ownership of all files created by make process to
 # the host's UID/GID.
@@ -148,7 +149,7 @@ all-in-docker:
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 package-in-docker:
-	$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package ARCH=$(ARCH) REACTOS=$(REACTOS) PAGE_KREF_DEBUG=$(PAGE_KREF_DEBUG) KREF_DEBUG=$(KREF_DEBUG) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP)
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package ARCH=$(ARCH) REACTOS=$(REACTOS) PAGE_KREF_DEBUG=$(PAGE_KREF_DEBUG) KREF_DEBUG=$(KREF_DEBUG) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 ifeq ($(ARCH), i686)
