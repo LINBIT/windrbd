@@ -13,8 +13,6 @@ default: $(DEFAULT)
 # default: all
 # default: package
 
-export BAR=123
-
 help:
 	@echo "                        WinDRBD 1.2 build help"
 	@echo "                        ----------------------"
@@ -124,32 +122,17 @@ pull-docker:
 	$(DOCKER) pull quay.io/johannesthoma/windrbd-devenv
 	$(DOCKER) tag quay.io/johannesthoma/windrbd-devenv windrbd-devenv
 
-foo:
-	$(call run,bash -c "echo $${BAR} $${DEFAULT}",ECHO)
-
-bar:
-	$(call run,$(DOCKER_RUN) bash -c "echo $${BAR} $${DEFAULT}",DOCKER-BAR)
-
-baz:
-	$(call run,make -C x zak,MAKE)
-
-env:
-	$(call run,$(DOCKER_RUN) bash -c "echo $${BAR} $${DEFAULT} ; env",DOCKER-ENV)
-
-env-norun:
-	$(DOCKER_RUN) bash -c "echo $${BAR} $${DEFAULT} ; env"
-
 # so one can type make with-docker :)
 with-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT) VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) PAGE_KREF_DEBUG=$(PAGE_KREF_DEBUG) KREF_DEBUG=$(KREF_DEBUG) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT),DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 all-in-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all VERSION=$(VERSION) ARCH=$(ARCH) REACTOS=$(REACTOS) PAGE_KREF_DEBUG=$(PAGE_KREF_DEBUG) KREF_DEBUG=$(KREF_DEBUG) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all,DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 package-in-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package ARCH=$(ARCH) REACTOS=$(REACTOS) PAGE_KREF_DEBUG=$(PAGE_KREF_DEBUG) KREF_DEBUG=$(KREF_DEBUG) V=$(V) DRBD=$(DRBD) DRBDTMP=$(DRBDTMP),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package,DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
 
 ifeq ($(ARCH), i686)
