@@ -11,6 +11,8 @@ stages:
 build:
    stage: build
    image: $LINBIT_DOCKER_REGISTRY/build-windrbd-1.1
+   rules:
+     - if: $CI_COMMIT_BRANCH == 'windrbd-1.1'
    script:
      - ./build-windrbd.sh
 
@@ -18,6 +20,8 @@ test:
   tags:
     - libvirt
   stage: test
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'windrbd-1.1'
   script: |
     echo "hallo"
     curl -sSfL -u gitlab-ci-token:$CI_JOB_TOKEN $CI_SERVER_URL/linbit/build-helpers/-/archive/$BUILD_HELPERS_VERSION/ignored.tar.gz | tar -xvzf -
