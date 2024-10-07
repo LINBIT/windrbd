@@ -508,31 +508,40 @@ static NTSTATUS SocketsInit(void)
 	static WSK_CLIENT_NPI	WskClient = { 0 };
 	NTSTATUS		Status;
 
+WriteStringSerial("SocketsInit 1\n");
 	if (InterlockedCompareExchange(&wsk_state, WSK_INITIALIZING, WSK_DEINITIALIZED) != WSK_DEINITIALIZED)
 		return STATUS_ALREADY_REGISTERED;
 
+WriteStringSerial("SocketsInit 2\n");
 	WskClient.ClientContext = NULL;
 	WskClient.Dispatch = &g_WskDispatch;
 
+WriteStringSerial("SocketsInit 3\n");
 	Status = WskRegister(&WskClient, &g_WskRegistration);
 	if (!NT_SUCCESS(Status)) {
+WriteStringSerial("SocketsInit 4\n");
 		InterlockedExchange(&wsk_state, WSK_DEINITIALIZED);
 		return Status;
 	}
 
+WriteStringSerial("SocketsInit 5\n");
 	printk("WskCaptureProviderNPI start.\n");
 	Status = WskCaptureProviderNPI(&g_WskRegistration, WSK_INFINITE_WAIT, &g_WskProvider);
+WriteStringSerial("SocketsInit 6\n");
 	printk("WskCaptureProviderNPI done.\n"); // takes long time! msg out after MVL loaded.
 
+WriteStringSerial("SocketsInit 7\n");
 	if (!NT_SUCCESS(Status)) {
 		printk(KERN_ERR "WskCaptureProviderNPI() failed with status 0x%08X\n", Status);
 		WskDeregister(&g_WskRegistration);
 		InterlockedExchange(&wsk_state, WSK_DEINITIALIZED);
 		return Status;
 	}
+WriteStringSerial("SocketsInit 8\n");
 
 	InterlockedExchange(&wsk_state, WSK_INITIALIZED);
 	KeSetEvent(&net_initialized_event, 0, FALSE);
+WriteStringSerial("SocketsInit 9\n");
 	return STATUS_SUCCESS;
 }
 

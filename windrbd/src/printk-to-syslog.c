@@ -435,7 +435,7 @@ int _printk(const char *func, const char *fmt, ...)
     
 	int level;
 	const char *fmt_without_level;
-	size_t pos, len, len_ret;
+	size_t pos, len, len_ret, n;
 	LARGE_INTEGER time;
 	LARGE_INTEGER hr_timer, hr_frequency;
 	va_list args;
@@ -477,18 +477,20 @@ int _printk(const char *func, const char *fmt, ...)
 	hr_timer = KeQueryPerformanceCounter(&hr_frequency);
 
 	pos = strlen(buffer);
-	status = RtlStringCbPrintfA(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8p(%s) #%llu %s ",
+/*
+	n = snprintf(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8p(%s) #%llu %s ",
 	    level,
 	    time_fields.Day, time_fields.Month, time_fields.Year,
 	    time_fields.Hour, time_fields.Minute, time_fields.Second, time_fields.Milliseconds,
 	    hr_timer.QuadPart, hr_frequency.QuadPart,
-	    /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
-//	    ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
 	    current,
             current->comm,
             serial_number,
 	    func
 	);
+*/
+	n = snprintf(buffer+pos, sizeof(buffer)-1-pos, "Zak %lld\n", serial_number);
+/*
 	if (! NT_SUCCESS(status)) {
 		if (!no_windows_printk)
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, RtlStringCbPrintfA returned error (status = %d).\n", status);
@@ -496,13 +498,15 @@ int _printk(const char *func, const char *fmt, ...)
 		buffer_overflows++;
 		return -EINVAL;
 	}
+*/
 
 	pos = strlen(buffer);
 	va_start(args, fmt);
-	status = RtlStringCbVPrintfA(buffer+pos, sizeof(buffer)-1-pos,
+	n = vsnprintf(buffer+pos, sizeof(buffer)-1-pos,
 		    fmt_without_level, args);
 	va_end(args);
 
+/*
 	if (! NT_SUCCESS(status))
 	{
 		if (!no_windows_printk)
@@ -510,6 +514,7 @@ int _printk(const char *func, const char *fmt, ...)
 		buffer_overflows++;
 		return -EINVAL;
 	}
+*/
 		/* We use Rtl string functions which are only available
 		 * at PASSIVE_LEVEL (on DISPATCH_LEVEL they may BSOD.
 		 */
@@ -517,7 +522,7 @@ int _printk(const char *func, const char *fmt, ...)
 	    (!no_event_log_printk) && 
 	    ((level-'0') >= 0) && ((level-'0') <= event_log_level_threshold))
 		split_message_and_write_to_eventlog(level-'0', buffer+pos);
-	
+
 	/* Print messages to debugging facility, use a tool like
 	 * DbgViewer to see them.
 	 */
