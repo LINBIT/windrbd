@@ -43,7 +43,7 @@
 static int no_event_log_printk = 0;
 static int no_windows_printk = 0;
 static int no_memory_printk = 0;
-static int no_net_printk = 1;
+static int no_net_printk = 0;
 
 	/* Write messages with this Linux loglevel or less */
 

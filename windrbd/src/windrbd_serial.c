@@ -9,6 +9,7 @@ HANDLE OpenSerialPort(void)
     static HANDLE Handle;
     UNICODE_STRING FileName;
 
+return NULL;
     if (Handle != NULL)
         return Handle;
 
