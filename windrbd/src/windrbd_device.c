@@ -3822,6 +3822,7 @@ static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp
 	unsigned int major = s->MajorFunction;
 	NTSTATUS ret;
 
+WriteSerial("windrbd_dispatch 1\n");
 	if (major > IRP_MJ_MAXIMUM_FUNCTION) {
 		printk("Warning: got major function %x out of range\n", major);
 		return STATUS_INVALID_DEVICE_REQUEST;
@@ -3833,7 +3834,7 @@ static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp
 		if (device == mvolRootDeviceObject)
 			t->is_root = 1;
 	}
-	dbg("got request major is %x device object is %p (is %s device)\n", major, device, device == mvolRootDeviceObject ? "root" : (device == drbd_bus_device ? "bus" : (device == user_device_object ? " user" : "disk")));
+	printk("got request major is %x device object is %p (is %s device)\n", major, device, device == mvolRootDeviceObject ? "root" : (device == drbd_bus_device ? "bus" : (device == user_device_object ? " user" : "disk")));
 
 	ret = windrbd_dispatch_table[major](device, irp);
 

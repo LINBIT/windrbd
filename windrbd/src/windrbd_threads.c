@@ -100,20 +100,27 @@ NTSTATUS windrbd_create_windows_thread(void (*threadfn)(void*), void *data, void
 	NTSTATUS status;
 	int retries;
 
+WriteStringSerial("windrbd_create_windows_thread 1\n");
 	retries = 0;
 	while (1) {
+WriteStringSerial("windrbd_create_windows_thread 2 into PsCreateSystemThread()\n");
 	        status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, threadfn, data);
+printk("windrbd_create_windows_thread 3 status is 0x%08x\n", status);
 		if (NT_SUCCESS(status)) {
+WriteStringSerial("windrbd_create_windows_thread 4\n");
 			if (retries > 0)
 				printk("succeeded after %d retries\n", retries);
 			break;
 		}
+WriteStringSerial("windrbd_create_windows_thread 5\n");
 		if (status != STATUS_INSUFFICIENT_RESOURCES)
 			return status;
 
+WriteStringSerial("windrbd_create_windows_thread 6\n");
                 if (retries % 10 == 0)
 			printk(KERN_ERR "Could not start thread, status = %x, retrying ...\n", status);
 
+WriteStringSerial("windrbd_create_windows_thread 7\n");
                 if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
 			if (retries == 0)
 				printk("cannot sleep now, busy looping\n");
@@ -121,12 +128,16 @@ NTSTATUS windrbd_create_windows_thread(void (*threadfn)(void*), void *data, void
 			msleep(100);
 		}
 		retries++;
+WriteStringSerial("windrbd_create_windows_thread 8\n");
 	}
 
+WriteStringSerial("windrbd_create_windows_thread 9\n");
 	if (thread_object_p)
 	        status = ObReferenceObjectByHandle(h, THREAD_ALL_ACCESS, NULL, KernelMode, thread_object_p, NULL);
 
+WriteStringSerial("windrbd_create_windows_thread a\n");
 	ZwClose(h);
+WriteStringSerial("windrbd_create_windows_thread b\n");
 	return status;
 }
 

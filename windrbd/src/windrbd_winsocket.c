@@ -2182,6 +2182,7 @@ static void windrbd_init_wsk_thread(void *unused)
 {
 	NTSTATUS status;
 
+WriteStringSerial("windrbd_init_wsk_thread ...\n");
         /* We have to do that here in a separate thread, else Windows
 	 * will deadlock on booting.
          */
@@ -2203,14 +2204,18 @@ NTSTATUS windrbd_init_wsk(void)
 {
 	NTSTATUS status;
 
+WriteStringSerial("windrbd_init_wsk 1\n");
 	spin_lock_init(&completions_lock);
 	KeInitializeEvent(&net_initialized_event, NotificationEvent, FALSE);
 
+WriteStringSerial("windrbd_init_wsk 2\n");
 	status = windrbd_create_windows_thread(windrbd_init_wsk_thread, NULL, &init_wsk_thread);
+WriteStringSerial("windrbd_init_wsk 3\n");
 
 	if (!NT_SUCCESS(status))
 		printk("Couldn't create thread for initializing socket layer: windrbd_create_windows_thread failed with status 0x%x\n", status);
 
+WriteStringSerial("windrbd_init_wsk 4\n");
 	return status;
 }
 
