@@ -3822,7 +3822,7 @@ static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp
 	unsigned int major = s->MajorFunction;
 	NTSTATUS ret;
 
-WriteSerial("windrbd_dispatch 1\n");
+WriteStringSerial("windrbd_dispatch 1\n");
 	if (major > IRP_MJ_MAXIMUM_FUNCTION) {
 		printk("Warning: got major function %x out of range\n", major);
 		return STATUS_INVALID_DEVICE_REQUEST;
