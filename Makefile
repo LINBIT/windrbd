@@ -201,7 +201,8 @@ WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
                 windrbd_netlink.c windrbd_test.c windrbd_threads.c \
                 windrbd_usermodehelper.c windrbd_waitqueue.c \
                 windrbd_winsocket.c windrbd_locking.c \
-                tiktok.c partition_table_template.c
+                tiktok.c partition_table_template.c \
+		windrbd_serial.c
 
 WINDRBD_FILES = $(addprefix $(WINDRBD_SRCDIR), $(WINDRBD_SOURCES))
 

@@ -188,4 +188,8 @@ void windrbd_set_realtime_priority(struct task_struct *t);
 /* Become super user */
 void sudo(void);
 
+void *OpenSerialPort(void);
+void WriteSerial(char *buf, size_t length);
+void WriteStringSerial(char *buf);
+
 #endif

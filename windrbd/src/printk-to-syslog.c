@@ -528,6 +528,9 @@ int _printk(const char *func, const char *fmt, ...)
 		    DPFLTR_WARNING_LEVEL),
 		    buffer);
 
+	/* Also write to serial port (COM2 as of this writing) */
+	WriteStringSerial(buffer);
+
 	len_ret = strlen(buffer);
 
 	if (no_memory_printk)
