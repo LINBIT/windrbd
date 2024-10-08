@@ -105,7 +105,7 @@ WriteStringSerial("windrbd_create_windows_thread 1\n");
 	while (1) {
 WriteStringSerial("windrbd_create_windows_thread 2 into PsCreateSystemThread()\n");
 	        status = PsCreateSystemThread(&h, THREAD_ALL_ACCESS, NULL, NULL, NULL, threadfn, data);
-printk("windrbd_create_windows_thread 3 status is 0x%08x\n", status);
+// PrintfSerial("windrbd_create_windows_thread 3 status is 0x%08x\n", status);
 		if (NT_SUCCESS(status)) {
 WriteStringSerial("windrbd_create_windows_thread 4\n");
 			if (retries > 0)

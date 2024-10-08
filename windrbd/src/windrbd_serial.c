@@ -1,4 +1,6 @@
 #include <wdm.h>
+#include <stdarg.h>
+#include <ntstrsafe.h>
 
 HANDLE OpenSerialPort(void)
 {
@@ -6,12 +8,8 @@ HANDLE OpenSerialPort(void)
     IO_STATUS_BLOCK Iosb;
     NTSTATUS Status;
     ULONG ShareAccess;
-    static HANDLE Handle;
+    HANDLE Handle;
     UNICODE_STRING FileName;
-
-return NULL;
-    if (Handle != NULL)
-        return Handle;
 
     ShareAccess = FILE_SHARE_READ | FILE_SHARE_WRITE;
     RtlInitUnicodeString(&FileName, L"\\DosDevices\\COM2");
@@ -36,7 +34,9 @@ return NULL;
                           NULL,                                 /* EA buffer */
                           0);                                   /* EA length */
 
-    DbgPrint("ZwCreateFile returned %08x\n", Status);
+    if (!NT_SUCCESS(Status))
+        DbgPrint("ZwCreateFile returned %08x\n", Status);
+
     return Handle;
 }
 
@@ -48,12 +48,34 @@ void WriteSerial(char *buf, size_t length)
 
     if (ComPort != NULL) {
         status = ZwWriteFile(ComPort, NULL, NULL, NULL, &iosb, buf, length, NULL, NULL);
-        DbgPrint("ZwWriteFile returned %08x\n", status);
+        if (!NT_SUCCESS(status))
+            DbgPrint("ZwWriteFile returned %08x\n", status);
     }
+    ZwClose(ComPort);
 }
 
 void WriteStringSerial(char *buf)
 {
     WriteSerial(buf, strlen(buf));
+}
+
+void PrintfSerial(char *fmt, ...)
+{
+    static char buf[4096];
+    NTSTATUS status;
+    va_list args;
+
+WriteStringSerial("PrintfSerial 1\n");
+    va_start(args, fmt);
+    status = RtlStringCbVPrintfA(buf, sizeof(buf)-1, fmt, args);
+    va_end(args);
+
+WriteStringSerial("PrintfSerial 2\n");
+    if (!NT_SUCCESS(status))
+        DbgPrint("RtlStringCbVPrintfA returned 0x%08x\n", status);
+    else
+        WriteStringSerial(buf);
+
+WriteStringSerial("PrintfSerial 3\n");
 }
 
