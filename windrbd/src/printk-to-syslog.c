@@ -44,6 +44,8 @@ static int no_event_log_printk = 0;
 static int no_windows_printk = 0;
 static int no_memory_printk = 0;
 static int no_net_printk = 0;
+/* Use it at your own risk! (need to check IRQL) */
+static int no_serial_printk = 1;
 
 	/* Write messages with this Linux loglevel or less */
 
@@ -527,7 +529,8 @@ int _printk(const char *func, const char *fmt, ...)
 		    buffer);
 
 	/* Also write to serial port (COM2 as of this writing) */
-	WriteStringSerial(buffer);
+	if (!no_serial_printk && KeGetCurrentIrql() < DISPATCH_LEVEL)
+		WriteStringSerial(buffer);
 
 	len_ret = strlen(buffer);
 

@@ -175,7 +175,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING registry_path)
 	make_me_a_windrbd_thread("driver-init");
 	sudo();
 
- 	printk(KERN_NOTICE "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
+// 	printk(KERN_NOTICE "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
 
 #ifdef SPIN_LOCK_DEBUG
 	spinlock_debug_init();
@@ -260,11 +260,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING registry_path)
 	printk("NOT starting boot device\n");
 #endif
 
-printk("1\n");
 	return_to_windows(current);
-printk("2\n");
-msleep(10*1000);
-printk("3\n");
 
 	return STATUS_SUCCESS;
 }
@@ -372,7 +368,6 @@ mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceOb
 	struct _BUS_EXTENSION *bus_extension;
 	UNICODE_STRING bus_device_name;
 
-WriteStringSerial("in mvolAddDevice ...\n");
 	printk(KERN_INFO "AddDevice: PhysicalDeviceObject is %p\n", PhysicalDeviceObject);
 
 	/* This assumes that the bus device object is the first

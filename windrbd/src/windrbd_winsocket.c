@@ -508,40 +508,31 @@ static NTSTATUS SocketsInit(void)
 	static WSK_CLIENT_NPI	WskClient = { 0 };
 	NTSTATUS		Status;
 
-WriteStringSerial("SocketsInit 1\n");
 	if (InterlockedCompareExchange(&wsk_state, WSK_INITIALIZING, WSK_DEINITIALIZED) != WSK_DEINITIALIZED)
 		return STATUS_ALREADY_REGISTERED;
 
-WriteStringSerial("SocketsInit 2\n");
 	WskClient.ClientContext = NULL;
 	WskClient.Dispatch = &g_WskDispatch;
 
-WriteStringSerial("SocketsInit 3\n");
 	Status = WskRegister(&WskClient, &g_WskRegistration);
 	if (!NT_SUCCESS(Status)) {
-WriteStringSerial("SocketsInit 4\n");
 		InterlockedExchange(&wsk_state, WSK_DEINITIALIZED);
 		return Status;
 	}
 
-WriteStringSerial("SocketsInit 5\n");
 	printk("WskCaptureProviderNPI start.\n");
 	Status = WskCaptureProviderNPI(&g_WskRegistration, WSK_INFINITE_WAIT, &g_WskProvider);
-WriteStringSerial("SocketsInit 6\n");
 	printk("WskCaptureProviderNPI done.\n"); // takes long time! msg out after MVL loaded.
 
-WriteStringSerial("SocketsInit 7\n");
 	if (!NT_SUCCESS(Status)) {
 		printk(KERN_ERR "WskCaptureProviderNPI() failed with status 0x%08X\n", Status);
 		WskDeregister(&g_WskRegistration);
 		InterlockedExchange(&wsk_state, WSK_DEINITIALIZED);
 		return Status;
 	}
-WriteStringSerial("SocketsInit 8\n");
 
 	InterlockedExchange(&wsk_state, WSK_INITIALIZED);
 	KeSetEvent(&net_initialized_event, 0, FALSE);
-WriteStringSerial("SocketsInit 9\n");
 	return STATUS_SUCCESS;
 }
 
@@ -2182,7 +2173,6 @@ static void windrbd_init_wsk_thread(void *unused)
 {
 	NTSTATUS status;
 
-WriteStringSerial("windrbd_init_wsk_thread ...\n");
         /* We have to do that here in a separate thread, else Windows
 	 * will deadlock on booting.
          */
@@ -2204,18 +2194,14 @@ NTSTATUS windrbd_init_wsk(void)
 {
 	NTSTATUS status;
 
-WriteStringSerial("windrbd_init_wsk 1\n");
 	spin_lock_init(&completions_lock);
 	KeInitializeEvent(&net_initialized_event, NotificationEvent, FALSE);
 
-WriteStringSerial("windrbd_init_wsk 2\n");
 	status = windrbd_create_windows_thread(windrbd_init_wsk_thread, NULL, &init_wsk_thread);
-WriteStringSerial("windrbd_init_wsk 3\n");
 
 	if (!NT_SUCCESS(status))
 		printk("Couldn't create thread for initializing socket layer: windrbd_create_windows_thread failed with status 0x%x\n", status);
 
-WriteStringSerial("windrbd_init_wsk 4\n");
 	return status;
 }
 

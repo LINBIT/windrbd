@@ -42,10 +42,15 @@ HANDLE OpenSerialPort(void)
 
 void WriteSerial(char *buf, size_t length)
 {
-    HANDLE ComPort = OpenSerialPort();
+    HANDLE ComPort;
     NTSTATUS status;
     IO_STATUS_BLOCK iosb;
 
+	/* TODO: log this somewhere else? */
+    if (KeGetCurrentIrql() > PASSIVE_LEVEL)
+        return;
+
+    ComPort = OpenSerialPort();
     if (ComPort != NULL) {
         status = ZwWriteFile(ComPort, NULL, NULL, NULL, &iosb, buf, length, NULL, NULL);
         if (!NT_SUCCESS(status))
@@ -65,17 +70,13 @@ void PrintfSerial(char *fmt, ...)
     NTSTATUS status;
     va_list args;
 
-WriteStringSerial("PrintfSerial 1\n");
     va_start(args, fmt);
     status = RtlStringCbVPrintfA(buf, sizeof(buf)-1, fmt, args);
     va_end(args);
 
-WriteStringSerial("PrintfSerial 2\n");
     if (!NT_SUCCESS(status))
         DbgPrint("RtlStringCbVPrintfA returned 0x%08x\n", status);
     else
         WriteStringSerial(buf);
-
-WriteStringSerial("PrintfSerial 3\n");
 }
 
