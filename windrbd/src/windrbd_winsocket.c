@@ -101,6 +101,15 @@ static int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_LOCAL_DISCONNECT: /* Sent by ReactOS on connection timeout */
 		printk("Got STATUS_LOCAL_DISCONNECT returning -ECONNRESET ...\n");
 		return -ECONNRESET;
+
+	case STATUS_REMOTE_DISCONNECT:	/* Sometimes they happen on ReactOS */
+		printk("Got STATUS_REMOTE_DISCONNECT returning -ECONNRESET ...\n");
+		return -ECONNRESET;
+
+	case STATUS_FILE_CLOSED:
+		printk("Got STATUS_FILE_CLOSED returning -ECONNRESET ...\n");
+		return -ECONNRESET;
+
 	default:
 		printk("Unknown status %x, returning -EIO.\n", status);
 		return -EIO;
