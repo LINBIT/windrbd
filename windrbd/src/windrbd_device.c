@@ -2376,7 +2376,6 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
 	}
-	status = STATUS_NOT_IMPLEMENTED;
 
 	dbg("Pnp: device: %p irp: %p\n", device, irp);
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
@@ -2390,111 +2389,68 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	        return status;
 	}
 
-// printk(KERN_DEBUG "got PnP device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
-	if (device == drbd_bus_device) {
-			/* Some minors (REMOVE_DEVICE) might delete the
-			 * device object in which case we must not
-			 * call IoCompleteRequest(). For the minors
-			 * that don't IoCompleteRequest or IoCallDevice
-			 * is done in this function:
-			 */
+		/* TODO: have a device MUX mechanism ... */
+	if (device == drbd_bus_device)
 		return windrbd_pnp_bus_device(device, irp);
-	} else {	/* TODO: this else is unnecessary ... */
-		num_pnp_requests++;
 
-		struct block_device_reference *ref = device->DeviceExtension;
-		struct block_device *bdev = NULL;
-		struct drbd_device *drbd_device = NULL;
-		int minor = -1;
-// printk("device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
-		if (ref != NULL) {
-			bdev = ref->bdev;
-			if (bdev) {
-				drbd_device = bdev->drbd_device;
-				if (drbd_device) {
-					minor = drbd_device->minor;
-				} else printk("no DRBD device\n");
-			} else printk("no block device\n");
-		} else {
-			printk("no block device reference\n");
+	struct block_device_reference *ref = device->DeviceExtension;
+	struct block_device *bdev = NULL;
+	struct drbd_device *drbd_device = NULL;
+	int minor = -1;
+
+	if (ref != NULL) {
+		bdev = ref->bdev;
+		if (bdev != NULL) {
+			drbd_device = bdev->drbd_device;
+			if (drbd_device != NULL)
+				minor = drbd_device->minor;
 		}
+	}
+	if (minor == -1) {
+		printk("Warning: got a PnP request when there is no DRBD minor associated\n");
+		status = STATUS_INVALID_DEVICE_REQUEST;
+		goto out;
+	}
 
+/* TODO: remove that again !! */
 printk("windrbd_pnp_device device is %p s->MinorFunction is %d\n", device, s->MinorFunction);
-		switch (s->MinorFunction) {
-		case IRP_MN_START_DEVICE:
-		{
-			dbg("got IRP_MN_START_DEVICE\n");
-			if (bdev != NULL) {
+	switch (s->MinorFunction) {
+	case IRP_MN_START_DEVICE:
+		KeSetEvent(&bdev->device_started_event, 0, FALSE);
 
-					/* On drbdadm primary wait for this
-					 * to happen, else a followup secondary
-					 * will BSOD.
-					 */
-				KeSetEvent(&bdev->device_started_event, 0, FALSE);
-			}
-#if 0
-			if (bdev != NULL) {
-// printk("starting device ...\n");
-				status = wait_for_becoming_primary(bdev);
-			} else {
-				printk("bdev is NULL on start device, this should not happen (minor is %x)\n", s->MinorFunction);
-				status = STATUS_UNSUCCESSFUL;
-			}
-#endif
-			status = STATUS_SUCCESS;
+		status = STATUS_SUCCESS;
+		break;
+
+	case IRP_MN_QUERY_PNP_DEVICE_STATE:
+		irp->IoStatus.Information = 0;
+		status = STATUS_SUCCESS;
+		break;
+
+	case IRP_MN_QUERY_ID:
+	{
+		wchar_t *string;
+		int len;
+
+/* TODO: how do we know: ? */
+#define MAX_ID_LEN 512
+/* TODO: kmalloc(GFP_USER, ...) */
+		string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), DRBD_TAG);
+		if (string == NULL) {
+			status = STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
 
-		case IRP_MN_QUERY_PNP_DEVICE_STATE:
-// printk("got IRP_MN_QUERY_PNP_DEVICE_STATE\n");
-			irp->IoStatus.Information = 0;
+		memset(string, 0, MAX_ID_LEN*sizeof(wchar_t));
+		switch (s->Parameters.QueryId.IdType) {
+		case BusQueryDeviceID:
+			/* SCSI\\t\*v(8)p(16)r(4) */
+			_snwprintf(string, MAX_ID_LEN, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
 			status = STATUS_SUCCESS;
 			break;
-
-		case IRP_MN_QUERY_ID:
-		{
-			wchar_t *string;
-// printk("Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
-// printk("minor is %d\n", minor);
-#if 0
-			if (minor < 0) {
-	/* TODO: there are HLK tests (testing PNP surprise removal) where
-	 * we land here..it is strange but Windows tries to rebuild the
-	 * Windows device without calling drbdadm primary ... so probably
-	 * other things also don't work here ...
-	 */
-				dbg("minor is %d, QUERY_ID not supported.\n", minor);
-				status = irp->IoStatus.Status;
-				dbg("status is %x\n", status);
-
-				IoCompleteRequest(irp, IO_NO_INCREMENT);
-				num_pnp_requests--;
-if (status == STATUS_NOT_SUPPORTED) {
-// printk("6 STATUS_NOT_SUPPORTED\n");
-}
-				return status;
-				minor = 1;	/* must match the minor of the test resource */
-			}
-#endif
-#define MAX_ID_LEN 512
-			string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), DRBD_TAG);
-			if (string == NULL) {
-				status = STATUS_INSUFFICIENT_RESOURCES;
-			} else {
-				int len;
-
-// mem_printk("memset %p 0 %d\n", string, MAX_ID_LEN*sizeof(wchar_t));
-				memset(string, 0, MAX_ID_LEN*sizeof(wchar_t));
-				switch (s->Parameters.QueryId.IdType) {
-				case BusQueryDeviceID:
-			/* SCSI\\t\*v(8)p(16)r(4) */
-					_snwprintf(string, MAX_ID_LEN, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
-					status = STATUS_SUCCESS;
-					break;
-				case BusQueryInstanceID:
-					_snwprintf(string, MAX_ID_LEN, L"WinDRBD%d", minor);
-					status = STATUS_SUCCESS;
-					break;
+		case BusQueryInstanceID:
+			_snwprintf(string, MAX_ID_LEN, L"WinDRBD%d", minor);
+			status = STATUS_SUCCESS;
+			break;
 /* TODO:
 SCSI\DiskRed_Hat___________VirtIO0001
 SCSI\DiskRed_Hat___________VirtIO
@@ -2503,174 +2459,92 @@ SCSI\Red_Hat___________VirtIO0
 Red_Hat___________VirtIO0
 GenDisk
 */
-				case BusQueryHardwareIDs:
-					len = _snwprintf(string, MAX_ID_LEN, L"SCSI\\DiskLinbit____________WinDRBD0001");
-					len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\DiskLinbit____________WinDRBD")+1;
-					len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\DiskLinbit__")+1;
-					len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\Linbit____________WinDRBD0")+1;
-					len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"Linbit____________WinDRBD0")+1;
-					_snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"GenDisk");
-					status = STATUS_SUCCESS;
-					break;
-				case BusQueryCompatibleIDs:
-					len = _snwprintf(string, MAX_ID_LEN, L"WinDRBDDisk");
-					_snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"GenDisk");
-//					len = _snwprintf(string, L"GenDisk");
-					status = STATUS_SUCCESS;
-					break;
-				case BusQueryDeviceSerialNumber:
-					_snwprintf(string, MAX_ID_LEN, L"%d", minor);
-					status = STATUS_SUCCESS;
-					break;
-				case 5:
-					_snwprintf(string, MAX_ID_LEN, L"%d", minor);
-					status = STATUS_SUCCESS;
-					break;
-/*
-				case -1:
-					return STATUS_NOT_SUPPORTED;
-*/
-				default: /* -1, ... */
-					ExFreePool(string);
+		case BusQueryHardwareIDs:
+			len = _snwprintf(string, MAX_ID_LEN, L"SCSI\\DiskLinbit____________WinDRBD0001");
+			len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\DiskLinbit____________WinDRBD")+1;
+			len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\DiskLinbit__")+1;
+			len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\Linbit____________WinDRBD0")+1;
+			len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"Linbit____________WinDRBD0")+1;
+			_snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"GenDisk");
+			status = STATUS_SUCCESS;
+			break;
+		case BusQueryCompatibleIDs:
+			len = _snwprintf(string, MAX_ID_LEN, L"WinDRBDDisk");
+			_snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"GenDisk");
+			status = STATUS_SUCCESS;
+			break;
+		case BusQueryDeviceSerialNumber:
+			_snwprintf(string, MAX_ID_LEN, L"%d", minor);
+			status = STATUS_SUCCESS;
+			break;
+		case 5:	/* TODO: really? */
+			_snwprintf(string, MAX_ID_LEN, L"%d", minor);
+			status = STATUS_SUCCESS;
+			break;
+		default: /* -1, ... */
+			ExFreePool(string);
+			status = STATUS_NOT_IMPLEMENTED;
+		}
+		if (status == STATUS_SUCCESS)
+			irp->IoStatus.Information = (ULONG_PTR) string;
+		else
+			ExFreePool(string); /* TODO: kfree() */
 
-					status = irp->IoStatus.Status;
-dbg("status is %x\n", status);
-					IoCompleteRequest(irp, IO_NO_INCREMENT);
-					num_pnp_requests--;
-if (status == STATUS_NOT_SUPPORTED) {
-// printk("5 STATUS_NOT_SUPPORTED\n");
-}
-					return status;
-				}
+		break;
+
+	case IRP_MN_QUERY_DEVICE_RELATIONS:
+		switch (s->Parameters.QueryDeviceRelations.Type) {
+		case TargetDeviceRelation:
+		{
+			struct _DEVICE_RELATIONS *device_relations;
+			size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
+		/* must be PagedPool else PnP manager complains TODO: kmalloc(GFP_USER) */
+			device_relations = ExAllocatePoolWithTag(PagedPool, siz, DRBD_TAG);
+			if (device_relations == NULL) {
+				status = STATUS_INSUFFICIENT_RESOURCES;
+				break;
 			}
-			if (status == STATUS_SUCCESS) {
-dbg("Returned string is %S\n", string);
-				irp->IoStatus.Information = (ULONG_PTR) string;
-			} else {
-				if (string)
-					ExFreePool(string);
-			}
+			RtlZeroMemory(device_relations, siz);
+			device_relations->Count = 1;
+			device_relations->Objects[0] = device;
+			ObReferenceObject(device);
+
+			irp->IoStatus.Information = (ULONG_PTR)device_relations;
+			status = STATUS_SUCCESS;
 			break;
 		}
 
-		case IRP_MN_QUERY_DEVICE_RELATIONS:
-printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x\n", s->Parameters.QueryDeviceRelations.Type);
+		case BusRelations:
+		case RemovalRelations:
+		case EjectionRelations:
+		{
+			struct _DEVICE_RELATIONS *device_relations;
+			size_t siz = sizeof(*device_relations);
 
-		/* Devices that have a WinDRBD assigned mount point
-		 * (via device "X:" minor y;) are non-PnP devices,
-		 * else there are driver verifier blue screens.
-		 */
-
-		/* TODO: we commented this out for HLK test see if it is
-		 * needed (we don't support block device interface any more).
-		 * Update: we get a PNP BSOD on drbdadm down ...
-		 */
-
-			if (bdev == NULL || bdev->about_to_delete || bdev->ejected) {
-				if (bdev == NULL) {
-					dbg("1 bdev is NULL not doing anything.\n");
-				} else {
-					dbg("Reasons: bdev->about_to_delete %d bdev->ejected %d\n", bdev->about_to_delete, bdev->ejected);
-				}
-
-/* Do not change the status field. Driver verifier complains */
-//				status = STATUS_NOT_IMPLEMENTED;
-				status = irp->IoStatus.Status;
-				break;
-			}
-
-		/* TODO: There is a race .. bdev->windows_device might get deleted
-		 * here.
-		 */
-
-			switch (s->Parameters.QueryDeviceRelations.Type) {
-			case TargetDeviceRelation:
-/* TODO: drbdadm secondary does not terminate on ReactOS: */
-/*			case EjectionRelations: */
-/* TODO: ReactOS loops here ... are we supposed to return outselves? */
-/*			case RemovalRelations: */
-			{
-				struct _DEVICE_RELATIONS *device_relations;
-				size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
-printk("Returning the disk device object in the relation array\n");
-				dbg("size of device relations is %d\n", siz);
 		/* must be PagedPool else PnP manager complains */
-				device_relations = ExAllocatePoolWithTag(PagedPool, siz, DRBD_TAG);
-				if (device_relations == NULL) {
-					status = STATUS_INSUFFICIENT_RESOURCES;
-					break;
-				}
-				RtlZeroMemory(device_relations, siz);
-				device_relations->Count = 1;
-				device_relations->Objects[0] = device;
-				ObReferenceObject(device);
-
-				dbg("reporting device %p for type %d\n", device, s->Parameters.QueryDeviceRelations.Type);
-
-				irp->IoStatus.Information = (ULONG_PTR)device_relations;
-				status = STATUS_SUCCESS;
+			device_relations = ExAllocatePoolWithTag(PagedPool, siz, DRBD_TAG);
+			if (device_relations == NULL) {
+				status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
-
-			case BusRelations:
-			case RemovalRelations:
-			case EjectionRelations:
-			{
-				struct _DEVICE_RELATIONS *device_relations;
-				size_t siz = sizeof(*device_relations);
-
-printk("Returning empty relation array\n");
-				dbg("disk BusRelations (Type %d)\n", s->Parameters.QueryDeviceRelations.Type);
-		/* must be PagedPool else PnP manager complains */
-				device_relations = ExAllocatePoolWithTag(PagedPool, siz, DRBD_TAG);
-				if (device_relations == NULL) {
-					status = STATUS_INSUFFICIENT_RESOURCES;
-					break;
-				}
-				RtlZeroMemory(device_relations, siz);
-				device_relations->Count = 0;
-				irp->IoStatus.Information = (ULONG_PTR)device_relations;
-				status = STATUS_SUCCESS;
-				break;
-			}
-
-			default:
-// printk("Type %d is not implemented\n", s->Parameters.QueryDeviceRelations.Type);
-				status = irp->IoStatus.Status;
-dbg("status is %x\n", status);
-				IoCompleteRequest(irp, IO_NO_INCREMENT);
-
-				num_pnp_requests--;
-if (status == STATUS_NOT_SUPPORTED) {
-// printk("5 STATUS_NOT_SUPPORTED\n");
-}
-				return status;
-			}
-	/* forward to lower device: but what is the lower device (bus?) */
-#if 0
-			if (status == STATUS_SUCCESS) {
-				irp->IoStatus.Status = status;
-				IoSkipCurrentIrpStackLocation(irp);
-				struct _IO_STACK_LOCATION s_lower;
-// printk("forwarding minor %x to lower driver...\n", s->MinorFunction);
-				status = IoCallDriver(bus_ext->lower_device, irp);
-			}
-
-		if (status != STATUS_SUCCESS)
-			dbg("Warning: lower device returned status %x\n", status);
-			}
-#endif
+			RtlZeroMemory(device_relations, siz);
+			device_relations->Count = 0;
+			irp->IoStatus.Information = (ULONG_PTR)device_relations;
+			status = STATUS_SUCCESS;
 			break;
+		}
+		default:
+			status = STATUS_NOT_IMPLEMENTED;
+		}
+		break;
 
+			/* TODO: needed? */
 		case IRP_MN_QUERY_INTERFACE:
 			status = irp->IoStatus.Status;
 dbg("status is %x\n", status);
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
 
 			num_pnp_requests--;
-if (status == STATUS_NOT_SUPPORTED) {
-// printk("4 STATUS_NOT_SUPPORTED\n");
-}
 			return status;
 
 		case IRP_MN_QUERY_DEVICE_TEXT:
@@ -2790,7 +2664,6 @@ printk("got IRP_MN_QUERY_REMOVE_DEVICE\n");
 				 * removing us. Removal always via drbdadm
 				 * seconary/down.
 				 */
-			// if (bdev && bdev->delete_pending) {
 			if (bdev) {
 
 		/* Tell the PnP manager that we are about to disappear.
@@ -2962,61 +2835,14 @@ dbg("Setting ejected flag ...\n");
 			}
 			status = STATUS_SUCCESS;
 			break;
-
-		case 0xff:
-			dbg("got 0xff\n");
-
-// TODO: ??
-// return STATUS_NOT_IMPLEMENTED;
-
-			if (drbd_bus_device != NULL) {
-// printk("irp status is %x\n", irp->IoStatus.Status);
-				IoSkipCurrentIrpStackLocation(irp);
-				dbg("calling bus object\n");
-				status = IoCallDriver(drbd_bus_device, irp);
-				dbg("bus object returned %x\n", status);
-				num_pnp_requests--;
-if (status == STATUS_NOT_SUPPORTED) {
-// printk("2 STATUS_NOT_SUPPORTED\n");
-}
-				return status;
-			}
-			else
-				dbg("no bus object, cannot forward irp\n");
-			break;
-
-		default:
-// printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
-
-				/* probably not a good idea? */
-			if (drbd_bus_device != NULL) {
-// printk("irp status is %x\n", irp->IoStatus.Status);
-				IoSkipCurrentIrpStackLocation(irp);
-				dbg("Calling bus object\n");
-				status = IoCallDriver(drbd_bus_device, irp);
-				dbg("bus object returned %x\n", status);
-				num_pnp_requests--;
-if (status == STATUS_NOT_SUPPORTED) {
-// printk("1 STATUS_NOT_SUPPORTED\n");
-}
-				return status;
-			}
-			else
-				dbg("no bus object, cannot forward irp\n");
-
-//			status = irp->IoStatus.Status;
-//			status = STATUS_NOT_IMPLEMENTED;
 		}
+		default:
+			status = STATUS_NOT_IMPLEMENTED;
 	}
-
-if (status == STATUS_NOT_SUPPORTED) {
-// printk("STATUS_NOT_SUPPORTED\n");
-}
-
+out:
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 
-	num_pnp_requests--;
 	return status;
 }
 
