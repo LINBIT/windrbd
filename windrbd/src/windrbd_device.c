@@ -2491,6 +2491,7 @@ GenDisk
 			ExFreePool(string); /* TODO: kfree() */
 
 		break;
+	}
 
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
 		switch (s->Parameters.QueryDeviceRelations.Type) {
@@ -2538,308 +2539,130 @@ GenDisk
 		}
 		break;
 
-			/* TODO: needed? */
-		case IRP_MN_QUERY_INTERFACE:
-			status = irp->IoStatus.Status;
-dbg("status is %x\n", status);
-			IoCompleteRequest(irp, IO_NO_INCREMENT);
+	case IRP_MN_QUERY_DEVICE_TEXT:
+	{
+		wchar_t *string = NULL;
 
-			num_pnp_requests--;
-			return status;
-
-		case IRP_MN_QUERY_DEVICE_TEXT:
-		{
-			wchar_t *string = NULL;
-			int string_length;
-
-			if ((string = (PWCHAR)ExAllocatePoolWithTag(NonPagedPool, (512 * sizeof(WCHAR)), DRBD_TAG)) == NULL) {
-				status = STATUS_INSUFFICIENT_RESOURCES;
-				break;
-			}
-// mem_printk("RtlZeroMemory %p %d\n", string, (512 * sizeof(WCHAR)));
-			RtlZeroMemory(string, (512 * sizeof(WCHAR)));
-			switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
-			case DeviceTextDescription:
-				string_length = _snwprintf(string, 512, L"WinDRBD Disk") + 1;
-				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), DRBD_TAG);
-				if (irp->IoStatus.Information == 0) {
-					status = STATUS_INSUFFICIENT_RESOURCES;
-					break;
-				}
-				RtlCopyMemory((PWCHAR)irp->IoStatus.Information, string, string_length * sizeof(WCHAR));
-				status = STATUS_SUCCESS;
-				break;
-
-			case DeviceTextLocationInformation:
-				string_length = _snwprintf(string, 512, L"WinDRBD Minor %d", minor) + 1;
-
-				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), DRBD_TAG);
-				if (irp->IoStatus.Information == 0) {
-					status = STATUS_INSUFFICIENT_RESOURCES;
-					break;
-				}
-				RtlCopyMemory((PWCHAR)irp->IoStatus.Information, string, string_length * sizeof(WCHAR));
-				status = STATUS_SUCCESS;
-				break;
-			default:
-				irp->IoStatus.Information = 0;
-				status = STATUS_NOT_SUPPORTED;
-			}
-			ExFreePool(string);
+			/* TODO: kmalloc(GFP_USER, ...) */
+		if ((string = (PWCHAR)ExAllocatePoolWithTag(PagedPool, (MAX_ID_LEN * sizeof(WCHAR)), DRBD_TAG)) == NULL) {
+			status = STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
-
-#if (NTDDI_VERSION >= NTDDI_WIN7)
-		case IRP_MN_DEVICE_ENUMERATED:
+		RtlZeroMemory(string, (MAX_ID_LEN * sizeof(WCHAR)));
+		switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
+		case DeviceTextDescription:
+			_snwprintf(string, MAX_ID_LEN, L"WinDRBD Disk");
+			irp->IoStatus.Information = (ULONG_PTR)string;
 			status = STATUS_SUCCESS;
 			break;
-#endif
 
-/* TODO: set PNP_DEVICE_NOT_DISABLEABLE on IRP_MN_QUERY_PNP_DEVICE_STATE */
-
-		case IRP_MN_QUERY_BUS_INFORMATION:
-		{
-			struct _PNP_BUS_INFORMATION *bus_info;
-
-			bus_info = ExAllocatePoolWithTag(PagedPool, sizeof(*bus_info), DRBD_TAG);
-			if (bus_info  == NULL) {
-			        printk("DiskDispatchPnP ExAllocatePool IRP_MN_QUERY_BUS_INFORMATION failed\n");
-			        status = STATUS_INSUFFICIENT_RESOURCES;
-				break;
-			}
-			RtlZeroMemory(bus_info, sizeof(*bus_info));
-			bus_info->BusTypeGuid = GUID_BUS_TYPE_INTERNAL;
-			bus_info->LegacyBusType = PNPBus;
-			bus_info->BusNumber = 0;
-			irp->IoStatus.Information = (ULONG_PTR)bus_info;
+		case DeviceTextLocationInformation:
+			_snwprintf(string, MAX_ID_LEN, L"WinDRBD Minor %d", minor);
+			irp->IoStatus.Information = (ULONG_PTR)string;
 			status = STATUS_SUCCESS;
 			break;
-		}
 
-		case IRP_MN_QUERY_CAPABILITIES:
-		{
-			struct _DEVICE_CAPABILITIES *DeviceCapabilities;
-			DeviceCapabilities = s->Parameters.DeviceCapabilities.Capabilities;
-// printk("got IRP_MN_QUERY_CAPABILITIES\n");
-			if (DeviceCapabilities->Version != 1 || DeviceCapabilities->Size < sizeof(DEVICE_CAPABILITIES)) {
-// printk("wrong version of DeviceCapabilities\n");
-				status = STATUS_UNSUCCESSFUL;
-				break;
-			}
-			DeviceCapabilities->DeviceState[PowerSystemWorking] = PowerDeviceD0;
-			if (DeviceCapabilities->DeviceState[PowerSystemSleeping1] != PowerDeviceD0) DeviceCapabilities->DeviceState[PowerSystemSleeping1] = PowerDeviceD1;
-			if (DeviceCapabilities->DeviceState[PowerSystemSleeping2] != PowerDeviceD0) DeviceCapabilities->DeviceState[PowerSystemSleeping2] = PowerDeviceD3;
-//      if (DeviceCapabilities->DeviceState[PowerSystemSleeping3] != PowerDeviceD0) DeviceCapabilities->DeviceState[PowerSystemSleeping3] = PowerDeviceD3;
-			DeviceCapabilities->DeviceWake = PowerDeviceD1;
-			DeviceCapabilities->DeviceD1 = TRUE;
-			DeviceCapabilities->DeviceD2 = FALSE;
-			DeviceCapabilities->WakeFromD0 = FALSE;
-			DeviceCapabilities->WakeFromD1 = FALSE;
-			DeviceCapabilities->WakeFromD2 = FALSE;
-			DeviceCapabilities->WakeFromD3 = FALSE;
-			DeviceCapabilities->D1Latency = 0;
-			DeviceCapabilities->D2Latency = 0;
-			DeviceCapabilities->D3Latency = 0;
-			DeviceCapabilities->EjectSupported = TRUE;
-			DeviceCapabilities->HardwareDisabled = FALSE;
-			DeviceCapabilities->Removable = TRUE;
-				/* TODO: it is not ok ... */
-			DeviceCapabilities->SurpriseRemovalOK = TRUE;
-				/* WinDRBD minors are unique on the system */
-			DeviceCapabilities->UniqueID = TRUE;
-			DeviceCapabilities->SilentInstall = FALSE;
-
-			status = STATUS_SUCCESS;
-			break;
-		}
-		case IRP_MN_DEVICE_USAGE_NOTIFICATION:
-// printk("got IRP_MN_DEVICE_USAGE_NOTIFICATION\n");
+		default:
 			irp->IoStatus.Information = 0;
-			status = STATUS_SUCCESS;
+			status = STATUS_NOT_SUPPORTED;
+		}
+		break;
+	}
+	case IRP_MN_QUERY_BUS_INFORMATION:
+	{
+		struct _PNP_BUS_INFORMATION *bus_info;
+
+		bus_info = ExAllocatePoolWithTag(PagedPool, sizeof(*bus_info), DRBD_TAG);
+		if (bus_info  == NULL) {
+		        status = STATUS_INSUFFICIENT_RESOURCES;
 			break;
+		}
+		RtlZeroMemory(bus_info, sizeof(*bus_info));
 
-		case IRP_MN_QUERY_REMOVE_DEVICE:
-printk("got IRP_MN_QUERY_REMOVE_DEVICE\n");
-				/* Prevent user space eject programs from
-				 * removing us. Removal always via drbdadm
-				 * seconary/down.
-				 */
-			if (bdev) {
+		bus_info->BusTypeGuid = GUID_BUS_TYPE_INTERNAL;
+		bus_info->LegacyBusType = PNPBus;
+		bus_info->BusNumber = 0;
+		irp->IoStatus.Information = (ULONG_PTR)bus_info;
+		status = STATUS_SUCCESS;
+		break;
+	}
 
-		/* Tell the PnP manager that we are about to disappear.
-		 * The device object will be deleted in a PnP REMOVE_DEVICE
-		 * request.
-		 */
+	case IRP_MN_QUERY_INTERFACE:
+		status = irp->IoStatus.Status;	/* TODO? */
+		break;
 
-				if (windrbd_rescan_bus() < 0) {
-					printk("Warning: couldn't rescan bus, is there a bus device object at all?\n");
-				} else {
-				}
-				status = STATUS_SUCCESS;
-				dbg("Returning SUCCESS\n");
-
-				/* On becoming secondary wait for EJECT to
-				 * be sent before rescanning devices. This
-				 * should avoid SURPRISE_REMOVAL.
-				 * Update: no it doesn't. For example when there are two volumes.
-				 */
-
-				dbg("set ejected event\n");
-				KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
-			} else {
-				status = STATUS_NOT_IMPLEMENTED; /* so we don't get removed. */
-			}
-printk("Returning status %08x\n", status);
+	case IRP_MN_QUERY_CAPABILITIES:
+	{
+		struct _DEVICE_CAPABILITIES *DeviceCapabilities;
+		DeviceCapabilities = s->Parameters.DeviceCapabilities.Capabilities;
+		if (DeviceCapabilities->Version != 1 || DeviceCapabilities->Size < sizeof(DEVICE_CAPABILITIES)) {
+			status = STATUS_UNSUCCESSFUL;
 			break;
+		}
+		DeviceCapabilities->DeviceState[PowerSystemWorking] = PowerDeviceD0;
+		if (DeviceCapabilities->DeviceState[PowerSystemSleeping1] != PowerDeviceD0)
+			DeviceCapabilities->DeviceState[PowerSystemSleeping1] = PowerDeviceD1;
+		if (DeviceCapabilities->DeviceState[PowerSystemSleeping2] != PowerDeviceD0)
+			DeviceCapabilities->DeviceState[PowerSystemSleeping2] = PowerDeviceD3;
+		DeviceCapabilities->DeviceWake = PowerDeviceD1;
+		DeviceCapabilities->DeviceD1 = TRUE;
+		DeviceCapabilities->DeviceD2 = FALSE;
+		DeviceCapabilities->WakeFromD0 = FALSE;
+		DeviceCapabilities->WakeFromD1 = FALSE;
+		DeviceCapabilities->WakeFromD2 = FALSE;
+		DeviceCapabilities->WakeFromD3 = FALSE;
+		DeviceCapabilities->D1Latency = 0;
+		DeviceCapabilities->D2Latency = 0;
+		DeviceCapabilities->D3Latency = 0;
+			/* TODO: check this: */
+		DeviceCapabilities->EjectSupported = FALSE;
+		DeviceCapabilities->HardwareDisabled = FALSE;
+		DeviceCapabilities->Removable = TRUE;
+			/* TODO: check this: */
+		DeviceCapabilities->SurpriseRemovalOK = FALSE;
+			/* WinDRBD minors are unique on the system */
+		DeviceCapabilities->UniqueID = TRUE;
+		DeviceCapabilities->SilentInstall = FALSE;
 
-		case IRP_MN_CANCEL_REMOVE_DEVICE:
-			dbg("got IRP_MN_CANCEL_REMOVE_DEVICE\n");
-				/* Sometimes we get CANCEL_REMOVE_DEVICE
-				 * without a QUERY_REMOVE_DEVICE. Set ejected
-				 * so we don't hang forever in drbdadm
-				 * secondary. We probably later get a
-				 * SURPRISE_REMOVAL but what can you do ...
-				 */
-			dbg("set ejected event\n");
-			if (bdev)
-				KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
+		status = STATUS_SUCCESS;
+		break;
+	}
 
-			status = STATUS_SUCCESS;
-			break;
+	case IRP_MN_QUERY_REMOVE_DEVICE:
+		status = STATUS_SUCCESS;
+		break;
 
-		case IRP_MN_SURPRISE_REMOVAL:
-			dbg("got IRP_MN_SURPRISE_REMOVAL\n");
-// printk("IRP_MN_SURPRISE_REMOVAL 1 bdev is %p\n", bdev);
-				/* Tell REMOVE request not to remove the device ...
-				 * this is required to make surprise removal HLK test
-				 * working. Since we don't have hardware to unplug,
-				 * SURPRISE_REMOVAL "should" never occur.
-				 * Update: it sometimes happens and should not block
-				 * drbdadm secondary.
-				 * We probably should delete the device here ...
-				 */
-			if (bdev) {
-// printk("IRP_MN_SURPRISE_REMOVAL 2 bdev is %p\n", bdev);
-				bdev->suprise_removal = true;
+	case IRP_MN_REMOVE_DEVICE:
 
-				dbg("set ejected event in IRP_MN_SURPRISE_REMOVAL\n");
-				KeSetEvent(&bdev->device_ejected_event, 0, FALSE);
-// printk("IRP_MN_SURPRISE_REMOVAL 3 bdev is %p\n", bdev);
-			}
-// printk("IRP_MN_SURPRISE_REMOVAL 4 bdev is %p\n", bdev);
-			status = STATUS_SUCCESS;
-			break;
+		bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
-		case IRP_MN_REMOVE_DEVICE:
-			dbg("got IRP_MN_REMOVE_DEVICE\n");
-// printk("IRP_MN_REMOVE_DEVICE 1 bdev is %p\n", bdev);
+			/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
+		IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
+			/* TODO: there is a ReactOS bug in that function: ? */
+		IoReleaseRemoveLockAndWait(&bdev->ref->w_remove_lock, NULL);
 
-				/* IRP_MN_REMOVE_DEVICE after IRP_MN_SURPRISE_REMOVAL is sometimes
-				 * sent also in production setting ... remove the device else
-				 * drbdadm secondary hangs. If needed change that again for the
-				 * HLK tests.
-				 */
-
-			if (bdev != NULL && bdev->suprise_removal) {
-				printk("got IRP_MN_REMOVE_DEVICE after IRP_MN_SURPRISE_REMOVAL ...\n");
-				bdev->suprise_removal = false;
-			}
-printk("IRP_MN_REMOVE_DEVICE 2 bdev is %p\n", bdev);
-			/* If it is NULL then we already deleted the device */
-			if (ref != NULL) {
-printk("IRP_MN_REMOVE_DEVICE 3 bdev is %p\n", bdev);
-				if (bdev != NULL) {
-printk("IRP_MN_REMOVE_DEVICE 4 bdev is %p\n", bdev);
-					bdev->about_to_delete = 1; /* meaning no more I/O on that device */
-
-					if (bdev->ref != NULL) {
-printk("IRP_MN_REMOVE_DEVICE 5 bdev is %p\n", bdev);
-						IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
-printk("IRP_MN_REMOVE_DEVICE 6 bdev is %p\n", bdev);
-printk("IRP_MN_REMOVE_DEVICE 6a irql is %p\n", KeGetCurrentIrql());
-		/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
-						IoReleaseRemoveLockAndWait(&bdev->ref->w_remove_lock, NULL);
-#if 0
-/* Workaround for REACTOS IoReleaseRemoveLockAndWait if/while bug */
-printk("Extra IoReleaseRemoveLock for ReactOS ...\n");
-IoReleaseRemoveLock(&bdev->ref->w_remove_lock, NULL);
-#endif
-/*
-printk("Extra ObDereferenceObject ...\n");
-ObDereferenceObject(device);
-*/
-
-printk("IRP_MN_REMOVE_DEVICE 7 bdev is %p\n", bdev);
-					}
-/*
-
-					dbg("Waiting for bus device reporting us as deleted ...\n");
-					KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, NULL);
-					dbg("Ok ...\n");
-*/
-// printk("IRP_MN_REMOVE_DEVICE 8 bdev is %p\n", bdev);
-				} else {
-					printk("bdev is NULL in REMOVE_DEVICE, this should not happen\n");
-				}
-				printk("About to delete device object %p\n", device);
+		printk("About to delete device object %p\n", device);
 
 				/* Avoid anything more happening to that
 				 * device. Reason is that there is a reference
 				 * count on the device, so it might still
 				 * exist for a short period.
 				 */
+		bdev->ref = NULL;	/* TODO: bdev->ref really needed? */
+		IoDeleteDevice(device);
+		KeSetEvent(&bdev->device_removed_event, 0, FALSE);
 
-				/* Commented out. ref may be used by bio_finished() ??
-				 * but we shouldn't get here if I/O is in flight ... */
-				/* Hmm ... there is a new BSOD probably because of this being commented out?
-				 */
-				if (bdev)
-					bdev->ref = NULL;
+		status = STATUS_SUCCESS;
+		break;
 
-					/* When zombie device is reenabled we
-					 * need the pointer to the block_device_ref ... so do not NULLify this here.. */
-/* TODO: this code is never executed in the test, reenable NULLify? */
-//				device->DeviceExtension = NULL;
-printk("REMOVE: device->DeviceExtension is %p, device is %p\n", device->DeviceExtension, device);
-printk("IRP_MN_REMOVE_DEVICE 9 bdev is %p\n", bdev);
-				if (bdev != NULL) {
-printk("IRP_MN_REMOVE_DEVICE a bdev is %p\n", bdev);
-						/* To allow bdev being removed. */
-
-printk("Really deleting device now (in REMOVE_LOCK)\n");
-IoDeleteDevice(device);
-					KeSetEvent(&bdev->device_removed_event, 0, FALSE);
-printk("IRP_MN_REMOVE_DEVICE b bdev is %p\n", bdev);
-				}
-printk("device object NOT deleted this should be done after bus rescan\n");
-printk("IRP_MN_REMOVE_DEVICE c bdev is %p\n", bdev);
-			} else {
-				printk("Warning: got IRP_MN_REMOVE_DEVICE twice for the same device object, not doing anything.\n");
-			}
-printk("IRP_MN_REMOVE_DEVICE d bdev is %p\n", bdev);
-
-			status = STATUS_SUCCESS;
-			irp->IoStatus.Status = status;
-		        IoCompleteRequest(irp, IO_NO_INCREMENT);
-
-printk("IRP_MN_REMOVE_DEVICE e bdev is %p\n", bdev);
-			num_pnp_requests--;
-printk("IRP_MN_REMOVE_DEVICE f bdev is %p\n", bdev);
-			return status;
-
-		case IRP_MN_EJECT:
-printk("got IRP_MN_EJECT status is \n", status);
-			if (bdev) {
-dbg("Setting ejected flag ...\n");
-				bdev->ejected = true;
-			}
-			status = STATUS_SUCCESS;
-			break;
-		}
-		default:
-			status = STATUS_NOT_IMPLEMENTED;
+	default:
+		status = STATUS_NOT_IMPLEMENTED;
+		printk("Got PnP minor 0x%02x which is not implemented.\n", s->MinorFunction);
 	}
 out:
+	if (!NT_SUCCESS(status))
+		printk("Warning: PnP request minor 0x%02x returning status 0x%08x\n", s->MinorFunction, status);
+
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 
