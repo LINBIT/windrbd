@@ -2650,9 +2650,7 @@ GenDisk
 		break;
 
 	default:
-//		status = STATUS_NOT_SUPPORTED;
-		status = STATUS_NOT_IMPLEMENTED;;
-
+		status = STATUS_NOT_SUPPORTED;	/* not STATUS_NOT_IMPLEMENTED! */
 		printk("Got PnP minor 0x%02x which is not implemented.\n", s->MinorFunction);
 	}
 out:
