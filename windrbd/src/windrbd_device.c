@@ -2413,7 +2413,7 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	}
 
 /* TODO: remove that again !! */
-printk("windrbd_pnp_device device is %p s->MinorFunction is %d\n", device, s->MinorFunction);
+printk("windrbd_pnp_device device is %p s->MinorFunction is 0x%02x\n", device, s->MinorFunction);
 	switch (s->MinorFunction) {
 	case IRP_MN_START_DEVICE:
 		KeSetEvent(&bdev->device_started_event, 0, FALSE);
@@ -2587,9 +2587,15 @@ GenDisk
 		break;
 	}
 
-	case IRP_MN_QUERY_INTERFACE:
+	case IRP_MN_QUERY_INTERFACE: /* needed? */
 		status = irp->IoStatus.Status;	/* TODO? */
 		break;
+
+#if 0
+	case 0x19:	/* IRP_MN_DEVICE_ENUMERATED */
+		status = STATUS_SUCCESS;
+		break;
+#endif
 
 	case IRP_MN_QUERY_CAPABILITIES:
 	{
@@ -2615,11 +2621,11 @@ GenDisk
 		DeviceCapabilities->D2Latency = 0;
 		DeviceCapabilities->D3Latency = 0;
 			/* TODO: check this: */
-		DeviceCapabilities->EjectSupported = FALSE;
+		DeviceCapabilities->EjectSupported = TRUE;
 		DeviceCapabilities->HardwareDisabled = FALSE;
 		DeviceCapabilities->Removable = TRUE;
 			/* TODO: check this: */
-		DeviceCapabilities->SurpriseRemovalOK = FALSE;
+		DeviceCapabilities->SurpriseRemovalOK = TRUE;
 			/* WinDRBD minors are unique on the system */
 		DeviceCapabilities->UniqueID = TRUE;
 		DeviceCapabilities->SilentInstall = FALSE;
@@ -2656,8 +2662,18 @@ GenDisk
 		break;
 
 	default:
-		status = STATUS_NOT_IMPLEMENTED;
 		printk("Got PnP minor 0x%02x which is not implemented.\n", s->MinorFunction);
+		IoSkipCurrentIrpStackLocation(irp);
+		printk("Calling bus object\n");
+		status = IoCallDriver(drbd_bus_device, irp);
+		printk("bus object returned %x\n", status);
+		return status;
+
+/*
+		status = STATUS_NOT_IMPLEMENTED;
+
+		printk("Got PnP minor 0x%02x which is not implemented.\n", s->MinorFunction);
+*/
 	}
 out:
 	if (!NT_SUCCESS(status))
