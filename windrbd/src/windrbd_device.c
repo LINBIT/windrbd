@@ -2587,16 +2587,6 @@ GenDisk
 		break;
 	}
 
-	case IRP_MN_QUERY_INTERFACE: /* needed? */
-		status = irp->IoStatus.Status;	/* TODO? */
-		break;
-
-#if 0
-	case 0x19:	/* IRP_MN_DEVICE_ENUMERATED */
-		status = STATUS_SUCCESS;
-		break;
-#endif
-
 	case IRP_MN_QUERY_CAPABILITIES:
 	{
 		struct _DEVICE_CAPABILITIES *DeviceCapabilities;
@@ -2620,11 +2610,9 @@ GenDisk
 		DeviceCapabilities->D1Latency = 0;
 		DeviceCapabilities->D2Latency = 0;
 		DeviceCapabilities->D3Latency = 0;
-			/* TODO: check this: */
 		DeviceCapabilities->EjectSupported = FALSE;
 		DeviceCapabilities->HardwareDisabled = FALSE;
 		DeviceCapabilities->Removable = TRUE;
-			/* TODO: check this: */
 		DeviceCapabilities->SurpriseRemovalOK = FALSE;
 			/* WinDRBD minors are unique on the system */
 		DeviceCapabilities->UniqueID = TRUE;
@@ -2662,16 +2650,8 @@ GenDisk
 		break;
 
 	default:
-/*
-		printk("Got PnP minor 0x%02x which is not implemented.\n", s->MinorFunction);
-		IoSkipCurrentIrpStackLocation(irp);
-		printk("Calling bus object\n");
-		status = IoCallDriver(drbd_bus_device, irp);
-		printk("bus object returned %x\n", status);
-		return status;
-*/
-
-		status = STATUS_NOT_SUPPORTED;
+//		status = STATUS_NOT_SUPPORTED;
+		status = STATUS_NOT_IMPLEMENTED;;
 
 		printk("Got PnP minor 0x%02x which is not implemented.\n", s->MinorFunction);
 	}
