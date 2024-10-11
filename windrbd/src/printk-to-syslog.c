@@ -479,7 +479,7 @@ int _printk(const char *func, const char *fmt, ...)
 	hr_timer = KeQueryPerformanceCounter(&hr_frequency);
 
 	pos = strlen(buffer);
-	n = snprintf(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (%llu/%llu)|%08.8p(%s) #%llu %s ",
+	n = snprintf(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (%llu/%llu)|%p(%s) #%llu %s ",
 	    level,
 	    time_fields.Day, time_fields.Month, time_fields.Year,
 	    time_fields.Hour, time_fields.Minute, time_fields.Second, time_fields.Milliseconds,
@@ -519,8 +519,11 @@ int _printk(const char *func, const char *fmt, ...)
 		split_message_and_write_to_eventlog(level-'0', buffer+pos);
 
 	/* Print messages to debugging facility, use a tool like
-	 * DbgViewer to see them.
+	 * DbgViewer to see them. Also those messages are displayed
+	 * on a remote kernel debugger (windbg) and on the ReactOS
+	 * console (if running in debug mode at least).
 	 */
+/* TODO: KERN_ERR[1] but: see linux_loglevel_to_windows_severity() */
 	if (!no_windows_printk)
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID,
 		   (level <= KERN_ERR[0]  ? DPFLTR_ERROR_LEVEL :
@@ -528,6 +531,7 @@ int _printk(const char *func, const char *fmt, ...)
 		    DPFLTR_WARNING_LEVEL),
 		    buffer);
 
+/* TODO: this should go away again: */
 	/* Also write to serial port (COM2 as of this writing) */
 	if (!no_serial_printk && KeGetCurrentIrql() < DISPATCH_LEVEL)
 		WriteStringSerial(buffer);

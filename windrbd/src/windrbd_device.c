@@ -1971,13 +1971,6 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 				dbg("windows device at %p\n", drbd_device->vdisk->part0->windows_device);
 				count++;
 			}
-/* TODO: is this needed: */
-#if 0
-			if (drbd_device && drbd_device->vdisk->part0 && drbd_device->vdisk->part0->delete_pending) {
-				dbg("Found blockdev about to be deleted ...\n");
-				KeSetEvent(&drbd_device->vdisk->part0->bus_device_iterated, 0, FALSE);
-			}
-#endif
 		}
 	}
 	dbg("%d drbd windows devices found\n", count);
@@ -1986,6 +1979,7 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 
 extern void windrbd_bus_is_ready(void);
 
+/* TODO: remove: */
 int num_pnp_requests = 0;
 int num_pnp_bus_requests = 0;
 
@@ -2000,13 +1994,13 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 	if (s == NULL) {
 		printk("Warning: IoGetCurrentIrpStackLocation(%x) is NULL\n");
 		status = STATUS_INVALID_DEVICE_REQUEST;
-	        irp->IoStatus.Status = status;
+		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 
-	        return status;
+		return status;
 	}
 
-printk("windrbd_pnp_bus_device device is %p s->MinorFunction is %d\n", device, s->MinorFunction);
+	printk(KERN_DEBUG "windrbd_pnp_bus_device device is %p s->MinorFunction is %d\n", device, s->MinorFunction);
 
 	num_pnp_bus_requests++;
 
@@ -2372,24 +2366,20 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	NTSTATUS status;
 
+		/* TODO: mux */
 	if (device == mvolRootDeviceObject || device == user_device_object) {
 		dbg(KERN_WARNING "PNP requests on root device not supported.\n");
 
-		irp->IoStatus.Status = STATUS_SUCCESS;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
+		status = STATUS_NOT_SUPPORTED;
+		goto out;
 	}
-
-	dbg("Pnp: device: %p irp: %p\n", device, irp);
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 
+		/* TODO: can this ever happen? */
 	if (s == NULL) {
-		printk("Warning: IoGetCurrentIrpStackLocation(%x) is NULL\n");
+		printk("Warning: IoGetCurrentIrpStackLocation(%p) is NULL\n", irp);
 		status = STATUS_INVALID_DEVICE_REQUEST;
-	        irp->IoStatus.Status = status;
-		IoCompleteRequest(irp, IO_NO_INCREMENT);
-
-	        return status;
+		goto out;
 	}
 
 		/* TODO: have a device MUX mechanism ... */
@@ -2415,8 +2405,6 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		goto out;
 	}
 
-/* TODO: remove that again !! */
-printk("windrbd_pnp_device device is %p s->MinorFunction is 0x%02x\n", device, s->MinorFunction);
 	switch (s->MinorFunction) {
 	case IRP_MN_START_DEVICE:
 		KeSetEvent(&bdev->device_started_event, 0, FALSE);
@@ -2639,7 +2627,7 @@ GenDisk
 			/* TODO: there is a ReactOS bug in that function: ? */
 		IoReleaseRemoveLockAndWait(&bdev->ref->w_remove_lock, NULL);
 
-		printk("About to delete device object %p\n", device);
+		printk(KERN_DEBUG "About to delete device object %p\n", device);
 
 				/* Avoid anything more happening to that
 				 * device. Reason is that there is a reference
@@ -2655,12 +2643,8 @@ GenDisk
 
 	default:
 		status = STATUS_NOT_SUPPORTED;	/* not STATUS_NOT_IMPLEMENTED! */
-		printk("Got PnP minor 0x%02x which is not implemented.\n", s->MinorFunction);
 	}
 out:
-	if (!NT_SUCCESS(status))
-		printk("Warning: PnP request minor 0x%02x returning status 0x%08x\n", s->MinorFunction, status);
-
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 

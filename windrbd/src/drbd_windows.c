@@ -4117,23 +4117,18 @@ int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 	if (!device->vdisk->part0->is_bootdevice) {
 		if (windrbd_umount(device->vdisk->part0) != 0)
 			windrbd_device_error(device, err_str, "Warning: couldn't umount volume %d\n", device->vnr);
-printk("1\n");
+
 		windrbd_remove_windows_device(device->vdisk->part0);
-printk("2\n");
 
-
+/* TODO: is this needed? windrbd_remove_windows_device does a rescan already ... 
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
 		}
-printk("3\n");
+*/
 		windrbd_destroy_io_workqueue(device->vdisk->part0);
-printk("4\n");
 	}
-
-printk("5\n");
 	KeClearEvent(&device->vdisk->part0->primary_event);
 
-printk("6\n");
 #ifdef DRBD_9_1
 	if (device->open_cnt > 0)
 		printk("Forcing close of DRBD device: device->open_cnt is %d\n", device->open_cnt);
@@ -4143,15 +4138,12 @@ printk("6\n");
 	if (device->open_rw_cnt > 0 || device->open_ro_cnt > 0)
 		printk("Forcing close of DRBD device: device->open_rw_cnt is %d, device->open_ro_cnt is %d\n", device->open_rw_cnt, device->open_ro_cnt);
 
-printk("7\n");
 	device->open_rw_cnt = 0;
 	device->open_ro_cnt = 0;
 #endif
 
-printk("8\n");
 	return 0;
 }
-
 
 static void windrbd_destroy_block_device(struct kref *kref)
 {
