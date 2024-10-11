@@ -2621,11 +2621,11 @@ GenDisk
 		DeviceCapabilities->D2Latency = 0;
 		DeviceCapabilities->D3Latency = 0;
 			/* TODO: check this: */
-		DeviceCapabilities->EjectSupported = TRUE;
+		DeviceCapabilities->EjectSupported = FALSE;
 		DeviceCapabilities->HardwareDisabled = FALSE;
 		DeviceCapabilities->Removable = TRUE;
 			/* TODO: check this: */
-		DeviceCapabilities->SurpriseRemovalOK = TRUE;
+		DeviceCapabilities->SurpriseRemovalOK = FALSE;
 			/* WinDRBD minors are unique on the system */
 		DeviceCapabilities->UniqueID = TRUE;
 		DeviceCapabilities->SilentInstall = FALSE;
