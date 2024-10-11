@@ -2662,18 +2662,18 @@ GenDisk
 		break;
 
 	default:
+/*
 		printk("Got PnP minor 0x%02x which is not implemented.\n", s->MinorFunction);
 		IoSkipCurrentIrpStackLocation(irp);
 		printk("Calling bus object\n");
 		status = IoCallDriver(drbd_bus_device, irp);
 		printk("bus object returned %x\n", status);
 		return status;
+*/
 
-/*
-		status = STATUS_NOT_IMPLEMENTED;
+		status = STATUS_NOT_SUPPORTED;
 
 		printk("Got PnP minor 0x%02x which is not implemented.\n", s->MinorFunction);
-*/
 	}
 out:
 	if (!NT_SUCCESS(status))
