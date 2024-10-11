@@ -440,25 +440,19 @@ struct block_device {
 	struct fault_injection inject_on_request;
 
 	/* Flags controlling end of this bdev: */
-	bool powering_down;	/* Regular windows shutdown, cancel all waiters */
+	bool powering_down;	/* Regular windows shutdown, cancel all waiters */ /* TODO: needed? */
 	bool delete_pending;	/* bdput called. waiting for REMOVE_DEVICE PnP IRP */
 	bool about_to_delete;	/* REMOVE_DEVICE, no more I/O */
-	bool ejected;		/* EJECTED event, no more I/O TODO: ?? */
 
 	struct _KEVENT primary_event;	/* Set whenever Primary */
 	struct _KEVENT capacity_event;	/* Set whenever size > 0 */
 	struct _KEVENT device_removed_event;	/* Set by REMOVE_DEVICE to signal bdput we're gone */
 	struct _KEVENT device_started_event; /* Set on receving IRP_MN_START_DEVICE PnP request (drbdadm primary waits for this) */
-	struct _KEVENT device_ejected_event; /* Set on receving IRP_MN_EJECT_DEVICE PnP request (drbdadm secondary waits for this) */
-	struct _KEVENT bus_device_iterated; /* Set on bus device receving IRP_QUERY_DEVICE_RELATIONS PnP request for a to be deleted blockdev (drbdadm secondary waits for this) */
 	struct _KEVENT io_not_suspended; /* Cleared by windrbd suspend_io (so that I/O is suspended). Needed to suspend I/O from outside DRBD in order to fix the busy resync bug (sync does not finished on ongoing application I/O) */
 	spinlock_t suspend_lock; /* Protecting toggeling of io_not_suspended */
 
 	/* Used for debugging handle leaks */
 	int num_openers;
-
-	/* For HLK test. */
-	bool suprise_removal;
 
 	/* This spinlock ensures that IoCompleteRequest (see bio_finished)
 	 * is called sequentially.

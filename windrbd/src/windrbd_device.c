@@ -1963,7 +1963,7 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 
 	for_each_resource(resource, &drbd_resources) {
 		idr_for_each_entry(&resource->devices, drbd_device, vnr) {
-			if (drbd_device && drbd_device->vdisk && drbd_device->vdisk->part0 && !drbd_device->vdisk->part0->delete_pending && drbd_device->vdisk->part0->windows_device != NULL && !drbd_device->vdisk->part0->ejected) {
+			if (drbd_device && drbd_device->vdisk && drbd_device->vdisk->part0 && !drbd_device->vdisk->part0->delete_pending && drbd_device->vdisk->part0->windows_device != NULL) {
 				if (count < max && array != NULL) {
 					array[count] = drbd_device->vdisk->part0->windows_device;
 					ObReferenceObject(drbd_device->vdisk->part0->windows_device);
@@ -1971,10 +1971,13 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 				dbg("windows device at %p\n", drbd_device->vdisk->part0->windows_device);
 				count++;
 			}
+/* TODO: is this needed: */
+#if 0
 			if (drbd_device && drbd_device->vdisk->part0 && drbd_device->vdisk->part0->delete_pending) {
 				dbg("Found blockdev about to be deleted ...\n");
 				KeSetEvent(&drbd_device->vdisk->part0->bus_device_iterated, 0, FALSE);
 			}
+#endif
 		}
 	}
 	dbg("%d drbd windows devices found\n", count);
@@ -2623,6 +2626,7 @@ GenDisk
 	}
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
+	case IRP_MN_SURPRISE_REMOVAL:		/* ReactOS requires this */
 		status = STATUS_SUCCESS;
 		break;
 

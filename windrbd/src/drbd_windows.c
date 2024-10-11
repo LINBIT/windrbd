@@ -3024,8 +3024,6 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 	KeInitializeEvent(&block_device->capacity_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->device_removed_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->device_started_event, NotificationEvent, FALSE);
-	KeInitializeEvent(&block_device->device_ejected_event, NotificationEvent, FALSE);
-	KeInitializeEvent(&block_device->bus_device_iterated, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->io_not_suspended, NotificationEvent, TRUE);
 	spin_lock_init(&block_device->complete_request_spinlock);
 	spin_lock_init(&block_device->virtual_partition_table_lock);
@@ -3640,10 +3638,7 @@ int windrbd_create_windows_device(struct block_device *bdev)
 		printk(KERN_WARNING "Warning: block device %p already has a windows device (%p)\n", bdev, bdev->windows_device);
 
 	KeClearEvent(&bdev->device_started_event);
-	KeClearEvent(&bdev->device_ejected_event);
-	KeClearEvent(&bdev->bus_device_iterated);
 	KeSetEvent(&bdev->io_not_suspended, 0, FALSE);	/* be nice and resume I/O on becoming Primary */
-	bdev->ejected = false;
 
 		/* By default, this creates an object accessible only
 		 * by the Administrator user from user space. If this
@@ -3697,8 +3692,6 @@ int windrbd_create_windows_device(struct block_device *bdev)
 
 static void windrbd_remove_windows_device(struct block_device *bdev)
 {
-// printk("Start removing device %S\n", bdev->path_to_device.Buffer);
-
 	if (bdev->windows_device == NULL) {
 		printk(KERN_WARNING "Windows device does not exist in block device %p.\n", bdev);
 		return;
@@ -3713,32 +3706,9 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 
 		/* counterpart to acquiring in bdget() */
 	IoReleaseRemoveLock(&bdev->ref->w_remove_lock, NULL);
-
 	remove_dos_link(bdev);
 
-	LARGE_INTEGER timeout;
-	NTSTATUS status;
-#if 0
-	dbg("Requesting eject of Windows device minor %d\n", bdev->drbd_device->minor);
-	IoRequestDeviceEject(bdev->windows_device);
-	dbg("Eject returned minor %d\n", bdev->drbd_device->minor);
-
-	timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
-	status = KeWaitForSingleObject(&bdev->device_ejected_event, Executive, KernelMode, FALSE, &timeout);
-	if (status == STATUS_TIMEOUT)
-		printk("Warning: no eject event after 10 seconds, giving up.\n");
-
-	dbg("Device ejected minor %d\n", bdev->drbd_device->minor);
-#endif
-	if (windrbd_rescan_bus() < 0) {
-		/* TODO: check if there are still references (PENDING_DELETE) */
-
-		printk("PnP did not work, removing device manually.\n");
-		IoDeleteDevice(bdev->windows_device);
-	} else {
-printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE minor %d bdev is %p windows device is %p\n", bdev->drbd_device->minor, bdev, bdev->windows_device);
-		timeout.QuadPart = -100*1000*1000*10; /* 100 seconds, sometimes it really takes very long, no idea why */
-//		status = KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, &timeout);
+	windrbd_rescan_bus();
 
 		/* We have to wait for REMOVE_DEVICE .. there could be a
 	         * BSOD if we didn't (when the DRBD device is brought down,
@@ -3746,23 +3716,8 @@ printk("waiting for device being removed via IRP_MN_REMOVE_DEVICE minor %d bdev 
                  * comes. So no timeout here. Sorry but drbdadm secondary
                  * takes about 40 seconds now, but there is no BSOD.
                  */
-		status = KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
-/*
-		if (status == STATUS_TIMEOUT)
-			printk("Warning: no IRP_MN_REMOVE_DEVICE received after 100 seconds, giving up.\n");
-*/
+	KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
 
-printk("finished. minor %d now waiting for bus device to report device as missing bdev is %p windows device is %p\n", bdev->drbd_device->minor, bdev, bdev->windows_device);
-
-		timeout.QuadPart = -10*1000*1000*10; /* 10 seconds */
-		status = KeWaitForSingleObject(&bdev->bus_device_iterated, Executive, KernelMode, FALSE, &timeout);
-		if (status == STATUS_TIMEOUT)
-			printk("Warning: no reiteration of bus device after 10 seconds, giving up.\n");
-printk("Excellent we are almost gone .. now really deleting the device ... bdev is %p windows device is %p\n", bdev, bdev->windows_device);
-printk("NOT deleting here, since that is done in REMOVE_DEVICE.\n");
-//		IoDeleteDevice(bdev->windows_device);
-printk("Done.\n");
-	}
 	bdev->windows_device = NULL;
 }
 
