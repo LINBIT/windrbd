@@ -2604,7 +2604,7 @@ GenDisk
 		DeviceCapabilities->EjectSupported = FALSE;
 		DeviceCapabilities->HardwareDisabled = FALSE;
 		DeviceCapabilities->Removable = TRUE;
-		DeviceCapabilities->SurpriseRemovalOK = FALSE;
+		DeviceCapabilities->SurpriseRemovalOK = TRUE;
 			/* WinDRBD minors are unique on the system */
 		DeviceCapabilities->UniqueID = TRUE;
 		DeviceCapabilities->SilentInstall = FALSE;

@@ -3708,7 +3708,9 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 	IoReleaseRemoveLock(&bdev->ref->w_remove_lock, NULL);
 	remove_dos_link(bdev);
 
-	windrbd_rescan_bus();
+	if (windrbd_rescan_bus() < 0) {
+		printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
+	}
 
 		/* We have to wait for REMOVE_DEVICE .. there could be a
 	         * BSOD if we didn't (when the DRBD device is brought down,
@@ -4120,11 +4122,10 @@ int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 
 		windrbd_remove_windows_device(device->vdisk->part0);
 
-/* TODO: is this needed? windrbd_remove_windows_device does a rescan already ... 
+/* TODO: is this needed? windrbd_remove_windows_device does a rescan already ...  */
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
 		}
-*/
 		windrbd_destroy_io_workqueue(device->vdisk->part0);
 	}
 	KeClearEvent(&device->vdisk->part0->primary_event);
