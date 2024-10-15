@@ -3049,18 +3049,12 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete || ref->bdev->ref == NULL) {
-		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
+//		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
 		srb = s->Parameters.Scsi.Srb;
-		if (srb) {
+		if (srb)
 			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
-printk("srb->Function is %x\n", srb->Function);
-cdb = (union _CDB*) srb->Cdb;
-printk("srb->Cdb->AsByte[0] is %x\n", cdb->AsByte[0]);
-		} else {
-printk("srb is NULL!\n");
-		}
 
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_NO_SUCH_DEVICE;
@@ -3434,7 +3428,7 @@ printk("srb is NULL!\n");
 		break;
 
 	default:
-		dbg("got unimplemented SCSI function %x\n", srb->Function);
+		printk("got unimplemented SCSI function %x\n", srb->Function);
 		status = STATUS_NOT_IMPLEMENTED;
 	}
 
@@ -3471,7 +3465,7 @@ static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp
 		if (device == mvolRootDeviceObject)
 			t->is_root = 1;
 	}
-	dbg("got request major is %x device object is %p (is %s device)\n", major, device, device == mvolRootDeviceObject ? "root" : (device == drbd_bus_device ? "bus" : (device == user_device_object ? " user" : "disk")));
+printk("got request major is %x device object is %p (is %s device)\n", major, device, device == mvolRootDeviceObject ? "root" : (device == drbd_bus_device ? "bus" : (device == user_device_object ? " user" : "disk")));
 
 	ret = windrbd_dispatch_table[major](device, irp);
 
