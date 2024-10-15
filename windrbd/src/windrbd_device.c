@@ -2614,13 +2614,17 @@ GenDisk
 	}
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
+printk("IRP_MN_QUERY_REMOVE_DEVICE!!!\n");
+		status = STATUS_SUCCESS;
+		break;
+
 	case IRP_MN_SURPRISE_REMOVAL:		/* ReactOS requires this */
 		status = STATUS_SUCCESS;
 		break;
 
 	case IRP_MN_REMOVE_DEVICE:
 
-printk("IRP_MN_REMOVE_DEVICE!!!\n");
+printk("IRP_MN_REMOVE_DEVICE!!! NO BREAK!!!\n");
 		bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
 			/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
