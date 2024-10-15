@@ -2615,7 +2615,13 @@ GenDisk
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
 printk("IRP_MN_QUERY_REMOVE_DEVICE!!!\n");
-		status = STATUS_SUCCESS;
+		if (bdev->delete_pending) {
+			status = STATUS_SUCCESS;
+		} else {
+			printk("Someone has requested to remove this device (for example via disabling in device manager.\n");
+			printk("Always use drbdadm to remove a WinDRBD disk device (drbdadm secondary or drbdadm down)\n");
+			status = STATUS_NOT_SUPPORTED;
+		}
 		break;
 
 	case IRP_MN_SURPRISE_REMOVAL:		/* ReactOS requires this */
