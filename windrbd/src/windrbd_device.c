@@ -3053,8 +3053,15 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
 		srb = s->Parameters.Scsi.Srb;
-		if (srb)
+		if (srb) {
 			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+printk("srb->Function is %x\n", srb->Function);
+cdb = (union _CDB*) srb->Cdb;
+printk("srb->Cdb->AsByte[0] is %x\n", cdb->AsByte[0]);
+		} else {
+printk("srb is NULL!\n");
+		}
+
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_NO_SUCH_DEVICE;
 	}
