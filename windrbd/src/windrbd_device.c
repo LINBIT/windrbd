@@ -307,7 +307,7 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCode, device);
+printk("root ioctl is 0x%08x object is %p\n", s->Parameters.DeviceIoControl.IoControlCode, device);
 
 	if (!current->is_root) {
 		switch (s->Parameters.DeviceIoControl.IoControlCode) {
@@ -672,7 +672,7 @@ static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IR
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-// printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
+printk("ioctl is 0x%08x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	if (dev->is_bootdevice) {
 		status = wait_for_becoming_primary(dev);
 		if (status != STATUS_SUCCESS)
@@ -3465,7 +3465,7 @@ static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp
 		if (device == mvolRootDeviceObject)
 			t->is_root = 1;
 	}
-printk("got request major is %x device object is %p (is %s device)\n", major, device, device == mvolRootDeviceObject ? "root" : (device == drbd_bus_device ? "bus" : (device == user_device_object ? " user" : "disk")));
+printk("got request major is 0x%02x minor is 0x%02x device object is %p (is %s device)\n", major, s->MinorFunction, device, device == mvolRootDeviceObject ? "root" : (device == drbd_bus_device ? "bus" : (device == user_device_object ? " user" : "disk")));
 
 	ret = windrbd_dispatch_table[major](device, irp);
 
