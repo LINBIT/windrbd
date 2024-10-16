@@ -3720,14 +3720,6 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 	bdev->windows_device = NULL;
 }
 
-	/* TODO: what is this: */
-NTSTATUS pnp_callback(void *notification, void *context)
-{
-	printk("notification: %p context: %p\n", notification, context);
-
-	return STATUS_SUCCESS;
-}
-
 static int windrbd_allocate_io_workqueue(struct block_device *bdev)
 {
 	bdev->io_workqueue = alloc_ordered_workqueue("windrbd_io", 0);
