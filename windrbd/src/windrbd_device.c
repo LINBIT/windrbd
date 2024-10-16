@@ -2144,7 +2144,14 @@ dbg("BusQueryCompatibleIDs\n");
 				status = STATUS_SUCCESS;
 				break;
 			default:
+				IoSkipCurrentIrpStackLocation(irp);
+				status = IoCallDriver(bus_ext->lower_device, irp);
+				if (status != STATUS_SUCCESS)
+					printk("Warning: lower device returned status %x\n", status);
+				return status;	/* TODO: memory leak */
+/*
 				status = STATUS_NOT_IMPLEMENTED;
+*/
 			}
 			if (status == STATUS_SUCCESS) {
 dbg("Returned string is %S\n", string);
@@ -2197,11 +2204,11 @@ dbg("Returned string is %S\n", string);
 		return status;
 
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
-		dbg_bus("got IRP_MN_QUERY_DEVICE_RELATIONS\n");
+printk("got IRP_MN_QUERY_DEVICE_RELATIONS\n");
 
 //		int type = s->Parameters.QueryDeviceRelations.Type;
 
-		dbg_bus("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
+printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
 
 		switch ((int)s->Parameters.QueryDeviceRelations.Type) {
 		case (int)BusRelations: 
@@ -2270,14 +2277,23 @@ dbg("Returned string is %S\n", string);
 			return STATUS_SUCCESS;
 		}
 #endif
+#if 0
 		case -1:
 			pass_on = 1;    /* Must not change status field */
 			break;
+#endif
 
-		default:
+		default:		/* must pass on to lower dev else verifier BSOD */
+			IoSkipCurrentIrpStackLocation(irp);
+			status = IoCallDriver(bus_ext->lower_device, irp);
+			if (status != STATUS_SUCCESS)
+				dbg_bus("Warning: lower device returned status %x\n", status);
+			return status;
+/*
 			status = STATUS_NOT_IMPLEMENTED;
 			pass_on = 0;
 			break;
+*/
 		}
 		break;
 
@@ -2287,12 +2303,14 @@ dbg("Returned string is %S\n", string);
 		pass_on = 1;
 		break;
 
+#if 0
 	case 0xb: /* ?? IRP_MN_QUERY_RESOURCE_REQUIREMENTS */
 	case 0xa: /* ?? IRP_MN_QUERY_RESOURCES */
 		dbg_bus("got unimplemented minor %x not passing on to lower device\n", s->MinorFunction);
 		status = STATUS_NOT_SUPPORTED;
 		pass_on = 0;
 		break;	/* do not pass on */
+#endif
 
 	case 0xd: /* ?? IRP_MN_FILTER_RESOURCE_REQUIREMENTS */
 		dbg_bus("got unimplemented minor %x passing on to lower device returning success 123\n", s->MinorFunction);
@@ -2326,11 +2344,13 @@ dbg("Returned string is %S\n", string);
 		return status;
 
 	default:
-		dbg_bus("got unimplemented minor %x\n", s->MinorFunction);
-
-		status = STATUS_NOT_SUPPORTED;
-		dbg_bus("status is %x\n", status);
-		pass_on = 1;
+printk("got unimplemented minor %x\n", s->MinorFunction);
+		IoSkipCurrentIrpStackLocation(irp);
+		status = IoCallDriver(bus_ext->lower_device, irp);
+		if (status != STATUS_SUCCESS)
+			dbg_bus("Warning: lower device returned status %x\n", status);
+printk("status is %x\n", status);
+		return status;
 	}
 exit:
 
