@@ -34,7 +34,6 @@
 
 #include <wdmguid.h>
 
-#include <mountmgr.h>
 #include "drbd_int.h"
 #include <windrbd/windrbd_ioctl.h>
 
@@ -2919,7 +2918,7 @@ static int create_dos_link(struct block_device *dev)
 
 	status = IoCreateSymbolicLink(&dos_name, &dev->path_to_device);
 	if (status != STATUS_SUCCESS) {
-		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, dos_name.Buffer, status);
+		printk("Creating DOS link: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, dos_name.Buffer, status);
 		kfree(dos_name.Buffer);
 		return -1;
 	}
@@ -2941,7 +2940,7 @@ static int remove_dos_link(struct block_device *dev)
 
 	status = IoDeleteSymbolicLink(&dos_name);
 	if (status != STATUS_SUCCESS) {
-		printk("windrbd_mount: couldn't remove symlink %S status: %x\n", dos_name.Buffer, status);
+		printk("Deleting DOS link: couldn't remove symlink %S status: %x\n", dos_name.Buffer, status);
 		kfree(dos_name.Buffer);
 		return -1;
 	}
@@ -3680,8 +3679,6 @@ int windrbd_create_windows_device(struct block_device *bdev)
 	}
 	bdev->ref = bdev_ref;
 
-		/* TODO: makes a difference? */
-		/* TODO: also try DO_BUFFERED_IO */
 	new_device->Flags |= DO_DIRECT_IO;
 	new_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
@@ -3723,222 +3720,12 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 	bdev->windows_device = NULL;
 }
 
-	/* This function is roughly taken from:
-	 * https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/content/mountmgr/ni-mountmgr-ioctl_mountmgr_create_point
-	 */
-
-/* TODO: mount point (drive letter) must always be upper case */
-
-/* TODO: this code (using mount manager) really does not have any
- * advantages and is quite complicated (it works, but ...), so
- * maybe we switch back to just creating the symbolic link.
- */
-
-/* TODO: oops fsutil reports and error when just creating the
- * symlink, good that we still have this code:
- */
-
-static int mountmgr_create_point(struct block_device *dev)
-{
-	struct _MOUNTMGR_CREATE_POINT_INPUT *create_point;
-	size_t create_point_size = sizeof(MOUNTMGR_CREATE_POINT_INPUT) +
-                      dev->mount_point.Length + dev->path_to_device.Length;
-	UNICODE_STRING mountmgr_name;
-	struct _FILE_OBJECT *mountmgr_file_object;
-	struct _DEVICE_OBJECT *mountmgr_device_object;
-	KEVENT event;
-	struct _IO_STATUS_BLOCK *io_status;
-	NTSTATUS status;
-	struct _IRP *irp;
-	struct _IO_STACK_LOCATION *s;
-
-	create_point = kzalloc(create_point_size, GFP_KERNEL);
-	if (create_point == NULL)
-		return -1;
-
-	io_status = kzalloc(sizeof(*io_status), GFP_KERNEL);
-	if (io_status == NULL) {
-		kfree(create_point);
-		return -1;
-	}
-	create_point->SymbolicLinkNameOffset = sizeof(*create_point);
-	create_point->SymbolicLinkNameLength = dev->mount_point.Length;
-	create_point->DeviceNameOffset = create_point->SymbolicLinkNameOffset+create_point->SymbolicLinkNameLength;
-	create_point->DeviceNameLength = dev->path_to_device.Length;
-
-	RtlCopyMemory(((char*)create_point)+create_point->SymbolicLinkNameOffset, dev->mount_point.Buffer, dev->mount_point.Length);
-	RtlCopyMemory(((char*)create_point)+create_point->DeviceNameOffset, dev->path_to_device.Buffer, dev->path_to_device.Length);
-
-	/* Use the name of the mount manager device object
-	 * defined in mountmgr.h (MOUNTMGR_DEVICE_NAME) to
-	 * obtain a pointer to the mount manager.
-	 */
-
-	RtlInitUnicodeString(&mountmgr_name, MOUNTMGR_DEVICE_NAME);
-	status = IoGetDeviceObjectPointer(&mountmgr_name, FILE_READ_ATTRIBUTES, &mountmgr_file_object, &mountmgr_device_object);
-	if (!NT_SUCCESS(status)) {
-		printk(KERN_WARNING "IoGetDeviceObjectPointer %s returned %x\n", MOUNTMGR_DEVICE_NAME, status);
-		kfree(create_point);
-		kfree(io_status);
-		return -1;
-	}
-	KeInitializeEvent(&event, NotificationEvent, FALSE);
-	irp = IoBuildDeviceIoControlRequest(
-            IOCTL_MOUNTMGR_CREATE_POINT,
-            mountmgr_device_object, create_point, create_point_size,
-            NULL, 0, FALSE, &event, io_status);
-
-	if (irp == NULL) {
-		printk(KERN_WARNING "Cannot create IRP.\n");
-		kfree(create_point);
-		kfree(io_status);
-		return -1;
-	}
-        s = IoGetNextIrpStackLocation(irp);
-
-        s->DeviceObject = mountmgr_device_object;
-        s->FileObject = mountmgr_file_object;
-
-	/* Send the irp to the mount manager requesting
-	 * that a new mount point (persistent symbolic link)
-	 * be created for the indicated volume.
-	 */
-
-	status = IoCallDriver(mountmgr_device_object, irp);
-
-	if (status == STATUS_PENDING) {
-		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
-		status = io_status->Status;
-	}
-
-	if (!NT_SUCCESS(status)) {
-		printk(KERN_ERR "Registering mount point failed status = %x\n", status);
-		kfree(create_point);
-		kfree(io_status);
-		return -1;
-	}
-	kfree(create_point);
-	kfree(io_status);
-	return 0;
-}
-
+	/* TODO: what is this: */
 NTSTATUS pnp_callback(void *notification, void *context)
 {
 	printk("notification: %p context: %p\n", notification, context);
 
 	return STATUS_SUCCESS;
-}
-
-bool windrbd_has_mount_point(struct block_device *dev)
-{
-	if (dev == NULL)
-		return false;
-
-	if (dev->mount_point.Buffer == NULL)
-		return false;
-
-	if (dev->mount_point.Buffer[0] == L'\0')
-		return false;
-
-	return true;
-}
-
-int windrbd_set_mount_point_utf16(struct block_device *dev, const wchar_t *mount_point)
-{
-	if (mount_point == NULL)
-		return -EINVAL;
-
-	if (dev->mount_point.Buffer != NULL) {
-		printk("set_mount_point called while there is a mount point registered.\n");
-
-		kfree(dev->mount_point.Buffer);
-		dev->mount_point.Buffer = NULL;
-	}
-		/* empty string means do not mount minor */
-	if (mount_point[0] == L'\0')
-		return 0;
-
-		/* TODO: later, check if it is a drive letter of the form
-		 * [A-Z]: and if not, try to mount it to NTFS directory.
-		 */
-
-#define DOS_DEVICES L"\\DosDevices\\"
-	size_t len = wcslen(mount_point)+wcslen(DOS_DEVICES)+1;
-	size_t size_in_bytes = len * sizeof(wchar_t);
-	int dos_devices_len = wcslen(DOS_DEVICES);
-
-	dev->mount_point.Buffer = kmalloc(size_in_bytes, GFP_KERNEL);
-	if (dev->mount_point.Buffer == NULL)
-		return -ENOMEM;
-	dev->mount_point.Length = size_in_bytes-sizeof(wchar_t);
-	dev->mount_point.MaximumLength = size_in_bytes;
-
-	wcscpy(dev->mount_point.Buffer, DOS_DEVICES);
-	wcscpy(dev->mount_point.Buffer+dos_devices_len, mount_point);
-#undef DOS_DEVICES
-
-	return 0;
-}
-
-
-/* TODO: IMHO this is dead code. Boot devices get their mount points
- * from the Windows kernel (partition manager or something like that).
- */
-
-#if 0
-
-static int create_windows_device_and_mount_it(struct block_device *block_device)
-{
-	int ret;
-
-	ret = windrbd_create_windows_device(block_device);
-	if (ret != 0) {
-		printk("Warning: Couldn't create windows device for volume\n");
-		return ret;
-	}
-
-	ret = windrbd_mount(block_device);
-	if (ret != 0)
-		printk("Warning: Couldn't mount volume, perhaps the drive letter (%S) is in use?\n", block_device->mount_point.Buffer);
-
-
-	return ret;
-}
-
-#endif
-
-int windrbd_set_mount_point_for_minor_utf16(int minor, const wchar_t *mount_point)
-{
-	struct drbd_device *drbd_device;
-	struct block_device *block_device;
-	int ret;
-
-	drbd_device = minor_to_device(minor);
-	if (drbd_device == NULL)
-		return -ENOENT;		/* no such minor */
-
-	block_device = drbd_device->vdisk->part0;
-	if (block_device == NULL)
-		return -ENOENT;
-
-	if (block_device->is_mounted) {
-		printk("Attempt to change mount point while mounted. Please do a drbdadm secondary first.\n");
-		return -EBUSY;
-	}
-
-	ret = windrbd_set_mount_point_utf16(block_device, mount_point);
-	if (ret == 0)
-		printk("Mount point for minor %d set to %S\n", minor, block_device->mount_point.Buffer);
-	else {
-		printk("Warning: could not set mount point, error is %d\n", ret);
-		return ret;
-	}
-/*
-	if (block_device->is_bootdevice)
-		ret = create_windows_device_and_mount_it(block_device);
-*/
-
-	return ret;
 }
 
 static int windrbd_allocate_io_workqueue(struct block_device *bdev)
@@ -3967,6 +3754,7 @@ static void windrbd_destroy_io_workqueue(struct block_device *bdev)
  * to be created early so that Windows has a boot device.
  */
 
+/* TODO: remove this later: */
 int windrbd_create_windows_device_for_minor(int minor)
 {
 	struct drbd_device *drbd_device;
@@ -3991,79 +3779,6 @@ int windrbd_create_windows_device_for_minor(int minor)
 		return ret;
 	}
 	return ret;
-}
-
-int windrbd_mount(struct block_device *dev)
-{
-	if (dev->mount_point.Buffer == NULL) {
-		dbg("No mount point set for minor %d, will not be mounted.\n", dev->drbd_device->minor);
-		return 0;	/* this is legal */
-	}
-
-/*
-	status = IoCreateSymbolicLink(&dev->mount_point, &dev->path_to_device);
-	if (status != STATUS_SUCCESS) {
-		printk("windrbd_mount: couldn't symlink %S to %S status: %x\n", dev->path_to_device.Buffer, dev->mount_point.Buffer, status);
-		return -1;
-
-	}
-*/
-
-	if (mountmgr_create_point(dev) < 0)
-		return -1;
-
-	dev->is_mounted = true;
-
-	printk(KERN_INFO "Assigned device %S the mount point %S\n", dev->path_to_device.Buffer, dev->mount_point.Buffer);
-
-	return 0;
-}
-
-int windrbd_umount(struct block_device *bdev)
-{
-	OBJECT_ATTRIBUTES attr;
-	HANDLE f;
-	IO_STATUS_BLOCK iostat;
-	NTSTATUS status;
-
-	if (bdev->mount_point.Buffer == NULL) {
-		dbg("windrbd_umount() called without a known mount_point.\n");
-		return 0;
-	}
-// printk("mount point is \"%S\"\n", bdev->mount_point.Buffer);
-	if (!bdev->is_mounted) {
-		printk("windrbd_umount() called while not mounted.\n");
-		return 0;
-	}
-	InitializeObjectAttributes(&attr, &bdev->mount_point, OBJ_KERNEL_HANDLE, NULL, NULL);
-
-		/* If we are in drbd_create_device() failure path, do
-		 * not open the DRBD device, it is already freed.
-		 */
-
-	status = ZwOpenFile(&f, GENERIC_READ, &attr, &iostat, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
-	if (status != STATUS_SUCCESS) {
-		printk("ZwOpenFile failed, status is %x\n", status);
-		return -1;
-	}
-
-	dbg("About to IoDeleteSymbolicLink(%S)\n", bdev->mount_point.Buffer);
-	status = IoDeleteSymbolicLink(&bdev->mount_point);
-	if (status != STATUS_SUCCESS) {
-		printk("Warning: Failed to remove symbolic link (drive letter) %S, status is %x\n", bdev->mount_point.Buffer, status);
-	}
-
-	status = ZwFsControlFile(f, NULL, NULL, NULL, &iostat, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0);
-
-	if (status != STATUS_SUCCESS) {
-		printk("ZwFsControlFile failed, status is %x\n", status);
-		ZwClose(f);
-		return -1;
-	}
-	ZwClose(f);
-
-	bdev->is_mounted = false;
-	return 0;
 }
 
 extern int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct block_device *bdev);
@@ -4097,9 +3812,6 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 		if (windrbd_create_windows_device(device->vdisk->part0) != 0)
 			windrbd_device_error(device, err_str, "Warning: Couldn't create windows device for volume %d\n", device->vnr);
 
-		if (windrbd_mount(device->vdisk->part0) != 0)
-			windrbd_device_error(device, err_str, "Warning: Couldn't mount volume %d, perhaps the drive letter (%S) is in use?\n", device->vnr, device->vdisk->part0->mount_point.Buffer);
-
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
 		}
@@ -4117,9 +3829,6 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 {
 	if (!device->vdisk->part0->is_bootdevice) {
-		if (windrbd_umount(device->vdisk->part0) != 0)
-			windrbd_device_error(device, err_str, "Warning: couldn't umount volume %d\n", device->vnr);
-
 		windrbd_remove_windows_device(device->vdisk->part0);
 
 /* TODO: is this needed? windrbd_remove_windows_device does a rescan already ...  */
@@ -4152,28 +3861,11 @@ static void windrbd_destroy_block_device(struct kref *kref)
 
 	del_timer(&bdev->disk_timeout_timer);
 
-		/* This is legal. Users may create DRBD devices without
-		 * mount point.
-		 */
-	if (bdev->mount_point.Buffer != NULL) {
-		if (bdev->is_mounted)
-			windrbd_umount(bdev);
-
-	}
 	if (bdev->windows_device != NULL) {
 		windrbd_remove_windows_device(bdev);
 		windrbd_destroy_io_workqueue(bdev);
 	}
 
-		/* Do this after removing device, so that we
-		 * we know if it was mounted (non-PnP) or not
-		 * (PnP way via REMOVE_DEVICE request).
-		 */
-
-	if (bdev->mount_point.Buffer != NULL) {
-		kfree(bdev->mount_point.Buffer);
-		bdev->mount_point.Buffer = NULL;
-	}
 	kfree(bdev->path_to_device.Buffer);
 	bdev->path_to_device.Buffer = NULL;
 
