@@ -14,6 +14,11 @@ Ran with 76547832377 (removing device in PnP handler)
 ReactOS: almost 50000 iterations (then some timer locked the system)
 Windows: 23749 iterations
 
+Update: re-run after cleanup of primary/secondary code
+	(create/destroy Windows device)
+Version: windrbd-1.2.0-rc6-76-g81df2298-pnp-cleaned-up17-drbd-9.0-x86_64
+32050 iterations on Windows (unconnected) about 26 hours
+
 ### Disconnect / Connect / Wait-Connect / Sleep 30
 
 When invalidated so it syncs a bit goal is to trigger free_page BSOD

@@ -1979,10 +1979,6 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 
 extern void windrbd_bus_is_ready(void);
 
-/* TODO: remove: */
-int num_pnp_requests = 0;
-int num_pnp_bus_requests = 0;
-
 static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
@@ -2002,7 +1998,6 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 
 	printk(KERN_DEBUG "windrbd_pnp_bus_device device is %p s->MinorFunction is %d\n", device, s->MinorFunction);
 
-	num_pnp_bus_requests++;
 
 	switch (s->MinorFunction) {
 	case IRP_MN_START_DEVICE:
@@ -2028,7 +2023,6 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 
 		windrbd_bus_is_ready();
 
-		num_pnp_bus_requests--;
 		return status;
 
 	case IRP_MN_QUERY_PNP_DEVICE_STATE:
@@ -2114,7 +2108,6 @@ dbg_bus("NOT completing IRP\n");
 		 */
 		drbd_physical_bus_device = NULL;
 
-		num_pnp_bus_requests--;
 		return status; /* must not do IoCompleteRequest */
 			/* This is done (?) in IoCallDriver */
 
@@ -2249,7 +2242,6 @@ dbg("Returned string is %S\n", string);
 			status = IoCallDriver(bus_ext->lower_device, irp);
 			if (status != STATUS_SUCCESS)
 				dbg_bus("Warning: lower device returned status %x\n", status);
-			num_pnp_bus_requests--;
 			return status;
 		}
 #if 0
@@ -2275,7 +2267,6 @@ dbg("Returned string is %S\n", string);
 			status = STATUS_SUCCESS;
 
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
-			num_pnp_bus_requests--;
 			return STATUS_SUCCESS;
 		}
 #endif
@@ -2358,7 +2349,6 @@ exit:
 		status = STATUS_NOT_IMPLEMENTED;
 	}
 
-	num_pnp_bus_requests--;
 	return status;
 }
 
