@@ -1975,13 +1975,14 @@ extern void windrbd_bus_is_ready(void);
 static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+	int minor_function = s->MinorFunction;
 	struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
 	NTSTATUS status = STATUS_NOT_SUPPORTED;
 	KEVENT start_completed_event;
 
-	printk(KERN_DEBUG "windrbd_pnp_bus_device device is %p s->MinorFunction is %d\n", device, s->MinorFunction);
+	printk(KERN_DEBUG "windrbd_pnp_bus_device device is %p s->MinorFunction is 0x%02x\n", device, minor_function);
 
-	switch (s->MinorFunction) {
+	switch (minor_function) {
 	case IRP_MN_START_DEVICE:
 		KeInitializeEvent(&start_completed_event, NotificationEvent, FALSE);
 		IoCopyCurrentIrpStackLocationToNext(irp);
@@ -2150,8 +2151,9 @@ exit:
 	if (!NT_SUCCESS(status)) {
 		IoSkipCurrentIrpStackLocation(irp);
 		status = IoCallDriver(bus_ext->lower_device, irp);
+	/* Keep in mind that irp and s are invalid from here on */
 		if (status != STATUS_SUCCESS)
-			printk("Warning: lower device returned status %x for minor 0x%02x\n", status, s->MinorFunction);
+			printk("Warning: lower device returned status %x for minor function\n", status, minor_function);
 	} else {
 		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
