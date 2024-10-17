@@ -2116,9 +2116,10 @@ dbg_bus("NOT completing IRP\n");
 	case IRP_MN_QUERY_ID:
 	{
 		wchar_t *string;
-		dbg("bus Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
+printk("bus Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
 		string = ExAllocatePoolWithTag(PagedPool, 512*sizeof(wchar_t), DRBD_TAG);
 		if (string == NULL) {
+printk("out of memory !\n");
 			status = STATUS_INSUFFICIENT_RESOURCES;
 		} else {
 			memset(string, 0, 512*sizeof(wchar_t));
@@ -2146,6 +2147,7 @@ dbg("BusQueryCompatibleIDs\n");
 			default:
 				IoSkipCurrentIrpStackLocation(irp);
 				status = IoCallDriver(bus_ext->lower_device, irp);
+printk("status from default lower driver is 0x%08x\n", status);
 				if (status != STATUS_SUCCESS)
 					printk("Warning: lower device returned status %x\n", status);
 				return status;	/* TODO: memory leak */
@@ -2154,23 +2156,29 @@ dbg("BusQueryCompatibleIDs\n");
 */
 			}
 			if (status == STATUS_SUCCESS) {
-dbg("Returned string is %S\n", string);
+printk("Returned string is %S\n", string);
 				irp->IoStatus.Information = (ULONG_PTR) string;
 				irp->IoStatus.Status = STATUS_SUCCESS;
 
-//				IoSkipCurrentIrpStackLocation(irp);
-				IoCopyCurrentIrpStackLocationToNext(irp);
+#if 0
+			/* TODO: copy? really? */
+				IoSkipCurrentIrpStackLocation(irp);
+//				IoCopyCurrentIrpStackLocationToNext(irp);
 
 				status = IoCallDriver(bus_ext->lower_device, irp);
+printk("status is 0x%08x\n", status);
 				if (status != STATUS_SUCCESS)
-					dbg("Warning: lower device returned status %x\n", status);
+					printk("Warning: lower device returned status %x\n", status);
 // lower device completes this?
-//				IoCompleteRequest(irp, IO_NO_INCREMENT);
+#endif
+printk("not forwarding irp, returning success ...\n");
+				IoCompleteRequest(irp, IO_NO_INCREMENT);
 				return STATUS_SUCCESS;
 			} else {
 				ExFreePool(string);
 			}
 		}
+printk("exiting query_id\n");
 		break;
 	}
 #else
