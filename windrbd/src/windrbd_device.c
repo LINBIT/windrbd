@@ -1980,8 +1980,6 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 	NTSTATUS status = STATUS_NOT_SUPPORTED;
 	KEVENT start_completed_event;
 
-	printk(KERN_DEBUG "windrbd_pnp_bus_device device is %p s->MinorFunction is 0x%02x\n", device, minor_function);
-
 	switch (minor_function) {
 	case IRP_MN_START_DEVICE:
 		KeInitializeEvent(&start_completed_event, NotificationEvent, FALSE);
@@ -2027,9 +2025,6 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 			/* This is done (?) in IoCallDriver */
 
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
-
-// printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
-
 		if (s->Parameters.QueryDeviceRelations.Type == BusRelations) {
 			int num_devices;
 			struct _DEVICE_RELATIONS *device_relations;
@@ -2148,7 +2143,10 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 /* TODO: how do we know: ? */
 #define MAX_ID_LEN 512
-/* TODO: kmalloc(GFP_USER, ...) */
+
+/* Do not use kmalloc(GFP_USER, ...) here .. this is passed to user level
+ * who will use something like ExFreePool() and not kfree().
+ */
 		string = ExAllocatePoolWithTag(PagedPool, MAX_ID_LEN*sizeof(wchar_t), DRBD_TAG);
 		if (string == NULL) {
 			status = STATUS_INSUFFICIENT_RESOURCES;
@@ -2166,14 +2164,6 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			_snwprintf(string, MAX_ID_LEN, L"WinDRBD%d", minor);
 			status = STATUS_SUCCESS;
 			break;
-/* TODO:
-SCSI\DiskRed_Hat___________VirtIO0001
-SCSI\DiskRed_Hat___________VirtIO
-SCSI\DiskRed_Hat_
-SCSI\Red_Hat___________VirtIO0
-Red_Hat___________VirtIO0
-GenDisk
-*/
 		case BusQueryHardwareIDs:
 			len = _snwprintf(string, MAX_ID_LEN, L"SCSI\\DiskLinbit____________WinDRBD0001");
 			len += _snwprintf(&string[len+1], MAX_ID_LEN-len-1, L"SCSI\\DiskLinbit____________WinDRBD")+1;
@@ -2203,7 +2193,7 @@ GenDisk
 		if (status == STATUS_SUCCESS)
 			irp->IoStatus.Information = (ULONG_PTR) string;
 		else
-			ExFreePool(string); /* TODO: kfree() */
+			ExFreePool(string);
 
 		break;
 	}
@@ -2214,7 +2204,7 @@ GenDisk
 		{
 			struct _DEVICE_RELATIONS *device_relations;
 			size_t siz = sizeof(*device_relations)+sizeof(device_relations->Objects[0]);
-		/* must be PagedPool else PnP manager complains TODO: kmalloc(GFP_USER) */
+		/* must be PagedPool else PnP manager complains */
 			device_relations = ExAllocatePoolWithTag(PagedPool, siz, DRBD_TAG);
 			if (device_relations == NULL) {
 				status = STATUS_INSUFFICIENT_RESOURCES;
@@ -2258,7 +2248,6 @@ GenDisk
 	{
 		wchar_t *string = NULL;
 
-			/* TODO: kmalloc(GFP_USER, ...) */
 		if ((string = (PWCHAR)ExAllocatePoolWithTag(PagedPool, (MAX_ID_LEN * sizeof(WCHAR)), DRBD_TAG)) == NULL) {
 			status = STATUS_INSUFFICIENT_RESOURCES;
 			break;
@@ -2372,7 +2361,7 @@ GenDisk
 				 * count on the device, so it might still
 				 * exist for a short period.
 				 */
-		bdev->ref = NULL;	/* TODO: bdev->ref really needed? */
+		bdev->ref = NULL;
 		IoDeleteDevice(device);
 		KeSetEvent(&bdev->device_removed_event, 0, FALSE);
 
