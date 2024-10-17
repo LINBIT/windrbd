@@ -2026,81 +2026,6 @@ static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IR
 		return status; /* must not do IoCompleteRequest */
 			/* This is done (?) in IoCallDriver */
 
-#ifdef REACTOS
-/* Not on Windows: IRP_MN_QUERY_ID must be handled by
- * lower device, else verifier BSOD
- */
-/* TODO: re-test this on ReactOS */
-	case IRP_MN_QUERY_ID:
-	{
-		wchar_t *string;
-printk("bus Pnp: Is IRP_MN_QUERY_ID, type is %d\n", s->Parameters.QueryId.IdType);
-		string = ExAllocatePoolWithTag(PagedPool, 512*sizeof(wchar_t), DRBD_TAG);
-		if (string == NULL) {
-printk("out of memory !\n");
-			status = STATUS_INSUFFICIENT_RESOURCES;
-		} else {
-			memset(string, 0, 512*sizeof(wchar_t));
-			switch (s->Parameters.QueryId.IdType) {
-			case BusQueryDeviceID:
-dbg("BusQueryDeviceID\n");
-				_snwprintf(string, 512, L"WinDRBD");
-				status = STATUS_SUCCESS;
-				break;
-			case BusQueryInstanceID:
-dbg("BusQueryInstanceID\n");
-				_snwprintf(string, 512, L"WinDRBD");
-				status = STATUS_SUCCESS;
-				break;
-			case BusQueryHardwareIDs:
-dbg("BusQueryHardwareIDs\n");
-				_snwprintf(string, 512, L"WinDRBD");
-				status = STATUS_SUCCESS;
-				break;
-			case BusQueryCompatibleIDs:
-dbg("BusQueryCompatibleIDs\n");
-				_snwprintf(string, 512, L"WinDRBD");
-				status = STATUS_SUCCESS;
-				break;
-			default:
-				IoSkipCurrentIrpStackLocation(irp);
-				status = IoCallDriver(bus_ext->lower_device, irp);
-printk("status from default lower driver is 0x%08x\n", status);
-				if (status != STATUS_SUCCESS)
-					printk("Warning: lower device returned status %x\n", status);
-				return status;	/* TODO: memory leak */
-/*
-				status = STATUS_NOT_IMPLEMENTED;
-*/
-			}
-			if (status == STATUS_SUCCESS) {
-printk("Returned string is %S\n", string);
-				irp->IoStatus.Information = (ULONG_PTR) string;
-				irp->IoStatus.Status = STATUS_SUCCESS;
-
-#if 0
-			/* TODO: copy? really? */
-				IoSkipCurrentIrpStackLocation(irp);
-//				IoCopyCurrentIrpStackLocationToNext(irp);
-
-				status = IoCallDriver(bus_ext->lower_device, irp);
-printk("status is 0x%08x\n", status);
-				if (status != STATUS_SUCCESS)
-					printk("Warning: lower device returned status %x\n", status);
-// lower device completes this?
-#endif
-printk("not forwarding irp, returning success ...\n");
-				IoCompleteRequest(irp, IO_NO_INCREMENT);
-				return STATUS_SUCCESS;
-			} else {
-				ExFreePool(string);
-			}
-		}
-printk("exiting query_id\n");
-		break;
-	}
-#endif
-
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
 
 // printk("Pnp: Is a IRP_MN_QUERY_DEVICE_RELATIONS: s->Parameters.QueryDeviceRelations.Type is %x (bus relations is %x)\n", s->Parameters.QueryDeviceRelations.Type, BusRelations);
@@ -2153,7 +2078,7 @@ exit:
 		status = IoCallDriver(bus_ext->lower_device, irp);
 	/* Keep in mind that irp and s are invalid from here on */
 		if (status != STATUS_SUCCESS)
-			printk("Warning: lower device returned status %x for minor function\n", status, minor_function);
+			printk("Warning: lower device returned status %x for minor function 0x%02x\n", status, minor_function);
 	} else {
 		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
