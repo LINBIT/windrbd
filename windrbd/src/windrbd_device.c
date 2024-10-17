@@ -2111,8 +2111,11 @@ dbg_bus("NOT completing IRP\n");
 		return status; /* must not do IoCompleteRequest */
 			/* This is done (?) in IoCallDriver */
 
-// #ifdef REACTOS
-#if 1
+#ifdef REACTOS
+/* Not on Windows: IRP_MN_QUERY_ID must be handled by
+ * lower device, else verifier BSOD
+ */
+/* TODO: re-test this on ReactOS */
 	case IRP_MN_QUERY_ID:
 	{
 		wchar_t *string;
