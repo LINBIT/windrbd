@@ -2189,12 +2189,12 @@ printk("windrbd_pnp_device device is %p s->MinorFunction is %d\n", device, s->Mi
 			status = STATUS_SUCCESS;
 			break;
 		default: /* -1, ... */
-			status = STATUS_NOT_IMPLEMENTED;
+			status = irp->IoStatus.Status;
+			ExFreePoolWithTag(string, DRBD_TAG);
+			goto out_dont_change_status;
 		}
 		if (status == STATUS_SUCCESS)
 			irp->IoStatus.Information = (ULONG_PTR) string;
-		else
-			ExFreePoolWithTag(string, DRBD_TAG);
 
 		break;
 	}
@@ -2241,7 +2241,8 @@ printk("windrbd_pnp_device device is %p s->MinorFunction is %d\n", device, s->Mi
 			break;
 		}
 		default:
-			status = STATUS_NOT_SUPPORTED;
+			status = irp->IoStatus.Status;
+
 			goto out_dont_change_status;
 		}
 		break;
@@ -2269,8 +2270,11 @@ printk("windrbd_pnp_device device is %p s->MinorFunction is %d\n", device, s->Mi
 			break;
 
 		default:
+			status = irp->IoStatus.Status;
+
+			ExFreePoolWithTag(string, DRBD_TAG);
 			irp->IoStatus.Information = 0;
-			status = STATUS_NOT_SUPPORTED;
+			goto out_dont_change_status;
 		}
 		break;
 	}
@@ -2371,7 +2375,8 @@ printk("windrbd_pnp_device device is %p s->MinorFunction is %d\n", device, s->Mi
 		break;
 
 	default:
-		status = STATUS_NOT_SUPPORTED;	/* not STATUS_NOT_IMPLEMENTED! */
+		status = irp->IoStatus.Status;
+		goto out_dont_change_status;
 	}
 out:
 	irp->IoStatus.Status = status;
