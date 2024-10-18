@@ -2072,7 +2072,7 @@ exit:
 		IoSkipCurrentIrpStackLocation(irp);
 		status = IoCallDriver(bus_ext->lower_device, irp);
 	/* Keep in mind that irp and s are invalid from here on */
-		if (status != STATUS_SUCCESS)
+		if (status != STATUS_SUCCESS && status != STATUS_NOT_SUPPORTED)
 			printk("Warning: lower device returned status %x for minor function 0x%02x\n", status, minor_function);
 	} else {
 		irp->IoStatus.Status = status;
@@ -2123,8 +2123,6 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		status = STATUS_INVALID_DEVICE_REQUEST;
 		goto out;
 	}
-
-printk("windrbd_pnp_device device is %p s->MinorFunction is %d\n", device, s->MinorFunction);
 
 	switch (s->MinorFunction) {
 	case IRP_MN_START_DEVICE:
