@@ -2124,6 +2124,8 @@ static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 		goto out;
 	}
 
+printk("windrbd_pnp_device device is %p s->MinorFunction is %d\n", device, s->MinorFunction);
+
 	switch (s->MinorFunction) {
 	case IRP_MN_START_DEVICE:
 		KeSetEvent(&bdev->device_started_event, 0, FALSE);
