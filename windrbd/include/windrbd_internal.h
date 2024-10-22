@@ -24,6 +24,7 @@
 
 #include <linux/types.h>
 #include <linux/blk_types.h>
+#include <windrbd_config.h>
 #include <windrbd/windrbd_ioctl.h>
 #include <windrbd.h>
 

@@ -1761,11 +1761,7 @@ static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_devic
 		 * is already offset, not using MmGetMdlByteOffset.
 		 */
 
-#ifdef CONFIG_HAVE_NO_EXECUTE
-	buffer = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
-#else
-	buffer = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority);
-#endif
+	buffer = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | WinDRBDMdlMappingNoExecute);
 
 	if (buffer == NULL) {
 		printk("I/O buffer from MmGetSystemAddressForMdlSafe() is NULL\n");

@@ -27,9 +27,13 @@
 	/* TODO: this should move somewhere else: */
 #define NonPagedPoolNx 512
 #define WinDRBDNonPagedPool NonPagedPoolNx
+#define MdlMappingNoExecute     0x40000000  // Create the mapping as noexecute
+#define WinDRBDMdlMappingNoExecute MdlMappingNoExecute
 #else
 	/* ReactOS, Windows < Windows 8 (for example Server 2003) */
 #define WinDRBDNonPagedPool NonPagedPool
+#define WinDRBDMdlMappingNoExecute 0
+
 #endif
 
 #endif
