@@ -12,7 +12,7 @@ struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align
 	cache = kmalloc(sizeof(*cache), GFP_KERNEL);
 	if (!cache)
 		return NULL;
-	ExInitializeNPagedLookasideList(&cache->l, NULL, NULL, 0, size, DRBD_TAG, 0);
+//	ExInitializeNPagedLookasideList(&cache->l, NULL, NULL, 0, size, DRBD_TAG, 0);
 	cache->element_size = size;
 
 	return cache;
@@ -20,7 +20,7 @@ struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align
 
 void kmem_cache_destroy(struct kmem_cache *cache)
 {
-	ExDeleteNPagedLookasideList(&cache->l);
+//	ExDeleteNPagedLookasideList(&cache->l);
 	kfree(cache);
 }
 
@@ -33,16 +33,16 @@ unsigned int kmem_cache_size(struct kmem_cache *s)
 
 void *kmem_cache_alloc(struct kmem_cache * cache, int flag)
 {
-	void *p = ExAllocateFromNPagedLookasideList(&cache->l);
+	void *p = kmalloc(cache->element_size, GFP_KERNEL);
 	if (p != NULL)
-		RtlZeroMemory(p, cache->element_size);
+		RtlZeroMemory(p, cache->element_size); /* TODO: memset? */
 
 	return p;
 }
 
 void kmem_cache_free(struct kmem_cache * cache, void *obj)
 {
-	ExFreeToNPagedLookasideList(&cache->l, obj);
+	kfree(obj);
 }
 
 #endif
