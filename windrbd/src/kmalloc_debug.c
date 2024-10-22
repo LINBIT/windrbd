@@ -58,7 +58,7 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 
 	retries = 0;
 	while (1) {
-		mem = ExAllocatePoolWithTag(NonPagedPool, full_size, DRBD_TAG);
+		mem = ExAllocatePoolWithTag(WinDRBDNonPagedPool, full_size, DRBD_TAG);
 
 		if (mem != NULL) {
 			if (strcmp(func, "SendTo") != 0 && retries > 0 )

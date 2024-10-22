@@ -1271,7 +1271,7 @@ static void double_free_test(int argc, const char ** argv)
 		break;
 
 	case EXALLOCATEPOOL:	/* BAD_POOL_HEADER */
-		p=ExAllocatePoolWithTag(NonPagedPool, 4096, DRBD_TAG);
+		p=ExAllocatePoolWithTag(WinDRBDNonPagedPool, 4096, DRBD_TAG);
 		if (p==NULL) {
 			printk("Oops. Out of memory.\n");
 			return;

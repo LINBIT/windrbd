@@ -126,6 +126,11 @@ static NTSTATUS create_device(const wchar_t *name, const UNICODE_STRING *sddl_pe
 
 	return STATUS_SUCCESS;
 }
+void ExInitializeDriverRuntime(
+  ULONG RuntimeFlags
+);
+
+#define DrvRtPoolNxOptIn 1
 
 NTSTATUS
 DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING registry_path)
@@ -137,9 +142,9 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING registry_path)
 		 * see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/single-binary-opt-in-pool-nx-optin
 		 */
 
-#ifdef CONFIG_HAVE_NO_EXECUTE
-	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
-#endif
+// #ifdef CONFIG_HAVE_NO_EXECUTE
+//	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
+// #endif
 
 		/* Needed for event log */
 	mvolDriverObject = DriverObject;

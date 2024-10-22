@@ -457,7 +457,7 @@ int atomic_read(const atomic_t *v)
 void *kmalloc(int size, int flag)
 {
 		/* and yes it is DBRD .. is little endian. */
-	return ExAllocatePoolUninitialized(NonPagedPool, size, 'DBRD');
+	return ExAllocatePoolUninitialized(WinDRBDNonPagedPool, size, 'DBRD');
 }
 
 void *kcalloc(int size, int count, int flag)
