@@ -7,8 +7,8 @@
 int mempool_init_page_pool(mempool_t *pool, int min_nr, int order)
 {
 	pool->type = MEMPOOL_PAGE;
-	ExInitializeNPagedLookasideList(&pool->pageLS, NULL, NULL, 0, sizeof(struct page), DRBD_TAG, 0);
-        ExInitializeNPagedLookasideList(&pool->page_addrLS, NULL, NULL, 0, PAGE_SIZE, DRBD_TAG, 0);
+//	ExInitializeNPagedLookasideList(&pool->pageLS, NULL, NULL, 0, sizeof(struct page), DRBD_TAG, 0);
+//        ExInitializeNPagedLookasideList(&pool->page_addrLS, NULL, NULL, 0, PAGE_SIZE, DRBD_TAG, 0);
 
 	return 0;
 }
@@ -56,8 +56,8 @@ mempool_t *mempool_create_slab_pool(int min_nr, struct kmem_cache *kc)
 void mempool_destroy(mempool_t *pool)
 {
 	if (pool->type == MEMPOOL_PAGE) {
-		ExDeleteNPagedLookasideList(&pool->pageLS);
-		ExDeleteNPagedLookasideList(&pool->page_addrLS);
+//		ExDeleteNPagedLookasideList(&pool->pageLS);
+//		ExDeleteNPagedLookasideList(&pool->page_addrLS);
 	}
 	if (pool->is_kmalloced == MEMPOOL_KMALLOCED_MAGIC)
 		kfree(pool);
