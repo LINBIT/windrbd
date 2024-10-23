@@ -317,15 +317,17 @@ clean:
 	rm -rf drbd*-tmp
 	make -C generate-cat-file clean
 	make -C drbd-utils clean
-	rm drbd-utils-*.log
-	rm generate-cat-file-*.log
+	rm -f drbd-utils-*.log
+	rm -f generate-cat-file-*.log
+	rm -f inno-setup.log
 
 ifdef REACTOS
 EXTRA_ISCC_DEFINES=/DReactos=1
 endif
 
 package: all drbd-utils
-	( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=..\\drbd-utils /DWindrbdDriverDirectory=$(DRIVER_DIR) /DArch=$(ARCH) $(EXTRA_ISCC_DEFINES))
+	$(call run,( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=..\\drbd-utils /DWindrbdDriverDirectory=$(DRIVER_DIR) /DArch=$(ARCH) $(EXTRA_ISCC_DEFINES)) > inno-setup.log 2>&1 || ( cat inno-setup.log && false ),SETUP,'windrbd (see inno-setup.log for logs)')
+	tail -n 2 inno-setup.log
 
 docker:
 	$(DOCKER) build --pull=true --no-cache=true -t $(DOCKER_IMAGE) docker-root
