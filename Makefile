@@ -303,9 +303,9 @@ windrbd.cat: windrbd.sys
 .PHONY: drbd-utils
 
 drbd-utils:
-	$(call run,cd drbd-utils && ./autogen.sh > drbd-utils-autogen.log 2>&1 || ( cat drbd-utils-autogen.log && false ),AUTOGEN,drbd-utils)
-	$(call run,cd drbd-utils && ./configure --without-83support --without-84support --without-drbdmon --with-windrbd --without-manual --prefix=/cygdrive/c/windrbd/usr --localstatedir=/cygdrive/c/windrbd/var --sysconfdir=/cygdrive/c/windrbd/etc --host=$(ARCH)-pc-cygwin > drbd-utils-configure.log 2>&1 || ( cat drbd-utils-configure.log && false ),CONF,drbd-utils)
-	$(call run,make -C drbd-utils -j $(NUM_JOBS) > drbd-utils-make.log 2>&1 || ( cat drbd-utils-make.log && false ),MAKE,drbd-utils)
+	$(call run,cd drbd-utils && ./autogen.sh > ../drbd-utils-autogen.log 2>&1 || ( cat ../drbd-utils-autogen.log && false ),AUTOGEN,'drbd-utils (see drbd-utils-autogen.log for logs)')
+	$(call run,cd drbd-utils && ./configure --without-83support --without-84support --without-drbdmon --with-windrbd --without-manual --prefix=/cygdrive/c/windrbd/usr --localstatedir=/cygdrive/c/windrbd/var --sysconfdir=/cygdrive/c/windrbd/etc --host=$(ARCH)-pc-cygwin > ../drbd-utils-configure.log 2>&1 || ( cat ../drbd-utils-configure.log && false ),CONF,'drbd-utils (see drbd-utils-configure.log for logs)')
+	$(call run,make -C drbd-utils -j $(NUM_JOBS) > drbd-utils-make.log 2>&1 || ( cat drbd-utils-make.log && false ),MAKE,'drbd-utils (see drbd-utils-make.log for logs)')
 
 clean:
 	rm -f $(OBJS) $(COFFRES) 
@@ -317,6 +317,7 @@ clean:
 	rm -rf drbd*-tmp
 	make -C generate-cat-file clean
 	make -C drbd-utils clean
+	rm drbd-utils-*.log
 
 ifdef REACTOS
 EXTRA_ISCC_DEFINES=/DReactos=1
