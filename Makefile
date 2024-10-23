@@ -292,7 +292,7 @@ windrbd.cat: windrbd.sys
 # build the cat file generator. It is not yet in any Linux distros ...
 # if this fails then you probably forgot to clone with --recursive.
 # You may want to do something like git submodule update or so..
-	$(call run,make -C generate-cat-file CC=$(HOSTCC),MAKE,generate-cat-file)
+	$(call run,make -C generate-cat-file CC=$(HOSTCC) > generate-cat-file-make.log 2>&1 || ( cat generate-cat-file-make.log && false ),MAKE,'generate-cat-file (see generate-cat-file-make.log for build logs)')
 	$(call run,generate-cat-file/gencat.sh -o windrbd.cat-unsigned -h windrbd windrbd.inf windrbd.sys,GENCAT,windrbd.cat-unsigned)
 
 # TODO: This needs a 'modern' osslsigncode (that from Ubuntu 18.04 and also
@@ -318,6 +318,7 @@ clean:
 	make -C generate-cat-file clean
 	make -C drbd-utils clean
 	rm drbd-utils-*.log
+	rm generate-cat-file-*.log
 
 ifdef REACTOS
 EXTRA_ISCC_DEFINES=/DReactos=1
