@@ -303,9 +303,9 @@ windrbd.cat: windrbd.sys
 .PHONY: drbd-utils
 
 drbd-utils:
-	cd drbd-utils && ./autogen.sh
-	cd drbd-utils && ./configure --without-83support --without-84support --without-drbdmon --with-windrbd --without-manual --prefix=/cygdrive/c/windrbd/usr --localstatedir=/cygdrive/c/windrbd/var --sysconfdir=/cygdrive/c/windrbd/etc --host=$(ARCH)-pc-cygwin
-	make -C drbd-utils -j $(NUM_JOBS)
+	$(call run,cd drbd-utils && ./autogen.sh > drbd-utils-build.log 2>&1,AUTOGEN,drbd-utils)
+	$(call run,cd drbd-utils && ./configure --without-83support --without-84support --without-drbdmon --with-windrbd --without-manual --prefix=/cygdrive/c/windrbd/usr --localstatedir=/cygdrive/c/windrbd/var --sysconfdir=/cygdrive/c/windrbd/etc --host=$(ARCH)-pc-cygwin >> drbd-utils-build.log 2>&1,CONF,drbd-utils)
+	$(call run,make -C drbd-utils -j $(NUM_JOBS) >> drbd-utils-build.log 2>&1,MAKE,drbd-utils)
 
 clean:
 	rm -f $(OBJS) $(COFFRES) 
