@@ -45,6 +45,7 @@ help:
 	@echo "    DOCKER_IMAGE=img    Use this docker image for building or generating"
 	@echo "    TARGET_IPS=<ips>    Install onto those Windows machines (install target)"
 	@echo "    V=1                 If set display command line, else pretty print (default)"
+	@echo "    DRIVER_DIR=dir      Take windrbd.sys/cat/inf from this directory"
 	@echo
 	@echo "Examples:"
 	@echo
@@ -99,7 +100,7 @@ DOCKER_IMAGE ?= windrbd-devenv
 # DOCKER_RUN=docker run -u $(MY_UID):$(MY_GID) --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 # so run docker as root ...
 # Add environment variables to pass to docker here:
-DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e REACTOS=$(REACTOS) -e PAGE_KREF_DEBUG=$(PAGE_KREF_DEBUG) -e KREF_DEBUG=$(KREF_DEBUG) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) $(DOCKER_IMAGE)
+DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e REACTOS=$(REACTOS) -e PAGE_KREF_DEBUG=$(PAGE_KREF_DEBUG) -e KREF_DEBUG=$(KREF_DEBUG) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) -e DRIVER_DIR=$(DRIVER_DIR) $(DOCKER_IMAGE)
 
 # Change ownership of all files created by make process to
 # the host's UID/GID.
