@@ -107,7 +107,7 @@ DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$
 ifeq ($(DOCKER),docker)
 FIXUP_OWNERSHIP=bash -c 'f=`find /windrbd -user root` ; if [ x"$$f" != x ] ; then chown $(MY_UID):$(MY_GID) $$f ; fi'
 else
-FIXUP_OWNERSHIP=echo "You don\'t use docker (congratulations!), no need to fixup ownership"
+FIXUP_OWNERSHIP=echo "You don't use docker (congratulations!), no need to fixup ownership"
 endif
 
 export VERSION:=$(VERSION)
@@ -130,15 +130,15 @@ pull-docker:
 # so one can type make with-docker :)
 with-docker:
 	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT),DOCKER,$(DOCKER_IMAGE))
-	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,"(fixup ownership)")
 
 all-in-docker:
 	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all,DOCKER,$(DOCKER_IMAGE))
-	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,"(fixup ownership)")
 
 package-in-docker:
 	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package,DOCKER,$(DOCKER_IMAGE))
-	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,"(fixup ownership)")
 
 ifeq ($(ARCH), i686)
 DRIVER_ENTRY=_DriverEntry
