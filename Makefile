@@ -104,7 +104,11 @@ DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$
 
 # Change ownership of all files created by make process to
 # the host's UID/GID.
+ifeq ($(DOCKER),docker)
 FIXUP_OWNERSHIP=bash -c 'f=`find /windrbd -user root` ; if [ x"$$f" != x ] ; then chown $(MY_UID):$(MY_GID) $$f ; fi'
+else
+FIXUP_OWNERSHIP=echo "You don\'t use docker (congratulations!), no need to fixup ownership"
+endif
 
 export VERSION:=$(VERSION)
 
