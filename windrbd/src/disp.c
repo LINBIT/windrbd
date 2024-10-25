@@ -23,7 +23,7 @@
 #include "windrbd_config.h"
 
 /* TODO: override for testing only!! */
-// #define CONFIG_HAVE_IO_CREATE_DEVICE_SECURE 1
+#define CONFIG_HAVE_IO_CREATE_DEVICE_SECURE 1
 #include <linux/types.h>
 
 #include "windrbd_internal.h"
