@@ -229,7 +229,8 @@ OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) 
 
 COFFRES=./windrbd/windrbd-event-log.coffres $(DRBDTMP)/drbd/resource.coffres
 
-LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio wdmsec.lib -static
+# LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio wdmsec.lib -static
+LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
 
 SUPPRESSED_WARNINGS=-Wno-array-bounds -Wno-address-of-packed-member
 CFLAGS_FOR_DRIVERS=-fPIC -fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -mno-stack-arg-probe -fno-strict-aliasing -fno-set-stack-executable
