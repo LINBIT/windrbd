@@ -1553,7 +1553,9 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	return_buffer_index = 0;
 
 	timeout = socket->sk->sk_rcvtimeo; 
+printk("1\n");
 	while (1) {
+printk("2\n");
 		remaining_time = wait_event_interruptible_timeout(
 			socket->data_available, 
 			socket->write_index != socket->read_index || 
@@ -1562,6 +1564,8 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			socket->sk->sk_state != TCP_ESTABLISHED,
 			timeout);
 
+
+printk("3\n");
 /*
 		if (remaining_time == -EINTR)
 			return -EINTR;
@@ -1570,11 +1574,13 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			return -EAGAIN;
 		timeout = remaining_time;
 
+printk("4\n");
 		if (socket->error_status != 0)
 			return socket->error_status;
 		if (socket->sk->sk_state != TCP_ESTABLISHED)
 			return 0;
 
+printk("5\n");
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 		if (socket->read_index < socket->write_index)
 			bytes_to_copy = socket->write_index - socket->read_index;
@@ -1589,6 +1595,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			}
 		}
 		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
+printk("6\n");
 
 		if (bytes_to_copy > len-return_buffer_index) {
 			bytes_to_copy = len-return_buffer_index;
@@ -1597,10 +1604,12 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		if (bytes_to_copy <= 0)
 			continue;
 
+printk("7\n");
 		memcpy(&((char*)vec[0].iov_base)[return_buffer_index], 
 			&socket->receive_buffer[socket->read_index],
 			bytes_to_copy);
 
+printk("8\n");
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 
 		return_buffer_index += bytes_to_copy;
@@ -1613,9 +1622,11 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			socket->receive_buffer_full = false;
 
 		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
+printk("9\n");
 
 		wake_up(&socket->buffer_available);
 
+printk("a\n");
 		if (flags & MSG_WAITALL) {
 			if (return_buffer_index == len) {
 				dump_packet(vec[0].iov_base, return_buffer_index);
@@ -1625,7 +1636,9 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			dump_packet(vec[0].iov_base, return_buffer_index);
 			return return_buffer_index;
 		}
+printk("b\n");
 	}
+printk("c\n");
 	return -EINVAL;
 }
 
@@ -1637,16 +1650,20 @@ static int socket_receive_thread(void *p)
 	int err;
 	KIRQL flags;
 
+printk("1\n");
 // printk("Receiver thread started for socket %p.\n", s);
 	while (1) {
+printk("2\n");
 		wait_event(s->buffer_available, 
 			!s->receive_thread_should_run ||
 			(s->sk->sk_state == TCP_ESTABLISHED &&
 			(s->write_index != s->read_index ||
 			(s->write_index == s->read_index && !s->receive_buffer_full)))); 
 
+printk("3\n");
 		if (!s->receive_thread_should_run)
 			break;
+printk("4\n");
 
 		spin_lock_irqsave(&s->receive_lock, flags);
 		if (s->read_index == s->write_index && !s->receive_buffer_full) {
@@ -1658,39 +1675,49 @@ static int socket_receive_thread(void *p)
 			else
 				iov.iov_len = s->read_index-s->write_index;
 		}
+printk("5\n");
 		iov.iov_base = &s->receive_buffer[s->write_index];
 		spin_unlock_irqrestore(&s->receive_lock, flags);
 
+printk("6\n");
 		if (iov.iov_len == 0) {
 			printk("Warning: iov.iov_len is 0 in WinDRBD receiver thread .. should not happen.\n");
 // printk("3a read_index is %d write_index is %d\n", s->read_index, s->write_index);
 			continue;	/* wait_event should block */
 		}
+printk("7\n");
 		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
 
 		if (err == -EAGAIN || err == -EINTR)
 			continue;
 
+printk("8\n");
 		if (err <= 0)
 			break;
 
+printk("9\n");
 		spin_lock_irqsave(&s->receive_lock, flags);
 
+printk("a\n");
 		s->write_index+=err;
 		if (s->write_index == s->receive_buffer_size)
 			s->write_index = 0;
 
 		if (s->write_index == s->read_index)
 			s->receive_buffer_full = true;
+printk("b\n");
 
 		spin_unlock_irqrestore(&s->receive_lock, flags);
 
+printk("c\n");
 		wake_up(&s->data_available);
 	}
 
+printk("d\n");
 	s->sk->sk_state = TCP_NO_CONNECTION;
 	wake_up(&s->data_available);
 	kref_put(&s->kref, sock_really_free);
+printk("e\n");
 //	complete(&s->receiver_thread_completion);
 // printk("terminating socket_receive_thread %p (socket is %p)\n", current, s);
 	return 0;
