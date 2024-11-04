@@ -479,11 +479,11 @@ int _printk(const char *func, const char *fmt, ...)
 	hr_timer = KeQueryPerformanceCounter(&hr_frequency);
 
 	pos = strlen(buffer);
-	n = snprintf(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (no hr timer)|%p(%s) #%llu %s ",
+	n = snprintf(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (%Ld/%Ld)|%p(%s) #%Ld %s ",
 	    level,
 	    time_fields.Day, time_fields.Month, time_fields.Year,
 	    time_fields.Hour, time_fields.Minute, time_fields.Second, time_fields.Milliseconds,
-//	    hr_timer.QuadPart, hr_frequency.QuadPart,
+	    hr_timer.QuadPart, hr_frequency.QuadPart,
 	    current,
             current->comm,
             serial_number,
