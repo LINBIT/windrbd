@@ -94,7 +94,7 @@ void print_threads_in_rcu(void)
 	 * reference in thread_object_p.
 	 */
 
-NTSTATUS windrbd_create_windows_thread(void (*threadfn)(void*), void *data, void **thread_object_p)
+NTSTATUS windrbd_create_windows_thread(void __attribute__((stdcall)) (*threadfn)(void*), void *data, void **thread_object_p)
 {
 	HANDLE h;
 	NTSTATUS status;
@@ -208,7 +208,7 @@ void windrbd_reap_all_threads(void)
 	 * do so.
 	 */
 
-static void windrbd_thread_setup(void *targ)
+static void __attribute__((stdcall)) windrbd_thread_setup(void *targ)
 {
 	struct task_struct *t = targ;
 	int ret;

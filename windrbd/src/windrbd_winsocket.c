@@ -149,7 +149,7 @@ static void sock_free_linux_socket(struct socket *socket)
 // printk("2\n");
 }
 
-static NTSTATUS completion_fire_event(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *irp, void *event_p)
+static NTSTATUS __attribute__((stdcall)) completion_fire_event(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *irp, void *event_p)
 {
 	struct _KEVENT *event = event_p;
 	/* Must not printk in here, will loop forever. Hence also no
@@ -161,7 +161,7 @@ static NTSTATUS completion_fire_event(struct _DEVICE_OBJECT *DeviceObject,struct
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-static NTSTATUS completion_fire_linux_event(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *irp, void *sock_p)
+static NTSTATUS __attribute__((stdcall)) completion_fire_linux_event(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *irp, void *sock_p)
 {
 	struct socket *s = sock_p;
 	/* Must not printk in here, will loop forever. Hence also no
@@ -174,7 +174,7 @@ static NTSTATUS completion_fire_linux_event(struct _DEVICE_OBJECT *DeviceObject,
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-static NTSTATUS completion_free_irp(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *Irp, void *event)
+static NTSTATUS __attribute__((stdcall)) completion_free_irp(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *Irp, void *event)
 {
 	IoFreeIrp(Irp);
 
@@ -376,7 +376,7 @@ static void have_sent(struct socket *socket, size_t length)
 	KeSetEvent(&socket->data_sent, IO_NO_INCREMENT, FALSE);
 }
 
-static NTSTATUS SendPageCompletionRoutine(struct _DEVICE_OBJECT	*DeviceObject, struct _IRP *Irp,void *completion_p)
+static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVICE_OBJECT	*DeviceObject, struct _IRP *Irp,void *completion_p)
 {
 	struct send_page_completion_info *completion = completion_p;
 	int may_printk = completion->page != NULL; /* called from SendPage */
@@ -440,7 +440,7 @@ static NTSTATUS SendPageCompletionRoutine(struct _DEVICE_OBJECT	*DeviceObject, s
 
 int duplicate_completions;
 
-static NTSTATUS send_page_completion_onlyonce(struct _DEVICE_OBJECT *DeviceObject, struct _IRP	*Irp, void *completion_p)
+static NTSTATUS __attribute__((stdcall)) send_page_completion_onlyonce(struct _DEVICE_OBJECT *DeviceObject, struct _IRP	*Irp, void *completion_p)
 {
 	struct send_page_completion_info *completion = completion_p;
 	int err;
@@ -2205,7 +2205,7 @@ static void *init_wsk_thread;
  * ignore the return value.
  */
 
-static void windrbd_init_wsk_thread(void *unused)
+static void __attribute__((stdcall)) windrbd_init_wsk_thread(void *unused)
 {
 	NTSTATUS status;
 

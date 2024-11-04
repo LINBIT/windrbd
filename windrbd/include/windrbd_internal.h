@@ -28,7 +28,7 @@
 #include <windrbd/windrbd_ioctl.h>
 #include <windrbd.h>
 
-extern NTSTATUS mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject);
+extern NTSTATUS __attribute__((stdcall)) mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject);
 
 typedef struct _ROOT_EXTENSION
 {
@@ -150,7 +150,7 @@ int my_atoi(const char *c);
 
 /* Thread functions */
 
-NTSTATUS windrbd_create_windows_thread(void (*threadfn)(void*), void *data, void **thread_object_p);
+NTSTATUS windrbd_create_windows_thread(void __attribute__((stdcall)) (*threadfn)(void*), void *data, void **thread_object_p);
 NTSTATUS windrbd_cleanup_windows_thread(void *thread_object);
 
 void init_windrbd_threads(void);

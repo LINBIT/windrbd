@@ -51,7 +51,7 @@
 
 #define START_BOOT_DEVICE 1
 
-void mvolUnload(IN PDRIVER_OBJECT DriverObject);
+void __attribute__((stdcall)) mvolUnload(IN PDRIVER_OBJECT DriverObject);
 
 void idr_shutdown(void);
 void shutdown_registry(void);
@@ -300,7 +300,7 @@ int windrbd_rescan_bus(void)
 	return -1;
 }
 
-void mvolUnload(IN PDRIVER_OBJECT DriverObject)
+void __attribute__((stdcall)) mvolUnload(IN PDRIVER_OBJECT DriverObject)
 {
 	UNREFERENCED_PARAMETER(DriverObject);
 	UNICODE_STRING linkUnicode, userLinkUnicode;
@@ -367,7 +367,7 @@ void mvolUnload(IN PDRIVER_OBJECT DriverObject)
 }
 
 NTSTATUS
-mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject)
+__attribute__((stdcall)) mvolAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject)
 {
 	UNICODE_STRING drbd_bus, drbd_bus_dos;
 	NTSTATUS status;

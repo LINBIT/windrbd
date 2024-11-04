@@ -1889,7 +1889,7 @@ void windrbd_set_disk_timeout(struct block_device *bdev, unsigned long long time
 
 static void bio_endio_impl(struct bio *bio, bool was_accounted);
 
-NTSTATUS DrbdIoCompletion(
+NTSTATUS __attribute__((stdcall)) DrbdIoCompletion(
   _In_     PDEVICE_OBJECT DeviceObject,
   _In_     PIRP           Irp,
   _In_opt_ PVOID          Context

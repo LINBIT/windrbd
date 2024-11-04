@@ -104,7 +104,7 @@ static int about_to_unload_driver;	/* Driver will soon unload so
  * whereever a kmalloc() fails.
  */
 
-static NTSTATUS windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 #ifdef DEBUG
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
@@ -295,7 +295,7 @@ void windrbd_resume_application_io(struct block_device *bdev, const char *messag
 	spin_unlock_irqrestore(&bdev->suspend_lock, flags);
 }
 
-static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
@@ -640,7 +640,7 @@ static NTSTATUS windrbd_root_device_control(struct _DEVICE_OBJECT *device, struc
 	return status;
 }
 
-static NTSTATUS windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == drbd_bus_device) {
 		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
@@ -1144,7 +1144,7 @@ out:
         return status;
 }
 
-static NTSTATUS windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
 		irp->IoStatus.Status = STATUS_SUCCESS;
@@ -1225,7 +1225,7 @@ exit:
 }
 
 
-static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
 		struct _IO_STACK_LOCATION *s2 = IoGetCurrentIrpStackLocation(irp);
@@ -1291,7 +1291,7 @@ static NTSTATUS windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	return status;
 }
 
-static NTSTATUS windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
 		irp->IoStatus.Status = STATUS_SUCCESS;
@@ -1837,7 +1837,7 @@ exit:
         return status;
 }
 
-static NTSTATUS windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_shutdown(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	printk("Got SHUTDOWN request, assuming system is about to shut down\n");
 	shutting_down = 1;
@@ -1893,7 +1893,7 @@ static void windrbd_bio_flush_finished(struct bio * bio)
 	bio_put(bio);
 }
 
-static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
 		dbg(KERN_WARNING "Flush on root device not supported.\n");
@@ -1968,7 +1968,7 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 
 extern void windrbd_bus_is_ready(void);
 
-static NTSTATUS windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_pnp_bus_device(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	int minor_function = s->MinorFunction;
@@ -2077,7 +2077,7 @@ exit:
 	return status;
 }
 
-static NTSTATUS windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	NTSTATUS status;
 
@@ -2380,7 +2380,7 @@ out_dont_change_status:
 	return status;
 }
 
-static NTSTATUS windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status;
@@ -2447,7 +2447,7 @@ static NTSTATUS windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
  * Must forward requests to next lower driver.
  */
 
-static NTSTATUS windrbd_sysctl(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_sysctl(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	NTSTATUS status = STATUS_SUCCESS;
 
@@ -2761,7 +2761,7 @@ static void set_partition_guid(struct block_device *bdev, const char *guid)
 }
 #endif
 
-static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) 
+static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) 
 {
 	NTSTATUS status;
 	struct _SCSI_REQUEST_BLOCK *srb;
@@ -3176,7 +3176,7 @@ out:
 	 * thread object.
 	 */
 
-static NTSTATUS windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_dispatch(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct task_struct *t;
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
