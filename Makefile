@@ -141,7 +141,7 @@ package-in-docker:
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,"(fixup ownership)")
 
 ifeq ($(ARCH), i686)
-DRIVER_ENTRY=_DriverEntry
+DRIVER_ENTRY=_DriverEntry@8
 endif
 
 ifeq ($(ARCH), x86_64)
