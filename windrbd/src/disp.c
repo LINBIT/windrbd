@@ -134,8 +134,7 @@ void ExInitializeDriverRuntime(
 
 #define DrvRtPoolNxOptIn 1
 
-NTSTATUS
-DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING registry_path)
+NTSTATUS __attribute__((stdcall)) DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING registry_path)
 {
 	NTSTATUS status;
 	int ret;

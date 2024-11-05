@@ -1772,7 +1772,7 @@ static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_devic
 	return windrbd_make_drbd_requests(irp, dev, buffer, total_size, sector, rw);
 }
 
-static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+static NTSTATUS __attribute__((stdcall)) windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
 		dbg(KERN_WARNING "I/O on root device not supported.\n");
@@ -2434,9 +2434,9 @@ static NTSTATUS __attribute__((stdcall)) windrbd_power(struct _DEVICE_OBJECT *de
 			}
 		}
 
-		irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+		irp->IoStatus.Status = STATUS_SUCCESS;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
-		status = STATUS_NOT_SUPPORTED;
+		status = STATUS_SUCCESS;
 	}
 
 // printk("status is %x\n", status);

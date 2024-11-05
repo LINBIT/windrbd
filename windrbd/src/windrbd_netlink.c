@@ -181,7 +181,7 @@ static void *reaper_thread_object;
 	 * and should free the memory there instead.
 	 */
 
-static void reply_reaper(void *unused)
+static void __attribute__((stdcall)) reply_reaper(void *unused)
 {
 	LARGE_INTEGER interval;
 	struct list_head *rh, *rhn;
