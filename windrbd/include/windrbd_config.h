@@ -2,12 +2,11 @@
 #define _WINDRBD_CONFIG_H
 
 /* Windows (not ReactOS) target, with mingw */
-// #ifndef REACTOS
+/* Update: Now we wrote our NETIO.SYS driver for ReactOS and Windows Server
+ * 2003. So always enable network:: */
 #define CONFIG_HAVE_NETIO_DRIVER 1
-// #endif
 
-	/* TODO: also if not Server 2003: */
-#ifndef REACTOS
+#ifdef CONFIG_64BIT
 #define CONFIG_HAVE_KERNEL_STACKSWAP_ENABLE 1
 #define CONFIG_HAVE_NO_EXECUTE 1
 #endif
