@@ -97,7 +97,7 @@ Name: "{code:WinDRBDRootDir}\var\lock"
 ; once on a ReactOS host inside cygwin. Since they usually
 ; don't change that often I included binaries for ReactOS
 ; in the repo.
-#ifdef Reactos
+#ifdef Config32Bit
 Source: "..\drbd-utils-from-reactos\drbdadm.exe"; DestDir: "{code:WinDRBDRootDir}\usr\sbin"; Flags: ignoreversion
 Source: "..\drbd-utils-from-reactos\drbdmeta.exe"; DestDir: "{code:WinDRBDRootDir}\usr\sbin"; Flags: ignoreversion
 Source: "..\drbd-utils-from-reactos\drbdsetup.exe"; DestDir: "{code:WinDRBDRootDir}\usr\sbin"; Flags: ignoreversion
