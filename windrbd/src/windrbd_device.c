@@ -1938,7 +1938,10 @@ exit:
         return status;
 }
 
-static NTSTATUS start_completed(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PKEVENT event) {
+static NTSTATUS __attribute__((stdcall)) start_completed(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID event_param)
+{
+	PKEVENT event = event_param;
+
 	KeSetEvent(event, 0, FALSE);
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
@@ -1980,7 +1983,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_pnp_bus_device(struct _DEVICE_O
 	case IRP_MN_START_DEVICE:
 		KeInitializeEvent(&start_completed_event, NotificationEvent, FALSE);
 		IoCopyCurrentIrpStackLocationToNext(irp);
-		IoSetCompletionRoutine(irp, (PIO_COMPLETION_ROUTINE)start_completed, (PVOID)&start_completed_event, TRUE, TRUE, TRUE);
+		IoSetCompletionRoutine(irp, start_completed, (PVOID)&start_completed_event, TRUE, TRUE, TRUE);
 
 		status = IoCallDriver(bus_ext->lower_device, irp);
 		if (status == STATUS_PENDING)
@@ -2385,17 +2388,19 @@ static NTSTATUS __attribute__((stdcall)) windrbd_power(struct _DEVICE_OBJECT *de
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status;
 
-	dbg(KERN_DEBUG "got Power device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
+printk(KERN_DEBUG "got Power device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
 
-	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
-		dbg(KERN_WARNING "Power requests on root device not supported.\n");
+	if (device == mvolRootDeviceObject || device == user_device_object) {
+printk(KERN_WARNING "Power requests on root device not supported. Returning SUCCESS to fix a BSOD on shutdown on Windows 2003 Server\n");
 
-		status = irp->IoStatus.Status;
+		status = STATUS_SUCCESS;
+		irp->IoStatus.Status = status;
+//		status = irp->IoStatus.Status;
 
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return status;
 	}
-	dbg("Power: device: %p irp: %p\n", device, irp);
+printk("Power: device: %p irp: %p\n", device, irp);
 
 	if (s->MinorFunction == IRP_MN_QUERY_POWER) {
 		dbg("is IRP_MN_QUERY_POWER for %d\n", s->Parameters.Power.Type);
@@ -2408,9 +2413,9 @@ static NTSTATUS __attribute__((stdcall)) windrbd_power(struct _DEVICE_OBJECT *de
 	if (device == drbd_bus_device) {
 		struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
 //		IoSkipCurrentIrpStackLocation(irp);
-// printk("Calling PoCallDriver ...\n");
+printk("Calling PoCallDriver ...\n");
 		status = PoCallDriver(bus_ext->lower_device, irp);
-// printk("PoCallDriver returned %x\n", status);
+printk("PoCallDriver returned %x\n", status);
 //		status = STATUS_SUCCESS;
 	} else {
 			/* TODO: if powering up after sleep / hibernate
@@ -2439,7 +2444,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_power(struct _DEVICE_OBJECT *de
 		status = STATUS_SUCCESS;
 	}
 
-// printk("status is %x\n", status);
+printk("status is %x\n", status);
 	return status;
 }
 

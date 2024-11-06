@@ -1903,6 +1903,8 @@ NTSTATUS __attribute__((stdcall)) DrbdIoCompletion(
 	KIRQL flags;
 	bool one_big_request;
 
+DbgPrint("DrbdIoCompletion 1\n");
+
 	atomic_dec(&bio->bi_bdev->num_irps_pending);
 
 bio->where_i_am = "in io completion";
@@ -1912,11 +1914,13 @@ bio->where_i_am = "in io completion";
 			status = STATUS_SUCCESS;
 	}
 
+DbgPrint("DrbdIoCompletion 2\n");
 	if (status != STATUS_SUCCESS) {
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x IRP is %p bio is %p\n", Irp->IoStatus.Status, Irp, bio);
 		printk("bio->bi_vcnt is %d bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %d bio->bi_io_vec[0].bv_page is %p bio->bi_big_buffer is %p", bio->bi_vcnt, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, bio->bi_io_vec[0].bv_page, bio->bi_big_buffer);
 	}
 
+DbgPrint("DrbdIoCompletion 3\n");
 	if (test_inject_faults(&bio->bi_bdev->inject_on_completion, "assuming completion routine was send an error (enabled for this device)"))
 		status = STATUS_IO_DEVICE_ERROR;
 
@@ -1925,6 +1929,7 @@ bio->where_i_am = "in io completion";
 
 	one_big_request = bio->bi_using_big_buffer;
 
+DbgPrint("DrbdIoCompletion 4\n");
 	if (bio->bi_using_big_buffer) {
 		if (stack_location->MajorFunction == IRP_MJ_READ) {
 			/* copy data to io_vecs */
@@ -1952,6 +1957,7 @@ bio->where_i_am = "in io completion";
 		}
 	}
 
+DbgPrint("DrbdIoCompletion 5\n");
 	int num_completed, device_failed;
 
 	spin_lock_irqsave(&bio->device_failed_lock, flags);
@@ -1987,6 +1993,7 @@ child_bio->where_i_am = "child bio in io completion";
 		}
 	}
 
+DbgPrint("DrbdIoCompletion 6\n");
 	bio_put(bio);
 
 		/* Tell IO manager that it should not touch the
@@ -1994,6 +2001,7 @@ child_bio->where_i_am = "child bio in io completion";
 		 * bio.
 		 */
 
+DbgPrint("DrbdIoCompletion 7\n");
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
@@ -2109,6 +2117,7 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	PIO_STACK_LOCATION next_stack_location;
 	unsigned int the_size;
 
+DbgPrint("windrbd_generic_make_request 1\n");
 bio->where_i_am = "in windrbd_generic_make_request big buffer";
 	if (bio->bi_vcnt == 0) {
 		printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
@@ -2120,6 +2129,7 @@ bio->where_i_am = "in windrbd_generic_make_request big buffer";
 		io = IRP_MJ_READ;
 	}
 
+DbgPrint("windrbd_generic_make_request 2\n");
 	bio->bi_io_vec[bio->bi_this_request].offset.QuadPart = bio->bi_iter.bi_sector << 9;
 	if (single_request) {
 		buffer = bio->bi_big_buffer;
@@ -2128,6 +2138,7 @@ bio->where_i_am = "in windrbd_generic_make_request big buffer";
 		buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_this_request].bv_page->addr) + bio->bi_io_vec[bio->bi_this_request].bv_offset);
 		the_size = bio->bi_io_vec[bio->bi_this_request].bv_len;
 	}
+DbgPrint("windrbd_generic_make_request 3\n");
 
 	/* Leave that here for now it is sometimes useful: */
 // printk("(%s) Local I/O(%s): offset=0x%llx sect=0x%llx total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d the_size=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_this_request].offset.QuadPart, bio->bi_io_vec[bio->bi_this_request].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, the_size, bio);
@@ -2150,6 +2161,7 @@ bio->where_i_am = "in windrbd_generic_make_request big buffer";
 		patch_boot_sector(buffer, 0, 0);
 	}
 
+DbgPrint("windrbd_generic_make_request 4\n");
 	int retries = 0;
 	while (1) {
 
@@ -2180,6 +2192,7 @@ bio->where_i_am = "in windrbd_generic_make_request big buffer";
 		}
 		retries++;
 	}
+DbgPrint("windrbd_generic_make_request 5\n");
 	IoSetCompletionRoutine(bio->bi_irps[bio->bi_this_request], DrbdIoCompletion, bio, TRUE, TRUE, TRUE);
 
 	next_stack_location = IoGetNextIrpStackLocation (bio->bi_irps[bio->bi_this_request]);
@@ -2187,6 +2200,7 @@ bio->where_i_am = "in windrbd_generic_make_request big buffer";
 	next_stack_location->DeviceObject = bio->bi_bdev->windows_device;
 	next_stack_location->FileObject = bio->bi_bdev->file_object;
 
+DbgPrint("windrbd_generic_make_request 6\n");
 	if (io == IRP_MJ_WRITE) {
 		next_stack_location->Parameters.Write.Length = the_size;
 	}
@@ -2197,6 +2211,7 @@ bio->where_i_am = "in windrbd_generic_make_request big buffer";
 
 	int device_failed = bio->device_failed;
 
+DbgPrint("windrbd_generic_make_request 7\n");
 	if (device_failed ||
 	    (bio->bi_bdev && bio->bi_bdev->drbd_device &&
 	     bio->bi_bdev->drbd_device->disk_state[NOW] <= D_FAILED)) {
@@ -2211,9 +2226,11 @@ bio->where_i_am = "in windrbd_generic_make_request big buffer";
 	if (test_inject_faults(&inject_on_request, "assuming request failed (enabled for all devices)"))
 		return -EIO;
 
+DbgPrint("windrbd_generic_make_request 8\n");
 	atomic_inc(&bio->bi_bdev->num_irps_pending);
 	part_stat_add(bio->bi_bdev, sectors[io == IRP_MJ_READ ? STAT_READ : STAT_WRITE], the_size / 512);
 
+DbgPrint("windrbd_generic_make_request 9\n");
 	bio->where_i_am = "calling backing dev driver";
 	status = IoCallDriver(bio->bi_bdev->windows_device, bio->bi_irps[bio->bi_this_request]);
 
@@ -2227,6 +2244,7 @@ bio->where_i_am = "in windrbd_generic_make_request big buffer";
 			     * must not be called).
 			     */
 	}
+DbgPrint("windrbd_generic_make_request a\n");
 	return 0;
 }
 
