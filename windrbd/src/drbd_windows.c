@@ -1393,11 +1393,15 @@ int page_count(struct page *page)
 	return atomic_read(&page->kref.refcount.refs);
 }
 
-static void timer_callback(PKDPC dpc, struct timer_list* timer, PVOID arg1, PVOID arg2)
+	/* This also must be stdcall else 'strange' deferred
+	 * BSOD's under Windows 2003. Took me a while to figure
+	 * that out.
+	 */
+
+static void __attribute__((stdcall)) timer_callback(PKDPC dpc, void *context, void *arg1_unused, void *arg2_unused)
 {
-	(void)arg1;
-	(void)arg2;
-	(void)dpc;
+	struct timer_list *timer = (struct timer_list *) context;
+
 	if (timer->function != NULL) {
 		timer->function(timer);
 	}
@@ -1407,7 +1411,7 @@ void timer_setup(struct timer_list *timer, void(*callback)(struct timer_list *ti
 {
 	timer->function = callback;
 	KeInitializeTimer(&timer->ktimer);
-	KeInitializeDpc(&timer->dpc, (PKDEFERRED_ROUTINE)timer_callback, timer);
+	KeInitializeDpc(&timer->dpc, timer_callback, timer);
 }
 
 void add_timer(struct timer_list *t)
@@ -2064,6 +2068,8 @@ static int make_flush_request(struct bio *bio)
 {
 	NTSTATUS status;
 	PIO_STACK_LOCATION next_stack_location;
+
+printk("FLUSH bio is %p\n", bio);
 
 	bio->bi_irps[bio->bi_this_request] = IoBuildAsynchronousFsdRequest(
 				IRP_MJ_FLUSH_BUFFERS,
@@ -3611,6 +3617,7 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
 {
 	long long d_size;
 
+printk("WINDRBD_GET_CAPACITY\n");
 	if (bdev == NULL) {
 		printk(KERN_WARNING "Warning: bdev is NULL in windrbd_get_capacity\n");
 		return 0;
