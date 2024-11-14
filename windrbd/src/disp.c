@@ -184,11 +184,6 @@ NTSTATUS __attribute__((stdcall)) DriverEntry(IN PDRIVER_OBJECT DriverObject, IN
 // 	printk(KERN_NOTICE "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
 	printk(KERN_NOTICE "Windrbd Driver Loading at %p\n", DriverObject->DriverStart);
 
-#ifdef SPIN_LOCK_DEBUG
-	spinlock_debug_init();
-	printk(KERN_DEBUG "spinlock_debug initialized.\n");
-#endif
-
 	init_registry(registry_path);
 	init_event_log();
  
@@ -337,11 +332,6 @@ void __attribute__((stdcall)) mvolUnload(IN PDRIVER_OBJECT DriverObject)
 
 	idr_shutdown();
 	printk("IDR layer shut down.\n");
-
-#ifdef SPIN_LOCK_DEBUG
-	spinlock_debug_shutdown();
-	printk("spinlock_debug shut down.\n");
-#endif
 
 	shutdown_free_bios();
 	printk("Free bios shut down.\n");

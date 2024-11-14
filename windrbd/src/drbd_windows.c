@@ -3998,9 +3998,5 @@ void init_windrbd(void)
 	spin_lock_init(&g_test_and_change_bit_lock);
 	spin_lock_init(&cpu_cache_spinlock);
 	spin_lock_init(&global_queue_lock);
-
-#ifdef SPIN_LOCK_DEBUG
-	KeInitializeSpinLock(&spinlock_lock);
-#endif
 }
 
