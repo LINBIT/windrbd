@@ -168,10 +168,8 @@ static NTSTATUS __attribute__((stdcall)) completion_fire_linux_event(struct _DEV
 	 * ASSERT.
 	 */
 
-DbgPrint("completion_fire_linux_event 1\n");
 	s->is_connected = true;
 	wake_up(&s->connected_waitqueue);
-DbgPrint("completion_fire_linux_event 2\n");
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
@@ -729,7 +727,6 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	(void) sockaddr_len;
 	(void) flags;
 
-DbgPrint("wsk_connect 1\n");
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || vaddr == NULL)
 		return -EINVAL;
 
@@ -737,7 +734,6 @@ DbgPrint("wsk_connect 1\n");
 	if (Irp == NULL)
 		return -ENOMEM;
 
-DbgPrint("wsk_connect 2\n");
 	socket->is_connected = false;
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskConnect(
 		socket->wsk_socket,
@@ -745,9 +741,7 @@ DbgPrint("wsk_connect 2\n");
 		0,
 		Irp);
 
-DbgPrint("wsk_connect 3\n");
 	if (Status == STATUS_PENDING) {
-DbgPrint("wsk_connect 4\n");
 /*
 		LARGE_INTEGER	nWaitTime;
 		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_sndtimeo * 1000 * 10);
@@ -764,7 +758,6 @@ DbgPrint("wsk_connect 4\n");
 			socket->connected_waitqueue,
 			socket->is_connected);
 
-DbgPrint("wsk_connect 5\n");
 		if (ret == -EINTR) {	/* Signal was sent */
 dbg("Got EINTR ...\n");
 			IoCancelIrp(Irp);
@@ -781,11 +774,9 @@ dbg("WskConnect completed KeWaitForSingleObject (status is %x)\n", Status);
 */
 	}
 
-DbgPrint("wsk_connect 6\n");
 	if (Status == STATUS_SUCCESS)
 	{
 		Status = Irp->IoStatus.Status;
-DbgPrint("WskConnect completed with status %x\n", Status);
 		if (Status == STATUS_SUCCESS) {
 			socket->sk->sk_state = TCP_ESTABLISHED;
 			wake_up(&socket->buffer_available);
@@ -793,7 +784,6 @@ DbgPrint("WskConnect completed with status %x\n", Status);
 		}
 	}
 	if (Status != STATUS_SUCCESS)
-DbgPrint("WskConnect failed with status = %x\n", Status);
 
 	IoFreeIrp(Irp);
 
@@ -939,16 +929,12 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	NTSTATUS	Status;
 	ULONG Flags = 0;
 
-DbgPrint("In wsk_sendmsg 1\n");
-// dbg("socket is %p\n", socket);
-
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
 	if (num != 1)
 		return -EOPNOTSUPP;
 
-DbgPrint("In wsk_sendmsg 2\n");
 	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, FALSE, TRUE);
 	if (!NT_SUCCESS(Status)) {
 		return winsock_to_linux_error(Status);
@@ -965,7 +951,6 @@ DbgPrint("In wsk_sendmsg 2\n");
 	else
 		Flags &= ~WSK_FLAG_NODELAY;
 
-DbgPrint("In wsk_sendmsg 3\n");
 	mutex_lock(&socket->wsk_mutex);
 
 	if (socket->wsk_socket == NULL) {
@@ -974,14 +959,12 @@ DbgPrint("In wsk_sendmsg 3\n");
 		return winsock_to_linux_error(Status);
 	}
 
-DbgPrint("In wsk_sendmsg 4\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
 		socket->wsk_socket,
 		&WskBuffer,
 		Flags,
 		Irp);
 
-DbgPrint("In wsk_sendmsg 5\n");
 	mutex_unlock(&socket->wsk_mutex);
 
 	if (Status == STATUS_PENDING)
@@ -989,7 +972,6 @@ DbgPrint("In wsk_sendmsg 5\n");
 		LARGE_INTEGER	nWaitTime;
 		LARGE_INTEGER	*pTime;
 
-DbgPrint("In wsk_sendmsg 6\n");
 		if (socket->sk->sk_sndtimeo <= 0 || socket->sk->sk_sndtimeo == MAX_SCHEDULE_TIMEOUT)
 		{
 			pTime = NULL;
@@ -1003,11 +985,9 @@ DbgPrint("In wsk_sendmsg 6\n");
 			PVOID       waitObjects[2];
 			int         wObjCount = 1;
 
-DbgPrint("In wsk_sendmsg 7\n");
 			waitObjects[0] = (PVOID) &CompletionEvent;
 
 			Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-DbgPrint("In wsk_sendmsg 8\n");
 
 			switch (Status)
 			{
@@ -1054,7 +1034,6 @@ DbgPrint("In wsk_sendmsg 8\n");
 	}
 	else
 	{
-DbgPrint("In wsk_sendmsg 9\n");
 		if (Status == STATUS_SUCCESS)
 		{
 			BytesSent = (LONG) Irp->IoStatus.Information;
@@ -1068,11 +1047,9 @@ DbgPrint("In wsk_sendmsg 9\n");
 	}
 
 
-DbgPrint("In wsk_sendmsg a\n");
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
-DbgPrint("In wsk_sendmsg b\n");
 dbg("returning %d\n", BytesSent);
 	return BytesSent;
 }
@@ -1325,16 +1302,12 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 	PVOID       waitObjects[2];
 	int         wObjCount = 1;
 
-DbgPrint("In wsk_recvmsg 1\n");
-// printk("in recvmsg: size is %d\n", len);
-// dbg("socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
 
 	if (num != 1)
 		return -EOPNOTSUPP;
 
-DbgPrint("In wsk_recvmsg 2\n");
 	if (socket->error_status != 0)
 {
 // printk("Socket in error state %d\n", socket->error_status);
@@ -1356,7 +1329,6 @@ DbgPrint("In wsk_recvmsg 2\n");
 	if (flags & MSG_WAITALL)
 		wsk_flags |= WSK_FLAG_WAITALL;
 
-DbgPrint("In wsk_recvmsg 3\n");
 	mutex_lock(&socket->wsk_mutex);
 
 	if (socket->wsk_socket == NULL) {
@@ -1365,13 +1337,11 @@ DbgPrint("In wsk_recvmsg 3\n");
 		return -ENOTCONN;
 	}
 
-DbgPrint("In wsk_recvmsg 4\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
 				wsk_flags,
 				Irp);
-DbgPrint("In wsk_recvmsg 5\n");
 	mutex_unlock(&socket->wsk_mutex);
 
     if (Status == STATUS_PENDING)
@@ -1379,7 +1349,6 @@ DbgPrint("In wsk_recvmsg 5\n");
         LARGE_INTEGER	nWaitTime;
         LARGE_INTEGER	*pTime;
 
-DbgPrint("In wsk_recvmsg 6\n");
         if (socket->sk->sk_rcvtimeo <= 0 || socket->sk->sk_rcvtimeo == MAX_SCHEDULE_TIMEOUT)
         {
             pTime = 0;
@@ -1398,10 +1367,8 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
             wObjCount = 2;
         } 
 
-DbgPrint("In wsk_recvmsg 7\n");
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
 
-DbgPrint("In wsk_recvmsg 8\n");
         switch (Status)
         {
         case STATUS_WAIT_0: // waitObjects[0] CompletionEvent
@@ -1437,7 +1404,6 @@ DbgPrint("In wsk_recvmsg 8\n");
     }
 	else
 	{
-DbgPrint("In wsk_recvmsg 9\n");
 		if (Status == STATUS_SUCCESS)
 		{
 			BytesReceived = (LONG) Irp->IoStatus.Information;
@@ -1452,7 +1418,6 @@ DbgPrint("In wsk_recvmsg 9\n");
 
 	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
 	{
-DbgPrint("In wsk_recvmsg a\n");
 		dbg("About to cancel irp\n");
 		// cancel irp in wsk subsystem
 		IoCancelIrp(Irp);
@@ -1485,16 +1450,13 @@ DbgPrint("In wsk_recvmsg a\n");
 		}
 	}
 
-DbgPrint("In wsk_recvmsg b\n");
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
-DbgPrint("In wsk_recvmsg c\n");
 	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
 		socket->error_status = BytesReceived;
 // printk("setting error status to %d\n", socket->error_status);
 	}
-DbgPrint("In wsk_recvmsg d\n");
 	return BytesReceived;
 }
 
@@ -1586,9 +1548,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	return_buffer_index = 0;
 
 	timeout = socket->sk->sk_rcvtimeo; 
-printk("1\n");
 	while (1) {
-printk("2\n");
 		remaining_time = wait_event_interruptible_timeout(
 			socket->data_available, 
 			socket->write_index != socket->read_index || 
@@ -1598,7 +1558,6 @@ printk("2\n");
 			timeout);
 
 
-printk("3\n");
 /*
 		if (remaining_time == -EINTR)
 			return -EINTR;
@@ -1607,13 +1566,11 @@ printk("3\n");
 			return -EAGAIN;
 		timeout = remaining_time;
 
-printk("4\n");
 		if (socket->error_status != 0)
 			return socket->error_status;
 		if (socket->sk->sk_state != TCP_ESTABLISHED)
 			return 0;
 
-printk("5\n");
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 		if (socket->read_index < socket->write_index)
 			bytes_to_copy = socket->write_index - socket->read_index;
@@ -1628,7 +1585,6 @@ printk("5\n");
 			}
 		}
 		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
-printk("6\n");
 
 		if (bytes_to_copy > len-return_buffer_index) {
 			bytes_to_copy = len-return_buffer_index;
@@ -1637,12 +1593,10 @@ printk("6\n");
 		if (bytes_to_copy <= 0)
 			continue;
 
-printk("7\n");
 		memcpy(&((char*)vec[0].iov_base)[return_buffer_index], 
 			&socket->receive_buffer[socket->read_index],
 			bytes_to_copy);
 
-printk("8\n");
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 
 		return_buffer_index += bytes_to_copy;
@@ -1655,11 +1609,9 @@ printk("8\n");
 			socket->receive_buffer_full = false;
 
 		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
-printk("9\n");
 
 		wake_up(&socket->buffer_available);
 
-printk("a\n");
 		if (flags & MSG_WAITALL) {
 			if (return_buffer_index == len) {
 				dump_packet(vec[0].iov_base, return_buffer_index);
@@ -1669,9 +1621,7 @@ printk("a\n");
 			dump_packet(vec[0].iov_base, return_buffer_index);
 			return return_buffer_index;
 		}
-printk("b\n");
 	}
-printk("c\n");
 	return -EINVAL;
 }
 
@@ -1683,20 +1633,16 @@ static int socket_receive_thread(void *p)
 	int err;
 	KIRQL flags;
 
-printk("1\n");
-// printk("Receiver thread started for socket %p.\n", s);
+	printk("Receiver thread started for socket %p.\n", s);
 	while (1) {
-printk("2\n");
 		wait_event(s->buffer_available, 
 			!s->receive_thread_should_run ||
 			(s->sk->sk_state == TCP_ESTABLISHED &&
 			(s->write_index != s->read_index ||
 			(s->write_index == s->read_index && !s->receive_buffer_full)))); 
 
-printk("3\n");
 		if (!s->receive_thread_should_run)
 			break;
-printk("4\n");
 
 		spin_lock_irqsave(&s->receive_lock, flags);
 		if (s->read_index == s->write_index && !s->receive_buffer_full) {
@@ -1708,51 +1654,42 @@ printk("4\n");
 			else
 				iov.iov_len = s->read_index-s->write_index;
 		}
-printk("5\n");
 		iov.iov_base = &s->receive_buffer[s->write_index];
 		spin_unlock_irqrestore(&s->receive_lock, flags);
 
-printk("6\n");
 		if (iov.iov_len == 0) {
 			printk("Warning: iov.iov_len is 0 in WinDRBD receiver thread .. should not happen.\n");
 // printk("3a read_index is %d write_index is %d\n", s->read_index, s->write_index);
 			continue;	/* wait_event should block */
 		}
-printk("7\n");
 		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
 
 		if (err == -EAGAIN || err == -EINTR)
 			continue;
 
-printk("8\n");
 		if (err <= 0)
 			break;
 
-printk("9\n");
 		spin_lock_irqsave(&s->receive_lock, flags);
 
-printk("a\n");
 		s->write_index+=err;
 		if (s->write_index == s->receive_buffer_size)
 			s->write_index = 0;
 
 		if (s->write_index == s->read_index)
 			s->receive_buffer_full = true;
-printk("b\n");
 
 		spin_unlock_irqrestore(&s->receive_lock, flags);
 
-printk("c\n");
 		wake_up(&s->data_available);
 	}
 
-printk("d\n");
 	s->sk->sk_state = TCP_NO_CONNECTION;
 	wake_up(&s->data_available);
 	kref_put(&s->kref, sock_really_free);
-printk("e\n");
 //	complete(&s->receiver_thread_completion);
-// printk("terminating socket_receive_thread %p (socket is %p)\n", current, s);
+
+	printk("terminating socket_receive_thread %p (socket is %p)\n", current, s);
 	return 0;
 }
 
