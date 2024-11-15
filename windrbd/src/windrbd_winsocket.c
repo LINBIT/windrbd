@@ -118,7 +118,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 
 static void terminate_receive_thread(struct socket *socket)
 {
-// printk("About to terminate receive thread for socket %p\n", socket);
+printk("About to terminate receive thread for socket %p\n", socket);
 	if (socket->receive_thread_should_run) {
 		socket->receive_thread_should_run = false;
 		wake_up(&socket->buffer_available);
@@ -1667,8 +1667,10 @@ static int socket_receive_thread(void *p)
 		if (err == -EAGAIN || err == -EINTR)
 			continue;
 
-		if (err <= 0)
+		if (err <= 0) {
+			printk(KERN_DEBUG "wsk_recvmsg returned %d, terminating receiver thread.\n", err);
 			break;
+		}
 
 		spin_lock_irqsave(&s->receive_lock, flags);
 
