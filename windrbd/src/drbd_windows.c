@@ -896,28 +896,6 @@ static void free_mdls_and_irp(struct bio *bio)
 	bio->bi_irps = NULL;
 }
 
-#ifdef BIO_REF_DEBUG
-
-void bio_get_debug(struct bio *bio, const char *file, int line, const char *func)
-{
-	int cnt;
-	printk("getting bio at %p from %s:%d(%s) allocated from %s:%d(%s) refcnt before is %d direction is %s\n", bio, file, line, func, bio->file, bio->line, bio->func, atomic_read(&bio->bi_cnt), bio_data_dir(bio) == WRITE ? "WRITE" : "READ");
-	cnt = atomic_inc(&bio->bi_cnt);
-}
-
-void bio_put_debug(struct bio *bio, const char *file, int line, const char *func)
-{
-	int cnt;
-
-	printk("putting bio at %p from %s:%d(%s) allocated from %s:%d(%s) refcnt before is %d direction is %s\n", bio, file, line, func, bio->file, bio->line, bio->func, atomic_read(&bio->bi_cnt), bio_data_dir(bio) == WRITE ? "WRITE" : "READ");
-
-	cnt = atomic_dec(&bio->bi_cnt);
-	if (cnt == 0)
-		bio_free(bio);
-}
-
-#else
-
 void bio_put(struct bio *bio)
 {
 	int cnt;
@@ -925,8 +903,6 @@ void bio_put(struct bio *bio)
 	if (cnt == 0)
 		bio_free(bio);
 }
-
-#endif
 
 static LIST_HEAD(bios_to_be_freed_list);
 static LIST_HEAD(bios_to_be_freed_list2);

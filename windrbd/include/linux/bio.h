@@ -119,23 +119,14 @@ enum {
 	BIOSET_PERCPU_CACHE = 4,
 };
 
-#ifdef BIO_REF_DEBUG
-
-extern void bio_get_debug(struct bio *bio, const char *file, int line, const char *func);
-extern void bio_put_debug(struct bio *bio, const char *file, int line, const char *func);
-
-#define bio_get(bio) bio_get_debug(bio, __FILE__, __LINE__, __func__)
-#define bio_put(bio) bio_put_debug(bio, __FILE__, __LINE__, __func__)
-#else
 static inline void bio_get(struct bio *bio)
 {
 	atomic_inc(&bio->bi_cnt);
 }
 
 extern void bio_put(struct bio *);
-#endif
 
-extern void bio_free(struct bio *bio); 
+extern void bio_free(struct bio *bio);
 // extern int bio_add_page(struct bio *bio, struct page *page, unsigned int len,unsigned int offset);
 extern int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsigned int offset, const char *file, int line, const char *func);
 
