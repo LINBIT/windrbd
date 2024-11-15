@@ -46,6 +46,8 @@ help:
 	@echo "    TARGET_IPS=<ips>    Install onto those Windows machines (install target)"
 	@echo "    V=1                 If set display command line, else pretty print (default)"
 	@echo "    DRIVER_DIR=dir      Take windrbd.sys/cat/inf from this directory"
+	@echo "    DRBD=drbd-dir       Compile this DRBD version"
+	@echo "                        may be one of drbd-9.0, drbd-9.1 or drbd-9.2"
 	@echo
 	@echo "Examples:"
 	@echo
