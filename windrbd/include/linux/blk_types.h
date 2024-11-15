@@ -126,12 +126,6 @@ struct bio {
 		 */
 	bool delayed_io_completion;
 
-#ifdef BIO_ALLOC_DEBUG
-	char *file;
-	int line;
-	char *func;
-#endif
-
 	struct bio *is_cloned_from;
 
 	struct list_head corked_bios;  /* used to link the bios */

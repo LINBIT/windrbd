@@ -27,13 +27,6 @@
  */
 #define KMEM_CACHE_DEBUG 1
 
-	/* TODO: we probably want to turn those off: */
-/* Enable this (and recompile all) to enable bio reference debugging */
-#define BIO_REF_DEBUG 1
-
-/* Enable this (and recompile all) to enable bio allocation debugging */
-#define BIO_ALLOC_DEBUG 1
-
 /* Enable this (and recompile all) to enable kref debug tracing */
 // #define KREF_DEBUG 1
 

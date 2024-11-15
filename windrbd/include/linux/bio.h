@@ -82,11 +82,6 @@ extern void bioset_free(struct bio_set *);
 
 #define bio_clone_fast(bio, gfp, bio_set) bio_clone(bio, gfp)
 
-#ifdef BIO_ALLOC_DEBUG
-extern struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, char *file, int line, char *func);
-#define bio_alloc(a, b) bio_alloc_debug(a, b, __FILE__, __LINE__, __func__)
-#else
-
 #ifdef DRBD_9_1
 extern struct bio *bio_alloc(struct block_device *bdev,
 		unsigned short nr_vecs, blk_opf_t opf, gfp_t gfp_mask);
@@ -103,8 +98,6 @@ extern struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_se
 
 	/* Old interface for use in WinDRBD only */
 extern struct bio *bio_alloc_old(gfp_t, int);
-
-#endif
 
 static inline int bioset_init(struct bio_set *bs, unsigned int size, unsigned int front_pad, int flags)
 {

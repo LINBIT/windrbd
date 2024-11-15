@@ -780,23 +780,6 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs)
 	return bio;
 }
 
-#ifdef BIO_ALLOC_DEBUG
-
-struct bio *bio_alloc_debug(gfp_t mask, int nr_iovecs, char *file, int line, char *func)
-{
-	struct bio *bio = bio_alloc_ll(mask, nr_iovecs);
-
-// printk("allocating bio at %p from %s:%d(%s)\n", bio, file, line, func);
-	if (bio) {
-		bio->file = file;
-		bio->line = line;
-		bio->func = func;
-	}
-	return bio;
-}
-
-#else
-
 struct bio *bio_alloc_old(gfp_t gfp_mask, int nr_iovecs)
 {
 	return bio_alloc_ll(gfp_mask, nr_iovecs);
@@ -859,8 +842,6 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *unus
 }
 
 #endif	/* DRBD 9.1 */
-
-#endif
 
 	/* biosets are meant for being responsive under memory pressure.
 	 * we haven't implemented it yet because windows fails earlier
@@ -1076,11 +1057,6 @@ struct bio *bio_clone(struct bio * bio_src, gfp_t flag)
 	if (!list_empty(&bio->locally_submitted_bios)) {
 		printk("Warning: bio->locally_submitted_bios not empty, is this bio already submitted?\n");
 	}
-#ifdef BIO_ALLOC_DEBUG
-	bio->file = bio_src->file;
-	bio->line = bio_src->line;
-	bio->func = bio_src->func;
-#endif
 
 	/* Take a reference to the original bio. This will be dropped
 	   when the cloned bio is freed. The reason for this is that

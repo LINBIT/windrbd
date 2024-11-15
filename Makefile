@@ -119,10 +119,6 @@ else
 run=@echo $2\\t$3 ; $1
 endif
 
-# TODO: use export to pass vars to docker
-# KREF_DEBUG := $(KREF_DEBUG)
-# export KREF_DEBUG
-
 pull-docker:
 	$(DOCKER) pull quay.io/johannesthoma/windrbd-devenv
 	$(DOCKER) tag quay.io/johannesthoma/windrbd-devenv windrbd-devenv
