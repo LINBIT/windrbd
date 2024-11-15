@@ -100,7 +100,7 @@ DOCKER_IMAGE ?= windrbd-devenv
 # DOCKER_RUN=docker run -u $(MY_UID):$(MY_GID) --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 # so run docker as root ...
 # Add environment variables to pass to docker here:
-DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e REACTOS=$(REACTOS) -e PAGE_KREF_DEBUG=$(PAGE_KREF_DEBUG) -e KREF_DEBUG=$(KREF_DEBUG) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) -e DRIVER_DIR=$(DRIVER_DIR) $(DOCKER_IMAGE)
+DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e REACTOS=$(REACTOS) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) -e DRIVER_DIR=$(DRIVER_DIR) -e CONFIG_KREF_DEBUG=$(CONFIG_KREF_DEBUG) $(DOCKER_IMAGE)
 
 # Change ownership of all files created by make process to
 # the host's UID/GID.
@@ -144,18 +144,12 @@ ifeq ($(ARCH), x86_64)
 DRIVER_ENTRY=DriverEntry
 endif
 
-DEFINES=-D WINNT=1 -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D COMPAT_HAVE_BOOL_TYPE=1  -D CONFIG_KREF_DEBUG=1 -DKBUILD_MODNAME='"drbd"' -D CONFIG_WINDOWS=1
+# for now must enable CONFIG_KREF_DEBUG because of a DRBD bug (?) missing include linux/kref.h
 
-# there are 2 different kref debugs: on from DRBD (CONFIG_KREF_DEBUG)
-# and one that printk's every kref change (KREF_DEBUG)
-# the latter can be enabled with make KREF_DEBUG=1
-#
-ifdef KREF_DEBUG
-DEFINES+=-DKREF_DEBUG=1
-endif
+DEFINES=-D WINNT=1 -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D COMPAT_HAVE_BOOL_TYPE=1 -DKBUILD_MODNAME='"drbd"' -D CONFIG_WINDOWS=1 # -D CONFIG_KREF_DEBUG=1
 
-ifdef PAGE_KREF_DEBUG
-DEFINES+=-DPAGE_KREF_DEBUG=1
+ifdef CONFIG_KREF_DEBUG
+DEFINES+=-D CONFIG_KREF_DEBUG=1
 endif
 
 ifdef REACTOS
@@ -183,8 +177,12 @@ DRBD_TMPSRCDIR=$(DRBDTMP)/drbd/
 
 DRBD_SOURCES += drbd_sender.c drbd_receiver.c drbd_req.c drbd_actlog.c
 DRBD_SOURCES += drbd_main.c drbd-headers/drbd_strings.c drbd_nl.c
-DRBD_SOURCES += drbd_interval.c drbd_state.c drbd_kref_debug.c
-DRBD_SOURCES += drbd_nla.c drbd_transport.c drbd_transport_tcp.c kref_debug.c drbd_buildtag.c drbd_bitmap.c drbd_proc.c
+DRBD_SOURCES += drbd_interval.c drbd_state.c
+DRBD_SOURCES += drbd_nla.c drbd_transport.c drbd_transport_tcp.c drbd_buildtag.c drbd_bitmap.c drbd_proc.c
+
+ifdef CONFIG_KREF_DEBUG
+DRBD_SOURCES += drbd_kref_debug.c kref_debug.c
+endif
 
 ifeq ($(DRBD),drbd-9.0)
 DRBD_SOURCES += lru_cache.c

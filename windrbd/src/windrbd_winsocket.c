@@ -427,14 +427,14 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 	if (completion->data_buffer) {	/* Is from SendPage, do not printk */
 		kfree(completion->data_buffer);
 		if (completion->socket != NULL)
-		        kref_put_no_printk(&completion->socket->kref, sock_really_free);
+		        kref_put(&completion->socket->kref, sock_really_free);
 	} else {
 		if (completion->socket != NULL)
 		        kref_put(&completion->socket->kref, sock_really_free);
 	}
 
 	kfree(completion);
-	
+
 	IoFreeIrp(Irp);
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
@@ -1276,7 +1276,7 @@ int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR Rem
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
 	completion->the_mdl = WskBuffer->Mdl;
-	kref_get_no_printk(&socket->kref);
+	kref_get(&socket->kref);
 
 	irp = IoAllocateIrp(1, FALSE);
 	if (irp == NULL) {

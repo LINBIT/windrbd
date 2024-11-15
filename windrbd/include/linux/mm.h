@@ -14,8 +14,6 @@ struct kref;
 
 extern void _free_page_kref(struct kref *kref);
 
-#ifndef PAGE_KREF_DEBUG
-
 static inline void put_page(struct page *page)
 {
 	kref_put(&page->kref, _free_page_kref);
@@ -25,28 +23,6 @@ static inline void get_page(struct page *page)
 {
 	kref_get(&page->kref);
 }
-
-#else
-
-static inline void put_page_debug(struct page *page, const char *file, int line, const char *func)
-{
-	printk("put_page called from %s:%d %s(). Old refcount is %d, page is %p, page->addr is %p\n",
-		file, line, func, atomic_read(&page->kref.refcount.refs), page, page->addr);
-	kref_put(&page->kref, _free_page_kref);
-}
-
-#define put_page(page) put_page_debug(page, __FILE__, __LINE__, __func__)
-
-static inline void get_page_debug(struct page *page, const char *file, int line, const char *func)
-{
-	printk("get_page called from %s:%d %s(). Old refcount is %d, page is %p, page->addr is %p\n",
-		file, line, func, atomic_read(&page->kref.refcount.refs), page, page->addr);
-	kref_get(&page->kref);
-}
-
-#define get_page(page) get_page_debug(page, __FILE__, __LINE__, __func__)
-
-#endif
 
 extern void *page_address(const struct page *page);
 

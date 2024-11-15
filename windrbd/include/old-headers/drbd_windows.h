@@ -27,9 +27,6 @@
  */
 #define KMEM_CACHE_DEBUG 1
 
-/* Enable this (and recompile all) to enable kref debug tracing */
-// #define KREF_DEBUG 1
-
 #define __func_	__FUNCTION__
 #define __func__ __FUNCTION__
 #define __bitwise__
