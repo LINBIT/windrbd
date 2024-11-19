@@ -82,7 +82,8 @@ static int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_CONNECTION_DISCONNECTED:
 		return -ECONNRESET;
 	case STATUS_CONNECTION_ABORTED:
-		return -ECONNABORTED;
+		printk("Got STATUS_CONNECTION_ABORTED returning -ECONNRESET ...\n");
+		return -ECONNRESET;	/* was: -ECONNABORTED */
 	case STATUS_IO_TIMEOUT:
 	case STATUS_TIMEOUT:
 		return -EAGAIN;
