@@ -1557,11 +1557,11 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			socket->sk->sk_state != TCP_ESTABLISHED,
 			timeout);
 
-
-/*
 		if (remaining_time == -EINTR)
+{
+printk("wait_event_interruptible_timeout returned -EINTR ...\n");
 			return -EINTR;
-*/
+}
 		if (remaining_time <= 0)
 			return -EAGAIN;
 		timeout = remaining_time;
