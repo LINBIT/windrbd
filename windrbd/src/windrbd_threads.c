@@ -327,8 +327,8 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	 * should remain signalled until explicitly removed
 	 * by flush_signals(). Change it in the 1.2 branch.
 	 */
-	// KeInitializeEvent(&t->sig_event, NotificationEvent, FALSE);
-	KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
+	KeInitializeEvent(&t->sig_event, NotificationEvent, FALSE);
+	// KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
 	KeInitializeEvent(&t->start_event, SynchronizationEvent, FALSE);
 	t->has_sig_event = TRUE;
 	t->sig = -1;
