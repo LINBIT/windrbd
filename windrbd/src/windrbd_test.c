@@ -1354,6 +1354,7 @@ static void leak_test(int argc, const char ** argv)
 }
 
 static void *r_thread;
+static void *s_thread;
 
 static __attribute__((stdcall)) void receive_a_lot(void *unused)
 {
@@ -1363,8 +1364,8 @@ static __attribute__((stdcall)) void receive_a_lot(void *unused)
 	static char bigbuffer[1024*128];
 	size_t bytes_received;
 	int short_reads;
-	int n, n2;
-	int *ints = (int*)&bigbuffer;
+//	int n, n2;
+//	int *ints = (int*)&bigbuffer;
 
         struct kvec iov = {
                 .iov_base = bigbuffer,
@@ -1404,7 +1405,7 @@ static __attribute__((stdcall)) void receive_a_lot(void *unused)
 		return;
 	}
 
-	while (1) {
+//	while (1) {
 		err = kernel_accept(s, &s2, 0);
 		if (err < 0) {
 			printk("accept returned %d\n", err);
@@ -1413,7 +1414,7 @@ static __attribute__((stdcall)) void receive_a_lot(void *unused)
 		}
 		printk("connection accepted\n");
 
-		n = 0;
+//		n = 0;
 		bytes_received = 0;
 		short_reads = 0;
 		while (1) {
@@ -1444,12 +1445,103 @@ static __attribute__((stdcall)) void receive_a_lot(void *unused)
 #endif
 		}
 		printk("%d short reads\n", short_reads);
-	}
+//	}
 	sock_release(s);
 	sock_release(s2);
 
 	return_to_windows(current);
 
+	printk("Exiting receive_a_lot thread, for more testing please rerun windrbd run-test receive_a_lot\n");
+	return;
+}
+
+static __attribute__((stdcall)) void send_a_lot(void *unused)
+{
+	struct socket *s;
+	int err;
+	struct sockaddr_in my_addr;
+	struct sockaddr_in his_addr;
+	static char bigbuffer[1024*128];
+	size_t bytes_sent;
+	int short_writes;
+
+        struct kvec iov = {
+                .iov_base = bigbuffer,
+               // .iov_len = sizeof(bigbuffer),
+		.iov_len = 16,
+	       // .iov_len = 4096,
+        };
+        struct msghdr msg = {
+		.msg_flags = 0
+        };
+
+	make_me_a_windrbd_thread("send_a_lot");
+
+	err = sock_create_kern(&init_net, AF_INET, SOCK_STREAM, IPPROTO_TCP, &s);
+
+	if (err < 0) {
+		printk("sock_create_kern returned %d\n", err);
+		return_to_windows(current);	/* else STACK_LOCKED_AT_EXIT BSOD */
+
+		return;
+	}
+
+	my_addr.sin_family = AF_INET;
+	my_addr.sin_addr.s_addr = 0;
+	my_addr.sin_port = htons(5679);	/* DRBD uses port 0 */
+
+        err = s->ops->bind(s, (struct sockaddr *)&my_addr, sizeof(my_addr));
+	if (err < 0) {
+		printk("bind returned %d\n", err);
+		sock_release(s);
+		return_to_windows(current);
+		return;
+	}
+	if (my_inet_aton("10.43.224.38", &his_addr.sin_addr) < 0) {
+		printk("Could not parse %s\n", "10.43.224.38");
+		sock_release(s);
+		return_to_windows(current);
+		return;
+	}
+	his_addr.sin_family = AF_INET;
+	his_addr.sin_port = htons(5679);
+
+        err = s->ops->connect(s, (struct sockaddr *)&his_addr, sizeof(his_addr), 0);
+	if (err < 0) {
+		printk("connect returned %d\n", err);
+		sock_release(s);
+		return_to_windows(current);	/* else STACK_LOCKED_AT_EXIT BSOD */
+		return;
+	}
+	printk("connection esablished\n");
+
+	bytes_sent = 0;
+	short_writes = 0;
+
+	while (1) {
+		err = kernel_sendmsg(s, &msg, &iov, 1, iov.iov_len);
+		if (err < 0) {
+			printk("sendmsg returned %d\n", err);
+			break;
+		}
+		if (err == 0) {  /* possible? is this an error? */
+			printk("send returned %d, connection closed\n", err);
+			break;
+		}
+		if (err != iov.iov_len)
+			short_writes++;
+		bytes_sent += err;
+
+		if ((bytes_sent % (1024*1024)) == 0)
+			printk("%lld bytes sent\n", bytes_sent);
+	}
+	printk("%d short writes\n", short_writes);
+
+	sock_release(s);
+
+	return_to_windows(current);
+
+	printk("Exiting send_a_lot thread, for more testing please rerun windrbd run-test send_a_lot\n");
 	return;
 }
 
@@ -1462,6 +1554,19 @@ static void start_receive_a_lot_thread(int argc, const char ** argv)
 	printk("About to start receive_a_lot thread.\n");
 	printk("You then need to send an integer sequence to port 5678.\n");
 	status = windrbd_create_windows_thread(receive_a_lot, NULL, &r_thread);
+	if (!NT_SUCCESS(status))
+		printk("Oops, create_windows_thread returned status %08x\n", status);
+}
+
+static void start_send_a_lot_thread(int argc, const char ** argv)
+{
+	NTSTATUS status;
+
+/* TODO: parse a port number an pass it to thread function. */
+
+	printk("About to start send_a_lot thread.\n");
+	printk("You then need to listen on 10.43.224.39:5678.\n");
+	status = windrbd_create_windows_thread(send_a_lot, NULL, &s_thread);
 	if (!NT_SUCCESS(status))
 		printk("Oops, create_windows_thread returned status %08x\n", status);
 }
@@ -1559,6 +1664,8 @@ void test_main(const char *arg)
 		intentionally_bsod(argc, argv);
 	if (strcmp(argv[0], "receive_a_lot") == 0)
 		start_receive_a_lot_thread(argc, argv);
+	if (strcmp(argv[0], "send_a_lot") == 0)
+		start_send_a_lot_thread(argc, argv);
 
 kfree_argv:
 	kfree(argv);
