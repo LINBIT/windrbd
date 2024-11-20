@@ -70,9 +70,8 @@ static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 
 static int winsock_to_linux_error(NTSTATUS status)
 {
-/*	if (status != STATUS_SUCCESS)
+	if (status != STATUS_SUCCESS)
 		printk("got status %x\n", status);
-*/
 
 	switch (status) {
 	case STATUS_SUCCESS:
@@ -102,6 +101,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_LOCAL_DISCONNECT: /* Sent by ReactOS on connection timeout */
 		printk("Got STATUS_LOCAL_DISCONNECT returning -ECONNRESET ...\n");
 		return -ECONNRESET;
+
 
 	case STATUS_REMOTE_DISCONNECT:	/* Sometimes they happen on ReactOS */
 		printk("Got STATUS_REMOTE_DISCONNECT returning -ECONNRESET ...\n");
@@ -784,8 +784,6 @@ dbg("WskConnect completed KeWaitForSingleObject (status is %x)\n", Status);
 			wake_up(&socket->data_available);
 		}
 	}
-	if (Status != STATUS_SUCCESS)
-
 	IoFreeIrp(Irp);
 
 	return winsock_to_linux_error(Status);
