@@ -2069,107 +2069,7 @@ void tcp_sock_set_quickack(struct sock *sk, int val)
 {
 }
 
-#if 0
-static NTSTATUS receive_a_lot(void *unused)
-{
-	struct socket *s, *s2;
-	int err;
-	struct sockaddr_in my_addr;
-	static char bigbuffer[1024*128];
-	size_t bytes_received;
-	int short_reads;
-	int n, n2;
-	int *ints = (int*)&bigbuffer;
-
-        struct kvec iov = {
-                .iov_base = bigbuffer,
-               // .iov_len = sizeof(bigbuffer),
-		.iov_len = 16,
-	       // .iov_len = 4096,
-        };
-        struct msghdr msg = {
-		.msg_flags = MSG_WAITALL
-	//	.msg_flags = 0
-        };
-
-	make_me_a_windrbd_thread("receive_a_lot");
-
-	err = sock_create_kern(&init_net, AF_INET, SOCK_LISTEN, IPPROTO_TCP, &s);
-
-	if (err < 0) {
-		printk("sock_create_kern returned %d\n", err);
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-	my_addr.sin_family = AF_INET;
-	my_addr.sin_addr.s_addr = 0;
-	my_addr.sin_port = htons(5678);
-
-        err = s->ops->bind(s, (struct sockaddr *)&my_addr, sizeof(my_addr));
-	if (err < 0) {
-		printk("bind returned %d\n", err);
-		sock_release(s);
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-        err = s->ops->listen(s, 10);
-	if (err < 0) {
-		printk("listen returned %d\n", err);
-		sock_release(s);
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-	while (1) {
-		err = kernel_accept(s, &s2, 0);
-		if (err < 0) {
-			printk("accept returned %d\n", err);
-			sock_release(s);
-			return STATUS_INSUFFICIENT_RESOURCES;
-		}
-		printk("connection accepted\n");
-
-		n = 0;
-		bytes_received = 0;
-		short_reads = 0;
-		while (1) {
-			err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
-			if (err < 0) {
-				printk("receive returned %d\n", err);
-				break;
-			}
-			if (err == 0) {
-				printk("receive returned %d, connection closed\n", err);
-				break;
-			}
-			if (err != iov.iov_len) {
-/*
-				printk("short receive (%d, expected %d)\n", err, iov.iov_len);
-				break;
-*/
-				short_reads++;
-			}
-			bytes_received += err;
-			if ((bytes_received % (1024*1024)) == 0)
-				printk("%lld bytes received\n", bytes_received);
-
-			for (n2=0;n2<err/sizeof(int);n2++,n++)
-				if (ints[n2] != n)
-					printk("Sequence number mismatch: expected %d got %d\n", n, ints[n]);
-		}
-		printk("%d short reads\n", short_reads);
-	}
-	sock_release(s);
-	sock_release(s2);
-
-	return_to_windows(current);
-
-	return STATUS_SUCCESS;
-}
-#endif
-
 static void *init_wsk_thread;
-
-// static void *r_thread;
 
 /* This is a separate thread, since it blocks until Windows has finished
  * booting. It initializes everything we need and then exits. You can
@@ -2191,10 +2091,6 @@ static void __attribute__((stdcall)) windrbd_init_wsk_thread(void *unused)
 	} else {
 		printk("WSK initialized.\n");
 	}
-
-#if 0
-	status = windrbd_create_windows_thread(receive_a_lot, NULL, &r_thread);
-#endif
 }
 
 NTSTATUS windrbd_init_wsk(void)

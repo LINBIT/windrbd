@@ -4,6 +4,11 @@
 #include <linux/kthread.h>
 #include <linux/delay.h>
 #include <linux/compiler_attributes.h>
+#include <linux/socket.h>
+#include <linux/net.h>
+#include <linux/tcp.h>
+#include <linux/gfp.h>
+#include <linux/printk.h>
 
 int debug_printks_enabled = 0;
 
@@ -1348,6 +1353,119 @@ static void leak_test(int argc, const char ** argv)
 	}
 }
 
+static void *r_thread;
+
+static __attribute__((stdcall)) void receive_a_lot(void *unused)
+{
+	struct socket *s, *s2;
+	int err;
+	struct sockaddr_in my_addr;
+	static char bigbuffer[1024*128];
+	size_t bytes_received;
+	int short_reads;
+	int n, n2;
+	int *ints = (int*)&bigbuffer;
+
+        struct kvec iov = {
+                .iov_base = bigbuffer,
+               // .iov_len = sizeof(bigbuffer),
+		.iov_len = 16,
+	       // .iov_len = 4096,
+        };
+        struct msghdr msg = {
+		.msg_flags = MSG_WAITALL
+	//	.msg_flags = 0
+        };
+
+	make_me_a_windrbd_thread("receive_a_lot");
+
+	err = sock_create_kern(&init_net, AF_INET, SOCK_LISTEN, IPPROTO_TCP, &s);
+
+	if (err < 0) {
+		printk("sock_create_kern returned %d\n", err);
+		return;
+	}
+
+	my_addr.sin_family = AF_INET;
+	my_addr.sin_addr.s_addr = 0;
+	my_addr.sin_port = htons(5678);
+
+        err = s->ops->bind(s, (struct sockaddr *)&my_addr, sizeof(my_addr));
+	if (err < 0) {
+		printk("bind returned %d\n", err);
+		sock_release(s);
+		return;
+	}
+
+        err = s->ops->listen(s, 10);
+	if (err < 0) {
+		printk("listen returned %d\n", err);
+		sock_release(s);
+		return;
+	}
+
+	while (1) {
+		err = kernel_accept(s, &s2, 0);
+		if (err < 0) {
+			printk("accept returned %d\n", err);
+			sock_release(s);
+			return;
+		}
+		printk("connection accepted\n");
+
+		n = 0;
+		bytes_received = 0;
+		short_reads = 0;
+		while (1) {
+			err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+			if (err < 0) {
+				printk("receive returned %d\n", err);
+				break;
+			}
+			if (err == 0) {
+				printk("receive returned %d, connection closed\n", err);
+				break;
+			}
+			if (err != iov.iov_len) {
+/*
+				printk("short receive (%d, expected %d)\n", err, iov.iov_len);
+				break;
+*/
+				short_reads++;
+			}
+			bytes_received += err;
+			if ((bytes_received % (1024*1024)) == 0)
+				printk("%lld bytes received\n", bytes_received);
+
+#if 0
+			for (n2=0;n2<err/sizeof(int);n2++,n++)
+				if (ints[n2] != n)
+					printk("Sequence number mismatch: expected %d got %d\n", n, ints[n]);
+#endif
+		}
+		printk("%d short reads\n", short_reads);
+	}
+	sock_release(s);
+	sock_release(s2);
+
+	return_to_windows(current);
+
+	return;
+}
+
+static void start_receive_a_lot_thread(int argc, const char ** argv)
+{
+	NTSTATUS status;
+
+/* TODO: parse a port number an pass it to thread function. */
+
+	printk("About to start receive_a_lot thread.\n");
+	printk("You then need to send an integer sequence to port 5678.\n");
+	status = windrbd_create_windows_thread(receive_a_lot, NULL, &r_thread);
+	if (!NT_SUCCESS(status))
+		printk("Oops, create_windows_thread returned status %08x\n", status);
+}
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1439,6 +1557,8 @@ void test_main(const char *arg)
 		leak_test(argc, argv);
 	if (strcmp(argv[0], "intentionally_bsod") == 0)
 		intentionally_bsod(argc, argv);
+	if (strcmp(argv[0], "receive_a_lot") == 0)
+		start_receive_a_lot_thread(argc, argv);
 
 kfree_argv:
 	kfree(argv);
