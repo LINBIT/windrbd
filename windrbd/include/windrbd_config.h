@@ -13,8 +13,10 @@
 
 /* Those need to be implemented: */
 // #define CONFIG_HAVE_IO_CREATE_DEVICE_SECURE 1
-// #define CONFIG_HAVE_RW_LOCKS 1
-
+	/* Windows Server 2016 and later */
+#ifdef CONFIG_64BIT
+#define CONFIG_HAVE_RW_LOCKS 1
+#endif
 
 /* Currently only works on 32 bit platforms, working on 64 bit: */
 #ifdef CONFIG_32BIT

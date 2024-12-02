@@ -19481,6 +19481,95 @@ ZwSetInformationKey(
 
 #endif /* (NTDDI_VERSION >= NTDDI_WIN7) */
 
+//
+// Define shared spinlock type and function prototypes.
+//
+
+typedef volatile LONG EX_SPIN_LOCK, *PEX_SPIN_LOCK;
+#define ALIGNED_EX_SPINLOCK DECLSPEC_CACHEALIGN EX_SPIN_LOCK
+
+// #if (NTDDI_VERSION >= NTDDI_VISTASP1)
+#if 1
+
+_IRQL_requires_min_(DISPATCH_LEVEL)
+NTKERNELAPI
+VOID
+ExAcquireSpinLockSharedAtDpcLevel (
+    _Inout_ _Requires_lock_not_held_(*_Curr_) _Acquires_lock_(*_Curr_)
+    PEX_SPIN_LOCK SpinLock
+    );
+
+_IRQL_saves_
+_IRQL_raises_(DISPATCH_LEVEL)
+NTKERNELAPI
+KIRQL
+ExAcquireSpinLockShared (
+    _Inout_ _Requires_lock_not_held_(*_Curr_) _Acquires_lock_(*_Curr_)
+    PEX_SPIN_LOCK SpinLock
+    );
+
+_IRQL_requires_min_(DISPATCH_LEVEL)
+NTKERNELAPI
+VOID
+ExReleaseSpinLockSharedFromDpcLevel (
+    _Inout_ _Requires_lock_held_(*_Curr_) _Releases_lock_(*_Curr_)
+    PEX_SPIN_LOCK SpinLock
+    );
+
+_IRQL_requires_(DISPATCH_LEVEL)
+NTKERNELAPI
+VOID
+ExReleaseSpinLockShared (
+    _Inout_ _Requires_lock_held_(*_Curr_) _Releases_lock_(*_Curr_)
+    PEX_SPIN_LOCK SpinLock,
+    _In_ _IRQL_restores_ KIRQL OldIrql
+    );
+
+_Must_inspect_result_
+_IRQL_requires_(DISPATCH_LEVEL)
+_Post_satisfies_(return == 0 || return == 1)
+NTKERNELAPI
+LOGICAL
+ExTryConvertSharedSpinLockExclusive (
+    _Inout_ PEX_SPIN_LOCK SpinLock
+    );
+
+_IRQL_requires_min_(DISPATCH_LEVEL)
+NTKERNELAPI
+VOID
+ExAcquireSpinLockExclusiveAtDpcLevel (
+    _Inout_ _Requires_lock_not_held_(*_Curr_) _Acquires_lock_(*_Curr_)
+    PEX_SPIN_LOCK SpinLock
+    );
+
+_IRQL_saves_
+_IRQL_raises_(DISPATCH_LEVEL)
+NTKERNELAPI
+KIRQL
+ExAcquireSpinLockExclusive (
+    _Inout_ _Requires_lock_not_held_(*_Curr_) _Acquires_lock_(*_Curr_)
+    PEX_SPIN_LOCK SpinLock
+    );
+
+_IRQL_requires_min_(DISPATCH_LEVEL)
+NTKERNELAPI
+VOID
+ExReleaseSpinLockExclusiveFromDpcLevel (
+    _Inout_ _Requires_lock_held_(*_Curr_) _Releases_lock_(*_Curr_)
+    PEX_SPIN_LOCK SpinLock
+    );
+
+_IRQL_requires_(DISPATCH_LEVEL)
+NTKERNELAPI
+VOID
+ExReleaseSpinLockExclusive (
+    _Inout_ _Requires_lock_held_(*_Curr_) _Releases_lock_(*_Curr_)
+    PEX_SPIN_LOCK SpinLock,
+    _In_ _IRQL_restores_ KIRQL OldIrql
+    );
+
+#endif //#if (NTDDI_VERSION >= NTDDI_VISTASP1)
+
 
 #ifdef __cplusplus
 }
