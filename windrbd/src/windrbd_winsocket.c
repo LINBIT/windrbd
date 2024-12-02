@@ -2057,8 +2057,8 @@ int sock_set_keepalive(struct sock *socket)
 
 void tcp_sock_set_nodelay(struct sock *sk)
 {
-	int val = 1;
-	(void) kernel_setsockopt(sk->sk_socket, SOL_TCP, TCP_NODELAY, (char *)&val, sizeof(val));
+	char val = 1;
+	(void) kernel_setsockopt(sk->sk_socket, SOL_TCP, TCP_NODELAY, &val, sizeof(val));
 }
 
 void tcp_sock_set_cork(struct sock *sk, bool on)
