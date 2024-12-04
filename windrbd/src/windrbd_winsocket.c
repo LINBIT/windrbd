@@ -312,6 +312,7 @@ static int remove_completion_locked(struct send_page_completion_info *c)
 	struct list_head *lh, *lhn;
 	struct allocated_completions *alloc_completion;
 	int n = 0;
+	int m = 0;
 
 	list_for_each_safe(lh, lhn, &completions) {
 		alloc_completion = list_entry(lh, struct allocated_completions, list);
@@ -320,7 +321,9 @@ static int remove_completion_locked(struct send_page_completion_info *c)
 			kfree(alloc_completion);
 			n++;
 		}
+		m++;
 	}
+printk("%d completions in the queue.\n", m);
 	if (n == 0)
 		return -ENOENT;
 	if (n == 1)
