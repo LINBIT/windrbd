@@ -1159,6 +1159,8 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 			 * error.
 			 */
 
+printk("STATUS_PENDING, relaxing a bit ...\n");
+msleep(10);
 		return len;
 
 	case STATUS_SUCCESS:
@@ -2062,6 +2064,8 @@ void tcp_sock_set_nodelay(struct sock *sk)
 {
 	char val = 1;
 	(void) kernel_setsockopt(sk->sk_socket, SOL_TCP, TCP_NODELAY, &val, sizeof(val));
+printk("relaxing ...\n");
+msleep(10);
 }
 
 void tcp_sock_set_cork(struct sock *sk, bool on)
