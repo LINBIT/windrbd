@@ -119,7 +119,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 
 static void terminate_receive_thread(struct socket *socket)
 {
-printk("About to terminate receive thread for socket %p\n", socket);
+// printk("About to terminate receive thread for socket %p\n", socket);
 	if (socket->receive_thread_should_run) {
 		socket->receive_thread_should_run = false;
 		wake_up(&socket->buffer_available);
@@ -323,7 +323,7 @@ static int remove_completion_locked(struct send_page_completion_info *c)
 		}
 		m++;
 	}
-printk("%d completions in the queue.\n", m);
+// printk("%d completions in the queue.\n", m);
 	if (n == 0)
 		return -ENOENT;
 	if (n == 1)
@@ -1159,8 +1159,8 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 			 * error.
 			 */
 
-printk("STATUS_PENDING, relaxing a bit ...\n");
-msleep(10);
+// printk("STATUS_PENDING, relaxing a bit ...\n");
+// msleep(10);
 		return len;
 
 	case STATUS_SUCCESS:
@@ -1562,10 +1562,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			timeout);
 
 		if (remaining_time == -EINTR)
-{
-printk("wait_event_interruptible_timeout returned -EINTR ...\n");
 			return -EINTR;
-}
 		if (remaining_time <= 0)
 			return -EAGAIN;
 		timeout = remaining_time;
@@ -2064,8 +2061,6 @@ void tcp_sock_set_nodelay(struct sock *sk)
 {
 	char val = 1;
 	(void) kernel_setsockopt(sk->sk_socket, SOL_TCP, TCP_NODELAY, &val, sizeof(val));
-printk("relaxing ...\n");
-msleep(10);
 }
 
 void tcp_sock_set_cork(struct sock *sk, bool on)
