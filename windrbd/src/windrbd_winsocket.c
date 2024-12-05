@@ -375,6 +375,7 @@ static void have_sent(struct socket *socket, size_t length)
 
 	spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
 	socket->sk->sk_wmem_queued -= length;
+	socket->num_sends_inflight--;
 	spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
 
 	KeSetEvent(&socket->data_sent, IO_NO_INCREMENT, FALSE);
@@ -470,7 +471,8 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 	while (1) {
 		spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
 
-		if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf) {
+		if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf ||
+		    socket->num_sends_inflight > 10) { // TODO: make configurable
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
 
 			timeout.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
@@ -503,6 +505,7 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 			}
 		} else {
 			socket->sk->sk_wmem_queued += want_to_send;
+			socket->num_sends_inflight++;
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
 			return 0;
 		}
@@ -1850,6 +1853,7 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	spin_lock_init(&socket->send_buf_counters_lock);
 	spin_lock_init(&socket->accept_socket_lock);
 	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
+	socket->num_sends_inflight = 0;
 	KeInitializeEvent(&socket->accept_event, SynchronizationEvent, FALSE);
 	mutex_init(&socket->wsk_mutex);
 	socket->ops = &winsocket_ops;

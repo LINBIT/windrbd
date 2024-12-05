@@ -101,6 +101,7 @@ struct socket {
 
 	spinlock_t send_buf_counters_lock;
 	KEVENT data_sent;
+	int num_sends_inflight;
 
 	struct mutex wsk_mutex;
 	const struct proto_ops *ops;
