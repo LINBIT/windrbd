@@ -28,3 +28,6 @@ When invalidated so it syncs a bit goal is to trigger free_page BSOD
 On Windows (with 27GB disk): 59 iterations (about 20 hours)
 	with windrbd-1.2.0-rc6
 	Were there any connection losses?
+
+Dec 5-6 2024: with 2b417f71733a28de no connection losses
+	82 iterations about 20 hours
