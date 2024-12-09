@@ -1571,6 +1571,19 @@ static void start_send_a_lot_thread(int argc, const char ** argv)
 		printk("Oops, create_windows_thread returned status %08x\n", status);
 }
 
+static void test_minus_max_long_long(int argc, const char ** argv)
+{
+	volatile unsigned long long a = 0;
+	volatile unsigned long long b = a + (1ULL << 63);
+
+	if (((long long) a - (long long) b) >= 0)
+		printk("wrong\n");
+	else
+		printk("right\n");
+}
+
+
+
 void test_main(const char *arg)
 {
 	char *arg_mutable, *s;
@@ -1666,6 +1679,8 @@ void test_main(const char *arg)
 		start_receive_a_lot_thread(argc, argv);
 	if (strcmp(argv[0], "send_a_lot") == 0)
 		start_send_a_lot_thread(argc, argv);
+	if (strcmp(argv[0], "minus_max_long_long") == 0)
+		test_minus_max_long_long(argc, argv);
 
 kfree_argv:
 	kfree(argv);
