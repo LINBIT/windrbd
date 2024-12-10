@@ -21,8 +21,20 @@ struct sk_buff
 	char cb[48];
 
 	unsigned char data[1];
+	struct sock *sk;
 };
 
 extern unsigned char *skb_put(struct sk_buff *skb, unsigned int len);
+
+struct skb_seq_state {
+	__u32		lower_offset;
+	__u32		upper_offset;
+	__u32		frag_idx;
+	__u32		stepped_offset;
+	struct sk_buff	*root_skb;
+	struct sk_buff	*cur_skb;
+	__u8		*frag_data;
+	__u32		frag_off;
+};
 
 #endif

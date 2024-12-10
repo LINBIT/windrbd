@@ -158,8 +158,17 @@ ifdef REACTOS
 DEFINES+=-DREACTOS
 endif
 
+# TODO: isn't there a numeric version (something like 0x090117) in the DRBD sources?
+ifeq ($(DRBD),drbd-9.0)
+DEFINES+=-DDRBD_9_0=1
+endif
+
 ifeq ($(DRBD),drbd-9.1)
 DEFINES+=-DDRBD_9_1=1
+endif
+
+ifeq ($(DRBD),drbd-9.2)
+DEFINES+=-DDRBD_9_2=1
 endif
 
 DEFINES+=-DBLKDEV_ISSUE_ZEROOUT_EXPORTED=1
@@ -172,6 +181,7 @@ ifeq ($(ARCH), i686)
 DEFINES+=-DCONFIG_32BIT
 endif
 
+# TODO: drbd-kernel-compat really? Do we want this?
 WINDRBD_INCLUDES=-I"windrbd/include" -I"$(DRBDTMP)/drbd" -I"$(DRBDTMP)/drbd/drbd-headers" -I"$(DRBDTMP)/drbd/drbd-kernel-compat"
 MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk -I$(REACTOS_ROOT)/crt -nostdinc -I$(REACTOS_ROOT)/lib/pseh/include
 

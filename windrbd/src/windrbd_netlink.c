@@ -413,6 +413,8 @@ struct sk_buff *genlmsg_new(size_t payload, gfp_t flags)
 	skb->len = 0;
 	skb->tail = 0;
 	skb->end = payload - sizeof(*skb);
+	skb->sk = NULL;	/* only used in DRBD 9.2 drbd_nl.c for getting the
+			 * net namespace (which is always init_net in WinDRBD */
 
 	return skb;
 }

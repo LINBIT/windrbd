@@ -4,6 +4,7 @@
 struct sock;
 
 #include <linux/tcp.h>
+#include <linux/spinlock.h>
 
 #define SOCK_SNDBUF_LOCK	1
 #define SOCK_RCVBUF_LOCK	2
@@ -24,6 +25,8 @@ struct sock {
 
 	void *sk_user_data;
 	void (*sk_state_change)(struct sock *sk);
+	/* TODO: implement this: */
+	void (*sk_data_ready)(struct sock *sk);
 	spinlock_t sk_callback_lock;
 
 	struct socket *sk_socket;

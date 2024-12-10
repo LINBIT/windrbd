@@ -26,7 +26,7 @@ extern void set_disk_ro(struct gendisk *disk, int flag);
 
 struct queue_limits;
 
-#ifdef DRBD_9_1
+#if (defined DRBD_9_1) || (defined DRBD_9_2)
 extern struct gendisk *blk_alloc_disk(struct queue_limits *limits_unused, int unused);
 #else
 extern struct gendisk *blk_alloc_disk(int unused);

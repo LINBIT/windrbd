@@ -6,6 +6,7 @@
 #include <linux/uio.h>	/* for struct kvec */
 #include <linux/net/sock.h>
 #include <linux/mutex.h>
+#include <linux/fs.h>
 #include <wsk.h>	/* for struct sockaddr_storage */
 
 /* drbd_headers.h includes this and uses a struct bio * later ... */
@@ -113,6 +114,7 @@ struct socket {
 	KEVENT accept_event;
 
 	struct sock *sk;
+	struct file *file;
 
 	int is_closed;
 

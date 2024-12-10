@@ -122,4 +122,25 @@ static inline bool sendpage_ok(struct page *page)
 	return true;	/* Always ok */
 }
 
+#define	sockfd_put(sock) fput(sock->file)
+
+/*
+ * "descriptor" for what we're up to with a read.
+ * This allows us to use the same read code yet
+ * have multiple different users of the data that
+ * we read from a file.
+ *
+ * The simplest case just copies the data to user
+ * mode.
+ */
+typedef struct {
+	size_t written;
+	size_t count;
+	union {
+		char __user *buf;
+		void *data;
+	} arg;
+	int error;
+} read_descriptor_t;
+
 #endif

@@ -21,4 +21,7 @@ extern void complete_all_debug(struct completion *c, const char *file, int line,
 #define complete(c) complete_debug(c, __FILE__, __LINE__, __func__)
 #define complete_all(c) complete_all_debug(c, __FILE__, __LINE__, __func__)
 
+#define COMPLETION_INITIALIZER_ONSTACK(work) \
+	(*({ init_completion(&work); &work; }))
+
 #endif

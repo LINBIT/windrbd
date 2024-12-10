@@ -3,14 +3,7 @@
 
 #include <linux/types.h>
 
-/* Define this to check IRQL at entry of spin_lock_irq() and the like. */
-
-/* It currently causes some BSOD's to happen more frequently (which
- * is good for testing but bad for releases), so disable it for
- * releases.
- */
-
-typedef struct _tagSPINLOCK
+typedef struct spinlock
 {
 	KSPIN_LOCK spinLock;
 
@@ -20,7 +13,7 @@ typedef struct _tagSPINLOCK
 extern void spin_lock_init(spinlock_t *lock);
 
 #define DECLARE_SPINLOCK(unused) \
-Error Cannot implement DECLARE_SPINLOCK since we need to call KeInitializeSemaphore at runtime. Please manually patch your driver.
+Error Cannot implement DECLARE_SPINLOCK since we need to call KeInitializeSpinlock at runtime. Please manually patch your driver.
 
 /* still used by drbd_main lock all resources but with IRQL = DISPATCH level */
 extern void spin_lock_nested(spinlock_t *lock, int level);

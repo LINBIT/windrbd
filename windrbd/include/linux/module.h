@@ -9,6 +9,7 @@
 #define MODULE_VERSION(unused)
 #define MODULE_LICENSE(unused)
 #define MODULE_ALIAS_BLOCKDEV_MAJOR(unused)
+#define MODULE_SOFTDEP(_softdep)
 
 struct module {
 	const char *version;

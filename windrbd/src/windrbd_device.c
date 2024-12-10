@@ -52,13 +52,13 @@
 #include <ntddscsi.h>
 #include <ntddstor.h>
 #include <linux/module.h>
+#include <linux/fs.h>
 // #include <strsafe.h>	/* for StringCbPrintfW() - but it does not return length */
 
 #include "windrbd_config.h"
 #include <windrbd_internal.h>
 #include "windrbd/windrbd_ioctl.h"
 #include "drbd_int.h"
-#include "drbd_wrappers.h"
 #include "partition_table_template.h"
 
 #include <linux/delay.h>
@@ -1196,7 +1196,7 @@ dbg("out of wait_for_becoming_primary, status is %x\n", status);
 		dbg(KERN_INFO "DRBD device  request: opening DRBD device %s\n",
 			mode == 0 ? "read-only" : "read-write");
 
-#ifdef DRBD_9_1
+#if (defined DRBD_9_1) || (defined DRBD_9_2)
 		err = dev->bd_disk->fops->open(dev->bd_disk, mode);
 #else
 		err = dev->bd_disk->fops->open(dev, mode);
@@ -1265,7 +1265,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_close(struct _DEVICE_OBJECT *de
 */
 
 		if (dev->num_openers > 0)
-#ifdef DRBD_9_1
+#if (defined DRBD_9_1) || (defined DRBD_9_2)
 			dev->bd_disk->fops->release(dev->bd_disk);
 #else
 			dev->bd_disk->fops->release(dev->bd_disk, 0);
