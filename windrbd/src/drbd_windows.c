@@ -1033,21 +1033,24 @@ void init_completion_debug(struct completion *completion, const char *file, int 
 	completion->completed = false;
 }
 
+LONG_PTR wait_for_completion_interruptible_timeout_debug(struct completion *completion, ULONG_PTR timeout, const char *file, int line, const char *func)
+{
+	return wait_event_interruptible_timeout(completion->wait, completion->completed, timeout);
+}
+
 ULONG_PTR wait_for_completion_timeout_debug(struct completion *completion, ULONG_PTR timeout, const char *file, int line, const char *func)
 {
-	ULONG_PTR ret;
-
-		/*  Not interruptible. When this is interruptible BSODs
-		 *  on disonnect may happen. */
-	ret = wait_event_timeout(completion->wait, completion->completed, timeout);
-
-	return ret;
+	return wait_event_timeout(completion->wait, completion->completed, timeout);
 }
 
 void wait_for_completion_debug(struct completion *completion, const char *file, int line, const char *func)
 {
-// printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
 	wait_for_completion_timeout(completion, MAX_SCHEDULE_TIMEOUT);
+}
+
+int wait_for_completion_interruptible_debug(struct completion *completion, const char *file, int line, const char *func)
+{
+	return wait_for_completion_interruptible_timeout(completion, MAX_SCHEDULE_TIMEOUT);
 }
 
 void complete_debug(struct completion *c, const char *file, int line, const char *func)
