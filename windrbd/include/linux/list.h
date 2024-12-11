@@ -124,6 +124,18 @@ static inline void __list_splice(const struct list_head *list, struct list_head 
 	next->prev = last;
 }
 
+/**
+ * list_splice_tail - join two lists, each list being a queue
+ * @list: the new list to add.
+ * @head: the place to add it in the first list.
+ */
+static inline void list_splice_tail(struct list_head *list,
+				struct list_head *head)
+{
+	if (!list_empty(list))
+		__list_splice(list, head->prev, head);
+}
+
 static inline void list_splice_init(struct list_head *list, struct list_head *head)
 {
 	if (!list_empty(list)) {

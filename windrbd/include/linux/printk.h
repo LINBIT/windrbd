@@ -64,6 +64,17 @@ extern int _printk(const char * func, const char * format, ...);
 	printk(KERN_WARNING pr_fmt(fmt), ##__VA_ARGS__)
 
 /**
+ * pr_notice - Print a notice-level message
+ * @fmt: format string
+ * @...: arguments for the format string
+ *
+ * This macro expands to a printk with KERN_NOTICE loglevel. It uses pr_fmt() to
+ * generate the format string.
+ */
+#define pr_notice(fmt, ...) \
+	printk(KERN_NOTICE pr_fmt(fmt), ##__VA_ARGS__)
+
+/**
  * pr_info - Print an info-level message
  * @fmt: format string
  * @...: arguments for the format string

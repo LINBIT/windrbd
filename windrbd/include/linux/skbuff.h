@@ -1,9 +1,12 @@
 #ifndef __LINUX_SKBUFF_H
 #define __LINUX_SKBUFF_H
 
+#include <net/netmem.h>
+
 struct sk_buff
 {
-	size_t len;
+	unsigned int len;
+	unsigned int data_len;
 		/* Maybe TODO: In current Linux versions these are
 		 * pointers into the data buffer.
 		 */
@@ -19,12 +22,24 @@ struct sk_buff
 	 */
 
 	char cb[48];
+	struct sock *sk;
 
 	unsigned char data[1];
-	struct sock *sk;
 };
 
 extern unsigned char *skb_put(struct sk_buff *skb, unsigned int len);
+
+static inline unsigned int skb_headlen(const struct sk_buff *skb)
+{
+	return skb->len - skb->data_len;
+}
+
+/*
+static inline unsigned char *skb_end_pointer(const struct sk_buff *skb)
+{
+	return skb->head + skb->end;
+}
+*/
 
 struct skb_seq_state {
 	__u32		lower_offset;
@@ -36,5 +51,13 @@ struct skb_seq_state {
 	__u8		*frag_data;
 	__u32		frag_off;
 };
+
+typedef struct skb_frag {
+	netmem_ref netmem;
+	unsigned int len;
+	unsigned int offset;
+} skb_frag_t;
+
+#define skb_shinfo(SKB)	((struct skb_shared_info *)(skb_end_pointer(SKB)))
 
 #endif

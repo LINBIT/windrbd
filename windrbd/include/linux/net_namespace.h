@@ -57,4 +57,10 @@ static inline void unregister_pernet_device(struct pernet_operations *unused)
 {
 }
 
+static inline
+int net_eq(const struct net *net1, const struct net *net2)
+{
+	return net1 == net2;
+}
+
 #endif
