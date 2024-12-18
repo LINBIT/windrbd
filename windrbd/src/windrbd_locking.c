@@ -214,7 +214,10 @@ void down_write(struct rw_semaphore *sem)
 
 int down_write_trylock(struct rw_semaphore *sem)
 {
-	return down_trylock(&sem->the_semaphore);
+		/* Note that in Linux the semantics of the return
+		 * value is inverse from down_trylock hence the !
+		 */
+	return !down_trylock(&sem->the_semaphore);
 }
 
 void up_write(struct rw_semaphore *sem)
