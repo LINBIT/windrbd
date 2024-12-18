@@ -551,9 +551,9 @@ usage:
 static unsigned long long n;
 static unsigned long long num_threads;
 
-enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_SPIN_LOCK_IRQSAVE, LM_MUTEX, LM_CRITICAL_REGION, LM_TWO_SPINLOCKS, LM_TWO_SPINLOCKS_PASSIVE_LEVEL, LM_SEMAPHORE, LM_RW_SEMAPHORE_READ, LM_RW_SEMAPHORE_WRITE, LM_LAST };
+enum lock_methods { LM_NONE, LM_SPIN_LOCK, LM_SPIN_LOCK_IRQ, LM_SPIN_LOCK_IRQSAVE, LM_MUTEX, LM_CRITICAL_REGION, LM_TWO_SPINLOCKS, LM_TWO_SPINLOCKS_PASSIVE_LEVEL, LM_SEMAPHORE, LM_RW_SEMAPHORE_READ, LM_RW_SEMAPHORE_WRITE, LM_SEMAPHORE_TRYLOCK, LM_RW_SEMAPHORE_TRYLOCK, LM_LAST };
 static char *lock_methods[LM_LAST] = {
-	"none", "spin_lock", "spin_lock_irq", "spin_lock_irqsave", "mutex", "critical_region", "two_spinlocks", "two_spinlocks_passive_level", "semaphore", "rw_semaphore_read", "rw_semaphore_write"
+	"none", "spin_lock", "spin_lock_irq", "spin_lock_irqsave", "mutex", "critical_region", "two_spinlocks", "two_spinlocks_passive_level", "semaphore", "rw_semaphore_read", "rw_semaphore_write", "semaphore_trylock", "rw_semaphore_trylock"
 };
 static enum lock_methods lock_method;
 
@@ -581,8 +581,22 @@ int concurrency_thread(void *p)
 			down_write(&test_rw_semaphore);
 			break;
 
+		case LM_RW_SEMAPHORE_TRYLOCK:
+			if (down_write_trylock(&test_rw_semaphore) == 1)
+				down_write(&test_rw_semaphore);
+			else
+				printk("down_write_trylock succeeded.\n");
+			break;
+
 		case LM_SEMAPHORE:
 			down(&test_semaphore);
+			break;
+
+		case LM_SEMAPHORE_TRYLOCK:
+			if (down_trylock(&test_semaphore) == 1)
+				down(&test_semaphore);
+			else
+				printk("down_trylock succeeded.\n");
 			break;
 
 #if 0
@@ -642,6 +656,7 @@ int concurrency_thread(void *p)
 			break;
 		default:
 			printk("lock method %d not supported.\n", lock_method);
+			complete(completion);
 			return -1;
 		}
 
@@ -658,7 +673,15 @@ int concurrency_thread(void *p)
 			up_write(&test_rw_semaphore);
 			break;
 
+		case LM_RW_SEMAPHORE_TRYLOCK:
+			up_write(&test_rw_semaphore);
+			break;
+
 		case LM_SEMAPHORE:
+			up(&test_semaphore);
+			break;
+
+		case LM_SEMAPHORE_TRYLOCK:
 			up(&test_semaphore);
 			break;
 
@@ -715,6 +738,7 @@ int concurrency_thread(void *p)
 			break;
 		default:
 			printk("lock method %d not supported.\n", lock_method);
+			complete(completion);
 			return -1;
 		}
 	}
