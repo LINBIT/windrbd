@@ -582,7 +582,11 @@ int concurrency_thread(void *p)
 			break;
 
 		case LM_RW_SEMAPHORE_TRYLOCK:
-			if (down_write_trylock(&test_rw_semaphore) == 1)
+				/* Semantics is inverse to normal semaphore
+				 * 0 ... could not acquire
+				 * 1 ... acquired
+				 */
+			if (down_write_trylock(&test_rw_semaphore) == 0)
 				down_write(&test_rw_semaphore);
 			else
 				printk("down_write_trylock succeeded.\n");
