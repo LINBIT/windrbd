@@ -328,6 +328,8 @@ KIRQL rcu_read_lock(void)
 			return KeGetCurrentIrql();
 
 		c->in_rcu = 1;
+	} else {	/* APC, ... do nothing else BSOD */
+		return KeGetCurrentIrql();
 	}
 
 	spin_lock_irqsave(&rcu_spin_lock, flags);
@@ -342,6 +344,8 @@ void rcu_read_unlock(KIRQL rcu_flags)
 	if (is_windrbd_thread(c)) {
 		if (atomic_dec_return(&c->rcu_recursion_depth) > 0)
 			return;
+	} else {	/* APC, ... do nothing */
+		return;
 	}
 	spin_unlock_irqrestore(&rcu_spin_lock, rcu_flags);
 
@@ -356,6 +360,8 @@ void synchronize_rcu(void)
 	if (is_windrbd_thread(current)) {
 		if (current->in_rcu)
 			return;	/* avoid deadlock */
+	} else {	/* APC, ... do nothing */
+		return;
 	}
 	spin_lock_irqsave(&rcu_spin_lock, rcu_flags);
 	spin_unlock_irqrestore(&rcu_spin_lock, rcu_flags);
@@ -369,6 +375,8 @@ void call_rcu(struct rcu_head *head, rcu_callback_t func)
 	if (is_windrbd_thread(current)) {
 		if (current->in_rcu)
 			can_lock = 0;
+	} else {	/* APC, ... do nothing */
+		can_lock = 0;
 	}
 	if (can_lock)
 		spin_lock_irqsave(&rcu_spin_lock, rcu_flags);
@@ -471,6 +479,7 @@ void local_irq_enable()
 
 int spin_trylock(spinlock_t *lock)
 {
+		/* TODO: broken here. Use an extra spinlock. */
 	if (KeTestSpinLock(&lock->spinLock) == FALSE)
 		return 0;
 
