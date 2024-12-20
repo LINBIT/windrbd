@@ -414,7 +414,7 @@ struct sk_buff *genlmsg_new(size_t payload, gfp_t flags)
 	skb->tail = 0;
 	skb->end = payload - sizeof(*skb);
 	skb->sk = NULL;	/* only used in DRBD 9.2 drbd_nl.c for getting the
-			 * net namespace (which is always init_net in WinDRBD */
+			 * net namespace (which is always init_net in WinDRBD) */
 
 	return skb;
 }
@@ -554,9 +554,18 @@ static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 	/* TODO: and if dump? According to net/netlink/genetlink.c:500
 	 * (function genl_family_rcv_msg) this has to be checked first.
 	 */
-	if (pops->doit)
-			/* TODO: NULL? Really? */
-		return pops->doit(NULL, pinfo);
+	if (pops->doit) {
+		int ret;
+		struct sk_buff *dummy_skb;
+
+		dummy_skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
+		if (dummy_skb == NULL)
+			return -ENOMEM;
+
+		ret = pops->doit(dummy_skb, pinfo);
+		nlmsg_free(dummy_skb);
+		return ret;
+	}
 
 	if (pinfo->nlhdr->nlmsg_flags && NLM_F_DUMP)
 	{
