@@ -1688,6 +1688,8 @@ static int socket_receive_thread(void *p)
 		spin_unlock_irqrestore(&s->receive_lock, flags);
 
 		wake_up(&s->data_available);
+		if (s->sk->sk_data_ready)
+			s->sk->sk_data_ready(s->sk);
 	}
 
 	s->sk->sk_state = TCP_NO_CONNECTION;
