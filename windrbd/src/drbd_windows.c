@@ -1138,12 +1138,13 @@ static int run_singlethread_workqueue(void *param)
 				spin_unlock_irqrestore(&w->pending_lock, flags2);
 				spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
-				if (wq->about_to_destroy) {
+				if (wq->about_to_destroy)
 					printk("About to destroy workqueue %s not calling function\n", wq->name);
-				} else {
-// printk("into func\n");
-					w->func(w);
-				}
+				else
+					if (w->cancelled)
+						printk("Work on workqueue %s was cancelled.\n", wq->name);
+					else
+						w->func(w);
 			}
 			KeSetEvent(&wq->workFinishedEvent, 0, FALSE);
 			break;
@@ -1220,17 +1221,16 @@ void flush_workqueue(struct workqueue_struct *wq)
 	}
 }
 
-bool cancel_work_sync(struct work_struct *work)
+int cancel_work_sync(struct work_struct *work)
 {
-	KIRQL flags;
 	bool ret = work->pending;
 
-		/* TODO: wait for work to finish? */
-	spin_lock_irqsave(&work->pending_lock, flags);
-	list_del_init(&work->work_list);
-	spin_unlock_irqrestore(&work->pending_lock, flags);
+	work->cancelled = 1;
+	if (work->orig_queue)
+		flush_workqueue(work->orig_queue);
+			/* else it was never queued */
 
-	return ret;	/* TODO: or so ... */
+	return ret;
 }
 
 void destroy_workqueue(struct workqueue_struct *wq)

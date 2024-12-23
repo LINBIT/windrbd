@@ -73,6 +73,7 @@ struct workqueue_struct {
 
 struct work_struct {
 	int pending;
+	int cancelled;
 	spinlock_t pending_lock;
 	struct list_head work_list;
 
@@ -149,6 +150,9 @@ static inline void schedule_work(struct work_struct *work)
 		spin_lock_init(&(_work)->pending_lock);			\
 		PREPARE_WORK((_work), (_func));                         \
 		(_work)->pending = 0;					\
+		(_work)->cancelled = 0;					\
+		(_work)->orig_queue = NULL;				\
+		(_work)->orig_func = (_func);				\
 	} while (0)
 
 #define INIT_WORK(_work, _func)                                         \
@@ -158,6 +162,6 @@ static inline void schedule_work(struct work_struct *work)
 #define create_singlethread_workqueue(name)				\
 	alloc_ordered_workqueue("%s", WQ_MEM_RECLAIM, name)
 
-extern bool cancel_work_sync(struct work_struct *work);
+extern int cancel_work_sync(struct work_struct *work);
 
 #endif
