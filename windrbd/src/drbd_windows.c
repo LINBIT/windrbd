@@ -1226,9 +1226,11 @@ int cancel_work_sync(struct work_struct *work)
 	bool ret = work->pending;
 
 	work->cancelled = 1;
-	if (work->orig_queue)
+	if (work->orig_queue) {
+			/* To terminate revc() */
+		force_sig(SIGHUP, work->orig_queue->thread);
 		flush_workqueue(work->orig_queue);
-			/* else it was never queued */
+	}           /* else it was never queued */
 
 	return ret;
 }
