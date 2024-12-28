@@ -3702,6 +3702,7 @@ extern int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(s
 
 int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 {
+	int err;
 /*
 	struct drbd_peer_device *peer_device;
 */
@@ -3725,6 +3726,15 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 		}
 		if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(device->vdisk->part0) < 0) {
 			printk("Warning: could not determine if there is a file system on the DRBD device.\n");
+		}
+#if (defined DRBD_9_1) || (defined DRBD_9_2)
+		err = device->vdisk->fops->open(device->vdisk, FMODE_WRITE);
+#else
+		err = device->vdisk->fops->open(device->vdisk->part0, FMODE_WRITE);
+#endif
+		if (err < 0) {
+			printk("Warning: initial DRBD open returned err %d\n", err);
+			printk("(you may get further warnings about open_cnt == 0)\n");
 		}
 		if (windrbd_create_windows_device(device->vdisk->part0) != 0)
 			windrbd_device_error(device, err_str, "Warning: Couldn't create windows device for volume %d\n", device->vnr);
@@ -3752,6 +3762,11 @@ int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
 		}
+#if (defined DRBD_9_1) || (defined DRBD_9_2)
+		device->vdisk->fops->release(device->vdisk);
+#else
+		device->vdisk->fops->release(device->vdisk, 0);
+#endif
 		windrbd_destroy_io_workqueue(device->vdisk->part0);
 	}
 	KeClearEvent(&device->vdisk->part0->primary_event);
