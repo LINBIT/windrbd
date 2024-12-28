@@ -39,3 +39,11 @@ Dec 9-10 2024: Ran fio with b17ee402 on Windows (compiled against DRBD 9.1)
 Stats:
   WRITE: bw=25.3MiB/s (26.6MB/s), 6363KiB/s-6569KiB/s (6516kB/s-6727kB/s), io=14
 25GiB (1530GB), run=57600000-57600033msec
+
+### disconnect / connect / wait-connect
+
+Dec 27-28: with cdc87c08 for drbd-9.1 (but checked 9.0 and 9.2 also)
+	18226 iterations (in about 22 hours)
+	With focus on execution speed (average 5 seconds / run but
+	reconnect sometimes takes > 10sec, which is probably also on
+	Linux DRBD). So I would say fast enough.
