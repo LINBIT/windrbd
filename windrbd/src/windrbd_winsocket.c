@@ -1071,23 +1071,30 @@ int sock_sendmsg(struct socket *sock, struct msghdr *msg)
 	return kernel_sendmsg(sock, msg, &vec, 1, vec.iov_len);
 }
 
-/* TODO: flags != windows flags!!! */
+/* Low level sending function. Waits if the send buffer is full.
+ * Sends len bytes from buffer buf using connected socket socket.
+ * page is just for grabbing a reference to the page (and releasing
+ * it in the completion routine) if the buffer is referenced by
+ * a page. It may be NULL.
+ */
 
-ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_t len, int flags)
+static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *page)
 {
 	struct _IRP *Irp;
 	struct _WSK_BUF *WskBuffer;
 	struct send_page_completion_info *completion;
 	NTSTATUS status;
 	int err, err2;
+	int flags = 0;
 
-	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !page || ((int) len <= 0))
+	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !buf || ((int) len <= 0))
 		return -EINVAL;
 
 	if (socket->error_status != 0)
 		return socket->error_status;
 
-	get_page(page);		/* we might sleep soon, do this before */
+	if (page)
+		get_page(page);	/* we might sleep soon, do this before */
 
 printk("socket sendbuffer: %d len is %d socket->sk->sk_wmem_queued is %d\n", socket->sk->sk_sndbuf, len, socket->sk->sk_wmem_queued);
 	err = wait_for_sendbuf(socket, len);
@@ -1106,15 +1113,13 @@ printk("socket sendbuffer: %d len is %d socket->sk->sk_wmem_queued is %d\n", soc
 		goto out_free_wsk_buffer;
 	}
 
-// printk("page: %p page->addr: %p page->size: %d offset: %d len: %d page->kref.refcount: %d\n", page, page->addr, page->size, offset, len, page->kref.refcount);
-
-	status = InitWskBuffer((void*) (((unsigned char *) page->addr)+offset), len, WskBuffer, FALSE, TRUE);
+	status = InitWskBuffer(buf, len, WskBuffer, FALSE, TRUE);
 	if (!NT_SUCCESS(status)) {
 		err = -ENOMEM;
 		goto out_free_completion;
 	}
 
-	completion->page = page;
+	completion->page = page;	/* may be NULL */
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
 	completion->the_mdl = WskBuffer->Mdl;
@@ -1200,12 +1205,22 @@ out_free_wsk_buffer:
 out_have_sent:
 	have_sent(socket, len);
 out_put_page:
-	put_page(page);
+	if (page)
+		put_page(page);
 
 	if (err != 0 && err != -ENOMEM && err != -EAGAIN && err != -EINTR)
 		socket->error_status = err;
 	return err;
 }
+
+ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_t len, int flags)
+{
+	if (!page)
+		return -EINVAL;
+
+	return do_send(socket, (void*) (((unsigned char *) page->addr)+offset), len, page);
+}
+
 
 /* Do not use printk's in here, will loop forever... */
 
