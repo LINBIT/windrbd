@@ -379,7 +379,7 @@ static void have_sent(struct socket *socket, size_t length)
 static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVICE_OBJECT	*DeviceObject, struct _IRP *Irp,void *completion_p)
 {
 	struct send_page_completion_info *completion = completion_p;
-	int may_printk = completion->page != NULL; /* called from SendPage */
+	int may_printk = completion->socket->wsk_flags != WSK_FLAG_DATAGRAM_SOCKET; /* called from SendPage */
 	size_t length;
 
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
@@ -922,8 +922,10 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !buf || ((int) len <= 0))
 		return -EINVAL;
 
-	if (socket->error_status != 0)
+	if (socket->error_status != 0) {
+printk("error status is already %d returning it\n", socket->error_status);
 		return socket->error_status;
+}
 
 	if (page)
 		get_page(page);	/* we might sleep soon, do this before */
@@ -1068,9 +1070,9 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	return bytes_sent;
 }
 
-int sock_sendmsg(struct socket *sock, struct msghdr *msg)
+int sock_sendmsg(struct socket *socket, struct msghdr *msg)
 {
-	struct bio_vec *bio_vec = msg->msg_iter.bvec;
+	const struct bio_vec *bio_vec = msg->msg_iter.bvec;
 
 	return do_send(socket, bio_vec->bv_page->addr+bio_vec->bv_offset, bio_vec->bv_len, NULL);
 }
