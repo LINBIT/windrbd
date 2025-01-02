@@ -1074,7 +1074,7 @@ int sock_sendmsg(struct socket *socket, struct msghdr *msg)
 {
 	const struct bio_vec *bio_vec = msg->msg_iter.bvec;
 
-	return do_send(socket, bio_vec->bv_page->addr+bio_vec->bv_offset, bio_vec->bv_len, NULL);
+	return do_send(socket, bio_vec->bv_page->addr+bio_vec->bv_offset, bio_vec->bv_len, bio_vec->bv_page);
 }
 
 /* Do not use printk's in here, will loop forever... */
