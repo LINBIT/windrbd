@@ -903,157 +903,6 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 	return 0;
 }
 
-
-	/* TODO: maybe one day we also eliminate this function. It
-	 * is currently only used for sending the first packet.
-	 * Even more now when we do not have send buf implemented here..
-	 *
-	 * Update: According to Lars all Linux kernel send functions
-	 * are 'non-blocking' in the sense that they just fill the
-	 * TCP/IP (or UDP) send buffer and return. They only block
-	 * if the send buffer is full.
-	 *
-	 * merge this function with SendTo(), making it non-blocking
-	 */
-
-	/* TODO: implement MSG_MORE? */
-
-
-int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
-                   size_t num, size_t len)
-{
-	KEVENT		CompletionEvent = { 0 };
-	PIRP		Irp = NULL;
-	WSK_BUF		WskBuffer = { 0 };
-	LONG		BytesSent;
-	NTSTATUS	Status;
-	ULONG Flags = 0;
-
-	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
-		return -EINVAL;
-
-	if (num != 1)
-		return -EOPNOTSUPP;
-
-	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, FALSE, TRUE);
-	if (!NT_SUCCESS(Status)) {
-		return winsock_to_linux_error(Status);
-	}
-
-	Irp = wsk_new_irp(&CompletionEvent, NULL);
-	if (Irp == NULL) {
-		FreeWskBuffer(&WskBuffer, 1);
-		return -ENOMEM;
-	}
-
-	if (socket->no_delay)
-		Flags |= WSK_FLAG_NODELAY;
-	else
-		Flags &= ~WSK_FLAG_NODELAY;
-
-	mutex_lock(&socket->wsk_mutex);
-
-	if (socket->wsk_socket == NULL) {
-		mutex_unlock(&socket->wsk_mutex);
-		FreeWskBuffer(&WskBuffer, 1);
-		return winsock_to_linux_error(Status);
-	}
-
-	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
-		socket->wsk_socket,
-		&WskBuffer,
-		Flags,
-		Irp);
-
-	mutex_unlock(&socket->wsk_mutex);
-
-	if (Status == STATUS_PENDING)
-	{
-		LARGE_INTEGER	nWaitTime;
-		LARGE_INTEGER	*pTime;
-
-		if (socket->sk->sk_sndtimeo <= 0 || socket->sk->sk_sndtimeo == MAX_SCHEDULE_TIMEOUT)
-		{
-			pTime = NULL;
-		}
-		else
-		{
-			nWaitTime.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
-			pTime = &nWaitTime;
-		}
-		{
-			PVOID       waitObjects[2];
-			int         wObjCount = 1;
-
-			waitObjects[0] = (PVOID) &CompletionEvent;
-
-			Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-
-			switch (Status)
-			{
-			case STATUS_TIMEOUT:
-				IoCancelIrp(Irp);
-				KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-				BytesSent = -EAGAIN;
-				break;
-
-			case STATUS_WAIT_0:
-				if (NT_SUCCESS(Irp->IoStatus.Status))
-				{
-					BytesSent = (LONG)Irp->IoStatus.Information;
-				}
-				else
-				{
-					printk("tx error(%x) wsk(0x%p)\n",Irp->IoStatus.Status, socket->wsk_socket);
-					switch (Irp->IoStatus.Status)
-					{
-						case STATUS_IO_TIMEOUT:
-							BytesSent = -EAGAIN;
-							break;
-						case STATUS_INVALID_DEVICE_STATE:
-							BytesSent = -EAGAIN;
-							break;
-						default:
-							BytesSent = -ECONNRESET;
-							break;
-					}
-				}
-				break;
-
-			//case STATUS_WAIT_1: // common: sender or send_bufferinf thread's kill signal
-			//	IoCancelIrp(Irp);
-			//	KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-			//	BytesSent = -EINTR;
-			//	break;
-
-			default:
-				printk(KERN_ERR "Wait failed. status 0x%x\n", Status);
-				BytesSent = winsock_to_linux_error(Status);
-			}
-		}
-	}
-	else
-	{
-		if (Status == STATUS_SUCCESS)
-		{
-			BytesSent = (LONG) Irp->IoStatus.Information;
-			printk("WskSend No pending: but sent(%d)!\n", BytesSent);
-		}
-		else
-		{
-			printk("WskSend error(0x%x)\n", Status);
-			BytesSent = winsock_to_linux_error(Status);
-		}
-	}
-
-
-	IoFreeIrp(Irp);
-	FreeWskBuffer(&WskBuffer, 1);
-
-dbg("returning %d\n", BytesSent);
-	return BytesSent;
-}
-
 int sock_sendmsg(struct socket *sock, struct msghdr *msg)
 {
 	struct bio_vec *bio_vec = msg->msg_iter.bvec;
@@ -1201,7 +1050,7 @@ out_put_page:
 	return err;
 }
 
-ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_t len, int flags)
+static ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_t len, int flags)
 {
 	if (!page)
 		return -EINVAL;
@@ -1209,6 +1058,25 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 	return do_send(socket, (void*) (((unsigned char *) page->addr)+offset), len, page);
 }
 
+
+	/* TODO: implement MSG_MORE? */
+
+int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
+                   size_t num, size_t len)
+{
+	int i, ret, bytes_sent;
+
+	bytes_sent = 0;
+	for (i=0;i<num;i++) {
+		ret = do_send(socket, vec[i].iov_base, vec[i].iov_len, NULL);
+		if (ret < 0)
+			return ret;
+		bytes_sent += ret;
+		if (ret != vec[i].iov_len)
+			break;
+	}
+	return bytes_sent;
+}
 
 /* Do not use printk's in here, will loop forever... */
 
