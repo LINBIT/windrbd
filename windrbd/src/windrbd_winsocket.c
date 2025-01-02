@@ -26,11 +26,6 @@
 
 struct net init_net;
 
-	/* Else: sorry no Winsocket API (Window Server 2003, ReactOS) */
-#ifdef CONFIG_HAVE_NETIO_DRIVER
-// #if (NTDDI_VERSION >= NTDDI_VISTA)
-
-
 /* Protects from API functions being called before the WSK provider is
  * initialized (see SocketsInit).
  */
@@ -2149,92 +2144,4 @@ void windrbd_shutdown_wsk(void)
 
 	SocketsDeinit();
 }
-
-#else
-
-/* This currently hangs on booting (at least on Windows) */
-
-int windrbd_wait_for_network(void)
-{
-	return 0;
-}
-
-int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
-{
-	return -ENOTSUP;
-}
-
-int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
-{
-	return -ENOTSUP;
-}
-
-int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
-                   size_t num, size_t len)
-{
-	return -ENOTSUP;
-}
-
-ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_t len, int flags)
-{
-	return -ENOTSUP;
-}
-
-int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress)
-{
-	return -ENOTSUP;
-}
-
-int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
-                   size_t num, size_t len, int flags)
-{
-	return -ENOTSUP;
-}
-
-int kernel_setsockopt(struct socket *sock, int level, int optname, char *optval,
-		      unsigned int optlen)
-{
-	return -ENOTSUP;
-}
-
-int sock_create_kern(struct net *net, int family, int type, int proto, struct socket **res)
-{
-	return -ENOTSUP;
-}
-
-void sock_release(struct socket *sock)
-{
-}
-
-void windrbd_update_socket_buffer_sizes(struct socket *socket)
-{
-}
-
-int sock_set_keepalive(struct sock *socket)
-{
-	return 0;
-}
-
-void tcp_sock_set_nodelay(struct sock *sk)
-{ 
-}
-
-void tcp_sock_set_cork(struct sock *sk, bool on)
-{
-}
-
-void tcp_sock_set_quickack(struct sock *sk, int val)
-{
-}
-
-NTSTATUS windrbd_init_wsk(void)
-{
-	return STATUS_SUCCESS;
-}
-
-void windrbd_shutdown_wsk(void)
-{
-}
-
-#endif
 
