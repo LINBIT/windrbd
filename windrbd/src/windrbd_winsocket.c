@@ -947,15 +947,9 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	}
 
 	if (socket->no_delay)
-{
-printk("no delay\n");
 		Flags |= WSK_FLAG_NODELAY;
-}
 	else
-{
-printk("delay\n");
 		Flags &= ~WSK_FLAG_NODELAY;
-}
 
 	mutex_lock(&socket->wsk_mutex);
 
@@ -1096,7 +1090,7 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 	if (page)
 		get_page(page);	/* we might sleep soon, do this before */
 
-printk("socket sendbuffer: %d len is %d socket->sk->sk_wmem_queued is %d\n", socket->sk->sk_sndbuf, len, socket->sk->sk_wmem_queued);
+// printk("socket sendbuffer: %d len is %d socket->sk->sk_wmem_queued is %d\n", socket->sk->sk_sndbuf, len, socket->sk->sk_wmem_queued);
 	err = wait_for_sendbuf(socket, len);
 	if (err < 0)
 		goto out_put_page;
@@ -1140,15 +1134,9 @@ printk("socket sendbuffer: %d len is %d socket->sk->sk_wmem_queued is %d\n", soc
 	IoSetCompletionRoutine(Irp, send_page_completion_onlyonce, completion, TRUE, TRUE, TRUE);
 
 	if (socket->no_delay)
-{
 		flags |= WSK_FLAG_NODELAY;
-printk("no delay\n");
-}
 	else
-{
 		flags &= ~WSK_FLAG_NODELAY;
-printk("delay\n");
-}
 
 	mutex_lock(&socket->wsk_mutex);
 
