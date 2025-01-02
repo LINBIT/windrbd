@@ -903,17 +903,6 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
 	return 0;
 }
 
-int sock_sendmsg(struct socket *sock, struct msghdr *msg)
-{
-	struct bio_vec *bio_vec = msg->msg_iter.bvec;
-	struct kvec vec = {
-		.iov_base = bio_vec->bv_page->addr+bio_vec->bv_offset,
-		.iov_len = bio_vec->bv_len,
-	};
-
-	return kernel_sendmsg(sock, msg, &vec, 1, vec.iov_len);
-}
-
 /* Low level sending function. Waits if the send buffer is full.
  * Sends len bytes from buffer buf using connected socket socket.
  * page is just for grabbing a reference to the page (and releasing
@@ -1060,6 +1049,7 @@ static ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset
 
 
 	/* TODO: implement MSG_MORE? */
+	/* TODO: honor len */
 
 int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len)
@@ -1076,6 +1066,13 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			break;
 	}
 	return bytes_sent;
+}
+
+int sock_sendmsg(struct socket *sock, struct msghdr *msg)
+{
+	struct bio_vec *bio_vec = msg->msg_iter.bvec;
+
+	return do_send(socket, bio_vec->bv_page->addr+bio_vec->bv_offset, bio_vec->bv_len, NULL);
 }
 
 /* Do not use printk's in here, will loop forever... */
