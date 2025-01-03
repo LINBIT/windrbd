@@ -25,17 +25,16 @@ struct sock {
 
 	void *sk_user_data;
 	void (*sk_state_change)(struct sock *sk);
-	/* TODO: implement this: */
 	void (*sk_data_ready)(struct sock *sk);
-	spinlock_t sk_callback_lock;
+	void (*sk_write_space)(struct sock *sk);
 
+	spinlock_t sk_callback_lock;
 	struct socket *sk_socket;
 
 	/* TODO: those are used by drbd_transport_tcp but not implemented
 	 * in WinDRBD.
 	 */
 
-	void (*sk_write_space)(struct sock *sk);
 	unsigned char sk_reuse:4;
 	gfp_t sk_allocation;
 	__u32 sk_priority;
