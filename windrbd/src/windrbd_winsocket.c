@@ -466,8 +466,11 @@ static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 	while (1) {
 		spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
 
+/*
 		if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf ||
 		    socket->num_sends_inflight > 1000) { // TODO: make configurable
+*/
+		if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf) {
 			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
 
 			timeout.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
