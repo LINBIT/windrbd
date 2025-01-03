@@ -379,7 +379,7 @@ static void have_sent(struct socket *socket, size_t length)
 static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVICE_OBJECT	*DeviceObject, struct _IRP *Irp,void *completion_p)
 {
 	struct send_page_completion_info *completion = completion_p;
-	int may_printk = completion->socket->wsk_flags != WSK_FLAG_DATAGRAM_SOCKET; /* called from SendPage */
+	int may_printk = completion->socket->wsk_flags != WSK_FLAG_DATAGRAM_SOCKET;
 	size_t length;
 
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
@@ -908,9 +908,12 @@ int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
  * page is just for grabbing a reference to the page (and releasing
  * it in the completion routine) if the buffer is referenced by
  * a page. It may be NULL.
+ * RemoteAddress is the remote address if the socket is a datagram
+ * (i.e. UDP) socket. In that case WskSendTo (instead of WskSend)
+ * will be called.
  */
 
-static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *page)
+static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *page, PSOCKADDR RemoteAddress)
 {
 	struct _IRP *Irp;
 	struct _WSK_BUF *WskBuffer;
@@ -1003,12 +1006,22 @@ printk("error status is already %d returning it\n", socket->error_status);
 		err = -ENOTCONN;
 		goto out_unlock_mutex;
 	}
-	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
-		socket->wsk_socket,
-		WskBuffer,
-		flags,
-		Irp);
-
+	if (socket->wsk_flags == WSK_FLAG_DATAGRAM_SOCKET) {
+		status = ((PWSK_PROVIDER_DATAGRAM_DISPATCH) socket->wsk_socket->Dispatch)->WskSendTo(
+			socket->wsk_socket,
+			WskBuffer,
+			0,
+			RemoteAddress,
+			0,
+			NULL,
+			Irp);
+	} else {
+		status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
+			socket->wsk_socket,
+			WskBuffer,
+			flags,
+			Irp);
+	}
 	mutex_unlock(&socket->wsk_mutex);
 
 	switch (status) {
@@ -1067,7 +1080,7 @@ static ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset
 	if (!page)
 		return -EINVAL;
 
-	return do_send(socket, (void*) (((unsigned char *) page->addr)+offset), len, page);
+	return do_send(socket, (void*) (((unsigned char *) page->addr)+offset), len, page, NULL);
 }
 
 
@@ -1081,7 +1094,7 @@ int kernel_sendmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	bytes_sent = 0;
 	for (i=0;i<num;i++) {
-		ret = do_send(socket, vec[i].iov_base, vec[i].iov_len, NULL);
+		ret = do_send(socket, vec[i].iov_base, vec[i].iov_len, NULL, NULL);
 		if (ret < 0)
 			return ret;
 		bytes_sent += ret;
@@ -1095,105 +1108,16 @@ int sock_sendmsg(struct socket *socket, struct msghdr *msg)
 {
 	const struct bio_vec *bio_vec = msg->msg_iter.bvec;
 
-	return do_send(socket, bio_vec->bv_page->addr+bio_vec->bv_offset, bio_vec->bv_len, bio_vec->bv_page);
+	return do_send(socket, bio_vec->bv_page->addr+bio_vec->bv_offset, bio_vec->bv_len, bio_vec->bv_page, NULL);
 }
 
 /* Do not use printk's in here, will loop forever... */
 
-int SendTo(struct socket *socket, void *Buffer, size_t BufferSize, PSOCKADDR RemoteAddress)
+int SendTo(struct socket *socket, void *buf, size_t len, PSOCKADDR RemoteAddress)
 {
-	struct _IRP *irp;
-	struct _WSK_BUF *WskBuffer;
-	struct send_page_completion_info *completion;
-
-		/* We copy what we send to a tmp buffer, so
-		 * caller may free or use otherwise what we
-		 * have got in Buffer.
-		 */
-
-	char *tmp_buffer;
-	NTSTATUS status;
-	int err;
-
-	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !Buffer || !BufferSize)
-		return -EINVAL;
-
-	if (socket->error_status != 0)
-		return socket->error_status;
-
-	err = wait_for_sendbuf(socket, BufferSize);
-	if (err < 0)
-		return err;
-
-	WskBuffer = kzalloc(sizeof(*WskBuffer), GFP_KERNEL);
-	if (WskBuffer == NULL) {
-		have_sent(socket, BufferSize);
-		return -ENOMEM;
-	}
-
-	completion = kzalloc(sizeof(*completion), GFP_KERNEL);
-	if (completion == NULL) {
-		have_sent(socket, BufferSize);
-		kfree(WskBuffer);
-		return -ENOMEM;
-	}
-
-	tmp_buffer = kmalloc(BufferSize, GFP_KERNEL);
-	if (tmp_buffer == NULL) {
-		have_sent(socket, BufferSize);
-		kfree(completion);
-		kfree(WskBuffer);
-		return -ENOMEM;
-	}
-	memcpy(tmp_buffer, Buffer, BufferSize);
-
-	status = InitWskBuffer(tmp_buffer, BufferSize, WskBuffer, FALSE, FALSE);
-	if (!NT_SUCCESS(status)) {
-		have_sent(socket, BufferSize);
-		kfree(completion);
-		kfree(WskBuffer);
-		kfree(tmp_buffer);
-		return -ENOMEM;
-	}
-
-	completion->data_buffer = tmp_buffer;
-	completion->wsk_buffer = WskBuffer;
-	completion->socket = socket;
-	completion->the_mdl = WskBuffer->Mdl;
-	kref_get(&socket->kref);
-
-	irp = IoAllocateIrp(1, FALSE);
-	if (irp == NULL) {
-        	kref_put(&socket->kref, sock_really_free);
-		have_sent(socket, BufferSize);
-		kfree(completion);
-		kfree(WskBuffer);
-		kfree(tmp_buffer);
-		FreeWskBuffer(WskBuffer, 0);
-		return -ENOMEM;
-	}
-	irp->Tail.Overlay.Thread = PsGetCurrentThread();
-	IoSetCompletionRoutine(irp, SendPageCompletionRoutine, completion, TRUE, TRUE, TRUE);
-
-	status = ((PWSK_PROVIDER_DATAGRAM_DISPATCH) socket->wsk_socket->Dispatch)->WskSendTo(
-		socket->wsk_socket,
-		WskBuffer,
-		0,
-		RemoteAddress,
-		0,
-		NULL,
-		irp);
-
-		/* Again if not yet sent, pretend that it has been sent,
-		 * followup calls to SendTo() on that socket will report
-		 * errors. This is how Linux behaves.
-		 */
-
-	if (status == STATUS_PENDING)
-		status = STATUS_SUCCESS;
-
-	return status == STATUS_SUCCESS ? BufferSize : winsock_to_linux_error(status);
+	return do_send(socket, buf, len, NULL, RemoteAddress);
 }
+
 
 static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len, int flags)
