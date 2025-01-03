@@ -918,6 +918,7 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 	NTSTATUS status;
 	int err, err2;
 	int flags = 0;
+	char *tmp_buffer;
 
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !buf || ((int) len <= 0))
 		return -EINVAL;
@@ -946,13 +947,31 @@ printk("error status is already %d returning it\n", socket->error_status);
 		err = -ENOMEM;
 		goto out_free_wsk_buffer;
 	}
+	if (page == NULL) {
 
-	status = InitWskBuffer(buf, len, WskBuffer, FALSE, TRUE);
+		/* We copy what we send to a tmp buffer, so
+		 * caller may free or use otherwise what we
+		 * have got in Buffer.
+		 */
+
+		tmp_buffer = kmalloc(len, GFP_KERNEL);
+		if (tmp_buffer == NULL) {
+			err = -ENOMEM;
+			goto out_free_completion;
+		}
+		memcpy(tmp_buffer, buf, len);
+
+		status = InitWskBuffer(tmp_buffer, len, WskBuffer, FALSE, TRUE);
+	} else {
+		tmp_buffer = NULL;
+		status = InitWskBuffer(buf, len, WskBuffer, FALSE, TRUE);
+	}
 	if (!NT_SUCCESS(status)) {
 		err = -ENOMEM;
-		goto out_free_completion;
+		goto out_maybe_free_tmp_buffer;
 	}
 
+	completion->data_buffer = tmp_buffer;  /* may be NULL */
 	completion->page = page;	/* may be NULL */
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
@@ -1026,6 +1045,8 @@ out_remove_completion:
 out_free_wsk_buffer_mdl:
         kref_put(&socket->kref, sock_really_free);
 	FreeWskBuffer(WskBuffer, 1);
+out_maybe_free_tmp_buffer:
+	kfree(tmp_buffer);
 out_free_completion:
 	kfree(completion);
 out_free_wsk_buffer:
