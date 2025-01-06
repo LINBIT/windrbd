@@ -148,10 +148,14 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 	drbd_device = bdev->drbd_device;
 	if (drbd_device != NULL) {
 		resource = drbd_device->resource;
-		if (resource == NULL)
+		if (resource == NULL) {
+printk("1 STATUS_INVALID_PARAMETER...\n");
 			return STATUS_INVALID_PARAMETER;
-	} else
+}
+	} else {
+printk("2 STATUS_INVALID_PARAMETER...\n");
 		return STATUS_INVALID_PARAMETER;
+}
 
 	/* TODO: should we keep the auto-promote support code here.
 	   It works pretty well, just need to export try_to_promote in
@@ -601,6 +605,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 			drbd_dev = minor_to_device(*the_minor);
 			if (drbd_dev == NULL || drbd_dev->vdisk == NULL || drbd_dev->vdisk->part0) {
 				printk("No such DRBD minor: %d\n", *the_minor);
+printk("3 STATUS_INVALID_PARAMETER...\n");
 				status = STATUS_INVALID_PARAMETER;
 			} else {
 				/* reverse logic ... */
@@ -621,6 +626,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 			drbd_dev = minor_to_device(*the_minor);
 			if (drbd_dev == NULL || drbd_dev->vdisk->part0 == NULL) {
 				printk("No such DRBD minor: %d\n", *the_minor);
+printk("4 STATUS_INVALID_PARAMETER...\n");
 				status = STATUS_INVALID_PARAMETER;
 			} else {
 					/* reverse logic ... */
@@ -1135,7 +1141,8 @@ printk("StorageDeviceTrimProperty ...\n");
 	default:
 printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 
-		status = STATUS_INVALID_PARAMETER;
+printk("5 STATUS_INVALID_PARAMETER...but returning STATUS_NOT_IMPLEMENTED\n");
+		status = STATUS_NOT_IMPLEMENTED;
 	}
 
 out:
@@ -1530,7 +1537,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		return STATUS_INVALID_PARAMETER;
 	}
 	if (sector * dev->bd_block_size >= dev->bd_inode->i_size) {
-		dbg("Attempt to read past the end of the device: dev->bd_block_size is %d sector is %lld (%llu) byte offset is %lld (%llu) dev->bd_inode->i_size is %lld rw is %s\n", dev->bd_block_size, sector, sector, sector * dev->bd_block_size, sector * dev->bd_block_size, dev->bd_inode->i_size, rw == WRITE ? "WRITE" : "READ");
+		printk("Attempt to read past the end of the device: dev->bd_block_size is %d sector is %lld (%llu) byte offset is %lld (%llu) dev->bd_inode->i_size is %lld rw is %s\n", dev->bd_block_size, sector, sector, sector * dev->bd_block_size, sector * dev->bd_block_size, dev->bd_inode->i_size, rw == WRITE ? "WRITE" : "READ");
 		return STATUS_INVALID_PARAMETER;
 	}
 	if (sector * dev->bd_block_size + total_size > dev->bd_inode->i_size) {
@@ -1726,7 +1733,7 @@ static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_devic
 			/* TODO: this sometimes happens with windrbd-test.
 			 * Find out why.
 			 */
-		dbg("MdlAddress is NULL.\n");
+		printk("MdlAddress is NULL.\n");
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -2949,6 +2956,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 						if (rw == READ) {
 							memset(buffer, 0, n);
 						} else {
+printk("6 STATUS_INVALID_PARAMETER\n");
 							status = STATUS_INVALID_PARAMETER;
 						}
 					}
@@ -3003,6 +3011,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 							printk("WRITE to backup partition table !!\n");
 							memcpy(bdev->disk_epilog+(start_sector-first_backup_sector)*512, buffer, sector_count*512);
 						} else {
+printk("7 STATUS_INVALID_PARAMETER\n");
 							status = STATUS_INVALID_PARAMETER;
 						}
 					}
