@@ -65,8 +65,10 @@ static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 
 static int winsock_to_linux_error(NTSTATUS status)
 {
+/*
 	if (status != STATUS_SUCCESS)
 		printk("got status %x\n", status);
+*/
 
 	switch (status) {
 	case STATUS_SUCCESS:
@@ -76,7 +78,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 	case STATUS_CONNECTION_DISCONNECTED:
 		return -ECONNRESET;
 	case STATUS_CONNECTION_ABORTED:
-		printk("Got STATUS_CONNECTION_ABORTED returning -ECONNRESET ...\n");
+//		printk("Got STATUS_CONNECTION_ABORTED returning -ECONNRESET ...\n");
 		return -ECONNRESET;	/* was: -ECONNABORTED */
 	case STATUS_IO_TIMEOUT:
 	case STATUS_TIMEOUT:
@@ -94,16 +96,16 @@ static int winsock_to_linux_error(NTSTATUS status)
 //		printk("Got STATUS_ACCESS_DENIED, please check your firewall settings\n");
 		return -EAGAIN;
 	case STATUS_LOCAL_DISCONNECT: /* Sent by ReactOS on connection timeout */
-		printk("Got STATUS_LOCAL_DISCONNECT returning -ECONNRESET ...\n");
+//		printk("Got STATUS_LOCAL_DISCONNECT returning -ECONNRESET ...\n");
 		return -ECONNRESET;
 
 
 	case STATUS_REMOTE_DISCONNECT:	/* Sometimes they happen on ReactOS */
-		printk("Got STATUS_REMOTE_DISCONNECT returning -ECONNRESET ...\n");
+//		printk("Got STATUS_REMOTE_DISCONNECT returning -ECONNRESET ...\n");
 		return -ECONNRESET;
 
 	case STATUS_FILE_CLOSED:
-		printk("Got STATUS_FILE_CLOSED returning -ECONNRESET ...\n");
+//		printk("Got STATUS_FILE_CLOSED returning -ECONNRESET ...\n");
 		return -ECONNRESET;
 
 	default:
@@ -930,7 +932,7 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 		return -EINVAL;
 
 	if (socket->error_status != 0) {
-printk("error status is already %d returning it\n", socket->error_status);
+// printk("error status is already %d returning it\n", socket->error_status);
 		return socket->error_status;
 }
 
