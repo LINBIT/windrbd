@@ -2,25 +2,6 @@ TODOs for Release 1.1.0 ----------------------------------------
 
 TODOs for 1.1 branch  ----------------------------------------
 
-TODO: Bug: list corruption in connection->todo.work_list
-
-	When resetting peer every 5 minutes.
-
-	This appears to be a DRBD bug:
-
-<6> 06.05.2024 U02:06:49.663 (819044118722/3579545)|FFFFC183AF6C9550(drbd_s_test1) #70058 change_cluster_wide_state drbd test1, r(Secondary), f(0x0), scf(0x83a): State change 3537994042: primary_nodes=0, weak_nodes=0
-<6> 06.05.2024 U02:06:49.663 (819044130365/3579545)|FFFFC183AF6C9550(drbd_s_test1) #70059 change_cluster_wide_state drbd test1, r(Secondary), f(0x0), scf(0x83a): Committing cluster-wide state change 3537994042 (31ms)
-<7> 06.05.2024 U02:06:49.663 (819044148533/3579545)|FFFFC183AF6C9550(drbd_s_test1) #70060 conn_send_twopc_request drbd test1 pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x20200e), scf(0x83a): Sending P_TWOPC_COMMIT request for state change 3537994042
-
-	Update: Stack paged out?
-
-TODO: Bug: list corruption in wake_up / complete_master_bio
-
-	We have a MEMORY.DMP from the field, analyze shows a
-	NULL pointer in wake_up_all_debug.
-
-	Update: Stack paged out?
-
 TODOs for Release 1.2 ----------------------------------------
 
 TODO: Feature: sync filesystem(s) on drbdadm secondary
@@ -8695,4 +8676,23 @@ Rejected: Bug: umhelper cannot find /var/lib/drbd-test
 
 	Probably because it is running as a service.
 	Still an issue? -> reopen.
+
+Done: Bug: list corruption in connection->todo.work_list
+
+	When resetting peer every 5 minutes.
+
+	This appears to be a DRBD bug:
+
+<6> 06.05.2024 U02:06:49.663 (819044118722/3579545)|FFFFC183AF6C9550(drbd_s_test1) #70058 change_cluster_wide_state drbd test1, r(Secondary), f(0x0), scf(0x83a): State change 3537994042: primary_nodes=0, weak_nodes=0
+<6> 06.05.2024 U02:06:49.663 (819044130365/3579545)|FFFFC183AF6C9550(drbd_s_test1) #70059 change_cluster_wide_state drbd test1, r(Secondary), f(0x0), scf(0x83a): Committing cluster-wide state change 3537994042 (31ms)
+<7> 06.05.2024 U02:06:49.663 (819044148533/3579545)|FFFFC183AF6C9550(drbd_s_test1) #70060 conn_send_twopc_request drbd test1 pnode-id:1, cs(Connecting), prole(Unknown), cflag(0x20200e), scf(0x83a): Sending P_TWOPC_COMMIT request for state change 3537994042
+
+	Update: Stack paged out?
+
+Done: Bug: list corruption in wake_up / complete_master_bio
+
+	We have a MEMORY.DMP from the field, analyze shows a
+	NULL pointer in wake_up_all_debug.
+
+	Update: Stack paged out?
 
