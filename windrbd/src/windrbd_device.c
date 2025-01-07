@@ -46,12 +46,10 @@
 #define dbg_bus(format, ...)   \
     _printk(__FUNCTION__, format, __VA_ARGS__)
 #else
-#define dbg_bus(format, ...)   __noop
+#define dbg_bus(format, ...) 
 #endif
 
-/* Enable all warnings throws lots of those warnings: */
-#pragma warning(disable: 4061 4062 4255 4388 4668 4820 5032 4711 5045)
-
+#include "windrbd_internal.h"
 #include <wdm.h>
 #include <ntddk.h>
 #include <ntdddisk.h>
@@ -60,9 +58,8 @@
 #include <scsi.h>
 #include <ntddscsi.h>
 #include <ntddstor.h>
-#include <linux/module.h>
+#include <mountdev.h>
 
-#include "drbd_windows.h"
 #include "windrbd_device.h"
 #include "windrbd/windrbd_ioctl.h"
 #include "drbd_int.h"
@@ -211,7 +208,7 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *dev)
 {
 	g->BytesPerSector = dev->bd_block_size;
-	g->Cylinders.QuadPart = dev->d_size / dev->bd_block_size / 255 / 63;
+	g->Cylinders.QuadPart = dev->bd_inode->i_size / dev->bd_block_size / 255 / 63;
 	g->TracksPerCylinder = 255;
 	g->SectorsPerTrack = 63;
 	g->MediaType = FixedMedia;
@@ -220,7 +217,7 @@ static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *d
 static void fill_partition_info(struct _PARTITION_INFORMATION *p, struct block_device *dev)
 {
 	p->StartingOffset.QuadPart = 0;
-	p->PartitionLength.QuadPart = dev->d_size;
+	p->PartitionLength.QuadPart = dev->bd_inode->i_size;
 	p->HiddenSectors = 0;
 	p->PartitionNumber = 1;
 	p->PartitionType = PARTITION_ENTRY_UNUSED;
@@ -233,7 +230,7 @@ static void fill_partition_info_ex(struct _PARTITION_INFORMATION_EX *p, struct b
 {
 	p->PartitionStyle = PARTITION_STYLE_MBR;
 	p->StartingOffset.QuadPart = 0;
-	p->PartitionLength.QuadPart = dev->d_size;
+	p->PartitionLength.QuadPart = dev->bd_inode->i_size;
 	p->PartitionNumber = 1;
 	p->RewritePartition = FALSE;
 	p->Mbr.PartitionType = PARTITION_EXTENDED;
@@ -465,6 +462,7 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		struct windrbd_minor_mount_point *mp =
 			(struct windrbd_minor_mount_point*) irp->AssociatedIrp.SystemBuffer;
 
+#if 0
 		switch (windrbd_set_mount_point_for_minor_utf16(mp->minor, mp->mount_point)) {
 		case -EBUSY:
 			status = STATUS_DEVICE_BUSY;
@@ -480,6 +478,7 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		default:
 			status = STATUS_INVALID_DEVICE_REQUEST;
 		}
+#endif
 
 		irp->IoStatus.Information = 0;
 		break;
@@ -620,12 +619,12 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		} else {
 			struct drbd_device *drbd_dev;
 			drbd_dev = minor_to_device(*the_minor);
-			if (drbd_dev == NULL || drbd_dev->this_bdev == NULL) {
+			if (drbd_dev == NULL || drbd_dev->vdisk->part0 == NULL) {
 				printk("No such DRBD minor: %d\n", *the_minor);
 				status = STATUS_INVALID_PARAMETER;
 			} else {
 				/* reverse logic ... */
-				KeClearEvent(&drbd_dev->this_bdev->io_not_suspended);
+				KeClearEvent(&drbd_dev->vdisk->part0->io_not_suspended);
 			}
 		}
 		break;
@@ -640,12 +639,12 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 		} else {
 			struct drbd_device *drbd_dev;
 			drbd_dev = minor_to_device(*the_minor);
-			if (drbd_dev == NULL || drbd_dev->this_bdev == NULL) {
+			if (drbd_dev == NULL || drbd_dev->vdisk->part0 == NULL) {
 				printk("No such DRBD minor: %d\n", *the_minor);
 				status = STATUS_INVALID_PARAMETER;
 			} else {
 					/* reverse logic ... */
-				KeSetEvent(&drbd_dev->this_bdev->io_not_suspended, 0, FALSE);
+				KeSetEvent(&drbd_dev->vdisk->part0->io_not_suspended, 0, FALSE);
 			}
 		}
 		break;
@@ -729,7 +728,7 @@ printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 
 		struct _DISK_GEOMETRY_EX *g = irp->AssociatedIrp.SystemBuffer;
 		fill_drive_geometry(&g->Geometry, dev);
-		g->DiskSize.QuadPart = dev->d_size;
+		g->DiskSize.QuadPart = dev->bd_inode->i_size;
 		g->Data[0] = 0;
 
 		irp->IoStatus.Information = sizeof(struct _DISK_GEOMETRY_EX);
@@ -742,7 +741,7 @@ printk("ioctl is %x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		}
 
 		struct _GET_LENGTH_INFORMATION *l = irp->AssociatedIrp.SystemBuffer;
-		l->Length.QuadPart = dev->d_size;
+		l->Length.QuadPart = dev->bd_inode->i_size;
 		irp->IoStatus.Information = sizeof(struct _GET_LENGTH_INFORMATION);
 		break;
 
@@ -1289,7 +1288,7 @@ dbg("ref->bdev is %p, delete_pending is %d\n", ref->bdev, ref->bdev->delete_pend
 
 		if (dev->is_bootdevice) {
 dbg("into wait_for_becoming_primary\n");
-			status = wait_for_becoming_primary(dev->drbd_device->this_bdev);
+			status = wait_for_becoming_primary(dev->drbd_device->vdisk->part0);
 dbg("out of wait_for_becoming_primary, status is %x\n", status);
 			if (status != STATUS_SUCCESS)
 				goto exit;
@@ -1301,7 +1300,11 @@ dbg("out of wait_for_becoming_primary, status is %x\n", status);
 		dbg(KERN_INFO "DRBD device  request: opening DRBD device %s\n",
 			mode == 0 ? "read-only" : "read-write");
 
-		err = drbd_open(dev, mode);
+#if (defined DRBD_9_1) || (defined DRBD_9_2)
+                err = dev->bd_disk->fops->open(dev->bd_disk, mode);
+#else
+                err = dev->bd_disk->fops->open(dev, mode);
+#endif
 		dbg(KERN_DEBUG "drbd_open returned %d\n", err);
 		status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
 	} else {
@@ -1837,7 +1840,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	struct bio *bio;
 
 	int b;
-	struct bio_collection *common_data;
+	struct windrbd_bio_collection *common_data;
 	struct _KEVENT event;
 	NTSTATUS status;
 
@@ -1845,13 +1848,13 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		printk("Attempt to write when not Primary\n");
 		return STATUS_INVALID_PARAMETER;
 	}
-	if (sector * dev->bd_block_size >= dev->d_size) {
-		dbg("Attempt to read past the end of the device: dev->bd_block_size is %d sector is %lld (%llu) byte offset is %lld (%llu) dev->d_size is %lld rw is %s\n", dev->bd_block_size, sector, sector, sector * dev->bd_block_size, sector * dev->bd_block_size, dev->d_size, rw == WRITE ? "WRITE" : "READ");
+	if (sector * dev->bd_block_size >= dev->bd_inode->i_size) {
+		dbg("Attempt to read past the end of the device: dev->bd_block_size is %d sector is %lld (%llu) byte offset is %lld (%llu) dev->bd_inode->i_size is %lld rw is %s\n", dev->bd_block_size, sector, sector, sector * dev->bd_block_size, sector * dev->bd_block_size, dev->bd_inode->i_size, rw == WRITE ? "WRITE" : "READ");
 		return STATUS_INVALID_PARAMETER;
 	}
-	if (sector * dev->bd_block_size + total_size > dev->d_size) {
+	if (sector * dev->bd_block_size + total_size > dev->bd_inode->i_size) {
 		dbg("Attempt to read past the end of the device, request shortened\n");
-		total_size = dev->d_size - sector * dev->bd_block_size; 
+		total_size = dev->bd_inode->i_size - sector * dev->bd_block_size; 
 	}
 	if (total_size == 0) {
 		printk("I/O request of size 0.\n");
@@ -1877,7 +1880,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	if (last_bio_size == 0)
 		last_bio_size = MAX_BIO_SIZE;
 
-	common_data = kzalloc(sizeof(*common_data), GFP_KERNEL, 'DRBD');
+	common_data = kzalloc(sizeof(*common_data), GFP_KERNEL);
 	if (common_data == NULL) {
 		printk("Cannot allocate common data.\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
@@ -1899,7 +1902,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	for (b=0; b<bio_count; b++) {
 		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
 
-		bio = bio_alloc(GFP_NOIO, 1, 'DBRD');
+		bio = bio_alloc(GFP_NOIO, 1);
 		if (bio == NULL) {
 			printk("Couldn't allocate bio.\n");
 			return STATUS_INSUFFICIENT_RESOURCES;
@@ -1919,14 +1922,14 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 
 cond_printk("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
 
-		bio->bi_io_vec[0].bv_page = kzalloc(sizeof(struct page), GFP_KERNEL, 'DRBD');
+		bio->bi_io_vec[0].bv_page = kzalloc(sizeof(struct page), GFP_KERNEL);
 		if (bio->bi_io_vec[0].bv_page == NULL) {
 			printk("Couldn't allocate page.\n");
 			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
 		}
 
 		bio->bi_io_vec[0].bv_len = this_bio_size;
-		bio->bi_io_vec[0].bv_page->size = this_bio_size;
+//		bio->bi_io_vec[0].bv_page->size = this_bio_size;
 		kref_init(&bio->bi_io_vec[0].bv_page->kref);
 
 			/* Corresponding put_page in the free-mdl
@@ -1942,7 +1945,7 @@ cond_printk("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", se
 
 
 		if (irp != NULL && bio_data_dir(bio) == READ) {
-			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, GFP_KERNEL, 'DRBD');
+			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, GFP_KERNEL);
 		} else {
 			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
 			bio->bi_io_vec[0].bv_page->is_system_buffer = 1;
@@ -1984,7 +1987,7 @@ dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\
 		/* drbd_make_request(dev->drbd_device->rq_queue, bio); */
 		struct io_request *ioreq;
 
-		ioreq = kzalloc(sizeof(*ioreq), GFP_KERNEL, 'DRBD');
+		ioreq = kzalloc(sizeof(*ioreq), GFP_KERNEL);
 		if (ioreq == NULL) {
 			return -ENOMEM;	/* TODO: cleanup */
 		}
@@ -2122,7 +2125,7 @@ static NTSTATUS windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	if (dev->is_bootdevice && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		dbg("I/O request while not primary, waiting for primary.\n");
 
-		status = wait_for_becoming_primary(dev->drbd_device->this_bdev);
+		status = wait_for_becoming_primary(dev->drbd_device->vdisk->part0);
 		if (status != STATUS_SUCCESS)
 			goto exit_remove_lock;
 	}
@@ -2227,7 +2230,7 @@ static NTSTATUS windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 	struct bio *bio;
 	NTSTATUS status;
 
-	bio = bio_alloc(GFP_NOIO, 0, 'DBRD');
+	bio = bio_alloc(GFP_NOIO, 0);
 	if (bio == NULL) {
 		status = STATUS_INSUFFICIENT_RESOURCES;
 		goto exit;
@@ -2264,17 +2267,17 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 
 	for_each_resource(resource, &drbd_resources) {
 		idr_for_each_entry(&resource->devices, drbd_device, vnr) {
-			if (drbd_device && drbd_device->this_bdev && !drbd_device->this_bdev->delete_pending && drbd_device->this_bdev->windows_device != NULL && drbd_device->this_bdev->is_disk_device && !drbd_device->this_bdev->ejected) {
+			if (drbd_device && drbd_device->vdisk->part0 && !drbd_device->vdisk->part0->delete_pending && drbd_device->vdisk->part0->windows_device != NULL) {
 				if (count < max && array != NULL) {
-					array[count] = drbd_device->this_bdev->windows_device;
-					ObReferenceObject(drbd_device->this_bdev->windows_device);
+					array[count] = drbd_device->vdisk->part0->windows_device;
+					ObReferenceObject(drbd_device->vdisk->part0->windows_device);
 				}
-				dbg("windows device at %p\n", drbd_device->this_bdev->windows_device);
+				dbg("windows device at %p\n", drbd_device->vdisk->part0->windows_device);
 				count++;
 			}
-			if (drbd_device && drbd_device->this_bdev && drbd_device->this_bdev->delete_pending) {
+			if (drbd_device && drbd_device->vdisk->part0 && drbd_device->vdisk->part0->delete_pending) {
 				dbg("Found blockdev about to be deleted ...\n");
-				KeSetEvent(&drbd_device->this_bdev->bus_device_iterated, 0, FALSE);
+//				KeSetEvent(&drbd_device->vdisk->part0->bus_device_iterated, 0, FALSE);
 			}
 		}
 	}
@@ -2771,11 +2774,11 @@ if (status == STATUS_NOT_SUPPORTED) {
 				switch (s->Parameters.QueryId.IdType) {
 				case BusQueryDeviceID:
 			/* SCSI\\t\*v(8)p(16)r(4) */
-					swprintf(string, L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
+					_snwprintf(string, MAX_ID_LEN,L"SCSI\\DiskVENLINBITWINDRBDDISK_____0000");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryInstanceID:
-					swprintf(string, L"WinDRBD%d", minor);
+					_snwprintf(string,MAX_ID_LEN, L"WinDRBD%d", minor);
 					status = STATUS_SUCCESS;
 					break;
 /* TODO:
@@ -2787,26 +2790,26 @@ Red_Hat___________VirtIO0
 GenDisk
 */
 				case BusQueryHardwareIDs:
-					len = swprintf(string, L"SCSI\\DiskLinbit____________WinDRBD0001");
-					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit____________WinDRBD")+1;
-					len += swprintf(&string[len+1], L"SCSI\\DiskLinbit__")+1;
-					len += swprintf(&string[len+1], L"SCSI\\Linbit____________WinDRBD0")+1;
-					len += swprintf(&string[len+1], L"Linbit____________WinDRBD0")+1;
-					swprintf(&string[len+1], L"GenDisk");
+					len = _snwprintf(string, MAX_ID_LEN,L"SCSI\\DiskLinbit____________WinDRBD0001");
+					len += _snwprintf(&string[len+1],MAX_ID_LEN, L"SCSI\\DiskLinbit____________WinDRBD")+1;
+					len += _snwprintf(&string[len+1], MAX_ID_LEN,L"SCSI\\DiskLinbit__")+1;
+					len += _snwprintf(&string[len+1],MAX_ID_LEN, L"SCSI\\Linbit____________WinDRBD0")+1;
+					len += _snwprintf(&string[len+1],MAX_ID_LEN, L"Linbit____________WinDRBD0")+1;
+					_snwprintf(&string[len+1], MAX_ID_LEN,L"GenDisk");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryCompatibleIDs:
-					len = swprintf(string, L"WinDRBDDisk");
-					swprintf(&string[len+1], L"GenDisk");
-//					len = swprintf(string, L"GenDisk");
+					len = _snwprintf(string, MAX_ID_LEN,L"WinDRBDDisk");
+					_snwprintf(&string[len+1],MAX_ID_LEN, L"GenDisk");
+//					len = _snwprintf(string, L"GenDisk");
 					status = STATUS_SUCCESS;
 					break;
 				case BusQueryDeviceSerialNumber:
-					swprintf(string, L"%d", minor);
+					_snwprintf(string, MAX_ID_LEN, L"%d", minor);
 					status = STATUS_SUCCESS;
 					break;
 				case 5:
-					swprintf(string, L"%d", minor);
+					_snwprintf(string, MAX_ID_LEN, L"%d", minor);
 					status = STATUS_SUCCESS;
 					break;
 /*
@@ -2849,11 +2852,11 @@ dbg("Returned string is %S\n", string);
 		 * Update: we get a PNP BSOD on drbdadm down ...
 		 */
 
-			if (bdev == NULL || !bdev->is_disk_device || bdev->about_to_delete || bdev->ejected) {
+			if (bdev == NULL || bdev->about_to_delete) {
 				if (bdev == NULL) {
 					dbg("1 bdev is NULL not doing anything.\n");
 				} else {
-					dbg("Reasons: !bdev->is_disk_device %d bdev->about_to_delete %d bdev->ejected %d\n", !bdev->is_disk_device, bdev->about_to_delete, bdev->ejected);
+					dbg("Reasons: !bdev->is_disk_device %d bdev->about_to_delete %d bdev->ejected %d\n", bdev->about_to_delete, bdev->ejected);
 				}
 
 /* Do not change the status field. Driver verifier complains */
@@ -2963,7 +2966,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			RtlZeroMemory(string, (512 * sizeof(WCHAR)));
 			switch (s->Parameters.QueryDeviceText.DeviceTextType ) {
 			case DeviceTextDescription:
-				string_length = swprintf(string, L"WinDRBD Disk") + 1;
+				string_length = _snwprintf(string,MAX_ID_LEN, L"WinDRBD Disk") + 1;
 				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
 				if (irp->IoStatus.Information == 0) {
 					status = STATUS_INSUFFICIENT_RESOURCES;
@@ -2974,7 +2977,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 				break;
 
 			case DeviceTextLocationInformation:
-				string_length = swprintf(string, L"WinDRBD Minor %d", minor) + 1;
+				string_length = _snwprintf(string,MAX_ID_LEN, L"WinDRBD Minor %d", minor) + 1;
 
 				irp->IoStatus.Information = (ULONG_PTR)ExAllocatePoolWithTag(PagedPool, string_length * sizeof(WCHAR), 'DRBD');
 				if (irp->IoStatus.Information == 0) {
@@ -2992,9 +2995,11 @@ if (status == STATUS_NOT_SUPPORTED) {
 			break;
 		}
 
+/*
 		case IRP_MN_DEVICE_ENUMERATED:
 			status = STATUS_SUCCESS;
 			break;
+*/
 
 /* TODO: set PNP_DEVICE_NOT_DISABLEABLE on IRP_MN_QUERY_PNP_DEVICE_STATE */
 
@@ -3059,6 +3064,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			status = STATUS_SUCCESS;
 			break;
 
+#if 0
 		case IRP_MN_QUERY_REMOVE_DEVICE:
 			dbg("got IRP_MN_QUERY_REMOVE_DEVICE\n");
 				/* Prevent user space eject programs from
@@ -3242,6 +3248,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 			else
 				dbg("no bus object, cannot forward irp\n");
 			break;
+#endif
 
 		default:
 // printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
@@ -3432,9 +3439,9 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 				dbg("Got size now, proceeding with I/O request\n");
 
 				if (!bdev->powering_down && !bdev->delete_pending && !shutting_down)  {
-					if (bdev->d_size > 0) {
-						dbg("block device size is %lld\n", bdev->d_size);
-						d_size = bdev->d_size;
+					if (bdev->bd_inode->i_size > 0) {
+						dbg("block device size is %lld\n", bdev->bd_inode->i_size);
+						d_size = bdev->bd_inode->i_size;
 					} else {
 						dbg("Warning: block device size still not known yet.\n");
 					}
@@ -3490,12 +3497,12 @@ static void fake_partition_table(struct block_device *bdev)
 		0x10 Unique partition GUID (mixed endian)
 		0x28 Last LBA (inclusive, usually odd)
 	*/
-	partition_table = kzalloc(bdev->data_shift*512, GFP_KERNEL, 'DRBD');
+	partition_table = kzalloc(bdev->data_shift*512, GFP_KERNEL);
 	if (partition_table == NULL) {
 		printk("Warning: Not enough memory for partition table.\n");
 		return;
 	}
-	backup_partition_table = kzalloc(bdev->appended_sectors*512, GFP_KERNEL, 'DRBD');
+	backup_partition_table = kzalloc(bdev->appended_sectors*512, GFP_KERNEL);
 	if (backup_partition_table == NULL) {
 		kfree(partition_table);
 		printk("Warning: Not enough memory for partition table.\n");
@@ -3504,14 +3511,14 @@ static void fake_partition_table(struct block_device *bdev)
 	memcpy(partition_table, partition_table_template, partition_table_template_size);
 
 		/* Boot sector. MBR style - present disk as one big partition */
-	*(uint32_t*)(partition_table+0x1ca) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
+	*(uint32_t*)(partition_table+0x1ca) = (bdev->bd_inode->i_size/512)+bdev->data_shift+bdev->appended_sectors-1;
 		/* TODO: we assume that CPU is little endian here ... */
-	*(uint64_t*)(partition_table+0x220) = (bdev->d_size/512)+bdev->data_shift+bdev->appended_sectors-1;
-	*(uint64_t*)(partition_table+0x230) = (bdev->d_size/512)+bdev->data_shift-1;
+	*(uint64_t*)(partition_table+0x220) = (bdev->bd_inode->i_size/512)+bdev->data_shift+bdev->appended_sectors-1;
+	*(uint64_t*)(partition_table+0x230) = (bdev->bd_inode->i_size/512)+bdev->data_shift-1;
 	if (old_partition_size != 0) {
 		*(uint64_t*)(partition_table+0x428) = old_partition_size;
 	} else {
-		*(uint64_t*)(partition_table+0x428) = (bdev->d_size/512)+bdev->data_shift-1;
+		*(uint64_t*)(partition_table+0x428) = (bdev->bd_inode->i_size/512)+bdev->data_shift-1;
 	}
 
 	memcpy(partition_table+0x238, my_disk_guid, 16);
@@ -3568,7 +3575,7 @@ int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct b
 		return 0;
 
 		/* Also if we don't exist yet, do nothing */
-	if (bdev->d_size <= 0)
+	if (bdev->bd_inode->i_size <= 0)
 		return 0;
 
 	if (!bdev->have_read_bootsector) {
@@ -3621,7 +3628,7 @@ int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct b
 
 void windrbd_device_size_change(struct block_device *bdev)
 {
-        if (bdev->d_size > 0) {
+        if (bdev->bd_inode->i_size > 0) {
                 printk("got a valid size, unblocking SCSI capacity requests.\n");
                 KeSetEvent(&bdev->capacity_event, 0, FALSE);
 
@@ -3634,6 +3641,20 @@ void windrbd_device_size_change(struct block_device *bdev)
                 KeClearEvent(&bdev->capacity_event);
         }
 }
+
+bool set_capacity_and_notify(struct gendisk *disk, sector_t size)
+{
+        struct block_device *bdev = disk->part0;
+
+        bdev->bd_inode->i_size = size << 9;
+        windrbd_device_size_change(bdev);
+
+        if (size <= 0)
+                return false;
+
+        return true;
+}
+
 
 #if 0
 static void set_partition_guid(struct block_device *bdev, const char *guid)
@@ -3857,7 +3878,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 
 			if (sector_count > 0) {
 				int64_t num_sectors = sector_count;
-				int64_t excess_sectors = (start_sector + num_sectors) - ((bdev->d_size/512) + bdev->data_shift);
+				int64_t excess_sectors = (start_sector + num_sectors) - ((bdev->bd_inode->i_size/512) + bdev->data_shift);
 				if (excess_sectors > 0) {
 					num_sectors -= excess_sectors;
 				}
@@ -3881,8 +3902,8 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				}
 			}
 			if (sector_count > 0) {
-				sector_t first_backup_sector = bdev->data_shift+bdev->d_size/512;
-				sector_t last_sector = bdev->data_shift+bdev->d_size/512 + bdev->appended_sectors;
+				sector_t first_backup_sector = bdev->data_shift+bdev->bd_inode->i_size/512;
+				sector_t last_sector = bdev->data_shift+bdev->bd_inode->i_size/512 + bdev->appended_sectors;
 				if (start_sector >= first_backup_sector) {
 					if (start_sector + sector_count > last_sector) {
 						printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
@@ -3935,7 +3956,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			if (bdev->is_bootdevice) {
 				d_size = wait_for_size(device);
 			} else {
-				d_size = bdev->d_size;
+				d_size = bdev->bd_inode->i_size;
 			}
 			d_size += (bdev->data_shift + bdev->appended_sectors) * 512;
 
@@ -3950,7 +3971,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 					((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress = -1;
 				} else {
 					Temp = (ULONG) LargeTemp;
-// printk("SCSI: Reporting %lld bytes as capacity ...\n", d_size);
+// printk("SCSI: Reporting %lld bytes as capacity ...\n", bd_inode->i_size);
 					REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress), &Temp);
 				}
 				irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA);
@@ -3972,7 +3993,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			if (bdev->is_bootdevice) {
 				d_size = wait_for_size(device);
 			} else {
-				d_size = bdev->d_size;
+				d_size = bdev->bd_inode->i_size;
 			}
 			d_size += (bdev->data_shift + bdev->appended_sectors) * 512;
 
@@ -3983,7 +4004,7 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 					printk("Warning: device size (%lld) not a multiple of 512\n", d_size);
 				LargeTemp = (d_size / 512) - 1;
 				REVERSE_BYTES_QUAD(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->LogicalBlockAddress.QuadPart), &LargeTemp);
-// printk("SCSI: Reporting %lld bytes as capacity16 ...\n", d_size);
+// printk("SCSI: Reporting %lld bytes as capacity16 ...\n", bd_inode->i_size);
 				irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA_EX);
 				srb->SrbStatus = SRB_STATUS_SUCCESS;
 				status = STATUS_SUCCESS;
