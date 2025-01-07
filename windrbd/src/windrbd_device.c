@@ -1752,7 +1752,6 @@ static void windrbd_bio_finished(struct bio * bio)
 
         spin_lock_irqsave(&bio->bi_common_data->bc_device_failed_lock, flags);
         int num_completed = atomic_inc_return(&bio->bi_common_data->bc_num_completed);
-        int device_failed = bio->bi_common_data->bc_device_failed;
         if (status != STATUS_SUCCESS)
                 bio->bi_common_data->bc_device_failed = 1;
         spin_unlock_irqrestore(&bio->bi_common_data->bc_device_failed_lock, flags);
@@ -1817,6 +1816,7 @@ static void windrbd_bio_finished(struct bio * bio)
 
 static void windrbd_internal_io_finished(struct bio * bio)
 {
+/*	IoReleaseRemoveLock(&bio->bi_bdev->ref->w_remove_lock, NULL); */
 	KeSetEvent(bio->bi_io_finished_event, 0, FALSE);
 }
 
@@ -1832,7 +1832,7 @@ static void drbd_make_request_work(struct work_struct *w)
 
 // printk("1\n");
 	atomic_inc(&ioreq->bio->bi_bdev->num_bios_pending);
-	drbd_submit_bio(ioreq->bio);
+	ioreq->bio->bi_bdev->bd_disk->fops->submit_bio(ioreq->bio);
 // printk("2\n");
 	kfree(ioreq);
 }
@@ -1842,7 +1842,8 @@ static void drbd_make_request_work(struct work_struct *w)
          * windrbd_bio_finished to complete the IRP.
 	 */
 
-static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device *dev, char *buffer, unsigned int total_size, sector_t sector, unsigned long rw)
+static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device *dev, char *buffer, unsigned int total_size, sector_t sector,
+					   ULONG_PTR rw)
 {
 	struct bio *bio;
 
@@ -1856,7 +1857,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		return STATUS_INVALID_PARAMETER;
 	}
 	if (sector * dev->bd_block_size >= dev->bd_inode->i_size) {
-		dbg("Attempt to read past the end of the device: dev->bd_block_size is %d sector is %lld (%llu) byte offset is %lld (%llu) dev->bd_inode->i_size is %lld rw is %s\n", dev->bd_block_size, sector, sector, sector * dev->bd_block_size, sector * dev->bd_block_size, dev->bd_inode->i_size, rw == WRITE ? "WRITE" : "READ");
+		printk("Attempt to read past the end of the device: dev->bd_block_size is %d sector is %lld (%llu) byte offset is %lld (%llu) dev->bd_inode->i_size is %lld rw is %s\n", dev->bd_block_size, sector, sector, sector * dev->bd_block_size, sector * dev->bd_block_size, dev->bd_inode->i_size, rw == WRITE ? "WRITE" : "READ");
 		return STATUS_INVALID_PARAMETER;
 	}
 	if (sector * dev->bd_block_size + total_size > dev->bd_inode->i_size) {
@@ -1906,18 +1907,26 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	        IoMarkIrpPending(irp);
 	}
 
+	int nr_io_vec_elm, i;
+	size_t last_elm_size, this_elm_size;
+
 	for (b=0; b<bio_count; b++) {
 		this_bio_size = (b==bio_count-1) ? last_bio_size : MAX_BIO_SIZE;
 
-		bio = bio_alloc(GFP_NOIO, 1);
+		nr_io_vec_elm = DIV_ROUND_UP(this_bio_size, PAGE_SIZE);
+		last_elm_size = this_bio_size % PAGE_SIZE;
+		if (last_elm_size == 0)
+			last_elm_size = PAGE_SIZE;
+
+		bio = bio_alloc_old(GFP_NOIO, nr_io_vec_elm);
 		if (bio == NULL) {
 			printk("Couldn't allocate bio.\n");
 			return STATUS_INSUFFICIENT_RESOURCES;
 		}
 		bio->bi_opf = (rw == WRITE ? REQ_OP_WRITE : REQ_OP_READ);
 		bio->bi_bdev = dev;
-		bio->bi_max_vecs = 1;
-		bio->bi_vcnt = 1;
+		bio->bi_max_vecs = nr_io_vec_elm;
+		bio->bi_vcnt = nr_io_vec_elm;
 		bio->bi_paged_memory = (bio_data_dir(bio) == WRITE);
 //		bio->force_mdl_unlock = 1;	/* TODO: ?? */
 		bio->bi_iter.bi_size = this_bio_size;
@@ -1929,20 +1938,24 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 
 cond_printk("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
 
-		bio->bi_io_vec[0].bv_page = kzalloc(sizeof(struct page), GFP_KERNEL);
-		if (bio->bi_io_vec[0].bv_page == NULL) {
-			printk("Couldn't allocate page.\n");
-			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
-		}
+		this_elm_size = PAGE_SIZE;
+		for (i = 0; i < nr_io_vec_elm; i++) {
+			if (i == nr_io_vec_elm - 1)
+				this_elm_size = last_elm_size;
 
-		bio->bi_io_vec[0].bv_len = this_bio_size;
-//		bio->bi_io_vec[0].bv_page->size = this_bio_size;
-		kref_init(&bio->bi_io_vec[0].bv_page->kref);
+			bio->bi_io_vec[i].bv_page = kzalloc(sizeof(struct page), GFP_KERNEL);
+			if (bio->bi_io_vec[i].bv_page == NULL) {
+				printk("Couldn't allocate page.\n");
+				return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
+			}
+
+			bio->bi_io_vec[i].bv_len = this_elm_size;
+			kref_init(&bio->bi_io_vec[i].bv_page->kref);
 
 			/* Corresponding put_page in the free-mdl
 			 * thread (free_bios_thread_fn())
 			 */
-		get_page(bio->bi_io_vec[0].bv_page);
+			get_page(bio->bi_io_vec[i].bv_page);
 
 
 /*
@@ -1951,40 +1964,30 @@ cond_printk("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", se
  */
 
 
-		if (irp != NULL && bio_data_dir(bio) == READ) {
-			bio->bi_io_vec[0].bv_page->addr = kmalloc(this_bio_size, GFP_KERNEL);
-		} else {
-			bio->bi_io_vec[0].bv_page->addr = buffer+bio->bi_mdl_offset;
-			bio->bi_io_vec[0].bv_page->is_system_buffer = 1;
-		}
+			if (irp != NULL && bio_data_dir(bio) == READ) {
+				bio->bi_io_vec[i].bv_page->addr = kmalloc(this_elm_size, GFP_KERNEL);
+			} else {
+				bio->bi_io_vec[i].bv_page->addr = buffer+bio->bi_mdl_offset;
+				bio->bi_io_vec[i].bv_page->is_system_buffer = 1;
+			}
 
 				/* TODO: fault inject here. */
-		if (bio->bi_io_vec[0].bv_page->addr == NULL) {
-			printk("Couldn't allocate temp buffer for read.\n");
-			return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
+			if (bio->bi_io_vec[i].bv_page->addr == NULL) {
+				printk("Couldn't allocate temp buffer for read.\n");
+				return STATUS_INSUFFICIENT_RESOURCES; /* TODO: cleanup */
+			}
+
+			bio->bi_io_vec[i].bv_offset = 0;
 		}
 
-		bio->bi_io_vec[0].bv_offset = 0;
 		if (irp != NULL) {
 			bio->bi_end_io = windrbd_bio_finished;
 			bio->bi_upper_irp = irp;
 		} else {
 			bio->bi_end_io = windrbd_internal_io_finished;
-
 			KeInitializeEvent(&event, NotificationEvent, FALSE);
 			bio->bi_io_finished_event = &event;
 		}
-
-// dbg("bio: %p bio->bi_io_vec[0].bv_page->addr: %p bio->bi_io_vec[0].bv_len: %d bio->bi_io_vec[0].bv_offset: %d\n", bio, bio->bi_io_vec[0].bv_page->addr, bio->bi_io_vec[0].bv_len, bio->bi_io_vec[0].bv_offset);
-dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\n", bio->bi_iter.bi_size, bio->bi_iter.bi_sector, bio->bi_mdl_offset);
-
-#if 0
-		if (b == 0) {
-// printk("into drbd_make_request irp is %p\n", irp);
-			if (add_irp(irp, bio->bi_bdev, bio->bi_iter.bi_sector) != 0)
-				printk("IRP already there?\n");
-		}
-#endif
 
 		if (dev->io_workqueue == NULL) {
 			printk("Warning: dev->io_workqueue is NULL on I/O handler.\n");
@@ -2021,7 +2024,9 @@ dbg("bio->bi_iter.bi_size: %d bio->bi_iter.bi_sector: %d bio->bi_mdl_offset: %d\
 			} while (status != STATUS_SUCCESS);
 
 				/* And clean up */
-			put_page(bio->bi_io_vec[0].bv_page);
+			for (i = 0; i < nr_io_vec_elm; i++)
+				put_page(bio->bi_io_vec[i].bv_page);
+
 			kfree(bio->bi_common_data);
 			bio_put(bio);
 		}
@@ -2038,7 +2043,7 @@ static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_devic
 	unsigned int total_size;
 	sector_t sector;
 	char *buffer;
-	unsigned long rw;
+	ULONG_PTR rw;
 
 	if (s == NULL) {
 		printk("Stacklocation is NULL.\n");
@@ -2048,7 +2053,7 @@ static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_devic
 			/* TODO: this sometimes happens with windrbd-test.
 			 * Find out why.
 			 */
-		dbg("MdlAddress is NULL.\n");
+		printk("MdlAddress is NULL.\n");
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -2084,7 +2089,8 @@ static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_devic
 		 * is already offset, not using MmGetMdlByteOffset.
 		 */
 
-	buffer = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | MdlMappingNoExecute);
+	buffer = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority | WinDRBDMdlMappingNoExecute);
+
 	if (buffer == NULL) {
 		printk("I/O buffer from MmGetSystemAddressForMdlSafe() is NULL\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
