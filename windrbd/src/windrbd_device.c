@@ -3253,6 +3253,7 @@ if (status == STATUS_NOT_SUPPORTED) {
 		default:
 // printk("got unimplemented minor %x for disk object\n", s->MinorFunction);
 
+#if 0
 				/* probably not a good idea? */
 			if (drbd_bus_device != NULL) {
 // printk("irp status is %x\n", irp->IoStatus.Status);
@@ -3268,9 +3269,10 @@ if (status == STATUS_NOT_SUPPORTED) {
 			}
 			else
 				dbg("no bus object, cannot forward irp\n");
+#endif
 
-//			status = irp->IoStatus.Status;
-//			status = STATUS_NOT_IMPLEMENTED;
+/* don't change status ... */
+			status = irp->IoStatus.Status;
 		}
 	}
 
