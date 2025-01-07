@@ -1967,7 +1967,7 @@ cond_printk("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", se
 			if (irp != NULL && bio_data_dir(bio) == READ) {
 				bio->bi_io_vec[i].bv_page->addr = kmalloc(this_elm_size, GFP_KERNEL);
 			} else {
-				bio->bi_io_vec[i].bv_page->addr = buffer+bio->bi_mdl_offset;
+				bio->bi_io_vec[i].bv_page->addr = buffer+bio->bi_mdl_offset+i*PAGE_SIZE;
 				bio->bi_io_vec[i].bv_page->is_system_buffer = 1;
 			}
 
