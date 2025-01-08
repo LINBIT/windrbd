@@ -47,3 +47,11 @@ Dec 27-28: with cdc87c08 for drbd-9.1 (but checked 9.0 and 9.2 also)
 	With focus on execution speed (average 5 seconds / run but
 	reconnect sometimes takes > 10sec, which is probably also on
 	Linux DRBD). So I would say fast enough.
+
+### invalidate / wait-sync
+
+Jan 3 - Jan 8 (843 iterations) about 9 minutes full sync time (26GB)
+	Runs for 5 days now, no network interruption
+	WinDRBD version is:
+		windrbd-1.2.0-rc6-194-g51ea8b0a-no-send-packets-limit-drbd-9.2-x86_64
+
