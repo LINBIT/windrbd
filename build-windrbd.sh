@@ -51,5 +51,5 @@ done
 
 echo "Should be finished, resulting installer should be on nexus"
 echo "To download do a"
-echo "curl -O https://nexus.at.linbit.com/repository/windows/WinDRBD/install-windrbd-latest-from-gitlab.exe"
+echo "curl -O https://nexus.at.linbit.com/repository/windows/WinDRBD/install-windrbd-windrbd-1.1-from-gitlab.exe"
 echo "drbdadm --version should show the correct version"
