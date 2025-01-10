@@ -709,4 +709,8 @@ out_free_info:
 	return ret;
 }
 
-
+bool drbd_op_is_known(int cmd)
+{
+	struct genl_ops *op = get_drbd_genl_ops(cmd);
+	return op != NULL;
+}

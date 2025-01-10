@@ -317,6 +317,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 		case IOCTL_WINDRBD_ROOT_JOIN_MC_GROUP:
 		case IOCTL_WINDRBD_ROOT_GET_DRBD_VERSION:
 		case IOCTL_WINDRBD_ROOT_GET_WINDRBD_VERSION:
+		case IOCTL_WINDRBD_ROOT_DRBD_OP_IS_KNOWN:
 			break;
 
 		default:
@@ -336,6 +337,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 		case IOCTL_WINDRBD_ROOT_RECEIVE_NL_PACKET:
 		case IOCTL_WINDRBD_ROOT_ARE_THERE_NL_PACKETS:
 		case IOCTL_WINDRBD_ROOT_JOIN_MC_GROUP:
+		case IOCTL_WINDRBD_ROOT_DRBD_OP_IS_KNOWN:
 			status = STATUS_NO_MORE_ENTRIES;
 
 			irp->IoStatus.Status = status;
@@ -420,7 +422,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 		irp->IoStatus.Information = sizeof(int);
 		break;
 	}
-
 	case IOCTL_WINDRBD_ROOT_JOIN_MC_GROUP:
 		if (s->Parameters.DeviceIoControl.InputBufferLength != sizeof(struct windrbd_ioctl_genl_portid_and_multicast_group)) {
 			status = STATUS_INVALID_DEVICE_REQUEST;
@@ -630,7 +631,22 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 		}
 		break;
 	}
+	case IOCTL_WINDRBD_ROOT_DRBD_OP_IS_KNOWN:
+	{
+		if ((s->Parameters.DeviceIoControl.InputBufferLength != sizeof(int)) ||
+		    (s->Parameters.DeviceIoControl.OutputBufferLength != sizeof(int)) ||
+		    (irp->AssociatedIrp.SystemBuffer == NULL)) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+		int *the_cmd = irp->AssociatedIrp.SystemBuffer;
+		int *the_result = irp->AssociatedIrp.SystemBuffer;
 
+		*the_result = drbd_op_is_known(*the_cmd);
+		irp->IoStatus.Information = sizeof(int);
+
+		break;
+	}
 	default:
 		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;

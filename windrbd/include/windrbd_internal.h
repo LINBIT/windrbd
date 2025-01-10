@@ -115,6 +115,7 @@ size_t windrbd_receive_netlink_packets(void *vbuf, size_t remaining_size, u32 po
 bool windrbd_are_there_netlink_packets(u32 portid);	/* non-blocking peek at netlink packets. Does not consume them. */
 int windrbd_join_multicast_group(u32 portid, const char *name, struct _FILE_OBJECT *f);
 int windrbd_delete_multicast_groups_for_file(struct _FILE_OBJECT *f);
+bool drbd_op_is_known(int cmd);
 
 /* printk_to_syslog.c: */
 
