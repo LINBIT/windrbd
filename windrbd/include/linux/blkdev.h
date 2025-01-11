@@ -80,8 +80,66 @@ enum blk_bounce {
 	BLK_BOUNCE_HIGH,
 };
 
+/* flags set by the driver in queue_limits.features */
+typedef unsigned int __bitwise blk_features_t;
+
+/* supports a volatile write cache */
+#define BLK_FEAT_WRITE_CACHE		((__force blk_features_t)(1u << 0))
+
+/* supports passing on the FUA bit */
+#define BLK_FEAT_FUA			((__force blk_features_t)(1u << 1))
+
+/* rotational device (hard drive or floppy) */
+#define BLK_FEAT_ROTATIONAL		((__force blk_features_t)(1u << 2))
+
+/* contributes to the random number pool */
+#define BLK_FEAT_ADD_RANDOM		((__force blk_features_t)(1u << 3))
+
+/* do disk/partitions IO accounting */
+#define BLK_FEAT_IO_STAT		((__force blk_features_t)(1u << 4))
+
+/* don't modify data until writeback is done */
+#define BLK_FEAT_STABLE_WRITES		((__force blk_features_t)(1u << 5))
+
+/* always completes in submit context */
+#define BLK_FEAT_SYNCHRONOUS		((__force blk_features_t)(1u << 6))
+
+/* supports REQ_NOWAIT */
+#define BLK_FEAT_NOWAIT			((__force blk_features_t)(1u << 7))
+
+/* supports DAX */
+#define BLK_FEAT_DAX			((__force blk_features_t)(1u << 8))
+
+/* supports I/O polling */
+#define BLK_FEAT_POLL			((__force blk_features_t)(1u << 9))
+
+/* is a zoned device */
+#define BLK_FEAT_ZONED			((__force blk_features_t)(1u << 10))
+
+/* supports PCI(e) p2p requests */
+#define BLK_FEAT_PCI_P2PDMA		((__force blk_features_t)(1u << 12))
+
+/* skip this queue in blk_mq_(un)quiesce_tagset */
+#define BLK_FEAT_SKIP_TAGSET_QUIESCE	((__force blk_features_t)(1u << 13))
+
+/* bounce all highmem pages */
+#define BLK_FEAT_BOUNCE_HIGH		((__force blk_features_t)(1u << 14))
+
+/* undocumented magic for bcache */
+#define BLK_FEAT_RAID_PARTIAL_STRIPES_EXPENSIVE \
+	((__force blk_features_t)(1u << 15))
+
+/*
+ * Flags automatically inherited when stacking limits.
+ */
+#define BLK_FEAT_INHERIT_MASK \
+	(BLK_FEAT_WRITE_CACHE | BLK_FEAT_FUA | BLK_FEAT_ROTATIONAL | \
+	 BLK_FEAT_STABLE_WRITES | BLK_FEAT_ZONED | BLK_FEAT_BOUNCE_HIGH | \
+	 BLK_FEAT_RAID_PARTIAL_STRIPES_EXPENSIVE)
+
 /* TODO: these should be initialized to sane default values: */
 struct queue_limits {
+	blk_features_t		features;
 	enum blk_bounce		bounce;
 	ULONG_PTR		seg_boundary_mask;
 	ULONG_PTR		virt_boundary_mask;
@@ -151,9 +209,38 @@ struct request_queue {
 	spinlock_t *queue_lock;
 	unsigned short logical_block_size;
 	ULONG_PTR queue_flags;
-	struct queue_limits limits; 
+	struct queue_limits limits;
+	struct mutex limits_lock;
 	struct gendisk *disk;	/* TODO: set this on creation ! */
 };
+
+/**
+ * queue_limits_start_update - start an atomic update of queue limits
+ * @q:		queue to update
+ *
+ * This functions starts an atomic update of the queue limits.  It takes a lock
+ * to prevent other updates and returns a snapshot of the current limits that
+ * the caller can modify.  The caller must call queue_limits_commit_update()
+ * to finish the update.
+ *
+ * Context: process context.  The caller must have frozen the queue or ensured
+ * that there is outstanding I/O by other means.
+ */
+static inline struct queue_limits
+queue_limits_start_update(struct request_queue *q)
+{
+	mutex_lock(&q->limits_lock);
+	return q->limits;
+}
+
+static inline int queue_limits_commit_update(struct request_queue *q,
+		struct queue_limits *lim)
+{
+	q->limits = *lim;
+	mutex_unlock(&q->limits_lock);
+
+	return 0;	/* meaning ok */
+}
 
 /* obsolete, don't use in new code */
 static inline void bio_set_op_attrs(struct bio *bio, unsigned op,

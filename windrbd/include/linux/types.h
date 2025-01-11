@@ -41,6 +41,12 @@ typedef signed long long ssize_t;
 #include <ntddk.h>
 #include <ntdddisk.h>
 
+#ifdef __CHECKER__
+#define __bitwise	__attribute__((bitwise))
+#else
+#define __bitwise
+#endif
+
 #define DECLARE_BITMAP(name,bits) \
 	ULONG_PTR name[BITS_TO_LONGS(bits)]
 

@@ -1073,13 +1073,13 @@ void complete_all_debug(struct completion *c, const char *file, int line, const 
 
 struct workqueue_struct *system_wq;
 
-void queue_work(struct workqueue_struct *queue, struct work_struct *work)
+bool queue_work(struct workqueue_struct *queue, struct work_struct *work)
 {
 	KIRQL flags, flags2;
 
 	if (queue->about_to_destroy) {
 		printk("Warning: Attempt to queue_work while destroying workqueue\n");
-		return;
+		return false;
 	}
 	spin_lock_irqsave(&queue->work_list_lock, flags2);
 	spin_lock_irqsave(&work->pending_lock, flags);
@@ -1090,7 +1090,7 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 		if (queue != work->orig_queue || work->orig_func != work->func)
 			printk("work %p pending on queue %s: queue or func have changed: queue is %p (%s) work->orig_queue is %p (%s) work->orig_func is %p work->func is %p\n", queue, queue->name, work->orig_queue, work->orig_queue->name, work->orig_func, work->func);
 
-		return;
+		return false;
 	}
 	work->pending = 1;
 
@@ -1103,6 +1103,7 @@ void queue_work(struct workqueue_struct *queue, struct work_struct *work)
 
 		/* signal to run_singlethread_workqueue */
 	KeSetEvent(&queue->wakeupEvent, 0, FALSE);
+	return true;	/* work was queued */
 }
 
 static int run_singlethread_workqueue(void *param)
@@ -2788,6 +2789,7 @@ struct request_queue *blk_alloc_queue(int unused)
 		 * It is used only once to set the bit flags.
 		 */
 	q->queue_lock = &global_queue_lock;
+	mutex_init(&q->limits_lock);
 
 	return q;
 }
@@ -2958,6 +2960,7 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 }
 
 #if (defined DRBD_9_1) || (defined DRBD_9_2)
+	/* TODO: use limits here ... something like q->limits = *limits_unsigned should do the trick ... */
 struct gendisk *blk_alloc_disk(struct queue_limits *limits_unused, int unused)
 #else
 struct gendisk *blk_alloc_disk(int unused)

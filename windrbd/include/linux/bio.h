@@ -15,6 +15,11 @@
 
 #define BIO_MAX_VECS 256
 
+static inline unsigned int bio_max_segs(unsigned int nr_segs)
+{
+	return min(nr_segs, BIO_MAX_VECS);
+}
+
 /*
  * Check whether this bio carries any data or not. A NULL bio is allowed.
  */

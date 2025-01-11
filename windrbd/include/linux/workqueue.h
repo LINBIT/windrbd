@@ -128,13 +128,13 @@ extern struct workqueue_struct *system_wq;
 __printf(1, 4) struct workqueue_struct *
 alloc_workqueue(const char *fmt, unsigned int flags, int max_active, ...);
 
-extern void queue_work(struct workqueue_struct* queue, struct work_struct* work);
+extern bool queue_work(struct workqueue_struct* queue, struct work_struct* work);
 extern void flush_workqueue(struct workqueue_struct *wq);
 extern void destroy_workqueue(struct workqueue_struct *wq);
 
-static inline void schedule_work(struct work_struct *work)
+static inline bool schedule_work(struct work_struct *work)
 {
-	queue_work(system_wq, work);
+	return queue_work(system_wq, work);
 }
 
 #define PREPARE_WORK(_work, _func)                                      \
