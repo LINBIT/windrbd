@@ -32,6 +32,7 @@
 #include <linux/rwsem.h>
 #include <linux/spinlock.h>
 #include <linux/atomic.h>
+#include <linux/rwlock.h>
 
 /* Define this if RCU implementation can use read/write locks
  * (ExAcquireSpinLockShared, ...).
@@ -387,6 +388,53 @@ void call_rcu(struct rcu_head *head, rcu_callback_t func)
 		spin_unlock_irqrestore(&rcu_spin_lock, rcu_flags);
 }
 
+/* And now, the rw_locks. Note that this implementation with spin locks
+ * causes DRBD 9.1 to lock up on application I/O, so only DRBD 9.0 support
+ * for ReactOS and Windows Server 2003 for now.
+ */
+
+void read_lock(rwlock_t *lock)
+{
+	spin_lock((spinlock_t*) lock);
+}
+
+void read_unlock(rwlock_t *lock)
+{
+	spin_unlock((spinlock_t*) lock);
+}
+
+KIRQL read_lock_irqsave_ret(rwlock_t *lock)
+{
+	KIRQL flags;
+
+	/* expands to flags = ... */
+	spin_lock_irqsave(&lock->lock, flags);
+	return flags;
+}
+
+void read_unlock_irqrestore(rwlock_t *lock, KIRQL flags)
+{
+	spin_unlock_irqrestore(&lock->lock, flags);
+}
+
+KIRQL write_lock_irqsave_ret(rwlock_t *lock)
+{
+	KIRQL flags;
+
+	spin_lock_irqsave(&lock->lock, flags);
+	return flags;
+}
+
+void write_unlock_irqrestore(rwlock_t *lock, KIRQL flags)
+{
+	spin_unlock_irqrestore(&lock->lock, flags);
+}
+
+void rwlock_init(rwlock_t *lock)
+{
+	spin_lock_init(&lock->lock);
+}
+
 #else
 
 	/* Still need deadlock detection, since rcu_read_lock maybe
@@ -397,7 +445,7 @@ KIRQL rcu_read_lock(void)
 {
 	KIRQL flags;
 	struct task_struct *c;
-	
+
 	c = current;
 	if (is_windrbd_thread(c)) {
 		if (atomic_inc_return(&c->rcu_recursion_depth) > 1)
@@ -433,7 +481,7 @@ void synchronize_rcu(void)
 	if (is_windrbd_thread(current)) {
 		if (current->in_rcu)
 			return;	/* avoid deadlock */
-	}	
+	}
 	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
 	/* compiler barrier */
 	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
@@ -455,6 +503,46 @@ void call_rcu(struct rcu_head *head, rcu_callback_t func)
 
 	if (can_lock)
 		ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
+}
+
+/* And now, the rw_locks using ExAcquireSpinLockShared and friends.
+ * No recursion detection here. Also no DPC checking. It is the
+ * same as the Linux implementation (I think :) ).
+ */
+
+void read_lock(rwlock_t *lock)
+{
+	ExAcquireSpinLockSharedAtDpcLevel(&lock->shared_exclusive_lock);
+}
+
+void read_unlock(rwlock_t *lock)
+{
+	ExReleaseSpinLockSharedFromDpcLevel(&lock->shared_exclusive_lock);
+}
+
+KIRQL read_lock_irqsave_ret(rwlock_t *lock)
+{
+	return ExAcquireSpinLockShared(&lock->shared_exclusive_lock);
+}
+
+void read_unlock_irqrestore(rwlock_t *lock, KIRQL flags)
+{
+	ExReleaseSpinLockShared(&lock->shared_exclusive_lock, flags);
+}
+
+KIRQL write_lock_irqsave_ret(rwlock_t *lock)
+{
+	return ExAcquireSpinLockExclusive(&lock->shared_exclusive_lock);
+}
+
+void write_unlock_irqrestore(rwlock_t *lock, KIRQL flags)
+{
+	ExReleaseSpinLockExclusive(&lock->shared_exclusive_lock, flags);
+}
+
+void rwlock_init(rwlock_t *lock)
+{
+	lock->shared_exclusive_lock = 0;
 }
 
 #endif  /* < NTDDI_VISTASP1 */
