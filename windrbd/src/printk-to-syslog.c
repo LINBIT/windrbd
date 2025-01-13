@@ -479,6 +479,23 @@ int _printk(const char *func, const char *fmt, ...)
 	hr_timer = KeQueryPerformanceCounter(&hr_frequency);
 
 	pos = strlen(buffer);
+#ifdef CONFIG_64BIT
+	n = snprintf(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (%llu/%llu)|%p(%s) #%llu %s ",
+            level,
+            time_fields.Day, time_fields.Month, time_fields.Year,
+            time_fields.Hour, time_fields.Minute, time_fields.Second, time_fields.Milliseconds,
+            hr_timer.QuadPart, hr_frequency.QuadPart,
+            /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
+//          ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
+            current,
+            current->comm,
+            serial_number,
+            func
+        );
+#else
+		/* Windows 2003, ReactOS. At least Windows 2003 does not
+		 * understand %llu.
+		 */
 	n = snprintf(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (%ld/%ld)|%p(%s) #%ld %s ",
 	    level,
 	    time_fields.Day, time_fields.Month, time_fields.Year,
@@ -489,6 +506,8 @@ int _printk(const char *func, const char *fmt, ...)
             (ULONG_PTR)serial_number,
 	    func
 	);
+#endif
+
 	if (n >= sizeof(buffer)-1-pos) {
 		if (!no_windows_printk)
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Message not sent, buffer overflow.\n");
