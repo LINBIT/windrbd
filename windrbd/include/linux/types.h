@@ -153,4 +153,14 @@ typedef struct {
 /* Nanosecond scalar representation for kernel time values */
 typedef s64	ktime_t;
 
+/* printf format specifiers for LONG_PTR and ULONG_PTR */
+
+#ifdef CONFIG_32BIT
+#define PRI_LONG_PTR "ld"
+#define PRI_ULONG_PTR "lu"
+#else
+#define PRI_LONG_PTR "lld"
+#define PRI_ULONG_PTR "llu"
+#endif
+
 #endif
