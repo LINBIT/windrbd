@@ -209,19 +209,6 @@ static inline int list_is_last(const struct list_head *list, const struct list_h
 		     prefetch(pos->member.prev), &pos->member != (head); 	\
 		     pos = list_entry(pos->member.prev, typeof(*pos), member))
 
-/**
-* list_for_each_entry_rcu	-	iterate over rcu list of given type
-* @pos:	the type * to use as a loop cursor.
-* @head:	the head for your list.
-* @member:	the name of the list_struct within the struct.
-*
-* This list-traversal primitive may safely run concurrently with
-* the _rcu list-mutation primitives such as list_add_rcu()
-* as long as the traversal is guarded by rcu_read_lock().
-*/
-#define list_for_each_entry_rcu(pos, head, member) \
-    list_for_each_entry(pos, head, member)
-
 #define list_prepare_entry(pos, head, member) \
          ((pos) ? pos : list_entry(head, typeof(*pos), member))
 
