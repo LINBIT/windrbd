@@ -406,10 +406,14 @@ $(DRBD_TMP_HEADERS):
 
 #	echo $@ -> $<
 
-ifeq ($(MAKECMDGOALS),$(filter-out clean help default install package-in-docker pull-docker all-in-docker,$(MAKECMDGOALS)))
-# ifneq ($(MAKECMDGOALS),)
+ifeq ($(MAKECMDGOALS),)
+TARGETS=$(DEFAULT)
+else
+TARGETS=$(MAKECMDGOALS)
+endif
+
+ifeq ($(TARGETS),$(filter-out clean help default install package-in-docker pull-docker all-in-docker,$(TARGETS)))
 -include $(all-dep)
-# endif
 endif
 
 COCCI_SCRIPT=\
