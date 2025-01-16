@@ -129,7 +129,7 @@ ifeq ($(ARCH), x86_64)
 DEFINES+=-D_WIN64 -DCONFIG_64BIT
 endif
 
-WINDRBD_INCLUDES=-I"windrbd/include" -I"drbd-tmp/drbd" -I"drbd-tmp/drbd/drbd-headers" -I"drbd-tmp/drbd/drbd-kernel-compat"
+WINDRBD_INCLUDES=-I"windrbd/include" -I"drbd-9.0/drbd" -I"drbd-9.0/drbd/drbd-headers" -I"drbd-9.0/drbd/drbd-kernel-compat"
 # WINDRBD_INCLUDES=-I"windrbd/include" -I"drbd/drbd/drbd-headers"
 MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk
 
@@ -178,8 +178,6 @@ LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 
 ifndef REACTOS
 OPTIMIZE=-O2
 endif
-
-CFLAGS_FOR_WINDRBD=-g -Wall $(SUPPRESSED_WARNINGS) $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
 
 all: windrbd.sys windrbd.cat
 
@@ -328,6 +326,12 @@ linux-tmp/%.o: linux-tmp/%.c $(LINUX_TMP_HEADERS)
 
 # do not delete intermediate C files:
 $(DEVICE_MAPPER_FILES):
+
+# Take Linux headers whereever possible:
+
+# CFLAGS_FOR_WINDRBD=-g -Wall $(SUPPRESSED_WARNINGS) $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(DEVICE_MAPPER_INCLUDES) $(MINGW_INCLUDES)
+
+CFLAGS_FOR_WINDRBD=-g -Wall $(SUPPRESSED_WARNINGS) $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(DEVICE_MAPPER_INCLUDES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
 
 windrbd/%.o: windrbd/%.c
 	$(CC) $(CFLAGS_FOR_WINDRBD) -c -o $@ $<
