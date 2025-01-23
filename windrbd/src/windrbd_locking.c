@@ -33,6 +33,8 @@
 #include <linux/spinlock.h>
 #include <linux/atomic.h>
 #include <linux/rwlock.h>
+#include <linux/slab.h>
+#include <linux/wait.h>
 
 /* Define this if RCU implementation can use read/write locks
  * (ExAcquireSpinLockShared, ...).
@@ -260,11 +262,14 @@ void spin_lock_init(spinlock_t *lock)
 	lock->printk_lock = 0;
 }
 
+#if 0
 // #if (NTDDI_VERSION < NTDDI_VISTASP1)
 #ifndef CONFIG_HAVE_RW_LOCKS
 static spinlock_t rcu_spin_lock;
 #else
 static EX_SPIN_LOCK rcu_rw_lock;
+#endif
+
 #endif
 
 /* See also defintion of spin_lock_irqsave in linux/spinlock.h for handling
@@ -311,6 +316,7 @@ void spin_lock_nested(spinlock_t *lock, int level)
 #ifndef CONFIG_HAVE_RW_LOCKS
 // #if (NTDDI_VERSION < NTDDI_VISTASP1)
 
+#if 0
 	/* Still need deadlock detection, since rcu_read_lock maybe
 	 * held while calling synchronize_rcu. Windows before Vista
 	 * Service pack 1 didn't have read/write locks, use plain old
@@ -388,6 +394,8 @@ void call_rcu(struct rcu_head *head, rcu_callback_t func)
 		spin_unlock_irqrestore(&rcu_spin_lock, rcu_flags);
 }
 
+#endif
+
 /* And now, the rw_locks. Note that this implementation with spin locks
  * causes DRBD 9.1 to lock up on application I/O, so only DRBD 9.0 support
  * for ReactOS and Windows Server 2003 for now.
@@ -436,6 +444,8 @@ void rwlock_init(rwlock_t *lock)
 }
 
 #else
+
+#if 0
 
 	/* Still need deadlock detection, since rcu_read_lock maybe
 	 * held while calling synchronize_rcu
@@ -505,6 +515,8 @@ void call_rcu(struct rcu_head *head, rcu_callback_t func)
 		ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
 }
 
+#endif
+
 /* And now, the rw_locks using ExAcquireSpinLockShared and friends.
  * No recursion detection here. Also no DPC checking. It is the
  * same as the Linux implementation (I think :) ).
@@ -547,6 +559,67 @@ void rwlock_init(rwlock_t *lock)
 
 #endif  /* < NTDDI_VISTASP1 */
 
+static atomic_t rcu_counter;
+static wait_queue_head_t nobody_in_rcu_read_lock;
+
+KIRQL rcu_read_lock(void)
+{
+	atomic_inc(&rcu_counter);
+
+	return KeGetCurrentIrql();
+}
+
+void rcu_read_unlock(KIRQL rcu_flags)
+{
+	if (atomic_dec_return(&rcu_counter) == 0)
+		wake_up(&nobody_in_rcu_read_lock);
+}
+
+void synchronize_rcu(void)
+{
+	wait_event(nobody_in_rcu_read_lock, 1);
+}
+
+static struct rcu_head *rcu_heads;
+static spinlock_t rcu_heads_lock;
+
+void call_rcu(struct rcu_head *head, rcu_callback_t func)
+{
+	KIRQL flags;
+	head->func = func;
+
+	spin_lock_irqsave(&rcu_heads_lock, flags);
+	head->next = rcu_heads;
+	rcu_heads = head;
+	spin_unlock_irqrestore(&rcu_heads_lock, flags);
+}
+
+struct rcu_pointer {
+	struct rcu_pointer *next;
+	void *free_me_later;
+};
+
+static struct rcu_pointer *rcu_pointers_to_free;
+static spinlock_t rcu_pointers_lock;
+
+void kfree_when_rcu_in_sync(void *p)
+{
+	KIRQL flags;
+	struct rcu_pointer *new;
+
+	new = kmalloc(sizeof(*new), GFP_KERNEL);
+	if (new == NULL) {
+		printk("Warning: could not kfree_when_rcu_in_sync(): out of memory.\n");
+		return;
+	}
+	new->free_me_later = p;
+
+	spin_lock_irqsave(&rcu_pointers_lock, flags);
+	new->next = rcu_pointers_to_free;
+	rcu_pointers_to_free = new;
+	spin_unlock_irqrestore(&rcu_pointers_lock, flags);
+}
+
 static spinlock_t irq_lock;
 
 void local_irq_disable()
@@ -577,10 +650,18 @@ int spin_trylock(spinlock_t *lock)
 
 void init_locking(void)
 {
+#if 0
 #ifndef CONFIG_HAVE_RW_LOCKS
 	spin_lock_init(&rcu_spin_lock);
 #else
         rcu_rw_lock = 0;
 #endif
+#endif
+
+	atomic_set(&rcu_counter, 0);
+	init_waitqueue_head(&nobody_in_rcu_read_lock);
+	rcu_heads = NULL;
+	spin_lock_init(&rcu_heads_lock);
+
 	spin_lock_init(&irq_lock);
 }
