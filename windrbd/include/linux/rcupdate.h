@@ -3,7 +3,7 @@
 
 #include <asm-generic/barrier.h>
 
-#define rcu_dereference(_PTR)		(_PTR)
+#define rcu_dereference(_PTR)		READ_ONCE(_PTR)
 #define __rcu_assign_pointer(_p, _v) \
 	do { \
 		smp_mb();    \

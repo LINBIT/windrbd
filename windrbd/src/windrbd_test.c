@@ -295,7 +295,7 @@ static int rcu_reader(void *arg)
 			KeEnterCriticalRegion();
 
 		if (rcu_read_method == RRM_DEREFERENCE) {
-			the_rcu = rcu_dereference((struct rcu_struct volatile *) non_atomic_rcu);
+			the_rcu = rcu_dereference(non_atomic_rcu);
 			val1 = the_rcu->a;
 			val2 = the_rcu->b;
 		} else {
