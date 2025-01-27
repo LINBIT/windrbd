@@ -561,6 +561,37 @@ void rwlock_init(rwlock_t *lock)
 
 static atomic_t rcu_counter;
 static wait_queue_head_t nobody_in_rcu_read_lock;
+static spinlock_t rcu_lock;
+static struct rcu_head *rcu_heads;
+struct rcu_pointer {
+	struct rcu_pointer *next;
+	void *free_me_later;
+};
+
+static struct rcu_pointer *rcu_pointers_to_free;
+
+static void free_all_rcu_heads(void)
+{
+	struct rcu_head *h, *h2;
+
+	for (h = rcu_heads; h != NULL; h = h2) {
+		h2 = h->next;
+		h->func(h);
+	}
+	rcu_heads = NULL;
+}
+
+static void free_all_rcu_pointers(void)
+{
+	struct rcu_pointer *p, *p2;
+
+	for (p = rcu_pointers_to_free; p != NULL; p = p2) {
+		p2 = p->next;
+		kfree(p->free_me_later);
+		kfree(p);
+	}
+	rcu_pointers_to_free = NULL;
+}
 
 KIRQL rcu_read_lock(void)
 {
@@ -571,36 +602,32 @@ KIRQL rcu_read_lock(void)
 
 void rcu_read_unlock(KIRQL rcu_flags)
 {
-	if (atomic_dec_return(&rcu_counter) == 0)
+	KIRQL flags;
+
+	spin_lock_irqsave(&rcu_lock, flags);
+	if (atomic_dec_return(&rcu_counter) == 0) {
 		wake_up(&nobody_in_rcu_read_lock);
+		free_all_rcu_heads();
+		free_all_rcu_pointers();
+	}
+	spin_unlock_irqrestore(&rcu_lock, flags);
 }
 
 void synchronize_rcu(void)
 {
-	wait_event(nobody_in_rcu_read_lock, 1);
+	wait_event(nobody_in_rcu_read_lock, atomic_read(&rcu_counter) == 0);
 }
-
-static struct rcu_head *rcu_heads;
-static spinlock_t rcu_heads_lock;
 
 void call_rcu(struct rcu_head *head, rcu_callback_t func)
 {
 	KIRQL flags;
 	head->func = func;
 
-	spin_lock_irqsave(&rcu_heads_lock, flags);
+	spin_lock_irqsave(&rcu_lock, flags);
 	head->next = rcu_heads;
 	rcu_heads = head;
-	spin_unlock_irqrestore(&rcu_heads_lock, flags);
+	spin_unlock_irqrestore(&rcu_lock, flags);
 }
-
-struct rcu_pointer {
-	struct rcu_pointer *next;
-	void *free_me_later;
-};
-
-static struct rcu_pointer *rcu_pointers_to_free;
-static spinlock_t rcu_pointers_lock;
 
 void kfree_when_rcu_in_sync(void *p)
 {
@@ -614,10 +641,10 @@ void kfree_when_rcu_in_sync(void *p)
 	}
 	new->free_me_later = p;
 
-	spin_lock_irqsave(&rcu_pointers_lock, flags);
+	spin_lock_irqsave(&rcu_lock, flags);
 	new->next = rcu_pointers_to_free;
 	rcu_pointers_to_free = new;
-	spin_unlock_irqrestore(&rcu_pointers_lock, flags);
+	spin_unlock_irqrestore(&rcu_lock, flags);
 }
 
 static spinlock_t irq_lock;
@@ -661,7 +688,7 @@ void init_locking(void)
 	atomic_set(&rcu_counter, 0);
 	init_waitqueue_head(&nobody_in_rcu_read_lock);
 	rcu_heads = NULL;
-	spin_lock_init(&rcu_heads_lock);
+	spin_lock_init(&rcu_lock);
 
 	spin_lock_init(&irq_lock);
 }
