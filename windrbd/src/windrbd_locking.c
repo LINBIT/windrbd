@@ -272,6 +272,13 @@ static EX_SPIN_LOCK rcu_rw_lock;
 
 #endif
 
+static KIRQL guess_old_kirql(void)
+{
+	if (is_windrbd_thread(current))
+		return PASSIVE_LEVEL;
+	return APC_LEVEL;	/* or so ... */
+}
+
 /* See also defintion of spin_lock_irqsave in linux/spinlock.h for handling
  * the flags parameter.
  */
@@ -293,12 +300,15 @@ void spin_lock_irq(spinlock_t *lock)
 {
 	KIRQL oldIrql;
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
+
 		/* if oldIrql != PASSIVE_LEVEL complain */
+if (oldIrql != PASSIVE_LEVEL)
+printk("Ahiee, we're not passive level at the beginning of spin_lock_irq() irql is %d\n", oldIrql);
 }
 
 void spin_unlock_irq(spinlock_t *lock)
 {
-	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
+	KeReleaseSpinLock(&lock->spinLock, guess_old_kirql());
 }
 
 /* This does not change the IRQL. In particular if IRQL is
@@ -320,6 +330,7 @@ void spin_unlock(spinlock_t *lock)
 
 void spin_lock_bh(spinlock_t *lock)
 {
+printk("KIRQL is %d\n", KeGetCurrentIrql());
 	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
 }
 
@@ -402,12 +413,16 @@ void read_unlock(rwlock_t *lock)
 
 void read_lock_irq(rwlock_t *lock)
 {
-	ExAcquireSpinLockShared(&lock->shared_exclusive_lock);
+	KIRQL oldIrql;
+
+	oldIrql = ExAcquireSpinLockShared(&lock->shared_exclusive_lock);
+if (oldIrql != PASSIVE_LEVEL)
+printk("Ahiee, we're not passive level at the beginning of read_lock_irq() irql is %d\n", oldIrql);
 }
 
 void read_unlock_irq(rwlock_t *lock)
 {
-	ExReleaseSpinLockShared(&lock->shared_exclusive_lock, PASSIVE_LEVEL);
+	ExReleaseSpinLockShared(&lock->shared_exclusive_lock, guess_old_kirql());
 }
 
 KIRQL read_lock_irqsave_ret(rwlock_t *lock)
@@ -432,6 +447,7 @@ void write_unlock(rwlock_t *lock)
 
 void write_lock_bh(rwlock_t *lock)
 {
+printk("KIRQL is %d\n", KeGetCurrentIrql());
 	ExAcquireSpinLockExclusiveAtDpcLevel(&lock->shared_exclusive_lock);
 }
 
@@ -442,12 +458,16 @@ void write_unlock_bh(rwlock_t *lock)
 
 void write_lock_irq(rwlock_t *lock)
 {
-	ExAcquireSpinLockExclusive(&lock->shared_exclusive_lock);
+	KIRQL oldIrql;
+
+	oldIrql = ExAcquireSpinLockExclusive(&lock->shared_exclusive_lock);
+if (oldIrql != PASSIVE_LEVEL)
+printk("Ahiee, we're not passive level at the beginning of write_lock_irq() IRQL is %d\n", oldIrql);
 }
 
 void write_unlock_irq(rwlock_t *lock)
 {
-	ExReleaseSpinLockExclusive(&lock->shared_exclusive_lock, PASSIVE_LEVEL);
+	ExReleaseSpinLockExclusive(&lock->shared_exclusive_lock, guess_old_kirql());
 }
 
 KIRQL write_lock_irqsave_ret(rwlock_t *lock)
