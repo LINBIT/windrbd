@@ -296,19 +296,23 @@ void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags)
 	KeReleaseSpinLock(&lock->spinLock, flags);
 }
 
-void spin_lock_irq(spinlock_t *lock)
+void spin_lock_irq_debug(spinlock_t *lock, char *file, int line, char *func)
 {
+printk("called from %s:%d %s(): irql is %d\n", file, line, func, KeGetCurrentIrql());
 	KIRQL oldIrql;
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
+printk("called from %s:%d %s(): took lock, irql is %d\n", file, line, func, KeGetCurrentIrql());
 		/* if oldIrql != PASSIVE_LEVEL complain */
 if (oldIrql != PASSIVE_LEVEL)
 printk("Ahiee, we're not passive level at the beginning of spin_lock_irq() irql is %d\n", oldIrql);
 }
 
-void spin_unlock_irq(spinlock_t *lock)
+void spin_unlock_irq_debug(spinlock_t *lock, char *file, int line, char *func)
 {
+printk("called from %s:%d %s(): about to release lock irql is %d\n", file, line, func, KeGetCurrentIrql());
 	KeReleaseSpinLock(&lock->spinLock, guess_old_kirql());
+printk("called from %s:%d %s(): irql is %d\n", file, line, func, KeGetCurrentIrql());
 }
 
 /* This does not change the IRQL. In particular if IRQL is

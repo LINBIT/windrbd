@@ -21,8 +21,11 @@ extern void spin_lock(spinlock_t *lock);
 extern void spin_unlock(spinlock_t *lock);
 extern void spin_lock_bh(spinlock_t *lock);
 extern void spin_unlock_bh(spinlock_t *lock);
-extern void spin_lock_irq(spinlock_t *lock);
-extern void spin_unlock_irq(spinlock_t *lock);
+extern void spin_lock_irq_debug(spinlock_t *lock, char *file, int line, char *func);
+extern void spin_unlock_irq_debug(spinlock_t *lock, char *file, int line, char *func);
+
+#define spin_lock_irq(l) spin_lock_irq_debug(l, __FILE__, __LINE__, (char*)__func__)
+#define spin_unlock_irq(l) spin_unlock_irq_debug(l, __FILE__, __LINE__, (char*)__func__)
 
 extern void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags);
 extern KIRQL _spin_lock_irqsave(spinlock_t *lock);
