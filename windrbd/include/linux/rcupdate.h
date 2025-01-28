@@ -15,6 +15,11 @@
 #define rcu_assign_pointer(p, v)	__rcu_assign_pointer((p), (v))
 #define list_next_rcu(list)		(*((struct list_head **)(&(list)->next)))
 
+void rcu_read_lock(void);
+void rcu_read_unlock(void);
+void synchronize_rcu(void);
+void call_rcu(struct rcu_head *head, rcu_callback_t func);
+
 	/* TODO: how is this function called in Linux? */
 void kfree_when_rcu_in_sync(void *p);
 

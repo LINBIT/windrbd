@@ -19,6 +19,10 @@ Error Cannot implement DECLARE_SPINLOCK since we need to call KeInitializeSpinlo
 extern void spin_lock_nested(spinlock_t *lock, int level);
 extern void spin_lock(spinlock_t *lock);
 extern void spin_unlock(spinlock_t *lock);
+extern void spin_lock_bh(spinlock_t *lock);
+extern void spin_unlock_bh(spinlock_t *lock);
+extern void spin_lock_irq(spinlock_t *lock);
+extern void spin_unlock_irq(spinlock_t *lock);
 
 extern void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags);
 extern KIRQL _spin_lock_irqsave(spinlock_t *lock);
@@ -28,11 +32,6 @@ extern KIRQL _spin_lock_irqsave(spinlock_t *lock);
 
 extern int spin_trylock(spinlock_t *lock);
 extern void init_locking(void);
-
-extern KIRQL rcu_read_lock(void);
-extern void rcu_read_unlock(KIRQL rcu_flags);
-extern void synchronize_rcu(void);
-extern void call_rcu(struct rcu_head *head, rcu_callback_t func);
 
 extern void local_irq_disable();
 extern void local_irq_enable();

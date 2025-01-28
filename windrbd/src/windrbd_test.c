@@ -277,14 +277,12 @@ static atomic_t rcu_num_read_errors;
 static int rcu_reader(void *arg)
 {
 	volatile long long val1, val2;
-	KIRQL flags;
 	struct rcu_struct volatile *the_rcu;
 	struct completion *c = arg;
 
-	flags = 0;
 	while (!rcu_writers_finished) {
 		if (rcu_lock_method == RCU_READ_LOCK)
-			flags = rcu_read_lock();
+			rcu_read_lock();
 #if 0
 		if (rcu_lock_method == RCU_SPIN_LOCK)
 			spin_lock(&rcu_writer_lock);
@@ -304,7 +302,7 @@ static int rcu_reader(void *arg)
 		}
 
 		if (rcu_lock_method == RCU_READ_LOCK)
-			rcu_read_unlock(flags);
+			rcu_read_unlock();
 #if 0
 		if (rcu_lock_method == RCU_SPIN_LOCK)
 			spin_unlock(&rcu_writer_lock);

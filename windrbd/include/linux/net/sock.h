@@ -5,6 +5,7 @@ struct sock;
 
 #include <linux/tcp.h>
 #include <linux/spinlock.h>
+#include <linux/rwlock.h>
 
 #define SOCK_SNDBUF_LOCK	1
 #define SOCK_RCVBUF_LOCK	2
@@ -28,7 +29,7 @@ struct sock {
 	void (*sk_data_ready)(struct sock *sk);
 	void (*sk_write_space)(struct sock *sk);
 
-	spinlock_t sk_callback_lock;
+	rwlock_t sk_callback_lock;
 	struct socket *sk_socket;
 
 	/* TODO: those are used by drbd_transport_tcp but not implemented

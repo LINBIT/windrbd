@@ -289,13 +289,23 @@ void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags)
 	KeReleaseSpinLock(&lock->spinLock, flags);
 }
 
+void spin_lock_irq(spinlock_t *lock)
+{
+	KIRQL oldIrql;
+	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
+		/* if oldIrql != PASSIVE_LEVEL complain */
+}
+
+void spin_unlock_irq(spinlock_t *lock)
+{
+	KeReleaseSpinLock(&lock->spinLock, PASSIVE_LEVEL);
+}
+
 /* This does not change the IRQL. In particular if IRQL is
  * at PASSIVE_LEVEL it stays at PASSIVE_LEVEL which means
  * that the critical section may be preempted. Again,
  * use spin_lock_irqsave/spin_unlock_irqrestore whereever
  * possible.
- *
- * TODO: these functions are deprecated and should go away.
  */
 
 void spin_lock(spinlock_t *lock)
@@ -308,6 +318,16 @@ void spin_unlock(spinlock_t *lock)
 	KeReleaseSpinLockFromDpcLevel(&lock->spinLock);
 }
 
+void spin_lock_bh(spinlock_t *lock)
+{
+	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
+}
+
+void spin_unlock_bh(spinlock_t *lock)
+{
+	KeReleaseSpinLockFromDpcLevel(&lock->spinLock);
+}
+
 void spin_lock_nested(spinlock_t *lock, int level)
 {
 	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
@@ -315,86 +335,6 @@ void spin_lock_nested(spinlock_t *lock, int level)
 
 #ifndef CONFIG_HAVE_RW_LOCKS
 // #if (NTDDI_VERSION < NTDDI_VISTASP1)
-
-#if 0
-	/* Still need deadlock detection, since rcu_read_lock maybe
-	 * held while calling synchronize_rcu. Windows before Vista
-	 * Service pack 1 didn't have read/write locks, use plain old
-	 * spinlocks instead ... only difference is that rcu_read_locks()
-	 * are slower.
-	 */
-
-KIRQL rcu_read_lock(void)
-{
-	KIRQL flags;
-	struct task_struct *c;
-
-	c = current;
-	if (is_windrbd_thread(c)) {
-		if (atomic_inc_return(&c->rcu_recursion_depth) > 1)
-			return KeGetCurrentIrql();
-
-		c->in_rcu = 1;
-	} else {	/* APC, ... do nothing else BSOD */
-		return KeGetCurrentIrql();
-	}
-
-	spin_lock_irqsave(&rcu_spin_lock, flags);
-	return flags;
-}
-
-void rcu_read_unlock(KIRQL rcu_flags)
-{
-	struct task_struct *c;
-
-	c = current;
-	if (is_windrbd_thread(c)) {
-		if (atomic_dec_return(&c->rcu_recursion_depth) > 0)
-			return;
-	} else {	/* APC, ... do nothing */
-		return;
-	}
-	spin_unlock_irqrestore(&rcu_spin_lock, rcu_flags);
-
-	if (is_windrbd_thread(current))
-		current->in_rcu = 0;
-}
-
-void synchronize_rcu(void)
-{
-	KIRQL rcu_flags;
-
-	if (is_windrbd_thread(current)) {
-		if (current->in_rcu)
-			return;	/* avoid deadlock */
-	} else {	/* APC, ... do nothing */
-		return;
-	}
-	spin_lock_irqsave(&rcu_spin_lock, rcu_flags);
-	spin_unlock_irqrestore(&rcu_spin_lock, rcu_flags);
-}
-
-void call_rcu(struct rcu_head *head, rcu_callback_t func)
-{
-	KIRQL rcu_flags = PASSIVE_LEVEL;
-	int can_lock = 1;
-
-	if (is_windrbd_thread(current)) {
-		if (current->in_rcu)
-			can_lock = 0;
-	} else {	/* APC, ... do nothing */
-		can_lock = 0;
-	}
-	if (can_lock)
-		spin_lock_irqsave(&rcu_spin_lock, rcu_flags);
-
-	func(head);
-
-	if (can_lock)
-		spin_unlock_irqrestore(&rcu_spin_lock, rcu_flags);
-}
-
-#endif
 
 /* And now, the rw_locks. Note that this implementation with spin locks
  * causes DRBD 9.1 to lock up on application I/O, so only DRBD 9.0 support
@@ -445,78 +385,6 @@ void rwlock_init(rwlock_t *lock)
 
 #else
 
-#if 0
-
-	/* Still need deadlock detection, since rcu_read_lock maybe
-	 * held while calling synchronize_rcu
-	 */
-
-KIRQL rcu_read_lock(void)
-{
-	KIRQL flags;
-	struct task_struct *c;
-
-	c = current;
-	if (is_windrbd_thread(c)) {
-		if (atomic_inc_return(&c->rcu_recursion_depth) > 1)
-			return KeGetCurrentIrql();
-
-		c->in_rcu = 1;
-	}
-
-	flags = ExAcquireSpinLockShared(&rcu_rw_lock);
-	return flags;
-}
-
-void rcu_read_unlock(KIRQL rcu_flags)
-{
-	struct task_struct *c;
-
-	c = current;
-	if (is_windrbd_thread(c)) {
-		if (atomic_dec_return(&c->rcu_recursion_depth) > 0)
-			return;
-	}
-
-	ExReleaseSpinLockShared(&rcu_rw_lock, rcu_flags);
-
-	if (is_windrbd_thread(current))
-		current->in_rcu = 0;
-}
-
-void synchronize_rcu(void)
-{
-	KIRQL rcu_flags;
-
-	if (is_windrbd_thread(current)) {
-		if (current->in_rcu)
-			return;	/* avoid deadlock */
-	}
-	rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
-	/* compiler barrier */
-	ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
-}
-
-void call_rcu(struct rcu_head *head, rcu_callback_t func)
-{
-	KIRQL rcu_flags = PASSIVE_LEVEL;
-	int can_lock = 1;
-
-	if (is_windrbd_thread(current)) {
-		if (current->in_rcu)
-			can_lock = 0;
-	}
-	if (can_lock)
-		rcu_flags = ExAcquireSpinLockExclusive(&rcu_rw_lock);
-
-	func(head);
-
-	if (can_lock)
-		ExReleaseSpinLockExclusive(&rcu_rw_lock, rcu_flags);
-}
-
-#endif
-
 /* And now, the rw_locks using ExAcquireSpinLockShared and friends.
  * No recursion detection here. Also no DPC checking. It is the
  * same as the Linux implementation (I think :) ).
@@ -532,6 +400,16 @@ void read_unlock(rwlock_t *lock)
 	ExReleaseSpinLockSharedFromDpcLevel(&lock->shared_exclusive_lock);
 }
 
+void read_lock_irq(rwlock_t *lock)
+{
+	ExAcquireSpinLockShared(&lock->shared_exclusive_lock);
+}
+
+void read_unlock_irq(rwlock_t *lock)
+{
+	ExReleaseSpinLockShared(&lock->shared_exclusive_lock, PASSIVE_LEVEL);
+}
+
 KIRQL read_lock_irqsave_ret(rwlock_t *lock)
 {
 	return ExAcquireSpinLockShared(&lock->shared_exclusive_lock);
@@ -540,6 +418,36 @@ KIRQL read_lock_irqsave_ret(rwlock_t *lock)
 void read_unlock_irqrestore(rwlock_t *lock, KIRQL flags)
 {
 	ExReleaseSpinLockShared(&lock->shared_exclusive_lock, flags);
+}
+
+void write_lock(rwlock_t *lock)
+{
+	ExAcquireSpinLockExclusiveAtDpcLevel(&lock->shared_exclusive_lock);
+}
+
+void write_unlock(rwlock_t *lock)
+{
+	ExReleaseSpinLockExclusiveFromDpcLevel(&lock->shared_exclusive_lock);
+}
+
+void write_lock_bh(rwlock_t *lock)
+{
+	ExAcquireSpinLockExclusiveAtDpcLevel(&lock->shared_exclusive_lock);
+}
+
+void write_unlock_bh(rwlock_t *lock)
+{
+	ExReleaseSpinLockExclusiveFromDpcLevel(&lock->shared_exclusive_lock);
+}
+
+void write_lock_irq(rwlock_t *lock)
+{
+	ExAcquireSpinLockExclusive(&lock->shared_exclusive_lock);
+}
+
+void write_unlock_irq(rwlock_t *lock)
+{
+	ExReleaseSpinLockExclusive(&lock->shared_exclusive_lock, PASSIVE_LEVEL);
 }
 
 KIRQL write_lock_irqsave_ret(rwlock_t *lock)
@@ -593,14 +501,12 @@ static void free_all_rcu_pointers(void)
 	rcu_pointers_to_free = NULL;
 }
 
-KIRQL rcu_read_lock(void)
+void rcu_read_lock(void)
 {
 	atomic_inc(&rcu_counter);
-
-	return KeGetCurrentIrql();
 }
 
-void rcu_read_unlock(KIRQL rcu_flags)
+void rcu_read_unlock(void)
 {
 	KIRQL flags;
 
