@@ -276,7 +276,7 @@ static KIRQL guess_old_kirql(void)
 {
 	if (is_windrbd_thread(current))
 		return PASSIVE_LEVEL;
-	return APC_LEVEL;	/* or so ... */
+	return DISPATCH_LEVEL;	/* or so ... */
 }
 
 /* See also defintion of spin_lock_irqsave in linux/spinlock.h for handling
