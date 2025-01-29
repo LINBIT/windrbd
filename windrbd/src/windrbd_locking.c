@@ -24,6 +24,8 @@
  * handling routines and routines to control IRQL directly.
  */
 
+// #define DEBUG 1
+
 #include <linux/types.h>
 #include "windrbd_config.h"
 #include <linux/mutex.h>
@@ -298,21 +300,21 @@ void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags)
 
 void spin_lock_irq_debug(spinlock_t *lock, char *file, int line, char *func)
 {
-printk("called from %s:%d %s(): irql is %d\n", file, line, func, KeGetCurrentIrql());
+dbg("called from %s:%d %s(): irql is %d\n", file, line, func, KeGetCurrentIrql());
 	KIRQL oldIrql;
 	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
 
-printk("called from %s:%d %s(): took lock, irql is %d\n", file, line, func, KeGetCurrentIrql());
+dbg("called from %s:%d %s(): took lock, irql is %d\n", file, line, func, KeGetCurrentIrql());
 		/* if oldIrql != PASSIVE_LEVEL complain */
 if (oldIrql != PASSIVE_LEVEL)
-printk("Ahiee, we're not passive level at the beginning of spin_lock_irq() irql is %d\n", oldIrql);
+dbg("Ahiee, we're not passive level at the beginning of spin_lock_irq() irql is %d\n", oldIrql);
 }
 
 void spin_unlock_irq_debug(spinlock_t *lock, char *file, int line, char *func)
 {
-printk("called from %s:%d %s(): about to release lock irql is %d\n", file, line, func, KeGetCurrentIrql());
+dbg("called from %s:%d %s(): about to release lock irql is %d\n", file, line, func, KeGetCurrentIrql());
 	KeReleaseSpinLock(&lock->spinLock, guess_old_kirql());
-printk("called from %s:%d %s(): irql is %d\n", file, line, func, KeGetCurrentIrql());
+dbg("called from %s:%d %s(): irql is %d\n", file, line, func, KeGetCurrentIrql());
 }
 
 /* This does not change the IRQL. In particular if IRQL is
@@ -334,7 +336,7 @@ void spin_unlock(spinlock_t *lock)
 
 void spin_lock_bh(spinlock_t *lock)
 {
-printk("KIRQL is %d\n", KeGetCurrentIrql());
+dbg("KIRQL is %d\n", KeGetCurrentIrql());
 	KeAcquireSpinLockAtDpcLevel(&lock->spinLock);
 }
 
@@ -421,7 +423,7 @@ void read_lock_irq(rwlock_t *lock)
 
 	oldIrql = ExAcquireSpinLockShared(&lock->shared_exclusive_lock);
 if (oldIrql != PASSIVE_LEVEL)
-printk("Ahiee, we're not passive level at the beginning of read_lock_irq() irql is %d\n", oldIrql);
+dbg("Ahiee, we're not passive level at the beginning of read_lock_irq() irql is %d\n", oldIrql);
 }
 
 void read_unlock_irq(rwlock_t *lock)
@@ -451,7 +453,7 @@ void write_unlock(rwlock_t *lock)
 
 void write_lock_bh(rwlock_t *lock)
 {
-printk("KIRQL is %d\n", KeGetCurrentIrql());
+dbg("KIRQL is %d\n", KeGetCurrentIrql());
 	ExAcquireSpinLockExclusiveAtDpcLevel(&lock->shared_exclusive_lock);
 }
 
@@ -466,7 +468,7 @@ void write_lock_irq(rwlock_t *lock)
 
 	oldIrql = ExAcquireSpinLockExclusive(&lock->shared_exclusive_lock);
 if (oldIrql != PASSIVE_LEVEL)
-printk("Ahiee, we're not passive level at the beginning of write_lock_irq() IRQL is %d\n", oldIrql);
+dbg("Ahiee, we're not passive level at the beginning of write_lock_irq() IRQL is %d\n", oldIrql);
 }
 
 void write_unlock_irq(rwlock_t *lock)
