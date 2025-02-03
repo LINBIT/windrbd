@@ -1,39 +1,39 @@
 What is WinDRBD?
 ================
 
-WinDRBD is a port of Linbit's Distributed Replicated Block Device
-(DRBD) Linux driver to Microsoft Windows. It is wire-compatible
+WinDRBD is a port of the LINBIT® Distributed Replicated Block Device
+(DRBD®) Linux driver to Microsoft Windows. It is wire-compatible
 with the Linux version and supports almost all features of the
-Linux version, too.
+Linux version.
 
-DRBD itself is used to build High Availability clusters by replicating
+DRBD itself is used to build high-availability (HA) clusters by replicating
 contents of one block device over a network to (up to 31) other nodes.
 
-In order to get professional support for WinDRBD please contact
+To get professional support for WinDRBD contact
 sales@linbit.com directly.
 
-To learn how to use WinDRBD to create a 2-node HA cluster based
+To learn how to use WinDRBD to create a two-node HA cluster based
 on Microsoft Windows, or to learn how to use WinDRBD for booting
-Windows from a Linux server please go to https://downloads.linbit.com
+Windows from a Linux server go to https://downloads.linbit.com
 and download the WinDRBD tech guides. You might also find the
 articles on https://kb.linbit.com useful.
 
 Since release 1.0.0, WinDRBD can be used in production environments
 for HA setups (as data disks). Support for system volume ("C:")
 replication and booting from a WinDRBD server is still experimental,
-since it is difficult to set up and cannot currently recover from
+because it is difficult to set up and cannot currently recover from
 a network outage.
 
-WinDRBD is Open Source and licensed under the GNU general public
-license. To obtain the source code, please go to:
+WinDRBD is open source software and licensed under the GNU general public
+license. To obtain the source code, go to:
 
 https://www.github.com/LINBIT/WinDRBD
 
-We'd love to get feedback, either over the github site or over
-the DRBD user mailing list (drbd-user@lists.linbit.com, please
+We'd love to get feedback, either submitted at the GitHub site or over
+the DRBD user mailing list (drbd-user@lists.linbit.com,
 go to http://lists.linbit.com/mailman/listinfo/drbd-user to
 subscribe).
 
 Thank you for participating in WinDRBD development by using it.
 
-- Johannes Thoma
+- Johannes Khoshnazar-Thoma
