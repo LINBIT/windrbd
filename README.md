@@ -293,3 +293,4 @@ Version history
  * 1.2.0-rc4 (May 22, 2024): DRBD with minimal patches compiles
  * 1.2.0-rc5 (Jul 09, 2024): DRBD 9.1 (with minimal patches) compiles
  * 1.2.0-rc6 (Oct 01, 2024): Lots of stability fixes (full sync, primary/secondary, application I/O, ...)
+ * 1.2.0-rc7 (Feb 03, 2025): DRBD 9.0, 9.1 and 9.2 support. First public beta of 1.2 branch.
