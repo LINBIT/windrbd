@@ -70,10 +70,10 @@ func(...) {
 +     KIRQL __cocci_spin_lock_flags3;
       <+...
 -     write_lock_bh(lock);
-+     spin_lock_irqsave(lock, __cocci_spin_lock_flags3);
++     write_lock_irqsave(lock, __cocci_spin_lock_flags3);
       ...
 -     write_unlock_bh(lock);
-+     spin_unlock_irqrestore(lock, __cocci_spin_lock_flags3);
++     write_unlock_irqrestore(lock, __cocci_spin_lock_flags3);
       ...+>
  }
 @@
