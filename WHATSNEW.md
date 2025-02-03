@@ -6,6 +6,12 @@ Base on DRBD 9.1
 
 DRBD reactor support
 
+What's new in version 1.2.0-rc7
+-------------------------------
+
+Compiles and runs stable with DRBD 9.0, DRBD 9.1 and
+DRBD 9.2. First 'real' release canidate.
+
 What's new in version 1.2.0-rc6
 -------------------------------
 
