@@ -274,12 +274,16 @@ static EX_SPIN_LOCK rcu_rw_lock;
 
 #endif
 
+#if 0
+
 static KIRQL guess_old_kirql(void)
 {
 	if (is_windrbd_thread(current))
 		return PASSIVE_LEVEL;
 	return DISPATCH_LEVEL;	/* or so ... */
 }
+
+#endif
 
 /* See also defintion of spin_lock_irqsave in linux/spinlock.h for handling
  * the flags parameter.
@@ -297,6 +301,8 @@ void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags)
 {
 	KeReleaseSpinLock(&lock->spinLock, flags);
 }
+
+#if 0
 
 void spin_lock_irq_debug(spinlock_t *lock, char *file, int line, char *func)
 {
@@ -317,6 +323,8 @@ dbg("called from %s:%d %s(): about to release lock irql is %d\n", file, line, fu
 dbg("called from %s:%d %s(): irql is %d\n", file, line, func, KeGetCurrentIrql());
 }
 
+#endif
+
 /* This does not change the IRQL. In particular if IRQL is
  * at PASSIVE_LEVEL it stays at PASSIVE_LEVEL which means
  * that the critical section may be preempted. Again,
@@ -334,6 +342,8 @@ void spin_unlock(spinlock_t *lock)
 	KeReleaseSpinLockFromDpcLevel(&lock->spinLock);
 }
 
+#if 0
+
 void spin_lock_bh(spinlock_t *lock)
 {
 dbg("KIRQL is %d\n", KeGetCurrentIrql());
@@ -344,6 +354,8 @@ void spin_unlock_bh(spinlock_t *lock)
 {
 	KeReleaseSpinLockFromDpcLevel(&lock->spinLock);
 }
+
+#endif
 
 void spin_lock_nested(spinlock_t *lock, int level)
 {
@@ -417,6 +429,8 @@ void read_unlock(rwlock_t *lock)
 	ExReleaseSpinLockSharedFromDpcLevel(&lock->shared_exclusive_lock);
 }
 
+#if 0
+
 void read_lock_irq(rwlock_t *lock)
 {
 	KIRQL oldIrql;
@@ -430,6 +444,8 @@ void read_unlock_irq(rwlock_t *lock)
 {
 	ExReleaseSpinLockShared(&lock->shared_exclusive_lock, guess_old_kirql());
 }
+
+#endif
 
 KIRQL read_lock_irqsave_ret(rwlock_t *lock)
 {
@@ -450,6 +466,8 @@ void write_unlock(rwlock_t *lock)
 {
 	ExReleaseSpinLockExclusiveFromDpcLevel(&lock->shared_exclusive_lock);
 }
+
+#if 0
 
 void write_lock_bh(rwlock_t *lock)
 {
@@ -475,6 +493,8 @@ void write_unlock_irq(rwlock_t *lock)
 {
 	ExReleaseSpinLockExclusive(&lock->shared_exclusive_lock, guess_old_kirql());
 }
+
+#endif
 
 KIRQL write_lock_irqsave_ret(rwlock_t *lock)
 {
