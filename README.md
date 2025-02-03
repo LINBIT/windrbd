@@ -10,12 +10,21 @@ Clone this repository with
 
 else you get an incomplete checkout.
 
-To build (within a docker container containing build dependecies), do
+To build (within a docker container containing build dependencies), do
 (on a Linux box):
 
-	make pull-docker && make package-in-docker
+	make pull-docker && make
 
-To install on Windows run the generated install-windrbd-<version>.exe (yes on a Windows box, tough ReactOS should also work, see make help).
+To install on Windows run the generated install-windrbd-<version>.exe (yes on a Windows box, tough ReactOS should also work, see make help). The installer
+will be placed in the inno-setup subdirectory of your checked out WinDRBD repo.
+
+For an unattended install (without having to click something or windows
+popping up) run the installer as follows (replace the EXE file's name):
+
+	install-windrbd-1.2.0-rc7-drbd-9.2-x86_64.exe /verysilent
+
+This installation mode is suitable for running from batch scripts or
+also from within a CygWin ssh session.
 
 To put your Windows box into test mode (required on 64-bit Microsoft Windows for loading the driver), do
 
