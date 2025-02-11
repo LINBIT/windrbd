@@ -1518,7 +1518,7 @@ void force_sig(int sig, struct task_struct *task)
 
 	if (task && task->has_sig_event)
 	{
-// printk("sending signal %d to task %p (%s)\n", sig, task, task->comm);
+printk("sending signal %d to task %p (%s)\n", sig, task, task->comm);
 		task->sig = sig;
 		KeSetEvent(&task->sig_event, 0, FALSE);
 	}
@@ -1535,7 +1535,7 @@ void flush_signals(struct task_struct *task)
 
 	if (task && task->has_sig_event)
 	{
-// printk("clearing signal event from task %p (%s)\n", task, task->comm);
+printk("clearing signal event from task %p (%s)\n", task, task->comm);
 		KeClearEvent(&task->sig_event); 
 		task->sig = 0;
 	}
