@@ -637,8 +637,11 @@ begin
 		PatchRegistry();
 #ifdef Reactos
 		CopyDriver();
+		InstallBusDevice();
+{
 		CreateWindrbdService();
 		StartWindrbdService();
+}
 #else
 		AddDriverToDriverStore();
 		InstallBusDevice();
