@@ -18,7 +18,7 @@ build1.2:
   stage: build
   image: nexus.at.linbit.com:5000/windrbd-devenv
   rules:
-    - if: $CI_COMMIT_BRANCH == 'windrbd-1.2'
+    - if: $CI_COMMIT_BRANCH == 'windrbd-1.2' || $CI_COMMIT_BRANCH == 'jt/debug-eagain-in-receive'
   script:
     - make package VERSION=windrbd-1.2-from-gitlab
     - |

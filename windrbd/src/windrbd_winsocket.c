@@ -65,10 +65,8 @@ static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 
 static int winsock_to_linux_error(NTSTATUS status)
 {
-/*
 	if (status != STATUS_SUCCESS)
 		printk("got status %x\n", status);
-*/
 
 	switch (status) {
 	case STATUS_SUCCESS:
@@ -1193,7 +1191,7 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
         {
             nWaitTime.QuadPart = -1LL * socket->sk->sk_rcvtimeo * 1000 * 10 * 1000 / HZ;
             pTime = &nWaitTime;
-dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadPart, socket->sk->sk_rcvtimeo);
+printk("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadPart, socket->sk->sk_rcvtimeo);
         }
 
         waitObjects[0] = (PVOID) &CompletionEvent;
@@ -1203,7 +1201,9 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
             wObjCount = 2;
         } 
 
+printk("timeout is %d\n", socket->sk->sk_rcvtimeo);
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
+printk("Status is %d\n", Status);
 
         switch (Status)
         {
@@ -1240,6 +1240,7 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
     }
 	else
 	{
+printk("status is not pending\n");
 		if (Status == STATUS_SUCCESS)
 		{
 			BytesReceived = (LONG) Irp->IoStatus.Information;
@@ -1385,6 +1386,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	timeout = socket->sk->sk_rcvtimeo; 
 	while (1) {
+printk("timeout is %d\n", timeout);
 		remaining_time = wait_event_interruptible_timeout(
 			socket->data_available, 
 			socket->write_index != socket->read_index || 
@@ -1393,6 +1395,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			socket->sk->sk_state != TCP_ESTABLISHED,
 			timeout);
 
+printk("remaining_time is %d\n", remaining_time);
 		if (remaining_time == -EINTR)
 			return -EINTR;
 		if (remaining_time <= 0)
