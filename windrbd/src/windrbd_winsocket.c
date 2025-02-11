@@ -114,9 +114,11 @@ static int winsock_to_linux_error(NTSTATUS status)
 
 static void terminate_receive_thread(struct socket *socket)
 {
-// printk("About to terminate receive thread for socket %p\n", socket);
+printk("About to terminate receive thread for socket %p\n", socket);
 	if (socket->receive_thread_should_run) {
+printk("1 socket->receive_thread_should_run is %d\n", socket->receive_thread_should_run);
 		socket->receive_thread_should_run = false;
+printk("2 socket->receive_thread_should_run is %d\n", socket->receive_thread_should_run);
 		wake_up(&socket->buffer_available);
 //		wait_for_completion(&socket->receiver_thread_completion);
 	}
@@ -658,6 +660,7 @@ static void close_socket(struct socket *socket)
 		return;
 	}
 
+printk("terminate_receive_thread ...\n");
 	terminate_receive_thread(socket);
 
 	Irp = wsk_new_irp(NULL, NULL);
@@ -1478,7 +1481,11 @@ static int socket_receive_thread(void *p)
 			(s->write_index == s->read_index && !s->receive_buffer_full)))); 
 
 		if (!s->receive_thread_should_run)
+{
+printk("s->receive_thread_should_run is %d\n", s->receive_thread_should_run);
 			break;
+}
+
 
 		spin_lock_irqsave(&s->receive_lock, flags);
 		if (s->read_index == s->write_index && !s->receive_buffer_full) {
