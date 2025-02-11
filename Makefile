@@ -66,7 +66,7 @@ export ARCH ?= x86_64
 
 TARGET_IPS ?= 10.43.224.5 10.43.224.47 10.43.224.50
 
-export DRBD ?= drbd-9.2
+export DRBD ?= drbd-9.1
 DRBDTMP ?= $(DRBD)-tmp
 
 export REACTOS
