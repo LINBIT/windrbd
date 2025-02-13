@@ -18,7 +18,7 @@ build1.2:
   stage: build
   image: nexus.at.linbit.com:5000/windrbd-devenv
   rules:
-    - if: $CI_COMMIT_BRANCH == 'windrbd-1.2' || $CI_COMMIT_BRANCH == 'jt/debug-eagain-in-receive'
+    - if: $CI_COMMIT_BRANCH == 'windrbd-1.2' || $CI_COMMIT_BRANCH == 'jt/fixing-issues-found-by-testsuite'
   script:
     - make package VERSION=windrbd-1.2-from-gitlab
     - |
@@ -57,7 +57,7 @@ test:
     virter --version
     ci_fetch_binary vmshed vmshed-$VMSHED_VERSION https://github.com/LINBIT/vmshed/releases/download/$VMSHED_VERSION/vmshed-linux-amd64
     vmshed --version
-    git clone --branch jt/windrbd-support https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/drbd/drbd9-tests.git
+    git clone --branch jt/windrbd-support-2025 https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/drbd/drbd9-tests.git
     export WINDRBD_VERSION=$CI_COMMIT_BRANCH-from-gitlab
     cd drbd9-tests && ./run-windrbd-tests.sh
   artifacts:
