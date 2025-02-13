@@ -33,7 +33,7 @@ test:
     virter --version
     ci_fetch_binary vmshed vmshed-$VMSHED_VERSION https://github.com/LINBIT/vmshed/releases/download/$VMSHED_VERSION/vmshed-linux-amd64
     vmshed --version
-    git clone --branch jt/windrbd-support https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/drbd/drbd9-tests.git
+    git clone --branch jt/windrbd-support-2025 https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/drbd/drbd9-tests.git
     export WINDRBD_VERSION=$CI_COMMIT_BRANCH-from-gitlab
     cd drbd9-tests && ./run-windrbd-tests.sh
   artifacts:
