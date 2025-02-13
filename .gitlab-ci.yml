@@ -34,8 +34,7 @@ test:
     ci_fetch_binary vmshed vmshed-$VMSHED_VERSION https://github.com/LINBIT/vmshed/releases/download/$VMSHED_VERSION/vmshed-linux-amd64
     vmshed --version
     git clone --branch jt/windrbd-support https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/drbd/drbd9-tests.git
-    # export WINDRBD_VERSION=$CI_COMMIT_BRANCH-from-gitlab
-    export WINDRBD_VERSION=1.1.19
+    export WINDRBD_VERSION=$CI_COMMIT_BRANCH-from-gitlab
     cd drbd9-tests && ./run-windrbd-tests.sh
   artifacts:
     # provide a convenient name so that the downloaded artifacts can be identified
