@@ -114,11 +114,11 @@ static int winsock_to_linux_error(NTSTATUS status)
 
 static void terminate_receive_thread(struct socket *socket)
 {
-printk("About to terminate receive thread for socket %p\n", socket);
+// printk("About to terminate receive thread for socket %p\n", socket);
 	if (socket->receive_thread_should_run) {
-printk("1 socket->receive_thread_should_run is %d\n", socket->receive_thread_should_run);
+// printk("1 socket->receive_thread_should_run is %d\n", socket->receive_thread_should_run);
 		socket->receive_thread_should_run = false;
-printk("2 socket->receive_thread_should_run is %d\n", socket->receive_thread_should_run);
+// printk("2 socket->receive_thread_should_run is %d\n", socket->receive_thread_should_run);
 		wake_up(&socket->buffer_available);
 //		wait_for_completion(&socket->receiver_thread_completion);
 	}
@@ -660,7 +660,7 @@ static void close_socket(struct socket *socket)
 		return;
 	}
 
-printk("terminate_receive_thread ...\n");
+// printk("terminate_receive_thread ...\n");
 	terminate_receive_thread(socket);
 
 	Irp = wsk_new_irp(NULL, NULL);
@@ -1194,7 +1194,7 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
         {
             nWaitTime.QuadPart = -1LL * socket->sk->sk_rcvtimeo * 1000 * 10 * 1000 / HZ;
             pTime = &nWaitTime;
-printk("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadPart, socket->sk->sk_rcvtimeo);
+// printk("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadPart, socket->sk->sk_rcvtimeo);
         }
 
         waitObjects[0] = (PVOID) &CompletionEvent;
@@ -1204,9 +1204,9 @@ printk("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.Qu
             wObjCount = 2;
         } 
 
-printk("timeout is %d\n", socket->sk->sk_rcvtimeo);
+// printk("timeout is %d\n", socket->sk->sk_rcvtimeo);
         Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-printk("Status is %d\n", Status);
+// printk("Status is %d\n", Status);
 
         switch (Status)
         {
@@ -1243,7 +1243,7 @@ printk("Status is %d\n", Status);
     }
 	else
 	{
-printk("status is not pending\n");
+// printk("status is not pending\n");
 		if (Status == STATUS_SUCCESS)
 		{
 			BytesReceived = (LONG) Irp->IoStatus.Information;
@@ -1389,7 +1389,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	timeout = socket->sk->sk_rcvtimeo; 
 	while (1) {
-printk("timeout is %d\n", timeout);
+// printk("timeout is %d\n", timeout);
 		remaining_time = wait_event_interruptible_timeout(
 			socket->data_available, 
 			socket->write_index != socket->read_index || 
@@ -1398,7 +1398,7 @@ printk("timeout is %d\n", timeout);
 			socket->sk->sk_state != TCP_ESTABLISHED,
 			timeout);
 
-printk("remaining_time is %d\n", remaining_time);
+// printk("remaining_time is %d\n", remaining_time);
 		if (remaining_time == -EINTR)
 			return -EINTR;
 		if (remaining_time <= 0)
@@ -1482,7 +1482,7 @@ static int socket_receive_thread(void *p)
 
 		if (!s->receive_thread_should_run)
 {
-printk("s->receive_thread_should_run is %d\n", s->receive_thread_should_run);
+// printk("s->receive_thread_should_run is %d\n", s->receive_thread_should_run);
 			break;
 }
 
