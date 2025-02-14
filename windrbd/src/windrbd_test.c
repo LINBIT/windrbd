@@ -1506,10 +1506,11 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	int short_writes;
 	struct ip_addr *ip_addr = (struct ip_addr*) ip_addr_p;
 
+	strcpy(bigbuffer, "Hallo Windows 2003\n");
         struct kvec iov = {
                 .iov_base = bigbuffer,
                // .iov_len = sizeof(bigbuffer),
-		.iov_len = 16,
+		.iov_len = 20,
 	       // .iov_len = 4096,
         };
         struct msghdr msg = {
@@ -1563,6 +1564,9 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	short_writes = 0;
 
 	while (1) {
+		printk("Sleeping a bit ...\n");
+		msleep(5000);  /* TODO: make this configurable */
+
 		err = kernel_sendmsg(s, &msg, &iov, 1, iov.iov_len);
 		if (err < 0) {
 			printk("sendmsg returned %d\n", err);
