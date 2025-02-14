@@ -1382,7 +1382,12 @@ static void leak_test(int argc, const char ** argv)
 static void *r_thread;
 static void *s_thread;
 
-static __attribute__((stdcall)) void receive_a_lot(void *unused)
+struct ip_addr {
+	char *addr;
+	int port;
+};
+
+static __attribute__((stdcall)) void receive_a_lot(void *ip_addr_p)
 {
 	struct socket *s, *s2;
 	int err;
@@ -1390,6 +1395,7 @@ static __attribute__((stdcall)) void receive_a_lot(void *unused)
 	static char bigbuffer[1024*128];
 	size_t bytes_received;
 	int short_reads;
+	struct ip_addr *ip_addr = (struct ip_addr*) ip_addr_p;
 //	int n, n2;
 //	int *ints = (int*)&bigbuffer;
 
@@ -1410,12 +1416,15 @@ static __attribute__((stdcall)) void receive_a_lot(void *unused)
 
 	if (err < 0) {
 		printk("sock_create_kern returned %d\n", err);
-		return;
+		goto out_free_ip_addr;
 	}
 
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_addr.s_addr = 0;
-	my_addr.sin_port = htons(5678);
+	my_addr.sin_port = htons(ip_addr->port);
+
+	kfree(ip_addr->addr);	/* should be NULL ... */
+	kfree(ip_addr);
 
         err = s->ops->bind(s, (struct sockaddr *)&my_addr, sizeof(my_addr));
 	if (err < 0) {
@@ -1478,10 +1487,15 @@ static __attribute__((stdcall)) void receive_a_lot(void *unused)
 	return_to_windows(current);
 
 	printk("Exiting receive_a_lot thread, for more testing please rerun windrbd run-test receive_a_lot\n");
+
 	return;
+
+out_free_ip_addr:
+	kfree(ip_addr->addr);
+	kfree(ip_addr);
 }
 
-static __attribute__((stdcall)) void send_a_lot(void *unused)
+static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 {
 	struct socket *s;
 	int err;
@@ -1490,6 +1504,7 @@ static __attribute__((stdcall)) void send_a_lot(void *unused)
 	static char bigbuffer[1024*128];
 	size_t bytes_sent;
 	int short_writes;
+	struct ip_addr *ip_addr = (struct ip_addr*) ip_addr_p;
 
         struct kvec iov = {
                 .iov_base = bigbuffer,
@@ -1509,28 +1524,31 @@ static __attribute__((stdcall)) void send_a_lot(void *unused)
 		printk("sock_create_kern returned %d\n", err);
 		return_to_windows(current);	/* else STACK_LOCKED_AT_EXIT BSOD */
 
-		return;
+		goto out_free_ip_addr;
 	}
 
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_addr.s_addr = 0;
-	my_addr.sin_port = htons(5679);	/* DRBD uses port 0 */
+	my_addr.sin_port = htons(ip_addr->port);
 
         err = s->ops->bind(s, (struct sockaddr *)&my_addr, sizeof(my_addr));
 	if (err < 0) {
 		printk("bind returned %d\n", err);
 		sock_release(s);
 		return_to_windows(current);
-		return;
+		goto out_free_ip_addr;
 	}
-	if (my_inet_aton("10.43.224.38", &his_addr.sin_addr) < 0) {
-		printk("Could not parse %s\n", "10.43.224.38");
+	if (my_inet_aton(ip_addr->addr, &his_addr.sin_addr) < 0) {
+		printk("Could not parse %s\n", ip_addr->addr);
 		sock_release(s);
 		return_to_windows(current);
-		return;
+		goto out_free_ip_addr;
 	}
 	his_addr.sin_family = AF_INET;
-	his_addr.sin_port = htons(5679);
+	his_addr.sin_port = htons(ip_addr->port);
+
+	kfree(ip_addr->addr);
+	kfree(ip_addr);
 
         err = s->ops->connect(s, (struct sockaddr *)&his_addr, sizeof(his_addr), 0);
 	if (err < 0) {
@@ -1569,17 +1587,32 @@ static __attribute__((stdcall)) void send_a_lot(void *unused)
 
 	printk("Exiting send_a_lot thread, for more testing please rerun windrbd run-test send_a_lot\n");
 	return;
+
+out_free_ip_addr:
+	kfree(ip_addr->addr);
+	kfree(ip_addr);
 }
 
 static void start_receive_a_lot_thread(int argc, const char ** argv)
 {
 	NTSTATUS status;
 
-/* TODO: parse a port number an pass it to thread function. */
+	struct ip_addr *addr;
+	if (argc != 2) {
+		printk("Usage: receive_a_lot port\n");
+		return;
+	}
+	addr = kmalloc(sizeof(*addr), GFP_KERNEL);
+	if (addr == NULL) {
+		printk("Out of memory.\n");
+		return;
+	}
+	addr->addr = NULL;
+	addr->port = my_atoi(argv[1]);
 
 	printk("About to start receive_a_lot thread.\n");
-	printk("You then need to send an integer sequence to port 5678.\n");
-	status = windrbd_create_windows_thread(receive_a_lot, NULL, &r_thread);
+	printk("You then need to send an integer sequence to port %d.\n", addr->port);
+	status = windrbd_create_windows_thread(receive_a_lot, addr, &r_thread);
 	if (!NT_SUCCESS(status))
 		printk("Oops, create_windows_thread returned status %08x\n", status);
 }
@@ -1588,11 +1621,27 @@ static void start_send_a_lot_thread(int argc, const char ** argv)
 {
 	NTSTATUS status;
 
-/* TODO: parse a port number an pass it to thread function. */
+	struct ip_addr *addr;
+	if (argc != 3) {
+		printk("Usage: send_a_lot ip-addr port\n");
+		return;
+	}
+	addr = kmalloc(sizeof(*addr), GFP_KERNEL);
+	if (addr == NULL) {
+		printk("Out of memory.\n");
+		return;
+	}
+	addr->addr = kstrdup(argv[1], GFP_KERNEL);
+	if (addr->addr == NULL) {
+		printk("Out of memory.\n");
+		kfree(addr);
+		return;
+	}
+	addr->port = my_atoi(argv[2]);
 
 	printk("About to start send_a_lot thread.\n");
-	printk("You then need to listen on 10.43.224.39:5678.\n");
-	status = windrbd_create_windows_thread(send_a_lot, NULL, &s_thread);
+	printk("You then need to listen on %s:%d.\n", addr->addr, addr->port);
+	status = windrbd_create_windows_thread(send_a_lot, addr, &s_thread);
 	if (!NT_SUCCESS(status))
 		printk("Oops, create_windows_thread returned status %08x\n", status);
 }
