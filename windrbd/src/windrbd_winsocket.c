@@ -65,8 +65,10 @@ static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 
 static int winsock_to_linux_error(NTSTATUS status)
 {
+#if 0
 	if (status != STATUS_SUCCESS)
 		printk("got status %x\n", status);
+#endif
 
 	switch (status) {
 	case STATUS_SUCCESS:
@@ -1472,7 +1474,8 @@ static int socket_receive_thread(void *p)
 	int err;
 	KIRQL flags;
 
-	printk("Receiver thread started for socket %p.\n", s);
+// TODO: maybe enable this again?
+//	printk("Receiver thread started for socket %p.\n", s);
 	while (1) {
 		wait_event(s->buffer_available, 
 			!s->receive_thread_should_run ||
@@ -1536,7 +1539,7 @@ static int socket_receive_thread(void *p)
 	kref_put(&s->kref, sock_really_free);
 //	complete(&s->receiver_thread_completion);
 
-	printk("terminating socket_receive_thread %p (socket is %p)\n", current, s);
+//	printk("terminating socket_receive_thread %p (socket is %p)\n", current, s);
 	return 0;
 }
 
