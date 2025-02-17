@@ -1385,6 +1385,7 @@ static void *s_thread;
 struct ip_addr {
 	char *addr;
 	int port;
+	int sleep_interval_ms;
 };
 
 static __attribute__((stdcall)) void receive_a_lot(void *ip_addr_p)
@@ -1505,6 +1506,7 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	size_t bytes_sent;
 	int short_writes;
 	struct ip_addr *ip_addr = (struct ip_addr*) ip_addr_p;
+	int sleep_interval_ms;
 
 	strcpy(bigbuffer, "Hallo Windows 2003\n");
         struct kvec iov = {
@@ -1547,6 +1549,7 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	}
 	his_addr.sin_family = AF_INET;
 	his_addr.sin_port = htons(ip_addr->port);
+	sleep_interval_ms = ip_addr->sleep_interval_ms;
 
 	kfree(ip_addr->addr);
 	kfree(ip_addr);
@@ -1564,8 +1567,10 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	short_writes = 0;
 
 	while (1) {
-		printk("Sleeping a bit ...\n");
-		msleep(5000);  /* TODO: make this configurable */
+		if (sleep_interval_ms > 0) {
+			printk("Sleeping %d milliseconds  ...\n", sleep_interval_ms);
+			msleep(sleep_interval_ms);
+		}
 
 		err = kernel_sendmsg(s, &msg, &iov, 1, iov.iov_len);
 		if (err < 0) {
@@ -1626,8 +1631,8 @@ static void start_send_a_lot_thread(int argc, const char ** argv)
 	NTSTATUS status;
 
 	struct ip_addr *addr;
-	if (argc != 3) {
-		printk("Usage: send_a_lot ip-addr port\n");
+	if (argc != 3 && argc != 4) {
+		printk("Usage: send_a_lot ip-addr port [sleep-interval-ms]\n");
 		return;
 	}
 	addr = kmalloc(sizeof(*addr), GFP_KERNEL);
@@ -1642,6 +1647,10 @@ static void start_send_a_lot_thread(int argc, const char ** argv)
 		return;
 	}
 	addr->port = my_atoi(argv[2]);
+	if (argc == 4)
+		addr->sleep_interval_ms = my_atoi(argv[3]);
+	else
+		addr->sleep_interval_ms = 0;
 
 	printk("About to start send_a_lot thread.\n");
 	printk("You then need to listen on %s:%d.\n", addr->addr, addr->port);
