@@ -35,7 +35,7 @@ test:
     vmshed --version
     git clone --branch jt/windrbd-support-2025 https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/drbd/drbd9-tests.git
     export WINDRBD_VERSION=$CI_COMMIT_BRANCH-from-gitlab
-    cd drbd9-tests && ./run-windrbd-tests.sh
+    cd drbd9-tests && ./run-windrbd-tests-ci-windrbd-1.1.sh
   artifacts:
     # provide a convenient name so that the downloaded artifacts can be identified
     name: $CI_PROJECT_NAME-$CI_JOB_ID
