@@ -1399,6 +1399,8 @@ static __attribute__((stdcall)) void receive_a_lot(void *ip_addr_p)
 	struct ip_addr *ip_addr = (struct ip_addr*) ip_addr_p;
 //	int n, n2;
 //	int *ints = (int*)&bigbuffer;
+	int num_accepts;
+	int num_reads;
 
         struct kvec iov = {
                 .iov_base = bigbuffer,
@@ -1441,7 +1443,7 @@ static __attribute__((stdcall)) void receive_a_lot(void *ip_addr_p)
 		return;
 	}
 
-	while (1) {
+	for (num_accepts=0; num_accepts < 4; num_accepts++) {
 		err = kernel_accept(s, &s2, 0);
 		if (err < 0) {
 			printk("accept returned %d\n", err);
@@ -1453,7 +1455,8 @@ static __attribute__((stdcall)) void receive_a_lot(void *ip_addr_p)
 //		n = 0;
 		bytes_received = 0;
 		short_reads = 0;
-		while (1) {
+
+		for (num_reads=0; num_reads < 128; num_reads++) {
 			err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
 			if (err == -EAGAIN) {
 				printk("receive timeout, retrying ...\n");
