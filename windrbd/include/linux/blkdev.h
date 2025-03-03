@@ -462,6 +462,9 @@ struct inode;
 /* TODO: this is used as device extension for the DRBD devices and
    also as block device for the backing devices. This is probably
    not a good idea.
+
+   TODO: Use the Linux definition and have WinDRBD specific fields
+   in bd_disk->private_data for the 'upper' device.
  */
 
 struct block_device {

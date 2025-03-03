@@ -1407,8 +1407,8 @@ static __attribute__((stdcall)) void receive_a_lot(void *ip_addr_p)
 	       // .iov_len = 4096,
         };
         struct msghdr msg = {
-		.msg_flags = MSG_WAITALL
-	//	.msg_flags = 0
+//		.msg_flags = MSG_WAITALL
+		.msg_flags = 0
         };
 
 	make_me_a_windrbd_thread("receive_a_lot");
@@ -1441,7 +1441,7 @@ static __attribute__((stdcall)) void receive_a_lot(void *ip_addr_p)
 		return;
 	}
 
-//	while (1) {
+	while (1) {
 		err = kernel_accept(s, &s2, 0);
 		if (err < 0) {
 			printk("accept returned %d\n", err);
@@ -1455,6 +1455,10 @@ static __attribute__((stdcall)) void receive_a_lot(void *ip_addr_p)
 		short_reads = 0;
 		while (1) {
 			err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+			if (err == -EAGAIN) {
+				printk("receive timeout, retrying ...\n");
+				continue;
+			}
 			if (err < 0) {
 				printk("receive returned %d\n", err);
 				break;
@@ -1481,9 +1485,9 @@ static __attribute__((stdcall)) void receive_a_lot(void *ip_addr_p)
 #endif
 		}
 		printk("%d short reads\n", short_reads);
-//	}
+		sock_release(s2);
+	}
 	sock_release(s);
-	sock_release(s2);
 
 	return_to_windows(current);
 
