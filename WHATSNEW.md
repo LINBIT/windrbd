@@ -6,6 +6,11 @@ Base on DRBD 9.1
 
 DRBD reactor support
 
+What's new in version 1.2.0-rc8
+-------------------------------
+
+Connection problems in 3 node setups fixed.
+
 What's new in version 1.2.0-rc7
 -------------------------------
 
