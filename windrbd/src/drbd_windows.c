@@ -3407,7 +3407,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	mutex_init(&block_device->vol_size_mutex);
 	block_device->bd_inode->i_size = windrbd_get_volsize(block_device);
-printk("block_device->bd_inode->i_size is %llu\n", block_device->bd_inode->i_size);
+// printk("block_device->bd_inode->i_size is %llu\n", block_device->bd_inode->i_size);
 	if (block_device->bd_inode->i_size == (loff_t)-1) {
 		printk(KERN_ERR "Cannot get volsize.\n");
 		err = -EINVAL;
@@ -3530,7 +3530,7 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
 
 	if (bdev->is_backing_device) {
 		d_size = windrbd_get_volsize(bdev);
-printk("d_size is %llu\n", d_size);
+// printk("d_size is %llu\n", d_size);
 		if (d_size == -1)
 			printk(KERN_WARNING "Warning: could not get size of backing device\n");
 		else {
