@@ -365,6 +365,12 @@ docker-cygwin:
 install: package-in-docker
 	$(call run,inno-setup/deploy.sh inno-setup/install-$(FULL_VERSION).exe $(TARGET_IPS),INSTALL,$(FULL_VERSION) $(TARGET_IPS))
 
+NEXUS ?= https://nexus.at.linbit.com/repository/windows/WinDRBD
+NEXUS_NETRC ?= /etc/nexus-password
+
+upload: package-in-docker
+	$(call run,curl -f --netrc-file $(NEXUS_NETRC) --upload-file inno-setup/install-$(FULL_VERSION).exe $(NEXUS)/install-$(FULL_VERSION).exe,UPLOAD,$(NEXUS)/install-$(FULL_VERSION).exe)
+
 # This now generates the cocci patched DRBD sources in drbd-tmp
 # subdirectory and also generates dependency files (*.d) for the
 # Makefile.
@@ -417,7 +423,7 @@ else
 TARGETS=$(MAKECMDGOALS)
 endif
 
-ifeq ($(TARGETS),$(filter-out clean help default install package-in-docker pull-docker all-in-docker,$(TARGETS)))
+ifeq ($(TARGETS),$(filter-out clean help default install upload package-in-docker pull-docker all-in-docker,$(TARGETS)))
 -include $(all-dep)
 endif
 
