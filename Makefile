@@ -183,6 +183,7 @@ endif
 
 # TODO: drbd-kernel-compat really? Do we want this?
 WINDRBD_INCLUDES=-I"windrbd/include" -I"$(DRBDTMP)/drbd" -I"$(DRBDTMP)/drbd/drbd-headers" -I"$(DRBDTMP)/drbd/drbd-kernel-compat"
+WINDRBD_INCLUDES_NOT_COCCIFIED=-I"windrbd/include" -I"$(DRBD)/drbd" -I"$(DRBD)/drbd/drbd-headers" -I"$(DRBD)/drbd/drbd-kernel-compat"
 MINGW_INCLUDES=-I$(REACTOS_BUILD)/xdk -I$(REACTOS_ROOT)/ddk -I$(REACTOS_ROOT)/psdk -I$(REACTOS_ROOT)/reactos -I$(REACTOS_ROOT)/ndk -I$(REACTOS_ROOT)/crt -nostdinc -I$(REACTOS_ROOT)/lib/pseh/include
 
 DRBD_TMPSRCDIR=$(DRBDTMP)/drbd/
@@ -256,6 +257,7 @@ OPTIMIZE ?= -O2
 endif
 
 CFLAGS=-g -Wall $(SUPPRESSED_WARNINGS) $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
+CFLAGS_NOT_COCCIFIED=-g -Wall $(SUPPRESSED_WARNINGS) $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES_NOT_COCCIFIED) $(MINGW_INCLUDES)
 
 $(SEH_SRCDIR)%.o: $(SEH_SRCDIR)%.c
 	$(CC) $(CFLAGS_FOR_SEH) -c -o $@ $<
@@ -285,7 +287,7 @@ versioninfo:
 .PHONY: windrbd.sys
 .PHONY: windrbd.cat
 
-$(DRBDTMP)/drbd/drbd_buildtag.c $(DRBDTMP)/drbd/windrbd_version.h &:
+$(DRBDTMP)/drbd/drbd_buildtag.c windrbd/include/windrbd_version.h &:
 	./versioninfo.sh $(DRBDTMP) $(VERSION)
 #	rm drbd-tmp/drbd/drbd_buildtag.o
 
@@ -294,7 +296,7 @@ $(DRBDTMP)/drbd/drbd_buildtag.o: versioninfo
 # Extraeinladung :)
 # Reason is that depend on windrbd_module.c will fail as long as there
 # is not windrbd_version.
-windrbd/src/windrbd_module.d: $(DRBDTMP)/drbd/windrbd_version.h
+windrbd/src/windrbd_module.d: windrbd/include/windrbd_version.h
 
 windrbd.sys: versioninfo $(TMP_DRBD_FILES) $(OBJS) $(COFFRES)
 	$(call run,$(CC) -o windrbd.sys-unsigned $(OBJS) $(COFFRES) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g,LD,windrbd.sys-unsigned)
@@ -337,6 +339,7 @@ clean:
 	rm -f drbd-utils-*.log
 	rm -f generate-cat-file-*.log
 	rm -f inno-setup.log
+	rm -f windrbd/include/windrbd_version.h
 
 ifdef REACTOS
 EXTRA_ISCC_DEFINES=/DReactos=1
@@ -400,14 +403,14 @@ $(all-dep) :
 DEPEND_SCRIPT=\
 	if [ $@ != $(DRBDTMP)/drbd/drbd_buildtag.d ] ; then \
 		set -e; rm -f $@; \
-		$(CC) -MM -MT $(patsubst %.c,%.o,$<)  $(CFLAGS) $< > $@.$$$$; \
-		sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+		$(CC) -MM -MT $(patsubst %.c,%.o,$<) $(CFLAGS_NOT_COCCIFIED) $< > $@.$$$$; \
+		sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ | sed 's/$(DRBD)\//$(DRBDTMP)\//g' > $@; \
 		rm -f $@.$$$$ ; \
 	fi
 
 # $(SEH_SRCDIR)%.d: %(SEH_SRCDIR)%.c
 
-%.d: %.c $(DRBD_TMP_HEADERS)
+%.d: %.c
 	$(call run,$(DEPEND_SCRIPT),DEPEND,$@)
 
 # Do not delete the temporary headers when restarting make:

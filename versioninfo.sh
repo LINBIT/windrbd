@@ -99,10 +99,10 @@ EOF
 echo "const char *drbd_buildtag(void){return \"${FULL_VERSION}\";}" > ${OUTPATH}/drbd_buildtag.c
 
 ## windrbd_version.h
-echo "#ifndef __WINDRBD_VERSION_H" > ${OUTPATH}/windrbd_version.h
-echo "#define __WINDRBD_VERSION_H" >> ${OUTPATH}/windrbd_version.h
-echo "#define WINDRBD_VERSION \"${FULL_VERSION}\"" >> ${OUTPATH}/windrbd_version.h
-echo "#endif" >> ${OUTPATH}/windrbd_version.h
+echo "#ifndef __WINDRBD_VERSION_H" > windrbd/include/windrbd_version.h
+echo "#define __WINDRBD_VERSION_H" >> windrbd/include/windrbd_version.h
+echo "#define WINDRBD_VERSION \"${FULL_VERSION}\"" >> windrbd/include/windrbd_version.h
+echo "#endif" >> windrbd/include/windrbd_version.h
 
 ## windrbd.inf
 sed "s#^DriverVer.*#DriverVer = $(date +%m/%d/%Y),${WINDRBD_VERSION}  ;Replaced by build magic#" ./windrbd/windrbd.inf.in > ./windrbd.inf
