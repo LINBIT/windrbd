@@ -380,23 +380,13 @@ upload: package-in-docker
 
 NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*.cocci))
 
-DRBD_HEADERS := $(shell find $(DRBD) -name "*.h")
-DRBD_TMP_HEADERS := $(patsubst $(DRBD)%,$(DRBDTMP)%,$(DRBD_HEADERS))
-
-
-# TODO: why not drbd_buildtag? */
 all-dep := $(filter-out $(SEH_SRCDIR)%.d,$(filter-out $(DRBDTMP)/drbd/drbd_buildtag.d,$(OBJS:%.o=%.d)))
 # all-dep := $(OBJS:%.o=%.d)
 
 # Do not delete this intermediate files:
 $(all-dep) :
 
-# TODO: should we depend on DRBD_TMP_HEADERS here? This makes
-# make copy all the headers over to drbd-tmp and patch them..
-# Alternative is to use -MG (and not explicitly depend).
-# from make documentation, automatic prerequisites
-#
-# Also do not regenerate drbd-tmp/drbd/drbd_buildtag.d this would
+# Do not regenerate drbd-tmp/drbd/drbd_buildtag.d this would
 # trigger drbd_buildtag.c being rebuilt which also depends on
 # version info and then we loop...
 #
@@ -408,17 +398,8 @@ DEPEND_SCRIPT=\
 		rm -f $@.$$$$ ; \
 	fi
 
-# $(SEH_SRCDIR)%.d: %(SEH_SRCDIR)%.c
-
 %.d: %.c
 	$(call run,$(DEPEND_SCRIPT),DEPEND,$@)
-
-# Do not delete the temporary headers when restarting make:
-$(DRBD_TMP_HEADERS):
-
-# $(patsubst %.c,%.o,$(TMP_DRBD_FILES)): $(DRBD_TMP_HEADERS)
-
-#	echo $@ -> $<
 
 ifeq ($(MAKECMDGOALS),)
 TARGETS=$(DEFAULT)
