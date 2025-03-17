@@ -108,6 +108,12 @@ static int winsock_to_linux_error(NTSTATUS status)
 //		printk("Got STATUS_FILE_CLOSED returning -ECONNRESET ...\n");
 		return -ECONNRESET;
 
+	case STATUS_CANCELLED:
+		return -EINTR;
+
+	case STATUS_ADDRESS_ALREADY_EXISTS:
+		return -EADDRINUSE;
+
 	default:
 		printk("Unknown status %x, returning -EIO.\n", status);
 		return -EIO;
