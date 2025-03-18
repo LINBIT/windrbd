@@ -112,7 +112,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 		return -EINTR;
 
 	case STATUS_ADDRESS_ALREADY_EXISTS:
-		return -EADDRINUSE;
+		return -EAGAIN; /* should be -EADDRINUSE, but we want DRBD to retry. */
 
 	default:
 		printk("Unknown status %x, returning -EIO.\n", status);
