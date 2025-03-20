@@ -1381,6 +1381,8 @@ static void leak_test(int argc, const char ** argv)
 
 static void *r_thread;
 static void *s_thread;
+static void *e_thread;
+static void *t_thread;
 
 struct ip_addr {
 	char *addr;
@@ -1478,8 +1480,12 @@ static __attribute__((stdcall)) void receive_a_lot(void *ip_addr_p)
 				short_reads++;
 			}
 			bytes_received += err;
+#if 0
 			if ((bytes_received % (1024*1024)) == 0)
-				printk("%lld bytes received\n", bytes_received);
+#endif
+			printk("%ld bytes received (total %ld bytes)\n", err, (unsigned long) bytes_received);
+			bigbuffer[err] = 0;
+			printk("%s", bigbuffer);
 
 #if 0
 			for (n2=0;n2<err/sizeof(int);n2++,n++)
@@ -1489,6 +1495,133 @@ static __attribute__((stdcall)) void receive_a_lot(void *ip_addr_p)
 		}
 		printk("%d short reads\n", short_reads);
 		sock_release(s2);
+	}
+	sock_release(s);
+
+	return_to_windows(current);
+
+	printk("Exiting receive_a_lot thread, for more testing please rerun windrbd run-test receive_a_lot\n");
+
+	return;
+
+out_free_ip_addr:
+	kfree(ip_addr->addr);
+	kfree(ip_addr);
+}
+
+static __attribute__((stdcall)) void echo_thread(void *socket_p)
+{
+	struct socket *s2 = (struct socket*) socket_p;
+	int err;
+	static char bigbuffer[1024*128];
+	size_t bytes_received, bytes_sent;
+	int num_reads;
+
+        struct kvec iov = {
+                .iov_base = bigbuffer,
+		.iov_len = 16,
+        };
+        struct kvec iov2 = {
+                .iov_base = bigbuffer,
+		.iov_len = 0,	/* set before sending */
+        };
+        struct msghdr msg = {
+		.msg_flags = 0
+        };
+
+	bytes_received = 0;
+	bytes_sent = 0;
+
+	make_me_a_windrbd_thread("echo_thread");
+
+	for (num_reads=0; num_reads < 128; num_reads++) {
+		err = kernel_recvmsg(s2, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+		if (err == -EAGAIN) {
+			printk("receive timeout, retrying ...\n");
+			continue;
+		}
+		if (err < 0) {
+			printk("receive returned %d\n", err);
+			break;
+		}
+		if (err == 0) {
+			printk("receive returned %d, connection closed\n", err);
+			break;
+		}
+		bytes_received += err;
+		printk("%ld bytes received (total %ld bytes)\n", err, (unsigned long) bytes_received);
+		bigbuffer[err] = 0;
+		printk("%s", bigbuffer);
+
+		iov2.iov_len = err;
+		err = kernel_sendmsg(s2, &msg, &iov2, 1, iov2.iov_len);
+		if (err < 0) {
+			printk("sendmsg returned %d\n", err);
+			break;
+		}
+		if (err == 0) {  /* possible? is this an error? */
+			printk("send returned %d, connection closed\n", err);
+			break;
+		}
+		bytes_sent += err;
+
+		printk("%ld bytes sent (total %ld bytes)\n", err, (unsigned long) bytes_sent);
+	}
+	printk("connection closed.\n");
+	sock_release(s2);
+}
+
+static __attribute__((stdcall)) void echo_server(void *ip_addr_p)
+{
+	struct socket *s, *s2;
+	int err;
+	struct sockaddr_in my_addr;
+	NTSTATUS status;
+	struct ip_addr *ip_addr = (struct ip_addr*) ip_addr_p;
+	int num_accepts;
+
+	make_me_a_windrbd_thread("echo_server");
+
+	err = sock_create_kern(&init_net, AF_INET, SOCK_LISTEN, IPPROTO_TCP, &s);
+
+	if (err < 0) {
+		printk("sock_create_kern returned %d\n", err);
+		goto out_free_ip_addr;
+	}
+
+	my_addr.sin_family = AF_INET;
+	my_addr.sin_addr.s_addr = 0;
+	my_addr.sin_port = htons(ip_addr->port);
+
+	kfree(ip_addr->addr);	/* should be NULL ... */
+	kfree(ip_addr);
+
+        err = s->ops->bind(s, (struct sockaddr *)&my_addr, sizeof(my_addr));
+	if (err < 0) {
+		printk("bind returned %d\n", err);
+		sock_release(s);
+		return;
+	}
+
+        err = s->ops->listen(s, 10);
+	if (err < 0) {
+		printk("listen returned %d\n", err);
+		sock_release(s);
+		return;
+	}
+
+	for (num_accepts=0; num_accepts < 4; num_accepts++) {
+		err = kernel_accept(s, &s2, 0);
+		if (err < 0) {
+			printk("accept returned %d\n", err);
+			sock_release(s);
+			return;
+		}
+		printk("connection accepted\n");
+
+		status = windrbd_create_windows_thread(echo_thread, s2, &t_thread);
+		if (!NT_SUCCESS(status))
+			printk("Oops, create_windows_thread returned status %08x\n", status);
 	}
 	sock_release(s);
 
@@ -1607,6 +1740,30 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 out_free_ip_addr:
 	kfree(ip_addr->addr);
 	kfree(ip_addr);
+}
+
+static void start_echo_server_thread(int argc, const char ** argv)
+{
+	NTSTATUS status;
+
+	struct ip_addr *addr;
+	if (argc != 2) {
+		printk("Usage: receive_a_lot port\n");
+		return;
+	}
+	addr = kmalloc(sizeof(*addr), GFP_KERNEL);
+	if (addr == NULL) {
+		printk("Out of memory.\n");
+		return;
+	}
+	addr->addr = NULL;
+	addr->port = my_atoi(argv[1]);
+
+	printk("About to start receive_a_lot thread.\n");
+	printk("You then need to send an integer sequence to port %d.\n", addr->port);
+	status = windrbd_create_windows_thread(echo_server, addr, &e_thread);
+	if (!NT_SUCCESS(status))
+		printk("Oops, create_windows_thread returned status %08x\n", status);
 }
 
 static void start_receive_a_lot_thread(int argc, const char ** argv)
@@ -1772,6 +1929,8 @@ void test_main(const char *arg)
 		intentionally_bsod(argc, argv);
 	if (strcmp(argv[0], "receive_a_lot") == 0)
 		start_receive_a_lot_thread(argc, argv);
+	if (strcmp(argv[0], "echo_server") == 0)
+		start_echo_server_thread(argc, argv);
 	if (strcmp(argv[0], "send_a_lot") == 0)
 		start_send_a_lot_thread(argc, argv);
 	if (strcmp(argv[0], "minus_max_long_long") == 0)
