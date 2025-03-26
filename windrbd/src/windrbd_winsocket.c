@@ -1934,6 +1934,11 @@ void tcp_sock_set_quickack(struct sock *sk, int val)
 {
 }
 
+/* Ignored on Windows */
+void sk_set_memalloc(struct sock *sk)
+{
+}
+
 static void *init_wsk_thread;
 
 /* This is a separate thread, since it blocks until Windows has finished
