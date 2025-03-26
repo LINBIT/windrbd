@@ -19,5 +19,6 @@ windrbd/include/windrbd-event-log.h
 windrbd/windrbd-event-log.coffres
 windrbd/windrbd-event-log.rc
 windrbd/msg00002.bin
+windrbd/include/windrbd_version.h
 
 *.log
