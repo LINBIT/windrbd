@@ -1,10 +1,12 @@
 Upcoming features
 -----------------
 
-Base on DRBD 9.1
-	See WinDRBD 1.2 branch (windrbd-1.2)
-
 DRBD reactor support
+
+What's new in version 1.2.0-rc9
+-------------------------------
+
+DRBD 9.2.13
 
 What's new in version 1.2.0-rc8
 -------------------------------
