@@ -1625,9 +1625,9 @@ static __attribute__((stdcall)) void echo_server(void *ip_addr_p)
 	}
 	sock_release(s);
 
-	return_to_windows(current);
+	printk("Exiting echo_server thread, for more testing please rerun windrbd run-test echo_server\n");
 
-	printk("Exiting receive_a_lot thread, for more testing please rerun windrbd run-test receive_a_lot\n");
+	return_to_windows(current);
 
 	return;
 
@@ -1748,7 +1748,7 @@ static void start_echo_server_thread(int argc, const char ** argv)
 
 	struct ip_addr *addr;
 	if (argc != 2) {
-		printk("Usage: receive_a_lot port\n");
+		printk("Usage: echo_server port\n");
 		return;
 	}
 	addr = kmalloc(sizeof(*addr), GFP_KERNEL);
@@ -1759,8 +1759,7 @@ static void start_echo_server_thread(int argc, const char ** argv)
 	addr->addr = NULL;
 	addr->port = my_atoi(argv[1]);
 
-	printk("About to start receive_a_lot thread.\n");
-	printk("You then need to send an integer sequence to port %d.\n", addr->port);
+	printk("About to start echo_server thread.\n");
 	status = windrbd_create_windows_thread(echo_server, addr, &e_thread);
 	if (!NT_SUCCESS(status))
 		printk("Oops, create_windows_thread returned status %08x\n", status);
