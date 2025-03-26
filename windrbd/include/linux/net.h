@@ -143,4 +143,6 @@ typedef struct {
 	int error;
 } read_descriptor_t;
 
+void sk_set_memalloc(struct sock *sk);
+
 #endif
