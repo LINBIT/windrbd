@@ -1331,11 +1331,9 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 /* Do nothing..just for debugging ... */
 static void dump_packet(unsigned char *buf, size_t buflen)
 {
-/*
 	return;
-*/
 
-#if 1
+#if 0
 	size_t i;
 	char s[80];
 	int pos;
