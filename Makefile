@@ -78,6 +78,7 @@ else
 FULL_VERSION=$(GIT_VERSION)-$(DRBD)-$(ARCH)
 endif
 
+# TODO: remove this dependecy: compilers should be in the $PATH!!
 MINGW_SYSROOT=$(HOME)/.zeranoe/mingw-w64/$(ARCH)
 CC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-gcc
 RC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windres
