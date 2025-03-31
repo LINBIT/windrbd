@@ -517,7 +517,7 @@ begin
 			end;
 		end;
 		Tries := Tries + 1;
-	until ResultCode = 0 or Tries > 5;
+	until (ResultCode = 0) or (Tries > 5);
 	if ResultCode <> 0 then
 	begin
 		Log('** Could not fix bus device, please do so manually');
