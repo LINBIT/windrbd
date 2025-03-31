@@ -24,8 +24,10 @@ test:
     - if: $CI_COMMIT_BRANCH == 'windrbd-1.1'
   script: |
     echo "hallo"
-    curl -sSfL -u gitlab-ci-token:$CI_JOB_TOKEN $CI_SERVER_URL/linbit/build-helpers/-/archive/$BUILD_HELPERS_VERSION/ignored.tar.gz | tar -xvzf -
-    mv build-helpers-* build-helpers
+    git init build-helpers -q -b unused
+    git -C build-helpers fetch -q --depth 1 $CI_SERVER_PROTOCOL://gitlab-ci-token:${CI_JOB_TOKEN}@$CI_SERVER_HOST:$CI_SERVER_PORT/linbit/build-helpers.git $BUILD_HELPERS_VERSION
+    git -C build-helpers checkout -q $BUILD_HELPERS_VERSION
+
     . build-helpers/gitlab-utils.sh
     ci_prepare_tools
     ci_fetch_rq
