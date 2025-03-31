@@ -492,9 +492,11 @@ end;
 procedure EnsureBusDevice;
 var ResultCode, ResultCode2: Integer;
     CommandOutput: String;
+    Tries: Integer;
 
 begin
 	log('testing if the bus device works as expected ...');
+	Tries := 0;
 	repeat
 		Sleep(5*1000);
 
@@ -514,7 +516,12 @@ begin
 				Log('Could not install bus device');
 			end;
 		end;
-	until ResultCode = 0;
+		Tries := Tries + 1;
+	until ResultCode = 0 or Tries > 5;
+	if ResultCode <> 0 then
+	begin
+		Log('** Could not fix bus device, please do so manually');
+	end;
 end;
 
 
