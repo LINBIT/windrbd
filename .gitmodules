@@ -1,5 +1,5 @@
 [submodule "drbd"]
         path = drbd
-        url = https://github.com/LINBIT/drbd-9.0.git
+        url = ../drbd.git
         update = rebase
         fetchRecurseSubmodules = true
