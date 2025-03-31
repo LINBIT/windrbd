@@ -548,7 +548,7 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 
 	case IOCTL_WINDRBD_ROOT_GET_LOCK_DOWN_STATE:
 	{
-		int* is_locked_p = irp->AssociatedIrp.SystemBuffer;
+		int *is_locked_p = irp->AssociatedIrp.SystemBuffer;
 		if (s->Parameters.DeviceIoControl.OutputBufferLength != sizeof(int)) {
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
@@ -648,6 +648,19 @@ dbg("root ioctl is %x object is %p\n", s->Parameters.DeviceIoControl.IoControlCo
 				KeSetEvent(&drbd_dev->this_bdev->io_not_suspended, 0, FALSE);
 			}
 		}
+		break;
+	}
+
+	case IOCTL_WINDRBD_ROOT_BUS_DEVICE_IS_WORKING:
+	{
+		int *bus_device_is_working_p = irp->AssociatedIrp.SystemBuffer;
+		if (s->Parameters.DeviceIoControl.OutputBufferLength != sizeof(int)) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+		*bus_device_is_working_p = (windrbd_rescan_bus() == 0);
+
+		irp->IoStatus.Information = sizeof(int);
 		break;
 	}
 

@@ -1,0 +1,37 @@
+From 32ba5fe76df2d79b3dc05759995e411854e73494 Mon Sep 17 00:00:00 2001
+From: Johannes Thoma <johannes@johannesthoma.com>
+Date: Mon, 31 Mar 2025 13:20:33 +0000
+Subject: [PATCH 1/2] Added IOCTL_WINDRBD_ROOT_DRBD_OP_IS_KNOWN to WinDRBD
+ ioctl's
+
+Not implemented by WinDRBD 1.1 (yet).
+---
+ drbd/drbd-headers/windrbd/windrbd_ioctl.h | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/drbd/drbd-headers/windrbd/windrbd_ioctl.h b/drbd/drbd-headers/windrbd/windrbd_ioctl.h
+index 52431b6..6243537 100644
+--- a/drbd/drbd-headers/windrbd/windrbd_ioctl.h
++++ b/drbd/drbd-headers/windrbd/windrbd_ioctl.h
+@@ -352,4 +352,18 @@ struct windrbd_minor_mount_point {
+ #define IOCTL_WINDRBD_ROOT_SET_IO_SUSPENDED_FOR_MINOR CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 21, METHOD_BUFFERED, FILE_ANY_ACCESS)
+ #define IOCTL_WINDRBD_ROOT_CLEAR_IO_SUSPENDED_FOR_MINOR CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 22, METHOD_BUFFERED, FILE_ANY_ACCESS)
+ 
++/* Check if DRBD implements a certain command on the netlink layer
++ *
++ * Input: cmd (as an 32-bit int) to query
++ * Output: 0 - does not implement command, 1 - implements command
++ *
++ * Newer drbd-utils query the netlink family of the Linux
++ * kernel for known commands. We don't implement a full
++ * netlink replacement but still want to query the kernel
++ * for commands it knows. Therefore we introduced this ioctl
++ * which checks if a certain command is known.
++ */
++
++#define IOCTL_WINDRBD_ROOT_DRBD_OP_IS_KNOWN CTL_CODE(WINDRBD_ROOT_DEVICE_TYPE, 23, METHOD_BUFFERED, FILE_ANY_ACCESS)
++
+ #endif
+-- 
+2.17.1
+
