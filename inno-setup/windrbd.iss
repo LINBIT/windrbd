@@ -494,6 +494,7 @@ var ResultCode, ResultCode2: Integer;
     CommandOutput: String;
 
 begin
+	log('testing if the bus device works as expected ...');
 	repeat
 		Sleep(5*1000);
 
@@ -512,9 +513,6 @@ begin
 			begin
 				Log('Could not install bus device');
 			end;
-		end;
-	end;
-
 		end;
 	until ResultCode = 0;
 end;
