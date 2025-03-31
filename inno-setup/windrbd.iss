@@ -489,6 +489,37 @@ begin
 
 end;
 
+procedure EnsureBusDevice;
+var ResultCode, ResultCode2: Integer;
+    CommandOutput: String;
+
+begin
+	repeat
+		Sleep(5*1000);
+
+		if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'bus-device-is-working', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+		begin
+			Log('Could not check if bus device is working');
+		end;
+		if ResultCode <> 0 then
+		begin
+			Log('** the bus device is not working, trying to fix that ...');
+			if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'remove-bus-device windrbd.inf', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode2, CommandOutput) then
+			begin
+				Log('Could not remove bus device');
+			end;
+			if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'install-bus-device windrbd.inf', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode2, CommandOutput) then
+			begin
+				Log('Could not install bus device');
+			end;
+		end;
+	end;
+
+		end;
+	until ResultCode = 0;
+end;
+
+
 function UninstallNeedRestart: Boolean;
 begin
 	Result:= not driverWasUnloaded;
@@ -602,6 +633,7 @@ begin
 		PatchRegistry();
 		AddDriverToDriverStore();
 		InstallBusDevice();
+		EnsureBusDevice();
 		StartUserModeServices();
 	end;
 end;
