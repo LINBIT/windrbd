@@ -2323,7 +2323,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_pnp(struct _DEVICE_OBJECT *devi
 			break;
 		}
 
-		case BusRelations:
 		case RemovalRelations:
 		case EjectionRelations:
 		{
@@ -2342,6 +2341,13 @@ static NTSTATUS __attribute__((stdcall)) windrbd_pnp(struct _DEVICE_OBJECT *devi
 			status = STATUS_SUCCESS;
 			break;
 		}
+
+		/* When queriing BusRelations someone (partmgr?) may already
+		 * have filled out irp->IoStatus.Information, so do not
+		 * change that. TODO: same for Remove/Eject relations?
+		 * This is at least a problem under ReactOS/Windows 2003.
+		 */
+		case BusRelations:
 		default:
 			status = irp->IoStatus.Status;
 
