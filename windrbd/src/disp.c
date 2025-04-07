@@ -118,7 +118,7 @@ static NTSTATUS set_admin_only_permission(struct _DEVICE_OBJECT *obj)
 	/* Create the DACL: we will only allow two SIDs */
 	Count = sizeof(ACL) + (sizeof(ACE) + RtlLengthSid(SeExports->SeLocalSystemSid)) +
 			      (sizeof(ACE) + RtlLengthSid(SeExports->SeAliasAdminsSid));
-	Dacl = ExAllocatePoolWithTag(PagedPool, Count, 'DBRD');
+	Dacl = kmalloc(Count, GFP_KERNEL);
 	if (Dacl == NULL) {
 		printk("Could not allocate DACL\n");
 		ZwClose(h);
@@ -129,6 +129,7 @@ static NTSTATUS set_admin_only_permission(struct _DEVICE_OBJECT *obj)
 	status = RtlCreateAcl(Dacl, Count, ACL_REVISION);
 	if (!NT_SUCCESS(status)) {
 		printk("Can't create security DACL, status is %08X\n", status);
+		kfree(Dacl);
 		ZwClose(h);
 		return status;
 	}
@@ -137,6 +138,7 @@ static NTSTATUS set_admin_only_permission(struct _DEVICE_OBJECT *obj)
 	status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, FILE_ALL_ACCESS, SeExports->SeAliasAdminsSid);
 	if (!NT_SUCCESS(status)) {
 		printk("Can't add admin to DACL, status is %08X\n", status);
+		kfree(Dacl);
 		ZwClose(h);
 		return status;
 	}
@@ -145,6 +147,7 @@ static NTSTATUS set_admin_only_permission(struct _DEVICE_OBJECT *obj)
 	status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, FILE_ALL_ACCESS, SeExports->SeLocalSystemSid);
 	if (!NT_SUCCESS(status)) {
 		printk("Can't add system to DACL, status is %08X\n", status);
+		kfree(Dacl);
 		ZwClose(h);
 		return status;
 	}
@@ -153,6 +156,7 @@ static NTSTATUS set_admin_only_permission(struct _DEVICE_OBJECT *obj)
 	status = RtlSetDaclSecurityDescriptor(&desc, TRUE, Dacl, FALSE);
 	if (!NT_SUCCESS(status)) {
 		printk("Can't add DACL to security descriptor, status is %08X\n", status);
+		kfree(Dacl);
 		ZwClose(h);
 		return status;
 	}
@@ -160,10 +164,12 @@ static NTSTATUS set_admin_only_permission(struct _DEVICE_OBJECT *obj)
 
 	if (!NT_SUCCESS(status)) {
 		printk("Can't set security object, status is %08X\n", status);
+		kfree(Dacl);
 		ZwClose(h);
 		return status;
 	}
 
+	kfree(Dacl);
 	ZwClose(h);
 	printk("Succeeded\n");
 
