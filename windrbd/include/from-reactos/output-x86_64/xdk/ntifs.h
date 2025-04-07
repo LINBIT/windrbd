@@ -37,7 +37,7 @@ extern "C" {
 #include <ntdef.h>
 #include <ntnls.h>
 #include <ntstatus.h>
-#include <bugcodes.h>
+// #include <bugcodes.h>
 #include <ntiologc.h>
 
 

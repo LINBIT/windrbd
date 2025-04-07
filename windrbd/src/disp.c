@@ -46,6 +46,9 @@
 #include <initguid.h>
 #include <devguid.h>
 
+#include <ntifs.h>
+#include <rtltypes.h>
+
 	/* Verifier BSOD on boot should be fixed we can read ACPI tables again.
 	 */
 
@@ -83,6 +86,91 @@ KEVENT bus_ready_event;
 
 #define TO_UNICODE(s) WIDEN2(s)
 #define WIDEN2(s) L##s
+
+#ifndef CONFIG_HAVE_IO_CREATE_DEVICE_SECURE
+
+static NTSTATUS set_admin_only_permission(struct _DEVICE_OBJECT *obj)
+{
+	HANDLE h;
+	NTSTATUS status;
+	SECURITY_DESCRIPTOR desc;
+	int Count;
+	PACL Dacl;
+
+	printk("About to set admin only permissions to root object ...\n");
+	status = ObOpenObjectByPointer(obj, 0, NULL, WRITE_DAC, 0, KernelMode, &h);
+	if (!NT_SUCCESS(status)) {
+		printk("Can't open root object, status is %08X\n", status);
+		return status;
+	}
+
+		/* This was taken from ntoskrnl/mm/pagefile.c of the ReactOS
+		 * kernel.
+		 */
+
+	status = RtlCreateSecurityDescriptor(&desc, SECURITY_DESCRIPTOR_REVISION);
+	if (!NT_SUCCESS(status)) {
+		printk("Can't create security descriptor, status is %08X\n", status);
+		ZwClose(h);
+		return status;
+	}
+
+	/* Create the DACL: we will only allow two SIDs */
+	Count = sizeof(ACL) + (sizeof(ACE) + RtlLengthSid(SeExports->SeLocalSystemSid)) +
+			      (sizeof(ACE) + RtlLengthSid(SeExports->SeAliasAdminsSid));
+	Dacl = ExAllocatePoolWithTag(PagedPool, Count, 'DBRD');
+	if (Dacl == NULL) {
+		printk("Could not allocate DACL\n");
+		ZwClose(h);
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	/* Initialize the DACL */
+	status = RtlCreateAcl(Dacl, Count, ACL_REVISION);
+	if (!NT_SUCCESS(status)) {
+		printk("Can't create security DACL, status is %08X\n", status);
+		ZwClose(h);
+		return status;
+	}
+
+	/* Grant full access to admins */
+	status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, FILE_ALL_ACCESS, SeExports->SeAliasAdminsSid);
+	if (!NT_SUCCESS(status)) {
+		printk("Can't add admin to DACL, status is %08X\n", status);
+		ZwClose(h);
+		return status;
+	}
+
+	/* Grant full access to SYSTEM */
+	status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, FILE_ALL_ACCESS, SeExports->SeLocalSystemSid);
+	if (!NT_SUCCESS(status)) {
+		printk("Can't add system to DACL, status is %08X\n", status);
+		ZwClose(h);
+		return status;
+	}
+
+	/* Attach the DACL to the security descriptor */
+	status = RtlSetDaclSecurityDescriptor(&desc, TRUE, Dacl, FALSE);
+	if (!NT_SUCCESS(status)) {
+		printk("Can't add DACL to security descriptor, status is %08X\n", status);
+		ZwClose(h);
+		return status;
+	}
+	status = ZwSetSecurityObject(h, DACL_SECURITY_INFORMATION, &desc);
+
+	if (!NT_SUCCESS(status)) {
+		printk("Can't set security object, status is %08X\n", status);
+		ZwClose(h);
+		return status;
+	}
+
+	ZwClose(h);
+	printk("Succeeded\n");
+
+	return status;
+}
+
+#endif
 
 static NTSTATUS create_device(const wchar_t *name, const UNICODE_STRING *sddl_perms, struct _DEVICE_OBJECT **d)
 {
@@ -198,6 +286,10 @@ NTSTATUS __attribute__((stdcall)) DriverEntry(IN PDRIVER_OBJECT DriverObject, IN
 		return status;
 #else
 	status = create_device(TO_UNICODE(WINDRBD_ROOT_DEVICE_NAME), NULL, &mvolRootDeviceObject);
+	if (status != STATUS_SUCCESS)
+		return status;
+
+	status = set_admin_only_permission(mvolRootDeviceObject);
 	if (status != STATUS_SUCCESS)
 		return status;
 
