@@ -560,7 +560,9 @@ typedef struct _REQUEST_MAILBOX
 //
 // Processor Region Control Block
 //
-#pragma pack(push,4)
+// #pragma pack(push,4)
+// Changed to suppress a warning:
+#pragma pack(push,16)
 typedef struct _KPRCB
 {
     ULONG MxCsr;
@@ -816,6 +818,7 @@ typedef struct _KPRCB
     PVOID HyperPte;
     PVOID WheaInfo;
     PVOID EtwSupport;
+    PVOID dummy;	/* added by me to suppress warning */
     SLIST_HEADER InterruptObjectPool;
     SLIST_HEADER HypercallPageList;
     PVOID HypercallPageVirtual;
@@ -825,6 +828,7 @@ typedef struct _KPRCB
     UINT64 CacheProcessorMask[5];
     UINT64 PackageProcessorSet;
     UINT64 CoreProcessorSet;
+    int dummy2;	/* added by me to suppress warning */
 #else
     ULONG PrcbPad90[1];
     ULONG DebugDpcTime;
