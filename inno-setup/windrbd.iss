@@ -134,6 +134,9 @@ Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.sys"; DestDir: "{app
 ; must be in same folder as the sysfile.
 Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.cat"; DestDir: "{app}"; Flags: ignoreversion
+#ifdef WinNT52
+Source: "{#WindrbdSource}\netio-binary\netio.sys"; DestDir: "{app}"; Flags: ignoreversion
+#endif
 Source: "{#WindrbdSource}\misc\drbd.cgi"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\misc\ipxe-windrbd.pxe"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -473,12 +476,28 @@ begin
 	ExecWithLogging(ExpandConstant('cmd'), ExpandConstant('/c "copy /y windrbd.sys '+ExpandConstant('{sys}')+'\drivers\windrbd.sys"'), ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
 end;
 
+procedure CopyNetioDriver;
+var ResultCode: Integer;
+    CommandOutput: String;
+
+begin
+	ExecWithLogging(ExpandConstant('cmd'), ExpandConstant('/c "copy /y netio.sys '+ExpandConstant('{sys}')+'\drivers\netio.sys"'), ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
+end;
+
 procedure CreateWindrbdService;
 var ResultCode: Integer;
     CommandOutput: String;
 
 begin
 	ExecWithLogging(ExpandConstant('sc.exe'), 'create windrbd type= kernel binpath= '+ExpandConstant('{sys}')+'\drivers\windrbd.sys', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
+end;
+
+procedure CreateNetioService;
+var ResultCode: Integer;
+    CommandOutput: String;
+
+begin
+	ExecWithLogging(ExpandConstant('sc.exe'), 'create netio type= kernel binpath= '+ExpandConstant('{sys}')+'\drivers\netio.sys', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
 end;
 
 procedure AddDriverToDriverStore;
@@ -631,9 +650,11 @@ begin
 		PatchRegistry();
 #ifdef WinNT52
 		CopyDriver();
-		InstallBusDevice();
+		CopyNetioDriver();
 		CreateWindrbdService();
-		StartWindrbdService();
+		CreateNetioService();
+		InstallBusDevice();
+		StartWindrbdService(); { TODO: needed? }
 #else
 		AddDriverToDriverStore();
 		InstallBusDevice();
