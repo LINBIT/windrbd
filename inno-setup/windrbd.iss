@@ -20,12 +20,6 @@
 #define MyAppPublisher "Linbit"
 #define MyAppURL "http://www.linbit.com/"
 #define MyAppURLDocumentation "https://www.linbit.com/user-guides/"
-; TODO: we should use {sysroot} ...
-#ifdef Reactos
-#define DriverPath "C:\Reactos\system32\drivers\windrbd.sys"
-#else
-#define DriverPath "C:\Windows\system32\drivers\windrbd.sys"
-#endif
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -163,7 +157,7 @@ Filename: "{cmd}"; Parameters: "/c uninstall-windrbd.cmd"; WorkingDir: "{app}"; 
 [Registry]
 
 Root: HKLM; Subkey: "System\CurrentControlSet\services\eventlog\system\WinDRBD"; Flags: uninsdeletekey
-Root: HKLM; Subkey: "System\CurrentControlSet\services\eventlog\system\WinDRBD"; ValueType: string; ValueName: "EventMessageFile"; ValueData: "{#DriverPath}"
+Root: HKLM; Subkey: "System\CurrentControlSet\services\eventlog\system\WinDRBD"; ValueType: string; ValueName: "EventMessageFile"; ValueData: "{sys}\drivers\windrbd.sys"
 
 [Code]
 
@@ -476,7 +470,7 @@ var ResultCode: Integer;
     CommandOutput: String;
 
 begin
-	ExecWithLogging(ExpandConstant('cmd'), ExpandConstant('/c "copy /y windrbd.sys {#DriverPath}"'), ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
+	ExecWithLogging(ExpandConstant('cmd'), ExpandConstant('/c "copy /y windrbd.sys '+ExpandConstant('{sys}')+'\drivers\windrbd.sys"'), ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
 end;
 
 procedure CreateWindrbdService;
@@ -484,7 +478,7 @@ var ResultCode: Integer;
     CommandOutput: String;
 
 begin
-	ExecWithLogging(ExpandConstant('sc.exe'), 'create windrbd type= kernel binpath= {#DriverPath}', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
+	ExecWithLogging(ExpandConstant('sc.exe'), 'create windrbd type= kernel binpath= '+ExpandConstant('{sys}')+'\drivers\windrbd.sys', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
 end;
 
 procedure AddDriverToDriverStore;
@@ -635,13 +629,11 @@ begin
 		WriteWinDRBDRootPath();
 		InstallUserModeServices();
 		PatchRegistry();
-#ifdef Reactos
+#ifdef WinNT52
 		CopyDriver();
 		InstallBusDevice();
-{
 		CreateWindrbdService();
 		StartWindrbdService();
-}
 #else
 		AddDriverToDriverStore();
 		InstallBusDevice();

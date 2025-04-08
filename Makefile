@@ -39,7 +39,7 @@ help:
 	@echo
 	@echo "    ARCH=[i686|x86_64]  Architecture to build for"
 	@echo "    VERSION=myversion   Version string to add to WinDRBD version"
-	@echo "    REACTOS=1           Build and package for ReactOS"
+	@echo "    WINNT_52=1          Build and package for ReactOS/Windows Server 2003"
 	@echo "    NUM_JOBS=j          Use j build jobs in paralell (in-docker targets"
 	@echo "    DOCKER=docker-cmd   Use this docker command (example: make DOCKER=podman)"
 	@echo "    DOCKER_IMAGE=img    Use this docker image for building or generating"
@@ -51,9 +51,8 @@ help:
 	@echo
 	@echo "Examples:"
 	@echo
-	@echo "        make package-in-docker VERSION=my-windrbd-build"
-	@echo "        make package-in-docker VERSION=my-i686-build ARCH=i686"
-	@echo "        make package-in-docker VERSION=my-reactos-build ARCH=i686 REACTOS=1"
+	@echo "        make VERSION=my-windrbd-build"
+	@echo "        make VERSION=my-i686-build ARCH=i686"
 	@echo
 	@echo "If you just want to build WinDRBD with all dependencies in"
 	@echo "a docker container, do"
@@ -69,7 +68,7 @@ TARGET_IPS ?= 10.43.224.5 10.43.224.47 10.43.224.50
 export DRBD ?= drbd-9.2
 DRBDTMP ?= $(DRBD)-tmp
 
-export REACTOS
+export WINNT_52
 
 GIT_VERSION=$(shell git describe --tags)
 ifdef VERSION
@@ -103,7 +102,7 @@ DOCKER_IMAGE ?= windrbd-devenv
 # DOCKER_RUN=docker run -u $(MY_UID):$(MY_GID) --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 # so run docker as root ...
 # Add environment variables to pass to docker here:
-DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e REACTOS=$(REACTOS) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) -e DRIVER_DIR=$(DRIVER_DIR) -e CONFIG_KREF_DEBUG=$(CONFIG_KREF_DEBUG) -e OPTIMIZE="$(OPTIMIZE)" $(DOCKER_IMAGE)
+DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e WINNT_52=$(WINNT_52) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) -e DRIVER_DIR=$(DRIVER_DIR) -e CONFIG_KREF_DEBUG=$(CONFIG_KREF_DEBUG) -e OPTIMIZE="$(OPTIMIZE)" $(DOCKER_IMAGE)
 
 # Change ownership of all files created by make process to
 # the host's UID/GID.
@@ -151,12 +150,12 @@ endif
 
 DEFINES=-D WINNT=1 -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D COMPAT_HAVE_BOOL_TYPE=1 -DKBUILD_MODNAME='"drbd"' -D CONFIG_WINDOWS=1 # -D CONFIG_KREF_DEBUG=1
 
-ifdef CONFIG_KREF_DEBUG
-DEFINES+=-D CONFIG_KREF_DEBUG=1
+ifdef WINNT_52
+DEFINES+=-D WINNT_52=1
 endif
 
-ifdef REACTOS
-DEFINES+=-DREACTOS
+ifdef CONFIG_KREF_DEBUG
+DEFINES+=-D CONFIG_KREF_DEBUG=1
 endif
 
 # TODO: isn't there a numeric version (something like 0x090117) in the DRBD sources?
@@ -253,9 +252,7 @@ ASM_CFLAGS_FOR_SEH=-x assembler-with-cpp -pipe -fms-extensions -fno-strict-alias
 %.coffres: %.rc
 	$(call run,$(RC) -i $< -o $@ -O coff,RC,$@)
 
-ifndef REACTOS
 OPTIMIZE ?= -O2
-endif
 
 CFLAGS=-g -Wall $(SUPPRESSED_WARNINGS) $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES) $(MINGW_INCLUDES)
 CFLAGS_NOT_COCCIFIED=-g -Wall $(SUPPRESSED_WARNINGS) $(OPTIMIZE) $(CFLAGS_FOR_DRIVERS) $(DEFINES) $(WINDRBD_INCLUDES_NOT_COCCIFIED) $(MINGW_INCLUDES)
@@ -342,12 +339,12 @@ clean:
 	rm -f inno-setup.log
 	rm -f windrbd/include/windrbd_version.h
 
-ifdef REACTOS
-EXTRA_ISCC_DEFINES=/DReactos=1
+ifdef WINNT_52
+EXTRA_ISCC_DEFINES+=/DWinNT52=1
 endif
 
 ifeq ($(ARCH), i686)
-EXTRA_ISCC_DEFINES=/DConfig32Bit=1
+EXTRA_ISCC_DEFINES+=/DConfig32Bit=1
 endif
 
 package: all drbd-utils

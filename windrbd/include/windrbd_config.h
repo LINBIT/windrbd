@@ -1,15 +1,9 @@
 #ifndef _WINDRBD_CONFIG_H
 #define _WINDRBD_CONFIG_H
 
-#ifdef CONFIG_64BIT
+#ifndef WINNT_52
 #define CONFIG_HAVE_KERNEL_STACKSWAP_ENABLE 1
 #define CONFIG_HAVE_NO_EXECUTE 1
-#endif
-
-/* Those need to be implemented: */
-// #define CONFIG_HAVE_IO_CREATE_DEVICE_SECURE 1
-	/* Windows Server 2016 and later */
-#ifdef CONFIG_64BIT
 #define CONFIG_HAVE_RW_LOCKS 1
 #endif
 
