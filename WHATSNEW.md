@@ -3,6 +3,11 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.0-rc10
+-------------------------------
+
+Windows Server 2003 32-bit support.
+
 What's new in version 1.2.0-rc9
 -------------------------------
 
