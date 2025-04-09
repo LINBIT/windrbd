@@ -653,8 +653,7 @@ begin
 		CopyNetioDriver();
 		CreateWindrbdService();
 		CreateNetioService();
-		InstallBusDevice();
-		StartWindrbdService(); { TODO: needed? }
+		InstallBusDevice();	{ will start the windrbd.sys driver }
 #else
 		AddDriverToDriverStore();
 		InstallBusDevice();
