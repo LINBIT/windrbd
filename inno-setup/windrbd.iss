@@ -118,6 +118,9 @@ Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygiconv-2.dll"; De
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygintl-8.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygncursesw-10.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygreadline7.dll"; DestDir: "{app}"; Flags: ignoreversion
+#ifdef Config32Bit
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cyggcc_s-1.dll"; DestDir: "{app}"; Flags: ignoreversion
+#endif
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\bash.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cat.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\chmod.exe"; DestDir: "{app}"; Flags: ignoreversion
