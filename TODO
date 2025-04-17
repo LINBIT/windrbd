@@ -61,6 +61,25 @@ TODO: Feature: make debugfs work
 
 TODO: Feature: make TRIM/DISCARD work
 
+TODO: Upstream: get drbdmon working.
+
+	Probably this works only with WSL .. CygWin does not have
+	epoll as well as some other required syscalls (kill,
+	sigaddset, sigemptyset, pipe2).
+
+	Maybe Robert does this.
+
+	Update: Prepared a Windows VM for him to develop on.
+
+	Didn't happen the last 5 years ...
+
+	Ok, we need to implement a communication layer that uses
+	select(2) instead of epoll check kill and signal handling.
+
+	Update April 17 2025: Robert is currently working on
+	it!! Waiting for drbd-utils push and then integrating
+	it into WinDRBD 1.2.
+
 Closed TODO's follow:
 -------------------------------------------------------------------------
 
@@ -8696,21 +8715,6 @@ Rejected: Remote boot: Performance: Improve boot speed.
 Delegated: Upstream: Feature: show reason for going into StandAlone on status
 
 	So one knows if it is split brain or something else.
-
-Delegated: Upstream: get drbdmon working.
-
-	Probably this works only with WSL .. CygWin does not have
-	epoll as well as some other required syscalls (kill,
-	sigaddset, sigemptyset, pipe2).
-
-	Maybe Robert does this.
-
-	Update: Prepared a Windows VM for him to develop on.
-
-	Didn't happen the last 5 years ...
-
-	Ok, we need to implement a communication layer that uses
-	select(2) instead of epoll check kill and signal handling.
 
 Done: Build system: have a make depend target
 	Or at least header file dependencies.
