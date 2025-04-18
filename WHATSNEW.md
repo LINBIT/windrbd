@@ -3,6 +3,11 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.0-rc11
+-------------------------------
+
+NETIO.SYS fixes
+
 What's new in version 1.2.0-rc10
 -------------------------------
 
