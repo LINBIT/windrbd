@@ -306,3 +306,4 @@ Version history
  * 1.2.0-rc8 (Mar 05, 2025): Connection problems in 3 node setups fixed.
  * 1.2.0-rc9 (Mar 26, 2025): DRBD 9.2.13
  * 1.2.0-rc10 (Apr 9, 2025): Windows Server 2003 32-bit support.
+ * 1.2.0-rc11 (Apr 18, 2025): NETIO.SYS fixes
