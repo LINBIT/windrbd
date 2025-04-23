@@ -3,13 +3,18 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.0-rc12
+--------------------------------
+
+even more NETIO.SYS fixes
+
 What's new in version 1.2.0-rc11
--------------------------------
+--------------------------------
 
 NETIO.SYS fixes
 
 What's new in version 1.2.0-rc10
--------------------------------
+--------------------------------
 
 Windows Server 2003 32-bit support.
 
