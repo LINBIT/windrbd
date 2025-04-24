@@ -633,6 +633,56 @@ static int CreateSocket(
 	return winsock_to_linux_error(Status);
 }
 
+static struct _WSK_SOCKET *get_accept_socket(struct socket *listening_socket)
+{
+	KIRQL flags;
+	struct _WSK_SOCKET *ws = NULL;
+
+	if (listening_socket->accept_wsk_sockets == NULL)
+		return NULL;
+
+	spin_lock_irqsave(&listening_socket->accept_socket_lock, flags);
+
+	if (listening_socket->accept_sockets_head != listening_socket->accept_sockets_tail) {
+		ws = listening_socket->accept_wsk_sockets[listening_socket->accept_sockets_tail];
+		listening_socket->accept_sockets_tail++;
+		if (listening_socket->accept_sockets_tail >= listening_socket->num_accept_sockets)
+			listening_socket->accept_sockets_tail = 0;
+	}
+
+	spin_unlock_irqrestore(&listening_socket->accept_socket_lock, flags);
+
+	return ws;
+}
+
+static int put_accept_socket(struct socket *listening_socket, struct _WSK_SOCKET *accept_socket)
+{
+	KIRQL flags;
+	int old_accept_sockets_head;
+
+	if (listening_socket->accept_wsk_sockets == NULL)
+		return -EINVAL;
+
+	spin_lock_irqsave(&listening_socket->accept_socket_lock, flags);
+	old_accept_sockets_head = listening_socket->accept_sockets_head;
+
+	listening_socket->accept_sockets_head++;
+	if (listening_socket->accept_sockets_head >= listening_socket->num_accept_sockets)
+		listening_socket->accept_sockets_head = 0;
+
+	if (listening_socket->accept_sockets_head == listening_socket->accept_sockets_tail) {
+		listening_socket->accept_sockets_head = old_accept_sockets_head;
+
+		spin_unlock_irqrestore(&listening_socket->accept_socket_lock, flags);
+		return -ENOBUFS;
+	}
+	listening_socket->accept_wsk_sockets[old_accept_sockets_head] = accept_socket;
+
+	spin_unlock_irqrestore(&listening_socket->accept_socket_lock, flags);
+
+	return 0;
+}
+
 	/* Use this only to close a newly created wsk_socket which
 	 * does not have a Linux socket yet (e.g. in accept when
 	 * creating Linux socket fails).
@@ -675,6 +725,15 @@ static void close_socket(struct socket *socket)
 	if (Irp == NULL)
 		return;
 
+	if (socket->accept_wsk_sockets != NULL) {
+		struct _WSK_SOCKET *ws;
+
+		while ((ws = get_accept_socket(socket)) != NULL) {
+printk("closing accept_wsk_socket %p\n", ws);
+			close_wsk_socket(ws);
+		}
+	}
+
 		/* TODO: Gracefully disconnect socket first? With what
 		 * timeout? Disconnect seems to work now (Linux detects
 		 * disconnect on Windows peer with about 200-300ms delay),
@@ -690,11 +749,6 @@ static void close_socket(struct socket *socket)
 		socket->wsk_socket = NULL;
 
 		mutex_unlock(&socket->wsk_mutex);
-	}
-
-	if (socket->accept_wsk_socket != NULL) {
-		close_wsk_socket(socket->accept_wsk_socket);
-		socket->accept_wsk_socket = NULL;
 	}
 	socket->error_status = 0;
 	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
@@ -811,27 +865,27 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	int err;
 	struct _WSK_SOCKET *wsk_socket;
 	struct socket *accept_socket;
-	KIRQL flags;
 
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
-retry:
-	spin_lock_irqsave(&socket->accept_socket_lock, flags);
-	if (socket->accept_wsk_socket == NULL) {
-		spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
-		if ((io_flags & O_NONBLOCK) != 0)
-			return -EWOULDBLOCK;
+	if (socket->accept_wsk_sockets == NULL) {
+		printk("Warning: accept() without listen() called.\n");
+		return -EINVAL;
+	}
+
+	do {
+		wsk_socket = get_accept_socket(socket);
+
+		if (wsk_socket == NULL) {
+			if ((io_flags & O_NONBLOCK) != 0)
+				return -EWOULDBLOCK;
 
 			/* TODO: handle signals */
-		KeWaitForSingleObject(&socket->accept_event, Executive, KernelMode, FALSE, NULL);
-		goto retry;
-	}
-	wsk_socket = socket->accept_wsk_socket;
-	socket->accept_wsk_socket = NULL;
-	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
+			KeWaitForSingleObject(&socket->accept_event, Executive, KernelMode, FALSE, NULL);
+		}
+	} while (wsk_socket == NULL);
 
-// printk("into sock_create_linux_socket ..\n");
 	err = sock_create_linux_socket(&accept_socket, SOCK_STREAM);
 	if (err < 0)
 		close_wsk_socket(wsk_socket);
@@ -893,12 +947,22 @@ static int wsk_set_event_callbacks(struct socket *socket, int mask)
  * must be a LISTEN socket (WSK_FLAG_LISTEN_SOCKET).
  */
 
-static int wsk_listen(struct socket *socket, int len)
+static int wsk_listen(struct socket *socket, int backlog)
 {
-	(void) len;
-
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
+
+	if (socket->accept_wsk_sockets != NULL) {
+		printk("Warning: socket->accept_sockets is != NULL (%p), currently only one call to listen() is supported for a socket\n");
+	} else {
+		socket->accept_wsk_sockets = kmalloc(sizeof(struct _WSK_SOCKET*)*backlog, GFP_KERNEL);
+		if (socket->accept_wsk_sockets == NULL)
+			return -ENOMEM;
+
+		socket->num_accept_sockets = backlog;
+		socket->accept_sockets_head = 0;
+		socket->accept_sockets_tail = 0;
+	}
 
 	return wsk_set_event_callbacks(socket, WSK_EVENT_ACCEPT);
 }
@@ -1707,6 +1771,9 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 		return -ENOMEM; 
 	}
 
+	/* Note that fields that are to be initialized to 0 or NULL
+	 * are omitted here, we're doing kzalloc ...
+	 */
 	socket->error_status = 0;
 
 	kref_init(&socket->kref);
@@ -1789,22 +1856,22 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 )
 {
 	struct socket *socket = (struct socket*) SocketContext;
-	KIRQL flags;
-	struct _WSK_SOCKET *socket_to_close = NULL;
+	int err;
 
-	spin_lock_irqsave(&socket->accept_socket_lock, flags);
-	if (socket->accept_wsk_socket != NULL) {
-		dbg("dropped incoming connection wsk_socket is old: %p new: %p socket is %p.\n", socket->accept_wsk_socket, AcceptSocket, socket);
-
-		socket_to_close = socket->accept_wsk_socket;
-		socket->dropped_accept_sockets++;
+	if (socket->accept_wsk_sockets == NULL) {
+		printk("Warning: incomping_connection() without listen() called.\n");
+		return -EINVAL;
 	}
-	socket->accept_wsk_socket = AcceptSocket;
-	spin_unlock_irqrestore(&socket->accept_socket_lock, flags);
 
-	if (socket_to_close != NULL)
-		close_wsk_socket(socket_to_close);
+	err = put_accept_socket(socket, AcceptSocket);
 
+	if (err < 0) {
+printk("dropped incoming connection new socket is: %p listening socket is %p.\n", AcceptSocket, socket);
+		close_wsk_socket(AcceptSocket);
+		socket->dropped_accept_sockets++;
+
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
 	KeSetEvent(&socket->accept_event, IO_NO_INCREMENT, FALSE);
 
 	if (socket->sk->sk_state_change)
@@ -1814,7 +1881,7 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 		*AcceptSocketContext = NULL;
 	if (AcceptSocketDispatch)
 		*AcceptSocketDispatch = NULL;
-	
+
 	return STATUS_SUCCESS;
 }
 
