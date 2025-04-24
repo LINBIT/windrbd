@@ -15,9 +15,9 @@ export DRBD_VERSION=9.*
 export DRBD_UTILS_VERSION=9.0.0.latest-*
 # export SKIP_PULL=true
 export PULL_WINDOWS_ONLY=true
-export LINBIT_CI_MAX_CPUS=3
-# This is too much for my Linux VM:
-# export LINBIT_CI_MAX_CPUS=5
+# export LINBIT_CI_MAX_CPUS=3
+# This is required for the connect-5 test: else we get failures
+export LINBIT_CI_MAX_CPUS=5
 
 time ./virter/run-test.sh --variant=windows
 # time ./virter/run-test.sh --variant=windows --torun=invalid-names
