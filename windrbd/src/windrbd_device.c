@@ -3230,7 +3230,35 @@ printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
 			break;
 		}
 
-// TODO: SCSIOP_INQUIRY
+		case SCSIOP_INQUIRY:
+		{
+			struct _INQUIRYDATA *id = srb->DataBuffer;
+printk("srb: %p id: %p srb->DataTransferLength: %d sizeof(*id): %d\n", srb, id, srb->DataTransferLength, sizeof(*id));
+/*
+			if (srb->DataTransferLength < sizeof(*id)) {
+				srb->SrbStatus = SRB_STATUS_DATA_OVERRUN;
+				break;
+			}
+*/
+			memset(id, 0, sizeof(*id));
+			id->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
+			strcpy((char*) id->VendorId, "Linbit  ");
+			strcpy((char*) id->ProductId, "WinDRBD Disk    ");
+			strcpy((char*) id->ProductRevisionLevel, "1.2 ");
+
+			srb->DataTransferLength = sizeof(*id);
+			irp->IoStatus.Information = sizeof(*id);
+			srb->SrbStatus = SRB_STATUS_SUCCESS;
+			status = STATUS_SUCCESS;
+
+			break;
+		}
+		case SCSIOP_SYNCHRONIZE_CACHE:
+printk("SCSIOP_SYNCHRONIZE_CACHE ...\n");
+			srb->SrbStatus = SRB_STATUS_SUCCESS;
+                        status = STATUS_SUCCESS;
+			break;
+
 		default:
 			printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
 			status = STATUS_NOT_IMPLEMENTED;
