@@ -732,6 +732,8 @@ static void close_socket(struct socket *socket)
 printk("closing accept_wsk_socket %p\n", ws);
 			close_wsk_socket(ws);
 		}
+		kfree(socket->accept_wsk_sockets);
+		socket->accept_wsk_sockets = NULL;
 	}
 
 		/* TODO: Gracefully disconnect socket first? With what
