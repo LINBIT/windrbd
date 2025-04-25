@@ -3232,22 +3232,25 @@ printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
 
 		case SCSIOP_INQUIRY:
 		{
+/* TODO: No! This should only be there when page is 0x83: */
 			struct _INQUIRYDATA *id = srb->DataBuffer;
-printk("srb: %p id: %p srb->DataTransferLength: %d sizeof(*id): %d\n", srb, id, srb->DataTransferLength, sizeof(*id));
+printk("srb: %p id: %p srb->DataTransferLength: %d sizeof(*id): %d cdb->CDB6INQUIRY3.PageCode is 0x%02x\n", srb, id, srb->DataTransferLength, sizeof(*id), cdb->CDB6INQUIRY3.PageCode);
 /*
 			if (srb->DataTransferLength < sizeof(*id)) {
 				srb->SrbStatus = SRB_STATUS_DATA_OVERRUN;
 				break;
 			}
 */
-			memset(id, 0, sizeof(*id));
+			memset(id, 0, srb->DataTransferLength);
 			id->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
 			strcpy((char*) id->VendorId, "Linbit  ");
 			strcpy((char*) id->ProductId, "WinDRBD Disk    ");
 			strcpy((char*) id->ProductRevisionLevel, "1.2 ");
 
+/*
 			srb->DataTransferLength = sizeof(*id);
 			irp->IoStatus.Information = sizeof(*id);
+*/
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
 			status = STATUS_SUCCESS;
 
