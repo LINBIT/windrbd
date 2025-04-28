@@ -2938,11 +2938,11 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
-printk("srb->Function is 0x%08x\n", srb->Function);
+// printk("srb->Function is 0x%08x\n", srb->Function);
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
-printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
+// printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
 		switch (cdb->AsByte[0]) {
 		case SCSIOP_TEST_UNIT_READY:
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
