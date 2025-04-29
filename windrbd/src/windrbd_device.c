@@ -2871,6 +2871,117 @@ static void set_partition_guid(struct block_device *bdev, const char *guid)
 }
 #endif
 
+static NTSTATUS scsi_inquiry(struct _SCSI_REQUEST_BLOCK *srb)
+{
+	union _CDB *cdb;
+
+	cdb = (union _CDB*) srb->Cdb;
+
+//	if (srb->DataTransferLength
+
+/*
+			if (srb->DataTransferLength < sizeof(*id)) {
+				srb->SrbStatus = SRB_STATUS_DATA_OVERRUN;
+				break;
+			}
+*/
+	memset(srb->DataBuffer, 0, srb->DataTransferLength);
+
+printk("page code is %d\n", cdb->CDB6INQUIRY3.PageCode);
+
+	switch (cdb->CDB6INQUIRY3.PageCode) {
+	case VPD_SUPPORTED_PAGES:
+		struct _VPD_SUPPORTED_PAGES_PAGE *spp = srb->DataBuffer;
+
+printk("supported pages ...\n");
+		spp->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
+		spp->DeviceTypeQualifier = DEVICE_QUALIFIER_ACTIVE;
+		spp->PageCode = VPD_SUPPORTED_PAGES;    /* 0 */
+		spp->PageLength = 5;
+
+			/* those must be ordered ascending: */
+		spp->SupportedPageList[0] = VPD_SUPPORTED_PAGES;
+		spp->SupportedPageList[1] = VPD_DEVICE_IDENTIFIERS;
+//		spp->SupportedPageList[2] = VPD_THIRD_PARTY_COPY;
+		spp->SupportedPageList[2] = VPD_BLOCK_LIMITS;
+		spp->SupportedPageList[3] = VPD_BLOCK_DEVICE_CHARACTERISTICS;
+		spp->SupportedPageList[4] = VPD_LOGICAL_BLOCK_PROVISIONING;
+
+		srb->DataTransferLength = sizeof(*spp) + spp->PageLength;
+		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		return STATUS_SUCCESS;
+
+	case VPD_DEVICE_IDENTIFIERS:	/* 0x83 */
+		struct _INQUIRYDATA *id = srb->DataBuffer;
+printk("srb: %p id: %p srb->DataTransferLength: %d sizeof(*id): %d cdb->CDB6INQUIRY3.PageCode is 0x%02x\n", srb, id, srb->DataTransferLength, sizeof(*id), cdb->CDB6INQUIRY3.PageCode);
+		id->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
+		strcpy((char*) id->VendorId, "Linbit  ");
+		strcpy((char*) id->ProductId, "WinDRBD Disk    ");
+		strcpy((char*) id->ProductRevisionLevel, "1.2 ");
+
+		srb->DataTransferLength = sizeof(*id);
+		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		return STATUS_SUCCESS;
+
+//	case 
+
+	case VPD_BLOCK_LIMITS: /* 0xb0 */
+		struct _VPD_BLOCK_LIMITS_PAGE *blp = srb->DataBuffer;
+
+		blp->PageCode = VPD_BLOCK_LIMITS;
+		blp->PageLength[1] = 0x3c;
+
+		/* Reserved0 is 1 .. ? */
+
+		/* big endian ... */
+		blp->MaximumTransferLength[0] = 0;
+		blp->MaximumTransferLength[0] = 0x3f;
+		blp->MaximumTransferLength[0] = 0xff;
+		blp->MaximumTransferLength[0] = 0xff;
+
+		/* MaximumUnmapLBACount is 0x200000 */
+		/* All others 0 since we don't support unmap */
+
+		srb->DataTransferLength = sizeof(*blp);
+		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		return STATUS_SUCCESS;
+
+	case VPD_BLOCK_DEVICE_CHARACTERISTICS:	/* 0xb1 */
+		struct _VPD_BLOCK_DEVICE_CHARACTERISTICS_PAGE *bdcp = srb->DataBuffer;
+		bdcp->PageCode = VPD_BLOCK_DEVICE_CHARACTERISTICS;
+		bdcp->PageLength = 0x3c;
+
+		/* rest is 0 */
+
+		srb->DataTransferLength = sizeof(*bdcp);
+		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		return STATUS_SUCCESS;
+
+	case VPD_LOGICAL_BLOCK_PROVISIONING:	/* 0xb2 */
+		/* This is for SCSI UNMAP request support (aka 'TRIM')
+		 * We are not supporting this yet. If we do this has
+		 * to be touched:
+		 */
+
+		struct _VPD_LOGICAL_BLOCK_PROVISIONING_PAGE *lbpp = srb->DataBuffer;
+		lbpp->PageCode = VPD_LOGICAL_BLOCK_PROVISIONING;    /* 0xb2 */
+		lbpp->PageLength[0] = 0;
+		lbpp->PageLength[1] = 4;
+
+#ifdef __TRIM_SUPPORTED_ON_DAY
+		lbpp->LBPU = 1;	/* Unmap supported */
+		lbpp->LBWS = 1;  /* Write same, but we probably don't support this */
+		lbpp->LBWS10 = 1; /* same */
+		lbpp->ProvisioningType = 2;	/* whatever this means ... */
+#endif
+
+		srb->DataTransferLength = sizeof(*lbpp);
+		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		return STATUS_SUCCESS;
+	}
+	return STATUS_NOT_SUPPORTED;
+}
+
 static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) 
 {
 	NTSTATUS status;
@@ -3231,31 +3342,12 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 		}
 
 		case SCSIOP_INQUIRY:
-		{
-/* TODO: No! This should only be there when page is 0x83: */
-			struct _INQUIRYDATA *id = srb->DataBuffer;
-printk("srb: %p id: %p srb->DataTransferLength: %d sizeof(*id): %d cdb->CDB6INQUIRY3.PageCode is 0x%02x\n", srb, id, srb->DataTransferLength, sizeof(*id), cdb->CDB6INQUIRY3.PageCode);
-/*
-			if (srb->DataTransferLength < sizeof(*id)) {
-				srb->SrbStatus = SRB_STATUS_DATA_OVERRUN;
-				break;
-			}
-*/
-			memset(id, 0, srb->DataTransferLength);
-			id->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
-			strcpy((char*) id->VendorId, "Linbit  ");
-			strcpy((char*) id->ProductId, "WinDRBD Disk    ");
-			strcpy((char*) id->ProductRevisionLevel, "1.2 ");
-
-/*
-			srb->DataTransferLength = sizeof(*id);
-			irp->IoStatus.Information = sizeof(*id);
-*/
-			srb->SrbStatus = SRB_STATUS_SUCCESS;
-			status = STATUS_SUCCESS;
+			status = scsi_inquiry(srb);
+			if (NT_SUCCESS(status))
+				irp->IoStatus.Information = srb->DataTransferLength;
 
 			break;
-		}
+
 		case SCSIOP_SYNCHRONIZE_CACHE:
 printk("SCSIOP_SYNCHRONIZE_CACHE ...\n");
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
