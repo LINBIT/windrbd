@@ -660,6 +660,9 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == drbd_bus_device) {
+		struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
+		printk("BUS ioctl is 0x%08x\n", s->Parameters.DeviceIoControl.IoControlCode);
+
 		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -682,7 +685,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-// printk("ioctl is 0x%08x\n", s->Parameters.DeviceIoControl.IoControlCode);
+printk("ioctl is 0x%08x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	if (dev->is_bootdevice) {
 		status = wait_for_becoming_primary(dev);
 		if (status != STATUS_SUCCESS)
@@ -2887,7 +2890,7 @@ static NTSTATUS scsi_inquiry(struct _SCSI_REQUEST_BLOCK *srb)
 */
 	memset(srb->DataBuffer, 0, srb->DataTransferLength);
 
-printk("page code is %d\n", cdb->CDB6INQUIRY3.PageCode);
+printk("page code is %d EnableVitalProductData is %d CommandSupportData is %d\n", cdb->CDB6INQUIRY3.PageCode, cdb->CDB6INQUIRY3.EnableVitalProductData, cdb->CDB6INQUIRY3.CommandSupportData);
 
 	switch (cdb->CDB6INQUIRY3.PageCode) {
 	case VPD_SUPPORTED_PAGES:
@@ -3031,7 +3034,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 	if (bdev->about_to_delete)
 		goto out;
 
-// printk("SCSI request for device %p\n", device);
+printk("SCSI request for device %p\n", device);
 
 	srb = s->Parameters.Scsi.Srb;
 	if (srb == NULL) {
@@ -3049,11 +3052,11 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 	}
 	status = STATUS_SUCCESS;	/* optimistic */
 
-// printk("srb->Function is 0x%08x\n", srb->Function);
+printk("srb->Function is 0x%08x\n", srb->Function);
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
-// printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
+printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
 		switch (cdb->AsByte[0]) {
 		case SCSIOP_TEST_UNIT_READY:
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
@@ -3322,6 +3325,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 
 		case SCSIOP_MODE_SENSE:
 		{
+printk("SCSIOP_MODE_SENSE ...\n");
 			PMODE_PARAMETER_HEADER ModeParameterHeader;
 
 			if (srb->DataTransferLength < sizeof(MODE_PARAMETER_HEADER)) {
@@ -3336,6 +3340,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 			ModeParameterHeader->BlockDescriptorLength = 0;
 			srb->DataTransferLength = sizeof(MODE_PARAMETER_HEADER);
 			irp->IoStatus.Information = sizeof(MODE_PARAMETER_HEADER);
+printk("SCSIOP_MODE_SENSE length is %d\n", irp->IoStatus.Information);
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
 			status = STATUS_SUCCESS; /* TODO: ?? */
 			break;
