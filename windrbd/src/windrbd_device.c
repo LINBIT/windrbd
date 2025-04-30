@@ -2985,20 +2985,210 @@ printk("srb: %p id: %p srb->DataTransferLength: %d sizeof(*id): %d cdb->CDB6INQU
 	return STATUS_NOT_SUPPORTED;
 }
 
+static NTSTATUS scsi_io(struct block_device *bdev, struct _SCSI_REQUEST_BLOCK *srb, struct _IRP *irp)
+{
+	NTSTATUS status;
+	char *buffer, *io_buffer = NULL;
+	int64_t io_start_sector = 0, io_sector_count = 0;
+	KIRQL flags;
+	int retries;
+	sector_t start_sector;
+	int64_t sector_count;
+	int rw;
+	int call_drbd = 0;
+        struct _CDB16 *cdb16;
+        union _CDB *cdb;
+
+
+	cdb = (union _CDB*) srb->Cdb;
+	cdb16 = (struct _CDB16*) srb->Cdb;
+
+	rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
+
+	if (bdev != NULL) {
+		if (rw == WRITE && bdev->is_bootdevice)
+			status = wait_for_becoming_primary(bdev);
+		else
+			status = STATUS_SUCCESS;
+	} else {
+		status = STATUS_INVALID_DEVICE_REQUEST;
+	}
+
+	if (status != STATUS_SUCCESS) {
+		srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+
+		srb->DataTransferLength = 0;
+		irp->IoStatus.Information = 0;
+		return status;
+	}
+
+	dbg("cdb->AsByte[0] is %d", cdb->AsByte[0]);
+	if (cdb->AsByte[0] == SCSIOP_READ16 ||
+	    cdb->AsByte[0] == SCSIOP_WRITE16) {
+		REVERSE_BYTES_QUAD(&start_sector, &(cdb16->LogicalBlock[0]));
+		sector_count = 0;	/* initialize all 8 bytes */
+		REVERSE_BYTES(&sector_count, &(cdb16->TransferLength[0]));
+	} else {
+		start_sector = (unsigned long long) ((unsigned long long) cdb->CDB10.LogicalBlockByte0 << 24) + ((unsigned long long) cdb->CDB10.LogicalBlockByte1 << 16) + ((unsigned long long) cdb->CDB10.LogicalBlockByte2 << 8) + (unsigned long long) cdb->CDB10.LogicalBlockByte3;
+		sector_count = (unsigned long long) ((unsigned long long) cdb->CDB10.TransferBlocksMsb << 8) + (unsigned long long) cdb->CDB10.TransferBlocksLsb;
+	}
+	if (sector_count * 512 > srb->DataTransferLength) {
+		dbg("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, srb->DataTransferLength);
+		sector_count = srb->DataTransferLength / 512;
+	}
+
+	if (srb->DataTransferLength % 512 != 0) {
+		dbg("srb->DataTransferLength (%lld) not sector aligned\n", srb->DataTransferLength);
+	}
+	if (srb->DataTransferLength > sector_count * 512) {
+		dbg("srb>DataTransferLength (%lld) too big\n", srb->DataTransferLength);
+	}
+
+	srb->DataTransferLength = sector_count * 512;
+	srb->SrbStatus = SRB_STATUS_SUCCESS;
+	if (sector_count == 0) {
+		irp->IoStatus.Information = 0;
+		return STATUS_SUCCESS;
+	}
+
+	retries = 0;
+	while (1) {
+		buffer = ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
+
+		if (buffer != NULL) {
+                        if (retries > 0)
+				printk("succeeded after %d retries\n", retries);
+                        break;
+		}
+
+		if (retries % 10 == 0) {
+			printk("cannot map transfer buffer, retrying\n");
+		}
+		if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
+			if (retries == 0)
+				printk("cannot sleep now, busy looping\n");
+		} else {
+			msleep(100);
+		}
+	}
+// printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
+
+	irp->IoStatus.Information = 0;
+	irp->IoStatus.Status = STATUS_PENDING;
+
+	spin_lock_irqsave(&bdev->virtual_partition_table_lock, flags);
+	if (start_sector < bdev->data_shift) {
+		if (start_sector < bdev->data_shift && sector_count > 0) {
+			size_t n = (bdev->data_shift - start_sector)*512;
+			if (n>=sector_count*512) {
+				n = sector_count*512;
+			}
+#if 0
+					if (rw == WRITE && start_sector <= 2 && start_sector+sector_count > 2) {
+						char *guid = buffer + (2 - start_sector) * 512 + 0x10;
+						set_partition_guid(bdev, guid);
+					}
+#endif
+			status = STATUS_SUCCESS;
+			if (bdev->disk_prolog != NULL) {
+				if (rw == READ) {
+					memcpy(buffer, bdev->disk_prolog+start_sector*512, n);
+				} else {
+					printk("WRITE to partition table !!\n");
+					memcpy(bdev->disk_prolog+start_sector*512, buffer, n);
+				}
+			} else {
+				if (rw == READ) {
+					memset(buffer, 0, n);
+				} else {
+					status = STATUS_INVALID_PARAMETER;
+				}
+			}
+			start_sector += n/512;
+			sector_count -= n/512;
+			buffer += n;
+		}
+	}
+
+	if (sector_count > 0) {
+		int64_t num_sectors = sector_count;
+		int64_t excess_sectors = (start_sector + num_sectors) - ((bdev->bd_inode->i_size/512) + bdev->data_shift);
+		if (excess_sectors > 0) {
+			num_sectors -= excess_sectors;
+		}
+		if (num_sectors > 0) {
+				/* Normally we would call windrbd_make_drbd_requests()
+				 * here but if the I/O is completed very fast then
+				 * the buffer is already invalid / freed or whatever.
+				 * So we cannot add epilog data after calling
+				 * windrbd_make_drbd_requests(). Save parameters here
+				 * and call windrbd_make_drbd_requests() after filling
+				 * epilog data.
+				 */
+			io_buffer = buffer;
+			io_start_sector = start_sector-bdev->data_shift;
+			io_sector_count = num_sectors;
+			call_drbd = 1;
+
+			buffer += num_sectors*512;
+			sector_count -= num_sectors;
+			start_sector += num_sectors;
+		}
+	}
+	if (sector_count > 0) {
+		sector_t first_backup_sector = bdev->data_shift+bdev->bd_inode->i_size/512;
+		sector_t last_sector = bdev->data_shift+bdev->bd_inode->i_size/512 + bdev->appended_sectors;
+		if (start_sector >= first_backup_sector) {
+			if (start_sector + sector_count > last_sector) {
+				printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
+				sector_count = last_sector - start_sector;
+			}
+			status = STATUS_SUCCESS;
+			if (rw == READ) {
+				if (bdev->disk_epilog != NULL) {
+					memcpy(buffer, bdev->disk_epilog+(start_sector-first_backup_sector)*512, sector_count*512);
+				} else {
+					memset(buffer, 0, sector_count*512);
+				}
+			} else {
+				if (bdev->disk_epilog != NULL) {
+					printk("WRITE to backup partition table !!\n");
+					memcpy(bdev->disk_epilog+(start_sector-first_backup_sector)*512, buffer, sector_count*512);
+				} else {
+					status = STATUS_INVALID_PARAMETER;
+				}
+			}
+		}
+	}
+	spin_unlock_irqrestore(&bdev->virtual_partition_table_lock, flags);
+
+	if (call_drbd) {
+		status = windrbd_make_drbd_requests(irp, bdev, io_buffer, io_sector_count*512, io_start_sector, rw);
+			/* irp may already be freed here, don't access it.
+			 * buffer also might already be freed here.
+			 */
+		if (status == STATUS_SUCCESS)
+			return STATUS_PENDING;
+	}
+
+// printk("XXX Debug: windrbd_make_drbd_requests returned, status is %x sector is %lld irp is %p\n", status, start_sector, irp);
+
+// printk("error initiating request status is %x\n", status);
+	if (status != STATUS_SUCCESS) {
+		srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+	}
+	return status;
+}
+
 static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) 
 {
 	NTSTATUS status;
 	struct _SCSI_REQUEST_BLOCK *srb;
-	struct _CDB16 *cdb16;
 	union _CDB *cdb;
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	ULONG Temp;
 	LONGLONG d_size, LargeTemp;
 	struct block_device *bdev;
-	char *buffer, *io_buffer = NULL;
-	int64_t io_start_sector = 0, io_sector_count = 0;
-	KIRQL flags;
-	int retries;
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete || ref->bdev->ref == NULL) {
@@ -3041,7 +3231,6 @@ printk("SCSI request for device %p\n", device);
 		goto out;
 	}
 	cdb = (union _CDB*) srb->Cdb;
-	cdb16 = (struct _CDB16*) srb->Cdb;
 
 	srb->SrbStatus = SRB_STATUS_INVALID_REQUEST;
 	srb->ScsiStatus = SCSISTAT_GOOD;
@@ -3071,189 +3260,18 @@ printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
 		case SCSIOP_READ16:
 		case SCSIOP_WRITE:
 		case SCSIOP_WRITE16:
-		{
-			sector_t start_sector;
-			int64_t sector_count;
-			int rw;
-			int call_drbd = 0;
+			/* TODO: irp->IoStatus.Information is not set? */
+			status = scsi_io(bdev, srb, irp);
 
-			rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
+			/* If pending, don't touch irp any more, it might
+			 * already be freed. Also the remove lock will
+			 * be released in the completion routine, so no
+			 * need to do that here.
+			 */
+			if (status == STATUS_PENDING)
+				return status;
 
-			if (bdev != NULL) {
-				if (rw == WRITE && bdev->is_bootdevice)
-					status = wait_for_becoming_primary(bdev);
-				else
-					status = STATUS_SUCCESS;
-			} else {
-				printk("bdev is NULL on SCSI I/O, this should not happen (minor is %x)\n", s->MinorFunction);
-				status = STATUS_INVALID_DEVICE_REQUEST;
-			}
-
-			if (status != STATUS_SUCCESS) {
-				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
-
-				srb->DataTransferLength = 0;
-				irp->IoStatus.Information = 0;
-				break;
-			}
-
-			dbg("cdb->AsByte[0] is %d", cdb->AsByte[0]);
-			if (cdb->AsByte[0] == SCSIOP_READ16 ||
-			    cdb->AsByte[0] == SCSIOP_WRITE16) {
-				REVERSE_BYTES_QUAD(&start_sector, &(cdb16->LogicalBlock[0]));
-				sector_count = 0;	/* initialize all 8 bytes */
-				REVERSE_BYTES(&sector_count, &(cdb16->TransferLength[0]));
-			} else {
-				start_sector = (unsigned long long) ((unsigned long long) cdb->CDB10.LogicalBlockByte0 << 24) + ((unsigned long long) cdb->CDB10.LogicalBlockByte1 << 16) + ((unsigned long long) cdb->CDB10.LogicalBlockByte2 << 8) + (unsigned long long) cdb->CDB10.LogicalBlockByte3;
-				sector_count = (unsigned long long) ((unsigned long long) cdb->CDB10.TransferBlocksMsb << 8) + (unsigned long long) cdb->CDB10.TransferBlocksLsb;
-			}
-			if (sector_count * 512 > srb->DataTransferLength) {
-				dbg("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, srb->DataTransferLength);
-				sector_count = srb->DataTransferLength / 512;
-			}
-
-			if (srb->DataTransferLength % 512 != 0) {
-				dbg("srb->DataTransferLength (%lld) not sector aligned\n", srb->DataTransferLength);
-			}
-			if (srb->DataTransferLength > sector_count * 512) {
-				dbg("srb>DataTransferLength (%lld) too big\n", srb->DataTransferLength);
-			}
-
-			srb->DataTransferLength = sector_count * 512;
-			srb->SrbStatus = SRB_STATUS_SUCCESS;
-			if (sector_count == 0) {
-				irp->IoStatus.Information = 0;
-				break;
-			}
-
-			retries = 0;
-			while (1) {
-				buffer = ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
-
-				if (buffer != NULL) {
-		                        if (retries > 0)
-						printk("succeeded after %d retries\n", retries);
-		                        break;
-				}
-
-				if (retries % 10 == 0) {
-					printk("cannot map transfer buffer, retrying\n");
-				}
-				if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
-					if (retries == 0)
-						printk("cannot sleep now, busy looping\n");
-				} else {
-					msleep(100);
-				}
-			}
-// printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
-
-			irp->IoStatus.Information = 0;
-			irp->IoStatus.Status = STATUS_PENDING;
-
-			spin_lock_irqsave(&bdev->virtual_partition_table_lock, flags);
-			if (start_sector < bdev->data_shift) {
-				if (start_sector < bdev->data_shift && sector_count > 0) {
-					size_t n = (bdev->data_shift - start_sector)*512;
-					if (n>=sector_count*512) {
-						n = sector_count*512;
-					}
-#if 0
-					if (rw == WRITE && start_sector <= 2 && start_sector+sector_count > 2) {
-						char *guid = buffer + (2 - start_sector) * 512 + 0x10;
-						set_partition_guid(bdev, guid);
-					}
-#endif
-					status = STATUS_SUCCESS;
-					if (bdev->disk_prolog != NULL) {
-						if (rw == READ) {
-							memcpy(buffer, bdev->disk_prolog+start_sector*512, n);
-						} else {
-							printk("WRITE to partition table !!\n");
-							memcpy(bdev->disk_prolog+start_sector*512, buffer, n);
-						}
-					} else {
-						if (rw == READ) {
-							memset(buffer, 0, n);
-						} else {
-							status = STATUS_INVALID_PARAMETER;
-						}
-					}
-					start_sector += n/512;
-					sector_count -= n/512;
-					buffer += n;
-				}
-			}
-
-			if (sector_count > 0) {
-				int64_t num_sectors = sector_count;
-				int64_t excess_sectors = (start_sector + num_sectors) - ((bdev->bd_inode->i_size/512) + bdev->data_shift);
-				if (excess_sectors > 0) {
-					num_sectors -= excess_sectors;
-				}
-				if (num_sectors > 0) {
-						/* Normally we would call windrbd_make_drbd_requests()
-						 * here but if the I/O is completed very fast then
-						 * the buffer is already invalid / freed or whatever.
-						 * So we cannot add epilog data after calling
-						 * windrbd_make_drbd_requests(). Save parameters here
-						 * and call windrbd_make_drbd_requests() after filling
-						 * epilog data.
-						 */
-					io_buffer = buffer;
-					io_start_sector = start_sector-bdev->data_shift;
-					io_sector_count = num_sectors;
-					call_drbd = 1;
-
-					buffer += num_sectors*512;
-					sector_count -= num_sectors;
-					start_sector += num_sectors;
-				}
-			}
-			if (sector_count > 0) {
-				sector_t first_backup_sector = bdev->data_shift+bdev->bd_inode->i_size/512;
-				sector_t last_sector = bdev->data_shift+bdev->bd_inode->i_size/512 + bdev->appended_sectors;
-				if (start_sector >= first_backup_sector) {
-					if (start_sector + sector_count > last_sector) {
-						printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
-						sector_count = last_sector - start_sector;
-					}
-					status = STATUS_SUCCESS;
-					if (rw == READ) {
-						if (bdev->disk_epilog != NULL) {
-							memcpy(buffer, bdev->disk_epilog+(start_sector-first_backup_sector)*512, sector_count*512);
-						} else {
-							memset(buffer, 0, sector_count*512);
-						}
-					} else {
-						if (bdev->disk_epilog != NULL) {
-							printk("WRITE to backup partition table !!\n");
-							memcpy(bdev->disk_epilog+(start_sector-first_backup_sector)*512, buffer, sector_count*512);
-						} else {
-							status = STATUS_INVALID_PARAMETER;
-						}
-					}
-				}
-			}
-			spin_unlock_irqrestore(&bdev->virtual_partition_table_lock, flags);
-
-			if (call_drbd) {
-				status = windrbd_make_drbd_requests(irp, bdev, io_buffer, io_sector_count*512, io_start_sector, rw);
-					/* irp may already be freed here, don't access it.
-					 * buffer also might already be freed here.
-					 */
-				if (status == STATUS_SUCCESS)
-					return STATUS_PENDING;
-			}
-
-// printk("XXX Debug: windrbd_make_drbd_requests returned, status is %x sector is %lld irp is %p\n", status, start_sector, irp);
-
-// printk("error initiating request status is %x\n", status);
-			if (status != STATUS_SUCCESS) {
-				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
-			}
 			break;
-		}
 
 		case SCSIOP_READ_CAPACITY:
 			if (bdev == NULL) {
