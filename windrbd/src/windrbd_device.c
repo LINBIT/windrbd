@@ -3233,7 +3233,21 @@ static NTSTATUS scsi_read_capacity(struct block_device *bdev, struct _SCSI_REQUE
 	return status;
 }
 
-static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp) 
+/* TODO: have a
+
+NTSTATUS scsi_execute(union _CDB *cdb, void *data_buffer, _InOut_ ULONG *data_transfer_length, _InOut_Opt_ struct _IRP *irp)
+
+function... (without srb, can also be used from a struct _SCSI_PASS_THROUGH_DIRECT
+
+irp is also not really neccessary (someone probably needs to fill out
+    irp->IoStatus.Status      (the NTSTATUS)
+    irp->IoStatus.Information (size of packet returned)
+
+irp->MdlAddress needed at all!?
+
+*/
+
+static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	NTSTATUS status;
 	struct _SCSI_REQUEST_BLOCK *srb;
