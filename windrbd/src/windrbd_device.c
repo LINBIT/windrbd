@@ -2874,29 +2874,33 @@ static void set_partition_guid(struct block_device *bdev, const char *guid)
 }
 #endif
 
-static NTSTATUS scsi_inquiry(struct _SCSI_REQUEST_BLOCK *srb)
+static NTSTATUS scsi_mode_sense(union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p)
 {
-	union _CDB *cdb;
+	PMODE_PARAMETER_HEADER ModeParameterHeader = data_buffer;
 
-	cdb = (union _CDB*) srb->Cdb;
+	if ((*data_transfer_length_p) < sizeof(MODE_PARAMETER_HEADER))
+		return STATUS_BUFFER_TOO_SMALL;
 
-//	if (srb->DataTransferLength
+	RtlZeroMemory(ModeParameterHeader, (*data_transfer_length_p));
 
-/*
-			if (srb->DataTransferLength < sizeof(*id)) {
-				srb->SrbStatus = SRB_STATUS_DATA_OVERRUN;
-				break;
-			}
-*/
-	memset(srb->DataBuffer, 0, srb->DataTransferLength);
+	ModeParameterHeader->ModeDataLength = sizeof(MODE_PARAMETER_HEADER);
+	ModeParameterHeader->MediumType = FixedMedia;
+	ModeParameterHeader->BlockDescriptorLength = 0;
+	(*data_transfer_length_p) = sizeof(MODE_PARAMETER_HEADER);
+
+	return STATUS_SUCCESS;
+}
+
+static NTSTATUS scsi_inquiry(union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p)
+{
+	memset(data_buffer, 0, (*data_transfer_length_p));
 
 printk("page code is %d EnableVitalProductData is %d CommandSupportData is %d\n", cdb->CDB6INQUIRY3.PageCode, cdb->CDB6INQUIRY3.EnableVitalProductData, cdb->CDB6INQUIRY3.CommandSupportData);
 
 	switch (cdb->CDB6INQUIRY3.PageCode) {
 	case VPD_SUPPORTED_PAGES:
-		struct _VPD_SUPPORTED_PAGES_PAGE *spp = srb->DataBuffer;
+		struct _VPD_SUPPORTED_PAGES_PAGE *spp = data_buffer;
 
-printk("supported pages ...\n");
 		spp->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
 		spp->DeviceTypeQualifier = DEVICE_QUALIFIER_ACTIVE;
 		spp->PageCode = VPD_SUPPORTED_PAGES;    /* 0 */
@@ -2910,26 +2914,21 @@ printk("supported pages ...\n");
 		spp->SupportedPageList[3] = VPD_BLOCK_DEVICE_CHARACTERISTICS;
 		spp->SupportedPageList[4] = VPD_LOGICAL_BLOCK_PROVISIONING;
 
-		srb->DataTransferLength = sizeof(*spp) + spp->PageLength;
-		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		(*data_transfer_length_p) = sizeof(*spp) + spp->PageLength;
 		return STATUS_SUCCESS;
 
 	case VPD_DEVICE_IDENTIFIERS:	/* 0x83 */
-		struct _INQUIRYDATA *id = srb->DataBuffer;
-printk("srb: %p id: %p srb->DataTransferLength: %d sizeof(*id): %d cdb->CDB6INQUIRY3.PageCode is 0x%02x\n", srb, id, srb->DataTransferLength, sizeof(*id), cdb->CDB6INQUIRY3.PageCode);
+		struct _INQUIRYDATA *id = data_buffer;
 		id->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
 		strcpy((char*) id->VendorId, "Linbit  ");
 		strcpy((char*) id->ProductId, "WinDRBD Disk    ");
 		strcpy((char*) id->ProductRevisionLevel, "1.2 ");
 
-		srb->DataTransferLength = sizeof(*id);
-		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		(*data_transfer_length_p) = sizeof(*id);
 		return STATUS_SUCCESS;
 
-//	case 
-
 	case VPD_BLOCK_LIMITS: /* 0xb0 */
-		struct _VPD_BLOCK_LIMITS_PAGE *blp = srb->DataBuffer;
+		struct _VPD_BLOCK_LIMITS_PAGE *blp = data_buffer;
 
 		blp->PageCode = VPD_BLOCK_LIMITS;
 		blp->PageLength[1] = 0x3c;
@@ -2938,26 +2937,24 @@ printk("srb: %p id: %p srb->DataTransferLength: %d sizeof(*id): %d cdb->CDB6INQU
 
 		/* big endian ... */
 		blp->MaximumTransferLength[0] = 0;
-		blp->MaximumTransferLength[0] = 0x3f;
-		blp->MaximumTransferLength[0] = 0xff;
-		blp->MaximumTransferLength[0] = 0xff;
+		blp->MaximumTransferLength[1] = 0x3f;
+		blp->MaximumTransferLength[2] = 0xff;
+		blp->MaximumTransferLength[3] = 0xff;
 
 		/* MaximumUnmapLBACount is 0x200000 */
 		/* All others 0 since we don't support unmap */
 
-		srb->DataTransferLength = sizeof(*blp);
-		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		(*data_transfer_length_p) = sizeof(*blp);
 		return STATUS_SUCCESS;
 
 	case VPD_BLOCK_DEVICE_CHARACTERISTICS:	/* 0xb1 */
-		struct _VPD_BLOCK_DEVICE_CHARACTERISTICS_PAGE *bdcp = srb->DataBuffer;
+		struct _VPD_BLOCK_DEVICE_CHARACTERISTICS_PAGE *bdcp = data_buffer;
 		bdcp->PageCode = VPD_BLOCK_DEVICE_CHARACTERISTICS;
 		bdcp->PageLength = 0x3c;
 
 		/* rest is 0 */
 
-		srb->DataTransferLength = sizeof(*bdcp);
-		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		(*data_transfer_length_p) = sizeof(*bdcp);
 		return STATUS_SUCCESS;
 
 	case VPD_LOGICAL_BLOCK_PROVISIONING:	/* 0xb2 */
@@ -2966,7 +2963,7 @@ printk("srb: %p id: %p srb->DataTransferLength: %d sizeof(*id): %d cdb->CDB6INQU
 		 * to be touched:
 		 */
 
-		struct _VPD_LOGICAL_BLOCK_PROVISIONING_PAGE *lbpp = srb->DataBuffer;
+		struct _VPD_LOGICAL_BLOCK_PROVISIONING_PAGE *lbpp = data_buffer;
 		lbpp->PageCode = VPD_LOGICAL_BLOCK_PROVISIONING;    /* 0xb2 */
 		lbpp->PageLength[0] = 0;
 		lbpp->PageLength[1] = 4;
@@ -2978,14 +2975,13 @@ printk("srb: %p id: %p srb->DataTransferLength: %d sizeof(*id): %d cdb->CDB6INQU
 		lbpp->ProvisioningType = 2;	/* whatever this means ... */
 #endif
 
-		srb->DataTransferLength = sizeof(*lbpp);
-		srb->SrbStatus = SRB_STATUS_SUCCESS;
+		(*data_transfer_length_p) = sizeof(*lbpp);
 		return STATUS_SUCCESS;
 	}
 	return STATUS_NOT_SUPPORTED;
 }
 
-static NTSTATUS scsi_io(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length, struct _IRP *irp)
+static NTSTATUS scsi_io(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p, struct _IRP *irp)
 {
 	NTSTATUS status = STATUS_SUCCESS;
 	char *buffer, *io_buffer = NULL;
@@ -3011,19 +3007,19 @@ static NTSTATUS scsi_io(struct block_device *bdev, union _CDB *cdb, void *data_b
 		start_sector = (unsigned long long) ((unsigned long long) cdb->CDB10.LogicalBlockByte0 << 24) + ((unsigned long long) cdb->CDB10.LogicalBlockByte1 << 16) + ((unsigned long long) cdb->CDB10.LogicalBlockByte2 << 8) + (unsigned long long) cdb->CDB10.LogicalBlockByte3;
 		sector_count = (unsigned long long) ((unsigned long long) cdb->CDB10.TransferBlocksMsb << 8) + (unsigned long long) cdb->CDB10.TransferBlocksLsb;
 	}
-	if (sector_count * 512 > (*data_transfer_length)) {
-		dbg("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, *data_transfer_length);
-		sector_count = (*data_transfer_length) / 512;
+	if (sector_count * 512 > (*data_transfer_length_p)) {
+		dbg("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, *data_transfer_length_p);
+		sector_count = (*data_transfer_length_p) / 512;
 	}
 
-	if ((*data_transfer_length) % 512 != 0) {
-		dbg("(*data_transfer_length) (%lld) not sector aligned\n", (*data_transfer_length));
+	if ((*data_transfer_length_p) % 512 != 0) {
+		dbg("(*data_transfer_length_p) (%lld) not sector aligned\n", (*data_transfer_length_p));
 	}
-	if ((*data_transfer_length) > sector_count * 512) {
-		dbg("(*data_transfer_length) (%lld) too big\n", (*data_transfer_length));
+	if ((*data_transfer_length_p) > sector_count * 512) {
+		dbg("(*data_transfer_length_p) (%lld) too big\n", (*data_transfer_length_p));
 	}
 
-	(*data_transfer_length) = sector_count * 512;
+	(*data_transfer_length_p) = sector_count * 512;
 	if (sector_count == 0) {
 		irp->IoStatus.Information = 0;
 		return STATUS_SUCCESS;
@@ -3150,7 +3146,7 @@ static NTSTATUS scsi_io(struct block_device *bdev, union _CDB *cdb, void *data_b
 	return status;
 }
 
-static NTSTATUS scsi_read_capacity(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length)
+static NTSTATUS scsi_read_capacity(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p)
 {
 	ULONG Temp;
 	LONGLONG d_size, LargeTemp;
@@ -3187,27 +3183,54 @@ static NTSTATUS scsi_read_capacity(struct block_device *bdev, union _CDB *cdb, v
 			Temp = (ULONG) LargeTemp;
 			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA) data_buffer)->LogicalBlockAddress), &Temp);
 		}
-		*data_transfer_length = sizeof(READ_CAPACITY_DATA);
+		*data_transfer_length_p = sizeof(READ_CAPACITY_DATA);
 	} else {	/* SCSIOP_READ_CAPACITY16 */
 		REVERSE_BYTES_QUAD(&(((PREAD_CAPACITY_DATA_EX) data_buffer)->LogicalBlockAddress.QuadPart), &LargeTemp);
-		*data_transfer_length = sizeof(READ_CAPACITY_DATA_EX);
+		*data_transfer_length_p = sizeof(READ_CAPACITY_DATA_EX);
 	}
 	return STATUS_SUCCESS;
 }
 
-/* TODO: have a
+/* Caller must fill in the srb->SrbStatus, irp->IoStatus.Status and
+ * irp->IoStatus.Information fields after calling this routine.
+ */
 
-NTSTATUS scsi_execute(struct block_device *bdev, union _CDB *cdb, void *data_buffer, _InOut_ ULONG *data_transfer_length, _InOut_Opt_ struct _IRP *irp)
+static NTSTATUS scsi_execute(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p, struct _IRP *irp)
+{
+	switch (cdb->AsByte[0]) {
+	case SCSIOP_TEST_UNIT_READY:
+		return STATUS_SUCCESS;
 
-function... (without srb, can also be used from a struct _SCSI_PASS_THROUGH_DIRECT
 
-irp is also not really neccessary (someone probably needs to fill out
-    irp->IoStatus.Status      (the NTSTATUS)
-    irp->IoStatus.Information (size of packet returned)
+	/* I/O. Route through DRBD via
+	 * windrbd_make_drbd_requests() and mark
+	 * IRP pending.
+	 */
 
-irp->MdlAddress needed at all!?
+	case SCSIOP_READ:
+	case SCSIOP_READ16:
+	case SCSIOP_WRITE:
+	case SCSIOP_WRITE16:
+		return scsi_io(bdev, cdb, data_buffer, data_transfer_length_p, irp);
 
-*/
+	case SCSIOP_READ_CAPACITY:
+	case SCSIOP_READ_CAPACITY16:
+		return scsi_read_capacity(bdev, cdb, data_buffer, data_transfer_length_p);
+
+	case SCSIOP_MODE_SENSE:
+		return scsi_mode_sense(cdb, data_buffer, data_transfer_length_p);
+
+	case SCSIOP_INQUIRY:
+		return scsi_inquiry(cdb, data_buffer, data_transfer_length_p);
+
+	case SCSIOP_SYNCHRONIZE_CACHE:
+		return STATUS_SUCCESS;
+
+	default:
+		printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
+		return STATUS_NOT_IMPLEMENTED;
+	}
+}
 
 static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
@@ -3272,93 +3295,27 @@ printk("srb->Function is 0x%08x\n", srb->Function);
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
-printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
-		switch (cdb->AsByte[0]) {
-		case SCSIOP_TEST_UNIT_READY:
+		status = scsi_execute(bdev, cdb, srb->DataBuffer, &srb->DataTransferLength, irp);
+
+		/* If pending, don't touch irp any more, it might
+		 * already be freed. Also the remove lock will
+		 * be released in the completion routine, so no
+		 * need to do that here.
+		 */
+		if (status == STATUS_PENDING) {
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
-			break;
-
-			/* I/O. Route through DRBD via 
-			 * windrbd_make_drbd_requests() and mark
-			 * IRP pending.
-			 */
-
-		case SCSIOP_READ:
-		case SCSIOP_READ16:
-		case SCSIOP_WRITE:
-		case SCSIOP_WRITE16:
-			status = scsi_io(bdev, cdb, srb->DataBuffer, &srb->DataTransferLength, irp);
-
-			/* If pending, don't touch irp any more, it might
-			 * already be freed. Also the remove lock will
-			 * be released in the completion routine, so no
-			 * need to do that here.
-			 */
-			if (status == STATUS_PENDING) {
-				srb->SrbStatus = SRB_STATUS_SUCCESS;
-				return status;
-			}
-			if (!NT_SUCCESS(status)) {
-				srb->SrbStatus = SRB_STATUS_NO_DEVICE;	/* or so ... */
-				irp->IoStatus.Information = 0;
-			} else {
-				srb->SrbStatus = SRB_STATUS_SUCCESS;
-				irp->IoStatus.Information = srb->DataTransferLength;
-			}
-			break;
-
-		case SCSIOP_READ_CAPACITY:
-		case SCSIOP_READ_CAPACITY16:
-			status = scsi_read_capacity(bdev, cdb, srb->DataBuffer, &srb->DataTransferLength);
-			if (!NT_SUCCESS(status)) {
-				srb->SrbStatus = SRB_STATUS_NO_DEVICE;	/* or so ... */
-				irp->IoStatus.Information = 0;
-			} else {
-				srb->SrbStatus = SRB_STATUS_SUCCESS;
-				irp->IoStatus.Information = srb->DataTransferLength;
-			}
-			break;
-
-		case SCSIOP_MODE_SENSE:
-		{
-printk("SCSIOP_MODE_SENSE ...\n");
-			PMODE_PARAMETER_HEADER ModeParameterHeader;
-
-			if (srb->DataTransferLength < sizeof(MODE_PARAMETER_HEADER)) {
-				srb->SrbStatus = SRB_STATUS_DATA_OVERRUN;
-				break;
-			}
-			ModeParameterHeader = (PMODE_PARAMETER_HEADER)srb->DataBuffer;
-// mem_printk("RtlZeroMemory %p %d\n", ModeParameterHeader, srb->DataTransferLength);
-			RtlZeroMemory(ModeParameterHeader, srb->DataTransferLength);
-			ModeParameterHeader->ModeDataLength = sizeof(MODE_PARAMETER_HEADER);
-			ModeParameterHeader->MediumType = FixedMedia;
-			ModeParameterHeader->BlockDescriptorLength = 0;
-			srb->DataTransferLength = sizeof(MODE_PARAMETER_HEADER);
-			irp->IoStatus.Information = sizeof(MODE_PARAMETER_HEADER);
-printk("SCSIOP_MODE_SENSE length is %d\n", irp->IoStatus.Information);
-			srb->SrbStatus = SRB_STATUS_SUCCESS;
-			status = STATUS_SUCCESS; /* TODO: ?? */
-
-			break;
+			return status;
 		}
+		if (!NT_SUCCESS(status)) {
+			if (status == STATUS_BUFFER_TOO_SMALL)
+				srb->SrbStatus = SRB_STATUS_DATA_OVERRUN;
+			else
+				srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 
-		case SCSIOP_INQUIRY:
-			status = scsi_inquiry(srb);
-			if (NT_SUCCESS(status))
-				irp->IoStatus.Information = srb->DataTransferLength;
-
-			break;
-
-		case SCSIOP_SYNCHRONIZE_CACHE:
-printk("SCSIOP_SYNCHRONIZE_CACHE ...\n");
+			irp->IoStatus.Information = 0;
+		} else {
 			srb->SrbStatus = SRB_STATUS_SUCCESS;
-                        status = STATUS_SUCCESS;
-			break;
-
-		default:
-			printk("SCSI OP %x not supported\n", cdb->AsByte[0]);
-			status = STATUS_NOT_IMPLEMENTED;
+			irp->IoStatus.Information = srb->DataTransferLength;
 		}
 		break;
 
@@ -3367,17 +3324,7 @@ printk("SCSIOP_SYNCHRONIZE_CACHE ...\n");
 		break;
 
 	case SRB_FUNCTION_CLAIM_DEVICE:
-#if 0
-		if (bdev != NULL) {
-				/* TODO: only if we are a boot device */
-			status = wait_for_becoming_primary(bdev);
-			if (status != STATUS_SUCCESS)
-				printk("Fatal: wait_for_becoming_primary returned non-success (%x) in CLAIM_DEVICE\n", status);
-		} else
-			printk("Fatal: bdev is NULL in CLAIM_DEVICE\n", status);
-#endif
-
-		srb->DataBuffer = device;
+		srb->DataBuffer = device;	/* TODO: ?!?!?! */
 		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
 
