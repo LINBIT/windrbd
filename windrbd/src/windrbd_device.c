@@ -3179,19 +3179,14 @@ static NTSTATUS scsi_io(struct block_device *bdev, struct _SCSI_REQUEST_BLOCK *s
 	return status;
 }
 
-static NTSTATUS scsi_read_capacity(struct block_device *bdev, struct _SCSI_REQUEST_BLOCK *srb, struct _IRP *irp)
+static NTSTATUS scsi_read_capacity(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length)
 {
-	NTSTATUS status;
 	ULONG Temp;
 	LONGLONG d_size, LargeTemp;
-        union _CDB *cdb;
 
-	cdb = (union _CDB*) srb->Cdb;
-
-	if (bdev == NULL) {
-		srb->SrbStatus = SRB_STATUS_NO_DEVICE;
+	if (bdev == NULL)
 		return STATUS_INVALID_DEVICE_REQUEST;
-	}
+
 	if (bdev->is_bootdevice) {
 			/* This will go away 'soon' */
 		d_size = wait_for_size(bdev->windows_device);
@@ -3202,40 +3197,36 @@ static NTSTATUS scsi_read_capacity(struct block_device *bdev, struct _SCSI_REQUE
 
 	Temp = bdev->bd_block_size;
 	if (cdb->AsByte[0] == SCSIOP_READ_CAPACITY) {
-		REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->BytesPerBlock), &Temp);
+		REVERSE_BYTES(&(((PREAD_CAPACITY_DATA) data_buffer)->BytesPerBlock), &Temp);
 	} else {
-		REVERSE_BYTES(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->BytesPerBlock), &Temp);
+		REVERSE_BYTES(&(((PREAD_CAPACITY_DATA_EX) data_buffer)->BytesPerBlock), &Temp);
 	}
 
-	if (d_size > 0) {
-		if ((d_size % 512) != 0)
-			printk("Warning: device size (%lld) not a multiple of 512\n", d_size);
-		LargeTemp = (d_size / 512) - 1;
+	if (d_size <= 0)
+		return STATUS_NO_SUCH_DEVICE;
 
-		if (cdb->AsByte[0] == SCSIOP_READ_CAPACITY) {
-			if (LargeTemp > 0xffffffff) {
-				((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress = -1;
-			} else {
-				Temp = (ULONG) LargeTemp;
-				REVERSE_BYTES(&(((PREAD_CAPACITY_DATA)srb->DataBuffer)->LogicalBlockAddress), &Temp);
-			}
-			irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA);
-		} else {	/* SCSIOP_READ_CAPACITY16 */
-			REVERSE_BYTES_QUAD(&(((PREAD_CAPACITY_DATA_EX)srb->DataBuffer)->LogicalBlockAddress.QuadPart), &LargeTemp);
-			irp->IoStatus.Information = sizeof(READ_CAPACITY_DATA_EX);
+	if ((d_size % 512) != 0)
+		printk("Warning: device size (%lld) not a multiple of 512\n", d_size);
+	LargeTemp = (d_size / 512) - 1;
+
+	if (cdb->AsByte[0] == SCSIOP_READ_CAPACITY) {
+		if (LargeTemp > 0xffffffff) {
+			((PREAD_CAPACITY_DATA) data_buffer)->LogicalBlockAddress = -1;
+		} else {
+			Temp = (ULONG) LargeTemp;
+			REVERSE_BYTES(&(((PREAD_CAPACITY_DATA) data_buffer)->LogicalBlockAddress), &Temp);
 		}
-		srb->SrbStatus = SRB_STATUS_SUCCESS;
-		status = STATUS_SUCCESS;
-	} else {
-		srb->SrbStatus = SRB_STATUS_NO_DEVICE;
-		status = STATUS_NO_SUCH_DEVICE;
+		*data_transfer_length = sizeof(READ_CAPACITY_DATA);
+	} else {	/* SCSIOP_READ_CAPACITY16 */
+		REVERSE_BYTES_QUAD(&(((PREAD_CAPACITY_DATA_EX) data_buffer)->LogicalBlockAddress.QuadPart), &LargeTemp);
+		*data_transfer_length = sizeof(READ_CAPACITY_DATA_EX);
 	}
-	return status;
+	return STATUS_SUCCESS;
 }
 
 /* TODO: have a
 
-NTSTATUS scsi_execute(union _CDB *cdb, void *data_buffer, _InOut_ ULONG *data_transfer_length, _InOut_Opt_ struct _IRP *irp)
+NTSTATUS scsi_execute(struct block_device *bdev, union _CDB *cdb, void *data_buffer, _InOut_ ULONG *data_transfer_length, _InOut_Opt_ struct _IRP *irp)
 
 function... (without srb, can also be used from a struct _SCSI_PASS_THROUGH_DIRECT
 
@@ -3340,7 +3331,14 @@ printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
 
 		case SCSIOP_READ_CAPACITY:
 		case SCSIOP_READ_CAPACITY16:
-			status = scsi_read_capacity(bdev, srb, irp);
+			status = scsi_read_capacity(bdev, cdb, srb->DataBuffer, &srb->DataTransferLength);
+			if (!NT_SUCCESS(status)) {
+				srb->SrbStatus = SRB_STATUS_NO_DEVICE;	/* or so ... */
+				irp->IoStatus.Information = 0;
+			} else {
+				srb->SrbStatus = SRB_STATUS_SUCCESS;
+				irp->IoStatus.Information = srb->DataTransferLength;
+			}
 			break;
 
 		case SCSIOP_MODE_SENSE:
