@@ -2985,9 +2985,9 @@ printk("srb: %p id: %p srb->DataTransferLength: %d sizeof(*id): %d cdb->CDB6INQU
 	return STATUS_NOT_SUPPORTED;
 }
 
-static NTSTATUS scsi_io(struct block_device *bdev, struct _SCSI_REQUEST_BLOCK *srb, struct _IRP *irp)
+static NTSTATUS scsi_io(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length, struct _IRP *irp)
 {
-	NTSTATUS status;
+	NTSTATUS status = STATUS_SUCCESS;
 	char *buffer, *io_buffer = NULL;
 	int64_t io_start_sector = 0, io_sector_count = 0;
 	KIRQL flags;
@@ -2997,31 +2997,11 @@ static NTSTATUS scsi_io(struct block_device *bdev, struct _SCSI_REQUEST_BLOCK *s
 	int rw;
 	int call_drbd = 0;
         struct _CDB16 *cdb16;
-        union _CDB *cdb;
 
-	cdb = (union _CDB*) srb->Cdb;
-	cdb16 = (struct _CDB16*) srb->Cdb;
+	cdb16 = (struct _CDB16*) cdb;
 
 	rw = (cdb->AsByte[0] == SCSIOP_READ16 || cdb->AsByte[0] == SCSIOP_READ) ? READ : WRITE;
 
-	if (bdev != NULL) {
-		if (rw == WRITE && bdev->is_bootdevice)
-			status = wait_for_becoming_primary(bdev);
-		else
-			status = STATUS_SUCCESS;
-	} else {
-		status = STATUS_INVALID_DEVICE_REQUEST;
-	}
-
-	if (status != STATUS_SUCCESS) {
-		srb->SrbStatus = SRB_STATUS_NO_DEVICE;
-
-		srb->DataTransferLength = 0;
-		irp->IoStatus.Information = 0;
-		return status;
-	}
-
-	dbg("cdb->AsByte[0] is %d", cdb->AsByte[0]);
 	if (cdb->AsByte[0] == SCSIOP_READ16 ||
 	    cdb->AsByte[0] == SCSIOP_WRITE16) {
 		REVERSE_BYTES_QUAD(&start_sector, &(cdb16->LogicalBlock[0]));
@@ -3031,20 +3011,19 @@ static NTSTATUS scsi_io(struct block_device *bdev, struct _SCSI_REQUEST_BLOCK *s
 		start_sector = (unsigned long long) ((unsigned long long) cdb->CDB10.LogicalBlockByte0 << 24) + ((unsigned long long) cdb->CDB10.LogicalBlockByte1 << 16) + ((unsigned long long) cdb->CDB10.LogicalBlockByte2 << 8) + (unsigned long long) cdb->CDB10.LogicalBlockByte3;
 		sector_count = (unsigned long long) ((unsigned long long) cdb->CDB10.TransferBlocksMsb << 8) + (unsigned long long) cdb->CDB10.TransferBlocksLsb;
 	}
-	if (sector_count * 512 > srb->DataTransferLength) {
-		dbg("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, srb->DataTransferLength);
-		sector_count = srb->DataTransferLength / 512;
+	if (sector_count * 512 > (*data_transfer_length)) {
+		dbg("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, *data_transfer_length);
+		sector_count = (*data_transfer_length) / 512;
 	}
 
-	if (srb->DataTransferLength % 512 != 0) {
-		dbg("srb->DataTransferLength (%lld) not sector aligned\n", srb->DataTransferLength);
+	if ((*data_transfer_length) % 512 != 0) {
+		dbg("(*data_transfer_length) (%lld) not sector aligned\n", (*data_transfer_length));
 	}
-	if (srb->DataTransferLength > sector_count * 512) {
-		dbg("srb>DataTransferLength (%lld) too big\n", srb->DataTransferLength);
+	if ((*data_transfer_length) > sector_count * 512) {
+		dbg("(*data_transfer_length) (%lld) too big\n", (*data_transfer_length));
 	}
 
-	srb->DataTransferLength = sector_count * 512;
-	srb->SrbStatus = SRB_STATUS_SUCCESS;
+	(*data_transfer_length) = sector_count * 512;
 	if (sector_count == 0) {
 		irp->IoStatus.Information = 0;
 		return STATUS_SUCCESS;
@@ -3052,7 +3031,8 @@ static NTSTATUS scsi_io(struct block_device *bdev, struct _SCSI_REQUEST_BLOCK *s
 
 	retries = 0;
 	while (1) {
-		buffer = ((char*)srb->DataBuffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
+			/* TODO: needed? */
+		buffer = ((char*)data_buffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
 
 		if (buffer != NULL) {
                         if (retries > 0)
@@ -3088,7 +3068,6 @@ static NTSTATUS scsi_io(struct block_device *bdev, struct _SCSI_REQUEST_BLOCK *s
 						set_partition_guid(bdev, guid);
 					}
 #endif
-			status = STATUS_SUCCESS;
 			if (bdev->disk_prolog != NULL) {
 				if (rw == READ) {
 					memcpy(buffer, bdev->disk_prolog+start_sector*512, n);
@@ -3142,7 +3121,6 @@ static NTSTATUS scsi_io(struct block_device *bdev, struct _SCSI_REQUEST_BLOCK *s
 				printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
 				sector_count = last_sector - start_sector;
 			}
-			status = STATUS_SUCCESS;
 			if (rw == READ) {
 				if (bdev->disk_epilog != NULL) {
 					memcpy(buffer, bdev->disk_epilog+(start_sector-first_backup_sector)*512, sector_count*512);
@@ -3168,13 +3146,6 @@ static NTSTATUS scsi_io(struct block_device *bdev, struct _SCSI_REQUEST_BLOCK *s
 			 */
 		if (status == STATUS_SUCCESS)
 			return STATUS_PENDING;
-	}
-
-// printk("XXX Debug: windrbd_make_drbd_requests returned, status is %x sector is %lld irp is %p\n", status, start_sector, irp);
-
-// printk("error initiating request status is %x\n", status);
-	if (status != STATUS_SUCCESS) {
-		srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 	}
 	return status;
 }
@@ -3316,17 +3287,24 @@ printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
 		case SCSIOP_READ16:
 		case SCSIOP_WRITE:
 		case SCSIOP_WRITE16:
-			/* TODO: irp->IoStatus.Information is not set? */
-			status = scsi_io(bdev, srb, irp);
+			status = scsi_io(bdev, cdb, srb->DataBuffer, &srb->DataTransferLength, irp);
 
 			/* If pending, don't touch irp any more, it might
 			 * already be freed. Also the remove lock will
 			 * be released in the completion routine, so no
 			 * need to do that here.
 			 */
-			if (status == STATUS_PENDING)
+			if (status == STATUS_PENDING) {
+				srb->SrbStatus = SRB_STATUS_SUCCESS;
 				return status;
-
+			}
+			if (!NT_SUCCESS(status)) {
+				srb->SrbStatus = SRB_STATUS_NO_DEVICE;	/* or so ... */
+				irp->IoStatus.Information = 0;
+			} else {
+				srb->SrbStatus = SRB_STATUS_SUCCESS;
+				irp->IoStatus.Information = srb->DataTransferLength;
+			}
 			break;
 
 		case SCSIOP_READ_CAPACITY:
