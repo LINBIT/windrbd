@@ -54,7 +54,7 @@ extern "C" {
     ULONG_PTR DataBufferOffset;
     ULONG SenseInfoOffset;
     UCHAR Cdb[16];
-  }SCSI_PASS_THROUGH,*PSCSI_PASS_THROUGH;
+  } __attribute__((__packed__)) SCSI_PASS_THROUGH,*PSCSI_PASS_THROUGH;
 
   typedef struct _SCSI_PASS_THROUGH_DIRECT {
     USHORT Length;
@@ -87,7 +87,7 @@ extern "C" {
     ULONG32 DataBufferOffset;
     ULONG SenseInfoOffset;
     UCHAR Cdb[16];
-  } SCSI_PASS_THROUGH32,*PSCSI_PASS_THROUGH32;
+  } __attribute__((__packed__)) SCSI_PASS_THROUGH32,*PSCSI_PASS_THROUGH32;
 
   typedef struct _SCSI_PASS_THROUGH_DIRECT32 {
     USHORT Length;
@@ -103,7 +103,7 @@ extern "C" {
     VOID * POINTER_32 DataBuffer;
     ULONG SenseInfoOffset;
     UCHAR Cdb[16];
-  } SCSI_PASS_THROUGH_DIRECT32,*PSCSI_PASS_THROUGH_DIRECT32;
+  } __attribute__((__packed__)) SCSI_PASS_THROUGH_DIRECT32,*PSCSI_PASS_THROUGH_DIRECT32;
 #endif /* _WIN64 */
 
 

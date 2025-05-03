@@ -296,6 +296,8 @@ void windrbd_resume_application_io(struct block_device *bdev, const char *messag
 	spin_unlock_irqrestore(&bdev->suspend_lock, flags);
 }
 
+static NTSTATUS scsi_execute(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p, struct _IRP *irp);
+
 static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
@@ -1239,6 +1241,56 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 		break;
 	}
 */
+
+	case IOCTL_SCSI_PASS_THROUGH:
+	{
+		struct _SCSI_PASS_THROUGH32 *sp =
+			(struct _SCSI_PASS_THROUGH32*) irp->AssociatedIrp.SystemBuffer;
+
+		union _CDB *cdb = (union _CDB*) sp->Cdb;
+
+printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
+printk("cdb is %p sp is %p\n", cdb, sp);
+printk("Cdb[0] is %p\n", sp->Cdb[0]);
+printk(KERN_DEBUG "IOCTL_SCSI_PASS_THROUGH: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
+char *str = (char*) irp->AssociatedIrp.SystemBuffer;
+int i;
+for (i=0;i<s->Parameters.DeviceIoControl.InputBufferLength;i++)
+printk("i=%d val=0x%02x\n", i, str[i]);
+
+		sp->ScsiStatus = SCSISTAT_GOOD;
+
+		status = scsi_execute(dev, cdb, ((char*) sp)+sp->DataBufferOffset, &sp->DataTransferLength, irp);
+
+		if (status == STATUS_PENDING)
+			return status;
+
+		if (!NT_SUCCESS(status))
+			irp->IoStatus.Information = 0;
+		else
+			irp->IoStatus.Information = sp->DataTransferLength;
+
+		break;
+	}
+	case IOCTL_SCSI_PASS_THROUGH_DIRECT:
+	{
+		struct _SCSI_PASS_THROUGH_DIRECT *spd =
+			(struct _SCSI_PASS_THROUGH_DIRECT*) irp->AssociatedIrp.SystemBuffer;
+
+		spd->ScsiStatus = SCSISTAT_GOOD;
+
+		status = scsi_execute(dev, (union _CDB*) spd->Cdb, spd->DataBuffer, &spd->DataTransferLength, irp);
+
+		if (status == STATUS_PENDING)
+			return status;
+
+		if (!NT_SUCCESS(status))
+			irp->IoStatus.Information = 0;
+		else
+			irp->IoStatus.Information = spd->DataTransferLength;
+
+		break;
+	}
 
 	default:
 // printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
@@ -3197,6 +3249,8 @@ static NTSTATUS scsi_read_capacity(struct block_device *bdev, union _CDB *cdb, v
 
 static NTSTATUS scsi_execute(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p, struct _IRP *irp)
 {
+printk("cdb->AsByte[0] is %x\n", cdb->AsByte[0]);
+
 	switch (cdb->AsByte[0]) {
 	case SCSIOP_TEST_UNIT_READY:
 		return STATUS_SUCCESS;
