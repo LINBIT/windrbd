@@ -1276,28 +1276,13 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 
 		union _CDB *cdb = (union _CDB*) &sp->Cdb[0];
 
-printk("cdb is %p sp is %p\n", cdb, sp);
-printk("Cdb[0] is %p\n", sp->Cdb[0]);
-printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
-printk("((char*) sp)+sp->DataBufferOffset is %p, sp->DataBufferOffset is %lx\n", ((char*) sp)+sp->DataBufferOffset, sp->DataBufferOffset);
-// printk(KERN_DEBUG "IOCTL_SCSI_PASS_THROUGH: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
-char *str = (char*) irp->AssociatedIrp.SystemBuffer;
-int i;
-for (i=0;i<sp->Length;i++)
-printk("i=%d val=0x%02x\n", i, str[i]);
-
-// break;
-
 		sp->ScsiStatus = SCSISTAT_GOOD;
 
-printk("sp->DataTransferLength is 0x%08x\n", sp->DataTransferLength);
 		status = scsi_execute(dev, cdb, ((char*) sp)+sp->DataBufferOffset, &sp->DataTransferLength, irp);
-printk("sp->DataTransferLength after execute is 0x%08x\n", sp->DataTransferLength);
 
-/*
+			/* Ough this shouldn't happen. */
 		if (status == STATUS_PENDING)
 			return status;
-*/
 
 		if (!NT_SUCCESS(status))
 			irp->IoStatus.Information = 0;
@@ -1310,6 +1295,16 @@ printk("sp->DataTransferLength after execute is 0x%08x\n", sp->DataTransferLengt
 	{
 		struct _SCSI_PASS_THROUGH_DIRECT *spd =
 			(struct _SCSI_PASS_THROUGH_DIRECT*) irp->AssociatedIrp.SystemBuffer;
+
+printk("Cdb[0] is %p\n", spd->Cdb[0]);
+// printk("((char*) sp)+sp->DataBufferOffset is %p, sp->DataBufferOffset is %lx\n", ((char*) spd)+spd->DataBufferOffset, spd->DataBufferOffset);
+// printk(KERN_DEBUG "IOCTL_SCSI_PASS_THROUGH: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
+char *str = (char*) irp->AssociatedIrp.SystemBuffer;
+int i;
+for (i=0;i<spd->Length;i++)
+printk("i=%d val=0x%02x\n", i, str[i]);
+
+// break;
 
 		spd->ScsiStatus = SCSISTAT_GOOD;
 
