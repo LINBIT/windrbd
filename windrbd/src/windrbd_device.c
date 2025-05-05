@@ -2977,11 +2977,32 @@ static NTSTATUS scsi_mode_sense(union _CDB *cdb, void *data_buffer, unsigned lon
 	return STATUS_SUCCESS;
 }
 
-static NTSTATUS scsi_inquiry(union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p)
+static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p)
 {
 	memset(data_buffer, 0, (*data_transfer_length_p));
 
 printk("page code is %d EnableVitalProductData is %d CommandSupportData is %d\n", cdb->CDB6INQUIRY3.PageCode, cdb->CDB6INQUIRY3.EnableVitalProductData, cdb->CDB6INQUIRY3.CommandSupportData);
+
+	if (!cdb->CDB6INQUIRY3.EnableVitalProductData) {
+		struct _INQUIRYDATA *id = data_buffer;
+
+		id->Versions = 2;
+		id->Wide32Bit = 1;
+		id->CommandQueue = 0; // NCQ not supported
+		id->ResponseDataFormat = 0x2;
+		id->DeviceTypeModifier = 0;
+		id->DeviceTypeQualifier = DEVICE_CONNECTED;
+		id->AdditionalLength = INQUIRYDATABUFFERSIZE - 5;
+		id->DeviceType = DIRECT_ACCESS_DEVICE;
+		id->RemovableMedia = 0;
+
+		strcpy((char*) id->VendorId, "Linbit  ");
+		strcpy((char*) id->ProductId, "WinDRBD Disk    ");
+		strcpy((char*) id->ProductRevisionLevel, "1.2 ");
+
+		(*data_transfer_length_p) = sizeof(*id);
+		return STATUS_SUCCESS;
+	}
 
 	switch (cdb->CDB6INQUIRY3.PageCode) {
 	case VPD_SUPPORTED_PAGES:
@@ -3004,13 +3025,20 @@ printk("page code is %d EnableVitalProductData is %d CommandSupportData is %d\n"
 		return STATUS_SUCCESS;
 
 	case VPD_DEVICE_IDENTIFIERS:	/* 0x83 */
-		struct _INQUIRYDATA *id = data_buffer;
-		id->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
-		strcpy((char*) id->VendorId, "Linbit  ");
-		strcpy((char*) id->ProductId, "WinDRBD Disk    ");
-		strcpy((char*) id->ProductRevisionLevel, "1.2 ");
+		struct _VPD_IDENTIFICATION_PAGE *vip = data_buffer;
+		struct _VPD_IDENTIFICATION_DESCRIPTOR *vid =
+			(struct _VPD_IDENTIFICATION_DESCRIPTOR *) vip->Descriptors;
+		char id[32];
+		int len = snprintf(id, ARRAY_SIZE(id), "WinDRBD Minor %d", bdev->minor);
 
-		(*data_transfer_length_p) = sizeof(*id);
+		vip->PageCode = VPD_DEVICE_IDENTIFIERS;
+		vip->PageLength = len+sizeof(*vid);
+		vid->CodeSet = 2;	/* ASCII */
+		vid->IdentifierType = VpdIdentifierTypeVendorSpecific;	/* 0 */
+		vid->IdentifierLength = len;
+		strncpy((char*)vid->Identifier, id, len);
+
+		(*data_transfer_length_p) = sizeof(*vip)+sizeof(*vid)+len;
 		return STATUS_SUCCESS;
 
 	case VPD_BLOCK_LIMITS: /* 0xb0 */
@@ -3309,7 +3337,7 @@ printk("cdb->AsByte[0] is %x\n", cdb->AsByte[0]);
 		return scsi_mode_sense(cdb, data_buffer, data_transfer_length_p);
 
 	case SCSIOP_INQUIRY:
-		return scsi_inquiry(cdb, data_buffer, data_transfer_length_p);
+		return scsi_inquiry(bdev, cdb, data_buffer, data_transfer_length_p);
 
 	case SCSIOP_SYNCHRONIZE_CACHE:
 		return STATUS_SUCCESS;
