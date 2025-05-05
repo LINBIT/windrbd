@@ -659,6 +659,33 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 	return status;
 }
 
+	/* There are issues with ReactOS's definition of this
+	 * structure (at least for gcc builds). So define it
+	 * here where we must use gcc, so we don't depend
+	 * on ReactOS header changing (if we patched the
+	 * ReactOS header we would have to repeat that every
+	 * time we upgrade them).
+	 */
+
+struct scsi_pass_through {
+    USHORT Length;
+    UCHAR ScsiStatus;
+    UCHAR PathId;
+    UCHAR TargetId;
+    UCHAR Lun;
+    UCHAR CdbLength;
+    UCHAR SenseInfoLength;
+    UCHAR DataIn;
+    UCHAR pad1;		/* those three have been added */
+    UCHAR pad2;
+    UCHAR pad3;
+    ULONG DataTransferLength;
+    ULONG TimeOutValue;
+    ULONG32 DataBufferOffset;
+    ULONG SenseInfoOffset;
+    UCHAR Cdb[16];
+} __attribute__((__packed__));
+
 static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == drbd_bus_device) {
@@ -1244,31 +1271,38 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 
 	case IOCTL_SCSI_PASS_THROUGH:
 	{
-		struct _SCSI_PASS_THROUGH32 *sp =
-			(struct _SCSI_PASS_THROUGH32*) irp->AssociatedIrp.SystemBuffer;
+		struct scsi_pass_through *sp =
+			(struct scsi_pass_through*) irp->AssociatedIrp.SystemBuffer;
 
-		union _CDB *cdb = (union _CDB*) sp->Cdb;
+		union _CDB *cdb = (union _CDB*) &sp->Cdb[0];
 
-printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
 printk("cdb is %p sp is %p\n", cdb, sp);
 printk("Cdb[0] is %p\n", sp->Cdb[0]);
-printk(KERN_DEBUG "IOCTL_SCSI_PASS_THROUGH: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
+printk("cdb->AsByte[0] is 0x%02x\n", cdb->AsByte[0]);
+printk("((char*) sp)+sp->DataBufferOffset is %p, sp->DataBufferOffset is %lx\n", ((char*) sp)+sp->DataBufferOffset, sp->DataBufferOffset);
+// printk(KERN_DEBUG "IOCTL_SCSI_PASS_THROUGH: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
 char *str = (char*) irp->AssociatedIrp.SystemBuffer;
 int i;
-for (i=0;i<s->Parameters.DeviceIoControl.InputBufferLength;i++)
+for (i=0;i<sp->Length;i++)
 printk("i=%d val=0x%02x\n", i, str[i]);
+
+// break;
 
 		sp->ScsiStatus = SCSISTAT_GOOD;
 
+printk("sp->DataTransferLength is 0x%08x\n", sp->DataTransferLength);
 		status = scsi_execute(dev, cdb, ((char*) sp)+sp->DataBufferOffset, &sp->DataTransferLength, irp);
+printk("sp->DataTransferLength after execute is 0x%08x\n", sp->DataTransferLength);
 
+/*
 		if (status == STATUS_PENDING)
 			return status;
+*/
 
 		if (!NT_SUCCESS(status))
 			irp->IoStatus.Information = 0;
 		else
-			irp->IoStatus.Information = sp->DataTransferLength;
+			irp->IoStatus.Information = sp->DataTransferLength+sp->DataBufferOffset;
 
 		break;
 	}
