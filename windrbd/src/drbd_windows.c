@@ -3543,6 +3543,7 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
 		}
 	}
 
+	bdev->bd_nr_sectors = bdev->bd_inode->i_size / bdev->bd_block_size;
 	return bdev->bd_inode->i_size >> 9;
 }
 

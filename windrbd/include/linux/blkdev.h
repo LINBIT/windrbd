@@ -761,7 +761,6 @@ static inline int bdev_alignment_offset(struct block_device *bdev)
 	return queue_alignment_offset(bdev_get_queue(bdev));
 }
 
-	/* TODO: this should set bd_nr_sectors */
 extern sector_t get_capacity(struct gendisk *disk);
 
 static inline sector_t bdev_nr_sectors(struct block_device *bdev)
