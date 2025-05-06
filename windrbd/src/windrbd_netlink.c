@@ -28,7 +28,6 @@ static LIST_HEAD(multicast_elements);
 
 static struct mutex genl_reply_mutex;
 static struct mutex genl_multicast_mutex;
-static struct mutex genl_drbd_mutex;
 
 static struct genl_reply *find_reply(u32 portid)
 {
@@ -438,7 +437,6 @@ void windrbd_init_netlink(void)
 {
 	NTSTATUS    status;
 
-        mutex_init(&genl_drbd_mutex);
         mutex_init(&genl_reply_mutex);
         mutex_init(&genl_multicast_mutex);
 
@@ -634,7 +632,6 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 	NTSTATUS status;
 	struct genl_thread_args args;
 	struct task_struct *t;
-	bool have_mutex = true;
 
 	if (msg == NULL)
 		return -EINVAL;
@@ -664,21 +661,6 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 		 * second or so if we log here, logfiles will be cluttered.
 		 */
 
-#define CMD_TIMEOUT_SHORT_DEF 5 /* will go away soon */
-
-		/* TODO: is this mutex needed at all? */
-	status = mutex_lock_timeout(&genl_drbd_mutex, CMD_TIMEOUT_SHORT_DEF * 1000);
-	if (status != STATUS_SUCCESS) {
-		printk("failed to acquire the mutex, probably a previous drbd command is stuck.\n");
-
-/*
-		printk("Warning: mutex overwritten, trying anyway ...\n");
-		have_mutex = false;
-*/
-		ret = -EAGAIN;
-		goto out_free_info;
-	}
-
 	args.op = op;
 	args.info = info;
 	KeInitializeEvent(&args.completion_event, SynchronizationEvent, FALSE);
@@ -688,19 +670,15 @@ int windrbd_process_netlink_packet(void *msg, size_t msg_size)
 	if (IS_ERR(t)) {
 		printk("Couldn't create netlink thread, error is %d\n", PTR_ERR(t));
 		ret = PTR_ERR(t);
-		goto out_unlock_mutex;
+		goto out_free_info;
 	}
 	status = KeWaitForSingleObject(&args.completion_event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 	if (!NT_SUCCESS(status)) {
 		printk("Couldn't wait for netlink thread completion event, status is %x\n", status);
 		ret = -ENOMEM;
-		goto out_unlock_mutex;
+		goto out_free_info;
 	}
 	ret = args.ret;
-
-out_unlock_mutex:
-	if (have_mutex)
-		mutex_unlock(&genl_drbd_mutex);
 
 out_free_info:
 	kfree(info->attrs);
