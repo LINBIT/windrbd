@@ -20,10 +20,6 @@ TODO: Code quality: remove unneeded CygWin deliverables
 	instead of manually running unzip. Also upgrade to latest
 	CygWin
 
-TODO: Feature: Remove netlink mutex
-
-	DRBD does internal locking.
-
 TODO: Feature: sync filesystem(s) on drbdadm secondary
 
 	Linux DRBD also does this.
@@ -8760,4 +8756,8 @@ Rejected: Feature: Use Event Tracing for event log
 	But keep the old implementation (for ReactOS and older Windows OSes)
 
 Done: Bug: Out of memory handling in windrbd device is broken (BSOD).
+
+Done: Feature: Remove netlink mutex
+	DRBD does internal locking.
+        Finally removed! after 8 years :)
 
