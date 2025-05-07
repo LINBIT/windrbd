@@ -235,12 +235,14 @@ static NTSTATUS InitWskBuffer(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
+DbgPrint("Buffer is %p, WskBuffer->Mdl is %p\n", Buffer, WskBuffer->Mdl);
 	retries = 0;
 	while (1) {
 		probe_and_lock_failed = 0;
 #ifdef CONFIG_HAVE_SEH2
 		_SEH2_TRY {
 #endif
+DbgPrint("MmProbeAndLockPages WskBuffer->Mdl is %p\n", WskBuffer->Mdl);
 			MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
 #ifdef CONFIG_HAVE_SEH2
 		}
@@ -278,23 +280,26 @@ DbgPrint("FreeWskBuffer 1\n");
 	if (WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) {
 		int unlock_max_loops;
 DbgPrint("FreeWskBuffer 2\n");
+DbgPrint("MmUnlockPages WskBuffer->Mdl is %p\n", WskBuffer->Mdl);
 		MmUnlockPages(WskBuffer->Mdl);
 
-DbgPrint("FreeWskBuffer 3\n");
+// DbgPrint("FreeWskBuffer 3\n");
 		unlock_max_loops=100;
 		while ((WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) && (unlock_max_loops > 0)) {
 			unlock_max_loops--;
 DbgPrint("FreeWskBuffer 4\n");
+DbgPrint("MmUnlockPages WskBuffer->Mdl is %p\n", WskBuffer->Mdl);
 			MmUnlockPages(WskBuffer->Mdl); 
 		}
 	} else {
-DbgPrint("FreeWskBuffer 5\n");
+DbgPrint("Not locked !! WskBuffer->Mdl is %p\n", WskBuffer->Mdl);
+// DbgPrint("FreeWskBuffer 5\n");
 		if (may_printk)
 			printk("Page not locked in FreeWskBuffer\n");
 	}
-DbgPrint("FreeWskBuffer 6\n");
+// DbgPrint("FreeWskBuffer 6\n");
 	IoFreeMdl(WskBuffer->Mdl);
-DbgPrint("FreeWskBuffer 7\n");
+// DbgPrint("FreeWskBuffer 7\n");
 }
 
 struct send_page_completion_info {
@@ -399,7 +404,7 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 	int may_printk = completion->socket->wsk_flags != WSK_FLAG_DATAGRAM_SOCKET;
 	size_t length;
 
-DbgPrint("SendPageCompletionRoutine 1\n");
+// DbgPrint("SendPageCompletionRoutine 1\n");
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
 
@@ -418,7 +423,7 @@ DbgPrint("SendPageCompletionRoutine 1\n");
 		if (completion->socket->wsk_flags == WSK_FLAG_DATAGRAM_SOCKET)
 			completion->socket->error_status = 0;
 	}
-DbgPrint("SendPageCompletionRoutine 2\n");
+// DbgPrint("SendPageCompletionRoutine 2\n");
 
 	length = completion->wsk_buffer->Length;
 		/* Also unmaps the pages of the containg Mdl */
@@ -429,24 +434,28 @@ DbgPrint("SendPageCompletionRoutine 2\n");
 			printk("Warning: Mdl field changed from %p to %p\n", completion->the_mdl, completion->wsk_buffer->Mdl);
 		/* completion->wsk_buffer->Mdl = completion->the_mdl */
 	}
-DbgPrint("SendPageCompletionRoutine 3\n");
+// DbgPrint("SendPageCompletionRoutine 3\n");
 	FreeWskBuffer(completion->wsk_buffer, may_printk);
-DbgPrint("SendPageCompletionRoutine 4\n");
+// DbgPrint("SendPageCompletionRoutine 4\n");
 
 		/* To avoid unmapping the page again in free_bio(). */
 	if (completion->page)
 		completion->page->is_unmapped = 1;
 
-DbgPrint("SendPageCompletionRoutine 5\n");
+// DbgPrint("SendPageCompletionRoutine 5\n");
 	kfree(completion->wsk_buffer);
 
 	have_sent(completion->socket, length);
 
-DbgPrint("SendPageCompletionRoutine 6\n");
+// DbgPrint("SendPageCompletionRoutine 6\n");
 	if (completion->page)
-		put_page(completion->page); /* Might free the page if connection is already down */
+{
+DbgPrint("put_page page is %p page->addr is %p refcount is %d\n", completion->page, completion->page->addr, completion->page->kref.refcount);
 
-DbgPrint("SendPageCompletionRoutine 7\n");
+		put_page(completion->page); /* Might free the page if connection is already down */
+}
+
+// DbgPrint("SendPageCompletionRoutine 7\n");
 	if (completion->data_buffer) {	/* Is from SendPage, do not printk */
 		kfree(completion->data_buffer);
 		if (completion->socket != NULL)
@@ -455,14 +464,14 @@ DbgPrint("SendPageCompletionRoutine 7\n");
 		if (completion->socket != NULL)
 		        kref_put(&completion->socket->kref, sock_really_free);
 	}
-DbgPrint("SendPageCompletionRoutine 8\n");
+// DbgPrint("SendPageCompletionRoutine 8\n");
 
 	kfree(completion);
-DbgPrint("SendPageCompletionRoutine 9\n");
+// DbgPrint("SendPageCompletionRoutine 9\n");
 
 	IoFreeIrp(Irp);
 
-DbgPrint("SendPageCompletionRoutine a\n");
+// DbgPrint("SendPageCompletionRoutine a\n");
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
@@ -760,6 +769,9 @@ printk("closing accept_wsk_socket %p\n", ws);
 		 * so not sure if that is neccessary. Current solution
 		 * however does an 'abortive' disconnect (whatever that
 		 * means).
+		 * TODO: we need a graceful shutdown, else peer might
+		 * run into NetworkFailer (and the DRBD9 test suite
+		 * complains).
 		 */
 
 	if (socket->wsk_socket != NULL) {
@@ -1064,6 +1076,7 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 
 		status = InitWskBuffer(tmp_buffer, len, WskBuffer, FALSE, TRUE);
 	} else {
+DbgPrint("page %p page->addr %p buf %p len %d\n", page, page->addr, buf, len);
 		tmp_buffer = NULL;
 		status = InitWskBuffer(buf, len, WskBuffer, FALSE, TRUE);
 	}
