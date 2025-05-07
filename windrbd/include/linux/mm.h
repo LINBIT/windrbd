@@ -14,10 +14,13 @@ struct kref;
 
 extern void _free_page_kref(struct kref *kref);
 
-static inline void put_page(struct page *page)
+static inline void put_page_debug(struct page *page, const char *file, int line)
 {
+DbgPrint("put_page function: page is %p page->addr is %p refcount is %d (called from %s:%d)\n", page, page->addr, page->kref.refcount, file, line);
 	kref_put(&page->kref, _free_page_kref);
 }
+
+#define put_page(kref) put_page_debug(kref, __FILE__, __LINE__)
 
 static inline void get_page(struct page *page)
 {
