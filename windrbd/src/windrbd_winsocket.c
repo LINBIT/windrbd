@@ -274,20 +274,27 @@ __in PWSK_BUF WskBuffer,
 int may_printk
 )
 {
+DbgPrint("FreeWskBuffer 1\n");
 	if (WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) {
 		int unlock_max_loops;
+DbgPrint("FreeWskBuffer 2\n");
 		MmUnlockPages(WskBuffer->Mdl);
 
+DbgPrint("FreeWskBuffer 3\n");
 		unlock_max_loops=100;
 		while ((WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) && (unlock_max_loops > 0)) {
 			unlock_max_loops--;
+DbgPrint("FreeWskBuffer 4\n");
 			MmUnlockPages(WskBuffer->Mdl); 
 		}
 	} else {
+DbgPrint("FreeWskBuffer 5\n");
 		if (may_printk)
 			printk("Page not locked in FreeWskBuffer\n");
 	}
+DbgPrint("FreeWskBuffer 6\n");
 	IoFreeMdl(WskBuffer->Mdl);
+DbgPrint("FreeWskBuffer 7\n");
 }
 
 struct send_page_completion_info {
@@ -392,6 +399,7 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 	int may_printk = completion->socket->wsk_flags != WSK_FLAG_DATAGRAM_SOCKET;
 	size_t length;
 
+DbgPrint("SendPageCompletionRoutine 1\n");
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
 
@@ -410,6 +418,7 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 		if (completion->socket->wsk_flags == WSK_FLAG_DATAGRAM_SOCKET)
 			completion->socket->error_status = 0;
 	}
+DbgPrint("SendPageCompletionRoutine 2\n");
 
 	length = completion->wsk_buffer->Length;
 		/* Also unmaps the pages of the containg Mdl */
@@ -420,18 +429,24 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 			printk("Warning: Mdl field changed from %p to %p\n", completion->the_mdl, completion->wsk_buffer->Mdl);
 		/* completion->wsk_buffer->Mdl = completion->the_mdl */
 	}
+DbgPrint("SendPageCompletionRoutine 3\n");
 	FreeWskBuffer(completion->wsk_buffer, may_printk);
+DbgPrint("SendPageCompletionRoutine 4\n");
 
 		/* To avoid unmapping the page again in free_bio(). */
 	if (completion->page)
 		completion->page->is_unmapped = 1;
 
+DbgPrint("SendPageCompletionRoutine 5\n");
 	kfree(completion->wsk_buffer);
 
 	have_sent(completion->socket, length);
 
+DbgPrint("SendPageCompletionRoutine 6\n");
 	if (completion->page)
 		put_page(completion->page); /* Might free the page if connection is already down */
+
+DbgPrint("SendPageCompletionRoutine 7\n");
 	if (completion->data_buffer) {	/* Is from SendPage, do not printk */
 		kfree(completion->data_buffer);
 		if (completion->socket != NULL)
@@ -440,11 +455,14 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 		if (completion->socket != NULL)
 		        kref_put(&completion->socket->kref, sock_really_free);
 	}
+DbgPrint("SendPageCompletionRoutine 8\n");
 
 	kfree(completion);
+DbgPrint("SendPageCompletionRoutine 9\n");
 
 	IoFreeIrp(Irp);
 
+DbgPrint("SendPageCompletionRoutine a\n");
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
