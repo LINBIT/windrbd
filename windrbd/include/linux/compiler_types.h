@@ -40,7 +40,10 @@
 	 * above definitions do not work.
 	 */
 
-#define __compiletime_assert(condition, msg, prefix, suffix)
+#define __compiletime_assert(condition, msg, prefix, suffix)	\
+	do {							\
+		(void) (condition);				\
+	} while (0)
 
 #endif
 
