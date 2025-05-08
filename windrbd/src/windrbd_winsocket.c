@@ -243,7 +243,7 @@ DbgPrint("Buffer is %p, WskBuffer->Mdl is %p\n", Buffer, WskBuffer->Mdl);
 		_SEH2_TRY {
 #endif
 // DbgPrint("MmProbeAndLockPages WskBuffer->Mdl is %p\n", WskBuffer->Mdl);
-			MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
+//			MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
 #ifdef CONFIG_HAVE_SEH2
 		}
 		_SEH2_EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
@@ -280,8 +280,8 @@ int may_printk
 	if (WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) {
 		int unlock_max_loops;
 // DbgPrint("FreeWskBuffer 2\n");
-DbgPrint("MmUnlockPages WskBuffer->Mdl is %p\n", WskBuffer->Mdl);
-		MmUnlockPages(WskBuffer->Mdl);
+DbgPrint("NO! MmUnlockPages WskBuffer->Mdl is %p\n", WskBuffer->Mdl);
+//		MmUnlockPages(WskBuffer->Mdl);
 
 // DbgPrint("FreeWskBuffer 3\n");
 		unlock_max_loops=100;
