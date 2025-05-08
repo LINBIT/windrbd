@@ -929,7 +929,6 @@ static int free_bios_thread_fn(void *unused)
 		list_for_each_entry_safe(bio, bio2, &bios_to_be_freed_list2, to_be_freed_list2) {
 			list_del(&bio->to_be_freed_list2);
 			free_mdls_and_irp(bio);
-DbgPrint("out of free_mdls_and_irp(%p) page is %p page refcount is %d\n", bio, bio->bi_io_vec[0].bv_page, refcount_read(&bio->bi_io_vec[0].bv_page->kref.refcount));
 			for (i=0;i<bio->bi_vcnt;i++) {
 				put_page(bio->bi_io_vec[i].bv_page);
 			}
