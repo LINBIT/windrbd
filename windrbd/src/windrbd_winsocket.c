@@ -1060,33 +1060,40 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 		err = -ENOMEM;
 		goto out_free_wsk_buffer;
 	}
-	if (page == NULL) {
+//	if (page == NULL) {
 
-		/* We copy what we send to a tmp buffer, so
-		 * caller may free or use otherwise what we
-		 * have got in Buffer.
-		 */
+	/* We copy what we send to a tmp buffer, so
+	 * caller may free or use otherwise what we
+	 * have got in Buffer.
+	 */
 
-		tmp_buffer = kmalloc(len, GFP_KERNEL);
-		if (tmp_buffer == NULL) {
-			err = -ENOMEM;
-			goto out_free_completion;
-		}
-		memcpy(tmp_buffer, buf, len);
+	tmp_buffer = kmalloc(len, GFP_KERNEL);
+	if (tmp_buffer == NULL) {
+		err = -ENOMEM;
+		goto out_free_completion;
+	}
+	memcpy(tmp_buffer, buf, len);
 
-		status = InitWskBuffer(tmp_buffer, len, WskBuffer, FALSE, TRUE);
+	status = InitWskBuffer(tmp_buffer, len, WskBuffer, FALSE, TRUE);
+
+#if 0
 	} else {
 DbgPrint("page %p page->addr %p buf %p len %d\n", page, page->addr, buf, len);
 		tmp_buffer = NULL;
 		status = InitWskBuffer(buf, len, WskBuffer, FALSE, TRUE);
 	}
+#endif
 	if (!NT_SUCCESS(status)) {
 		err = -ENOMEM;
 		goto out_maybe_free_tmp_buffer;
 	}
 
-	completion->data_buffer = tmp_buffer;  /* may be NULL */
-	completion->page = page;	/* may be NULL */
+	if (page != NULL) {
+		put_page(page);
+		page = NULL;
+	}
+	completion->data_buffer = tmp_buffer;  /* may NOT be NULL */
+//	completion->page = page;	/* may be NULL */
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
 	completion->the_mdl = WskBuffer->Mdl;
