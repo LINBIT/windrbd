@@ -3,6 +3,24 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.0-rc13
+--------------------------------
+
+Have a ring buffer for accepting sockets (backlog parameter to listen())
+	This solves one reasons for connection establishment failure.
+
+Support WinDRBD disks as "physical" backing disks for Hyper-V VMs.
+	A new ioctl IOCTL_SCSI_PASS_THROUGH/IOCTL_SCSI_PASS_THROUGH_DIRECT
+	was implemented
+
+Fixed online resize
+	It never working in 1.2 branch before
+
+Removed netlink mutex.
+	DRBD is much more responsive now.
+
+Fixed a BSOD on Windows Server 2003 SP2
+
 What's new in version 1.2.0-rc12
 --------------------------------
 
