@@ -308,3 +308,4 @@ Version history
  * 1.2.0-rc10 (Apr 9, 2025): Windows Server 2003 32-bit support.
  * 1.2.0-rc11 (Apr 18, 2025): NETIO.SYS fixes
  * 1.2.0-rc12 (Apr 23, 2025): Even more NETIO.SYS fixes, debug symbols for NETIO.SYS
+ * 1.2.0-rc13 (May 8, 2025): Hyper-V physical disk, listen backlog, fixed online resize, removed netlink mutex
