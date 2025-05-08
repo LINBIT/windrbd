@@ -435,7 +435,8 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 		put_page(completion->page); /* Might free the page if connection is already down */
 
 	if (completion->data_buffer) {	/* Is from SendPage, do not printk */
-		kfree(completion->data_buffer);
+		// kfree(completion->data_buffer);
+		ExFreePoolWithTag(completion->data_buffer, 'XXYY');
 		if (completion->socket != NULL)
 		        kref_put(&completion->socket->kref, sock_really_free);
 	} else {
@@ -1042,7 +1043,8 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 	 * have got in Buffer.
 	 */
 
-	tmp_buffer = kmalloc(len, GFP_KERNEL);
+	// tmp_buffer = kmalloc(len, GFP_KERNEL);
+	tmp_buffer = ExAllocatePoolWithTag(WinDRBDNonPagedPool, min(len, PAGE_SIZE), 'XXYY');
 	if (tmp_buffer == NULL) {
 		err = -ENOMEM;
 		goto out_free_completion;
