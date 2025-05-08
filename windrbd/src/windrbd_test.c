@@ -1743,13 +1743,13 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 			offset += iov.iov_len;
 			offset &= PAGE_SIZE-1;
 
-			if ((offset % 256) == 0) {
+//			if ((offset % 256) == 0) {
 				put_page(p);
 				page_nr++;
 				p = alloc_a_page(page_nr);
 				if (p == NULL)
 					return;
-			}
+//			}
 		} else {
 			err = kernel_sendmsg(s, &msg, &iov, 1, iov.iov_len);
 		}
