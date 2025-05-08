@@ -1636,6 +1636,22 @@ out_free_ip_addr:
 	kfree(ip_addr);
 }
 
+static struct page *alloc_a_page(int page_nr)
+{
+	int i;
+	struct page *p;
+
+	p = alloc_page(GFP_KERNEL);
+	if (p == NULL) {
+		printk("Couldn't allocate page\n");
+		return NULL;
+	}
+	for (i=0;i<PAGE_SIZE;i+=32)
+		sprintf(p->addr+i, "Data %d Page %d\n", i, page_nr);
+
+	return p;
+}
+
 static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 {
 	struct socket *s;
@@ -1648,7 +1664,8 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	struct ip_addr *ip_addr = (struct ip_addr*) ip_addr_p;
 	int sleep_interval_ms;
 	struct page *p;
-	int offset, i;
+	int offset;
+	int page_nr;
 
 	strcpy(bigbuffer, "Hallo Windows 2003\n");
         struct kvec iov = {
@@ -1663,14 +1680,10 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 
 	make_me_a_windrbd_thread("send_a_lot");
 
-	p = alloc_page(GFP_KERNEL);
-	if (p == NULL) {
-		printk("Couldn't allocate page\n");
+	p = alloc_a_page(0);
+	if (p == NULL)
 		return;
-	}
-	for (i=0;i<PAGE_SIZE;i+=16)
-		sprintf(p->addr, "Data %d\n", i);
-	iov.iov_len = 16;
+	iov.iov_len = 32;
 
 	err = sock_create_kern(&init_net, AF_INET, SOCK_STREAM, IPPROTO_TCP, &s);
 
@@ -1717,6 +1730,7 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	bytes_sent = 0;
 	short_writes = 0;
 	offset = 0;
+	page_nr = 0;
 
 	while (1) {
 		if (sleep_interval_ms > 0) {
@@ -1728,6 +1742,14 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 			err = s->ops->sendpage(s, p, offset, iov.iov_len, 0);
 			offset += iov.iov_len;
 			offset &= PAGE_SIZE-1;
+
+			if ((offset % 256) == 0) {
+				put_page(p);
+				page_nr++;
+				p = alloc_a_page(page_nr);
+				if (p == NULL)
+					return;
+			}
 		} else {
 			err = kernel_sendmsg(s, &msg, &iov, 1, iov.iov_len);
 		}
