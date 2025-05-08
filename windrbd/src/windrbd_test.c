@@ -1646,7 +1646,7 @@ static struct page *alloc_a_page(int page_nr)
 		printk("Couldn't allocate page\n");
 		return NULL;
 	}
-	memset(page->addr, 0, PAGE_SIZE);
+	memset(p->addr, 0, PAGE_SIZE);
 	for (i=0;i<PAGE_SIZE;i+=32)
 		sprintf(p->addr+i, "Data %d Page %d\n", i, page_nr);
 
