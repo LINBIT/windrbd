@@ -65,10 +65,8 @@ static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 
 static int winsock_to_linux_error(NTSTATUS status)
 {
-#if 0
 	if (status != STATUS_SUCCESS)
 		printk("got status %x\n", status);
-#endif
 
 	switch (status) {
 	case STATUS_SUCCESS:
@@ -435,8 +433,8 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 		put_page(completion->page); /* Might free the page if connection is already down */
 
 	if (completion->data_buffer) {	/* Is from SendPage, do not printk */
-		// kfree(completion->data_buffer);
-		ExFreePoolWithTag(completion->data_buffer, 'XXYY');
+		kfree(completion->data_buffer);
+		// ExFreePoolWithTag(completion->data_buffer, 'XXYY');
 		if (completion->socket != NULL)
 		        kref_put(&completion->socket->kref, sock_really_free);
 	} else {
@@ -1036,6 +1034,7 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 		err = -ENOMEM;
 		goto out_free_wsk_buffer;
 	}
+	/* TODO: Also just for Windows Server 2003 (WINNT_52)? */
 //	if (page == NULL) {
 
 	/* We copy what we send to a tmp buffer, so
@@ -1044,7 +1043,23 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 	 */
 
 	// tmp_buffer = kmalloc(len, GFP_KERNEL);
-	tmp_buffer = ExAllocatePoolWithTag(WinDRBDNonPagedPool, min(len, PAGE_SIZE), 'XXYY');
+
+		/* TODO: on Windows Server 2003 this must be page aligned.
+		 * Maybe #ifdef WINNT_52?
+		 */
+
+	/* this works: */
+	// tmp_buffer = ExAllocatePoolWithTag(WinDRBDNonPagedPool, min(len, PAGE_SIZE), 'XXYY');
+	/* this *also* works: */
+	// tmp_buffer = ExAllocatePoolWithTag(WinDRBDNonPagedPool, len, 'XXYY');
+	/* This does NOT work: */
+	tmp_buffer = kmalloc(min(len, PAGE_SIZE), GFP_KERNEL);
+	/* So it is probably confusion when a memory region is locked
+	 * which is somewhere (offset 0xf4 on 32 bit) inside a
+	 * ExAllocatePoolWithTag()'ed region (see kmalloc_debug)
+	 * Next step is to undef kmalloc_debug and retry.
+	 */
+
 	if (tmp_buffer == NULL) {
 		err = -ENOMEM;
 		goto out_free_completion;
