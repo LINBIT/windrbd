@@ -476,8 +476,12 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 		break;
 
 	case IOCTL_WINDRBD_ROOT_DUMP_ALLOCATED_MEMORY:
+#ifdef KMALLOC_DEBUG
 		if (dump_memory_allocations(0) != 0)
 			status = STATUS_INVALID_DEVICE_REQUEST;
+#else
+		printk("Dumping memory allocations not supported, please rebuild WinDRBD with CONFIG_KMALLOC_DEBUG enabled.\n");
+#endif
 		break;
 
 	case IOCTL_WINDRBD_ROOT_RUN_TEST:

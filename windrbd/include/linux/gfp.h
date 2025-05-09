@@ -5,6 +5,8 @@
 #include <linux/kref.h>
 #include <linux/gfp_types.h>
 
+#ifdef KMALLOC_DEBUG
+
 struct page *alloc_page_debug(int flag, const char *file, int line, const char *func);
 void __free_page_debug(struct page *page, const char *file, int line, const char *func);
 void free_page_kref_debug(struct kref *kref, const char *file, int line, const char *func);
@@ -22,19 +24,16 @@ ULONG_PTR __get_free_page_debug(gfp_t flag, const char *file, int line, const ch
 
 #define free_page_kref(kref) free_page_kref_debug(kref, __FILE__, __LINE__, __func__)
 
-#if 0
-/* TODO: implement */
-extern ULONG_PTR __get_free_pages(gfp_t gfp_mask, unsigned int order);
-extern void free_pages(ULONG_PTR addr, unsigned int order);
-extern ULONG_PTR __get_free_page(gfp_t flags);
-/* {
-    return kmalloc(PAGE_SIZE, flags);
-} */
+#else
 
-extern void free_page(ULONG_PTR addr);
-/* {
-	kfree(addr);
-} */
+struct page *alloc_page(gfp_t flag);
+void __free_page(struct page *page);
+void free_pages(ULONG_PTR addr, int order);
+void free_page(ULONG_PTR addr);
+void free_page_kref(struct kref *kref);
+ULONG_PTR __get_free_pages(gfp_t flag, int order);
+ULONG_PTR __get_free_page(gfp_t flag);
+
 #endif
 
 #endif

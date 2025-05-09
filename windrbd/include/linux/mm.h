@@ -8,6 +8,8 @@
 
 struct kref;
 
+#ifdef KMALLOC_DEBUG
+
 	/* In WinDRBD free_page_kref might be a macro that
 	 * calls free_page_kref_debug. Therefore a _ here.
 	 */
@@ -20,6 +22,18 @@ static inline void put_page_debug(struct page *page, const char *file, int line)
 }
 
 #define put_page(kref) put_page_debug(kref, __FILE__, __LINE__)
+
+#else
+
+extern void free_page_kref(struct kref *kref);
+
+static inline void put_page(struct page *page)
+{
+	kref_put(&page->kref, free_page_kref);
+}
+
+
+#endif
 
 static inline void get_page(struct page *page)
 {

@@ -448,36 +448,6 @@ int atomic_read(const atomic_t *v)
 	return InterlockedAnd((volatile long*)&v->counter, 0xffffffff);
 }
 
-#ifndef KMALLOC_DEBUG
-
-	/* TODO: honor the flag: alloc from PagedPool if flag is GFP_USER */
-	/* TODO: this should also implement the retries ... */
-	/* TODO: this also should implement the page list */
-
-void *kmalloc(int size, int flag)
-{
-		/* and yes it is DBRD .. is little endian. */
-	return ExAllocatePoolUninitialized(WinDRBDNonPagedPool, size, 'DBRD');
-}
-
-void *kcalloc(int size, int count, int flag)
-{
-	return kzalloc(size*count, flag);
-}
-
-void *kzalloc(int size, int flag)
-{
-	void *mem;
-
-	mem = kmalloc(size, flag);
-	if (mem != NULL)
-		RtlZeroMemory(mem, size);
-
-	return mem;
-}
-
-#endif
-
 #if 0
 /* see string.c */
 /**
@@ -533,73 +503,6 @@ void copy_page(void *to, void *from)
 {
 	memcpy(to, from, PAGE_SIZE);
 }
-
-#ifdef KMALLOC_DEBUG
-
-#else
-
-zak lebt nicht
-
-struct page *alloc_page(int flag)
-{
-	struct page *p = kzalloc(sizeof(struct page), flag);
-	if (!p)	{
-		printk("alloc_page struct page failed\n");
-		return NULL;
-	}
-
-		/* Under Windows this is defined to align to a page
-		 * of PAGE_SIZE bytes if size is >= PAGE_SIZE.
-		 * PAGE_SIZE itself is always 4096 under Windows.
-		 */
-
-	p->addr = kmalloc(PAGE_SIZE, flag);
-	if (!p->addr)	{
-		kfree(p);
-		printk("alloc_page failed\n");
-		return NULL;
-	}
-	kref_init(&p->kref);
-
-	return p;
-}
-
-void __free_page(struct page *page)
-{
-	if (!page->is_system_buffer)
-		kfree(page->addr);
-	kfree(page);
-}
-
-void free_page_kref(struct kref *kref)
-{
-	struct page *page = container_of(kref, struct page, kref);
-	__free_page(page);
-}
-
-#endif
-
-#ifndef KMALLOC_DEBUG
-
-void kfree(const void * x)
-{
-	if (x)
-		ExFreePool((void*)x);
-}
-
-void kvfree(const void * x)
-{
-	if (x)
-		ExFreePool((void*)x);
-}
-
-int dump_memory_allocations(int free_them)
-{
-	printk("Cannot dump memory allocations: to enable recompile with KMALLOC_DEBUG defined.\n");
-	return -1;
-}
-
-#endif
 
 int kref_put(struct kref *kref, void (*release)(struct kref *kref))
 {

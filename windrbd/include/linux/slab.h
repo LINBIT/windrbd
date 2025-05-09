@@ -5,6 +5,7 @@
 
 /* TODO: Linux header should not depend on WinDRBD header ... */
 #ifdef KMALLOC_DEBUG
+
 #include "kmalloc_debug.h"
 
 /* Comment that out for production releases */
@@ -20,15 +21,15 @@
 #endif
 
 #else
-/* TODO: flag probably gfp_t */
-/* TODO: int? really? should be size_t */
-/* TODO: remove Tag. */
-extern void * kcalloc(int e_count, int x, int flag);
-extern void * kzalloc(int x, int flag);
-extern void * kmalloc(int size, int flag);
-extern void kfree(const void * x);
-extern void kvfree(const void * x);
-extern int dump_memory_allocations(int free_them);
+
+void *kmalloc(size_t size, gfp_t flag);
+void *kzalloc(size_t size, gfp_t flag);
+void *kcalloc(size_t size, int count, gfp_t flag);
+void *__vmalloc(size_t size, gfp_t flag);
+
+void kfree(const void *data);
+void kvfree(const void *data);
+
 #endif
 
 struct kmem_cache {
