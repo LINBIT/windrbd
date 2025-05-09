@@ -102,7 +102,7 @@ DOCKER_IMAGE ?= windrbd-devenv
 # DOCKER_RUN=docker run -u $(MY_UID):$(MY_GID) --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 # so run docker as root ...
 # Add environment variables to pass to docker here:
-DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e WINNT_52=$(WINNT_52) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) -e DRIVER_DIR=$(DRIVER_DIR) -e CONFIG_KREF_DEBUG=$(CONFIG_KREF_DEBUG) -e OPTIMIZE="$(OPTIMIZE)" $(DOCKER_IMAGE)
+DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e WINNT_52=$(WINNT_52) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) -e DRIVER_DIR=$(DRIVER_DIR) -e CONFIG_KMALLOC_DEBUG=$(CONFIG_KMALLOC_DEBUG) -e CONFIG_KREF_DEBUG=$(CONFIG_KREF_DEBUG) -e OPTIMIZE="$(OPTIMIZE)" $(DOCKER_IMAGE)
 
 # Change ownership of all files created by make process to
 # the host's UID/GID.
@@ -146,9 +146,7 @@ ifeq ($(ARCH), x86_64)
 DRIVER_ENTRY=DriverEntry
 endif
 
-# for now must enable CONFIG_KREF_DEBUG because of a DRBD bug (?) missing include linux/kref.h
-
-DEFINES=-D WINNT=1 -D KMALLOC_DEBUG=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D COMPAT_HAVE_BOOL_TYPE=1 -DKBUILD_MODNAME='"drbd"' -D CONFIG_WINDOWS=1 # -D CONFIG_KREF_DEBUG=1
+DEFINES=-D WINNT=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D COMPAT_HAVE_BOOL_TYPE=1 -DKBUILD_MODNAME='"drbd"' -D CONFIG_WINDOWS=1
 
 ifdef WINNT_52
 DEFINES+=-D WINNT_52=1
@@ -156,6 +154,10 @@ endif
 
 ifdef CONFIG_KREF_DEBUG
 DEFINES+=-D CONFIG_KREF_DEBUG=1
+endif
+
+ifdef CONFIG_KMALLOC_DEBUG
+DEFINES+=-D KMALLOC_DEBUG=1
 endif
 
 # TODO: isn't there a numeric version (something like 0x090117) in the DRBD sources?
@@ -207,7 +209,7 @@ TMP_DRBD_FILES = $(addprefix $(DRBD_TMPSRCDIR), $(DRBD_SOURCES))
 
 WINDRBD_SRCDIR = ./windrbd/src/
 WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
-                idr.c kmalloc_debug.c mempool.c printk-to-syslog.c \
+                idr.c mempool.c printk-to-syslog.c \
                 seq_file.c slab.c util.c windrbd_bootdevice.c \
                 windrbd_device.c windrbd_drbd_url_parser.c windrbd_module.c \
                 windrbd_netlink.c windrbd_test.c windrbd_threads.c \
@@ -215,6 +217,12 @@ WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
                 windrbd_winsocket.c windrbd_locking.c \
                 tiktok.c partition_table_template.c \
                 windrbd_serial.c
+
+ifdef CONFIG_KMALLOC_DEBUG
+WINDRBD_SOURCES += kmalloc_debug.c
+else
+WINDRBD_SOURCES += kmalloc.c
+endif
 
 WINDRBD_FILES = $(addprefix $(WINDRBD_SRCDIR), $(WINDRBD_SOURCES))
 
