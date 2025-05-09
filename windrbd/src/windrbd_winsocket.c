@@ -1035,6 +1035,11 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 		goto out_free_wsk_buffer;
 	}
 	/* TODO: Also just for Windows Server 2003 (WINNT_52)? */
+	/* TODO: ifdef KMALLOC_DEBUG and WINNT_52:
+	 * Use ExAllocatePoolWithTag() (and ExFreePoolWithTag
+	 * of course). Else do the original behaviour.
+	 */
+
 //	if (page == NULL) {
 
 	/* We copy what we send to a tmp buffer, so
@@ -1042,7 +1047,11 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 	 * have got in Buffer.
 	 */
 
-	// tmp_buffer = kmalloc(len, GFP_KERNEL);
+	/* This appears to work when CONFIG_KMALLOC_DEBUG is
+	 * *not* set. It crashes with kmalloc_debug.
+	 */
+
+	tmp_buffer = kmalloc(len, GFP_KERNEL);
 
 		/* TODO: on Windows Server 2003 this must be page aligned.
 		 * Maybe #ifdef WINNT_52?
@@ -1053,7 +1062,7 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 	/* this *also* works: */
 	// tmp_buffer = ExAllocatePoolWithTag(WinDRBDNonPagedPool, len, 'XXYY');
 	/* This does NOT work: */
-	tmp_buffer = kmalloc(min(len, PAGE_SIZE), GFP_KERNEL);
+	// tmp_buffer = kmalloc(min(len, PAGE_SIZE), GFP_KERNEL);
 	/* So it is probably confusion when a memory region is locked
 	 * which is somewhere (offset 0xf4 on 32 bit) inside a
 	 * ExAllocatePoolWithTag()'ed region (see kmalloc_debug)
