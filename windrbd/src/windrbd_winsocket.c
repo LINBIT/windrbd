@@ -590,6 +590,36 @@ static void SocketsDeinit(void)
 	InterlockedExchange(&wsk_state, WSK_DEINITIALIZED);
 }
 
+static int disconnect_socket(struct socket *socket)
+{
+	struct _KEVENT event;
+	struct _IRP *irp;
+	NTSTATUS status;
+
+	if (wsk_state != WSK_INITIALIZED || socket == NULL)
+		return -EINVAL;
+
+	if (socket->wsk_flags != WSK_FLAG_CONNECTION_SOCKET)
+		return 0;
+
+	irp = wsk_new_irp(&event, NULL);
+	if (irp == NULL)
+		return -ENOMEM;
+
+	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskDisconnect(socket->wsk_socket, NULL, 0, irp);
+
+	if (status == STATUS_PENDING) {
+		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
+		status = irp->IoStatus.Status;
+	}
+	if (!NT_SUCCESS(status))
+		printk("WskDisconnect returned error status 0x%08x\n", status);
+
+	IoFreeIrp(irp);
+
+	return winsock_to_linux_error(status);
+}
+
 static int CreateSocket(
 	ADDRESS_FAMILY		AddressFamily,
 	USHORT			SocketType,
@@ -740,19 +770,13 @@ printk("closing accept_wsk_socket %p\n", ws);
 		socket->accept_wsk_sockets = NULL;
 	}
 
-		/* TODO: Gracefully disconnect socket first? With what
-		 * timeout? Disconnect seems to work now (Linux detects
-		 * disconnect on Windows peer with about 200-300ms delay),
-		 * so not sure if that is neccessary. Current solution
-		 * however does an 'abortive' disconnect (whatever that
-		 * means).
-		 * TODO: we need a graceful shutdown, else peer might
-		 * run into NetworkFailer (and the DRBD9 test suite
-		 * complains).
-		 */
-
 	if (socket->wsk_socket != NULL) {
 		mutex_lock(&socket->wsk_mutex);
+
+		/* gracefully disconnect if this is a connection oriented
+		 * socket.
+		 */
+		disconnect_socket(socket);
 
 		(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
 		socket->wsk_socket = NULL;
@@ -900,6 +924,7 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 		close_wsk_socket(wsk_socket);
 	else {
 		accept_socket->wsk_socket = wsk_socket;
+		accept_socket->wsk_flags = WSK_FLAG_CONNECTION_SOCKET;
 		accept_socket->sk->sk_state = TCP_ESTABLISHED;
 		accept_socket->sk->sk_state_change = socket->sk->sk_state_change;
 		accept_socket->sk->sk_user_data = socket->sk->sk_user_data;
