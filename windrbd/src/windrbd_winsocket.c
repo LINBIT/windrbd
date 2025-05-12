@@ -433,8 +433,11 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 		put_page(completion->page); /* Might free the page if connection is already down */
 
 	if (completion->data_buffer) {	/* Is from SendPage, do not printk */
+#if (defined KMALLOC_DEBUG) && (defined WINNT_52)
+		ExFreePoolWithTag(completion->data_buffer, DRBD_TAG);
+#else
 		kfree(completion->data_buffer);
-		// ExFreePoolWithTag(completion->data_buffer, 'XXYY');
+#endif
 		if (completion->socket != NULL)
 		        kref_put(&completion->socket->kref, sock_really_free);
 	} else {
@@ -1034,40 +1037,25 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 		err = -ENOMEM;
 		goto out_free_wsk_buffer;
 	}
-	/* TODO: Also just for Windows Server 2003 (WINNT_52)? */
-	/* TODO: ifdef KMALLOC_DEBUG and WINNT_52:
-	 * Use ExAllocatePoolWithTag() (and ExFreePoolWithTag
-	 * of course). Else do the original behaviour.
-	 */
 
-//	if (page == NULL) {
+#if (defined KMALLOC_DEBUG) && (defined WINNT_52)
 
 	/* We copy what we send to a tmp buffer, so
 	 * caller may free or use otherwise what we
 	 * have got in Buffer.
+	 * Reason is that with kmalloc_debug the allocated
+	 * region is not equal the pointer returned. At
+	 * least Windows Server 2003 SP2 32 bit has a
+	 * problem with that, so use the ExAllocatePoolWithTag
+	 * function directory instead of kmalloc() here.
 	 */
 
-	/* This appears to work when CONFIG_KMALLOC_DEBUG is
-	 * *not* set. It crashes with kmalloc_debug.
-	 */
+	if (page != NULL) {
+		put_page(page);
+		page = NULL;
+	}
 
-	tmp_buffer = kmalloc(len, GFP_KERNEL);
-
-		/* TODO: on Windows Server 2003 this must be page aligned.
-		 * Maybe #ifdef WINNT_52?
-		 */
-
-	/* this works: */
-	// tmp_buffer = ExAllocatePoolWithTag(WinDRBDNonPagedPool, min(len, PAGE_SIZE), 'XXYY');
-	/* this *also* works: */
-	// tmp_buffer = ExAllocatePoolWithTag(WinDRBDNonPagedPool, len, 'XXYY');
-	/* This does NOT work: */
-	// tmp_buffer = kmalloc(min(len, PAGE_SIZE), GFP_KERNEL);
-	/* So it is probably confusion when a memory region is locked
-	 * which is somewhere (offset 0xf4 on 32 bit) inside a
-	 * ExAllocatePoolWithTag()'ed region (see kmalloc_debug)
-	 * Next step is to undef kmalloc_debug and retry.
-	 */
+	tmp_buffer = ExAllocatePoolWithTag(WinDRBDNonPagedPool, len, DRBD_TAG);
 
 	if (tmp_buffer == NULL) {
 		err = -ENOMEM;
@@ -1076,8 +1064,21 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 	memcpy(tmp_buffer, buf, len);
 
 	status = InitWskBuffer(tmp_buffer, len, WskBuffer, FALSE, TRUE);
+#else
+	if (page == NULL) {
+		/* We copy what we send to a tmp buffer, so
+		 * caller may free or use otherwise what we
+		 * have got in Buffer.
+		 */
 
-#if 0
+		tmp_buffer = kmalloc(len, GFP_KERNEL);
+		if (tmp_buffer == NULL) {
+			err = -ENOMEM;
+			goto out_free_completion;
+		}
+		memcpy(tmp_buffer, buf, len);
+
+		status = InitWskBuffer(tmp_buffer, len, WskBuffer, FALSE, TRUE);
 	} else {
 		tmp_buffer = NULL;
 		status = InitWskBuffer(buf, len, WskBuffer, FALSE, TRUE);
@@ -1088,12 +1089,8 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 		goto out_maybe_free_tmp_buffer;
 	}
 
-	if (page != NULL) {
-		put_page(page);
-		page = NULL;
-	}
-	completion->data_buffer = tmp_buffer;  /* may NOT be NULL */
-//	completion->page = page;	/* may be NULL */
+	completion->data_buffer = tmp_buffer;  /* may be NULL */
+	completion->page = page;	/* may be NULL */
 	completion->wsk_buffer = WskBuffer;
 	completion->socket = socket;
 	completion->the_mdl = WskBuffer->Mdl;
