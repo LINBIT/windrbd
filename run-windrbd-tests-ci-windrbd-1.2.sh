@@ -19,8 +19,10 @@ export PULL_WINDOWS_ONLY=true
 # This is required for the connect-5 test: else we get failures
 export LINBIT_CI_MAX_CPUS=5
 
-# will fail:
-export VIRTER_TIME_SSH_PING_COUNT=1
+# fails: (which is intended)
+# export VIRTER_TIME_SSH_PING_COUNT=1
+# This should be enough:
+export VIRTER_TIME_SSH_PING_COUNT=300
 
 time ./virter/run-test.sh --variant=windows
 # time ./virter/run-test.sh --variant=windows --torun=invalid-names
