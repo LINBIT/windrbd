@@ -1624,6 +1624,12 @@ static void windrbd_bio_finished(struct bio * bio)
 				 * code is returned (even if we already
 				 * successfully read/wrote data).
 				 */
+
+				/* TODO: do we need to set the
+				 * Srb->SrbStatus to some error value
+				 * here?
+				 */
+
 			irp->IoStatus.Information = 0;
 
 		irp->IoStatus.Status = status;
@@ -3400,6 +3406,15 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
+		/* Do this *before*. The irp may be completed
+		 * before the scsi_io function even returns.
+		 * In that case a srb->SrbStatus != SRB_STATUS_SUCCESS
+		 * would the upper driver assume that I/O failed.
+		 * (which happened sometimes in our tests).
+		 */
+
+		srb->SrbStatus = SRB_STATUS_SUCCESS;
+
 		status = scsi_execute(bdev, cdb, srb->DataBuffer, &srb->DataTransferLength, irp);
 
 		/* If pending, don't touch irp any more, it might
@@ -3407,10 +3422,9 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 		 * be released in the completion routine, so no
 		 * need to do that here.
 		 */
-		if (status == STATUS_PENDING) {
-			srb->SrbStatus = SRB_STATUS_SUCCESS;
+		if (status == STATUS_PENDING)
 			return status;
-		}
+
 		if (!NT_SUCCESS(status)) {
 			if (status == STATUS_BUFFER_TOO_SMALL)
 				srb->SrbStatus = SRB_STATUS_DATA_OVERRUN;
