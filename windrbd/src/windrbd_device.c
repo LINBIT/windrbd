@@ -2987,7 +2987,7 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 		id->ResponseDataFormat = 0x2;
 		id->DeviceTypeModifier = 0;
 		id->DeviceTypeQualifier = DEVICE_CONNECTED;
-		id->AdditionalLength = INQUIRYDATABUFFERSIZE - 5;
+		id->AdditionalLength = 0x20;
 		id->DeviceType = DIRECT_ACCESS_DEVICE;
 		id->RemovableMedia = 0;
 
@@ -2995,7 +2995,7 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 		strcpy((char*) id->ProductId, "WinDRBD Disk    ");
 		strcpy((char*) id->ProductRevisionLevel, "1.2 ");
 
-		(*data_transfer_length_p) = sizeof(*id);
+		(*data_transfer_length_p) = 36;
 		return STATUS_SUCCESS;
 	}
 
