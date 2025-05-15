@@ -5,8 +5,9 @@ We are using inno-setup (http://www.jrsoftware.org) which perfectly
 fits our needs (thanks to the authors Jordan Russell and Martijn Laan!)
 and saved a lot of work.
 
-To obtain inno-setup go to their website, install it (sorry only runs
-under Microsoft Windows platforms) and make sure the application
+To obtain inno-setup go to their website, install it (pick a
+5.X version, 6.X does not work yet) and make sure the application
 directory is in the PATH (we need to call the iscc command line
-compiler to generate the .EXE).
+compiler to generate the .EXE). Inno setup also runs on Linux
+using a 32-bit wine environment in addition to Windows.
 

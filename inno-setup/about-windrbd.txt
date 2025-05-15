@@ -13,16 +13,13 @@ In order to get professional support for WinDRBD please contact
 sales@linbit.com directly.
 
 To learn how to use WinDRBD to create a 2-node HA cluster based
-on Microsoft Windows, or to learn how to use WinDRBD for booting
-Windows from a Linux server please go to https://downloads.linbit.com
-and download the WinDRBD tech guides. You might also find the
-articles on https://kb.linbit.com useful.
+on Microsoft Windows (or ReactOS) please go to https://www.linbit.com
+and download the WinDRBD tech guide (Resources/User Guides).
+You might also find the articles on https://kb.linbit.com useful.
 
-Since release 1.0.0, WinDRBD can be used in production environments
-for HA setups (as data disks). Support for system volume ("C:")
-replication and booting from a WinDRBD server is still experimental,
-since it is difficult to set up and cannot currently recover from
-a network outage.
+Note that larger deployments (more than 2 nodes, more than a
+handful resources) are best managed with LINSTOR which also supports
+the Windows platform.
 
 WinDRBD is Open Source and licensed under the GNU general public
 license. To obtain the source code, please go to:
@@ -30,10 +27,8 @@ license. To obtain the source code, please go to:
 https://www.github.com/LINBIT/WinDRBD
 
 We'd love to get feedback, either over the github site or over
-the DRBD user mailing list (drbd-user@lists.linbit.com, please
-go to http://lists.linbit.com/mailman/listinfo/drbd-user to
-subscribe).
+the forum on https://forums.linbit.com
 
 Thank you for participating in WinDRBD development by using it.
 
-- Johannes Thoma
+- Johannes Khoshnazar-Thoma
