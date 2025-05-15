@@ -606,6 +606,8 @@ static int disconnect_socket(struct socket *socket)
 	if (irp == NULL)
 		return -ENOMEM;
 
+printk("socket->sk->sk_wmem_queued: %d socket->num_sends_inflight: %d\n", socket->sk->sk_wmem_queued, socket->num_sends_inflight);
+
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskDisconnect(socket->wsk_socket, NULL, 0, irp);
 
 	if (status == STATUS_PENDING) {
