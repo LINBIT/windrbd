@@ -70,6 +70,31 @@ begin
 	Result:= myNeedRestart and not driverWasUnloaded;
 end;
 
+function IsDigit(c: String): Boolean;
+begin
+	Result := (c[1] >= '0') and (c[1] <= '9');
+end;
+
+function isRc: Boolean;
+var s: string;
+    p: Integer;
+
+begin
+	s := ExpandConstant('{#SetupSetting("AppVersion")}');
+	p := pos('-rc', s);
+	Result := (p <> 0) and IsDigit(s[p-1]) and IsDigit(s[p+3]);
+end;
+
+function isEval: Boolean;
+var s: string;
+    p: Integer;
+
+begin
+	s := ExpandConstant('{#SetupSetting("AppVersion")}');
+	p := pos('-eval', s);
+	Result := p <> 0;
+end;
+
 function InitializeSetup: Boolean;
 var
 	version: String;
@@ -87,7 +112,7 @@ begin
 		if version = '{#SetupSetting("AppVersion")}' then
 			str := 'WinDRBD version '+version+' is already installed. It is not neccessary to install it again, unless you manually destroyed the WinDRBD installation. Do you wish to continue?'
 		else
-			str := ExpandConstant('Found WinDRBD version '+version+' installed. The version you are about to install is {#SetupSetting("AppVersion")}. You can safely install one over the other, however to restart the driver all WinDRBD resources are taken down by the installer. Optionally a reboot is required if the installed version is 1.0.0-rc16 or older. Continue?');
+			str := ExpandConstant('Found WinDRBD version '+version+' installed. The version you are about to install is {#SetupSetting("AppVersion")}. You can safely install one over the other, however to restart the driver all WinDRBD resources are taken down by the installer. Continue?');
 
 		if not WizardSilent then
 		begin
@@ -99,4 +124,24 @@ begin
 		end;
 		myNeedRestart := True;
 	end;
+
+	if isRc then
+	begin
+		str := 'The version you are about to install is a -rc version, which is NOT meant for production use. Do NOT use this version of WinDRBD in a production environment';
+
+		if not WizardSilent then
+		begin
+			MsgBox(str, mbInformation, MB_OK);
+		end;
+        end;
+
+	if isEval then
+	begin
+		str := 'The version you are about to install is an evaluation version of WinDRBD. To make the WinDRBD driver load into the Windows kernel on 64-bit systems of Microsoft Windows, you need to run'+#13#10+'    bcdedit /set TESTSIGNING YES'+#13#10+'and reboot the machine.';
+
+		if not WizardSilent then
+		begin
+			MsgBox(str, mbInformation, MB_OK);
+		end;
+        end;
 end;
