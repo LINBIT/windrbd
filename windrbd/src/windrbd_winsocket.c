@@ -611,12 +611,15 @@ printk("socket->sk->sk_wmem_queued: %d socket->num_sends_inflight: %d\n", socket
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskDisconnect(socket->wsk_socket, NULL, 0, irp);
 
 	if (status == STATUS_PENDING) {
+printk("WskDisconnect Pending ...\n");
 		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
+printk("WskDisconnect Completed status is 0x%08x ...\n", irp->IoStatus.Status);
 		status = irp->IoStatus.Status;
 	}
 	if (!NT_SUCCESS(status))
 		printk("WskDisconnect returned error status 0x%08x\n", status);
 
+printk("WskDisconnect Status is 0x%08x ...\n", status);
 	IoFreeIrp(irp);
 
 	return winsock_to_linux_error(status);
