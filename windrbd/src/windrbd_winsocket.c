@@ -160,6 +160,7 @@ static NTSTATUS __attribute__((stdcall)) completion_fire_event(struct _DEVICE_OB
 	 * ASSERT.
 	 */
 
+DbgPrint("fire_event %p\n", event);
 	KeSetEvent(event, IO_NO_INCREMENT, FALSE);
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
@@ -610,6 +611,7 @@ printk("socket->sk->sk_wmem_queued: %d socket->num_sends_inflight: %d\n", socket
 
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskDisconnect(socket->wsk_socket, NULL, 0, irp);
 
+DbgPrint("event is %p\n", &event);
 	if (status == STATUS_PENDING) {
 printk("WskDisconnect Pending ...\n");
 		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
@@ -771,6 +773,7 @@ static void close_socket(struct socket *socket)
 printk("closing accept_wsk_socket %p\n", ws);
 			close_wsk_socket(ws);
 		}
+printk("socket %p socket->accept_wsk_sockets %p freeing socket->accept_wsk_sockets\n", socket, socket->accept_wsk_sockets);
 		kfree(socket->accept_wsk_sockets);
 		socket->accept_wsk_sockets = NULL;
 	}
@@ -843,12 +846,14 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 		return -ENOMEM;
 
 	socket->is_connected = false;
+printk("into WskConnect ... socket is %p socket->wsk_socket is %p\n", socket, socket->wsk_socket);
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskConnect(
 		socket->wsk_socket,
 		vaddr,
 		0,
 		Irp);
 
+printk("out of WskConnect ... socket is %p status is 0x%08x\n", socket, Status);
 	if (Status == STATUS_PENDING) {
 /*
 		LARGE_INTEGER	nWaitTime;
@@ -862,12 +867,14 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 */
 		int ret;
 
+printk("into wait_event_interruptible ...\n");
 		ret = wait_event_interruptible(
 			socket->connected_waitqueue,
 			socket->is_connected);
 
+printk("out of wait_event_interruptible, ret is %d...\n", ret);
 		if (ret == -EINTR) {	/* Signal was sent */
-dbg("Got EINTR ...\n");
+printk("Got EINTR ...\n");
 			IoCancelIrp(Irp);
 			IoFreeIrp(Irp);
 
@@ -882,11 +889,14 @@ dbg("WskConnect completed KeWaitForSingleObject (status is %x)\n", Status);
 */
 	}
 
+printk("Status is 0x%08x ...\n", Status);
 	if (Status == STATUS_SUCCESS)
 	{
 		Status = Irp->IoStatus.Status;
+printk("Status is 0x%08x ...\n", Status);
 		if (Status == STATUS_SUCCESS) {
 			socket->sk->sk_state = TCP_ESTABLISHED;
+printk("connection established ...\n");
 			wake_up(&socket->buffer_available);
 			wake_up(&socket->data_available);
 		}
@@ -913,14 +923,19 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	}
 
 	do {
+printk("about to fetch socket ...\n");
 		wsk_socket = get_accept_socket(socket);
+printk("ok got it ...\n");
 
 		if (wsk_socket == NULL) {
+printk("is NULL ...\n");
 			if ((io_flags & O_NONBLOCK) != 0)
 				return -EWOULDBLOCK;
 
 			/* TODO: handle signals */
+printk("into KeWaitForSingleObject\n");
 			KeWaitForSingleObject(&socket->accept_event, Executive, KernelMode, FALSE, NULL);
+printk("out of KeWaitForSingleObject\n");
 		}
 	} while (wsk_socket == NULL);
 
@@ -998,6 +1013,7 @@ static int wsk_listen(struct socket *socket, int backlog)
 		if (socket->accept_wsk_sockets == NULL)
 			return -ENOMEM;
 
+printk("socket %p socket->accept_wsk_sockets %p\n", socket, socket->accept_wsk_sockets);
 		socket->num_accept_sockets = backlog;
 		socket->accept_sockets_head = 0;
 		socket->accept_sockets_tail = 0;
@@ -1612,14 +1628,16 @@ static int socket_receive_thread(void *p)
 	KIRQL flags;
 
 // TODO: maybe enable this again?
-//	printk("Receiver thread started for socket %p.\n", s);
+printk("Receiver thread started for socket %p.\n", s);
 	while (1) {
+printk("into wait_event ...\n");
 		wait_event(s->buffer_available, 
 			!s->receive_thread_should_run ||
 			(s->sk->sk_state == TCP_ESTABLISHED &&
 			(s->write_index != s->read_index ||
 			(s->write_index == s->read_index && !s->receive_buffer_full)))); 
 
+printk("out of wait_event ...\n");
 		if (!s->receive_thread_should_run)
 {
 // printk("s->receive_thread_should_run is %d\n", s->receive_thread_should_run);
@@ -1699,15 +1717,19 @@ static int wsk_bind(
 	if (Irp == NULL)
 		return -ENOMEM;
 
+printk("into WskBind ... socket is %p socket->wsk_socket is %p\n", socket->wsk_socket, socket->wsk_socket);
+
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskBind(
 		socket->wsk_socket,
 		myaddr,
 		0,
 		Irp);
+printk("out of WskBind ... socket is %p socket->wsk_socket is %p status is 0x%08x\n", socket->wsk_socket, socket->wsk_socket, Status);
 
 	if (Status == STATUS_PENDING) {
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		Status = Irp->IoStatus.Status;
+printk("bind: status is 0x%08x\n", Status);
 	}
 	IoFreeIrp(Irp);
 	return winsock_to_linux_error(Status);
@@ -1925,8 +1947,9 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	struct socket *socket = (struct socket*) SocketContext;
 	int err;
 
+printk("incoming connection !!!\n");
 	if (socket->accept_wsk_sockets == NULL) {
-		printk("Warning: incomping_connection() without listen() called.\n");
+		printk("Warning: incoming_connection() without listen() called.\n");
 		return -EINVAL;
 	}
 
