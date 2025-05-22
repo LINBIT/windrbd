@@ -3,6 +3,17 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.0-rc14
+--------------------------------
+
+Made KMALLOC_DEBUG optional (default off)
+
+Fixed a bug that caused VMs with specific Windows versions to crash when booting
+
+Disconnect gracefully
+
+Fixed a bug that caused a BSOD on some older Windows versions
+
 What's new in version 1.2.0-rc13
 --------------------------------
 
