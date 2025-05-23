@@ -1280,6 +1280,7 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		FreeWskBuffer(&WskBuffer, 1);
 		return -ENOMEM;
 	}
+printk("Ok, Irp is %p\n", Irp);
 
 	wsk_flags = 0;
 	if (flags & MSG_WAITALL)
@@ -1320,7 +1321,9 @@ printk("out of wait_event_interruptible_timeout remaining_time is %d...\n", rema
 printk("some data was received ...\n");
 				BytesReceived = Irp->IoStatus.Information;
 			} else {
+printk("CANCELLING IRP %p ...\n", Irp);
 				IoCancelIrp(Irp);
+printk("still alive?\n");
 				BytesReceived = remaining_time;
 			}
 
@@ -1334,7 +1337,9 @@ printk("some data was received ...\n");
 		BytesReceived = winsock_to_linux_error(Status);
 
 out:
+printk("About to free Irp %p ...\n", Irp);
 	IoFreeIrp(Irp);
+printk("Irp %p freed.\n", Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
 	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
