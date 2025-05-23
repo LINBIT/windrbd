@@ -139,6 +139,8 @@ struct socket {
 	ULONG_PTR flags;
 	struct wait_queue_head connected_waitqueue;
 	bool is_connected;
+	struct wait_queue_head receive_waitqueue;
+	bool data_received;
 };
 
 /* TODO: implement this: */

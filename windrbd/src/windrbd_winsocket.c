@@ -165,15 +165,24 @@ static NTSTATUS __attribute__((stdcall)) completion_fire_event(struct _DEVICE_OB
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-static NTSTATUS __attribute__((stdcall)) completion_fire_linux_event(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *irp, void *sock_p)
+static NTSTATUS __attribute__((stdcall)) connect_completion(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *irp, void *sock_p)
 {
 	struct socket *s = sock_p;
-	/* Must not printk in here, will loop forever. Hence also no
-	 * ASSERT.
-	 */
 
 	s->is_connected = true;
 	wake_up(&s->connected_waitqueue);
+
+	return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
+static NTSTATUS __attribute__((stdcall)) receive_completion(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *irp, void *sock_p)
+{
+	struct socket *s = sock_p;
+
+printk("irp->IoStatus.Status is 0x%08x irp->IoStatus.Information is %d\n", irp->IoStatus.Status, irp->IoStatus.Information);
+
+	s->data_received = true;
+	wake_up(&s->receive_waitqueue);
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
@@ -191,7 +200,7 @@ static NTSTATUS __attribute__((stdcall)) completion_free_irp(struct _DEVICE_OBJE
 	 * completion_free_irp is used (which just frees the irp).
 	 */
 
-static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *s)
+static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *s, PIO_COMPLETION_ROUTINE completion_routine)
 {
 	struct _IRP *irp;
 
@@ -206,7 +215,7 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *
 		KeInitializeEvent(CompletionEvent, NotificationEvent, FALSE);
 		IoSetCompletionRoutine(irp, completion_fire_event, CompletionEvent, TRUE, TRUE, TRUE);
 	} else if (s) {
-		IoSetCompletionRoutine(irp, completion_fire_linux_event, s, TRUE, TRUE, TRUE);
+		IoSetCompletionRoutine(irp, completion_routine, s, TRUE, TRUE, TRUE);
 	} else {
 		IoSetCompletionRoutine(irp, completion_free_irp, NULL, TRUE, TRUE, TRUE);
 	}
@@ -602,7 +611,7 @@ static int disconnect_socket(struct socket *socket)
 	if (socket->wsk_flags != WSK_FLAG_CONNECTION_SOCKET)
 		return 0;
 
-	irp = wsk_new_irp(&event, NULL);
+	irp = wsk_new_irp(&event, NULL, NULL);
 	if (irp == NULL)
 		return -ENOMEM;
 
@@ -638,7 +647,7 @@ static int CreateSocket(
 	if (wsk_state != WSK_INITIALIZED || out == NULL)
 		return -EINVAL;
 
-	Irp = wsk_new_irp(&CompletionEvent, NULL);
+	Irp = wsk_new_irp(&CompletionEvent, NULL, NULL);
 	if (Irp == NULL)
 		return -ENOMEM;
 
@@ -729,7 +738,7 @@ static void close_wsk_socket(struct _WSK_SOCKET *wsk_socket)
 	if (wsk_state != WSK_INITIALIZED || wsk_socket == NULL)
 		return;
 
-	Irp = wsk_new_irp(NULL, NULL);
+	Irp = wsk_new_irp(NULL, NULL, NULL);
 	if (Irp == NULL)
 		return;
 
@@ -755,7 +764,7 @@ static void close_socket(struct socket *socket)
 // printk("terminate_receive_thread ...\n");
 	terminate_receive_thread(socket);
 
-	Irp = wsk_new_irp(NULL, NULL);
+	Irp = wsk_new_irp(NULL, NULL, NULL);
 	if (Irp == NULL)
 		return;
 
@@ -798,7 +807,7 @@ static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
-	Irp = wsk_new_irp(&CompletionEvent, NULL);
+	Irp = wsk_new_irp(&CompletionEvent, NULL, NULL);
 	if (Irp == NULL)
 		return -ENOMEM;
 
@@ -832,7 +841,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || vaddr == NULL)
 		return -EINVAL;
 
-	Irp = wsk_new_irp(NULL, socket);
+	Irp = wsk_new_irp(NULL, socket, connect_completion);
 	if (Irp == NULL)
 		return -ENOMEM;
 
@@ -844,16 +853,6 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 		Irp);
 
 	if (Status == STATUS_PENDING) {
-/*
-		LARGE_INTEGER	nWaitTime;
-		nWaitTime = RtlConvertLongToLargeInteger(-1 * socket->sk->sk_sndtimeo * 1000 * 10);
-		if ((Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, &nWaitTime)) == STATUS_TIMEOUT)
-		{
-			dbg("Timeout (%lld/%d) expired, cancelling connect.\n", nWaitTime, socket->sk->sk_sndtimeo);
-			IoCancelIrp(Irp);
-			KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-		}
-*/
 		int ret;
 
 		ret = wait_event_interruptible(
@@ -867,12 +866,6 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 			return ret;
 		}
 		Status = STATUS_SUCCESS;
-
-/*
-dbg("Waiting for WskConnect to complete\n");
-		Status = KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-dbg("WskConnect completed KeWaitForSingleObject (status is %x)\n", Status);
-*/
 	}
 
 	if (Status == STATUS_SUCCESS)
@@ -947,7 +940,7 @@ static int wsk_set_event_callbacks(struct socket *socket, int mask)
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
-	Irp = wsk_new_irp(&CompletionEvent, NULL);
+	Irp = wsk_new_irp(&CompletionEvent, NULL, NULL);
 	if (Irp == NULL)
 		return -ENOMEM;
 
@@ -1260,16 +1253,13 @@ int SendTo(struct socket *socket, void *buf, size_t len, PSOCKADDR RemoteAddress
 static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len, int flags)
 {
-	KEVENT		CompletionEvent = { 0 };
 	PIRP		Irp = NULL;
 	WSK_BUF		WskBuffer = { 0 };
 	LONG		BytesReceived;
 	NTSTATUS	Status;
 	ULONG		wsk_flags;
 
-	struct      task_struct *thread = current;
-	PVOID       waitObjects[2];
-	int         wObjCount = 1;
+	int remaining_time;
 
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
@@ -1278,17 +1268,14 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		return -EOPNOTSUPP;
 
 	if (socket->error_status != 0)
-{
-// printk("Socket in error state %d\n", socket->error_status);
 		return socket->error_status;
-}
 
 	Status = InitWskBuffer(vec[0].iov_base, vec[0].iov_len, &WskBuffer, TRUE, TRUE);
 	if (!NT_SUCCESS(Status)) {
 		return winsock_to_linux_error(Status);
 	}
 
-	Irp = wsk_new_irp(&CompletionEvent, NULL);
+	Irp = wsk_new_irp(NULL, socket, receive_completion);
 	if (Irp == NULL) {
 		FreeWskBuffer(&WskBuffer, 1);
 		return -ENOMEM;
@@ -1306,128 +1293,53 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		return -ENOTCONN;
 	}
 
+printk("into WskReceive ...\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
 				wsk_flags,
 				Irp);
+printk("out of WskReceive, Status is 0x%08x ...\n", Status);
 	mutex_unlock(&socket->wsk_mutex);
 
-    if (Status == STATUS_PENDING)
-    {
-        LARGE_INTEGER	nWaitTime;
-        LARGE_INTEGER	*pTime;
-
-        if (socket->sk->sk_rcvtimeo <= 0 || socket->sk->sk_rcvtimeo == MAX_SCHEDULE_TIMEOUT)
-        {
-            pTime = 0;
-        }
-        else
-        {
-            nWaitTime.QuadPart = -1LL * socket->sk->sk_rcvtimeo * 1000 * 10 * 1000 / HZ;
-            pTime = &nWaitTime;
-// printk("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadPart, socket->sk->sk_rcvtimeo);
-        }
-
-        waitObjects[0] = (PVOID) &CompletionEvent;
-        if (thread->has_sig_event)
-        {
-            waitObjects[1] = (PVOID) &thread->sig_event;
-            wObjCount = 2;
-        } 
-
-// printk("timeout is %d\n", socket->sk->sk_rcvtimeo);
-        Status = KeWaitForMultipleObjects(wObjCount, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, pTime, NULL);
-// printk("Status is %d\n", Status);
-
-        switch (Status)
-        {
-        case STATUS_WAIT_0: // waitObjects[0] CompletionEvent
-            if (Irp->IoStatus.Status == STATUS_SUCCESS)
-            {
-                BytesReceived = (LONG) Irp->IoStatus.Information;
-		if (BytesReceived == 0)
-			dbg("BytesReceived is 0, socket closed by peer?\n");
-            }
-            else
-            {
-		dbg("receive completed with error %x\n", Irp->IoStatus.Status);
-		BytesReceived = winsock_to_linux_error(Irp->IoStatus.Status);
-            }
-            break;
-
-        case STATUS_WAIT_1:
-	    dbg("receive interrupted by signal\n");
-//            flush_signals(current);	/* TODO: this is probably wrong here */
-            BytesReceived = -EINTR;
-            break;
-
-        case STATUS_TIMEOUT:
-	    dbg("receive timed out\n");
-            BytesReceived = -EAGAIN;
-            break;
-
-        default:
-	    dbg("wait_event returned error %x\n", Status);
-            BytesReceived = winsock_to_linux_error(Status);
-            break;
-        }
-    }
-	else
+	if (Status == STATUS_PENDING)
 	{
-// printk("status is not pending\n");
-		if (Status == STATUS_SUCCESS)
-		{
-			BytesReceived = (LONG) Irp->IoStatus.Information;
-			dbg("WskReceive returned immediately, data (%d bytes) is available\n", BytesReceived);
-		}
-		else
-		{
-			dbg("WskReceive error status=%x\n", Status);
-			BytesReceived = winsock_to_linux_error(Status);
-		}
-	}
+		socket->data_received = false;
+printk("into wait_event_interruptible_timeout ...\n");
+		remaining_time = wait_event_interruptible_timeout(
+			socket->receive_waitqueue,
+			socket->data_received,
+			socket->sk->sk_rcvtimeo);
 
-	if (BytesReceived == -EINTR || BytesReceived == -EAGAIN)
-	{
-		dbg("About to cancel irp\n");
-		// cancel irp in wsk subsystem
-		IoCancelIrp(Irp);
-		dbg("waiting for cancel irp to complete\n");
-		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
-		dbg("after KeWaitForSingleObject()\n");
-		if (Irp->IoStatus.Information > 0)
+printk("out of wait_event_interruptible_timeout remaining_time is %d...\n", remaining_time);
+		if (remaining_time <= 0)
+			remaining_time = -EAGAIN;
+
+		if (remaining_time == -EINTR || remaining_time == -EAGAIN)
 		{
-				/* When network is interrupted while we
-				 * are serving a Primary Diskless server
-				 * we want DRBD to know that the network
-				 * is down. Do not deliver the data to
-				 * DRBD, it should cancel the receiver
-				 * instead (else it would get stuck in
-				 * NetworkFailure). This is probably a
-				 * DRBD bug, since Linux (userland) recv
-				 * would deliver EINTR only if no data
-				 * is available.
-				 */
-
-		/* Deliver what we have in case we timed out. */
-
-			if (BytesReceived == -EAGAIN) {
-				dbg("Timed out, but there is data (%d bytes) returning it.\n", Irp->IoStatus.Information);
+			if (Irp->IoStatus.Information > 0) {
+printk("some data was received ...\n");
 				BytesReceived = Irp->IoStatus.Information;
 			} else {
-				dbg("Receiving cancelled (errno is %d) but data available (%d bytes, returning it).\n", BytesReceived, Irp->IoStatus.Information);
-				BytesReceived = Irp->IoStatus.Information;
+				IoCancelIrp(Irp);
+				BytesReceived = remaining_time;
 			}
-		}
-	}
 
+			goto out;
+		}
+		Status = Irp->IoStatus.Status;
+	}
+	if (Status == STATUS_SUCCESS)
+		BytesReceived = (LONG) Irp->IoStatus.Information;
+	else
+		BytesReceived = winsock_to_linux_error(Status);
+
+out:
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
 	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
 		socket->error_status = BytesReceived;
-// printk("setting error status to %d\n", socket->error_status);
 	}
 	return BytesReceived;
 }
@@ -1477,6 +1389,10 @@ static void dump_packet(unsigned char *buf, size_t buflen)
 #endif
 }
 
+	/* This function returns data received by the receive_cache
+	 * thread. We need that extra thread for performance reasons.
+	 */
+
 int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
                    size_t num, size_t len, int flags)
 {
@@ -1486,7 +1402,6 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	int ret;
 	LONG_PTR timeout, remaining_time;
 
-// printk("about to receive %d bytes on socket %p\n", len, socket);
 	if (KeGetCurrentIrql() == PASSIVE_LEVEL) {
 		if (!socket->have_printed_status) {
 			if (!socket->receiver_cache_enabled)
@@ -1519,21 +1434,19 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	return_buffer_index = 0;
 
-	timeout = socket->sk->sk_rcvtimeo; 
+	timeout = socket->sk->sk_rcvtimeo;
 	while (1) {
-// printk("timeout is %d\n", timeout);
 		remaining_time = wait_event_interruptible_timeout(
-			socket->data_available, 
-			socket->write_index != socket->read_index || 
-			(socket->write_index == socket->read_index && socket->receive_buffer_full) || 
-			socket->error_status != 0 || 
+			socket->data_available,
+			socket->write_index != socket->read_index ||
+			(socket->write_index == socket->read_index && socket->receive_buffer_full) ||
+			socket->error_status != 0 ||
 			socket->sk->sk_state != TCP_ESTABLISHED,
 			timeout);
 
-// printk("remaining_time is %d\n", remaining_time);
 		if (remaining_time == -EINTR)
 			return -EINTR;
-		if (remaining_time <= 0)
+		if (remaining_time <= 0)	/* ?? really ?? not == 0 ?? */
 			return -EAGAIN;
 		timeout = remaining_time;
 
@@ -1687,7 +1600,7 @@ static int wsk_bind(
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL || myaddr == NULL)
 		return -EINVAL;
 
-	Irp = wsk_new_irp(&CompletionEvent, NULL);
+	Irp = wsk_new_irp(&CompletionEvent, NULL, NULL);
 	if (Irp == NULL)
 		return -ENOMEM;
 
@@ -1724,7 +1637,7 @@ static NTSTATUS ControlSocket(
 	if (wsk_state != WSK_INITIALIZED || !WskSocket)
 		return -EINVAL;
 
-	Irp = wsk_new_irp(&CompletionEvent, NULL);
+	Irp = wsk_new_irp(&CompletionEvent, NULL, NULL);
 	if (Irp == NULL)
 		return -ENOMEM;
 
@@ -1848,6 +1761,7 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	init_waitqueue_head(&socket->buffer_available);
 	init_waitqueue_head(&socket->data_available);
 	init_waitqueue_head(&socket->connected_waitqueue);
+	init_waitqueue_head(&socket->receive_waitqueue);
 
 	socket->have_printed_status = false;
 
