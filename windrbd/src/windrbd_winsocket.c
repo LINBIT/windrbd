@@ -215,7 +215,7 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *
 		KeInitializeEvent(CompletionEvent, NotificationEvent, FALSE);
 		IoSetCompletionRoutine(irp, completion_fire_event, CompletionEvent, TRUE, TRUE, TRUE);
 	} else if (s) {
-		IoSetCompletionRoutine(irp, completion_routine, s, TRUE, TRUE, TRUE);
+		IoSetCompletionRoutine(irp, completion_routine, s, TRUE, TRUE, FALSE);
 	} else {
 		IoSetCompletionRoutine(irp, completion_free_irp, NULL, TRUE, TRUE, TRUE);
 	}
@@ -1292,7 +1292,7 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		FreeWskBuffer(&WskBuffer, 1);
 		return -ENOTCONN;
 	}
-
+	socket->data_received = false;
 printk("into WskReceive ...\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
@@ -1304,7 +1304,6 @@ printk("out of WskReceive, Status is 0x%08x ...\n", Status);
 
 	if (Status == STATUS_PENDING)
 	{
-		socket->data_received = false;
 printk("into wait_event_interruptible_timeout ...\n");
 		remaining_time = wait_event_interruptible_timeout(
 			socket->receive_waitqueue,
@@ -1312,7 +1311,7 @@ printk("into wait_event_interruptible_timeout ...\n");
 			socket->sk->sk_rcvtimeo);
 
 printk("out of wait_event_interruptible_timeout remaining_time is %d...\n", remaining_time);
-		if (remaining_time <= 0)
+		if (remaining_time == 0)
 			remaining_time = -EAGAIN;
 
 		if (remaining_time == -EINTR || remaining_time == -EAGAIN)
