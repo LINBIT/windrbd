@@ -22,7 +22,7 @@ export LINBIT_CI_MAX_CPUS=5
 # fails: (which is intended)
 # export VIRTER_TIME_SSH_PING_COUNT=1
 # This should be enough:
-export VIRTER_TIME_SSH_PING_COUNT=300
+export VIRTER_TIME_SSH_PING_COUNT=600
 
 # time ./virter/run-test.sh --variant=windows
 # time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=20
