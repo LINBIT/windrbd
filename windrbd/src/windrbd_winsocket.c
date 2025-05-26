@@ -215,7 +215,7 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *
 		KeInitializeEvent(CompletionEvent, NotificationEvent, FALSE);
 		IoSetCompletionRoutine(irp, completion_fire_event, CompletionEvent, TRUE, TRUE, TRUE);
 	} else if (s) {
-		IoSetCompletionRoutine(irp, completion_routine, s, TRUE, TRUE, FALSE);
+		IoSetCompletionRoutine(irp, completion_routine, s, TRUE, TRUE, TRUE);
 	} else {
 		IoSetCompletionRoutine(irp, completion_free_irp, NULL, TRUE, TRUE, TRUE);
 	}
@@ -1260,6 +1260,7 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 	ULONG		wsk_flags;
 
 	int remaining_time;
+	int cancel_remaining_time;
 
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !vec || vec[0].iov_base == NULL || ((int) vec[0].iov_len == 0))
 		return -EINVAL;
@@ -1311,19 +1312,29 @@ printk("into wait_event_interruptible_timeout ...\n");
 			socket->data_received,
 			socket->sk->sk_rcvtimeo);
 
-printk("out of wait_event_interruptible_timeout remaining_time is %d...\n", remaining_time);
+printk("out of wait_event_interruptible_timeout remaining_time is %d Irp->IoStatus.Information is %d ...\n", remaining_time, Irp->IoStatus.Information);
 		if (remaining_time == 0)
 			remaining_time = -EAGAIN;
 
 		if (remaining_time == -EINTR || remaining_time == -EAGAIN)
 		{
+printk("CANCELLING IRP %p ...\n", Irp);
+			IoCancelIrp(Irp);
+printk("waiting for IRP completion\n");
+			cancel_remaining_time = wait_event_interruptible_timeout(
+				socket->receive_waitqueue,
+				socket->data_received,
+				socket->sk->sk_rcvtimeo);
+
+			if (cancel_remaining_time <= 0)
+				printk("Warning: cancel_remaining_time is %d after IRP cancellation\n", cancel_remaining_time);
+
+printk("Ok IRP completed cancel_remaining_time is %d Irp->IoStatus.Information is %d\n", cancel_remaining_time, Irp->IoStatus.Information);
+
 			if (Irp->IoStatus.Information > 0) {
 printk("some data was received ...\n");
 				BytesReceived = Irp->IoStatus.Information;
 			} else {
-printk("CANCELLING IRP %p ...\n", Irp);
-				IoCancelIrp(Irp);
-printk("still alive?\n");
 				BytesReceived = remaining_time;
 			}
 
