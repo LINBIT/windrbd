@@ -1451,7 +1451,11 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	timeout = socket->sk->sk_rcvtimeo;
 	while (1) {
-printk("into wait_event_interruptible_timeout ...\n");
+// printk("into wait_event_interruptible_timeout timeout is %d...\n", timeout);
+		if (timeout < 0) {
+			printk("Warning: timeout < 0 before wait_event_interruptible_timeout...\n");
+			return -EINVAL;
+		}
 		remaining_time = wait_event_interruptible_timeout(
 			socket->data_available,
 			socket->write_index != socket->read_index ||
@@ -1460,11 +1464,11 @@ printk("into wait_event_interruptible_timeout ...\n");
 			socket->sk->sk_state != TCP_ESTABLISHED,
 			timeout);
 
-printk("out of wait_event_interruptible_timeout, remaining time is %d ...\n", remaining_time);
+// printk("out of wait_event_interruptible_timeout, remaining time is %d ...\n", remaining_time);
 		ret = 1;
-		if (remaining_time == -EINTR)
-			ret = -EINTR;
-		if (remaining_time <= 0)	/* ?? really ?? not == 0 ?? */
+		if (remaining_time < 0)
+			ret = remaining_time;
+		if (remaining_time == 0)
 			ret = -EAGAIN;
 		timeout = remaining_time;
 
@@ -1472,7 +1476,7 @@ printk("out of wait_event_interruptible_timeout, remaining time is %d ...\n", re
 			ret = socket->error_status;
 		if (socket->sk->sk_state != TCP_ESTABLISHED)
 			ret = 0;
-printk("ret is %d\n", ret);
+// printk("ret is %d\n", ret);
 
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 		if (socket->read_index < socket->write_index)
@@ -1496,7 +1500,7 @@ printk("ret is %d\n", ret);
 		if (bytes_to_copy <= 0) {
 			if (ret != 1)
 {
-printk("nothing received and ret is %d, returning that ...\n", ret);
+// printk("nothing received and ret is %d, returning that ...\n", ret);
 				return ret;
 }
 			continue;
@@ -1521,26 +1525,26 @@ printk("nothing received and ret is %d, returning that ...\n", ret);
 
 		wake_up(&socket->buffer_available);
 
-printk("about to maybe return data ...\n");
+// printk("about to maybe return data ...\n");
 		if (flags & MSG_WAITALL) {
-printk("MSG_WAITALL ...\n");
+// printk("MSG_WAITALL ...\n");
 			if (ret != 1 || return_buffer_index == len) {
 				dump_packet(vec[0].iov_base, return_buffer_index);
-printk("data %d ret is %d len is %d...\n", return_buffer_index, ret, len);
+// printk("data %d ret is %d len is %d...\n", return_buffer_index, ret, len);
 				return return_buffer_index;
 			}
 		} else {
 			dump_packet(vec[0].iov_base, return_buffer_index);
-printk("some data received: return_buffer_index is %d\n", return_buffer_index);
+// printk("some data received: return_buffer_index is %d\n", return_buffer_index);
 			return return_buffer_index;
 		}
 		if (ret != 1)
 {
-printk("ok ret is %d, returning it ...\n", ret);
+// printk("ok ret is %d, returning it ...\n", ret);
 			return ret;
 }
 
-printk("ok, next iteration ...\n");
+// printk("ok, next iteration ...\n");
 	}
 	return -EINVAL;
 }
