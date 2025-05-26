@@ -1435,6 +1435,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		ret = wsk_recvmsg(socket, msg, vec, num, len, flags);
 		if (ret > 0)
 			dump_packet(vec[0].iov_base, ret);
+printk("returning %d ...\n", ret);
 		return ret;
 	}
 
@@ -1500,7 +1501,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		if (bytes_to_copy <= 0) {
 			if (ret != 1)
 {
-// printk("nothing received and ret is %d, returning that ...\n", ret);
+printk("nothing received and ret is %d, returning that ...\n", ret);
 				return ret;
 }
 			continue;
@@ -1530,17 +1531,17 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 // printk("MSG_WAITALL ...\n");
 			if (ret != 1 || return_buffer_index == len) {
 				dump_packet(vec[0].iov_base, return_buffer_index);
-// printk("data %d ret is %d len is %d...\n", return_buffer_index, ret, len);
+printk("data %d ret is %d len is %d...\n", return_buffer_index, ret, len);
 				return return_buffer_index;
 			}
 		} else {
 			dump_packet(vec[0].iov_base, return_buffer_index);
-// printk("some data received: return_buffer_index is %d\n", return_buffer_index);
+printk("some data received: return_buffer_index is %d\n", return_buffer_index);
 			return return_buffer_index;
 		}
 		if (ret != 1)
 {
-// printk("ok ret is %d, returning it ...\n", ret);
+printk("ok ret is %d, returning it ...\n", ret);
 			return ret;
 }
 
@@ -1591,6 +1592,7 @@ static int socket_receive_thread(void *p)
 			continue;	/* wait_event should block */
 		}
 		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
+printk("wsk_recvmsg returned %d ...\n", err);
 
 		if (err == -EAGAIN || err == -EINTR)
 			continue;
