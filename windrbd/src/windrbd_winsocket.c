@@ -179,7 +179,7 @@ static NTSTATUS __attribute__((stdcall)) receive_completion(struct _DEVICE_OBJEC
 {
 	struct socket *s = sock_p;
 
-printk("irp->IoStatus.Status is 0x%08x irp->IoStatus.Information is %d\n", irp->IoStatus.Status, irp->IoStatus.Information);
+// printk("irp->IoStatus.Status is 0x%08x irp->IoStatus.Information is %d\n", irp->IoStatus.Status, irp->IoStatus.Information);
 
 	s->data_received = true;
 	wake_up(&s->receive_waitqueue);
@@ -1281,7 +1281,7 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		FreeWskBuffer(&WskBuffer, 1);
 		return -ENOMEM;
 	}
-printk("Ok, Irp is %p\n", Irp);
+// printk("Ok, Irp is %p\n", Irp);
 
 	wsk_flags = 0;
 	if (flags & MSG_WAITALL)
@@ -1295,32 +1295,32 @@ printk("Ok, Irp is %p\n", Irp);
 		return -ENOTCONN;
 	}
 	socket->data_received = false;
-printk("into WskReceive ...\n");
+// printk("into WskReceive ...\n");
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
 				wsk_flags,
 				Irp);
-printk("out of WskReceive, Status is 0x%08x ...\n", Status);
+// printk("out of WskReceive, Status is 0x%08x ...\n", Status);
 	mutex_unlock(&socket->wsk_mutex);
 
 	if (Status == STATUS_PENDING)
 	{
-printk("into wait_event_interruptible_timeout ...\n");
+// printk("into wait_event_interruptible_timeout ...\n");
 		remaining_time = wait_event_interruptible_timeout(
 			socket->receive_waitqueue,
 			socket->data_received,
 			socket->sk->sk_rcvtimeo);
 
-printk("out of wait_event_interruptible_timeout remaining_time is %d Irp->IoStatus.Information is %d ...\n", remaining_time, Irp->IoStatus.Information);
+// printk("out of wait_event_interruptible_timeout remaining_time is %d Irp->IoStatus.Information is %d ...\n", remaining_time, Irp->IoStatus.Information);
 		if (remaining_time == 0)
 			remaining_time = -EAGAIN;
 
 		if (remaining_time == -EINTR || remaining_time == -EAGAIN)
 		{
-printk("CANCELLING IRP %p ...\n", Irp);
+// printk("CANCELLING IRP %p ...\n", Irp);
 			IoCancelIrp(Irp);
-printk("waiting for IRP completion\n");
+// printk("waiting for IRP completion\n");
 			cancel_remaining_time = wait_event_interruptible_timeout(
 				socket->receive_waitqueue,
 				socket->data_received,
@@ -1329,10 +1329,10 @@ printk("waiting for IRP completion\n");
 			if (cancel_remaining_time <= 0)
 				printk("Warning: cancel_remaining_time is %d after IRP cancellation\n", cancel_remaining_time);
 
-printk("Ok IRP completed cancel_remaining_time is %d Irp->IoStatus.Information is %d\n", cancel_remaining_time, Irp->IoStatus.Information);
+// printk("Ok IRP completed cancel_remaining_time is %d Irp->IoStatus.Information is %d\n", cancel_remaining_time, Irp->IoStatus.Information);
 
 			if (Irp->IoStatus.Information > 0) {
-printk("some data was received ...\n");
+// printk("some data was received ...\n");
 				BytesReceived = Irp->IoStatus.Information;
 			} else {
 				BytesReceived = remaining_time;
@@ -1348,9 +1348,9 @@ printk("some data was received ...\n");
 		BytesReceived = winsock_to_linux_error(Status);
 
 out:
-printk("About to free Irp %p ...\n", Irp);
+// printk("About to free Irp %p ...\n", Irp);
 	IoFreeIrp(Irp);
-printk("Irp %p freed.\n", Irp);
+// printk("Irp %p freed.\n", Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
 	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
