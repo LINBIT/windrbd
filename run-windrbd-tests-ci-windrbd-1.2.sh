@@ -17,7 +17,8 @@ export DRBD_UTILS_VERSION=9.0.0.latest-*
 export PULL_WINDOWS_ONLY=true
 # export LINBIT_CI_MAX_CPUS=3
 # This is required for the connect-5 test: else we get failures
-export LINBIT_CI_MAX_CPUS=5
+# export LINBIT_CI_MAX_CPUS=5
+export LINBIT_CI_MAX_CPUS=6
 
 # fails: (which is intended)
 # export VIRTER_TIME_SSH_PING_COUNT=1
