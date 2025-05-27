@@ -617,10 +617,14 @@ static int disconnect_socket(struct socket *socket)
 
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskDisconnect(socket->wsk_socket, NULL, 0, irp);
 
+printk("socket %p WskDisconnect returned 0x%08x\n", socket, status);
 	if (status == STATUS_PENDING) {
+printk("socket %p disconnect pending ... \n", socket);
 		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
+printk("socket %p ok, finished\n", socket);
 		status = irp->IoStatus.Status;
 	}
+printk("socket %p WskDisconnect status is 0x%08x\n", socket, status);
 	if (!NT_SUCCESS(status))
 		printk("WskDisconnect returned error status 0x%08x\n", status);
 
@@ -742,6 +746,7 @@ static void close_wsk_socket(struct _WSK_SOCKET *wsk_socket)
 	if (Irp == NULL)
 		return;
 
+printk("into WskCloseSocket ...\n");
 	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) wsk_socket->Dispatch)->WskCloseSocket(wsk_socket, Irp);
 }
 
@@ -786,6 +791,7 @@ static void close_socket(struct socket *socket)
 		 */
 		disconnect_socket(socket);
 
+printk("socket %p into WskCloseSocket ...\n", socket);
 		(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
 		socket->wsk_socket = NULL;
 
