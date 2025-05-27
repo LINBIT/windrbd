@@ -25,7 +25,8 @@ export LINBIT_CI_MAX_CPUS=5
 export VIRTER_TIME_SSH_PING_COUNT=600
 
 # time ./virter/run-test.sh --variant=windows
-time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=20
+# time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=20
+time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=100
 # time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=20
 # time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=5
 # time ./virter/run-test.sh --variant=windows --torun=invalid-names
