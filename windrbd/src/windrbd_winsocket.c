@@ -1453,7 +1453,7 @@ printk("socket: %p returning %d ...\n", socket, ret);
 
 	timeout = socket->sk->sk_rcvtimeo;
 	while (1) {
-// printk("into wait_event_interruptible_timeout timeout is %d...\n", timeout);
+printk("socket is %p into wait_event_interruptible_timeout timeout is %d...\n", socket, timeout);
 		if (timeout < 0) {
 			printk("Warning: timeout < 0 before wait_event_interruptible_timeout...\n");
 			return -EINVAL;
@@ -1463,10 +1463,11 @@ printk("socket: %p returning %d ...\n", socket, ret);
 			socket->write_index != socket->read_index ||
 			(socket->write_index == socket->read_index && socket->receive_buffer_full) ||
 			socket->error_status != 0 ||
-			socket->sk->sk_state != TCP_ESTABLISHED,
+			socket->sk->sk_state != TCP_ESTABLISHED ||
+			(flags | MSG_DONTWAIT) != 0,
 			timeout);
 
-// printk("out of wait_event_interruptible_timeout, remaining time is %d ...\n", remaining_time);
+printk("socket is %p out of wait_event_interruptible_timeout, remaining time is %d ... flags | MSG_DONTWAIT is 0x%08x\n", socket, remaining_time, flags | MSG_DONTWAIT);
 		ret = 1;
 		if (remaining_time < 0)
 			ret = remaining_time;
@@ -1478,7 +1479,7 @@ printk("socket: %p returning %d ...\n", socket, ret);
 			ret = socket->error_status;
 		if (socket->sk->sk_state != TCP_ESTABLISHED)
 			ret = 0;
-// printk("ret is %d\n", ret);
+printk("socket is %p ret is %d\n", socket, ret);
 
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 		if (socket->read_index < socket->write_index)
@@ -1546,7 +1547,7 @@ printk("socket: %p ok ret is %d, returning it ...\n", socket, ret);
 			return ret;
 }
 
-// printk("ok, next iteration ...\n");
+printk("socket: %p ok, next iteration ...\n", socket);
 	}
 	return -EINVAL;
 }
