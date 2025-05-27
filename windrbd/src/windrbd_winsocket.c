@@ -1464,10 +1464,10 @@ printk("socket is %p into wait_event_interruptible_timeout timeout is %d...\n", 
 			(socket->write_index == socket->read_index && socket->receive_buffer_full) ||
 			socket->error_status != 0 ||
 			socket->sk->sk_state != TCP_ESTABLISHED ||
-			(flags | MSG_DONTWAIT) != 0,
+			((flags & MSG_DONTWAIT) != 0),
 			timeout);
 
-printk("socket is %p out of wait_event_interruptible_timeout, remaining time is %d ... flags | MSG_DONTWAIT is 0x%08x\n", socket, remaining_time, flags | MSG_DONTWAIT);
+printk("socket is %p out of wait_event_interruptible_timeout, remaining time is %d ... flags & MSG_DONTWAIT is 0x%08x\n", socket, remaining_time, flags & MSG_DONTWAIT);
 		ret = 1;
 		if (remaining_time < 0)
 			ret = remaining_time;
@@ -1479,6 +1479,12 @@ printk("socket is %p out of wait_event_interruptible_timeout, remaining time is 
 			ret = socket->error_status;
 		if (socket->sk->sk_state != TCP_ESTABLISHED)
 			ret = 0;
+
+		if (((flags & MSG_DONTWAIT) != 0) && (ret == 1))
+{
+printk("socket %p MSG_DONTWAIT set and no error / EOF setting ret to 0...\n", socket);
+			ret = 0;
+}
 printk("socket is %p ret is %d\n", socket, ret);
 
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
