@@ -141,6 +141,9 @@ struct socket {
 	bool is_connected;
 	struct wait_queue_head receive_waitqueue;
 	bool data_received;
+	struct wait_queue_head send_waitqueue;
+
+	bool about_to_close;
 };
 
 /* TODO: implement this: */

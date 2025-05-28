@@ -633,6 +633,17 @@ printk("socket %p WskDisconnect status is 0x%08x\n", socket, status);
 	return winsock_to_linux_error(status);
 }
 
+static void drain_send_buffer(struct socket *socket)
+{
+printk("right now %d bytes in send buffer ...\n", socket->sk->sk_wmem_queued);
+	socket->about_to_close = true;
+	while (socket->sk->sk_wmem_queued > 0) {
+		KeWaitForSingleObject(&socket->data_sent, Executive, KernelMode, FALSE, NULL);
+printk("right now %d bytes in send buffer ...\n", socket->sk->sk_wmem_queued);
+	}
+printk("send buffer should be empty now ...\n");
+}
+
 static int CreateSocket(
 	ADDRESS_FAMILY		AddressFamily,
 	USHORT			SocketType,
@@ -782,6 +793,8 @@ static void close_socket(struct socket *socket)
 		kfree(socket->accept_wsk_sockets);
 		socket->accept_wsk_sockets = NULL;
 	}
+
+	drain_send_buffer(socket);
 
 	if (socket->wsk_socket != NULL) {
 		mutex_lock(&socket->wsk_mutex);
@@ -1033,6 +1046,9 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 	char *tmp_buffer;
 
 	if (wsk_state != WSK_INITIALIZED || !socket || !socket->wsk_socket || !buf || ((int) len <= 0))
+		return -EINVAL;
+
+	if (socket->about_to_close)
 		return -EINVAL;
 
 	if (socket->error_status != 0) {
@@ -1812,6 +1828,7 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	KeInitializeEvent(&socket->accept_event, SynchronizationEvent, FALSE);
 	mutex_init(&socket->wsk_mutex);
 	socket->ops = &winsocket_ops;
+	socket->about_to_close = false;
 
 	get_registry_int(L"enable_receiver_cache", &socket->receiver_cache_enabled, 1);
 	init_waitqueue_head(&socket->buffer_available);
