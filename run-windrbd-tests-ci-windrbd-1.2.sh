@@ -25,6 +25,9 @@ export LINBIT_CI_MAX_CPUS=6
 # This should be enough:
 export VIRTER_TIME_SSH_PING_COUNT=600
 
+# should fail:
+export VIRTER_TIME_SHUTDOWN_TIMEOUT=1
+
 # time ./virter/run-test.sh --variant=windows
 # time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=20
 time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=100
