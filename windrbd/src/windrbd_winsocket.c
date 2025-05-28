@@ -393,7 +393,7 @@ static void have_sent(struct socket *socket, size_t length)
 	socket->num_sends_inflight--;
 	spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
 
-	KeSetEvent(&socket->data_sent, IO_NO_INCREMENT, FALSE);
+	wake_up(&socket->send_waitqueue);
 }
 
 static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVICE_OBJECT	*DeviceObject, struct _IRP *Irp,void *completion_p)
@@ -483,58 +483,31 @@ static NTSTATUS __attribute__((stdcall)) send_page_completion_onlyonce(struct _D
 static int wait_for_sendbuf(struct socket *socket, size_t want_to_send)
 {
 	KIRQL flags;
-	LARGE_INTEGER timeout;
-	NTSTATUS status;
-	void *wait_objects[2];
-	int num_objects;
+	int remaining_time;
 
-	while (1) {
-		spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
+retry:
+	spin_lock_irqsave(&socket->send_buf_counters_lock, flags);
 
-/*
-		if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf ||
-		    socket->num_sends_inflight > 1000) { // TODO: make configurable
-*/
-		if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf) {
-			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
+	if (socket->sk->sk_wmem_queued > socket->sk->sk_sndbuf) {
+		spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
 
-			timeout.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
+		remaining_time = wait_event_interruptible_timeout(
+			socket->send_waitqueue,
+			socket->sk->sk_wmem_queued <= socket->sk->sk_sndbuf,
+			socket->sk->sk_sndtimeo);
 
-	/* TODO: once it is fixed, use wait_event_interruptible() here. */
+		if (remaining_time == 0)
+			return -EAGAIN;
+		if (remaining_time < 0)
+			return remaining_time;
 
-			wait_objects[0] = &socket->data_sent;
-			num_objects = 1;
-			if (current->has_sig_event) {
-				wait_objects[1] = &current->sig_event;
-				num_objects = 2;
-			}
-			status = KeWaitForMultipleObjects(num_objects, &wait_objects[0], WaitAny, Executive, KernelMode, FALSE, &timeout, NULL);
-
-			switch (status) {
-			case STATUS_WAIT_0:
-				continue;
-			case STATUS_WAIT_1:
-				return -EINTR;
-			case STATUS_TIMEOUT:
-					/* Returning -ETIMEOUT here causes
-					 * the connection to be disconnected
-					 * which we don't want here. DRBD
-					 * knows how to handle this.
-					 */
-				return -EAGAIN;
-			default:
-				dbg("KeWaitForMultipleObjects returned unexpected error %x\n", status);
-				return winsock_to_linux_error(status);
-			}
-		} else {
-			socket->sk->sk_wmem_queued += want_to_send;
-			socket->num_sends_inflight++;
-			spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
-			return 0;
-		}
-			/* TODO: if socket closed meanwhile return an error */
-			/* TODO: need socket refcount for doing so */
+		goto retry;
 	}
+	socket->sk->sk_wmem_queued += want_to_send;
+	socket->num_sends_inflight++;
+	spin_unlock_irqrestore(&socket->send_buf_counters_lock, flags);
+
+	return 0;
 }
 
 /* Library initialization routine: registers us and waits for
@@ -637,13 +610,15 @@ static int disconnect_socket(struct socket *socket)
 
 static void drain_send_buffer(struct socket *socket)
 {
-// printk("right now %d bytes in send buffer ...\n", socket->sk->sk_wmem_queued);
+printk("right now %d bytes in send buffer ...\n", socket->sk->sk_wmem_queued);
 	socket->about_to_close = true;
-	while (socket->sk->sk_wmem_queued > 0) {
-		KeWaitForSingleObject(&socket->data_sent, Executive, KernelMode, FALSE, NULL);
-// printk("right now %d bytes in send buffer ...\n", socket->sk->sk_wmem_queued);
-	}
-// printk("send buffer should be empty now ...\n");
+
+	wait_event_interruptible_timeout(
+		socket->send_waitqueue,
+		socket->sk->sk_wmem_queued == 0,
+		socket->sk->sk_sndtimeo);
+
+printk("send buffer should be empty now (is %d) ...\n", socket->sk->sk_wmem_queued);
 }
 
 static int CreateSocket(
@@ -1825,7 +1800,6 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	kref_init(&socket->kref);
 	spin_lock_init(&socket->send_buf_counters_lock);
 	spin_lock_init(&socket->accept_socket_lock);
-	KeInitializeEvent(&socket->data_sent, SynchronizationEvent, FALSE);
 	socket->num_sends_inflight = 0;
 	KeInitializeEvent(&socket->accept_event, SynchronizationEvent, FALSE);
 	mutex_init(&socket->wsk_mutex);
@@ -1837,6 +1811,7 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	init_waitqueue_head(&socket->data_available);
 	init_waitqueue_head(&socket->connected_waitqueue);
 	init_waitqueue_head(&socket->receive_waitqueue);
+	init_waitqueue_head(&socket->send_waitqueue);
 
 	socket->have_printed_status = false;
 
@@ -2018,7 +1993,7 @@ void windrbd_update_socket_buffer_sizes(struct socket *socket)
 		return;
 
 	if (socket->sk->sk_userlocks & SOCK_SNDBUF_LOCK) {
-                KeSetEvent(&socket->data_sent, IO_NO_INCREMENT, FALSE);
+		wake_up(&socket->send_waitqueue);
 		socket->sk->sk_userlocks &= ~SOCK_SNDBUF_LOCK;
 	}
 	if (socket->sk->sk_userlocks & SOCK_RCVBUF_LOCK) {
