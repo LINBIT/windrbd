@@ -27,7 +27,7 @@ export VIRTER_TIME_SSH_PING_COUNT=600
 
 # should fail: yes it does!
 # export VIRTER_TIME_SHUTDOWN_TIMEOUT=1
-export VIRTER_TIME_SHUTDOWN_TIMEOUT=300
+export VIRTER_TIME_SHUTDOWN_TIMEOUT=300s
 
 # time ./virter/run-test.sh --variant=windows
 # time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=20
