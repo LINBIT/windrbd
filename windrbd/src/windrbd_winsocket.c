@@ -1301,32 +1301,32 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		return -ENOTCONN;
 	}
 	socket->data_received = false;
-printk("socket %p into WskReceive ...\n", socket);
+// printk("socket %p into WskReceive ...\n", socket);
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
 				wsk_flags,
 				Irp);
-printk("socket %p out of WskReceive, Status is 0x%08x ...\n", socket, Status);
+// printk("socket %p out of WskReceive, Status is 0x%08x ...\n", socket, Status);
 	mutex_unlock(&socket->wsk_mutex);
 
 	if (Status == STATUS_PENDING)
 	{
-printk("socket %p into wait_event_interruptible_timeout ...\n", socket);
+// printk("socket %p into wait_event_interruptible_timeout ...\n", socket);
 		remaining_time = wait_event_interruptible_timeout(
 			socket->receive_waitqueue,
 			socket->data_received,
 			socket->sk->sk_rcvtimeo);
 
-printk("socket %p out of wait_event_interruptible_timeout remaining_time is %d Irp->IoStatus.Information is %d ...\n", socket, remaining_time, Irp->IoStatus.Information);
+// printk("socket %p out of wait_event_interruptible_timeout remaining_time is %d Irp->IoStatus.Information is %d ...\n", socket, remaining_time, Irp->IoStatus.Information);
 		if (remaining_time == 0)
 			remaining_time = -EAGAIN;
 
 		if (remaining_time == -EINTR || remaining_time == -EAGAIN)
 		{
-printk("socket %p CANCELLING IRP %p ...\n", socket, Irp);
+// printk("socket %p CANCELLING IRP %p ...\n", socket, Irp);
 			IoCancelIrp(Irp);
-printk("socket %p waiting for IRP completion\n", socket);
+// printk("socket %p waiting for IRP completion\n", socket);
 			cancel_remaining_time = wait_event_interruptible_timeout(
 				socket->receive_waitqueue,
 				socket->data_received,
@@ -1335,10 +1335,10 @@ printk("socket %p waiting for IRP completion\n", socket);
 			if (cancel_remaining_time <= 0)
 				printk("Warning: cancel_remaining_time is %d after IRP cancellation\n", cancel_remaining_time);
 
-printk("socket %p Ok IRP completed cancel_remaining_time is %d Irp->IoStatus.Information is %d\n", socket, cancel_remaining_time, Irp->IoStatus.Information);
+// printk("socket %p Ok IRP completed cancel_remaining_time is %d Irp->IoStatus.Information is %d\n", socket, cancel_remaining_time, Irp->IoStatus.Information);
 
 			if (Irp->IoStatus.Information > 0) {
-printk("socket %p some data was received ...\n", socket);
+// printk("socket %p some data was received ...\n", socket);
 				BytesReceived = Irp->IoStatus.Information;
 			} else {
 				BytesReceived = remaining_time;
@@ -1362,7 +1362,7 @@ out:
 	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
 		socket->error_status = BytesReceived;
 	}
-printk("socket: %p returning %d ...\n", socket, BytesReceived);
+// printk("socket: %p returning %d ...\n", socket, BytesReceived);
 	return BytesReceived;
 }
 
@@ -1442,7 +1442,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		ret = wsk_recvmsg(socket, msg, vec, num, len, flags);
 		if (ret > 0)
 			dump_packet(vec[0].iov_base, ret);
-printk("socket: %p returning %d ...\n", socket, ret);
+// printk("socket: %p returning %d ...\n", socket, ret);
 		return ret;
 	}
 
@@ -1459,7 +1459,7 @@ printk("socket: %p returning %d ...\n", socket, ret);
 
 	timeout = socket->sk->sk_rcvtimeo;
 	while (1) {
-printk("socket is %p into wait_event_interruptible_timeout timeout is %d...\n", socket, timeout);
+// printk("socket is %p into wait_event_interruptible_timeout timeout is %d...\n", socket, timeout);
 		if (timeout < 0) {
 			printk("Warning: timeout < 0 before wait_event_interruptible_timeout...\n");
 			return -EINVAL;
@@ -1473,7 +1473,7 @@ printk("socket is %p into wait_event_interruptible_timeout timeout is %d...\n", 
 			((flags & MSG_DONTWAIT) != 0),
 			timeout);
 
-printk("socket is %p out of wait_event_interruptible_timeout, remaining time is %d ... flags & MSG_DONTWAIT is 0x%08x\n", socket, remaining_time, flags & MSG_DONTWAIT);
+// printk("socket is %p out of wait_event_interruptible_timeout, remaining time is %d ... flags & MSG_DONTWAIT is 0x%08x\n", socket, remaining_time, flags & MSG_DONTWAIT);
 		ret = 1;
 		if (remaining_time < 0)
 			ret = remaining_time;
@@ -1488,10 +1488,10 @@ printk("socket is %p out of wait_event_interruptible_timeout, remaining time is 
 
 		if (((flags & MSG_DONTWAIT) != 0) && (ret == 1))
 {
-printk("socket %p MSG_DONTWAIT set and no error / EOF setting ret to 0...\n", socket);
+// printk("socket %p MSG_DONTWAIT set and no error / EOF setting ret to 0...\n", socket);
 			ret = 0;
 }
-printk("socket is %p ret is %d\n", socket, ret);
+// printk("socket is %p ret is %d\n", socket, ret);
 
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 		if (socket->read_index < socket->write_index)
@@ -1515,7 +1515,7 @@ printk("socket is %p ret is %d\n", socket, ret);
 		if (bytes_to_copy <= 0) {
 			if (ret != 1)
 {
-printk("socket: %p nothing received and ret is %d, returning that ...\n", socket, ret);
+// printk("socket: %p nothing received and ret is %d, returning that ...\n", socket, ret);
 				return ret;
 }
 			continue;
@@ -1545,21 +1545,21 @@ printk("socket: %p nothing received and ret is %d, returning that ...\n", socket
 // printk("MSG_WAITALL ...\n");
 			if (ret != 1 || return_buffer_index == len) {
 				dump_packet(vec[0].iov_base, return_buffer_index);
-printk("socket: %p data %d ret is %d len is %d...\n", socket, return_buffer_index, ret, len);
+// printk("socket: %p data %d ret is %d len is %d...\n", socket, return_buffer_index, ret, len);
 				return return_buffer_index;
 			}
 		} else {
 			dump_packet(vec[0].iov_base, return_buffer_index);
-printk("socket: %p some data received: return_buffer_index is %d\n", socket, return_buffer_index);
+// printk("socket: %p some data received: return_buffer_index is %d\n", socket, return_buffer_index);
 			return return_buffer_index;
 		}
 		if (ret != 1)
 {
-printk("socket: %p ok ret is %d, returning it ...\n", socket, ret);
+// printk("socket: %p ok ret is %d, returning it ...\n", socket, ret);
 			return ret;
 }
 
-printk("socket: %p ok, next iteration ...\n", socket);
+// printk("socket: %p ok, next iteration ...\n", socket);
 	}
 	return -EINVAL;
 }
@@ -1606,7 +1606,7 @@ static int socket_receive_thread(void *p)
 			continue;	/* wait_event should block */
 		}
 		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
-printk("socket: %p wsk_recvmsg returned %d ...\n", s, err);
+// printk("socket: %p wsk_recvmsg returned %d ...\n", s, err);
 
 		if (err == -EAGAIN || err == -EINTR)
 			continue;
