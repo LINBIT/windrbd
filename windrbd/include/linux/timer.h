@@ -14,6 +14,8 @@ struct timer_list {
 extern void add_timer(struct timer_list *t);
 extern int del_timer_sync(struct timer_list *t);
 extern void del_timer(struct timer_list *t);
+extern int timer_delete_sync(struct timer_list *t);
+extern int timer_delete(struct timer_list *t);
 extern int mod_timer(struct timer_list *t, ULONG_PTR expires);
 extern int timer_pending(const struct timer_list * timer);
 

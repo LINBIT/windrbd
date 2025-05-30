@@ -28,6 +28,11 @@ extern void mempool_destroy(mempool_t *pool);
 extern void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask);
 extern void mempool_free(void *element, mempool_t *pool);
 
+static inline bool mempool_is_saturated(mempool_t *pool)
+{
+	return false;
+}
+
 static inline void mempool_exit(mempool_t *pool)
 {
 	mempool_destroy(pool);

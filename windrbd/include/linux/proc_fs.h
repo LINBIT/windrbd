@@ -1,6 +1,9 @@
 #ifndef __LINUX_PROC_FS_H
 #define __LINUX_PROC_FS_H
 
+#include <linux/types.h>
+#include <linux/seq_file.h>
+
 struct proc_dir_entry {
 	int dummy;
 };

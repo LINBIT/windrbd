@@ -1160,6 +1160,22 @@ void timer_setup(struct timer_list *timer, void(*callback)(struct timer_list *ti
 	KeInitializeDpc(&timer->dpc, timer_callback, timer);
 }
 
+/**
+ * timer_pending - is a timer pending?
+ * @timer: the timer in question
+ *
+ * timer_pending will tell whether a given timer is currently pending,
+ * or not. Callers must ensure serialization wrt. other operations done
+ * to this timer, eg. interrupt contexts, or other CPUs on SMP.
+ *
+ * return value: 1 if the timer is pending, 0 if not.
+ */
+
+int timer_pending(const struct timer_list * timer)
+{
+    return timer->ktimer.Header.Inserted;
+}
+
 void add_timer(struct timer_list *t)
 {
 	mod_timer(t, t->expires);
@@ -1171,31 +1187,30 @@ void del_timer(struct timer_list *t)
 	t->expires = 0;
 }
 
-/**
- * timer_pending - is a timer pending?
- * @timer: the timer in question
- *
- * timer_pending will tell whether a given timer is currently pending,
- * or not. Callers must ensure serialization wrt. other operations done
- * to this timer, eg. interrupt contexts, or other CPUs on SMP.
- *
- * return value: 1 if the timer is pending, 0 if not.
- */
-int timer_pending(const struct timer_list * timer)
+int timer_delete(struct timer_list *t)
 {
-    return timer->ktimer.Header.Inserted;
-}
-
-	/* TODO: sync? */
-
-int del_timer_sync(struct timer_list *t)
-{
-	bool pending = 0;
-	pending = timer_pending(t);
+	bool pending = timer_pending(t);
 
 	del_timer(t);
 
 	return pending;
+}
+
+	/* TODO: sync? */
+	/* Need an KeEvent for that .. */
+
+int del_timer_sync(struct timer_list *t)
+{
+	bool pending = timer_pending(t);
+
+	del_timer(t);
+
+	return pending;
+}
+
+int timer_delete_sync(struct timer_list *t)
+{
+	return del_timer_sync(t);
 }
 
 int timer_shutdown_sync(struct timer_list *t)
