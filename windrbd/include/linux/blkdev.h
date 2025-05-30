@@ -632,7 +632,7 @@ struct block_device_reference {
 	IO_REMOVE_LOCK w_remove_lock;
 };
 
-#if (defined DRBD_9_1) || (defined DRBD_9_2)
+#ifndef DRBD_9_0
 
 struct block_device_operations {
 	struct module *owner;
@@ -889,7 +889,7 @@ static inline unsigned int bdev_max_discard_sectors(struct block_device *bdev)
 #define BLKDEV_ZERO_NOUNMAP	(1 << 0)  /* do not free blocks */
 
 	/* TODO: implement these: */
-#if (defined DRBD_9_1) || (defined DRBD_9_2)
+#ifndef DRBD_9_0
 
 extern int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 		sector_t nr_sects, gfp_t gfp_mask, unsigned flags);

@@ -571,7 +571,7 @@ struct bio *bio_alloc_old(gfp_t gfp_mask, int nr_iovecs)
 	return bio_alloc_ll(gfp_mask, nr_iovecs);
 }
 
-#if (defined DRBD_9_1) || (defined DRBD_9_2)
+#ifndef DRBD_9_0
 
 struct bio *bio_alloc(struct block_device *bdev,
                 unsigned short nr_vecs, blk_opf_t opf, gfp_t gfp_mask)
@@ -2798,7 +2798,8 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 	return block_device;
 }
 
-#if (defined DRBD_9_1) || (defined DRBD_9_2)
+#ifndef DRBD_9_0
+
 	/* TODO: use limits here ... something like q->limits = *limits_unsigned should do the trick ... */
 struct gendisk *blk_alloc_disk(struct queue_limits *limits_unused, int unused)
 #else
@@ -3218,7 +3219,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 		goto out_no_windows_device;
 	}
 
-#if (defined DRBD_9_1) || (defined DRBD_9_2)
+#ifndef DRBD_9_0
 	disk = blk_alloc_disk(NULL, 0);
 #else
 	disk = blk_alloc_disk(0);
@@ -3573,7 +3574,7 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 		if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(device->vdisk->part0) < 0) {
 			printk("Warning: could not determine if there is a file system on the DRBD device.\n");
 		}
-#if (defined DRBD_9_1) || (defined DRBD_9_2)
+#ifndef DRBD_9_0
 		err = device->vdisk->fops->open(device->vdisk, FMODE_WRITE);
 #else
 		err = device->vdisk->fops->open(device->vdisk->part0, FMODE_WRITE);
@@ -3608,7 +3609,7 @@ int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 		if (windrbd_rescan_bus() < 0) {
 			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
 		}
-#if (defined DRBD_9_1) || (defined DRBD_9_2)
+#ifndef DRBD_9_0
 		device->vdisk->fops->release(device->vdisk);
 #else
 		device->vdisk->fops->release(device->vdisk, 0);
@@ -3617,7 +3618,7 @@ int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 	}
 	KeClearEvent(&device->vdisk->part0->primary_event);
 
-#if (defined DRBD_9_1) || (defined DRBD_9_2)
+#ifndef DRBD_9_0
 	if (device->open_cnt > 0)
 		printk("Forcing close of DRBD device: device->open_cnt is %d\n", device->open_cnt);
 
@@ -3714,7 +3715,7 @@ void unregister_blkdev(unsigned int major, const char *name)
 
 /* TODO: we need those for supporting TRIM ... */
 
-#if (defined DRBD_9_1) || (defined DRBD_9_2)
+#ifndef DRBD_9_0
 
 int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
         sector_t nr_sects, gfp_t gfp_mask)

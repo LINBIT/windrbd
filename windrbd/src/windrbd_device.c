@@ -1379,7 +1379,7 @@ dbg("out of wait_for_becoming_primary, status is %x\n", status);
 		dbg(KERN_INFO "DRBD device  request: opening DRBD device %s\n",
 			mode == 0 ? "read-only" : "read-write");
 
-#if (defined DRBD_9_1) || (defined DRBD_9_2)
+#ifndef DRBD_9_0
 		err = dev->bd_disk->fops->open(dev->bd_disk, mode);
 #else
 		err = dev->bd_disk->fops->open(dev, mode);
@@ -1448,7 +1448,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_close(struct _DEVICE_OBJECT *de
 */
 
 		if (dev->num_openers > 0)
-#if (defined DRBD_9_1) || (defined DRBD_9_2)
+#ifndef DRBD_9_0
 			dev->bd_disk->fops->release(dev->bd_disk);
 #else
 			dev->bd_disk->fops->release(dev->bd_disk, 0);

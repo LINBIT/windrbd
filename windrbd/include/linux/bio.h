@@ -87,7 +87,7 @@ extern void bioset_free(struct bio_set *);
 
 #define bio_clone_fast(bio, gfp, bio_set) bio_clone(bio, gfp)
 
-#if (defined DRBD_9_1) || (defined DRBD_9_2)
+#ifndef DRBD_9_0
 extern struct bio *bio_alloc(struct block_device *bdev,
 		unsigned short nr_vecs, blk_opf_t opf, gfp_t gfp_mask);
 extern struct bio *bio_alloc_bioset(struct block_device *bdev, unsigned short nr_vecs,

@@ -47,7 +47,7 @@ help:
 	@echo "    V=1                 If set display command line, else pretty print (default)"
 	@echo "    DRIVER_DIR=dir      Take windrbd.sys/cat/inf from this directory"
 	@echo "    DRBD=drbd-dir       Compile this DRBD version"
-	@echo "                        may be one of drbd-9.0, drbd-9.1 or drbd-9.2"
+	@echo "                        may be one of drbd-9.0, drbd-9.1, drbd-9.2 or drbd-9.3"
 	@echo
 	@echo "Examples:"
 	@echo
@@ -171,6 +171,10 @@ endif
 
 ifeq ($(DRBD),drbd-9.2)
 DEFINES+=-DDRBD_9_2=1
+endif
+
+ifeq ($(DRBD),drbd-9.3)
+DEFINES+=-DDRBD_9_3=1
 endif
 
 DEFINES+=-DBLKDEV_ISSUE_ZEROOUT_EXPORTED=1
