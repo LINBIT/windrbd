@@ -12,6 +12,7 @@ struct genl_multicast_group {
 
 extern const struct genl_family *the_windrbd_netlink_family;
 
+/* TODO: implement this */
 static inline int genl_register_family_with_ops(const struct genl_family *f, const struct genl_ops *o, int count)
 {
 	the_windrbd_netlink_family = f;
