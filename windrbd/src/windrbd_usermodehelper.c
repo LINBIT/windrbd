@@ -4,14 +4,17 @@
 #include <linux/mutex.h>
 #include <linux/printk.h>
 
-/* In case daemon is not running or a process takes longer than that
- * to terminate, timeout after 1 second. This should not be too long
- * since there are DRBD processes stalled while waiting.
+/* This timeout is between call_usermodehelper and some daemon to
+ * fetch the request. If this timeout elapses then the user mode
+ * daemon is most likely not running. There is a special case,
+ * namely the user mode helper daemon fetching the request but
+ * terminates / crashes before it delivers the return value of
+ * the user mode helper process, here also this timeout is used.
+ *
+ * There is *no* timeout for the user mode helper process itself
+ * this is how Linux also behaves.
  */
 
-/* This timeout is between call_usermodehelper and some daemon to
- * fetch the request.
- */
 #define REQUEST_TIMEOUT_MS 10000
 
 struct um_request {
@@ -51,6 +54,8 @@ static int string_table_to_buffer(char *buf, char **argv, size_t max_size, size_
 
 	return argc;
 }
+
+static unsigned long long umhelper_daemon_seen;
 
 int call_usermodehelper(const char *path, char **argv, char **envp, int wait)
 {
@@ -100,12 +105,33 @@ int call_usermodehelper(const char *path, char **argv, char **envp, int wait)
 		printk("User mode helper request timed out after %d milliseconds, is the user mode helper daemon running?\n", REQUEST_TIMEOUT_MS);
 		ret = -ETIMEDOUT;
 	} else {
-			/* Wait forever. Some scripts can take several minutes
-			 * to complete. Linux also does it this way. */
-		status = KeWaitForSingleObject(&new_request->return_event, Executive, KernelMode, FALSE, NULL);
 
-		ret = new_request->retval;
-		printk("User mode helper \"%s\" returned %d (exit status is %d)\n", (argv[0] != NULL && argv[1] != NULL) ? argv[1] : "unknown", ret, (ret >> 8) & 0xff);
+		/* Wait forever. Some scripts can take several minutes
+		 * to complete. Linux also does it this way.
+		 *
+		 * But also check every 10 seconds if the user mode
+		 * helper daemon is still running. Else it might happen
+		 * that we wait forever.
+		 */
+
+		while (1) {
+			timeout.QuadPart = -10*1000*REQUEST_TIMEOUT_MS;
+			status = KeWaitForSingleObject(&new_request->return_event, Executive, KernelMode, FALSE, &timeout);
+
+			if (status == STATUS_TIMEOUT &&
+			    umhelper_daemon_seen != 0 &&
+			    jiffies > umhelper_daemon_seen+REQUEST_TIMEOUT_MS*HZ/1000) {
+				printk("User mode helper not seen the last %d milliseconds, is the user mode helper daemon *still* running?\n(it fetched a um request but didn't poll for a return value recently)\n", REQUEST_TIMEOUT_MS);
+				ret = -ETIMEDOUT;
+				break;
+			}
+
+			if (status == STATUS_SUCCESS) {
+				ret = new_request->retval;
+				printk("User mode helper \"%s\" returned %d (exit status is %d)\n", (argv[0] != NULL && argv[1] != NULL) ? argv[1] : "unknown", ret, (ret >> 8) & 0xff);
+				break;
+			}
+		}
 	}
 
 	mutex_lock(&request_mutex);
@@ -158,6 +184,7 @@ int windrbd_um_get_next_request(void *buf, size_t max_data_size, size_t *actual_
 	if (actual_data_size)
 		*actual_data_size = bytes_copied;
 
+	umhelper_daemon_seen = jiffies;
 	return ret;
 }
 
@@ -181,6 +208,7 @@ int windrbd_um_return_return_value(void *rv_buf)
 	}
 	mutex_unlock(&request_mutex);
 
+	umhelper_daemon_seen = jiffies;
 	return ret;
 
 }
