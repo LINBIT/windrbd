@@ -310,3 +310,4 @@ Version history
  * 1.2.0-rc12 (Apr 23, 2025): Even more NETIO.SYS fixes, debug symbols for NETIO.SYS
  * 1.2.0-rc13 (May 8, 2025): Hyper-V physical disk, listen backlog, fixed online resize, removed netlink mutex
  * 1.2.0-rc14 (May 22, 2025): KMALLOC_DEBUG optional, several fixes
+ * 1.2.0-rc15 (Jun 4, 2025): DRBD 9.2.14 support, fixes in networking and um helper
