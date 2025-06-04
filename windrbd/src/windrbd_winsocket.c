@@ -65,10 +65,12 @@ static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 
 static int winsock_to_linux_error(NTSTATUS status)
 {
+#if 0
 if (status != STATUS_SUCCESS)
 {
 printk("got status %x\n", status);
 }
+#endif
 
 	switch (status) {
 	case STATUS_SUCCESS:
@@ -610,7 +612,7 @@ static int disconnect_socket(struct socket *socket)
 
 static void drain_send_buffer(struct socket *socket)
 {
-printk("right now %d bytes in send buffer ...\n", socket->sk->sk_wmem_queued);
+// printk("right now %d bytes in send buffer ...\n", socket->sk->sk_wmem_queued);
 	socket->about_to_close = true;
 
 	wait_event_interruptible_timeout(
@@ -618,7 +620,7 @@ printk("right now %d bytes in send buffer ...\n", socket->sk->sk_wmem_queued);
 		socket->sk->sk_wmem_queued == 0,
 		socket->sk->sk_sndtimeo);
 
-printk("send buffer should be empty now (is %d) ...\n", socket->sk->sk_wmem_queued);
+// printk("send buffer should be empty now (is %d) ...\n", socket->sk->sk_wmem_queued);
 }
 
 static int CreateSocket(
