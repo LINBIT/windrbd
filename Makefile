@@ -417,7 +417,7 @@ else
 TARGETS=$(MAKECMDGOALS)
 endif
 
-ifeq ($(TARGETS),$(filter-out clean help default install upload package-in-docker pull-docker all-in-docker,$(TARGETS)))
+ifeq ($(TARGETS),$(filter-out clean help default install upload package-in-docker pull-docker all-in-docker docker docker-fc37 docker-cygwin docker-wine64,$(TARGETS)))
 -include $(all-dep)
 endif
 
