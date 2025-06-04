@@ -3,6 +3,19 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.0-rc15
+--------------------------------
+
+DRBD 9.2.14 support
+
+Prepared support for DRBD 9.3 branch
+
+Use wait_event_XXX in windrbd_winsocket.c
+
+Drain send buffer before closing a socket
+
+Fixed waiting forever on user mode helper daemon
+
 What's new in version 1.2.0-rc14
 --------------------------------
 
