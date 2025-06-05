@@ -296,6 +296,7 @@ Version history
  * 1.1.17 (July 24, 2024): Disk timeout now handled by WinDRBD (not DRBD)
  * 1.1.18 (July 25, 2024): Cygwin console close patch: drbdadm shouldn't hang on exiting
  * 1.1.19 (August 5, 2024): Disabled backing device I/O corking again
+ * 1.1.20 (April 1, 2025): Fixed adding volumes while connected
  * 1.2.0-rc1 (Aug 14, 2023): Compile with gcc. Don't use 1.2.0-rc's in production.
  * 1.2.0-rc2 (Sep 12, 2023): Build everything within a docker container (WinDRBD, drbd-utils, ...)
  * 1.2.0-rc3 (Sep 20, 2023): Fix for BSOD on Primary, ReactOS support

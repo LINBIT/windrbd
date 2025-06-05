@@ -127,6 +127,14 @@ What's new in version 1.2.0-rc1
 
 Can compile WinDRBD driver with gcc (mingw-w64).
 
+What's new in version 1.1.20
+----------------------------
+
+Fixed adding volumes while connected.
+
+Installer checks if bus device is there and tries to fix
+that if not.
+
 What's new in version 1.1.19
 ----------------------------
 

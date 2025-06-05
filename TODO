@@ -1,3 +1,14 @@
+TODOs for Release 1.1.0 ----------------------------------------
+
+TODOs for 1.1 branch  ----------------------------------------
+
+TODOs for Release 1.2 ----------------------------------------
+
+TODO: Feature: sync filesystem(s) on drbdadm secondary
+
+	Linux DRBD also does this.
+	Implement that but please lets do it for the 1.2 branch
+
 TODO: Code quality: review TODOs in source code.
 
 	Currently 136 total.
@@ -34,14 +45,6 @@ TODO: Feature: Understand SCSI addressing
 	Right now we just have TargetId, which limits minors to
 	255. What's a Lun and how many can there be?
 
-TODO: Code quality: Undef kmalloc debug.
-
-	Right now we allocate extra 256 bytes for each memory chunk.
-	Also undef BIO_REF_DEBUG / BIO_ALLOC_DEBUG
-	And of course SPIN_LOCK_DEBUG ... Remove this code completely.
-	It has done a good job but is now obsolete.
-	Also remove all spinlock functions except spin_lock_irqsave().
-
 TODO: Test: IPv6
 
 	Doesn't work, but this might be an Ubuntu issue.
@@ -52,6 +55,8 @@ TODO: Feature: Use next generation crypto API for secure handshake.
 	See:
 
 https://docs.microsoft.com/en-us/windows/win32/seccng/cng-features#kernel-mode-support
+
+	No: take the crypt implementation from Linux.
 
 TODO: Feature: make debugfs work
 
@@ -8760,4 +8765,32 @@ Done: Bug: Out of memory handling in windrbd device is broken (BSOD).
 Done: Feature: Remove netlink mutex
 	DRBD does internal locking.
         Finally removed! after 8 years :)
+
+Done: Build System: Make it build under Linux (was: Windows) only
+
+	Done: install ocaml for CygWin
+	In progress: Cross compile conccinelle for CygWin
+		If possible, do not try to fix too many things.
+		Update: compiles but does not link currently
+	TODO: make should build everything under Windows
+
+	Update: we are now trying to make it build under
+	Linux only (with MS build tools under wine). Need
+	to make a wine patch though ... But this saves us
+	from special casing the CI environment.
+
+Done: Check out osslsigncode
+        signtool replacement using openssl library.
+
+Done: Wine support for catgen
+        Next steps: implement PutMemberInfo, PutAttrInfo(member),
+                PersistStore.
+
+Done: Code quality: Undef kmalloc debug.
+
+	Right now we allocate extra 256 bytes for each memory chunk.
+	Also undef BIO_REF_DEBUG / BIO_ALLOC_DEBUG
+	And of course SPIN_LOCK_DEBUG ... Remove this code completely.
+	It has done a good job but is now obsolete.
+	Also remove all spinlock functions except spin_lock_irqsave().
 

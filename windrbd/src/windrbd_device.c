@@ -535,7 +535,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 
 	case IOCTL_WINDRBD_ROOT_GET_LOCK_DOWN_STATE:
 	{
-		int* is_locked_p = irp->AssociatedIrp.SystemBuffer;
+		int *is_locked_p = irp->AssociatedIrp.SystemBuffer;
 		if (s->Parameters.DeviceIoControl.OutputBufferLength != sizeof(int)) {
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
@@ -651,6 +651,18 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 		*the_result = drbd_op_is_known(*the_cmd);
 		irp->IoStatus.Information = sizeof(int);
 
+		break;
+	}
+	case IOCTL_WINDRBD_ROOT_BUS_DEVICE_IS_WORKING:
+	{
+		int *bus_device_is_working_p = irp->AssociatedIrp.SystemBuffer;
+		if (s->Parameters.DeviceIoControl.OutputBufferLength != sizeof(int)) {
+			status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+		}
+		*bus_device_is_working_p = (windrbd_rescan_bus() == 0);
+
+		irp->IoStatus.Information = sizeof(int);
 		break;
 	}
 	default:
