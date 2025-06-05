@@ -234,10 +234,6 @@ static NTSTATUS InitWskBuffer(
 	__in  BOOLEAN	may_printk
 )
 {
-	int probe_and_lock_failed;
-	int retries;
-	NTSTATUS Status = STATUS_SUCCESS;
-
 	WskBuffer->Offset = 0;
 	WskBuffer->Length = BufferSize;
 
@@ -246,38 +242,15 @@ static NTSTATUS InitWskBuffer(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-	retries = 0;
-	while (1) {
-		probe_and_lock_failed = 0;
-#ifdef CONFIG_HAVE_SEH2
-		_SEH2_TRY {
-#endif
-			MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, bWriteAccess?IoWriteAccess:IoReadAccess);
-#ifdef CONFIG_HAVE_SEH2
-		}
-		_SEH2_EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
-			probe_and_lock_failed = 1;
-		}
-		_SEH2_END;
-#endif
+	/* Use this instead of MmProbeAndLockPages: We don't have
+	 * a exception (SEH) implementation that works on modern
+	 * 64 bit Windows. Buffer must reside in the NonPaged
+	 * pool which it usually does anyway. If not a tmp
+	 * buffer must be allocated.
+	 */
+	MmBuildMdlForNonPagedPool(WskBuffer->Mdl);
 
-		if (probe_and_lock_failed == 0) {
-                        if (may_printk && retries > 0)
-                                printk("succeeded after %d retries\n", retries);
-			break;
-		}
-		if (may_printk && retries % 10 == 0)
-			printk(KERN_ERR "MmProbeAndLockPages failed, retrying ...\n");
-
-                if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
-                        if (may_printk && retries == 0)
-                                printk("cannot sleep now, busy looping\n");
-                } else {
-                        msleep(100);
-                }
-                retries++;
-	}
-	return Status;
+	return STATUS_SUCCESS;
 }
 
 static VOID FreeWskBuffer(
@@ -285,20 +258,6 @@ __in PWSK_BUF WskBuffer,
 int may_printk
 )
 {
-	if (WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) {
-		int unlock_max_loops;
-		MmUnlockPages(WskBuffer->Mdl);
-
-			/* TODO: do we still need this: */
-		unlock_max_loops=100;
-		while ((WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) && (unlock_max_loops > 0)) {
-			unlock_max_loops--;
-			MmUnlockPages(WskBuffer->Mdl); 
-		}
-	} else {
-		if (may_printk)
-			printk("Page not locked in FreeWskBuffer\n");
-	}
 	IoFreeMdl(WskBuffer->Mdl);
 }
 
@@ -433,11 +392,6 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 		/* completion->wsk_buffer->Mdl = completion->the_mdl */
 	}
 	FreeWskBuffer(completion->wsk_buffer, may_printk);
-
-		/* To avoid unmapping the page again in free_bio(). */
-	if (completion->page)
-		completion->page->is_unmapped = 1;
-
 	kfree(completion->wsk_buffer);
 
 	have_sent(completion->socket, length);
@@ -1082,7 +1036,7 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 
 	status = InitWskBuffer(tmp_buffer, len, WskBuffer, FALSE, TRUE);
 #else
-	if (page == NULL) {
+	if (page == NULL || page->is_system_buffer) {
 		/* We copy what we send to a tmp buffer, so
 		 * caller may free or use otherwise what we
 		 * have got in Buffer.
@@ -1096,6 +1050,12 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 		memcpy(tmp_buffer, buf, len);
 
 		status = InitWskBuffer(tmp_buffer, len, WskBuffer, FALSE, TRUE);
+
+		if (page != NULL) {
+printk("is system buffer.\n");
+			put_page(page);
+			page = NULL;
+		}
 	} else {
 		tmp_buffer = NULL;
 		status = InitWskBuffer(buf, len, WskBuffer, FALSE, TRUE);
