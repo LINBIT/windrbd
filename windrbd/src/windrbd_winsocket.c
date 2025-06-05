@@ -1037,9 +1037,15 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 	status = InitWskBuffer(tmp_buffer, len, WskBuffer, FALSE, TRUE);
 #else
 	if (page == NULL || page->is_system_buffer) {
+
 		/* We copy what we send to a tmp buffer, so
 		 * caller may free or use otherwise what we
-		 * have got in Buffer.
+		 * have got in Buffer. Also copiing pages
+		 * that we are not sure if they are from
+		 * NonPaged pools (as indicated by
+		 * is_system_buffer) need to be copiied,
+		 * since we don't have MmProbeAndLockPages
+		 * any more.
 		 */
 
 		tmp_buffer = kmalloc(len, GFP_KERNEL);
@@ -1052,7 +1058,6 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 		status = InitWskBuffer(tmp_buffer, len, WskBuffer, FALSE, TRUE);
 
 		if (page != NULL) {
-printk("is system buffer.\n");
 			put_page(page);
 			page = NULL;
 		}
