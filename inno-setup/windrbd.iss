@@ -364,7 +364,7 @@ Begin
 	{ ignore errors: on a fresh install this will fail anyway. }
 
 	ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-R windrbdlog', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
-	ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-R windrbdumhelpers', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
+	ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-R windrbdumhelper', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
 end;
 
 Procedure QuoteImagePath(reg_path: string);
