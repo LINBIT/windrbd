@@ -17,6 +17,9 @@ export LINBIT_CI_MAX_CPUS=3
 # This is too much for my Linux VM:
 # export LINBIT_CI_MAX_CPUS=5
 
+# else we get ERROR sometimes ...
+export VIRTER_TIME_SSH_PING_COUNT=300
+
 # time ./virter/run-test.sh --base-image=windows-server-2019-created-2023 --startvm=250 --torun=add-connect-delete,add-path-multiple-times,connect,diskless,double-promote-diskless,invalid-names,outdate,quorum,quorum-failover-reconnect,rename,resync-after,resync-after-failover-to-dless,resync-initial,split-brain,stress-connect-and-2pc,suspend-io --repeats=3
 # This test should always succeed:
 time ./virter/run-test.sh --variant=windows --torun=invalid-names
