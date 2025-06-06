@@ -112,27 +112,6 @@ Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; F
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygwin1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygrunsrv.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygpath.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygattr-1.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygbz2-1.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygiconv-2.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygintl-8.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygncursesw-10.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygreadline7.dll"; DestDir: "{app}"; Flags: ignoreversion
-#ifdef Config32Bit
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cyggcc_s-1.dll"; DestDir: "{app}"; Flags: ignoreversion
-#endif
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\bash.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cat.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\chmod.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cp.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\ls.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\mkdir.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\mv.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\sed.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\sync.exe"; DestDir: "{app}"; Flags: ignoreversion
-#if Arch == "x86_64"
-Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-x86_64\unzip.exe"; DestDir: "{app}"; Flags: ignoreversion
-#endif
 Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion
 ; must be in same folder as the sysfile.
 Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
