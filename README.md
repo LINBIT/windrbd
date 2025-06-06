@@ -1,14 +1,11 @@
 First things first
 ==================
 
-This branch (windrbd-1.2) is under development. Certain commits
-might not work or not even compile at all.
-
 Clone this repository with
 
 	git clone --branch windrbd-1.2 --recursive https://github.com/LINBIT/windrbd.git
 
-else you get an incomplete checkout.
+Be sure to specify --recursive else you get an incomplete checkout.
 
 To build (within a docker container containing build dependencies), do
 (on a Linux box):
@@ -21,7 +18,7 @@ will be placed in the inno-setup subdirectory of your checked out WinDRBD repo.
 For an unattended install (without having to click something or windows
 popping up) run the installer as follows (replace the EXE file's name):
 
-	install-windrbd-1.2.0-rc7-drbd-9.2-x86_64.exe /verysilent
+	install-windrbd-1.2.0-rc15-drbd-9.2-x86_64.exe /verysilent
 
 This installation mode is suitable for running from batch scripts or
 also from within a CygWin ssh session.
@@ -39,39 +36,18 @@ sponsor [LINBIT](https://www.linbit.com).
 What is WinDRBD?
 ================
 
-WinDRBD is a port of Linbit's Distributed Replicated Block Device
-Linux driver to Microsoft Windows. Technically it is a
-compatibility layer that maps Linux specific kernel API calls to the
-Microsoft Windows NT Kernel API.
+WinDRBD is a port of Linbit's Distributed Replicated Block Device (DRBD)
+Linux driver to Microsoft Windows. It is based on the original
+DRBD sources and is also wire compatible to the Linux version
+so you can have cross platform replication.
 
-DRBD itself is used to build High Availability clusters by replicating
-contents of block devices over a network to (up to 31) other nodes.
-
-WinDRBD is based on DRBD 9. It was originally started by Korean
-company Mantech and was later rewritten by Johannes Thoma for Linbit.
-
-DRBD devices are exported as SCSI disks. As soon as the resource
-becomes primary such a disk can be partitioned and formatted with the
+DRBD devices are exported as SCSI disks. As soon as a DRBD resource
+becomes primary, the disk can be partitioned and formatted with the
 standard Windows tools (diskpart, partition editor in control
 panel, powershell).
 
-WinDRBD also supports reusing existing data partitions. It does so
-by faking a partition table around the data partition and presents
-it as a SCSI disk.
-
-What else is needed?
-====================
-
-If you want to build WinDRBD by yourself please read through
-the file ``INSTALL.md``. However keep in mind that for 64-bit
-platforms a digital signature issued by Microsoft  is required.
-
-Therefore we strongly recommend to use the binary packages provided by
-Linbit since they are signed with a Microsoft key and therefore
-should load without putting Windows into test mode.
-
-Configuring DRBD
-================
+Quickstart
+==========
 
 The DRBD config files can be found in following folder:
 
@@ -80,30 +56,28 @@ The DRBD config files can be found in following folder:
 The C:\windrbd folder can be configured at installation time (use this for
 example if your C: drive is read only).
 
-Put your resources (extension .res) into the C:\windrbd\etc\drbd.d
-folder. From within a CygWin shell you can access this via
-
-	/cygdrive/c/windrbd/etc/drbd.d/<name>.res
-
 Then with
 
-	drbdadm up <name>
+	drbdadm up <resource-name>
 
-you can bring your DRBD resource up. Please refer to the DRBD
-Users guide (be sure to pick the 9.0 version) for more information
+you can bring your DRBD resource up. To make it primary
+(and thereby enable Windows to access it) do:
+
+	drbdadm primary <resource-name>
+
+Resources
+=========
+
+Please refer to the DRBD Users guide for more information
 of how to configure and administrate DRBD. Most drbdadm commands
 should work exactly like with the Linux version of DRBD.
 
-Note that since WinDRBD and DRBD are very similar many procedures
-from the DRBD user's guide should also work with WinDRBD. Currently
-there is no separate WinDRBD user's guide.
+There is a WinDRBD specific tech guide which explains how
+to prepare two Windows Server 2016 nodes for use with WinDRBD
+at: https://linbit.com/user-guides-and-product-documentation/
 
-There is also a WinDRBD specific tech guide which explains how
-to prepare two Windows Server 2016 nodes for use with WinDRBD.
-Please see the Linbit website for that guide.
-
-Also there are some newer (beginning 2023) articles on
-https://kb.linbit.com
+Also there are some newer (beginning 2023) articles on WinDRBD
+at: https://kb.linbit.com
 
 Current limitations
 ===================
@@ -114,36 +88,16 @@ The current 1.2 branch has following restrictions:
 
   * No read access when there are only secondaries.
 
-  * For booting via WinDRBD the installation onto a WinDRBD volume
-    is not possible yet with the Windows installer GUI.
+  * Booting from a WinDRBD disk is not possible.
 
 Logging
 =======
 
-To view the log file go to
+To view the log file of the WinDRBD driver, go to
 
 	C:\windrbd\windrbd-kernel.log
 
-If you need remote logging, please read on (you don't usually
-need it any more since WinDRBD is quite stable now).
-
-We use syslog UDP packets and a Linux host to debug WinDRBD.
-
-To configure the log host set a Registry key (string value):
-
-	Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\drbd\syslog_ip
-
-and assign it the IP address.
-
-You can use 
-
-	windrbd set-syslog-ip ipv4-address
-
-to change the syslog IP for this session (the registry key is only
-evaluated at server start).
-
-If you are logging to the local Windows machine, use 127.0.0.1 as
-IP address (this is the default).
+Make sure that the windrbdlog service is running.
 
 There is also a logfile written by the installer located in the
 %TEMP% directory. It should be consulted when something with the
