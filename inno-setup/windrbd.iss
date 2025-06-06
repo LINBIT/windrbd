@@ -107,10 +107,13 @@ Source: "{#WindrbdSource}\inno-setup\sysroot\README-windrbd.txt"; DestDir: "{cod
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.conf"; DestDir: "{code:WinDRBDRootDir}\etc"; Flags: ignoreversion onlyifdoesntexist
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\global_common.conf"; DestDir: "{code:WinDRBDRootDir}\etc\drbd.d"; Flags: ignoreversion onlyifdoesntexist
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\windrbd-sample.res"; DestDir: "{code:WinDRBDRootDir}\etc\drbd.d"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
-Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygwin1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygrunsrv.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygpath.exe"; DestDir: "{app}"; Flags: ignoreversion
+#if Arch == "i686"
+Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cyggcc_s-1.dll"; DestDir: "{app}"; Flags: ignoreversion
+#endif
+
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygpath.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.sys"; DestDir: "{app}"; Flags: ignoreversion
 ; must be in same folder as the sysfile.
@@ -132,12 +135,7 @@ Name: "{group}\Open {#MyAppName} configuration folder"; Filename: "{code:WinDRBD
 Name: "{group}\Open {#MyAppName} application folder"; Filename: "{app}"
 
 [Run]
-Filename: "{cmd}"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
 Filename: "{#MyAppURLDocumentation}"; Description: "Download WinDRBD documentation"; Flags: postinstall shellexec skipifsilent
-
-[UninstallRun]
-Filename: "{cmd}"; Parameters: "/c uninstall-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; RunOnceId: "UninstallWinDRBD"
-; Filename: "{code:WinDRBDRootDir}\usr\sbin\windrbd.exe"; Parameters: "remove-bus-device windrbd.inf"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; RunOnceId: "RemoveBusDeviceWinDRBD"
 
 [Registry]
 
@@ -359,6 +357,16 @@ Begin
 		MsgBox('Could not install WinDRBD user mode helper service', mbInformation, MB_OK);
 end;
 
+Procedure UninstallUserModeServices;
+var ResultCode: Integer;
+    CommandOutput: String;
+Begin
+	{ ignore errors: on a fresh install this will fail anyway. }
+
+	ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-R windrbdlog', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
+	ExecWithLogging(ExpandConstant('{app}')+'\cygrunsrv', '-R windrbdumhelpers', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput);
+end;
+
 Procedure QuoteImagePath(reg_path: string);
 var the_path: string;
 
@@ -568,6 +576,7 @@ begin
 		StopUserModeServices();
 		StopDriver();
 		StopLogger();
+		UninstallUserModeServices();
 	end;
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
@@ -581,14 +590,13 @@ begin
 			MsgBox('Uninstall does not remove files in the '+root+' directory that are created by you (for example .res files in /etc/drbd.d). If you do not need them any more, please remove the '+root+' directory manually.', mbInformation, MB_OK);
 		end;
 	end;
-	// cmd script stops user mode helpers, no need to do that here
 end;
 
 procedure InitializeWizard;
 begin
 	WinDRBDRootDirPage := CreateInputDirPage(wpSelectDir, 'Select WinDRBD root directory', '',  '', True, 'WinDRBD');
 	WinDRBDRootDirPage.Add('WinDRBD root directory:'+#13#10#13#10+'This is the system root for WinDRBD where the etc, bin, usr, ... directories'+#13#10+'for the userland utilities are located.'+#13#10);
-	WinDRBDRootDirPage.Values[0] := WinDRBDRootDir(''); 
+	WinDRBDRootDirPage.Values[0] := WinDRBDRootDir('');
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -651,6 +659,7 @@ begin
 			StopUserModeServices();
 			StopDriver();
 			StopLogger();
+			UninstallUserModeServices();
 
 			{ TODO: Also remove all windrbd drivers from driver store,
 			  pnputil -d (pnputil /delete-driver) will do that but

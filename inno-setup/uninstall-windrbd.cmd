@@ -12,12 +12,6 @@ rem (procedure stopDriver)
 rem drbdadm down all
 rem This is done in the windrbd.iss stopDriver now:
 rem sc stop windrbd
-sc stop windrbdlog
-sc stop windrbdumhelper
-
-cygrunsrv -R windrbdlog
-cygrunsrv -R windrbdumhelper
-
 rem This is done in stopDriver section of windrbd.iss
 rem windrbd remove-bus-device C:\windows\inf\windrbd.inf
 
