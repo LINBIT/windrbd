@@ -107,8 +107,8 @@ Source: "{#WindrbdSource}\inno-setup\sysroot\README-windrbd.txt"; DestDir: "{cod
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.conf"; DestDir: "{code:WinDRBDRootDir}\etc"; Flags: ignoreversion onlyifdoesntexist
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\global_common.conf"; DestDir: "{code:WinDRBDRootDir}\etc\drbd.d"; Flags: ignoreversion onlyifdoesntexist
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\windrbd-sample.res"; DestDir: "{code:WinDRBDRootDir}\etc\drbd.d"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
+; Source: "{#WindrbdSource}\inno-setup\uninstall-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
+; Source: "{#WindrbdSource}\inno-setup\install-windrbd.cmd"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygwin1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygrunsrv.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\cygwin-binaries-{#Arch}\cygpath.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -137,7 +137,7 @@ Name: "{group}\Open {#MyAppName} configuration folder"; Filename: "{code:WinDRBD
 Name: "{group}\Open {#MyAppName} application folder"; Filename: "{app}"
 
 [Run]
-Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
+; Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden
 Filename: "{#MyAppURLDocumentation}"; Description: "Download WinDRBD documentation"; Flags: postinstall shellexec skipifsilent
 
 [UninstallRun]
@@ -640,7 +640,7 @@ var ResultCode: integer;
     CommandOutput: string;
 
 begin
-	if not ExecWithLogging(ExpandConstant('{win}')+'\system32\rundll32.exe', 'setupapi.dll,InstallHinfSection DefaultUninstall 132 C:\windows\inf\windrbd.inf', 'c:\windows', '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{win}')+'\system32\rundll32.exe', 'setupapi.dll,InstallHinfSection DefaultUninstall 132 windrbd.inf', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		Log('Could not run '+ExpandConstant('{win}')+'\system32\rundll32.exe');
 	end
