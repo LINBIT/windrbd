@@ -141,7 +141,7 @@ Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c install-windrbd.cmd"; 
 Filename: "{#MyAppURLDocumentation}"; Description: "Download WinDRBD documentation"; Flags: postinstall shellexec skipifsilent
 
 [UninstallRun]
-Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c uninstall-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; RunOnceId: "UninstallWinDRBD"
+; Filename: "C:\Windows\sysnative\cmd.exe"; Parameters: "/c uninstall-windrbd.cmd"; WorkingDir: "{app}"; Flags: runascurrentuser waituntilterminated shellexec runhidden; RunOnceId: "UninstallWinDRBD"
 
 [Registry]
 
@@ -628,6 +628,30 @@ begin
 	end;
 end;
 
+	{ This works only on 64 bit Windows }
+
+procedure UninstallDriver;
+var ResultCode: integer;
+    CommandOutput: string;
+
+begin
+	if not ExecWithLogging(ExpandConstant('{win}')+'\sysnative\rundll32.exe', 'setupapi.dll,InstallHinfSection DefaultUninstall 132 C:\windows\inf\windrbd.inf', 'c:\windows', '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	begin
+		Log('Could not run '+ExpandConstant('{win}')+'\sysnative\rundll32.exe');
+	end
+	else
+	begin
+		if ResultCode <> 0 then
+		begin
+			Log(ExpandConstant('{win}')+'\sysnative\rundll32.exe returned non-zero exit value');
+		end
+		else
+		begin
+			Log(ExpandConstant('{win}')+'\sysnative\rundll32.exe ran successfully, driver should be removed from C:\Windows\System32\drivers');
+		end;
+	end;
+end;
+
 function UninstallNeedRestart: Boolean;
 begin
 	Result:= not driverWasUnloaded;
@@ -643,6 +667,7 @@ begin
 		StopLogger();
 		UninstallUserModeServices();
 #ifndef WinNT52
+		UninstallDriver();
 		RemoveDriverFromDriverStore();
 #endif
 	end;
@@ -729,6 +754,7 @@ begin
 			StopLogger();
 			UninstallUserModeServices();
 #ifndef WinNT52
+			UninstallDriver();
 			RemoveDriverFromDriverStore();
 #endif
 
