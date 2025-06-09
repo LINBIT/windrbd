@@ -568,6 +568,65 @@ begin
 	end;
 end;
 
+{ See https://stackoverflow.com/questions/23836703/how-to-split-a-string-in-inno-setup }
+
+function StrSplit(Text: String; Separator: String): TArrayOfString;
+var
+  i, p: Integer;
+  Dest: TArrayOfString; 
+begin
+  i := 0;
+  repeat
+    SetArrayLength(Dest, i+1);
+    p := Pos(Separator,Text);
+    if p > 0 then begin
+      Dest[i] := Copy(Text, 1, p-1);
+      Text := Copy(Text, p + Length(Separator), Length(Text));
+      i := i + 1;
+    end else begin
+      Dest[i] := Text;
+      Text := '';
+    end;
+  until Length(Text)=0;
+  Result := Dest
+end;
+
+procedure RemoveDriverFromDriverStore;
+var owners: String;
+    ownersArray: TArrayOfString;
+    i: Integer;
+    o: string;
+    ResultCode: Integer;
+    CommandOutput: String;
+
+begin
+	if RegQueryMultiStringValue(HKEY_LOCAL_MACHINE, 'System\CurrentControlSet\Services\WinDRBD', 'Owners', owners) then
+	begin
+		ownersArray := StrSplit(owners, #0);
+		for i := 0 to GetArrayLength(ownersArray) - 1 do
+		begin
+			o := ownersArray[i];
+			if o <> '' then
+			begin
+				if not ExecWithLogging(ExpandConstant('pnputil.exe'), '-d '+o, ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+				begin
+					Log('Could not run pnputil to delete old driver versions');
+				end
+				else
+				begin
+					if ResultCode = 0 then
+					begin
+						Log('old driver version '+o+' was successfully removed');
+					end
+					else
+					begin
+						Log('old driver version '+o+' was NOT successfully removed');
+					end;
+				end;
+			end;
+		end;
+	end;
+end;
 
 function UninstallNeedRestart: Boolean;
 begin
@@ -583,6 +642,9 @@ begin
 		StopDriver();
 		StopLogger();
 		UninstallUserModeServices();
+#ifndef WinNT52
+		RemoveDriverFromDriverStore();
+#endif
 	end;
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
@@ -666,6 +728,9 @@ begin
 			StopDriver();
 			StopLogger();
 			UninstallUserModeServices();
+#ifndef WinNT52
+			RemoveDriverFromDriverStore();
+#endif
 
 			{ TODO: Also remove all windrbd drivers from driver store,
 			  pnputil -d (pnputil /delete-driver) will do that but
