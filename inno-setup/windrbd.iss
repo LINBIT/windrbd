@@ -671,10 +671,10 @@ begin
 		StopDriver();
 		StopLogger();
 		UninstallUserModeServices();
-		UninstallDriver();
 #ifndef WinNT52
 		RemoveDriverFromDriverStore();
 #endif
+		UninstallDriver();
 	end;
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
@@ -758,7 +758,6 @@ begin
 			StopDriver();
 			StopLogger();
 			UninstallUserModeServices();
-			UninstallDriver();
 #ifndef WinNT52
 			RemoveDriverFromDriverStore();
 #endif
