@@ -640,7 +640,7 @@ var ResultCode: integer;
     CommandOutput: string;
 
 begin
-	if not ExecWithLogging(ExpandConstant('{win}')+'\system32\rundll32.exe', 'setupapi.dll,InstallHinfSection DefaultUninstall 132 windrbd.inf', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if not ExecWithLogging(ExpandConstant('{win}')+'\system32\rundll32.exe', 'setupapi.dll,InstallHinfSection DefaultUninstall 132 "'+ExpandConstant('{app}')+'\windrbd.inf"', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		Log('Could not run '+ExpandConstant('{win}')+'\system32\rundll32.exe');
 	end
