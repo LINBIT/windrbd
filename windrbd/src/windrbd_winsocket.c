@@ -1438,8 +1438,11 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 // printk("socket is %p out of wait_event_interruptible_timeout, remaining time is %d ... flags & MSG_DONTWAIT is 0x%08x\n", socket, remaining_time, flags & MSG_DONTWAIT);
 		ret = 1;
-		if (remaining_time < 0)
+		if (remaining_time < 0) {
 			ret = remaining_time;
+			if (ret == -EINTR)
+				ret = -ERESTARTSYS;
+		}
 		if (remaining_time == 0)
 			ret = -EAGAIN;
 		timeout = remaining_time;
