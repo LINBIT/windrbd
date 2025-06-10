@@ -331,6 +331,10 @@ drbd-utils:
 	$(call run,cd drbd-utils && ./configure --without-83support --without-84support --without-drbdmon --with-windrbd --without-manual --prefix=/cygdrive/c/windrbd/usr --localstatedir=/cygdrive/c/windrbd/var --sysconfdir=/cygdrive/c/windrbd/etc --host=$(ARCH)-pc-cygwin > ../drbd-utils-configure.log 2>&1 || ( cat ../drbd-utils-configure.log && false ),CONF,'drbd-utils (see drbd-utils-configure.log for logs)')
 	$(call run,make -C drbd-utils -j $(NUM_JOBS) > drbd-utils-make.log 2>&1 || ( cat drbd-utils-make.log && false ),MAKE,'drbd-utils (see drbd-utils-make.log for logs)')
 
+# do:
+# make with-docker WHAT=drbd-utils-clean -j 16
+# if configure complains about wrong C compiler
+#
 drbd-utils-clean:
 	$(call run,cd drbd-utils && ./autogen.sh > ../drbd-utils-autogen.log 2>&1 || ( cat ../drbd-utils-autogen.log && false ),AUTOGEN,'drbd-utils (see drbd-utils-autogen.log for logs)')
 	$(call run,cd drbd-utils && ./configure --without-83support --without-84support --without-drbdmon --with-windrbd --without-manual --prefix=/cygdrive/c/windrbd/usr --localstatedir=/cygdrive/c/windrbd/var --sysconfdir=/cygdrive/c/windrbd/etc --host=$(ARCH)-pc-cygwin > ../drbd-utils-configure.log 2>&1 || ( cat ../drbd-utils-configure.log && false ),CONF,'drbd-utils (see drbd-utils-configure.log for logs)')
@@ -417,7 +421,7 @@ else
 TARGETS=$(MAKECMDGOALS)
 endif
 
-ifeq ($(TARGETS),$(filter-out clean help default install upload package-in-docker pull-docker all-in-docker docker docker-fc37 docker-cygwin docker-wine64,$(TARGETS)))
+ifeq ($(TARGETS),$(filter-out clean help default install upload package-in-docker pull-docker all-in-docker docker docker-fc37 docker-cygwin docker-wine64 drbd-utils-clean with-docker,$(TARGETS)))
 -include $(all-dep)
 endif
 
