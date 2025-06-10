@@ -25,18 +25,10 @@ TODO: Code quality: Update rbtree.c, attr.c, idr.c, hweight.c from Linux kernel 
 	or so ...)
 	better not .. we need to patch :)
 
-TODO: Code quality: remove unneeded CygWin deliverables
-
-	And restructure installer package: use inno-setup compression
-	instead of manually running unzip. Also upgrade to latest
-	CygWin
-
 TODO: Feature: sync filesystem(s) on drbdadm secondary
 
 	Linux DRBD also does this.
 	Implement that but please lets do it for the 1.2 branch
-
-TODO: Code quality: Remove cmd scripts (all of them)
 
 TODO: Code quality: Fix drbd-utils compiler warnings
 
@@ -8793,4 +8785,12 @@ Done: Code quality: Undef kmalloc debug.
 	And of course SPIN_LOCK_DEBUG ... Remove this code completely.
 	It has done a good job but is now obsolete.
 	Also remove all spinlock functions except spin_lock_irqsave().
+
+Done: Code quality: remove unneeded CygWin deliverables
+
+	And restructure installer package: use inno-setup compression
+	instead of manually running unzip. Also upgrade to latest
+	CygWin
+
+Done: Code quality: Remove cmd scripts (all of them)
 
