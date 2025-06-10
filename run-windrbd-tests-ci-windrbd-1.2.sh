@@ -32,9 +32,8 @@ export VIRTER_TIME_SHUTDOWN_TIMEOUT=300s
 # time ./virter/run-test.sh --variant=windows
 # time ./virter/run-test.sh --variant=windows --repeats=5
 # time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=20
-# time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=100
-# time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=20
-time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=5
+time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=100
+# time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=5
 # time ./virter/run-test.sh --variant=windows --torun=invalid-names
 
 # time ./virter/run-test.sh --base-image=windows-server-2019-created-2023 --startvm=250 --torun=add-connect-delete,add-path-multiple-times,connect,diskless,double-promote-diskless,invalid-names,outdate,quorum,quorum-failover-reconnect,rename,resync-after,resync-after-failover-to-dless,resync-initial,split-brain,stress-connect-and-2pc,suspend-io
