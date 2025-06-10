@@ -702,6 +702,7 @@ static void close_socket(struct socket *socket)
 {
 	struct _IRP *Irp;
 
+printk("socket %p close_socket ...\n", socket);
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
@@ -735,9 +736,11 @@ static void close_socket(struct socket *socket)
 		/* gracefully disconnect if this is a connection oriented
 		 * socket.
 		 */
+
+printk("socket %p into disconnect_socket ...\n", socket);
 		disconnect_socket(socket);
 
-// printk("socket %p into WskCloseSocket ...\n", socket);
+printk("socket %p into WskCloseSocket ...\n", socket);
 		(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
 		socket->wsk_socket = NULL;
 
