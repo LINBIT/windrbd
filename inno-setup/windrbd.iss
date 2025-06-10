@@ -640,20 +640,27 @@ var ResultCode: integer;
     CommandOutput: string;
 
 begin
-	if not ExecWithLogging(ExpandConstant('{win}')+'\system32\rundll32.exe', 'setupapi.dll,InstallHinfSection DefaultUninstall 132 "'+ExpandConstant('{app}')+'\windrbd.inf"', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+	if FileCopy(ExpandConstant('{app}')+'\windrbd.inf', ExpandConstant('{tmp}')+'\windrbd.inf', False) then
 	begin
-		Log('Could not run '+ExpandConstant('{win}')+'\system32\rundll32.exe');
-	end
-	else
-	begin
-		if ResultCode <> 0 then
+		if not ExecWithLogging(ExpandConstant('{win}')+'\system32\rundll32.exe', 'setupapi.dll,InstallHinfSection DefaultUninstall 132 '+ExpandConstant('{tmp}')+'\windrbd.inf', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 		begin
-			Log(ExpandConstant('{win}')+'\system32\rundll32.exe returned non-zero exit value');
+			Log('Could not run '+ExpandConstant('{win}')+'\system32\rundll32.exe');
 		end
 		else
 		begin
-			Log(ExpandConstant('{win}')+'\system32\rundll32.exe ran successfully, driver should be removed from C:\Windows\System32\drivers');
+			if ResultCode <> 0 then
+			begin
+				Log(ExpandConstant('{win}')+'\system32\rundll32.exe returned non-zero exit value');
+			end
+			else
+			begin
+				Log(ExpandConstant('{win}')+'\system32\rundll32.exe ran successfully, driver should be removed from C:\Windows\System32\drivers');
+			end;
 		end;
+	end
+	else
+	begin
+		Log('Could not copy file to temp directory.');
 	end;
 end;
 
