@@ -703,6 +703,9 @@ static void close_socket(struct socket *socket)
 	struct _IRP *Irp;
 
 printk("socket %p close_socket ...\n", socket);
+printk("sleeping a bit to make sure all packets are delivered  ...\n");
+msleep(1000);
+
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
