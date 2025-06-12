@@ -1698,6 +1698,7 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 		goto out_free_ip_addr;
 	}
 
+/*
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_addr.s_addr = 0;
 	my_addr.sin_port = htons(ip_addr->port);
@@ -1709,6 +1710,7 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 		return_to_windows(current);
 		goto out_free_ip_addr;
 	}
+*/
 	if (my_inet_aton(ip_addr->addr, &his_addr.sin_addr) < 0) {
 		printk("Could not parse %s\n", ip_addr->addr);
 		sock_release(s);

@@ -65,12 +65,10 @@ static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 
 static int winsock_to_linux_error(NTSTATUS status)
 {
-#if 0
 if (status != STATUS_SUCCESS)
 {
 printk("got status %x\n", status);
 }
-#endif
 
 	switch (status) {
 	case STATUS_SUCCESS:
@@ -702,9 +700,11 @@ static void close_socket(struct socket *socket)
 {
 	struct _IRP *Irp;
 
+/*
 printk("socket %p close_socket ...\n", socket);
 printk("sleeping a bit to make sure all packets are delivered  ...\n");
 msleep(1000);
+*/
 
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
@@ -740,10 +740,10 @@ msleep(1000);
 		 * socket.
 		 */
 
-printk("socket %p into disconnect_socket ...\n", socket);
+// printk("socket %p into disconnect_socket ...\n", socket);
 		disconnect_socket(socket);
 
-printk("socket %p into WskCloseSocket ...\n", socket);
+// printk("socket %p into WskCloseSocket ...\n", socket);
 		(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
 		socket->wsk_socket = NULL;
 
