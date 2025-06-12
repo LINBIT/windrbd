@@ -47,7 +47,7 @@ PrivilegesRequired=admin
 Compression=lzma
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
-SetupIconFile=windrbd.ico
+SetupIconFile=windrbd2025-2.ico
 SetupLogging=yes
 
 [Languages]
