@@ -1667,12 +1667,13 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	struct page *p;
 	int offset;
 	int page_nr;
+	int i;
 
 	strcpy(bigbuffer, "Hallo Windows 2003\n");
         struct kvec iov = {
                 .iov_base = bigbuffer,
                // .iov_len = sizeof(bigbuffer),
-		.iov_len = 20,
+		.iov_len = 4,
 	       // .iov_len = 4096,
         };
         struct msghdr msg = {
@@ -1681,10 +1682,12 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 
 	make_me_a_windrbd_thread("send_a_lot");
 
+/*
 	p = alloc_a_page(0);
 	if (p == NULL)
 		return;
 	iov.iov_len = 32;
+*/
 
 	err = sock_create_kern(&init_net, AF_INET, SOCK_STREAM, IPPROTO_TCP, &s);
 
@@ -1733,12 +1736,14 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	offset = 0;
 	page_nr = 0;
 
-	while (1) {
+	// while (1) {
+	for (i=0;i<16*1024;i++) {
 		if (sleep_interval_ms > 0) {
 			printk("Sleeping %d milliseconds  ...\n", sleep_interval_ms);
 			msleep(sleep_interval_ms);
 		}
 
+/*
 		if (p != NULL) {
 			err = s->ops->sendpage(s, p, offset, iov.iov_len, 0);
 			offset += iov.iov_len;
@@ -1752,8 +1757,12 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 					return;
 //			}
 		} else {
+*/
+			*(int*)iov.iov_base = i;
 			err = kernel_sendmsg(s, &msg, &iov, 1, iov.iov_len);
+/*
 		}
+*/
 		if (err < 0) {
 			printk("sendmsg/sendpage returned %d\n", err);
 			break;
@@ -1769,9 +1778,9 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 		if ((bytes_sent % (1024*1024)) == 0)
 			printk("%lld bytes sent\n", bytes_sent);
 	}
-	printk("%d short writes\n", short_writes);
-
 	sock_release(s);
+
+	printk("%d short writes\n", short_writes);
 
 	return_to_windows(current);
 
