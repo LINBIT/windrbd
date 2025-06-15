@@ -18,7 +18,7 @@ build1.2:
   stage: build
   image: nexus.at.linbit.com:5000/windrbd-devenv
   rules:
-    - if: $CI_COMMIT_BRANCH == 'windrbd-1.2'
+    - if: $CI_COMMIT_BRANCH == 'windrbd-1.2' || $CI_COMMIT_BRANCH == 'jt/log-all-packets'
   script:
     - make package VERSION=windrbd-1.2-from-gitlab
     - |
@@ -46,7 +46,7 @@ test:
     - libvirt
   stage: test
   rules:
-    - if: $CI_COMMIT_BRANCH == 'windrbd-1.1' || $CI_COMMIT_BRANCH == 'windrbd-1.2'
+    - if: $CI_COMMIT_BRANCH == 'windrbd-1.1' || $CI_COMMIT_BRANCH == 'windrbd-1.2' || $CI_COMMIT_BRANCH == 'jt/log-all-packets'
   script: |
     git init build-helpers -q -b unused
     git -C build-helpers fetch -q --depth 1 $CI_SERVER_PROTOCOL://gitlab-ci-token:${CI_JOB_TOKEN}@$CI_SERVER_HOST:$CI_SERVER_PORT/linbit/build-helpers.git $BUILD_HELPERS_VERSION
