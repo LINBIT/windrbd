@@ -25,7 +25,7 @@ build1.2:
       for i in inno-setup/install-windrbd-*.exe
       do
           echo copiing $i to nexus ...
-          curl -f -isSf -u $LINBIT_REGISTRY_USER:$LINBIT_REGISTRY_PASSWORD --upload-file $i https://nexus.at.linbit.com/repository/windows/WinDRBD/install-windrbd-windrbd-1.2-from-gitlab.exe
+          curl -f -isSf -u $LINBIT_REGISTRY_USER:$LINBIT_REGISTRY_PASSWORD --upload-file $i https://nexus.at.linbit.com/repository/windows/WinDRBD/install-windrbd-$CI_COMMIT_BRANCH-from-gitlab.exe
       done
 
   artifacts:
