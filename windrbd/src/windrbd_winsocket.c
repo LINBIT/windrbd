@@ -701,9 +701,6 @@ static void close_socket(struct socket *socket)
 	struct _IRP *Irp;
 
 // printk("socket %p close_socket ...\n", socket);
-	printk("sleeping one second before closing the socket %p to make sure all packets are delivered  ...\n", socket);
-	msleep(1000);
-
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
@@ -711,6 +708,8 @@ static void close_socket(struct socket *socket)
 // printk("Socket already closed, refusing to close it again.\n");
 		return;
 	}
+	printk("sleeping 100 milliseconds before closing the socket %p to make sure all packets are delivered  ...\n", socket);
+	msleep(100);
 
 // printk("terminate_receive_thread ...\n");
 	terminate_receive_thread(socket);
