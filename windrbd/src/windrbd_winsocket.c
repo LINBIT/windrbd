@@ -699,17 +699,25 @@ static void close_wsk_socket(struct _WSK_SOCKET *wsk_socket)
 static void close_socket(struct socket *socket)
 {
 	struct _IRP *Irp;
+	unsigned long irq_flags;
 
 // printk("socket %p close_socket ...\n", socket);
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
+	spin_lock_irqsave(&socket->is_closed_lock, irq_flags);
 	if (socket->is_closed) {
 // printk("Socket already closed, refusing to close it again.\n");
+		spin_unlock_irqrestore(&socket->is_closed_lock, irq_flags);
 		return;
 	}
+	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
+	spin_unlock_irqrestore(&socket->is_closed_lock, irq_flags);
+
+/*
 	printk("sleeping 100 milliseconds before closing the socket %p to make sure all packets are delivered  ...\n", socket);
 	msleep(100);
+*/
 
 // printk("terminate_receive_thread ...\n");
 	terminate_receive_thread(socket);
@@ -747,7 +755,6 @@ static void close_socket(struct socket *socket)
 		mutex_unlock(&socket->wsk_mutex);
 	}
 	socket->error_status = 0;
-	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
 }
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
@@ -1773,6 +1780,7 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 	kref_init(&socket->kref);
 	spin_lock_init(&socket->send_buf_counters_lock);
 	spin_lock_init(&socket->accept_socket_lock);
+	spin_lock_init(&socket->is_closed_lock);
 	socket->num_sends_inflight = 0;
 	KeInitializeEvent(&socket->accept_event, SynchronizationEvent, FALSE);
 	mutex_init(&socket->wsk_mutex);

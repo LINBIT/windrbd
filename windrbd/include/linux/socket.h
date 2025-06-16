@@ -121,6 +121,7 @@ struct socket {
 	struct file *file;
 
 	int is_closed;
+	spinlock_t is_closed_lock;
 
 	int receiver_cache_enabled;
 	char *receive_buffer;
