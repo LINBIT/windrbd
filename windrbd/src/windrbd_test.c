@@ -1667,15 +1667,17 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	struct page *p;
 	int offset;
 	int page_nr;
-	int i, j;
 
 	strcpy(bigbuffer, "Hallo Windows 2003\n");
         struct kvec iov = {
                 .iov_base = bigbuffer,
                // .iov_len = sizeof(bigbuffer),
+		/* With that packet size and sending 64KiB 1 out of 1000
+		 * times data at the end of the TCP/IP stream is missing
+		 */
 	       // .iov_len = 4,
-	       // .iov_len = 4096,
-		.iov_len = 65536,
+	        .iov_len = 4096,
+	       // .iov_len = 65536,
         };
         struct msghdr msg = {
 		.msg_flags = 0
@@ -1683,12 +1685,10 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 
 	make_me_a_windrbd_thread("send_a_lot");
 
-/*
 	p = alloc_a_page(0);
 	if (p == NULL)
 		return;
 	iov.iov_len = 32;
-*/
 
 	err = sock_create_kern(&init_net, AF_INET, SOCK_STREAM, IPPROTO_TCP, &s);
 
@@ -1701,7 +1701,6 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_addr.s_addr = 0;
-//	my_addr.sin_port = htons(ip_addr->port);
 	my_addr.sin_port = 0;	/* have ip stack assign a port */
 
         err = s->ops->bind(s, (struct sockaddr *)&my_addr, sizeof(my_addr));
@@ -1738,14 +1737,15 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	offset = 0;
 	page_nr = 0;
 
-	// while (1) {
-	for (i=0;i<16*1024*1024;) {
+//	int i, j;
+//	for (i=0;i<16*1024*1024;) {
+
+	while (1) {
 		if (sleep_interval_ms > 0) {
 			printk("Sleeping %d milliseconds  ...\n", sleep_interval_ms);
 			msleep(sleep_interval_ms);
 		}
 
-/*
 		if (p != NULL) {
 			err = s->ops->sendpage(s, p, offset, iov.iov_len, 0);
 			offset += iov.iov_len;
@@ -1759,15 +1759,14 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 					return;
 //			}
 		} else {
-*/
+/*
 		for (j=i;j<i+16374;j++)
 			((int*)iov.iov_base)[j-i] = j;
 
 		i = j;
-		err = kernel_sendmsg(s, &msg, &iov, 1, iov.iov_len);
-/*
-		}
 */
+			err = kernel_sendmsg(s, &msg, &iov, 1, iov.iov_len);
+		}
 		if (err < 0) {
 			printk("sendmsg/sendpage returned %d\n", err);
 			break;
