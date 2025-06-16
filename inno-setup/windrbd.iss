@@ -103,7 +103,6 @@ Source: "{#WindrbdUtilsSource}\user\v9\drbdsetup.exe"; DestDir: "{code:WinDRBDRo
 Source: "{#WindrbdUtilsSource}\user\windrbd\windrbd.exe"; DestDir: "{code:WinDRBDRootDir}\usr\sbin"; Flags: ignoreversion
 #endif
 
-Source: "{#WindrbdSource}\inno-setup\sysroot\README-windrbd.txt"; DestDir: "{code:WinDRBDRootDir}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.conf"; DestDir: "{code:WinDRBDRootDir}\etc"; Flags: ignoreversion onlyifdoesntexist
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\global_common.conf"; DestDir: "{code:WinDRBDRootDir}\etc\drbd.d"; Flags: ignoreversion onlyifdoesntexist
 Source: "{#WindrbdSource}\inno-setup\sysroot\etc\drbd.d\windrbd-sample.res"; DestDir: "{code:WinDRBDRootDir}\etc\drbd.d"; Flags: ignoreversion
