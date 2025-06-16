@@ -1667,14 +1667,15 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	struct page *p;
 	int offset;
 	int page_nr;
-	int i;
+	int i, j;
 
 	strcpy(bigbuffer, "Hallo Windows 2003\n");
         struct kvec iov = {
                 .iov_base = bigbuffer,
                // .iov_len = sizeof(bigbuffer),
-		.iov_len = 4,
+	       // .iov_len = 4,
 	       // .iov_len = 4096,
+		.iov_len = 65536,
         };
         struct msghdr msg = {
 		.msg_flags = 0
@@ -1738,7 +1739,7 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	page_nr = 0;
 
 	// while (1) {
-	for (i=0;i<16*1024;i++) {
+	for (i=0;i<16*1024*1024;) {
 		if (sleep_interval_ms > 0) {
 			printk("Sleeping %d milliseconds  ...\n", sleep_interval_ms);
 			msleep(sleep_interval_ms);
@@ -1759,8 +1760,11 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 //			}
 		} else {
 */
-			*(int*)iov.iov_base = i;
-			err = kernel_sendmsg(s, &msg, &iov, 1, iov.iov_len);
+		for (j=i;j<i+16374;j++)
+			((int*)iov.iov_base)[j-i] = j;
+
+		i = j;
+		err = kernel_sendmsg(s, &msg, &iov, 1, iov.iov_len);
 /*
 		}
 */
