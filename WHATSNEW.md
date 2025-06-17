@@ -3,6 +3,19 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.0
+---------------------------
+
+Installer: clean up driver store
+
+Installer: removed cmd scripts
+
+Merged changes from 1.1.20
+
+Removed last occurance of SEH (structured exception handling)
+
+Workaround for BrokenPipe when peer disconnects bug found by testsuite
+
 What's new in version 1.2.0-rc15
 --------------------------------
 
