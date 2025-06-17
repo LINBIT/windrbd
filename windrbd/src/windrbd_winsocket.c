@@ -67,7 +67,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 {
 if (status != STATUS_SUCCESS)
 {
-printk("got status %x\n", status);
+// printk("got status %x\n", status);
 }
 
 	switch (status) {
