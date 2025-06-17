@@ -554,8 +554,10 @@ static int disconnect_socket(struct socket *socket)
 		status = irp->IoStatus.Status;
 	}
 // printk("socket %p WskDisconnect status is 0x%08x\n", socket, status);
+/*
 	if (!NT_SUCCESS(status))
 		printk("WskDisconnect returned error status 0x%08x\n", status);
+*/
 
 	IoFreeIrp(irp);
 
@@ -714,7 +716,7 @@ static void close_socket(struct socket *socket)
 	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
 	spin_unlock_irqrestore(&socket->is_closed_lock, irq_flags);
 
-	printk("sleeping 100 milliseconds before closing the socket %p to make sure all packets are delivered  ...\n", socket);
+// printk("sleeping 100 milliseconds before closing the socket %p to make sure all packets are delivered  ...\n", socket);
 	msleep(100);
 
 // printk("terminate_receive_thread ...\n");
