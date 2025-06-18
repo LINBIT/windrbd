@@ -2592,6 +2592,7 @@ out_dont_change_status:
 
 static NTSTATUS __attribute__((stdcall)) windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+#if 0
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status;
 
@@ -2645,6 +2646,21 @@ static NTSTATUS __attribute__((stdcall)) windrbd_power(struct _DEVICE_OBJECT *de
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 		status = STATUS_SUCCESS;
 	}
+#endif
+
+		/* Do not modify irp->IoStatus.Status. Windows 2003 and
+		 * 2019 have different values here. Both get confused
+		 * if they are changed.
+		 */
+
+	NTSTATUS status = irp->IoStatus.Status;
+
+		/* Windows 2003: tell them that we're ready for
+		 * the next POWER request.
+		 */
+
+	PoStartNextPowerIrp(irp);
+	IoCompleteRequest(irp, IO_NO_INCREMENT);
 
 	return status;
 }
