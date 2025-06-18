@@ -2592,61 +2592,6 @@ out_dont_change_status:
 
 static NTSTATUS __attribute__((stdcall)) windrbd_power(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-#if 0
-	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
-	NTSTATUS status;
-
-	printk(KERN_DEBUG "got Power device request: MajorFunction: 0x%x, MinorFunction: %x\n", s->MajorFunction, s->MinorFunction);
-
-	if (device == mvolRootDeviceObject || device == user_device_object) {
-			/* Return SUCCESS else BSOD on Windows Server 2003
-			 * power down.
-			 */
-
-		status = STATUS_SUCCESS;
-		irp->IoStatus.Status = status;
-
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return status;
-	}
-	if (s->MinorFunction == IRP_MN_QUERY_POWER) {
-		dbg("is IRP_MN_QUERY_POWER for %d\n", s->Parameters.Power.Type);
-	}
-	if (s->MinorFunction == IRP_MN_SET_POWER) {
-		dbg("is IRP_MN_SET_POWER for %d\n", s->Parameters.Power.Type);
-	}
-
-	PoStartNextPowerIrp(irp);
-	if (device == drbd_bus_device) {
-		struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
-		status = PoCallDriver(bus_ext->lower_device, irp);
-	} else {
-			/* TODO: if powering up after sleep / hibernate
-			 * unset this flag again.
-			 */
-
-		if (s->MinorFunction == IRP_MN_QUERY_POWER &&
-		    s->Parameters.Power.Type == SystemPowerState) {
-			struct block_device_reference *ref = device->DeviceExtension;
-			struct block_device *bdev;
-
-			if (ref != NULL) {
-				bdev = ref->bdev;
-				if (bdev) {
-					printk("About to power down device %p, not trying to become primary any more.\n", device);
-					bdev->powering_down = 1;
-						/* Wake up those waiting for us */
-					KeSetEvent(&bdev->primary_event, 0, FALSE);
-					KeSetEvent(&bdev->capacity_event, 0, FALSE);
-				}
-			}
-		}
-
-		irp->IoStatus.Status = STATUS_SUCCESS;
-		IoCompleteRequest(irp, IO_NO_INCREMENT);
-		status = STATUS_SUCCESS;
-	}
-#endif
 
 		/* Do not modify irp->IoStatus.Status. Windows 2003 and
 		 * 2019 have different values here. Both get confused
