@@ -65,11 +65,6 @@ static WSK_CLIENT_DISPATCH	g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
 
 static int winsock_to_linux_error(NTSTATUS status)
 {
-if (status != STATUS_SUCCESS)
-{
-// printk("got status %x\n", status);
-}
-
 	switch (status) {
 	case STATUS_SUCCESS:
 		return 0;
@@ -78,7 +73,6 @@ if (status != STATUS_SUCCESS)
 	case STATUS_CONNECTION_DISCONNECTED:
 		return -ECONNRESET;
 	case STATUS_CONNECTION_ABORTED:
-//		printk("Got STATUS_CONNECTION_ABORTED returning -ECONNRESET ...\n");
 		return -ECONNRESET;	/* was: -ECONNABORTED */
 	case STATUS_IO_TIMEOUT:
 	case STATUS_TIMEOUT:
@@ -93,19 +87,15 @@ if (status != STATUS_SUCCESS)
 		return -ECONNREFUSED;
 	case STATUS_ACCESS_DENIED:  /* returned when port is blocked by firewall, retry again later */
 		/* Do not log this: logfile may get 150GB ... */
-//		printk("Got STATUS_ACCESS_DENIED, please check your firewall settings\n");
 		return -EAGAIN;
 	case STATUS_LOCAL_DISCONNECT: /* Sent by ReactOS on connection timeout */
-//		printk("Got STATUS_LOCAL_DISCONNECT returning -ECONNRESET ...\n");
 		return -ECONNRESET;
 
 
 	case STATUS_REMOTE_DISCONNECT:	/* Sometimes they happen on ReactOS */
-//		printk("Got STATUS_REMOTE_DISCONNECT returning -ECONNRESET ...\n");
 		return -ECONNRESET;
 
 	case STATUS_FILE_CLOSED:
-//		printk("Got STATUS_FILE_CLOSED returning -ECONNRESET ...\n");
 		return -ECONNRESET;
 
 	case STATUS_CANCELLED:
@@ -122,13 +112,9 @@ if (status != STATUS_SUCCESS)
 
 static void terminate_receive_thread(struct socket *socket)
 {
-// printk("About to terminate receive thread for socket %p\n", socket);
 	if (socket->receive_thread_should_run) {
-// printk("1 socket->receive_thread_should_run is %d\n", socket->receive_thread_should_run);
 		socket->receive_thread_should_run = false;
-// printk("2 socket->receive_thread_should_run is %d\n", socket->receive_thread_should_run);
 		wake_up(&socket->buffer_available);
-//		wait_for_completion(&socket->receiver_thread_completion);
 	}
 }
 
@@ -150,9 +136,7 @@ static void sock_free_linux_socket(struct socket *socket)
 	if (socket == NULL)
 		return;
 
-// printk("into kref_put(socket %p)\n", socket);
 	kref_put(&socket->kref, sock_really_free);
-// printk("2\n");
 }
 
 static NTSTATUS __attribute__((stdcall)) completion_fire_event(struct _DEVICE_OBJECT *DeviceObject,struct _IRP *irp, void *event_p)
@@ -181,8 +165,6 @@ static NTSTATUS __attribute__((stdcall)) receive_completion(struct _DEVICE_OBJEC
 {
 	struct socket *s = sock_p;
 
-// printk("irp->IoStatus.Status is 0x%08x irp->IoStatus.Information is %d\n", irp->IoStatus.Status, irp->IoStatus.Information);
-
 	s->data_received = true;
 	wake_up(&s->receive_waitqueue);
 
@@ -207,10 +189,8 @@ static struct _IRP *wsk_new_irp(struct _KEVENT *CompletionEvent, struct socket *
 	struct _IRP *irp;
 
 	irp = IoAllocateIrp(1, FALSE);
-	if (irp == NULL) {
-		dbg("IoAllocateIrp returned NULL, out of IRPs?\n");
+	if (irp == NULL)
 		return NULL;
-	}
 	irp->Tail.Overlay.Thread = PsGetCurrentThread();
 
 	if (CompletionEvent) {
@@ -297,7 +277,6 @@ static int remove_completion_locked(struct send_page_completion_info *c)
 		}
 		m++;
 	}
-// printk("%d completions in the queue.\n", m);
 	if (n == 0)
 		return -ENOENT;
 	if (n == 1)
@@ -364,14 +343,8 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
 
-		if (new_status != -EAGAIN && new_status != -EINTR) {
-			if (may_printk && completion->socket->error_status != 0 &&
-			    completion->socket->error_status != new_status)
-				dbg(KERN_WARNING "Last error status of socket was %d, now got %d (ntstatus %x)\n", completion->socket->error_status, new_status, Irp->IoStatus.Status);
-
-/* TODO: completion->socket may be NULL here? */
+		if (new_status != -EAGAIN && new_status != -EINTR)
 			completion->socket->error_status = new_status;
-		}
 	} else {
 			/* Only for connectionless sockets: clear error
 			 * status (they may "repair" themselves).
@@ -383,12 +356,6 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 	length = completion->wsk_buffer->Length;
 		/* Also unmaps the pages of the containg Mdl */
 
-		/* TODO: remove that again: */
-	if (completion->the_mdl != NULL && completion->the_mdl != completion->wsk_buffer->Mdl) {
-		if (may_printk)
-			printk("Warning: Mdl field changed from %p to %p\n", completion->the_mdl, completion->wsk_buffer->Mdl);
-		/* completion->wsk_buffer->Mdl = completion->the_mdl */
-	}
 	FreeWskBuffer(completion->wsk_buffer, may_printk);
 	kfree(completion->wsk_buffer);
 
@@ -546,19 +513,10 @@ static int disconnect_socket(struct socket *socket)
 
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskDisconnect(socket->wsk_socket, NULL, 0, irp);
 
-// printk("socket %p WskDisconnect returned 0x%08x\n", socket, status);
 	if (status == STATUS_PENDING) {
-// printk("socket %p disconnect pending ... \n", socket);
 		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
-// printk("socket %p ok, finished\n", socket);
 		status = irp->IoStatus.Status;
 	}
-// printk("socket %p WskDisconnect status is 0x%08x\n", socket, status);
-/*
-	if (!NT_SUCCESS(status))
-		printk("WskDisconnect returned error status 0x%08x\n", status);
-*/
-
 	IoFreeIrp(irp);
 
 	return winsock_to_linux_error(status);
@@ -566,15 +524,12 @@ static int disconnect_socket(struct socket *socket)
 
 static void drain_send_buffer(struct socket *socket)
 {
-// printk("right now %d bytes in send buffer ...\n", socket->sk->sk_wmem_queued);
 	socket->about_to_close = true;
 
 	wait_event_interruptible_timeout(
 		socket->send_waitqueue,
 		socket->sk->sk_wmem_queued == 0,
 		socket->sk->sk_sndtimeo);
-
-// printk("send buffer should be empty now (is %d) ...\n", socket->sk->sk_wmem_queued);
 }
 
 static int CreateSocket(
@@ -690,7 +645,6 @@ static void close_wsk_socket(struct _WSK_SOCKET *wsk_socket)
 	if (Irp == NULL)
 		return;
 
-// printk("into WskCloseSocket ...\n");
 	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) wsk_socket->Dispatch)->WskCloseSocket(wsk_socket, Irp);
 }
 
@@ -703,23 +657,19 @@ static void close_socket(struct socket *socket)
 	struct _IRP *Irp;
 	unsigned long irq_flags;
 
-// printk("socket %p close_socket ...\n", socket);
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
 	spin_lock_irqsave(&socket->is_closed_lock, irq_flags);
 	if (socket->is_closed) {
-// printk("Socket already closed, refusing to close it again.\n");
 		spin_unlock_irqrestore(&socket->is_closed_lock, irq_flags);
 		return;
 	}
 	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
 	spin_unlock_irqrestore(&socket->is_closed_lock, irq_flags);
 
-// printk("sleeping 100 milliseconds before closing the socket %p to make sure all packets are delivered  ...\n", socket);
 	msleep(100);
 
-// printk("terminate_receive_thread ...\n");
 	terminate_receive_thread(socket);
 
 	Irp = wsk_new_irp(NULL, NULL, NULL);
@@ -745,10 +695,8 @@ static void close_socket(struct socket *socket)
 		 * socket.
 		 */
 
-// printk("socket %p into disconnect_socket ...\n", socket);
 		disconnect_socket(socket);
 
-// printk("socket %p into WskCloseSocket ...\n", socket);
 		(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
 		socket->wsk_socket = NULL;
 
@@ -783,10 +731,8 @@ static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
 	}
 	IoFreeIrp(Irp);
 
-	if (status == STATUS_SUCCESS) {
-		dbg("peer address is %s\n", my_inet_ntoa(&((struct sockaddr_in*) uaddr)->sin_addr));
+	if (status == STATUS_SUCCESS)
 		return sizeof(*uaddr);
-	}
 
 	return winsock_to_linux_error(status);
 }
@@ -994,15 +940,12 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 	if (socket->about_to_close)
 		return -EINVAL;
 
-	if (socket->error_status != 0) {
-// printk("error status is already %d returning it\n", socket->error_status);
+	if (socket->error_status != 0)
 		return socket->error_status;
-}
 
 	if (page)
 		get_page(page);	/* we might sleep soon, do this before */
 
-// printk("socket sendbuffer: %d len is %d socket->sk->sk_wmem_queued is %d\n", socket->sk->sk_sndbuf, len, socket->sk->sk_wmem_queued);
 	err = wait_for_sendbuf(socket, len);
 	if (err < 0)
 		goto out_put_page;
@@ -1143,8 +1086,6 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 			 * error.
 			 */
 
-// printk("STATUS_PENDING, relaxing a bit ...\n");
-// msleep(10);
 		return len;
 
 	case STATUS_SUCCESS:
@@ -1155,7 +1096,6 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 		socket->error_status = err;
 
 		/* Resources are freed by completion routine. */
-// dbg("returning %d\n", err);
 	return err;
 
 out_unlock_mutex:
@@ -1257,7 +1197,6 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		FreeWskBuffer(&WskBuffer, 1);
 		return -ENOMEM;
 	}
-// printk("Ok, Irp is %p\n", Irp);
 
 	wsk_flags = 0;
 	if (flags & MSG_WAITALL)
@@ -1271,32 +1210,26 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		return -ENOTCONN;
 	}
 	socket->data_received = false;
-// printk("socket %p into WskReceive ...\n", socket);
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskReceive(
 				socket->wsk_socket,
 				&WskBuffer,
 				wsk_flags,
 				Irp);
-// printk("socket %p out of WskReceive, Status is 0x%08x ...\n", socket, Status);
 	mutex_unlock(&socket->wsk_mutex);
 
 	if (Status == STATUS_PENDING)
 	{
-// printk("socket %p into wait_event_interruptible_timeout ...\n", socket);
 		remaining_time = wait_event_interruptible_timeout(
 			socket->receive_waitqueue,
 			socket->data_received,
 			socket->sk->sk_rcvtimeo);
 
-// printk("socket %p out of wait_event_interruptible_timeout remaining_time is %d Irp->IoStatus.Information is %d ...\n", socket, remaining_time, Irp->IoStatus.Information);
 		if (remaining_time == 0)
 			remaining_time = -EAGAIN;
 
 		if (remaining_time == -EINTR || remaining_time == -EAGAIN)
 		{
-// printk("socket %p CANCELLING IRP %p ...\n", socket, Irp);
 			IoCancelIrp(Irp);
-// printk("socket %p waiting for IRP completion\n", socket);
 			cancel_remaining_time = wait_event_interruptible_timeout(
 				socket->receive_waitqueue,
 				socket->data_received,
@@ -1305,14 +1238,10 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 			if (cancel_remaining_time <= 0)
 				printk("Warning: cancel_remaining_time is %d after IRP cancellation\n", cancel_remaining_time);
 
-// printk("socket %p Ok IRP completed cancel_remaining_time is %d Irp->IoStatus.Information is %d\n", socket, cancel_remaining_time, Irp->IoStatus.Information);
-
-			if (Irp->IoStatus.Information > 0) {
-// printk("socket %p some data was received ...\n", socket);
+			if (Irp->IoStatus.Information > 0)
 				BytesReceived = Irp->IoStatus.Information;
-			} else {
+			else
 				BytesReceived = remaining_time;
-			}
 
 			goto out;
 		}
@@ -1324,15 +1253,12 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		BytesReceived = winsock_to_linux_error(Status);
 
 out:
-// printk("About to free Irp %p ...\n", Irp);
 	IoFreeIrp(Irp);
-// printk("Irp %p freed.\n", Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
 	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
 		socket->error_status = BytesReceived;
 	}
-// printk("socket: %p returning %d ...\n", socket, BytesReceived);
 	return BytesReceived;
 }
 
@@ -1407,12 +1333,10 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		printk("KeGetCurrentIrql() in kernel_recvmsg() should not happen.\n");
 	}
 
-// printk("flags is %x len is %d\n", flags, len);
 	if (!socket->receiver_cache_enabled) {
 		ret = wsk_recvmsg(socket, msg, vec, num, len, flags);
 		if (ret > 0)
 			dump_packet(vec[0].iov_base, ret);
-// printk("socket: %p returning %d ...\n", socket, ret);
 		return ret;
 	}
 
@@ -1429,7 +1353,6 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 	timeout = socket->sk->sk_rcvtimeo;
 	while (1) {
-// printk("socket is %p into wait_event_interruptible_timeout timeout is %d...\n", socket, timeout);
 		if (timeout < 0) {
 			printk("Warning: timeout < 0 before wait_event_interruptible_timeout...\n");
 			return -EINVAL;
@@ -1443,7 +1366,6 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			((flags & MSG_DONTWAIT) != 0),
 			timeout);
 
-// printk("socket is %p out of wait_event_interruptible_timeout, remaining time is %d ... flags & MSG_DONTWAIT is 0x%08x\n", socket, remaining_time, flags & MSG_DONTWAIT);
 		ret = 1;
 		if (remaining_time < 0) {
 			ret = remaining_time;
@@ -1460,11 +1382,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			ret = 0;
 
 		if (((flags & MSG_DONTWAIT) != 0) && (ret == 1))
-{
-// printk("socket %p MSG_DONTWAIT set and no error / EOF setting ret to 0...\n", socket);
 			ret = 0;
-}
-// printk("socket is %p ret is %d\n", socket, ret);
 
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 		if (socket->read_index < socket->write_index)
@@ -1487,10 +1405,8 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 		if (bytes_to_copy <= 0) {
 			if (ret != 1)
-{
-// printk("socket: %p nothing received and ret is %d, returning that ...\n", socket, ret);
 				return ret;
-}
+
 			continue;
 		}
 
@@ -1513,26 +1429,17 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 
 		wake_up(&socket->buffer_available);
 
-// printk("about to maybe return data ...\n");
 		if (flags & MSG_WAITALL) {
-// printk("MSG_WAITALL ...\n");
 			if (ret != 1 || return_buffer_index == len) {
 				dump_packet(vec[0].iov_base, return_buffer_index);
-// printk("socket: %p data %d ret is %d len is %d...\n", socket, return_buffer_index, ret, len);
 				return return_buffer_index;
 			}
 		} else {
 			dump_packet(vec[0].iov_base, return_buffer_index);
-// printk("socket: %p some data received: return_buffer_index is %d\n", socket, return_buffer_index);
 			return return_buffer_index;
 		}
 		if (ret != 1)
-{
-// printk("socket: %p ok ret is %d, returning it ...\n", socket, ret);
 			return ret;
-}
-
-// printk("socket: %p ok, next iteration ...\n", socket);
 	}
 	return -EINVAL;
 }
@@ -1554,11 +1461,7 @@ static int socket_receive_thread(void *p)
 			(s->write_index == s->read_index && !s->receive_buffer_full)))); 
 
 		if (!s->receive_thread_should_run)
-{
-// printk("s->receive_thread_should_run is %d\n", s->receive_thread_should_run);
 			break;
-}
-
 
 		spin_lock_irqsave(&s->receive_lock, flags);
 		if (s->read_index == s->write_index && !s->receive_buffer_full) {
@@ -1575,11 +1478,9 @@ static int socket_receive_thread(void *p)
 
 		if (iov.iov_len == 0) {
 			printk("Warning: iov.iov_len is 0 in WinDRBD receiver thread .. should not happen.\n");
-// printk("3a read_index is %d write_index is %d\n", s->read_index, s->write_index);
 			continue;	/* wait_event should block */
 		}
 		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
-// printk("socket: %p wsk_recvmsg returned %d ...\n", s, err);
 
 		if (err == -EAGAIN || err == -EINTR)
 			continue;
@@ -1610,7 +1511,6 @@ static int socket_receive_thread(void *p)
 	kref_put(&s->kref, sock_really_free);
 //	complete(&s->receiver_thread_completion);
 
-//	printk("terminating socket_receive_thread %p (socket is %p)\n", current, s);
 	return 0;
 }
 
@@ -1840,7 +1740,6 @@ static int sock_create_linux_socket(struct socket **out, unsigned short type)
 				 */
 		kref_get(&socket->kref);
 
-// printk("About to start receive_cache for socket %p...\n", socket);
 		kthread_run(socket_receive_thread, socket, "receive_cache");
 	}
 
@@ -1908,7 +1807,6 @@ static int wsk_sock_create_kern(void *net_namespace,
 	if (net_namespace != &init_net)
 		return -EINVAL;
 
-// printk("into sock_create_linux_socket ..\n");
 	err = sock_create_linux_socket(&socket, type);
 	if (err < 0)
 		return err;

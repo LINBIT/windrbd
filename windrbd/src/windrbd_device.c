@@ -25,25 +25,6 @@
  * devices (the 'physical' devices), see drbd_windows.c
  */
 
-/* Uncomment this if you want more debug output (disable for releases) */
-
-/*
-#define DEBUG 1
-*/
-
-/* less verbose, used to debug bus device being deleted
- * right after creation.
- */
-/*
-#define DEBUG_BUS 1
-*/
-
-#ifdef RELEASE
-#ifdef DEBUG
-#undef DEBUG
-#endif
-#endif
-
 #include <linux/types.h>
 #include <mountdev.h>
 #include <ntdddisk.h>
@@ -54,7 +35,6 @@
 #include <ntddstor.h>
 #include <linux/module.h>
 #include <linux/fs.h>
-// #include <strsafe.h>	/* for StringCbPrintfW() - but it does not return length */
 
 #include "windrbd_config.h"
 #include <windrbd_internal.h>
@@ -107,19 +87,12 @@ static int about_to_unload_driver;	/* Driver will soon unload so
 
 static NTSTATUS __attribute__((stdcall)) windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-#ifdef DEBUG
-	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
-#endif
-
 	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
-		dbg(KERN_DEBUG "DRBD root device request not implemented: MajorFunction: 0x%x\n", s->MajorFunction);
-
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
 	}
 
-	dbg(KERN_DEBUG "DRBD device request not implemented: MajorFunction: 0x%x\n", s->MajorFunction);
 	irp->IoStatus.Status = STATUS_NOT_IMPLEMENTED;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 	return STATUS_NOT_IMPLEMENTED;
@@ -164,7 +137,6 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 			resource = drbd_device->resource;
 			if (resource != NULL) {
 				while (resource->role[NOW] == R_SECONDARY) {
-					dbg("Am secondary, trying to promote (called from %s:%d (%s())...\n", file, line, func);
 					rv = try_to_promote(drbd_device, timeout, 0);
 
 		/* no uptodate disk: we are not yet connected, wait a bit
@@ -192,22 +164,14 @@ static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const
 		}
 	} else {
 		if (!bdev->powering_down && !shutting_down) {
-			dbg("Waiting for becoming primary (called from %s:%d (%s())...\n", file, line, func);
-
 			status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
-			if (status != STATUS_SUCCESS)
-				dbg("KeWaitForSingleObject returned %x\n", status);
-			else
-				dbg("Am primary now, proceeding with request\n");
-		} else {
-			dbg("bdev->powering_down is %d, shutting_down is %d, system shutdown, not waiting for becoming Primary\n", bdev->powering_down, shutting_down);
+			if (!NT_SUCCESS(status))
+				printk("Warning: KeWaitForSingleObject returned non-success status 0x%08x\n", status);
 		}
 	}
 
-	if (bdev->delete_pending) {
-		dbg("device already deleted, cancelling request\n");
+	if (bdev->delete_pending)
 		return STATUS_NO_SUCH_DEVICE;
-	}
 
 	return (resource->role[NOW] == R_PRIMARY ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL);
 }
@@ -302,8 +266,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 {
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
-
-// printk("root ioctl is 0x%08x object is %p\n", s->Parameters.DeviceIoControl.IoControlCode, device);
 
 	if (!current->is_root) {
 		switch (s->Parameters.DeviceIoControl.IoControlCode) {
@@ -666,7 +628,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 		break;
 	}
 	default:
-		dbg(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
 		status = STATUS_INVALID_DEVICE_REQUEST;
 	}
 
@@ -705,9 +666,6 @@ struct scsi_pass_through {
 static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == drbd_bus_device) {
-		struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
-		printk("BUS ioctl is 0x%08x\n", s->Parameters.DeviceIoControl.IoControlCode);
-
 		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -719,7 +677,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
-		dbg(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -730,7 +687,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-// printk("ioctl is 0x%08x\n", s->Parameters.DeviceIoControl.IoControlCode);
 	if (dev->is_bootdevice) {
 		status = wait_for_becoming_primary(dev);
 		if (status != STATUS_SUCCESS)
@@ -797,7 +753,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 		}
 
 		struct _PREVENT_MEDIA_REMOVAL *r = irp->AssociatedIrp.SystemBuffer;
-		dbg(KERN_INFO "DRBD: Request for %slocking media\n", r->PreventMediaRemoval ? "" : "un");
 
 		dev->mechanically_locked = r->PreventMediaRemoval;
 
@@ -805,25 +760,21 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 		break;
 
 	case IOCTL_DISK_GET_PARTITION_INFO:
-// printk("got IOCTL_DISK_GET_PARTITION_INFO\n");
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _PARTITION_INFORMATION)) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
 		struct _PARTITION_INFORMATION *p = irp->AssociatedIrp.SystemBuffer;
-// printk("IOCTL_DISK_GET_PARTITION_INFO bootable TRUE\n");
 		fill_partition_info(p, dev);
 		irp->IoStatus.Information = sizeof(struct _PARTITION_INFORMATION);
 		break;
 
 	case IOCTL_DISK_GET_PARTITION_INFO_EX:
-// printk("got IOCTL_DISK_GET_PARTITION_INFO_EX\n");
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _PARTITION_INFORMATION_EX)) {
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
 		struct _PARTITION_INFORMATION_EX *pe = irp->AssociatedIrp.SystemBuffer;
-// printk("IOCTL_DISK_GET_PARTITION_INFO_EX bootable TRUE\n");
 		fill_partition_info_ex(pe, dev);
 		irp->IoStatus.Information = sizeof(struct _PARTITION_INFORMATION_EX);
 		break;
@@ -833,103 +784,12 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
-	/* TODO: this ioctl still needed? */
-//		struct _SET_PARTITION_INFORMATION *pi = irp->AssociatedIrp.SystemBuffer;
-//		dbg(KERN_INFO "Request to set partition type to %x\n", pi->PartitionType);
 		irp->IoStatus.Information = 0;
 		break;
 
 	case IOCTL_DISK_IS_WRITABLE:
 		break;	/* just return without error */
 
-#if 0
-	case IOCTL_MOUNTDEV_QUERY_DEVICE_NAME:
-	{
-		int length = dev->path_to_device.Length;
-		struct _MOUNTDEV_NAME *name = irp->AssociatedIrp.SystemBuffer;
-		int total_length = sizeof(struct _MOUNTDEV_NAME) - sizeof(name->Name) + length + sizeof(name->Name[0]);
-
-dbg("IOCTL_MOUNTDEV_QUERY_DEVICE_NAME path_to_device is %S\n", dev->path_to_device.Buffer);
-
-		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _MOUNTDEV_NAME) - sizeof(name->Name)) {
-			status = STATUS_BUFFER_TOO_SMALL;
-			break;
-		}
-		name->NameLength = length;
-		if (s->Parameters.DeviceIoControl.OutputBufferLength < total_length) {
-				/* Fill in only length, so mount manager knows
-				 * how much space we need. */
-			irp->IoStatus.Information = sizeof(struct _MOUNTDEV_NAME);
-			status = STATUS_BUFFER_OVERFLOW;
-			break;
-		}
-		RtlCopyMemory(name->Name, dev->path_to_device.Buffer, length);
-		name->Name[length / sizeof(name->Name[0])] = 0;
-
-		irp->IoStatus.Information = total_length;
-		break;
-	}
-
-	case IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME:
-	{
-		int length = dev->mount_point.Length;
-		struct _MOUNTDEV_SUGGESTED_LINK_NAME *mount_point = irp->AssociatedIrp.SystemBuffer;
-		int total_length = sizeof(struct _MOUNTDEV_SUGGESTED_LINK_NAME) - sizeof(mount_point->Name) + length + sizeof(mount_point->Name[0]);
-
-dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_point.Buffer);
-
-		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _MOUNTDEV_SUGGESTED_LINK_NAME) - sizeof(mount_point->Name)) {
-			status = STATUS_BUFFER_TOO_SMALL;
-			break;
-		}
-		mount_point->UseOnlyIfThereAreNoOtherLinks = FALSE;
-		mount_point->NameLength = length;
-		if (s->Parameters.DeviceIoControl.OutputBufferLength < total_length) {
-				/* Fill in only length, so mount manager knows
-				 * how much space we need. */
-			irp->IoStatus.Information = sizeof(struct _MOUNTDEV_SUGGESTED_LINK_NAME);
-			status = STATUS_BUFFER_OVERFLOW;
-			break;
-		}
-		RtlCopyMemory(mount_point->Name, dev->mount_point.Buffer, length);
-		mount_point->Name[length / sizeof(mount_point->Name[0])] = 0;
-
-		irp->IoStatus.Information = total_length;
-		break;
-	}
-
-	case IOCTL_MOUNTDEV_QUERY_UNIQUE_ID:
-	{
-		char guid[64];
-			/* generated by https://www.guidgen.com */
-		status = RtlStringCbPrintfA(guid, sizeof(guid)-1, "b71d%04x-0aac-47f4-b6df-223a1c73eb2e", dev->minor);
-
-		if (status != STATUS_SUCCESS)
-			break;
-
-		int length = strlen(guid);
-		struct _MOUNTDEV_UNIQUE_ID *id = irp->AssociatedIrp.SystemBuffer;
-		int total_length = sizeof(struct _MOUNTDEV_UNIQUE_ID) - sizeof(id->UniqueId) + length + sizeof(id->UniqueId[0]);
-
-		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _MOUNTDEV_UNIQUE_ID) - sizeof(id->UniqueId)) {
-			status = STATUS_BUFFER_TOO_SMALL;
-			break;
-		}
-		id->UniqueIdLength = length;
-		if (s->Parameters.DeviceIoControl.OutputBufferLength < total_length) {
-				/* Fill in only length, so mount manager knows
-				 * how much space we need. */
-			irp->IoStatus.Information = sizeof(struct _MOUNTDEV_UNIQUE_ID);
-			status = STATUS_BUFFER_OVERFLOW;
-			break;
-		}
-		RtlCopyMemory(id->UniqueId, guid, length);
-		id->UniqueId[length] = 0;
-
-		irp->IoStatus.Information = total_length;
-		break;
-	}
-#endif
 	case IOCTL_STORAGE_GET_HOTPLUG_INFO:
 	{
 		struct _STORAGE_HOTPLUG_INFO* hotplug_info =
@@ -957,16 +817,11 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 	case IOCTL_STORAGE_QUERY_PROPERTY:
 	{
 		PSTORAGE_PROPERTY_QUERY StoragePropertyQuery = irp->AssociatedIrp.SystemBuffer;
-		// status = STATUS_INVALID_PARAMETER;
-		// status = irp->IoStatus.Status;
-// printk("irp->IoStatus.Status is %x (STATUS_NOT_SUPPORTED is %x)\n", irp->IoStatus.Status, STATUS_NOT_SUPPORTED);
 		status = STATUS_NOT_SUPPORTED;
 
 		size_t CopySize;
 		STORAGE_ADAPTER_DESCRIPTOR StorageAdapterDescriptor;
 		STORAGE_DEVICE_DESCRIPTOR StorageDeviceDescriptor;
-
-// printk("IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x )!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
 
 		switch (StoragePropertyQuery->QueryType) {
 		case PropertyExistsQuery:
@@ -1039,7 +894,6 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 				break;
 			case StorageDeviceAttributesProperty:
 					/* seems to be undocumented ... */
-// printk("StorageDeviceAttributesProperty ...\n");
 				irp->IoStatus.Information = 0;
 				status = STATUS_SUCCESS;
 				break;
@@ -1049,7 +903,6 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 				struct _STORAGE_ACCESS_ALIGNMENT_DESCRIPTOR a;
 
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(a)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(a));
-// printk("StorageAccessAlignmentProperty ...\n");
 				a.Version = sizeof(a);
 				a.Size = sizeof(a);
 				a.BytesPerCacheLine = 16;
@@ -1068,7 +921,6 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 				struct _DEVICE_SEEK_PENALTY_DESCRIPTOR sp;
 
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(sp)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(sp));
-// printk("StorageDeviceSeekPenaltyProperty ...\n");
 				sp.Version = sizeof(sp);
 				sp.Size = sizeof(sp);
 					/* actually this depends on underlying
@@ -1087,7 +939,6 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 				struct _DEVICE_TRIM_DESCRIPTOR trim;
 
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(trim)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(trim));
-// printk("StorageDeviceTrimProperty ...\n");
 				trim.Version = sizeof(trim);
 				trim.Size = sizeof(trim);
 					/* TRIM not implemented till now. TODO: 
@@ -1100,39 +951,17 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 				irp->IoStatus.Information = (ULONG_PTR)CopySize;
 				status = STATUS_SUCCESS;
 				break;
-			default:
 			}
+			default:
 
-#if 0
-	/* This is "reserved for system use". ReFS calls this
-         * to check if there is redundancy at device level.
-	 * Well ... there is ..  but correctly filling out the
-         * struct (https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ne-winioctl-storage_property_id).
-         * depends on if we are currently connected to a
-         * remote with up to date data and many other things.
-         * I think best for now is just to say we do not support
-         * it (if we return an invalid struct the device cannot be
-         * formatted with ReFS).
-	 */
-
-			case StorageDeviceResiliencyProperty:
-// printk("StorageDeviceResiliencyProperty ...\n");
-				irp->IoStatus.Information = 0;
-				status = STATUS_SUCCESS;
-				break;
-#endif
 			}	/* switch PropertyId */
 			break;
 		default:
 		}
-		if (status != STATUS_SUCCESS) {
-// printk("Invalid IOCTL_STORAGE_QUERY_PROPERTY (PropertyId: %08x / QueryType: %08x)!!\n", StoragePropertyQuery->PropertyId, StoragePropertyQuery->QueryType);
-		}
 		break;
-   	}
+	}
 	case IOCTL_STORAGE_GET_MEDIA_SERIAL_NUMBER:
 	{
-		printk("IOCTL_STORAGE_GET_MEDIA_SERIAL_NUMBER");
 		status = STATUS_NO_SUCH_DEVICE;
 		break;
 	}
@@ -1153,25 +982,9 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 		break;
 	}
 
-/*
-	case IOCTL_STORAGE_QUERY_PROPERTY:
-		struct _STORAGE_PROPERTY_QUERY *query =
-			irp->AssociatedIrp.SystemBuffer;
-
-		if (s->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct _STORAGE_PROPERTY_QUERY)) {
-			status = STATUS_BUFFER_TOO_SMALL;
-			break;
-		}
-
-		dbg("IOCTL_STORAGE_QUERY_PROPERTY: PropertyId: %d QueryType: %d\n", query->PropertyId, query->QueryType);
-		status = STATUS_NOT_IMPLEMENTED;
-		break;
-*/
-
 	case IOCTL_DISK_CHECK_VERIFY:
 	case IOCTL_STORAGE_CHECK_VERIFY:
 	case IOCTL_STORAGE_CHECK_VERIFY2:
-		dbg("CHECK_VERIFY (%x)\n", s->Parameters.DeviceIoControl.IoControlCode);
 		if (s->Parameters.DeviceIoControl.OutputBufferLength >=
 			sizeof(ULONG))
 		{
@@ -1201,7 +1014,6 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 
 	case IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES:
 	{
-// printk("IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES\n");
 		struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES* attrs =
 			(struct _DEVICE_MANAGE_DATA_SET_ATTRIBUTES*)irp->AssociatedIrp.SystemBuffer;
 
@@ -1212,16 +1024,12 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 			status = STATUS_BUFFER_TOO_SMALL;
 			break;
 		}
-// printk("attrs->Action is %d flag is %d\n", attrs->Action, attrs->Flags);
 		if (attrs->Action != DeviceDsmAction_Trim) {
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 		}
 //		int items = attrs->DataSetRangesLength / sizeof(DEVICE_DATA_SET_RANGE);
 
-// printk("%d items\n", items);
-
-		// status = STATUS_SUCCESS;
 		status = STATUS_NOT_SUPPORTED;
 		irp->IoStatus.Information = 0;
 		/* TODO: trim */
@@ -1236,16 +1044,12 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
   CTL_CODE(IOCTL_VOLUME_BASE, 10, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 	case IOCTL_VOLUME_IS_PARTITION:
-		dbg(KERN_DEBUG "IOCTL_VOLUME_IS_PARTITION: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
-
 		status = STATUS_SUCCESS;
 		break;
 
 	case IOCTL_DISK_GET_DRIVE_LAYOUT_EX:
 	{
 		struct _DRIVE_LAYOUT_INFORMATION_EX* dli;
-
-// printk(KERN_DEBUG "IOCTL_DISK_GET_DRIVE_LAYOUT_EX: s->Parameters.DeviceIoControl.InputBufferLength is %d s->Parameters.DeviceIoControl.OutputBufferLength is %d\n", s->Parameters.DeviceIoControl.InputBufferLength, s->Parameters.DeviceIoControl.OutputBufferLength);
 
 		if (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(struct _DRIVE_LAYOUT_INFORMATION_EX)) {
 			status = STATUS_BUFFER_TOO_SMALL;
@@ -1328,8 +1132,6 @@ dbg("IOCTL_MOUNTDEV_QUERY_SUGGESTED_LINK_NAME mount_point is %S\n", dev->mount_p
 	}
 
 	default:
-// printk(KERN_DEBUG "DRBD IoCtl request not implemented: IoControlCode: 0x%x\n", s->Parameters.DeviceIoControl.IoControlCode);
-
 		status = STATUS_NOT_IMPLEMENTED;
 	}
 
@@ -1349,12 +1151,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_create(struct _DEVICE_OBJECT *d
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
-		dbg(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
-
-dbg("ref is %p\n", ref);
-if (ref != NULL)
-dbg("ref->bdev is %p, delete_pending is %d\n", ref->bdev, ref->bdev->delete_pending);
-
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -1367,20 +1163,8 @@ dbg("ref->bdev is %p, delete_pending is %d\n", ref->bdev, ref->bdev->delete_pend
 	int err;
 
 	if (dev->drbd_device != NULL) {
-		dbg(KERN_DEBUG "s->Parameters.Create.SecurityContext->DesiredAccess is %x\n", s->Parameters.Create.SecurityContext->DesiredAccess);
-		dbg(KERN_DEBUG "s->Parameters.Create.FileAttributes is %x\n", s->Parameters.Create.FileAttributes);
-		dbg(KERN_DEBUG "s->Parameters.Create.Options is %x\n", s->Parameters.Create.Options);
-		dbg(KERN_DEBUG "FILE_WRITE_DATA is %x\n", FILE_WRITE_DATA);
-		if (s->FileObject != NULL) {
-			dbg(KERN_DEBUG "file object is %p write access is %d\n", s->FileObject, s->FileObject->WriteAccess);
-		} else {
-			dbg(KERN_DEBUG "file object is NULL\n");
-		}
-
 		if (dev->is_bootdevice) {
-dbg("into wait_for_becoming_primary\n");
 			status = wait_for_becoming_primary(dev->drbd_device->vdisk->part0);
-dbg("out of wait_for_becoming_primary, status is %x\n", status);
 			if (status != STATUS_SUCCESS)
 				goto exit;
 		}
@@ -1388,15 +1172,11 @@ dbg("out of wait_for_becoming_primary, status is %x\n", status);
 		mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
        	               (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0;
 
-		dbg(KERN_INFO "DRBD device  request: opening DRBD device %s\n",
-			mode == 0 ? "read-only" : "read-write");
-
 #ifndef DRBD_9_0
 		err = dev->bd_disk->fops->open(dev->bd_disk, mode);
 #else
 		err = dev->bd_disk->fops->open(dev, mode);
 #endif
-		dbg(KERN_DEBUG "drbd_open returned %d\n", err);
 		status = (err < 0) ? STATUS_INVALID_DEVICE_REQUEST : STATUS_SUCCESS;
 	} else {
 			/* If we are currently mounting we most likely got
@@ -1404,18 +1184,15 @@ dbg("out of wait_for_becoming_primary, status is %x\n", status);
 			 * device in drbd, this will fail at this early stage.
 			 */
 
-		dbg("Create request while device isn't set up yet.\n");
 		status = STATUS_SUCCESS;
 	}
 
 exit:
-	if (status == STATUS_SUCCESS && dev != NULL) {
+	if (status == STATUS_SUCCESS && dev != NULL)
 		dev->num_openers++;
-		dbg("num_openers of device %p is now %d\n", dev, dev->num_openers);
-	}
+
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
-	dbg(KERN_DEBUG "status is %x\n", status);
 	return status;
 }
 
@@ -1435,8 +1212,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_close(struct _DEVICE_OBJECT *de
 	NTSTATUS status;
 
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
-		dbg(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
-
 		if (ref == NULL || ref->bdev == NULL)
 			status = STATUS_NO_SUCH_DEVICE;
 		else
@@ -1451,14 +1226,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_close(struct _DEVICE_OBJECT *de
 	struct block_device *dev = ref->bdev;
 
 	if (dev->drbd_device != NULL) {
-/*	mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
-                (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0; */
-
-/*
-		dbg(KERN_INFO "DRBD device close request: releasing DRBD device %s\n",
-			mode == 0 ? "read-only" : "read-write");
-*/
-
 		if (dev->num_openers > 0)
 #ifndef DRBD_9_0
 			dev->bd_disk->fops->release(dev->bd_disk);
@@ -1467,19 +1234,13 @@ static NTSTATUS __attribute__((stdcall)) windrbd_close(struct _DEVICE_OBJECT *de
 #endif
 		else
 			printk("Warning: close called when there are no disk devices open.\n");
-
-		status = STATUS_SUCCESS;
-	} else {
-		dbg("Close request while device isn't set up yet.\n");
-			/* See comment in windrbd_create() */
-		status = STATUS_SUCCESS;
 	}
 
-	if (status == STATUS_SUCCESS && dev != NULL) {
+	status = STATUS_SUCCESS;
+
+	if (dev != NULL) {
 		if (dev->num_openers > 0)
 			dev->num_openers--;
-
-		dbg("num_openers of device %p is now %d\n", dev, dev->num_openers);
 	}
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -1496,7 +1257,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_cleanup(struct _DEVICE_OBJECT *
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
-		dbg(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -1504,37 +1264,10 @@ static NTSTATUS __attribute__((stdcall)) windrbd_cleanup(struct _DEVICE_OBJECT *
 	}
 	NTSTATUS status = STATUS_SUCCESS;
 
-	dbg(KERN_INFO "Pretending that cleanup does something.\n");
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 	return status;
 }
-
-/* TODO: this was for some testing? */
-#if 0
-static void dump_data(const char *tag, char *data, size_t len, size_t offset_on_disk)
-{
-	size_t i;
-
-	for (i=0;i<len;i++) {
-		printk("%s: %x %x\n", tag, offset_on_disk+i, (unsigned char) (data[i]));
-	}
-}
-
-static int io_complete_thread(void *irp_p)
-{
-	uint64_t started, elapsed;
-	struct _IRP *irp = (struct _IRP*) irp_p;
-
-	started = jiffies;
-	IoCompleteRequest(irp, IO_NO_INCREMENT);
-	elapsed = jiffies - started;
-	if (elapsed > 1000)
-		printk("IoCompleteRequest %p took %lld ms.\n", irp, elapsed);
-
-	return 0;
-}
-#endif
 
 /* Limit imposed by DRBD over the wire protocol. This will not change
  * in the next 5+ years, most likely never.
@@ -1553,8 +1286,6 @@ static void windrbd_bio_finished(struct bio * bio)
 		printk("Internal error: irp is NULL in bio_finished, this should not happen.");
 		return;
 	}
-// printk("1 error is %d bio is %p\n", error, bio);
-// printk("bio->bi_vcnt is %d\n", bio->bi_vcnt);
 	status = STATUS_SUCCESS;
 
 	if (error == 0) {
@@ -1587,27 +1318,11 @@ static void windrbd_bio_finished(struct bio * bio)
 
 		status = STATUS_DEVICE_DOES_NOT_EXIST;
 	}
-// printk("2\n");
 	if (bio_data_dir(bio) == READ) {
-// printk("free page contents %p ...\n", bio);
 		for (i=0;i<bio->bi_vcnt;i++) {
-// printk("free page contents bio->bi_io_vec[i].bv_page->addr is %p i is %d ...\n", bio->bi_io_vec[i].bv_page->addr, i);
 			put_page(bio->bi_io_vec[i].bv_page);
-//			kfree(bio->bi_io_vec[i].bv_page->addr);
 		}
 	}
-
-#if 0
-		/* Set addr to NULL so that a free_page() later on
-		 * (on put_page() at the end of this function) will
-		 * not free the page again (or free an invalid address).
-		 */
-
-	for (i=0;i<bio->bi_vcnt;i++) {
-		bio->bi_io_vec[i].bv_page->addr = NULL;
-	}
-#endif
-
 	KIRQL flags;
 
 		/* TODO: later when we patch out the extra copy
@@ -1646,15 +1361,6 @@ static void windrbd_bio_finished(struct bio * bio)
 
 		irp->IoStatus.Status = status;
 
-#if 0
-			/* do not complete? */
-		if (about_to_remove_irp(irp, bio->bi_bdev) != 0)
-			printk("XXX IRP %p not registered, let's see what happens\n", irp);
-
-//		spin_lock_irqsave(&bio->bi_bdev->complete_request_spinlock, flags);
-#endif
-//		kthread_run(io_complete_thread, irp, "complete-irp");
-
 		if (bio_data_dir(bio) == WRITE)
 				/* Signal free_mdl thread that it should
 				 * complete the IRP.
@@ -1662,24 +1368,11 @@ static void windrbd_bio_finished(struct bio * bio)
 			bio->delayed_io_completion = true;
 		else
 			IoCompleteRequest(irp, status != STATUS_SUCCESS ? IO_NO_INCREMENT : IO_DISK_INCREMENT);
-#if 0
-		if (!irp_already_completed(irp))
-			IoCompleteRequest(irp, IO_NO_INCREMENT);
-
-		if (really_remove_irp(irp, bio->bi_bdev) != 0)
-			printk("XXX IRP %p not registered, let's see what happens\n", irp);
-
-// printk("out of IoCompleteRequest irp is %p\n", irp);
-//		spin_unlock_irqrestore(&bio->bi_bdev->complete_request_spinlock, flags);
-	printk("XXX out of IoCompleteRequest irp is %p sector is %lld\n", irp, bio->bi_iter.bi_sector);
-#endif
 
 		kfree(bio->bi_common_data);
 	}
 	IoReleaseRemoveLock(&bio->bi_bdev->ref->w_remove_lock, NULL);
 
-		/* TODO: solves memory leak? */
-		/* Where is the get_page for this? */
 	if (bio_data_dir(bio) == WRITE) {
 		for (i=0;i<bio->bi_vcnt;i++)
 			put_page(bio->bi_io_vec[i].bv_page);
@@ -1689,7 +1382,6 @@ static void windrbd_bio_finished(struct bio * bio)
 
 static void windrbd_internal_io_finished(struct bio * bio)
 {
-/*	IoReleaseRemoveLock(&bio->bi_bdev->ref->w_remove_lock, NULL); */
 	KeSetEvent(bio->bi_io_finished_event, 0, FALSE);
 }
 
@@ -1703,10 +1395,8 @@ static void drbd_make_request_work(struct work_struct *w)
 {
 	struct io_request *ioreq = container_of(w, struct io_request, w);
 
-// printk("1\n");
 	atomic_inc(&ioreq->bio->bi_bdev->num_bios_pending);
 	ioreq->bio->bi_bdev->bd_disk->fops->submit_bio(ioreq->bio);
-// printk("2\n");
 	kfree(ioreq);
 }
 
@@ -1734,7 +1424,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		return STATUS_INVALID_PARAMETER;
 	}
 	if (sector * dev->bd_block_size + total_size > dev->bd_inode->i_size) {
-		dbg("Attempt to read past the end of the device, request shortened\n");
+		printk("Attempt to read past the end of the device, request shortened\n");
 		total_size = dev->bd_inode->i_size - sector * dev->bd_block_size; 
 	}
 	if (total_size == 0) {
@@ -1808,8 +1498,6 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		bio->bi_mdl_offset = (unsigned long long)b*MAX_BIO_SIZE;
 		bio->bi_common_data = common_data;
 		bio->is_user_request = true;
-
-cond_printk("%s sector: %d total_size: %d\n", rw == WRITE ? "WRITE" : "READ", sector, total_size);
 
 		this_elm_size = PAGE_SIZE;
 		for (i = 0; i < nr_io_vec_elm; i++) {
@@ -1976,8 +1664,6 @@ static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_devic
 static NTSTATUS __attribute__((stdcall)) windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
-		dbg(KERN_WARNING "I/O on root device not supported.\n");
-
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
@@ -1998,10 +1684,9 @@ static NTSTATUS __attribute__((stdcall)) windrbd_io(struct _DEVICE_OBJECT *devic
 		 * the device.
 		 */
 
-	if (dev->drbd_device == NULL) {
-		dbg("I/O request while device isn't set up yet.\n");
+	if (dev->drbd_device == NULL)
 		goto exit;
-	}
+
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
 	IoAcquireRemoveLock(&ref->w_remove_lock, NULL);
@@ -2009,8 +1694,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_io(struct _DEVICE_OBJECT *devic
 		goto exit_remove_lock;
 
 	if (dev->is_bootdevice && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
-		dbg("I/O request while not primary, waiting for primary.\n");
-
 		status = wait_for_becoming_primary(dev->drbd_device->vdisk->part0);
 		if (status != STATUS_SUCCESS)
 			goto exit_remove_lock;
@@ -2042,26 +1725,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_shutdown(struct _DEVICE_OBJECT 
 {
 	printk("Got SHUTDOWN request, assuming system is about to shut down\n");
 	shutting_down = 1;
-
-	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
-		irp->IoStatus.Status = STATUS_SUCCESS;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
-	}
-
-	printk("System shutdown, for now, don't clean up, there might be DRBD resources online\nin which case we would crash the system.\n");
-
-	printk("device: %p irp: %p\n", device, irp);
-
-/* TODO: signal the devices waiting for primary that it should stop
- * waiting now.
- */
-#if 0
-	if (device == mvolRootDeviceObject)
-		drbd_cleanup();
-
-/* TODO: clean up logging. */
-#endif
 
 	irp->IoStatus.Status = STATUS_SUCCESS;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -2097,8 +1760,6 @@ static void windrbd_bio_flush_finished(struct bio * bio)
 static NTSTATUS __attribute__((stdcall)) windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
-		dbg(KERN_WARNING "Flush on root device not supported.\n");
-
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
@@ -2106,7 +1767,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_flush(struct _DEVICE_OBJECT *de
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
-		dbg(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -2161,12 +1821,10 @@ static int get_all_drbd_device_objects(struct _DEVICE_OBJECT **array, int max)
 					array[count] = drbd_device->vdisk->part0->windows_device;
 					ObReferenceObject(drbd_device->vdisk->part0->windows_device);
 				}
-				dbg("windows device at %p\n", drbd_device->vdisk->part0->windows_device);
 				count++;
 			}
 		}
 	}
-	dbg("%d drbd windows devices found\n", count);
 	return count;
 }
 
@@ -2287,8 +1945,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_pnp(struct _DEVICE_OBJECT *devi
 
 		/* TODO: mux */
 	if (device == mvolRootDeviceObject || device == user_device_object) {
-		dbg(KERN_WARNING "PNP requests on root device not supported.\n");
-
 		status = STATUS_NOT_SUPPORTED;
 		goto out;
 	}
@@ -2619,8 +2275,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_sysctl(struct _DEVICE_OBJECT *d
 	NTSTATUS status = STATUS_SUCCESS;
 
 	if (device == mvolRootDeviceObject || device == user_device_object) {
-		dbg(KERN_WARNING "Sysctl requests on root device not supported.\n");
-
 		irp->IoStatus.Status = STATUS_SUCCESS;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_SUCCESS;
@@ -2631,15 +2285,12 @@ static NTSTATUS __attribute__((stdcall)) windrbd_sysctl(struct _DEVICE_OBJECT *d
 
 		IoSkipCurrentIrpStackLocation(irp);
 		status = IoCallDriver(bus_ext->lower_device, irp);
-		dbg("sysctl lower object returned %x\n", status);
 	} else  {
 			/* a disk */
 	/* most likely we need to forward that to the lower (=bus) device */
 		if (drbd_bus_device != NULL) {
 			IoSkipCurrentIrpStackLocation(irp);
-			dbg("calling sysctl bus device\n", status);
 			status = IoCallDriver(drbd_bus_device, irp);
-			dbg("sysctl lower object returned %x\n", status);
 		} else {
 				/* verifier would complain about this */
 			irp->IoStatus.Status = STATUS_SUCCESS;
@@ -2677,7 +2328,6 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 		 */
 //			windrbd_bdget(bdev);
 
-			dbg("waiting for block device size to become valid.\n");
 		/* Windows 10: it BSODs with a DRIVER_PNP_WATCHDOG if
 		 * it cannot complete within 5-6 minutes. Report an
 		 * error in getting size. TODO: trigger the watchdog.
@@ -2685,26 +2335,15 @@ static long long wait_for_size(struct _DEVICE_OBJECT *device)
 
 			status = KeWaitForSingleObject(&bdev->capacity_event, Executive, KernelMode, FALSE, NULL);
 			if (status == STATUS_SUCCESS) {
-				dbg("Got size now, proceeding with I/O request\n");
-
 				if (!bdev->powering_down && !bdev->delete_pending && !shutting_down)  {
 					if (bdev->bd_inode->i_size > 0) {
-						dbg("block device size is %lld\n", bdev->bd_inode->i_size);
 						d_size = bdev->bd_inode->i_size;
 					} else {
-						dbg("Warning: block device size still not known yet.\n");
+						printk("Warning: block device size still not known yet.\n");
 					}
-				} else {
-					dbg("Warning: device object about to be deleted\n");
 				}
 			}
-			else {
-				dbg("KeWaitForSingleObject returned %x\n", status);
-			}
-//			windrbd_bdput(bdev);
 		}
-	} else {
-		dbg("ref is NULL!\n");
 	}
 	return d_size;
 }
@@ -2905,29 +2544,6 @@ bool set_capacity_and_notify(struct gendisk *disk, sector_t size)
 	return true;
 }
 
-#if 0
-static void set_partition_guid(struct block_device *bdev, const char *guid)
-{
-	int i, n;
-	char buf[256];
-
-	bdev->has_guid = true;
-	memcpy(bdev->guid, guid, 16);
-
-		/* TODO: store it somewhere (bootsector of partition?) */
-
-		/* Ugh - remove this again ... */
-	n = 0;
-	n += snprintf(buf+n, sizeof(buf)-n, "Got GUID assigned: ");
-	for (i=0;i<16;i++)
-		n += snprintf(buf+n, sizeof(buf)-n, "%02x ", (unsigned char) guid[i]);
-	n += snprintf(buf+n, sizeof(buf)-n, "\n");
-	buf[n] = '\0';
-
-	printk("%s", buf);
-}
-#endif
-
 static NTSTATUS scsi_mode_sense(union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p)
 {
 	PMODE_PARAMETER_HEADER ModeParameterHeader = data_buffer;
@@ -2948,8 +2564,6 @@ static NTSTATUS scsi_mode_sense(union _CDB *cdb, void *data_buffer, unsigned lon
 static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p)
 {
 	memset(data_buffer, 0, (*data_transfer_length_p));
-
-// printk("page code is %d EnableVitalProductData is %d CommandSupportData is %d\n", cdb->CDB6INQUIRY3.PageCode, cdb->CDB6INQUIRY3.EnableVitalProductData, cdb->CDB6INQUIRY3.CommandSupportData);
 
 	if (!cdb->CDB6INQUIRY3.EnableVitalProductData) {
 		struct _INQUIRYDATA *id = data_buffer;
@@ -3090,15 +2704,15 @@ static NTSTATUS scsi_io(struct block_device *bdev, union _CDB *cdb, void *data_b
 		sector_count = (unsigned long long) ((unsigned long long) cdb->CDB10.TransferBlocksMsb << 8) + (unsigned long long) cdb->CDB10.TransferBlocksLsb;
 	}
 	if (sector_count * 512 > (*data_transfer_length_p)) {
-		dbg("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, *data_transfer_length_p);
+		printk("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, *data_transfer_length_p);
 		sector_count = (*data_transfer_length_p) / 512;
 	}
 
 	if ((*data_transfer_length_p) % 512 != 0) {
-		dbg("(*data_transfer_length_p) (%lld) not sector aligned\n", (*data_transfer_length_p));
+		printk("(*data_transfer_length_p) (%lld) not sector aligned\n", (*data_transfer_length_p));
 	}
 	if ((*data_transfer_length_p) > sector_count * 512) {
-		dbg("(*data_transfer_length_p) (%lld) too big\n", (*data_transfer_length_p));
+		printk("(*data_transfer_length_p) (%lld) too big\n", (*data_transfer_length_p));
 	}
 
 	(*data_transfer_length_p) = sector_count * 512;
@@ -3109,7 +2723,6 @@ static NTSTATUS scsi_io(struct block_device *bdev, union _CDB *cdb, void *data_b
 
 	retries = 0;
 	while (1) {
-			/* TODO: needed? */
 		buffer = ((char*)data_buffer - (char*)MmGetMdlVirtualAddress(irp->MdlAddress)) + (char*)MmGetSystemAddressForMdlSafe(irp->MdlAddress, HighPagePriority);
 
 		if (buffer != NULL) {
@@ -3128,8 +2741,6 @@ static NTSTATUS scsi_io(struct block_device *bdev, union _CDB *cdb, void *data_b
 			msleep(100);
 		}
 	}
-// printk("Debug: SCSI I/O: %s sector %lld, %d sectors to %p irp is %p\n", rw == READ ? "Reading" : "Writing", start_sector, sector_count, srb->DataBuffer, irp);
-
 	irp->IoStatus.Information = 0;
 	irp->IoStatus.Status = STATUS_PENDING;
 
@@ -3279,8 +2890,6 @@ static NTSTATUS scsi_read_capacity(struct block_device *bdev, union _CDB *cdb, v
 
 static NTSTATUS scsi_execute(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p, struct _IRP *irp)
 {
-// printk("cdb->AsByte[0] is %x\n", cdb->AsByte[0]);
-
 	switch (cdb->AsByte[0]) {
 	case SCSIOP_TEST_UNIT_READY:
 		return STATUS_SUCCESS;
@@ -3326,7 +2935,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete || ref->bdev->ref == NULL) {
-//		printk(KERN_WARNING "Device %p accessed after it was deleted.\n", device);
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
 		srb = s->Parameters.Scsi.Srb;
@@ -3336,29 +2944,12 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return STATUS_NO_SUCH_DEVICE;
 	}
-// cond_printk("SCSI IRQL is %d\n", KeGetCurrentIrql());
-#if 0
-	if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
-			/* do not touch any (pageable) memory */
-		status = irp->IoStatus.Status;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return status;
-/*		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
-		irp->IoStatus.Information = 0;
-		srb = s->Parameters.Scsi.Srb;
-		if (srb)
-			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
-*/
-	}
-#endif
 	bdev = ref->bdev;
 	IoAcquireRemoveLock(&ref->w_remove_lock, NULL);
 	status = STATUS_INVALID_DEVICE_REQUEST;
 
 	if (bdev->about_to_delete)
 		goto out;
-
-// printk("SCSI request for device %p\n", device);
 
 	srb = s->Parameters.Scsi.Srb;
 	if (srb == NULL) {
@@ -3369,13 +2960,10 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 	srb->SrbStatus = SRB_STATUS_INVALID_REQUEST;
 	srb->ScsiStatus = SCSISTAT_GOOD;
 	irp->IoStatus.Information = 0;
-	if (srb->Lun != 0) {
-		dbg("LUN of SCSI device request is %d (should be 0)\n", srb->Lun);
+	if (srb->Lun != 0)
 		goto out; // STATUS_SUCCESS?
-	}
-	status = STATUS_SUCCESS;	/* optimistic */
 
-// printk("srb->Function is 0x%08x\n", srb->Function);
+	status = STATUS_SUCCESS;	/* optimistic */
 
 	switch (srb->Function) {
 	case SRB_FUNCTION_EXECUTE_SCSI:
@@ -3421,8 +3009,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 		break;
 
 	case SRB_FUNCTION_RELEASE_DEVICE:
-//             ObDereferenceObject(device);
-// printk("got SRB_FUNCTION_RELEASE_DEVICE, referencing device object\n");
 		srb->SrbStatus = SRB_STATUS_SUCCESS;
 		break;
 
@@ -3472,8 +3058,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_dispatch(struct _DEVICE_OBJECT 
 		if (device == mvolRootDeviceObject)
 			t->is_root = 1;
 	}
-// printk("got request major is 0x%02x minor is 0x%02x device object is %p (is %s device)\n", major, s->MinorFunction, device, device == mvolRootDeviceObject ? "root" : (device == drbd_bus_device ? "bus" : (device == user_device_object ? " user" : "disk")));
-
 	ret = windrbd_dispatch_table[major](device, irp);
 
 	if (t != NULL) {
@@ -3510,8 +3094,4 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	if (status != STATUS_SUCCESS) {
 		printk("Could not register shutdown notification.\n");
 	}
-#if 0
-	spin_lock_init(&irps_in_progress_lock);
-	kthread_run(check_irps_thread, NULL, "check-irps");
-#endif
 }
