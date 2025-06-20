@@ -19,15 +19,6 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-/* Uncomment this if you want more debug output (disable for releases) */
-/* #define DEBUG 1 */
-
-#ifdef RELEASE
-#ifdef DEBUG
-#undef DEBUG
-#endif
-#endif
-
 #include <linux/types.h>
 
 #include <initguid.h>
@@ -215,7 +206,6 @@ found:
 
 ULONG_PTR find_next_bit(const ULONG_PTR *addr, ULONG_PTR size, ULONG_PTR offset)
 {
-// printk("addr is %p, *addr is %llx size is %lld, offset is %lld\n", addr, *addr, size, offset);
 	const ULONG_PTR *p = addr + BITOP_WORD(offset);
 	ULONG_PTR result = offset & ~(BITS_PER_LONG - 1);
 	ULONG_PTR tmp;
@@ -706,9 +696,8 @@ void bio_free(struct bio *bio)
 	KIRQL flags;
 	struct bio *upper_bio = bio->is_cloned_from;
 
-	if (!list_empty(&bio->locally_submitted_bios)) {
+	if (!list_empty(&bio->locally_submitted_bios))
 		printk("Warning: bio->locally_submitted_bios not empty.\n");
-	}
 
 		/* DRBD considers pages here as not in use any more.
 		 * however we still have MDLs referencing memory
@@ -815,9 +804,8 @@ struct bio *bio_clone(struct bio * bio_src, gfp_t flag)
 	for (i=0;i<bio->bi_vcnt;i++) {
 		get_page(bio->bi_io_vec[i].bv_page);
 	}
-	if (!list_empty(&bio->locally_submitted_bios)) {
+	if (!list_empty(&bio->locally_submitted_bios))
 		printk("Warning: bio->locally_submitted_bios not empty, is this bio already submitted?\n");
-	}
 
 	/* Take a reference to the original bio. This will be dropped
 	   when the cloned bio is freed. The reason for this is that
@@ -852,7 +840,6 @@ int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsi
 
 void init_completion_debug(struct completion *completion, const char *file, int line, const char *func)
 {
-// printk("from %s:%d (%s()) completion is %p\n", file, line, func, completion);
 	init_waitqueue_head(&completion->wait);
 	completion->completed = false;
 }
@@ -879,20 +866,14 @@ int wait_for_completion_interruptible_debug(struct completion *completion, const
 
 void complete_debug(struct completion *c, const char *file, int line, const char *func)
 {
-// printk("from %s:%d (%s()) completion is %p\n", file, line, func, c);
-// printk("completing %p\n", c);
 	c->completed = true;
 	wake_up(&c->wait);
-// printk("%p completed\n", c);
 }
 
 void complete_all_debug(struct completion *c, const char *file, int line, const char *func)
 {
-// printk("from %s:%d (%s()) completion is %p\n", file, line, func, c);
-// printk("completing all %p\n", c);
 	c->completed = true;
 	wake_up_all(&c->wait);
-// printk("%p completed\n", c);
 }
 
 struct workqueue_struct *system_wq;
@@ -1070,19 +1051,7 @@ void destroy_workqueue(struct workqueue_struct *wq)
 	kfree(wq);
 }
 
-int threads_sleeping;
-
-void enter_interruptible_debug(const char *file, int line, const char *func)
-{
-// cond_printk("Thread %s entering interruptible sleep (from %s:%d (%s()).\n", current->comm, file, line, func);
-	threads_sleeping++;
-}
-
-void exit_interruptible_debug(const char *file, int line, const char *func)
-{
-// cond_printk("Thread %s exiting interruptible sleep. (from %s:%d (%s())\n", current->comm, file, line, func);
-	threads_sleeping--;
-}
+/* TODO: take this function from Linux (again) */
 
 void get_random_bytes(void *buf, int nbytes)
 {
@@ -1244,11 +1213,6 @@ static int __mod_timer(struct timer_list *timer, ULONG_PTR expires, bool pending
 		nWaitTime.QuadPart = -(((int64_t) expires) * 10 * 1000);
 	}
 
-/*
-  printk("%s timer(0x%p) current(%d) expires(%d) gap(%d) nWaitTime(%lld)\n",
-        timer->name, timer, current_milisec, timer->expires, timer->expires - current_milisec, nWaitTime.QuadPart);
-*/
-
 	KeSetTimer(&timer->ktimer, nWaitTime, &timer->dpc);
 	return pending;
 }
@@ -1275,67 +1239,31 @@ int mod_timer(struct timer_list *timer, ULONG_PTR expires)
 
 void kobject_put(struct kobject *kobj)
 {
-    if (kobj) 
-    {
-        if (kobj->name == NULL)
-        {
-            return;
-        }
-
+	if (kobj && kobj->name && kobj->ktype && kobj->ktype->release)
+	{
 		if (atomic_sub_and_test(1, &kobj->kref.refcount.refs))
-		{
-			void(*release)(struct kobject *kobj);
-			release = kobj->ktype->release;
-			if (release == 0)
-			{
-				return;
-			}
-			release(kobj);
-		}
-    }
-    else
-    {
-        return;
-    }
+			kobj->ktype->release(kobj);
+	}
 }
 
 void kobject_del(struct kobject *kobj)
 {
-    if (!kobj)
-    {
-        return;
-    }
-    kobject_put(kobj->parent); 
+	kobject_put(kobj->parent);
 }
 
 void kobject_get(struct kobject *kobj)
 {
-    if (kobj)
-    {
-        kref_get(&kobj->kref);
-    }
-    else
-    {
-        return;
-    }
+	if (kobj)
+		kref_get(&kobj->kref);
 }
 
 void del_gendisk(struct gendisk *disk)
 {
-#if 0
         if (disk != NULL) {
-		printk("freeing disk %p\n", disk);
                 if (disk->queue != NULL)
                         blk_cleanup_queue(disk->queue);
                 put_disk(disk);
         }
-#endif
-}
-
-//Linux/block/genhd.c
-void set_disk_ro(struct gendisk *disk, int flag)
-{
-
 }
 
 #include <asm/signal.h>
@@ -1352,12 +1280,8 @@ int signal_pending(struct task_struct *task)
 
 void force_sig(int sig, struct task_struct *task)
 {
-		/* TODO: We need to protect against thread
-		 * suddenly dying here. */
-
 	if (task && task->has_sig_event)
 	{
-// printk("sending signal %d to task %p (%s)\n", sig, task, task->comm);
 		task->sig = sig;
 		KeSetEvent(&task->sig_event, 0, FALSE);
 	}
@@ -1370,12 +1294,9 @@ void send_sig(int sig, struct task_struct *task, int priv)
 
 void flush_signals(struct task_struct *task)
 {
-		/* TODO: protect against thread being deleted. */
-
 	if (task && task->has_sig_event)
 	{
-// printk("clearing signal event from task %p (%s)\n", task, task->comm);
-		KeClearEvent(&task->sig_event); 
+		KeClearEvent(&task->sig_event);
 		task->sig = 0;
 	}
 }
@@ -1535,10 +1456,6 @@ int wait_for_bios_to_complete(struct block_device *bdev)
 {
 	int timeout;
 
-	if (atomic_read(&bdev->num_bios_pending) > 0) {
-		dbg("%d bios pending before wait_event\n", atomic_read(&bdev->num_bios_pending));
-		dbg("%d IRPs pending before wait_event\n", atomic_read(&bdev->num_irps_pending));
-	}
 	timeout = wait_event_timeout(bdev->bios_event, (atomic_read(&bdev->num_bios_pending) == 0), HZ*10);
 	if (timeout == 0) {
 		printk("Warning: Still %d bios and %d IRPs pending after 10 seconds\n", atomic_read(&bdev->num_bios_pending), atomic_read(&bdev->num_irps_pending));
@@ -1565,13 +1482,11 @@ static void windrbd_fail_all_in_flight_bios(struct block_device *bdev, int bi_st
 
 	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
 	list_for_each_entry_safe(bio, bio2, &bdev->in_flight_bios, locally_submitted_bios) {
-//		list_del_init(&bio->locally_submitted_bios);
 		list_add(&bio->locally_submitted_bios2, &tmp_list);
 	}
 	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
 
 	list_for_each_entry(bio, &tmp_list, locally_submitted_bios2) {
-// printk("disk timeout, failing bio %p (was last at %s)\n", bio, bio->where_i_am);
 		bio->bi_status = bi_status;
 		bio->disk_has_timed_out = true;
 		bio_endio(bio); /* will remove this bio from the list */
@@ -1681,8 +1596,6 @@ bio->where_i_am = "in io completion";
 		printk(KERN_WARNING "DrbdIoCompletion: I/O failed with error %x IRP is %p bio is %p\n", Irp->IoStatus.Status, Irp, bio);
 		printk("bio->bi_vcnt is %d bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %d bio->bi_io_vec[0].bv_page is %p bio->bi_big_buffer is %p", bio->bi_vcnt, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, bio->bi_io_vec[0].bv_page, bio->bi_big_buffer);
 	}
-// printk("I/O request completed by NT kernel: bio->bi_vcnt is %d bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %d bio->bi_io_vec[0].bv_page is %p bio->bi_big_buffer is %p", bio->bi_vcnt, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, bio->bi_io_vec[0].bv_page, bio->bi_big_buffer);
-
 	if (test_inject_faults(&bio->bi_bdev->inject_on_completion, "assuming completion routine was send an error (enabled for this device)"))
 		status = STATUS_IO_DEVICE_ERROR;
 
@@ -1773,7 +1686,6 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 
 	mutex_lock(&dev->vol_size_mutex);
 
-// mem_printk("memset %p 0 %d\n", &dev->vol_size_length_information, sizeof(dev->vol_size_length_information));
 	memset(&dev->vol_size_length_information, 0, sizeof(dev->vol_size_length_information));
 
 	if (KeGetCurrentIrql() >= APC_LEVEL) {
@@ -1785,8 +1697,8 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 
 	KeInitializeEvent(&event, NotificationEvent, FALSE);
 	newIrp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_LENGTH_INFO,
-       		dev->windows_device, NULL, 0,
-		&dev->vol_size_length_information, sizeof(dev->vol_size_length_information), 
+		dev->windows_device, NULL, 0,
+		&dev->vol_size_length_information, sizeof(dev->vol_size_length_information),
 		FALSE, &event, &dev->vol_size_io_status);
 
 	if (!newIrp) {
@@ -1794,7 +1706,7 @@ static LONGLONG windrbd_get_volsize(struct block_device *dev)
 		mutex_unlock(&dev->vol_size_mutex);
 
 		return -1;
-	}	
+	}
 	s = IoGetNextIrpStackLocation(newIrp);
 
 	s->DeviceObject = dev->windows_device;
@@ -1854,7 +1766,6 @@ static int make_flush_request(struct bio *bio)
 				/* seems to be the common case, only
 				   print for debugging. For Windows7.
 				 */
-			dbg(KERN_INFO "Flush not supported by windows device, ignored\n");
 			return 0;
 		}
 		printk(KERN_WARNING "flush request failed with status %x\n", status);
@@ -1862,7 +1773,7 @@ static int make_flush_request(struct bio *bio)
 	}
 
 	/* For Server 2016 (probably also Windows 10) kernels this succeeds. */
-	dbg("flush succeeded\n");
+
 	return 0;
 }
 
@@ -1875,7 +1786,7 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	PIO_STACK_LOCATION next_stack_location;
 	unsigned int the_size;
 
-bio->where_i_am = "in windrbd_generic_make_request big buffer";
+	bio->where_i_am = "in windrbd_generic_make_request big buffer";
 	if (bio->bi_vcnt == 0) {
 		printk(KERN_ERR "Warning: bio->bi_vcnt == 0\n");
 		return -EIO;
@@ -1894,9 +1805,6 @@ bio->where_i_am = "in windrbd_generic_make_request big buffer";
 		buffer = (void*) (((char*) bio->bi_io_vec[bio->bi_this_request].bv_page->addr) + bio->bi_io_vec[bio->bi_this_request].bv_offset);
 		the_size = bio->bi_io_vec[bio->bi_this_request].bv_len;
 	}
-
-	/* Leave that here for now it is sometimes useful: */
-// printk("(%s) Local I/O(%s): disk offset=%llu sect=%llu total sz=%d IRQL=%d buf=0x%p bi_vcnt: %d bv_offset=%d the_size=%d bio=%p\n", current->comm, (io == IRP_MJ_READ) ? "READ" : "WRITE", bio->bi_io_vec[bio->bi_this_request].offset.QuadPart, bio->bi_io_vec[bio->bi_this_request].offset.QuadPart / 512, bio->bi_iter.bi_size, KeGetCurrentIrql(), buffer, bio->bi_vcnt, bio->bi_io_vec[0].bv_offset, the_size, bio);
 
 /* Make a copy of the (page cache) buffer and write the copy to the
    backing device. Reason is that on write (for example formatting the
@@ -2088,7 +1996,6 @@ bio->where_i_am = "in generic_make_request2 big buffer";
 			bio->bi_iter.bi_sector = sector;
 			bio->bi_iter.bi_size = total_size;
 
-// printk("1 size is %d\n", total_size);
 			ret = windrbd_generic_make_request(bio, false);
 
 			if (ret < 0) {
@@ -2145,7 +2052,6 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	first_bio = list_first_entry(list, struct bio, corked_bios);
 	if (list_is_last(&first_bio->corked_bios, list)) {
 		list_del(&first_bio->corked_bios);
-// printk("bio %p is alone: submitting (1)\n", first_bio);
 		ret = generic_make_request2(first_bio);
 		for (i=0; i<first_bio->bi_vcnt; i++) {
 			/* corresponding get_page in generic_make_request() */
@@ -2168,7 +2074,6 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 	joined_bios_bio->bi_bdev = first_bio->bi_bdev;
 	joined_bios_bio->bi_opf = first_bio->bi_opf;
 	joined_bios_bio->bi_iter.bi_sector = first_bio->bi_iter.bi_sector;
-// printk("first_bio is %p first_bio->bi_iter.bi_sector is %lld joined_bios_bio->bi_iter.bi_sector is %lld\n", first_bio, first_bio->bi_iter.bi_sector, joined_bios_bio->bi_iter.bi_sector);
 
 	joined_bios_bio->bi_iter.bi_size = total_size;
 	joined_bios_bio->bi_vcnt = 0;
@@ -2184,18 +2089,14 @@ static int create_and_submit_joined_bio(int num_vector_elements, int total_size,
 				/* TODO: get_page here? */
 			joined_bios_bio->bi_vcnt++;
 if (bio_data_dir(bio3) == WRITE) {
-// printk("joined_bios_bio is %p bio3 is %p bio3->bi_vcnt is %d joined_bios_bio->bi_vcnt is %d\n", joined_bios_bio, bio3, bio3->bi_vcnt, joined_bios_bio->bi_vcnt);
 }
 		}
-// printk("bio %p is being joined: NOT submitting (5)\n", bio3);
 		list_del(&bio3->corked_bios);
 		list_add(&bio3->corked_bios, &joined_bios_bio->joined_bios);
 	}
 	if (joined_bios_bio->bi_vcnt != num_vector_elements) {
 		printk("Warning: joined_bios_bio->bi_vcnt(%d) != num_vector_elements(%d)\n", joined_bios_bio->bi_vcnt, num_vector_elements);
 	}
-// printk("first_bio is %p first_bio->bi_iter.bi_sector is %lld joined_bios_bio->bi_iter.bi_sector is %lld\n", first_bio, first_bio->bi_iter.bi_sector, joined_bios_bio->bi_iter.bi_sector);
-// printk("bio %p is joined bios: submitting (2)\n", joined_bios_bio);
 		/* child bios will be put is I/O request routine */
 	return generic_make_request2(joined_bios_bio);
 }
@@ -2236,10 +2137,8 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 	last_bio = NULL;
 
 	list_for_each_entry_safe(bio, bio2, &tmp_list, corked_bios) {
-//  printk("bio is %p expected_sector is %lld bio->bi_iter.bi_sector is %lld bio->bi_iter.bi_size is %lld num_vector_elements is %d joinable_size is %d opf is %d bio->bi_opf is %d\n", bio, expected_sector, bio->bi_iter.bi_sector, bio->bi_iter.bi_size, num_vector_elements, joinable_size, opf, bio->bi_opf);
 		bio->where_i_am = "in uncorking loop";
 		if ((expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) || num_vector_elements >= 1024 || joinable_size >= 4*1024*1024 || (opf != (unsigned int)-1 && bio->bi_opf != opf) || bio->is_user_request) {
-// printk("Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 			if (last_bio == NULL) {
 				printk("Warning: logic bug, last_bio should not be NULL here.\n");
 			} else {
@@ -2252,9 +2151,6 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 					}
 					bio_put(last_bio);	/* corresponding get in generic_request() */
 				} else {
-// if (bio_data_dir(bio) == WRITE) {
-// printk("1 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
-// }
 					ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, bio);
 				}
 				if (ret < 0)
@@ -2287,13 +2183,7 @@ int windrbd_bdev_uncork(struct block_device *bdev)
 		joinable_size += bio->bi_iter.bi_size;
 		expected_sector = bio->bi_iter.bi_sector + bio->bi_iter.bi_size/512;
 		last_bio = bio;
-
-if (bio_data_dir(bio) == WRITE) {
-// printk("2 bio is %p bio->bi_vcnt is %d num_vector_elements is %d num_joinable_bios is %d\n", bio, bio->bi_vcnt, num_vector_elements, num_joinable_bios);
-}
-
 	}
-// printk("At end of loop: Found %d joinable bios (%lld bytes)\n", num_joinable_bios, joinable_size);
 		/* bio variable is invalid here ... */
 	ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, NULL);
 
@@ -2345,7 +2235,6 @@ int generic_make_request(struct bio *bio)
 
 		return 0;
 	} else {
-// printk("bio %p corking is off: submitting (4)\n", bio);
 		bio->where_i_am = "in generic_make_request no corking";
 		return generic_make_request2(bio);
 	}
@@ -2849,26 +2738,6 @@ void blk_cleanup_disk(struct gendisk *disk)
 	put_disk(disk);
 }
 
-#if 0
-struct block_device *bdget_disk(struct gendisk *disk, int partno)
-{
-	if (partno > 0)
-		printk("Warning: bdget_disk called with partno = %d, we do not support partitions\n", partno);
-
-	if (disk) {
-		if (disk->part0)
-			kref_get(&disk->part0->kref);
-		else
-			printk("Warning: disk->bdev is NULL in bdget_disk\n");
-
-		return disk->part0;
-	}
-	printk("Warning: disk is NULL in bdget_disk\n");
-	return NULL;
-}
-
-#endif
-
 /**
  * bdgrab -- Grab a reference to an already referenced block device
  * @bdev:	Block device to grab a reference to.
@@ -2878,17 +2747,6 @@ struct block_device *bdgrab(struct block_device *bdev)
 	kref_get(&bdev->kref);
 	return bdev;
 }
-
-/*
-void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
-{
-	// not support
-}
-
-void blk_queue_flush(struct request_queue *q, unsigned int flush)
-{
-}
-*/
 
 /**
  * blk_queue_segment_boundary - set boundary rules for segment merging
@@ -2937,14 +2795,11 @@ void bioset_free(struct bio_set *bs)
 unsigned char *skb_put(struct sk_buff *skb, unsigned int len)
 {
 	unsigned char *tmp = skb_tail_pointer(skb);
-	// SKB_LINEAR_ASSERT(skb);
 	skb->tail += len;
 	skb->len  += len;
 
 	if (skb->tail > skb->end)
-	{
 		printk("drbd:skb_put: skb_over_panic\n");
-	}
 
 	return tmp;
 }
@@ -2977,54 +2832,6 @@ int ___ratelimit(struct ratelimit_state *rs, const char *func)
 	return 1;
 }
 
-#if 0
-int _DRBD_ratelimit(struct ratelimit_state *rs, const char * func, const char * __FILE, const int __LINE)
-{
-	int ret;
-	
-	if (!rs || rs->interval == 0)
-		return 1;
-
-	/* TODO: why? */
-	if (KeGetCurrentIrql() > DISPATCH_LEVEL)
-	{
-		return 1;
-	}
-
-	/*
-	 * If we contend on this state's lock then almost
-	 * by definition we are too busy to print a message,
-	 * in addition to the one that will be printed by
-	 * the entity that is holding the lock already:
-	 */
-	if (!spin_trylock(&rs->lock))
-		return 0;
-
-	if (!rs->begin)
-		rs->begin = jiffies;
-
-	if (time_is_before_jiffies(rs->begin + rs->interval)){
-		if (rs->missed)
-			printk("%s(%s@%d): %d callbacks suppressed\n", func, __FILE, __LINE, rs->missed);
-		rs->begin = jiffies;
-		rs->printed = 0;
-		rs->missed = 0;
-	}
-
-	if (rs->burst && rs->burst > rs->printed){
-		rs->printed++;
-		ret = 1;
-	} else {
-		rs->missed++;
-		ret = 0;
-	}
-	spin_unlock(&rs->lock);
-
-	return ret;
-}
-#endif
-
-// DW-1109: delete drbd bdev when ref cnt gets 0, clean up all resources that has been created in create_drbd_block_device.
 void delete_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
@@ -3247,7 +3054,6 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, void *ho
 
 	mutex_init(&block_device->vol_size_mutex);
 	block_device->bd_inode->i_size = windrbd_get_volsize(block_device);
-// printk("block_device->bd_inode->i_size is %llu\n", block_device->bd_inode->i_size);
 	if (block_device->bd_inode->i_size == (loff_t)-1) {
 		printk(KERN_ERR "Cannot get volsize.\n");
 		err = -EINVAL;
@@ -3370,7 +3176,6 @@ sector_t windrbd_get_capacity(struct block_device *bdev)
 
 	if (bdev->is_backing_device) {
 		d_size = windrbd_get_volsize(bdev);
-// printk("d_size is %llu\n", d_size);
 		if (d_size == -1)
 			printk(KERN_WARNING "Warning: could not get size of backing device\n");
 		else {
@@ -3555,19 +3360,6 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 */
 
 	if (!device->vdisk->part0->is_bootdevice) {
-	/* TODO: this requires some DRBD patches. For 9.1 however this
-	 * is implemented somehow else so we can skip this patch.
-	 */
-#if 0
-		printk("Becoming primary, resuming application I/O and deleting sync stall timers.\n");
-		for_each_peer_device(peer_device, device) {
-			del_timer(&peer_device->resync_stalled_timer);
-			peer_device->rs_last_bm_extent = NULL;
-		}
-		windrbd_resume_application_io(device->vdisk->part0,
-			"Resuming application I/O on becoming Primary.\n");
-#endif
-
 		if (windrbd_allocate_io_workqueue(device->vdisk->part0) < 0) {
 			printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");
 		}
