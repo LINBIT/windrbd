@@ -1259,11 +1259,14 @@ void kobject_get(struct kobject *kobj)
 
 void del_gendisk(struct gendisk *disk)
 {
+	/* TODO: repair put_disk() first ... else we get a double free. */
+#if 0
         if (disk != NULL) {
                 if (disk->queue != NULL)
                         blk_cleanup_queue(disk->queue);
                 put_disk(disk);
         }
+#endif
 }
 
 #include <asm/signal.h>
@@ -2725,7 +2728,7 @@ struct gendisk *blk_alloc_disk(int unused)
 	return disk;
 }
 
-/* we should have a refcount here ... */
+/* TODO: we should have a refcount here ... */
 void put_disk(struct gendisk *disk)
 {
 	kfree(disk);
