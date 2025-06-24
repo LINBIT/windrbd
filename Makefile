@@ -79,9 +79,14 @@ endif
 
 # TODO: remove this dependecy: compilers should be in the $PATH!!
 MINGW_SYSROOT=$(HOME)/.zeranoe/mingw-w64/$(ARCH)
+ifndef USE_CLANG
 CC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-gcc
+else
+CC=clang --target=x86_64-pc-mingw32-w64
+endif
 RC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windres
 MC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windmc
+
 
 HOSTCC ?= gcc
 
@@ -249,10 +254,18 @@ OBJS=$(patsubst %.c,%.o,$(TMP_DRBD_FILES)) $(patsubst %.c,%.o,$(WINDRBD_FILES)) 
 COFFRES=./windrbd/windrbd-event-log.coffres $(DRBDTMP)/drbd/resource.coffres
 
 # LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio wdmsec.lib -static
+ifndef USE_CLANG
 LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
+else
+LIBS=-lntoskrnl -lhal -lntdll
+endif
 
 SUPPRESSED_WARNINGS=-Wno-array-bounds -Wno-address-of-packed-member
+ifndef USE_CLANG
 CFLAGS_FOR_DRIVERS=-fPIC -fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -mno-stack-arg-probe -fno-strict-aliasing -fno-set-stack-executable
+else
+CFLAGS_FOR_DRIVERS=-fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -fno-strict-aliasing
+endif
 LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--file-alignment,0x200 -Wl,--section-alignment,0x1000 -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--exclude-all-symbols -Wl,--entry,$(DRIVER_ENTRY) -nostartfiles -nodefaultlibs -nostdlib -Wl,-Map='windrbd.sys.map'
 
 SEH_INCLUDES=-I$(REACTOS_ROOT)/crt -I$(REACTOS_ROOT)/lib/pseh/include/pseh -I$(REACTOS_ROOT)/asm
