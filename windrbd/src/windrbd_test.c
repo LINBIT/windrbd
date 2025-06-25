@@ -983,9 +983,13 @@ printk("threads completed now waiting for workqueue.\n");
 	flush_workqueue(w);
 	printk("obj->counter is %d (should be max %d)\n", obj->counter, n*num_threads);
 
+	printk("freeing obj ...\n");
 	kfree(obj);
+	printk("destroying workqueue ...\n");
 	destroy_workqueue(w);
+	printk("ok workqueue destroyed, freeing params\n");
 	kfree(params);
+	printk("test succeeded.\n");
 }
 
 enum wq_test { WQ_NO_WAIT, WQ_SIMPLE, WQ_FAST, WQ_NO_SLEEP, WQ_LOOP, WQ_LOOP_NO_SLEEP, WQ_LAST };

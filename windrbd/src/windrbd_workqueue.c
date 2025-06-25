@@ -21,6 +21,7 @@ static struct work_struct *get_a_work(struct workqueue_struct *wq)
 		return NULL;
 	}
 	w = list_first_entry(&wq->work_list, struct work_struct, work_list);
+	list_del(&w->work_list);
 	list_add(&w->work_list, &wq->in_progress_list);
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
@@ -31,6 +32,7 @@ void really_destroy_workqueue(struct kref *kref)
 {
 	struct workqueue_struct *wq = container_of(kref, struct workqueue_struct, kref);
 
+printk("really destroying workqueue at %p\n", wq);
 	kfree(wq->threads);
 	kfree(wq);
 }
@@ -39,10 +41,13 @@ void destroy_workqueue(struct workqueue_struct *wq)
 {
 	int i;
 
+printk("about to destroy workqueue at %p\n", wq);
 	for (i=0;i<wq->num_threads;i++)
 		force_sig(SIGINT, wq->threads[i]);
 
+printk("sent signals to threads of workqueue %p\n", wq);
 	kref_put(&wq->kref, really_destroy_workqueue);
+printk("ok, kref put was run\n");
 }
 
 static int run_singlethread_workqueue(void *param)
@@ -52,6 +57,7 @@ static int run_singlethread_workqueue(void *param)
 	int ret;
 	KIRQL flags;
 
+printk("workqueue started.\n");
 	while (1) {
 		ret = wait_event_interruptible(wq->there_is_work, !list_empty(&wq->work_list));
 		if (ret == -ERESTARTSYS) {
@@ -59,14 +65,19 @@ static int run_singlethread_workqueue(void *param)
 				flush_signals(current);
 				continue;
 			}
+printk("got a signal, terminating...\n");
 			break;
 		}
 
+printk("getting work ...\n");
 		w = get_a_work(wq);
 		if (w == NULL)
 			continue;
 
+printk("running work ...\n");
+printk("w is %p w->func is %p queue is %p\n", w, w->func, wq);
 		w->func(w);
+printk("ok finished work ...\n");
 
 			/* either on in_progress_list or on a
 			 * active_list of a flush_workqueue.
@@ -77,9 +88,12 @@ static int run_singlethread_workqueue(void *param)
 		w->queue = NULL;	/* done with it */
 		spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
+printk("waking flush/cancel work functions...\n");
 		wake_up(&wq->a_work_has_finished);
 	}
+printk("terminating into kref_put\n");
 	kref_put(&wq->kref, really_destroy_workqueue);
+printk("terminating out of kref_put\n");
 
 	return 0;
 }
@@ -98,6 +112,8 @@ bool queue_work(struct workqueue_struct *queue, struct work_struct *work)
 	list_add_tail(&work->work_list, &queue->work_list);
 	work->queue = queue;
 	spin_unlock_irqrestore(&queue->work_list_lock, flags);
+
+printk("work is %p work->queue is %p work->func is %p\n", work, queue, work->func);
 
 	wake_up(&queue->there_is_work);
 
@@ -169,13 +185,13 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
 void flush_workqueue(struct workqueue_struct *wq)
 {
 	KIRQL flags;
-	struct work_struct *work;
+	struct work_struct *work, *w2;
 	struct list_head active_work_items;
 
 	INIT_LIST_HEAD(&active_work_items);
 
 	spin_lock_irqsave(&wq->work_list_lock, flags);
-	list_for_each_entry(work, &wq->in_progress_list, work_list) {
+	list_for_each_entry_safe(work, w2, &wq->in_progress_list, work_list) {
 		list_del(&work->work_list);
 		list_add(&work->work_list, &active_work_items);
 	}
