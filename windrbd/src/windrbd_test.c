@@ -896,7 +896,9 @@ static void workqueue_worker(struct work_struct *work)
 {
 	struct object *obj = container_of(work, struct object, work);
 
+printk("about to increment counter ...\n");
 	obj->counter++;
+printk("ok, counter incremented.\n");
 }
 
 struct workqueue_params {

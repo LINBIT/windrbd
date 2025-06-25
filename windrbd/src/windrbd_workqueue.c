@@ -6,6 +6,7 @@
 #include <linux/kthread.h>
 #include <asm/signal.h>
 #include <linux/sched/signal.h>
+#include <linux/completion.h>
 
 struct workqueue_struct *system_wq;
 
@@ -33,7 +34,7 @@ void really_destroy_workqueue(struct kref *kref)
 	struct workqueue_struct *wq = container_of(kref, struct workqueue_struct, kref);
 
 printk("really destroying workqueue at %p\n", wq);
-	kfree(wq->threads);
+	kfree(wq->tasks);
 	kfree(wq);
 }
 
@@ -42,17 +43,24 @@ void destroy_workqueue(struct workqueue_struct *wq)
 	int i;
 
 printk("about to destroy workqueue at %p\n", wq);
-	for (i=0;i<wq->num_threads;i++)
-		force_sig(SIGINT, wq->threads[i]);
+	for (i=0;i<wq->num_tasks;i++)
+		force_sig(SIGINT, wq->tasks[i].task);
 
 printk("sent signals to threads of workqueue %p\n", wq);
+printk("now waiting for all completions ...\n");
+
+	for (i=0;i<wq->num_tasks;i++)
+		wait_for_completion(&wq->tasks[i].completion);
+
+printk("All tasks completed, now dropping (last) reference.\n");
 	kref_put(&wq->kref, really_destroy_workqueue);
 printk("ok, kref put was run\n");
 }
 
 static int run_singlethread_workqueue(void *param)
 {
-	struct workqueue_struct *wq = param;
+	struct workqueue_task *t = param;
+	struct workqueue_struct *wq = t->workqueue;
 	struct work_struct *w;
 	int ret;
 	KIRQL flags;
@@ -94,6 +102,8 @@ printk("waking flush/cancel work functions...\n");
 printk("terminating into kref_put\n");
 	kref_put(&wq->kref, really_destroy_workqueue);
 printk("terminating out of kref_put\n");
+	complete(&t->completion);
+printk("completion completed\n");
 
 	return 0;
 }
@@ -135,8 +145,8 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
 		printk("Warning: not enough memory for workqueue\n");
 		return NULL;
 	}
-	wq->threads = kzalloc(max_active*sizeof(*wq->threads), GFP_KERNEL);
-	if (wq->threads == NULL) {
+	wq->tasks = kzalloc(max_active*sizeof(*wq->tasks), GFP_KERNEL);
+	if (wq->tasks == NULL) {
 		printk("Warning: not enough memory for workqueue threads\n");
 		kfree(wq);
 		return NULL;
@@ -159,21 +169,25 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
 
 	for (i=0;i<max_active;i++) {
 		kref_get(&wq->kref);
-		wq->threads[i] = kthread_create(run_singlethread_workqueue, wq, "wq_%s_%d", wq->name, i);
 
-		if (IS_ERR(wq->threads[i])) {
+		init_completion(&wq->tasks[i].completion);
+		wq->tasks[i].i = i;
+		wq->tasks[i].workqueue = wq;
+		wq->tasks[i].task = kthread_create(run_singlethread_workqueue, wq, "wq_%s_%d", wq->name, i);
+
+		if (IS_ERR(wq->tasks[i].task)) {
 			kref_put(&wq->kref, really_destroy_workqueue);
 
-			printk("kthread_run failed on creating workqueue thread, err is %d\n", PTR_ERR(wq->threads[i]));
+			printk("kthread_run failed on creating workqueue thread, err is %d\n", PTR_ERR(wq->tasks[i].task));
 			for (j=0;j<i;j++)
-				force_sig(SIGINT, wq->threads[j]);
+				force_sig(SIGINT, wq->tasks[j].task);
 
 			kfree(wq);
 			return NULL;
 		}
-		wake_up_process(wq->threads[i]);
+		wake_up_process(wq->tasks[i].task);
 	}
-	wq->num_threads = i;
+	wq->num_tasks = i;
 
 	return wq;
 }
