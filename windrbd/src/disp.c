@@ -323,7 +323,7 @@ NTSTATUS __attribute__((stdcall)) DriverEntry(IN PDRIVER_OBJECT DriverObject, IN
 
 	dtt_initialize_fn();
 
-	system_wq = alloc_ordered_workqueue("system workqueue", 0);
+	system_wq = alloc_workqueue("system workqueue", 0, 8);
 	if (system_wq == NULL) {
 		printk("Could not allocate system work queue\n");
 		IoDeleteDevice(mvolRootDeviceObject);

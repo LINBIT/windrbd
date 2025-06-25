@@ -225,7 +225,7 @@ WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
                 windrbd_usermodehelper.c windrbd_waitqueue.c \
                 windrbd_winsocket.c windrbd_locking.c \
                 tiktok.c partition_table_template.c \
-                windrbd_serial.c
+                windrbd_serial.c windrbd_workqueue.c
 
 ifdef CONFIG_KMALLOC_DEBUG
 WINDRBD_SOURCES += kmalloc_debug.c

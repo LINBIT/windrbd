@@ -4,6 +4,8 @@
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <linux/kref.h>
 
 /*
  * Workqueue flags and constants.  For details, please refer to
@@ -59,13 +61,16 @@ enum wq_flags {
 
 struct workqueue_struct {
 	struct list_head work_list;
+	struct list_head in_progress_list;
 	spinlock_t work_list_lock;
 
 	wait_queue_head_t there_is_work;
+	wait_queue_head_t a_work_has_finished;
 	struct kref kref;
 
 	char name[WQNAME_LEN];
-	struct task_struct threads[MAX_WORKQUEUE_THREADS];
+	int num_threads;
+	struct task_struct **threads;
 };
 
 struct work_struct {

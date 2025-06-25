@@ -1,6 +1,11 @@
 #include <linux/workqueue.h>
 #include <linux/wait.h>
 #include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/kref.h>
+#include <linux/kthread.h>
+#include <asm/signal.h>
+#include <linux/sched/signal.h>
 
 struct workqueue_struct *system_wq;
 
@@ -16,39 +21,17 @@ static struct work_struct *get_a_work(struct workqueue_struct *wq)
 		return NULL;
 	}
 	w = list_first_entry(&wq->work_list, struct work_struct, work_list);
-	list_del_init(&w->work_list);
-	w->queue = NULL;
+	list_add(&w->work_list, &wq->in_progress_list);
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
 	return w;
-}
-
-static bool remove_work_from_worklist(struct work_struct *work)
-{
-	KIRQL flags;
-
-	struct workqueue_struct *wq;
-	wq = work->queue;
-
-	if (wq == NULL)
-		return false;
-
-	spin_lock_irqsave(&wq->work_list_lock, flags);
-	if (list_empty(&work->work_list)) {
-		spin_unlock_irqrestore(&wq->work_list_lock, flags);
-		return false;
-	}
-	list_del_init(&work->work_list);
-	work->queue = NULL;
-	spin_unlock_irqrestore(&wq->work_list_lock, flags);
-
-	return true;
 }
 
 void really_destroy_workqueue(struct kref *kref)
 {
 	struct workqueue_struct *wq = container_of(kref, struct workqueue_struct, kref);
 
+	kfree(wq->threads);
 	kfree(wq);
 }
 
@@ -57,15 +40,17 @@ void destroy_workqueue(struct workqueue_struct *wq)
 	int i;
 
 	for (i=0;i<wq->num_threads;i++)
-		force_sig(wq->threads[i], SIGINT);
+		force_sig(SIGINT, wq->threads[i]);
 
-	kref_put(&wq, really_destroy_workqueue);
+	kref_put(&wq->kref, really_destroy_workqueue);
 }
 
 static int run_singlethread_workqueue(void *param)
 {
 	struct workqueue_struct *wq = param;
 	struct work_struct *w;
+	int ret;
+	KIRQL flags;
 
 	while (1) {
 		ret = wait_event_interruptible(wq->there_is_work, !list_empty(&wq->work_list));
@@ -82,8 +67,19 @@ static int run_singlethread_workqueue(void *param)
 			continue;
 
 		w->func(w);
+
+			/* either on in_progress_list or on a
+			 * active_list of a flush_workqueue.
+			 */
+
+		spin_lock_irqsave(&wq->work_list_lock, flags);
+		list_del_init(&w->work_list);
+		w->queue = NULL;	/* done with it */
+		spin_unlock_irqrestore(&wq->work_list_lock, flags);
+
+		wake_up(&wq->a_work_has_finished);
 	}
-	kref_put(&wq, really_destroy_workqueue);
+	kref_put(&wq->kref, really_destroy_workqueue);
 
 	return 0;
 }
@@ -92,19 +88,16 @@ bool queue_work(struct workqueue_struct *queue, struct work_struct *work)
 {
 	KIRQL flags;
 
-	if (queue->about_to_destroy) {
-		printk("Warning: Attempt to queue_work while destroying workqueue\n");
-		return false;
-	}
 	spin_lock_irqsave(&queue->work_list_lock, flags);
-
-	if (!list_empty(&work->work_list)) {	/* it is already on the list */
+	if (work->queue != NULL) {	/* it is already on the list or
+					 * currently executing
+					 */
 		spin_unlock_irqrestore(&queue->work_list_lock, flags);
 		return false;
 	}
 	list_add_tail(&work->work_list, &queue->work_list);
 	work->queue = queue;
-	spin_unlock_irqrestore(&queue->work_list_lock, flags2);
+	spin_unlock_irqrestore(&queue->work_list_lock, flags);
 
 	wake_up(&queue->there_is_work);
 
@@ -126,9 +119,18 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
 		printk("Warning: not enough memory for workqueue\n");
 		return NULL;
 	}
+	wq->threads = kzalloc(max_active*sizeof(*wq->threads), GFP_KERNEL);
+	if (wq->threads == NULL) {
+		printk("Warning: not enough memory for workqueue threads\n");
+		kfree(wq);
+		return NULL;
+	}
+
 	INIT_LIST_HEAD(&wq->work_list);
+	INIT_LIST_HEAD(&wq->in_progress_list);
 	spin_lock_init(&wq->work_list_lock);
 	init_waitqueue_head(&wq->there_is_work);
+	init_waitqueue_head(&wq->a_work_has_finished);
 	kref_init(&wq->kref);
 
 	va_start(args, max_active);
@@ -146,15 +148,16 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
 		if (IS_ERR(wq->threads[i])) {
 			kref_put(&wq->kref, really_destroy_workqueue);
 
-			printk("kthread_run failed on creating workqueue thread, err is %d\n", PTR_ERR(wq->thread));
+			printk("kthread_run failed on creating workqueue thread, err is %d\n", PTR_ERR(wq->threads[i]));
 			for (j=0;j<i;j++)
-				force_sig(wq->threads[j], SIGINT);
+				force_sig(SIGINT, wq->threads[j]);
 
 			kfree(wq);
 			return NULL;
 		}
 		wake_up_process(wq->threads[i]);
 	}
+	wq->num_threads = i;
 
 	return wq;
 }
@@ -165,31 +168,45 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
  */
 void flush_workqueue(struct workqueue_struct *wq)
 {
-	PVOID waitObjects[2] = { &wq->workFinishedEvent, &wq->killEvent };
-	NTSTATUS status;
+	KIRQL flags;
+	struct work_struct *work;
+	struct list_head active_work_items;
 
-	KeResetEvent(&wq->workFinishedEvent);
-	KeSetEvent(&wq->wakeupEvent, 0, FALSE);
-	status = KeWaitForMultipleObjects(2, &waitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL, NULL);
-	if (!NT_SUCCESS(status)) {
-		printk("Warning: KeWaitForMultipleObjects in flush_workqueue() returned status %08x\n", status);
+	INIT_LIST_HEAD(&active_work_items);
+
+	spin_lock_irqsave(&wq->work_list_lock, flags);
+	list_for_each_entry(work, &wq->in_progress_list, work_list) {
+		list_del(&work->work_list);
+		list_add(&work->work_list, &active_work_items);
 	}
-	if (!list_empty(&wq->work_list)) {
-		printk("Warning: wq->work_list not empty at exiting flush_workqueue\n");
-	}
+	spin_unlock_irqrestore(&wq->work_list_lock, flags);
+
+	wait_event(wq->a_work_has_finished, list_empty(&active_work_items));
 }
 
 int cancel_work_sync(struct work_struct *work)
 {
-	bool ret = work->pending;
+	struct list_head active_work_items;
+	KIRQL flags;
 
-	if (remove_work_from_worklist(work)) {
-			/* To terminate revc()  .... */
+	INIT_LIST_HEAD(&active_work_items);
+
+	struct workqueue_struct *wq;
+
+	wq = work->queue;
+	if (wq == NULL)
+		return false;
+
+	spin_lock_irqsave(&wq->work_list_lock, flags);
+	list_del(&work->work_list);
+	list_add(&work->work_list, &active_work_items);
+	spin_unlock_irqrestore(&wq->work_list_lock, flags);
+
+	wait_event(wq->a_work_has_finished, list_empty(&active_work_items));
+	return true;
+}
+
+
 		/* TODO: needed? hopefully not ... */
 //		force_sig(SIGHUP, work->queue->thread);
-		flush_workqueue(work->orig_queue);
-	}           /* else it was never queued */
-
-	return ret;
-}
 

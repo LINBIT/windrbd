@@ -63,8 +63,9 @@ static inline void sigandnsets(sigset_t *res, sigset_t *a, sigset_t *b)
 
 extern int sigprocmask(int, sigset_t *, sigset_t *);
 
+#define SIGHUP					1
+#define SIGINT					2
 #define SIGCHLD					17
-#define SIGXCPU					1
-#define SIGHUP					24
+#define SIGXCPU					24
 
 #endif
