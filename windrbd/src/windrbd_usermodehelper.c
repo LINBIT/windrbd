@@ -93,6 +93,8 @@ int call_usermodehelper(const char *path, char **argv, char **envp, int wait)
 	buf+=arg_size;
 	new_request->helper.envc = string_table_to_buffer(buf, envp, env_size, NULL);
 
+	printk("About to queue user mode helper \"%s\" with id %d\n", (argv[0] != NULL && argv[1] != NULL) ? argv[1] : "unknown", new_request->helper.id);
+
 	mutex_lock(&request_mutex);
 	list_add(&new_request->list, &um_requests);
 	mutex_unlock(&request_mutex);
@@ -128,7 +130,7 @@ int call_usermodehelper(const char *path, char **argv, char **envp, int wait)
 
 			if (status == STATUS_SUCCESS) {
 				ret = new_request->retval;
-				printk("User mode helper \"%s\" returned %d (exit status is %d)\n", (argv[0] != NULL && argv[1] != NULL) ? argv[1] : "unknown", ret, (ret >> 8) & 0xff);
+				printk("User mode helper \"%s\" with id %d returned %d (exit status is %d)\n", (argv[0] != NULL && argv[1] != NULL) ? argv[1] : "unknown", new_request->helper.id, ret, (ret >> 8) & 0xff);
 				break;
 			}
 		}
