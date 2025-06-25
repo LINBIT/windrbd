@@ -86,7 +86,7 @@ if (timeout > 30000) { forced_timeout = true; timeout = 30000; }
 	case STATUS_WAIT_0:
 		if (e) return 0;	/* fallthrough */
 	case STATUS_WAIT_1:
-		return -EINTR;		/* TODO: -ERESTARTSYS */
+		return -ERESTARTSYS;
 	case STATUS_TIMEOUT:
 		return -ETIMEDOUT;
 	}
