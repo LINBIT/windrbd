@@ -53,35 +53,25 @@ enum wq_flags {
 	/* BH wq only allows the following flags */
 	__WQ_BH_ALLOWS		= WQ_BH | WQ_HIGHPRI,
 };
+
 #define WQNAME_LEN	32
+#define MAX_WORKQUEUE_THREADS 8
 
 struct workqueue_struct {
 	struct list_head work_list;
 	spinlock_t work_list_lock;
 
-	int run;
-	int about_to_destroy;
-	KEVENT	wakeupEvent;
-	KEVENT	killEvent;
-	KEVENT	workFinishedEvent;
-	KEVENT	readyToFreeEvent;
+	wait_queue_head_t there_is_work;
+	struct kref kref;
 
-	void (*func)();
 	char name[WQNAME_LEN];
-	struct task_struct *thread;
+	struct task_struct threads[MAX_WORKQUEUE_THREADS];
 };
 
 struct work_struct {
-	int pending;
-	int cancelled;
-	spinlock_t pending_lock;
 	struct list_head work_list;
-
 	void (*func)(struct work_struct *work);
-
-		/* For checking if they change */
-	struct workqueue_struct *orig_queue;
-	void (*orig_func)(struct work_struct *work);
+	struct workqueue_struct *queue;
 };
 
 extern struct workqueue_struct *system_wq;
@@ -128,7 +118,7 @@ extern struct workqueue_struct *system_wq;
 __printf(1, 4) struct workqueue_struct *
 alloc_workqueue(const char *fmt, unsigned int flags, int max_active, ...);
 
-extern bool queue_work(struct workqueue_struct* queue, struct work_struct* work);
+extern bool queue_work(struct workqueue_struct *queue, struct work_struct *work);
 extern void flush_workqueue(struct workqueue_struct *wq);
 extern void destroy_workqueue(struct workqueue_struct *wq);
 
@@ -147,12 +137,8 @@ static inline bool schedule_work(struct work_struct *work)
 	       /* __init_work((_work), _onstack);        */  \
 	       /*  (_work)->data = (atomic_long_t) WORK_DATA_INIT(); */ \
 		INIT_LIST_HEAD(&(_work)->work_list);			\
-		spin_lock_init(&(_work)->pending_lock);			\
 		PREPARE_WORK((_work), (_func));                         \
-		(_work)->pending = 0;					\
-		(_work)->cancelled = 0;					\
-		(_work)->orig_queue = NULL;				\
-		(_work)->orig_func = (_func);				\
+		(_work)->queue = NULL;				\
 	} while (0)
 
 #define INIT_WORK(_work, _func)                                         \
