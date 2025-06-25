@@ -173,7 +173,7 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
 		init_completion(&wq->tasks[i].completion);
 		wq->tasks[i].i = i;
 		wq->tasks[i].workqueue = wq;
-		wq->tasks[i].task = kthread_create(run_singlethread_workqueue, wq, "wq_%s_%d", wq->name, i);
+		wq->tasks[i].task = kthread_create(run_singlethread_workqueue, &wq->tasks[i], "wq_%s_%d", wq->name, i);
 
 		if (IS_ERR(wq->tasks[i].task)) {
 			kref_put(&wq->kref, really_destroy_workqueue);
@@ -205,6 +205,7 @@ void flush_workqueue(struct workqueue_struct *wq)
 	INIT_LIST_HEAD(&active_work_items);
 
 	spin_lock_irqsave(&wq->work_list_lock, flags);
+		/* TODO: also pending !! */
 	list_for_each_entry_safe(work, w2, &wq->in_progress_list, work_list) {
 		list_del(&work->work_list);
 		list_add(&work->work_list, &active_work_items);
