@@ -58,7 +58,7 @@ enum wq_flags {
 };
 
 #define WQNAME_LEN	32
-#define MAX_WORKQUEUE_THREADS 8
+#define MAX_WORKQUEUE_THREADS 1024
 
 struct workqueue_struct;
 

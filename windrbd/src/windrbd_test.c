@@ -935,16 +935,17 @@ printk("queue_work thread %d completed\n", p->thread_num);
 static void workqueue_test(int argc, const char ** argv)
 {
 	struct workqueue_struct *w;
-	struct object *obj;
+	struct object *obj;	/* a pointer to a table of struct objects. */
 
 	long long n;
-	int o, j, num_threads, num_objects;
+	int o, j, num_threads, num_objects, num_workers;
 
 	struct workqueue_params *params;
 
 	n = 100;
 	num_threads = 1;
 	num_objects = 1;
+	num_workers = 1;
 
 	if (argc > 1)
 		n = my_strtoull(argv[1], NULL, 10);
@@ -952,8 +953,10 @@ static void workqueue_test(int argc, const char ** argv)
 		num_threads = my_strtoull(argv[2], NULL, 10);
 	if (argc > 3)
 		num_objects = my_strtoull(argv[3], NULL, 10);
+	if (argc > 4)
+		num_workers = my_strtoull(argv[4], NULL, 10);
 
-	w = alloc_ordered_workqueue("test%d", 0, 1);
+	w = alloc_workqueue("test", 0, num_workers);
 	if (w == NULL) {
 		printk("could not allocate workqueue\n");
 		return;
