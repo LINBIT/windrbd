@@ -964,8 +964,8 @@ static void workqueue_test(int argc, const char ** argv)
 		return;
 	}
 	for (o=0;o<num_objects;o++) {
-		obj->counter = 0;
-		INIT_WORK(&obj->work, workqueue_worker);
+		obj[o].counter = 0;
+		INIT_WORK(&obj[o].work, workqueue_worker);
 	}
 
 	params = kmalloc(sizeof(*params)*num_threads, GFP_KERNEL);
