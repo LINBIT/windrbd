@@ -85,6 +85,7 @@ struct workqueue_struct {
 
 struct work_struct {
 	struct list_head work_list;
+	struct list_head in_progress_list;
 	void (*func)(struct work_struct *work);
 	struct workqueue_struct *queue;
 };
@@ -152,8 +153,9 @@ static inline bool schedule_work(struct work_struct *work)
 	       /* __init_work((_work), _onstack);        */  \
 	       /*  (_work)->data = (atomic_long_t) WORK_DATA_INIT(); */ \
 		INIT_LIST_HEAD(&(_work)->work_list);			\
+		INIT_LIST_HEAD(&(_work)->in_progress_list);		\
 		PREPARE_WORK((_work), (_func));                         \
-		(_work)->queue = NULL;				\
+		(_work)->queue = NULL;					\
 	} while (0)
 
 #define INIT_WORK(_work, _func)                                         \

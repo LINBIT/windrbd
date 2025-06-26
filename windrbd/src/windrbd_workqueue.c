@@ -23,7 +23,6 @@ static struct work_struct *get_a_work(struct workqueue_struct *wq)
 	}
 	w = list_first_entry(&wq->work_list, struct work_struct, work_list);
 	list_del(&w->work_list);
-	list_add(&w->work_list, &wq->in_progress_list);
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
 	return w;
@@ -92,7 +91,7 @@ printk("ok finished work ...\n");
 			 */
 
 		spin_lock_irqsave(&wq->work_list_lock, flags);
-		list_del_init(&w->work_list);
+		list_del_init(&w->in_progress_list);
 		w->queue = NULL;	/* done with it */
 		spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
@@ -120,6 +119,7 @@ bool queue_work(struct workqueue_struct *queue, struct work_struct *work)
 		return false;
 	}
 	list_add_tail(&work->work_list, &queue->work_list);
+	list_add(&work->in_progress_list, &queue->in_progress_list);
 	work->queue = queue;
 	spin_unlock_irqrestore(&queue->work_list_lock, flags);
 
@@ -205,10 +205,9 @@ void flush_workqueue(struct workqueue_struct *wq)
 	INIT_LIST_HEAD(&active_work_items);
 
 	spin_lock_irqsave(&wq->work_list_lock, flags);
-		/* TODO: also pending !! */
 	list_for_each_entry_safe(work, w2, &wq->in_progress_list, work_list) {
-		list_del(&work->work_list);
-		list_add(&work->work_list, &active_work_items);
+		list_del(&work->in_progress_list);
+		list_add(&work->in_progress_list, &active_work_items);
 	}
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
@@ -229,8 +228,8 @@ int cancel_work_sync(struct work_struct *work)
 		return false;
 
 	spin_lock_irqsave(&wq->work_list_lock, flags);
-	list_del(&work->work_list);
-	list_add(&work->work_list, &active_work_items);
+	list_del(&work->in_progress_list);
+	list_add(&work->in_progress_list, &active_work_items);
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
 	wait_event(wq->a_work_has_finished, list_empty(&active_work_items));
