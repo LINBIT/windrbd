@@ -95,11 +95,15 @@ bool queue_work(struct workqueue_struct *queue, struct work_struct *work)
 	unsigned long flags;
 
 	spin_lock_irqsave(&queue->work_list_lock, flags);
-	if (work->queue != NULL) {	/* it is already on the list or
-					 * currently executing
-					 */
+	if (!list_empty(&work->work_list)) {	/* it is already queued */
 		spin_unlock_irqrestore(&queue->work_list_lock, flags);
+printk("could not add work %p to queue %p\n", work, queue);
+if (list_empty(&work->work_list)) printk("(looks like it is currently executing)\n");
 		return false;
+	}
+printk("about to queue work ...\n");
+	if (work->queue != NULL && queue != work->queue) {	/* it is executing */
+		printk("Warning: attempt to move work to another queue while it is executing.\n");
 	}
 	list_add_tail(&work->work_list, &queue->work_list);
 	list_add(&work->in_progress_list, &queue->in_progress_list);

@@ -1227,7 +1227,7 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		if (remaining_time == 0)
 			remaining_time = -EAGAIN;
 
-		if (remaining_time == -EINTR || remaining_time == -EAGAIN && err != -ERESTARTSYS)
+		if (remaining_time == -EINTR || remaining_time == -EAGAIN || remaining_time == -ERESTARTSYS)
 		{
 			IoCancelIrp(Irp);
 			cancel_remaining_time = wait_event_interruptible_timeout(
@@ -1256,7 +1256,7 @@ out:
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
-	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN && err != -ERESTARTSYS) {
+	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN && BytesReceived != -ERESTARTSYS) {
 		socket->error_status = BytesReceived;
 	}
 	return BytesReceived;
