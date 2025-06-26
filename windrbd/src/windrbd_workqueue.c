@@ -7,6 +7,7 @@
 #include <asm/signal.h>
 #include <linux/sched/signal.h>
 #include <linux/completion.h>
+#include <linux/mutex.h>
 
 struct workqueue_struct *system_wq;
 
@@ -71,7 +72,9 @@ static int run_singlethread_workqueue(void *param)
 		if (w == NULL)
 			continue;
 
+		mutex_lock(&w->the_mutex);
 		w->func(w);
+		mutex_unlock(&w->the_mutex);
 
 			/* either on in_progress_list or on a
 			 * active_list of a flush_workqueue.

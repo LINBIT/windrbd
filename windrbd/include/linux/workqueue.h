@@ -7,6 +7,7 @@
 #include <linux/wait.h>
 #include <linux/kref.h>
 #include <linux/completion.h>
+#include <linux/mutex.h>
 
 /*
  * Workqueue flags and constants.  For details, please refer to
@@ -88,6 +89,7 @@ struct work_struct {
 	struct list_head in_progress_list;
 	void (*func)(struct work_struct *work);
 	struct workqueue_struct *queue;
+	struct mutex the_mutex;
 };
 
 extern struct workqueue_struct *system_wq;
@@ -154,6 +156,7 @@ static inline bool schedule_work(struct work_struct *work)
 	       /*  (_work)->data = (atomic_long_t) WORK_DATA_INIT(); */ \
 		INIT_LIST_HEAD(&(_work)->work_list);			\
 		INIT_LIST_HEAD(&(_work)->in_progress_list);		\
+		mutex_init(&(_work)->the_mutex);			\
 		PREPARE_WORK((_work), (_func));                         \
 		(_work)->queue = NULL;					\
 	} while (0)
