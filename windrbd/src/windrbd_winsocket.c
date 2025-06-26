@@ -767,7 +767,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 			socket->connected_waitqueue,
 			socket->is_connected);
 
-		if (ret == -EINTR) {	/* Signal was sent */
+		if (ret == -ERESTARTSYS) {	/* Signal was sent */
 			IoCancelIrp(Irp);
 			IoFreeIrp(Irp);
 
@@ -1092,7 +1092,7 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 		return (LONG) Irp->IoStatus.Information;
 	}
 	err = winsock_to_linux_error(status);
-	if (err != 0 && err != -ENOMEM && err != -EAGAIN && err != -EINTR)
+	if (err != 0 && err != -ENOMEM && err != -EAGAIN && err != -EINTR && err != -ERESTARTSYS)
 		socket->error_status = err;
 
 		/* Resources are freed by completion routine. */
@@ -1117,7 +1117,7 @@ out_put_page:
 	if (page)
 		put_page(page);
 
-	if (err != 0 && err != -ENOMEM && err != -EAGAIN && err != -EINTR)
+	if (err != 0 && err != -ENOMEM && err != -EAGAIN && err != -EINTR && err != -ERESTARTSYS)
 		socket->error_status = err;
 	return err;
 }
@@ -1227,7 +1227,7 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 		if (remaining_time == 0)
 			remaining_time = -EAGAIN;
 
-		if (remaining_time == -EINTR || remaining_time == -EAGAIN)
+		if (remaining_time == -EINTR || remaining_time == -EAGAIN && err != -ERESTARTSYS)
 		{
 			IoCancelIrp(Irp);
 			cancel_remaining_time = wait_event_interruptible_timeout(
@@ -1256,7 +1256,7 @@ out:
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
-	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
+	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN && err != -ERESTARTSYS) {
 		socket->error_status = BytesReceived;
 	}
 	return BytesReceived;
@@ -1482,7 +1482,7 @@ static int socket_receive_thread(void *p)
 		}
 		err = wsk_recvmsg(s, &msg, &iov, 1, iov.iov_len, msg.msg_flags);
 
-		if (err == -EAGAIN || err == -EINTR)
+		if (err == -EAGAIN || err == -EINTR || err == -ERESTARTSYS)
 			continue;
 
 		if (err <= 0) {

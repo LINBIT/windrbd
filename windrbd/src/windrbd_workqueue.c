@@ -12,7 +12,7 @@ struct workqueue_struct *system_wq;
 
 static struct work_struct *get_a_work(struct workqueue_struct *wq)
 {
-	KIRQL flags;
+	unsigned long flags;
 
 	struct work_struct *w;
 	spin_lock_irqsave(&wq->work_list_lock, flags);
@@ -55,7 +55,7 @@ static int run_singlethread_workqueue(void *param)
 	struct workqueue_struct *wq = t->workqueue;
 	struct work_struct *w;
 	int ret;
-	KIRQL flags;
+	unsigned long flags;
 
 	while (1) {
 		ret = wait_event_interruptible(wq->there_is_work, !list_empty(&wq->work_list));
@@ -92,7 +92,7 @@ static int run_singlethread_workqueue(void *param)
 
 bool queue_work(struct workqueue_struct *queue, struct work_struct *work)
 {
-	KIRQL flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&queue->work_list_lock, flags);
 	if (work->queue != NULL) {	/* it is already on the list or
@@ -185,7 +185,7 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
  */
 void flush_workqueue(struct workqueue_struct *wq)
 {
-	KIRQL flags;
+	unsigned long flags;
 	struct work_struct *work, *w2;
 	struct list_head active_work_items;
 
@@ -204,7 +204,7 @@ void flush_workqueue(struct workqueue_struct *wq)
 int cancel_work_sync(struct work_struct *work)
 {
 	struct list_head active_work_items;
-	KIRQL flags;
+	unsigned long flags;
 
 	INIT_LIST_HEAD(&active_work_items);
 
