@@ -938,39 +938,50 @@ static void workqueue_test(int argc, const char ** argv)
 	struct object *obj;
 
 	long long n;
-	int j, num_threads;
+	int o, j, num_threads, num_objects;
 
 	struct workqueue_params *params;
 
 	n = 100;
 	num_threads = 1;
+	num_objects = 1;
 
 	if (argc > 1)
 		n = my_strtoull(argv[1], NULL, 10);
 	if (argc > 2)
 		num_threads = my_strtoull(argv[2], NULL, 10);
+	if (argc > 3)
+		num_objects = my_strtoull(argv[2], NULL, 10);
 
 	w = alloc_ordered_workqueue("test%d", 0, 1);
 	if (w == NULL) {
 		printk("could not allocate workqueue\n");
 		return;
 	}
-	obj = kmalloc(sizeof(*obj), GFP_KERNEL);
+	obj = kmalloc(num_objects*sizeof(*obj), GFP_KERNEL);
 	if (obj == NULL) {
 		printk("could not allocate object\n");
 		return;
 	}
-	obj->counter = 0;
-	INIT_WORK(&obj->work, workqueue_worker);
+	for (o=0;o<num_objects;o++) {
+		obj->counter = 0;
+		INIT_WORK(&obj->work, workqueue_worker);
+	}
 
 	params = kmalloc(sizeof(*params)*num_threads, GFP_KERNEL);
 	if (params == NULL) {
 		printk("Could not allocate params\n");
 		return;
 	}
+	o=0;
 	for (j=0;j<num_threads;j++) {
 		params[j].n = n;
-		params[j].obj = obj;
+		params[j].obj = &obj[o];
+
+		o++;
+		if (o >= num_objects)
+			o=0;
+
 		params[j].w = w;
 		params[j].thread_num = j;
 		init_completion(&params[j].completion);
@@ -983,7 +994,8 @@ printk("threads started now waiting for completion.\n");
 
 printk("threads completed now waiting for workqueue.\n");
 	flush_workqueue(w);
-	printk("obj->counter is %d (should be max %d)\n", obj->counter, n*num_threads);
+	for (o=0;o<num_objects;o++)
+		printk("obj[%d]->counter is %d (should be max %d)\n", o, obj[o].counter, n*num_threads);
 
 	printk("freeing obj ...\n");
 	kfree(obj);
