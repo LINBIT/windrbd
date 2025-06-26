@@ -1397,7 +1397,8 @@ static void drbd_make_request_work(struct work_struct *w)
 
 	atomic_inc(&ioreq->bio->bi_bdev->num_bios_pending);
 	ioreq->bio->bi_bdev->bd_disk->fops->submit_bio(ioreq->bio);
-	kfree(ioreq);
+/* TODO: this contains the work_struct and shouldn't be freed in here. */
+//	kfree(ioreq);
 }
 
 	/* Create a bio from the parameters and submit I/O request to

@@ -951,7 +951,7 @@ static void workqueue_test(int argc, const char ** argv)
 	if (argc > 2)
 		num_threads = my_strtoull(argv[2], NULL, 10);
 	if (argc > 3)
-		num_objects = my_strtoull(argv[2], NULL, 10);
+		num_objects = my_strtoull(argv[3], NULL, 10);
 
 	w = alloc_ordered_workqueue("test%d", 0, 1);
 	if (w == NULL) {
