@@ -22,7 +22,7 @@ static struct work_struct *get_a_work(struct workqueue_struct *wq)
 		return NULL;
 	}
 	w = list_first_entry(&wq->work_list, struct work_struct, work_list);
-	list_del(&w->work_list);
+	list_del_init(&w->work_list);
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
 	return w;
@@ -64,6 +64,8 @@ static int run_singlethread_workqueue(void *param)
 	int ret;
 	KIRQL flags;
 
+printk("wq is %p\n", wq);
+printk("t is %p\n", t);
 printk("workqueue started.\n");
 	while (1) {
 		ret = wait_event_interruptible(wq->there_is_work, !list_empty(&wq->work_list));
@@ -136,6 +138,9 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
 	va_list args;
 	int i, j;
 
+	if ((flags & WQ_UNBOUND) && (max_active == 0))
+		max_active = 2;		/* or so ... */
+
 	if (max_active > MAX_WORKQUEUE_THREADS) {
 		printk("max_active is %d and we support only %d threads.\n", max_active, MAX_WORKQUEUE_THREADS);
 		return NULL;
@@ -145,6 +150,7 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
 		printk("Warning: not enough memory for workqueue\n");
 		return NULL;
 	}
+printk("size is %d max_active is %d\n", max_active*sizeof(*wq->tasks), max_active);
 	wq->tasks = kzalloc(max_active*sizeof(*wq->tasks), GFP_KERNEL);
 	if (wq->tasks == NULL) {
 		printk("Warning: not enough memory for workqueue threads\n");
@@ -167,20 +173,25 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
 
 	va_end(args);
 
+printk("wq is %p\n", wq);
 	for (i=0;i<max_active;i++) {
 		kref_get(&wq->kref);
 
 		init_completion(&wq->tasks[i].completion);
 		wq->tasks[i].i = i;
 		wq->tasks[i].workqueue = wq;
+printk("arg is %p i is %d\n", &wq->tasks[i], i);
 		wq->tasks[i].task = kthread_create(run_singlethread_workqueue, &wq->tasks[i], "wq_%s_%d", wq->name, i);
 
 		if (IS_ERR(wq->tasks[i].task)) {
 			kref_put(&wq->kref, really_destroy_workqueue);
 
 			printk("kthread_run failed on creating workqueue thread, err is %d\n", PTR_ERR(wq->tasks[i].task));
+
 			for (j=0;j<i;j++)
 				force_sig(SIGINT, wq->tasks[j].task);
+			for (j=0;j<i;j++)
+				wait_for_completion(&wq->tasks[j].completion);
 
 			kfree(wq);
 			return NULL;
@@ -204,14 +215,21 @@ void flush_workqueue(struct workqueue_struct *wq)
 
 	INIT_LIST_HEAD(&active_work_items);
 
+printk("1\n");
 	spin_lock_irqsave(&wq->work_list_lock, flags);
-	list_for_each_entry_safe(work, w2, &wq->in_progress_list, work_list) {
-		list_del(&work->in_progress_list);
+	list_for_each_entry_safe(work, w2, &wq->in_progress_list, in_progress_list) {
+printk("2\n");
+		list_del_init(&work->in_progress_list);
+printk("3\n");
 		list_add(&work->in_progress_list, &active_work_items);
+printk("4\n");
 	}
+printk("5\n");
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
+printk("6\n");
 	wait_event(wq->a_work_has_finished, list_empty(&active_work_items));
+printk("7\n");
 }
 
 int cancel_work_sync(struct work_struct *work)
@@ -228,7 +246,7 @@ int cancel_work_sync(struct work_struct *work)
 		return false;
 
 	spin_lock_irqsave(&wq->work_list_lock, flags);
-	list_del(&work->in_progress_list);
+	list_del_init(&work->in_progress_list);
 	list_add(&work->in_progress_list, &active_work_items);
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
