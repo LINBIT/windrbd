@@ -1386,19 +1386,31 @@ static void windrbd_internal_io_finished(struct bio * bio)
 }
 
 struct io_request {
-	struct work_struct w;
-	struct drbd_device *drbd_device;
+	struct list_head io_list;
 	struct bio *bio;
 };
 
-static void drbd_make_request_work(struct work_struct *w)
+/* TODO: static again when we have a windrbd_upper_device.c */
+void drbd_make_request_work(struct work_struct *w)
 {
-	struct io_request *ioreq = container_of(w, struct io_request, w);
+	unsigned long flags;
+	struct block_device *bdev = container_of(w, struct block_device, io_work);
+	struct io_request *req;
 
-	atomic_inc(&ioreq->bio->bi_bdev->num_bios_pending);
-	ioreq->bio->bi_bdev->bd_disk->fops->submit_bio(ioreq->bio);
-/* TODO: this contains the work_struct and shouldn't be freed in here. */
-//	kfree(ioreq);
+	while (1) {
+		spin_lock_irqsave(&bdev->io_request_lock, flags);
+		if (list_empty(&bdev->io_request_list)) {
+			spin_unlock_irqrestore(&bdev->io_request_lock, flags);
+			return;
+		}
+		req = list_first_entry(&bdev->io_request_list, struct io_request, io_list);
+		list_del(&req->io_list);
+		spin_unlock_irqrestore(&bdev->io_request_lock, flags);
+
+		atomic_inc(&bdev->num_bios_pending);
+		bdev->bd_disk->fops->submit_bio(req->bio);
+		kfree(req);
+	}
 }
 
 	/* Create a bio from the parameters and submit I/O request to
@@ -1415,6 +1427,7 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 	struct windrbd_bio_collection *common_data;
 	struct _KEVENT event;
 	NTSTATUS status;
+	unsigned long flags;
 
 	if (rw == WRITE && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
 		printk("Attempt to write when not Primary\n");
@@ -1563,16 +1576,14 @@ static NTSTATUS windrbd_make_drbd_requests(struct _IRP *irp, struct block_device
 		if (ioreq == NULL) {
 			return -ENOMEM;	/* TODO: cleanup */
 		}
-		INIT_WORK(&ioreq->w, drbd_make_request_work);
-
-			/* No need for refcount. workqueue is flushed
-			 * and destroyed when becoming secondary, so
-			 * no in-flight requests on drbdadm down.
-			 */
-		ioreq->drbd_device = dev->drbd_device;
+		INIT_LIST_HEAD(&ioreq->io_list);
 		ioreq->bio = bio;
 
-		queue_work(dev->io_workqueue, &ioreq->w);
+		spin_lock_irqsave(&dev->io_request_lock, flags);
+		list_add_tail(&ioreq->io_list, &dev->io_request_list);
+		spin_unlock_irqrestore(&dev->io_request_lock, flags);
+
+		queue_work(dev->io_workqueue, &dev->io_work);
 
 		if (irp == NULL) {
 			NTSTATUS status;

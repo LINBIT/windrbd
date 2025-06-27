@@ -2453,6 +2453,9 @@ int add_disk(struct gendisk *disk)
 	return 0;
 }
 
+	/* see windrbd_device.c for now ... */
+extern void drbd_make_request_work(struct work_struct *w);
+
 struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 {
 	struct block_device *block_device;
@@ -2511,6 +2514,14 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 	spin_lock_init(&block_device->complete_request_spinlock);
 	spin_lock_init(&block_device->virtual_partition_table_lock);
 	spin_lock_init(&block_device->suspend_lock);
+
+		/* The workqueue is allocated when becoming
+		 * Primary later.
+		 */
+
+	INIT_WORK(&block_device->io_work, drbd_make_request_work);
+	INIT_LIST_HEAD(&block_device->io_request_list);
+	spin_lock_init(&block_device->io_request_lock);
 
 	return block_device;
 }

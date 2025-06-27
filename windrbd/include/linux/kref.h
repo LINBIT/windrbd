@@ -83,7 +83,6 @@ static inline bool kref_get_unless_zero(struct kref *kref)
 #include <linux/rwlock.h>
 #include <linux/limits.h>
 #include <linux/lockdep.h>
-#include <linux/net.h>
 #include <linux/crypto.h>
 #include <linux/pfn.h>
 

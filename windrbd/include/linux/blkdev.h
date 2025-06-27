@@ -11,6 +11,7 @@
 #include <linux/part_stat.h>
 #include <linux/module.h>
 #include <linux/genhd.h>
+#include <linux/workqueue.h>
 
 #ifndef SECTOR_SHIFT
 #define SECTOR_SHIFT 9
@@ -556,6 +557,9 @@ struct block_device {
 	 */
 
 	struct workqueue_struct *io_workqueue;
+	struct work_struct io_work;
+	struct list_head io_request_list;
+	spinlock_t io_request_lock;
 
 	/* Wait queue for waiting for all bios completed. This solves
 	 * a BSOD on disconnect while sync. To be called at the 

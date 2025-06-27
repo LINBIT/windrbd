@@ -3,6 +3,7 @@
 #include <linux/gfp.h>
 #include <linux/mutex.h>
 #include <linux/printk.h>
+#include <linux/jiffies.h>
 
 /* This timeout is between call_usermodehelper and some daemon to
  * fetch the request. If this timeout elapses then the user mode

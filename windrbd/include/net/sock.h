@@ -2,6 +2,7 @@
 #define __NET_SOCK_H
 
 #include <net/net_namespace.h>
+#include <linux/net.h>
 #include <linux/net/sock.h>
 
 static inline
