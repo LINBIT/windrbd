@@ -1883,6 +1883,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_pnp_bus_device(struct _DEVICE_O
 			 * once there are also no primary DRBD resources
 			 */
 
+printk("YYYY Bus device deleted.\n");
 		module_put(&windrbd_module);
 
 		drbd_bus_device = NULL;
