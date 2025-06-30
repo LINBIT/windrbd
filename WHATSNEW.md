@@ -3,6 +3,13 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.1
+---------------------------
+
+Implemented multi-threaded workqueues
+
+Removed much commented out code
+
 What's new in version 1.2.0
 ---------------------------
 
