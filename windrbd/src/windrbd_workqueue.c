@@ -1,3 +1,15 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+/* A multi-threaded workqueue implementation for WinDRBD.
+ *
+ * It uses only Linux kernel APIs (no direct calls to
+ * Windows kernel API functions). The interface is compatible
+ * to a recent (say, 6.14) Linux kernel.
+ *
+ * Copyright (C) 2025, Johannes Khoshnazar-Thoma <johannes@johannesthoma.com>
+ *
+ */
+
 #include <linux/workqueue.h>
 #include <linux/wait.h>
 #include <linux/spinlock.h>
@@ -14,8 +26,8 @@ struct workqueue_struct *system_wq;
 static struct work_struct *get_a_work(struct workqueue_struct *wq)
 {
 	unsigned long flags;
-
 	struct work_struct *w;
+
 	spin_lock_irqsave(&wq->work_list_lock, flags);
 
 	if (list_empty(&wq->work_list)) {
@@ -41,10 +53,10 @@ void destroy_workqueue(struct workqueue_struct *wq)
 {
 	int i;
 
-	for (i=0;i<wq->num_tasks;i++)
+	for (i = 0; i < wq->num_tasks; i++)
 		force_sig(SIGINT, wq->tasks[i].task);
 
-	for (i=0;i<wq->num_tasks;i++)
+	for (i = 0; i < wq->num_tasks; i++)
 		wait_for_completion(&wq->tasks[i].completion);
 
 	kref_put(&wq->kref, really_destroy_workqueue);
@@ -103,7 +115,7 @@ bool queue_work(struct workqueue_struct *queue, struct work_struct *work)
 		return false;
 	}
 	if (work->queue != NULL && queue != work->queue) {	/* it is executing */
-		printk("Warning: attempt to move work to another queue while it is executing.\n");
+		pr_warn("Warning: attempt to move work to another queue while it is executing.\n");
 	}
 	list_add_tail(&work->work_list, &queue->work_list);
 	if (list_empty(&work->in_progress_list))
@@ -118,7 +130,7 @@ bool queue_work(struct workqueue_struct *queue, struct work_struct *work)
 	return true;	/* work was queued */
 }
 
-struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, int max_active, ...)
+struct workqueue_struct *alloc_workqueue(const char *fmt, unsigned int flags, int max_active, ...)
 {
 	struct workqueue_struct *wq;
 	va_list args;
@@ -127,18 +139,21 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
 	if ((flags & WQ_UNBOUND) && (max_active == 0))
 		max_active = 2;		/* or so ... */
 
+	if (max_active <= 0) {
+		pr_warn("max_active is %d, invalid!\n", max_active);
+		return NULL;
+	}
+
 	if (max_active > MAX_WORKQUEUE_THREADS) {
-		printk("max_active is %d and we support only %d threads.\n", max_active, MAX_WORKQUEUE_THREADS);
+		pr_warn("max_active is %d and we support only %d threads.\n", max_active, MAX_WORKQUEUE_THREADS);
 		return NULL;
 	}
 	wq = kzalloc(sizeof(*wq), GFP_KERNEL);
-	if (wq == NULL) {
-		printk("Warning: not enough memory for workqueue\n");
+	if (wq == NULL)
 		return NULL;
-	}
-	wq->tasks = kzalloc(max_active*sizeof(*wq->tasks), GFP_KERNEL);
+
+	wq->tasks = kzalloc(sizeof(*wq->tasks), max_active, GFP_KERNEL);
 	if (wq->tasks == NULL) {
-		printk("Warning: not enough memory for workqueue threads\n");
 		kfree(wq);
 		return NULL;
 	}
@@ -158,7 +173,7 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
 
 	va_end(args);
 
-	for (i=0;i<max_active;i++) {
+	for (i = 0; i < max_active; i++) {
 		kref_get(&wq->kref);
 
 		init_completion(&wq->tasks[i].completion);
@@ -169,11 +184,11 @@ struct workqueue_struct *alloc_workqueue(const char * fmt, unsigned int flags, i
 		if (IS_ERR(wq->tasks[i].task)) {
 			kref_put(&wq->kref, really_destroy_workqueue);
 
-			printk("kthread_run failed on creating workqueue thread, err is %d\n", PTR_ERR(wq->tasks[i].task));
+			pr_warn("kthread_run failed on creating workqueue thread, err is %d\n", PTR_ERR(wq->tasks[i].task));
 
-			for (j=0;j<i;j++)
+			for (j = 0; j < i; j++)
 				force_sig(SIGINT, wq->tasks[j].task);
-			for (j=0;j<i;j++)
+			for (j = 0; j < i; j++)
 				wait_for_completion(&wq->tasks[j].completion);
 
 			kfree(wq);
