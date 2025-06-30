@@ -117,7 +117,11 @@ printk("already queued.\n");
 		printk("Warning: attempt to move work to another queue while it is executing.\n");
 	}
 	list_add_tail(&work->work_list, &queue->work_list);
-	list_add(&work->in_progress_list, &queue->in_progress_list);
+	if (list_empty(&work->in_progress_list))
+		list_add(&work->in_progress_list, &queue->in_progress_list);
+	else
+printk("XXXXXXXX work to queue is already on the progress list\n");
+			/* else it is already on the list */
 	work->queue = queue;
 	spin_unlock_irqrestore(&queue->work_list_lock, flags);
 printk("ok queued waking up worker threads.\n");
