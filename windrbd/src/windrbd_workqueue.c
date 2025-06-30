@@ -59,9 +59,7 @@ static int run_singlethread_workqueue(void *param)
 	unsigned long flags;
 
 	while (1) {
-printk("waiting for work (wq is %p) ...\n", wq);
 		ret = wait_event_interruptible(wq->there_is_work, !list_empty(&wq->work_list));
-printk("something happened ...\n");
 		if (ret == -ERESTARTSYS) {
 			if (current->sig == SIGHUP) {
 				flush_signals(current);
@@ -70,35 +68,28 @@ printk("something happened ...\n");
 			break;
 		}
 
-printk("getting work ...\n");
 		w = get_a_work(wq);
 		if (w == NULL)
 			continue;
 
-printk("work is %p ...\n", w);
 		mutex_lock(&w->the_mutex);
-printk("calling func %p ...\n", w->func);
 		w->func(w);
-printk("out of func %p ...\n", w->func);
 		mutex_unlock(&w->the_mutex);
 
 			/* either on in_progress_list or on a
 			 * active_list of a flush_workqueue.
 			 */
 
-printk("finishing work %p\n", w);
 		spin_lock_irqsave(&wq->work_list_lock, flags);
 		list_del_init(&w->in_progress_list);
 		w->queue = NULL;	/* done with it */
 		spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
-printk("waking up work has finished wq is %p\n", wq);
 		wake_up(&wq->a_work_has_finished);
 	}
 	kref_put(&wq->kref, really_destroy_workqueue);
 	complete(&t->completion);
 
-printk("exiting thread ...\n");
 	return 0;
 }
 
@@ -106,11 +97,9 @@ bool queue_work(struct workqueue_struct *queue, struct work_struct *work)
 {
 	unsigned long flags;
 
-printk("request to queue work %p onto workqueue %p ...\n", work, queue);
 	spin_lock_irqsave(&queue->work_list_lock, flags);
 	if (!list_empty(&work->work_list)) {	/* it is already queued */
 		spin_unlock_irqrestore(&queue->work_list_lock, flags);
-printk("already queued.\n");
 		return false;
 	}
 	if (work->queue != NULL && queue != work->queue) {	/* it is executing */
@@ -119,15 +108,12 @@ printk("already queued.\n");
 	list_add_tail(&work->work_list, &queue->work_list);
 	if (list_empty(&work->in_progress_list))
 		list_add(&work->in_progress_list, &queue->in_progress_list);
-	else
-printk("XXXXXXXX work to queue is already on the progress list\n");
-			/* else it is already on the list */
+			/* else it is already on the list executing right now */
+
 	work->queue = queue;
 	spin_unlock_irqrestore(&queue->work_list_lock, flags);
-printk("ok queued waking up worker threads.\n");
 
 	wake_up(&queue->there_is_work);
-printk("worker threads woken up.\n");
 
 	return true;	/* work was queued */
 }
@@ -212,18 +198,14 @@ void flush_workqueue(struct workqueue_struct *wq)
 
 	INIT_LIST_HEAD(&active_work_items);
 
-printk("about to flush workqueue %p ...\n", wq);
 	spin_lock_irqsave(&wq->work_list_lock, flags);
 	list_for_each_entry_safe(work, w2, &wq->in_progress_list, in_progress_list) {
-printk("adding work %p ...\n", work);
 		list_del_init(&work->in_progress_list);
 		list_add(&work->in_progress_list, &active_work_items);
 	}
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
-printk("waiting for list empty ...\n");
 	wait_event(wq->a_work_has_finished, list_empty(&active_work_items));
-printk("ok workqueue was flushed.\n");
 }
 
 int cancel_work_sync(struct work_struct *work)
