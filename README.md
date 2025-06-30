@@ -267,3 +267,4 @@ Version history
  * 1.2.0-rc14 (May 22, 2025): KMALLOC_DEBUG optional, several fixes
  * 1.2.0-rc15 (Jun 4, 2025): DRBD 9.2.14 support, fixes in networking and um helper
  * 1.2.0 (Jun 17, 2025): Installer fixes, no SEH
+ * 1.2.1 (Jun 30, 2025): Multi-threaded workqueues
