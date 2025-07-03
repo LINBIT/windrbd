@@ -29,7 +29,7 @@ void shutdown_kmalloc_debug(void);
 
 #define kmalloc(size, flags) kmalloc_debug(size, flags, __FILE__, __LINE__, __func__)
 #define kzalloc(size, flags) kzalloc_debug(size, flags, __FILE__, __LINE__, __func__)
-#define kcalloc(size, count, flags) kzalloc_debug(size*count, flags, __FILE__, __LINE__, __func__)
+#define kcalloc(count, size, flags) kzalloc_debug(count*size, flags, __FILE__, __LINE__, __func__)
 #define kfree(data) kfree_debug(data, __FILE__, __LINE__, __func__)
 	/* under Windows kfree and kvfree is the same */
 #define kvfree(data) kfree_debug(data, __FILE__, __LINE__, __func__)

@@ -152,7 +152,7 @@ struct workqueue_struct *alloc_workqueue(const char *fmt, unsigned int flags, in
 	if (wq == NULL)
 		return NULL;
 
-	wq->tasks = kcalloc(sizeof(*wq->tasks), max_active, GFP_KERNEL);
+	wq->tasks = kcalloc(max_active, sizeof(*wq->tasks), GFP_KERNEL);
 	if (wq->tasks == NULL) {
 		kfree(wq);
 		return NULL;

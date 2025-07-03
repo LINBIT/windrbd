@@ -42,9 +42,9 @@ void *kzalloc(size_t size, gfp_t flag)
 	return data;
 }
 
-void *kcalloc(size_t size, int count, gfp_t flag)
+void *kcalloc(int count, size_t size, gfp_t flag)
 {
-	return kzalloc(size*count, flag);
+	return kzalloc(count*size, flag);
 }
 
 void *__vmalloc(size_t size, gfp_t flag)
