@@ -19,12 +19,10 @@
 	the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-/* This used to be a part of drbd_windows.c . It contains implementation
- * of muteces, spin locks, semaphores, read/write semaphores, RCU
+/* This file contains implementation of muteces, spin locks,
+ * read/write locks, semaphores, read/write semaphores, RCU
  * handling routines and routines to control IRQL directly.
  */
-
-// #define DEBUG 1
 
 #include <linux/types.h>
 #include "windrbd_config.h"
@@ -38,43 +36,19 @@
 #include <linux/slab.h>
 #include <linux/wait.h>
 
-/* Define this if RCU implementation can use read/write locks
- * (ExAcquireSpinLockShared, ...).
- */
-
-/* #define CONFIG_HAVE_RW_LOCKS 1 */
-
 void mutex_init(struct mutex *m)
 {
 	KeInitializeMutex(&m->mtx, 0);
 }
 
-NTSTATUS mutex_lock_timeout(struct mutex *m, ULONG msTimeout)
+void mutex_lock(struct mutex *m)
 {
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	LARGE_INTEGER nWaitTime = { 0, };
-
-	if (NULL == m)
-	{
-		return STATUS_INVALID_PARAMETER;
-	}
-
-	nWaitTime.QuadPart = (-1 * 10000);
-	nWaitTime.QuadPart *= msTimeout;		// multiply timeout value separately to avoid overflow.
-	status = KeWaitForMutexObject(&m->mtx, Executive, KernelMode, FALSE, &nWaitTime);
-
-	return status;
-}
-
-NTSTATUS mutex_lock(struct mutex *m)
-{
-    return KeWaitForMutexObject(&m->mtx, Executive, KernelMode, FALSE, NULL);
+	KeWaitForMutexObject(&m->mtx, Executive, KernelMode, FALSE, NULL);
 }
 
 int mutex_lock_interruptible(struct mutex *m)
 {
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	int err = -EIO;
+	NTSTATUS status;
 	struct task_struct *thread = current;
 	PVOID waitObjects[2];
 	int wObjCount = 1;
@@ -89,19 +63,15 @@ int mutex_lock_interruptible(struct mutex *m)
 
 	switch (status)
 	{
-	case STATUS_WAIT_0:		// mutex acquired.
-		err = 0;
-		break;
-	case STATUS_WAIT_1:		// thread got signal by the func 'force_sig'
-		err = thread->sig != 0 ? -thread->sig : -EIO;
-		break;
-	default:
-		err = -EIO;
-		printk("KeWaitForMultipleObjects returned unexpected status(0x%x)", status);
-		break;
+	case STATUS_WAIT_0:	/* mutex acquired */
+		return 0;
+
+	case STATUS_WAIT_1:	/* we got a signal */
+		return -EINTR;
 	}
 
-	return err;
+	/* Should not happen */
+	return -EIO;
 }
 
 // Returns 1 if the mutex is locked, 0 if unlocked.
@@ -265,16 +235,6 @@ void spin_lock_init(spinlock_t *lock)
 }
 
 #if 0
-// #if (NTDDI_VERSION < NTDDI_VISTASP1)
-#ifndef CONFIG_HAVE_RW_LOCKS
-static spinlock_t rcu_spin_lock;
-#else
-static EX_SPIN_LOCK rcu_rw_lock;
-#endif
-
-#endif
-
-#if 0
 
 static KIRQL guess_old_kirql(void)
 {
@@ -301,29 +261,6 @@ void spin_unlock_irqrestore(spinlock_t *lock, KIRQL flags)
 {
 	KeReleaseSpinLock(&lock->spinLock, flags);
 }
-
-#if 0
-
-void spin_lock_irq_debug(spinlock_t *lock, char *file, int line, char *func)
-{
-dbg("called from %s:%d %s(): irql is %d\n", file, line, func, KeGetCurrentIrql());
-	KIRQL oldIrql;
-	KeAcquireSpinLock(&lock->spinLock, &oldIrql);
-
-dbg("called from %s:%d %s(): took lock, irql is %d\n", file, line, func, KeGetCurrentIrql());
-		/* if oldIrql != PASSIVE_LEVEL complain */
-if (oldIrql != PASSIVE_LEVEL)
-dbg("Ahiee, we're not passive level at the beginning of spin_lock_irq() irql is %d\n", oldIrql);
-}
-
-void spin_unlock_irq_debug(spinlock_t *lock, char *file, int line, char *func)
-{
-dbg("called from %s:%d %s(): about to release lock irql is %d\n", file, line, func, KeGetCurrentIrql());
-	KeReleaseSpinLock(&lock->spinLock, guess_old_kirql());
-dbg("called from %s:%d %s(): irql is %d\n", file, line, func, KeGetCurrentIrql());
-}
-
-#endif
 
 /* This does not change the IRQL. In particular if IRQL is
  * at PASSIVE_LEVEL it stays at PASSIVE_LEVEL which means
@@ -363,11 +300,9 @@ void spin_lock_nested(spinlock_t *lock, int level)
 }
 
 #ifndef CONFIG_HAVE_RW_LOCKS
-// #if (NTDDI_VERSION < NTDDI_VISTASP1)
 
-/* And now, the rw_locks. Note that this implementation with spin locks
- * causes DRBD 9.1 to lock up on application I/O, so only DRBD 9.0 support
- * for ReactOS and Windows Server 2003 for now.
+/* And now, the rw_locks. Not supported before NT6 (Vista) so
+ * for ancient Windows this maps to spin_lock's here.
  */
 
 void read_lock(rwlock_t *lock)
@@ -513,6 +448,13 @@ void rwlock_init(rwlock_t *lock)
 
 #endif  /* < NTDDI_VISTASP1 */
 
+/* RCUs: these are implemented with a counter and some lists.
+ *
+ * No calls to spin_lock_XXX herein (except for protecting
+ * the lists)  so also they do not change the IRQL (as it
+ * was in WinDRBD 1.1.X and before).
+ */
+
 static atomic_t rcu_counter;
 static wait_queue_head_t nobody_in_rcu_read_lock;
 static spinlock_t rcu_lock;
@@ -629,14 +571,6 @@ int spin_trylock(spinlock_t *lock)
 
 void init_locking(void)
 {
-#if 0
-#ifndef CONFIG_HAVE_RW_LOCKS
-	spin_lock_init(&rcu_spin_lock);
-#else
-        rcu_rw_lock = 0;
-#endif
-#endif
-
 	atomic_set(&rcu_counter, 0);
 	init_waitqueue_head(&nobody_in_rcu_read_lock);
 	rcu_heads = NULL;
