@@ -89,10 +89,6 @@ int windrbd_init_usermode_helper(void);
 void windrbd_run_tests(void);
 void windrbd_shutdown_tests(void);
 
-/* See windrbd_bootdevice.c */
-int create_drbd_resource_from_url(const char *url);
-void windrbd_init_boot_device(void);
-
 /* TODO: We put this here, since this should be included by most WinDRBD
  * C source files. One day we probably find a better way.
  */

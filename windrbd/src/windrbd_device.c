@@ -469,18 +469,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_root_device_control(struct _DEV
 		break;
 	}
 
-	case IOCTL_WINDRBD_ROOT_CREATE_RESOURCE_FROM_URL:
-	{
-		const char* drbd_url = irp->AssociatedIrp.SystemBuffer;
-
-		if (drbd_url == NULL)
-			status = STATUS_INVALID_DEVICE_REQUEST;
-		else
-			create_drbd_resource_from_url(drbd_url);
-
-		break;
-	}
-
 	case IOCTL_WINDRBD_ROOT_SET_CONFIG_KEY:
 	{
 		const char* the_config_key = irp->AssociatedIrp.SystemBuffer;

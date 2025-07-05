@@ -219,13 +219,13 @@ TMP_DRBD_FILES = $(addprefix $(DRBD_TMPSRCDIR), $(DRBD_SOURCES))
 WINDRBD_SRCDIR = ./windrbd/src/
 WINDRBD_SOURCES = Attr.c disp.c drbd_windows.c hweight.c \
                 idr.c mempool.c printk-to-syslog.c \
-                seq_file.c slab.c util.c windrbd_bootdevice.c \
-                windrbd_device.c windrbd_drbd_url_parser.c windrbd_module.c \
+                seq_file.c slab.c util.c \
+                windrbd_device.c windrbd_module.c \
                 windrbd_netlink.c windrbd_test.c windrbd_threads.c \
                 windrbd_usermodehelper.c windrbd_waitqueue.c \
                 windrbd_winsocket.c windrbd_locking.c \
                 tiktok.c partition_table_template.c \
-                windrbd_serial.c windrbd_workqueue.c
+                windrbd_workqueue.c
 
 ifdef CONFIG_KMALLOC_DEBUG
 WINDRBD_SOURCES += kmalloc_debug.c

@@ -158,3 +158,20 @@ NTSTATUS get_registry_long_long(wchar_t *key, unsigned long long *val_p, unsigne
 
 	return status;
 }
+
+int my_atoi(const char *c)
+{
+	int i;
+
+	if (c == NULL)
+		return 0;
+
+	i=0;
+	while (*c >= '0' && *c <= '9') {
+		i*=10;
+		i+=*c-'0';
+		c++;
+	}
+	return i;
+}
+

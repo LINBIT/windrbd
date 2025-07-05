@@ -233,14 +233,6 @@ NTSTATUS __attribute__((stdcall)) DriverEntry(IN PDRIVER_OBJECT DriverObject, IN
 	NTSTATUS status;
 	int ret;
 
-		/* Use non executable pool for memory allocations.
-		 * see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/single-binary-opt-in-pool-nx-optin
-		 */
-
-// #ifdef CONFIG_HAVE_NO_EXECUTE
-//	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
-// #endif
-
 		/* Needed for event log */
 	mvolDriverObject = DriverObject;
 
@@ -308,18 +300,14 @@ NTSTATUS __attribute__((stdcall)) DriverEntry(IN PDRIVER_OBJECT DriverObject, IN
 /* Remove this line to make driver removable (driver removing currently
  * BSOD's sometimes):
  */
-// #ifndef CONFIG_DONT_HAVE_BUS_DEVICE
 	DriverObject->DriverExtension->AddDevice = mvolAddDevice;
-// #endif
 	DriverObject->DriverUnload = mvolUnload;
 
 		/* For bus object: TODO: don't do this if there
 		 * is no bus object. (Maybe move to AddDevice)
 		 */
 
-// #ifndef CONFIG_DONT_HAVE_BUS_DEVICE
 	try_module_get(&windrbd_module);
-// #endif
 
 	dtt_initialize_fn();
 
@@ -347,18 +335,7 @@ NTSTATUS __attribute__((stdcall)) DriverEntry(IN PDRIVER_OBJECT DriverObject, IN
 
 	printk(KERN_INFO "Windrbd Driver loaded.\n");
 
-	windrbd_run_tests();
-
 	KeInitializeEvent(&bus_ready_event, NotificationEvent, FALSE);
-
-#ifdef START_BOOT_DEVICE
-	printk("Attempting to start boot device\n");
-
-	windrbd_init_boot_device();
-	printk("Start boot device stage1 returned\n");
-#else
-	printk("NOT starting boot device\n");
-#endif
 
 	return_to_windows(current);
 

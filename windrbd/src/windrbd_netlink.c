@@ -2,6 +2,14 @@
 #include <windrbd_internal.h>
 #include <linux/kthread.h>
 
+        /* See include/net/netlink.h: the register function sets
+         * this variable to the static drbd_genl_family defined
+         * somewhere magically in drbd-headers/linux/genl_magic
+         * something.
+         */
+
+const struct genl_family *the_windrbd_netlink_family;
+
 struct genl_reply_buffer {
 	struct list_head list;
 	void *buf;
