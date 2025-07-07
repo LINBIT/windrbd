@@ -2899,7 +2899,7 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	root_dispatch_table[IRP_MJ_CLOSE] = windrbd_root_close;
 	root_dispatch_table[IRP_MJ_SYSTEM_CONTROL] = windrbd_sysctl;
 
-	bus_dispatch_table[IRP_MJ_CLOSE] = windrbd_pnp_bus_device;
+	bus_dispatch_table[IRP_MJ_PNP] = windrbd_pnp_bus_device;
 	bus_dispatch_table[IRP_MJ_SYSTEM_CONTROL] = windrbd_sysctl;
 
 	status = IoRegisterShutdownNotification(mvolRootDeviceObject);
