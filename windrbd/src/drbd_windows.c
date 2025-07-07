@@ -541,8 +541,6 @@ static struct bio *bio_alloc_ll(gfp_t gfp_mask, int nr_iovecs)
 	atomic_set(&bio->bi_cnt, 1);
 	bio->bi_vcnt = 0;
 	spin_lock_init(&bio->device_failed_lock);
-	INIT_LIST_HEAD(&bio->corked_bios);
-	INIT_LIST_HEAD(&bio->joined_bios);
 
 	INIT_LIST_HEAD(&bio->locally_submitted_bios);
 	INIT_LIST_HEAD(&bio->locally_submitted_bios2);
@@ -1413,7 +1411,7 @@ NTSTATUS __attribute__((stdcall)) DrbdIoCompletion(
 
 	atomic_dec(&bio->bi_bdev->num_irps_pending);
 
-bio->where_i_am = "in io completion";
+	bio->where_i_am = "in io completion";
 
 	if (status != STATUS_SUCCESS) {
 		if (status == STATUS_INVALID_DEVICE_REQUEST && stack_location->MajorFunction == IRP_MJ_FLUSH_BUFFERS)
@@ -1469,29 +1467,10 @@ bio->where_i_am = "in io completion";
 	spin_unlock_irqrestore(&bio->device_failed_lock, flags);
 
 	if (!device_failed && (num_completed == bio->bi_num_requests || status != STATUS_SUCCESS || one_big_request)) {
-bio->where_i_am = "into bio_endio";
+		bio->where_i_am = "into bio_endio";
 			/* Last call to DrbdIoComplete() for this bio */
 		bio->bi_status = win_status_to_blk_status(status);
 		bio_endio(bio);
-
-		struct bio *child_bio, *child_bio2;
-		list_for_each_entry_safe(child_bio, child_bio2, &bio->joined_bios, corked_bios) {
-child_bio->where_i_am = "child bio in io completion";
-			child_bio->bi_status = win_status_to_blk_status(status);
-
-				/* bio was never submitted, so bdev's pending
-				 * bios counter should not be decremented.
-				 */
-			bio_endio_impl(child_bio, false);
-
-				/* No bio_put here - this bio was never sent
-				 * to generic_make_request2. bio_endio does
-				 * a bio_put the corresponding get was where
-				 * we have put the bio on the list */
-
-				/* Hmmm .. not sure: */
-			bio_put(child_bio);
-		}
 	}
 
 	bio_put(bio);
@@ -1732,7 +1711,7 @@ static int windrbd_generic_make_request(struct bio *bio, bool single_request)
 	return 0;
 }
 
-static int generic_make_request2(struct bio *bio)
+int generic_make_request(struct bio *bio)
 {
 	int ret;
 	sector_t sector;
@@ -1741,9 +1720,23 @@ static int generic_make_request2(struct bio *bio)
 	int orig_size;
 	int e;
 	int flush_request;
-	atomic_inc(&bio->bi_bdev->num_bios_pending);
+	struct block_device *bdev;
+	unsigned long flags;
 
-	bio->where_i_am = "in generic_make_request2";
+	bdev = bio->bi_bdev;
+	atomic_inc(&bdev->num_bios_pending);
+
+		/* First thing: put bio on pending list.
+		 */
+
+	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
+	list_add(&bio->locally_submitted_bios, &bdev->in_flight_bios);
+	bio->submission_timestamp = jiffies;
+	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
+
+	rearm_disk_timeout_timer(bdev);
+
+	bio->where_i_am = "in generic_make_request";
 	bio_get(bio);
 
 	flush_request = ((bio->bi_opf & REQ_PREFLUSH) != 0);
@@ -1771,7 +1764,7 @@ static int generic_make_request2(struct bio *bio)
 	orig_sector = sector = bio->bi_iter.bi_sector;
 	orig_size = bio->bi_iter.bi_size;
 
-	bio->where_i_am = "in generic_make_request2 2";
+	bio->where_i_am = "in generic_make_request 2";
 	bio->bi_using_big_buffer = false;
 	if (bio->bi_vcnt > 1) {
 		total_size = 0;
@@ -1788,7 +1781,7 @@ static int generic_make_request2(struct bio *bio)
 			bio->bi_this_request = 0;
 			bio->bi_using_big_buffer = true;
 
-bio->where_i_am = "in generic_make_request2 big buffer";
+			bio->where_i_am = "in generic_make_request big buffer";
 			if (bio_data_dir(bio) == WRITE) {
 				/* copy data from io_vecs */
 				int i;
@@ -1858,215 +1851,6 @@ out:
 	return ret;
 }
 
-void windrbd_bdev_cork(struct block_device *bdev)
-{
-	bdev->corked = true;
-}
-
-static void do_nothing(struct bio *bio)
-{
-	bio->where_i_am = "in do_nothing";
-	bio_put(bio);
-}
-
-static int create_and_submit_joined_bio(int num_vector_elements, int total_size, struct list_head *list, struct bio *first_bio_not_on_list)
-{
-	struct bio *joined_bios_bio, *bio3, *bio4, *first_bio;
-	int i, ret;
-
-	if (list_empty(list)) {
-		return 0;
-	}
-	first_bio = list_first_entry(list, struct bio, corked_bios);
-	if (list_is_last(&first_bio->corked_bios, list)) {
-		list_del(&first_bio->corked_bios);
-		ret = generic_make_request2(first_bio);
-		for (i=0; i<first_bio->bi_vcnt; i++) {
-			/* corresponding get_page in generic_make_request() */
-			put_page(first_bio->bi_io_vec[i].bv_page);
-		}
-		bio_put(first_bio);	/* corresponding get in generic_request() */
-		return ret;
-	}
-	joined_bios_bio = bio_alloc_old(0, num_vector_elements);
-	if (joined_bios_bio == NULL) {
-		printk("Could not allocate joined_bios_bio, failing outstanding bios\n");
-		list_for_each_entry_safe(bio3, bio4, list, corked_bios) {
-			bio3->bi_status = BLK_STS_IOERR;
-			bio_endio(bio3);
-		}
-		return -ENOMEM;
-	}
-
-	joined_bios_bio->bi_end_io = do_nothing;
-	joined_bios_bio->bi_bdev = first_bio->bi_bdev;
-	joined_bios_bio->bi_opf = first_bio->bi_opf;
-	joined_bios_bio->bi_iter.bi_sector = first_bio->bi_iter.bi_sector;
-
-	joined_bios_bio->bi_iter.bi_size = total_size;
-	joined_bios_bio->bi_vcnt = 0;
-
-	list_for_each_entry_safe(bio3, bio4, list, corked_bios) {
-		bio3->where_i_am = "in join bios loop";
-		if (first_bio_not_on_list != NULL && bio3 == first_bio_not_on_list) {
-			break;
-		}
-
-		for (i=0; i<bio3->bi_vcnt; i++) {
-			joined_bios_bio->bi_io_vec[joined_bios_bio->bi_vcnt] = bio3->bi_io_vec[i];
-				/* TODO: get_page here? */
-			joined_bios_bio->bi_vcnt++;
-if (bio_data_dir(bio3) == WRITE) {
-}
-		}
-		list_del(&bio3->corked_bios);
-		list_add(&bio3->corked_bios, &joined_bios_bio->joined_bios);
-	}
-	if (joined_bios_bio->bi_vcnt != num_vector_elements) {
-		printk("Warning: joined_bios_bio->bi_vcnt(%d) != num_vector_elements(%d)\n", joined_bios_bio->bi_vcnt, num_vector_elements);
-	}
-		/* child bios will be put is I/O request routine */
-	return generic_make_request2(joined_bios_bio);
-}
-
-int windrbd_bdev_uncork(struct block_device *bdev)
-{
-	struct bio *bio, *bio2, *last_bio;
-	struct list_head tmp_list;
-	KIRQL flags;
-	int i, ret;
-	int num_joinable_bios, num_vector_elements;
-	sector_t expected_sector;
-	unsigned long long joinable_size;
-	unsigned int opf;
-
-	INIT_LIST_HEAD(&tmp_list);
-	bdev->corked = false;
-
-		/* This is so we don't have to keep the spin lock
-		 * longer than needed.
-		 */
-	spin_lock_irqsave(&bdev->cork_spinlock, flags);
-	list_for_each_entry_safe(bio, bio2, &bdev->corked_list, corked_bios) {
-		list_del(&bio->corked_bios);
-		list_add(&bio->corked_bios, &tmp_list);
-	}
-	spin_unlock_irqrestore(&bdev->cork_spinlock, flags);
-
-	if (list_empty(&tmp_list)) {
-		return 0;
-	}
-
-	num_joinable_bios = 0;
-	num_vector_elements = 0;
-	joinable_size = 0;
-	expected_sector = -1;
-	opf = -1;
-	last_bio = NULL;
-
-	list_for_each_entry_safe(bio, bio2, &tmp_list, corked_bios) {
-		bio->where_i_am = "in uncorking loop";
-		if ((expected_sector != -1 && expected_sector != bio->bi_iter.bi_sector) || num_vector_elements >= 1024 || joinable_size >= 4*1024*1024 || (opf != (unsigned int)-1 && bio->bi_opf != opf) || bio->is_user_request) {
-			if (last_bio == NULL) {
-				printk("Warning: logic bug, last_bio should not be NULL here.\n");
-			} else {
-				if (num_joinable_bios == 1) {
-					list_del(&last_bio->corked_bios);
-					ret = generic_make_request2(last_bio);
-					for (i=0; i<last_bio->bi_vcnt; i++) {
-					/* corresponding get_page in generic_make_request() */
-						put_page(last_bio->bi_io_vec[i].bv_page);
-					}
-					bio_put(last_bio);	/* corresponding get in generic_request() */
-				} else {
-					ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, bio);
-				}
-				if (ret < 0)
-					return ret;
-			}
-
-			/* Rejected: create a buffer and copy over the data (if writing).
-			 * instead create a bi_io_vec pointing to the data and
-			 * use big_buffer mechanism.
-			 *
-			 * Done: create a 'master' bio here.
-			 * Done: move bios from first bio to this bio to the master bio's list.
-			 * Done: submit the master bio
-			 * in master bio completion:
-			 *    rejected: copy over data when reading. already done
-                         *    bio_endfn() for all child functions
-			 *
-			 * Error handling?
-			 * must bio_endio bios on memory allocation error this
-			 * is done now in create_and_submit_joined_bio()
-			 */
-			num_joinable_bios = 0;
-			num_vector_elements = 0;
-			joinable_size = 0;
-			expected_sector = -1;
-			opf = bio->bi_opf;
-		}
-		num_joinable_bios++;
-		num_vector_elements += bio->bi_vcnt;
-		joinable_size += bio->bi_iter.bi_size;
-		expected_sector = bio->bi_iter.bi_sector + bio->bi_iter.bi_size/512;
-		last_bio = bio;
-	}
-		/* bio variable is invalid here ... */
-	ret = create_and_submit_joined_bio(num_vector_elements, joinable_size, &tmp_list, NULL);
-
-	return ret;
-}
-
-	/* Corking. Keep bios on a list and submit them
-	 * at once as a single request (if possible).
-	 */
-
-int generic_make_request(struct bio *bio)
-{
-	struct block_device *bdev = bio->bi_bdev;
-	KIRQL flags;
-	int i;
-
-	bio->where_i_am = "in generic_make_request 1";
-
-		/* First thing: put bio on pending list before
-		 * we get confused facing joined, corked, child, ...
-		 * bios.
-		 */
-
-	spin_lock_irqsave(&bdev->in_flight_bios_lock, flags);
-	list_add(&bio->locally_submitted_bios, &bdev->in_flight_bios);
-	bio->submission_timestamp = jiffies;
-	spin_unlock_irqrestore(&bdev->in_flight_bios_lock, flags);
-
-	rearm_disk_timeout_timer(bdev);
-
-	if (bdev->corked) {
-		bio->where_i_am = "in generic_make_request bdev corked";
-		bio_get(bio);	/* we want to put it on a list. */
-
-			/* TODO: also get pages? It works with this ...
-			   But why? Is there some get_page inside the
-			   generic_make_request2 / windrbd_make_request?
-			   I think this is because we copy the bi_vec
-			   elements to a new structure...
-			 */
-
-		for (i=0;i<bio->bi_vcnt;i++) {
-			get_page(bio->bi_io_vec[i].bv_page);
-		}
-
-		spin_lock_irqsave(&bdev->cork_spinlock, flags);
-	        list_add(&bio->corked_bios, &bdev->corked_list);
-		spin_unlock_irqrestore(&bdev->cork_spinlock, flags);
-
-		return 0;
-	} else {
-		bio->where_i_am = "in generic_make_request no corking";
-		return generic_make_request2(bio);
-	}
-}
 
 static void bio_endio_impl(struct bio *bio, bool was_accounted)
 {
@@ -2488,12 +2272,6 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 	init_waitqueue_head(&block_device->bios_event);
 	atomic_set(&block_device->num_bios_pending, 0);
 	atomic_set(&block_device->num_irps_pending, 0);
-
-		/* Most of this probably goes away soon */
-		/* Corking ... new with 1.1.8 */
-	block_device->corked = false;
-	spin_lock_init(&block_device->cork_spinlock);
-	INIT_LIST_HEAD(&block_device->corked_list);
 
 		/* fail I/O on disk timeout, new in 1.1.9 */
 	spin_lock_init(&block_device->in_flight_bios_lock);

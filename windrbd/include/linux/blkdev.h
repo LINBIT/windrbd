@@ -590,18 +590,6 @@ struct block_device {
 
 	spinlock_t virtual_partition_table_lock;
 
-		/* This members allow I/O to be "corked": collect
-		 * I/O requests (=bios) and submit them as a single
-		 * driver call to the backing device. This should
-		 * perform better (1 4Meg request vs. 1000 4K requests)
-		 * Right now one needs to call bdev_cork_io() and
-		 * bdev_uncork_io() manually.
-		 */
-
-	bool corked;
-	spinlock_t cork_spinlock;
-	struct list_head corked_list;
-
 	spinlock_t in_flight_bios_lock;
 	struct list_head in_flight_bios;
 

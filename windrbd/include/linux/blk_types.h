@@ -128,9 +128,6 @@ struct bio {
 
 	struct bio *is_cloned_from;
 
-	struct list_head corked_bios;  /* used to link the bios */
-	struct list_head joined_bios;  /* a list containg bios which we do the big buffer for. Must end_io them once this joined bio is finished */
-
 	/* Set when a bio is created in windrbd_make_drbd_requests.
 	   Do not try to join them */
 	bool is_user_request;
