@@ -444,6 +444,9 @@ begin
 		Log('Failed to set shutdown flag. The old WinDRBD version is probably less than 1.1.0, please make sure that drbdsetup events2 processes are stopped by yourself');
 	end;
 
+	{ Give WinDRBD a chance to terminate workers, bus device, ... }
+	Sleep(10*1000);
+
 	if not ExecWithLogging(ExpandConstant('{code:WinDRBDRootDir}\usr\sbin\windrbd.exe'), 'unlock-driver', ExpandConstant('{app}'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
 	begin
 		Log('Failed to unlock the driver. The old WinDRBD version is probably less than 1.1.8, in most cases you can ignore this.');
