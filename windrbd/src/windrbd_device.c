@@ -45,6 +45,9 @@
 #include <linux/delay.h>
 
 static PDRIVER_DISPATCH windrbd_dispatch_table[IRP_MJ_MAXIMUM_FUNCTION + 1];
+static PDRIVER_DISPATCH root_dispatch_table[IRP_MJ_MAXIMUM_FUNCTION + 1];
+static PDRIVER_DISPATCH bus_dispatch_table[IRP_MJ_MAXIMUM_FUNCTION + 1];
+
 static char *thread_names[IRP_MJ_MAXIMUM_FUNCTION + 1] = {
 "create",		/* IRP_MJ_CREATE                     0x00 */
 "createpipe",		/* IRP_MJ_CREATE_NAMED_PIPE          0x01 */
@@ -87,15 +90,16 @@ static int about_to_unload_driver;	/* Driver will soon unload so
 
 static NTSTATUS __attribute__((stdcall)) windrbd_not_implemented(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
-		irp->IoStatus.Status = STATUS_SUCCESS;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
-	}
-
 	irp->IoStatus.Status = STATUS_NOT_IMPLEMENTED;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
 	return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS __attribute__((stdcall)) return_success(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+	return STATUS_SUCCESS;
 }
 
 	/* Better not do any printk's in here, we are in the I/O
@@ -579,16 +583,6 @@ struct scsi_pass_through {
 
 static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-	if (device == drbd_bus_device) {
-		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
-		irp->IoStatus.Information = 0;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_INVALID_DEVICE_REQUEST;
-	}
-
-	if (device == mvolRootDeviceObject || device == user_device_object)
-		return windrbd_root_device_control(device, irp);
-
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
@@ -1050,12 +1044,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 
 static NTSTATUS __attribute__((stdcall)) windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
-		irp->IoStatus.Status = STATUS_SUCCESS;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
-	}
-
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
@@ -1096,18 +1084,18 @@ static NTSTATUS __attribute__((stdcall)) windrbd_create(struct _DEVICE_OBJECT *d
 	return status;
 }
 
+static NTSTATUS __attribute__((stdcall)) windrbd_root_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
+{
+	struct _IO_STACK_LOCATION *s2 = IoGetCurrentIrpStackLocation(irp);
+	windrbd_delete_multicast_groups_for_file(s2->FileObject);
+
+	irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+	return STATUS_SUCCESS;
+}
 
 static NTSTATUS __attribute__((stdcall)) windrbd_close(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
-		struct _IO_STACK_LOCATION *s2 = IoGetCurrentIrpStackLocation(irp);
-		windrbd_delete_multicast_groups_for_file(s2->FileObject);
-
-		irp->IoStatus.Status = STATUS_SUCCESS;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
-	}
-
 	struct block_device_reference *ref = device->DeviceExtension;
 	NTSTATUS status;
 
@@ -1149,12 +1137,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_close(struct _DEVICE_OBJECT *de
 
 static NTSTATUS __attribute__((stdcall)) windrbd_cleanup(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
-		irp->IoStatus.Status = STATUS_SUCCESS;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
-	}
-
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
@@ -1575,12 +1557,6 @@ static NTSTATUS make_drbd_requests_from_irp(struct _IRP *irp, struct block_devic
 
 static NTSTATUS __attribute__((stdcall)) windrbd_io(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
-		irp->IoStatus.Status = STATUS_SUCCESS;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
-	}
-
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete || ref->bdev->ref == NULL) {
 		printk(KERN_WARNING "I/O request: Device %p accessed after it was deleted.\n", device);
@@ -1665,12 +1641,6 @@ static void windrbd_bio_flush_finished(struct bio * bio)
 
 static NTSTATUS __attribute__((stdcall)) windrbd_flush(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-	if (device == mvolRootDeviceObject || device == user_device_object || device == drbd_bus_device) {
-		irp->IoStatus.Status = STATUS_SUCCESS;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
-	}
-
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
@@ -1848,25 +1818,7 @@ exit:
 static NTSTATUS __attribute__((stdcall)) windrbd_pnp(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	NTSTATUS status;
-
-		/* TODO: mux */
-	if (device == mvolRootDeviceObject || device == user_device_object) {
-		status = STATUS_NOT_SUPPORTED;
-		goto out;
-	}
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
-
-		/* TODO: can this ever happen? */
-	if (s == NULL) {
-		printk("Warning: IoGetCurrentIrpStackLocation(%p) is NULL\n", irp);
-		status = STATUS_INVALID_DEVICE_REQUEST;
-		goto out;
-	}
-
-		/* TODO: have a device MUX mechanism ... */
-	if (device == drbd_bus_device)
-		return windrbd_pnp_bus_device(device, irp);
-
 	struct block_device_reference *ref = device->DeviceExtension;
 	struct block_device *bdev = NULL;
 	struct drbd_device *drbd_device = NULL;
@@ -2176,15 +2128,11 @@ static NTSTATUS __attribute__((stdcall)) windrbd_power(struct _DEVICE_OBJECT *de
  * Must forward requests to next lower driver.
  */
 
+/* TODO: we have MUX in here, which is probably not good ... */
+
 static NTSTATUS __attribute__((stdcall)) windrbd_sysctl(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
 	NTSTATUS status = STATUS_SUCCESS;
-
-	if (device == mvolRootDeviceObject || device == user_device_object) {
-		irp->IoStatus.Status = STATUS_SUCCESS;
-	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-		return STATUS_SUCCESS;
-	}
 
 	if (device == drbd_bus_device) {
 		struct _BUS_EXTENSION *bus_ext = (struct _BUS_EXTENSION*) device->DeviceExtension;
@@ -2909,7 +2857,12 @@ static NTSTATUS __attribute__((stdcall)) windrbd_dispatch(struct _DEVICE_OBJECT 
 		if (device == mvolRootDeviceObject)
 			t->is_root = 1;
 	}
-	ret = windrbd_dispatch_table[major](device, irp);
+	if (device == mvolRootDeviceObject || device == user_device_object)
+		ret = root_dispatch_table[major](device, irp);
+	else if (device == drbd_bus_device)
+		ret = bus_dispatch_table[major](device, irp);
+	else		/* a disk */
+		ret = windrbd_dispatch_table[major](device, irp);
 
 	if (t != NULL) {
 		return_to_windows(t);
@@ -2922,11 +2875,12 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	int i;
 	NTSTATUS status;
 
-	for (i=0; i<=IRP_MJ_MAXIMUM_FUNCTION; i++)
+	for (i=0; i<=IRP_MJ_MAXIMUM_FUNCTION; i++) {
 		obj->MajorFunction[i] = windrbd_dispatch;
-
-	for (i=0; i<=IRP_MJ_MAXIMUM_FUNCTION; i++)
 		windrbd_dispatch_table[i] = windrbd_not_implemented;
+		root_dispatch_table[i] = return_success;
+		bus_dispatch_table[i] = return_success;
+	}
 
 	windrbd_dispatch_table[IRP_MJ_DEVICE_CONTROL] = windrbd_device_control;
 	windrbd_dispatch_table[IRP_MJ_READ] = windrbd_io;
@@ -2940,6 +2894,13 @@ void windrbd_set_major_functions(struct _DRIVER_OBJECT *obj)
 	windrbd_dispatch_table[IRP_MJ_SCSI] = windrbd_scsi;
 	windrbd_dispatch_table[IRP_MJ_POWER] = windrbd_power;
 	windrbd_dispatch_table[IRP_MJ_SYSTEM_CONTROL] = windrbd_sysctl;
+
+	root_dispatch_table[IRP_MJ_DEVICE_CONTROL] = windrbd_root_device_control;
+	root_dispatch_table[IRP_MJ_CLOSE] = windrbd_root_close;
+	root_dispatch_table[IRP_MJ_SYSTEM_CONTROL] = windrbd_sysctl;
+
+	bus_dispatch_table[IRP_MJ_CLOSE] = windrbd_pnp_bus_device;
+	bus_dispatch_table[IRP_MJ_SYSTEM_CONTROL] = windrbd_sysctl;
 
 	status = IoRegisterShutdownNotification(mvolRootDeviceObject);
 	if (status != STATUS_SUCCESS) {
