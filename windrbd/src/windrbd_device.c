@@ -102,80 +102,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_not_implemented(struct _DEVICE_
 	 * path.
 	 */
 
-/* 3 hours */
-// #define LONG_TIMEOUT 10000
-#define LONG_TIMEOUT 50
-
-#define wait_for_becoming_primary(bdev) wait_for_becoming_primary_debug(bdev, __FILE__, __LINE__, __func__)
-
-	/* See drbd_main.c: must patch this to non-static */
-extern int try_to_promote(struct drbd_device *device, long timeout, bool ndelay);
-
-static NTSTATUS wait_for_becoming_primary_debug(struct block_device *bdev, const char *file, int line, const char *func)
-{
-	NTSTATUS status;
-	struct drbd_device *drbd_device;
-	struct drbd_resource *resource;
-	int rv;
-	LONG_PTR timeout = LONG_TIMEOUT * HZ / 10;
-
-	drbd_device = bdev->drbd_device;
-	if (drbd_device != NULL) {
-		resource = drbd_device->resource;
-		if (resource == NULL)
-			return STATUS_INVALID_PARAMETER;
-	} else
-		return STATUS_INVALID_PARAMETER;
-
-	/* TODO: should we keep the auto-promote support code here.
-	   It works pretty well, just need to export try_to_promote in
-	   DRBD ...
-	 */
-	if ((bdev->is_bootdevice || bdev->my_auto_promote) && !bdev->powering_down && !shutting_down) {
-		drbd_device = bdev->drbd_device;
-		if (drbd_device != NULL) {
-			resource = drbd_device->resource;
-			if (resource != NULL) {
-				while (resource->role[NOW] == R_SECONDARY) {
-					rv = try_to_promote(drbd_device, timeout, 0);
-
-		/* no uptodate disk: we are not yet connected, wait a bit
-		 * until we are.
-		 */
-					if (rv < SS_SUCCESS && rv != SS_NO_UP_TO_DATE_DISK) {
-						drbd_info(resource, "Auto-promote failed: %s\n", drbd_set_st_err_str(rv));
-						break;
-					}
-					if (rv == SS_SUCCESS) {
-						if (windrbd_rescan_bus() < 0) {
-							printk("Warning: could not rescan bus on becoming primary.\n");
-						}
-						break;
-					}
-
-					if (bdev->powering_down || bdev->delete_pending || shutting_down)
-						break;
-
-					msleep(100);
-					if (bdev->powering_down || bdev->delete_pending || shutting_down)
-						break;
-				}
-			}
-		}
-	} else {
-		if (!bdev->powering_down && !shutting_down) {
-			status = KeWaitForSingleObject(&bdev->primary_event, Executive, KernelMode, FALSE, NULL);
-			if (!NT_SUCCESS(status))
-				printk("Warning: KeWaitForSingleObject returned non-success status 0x%08x\n", status);
-		}
-	}
-
-	if (bdev->delete_pending)
-		return STATUS_NO_SUCH_DEVICE;
-
-	return (resource->role[NOW] == R_PRIMARY ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL);
-}
-
 static void fill_drive_geometry(struct _DISK_GEOMETRY *g, struct block_device *dev)
 {
 	g->BytesPerSector = dev->bd_block_size;
@@ -675,12 +601,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	NTSTATUS status = STATUS_SUCCESS;
 
-	if (dev->is_bootdevice) {
-		status = wait_for_becoming_primary(dev);
-		if (status != STATUS_SUCCESS)
-			goto out;
-	}
-
 	switch (s->Parameters.DeviceIoControl.IoControlCode) {
 		/* custom WINDRBD ioctl's */
 	case IOCTL_WINDRBD_IS_WINDRBD_DEVICE:
@@ -1123,7 +1043,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 		status = STATUS_NOT_IMPLEMENTED;
 	}
 
-out:
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return status;
@@ -1151,12 +1070,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_create(struct _DEVICE_OBJECT *d
 	int err;
 
 	if (dev->drbd_device != NULL) {
-		if (dev->is_bootdevice) {
-			status = wait_for_becoming_primary(dev->drbd_device->vdisk->part0);
-			if (status != STATUS_SUCCESS)
-				goto exit;
-		}
-
 		mode = (s->Parameters.Create.SecurityContext->DesiredAccess &
        	               (FILE_WRITE_DATA  | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_APPEND_DATA | GENERIC_WRITE)) ? FMODE_WRITE : 0;
 
@@ -1175,7 +1088,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_create(struct _DEVICE_OBJECT *d
 		status = STATUS_SUCCESS;
 	}
 
-exit:
 	if (status == STATUS_SUCCESS && dev != NULL)
 		dev->num_openers++;
 
@@ -1692,12 +1604,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_io(struct _DEVICE_OBJECT *devic
 	IoAcquireRemoveLock(&ref->w_remove_lock, NULL);
 	if (dev->about_to_delete)
 		goto exit_remove_lock;
-
-	if (dev->is_bootdevice && dev->drbd_device->resource->role[NOW] != R_PRIMARY) {
-		status = wait_for_becoming_primary(dev->drbd_device->vdisk->part0);
-		if (status != STATUS_SUCCESS)
-			goto exit_remove_lock;
-	}
 
 		/* allow I/O when the local disk failed, usually there
 		 * are peers which can handle the I/O. If not, DRBD will
@@ -2300,53 +2206,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_sysctl(struct _DEVICE_OBJECT *d
 	}
 	return status;
 }
-	/* When installing WinDRBD as PnP Disk driver, the disk.sys driver
-	 * is stacked over us and will send us SCSI requests. Some of them
-	 * are implemented here (like read/write), others like TRIM
-	 * or WRITESAME are not supported yet.
-	 */
-
-static long long wait_for_size(struct _DEVICE_OBJECT *device)
-{
-	struct block_device_reference *ref;
-	struct block_device *bdev = NULL;
-	NTSTATUS status;
-	long long d_size = -1;
-
-	ref = device->DeviceExtension;
-	if (ref != NULL) {
-		bdev = ref->bdev;
-
-		if (bdev != NULL && !bdev->delete_pending && !bdev->powering_down && !shutting_down) {
-
-		/* This is racy: if refcount is 0 here, it is incremented
-		 * again and the destroy function is called twice for
-		 * the same object (later in windrbd_bdput(). We now have
-		 * RemoveLocks around the I/O paths and will wait in
-		 * REMOVE_DEVICE for completion of all I/O including
-		 * this one.
-		 */
-//			windrbd_bdget(bdev);
-
-		/* Windows 10: it BSODs with a DRIVER_PNP_WATCHDOG if
-		 * it cannot complete within 5-6 minutes. Report an
-		 * error in getting size. TODO: trigger the watchdog.
-		 */
-
-			status = KeWaitForSingleObject(&bdev->capacity_event, Executive, KernelMode, FALSE, NULL);
-			if (status == STATUS_SUCCESS) {
-				if (!bdev->powering_down && !bdev->delete_pending && !shutting_down)  {
-					if (bdev->bd_inode->i_size > 0) {
-						d_size = bdev->bd_inode->i_size;
-					} else {
-						printk("Warning: block device size still not known yet.\n");
-					}
-				}
-			}
-		}
-	}
-	return d_size;
-}
 
 static void fake_partition_table(struct block_device *bdev)
 {
@@ -2518,15 +2377,12 @@ void windrbd_device_size_change(struct block_device *bdev)
 {
         if (bdev->bd_inode->i_size > 0) {
                 printk("got a valid size, unblocking SCSI capacity requests.\n");
-                KeSetEvent(&bdev->capacity_event, 0, FALSE);
-
 		if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(bdev) < 0) {
 			printk("Warning: could not read boot sector on device size change.\n");
 		}
 /* TODO: IoUpdateDiskGeometry(device_object, &old_geometry, &new_geometry); */
         } else {
                 printk("Size set to 0, am I Diskless/Unconnected?\n");
-                KeClearEvent(&bdev->capacity_event);
         }
 	bdev->bd_nr_sectors = bdev->bd_inode->i_size / bdev->bd_block_size;
 }
@@ -2847,12 +2703,7 @@ static NTSTATUS scsi_read_capacity(struct block_device *bdev, union _CDB *cdb, v
 	if (bdev == NULL)
 		return STATUS_INVALID_DEVICE_REQUEST;
 
-	if (bdev->is_bootdevice) {
-			/* This will go away 'soon' */
-		d_size = wait_for_size(bdev->windows_device);
-	} else {
-		d_size = bdev->bd_inode->i_size;
-	}
+	d_size = bdev->bd_inode->i_size;
 	d_size += (bdev->data_shift + bdev->appended_sectors) * 512;
 
 	Temp = bdev->bd_block_size;

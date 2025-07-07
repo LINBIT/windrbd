@@ -501,7 +501,6 @@ struct block_device {
 	UNICODE_STRING path_to_device;
 	UNICODE_STRING mount_point;
 	bool is_mounted;
-	bool is_bootdevice;
 		/* TODO: test this should go away */
 	bool my_auto_promote;
 		/* Only for lower device. For upper device, see
@@ -536,8 +535,6 @@ struct block_device {
 	bool delete_pending;	/* bdput called. waiting for REMOVE_DEVICE PnP IRP */
 	bool about_to_delete;	/* REMOVE_DEVICE, no more I/O */
 
-	struct _KEVENT primary_event;	/* Set whenever Primary */
-	struct _KEVENT capacity_event;	/* Set whenever size > 0 */
 	struct _KEVENT device_removed_event;	/* Set by REMOVE_DEVICE to signal bdput we're gone */
 	struct _KEVENT device_started_event; /* Set on receving IRP_MN_START_DEVICE PnP request (drbdadm primary waits for this) */
 	struct _KEVENT io_not_suspended; /* Cleared by windrbd suspend_io (so that I/O is suspended). Needed to suspend I/O from outside DRBD in order to fix the busy resync bug (sync does not finished on ongoing application I/O) */

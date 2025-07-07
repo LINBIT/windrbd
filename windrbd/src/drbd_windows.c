@@ -2506,8 +2506,6 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 	inject_faults(-1, &block_device->inject_on_completion);
 	inject_faults(-1, &block_device->inject_on_request);
 
-	KeInitializeEvent(&block_device->primary_event, NotificationEvent, FALSE);
-	KeInitializeEvent(&block_device->capacity_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->device_removed_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->device_started_event, NotificationEvent, FALSE);
 	KeInitializeEvent(&block_device->io_not_suspended, NotificationEvent, TRUE);
@@ -3194,60 +3192,47 @@ extern int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(s
 int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 {
 	int err;
-/*
-	struct drbd_peer_device *peer_device;
-*/
 
-	if (!device->vdisk->part0->is_bootdevice) {
-		if (windrbd_allocate_io_workqueue(device->vdisk->part0) < 0) {
-			printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");
-		}
-		if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(device->vdisk->part0) < 0) {
-			printk("Warning: could not determine if there is a file system on the DRBD device.\n");
-		}
+	if (windrbd_allocate_io_workqueue(device->vdisk->part0) < 0) {
+		printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");
+	}
+	if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(device->vdisk->part0) < 0) {
+		printk("Warning: could not determine if there is a file system on the DRBD device.\n");
+	}
 #ifndef DRBD_9_0
-		err = device->vdisk->fops->open(device->vdisk, FMODE_WRITE);
+	err = device->vdisk->fops->open(device->vdisk, FMODE_WRITE);
 #else
-		err = device->vdisk->fops->open(device->vdisk->part0, FMODE_WRITE);
+	err = device->vdisk->fops->open(device->vdisk->part0, FMODE_WRITE);
 #endif
-		if (err < 0) {
-			printk("Warning: initial DRBD open returned err %d\n", err);
-			printk("(you may get further warnings about open_cnt == 0)\n");
-		}
-		if (windrbd_create_windows_device(device->vdisk->part0) != 0)
-			windrbd_device_error(device, err_str, "Warning: Couldn't create windows device for volume %d\n", device->vnr);
+	if (err < 0) {
+		printk("Warning: initial DRBD open returned err %d\n", err);
+		printk("(you may get further warnings about open_cnt == 0)\n");
+	}
+	if (windrbd_create_windows_device(device->vdisk->part0) != 0)
+		windrbd_device_error(device, err_str, "Warning: Couldn't create windows device for volume %d\n", device->vnr);
 
-		if (windrbd_rescan_bus() < 0) {
-			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
-		}
-			/* A PnP disk device. Wait for PnP manager to 
+	if (windrbd_rescan_bus() < 0) {
+		printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
+	}
+			/* A PnP disk device. Wait for PnP manager to
 			 * properly start the device else races may happen
 			 * (drbdadm secondary might BSOD).
 			 */
-		KeWaitForSingleObject(&device->vdisk->part0->device_started_event, Executive, KernelMode, FALSE, NULL);
-	}
-	KeSetEvent(&device->vdisk->part0->primary_event, 0, FALSE);
+	KeWaitForSingleObject(&device->vdisk->part0->device_started_event, Executive, KernelMode, FALSE, NULL);
 
 	return 0;
 }
 
 int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 {
-	if (!device->vdisk->part0->is_bootdevice) {
-		windrbd_remove_windows_device(device->vdisk->part0);
+	windrbd_remove_windows_device(device->vdisk->part0);
 
-/* TODO: is this needed? windrbd_remove_windows_device does a rescan already ...  */
-		if (windrbd_rescan_bus() < 0) {
-			printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
-		}
 #ifndef DRBD_9_0
-		device->vdisk->fops->release(device->vdisk);
+	device->vdisk->fops->release(device->vdisk);
 #else
-		device->vdisk->fops->release(device->vdisk, 0);
+	device->vdisk->fops->release(device->vdisk, 0);
 #endif
-		windrbd_destroy_io_workqueue(device->vdisk->part0);
-	}
-	KeClearEvent(&device->vdisk->part0->primary_event);
+	windrbd_destroy_io_workqueue(device->vdisk->part0);
 
 #ifndef DRBD_9_0
 	if (device->open_cnt > 0)
@@ -3306,9 +3291,6 @@ static void windrbd_destroy_block_device(struct kref *kref)
 
 void bdput(struct block_device *this_bdev)
 {
-	KeSetEvent(&this_bdev->capacity_event, 0, FALSE);
-	KeSetEvent(&this_bdev->primary_event, 0, FALSE);
-
 	kref_put(&this_bdev->kref, windrbd_destroy_block_device);
 }
 
