@@ -499,10 +499,7 @@ struct block_device {
 	struct _DEVICE_OBJECT *attached_windows_device; /* If upper device, this is the device returned by IoAttachDeviceToDeviceStack in AddDevice of the PnP request. */
 	struct _FILE_OBJECT *file_object; /* As returned by IoGetDeviceObjectPointer() */
 	UNICODE_STRING path_to_device;
-	UNICODE_STRING mount_point;
-	bool is_mounted;
-		/* TODO: test this should go away */
-	bool my_auto_promote;
+
 		/* Only for lower device. For upper device, see
 		 * w_remove_lock in block_device_reference (windows
 		 * device struct).
@@ -531,7 +528,6 @@ struct block_device {
 	struct fault_injection inject_on_request;
 
 	/* Flags controlling end of this bdev: */
-	bool powering_down;	/* Regular windows shutdown, cancel all waiters */ /* TODO: needed? */
 	bool delete_pending;	/* bdput called. waiting for REMOVE_DEVICE PnP IRP */
 	bool about_to_delete;	/* REMOVE_DEVICE, no more I/O */
 
