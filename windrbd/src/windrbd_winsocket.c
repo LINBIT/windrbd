@@ -507,6 +507,9 @@ static int disconnect_socket(struct socket *socket)
 	if (socket->wsk_flags != WSK_FLAG_CONNECTION_SOCKET)
 		return 0;
 
+	if (socket->error_status != 0)
+		return socket->error_status;
+
 	irp = wsk_new_irp(&event, NULL, NULL);
 	if (irp == NULL)
 		return -ENOMEM;
@@ -524,6 +527,9 @@ static int disconnect_socket(struct socket *socket)
 
 static void drain_send_buffer(struct socket *socket)
 {
+	if (socket->error_status != 0)
+		return;
+
 	socket->about_to_close = true;
 
 	wait_event_interruptible_timeout(
@@ -669,7 +675,12 @@ printk("1\n");
 	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
 	spin_unlock_irqrestore(&socket->is_closed_lock, irq_flags);
 
-	msleep(100);
+		/* TODO: is this still needed? Or does the diskless test
+		 * fail without this msleep():
+		 */
+
+	if (socket->error_status == 0)
+		msleep(100);
 
 	terminate_receive_thread(socket);
 
@@ -689,7 +700,8 @@ printk("2\n");
 	}
 printk("3\n");
 
-	drain_send_buffer(socket);
+	if (socket->error_status == 0)
+		drain_send_buffer(socket);
 printk("4\n");
 
 	if (socket->wsk_socket != NULL) {
@@ -700,7 +712,8 @@ printk("4\n");
 		 */
 
 printk("5\n");
-		disconnect_socket(socket);
+		if (socket->error_status == 0)
+			disconnect_socket(socket);
 printk("6\n");
 
 		(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
