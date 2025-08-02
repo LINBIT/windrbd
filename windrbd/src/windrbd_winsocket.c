@@ -663,7 +663,6 @@ static void close_socket(struct socket *socket)
 	struct _IRP *Irp;
 	unsigned long irq_flags;
 
-printk("1\n");
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
@@ -684,7 +683,6 @@ printk("1\n");
 
 	terminate_receive_thread(socket);
 
-printk("2\n");
 	Irp = wsk_new_irp(NULL, NULL, NULL);
 	if (Irp == NULL)
 		return;
@@ -698,11 +696,11 @@ printk("2\n");
 		kfree(socket->accept_wsk_sockets);
 		socket->accept_wsk_sockets = NULL;
 	}
-printk("3\n");
 
+/*
 	if (socket->error_status == 0)
 		drain_send_buffer(socket);
-printk("4\n");
+*/
 
 	if (socket->wsk_socket != NULL) {
 		mutex_lock(&socket->wsk_mutex);
@@ -711,18 +709,16 @@ printk("4\n");
 		 * socket.
 		 */
 
-printk("5\n");
+/*
 		if (socket->error_status == 0)
 			disconnect_socket(socket);
-printk("6\n");
+*/
 
 		(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
 		socket->wsk_socket = NULL;
-printk("7\n");
 
 		mutex_unlock(&socket->wsk_mutex);
 	}
-printk("8\n");
 	socket->error_status = 0;
 }
 
@@ -1341,7 +1337,6 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 	int ret;
 	LONG_PTR timeout, remaining_time;
 
-printk("1\n");
 	if (KeGetCurrentIrql() == PASSIVE_LEVEL) {
 		if (!socket->have_printed_status) {
 			if (!socket->receiver_cache_enabled)
@@ -1373,14 +1368,12 @@ printk("1\n");
 
 	return_buffer_index = 0;
 
-printk("2\n");
 	timeout = socket->sk->sk_rcvtimeo;
 	while (1) {
 		if (timeout < 0) {
 			printk("Warning: timeout < 0 before wait_event_interruptible_timeout...\n");
 			return -EINVAL;
 		}
-printk("3\n");
 		remaining_time = wait_event_interruptible_timeout(
 			socket->data_available,
 			socket->write_index != socket->read_index ||
@@ -1390,7 +1383,6 @@ printk("3\n");
 			((flags & MSG_DONTWAIT) != 0),
 			timeout);
 
-printk("4\n");
 		ret = 1;
 		if (remaining_time < 0) {
 			ret = remaining_time;
@@ -1453,7 +1445,6 @@ printk("4\n");
 		spin_unlock_irqrestore(&socket->receive_lock, irq_flags);
 
 		wake_up(&socket->buffer_available);
-printk("5\n");
 
 		if (flags & MSG_WAITALL) {
 			if (ret != 1 || return_buffer_index == len) {
