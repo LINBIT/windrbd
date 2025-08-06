@@ -6,6 +6,13 @@ Base on DRBD 9.1
 
 DRBD reactor support
 
+What's new in version 1.1.21
+----------------------------
+
+Log rotation for windrbdlog and windrbdumhelper services.
+
+Log kernel IDs for user mode helper requests.
+
 What's new in version 1.1.20
 ----------------------------
 
