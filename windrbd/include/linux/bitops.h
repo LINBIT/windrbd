@@ -111,6 +111,11 @@ static inline int test_bit(int nr, const ULONG_PTR *addr)
 #define generic_find_next_le_bit(addr, size, offset)	find_next_bit(addr, size, offset)
 #endif
 
+#if 0
+
+/* TODO: seems to be broken using the implementation from WinDRBD 1.1
+   for now ...
+*/
 /* Undefined if input is zero.
  * http://lxr.free-electrons.com/source/include/linux/bitops.h#L215 */
 static inline int __ffs(u64 i)
@@ -124,6 +129,12 @@ static inline int __ffs(u64 i)
 #endif
 	return found ? index : 0;
 }
+
+#else
+
+extern ULONG_PTR __ffs(ULONG_PTR i);
+
+#endif
 
 /**
  * __ffs64 - find first set bit in a 64 bit word
