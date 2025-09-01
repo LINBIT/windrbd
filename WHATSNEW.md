@@ -6,6 +6,13 @@ Base on DRBD 9.1
 
 DRBD reactor support
 
+What's new in version 1.1.22
+----------------------------
+
+Installer: Flush registry at the end of install/remove bus device
+	This should solve driver half installed we observe when the
+	system is reset shortly after the installer ran.
+
 What's new in version 1.1.21
 ----------------------------
 
