@@ -249,3 +249,4 @@ Version history
  * 1.1.19 (August 5, 2024): Disabled backing device I/O corking again
  * 1.1.20 (April 1, 2025): Fixed adding volumes while connected
  * 1.1.21 (August 6, 2025): Log rotation for user mode services
+ * 1.1.22 (September 1, 2025): Flush registry at the end of install/remove bus device
