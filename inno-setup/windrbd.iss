@@ -638,6 +638,12 @@ begin
 		PatchRegistry();
 		AddDriverToDriverStore();
 		InstallBusDevice();
+
+		{ as we found the reason for the bus device missing
+		  (system was reset shortly after installer ran and
+                  therefore some registry values were missing) we can
+                  eventually remove this again:
+		}
 		EnsureBusDevice();
 		StartUserModeServices();
 	end;
