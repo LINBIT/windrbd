@@ -11,5 +11,5 @@ shift
 PROG=$( basename $FILE )
 
 parallel scp ./$FILE Administrator@{}: ::: $*
-parallel ssh Administrator@{} "./$PROG /verysilent /norestart" ::: $*
+parallel ssh Administrator@{} "./$PROG /verysilent /norestart /CloseApplications:no" ::: $*
 parallel ssh Administrator@{} "drbdadm --version" ::: $*

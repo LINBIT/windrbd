@@ -1,4 +1,4 @@
-TODO: identifiers created by cocci should have __cocci_ prefix.
+Done: identifiers created by cocci should have __cocci_ prefix.
 	Check
 
 Cocci patches (generic unless noted otherwise):
@@ -10,13 +10,16 @@ Done: Spinlocks that are locked and unlocked within the same function must be sp
 	(with 2 different flags). Also must be aware that
 	the flags parameter might already be defined.
 
-TODO: The flag for the IRQ level should be of type KIRQL
+Rejected: The flag for the IRQ level should be of type KIRQL
 	Hmm ... don't want this really
 
 Done: replace all unsigned long -> ULONG_PTR and long -> LONG_PTR
 also in macros
 
-Rejected: Change UL postfix to ULL (64 bit only)
+TODO: Change UL postfix to ULL (64 bit only)
+	We need this! Had a comparition:
+		if (tmp == -1UL)
+	failed when tmp is 64 bit (ULONG_PTR)
 
 Rejected: GNU extension: Change a?:b to a?a:b
 
