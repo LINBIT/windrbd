@@ -268,3 +268,4 @@ Version history
  * 1.2.0-rc15 (Jun 4, 2025): DRBD 9.2.14 support, fixes in networking and um helper
  * 1.2.0 (Jun 17, 2025): Installer fixes, no SEH
  * 1.2.1 (Jun 30, 2025): Multi-threaded workqueues
+ * 1.2.2 (Sep 9, 2025): Lots of unused code removed, minor fixes (ULL cocci, ...)
