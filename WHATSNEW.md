@@ -3,6 +3,13 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.2
+---------------------------
+
+Lots of unused code removed (remote booting, ...)
+
+Minor fixes (UL -> ULL, ...)
+
 What's new in version 1.2.1
 ---------------------------
 
