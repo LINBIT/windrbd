@@ -406,6 +406,9 @@ upload: package-in-docker
 # Makefile.
 
 NEW_TRANSFORMATIONS := $(sort $(wildcard cocci/*.cocci))
+ifeq ($(ARCH), x86_64)
+NEW_TRANSFORMATIONS += $(sort $(wildcard cocci/*.cocci64))
+endif
 
 all-dep := $(filter-out $(SEH_SRCDIR)%.d,$(filter-out $(DRBDTMP)/drbd/drbd_buildtag.d,$(OBJS:%.o=%.d)))
 # all-dep := $(OBJS:%.o=%.d)
