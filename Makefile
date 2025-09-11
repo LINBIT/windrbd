@@ -96,7 +96,7 @@ MINGW_SYSROOT=$(HOME)/.zeranoe/mingw-w64/$(ARCH)
 ifndef USE_CLANG
 CC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-gcc
 else
-CC=clang --target=x86_64-pc-mingw32-w64
+CC=clang --target=$(ARCH)-pc-mingw32-w64
 endif
 RC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windres
 MC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windmc
