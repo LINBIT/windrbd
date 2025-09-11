@@ -33,14 +33,9 @@ fi
 
 if [ "$DRBD" -a "$ARCH" ]
 then
-    if [ "$REACTOS" ]
-    then
-        FULL_VERSION=$GITHASH-$DRBD-$ARCH-reactos
-    else
-        FULL_VERSION=$GITHASH-$DRBD-$ARCH
-    fi
+    FULL_VERSION=$GITHASH-$DRBD-${ARCH}${EXTRA_COMPILE_OPTIONS}
 else
-    FULL_VERSION=$GITHASH
+    FULL_VERSION=${GITHASH}${EXTRA_COMPILE_OPTIONS}
 fi
 
 RESOURCE_VERSION=$( echo $WINDRBD_VERSION | tr . , )
