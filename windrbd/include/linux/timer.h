@@ -27,4 +27,7 @@ extern int timer_shutdown_sync(struct timer_list *timer);
 #define from_timer(var, callback_timer, timer_fieldname) \
 	container_of(callback_timer, typeof(*var), timer_fieldname)
 
+#define timer_container_of(var, callback_timer, timer_fieldname)	\
+	container_of(callback_timer, typeof(*var), timer_fieldname)
+
 #endif
