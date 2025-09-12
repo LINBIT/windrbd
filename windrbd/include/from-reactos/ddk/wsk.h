@@ -258,7 +258,8 @@ typedef struct _WSK_PROVIDER_LISTEN_DISPATCH
 #ifdef __cplusplus
     WSK_PROVIDER_BASIC_DISPATCH Basic;
 #else
-    WSK_PROVIDER_BASIC_DISPATCH;
+    PFN_WSK_CONTROL_SOCKET WskControlSocket;
+    PFN_WSK_CLOSE_SOCKET WskCloseSocket;
 #endif
     PFN_WSK_BIND WskBind;
     PFN_WSK_ACCEPT WskAccept;
@@ -334,7 +335,8 @@ typedef struct _WSK_PROVIDER_CONNECTION_DISPATCH
 #ifdef __cplusplus
     WSK_PROVIDER_BASIC_DISPATCH Basic;
 #else
-    WSK_PROVIDER_BASIC_DISPATCH;
+    PFN_WSK_CONTROL_SOCKET WskControlSocket;
+    PFN_WSK_CLOSE_SOCKET WskCloseSocket;
 #endif
     PFN_WSK_BIND WskBind;
     PFN_WSK_CONNECT WskConnect;
@@ -495,7 +497,8 @@ typedef struct _WSK_PROVIDER_DATAGRAM_DISPATCH
 #ifdef __cplusplus
     WSK_PROVIDER_BASIC_DISPATCH Basic;
 #else
-    WSK_PROVIDER_BASIC_DISPATCH;
+    PFN_WSK_CONTROL_SOCKET WskControlSocket;
+    PFN_WSK_CLOSE_SOCKET WskCloseSocket;
 #endif
     PFN_WSK_BIND WskBind;
     PFN_WSK_SEND_TO WskSendTo;

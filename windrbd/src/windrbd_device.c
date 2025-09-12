@@ -738,6 +738,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 				status = STATUS_SUCCESS;
 				break;
 			default:
+				break;
 			}
 			break;
 
@@ -765,6 +766,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 
 				break;
 			case StorageDeviceProperty:
+			{
 				char serial_number[100] = "fdfe98eb-9901-472f-a9bf-f3a6562c578a";
 				int serial_number_length;
 
@@ -794,6 +796,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 				status = STATUS_SUCCESS;
 
 				break;
+			}
 			case StorageDeviceAttributesProperty:
 					/* seems to be undocumented ... */
 				irp->IoStatus.Information = 0;
@@ -855,10 +858,11 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 				break;
 			}
 			default:
-
+				break;
 			}	/* switch PropertyId */
 			break;
 		default:
+			break;
 		}
 		break;
 	}
@@ -2392,6 +2396,7 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 
 	switch (cdb->CDB6INQUIRY3.PageCode) {
 	case VPD_SUPPORTED_PAGES:
+	{
 		struct _VPD_SUPPORTED_PAGES_PAGE *spp = data_buffer;
 
 		spp->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
@@ -2409,8 +2414,10 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 
 		(*data_transfer_length_p) = sizeof(*spp) + spp->PageLength;
 		return STATUS_SUCCESS;
+	}
 
 	case VPD_DEVICE_IDENTIFIERS:	/* 0x83 */
+	{
 		struct _VPD_IDENTIFICATION_PAGE *vip = data_buffer;
 		struct _VPD_IDENTIFICATION_DESCRIPTOR *vid =
 			(struct _VPD_IDENTIFICATION_DESCRIPTOR *) vip->Descriptors;
@@ -2426,8 +2433,10 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 
 		(*data_transfer_length_p) = sizeof(*vip)+sizeof(*vid)+len;
 		return STATUS_SUCCESS;
+	}
 
 	case VPD_BLOCK_LIMITS: /* 0xb0 */
+	{
 		struct _VPD_BLOCK_LIMITS_PAGE *blp = data_buffer;
 
 		blp->PageCode = VPD_BLOCK_LIMITS;
@@ -2446,8 +2455,10 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 
 		(*data_transfer_length_p) = sizeof(*blp);
 		return STATUS_SUCCESS;
+	}
 
 	case VPD_BLOCK_DEVICE_CHARACTERISTICS:	/* 0xb1 */
+	{
 		struct _VPD_BLOCK_DEVICE_CHARACTERISTICS_PAGE *bdcp = data_buffer;
 		bdcp->PageCode = VPD_BLOCK_DEVICE_CHARACTERISTICS;
 		bdcp->PageLength = 0x3c;
@@ -2456,8 +2467,10 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 
 		(*data_transfer_length_p) = sizeof(*bdcp);
 		return STATUS_SUCCESS;
+	}
 
 	case VPD_LOGICAL_BLOCK_PROVISIONING:	/* 0xb2 */
+	{
 		/* This is for SCSI UNMAP request support (aka 'TRIM')
 		 * We are not supporting this yet. If we do this has
 		 * to be touched:
@@ -2477,6 +2490,7 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 
 		(*data_transfer_length_p) = sizeof(*lbpp);
 		return STATUS_SUCCESS;
+	}
 	}
 	return STATUS_NOT_SUPPORTED;
 }

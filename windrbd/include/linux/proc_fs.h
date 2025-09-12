@@ -22,7 +22,7 @@ static inline struct proc_dir_entry *proc_create_single_data(const char *name, u
 #define proc_create_single(name, mode, parent, show) \
 	proc_create_single_data(name, mode, parent, show, NULL)
  
-static inline void remove_proc_entry(const char *, struct proc_dir_entry *)
+static inline void remove_proc_entry(const char *name, struct proc_dir_entry *parent)
 {
 	/* TODO: stub */
 }

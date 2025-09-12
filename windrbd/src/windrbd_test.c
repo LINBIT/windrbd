@@ -1034,7 +1034,7 @@ static int waker_task(void *unused)
 	case WQ_LOOP: msec = 10; break; 
 	case WQ_LOOP_NO_SLEEP:
 	case WQ_NO_SLEEP: msec = 0; break;
-	default:
+	default: break;
 	}
 	if (wt == WQ_LOOP || wt == WQ_LOOP_NO_SLEEP)
 		loop_cnt = waker_loops;

@@ -548,7 +548,7 @@ static int CreateSocket(
 	struct _WSK_SOCKET		**out
 )
 {
-	KEVENT			CompletionEvent = { 0 };
+	KEVENT			CompletionEvent;
 	PIRP			Irp = NULL;
 	NTSTATUS		Status;
 
@@ -724,7 +724,7 @@ static void close_socket(struct socket *socket)
 
 static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
 {
-	KEVENT		CompletionEvent = { 0 };
+	KEVENT		CompletionEvent;
 	PIRP		Irp = NULL;
 	NTSTATUS	status;
 
@@ -1538,7 +1538,7 @@ static int wsk_bind(
 	int sockaddr_len
 )
 {
-	KEVENT		CompletionEvent = { 0 };
+	KEVENT		CompletionEvent;
 	PIRP		Irp = NULL;
 	NTSTATUS	Status;
 	(void) sockaddr_len;	/* TODO: check this parameter */
@@ -1576,7 +1576,7 @@ static NTSTATUS ControlSocket(
 	__out_opt SIZE_T	*OutputSizeReturned
 )
 {
-	KEVENT		CompletionEvent = { 0 };
+	KEVENT		CompletionEvent;
 	PIRP		Irp = NULL;
 	NTSTATUS	Status;
 

@@ -1265,9 +1265,10 @@ int windrbd_inject_faults(int after, enum fault_injection_location where, struct
         case ON_BACKING_DEVICE_ON_COMPLETION:
 		if (bdev == NULL) return -1;
 		return inject_faults(after, &bdev->inject_on_completion);
-	default:	/* nothing */
+	default:
+		return -1;
 	}
-	return -1;
+	/* Cannot be reached. */
 }
 
 	/* TODO: is this still needed now that we fixed the interruptible

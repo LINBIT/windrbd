@@ -271,14 +271,14 @@ COFFRES=./windrbd/windrbd-event-log.coffres $(DRBDTMP)/drbd/resource.coffres
 ifndef USE_CLANG
 LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
 else
-LIBS=-lntoskrnl -lhal -lntdll
+LIBS=-lntoskrnl -lhal -lgcc -lntdll -lnetio
 endif
 
 SUPPRESSED_WARNINGS=-Wno-array-bounds -Wno-address-of-packed-member
 ifndef USE_CLANG
 CFLAGS_FOR_DRIVERS=-fPIC -fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -mno-stack-arg-probe -fno-strict-aliasing -fno-set-stack-executable
 else
-CFLAGS_FOR_DRIVERS=-fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -fno-strict-aliasing
+CFLAGS_FOR_DRIVERS=-fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -fno-strict-aliasing -Wno-pragma-pack -Wno-missing-declarations
 endif
 LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--file-alignment,0x200 -Wl,--section-alignment,0x1000 -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--exclude-all-symbols -Wl,--entry,$(DRIVER_ENTRY) -nostartfiles -nodefaultlibs -nostdlib -Wl,-Map='windrbd.sys.map'
 
@@ -317,6 +317,7 @@ windrbd/include/windrbd-event-log.h: windrbd/windrbd-event-log.mc
 	$(call run,$(MC) $< -r windrbd -h windrbd/include,MC,$@)
 
 windrbd/src/printk-to-syslog.o: windrbd/include/windrbd-event-log.h
+windrbd/src/printk-to-syslog.d: windrbd/include/windrbd-event-log.h
 
 versioninfo:
 	$(call run,./versioninfo.sh $(DRBDTMP) $(VERSION),VERSION,$(DRBDTMP))
@@ -381,6 +382,7 @@ clean:
 	rm -f generate-cat-file-*.log
 	rm -f inno-setup.log
 	rm -f windrbd/include/windrbd_version.h
+	find . -name \*.d.* | xargs rm -f
 
 ifdef WINNT_52
 EXTRA_ISCC_DEFINES+=/DWinNT52=1

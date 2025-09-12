@@ -573,7 +573,7 @@ static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 		return ret;
 	}
 
-	if (pinfo->nlhdr->nlmsg_flags && NLM_F_DUMP)
+	if (pinfo->nlhdr->nlmsg_flags & NLM_F_DUMP)
 	{
 		int ret;
 		struct sk_buff *skb;

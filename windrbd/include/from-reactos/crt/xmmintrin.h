@@ -63,7 +63,7 @@ typedef union _DECLSPEC_INTRIN_TYPE _CRT_ALIGN(16) __m128
     typedef        float __m128 __attribute__((__vector_size__(16), __aligned__(16)));
 
 #ifdef __clang__
-#define __ATTRIBUTE_SSE__ __attribute__((__target__("sse"),__min_vector_width__(128)))
+#define __ATTRIBUTE_SSE__ __attribute__((__target__("sse")))
 #else
 #define __ATTRIBUTE_SSE__ __attribute__((__target__("sse")))
 #endif
