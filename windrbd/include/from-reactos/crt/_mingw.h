@@ -245,7 +245,7 @@ allow GCC to optimize away some EH unwind code, at least in DW2 case.  */
 #endif /* DECLSPEC_HOTPATCH */
 
 #ifndef __INTRIN_INLINE
-#  define __INTRIN_INLINE extern __inline__ __attribute__((__always_inline__,__gnu_inline__))
+#  define __INTRIN_INLINE extern __inline__ __attribute__((__always_inline__,__gnu_inline__,artificial))
 #endif
 
 #ifndef HAS_BUILTIN
