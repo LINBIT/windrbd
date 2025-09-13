@@ -98,6 +98,11 @@ extern int param_get_int(char *buffer, const struct kernel_param *kp);
  */
 
 #define module_param_named(name, value, type, perm) \
+	/* nothing */
+
+/*
+#define module_param_named(name, value, type, perm) \
 	const struct kernel_param_ops *dummy ## value = &param_ops_ ## type;
+*/
 
 #endif
