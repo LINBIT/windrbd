@@ -63,7 +63,7 @@ typedef union _DECLSPEC_INTRIN_TYPE _CRT_ALIGN(16) __m128
     typedef        float __m128 __attribute__((__vector_size__(16), __aligned__(16)));
 
 #ifdef __clang__
-#define __ATTRIBUTE_SSE__ __attribute__((__target__("sse")))
+#define __ATTRIBUTE_SSE__ __attribute__((__target__("sse"),__min_vector_width__(128)))
 #else
 #define __ATTRIBUTE_SSE__ __attribute__((__target__("sse")))
 #endif
@@ -872,11 +872,13 @@ __INTRIN_INLINE_SSE long long _mm_cvtss_si64(__m128 __a)
 }
 #endif
 
+#if 0  // fails to compile with newer clang
 // _mm_cvt_ps2pi
 __INTRIN_INLINE_SSE __m64 _mm_cvtps_pi32(__m128 __a)
 {
     return (__m64)__builtin_ia32_cvtps2pi((__v4sf)__a);
 }
+#endif
 
 // _mm_cvtt_ss2si
 __INTRIN_INLINE_SSE int _mm_cvttss_si32(__m128 __a)
@@ -891,11 +893,13 @@ __INTRIN_INLINE_SSE long long _mm_cvttss_si64(__m128 __a)
 }
 #endif
 
+#if 0  // fails to compile with newer clang
 // _mm_cvtt_ps2pi
 __INTRIN_INLINE_SSE __m64 _mm_cvttps_pi32(__m128 __a)
 {
     return (__m64)__builtin_ia32_cvttps2pi((__v4sf)__a);
 }
+#endif
 
 // _mm_cvt_si2ss
 __INTRIN_INLINE_SSE __m128 _mm_cvtsi32_ss(__m128 __a, int __b)
@@ -913,10 +917,12 @@ __INTRIN_INLINE_SSE __m128 _mm_cvtsi64_ss(__m128 __a, long long __b)
 #endif
 
 // _mm_cvt_pi2ps
+#if 0  // fails to compile with newer clang
 __INTRIN_INLINE_SSE __m128 _mm_cvtpi32_ps(__m128 __a, __m64 __b)
 {
     return __builtin_ia32_cvtpi2ps((__v4sf)__a, (__v2si)__b);
 }
+#endif
 
 __INTRIN_INLINE_SSE float _mm_cvtss_f32(__m128 __a)
 {
@@ -1118,6 +1124,7 @@ __INTRIN_INLINE_SSE void _mm_storer_ps(float *__p, __m128 __a)
 
 #endif /* _MSC_VER */
 
+#if 0  // fails to compile with newer clang
 __INTRIN_INLINE_SSE void _mm_stream_pi(__m64 *__p, __m64 __a)
 {
 #ifdef __clang__
@@ -1126,6 +1133,7 @@ __INTRIN_INLINE_SSE void _mm_stream_pi(__m64 *__p, __m64 __a)
     __builtin_ia32_movntq((long long unsigned int *)__p, (long long unsigned int)__a);
 #endif
 }
+#endif
 
 __INTRIN_INLINE_SSE void _mm_stream_ps(float *__p, __m128 __a)
 {
@@ -1164,6 +1172,7 @@ __INTRIN_INLINE_SSE __m64 _mm_insert_pi16 (__m64 const __a, int const __d, int c
 
 #endif
 
+#if 0  // fails to compile with newer clang
 // _m_pmaxsw
 __INTRIN_INLINE_SSE __m64 _mm_max_pi16(__m64 __a, __m64 __b)
 {
@@ -1199,6 +1208,7 @@ __INTRIN_INLINE_SSE __m64 _mm_mulhi_pu16(__m64 __a, __m64 __b)
 {
     return (__m64)__builtin_ia32_pmulhuw((__v4hi)__a, (__v4hi)__b);
 }
+#endif
 
 #ifdef __clang__
 #define _m_pshufw(a, n) \
@@ -1211,6 +1221,7 @@ __INTRIN_INLINE_MMX __m64 _mm_shuffle_pi16 (__m64 __a, int const __n)
 }
 #endif
 
+#if 0  // fails to compile with newer clang
 // _m_maskmovq
 __INTRIN_INLINE_SSE void _mm_maskmove_si64(__m64 __d, __m64 __n, char *__p)
 {
@@ -1234,6 +1245,7 @@ __INTRIN_INLINE_SSE __m64 _mm_sad_pu8(__m64 __a, __m64 __b)
 {
     return (__m64)__builtin_ia32_psadbw((__v8qi)__a, (__v8qi)__b);
 }
+#endif
 
 #endif // __GNUC__
 
