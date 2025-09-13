@@ -91,15 +91,13 @@ else
 FULL_VERSION=$(GIT_VERSION)-$(DRBD)-$(ARCH)$(EXTRA_COMPILE_OPTIONS)
 endif
 
-# TODO: remove this dependecy: compilers should be in the $PATH!!
-MINGW_SYSROOT=$(HOME)/.zeranoe/mingw-w64/$(ARCH)
 ifndef USE_CLANG
-CC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-gcc
+CC=$(ARCH)-w64-mingw32-gcc
 else
 CC=clang --target=$(ARCH)-pc-mingw32-w64
 endif
-RC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windres
-MC=$(MINGW_SYSROOT)/bin/$(ARCH)-w64-mingw32-windmc
+RC=$(ARCH)-w64-mingw32-windres
+MC=$(ARCH)-w64-mingw32-windmc
 
 
 HOSTCC ?= gcc
@@ -280,7 +278,7 @@ CFLAGS_FOR_DRIVERS=-fPIC -fvisibility=hidden -ffunction-sections -fdata-sections
 LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--file-alignment,0x200 -Wl,--section-alignment,0x1000 -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--exclude-all-symbols -Wl,--entry,$(DRIVER_ENTRY) -nostartfiles -nodefaultlibs -nostdlib -Wl,-Map='windrbd.sys.map'
 else
 CFLAGS_FOR_DRIVERS=-fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -fno-strict-aliasing -Wno-pragma-pack -Wno-missing-declarations -g -gcodeview
-LDFLAGS_FOR_DRIVERS=-fuse-ld=lld -shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--entry,$(DRIVER_ENTRY) -nostartfiles -nodefaultlibs -nostdlib -g -gcodeview -Wl,--pdb=windrbd.pdb
+LDFLAGS_FOR_DRIVERS=-fuse-ld=lld-19 -shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--entry,$(DRIVER_ENTRY) -nostartfiles -nodefaultlibs -nostdlib -g -gcodeview -Wl,--pdb=windrbd.pdb
 endif
 
 SEH_INCLUDES=-I$(REACTOS_ROOT)/crt -I$(REACTOS_ROOT)/lib/pseh/include/pseh -I$(REACTOS_ROOT)/asm
