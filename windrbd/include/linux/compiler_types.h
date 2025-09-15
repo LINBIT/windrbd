@@ -19,7 +19,8 @@
 	/* TODO: Somehow this does not work with our gcc ... ignoring for now */
 	/* Has something to do with DRBD: in DRBD 9.1 this works: */
 
-#ifndef WINNT_52
+// #ifndef WINNT_52
+#if 0
 
 # define __compiletime_assert(condition, msg, prefix, suffix)		\
 	do {								\
