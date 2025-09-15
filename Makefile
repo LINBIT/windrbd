@@ -131,11 +131,13 @@ endif
 
 export VERSION:=$(VERSION)
 
+SHELL=/bin/bash
+
 # Very simple pretty printer:
 ifeq ($(V),1)
 run=$1
 else
-run=@echo $2\\t$3 ; $1
+run=@echo -e $2\\t$3 ; $1
 endif
 
 pull-docker:
