@@ -1,4 +1,4 @@
-DEFAULT ?= package-in-docker
+DEFAULT ?= package
 
 default: $(DEFAULT)
 
@@ -407,7 +407,7 @@ docker-wine64:
 docker-cygwin:
 	$(DOCKER) build --pull=true --no-cache=true -t $(DOCKER_IMAGE)-cygwin -f docker-root/Dockerfile-cygwin docker-root
 
-install: package-in-docker
+install: default
 	$(call run,inno-setup/deploy.sh inno-setup/install-$(FULL_VERSION).exe $(TARGET_IPS),INSTALL,$(FULL_VERSION) $(TARGET_IPS))
 
 NEXUS ?= https://nexus.at.linbit.com/repository/windows/WinDRBD
