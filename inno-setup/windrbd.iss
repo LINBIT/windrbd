@@ -313,21 +313,18 @@ Begin
 	begin
 		LoggerWasStarted := MyStopService('windrbdlog');
 		SetWinDRBDStartTypeTo1;
-		UmHelperWasStarted := MyStopService('windrbdumhelper');
 	end;
 
+	UmHelperWasStarted := MyStopService('windrbdumhelper');
 	LinstorSatelliteWasStarted := MyStopService('linstor-satellite');
 	DrbdReactorWasStarted := MyStopService('drbd-reactor');
 End;
 
-Procedure StopLoggerAndUmHelper;
+Procedure StopLogger;
 Begin
 	Log('about to stop windrbdlog service');
 	if GetVersionCode > $10102 then
-	begin
 		LoggerWasStarted := MyStopService('windrbdlog');
-		UmHelperWasStarted := MyStopService('windrbdumhelper');
-	end;
 
 		{ else logger already stopped in function above }
 End;
@@ -693,7 +690,7 @@ begin
 	if CurUninstallStep = usAppMutexCheck then begin
 		StopUserModeServices();
 		StopDriver();
-		StopLoggerAndUmHelper();
+		StopLogger();
 		UninstallUserModeServices();
 #ifndef WinNT52
 		RemoveDriverFromDriverStore();
@@ -780,7 +777,7 @@ begin
 		if GetOldVersion <> '' then begin
 			StopUserModeServices();
 			StopDriver();
-			StopLoggerAndUmHelper();
+			StopLogger();
 			UninstallUserModeServices();
 #ifndef WinNT52
 			RemoveDriverFromDriverStore();
