@@ -552,8 +552,10 @@ int _printk(const char *func, const char *fmt, ...)
 
 /* TODO: this should go away again: */
 	/* Also write to serial port (COM2 as of this writing) */
+#if 0
 	if (!no_serial_printk && KeGetCurrentIrql() < DISPATCH_LEVEL)
 		WriteStringSerial(buffer);
+#endif
 
 	len_ret = strlen(buffer);
 
