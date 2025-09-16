@@ -279,7 +279,18 @@ ifndef USE_CLANG
 CFLAGS_FOR_DRIVERS=-fPIC -fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -mno-stack-arg-probe -fno-strict-aliasing -fno-set-stack-executable
 LDFLAGS_FOR_DRIVERS=-shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--file-alignment,0x200 -Wl,--section-alignment,0x1000 -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--exclude-all-symbols -Wl,--entry,$(DRIVER_ENTRY) -nostartfiles -nodefaultlibs -nostdlib -Wl,-Map='windrbd.sys.map'
 else
-CFLAGS_FOR_DRIVERS=-fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -fno-strict-aliasing -Wno-pragma-pack -Wno-missing-declarations -g -gcodeview
+# not sure? didn't work:
+# CFLAGS_FOR_DRIVERS=-fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -ffreestanding -fno-stack-protector -fno-strict-aliasing -Wno-pragma-pack -Wno-missing-declarations -g -gcodeview
+# Works with this:
+# CFLAGS_FOR_DRIVERS=-ffunction-sections -fdata-sections -fvisibility=hidden -fno-stack-protector -Wno-pragma-pack -Wno-missing-declarations -g -gcodeview
+# it does NOT work with this:
+# CFLAGS_FOR_DRIVERS=-ffunction-sections -fdata-sections -fvisibility=hidden -fno-stack-protector -fno-builtin -ffreestanding -Wno-pragma-pack -Wno-missing-declarations -g -gcodeview
+# it does NOT work:
+# CFLAGS_FOR_DRIVERS=-ffreestanding -Wno-pragma-pack -Wno-missing-declarations -g -gcodeview
+# it works:
+CFLAGS_FOR_DRIVERS=-fvisibility=hidden -ffunction-sections -fdata-sections -fno-builtin -fno-stack-protector -fno-strict-aliasing -Wno-pragma-pack -Wno-missing-declarations -g -gcodeview
+# With these settings: stack frames are interpreted correctly:
+# CFLAGS_FOR_DRIVERS=-Wno-pragma-pack -Wno-missing-declarations -g -gcodeview
 LDFLAGS_FOR_DRIVERS=-fuse-ld=lld-19 -shared -Wl,--subsystem,native -Wl,--image-base,0x140000000 -Wl,--dynamicbase -Wl,--nxcompat -Wl,--stack,0x100000 -Wl,--gc-sections -Wl,--entry,$(DRIVER_ENTRY) -nostartfiles -nodefaultlibs -nostdlib -g -gcodeview -Wl,--pdb=windrbd.pdb
 endif
 
