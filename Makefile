@@ -121,7 +121,7 @@ DOCKER_IMAGE ?= windrbd-devenv
 # DOCKER_RUN=docker run -u $(MY_UID):$(MY_GID) --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 # so run docker as root ...
 # Add environment variables to pass to docker here:
-DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e WINNT_52=$(WINNT_52) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) -e DRIVER_DIR=$(DRIVER_DIR) -e CONFIG_KMALLOC_DEBUG=$(CONFIG_KMALLOC_DEBUG) -e CONFIG_KREF_DEBUG=$(CONFIG_KREF_DEBUG) -e OPTIMIZE="$(OPTIMIZE)" -e BASH_ENV=/root/.bashrc $(DOCKER_IMAGE)
+DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e WINNT_52=$(WINNT_52) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) -e DRIVER_DIR=$(DRIVER_DIR) -e CONFIG_KMALLOC_DEBUG=$(CONFIG_KMALLOC_DEBUG) -e CONFIG_KREF_DEBUG=$(CONFIG_KREF_DEBUG) -e OPTIMIZE="$(OPTIMIZE)" $(DOCKER_IMAGE)
 
 # Change ownership of all files created by make process to
 # the host's UID/GID.
