@@ -1,6 +1,8 @@
-DEFAULT ?= package
+DEFAULT ?= package-in-docker
 
 default: $(DEFAULT)
+
+SHELL=/bin/bash
 
 # default: windrbd.sys
 # If you have your dev env set up on the host you can try
@@ -119,7 +121,7 @@ DOCKER_IMAGE ?= windrbd-devenv
 # DOCKER_RUN=docker run -u $(MY_UID):$(MY_GID) --rm -v ${PWD}:/windrbd $(DOCKER_IMAGE)
 # so run docker as root ...
 # Add environment variables to pass to docker here:
-DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e WINNT_52=$(WINNT_52) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) -e DRIVER_DIR=$(DRIVER_DIR) -e CONFIG_KMALLOC_DEBUG=$(CONFIG_KMALLOC_DEBUG) -e CONFIG_KREF_DEBUG=$(CONFIG_KREF_DEBUG) -e OPTIMIZE="$(OPTIMIZE)" $(DOCKER_IMAGE)
+DOCKER_RUN=$(DOCKER) run --rm -v ${PWD}:/windrbd -e VERSION=$(VERSION) -e ARCH=$(ARCH) -e WINNT_52=$(WINNT_52) -e V=$(V) -e DRBD=$(DRBD) -e DRBDTMP=$(DRBDTMP) -e DRIVER_DIR=$(DRIVER_DIR) -e CONFIG_KMALLOC_DEBUG=$(CONFIG_KMALLOC_DEBUG) -e CONFIG_KREF_DEBUG=$(CONFIG_KREF_DEBUG) -e OPTIMIZE="$(OPTIMIZE)" -e BASH_ENV=/root/.bashrc $(DOCKER_IMAGE)
 
 # Change ownership of all files created by make process to
 # the host's UID/GID.
@@ -130,8 +132,6 @@ FIXUP_OWNERSHIP=echo "You don't use docker (congratulations!), no need to fixup 
 endif
 
 export VERSION:=$(VERSION)
-
-SHELL=/bin/bash
 
 # Very simple pretty printer:
 ifeq ($(V),1)
@@ -146,15 +146,16 @@ pull-docker:
 
 # so one can type make with-docker :)
 with-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd $(WHAT),DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) /bin/bash -c "export PATH=/root/.zeranoe/mingw-w64/x86_64/bin:/root/.zeranoe/mingw-w64/cygwin-x86_64/bin:/root/.zeranoe/mingw-w64/i686/bin:$$PATH ; make -j $(NUM_JOBS) -C windrbd $(WHAT)",DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,"(fixup ownership)")
 
 all-in-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd all,DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) /bin/bash -c "export PATH=/root/.zeranoe/mingw-w64/x86_64/bin:/root/.zeranoe/mingw-w64/cygwin-x86_64/bin:/root/.zeranoe/mingw-w64/i686/bin:$$PATH ; make -j $(NUM_JOBS) -C windrbd all",DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,"(fixup ownership)")
 
 package-in-docker:
-	$(call run,$(DOCKER_RUN) make -j $(NUM_JOBS) -C windrbd package,DOCKER,$(DOCKER_IMAGE))
+	$(call run,$(DOCKER_RUN) /bin/bash -c "export PATH=/root/.zeranoe/mingw-w64/x86_64/bin:/root/.zeranoe/mingw-w64/cygwin-x86_64/bin:/root/.zeranoe/mingw-w64/i686/bin:$$PATH ; make -j $(NUM_JOBS) -C windrbd package",DOCKER,$(DOCKER_IMAGE))
+#	$(call run,$(DOCKER_RUN) echo $$PATH,DOCKER,$(DOCKER_IMAGE))
 	$(call run,$(DOCKER_RUN) $(FIXUP_OWNERSHIP),DOCKER,"(fixup ownership)")
 
 ifeq ($(ARCH), i686)
