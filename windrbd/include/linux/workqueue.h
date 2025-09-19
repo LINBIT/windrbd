@@ -90,6 +90,7 @@ struct work_struct {
 	void (*func)(struct work_struct *work);
 	struct workqueue_struct *queue;
 	struct mutex the_mutex;
+	bool cancelled;
 };
 
 extern struct workqueue_struct *system_wq;
@@ -159,6 +160,7 @@ static inline bool schedule_work(struct work_struct *work)
 		mutex_init(&(_work)->the_mutex);			\
 		PREPARE_WORK((_work), (_func));                         \
 		(_work)->queue = NULL;					\
+		(_work)->cancelled = false;				\
 	} while (0)
 
 #define INIT_WORK(_work, _func)                                         \

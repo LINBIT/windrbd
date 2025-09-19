@@ -85,9 +85,11 @@ static int run_singlethread_workqueue(void *param)
 			continue;
 
 		mutex_lock(&w->the_mutex);
-		if (w->func == NULL)
-			printk("ARGHHH func is NULL in work %p!!\n", w);
-		w->func(w);
+		if (!w->cancelled) {
+			if (w->func == NULL)
+				printk("ARGHHH func is NULL in work %p!!\n", w);
+			w->func(w);
+		}
 		mutex_unlock(&w->the_mutex);
 
 			/* either on in_progress_list or on a
@@ -112,7 +114,7 @@ bool queue_work(struct workqueue_struct *queue, struct work_struct *work)
 	unsigned long flags;
 
 	spin_lock_irqsave(&queue->work_list_lock, flags);
-	if (!list_empty(&work->work_list)) {	/* it is already queued */
+	if (!list_empty(&work->work_list) || work->cancelled) {	/* it is already queued or cancelled */
 		spin_unlock_irqrestore(&queue->work_list_lock, flags);
 		return false;
 	}
@@ -229,10 +231,10 @@ int cancel_work_sync(struct work_struct *work)
 {
 	struct list_head active_work_items;
 	unsigned long flags;
+	struct workqueue_struct *wq;
 
 	INIT_LIST_HEAD(&active_work_items);
-
-	struct workqueue_struct *wq;
+	work->cancelled = true;
 
 	wq = work->queue;
 	if (wq == NULL)
