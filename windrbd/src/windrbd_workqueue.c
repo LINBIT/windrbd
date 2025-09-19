@@ -85,6 +85,8 @@ static int run_singlethread_workqueue(void *param)
 			continue;
 
 		mutex_lock(&w->the_mutex);
+		if (w->func == NULL)
+			printk("ARGHHH func is NULL in work %p!!\n", w);
 		w->func(w);
 		mutex_unlock(&w->the_mutex);
 

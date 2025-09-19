@@ -480,13 +480,14 @@ int _printk(const char *func, const char *fmt, ...)
 
 	pos = strlen(buffer);
 #ifdef CONFIG_64BIT
-	n = snprintf(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (%llu/%llu)|%p(%s) #%llu %s ",
+	n = snprintf(buffer+pos, sizeof(buffer)-1-pos, "<%c> %02d.%02d.%04d U%02d:%02d:%02d.%03d (%llu/%llu)|%p %p(%s) #%llu %s ",
             level,
             time_fields.Day, time_fields.Month, time_fields.Year,
             time_fields.Hour, time_fields.Minute, time_fields.Second, time_fields.Milliseconds,
             hr_timer.QuadPart, hr_frequency.QuadPart,
             /* The upper bits of the thread ID are useless; and the lowest 4 as well. */
 //          ((ULONG_PTR)PsGetCurrentThread()) & 0xffffffff,
+            KeGetCurrentThread(),
             current,
             current->comm,
             serial_number,

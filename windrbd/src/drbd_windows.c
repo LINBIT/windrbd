@@ -1405,6 +1405,8 @@ NTSTATUS __attribute__((stdcall)) DrbdIoCompletion(
 	NTSTATUS status = Irp->IoStatus.Status;
 	KIRQL flags;
 	bool one_big_request;
+ 
+printk("ZAKZAK completion backing device.\n");
 
 	atomic_dec(&bio->bi_bdev->num_irps_pending);
 
