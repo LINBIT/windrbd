@@ -340,8 +340,6 @@ static NTSTATUS __attribute__((stdcall)) SendPageCompletionRoutine(struct _DEVIC
 	int may_printk = completion->socket->wsk_flags != WSK_FLAG_DATAGRAM_SOCKET;
 	size_t length;
 
-if (may_printk) printk("ZAKZAK completion\n");
-
 	if (Irp->IoStatus.Status != STATUS_SUCCESS) {
 		int new_status = winsock_to_linux_error(Irp->IoStatus.Status);
 
