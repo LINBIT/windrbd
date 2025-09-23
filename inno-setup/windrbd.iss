@@ -804,7 +804,7 @@ begin
 		AddDriverToDriverStore();
 		InstallBusDevice();
 #endif
-		EnsureBusDevice();
+{		EnsureBusDevice(); }
 		StartUserModeServices();
 	end;
 end;
