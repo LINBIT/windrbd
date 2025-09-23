@@ -15,11 +15,18 @@ Rejected: The flag for the IRQ level should be of type KIRQL
 
 Done: replace all unsigned long -> ULONG_PTR and long -> LONG_PTR
 also in macros
+	TODO: only for 64 bit ...
 
 TODO: Change UL postfix to ULL (64 bit only)
 	We need this! Had a comparition:
 		if (tmp == -1UL)
 	failed when tmp is 64 bit (ULONG_PTR)
+	Update: we have it, but ugly. Rewrite in sed using
+	regexp!
+	Only for 64 bit! (else syncing fails on 32 bit)
+
+TODO: Also change %l[du] to %ll[du] in strings but ONLY
+	for 64 bit!
 
 Rejected: GNU extension: Change a?:b to a?a:b
 
