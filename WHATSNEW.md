@@ -3,6 +3,15 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.3
+---------------------------
+
+clang support (to produce WinDBG symbol/PDB files)
+
+stability fixes (spin lock in DRBD, cancel_work_sync fix)
+
+Update drbd-utils
+
 What's new in version 1.2.2
 ---------------------------
 
