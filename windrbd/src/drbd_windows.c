@@ -3121,6 +3121,26 @@ int kobject_uevent(struct kobject *kobj, enum kobject_action action)
 	return 0;
 }
 
+#include <linux/moduleparam.h>
+
+int param_set_uint(const char *val, const struct kernel_param *kp)
+{
+	return -EOPNOTSUPP;
+}
+
+int param_get_uint(char *buffer, const struct kernel_param *kp)
+{
+	return -EOPNOTSUPP;
+}
+
+const struct kernel_param_ops param_ops_uint = {
+	.flags = 0,
+	.set = param_set_uint,
+	.get = param_get_uint,
+	.free = NULL
+};
+
+
 static spinlock_t cpu_cache_spinlock;
 
 /* This takes a spinlock and releases it right after, this should
