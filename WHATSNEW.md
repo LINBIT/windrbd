@@ -8,6 +8,8 @@ What's new in version 1.2.3
 
 clang support (to produce WinDBG symbol/PDB files)
 
+DRBD 9.2.15 support
+
 stability fixes (spin lock in DRBD, cancel_work_sync fix)
 
 Update drbd-utils

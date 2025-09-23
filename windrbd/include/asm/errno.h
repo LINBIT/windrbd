@@ -44,6 +44,7 @@
 #define EADDRNOTAVAIL				99
 #define ENOTSUP					95
 #define EACCES					13
+#define ENOTUNIQ				76
 
 #define ERESTARTSYS				512
 #define EMEDIUMTYPE				513

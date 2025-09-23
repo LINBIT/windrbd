@@ -495,6 +495,7 @@ static void SocketsDeinit(void)
 	InterlockedExchange(&wsk_state, WSK_DEINITIALIZED);
 }
 
+/*
 static int disconnect_socket(struct socket *socket)
 {
 	struct _KEVENT event;
@@ -537,6 +538,7 @@ static void drain_send_buffer(struct socket *socket)
 		socket->sk->sk_wmem_queued == 0,
 		socket->sk->sk_sndtimeo);
 }
+*/
 
 static int CreateSocket(
 	ADDRESS_FAMILY		AddressFamily,

@@ -44,8 +44,6 @@ static int no_event_log_printk = 0;
 static int no_windows_printk = 0;
 static int no_memory_printk = 0;
 static int no_net_printk = 0;
-/* Use it at your own risk! (need to check IRQL) */
-static int no_serial_printk = 1;
 
 	/* Write messages with this Linux loglevel or less */
 

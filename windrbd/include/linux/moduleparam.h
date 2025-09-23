@@ -97,12 +97,12 @@ extern int param_get_int(char *buffer, const struct kernel_param *kp);
  * by the MinGW gcc we cannot use the Linux macros ...
  */
 
+#if 0
 #define module_param_named(name, value, type, perm) \
 	/* nothing */
+#endif
 
-/*
 #define module_param_named(name, value, type, perm) \
-	const struct kernel_param_ops *dummy ## value = &param_ops_ ## type;
-*/
+	const struct kernel_param_ops *dummy_ ## value = &param_ops_ ## type;
 
 #endif
