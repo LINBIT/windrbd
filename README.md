@@ -269,3 +269,4 @@ Version history
  * 1.2.0 (Jun 17, 2025): Installer fixes, no SEH
  * 1.2.1 (Jun 30, 2025): Multi-threaded workqueues
  * 1.2.2 (Sep 9, 2025): Lots of unused code removed, minor fixes (ULL cocci, ...)
+ * 1.2.3 (Sep 23, 2025): DRBD 9.2.15 support, clang support, stability fixes in DRBD and WinDRBD
