@@ -118,6 +118,7 @@ Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.sys"; DestDir: "{app
 ; must be in same folder as the sysfile.
 Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.inf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.cat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.pdb"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 #ifdef WinNT52
 Source: "{#WindrbdSource}\netio-binary\netio.sys"; DestDir: "{app}"; Flags: ignoreversion
 #endif
