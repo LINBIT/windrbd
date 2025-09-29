@@ -1891,6 +1891,58 @@ static void test_minus_max_long_long(int argc, const char ** argv)
 		printk("right\n");
 }
 
+static int completer_task(void *c)
+{
+	struct completion *completion = c;
+
+	printk("about to complete.\n");
+	complete(completion);
+	return 0;
+}
+
+static int wait_completion_task(void *c)
+{
+	struct completion *completion = c;
+
+	wait_for_completion(completion);
+	memset(completion, 0xab, sizeof(*completion));
+	printk("completion destroyed.\n");
+	return 0;
+}
+
+static void completion_test(int argc, const char ** argv)
+{
+	struct completion *a_completion;
+	int n;
+
+	if (argc != 2) {
+		printk("Usage: completion_test <nr-threads>\n");
+		return;
+	}
+	for (n = atoi(argv[1]);n>0;n--) {
+		struct task_struct *completer, *waiter;
+
+		a_completion = kmalloc(sizeof(*a_completion), GFP_KERNEL);
+		if (a_completion == NULL) {
+			printk("oops - out of memory.\n");
+			return;
+		}
+		init_completion(a_completion);
+		completer = kthread_create(completer_task, a_completion, "completer_%d", n);
+		if (completer == NULL) {
+			printk("oops - cannot start completer thread.\n");
+			return;
+		}
+		waiter = kthread_create(wait_completion_task, a_completion, "waiter_%d", n);
+		if (waiter == NULL) {
+			printk("oops - cannot start waiter thread.\n");
+			return;
+		}
+
+		wake_up_process(completer);
+		wake_up_process(waiter);
+	}
+}
 
 
 void test_main(const char *arg)
@@ -1990,6 +2042,8 @@ void test_main(const char *arg)
 		start_send_a_lot_thread(argc, argv);
 	if (strcmp(argv[0], "minus_max_long_long") == 0)
 		test_minus_max_long_long(argc, argv);
+	if (strcmp(argv[0], "completion_test") == 0)
+		completion_test(argc, argv);
 
 kfree_argv:
 	kfree(argv);
