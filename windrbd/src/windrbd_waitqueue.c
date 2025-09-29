@@ -12,21 +12,13 @@
 #include <linux/jiffies.h>
 #include <linux/printk.h>
 
-/* This currently makes (at least) wsk receive thread BSOD... */
-// #define FORCE_TIMEOUT 1
-
-/* TODO: for debugging purposes, record which processes currently
- * are waiting and have ioctl for printing those .. much like
- * spinlock_debug()
- */
-
 	/* Timeout is in jiffies (usually 1ms on WinDRBD)
          * Returns -EINTR, -ETIMEOUT or 0
 	 */
 
 int raised_irql_waits;
 
-static int ll_wait(struct wait_queue_entry *e, LONG_PTR timeout, int interruptible, const char *file, int line, const char *func)
+static int ll_wait(void *wait_object, LONG_PTR timeout, int interruptible, const char *file, int line, const char *func)
 {
 	LARGE_INTEGER wait_time;
 	LARGE_INTEGER *wait_time_p;
@@ -35,12 +27,6 @@ static int ll_wait(struct wait_queue_entry *e, LONG_PTR timeout, int interruptib
 	PVOID wait_objects[2] = {0};
 	struct task_struct *thread = current;
 
-#ifdef FORCE_TIMEOUT
-	bool forced_timeout = false;
-	/* Busy looping .. to see where it hangs */
-if (timeout > 30000) { forced_timeout = true; timeout = 30000; }
-#endif
-
 	if(timeout != MAX_SCHEDULE_TIMEOUT) {
 		wait_time.QuadPart = timeout * (-1 * 1000 * 1000 * 10 / HZ);
 		wait_time_p = &wait_time;
@@ -48,8 +34,8 @@ if (timeout > 30000) { forced_timeout = true; timeout = 30000; }
 	else
 		wait_time_p = NULL;
 
-	if (e) {
-		wait_objects[num_wait_objects] = (void *) &e->windows_event;
+	if (wait_object) {
+		wait_objects[num_wait_objects] = wait_object;
 		num_wait_objects++;
 	}
 	if (thread->has_sig_event && interruptible == TASK_INTERRUPTIBLE) {
@@ -84,7 +70,7 @@ if (timeout > 30000) { forced_timeout = true; timeout = 30000; }
 
 	switch (status) {
 	case STATUS_WAIT_0:
-		if (e) return 0;	/* fallthrough */
+		if (wait_object) return 0;	/* fallthrough */
 	case STATUS_WAIT_1:
 		return -ERESTARTSYS;
 	case STATUS_TIMEOUT:
@@ -95,10 +81,16 @@ if (timeout > 30000) { forced_timeout = true; timeout = 30000; }
 
 void schedule_debug(const char *file, int line, const char *func)
 {
+	void *wait_object;
+
 	if (!is_windrbd_thread(current))
 		printk("Warning: schedule called from a non WinDRBD thread (called from %s:%d %s())\n", file, line, func);
 
-	ll_wait(current->wait_queue_entry, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
+	wait_object = NULL;
+	if (current->wait_queue_entry)
+		wait_object = &current->wait_queue_entry->windows_event;
+
+	ll_wait(wait_object, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
 }
 
 LONG_PTR ll_schedule_debug(LONG_PTR timeout, int return_error, int interruptible, const char *file, int line, const char *func)
@@ -106,13 +98,18 @@ LONG_PTR ll_schedule_debug(LONG_PTR timeout, int return_error, int interruptible
 	LONG_PTR then = jiffies;
 	LONG_PTR elapsed;
 	int err;
+	void *wait_object;
 
 	if (!is_windrbd_thread(current)) {
 		printk("Warning: schedule called from a non WinDRBD thread, not waiting (called from %s:%d %s())\n", file, line, func);
 		return -EINVAL;
 	}
 
-	err = ll_wait(current->wait_queue_entry, timeout, interruptible, file, line, func);
+	wait_object = NULL;
+	if (current->wait_queue_entry)
+		wait_object = &current->wait_queue_entry->windows_event;
+
+	err = ll_wait(wait_object, timeout, interruptible, file, line, func);
 
 	if (err < 0 && return_error)
 		return err;
