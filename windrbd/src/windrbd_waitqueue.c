@@ -11,6 +11,7 @@
 #include <linux/wait.h>
 #include <linux/jiffies.h>
 #include <linux/printk.h>
+#include <linux/completion.h>
 
 	/* Timeout is in jiffies (usually 1ms on WinDRBD)
          * Returns -EINTR, -ETIMEOUT or 0
@@ -207,4 +208,43 @@ void wake_up_debug(wait_queue_head_t *q, const char *file, int line, const char 
 
 void init_waitqueue(void)
 {
+}
+
+void init_completion_debug(struct completion *completion, const char *file, int line, const char *func)
+{
+		/* Notification event (stays set - no autoclear) in
+		 * case we have more waiters.
+		 */
+
+	KeInitializeEvent(&completion->windows_event, NotificationEvent, FALSE);
+}
+
+LONG_PTR wait_for_completion_interruptible_timeout_debug(struct completion *completion, ULONG_PTR timeout, const char *file, int line, const char *func)
+{
+	return ll_wait(&completion->windows_event, timeout, TASK_INTERRUPTIBLE, file, line, func);
+}
+
+ULONG_PTR wait_for_completion_timeout_debug(struct completion *completion, ULONG_PTR timeout, const char *file, int line, const char *func)
+{
+	return ll_wait(&completion->windows_event, timeout, TASK_UNINTERRUPTIBLE, file, line, func);
+}
+
+void wait_for_completion_debug(struct completion *completion, const char *file, int line, const char *func)
+{
+	ll_wait(&completion->windows_event, MAX_SCHEDULE_TIMEOUT, TASK_UNINTERRUPTIBLE, file, line, func);
+}
+
+int wait_for_completion_interruptible_debug(struct completion *completion, const char *file, int line, const char *func)
+{
+	return ll_wait(&completion->windows_event, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
+}
+
+void complete_debug(struct completion *c, const char *file, int line, const char *func)
+{
+	KeSetEvent(&c->windows_event, 0, FALSE);
+}
+
+void complete_all_debug(struct completion *c, const char *file, int line, const char *func)
+{
+	KeSetEvent(&c->windows_event, 0, FALSE);
 }

@@ -5,8 +5,7 @@
 #include <linux/wait.h>
 
 struct completion {
-	bool completed;
-	wait_queue_head_t wait;
+	KEVENT windows_event;
 };
 
 extern void init_completion_debug(struct completion *c, const char *file, int line, const char *func);

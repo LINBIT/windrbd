@@ -832,44 +832,6 @@ int bio_add_page_debug(struct bio *bio, struct page *page, unsigned int len,unsi
 
 #include "drbd_int.h"
 
-void init_completion_debug(struct completion *completion, const char *file, int line, const char *func)
-{
-	init_waitqueue_head(&completion->wait);
-	completion->completed = false;
-}
-
-LONG_PTR wait_for_completion_interruptible_timeout_debug(struct completion *completion, ULONG_PTR timeout, const char *file, int line, const char *func)
-{
-	return wait_event_interruptible_timeout(completion->wait, completion->completed, timeout);
-}
-
-ULONG_PTR wait_for_completion_timeout_debug(struct completion *completion, ULONG_PTR timeout, const char *file, int line, const char *func)
-{
-	return wait_event_timeout(completion->wait, completion->completed, timeout);
-}
-
-void wait_for_completion_debug(struct completion *completion, const char *file, int line, const char *func)
-{
-	wait_for_completion_timeout(completion, MAX_SCHEDULE_TIMEOUT);
-}
-
-int wait_for_completion_interruptible_debug(struct completion *completion, const char *file, int line, const char *func)
-{
-	return wait_for_completion_interruptible_timeout(completion, MAX_SCHEDULE_TIMEOUT);
-}
-
-void complete_debug(struct completion *c, const char *file, int line, const char *func)
-{
-	c->completed = true;
-	wake_up(&c->wait);
-}
-
-void complete_all_debug(struct completion *c, const char *file, int line, const char *func)
-{
-	c->completed = true;
-	wake_up_all(&c->wait);
-}
-
 /* TODO: take this function from Linux (again) */
 
 void get_random_bytes(void *buf, int nbytes)
