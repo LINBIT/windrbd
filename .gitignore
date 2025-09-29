@@ -14,6 +14,7 @@ codeql-database
 windrbd.sys*
 windrbd.cat*
 windrbd.inf*
+windrbd.pdb*
 
 windrbd/include/windrbd-event-log.h
 windrbd/windrbd-event-log.coffres

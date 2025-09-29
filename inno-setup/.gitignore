@@ -1,3 +1,5 @@
 install*.exe
 version.iss
 resource-version.iss
+windrbd-*.sys
+windrbd-*.pdb
