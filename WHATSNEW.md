@@ -3,6 +3,13 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.4
+---------------------------
+
+Makefile: keep windrbd.sys and windrbd.pdb for each build
+
+Fixed a race in completion implementation
+
 What's new in version 1.2.3
 ---------------------------
 
