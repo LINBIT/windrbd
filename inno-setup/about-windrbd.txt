@@ -1,8 +1,8 @@
 What is WinDRBD?
 ================
 
-WinDRBD is a port of the LINBIT® Distributed Replicated Block Device
-(DRBD®) Linux driver to Microsoft Windows. It is wire-compatible
+WinDRBD is a port of the LINBIT Distributed Replicated Block Device
+(DRBD) Linux driver to Microsoft Windows. It is wire-compatible
 with the Linux version and supports almost all features of the
 Linux version.
 
