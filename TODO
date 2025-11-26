@@ -61,9 +61,6 @@ TODO: Upstream: get drbdmon working.
 
 	Didn't happen the last 5 years ...
 
-	Ok, we need to implement a communication layer that uses
-	select(2) instead of epoll check kill and signal handling.
-
 	Update April 17 2025: Robert is currently working on
 	it!! Waiting for drbd-utils push and then integrating
 	it into WinDRBD 1.2.
