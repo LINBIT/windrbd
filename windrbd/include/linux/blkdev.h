@@ -915,4 +915,17 @@ extern struct block_device *blkdev_get_by_path(const char *path, fmode_t mode, v
 struct file *bdev_file_open_by_path(const char *path, blk_mode_t mode,
 		void *holder, const struct blk_holder_ops *hops);
 
+
+static inline int bdev_freeze(struct block_device *bdev)
+{
+	printk("Warning: bdev_freeze not implemented\n");
+	return 0;
+}
+
+static inline int bdev_thaw(struct block_device *bdev)
+{
+	printk("Warning: bdev_thawnot implemented\n");
+	return 0;
+}
+
 #endif
