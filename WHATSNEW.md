@@ -177,6 +177,20 @@ What's new in version 1.2.0-rc1
 
 Can compile WinDRBD driver with gcc (mingw-w64).
 
+What's new in version 1.1.22
+----------------------------
+
+Installer: Flush registry at the end of install/remove bus device
+	This should solve driver half installed we observe when the
+	system is reset shortly after the installer ran.
+
+What's new in version 1.1.21
+----------------------------
+
+Log rotation for windrbdlog and windrbdumhelper services.
+
+Log kernel IDs for user mode helper requests.
+
 What's new in version 1.1.20
 ----------------------------
 
