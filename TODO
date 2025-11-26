@@ -25,11 +25,6 @@ TODO: Code quality: Update rbtree.c, attr.c, idr.c, hweight.c from Linux kernel 
 	or so ...)
 	better not .. we need to patch :)
 
-TODO: Feature: sync filesystem(s) on drbdadm secondary
-
-	Linux DRBD also does this.
-	Implement that but please lets do it for the 1.2 branch
-
 TODO: Code quality: Fix drbd-utils compiler warnings
 
 TODO: Feature: Understand SCSI addressing
