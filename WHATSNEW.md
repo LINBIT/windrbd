@@ -3,6 +3,11 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.6
+---------------------------
+
+DRBD 9.3.0 support
+
 What's new in version 1.2.5
 ---------------------------
 
