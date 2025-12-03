@@ -1,10 +1,5 @@
 #!/bin/bash
 
-if [ ! -d ".git" ]; then
-	echo "Not a git repo, not regenerating version info"
-	exit 0
-fi
-
 EXTRA_VERSION=""
 
 if [ "$#" -ne 1 -a "$#" -ne 2 ]; then
