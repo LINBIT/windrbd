@@ -42,7 +42,11 @@ DefaultGroupName={#MyAppName}
 LicenseFile={#WindrbdSource}\COPYING
 InfoBeforeFile={#WindrbdSource}\inno-setup\about-windrbd.txt
 OutputDir={#WindrbdSource}\inno-setup
+#ifdef OutputFileName
+OutputBaseFilename={#OutputFileName}
+#else
 OutputBaseFilename=install-windrbd-{#MyAppVersion}
+#endif
 PrivilegesRequired=admin
 Compression=lzma
 SolidCompression=yes
