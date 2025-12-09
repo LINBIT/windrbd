@@ -66,6 +66,7 @@ export ARCH ?= x86_64
 # ARCH=i686
 
 TARGET_IPS ?= 10.43.224.5 10.43.224.47 10.43.224.50
+KEY ?= linbit-2019
 
 export DRBD ?= drbd-9.2
 DRBDTMP ?= $(DRBD)-tmp
@@ -351,7 +352,7 @@ windrbd/src/windrbd_module.d: windrbd/include/windrbd_version.h
 
 windrbd.sys: versioninfo $(TMP_DRBD_FILES) $(OBJS) $(COFFRES)
 	$(call run,$(CC) -o windrbd.sys-unsigned $(OBJS) $(COFFRES) $(LIBS) $(LDFLAGS_FOR_DRIVERS) -g,LD,windrbd.sys-unsigned)
-	$(call run,osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.sys-unsigned windrbd.sys-signed ; mv windrbd.sys-signed windrbd.sys ; rm -f windrbd.sys-unsigned,SIGN,windrbd.sys)
+	$(call run,osslsigncode sign -key crypto/$(KEY).pvk -certs crypto/$(KEY).spc windrbd.sys-unsigned windrbd.sys-signed && mv windrbd.sys-signed windrbd.sys && rm -f windrbd.sys-unsigned,SIGN,windrbd.sys)
 
 windrbd.cat: windrbd.sys
 # build the cat file generator. It is not yet in any Linux distros ...
@@ -362,7 +363,7 @@ windrbd.cat: windrbd.sys
 
 # TODO: This needs a 'modern' osslsigncode (that from Ubuntu 18.04 and also
 # from Ubuntu 20.04 is too old - you probably have to build it yourself)
-	$(call run,rm -f windrbd.cat ;  osslsigncode sign -key crypto/linbit-2019.pvk -certs crypto/linbit-2019.spc windrbd.cat-unsigned windrbd.cat ; rm -f windrbd.cat-unsigned,SIGN,windrbd.cat)
+	$(call run,rm -f windrbd.cat ;  osslsigncode sign -key crypto/$(KEY).pvk -certs crypto/$(KEY).spc windrbd.cat-unsigned windrbd.cat ; rm -f windrbd.cat-unsigned,SIGN,windrbd.cat)
 #	rm -f windrbd.cat-unsigned
 
 .PHONY: drbd-utils
