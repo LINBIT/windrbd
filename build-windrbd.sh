@@ -21,11 +21,11 @@ tar zcf windrbd-built-converted-sources.tarball.tar.gz --exclude=\*.tarball.tar.
 echo Done
 "
 echo "Copying the result to Windows VM"
-scp johannes@10.43.224.39:/tmp/build-windrbd/windrbd-built-converted-sources.tarball.tar.gz Administrator@10.43.224.35:/tmp
+scp johannes@10.43.224.39:/tmp/build-windrbd/windrbd-built-converted-sources.tarball.tar.gz Administrator@10.43.208.75:/tmp
 
 echo "Now running Windows build steps (compile, package, upload to nexus)"
 
-ssh Administrator@10.43.224.35 "rm -rf /tmp/build-windrbd
+ssh Administrator@10.43.208.75 "rm -rf /tmp/build-windrbd
 mkdir -p /tmp/build-windrbd
 cd /tmp/build-windrbd
 tar zxf ../windrbd-built-converted-sources.tarball.tar.gz
