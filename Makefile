@@ -65,7 +65,7 @@ help:
 export ARCH ?= x86_64
 # ARCH=i686
 
-TARGET_IPS ?= 10.43.224.5 10.43.224.47 10.43.224.50
+TARGET_IPS ?= 10.43.208.80 10.43.208.81 10.43.208.82
 KEY ?= linbit-2019
 
 export DRBD ?= drbd-9.2
