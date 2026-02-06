@@ -31,7 +31,9 @@ export VIRTER_TIME_SHUTDOWN_TIMEOUT=300s
 
 # time ./virter/run-test.sh --variant=windows
 # time ./virter/run-test.sh --variant=windows --repeats=3
-time ./virter/run-test.sh --variant=cross-platform --repeats=3
+# time ./virter/run-test.sh --variant=cross-platform --repeats=3
+# YES this is without 't'. There's a type upstream ...
+time ./virter/run-test.sh --variant=cross-plaform --repeats=3
 # time ./virter/run-test.sh --variant=windows --repeats=10
 # time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=3
 # time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=100
