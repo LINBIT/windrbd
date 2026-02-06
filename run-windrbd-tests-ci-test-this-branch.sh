@@ -14,7 +14,7 @@ export DRBD_TEST_DOCKER_IMAGE=$LINBIT_DOCKER_REGISTRY/drbd9-tests
 export DRBD_VERSION=9.*
 export DRBD_UTILS_VERSION=9.0.0.latest-*
 # export SKIP_PULL=true
-export PULL_WINDOWS_ONLY=true
+# export PULL_WINDOWS_ONLY=true
 # export LINBIT_CI_MAX_CPUS=3
 # This is required for the connect-5 test: else we get failures
 # export LINBIT_CI_MAX_CPUS=5
