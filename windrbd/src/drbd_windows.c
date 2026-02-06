@@ -2266,7 +2266,8 @@ struct gendisk *blk_alloc_disk(int unused)
 	disk->part0 = bdev;
 	disk->part0->bd_disk = disk;
 
-	q->logical_block_size = 512;
+	q->limits.logical_block_size = 512;
+	q->limits.physical_block_size = 512;
 	q->limits.max_hw_sectors = DRBD_MAX_BIO_SIZE >> 9;
 
 	return disk;

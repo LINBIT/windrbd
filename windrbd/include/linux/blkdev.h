@@ -209,7 +209,6 @@ struct request_queue {
 	void * queuedata;
 	struct backing_dev_info *backing_dev_info;
 	spinlock_t *queue_lock;
-	unsigned short logical_block_size;
 	ULONG_PTR queue_flags;
 	struct queue_limits limits;
 	struct mutex limits_lock;
