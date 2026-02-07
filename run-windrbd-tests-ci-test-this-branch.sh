@@ -14,7 +14,9 @@ export DRBD_TEST_DOCKER_IMAGE=$LINBIT_DOCKER_REGISTRY/drbd9-tests
 export DRBD_VERSION=9.2.16
 export DRBD_UTILS_VERSION=9.0.0.latest-*
 # export SKIP_PULL=true
+# for cross_platform:
 export PULL_WINDOWS_AND_LINUX=true
+# for windows only tests:
 # export PULL_WINDOWS_ONLY=true
 # export LINBIT_CI_MAX_CPUS=3
 # This is required for the connect-5 test: else we get failures
@@ -32,7 +34,8 @@ export VIRTER_TIME_SHUTDOWN_TIMEOUT=300s
 
 # time ./virter/run-test.sh --variant=windows
 # time ./virter/run-test.sh --variant=windows --repeats=3
-time ./virter/run-test.sh --variant=cross_platform --repeats=3
+# time ./virter/run-test.sh --variant=cross_platform --repeats=3
+time ./virter/run-test.sh --variant=cross_platform
 # time ./virter/run-test.sh --variant=windows --repeats=10
 # time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=3
 # time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=100
