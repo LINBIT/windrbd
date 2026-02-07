@@ -11,7 +11,7 @@ export LINBIT_DOCKER_REGISTRY=nexus.at.linbit.com:5000
 export DRBD_TEST_DOCKER_IMAGE=$LINBIT_DOCKER_REGISTRY/drbd9-tests
 # accept all 9.X DRBD versions - we have a separate WINDRBD_VERSION
 # which we also check and use for provisioning.
-export DRBD_VERSION=9.*
+export DRBD_VERSION=9.2.16
 export DRBD_UTILS_VERSION=9.0.0.latest-*
 # export SKIP_PULL=true
 export PULL_WINDOWS_AND_LINUX=true
