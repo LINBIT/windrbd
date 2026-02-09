@@ -33,9 +33,9 @@ export VIRTER_TIME_SSH_PING_COUNT=600
 export VIRTER_TIME_SHUTDOWN_TIMEOUT=300s
 
 # time ./virter/run-test.sh --variant=windows
-# time ./virter/run-test.sh --variant=windows --repeats=3
-# time ./virter/run-test.sh --variant=cross_platform --repeats=3
-time ./virter/run-test.sh --variant=cross_platform
+time ./virter/run-test.sh --variant=windows --repeats=3
+time ./virter/run-test.sh --variant=cross_platform --repeats=3
+# time ./virter/run-test.sh --variant=cross_platform
 # time ./virter/run-test.sh --variant=windows --repeats=10
 # time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=3
 # time ./virter/run-test.sh --variant=windows --torun=diskless --repeats=100
