@@ -275,3 +275,4 @@ Version history
  * 1.2.4 (Oct 1, 2025): Fixed completion race, keep sys and pdb of every build
  * 1.2.5 (Nov 26, 2025): DRBD 9.2.16 / DRBD 9.3.0-rc6 / drbd-utils 9.33.0+ support
  * 1.2.6 (Dec 01, 2025): DRBD 9.3.0 support
+ * 1.2.7 (Feb 09, 2026): Fixed a bug that caused connection to Linux DRBD fail
