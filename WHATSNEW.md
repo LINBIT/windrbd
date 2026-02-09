@@ -3,6 +3,11 @@ Upcoming features
 
 DRBD reactor support
 
+What's new in version 1.2.7
+---------------------------
+
+Fixed a bug that caused connection to Linux DRBD fail.
+
 What's new in version 1.2.6
 ---------------------------
 
