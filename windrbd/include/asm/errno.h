@@ -56,4 +56,6 @@
 #define EPROTO		85	/* Protocol error */
 #define ENOTRECOVERABLE	131	/* State not recoverable */
 
+#define        ENOKEY          126     /* Required key not available */
+
 #endif

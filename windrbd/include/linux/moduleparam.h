@@ -102,5 +102,11 @@ extern const struct kernel_param_ops param_ops_uint;
 #define module_param_named(name, value, type, perm) \
 	const struct kernel_param_ops *dummy_ ## value = &param_ops_ ## type;
 
+#define __MODULE_INFO(tag, name, info)  /* nothing */
+
+#if 0
+        static const char (name)[]                                        \
+                = __stringify(tag) "=" info
+#endif
 
 #endif
