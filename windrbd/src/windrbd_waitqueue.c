@@ -210,7 +210,7 @@ void init_waitqueue(void)
 {
 }
 
-void init_completion_debug(struct completion *completion, const char *file, int line, const char *func)
+void init_completion(struct completion *completion)
 {
 		/* Notification event (stays set - no autoclear) in
 		 * case we have more waiters.
@@ -219,32 +219,37 @@ void init_completion_debug(struct completion *completion, const char *file, int 
 	KeInitializeEvent(&completion->windows_event, NotificationEvent, FALSE);
 }
 
-LONG_PTR wait_for_completion_interruptible_timeout_debug(struct completion *completion, ULONG_PTR timeout, const char *file, int line, const char *func)
+void reinit_completion(struct completion *completion)
 {
-	return ll_wait(&completion->windows_event, timeout, TASK_INTERRUPTIBLE, file, line, func);
+	init_completion(completion);
 }
 
-ULONG_PTR wait_for_completion_timeout_debug(struct completion *completion, ULONG_PTR timeout, const char *file, int line, const char *func)
+LONG_PTR wait_for_completion_interruptible_timeout(struct completion *completion, ULONG_PTR timeout)
 {
-	return ll_wait(&completion->windows_event, timeout, TASK_UNINTERRUPTIBLE, file, line, func);
+	return ll_wait(&completion->windows_event, timeout, TASK_INTERRUPTIBLE, __FILE__, __LINE__, __func__);
 }
 
-void wait_for_completion_debug(struct completion *completion, const char *file, int line, const char *func)
+ULONG_PTR wait_for_completion_timeout(struct completion *completion, ULONG_PTR timeout)
 {
-	ll_wait(&completion->windows_event, MAX_SCHEDULE_TIMEOUT, TASK_UNINTERRUPTIBLE, file, line, func);
+	return ll_wait(&completion->windows_event, timeout, TASK_UNINTERRUPTIBLE, __FILE__, __LINE__, __func__);
 }
 
-int wait_for_completion_interruptible_debug(struct completion *completion, const char *file, int line, const char *func)
+void wait_for_completion(struct completion *completion)
 {
-	return ll_wait(&completion->windows_event, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, file, line, func);
+	ll_wait(&completion->windows_event, MAX_SCHEDULE_TIMEOUT, TASK_UNINTERRUPTIBLE, __FILE__, __LINE__, __func__);
 }
 
-void complete_debug(struct completion *c, const char *file, int line, const char *func)
+int wait_for_completion_interruptible(struct completion *completion)
+{
+	return ll_wait(&completion->windows_event, MAX_SCHEDULE_TIMEOUT, TASK_INTERRUPTIBLE, __FILE__, __LINE__, __func__);
+}
+
+void complete(struct completion *c)
 {
 	KeSetEvent(&c->windows_event, 0, FALSE);
 }
 
-void complete_all_debug(struct completion *c, const char *file, int line, const char *func)
+void complete_all(struct completion *c)
 {
 	KeSetEvent(&c->windows_event, 0, FALSE);
 }
