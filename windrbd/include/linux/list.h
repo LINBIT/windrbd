@@ -44,6 +44,14 @@ struct list_head {
 #define LIST_HEAD_INIT(name)			{ &(name), &(name) }
 #define LIST_HEAD(name)				struct list_head name = LIST_HEAD_INIT(name)
 
+/**
+ * list_prev_entry - get the prev element in list
+ * @pos:        the type * to cursor
+ * @member:     the name of the list_head within the struct.
+ */
+#define list_prev_entry(pos, member) \
+        list_entry((pos)->member.prev, typeof(*(pos)), member)
+
 static inline void INIT_LIST_HEAD(struct list_head *list)
 {
 	list->next = list;

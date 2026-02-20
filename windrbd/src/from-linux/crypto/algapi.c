@@ -11,12 +11,42 @@
 #endif
 #include <linux/err.h>
 #include <linux/errno.h>
+#if 0
 #include <linux/fips.h>
+#endif
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/module.h>
+#if 0
 #include <linux/rtnetlink.h>
+#else
+/* from include/uapi/linux/rtnetlink.h: */
+/* 
+   Generic structure for encapsulation of optional route information.
+   It is reminiscent of sockaddr, but with sa_family replaced
+   with attribute type.
+ */
+
+struct rtattr {
+        unsigned short  rta_len;
+        unsigned short  rta_type;
+};
+
+
+#define RTA_ALIGNTO     4U
+#define RTA_ALIGN(len) ( ((len)+RTA_ALIGNTO-1) & ~(RTA_ALIGNTO-1) )
+#define RTA_OK(rta,len) ((len) >= (int)sizeof(struct rtattr) && \
+                         (rta)->rta_len >= sizeof(struct rtattr) && \
+                         (rta)->rta_len <= (len))
+#define RTA_NEXT(rta,attrlen)   ((attrlen) -= RTA_ALIGN((rta)->rta_len), \
+                                 (struct rtattr*)(((char*)(rta)) + RTA_ALIGN((rta)->rta_len)))
+#define RTA_LENGTH(len) (RTA_ALIGN(sizeof(struct rtattr)) + (len))
+#define RTA_SPACE(len)  RTA_ALIGN(RTA_LENGTH(len))
+#define RTA_DATA(rta)   ((void*)(((char*)(rta)) + RTA_LENGTH(0)))
+#define RTA_PAYLOAD(rta) ((int)((rta)->rta_len) - RTA_LENGTH(0))
+
+#endif
 #include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/workqueue.h>
@@ -30,16 +60,20 @@ DEFINE_PER_CPU(bool, crypto_simd_disabled_for_test);
 EXPORT_PER_CPU_SYMBOL_GPL(crypto_simd_disabled_for_test);
 #endif
 
+#if 0
 static inline void crypto_check_module_sig(struct module *mod)
 {
 	if (fips_enabled && mod && !module_sig_ok(mod))
 		panic("Module %s signature verification failed in FIPS mode\n",
 		      module_name(mod));
 }
+#endif
 
 static int crypto_check_alg(struct crypto_alg *alg)
 {
+#if 0
 	crypto_check_module_sig(alg->cra_module);
+#endif
 
 	if (!alg->cra_name[0] || !alg->cra_driver_name[0])
 		return -EINVAL;
@@ -551,7 +585,9 @@ int crypto_register_template(struct crypto_template *tmpl)
 
 	down_write(&crypto_alg_sem);
 
+#if 0
 	crypto_check_module_sig(tmpl->module);
+#endif
 
 	list_for_each_entry(q, &crypto_template_list, list) {
 		if (q == tmpl)
@@ -643,8 +679,11 @@ static struct crypto_template *__crypto_lookup_template(const char *name)
 
 struct crypto_template *crypto_lookup_template(const char *name)
 {
+/*
 	return try_then_request_module(__crypto_lookup_template(name),
 				       "crypto-%s", name);
+*/
+	return -ENOENT;
 }
 EXPORT_SYMBOL_GPL(crypto_lookup_template);
 
@@ -847,13 +886,21 @@ EXPORT_SYMBOL_GPL(crypto_spawn_tfm2);
 
 int crypto_register_notifier(struct notifier_block *nb)
 {
+#if 0
 	return blocking_notifier_chain_register(&crypto_chain, nb);
+#else
+	return 0;
+#endif
 }
 EXPORT_SYMBOL_GPL(crypto_register_notifier);
 
 int crypto_unregister_notifier(struct notifier_block *nb)
 {
+#if 0
 	return blocking_notifier_chain_unregister(&crypto_chain, nb);
+#else
+	return 0;
+#endif
 }
 EXPORT_SYMBOL_GPL(crypto_unregister_notifier);
 

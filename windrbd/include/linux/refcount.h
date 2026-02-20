@@ -35,6 +35,18 @@ static inline void refcount_inc(refcount_t *r)
 	atomic_inc(&r->refs);
 }
 
+
+/* TODO: racy */
+static inline __must_check bool refcount_inc_not_zero(refcount_t *r)
+{
+	if (atomic_read(&r->refs) > 0) {
+		atomic_inc(&r->refs);
+		return true;
+	}
+	return false;
+}
+
+
 /**
  * refcount_dec_and_test - decrement a refcount and test if it is 0
  * @r: the refcount

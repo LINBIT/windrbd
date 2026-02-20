@@ -7,7 +7,7 @@
 #ifndef _CRYPTO_UTILS_H
 #define _CRYPTO_UTILS_H
 
-#include <asm/unaligned.h>
+#include <asm-generic/unaligned.h>
 #include <linux/compiler_attributes.h>
 #include <linux/types.h>
 

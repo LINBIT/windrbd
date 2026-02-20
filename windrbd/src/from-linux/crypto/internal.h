@@ -202,7 +202,7 @@ static inline int crypto_is_moribund(struct crypto_alg *alg)
 
 static inline void crypto_notify(unsigned long val, void *v)
 {
-	blocking_notifier_call_chain(&crypto_chain, val, v);
+//	blocking_notifier_call_chain(&crypto_chain, val, v);
 }
 
 static inline void crypto_yield(u32 flags)

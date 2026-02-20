@@ -602,7 +602,7 @@ static inline struct ahash_request *ahash_request_alloc(
  */
 static inline void ahash_request_free(struct ahash_request *req)
 {
-	kfree_sensitive(req);
+	kfree(req);
 }
 
 static inline void ahash_request_zero(struct ahash_request *req)

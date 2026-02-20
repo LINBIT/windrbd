@@ -58,5 +58,8 @@
 
 #define ENOKEY          126     /* Required key not available */
 #define ENOSYS          38      /* Invalid system call number */
+#define ELIBBAD         80      /* Accessing a corrupted shared library */
+#define ECANCELED       125     /* Operation Canceled */
+#define ENAMETOOLONG    36      /* File name too long */
 
 #endif
