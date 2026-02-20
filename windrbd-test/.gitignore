@@ -1,4 +1,4 @@
-windrbd-test.exe
+*.exe
 *.o
 .*.sw?
 ntfs.*

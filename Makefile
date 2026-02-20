@@ -254,7 +254,7 @@ WINDRBD_FILES = $(addprefix $(WINDRBD_SRCDIR), $(WINDRBD_SOURCES))
 LINUX_SRCDIR = ./windrbd/src/from-linux/
 # TODO: lib/vsprintf.c does not compile, use the Windows counterpart ...
 # TODO: net/core/skbuff.c also does not compile however we don't need it at the moment.
-LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/kasprintf.c block/genhd.c block/blk-settings.c kernel/time/timeconv.c kernel/time/time.c lib/rbtree.c lib/string.c kernel/params.c
+LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/kasprintf.c block/genhd.c block/blk-settings.c kernel/time/timeconv.c kernel/time/time.c lib/rbtree.c lib/string.c kernel/params.c lib/crypto/sha1.c
 LINUX_FILES = $(addprefix $(LINUX_SRCDIR), $(LINUX_SOURCES))
 
 ifeq ($(ARCH), i686)

@@ -162,6 +162,27 @@ static inline unsigned fls_long(ULONG_PTR l)
 	return fls64(l);
 }
 
+/**
+ * rol32 - rotate a 32-bit value left
+ * @word: value to rotate
+ * @shift: bits to roll
+ */
+static inline __u32 rol32(__u32 word, unsigned int shift)
+{
+        return (word << (shift & 31)) | (word >> ((-shift) & 31));
+}
+
+/**
+ * ror32 - rotate a 32-bit value right
+ * @word: value to rotate
+ * @shift: bits to roll
+ */
+static inline __u32 ror32(__u32 word, unsigned int shift)
+{
+        return (word >> (shift & 31)) | (word << ((-shift) & 31));
+}
+
+
 #include <asm-generic/bitops/le.h>
 
 #endif
