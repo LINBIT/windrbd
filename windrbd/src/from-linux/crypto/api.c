@@ -26,20 +26,24 @@
 
 LIST_HEAD(crypto_alg_list);
 EXPORT_SYMBOL_GPL(crypto_alg_list);
+// was:
 // DECLARE_RWSEM(crypto_alg_sem);
-/* TODO: need to initialize this: */
 struct rw_semaphore crypto_alg_sem;
 EXPORT_SYMBOL_GPL(crypto_alg_sem);
 
+#if 0
 BLOCKING_NOTIFIER_HEAD(crypto_chain);
 EXPORT_SYMBOL_GPL(crypto_chain);
+#endif
 
 #ifndef CONFIG_CRYPTO_MANAGER_DISABLE_TESTS
 DEFINE_STATIC_KEY_FALSE(__crypto_boot_test_finished);
 EXPORT_SYMBOL_GPL(__crypto_boot_test_finished);
 #endif
 
+#if 0
 static struct crypto_alg *crypto_larval_wait(struct crypto_alg *alg);
+#endif
 
 struct crypto_alg *crypto_mod_get(struct crypto_alg *alg)
 {
@@ -126,6 +130,7 @@ struct crypto_larval *crypto_larval_alloc(const char *name, u32 type, u32 mask)
 }
 EXPORT_SYMBOL_GPL(crypto_larval_alloc);
 
+#if 0
 static struct crypto_alg *crypto_larval_add(const char *name, u32 type,
 					    u32 mask)
 {
@@ -154,6 +159,7 @@ static struct crypto_alg *crypto_larval_add(const char *name, u32 type,
 
 	return alg;
 }
+#endif
 
 void crypto_larval_kill(struct crypto_alg *alg)
 {
@@ -208,11 +214,9 @@ void crypto_wait_for_test(struct crypto_larval *larval)
 {
 }
 
-static void crypto_start_test(struct crypto_larval *larval)
-{
-}
-
 #endif
+
+#if 0
 
 static struct crypto_alg *crypto_larval_wait(struct crypto_alg *alg)
 {
@@ -222,7 +226,7 @@ static struct crypto_alg *crypto_larval_wait(struct crypto_alg *alg)
 	if (!crypto_boot_test_finished())
 		crypto_start_test(larval);
 
-	timeout = wait_for_completion_killable_timeout(
+	timeout = wait_for_completion_timeout(
 		&larval->completion, 60 * HZ);
 
 	alg = larval->adult;
@@ -245,6 +249,8 @@ static struct crypto_alg *crypto_larval_wait(struct crypto_alg *alg)
 
 	return alg;
 }
+
+#endif
 
 static struct crypto_alg *crypto_alg_lookup(const char *name, u32 type,
 					    u32 mask)
@@ -340,9 +346,11 @@ EXPORT_SYMBOL_GPL(crypto_probing_notify);
 
 struct crypto_alg *crypto_alg_mod_lookup(const char *name, u32 type, u32 mask)
 {
+/*
 	struct crypto_alg *alg;
 	struct crypto_alg *larval;
 	int ok;
+*/
 
 	/*
 	 * If the internal flag is set for a cipher, require a caller to
@@ -720,6 +728,18 @@ void crypto_req_done(void *data, int err)
 	complete(&wait->completion);
 }
 EXPORT_SYMBOL_GPL(crypto_req_done);
+
+extern void init_sha1();
+extern void crypto_algapi_init();
+
+void init_crypto(void)
+{
+	init_rwsem(&crypto_alg_sem);
+	crypto_algapi_init();
+
+	init_sha1();
+	/* add more initializers here */
+}
 
 MODULE_DESCRIPTION("Cryptographic core API");
 MODULE_LICENSE("GPL");

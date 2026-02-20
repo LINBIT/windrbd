@@ -143,12 +143,9 @@ typedef long long loff_t;
 
 typedef unsigned short		umode_t;
 
-	/* TODO: always? */
-// #ifdef CONFIG_64BIT
 typedef struct {
 	s64 counter;
 } atomic64_t;
-// #endif
 
 /* Nanosecond scalar representation for kernel time values */
 typedef s64	ktime_t;

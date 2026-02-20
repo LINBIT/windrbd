@@ -658,6 +658,7 @@ void crypto_unregister_templates(struct crypto_template *tmpls, int count)
 }
 EXPORT_SYMBOL_GPL(crypto_unregister_templates);
 
+#if 0
 static struct crypto_template *__crypto_lookup_template(const char *name)
 {
 	struct crypto_template *q, *tmpl = NULL;
@@ -676,6 +677,7 @@ static struct crypto_template *__crypto_lookup_template(const char *name)
 
 	return tmpl;
 }
+#endif
 
 struct crypto_template *crypto_lookup_template(const char *name)
 {
@@ -683,7 +685,7 @@ struct crypto_template *crypto_lookup_template(const char *name)
 	return try_then_request_module(__crypto_lookup_template(name),
 				       "crypto-%s", name);
 */
-	return -ENOENT;
+	return NULL;
 }
 EXPORT_SYMBOL_GPL(crypto_lookup_template);
 
@@ -1068,7 +1070,7 @@ void crypto_inc(u8 *a, unsigned int size)
 	u32 c;
 
 	if (IS_ENABLED(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) ||
-	    IS_ALIGNED((unsigned long)b, __alignof__(*b)))
+	    IS_ALIGNED((ULONG_PTR)b, __alignof__(*b)))
 		for (; size >= 4; size -= 4) {
 			c = be32_to_cpu(*--b) + 1;
 			*b = cpu_to_be32(c);
@@ -1143,7 +1145,7 @@ static void __init crypto_start_tests(void)
 	set_crypto_boot_test_finished();
 }
 
-static int __init crypto_algapi_init(void)
+int __init crypto_algapi_init(void)
 {
 	crypto_init_proc();
 	crypto_start_tests();
@@ -1159,7 +1161,6 @@ static void __exit crypto_algapi_exit(void)
  * We run this at late_initcall so that all the built-in algorithms
  * have had a chance to register themselves first.
  */
-late_initcall(crypto_algapi_init);
 module_exit(crypto_algapi_exit);
 
 MODULE_LICENSE("GPL");

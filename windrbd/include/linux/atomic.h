@@ -44,4 +44,9 @@ static inline void atomic64_set(atomic64_t *v, s64 val)
 #define	atomic64_inc_return(_p)		InterlockedIncrement64((long long volatile*)(&(_p)->counter))
 #define	atomic64_dec_return(_p)		InterlockedDecrement64((long long volatile*)(&(_p)->counter))
 
+#define	atomic64_inc(_p)		InterlockedIncrement64((long long volatile*)(&(_p)->counter))
+#define	atomic64_dec(_p)		InterlockedDecrement64((long long volatile*)(&(_p)->counter))
+
+#define	atomic64_add(i, _p)		InterlockedExchangeAdd64((volatile long long*)&(_p)->counter, i);
+
 #endif

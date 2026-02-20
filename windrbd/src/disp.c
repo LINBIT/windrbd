@@ -270,6 +270,7 @@ NTSTATUS __attribute__((stdcall)) DriverEntry(IN PDRIVER_OBJECT DriverObject, IN
 // 	printk(KERN_NOTICE "Windrbd Driver Loading (compiled " __DATE__ " " __TIME__ ") ...\n");
 	printk(KERN_NOTICE "Windrbd Driver Loading at %p\n", DriverObject->DriverStart);
 
+	init_crypto();
 	init_registry(registry_path);
 	init_event_log();
  

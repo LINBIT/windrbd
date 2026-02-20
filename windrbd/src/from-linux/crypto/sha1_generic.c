@@ -33,7 +33,7 @@ static void sha1_generic_block_fn(struct sha1_state *sst, u8 const *src,
 	u32 temp[SHA1_WORKSPACE_WORDS];
 
 	while (blocks--) {
-		sha1_transform(sst->state, src, temp);
+		sha1_transform(sst->state, (const char *)src, temp);
 		src += SHA1_BLOCK_SIZE;
 	}
 	memzero_explicit(temp, sizeof(temp));
@@ -86,7 +86,11 @@ static void __exit sha1_generic_mod_fini(void)
 	crypto_unregister_shash(&alg);
 }
 
-subsys_initcall(sha1_generic_mod_init);
+void init_sha1(void)
+{
+	sha1_generic_mod_init();
+}
+
 module_exit(sha1_generic_mod_fini);
 
 MODULE_LICENSE("GPL");

@@ -191,4 +191,7 @@ void WriteSerial(char *buf, size_t length);
 void WriteStringSerial(char *buf);
 void PrintfSerial(char *fmt, ...);
 
+/* crypto port from Linux */
+void init_crypto(void);
+
 #endif
