@@ -56,6 +56,7 @@
 #define EPROTO		85	/* Protocol error */
 #define ENOTRECOVERABLE	131	/* State not recoverable */
 
-#define        ENOKEY          126     /* Required key not available */
+#define ENOKEY          126     /* Required key not available */
+#define ENOSYS          38      /* Invalid system call number */
 
 #endif

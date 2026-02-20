@@ -5,8 +5,10 @@
  * Copyright (c) 2008 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#if 0
 #include <crypto/scatterwalk.h>
-#include <linux/cryptouser.h>
+#endif
+#include <uapi/linux/cryptouser.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -8,7 +8,7 @@
 #define _LOCAL_CRYPTO_HASH_H
 
 #include <crypto/internal/hash.h>
-#include <linux/cryptouser.h>
+#include <uapi/linux/cryptouser.h>
 
 #include "internal.h"
 

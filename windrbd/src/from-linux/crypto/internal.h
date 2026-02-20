@@ -44,7 +44,8 @@ struct crypto_akcipher_sync_data {
 
 	struct akcipher_request *req;
 	struct crypto_wait cwait;
-	struct scatterlist sg;
+/* Used by akcipher. We don't use it in WinDRBD */
+//	struct scatterlist sg;
 	u8 *buf;
 };
 
@@ -66,7 +67,11 @@ extern struct blocking_notifier_head crypto_chain;
 
 int alg_test(const char *driver, const char *alg, u32 type, u32 mask);
 
+/* No tests on WinDRBD */
+#define CONFIG_CRYPTO_MANAGER_DISABLE_TESTS 1
+
 #ifdef CONFIG_CRYPTO_MANAGER_DISABLE_TESTS
+
 static inline bool crypto_boot_test_finished(void)
 {
 	return true;
