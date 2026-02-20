@@ -318,6 +318,8 @@ static struct crypto_alg *crypto_larval_lookup(const char *name, u32 type,
 		alg = crypto_larval_add(name, type, mask);
 #endif
 
+	if (alg == NULL)
+		alg = ERR_PTR(-ENOENT);
 	return alg;
 }
 
