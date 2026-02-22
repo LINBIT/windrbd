@@ -732,7 +732,10 @@ void crypto_req_done(void *data, int err)
 EXPORT_SYMBOL_GPL(crypto_req_done);
 
 extern void init_sha1();
+extern void init_crc32();
+extern void init_crc32c();
 extern void crypto_algapi_init();
+extern int libcrc32c_mod_init();
 
 void init_crypto(void)
 {
@@ -740,6 +743,9 @@ void init_crypto(void)
 	crypto_algapi_init();
 
 	init_sha1();
+	init_crc32();
+	init_crc32c();
+	libcrc32c_mod_init();
 	/* add more initializers here */
 }
 
