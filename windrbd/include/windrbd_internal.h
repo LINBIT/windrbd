@@ -138,8 +138,6 @@ int set_driver_locked_state(int state);
 struct drbd_device;
 // extern int try_to_promote(struct drbd_device *device, long timeout, bool ndelay);
 
-extern ULONG_PTR crc32(const char *s, size_t len);
-
 /* Implemented in windrbd_test: base works now from 2 to 36 */
 /* TODO: replace these with Linux functions. */
 unsigned long long my_strtoull(const char *nptr, const char ** endptr, int base);

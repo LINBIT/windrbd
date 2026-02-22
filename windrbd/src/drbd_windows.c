@@ -1884,6 +1884,8 @@ void list_del_init(struct list_head *entry)
 }
 */
 
+#if 0
+
 #include <linux/crc32c.h>
 
 /*----------------------------------------------------------------------*/
@@ -2038,6 +2040,8 @@ u32 crc32c(u32 crc, const void *p, unsigned int length)
 
 	return crc;
 }
+
+#endif
 
 static spinlock_t global_queue_lock;
 

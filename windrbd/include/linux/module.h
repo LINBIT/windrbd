@@ -3,6 +3,7 @@
 
 #include <linux/types.h>	/* for bool */
 #include <linux/moduleparam.h>
+#include <linux/export.h>
 
 #define MODULE_AUTHOR(unused, ...)
 #define MODULE_DESCRIPTION(unused, ...)

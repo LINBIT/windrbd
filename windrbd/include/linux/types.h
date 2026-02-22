@@ -20,6 +20,8 @@
 #ifndef _WINDOWS_TYPES_H
 #define _WINDOWS_TYPES_H
 
+#include <linux/cache.h>
+
 /* TODO: */
 typedef signed long long ssize_t;
 
