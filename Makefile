@@ -167,7 +167,7 @@ ifeq ($(ARCH), x86_64)
 DRIVER_ENTRY=DriverEntry
 endif
 
-DEFINES=-D WINNT=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D COMPAT_HAVE_BOOL_TYPE=1 -DKBUILD_MODNAME='"drbd"' -D CONFIG_WINDOWS=1
+DEFINES=-D WINNT=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D COMPAT_HAVE_BOOL_TYPE=1 -DKBUILD_MODNAME='"drbd"' -D CONFIG_WINDOWS=1 -D CONFIG_CRYPTO_HMAC=y
 
 ifdef WINNT_52
 DEFINES+=-D WINNT_52=1
@@ -254,7 +254,7 @@ WINDRBD_FILES = $(addprefix $(WINDRBD_SRCDIR), $(WINDRBD_SOURCES))
 LINUX_SRCDIR = ./windrbd/src/from-linux/
 # TODO: lib/vsprintf.c does not compile, use the Windows counterpart ...
 # TODO: net/core/skbuff.c also does not compile however we don't need it at the moment.
-LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/kasprintf.c block/genhd.c block/blk-settings.c kernel/time/timeconv.c kernel/time/time.c lib/rbtree.c lib/string.c kernel/params.c lib/crypto/sha1.c crypto/sha1_generic.c crypto/shash.c crypto/api.c crypto/algapi.c lib/crc32.c lib/libcrc32c.c crypto/crc32_generic.c crypto/crc32c_generic.c
+LINUX_SOURCES = lib/kstrtox.c mm/util.c lib/kasprintf.c block/genhd.c block/blk-settings.c kernel/time/timeconv.c kernel/time/time.c lib/rbtree.c lib/string.c kernel/params.c lib/crypto/sha1.c crypto/sha1_generic.c crypto/shash.c crypto/api.c crypto/algapi.c lib/crc32.c lib/libcrc32c.c crypto/crc32_generic.c crypto/crc32c_generic.c crypto/hmac.c
 LINUX_FILES = $(addprefix $(LINUX_SRCDIR), $(LINUX_SOURCES))
 
 ifeq ($(ARCH), i686)

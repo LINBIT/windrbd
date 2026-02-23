@@ -177,7 +177,8 @@ static inline void crypto_alg_put(struct crypto_alg *alg)
 
 static inline int crypto_tmpl_get(struct crypto_template *tmpl)
 {
-	return try_module_get(tmpl->module);
+//	return try_module_get(tmpl->module);
+	return 0;
 }
 
 static inline void crypto_tmpl_put(struct crypto_template *tmpl)

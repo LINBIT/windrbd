@@ -47,7 +47,8 @@ static struct crypto_alg *crypto_larval_wait(struct crypto_alg *alg);
 
 struct crypto_alg *crypto_mod_get(struct crypto_alg *alg)
 {
-	return try_module_get(alg->cra_module) ? crypto_alg_get(alg) : NULL;
+	// return try_module_get(alg->cra_module) ? crypto_alg_get(alg) : NULL;
+	return crypto_alg_get(alg);
 }
 EXPORT_SYMBOL_GPL(crypto_mod_get);
 
@@ -72,6 +73,7 @@ static struct crypto_alg *__crypto_alg_lookup(const char *name, u32 type,
 		if (crypto_is_moribund(q))
 			continue;
 
+#if 0
 		if ((q->cra_flags ^ type) & mask)
 			continue;
 
@@ -79,6 +81,7 @@ static struct crypto_alg *__crypto_alg_lookup(const char *name, u32 type,
 		    !crypto_is_test_larval((struct crypto_larval *)q) &&
 		    ((struct crypto_larval *)q)->mask != mask)
 			continue;
+#endif
 
 		exact = !strcmp(q->cra_driver_name, name);
 		fuzzy = !strcmp(q->cra_name, name);
@@ -736,6 +739,8 @@ extern void init_crc32();
 extern void init_crc32c();
 extern void crypto_algapi_init();
 extern int libcrc32c_mod_init();
+extern int hmac_module_init(void);
+
 
 void init_crypto(void)
 {
@@ -746,6 +751,7 @@ void init_crypto(void)
 	init_crc32();
 	init_crc32c();
 	libcrc32c_mod_init();
+	hmac_module_init();
 	/* add more initializers here */
 }
 
