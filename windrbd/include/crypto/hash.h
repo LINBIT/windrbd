@@ -848,8 +848,8 @@ int crypto_shash_setkey(struct crypto_shash *tfm, const u8 *key,
  * Return: 0 if the message digest creation was successful; < 0 if an error
  *	   occurred
  */
-int crypto_shash_digest(struct shash_desc *desc, const u8 *data,
-			unsigned int len, u8 *out);
+int crypto_shash_digest(struct shash_desc *desc, const char *data,
+			unsigned int len, char *out);
 
 /**
  * crypto_shash_tfm_digest() - calculate message digest for buffer

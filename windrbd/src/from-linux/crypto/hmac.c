@@ -51,7 +51,7 @@ static int hmac_setkey(struct crypto_shash *parent,
 	if (keylen > bs) {
 		int err;
 
-		err = crypto_shash_digest(shash, inkey, keylen, ipad);
+		err = crypto_shash_digest(shash, (const char*) inkey, keylen, (char *) ipad);
 		if (err)
 			return err;
 

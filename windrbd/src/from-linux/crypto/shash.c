@@ -131,8 +131,8 @@ static int shash_default_digest(struct shash_desc *desc, const u8 *data,
 	       shash->finup(desc, data, len, out);
 }
 
-int crypto_shash_digest(struct shash_desc *desc, const u8 *data,
-			unsigned int len, u8 *out)
+int crypto_shash_digest(struct shash_desc *desc, const char *data,
+			unsigned int len, char *out)
 {
 	struct crypto_shash *tfm = desc->tfm;
 	struct shash_alg *shash = crypto_shash_alg(tfm);
@@ -148,7 +148,7 @@ int crypto_shash_digest(struct shash_desc *desc, const u8 *data,
 	if (crypto_shash_get_flags(tfm) & CRYPTO_TFM_NEED_KEY)
 		err = -ENOKEY;
 	else
-		err = shash->digest(desc, data, len, out);
+		err = shash->digest(desc, (const u8*) data, len, (u8*) out);
 
 	return crypto_shash_errstat(shash, err);
 }
@@ -162,7 +162,7 @@ int crypto_shash_tfm_digest(struct crypto_shash *tfm, const u8 *data,
 
 	desc->tfm = tfm;
 
-	err = crypto_shash_digest(desc, data, len, out);
+	err = crypto_shash_digest(desc, (const char*) data, len, (char *) out);
 
 	shash_desc_zero(desc);
 
