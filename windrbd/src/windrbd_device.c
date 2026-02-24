@@ -2225,9 +2225,9 @@ static void fake_partition_table(struct block_device *bdev)
 	memcpy(partition_table+0x410, my_partition_guid, 16);
 
 		/* TODO: seed? */
-	*(uint32_t*)(partition_table+0x258) = crc32(0, partition_table+0x400, 0x80 * 0x80);
+	*(uint32_t*)(partition_table+0x258) = crc32(~0, partition_table+0x400, 0x80 * 0x80) ^ ~0;
 	*(uint32_t*)(partition_table+0x210) = 0;
-	*(uint32_t*)(partition_table+0x210) = crc32(0, partition_table+0x200, 0x5c);
+	*(uint32_t*)(partition_table+0x210) = crc32(~0, partition_table+0x200, 0x5c) ^ ~0;
 
 	memcpy(backup_partition_table+((bdev->appended_sectors-1)*512), partition_table+0x200, 512);
 	memcpy(backup_partition_table, partition_table+(512*2), 512);
@@ -2238,10 +2238,9 @@ static void fake_partition_table(struct block_device *bdev)
 		*(uint64_t*)(backup_partition_table+((bdev->appended_sectors-1)*512)+0x18);
 	*(uint64_t*)(backup_partition_table+((bdev->appended_sectors-1)*512)+0x18) = swap;
 
-//	*(uint32_t*)(backup_partition_table+((bdev->appended_sectors-1)*512)+0x58) = crc32(partition_table+0x400, 0x80 * 0x80);
 	*(uint32_t*)(backup_partition_table+((bdev->appended_sectors-1)*512)+0x10) = 0;
 	*(uint32_t*)(backup_partition_table+((bdev->appended_sectors-1)*512)+0x10) =
-		crc32(0, backup_partition_table+((bdev->appended_sectors-1)*512), 0x5c);
+		crc32(~0, backup_partition_table+((bdev->appended_sectors-1)*512), 0x5c) ^ ~0;
 
 	old_partition_table = bdev->disk_prolog;
 	old_backup_partition_table = bdev->disk_epilog;
