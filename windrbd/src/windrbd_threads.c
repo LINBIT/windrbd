@@ -186,10 +186,11 @@ void windrbd_reap_threads(void)
 void windrbd_reap_all_threads(void)
 {
 	struct task_struct *t;
+	int count = 10;
 
 	windrbd_reap_threads();
 
-	while (!list_empty(&thread_list)) {
+	while (!list_empty(&thread_list) && --count > 0) {
 		printk("Still threads alive, waiting for them to terminate ...\n");
 
 	/* TODO: printk will call current which also takes the lock. */
@@ -200,6 +201,10 @@ void windrbd_reap_all_threads(void)
 //		spin_unlock_irqrestore(&thread_list_lock, flags);
 		msleep(1000);
 		windrbd_reap_threads();
+	}
+	if (count == 0) {
+		printk("There is still a thread running, unloading will now work.\n");
+		printk("You have to reboot the machine in order to load the updated driver.\n");
 	}
 }
 
