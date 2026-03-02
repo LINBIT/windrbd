@@ -1,7 +1,13 @@
-Upcoming features
------------------
+What's new in version 1.2.8
+---------------------------
 
-DRBD reactor support
+DRBD reactor support - see LINBIT SDS repo
+
+Integrated Linux kernel's crypto framework in WinDRBD
+
+Support sha1 crypto algorithm
+
+Do not wait forever for still running tasks on unload
 
 What's new in version 1.2.7
 ---------------------------
