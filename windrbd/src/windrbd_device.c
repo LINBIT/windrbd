@@ -3895,9 +3895,12 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 			if (sector_count > 0) {
 				sector_t first_backup_sector = bdev->data_shift+bdev->d_size/512;
 				sector_t last_sector = bdev->data_shift+bdev->d_size/512 + bdev->appended_sectors;
-				if (start_sector >= first_backup_sector) {
+				if (start_sector >= last_sector) {
+					printk("Warning: attempt to %s past device start sector is %lld sector_count is %lld last_sector is %lld\n", rw ? "write" : "read", start_sector, sector_count, last_sector);
+					status = STATUS_INVALID_PARAMETER;
+				} else if (start_sector >= first_backup_sector) {
 					if (start_sector + sector_count > last_sector) {
-						printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
+						printk("Warning: attempt to %s past device start sector is %lld sector_count is %lld last_sector is %lld\n", rw ? "write" : "read", start_sector, sector_count, last_sector);
 						sector_count = last_sector - start_sector;
 					}
 					status = STATUS_SUCCESS;
