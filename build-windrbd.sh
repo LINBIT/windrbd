@@ -8,9 +8,9 @@
 set -e
 echo "Creating tarball this may take a while ..."
 tar zcf windrbd-initial.tarball.tar.gz --exclude=\*.tarball.tar.gz --exclude=inno-setup/install-windrbd\*.exe --exclude=converted-sources . || :
-scp windrbd-initial.tarball.tar.gz johannes@10.43.224.39:/tmp
+scp windrbd-initial.tarball.tar.gz johannes@10.43.208.83:/tmp
 echo "Ok, now running Linux build steps (cocci, ...)"
-ssh johannes@10.43.224.39 "rm -rf /tmp/build-windrbd
+ssh johannes@10.43.208.83 "rm -rf /tmp/build-windrbd
 mkdir -p /tmp/build-windrbd
 cd /tmp/build-windrbd
 tar zxf ../windrbd-initial.tarball.tar.gz
@@ -21,7 +21,7 @@ tar zcf windrbd-built-converted-sources.tarball.tar.gz --exclude=\*.tarball.tar.
 echo Done
 "
 echo "Copying the result to Windows VM"
-scp johannes@10.43.224.39:/tmp/build-windrbd/windrbd-built-converted-sources.tarball.tar.gz Administrator@10.43.208.75:/tmp
+scp johannes@10.43.208.83:/tmp/build-windrbd/windrbd-built-converted-sources.tarball.tar.gz Administrator@10.43.208.75:/tmp
 
 echo "Now running Windows build steps (compile, package, upload to nexus)"
 
@@ -36,12 +36,12 @@ make package VERSION=gitlab
 for i in inno-setup/install-windrbd-*.exe
 do
 	echo copiing \$i to linux host ...
-	scp \$i johannes@10.43.224.39:/tmp/build-windrbd/\$i
+	scp \$i johannes@10.43.208.83:/tmp/build-windrbd/\$i
 done
 echo Done
 "
 
-ssh johannes@10.43.224.39 "cd /tmp/build-windrbd
+ssh johannes@10.43.208.83 "cd /tmp/build-windrbd
 for i in inno-setup/install-windrbd-*.exe
 do
 	echo copiing \$i to nexus ...
