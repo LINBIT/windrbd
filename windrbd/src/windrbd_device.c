@@ -3789,6 +3789,14 @@ static NTSTATUS windrbd_scsi(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 				start_sector = (unsigned long long) ((unsigned long long) cdb->CDB10.LogicalBlockByte0 << 24) + ((unsigned long long) cdb->CDB10.LogicalBlockByte1 << 16) + ((unsigned long long) cdb->CDB10.LogicalBlockByte2 << 8) + (unsigned long long) cdb->CDB10.LogicalBlockByte3;
 				sector_count = (unsigned long long) ((unsigned long long) cdb->CDB10.TransferBlocksMsb << 8) + (unsigned long long) cdb->CDB10.TransferBlocksLsb;
 			}
+
+if (start_sector == 42)
+{
+start_sector = bdev->data_shift+bdev->d_size/512 + bdev->appended_sectors+42;
+printk("Injecting fault: start_sector 42 -> %lld\n", start_sector);
+}
+
+
 			if (sector_count * 512 > srb->DataTransferLength) {
 				dbg("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, srb->DataTransferLength);
 				sector_count = srb->DataTransferLength / 512;
