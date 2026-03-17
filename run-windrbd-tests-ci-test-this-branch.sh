@@ -1,6 +1,6 @@
 # you may have to change those settings:
 export VMSHED_TEST_TIMEOUT=30m
-export DRBD_TESTS_DIR=tests
+export DRBD_TESTS_SUB_DIR=tests
 
 # may be windrbd-1.1-from-gitlab or windrbd-1.2-from-gitlab
 if [ ! "$WINDRBD_VERSION" ] ; then WINDRBD_VERSION=windrbd-1.2-from-gitlab ; fi
