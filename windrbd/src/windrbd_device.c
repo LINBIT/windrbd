@@ -2523,12 +2523,6 @@ static NTSTATUS scsi_io(struct block_device *bdev, union _CDB *cdb, void *data_b
 		sector_count = (unsigned long long) ((unsigned long long) cdb->CDB10.TransferBlocksMsb << 8) + (unsigned long long) cdb->CDB10.TransferBlocksLsb;
 	}
 
-if (start_sector == 42)
-{
-start_sector = bdev->data_shift+bdev->bd_inode->i_size/512 + bdev->appended_sectors+42;
-printk("Injecting fault: start_sector 42 -> %lld\n", start_sector);
-}
-
 	if (sector_count * 512 > (*data_transfer_length_p)) {
 		printk("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, *data_transfer_length_p);
 		sector_count = (*data_transfer_length_p) / 512;
