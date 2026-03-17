@@ -2522,7 +2522,6 @@ static NTSTATUS scsi_io(struct block_device *bdev, union _CDB *cdb, void *data_b
 		start_sector = (unsigned long long) ((unsigned long long) cdb->CDB10.LogicalBlockByte0 << 24) + ((unsigned long long) cdb->CDB10.LogicalBlockByte1 << 16) + ((unsigned long long) cdb->CDB10.LogicalBlockByte2 << 8) + (unsigned long long) cdb->CDB10.LogicalBlockByte3;
 		sector_count = (unsigned long long) ((unsigned long long) cdb->CDB10.TransferBlocksMsb << 8) + (unsigned long long) cdb->CDB10.TransferBlocksLsb;
 	}
-
 	if (sector_count * 512 > (*data_transfer_length_p)) {
 		printk("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, *data_transfer_length_p);
 		sector_count = (*data_transfer_length_p) / 512;
