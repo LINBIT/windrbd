@@ -2631,10 +2631,13 @@ printk("Injecting fault: start_sector 42 -> %lld\n", start_sector);
 	if (sector_count > 0) {
 		sector_t first_backup_sector = bdev->data_shift+bdev->bd_inode->i_size/512;
 		sector_t last_sector = bdev->data_shift+bdev->bd_inode->i_size/512 + bdev->appended_sectors;
-		if (start_sector >= first_backup_sector) {
-/* TODO: if (start_sector > last_sector) { fail the request } */
+
+		if (start_sector >= last_sector) {
+			printk("Warning: attempt to %s past device start sector is %lld sector_count is %lld last_sector is %lld\n", rw ? "write" : "read", start_sector, sector_count, last_sector);
+			status = STATUS_INVALID_PARAMETER;
+		} else if (start_sector >= first_backup_sector) {
 			if (start_sector + sector_count > last_sector) {
-				printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld last_sector is %lld\n", start_sector, sector_count, last_sector);
+				printk("Warning: attempt to %s past device start sector is %lld sector_count is %lld last_sector is %lld\n", rw ? "write" : "read", start_sector, sector_count, last_sector);
 				sector_count = last_sector - start_sector;
 			}
 			if (rw == READ) {
