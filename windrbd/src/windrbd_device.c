@@ -2522,6 +2522,13 @@ static NTSTATUS scsi_io(struct block_device *bdev, union _CDB *cdb, void *data_b
 		start_sector = (unsigned long long) ((unsigned long long) cdb->CDB10.LogicalBlockByte0 << 24) + ((unsigned long long) cdb->CDB10.LogicalBlockByte1 << 16) + ((unsigned long long) cdb->CDB10.LogicalBlockByte2 << 8) + (unsigned long long) cdb->CDB10.LogicalBlockByte3;
 		sector_count = (unsigned long long) ((unsigned long long) cdb->CDB10.TransferBlocksMsb << 8) + (unsigned long long) cdb->CDB10.TransferBlocksLsb;
 	}
+
+if (start_sector == 42)
+{
+start_sector = bdev->data_shift+bdev->bd_inode->i_size/512 + bdev->appended_sectors+42;
+printk("Injecting fault: start_sector 42 -> %lld\n", start_sector);
+}
+
 	if (sector_count * 512 > (*data_transfer_length_p)) {
 		printk("data transfer length too small for requested sectors: need %lld bytes, have %lld bytes\n", sector_count * 512, *data_transfer_length_p);
 		sector_count = (*data_transfer_length_p) / 512;
@@ -2625,8 +2632,9 @@ static NTSTATUS scsi_io(struct block_device *bdev, union _CDB *cdb, void *data_b
 		sector_t first_backup_sector = bdev->data_shift+bdev->bd_inode->i_size/512;
 		sector_t last_sector = bdev->data_shift+bdev->bd_inode->i_size/512 + bdev->appended_sectors;
 		if (start_sector >= first_backup_sector) {
+/* TODO: if (start_sector > last_sector) { fail the request } */
 			if (start_sector + sector_count > last_sector) {
-				printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld\n");
+				printk("Warning: attempt to read past device (start sector is %lld sector_count is %lld last_sector is %lld\n", start_sector, sector_count, last_sector);
 				sector_count = last_sector - start_sector;
 			}
 			if (rw == READ) {
