@@ -1,10 +1,13 @@
 Upcoming features
 -----------------
 
-Base on DRBD 9.1
-	See WinDRBD 1.2 branch (windrbd-1.2)
+See the windrbd-1.2 branch of this repo
 
-DRBD reactor support
+What's new in version 1.1.23
+----------------------------
+
+Fixed a BSOD that happened when there is an attempt to do
+	I/O past the end of the device.
 
 What's new in version 1.1.22
 ----------------------------
