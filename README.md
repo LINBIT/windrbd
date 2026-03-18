@@ -250,3 +250,4 @@ Version history
  * 1.1.20 (April 1, 2025): Fixed adding volumes while connected
  * 1.1.21 (August 6, 2025): Log rotation for user mode services
  * 1.1.22 (September 1, 2025): Flush registry at the end of install/remove bus device
+ * 1.1.23 (March 18, 2026): Fixed a BSOD when reading starts past the device
