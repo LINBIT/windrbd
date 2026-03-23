@@ -82,4 +82,30 @@
 # define __counted_by(member)
 #endif
 
+#if __has_builtin(__builtin_counted_by_ref) && \
+    !defined(CONFIG_CC_HAS_BROKEN_COUNTED_BY_REF)
+/**
+ * __flex_counter() - Get pointer to counter member for the given
+ *                    flexible array, if it was annotated with __counted_by()
+ * @FAM: Pointer to flexible array member of an addressable struct instance
+ *
+ * For example, with:
+ *
+ *      struct foo {
+ *              int counter;
+ *              short array[] __counted_by(counter);
+ *      } *p;
+ *
+ * __flex_counter(p->array) will resolve to &p->counter.
+ *
+ * Note that Clang may not allow this to be assigned to a separate
+ * variable; it must be used directly.
+ *
+ * If p->array is unannotated, this returns (void *)NULL.
+ */
+#define __flex_counter(FAM)     __builtin_counted_by_ref(FAM)
+#else
+#define __flex_counter(FAM)     ((void *)NULL)
+#endif
+
 #endif

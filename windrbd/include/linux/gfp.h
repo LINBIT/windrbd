@@ -36,4 +36,10 @@ ULONG_PTR __get_free_page(gfp_t flag);
 
 #endif
 
+/* Taken from linux-7.0-rc5 */
+/* Helper macro to avoid gfp flags if they are the default one */
+#define __default_gfp(a,b,...) b
+#define default_gfp(...) __default_gfp(,##__VA_ARGS__,GFP_KERNEL)
+/* End taken from linux-7.0-rc5 */
+
 #endif
