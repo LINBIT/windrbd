@@ -42,6 +42,10 @@ int set_driver_locked_state(int state)
 	if (state == 0) {
 		if (atomic_read(&windrbd_module.refcnt) > 0) {
 			printk("Request for unlocking driver but module is in use (%d).\n", atomic_read(&windrbd_module.refcnt));
+
+printk("BSOD for creating memdump ...\n");
+KeBugCheckEx(0xdeaddeac /* MANUALLY_INITIATED_CRASH */, 42, 67, 28, 7);
+
 			return -EBUSY;
 		} else {
 			printk("Unlocking module by setting AddDevice to NULL, sc stop windrbd should work now.\n");
