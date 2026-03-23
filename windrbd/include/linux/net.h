@@ -4,7 +4,7 @@
 #include <linux/socket.h>
 #include <linux/types.h>	/* for ssize_t */
 #include <linux/net_namespace.h>
-#include <wsk.h>	/* for struct sockaddr */
+// #include <wsk.h>	/* for struct sockaddr */
 
 #define SOCKWQ_ASYNC_NOSPACE	0
 #define SOCKWQ_ASYNC_WAITDATA	1
@@ -16,6 +16,7 @@
 #define SOCK_PASSPIDFD		7
 
 struct socket;
+struct sockaddr_unsized;
 struct kvec;
 struct msghdr;
 
@@ -26,10 +27,10 @@ struct proto_ops {
 	int		(*release)   (struct socket *sock);
 #endif
 	int		(*bind)	     (struct socket *sock,
-				      struct sockaddr *myaddr,
+				      struct sockaddr_unsized *myaddr,
 				      int sockaddr_len);
 	int		(*connect)   (struct socket *sock,
-				      struct sockaddr *vaddr,
+				      struct sockaddr_unsized *vaddr,
 				      int sockaddr_len, int flags);
 #if 0
 	int		(*socketpair)(struct socket *sock1,

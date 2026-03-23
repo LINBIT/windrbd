@@ -42,4 +42,9 @@ static inline void get_page(struct page *page)
 
 extern void *page_address(const struct page *page);
 
+static inline unsigned int compound_order(const struct page *page)
+{
+	return page->order;
+}
+
 #endif

@@ -756,7 +756,7 @@ static int wsk_getname(struct socket *socket, struct sockaddr *uaddr, int peer)
 	return winsock_to_linux_error(status);
 }
 
-static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockaddr_len, int flags)
+static int wsk_connect(struct socket *socket, struct sockaddr_unsized *vaddr, int sockaddr_len, int flags)
 {
 	PIRP		Irp = NULL;
 	NTSTATUS	Status = STATUS_SUCCESS;
@@ -775,7 +775,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr *vaddr, int sockad
 	socket->is_connected = false;
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskConnect(
 		socket->wsk_socket,
-		vaddr,
+		(struct sockaddr*) vaddr,
 		0,
 		Irp);
 
@@ -1536,7 +1536,7 @@ static int socket_receive_thread(void *p)
 /* Must not printk() from in here, might loop forever */
 static int wsk_bind(
 	struct socket *socket,
-	struct sockaddr *myaddr,
+	struct sockaddr_unsized *myaddr,
 	int sockaddr_len
 )
 {
@@ -1554,7 +1554,7 @@ static int wsk_bind(
 
 	Status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskBind(
 		socket->wsk_socket,
-		myaddr,
+		(struct sockaddr*) myaddr,
 		0,
 		Irp);
 

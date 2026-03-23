@@ -353,6 +353,14 @@ int genlmsg_multicast(struct sk_buff *skb, u32 portid,
 	return do_genl_multicast(skb, "events");
 }
 
+int genlmsg_multicast_allns(const struct genl_family *family,
+                            struct sk_buff *skb, u32 portid,
+                            unsigned int group)
+{
+	return do_genl_multicast(skb, "events");
+}
+
+
 int windrbd_join_multicast_group(u32 portid, const char *name, struct _FILE_OBJECT *f)
 {
 	struct genl_multicast_element *m;

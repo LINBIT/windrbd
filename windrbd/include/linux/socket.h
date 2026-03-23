@@ -12,6 +12,25 @@
 /* drbd_headers.h includes this and uses a struct bio * later ... */
 struct bio;
 
+typedef unsigned short __kernel_sa_family_t;
+
+/**
+ * struct sockaddr_unsized - Unspecified size sockaddr for callbacks
+ * @sa_family: Address family (AF_UNIX, AF_INET, AF_INET6, etc.)
+ * @sa_data: Flexible array for address data
+ *
+ * This structure is designed for callback interfaces where the
+ * total size is known via the sockaddr_len parameter. Unlike struct
+ * sockaddr which has a fixed 14-byte sa_data limit or struct
+ * sockaddr_storage which has a fixed 128-byte sa_data limit, this
+ * structure can accommodate addresses of any size, but must be used
+ * carefully.
+ */
+struct sockaddr_unsized {
+	__kernel_sa_family_t	sa_family;	/* address family, AF_xxx */
+	char			sa_data[];	/* flexible address data */
+};
+
 /* Originally somewhere in arch, we put it here, since it is only
  * used for kernel_accept() for now.
  */

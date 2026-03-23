@@ -1435,7 +1435,7 @@ static __attribute__((stdcall)) void receive_a_lot(void *ip_addr_p)
 	kfree(ip_addr->addr);	/* should be NULL ... */
 	kfree(ip_addr);
 
-        err = s->ops->bind(s, (struct sockaddr *)&my_addr, sizeof(my_addr));
+        err = s->ops->bind(s, (struct sockaddr_unsized *)&my_addr, sizeof(my_addr));
 	if (err < 0) {
 		printk("bind returned %d\n", err);
 		sock_release(s);
@@ -1600,7 +1600,7 @@ static __attribute__((stdcall)) void echo_server(void *ip_addr_p)
 	kfree(ip_addr->addr);	/* should be NULL ... */
 	kfree(ip_addr);
 
-        err = s->ops->bind(s, (struct sockaddr *)&my_addr, sizeof(my_addr));
+        err = s->ops->bind(s, (struct sockaddr_unsized *)&my_addr, sizeof(my_addr));
 	if (err < 0) {
 		printk("bind returned %d\n", err);
 		sock_release(s);
@@ -1707,7 +1707,7 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	my_addr.sin_addr.s_addr = 0;
 	my_addr.sin_port = 0;	/* have ip stack assign a port */
 
-        err = s->ops->bind(s, (struct sockaddr *)&my_addr, sizeof(my_addr));
+        err = s->ops->bind(s, (struct sockaddr_unsized *)&my_addr, sizeof(my_addr));
 	if (err < 0) {
 		printk("bind returned %d\n", err);
 		sock_release(s);
@@ -1727,7 +1727,7 @@ static __attribute__((stdcall)) void send_a_lot(void *ip_addr_p)
 	kfree(ip_addr->addr);
 	kfree(ip_addr);
 
-        err = s->ops->connect(s, (struct sockaddr *)&his_addr, sizeof(his_addr), 0);
+        err = s->ops->connect(s, (struct sockaddr_unsized *)&his_addr, sizeof(his_addr), 0);
 	if (err < 0) {
 		printk("connect returned %d\n", err);
 		sock_release(s);

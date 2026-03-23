@@ -90,7 +90,18 @@ struct genl_family
 	u8			parallel_ops:1;
 	/* New with DRBD 9.1: TODO: what does this? */
 	bool	netnsok;
+
+        u8                      n_ops;
+        const struct genl_ops * ops;
+        u8                      n_mcgrps;
+        const struct genl_multicast_group *mcgrps;
+        struct module           *module;
 };
+
+static inline int genl_register_family(struct genl_family *family)
+{
+	return 0;
+}
 
 /**
 * struct genl_info - receiving information
@@ -895,6 +906,20 @@ static inline void *genlmsg_data(const struct genlmsghdr *gnlh)
 
 extern int genlmsg_multicast(struct sk_buff *skb, u32 portid,
 			    unsigned int group, gfp_t flags);
+
+/**
+ * genlmsg_multicast_allns - multicast a netlink message to all net namespaces
+ * @family: the generic netlink family
+ * @skb: netlink message as socket buffer
+ * @portid: own netlink portid to avoid sending to yourself
+ * @group: offset of multicast group in groups array
+ *
+ * This function must hold the RTNL or rcu_read_lock().
+ */
+extern int genlmsg_multicast_allns(const struct genl_family *family,
+                            struct sk_buff *skb, u32 portid,
+                            unsigned int group);
+
 
 /* Those two now patched into drbd_nl.c */
 extern struct genl_ops * get_drbd_genl_ops(u8 cmd);

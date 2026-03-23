@@ -35,7 +35,7 @@ static inline bool bio_has_data(struct bio *bio)
 	return false;
 }
 
-static inline bool bio_no_advance_iter(struct bio *bio)
+static inline bool bio_no_advance_iter(const struct bio *bio)
 {
 /* TODO: writesame? This is in DRBD 9.0 but not in DRBD 9.1 ... */
 #if 0
@@ -61,6 +61,25 @@ static inline void bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
 		/* TODO: It is reasonable to complete bio with error here. */
 }
 
+/* @bytes should be less or equal to bvec[i->bi_idx].bv_len */
+static inline void bio_advance_iter_single(const struct bio *bio,
+					   struct bvec_iter *iter,
+					   unsigned int bytes)
+{
+	iter->bi_sector += bytes >> 9;
+
+	if (bio_no_advance_iter(bio))
+		iter->bi_size -= bytes;
+	else
+		bvec_iter_advance_single(bio->bi_io_vec, iter, bytes);
+}
+
+#define bvec_iter_sectors(iter)	((iter).bi_size >> 9)
+#define bvec_iter_end_sector(iter) ((iter).bi_sector + bvec_iter_sectors((iter)))
+
+#define bio_sectors(bio)	bvec_iter_sectors((bio)->bi_iter)
+#define bio_end_sector(bio)	bvec_iter_end_sector((bio)->bi_iter)
+
 #define bio_iter_iovec(bio, iter)				\
 	bvec_iter_bvec((bio)->bi_io_vec, (iter))
 
@@ -72,6 +91,16 @@ static inline void bio_advance_iter(struct bio *bio, struct bvec_iter *iter,
 
 #define bio_for_each_segment(bvl, bio, iter)				\
 	__bio_for_each_segment(bvl, bio, iter, (bio)->bi_iter)
+
+#define __bio_for_each_bvec(bvl, bio, iter, start)		\
+	for (iter = (start);						\
+	     (iter).bi_size &&						\
+		((bvl = mp_bvec_iter_bvec((bio)->bi_io_vec, (iter))), 1); \
+	     bio_advance_iter_single((bio), &(iter), (bvl).bv_len))
+
+/* iterate over multi-page bvec */
+#define bio_for_each_bvec(bvl, bio, iter)			\
+	__bio_for_each_bvec(bvl, bio, iter, (bio)->bi_iter)
 
 #define bio_iter_last(bvec, iter) ((iter).bi_size == (bvec).bv_len)
 
@@ -145,6 +174,129 @@ extern void bio_endio(struct bio *bio);
 static inline void bio_set_dev(struct bio *bio, struct block_device *bdev)
 {
 	bio->bi_bdev = bdev;
+}
+
+/*
+ * BIO list management for use by remapping drivers (e.g. DM or MD) and loop.
+ *
+ * A bio_list anchors a singly-linked list of bios chained through the bi_next
+ * member of the bio.  The bio_list also caches the last list member to allow
+ * fast access to the tail.
+ */
+struct bio_list {
+	struct bio *head;
+	struct bio *tail;
+};
+
+static inline int bio_list_empty(const struct bio_list *bl)
+{
+	return bl->head == NULL;
+}
+
+static inline void bio_list_init(struct bio_list *bl)
+{
+	bl->head = bl->tail = NULL;
+}
+
+#define BIO_EMPTY_LIST	{ NULL, NULL }
+
+#define bio_list_for_each(bio, bl) \
+	for (bio = (bl)->head; bio; bio = bio->bi_next)
+
+static inline unsigned bio_list_size(const struct bio_list *bl)
+{
+	unsigned sz = 0;
+	struct bio *bio;
+
+	bio_list_for_each(bio, bl)
+		sz++;
+
+	return sz;
+}
+
+static inline void bio_list_add(struct bio_list *bl, struct bio *bio)
+{
+	bio->bi_next = NULL;
+
+	if (bl->tail)
+		bl->tail->bi_next = bio;
+	else
+		bl->head = bio;
+
+	bl->tail = bio;
+}
+
+static inline void bio_list_add_head(struct bio_list *bl, struct bio *bio)
+{
+	bio->bi_next = bl->head;
+
+	bl->head = bio;
+
+	if (!bl->tail)
+		bl->tail = bio;
+}
+
+static inline void bio_list_merge(struct bio_list *bl, struct bio_list *bl2)
+{
+	if (!bl2->head)
+		return;
+
+	if (bl->tail)
+		bl->tail->bi_next = bl2->head;
+	else
+		bl->head = bl2->head;
+
+	bl->tail = bl2->tail;
+}
+
+static inline void bio_list_merge_init(struct bio_list *bl,
+		struct bio_list *bl2)
+{
+	bio_list_merge(bl, bl2);
+	bio_list_init(bl2);
+}
+
+static inline void bio_list_merge_head(struct bio_list *bl,
+				       struct bio_list *bl2)
+{
+	if (!bl2->head)
+		return;
+
+	if (bl->head)
+		bl2->tail->bi_next = bl->head;
+	else
+		bl->tail = bl2->tail;
+
+	bl->head = bl2->head;
+}
+
+static inline struct bio *bio_list_peek(struct bio_list *bl)
+{
+	return bl->head;
+}
+
+static inline struct bio *bio_list_pop(struct bio_list *bl)
+{
+	struct bio *bio = bl->head;
+
+	if (bio) {
+		bl->head = bl->head->bi_next;
+		if (!bl->head)
+			bl->tail = NULL;
+
+		bio->bi_next = NULL;
+	}
+
+	return bio;
+}
+
+static inline struct bio *bio_list_get(struct bio_list *bl)
+{
+	struct bio *bio = bl->head;
+
+	bl->head = bl->tail = NULL;
+
+	return bio;
 }
 
 #endif

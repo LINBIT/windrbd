@@ -241,7 +241,7 @@ static int open_syslog_socket(void)
 
 		err = sock_create_kern(&init_net, AF_INET, SOCK_DGRAM, IPPROTO_UDP, &printk_udp_socket);
 		if (err == 0) {
-			status = printk_udp_socket->ops->bind(printk_udp_socket, (struct sockaddr *) &local, sizeof(local));
+			status = printk_udp_socket->ops->bind(printk_udp_socket, (struct sockaddr_unsized *) &local, sizeof(local));
 			if (!NT_SUCCESS(status)) {
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Failed to Bind socket, status is %x\n", status);
 

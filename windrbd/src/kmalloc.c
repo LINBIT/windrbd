@@ -63,7 +63,7 @@ void kvfree(const void *data)
 	kfree(data);
 }
 
-struct page *alloc_page(gfp_t flag)
+struct page *alloc_pages(gfp_t flag, int order)
 {
 	struct page *p = kzalloc(sizeof(struct page), flag);
 	if (p == NULL)
@@ -74,14 +74,20 @@ struct page *alloc_page(gfp_t flag)
 		 * PAGE_SIZE itself is always 4096 under Windows.
 		 */
 
-	p->addr = kmalloc(PAGE_SIZE, flag);
+	p->addr = kmalloc(PAGE_SIZE << order, flag);
 	if (!p->addr){
 		kfree(p);
 		return NULL;
 	}
+	p->order = order;
 	kref_init(&p->kref);
 
 	return p;
+}
+
+struct page *alloc_page(gfp_t flag)
+{
+	return alloc_pages(flag, 0);
 }
 
 void __free_page(struct page *page)

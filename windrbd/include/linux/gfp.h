@@ -27,6 +27,7 @@ ULONG_PTR __get_free_page_debug(gfp_t flag, const char *file, int line, const ch
 #else
 
 struct page *alloc_page(gfp_t flag);
+struct page *alloc_pages(gfp_t flag, int order);
 void __free_page(struct page *page);
 void free_pages(ULONG_PTR addr, int order);
 void free_page(ULONG_PTR addr);
