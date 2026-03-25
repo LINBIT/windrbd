@@ -20,8 +20,17 @@ struct page {
 	struct list_head lru;
 	struct kref kref;
 	int is_unmapped;
-	int is_system_buffer;	/* do not kfree(page->addr) but kfree(page) */
-	int order;	/* see alloc_pages() */
+	int is_system_buffer;		/* do not kfree(page->addr)
+					 * but kfree(page). We got the
+					 * memory from the Windows kernel
+					 * (or user space)
+					 */
+
+	int order;			/* see alloc_pages() */
+	struct page *first_page;	/* Compound pages referencing
+					 * the first page. NULL for the
+					 * first page.
+					 */
 };
 
 #define page_private(_page)		((_page)->private)

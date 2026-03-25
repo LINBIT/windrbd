@@ -65,24 +65,35 @@ void kvfree(const void *data)
 
 struct page *alloc_pages(gfp_t flag, int order)
 {
-	struct page *p = kzalloc(sizeof(struct page), flag);
-	if (p == NULL)
+	int i;
+		/* Example: for order = 2 (16KB of contiguous memory)
+		 * we need 4 struct pages.
+		 */
+	struct page *pages = kzalloc(sizeof(struct page) << order, flag);
+	if (pages == NULL)
 		return NULL;
 
 		/* Under Windows this is defined to align to a page
 		 * of PAGE_SIZE bytes if size is >= PAGE_SIZE.
 		 * PAGE_SIZE itself is always 4096 under Windows.
 		 */
-
-	p->addr = kmalloc(PAGE_SIZE << order, flag);
-	if (!p->addr){
-		kfree(p);
+	void *mem = kmalloc(PAGE_SIZE << order, flag);
+	if (!mem) {
+		kfree(pages);
 		return NULL;
 	}
-	p->order = order;
-	kref_init(&p->kref);
 
-	return p;
+	for (i = 0; i < (1 << order); i++) {
+		pages[i].addr = mem + PAGE_SIZE*i;
+		pages[i].order = order;
+		kref_init(&pages[i].kref);
+	}
+	for (i = 1; i < (1 << order); i++) {
+		pages[i].first_page = pages;
+		get_page(pages);
+	}
+
+	return pages;
 }
 
 struct page *alloc_page(gfp_t flag)
@@ -92,6 +103,20 @@ struct page *alloc_page(gfp_t flag)
 
 void __free_page(struct page *page)
 {
+	if (page->first_page) {
+		put_page(page->first_page);
+
+			/* Don't free anything here. The pointers point
+			 * to memory inside the first page (both struct
+			 * page and memory data), so we'll get a BSOD
+			 * when freeing something in here. Also the
+			 * reference counting ensures that the first
+			 * page is only freed when all compound pages
+			 * are freed.
+			 */
+		return;
+	}
+
 	if (!page->is_system_buffer)
 		kfree(page->addr);
 
