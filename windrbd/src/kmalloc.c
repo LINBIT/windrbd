@@ -90,7 +90,6 @@ struct page *alloc_pages(gfp_t flag, int order)
 	}
 	for (i = 1; i < (1 << order); i++) {
 		pages[i].first_page = pages;
-		get_page(pages);
 	}
 
 	return pages;
@@ -104,7 +103,7 @@ struct page *alloc_page(gfp_t flag)
 void __free_page(struct page *page)
 {
 	if (page->first_page) {
-		put_page(page->first_page);
+		printk("Warning: Attempt to free a tail page (page is %p page->first_page is %p)\n", page, page->first_page);
 
 			/* Don't free anything here. The pointers point
 			 * to memory inside the first page (both struct
@@ -112,7 +111,7 @@ void __free_page(struct page *page)
 			 * when freeing something in here. Also the
 			 * reference counting ensures that the first
 			 * page is only freed when all compound pages
-			 * are freed.
+			 * are freed (see get_page/put_page).
 			 */
 		return;
 	}

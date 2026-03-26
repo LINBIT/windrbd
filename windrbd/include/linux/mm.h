@@ -29,7 +29,10 @@ extern void free_page_kref(struct kref *kref);
 
 static inline void put_page(struct page *page)
 {
-	kref_put(&page->kref, free_page_kref);
+	if (page->first_page)
+		kref_put(&page->first_page->kref, free_page_kref);
+	else
+		kref_put(&page->kref, free_page_kref);
 }
 
 
@@ -37,7 +40,10 @@ static inline void put_page(struct page *page)
 
 static inline void get_page(struct page *page)
 {
-	kref_get(&page->kref);
+	if (page->first_page)
+		kref_get(&page->first_page->kref);
+	else
+		kref_get(&page->kref);
 }
 
 extern void *page_address(const struct page *page);
