@@ -7,7 +7,8 @@
 
 #ifdef KMALLOC_DEBUG
 
-struct page *alloc_page_debug(int flag, const char *file, int line, const char *func);
+struct page *alloc_page_debug(gfp_t flag, const char *file, int line, const char *func);
+struct page *alloc_pages_debug(gfp_t flag, int order, const char *file, int line, const char *func);
 void __free_page_debug(struct page *page, const char *file, int line, const char *func);
 void free_page_kref_debug(struct kref *kref, const char *file, int line, const char *func);
 void free_pages_debug(ULONG_PTR addr, int order, const char *file, int line, const char *func);
@@ -16,6 +17,7 @@ ULONG_PTR __get_free_pages_debug(gfp_t flag, int order, const char *file, int li
 ULONG_PTR __get_free_page_debug(gfp_t flag, const char *file, int line, const char *func);
 
 #define alloc_page(flag) alloc_page_debug(flag,  __FILE__, __LINE__, __func__)
+#define alloc_pages(flag, order) alloc_pages_debug(flag, order, __FILE__, __LINE__, __func__)
 #define __free_page(page) __free_page_debug(page, __FILE__, __LINE__, __func__)
 #define free_page(addr) free_page_debug(addr, __FILE__, __LINE__, __func__)
 #define free_pages(addr, order) free_pages_debug(addr, order, __FILE__, __LINE__, __func__)

@@ -18,7 +18,10 @@ extern void _free_page_kref(struct kref *kref);
 
 static inline void put_page_debug(struct page *page, const char *file, int line)
 {
-	kref_put(&page->kref, _free_page_kref);
+	if (page->first_page)
+		kref_put(&page->first_page->kref, _free_page_kref);
+	else
+		kref_put(&page->kref, _free_page_kref);
 }
 
 #define put_page(kref) put_page_debug(kref, __FILE__, __LINE__)

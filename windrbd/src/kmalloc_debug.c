@@ -257,34 +257,59 @@ void shutdown_kmalloc_debug(void)
 	dump_memory_allocations(1);
 }
 
-struct page *alloc_page_debug(int flag, const char *file, int line, const char *func)
+struct page *alloc_pages_debug(gfp_t flag, int order, const char *file, int line, const char *func)
 {
-	struct page *p = kzalloc_debug(sizeof(struct page), flag, file, line, func);
-	if (!p)	{
-		printk("alloc_page struct page failed\n");
+	int i;
+		/* Example: for order = 2 (16KB of contiguous memory)
+		 * we need 4 struct pages.
+		 */
+	struct page *pages = kzalloc_debug(sizeof(struct page) << order, flag, file, line, func);
+	if (pages == NULL)
 		return NULL;
-	}
 
 		/* Under Windows this is defined to align to a page
 		 * of PAGE_SIZE bytes if size is >= PAGE_SIZE.
 		 * PAGE_SIZE itself is always 4096 under Windows.
 		 */
-
-	p->addr = kmalloc_debug(PAGE_SIZE, flag, file, line, func);
-	if (!p->addr)	{
-		kfree_debug(p, file, line, func);
-		printk("Warning: alloc_page failed.\n");
+	void *mem = kmalloc_debug(PAGE_SIZE << order, flag, file, line, func);
+	if (!mem) {
+		kfree(pages);
 		return NULL;
 	}
-	kref_init(&p->kref);
 
-// printk("alloc_page called from %s:%d %s(). Refcount is %d, page is %p, page->addr is %p\n", file, line, func, atomic_read(&p->kref.refcount.refs), p, p->addr);
+	for (i = 0; i < (1 << order); i++) {
+		pages[i].addr = mem + PAGE_SIZE*i;
+		pages[i].order = order;
+		kref_init(&pages[i].kref);
+	}
+	for (i = 1; i < (1 << order); i++) {
+		pages[i].first_page = pages;
+	}
 
-	return p;
+	return pages;
+}
+
+struct page *alloc_page_debug(gfp_t flag, const char *file, int line, const char *func)
+{
+	return alloc_pages_debug(flag, 0, file, line, func);
 }
 
 void __free_page_debug(struct page *page, const char *file, int line, const char *func)
 {
+	if (page->first_page) {
+		printk("Warning: Attempt to free a tail page (page is %p page->first_page is %p)\n", page, page->first_page);
+
+			/* Don't free anything here. The pointers point
+			 * to memory inside the first page (both struct
+			 * page and memory data), so we'll get a BSOD
+			 * when freeing something in here. Also the
+			 * reference counting ensures that the first
+			 * page is only freed when all compound pages
+			 * are freed (see get_page/put_page).
+			 */
+		return;
+	}
+
 // printk("__free_page_debug called from %s:%d %s(). Refcount is %d, page is %p, page->addr is %p\n", file, line, func, atomic_read(&page->kref.refcount.refs), page, page->addr);
 
 	if (!page->is_system_buffer)
