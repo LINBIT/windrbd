@@ -97,7 +97,7 @@ endif
 ifndef USE_CLANG
 CC=$(ARCH)-w64-mingw32-gcc
 else
-CC=/usr/bin/clang --target=$(ARCH)-pc-mingw32-w64
+CC=clang --target=$(ARCH)-pc-mingw32-w64
 endif
 RC=$(ARCH)-w64-mingw32-windres
 MC=$(ARCH)-w64-mingw32-windmc
@@ -434,7 +434,7 @@ install: default
 NEXUS ?= https://nexus.at.linbit.com/repository/windows/WinDRBD
 NEXUS_NETRC ?= /etc/nexus-password
 
-upload: package-in-docker
+upload: default
 	$(call run,curl -f --netrc-file $(NEXUS_NETRC) --upload-file inno-setup/install-$(FULL_VERSION).exe $(NEXUS)/install-$(FULL_VERSION).exe,UPLOAD,$(NEXUS)/install-$(FULL_VERSION).exe)
 
 # This now generates the cocci patched DRBD sources in drbd-tmp
