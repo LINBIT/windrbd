@@ -10,6 +10,7 @@ struct wait_queue_entry
 {
 	struct list_head entry;
 	KEVENT windows_event;
+	struct task_struct *owning_thread;
 };
 
 struct wait_queue_head
