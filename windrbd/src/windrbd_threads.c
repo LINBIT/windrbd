@@ -205,6 +205,11 @@ void windrbd_reap_all_threads(void)
 	if (count == 0) {
 		printk("There is still a thread running, unloading will now work.\n");
 		printk("You have to reboot the machine in order to load the updated driver.\n");
+
+/*
+printk("BSOD for creating memdump ...\n");
+KeBugCheckEx(0xdeaddeab, 42, 67, 28, 7);
+*/
 	}
 }
 
@@ -328,15 +333,14 @@ struct task_struct *kthread_create(int (*threadfn)(void *), void *data, const ch
 	t->is_root = current->is_root;	/* inherit user ID */
 	spin_lock_init(&t->thread_started_lock);
 
-	/* TODO: this should be a NotificationEvent. UNIX Signals
+	/* Done: this should be a NotificationEvent. UNIX Signals
 	 * should remain signalled until explicitly removed
-	 * by flush_signals(). Change it in the 1.2 branch.
+	 * by flush_signals(). Changed it in the 1.2 branch.
 	 */
 	KeInitializeEvent(&t->sig_event, NotificationEvent, FALSE);
-	// KeInitializeEvent(&t->sig_event, SynchronizationEvent, FALSE);
 	KeInitializeEvent(&t->start_event, SynchronizationEvent, FALSE);
 	t->has_sig_event = TRUE;
-	t->sig = -1;
+	t->sig = 0;	/* No signal pending */
 
 		/* ignore if string is too long */
 	va_start(args, name);
