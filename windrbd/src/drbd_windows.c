@@ -2994,16 +2994,19 @@ static void windrbd_destroy_block_device(struct kref *kref)
 
 printk("ZAKZAK %d %p\n", atomic_read(&kref->refcount.refs), bdev);
 
-	if (!bdev->is_backing_device && bdev->windows_device != NULL) {
-		windrbd_remove_windows_device(bdev);
-		windrbd_destroy_io_workqueue(bdev);
+	if (bdev->is_backing_device) {
+		if (bdev->file_object != NULL)
+			ObDereferenceObject(bdev->file_object);
+		list_del(&bdev->backing_devices_list);
+	} else {
+		if (bdev->windows_device != NULL) {
+			windrbd_remove_windows_device(bdev);
+			windrbd_destroy_io_workqueue(bdev);
+		}
 	}
 
 	kfree(bdev->path_to_device.Buffer);
 	bdev->path_to_device.Buffer = NULL;
-
-	if (bdev->file_object != NULL)
-		ObDereferenceObject(bdev->file_object);
 
 	if (bdev->bd_disk != NULL)
 		bdev->bd_disk->part0 = NULL;
