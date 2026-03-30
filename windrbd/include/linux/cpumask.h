@@ -45,6 +45,7 @@ static inline void cpumask_copy(struct cpumask *dstp,
 
 static inline void free_cpumask_var(cpumask_var_t mask)
 {
+	kfree(mask);
 }
 
 static inline bool zalloc_cpumask_var(cpumask_var_t *mask, gfp_t flags)
