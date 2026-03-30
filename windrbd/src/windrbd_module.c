@@ -43,8 +43,12 @@ int set_driver_locked_state(int state)
 		if (atomic_read(&windrbd_module.refcnt) > 0) {
 			printk("Request for unlocking driver but module is in use (%d).\n", atomic_read(&windrbd_module.refcnt));
 
-printk("BSOD for creating memdump ...\n");
-KeBugCheckEx(0xdeaddeac /* MANUALLY_INITIATED_CRASH */, 42, 67, 28, 7);
+// TODO: Observe if this still happens, it seems to fixed with 1.2.8
+// If it happens (module in use), enable these lines, compile with
+// clang and try again to trigger it:
+//
+// printk("BSOD for creating memdump ...\n");
+// KeBugCheckEx(0xdeaddeac, 42, 67, 28, 7);
 
 			return -EBUSY;
 		} else {
