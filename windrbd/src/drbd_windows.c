@@ -2235,6 +2235,8 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 	INIT_LIST_HEAD(&block_device->io_request_list);
 	spin_lock_init(&block_device->io_request_lock);
 
+printk("ZAKZAK block_device is %p\n", block_device);
+
 	return block_device;
 }
 
@@ -2277,15 +2279,25 @@ struct gendisk *blk_alloc_disk(int unused)
 	return disk;
 }
 
-/* TODO: we should have a refcount here ... */
+/* We are using the bdev's (part0) reference count here. We
+ * only have one disk for one block_device (and vice versa)
+ * so if the bdev gets freed, we also free ourselves.
+ */
+
 void put_disk(struct gendisk *disk)
 {
-	kfree(disk);
+	bdput(disk->part0);
+
+		/* Meaning that the bdev was freed */
+	if (disk->part0 == NULL) {
+		blk_cleanup_queue(disk->queue);
+		kfree(disk);
+	}
 }
 
+/* For DRBD < 9.2.x */
 void blk_cleanup_disk(struct gendisk *disk)
 {
-	blk_cleanup_queue(disk->queue);
 	/* TODO: and also disk->part0 ?? */
 	put_disk(disk);
 }
@@ -2296,6 +2308,7 @@ void blk_cleanup_disk(struct gendisk *disk)
  */
 struct block_device *bdgrab(struct block_device *bdev)
 {
+printk("ZAKZAK %d\n", atomic_read(&bdev->kref.refcount.refs));
 	kref_get(&bdev->kref);
 	return bdev;
 }
@@ -2384,6 +2397,7 @@ int ___ratelimit(struct ratelimit_state *rs, const char *func)
 	return 1;
 }
 
+/*
 void delete_block_device(struct kref *kref)
 {
 	struct block_device *bdev = container_of(kref, struct block_device, kref);
@@ -2399,6 +2413,7 @@ void delete_block_device(struct kref *kref)
 	list_del(&bdev->backing_devices_list);
 	kfree(bdev);
 }
+*/
 
 static NTSTATUS resolve_nt_kernel_link(UNICODE_STRING *upath, UNICODE_STRING *link_target)
 {
@@ -2664,11 +2679,17 @@ void destroy_file(struct kref *f_kref)
 {
 	struct file *f = container_of(f_kref, struct file, kref);
 
+printk("ZAKZAK f->bdev is %p\n", f->bdev);
+
 	kfree(f);
 }
 
 extern void fput(struct file *f)
 {
+printk("ZAKZAK f->bdev is %p kref is %d\n", f->bdev, atomic_read(&f->kref.refcount.refs));
+	if (f->bdev && f->bdev->bd_disk)
+		put_disk(f->bdev->bd_disk);
+
 	kref_put(&f->kref, destroy_file);
 }
 
@@ -2971,13 +2992,18 @@ static void windrbd_destroy_block_device(struct kref *kref)
 
 	del_timer(&bdev->disk_timeout_timer);
 
-	if (bdev->windows_device != NULL) {
+printk("ZAKZAK %d %p\n", atomic_read(&kref->refcount.refs), bdev);
+
+	if (!bdev->is_backing_device && bdev->windows_device != NULL) {
 		windrbd_remove_windows_device(bdev);
 		windrbd_destroy_io_workqueue(bdev);
 	}
 
 	kfree(bdev->path_to_device.Buffer);
 	bdev->path_to_device.Buffer = NULL;
+
+	if (bdev->file_object != NULL)
+		ObDereferenceObject(bdev->file_object);
 
 	if (bdev->bd_disk != NULL)
 		bdev->bd_disk->part0 = NULL;
@@ -3006,6 +3032,7 @@ static void windrbd_destroy_block_device(struct kref *kref)
 
 void bdput(struct block_device *this_bdev)
 {
+printk("ZAKZAK %d %p\n", atomic_read(&this_bdev->kref.refcount.refs), this_bdev);
 	kref_put(&this_bdev->kref, windrbd_destroy_block_device);
 }
 
@@ -3075,11 +3102,13 @@ int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 	return -EIO;
 }
 
+/*
 void blkdev_put(struct block_device *bdev, fmode_t mode)
 {
         struct block_device *b = bdev->bd_parent ? bdev->bd_parent : bdev;
         kref_put(&b->kref, delete_block_device);
 }
+*/
 
 int kobject_uevent(struct kobject *kobj, enum kobject_action action)
 {
