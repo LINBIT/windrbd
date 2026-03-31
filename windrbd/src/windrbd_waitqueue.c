@@ -152,7 +152,6 @@ void prepare_to_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e
 	thread->interruptible = interruptible;
 	thread->wait_queue = w;
 	thread->wait_queue_entry = e;
-	e->owning_thread = thread;
 
 	if (list_empty(&e->entry)) {
 		list_add(&e->entry, &w->head);
@@ -167,7 +166,6 @@ void finish_wait_debug(struct wait_queue_head *w, struct wait_queue_entry *e, co
 
 	spin_lock_irqsave(&w->lock, flags);
 
-	thread->wait_queue_entry->owning_thread = NULL;
 	thread->wait_queue = NULL;
 	thread->wait_queue_entry = NULL;
 
