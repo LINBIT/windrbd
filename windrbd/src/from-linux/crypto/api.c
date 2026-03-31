@@ -739,7 +739,9 @@ extern void init_crc32();
 extern void init_crc32c();
 extern void crypto_algapi_init();
 extern int libcrc32c_mod_init();
+extern int libcrc32c_mod_fini();
 extern int hmac_module_init(void);
+extern int hmac_module_exit(void);
 
 
 void init_crypto(void)
@@ -753,6 +755,12 @@ void init_crypto(void)
 	libcrc32c_mod_init();
 	hmac_module_init();
 	/* add more initializers here */
+}
+
+void shutdown_crypto(void)
+{
+	libcrc32c_mod_fini();
+	hmac_module_exit();
 }
 
 MODULE_DESCRIPTION("Cryptographic core API");

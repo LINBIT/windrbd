@@ -391,6 +391,8 @@ void __attribute__((stdcall)) mvolUnload(IN PDRIVER_OBJECT DriverObject)
 	destroy_workqueue(system_wq);
 	printk("System workqueue destroyed.\n");
 
+	shutdown_crypto();
+
 	RtlInitUnicodeString(&linkUnicode, L"\\DosDevices\\" WINDRBD_ROOT_DEVICE_NAME);
 	status = IoDeleteSymbolicLink(&linkUnicode);
 	if (!NT_SUCCESS(status))

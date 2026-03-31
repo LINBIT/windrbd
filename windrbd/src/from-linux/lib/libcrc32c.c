@@ -60,7 +60,7 @@ int __init libcrc32c_mod_init(void)
 	return PTR_ERR_OR_ZERO(tfm);
 }
 
-static void __exit libcrc32c_mod_fini(void)
+void __exit libcrc32c_mod_fini(void)
 {
 	crypto_free_shash(tfm);
 }

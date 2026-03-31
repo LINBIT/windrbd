@@ -191,5 +191,6 @@ void PrintfSerial(char *fmt, ...);
 
 /* crypto port from Linux */
 void init_crypto(void);
+void shutdown_crypto(void);
 
 #endif

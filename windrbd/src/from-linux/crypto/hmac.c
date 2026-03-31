@@ -271,7 +271,7 @@ int __init hmac_module_init(void)
 	return hmac_create_with_name(&hmac_tmpl, "sha1");
 }
 
-static void __exit hmac_module_exit(void)
+void __exit hmac_module_exit(void)
 {
 	crypto_unregister_template(&hmac_tmpl);
 }
