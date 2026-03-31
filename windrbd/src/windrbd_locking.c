@@ -509,7 +509,17 @@ void rcu_read_unlock(void)
 
 void synchronize_rcu(void)
 {
-	wait_event(nobody_in_rcu_read_lock, atomic_read(&rcu_counter) == 0);
+	KIRQL flags;
+
+	spin_lock_irqsave(&rcu_lock, flags);
+	if (atomic_read(&rcu_counter) == 0) {
+		free_all_rcu_heads();
+		free_all_rcu_pointers();
+		spin_unlock_irqrestore(&rcu_lock, flags);
+	} else {
+		spin_unlock_irqrestore(&rcu_lock, flags);
+		wait_event(nobody_in_rcu_read_lock, atomic_read(&rcu_counter) == 0);
+	}
 }
 
 void call_rcu(struct rcu_head *head, rcu_callback_t func)
