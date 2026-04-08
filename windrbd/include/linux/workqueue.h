@@ -91,6 +91,7 @@ struct work_struct {
 	struct workqueue_struct *queue;
 	struct mutex the_mutex;
 	bool cancelled;
+	bool will_delete_work;
 };
 
 extern struct workqueue_struct *system_wq;
@@ -161,6 +162,7 @@ static inline bool schedule_work(struct work_struct *work)
 		PREPARE_WORK((_work), (_func));                         \
 		(_work)->queue = NULL;					\
 		(_work)->cancelled = false;				\
+		(_work)->will_delete_work = false;			\
 	} while (0)
 
 #define INIT_WORK(_work, _func)                                         \

@@ -69,6 +69,7 @@ static int run_singlethread_workqueue(void *param)
 	struct work_struct *w;
 	int ret;
 	unsigned long flags;
+	bool wdw;
 
 	while (1) {
 		ret = wait_event_interruptible(wq->there_is_work, !list_empty(&wq->work_list));
@@ -84,23 +85,36 @@ static int run_singlethread_workqueue(void *param)
 		if (w == NULL)
 			continue;
 
-		mutex_lock(&w->the_mutex);
+		wdw = w->will_delete_work;
+		if (!wdw) {
+			mutex_lock(&w->the_mutex);
+		} else {/* must not touch w after calling func, so
+			 * we cleanup here. cancel_work is not defined
+			 * to work when the handler deletes the work
+			 * anyway.
+			 */
+			spin_lock_irqsave(&wq->work_list_lock, flags);
+			list_del_init(&w->in_progress_list);
+			w->queue = NULL;	/* done with it */
+			spin_unlock_irqrestore(&wq->work_list_lock, flags);
+		}
 		if (!w->cancelled) {
 			if (w->func == NULL)
 				printk("ARGHHH func is NULL in work %p!!\n", w);
 			w->func(w);
 		}
-		mutex_unlock(&w->the_mutex);
+		if (!wdw) {
+			mutex_unlock(&w->the_mutex);
 
 			/* either on in_progress_list or on a
 			 * active_list of a flush_workqueue.
 			 */
 
-		spin_lock_irqsave(&wq->work_list_lock, flags);
-		list_del_init(&w->in_progress_list);
-		w->queue = NULL;	/* done with it */
-		spin_unlock_irqrestore(&wq->work_list_lock, flags);
-
+			spin_lock_irqsave(&wq->work_list_lock, flags);
+			list_del_init(&w->in_progress_list);
+			w->queue = NULL;	/* done with it */
+			spin_unlock_irqrestore(&wq->work_list_lock, flags);
+		}
 		wake_up(&wq->a_work_has_finished);
 	}
 	kref_put(&wq->kref, really_destroy_workqueue);
