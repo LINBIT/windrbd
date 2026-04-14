@@ -205,11 +205,6 @@ void windrbd_reap_all_threads(void)
 	if (count == 0) {
 		printk("There is still a thread running, unloading will now work.\n");
 		printk("You have to reboot the machine in order to load the updated driver.\n");
-
-/*
-printk("BSOD for creating memdump ...\n");
-KeBugCheckEx(0xdeaddeab, 42, 67, 28, 7);
-*/
 	}
 }
 
