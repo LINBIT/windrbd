@@ -1,3 +1,22 @@
+What's new in version 1.2.9
+---------------------------
+
+DRBD 9.2.17 / DRBD 9.3.1 support
+
+Support compound pages (used by DRBD 9.3.1)
+
+Fixed several memory leaks
+
+Fixed use after free in drbd_destroy_device / workqueue
+
+Fixed start sector out of range check
+
+Fixed synchronize RCU if called before driver unload
+
+Fixed signal pending on task creation
+
+Compile binary packages with clang
+
 What's new in version 1.2.8
 ---------------------------
 
