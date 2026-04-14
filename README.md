@@ -277,3 +277,4 @@ Version history
  * 1.2.6 (Dec 01, 2025): DRBD 9.3.0 support
  * 1.2.7 (Feb 09, 2026): Fixed a bug that caused connection to Linux DRBD fail
  * 1.2.8 (Mar 02, 2026): Linux crypto framework, sha1 algorithm, DRBD reactor support
+ * 1.2.9 (Apr 14, 2026): DRBD 9.2.17 / DRBD 9.3.1 support, clang packages, some fixes
