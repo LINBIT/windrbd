@@ -161,10 +161,19 @@ package-in-docker:
 
 ifeq ($(ARCH), i686)
 DRIVER_ENTRY=_DriverEntry@8
+BUILD_DRBD_UTILS=
 endif
 
 ifeq ($(ARCH), x86_64)
 DRIVER_ENTRY=DriverEntry
+BUILD_DRBD_UTILS=drbd-utils
+endif
+
+
+ifdef DRIVER_DIR
+BUILD_WINDRBD=versioninfo
+else
+BUILD_WINDRBD=all
 endif
 
 DEFINES=-D WINNT=1 -D __KERNEL__=1 -D __BYTE_ORDER=1 -D __LITTLE_ENDIAN=1 -D __LITTLE_ENDIAN_BITFIELD -D COMPAT_HAVE_BOOL_TYPE=1 -DKBUILD_MODNAME='"drbd"' -D CONFIG_WINDOWS=1 -D CONFIG_CRYPTO_HMAC=y
@@ -410,10 +419,12 @@ ifdef OUTPUT_FILE_NAME
 EXTRA_ISCC_DEFINES+=-DOutputFileName=$(OUTPUT_FILE_NAME)
 endif
 
-package: all drbd-utils
+# Don't build utils for i686, there is no compiler currently
+# Don't build WinDRBD driver when DRIVER_DIR is given (makes no sense)
+package: $(BUILD_WINDRBD) $(BUILD_DRBD_UTILS)
 	$(call run,( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=..\\drbd-utils /DWindrbdDriverDirectory=$(DRIVER_DIR) /DArch=$(ARCH) $(EXTRA_ISCC_DEFINES)) > inno-setup.log 2>&1 || ( cat inno-setup.log && false ),SETUP,'windrbd (see inno-setup.log for logs)')
 	tail -n 2 inno-setup.log
-	$(call run,( cp windrbd.sys inno-setup/$(FULL_VERSION).sys ),CP,inno-setup/$(FULL_VERSION).sys)
+	$(call run,( cp windrbd.sys inno-setup/$(FULL_VERSION).sys 2>/dev/null || : ),CP,inno-setup/$(FULL_VERSION).sys)
 	$(call run,( cp windrbd.pdb inno-setup/$(FULL_VERSION).pdb 2>/dev/null || : ),CP,inno-setup/$(FULL_VERSION).pdb)
 
 docker:
@@ -473,8 +484,10 @@ else
 TARGETS=$(MAKECMDGOALS)
 endif
 
+ifeq ($(DRIVER_DIR),)
 ifeq ($(TARGETS),$(filter-out clean help default package-in-docker pull-docker all-in-docker docker docker-fc37 docker-cygwin docker-wine64 drbd-utils-clean with-docker,$(TARGETS)))
 -include $(all-dep)
+endif
 endif
 
 COCCI_SCRIPT=\
