@@ -23,3 +23,6 @@ windrbd/msg00002.bin
 windrbd/include/windrbd_version.h
 
 *.log
+
+# this must not be published:
+crypto/linbit-2025.*

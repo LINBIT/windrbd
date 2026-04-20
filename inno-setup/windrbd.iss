@@ -128,6 +128,7 @@ Source: "{#WindrbdSource}\netio-binary\netio.sys"; DestDir: "{app}"; Flags: igno
 #endif
 Source: "{#WindrbdSource}\misc\drbd.cgi"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\misc\ipxe-windrbd.pxe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WindrbdSource}\crypto\*.cer"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
@@ -685,6 +686,28 @@ begin
 	Result:= not driverWasUnloaded;
 end;
 
+procedure AddCertificates;
+var ResultCode: integer;
+    CommandOutput: string;
+
+begin
+	if UpperCase(ExpandConstant('{param:installcertificates|no}')) = 'YES' then
+	begin
+		if not ExecWithLogging(ExpandConstant('{win}')+'\system32\certutil.exe', '-addstore -f root linbit-2025.cer', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+		begin
+			Log('Could not run '+ExpandConstant('{win}')+'\system32\certutil.exe');
+		end;
+		if not ExecWithLogging(ExpandConstant('{win}')+'\system32\certutil.exe', '-addstore "TrustedPublisher" linbit-2025.cer', ExpandConstant('{app}'), '', SW_HIDE, ewWaitUntilTerminated, ResultCode, CommandOutput) then
+		begin
+			Log('Could not run '+ExpandConstant('{win}')+'\system32\certutil.exe');
+		end;
+	end
+	else
+	begin
+		Log('certificates not installed. Use /installcertificates=yes to install certificates (or install them manually)');
+	end;
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var root: string;
 
@@ -794,6 +817,7 @@ begin
 			LoggerWasStarted := true;
 			UmHelperWasStarted := true;
 		end;
+		AddCertificates();
 	end;
 	if CurStep = ssPostInstall then begin
 		WriteWinDRBDRootPath();
