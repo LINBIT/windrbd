@@ -225,7 +225,10 @@ begin
 
 	Result := Exec(ExpandConstant('{cmd}'), Command, WorkingDir, ShowCmd, Wait, ResultCode);
 	if not Result then
+	begin
+		Log(Format('Exec %s failed, ResultCode is %d (meaning %s)', [ Command, ResultCode, SysErrorMessage(ResultCode) ]));
 		Exit;
+	end;
 
 	LoadStringFromFile(TempFilename, ResultString);  { Cannot fail }
 	DeleteFile(TempFilename);
