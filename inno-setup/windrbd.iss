@@ -820,9 +820,9 @@ begin
 			LoggerWasStarted := true;
 			UmHelperWasStarted := true;
 		end;
-		AddCertificates();
 	end;
 	if CurStep = ssPostInstall then begin
+		AddCertificates();
 		WriteWinDRBDRootPath();
 		InstallUserModeServices();
 		PatchRegistry();
