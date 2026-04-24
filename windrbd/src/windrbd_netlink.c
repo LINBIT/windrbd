@@ -571,12 +571,25 @@ static int _genl_ops(struct genl_ops * pops, struct genl_info * pinfo)
 	if (pops->doit) {
 		int ret;
 		struct sk_buff *dummy_skb;
+			/* DRBD does not use this struct: initialize it in
+			 * case this changes one day:
+			 */
+		struct genl_split_ops dummy_split_ops;
 
 		dummy_skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
 		if (dummy_skb == NULL)
 			return -ENOMEM;
 
+		if (the_windrbd_netlink_family->pre_doit) {
+			ret = the_windrbd_netlink_family->pre_doit(&dummy_split_ops, dummy_skb, pinfo);
+			if (ret)
+				goto out;
+		}
 		ret = pops->doit(dummy_skb, pinfo);
+		if (the_windrbd_netlink_family->post_doit)
+			the_windrbd_netlink_family->post_doit(&dummy_split_ops, dummy_skb, pinfo);
+
+out:
 		nlmsg_free(dummy_skb);
 		return ret;
 	}

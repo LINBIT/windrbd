@@ -35,6 +35,14 @@ static inline u32 get_random_u32(void)
 	return prandom_u32();
 }
 
+static inline u64 get_random_u64(void)
+{
+	u64 buf;
+
+	get_random_bytes((char*) &buf, sizeof(buf));
+	return buf;
+}
+
 /*
  * Returns a random integer in the interval [0, ceil), with uniform
  * distribution, suitable for all uses. Fastest when ceil is a constant, but

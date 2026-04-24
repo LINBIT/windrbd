@@ -56,6 +56,59 @@ struct genl_ops
     int (*done)(struct netlink_callback *cb);
 };
 
+/**
+ * struct genl_split_ops - generic netlink operations (do/dump split version)
+ * @cmd: command identifier
+ * @internal_flags: flags used by the family
+ * @flags: GENL_* flags (%GENL_ADMIN_PERM or %GENL_UNS_ADMIN_PERM)
+ * @validate: validation flags from enum genl_validate_flags
+ * @policy: netlink policy (takes precedence over family policy)
+ * @maxattr: maximum number of attributes supported
+ *
+ * Do callbacks:
+ * @pre_doit: called before an operation's @doit callback, it may
+ *	do additional, common, filtering and return an error
+ * @doit: standard command callback
+ * @post_doit: called after an operation's @doit callback, it may
+ *	undo operations done by pre_doit, for example release locks
+ *
+ * Dump callbacks:
+ * @start: start callback for dumps
+ * @dumpit: callback for dumpers
+ * @done: completion callback for dumps
+ *
+ * Do callbacks can be used if %GENL_CMD_CAP_DO is set in @flags.
+ * Dump callbacks can be used if %GENL_CMD_CAP_DUMP is set in @flags.
+ * Exactly one of those flags must be set.
+ */
+struct genl_split_ops {
+	union {
+		struct {
+			int (*pre_doit)(const struct genl_split_ops *ops,
+					struct sk_buff *skb,
+					struct genl_info *info);
+			int (*doit)(struct sk_buff *skb,
+				    struct genl_info *info);
+			void (*post_doit)(const struct genl_split_ops *ops,
+					  struct sk_buff *skb,
+					  struct genl_info *info);
+		};
+		struct {
+			int (*start)(struct netlink_callback *cb);
+			int (*dumpit)(struct sk_buff *skb,
+				      struct netlink_callback *cb);
+			int (*done)(struct netlink_callback *cb);
+		};
+	};
+	const struct nla_policy *policy;
+	unsigned int		maxattr;
+	u8			cmd;
+	u8			internal_flags;
+	u8			flags;
+	u8			validate;
+};
+
+
 #ifndef __read_mostly
 #define __read_mostly
 #endif
@@ -96,12 +149,25 @@ struct genl_family
         u8                      n_mcgrps;
         const struct genl_multicast_group *mcgrps;
         struct module           *module;
+
+	int			(*pre_doit)(const struct genl_split_ops *ops,
+					    struct sk_buff *skb,
+					    struct genl_info *info);
+	void			(*post_doit)(const struct genl_split_ops *ops,
+					     struct sk_buff *skb,
+					     struct genl_info *info);
 };
+
+extern const struct genl_family *the_windrbd_netlink_family;
 
 static inline int genl_register_family(struct genl_family *family)
 {
+        the_windrbd_netlink_family = family;
+
 	return 0;
 }
+
+#define NETLINK_CTX_SIZE	48
 
 /**
 * struct genl_info - receiving information
@@ -120,6 +186,10 @@ struct genl_info
     struct nlattr **	attrs;
     u32             snd_seq;
     u32			    snd_portid;
+    	union {
+		u8		ctx[NETLINK_CTX_SIZE];
+		void *		user_ptr[2];
+	};
 
 };
 
