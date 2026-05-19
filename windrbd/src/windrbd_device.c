@@ -28,6 +28,7 @@
 #include <linux/types.h>
 #include <mountdev.h>
 #include <ntdddisk.h>
+#include <ntddvol.h>
 #include <wdmguid.h>
 #include <srb.h>
 #include <scsi.h>
@@ -1037,6 +1038,25 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 
 		break;
 	}
+
+		/* Those three are not sent by Hyper-V hypervisor.
+		 * We leave it here so we document that we tried
+		 * that already. (Problem is that attaching a WinDRBD
+		 * disk directly to a VM works on Server 2019 but
+		 * not on Server 2022.
+		 */
+
+	case IOCTL_DISK_IS_CLUSTERED:
+		status = STATUS_NOT_IMPLEMENTED;
+		break;
+
+	case IOCTL_VOLUME_IS_CLUSTERED:
+		status = STATUS_NOT_IMPLEMENTED;
+		break;
+
+	case IOCTL_DISK_GET_SAN_SETTINGS:
+		status = STATUS_NOT_IMPLEMENTED;
+		break;
 
 	default:
 		status = STATUS_NOT_IMPLEMENTED;
