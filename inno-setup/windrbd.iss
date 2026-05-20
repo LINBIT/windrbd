@@ -126,8 +126,6 @@ Source: "{#WindrbdSource}\{#WindrbdDriverDirectory}\windrbd.pdb"; DestDir: "{app
 #ifdef WinNT52
 Source: "{#WindrbdSource}\netio-binary\netio.sys"; DestDir: "{app}"; Flags: ignoreversion
 #endif
-Source: "{#WindrbdSource}\misc\drbd.cgi"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WindrbdSource}\misc\ipxe-windrbd.pxe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WindrbdSource}\crypto\*.cer"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
