@@ -1,6 +1,0 @@
-TODO: Use unsigned long for irql (instead KIRQL)
-
-TODO: Can we initialize spin locks without having to call a function?
-	This would save more unnecessary patches
-
-TODO: try_to_promote still needed?
