@@ -1,3 +1,14 @@
+What's new in version 1.2.10
+----------------------------
+
+DRBD 9.2.18 / DRBD 9.3.2 support
+
+Hyper-V Support
+
+Removed lots of obsolete files/documentation
+
+Ansible support
+
 What's new in version 1.2.9
 ---------------------------
 
