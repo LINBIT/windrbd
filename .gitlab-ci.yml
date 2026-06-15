@@ -23,7 +23,7 @@ build1.2:
     - |
       export PATH=/root/.zeranoe/mingw-w64/x86_64/bin:/root/.zeranoe/mingw-w64/cygwin-x86_64/bin:/root/.zeranoe/mingw-w64/i686/bin:$PATH
       if [ $CI_COMMIT_BRANCH == 'test-this-branch-with-drbd-9.3' ] ; then export DRBD=drbd-9.3 ; fi
-      if [ $CI_COMMIT_BRANCH == 'test-this-branch-with-connect5' ] ; then export USE_CLANG=1 ; fi
+      if [ $CI_COMMIT_BRANCH == 'test-this-branch-with-connect5' ] ; then export USE_CLANG=1 ; export DRBD=drbd-9.3 ; fi
       make package VERSION=windrbd-1.2-from-gitlab
     - |
       for i in inno-setup/install-windrbd-*.exe
