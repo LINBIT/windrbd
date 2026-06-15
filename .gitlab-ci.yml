@@ -18,7 +18,7 @@ build1.2:
   stage: build
   image: nexus.at.linbit.com:5000/windrbd-devenv
   rules:
-    - if: $CI_COMMIT_BRANCH == 'windrbd-1.2' || $CI_COMMIT_BRANCH == 'test-this-branch' || $CI_COMMIT_BRANCH == 'test-this-branch-with-drbd-9.3' || $CI_COMMIT_BRANCH == 'test-this-branch-with-diskless'
+    - if: $CI_COMMIT_BRANCH == 'windrbd-1.2' || $CI_COMMIT_BRANCH == 'test-this-branch' || $CI_COMMIT_BRANCH == 'test-this-branch-with-drbd-9.3' || $CI_COMMIT_BRANCH == 'test-this-branch-with-diskless' || $CI_COMMIT_BRANCH == 'test-this-branch-with-connect5'
   script:
     - |
       export PATH=/root/.zeranoe/mingw-w64/x86_64/bin:/root/.zeranoe/mingw-w64/cygwin-x86_64/bin:/root/.zeranoe/mingw-w64/i686/bin:$PATH
