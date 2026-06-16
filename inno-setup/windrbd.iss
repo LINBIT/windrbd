@@ -133,7 +133,6 @@ Source: "{#WindrbdSource}\crypto\*.cer"; DestDir: "{app}"; Flags: ignoreversion 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
 Name: "{group}\View {#MyAppName} Tech Guides"; Filename: "{#MyAppURLDocumentation}"
-Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{group}\Open {#MyAppName} configuration folder"; Filename: "{code:WinDRBDRootDir}\etc\drbd.d"
 Name: "{group}\Open {#MyAppName} application folder"; Filename: "{app}"
 
