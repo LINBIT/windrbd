@@ -2288,6 +2288,9 @@ int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct b
 	int err;
 	KIRQL flags;
 
+printk("NOT checking boot sector\n");
+return 0;
+
 		/* Are we primary? If not, do nothing. */
 	if (bdev->drbd_device == NULL ||
             bdev->drbd_device->resource == NULL ||
