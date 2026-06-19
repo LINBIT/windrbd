@@ -2926,9 +2926,6 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 	if (windrbd_allocate_io_workqueue(device->vdisk->part0) < 0) {
 		printk("Warning: could not allocate I/O workqueues, I/O might not work.\n");
 	}
-	if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(device->vdisk->part0) < 0) {
-		printk("Warning: could not determine if there is a file system on the DRBD device.\n");
-	}
 #ifndef DRBD_9_0
 	err = device->vdisk->fops->open(device->vdisk, FMODE_WRITE);
 #else
@@ -2937,6 +2934,9 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 	if (err < 0) {
 		printk("Warning: initial DRBD open returned err %d\n", err);
 		printk("(you may get further warnings about open_cnt == 0)\n");
+	}
+	if (windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(device->vdisk->part0) < 0) {
+		printk("Warning: could not determine if there is a file system on the DRBD device.\n");
 	}
 	if (windrbd_create_windows_device(device->vdisk->part0) != 0)
 		windrbd_device_error(device, err_str, "Warning: Couldn't create windows device for volume %d\n", device->vnr);
