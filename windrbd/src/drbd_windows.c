@@ -2859,7 +2859,7 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
                  * comes. So no timeout here. Sorry but drbdadm secondary
                  * takes about 40 seconds now, but there is no BSOD.
                  */
-	KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
+//	KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
 
 	bdev->windows_device = NULL;
 }
