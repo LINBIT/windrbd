@@ -1069,6 +1069,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 
 static NTSTATUS __attribute__((stdcall)) windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
+printk("open ...\n");
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete) {
 printk("attempt to open device when it is shutting down ...\n");
@@ -1124,6 +1125,8 @@ static NTSTATUS __attribute__((stdcall)) windrbd_close(struct _DEVICE_OBJECT *de
 {
 	struct block_device_reference *ref = device->DeviceExtension;
 	NTSTATUS status;
+
+printk("close ...\n");
 
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
 		if (ref == NULL || ref->bdev == NULL)

@@ -2958,24 +2958,24 @@ int windrbd_become_secondary(struct drbd_device *device, const char **err_str)
 	windrbd_remove_windows_device(device->vdisk->part0);
 
 #ifndef DRBD_9_0
+	if (device->open_cnt > 1)
+		printk("Forcing close of DRBD device: device->open_cnt is %d\n", device->open_cnt);
+
+	device->open_cnt = 1;
+#else
+	if (device->open_rw_cnt > 1 || device->open_ro_cnt > 1)
+		printk("Forcing close of DRBD device: device->open_rw_cnt is %d, device->open_ro_cnt is %d\n", device->open_rw_cnt, device->open_ro_cnt);
+
+	device->open_rw_cnt = 1;
+	device->open_ro_cnt = 1;
+#endif
+
+#ifndef DRBD_9_0
 	device->vdisk->fops->release(device->vdisk);
 #else
 	device->vdisk->fops->release(device->vdisk, 0);
 #endif
 	windrbd_destroy_io_workqueue(device->vdisk->part0);
-
-#ifndef DRBD_9_0
-	if (device->open_cnt > 0)
-		printk("Forcing close of DRBD device: device->open_cnt is %d\n", device->open_cnt);
-
-	device->open_cnt = 0;
-#else
-	if (device->open_rw_cnt > 0 || device->open_ro_cnt > 0)
-		printk("Forcing close of DRBD device: device->open_rw_cnt is %d, device->open_ro_cnt is %d\n", device->open_rw_cnt, device->open_ro_cnt);
-
-	device->open_rw_cnt = 0;
-	device->open_ro_cnt = 0;
-#endif
 
 	return 0;
 }
