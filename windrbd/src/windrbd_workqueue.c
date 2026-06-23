@@ -45,24 +45,26 @@ void really_destroy_workqueue(struct kref *kref)
 {
 	struct workqueue_struct *wq = container_of(kref, struct workqueue_struct, kref);
 
-printk("ZAKZAK really_destroy_workqueue 4 %p\n", wq);
+// printk("ZAKZAK really_destroy_workqueue 4 %p\n", wq);
 	kfree(wq->tasks);
 	kfree(wq);
-printk("ZAKZAK really_destroy_workqueue 5 %p\n", wq);
+// printk("ZAKZAK really_destroy_workqueue 5 %p\n", wq);
 }
 
 void destroy_workqueue(struct workqueue_struct *wq)
 {
 	int i;
 
-printk("ZAKZAK destroy_workqueue 1 %p\n", wq);
+// printk("ZAKZAK destroy_workqueue 1 %p\n", wq);
 	for (i = 0; i < wq->num_tasks; i++)
 		force_sig(SIGINT, wq->tasks[i].task);
 
-printk("ZAKZAK destroy_workqueue 2 %p\n", wq);
+// printk("ZAKZAK destroy_workqueue 2 %p\n", wq);
 	for (i = 0; i < wq->num_tasks; i++)
 		wait_for_completion(&wq->tasks[i].completion);
-printk("ZAKZAK destroy_workqueue 3 %p\n", wq);
+// printk("ZAKZAK destroy_workqueue 3 %p\n", wq);
+if (!list_empty(&wq->in_progress_list))
+printk("ZAKZAK wq %p in progresslist not empty!!!\n");
 
 	kref_put(&wq->kref, really_destroy_workqueue);
 }
@@ -143,8 +145,8 @@ bool queue_work(struct workqueue_struct *queue, struct work_struct *work)
 	list_add_tail(&work->work_list, &queue->work_list);
 	if (list_empty(&work->in_progress_list))
 		list_add(&work->in_progress_list, &queue->in_progress_list);
-else 
-printk("ZAKZAK work %p already on some list\n", work);
+// else 
+// printk("ZAKZAK work %p already on some list\n", work);
 			/* else it is already on the list executing right now */
 
 	work->queue = queue;
@@ -236,7 +238,7 @@ void flush_workqueue(struct workqueue_struct *wq)
 	struct work_struct *work, *w2;
 	struct list_head active_work_items;
 
-printk("ZAKZAK flush_workqueue wq %p\n", wq);
+// printk("ZAKZAK flush_workqueue wq %p\n", wq);
 
 	INIT_LIST_HEAD(&active_work_items);
 
@@ -256,7 +258,7 @@ int cancel_work_sync(struct work_struct *work)
 	unsigned long flags;
 	struct workqueue_struct *wq;
 
-printk("ZAKZAK cancel_work_sync work %p\n", work);
+// printk("ZAKZAK cancel_work_sync work %p\n", work);
 
 	INIT_LIST_HEAD(&active_work_items);
 	work->cancelled = true;
