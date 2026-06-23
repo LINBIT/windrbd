@@ -258,14 +258,16 @@ int cancel_work_sync(struct work_struct *work)
 	unsigned long flags;
 	struct workqueue_struct *wq;
 
-// printk("ZAKZAK cancel_work_sync work %p\n", work);
+printk("ZAKZAK cancel_work_sync work %p\n", work);
 
 	INIT_LIST_HEAD(&active_work_items);
 	work->cancelled = true;
 
 	wq = work->queue;
 	if (wq == NULL)
+{ printk("ZAKZAK wq is NULL\n");
 		return false;
+}
 
 	spin_lock_irqsave(&wq->work_list_lock, flags);
 	list_del_init(&work->in_progress_list);
@@ -273,6 +275,7 @@ int cancel_work_sync(struct work_struct *work)
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
 	wait_event(wq->a_work_has_finished, list_empty(&active_work_items));
+printk("ZAKZAK ok work %p should be cancelled\n", work);
 	return true;
 }
 
@@ -283,7 +286,7 @@ int cancel_work_sync(struct work_struct *work)
 void windrbd_assert_work_list_empty(struct work_struct *work, const char *msg)
 {
 	if (!list_empty(&work->in_progress_list))
-		printk("ZAKZAK work list %p not empty!!! at: %s", work, msg);
+		printk("ZAKZAK work list %p not empty!!! at: %s work->queue: %p work->func: %p\n", work, msg, work->queue, work->func);
 }
 
 		/* TODO: needed? hopefully not ... */
