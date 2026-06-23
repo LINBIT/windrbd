@@ -276,6 +276,15 @@ int cancel_work_sync(struct work_struct *work)
 	return true;
 }
 
+/* DRBD should call this before freeing the structs containing
+ * the work.
+ */
+
+void windrbd_assert_work_list_empty(struct work_struct *work, const char *msg)
+{
+	if (!list_empty(&work->in_progress_list))
+		printk("ZAKZAK work list %p not empty!!! at: %s", work, msg);
+}
 
 		/* TODO: needed? hopefully not ... */
 //		force_sig(SIGHUP, work->queue->thread);
