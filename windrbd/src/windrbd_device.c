@@ -1069,10 +1069,8 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 
 static NTSTATUS __attribute__((stdcall)) windrbd_create(struct _DEVICE_OBJECT *device, struct _IRP *irp)
 {
-printk("open ...\n");
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete) {
-printk("attempt to open device when it is shutting down ...\n");
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
 		irp->IoStatus.Information = 0;
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -1125,8 +1123,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_close(struct _DEVICE_OBJECT *de
 {
 	struct block_device_reference *ref = device->DeviceExtension;
 	NTSTATUS status;
-
-printk("close ...\n");
 
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending) {
 		if (ref == NULL || ref->bdev == NULL)
@@ -2080,7 +2076,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_pnp(struct _DEVICE_OBJECT *devi
 	}
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
-printk("IRP_MN_QUERY_REMOVE_DEVICE\n");
 		if (bdev->delete_pending) {
 			status = STATUS_SUCCESS;
 		} else {
@@ -2091,14 +2086,11 @@ printk("IRP_MN_QUERY_REMOVE_DEVICE\n");
 		break;
 
 	case IRP_MN_SURPRISE_REMOVAL:		/* ReactOS requires this */
-printk("IRP_MN_SURPRISE_REMOVAL\n");
 		bdev->about_to_delete = 1; /* meaning no more I/O on that device */
-printk("Rejected further I/O on the disk\n");
 		status = STATUS_SUCCESS;
 		break;
 
 	case IRP_MN_REMOVE_DEVICE:
-printk("IRP_MN_REMOVE_DEVICE\n");
 		if (!bdev->delete_pending) {
 			printk("Someone has requested to remove this device (for example via disabling in device manager).\n");
 			printk("Always use drbdadm to remove a WinDRBD disk device (drbdadm secondary or drbdadm down)\n");
@@ -2296,11 +2288,6 @@ int windrbd_check_for_filesystem_and_maybe_start_faking_partition_table(struct b
 {
 	int err;
 	KIRQL flags;
-
-#if 0
-printk("NOT checking boot sector\n");
-return 0;
-#endif
 
 		/* Are we primary? If not, do nothing. */
 	if (bdev->drbd_device == NULL ||

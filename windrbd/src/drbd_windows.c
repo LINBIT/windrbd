@@ -2853,13 +2853,11 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 		printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
 	}
 
-		/* We have to wait for REMOVE_DEVICE .. there could be a
-	         * BSOD if we didn't (when the DRBD device is brought down,
-                 * and up again and then a REMOVE_DEVICE for the old device
-                 * comes. So no timeout here. Sorry but drbdadm secondary
-                 * takes about 40 seconds now, but there is no BSOD.
-                 */
-//	KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, NULL);
+	/* We do not wait for REMOVE_DEVICE here any more, because
+	 * this caused a deadlock in some situations (REMOVE_DEVICE
+	 * not being sent until all handles are closed, handles not
+	 * closed because drbdadm secondary did not terminate).
+	 */
 
 	bdev->windows_device = NULL;
 }
