@@ -63,8 +63,8 @@ void destroy_workqueue(struct workqueue_struct *wq)
 	for (i = 0; i < wq->num_tasks; i++)
 		wait_for_completion(&wq->tasks[i].completion);
 // printk("ZAKZAK destroy_workqueue 3 %p\n", wq);
-if (!list_empty(&wq->in_progress_list))
-printk("ZAKZAK wq %p in progresslist not empty!!!\n");
+// if (!list_empty(&wq->in_progress_list))
+// printk("ZAKZAK wq %p in progresslist not empty!!!\n");
 
 	kref_put(&wq->kref, really_destroy_workqueue);
 }
@@ -258,16 +258,16 @@ int cancel_work_sync(struct work_struct *work)
 	unsigned long flags;
 	struct workqueue_struct *wq;
 
-printk("ZAKZAK cancel_work_sync work %p\n", work);
+// printk("ZAKZAK cancel_work_sync work %p\n", work);
 
 	INIT_LIST_HEAD(&active_work_items);
 	work->cancelled = true;
 
 	wq = work->queue;
 	if (wq == NULL)
-{ printk("ZAKZAK wq is NULL\n");
+// { printk("ZAKZAK wq is NULL\n");
 		return false;
-}
+// }
 
 	spin_lock_irqsave(&wq->work_list_lock, flags);
 	list_del_init(&work->in_progress_list);
@@ -275,7 +275,7 @@ printk("ZAKZAK cancel_work_sync work %p\n", work);
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
 	wait_event(wq->a_work_has_finished, list_empty(&active_work_items));
-printk("ZAKZAK ok work %p should be cancelled\n", work);
+// printk("ZAKZAK ok work %p should be cancelled\n", work);
 	return true;
 }
 
