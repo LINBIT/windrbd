@@ -84,14 +84,24 @@ struct workqueue_struct {
 	struct workqueue_task *tasks;
 };
 
-struct work_struct {
+extern void destroy_work_struct_internal(struct kref *kref);
+
+struct work_struct;
+
+struct work_struct_internal {
 	struct list_head work_list;
 	struct list_head in_progress_list;
-	void (*func)(struct work_struct *work);
 	struct workqueue_struct *queue;
 	struct mutex the_mutex;
 	bool cancelled;
-	bool will_delete_work;
+	struct work_struct *work;
+	struct kref kref;
+};
+
+/* We need a 'destructor' for this: */
+struct work_struct {
+	struct work_struct_internal *internal_work_struct;
+	void (*func)(struct work_struct *work);
 };
 
 extern struct workqueue_struct *system_wq;
@@ -154,20 +164,33 @@ static inline bool schedule_work(struct work_struct *work)
 
 #define __INIT_WORK(_work, _func, _onstack)                             \
 	 do {                                                           \
-	       /* __init_work((_work), _onstack);        */  \
-	       /*  (_work)->data = (atomic_long_t) WORK_DATA_INIT(); */ \
-		INIT_LIST_HEAD(&(_work)->work_list);			\
-		INIT_LIST_HEAD(&(_work)->in_progress_list);		\
-		mutex_init(&(_work)->the_mutex);			\
-		PREPARE_WORK((_work), (_func));                         \
-		(_work)->queue = NULL;					\
-		(_work)->cancelled = false;				\
-		(_work)->will_delete_work = false;			\
+		struct work_struct_internal *wi;			\
+		wi = kmalloc(sizeof(*wi), GFP_KERNEL);			\
+		if (wi == NULL)						\
+		 	pr_warn("No memory for work_struct_internal, this is very bad.\n");	\
+		else {							\
+			(_work)->internal_work_struct = wi;		\
+			INIT_LIST_HEAD(&wi->work_list);			\
+			INIT_LIST_HEAD(&wi->in_progress_list);		\
+			mutex_init(&wi->the_mutex);			\
+			PREPARE_WORK((_work), (_func));                 \
+			wi->queue = NULL;				\
+			wi->cancelled = false;				\
+			wi->work = (_work);				\
+			kref_init(&wi->kref);				\
+		};							\
 	} while (0)
 
 #define INIT_WORK(_work, _func)                                         \
 	 __INIT_WORK((_work), (_func), 0);
 
+/* This is non-standard Linux: DRBD needs to call this whereever a
+ * work is (implicitly) freed. Sorry about that, in WinDRBD 2.0 this
+ * will go away.
+ */
+
+#define FINALIZE_WORK(w)						\
+	kref_put(&(w)->internal_work_struct.kref, destroy_work_struct_internal); \
 
 #define create_singlethread_workqueue(name)				\
 	alloc_ordered_workqueue("%s", WQ_MEM_RECLAIM, name)

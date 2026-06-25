@@ -23,10 +23,17 @@
 
 struct workqueue_struct *system_wq;
 
+void destroy_work_struct_internal(struct kref *kref)
+{
+	struct work_struct_internal *wi = container_of(kref, struct work_struct_internal, kref);
+
+	kfree(wi);
+}
+
 static struct work_struct *get_a_work(struct workqueue_struct *wq)
 {
 	unsigned long flags;
-	struct work_struct *w;
+	struct work_struct_internal *wi;
 
 	spin_lock_irqsave(&wq->work_list_lock, flags);
 
@@ -34,37 +41,30 @@ static struct work_struct *get_a_work(struct workqueue_struct *wq)
 		spin_unlock_irqrestore(&wq->work_list_lock, flags);
 		return NULL;
 	}
-	w = list_first_entry(&wq->work_list, struct work_struct, work_list);
-	list_del_init(&w->work_list);
+	wi = list_first_entry(&wq->work_list, struct work_struct_internal, work_list);
+	list_del_init(&wi->work_list);
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
-	return w;
+	return wi->work;
 }
 
 void really_destroy_workqueue(struct kref *kref)
 {
 	struct workqueue_struct *wq = container_of(kref, struct workqueue_struct, kref);
 
-// printk("ZAKZAK really_destroy_workqueue 4 %p\n", wq);
 	kfree(wq->tasks);
 	kfree(wq);
-// printk("ZAKZAK really_destroy_workqueue 5 %p\n", wq);
 }
 
 void destroy_workqueue(struct workqueue_struct *wq)
 {
 	int i;
 
-// printk("ZAKZAK destroy_workqueue 1 %p\n", wq);
 	for (i = 0; i < wq->num_tasks; i++)
 		force_sig(SIGINT, wq->tasks[i].task);
 
-// printk("ZAKZAK destroy_workqueue 2 %p\n", wq);
 	for (i = 0; i < wq->num_tasks; i++)
 		wait_for_completion(&wq->tasks[i].completion);
-// printk("ZAKZAK destroy_workqueue 3 %p\n", wq);
-// if (!list_empty(&wq->in_progress_list))
-// printk("ZAKZAK wq %p in progresslist not empty!!!\n");
 
 	kref_put(&wq->kref, really_destroy_workqueue);
 }
@@ -74,9 +74,9 @@ static int run_singlethread_workqueue(void *param)
 	struct workqueue_task *t = param;
 	struct workqueue_struct *wq = t->workqueue;
 	struct work_struct *w;
+	struct work_struct_internal *wi;
 	int ret;
 	unsigned long flags;
-	bool wdw;
 
 	while (1) {
 		ret = wait_event_interruptible(wq->there_is_work, !list_empty(&wq->work_list));
@@ -92,36 +92,36 @@ static int run_singlethread_workqueue(void *param)
 		if (w == NULL)
 			continue;
 
-		wdw = w->will_delete_work;
-		if (!wdw) {
-			mutex_lock(&w->the_mutex);
-		} else {/* must not touch w after calling func, so
-			 * we cleanup here. cancel_work is not defined
-			 * to work when the handler deletes the work
-			 * anyway.
-			 */
-			spin_lock_irqsave(&wq->work_list_lock, flags);
-			list_del_init(&w->in_progress_list);
-			w->queue = NULL;	/* done with it */
-			spin_unlock_irqrestore(&wq->work_list_lock, flags);
-		}
-		if (!w->cancelled) {
+		wi = w->internal_work_struct;
+		kref_get(&wi->kref);
+
+		mutex_lock(&wi->the_mutex);
+
+		if (!wi->cancelled) {
 			if (w->func == NULL)
 				printk("ARGHHH func is NULL in work %p!!\n", w);
 			w->func(w);
 		}
-		if (!wdw) {
-			mutex_unlock(&w->the_mutex);
+		mutex_unlock(&wi->the_mutex);
 
-			/* either on in_progress_list or on a
-			 * active_list of a flush_workqueue.
-			 */
+		/* either on in_progress_list or on a
+		 * active_list of a flush_workqueue.
+		 */
 
-			spin_lock_irqsave(&wq->work_list_lock, flags);
-			list_del_init(&w->in_progress_list);
-			w->queue = NULL;	/* done with it */
-			spin_unlock_irqrestore(&wq->work_list_lock, flags);
-		}
+		spin_lock_irqsave(&wq->work_list_lock, flags);
+		list_del_init(&wi->in_progress_list);
+		wi->queue = NULL;	/* done with it */
+		spin_unlock_irqrestore(&wq->work_list_lock, flags);
+
+		/* This is 'the trick': the work_struct_internal lives
+		 * a little bit longer than the work_struct, so we can
+		 * remove from it the list here and release the mutex.
+		 * The work_struct ('w') maybe already freed once
+		 * the worker function returns.
+		 */
+
+		kref_put(&wi->kref, destroy_work_struct_internal);
+
 		wake_up(&wq->a_work_has_finished);
 	}
 	kref_put(&wq->kref, really_destroy_workqueue);
@@ -132,26 +132,30 @@ static int run_singlethread_workqueue(void *param)
 
 bool queue_work(struct workqueue_struct *queue, struct work_struct *work)
 {
+	struct work_struct_internal *wi = work->internal_work_struct;
 	unsigned long flags;
 
+	kref_get(&wi->kref);
+
 	spin_lock_irqsave(&queue->work_list_lock, flags);
-	if (!list_empty(&work->work_list) || work->cancelled) {	/* it is already queued or cancelled */
+	if (!list_empty(&wi->work_list) || wi->cancelled) {	/* it is already queued or cancelled */
 		spin_unlock_irqrestore(&queue->work_list_lock, flags);
+		kref_put(&wi->kref, destroy_work_struct_internal);
+
 		return false;
 	}
-	if (work->queue != NULL && queue != work->queue) {	/* it is executing */
+	if (wi->queue != NULL && queue != wi->queue) {	/* it is executing */
 		pr_warn("Warning: attempt to move work to another queue while it is executing.\n");
 	}
-	list_add_tail(&work->work_list, &queue->work_list);
-	if (list_empty(&work->in_progress_list))
-		list_add(&work->in_progress_list, &queue->in_progress_list);
-// else 
-// printk("ZAKZAK work %p already on some list\n", work);
+	list_add_tail(&wi->work_list, &queue->work_list);
+	if (list_empty(&wi->in_progress_list))
+		list_add(&wi->in_progress_list, &queue->in_progress_list);
 			/* else it is already on the list executing right now */
 
-	work->queue = queue;
+	wi->queue = queue;
 	spin_unlock_irqrestore(&queue->work_list_lock, flags);
 
+	kref_put(&wi->kref, destroy_work_struct_internal);
 	wake_up(&queue->there_is_work);
 
 	return true;	/* work was queued */
@@ -235,17 +239,15 @@ struct workqueue_struct *alloc_workqueue(const char *fmt, unsigned int flags, in
 void flush_workqueue(struct workqueue_struct *wq)
 {
 	unsigned long flags;
-	struct work_struct *work, *w2;
+	struct work_struct_internal *wi, *wi2;
 	struct list_head active_work_items;
-
-// printk("ZAKZAK flush_workqueue wq %p\n", wq);
 
 	INIT_LIST_HEAD(&active_work_items);
 
 	spin_lock_irqsave(&wq->work_list_lock, flags);
-	list_for_each_entry_safe(work, w2, &wq->in_progress_list, in_progress_list) {
-		list_del_init(&work->in_progress_list);
-		list_add(&work->in_progress_list, &active_work_items);
+	list_for_each_entry_safe(wi, wi2, &wq->in_progress_list, in_progress_list) {
+		list_del_init(&wi->in_progress_list);
+		list_add(&wi->in_progress_list, &active_work_items);
 	}
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
@@ -254,41 +256,32 @@ void flush_workqueue(struct workqueue_struct *wq)
 
 int cancel_work_sync(struct work_struct *work)
 {
+	struct work_struct_internal *wi = work->internal_work_struct;
 	struct list_head active_work_items;
 	unsigned long flags;
 	struct workqueue_struct *wq;
 
+	kref_get(&wi->kref);
+
 // printk("ZAKZAK cancel_work_sync work %p\n", work);
 
 	INIT_LIST_HEAD(&active_work_items);
-	work->cancelled = true;
+	wi->cancelled = true;
 
-	wq = work->queue;
-	if (wq == NULL)
-// { printk("ZAKZAK wq is NULL\n");
+	wq = wi->queue;
+	if (wq == NULL) {
+		kref_put(&wi->kref, destroy_work_struct_internal);
 		return false;
-// }
+	}
 
 	spin_lock_irqsave(&wq->work_list_lock, flags);
-	list_del_init(&work->in_progress_list);
-	list_add(&work->in_progress_list, &active_work_items);
+	list_del_init(&wi->in_progress_list);
+	list_add(&wi->in_progress_list, &active_work_items);
 	spin_unlock_irqrestore(&wq->work_list_lock, flags);
 
 	wait_event(wq->a_work_has_finished, list_empty(&active_work_items));
-// printk("ZAKZAK ok work %p should be cancelled\n", work);
+
+	kref_put(&wi->kref, destroy_work_struct_internal);
 	return true;
 }
-
-/* DRBD should call this before freeing the structs containing
- * the work.
- */
-
-void windrbd_assert_work_list_empty(struct work_struct *work, const char *msg)
-{
-	if (!list_empty(&work->in_progress_list))
-		printk("ZAKZAK work list %p not empty!!! at: %s work->queue: %p work->func: %p\n", work, msg, work->queue, work->func);
-}
-
-		/* TODO: needed? hopefully not ... */
-//		force_sig(SIGHUP, work->queue->thread);
 
