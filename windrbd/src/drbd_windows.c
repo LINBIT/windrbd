@@ -3106,8 +3106,6 @@ void blkdev_put(struct block_device *bdev, fmode_t mode)
 
 int kobject_uevent(struct kobject *kobj, enum kobject_action action)
 {
-	printk("Warning: kobject_uevent not implemented\n");
-
 	return 0;
 }
 
