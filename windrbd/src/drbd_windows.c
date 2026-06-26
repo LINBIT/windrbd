@@ -3009,6 +3009,8 @@ static void windrbd_destroy_block_device(struct kref *kref)
 		kfree(bdev->disk_epilog);
 		bdev->disk_epilog = NULL;
 	}
+	FINALIZE_WORK(&bdev->io_work);
+
 	kfree(bdev->bd_inode);
 	kfree(bdev);
 		/* Do not set windows device object->DeviceExtension->ref

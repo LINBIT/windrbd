@@ -190,7 +190,7 @@ static inline bool schedule_work(struct work_struct *work)
  */
 
 #define FINALIZE_WORK(w)						\
-	kref_put(&(w)->internal_work_struct.kref, destroy_work_struct_internal); \
+	kref_put(&(w)->internal_work_struct->kref, destroy_work_struct_internal); \
 
 #define create_singlethread_workqueue(name)				\
 	alloc_ordered_workqueue("%s", WQ_MEM_RECLAIM, name)
