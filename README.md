@@ -279,3 +279,4 @@ Version history
  * 1.2.8 (Mar 02, 2026): Linux crypto framework, sha1 algorithm, DRBD reactor support
  * 1.2.9 (Apr 14, 2026): DRBD 9.2.17 / DRBD 9.3.1 support, clang packages, some fixes
  * 1.2.10 (Jun 08, 2026): DRBD 9.2.18 / DRBD 9.3.2 support
+ * 1.2.11 (Jun 27, 2026): 3 fixes (hang on primary, hang on secondary, BSOD on disconnect)
