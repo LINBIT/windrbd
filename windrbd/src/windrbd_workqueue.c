@@ -263,8 +263,6 @@ int cancel_work_sync(struct work_struct *work)
 
 	kref_get(&wi->kref);
 
-// printk("ZAKZAK cancel_work_sync work %p\n", work);
-
 	INIT_LIST_HEAD(&active_work_items);
 	wi->cancelled = true;
 
