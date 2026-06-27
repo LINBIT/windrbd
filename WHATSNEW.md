@@ -1,3 +1,12 @@
+What's new in version 1.2.11
+----------------------------
+
+Fixed use after free in workqueue code (have work_struct_internal)
+
+Fixed hang on drbdadm secondary (don't wait for IRP_MN_REMOVE_DEVICE)
+
+Fixed hang on Primary (boot sector was read while state_sem was held)
+
 What's new in version 1.2.10
 ----------------------------
 
