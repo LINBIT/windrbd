@@ -448,7 +448,7 @@ NEXUS_NETRC ?= /etc/nexus-password
 upload: default
 	$(call run,curl -f --netrc-file $(NEXUS_NETRC) --upload-file inno-setup/install-$(FULL_VERSION).exe $(NEXUS)/install-$(FULL_VERSION).exe,UPLOAD,$(NEXUS)/install-$(FULL_VERSION).exe)
 
-upload-pulp: default
+upload-pulp: package
 	$(call run,inno-setup/upload-pulp.sh inno-setup/install-$(FULL_VERSION).exe,PULP,install-$(FULL_VERSION).exe)
 
 # This now generates the cocci patched DRBD sources in drbd-tmp
