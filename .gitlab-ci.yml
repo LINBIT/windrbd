@@ -3,7 +3,6 @@ variables:
 # so we get a version number with git describe
   GIT_DEPTH: 0
   LINBIT_DOCKER_REGISTRY: nexus.at.linbit.com:5000
-  LINBIT_REGISTRY_URL: nexus.at.linbit.com:5000
   BUILD_HELPERS_VERSION: c0d39c0e5a2235262f21d072c4bf3b2dd62b2040
   VIRTER_VERSION: v1.0.0
   VMSHED_VERSION: v0.27.0
@@ -14,11 +13,8 @@ stages:
 
 build1.2:
   stage: build
-#  image: nexus.at.linbit.com:5000/windrbd-devenv
-#  This has clang:
-#  image: nexus.at.linbit.com:5000/rainbow-devenv
 #  This is on our new location (as of 2026):
-  image: registry.at.linbit.com/rainbow-devenv
+  image: registry.at.linbit.com/linbit-sds-for-windows-devenv
   rules:
     - if: $CI_COMMIT_BRANCH == 'windrbd-1.2' || $CI_COMMIT_BRANCH == 'test-this-branch' || $CI_COMMIT_BRANCH == 'test-this-branch-with-drbd-9.3' || $CI_COMMIT_BRANCH == 'test-this-branch-with-diskless' || $CI_COMMIT_BRANCH == 'test-this-branch-with-connect5'
   script:
