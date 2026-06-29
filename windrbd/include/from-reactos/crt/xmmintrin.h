@@ -589,6 +589,9 @@ __INTRIN_INLINE_SSE __m128 _mm_div_ps(__m128 __a, __m128 __b)
     return (__m128)((__v4sf)__a / (__v4sf)__b);
 }
 
+#if 0
+// Does not exist on modern clang: we do not need it.
+//
 __INTRIN_INLINE_SSE __m128 _mm_sqrt_ss(__m128 __a)
 {
     return (__m128)__builtin_ia32_sqrtss((__v4sf)__a);
@@ -598,6 +601,7 @@ __INTRIN_INLINE_SSE __m128 _mm_sqrt_ps(__m128 __a)
 {
     return __builtin_ia32_sqrtps((__v4sf)__a);
 }
+#endif
 
 __INTRIN_INLINE_SSE __m128 _mm_rcp_ss(__m128 __a)
 {
