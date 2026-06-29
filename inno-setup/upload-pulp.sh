@@ -5,5 +5,5 @@ fi
 
 for f in $*
 do
-	pulp file content upload   --repository WinDRBD2   --file $f --relative-path $f
+	pulp --format none file content upload  --repository WindowsTemp --file $f --relative-path $( basename $f )
 done
