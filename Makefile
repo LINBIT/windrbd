@@ -425,7 +425,9 @@ package: $(BUILD_WINDRBD) $(BUILD_DRBD_UTILS)
 	$(call run,( cd inno-setup && $(WINE) "C:\Program Files (x86)\Inno Setup 5\iscc.exe" windrbd.iss /DWindrbdSource=.. /DWindrbdUtilsSource=..\\drbd-utils /DWindrbdDriverDirectory=$(DRIVER_DIR) /DArch=$(ARCH) $(EXTRA_ISCC_DEFINES)) > inno-setup.log 2>&1 || ( cat inno-setup.log && false ),SETUP,'windrbd (see inno-setup.log for logs)')
 	tail -n 2 inno-setup.log
 	$(call run,( cp windrbd.sys inno-setup/$(FULL_VERSION).sys 2>/dev/null || : ),CP,inno-setup/$(FULL_VERSION).sys)
+ifdef USE_CLANG
 	$(call run,( cp windrbd.pdb inno-setup/$(FULL_VERSION).pdb 2>/dev/null || : ),CP,inno-setup/$(FULL_VERSION).pdb)
+endif
 
 docker:
 	$(DOCKER) build --pull=true --no-cache=true -t $(DOCKER_IMAGE) docker-root
