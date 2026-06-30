@@ -2942,12 +2942,6 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 	if (windrbd_rescan_bus() < 0) {
 		printk("Warning: could not rescan bus, is the WinDRBD virtual bus device existing?\n");
 	}
-			/* A PnP disk device. Wait for PnP manager to
-			 * properly start the device else races may happen
-			 * (drbdadm secondary might BSOD).
-			 */
-printk("NOT waiting for IRP_MN_START_DEVICE\n");
-//	KeWaitForSingleObject(&device->vdisk->part0->device_started_event, Executive, KernelMode, FALSE, NULL);
 
 	return 0;
 }
