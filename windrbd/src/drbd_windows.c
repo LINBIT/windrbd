@@ -2946,7 +2946,8 @@ int windrbd_become_primary(struct drbd_device *device, const char **err_str)
 			 * properly start the device else races may happen
 			 * (drbdadm secondary might BSOD).
 			 */
-	KeWaitForSingleObject(&device->vdisk->part0->device_started_event, Executive, KernelMode, FALSE, NULL);
+printk("NOT waiting for IRP_MN_START_DEVICE\n");
+//	KeWaitForSingleObject(&device->vdisk->part0->device_started_event, Executive, KernelMode, FALSE, NULL);
 
 	return 0;
 }
