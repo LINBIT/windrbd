@@ -394,6 +394,10 @@ drbd-utils-clean:
 clean:
 	rm -f $(OBJS) $(COFFRES) 
 	rm -f $(patsubst %.o,%.d,$(OBJS))
+	rm -f windrbd/src/kmalloc.o
+	rm -f windrbd/src/kmalloc.d
+	rm -f windrbd/src/kmalloc_debug.o
+	rm -f windrbd/src/kmalloc_debug.d
 	rm -f windrbd.sys windrbd.sys.map windrbd.cat windrbd.inf
 	rm -f windrbd/msg00002.bin windrbd/include/windrbd-event-log.h windrbd/windrbd-event-log.rc
 	rm -f windrbd.cat-unsigned windrbd.sys-unsigned windrbd.sys-signed
