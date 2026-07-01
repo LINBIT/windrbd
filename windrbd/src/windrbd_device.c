@@ -1004,9 +1004,11 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 
 		union _CDB *cdb = (union _CDB*) &sp->Cdb[0];
 
+printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH cdb->AsByte[0] is %d\n", cdb->AsByte[0]);
 		sp->ScsiStatus = SCSISTAT_GOOD;
 
 		status = scsi_execute(dev, cdb, ((char*) sp)+sp->DataBufferOffset, &sp->DataTransferLength, irp);
+printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH status is 0x%08x\n", status);
 
 			/* Ough this shouldn't happen. */
 		if (status == STATUS_PENDING)
@@ -1023,10 +1025,13 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 	{
 		struct _SCSI_PASS_THROUGH_DIRECT *spd =
 			(struct _SCSI_PASS_THROUGH_DIRECT*) irp->AssociatedIrp.SystemBuffer;
+		union _CDB *cdb = (union _CDB*) &spd->Cdb;
 
+printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH_DIRECT cdb->AsByte[0] is %d\n", cdb->AsByte[0]);
 		spd->ScsiStatus = SCSISTAT_GOOD;
 
 		status = scsi_execute(dev, (union _CDB*) spd->Cdb, spd->DataBuffer, &spd->DataTransferLength, irp);
+printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH_DIRECT status is 0x%08x\n", status);
 
 		if (status == STATUS_PENDING)
 			return status;
@@ -2076,6 +2081,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_pnp(struct _DEVICE_OBJECT *devi
 	}
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
+printk("ZAKZAK IRP_MN_QUERY_REMOVE_DEVICE %p\n", bdev);
 		if (bdev->delete_pending) {
 			status = STATUS_SUCCESS;
 		} else {
@@ -2086,11 +2092,17 @@ static NTSTATUS __attribute__((stdcall)) windrbd_pnp(struct _DEVICE_OBJECT *devi
 		break;
 
 	case IRP_MN_SURPRISE_REMOVAL:		/* ReactOS requires this */
+printk("ZAKZAK IRP_MN_SURPRISE_REMOVAL %p\n", bdev);
 		bdev->about_to_delete = 1; /* meaning no more I/O on that device */
+
+printk(KERN_DEBUG "ZAKZAK About to delete device object %p in IRP_MN_SURPRISE_REMOVAL!!!\n", device);
+		IoDeleteDevice(device);
+
 		status = STATUS_SUCCESS;
 		break;
 
 	case IRP_MN_REMOVE_DEVICE:
+printk("ZAKZAK IRP_MN_REMOVE_DEVICE %p\n", bdev);
 		if (!bdev->delete_pending) {
 			printk("Someone has requested to remove this device (for example via disabling in device manager).\n");
 			printk("Always use drbdadm to remove a WinDRBD disk device (drbdadm secondary or drbdadm down)\n");
@@ -2100,7 +2112,9 @@ static NTSTATUS __attribute__((stdcall)) windrbd_pnp(struct _DEVICE_OBJECT *devi
 		bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
 			/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
+printk("ZAKZAK into IoAcquireRemoveLock %p ...\n", bdev);
 		IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
+printk("ZAKZAK into IoReleaseRemoveLockAndWait %p ...\n", bdev);
 			/* TODO: there is a ReactOS bug in that function: ? */
 		IoReleaseRemoveLockAndWait(&bdev->ref->w_remove_lock, NULL);
 
