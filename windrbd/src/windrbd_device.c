@@ -2101,6 +2101,8 @@ printk(KERN_DEBUG "ZAKZAK About to delete device object %p in IRP_MN_SURPRISE_RE
 		*/
 
 		status = STATUS_SUCCESS;
+		KeSetEvent(&bdev->device_removed_event, 0, FALSE);
+
 		break;
 
 	case IRP_MN_REMOVE_DEVICE:

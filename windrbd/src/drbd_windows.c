@@ -2867,6 +2867,11 @@ printk("ZAKZAK into IoReleaseRemoveLockAndWait %p ...\n", bdev);
 			/* TODO: there is a ReactOS bug in that function: ? */
 	IoReleaseRemoveLockAndWait(&bdev->ref->w_remove_lock, NULL);
 
+printk("ZAKZAK into KeWaitForSingleObject ...\n");
+	KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode
+, FALSE, NULL);
+printk("ZAKZAK out of KeWaitForSingleObject ...\n");
+
 	printk(KERN_DEBUG "About to delete device object %p for bdev %p\n", bdev->windows_device, bdev);
 
 				/* Avoid anything more happening to that
