@@ -2095,20 +2095,25 @@ printk("ZAKZAK IRP_MN_QUERY_REMOVE_DEVICE %p\n", bdev);
 printk("ZAKZAK IRP_MN_SURPRISE_REMOVAL %p\n", bdev);
 		bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
+		/*
 printk(KERN_DEBUG "ZAKZAK About to delete device object %p in IRP_MN_SURPRISE_REMOVAL!!!\n", device);
 		IoDeleteDevice(device);
+		*/
 
 		status = STATUS_SUCCESS;
 		break;
 
 	case IRP_MN_REMOVE_DEVICE:
 printk("ZAKZAK IRP_MN_REMOVE_DEVICE %p\n", bdev);
+#if 0
 		if (!bdev->delete_pending) {
 			printk("Someone has requested to remove this device (for example via disabling in device manager).\n");
 			printk("Always use drbdadm to remove a WinDRBD disk device (drbdadm secondary or drbdadm down)\n");
 			status = STATUS_NOT_SUPPORTED;
 			break;
 		}
+#endif
+#if 0
 		bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
 			/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
@@ -2128,6 +2133,7 @@ printk("ZAKZAK into IoReleaseRemoveLockAndWait %p ...\n", bdev);
 		bdev->ref = NULL;
 		IoDeleteDevice(device);
 		KeSetEvent(&bdev->device_removed_event, 0, FALSE);
+#endif
 
 		status = STATUS_SUCCESS;
 		break;

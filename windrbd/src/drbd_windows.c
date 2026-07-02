@@ -2858,6 +2858,24 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 	 * not being sent until all handles are closed, handles not
 	 * closed because drbdadm secondary did not terminate).
 	 */
+	bdev->about_to_delete = 1; /* meaning no more I/O on that device */
+
+			/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
+printk("ZAKZAK into IoAcquireRemoveLock %p ...\n", bdev);
+	IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
+printk("ZAKZAK into IoReleaseRemoveLockAndWait %p ...\n", bdev);
+			/* TODO: there is a ReactOS bug in that function: ? */
+	IoReleaseRemoveLockAndWait(&bdev->ref->w_remove_lock, NULL);
+
+	printk(KERN_DEBUG "About to delete device object %p for bdev %p\n", bdev->windows_device, bdev);
+
+				/* Avoid anything more happening to that
+				 * device. Reason is that there is a reference
+				 * count on the device, so it might still
+				 * exist for a short period.
+				 */
+	bdev->ref = NULL;
+	IoDeleteDevice(bdev->windows_device);
 
 	bdev->windows_device = NULL;
 }
