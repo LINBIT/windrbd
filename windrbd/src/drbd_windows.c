@@ -2860,17 +2860,13 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 	 */
 	bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
-			/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
-printk("ZAKZAK into IoAcquireRemoveLock %p ...\n", bdev);
+	/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
 	IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
-printk("ZAKZAK into IoReleaseRemoveLockAndWait %p ...\n", bdev);
-			/* TODO: there is a ReactOS bug in that function: ? */
 	IoReleaseRemoveLockAndWait(&bdev->ref->w_remove_lock, NULL);
 
-printk("ZAKZAK into KeWaitForSingleObject ...\n");
+	/* This silences a driver verifier error: */
 	KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode
 , FALSE, NULL);
-printk("ZAKZAK out of KeWaitForSingleObject ...\n");
 
 	printk(KERN_DEBUG "About to delete device object %p for bdev %p\n", bdev->windows_device, bdev);
 
@@ -2879,6 +2875,7 @@ printk("ZAKZAK out of KeWaitForSingleObject ...\n");
 				 * count on the device, so it might still
 				 * exist for a short period.
 				 */
+
 	bdev->ref = NULL;
 	IoDeleteDevice(bdev->windows_device);
 

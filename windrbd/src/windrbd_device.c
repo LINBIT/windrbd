@@ -2092,51 +2092,22 @@ printk("ZAKZAK IRP_MN_QUERY_REMOVE_DEVICE %p\n", bdev);
 		break;
 
 	case IRP_MN_SURPRISE_REMOVAL:		/* ReactOS requires this */
-printk("ZAKZAK IRP_MN_SURPRISE_REMOVAL %p\n", bdev);
 		bdev->about_to_delete = 1; /* meaning no more I/O on that device */
-
-		/*
-printk(KERN_DEBUG "ZAKZAK About to delete device object %p in IRP_MN_SURPRISE_REMOVAL!!!\n", device);
-		IoDeleteDevice(device);
-		*/
-
 		status = STATUS_SUCCESS;
+
+		/* This is so that driver verifier does not complain.
+		 * We need to wait until the SURPRISE_REMOVAL is
+		 * processed.
+		 */
 		KeSetEvent(&bdev->device_removed_event, 0, FALSE);
 
 		break;
 
 	case IRP_MN_REMOVE_DEVICE:
-printk("ZAKZAK IRP_MN_REMOVE_DEVICE %p\n", bdev);
-#if 0
-		if (!bdev->delete_pending) {
-			printk("Someone has requested to remove this device (for example via disabling in device manager).\n");
-			printk("Always use drbdadm to remove a WinDRBD disk device (drbdadm secondary or drbdadm down)\n");
-			status = STATUS_NOT_SUPPORTED;
-			break;
-		}
-#endif
-#if 0
-		bdev->about_to_delete = 1; /* meaning no more I/O on that device */
 
-			/* see https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-remove-locks */
-printk("ZAKZAK into IoAcquireRemoveLock %p ...\n", bdev);
-		IoAcquireRemoveLock(&bdev->ref->w_remove_lock, NULL);
-printk("ZAKZAK into IoReleaseRemoveLockAndWait %p ...\n", bdev);
-			/* TODO: there is a ReactOS bug in that function: ? */
-		IoReleaseRemoveLockAndWait(&bdev->ref->w_remove_lock, NULL);
-
-		printk(KERN_DEBUG "About to delete device object %p\n", device);
-
-				/* Avoid anything more happening to that
-				 * device. Reason is that there is a reference
-				 * count on the device, so it might still
-				 * exist for a short period.
-				 */
-		bdev->ref = NULL;
-		IoDeleteDevice(device);
-		KeSetEvent(&bdev->device_removed_event, 0, FALSE);
-#endif
-
+		/* Noop now, IoDeleteDevice is in
+		 * windrbd_remove_windows_device().
+		 */
 		status = STATUS_SUCCESS;
 		break;
 
