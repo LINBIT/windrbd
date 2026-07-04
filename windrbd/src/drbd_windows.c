@@ -2865,6 +2865,12 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 	IoReleaseRemoveLockAndWait(&bdev->ref->w_remove_lock, NULL);
 
 	/* This silences a driver verifier error: */
+
+	/* TODO: have at least a timeout here. When primary wasn't
+	 * successful because of bus device missing, we hang here
+	 * forever.
+	 */
+
 	KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode
 , FALSE, NULL);
 

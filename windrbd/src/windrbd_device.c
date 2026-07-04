@@ -2686,6 +2686,7 @@ static NTSTATUS scsi_read_capacity(struct block_device *bdev, union _CDB *cdb, v
 
 	d_size = bdev->bd_inode->i_size;
 	d_size += (bdev->data_shift + bdev->appended_sectors) * 512;
+printk("d_size is %lld\n", d_size);
 
 	Temp = bdev->bd_block_size;
 	if (cdb->AsByte[0] == SCSIOP_READ_CAPACITY) {
@@ -2722,6 +2723,7 @@ static NTSTATUS scsi_read_capacity(struct block_device *bdev, union _CDB *cdb, v
 
 static NTSTATUS scsi_execute(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p, struct _IRP *irp)
 {
+printk("ZAKZAK scsi_execute cdb->AsByte[0] is %d\n", cdb->AsByte[0]);
 	switch (cdb->AsByte[0]) {
 	case SCSIOP_TEST_UNIT_READY:
 		return STATUS_SUCCESS;
@@ -2765,6 +2767,8 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct block_device *bdev;
 
+printk("ZAKZAK windrbd_scsi ...\n");
+
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete || ref->bdev->ref == NULL) {
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
@@ -2774,6 +2778,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
+printk("ZAKZAK windrbd_scsi returns STATUS_NO_SUCH_DEVICE\n");
 		return STATUS_NO_SUCH_DEVICE;
 	}
 	bdev = ref->bdev;
@@ -2816,7 +2821,10 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 		 * need to do that here.
 		 */
 		if (status == STATUS_PENDING)
+{
+printk("ZAKZAK windrbd_scsi returns pending %08x\n", status);
 			return status;
+}
 
 		if (!NT_SUCCESS(status)) {
 			if (status == STATUS_BUFFER_TOO_SMALL)
@@ -2862,6 +2870,7 @@ out:
 
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
+printk("ZAKZAK windrbd_scsi returns %08x\n", status);
 	return status;
 }
 
