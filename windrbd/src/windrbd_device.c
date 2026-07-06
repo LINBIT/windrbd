@@ -2391,6 +2391,8 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 	if (!cdb->CDB6INQUIRY3.EnableVitalProductData) {
 		struct _INQUIRYDATA *id = data_buffer;
 
+printk("no EnableVitalProductData\n");
+
 		id->Versions = 2;
 		id->Wide32Bit = 1;
 		id->CommandQueue = 0; // NCQ not supported
@@ -2408,6 +2410,8 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 		(*data_transfer_length_p) = 36;
 		return STATUS_SUCCESS;
 	}
+
+printk("EnableVitalProductData cdb->CDB6INQUIRY3.PageCode is %d\n", cdb->CDB6INQUIRY3.PageCode);
 
 	switch (cdb->CDB6INQUIRY3.PageCode) {
 	case VPD_SUPPORTED_PAGES:
