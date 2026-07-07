@@ -2423,14 +2423,14 @@ printk("EnableVitalProductData cdb->CDB6INQUIRY3.PageCode is %d\n", cdb->CDB6INQ
 		spp->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
 		spp->DeviceTypeQualifier = DEVICE_QUALIFIER_ACTIVE;
 		spp->PageCode = VPD_SUPPORTED_PAGES;    /* 0 */
-		spp->PageLength = 4;
+		spp->PageLength = 3;
 
 			/* those must be ordered ascending: */
 		spp->SupportedPageList[0] = VPD_SUPPORTED_PAGES;
 		spp->SupportedPageList[1] = VPD_SERIAL_NUMBER;
 		spp->SupportedPageList[2] = VPD_DEVICE_IDENTIFIERS;
 //		spp->SupportedPageList[2] = VPD_THIRD_PARTY_COPY;
-		spp->SupportedPageList[3] = VPD_BLOCK_LIMITS;
+//		spp->SupportedPageList[3] = VPD_BLOCK_LIMITS;
 /*		spp->SupportedPageList[3] = VPD_BLOCK_DEVICE_CHARACTERISTICS;
 		spp->SupportedPageList[4] = VPD_LOGICAL_BLOCK_PROVISIONING;
 		*/
