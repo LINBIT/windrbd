@@ -845,6 +845,8 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 			{
 				struct _DEVICE_TRIM_DESCRIPTOR trim;
 
+printk("ZAKZAK got StorageDeviceTrimProperty ...\n");
+
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(trim)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(trim));
 				trim.Version = sizeof(trim);
 				trim.Size = sizeof(trim);
@@ -2421,17 +2423,31 @@ printk("EnableVitalProductData cdb->CDB6INQUIRY3.PageCode is %d\n", cdb->CDB6INQ
 		spp->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
 		spp->DeviceTypeQualifier = DEVICE_QUALIFIER_ACTIVE;
 		spp->PageCode = VPD_SUPPORTED_PAGES;    /* 0 */
-		spp->PageLength = 5;
+		spp->PageLength = 4;
 
 			/* those must be ordered ascending: */
 		spp->SupportedPageList[0] = VPD_SUPPORTED_PAGES;
-		spp->SupportedPageList[1] = VPD_DEVICE_IDENTIFIERS;
+		spp->SupportedPageList[1] = VPD_SERIAL_NUMBER;
+		spp->SupportedPageList[2] = VPD_DEVICE_IDENTIFIERS;
 //		spp->SupportedPageList[2] = VPD_THIRD_PARTY_COPY;
-		spp->SupportedPageList[2] = VPD_BLOCK_LIMITS;
-		spp->SupportedPageList[3] = VPD_BLOCK_DEVICE_CHARACTERISTICS;
+		spp->SupportedPageList[3] = VPD_BLOCK_LIMITS;
+/*		spp->SupportedPageList[3] = VPD_BLOCK_DEVICE_CHARACTERISTICS;
 		spp->SupportedPageList[4] = VPD_LOGICAL_BLOCK_PROVISIONING;
+		*/
 
 		(*data_transfer_length_p) = sizeof(*spp) + spp->PageLength;
+		return STATUS_SUCCESS;
+	}
+	case VPD_SERIAL_NUMBER:		/* 0x80 */
+	{
+		struct _VPD_SERIAL_NUMBER_PAGE *snp = data_buffer;
+		snp->DeviceType = DIRECT_ACCESS_DEVICE;
+		snp->DeviceTypeQualifier = DEVICE_CONNECTED;
+		snp->PageCode = VPD_SERIAL_NUMBER;
+		snp->PageLength = 20;
+
+		strcpy(&snp->SerialNumber[0], "01234567890123456789");
+		(*data_transfer_length_p) = sizeof(*snp) + snp->PageLength;
 		return STATUS_SUCCESS;
 	}
 
@@ -2458,6 +2474,8 @@ printk("EnableVitalProductData cdb->CDB6INQUIRY3.PageCode is %d\n", cdb->CDB6INQ
 	{
 		struct _VPD_BLOCK_LIMITS_PAGE *blp = data_buffer;
 
+		blp->DeviceType = DIRECT_ACCESS_DEVICE;
+		blp->DeviceTypeQualifier = DEVICE_CONNECTED;
 		blp->PageCode = VPD_BLOCK_LIMITS;
 		blp->PageLength[1] = 0x3c;
 
@@ -2468,6 +2486,16 @@ printk("EnableVitalProductData cdb->CDB6INQUIRY3.PageCode is %d\n", cdb->CDB6INQ
 		blp->MaximumTransferLength[1] = 0x3f;
 		blp->MaximumTransferLength[2] = 0xff;
 		blp->MaximumTransferLength[3] = 0xff;
+
+		blp->OptimalTransferLengthGranularity[0] = 0;
+		blp->OptimalTransferLengthGranularity[1] = 1;
+
+		blp->OptimalTransferLength[3] = 1;
+
+//      UCHAR MaxPrefetchXDReadXDWriteTransferLength[4];
+		blp->MaximumUnmapLBACount[1] = 0x20;
+//      UCHAR MaximumUnmapBlockDescriptorCount[4];
+ //     UCHAR OptimalUnmapGranularity[4];
 
 		/* MaximumUnmapLBACount is 0x200000 */
 		/* All others 0 since we don't support unmap */
@@ -2500,11 +2528,13 @@ printk("EnableVitalProductData cdb->CDB6INQUIRY3.PageCode is %d\n", cdb->CDB6INQ
 		lbpp->PageLength[0] = 0;
 		lbpp->PageLength[1] = 4;
 
-#ifdef __TRIM_SUPPORTED_ON_DAY
+// #ifdef __TRIM_SUPPORTED_ON_DAY
+#if 1
 		lbpp->LBPU = 1;	/* Unmap supported */
-		lbpp->LBWS = 1;  /* Write same, but we probably don't support this */
-		lbpp->LBWS10 = 1; /* same */
+//		lbpp->LBWS = 1;  /* Write same, but we probably don't support this */
+//		lbpp->LBWS10 = 1; /* same */
 		lbpp->ProvisioningType = 2;	/* whatever this means ... */
+printk("ZAKZAK Pretending that TRIM is supported\n");
 #endif
 
 		(*data_transfer_length_p) = sizeof(*lbpp);
