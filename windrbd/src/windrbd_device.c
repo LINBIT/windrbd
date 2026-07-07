@@ -845,7 +845,8 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 			{
 				struct _DEVICE_TRIM_DESCRIPTOR trim;
 
-printk("ZAKZAK got StorageDeviceTrimProperty ...\n");
+// printk("ZAKZAK got StorageDeviceTrimProperty ...\n");
+
 
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(trim)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(trim));
 				trim.Version = sizeof(trim);
@@ -1006,11 +1007,11 @@ printk("ZAKZAK got StorageDeviceTrimProperty ...\n");
 
 		union _CDB *cdb = (union _CDB*) &sp->Cdb[0];
 
-printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH cdb->AsByte[0] is %d\n", cdb->AsByte[0]);
+// printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH cdb->AsByte[0] is %d\n", cdb->AsByte[0]);
 		sp->ScsiStatus = SCSISTAT_GOOD;
 
 		status = scsi_execute(dev, cdb, ((char*) sp)+sp->DataBufferOffset, &sp->DataTransferLength, irp);
-printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH status is 0x%08x\n", status);
+// printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH status is 0x%08x\n", status);
 
 			/* Ough this shouldn't happen. */
 		if (status == STATUS_PENDING)
@@ -1029,11 +1030,11 @@ printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH status is 0x%08x\n", status);
 			(struct _SCSI_PASS_THROUGH_DIRECT*) irp->AssociatedIrp.SystemBuffer;
 		union _CDB *cdb = (union _CDB*) &spd->Cdb;
 
-printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH_DIRECT cdb->AsByte[0] is %d\n", cdb->AsByte[0]);
+// printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH_DIRECT cdb->AsByte[0] is %d\n", cdb->AsByte[0]);
 		spd->ScsiStatus = SCSISTAT_GOOD;
 
 		status = scsi_execute(dev, (union _CDB*) spd->Cdb, spd->DataBuffer, &spd->DataTransferLength, irp);
-printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH_DIRECT status is 0x%08x\n", status);
+// printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH_DIRECT status is 0x%08x\n", status);
 
 		if (status == STATUS_PENDING)
 			return status;
@@ -2083,7 +2084,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_pnp(struct _DEVICE_OBJECT *devi
 	}
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
-printk("ZAKZAK IRP_MN_QUERY_REMOVE_DEVICE %p\n", bdev);
+// printk("ZAKZAK IRP_MN_QUERY_REMOVE_DEVICE %p\n", bdev);
 		if (bdev->delete_pending) {
 			status = STATUS_SUCCESS;
 		} else {
@@ -2393,7 +2394,7 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 	if (!cdb->CDB6INQUIRY3.EnableVitalProductData) {
 		struct _INQUIRYDATA *id = data_buffer;
 
-printk("no EnableVitalProductData\n");
+// printk("no EnableVitalProductData\n");
 
 		id->Versions = 2;
 		id->Wide32Bit = 1;
@@ -2413,7 +2414,7 @@ printk("no EnableVitalProductData\n");
 		return STATUS_SUCCESS;
 	}
 
-printk("EnableVitalProductData cdb->CDB6INQUIRY3.PageCode is %d\n", cdb->CDB6INQUIRY3.PageCode);
+// printk("EnableVitalProductData cdb->CDB6INQUIRY3.PageCode is %d\n", cdb->CDB6INQUIRY3.PageCode);
 
 	switch (cdb->CDB6INQUIRY3.PageCode) {
 	case VPD_SUPPORTED_PAGES:
@@ -2534,7 +2535,7 @@ printk("EnableVitalProductData cdb->CDB6INQUIRY3.PageCode is %d\n", cdb->CDB6INQ
 //		lbpp->LBWS = 1;  /* Write same, but we probably don't support this */
 //		lbpp->LBWS10 = 1; /* same */
 		lbpp->ProvisioningType = 2;	/* whatever this means ... */
-printk("ZAKZAK Pretending that TRIM is supported\n");
+// printk("ZAKZAK Pretending that TRIM is supported\n");
 #endif
 
 		(*data_transfer_length_p) = sizeof(*lbpp);
@@ -2720,7 +2721,7 @@ static NTSTATUS scsi_read_capacity(struct block_device *bdev, union _CDB *cdb, v
 
 	d_size = bdev->bd_inode->i_size;
 	d_size += (bdev->data_shift + bdev->appended_sectors) * 512;
-printk("d_size is %lld\n", d_size);
+// printk("d_size is %lld\n", d_size);
 
 	Temp = bdev->bd_block_size;
 	if (cdb->AsByte[0] == SCSIOP_READ_CAPACITY) {
@@ -2757,7 +2758,7 @@ printk("d_size is %lld\n", d_size);
 
 static NTSTATUS scsi_execute(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p, struct _IRP *irp)
 {
-printk("ZAKZAK scsi_execute cdb->AsByte[0] is %d\n", cdb->AsByte[0]);
+// printk("ZAKZAK scsi_execute cdb->AsByte[0] is %d\n", cdb->AsByte[0]);
 	switch (cdb->AsByte[0]) {
 	case SCSIOP_TEST_UNIT_READY:
 		return STATUS_SUCCESS;
@@ -2801,7 +2802,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct block_device *bdev;
 
-printk("ZAKZAK windrbd_scsi ...\n");
+// printk("ZAKZAK windrbd_scsi ...\n");
 
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete || ref->bdev->ref == NULL) {
@@ -2812,7 +2813,7 @@ printk("ZAKZAK windrbd_scsi ...\n");
 			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-printk("ZAKZAK windrbd_scsi returns STATUS_NO_SUCH_DEVICE\n");
+// printk("ZAKZAK windrbd_scsi returns STATUS_NO_SUCH_DEVICE\n");
 		return STATUS_NO_SUCH_DEVICE;
 	}
 	bdev = ref->bdev;
@@ -2856,7 +2857,7 @@ printk("ZAKZAK windrbd_scsi returns STATUS_NO_SUCH_DEVICE\n");
 		 */
 		if (status == STATUS_PENDING)
 {
-printk("ZAKZAK windrbd_scsi returns pending %08x\n", status);
+// printk("ZAKZAK windrbd_scsi returns pending %08x\n", status);
 			return status;
 }
 
@@ -2904,7 +2905,7 @@ out:
 
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
-printk("ZAKZAK windrbd_scsi returns %08x\n", status);
+// printk("ZAKZAK windrbd_scsi returns %08x\n", status);
 	return status;
 }
 
