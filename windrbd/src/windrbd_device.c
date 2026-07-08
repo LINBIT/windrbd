@@ -2424,6 +2424,7 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 		spp->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
 		spp->DeviceTypeQualifier = DEVICE_QUALIFIER_ACTIVE;
 		spp->PageCode = VPD_SUPPORTED_PAGES;    /* 0 */
+//		spp->PageLength = 3;
 		spp->PageLength = 4;
 
 			/* those must be ordered ascending: */
@@ -2478,7 +2479,9 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 		blp->DeviceType = DIRECT_ACCESS_DEVICE;
 		blp->DeviceTypeQualifier = DEVICE_CONNECTED;
 		blp->PageCode = VPD_BLOCK_LIMITS;
-		blp->PageLength[1] = 0x3c;
+		// blp->PageLength[1] = 0x3c;
+printk("setting length to %x\n", sizeof(*blp) - 4);
+		blp->PageLength[1] = sizeof(*blp) - 4;
 
 		/* Reserved0 is 1 .. ? */
 		blp->Reserved0 = 1;
