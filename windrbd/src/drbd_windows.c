@@ -2866,13 +2866,15 @@ static void windrbd_remove_windows_device(struct block_device *bdev)
 
 	/* This silences a driver verifier error: */
 
-	/* TODO: have at least a timeout here. When primary wasn't
-	 * successful because of bus device missing, we hang here
+	/* Have a timeout here. When primary wasn't
+	 * successful because of bus device missing, we would hang here
 	 * forever.
 	 */
 
-	KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode
-, FALSE, NULL);
+	LARGE_INTEGER wait_time;
+	wait_time.QuadPart = -1 * 1000 * 1000 * 10; /* one second */
+
+	KeWaitForSingleObject(&bdev->device_removed_event, Executive, KernelMode, FALSE, &wait_time);
 
 	printk(KERN_DEBUG "About to delete device object %p for bdev %p\n", bdev->windows_device, bdev);
 
