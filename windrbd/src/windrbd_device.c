@@ -845,9 +845,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 			{
 				struct _DEVICE_TRIM_DESCRIPTOR trim;
 
-// printk("ZAKZAK got StorageDeviceTrimProperty ...\n");
-
-
 				CopySize = (s->Parameters.DeviceIoControl.OutputBufferLength < sizeof(trim)?s->Parameters.DeviceIoControl.OutputBufferLength:sizeof(trim));
 				trim.Version = sizeof(trim);
 				trim.Size = sizeof(trim);
@@ -1007,11 +1004,9 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 
 		union _CDB *cdb = (union _CDB*) &sp->Cdb[0];
 
-// printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH cdb->AsByte[0] is %d\n", cdb->AsByte[0]);
 		sp->ScsiStatus = SCSISTAT_GOOD;
 
 		status = scsi_execute(dev, cdb, ((char*) sp)+sp->DataBufferOffset, &sp->DataTransferLength, irp);
-// printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH status is 0x%08x\n", status);
 
 			/* Ough this shouldn't happen. */
 		if (status == STATUS_PENDING)
@@ -1030,11 +1025,9 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 			(struct _SCSI_PASS_THROUGH_DIRECT*) irp->AssociatedIrp.SystemBuffer;
 		union _CDB *cdb = (union _CDB*) &spd->Cdb;
 
-// printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH_DIRECT cdb->AsByte[0] is %d\n", cdb->AsByte[0]);
 		spd->ScsiStatus = SCSISTAT_GOOD;
 
 		status = scsi_execute(dev, (union _CDB*) spd->Cdb, spd->DataBuffer, &spd->DataTransferLength, irp);
-// printk("ZAKZAK IOCTL_SCSI_PASS_THROUGH_DIRECT status is 0x%08x\n", status);
 
 		if (status == STATUS_PENDING)
 			return status;
@@ -2084,7 +2077,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_pnp(struct _DEVICE_OBJECT *devi
 	}
 
 	case IRP_MN_QUERY_REMOVE_DEVICE:
-// printk("ZAKZAK IRP_MN_QUERY_REMOVE_DEVICE %p\n", bdev);
 		if (bdev->delete_pending) {
 			status = STATUS_SUCCESS;
 		} else {
@@ -2394,8 +2386,6 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 	if (!cdb->CDB6INQUIRY3.EnableVitalProductData) {
 		struct _INQUIRYDATA *id = data_buffer;
 
-// printk("no EnableVitalProductData\n");
-
 		id->Versions = 2;
 		id->Wide32Bit = 1;
 		id->CommandQueue = 0; // NCQ not supported
@@ -2414,8 +2404,6 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 		return STATUS_SUCCESS;
 	}
 
-// printk("EnableVitalProductData cdb->CDB6INQUIRY3.PageCode is %d\n", cdb->CDB6INQUIRY3.PageCode);
-
 	switch (cdb->CDB6INQUIRY3.PageCode) {
 	case VPD_SUPPORTED_PAGES:
 	{
@@ -2424,32 +2412,13 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 		spp->DeviceType = DIRECT_ACCESS_DEVICE;	/* a disk */
 		spp->DeviceTypeQualifier = DEVICE_QUALIFIER_ACTIVE;
 		spp->PageCode = VPD_SUPPORTED_PAGES;    /* 0 */
-//		spp->PageLength = 3;
-		spp->PageLength = 4;
+		spp->PageLength = 2;
 
 			/* those must be ordered ascending: */
 		spp->SupportedPageList[0] = VPD_SUPPORTED_PAGES;
-		spp->SupportedPageList[1] = VPD_SERIAL_NUMBER;
-		spp->SupportedPageList[2] = VPD_DEVICE_IDENTIFIERS;
-//		spp->SupportedPageList[2] = VPD_THIRD_PARTY_COPY;
-		spp->SupportedPageList[3] = VPD_BLOCK_LIMITS;
-/*		spp->SupportedPageList[3] = VPD_BLOCK_DEVICE_CHARACTERISTICS;
-		spp->SupportedPageList[4] = VPD_LOGICAL_BLOCK_PROVISIONING;
-		*/
+		spp->SupportedPageList[1] = VPD_DEVICE_IDENTIFIERS;
 
 		(*data_transfer_length_p) = sizeof(*spp) + spp->PageLength;
-		return STATUS_SUCCESS;
-	}
-	case VPD_SERIAL_NUMBER:		/* 0x80 */
-	{
-		struct _VPD_SERIAL_NUMBER_PAGE *snp = data_buffer;
-		snp->DeviceType = DIRECT_ACCESS_DEVICE;
-		snp->DeviceTypeQualifier = DEVICE_CONNECTED;
-		snp->PageCode = VPD_SERIAL_NUMBER;
-		snp->PageLength = 20;
-
-		strcpy(&snp->SerialNumber[0], "01234567890123456789");
-		(*data_transfer_length_p) = sizeof(*snp) + snp->PageLength;
 		return STATUS_SUCCESS;
 	}
 
@@ -2472,79 +2441,6 @@ static NTSTATUS scsi_inquiry(struct block_device *bdev, union _CDB *cdb, void *d
 		return STATUS_SUCCESS;
 	}
 
-	case VPD_BLOCK_LIMITS: /* 0xb0 */
-	{
-		struct _VPD_BLOCK_LIMITS_PAGE *blp = data_buffer;
-
-		blp->DeviceType = DIRECT_ACCESS_DEVICE;
-		blp->DeviceTypeQualifier = DEVICE_CONNECTED;
-		blp->PageCode = VPD_BLOCK_LIMITS;
-		// blp->PageLength[1] = 0x3c;
-printk("setting length to %x\n", sizeof(*blp) - 4);
-		blp->PageLength[1] = sizeof(*blp) - 4;
-
-		/* Reserved0 is 1 .. ? */
-		blp->Reserved0 = 1;
-
-		/* big endian ... */
-		blp->MaximumTransferLength[0] = 0;
-		blp->MaximumTransferLength[1] = 0;
-		blp->MaximumTransferLength[2] = 0xff;
-		blp->MaximumTransferLength[3] = 0xff;
-
-		blp->OptimalTransferLengthGranularity[0] = 0;
-		blp->OptimalTransferLengthGranularity[1] = 1;
-
-		blp->OptimalTransferLength[3] = 1;
-
-//      UCHAR MaxPrefetchXDReadXDWriteTransferLength[4];
-		blp->MaximumUnmapLBACount[1] = 0x20;
-//      UCHAR MaximumUnmapBlockDescriptorCount[4];
- //     UCHAR OptimalUnmapGranularity[4];
-
-		/* MaximumUnmapLBACount is 0x200000 */
-		/* All others 0 since we don't support unmap */
-
-		(*data_transfer_length_p) = sizeof(*blp);
-		return STATUS_SUCCESS;
-	}
-
-	case VPD_BLOCK_DEVICE_CHARACTERISTICS:	/* 0xb1 */
-	{
-		struct _VPD_BLOCK_DEVICE_CHARACTERISTICS_PAGE *bdcp = data_buffer;
-		bdcp->PageCode = VPD_BLOCK_DEVICE_CHARACTERISTICS;
-		bdcp->PageLength = 0x3c;
-
-		/* rest is 0 */
-
-		(*data_transfer_length_p) = sizeof(*bdcp);
-		return STATUS_SUCCESS;
-	}
-
-	case VPD_LOGICAL_BLOCK_PROVISIONING:	/* 0xb2 */
-	{
-		/* This is for SCSI UNMAP request support (aka 'TRIM')
-		 * We are not supporting this yet. If we do this has
-		 * to be touched:
-		 */
-
-		struct _VPD_LOGICAL_BLOCK_PROVISIONING_PAGE *lbpp = data_buffer;
-		lbpp->PageCode = VPD_LOGICAL_BLOCK_PROVISIONING;    /* 0xb2 */
-		lbpp->PageLength[0] = 0;
-		lbpp->PageLength[1] = 4;
-
-// #ifdef __TRIM_SUPPORTED_ON_DAY
-#if 1
-		lbpp->LBPU = 1;	/* Unmap supported */
-//		lbpp->LBWS = 1;  /* Write same, but we probably don't support this */
-//		lbpp->LBWS10 = 1; /* same */
-		lbpp->ProvisioningType = 2;	/* whatever this means ... */
-// printk("ZAKZAK Pretending that TRIM is supported\n");
-#endif
-
-		(*data_transfer_length_p) = sizeof(*lbpp);
-		return STATUS_SUCCESS;
-	}
 	}
 	return STATUS_NOT_SUPPORTED;
 }
@@ -2725,7 +2621,6 @@ static NTSTATUS scsi_read_capacity(struct block_device *bdev, union _CDB *cdb, v
 
 	d_size = bdev->bd_inode->i_size;
 	d_size += (bdev->data_shift + bdev->appended_sectors) * 512;
-// printk("d_size is %lld\n", d_size);
 
 	Temp = bdev->bd_block_size;
 	if (cdb->AsByte[0] == SCSIOP_READ_CAPACITY) {
@@ -2762,7 +2657,6 @@ static NTSTATUS scsi_read_capacity(struct block_device *bdev, union _CDB *cdb, v
 
 static NTSTATUS scsi_execute(struct block_device *bdev, union _CDB *cdb, void *data_buffer, unsigned long *data_transfer_length_p, struct _IRP *irp)
 {
-// printk("ZAKZAK scsi_execute cdb->AsByte[0] is %d\n", cdb->AsByte[0]);
 	switch (cdb->AsByte[0]) {
 	case SCSIOP_TEST_UNIT_READY:
 		return STATUS_SUCCESS;
@@ -2806,8 +2700,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 	struct _IO_STACK_LOCATION *s = IoGetCurrentIrpStackLocation(irp);
 	struct block_device *bdev;
 
-// printk("ZAKZAK windrbd_scsi ...\n");
-
 	struct block_device_reference *ref = device->DeviceExtension;
 	if (ref == NULL || ref->bdev == NULL || ref->bdev->delete_pending || ref->bdev->about_to_delete || ref->bdev->ref == NULL) {
 		irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
@@ -2817,7 +2709,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 			srb->SrbStatus = SRB_STATUS_NO_DEVICE;
 
 	        IoCompleteRequest(irp, IO_NO_INCREMENT);
-// printk("ZAKZAK windrbd_scsi returns STATUS_NO_SUCH_DEVICE\n");
 		return STATUS_NO_SUCH_DEVICE;
 	}
 	bdev = ref->bdev;
@@ -2860,10 +2751,7 @@ static NTSTATUS __attribute__((stdcall)) windrbd_scsi(struct _DEVICE_OBJECT *dev
 		 * need to do that here.
 		 */
 		if (status == STATUS_PENDING)
-{
-// printk("ZAKZAK windrbd_scsi returns pending %08x\n", status);
 			return status;
-}
 
 		if (!NT_SUCCESS(status)) {
 			if (status == STATUS_BUFFER_TOO_SMALL)
@@ -2909,7 +2797,6 @@ out:
 
 	irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
-// printk("ZAKZAK windrbd_scsi returns %08x\n", status);
 	return status;
 }
 
