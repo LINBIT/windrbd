@@ -1023,7 +1023,6 @@ static NTSTATUS __attribute__((stdcall)) windrbd_device_control(struct _DEVICE_O
 	{
 		struct _SCSI_PASS_THROUGH_DIRECT *spd =
 			(struct _SCSI_PASS_THROUGH_DIRECT*) irp->AssociatedIrp.SystemBuffer;
-		union _CDB *cdb = (union _CDB*) &spd->Cdb;
 
 		spd->ScsiStatus = SCSISTAT_GOOD;
 
