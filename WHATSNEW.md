@@ -1,3 +1,12 @@
+What's new in version 1.2.12
+----------------------------
+
+Hyper-V SCSI pass-through support (also for Server 2022, 2025)
+
+Fixed flakiness on connection establishment
+
+Fixed hang on primary after secondary (when there are handles open)
+
 What's new in version 1.2.11
 ----------------------------
 
