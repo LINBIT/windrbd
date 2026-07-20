@@ -1944,6 +1944,31 @@ static void completion_test(int argc, const char ** argv)
 	}
 }
 
+#ifdef CONFIG_DRBD_FAULT_INJECTION
+
+static void drbd_fault_injection(int argc, const char ** argv)
+{
+	if (argc != 4) {
+		printk("Usage: drbd_fault_injection <faults> <rate> <devs>\n");
+		return;
+	}
+
+	/* See drbd/drbd_main.c: drbd_fault_devs needed to be patched
+	 * to non-static.
+	 */
+
+	extern int drbd_enable_faults;
+	extern int drbd_fault_rate;
+	extern int drbd_fault_devs;
+
+	drbd_enable_faults = atoi(argv[1]);
+	drbd_fault_rate = atoi(argv[2]);
+	drbd_fault_devs = atoi(argv[3]);
+
+	printk("Set DRBD fault parameters to drbd_enable_faults=%d drbd_fault_rate=%d drbd_fault_devs=%d\n", drbd_enable_faults, drbd_fault_rate, drbd_fault_devs);
+}
+
+#endif
 
 void test_main(const char *arg)
 {
@@ -2044,6 +2069,10 @@ void test_main(const char *arg)
 		test_minus_max_long_long(argc, argv);
 	if (strcmp(argv[0], "completion_test") == 0)
 		completion_test(argc, argv);
+#ifdef CONFIG_DRBD_FAULT_INJECTION
+	if (strcmp(argv[0], "drbd_fault_injection") == 0)
+		drbd_fault_injection(argc, argv);
+#endif
 
 kfree_argv:
 	kfree(argv);
