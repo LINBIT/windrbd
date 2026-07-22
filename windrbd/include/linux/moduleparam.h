@@ -109,4 +109,6 @@ extern const struct kernel_param_ops param_ops_uint;
                 = __stringify(tag) "=" info
 #endif
 
+#define module_param_cb(name, ops, arg, perm) /* nothing */	
+
 #endif
