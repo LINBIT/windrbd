@@ -13,7 +13,7 @@ export DRBD_TEST_DOCKER_IMAGE=$LINBIT_DOCKER_REGISTRY/drbd9-tests
 # which we also check and use for provisioning.
 # Update: for provisioning Linux VMs the exact version is required.
 # So we have to update this every time we switch to a newer DRBD version:
-export DRBD_VERSION=9.2.18
+export DRBD_VERSION=9.2.19
 export DRBD_UTILS_VERSION=9.0.0.latest-*
 # export SKIP_PULL=true
 # for cross_platform:
