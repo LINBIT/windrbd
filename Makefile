@@ -231,7 +231,7 @@ DRBD_TMPSRCDIR=$(DRBDTMP)/drbd/
 DRBD_SOURCES += drbd_sender.c drbd_receiver.c drbd_req.c drbd_actlog.c
 DRBD_SOURCES += drbd_main.c drbd-headers/drbd_strings.c drbd_nl.c
 DRBD_SOURCES += drbd_interval.c drbd_state.c
-DRBD_SOURCES += drbd_nla.c drbd_transport.c drbd_transport_tcp.c drbd_buildtag.c drbd_bitmap.c drbd_proc.c
+DRBD_SOURCES += drbd_transport.c drbd_transport_tcp.c drbd_buildtag.c drbd_bitmap.c drbd_proc.c
 
 ifdef CONFIG_KREF_DEBUG
 DRBD_SOURCES += drbd_kref_debug.c kref_debug.c
@@ -241,6 +241,11 @@ ifeq ($(DRBD),drbd-9.0)
 DRBD_SOURCES += lru_cache.c
 else
 DRBD_SOURCES += drbd-kernel-compat/lru_cache.c
+endif
+
+# .. and probably older ones as well, but we don't care anymore.
+ifeq ($(DRBD),drbd-9.2)
+DRBD_SOURCES += drbd_nla.c
 endif
 
 TMP_DRBD_FILES = $(addprefix $(DRBD_TMPSRCDIR), $(DRBD_SOURCES))

@@ -12,26 +12,26 @@
 
 
 /* PAGE_SHIFT determines the page size */
-/* Those are defined in the ReactOS headers: */
 
-#if 0
+/* Windows/ReactOS headers also #define this to the same value */
 
+#ifndef PAGE_SHIFT
 #define PAGE_SHIFT	12
+#endif
+
+#ifndef PAGE_SIZE
 #ifdef __ASSEMBLY__
 #define PAGE_SIZE	(1 << PAGE_SHIFT)
 #else
 #define PAGE_SIZE	(1UL << PAGE_SHIFT)
 #endif
-#define PAGE_MASK	(~(PAGE_SIZE-1))
-
 #endif
+
+#define PAGE_MASK	(~(PAGE_SIZE-1))
 
 // #include <asm/setup.h>
 
 #ifndef __ASSEMBLY__
-
-#define clear_page(page)	memset((page), 0, PAGE_SIZE)
-#define copy_page(to,from)	memcpy((to), (from), PAGE_SIZE)
 
 #define clear_user_page(page, vaddr, pg)	clear_page(page)
 #define copy_user_page(to, from, vaddr, pg)	copy_page(to, from)

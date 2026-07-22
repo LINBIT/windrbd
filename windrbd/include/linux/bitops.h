@@ -16,6 +16,12 @@ static inline void barrier(void)
 	KeMemoryBarrier();
 }
 
+#define smp_store_release(p, v)						\
+do {									\
+	barrier();							\
+	WRITE_ONCE(*p, v);						\
+} while (0)
+
 #define BIT_MASK(_nr)				(1ULL << ((_nr) % BITS_PER_LONG))
 #define BIT_WORD(_nr)				((_nr) / BITS_PER_LONG)
 
