@@ -840,10 +840,12 @@ printk("ZAKZAK accept ... (listen?) socket is %p\n", socket);
 				return -EWOULDBLOCK;
 
 			/* TODO: handle signals */
+printk("ZAKZAK accept ... listening socket is %p into KeWaitForSingleObject\n", socket);
 			KeWaitForSingleObject(&socket->accept_event, Executive, KernelMode, FALSE, NULL);
+printk("ZAKZAK accept ... listening socket is %p out of KeWaitForSingleObject\n", socket);
 		}
 	} while (wsk_socket == NULL);
-printk("ZAKZAK accept ... socket is %p got a wsk_socket\n", socket);
+printk("ZAKZAK accept ... socket is %p got a wsk_socket=%p\n", socket, wsk_socket);
 
 	err = sock_create_linux_socket(&accept_socket, SOCK_STREAM);
 printk("ZAKZAK accept ... created linux socket is %p, err is %d\n", accept_socket, err);
