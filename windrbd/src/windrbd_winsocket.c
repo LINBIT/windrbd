@@ -112,6 +112,7 @@ static int winsock_to_linux_error(NTSTATUS status)
 
 static void terminate_receive_thread(struct socket *socket)
 {
+printk("ZAKZAK about to terminate receive thread socket=%p\n", socket);
 	if (socket->receive_thread_should_run) {
 		socket->receive_thread_should_run = false;
 		wake_up(&socket->buffer_available);
@@ -665,12 +666,15 @@ static void close_socket(struct socket *socket)
 	struct _IRP *Irp;
 	unsigned long irq_flags;
 
+printk("ZAKZAK close_socket socket=%p\n", socket);
+
 	if (wsk_state != WSK_INITIALIZED || socket == NULL)
 		return;
 
 	spin_lock_irqsave(&socket->is_closed_lock, irq_flags);
 	if (socket->is_closed) {
 		spin_unlock_irqrestore(&socket->is_closed_lock, irq_flags);
+printk("ZAKZAK socket %p already closed\n", socket);
 		return;
 	}
 	socket->is_closed = 1;	/* TODO: can it be reopened? Then we need to reset this flag. */
@@ -683,6 +687,7 @@ static void close_socket(struct socket *socket)
 	if (socket->error_status == 0)
 		msleep(100);
 
+printk("ZAKZAK into terminate_receive_thread socket=%p\n", socket);
 	terminate_receive_thread(socket);
 
 	Irp = wsk_new_irp(NULL, NULL, NULL);
@@ -803,6 +808,7 @@ static int wsk_connect(struct socket *socket, struct sockaddr_unsized *vaddr, in
 			wake_up(&socket->buffer_available);
 			wake_up(&socket->data_available);
 		}
+printk("ZAKZAK connection established socket=%p\n", socket);
 	}
 	IoFreeIrp(Irp);
 
@@ -817,6 +823,7 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 	struct _WSK_SOCKET *wsk_socket;
 	struct socket *accept_socket;
 
+printk("ZAKZAK accept ... (listen?) socket is %p\n", socket);
 	if (wsk_state != WSK_INITIALIZED || socket == NULL || socket->wsk_socket == NULL)
 		return -EINVAL;
 
@@ -836,8 +843,10 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 			KeWaitForSingleObject(&socket->accept_event, Executive, KernelMode, FALSE, NULL);
 		}
 	} while (wsk_socket == NULL);
+printk("ZAKZAK accept ... socket is %p got a wsk_socket\n", socket);
 
 	err = sock_create_linux_socket(&accept_socket, SOCK_STREAM);
+printk("ZAKZAK accept ... created linux socket is %p, err is %d\n", accept_socket, err);
 	if (err < 0)
 		close_wsk_socket(wsk_socket);
 	else {
@@ -850,6 +859,7 @@ int kernel_accept(struct socket *socket, struct socket **newsock, int io_flags)
 		wake_up(&accept_socket->buffer_available);
 		wake_up(&accept_socket->data_available);
 		*newsock = accept_socket;
+printk("ZAKZAK connection accepted new socket=%p\n", accept_socket);
 	}
 
 	return err;
@@ -1085,6 +1095,9 @@ static ssize_t do_send(struct socket *socket, void *buf, int len, struct page *p
 			NULL,
 			Irp);
 	} else {
+if (len == 8)
+printk("ZAKZAK sending 8 bytes ... socket = %p\n", socket);
+
 		status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskSend(
 			socket->wsk_socket,
 			WskBuffer,
@@ -1344,7 +1357,7 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			if (!socket->receiver_cache_enabled)
 				printk("Receiver cache disabled\n");
 			else
-				printk("Receiver cache enabled, buffer size is %d\n", socket->receive_buffer_size);
+				printk("Receiver cache enabled, buffer size is %d (socket is %p)\n", socket->receive_buffer_size, socket);
 
 			socket->have_printed_status = true;
 		}
@@ -1391,8 +1404,10 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			if (ret == -EINTR)
 				ret = -ERESTARTSYS;
 		}
-		if (remaining_time == 0)
+		if (remaining_time == 0) {
+printk("ZAKZAK remaining time is 0, timeout? (timeout is %d) socket=%p\n", timeout, socket);
 			ret = -EAGAIN;
+		}
 		timeout = remaining_time;
 
 		if (socket->error_status != 0)
@@ -1471,6 +1486,8 @@ static int socket_receive_thread(void *p)
 	int err;
 	KIRQL flags;
 
+printk("ZAKZAK receiver thread started for socket %p\n", s);
+
 // TODO: maybe enable this again?
 	while (1) {
 		wait_event(s->buffer_available, 
@@ -1480,7 +1497,10 @@ static int socket_receive_thread(void *p)
 			(s->write_index == s->read_index && !s->receive_buffer_full)))); 
 
 		if (!s->receive_thread_should_run)
+{
+printk("ZAKZAK receive thread should not run, terminating it. socket=%p\n", s);
 			break;
+}
 
 		spin_lock_irqsave(&s->receive_lock, flags);
 		if (s->read_index == s->write_index && !s->receive_buffer_full) {
@@ -1780,6 +1800,7 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	struct socket *socket = (struct socket*) SocketContext;
 	int err;
 
+printk("ZAKZAK incoming connection on listening socket %p AcceptSocket %p\n", socket, AcceptSocket);
 	if (socket->accept_wsk_sockets == NULL) {
 		printk("Warning: incoming_connection() without listen() called.\n");
 		return -EINVAL;
@@ -1788,11 +1809,14 @@ static NTSTATUS WSKAPI wsk_incoming_connection (
 	err = put_accept_socket(socket, AcceptSocket);
 
 	if (err < 0) {
+printk("ZAKZAK put_accept_socket UNsuccessful error %d on listening socket %p AcceptSocket %p\n", err, socket, AcceptSocket);
 		close_wsk_socket(AcceptSocket);
+printk("ZAKZAK closing AcceptSocket on listening socket %p AcceptSocket %p\n", err, socket, AcceptSocket);
 		socket->dropped_accept_sockets++;
 
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
+printk("ZAKZAK put_accept_socket successful on listening socket %p AcceptSocket %p\n", socket, AcceptSocket);
 	KeSetEvent(&socket->accept_event, IO_NO_INCREMENT, FALSE);
 
 	if (socket->sk->sk_state_change)
@@ -1829,6 +1853,8 @@ static int wsk_sock_create_kern(void *net_namespace,
 	err = sock_create_linux_socket(&socket, type);
 	if (err < 0)
 		return err;
+
+printk("ZAKZAK created socket %p (is a %s socket)\n", socket, Flags == WSK_FLAG_LISTEN_SOCKET ? "listener" : "connection");
 
 	if (Flags == WSK_FLAG_LISTEN_SOCKET)
 		err = CreateSocket(family, type, protocol,
