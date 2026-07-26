@@ -787,11 +787,20 @@ static int wsk_connect(struct socket *socket, struct sockaddr_unsized *vaddr, in
 	if (Status == STATUS_PENDING) {
 		int ret;
 
-		ret = wait_event_interruptible(
+		ret = wait_event_interruptible_timeout(
 			socket->connected_waitqueue,
-			socket->is_connected);
+			socket->is_connected,
+			socket->sk->sk_sndtimeo);
 
-		if (ret == -ERESTARTSYS) {	/* Signal was sent */
+		if (ret == 0)
+{
+printk("ZAKZAK Connect timed out after %d ms ...\n", socket->sk->sk_sndtimeo);
+			ret = -EAGAIN;
+}
+
+		if (ret == -EAGAIN ||		/* Timed out */
+		    ret == -EINTR ||		/* Signal was sent */
+		    ret == -ERESTARTSYS) {	/* Signal was sent */
 			IoCancelIrp(Irp);
 			IoFreeIrp(Irp);
 
@@ -807,8 +816,10 @@ static int wsk_connect(struct socket *socket, struct sockaddr_unsized *vaddr, in
 			socket->sk->sk_state = TCP_ESTABLISHED;
 			wake_up(&socket->buffer_available);
 			wake_up(&socket->data_available);
-		}
 printk("ZAKZAK connection established socket=%p\n", socket);
+		} else {
+printk("connection failed, Status (from Irp) is %x ...\n", Status);
+		}
 	}
 	IoFreeIrp(Irp);
 
