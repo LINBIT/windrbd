@@ -92,12 +92,10 @@ extern int param_get_int(char *buffer, const struct kernel_param *kp);
  * structure.  This allows exposure under a different name.
  */
 
-/* TODO: note that this is just to silence a warning in drbd_main.c
+/* Note that this is just to silence a warning in drbd_main.c
  * since we do not have sections on Windows (at least not supported
  * by the MinGW gcc we cannot use the Linux macros ...
  */
-
-// extern const struct kernel_param_ops param_ops_uint;
 
 #define module_param_named(name, value, type, perm) \
 	const struct kernel_param_ops *dummy_ ## value;
