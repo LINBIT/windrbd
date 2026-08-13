@@ -97,6 +97,9 @@ void *kmalloc_debug(size_t size, int flag, const char *file, int line, const cha
 	poison_after = (struct poison_after*) (&mem->data[size]);
 	poison_after->poison2 = POISON_AFTER;
 
+	if (flag | __GFP_ZERO)
+		memset(&mem->data[0], 0, size);
+
 	spin_lock_irqsave(&memory_lock, flags);
 	list_add(&mem->list, &memory_allocations);
 	spin_unlock_irqrestore(&memory_lock, flags);

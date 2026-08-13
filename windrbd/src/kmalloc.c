@@ -8,15 +8,17 @@ static int kmalloc_errors;
 
 void *kmalloc(size_t size, gfp_t flag)
 {
-	int retries;
 	void *mem;
 
-	retries = 0;
 	while (1) {
 		mem = ExAllocatePoolWithTag(WinDRBDNonPagedPool, size, DRBD_TAG);
 
-		if (mem != NULL)
+		if (mem != NULL) {
+			if (flag | __GFP_ZERO)
+				memset(mem, 0, size);
+
 			return mem;
+		}
 
 		if (!(flag & __GFP_DIRECT_RECLAIM)) {
 			kmalloc_errors++;
@@ -25,10 +27,7 @@ void *kmalloc(size_t size, gfp_t flag)
 
                 if (KeGetCurrentIrql() == PASSIVE_LEVEL)
                         msleep(100);
-
-                retries++;
 	}
-	return mem;
 }
 
 void *kzalloc(size_t size, gfp_t flag)
