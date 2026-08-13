@@ -2521,9 +2521,9 @@ static int check_if_backingdev_contains_filesystem(struct block_device *dev)
 
 	mutex_lock(&read_bootsector_mutex);
 
-	p = alloc_page(sizeof(struct page)); 
+	p = alloc_page(GFP_KERNEL);
 	if (!p)	{
-		printk(KERN_ERR "alloc_page struct page failed\n");
+		printk(KERN_ERR "alloc_page failed\n");
 		mutex_unlock(&read_bootsector_mutex);
 		return 1;
 	}
