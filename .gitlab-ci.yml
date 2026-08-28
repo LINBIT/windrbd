@@ -29,14 +29,9 @@ build1.2:
       if [ $CI_COMMIT_BRANCH == 'test-this-branch-with-drbd-9.3' ] ; then export DRBD=drbd-9.3 ; fi
       if [ $CI_COMMIT_BRANCH == 'test-this-branch-with-connect5' ] ; then export USE_CLANG=1 ; export DRBD=drbd-9.3 ; fi
       make package VERSION=windrbd-1.2-from-gitlab
-# TODO: this (nexus) should go away:
-# The for loop is supposed to to run only once ...
     - |
       for i in inno-setup/install-windrbd-*.exe
       do
-          echo copiing $i to nexus ...
-          curl -f -isSf -u $LINBIT_REGISTRY_USER:$LINBIT_REGISTRY_PASSWORD --upload-file $i https://nexus.at.linbit.com/repository/windows/WinDRBD/install-windrbd-$CI_COMMIT_BRANCH-from-gitlab.exe
-
           echo copiing $i to pulp ...
           pulp --format none file content upload  --repository WindowsTemp --file $i --relative-path install-windrbd-$CI_COMMIT_BRANCH-from-gitlab.exe
       done
