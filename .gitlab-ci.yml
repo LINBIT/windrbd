@@ -1,5 +1,11 @@
+default:
+  hooks:
+    pre_get_sources_script:
+      - git config --global protocol.file.allow always
+
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  GIT_ALLOW_PROTOCOL: "file:git:http:https:ssh"
 # so we get a version number with git describe
   GIT_DEPTH: 0
   LINBIT_DOCKER_REGISTRY: nexus.at.linbit.com:5000
