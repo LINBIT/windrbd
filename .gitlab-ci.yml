@@ -4,6 +4,7 @@ default:
       - git config --global protocol.file.allow always
 
 variables:
+  GIT_STRATEGY: clone
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_ALLOW_PROTOCOL: "file:git:http:https:ssh"
 # so we get a version number with git describe
