@@ -7,7 +7,7 @@ if [ ! "$WINDRBD_VERSION" ] ; then WINDRBD_VERSION=windrbd-1.2-from-gitlab ; fi
 export WINDRBD_VERSION
 echo "WinDRBD version is $WINDRBD_VERSION ..."
 
-export LINBIT_DOCKER_REGISTRY=nexus.at.linbit.com:5000
+export LINBIT_DOCKER_REGISTRY=registry.at.linbit.com
 export DRBD_TEST_DOCKER_IMAGE=$LINBIT_DOCKER_REGISTRY/drbd9-tests
 # accept all 9.X DRBD versions - we have a separate WINDRBD_VERSION
 # which we also check and use for provisioning.
