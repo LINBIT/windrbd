@@ -34,19 +34,7 @@ export VIRTER_TIME_SSH_PING_COUNT=600
 # export VIRTER_TIME_SHUTDOWN_TIMEOUT=1
 export VIRTER_TIME_SHUTDOWN_TIMEOUT=300s
 
-time ./virter/run-test.sh --variant=windows
-
-# time ./virter/run-test.sh --variant=windows --repeats=3
-# err=$?
-# time ./virter/run-test.sh --variant=cross_platform --repeats=3
-# err2=$?
-
-# if [ $err -eq 0 -a $err2 -eq 0 ]
-# then
-# 	echo 'all good'
-# 	exit 0
-# fi
-# exit 1
+time ./virter/run-test.sh --variant=cross_platform
 
 # time ./virter/run-test.sh --variant=cross_platform
 # time ./virter/run-test.sh --variant=windows --repeats=10
