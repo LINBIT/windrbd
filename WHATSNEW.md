@@ -1,3 +1,14 @@
+What's new in version 1.2.13
+----------------------------
+
+DRBD 9.2.19 / DRBD 9.3.3
+
+Honor GFP_ZERO flag, thereby fixing unneccessary resyncs
+
+Export DRBD's fault injection framework
+
+Honor send timeout on connect
+
 What's new in version 1.2.12
 ----------------------------
 
