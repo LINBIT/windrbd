@@ -281,3 +281,4 @@ Version history
  * 1.2.10 (Jun 08, 2026): DRBD 9.2.18 / DRBD 9.3.2 support
  * 1.2.11 (Jun 27, 2026): 3 fixes (hang on primary, hang on secondary, BSOD on disconnect)
  * 1.2.12 (Jul 08, 2026): Hyper-V SCSI pass-through also on Server 2022 and 2025, fix connection flakiness, handle handle leaks
+ * 1.2.13 (Aug 31, 2026): GFP_ZERO flag, send timeout on connect, DRBD 9.2.19 / 9.3.3
