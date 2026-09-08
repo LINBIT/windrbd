@@ -33,15 +33,13 @@ export BUILD_ENV=jt-gitlab
 export PATH=\$PATH:'/cygdrive/c/Program Files (x86)/Inno Setup 5/'
 make clean
 make package VERSION=gitlab
-for i in inno-setup/install-windrbd-*.exe
-do
-	echo downloading \$i ...
-	scp \$i \$( basename \$i )
-done
 echo Done
 "
 
+scp Administrator@10.43.208.75:/tmp/build-windrbd/inno-setup/install-windrbd*.exe .
+
 ./upload-pulp.sh install-windrbd*.exe
+# rm -rf install-windrbd*.exe
 
 echo "Should be finished, resulting installer should be on pulp"
 echo "To download do a"
