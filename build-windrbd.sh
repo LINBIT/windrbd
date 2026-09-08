@@ -35,21 +35,15 @@ make clean
 make package VERSION=gitlab
 for i in inno-setup/install-windrbd-*.exe
 do
-	echo copiing \$i to linux host ...
-	scp \$i johannes@10.43.208.83:/tmp/build-windrbd/\$i
+	echo downloading \$i ...
+	scp \$i \$( basename \$i )
 done
 echo Done
 "
 
-ssh johannes@10.43.208.83 "cd /tmp/build-windrbd
-for i in inno-setup/install-windrbd-*.exe
-do
-	echo copiing \$i to nexus ...
-	curl -f --netrc-file /etc/nexus-password --upload-file \$i https://nexus.at.linbit.com/repository/windows/WinDRBD/install-windrbd-windrbd-1.1-from-gitlab.exe
-done
-"
+./upload-pulp.sh install-windrbd*.exe
 
-echo "Should be finished, resulting installer should be on nexus"
+echo "Should be finished, resulting installer should be on pulp"
 echo "To download do a"
-echo "curl -O https://nexus.at.linbit.com/repository/windows/WinDRBD/install-windrbd-windrbd-1.1-from-gitlab.exe"
+echo "curl -O https://pulp.at.linbit.com/pulp/content/file/WindowsTemp/install-windrbd-windrbd-1.1-from-gitlab.exe"
 echo "drbdadm --version should show the correct version"
