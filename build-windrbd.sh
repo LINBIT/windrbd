@@ -1,6 +1,6 @@
 # This script copies the WinDRBD sources (and build artifacts)
 # to machines capable of building it and finally uploads the
-# installer to nexus. It works only in the Linbit environment.
+# installer to pulp. It works only in the Linbit environment.
 # If you are looking for something with a sane Linux-only
 # build process, take a look at WinDRBD 1.2.
 #
@@ -23,7 +23,7 @@ echo Done
 echo "Copying the result to Windows VM"
 scp johannes@10.43.208.83:/tmp/build-windrbd/windrbd-built-converted-sources.tarball.tar.gz Administrator@10.43.208.75:/tmp
 
-echo "Now running Windows build steps (compile, package, upload to nexus)"
+echo "Now running Windows build steps (compile, package)"
 
 ssh Administrator@10.43.208.75 "rm -rf /tmp/build-windrbd
 mkdir -p /tmp/build-windrbd
@@ -42,6 +42,7 @@ scp Administrator@10.43.208.75:/tmp/build-windrbd/inno-setup/install-windrbd*.ex
 # rm -rf install-windrbd*.exe
 
 echo "Should be finished, resulting installer should be on pulp"
-echo "To download do a"
-echo "curl -O https://pulp.at.linbit.com/pulp/content/file/WindowsTemp/install-windrbd-windrbd-1.1-from-gitlab.exe"
+echo "To download, go to"
+echo "    https://pulp.at.linbit.com/pulp/content/file/WindowsTemp"
+echo "and look for windrbd-1.1 installers"
 echo "drbdadm --version should show the correct version"
