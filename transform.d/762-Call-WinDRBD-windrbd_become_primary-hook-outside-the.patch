@@ -1,0 +1,49 @@
+From 1867038d236b1b146f1cb0e2ae645feb091cb18e Mon Sep 17 00:00:00 2001
+From: Johannes Khoshnazar-Thoma <johannes@johannesthoma.com>
+Date: Fri, 19 Jun 2026 18:51:30 +0200
+Subject: [PATCH] Call WinDRBD windrbd_become_primary hook outside the
+ state_semaphore
+
+When running the day0-add-disk, a drbdadm primary hung in reading
+the boot sector (which is required so we know if we need to wrap
+the device in a partition table, some Windows odds...). It hung
+in inc_ap_bio(). It looked like the misc event queue was never
+triggered. Moving the call of the windrbd_become_primary out of
+the state_semaphore solved the problem.
+---
+ drbd/drbd_nl.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drbd/drbd_nl.c b/drbd/drbd_nl.c
+index e4bd0dc52..5c2961e59 100644
+--- a/drbd/drbd_nl.c
++++ b/drbd/drbd_nl.c
+@@ -1277,12 +1277,6 @@ retry:
+ 			kobject_uevent(&disk_to_dev(device->vdisk)->kobj, KOBJ_CHANGE);
+ 	}
+ 
+-	if (old_role == R_SECONDARY && role == R_PRIMARY) {
+-		idr_for_each_entry(&resource->devices, device, vnr) {
+-			windrbd_become_primary(device, &err_str);
+-		}
+-	}
+-
+ out:
+ 	up(&resource->state_sem);
+ 	if (err_str) {
+@@ -1291,6 +1285,12 @@ out:
+ 			drbd_msg_put_info(reply_skb, err_str);
+ 		kfree(err_str);
+ 	}
++	if (old_role == R_SECONDARY && role == R_PRIMARY && rv >= SS_SUCCESS) {
++		idr_for_each_entry(&resource->devices, device, vnr) {
++			windrbd_become_primary(device, &err_str);
++		}
++	}
++
+ 	return rv;
+ }
+ 
+-- 
+2.55.0
+
