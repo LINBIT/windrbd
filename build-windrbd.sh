@@ -36,10 +36,12 @@ make package VERSION=gitlab
 echo Done
 "
 
-scp Administrator@10.43.208.75:/tmp/build-windrbd/inno-setup/install-windrbd*.exe .
+mkdir -p artifacts
+scp Administrator@10.43.208.75:/tmp/build-windrbd/inno-setup/install-windrbd*.exe artifacts
+scp Administrator@10.43.208.75:/tmp/build-windrbd/converted-sources/drbd/windrbd.* artifacts
 
-./upload-pulp.sh install-windrbd*.exe
-# rm -rf install-windrbd*.exe
+./upload-pulp.sh artifacts/*
+# rm -rf artifacts
 
 echo "Should be finished, resulting installer should be on pulp"
 echo "To download, go to"
