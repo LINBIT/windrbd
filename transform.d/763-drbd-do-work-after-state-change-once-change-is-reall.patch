@@ -1,0 +1,143 @@
+From 1ea26e0c2a55fab3db958f690f0b599126782078 Mon Sep 17 00:00:00 2001
+From: Joel Colledge <joel.colledge@linbit.com>
+Date: Wed, 7 Sep 2022 08:43:23 +0200
+Subject: [PATCH] drbd: do work after state change once change is really
+ applied
+
+w_after_state_change() checks the condition
+"peer_device->repl_state[NOW] == L_WF_BITMAP_S" when deciding whether to
+really send the bitmap. Hence we need to apply the state change by
+copying NEW to NOW _before_ queueing the after state change work.
+
+This fixes a bug where both sides of a connection ended up stuck in
+WFBitMapS / WFBitMapT states.
+---
+[backported to WinDRBD 1.1 converted sources]
+diff --git a/drbd/drbd_state.c b/drbd/drbd_state.c
+--- a/drbd/drbd_state.c
++++ b/drbd/drbd_state.c
+@@ -72,7 +72,7 @@ static bool lost_contact_to_peer_data(en
+ static bool peer_returns_diskless(struct drbd_peer_device *peer_device,
+ 				  enum drbd_disk_state os, enum drbd_disk_state ns);
+ static void print_state_change(struct drbd_resource *resource, const char *prefix);
+-static void finish_state_change(struct drbd_resource *, struct completion *);
++static void finish_state_change(struct drbd_resource *);
+ static int w_after_state_change(struct drbd_work *w, int unused);
+ static enum drbd_state_rv is_valid_soft_transition(struct drbd_resource *);
+ static enum drbd_state_rv is_valid_transition(struct drbd_resource *resource);
+@@ -712,6 +712,38 @@ static bool state_is_stable(struct drbd_
+ 	return stable;
+ }
+ 
++static struct after_state_change_work *alloc_after_state_change_work(struct drbd_resource *resource)
++{
++	/* Caller holds req_lock */
++	struct after_state_change_work *work;
++
++	work = kmalloc(sizeof(*work), GFP_ATOMIC, '01WD');
++	if (work) {
++		work->state_change = remember_state_change(resource, GFP_ATOMIC);
++		if (!work->state_change) {
++			kfree(work);
++			work = NULL;
++		}
++	}
++	if (!work)
++		drbd_err(resource, "Could not allocate after state change work\n");
++
++	return work;
++}
++
++static void queue_after_state_change_work(struct drbd_resource *resource,
++					  struct completion *done,
++					  struct after_state_change_work *work)
++{
++	if (work) {
++		work->w.cb = w_after_state_change;
++		work->done = done;
++		drbd_queue_work(&resource->work, &work->w);
++	} else if (done) {
++		complete(done);
++	}
++}
++
+ static enum drbd_state_rv ___end_state_change(struct drbd_resource *resource, struct completion *done,
+ 					      enum drbd_state_rv rv)
+ {
+@@ -721,6 +753,7 @@ static enum drbd_state_rv ___end_state_c
+ 	unsigned int pro_ver;
+ 	int vnr;
+ 	bool all_devs_have_quorum = true;
++	struct after_state_change_work *work;
+ 
+ 	if (flags & CS_ABORT)
+ 		goto out;
+@@ -736,7 +769,10 @@ static enum drbd_state_rv ___end_state_c
+ 	if (flags & CS_PREPARE)
+ 		goto out;
+ 
+-	finish_state_change(resource, done);
++	finish_state_change(resource);
++
++	/* This remembers the state change, so call before applying the change. */
++	work = alloc_after_state_change_work(resource);
+ 
+ 	/* changes to local_cnt and device flags should be visible before
+ 	 * changes to state, which again should be visible before anything else
+@@ -804,6 +840,9 @@ static enum drbd_state_rv ___end_state_c
+ 	}
+ 
+ 	wake_up_all(&resource->state_wait);
++
++	/* Call this after applying the state change from NEW to NOW. */
++	queue_after_state_change_work(resource, done, work);
+ out:
+ 	rcu_read_unlock(resource->wrcu_flags);
+ 
+@@ -2262,28 +2301,6 @@ static void set_ov_position(struct drbd_
+ 	peer_device->ov_skipped = 0;
+ }
+ 
+-static void queue_after_state_change_work(struct drbd_resource *resource,
+-					  struct completion *done)
+-{
+-	/* Caller holds req_lock */
+-	struct after_state_change_work *work;
+-	gfp_t gfp = GFP_ATOMIC;
+-
+-	work = kmalloc(sizeof(*work), gfp, '01WD');
+-	if (work)
+-		work->state_change = remember_state_change(resource, gfp);
+-	if (work && work->state_change) {
+-		work->w.cb = w_after_state_change;
+-		work->done = done;
+-		drbd_queue_work(&resource->work, &work->w);
+-	} else {
+-		kfree(work);
+-		drbd_err(resource, "Could not allocate after state change work\n");
+-		if (done)
+-			complete(done);
+-	}
+-}
+-
+ static void initialize_resync_progress_marks(struct drbd_peer_device *peer_device)
+ {
+ 	ULONG_PTR tw = drbd_bm_total_weight(peer_device);
+@@ -2404,7 +2421,7 @@ static void thaw_requests_after_quorum_s
+ /**
+  * finish_state_change  -  carry out actions triggered by a state change
+  */
+-static void finish_state_change(struct drbd_resource *resource, struct completion *done)
++static void finish_state_change(struct drbd_resource *resource)
+ {
+ 	enum drbd_role *role = resource->role;
+ 	struct drbd_device *device;
+@@ -2829,8 +2846,6 @@ static void finish_state_change(struct d
+ 		if (!susp_quorum[NEW])
+ 			thaw_requests_after_quorum_suspend(resource);
+ 	}
+-
+-	queue_after_state_change_work(resource, done);
+ }
+ 
+ static void abw_start_sync(struct drbd_device *device,
