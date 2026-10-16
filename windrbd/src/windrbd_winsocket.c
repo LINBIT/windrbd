@@ -674,6 +674,9 @@ static void close_socket(struct socket *socket)
 		return;
 	}
 
+	if (socket->error_status == 0)
+		msleep(100);
+
 	terminate_receive_thread(socket);
 
 	Irp = wsk_new_irp(NULL, NULL);
