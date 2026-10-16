@@ -631,6 +631,33 @@ static void close_wsk_socket(struct _WSK_SOCKET *wsk_socket)
 	(void) ((PWSK_PROVIDER_BASIC_DISPATCH) wsk_socket->Dispatch)->WskCloseSocket(wsk_socket, Irp);
 }
 
+static int disconnect_socket(struct socket *socket)
+{
+	struct _KEVENT event;
+	struct _IRP *irp;
+	NTSTATUS status;
+
+	if (socket->wsk_flags != WSK_FLAG_CONNECTION_SOCKET)
+		return 0;
+
+	if (socket->error_status != 0)
+		return socket->error_status;
+
+	irp = wsk_new_irp(&event, NULL);
+	if (irp == NULL)
+		return -ENOMEM;
+
+	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskDisconnect(socket->wsk_socket, NULL, 0, irp);
+
+	if (status == STATUS_PENDING) {
+		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
+		status = irp->IoStatus.Status;
+	}
+	IoFreeIrp(irp);
+
+	return winsock_to_linux_error(status);
+}
+
 
 	/* We do not wait for completion here, errors are ignored.
 	 */
@@ -653,16 +680,11 @@ static void close_socket(struct socket *socket)
 	if (Irp == NULL)
 		return;
 
-		/* TODO: Gracefully disconnect socket first? With what
-		 * timeout? Disconnect seems to work now (Linux detects
-		 * disconnect on Windows peer with about 200-300ms delay),
-		 * so not sure if that is neccessary. Current solution
-		 * however does an 'abortive' disconnect (whatever that
-		 * means).
-		 */
-
 	if (socket->wsk_socket != NULL) {
 		mutex_lock(&socket->wsk_mutex);
+
+		if (socket->error_status == 0)
+			disconnect_socket(socket);
 
 		(void) ((PWSK_PROVIDER_BASIC_DISPATCH) socket->wsk_socket->Dispatch)->WskCloseSocket(socket->wsk_socket, Irp);
 		socket->wsk_socket = NULL;
