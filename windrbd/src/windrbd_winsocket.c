@@ -650,7 +650,17 @@ static int disconnect_socket(struct socket *socket)
 	status = ((PWSK_PROVIDER_CONNECTION_DISPATCH) socket->wsk_socket->Dispatch)->WskDisconnect(socket->wsk_socket, NULL, 0, irp);
 
 	if (status == STATUS_PENDING) {
-		KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
+		LARGE_INTEGER timeout, *ptimeout = NULL;
+
+		/* Don't wait for TCP to give up when the peer is unreachable */
+		if (socket->sk->sk_sndtimeo > 0 && socket->sk->sk_sndtimeo != MAX_SCHEDULE_TIMEOUT) {
+			timeout.QuadPart = -1 * socket->sk->sk_sndtimeo * 10 * 1000 * 1000 / HZ;
+			ptimeout = &timeout;
+		}
+		if (KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, ptimeout) == STATUS_TIMEOUT) {
+			IoCancelIrp(irp);
+			KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
+		}
 		status = irp->IoStatus.Status;
 	}
 	IoFreeIrp(irp);
