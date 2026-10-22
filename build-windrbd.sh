@@ -39,10 +39,10 @@ echo Done
 "
 
 mkdir -p artifacts
-rm artifacts/*
+rm -f artifacts/*
 scp Administrator@10.43.208.75:/tmp/build-windrbd/inno-setup/install-windrbd*.exe artifacts
 scp Administrator@10.43.208.75:/tmp/build-windrbd/converted-sources/drbd/windrbd.* artifacts
-for i in artifacts/windrbd.??? ; do cp $i $i-$VERSION ; done
+for i in artifacts/windrbd.??? ; do mv $i $i-$VERSION ; done
 
 ./upload-pulp.sh artifacts/*
 # rm -rf artifacts
