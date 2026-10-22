@@ -1591,7 +1591,9 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 		if (remaining_time == -EINTR)
 			return -EINTR;
 */
-		if (remaining_time <= 0)
+		if (remaining_time < 0)
+			return remaining_time;
+		if (remaining_time == 0)
 			return -EAGAIN;
 		timeout = remaining_time;
 
