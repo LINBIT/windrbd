@@ -376,8 +376,6 @@ static NTSTATUS NTAPI SendPageCompletionRoutine(
 
 /* TODO: completion->socket may be NULL here? */
 			completion->socket->error_status = new_status;
-			if (may_printk)
-				printk("ZAKZAK: socket %p send completion failed: ntstatus %x -> error_status %d\n", completion->socket, Irp->IoStatus.Status, new_status);
 		}
 	} else {
 			/* Only for connectionless sockets: clear error
@@ -1194,10 +1192,8 @@ ssize_t wsk_sendpage(struct socket *socket, struct page *page, int offset, size_
 		return (LONG) Irp->IoStatus.Information;
 	}
 	err = winsock_to_linux_error(status);
-	if (err != 0 && err != -ENOMEM && err != -EAGAIN && err != -EINTR) {
+	if (err != 0 && err != -ENOMEM && err != -EAGAIN && err != -EINTR)
 		socket->error_status = err;
-		printk("ZAKZAK: socket %p WskSend failed: ntstatus %x -> error_status %d\n", socket, status, err);
-	}
 
 		/* Resources are freed by completion routine. */
 // dbg("returning %d\n", err);
@@ -1219,10 +1215,8 @@ out_have_sent:
 out_put_page:
 	put_page(page);
 
-	if (err != 0 && err != -ENOMEM && err != -EAGAIN && err != -EINTR) {
+	if (err != 0 && err != -ENOMEM && err != -EAGAIN && err != -EINTR)
 		socket->error_status = err;
-		printk("ZAKZAK: socket %p sendpage failed before WskSend: error_status %d\n", socket, err);
-	}
 	return err;
 }
 
@@ -1331,7 +1325,6 @@ static int wsk_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *v
 	LONG		BytesReceived;
 	NTSTATUS	Status;
 	ULONG		wsk_flags;
-	NTSTATUS	irp_status;
 
 	struct      task_struct *thread = current;
 	PVOID       waitObjects[2];
@@ -1489,13 +1482,11 @@ dbg("receive timeout is %lld (in 100ns units) %d in ms units\n", nWaitTime.QuadP
 		}
 	}
 
-	irp_status = Irp->IoStatus.Status;
 	IoFreeIrp(Irp);
 	FreeWskBuffer(&WskBuffer, 1);
 
 	if (BytesReceived < 0 && BytesReceived != -EINTR && BytesReceived != -EAGAIN) {
 		socket->error_status = BytesReceived;
-		printk("ZAKZAK: socket %p receive failed: ntstatus %x irp status %x -> error_status %d\n", socket, Status, irp_status, BytesReceived);
 // printk("setting error status to %d\n", socket->error_status);
 	}
 	return BytesReceived;
@@ -1606,14 +1597,10 @@ int kernel_recvmsg(struct socket *socket, struct msghdr *msg, struct kvec *vec,
 			return -EAGAIN;
 		timeout = remaining_time;
 
-		if (socket->error_status != 0) {
-			printk("ZAKZAK: socket %p kernel_recvmsg returns error_status %d\n", socket, socket->error_status);
+		if (socket->error_status != 0)
 			return socket->error_status;
-		}
-		if (socket->sk->sk_state != TCP_ESTABLISHED) {
-			printk("ZAKZAK: socket %p kernel_recvmsg returns 0, sk_state %d\n", socket, socket->sk->sk_state);
+		if (socket->sk->sk_state != TCP_ESTABLISHED)
 			return 0;
-		}
 
 		spin_lock_irqsave(&socket->receive_lock, irq_flags);
 		if (socket->read_index < socket->write_index)
@@ -1711,10 +1698,8 @@ static int socket_receive_thread(void *p)
 		if (err == -EAGAIN || err == -EINTR)
 			continue;
 
-		if (err <= 0) {
-			printk("ZAKZAK: socket %p receive thread stops: wsk_recvmsg returned %d, error_status %d\n", s, err, s->error_status);
+		if (err <= 0)
 			break;
-		}
 
 		spin_lock_irqsave(&s->receive_lock, flags);
 
