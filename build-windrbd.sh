@@ -45,6 +45,10 @@ scp Administrator@10.43.208.75:/tmp/build-windrbd/converted-sources/drbd/windrbd
 for i in artifacts/windrbd.??? ; do mv $i $i-$VERSION ; done
 
 ./upload-pulp.sh artifacts/*
+for i in artifacts/install-windrbd*.exe
+do
+	pulp --format none file content upload  --repository WindowsTemp --file $i --relative-path install-windrbd-1.1-from-gitlab.exe
+done
 # rm -rf artifacts
 
 echo "Should be finished, resulting installer should be on pulp"
