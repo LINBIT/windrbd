@@ -20,6 +20,9 @@ export LINBIT_CI_MAX_CPUS=5
 # else we get ERROR sometimes ...
 export VIRTER_TIME_SSH_PING_COUNT=300
 
+# pull only windows, do not pull Linux.
+export PULL_WINDOWS_ONLY=true
+
 # time ./virter/run-test.sh --base-image=windows-server-2019-created-2023 --startvm=250 --torun=add-connect-delete,add-path-multiple-times,connect,diskless,double-promote-diskless,invalid-names,outdate,quorum,quorum-failover-reconnect,rename,resync-after,resync-after-failover-to-dless,resync-initial,split-brain,stress-connect-and-2pc,suspend-io --repeats=3
 # This test should always succeed:
 # time ./virter/run-test.sh --variant=windrbd_1_1 --torun=invalid-names
