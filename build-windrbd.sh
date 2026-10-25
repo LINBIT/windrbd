@@ -47,7 +47,7 @@ for i in artifacts/windrbd.??? ; do mv $i $i-$VERSION ; done
 ./upload-pulp.sh artifacts/*
 for i in artifacts/install-windrbd*.exe
 do
-	pulp --format none file content upload  --repository WindowsTemp --file $i --relative-path install-windrbd-1.1-from-gitlab.exe
+	pulp --format none file content upload  --repository WindowsTemp --file $i --relative-path install-windrbd-windrbd-1.1-from-gitlab.exe
 done
 # rm -rf artifacts
 
