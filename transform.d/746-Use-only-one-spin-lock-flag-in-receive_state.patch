@@ -38,16 +38,16 @@ index 53eef53..d1eb5ae 100644
  			if (rv < SS_SUCCESS)
  				goto fail;
  		}
-@@ -7480,7 +7479,7 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
- 		}
- 	}
+@@ -7484,7 +7483,7 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
+ 	if (connection->cstate[NOW] == C_CONNECTING)
+ 		return 0;
  
 -	begin_state_change(resource, &irq_flags, begin_state_chg_flags);
 +	begin_state_change(resource, &spin_lock_irq_flags, begin_state_chg_flags);
  	if (old_peer_state.i != drbd_get_peer_device_state(peer_device, NOW).i) {
  		old_peer_state = drbd_get_peer_device_state(peer_device, NOW);
  		abort_state_change_locked(resource);
-@@ -7501,7 +7500,7 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
+@@ -7505,7 +7504,7 @@ static int receive_state(struct drbd_connection *connection, struct packet_info
  	if (repl_state[OLD] < L_ESTABLISHED && repl_state[NEW] >= L_ESTABLISHED)
  		resource->state_change_flags |= CS_HARD;
  
