@@ -3,6 +3,12 @@ Upcoming features
 
 See the windrbd-1.2 branch of this repo
 
+What's new in version 1.1.24
+----------------------------
+
+Made a total of 50 DRBD9 tests work and succeed with this
+WinDRBD version.
+
 What's new in version 1.1.23
 ----------------------------
 
